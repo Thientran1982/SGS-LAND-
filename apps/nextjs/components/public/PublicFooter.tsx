@@ -1,7 +1,7 @@
 // @ts-nocheck
 "use client";
+import { useState, useEffect } from "react";
 import Link from "next/link";
-import { Phone, Mail, MapPin } from "lucide-react";
 const FOOTER_PROJECTS = [
   { label: "Aqua City Novaland",       href: "/du-an/aqua-city" },
   { label: "The Global City",          href: "/du-an/the-global-city" },
@@ -18,41 +18,53 @@ const FOOTER_PROJECTS = [
   { label: "Sơn Kim Land",             href: "/du-an/son-kim-land" },
 ];
 const FOOTER_SUPPORT = [
-  { label: "Tìm kiếm BĐS",       href: "/marketplace" },
-  { label: "Định giá AI",         href: "/ai-valuation" },
-  { label: "Lãi suất ngân hàng",  href: "/lai-suat-ngan-hang" },
-  { label: "CRM Bất Động Sản",    href: "/crm-platform" },
-  { label: "Live Chat AI",        href: "/livechat" },
-  { label: "Trung tâm hỗ trợ",    href: "/help-center" },
-  { label: "Hướng dẫn sử dụng",   href: "/huong-dan-su-dung" },
-  { label: "Chính sách bảo mật",   href: "/privacy-policy" },
-  { label: "Điều khoản sử dụng",   href: "/terms-of-service" },
+  { vi: "Tìm kiếm BĐS",      en: "Property Search", href: "/marketplace" },
+  { vi: "Định giá AI",        en: "AI Valuation",    href: "/ai-valuation" },
+  { vi: "Lãi suất ngân hàng", en: "Bank Rates",      href: "/lai-suat-ngan-hang" },
+  { vi: "CRM Bất Động Sản",   en: "Real Estate CRM", href: "/crm-platform" },
+  { vi: "Live Chat AI",       en: "Live Chat AI",    href: "/livechat" },
+  { vi: "Trung tâm hỗ trợ",   en: "Help Center",     href: "/help-center" },
+  { vi: "Hướng dẫn sử dụng",  en: "User Guide",      href: "/huong-dan-su-dung" },
+  { vi: "Chính sách bảo mật",  en: "Privacy Policy",  href: "/privacy-policy" },
+  { vi: "Điều khoản sử dụng",  en: "Terms of Service", href: "/terms-of-service" },
 ];
 const FOOTER_ABOUT = [
-  { label: "Về chúng tôi",     href: "/about-us" },
-  { label: "Tin tức",          href: "/news" },
-  { label: "Tuyển dụng",       href: "/careers" },
-  { label: "Liên hệ",          href: "/contact" },
-  { label: "Chủ đầu tư",       href: "/chu-dau-tu" },
-  { label: "BĐS Thủ Đức",      href: "/bat-dong-san-thu-duc" },
-  { label: "BĐS Long Thành",    href: "/bat-dong-san-long-thanh" },
-  { label: "BĐS Đồng Nai",      href: "/bat-dong-san-dong-nai" },
-  { label: "BĐS Bình Thạnh",    href: "/bat-dong-san-binh-thanh" },
-  { label: "BĐS Quận 7",        href: "/bat-dong-san-quan-7" },
-  { label: "BĐS Long An",       href: "/bat-dong-san-long-an" },
-  { label: "Nhà phố Trung Tâm",  href: "/du-an/nha-pho-trung-tam" },
-  { label: "Trạng thái hệ thống", href: "/status" },
+  { vi: "Về chúng tôi",     en: "About Us",             href: "/about-us" },
+  { vi: "Tin tức",          en: "News",                 href: "/news" },
+  { vi: "Tuyển dụng",       en: "Careers",              href: "/careers" },
+  { vi: "Liên hệ",          en: "Contact",              href: "/contact" },
+  { vi: "Chủ đầu tư",       en: "Developers",           href: "/chu-dau-tu" },
+  { vi: "BĐS Thủ Đức",      en: "Thu Duc Properties",   href: "/bat-dong-san-thu-duc" },
+  { vi: "BĐS Long Thành",    en: "Long Thanh Properties", href: "/bat-dong-san-long-thanh" },
+  { vi: "BĐS Đồng Nai",      en: "Dong Nai Properties",  href: "/bat-dong-san-dong-nai" },
+  { vi: "BĐS Bình Thạnh",    en: "Binh Thanh Properties", href: "/bat-dong-san-binh-thanh" },
+  { vi: "BĐS Quận 7",        en: "District 7 Properties", href: "/bat-dong-san-quan-7" },
+  { vi: "BĐS Long An",       en: "Long An Properties",   href: "/bat-dong-san-long-an" },
+  { vi: "Nhà phố Trung Tâm",  en: "Central Townhouses",   href: "/du-an/nha-pho-trung-tam" },
+  { vi: "Trạng thái hệ thống", en: "System Status",        href: "/status" },
 ];
 const LEGAL_LINKS = [
-  { label: "Chính sách bảo mật", href: "/privacy-policy"  },
-  { label: "Điều khoản",          href: "/terms-of-service" },
-  { label: "Cookie",              href: "/cookie-settings"  },
+  { vi: "Chính sách bảo mật", en: "Privacy Policy", href: "/privacy-policy" },
+  { vi: "Điều khoản",         en: "Terms",          href: "/terms-of-service" },
+  { vi: "Cookie",             en: "Cookie",         href: "/cookie-settings" },
 ];
 const linkHover = (e: React.MouseEvent<HTMLAnchorElement | HTMLElement>, hover: boolean) => {
   (e.currentTarget as HTMLElement).style.color = hover ? "#D4A855" : "#B9C6D4";
 };
+type Lang = "vi" | "en";
+
 export function PublicFooter() {
   const year = new Date().getFullYear();
+  const [lang, setLang] = useState<Lang>("vi");
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem("sgs-lang") as Lang | null;
+      if (saved === "vi" || saved === "en") setLang(saved);
+    } catch {}
+    const onLang = (e: any) => { if (e?.detail === "vi" || e?.detail === "en") setLang(e.detail); };
+    window.addEventListener("sgs-lang-change", onLang as EventListener);
+    return () => window.removeEventListener("sgs-lang-change", onLang as EventListener);
+  }, []);
   return (
     <footer style={{ background: "var(--sgs-primary-deep)", borderTop: "1px solid rgba(200,150,62,0.2)" }}>
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-14 pb-4">
@@ -61,81 +73,45 @@ export function PublicFooter() {
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-10 pb-10"
           style={{ borderBottom: "1px solid rgba(255,255,255,0.07)" }}>
 
-          {/* Col 1 — Brand + contact ────────────────────── */}
+          {/* Col 1 - Brand + contact */}
           <div>
             <div className="flex items-center gap-2.5 mb-4">
-              <div
-                className="w-9 h-9 rounded-xl flex items-center justify-center shrink-0"
-                style={{ background: "var(--sgs-accent)" }}
-              >
-                <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"
-                  className="w-5 h-5" style={{ color: "var(--sgs-primary-deep)" }}>
-                  <path
-                    d="M3 9.5L12 3l9 6.5V20a1 1 0 01-1 1H4a1 1 0 01-1-1V9.5z"
-                    stroke="currentColor" strokeWidth="2.5" strokeLinejoin="round"
-                    fill="currentColor" fillOpacity="0.18"
-                  />
-                  <path d="M9 21V12h6v9" stroke="currentColor" strokeWidth="2.5" strokeLinejoin="round"/>
-                </svg>
-              </div>
+              <img src="/logo-white.png" alt="SGS Land" className="w-9 h-9 shrink-0" style={{ objectFit: "contain" }} />
               <div>
-                <div
-                  className="font-bold text-base leading-tight"
-                  style={{
-                    color: "#FFFFFF",
-                    fontFamily: "var(--font-noto-serif, Georgia, serif)",
-                  }}
-                >
-                  SGS <span style={{ color: "#D4A855" }}>LAND</span>
+                <div className="font-bold text-base" style={{ color: "#E4EDF5", fontFamily: "var(--font-noto-serif, Georgia, serif)", letterSpacing: "-0.02em" }}>
+                  SGS <span style={{ color: "var(--sgs-accent)" }}>LAND</span>
                 </div>
-                <div
-                  className="text-[9px] font-semibold uppercase"
-                  style={{ color: "rgba(200,150,62,0.7)", letterSpacing: "0.2em" }}
-                >
-                  Proptech
-                </div>
+                <div className="text-[9px] font-semibold uppercase" style={{ color: "rgba(200,150,62,0.7)", letterSpacing: "0.2em" }}>Proptech</div>
               </div>
             </div>
-
-            <p className="text-sm leading-relaxed mb-5" style={{ color: "var(--sgs-on-dark-muted)" }}>
-              Nền tảng quản lý &amp; phân phối BĐS AI — Đại lý F1 uỷ quyền Novaland,
-              Masterise Homes, Nam Long, Vinhomes. Tin dùng bởi 15.000+ môi giới.
+            <p className="text-xs mb-3 leading-relaxed" style={{ color: "#7A91A8" }}>
+              {lang === "vi"
+                ? "Nền tảng AI quản lý & phân phối BĐS · Sàn BĐS F1 uy tín · Tin dùng bởi 15.000+ môi giới."
+                : "AI-powered real estate management & distribution platform · Trusted F1 · Trusted by 15.000+ brokers."}
             </p>
-
-            <div className="space-y-2.5">
-              <a
-                href="tel:+84971132378"
-                className="flex items-center gap-2.5 text-sm transition-colors"
-                style={{ color: "#B9C6D4" }}
-                onMouseEnter={e => linkHover(e, true)}
-                onMouseLeave={e => linkHover(e, false)}
-              >
-                <Phone className="w-4 h-4 shrink-0" style={{ color: "var(--sgs-accent)" }} />
-                0971 132 378
+            <div className="flex flex-col gap-1.5">
+              <a href="tel:+84971132378" className="text-xs flex items-center gap-2" style={{ color: "#B9C6D4" }} onMouseEnter={e => linkHover(e, true)} onMouseLeave={e => linkHover(e, false)}>
+                📞 0971 132 378
               </a>
-              <a
-                href="mailto:info@sgsland.vn"
-                className="flex items-center gap-2.5 text-sm transition-colors"
-                style={{ color: "#B9C6D4" }}
-                onMouseEnter={e => linkHover(e, true)}
-                onMouseLeave={e => linkHover(e, false)}
-              >
-                <Mail className="w-4 h-4 shrink-0" style={{ color: "var(--sgs-accent)" }} />
-                info@sgsland.vn
+              <p className="text-xs flex items-start gap-2 mb-1" style={{ color: "#B9C6D4" }}>
+                📍 122 - 124 B2, Khu đô thị Sala, Phường An Khánh, TP.HCM, Việt Nam
+              </p>
+              <a href="mailto:info@sgsland.vn" className="text-xs" style={{ color: "#B9C6D4" }} onMouseEnter={e => linkHover(e, true)} onMouseLeave={e => linkHover(e, false)}>
+                ✉ info@sgsland.vn
               </a>
-              <div className="flex items-start gap-2.5 text-sm" style={{ color: "#B9C6D4" }}>
-                <MapPin className="w-4 h-4 shrink-0 mt-0.5" style={{ color: "var(--sgs-accent)" }} />
-                TP. Hồ Chí Minh, Việt Nam
-              </div>
+              <p className="text-xs mt-1" style={{ color: "#7A91A8" }}>
+                {lang === "vi" ? "Hỗ trợ 7/7 · 8:00 - 18:00" : "Support 7/7 · 8:00 - 18:00"}
+              </p>
             </div>
           </div>
+
           {/* Col 2 — Dự án ──────────────────────────────── */}
           <div>
             <h3
               className="text-xs font-semibold uppercase mb-4"
               style={{ color: "#D4A855", letterSpacing: "0.12em" }}
             >
-              Dự án phân phối
+              {lang === "vi" ? "Dự Án Nổi Bật" : "Featured Projects"}
             </h3>
             <ul className="space-y-2.5">
               {FOOTER_PROJECTS.map((link) => (
@@ -159,7 +135,7 @@ export function PublicFooter() {
               className="text-xs font-semibold uppercase mb-4"
               style={{ color: "#D4A855", letterSpacing: "0.12em" }}
             >
-              Hỗ trợ &amp; Chính sách
+              {lang === "vi" ? "Dịch Vụ" : "Services"}
             </h3>
             <ul className="space-y-2.5">
               {FOOTER_SUPPORT.map((link) => (
@@ -171,7 +147,7 @@ export function PublicFooter() {
                     onMouseEnter={e => linkHover(e, true)}
                     onMouseLeave={e => linkHover(e, false)}
                   >
-                    {link.label}
+                    {lang === "vi" ? link.vi : link.en}
                   </Link>
                 </li>
               ))}
@@ -183,7 +159,7 @@ export function PublicFooter() {
               className="text-xs font-semibold uppercase mb-4"
               style={{ color: "#D4A855", letterSpacing: "0.12em" }}
             >
-              Về SGS LAND
+              {lang === "vi" ? "Về SGS LAND" : "About SGS LAND"}
             </h3>
             <ul className="space-y-2.5 mb-5">
               {FOOTER_ABOUT.map((link) => (
@@ -195,7 +171,7 @@ export function PublicFooter() {
                     onMouseEnter={e => linkHover(e, true)}
                     onMouseLeave={e => linkHover(e, false)}
                   >
-                    {link.label}
+                    {lang === "vi" ? link.vi : link.en}
                   </Link>
                 </li>
               ))}
@@ -204,9 +180,7 @@ export function PublicFooter() {
               className="space-y-1 pt-4"
               style={{ borderTop: "1px solid rgba(255,255,255,0.07)" }}
             >
-              <p className="text-xs" style={{ color: "var(--sgs-on-dark-muted)" }}>GPKD: 0312960439</p>
               <p className="text-xs" style={{ color: "var(--sgs-on-dark-muted)" }}>Cấp ngày: 01/01/2018 tại TP.HCM</p>
-              <p className="text-xs" style={{ color: "var(--sgs-on-dark-muted)" }}>MST: 0312960439</p>
               <p className="text-xs" style={{ color: "var(--sgs-on-dark-muted)" }}>API: <a href="/developers" style={{ color: "#B9C6D4" }}>developers</a></p>
             </div>
           </div>
@@ -214,7 +188,7 @@ export function PublicFooter() {
         {/* ── Bottom bar ────────────────────────────────── */}
         <div className="flex flex-col sm:flex-row items-center justify-between gap-3 pt-5">
           <p className="text-xs" style={{ color: "var(--sgs-on-dark-muted)" }}>
-            © {year} Công ty TNHH SGS Land. Đại lý F1: Novaland · Masterise Homes · Nam Long · Vinhomes.
+            © {year} SGS LAND. {lang === "vi" ? "Bảo lưu mọi quyền." : "All rights reserved."}
           </p>
           <div className="flex items-center gap-3 flex-wrap justify-center sm:justify-end">
             {LEGAL_LINKS.map((link) => (
@@ -226,7 +200,7 @@ export function PublicFooter() {
                 onMouseEnter={e => linkHover(e, true)}
                 onMouseLeave={e => (e.currentTarget as HTMLElement).style.color = "var(--sgs-on-dark-muted)"}
               >
-                {link.label}
+                {lang === "vi" ? link.vi : link.en}
               </Link>
             ))}
           </div>
