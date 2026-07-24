@@ -73,17 +73,19 @@ export function PublicHeader() {
 
           {/* ── Logo ─────────────────────────────────────── */}
           <Link href="/" className="flex items-center gap-2.5 shrink-0 group">
-            <div
-              className="w-9 h-9 rounded-xl flex items-center justify-center transition-transform group-hover:scale-105 overflow-hidden"
-              style={{ background: "rgba(255,255,255,0.12)" }}
-            >
-              <img src="/logo-white.png" alt="SGS Land" className="w-7 h-7 object-contain" />
-            </div>
+            <img
+              src={theme === "dark" ? "/logo-white.png" : "/logo-navy.png"}
+              alt="SGS Land"
+              className="w-9 h-9 transition-transform group-hover:scale-105"
+              style={{ objectFit: "contain" }}
+            />
             <div>
               <div
                 className="font-bold text-lg leading-tight"
                 style={{
-                  color: isHero ? "#FFFFFF" : "var(--sgs-primary)",
+                  color: isHero
+                    ? theme === "dark" ? "#FFFFFF" : "var(--sgs-primary)"
+                    : theme === "dark" ? "#E4EDF5" : "var(--sgs-primary)",
                   fontFamily: "var(--font-noto-serif, var(--font-inter), Georgia, serif)",
                   letterSpacing: "-0.02em",
                 }}
@@ -93,7 +95,9 @@ export function PublicHeader() {
               <div
                 className="text-[9px] font-semibold uppercase hidden sm:block"
                 style={{
-                  color: isHero ? "rgba(200,150,62,0.85)" : "var(--sgs-accent-text)",
+                  color: isHero
+                    ? "rgba(200,150,62,0.85)"
+                    : theme === "dark" ? "var(--sgs-accent)" : "var(--sgs-accent-text)",
                   letterSpacing: "0.2em",
                 }}
               >
