@@ -102,14 +102,14 @@ function useReveal() {
 }
 
 // ─── MAP SECTION ─────────────────────────────────────────────────────────────
-function MapHero({ lang }: { lang: Lang }) {
+function MapHero({ lang, onChatOpen }: { lang: Lang; onChatOpen: () => void }) {
   const [activePin, setActivePin] = useState<number | null>(null);
-  const [cardPos, setCardPos]     = useState<{ left: number; top: number }>({ left: 0, top: 0 });
+  const [cardPos, setCardPos]     = useState<{ left: number; top: number; w: number }>({ left: 0, top: 0, w: 290 });
   const [query, setQuery]         = useState("");
   const [visible, setVisible]     = useState(false);
-  const cardRef   = useRef<HTMLDivElement>(null);
-  const mapcardRef= useRef<HTMLDivElement>(null);
-  const hideTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const cardRef    = useRef<HTMLDivElement>(null);
+  const mapcardRef = useRef<HTMLDivElement>(null);
+  const hideTimer  = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => { const t = setTimeout(() => setVisible(true), 80); return () => clearTimeout(t); }, []);
 
@@ -120,12 +120,14 @@ function MapHero({ lang }: { lang: Lang }) {
     const svgW = 1200, svgH = 640;
     const scaleX = mr.width / svgW, scaleY = mr.height / svgH;
     const pxX = cx * scaleX, pxY = cy * scaleY;
-    const cw = 290, ch = 250;
+    const cw = Math.min(290, mr.width - 32), ch = 250;
     let left = pxX + 18, top = pxY - 10;
     if (left + cw > mr.width - 20) left = pxX - cw - 18;
     if (top + ch > mr.height - 16) top = mr.height - ch - 16;
     if (top < 16) top = 16;
-    setCardPos({ left, top });
+    if (left < 16) left = 16;
+    if (left + cw > mr.width - 16) left = mr.width - cw - 16;
+    setCardPos({ left, top, w: cw });
     setActivePin(i);
   }, []);
 
@@ -133,35 +135,34 @@ function MapHero({ lang }: { lang: Lang }) {
     hideTimer.current = setTimeout(() => setActivePin(null), 260);
   }, []);
 
-  const proj = activePin !== null ? PROJECTS[activePin] : null;
-  const pin  = activePin !== null ? PIN_DATA[activePin] : null;
-  const imgSrc = proj ? `https://sgsland.vn/og/du-an/${proj.slug}` : "";
+  const proj   = activePin !== null ? PROJECTS[activePin] : null;
+  const pin    = activePin !== null ? PIN_DATA[activePin] : null;
+  const imgSrc = proj ? (proj.img || `/images/projects/${proj.slug}.webp`) : "";
 
   return (
     <section id="ban-do" style={{ padding: "120px 0 0", background: "var(--lp-bg)" }}>
       <div className="lp-wrap">
-        {/* Hero head */}
-        <div style={{ display:"grid", gridTemplateColumns:"1fr auto", alignItems:"end", gap:"24px", marginBottom:"26px" }}
-          className="max-sm:grid-cols-1">
+        <div style={{ display:"grid", alignItems:"end", gap:"24px", marginBottom:"26px" }}
+          className="grid grid-cols-1 sm:[grid-template-columns:1fr_auto]">
           <h1
             className="lp-serif"
             style={{
-              fontSize:"clamp(34px,5.2vw,70px)", fontWeight:550, lineHeight:1.03, letterSpacing:"-.015em",
+              fontSize:"clamp(26px,6vw,70px)", fontWeight:550, lineHeight:1.03, letterSpacing:"-.015em",
               color:"var(--lp-ink)",
               opacity: visible ? 1 : 0, transform: visible ? "translateY(0)" : "translateY(20px)",
               transition: "opacity .75s ease .1s, transform .75s ease .1s",
             }}
           >
             {lang === "vi"
-              ? <>Sàn F1 uy tín · bất động sản<br /><em style={{ color:"var(--lp-navy)", fontStyle:"italic", fontWeight:340 }}>6 tỉnh miền Nam.</em></>
-              : <>Trusted F1 agency · real estate<br /><em style={{ color:"var(--lp-navy)", fontStyle:"italic", fontWeight:340 }}>across 6 southern provinces.</em></>
+              ? <>Tìm kiếm, mua & đầu tư · bất động sản<br /><em style={{ color:"var(--lp-navy)", fontStyle:"italic", fontWeight:340 }}> </em></>
+              : <>Search, buy & invest · real estate<br /><em style={{ color:"var(--lp-navy)", fontStyle:"italic", fontWeight:340 }}> </em></>
             }
           </h1>
           <p style={{ maxWidth:"320px", fontSize:"14px", color:"var(--lp-muted)", textAlign:"right", opacity: visible ? 1 : 0, transition:"opacity .75s ease .3s" }}
             className="max-sm:text-left">
             {lang === "vi"
-              ? "Dự án BĐS TPHCM, Đồng Nai, Bình Dương, BR-VT, Long An, Tây Ninh. Di chuột lên từng điểm ghim để xem giá và pháp lý."
-              : "Real estate projects in HCMC, Dong Nai, Binh Duong, BR-VT, Long An, Tay Ninh. Hover each pin for verified pricing and legal status."}
+              ? "Mua đúng giá, pháp lý rõ ràng. 15.000+ môi giới và 45.000+ bất động sản chờ bạn tại Tp.HCM - Đồng Nai - Tây Ninh."
+              : "Buy at the right price, clear legal status. 15000+ agents and 45.000+ properties waiting for you across HCMC - Dong Nai - Tay Ninh."}
           </p>
         </div>
 
@@ -174,12 +175,12 @@ function MapHero({ lang }: { lang: Lang }) {
           >
             {/* Corner labels */}
             {[
-              { cls:"tl", style:{top:26,left:30},   text: lang==="vi" ? "SGS LAND · Bản đồ 6 tỉnh miền Nam 2026" : "SGS LAND · 6-province map, South Vietnam 2026" },
-              { cls:"tr", style:{top:26,right:30},  text:"Tỷ lệ 1:250.000 · WGS-84" },
-              { cls:"bl", style:{bottom:24,left:30},text:"10°25′–11°00′ N" },
+              { cls:"tl", style:{top:26,left:30},    text: lang==="vi" ? "SGS LAND · Bản đồ 6 tỉnh miền Nam 2026" : "SGS LAND · 6-province map, South Vietnam 2026" },
+              { cls:"tr", style:{top:26,right:30},   text:"Tỷ lệ 1:250.000 · WGS-84" },
+              { cls:"bl", style:{bottom:24,left:30}, text:"10°25′–11°00′ N" },
               { cls:"br", style:{bottom:24,right:30},text:"106°30′–107°00′ E" },
             ].map(c => (
-              <span key={c.cls} className="lp-mono" style={{ position:"absolute", color:"var(--lp-muted)", zIndex:3, pointerEvents:"none", fontSize:"10px", letterSpacing:".14em", ...c.style }}>
+              <span key={c.cls} className="lp-mono max-sm:!hidden" style={{ position:"absolute", color:"var(--lp-muted)", zIndex:3, pointerEvents:"none", fontSize:"10px", letterSpacing:".14em", ...c.style }}>
                 {c.text}
               </span>
             ))}
@@ -247,8 +248,8 @@ function MapHero({ lang }: { lang: Lang }) {
             </svg>
 
             {/* Legend */}
-            <div style={{ position:"absolute", left:30, bottom:52, zIndex:3, background:"var(--lp-navbg)", backdropFilter:"blur(6px)", border:"1px solid var(--lp-line)", borderRadius:"12px", padding:"12px 16px", fontSize:"11.5px", color:"var(--lp-muted)", display:"flex", flexDirection:"column", gap:"6px" }}
-              className="max-sm:hidden">
+            <div style={{ position:"absolute", left:30, bottom:52, zIndex:3, background:"var(--lp-navbg)", backdropFilter:"blur(6px)", border:"1px solid var(--lp-line)", borderRadius:"12px", padding:"12px 16px", fontSize:"11.5px", color:"var(--lp-muted)", flexDirection:"column", gap:"6px" }}
+              className="hidden sm:flex">
               <b className="lp-mono" style={{ color:"var(--lp-ink)", fontSize:"11px" }}>{lang==="vi" ? "Chú giải" : "Legend"}</b>
               <span style={{ display:"flex", alignItems:"center", gap:"8px" }}><i style={{ width:9,height:9,borderRadius:"50%",background:"var(--lp-navy)",flexShrink:0,display:"inline-block" }}/>{lang==="vi" ? "Dự án pháp lý 2 lớp" : "Two-layer legal verified"}</span>
               <span style={{ display:"flex", alignItems:"center", gap:"8px" }}><i style={{ width:9,height:9,borderRadius:"50%",background:"var(--lp-gold)",flexShrink:0,display:"inline-block" }}/>{lang==="vi" ? "Đang xem" : "Viewing"}</span>
@@ -258,15 +259,7 @@ function MapHero({ lang }: { lang: Lang }) {
             {activePin !== null && proj && pin && (
               <div
                 ref={cardRef}
-                style={{
-                  position:"absolute", zIndex:10, width:"290px",
-                  background:"var(--lp-cardbg)", border:"1px solid var(--lp-line)",
-                  borderRadius:"16px", overflow:"hidden",
-                  boxShadow:"0 26px 60px var(--lp-shadow)",
-                  left:cardPos.left, top:cardPos.top,
-                  pointerEvents:"auto",
-                  transition:"opacity .2s,transform .2s",
-                }}
+                style={{ position:"absolute", zIndex:10, width:(cardPos.w||290)+"px", maxWidth:"calc(100% - 20px)", background:"var(--lp-cardbg)", border:"1px solid var(--lp-line)", borderRadius:"16px", overflow:"hidden", boxShadow:"0 26px 60px var(--lp-shadow)", left:cardPos.left, top:cardPos.top, pointerEvents:"auto", transition:"opacity .2s,transform .2s" }}
                 onMouseEnter={() => { if (hideTimer.current) clearTimeout(hideTimer.current); }}
                 onMouseLeave={hideCard}
               >
@@ -291,20 +284,34 @@ function MapHero({ lang }: { lang: Lang }) {
         </div>
 
         {/* AI Search bar */}
-        <div style={{ display:"flex", justifyContent:"center", marginTop:"-30px", position:"relative", zIndex:20, padding:"0 20px" }}>
+        <div className="max-sm:!mt-3" style={{ display:"flex", justifyContent:"center", marginTop:"-30px", position:"relative", zIndex:20, padding:"0 20px" }}>
           <form
+            className="max-sm:!pl-4"
             style={{ background:"var(--lp-ink)", color:"var(--lp-bg)", borderRadius:"999px", boxShadow:"0 24px 60px var(--lp-shadow)", display:"flex", alignItems:"center", gap:"12px", padding:"10px 10px 10px 24px", width:"min(640px,100%)" }}
-            onSubmit={e => { e.preventDefault(); location.href = `/marketplace?q=${encodeURIComponent(query)}`; }}
+            onSubmit={e => {
+              e.preventDefault();
+              onChatOpen();
+            }}
           >
             <span className="lp-mono" style={{ color:"var(--lp-gold)", fontSize:"14px" }}>⌘</span>
-            <input
-              value={query}
-              onChange={e => setQuery(e.target.value)}
-              type="search"
-              placeholder={lang==="vi" ? "Nhà phố Thủ Đức dưới 8 tỷ, pháp lý sạch…" : "Townhouse Thu Duc under 8B VND, clean title…"}
-              style={{ flex:1, border:"none", outline:"none", background:"none", color:"var(--lp-bg)", fontFamily:"var(--font-be-vietnam,sans-serif)", fontSize:"15px", minWidth:0 }}
-              aria-label={lang==="vi" ? "Hỏi AI về bất động sản" : "Ask AI about real estate"}
-            />
+            <div className="lp-ph-wrap">
+              {!query && (
+                <span className="lp-ph-over" aria-hidden="true">
+                  <span className="lp-ph-track">
+                    <span>{lang==="vi" ? "Nhà phố Aqua City dưới 6 tỷ, pháp lý sạch…" : "Townhouse Aqua City under 6B VND, clean title…"}</span>
+                    <span>{lang==="vi" ? "Căn hộ Global City dưới 8 tỷ, pháp lý sạch…" : "Apartment Global City under 8B VND, clean title…"}</span>
+                  </span>
+                </span>
+              )}
+              <input
+                value={query}
+                onChange={e => setQuery(e.target.value)}
+                type="search"
+                placeholder=""
+                style={{ width:"100%", border:"none", outline:"none", background:"none", color:"var(--lp-bg)", fontFamily:"var(--font-be-vietnam,sans-serif)", fontSize:"15px", minWidth:0 }}
+                aria-label={lang==="vi" ? "Hỏi AI về bất động sản" : "Ask AI about real estate"}
+              />
+            </div>
             <button type="submit" style={{ background:"var(--lp-bg)", color:"var(--lp-ink)", borderRadius:"999px", padding:"11px 20px", fontSize:"13.5px", fontWeight:600, whiteSpace:"nowrap", cursor:"pointer", border:"none", transition:"opacity .2s" }}>
               {lang==="vi" ? "Hỏi AI →" : "Ask AI →"}
             </button>
@@ -312,14 +319,14 @@ function MapHero({ lang }: { lang: Lang }) {
         </div>
 
         {/* Stats */}
-        <div style={{ display:"flex", justifyContent:"center", gap:0, padding:"56px 0 0", flexWrap:"wrap" }}>
+        <div className="max-sm:!grid max-sm:grid-cols-2 max-sm:gap-y-7" style={{ display:"flex", justifyContent:"center", gap:0, padding:"56px 0 0", flexWrap:"wrap" }}>
           {[
-            { num:"45.000+", vi:"sản phẩm realtime",    en:"listings in realtime"     },
-            { num:"±4.8%",   vi:"sai số định giá AI",   en:"AI valuation error"       },
-            { num:"24h",     vi:"xác minh thực địa",    en:"on-site verification"     },
-            { num:"$1B+",    vi:"giao dịch xử lý",      en:"transactions processed"   },
-          ].map((s,i) => (
-            <div key={i} style={{ padding:"0 34px", borderLeft: i===0 ? "none" : "1px solid var(--lp-hair)", textAlign:"center" }}>
+            { num:"45.000+", vi:"sản phẩm realtime",    en:"listings in realtime"   },
+            { num:"±4.8%",   vi:"sai số định giá AI",   en:"AI valuation error"     },
+            { num:"24h",     vi:"xác minh thực địa",    en:"on-site verification"   },
+            { num:"$1B+",    vi:"giao dịch xử lý",      en:"transactions processed" },
+          ].map((s, i) => (
+            <div key={i} className="max-sm:!px-2 max-sm:!border-0" style={{ padding:"0 34px", borderLeft: i===0 ? "none" : "1px solid var(--lp-hair)", textAlign:"center" }}>
               <b className="lp-serif" style={{ fontSize:"clamp(24px,2.6vw,36px)", fontWeight:550, display:"block", lineHeight:1.15, color:"var(--lp-ink)" }}>{s.num}</b>
               <span style={{ fontSize:"12px", color:"var(--lp-muted)" }}>{s[lang]}</span>
             </div>
@@ -330,7 +337,7 @@ function MapHero({ lang }: { lang: Lang }) {
   );
 }
 
-// ─── SECTION HEADER ──────────────────────────────────────────────────────────
+// ─── SECTION HEADER ───────────────────────────────────────────────────────────
 function ChapterHead({ no, title, side }: { no: string; title: React.ReactNode; side: string }) {
   const { ref, inView } = useReveal();
   return (
@@ -535,6 +542,7 @@ interface Props {
 
 export function LandingPage({ featuredListings = [], stats }: Props) {
   const [lang, setLang] = useState<Lang>("vi");
+  const onChatOpen = React.useCallback(() => { window.dispatchEvent(new CustomEvent("sgs-open-chat")); }, []);
 
   // Sync with PublicHeader lang
   useEffect(() => {
@@ -553,7 +561,7 @@ export function LandingPage({ featuredListings = [], stats }: Props) {
     <>
       <style dangerouslySetInnerHTML={{ __html: STYLE }} />
       <div className="lp-root lp-sans" style={{ background:"var(--lp-bg)", color:"var(--lp-ink)", minHeight:"100vh" }}>
-        <MapHero lang={lang} />
+        <MapHero lang={lang} onChatOpen={onChatOpen} />
         <ProjectsSection lang={lang} />
         <MethodSection lang={lang} />
         <FaqSection lang={lang} />
