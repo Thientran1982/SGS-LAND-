@@ -1,0 +1,9 @@
+=== grep Cam du an ===
+apps/nextjs/components/public/LandingPage.tsx:79:  { slug:"masterise-homes",  no:"№ 05 · Masterise",  name:"Grand Marina · Masteri", desc:{ vi:"TPHCM · căn hộ hàng hiệu",                          en:"HCMC · Branded residences" },            price:{ vi:"Tư vấn 1-1",        en:"1-on-1 consultation" }, loc:{ vi:"Trung tâm TPHCM · hàng hiệu", en:"Central HCMC · luxury residences" } },
+apps/nextjs/components/public/LandingPage.tsx:405:          title={lang==="vi" ? <>Cầm dự án <em style={{ fontStyle:"italic", fontWeight:340, color:"var(--lp-navy)" }}>trên tay</em></> : <>Hold each project <em style={{ fontStyle:"italic", fontWeight:340, color:"var(--lp-navy)" }}>in hand</em></>}
+=== homepage file ===
+// @ts-nocheck
+import type { Metadata } from "next";
+import type { Listing } from "@/types";
+import { LandingPage } from "@/components/public/LandingPage";
+import { SchemaScript } from "@/components/SchemaScript";

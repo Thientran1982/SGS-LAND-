@@ -54,7 +54,7 @@ export function middleware(request: NextRequest) {
 
   // Detect auth via JWT cookie (set by Express backend)
   const token = request.cookies.get("auth_token")?.value
-    || request.cookies.get("sgs_token")?.value;
+    || request.cookies.get("sgs_token")?.value || request.cookies.get("token")?.value;
   const isAuthenticated = Boolean(token);
 
   // ── Redirect logged-in users away from auth pages ───────

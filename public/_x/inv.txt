@@ -1,0 +1,21 @@
+--- card/dropdown files ---
+./.local/skills/artifacts/artifacts/design-system/files/src/components/ui/dropdown-menu.tsx
+./.local/skills/artifacts/artifacts/mockup-sandbox/files/src/components/ui/dropdown-menu.tsx
+./.local/skills/artifacts/artifacts/react-vite/files/src/components/ui/dropdown-menu.tsx
+./artifacts/mockup-sandbox/src/components/ui/dropdown-menu.tsx
+./apps/mobile/src/components/ListingCard.tsx
+./components/ListingCard.tsx.bak
+./components/ListingCard.tsx.bak-claude2
+./components/Dropdown.tsx
+./components/ListingCard.tsx
+./components.bak-purplefix/Dropdown.tsx
+./components.bak-purplefix/ListingCard.tsx
+--- Listing fields ---
+--- layout ---
+apps/nextjs/app/(private)/layout.tsx
+apps/nextjs/app/(public)/layout.tsx
+apps/nextjs/app/layout.tsx
+--- leaflet ---
+    "framer-motion": "^12.38.0",
+    "leaflet": "^1.9.4",
+    "@types/leaflet": "^1.9.21",

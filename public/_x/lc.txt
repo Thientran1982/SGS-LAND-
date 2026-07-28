@@ -1,0 +1,13 @@
+=== login components ===
+LoginView3.tsx
+=== page import ===
+public/LoginView3
+=== root div of current login ===
+<div className="min-h-[100dvh] w-full flex bg-black text-white font-sans selection:bg-[var(--sgs-primary)]/30 selection:text-[var(--sgs-primary)] overflow-hidden relative" data-login-root style={{ backgroundColor: "#09090b", color: "#ffffff" }}
+=== sgs vars in globals ===
+sgs-accent
+sgs-bg
+sgs-hero-deep
+sgs-primary
+sgs-primary-deep
+sgs-surface

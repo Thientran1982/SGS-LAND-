@@ -1,0 +1,94 @@
+=== authenticate ===
+1004:  async authenticate(email: string, password: string) {
+1005-    const res = await fetch('/api/auth/login', {
+1006-      method: 'POST',
+1007-      credentials: 'include',
+1008-      headers: { 'Content-Type': 'application/json' },
+1009-      body: JSON.stringify({ email, password }),
+1010-    });
+1011-    if (!res.ok) {
+1012-      const err = await res.json().catch(() => ({ error: 'Login failed' }));
+--
+1035:  async authenticateWithTotp(email: string, password: string, totpToken: string) {
+1036-    const res = await fetch('/api/auth/login', {
+=== authenticateViaSSO ===
+1183:  async authenticateViaSSO(email: string) {
+1184-    const res = await fetch('/api/auth/sso', {
+1185-      method: 'POST',
+1186-      credentials: 'include',
+1187-      headers: { 'Content-Type': 'application/json' },
+1188-      body: JSON.stringify({ email }),
+1189-    });
+1190-    if (!res.ok) {
+1191-      const err = await res.json().catch(() => ({ error: 'SSO login failed' }));
+=== register ===
+1079:  async register(name: string, email: string, password: string, company?: string) {
+1080:    const res = await fetch('/api/auth/register', {
+1081-      method: 'POST',
+1082-      credentials: 'include',
+1083-      headers: { 'Content-Type': 'application/json' },
+1084-      body: JSON.stringify({ name, email, password, company }),
+1085-    });
+1086-    if (!res.ok) {
+1087-      const err = await res.json().catch(() => ({ error: 'Registration failed' }));
+1088-      throw new Error(err.error || 'Registration failed');
+=== onboardVendor ===
+1096:  async onboardVendor(
+1097-    company: string | undefined,
+1098-    name: string,
+1099-    email: string,
+1100-    password: string,
+1101-    phone?: string
+1102-  ) {
+1103-    const res = await fetch('/api/auth/onboard-vendor', {
+1104-      method: 'POST',
+=== requestPasswordReset ===
+1149:  async requestPasswordReset(email: string) {
+1150-    const res = await fetch('/api/auth/forgot-password', {
+1151-      method: 'POST',
+1152-      headers: { 'Content-Type': 'application/json' },
+1153-      credentials: 'include',
+1154-      body: JSON.stringify({ email }),
+1155-    });
+1156-    if (!res.ok) {
+1157-      const data = await res.json().catch(() => ({}));
+=== resetPassword ===
+1162:  async resetPassword(token: string, newPassword: string) {
+1163-    const res = await fetch('/api/auth/reset-password', {
+1164-      method: 'POST',
+1165-      headers: { 'Content-Type': 'application/json' },
+1166-      credentials: 'include',
+1167-      body: JSON.stringify({ token, newPassword }),
+1168-    });
+1169-    const data = await res.json().catch(() => ({}));
+1170-    if (!res.ok) {
+=== verifyEmail ===
+1115:  async verifyEmail(token: string) {
+1116-    const res = await fetch(`/api/auth/verify-email?token=${encodeURIComponent(token)}`, {
+1117-      credentials: 'include',
+1118-    });
+1119-    if (!res.ok) {
+1120-      const err = await res.json().catch(() => ({ error: 'Verification failed' }));
+1121-      throw new Error(err.error || 'Verification failed');
+1122-    }
+1123-    const data = await res.json();
+=== resendVerificationEmail ===
+1130:  async resendVerificationEmail(email: string) {
+1131-    const res = await fetch('/api/auth/resend-verification', {
+1132-      method: 'POST',
+1133-      credentials: 'include',
+1134-      headers: { 'Content-Type': 'application/json' },
+1135-      body: JSON.stringify({ email }),
+1136-    });
+1137-    if (!res.ok) {
+1138-      const err = await res.json().catch(() => ({ error: 'Failed to resend' }));
+=== authenticateWithTotp ===
+1035:  async authenticateWithTotp(email: string, password: string, totpToken: string) {
+1036-    const res = await fetch('/api/auth/login', {
+1037-      method: 'POST',
+1038-      credentials: 'include',
+1039-      headers: { 'Content-Type': 'application/json' },
+1040-      body: JSON.stringify({ email, password, totpToken }),
+1041-    });
+1042-    if (!res.ok) {
+1043-      const err = await res.json().catch(() => ({ error: 'Login failed' }));

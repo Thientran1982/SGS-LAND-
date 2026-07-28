@@ -118,7 +118,7 @@
 }
 
 /* ─── TailwindCSS v4 Theme Extension ─────────────────────── */
-@theme {
+@theme { --color-sgs-primary:var(--sgs-primary); --color-sgs-primary-deep:var(--sgs-primary-deep); --color-sgs-accent:var(--sgs-accent); --color-sgs-accent-hover:var(--sgs-accent-hover); --color-sgs-accent-text:var(--sgs-accent-text); --color-sgs-text:var(--sgs-text); --color-sgs-text-muted:var(--sgs-text-muted); --color-sgs-verified:var(--sgs-verified); --color-sgs-champagne:var(--sgs-champagne); --color-sgs-on-dark-muted:var(--sgs-on-dark-muted);
   /* Font families — use CSS variables injected by next/font so the
      self-hosted font files are resolved correctly in production.
      Falling back to the literal name "Inter" causes production failures

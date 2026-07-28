@@ -1,0 +1,49 @@
+=== 255-275 ===
+              <span style={{ display:"flex", alignItems:"center", gap:"8px" }}><i style={{ width:9,height:9,borderRadius:"50%",background:"var(--lp-gold)",flexShrink:0,display:"inline-block" }}/>{lang==="vi" ? "Đang xem" : "Viewing"}</span>
+            </div>
+
+            {/* Floating project card */}
+            {activePin !== null && proj && pin && (
+              <div
+                ref={cardRef}
+                style={{ position:"absolute", zIndex:10, width:(cardPos.w||290)+"px", maxWidth:"calc(100% - 20px)", background:"var(--lp-cardbg)", border:"1px solid var(--lp-line)", borderRadius:"16px", overflow:"hidden", boxShadow:"0 26px 60px var(--lp-shadow)", left:cardPos.left, top:cardPos.top, pointerEvents:"auto", transition:"opacity .2s,transform .2s" }}
+                onMouseEnter={() => { if (hideTimer.current) clearTimeout(hideTimer.current); }}
+                onMouseLeave={hideCard}
+              >
+                <img src={imgSrc} alt={proj.name} loading="lazy"
+                  style={{ aspectRatio:"16/9", objectFit:"cover", width:"100%", display:"block" }}
+                  onError={e => { (e.currentTarget as HTMLImageElement).style.display = "none"; }} />
+                <div style={{ padding:"14px 18px 16px" }}>
+                  <div style={{ display:"flex", justifyContent:"space-between", marginBottom:"5px" }}>
+                    <span className="lp-mono" style={{ fontSize:"10px", color:"var(--lp-muted)" }}>{proj.no}</span>
+                    <span style={{ color:"var(--lp-ok)", fontSize:"10px" }}>✓</span>
+                  </div>
+                  <h3 className="lp-serif" style={{ fontSize:"19px", fontWeight:550, color:"var(--lp-ink)", lineHeight:1.1 }}>{proj.name}</h3>
+                  <p style={{ fontSize:"12.5px", color:"var(--lp-muted)", marginTop:"2px" }}>{proj.loc[lang]}</p>
+=== 355,378 ===
+// ─── PROJECT CARD (isolated component so hooks aren't called in .map) ────────
+function ProjectCard({ p, lang }: { p: typeof PROJECTS[number]; lang: Lang }) {
+  const { ref, inView } = useReveal();
+  return (
+    <a
+      ref={ref as any}
+      href={`/du-an/${p.slug}`}
+      className={`lp-rv${inView ? " in" : ""}`}
+      style={{ position:"relative", borderRadius:"20px", overflow:"hidden", border:"1px solid var(--lp-line)", background:"var(--lp-cardbg)", display:"block", textDecoration:"none", transition:"transform .25s,box-shadow .3s" }}
+      onMouseEnter={e => { (e.currentTarget as HTMLElement).style.transform="translateY(-4px)"; (e.currentTarget as HTMLElement).style.boxShadow="0 24px 60px var(--lp-shadow)"; }}
+      onMouseLeave={e => { (e.currentTarget as HTMLElement).style.transform=""; (e.currentTarget as HTMLElement).style.boxShadow=""; }}
+    >
+      <img
+        src={`https://sgsland.vn/og/du-an/${p.slug}`}
+        alt={p.name}
+        loading="lazy"
+        style={{ aspectRatio:"4/3", objectFit:"cover", width:"100%", display:"block" }}
+        onError={e => { const el = e.currentTarget as HTMLImageElement; el.style.background="var(--lp-hair)"; el.style.minHeight="200px"; }}
+      />
+      <div style={{ padding:"18px 20px 22px" }}>
+        <div style={{ display:"flex", justifyContent:"space-between", marginBottom:"6px" }}>
+          <span className="lp-mono" style={{ fontSize:"10px", color:"var(--lp-muted)" }}>{p.no}</span>
+          <span style={{ color:"var(--lp-ok)", fontSize:"10px", fontFamily:"var(--font-ibm-plex-mono,monospace)", letterSpacing:".1em" }}>✓ {lang==="vi" ? "2 lớp" : "2-layer"}</span>
+        </div>
+=== all og refs ===
+368:        src={`https://sgsland.vn/og/du-an/${p.slug}`}

@@ -1,0 +1,10 @@
+=== files with auth.welcome or auth translations ===
+=== i18n imports ===
+1:import React, { createContext, useContext, useState, useCallback, useMemo, ReactNode } from 'react';
+2:import { DICTIONARY } from '../config/locales';
+145:// "Dự Án"). Thay vào đó, tra cứu trực tiếp từ DICTIONARY đã import (sync,
+=== locate vn/vi translation files ===
+./config/locales.ts.bak3
+./config/locales.ts.seobak_aimenu
+./config/locales.ts.seobak_menu4
+./config/locales.ts

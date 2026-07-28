@@ -1,7 +1,7 @@
 // @ts-nocheck
 import type { Metadata } from "next";
 import type { Listing } from "@/types";
-import { LandingPage } from "@/components/public/LandingPage";
+import { LandingPage } from "@/components/public/LandingHome";
 import { SchemaScript } from "@/components/SchemaScript";
 import { getFAQSchema, getBreadcrumbSchema, getFoundersSchema, FAQ_HOMEPAGE, SITE_URL } from "@/lib/schema";
 export const metadata: Metadata = {

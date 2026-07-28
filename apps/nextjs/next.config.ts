@@ -59,6 +59,40 @@ const nextConfig: NextConfig = {
   async rewrites() {
     return [
       { source: "/home", destination: "/" },
+      // Private CRM app (Vite) proxied on same domain via BACKEND_URL
+      { source: "/dashboard", destination: BACKEND_URL + "/dashboard" },
+      { source: "/dashboard/:path*", destination: BACKEND_URL + "/dashboard/:path*" },
+      { source: "/@vite/:path*", destination: BACKEND_URL + "/@vite/:path*" },
+      { source: "/@react-refresh", destination: BACKEND_URL + "/@react-refresh" },
+      { source: "/@fs/:path*", destination: BACKEND_URL + "/@fs/:path*" },
+      { source: "/@id/:path*", destination: BACKEND_URL + "/@id/:path*" },
+      { source: "/@vite-plugin-checker-runtime", destination: BACKEND_URL + "/@vite-plugin-checker-runtime" },
+      { source: "/src/:path*", destination: BACKEND_URL + "/src/:path*" },
+      { source: "/assets/:path*", destination: BACKEND_URL + "/assets/:path*" },
+      { source: "/node_modules/.vite/:path*", destination: BACKEND_URL + "/node_modules/.vite/:path*" },
+      // Vite dev entry + root init scripts (dev only; prod uses built /assets)
+      { source: "/index.tsx", destination: BACKEND_URL + "/index.tsx" },
+      { source: "/theme-init.js", destination: BACKEND_URL + "/theme-init.js" },
+      { source: "/clarity-init.js", destination: BACKEND_URL + "/clarity-init.js" },
+      { source: "/critical.css", destination: BACKEND_URL + "/critical.css" },
+      { source: "/node_modules/:path*", destination: BACKEND_URL + "/node_modules/:path*" },
+      // Vite dev source tree (repo root served at /) — dev only; prod uses built /assets
+      { source: "/components/:path*", destination: BACKEND_URL + "/components/:path*" },
+      { source: "/config/:path*", destination: BACKEND_URL + "/config/:path*" },
+      { source: "/pages/:path*", destination: BACKEND_URL + "/pages/:path*" },
+      { source: "/schemas/:path*", destination: BACKEND_URL + "/schemas/:path*" },
+      { source: "/shared/:path*", destination: BACKEND_URL + "/shared/:path*" },
+      { source: "/services/:path*", destination: BACKEND_URL + "/services/:path*" },
+      { source: "/styles/:path*", destination: BACKEND_URL + "/styles/:path*" },
+      { source: "/types/:path*", destination: BACKEND_URL + "/types/:path*" },
+      { source: "/utils/:path*", destination: BACKEND_URL + "/utils/:path*" },
+      { source: "/attached_assets/:path*", destination: BACKEND_URL + "/attached_assets/:path*" },
+      { source: "/hooks/:path*", destination: BACKEND_URL + "/hooks/:path*" },
+      { source: "/contexts/:path*", destination: BACKEND_URL + "/contexts/:path*" },
+      { source: "/lib/:path*", destination: BACKEND_URL + "/lib/:path*" },
+      { source: "/assets/:path*", destination: BACKEND_URL + "/assets/:path*" },
+      { source: "/App.tsx", destination: BACKEND_URL + "/App.tsx" },
+      { source: "/types.ts", destination: BACKEND_URL + "/types.ts" },
       { source: "/api/:path*",        destination: `${BACKEND_URL}/api/:path*` },
       { source: "/socket.io/:path*",  destination: `${BACKEND_URL}/socket.io/:path*` },
       { source: "/yjs/:path*",        destination: `${BACKEND_URL}/yjs/:path*` },
@@ -92,7 +126,7 @@ const nextConfig: NextConfig = {
       },
       {
         source: "/_next/static/(.*)",
-        headers: [{ key: "Cache-Control", value: "public, max-age=31536000, immutable" }],
+        headers: [{ key: "Cache-Control", value: (process.env.NODE_ENV === "production" ? "public, max-age=31536000, immutable" : "no-store") }],
       },
     ];
   },
@@ -106,8 +140,6 @@ const nextConfig: NextConfig = {
       { source: "/lai-suat-vay-mua-nha",    destination: "/lai-suat-ngan-hang",      permanent: true },
       { source: "/nha-pho-trung-tam",       destination: "/du-an/nha-pho-trung-tam", permanent: true },
       { source: "/landing/aqua-city", destination: "/du-an/aqua-city", permanent: true },
-      { source: "/developers",              destination: "/help-center",              permanent: false },
-      { source: "/status",                  destination: "/help-center",              permanent: false },
     ];
   },
 

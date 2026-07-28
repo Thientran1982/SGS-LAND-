@@ -1,0 +1,32 @@
+=== projects array 70-90 ===
+  { q:"Làm thế nào để biết giá BĐS trong khu vực đang tăng hay giảm?", a:"(1) Dùng Định Giá AI SGS LAND so sánh lịch sử giá 24 tháng; (2) Theo dõi giao dịch thực tế từ 45.000+ giao dịch công chứng; (3) Xem lãi suất, tín dụng BĐS, chính sách nhà ở; (4) Chú ý hạ tầng mới: cao tốc, metro, khu công nghiệp; (5) Báo cáo thị trường SGS LAND cập nhật hàng quý.", q_en:"How do I know if real estate prices in my area are rising or falling?", a_en:"Monitor trends using SGS LAND's AI valuation with 24-month history, track 45,000+ notarized transactions, monitor macro factors (interest rates, policy), watch new infrastructure developments, and subscribe to SGS LAND quarterly market reports." },
+];
+
+// ─── Projects ───────────────────────────────────────────────────────────────
+const PROJECTS = [
+  { slug:"aqua-city",        no:"№ 01 · Novaland",   name:"Aqua City",              desc:{ vi:"1.000 ha · Biên Hòa · từ 3 tỷ ₫",                  en:"1,000 ha · Bien Hoa · from 3B VND" },  price:{ vi:"Từ 3 tỷ ₫",         en:"From 3B VND" },  loc:{ vi:"Biên Hòa · Golf 18 lỗ, Marina", en:"Bien Hoa · 18-hole Golf, Marina" } },
+  { slug:"the-global-city",  no:"№ 02 · Masterise",  name:"The Global City",        desc:{ vi:"117 ha · Thủ Đức · bảng giá T7/2026",               en:"117 ha · Thu Duc · price list Jul/2026" }, price:{ vi:"Bảng giá T7/2026",  en:"Price list Jul/2026" }, loc:{ vi:"Thủ Đức · trung tâm mới quốc tế", en:"Thu Duc · New International CBD" } },
+  { slug:"vinhomes-can-gio", no:"№ 03 · Vinhomes",   name:"Vinhomes Cần Giờ",       desc:{ vi:"2.870 ha · siêu đô thị biển · 2026",                en:"2,870 ha · Coastal megacity · 2026" },  price:{ vi:"Mở bán 2026",       en:"Launch 2026" },  loc:{ vi:"Siêu đô thị biển lớn nhất TPHCM", en:"Largest coastal city in HCMC" } },
+  { slug:"izumi-city",       no:"№ 04 · Nam Long",   name:"Izumi City",             desc:{ vi:"170 ha · Biên Hòa · chuẩn Nhật Bản",               en:"170 ha · Bien Hoa · Japanese standard" }, price:{ vi:"Giá tốt",           en:"Competitive price" }, loc:{ vi:"Biên Hòa · chuẩn sống Nhật Bản", en:"Bien Hoa · Japanese living standard" } },
+  { slug:"masterise-homes",  no:"№ 05 · Masterise",  name:"Grand Marina · Masteri", desc:{ vi:"TPHCM · căn hộ hàng hiệu",                          en:"HCMC · Branded residences" },            price:{ vi:"Tư vấn 1-1",        en:"1-on-1 consultation" }, loc:{ vi:"Trung tâm TPHCM · hàng hiệu", en:"Central HCMC · luxury residences" } },
+];
+
+// ─── Map pin positions ───────────────────────────────────────────────────────
+const PIN_DATA = [
+  { i:0, cx:810, cy:300, label:"Aqua City",   href:"/du-an/aqua-city"       },
+  { i:1, cx:590, cy:285, label:"Global City",  href:"/du-an/the-global-city" },
+  { i:2, cx:520, cy:545, label:"Cần Giờ",      href:"/du-an/vinhomes-can-gio"},
+  { i:3, cx:700, cy:210, label:"Izumi City",   href:"/du-an/izumi-city"      },
+  { i:4, cx:452, cy:308, label:"Masterise",    href:"/du-an/masterise-homes" },
+];
+
+// ─── Helpers ────────────────────────────────────────────────────────────────
+function useReveal() {
+=== img/src refs ===
+140:  const imgSrc = proj ? (proj.img || `/images/projects/${proj.slug}.webp`) : "";
+191:              role="img" aria-label={lang==="vi" ? "Bản đồ 5 dự án tại 6 tỉnh miền Nam" : "Map of 5 projects across 6 southern provinces"}>
+266:                <img src={imgSrc} alt={proj.name} loading="lazy"
+268:                  onError={e => { (e.currentTarget as HTMLImageElement).style.display = "none"; }} />
+367:      <img
+368:        src={`https://sgsland.vn/og/du-an/${p.slug}`}
+372:        onError={e => { const el = e.currentTarget as HTMLImageElement; el.style.background="var(--lp-hair)"; el.style.minHeight="200px"; }}

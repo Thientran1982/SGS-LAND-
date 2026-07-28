@@ -1,0 +1,35 @@
+=== dev login files ===
+./.local/tasks/mobile-sprint-3-buyer-login-and-store-assets.md
+./.local/tasks/mobile-sprint-3-buyer-login-and-saved-searches.md
+./public/_x/login.txt
+./apps/nextjs/app/login
+./apps/nextjs/components/public/LoginPage.tsx
+./pages/Login.tsx
+=== next login route ===
+total 4
+drwxr-xr-x 1 runner runner  16 Jun 11 06:31 .
+drwxr-xr-x 1 runner runner 560 Jul 27 14:38 ..
+-rw-r--r-- 1 runner runner 728 Jun 11 06:31 page.tsx
+108 apps/nextjs/components/public/LoginPage.tsx
+=== dev Login wc + imports ===
+976 pages/Login.tsx
+import React, { useState, useMemo, useEffect, useCallback, memo } from 'react';
+import { AreaChart, Area, YAxis, ResponsiveContainer } from 'recharts';
+import { db } from '../services/dbApi';
+import { useTranslation } from '../services/i18n';
+import { Logo } from '../components/Logo';
+import { ROUTES } from '../config/routes';
+import { SeoHead } from '../components/SeoHead';
+interface LoginProps {
+  onLoginSuccess: () => void;
+}
+// -----------------------------------------------------------------------------
+//  CONSTANTS & CONFIG
+// -----------------------------------------------------------------------------
+const AUTH_CONFIG = {
+    EMAIL_REGEX: /^[^\s@]+@[^\s@]+\.[^\s@]+$/,
+    // Check for free email providers to encourage business email usage in B2B
+    FREE_EMAIL_DOMAINS: ['gmail.com', 'yahoo.com', 'hotmail.com', 'outlook.com'],
+    BG_IMAGE: "https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?q=80&w=2070&auto=format&fit=crop",
+    PASSWORD_MIN_LENGTH: 8
+};

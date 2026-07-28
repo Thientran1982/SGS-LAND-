@@ -1,0 +1,5 @@
+=== grep images/projects ===
+140:  const imgSrc = proj ? (proj.img || `/images/projects/${proj.slug}.webp`) : "";
+368:        src={`/images/projects/${p.slug}.webp`}
+=== grep og left ===
+0

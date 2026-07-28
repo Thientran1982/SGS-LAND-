@@ -501,6 +501,11 @@ const useRouter = () => {
     }, [route.base]);
     const navigate = useCallback((path: string) => {
         const target = path.startsWith('/') ? path : `/${path}`;
+        // Next hosts the public entry routes (home/login) on the same domain —
+        // hand off with a full-page navigation instead of client-side routing.
+        const _seg = target.split('?')[0].replace(/\/+$/, '');
+        if (_seg === '/login') { window.location.href = target; return; }
+        if (_seg === '/home' || _seg === '') { window.location.href = '/'; return; }
         window.history.pushState(null, '', target);
         setRoute(getPathData());
     }, [getPathData]);

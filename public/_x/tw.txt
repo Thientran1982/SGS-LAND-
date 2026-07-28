@@ -1,0 +1,20 @@
+=== next tailwind config files ===
+ls: cannot access 'apps/nextjs/tailwind.config*': No such file or directory
+apps/nextjs/postcss.config.mjs
+=== sgs- token defs in next ===
+apps/nextjs/app/(private)/campaigns/page.tsx
+apps/nextjs/app/(private)/data-platform/page.tsx
+apps/nextjs/app/(private)/enterprise-settings/page.tsx
+apps/nextjs/app/(private)/marketplace-apps/page.tsx
+apps/nextjs/app/(private)/sequences/page.tsx
+apps/nextjs/app/(private)/task-dashboard/page.tsx
+apps/nextjs/app/(private)/task-reports/page.tsx
+apps/nextjs/app/(public)/about-us/page.tsx
+apps/nextjs/app/(public)/du-an/vinhomes-hoc-mon/page.tsx
+apps/nextjs/app/loading.tsx
+=== where sgs colors defined (root) ===
+tailwind.config.js
+=== next globals css ===
+apps/nextjs/app/globals.css
+apps/nextjs/app/globals.css
+43

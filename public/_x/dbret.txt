@@ -1,0 +1,207 @@
+  async authenticate(email: string, password: string) {
+    const res = await fetch('/api/auth/login', {
+      method: 'POST',
+      credentials: 'include',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email, password }),
+    });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({ error: 'Login failed' }));
+      const error: any = new Error(err.error || 'Login failed');
+      if (err.error === 'TWO_FACTOR_REQUIRED' || err.code === 'TWO_FACTOR_REQUIRED') {
+        error.code = 'TWO_FACTOR_REQUIRED';
+      } else if (err.error === 'EMAIL_NOT_VERIFIED') {
+        error.code = 'EMAIL_NOT_VERIFIED';
+        error.email = err.email || email;
+      } else if (err.error === 'TENANT_PENDING_APPROVAL') {
+        error.code = 'TENANT_PENDING_APPROVAL';
+        error.email = err.email || email;
+      } else if (err.error === 'TENANT_REJECTED') {
+        error.code = 'TENANT_REJECTED';
+        error.email = err.email || email;
+      }
+      throw error;
+    }
+    const data = await res.json();
+    this._isLoggedOut = false;
+    _cache.clearAll();
+    this.cachedCurrentUser = data.user;
+    window.dispatchEvent(new CustomEvent('auth:login'));
+    return data.user;
+  }
+  async authenticateWithTotp(email: string, password: string, totpToken: string) {
+    const res = await fetch('/api/auth/login', {
+      method: 'POST',
+      credentials: 'include',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email, password, totpToken }),
+    });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({ error: 'Login failed' }));
+      throw new Error(err.error || 'Invalid code');
+    }
+    const data = await res.json();
+    this._isLoggedOut = false;
+    _cache.clearAll();
+    this.cachedCurrentUser = data.user;
+    window.dispatchEvent(new CustomEvent('auth:login'));
+    return data.user;
+  }
+  async getTotpStatus(): Promise<{ enabled: boolean }> {
+    const res = await fetch('/api/auth/2fa/status', { credentials: 'include' });
+    if (!res.ok) return { enabled: false };
+    return res.json();
+  }
+  async setupTotp(): Promise<{ secret: string; otpauthUrl: string; backupCodes: string[] }> {
+    const res = await fetch('/api/auth/2fa/setup', { method: 'POST', credentials: 'include' });
+    if (!res.ok) { const e = await res.json().catch(() => ({})); throw new Error(e.error || 'Setup failed'); }
+    return res.json();
+  }
+  async enableTotp(token: string): Promise<void> {
+    const res = await fetch('/api/auth/2fa/enable', {
+      method: 'POST', credentials: 'include',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ token }),
+    });
+    if (!res.ok) { const e = await res.json().catch(() => ({})); throw new Error(e.error || 'Enable failed'); }
+  }
+  async disableTotp(token: string): Promise<void> {
+    const res = await fetch('/api/auth/2fa/disable', {
+      method: 'POST', credentials: 'include',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ token }),
+    });
+    if (!res.ok) { const e = await res.json().catch(() => ({})); throw new Error(e.error || 'Disable failed'); }
+  }
+  async register(name: string, email: string, password: string, company?: string) {
+    const res = await fetch('/api/auth/register', {
+      method: 'POST',
+      credentials: 'include',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name, email, password, company }),
+    });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({ error: 'Registration failed' }));
+      throw new Error(err.error || 'Registration failed');
+    }
+    return res.json();
+  }
+  /**
+   * B2B vendor self-signup: tạo tenant mới + ADMIN user + subscription INDIVIDUAL trial 14 ngày.
+   * Trả về { needsVerification, email, tenantId, tenantDomain, plan, trialDays, ...devVerifyToken? }.
+   */
+  async onboardVendor(
+    company: string | undefined,
+    name: string,
+    email: string,
+    password: string,
+    phone?: string
+  ) {
+    const res = await fetch('/api/auth/onboard-vendor', {
+      method: 'POST',
+      credentials: 'include',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ company: company || undefined, name, email, password, phone }),
+    });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({ error: 'Onboarding failed' }));
+      throw new Error(err.error || 'Onboarding failed');
+    }
+    return res.json();
+  }
+  async verifyEmail(token: string) {
+    const res = await fetch(`/api/auth/verify-email?token=${encodeURIComponent(token)}`, {
+      credentials: 'include',
+    });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({ error: 'Verification failed' }));
+      throw new Error(err.error || 'Verification failed');
+    }
+    const data = await res.json();
+    this._isLoggedOut = false;
+    _cache.clearAll();
+    this.cachedCurrentUser = data.user;
+    window.dispatchEvent(new CustomEvent('auth:login'));
+    return data;
+  }
+  async resendVerificationEmail(email: string) {
+    const res = await fetch('/api/auth/resend-verification', {
+      method: 'POST',
+      credentials: 'include',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email }),
+    });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({ error: 'Failed to resend' }));
+      throw new Error(err.error || 'Failed to resend verification email');
+    }
+    return res.json();
+  }
+  async logout() {
+    this._isLoggedOut = true;
+    this.clearUserCache();
+    await fetch('/api/auth/logout', { method: 'POST', credentials: 'include' });
+    window.dispatchEvent(new CustomEvent('auth:logout'));
+  }
+  async requestPasswordReset(email: string) {
+    const res = await fetch('/api/auth/forgot-password', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
+      body: JSON.stringify({ email }),
+    });
+    if (!res.ok) {
+      const data = await res.json().catch(() => ({}));
+      throw new Error(data.error || 'Failed to request password reset');
+    }
+    return await res.json();
+  }
+  async resetPassword(token: string, newPassword: string) {
+    const res = await fetch('/api/auth/reset-password', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
+      body: JSON.stringify({ token, newPassword }),
+    });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) {
+      throw new Error(data.error || 'Failed to reset password');
+    }
+    return data;
+  }
+  async testSmtpConnection() {
+    const res = await api.post<any>('/api/enterprise/test-smtp', {});
+    return res;
+  }
+  async sendTestEmail(to?: string) {
+    const res = await api.post<any>('/api/enterprise/send-test-email', { to });
+    return res;
+  }
+  async authenticateViaSSO(email: string) {
+    const res = await fetch('/api/auth/sso', {
+      method: 'POST',
+      credentials: 'include',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email }),
+    });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({ error: 'SSO login failed' }));
+      throw new Error(err.error || 'SSO login failed');
+    }
+    const data = await res.json();
+    this._isLoggedOut = false;
+    this.cachedCurrentUser = data.user;
+    return data.user;
+  }
+  async verifySsoConfig(): Promise<{ success: boolean; error?: string; metadata?: any }> {
+    const res = await api.post<any>('/api/enterprise/verify-sso', {});
+    return res;
+  }
+  async changeUserPassword(userId: string, currentPassword: string, newPassword: string) {
+    return userApi.changePassword(userId, currentPassword, newPassword);
+  }
+  async changeUserEmail(userId: string, currentPassword: string, newEmail: string) {
+    const updated = await userApi.changeEmail(userId, currentPassword, newEmail);
+    if (updated) {
+      this.cachedCurrentUser = { ...this.cachedCurrentUser, ...updated };
+    }

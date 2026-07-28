@@ -1,6 +1,41 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { ProjectDetailPage } from "@/components/public/ProjectDetailPage";
+import { PROJECT_CONFIG, ALL_PROJECTS } from "@/data/projects";
+import { LANDING_PROJECTS, type LandingProject } from "@/data/landing-projects";
+// Fallback: projects present in the listing (ALL_PROJECTS) but without a rich
+// PROJECT_CONFIG entry still get a "Thông Tin Chi Tiết" section built from real
+// listing data — no fabricated prices/FAQs.
+function resolveProjectConfig(slug: string) {
+  const cfg = (PROJECT_CONFIG as Record<string, unknown>)[slug];
+  if (cfg) return cfg as Record<string, unknown>;
+  // Landing-based projects (legacy-66, masteri-cosmo-central, aqua-city): pull
+  // rich detail content (entity table, amenities, FAQs) from data/landing-projects.ts.
+  const lp = (LANDING_PROJECTS as Record<string, LandingProject>)[slug];
+  if (lp) {
+    return {
+      heroDescription: lp.desc,
+      details: (lp.entityTable || []).map((r) => ({ label: r.k, value: r.v })),
+      amenities: lp.schemaAmenities && lp.schemaAmenities.length
+        ? [{ title: "Tiện ích & pháp lý nổi bật", items: lp.schemaAmenities }]
+        : [],
+      faqs: lp.faq || [],
+    };
+  }
+  const p = ALL_PROJECTS.find((x) => x.slug === slug);
+  if (!p) return null;
+  return {
+    heroDescription: p.description,
+    details: [
+      { label: "Chủ đầu tư", value: p.developer },
+      { label: "Vị trí", value: p.location },
+      { label: "Quy mô", value: p.scale },
+      { label: "Loại hình", value: p.projectType },
+      { label: "Giá tham khảo", value: p.priceRange },
+      { label: "Tình trạng", value: p.status },
+    ].filter((d) => Boolean(d.value)),
+  };
+}
 import { SchemaScript } from "@/components/SchemaScript";
 import {
   getRealEstateListingSchema,
@@ -632,15 +667,16 @@ export default async function ProjectPage({
   } catch {
     // Fallback to static meta below
   }
-  if (!project && !PROJECT_META[slug]) {
+  const listItem = ALL_PROJECTS.find((x) => x.slug === slug);
+  if (!project && !PROJECT_META[slug] && !listItem) {
     notFound();
   }
   const meta = PROJECT_META[slug];
   const projectData = project ?? {
-    name: meta?.name ?? slug,
-    developer: meta?.dev ?? "",
-    location: meta?.loc ?? "",
-    description: meta?.desc ?? "",
+    name: meta?.name ?? listItem?.name ?? slug,
+    developer: meta?.dev ?? listItem?.developer ?? "",
+    location: meta?.loc ?? listItem?.location ?? "",
+    description: meta?.desc ?? listItem?.description ?? "",
     slug,  
   "diamond-sky-van-phuc-city": {
     name: "Diamond Sky Vạn Phúc City – Căn hộ Hạng Sang Thủ Đức",
@@ -815,7 +851,7 @@ export default async function ProjectPage({
         </section>
       </article>
       {/* ── Interactive client component ── */}
-      <ProjectDetailPage project={projectData} slug={slug} />
+      <ProjectDetailPage project={projectData} slug={slug} config={resolveProjectConfig(slug)} />
     </>
   );
 }

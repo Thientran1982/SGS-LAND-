@@ -1,0 +1,70 @@
+=== NEXT public/images/projects ===
+total 42648
+drwxr-xr-x 1 runner runner     924 Jul 24 10:54 .
+drwxr-xr-x 1 runner runner      16 Jul 24 10:54 ..
+-rw-r--r-- 1 runner runner  733504 Jul 24 10:54 aqua-city.jpg
+-rw-r--r-- 1 runner runner 2314680 Jul 24 10:54 aqua-city.png
+-rw-r--r-- 1 runner runner  118868 Jul 24 10:54 aqua-city.webp
+-rw-r--r-- 1 runner runner 8053915 Jul 24 10:54 diamond-sky-floor-05-19.jpg
+-rw-r--r-- 1 runner runner 7960054 Jul 24 10:54 diamond-sky-floor-20.jpg
+-rw-r--r-- 1 runner runner 1136921 Jul 24 10:54 diamond-sky-map.jpg
+-rw-r--r-- 1 runner runner 1326405 Jul 24 10:54 diamond-sky-rooftop.jpg
+-rw-r--r-- 1 runner runner 6452128 Jul 24 10:54 diamond-sky-van-phuc-city.jpg
+-rw-r--r-- 1 runner runner  126380 Jul 24 10:54 diamond-sky-van-phuc-city.webp
+-rw-r--r-- 1 runner runner  112759 Jul 24 10:54 izumi-city.jpg
+-rw-r--r-- 1 runner runner 2076421 Jul 24 10:54 izumi-city.png
+-rw-r--r-- 1 runner runner   96360 Jul 24 10:54 izumi-city.webp
+-rw------- 1 runner runner 2103769 Jul 24 10:54 masteri-park-place.jpg
+-rw-r--r-- 1 runner runner 1578611 Jul 24 10:54 masterise-homes.png
+-rw-r--r-- 1 runner runner   49904 Jul 24 10:54 masterise-homes.webp
+-rw-r--r-- 1 runner runner 2103769 Jul 24 10:54 the-global-city.jpg
+-rw-r--r-- 1 runner runner 2351937 Jul 24 10:54 the-global-city.png
+-rw-r--r-- 1 runner runner  124410 Jul 24 10:54 the-global-city.webp
+-rw-r--r-- 1 runner runner  270878 Jul 24 10:54 vinhomes-can-gio.jpg
+-rw-r--r-- 1 runner runner 2028069 Jul 24 10:54 vinhomes-can-gio.png
+-rw-r--r-- 1 runner runner   85280 Jul 24 10:54 vinhomes-can-gio.webp
+-rw-r--r-- 1 runner runner 2294061 Jul 24 10:54 vinhomes-grand-park.png
+-rw-r--r-- 1 runner runner  115820 Jul 24 10:54 vinhomes-grand-park.webp
+=== ROOT public/images/projects ===
+total 42648
+drwxr-xr-x 1 runner runner     924 Jul  8 04:36 .
+drwxr-xr-x 1 runner runner      16 Apr 18 19:19 ..
+-rw-r--r-- 1 runner runner  733504 Jul  8 04:34 aqua-city.jpg
+-rw-r--r-- 1 runner runner 2314680 Apr 18 19:19 aqua-city.png
+-rw-r--r-- 1 runner runner  118868 May 18 12:50 aqua-city.webp
+-rw-r--r-- 1 runner runner 8053915 Apr 21 14:21 diamond-sky-floor-05-19.jpg
+-rw-r--r-- 1 runner runner 7960054 Apr 21 14:21 diamond-sky-floor-20.jpg
+-rw-r--r-- 1 runner runner 1136921 Apr 21 14:21 diamond-sky-map.jpg
+-rw-r--r-- 1 runner runner 1326405 Apr 21 14:21 diamond-sky-rooftop.jpg
+-rw-r--r-- 1 runner runner 6452128 Apr 21 14:21 diamond-sky-van-phuc-city.jpg
+-rw-r--r-- 1 runner runner  126380 May 18 12:50 diamond-sky-van-phuc-city.webp
+-rw-r--r-- 1 runner runner  112759 Jul  8 04:36 izumi-city.jpg
+-rw-r--r-- 1 runner runner 2076421 Apr 18 19:19 izumi-city.png
+-rw-r--r-- 1 runner runner   96360 May 18 12:50 izumi-city.webp
+-rw------- 1 runner runner 2103769 Jul  5 14:56 masteri-park-place.jpg
+-rw-r--r-- 1 runner runner 1578611 Apr 18 19:19 masterise-homes.png
+-rw-r--r-- 1 runner runner   49904 May 18 12:50 masterise-homes.webp
+-rw-r--r-- 1 runner runner 2103769 Jul  8 04:35 the-global-city.jpg
+-rw-r--r-- 1 runner runner 2351937 Apr 18 19:19 the-global-city.png
+-rw-r--r-- 1 runner runner  124410 May 18 12:50 the-global-city.webp
+-rw-r--r-- 1 runner runner  270878 Jul  8 04:35 vinhomes-can-gio.jpg
+-rw-r--r-- 1 runner runner 2028069 Apr 18 19:19 vinhomes-can-gio.png
+-rw-r--r-- 1 runner runner   85280 May 18 12:50 vinhomes-can-gio.webp
+-rw-r--r-- 1 runner runner 2294061 Apr 18 19:19 vinhomes-grand-park.png
+-rw-r--r-- 1 runner runner  115820 May 18 12:50 vinhomes-grand-park.webp
+=== dirs named projects ===
+./public/images/projects
+./dist/images/projects
+./apps/nextjs/app/(private)/projects
+./apps/nextjs/public/images/projects
+=== any aqua-city img ===
+./public/images/projects/aqua-city.png
+./public/images/projects/aqua-city.webp
+./public/images/projects/aqua-city.jpg
+./public/landing/aqua-city
+./dist/images/projects/aqua-city.jpg
+./dist/images/projects/aqua-city.png
+./dist/images/projects/aqua-city.webp
+./dist/landing/aqua-city
+./apps/nextjs/app/(public)/bat-dong-san-dong-nai/aqua-city-co-nen-mua-khong-2026
+./apps/nextjs/app/(public)/bat-dong-san-dong-nai/aqua-city-vs-izumi-city-so-sanh

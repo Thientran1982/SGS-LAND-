@@ -1,0 +1,6 @@
+--- PublicHeader position ---
+59:    <header
+60:      className="fixed top-0 left-0 right-0 z-50 transition-all duration-300"
+281:    </header>
+--- listing coords in API sample ---
+{"data":[{"id":"c581da7d-5162-4333-9951-69191c53ade5","tenantId":"00000000-0000-0000-0000-000000000001","title":"Shop Villas NA.GV5-01 dự án Aqua City","type":"Commercial","status":"AVAILABLE","price":57200000000,"address":null,"attributes":{"frontage":15,"landType":"TMD","direction":"NorthEast","furniture":"BASIC","roadWidth":45,"legalStatus":"Contract"},"images":["/uploads/00000000-0000-0000-0000-000000000001/1776619818521-2abd5fb43bed2b245ecf448d2f2081ed.webp","/uploads/00000000-0000-0000-0000-000000000001/1776619824168-c896810861f0f0eecb595cd930351dec.webp"],"createdBy":"528956c0-d673-4281-aae1-3584ca4273ac","createdAt":"2026-04-16T06:02:19.755Z","updatedAt":"2026-04-20T14:39:58.518Z","projectId":null,"code":"LST224110","location":"đường Ngô Quyền, Long Hưng, Đồng Nai","currency":"VND","area":465,"bedrooms":null,"bathrooms":null,"transaction":"SALE","holdExpiresAt":null

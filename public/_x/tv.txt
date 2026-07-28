@@ -1,0 +1,32 @@
+=== find AiValuation ===
+./pages/AiValuation.tsx
+./.task2-backup/AiValuation.tsx
+./.local/tasks/task-valuation-upgrade.md
+./public/data/valuation-methodology.json
+./server/migrations/061_valuation_agent.ts
+./server/migrations/062_valuation_usage_log.ts
+./server/migrations/064_valuation_cost_alerts_early_warning.ts
+./server/routes/valuationRoutes.ts
+./server/routes/valuationRoutes.ts.seobak_rlsfix2
+./server/routes/valuationRoutes.ts.bak-claude2
+./server/services/valuationUsageService.ts
+./server/ai/valuationPrompts.ts
+./server/valuationEngine.ts
+./services/api/valuationApi.ts
+./tests/valuation.spec.ts
+./dist/data/valuation-methodology.json
+./pages/AiValuation.tsx
+./.task2-backup/AiValuation.tsx
+=== dev pages/AiValuation wc ===
+2927 pages/AiValuation.tsx
+=== next ai-valuation ===
+wc: 'apps/nextjs/app/(public)/ai-valuation/page.tsx': No such file or directory
+areas.ts
+articles.ts
+authors.ts
+categories.ts
+experts.ts
+geo-pages.ts
+landing-projects.ts
+landing-projects.ts.seobak
+projects.ts

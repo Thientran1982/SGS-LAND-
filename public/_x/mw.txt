@@ -1,0 +1,4 @@
+=== cookie checks in middleware ===
+48:  const host = request.headers.get("host") || "";
+56:  const token = request.cookies.get("auth_token")?.value
+57:    || request.cookies.get("sgs_token")?.value;

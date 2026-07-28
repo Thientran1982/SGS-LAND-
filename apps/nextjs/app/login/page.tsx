@@ -1,7 +1,7 @@
 // @ts-nocheck
 import type { Metadata } from "next";
 import { Suspense } from "react";
-import { LoginPage } from "@/components/public/LoginPage";
+import { LoginPage } from "@/components/public/LoginView8";
 
 export const metadata: Metadata = {
   title: "Đăng Nhập | SGS LAND",

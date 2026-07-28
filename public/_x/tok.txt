@@ -1,0 +1,14 @@
+=== tokens in next globals.css ===
+sgs-accent
+sgs-accent-hover
+sgs-accent-text
+sgs-bg
+sgs-champagne
+sgs-hero-deep
+sgs-on-dark-muted
+sgs-primary
+sgs-primary-deep
+sgs-surface
+sgs-text
+sgs-text-muted
+sgs-verified

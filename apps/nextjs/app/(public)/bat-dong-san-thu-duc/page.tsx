@@ -1,5 +1,6 @@
 // @ts-nocheck
 import { LocalLandingPageTemplate } from "@/components/public/LocalLandingPageTemplate";
+import { GEO_PAGES } from "@/data/geo-pages";
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
@@ -18,14 +19,6 @@ export const dynamic = "force-dynamic";
 
 export default function BDSThuDucPage() {
   return (
-    <LocalLandingPageTemplate
-      area="Thủ Đức"
-      areaSlug="thu-duc"
-      description="TP Thủ Đức – thành phố trong thành phố với quy mô 1 triệu dân, trung tâm đổi mới sáng tạo ĐHQG TP.HCM, trụ sở Samsung, Intel. Quản 2 cũ (An Phú, Thủ Thiêm) nằm trong Thủ Đức với giá căn hộ cao nhất TP.HCM. Căn hộ Thủ Thiêm giá bao nhiêu? Từ 150-250 triệu/m² cho dự án hạng sang. Dự án nổi bật: The Global City Masterise (117ha, shophouse từ 15 tỷ, căn hộ từ 6 tỷ), Empire City Thủ Thiêm (tiến độ theo tung đợt), Masteri Cosmo Central (mở bán 2026). Quy hoạch Thủ Đức 2026: câu trợ Metro số 1 (Quận 1 – Thủ Đức) sẽ thay đổi toàn bộ thị trường bất động sản khu vực. SGS LAND – đại lý F1 Masterise Homes tại The Global City."
-      districts={["An Phú", "Thủ Thiêm", "Thảo Điền", "Bình Khánh", "An Lợi Đông"]}
-      projects={["The Global City", "Masteri Cosmo Central", "Empire City", "Thiso Mall"]}
-      priceRange="60 - 250 triệu/m²"
-      totalListings={410}
-    />
+    <LocalLandingPageTemplate {...GEO_PAGES["bat-dong-san-thu-duc"]} />
   );
 }

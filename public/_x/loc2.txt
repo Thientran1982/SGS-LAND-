@@ -1,0 +1,9 @@
+=== btn_login occurrences ===
+127:        "auth.btn_login": "Đăng Nhập",
+2567:        "auth.btn_login": "Login",
+=== login_subtitle occurrences ===
+128:        "auth.login_subtitle": "Truy cập không gian làm việc số dành cho chuyên gia.",
+2568:        "auth.login_subtitle": "Access the digital workspace for professionals.",
+=== block markers (vn/vi/en) ===
+3:    vn: {
+2442:    en: {

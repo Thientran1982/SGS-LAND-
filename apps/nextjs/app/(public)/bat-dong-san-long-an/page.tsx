@@ -1,5 +1,6 @@
 // @ts-nocheck
 import { LocalLandingPageTemplate } from "@/components/public/LocalLandingPageTemplate";
+import { GEO_PAGES } from "@/data/geo-pages";
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
@@ -11,14 +12,6 @@ export const dynamic = "force-dynamic";
 
 export default function BDSLongAnPage() {
   return (
-    <LocalLandingPageTemplate
-      area="Long An"
-      areaSlug="long-an"
-      description="Long An giáp TP.HCM là điểm đến đầu tư BĐS hấp dẫn với giá còn thấp, hạ tầng đang hoàn thiện nhanh. Waterpoint Nam Long 355ha và nhiều KCN lớn thúc đẩy nhu cầu BĐS."
-      districts={["Bến Lức", "Đức Hòa", "Cần Giuộc", "Cần Đước", "Tân An"]}
-      projects={["Waterpoint Nam Long", "Đức Hòa Star", "Cần Giuộc", "Kim Oanh Long An"]}
-      priceRange="8 – 25 triệu/m²"
-      totalListings={280}
-    />
+    <LocalLandingPageTemplate {...GEO_PAGES["bat-dong-san-long-an"]} />
   );
 }

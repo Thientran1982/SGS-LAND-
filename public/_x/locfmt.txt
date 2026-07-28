@@ -1,0 +1,15 @@
+=== structure sample around auth.welcome ===
+129:        "auth.welcome": "Chào mừng trở lại",
+130-        "auth.register_title": "Đăng Ký Đối Tác",
+131-        "auth.register_subtitle": "Tham gia mạng lưới phân phối BĐS công nghệ cao.",
+--
+2044:        "livechat.welcome_msg": "Xin chào {name}, cảm ơn bạn đã liên hệ. Chúng tôi có thể giúp gì cho bạn?",
+2045-        "livechat.auto_reply": "Cảm ơn bạn đã nhắn tin. Chuyên viên của chúng tôi sẽ phản hồi bạn trong giây lát. (Tin nhắn tự động)",
+2046-        "livechat.powered_by": "Được cung cấp bởi",
+--
+2569:        "auth.welcome": "Welcome Back",
+2570-        "auth.register_title": "Partner Registration",
+2571-        "auth.register_subtitle": "Join the high-tech real estate distribution network.",
+--
+=== count auth lines ===
+262

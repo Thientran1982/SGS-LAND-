@@ -1,0 +1,21 @@
+import type { Metadata } from "next";
+import { AiValuation } from "@/components/public/AiValuationPage";
+
+export const metadata: Metadata = {
+  title: "Định Giá Bất Động Sản AI Miễn Phí | Sai Số ±5% — SGS LAND",
+  description:
+    "Công cụ định giá bất động sản AI miễn phí của SGS LAND: nhập địa chỉ và diện tích, nhận giá thị trường ước tính trong 30 giây với sai số ±5% theo chuẩn TĐGVN/IVS. Đối chiếu trên 45.000+ giao dịch lịch sử tại TP.HCM, Đồng Nai, Bình Dương.",
+  alternates: { canonical: "https://sgsland.vn/ai-valuation" },
+  openGraph: {
+    title: "Định Giá Bất Động Sản AI Miễn Phí | SGS LAND",
+    description:
+      "Nhập địa chỉ + diện tích, nhận giá thị trường ước tính ±5% trong 30 giây theo chuẩn TĐGVN/IVS.",
+    url: "https://sgsland.vn/ai-valuation",
+  },
+};
+
+export const dynamic = "force-dynamic";
+
+export default function AiValuationRoute() {
+  return <AiValuation />;
+}

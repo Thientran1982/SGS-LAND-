@@ -17,11 +17,21 @@ interface ProjectDetail {
   property_types?: string[];
   investment_score?: number;
 }
+// Rich editorial content from data/projects.ts (PROJECT_CONFIG).
+// Optional: area/investment landing slugs have no config → sections below simply don't render.
+interface ProjectConfig {
+  heroDescription?: string;
+  details?: { label: string; value: string }[];
+  amenities?: { title: string; items: string[] }[];
+  faqs?: { q: string; a: string }[];
+  relatedProjects?: { name: string; slug: string }[];
+}
 interface Props {
   project: ProjectDetail;
   slug: string;
+  config?: ProjectConfig | null;
 }
-export function ProjectDetailPage({ project, slug }: Props) {
+export function ProjectDetailPage({ project, slug, config }: Props) {
   return (
     <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
       {/* Breadcrumb */}
@@ -83,6 +93,44 @@ export function ProjectDetailPage({ project, slug }: Props) {
           </div>
         ))}
       </div>      
+        {/* Chi tiết dự án (từ PROJECT_CONFIG) */}
+        {config?.details && config.details.length > 0 && (
+          <div className="mb-12">
+            <h2 className="text-xl font-bold mb-4" style={{ color: "var(--text-primary)" }}>Thông Tin Chi Tiết</h2>
+            <dl className="grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-0 rounded-2xl overflow-hidden"
+              style={{ background: "var(--bg-elevated)", border: "1px solid var(--border-default)" }}>
+              {config.details.map((d, i) => (
+                <div key={i} className="flex items-start justify-between gap-4 px-5 py-3.5"
+                  style={{ borderBottom: "1px solid var(--border-default)" }}>
+                  <dt className="text-sm shrink-0" style={{ color: "var(--text-tertiary)" }}>{d.label}</dt>
+                  <dd className="text-sm font-semibold text-right" style={{ color: "var(--text-primary)" }}>{d.value}</dd>
+                </div>
+              ))}
+            </dl>
+          </div>
+        )}
+        {/* Tiện ích & kết nối (từ PROJECT_CONFIG) */}
+        {config?.amenities && config.amenities.length > 0 && (
+          <div className="mb-12">
+            <h2 className="text-xl font-bold mb-4" style={{ color: "var(--text-primary)" }}>Tiện Ích & Kết Nối</h2>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+              {config.amenities.map((group, i) => (
+                <div key={i} className="p-5 rounded-2xl"
+                  style={{ background: "var(--bg-elevated)", border: "1px solid var(--border-default)" }}>
+                  <h3 className="text-sm font-bold mb-3" style={{ color: "var(--primary-600)" }}>{group.title}</h3>
+                  <ul className="space-y-2">
+                    {group.items.map((item, j) => (
+                      <li key={j} className="flex items-start gap-2 text-sm" style={{ color: "var(--text-secondary)" }}>
+                        <Building2 className="w-4 h-4 shrink-0 mt-0.5" style={{ color: "var(--primary-600)" }} />
+                        {item}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
         {/* Google Maps embed for specific projects */}
         {(["aqua-city","vinhomes-central-park","masteri-cosmo-central","diamond-sky-van-phuc-city","legacy-66"] as string[]).includes(slug) && (
           <div className="mb-8">
@@ -110,6 +158,41 @@ export function ProjectDetailPage({ project, slug }: Props) {
               />
             </div>
             <p className="text-xs text-gray-400 mt-2">* Bản đồ mang tính tham khảo vị trí dự án.</p>
+          </div>
+        )}
+        {/* Câu hỏi thường gặp (từ PROJECT_CONFIG) */}
+        {config?.faqs && config.faqs.length > 0 && (
+          <div className="mb-12">
+            <h2 className="text-xl font-bold mb-4" style={{ color: "var(--text-primary)" }}>Câu Hỏi Thường Gặp</h2>
+            <div className="space-y-3">
+              {config.faqs.map((f, i) => (
+                <details key={i} className="rounded-2xl px-5 py-4 group"
+                  style={{ background: "var(--bg-elevated)", border: "1px solid var(--border-default)" }}>
+                  <summary className="text-sm font-semibold cursor-pointer list-none flex items-center justify-between gap-3"
+                    style={{ color: "var(--text-primary)" }}>
+                    {f.q}
+                    <ArrowRight className="w-4 h-4 shrink-0 transition-transform group-open:rotate-90" style={{ color: "var(--primary-600)" }} />
+                  </summary>
+                  <p className="text-sm mt-3 leading-relaxed" style={{ color: "var(--text-secondary)" }}>{f.a}</p>
+                </details>
+              ))}
+            </div>
+          </div>
+        )}
+        {/* Dự án liên quan (từ PROJECT_CONFIG) */}
+        {config?.relatedProjects && config.relatedProjects.length > 0 && (
+          <div className="mb-12">
+            <h2 className="text-xl font-bold mb-4" style={{ color: "var(--text-primary)" }}>Dự Án Liên Quan</h2>
+            <div className="flex flex-wrap gap-3">
+              {config.relatedProjects.map((r, i) => (
+                <Link key={i} href={`/du-an/${r.slug}`}
+                  className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium transition-colors hover:opacity-80"
+                  style={{ background: "var(--bg-elevated)", border: "1px solid var(--border-default)", color: "var(--text-primary)" }}>
+                  <Building2 className="w-4 h-4" style={{ color: "var(--primary-600)" }} />
+                  {r.name}
+                </Link>
+              ))}
+            </div>
           </div>
         )}
         {/* CTA */}

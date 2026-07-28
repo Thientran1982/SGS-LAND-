@@ -1,0 +1,69 @@
+=== aiService getAdvancedValuation + submitFeedback ===
+96:    async getAdvancedValuation(
+118:    async submitFeedback(data: {
+--- bodies ---
+    async getAdvancedValuation(
+        address: string,
+        area: number,
+        roadWidth: number,
+        legal: string,
+        propertyType?: string,
+        advanced?: {
+            floorLevel?: number;
+            direction?: string;
+            frontageWidth?: number;
+            furnishing?: string;
+            monthlyRent?: number;
+            buildingAge?: number;
+            bedrooms?: number;
+            roadTypeLabel?: string;
+        }
+    ): Promise<any> {
+        return this.fetchApi('/api/valuation/advanced', {
+            address, area, roadWidth, legal, propertyType,
+            ...(advanced ?? {}),
+        });
+    }
+=== dbApi getCurrentUser ===
+103:  async getCurrentUser() {
+104-    if (this._isLoggedOut) return null;
+105-    if (this.cachedCurrentUser) return this.cachedCurrentUser;
+106-    if (!this.currentUserPromise) {
+107-      this.currentUserPromise = userApi.getMe()
+108-        .then(result => {
+109-          this.cachedCurrentUser = result.user;
+110-          return result.user;
+111-        })
+112-        .catch((err) => {
+113:          console.warn('[dbApi] getCurrentUser cache error:', err?.message || err);
+114-          return null;
+115-        })
+116-        .finally(() => {
+117-          this.currentUserPromise = null;
+118-        });
+119-    }
+120-    return this.currentUserPromise;
+121-  }
+122-  clearUserCache() {
+123-    this.cachedCurrentUser = null;
+124-    this.currentUserPromise = null;
+125-    _cache.clearAll();
+=== formatSmartPrice src ===
+145:export const formatSmartPrice = (price: number, t?: (key: string) => string): string => {
+146-    if (!price) return '0';
+147-    const billionLabel = t ? t('format.billion') : 'Tỷ';
+148-    const millionLabel = t ? t('format.million') : 'Tr';    
+149-    if (price >= 1_000_000_000) {
+150-        return `${fmtDecimalDot(price / 1_000_000_000, 3)} ${billionLabel}`;
+151-    }
+152-    if (price >= 1_000_000) {
+153-        return `${fmtDecimalDot(price / 1_000_000, 2)} ${millionLabel}`;
+154-    }
+155-    return Math.round(price).toString().replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+156-};
+157-/**
+158- * Calculates and formats Unit Price (Price per m2)
+159- * FIX APPLIED: Clamp decimals to 1 digit to prevent '123,456.79'.
+160- * Logic: Prioritize Million/m2 for readability.
+=== next lib/api base ===
+26:    ? (process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:5000")

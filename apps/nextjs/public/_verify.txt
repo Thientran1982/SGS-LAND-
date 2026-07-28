@@ -1,0 +1,3 @@
+OK navigate patched
+--check--
+507:        if (_seg === '/login' || _seg === '/home' || _seg === '') {

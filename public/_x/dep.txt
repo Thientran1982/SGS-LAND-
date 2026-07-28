@@ -1,0 +1,27 @@
+=== recharts in next ===
+YES-recharts
+    "recharts": "^3.8.1",
+=== next lib/services ===
+api.ts
+consent.ts
+content
+schema
+seo
+tracking.ts
+visitorId.ts
+--- utils ---
+=== formatSmartPrice / aiService / i18n in next ===
+apps/nextjs/lib/api.ts
+apps/nextjs/lib/content/internal-links.ts
+apps/nextjs/lib/schema/breadcrumb.ts
+=== how existing client pages call API ===
+apps/nextjs/components/public/ProjectDetailPage.tsx
+apps/nextjs/components/public/MiniSiteProjectPage.tsx
+apps/nextjs/components/public/LoginPage.tsx
+apps/nextjs/components/public/ListingDetailPage.tsx
+apps/nextjs/components/public/ContactForm.tsx
+apps/nextjs/components/public/BankRatesPage.tsx
+apps/nextjs/components/public/AiChatWidgetWrapper.tsx
+apps/nextjs/components/public/ListingDetailPage.tsx.seobak_consent
+apps/nextjs/components/public/LandingPage.tsx.seobak_footer
+apps/nextjs/components/public/PublicFooter.tsx

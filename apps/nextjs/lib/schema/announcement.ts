@@ -68,6 +68,7 @@ export function getSpecialAnnouncementSchema(input: ProjectAnnouncement | string
     ? PROJECT_ANNOUNCEMENTS.find(a => a.slug === input) || null
     : input;
 
+  if (!announcement) return null;
   const ann2 = announcement as ProjectAnnouncement;
   const projectUrl = `${SITE_URL}/du-an/${ann2.slug}`;
   return {

@@ -1,0 +1,8 @@
+=== csrf usage in client ===
+services/api/apiClient.ts
+services/csrfFetch.ts
+=== how token fetched/sent ===
+services/api/apiClient.ts:16:function getCsrfToken(): string | null {
+services/csrfFetch.ts:3:// token header (X-CSRF-Token) into same-origin state-changing requests.
+services/csrfFetch.ts:5:// csrfTokenIssuer; enforcing csrfProtection() validates the header.
+services/csrfFetch.ts:9:const HEADER_NAME = 'X-CSRF-Token';

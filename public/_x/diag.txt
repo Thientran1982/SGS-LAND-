@@ -1,0 +1,5 @@
+b64bytes=60668
+b64sha1=b69d60d257586d19b8287235539691d43a30c6ba
+gzerr= gzip: stdin: invalid compressed data--crc error gzip: stdin: invalid compressed data--length error
+declines=1962
+decsha1=181a41e81227118010eb02c08b79e9007cfa1f45
