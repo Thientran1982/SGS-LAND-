@@ -55,8 +55,10 @@ const linkHover = (e: React.MouseEvent<HTMLAnchorElement | HTMLElement>, hover: 
 };
 type Lang = "vi" | "en";
 
+// Evaluated once at module load — same on server and client, avoids hydration mismatch
+const FOOTER_YEAR = new Date().getFullYear();
+
 export function PublicFooter() {
-  const year = new Date().getFullYear();
   const lang: Lang = useLang();
   return (
     <footer style={{ background: "var(--sgs-primary-deep)", borderTop: "1px solid rgba(200,150,62,0.2)" }}>
@@ -181,7 +183,7 @@ export function PublicFooter() {
         {/* ── Bottom bar ────────────────────────────────── */}
         <div className="flex flex-col sm:flex-row items-center justify-between gap-3 pt-5 pb-20 sm:pb-6 sm:pr-24">
           <p className="text-xs" style={{ color: "var(--sgs-on-dark-muted)" }}>
-            © {year} SGS LAND. {lang === "vi" ? "Bảo lưu mọi quyền." : "All rights reserved."}
+            © {FOOTER_YEAR} SGS LAND. {lang === "vi" ? "Bảo lưu mọi quyền." : "All rights reserved."}
           </p>
           <div className="flex items-center gap-3 flex-wrap justify-center sm:justify-end">
             {LEGAL_LINKS.map((link) => (

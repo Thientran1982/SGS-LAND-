@@ -15,6 +15,9 @@ export function PublicHeader({ authed = false }: { authed?: boolean }) {
   const [scrolled, setScrolled]   = useState(false);
   const [menuOpen, setMenuOpen]   = useState(false);
   const [theme, setTheme]         = useState<Theme>("light");
+  // mounted flag: prevents typeof-document server/client branch that triggers hydration mismatch
+  const [mounted, setMounted]     = useState(false);
+  useEffect(() => setMounted(true), []);
 
   // Khoa cuon nen khi menu mobile mo
   useEffect(() => {
@@ -222,7 +225,7 @@ export function PublicHeader({ authed = false }: { authed?: boolean }) {
 
       {/* ── Mobile Menu Drawer ─────────────────────────────── */}
       {/* Lop phu: bam ra ngoai de dong, tranh noi dung phia sau canh tranh thi giac */}
-      {menuOpen && typeof document !== "undefined" &&
+      {mounted && menuOpen &&
         createPortal(
           <div
             className="md:hidden fixed inset-0 z-40"
