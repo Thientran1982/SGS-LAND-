@@ -4,7 +4,7 @@ export const metadata: Metadata = {
   title: "So Sánh Dự Án Thủ Thiêm 2026 | Empire City vs The Metropole",
   description: "So sánh chi tiết các dự án Thủ Thiêm 2026: Empire City, The Metropole, Thủ Thiêm Dragon. Giá, tiến độ, pháp lý, nên mua dự án nào?",
   openGraph: { title: "So Sánh Dự Án Thủ Thiêm 2026 | Empire City vs The Metropole", description: "So sánh chi tiết các dự án Thủ Thiêm 2026: Empire City, The Metropole, Thủ Thiêm Dragon. Giá, tiến độ, pháp lý, nên mua dự án nào?", url: "https://sgsland.vn/bat-dong-san-thu-duc/so-sanh-du-an-thu-thiem", type: "article" },
-  alternates: { canonical: "https://sgsland.vn/bat-dong-san-thu-duc/so-sanh-du-an-thu-thiem" },
+  alternates: { canonical: "https://sgsland.vn/bat-dong-san-thu-duc/so-sanh-du-an-thu-thiem", languages: { "vi-VN": "https://sgsland.vn/bat-dong-san-thu-duc/so-sanh-du-an-thu-thiem", "en-US": "https://sgsland.vn/en/bat-dong-san-thu-duc/so-sanh-du-an-thu-thiem", "x-default": "https://sgsland.vn/bat-dong-san-thu-duc/so-sanh-du-an-thu-thiem" } },
 };
 export default function Page() {
   return (

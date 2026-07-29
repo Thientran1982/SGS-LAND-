@@ -1,6 +1,6 @@
 // @ts-nocheck
 import type { Metadata } from "next";
-export const metadata: Metadata = { title: "Điều Khoản Sử Dụng", alternates: { canonical: "https://sgsland.vn/terms-of-service" } };
+export const metadata: Metadata = { title: "Điều Khoản Sử Dụng", alternates: { canonical: "https://sgsland.vn/terms-of-service", languages: { "vi-VN": "https://sgsland.vn/terms-of-service", "en-US": "https://sgsland.vn/en/terms-of-service", "x-default": "https://sgsland.vn/terms-of-service" } } };
 export const dynamic = "force-dynamic";
 export default function TermsPage() {
   return (

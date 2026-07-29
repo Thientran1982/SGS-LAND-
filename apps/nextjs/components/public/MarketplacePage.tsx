@@ -3,6 +3,9 @@
 import React, { useState, useCallback, useRef, useEffect } from "react";
 import { useRouter, usePathname } from "next/navigation";
 import Link from "next/link";
+import { useLang } from "@/components/shared/useLang";
+import { tt } from "@/lib/i18n";
+type L = "vi" | "en";
 import dynamic from "next/dynamic";
 import {
   Search, MapPin, Bed, ChevronLeft, ChevronRight, ChevronDown, Check,
@@ -25,21 +28,49 @@ interface Props {
   };
 }
 
-const TRANSACTION_OPTIONS = [
-  { label: "Tất cả giao dịch", value: "" }, { label: "Bán", value: "SALE" }, { label: "Cho thuê", value: "RENT" },
+const TRANSACTION_OPTIONS = (g: L) => [
+  { label: tt(g, "Tất cả giao dịch", "All transactions"), value: "" },
+  { label: tt(g, "Bán", "For sale"), value: "SALE" },
+  { label: tt(g, "Cho thuê", "For rent"), value: "RENT" },
 ];
-const TYPE_OPTIONS = [
-  { label: "Tất cả loại hình", value: "" }, { label: "Căn hộ", value: "Apartment" }, { label: "Biệt thự", value: "Villa" },
-  { label: "Nhà phố", value: "Townhouse" }, { label: "Đất nền", value: "Land" }, { label: "Thương mại", value: "Commercial" }, { label: "Văn phòng", value: "Office" },
+const TYPE_OPTIONS = (g: L) => [
+  { label: tt(g, "Tất cả loại hình", "All property types"), value: "" },
+  { label: tt(g, "Căn hộ", "Apartment"), value: "Apartment" },
+  { label: tt(g, "Biệt thự", "Villa"), value: "Villa" },
+  { label: tt(g, "Nhà phố", "Townhouse"), value: "Townhouse" },
+  { label: tt(g, "Đất nền", "Land"), value: "Land" },
+  { label: tt(g, "Thương mại", "Commercial"), value: "Commercial" },
+  { label: tt(g, "Văn phòng", "Office"), value: "Office" },
 ];
-const LOCATION_OPTIONS = [
-  { label: "Tất cả vị trí", value: "" }, { label: "Đồng Nai", value: "Đồng Nai" }, { label: "TP.HCM", value: "TP.HCM" },
-  { label: "Bình Dương", value: "Bình Dương" }, { label: "Long An", value: "Long An" }, { label: "Bà Rịa - Vũng Tàu", value: "Bà Rịa" },
+const LOCATION_OPTIONS = (g: L) => [
+  { label: tt(g, "Tất cả vị trí", "All locations"), value: "" },
+  { label: "Đồng Nai", value: "Đồng Nai" }, { label: "TP.HCM", value: "TP.HCM" },
+  { label: "Bình Dương", value: "Bình Dương" }, { label: "Long An", value: "Long An" },
+  { label: "Bà Rịa - Vũng Tàu", value: "Bà Rịa" },
 ];
-const PRICE_OPTIONS = [
-  { label: "Tất cả mức giá", min: "", max: "" }, { label: "Dưới 3 tỷ", min: "", max: "3" }, { label: "3 – 5 tỷ", min: "3", max: "5" },
-  { label: "5 – 10 tỷ", min: "5", max: "10" }, { label: "10 – 20 tỷ", min: "10", max: "20" }, { label: "Trên 20 tỷ", min: "20", max: "" },
+const PRICE_OPTIONS = (g: L) => [
+  { label: tt(g, "Tất cả mức giá", "Any price"), min: "", max: "" },
+  { label: tt(g, "Dưới 3 tỷ", "Under 3B VND"), min: "", max: "3" },
+  { label: tt(g, "3 – 5 tỷ", "3 – 5B VND"), min: "3", max: "5" },
+  { label: tt(g, "5 – 10 tỷ", "5 – 10B VND"), min: "5", max: "10" },
+  { label: tt(g, "10 – 20 tỷ", "10 – 20B VND"), min: "10", max: "20" },
+  { label: tt(g, "Trên 20 tỷ", "Over 20B VND"), min: "20", max: "" },
 ];
+const CHIP_EN: Record<string, string> = {
+  "BĐS Đồng Nai": "Dong Nai property",
+  "BĐS Long Thành": "Long Thanh property",
+  "BĐS Thủ Đức": "Thu Duc property",
+  "BĐS Bình Dương": "Binh Duong property",
+  "BĐS Quận 7": "District 7 property",
+  "BĐS Phú Nhuận": "Phu Nhuan property",
+  "BĐS Bình Chánh": "Binh Chanh property",
+  "BĐS Long An": "Long An property",
+  "BĐS Nhơn Trạch": "Nhon Trach property",
+  "BĐS Bình Thạnh": "Binh Thanh property",
+  "BĐS Cần Giờ": "Can Gio property",
+};
+const chipLabel = (label: string, g: "vi" | "en") => (g === "en" ? CHIP_EN[label] || label : label);
+
 const LOCATION_CHIPS = [
   { label: "BĐS Đồng Nai", href: "/bat-dong-san-dong-nai" }, { label: "BĐS Long Thành", href: "/bat-dong-san-long-thanh" },
   { label: "BĐS Thủ Đức", href: "/bat-dong-san-thu-duc" }, { label: "BĐS Bình Dương", href: "/bat-dong-san-binh-duong" },
@@ -48,16 +79,23 @@ const LOCATION_CHIPS = [
   { label: "Vinhomes Grand Park", href: "/du-an/vinhomes-grand-park" }, { label: "Izumi City", href: "/du-an/izumi-city" },
   { label: "The Global City", href: "/du-an/the-global-city" }, { label: "Thủ Thiêm", href: "/du-an/thu-thiem" },
 ];
-const TYPE_LABELS = { Apartment: "Căn hộ", Villa: "Biệt thự", Townhouse: "Nhà phố", Land: "Đất nền", Commercial: "Thương mại", Office: "Văn phòng", PROJECT: "Dự án" };
+const TYPE_LABELS = (g: L): Record<string, string> => ({
+  Apartment: tt(g, "Căn hộ", "Apartment"), Villa: tt(g, "Biệt thự", "Villa"),
+  Townhouse: tt(g, "Nhà phố", "Townhouse"), Land: tt(g, "Đất nền", "Land"),
+  Commercial: tt(g, "Thương mại", "Commercial"), Office: tt(g, "Văn phòng", "Office"),
+  PROJECT: tt(g, "Dự án", "Project"),
+});
 
-function formatPrice(price: number): string {
-  return price >= 1e9 ? `${(price / 1e9).toFixed(2)} tỷ` : `${Math.round(price / 1e6)} triệu`;
+function formatPrice(price: number, g: L = "vi"): string {
+  if (price >= 1e9) return g === "en" ? `${(price / 1e9).toFixed(2)}B VND` : `${(price / 1e9).toFixed(2)} tỷ`;
+  return g === "en" ? `${Math.round(price / 1e6)}M VND` : `${Math.round(price / 1e6)} triệu`;
 }
-function pricePerM2(price: number, area: number): string | null {
+function pricePerM2(price: number, area: number, g: L = "vi"): string | null {
   if (!area || area <= 0) return null;
   const v = price / area;
-  if (v >= 1e9) return `${(v / 1e9).toFixed(2)} tỷ/m²`;
-  return `${(v / 1e6).toLocaleString("vi-VN", { maximumFractionDigits: 1 })} Triệu/m²`;
+  if (v >= 1e9) return g === "en" ? `${(v / 1e9).toFixed(2)}B/m²` : `${(v / 1e9).toFixed(2)} tỷ/m²`;
+  const n = (v / 1e6).toLocaleString("vi-VN", { maximumFractionDigits: 1 });
+  return g === "en" ? `${n}M/m²` : `${n} Triệu/m²`;
 }
 
 const boxStyle: React.CSSProperties = { background: "var(--bg-elevated)", border: "1.5px solid var(--border-default)", color: "var(--text-primary)" };
@@ -99,12 +137,13 @@ function Dropdown({ value, options, onChange, minWidth = 140 }: { value: string;
 
 /* ── Listing card ─────────────────────────────────────────── */
 function ListingCard({ listing, list }: { listing: any; list?: boolean }) {
+  const lang = useLang();
   const slug = `${(listing.title || "bds").toLowerCase().replace(/\s+/g, "-").replace(/[^a-z0-9-]/g, "").slice(0, 40)}-${listing.id}`;
   const isRent = String(listing.transaction || "").toUpperCase() === "RENT";
-  const ppm = pricePerM2(listing.price, listing.area);
+  const ppm = pricePerM2(listing.price, listing.area, lang);
   const views = listing.viewCount || 0;
   return (
-    <Link href={`/bds/${slug}`}
+    <Link href={lang === "en" ? `/en/bds/${slug}` : `/bds/${slug}`}
       className={`group block rounded-3xl overflow-hidden hover:shadow-token-lg transition-all hover:-translate-y-1 ${list ? "sm:flex" : ""}`}
       style={{ background: "var(--bg-surface)", border: "1px solid var(--border-default)" }}>
       {/* Image */}
@@ -119,11 +158,11 @@ function ListingCard({ listing, list }: { listing: any; list?: boolean }) {
         <div className="absolute top-3 left-3 flex flex-col gap-1.5 items-start">
           <div className="flex gap-1.5">
             <span className="px-2 py-0.5 rounded-lg text-[11px] font-bold text-white shadow-sm backdrop-blur-sm" style={{ background: isRent ? "rgba(37,99,235,0.9)" : "rgba(11,107,84,0.92)" }}>
-              {isRent ? "CHO THUÊ" : "BÁN"}
+              {isRent ? tt(lang, "CHO THUÊ", "FOR RENT") : tt(lang, "BÁN", "FOR SALE")}
             </span>
             {listing.isVerified && (
               <span className="flex items-center gap-1 px-2 py-0.5 rounded-lg text-[11px] font-bold text-white shadow-sm backdrop-blur-sm" style={{ background: "rgba(5,150,105,0.95)" }}>
-                <BadgeCheck className="w-3.5 h-3.5" /> ĐÃ XÁC THỰC
+                <BadgeCheck className="w-3.5 h-3.5" /> {tt(lang, "ĐÃ XÁC THỰC", "VERIFIED")}
               </span>
             )}
           </div>
@@ -148,7 +187,7 @@ function ListingCard({ listing, list }: { listing: any; list?: boolean }) {
         </div>
         <div className="flex items-end justify-between gap-2">
           <div className="min-w-0">
-            <p className="font-extrabold text-lg leading-none" style={{ color: "var(--primary-600)" }}>{formatPrice(listing.price)}</p>
+            <p className="font-extrabold text-lg leading-none" style={{ color: "var(--primary-600)" }}>{formatPrice(listing.price, lang)}</p>
             {ppm && <p className="text-[11px] font-medium mt-0.5 truncate" style={{ color: "var(--text-tertiary)" }}>{ppm}</p>}
           </div>
           <div className="flex items-center gap-3 text-xs shrink-0" style={{ color: "var(--text-tertiary)" }}>
@@ -162,6 +201,7 @@ function ListingCard({ listing, list }: { listing: any; list?: boolean }) {
 }
 
 export function MarketplacePage({ initialListings, totalCount, totalPages, searchParams: sp }: Props) {
+  const lang = useLang();
   const router = useRouter();
   const pathname = usePathname();
   const [search, setSearch] = useState(sp.q ?? "");
@@ -184,7 +224,7 @@ export function MarketplacePage({ initialListings, totalCount, totalPages, searc
   const setParam = (key: string, value: string) => pushParams((p) => { if (value) p.set(key, value); else p.delete(key); });
   const handleSearch = (e: React.FormEvent) => { e.preventDefault(); setParam("q", search.trim()); };
   const currentPage = parseInt(sp.page ?? "1");
-  const activePriceLabel = (PRICE_OPTIONS.find((pr) => pr.min === (sp.minPrice ?? "") && pr.max === (sp.maxPrice ?? "")) || PRICE_OPTIONS[0]).label;
+  const activePriceLabel = (PRICE_OPTIONS(lang).find((pr) => pr.min === (sp.minPrice ?? "") && pr.max === (sp.maxPrice ?? "")) || PRICE_OPTIONS(lang)[0]).label;
 
   const VIEWS = [
     { id: "GRID", icon: LayoutGrid }, { id: "LIST", icon: ListIcon }, { id: "BOARD", icon: Columns }, { id: "MAP", icon: MapIcon },
@@ -194,34 +234,34 @@ export function MarketplacePage({ initialListings, totalCount, totalPages, searc
   const boards = React.useMemo(() => {
     const groups: Record<string, any[]> = {};
     (initialListings || []).forEach((l: any) => {
-      const label = TYPE_LABELS[l.type] || "Khác";
+      const label = TYPE_LABELS(lang)[l.type] || tt(lang, "Khác", "Other");
       (groups[label] = groups[label] || []).push(l);
     });
     return Object.entries(groups);
-  }, [initialListings]);
+  }, [initialListings, lang]);
 
   return (
     <div className="max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8 pb-10" style={{ paddingTop: 96 }}>
       {/* Header */}
       <div className="mb-4">
         <h1 className="text-2xl font-bold mb-1" style={{ color: "var(--text-primary)" }}>
-          {sp.q ? `Kết quả cho "${sp.q}"` : "Tìm kiếm Bất Động Sản"}
+          {sp.q ? tt(lang, `Kết quả cho "${sp.q}"`, `Results for "${sp.q}"`) : tt(lang, "Tìm kiếm Bất Động Sản", "Search Properties")}
         </h1>
         <p className="text-sm" style={{ color: "var(--text-secondary)" }}>
-          {totalCount.toLocaleString()} bất động sản phù hợp · Kho hàng cập nhật realtime
+          {totalCount.toLocaleString()}{tt(lang, " bất động sản phù hợp · Kho hàng cập nhật realtime", " matching properties · Inventory updated in real time")}
         </p>
       </div>
 
       {/* Search bar */}
       <form onSubmit={handleSearch} className="relative mb-3">
         <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4" style={{ color: "var(--text-tertiary)" }} />
-        <input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Tìm theo tên, dự án, khu vực, mã code..."
+        <input value={search} onChange={(e) => setSearch(e.target.value)} placeholder={tt(lang, "Tìm theo tên, dự án, khu vực, mã code...", "Search by name, project, area or code...")}
           className="w-full pl-9 pr-24 py-3 rounded-xl text-sm outline-none" style={boxStyle} />
-        <button type="submit" className="absolute right-1.5 top-1/2 -translate-y-1/2 px-5 py-2 rounded-lg text-sm font-semibold text-white" style={{ background: "var(--primary-600)" }}>Tìm</button>
+        <button type="submit" className="absolute right-1.5 top-1/2 -translate-y-1/2 px-5 py-2 rounded-lg text-sm font-semibold text-white" style={{ background: "var(--primary-600)" }}>{tt(lang, "Tìm", "Search")}</button>
       </form>
 
       {/* Toolbar */}
-      <div className="flex items-center gap-2 overflow-x-auto no-scrollbar pb-1 mb-3">
+      <div className="flex items-center gap-2 flex-wrap pb-1 mb-3">
         <div className="flex p-0.5 rounded-lg shrink-0" style={{ background: "var(--bg-elevated)" }}>
           {VIEWS.map((v) => {
             const Icon = v.icon; const active = view === v.id;
@@ -234,20 +274,20 @@ export function MarketplacePage({ initialListings, totalCount, totalPages, searc
           })}
         </div>
         <div className="w-px h-6 shrink-0" style={{ background: "var(--border-default)" }} />
-        <Dropdown value={sp.transaction ?? ""} options={TRANSACTION_OPTIONS} onChange={(v) => setParam("transaction", v)} minWidth={140} />
-        <Dropdown value={sp.type ?? ""} options={TYPE_OPTIONS} onChange={(v) => setParam("type", v)} minWidth={140} />
-        <Dropdown value={sp.area ?? ""} options={LOCATION_OPTIONS} onChange={(v) => setParam("area", v)} minWidth={150} />
-        <Dropdown value={activePriceLabel} options={PRICE_OPTIONS.map((o) => ({ label: o.label, value: o.label }))}
-          onChange={(label) => { const pr = PRICE_OPTIONS.find((x) => x.label === label) || PRICE_OPTIONS[0]; pushParams((p) => { p.delete("minPrice"); p.delete("maxPrice"); if (pr.min) p.set("minPrice", pr.min); if (pr.max) p.set("maxPrice", pr.max); }); }}
+        <Dropdown value={sp.transaction ?? ""} options={TRANSACTION_OPTIONS(lang)} onChange={(v) => setParam("transaction", v)} minWidth={140} />
+        <Dropdown value={sp.type ?? ""} options={TYPE_OPTIONS(lang)} onChange={(v) => setParam("type", v)} minWidth={140} />
+        <Dropdown value={sp.area ?? ""} options={LOCATION_OPTIONS(lang)} onChange={(v) => setParam("area", v)} minWidth={150} />
+        <Dropdown value={activePriceLabel} options={PRICE_OPTIONS(lang).map((o) => ({ label: o.label, value: o.label }))}
+          onChange={(label) => { const pr = PRICE_OPTIONS(lang).find((x) => x.label === label) || PRICE_OPTIONS(lang)[0]; pushParams((p) => { p.delete("minPrice"); p.delete("maxPrice"); if (pr.min) p.set("minPrice", pr.min); if (pr.max) p.set("maxPrice", pr.max); }); }}
           minWidth={140} />
       </div>
 
       {/* Location chips */}
       <div className="flex items-center gap-2 overflow-x-auto no-scrollbar pb-2 mb-5">
-        <span className="text-xs shrink-0 font-medium hidden sm:inline" style={{ color: "var(--text-tertiary)" }}>Tất cả vị trí:</span>
+        <span className="text-xs shrink-0 font-medium hidden sm:inline" style={{ color: "var(--text-tertiary)" }}>{tt(lang, "Tất cả vị trí:", "All locations:")}</span>
         {LOCATION_CHIPS.map((c) => (
-          <Link key={c.href} href={c.href} className="shrink-0 text-xs font-medium px-3 py-1 rounded-full transition-all whitespace-nowrap hover:opacity-80"
-            style={{ background: "var(--bg-elevated)", border: "1px solid var(--border-default)", color: "var(--text-secondary)" }}>{c.label}</Link>
+          <Link key={c.href} href={lang === "en" ? "/en" + c.href : c.href} className="shrink-0 text-xs font-medium px-3 py-1 rounded-full transition-all whitespace-nowrap hover:opacity-80"
+            style={{ background: "var(--bg-elevated)", border: "1px solid var(--border-default)", color: "var(--text-secondary)" }}>{chipLabel(c.label, lang)}</Link>
         ))}
       </div>
 
@@ -255,21 +295,25 @@ export function MarketplacePage({ initialListings, totalCount, totalPages, searc
       {initialListings.length === 0 ? (
         <div className="py-24 text-center">
           <p className="text-4xl mb-4">🔍</p>
-          <p className="font-semibold mb-2" style={{ color: "var(--text-primary)" }}>Không tìm thấy kết quả</p>
-          <p className="text-sm" style={{ color: "var(--text-secondary)" }}>Thử thay đổi tiêu chí tìm kiếm hoặc mở rộng khu vực</p>
+          <p className="font-semibold mb-2" style={{ color: "var(--text-primary)" }}>{tt(lang, "Không tìm thấy kết quả", "No results found")}</p>
+          <p className="text-sm" style={{ color: "var(--text-secondary)" }}>{tt(lang, "Thử thay đổi tiêu chí tìm kiếm hoặc mở rộng khu vực", "Try adjusting your filters or widening the area")}</p>
         </div>
       ) : view === "MAP" ? (
         <MarketplaceMap listings={initialListings} />
       ) : view === "BOARD" ? (
-        <div className="flex gap-4 overflow-x-auto no-scrollbar pb-2">
+        <div className="flex gap-4 no-scrollbar pb-2" style={{ overflowX: "auto", WebkitOverflowScrolling: "touch" }}>
           {boards.map(([label, items]) => (
             <div key={label} className="shrink-0 w-80 rounded-2xl p-3" style={{ background: "var(--bg-elevated)", border: "1px solid var(--border-default)" }}>
               <div className="flex items-center justify-between px-1 mb-3">
                 <h3 className="font-bold text-sm uppercase tracking-wide" style={{ color: "var(--text-primary)" }}>{label}</h3>
                 <span className="text-xs font-bold px-2 py-0.5 rounded-full" style={{ background: "var(--primary-subtle)", color: "var(--primary-600)" }}>{items.length}</span>
               </div>
-              <div className="flex flex-col gap-3 max-h-[70vh] overflow-y-auto no-scrollbar">
-                {items.map((l: any) => <ListingCard key={l.id} listing={l} />)}
+              <div className="flex flex-col gap-3" style={{ maxHeight: "70vh", overflowY: "auto", WebkitOverflowScrolling: "touch", paddingRight: "6px", scrollbarWidth: "thin" }}>
+                {items.map((l: any) => (
+                  <div key={l.id} style={{ flexShrink: 0 }}>
+                    <ListingCard listing={l} />
+                  </div>
+                ))}
               </div>
             </div>
           ))}
@@ -290,13 +334,13 @@ export function MarketplacePage({ initialListings, totalCount, totalPages, searc
           <Link href={`${pathname}?${new URLSearchParams({ ...sp, page: String(Math.max(1, currentPage - 1)) }).toString()}`}
             className={`flex items-center gap-1 px-4 py-2 rounded-xl text-sm font-medium ${currentPage <= 1 ? "opacity-40 pointer-events-none" : ""}`}
             style={{ color: "var(--text-primary)", border: "1px solid var(--border-default)" }}>
-            <ChevronLeft className="w-4 h-4" /> Trước
+            <ChevronLeft className="w-4 h-4" /> {tt(lang, "Trước", "Previous")}
           </Link>
-          <span className="px-4 py-2 text-sm" style={{ color: "var(--text-secondary)" }}>Trang {currentPage} / {totalPages}</span>
+          <span className="px-4 py-2 text-sm" style={{ color: "var(--text-secondary)" }}>{tt(lang, "Trang", "Page")} {currentPage} / {totalPages}</span>
           <Link href={`${pathname}?${new URLSearchParams({ ...sp, page: String(Math.min(totalPages, currentPage + 1)) }).toString()}`}
             className={`flex items-center gap-1 px-4 py-2 rounded-xl text-sm font-medium ${currentPage >= totalPages ? "opacity-40 pointer-events-none" : ""}`}
             style={{ color: "var(--text-primary)", border: "1px solid var(--border-default)" }}>
-            Tiếp <ChevronRight className="w-4 h-4" />
+            {tt(lang, "Tiếp", "Next")} <ChevronRight className="w-4 h-4" />
           </Link>
         </div>
       )}

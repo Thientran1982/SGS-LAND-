@@ -5,7 +5,7 @@ export const metadata: Metadata = {
   description: "So sánh chi tiết Aqua City (Novaland) và Izumi City (Nam Long) 2026: quy mô, pháp lý, tiến độ, giá bán, tiện ích và khuyến nghị từ SGS Land.",
   keywords: ["Aqua City vs Izumi City","so sánh Aqua City Izumi City","Aqua City hay Izumi City","Novaland hay Nam Long","BĐS Long Thành 2026"],
   openGraph: { title: "Aqua City vs Izumi City 2026 – So Sánh Toàn Diện", description: "So sánh Aqua City Novaland và Izumi City Nam Long: pháp lý, tiến độ, giá bán 2026.", url: "https://sgsland.vn/bat-dong-san-dong-nai/aqua-city-vs-izumi-city-so-sanh", type: "article" },
-  alternates: { canonical: "https://sgsland.vn/bat-dong-san-dong-nai/aqua-city-vs-izumi-city-so-sanh" },
+  alternates: { canonical: "https://sgsland.vn/bat-dong-san-dong-nai/aqua-city-vs-izumi-city-so-sanh", languages: { "vi-VN": "https://sgsland.vn/bat-dong-san-dong-nai/aqua-city-vs-izumi-city-so-sanh", "en-US": "https://sgsland.vn/en/bat-dong-san-dong-nai/aqua-city-vs-izumi-city-so-sanh", "x-default": "https://sgsland.vn/bat-dong-san-dong-nai/aqua-city-vs-izumi-city-so-sanh" } },
 };
 export default function Page() {
   return (

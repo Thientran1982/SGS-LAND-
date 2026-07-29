@@ -5,7 +5,7 @@ export const metadata: Metadata = {
   description: "Cập nhật tiến độ xây dựng Izumi City Nam Long Đồng Nai tháng 6/2026: phân khu đã hoàn thành, đang thi công, bàn giao. Giá bán và so sánh với Aqua City.",
   keywords: ["Izumi City tiến độ","Izumi City 2026","Nam Long Đồng Nai","Izumi City bàn giao","tiến độ Izumi City mới nhất"],
   openGraph: { title: "Izumi City Tiến Độ Mới Nhất 2026", description: "Cập nhật tiến độ Izumi City Nam Long Đồng Nai tháng 6/2026.", url: "https://sgsland.vn/bat-dong-san-dong-nai/izumi-city-tien-do-moi-nhat", type: "article" },
-  alternates: { canonical: "https://sgsland.vn/bat-dong-san-dong-nai/izumi-city-tien-do-moi-nhat" },
+  alternates: { canonical: "https://sgsland.vn/bat-dong-san-dong-nai/izumi-city-tien-do-moi-nhat", languages: { "vi-VN": "https://sgsland.vn/bat-dong-san-dong-nai/izumi-city-tien-do-moi-nhat", "en-US": "https://sgsland.vn/en/bat-dong-san-dong-nai/izumi-city-tien-do-moi-nhat", "x-default": "https://sgsland.vn/bat-dong-san-dong-nai/izumi-city-tien-do-moi-nhat" } },
 };
 export default function Page() {
   return (

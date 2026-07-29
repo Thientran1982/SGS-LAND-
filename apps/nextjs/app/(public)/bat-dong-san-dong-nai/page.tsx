@@ -6,7 +6,7 @@ export const metadata: Metadata = {
   title: "Bất Động Sản Đồng Nai 2026 – Giá Bán, Dự Án & Tư Vấn Đầu Tư | SGS Land",
   description: "Bất động sản Đồng Nai 2026: giá bán, danh sách dự án nhà phố, biệt thự, đất nền Long Thành, Biên Hòa, Nhơn Trạch. Cập nhật Aqua City, Izumi City, tiến độ & pháp lý. ☎ Tư vấn mua bán BĐS Đồng Nai miễn phí từ SGS Land!",
   keywords: "bat dong san Dong Nai, bds Dong Nai, gia ban bat dong san Dong Nai, du an bat dong san Dong Nai, dat nen Dong Nai, nha pho Dong Nai, bat dong san Long Thanh, Aqua City Dong Nai, Izumi City Bien Hoa, dat Long Thanh gan san bay 2026",
-  alternates: { canonical: "https://sgsland.vn/bat-dong-san-dong-nai" },
+  alternates: { canonical: "https://sgsland.vn/bat-dong-san-dong-nai", languages: { "vi-VN": "https://sgsland.vn/bat-dong-san-dong-nai", "en-US": "https://sgsland.vn/en/bat-dong-san-dong-nai", "x-default": "https://sgsland.vn/bat-dong-san-dong-nai" } },
   openGraph: {
     title: "Bất Động Sản Đồng Nai 2026 – Giá Bán & Danh Sách Dự Án | SGS Land",
     description: "Thị trường BĐS Đồng Nai 2026: giá bán, dự án Aqua City, Izumi City, đất nền Long Thành gần sân bay. Cập nhật hàng ngày từ SGS Land.",

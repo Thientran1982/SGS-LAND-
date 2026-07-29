@@ -4,7 +4,7 @@ import type { Metadata } from "next";
 export const metadata: Metadata = {
   title: "Live Chat AI BĐS",
   description: "Chat trực tiếp với AI Agent SGS LAND: hỏi về giá BĐS, pháp lý, dự án, lãi suất vay. Phản hồi tức thì 24/7.",
-  alternates: { canonical: "https://sgsland.vn/livechat" },
+  alternates: { canonical: "https://sgsland.vn/livechat", languages: { "vi-VN": "https://sgsland.vn/livechat", "en-US": "https://sgsland.vn/en/livechat", "x-default": "https://sgsland.vn/livechat" } },
 };
 export const dynamic = "force-dynamic";
 

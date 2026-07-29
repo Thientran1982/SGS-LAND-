@@ -5,7 +5,7 @@ import { ALL_PROJECTS } from "@/data/projects";
 export const metadata: Metadata = {
   title: "Dự Án Bất Động Sản",
   description: "Khám phá các dự án BĐS lớn nhất TP.HCM, Đồng Nai, Bình Dương, Long An. Aqua City, The Global City, Vinhomes, Masterise Homes và nhiều dự án nổi bật khác.",
-  alternates: { canonical: "https://sgsland.vn/du-an" },
+  alternates: { canonical: "https://sgsland.vn/du-an", languages: { "vi-VN": "https://sgsland.vn/du-an", "en-US": "https://sgsland.vn/en/du-an", "x-default": "https://sgsland.vn/du-an" } },
 };
 export const dynamic = "force-dynamic";
 const HOT = new Set(["aqua-city","the-global-city","vinhomes-can-gio","vinhomes-hoc-mon","masteri-cosmo-central"]);

@@ -1,7 +1,7 @@
 // @ts-nocheck
 import type { MetadataRoute } from "next";
 const BASE = "https://sgsland.vn";
-export default function sitemap(): MetadataRoute.Sitemap {
+export function sitemapVi(): MetadataRoute.Sitemap {
   const now = new Date();
   const staticRoutes: MetadataRoute.Sitemap = [
     { url: `${BASE}/`,                            lastModified: now, changeFrequency: "daily",   priority: 1.0 },
@@ -66,5 +66,14 @@ export default function sitemap(): MetadataRoute.Sitemap {
     { url: `${BASE}/mua-hay-thue-nha-tphcm`,   lastModified: now, changeFrequency: "weekly",  priority: 0.8 },
     { url: `${BASE}/vinhomes-hoc-mon`,         lastModified: now, changeFrequency: "weekly",  priority: 0.9 },
   ];
-  return [...staticRoutes, ...projectRoutes, ...miniSites, ...faqRoutes];
+  const devSlugs = ["vinhomes", "novaland", "masterise-homes", "nam-long", "van-phuc-group", "son-kim-land", "dai-quang-minh"];
+  const devRoutes: MetadataRoute.Sitemap = [
+    { url: `${BASE}/chu-dau-tu`, lastModified: now, changeFrequency: "monthly" as const, priority: 0.6 },
+    ...devSlugs.map((s) => ({ url: `${BASE}/chu-dau-tu/${s}`, lastModified: now, changeFrequency: "monthly" as const, priority: 0.6 })),
+  ];
+  return [...staticRoutes, ...projectRoutes, ...miniSites, ...faqRoutes, ...devRoutes];
+}
+
+export default function sitemap(): MetadataRoute.Sitemap {
+  return sitemapVi();
 }

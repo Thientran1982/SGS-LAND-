@@ -6,7 +6,7 @@ import { TrendingUp, Shield, MapPin, BarChart3 } from "lucide-react";
 export const metadata: Metadata = {
   title: "Đầu Tư Bất Động Sản 2026: 5 Kênh Sinh Lời 8-15%/Năm | SGS Land",
   description: "Đầu tư BĐS 2026 sinh lời 8-15%/năm: chọn dự án tiềm năng, pháp lý rõ ràng, dòng tiền ổn định tại TP.HCM, Đồng Nai, Bình Dương. ☎ Nhận tư vấn & báo giá miễn phí từ SGS Land!",
-  alternates: { canonical: "https://sgsland.vn/dau-tu-bat-dong-san" },
+  alternates: { canonical: "https://sgsland.vn/dau-tu-bat-dong-san", languages: { "vi-VN": "https://sgsland.vn/dau-tu-bat-dong-san", "en-US": "https://sgsland.vn/en/dau-tu-bat-dong-san", "x-default": "https://sgsland.vn/dau-tu-bat-dong-san" } },
 };
 export const dynamic = "force-dynamic";
 

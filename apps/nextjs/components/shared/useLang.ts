@@ -1,34 +1,27 @@
 "use client";
-import { useState, useEffect } from "react";
 
-export type Lang = "vi" | "en";
+import { useContext } from "react";
+import { usePathname } from "next/navigation";
+import { LangContext, type Lang } from "./LangProvider";
+
+export type { Lang };
 
 /**
- * useLang – reads the current language from localStorage / CustomEvent
- * dispatched by PublicHeader when user toggles VI / EN.
- *
- * #3 FIX: All client components that render language-sensitive content
- * should use this hook instead of hardcoding Vietnamese text,
- * so that switching language in the header instantly updates every page.
+ * Locale hien tai.
+ * Uu tien context (do RootLayout bom vao tu header x-sgs-lang) vi middleware
+ * rewrite /en/* -> /* nen usePathname() phia server khong con tien to /en.
  */
 export function useLang(): Lang {
-  const [lang, setLang] = useState<Lang>("vi");
+  const ctx = useContext(LangContext);
+  const p = usePathname() || "/";
+  if (ctx) return ctx;
+  return p === "/en" || p.startsWith("/en/") ? "en" : "vi";
+}
 
-  useEffect(() => {
-    // Hydrate from localStorage on mount
-    try {
-      const saved = localStorage.getItem("sgs-lang") as Lang | null;
-      if (saved === "vi" || saved === "en") setLang(saved);
-    } catch {}
-
-    // Listen for header toggle events
-    const handler = (e: Event) => {
-      const detail = (e as CustomEvent<Lang>).detail;
-      if (detail === "vi" || detail === "en") setLang(detail);
-    };
-    window.addEventListener("sgs-lang-change", handler);
-    return () => window.removeEventListener("sgs-lang-change", handler);
-  }, []);
-
-  return lang;
+/** Duong dan tuong ung o ngon ngu con lai (dung cho nut doi ngon ngu). */
+export function switchLangPath(pathname: string, to: Lang): string {
+  const isEn = pathname === "/en" || pathname.startsWith("/en/");
+  const base = isEn ? pathname.slice(3) || "/" : pathname;
+  if (to === "en") return base === "/" ? "/en" : "/en" + base;
+  return base || "/";
 }

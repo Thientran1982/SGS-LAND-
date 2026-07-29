@@ -4,12 +4,22 @@ import type { Listing } from "@/types";
 import { LandingPage } from "@/components/public/LandingHome";
 import { SchemaScript } from "@/components/SchemaScript";
 import { getFAQSchema, getBreadcrumbSchema, getFoundersSchema, FAQ_HOMEPAGE, SITE_URL } from "@/lib/schema";
-export const metadata: Metadata = {
-  title: "Nền Tảng Quản Lý Bất Động Sản AI Số 1 Việt Nam",
-  description:
-    "SGS LAND — Marketplace BĐS, định giá AI tự động ±5%, CRM đa kênh. Khám phá 45.000+ sản phẩm BĐS tại TP.HCM, Đồng Nai, Bình Dương. Đại lý F1: Vinhomes Hóc Môn, Vinhomes Cần Giờ, Aqua City.",
-  alternates: { canonical: "https://sgsland.vn/" },
-};
+import { getLang, langAlternates } from "@/lib/lang";
+export async function generateMetadata(): Promise<Metadata> {
+  const en = (await getLang()) === "en";
+  return {
+    title: en
+      ? "Vietnam's #1 AI Real Estate Platform"
+      : "Nền Tảng Quản Lý Bất Động Sản AI Số 1 Việt Nam",
+    description: en
+      ? "SGS LAND — property marketplace, automated AI valuation to ±5%, omnichannel CRM. Explore 45,000+ listings across Ho Chi Minh City, Dong Nai and Binh Duong. Authorised tier-1 agent: Vinhomes Hoc Mon, Vinhomes Can Gio, Aqua City."
+      : "SGS LAND — Marketplace BĐS, định giá AI tự động ±5%, CRM đa kênh. Khám phá 45.000+ sản phẩm BĐS tại TP.HCM, Đồng Nai, Bình Dương. Đại lý F1: Vinhomes Hóc Môn, Vinhomes Cần Giờ, Aqua City.",
+    alternates: {
+      canonical: en ? "https://sgsland.vn/en" : "https://sgsland.vn/",
+      ...langAlternates("/"),
+    },
+  };
+}
 // SSG — statically generated, revalidate every 1 hour for hero stats
 export const dynamic = "force-dynamic";
 // ── Additional GEO schemas for Phase 4 ──────────────────────────────────────

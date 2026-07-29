@@ -5,7 +5,7 @@ export const metadata: Metadata = {
   title: "Tuyển Dụng",
   description:
     "Cơ hội nghề nghiệp tại SGS LAND — Môi giới BĐS, Kỹ sư phần mềm, Product Manager, Data Analyst. Startup proptech hàng đầu Việt Nam.",
-  alternates: { canonical: "https://sgsland.vn/careers" },
+  alternates: { canonical: "https://sgsland.vn/careers", languages: { "vi-VN": "https://sgsland.vn/careers", "en-US": "https://sgsland.vn/en/careers", "x-default": "https://sgsland.vn/careers" } },
 };
 
 export const dynamic = "force-dynamic";

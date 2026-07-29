@@ -6,7 +6,7 @@ import { HelpCircle, MessageSquare, Phone, Mail, BookOpen, ChevronRight } from "
 export const metadata: Metadata = {
   title: "Trung Tâm Trợ Giúp",
   description: "Hỗ trợ khách hàng SGS LAND: hướng dẫn sử dụng nền tảng, tư vấn BĐS, giải đáp thắc mắc. Liên hệ qua hotline, chat hoặc email.",
-  alternates: { canonical: "https://sgsland.vn/help-center" },
+  alternates: { canonical: "https://sgsland.vn/help-center", languages: { "vi-VN": "https://sgsland.vn/help-center", "en-US": "https://sgsland.vn/en/help-center", "x-default": "https://sgsland.vn/help-center" } },
 };
 export const dynamic = "force-dynamic";
 

@@ -7,7 +7,7 @@ export const metadata: Metadata = {
   description:
     "Tổng hợp lãi suất vay mua nhà tốt nhất 2025 từ Vietcombank, BIDV, VietinBank, Techcombank, VPBank, MB. Tính toán khoản vay thông minh cùng SGS LAND.",
   keywords: ["lãi suất vay mua nhà 2025", "lãi suất ngân hàng bất động sản", "vay mua nhà tốt nhất"],
-  alternates: { canonical: "https://sgsland.vn/lai-suat-ngan-hang" },
+  alternates: { canonical: "https://sgsland.vn/lai-suat-ngan-hang", languages: { "vi-VN": "https://sgsland.vn/lai-suat-ngan-hang", "en-US": "https://sgsland.vn/en/lai-suat-ngan-hang", "x-default": "https://sgsland.vn/lai-suat-ngan-hang" } },
 };
 
 // ISR — bank rates change weekly

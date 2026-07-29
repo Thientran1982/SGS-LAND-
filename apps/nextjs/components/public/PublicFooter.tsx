@@ -2,6 +2,8 @@
 "use client";
 import { useState, useEffect } from "react";
 import Link from "next/link";
+import { useLang } from "@/components/shared/useLang";
+import { tt } from "@/lib/i18n";
 const FOOTER_PROJECTS = [
   { label: "Aqua City Novaland",       href: "/du-an/aqua-city" },
   { label: "The Global City",          href: "/du-an/the-global-city" },
@@ -55,16 +57,7 @@ type Lang = "vi" | "en";
 
 export function PublicFooter() {
   const year = new Date().getFullYear();
-  const [lang, setLang] = useState<Lang>("vi");
-  useEffect(() => {
-    try {
-      const saved = localStorage.getItem("sgs-lang") as Lang | null;
-      if (saved === "vi" || saved === "en") setLang(saved);
-    } catch {}
-    const onLang = (e: any) => { if (e?.detail === "vi" || e?.detail === "en") setLang(e.detail); };
-    window.addEventListener("sgs-lang-change", onLang as EventListener);
-    return () => window.removeEventListener("sgs-lang-change", onLang as EventListener);
-  }, []);
+  const lang: Lang = useLang();
   return (
     <footer style={{ background: "var(--sgs-primary-deep)", borderTop: "1px solid rgba(200,150,62,0.2)" }}>
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-14 pb-4">
@@ -94,7 +87,7 @@ export function PublicFooter() {
                 📞 0971 132 378
               </a>
               <p className="text-xs flex items-start gap-2 mb-1" style={{ color: "#B9C6D4" }}>
-                📍 122 - 124 B2, Khu đô thị Sala, Phường An Khánh, TP.HCM, Việt Nam
+                📍 {tt(lang, "122 - 124 B2, Khu đô thị Sala, Phường An Khánh, TP.HCM, Việt Nam", "122 - 124 B2, Sala Urban Area, An Khanh Ward, HCMC, Vietnam")}
               </p>
               <a href="mailto:info@sgsland.vn" className="text-xs" style={{ color: "#B9C6D4" }} onMouseEnter={e => linkHover(e, true)} onMouseLeave={e => linkHover(e, false)}>
                 ✉ info@sgsland.vn
@@ -117,7 +110,7 @@ export function PublicFooter() {
               {FOOTER_PROJECTS.map((link) => (
                 <li key={link.href}>
                   <Link
-                    href={link.href}
+                    href={lang === "en" ? "/en" + link.href : link.href}
                     className="text-sm transition-colors block"
                     style={{ color: "#B9C6D4" }}
                     onMouseEnter={e => linkHover(e, true)}
@@ -141,7 +134,7 @@ export function PublicFooter() {
               {FOOTER_SUPPORT.map((link) => (
                 <li key={link.href}>
                   <Link
-                    href={link.href}
+                    href={lang === "en" ? "/en" + link.href : link.href}
                     className="text-sm transition-colors block"
                     style={{ color: "#B9C6D4" }}
                     onMouseEnter={e => linkHover(e, true)}
@@ -165,7 +158,7 @@ export function PublicFooter() {
               {FOOTER_ABOUT.map((link) => (
                 <li key={link.href}>
                   <Link
-                    href={link.href}
+                    href={lang === "en" ? "/en" + link.href : link.href}
                     className="text-sm transition-colors block"
                     style={{ color: "#B9C6D4" }}
                     onMouseEnter={e => linkHover(e, true)}
@@ -180,13 +173,13 @@ export function PublicFooter() {
               className="space-y-1 pt-4"
               style={{ borderTop: "1px solid rgba(255,255,255,0.07)" }}
             >
-              <p className="text-xs" style={{ color: "var(--sgs-on-dark-muted)" }}>Cấp ngày: 01/01/2018 tại TP.HCM</p>
+              <p className="text-xs" style={{ color: "var(--sgs-on-dark-muted)" }}>{tt(lang, "Cấp ngày: 01/01/2018 tại TP.HCM", "Issued: 01/01/2018 in Ho Chi Minh City")}</p>
               <p className="text-xs" style={{ color: "var(--sgs-on-dark-muted)" }}>API: <a href="/developers" style={{ color: "#B9C6D4" }}>developers</a></p>
             </div>
           </div>
         </div>
         {/* ── Bottom bar ────────────────────────────────── */}
-        <div className="flex flex-col sm:flex-row items-center justify-between gap-3 pt-5">
+        <div className="flex flex-col sm:flex-row items-center justify-between gap-3 pt-5 pb-20 sm:pb-6 sm:pr-24">
           <p className="text-xs" style={{ color: "var(--sgs-on-dark-muted)" }}>
             © {year} SGS LAND. {lang === "vi" ? "Bảo lưu mọi quyền." : "All rights reserved."}
           </p>
@@ -194,7 +187,7 @@ export function PublicFooter() {
             {LEGAL_LINKS.map((link) => (
               <Link
                 key={link.href}
-                href={link.href}
+                href={lang === "en" ? "/en" + link.href : link.href}
                 className="text-xs transition-colors"
                 style={{ color: "var(--sgs-on-dark-muted)" }}
                 onMouseEnter={e => linkHover(e, true)}

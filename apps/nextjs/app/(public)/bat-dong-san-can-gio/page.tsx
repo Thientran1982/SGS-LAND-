@@ -5,7 +5,7 @@ import type { Metadata } from "next";
 export const metadata: Metadata = {
   title: "Bất Động Sản Cần Giờ | Siêu Đô Thị Lấn Biển",
   description: "BĐS Cần Giờ TP.HCM: cơ hội đầu tư đón sóng Vinhomes Cần Giờ 2.870ha và Metro số 4. Giá đất còn thấp, tiềm năng tăng trưởng cao nhất TP.HCM.",
-  alternates: { canonical: "https://sgsland.vn/bat-dong-san-can-gio" },
+  alternates: { canonical: "https://sgsland.vn/bat-dong-san-can-gio", languages: { "vi-VN": "https://sgsland.vn/bat-dong-san-can-gio", "en-US": "https://sgsland.vn/en/bat-dong-san-can-gio", "x-default": "https://sgsland.vn/bat-dong-san-can-gio" } },
 };
 export const dynamic = "force-dynamic";
 

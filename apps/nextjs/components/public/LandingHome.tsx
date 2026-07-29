@@ -1,6 +1,7 @@
 // @ts-nocheck
 "use client";
 import React, { useState, useEffect, useRef, useCallback } from "react";
+import { useLang } from "@/components/shared/useLang";
 
 type Lang = "vi" | "en";
 
@@ -103,6 +104,12 @@ function useReveal() {
 
 // ─── MAP SECTION ─────────────────────────────────────────────────────────────
 function MapHero({ lang, onChatOpen }: { lang: Lang; onChatOpen: () => void }) {
+  // Goi y AI: doi cau moi 4s (chi render 1 cau nen khong pha layout pill)
+  const [phIdx, setPhIdx] = useState(0);
+  useEffect(() => {
+    const id = setInterval(() => setPhIdx((i) => (i + 1) % 2), 4000);
+    return () => clearInterval(id);
+  }, []);
   const [activePin, setActivePin] = useState<number | null>(null);
   const [cardPos, setCardPos]     = useState<{ left: number; top: number; w: number }>({ left: 0, top: 0, w: 290 });
   const [query, setQuery]         = useState("");
@@ -176,7 +183,7 @@ function MapHero({ lang, onChatOpen }: { lang: Lang; onChatOpen: () => void }) {
             {/* Corner labels */}
             {[
               { cls:"tl", style:{top:26,left:30},    text: lang==="vi" ? "SGS LAND · Bản đồ 6 tỉnh miền Nam 2026" : "SGS LAND · 6-province map, South Vietnam 2026" },
-              { cls:"tr", style:{top:26,right:30},   text:"Tỷ lệ 1:250.000 · WGS-84" },
+              { cls:"tr", style:{top:26,right:30},   text: lang==="vi" ? "Tỷ lệ 1:250.000 · WGS-84" : "Scale 1:250,000 · WGS-84" },
               { cls:"bl", style:{bottom:24,left:30}, text:"10°25′–11°00′ N" },
               { cls:"br", style:{bottom:24,right:30},text:"106°30′–107°00′ E" },
             ].map(c => (
@@ -298,8 +305,10 @@ function MapHero({ lang, onChatOpen }: { lang: Lang; onChatOpen: () => void }) {
               {!query && (
                 <span className="lp-ph-over" aria-hidden="true">
                   <span className="lp-ph-track">
-                    <span>{lang==="vi" ? "Nhà phố Aqua City dưới 6 tỷ, pháp lý sạch…" : "Townhouse Aqua City under 6B VND, clean title…"}</span>
-                    <span>{lang==="vi" ? "Căn hộ Global City dưới 8 tỷ, pháp lý sạch…" : "Apartment Global City under 8B VND, clean title…"}</span>
+                    <span key={phIdx} className="sgs-ph-fade">{phIdx === 0
+                      ? (lang==="vi" ? "Nhà phố Aqua City dưới 6 tỷ, pháp lý sạch…" : "Townhouse Aqua City under 6B VND, clean title…")
+                      : (lang==="vi" ? "Căn hộ Global City dưới 8 tỷ, pháp lý sạch…" : "Apartment Global City under 8B VND, clean title…")}</span>
+                    
                   </span>
                 </span>
               )}
@@ -410,7 +419,7 @@ function ProjectsSection({ lang }: { lang: Lang }) {
             <ProjectCard key={p.slug} p={p} lang={lang} />
           ))}
           {/* +45k card */}
-          <a href="/marketplace"
+          <a href={lpath("/marketplace", lang)}
             style={{ display:"flex", alignItems:"center", justifyContent:"center", textAlign:"center", background:"var(--lp-ink)", borderRadius:"20px", border:"1px solid var(--lp-line)", textDecoration:"none", minHeight:"280px", transition:"opacity .2s" }}
             onMouseEnter={e => { (e.currentTarget as HTMLElement).style.opacity="0.88"; }}
             onMouseLeave={e => { (e.currentTarget as HTMLElement).style.opacity="1"; }}
@@ -513,7 +522,7 @@ function CtaSection({ lang, onChatOpen }: { lang: Lang; onChatOpen: () => void }
               : "Get an AI valuation now, or talk to a specialist: reply within 15 minutes, seven days a week."}
           </p>
           <div style={{ display:"flex", gap:"14px", justifyContent:"center", flexWrap:"wrap" }}>
-            <a href="/ai-valuation"
+            <a href={lpath("/ai-valuation", lang)}
               style={{ display:"inline-flex", alignItems:"center", gap:"10px", padding:"17px 36px", borderRadius:"999px", fontWeight:500, fontSize:"15px", background:"var(--lp-ink)", color:"var(--lp-bg)", textDecoration:"none", transition:"all .25s" }}
               onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background="var(--lp-navy)"; (e.currentTarget as HTMLElement).style.transform="translateY(-2px)"; }}
               onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background="var(--lp-ink)"; (e.currentTarget as HTMLElement).style.transform=""; }}
@@ -541,22 +550,12 @@ interface Props {
   stats?: { totalListings: number; totalProjects: number; totalBrokers: number };
 }
 
-export function LandingPage({ featuredListings = [], stats }: Props) {
-  const [lang, setLang] = useState<Lang>("vi");
-  const onChatOpen = React.useCallback(() => { window.dispatchEvent(new CustomEvent("sgs-open-chat")); }, []);
+const lpath = (p: string, g: string) => (g === "en" ? "/en" + p : p);
 
-  // Sync with PublicHeader lang
-  useEffect(() => {
-    try {
-      const saved = localStorage.getItem("sgs-lang") as Lang | null;
-      if (saved === "vi" || saved === "en") setLang(saved);
-    } catch {}
-    const handler = (e: CustomEvent) => {
-      if (e.detail === "vi" || e.detail === "en") setLang(e.detail as Lang);
-    };
-    window.addEventListener("sgs-lang-change", handler as EventListener);
-    return () => window.removeEventListener("sgs-lang-change", handler as EventListener);
-  }, []);
+export function LandingPage({ featuredListings = [], stats }: Props) {
+  const lang: Lang = useLang();
+
+  const onChatOpen = React.useCallback(() => { window.dispatchEvent(new CustomEvent("sgs-open-chat")); }, []);
 
   return (
     <>

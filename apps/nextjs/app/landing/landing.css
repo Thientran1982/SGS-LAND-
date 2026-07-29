@@ -358,5 +358,6 @@
 /* ── SCROLL REVEAL ── */
 .lp-reveal { opacity: 0; transform: translateY(28px); transition: opacity .8s ease, transform .8s ease; }
 .lp-reveal.lp-in { opacity: 1; transform: translateY(0); }
-/* ── GOOGLE FONTS (loaded via Next.js layout, fallback here) ── */
-@import url('https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700&family=Playfair+Display:wght@700&display=swap');
+/* Fonts: 'Be Vietnam Pro' da duoc self-host qua next/font trong app/layout.tsx.
+   Bo @import Google Fonts o day: @import phai dung truoc moi rule (loi parse CSS),
+   va du an khong goi Google Fonts luc runtime. 'Playfair Display' khong duoc dung. */

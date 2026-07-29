@@ -18,3 +18,4 @@ Allow: /
 LLMs: https://sgsland.vn/llms.txt
 
 Sitemap: https://sgsland.vn/sitemap.xml
+Sitemap: https://sgsland.vn/sitemap-en.xml

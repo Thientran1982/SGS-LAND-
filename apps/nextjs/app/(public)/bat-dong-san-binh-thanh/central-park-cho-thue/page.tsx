@@ -5,7 +5,7 @@ export const metadata: Metadata = {
   description: "Tổng hợp căn hộ cho thuê Vinhomes Central Park 2026: giá từ 9 triệu/tháng, đầy đủ nội thất cao cấp. Studio, 1-3PN. Hỗ trợ tìm thuê nhanh từ SGS Land.",
   keywords: ["cho thuê Vinhomes Central Park", "Central Park cho thuê", "thuê căn hộ Central Park Bình Thạnh", "Vinhomes cho thuê 2026", "thuê căn hộ Landmark 81"],
   openGraph: { title: "Cho Thuê Vinhomes Central Park 2026 | Giá Tốt, Đầy Đủ Nội Thất", description: "Tổng hợp căn hộ cho thuê Vinhomes Central Park 2026: giá từ 9 triệu/tháng, đầy đủ nội thất cao cấp. Studio, 1-3PN. Hỗ trợ tìm thuê nhanh từ SGS Land.", url: "https://sgsland.vn/bat-dong-san-binh-thanh/central-park-cho-thue", type: "article" },
-  alternates: { canonical: "https://sgsland.vn/bat-dong-san-binh-thanh/central-park-cho-thue" },
+  alternates: { canonical: "https://sgsland.vn/bat-dong-san-binh-thanh/central-park-cho-thue", languages: { "vi-VN": "https://sgsland.vn/bat-dong-san-binh-thanh/central-park-cho-thue", "en-US": "https://sgsland.vn/en/bat-dong-san-binh-thanh/central-park-cho-thue", "x-default": "https://sgsland.vn/bat-dong-san-binh-thanh/central-park-cho-thue" } },
 };
 export default function Page() {
   return (

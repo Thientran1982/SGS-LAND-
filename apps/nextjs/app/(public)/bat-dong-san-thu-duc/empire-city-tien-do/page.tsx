@@ -4,7 +4,7 @@ export const metadata: Metadata = {
   title: "Empire City Tiến Độ 2026 | Keppel Land Thủ Thiêm",
   description: "Cập nhật tiến độ Empire City Thủ Thiêm 2026: Linden bàn giao, Tilia đang xây, tháp Empire 88 tầng. Giá bán và cơ hội đầu tư.",
   openGraph: { title: "Empire City Tiến Độ 2026 | Keppel Land Thủ Thiêm", description: "Cập nhật tiến độ Empire City Thủ Thiêm 2026: Linden bàn giao, Tilia đang xây, tháp Empire 88 tầng. Giá bán và cơ hội đầu tư.", url: "https://sgsland.vn/bat-dong-san-thu-duc/empire-city-tien-do", type: "article" },
-  alternates: { canonical: "https://sgsland.vn/bat-dong-san-thu-duc/empire-city-tien-do" },
+  alternates: { canonical: "https://sgsland.vn/bat-dong-san-thu-duc/empire-city-tien-do", languages: { "vi-VN": "https://sgsland.vn/bat-dong-san-thu-duc/empire-city-tien-do", "en-US": "https://sgsland.vn/en/bat-dong-san-thu-duc/empire-city-tien-do", "x-default": "https://sgsland.vn/bat-dong-san-thu-duc/empire-city-tien-do" } },
 };
 export default function Page() {
   return (

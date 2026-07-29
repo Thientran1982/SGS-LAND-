@@ -5,7 +5,7 @@ export const metadata: Metadata = {
   description: "Tổng quan Vinhomes Central Park Bình Thạnh 2026: 9 tòa tháp, Landmark 81, công viên 36ha. Giá bán 65-180 triệu/m², cho thuê 12-50 triệu/tháng. SGS Land.",
   keywords: ["Vinhomes Central Park tổng quan","Vinhomes Bình Thạnh","Central Park Bình Thạnh","Landmark 81","Vinhomes Central Park giá 2026"],
   openGraph: { title: "Vinhomes Central Park Tổng Quan 2026", description: "9 tòa tháp, Landmark 81, công viên 36ha, metro tuyến 1.", url: "https://sgsland.vn/bat-dong-san-binh-thanh/vinhomes-central-park-tong-quan", type: "article" },
-  alternates: { canonical: "https://sgsland.vn/bat-dong-san-binh-thanh/vinhomes-central-park-tong-quan" },
+  alternates: { canonical: "https://sgsland.vn/bat-dong-san-binh-thanh/vinhomes-central-park-tong-quan", languages: { "vi-VN": "https://sgsland.vn/bat-dong-san-binh-thanh/vinhomes-central-park-tong-quan", "en-US": "https://sgsland.vn/en/bat-dong-san-binh-thanh/vinhomes-central-park-tong-quan", "x-default": "https://sgsland.vn/bat-dong-san-binh-thanh/vinhomes-central-park-tong-quan" } },
 };
 export default function Page() {
   return (

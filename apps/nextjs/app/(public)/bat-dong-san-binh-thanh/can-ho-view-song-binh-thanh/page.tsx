@@ -5,7 +5,7 @@ export const metadata: Metadata = {
   description: "Căn hộ view sông Bình Thạnh 2026: Xi Riverview Palace, Vinhomes Central Park, Sunwah Pearl, Saigon Pearl. Bảng giá, tiện ích và kinh nghiệm chọn căn đẹp.",
   keywords: ["căn hộ view sông Bình Thạnh","căn hộ mặt sông Sài Gòn","view sông Sài Gòn Bình Thạnh","căn hộ ven sông TPHCM"],
   openGraph: { title: "Căn Hộ View Sông Bình Thạnh 2026", description: "Top căn hộ mặt sông Sài Gòn tại Bình Thạnh.", url: "https://sgsland.vn/bat-dong-san-binh-thanh/can-ho-view-song-binh-thanh", type: "article" },
-  alternates: { canonical: "https://sgsland.vn/bat-dong-san-binh-thanh/can-ho-view-song-binh-thanh" },
+  alternates: { canonical: "https://sgsland.vn/bat-dong-san-binh-thanh/can-ho-view-song-binh-thanh", languages: { "vi-VN": "https://sgsland.vn/bat-dong-san-binh-thanh/can-ho-view-song-binh-thanh", "en-US": "https://sgsland.vn/en/bat-dong-san-binh-thanh/can-ho-view-song-binh-thanh", "x-default": "https://sgsland.vn/bat-dong-san-binh-thanh/can-ho-view-song-binh-thanh" } },
 };
 export default function Page() {
   return (

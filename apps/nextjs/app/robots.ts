@@ -46,6 +46,7 @@ export default function robots(): MetadataRoute.Robots {
     ],
     sitemap: [
       "https://sgsland.vn/sitemap.xml",
+      "https://sgsland.vn/sitemap-en.xml",
       "https://sgsland.vn/sitemap-answers.xml",
       "https://sgsland.vn/sitemap-areas.xml",
       "https://sgsland.vn/sitemap-faq.xml",

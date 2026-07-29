@@ -7,7 +7,7 @@ export const metadata: Metadata = {
   description:
     "3.200+ bất động sản Long Thành, Đồng Nai. Hưởng lợi từ Sân Bay Quốc Tế Long Thành, cao tốc Bến Lức — Long Thành. Đất nền, nhà phố, khu công nghiệp.",
   keywords: ["bất động sản Long Thành", "đất Long Thành", "BĐS sân bay Long Thành"],
-  alternates: { canonical: "https://sgsland.vn/bat-dong-san-long-thanh" },
+  alternates: { canonical: "https://sgsland.vn/bat-dong-san-long-thanh", languages: { "vi-VN": "https://sgsland.vn/bat-dong-san-long-thanh", "en-US": "https://sgsland.vn/en/bat-dong-san-long-thanh", "x-default": "https://sgsland.vn/bat-dong-san-long-thanh" } },
 };
 
 export const dynamic = "force-dynamic";

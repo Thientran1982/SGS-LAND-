@@ -5,7 +5,7 @@ import type { Metadata } from "next";
 export const metadata: Metadata = {
   title: "Bất Động Sản Bình Chánh | Nhà Đất Bình Chánh TP.HCM",
   description: "Tìm BĐS Bình Chánh TP.HCM: đất nền, nhà phố, căn hộ giá tốt. Hạ tầng vành đai, KCN Vĩnh Lộc phát triển mạnh. Pháp lý rõ ràng, cập nhật liên tục.",
-  alternates: { canonical: "https://sgsland.vn/bat-dong-san-binh-chanh" },
+  alternates: { canonical: "https://sgsland.vn/bat-dong-san-binh-chanh", languages: { "vi-VN": "https://sgsland.vn/bat-dong-san-binh-chanh", "en-US": "https://sgsland.vn/en/bat-dong-san-binh-chanh", "x-default": "https://sgsland.vn/bat-dong-san-binh-chanh" } },
 };
 export const dynamic = "force-dynamic";
 

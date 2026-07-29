@@ -327,3 +327,53 @@
   0%, 100% { opacity: 1;   box-shadow: 0 0 6px 2px rgba(74,222,128,0.5); }
   50%       { opacity: 0.5; box-shadow: 0 0 10px 4px rgba(74,222,128,0.25); }
 }
+
+
+/* ── Header / mobile-menu tokens: doi mau theo theme (truoc day hardcode trang) ── */
+:root {
+  /* Nen header lay dung tong kem cua trang (truoc day trang thuan => lech mau,
+     doc nhu mot vat lieu khac dan len trang). Mot duong hairline, khong do bong. */
+  --hdr-bg: rgba(247,244,238,0.82);
+  --hdr-panel: rgba(247,244,238,0.98);
+  --hdr-border: rgba(27,58,92,0.10);
+  --hdr-shadow: none;
+  --hdr-chip: rgba(27,58,92,0.07);
+  --hdr-muted: rgba(27,58,92,0.72);
+}
+.dark {
+  --hdr-bg: rgba(11,15,26,0.82);
+  --hdr-panel: rgba(11,15,26,0.98);
+  --hdr-border: rgba(255,255,255,0.08);
+  --hdr-shadow: none;
+  --hdr-chip: rgba(255,255,255,0.08);
+  --hdr-muted: rgba(226,235,245,0.78);
+}
+
+/* Nut phu trong header: khong vien, chi hien nen khi hover */
+.sgs-hdr-chip:hover,
+.sgs-hdr-ghost:hover {
+  background: var(--hdr-chip) !important;
+  color: var(--sgs-primary) !important;
+}
+.dark .sgs-hdr-chip:hover,
+.dark .sgs-hdr-ghost:hover {
+  color: var(--text-primary) !important;
+}
+
+
+/* Goi y AI o hero: fade khi doi cau */
+@keyframes sgs-ph-in {
+  from { opacity: 0; transform: translateY(3px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.sgs-ph-fade { animation: sgs-ph-in .45s ease both; }
+@media (prefers-reduced-motion: reduce) {
+  .sgs-ph-fade { animation: none; }
+}
+
+/* Cua so goi y AI cao 48px (thiet ke cho marquee 2 dong). Nay chi hien 1 cau
+   luan phien nen phai can giua theo chieu doc. Dung :has de chi ap dung o day. */
+.lp-ph-wrap:has(.sgs-ph-fade) {
+  display: flex;
+  align-items: center;
+}

@@ -7,7 +7,7 @@ export const metadata: Metadata = {
   description:
     "Bất động sản Nhơn Trạch 2026: giá đất nền 12–25 triệu/m², khu công nghiệp Nhơn Trạch, cầu Nhơn Trạch & Vành đai 3. Tư vấn đầu tư miễn phí từ SGS Land.",
   keywords: ["bất động sản Nhơn Trạch", "đất Nhơn Trạch", "khu công nghiệp Nhơn Trạch", "bđs Nhơn Trạch Đồng Nai"],
-  alternates: { canonical: "https://sgsland.vn/bat-dong-san-nhon-trach" },
+  alternates: { canonical: "https://sgsland.vn/bat-dong-san-nhon-trach", languages: { "vi-VN": "https://sgsland.vn/bat-dong-san-nhon-trach", "en-US": "https://sgsland.vn/en/bat-dong-san-nhon-trach", "x-default": "https://sgsland.vn/bat-dong-san-nhon-trach" } },
   openGraph: {
     title: "Bất Động Sản Nhơn Trạch 2026 – Giá Đất & Dự Án | SGS Land",
     description: "Thị trường BĐS Nhơn Trạch 2026: giá đất, khu công nghiệp, cầu Nhơn Trạch. Cập nhật từ SGS Land.",

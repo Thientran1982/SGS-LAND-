@@ -3,6 +3,7 @@
 import React, { useState, useMemo, useEffect, useCallback, memo } from 'react';
 import { AreaChart, Area, YAxis, ResponsiveContainer } from 'recharts';
 import { useRouter, useSearchParams } from 'next/navigation';
+import { useLang } from '@/components/shared/useLang';
 
 // ---- Next.js adapters (ported from Vite root pages/Login.tsx) ----
 const ROUTES = { LANDING: '', LOGIN: 'login', DASHBOARD: 'dashboard', CHECKOUT: 'checkout' };
@@ -351,7 +352,9 @@ const EN_DICT: Record<string, string> = {
 
 
 function useTranslation() {
-  const [language, setLanguage] = React.useState('vn');
+  const _urlLang = useLang();
+  const [language, setLanguage] = React.useState(_urlLang === 'en' ? 'en' : 'vn');
+  React.useEffect(() => { setLanguage(_urlLang === 'en' ? 'en' : 'vn'); }, [_urlLang]);
   const t = (key: string, params?: Record<string, any>) => {
     const _src = language === 'en' ? EN_DICT : DICT; let s = _src[key] !== undefined ? _src[key] : (DICT[key] !== undefined ? DICT[key] : key);
     if (params) s = s.replace(/{(\w+)}/g, (_: string, k: string) => (params[k] !== undefined ? String(params[k]) : '{' + k + '}'));
@@ -918,7 +921,7 @@ export function LoginPage() {
                     {language.toUpperCase()}
                 </button>
                 <button 
-                    onClick={() => window.location.href = `/${ROUTES.LANDING}`}
+                    onClick={() => window.location.href = language === 'en' ? '/en' : `/${ROUTES.LANDING}`}
                     className="text-xs font-bold text-sgs-text-muted hover:text-white transition-colors"
                 >
                     {t('legal.back_home')}

@@ -3,6 +3,9 @@
 
 import Link from "next/link";
 import { useState, useEffect } from "react";
+import { createPortal } from "react-dom";
+import { usePathname } from "next/navigation";
+import { useLang, switchLangPath } from "@/components/shared/useLang";
 import { Sun, Moon, Globe, User, Menu, X, Sparkles } from "lucide-react";
 
 type Lang = "vi" | "en";
@@ -12,15 +15,22 @@ export function PublicHeader({ authed = false }: { authed?: boolean }) {
   const [scrolled, setScrolled]   = useState(false);
   const [menuOpen, setMenuOpen]   = useState(false);
   const [theme, setTheme]         = useState<Theme>("light");
-  const [lang, setLang]           = useState<Lang>("vi");
+
+  // Khoa cuon nen khi menu mobile mo
+  useEffect(() => {
+    if (typeof document === "undefined") return;
+    const prev = document.body.style.overflow;
+    if (menuOpen) document.body.style.overflow = "hidden";
+    return () => { document.body.style.overflow = prev; };
+  }, [menuOpen]);
+  const pathname = usePathname();
+  const lang = useLang();
 
   useEffect(() => {
     try {
       const savedTheme = localStorage.getItem("sgs-theme") as Theme | null;
       if (savedTheme === "dark" || savedTheme === "light") setTheme(savedTheme);
       else if (window.matchMedia("(prefers-color-scheme: dark)").matches) setTheme("dark");
-      const savedLang = localStorage.getItem("sgs-lang") as Lang | null;
-      if (savedLang === "vi" || savedLang === "en") setLang(savedLang);
     } catch {}
   }, []);
 
@@ -39,9 +49,9 @@ export function PublicHeader({ authed = false }: { authed?: boolean }) {
 
   const toggleLang = () => {
     const next: Lang = lang === "vi" ? "en" : "vi";
-    setLang(next);
     try { localStorage.setItem("sgs-lang", next); } catch {}
     window.dispatchEvent(new CustomEvent("sgs-lang-change", { detail: next }));
+    window.location.assign(switchLangPath(pathname || "/", next));
   };
 
   const navLinks = [
@@ -61,11 +71,11 @@ export function PublicHeader({ authed = false }: { authed?: boolean }) {
       style={{
         background:      isHero
           ? "linear-gradient(to bottom, rgba(10,30,51,0.72) 0%, rgba(10,30,51,0.0) 100%)"
-          : "rgba(255,255,255,0.93)",
+          : "var(--hdr-bg)",
         backdropFilter:  isHero ? "none"   : "blur(14px)",
         WebkitBackdropFilter: isHero ? "none" : "blur(14px)",
-        borderBottom:    isHero ? "none"   : "1px solid rgba(27,58,92,0.12)",
-        boxShadow:       isHero ? "none"   : "0 1px 20px rgba(15,39,64,0.08)",
+        borderBottom:    isHero ? "none"   : "1px solid var(--hdr-border)",
+        boxShadow:       isHero ? "none"   : "var(--hdr-shadow)",
       }}
     >
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -111,7 +121,7 @@ export function PublicHeader({ authed = false }: { authed?: boolean }) {
             {navLinks.map((link) => (
               <Link
                 key={link.href}
-                href={link.href}
+                href={lang === "en" ? "/en" + link.href : link.href}
                 className="px-3.5 py-2 rounded-lg text-sm font-medium transition-all"
                 style={{
                   color: isHero ? "rgba(255,255,255,0.85)" : "var(--sgs-primary)",
@@ -138,11 +148,11 @@ export function PublicHeader({ authed = false }: { authed?: boolean }) {
             {/* VI/EN Toggle */}
             <button
               onClick={toggleLang}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold transition-all"
+              className="sgs-hdr-chip flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold transition-all"
               style={{
-                background: isHero ? "rgba(255,255,255,0.12)" : "rgba(27,58,92,0.07)",
-                border: `1px solid ${isHero ? "rgba(255,255,255,0.3)" : "rgba(27,58,92,0.18)"}`,
-                color: isHero ? "#FFFFFF" : "var(--sgs-primary)",
+                background: isHero ? "rgba(255,255,255,0.12)" : "transparent",
+                border: `1px solid ${isHero ? "rgba(255,255,255,0.3)" : "transparent"}`,
+                color: isHero ? "#FFFFFF" : "var(--hdr-muted)",
               }}
               aria-label="Chuyển ngôn ngữ VI / EN"
             >
@@ -152,11 +162,11 @@ export function PublicHeader({ authed = false }: { authed?: boolean }) {
             {/* Light / Dark Toggle */}
             <button
               onClick={() => setTheme(t => t === "light" ? "dark" : "light")}
-              className="w-8 h-8 rounded-full flex items-center justify-center transition-all"
+              className="sgs-hdr-chip w-8 h-8 rounded-full flex items-center justify-center transition-all"
               style={{
-                background: isHero ? "rgba(255,255,255,0.12)" : "rgba(27,58,92,0.07)",
-                border: `1px solid ${isHero ? "rgba(255,255,255,0.3)" : "rgba(27,58,92,0.18)"}`,
-                color: isHero ? "#FFFFFF" : "var(--sgs-primary)",
+                background: isHero ? "rgba(255,255,255,0.12)" : "transparent",
+                border: `1px solid ${isHero ? "rgba(255,255,255,0.3)" : "transparent"}`,
+                color: isHero ? "#FFFFFF" : "var(--hdr-muted)",
               }}
               aria-label="Chuyển chế độ sáng / tối"
             >
@@ -166,10 +176,10 @@ export function PublicHeader({ authed = false }: { authed?: boolean }) {
             {/* Login — ghost outline */}
             <Link
               href={authed ? "/dashboard" : "/login"}
-              className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-sm font-medium transition-all"
+              className="sgs-hdr-ghost flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-sm font-medium transition-all"
               style={{
-                border: `1.5px solid ${isHero ? "rgba(255,255,255,0.45)" : "var(--sgs-primary)"}`,
-                color: isHero ? "rgba(255,255,255,0.92)" : "var(--sgs-primary)",
+                border: `1.5px solid ${isHero ? "rgba(255,255,255,0.45)" : "transparent"}`,
+                color: isHero ? "rgba(255,255,255,0.92)" : "var(--hdr-muted)",
               }}
               onMouseEnter={e => {
                 const el = e.currentTarget as HTMLElement;
@@ -189,7 +199,7 @@ export function PublicHeader({ authed = false }: { authed?: boolean }) {
               style={{
                 background: "var(--sgs-accent)",
                 color: "var(--sgs-primary-deep)",
-                boxShadow: "0 2px 8px rgba(200,150,62,0.35)",
+                boxShadow: "none",
               }}
               onMouseEnter={e => (e.currentTarget as HTMLElement).style.background = "#D9A94E"}
               onMouseLeave={e => (e.currentTarget as HTMLElement).style.background = "var(--sgs-accent)"}
@@ -211,21 +221,32 @@ export function PublicHeader({ authed = false }: { authed?: boolean }) {
       </div>
 
       {/* ── Mobile Menu Drawer ─────────────────────────────── */}
+      {/* Lop phu: bam ra ngoai de dong, tranh noi dung phia sau canh tranh thi giac */}
+      {menuOpen && typeof document !== "undefined" &&
+        createPortal(
+          <div
+            className="md:hidden fixed inset-0 z-40"
+            style={{ top: 64, background: "rgba(0,0,0,0.45)" }}
+            onClick={() => setMenuOpen(false)}
+            aria-hidden
+          />,
+          document.body
+        )}
       {menuOpen && (
         <div
-          className="md:hidden"
+          className="md:hidden relative z-50"
           style={{
-            background: "rgba(255,255,255,0.97)",
+            background: "var(--hdr-panel)",
             backdropFilter: "blur(14px)",
             WebkitBackdropFilter: "blur(14px)",
-            borderBottom: "1px solid rgba(27,58,92,0.1)",
+            borderBottom: "1px solid var(--hdr-border)",
           }}
         >
           <div className="max-w-7xl mx-auto px-4 py-4 space-y-1">
             {navLinks.map((link) => (
               <Link
                 key={link.href}
-                href={link.href}
+                href={lang === "en" ? "/en" + link.href : link.href}
                 onClick={() => setMenuOpen(false)}
                 className="block px-3 py-2.5 rounded-lg text-sm font-medium transition-colors hover:bg-sgs-bg"
                 style={{ color: "var(--sgs-primary)" }}
@@ -240,7 +261,7 @@ export function PublicHeader({ authed = false }: { authed?: boolean }) {
               <button
                 onClick={toggleLang}
                 className="flex-1 flex items-center justify-center gap-1.5 text-xs font-semibold py-2.5 rounded-lg"
-                style={{ background: "rgba(27,58,92,0.07)", color: "var(--sgs-primary)" }}
+                style={{ background: "var(--hdr-chip)", color: "var(--sgs-primary)" }}
                 aria-label="Chuyển ngôn ngữ"
               >
                 {lang.toUpperCase()}
@@ -248,7 +269,7 @@ export function PublicHeader({ authed = false }: { authed?: boolean }) {
               <button
                 onClick={() => setTheme(t => t === "light" ? "dark" : "light")}
                 className="flex-1 flex items-center justify-center gap-1.5 text-xs font-semibold py-2.5 rounded-lg"
-                style={{ background: "rgba(27,58,92,0.07)", color: "var(--sgs-primary)" }}
+                style={{ background: "var(--hdr-chip)", color: "var(--sgs-primary)" }}
                 aria-label="Chuyển chế độ sáng tối"
               >
                 {theme === "light" ? <Moon className="w-4 h-4" /> : <Sun className="w-4 h-4" />}

@@ -4,7 +4,7 @@ export const metadata: Metadata = {
   title: "Thủ Thiêm 2026 Quy Hoạch | Cập Nhật Mới Nhất",
   description: "Quy hoạch khu đô thị Thủ Thiêm 2026: hạ tầng giao thông, trung tâm tài chính, dự án đang triển khai. Cập nhật mới nhất từ SGS Land.",
   openGraph: { title: "Thủ Thiêm 2026 Quy Hoạch | Cập Nhật Mới Nhất", description: "Quy hoạch khu đô thị Thủ Thiêm 2026: hạ tầng giao thông, trung tâm tài chính, dự án đang triển khai. Cập nhật mới nhất từ SGS Land.", url: "https://sgsland.vn/bat-dong-san-thu-duc/thu-thiem-2026-quy-hoach", type: "article" },
-  alternates: { canonical: "https://sgsland.vn/bat-dong-san-thu-duc/thu-thiem-2026-quy-hoach" },
+  alternates: { canonical: "https://sgsland.vn/bat-dong-san-thu-duc/thu-thiem-2026-quy-hoach", languages: { "vi-VN": "https://sgsland.vn/bat-dong-san-thu-duc/thu-thiem-2026-quy-hoach", "en-US": "https://sgsland.vn/en/bat-dong-san-thu-duc/thu-thiem-2026-quy-hoach", "x-default": "https://sgsland.vn/bat-dong-san-thu-duc/thu-thiem-2026-quy-hoach" } },
 };
 export default function Page() {
   return (

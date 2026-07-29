@@ -1,6 +1,8 @@
 import type { Metadata, Viewport } from "next";
 import { Inter, JetBrains_Mono, Noto_Serif_Display, Be_Vietnam_Pro, IBM_Plex_Mono } from "next/font/google";
 import "./globals.css";
+import { getLang } from "@/lib/lang";
+import { LangProvider } from "@/components/shared/LangProvider";
 import { SchemaScript } from "@/components/SchemaScript";
 import ServiceWorkerRegister from "@/components/ServiceWorkerRegister";
 import ConsentBanner from "@/components/ConsentBanner";
@@ -151,9 +153,10 @@ export const viewport: Viewport = {
 // only affects the not-found route; it has no impact on performance.
 export const dynamic = "force-dynamic";
 // ─── Root Layout ───────────────────────────────────────────
-export default function RootLayout({ children }: { children: React.ReactNode }) {
+export default async function RootLayout({ children }: { children: React.ReactNode }) {
+  const lang = await getLang();
   return (
-    <html lang="vi" suppressHydrationWarning>
+    <html lang={lang === "en" ? "en" : "vi"} suppressHydrationWarning>
       <head>
         {/* Preconnect to key third-party origins for LCP improvement */}
         <link rel="preconnect" href="https://c.clarity.ms" />
@@ -193,8 +196,10 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         className={`${inter.variable} ${jetbrainsMono.variable} ${notoSerifDisplay.variable} ${beVietnamPro.variable} ${ibmPlexMono.variable} font-sans antialiased`}
         style={{ background: "var(--bg-app)", color: "var(--text-primary)" }}
       >
-        {children}
-        <ConsentBanner />
+        <LangProvider lang={lang}>
+          {children}
+          <ConsentBanner />
+        </LangProvider>
         <ServiceWorkerRegister />
       </body>
     </html>

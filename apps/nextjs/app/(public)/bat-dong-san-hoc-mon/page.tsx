@@ -6,7 +6,7 @@ export const metadata: Metadata = {
   title: "Bất Động Sản Hóc Môn | Đất Nền & Nhà Phố Vùng Ven",
   description:
     "BĐS Hóc Môn TP.HCM: đất nền, nhà phố vùng ven phía Tây Bắc. Giá còn mềm quanh 25 triệu/m², hạ tầng Vành đai 3 và Quốc lộ 22 thúc đẩy tăng trưởng.",
-  alternates: { canonical: "https://sgsland.vn/bat-dong-san-hoc-mon" },
+  alternates: { canonical: "https://sgsland.vn/bat-dong-san-hoc-mon", languages: { "vi-VN": "https://sgsland.vn/bat-dong-san-hoc-mon", "en-US": "https://sgsland.vn/en/bat-dong-san-hoc-mon", "x-default": "https://sgsland.vn/bat-dong-san-hoc-mon" } },
 };
 export const dynamic = "force-dynamic";
 

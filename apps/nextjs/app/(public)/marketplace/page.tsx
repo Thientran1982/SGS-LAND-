@@ -3,18 +3,29 @@ import type { Metadata } from "next";
 import { Suspense } from "react";
 import type { Listing } from "@/types";
 import { MarketplacePage } from "@/components/public/MarketplacePage";
+import { getLang, langAlternates } from "@/lib/lang";
 
-export const metadata: Metadata = {
-  title: "Tìm kiếm Bất Động Sản | Marketplace SGS LAND",
-  description:
-    "Tìm kiếm 45.000+ bất động sản tại TP.HCM, Đồng Nai, Bình Dương. Lọc theo khu vực, loại, giá, số phòng ngủ. Pháp lý rõ ràng, giá thực, cập nhật liên tục.",
-  alternates: { canonical: "https://sgsland.vn/marketplace" },
-  openGraph: {
-    title: "Tìm kiếm Bất Động Sản | SGS LAND Marketplace",
-    description: "45.000+ BĐS TP.HCM, Đồng Nai, Bình Dương — pháp lý rõ ràng, giá thực",
-    url: "https://sgsland.vn/marketplace",
-  },
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const lang = await getLang();
+  const en = lang === "en";
+  const url = en ? "https://sgsland.vn/en/marketplace" : "https://sgsland.vn/marketplace";
+  return {
+    title: en
+      ? "Property Search | SGS LAND Marketplace"
+      : "Tìm kiếm Bất Động Sản | Marketplace SGS LAND",
+    description: en
+      ? "Search 45,000+ properties across Ho Chi Minh City, Dong Nai and Binh Duong. Filter by area, type, price and bedrooms. Verified legal status, real prices, updated continuously."
+      : "Tìm kiếm 45.000+ bất động sản tại TP.HCM, Đồng Nai, Bình Dương. Lọc theo khu vực, loại, giá, số phòng ngủ. Pháp lý rõ ràng, giá thực, cập nhật liên tục.",
+    alternates: { canonical: url, ...langAlternates("/marketplace") },
+    openGraph: {
+      title: en ? "Property Search | SGS LAND Marketplace" : "Tìm kiếm Bất Động Sản | SGS LAND Marketplace",
+      description: en
+        ? "45,000+ properties in HCMC, Dong Nai, Binh Duong — verified legal status, real prices"
+        : "45.000+ BĐS TP.HCM, Đồng Nai, Bình Dương — pháp lý rõ ràng, giá thực",
+      url,
+    },
+  };
+}
 
 interface SearchParams {
   q?: string;

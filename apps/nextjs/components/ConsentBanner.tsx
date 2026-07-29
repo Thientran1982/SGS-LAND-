@@ -1,6 +1,8 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useLang } from "@/components/shared/useLang";
+import { tt } from "@/lib/i18n";
 import type { CSSProperties } from "react";
 import {
   type ConsentState,
@@ -101,6 +103,7 @@ function ConsentToggleRow({
 // Lop 2 = bang tuy chinh chi tiet tung loai cookie, khong co gia tri mac dinh duoc bat san
 // (ngoai ESSENTIAL), im lang KHONG duoc coi la dong y.
 export default function ConsentBanner() {
+  const lang = useLang();
   const [visible, setVisible] = useState(false);
   const [showDetails, setShowDetails] = useState(false);
   const [draft, setDraft] = useState<ConsentState>({ ESSENTIAL: true, BEHAVIORAL: false, ADVERTISING: false });
@@ -140,7 +143,7 @@ export default function ConsentBanner() {
   return (
     <div
       role="dialog"
-      aria-label="Cài đặt cookie"
+      aria-label={tt(lang, "Cài đặt cookie", "Cookie settings")}
       style={{
         position: "fixed",
         left: 0,
@@ -157,53 +160,54 @@ export default function ConsentBanner() {
         {!showDetails ? (
           <div style={{ display: "flex", flexWrap: "wrap", gap: 12, alignItems: "center", justifyContent: "space-between" }}>
             <p style={{ margin: 0, fontSize: 14, color: "#4b5563", flex: "1 1 320px" }}>
-              SGS LAND sử dụng cookie thiết yếu để vận hành website và cookie tùy chọn (nếu bạn đồng ý) để
-              ca nhan hoa goi y bat dong san phu hop hon. Xem{" "}
+              {tt(lang,
+                "SGS LAND sử dụng cookie thiết yếu để vận hành website và cookie tùy chọn (nếu bạn đồng ý) để cá nhân hóa gợi ý bất động sản phù hợp hơn. Xem ",
+                "SGS LAND uses essential cookies to operate the site and optional cookies (with your consent) to personalise property recommendations. See ")}
               <a href="/cookie-settings" style={{ textDecoration: "underline" }}>
-                chính sách cookie
+                {tt(lang, "chính sách cookie", "cookie policy")}
               </a>
               .
             </p>
             <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
               <button onClick={() => setShowDetails(true)} disabled={saving} style={secondaryBtn}>
-                Tùy chỉnh
+                {tt(lang, "Tùy chỉnh", "Customise")}
               </button>
               <button onClick={handleRejectNonEssential} disabled={saving} style={secondaryBtn}>
-                Chỉ thiết yếu
+                {tt(lang, "Chỉ thiết yếu", "Essential only")}
               </button>
               <button onClick={handleAcceptAll} disabled={saving} style={primaryBtn}>
-                Chấp nhận tất cả
+                {tt(lang, "Chấp nhận tất cả", "Accept all")}
               </button>
             </div>
           </div>
         ) : (
           <div>
-            <h2 style={{ fontSize: 16, fontWeight: 600, marginBottom: 8 }}>Tùy chọn cookie</h2>
+            <h2 style={{ fontSize: 16, fontWeight: 600, marginBottom: 8 }}>{tt(lang, "Tùy chọn cookie", "Cookie preferences")}</h2>
             <ConsentToggleRow
-              label="Thiết yếu (bắt buộc)"
-              description="Cần thiết để website hoạt động, không thể tắt."
+              label={tt(lang, "Thiết yếu (bắt buộc)", "Essential (required)")}
+              description={tt(lang, "Cần thiết để website hoạt động, không thể tắt.", "Required for the website to work; cannot be turned off.")}
               checked={true}
               disabled
               onChange={() => {}}
             />
             <ConsentToggleRow
-              label="Hành vi & cá nhân hóa"
-              description="Giúp gợi ý bất động sản tương tự và thông báo phù hợp hơn với bạn."
+              label={tt(lang, "Hành vi & cá nhân hóa", "Behaviour & personalisation")}
+              description={tt(lang, "Giúp gợi ý bất động sản tương tự và thông báo phù hợp hơn với bạn.", "Helps us recommend similar properties and more relevant notifications.")}
               checked={draft.BEHAVIORAL}
               onChange={(v) => setDraft((d) => ({ ...d, BEHAVIORAL: v }))}
             />
             <ConsentToggleRow
-              label="Quảng cáo"
-              description="Giúp đo lường và tối ưu hiệu quả quảng cáo trên các nền tảng khác."
+              label={tt(lang, "Quảng cáo", "Advertising")}
+              description={tt(lang, "Giúp đo lường và tối ưu hiệu quả quảng cáo trên các nền tảng khác.", "Helps measure and optimise ad performance on other platforms.")}
               checked={draft.ADVERTISING}
               onChange={(v) => setDraft((d) => ({ ...d, ADVERTISING: v }))}
             />
             <div style={{ display: "flex", gap: 8, marginTop: 12, flexWrap: "wrap" }}>
               <button onClick={() => setShowDetails(false)} disabled={saving} style={secondaryBtn}>
-                Quay lai
+                {tt(lang, "Quay lại", "Back")}
               </button>
               <button onClick={handleSaveCustom} disabled={saving} style={primaryBtn}>
-                Luu tuy chon
+                {tt(lang, "Lưu tùy chọn", "Save preferences")}
               </button>
             </div>
           </div>

@@ -1,6 +1,6 @@
 // @ts-nocheck
 import type { Metadata } from "next";
-export const metadata: Metadata = { title: "Chính Sách Bảo Mật", alternates: { canonical: "https://sgsland.vn/privacy-policy" } };
+export const metadata: Metadata = { title: "Chính Sách Bảo Mật", alternates: { canonical: "https://sgsland.vn/privacy-policy", languages: { "vi-VN": "https://sgsland.vn/privacy-policy", "en-US": "https://sgsland.vn/en/privacy-policy", "x-default": "https://sgsland.vn/privacy-policy" } } };
 export const dynamic = "force-dynamic";
 export default function PrivacyPolicyPage() {
   return (

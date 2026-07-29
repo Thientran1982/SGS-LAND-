@@ -1,7 +1,7 @@
 // @ts-nocheck
 import type { Metadata } from "next";
 import CookieSettingsClient from "@/components/CookieSettingsClient";
-export const metadata: Metadata = { title: "Cookie Settings", alternates: { canonical: "https://sgsland.vn/cookie-settings" } };
+export const metadata: Metadata = { title: "Cookie Settings", alternates: { canonical: "https://sgsland.vn/cookie-settings", languages: { "vi-VN": "https://sgsland.vn/cookie-settings", "en-US": "https://sgsland.vn/en/cookie-settings", "x-default": "https://sgsland.vn/cookie-settings" } } };
 export const dynamic = "force-dynamic";
 export default function CookieSettingsPage() {
   return (

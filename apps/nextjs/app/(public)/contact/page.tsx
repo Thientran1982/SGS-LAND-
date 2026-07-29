@@ -6,7 +6,7 @@ export const metadata: Metadata = {
   title: "Liên Hệ",
   description:
     "Liên hệ SGS LAND — Hotline: 0971 132 378 | Email: info@sgsland.vn | TP. Hồ Chí Minh. Tư vấn BĐS, CRM, định giá AI miễn phí.",
-  alternates: { canonical: "https://sgsland.vn/contact" },
+  alternates: { canonical: "https://sgsland.vn/contact", languages: { "vi-VN": "https://sgsland.vn/contact", "en-US": "https://sgsland.vn/en/contact", "x-default": "https://sgsland.vn/contact" } },
 };
 
 export const dynamic = "force-dynamic";

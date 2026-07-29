@@ -1,0 +1,3 @@
+home=200
+hdrbg=hdr-bg: rgba(247, 244, 238, .82)
+hdrmuted=2
