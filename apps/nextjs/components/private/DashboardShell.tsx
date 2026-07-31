@@ -90,7 +90,7 @@ export function DashboardShell() {
             <span className="text-xl font-black" style={{ color: "var(--primary-600)" }}>SGS</span>
             <span className="text-xl font-black" style={{ color: "var(--text-primary)" }}>LAND</span>
           </Link>
-          <p className="text-[10px] mt-0.5" style={{ color: "var(--text-tertiary)" }}>CRM Platform</p>
+          <p className="text-[12px] mt-0.5" style={{ color: "var(--text-tertiary)" }}>CRM Platform</p>
         </div>
 
         <nav className="flex-1 px-3 space-y-0.5">

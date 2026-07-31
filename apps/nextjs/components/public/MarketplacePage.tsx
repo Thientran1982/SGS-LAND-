@@ -157,17 +157,17 @@ function ListingCard({ listing, list }: { listing: any; list?: boolean }) {
         {/* Badges top-left */}
         <div className="absolute top-3 left-3 flex flex-col gap-1.5 items-start">
           <div className="flex gap-1.5">
-            <span className="px-2 py-0.5 rounded-lg text-[11px] font-bold text-white shadow-sm backdrop-blur-sm" style={{ background: isRent ? "rgba(37,99,235,0.9)" : "rgba(11,107,84,0.92)" }}>
+            <span className="px-2 py-0.5 rounded-lg text-[12px] font-bold text-white shadow-sm backdrop-blur-sm" style={{ background: isRent ? "rgba(37,99,235,0.9)" : "rgba(11,107,84,0.92)" }}>
               {isRent ? tt(lang, "CHO THUÊ", "FOR RENT") : tt(lang, "BÁN", "FOR SALE")}
             </span>
             {listing.isVerified && (
-              <span className="flex items-center gap-1 px-2 py-0.5 rounded-lg text-[11px] font-bold text-white shadow-sm backdrop-blur-sm" style={{ background: "rgba(5,150,105,0.95)" }}>
+              <span className="flex items-center gap-1 px-2 py-0.5 rounded-lg text-[12px] font-bold text-white shadow-sm backdrop-blur-sm" style={{ background: "rgba(5,150,105,0.95)" }}>
                 <BadgeCheck className="w-3.5 h-3.5" /> {tt(lang, "ĐÃ XÁC THỰC", "VERIFIED")}
               </span>
             )}
           </div>
           {views > 0 && (
-            <span className="flex items-center gap-1 px-2 py-0.5 rounded-lg text-[11px] font-bold text-white shadow-sm backdrop-blur-sm" style={{ background: "rgba(0,0,0,0.6)" }}>
+            <span className="flex items-center gap-1 px-2 py-0.5 rounded-lg text-[12px] font-bold text-white shadow-sm backdrop-blur-sm" style={{ background: "rgba(0,0,0,0.6)" }}>
               <Eye className="w-3.5 h-3.5" /> {views}
             </span>
           )}
@@ -188,7 +188,7 @@ function ListingCard({ listing, list }: { listing: any; list?: boolean }) {
         <div className="flex items-end justify-between gap-2">
           <div className="min-w-0">
             <p className="font-extrabold text-lg leading-none" style={{ color: "var(--primary-600)" }}>{formatPrice(listing.price, lang)}</p>
-            {ppm && <p className="text-[11px] font-medium mt-0.5 truncate" style={{ color: "var(--text-tertiary)" }}>{ppm}</p>}
+            {ppm && <p className="text-[12px] font-medium mt-0.5 truncate" style={{ color: "var(--text-tertiary)" }}>{ppm}</p>}
           </div>
           <div className="flex items-center gap-3 text-xs shrink-0" style={{ color: "var(--text-tertiary)" }}>
             {listing.area ? <span>{listing.area}m²</span> : null}

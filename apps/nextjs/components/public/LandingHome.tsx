@@ -7,9 +7,9 @@ type Lang = "vi" | "en";
 
 // ─── Dark-mode CSS vars injected once ──────────────────────────────────────
 const STYLE = `
-  .lp-wrap { max-width: 1380px; margin: 0 auto; padding: 0 clamp(20px,4vw,60px); }
+  .lp-wrap { max-width: 1380px; margin: 0 auto; padding: 0 clamp(20px,4vw,64px); }
   .lp-serif { font-family: var(--font-noto-serif, Georgia, serif); }
-  .lp-mono  { font-family: var(--font-ibm-plex-mono, monospace); font-size: 11px; letter-spacing: .16em; text-transform: uppercase; }
+  .lp-mono  { font-family: var(--font-ibm-plex-mono, monospace); font-size: 12px; letter-spacing: .16em; text-transform: uppercase; }
   .lp-sans  { font-family: var(--font-be-vietnam, system-ui, sans-serif); }
 
   /* light / dark token bridge */
@@ -154,7 +154,7 @@ function MapHero({ lang, onChatOpen }: { lang: Lang; onChatOpen: () => void }) {
           <h1
             className="lp-serif"
             style={{
-              fontSize:"clamp(26px,6vw,70px)", fontWeight:550, lineHeight:1.03, letterSpacing:"-.015em",
+              fontSize:"clamp(28px,6vw,64px)", fontWeight:550, lineHeight:1.03, letterSpacing:"-.015em",
               color:"var(--lp-ink)",
               opacity: visible ? 1 : 0, transform: visible ? "translateY(0)" : "translateY(20px)",
               transition: "opacity .75s ease .1s, transform .75s ease .1s",
@@ -187,7 +187,7 @@ function MapHero({ lang, onChatOpen }: { lang: Lang; onChatOpen: () => void }) {
               { cls:"bl", style:{bottom:24,left:30}, text:"10°25′–11°00′ N" },
               { cls:"br", style:{bottom:24,right:30},text:"106°30′–107°00′ E" },
             ].map(c => (
-              <span key={c.cls} className="lp-mono max-sm:!hidden" style={{ position:"absolute", color:"var(--lp-muted)", zIndex:3, pointerEvents:"none", fontSize:"10px", letterSpacing:".14em", ...c.style }}>
+              <span key={c.cls} className="lp-mono max-sm:!hidden" style={{ position:"absolute", color:"var(--lp-muted)", zIndex:3, pointerEvents:"none", fontSize: "12px", letterSpacing:".14em", ...c.style }}>
                 {c.text}
               </span>
             ))}
@@ -255,9 +255,9 @@ function MapHero({ lang, onChatOpen }: { lang: Lang; onChatOpen: () => void }) {
             </svg>
 
             {/* Legend */}
-            <div style={{ position:"absolute", left:30, bottom:52, zIndex:3, background:"var(--lp-navbg)", backdropFilter:"blur(6px)", border:"1px solid var(--lp-line)", borderRadius:"12px", padding:"12px 16px", fontSize:"11.5px", color:"var(--lp-muted)", flexDirection:"column", gap:"6px" }}
+            <div style={{ position:"absolute", left:30, bottom:52, zIndex:3, background:"var(--lp-navbg)", backdropFilter:"blur(6px)", border:"1px solid var(--lp-line)", borderRadius:"12px", padding:"12px 16px", fontSize: "12px", color:"var(--lp-muted)", flexDirection:"column", gap:"6px" }}
               className="hidden sm:flex">
-              <b className="lp-mono" style={{ color:"var(--lp-ink)", fontSize:"11px" }}>{lang==="vi" ? "Chú giải" : "Legend"}</b>
+              <b className="lp-mono" style={{ color:"var(--lp-ink)", fontSize: "12px" }}>{lang==="vi" ? "Chú giải" : "Legend"}</b>
               <span style={{ display:"flex", alignItems:"center", gap:"8px" }}><i style={{ width:9,height:9,borderRadius:"50%",background:"var(--lp-navy)",flexShrink:0,display:"inline-block" }}/>{lang==="vi" ? "Dự án pháp lý 2 lớp" : "Two-layer legal verified"}</span>
               <span style={{ display:"flex", alignItems:"center", gap:"8px" }}><i style={{ width:9,height:9,borderRadius:"50%",background:"var(--lp-gold)",flexShrink:0,display:"inline-block" }}/>{lang==="vi" ? "Đang xem" : "Viewing"}</span>
             </div>
@@ -275,12 +275,12 @@ function MapHero({ lang, onChatOpen }: { lang: Lang; onChatOpen: () => void }) {
                   onError={e => { (e.currentTarget as HTMLImageElement).style.display = "none"; }} />
                 <div style={{ padding:"14px 18px 16px" }}>
                   <div style={{ display:"flex", justifyContent:"space-between", marginBottom:"5px" }}>
-                    <span className="lp-mono" style={{ fontSize:"10px", color:"var(--lp-muted)" }}>{proj.no}</span>
-                    <span style={{ color:"var(--lp-ok)", fontSize:"10px" }}>✓</span>
+                    <span className="lp-mono" style={{ fontSize: "12px", color:"var(--lp-muted)" }}>{proj.no}</span>
+                    <span style={{ color:"var(--lp-ok)", fontSize: "12px" }}>✓</span>
                   </div>
-                  <h3 className="lp-serif" style={{ fontSize:"19px", fontWeight:550, color:"var(--lp-ink)", lineHeight:1.1 }}>{proj.name}</h3>
-                  <p style={{ fontSize:"12.5px", color:"var(--lp-muted)", marginTop:"2px" }}>{proj.loc[lang]}</p>
-                  <div style={{ fontSize:"13px", fontWeight:600, color:"var(--lp-navy)", marginTop:"8px", display:"flex", justifyContent:"space-between", alignItems:"center" }}>
+                  <h3 className="lp-serif" style={{ fontSize: "20px", fontWeight:550, color:"var(--lp-ink)", lineHeight:1.1 }}>{proj.name}</h3>
+                  <p style={{ fontSize: "12px", color:"var(--lp-muted)", marginTop:"2px" }}>{proj.loc[lang]}</p>
+                  <div style={{ fontSize: "14px", fontWeight:600, color:"var(--lp-navy)", marginTop:"8px", display:"flex", justifyContent:"space-between", alignItems:"center" }}>
                     <span>{proj.price[lang]}</span>
                     <em className="lp-serif" style={{ fontStyle:"italic", fontWeight:340, color:"var(--lp-gold)", fontSize:"12px" }}>{lang==="vi" ? "Xem dự án →" : "View project →"}</em>
                   </div>
@@ -317,11 +317,11 @@ function MapHero({ lang, onChatOpen }: { lang: Lang; onChatOpen: () => void }) {
                 onChange={e => setQuery(e.target.value)}
                 type="search"
                 placeholder=""
-                style={{ width:"100%", border:"none", outline:"none", background:"none", color:"var(--lp-bg)", fontFamily:"var(--font-be-vietnam,sans-serif)", fontSize:"15px", minWidth:0 }}
+                style={{ width:"100%", border:"none", outline:"none", background:"none", color:"var(--lp-bg)", fontFamily:"var(--font-be-vietnam,sans-serif)", fontSize: "16px", minWidth:0 }}
                 aria-label={lang==="vi" ? "Hỏi AI về bất động sản" : "Ask AI about real estate"}
               />
             </div>
-            <button type="submit" style={{ background:"var(--lp-bg)", color:"var(--lp-ink)", borderRadius:"999px", padding:"11px 20px", fontSize:"13.5px", fontWeight:600, whiteSpace:"nowrap", cursor:"pointer", border:"none", transition:"opacity .2s" }}>
+            <button type="submit" style={{ background:"var(--lp-bg)", color:"var(--lp-ink)", borderRadius:"999px", padding:"11px 20px", fontSize: "14px", fontWeight:600, whiteSpace:"nowrap", cursor:"pointer", border:"none", transition:"opacity .2s" }}>
               {lang==="vi" ? "Hỏi AI →" : "Ask AI →"}
             </button>
           </form>
@@ -336,7 +336,7 @@ function MapHero({ lang, onChatOpen }: { lang: Lang; onChatOpen: () => void }) {
             { num:"$1B+",    vi:"giao dịch xử lý",      en:"transactions processed" },
           ].map((s, i) => (
             <div key={i} className="max-sm:!px-2 max-sm:!border-0" style={{ padding:"0 34px", borderLeft: i===0 ? "none" : "1px solid var(--lp-hair)", textAlign:"center" }}>
-              <b className="lp-serif" style={{ fontSize:"clamp(24px,2.6vw,36px)", fontWeight:550, display:"block", lineHeight:1.15, color:"var(--lp-ink)" }}>{s.num}</b>
+              <b className="lp-serif" style={{ fontSize:"clamp(20px,2.6vw,28px)", fontWeight:550, display:"block", lineHeight:1.15, color:"var(--lp-ink)" }}>{s.num}</b>
               <span style={{ fontSize:"12px", color:"var(--lp-muted)" }}>{s[lang]}</span>
             </div>
           ))}
@@ -353,10 +353,10 @@ function ChapterHead({ no, title, side }: { no: string; title: React.ReactNode; 
     <div ref={ref as any} className={`lp-rv${inView ? " in" : ""}`}
       style={{ display:"flex", alignItems:"baseline", gap:"22px", marginBottom:"60px", borderTop:"1px solid var(--lp-hair)", paddingTop:"22px", flexWrap:"wrap" }}>
       <span className="lp-mono" style={{ color:"var(--lp-gold)", whiteSpace:"nowrap" }}>{no}</span>
-      <h2 className="lp-serif" style={{ fontSize:"clamp(32px,4.8vw,60px)", fontWeight:550, lineHeight:1.03, letterSpacing:"-.015em", color:"var(--lp-ink)" }}>
+      <h2 className="lp-serif" style={{ fontSize:"clamp(28px,4.8vw,64px)", fontWeight:550, lineHeight:1.03, letterSpacing:"-.015em", color:"var(--lp-ink)" }}>
         {title}
       </h2>
-      <span style={{ marginLeft:"auto", maxWidth:"300px", fontSize:"13.5px", color:"var(--lp-muted)", alignSelf:"flex-end" }}>{side}</span>
+      <span style={{ marginLeft:"auto", maxWidth:"300px", fontSize: "14px", color:"var(--lp-muted)", alignSelf:"flex-end" }}>{side}</span>
     </div>
   );
 }
@@ -382,11 +382,11 @@ function ProjectCard({ p, lang }: { p: typeof PROJECTS[number]; lang: Lang }) {
       />
       <div style={{ padding:"18px 20px 22px" }}>
         <div style={{ display:"flex", justifyContent:"space-between", marginBottom:"6px" }}>
-          <span className="lp-mono" style={{ fontSize:"10px", color:"var(--lp-muted)" }}>{p.no}</span>
-          <span style={{ color:"var(--lp-ok)", fontSize:"10px", fontFamily:"var(--font-ibm-plex-mono,monospace)", letterSpacing:".1em" }}>✓ {lang==="vi" ? "2 lớp" : "2-layer"}</span>
+          <span className="lp-mono" style={{ fontSize: "12px", color:"var(--lp-muted)" }}>{p.no}</span>
+          <span style={{ color:"var(--lp-ok)", fontSize: "12px", fontFamily:"var(--font-ibm-plex-mono,monospace)", letterSpacing:".1em" }}>✓ {lang==="vi" ? "2 lớp" : "2-layer"}</span>
         </div>
-        <h3 className="lp-serif" style={{ fontSize:"21px", fontWeight:550, color:"var(--lp-ink)", lineHeight:1.1 }}>{p.name}</h3>
-        <p style={{ fontSize:"13px", color:"var(--lp-muted)", marginTop:"4px" }}>{p.desc[lang]}</p>
+        <h3 className="lp-serif" style={{ fontSize: "20px", fontWeight:550, color:"var(--lp-ink)", lineHeight:1.1 }}>{p.name}</h3>
+        <p style={{ fontSize: "14px", color:"var(--lp-muted)", marginTop:"4px" }}>{p.desc[lang]}</p>
       </div>
     </a>
   );
@@ -397,9 +397,9 @@ function MethodCard({ m, lang }: { m: { n: string; ti: { vi: string; en: string 
   const { ref, inView } = useReveal();
   return (
     <div ref={ref as any} className={`lp-rv${inView ? " in" : ""}`}>
-      <span className="lp-serif" style={{ fontStyle:"italic", fontWeight:340, fontSize:"44px", lineHeight:1, color:"var(--lp-gold)", display:"block", marginBottom:"14px" }}>{m.n}</span>
-      <h3 className="lp-serif" style={{ fontSize:"18px", fontWeight:550, color:"var(--lp-ink)", marginBottom:"8px" }}>{m.ti[lang]}</h3>
-      <p style={{ fontSize:"13.5px", color:"var(--lp-muted)", lineHeight:1.6 }}>{m.tx[lang]}</p>
+      <span className="lp-serif" style={{ fontStyle:"italic", fontWeight:340, fontSize: "40px", lineHeight:1, color:"var(--lp-gold)", display:"block", marginBottom:"14px" }}>{m.n}</span>
+      <h3 className="lp-serif" style={{ fontSize: "20px", fontWeight:550, color:"var(--lp-ink)", marginBottom:"8px" }}>{m.ti[lang]}</h3>
+      <p style={{ fontSize: "14px", color:"var(--lp-muted)", lineHeight:1.6 }}>{m.tx[lang]}</p>
     </div>
   );
 }
@@ -425,8 +425,8 @@ function ProjectsSection({ lang }: { lang: Lang }) {
             onMouseLeave={e => { (e.currentTarget as HTMLElement).style.opacity="1"; }}
           >
             <div style={{ padding:"40px 24px" }}>
-              <h3 className="lp-serif" style={{ color:"var(--lp-gold)", fontSize:"24px", fontWeight:550 }}>+45.000 {lang==="vi" ? "sản phẩm" : "listings"}</h3>
-              <p style={{ opacity:.7, fontSize:"13.5px", marginTop:"6px", color:"var(--lp-bg)" }}>
+              <h3 className="lp-serif" style={{ color:"var(--lp-gold)", fontSize: "28px", fontWeight:550 }}>+45.000 {lang==="vi" ? "sản phẩm" : "listings"}</h3>
+              <p style={{ opacity:.7, fontSize: "14px", marginTop:"6px", color:"var(--lp-bg)" }}>
                 {lang==="vi" ? "Nhà phố · Căn hộ · Đất nền · Cho thuê" : "Townhouses · Apartments · Land · Rentals"}<br/>→ Marketplace
               </p>
             </div>
@@ -453,7 +453,7 @@ function MethodSection({ lang }: { lang: Lang }) {
           title={lang==="vi" ? <>Bốn lớp <em style={{ fontStyle:"italic", fontWeight:340, color:"var(--lp-navy)" }}>bảo chứng</em></> : <>Four layers of <em style={{ fontStyle:"italic", fontWeight:340, color:"var(--lp-navy)" }}>assurance</em></>}
           side={lang==="vi" ? "Miễn phí hoàn toàn với người mua và người thuê." : "Completely free for buyers and renters."}
         />
-        <div style={{ display:"grid", gap:"clamp(20px,3vw,44px)" }} className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4">
+        <div style={{ display:"grid", gap:"clamp(20px,3vw,40px)" }} className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4">
           {methods.map((m, i) => (
             <MethodCard key={i} m={m} lang={lang} />
           ))}
@@ -473,11 +473,11 @@ function FaqItem({ q, a, defaultOpen }: { q: string; a: string; defaultOpen?: bo
         style={{ width:"100%", padding:"22px 4px", background:"none", border:"none", cursor:"pointer", display:"flex", justifyContent:"space-between", alignItems:"baseline", gap:"16px", textAlign:"left" }}
         aria-expanded={open}
       >
-        <span className="lp-serif" style={{ fontWeight:550, fontSize:"19px", color:"var(--lp-ink)", lineHeight:1.25 }}>{q}</span>
-        <span className="lp-serif" style={{ fontStyle:"italic", fontWeight:340, color:"var(--lp-gold)", fontSize:"24px", flexShrink:0 }}>{open ? "–" : "+"}</span>
+        <span className="lp-serif" style={{ fontWeight:550, fontSize: "20px", color:"var(--lp-ink)", lineHeight:1.25 }}>{q}</span>
+        <span className="lp-serif" style={{ fontStyle:"italic", fontWeight:340, color:"var(--lp-gold)", fontSize: "28px", flexShrink:0 }}>{open ? "–" : "+"}</span>
       </button>
       <div className={`lp-faq-body ${open ? "open" : "closed"}`}>
-        <p style={{ margin:"0 0 20px", color:"var(--lp-muted)", fontSize:"14.5px", maxWidth:"64ch", lineHeight:1.7, paddingLeft:"4px" }}>{a}</p>
+        <p style={{ margin:"0 0 20px", color:"var(--lp-muted)", fontSize: "14px", maxWidth:"64ch", lineHeight:1.7, paddingLeft:"4px" }}>{a}</p>
       </div>
     </div>
   );
@@ -511,19 +511,19 @@ function CtaSection({ lang, onChatOpen }: { lang: Lang; onChatOpen: () => void }
       <div className="lp-wrap">
         <div ref={ref as any} className={`lp-rv${inView ? " in" : ""}`}>
           <span className="lp-mono" style={{ color:"var(--lp-muted)" }}>{lang==="vi" ? "Miễn phí · Không cần đăng ký · 30 giây" : "Free · No sign-up · 30 seconds"}</span>
-          <h2 className="lp-serif" style={{ fontSize:"clamp(36px,6vw,84px)", fontWeight:550, lineHeight:1.03, letterSpacing:"-.015em", marginTop:"18px", color:"var(--lp-ink)" }}>
+          <h2 className="lp-serif" style={{ fontSize:"clamp(28px,6vw,64px)", fontWeight:550, lineHeight:1.03, letterSpacing:"-.015em", marginTop:"18px", color:"var(--lp-ink)" }}>
             {lang==="vi"
               ? <>Bắt đầu bằng<br /><em style={{ fontStyle:"italic", fontWeight:340, color:"var(--lp-navy)" }}>giá thật.</em></>
               : <>Start with the<br /><em style={{ fontStyle:"italic", fontWeight:340, color:"var(--lp-navy)" }}>real price.</em></>}
           </h2>
-          <p style={{ color:"var(--lp-muted)", margin:"22px auto 42px", maxWidth:"430px", fontSize:"15px" }}>
+          <p style={{ color:"var(--lp-muted)", margin:"22px auto 42px", maxWidth:"430px", fontSize: "16px" }}>
             {lang==="vi"
               ? "Định giá AI ngay, hoặc trò chuyện với chuyên gia: phản hồi trong 15 phút, bảy ngày mỗi tuần."
               : "Get an AI valuation now, or talk to a specialist: reply within 15 minutes, seven days a week."}
           </p>
           <div style={{ display:"flex", gap:"14px", justifyContent:"center", flexWrap:"wrap" }}>
             <a href={lpath("/ai-valuation", lang)}
-              style={{ display:"inline-flex", alignItems:"center", gap:"10px", padding:"17px 36px", borderRadius:"999px", fontWeight:500, fontSize:"15px", background:"var(--lp-ink)", color:"var(--lp-bg)", textDecoration:"none", transition:"all .25s" }}
+              style={{ display:"inline-flex", alignItems:"center", gap:"10px", padding:"17px 36px", borderRadius:"999px", fontWeight:500, fontSize: "16px", background:"var(--lp-ink)", color:"var(--lp-bg)", textDecoration:"none", transition:"all .25s" }}
               onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background="var(--lp-navy)"; (e.currentTarget as HTMLElement).style.transform="translateY(-2px)"; }}
               onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background="var(--lp-ink)"; (e.currentTarget as HTMLElement).style.transform=""; }}
             >
@@ -531,7 +531,7 @@ function CtaSection({ lang, onChatOpen }: { lang: Lang; onChatOpen: () => void }
             </a>
             <button
               onClick={onChatOpen}
-              style={{ display:"inline-flex", alignItems:"center", gap:"10px", padding:"17px 36px", borderRadius:"999px", fontWeight:500, fontSize:"15px", border:"1px solid var(--lp-ink)", color:"var(--lp-ink)", background:"transparent", cursor:"pointer", transition:"all .25s" }}
+              style={{ display:"inline-flex", alignItems:"center", gap:"10px", padding:"17px 36px", borderRadius:"999px", fontWeight:500, fontSize: "16px", border:"1px solid var(--lp-ink)", color:"var(--lp-ink)", background:"transparent", cursor:"pointer", transition:"all .25s" }}
               onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background="var(--lp-ink)"; (e.currentTarget as HTMLElement).style.color="var(--lp-bg)"; }}
               onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background="transparent"; (e.currentTarget as HTMLElement).style.color="var(--lp-ink)"; }}
             >

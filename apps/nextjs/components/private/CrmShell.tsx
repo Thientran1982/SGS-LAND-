@@ -53,7 +53,7 @@ export function CrmShell({ children }: { children: React.ReactNode }) {
           <X className="w-4 h-4" />
         </button>
       </div>
-      <p className="px-5 text-[10px] mb-4" style={{ color: "var(--text-tertiary)" }}>CRM Platform</p>
+      <p className="px-5 text-[12px] mb-4" style={{ color: "var(--text-tertiary)" }}>CRM Platform</p>
 
       <nav className="flex-1 px-3 space-y-0.5 overflow-y-auto">
         {NAV_ITEMS.map(({ href, label, icon: Icon }) => {

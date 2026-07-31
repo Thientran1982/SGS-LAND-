@@ -52,7 +52,7 @@ export default function DauTuBDSPage() {
             style={{ background: "var(--bg-elevated)", border: "1px solid var(--border-default)" }}>
             <div className="text-center shrink-0 w-16">
               <p className="text-2xl font-black" style={{ color: "var(--color-success)" }}>{zone.growth}</p>
-              <p className="text-[10px]" style={{ color: "var(--text-tertiary)" }}>tăng giá</p>
+              <p className="text-[12px]" style={{ color: "var(--text-tertiary)" }}>tăng giá</p>
             </div>
             <div className="flex-1">
               <h3 className="font-bold text-sm mb-1 flex items-center gap-1.5" style={{ color: "var(--text-primary)" }}>
@@ -62,7 +62,7 @@ export default function DauTuBDSPage() {
             </div>
             <div className="shrink-0 text-center">
               <div className="text-lg font-black" style={{ color: "var(--primary-600)" }}>{zone.score}</div>
-              <p className="text-[10px]" style={{ color: "var(--text-tertiary)" }}>AI Score</p>
+              <p className="text-[12px]" style={{ color: "var(--text-tertiary)" }}>AI Score</p>
             </div>
           </div>
         ))}

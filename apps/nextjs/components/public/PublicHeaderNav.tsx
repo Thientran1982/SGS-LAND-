@@ -106,7 +106,7 @@ export function PublicHeader({ authed = false }: { authed?: boolean }) {
                 SGS <span style={{ color: "var(--sgs-accent)" }}>LAND</span>
               </div>
               <div
-                className="text-[9px] font-semibold uppercase hidden sm:block"
+                className="text-[12px] font-semibold uppercase hidden sm:block"
                 style={{
                   color: isHero
                     ? "rgba(200,150,62,0.85)"

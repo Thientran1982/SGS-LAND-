@@ -14,7 +14,7 @@ export default async function PublicLayout({ children }: { children: React.React
     <Providers>
       <div className="flex flex-col min-h-screen" style={{ background: "var(--bg-app)" }}>
         <PublicHeader authed={_authed} />
-        <main className="flex-1">{children}</main>
+        <main className="flex-1 sgs-main">{children}</main>
         <PublicFooter />
         {/* Floating AI Chat Widget */}
         <AiChatWidgetWrapper />

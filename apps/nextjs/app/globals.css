@@ -361,7 +361,6 @@
 }
 
 
-/* Goi y AI o hero: fade khi doi cau */
 @keyframes sgs-ph-in {
   from { opacity: 0; transform: translateY(3px); }
   to   { opacity: 1; transform: translateY(0); }
@@ -373,7 +372,70 @@
 
 /* Cua so goi y AI cao 48px (thiet ke cho marquee 2 dong). Nay chi hien 1 cau
    luan phien nen phai can giua theo chieu doc. Dung :has de chi ap dung o day. */
-.lp-ph-wrap:has(.sgs-ph-fade) {
+
+
+/* Thang chu 7 bac: caption / body-sm / body / lead / h3 / h2 / display */
+:root {
+  --fs-1: 12px;
+  --fs-2: 14px;
+  --fs-3: 16px;
+  --fs-4: 20px;
+  --fs-5: 28px;
+  --fs-6: 40px;
+  --fs-7: 64px;
+}
+
+
+/* ── Pill gợi ý AI ở hero ───────────────────────────────────────────────
+   Chữ gợi ý là lớp phủ tuyệt đối lên input: nếu để nó nằm trong luồng
+   flex thì nó chỉ được ~174px trong khi câu dài 296px → xuống 2–3 dòng
+   và tràn ra ngoài khung 48px, đè lên bản đồ.                          */
+.lp-ph-wrap {
+  position: relative;            /* mốc toạ độ cho lớp phủ */
+  flex: 1 1 auto;                /* chiếm hết chỗ trống của hàng tìm kiếm */
+  min-width: 0;
+  font-size: 14px;               /* bậc 14 của thang chữ */
+}
+.lp-ph-wrap:has(.sgs-ph-fade) {  /* canh giữa dòng chữ trong khung cao 48px */
   display: flex;
   align-items: center;
 }
+.lp-ph-wrap > .lp-ph-over {
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: 100%;
+  display: flex;
+  align-items: center;
+  pointer-events: none;          /* không chắn thao tác gõ vào input */
+}
+.lp-ph-wrap > input,
+.lp-ph-wrap .lp-ph-track { flex: 1 1 auto; min-width: 0; }
+.lp-ph-wrap .lp-ph-track { font-size: 14px; }
+.lp-ph-wrap .sgs-ph-fade {       /* khoá 1 dòng, cắt bằng dấu … khi hẹp */
+  display: block;
+  max-width: 100%;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Thang chu 7 bac cho tien ich Tailwind (12/14/16/20/28/40/64) */
+@theme {
+  --text-xs: 12px;
+  --text-sm: 14px;
+  --text-base: 16px;
+  --text-lg: 20px;
+  --text-xl: 20px;
+  --text-2xl: 28px;
+  --text-3xl: 28px;
+  --text-4xl: 40px;
+  --text-5xl: 40px;
+  --text-6xl: 64px;
+  --text-7xl: 64px;
+}
+
+/* Header la position:fixed cao 65px. Truoc day khong trang nao chua cho no,
+   nen tieu de cua cac trang chi co py-12 (48px) bi header de len.
+   Chua khoang trong mot lan tai main; trang chu tu co khoang trong hero rieng. */
+main.sgs-main { padding-top: 65px; }
+main.sgs-main:has(> .lp-root) { padding-top: 0; }

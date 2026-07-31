@@ -30,7 +30,7 @@ export default function HelpCenterPage() {
         {[
           { icon: Phone, label: "Hotline", value: "0971 132 378", desc: "Thứ 2 – Chủ nhật, 8:00 – 20:00", href: "tel:0971132378" },
           { icon: MessageSquare, label: "Live Chat", value: "Chat ngay", desc: "AI Agent 24/7, phản hồi tức thì", href: "/livechat" },
-          { icon: Mail, label: "Email", value: "lienhe@sgsland.vn", desc: "Phản hồi trong 2 giờ làm việc", href: "mailto:lienhe@sgsland.vn" },
+          { icon: Mail, label: "Email", value: "info@sgsland.vn", desc: "Phản hồi trong 2 giờ làm việc", href: "mailto:info@sgsland.vn" },
         ].map(({ icon: Icon, label, value, desc, href }) => (
           <a key={label} href={href}
             className="p-5 rounded-2xl flex flex-col items-center text-center gap-2 hover:scale-[1.02] transition-transform"

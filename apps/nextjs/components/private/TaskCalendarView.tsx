@@ -165,7 +165,7 @@ export default function TaskCalendarView() {
                   <Link
                     key={t.id}
                     href={`/tasks/${t.id}`}
-                    className="block text-[11px] px-1.5 py-1 rounded truncate hover:opacity-80"
+                    className="block text-[12px] px-1.5 py-1 rounded truncate hover:opacity-80"
                     style={{
                       background: "var(--bg-elevated)",
                       borderLeft: `3px solid ${PRIORITY_DOT[t.priority || "medium"] || "#9ca3af"}`,
@@ -177,7 +177,7 @@ export default function TaskCalendarView() {
                   </Link>
                 ))}
                 {dayTasks.length > 3 && (
-                  <div className="text-[10px]" style={{ color: "var(--text-tertiary)" }}>
+                  <div className="text-[12px]" style={{ color: "var(--text-tertiary)" }}>
                     +{dayTasks.length - 3} khác
                   </div>
                 )}

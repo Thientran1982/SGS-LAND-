@@ -42,7 +42,7 @@ export default function RootLoading() {
       {/* Brand */}
       <p
         style={{
-          fontSize: "1.125rem",
+          fontSize: "20px",
           fontWeight: 800,
           letterSpacing: "0.18em",
           color: "var(--text-primary, #f1f5f9)",
@@ -54,7 +54,7 @@ export default function RootLoading() {
       {/* Status */}
       <p
         style={{
-          fontSize: "0.8125rem",
+          fontSize: "14px",
           color: "#64748b",
           margin: "0 0 28px",
           letterSpacing: "0.025em",

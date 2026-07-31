@@ -111,10 +111,10 @@ export function MarketplaceMap({ listings }: { listings: any[] }) {
             `<a href="/bds/${slug}" style="display:block;text-decoration:none;color:inherit;width:232px">` +
               (img ? `<img src="${img}" alt="" style="width:100%;height:120px;object-fit:cover;display:block;border-radius:6px"/>` : "") +
               `<div style="padding:8px 2px 2px">` +
-              `<div style="font-weight:700;font-size:13px;line-height:1.3;margin-bottom:4px;color:#152232">${l.title || ""}</div>` +
-              `<div style="color:#1B3A5C;font-weight:800;font-size:15px">${formatPrice(l.price)}</div>` +
-              `<div style="color:#64748b;font-size:11px;margin-top:2px">${l.location || ""}</div>` +
-              (l._approx ? `<div style="color:#94a3b8;font-size:10px;margin-top:3px">Vị trí tương đối theo khu vực</div>` : "") +
+              `<div style="font-weight:700;font-size: 14px;line-height:1.3;margin-bottom:4px;color:#152232">${l.title || ""}</div>` +
+              `<div style="color:#1B3A5C;font-weight:800;font-size: 16px">${formatPrice(l.price)}</div>` +
+              `<div style="color:#64748b;font-size: 12px;margin-top:2px">${l.location || ""}</div>` +
+              (l._approx ? `<div style="color:#94a3b8;font-size: 12px;margin-top:3px">Vị trí tương đối theo khu vực</div>` : "") +
               `<div style="margin-top:8px;color:#C8963E;font-weight:700;font-size:12px">Xem chi tiết →</div>` +
               `</div></a>`,
             { maxWidth: 252, minWidth: 232 }

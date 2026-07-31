@@ -76,7 +76,7 @@ export function PublicFooter() {
                 <div className="font-bold text-base" style={{ color: "#E4EDF5", fontFamily: "var(--font-noto-serif, Georgia, serif)", letterSpacing: "-0.02em" }}>
                   SGS <span style={{ color: "var(--sgs-accent)" }}>LAND</span>
                 </div>
-                <div className="text-[9px] font-semibold uppercase" style={{ color: "rgba(200,150,62,0.7)", letterSpacing: "0.2em" }}>Proptech</div>
+                <div className="text-[12px] font-semibold uppercase" style={{ color: "rgba(200,150,62,0.7)", letterSpacing: "0.2em" }}>Proptech</div>
               </div>
             </div>
             <p className="text-xs mb-3 leading-relaxed" style={{ color: "#7A91A8" }}>
@@ -109,7 +109,7 @@ export function PublicFooter() {
               {lang === "vi" ? "Dự Án Nổi Bật" : "Featured Projects"}
             </h3>
             <ul className="space-y-2.5">
-              {FOOTER_PROJECTS.map((link) => (
+              {[...FOOTER_PROJECTS.slice(0, 6), { label: lang === "en" ? "View all projects →" : "Xem tất cả dự án →", href: "/du-an" }].map((link) => (
                 <li key={link.href}>
                   <Link
                     href={lang === "en" ? "/en" + link.href : link.href}
@@ -157,7 +157,7 @@ export function PublicFooter() {
               {lang === "vi" ? "Về SGS LAND" : "About SGS LAND"}
             </h3>
             <ul className="space-y-2.5 mb-5">
-              {FOOTER_ABOUT.map((link) => (
+              {FOOTER_ABOUT.filter((l) => !l.vi.startsWith("BĐS") && l.vi !== "Nhà phố Trung Tâm").map((link) => (
                 <li key={link.href}>
                   <Link
                     href={lang === "en" ? "/en" + link.href : link.href}
@@ -181,6 +181,22 @@ export function PublicFooter() {
           </div>
         </div>
         {/* ── Bottom bar ────────────────────────────────── */}
+        <div className="flex flex-wrap gap-2 pt-6 pb-1"
+          style={{ borderTop: "1px solid rgba(255,255,255,0.07)" }}>
+          {FOOTER_ABOUT.filter((l) => l.vi.startsWith("BĐS") || l.vi === "Nhà phố Trung Tâm").map((link) => (
+            <Link
+              key={link.href}
+              href={lang === "en" ? "/en" + link.href : link.href}
+              className="text-xs px-2.5 py-1 rounded-full transition-colors"
+              style={{ color: "#B9C6D4", background: "rgba(255,255,255,0.05)" }}
+              onMouseEnter={e => linkHover(e, true)}
+              onMouseLeave={e => linkHover(e, false)}
+            >
+              {lang === "en" ? link.en : link.vi}
+            </Link>
+          ))}
+        </div>
+
         <div className="flex flex-col sm:flex-row items-center justify-between gap-3 pt-5 pb-20 sm:pb-6 sm:pr-24">
           <p className="text-xs" style={{ color: "var(--sgs-on-dark-muted)" }}>
             © {FOOTER_YEAR} SGS LAND. {lang === "vi" ? "Bảo lưu mọi quyền." : "All rights reserved."}

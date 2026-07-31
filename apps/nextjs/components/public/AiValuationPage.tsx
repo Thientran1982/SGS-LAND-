@@ -1090,7 +1090,7 @@ export const AiValuation: React.FC = () => {
                                                 </svg>
                                             ) : num}
                                         </div>
-                                        <span className={`text-[10px] font-bold transition-colors ${isActive ? 'text-sgs-verified' : isDone ? 'text-sgs-verified' : 'text-slate-600'}`}>{label}</span>
+                                        <span className={`text-[12px] font-bold transition-colors ${isActive ? 'text-sgs-verified' : isDone ? 'text-sgs-verified' : 'text-slate-600'}`}>{label}</span>
                                     </div>
                                     {i < arr.length - 1 && (
                                         <div className={`w-12 md:w-20 h-0.5 mb-4 rounded-full transition-all duration-300 ${isDone ? 'bg-sgs-verified' : 'bg-slate-700'}`} />
@@ -1389,7 +1389,7 @@ export const AiValuation: React.FC = () => {
                                                 <div className="flex gap-1.5 mt-2 flex-wrap">
                                                     {areaPresets.map(v => (
                                                         <button key={v} type="button" onClick={() => setArea(String(v))}
-                                                            className={`text-[10px] font-bold px-2 py-0.5 rounded-md border transition-all ${area === String(v) ? 'bg-sgs-verified/20 border-sgs-verified/60 text-sgs-verified' : 'bg-slate-800 border-slate-700 text-slate-500 hover:border-slate-500 hover:text-slate-300'}`}>
+                                                            className={`text-[12px] font-bold px-2 py-0.5 rounded-md border transition-all ${area === String(v) ? 'bg-sgs-verified/20 border-sgs-verified/60 text-sgs-verified' : 'bg-slate-800 border-slate-700 text-slate-500 hover:border-slate-500 hover:text-slate-300'}`}>
                                                             {v}m²
                                                         </button>
                                                     ))}
@@ -1435,7 +1435,7 @@ export const AiValuation: React.FC = () => {
                                                             }`}
                                                         >
                                                             <span className="truncate pr-1">{opt.label}</span>
-                                                            <span className={`text-[10px] shrink-0 font-bold ${roadTypeSelect === opt.id ? 'text-sky-400' : 'text-slate-600'}`}>{opt.hint}</span>
+                                                            <span className={`text-[12px] shrink-0 font-bold ${roadTypeSelect === opt.id ? 'text-sky-400' : 'text-slate-600'}`}>{opt.hint}</span>
                                                         </button>
                                                     ))}
                                                 </div>
@@ -1528,7 +1528,7 @@ export const AiValuation: React.FC = () => {
                                                 className={`py-2.5 rounded-xl text-xs font-bold transition-all border flex flex-col items-center gap-0.5 ${legal === opt.id ? 'bg-sgs-verified text-[var(--text-primary)] border-sgs-verified' : 'bg-slate-900 text-slate-400 border-slate-700 hover:border-sgs-primary/50'}`}
                                             >
                                                 <span>{opt.label}</span>
-                                                <span className={`text-[10px] font-bold ${legal === opt.id ? 'text-white/70' : opt.badgeColor}`}>{opt.badge}</span>
+                                                <span className={`text-[12px] font-bold ${legal === opt.id ? 'text-white/70' : opt.badgeColor}`}>{opt.badge}</span>
                                             </button>
                                         ))}
                                     </div>
@@ -1605,7 +1605,7 @@ export const AiValuation: React.FC = () => {
                                     <div>
                                         <label className="text-xs font-bold text-[var(--text-tertiary)] uppercase block mb-2">
                                             Số Phòng Ngủ
-                                            <span className="text-sgs-verified ml-1 normal-case font-bold text-[10px]">★ quan trọng với căn hộ</span>
+                                            <span className="text-sgs-verified ml-1 normal-case font-bold text-[12px]">★ quan trọng với căn hộ</span>
                                         </label>
                                         <div className="grid grid-cols-5 gap-2">
                                             {[
@@ -1659,7 +1659,7 @@ export const AiValuation: React.FC = () => {
                                                 className={`py-2 rounded-xl text-xs font-bold transition-all border flex flex-col items-center gap-0.5 ${direction === d ? 'bg-sgs-verified text-[var(--text-primary)] border-sgs-verified' : 'bg-slate-900 text-slate-400 border-slate-700 hover:border-sgs-primary/50'}`}
                                             >
                                                 <span>{d}</span>
-                                                {badge && <span className={`text-[9px] font-bold ${direction === d ? 'text-white/80' : badgeColor}`}>{badge}</span>}
+                                                {badge && <span className={`text-[12px] font-bold ${direction === d ? 'text-white/80' : badgeColor}`}>{badge}</span>}
                                             </button>
                                         ))}
                                     </div>
@@ -1796,7 +1796,7 @@ export const AiValuation: React.FC = () => {
                                                     className={`py-2.5 rounded-xl text-xs font-bold transition-all border flex flex-col items-center gap-0.5 ${furnishing === opt.id ? 'bg-sgs-verified text-[var(--text-primary)] border-sgs-verified' : 'bg-slate-900 text-slate-400 border-slate-700 hover:border-sgs-primary/50'}`}
                                                 >
                                                     <span>{opt.label}</span>
-                                                    <span className={`text-[9px] font-bold ${furnishing === opt.id ? 'text-white/80' : opt.badgeColor}`}>{opt.badge}</span>
+                                                    <span className={`text-[12px] font-bold ${furnishing === opt.id ? 'text-white/80' : opt.badgeColor}`}>{opt.badge}</span>
                                                 </button>
                                             ))}
                                         </div>
@@ -1841,7 +1841,7 @@ export const AiValuation: React.FC = () => {
                             </div>
                         ) : teaserError ? (
                             <div className="bg-slate-800 rounded-[32px] border border-red-500/30 p-7 md:p-8 shadow-2xl">
-                                <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-rose-500/10 border border-red-500/30 text-red-500 text-[11px] font-bold uppercase tracking-widest mb-4">
+                                <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-rose-500/10 border border-red-500/30 text-red-500 text-[12px] font-bold uppercase tracking-widest mb-4">
                                     <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 9v2m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z" /></svg>
                                     Không lấy được giá sơ bộ
                                 </div>
@@ -1871,7 +1871,7 @@ export const AiValuation: React.FC = () => {
                         ) : !teaser ? null : (
                             <div className="bg-slate-800 rounded-[32px] border border-slate-700 p-7 md:p-8 shadow-2xl">
                                 <div className="flex items-start justify-between gap-3 mb-1">
-                                    <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-sgs-verified/10 border border-sgs-verified/20 text-sgs-verified text-[11px] font-bold uppercase tracking-widest">
+                                    <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-sgs-verified/10 border border-sgs-verified/20 text-sgs-verified text-[12px] font-bold uppercase tracking-widest">
                                         <span className="w-2 h-2 rounded-full bg-sgs-verified"></span>
                                         Giá sơ bộ — Miễn phí
                                     </div>
@@ -1925,18 +1925,18 @@ export const AiValuation: React.FC = () => {
                                 {/* Source meta */}
                                 <div className="grid grid-cols-3 gap-2 mb-5">
                                     <div className="bg-sgs-primary-deep/40 border border-slate-700/40 rounded-xl px-3 py-2.5 text-center">
-                                        <div className="text-[10px] text-sgs-text-muted uppercase font-bold mb-0.5">Tin cậy</div>
+                                        <div className="text-[12px] text-sgs-text-muted uppercase font-bold mb-0.5">Tin cậy</div>
                                         <div className={`text-sm font-bold ${teaser.confidence >= 75 ? 'text-sgs-verified' : teaser.confidence >= 60 ? 'text-sgs-accent-text' : 'text-slate-300'}`}>{teaser.confidence}%</div>
                                     </div>
                                     <div className="bg-sgs-primary-deep/40 border border-slate-700/40 rounded-xl px-3 py-2.5 text-center">
-                                        <div className="text-[10px] text-sgs-text-muted uppercase font-bold mb-0.5">Xu hướng</div>
+                                        <div className="text-[12px] text-sgs-text-muted uppercase font-bold mb-0.5">Xu hướng</div>
                                         <div className="text-sm font-bold text-white truncate" title={teaser.trendText}>{teaser.trendText}</div>
                                     </div>
                                     <div className="bg-sgs-primary-deep/40 border border-slate-700/40 rounded-xl px-3 py-2.5 text-center">
-                                        <div className="text-[10px] text-sgs-text-muted uppercase font-bold mb-0.5">
+                                        <div className="text-[12px] text-sgs-text-muted uppercase font-bold mb-0.5">
                                             {teaser.internalCompsCount ? 'Kho BĐS' : 'Nguồn'}
                                         </div>
-                                        <div className="text-[11px] font-bold text-slate-300 leading-tight">
+                                        <div className="text-[12px] font-bold text-slate-300 leading-tight">
                                             {teaser.internalCompsCount
                                                 ? <span className="text-sgs-on-dark-muted">{teaser.internalCompsCount} BĐS</span>
                                                 : teaser.dataSource

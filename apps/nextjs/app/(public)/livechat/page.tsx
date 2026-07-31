@@ -1,5 +1,6 @@
 // @ts-nocheck
 import type { Metadata } from "next";
+import { MessageCircle } from "lucide-react";
 
 export const metadata: Metadata = {
   title: "Live Chat AI BĐS",
@@ -12,9 +13,9 @@ export default function LiveChatPage() {
   return (
     <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-12 text-center">
       <div className="mb-6">
-        <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl mb-4 text-3xl"
+        <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl mb-4"
           style={{ background: "var(--primary-subtle)" }}>
-          💬
+          <MessageCircle className="w-7 h-7" style={{ color: "var(--primary-600)" }} aria-hidden />
         </div>
         <h1 className="text-3xl font-bold mb-2" style={{ color: "var(--text-primary)" }}>AI Chat BĐS 24/7</h1>
         <p style={{ color: "var(--text-secondary)" }}>

@@ -28,8 +28,8 @@ export default function DuAnPage() {
                 <Building2 className="w-5 h-5" />
               </div>
               <div className="flex gap-1.5">
-                {p.hot && <span className="px-2 py-0.5 rounded-full text-[10px] font-bold" style={{ background: "#ef4444", color: "#fff" }}>HOT</span>}
-                <span className="px-2 py-0.5 rounded-full text-[10px] font-medium"
+                {p.hot && <span className="px-2 py-0.5 rounded-full text-[12px] font-bold" style={{ background: "#ef4444", color: "#fff" }}>HOT</span>}
+                <span className="px-2 py-0.5 rounded-full text-[12px] font-medium"
                   style={{ background: "var(--primary-subtle)", color: "var(--primary-600)" }}>{p.badge}</span>
               </div>
             </div>

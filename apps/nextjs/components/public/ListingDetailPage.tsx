@@ -84,7 +84,7 @@ function LoanCalculator({ price }: { price: number }) {
         <div>
           <div className="flex justify-between text-xs font-semibold mb-1" style={{ color: "var(--text-secondary)" }}><span>{tt(lang, "TỶ LỆ VAY", "LOAN RATIO")}</span><span>{ratio}%</span></div>
           <input type="range" min={0} max={90} step={5} value={ratio} onChange={(e) => setRatio(+e.target.value)} className="w-full" style={{ accentColor: "var(--sgs-primary, #1B3A5C)" }} />
-          <div className="text-[11px] mt-1" style={{ color: "var(--text-tertiary)" }}>{tt(lang, "Vốn tự có", "Your equity")}: {vnd(own)}</div>
+          <div className="text-[12px] mt-1" style={{ color: "var(--text-tertiary)" }}>{tt(lang, "Vốn tự có", "Your equity")}: {vnd(own)}</div>
         </div>
         <div className="grid grid-cols-2 gap-4">
           <div><div className="text-xs font-semibold mb-1" style={{ color: "var(--text-secondary)" }}>{tt(lang, "THỜI HẠN (NĂM)", "TERM (YEARS)")}</div>
@@ -97,17 +97,17 @@ function LoanCalculator({ price }: { price: number }) {
           <div className="text-2xl font-extrabold" style={{ color: "var(--sgs-primary, #1B3A5C)" }}>{vnd(monthly)}</div>
           <div className="flex justify-between text-sm mt-3 pt-3" style={{ borderTop: "1px solid var(--border-default)" }}><span style={{ color: "var(--text-tertiary)" }}>{tt(lang, "Tổng gốc vay", "Total loan principal")}</span><span className="font-semibold" style={{ color: "var(--text-primary)" }}>{vnd(principal)}</span></div>
         </div>
-        <p className="text-[11px]" style={{ color: "var(--text-tertiary)" }}>{tt(lang, "* Ước tính theo dư nợ giảm dần, chỉ mang tính tham khảo.", "* Estimated on a reducing-balance basis, for reference only.")}</p>
+        <p className="text-[12px]" style={{ color: "var(--text-tertiary)" }}>{tt(lang, "* Ước tính theo dư nợ giảm dần, chỉ mang tính tham khảo.", "* Estimated on a reducing-balance basis, for reference only.")}</p>
       </div>
       ) : (
       <div className="space-y-4">
         <div className="grid grid-cols-2 gap-3">
           <div className="p-3 rounded-xl" style={{ background: "var(--bg-surface)", border: "1px solid var(--border-default)" }}>
-            <div className="text-[11px] uppercase font-semibold" style={{ color: "var(--text-tertiary)" }}>{tt(lang, "Lợi suất thuê", "Rental yield")}</div>
+            <div className="text-[12px] uppercase font-semibold" style={{ color: "var(--text-tertiary)" }}>{tt(lang, "Lợi suất thuê", "Rental yield")}</div>
             <div className="text-lg font-extrabold" style={{ color: "var(--sgs-primary, #1B3A5C)" }}>{tt(lang, "~4,8%/năm", "~4.8%/year")}</div>
           </div>
           <div className="p-3 rounded-xl" style={{ background: "var(--bg-surface)", border: "1px solid var(--border-default)" }}>
-            <div className="text-[11px] uppercase font-semibold" style={{ color: "var(--text-tertiary)" }}>{tt(lang, "Giá thuê ước tính", "Estimated rent")}</div>
+            <div className="text-[12px] uppercase font-semibold" style={{ color: "var(--text-tertiary)" }}>{tt(lang, "Giá thuê ước tính", "Estimated rent")}</div>
             <div className="text-lg font-extrabold" style={{ color: "var(--text-primary)" }}>{vnd(monthlyRent)}</div>
           </div>
         </div>
@@ -123,7 +123,7 @@ function LoanCalculator({ price }: { price: number }) {
             <div className="text-right"><div className="text-xl font-extrabold" style={{ color: "var(--sgs-primary, #1B3A5C)" }}>{vnd(totalProfit)}</div><div className="text-xs font-bold" style={{ color: "var(--color-success, #0B6B54)" }}>ROI {roi.toFixed(1)}%</div></div>
           </div>
         </div>
-        <p className="text-[11px]" style={{ color: "var(--text-tertiary)" }}>{tt(lang, "* Giả định thuê ~4,8%/năm & tăng giá ~7%/năm (trung bình thị trường). Chỉ tham khảo.", "* Assumes ~4.8%/yr rental yield and ~7%/yr appreciation (market average). Reference only.")}</p>
+        <p className="text-[12px]" style={{ color: "var(--text-tertiary)" }}>{tt(lang, "* Giả định thuê ~4,8%/năm & tăng giá ~7%/năm (trung bình thị trường). Chỉ tham khảo.", "* Assumes ~4.8%/yr rental yield and ~7%/yr appreciation (market average). Reference only.")}</p>
       </div>
       )}
     </div>
@@ -302,7 +302,7 @@ export function ListingDetailPage({ listing, similarListings }: Props) {
                 <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 mb-6">
                   {items.map((a, i) => (
                     <div key={i} className="p-4 rounded-xl" style={{ background: "var(--bg-elevated)", border: "1px solid var(--border-default)" }}>
-                      <div className="text-[11px] uppercase font-semibold mb-1" style={{ color: "var(--text-tertiary)" }}>{a.label}</div>
+                      <div className="text-[12px] uppercase font-semibold mb-1" style={{ color: "var(--text-tertiary)" }}>{a.label}</div>
                       <div className="text-base font-bold truncate" style={{ color: "var(--text-primary)" }}>{a.value}</div>
                     </div>
                   ))}
@@ -421,7 +421,7 @@ export function ListingDetailPage({ listing, similarListings }: Props) {
                   style={{ background: "var(--sgs-primary, #1B3A5C)", opacity: bkState.loading ? 0.6 : 1 }}>
                   {bkState.loading ? tt(lang, "Đang gửi...", "Sending...") : tt(lang, "Xác nhận đặt lịch", "Confirm booking")}
                 </button>
-                <p className="text-[11px] text-center" style={{ color: "var(--text-tertiary)" }}>{tt(lang, "SGS LAND sẽ gọi xác nhận trước khi tới xem.", "SGS LAND will call to confirm before the visit.")}</p>
+                <p className="text-[12px] text-center" style={{ color: "var(--text-tertiary)" }}>{tt(lang, "SGS LAND sẽ gọi xác nhận trước khi tới xem.", "SGS LAND will call to confirm before the visit.")}</p>
               </form>
             )}
           </div>
@@ -451,15 +451,15 @@ export function ListingDetailPage({ listing, similarListings }: Props) {
                     <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent pointer-events-none" />
                     <div className="absolute top-3 left-3 flex flex-col gap-1.5 items-start">
                       <div className="flex gap-1.5">
-                        <span className="px-2 py-0.5 rounded-lg text-[11px] font-bold text-white shadow-sm backdrop-blur-sm"
+                        <span className="px-2 py-0.5 rounded-lg text-[12px] font-bold text-white shadow-sm backdrop-blur-sm"
                           style={{ background: rent ? "rgba(37,99,235,0.9)" : "rgba(11,107,84,0.92)" }}>{rent ? tt(lang, "CHO THUÊ", "FOR RENT") : tt(lang, "BÁN", "FOR SALE")}</span>
                         {l.isVerified && (
-                          <span className="flex items-center gap-1 px-2 py-0.5 rounded-lg text-[11px] font-bold text-white shadow-sm backdrop-blur-sm"
+                          <span className="flex items-center gap-1 px-2 py-0.5 rounded-lg text-[12px] font-bold text-white shadow-sm backdrop-blur-sm"
                             style={{ background: "rgba(5,150,105,0.95)" }}><CheckCircle className="w-3.5 h-3.5" /> {tt(lang, "ĐÃ XÁC THỰC", "VERIFIED")}</span>
                         )}
                       </div>
                       {(l.viewCount || 0) > 0 && (
-                        <span className="flex items-center gap-1 px-2 py-0.5 rounded-lg text-[11px] font-bold text-white shadow-sm backdrop-blur-sm"
+                        <span className="flex items-center gap-1 px-2 py-0.5 rounded-lg text-[12px] font-bold text-white shadow-sm backdrop-blur-sm"
                           style={{ background: "rgba(0,0,0,0.6)" }}><Eye className="w-3.5 h-3.5" /> {l.viewCount}</span>
                       )}
                     </div>
@@ -475,7 +475,7 @@ export function ListingDetailPage({ listing, similarListings }: Props) {
                     <div className="flex items-end justify-between gap-2">
                       <div className="min-w-0">
                         <p className="font-extrabold text-lg leading-none" style={{ color: "var(--primary-600)" }}>{formatPrice(l.price, lang)}</p>
-                        {ppm && <p className="text-[11px] font-medium mt-0.5 truncate" style={{ color: "var(--text-tertiary)" }}>{ppm}</p>}
+                        {ppm && <p className="text-[12px] font-medium mt-0.5 truncate" style={{ color: "var(--text-tertiary)" }}>{ppm}</p>}
                       </div>
                       <div className="flex items-center gap-3 text-xs shrink-0" style={{ color: "var(--text-tertiary)" }}>
                         {l.area ? <span>{l.area}m²</span> : null}

@@ -12,7 +12,7 @@ const WELCOME: Message = {
   id: "welcome",
   role: "assistant",
   content:
-    "Xin chào! Tôi là **SGS AI** — trợ lý bất động sản thông minh của SGS LAND.\n\nTôi có thể giúp bạn:\n• 🏠 Tìm kiếm bất động sản phù hợp\n• 💰 Định giá & phân tích đầu tư\n• ⚖️ Tư vấn pháp lý, sổ hồng\n• 📊 Thị trường Đông Nam Bộ\n\nBạn đang quan tâm đến BĐS nào?",
+    "Xin chào! Tôi là **SGS AI** — trợ lý bất động sản thông minh của SGS LAND.\n\nTôi có thể giúp bạn:\n• Tìm kiếm bất động sản phù hợp\n• Định giá & phân tích đầu tư\n• Tư vấn pháp lý, sổ hồng\n• Thị trường Đông Nam Bộ\n\nBạn đang quan tâm đến BĐS nào?",
   ts: Date.now(),
 };
 export function AiChatWidget() {
