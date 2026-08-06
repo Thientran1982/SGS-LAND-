@@ -134,6 +134,10 @@ import m114 from './114_visitor_consent_and_erasure';
 import m115 from './115_sms_log';
 import m116 from './116_audit_trigger_enforcement';
 import m117 from './117_custom_fields_and_units';
+import m118 from './118_booking_lifecycle_guards';
+import m119 from './119_market_price_history_listing_uuid';
+import m120 from './120_visitor_logs_view_dedupe_index';
+import m121 from './121_listings_code_lookup_index';
 
 dotenv.config();
 
@@ -264,6 +268,10 @@ const MIGRATION_REGISTRY: Record<string, Migration> = {
   '115_sms_log.ts': m115,
   '116_audit_trigger_enforcement.ts': m116,
   '117_custom_fields_and_units.ts': m117,
+  '118_booking_lifecycle_guards.ts': m118,
+  '119_market_price_history_listing_uuid.ts': m119,
+  '120_visitor_logs_view_dedupe_index.ts': m120,
+  '121_listings_code_lookup_index.ts': m121,
 };
 
 async function ensureSchemaVersionsTable(client: PoolClient): Promise<void> {

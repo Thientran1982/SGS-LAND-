@@ -9,6 +9,16 @@ import { evictPublicProjectCache } from '../services/publicProjectCache';
 import { evictPublicListingsCache } from '../services/publicListingsCache';
 import { evictPublicListingDetailCache } from '../services/publicListingDetailCache';
 import { priceCalibrationService } from '../services/priceCalibrationService';
+import {
+  checkStatusTransition,
+  isValidListingStatus,
+  LISTING_STATUSES,
+  runStatusSideEffects,
+} from '../services/listingStatusService';
+import {
+  sanitizeListingInput,
+  describeDropped,
+} from '../services/listingFieldPolicy';
 import { notificationRepository } from '../repositories/notificationRepository';
 import { storeFile } from '../services/storageService';
 
@@ -361,7 +371,7 @@ export function createListingRoutes(authenticateToken: any) {
     try {
       const user = (req as any).user;
       if (PARTNER_ROLES.includes(user.role)) {
-        return res.json({ availableCount: 0, holdCount: 0, soldCount: 0, rentedCount: 0, bookingCount: 0, openingCount: 0, inactiveCount: 0, totalCount: 0 });
+        return res.json({ availableCount: 0, holdCount: 0, soldCount: 0, rentedCount: 0, bookingCount: 0, openingCount: 0, inactiveCount: 0, bestMarketCount: 0, otherCount: 0, totalCount: 0 });
       }
       const stats = await listingRepository.getGlobalStats(user.tenantId, user.id, user.role);
       res.json(stats);
@@ -397,7 +407,6 @@ export function createListingRoutes(authenticateToken: any) {
         const listing = await listingRepository.findById(user.tenantId, String(req.params.id));
         if (!listing) return res.status(404).json({ error: 'Listing not found' });
         res.json(redactSensitiveFields(listing));
-        listingRepository.incrementViewCount(user.tenantId, String(req.params.id)).catch(() => {});
         const pl = listing as any;
         const pcMissing = !hasValidCoords(pl.coordinates);
         if (pcMissing && pl.location) scheduleGeocode(user.tenantId, String(req.params.id), pl.location);
@@ -421,7 +430,6 @@ export function createListingRoutes(authenticateToken: any) {
 
       // Respond immediately, increment view count + geocode (if needed) in background
       res.json(listing);
-      listingRepository.incrementViewCount(user.tenantId, String(req.params.id)).catch(() => {});
       // Auto-geocode: nếu listing thiếu coordinates (ví dụ PROJECT vừa tạo), tự bổ sung để
       // lần load tiếp theo có tọa độ thật trên bản đồ.
       const anyListing = listing as any;
@@ -445,6 +453,12 @@ export function createListingRoutes(authenticateToken: any) {
         return res.status(403).json({ error: 'Partners cannot create listings directly' });
       }
 
+      // VIEWER is a read-only internal role. Only PARTNER_* used to be blocked
+      // here, so a viewer could create listings despite having no write rights.
+      if (user.role === 'VIEWER') {
+        return res.status(403).json({ error: 'Viewers cannot create listings' });
+      }
+
       const { code, title, location, price, area, type } = req.body;
       if (!code || !title || !location || !price || !area || !type) {
         return res.status(400).json({ error: 'Missing required fields: code, title, location, price, area, type' });
@@ -455,8 +469,21 @@ export function createListingRoutes(authenticateToken: any) {
         return res.status(400).json({ error: 'Maximum 10 images allowed per listing' });
       }
 
-      const listing = await listingRepository.create(user.tenantId, {
-        ...req.body,
+      // Mass-assignment guard: only whitelisted content fields survive. System
+    // counters (viewCount/bookingCount, createdBy, holdExpiresAt) are never
+    // accepted, and privileged fields (isVerified, commission, commissionUnit,
+    // authorizedAgents) need an elevated role.
+    // MA BDS is free text; enforce a case-insensitive unique code per tenant
+    // so two agents cannot publish the same product code.
+    const normalizedCode = String(code).trim();
+    if (!normalizedCode) return res.status(400).json({ error: 'M\u00e3 B\u0110S kh\u00f4ng \u0111\u01b0\u1ee3c \u0111\u1ec3 tr\u1ed1ng' });
+    if (await listingRepository.codeExists(user.tenantId, normalizedCode)) {
+      return res.status(409).json({ error: `M\u00e3 B\u0110S "${normalizedCode}" \u0111\u00e3 t\u1ed3n t\u1ea1i` });
+    }
+    const sanitized = sanitizeListingInput(req.body, 'create', user.role);
+    const listing = await listingRepository.create(user.tenantId, {
+      ...sanitized.data,
+      code: normalizedCode,
         createdBy: user.id,
       });
 
@@ -473,7 +500,7 @@ export function createListingRoutes(authenticateToken: any) {
         action: 'CREATE',
         entityType: 'LISTING',
         entityId: listing.id,
-        details: `Created listing: ${title}`,
+        details: `Created listing: ${title}${describeDropped(sanitized)}`,
         ipAddress: req.ip,
       });
 
@@ -507,6 +534,7 @@ export function createListingRoutes(authenticateToken: any) {
       }
 
       const created: unknown[] = [];
+    const seenCodes = new Set<string>();
       const errors: { row: number; error: string }[] = [];
       const touchedProjectCodes = new Set<string>();
 
@@ -515,8 +543,17 @@ export function createListingRoutes(authenticateToken: any) {
         const rowNum = (item._row as number) ?? (i + 2);
         try {
           const { _row, ...data } = item;
+          const safeData = sanitizeListingInput(data, 'create', user.role).data;
+          const rowCode = String((safeData as any).code ?? '').trim();
+          if (!rowCode) throw new Error('M\u00e3 B\u0110S kh\u00f4ng \u0111\u01b0\u1ee3c \u0111\u1ec3 tr\u1ed1ng');
+          if (seenCodes.has(rowCode.toUpperCase())
+            || await listingRepository.codeExists(user.tenantId, rowCode)) {
+            throw new Error(`M\u00e3 B\u0110S "${rowCode}" \u0111\u00e3 t\u1ed3n t\u1ea1i`);
+          }
+          seenCodes.add(rowCode.toUpperCase());
+          (safeData as any).code = rowCode;
           const listing = await listingRepository.create(user.tenantId, {
-            ...data,
+            ...safeData,
             createdBy: user.id,
           });
           created.push(listing);
@@ -701,15 +738,6 @@ export function createListingRoutes(authenticateToken: any) {
         // 6) Persist updated image arrays + aggregate audit log per listing
         // (the per-file logs above provide file-level traceability; this
         // aggregate entry summarizes the batch impact on each listing).
-        // Cache invalidation: bulk-images thuộc 1 dự án duy nhất (param
-        // :projectCode), nên evict 1 lần sau loop là đủ.
-        if (updatedImages.size > 0 && projectCode) {
-          try { evictPublicProjectCache(projectCode); } catch { /* best-effort */ }
-          evictPublicListingsCache();
-          for (const lid of updatedImages.keys()) {
-            try { evictPublicListingDetailCache(String(lid)); } catch { /* best-effort */ }
-          }
-        }
         for (const [listingId, images] of updatedImages) {
           await listingRepository.update(user.tenantId, listingId, { images });
           const original = projectListings.find(l => l.id === listingId);
@@ -724,6 +752,19 @@ export function createListingRoutes(authenticateToken: any) {
           });
         }
 
+        // Cache invalidation AFTER the DB writes: evicting first left a window
+    // where a public request could repopulate the cache with the pre-upload
+    // images and keep serving them until the next eviction.
+    // bulk-images belongs to a single project (:projectCode param), so one
+    // evict pass after the loop is enough. thuộc 1 dự án duy nhất (param
+        // :projectCode), nên evict 1 lần sau loop là đủ.
+        if (updatedImages.size > 0 && projectCode) {
+          try { evictPublicProjectCache(projectCode); } catch { /* best-effort */ }
+          evictPublicListingsCache();
+          for (const lid of updatedImages.keys()) {
+            try { evictPublicListingDetailCache(String(lid)); } catch { /* best-effort */ }
+          }
+        }
         const summary = {
           total:                  files.length,
           uploaded:               results.filter(r => r.status === 'uploaded').length,
@@ -773,14 +814,34 @@ export function createListingRoutes(authenticateToken: any) {
         return res.status(403).json({ error: 'Insufficient permissions to edit listings' });
       }
 
-      // Strip assignedTo — assignment is exclusively managed via PATCH /:id/assign (ADMIN/TEAM_LEAD only)
-      const { assignedTo: _stripped, ...safeBody } = req.body;
+      // Whitelist the payload (see listingFieldPolicy): assignedTo stays exclusive
+    // to PATCH /:id/assign, viewCount/bookingCount stay server-owned, and
+    // isVerified / commission need an elevated role.
+      const sanitized = sanitizeListingInput(req.body, 'update', user.role);
+    const safeBody = sanitized.data;
+
+    // Renaming a listing code must not collide with another listing.
+    if (typeof safeBody.code === 'string') {
+      const nextCode = safeBody.code.trim();
+      if (!nextCode) return res.status(400).json({ error: 'M\u00e3 B\u0110S kh\u00f4ng \u0111\u01b0\u1ee3c \u0111\u1ec3 tr\u1ed1ng' });
+      if (await listingRepository.codeExists(user.tenantId, nextCode, String(req.params.id))) {
+        return res.status(409).json({ error: `M\u00e3 B\u0110S "${nextCode}" \u0111\u00e3 t\u1ed3n t\u1ea1i` });
+      }
+      safeBody.code = nextCode;
+    }
 
       // Capture old status before update (for change notification)
       let oldStatus: string | undefined;
       if (safeBody.status) {
         const prev = prefetchedListing ?? await listingRepository.findById(user.tenantId, String(req.params.id));
         oldStatus = (prev as any)?.status;
+      }
+
+      // Same state machine as PATCH /:id/status - a status hidden inside a
+      // full-object PUT used to bypass every rule.
+      if (safeBody.status) {
+        const check = checkStatusTransition(oldStatus, String(safeBody.status), user.role);
+        if (!check.ok) return res.status(409).json({ error: check.error });
       }
 
       const listing = await listingRepository.update(user.tenantId, String(req.params.id), safeBody);
@@ -796,33 +857,17 @@ export function createListingRoutes(authenticateToken: any) {
       } catch { /* best-effort */ }
       evictPublicListingsCache();
       try { evictPublicListingDetailCache(String(req.params.id)); } catch { /* best-effort */ }
-
-      // ── Self-learning: record ground-truth price when listing is sold ─────
-      // A sold transaction is the most accurate price signal — weight 50% in calibration.
-      if (listing.status === 'SOLD' && listing.price && listing.area) {
-        const pricePerM2 = Math.round((listing.price as number) / (listing.area as number));
-        if (pricePerM2 > 1_000_000 && listing.location) {
-          const { getRegionalBasePrice } = await import('../valuationEngine');
-          const regional = getRegionalBasePrice(listing.location as string, listing.propertyType as string);
-          const normalizedKey = (listing.location as string)
-            .toLowerCase()
-            .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
-            .replace(/[^a-z0-9\s]/g, ' ')
-            .replace(/\s+/g, ' ')
-            .trim()
-            .slice(0, 80);
-          setImmediate(() =>
-            priceCalibrationService.recordTransaction({
-              locationKey:     normalizedKey,
-              locationDisplay: listing.location as string,
-              pricePerM2,
-              propertyType:    (listing.propertyType as string) || 'townhouse_center',
-              confidence:      regional.confidence,
-              listingId:       parseInt(req.params.id as string, 10),
-              tenantId:        user.tenantId,
-            }).catch(() => {})
-          );
-        }
+      // Status side effects (commission ledger + ground-truth price feedback)
+      // live in listingStatusService, so PUT and PATCH now behave identically.
+      if (safeBody.status && oldStatus !== (listing.status as string)) {
+        const changed = listing;
+        setImmediate(() => runStatusSideEffects({
+          tenantId: user.tenantId,
+          actorUserId: user.id,
+          listing: changed,
+          oldStatus,
+          newStatus: changed.status as string,
+        }).catch(() => {}));
       }
 
       await auditRepository.log(user.tenantId, {
@@ -830,7 +875,7 @@ export function createListingRoutes(authenticateToken: any) {
         action: 'UPDATE',
         entityType: 'LISTING',
         entityId: String(req.params.id),
-        details: `Updated listing fields: ${Object.keys(req.body).join(', ')}`,
+        details: `Updated listing fields: ${Object.keys(safeBody).join(', ')}${describeDropped(sanitized)}`,
         ipAddress: req.ip,
       });
 
@@ -873,9 +918,8 @@ export function createListingRoutes(authenticateToken: any) {
         return res.status(400).json({ error: 'status is required' });
       }
 
-      const VALID_STATUSES = ['BOOKING', 'OPENING', 'AVAILABLE', 'HOLD', 'SOLD', 'RENTED', 'INACTIVE', 'BEST_MARKET'];
-      if (!VALID_STATUSES.includes(status)) {
-        return res.status(400).json({ error: `Invalid status. Must be one of: ${VALID_STATUSES.join(', ')}` });
+      if (!isValidListingStatus(status)) {
+        return res.status(400).json({ error: `Invalid status. Must be one of: ${LISTING_STATUSES.join(', ')}` });
       }
 
       // Fetch current listing to get old status
@@ -887,8 +931,34 @@ export function createListingRoutes(authenticateToken: any) {
         return res.json(existing); // No-op: status unchanged
       }
 
+      // Same ownership rule PUT and DELETE enforce: SALES/MARKETING may only
+      // act on listings they created or are assigned to.
+      if (WRITABLE_RESTRICTED_ROLES.includes(user.role)) {
+        const isOwnerOrAssignee =
+          (existing as any).createdBy === user.id || (existing as any).assignedTo === user.id;
+        if (!isOwnerOrAssignee) {
+          return res.status(403).json({
+            error: 'You can only change the status of listings you created or are assigned to',
+          });
+        }
+      }
+
+      const check = checkStatusTransition(oldStatus, status, user.role);
+      if (!check.ok) return res.status(409).json({ error: check.error });
+
       const listing = await listingRepository.update(user.tenantId, String(req.params.id), { status });
       if (!listing) return res.status(404).json({ error: 'Listing not found' });
+
+      if (check.reversal) {
+        await auditRepository.log(user.tenantId, {
+          actorId: user.id,
+          action: 'UPDATE_STATUS_REVERSAL',
+          entityType: 'LISTING',
+          entityId: String(req.params.id),
+          details: `Admin override of a terminal status: ${oldStatus} -> ${status}`,
+          ipAddress: req.ip,
+        });
+      }
 
       // Invalidate public mini-site cache khi status đổi (đặc biệt giữa
       // AVAILABLE/BOOKING/OPENING ↔ HOLD/SOLD — ảnh hưởng filter công khai)
@@ -915,37 +985,15 @@ export function createListingRoutes(authenticateToken: any) {
         oldStatus, status,
         user.name || user.email,
       ));
-
-      // ── Commission engine v1: auto-sinh ledger entry khi → SOLD ──────────
-      // Idempotent: trùng listing_id sẽ no-op qua UNIQUE constraint.
-      // Best-effort: lỗi không chặn response status update.
-      if (status === 'SOLD' && oldStatus !== 'SOLD') {
-        setImmediate(async () => {
-          try {
-            const { generateLedgerOnSold } = await import('../services/commissionHook');
-            const lst = listing as {
-              id: string;
-              price: number | string | null | undefined;
-              project_id?: string | null; projectId?: string | null;
-              assigned_to?: string | null; assignedTo?: string | null;
-            };
-            await generateLedgerOnSold({
-              tenantId: user.tenantId,
-              listing: {
-                id: lst.id,
-                price: lst.price,
-                project_id: lst.project_id ?? null,
-                projectId: lst.projectId ?? null,
-                assigned_to: lst.assigned_to ?? null,
-                assignedTo: lst.assignedTo ?? null,
-              },
-              actorUserId: user.id,
-            });
-          } catch (e) {
-            console.error('[commission hook] failed:', e);
-          }
-        });
-      }
+      // Commission ledger + sold-price calibration, from the one place that
+      // owns them. Best-effort: never blocks the status response.
+      setImmediate(() => runStatusSideEffects({
+        tenantId: user.tenantId,
+        actorUserId: user.id,
+        listing,
+        oldStatus,
+        newStatus: status,
+      }).catch(() => {}));
 
       res.json(listing);
     } catch (error) {

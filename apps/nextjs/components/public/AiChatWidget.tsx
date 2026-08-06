@@ -15,6 +15,26 @@ const WELCOME: Message = {
     "Xin chào! Tôi là **SGS AI** — trợ lý bất động sản thông minh của SGS LAND.\n\nTôi có thể giúp bạn:\n• Tìm kiếm bất động sản phù hợp\n• Định giá & phân tích đầu tư\n• Tư vấn pháp lý, sổ hồng\n• Thị trường Đông Nam Bộ\n\nBạn đang quan tâm đến BĐS nào?",
   ts: Date.now(),
 };
+// The Express API protects non-exempt POST routes with a double-submit CSRF
+// token (cookie `csrf_token` + header `X-CSRF-Token`). Read it from the cookie,
+// or mint one via the exempt /api/csrf-token endpoint on first use.
+async function getCsrfToken(): Promise<string> {
+  const fromCookie = () => {
+    const m = document.cookie.match(/(?:^|;\s*)csrf_token=([^;]+)/);
+    return m ? decodeURIComponent(m[1]) : "";
+  };
+  const existing = fromCookie();
+  if (existing) return existing;
+  try {
+    const r = await fetch("/api/csrf-token", { credentials: "include" });
+    const j = (await r.json()) as { csrfToken?: string };
+    if (j?.csrfToken) return j.csrfToken;
+  } catch {
+    // ignore - the chat request below will surface the real error
+  }
+  return fromCookie();
+}
+
 export function AiChatWidget() {
   const [open, setOpen] = useState(false);
   const [minimized, setMinimized] = useState(false);
@@ -47,16 +67,35 @@ export function AiChatWidget() {
     setInput("");
     setLoading(true);
     try {
-      const res = await fetch("/api/ai/chat", {
+      // Backend endpoint: POST /api/landing-ai/consult (public, Gemini-backed,
+      // see server/routes/landingAiRoutes.ts). The previous "/api/ai/chat" path
+      // does not exist on the Express server, so every message failed (403 CSRF
+      // then 404) and the widget silently fell back to "chua hieu cau hoi".
+      const history = [...messages, userMsg]
+        .filter((m) => m.id !== "welcome")
+        .slice(-10)
+        .map((m) => ({ role: m.role, content: m.content }));
+      const res = await fetch("/api/landing-ai/consult", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        headers: {
+          "Content-Type": "application/json",
+          "X-CSRF-Token": await getCsrfToken(),
+        },
         body: JSON.stringify({
-          message: text,
-          history: messages.slice(-10).map((m) => ({ role: m.role, content: m.content })),
+          project: "sgs-land",
+          messages: history,
+          visitorInfo: {
+            pageUrl: typeof window !== "undefined" ? window.location.href : undefined,
+            referrer:
+              typeof document !== "undefined" ? document.referrer || undefined : undefined,
+          },
         }),
       });
-      if (!res.ok) throw new Error("API error");
-      const data = await res.json();
+      const data = await res.json().catch(() => ({}) as { ok?: boolean; reply?: string; error?: string });
+      if (!res.ok || data?.ok === false) {
+        throw new Error(data?.error || `HTTP ${res.status}`);
+      }
       const aiMsg: Message = {
         id: (Date.now() + 1).toString(),
         role: "assistant",
@@ -66,7 +105,8 @@ export function AiChatWidget() {
       setMessages((prev) => [...prev, aiMsg]);
       // Unread badge when minimized/closed
       if (minimized || !open) setUnread((n) => n + 1);
-    } catch {
+    } catch (err) {
+      console.error("[AiChatWidget] /api/landing-ai/consult failed:", err);
       setMessages((prev) => [
         ...prev,
         {

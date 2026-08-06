@@ -72,6 +72,7 @@ import { createBackupRouter } from "./server/routes/backupRoutes";
 import { createListingPriceRefreshRouter } from "./server/routes/listingPriceRefreshRoutes";
 import { createTaskReminderCronRouter } from "./server/routes/taskReminderCronRoutes";
 import { createCampaignSchedulerCronRouter, startCampaignSchedulerCron } from "./server/routes/campaignSchedulerCronRoutes";
+import { startBookingLifecycleCron } from "./server/services/bookingLifecycleService";
 import { createGeoMonitorCronRouter } from "./server/routes/geoMonitorCronRoutes";
 import { createBuyerPushRoutes } from "./server/routes/buyerPushRoutes";
 import { createBuyerAuthRoutes } from "./server/routes/buyerAuthRoutes";
@@ -1628,7 +1629,12 @@ app.use(globalMutationAudit);
     'An Giang':          ['An Giang', 'Long Xuyên'],
   };
 
-  /** Normalize a raw last-segment location to canonical province; null = skip */
+  // Marketplace dropdown values that are not canonical province names - map them
+// onto the same alias list so the public location filter actually matches.
+VN_PROVINCE_ALIASES['TP.HCM'] = VN_PROVINCE_ALIASES['TP. H\u1ed3 Ch\u00ed Minh'];
+VN_PROVINCE_ALIASES['B\u00e0 R\u1ecba'] = VN_PROVINCE_ALIASES['B\u00e0 R\u1ecba - V\u0169ng T\u00e0u'];
+
+/** Normalize a raw last-segment location to canonical province; null = skip */
   function normalizeToProvince(raw: string): string | null {
     if (!raw || !raw.trim()) return null;
     const key = vnDeaccent(raw);
@@ -1638,6 +1644,28 @@ app.use(globalMutationAudit);
     }
     return raw.trim();
   }
+
+// ---------------------------------------------------------------------------
+// Allow-list for the PUBLIC FEED (/api/public/listings).
+// The marketplace page is SSR, so every field returned here is embedded in
+// public HTML. Owner name/phone, commission, tenant id, audit and assignment
+// fields must NEVER be listed below. Mirrors PUBLIC_LISTING_DETAIL_FIELDS plus
+// the few list-only fields the cards / map / mobile feed need.
+// ---------------------------------------------------------------------------
+const PUBLIC_LISTING_FEED_FIELDS = [
+  'id', 'code', 'title', 'description', 'type', 'transaction', 'status',
+  'price', 'currency', 'area', 'builtArea', 'bedrooms', 'bathrooms',
+  'location', 'address', 'coordinates', 'images', 'attributes', 'projectCode',
+  'totalUnits', 'availableUnits', 'isVerified', 'viewCount', 'bookingCount',
+  'createdAt', 'updatedAt',
+] as const;
+function sanitizePublicListingFeed(row: any): Record<string, any> {
+  if (!row) return row;
+  const out: Record<string, any> = {};
+  for (const f of PUBLIC_LISTING_FEED_FIELDS) out[f] = (row as any)[f] ?? null;
+  if (Array.isArray(out.images)) out.images = out.images.slice(0, 20);
+  return out;
+}
 
   app.get('/api/public/listings', apiRateLimit, async (req: express.Request, res: express.Response) => {
     try {
@@ -1668,7 +1696,7 @@ app.use(globalMutationAudit);
         return res.json(cached) as any;
       }
 
-      const filters: any = { status_in: ['AVAILABLE', 'OPENING', 'BOOKING'] };
+      const filters: any = { status_in: ['AVAILABLE', 'OPENING', 'BOOKING', 'BEST_MARKET'] };
       if (req.query.projectCode) {
         filters.projectCode = req.query.projectCode as string;
       } else {
@@ -1717,6 +1745,10 @@ app.use(globalMutationAudit);
       } else {
         result = await listingRepository.findListings(PUBLIC_TENANT, { page, pageSize }, filters);
       }
+    // Allow-list BEFORE caching so the cached payload is public-safe too.
+    if (result && Array.isArray(result.data)) {
+      result = { ...result, data: result.data.map(sanitizePublicListingFeed) };
+    }
       setPublicListingsCache(cacheKey, result);
       res.setHeader('X-Public-Listings-Cache', 'MISS');
       res.setHeader('Cache-Control', 'public, max-age=60, stale-while-revalidate=300');
@@ -1752,7 +1784,7 @@ app.use(globalMutationAudit);
           `SELECT DISTINCT TRIM(SPLIT_PART(location, ',', -1)) AS loc
              FROM listings
              WHERE tenant_id = $1
-               AND status IN ('AVAILABLE','OPENING','BOOKING')
+               AND status IN ('AVAILABLE','OPENING','BOOKING','BEST_MARKET')
                AND location IS NOT NULL AND location <> ''
              ORDER BY 1`,
           [PUBLIC_TENANT]
@@ -1827,7 +1859,45 @@ app.use(globalMutationAudit);
       createdAt: r.created_at, updatedAt: r.updated_at,
     };
   }
-  app.get('/api/public/listings/:slugId', apiRateLimit, async (req: express.Request, res: express.Response) => {
+  
+// --- Public view tracking -------------------------------------------------
+// listings.view_count is now a PUBLIC metric only: the authenticated CRM
+// endpoint no longer increments it, bots are ignored, and one visitor (IP)
+// is counted at most once per PUBLIC_VIEW_DEDUPE_MINUTES.
+const PUBLIC_VIEW_DEDUPE_MINUTES = 30;
+const BOT_UA_RE = /(bot|crawler|crawling|spider|slurp|facebookexternalhit|embedly|whatsapp|telegram|discordbot|skypeuripreview|linkpreview|preview|headless|lighthouse|pingdom|uptime|curl|wget|python-requests|axios|node-fetch|go-http-client|postman|httpclient)/i;
+function isBotRequest(req: express.Request): boolean {
+  const ua = String(req.headers['user-agent'] || '').trim();
+  if (!ua) return true;
+  return BOT_UA_RE.test(ua);
+}
+// Owner tenant per public listing id, filled on cache MISS so the cache-HIT
+// branch can attribute the view without exposing tenantId in the payload.
+const PUBLIC_LISTING_TENANT_BY_ID = new Map<string, string>();
+async function trackPublicListingView(
+  req: express.Request, tenantId: string, id: string, slugId: string,
+): Promise<void> {
+  const ip = getClientIp(req);
+  try {
+    if (!isBotRequest(req)) {
+      const seen = await visitorRepository.hasRecentView(
+        id, ip, PUBLIC_VIEW_DEDUPE_MINUTES, BOT_UA_RE.source,
+      );
+      if (!seen) await listingRepository.incrementViewCount(tenantId, id);
+    }
+  } catch { /* view_count is best-effort */ }
+  try {
+    const geo = await lookupIp(ip);
+    await visitorRepository.log({
+      tenantId, ipAddress: ip,
+      country: geo?.country, countryCode: geo?.countryCode,
+      region: geo?.region, city: geo?.city, lat: geo?.lat, lon: geo?.lon,
+      isp: geo?.isp, page: `/bds/${slugId}`, listingId: id,
+      userAgent: req.headers['user-agent'] as any, referrer: req.headers['referer'],
+    });
+  } catch { /* visitor log is best-effort */ }
+}
+app.get('/api/public/listings/:slugId', apiRateLimit, async (req: express.Request, res: express.Response) => {
     try {
       const slugId = String(req.params.slugId || '');
       const id = extractListingId(slugId);
@@ -1847,18 +1917,9 @@ app.use(globalMutationAudit);
         // implicitly via branding.tenantId; fallback to a quick lookup) so
         // view_count and visitor logs land in the vendor's CRM, not in
         // PUBLIC_TENANT — preserves cross-tenant analytics accuracy.
-        const ip = getClientIp(req);
-        const ownerTenantId = String((cached as any)?.branding?.tenantId || PUBLIC_TENANT);
-        Promise.all([
-          listingRepository.incrementViewCount(ownerTenantId, id).catch(() => {}),
-          lookupIp(ip).then(geo => visitorRepository.log({
-            tenantId: ownerTenantId, ipAddress: ip,
-            country: geo?.country, countryCode: geo?.countryCode,
-            region: geo?.region, city: geo?.city, lat: geo?.lat, lon: geo?.lon,
-            isp: geo?.isp, page: `/bds/${slugId}`, listingId: id,
-            userAgent: req.headers['user-agent'], referrer: req.headers['referer'],
-          })).catch(() => {}),
-        ]).catch(() => {});
+        const ownerTenantId = PUBLIC_LISTING_TENANT_BY_ID.get(id)
+          || String((cached as any)?.branding?.tenantId || PUBLIC_TENANT);
+        void trackPublicListingView(req, ownerTenantId, id, slugId);
         return;
       }
 
@@ -1870,7 +1931,7 @@ app.use(globalMutationAudit);
           `SELECT l.* FROM listings l
              JOIN tenants t ON t.id = l.tenant_id
              WHERE l.id = $1
-               AND l.status IN ('AVAILABLE','BOOKING','OPENING')
+               AND l.status IN ('AVAILABLE','BOOKING','OPENING','BEST_MARKET')
                AND t.approval_status = 'APPROVED'
              LIMIT 1`,
           [id]
@@ -1908,22 +1969,13 @@ app.use(globalMutationAudit);
       res.json(sanitized);
 
       // Background: view count, visitor log, geocode missing coords.
-      const ip = getClientIp(req);
       const coordsMissing = !mapped.coordinates?.lat || !mapped.coordinates?.lng ||
         (mapped.coordinates.lat === 0 && mapped.coordinates.lng === 0);
       if (coordsMissing && mapped.location) {
         scheduleGeocode(String(mapped.tenantId || PUBLIC_TENANT), id, mapped.location);
       }
-      Promise.all([
-        listingRepository.incrementViewCount(String(mapped.tenantId || PUBLIC_TENANT), id).catch(() => {}),
-        lookupIp(ip).then(geo => visitorRepository.log({
-          tenantId: String(mapped.tenantId || PUBLIC_TENANT), ipAddress: ip,
-          country: geo?.country, countryCode: geo?.countryCode,
-          region: geo?.region, city: geo?.city, lat: geo?.lat, lon: geo?.lon,
-          isp: geo?.isp, page: `/bds/${slugId}`, listingId: id,
-          userAgent: req.headers['user-agent'], referrer: req.headers['referer'],
-        })).catch(() => {}),
-      ]).catch(() => {});
+        PUBLIC_LISTING_TENANT_BY_ID.set(id, String(mapped.tenantId || PUBLIC_TENANT));
+        void trackPublicListingView(req, String(mapped.tenantId || PUBLIC_TENANT), id, slugId);
     } catch (error) {
       console.error('Error fetching public listing:', error);
       res.status(500).json({ error: 'Failed to fetch listing' });
@@ -1971,7 +2023,7 @@ app.use(globalMutationAudit);
           `SELECT l.* FROM listings l
            JOIN tenants t ON t.id = l.tenant_id
            WHERE l.id <> $1
-             AND l.status IN ('AVAILABLE','BOOKING','OPENING')
+             AND l.status IN ('AVAILABLE','BOOKING','OPENING','BEST_MARKET')
              AND t.approval_status = 'APPROVED'
              AND l.type = $2
              AND l.location ILIKE $3
@@ -2068,7 +2120,7 @@ app.use(globalMutationAudit);
              FROM listings l
              JOIN tenants t ON t.id = l.tenant_id
              WHERE l.id = $1
-               AND l.status IN ('AVAILABLE','BOOKING','OPENING')
+               AND l.status IN ('AVAILABLE','BOOKING','OPENING','BEST_MARKET')
                AND t.approval_status = 'APPROVED'
              LIMIT 1`,
           [listingId]
@@ -2571,7 +2623,8 @@ app.use(globalMutationAudit);
     try {
       const page = parseInt(req.query.page as string) || 1;
       const pageSize = Math.min(parseInt(req.query.pageSize as string) || 50, 200);
-      const filters: any = {};
+      // Public feed = published articles only (single source of truth: Postgres)
+      const filters: any = { status: 'PUBLISHED' };
       if (req.query.category) filters.category = req.query.category;
       if (req.query.search) filters.search = req.query.search;
       const result = await articleRepository.findArticles(PUBLIC_TENANT, { page, pageSize }, filters);
@@ -2591,6 +2644,10 @@ app.use(globalMutationAudit);
         : await articleRepository.findBySlug(PUBLIC_TENANT, idOrSlug);
       if (!article) article = await articleRepository.findBySlug(PUBLIC_TENANT, idOrSlug);
       if (!article) return res.status(404).json({ error: 'Article not found' }) as any;
+      // Never expose drafts through the public endpoint
+      if (String(article.status || '').toUpperCase() !== 'PUBLISHED') {
+        return res.status(404).json({ error: 'Article not found' }) as any;
+      }
       res.json(normalizeArticle(article));
     } catch (error) {
       console.error('Error fetching public article:', error);
@@ -3457,7 +3514,7 @@ app.use(globalMutationAudit);
 
       // Check dynamic sitemaps via DB count — these routes are always available in Express.
       const [listingsCount, projectsCount, newsCount] = await Promise.all([
-        withRlsBypass((client) => client.query(`SELECT COUNT(*)::int AS n FROM listings l JOIN tenants t ON t.id = l.tenant_id WHERE l.status IN ('AVAILABLE','BOOKING','OPENING') AND t.approval_status = 'APPROVED'`)).catch(() => ({ rows: [{ n: 0 }] })),
+        withRlsBypass((client) => client.query(`SELECT COUNT(*)::int AS n FROM listings l JOIN tenants t ON t.id = l.tenant_id WHERE l.status IN ('AVAILABLE','BOOKING','OPENING','BEST_MARKET') AND t.approval_status = 'APPROVED'`)).catch(() => ({ rows: [{ n: 0 }] })),
         withRlsBypass((client) => client.query(`SELECT COUNT(*)::int AS n FROM projects WHERE code IS NOT NULL AND code <> '' AND metadata->>'public_microsite' = 'true'`)).catch(() => ({ rows: [{ n: 0 }] })),
         pool.query(`SELECT COUNT(*)::int AS n FROM articles WHERE status = 'PUBLISHED'`).catch(() => ({ rows: [{ n: 0 }] })),
       ]);
@@ -4508,6 +4565,10 @@ app.use(globalMutationAudit);
     app.use(createCampaignSchedulerCronRouter(pool, campaignSchedulerSecret));
     try {
       startCampaignSchedulerCron(pool, { intervalMs: 15 * 60 * 1000 }); // Neon scale-to-zero fix 2026-07-22: giam tu 5p xuong 15p (QSTASH_TOKEN hien invalid nen khong the xac nhan QStash schedule con hoat dong, giu interval vua phai an toan hon)
+      // Booking lifecycle: expire abandoned PENDING deposits and hand paid
+      // holds back to the market once hold_expires_at elapses. Same 15m
+      // cadence as the campaign cron to stay friendly to Neon scale-to-zero.
+      startBookingLifecycleCron(pool, { intervalMs: 15 * 60 * 1000 });
     } catch (err: any) {
       logger.warn(`[CampaignScheduler] Không thể khởi động in-process cron: ${err?.message || err}`);
     }
@@ -4798,7 +4859,7 @@ app.use(globalMutationAudit);
         `SELECT l.id, l.title, l.updated_at, l.images
            FROM listings l
            JOIN tenants t ON t.id = l.tenant_id
-           WHERE l.status IN ('AVAILABLE','BOOKING','OPENING')
+           WHERE l.status IN ('AVAILABLE','BOOKING','OPENING','BEST_MARKET')
              AND t.approval_status = 'APPROVED'
            ORDER BY l.updated_at DESC LIMIT 50000`
       );
@@ -5303,7 +5364,7 @@ app.use(globalMutationAudit);
             `SELECT l.* FROM listings l
                JOIN tenants t ON t.id = l.tenant_id
                WHERE l.id = $1
-                 AND l.status IN ('AVAILABLE','BOOKING','OPENING')
+                 AND l.status IN ('AVAILABLE','BOOKING','OPENING','BEST_MARKET')
                  AND t.approval_status = 'APPROVED'
                LIMIT 1`,
             [id]

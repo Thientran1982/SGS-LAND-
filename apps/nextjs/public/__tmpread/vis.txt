@@ -1,0 +1,109 @@
+  topCountries: { country: string; countryCode: string; count: number }[];
+  topCities: { city: string; count: number }[];
+  topPages: { page: string; count: number }[];
+  dailyVisits: { date: string; count: number }[];
+  topListings: { listingId: string; count: number }[];
+}
+
+class VisitorRepository {
+  async log(data: VisitorLogInput): Promise<void> {
+    try {
+      await pool.query(
+        `INSERT INTO visitor_logs
+          (tenant_id, session_id, ip_address, country, country_code, region, city, lat, lon, isp, page, listing_id, user_agent, referrer)
+         VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14)`,
+        [
+          data.tenantId ?? DEFAULT_TENANT_ID,
+          data.sessionId ?? null,
+          data.ipAddress ?? null,
+          data.country ?? null,
+          data.countryCode ?? null,
+          data.region ?? null,
+          data.city ?? null,
+          data.lat ?? null,
+          data.lon ?? null,
+          data.isp ?? null,
+          data.page ?? null,
+          data.listingId ?? null,
+          data.userAgent ? data.userAgent.slice(0, 512) : null,
+          data.referrer ? data.referrer.slice(0, 512) : null,
+        ]
+      );
+    } catch (err) {
+      logger.warn('[visitorRepository] Failed to log visitor: ' + (err as Error).message);
+    }
+  }
+
+  /**
+   * True when this listing was already counted for the same visitor (IP)
+   * inside the given window. Used to de-duplicate listings.view_count so a
+   * page refresh does not inflate the public counter. Rows written by bots
+   * (matching excludeUaPattern) never act as a de-duplication key.
+   */
+  async hasRecentView(
+    listingId: string,
+    ipAddress: string | null | undefined,
+    minutes = 30,
+    excludeUaPattern?: string,
+  ): Promise<boolean> {
+    if (!listingId || !ipAddress) return false;
+    const win = Math.max(1, Math.min(Math.floor(minutes), 1440));
+    try {
+      const params: any[] = [listingId, String(ipAddress), win];
+      let uaClause = '';
+      if (excludeUaPattern) {
+        params.push(excludeUaPattern);
+        uaClause = ' AND user_agent IS NOT NULL AND user_agent !~* $4';
+      }
+      const r = await pool.query(
+        `SELECT 1 FROM visitor_logs
+          WHERE listing_id::text = $1
+            AND ip_address::text = $2
+            AND created_at >= NOW() - ($3 || ' minutes')::interval` + uaClause + `
+          LIMIT 1`,
+        params
+      );
+      return (r.rowCount ?? 0) > 0;
+    } catch (err) {
+      logger.warn('[visitorRepository] hasRecentView failed: ' + (err as Error).message);
+      return false;
+    }
+  }
+
+  async getStats(tenantId: string, days = 30): Promise<VisitorStats> {
+    const safeDays = Math.max(1, Math.min(Math.floor(days), 365));
+
+    const [total, countries, cities, pages, daily, listings] = await Promise.all([
+    await client.query('CREATE INDEX IF NOT EXISTS idx_prt_token ON password_reset_tokens(token);');
+    await client.query('CREATE INDEX IF NOT EXISTS idx_prt_user ON password_reset_tokens(user_id);');
+
+    // ---------- visitor_logs (no RLS) ----------
+    await client.query(`
+      CREATE TABLE IF NOT EXISTS visitor_logs (
+        id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+        tenant_id UUID REFERENCES tenants(id) ON DELETE CASCADE DEFAULT '00000000-0000-0000-0000-000000000001',
+        session_id VARCHAR(64),
+        ip_address VARCHAR(45),
+        country VARCHAR(100),
+        country_code VARCHAR(10),
+        region VARCHAR(100),
+        city VARCHAR(100),
+        lat NUMERIC(9,6),
+        lon NUMERIC(9,6),
+        isp VARCHAR(255),
+        page VARCHAR(255),
+        listing_id UUID,
+        user_agent TEXT,
+        referrer TEXT,
+        created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+      );
+    `);
+    await client.query('CREATE INDEX IF NOT EXISTS idx_visitor_logs_tenant_created ON visitor_logs(tenant_id, created_at DESC);');
+    await client.query('CREATE INDEX IF NOT EXISTS idx_visitor_logs_listing ON visitor_logs(listing_id);');
+    await client.query('CREATE INDEX IF NOT EXISTS idx_visitor_logs_country ON visitor_logs(tenant_id, country_code);');
+
+    // ---------- projects ----------
+    await client.query(`
+      CREATE TABLE IF NOT EXISTS projects (
+        id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+        tenant_id UUID REFERENCES tenants(id) ON DELETE CASCADE DEFAULT '00000000-0000-0000-0000-000000000001',

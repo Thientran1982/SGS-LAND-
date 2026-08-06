@@ -32,6 +32,8 @@ export interface Article {
   coverImage: string;
   featured: boolean;
   outline: string[];
+  /** Optional rich-text body (HTML). When empty the page shows the outline only. */
+  body?: string;
   sources: Source[];
   relatedSlugs: string[];
   seo: ArticleSEO;
@@ -54,7 +56,7 @@ export const ARTICLES: Article[] = [
     readTime: 12,
     wordCount: 2400,
     tags: ["pháp lý", "mua nhà", "kiểm tra pháp lý", "Luật Đất Đai 2024", "sổ đỏ"],
-    coverImage: "/images/articles/kiem-tra-phap-ly-mua-nha.jpg",
+    coverImage: "https://images.unsplash.com/photo-1554224155-6726b3ff858f?w=1200&q=80&fit=crop",
     featured: false,
     isLegal: true,
     outline: [
@@ -94,7 +96,7 @@ export const ARTICLES: Article[] = [
     readTime: 8,
     wordCount: 1600,
     tags: ["sổ đỏ", "sổ hồng", "pháp lý", "GCNQSDĐ", "Luật Đất Đai 2024"],
-    coverImage: "/images/articles/so-do-so-hong-phan-biet.jpg",
+    coverImage: "https://images.unsplash.com/photo-1450101499163-c8848c66ca85?w=1200&q=80&fit=crop",
     featured: false,
     isLegal: true,
     outline: [
@@ -132,7 +134,7 @@ export const ARTICLES: Article[] = [
     readTime: 10,
     wordCount: 2000,
     tags: ["mua căn hộ", "quy trình", "chung cư", "TP.HCM", "Luật Nhà Ở 2023"],
-    coverImage: "/images/articles/quy-trinh-mua-ban-can-ho.jpg",
+    coverImage: "https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?w=1200&q=80&fit=crop",
     featured: false,
     isLegal: true,
     outline: [
@@ -174,7 +176,7 @@ export const ARTICLES: Article[] = [
     readTime: 9,
     wordCount: 1800,
     tags: ["Luật Kinh Doanh BĐS 2023", "pháp lý", "nhà đầu tư", "phân lô bán nền"],
-    coverImage: "/images/articles/luat-kinh-doanh-bds-2023.jpg",
+    coverImage: "https://images.unsplash.com/photo-1477959858617-67f85cf4f1df?w=1200&q=80&fit=crop",
     featured: false,
     isLegal: true,
     outline: [
@@ -215,7 +217,7 @@ export const ARTICLES: Article[] = [
     readTime: 15,
     wordCount: 3000,
     tags: ["thị trường BĐS", "Đông Nam Bộ", "TP.HCM", "Đồng Nai", "đầu tư BĐS 2025"],
-    coverImage: "/images/articles/thi-truong-bds-dong-nam-bo-2025.jpg",
+    coverImage: "/images/projects/izumi-city.jpg",
     featured: true,
     outline: [
       "Tổng quan thị trường BĐS Đông Nam Bộ H1/2025",
@@ -255,7 +257,7 @@ export const ARTICLES: Article[] = [
     readTime: 11,
     wordCount: 2200,
     tags: ["Aqua City", "Novaland", "cầu Nhơn Trạch", "đầu tư BĐS", "Đồng Nai"],
-    coverImage: "/images/articles/aqua-city-cau-nhon-trach.jpg",
+    coverImage: "/images/projects/aqua-city.jpg",
     featured: false,
     outline: [
       "Aqua City Novaland: Tổng quan dự án 2025",
@@ -292,7 +294,7 @@ export const ARTICLES: Article[] = [
     readTime: 13,
     wordCount: 2600,
     tags: ["Vinhomes Grand Park", "ROI", "cho thuê căn hộ", "TP Thủ Đức", "đầu tư"],
-    coverImage: "/images/articles/vinhomes-grand-park-roi.jpg",
+    coverImage: "/images/projects/vinhomes-grand-park.webp",
     featured: false,
     outline: [
       "Tổng quan Vinhomes Grand Park tháng 5/2025",
@@ -330,7 +332,7 @@ export const ARTICLES: Article[] = [
     readTime: 12,
     wordCount: 2400,
     tags: ["dự báo BĐS", "giá nhà TP.HCM", "2026", "Metro số 1"],
-    coverImage: "/images/articles/du-bao-gia-bds-tphcm-2026.jpg",
+    coverImage: "/images/projects/the-global-city.jpg",
     featured: false,
     outline: [
       "Nhìn lại giá BĐS TP.HCM 2024–2025",
@@ -370,7 +372,7 @@ export const ARTICLES: Article[] = [
     readTime: 10,
     wordCount: 2000,
     tags: ["vay mua nhà", "lãi suất", "BIDV", "Vietcombank", "VPBank", "tài chính BĐS"],
-    coverImage: "/images/articles/vay-mua-nha-lai-suat-thap-2024.jpg",
+    coverImage: "https://images.unsplash.com/photo-1560518883-ce09059eeffa?w=1200&q=80&fit=crop",
     featured: false,
     outline: [
       "Tình hình lãi suất vay mua nhà tháng 5/2025",
@@ -409,7 +411,7 @@ export const ARTICLES: Article[] = [
     readTime: 12,
     wordCount: 2400,
     tags: ["định giá AI", "AVM", "PropTech", "SGS Land", "công nghệ BĐS"],
-    coverImage: "/images/articles/dinh-gia-bds-ai-sgsland.jpg",
+    coverImage: "https://images.unsplash.com/photo-1556761175-5973dc0f32e7?w=1200&q=80&fit=crop",
     featured: true,
     outline: [
       "AVM là gì và tại sao quan trọng với thị trường Việt Nam?",
@@ -447,7 +449,7 @@ export const ARTICLES: Article[] = [
     readTime: 13,
     wordCount: 2600,
     tags: ["đầu tư BĐS", "người mới", "nguyên tắc đầu tư", "tránh rủi ro"],
-    coverImage: "/images/articles/dau-tu-bds-nguoi-moi-bat-dau.jpg",
+    coverImage: "https://images.unsplash.com/photo-1503174971373-b1f69850bded?w=1200&q=80&fit=crop",
     featured: false,
     outline: [
       "Tại sao 72% người mới đầu tư BĐS lần đầu mắc sai lầm?",
@@ -486,7 +488,7 @@ export const ARTICLES: Article[] = [
     readTime: 11,
     wordCount: 2200,
     tags: ["cho thuê căn hộ", "dòng tiền", "TP.HCM", "đầu tư", "tỷ suất sinh lời"],
-    coverImage: "/images/articles/dong-tien-cho-thue-can-ho-tphcm.jpg",
+    coverImage: "/images/projects/masteri-park-place.jpg",
     featured: false,
     outline: [
       "Tổng quan thị trường cho thuê căn hộ TP.HCM Q1/2025",

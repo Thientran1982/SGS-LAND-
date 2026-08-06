@@ -42,7 +42,7 @@ export const ListingForm: React.FC<ListingFormProps> = memo(({ isOpen, onClose, 
         status: ListingStatus.AVAILABLE,
         transaction: TransactionType.SALE,
         projectCode: '',
-        attributes: { direction: 'North', legalStatus: 'PinkBook', furniture: 'BASIC', roadWidth: 0 },
+        attributes: { direction: '', legalStatus: '', furniture: 'BASIC', roadWidth: 0 },
         images: [],
         isVerified: false,
         contactPhone: '',
@@ -53,6 +53,17 @@ export const ListingForm: React.FC<ListingFormProps> = memo(({ isOpen, onClose, 
     };
     const UNITS = useMemo(() => getUnits(t), [t]);
     const [formData, setFormData] = useState<Partial<Listing>>(defaultState);
+    // Only elevated roles may set the verified badge; the server drops the
+    // field for everyone else (listingFieldPolicy), so the checkbox must not
+    // pretend it worked.
+    const [canVerify, setCanVerify] = useState(false);
+    useEffect(() => {
+        let alive = true;
+        Promise.resolve(db.getCurrentUser())
+            .then((u: any) => { if (alive) setCanVerify(['SUPER_ADMIN', 'ADMIN', 'TEAM_LEAD'].includes(u?.role)); })
+            .catch(() => { /* stay read-only on failure */ });
+        return () => { alive = false; };
+    }, []);
     const [images, setImages] = useState<string[]>([]);
     const [projects, setProjects] = useState<{value: string, label: string}[]>([]);
     const [projectsLoading, setProjectsLoading] = useState(false);
@@ -316,6 +327,7 @@ export const ListingForm: React.FC<ListingFormProps> = memo(({ isOpen, onClose, 
     };
     // --- OPTIONS MEMOIZATION ---
     const directionOptions = useMemo(() => [
+        { value: '', label: '\u2014' },
         { value: 'North', label: t('direction.North') },
         { value: 'South', label: t('direction.South') },
         { value: 'East', label: t('direction.East') },
@@ -326,6 +338,7 @@ export const ListingForm: React.FC<ListingFormProps> = memo(({ isOpen, onClose, 
         { value: 'SouthWest', label: t('direction.SouthWest') },
     ], [t]);
     const legalOptions = useMemo(() => [
+        { value: '', label: '\u2014' },
         { value: 'PinkBook', label: t('legal.PinkBook') },
         { value: 'Contract', label: t('legal.Contract') },
         { value: 'Waiting', label: t('legal.Waiting') },
@@ -842,7 +855,9 @@ export const ListingForm: React.FC<ListingFormProps> = memo(({ isOpen, onClose, 
                                         <input 
                                             type="checkbox" 
                                             checked={!!formData.isVerified} 
-                                            onChange={e => setFormData({...formData, isVerified: e.target.checked})}
+                                            disabled={!canVerify}
+                                        title={canVerify ? undefined : 'Ch\u1ec9 Tr\u01b0\u1edfng nh\u00f3m / Qu\u1ea3n tr\u1ecb vi\u00ean m\u1edbi \u0111\u01b0\u1ee3c \u0111\u00e1nh d\u1ea5u \u0111\u00e3 x\u00e1c th\u1ef1c'}
+                                        onChange={e => { if (!canVerify) return; setFormData({...formData, isVerified: e.target.checked}); }}
                                             className="w-3.5 h-3.5 accent-[var(--sgs-primary)] rounded border-slate-300 focus:ring-sgs-primary"
                                         />
                                         <span className="text-xs2 font-bold text-sgs-primary uppercase flex items-center gap-1">

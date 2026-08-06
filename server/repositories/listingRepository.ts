@@ -320,7 +320,7 @@ export class ListingRepository extends BaseRepository {
     tenantId: string,
     userId?: string,
     userRole?: string
-  ): Promise<{ availableCount: number; holdCount: number; soldCount: number; rentedCount: number; bookingCount: number; openingCount: number; inactiveCount: number; otherCount: number; totalCount: number }> {
+  ): Promise<{ availableCount: number; holdCount: number; soldCount: number; rentedCount: number; bookingCount: number; openingCount: number; inactiveCount: number; bestMarketCount: number; otherCount: number; totalCount: number }> {
     return this.withTenant(tenantId, async (client) => {
       const conditions: string[] = [];
       const values: any[] = [];
@@ -360,7 +360,8 @@ export class ListingRepository extends BaseRepository {
           COUNT(*) FILTER (WHERE l.status = 'BOOKING')::int    AS booking_count,
           COUNT(*) FILTER (WHERE l.status = 'OPENING')::int    AS opening_count,
           COUNT(*) FILTER (WHERE l.status = 'INACTIVE')::int   AS inactive_count,
-          COUNT(*) FILTER (WHERE l.status IS NULL OR l.status NOT IN ('AVAILABLE','HOLD','SOLD','RENTED','BOOKING','OPENING','INACTIVE'))::int AS other_count,
+          COUNT(*) FILTER (WHERE l.status = 'BEST_MARKET')::int   AS best_market_count,
+          COUNT(*) FILTER (WHERE l.status IS NULL OR l.status NOT IN ('AVAILABLE','HOLD','SOLD','RENTED','BOOKING','OPENING','INACTIVE','BEST_MARKET'))::int AS other_count,
           COUNT(*)::int                                         AS total_count
          FROM listings l ${whereClause}`,
         values
@@ -374,6 +375,7 @@ export class ListingRepository extends BaseRepository {
         bookingCount:   sr.booking_count,
         openingCount:   sr.opening_count,
         inactiveCount:  sr.inactive_count,
+        bestMarketCount:  sr.best_market_count,
         otherCount:    sr.other_count,
         totalCount:     sr.total_count,
       };
@@ -441,7 +443,9 @@ export class ListingRepository extends BaseRepository {
              COUNT(*) FILTER (WHERE l.status = 'RENTED')::int     AS rented_count,
              COUNT(*) FILTER (WHERE l.status = 'BOOKING')::int    AS booking_count,
              COUNT(*) FILTER (WHERE l.status = 'OPENING')::int    AS opening_count,
-             COUNT(*) FILTER (WHERE l.status = 'INACTIVE')::int   AS inactive_count
+             COUNT(*) FILTER (WHERE l.status = 'INACTIVE')::int   AS inactive_count,
+             COUNT(*) FILTER (WHERE l.status = 'BEST_MARKET')::int   AS best_market_count,
+             COUNT(*) FILTER (WHERE l.status IS NULL OR l.status NOT IN ('AVAILABLE','HOLD','SOLD','RENTED','BOOKING','OPENING','INACTIVE','BEST_MARKET'))::int AS other_count
            FROM listings l ${whereClause}`,
           values
         ),
@@ -479,6 +483,8 @@ export class ListingRepository extends BaseRepository {
           bookingCount:   cs?.booking_count   ?? 0,
           openingCount:   cs?.opening_count   ?? 0,
           inactiveCount:  cs?.inactive_count  ?? 0,
+          bestMarketCount:  cs?.best_market_count ?? 0,
+          otherCount:  cs?.other_count ?? 0,
           totalCount:     total,
         },
       };
@@ -589,7 +595,9 @@ export class ListingRepository extends BaseRepository {
              COUNT(*) FILTER (WHERE l.status = 'RENTED')::int     AS rented_count,
              COUNT(*) FILTER (WHERE l.status = 'BOOKING')::int    AS booking_count,
              COUNT(*) FILTER (WHERE l.status = 'OPENING')::int    AS opening_count,
-             COUNT(*) FILTER (WHERE l.status = 'INACTIVE')::int   AS inactive_count
+             COUNT(*) FILTER (WHERE l.status = 'INACTIVE')::int   AS inactive_count,
+             COUNT(*) FILTER (WHERE l.status = 'BEST_MARKET')::int   AS best_market_count,
+             COUNT(*) FILTER (WHERE l.status IS NULL OR l.status NOT IN ('AVAILABLE','HOLD','SOLD','RENTED','BOOKING','OPENING','INACTIVE','BEST_MARKET'))::int AS other_count
            FROM listings l ${statsWhere}`,
           baseValues
         ),
@@ -644,6 +652,8 @@ export class ListingRepository extends BaseRepository {
           bookingCount:   cs?.booking_count   ?? 0,
           openingCount:   cs?.opening_count   ?? 0,
           inactiveCount:  cs?.inactive_count  ?? 0,
+          bestMarketCount:  cs?.best_market_count ?? 0,
+          otherCount:  cs?.other_count ?? 0,
           totalCount:     cs?.total           ?? 0,
         },
       };
@@ -705,6 +715,27 @@ export class ListingRepository extends BaseRepository {
         [projectCode]
       );
       return this.rowsToEntities(result.rows);
+    });
+  }
+
+  /**
+   * Case-insensitive, whitespace-insensitive duplicate check for listing codes.
+   * listings.code has no UNIQUE constraint (historical data still holds a few
+   * duplicate codes), so the API enforces uniqueness for new writes instead.
+   * RLS keeps the lookup inside the caller's tenant.
+   */
+  async codeExists(tenantId: string, code: string, excludeId?: string): Promise<boolean> {
+    const key = String(code ?? '').trim();
+    if (!key) return false;
+    return this.withTenant(tenantId, async (client) => {
+      const params: any[] = [key];
+      let sql = `SELECT 1 FROM listings WHERE upper(btrim(code)) = upper(btrim($1))`;
+      if (excludeId) {
+        params.push(excludeId);
+        sql += ` AND id <> $2`;
+      }
+      const result = await client.query(sql + ` LIMIT 1`, params);
+      return (result.rowCount ?? 0) > 0;
     });
   }
 
@@ -796,8 +827,10 @@ export class ListingRepository extends BaseRepository {
   async incrementViewCount(tenantId: string, id: string): Promise<number> {
     return this.withTenant(tenantId, async (client) => {
       const result = await client.query(
-        `UPDATE listings SET view_count = view_count + 1 WHERE id = $1 RETURNING view_count`,
-        [id]
+        `UPDATE listings SET view_count = view_count + 1
+            WHERE id = $1 AND tenant_id::text = $2
+          RETURNING view_count`,
+        [id, tenantId]
       );
       return result.rows[0]?.view_count ?? 0;
     });

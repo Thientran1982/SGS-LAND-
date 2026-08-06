@@ -1,5 +1,6 @@
 import type { NextConfig } from "next";
 import path from "path";
+import { PRIVATE_PREFIXES } from "./config/routes";
 
 const BACKEND_URL = process.env.BACKEND_URL || "http://localhost:5000";
 
@@ -17,6 +18,9 @@ const nextConfig: NextConfig = {
   ],
   
   // ─── Output & Build ────────────────────────────────────
+  // Optional temp output dir so a prod build can be tested without
+  // clobbering the running dev server .next directory.
+  distDir: process.env.NEXT_DIST_DIR || ".next",
   reactStrictMode: true,
   poweredByHeader: false,
   compress: true,
@@ -31,7 +35,6 @@ const nextConfig: NextConfig = {
   // so they share the same React instance as the rest of the server bundle.
   serverExternalPackages: [
     "socket.io-client",
-    "leaflet",
     "dompurify",
     "html2canvas",
     "jspdf",
@@ -60,8 +63,15 @@ const nextConfig: NextConfig = {
     return [
       { source: "/home", destination: "/" },
       // Private CRM app (Vite) proxied on same domain via BACKEND_URL
-      { source: "/dashboard", destination: BACKEND_URL + "/dashboard" },
-      { source: "/dashboard/:path*", destination: BACKEND_URL + "/dashboard/:path*" },
+// Private CRM app (Vite SPA served by Express) proxied on the same domain.
+      // The prefix list is imported from config/routes.ts, the same source the
+      // middleware guard uses, so the two can never drift apart again: before
+      // this, only /dashboard was proxied, so a deep link such as /inventory
+      // reached Next.js, matched no page and returned 404.
+      ...PRIVATE_PREFIXES.flatMap((prefix) => [
+        { source: prefix, destination: `${BACKEND_URL}${prefix}` },
+        { source: `${prefix}/:path*`, destination: `${BACKEND_URL}${prefix}/:path*` },
+      ]),
       { source: "/@vite/:path*", destination: BACKEND_URL + "/@vite/:path*" },
       { source: "/@react-refresh", destination: BACKEND_URL + "/@react-refresh" },
       { source: "/@fs/:path*", destination: BACKEND_URL + "/@fs/:path*" },
@@ -97,8 +107,10 @@ const nextConfig: NextConfig = {
       { source: "/socket.io/:path*",  destination: `${BACKEND_URL}/socket.io/:path*` },
       { source: "/yjs/:path*",        destination: `${BACKEND_URL}/yjs/:path*` },
       { source: "/uploads/:path*",    destination: `${BACKEND_URL}/uploads/:path*` },
-      // Proxy static media from Express public folder
-      { source: "/images/:path*",     destination: `${BACKEND_URL}/images/:path*` },
+      // NOTE: the /images/:path* proxy to Express was removed. Express serves no
+      // static image folder, so missing files fell through to the SPA catch-all and
+      // returned index.html (200 text/html); next/image then answered 400.
+      // Without the proxy a missing file returns a clean 404 instead.
       { source: "/og/:path*",         destination: `${BACKEND_URL}/og/:path*` },
       // Proxy only landing *sub-paths* (hero.jpg, etc.) to Express.
       // The root /landing/:slug path is handled by the Next.js SSG page — do NOT
@@ -167,16 +179,26 @@ const nextConfig: NextConfig = {
   },
 
   // ─── Webpack customisations ────────────────────────────
-  webpack(config) {
+  webpack(config, { isServer }) {
     // 1. Force ALL bundles (client + server + edge) to resolve React from
     //    this package's node_modules — critical in monorepos with React 18 root
     config.resolve.alias = {
       ...config.resolve.alias,
-      react:               REACT_PATH,
-      "react-dom":         RDOM_PATH,
-      "react/jsx-runtime": RJSX_PATH,
+      // DO NOT alias react / react-dom / react-jsx-runtime here.
+      // Next.js already maps them to its own vendored copies, separately for the
+      // react-server layer and the client/SSR layer. Overriding that mixes two
+      // React copies: during SSR the dispatcher becomes null and Next's internal
+      // layout-router throws "Cannot read properties of null (reading
+      // 'useContext')", which made EVERY production route answer HTTP 500
+      // (page still rendered, but status 500 - very bad for SEO).
+      // resolve.modules below is enough to prefer this package's node_modules.
+      // react:               REACT_PATH,
+      // "react-dom":         RDOM_PATH,
+      // "react/jsx-runtime": RJSX_PATH,
       // Leaflet SSR fix — window is not defined in Node.js
-      leaflet: false,
+      // Client MUST bundle Leaflet, otherwise L.map is not a function.
+      // Only the server bundle needs it stubbed (window is not defined).
+      ...(isServer ? { leaflet: false } : {}),
       // Replace crashing Next.js 15.5 dev segment explorer (uses useContext in SSR
       // before React dispatcher is ready — monorepo React 18 root / React 19 app
       // version mismatch triggers null dispatcher).  No-op prevents the 500 crash.

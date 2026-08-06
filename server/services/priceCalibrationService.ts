@@ -76,7 +76,7 @@ export class PriceCalibrationService {
     trendText?: string;
     sourceCount?: number;
     dataRecency?: string;
-    listingId?: number;
+    listingId?: string | number;
     tenantId?: string;
   }): Promise<void> {
     if (!this.pool) return;
@@ -116,7 +116,7 @@ export class PriceCalibrationService {
     pricePerM2: number;
     propertyType: string;
     confidence: number;
-    listingId: number;
+    listingId: string | number;
     tenantId: string;
   }): Promise<void> {
     await this.recordObservation({ ...opts, source: 'transaction' });

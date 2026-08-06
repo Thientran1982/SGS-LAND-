@@ -44,7 +44,7 @@ Trước khi thành lập SGS LAND, ông Thiện từng là chuyên viên phân 
 Dưới sự lãnh đạo của ông, SGS LAND đã xây dựng mạng lưới 15.000+ môi giới được xác thực, kho hàng 45.000+ sản phẩm và hệ thống định giá AVM với độ chính xác ±5%. SGS LAND được vinh danh Top Proptech Việt Nam 2025.
 
 Ông Thiện thường xuyên chia sẻ phân tích thị trường và là diễn giả tại các sự kiện BĐS lớn như Vietnam Real Estate Summit và PropTech Vietnam Conference.`,
-    avatar: "/images/authors/tran-minh-thien.jpg",
+    avatar: "",
     linkedIn: "https://www.linkedin.com/in/tran-minh-thien-sgsland",
     articlesCount: 8,
     sameAs: [
@@ -77,7 +77,7 @@ Dưới sự lãnh đạo của ông, SGS LAND đã xây dựng mạng lưới 1
 Hệ thống AVM do ông thiết kế phân tích 9 hệ số định giá theo thời gian thực: vị trí, diện tích, tầng, hướng, pháp lý, tiện ích, thị trường khu vực, chủ đầu tư và tiến độ bàn giao — cho kết quả trong 30 giây. Tính đến T5/2026, hệ thống đã xử lý hơn 500.000 yêu cầu định giá.
 
 Ông Nam thường viết về ứng dụng AI trong định giá BĐS, phân tích dữ liệu thị trường và các giải pháp tài chính cho người mua nhà.`,
-    avatar: "/images/authors/nguyen-hoang-nam.jpg",
+    avatar: "",
     linkedIn: "https://www.linkedin.com/in/nguyen-hoang-nam-cto-sgsland",
     articlesCount: 4,
     sameAs: [
@@ -110,7 +110,7 @@ Bà Hoa có hơn 8 năm kinh nghiệm trong lĩnh vực quản lý giao dịch b
 Với vai trò COO, bà Hoa đã thiết lập quy trình thẩm định pháp lý nội bộ tại SGS LAND — đảm bảo 100% sản phẩm trên nền tảng đã được kiểm tra hồ sơ pháp lý trước khi đăng bán. Quy trình này giúp giảm 98% tranh chấp pháp lý sau giao dịch.
 
 Bà Hoa thường viết về các chủ đề pháp lý BĐS, dòng tiền cho thuê và kinh nghiệm thực tế mua bán nhà đất tại TP.HCM.`,
-    avatar: "/images/authors/le-thi-hoa.jpg",
+    avatar: "",
     linkedIn: "https://www.linkedin.com/in/le-thi-hoa-coo-sgsland",
     articlesCount: 4,
     sameAs: [
@@ -143,13 +143,30 @@ Bà Hoa thường viết về các chủ đề pháp lý BĐS, dòng tiền cho 
 Tại SGS LAND, ông Pháp đảm nhận vai trò kiểm duyệt và xác minh nội dung pháp lý cho tất cả bài viết liên quan đến Luật Đất Đai, quy trình giao dịch và quyền lợi người mua nhà — đảm bảo tính chính xác và phù hợp với quy định pháp luật hiện hành.
 
 Tất cả bài viết pháp lý trên sgsland.vn đều được ông Pháp review trước khi xuất bản.`,
-    avatar: "/images/authors/chuyen-gia-phap-ly.jpg",
+    avatar: "",
     linkedIn: "https://www.linkedin.com/in/nguyen-van-phap-legal",
     articlesCount: 4,
     sameAs: [
       "https://www.linkedin.com/in/nguyen-van-phap-legal",
       "https://sgsland.vn/tac-gia/chuyen-gia-phap-ly",
     ],
+  },
+  {
+    id: "ban-bien-tap",
+    slug: "ban-bien-tap",
+    name: "Ban Biên Tập SGS LAND",
+    title: "Ban Biên Tập nội dung",
+    credentials: [],
+    expertise: ["Biên tập nội dung bất động sản"],
+    yearsExperience: 0,
+    bio:
+      "Nhóm biên tập nội dung của SGS LAND, tổng hợp và kiểm duyệt bài viết trên chuyên mục Tin tức.",
+    bioFull:
+      "Ban Biên Tập SGS LAND chịu trách nhiệm tổng hợp, biên tập và kiểm duyệt nội dung đăng trên chuyên mục Kiến thức & Tin tức BĐS. Bài viết do các phòng ban chuyên môn cung cấp được đăng dưới tên Ban Biên Tập khi tác giả chưa có trang hồ sơ riêng.",
+    avatar: "",
+    linkedIn: "",
+    articlesCount: 0,
+    sameAs: [],
   },
 ];
 

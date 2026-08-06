@@ -12,7 +12,7 @@
 import { Router, Request, Response } from 'express';
 import { Pool } from 'pg';
 import { logger } from '../middleware/logger';
-import { applyAVM, getRegionalBasePrice, PROPERTY_TYPE_PRICE_MULT } from '../valuationEngine';
+import { applyAVM, getRegionalBasePrice, PROPERTY_TYPE_PRICE_MULT , mapListingTypeToPropertyType } from '../valuationEngine';
 import type { PropertyType, LegalStatus } from '../valuationEngine';
 import { marketDataService } from '../services/marketDataService';
 import { startAgentRun, finishAgentRun } from '../services/agentRunsService';
@@ -23,16 +23,8 @@ const BATCH_SIZE        = 50;         // Xử lý theo lô để tránh quá t�
 const MAX_LISTINGS      = 2000;       // Giới hạn tổng số listing mỗi lần chạy
 
 function mapListingType(type: string): PropertyType {
-  const t = (type || '').toLowerCase();
-  if (t === 'apartment')     return 'apartment_center';
-  if (t === 'house')         return 'townhouse_center';
-  if (t === 'villa')         return 'villa';
-  if (t === 'land')          return 'land_urban';
-  if (t === 'shophouse')     return 'shophouse';
-  if (t === 'penthouse')     return 'penthouse';
-  if (t === 'office')        return 'office';
-  if (t === 'warehouse')     return 'warehouse';
-  return 'townhouse_center';
+  // Single source of truth lives in valuationEngine.
+  return mapListingTypeToPropertyType(type);
 }
 
 function mapLegal(raw?: string): LegalStatus {

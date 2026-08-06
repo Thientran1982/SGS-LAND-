@@ -4,11 +4,13 @@ import Link from "next/link";
 import Image from "next/image";
 import { Suspense } from "react";
 import { Calendar, Clock, ArrowRight } from "lucide-react";
-import { ARTICLES, getFeaturedArticles } from "@/data/articles";
+import type { Article } from "@/data/articles";
+import { getAllArticles } from "@/lib/content/articles-source";
 import { AUTHORS } from "@/data/authors";
 import { CATEGORIES } from "@/data/categories";
 import { CategoryFilter } from "@/components/content/CategoryFilter";
 import { AuthorCard } from "@/components/content/AuthorCard";
+import { NewsAdminBar } from "@/components/content/NewsAdminBar";
 import { SchemaScript } from "@/components/SchemaScript";
 import { getBreadcrumbSchema, SITE_URL } from "@/lib/schema";
 export const metadata: Metadata = {
@@ -34,7 +36,7 @@ export const dynamic = "force-dynamic";
 function formatDate(iso: string) {
   return new Date(iso).toLocaleDateString("vi-VN", { day: "2-digit", month: "2-digit", year: "numeric" });
 }
-function ArticleCard({ article }: { article: (typeof ARTICLES)[0] }) {
+function ArticleCard({ article }: { article: Article }) {
   const cat = CATEGORIES.find((c) => c.slug === article.category);
   const author = AUTHORS.find((a) => a.slug === article.author);
   const catColor = cat?.color ?? "var(--primary-600)";
@@ -103,7 +105,7 @@ function ArticleCard({ article }: { article: (typeof ARTICLES)[0] }) {
     </article>
   );
 }
-function FeaturedArticle({ article }: { article: (typeof ARTICLES)[0] }) {
+function FeaturedArticle({ article }: { article: Article }) {
   const cat = CATEGORIES.find((c) => c.slug === article.category);
   const author = AUTHORS.find((a) => a.slug === article.author);
   const catColor = cat?.color ?? "var(--primary-600)";
@@ -126,14 +128,14 @@ function FeaturedArticle({ article }: { article: (typeof ARTICLES)[0] }) {
           Nổi bật
         </span>
       </Link>
-      <div className="flex flex-col justify-center p-7">
+      <div className="flex flex-col justify-center p-5 sm:p-7">
         {cat && (
           <span className="px-2.5 py-0.5 rounded-full text-xs font-semibold mb-3 inline-block w-fit"
             style={{ background: `${catColor}18`, color: catColor }}>
             {cat.name}
           </span>
         )}
-        <h2 className="text-2xl font-extrabold leading-tight mb-3 group-hover:text-sgs-primary transition-colors"
+        <h2 className="text-xl sm:text-2xl font-extrabold leading-tight mb-3 group-hover:text-sgs-primary transition-colors"
           style={{ color: "var(--text-primary)" }}>
           <Link href={`/news/${article.slug}`}>{article.title}</Link>
         </h2>
@@ -149,9 +151,11 @@ function FeaturedArticle({ article }: { article: (typeof ARTICLES)[0] }) {
     </article>
   );
 }
-export default function NewsPage() {
-  const featured = getFeaturedArticles(1);
-  const rest = ARTICLES.filter((a) => !a.featured);
+export default async function NewsPage() {
+  // Single source of truth: the Postgres `articles` table (via /api/public/articles)
+  const all = await getAllArticles();
+  const featured = all.filter((a) => a.featured).slice(0, 1);
+  const rest = all.filter((a) => a.slug !== featured[0]?.slug);
   const breadcrumb = getBreadcrumbSchema([
     { name: "Trang chủ", url: SITE_URL },
     { name: "Kiến thức & Tin tức", url: `${SITE_URL}/news` },
@@ -166,7 +170,7 @@ export default function NewsPage() {
     publisher: { "@id": `${SITE_URL}/#organization` },
     mainEntity: {
       "@type": "ItemList",
-      itemListElement: ARTICLES.map((a, i) => ({
+      itemListElement: all.map((a, i) => ({
         "@type": "ListItem",
         position: i + 1,
         url: `${SITE_URL}/news/${a.slug}`,
@@ -177,16 +181,18 @@ export default function NewsPage() {
   return (
     <>
       <SchemaScript schemas={[breadcrumb, collectionSchema]} />
-      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 pt-6 pb-12 sm:py-12">
         {/* Page header */}
         <div className="mb-8">
-          <h1 className="text-4xl font-extrabold mb-2" style={{ color: "var(--text-primary)" }}>
+          <h1 className="text-2xl sm:text-4xl font-extrabold mb-2" style={{ color: "var(--text-primary)" }}>
             Kiến thức &amp; Tin tức BĐS
           </h1>
           <p style={{ color: "var(--text-secondary)" }}>
             Phân tích chuyên sâu, hướng dẫn pháp lý và kiến thức đầu tư từ chuyên gia SGS LAND
           </p>
         </div>
+        {/* Editor toolbar - only visible to signed-in staff */}
+        <NewsAdminBar />
         {/* Category filter (client component) */}
         <Suspense>
           <CategoryFilter categories={CATEGORIES} className="mb-8" />

@@ -1,0 +1,97 @@
+    const key = vnDeaccent(raw);
+    if (key in VN_PROVINCE_MAP) {
+      const canonical = VN_PROVINCE_MAP[key];
+      return canonical || null;
+    }
+    return raw.trim();
+  }
+
+// ---------------------------------------------------------------------------
+// Allow-list for the PUBLIC FEED (/api/public/listings).
+// The marketplace page is SSR, so every field returned here is embedded in
+// public HTML. Owner name/phone, commission, tenant id, audit and assignment
+// fields must NEVER be listed below. Mirrors PUBLIC_LISTING_DETAIL_FIELDS plus
+// the few list-only fields the cards / map / mobile feed need.
+// ---------------------------------------------------------------------------
+const PUBLIC_LISTING_FEED_FIELDS = [
+  'id', 'code', 'title', 'description', 'type', 'transaction', 'status',
+  'price', 'currency', 'area', 'builtArea', 'bedrooms', 'bathrooms',
+  'location', 'address', 'coordinates', 'images', 'attributes', 'projectCode',
+  'totalUnits', 'availableUnits', 'isVerified', 'viewCount', 'bookingCount',
+  'createdAt', 'updatedAt',
+] as const;
+function sanitizePublicListingFeed(row: any): Record<string, any> {
+  if (!row) return row;
+  const out: Record<string, any> = {};
+  for (const f of PUBLIC_LISTING_FEED_FIELDS) out[f] = (row as any)[f] ?? null;
+  if (Array.isArray(out.images)) out.images = out.images.slice(0, 20);
+  return out;
+}
+
+  app.get('/api/public/listings', apiRateLimit, async (req: express.Request, res: express.Response) => {
+    try {
+      const page = parseInt(req.query.page as string) || 1;
+      const pageSize = Math.min(parseInt(req.query.pageSize as string) || 20, 500);
+
+      // Server-side cache 5 phút cho public listings feed (LRU per-process).
+      // Mọi mutate trên listings (create/update/delete/bulk/status) sẽ
+      // evictPublicListingsCache() — đảm bảo SLA listing mới hiển thị < 30s
+      // sau khi tạo trên các route quản trị.
+      // Whitelist param key để chống cache pollution: attacker không thể spam
+      // ?junk1=...&junk2=... để evict legit entries khỏi LRU 500 slot.
+      const CACHE_KEY_PARAMS = ['page', 'pageSize', 'cursor', 'cursorMode',
+        'projectCode', 'type', 'types', 'transaction', 'priceMin', 'priceMax',
+        'bedroomsMin', 'areaMin', 'areaMax',
+        'search', 'location', 'isVerified'];
+      const cacheKey = `pl:${PUBLIC_TENANT}|${
+        CACHE_KEY_PARAMS
+          .filter(k => req.query[k] !== undefined)
+          .sort()
+          .map(k => `${k}=${String(req.query[k])}`)
+          .join('&')
+      }`;
+      const cached = getPublicListingsCache(cacheKey);
+      if (cached) {
+        res.setHeader('X-Public-Listings-Cache', 'HIT');
+        res.setHeader('Cache-Control', 'public, max-age=60, stale-while-revalidate=300');
+        return res.json(cached) as any;
+      }
+
+      const filters: any = { status_in: ['AVAILABLE', 'OPENING', 'BOOKING', 'BEST_MARKET'] };
+      if (req.query.projectCode) {
+  return String(s)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
+function pickPublicAttributes(attrs: any): Record<string, any> {
+  if (!attrs || typeof attrs !== 'object') return {};
+  const out: Record<string, any> = {};
+  for (const [k, v] of Object.entries(attrs)) {
+    if (PUBLIC_ATTRIBUTE_KEYS.has(k) && v !== null && v !== undefined && v !== '') {
+      out[k] = v;
+    }
+  }
+  return out;
+}
+
+function pickPublicListing(row: any) {
+  const out: Record<string, any> = {};
+  for (const f of PUBLIC_LISTING_FIELDS) {
+    if (f === 'attributes') {
+      out.attributes = pickPublicAttributes(row.attributes);
+    } else if (f === 'images') {
+      out.images = Array.isArray(row.images) ? row.images.slice(0, 10) : [];
+    } else {
+      out[f] = row[f] ?? null;
+    }
+  }
+  return out;
+}
+
+function pickPublicProject(row: any) {
+  const meta = (row.metadata && typeof row.metadata === 'object') ? row.metadata : {};
+  return {

@@ -58,6 +58,45 @@ class VisitorRepository {
     }
   }
 
+  /**
+   * True when this listing was already counted for the same visitor (IP)
+   * inside the given window. Used to de-duplicate listings.view_count so a
+   * page refresh does not inflate the public counter. Rows written by bots
+   * (matching excludeUaPattern) never act as a de-duplication key.
+   */
+  async hasRecentView(
+    listingId: string,
+    ipAddress: string | null | undefined,
+    minutes = 30,
+    excludeUaPattern?: string,
+  ): Promise<boolean> {
+    if (!listingId || !ipAddress) return false;
+    // Native types only: the previous listing_id::text / ip_address::text casts
+    // made the composite index unusable, so every view scanned the table.
+    if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(String(listingId))) return false;
+    const win = Math.max(1, Math.min(Math.floor(minutes), 1440));
+    try {
+      const params: any[] = [listingId, String(ipAddress), win];
+      let uaClause = '';
+      if (excludeUaPattern) {
+        params.push(excludeUaPattern);
+        uaClause = ' AND user_agent IS NOT NULL AND user_agent !~* $4';
+      }
+      const r = await pool.query(
+        `SELECT 1 FROM visitor_logs
+          WHERE listing_id = $1::uuid
+            AND ip_address = $2
+            AND created_at >= NOW() - ($3 || ' minutes')::interval` + uaClause + `
+          LIMIT 1`,
+        params
+      );
+      return (r.rowCount ?? 0) > 0;
+    } catch (err) {
+      logger.warn('[visitorRepository] hasRecentView failed: ' + (err as Error).message);
+      return false;
+    }
+  }
+
   async getStats(tenantId: string, days = 30): Promise<VisitorStats> {
     const safeDays = Math.max(1, Math.min(Math.floor(days), 365));
 

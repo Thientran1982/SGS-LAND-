@@ -57,15 +57,25 @@ export default async function MarketplaceRoute({
     const url = new URL(
       `${process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000"}/api/public/listings`
     );
-    if (sp.q)           url.searchParams.set("q", sp.q);
-    if (sp.type)        url.searchParams.set("type", sp.type);
-    if (sp.area)        url.searchParams.set("area", sp.area);
-    if (sp.minPrice)    url.searchParams.set("minPrice", sp.minPrice);
-    if (sp.maxPrice)    url.searchParams.set("maxPrice", sp.maxPrice);
-    if (sp.bedrooms)    url.searchParams.set("bedrooms", sp.bedrooms);
+    // The Express feed expects search / location / priceMin / priceMax /
+    // bedroomsMin / pageSize. The old q / area / minPrice / maxPrice /
+    // bedrooms / limit names were silently ignored, so no filter (and no page
+    // size) ever reached the API. Price dropdown values are in billions (ty).
+    const toVnd = (v?: string): string => {
+      const n = parseFloat(String(v));
+      return Number.isFinite(n) && n > 0 ? String(Math.round(n * 1_000_000_000)) : "";
+    };
+    const priceMin = toVnd(sp.minPrice);
+    const priceMax = toVnd(sp.maxPrice);
+    if (sp.q) url.searchParams.set("search", sp.q);
+    if (sp.type) url.searchParams.set("type", sp.type);
+    if (sp.area) url.searchParams.set("location", sp.area);
+    if (priceMin) url.searchParams.set("priceMin", priceMin);
+    if (priceMax) url.searchParams.set("priceMax", priceMax);
+    if (sp.bedrooms) url.searchParams.set("bedroomsMin", sp.bedrooms);
     if (sp.transaction) url.searchParams.set("transaction", sp.transaction);
     url.searchParams.set("page", sp.page ?? "1");
-    url.searchParams.set("limit", "20");
+    url.searchParams.set("pageSize", "20");
 
     const res = await fetch(url.toString(), { cache: "no-store" });
     if (res.ok) {

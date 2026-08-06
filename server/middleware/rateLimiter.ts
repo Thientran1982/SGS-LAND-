@@ -67,6 +67,32 @@ async function upstashIncr(client: any, key: string, windowSecs: number): Promis
 // Factory
 // ---------------------------------------------------------------------------
 
+// ---------------------------------------------------------------------------
+// Client IP resolution (behind Cloudflare -> Replit edge -> Express)
+// ---------------------------------------------------------------------------
+// With a proxy chain, Express's req.ip can resolve to an INFRASTRUCTURE IP
+// instead of the real visitor (it depends on 'trust proxy' matching the exact
+// hop count). When that happens every visitor shares ONE rate-limit bucket, so
+// a few requests lock out the entire site -- observed in production:
+// POST /api/auth/forgot-password answered 429 "thu lai sau 60 phut" to users
+// who had never sent a single request.
+// Resolve the visitor IP explicitly, most trustworthy header first.
+export function getClientIp(req: Request): string {
+  const h: any = (req && req.headers) || {};
+  const first = (v: any): string => {
+    const raw = Array.isArray(v) ? v[0] : v;
+    return typeof raw === 'string' ? raw.split(',')[0].trim() : '';
+  };
+  return (
+    first(h['cf-connecting-ip']) ||
+    first(h['x-real-ip']) ||
+    first(h['x-forwarded-for']) ||
+    req.ip ||
+    (req.socket && req.socket.remoteAddress) ||
+    'anonymous'
+  );
+}
+
 export function rateLimit(options: {
   name: string;
   windowMs: number;
@@ -78,7 +104,7 @@ export function rateLimit(options: {
   const windowSecs = Math.ceil(windowMs / 1000);
   const keyFn = options.keyFn || ((req: Request) => {
     const user = (req as any).user;
-    return user?.id || req.ip || 'anonymous';
+    return user?.id || getClientIp(req);
   });
 
   return async (req: Request, res: Response, next: NextFunction) => {
@@ -136,6 +162,13 @@ export function rateLimit(options: {
     if (count > maxRequests) {
       const retryAfter = Math.ceil((resetAt - Date.now()) / 1000);
       res.setHeader('Retry-After', retryAfter);
+    // Log every block so a mis-resolved client IP (all traffic collapsing into
+    // one bucket) is visible in the server logs instead of silently 429-ing.
+    console.warn(
+      `[rateLimit] BLOCKED name=${name} key=${key} count=${count}/${maxRequests} ` +
+      `reqIp=${req.ip} xff=${req.headers['x-forwarded-for'] || '-'} ` +
+      `cfip=${req.headers['cf-connecting-ip'] || '-'} path=${req.originalUrl}`
+    );
       return res.status(429).json({
         error: message || 'Too many requests. Please try again later.',
         retryAfter,
@@ -157,7 +190,7 @@ export const authRateLimit = rateLimit({
   name: 'auth',
   windowMs: 15 * 60_000,
   maxRequests: 20,
-  keyFn: (req) => req.ip || 'anonymous',
+  keyFn: (req) => getClientIp(req),
   message: 'Quá nhiều yêu cầu. Vui lòng thử lại sau 15 phút.',
 });
 
@@ -167,17 +200,24 @@ export const loginRateLimit = rateLimit({
   name: 'login',
   windowMs: 15 * 60_000,
   maxRequests: 5,
-  keyFn: (req) => req.ip || 'anonymous',
+  keyFn: (req) => getClientIp(req),
   message: 'Quá nhiều lần thử đăng nhập. Vui lòng thử lại sau 15 phút.',
 });
 
 // H3 FIX: Rate limit for password-reset / forgot-password endpoints.
-// Prevents email-flooding: 3 requests / 60 min per IP.
+// Prevents email-flooding: 5 requests / 60 min per (IP + email).
+// Keying on the email as well as the IP means one visitor (or one shared
+// corporate NAT / mobile carrier IP) can no longer lock everybody else out,
+// while still blocking someone flooding a single mailbox.
 export const passwordResetRateLimit = rateLimit({
   name: 'password_reset',
   windowMs: 60 * 60_000,
-  maxRequests: 3,
-  keyFn: (req) => req.ip || 'anonymous',
+  maxRequests: 5,
+  keyFn: (req) => {
+    const email = String((req.body as any)?.email || '').trim().toLowerCase();
+    const ip = getClientIp(req);
+    return email ? `${ip}|${email}` : ip;
+  },
   message: 'Quá nhiều yêu cầu đặt lại mật khẩu. Vui lòng thử lại sau 60 phút.',
 });
 
@@ -191,14 +231,14 @@ export const webhookRateLimit = rateLimit({
   name: 'webhook',
   windowMs: 60_000,
   maxRequests: 100,
-  keyFn: (req) => req.ip || 'anonymous',
+  keyFn: (req) => getClientIp(req),
 });
 
 export const publicLeadRateLimit = rateLimit({
   name: 'public_lead',
   windowMs: 60_000,
   maxRequests: 5,
-  keyFn: (req) => req.ip || 'anonymous',
+  keyFn: (req) => getClientIp(req),
   message: 'Too many lead submissions from this IP. Please try again later.',
 });
 
@@ -208,7 +248,7 @@ export const livechatRateLimit = rateLimit({
   name: 'livechat',
   windowMs: 60_000,
   maxRequests: 60,
-  keyFn: (req) => req.ip || 'anonymous',
+  keyFn: (req) => getClientIp(req),
   message: 'Bạn đang gửi tin nhắn quá nhanh. Vui lòng đợi một chút.',
 });
 
@@ -218,7 +258,7 @@ export const guestValuationRateLimit = rateLimit({
   name: 'guest_valuation',
   windowMs: 24 * 60 * 60_000,
   maxRequests: 2,
-  keyFn: (req) => `gv:${req.ip || 'anon'}`,
+  keyFn: (req) => `gv:${getClientIp(req)}`,
   message: 'Bạn đã dùng hết 2 lượt định giá miễn phí hôm nay. Đăng nhập để tiếp tục.',
 });
 
@@ -375,7 +415,7 @@ export const userValuationRateLimit = rateLimit({
   name: 'user_valuation_legacy',
   windowMs: 24 * 60 * 60_000,
   maxRequests: 20,
-  keyFn: (req) => `uv:${(req as any).user?.id || req.ip || 'user'}`,
+  keyFn: (req) => `uv:${(req as any).user?.id || getClientIp(req)}`,
   message: 'Vui lòng thử lại sau.',
 });
 

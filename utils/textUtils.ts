@@ -132,49 +132,14 @@ export const parseCurrencyString = (raw: string, config: CurrencyConfig = DEFAUL
     if (isNaN(numPart)) return 0;
     return numPart * multiplier;
 };
-/**
- * Smartly formats large numbers into Tỷ/Triệu (Billion/Million) for Vietnamese market
- * or compact notation for English.
- */
-const fmtDecimalDot = (n: number, maxFractions: number): string => {
-    const rounded = parseFloat(n.toFixed(maxFractions));
-    const [intPart, decPart] = rounded.toString().split('.');
-    const intFormatted = intPart.replace(/\B(?=(\d{3})+(?!\d))/g, '.');
-    return decPart ? `${intFormatted},${decPart}` : intFormatted;
-};
-export const formatSmartPrice = (price: number, t?: (key: string) => string): string => {
-    if (!price) return '0';
-    const billionLabel = t ? t('format.billion') : 'Tỷ';
-    const millionLabel = t ? t('format.million') : 'Tr';    
-    if (price >= 1_000_000_000) {
-        return `${fmtDecimalDot(price / 1_000_000_000, 3)} ${billionLabel}`;
-    }
-    if (price >= 1_000_000) {
-        return `${fmtDecimalDot(price / 1_000_000, 2)} ${millionLabel}`;
-    }
-    return Math.round(price).toString().replace(/\B(?=(\d{3})+(?!\d))/g, '.');
-};
-/**
- * Calculates and formats Unit Price (Price per m2)
- * FIX APPLIED: Clamp decimals to 1 digit to prevent '123,456.79'.
- * Logic: Prioritize Million/m2 for readability.
- */
-export const formatUnitPrice = (price: number, area: number, t?: (key: string) => string): string => {
-    if (!price || !area) return '';
-    const unit = price / area;
-    const billionLabel = t ? t('format.billion') : 'Tỷ';
-    const millionLabel = t ? t('format.million') : 'Tr';    
-    // Billion/m2 (Rare, but for prime land)
-    if (unit >= 1_000_000_000) {
-        return `${fmtDecimalDot(unit / 1_000_000_000, 1)} ${billionLabel}/m²`;
-    }
-    // Million/m2 (Standard)
-    if (unit >= 1_000_000) {
-        return `${fmtDecimalDot(unit / 1_000_000, 1)} ${millionLabel}/m²`;
-    }
-    // Standard VND (For cheap rent)
-    return `${Math.round(unit).toString().replace(/\B(?=(\d{3})+(?!\d))/g, '.')} đ/m²`;
-};
+// -----------------------------------------------------------------------------
+// Price formatting now lives in ./priceFormat.ts (single source of truth shared
+// with the Next.js public site). Re-exported here so existing imports keep
+// working unchanged: formatSmartPrice / formatUnitPrice behave exactly as before.
+// -----------------------------------------------------------------------------
+export { fmtDecimalDot, formatSmartPrice, formatUnitPrice } from './priceFormat';
+export type { PriceLang } from './priceFormat';
+
 // -----------------------------------------------------------------------------
 // 4. URL UTILS
 // -----------------------------------------------------------------------------

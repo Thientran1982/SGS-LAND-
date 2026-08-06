@@ -1856,3 +1856,25 @@ export function estimateFallbackRent(
   }
   return Math.round(monthlyRentTrieu * 10) / 10;
 }
+
+/**
+ * Map the CRM's `listings.type` vocabulary (APARTMENT / VILLA / LAND / ...)
+ * onto the valuation engine's PropertyType keys. Kept here so every caller
+ * (price refresh cron, sold-transaction calibration, AVM) agrees on one
+ * translation instead of each one inventing its own.
+ */
+export function mapListingTypeToPropertyType(type: string): PropertyType {
+  const t = (type || '').toLowerCase();
+  if (t === 'apartment') return 'apartment_center';
+  if (t === 'house') return 'townhouse_center';
+  if (t === 'townhouse') return 'townhouse_center';
+  if (t === 'villa') return 'villa';
+  if (t === 'land') return 'land_urban';
+  if (t === 'shophouse') return 'shophouse';
+  if (t === 'penthouse') return 'penthouse';
+  if (t === 'office') return 'office';
+  if (t === 'warehouse') return 'warehouse';
+  if (t === 'project') return 'project';
+  return 'townhouse_center';
+}
+

@@ -1,0 +1,40 @@
+import { NextResponse } from "next/server";
+import type { NextRequest } from "next/server";
+
+// ─── Routes that require authentication ───────────────────
+const PRIVATE_PREFIXES = [
+  "/dashboard",
+  "/leads",
+  "/contracts",
+  "/inventory",
+  "/projects",
+  "/favorites",
+  "/inbox",
+  "/reports",
+  "/approvals",
+  "/routing-rules",
+  "/sequences",
+  "/campaigns",
+  "/knowledge",
+  "/scoring-rules",
+  "/marketplace-apps",
+  "/data-platform",
+  "/security",
+  "/ai-governance",
+  "/seo-manager",
+  "/error-monitor",
+  "/profile",
+  "/admin-users",
+  "/enterprise-settings",
+  "/admin-ai-cost",
+  "/billing",
+  "/checkout",
+  "/vendor-management",
+  "/task-dashboard",
+  "/task-kanban",
+  "/tasks",
+  "/employees",
+  "/task-reports",
+  "/scraper",
+];
+

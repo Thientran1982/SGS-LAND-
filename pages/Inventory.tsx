@@ -545,7 +545,7 @@ export const Inventory: React.FC = () => {
     const { t, formatCurrency, formatCompactNumber, language } = useTranslation();
     const [listings, setListings] = useState<Listing[]>([]); // Store current page data
     const [totalItems, setTotalItems] = useState(0);
-    const [stats, setStats] = useState({ availableCount: 0, holdCount: 0, soldCount: 0, rentedCount: 0, bookingCount: 0, openingCount: 0, inactiveCount: 0, otherCount: 0, totalCount: 0 });
+    const [stats, setStats] = useState({ availableCount: 0, holdCount: 0, soldCount: 0, rentedCount: 0, bookingCount: 0, openingCount: 0, inactiveCount: 0, bestMarketCount: 0, otherCount: 0, totalCount: 0 });
     const [allFilteredListings, setAllFilteredListings] = useState<Listing[]>([]); // For Kanban board
     const [loading, setLoading] = useState(true);
     const [boardLoading, setBoardLoading] = useState(false);
@@ -808,6 +808,13 @@ export const Inventory: React.FC = () => {
                     <div className="text-base md:text-xl font-black text-rose-600">{stats.inactiveCount}</div>
                 </div>
                     {/* Khác / Không xác định */}
+                    {/* BEST_MARKET: previously folded into "other" (or nothing), so the tiles never summed to totalCount */}
+                    {stats.bestMarketCount > 0 && (
+                      <div className="bg-[var(--bg-surface)] px-2.5 md:px-3 py-2 rounded-xl border border-yellow-200 shadow-sm min-w-[90px] md:flex-1 shrink-0">
+                        <div className="text-2xs font-bold text-yellow-600 uppercase tracking-wider mb-0.5 truncate">{t('status.BEST_MARKET')}</div>
+                        <div className="text-base md:text-xl font-black text-yellow-600">{stats.bestMarketCount}</div>
+                      </div>
+                    )}
                     {stats.otherCount > 0 && (
                       <div className="bg-[var(--bg-surface)] px-2.5 md:px-3 py-2 rounded-xl border border-slate-200 shadow-sm min-w-[90px] md:flex-1 shrink-0">
                         <div className="text-2xs font-bold text-slate-500 uppercase tracking-wider mb-0.5 truncate">{t('status.OTHER') === 'status.OTHER' ? 'Khác' : t('status.OTHER')}</div>

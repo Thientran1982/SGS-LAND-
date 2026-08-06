@@ -31,6 +31,17 @@ const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/
 const MIN_DEPOSIT_VND = 100_000;        // 100k VND lower bound (sandbox-friendly)
 const MAX_DEPOSIT_VND = 500_000_000;    // 500M VND upper bound (sanity cap)
 const BOOKING_TTL_MIN = 30;             // PENDING expires after 30 minutes
+const BOOKABLE_LISTING_STATUSES = ['AVAILABLE', 'BOOKING', 'OPENING'];
+// How long a paid deposit keeps the listing off the market before the
+// lifecycle sweeper hands it back. Override per deployment if ops needs it.
+const HOLD_HOURS_AFTER_PAID = Math.max(1, Number(process.env.BOOKING_HOLD_HOURS) || 72);
+// Partial unique index created by migration 118 - the hard guarantee that a
+// listing (or unit) can only carry one live PENDING hold at a time.
+const ACTIVE_BOOKING_INDEX = 'idx_bookings_one_active_per_listing';
+const MSG_ACTIVE_BOOKING = 'S\u1EA3n ph\u1EA9m \u0111ang c\u00F3 \u0111\u01A1n \u0111\u1EB7t c\u1ECDc gi\u1EEF ch\u1ED7, vui l\u00F2ng th\u1EED l\u1EA1i sau';
+const MSG_UNIT_NOT_FOUND = 'Kh\u00F4ng t\u00ECm th\u1EA5y c\u0103n thu\u1ED9c s\u1EA3n ph\u1EA9m n\u00E0y';
+const MSG_UNIT_WRONG_PROJECT = 'C\u0103n kh\u00F4ng thu\u1ED9c d\u1EF1 \u00E1n c\u1EE7a s\u1EA3n ph\u1EA9m';
+const MSG_UNIT_TAKEN = 'C\u0103n n\u00E0y \u0111\u00E3 \u0111\u01B0\u1EE3c gi\u1EEF ch\u1ED7';
 
 function sanitizeBookingRow(r: any) {
   return {
@@ -190,15 +201,66 @@ export function createBookingRoutes(
       // source of truth.
       const listingRow = await withRlsBypass(async (client) => {
         const r = await client.query(
-          `SELECT id, tenant_id, title, status, assigned_to, price
+          `SELECT id, tenant_id, title, status, assigned_to, price, project_id, transaction
              FROM listings WHERE id = $1 LIMIT 1`,
           [listingId],
         );
         return r.rows[0] || null;
       });
       if (!listingRow) return res.status(404).json({ error: 'Không tìm thấy BĐS' });
-      if (!['AVAILABLE', 'BOOKING', 'OPENING'].includes(listingRow.status)) {
+      if (!BOOKABLE_LISTING_STATUSES.includes(listingRow.status)) {
         return res.status(409).json({ error: 'Sản phẩm không còn nhận đặt cọc' });
+      }
+
+      // A unit-level booking must point at a unit that really belongs to
+      // this listing's tenant (and project, when both declare one) and is
+      // still free. Previously any well-formed UUID was accepted verbatim.
+      if (unitId) {
+        const unitRow = await withRlsBypass(async (client) => {
+          const r = await client.query(
+            `SELECT id, tenant_id, project_id, status FROM units WHERE id = $1 LIMIT 1`,
+            [unitId],
+          );
+          return r.rows[0] || null;
+        });
+        if (!unitRow || String(unitRow.tenant_id) !== String(listingRow.tenant_id)) {
+          return res.status(404).json({ error: MSG_UNIT_NOT_FOUND });
+        }
+        if (
+          listingRow.project_id &&
+          unitRow.project_id &&
+          String(unitRow.project_id) !== String(listingRow.project_id)
+        ) {
+          return res.status(400).json({ error: MSG_UNIT_WRONG_PROJECT });
+        }
+        if (unitRow.status !== 'available') {
+          return res.status(409).json({ error: MSG_UNIT_TAKEN });
+        }
+      }
+
+      // Close abandoned checkouts on this listing first, so a dead PENDING
+      // row cannot block the next buyer for a whole sweeper interval.
+      await pool.query(
+        `UPDATE bookings
+            SET status = 'CANCELLED', updated_at = NOW()
+          WHERE listing_id = $1 AND status = 'PENDING' AND expires_at <= NOW()`,
+        [listingId],
+      );
+
+      // One live hold per listing (or per unit). The unique index is the
+      // real guarantee under concurrency; this read exists so the buyer
+      // gets a readable 409 instead of a constraint violation.
+      const activeBooking = await pool.query(
+        `SELECT id FROM bookings
+          WHERE listing_id = $1
+            AND status = 'PENDING'
+            AND expires_at > NOW()
+            AND (unit_id IS NOT DISTINCT FROM $2::uuid OR unit_id IS NULL OR $2::uuid IS NULL)
+          LIMIT 1`,
+        [listingId, unitId],
+      );
+      if ((activeBooking.rowCount ?? 0) > 0) {
+        return res.status(409).json({ error: MSG_ACTIVE_BOOKING });
       }
 
       // Deposit amount — server-side policy is source of truth. The mobile
@@ -209,8 +271,17 @@ export function createBookingRoutes(
       // Default (when the client omits the field) is min(env-default,
       // listing-anchored ceiling).
       const listingPrice = Number(listingRow.price);
+      // SALE: 10% of the asking price. RENT: `price` is a MONTHLY rent, so
+      // 10% of it is not a deposit - the market convention is one month.
+      // Either way the ceiling is clamped into the accepted band, because a
+      // ceiling below MIN_DEPOSIT_VND used to make every deposit on a cheap
+      // listing impossible (clamped down, then rejected as too small).
+      const isRental = String(listingRow.transaction || 'SALE').toUpperCase() === 'RENT';
       const listingCeiling = Number.isFinite(listingPrice) && listingPrice > 0
-        ? Math.round(listingPrice * 0.10)
+        ? Math.min(
+            MAX_DEPOSIT_VND,
+            Math.max(MIN_DEPOSIT_VND, Math.round(isRental ? listingPrice : listingPrice * 0.10)),
+          )
         : null;
       let amount = Number(body.depositAmount);
       if (!Number.isFinite(amount) || amount <= 0) {
@@ -275,6 +346,10 @@ export function createBookingRoutes(
           );
           booking = inserted.rows[0];
         } catch (e: any) {
+          if (e?.code === '23505' && String(e?.constraint || '') === ACTIVE_BOOKING_INDEX) {
+            // Another buyer won the race between our check and this insert.
+            return res.status(409).json({ error: MSG_ACTIVE_BOOKING });
+          }
           if (e?.code === '23505' && attempt < 3) {
             logger.warn(`[bookings] txnRef collision (attempt ${attempt}), retrying`);
             continue;
@@ -681,6 +756,62 @@ export function createBookingRoutes(
 
         // Side effects — best-effort, never block the IPN ack.
         if (isPaid) {
+        // Inventory now follows the money. A confirmed deposit takes the
+        // listing off the market for HOLD_HOURS_AFTER_PAID hours; before
+        // this, nothing ever touched listing.status, so two buyers could
+        // pay a deposit on the very same unit.
+        const expiresTs = booking.expires_at ? new Date(booking.expires_at).getTime() : 0;
+        const paidAfterExpiry = expiresTs > 0 && expiresTs < Date.now();
+        if (paidAfterExpiry) {
+          // The money is real, so the row still becomes PAID, but we refuse
+          // to re-reserve inventory the sweeper may already have handed to
+          // someone else. Ops reconcile these from the event log.
+          await logBookingEvent(pool, booking.id, 'PAID_AFTER_EXPIRY', {
+            verified: true,
+            responseCode: result.responseCode,
+            message: 'paid after expires_at - listing NOT held, needs manual review',
+            ip: clientIp(req),
+          });
+        } else {
+          try {
+            const holdUntil = new Date(Date.now() + HOLD_HOURS_AFTER_PAID * 60 * 60 * 1000);
+            const held = await withRlsBypass((client) => client.query(
+              `UPDATE listings
+                  SET status = 'HOLD',
+                      hold_expires_at = $2,
+                      booking_count = COALESCE(booking_count, 0) + 1,
+                      updated_at = NOW()
+                WHERE id = $1
+                  AND status = ANY($3::text[])
+                RETURNING id`,
+              [booking.listing_id, holdUntil, BOOKABLE_LISTING_STATUSES],
+            ));
+            const didHold = (held.rowCount ?? 0) === 1;
+            if (didHold && booking.unit_id) {
+              await withRlsBypass((client) => client.query(
+                `UPDATE units
+                    SET status = 'reserved', updated_at = NOW()
+                  WHERE id = $1 AND status = 'available'`,
+                [booking.unit_id],
+              ));
+            }
+            await logBookingEvent(
+              pool,
+              booking.id,
+              didHold ? 'LISTING_HELD' : 'LISTING_HOLD_SKIPPED',
+              {
+                verified: true,
+                message: didHold
+                  ? `listing ${booking.listing_id} -> HOLD until ${holdUntil.toISOString()}`
+                  : `listing ${booking.listing_id} left as-is (not in a bookable status)`,
+                ip: clientIp(req),
+              },
+            );
+          } catch (e: any) {
+            logger.warn('[vnpay/ipn] hold listing failed: ' + (e?.message || e));
+          }
+        }
+
           // Realtime nudge to the assigned agent (web CRM picks this up).
           if (io && booking.agent_user_id) {
             try {

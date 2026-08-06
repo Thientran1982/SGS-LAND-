@@ -5,7 +5,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { Linkedin, ArrowRight, Calendar, Clock } from "lucide-react";
 import { AUTHORS, getAuthorBySlug } from "@/data/authors";
-import { ARTICLES } from "@/data/articles";
+import { getArticlesByAuthor } from "@/lib/content/articles-source";
 import { CATEGORIES } from "@/data/categories";
 import { SchemaScript } from "@/components/SchemaScript";
 import { getBreadcrumbSchema, SITE_URL, ORG_ID } from "@/lib/schema";
@@ -30,9 +30,15 @@ export async function generateMetadata({
       title: `${author.name}`,
       description: author.bio,
       url: `${SITE_URL}/tac-gia/${slug}`,
-      images: [{ url: `${SITE_URL}${author.avatar}`, width: 400, height: 400, alt: author.name }],
+      ...(author.avatar ? { images: [{ url: `${SITE_URL}${author.avatar}`, width: 400, height: 400, alt: author.name }] } : {}),
     },
   };
+}
+
+function initialsOf(name: string) {
+  const parts = name.trim().split(/\s+/).filter(Boolean);
+  const raw = parts.length >= 2 ? `${parts[0][0]}${parts[parts.length - 1][0]}` : parts[0]?.[0] ?? "?";
+  return raw.toUpperCase();
 }
 
 export const dynamic = "force-dynamic";
@@ -46,7 +52,7 @@ export default async function AuthorPage({
   const author = getAuthorBySlug(slug);
   if (!author) notFound();
 
-  const articles = ARTICLES.filter((a) => a.author === slug);
+  const articles = await getArticlesByAuthor(slug);
   const catMap = Object.fromEntries(CATEGORIES.map((c) => [c.slug, c]));
 
   const breadcrumb = getBreadcrumbSchema([
@@ -64,7 +70,7 @@ export default async function AuthorPage({
     jobTitle: author.title,
     description: author.bio,
     url: `${SITE_URL}/tac-gia/${slug}`,
-    image: `${SITE_URL}${author.avatar}`,
+    ...(author.avatar ? { image: `${SITE_URL}${author.avatar}` } : {}),
     sameAs: author.sameAs,
     worksFor: { "@id": ORG_ID },
     knowsAbout: author.expertise,
@@ -95,15 +101,19 @@ export default async function AuthorPage({
         >
           {/* Avatar */}
           <div className="shrink-0 mx-auto sm:mx-0">
-            <div className="relative w-28 h-28 rounded-full overflow-hidden">
-              <Image
-                src={author.avatar}
-                alt={author.name}
-                fill
-                className="object-cover"
-                priority
-              />
-            </div>
+            {author.avatar ? (
+              <div className="relative w-28 h-28 rounded-full overflow-hidden">
+                <Image src={author.avatar} alt={author.name} fill className="object-cover" priority />
+              </div>
+            ) : (
+              <div
+                className="w-28 h-28 rounded-full flex items-center justify-center text-3xl font-bold text-white select-none"
+                style={{ background: "var(--primary-600)" }}
+                aria-label={author.name}
+              >
+                {initialsOf(author.name)}
+              </div>
+            )}
           </div>
 
           {/* Info */}

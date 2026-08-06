@@ -76,10 +76,12 @@ export function ArticleHeader({ article, author, category, className = "" }: Art
           <Clock className="w-3.5 h-3.5" aria-hidden />
           {article.readTime} phút đọc
         </span>
-        <span className="flex items-center gap-1">
-          <BookOpen className="w-3.5 h-3.5" aria-hidden />
-          {article.wordCount.toLocaleString("vi-VN")} từ
-        </span>
+        {article.body && (
+          <span className="flex items-center gap-1">
+            <BookOpen className="w-3.5 h-3.5" aria-hidden />
+            {article.wordCount.toLocaleString("vi-VN")} từ
+          </span>
+        )}
       </div>
       {/* Author inline */}
       <AuthorCard author={author} variant="inline" className="mb-5" />

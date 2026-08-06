@@ -1,42 +1,9 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
+// Single source of truth - next.config.ts proxies exactly these prefixes to Express.
+import { PRIVATE_PREFIXES } from "./config/routes";
 
 // ─── Routes that require authentication ───────────────────
-const PRIVATE_PREFIXES = [
-  "/dashboard",
-  "/leads",
-  "/contracts",
-  "/inventory",
-  "/projects",
-  "/favorites",
-  "/inbox",
-  "/reports",
-  "/approvals",
-  "/routing-rules",
-  "/sequences",
-  "/campaigns",
-  "/knowledge",
-  "/scoring-rules",
-  "/marketplace-apps",
-  "/data-platform",
-  "/security",
-  "/ai-governance",
-  "/seo-manager",
-  "/error-monitor",
-  "/profile",
-  "/admin-users",
-  "/enterprise-settings",
-  "/admin-ai-cost",
-  "/billing",
-  "/checkout",
-  "/vendor-management",
-  "/task-dashboard",
-  "/task-kanban",
-  "/tasks",
-  "/employees",
-  "/task-reports",
-  "/scraper",
-];
 
 // ─── Routes accessible only when NOT logged in ────────────
 const AUTH_ONLY_ROUTES = ["/login", "/reset-password", "/verify-email"];
@@ -47,7 +14,10 @@ export function middleware(request: NextRequest) {
   // —— Canonical host: 301 redirect www → non-www (SEO consolidation) ——
   const host = request.headers.get("host") || "";
   if (host.startsWith("www.")) {
-    return NextResponse.redirect(`https://${host.slice(4)}${pathname}${request.nextUrl.search}`, 301);
+    return NextResponse.redirect(
+      `https://${host.slice(4)}${pathname}${request.nextUrl.search}`,
+      301,
+    );
   }
 
   // —— Locale: /en/<route> renders the English variant of the same route ——
@@ -63,10 +33,21 @@ export function middleware(request: NextRequest) {
   // —— Hard 404 cho cac route co tap slug dong (tranh soft-404) ——
   // notFound() trong route dong chi tra 200 vi shell da stream, nen chan tu day.
   const DEV_SLUGS = new Set([
-    "vinhomes", "novaland", "masterise-homes", "nam-long",
-    "van-phuc-group", "son-kim-land", "dai-quang-minh",
+    "vinhomes",
+    "novaland",
+    "masterise-homes",
+    "nam-long",
+    "van-phuc-group",
+    "son-kim-land",
+    "dai-quang-minh",
   ]);
-  const AUTHOR_SLUGS = new Set(["tran-minh-thien", "nguyen-hoang-nam", "le-thi-hoa", "chuyen-gia-phap-ly"]);
+  const AUTHOR_SLUGS = new Set([
+    "tran-minh-thien",
+    "nguyen-hoang-nam",
+    "le-thi-hoa",
+    "chuyen-gia-phap-ly",
+    "ban-bien-tap",
+  ]);
   if (pathname.startsWith("/tac-gia/")) {
     const seg = pathname.split("/")[2];
     if (seg && !AUTHOR_SLUGS.has(seg)) {
@@ -78,7 +59,8 @@ export function middleware(request: NextRequest) {
   // /bds/<slug> chi hop le khi slug ket thuc bang UUID (trang detail tra cuu theo UUID)
   if (pathname.startsWith("/bds/")) {
     const seg = pathname.split("/")[2] || "";
-    const TRAILING_UUID = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+    const TRAILING_UUID =
+      /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
     if (seg && !TRAILING_UUID.test(seg)) {
       const nf = request.nextUrl.clone();
       nf.pathname = "/_not-found";
@@ -95,19 +77,28 @@ export function middleware(request: NextRequest) {
   }
 
   // Detect auth via JWT cookie (set by Express backend)
-  const token = request.cookies.get("auth_token")?.value
-    || request.cookies.get("sgs_token")?.value || request.cookies.get("token")?.value;
+  const token =
+    request.cookies.get("auth_token")?.value ||
+    request.cookies.get("sgs_token")?.value ||
+    request.cookies.get("token")?.value;
   const isAuthenticated = Boolean(token);
 
   // ── Redirect logged-in users away from auth pages ───────
   if (isAuthenticated && AUTH_ONLY_ROUTES.some((r) => pathname.startsWith(r))) {
-    return NextResponse.redirect(new URL(lang === "en" ? "/en/dashboard" : "/dashboard", request.url));
+    return NextResponse.redirect(
+      new URL(lang === "en" ? "/en/dashboard" : "/dashboard", request.url),
+    );
   }
 
   // ── Guard private routes ─────────────────────────────────
-  const isPrivate = PRIVATE_PREFIXES.some((prefix) => pathname.startsWith(prefix));
+  const isPrivate = PRIVATE_PREFIXES.some((prefix) =>
+    pathname.startsWith(prefix),
+  );
   if (isPrivate && !isAuthenticated) {
-    const loginUrl = new URL(lang === "en" ? "/en/login" : "/login", request.url);
+    const loginUrl = new URL(
+      lang === "en" ? "/en/login" : "/login",
+      request.url,
+    );
     loginUrl.searchParams.set("redirect", pathname);
     return NextResponse.redirect(loginUrl);
   }
@@ -119,7 +110,9 @@ export function middleware(request: NextRequest) {
   if (localeRewrite) {
     const url = request.nextUrl.clone();
     url.pathname = pathname;
-    response = NextResponse.rewrite(url, { request: { headers: requestHeaders } });
+    response = NextResponse.rewrite(url, {
+      request: { headers: requestHeaders },
+    });
   } else {
     response = NextResponse.next({ request: { headers: requestHeaders } });
   }

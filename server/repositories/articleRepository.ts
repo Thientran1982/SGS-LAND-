@@ -50,7 +50,7 @@ class ArticleRepository extends BaseRepository {
         paramIndex++;
       }
       if (filters?.status) {
-        conditions.push(`status = $${paramIndex}`);
+        conditions.push(`UPPER(status) = UPPER($${paramIndex})`);
         values.push(filters.status);
         paramIndex++;
       }
@@ -69,7 +69,7 @@ class ArticleRepository extends BaseRepository {
       const total = countResult.rows[0].total;
 
       const result = await client.query(
-        `SELECT * FROM articles ${whereClause} ORDER BY created_at DESC LIMIT $${paramIndex} OFFSET $${paramIndex + 1}`,
+        `SELECT * FROM articles ${whereClause} ORDER BY COALESCE(published_at, created_at) DESC LIMIT $${paramIndex} OFFSET $${paramIndex + 1}`,
         [...values, pageSize, offset]
       );
 

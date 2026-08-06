@@ -1,7 +1,7 @@
 // @ts-nocheck
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
-import { ARTICLES, getArticleBySlug } from "@/data/articles";
+import { getAllArticles, getArticleBySlug } from "@/lib/content/articles-source";
 import { getAuthorBySlug } from "@/data/authors";
 import { getCategoryBySlug, CATEGORIES } from "@/data/categories";
 import { getRelatedArticles } from "@/lib/content/related-articles";
@@ -14,7 +14,8 @@ import { SchemaScript } from "@/components/SchemaScript";
 import { getBreadcrumbSchema, SITE_URL } from "@/lib/schema";
 
 export async function generateStaticParams() {
-  return ARTICLES.map((a) => ({ slug: a.slug }));
+  const all = await getAllArticles();
+  return all.map((a) => ({ slug: a.slug }));
 }
 
 export async function generateMetadata({
@@ -24,7 +25,7 @@ export async function generateMetadata({
 }): Promise<Metadata> {
   const { slug } = await params;
   const canonicalUrl = `https://sgsland.vn/news/${slug}`;
-  const article = getArticleBySlug(slug);
+  const article = await getArticleBySlug(slug);
   if (!article) {
     return {
       title: "Bài viết không tìm thấy",
@@ -45,14 +46,14 @@ export default async function ArticlePage({
   params: Promise<{ slug: string }>;
 }) {
   const { slug } = await params;
-  const article = getArticleBySlug(slug);
+  const article = await getArticleBySlug(slug);
   if (!article) notFound();
 
-  const author = getAuthorBySlug(article.author);
+  const author = getAuthorBySlug(article.author) ?? getAuthorBySlug("ban-bien-tap");
   if (!author) notFound();
 
   const category = getCategoryBySlug(article.category);
-  const relatedArticles = getRelatedArticles(ARTICLES, slug, article.category, article.tags);
+  const relatedArticles = getRelatedArticles(await getAllArticles(), slug, article.category, article.tags);
 
   const breadcrumb = getBreadcrumbSchema([
     { name: "Trang chủ", url: SITE_URL },
@@ -67,13 +68,13 @@ export default async function ArticlePage({
       <ArticleSchema article={article} author={author} />
       <SchemaScript schemas={[breadcrumb]} />
 
-      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
+      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 pt-5 pb-10 sm:py-10">
         <div className="grid grid-cols-1 lg:grid-cols-[1fr_280px] gap-10">
           {/* Main content */}
           <article itemScope itemType="https://schema.org/Article">
             <ArticleHeader article={article} author={author} category={category} />
 
-            {/* Article body placeholder — in production this renders MDX/rich text */}
+            {/* Article body: renders article.body (HTML) when available */}
             <div
               className="prose prose-lg max-w-none mb-10"
               style={{ color: "var(--text-secondary)" }}
@@ -92,7 +93,8 @@ export default async function ArticlePage({
               </div>
 
               {/* Outline / Table of contents */}
-              <nav aria-label="Mục lục bài viết" className="mb-8">
+              {article.outline.length > 0 && (
+            <nav aria-label="Mục lục bài viết" className="mb-8">
                 <p className="font-bold text-sm mb-3" style={{ color: "var(--text-primary)" }}>
                   Nội dung bài viết
                 </p>
@@ -107,6 +109,29 @@ export default async function ArticlePage({
                   ))}
                 </ol>
               </nav>
+            )}
+
+              {/* Article body */}
+              {article.body ? (
+                <div className="article-body" dangerouslySetInnerHTML={{ __html: article.body }} />
+              ) : (
+                <div
+                  className="not-prose p-5 rounded-xl text-sm leading-relaxed"
+                  style={{ background: "var(--bg-elevated)", border: "1px dashed var(--border-default)", color: "var(--text-secondary)" }}
+                >
+                  <p className="font-semibold mb-1" style={{ color: "var(--text-primary)" }}>
+                    Nội dung chi tiết đang được cập nhật
+                  </p>
+                  <p>
+                    Mục lục phía trên là cấu trúc của bài phân tích này. Nội dung đầy đủ sẽ được cập nhật sớm.{" "}
+                    <a href="/contact" className="underline font-medium">
+                      Liên hệ chuyên gia SGS LAND
+                    </a>{" "}
+                    để được tư vấn trực tiếp.
+                  </p>
+                </div>
+              )}
+
 
               {/* Tags */}
               <div className="flex flex-wrap gap-2 mt-8">

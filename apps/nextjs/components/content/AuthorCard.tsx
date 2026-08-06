@@ -8,14 +8,14 @@ interface AuthorCardProps {
   variant?: "inline" | "full";
   className?: string;
 }
-function Initials({ name }: { name: string }) {
+function Initials({ name, className = "" }: { name: string; className?: string }) {
   const parts = name.trim().split(" ");
   const initials = parts.length >= 2
     ? `${parts[0][0]}${parts[parts.length - 1][0]}`
     : parts[0][0];
   return (
     <div
-      className="flex items-center justify-center rounded-full font-bold text-white select-none"
+      className={`flex items-center justify-center rounded-full font-bold text-white select-none ${className}`}
       style={{ background: "var(--primary-600)" }}
       aria-label={name}
     >
@@ -28,15 +28,13 @@ export function AuthorCard({ author, variant = "inline", className = "" }: Autho
     return (
       <div className={`flex items-center gap-3 ${className}`}>
         <Link href={`/tac-gia/${author.slug}`} className="shrink-0" tabIndex={-1} aria-hidden>
-          <div className="relative w-10 h-10 rounded-full overflow-hidden">
-            <Image
-              src={author.avatar}
-              alt={author.name}
-              fill
-              className="object-cover"
-              onError={() => {}} // falls through to next element on load error
-            />
-          </div>
+          {author.avatar ? (
+            <div className="relative w-10 h-10 rounded-full overflow-hidden">
+              <Image src={author.avatar} alt={author.name} fill className="object-cover" />
+            </div>
+          ) : (
+            <Initials name={author.name} className="w-10 h-10 text-xs" />
+          )}
         </Link>
         <div className="min-w-0">
           <Link
@@ -72,14 +70,13 @@ export function AuthorCard({ author, variant = "inline", className = "" }: Autho
     >
       <div className="flex items-start gap-4 mb-4">
         <Link href={`/tac-gia/${author.slug}`} className="shrink-0">
-          <div className="relative w-16 h-16 rounded-full overflow-hidden">
-            <Image
-              src={author.avatar}
-              alt={author.name}
-              fill
-              className="object-cover"
-            />
-          </div>
+          {author.avatar ? (
+            <div className="relative w-16 h-16 rounded-full overflow-hidden">
+              <Image src={author.avatar} alt={author.name} fill className="object-cover" />
+            </div>
+          ) : (
+            <Initials name={author.name} className="w-16 h-16 text-xl" />
+          )}
         </Link>
         <div className="flex-1 min-w-0">
           <Link

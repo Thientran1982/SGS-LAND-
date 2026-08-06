@@ -166,6 +166,14 @@ export default async function RootLayout({ children }: { children: React.ReactNo
         <link rel="dns-prefetch" href="https://www.googletagmanager.com" />
         {/* Google tag (gtag.js) */}
         <script async src="https://www.googletagmanager.com/gtag/js?id=G-3LBRB691S4" />
+      </head>
+      <body
+        className={`${inter.variable} ${jetbrainsMono.variable} ${notoSerifDisplay.variable} ${beVietnamPro.variable} ${ibmPlexMono.variable} font-sans antialiased`}
+        style={{ background: "var(--bg-app)", color: "var(--text-primary)" }}
+      >
+        {/* Inline <script> tags live at the top of <body>, not in <head>:
+            the Replit dev proxy injects its own <script> into <head>, which
+            shifts positions and breaks React hydration in the preview. */}
         <script
           dangerouslySetInnerHTML={{
             __html: `window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag('js',new Date());gtag('config','G-3LBRB691S4');`,
@@ -191,11 +199,6 @@ export default async function RootLayout({ children }: { children: React.ReactNo
             __html: `try{var t=localStorage.getItem('sgs-theme')||'light';document.documentElement.classList.add(t)}catch(e){document.documentElement.classList.add('light')}`,
           }}
         />
-      </head>
-      <body
-        className={`${inter.variable} ${jetbrainsMono.variable} ${notoSerifDisplay.variable} ${beVietnamPro.variable} ${ibmPlexMono.variable} font-sans antialiased`}
-        style={{ background: "var(--bg-app)", color: "var(--text-primary)" }}
-      >
         <LangProvider lang={lang}>
           {children}
           <ConsentBanner />

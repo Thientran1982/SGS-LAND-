@@ -1,0 +1,29 @@
+  DATA_PLATFORM:  "/data-platform",
+  SECURITY:       "/security",
+  AI_GOVERNANCE:  "/ai-governance",
+  SEO_MANAGER:    "/seo-manager",
+  ERROR_MONITOR:  "/error-monitor",
+  PROFILE:        "/profile",
+  ADMIN_USERS:    "/admin-users",
+  ENTERPRISE:     "/enterprise-settings",
+  ADMIN_AI_COST:  "/admin-ai-cost",
+  BILLING:        "/billing",
+  VENDOR:         "/vendor-management",
+  TASK_DASHBOARD: "/task-dashboard",
+  TASK_KANBAN:    "/task-kanban",
+  TASKS:          "/tasks",
+  EMPLOYEES:      "/employees",
+  TASK_REPORTS:   "/task-reports",
+} as const;
+
+// Private route prefixes (for middleware)
+export const PRIVATE_PREFIXES = [
+  "/dashboard", "/leads", "/contracts", "/inventory", "/projects",
+  "/favorites", "/inbox", "/reports", "/approvals", "/routing-rules",
+  "/sequences", "/campaigns", "/knowledge", "/scoring-rules",
+  "/marketplace-apps", "/data-platform", "/security", "/ai-governance",
+  "/seo-manager", "/error-monitor", "/profile", "/admin-users",
+  "/enterprise-settings", "/admin-ai-cost", "/billing", "/checkout",
+  "/vendor-management", "/task-dashboard", "/task-kanban", "/tasks",
+  "/employees", "/task-reports", "/scraper",
+] as const;

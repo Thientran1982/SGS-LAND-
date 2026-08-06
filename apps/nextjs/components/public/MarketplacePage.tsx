@@ -9,9 +9,11 @@ type L = "vi" | "en";
 import dynamic from "next/dynamic";
 import {
   Search, MapPin, Bed, ChevronLeft, ChevronRight, ChevronDown, Check,
-  LayoutGrid, List as ListIcon, Columns, Map as MapIcon, BadgeCheck, Eye, Heart,
+  LayoutGrid, List as ListIcon, Columns, Map as MapIcon, BadgeCheck, Eye, Heart, SlidersHorizontal, Star, Camera,
 } from "lucide-react";
 import type { Listing } from "@/types";
+import Image from "next/image";
+import { formatPriceLang, formatUnitPriceLang, rentSuffix } from "@/utils/priceFormat";
 
 const MarketplaceMap = dynamic(() => import("./MarketplaceMap").then((m) => m.MarketplaceMap), {
   ssr: false,
@@ -86,17 +88,64 @@ const TYPE_LABELS = (g: L): Record<string, string> => ({
   PROJECT: tt(g, "Dự án", "Project"),
 });
 
-function formatPrice(price: number, g: L = "vi"): string {
-  if (price >= 1e9) return g === "en" ? `${(price / 1e9).toFixed(2)}B VND` : `${(price / 1e9).toFixed(2)} tỷ`;
-  return g === "en" ? `${Math.round(price / 1e6)}M VND` : `${Math.round(price / 1e6)} triệu`;
+/* Shared listing presentation helpers.
+   Price formatting comes from utils/priceFormat.ts - the SAME module the CRM
+   inventory card uses, so one listing now renders identically on both sides.
+   Vietnamese labels are \uXXXX escapes to keep this file ASCII-safe. */
+type Bi = [string, string];
+const bi = (m: Record<string, Bi>, key: string, g: L): string => {
+  const v = m[String(key)];
+  return v ? (g === "en" ? v[1] : v[0]) : String(key || "");
+};
+const STATUS_LABELS: Record<string, Bi> = {
+  AVAILABLE: ["\u0110ang giao d\u1ecbch", "In transaction"],
+  READY: ["S\u1eb5n s\u00e0ng", "Ready"],
+  BOOKING: ["Nh\u1eadn Booking", "Booking"],
+  OPENING: ["\u0110ang m\u1edf b\u00e1n", "Opening"],
+  BEST_MARKET: ["T\u1ed1t nh\u1ea5t th\u1ecb tr\u01b0\u1eddng", "Best in market"],
+};
+const LEGAL_LABELS: Record<string, Bi> = {
+  PinkBook: ["S\u1ed5 H\u1ed3ng", "Pink Book"],
+  Contract: ["H\u0110MB", "Sales contract"],
+  Waiting: ["\u0110ang ch\u1edd s\u1ed5/Vi b\u1eb1ng", "Waiting for title"],
+};
+const DIRECTION_LABELS: Record<string, Bi> = {
+  North: ["B\u1eafc", "North"], South: ["Nam", "South"],
+  East: ["\u0110\u00f4ng", "East"], West: ["T\u00e2y", "West"],
+  NorthEast: ["\u0110\u00f4ng B\u1eafc", "North East"], NorthWest: ["T\u00e2y B\u1eafc", "North West"],
+  SouthEast: ["\u0110\u00f4ng Nam", "South East"], SouthWest: ["T\u00e2y Nam", "South West"],
+};
+const UI_LABELS: Record<string, Bi> = {
+  legal: ["Ph\u00e1p l\u00fd", "Legal"],
+  direction: ["H\u01b0\u1edbng", "Direction"],
+  noImage: ["Ch\u01b0a c\u00f3 \u1ea3nh", "No photo"],
+  save: ["L\u01b0u tin", "Save"],
+  saved: ["\u0110\u00e3 l\u01b0u", "Saved"],
+};
+const ui = (k: string, g: L): string => bi(UI_LABELS, k, g);
+
+/* Same thumbnail contract as components/ListingCard.tsx: round the width up to
+   a multiple of 64 so both apps share the server resize cache. */
+function toThumbnailUrl(src: string, width = 800): string {
+  if (src.startsWith("/uploads/") && !src.includes("?")) {
+    const w = Math.max(64, Math.ceil(width / 64) * 64);
+    return `${src}?w=${w}`;
+  }
+  return src;
 }
-function pricePerM2(price: number, area: number, g: L = "vi"): string | null {
-  if (!area || area <= 0) return null;
-  const v = price / area;
-  if (v >= 1e9) return g === "en" ? `${(v / 1e9).toFixed(2)}B/m²` : `${(v / 1e9).toFixed(2)} tỷ/m²`;
-  const n = (v / 1e6).toLocaleString("vi-VN", { maximumFractionDigits: 1 });
-  return g === "en" ? `${n}M/m²` : `${n} Triệu/m²`;
-}
+
+/* Anonymous visitors have no favourites API yet - persist locally so the heart
+   is a real control instead of a dead icon inside the card link. */
+const FAV_KEY = "sgs:favorites";
+const readFavs = (): string[] => {
+  try {
+    const v = JSON.parse(window.localStorage.getItem(FAV_KEY) || "[]");
+    return Array.isArray(v) ? v : [];
+  } catch { return []; }
+};
+const writeFavs = (ids: string[]) => {
+  try { window.localStorage.setItem(FAV_KEY, JSON.stringify(ids.slice(0, 300))); } catch { /* quota */ }
+};
 
 const boxStyle: React.CSSProperties = { background: "var(--bg-elevated)", border: "1.5px solid var(--border-default)", color: "var(--text-primary)" };
 
@@ -136,49 +185,113 @@ function Dropdown({ value, options, onChange, minWidth = 140 }: { value: string;
 }
 
 /* ── Listing card ─────────────────────────────────────────── */
-function ListingCard({ listing, list }: { listing: any; list?: boolean }) {
+function ListingCard({ listing, list, eager }: { listing: any; list?: boolean; eager?: boolean }) {
   const lang = useLang();
   const slug = `${(listing.title || "bds").toLowerCase().replace(/\s+/g, "-").replace(/[^a-z0-9-]/g, "").slice(0, 40)}-${listing.id}`;
   const isRent = String(listing.transaction || "").toUpperCase() === "RENT";
-  const ppm = pricePerM2(listing.price, listing.area, lang);
+  const attrs = listing.attributes || {};
+  const area = Number(listing.area) || 0;
+  const priceText = formatPriceLang(Number(listing.price) || 0, lang);
+  const ppm = area > 0 ? formatUnitPriceLang(Number(listing.price) || 0, area, lang) : "";
   const views = listing.viewCount || 0;
+  const rawStatus = String(listing.status || "");
+  const statusKey = rawStatus === "AVAILABLE" && isRent ? "READY" : rawStatus;
+  const statusLabel = STATUS_LABELS[statusKey] ? bi(STATUS_LABELS, statusKey, lang) : "";
+  const isBest = rawStatus === "BEST_MARKET";
+  const legal = attrs.legalStatus ? bi(LEGAL_LABELS, String(attrs.legalStatus), lang) : "";
+  const direction = attrs.direction ? bi(DIRECTION_LABELS, String(attrs.direction), lang) : "";
+  const images: string[] = Array.isArray(listing.images) ? listing.images : [];
+  const src = images[0] || "";
+  const [imgFailed, setImgFailed] = useState(false);
+  const [optFailed, setOptFailed] = useState(false);
+  const [fav, setFav] = useState(false);
+  useEffect(() => { setFav(readFavs().includes(listing.id)); }, [listing.id]);
+  const toggleFav = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    const ids = readFavs();
+    const next = ids.includes(listing.id) ? ids.filter((x) => x !== listing.id) : [listing.id, ...ids];
+    writeFavs(next);
+    setFav(next.includes(listing.id));
+  };
+  // next/image only for same-origin paths (/uploads/...): a remote host that is
+  // missing from next.config remotePatterns must never blank out the card.
+  const optimized = src.startsWith("/") && !optFailed;
+  const sizes = list ? "288px" : "(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw";
+  const savedLabel = fav ? ui("saved", lang) : ui("save", lang);
   return (
     <Link href={lang === "en" ? `/en/bds/${slug}` : `/bds/${slug}`}
       className={`group block rounded-3xl overflow-hidden hover:shadow-token-lg transition-all hover:-translate-y-1 ${list ? "sm:flex" : ""}`}
       style={{ background: "var(--bg-surface)", border: "1px solid var(--border-default)" }}>
       {/* Image */}
       <div className={`relative overflow-hidden ${list ? "sm:w-72 h-52 sm:h-auto shrink-0" : "aspect-[4/3]"}`} style={{ background: "var(--bg-elevated)" }}>
-        {listing.images?.[0] ? (
-          <img src={listing.images[0]} alt={listing.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
+        {src && !imgFailed ? (
+          optimized ? (
+            <Image src={src} alt={listing.title || ""} fill sizes={sizes} priority={!!eager}
+              className="object-cover group-hover:scale-105 transition-transform duration-500"
+              onError={() => setOptFailed(true)} />
+          ) : (
+            <img src={toThumbnailUrl(src, 800)} alt={listing.title || ""}
+              loading={eager ? "eager" : "lazy"} decoding="async"
+              className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+              onError={() => setImgFailed(true)} />
+          )
         ) : (
-          <div className="w-full h-full flex items-center justify-center text-5xl opacity-20">🏢</div>
+          <div className="w-full h-full flex flex-col items-center justify-center gap-1">
+            <span className="text-5xl opacity-20">{"\ud83c\udfe2"}</span>
+            <span className="text-[11px]" style={{ color: "var(--text-tertiary)" }}>{ui("noImage", lang)}</span>
+          </div>
         )}
         <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent pointer-events-none" />
         {/* Badges top-left */}
         <div className="absolute top-3 left-3 flex flex-col gap-1.5 items-start">
           <div className="flex gap-1.5">
             <span className="px-2 py-0.5 rounded-lg text-[12px] font-bold text-white shadow-sm backdrop-blur-sm" style={{ background: isRent ? "rgba(37,99,235,0.9)" : "rgba(11,107,84,0.92)" }}>
-              {isRent ? tt(lang, "CHO THUÊ", "FOR RENT") : tt(lang, "BÁN", "FOR SALE")}
+              {isRent ? tt(lang, "CHO THU\u00ca", "FOR RENT") : tt(lang, "B\u00c1N", "FOR SALE")}
             </span>
             {listing.isVerified && (
               <span className="flex items-center gap-1 px-2 py-0.5 rounded-lg text-[12px] font-bold text-white shadow-sm backdrop-blur-sm" style={{ background: "rgba(5,150,105,0.95)" }}>
-                <BadgeCheck className="w-3.5 h-3.5" /> {tt(lang, "ĐÃ XÁC THỰC", "VERIFIED")}
+                <BadgeCheck className="w-3.5 h-3.5" /> {tt(lang, "\u0110\u00c3 X\u00c1C TH\u1ef0C", "VERIFIED")}
               </span>
             )}
           </div>
-          {views > 0 && (
-            <span className="flex items-center gap-1 px-2 py-0.5 rounded-lg text-[12px] font-bold text-white shadow-sm backdrop-blur-sm" style={{ background: "rgba(0,0,0,0.6)" }}>
-              <Eye className="w-3.5 h-3.5" /> {views}
-            </span>
-          )}
+          <div className="flex gap-1.5">
+            {isBest && (
+              <span className="flex items-center gap-1 px-2 py-0.5 rounded-lg text-[12px] font-bold shadow-sm backdrop-blur-sm uppercase" style={{ background: "rgba(250,204,21,0.95)", color: "#3f2d00" }}>
+                <Star className="w-3.5 h-3.5" /> {bi(STATUS_LABELS, "BEST_MARKET", lang)}
+              </span>
+            )}
+            {views > 0 && (
+              <span className="flex items-center gap-1 px-2 py-0.5 rounded-lg text-[12px] font-bold text-white shadow-sm backdrop-blur-sm" style={{ background: "rgba(0,0,0,0.6)" }}>
+                <Eye className="w-3.5 h-3.5" /> {views}
+              </span>
+            )}
+            {images.length > 1 && (
+              <span className="flex items-center gap-1 px-2 py-0.5 rounded-lg text-[12px] font-bold text-white shadow-sm backdrop-blur-sm" style={{ background: "rgba(0,0,0,0.6)" }}>
+                <Camera className="w-3.5 h-3.5" /> {images.length}
+              </span>
+            )}
+          </div>
         </div>
-        {/* Heart top-right */}
-        <div className="absolute top-3 right-3 w-8 h-8 rounded-full flex items-center justify-center bg-black/25 backdrop-blur-sm">
-          <Heart className="w-4 h-4 text-white" />
-        </div>
+        {/* Save - a real control, no longer a decorative icon */}
+        <button type="button" onClick={toggleFav} aria-pressed={fav} aria-label={savedLabel} title={savedLabel}
+          className="absolute top-3 right-3 w-8 h-8 rounded-full flex items-center justify-center bg-black/25 backdrop-blur-sm transition-transform active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white">
+          <Heart className={`w-4 h-4 ${fav ? "text-rose-400" : "text-white"}`} fill={fav ? "currentColor" : "none"} />
+        </button>
       </div>
       {/* Body */}
       <div className="p-4 flex-1">
+        <div className="flex items-center gap-2 mb-1.5 flex-wrap">
+          {listing.code && (
+            <span className="font-mono text-[11px] font-bold px-1.5 py-0.5 rounded uppercase tracking-wider" style={{ background: "var(--bg-elevated)", color: "var(--text-secondary)" }}>{listing.code}</span>
+          )}
+          {statusLabel && (
+            <span className="text-[11px] font-bold px-1.5 py-0.5 rounded uppercase tracking-wider"
+              style={statusKey === "READY" || statusKey === "OPENING" || statusKey === "BEST_MARKET"
+                ? { background: "var(--primary-subtle)", color: "var(--primary-600)" }
+                : { background: "var(--bg-elevated)", color: "var(--text-tertiary)" }}>{statusLabel}</span>
+          )}
+        </div>
         <h3 className="font-semibold text-sm mb-2 line-clamp-2 leading-snug group-hover:text-sgs-primary transition-colors" style={{ color: "var(--text-primary)" }}>
           {listing.title}
         </h3>
@@ -187,14 +300,31 @@ function ListingCard({ listing, list }: { listing: any; list?: boolean }) {
         </div>
         <div className="flex items-end justify-between gap-2">
           <div className="min-w-0">
-            <p className="font-extrabold text-lg leading-none" style={{ color: "var(--primary-600)" }}>{formatPrice(listing.price, lang)}</p>
+            <p className="font-extrabold text-lg leading-none" style={{ color: "var(--primary-600)" }}>
+              {priceText}
+              {isRent && <span className="text-xs font-semibold ml-0.5" style={{ color: "var(--text-tertiary)" }}>{rentSuffix(lang)}</span>}
+            </p>
             {ppm && <p className="text-[12px] font-medium mt-0.5 truncate" style={{ color: "var(--text-tertiary)" }}>{ppm}</p>}
           </div>
           <div className="flex items-center gap-3 text-xs shrink-0" style={{ color: "var(--text-tertiary)" }}>
-            {listing.area ? <span>{listing.area}m²</span> : null}
+            {area > 0 ? <span>{area}{"m\u00b2"}</span> : null}
             {listing.bedrooms ? <span className="flex items-center gap-1"><Bed className="w-3 h-3" />{listing.bedrooms}PN</span> : null}
           </div>
         </div>
+        {(direction || legal) && (
+          <div className="flex items-center gap-2 mt-2.5 pt-2.5 flex-wrap text-[11px]" style={{ borderTop: "1px solid var(--border-default)" }}>
+            {direction && (
+              <span style={{ color: "var(--text-tertiary)" }}>
+                {ui("direction", lang)}: <b style={{ color: "var(--text-secondary)" }}>{direction}</b>
+              </span>
+            )}
+            {legal && (
+              <span className="px-1.5 py-0.5 rounded font-semibold" style={{ background: "var(--primary-subtle)", color: "var(--primary-600)" }}>
+                {ui("legal", lang)}: {legal}
+              </span>
+            )}
+          </div>
+        )}
       </div>
     </Link>
   );
@@ -206,6 +336,7 @@ export function MarketplacePage({ initialListings, totalCount, totalPages, searc
   const pathname = usePathname();
   const [search, setSearch] = useState(sp.q ?? "");
   const [view, setView] = useState<"GRID" | "LIST" | "BOARD" | "MAP">("GRID");
+  const [filtersOpen, setFiltersOpen] = useState(false);
 
   const pushParams = useCallback((mut: (p: URLSearchParams) => void) => {
     const params = new URLSearchParams();
@@ -225,6 +356,7 @@ export function MarketplacePage({ initialListings, totalCount, totalPages, searc
   const handleSearch = (e: React.FormEvent) => { e.preventDefault(); setParam("q", search.trim()); };
   const currentPage = parseInt(sp.page ?? "1");
   const activePriceLabel = (PRICE_OPTIONS(lang).find((pr) => pr.min === (sp.minPrice ?? "") && pr.max === (sp.maxPrice ?? "")) || PRICE_OPTIONS(lang)[0]).label;
+  const activeFilterCount = [sp.transaction, sp.type, sp.area, sp.minPrice || sp.maxPrice].filter(Boolean).length;
 
   const VIEWS = [
     { id: "GRID", icon: LayoutGrid }, { id: "LIST", icon: ListIcon }, { id: "BOARD", icon: Columns }, { id: "MAP", icon: MapIcon },
@@ -241,13 +373,13 @@ export function MarketplacePage({ initialListings, totalCount, totalPages, searc
   }, [initialListings, lang]);
 
   return (
-    <div className="max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8 pb-10" style={{ paddingTop: 96 }}>
+    <div className="max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8 pb-10 pt-6 sm:pt-24">
       {/* Header */}
       <div className="mb-4">
-        <h1 className="text-2xl font-bold mb-1" style={{ color: "var(--text-primary)" }}>
+        <h1 className="text-xl sm:text-2xl font-bold mb-1" style={{ color: "var(--text-primary)" }}>
           {sp.q ? tt(lang, `Kết quả cho "${sp.q}"`, `Results for "${sp.q}"`) : tt(lang, "Tìm kiếm Bất Động Sản", "Search Properties")}
         </h1>
-        <p className="text-sm" style={{ color: "var(--text-secondary)" }}>
+        <p className="text-xs sm:text-sm" style={{ color: "var(--text-secondary)" }}>
           {totalCount.toLocaleString()}{tt(lang, " bất động sản phù hợp · Kho hàng cập nhật realtime", " matching properties · Inventory updated in real time")}
         </p>
       </div>
@@ -260,30 +392,45 @@ export function MarketplacePage({ initialListings, totalCount, totalPages, searc
         <button type="submit" className="absolute right-1.5 top-1/2 -translate-y-1/2 px-5 py-2 rounded-lg text-sm font-semibold text-white" style={{ background: "var(--primary-600)" }}>{tt(lang, "Tìm", "Search")}</button>
       </form>
 
-      {/* Toolbar */}
-      <div className="flex items-center gap-2 flex-wrap pb-1 mb-3">
-        <div className="flex p-0.5 rounded-lg shrink-0" style={{ background: "var(--bg-elevated)" }}>
-          {VIEWS.map((v) => {
-            const Icon = v.icon; const active = view === v.id;
-            return (
-              <button key={v.id} type="button" onClick={() => setView(v.id)}
-                className="p-2 rounded-md transition-colors" style={active ? { background: "var(--bg-surface)", color: "var(--primary-600)" } : { color: "var(--text-tertiary)" }}>
-                <Icon className="w-4 h-4" />
-              </button>
-            );
-          })}
-        </div>
-        <div className="w-px h-6 shrink-0" style={{ background: "var(--border-default)" }} />
-        <Dropdown value={sp.transaction ?? ""} options={TRANSACTION_OPTIONS(lang)} onChange={(v) => setParam("transaction", v)} minWidth={140} />
-        <Dropdown value={sp.type ?? ""} options={TYPE_OPTIONS(lang)} onChange={(v) => setParam("type", v)} minWidth={140} />
-        <Dropdown value={sp.area ?? ""} options={LOCATION_OPTIONS(lang)} onChange={(v) => setParam("area", v)} minWidth={150} />
-        <Dropdown value={activePriceLabel} options={PRICE_OPTIONS(lang).map((o) => ({ label: o.label, value: o.label }))}
-          onChange={(label) => { const pr = PRICE_OPTIONS(lang).find((x) => x.label === label) || PRICE_OPTIONS(lang)[0]; pushParams((p) => { p.delete("minPrice"); p.delete("maxPrice"); if (pr.min) p.set("minPrice", pr.min); if (pr.max) p.set("maxPrice", pr.max); }); }}
-          minWidth={140} />
-      </div>
+      {/* Toolbar: view switcher + filters (mobile: collapsible) */}
+        <div className="flex items-center gap-2 flex-wrap pb-1 mb-3">
+          <div className="flex p-0.5 rounded-lg shrink-0" style={{ background: "var(--bg-elevated)" }}>
+            {VIEWS.map((v) => {
+              const Icon = v.icon;
+              const active = view === v.id;
+              return (
+                <button key={v.id} type="button" onClick={() => setView(v.id)} aria-label={v.id}
+                  className="p-2 rounded-md transition-colors" style={active ? { background: "var(--bg-surface)", color: "var(--primary-600)" } : { color: "var(--text-tertiary)" }}>
+                  <Icon className="w-4 h-4" />
+                </button>
+              );
+            })}
+          </div>
 
-      {/* Location chips */}
-      <div className="flex items-center gap-2 overflow-x-auto no-scrollbar pb-2 mb-5">
+          <button type="button" onClick={() => setFiltersOpen((o) => !o)} aria-expanded={filtersOpen}
+            className="sm:hidden flex-1 min-w-0 h-10 px-3 rounded-xl text-xs font-semibold flex items-center justify-center gap-1.5" style={boxStyle}>
+            <SlidersHorizontal className="w-4 h-4 shrink-0" style={{ color: "var(--text-tertiary)" }} />
+            <span className="truncate">{tt(lang, "Bộ lọc", "Filters")}</span>
+            {activeFilterCount > 0 && (
+              <span className="px-1.5 rounded-full text-[10px] font-bold text-white shrink-0" style={{ background: "var(--primary-600)" }}>{activeFilterCount}</span>
+            )}
+            <ChevronDown className={`w-4 h-4 shrink-0 transition-transform ${filtersOpen ? "rotate-180" : ""}`} style={{ color: "var(--text-tertiary)" }} />
+          </button>
+
+          <div className="w-px h-6 shrink-0 hidden sm:block" style={{ background: "var(--border-default)" }} />
+
+          <div className={`${filtersOpen ? "grid" : "hidden"} grid-cols-2 gap-2 basis-full min-w-0 sm:basis-auto sm:flex sm:flex-wrap sm:items-center sm:gap-2`}>
+            <Dropdown value={sp.transaction ?? ""} options={TRANSACTION_OPTIONS(lang)} onChange={(v) => setParam("transaction", v)} minWidth={140} />
+            <Dropdown value={sp.type ?? ""} options={TYPE_OPTIONS(lang)} onChange={(v) => setParam("type", v)} minWidth={140} />
+            <Dropdown value={sp.area ?? ""} options={LOCATION_OPTIONS(lang)} onChange={(v) => setParam("area", v)} minWidth={150} />
+            <Dropdown value={activePriceLabel} options={PRICE_OPTIONS(lang).map((o) => ({ label: o.label, value: o.label }))}
+              onChange={(label) => { const pr = PRICE_OPTIONS(lang).find((x) => x.label === label) || PRICE_OPTIONS(lang)[0]; pushParams((p) => { p.delete("minPrice"); p.delete("maxPrice"); if (pr.min) p.set("minPrice", pr.min); if (pr.max) p.set("maxPrice", pr.max); }); }}
+              minWidth={140} />
+          </div>
+        </div>
+
+        {/* Location chips */}
+      <div className="flex items-center gap-2 overflow-x-auto no-scrollbar pb-2 mb-5 -mx-4 px-4 sm:mx-0 sm:px-0">
         <span className="text-xs shrink-0 font-medium hidden sm:inline" style={{ color: "var(--text-tertiary)" }}>{tt(lang, "Tất cả vị trí:", "All locations:")}</span>
         {LOCATION_CHIPS.map((c) => (
           <Link key={c.href} href={lang === "en" ? "/en" + c.href : c.href} className="shrink-0 text-xs font-medium px-3 py-1 rounded-full transition-all whitespace-nowrap hover:opacity-80"
@@ -320,11 +467,11 @@ export function MarketplacePage({ initialListings, totalCount, totalPages, searc
         </div>
       ) : view === "LIST" ? (
         <div className="flex flex-col gap-4">
-          {initialListings.map((l: any) => <ListingCard key={l.id} listing={l} list />)}
+          {initialListings.map((l: any, i: number) => <ListingCard key={l.id} listing={l} list eager={i < 2} />)}
         </div>
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
-          {initialListings.map((l: any) => <ListingCard key={l.id} listing={l} />)}
+          {initialListings.map((l: any, i: number) => <ListingCard key={l.id} listing={l} eager={i < 4} />)}
         </div>
       )}
 
