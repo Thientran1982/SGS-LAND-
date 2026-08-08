@@ -1,0 +1,31 @@
+Kiểm tra và so sánh môi trường dev vs production của dự án SGSLand để tìm nguyên nhân production hiện không truy cập được. Dự án gồm Next.js (app chính) và các trang đăng nhập build bằng Vite (có thể là micro-frontend/subapp riêng).
+
+1. XÁC ĐỊNH KIẾN TRÚC
+- Liệt kê cấu trúc thư mục: đâu là Next.js app, đâu là Vite app (login pages), chúng deploy chung hay tách riêng
+- Kiểm tra package.json (root và từng subapp) xem build script, output dir (.next, dist, build) có đúng không
+- Xem file cấu hình reverse proxy/rewrite (next.config.js rewrites/redirects, vercel.json, nginx.conf...) coi cách Next.js route sang trang Vite login
+
+2. SO SÁNH BIẾN MÔI TRƯỜNG
+- Liệt kê toàn bộ biến env dùng trong code (NEXT_PUBLIC_*, VITE_*, DATABASE_URL, API keys...)
+- So sánh .env.development / .env.local với .env.production (hoặc biến set trên hosting/CI)
+- Cảnh báo nếu có biến chỉ tồn tại ở dev mà thiếu ở production (đặc biệt NEXT_PUBLIC_API_URL, VITE_API_URL, domain, CORS origin)
+
+3. KIỂM TRA BUILD PRODUCTION
+- Chạy thử `npm run build` (Next) và build Vite app, xem có lỗi build không
+- Kiểm tra output có include đúng file, đúng base path (Vite base config) không
+- Xem log build gần nhất trên hosting (Vercel/Replit/VPS...) nếu có quyền truy cập
+
+4. KIỂM TRA DEPLOY/HOSTING
+- Domain sgsland.vn trỏ DNS đúng chưa (A record / CNAME), có bị hết hạn SSL không
+- Server/hosting production có đang chạy (process next start / pm2 status / systemctl status) không, hay bị crash/OOM
+- Kiểm tra port, reverse proxy (nginx/caddy) có route đúng vào Next.js server không
+- Xem log lỗi gần nhất: `pm2 logs`, hoặc log trên nền tảng hosting đang dùng
+
+5. KIỂM TRA ROUTING GIỮA NEXT VÀ VITE
+- Trang login (Vite) có được Next.js serve như static asset hay proxy riêng qua subdomain/path không
+- Nếu qua rewrite, kiểm tra path pattern có khớp môi trường production (basePath, assetPrefix) không
+
+6. OUTPUT MONG MUỐN
+- Danh sách khác biệt cụ thể giữa cấu hình dev và production (biến env, config, script)
+- Nguyên nhân nghi ngờ nhất khiến production không truy cập được (DNS/SSL, server crash, build lỗi, sai env, sai rewrite)
+- Đề xuất fix theo thứ tự ưu tiên

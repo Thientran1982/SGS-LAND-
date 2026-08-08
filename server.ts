@@ -6218,11 +6218,19 @@ app.use('/api/v1', (req, _res, next) => {
     logger.error('[Server] Unhandled promise rejection:', reason instanceof Error ? reason.message : String(reason));
   });
 
-  // Prevent uncaught exceptions from crashing the server (log and continue where safe)
+  // Log uncaught exceptions. Most async errors are safe to swallow and keep serving,
+  // but errors outside a known-safe allowlist may have left Node's internal state
+  // corrupted (e.g. Node's native stream/webstream internals) — continuing to run in
+  // that state risks a "zombie" process that stays alive but stops responding to any
+  // request, with no further logs and no automatic restart. Exiting lets the platform's
+  // process supervisor restart the server cleanly instead of hanging indefinitely.
+  const SAFE_TO_IGNORE_CODES = new Set(['ERR_USE_AFTER_CLOSE']);
   process.on('uncaughtException', (err: Error) => {
     logger.error(`[Server] Uncaught exception: ${err.message}\n${err.stack}`);
-    // Only exit on truly fatal errors; most async errors should not crash the process
-    if ((err as any).code === 'ERR_USE_AFTER_CLOSE') return;
+    if (SAFE_TO_IGNORE_CODES.has((err as any).code)) return;
+    logger.error('[Server] Exiting after uncaught exception so the process can restart cleanly.');
+    // Give the log line a moment to flush before terminating.
+    setTimeout(() => process.exit(1), 250);
   });
 }
 
