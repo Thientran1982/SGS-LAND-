@@ -189,7 +189,7 @@ const Sidebar = memo(({
                 {!isMobile && (
                     <button
                         onClick={onToggleCollapse}
-                        className={`absolute -right-2.5 top-8 w-5 h-5 bg-[var(--bg-surface)] border border-[var(--glass-border)] rounded-full flex items-center justify-center text-[var(--text-tertiary)] hover:text-[var(--sgs-primary)] shadow-sm z-50 hover:scale-110 transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--sgs-primary)] ${isCollapsed ? 'rotate-180' : ''}`}
+                        className={`absolute -right-2.5 top-8 w-5 h-5 bg-[var(--bg-sidebar)] border border-[var(--glass-border)] rounded-full flex items-center justify-center text-[var(--text-tertiary)] hover:text-[var(--sgs-primary)] shadow-sm z-50 hover:scale-110 transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--sgs-primary)] ${isCollapsed ? 'rotate-180' : ''}`}
                         aria-label={t('nav.toggle_sidebar') || "Đóng mở thanh bên"}
                     >
                         <ChevronLeft size={12} strokeWidth={2.5} />
