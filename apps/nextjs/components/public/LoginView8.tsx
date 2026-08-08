@@ -636,9 +636,11 @@ export function LoginPage() {
               });
           return true;
       }
-      // 2. Password reset: #/login?reset_token={token} → /login?reset_token={token}
+      // 2. Password reset: supports both /login?reset_token={token} (query)
+      //    and /reset-password/{token} (path — used by the reset-password email link).
       const resetFromSearch = new URLSearchParams(window.location.search).get('reset_token');
-      const resetMatch = hash.match(/reset_token=([a-f0-9]+)/) || (resetFromSearch ? [null, resetFromSearch] : null);
+      const resetFromPath = pathParts[0] === 'reset-password' && pathParts[1] ? pathParts[1] : null;
+      const resetMatch = hash.match(/reset_token=([a-f0-9]+)/) || (resetFromSearch ? [null, resetFromSearch] : null) || (resetFromPath ? [null, resetFromPath] : null);
       if (resetMatch) {
           setOtp(resetMatch[1] as string);
           setTokenFromUrl(true);
