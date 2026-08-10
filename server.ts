@@ -3969,12 +3969,34 @@ app.get('/api/public/listings/:slugId', apiRateLimit, async (req: express.Reques
     }
     memoryLoggerStarted = true;
     const INTERVAL_MS = 5 * 60 * 1000; // 5 minutes
+    // RELIABILITY FIX (audit): nguong canh bao RSS. Truoc day chi log so lieu,
+    // khong co nguong nao nen khong ai biet RSS dang leo den muc bi OOM-kill.
+    // Override qua env de khop RAM thuc cua Reserved VM.
+    const MEMORY_WARN_RSS_MB = Number(process.env.MEMORY_WARN_RSS_MB || 900);
+    const MEMORY_CRIT_RSS_MB = Number(process.env.MEMORY_CRIT_RSS_MB || 1200);
+    const MEMORY_ALERT_COOLDOWN_MS = 15 * 60 * 1000;
+    let lastMemoryAlertMs = 0;
     const logOnce = () => {
       const mem = process.memoryUsage();
       const fmt = (bytes: number) => Math.round(bytes / 1024 / 1024);
       logger.info(
         `[MemoryLogger] ${new Date().toISOString()} rss=${fmt(mem.rss)}MB heapUsed=${fmt(mem.heapUsed)}MB heapTotal=${fmt(mem.heapTotal)}MB external=${fmt(mem.external)}MB`,
       );
+      // Nguong canh bao: log o level error (de grep/alert duoc) voi cooldown
+      // 15 phut de khong spam deployment logs.
+      const rssMb = fmt(mem.rss);
+      if (rssMb >= MEMORY_WARN_RSS_MB) {
+        const nowMs = Date.now();
+        if (nowMs - lastMemoryAlertMs >= MEMORY_ALERT_COOLDOWN_MS) {
+          lastMemoryAlertMs = nowMs;
+          const level = rssMb >= MEMORY_CRIT_RSS_MB ? 'CRITICAL' : 'WARNING';
+          logger.error(
+            `[MemoryLogger] ${level}: rss=${rssMb}MB vuot nguong (warn=${MEMORY_WARN_RSS_MB}MB, crit=${MEMORY_CRIT_RSS_MB}MB) ` +
+            `heapUsed=${fmt(mem.heapUsed)}MB heapTotal=${fmt(mem.heapTotal)}MB external=${fmt(mem.external)}MB. ` +
+            `Nghi ngo memory leak  doi chieu voi [supervisor] restart log.`,
+          );
+        }
+      }
     };
     logOnce(); // log immediately at startup so the first data point isn't 5 min late
     const timer = setInterval(logOnce, INTERVAL_MS);
@@ -3994,7 +4016,23 @@ app.get('/api/public/listings/:slugId', apiRateLimit, async (req: express.Reques
   app.get("/api/health", async (req, res) => {
     res.setHeader('Cache-Control', 'no-store');
     try {
-      const health = await systemService.checkHealth();
+      // RELIABILITY FIX (audit): systemService.checkHealth() ping Neon bang
+      // pool.query('SELECT 1') KHONG co timeout, nen khi Neon dang cold start
+      // health probe co the treo ti connectionTimeoutMillis (15s, server/db.ts:26).
+      // Boc withTimeout + fallback de probe luon tra ve trong ~1.2s.
+      let health: any;
+      try {
+        health = await withTimeout(systemService.checkHealth(), 1200, 'health-summary');
+      } catch {
+        health = {
+          status: 'critical',
+          uptime: Math.floor(process.uptime()),
+          timestamp: new Date().toISOString(),
+          environment: process.env.NODE_ENV === 'production' ? 'PROD' : 'DEV',
+          checks: { database: false, aiService: !!(process.env.GOOGLE_API_KEY || process.env.GEMINI_API_KEY || process.env.API_KEY) },
+          latency: -1,
+        };
+      }
 
       const components: Record<string, any> = {
         database: { status: health.checks?.database ? 'healthy' : 'down' },
@@ -4056,8 +4094,18 @@ app.get('/api/public/listings/:slugId', apiRateLimit, async (req: express.Reques
         heap_total_mb: Math.round(mem.heapTotal / 1024 / 1024),
       };
 
-      res.json({
+      // RELIABILITY FIX (audit): truoc day endpoint luon tra HTTP 200 ke ca khi
+      // database.status === 'down' (chi doi field trong body), nen uptime monitor,
+      // load balancer va dbApi.ping() (services/dbApi.ts:1442 chi doc res.ok)
+      // khong bao gio phat hien su co. Gio: Neon down => 503 (readiness fail),
+      // Upstash down => van 200 nhung status='degraded' (co in-memory fallback).
+      // /health (server.ts) van la liveness probe tra 200 khong phu thuoc DB.
+      const dbDown = components.database.status !== 'healthy';
+      const redisDegraded = components.redis.status === 'down';
+      const httpStatus = dbDown ? 503 : 200;
+      res.status(httpStatus).json({
         ...health,
+        status: dbDown ? 'critical' : (redisDegraded ? 'degraded' : 'healthy'),
         components,
         connectedClients: io.engine?.clientsCount || 0,
         migration_version: migrationVersion,
@@ -5944,6 +5992,22 @@ app.use('/api/v1', (req, _res, next) => {
 
   server.listen(PORT, "0.0.0.0", async () => {
     logger.info(`Server running on http://localhost:${PORT}`);
+    //  RELIABILITY FIX (audit): gate cho viec dang ky QStash schedule 
+    // Truoc day 8 khoi duoi day POST /v2/schedules/<id> MOI LAN process boot,
+    // voi appDomain = (PROD_DOMAIN | REPLIT_DOMAINS | APP_DOMAIN) || REPLIT_DEV_DOMAIN.
+    // Hai hau qua:
+    //   1) Mot process DEV co QSTASH_TOKEN ghi cung scheduleId nhung tro ve domain
+    //      dev => chiem/ghi de cron cua production.
+    //   2) Crash-loop (supervisor restart lien tuc) => 8 API call QStash moi lan
+    //      boot => dot quota va co nguy co tao schedule trung.
+    // Gio chi dang ky khi that su la production VA co PROD_DOMAIN tuong minh.
+    const QSTASH_SCHEDULE_DOMAIN =
+      process.env.NODE_ENV === 'production' && process.env.PROD_DOMAIN
+        ? process.env.PROD_DOMAIN
+        : '';
+    if (!QSTASH_SCHEDULE_DOMAIN) {
+      logger.info('[QStash] Bo qua dang ky schedule: chi dang ky khi NODE_ENV=production va co PROD_DOMAIN.');
+    }
     // Đăng ký QStash daily schedule cho RLHF recompute
     if (isQStashEnabled()) {
       try {
@@ -5951,7 +6015,7 @@ app.use('/api/v1', (req, _res, next) => {
         const rlhfSecret = process.env.RLHF_CRON_SECRET || process.env.JWT_SECRET?.slice(0, 32) || '';
         const devDomain = process.env.REPLIT_DEV_DOMAIN;
         const prodDomain = process.env.REPLIT_DOMAINS?.split(',')[0]?.trim() || process.env.APP_DOMAIN;
-        const appDomain = prodDomain || devDomain;
+        const appDomain = QSTASH_SCHEDULE_DOMAIN; // reliability fix: prod + PROD_DOMAIN only (was prodDomain || devDomain)
         if (appDomain && rlhfSecret) {
           const scheduleUrl = `https://${appDomain}/api/internal/rlhf-recompute`;
           const scheduleId = 'rlhf-daily-recompute';
@@ -5987,7 +6051,7 @@ app.use('/api/v1', (req, _res, next) => {
           '';
         const devDomain2  = process.env.REPLIT_DEV_DOMAIN;
         const prodDomain2 = process.env.REPLIT_DOMAINS?.split(',')[0]?.trim() || process.env.APP_DOMAIN;
-        const appDomain2  = prodDomain2 || devDomain2;
+        const appDomain2  = QSTASH_SCHEDULE_DOMAIN; // reliability fix: prod + PROD_DOMAIN only (was prodDomain2 || devDomain2)
 
         if (appDomain2 && engagementSecret) {
           const engScheduleId  = 'engagement-email-daily';
@@ -6027,7 +6091,7 @@ app.use('/api/v1', (req, _res, next) => {
           '';
         const devDomain3  = process.env.REPLIT_DEV_DOMAIN;
         const prodDomain3 = process.env.REPLIT_DOMAINS?.split(',')[0]?.trim() || process.env.APP_DOMAIN;
-        const appDomain3  = prodDomain3 || devDomain3;
+        const appDomain3  = QSTASH_SCHEDULE_DOMAIN; // reliability fix: prod + PROD_DOMAIN only (was prodDomain3 || devDomain3)
 
         if (appDomain3 && backupSecret) {
           const bkScheduleId  = 'backup-db-daily';
@@ -6067,7 +6131,7 @@ app.use('/api/v1', (req, _res, next) => {
           '';
         const devDomain4  = process.env.REPLIT_DEV_DOMAIN;
         const prodDomain4 = process.env.REPLIT_DOMAINS?.split(',')[0]?.trim() || process.env.APP_DOMAIN;
-        const appDomain4  = prodDomain4 || devDomain4;
+        const appDomain4  = QSTASH_SCHEDULE_DOMAIN; // reliability fix: prod + PROD_DOMAIN only (was prodDomain4 || devDomain4)
 
         if (appDomain4 && priceRefreshSecret) {
           const prScheduleId  = 'listing-price-refresh-daily';
@@ -6106,7 +6170,7 @@ app.use('/api/v1', (req, _res, next) => {
           '';
         const devDomain5  = process.env.REPLIT_DEV_DOMAIN;
         const prodDomain5 = process.env.REPLIT_DOMAINS?.split(',')[0]?.trim() || process.env.APP_DOMAIN;
-        const appDomain5  = prodDomain5 || devDomain5;
+        const appDomain5  = QSTASH_SCHEDULE_DOMAIN; // reliability fix: prod + PROD_DOMAIN only (was prodDomain5 || devDomain5)
 
         if (appDomain5 && taskReminderSecret) {
           const trScheduleId  = 'task-reminder-hourly';
@@ -6145,7 +6209,7 @@ app.use('/api/v1', (req, _res, next) => {
           '';
         const devDomain7  = process.env.REPLIT_DEV_DOMAIN;
         const prodDomain7 = process.env.REPLIT_DOMAINS?.split(',')[0]?.trim() || process.env.APP_DOMAIN;
-        const appDomain7  = prodDomain7 || devDomain7;
+        const appDomain7  = QSTASH_SCHEDULE_DOMAIN; // reliability fix: prod + PROD_DOMAIN only (was prodDomain7 || devDomain7)
 
         if (appDomain7 && geoSecret) {
           const geoScheduleId  = 'geo-monitor-daily';
@@ -6184,7 +6248,7 @@ app.use('/api/v1', (req, _res, next) => {
           '';
         const devDomain6  = process.env.REPLIT_DEV_DOMAIN;
         const prodDomain6 = process.env.REPLIT_DOMAINS?.split(',')[0]?.trim() || process.env.APP_DOMAIN;
-        const appDomain6  = prodDomain6 || devDomain6;
+        const appDomain6  = QSTASH_SCHEDULE_DOMAIN; // reliability fix: prod + PROD_DOMAIN only (was prodDomain6 || devDomain6)
 
         if (appDomain6 && campaignSchedulerSecret) {
           const csScheduleId  = 'campaign-scheduler-5min';
@@ -6223,7 +6287,7 @@ app.use('/api/v1', (req, _res, next) => {
           '';
         const prodDomain8  = process.env.PROD_DOMAIN;
         const devDomain8   = process.env.REPLIT_DEV_DOMAIN;
-        const appDomain8   = prodDomain8 || devDomain8;
+        const appDomain8   = QSTASH_SCHEDULE_DOMAIN; // reliability fix: prod + PROD_DOMAIN only (was prodDomain8 || devDomain8)
 
         if (appDomain8 && chatFollowUpSecret8) {
           const cfScheduleId  = 'chat-followup-daily';

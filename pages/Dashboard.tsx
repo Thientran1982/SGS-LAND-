@@ -321,7 +321,7 @@ const RealtimeTrafficWidget = memo(({ t, theme }: any) => {
             }
         };
         fetchMetrics();
-        const interval = setInterval(fetchMetrics, 5000);
+        const interval = setInterval(fetchMetrics, 30_000); // reliability fix: 5s -> 30s
         return () => clearInterval(interval);
     }, []);
     return (

@@ -103,6 +103,9 @@ const nextConfig: NextConfig = {
       { source: "/assets/:path*", destination: BACKEND_URL + "/assets/:path*" },
       { source: "/App.tsx", destination: BACKEND_URL + "/App.tsx" },
       { source: "/types.ts", destination: BACKEND_URL + "/types.ts" },
+      // Reliability fix: /health la liveness probe cua Express (server.ts:3985).
+      // Truoc day Next tra 404 HTML cho /health tren port public 5000.
+      { source: "/health", destination: `${BACKEND_URL}/health` },
       { source: "/api/:path*",        destination: `${BACKEND_URL}/api/:path*` },
       { source: "/socket.io/:path*",  destination: `${BACKEND_URL}/socket.io/:path*` },
       { source: "/yjs/:path*",        destination: `${BACKEND_URL}/yjs/:path*` },

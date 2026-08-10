@@ -401,7 +401,9 @@ export const SystemStatus: React.FC = () => {
                     setLogs(systemService.getRecentLogs());
                 }
             }
-        }, 1000);
+        // Reliability fix: 1s -> 30s. Poll 1 giay/tab lam Neon khong bao gio
+        // autosuspend va dot ~3 command Upstash/giay qua rate limiter.
+        }, 30_000);
         return () => clearInterval(interval);
     }, [isPaused]);
     const notify = (msg: string, type: 'success' | 'error' = 'success') => {

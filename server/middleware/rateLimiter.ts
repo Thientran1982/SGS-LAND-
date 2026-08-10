@@ -34,6 +34,26 @@ setInterval(() => {
 }, 60_000);
 
 // ---------------------------------------------------------------------------
+// RELIABILITY FIX (audit): in-memory counting duoc tach ra thanh helper de
+// dung lai lam FALLBACK khi Upstash het quota hoac khong reachable.
+// ---------------------------------------------------------------------------
+let redisFallbackCount = 0;
+let lastRedisFallbackLogMs = 0;
+const REDIS_FALLBACK_LOG_COOLDOWN_MS = 60_000;
+
+function countInMemory(name: string, key: string, windowMs: number): { count: number; resetAt: number } {
+  const store = getStore(name);
+  const now = Date.now();
+  let entry = store.get(key);
+  if (!entry || now > entry.resetAt) {
+    entry = { count: 0, resetAt: now + windowMs };
+    store.set(key, entry);
+  }
+  entry.count++;
+  return { count: entry.count, resetAt: entry.resetAt };
+}
+
+// ---------------------------------------------------------------------------
 // Upstash Redis REST store (production — used when UPSTASH_REDIS_REST_URL is set)
 // Uses HTTP REST API, no TCP connection required.
 // ---------------------------------------------------------------------------
@@ -120,39 +140,41 @@ export function rateLimit(options: {
         const ttl = await redis.ttl(redisKey) as number;
         resetAt = Date.now() + (ttl > 0 ? ttl * 1000 : windowMs);
         } catch (redisErr: any) {
-          // H2 FIX: Distinguish quota errors (Upstash free tier) from network errors.
-          const msg = String(redisErr?.message || redisErr || '');
-          const isQuotaError =
-            msg.includes('max requests limit exceeded') ||
-            msg.includes('QUOTA') ||
-            msg.includes('ERR max');
-          if (isQuotaError) {
-            // Upstash free-tier quota exhausted: skip rate limiting gracefully.
-            return next();
-          }
-          // For genuine Redis network/timeout errors: return 503 instead of
-          // falling back to an in-memory store that would be bypassed in
-          // multi-instance deployments, giving a false sense of security.
-          console.error('[RateLimit] Redis unavailable — returning 503:', msg);
-          return res.status(503).json({
-            error: 'service_temporarily_unavailable',
-            message: 'Dịch vụ tạm thời không khả dụng. Vui lòng thử lại sau.',
-            retryAfter: 10,
-          });
+        // H2 FIX: Distinguish quota errors (Upstash free tier) from network errors.
+        const msg = String(redisErr?.message || redisErr || '');
+        const isQuotaError =
+          msg.includes('max requests limit exceeded') ||
+          msg.includes('QUOTA') ||
+          msg.includes('ERR max');
+        // RELIABILITY FIX (audit):
+        //  - Truoc day quota exhausted => return next() IM LANG: rate limiting
+        //    tu tat hoan toan, khong log/metric nen khong the phat hien.
+        //  - Truoc day loi mang Redis => 503 cho MOI request co apiRateLimit,
+        //    tuc 1 su co Upstash = downtime API toan phan, du app chay
+        //    single-instance (server.ts:1487 socket.io in-memory adapter).
+        // Gio ca 2 truong hop degrade sang in-memory store + log ro rang
+        // (level error, cooldown 60s, kem so request bi anh huong).
+        redisFallbackCount++;
+        const nowMs = Date.now();
+        if (nowMs - lastRedisFallbackLogMs >= REDIS_FALLBACK_LOG_COOLDOWN_MS) {
+          lastRedisFallbackLogMs = nowMs;
+          console.error(
+            `[RateLimit] ${isQuotaError ? 'UPSTASH QUOTA EXHAUSTED' : 'REDIS UNAVAILABLE'}  ` +
+            `degrade sang in-memory store (${redisFallbackCount} request ke tu lan log truoc). ` +
+            `name=${name} err=${msg}`
+          );
+          redisFallbackCount = 0;
         }
+        const fb = countInMemory(name, key, windowMs);
+        count = fb.count;
+        resetAt = fb.resetAt;
+      }
     } else {
       // No Redis configured: use in-memory store (dev/single-process only).
         // WARNING: unsafe in multi-instance deployments.
-      const store = getStore(name);
-      const now = Date.now();
-      let entry = store.get(key);
-      if (!entry || now > entry.resetAt) {
-        entry = { count: 0, resetAt: now + windowMs };
-        store.set(key, entry);
-      }
-      entry.count++;
-      count = entry.count;
-      resetAt = entry.resetAt;
+      const fb = countInMemory(name, key, windowMs);
+      count = fb.count;
+      resetAt = fb.resetAt;
     }
 
     res.setHeader('X-RateLimit-Limit', maxRequests);
