@@ -1,0 +1,27 @@
+Tôi cần bạn thực hiện 5 thay đổi trên codebase SGSLand (Node.js/Express, Neon PostgreSQL/PostGIS, Upstash Redis/QStash, Mapbox GL JS, scraper Playwright, deploy Reserved VM trên Replit) để khắc phục sự cố production sập theo chu kỳ khoảng 24h. Làm từng mục, verify trước khi qua mục tiếp theo, không tự ý gộp hoặc bỏ bước.
+
+1. THÊM ENDPOINT HEALTH CHECK
+   - Kiểm tra xem đã có route `/api/health` chưa. Nếu chưa, tạo route GET `/api/health` trả về JSON gồm: status ok/degraded, uptime process, timestamp, và trạng thái kết nối tới Neon Postgres + Upstash Redis (thử ping thật, không chỉ trả về "ok" cứng).
+   - Route này phải luôn phản hồi nhanh (<1s), không phụ thuộc vào các service nặng khác.
+   - Sau khi tạo xong, in ra curl command tôi có thể dùng để test thủ công.
+
+2. THÊM LOGGING BỘ NHỚ ĐỊNH KỲ
+   - Thêm một `setInterval` chạy mỗi 5–10 phút, log ra `process.memoryUsage()` (rss, heapUsed, heapTotal, external) kèm timestamp, ghi vào console/log của deployment (không ghi file để tránh phình ổ đĩa).
+   - Đảm bảo interval này không tự nhân bản nếu server restart nhiều lần trong cùng process (dùng cờ kiểm tra tránh đăng ký interval hai lần).
+
+3. RÀ SOÁT VÀ SỬA CÁC ĐIỂM RÒ RỈ BỘ NHỚ NGHI VẤN
+   - Kiểm tra `MarketDataService` (hoặc service cache dữ liệu thị trường tương đương): cache có giới hạn kích thước (max size / TTL) không, hay tăng vô hạn theo thời gian? Nếu chưa có TTL/eviction, thêm vào.
+   - Liệt kê tất cả các nơi dùng `setInterval`/`setTimeout` chạy cron trong tiến trình: xác nhận mỗi cái đều có điều kiện dừng rõ ràng, không tạo listener/interval chồng lên nhau mỗi lần có request hoặc mỗi lần reconnect.
+   - Kiểm tra các kết nối socket.io: xác nhận có xử lý sự kiện `disconnect` để dọn dẹp listener, timer, hoặc reference gắn với từng socket, tránh tích lũy theo thời gian.
+   - Với mỗi điểm rò rỉ tìm thấy, sửa và giải thích ngắn gọn nguyên nhân.
+
+4. THÊM PROCESS SUPERVISOR TỰ RESTART
+   - Đề xuất và cài đặt một cơ chế để tiến trình Node tự khởi động lại khi crash, phù hợp với môi trường Replit Reserved VM (ví dụ dùng PM2 ở chế độ cluster/fork với autorestart, hoặc một wrapper script đơn giản dùng shell loop nếu PM2 không tương thích với cách Replit chạy start command).
+   - Đảm bảo supervisor này log lại mỗi lần restart (thời điểm, lý do nếu bắt được từ exit code) để sau này đối chiếu với log memory ở bước 2.
+   - Cập nhật start command trong cấu hình deployment (ví dụ package.json script hoặc .replit) để dùng supervisor thay vì gọi trực tiếp node.
+
+5. VERIFY QSTASH TOKEN MỚI
+   - Xác nhận biến môi trường QSTASH_TOKEN đang được đọc đúng chỗ trong code (không hardcode, không có token cũ còn sót ở file config khác).
+   - Thêm một lần gọi thử tới Upstash QStash API lúc khởi động app để log rõ ràng "QStash token hợp lệ" hoặc "QStash token lỗi: <chi tiết>", để lần sau phát hiện token hỏng ngay lập tức thay vì âm thầm fallback.
+
+Sau khi hoàn tất cả 5 mục, tóm tắt lại: những file nào đã sửa, có cần thêm package nào vào dependencies không, và checklist tôi cần tự làm thêm bên ngoài code (ví dụ: đăng ký UptimeRobot trỏ vào /api/health, monitor mỗi X phút).

@@ -53,6 +53,10 @@ export class PriceCalibrationService {
       () => this.calibrateAll().catch(e => logger.error('[Calibration] scheduled error:', e.message)),
       6 * 60 * 60 * 1_000,
     );
+    // Consistent with the other in-process crons (bookingLifecycle, buyerPush,
+    // campaignScheduler, tenantBranding) — unref() so this timer never keeps
+    // the event loop alive on its own during a graceful shutdown.
+    if (typeof (this.calibrationTimer as any).unref === 'function') (this.calibrationTimer as any).unref();
   }
 
   stop(): void {

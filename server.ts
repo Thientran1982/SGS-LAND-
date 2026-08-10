@@ -14,7 +14,7 @@ import { pool, withTenantContext, withRlsBypass } from "./server/db";
 import bcrypt from "bcrypt";
 import { runPendingMigrations } from "./server/migrations/runner";
 import { systemService } from "./server/services/systemService";
-import { webhookQueue, setupWebhookWorker, processWebhookJob, isQStashEnabled } from "./server/queue";
+import { webhookQueue, setupWebhookWorker, processWebhookJob, isQStashEnabled, verifyQstashTokenAtStartup } from "./server/queue";
 import { userRepository } from "./server/repositories/userRepository";
 import { listingRepository } from "./server/repositories/listingRepository";
 import { leadRepository } from "./server/repositories/leadRepository";
@@ -102,6 +102,11 @@ import { sessionRepository } from "./server/repositories/sessionRepository";
 import { visitorRepository } from "./server/repositories/visitorRepository";
 import { lookupIp, getClientIp } from "./server/services/geoService";
 import { sendAiError, parseAiError } from "./server/utils/aiErrorHandler";
+
+// Module-level guard for the periodic memory-usage logger (see
+// startMemoryUsageLogger() further down) — prevents a double registration if
+// the setup path is ever invoked twice within the same process.
+let memoryLoggerStarted = false;
 
 let broadcastIo: any = null;
 
@@ -1515,6 +1520,20 @@ app.use(globalMutationAudit);
     } catch (err: any) {
       logger.warn(`[tenant] Failed to start TXT verify cron: ${err?.message || err}`);
     }
+
+    // ── Periodic memory logging (production OOM diagnosis) ───────────────────
+    // Production has crashed twice with zero error/exception log — the classic
+    // signature of an external SIGKILL (most likely OOM-kill). This logs
+    // process.memoryUsage() every 5 minutes so a future crash can be
+    // correlated against a rising RSS/heap trend in the deployment logs.
+    // Console only (no file) — avoids disk growth on the VM.
+    startMemoryUsageLogger();
+
+    // ── QStash token verification ─────────────────────────────────────────
+    // Makes a bad/expired QSTASH_TOKEN impossible to miss at boot (see
+    // verifyQstashTokenAtStartup() for why — every cron already logs a 401
+    // but those lines are easy to miss among the rest of startup output).
+    verifyQstashTokenAtStartup();
 
     // ── Init self-learning price calibration engine ──────────────────────────
     // Must run AFTER migrations so market_price_history & avm_calibration tables exist
@@ -3928,6 +3947,40 @@ app.get('/api/public/listings/:slugId', apiRateLimit, async (req: express.Reques
   app.use('/api/landing-ai', aiRateLimit, createLandingAiRoutes());
   app.use('/api/live-chat', createLiveChatAgentRoutes(authenticateToken, aiRateLimit, apiRateLimit));
 
+  // Bounds a promise so a stalled dependency (DB/Redis) never blocks the
+  // /api/health SLA of <1s — rejects with a labeled timeout error instead.
+  function withTimeout<T>(promise: Promise<T>, ms: number, label: string): Promise<T> {
+    return Promise.race([
+      promise,
+      new Promise<T>((_, reject) =>
+        setTimeout(() => reject(new Error(`${label} timed out after ${ms}ms`)), ms)
+      ),
+    ]);
+  }
+
+  // ── Periodic memory usage logging (OOM diagnosis) ──────────────────────────
+  // Module-level guard: prevents a double registration if this setup function
+  // ever runs twice within the same process (e.g. hot-reload in dev, or a
+  // future refactor that re-invokes server bootstrap).
+  function startMemoryUsageLogger(): void {
+    if (memoryLoggerStarted) {
+      logger.warn('[MemoryLogger] startMemoryUsageLogger() called again — skipping (already running)');
+      return;
+    }
+    memoryLoggerStarted = true;
+    const INTERVAL_MS = 5 * 60 * 1000; // 5 minutes
+    const logOnce = () => {
+      const mem = process.memoryUsage();
+      const fmt = (bytes: number) => Math.round(bytes / 1024 / 1024);
+      logger.info(
+        `[MemoryLogger] ${new Date().toISOString()} rss=${fmt(mem.rss)}MB heapUsed=${fmt(mem.heapUsed)}MB heapTotal=${fmt(mem.heapTotal)}MB external=${fmt(mem.external)}MB`,
+      );
+    };
+    logOnce(); // log immediately at startup so the first data point isn't 5 min late
+    const timer = setInterval(logOnce, INTERVAL_MS);
+    if (typeof (timer as any).unref === 'function') (timer as any).unref();
+  }
+
   // Lightweight health probe for deployment infrastructure (no DB call)
   app.get("/health", (_req, res) => {
     res.setHeader('Cache-Control', 'no-store');
@@ -3951,12 +4004,38 @@ app.get('/api/public/listings/:slugId', apiRateLimit, async (req: express.Reques
         queue: { status: 'healthy', type: isQStashEnabled() ? 'qstash' : 'in-memory' },
       };
 
+      // Real Postgres ping (with latency), capped so a slow DB never blocks
+      // the health probe past the 1s SLA.
+      const dbStartMs = Date.now();
       try {
-        const dbCheck = await pool.query('SELECT 1');
-        components.database.latencyMs = health.uptime !== undefined ? 'ok' : undefined;
+        await withTimeout(pool.query('SELECT 1'), 800, 'db-ping');
         components.database.status = 'healthy';
-      } catch {
+        components.database.latencyMs = Date.now() - dbStartMs;
+      } catch (err: any) {
         components.database.status = 'down';
+        components.database.error = err?.message || String(err);
+      }
+
+      // Real Upstash Redis ping (REST PING command) — previously this only
+      // checked whether the env vars were *set*, not whether Redis actually
+      // answered. Capped at 800ms so a stalled Redis never blocks the probe.
+      const redisStartMs = Date.now();
+      if (process.env.UPSTASH_REDIS_REST_URL && process.env.UPSTASH_REDIS_REST_TOKEN) {
+        try {
+          const { Redis } = await import('@upstash/redis');
+          const redis = new Redis({
+            url: process.env.UPSTASH_REDIS_REST_URL,
+            token: process.env.UPSTASH_REDIS_REST_TOKEN,
+          });
+          const pong = await withTimeout(redis.ping(), 800, 'redis-ping');
+          components.redis.status = pong === 'PONG' ? 'healthy' : 'degraded';
+          components.redis.latencyMs = Date.now() - redisStartMs;
+        } catch (err: any) {
+          components.redis.status = 'down';
+          components.redis.error = err?.message || String(err);
+        }
+      } else {
+        components.redis.status = 'in-memory-fallback';
       }
 
       // Migration version

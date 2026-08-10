@@ -39,6 +39,33 @@ function runWithRetry(job: any, attempt = 1): void {
 export function isQStashEnabled(): boolean {
   return !!(process.env.QSTASH_TOKEN && process.env.QSTASH_CURRENT_SIGNING_KEY);
 }
+// ---------------------------------------------------------------------------
+// Startup token verification
+//
+// Every in-process cron that tries to register a QStash schedule already logs
+// a 401 "unable to authenticate" warning when the token is bad, but those
+// warnings are easy to miss among the rest of the startup log. This makes a
+// single, cheap, unambiguous call at boot (listing schedules — no side
+// effects) so a broken/expired QSTASH_TOKEN is impossible to miss: it prints
+// one clear line saying exactly whether the token is valid or not.
+// ---------------------------------------------------------------------------
+export async function verifyQstashTokenAtStartup(): Promise<void> {
+  if (!process.env.QSTASH_TOKEN) {
+    logger.info('[Queue] QStash token check bỏ qua — QSTASH_TOKEN chưa được cấu hình (dùng in-memory queue).');
+    return;
+  }
+  try {
+    const { Client } = await import('@upstash/qstash');
+    const client = new Client({ token: process.env.QSTASH_TOKEN });
+    // schedules.list() is a cheap, read-only, no-side-effect call — perfect
+    // for an auth check without touching any real schedule/job.
+    await client.schedules.list();
+    logger.info('[Queue] QStash token hợp lệ — kết nối Upstash QStash thành công.');
+  } catch (err: any) {
+    const detail = err?.message || String(err);
+    logger.error(`[Queue] QStash token lỗi: ${detail}. Tất cả cron sẽ fallback về in-process setInterval (kém bền vững hơn khi restart). Vào Upstash dashboard để lấy token mới.`);
+  }
+}
 function getReceiverUrl(): string {
   if (process.env.QSTASH_RECEIVER_URL) return process.env.QSTASH_RECEIVER_URL;
   const isProduction = process.env.NODE_ENV === 'production';
