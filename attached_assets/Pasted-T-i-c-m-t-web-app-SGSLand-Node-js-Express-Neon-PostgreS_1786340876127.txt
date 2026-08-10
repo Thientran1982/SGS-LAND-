@@ -1,0 +1,32 @@
+Tôi có một web app SGSLand (Node.js/Express + Neon PostgreSQL/PostGIS + Upstash Redis/QStash + Mapbox GL JS + pipeline scraper Playwright) deploy trên Replit, domain sgsland.vn.
+
+Hiện tượng: Sau khi publish, site truy cập bình thường trong khoảng 1 ngày, sau đó không truy cập được nữa — không có thay đổi code hay deploy mới nào ở giữa.
+
+Hãy điều tra theo đúng thứ tự ưu tiên sau, và với mỗi bước báo cáo rõ: kiểm tra ở đâu, thấy gì, kết luận loại trừ hay xác nhận nguyên nhân.
+
+1. LOẠI DEPLOYMENT REPLIT
+   - Xác nhận đây là Autoscale, Reserved VM hay deployment dạng "development preview" (link tạm thời hết hạn sau X giờ nếu chưa publish chính thức).
+   - Nếu là Autoscale: kiểm tra deployment logs xem app có bị "scale to zero" rồi restart lỗi (crash loop) không.
+   - Kiểm tra Replit billing/usage: có đang hết credit, hết quota compute/egress trong ngày không (Replit tạm khóa deployment khi vượt hạn mức).
+
+2. NEON POSTGRESQL — AUTOSUSPEND & CONNECTION POOL
+   - Kiểm tra Neon project có đang ở gói free/dev với autosuspend (compute tự tắt sau X phút không hoạt động) không.
+   - Kiểm tra connection pool: app có đang mở connection mà không đóng (leak), dẫn đến "too many connections" sau vài giờ chạy không.
+   - Xem Neon dashboard > Monitoring > connection count theo thời gian, đối chiếu với thời điểm site sập.
+
+3. UPSTASH REDIS / QSTASH — GIỚI HẠN REQUEST THEO NGÀY
+   - Free tier Upstash thường giới hạn request/ngày. Kiểm tra Upstash dashboard xem có bị chặn do vượt quota (thường reset 24h) đúng khớp với thời điểm site sập không.
+   - Kiểm tra QStash: job nào chạy định kỳ (ví dụ scraper Playwright), có job nào lỗi liên tục gây restart app không.
+
+4. DNS / SSL / CUSTOM DOMAIN
+   - Kiểm tra TTL DNS của sgsland.vn — có khả năng lúc publish, DNS cache cũ (trỏ đúng) còn hiệu lực, sau khi TTL hết thì trỏ sai/không trỏ do domain chưa verify xong ở Replit.
+   - Kiểm tra chứng chỉ SSL của custom domain trên Replit: đã cấp thành công chưa, có đang ở trạng thái "pending" rồi tự rớt không.
+
+5. TÀI NGUYÊN / MEMORY LEAK / CRASH SAU THỜI GIAN CHẠY DÀI
+   - Xem Replit deployment logs quanh đúng thời điểm sập: có exception, "out of memory", "unhandled promise rejection" không.
+   - Scraper Playwright có chạy nền liên tục và tích lũy memory/browser instance không đóng (zombie process) không — đây là nguyên nhân phổ biến cho app "chết dần" sau ~24h.
+
+6. SECRETS / ENV VARIABLES CÓ HẠN SỬ DỤNG
+   - Kiểm tra có API key/token nào (Mapbox, TikTok Lead Gen, Zoho Mail) là dạng short-lived token cần refresh mà code chưa xử lý refresh không.
+
+Sau khi kiểm tra xong cả 6 mục, tổng hợp lại: nguyên nhân gốc rễ nhiều khả năng nhất là gì, bằng chứng cụ thể (log/dashboard nào), và đề xuất fix + cách phòng tránh tái diễn (ví dụ: chuyển Reserved VM thay Autoscale, nâng gói Neon/Upstash, thêm health check + auto-restart, sửa leak trong scraper).
