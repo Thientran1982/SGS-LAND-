@@ -160,10 +160,18 @@ const nextConfig: NextConfig = {
     "*.replit.dev",
     "*.worf.replit.dev",
     "*.replit.app",
+    "localhost",
     "localhost:3000",
     "localhost:3001",
+    "localhost:5000",
+    "0.0.0.0",
     "0.0.0.0:3000",
     "0.0.0.0:3001",
+    "0.0.0.0:5000",
+    "127.0.0.1",
+    "127.0.0.1:5000",
+    "127.0.0.1:3000",
+    "127.0.0.1:3001",
   ],
 
   // ─── Next.js dev tools & indicators — disable both to prevent
