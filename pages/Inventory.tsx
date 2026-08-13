@@ -40,7 +40,7 @@ const STATUS_CONFIG: Record<ListingStatus, { color: string, bg: string, border: 
     [ListingStatus.BEST_MARKET]: { color: 'text-yellow-600', bg: 'bg-yellow-50', border: 'border-yellow-300' },
 };
 // --- HOOK: DRAGGABLE SCROLL (Unified) ---
-const useDraggableScroll = (ref: React.RefObject<HTMLDivElement>, trigger?: any) => {
+const useDraggableScroll = (ref: React.RefObject<HTMLDivElement | null>, trigger?: any) => {
     useEffect(() => {
         const node = ref.current;
         if (!node) return;

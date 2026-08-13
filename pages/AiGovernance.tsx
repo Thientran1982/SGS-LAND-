@@ -391,7 +391,7 @@ const ConfigTab = memo(({ config, modelGroups, onSave, onUpdateConfig, t }: Conf
                                     <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded border ${group.badgeColor}`}>{group.badge}</span>
                                 </div>
                                 <div className="flex flex-wrap gap-1.5">
-                                    {group.models.map(m => {
+                                    {group.models.map((m: any) => {
                                         const isChecked = config.allowedModels?.includes(m) || false;
                                         const isDeprecated = DEPRECATED_MODELS.has(m as string);
                                         return (

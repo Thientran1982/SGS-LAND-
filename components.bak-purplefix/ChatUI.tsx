@@ -59,7 +59,7 @@ export const ThinkingProcess = memo(({ steps, t }: { steps?: AgentTraceStep[], t
                                                 {new Date(step.timestamp).toLocaleTimeString([], {minute:'2-digit', second:'2-digit'})}
                                             </span>
                                         </div>
-                                        {step.output && (
+                                        {Boolean(step.output) && (
                                             <div className="text-xs2 text-[var(--text-tertiary)] font-mono leading-relaxed bg-[var(--glass-surface)]/50 p-2 rounded border border-[var(--glass-border)] break-words whitespace-pre-wrap overflow-x-auto no-scrollbar">
                                                 {typeof step.output === 'object' ? JSON.stringify(step.output) : String(step.output)}
                                             </div>

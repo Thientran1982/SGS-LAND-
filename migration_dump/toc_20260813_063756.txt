@@ -1,0 +1,918 @@
+;
+; Archive created at 2026-08-13 06:37:58 UTC
+;     dbname: neondb
+;     TOC Entries: 908
+;     Compression: gzip
+;     Dump Version: 1.16-0
+;     Format: CUSTOM
+;     Integer: 4 bytes
+;     Offset: 8 bytes
+;     Dumped from database version: 17.10 (29ad1b7)
+;     Dumped by pg_dump version: 17.5
+;
+;
+; Selected TOC Entries:
+;
+9; 2615 24576 SCHEMA - public neondb_owner
+2; 3079 24577 EXTENSION - pg_trgm 
+5553; 0 0 COMMENT - EXTENSION pg_trgm 
+3; 3079 24658 EXTENSION - uuid-ossp 
+5554; 0 0 COMMENT - EXTENSION "uuid-ossp" 
+4; 3079 139266 EXTENSION - vector 
+5555; 0 0 COMMENT - EXTENSION vector 
+387; 1255 287536 FUNCTION public fn_audit_log_enforce() neondb_owner
+450; 1255 139611 FUNCTION public update_knowledge_chunks_updated_at() neondb_owner
+407; 1255 24669 FUNCTION public update_wf_task_timestamp() neondb_owner
+230; 1259 24670 TABLE public agent_observations neondb_owner
+231; 1259 24677 SEQUENCE public agent_observations_id_seq neondb_owner
+5556; 0 0 SEQUENCE OWNED BY public agent_observations_id_seq neondb_owner
+342; 1259 287142 TABLE public agent_prompt_versions neondb_owner
+334; 1259 189340 TABLE public agent_runs neondb_owner
+232; 1259 24678 TABLE public agent_system_change_log neondb_owner
+233; 1259 24684 SEQUENCE public agent_system_change_log_id_seq neondb_owner
+5557; 0 0 SEQUENCE OWNED BY public agent_system_change_log_id_seq neondb_owner
+234; 1259 24685 TABLE public ai_agent_memories neondb_owner
+235; 1259 24694 TABLE public ai_agents neondb_owner
+236; 1259 24705 TABLE public ai_cost_plan_quotas neondb_owner
+237; 1259 24710 TABLE public ai_feedback neondb_owner
+238; 1259 24719 TABLE public ai_governance_logs neondb_owner
+239; 1259 24732 TABLE public ai_reward_signals neondb_owner
+240; 1259 24747 TABLE public ai_safety_logs neondb_owner
+241; 1259 24759 TABLE public ai_usage_log neondb_owner
+242; 1259 24767 TABLE public articles neondb_owner
+243; 1259 24783 TABLE public audit_logs neondb_owner
+244; 1259 24791 TABLE public avm_calibration neondb_owner
+245; 1259 24805 SEQUENCE public avm_calibration_id_seq neondb_owner
+5558; 0 0 SEQUENCE OWNED BY public avm_calibration_id_seq neondb_owner
+246; 1259 24806 TABLE public bank_rates neondb_owner
+247; 1259 24815 SEQUENCE public bank_rates_id_seq neondb_owner
+5559; 0 0 SEQUENCE OWNED BY public bank_rates_id_seq neondb_owner
+332; 1259 189299 TABLE public booking_events neondb_owner
+331; 1259 189298 SEQUENCE public booking_events_id_seq neondb_owner
+5560; 0 0 SEQUENCE OWNED BY public booking_events_id_seq neondb_owner
+330; 1259 189273 TABLE public bookings neondb_owner
+320; 1259 189139 TABLE public buyer_devices neondb_owner
+327; 1259 189204 TABLE public buyer_favorites neondb_owner
+326; 1259 189193 TABLE public buyer_otp_log neondb_owner
+325; 1259 189192 SEQUENCE public buyer_otp_log_id_seq neondb_owner
+5561; 0 0 SEQUENCE OWNED BY public buyer_otp_log_id_seq neondb_owner
+323; 1259 189169 TABLE public buyer_push_notification_log neondb_owner
+322; 1259 189168 SEQUENCE public buyer_push_notification_log_id_seq neondb_owner
+5562; 0 0 SEQUENCE OWNED BY public buyer_push_notification_log_id_seq neondb_owner
+321; 1259 189154 TABLE public buyer_saved_searches neondb_owner
+324; 1259 189182 TABLE public buyer_users neondb_owner
+248; 1259 24816 TABLE public campaign_costs neondb_owner
+297; 1259 40979 TABLE public campaign_recipients neondb_owner
+296; 1259 40960 TABLE public campaigns neondb_owner
+339; 1259 221278 TABLE public chat_sessions neondb_owner
+315; 1259 188461 TABLE public commission_ledger neondb_owner
+314; 1259 188438 TABLE public commission_policies neondb_owner
+301; 1259 41342 TABLE public connector_configs neondb_owner
+347; 1259 287494 TABLE public consent_records neondb_owner
+249; 1259 24825 TABLE public contracts neondb_owner
+328; 1259 189225 TABLE public conversations neondb_owner
+350; 1259 294984 TABLE public custom_fields neondb_owner
+348; 1259 287505 TABLE public data_erasure_requests neondb_owner
+250; 1259 24839 TABLE public departments neondb_owner
+346; 1259 287204 TABLE public developers neondb_owner
+251; 1259 24846 TABLE public documents neondb_owner
+252; 1259 24857 TABLE public email_campaign_log neondb_owner
+299; 1259 41030 TABLE public email_log neondb_owner
+319; 1259 189117 TABLE public email_send_metrics neondb_owner
+318; 1259 189116 SEQUENCE public email_send_metrics_id_seq neondb_owner
+5563; 0 0 SEQUENCE OWNED BY public email_send_metrics_id_seq neondb_owner
+253; 1259 24862 TABLE public enterprise_config neondb_owner
+254; 1259 24871 TABLE public error_logs neondb_owner
+255; 1259 24881 SEQUENCE public error_logs_id_seq neondb_owner
+5564; 0 0 SEQUENCE OWNED BY public error_logs_id_seq neondb_owner
+256; 1259 24882 TABLE public favorites neondb_owner
+341; 1259 221340 TABLE public feedback_events neondb_owner
+337; 1259 213103 TABLE public follow_up_sends neondb_owner
+336; 1259 213083 TABLE public follow_up_sequences neondb_owner
+257; 1259 24887 TABLE public interactions neondb_owner
+309; 1259 139594 TABLE public knowledge_chunks neondb_owner
+308; 1259 41406 TABLE public land_price_zones neondb_owner
+307; 1259 41405 SEQUENCE public land_price_zones_id_seq neondb_owner
+5565; 0 0 SEQUENCE OWNED BY public land_price_zones_id_seq neondb_owner
+310; 1259 155652 TABLE public lead_email_log neondb_owner
+343; 1259 287156 TABLE public lead_journey_memory neondb_owner
+258; 1259 24898 TABLE public leads neondb_owner
+259; 1259 24914 TABLE public listing_access neondb_owner
+312; 1259 155685 TABLE public listing_price_refresh_log neondb_owner
+260; 1259 24922 TABLE public listings neondb_owner
+261; 1259 24940 TABLE public market_price_history neondb_owner
+262; 1259 24951 SEQUENCE public market_price_history_id_seq neondb_owner
+5566; 0 0 SEQUENCE OWNED BY public market_price_history_id_seq neondb_owner
+329; 1259 189251 TABLE public messages neondb_owner
+263; 1259 24952 TABLE public newsletter_subscribers neondb_owner
+264; 1259 24960 TABLE public notifications neondb_owner
+265; 1259 24968 TABLE public password_reset_tokens neondb_owner
+338; 1259 213148 TABLE public payment_transactions neondb_owner
+266; 1259 24974 TABLE public project_access neondb_owner
+313; 1259 188417 TABLE public project_floor_plans neondb_owner
+311; 1259 155663 TABLE public project_price_matrix neondb_owner
+267; 1259 24982 TABLE public projects neondb_owner
+345; 1259 287185 TABLE public prompt_performance_log neondb_owner
+317; 1259 189094 TABLE public prompt_promote_log neondb_owner
+268; 1259 24992 TABLE public prompt_templates neondb_owner
+340; 1259 221326 TABLE public prompt_variants neondb_owner
+269; 1259 25003 TABLE public proposals neondb_owner
+270; 1259 25016 TABLE public routing_rules neondb_owner
+271; 1259 25027 TABLE public schema_versions neondb_owner
+272; 1259 25033 SEQUENCE public schema_versions_id_seq neondb_owner
+5567; 0 0 SEQUENCE OWNED BY public schema_versions_id_seq neondb_owner
+273; 1259 25034 TABLE public scoring_configs neondb_owner
+333; 1259 189325 TABLE public seo_geo_snapshots neondb_owner
+274; 1259 25044 TABLE public seo_overrides neondb_owner
+298; 1259 40998 TABLE public seo_target_keywords neondb_owner
+335; 1259 212996 TABLE public sequence_enrollments neondb_owner
+275; 1259 25052 TABLE public sequences neondb_owner
+300; 1259 41054 TABLE public sessions neondb_owner
+349; 1259 287523 TABLE public sms_log neondb_owner
+276; 1259 25066 TABLE public subscriptions neondb_owner
+302; 1259 41358 TABLE public sync_jobs neondb_owner
+277; 1259 25081 TABLE public task_activity_logs neondb_owner
+278; 1259 25088 TABLE public task_assignments neondb_owner
+279; 1259 25096 TABLE public task_comments neondb_owner
+280; 1259 25104 TABLE public task_reminders neondb_owner
+281; 1259 25112 TABLE public tasks neondb_owner
+282; 1259 25123 TABLE public team_members neondb_owner
+283; 1259 25127 TABLE public teams neondb_owner
+284; 1259 25135 TABLE public templates neondb_owner
+344; 1259 287172 TABLE public tenant_prompt_overrides neondb_owner
+285; 1259 25145 TABLE public tenants neondb_owner
+351; 1259 295000 TABLE public units neondb_owner
+286; 1259 25153 TABLE public uploaded_files neondb_owner
+287; 1259 25161 SEQUENCE public uploaded_files_id_seq neondb_owner
+5568; 0 0 SEQUENCE OWNED BY public uploaded_files_id_seq neondb_owner
+288; 1259 25162 TABLE public usage_tracking neondb_owner
+289; 1259 25169 TABLE public user_page_views neondb_owner
+290; 1259 25178 TABLE public user_sessions neondb_owner
+291; 1259 25187 TABLE public users neondb_owner
+292; 1259 25200 TABLE public valuation_cost_alerts neondb_owner
+293; 1259 25207 TABLE public valuation_usage_log neondb_owner
+316; 1259 188513 TABLE public visitor_events neondb_owner
+294; 1259 25216 TABLE public visitor_logs neondb_owner
+306; 1259 41391 TABLE public vn_districts neondb_owner
+305; 1259 41390 SEQUENCE public vn_districts_id_seq neondb_owner
+5569; 0 0 SEQUENCE OWNED BY public vn_districts_id_seq neondb_owner
+304; 1259 41380 TABLE public vn_provinces neondb_owner
+303; 1259 41379 SEQUENCE public vn_provinces_id_seq neondb_owner
+5570; 0 0 SEQUENCE OWNED BY public vn_provinces_id_seq neondb_owner
+295; 1259 25224 TABLE public wf_tasks neondb_owner
+3979; 2604 25237 DEFAULT public agent_observations id neondb_owner
+3982; 2604 25238 DEFAULT public agent_system_change_log id neondb_owner
+4043; 2604 25239 DEFAULT public avm_calibration id neondb_owner
+4053; 2604 25240 DEFAULT public bank_rates id neondb_owner
+4408; 2604 189302 DEFAULT public booking_events id neondb_owner
+4390; 2604 189196 DEFAULT public buyer_otp_log id neondb_owner
+4384; 2604 189172 DEFAULT public buyer_push_notification_log id neondb_owner
+4370; 2604 189120 DEFAULT public email_send_metrics id neondb_owner
+4085; 2604 25241 DEFAULT public error_logs id neondb_owner
+4319; 2604 41409 DEFAULT public land_price_zones id neondb_owner
+4124; 2604 25242 DEFAULT public market_price_history id neondb_owner
+4169; 2604 25243 DEFAULT public schema_versions id neondb_owner
+4230; 2604 25244 DEFAULT public uploaded_files id neondb_owner
+4317; 2604 41394 DEFAULT public vn_districts id neondb_owner
+4314; 2604 41383 DEFAULT public vn_provinces id neondb_owner
+5424; 0 24670 TABLE DATA public agent_observations neondb_owner
+5536; 0 287142 TABLE DATA public agent_prompt_versions neondb_owner
+5528; 0 189340 TABLE DATA public agent_runs neondb_owner
+5426; 0 24678 TABLE DATA public agent_system_change_log neondb_owner
+5428; 0 24685 TABLE DATA public ai_agent_memories neondb_owner
+5429; 0 24694 TABLE DATA public ai_agents neondb_owner
+5430; 0 24705 TABLE DATA public ai_cost_plan_quotas neondb_owner
+5431; 0 24710 TABLE DATA public ai_feedback neondb_owner
+5432; 0 24719 TABLE DATA public ai_governance_logs neondb_owner
+5433; 0 24732 TABLE DATA public ai_reward_signals neondb_owner
+5434; 0 24747 TABLE DATA public ai_safety_logs neondb_owner
+5435; 0 24759 TABLE DATA public ai_usage_log neondb_owner
+5436; 0 24767 TABLE DATA public articles neondb_owner
+5437; 0 24783 TABLE DATA public audit_logs neondb_owner
+5438; 0 24791 TABLE DATA public avm_calibration neondb_owner
+5440; 0 24806 TABLE DATA public bank_rates neondb_owner
+5526; 0 189299 TABLE DATA public booking_events neondb_owner
+5524; 0 189273 TABLE DATA public bookings neondb_owner
+5514; 0 189139 TABLE DATA public buyer_devices neondb_owner
+5521; 0 189204 TABLE DATA public buyer_favorites neondb_owner
+5520; 0 189193 TABLE DATA public buyer_otp_log neondb_owner
+5517; 0 189169 TABLE DATA public buyer_push_notification_log neondb_owner
+5515; 0 189154 TABLE DATA public buyer_saved_searches neondb_owner
+5518; 0 189182 TABLE DATA public buyer_users neondb_owner
+5442; 0 24816 TABLE DATA public campaign_costs neondb_owner
+5491; 0 40979 TABLE DATA public campaign_recipients neondb_owner
+5490; 0 40960 TABLE DATA public campaigns neondb_owner
+5533; 0 221278 TABLE DATA public chat_sessions neondb_owner
+5509; 0 188461 TABLE DATA public commission_ledger neondb_owner
+5508; 0 188438 TABLE DATA public commission_policies neondb_owner
+5495; 0 41342 TABLE DATA public connector_configs neondb_owner
+5541; 0 287494 TABLE DATA public consent_records neondb_owner
+5443; 0 24825 TABLE DATA public contracts neondb_owner
+5522; 0 189225 TABLE DATA public conversations neondb_owner
+5544; 0 294984 TABLE DATA public custom_fields neondb_owner
+5542; 0 287505 TABLE DATA public data_erasure_requests neondb_owner
+5444; 0 24839 TABLE DATA public departments neondb_owner
+5540; 0 287204 TABLE DATA public developers neondb_owner
+5445; 0 24846 TABLE DATA public documents neondb_owner
+5446; 0 24857 TABLE DATA public email_campaign_log neondb_owner
+5493; 0 41030 TABLE DATA public email_log neondb_owner
+5513; 0 189117 TABLE DATA public email_send_metrics neondb_owner
+5447; 0 24862 TABLE DATA public enterprise_config neondb_owner
+5448; 0 24871 TABLE DATA public error_logs neondb_owner
+5450; 0 24882 TABLE DATA public favorites neondb_owner
+5535; 0 221340 TABLE DATA public feedback_events neondb_owner
+5531; 0 213103 TABLE DATA public follow_up_sends neondb_owner
+5530; 0 213083 TABLE DATA public follow_up_sequences neondb_owner
+5451; 0 24887 TABLE DATA public interactions neondb_owner
+5503; 0 139594 TABLE DATA public knowledge_chunks neondb_owner
+5502; 0 41406 TABLE DATA public land_price_zones neondb_owner
+5504; 0 155652 TABLE DATA public lead_email_log neondb_owner
+5537; 0 287156 TABLE DATA public lead_journey_memory neondb_owner
+5452; 0 24898 TABLE DATA public leads neondb_owner
+5453; 0 24914 TABLE DATA public listing_access neondb_owner
+5506; 0 155685 TABLE DATA public listing_price_refresh_log neondb_owner
+5454; 0 24922 TABLE DATA public listings neondb_owner
+5455; 0 24940 TABLE DATA public market_price_history neondb_owner
+5523; 0 189251 TABLE DATA public messages neondb_owner
+5457; 0 24952 TABLE DATA public newsletter_subscribers neondb_owner
+5458; 0 24960 TABLE DATA public notifications neondb_owner
+5459; 0 24968 TABLE DATA public password_reset_tokens neondb_owner
+5532; 0 213148 TABLE DATA public payment_transactions neondb_owner
+5460; 0 24974 TABLE DATA public project_access neondb_owner
+5507; 0 188417 TABLE DATA public project_floor_plans neondb_owner
+5505; 0 155663 TABLE DATA public project_price_matrix neondb_owner
+5461; 0 24982 TABLE DATA public projects neondb_owner
+5539; 0 287185 TABLE DATA public prompt_performance_log neondb_owner
+5511; 0 189094 TABLE DATA public prompt_promote_log neondb_owner
+5462; 0 24992 TABLE DATA public prompt_templates neondb_owner
+5534; 0 221326 TABLE DATA public prompt_variants neondb_owner
+5463; 0 25003 TABLE DATA public proposals neondb_owner
+5464; 0 25016 TABLE DATA public routing_rules neondb_owner
+5465; 0 25027 TABLE DATA public schema_versions neondb_owner
+5467; 0 25034 TABLE DATA public scoring_configs neondb_owner
+5527; 0 189325 TABLE DATA public seo_geo_snapshots neondb_owner
+5468; 0 25044 TABLE DATA public seo_overrides neondb_owner
+5492; 0 40998 TABLE DATA public seo_target_keywords neondb_owner
+5529; 0 212996 TABLE DATA public sequence_enrollments neondb_owner
+5469; 0 25052 TABLE DATA public sequences neondb_owner
+5494; 0 41054 TABLE DATA public sessions neondb_owner
+5543; 0 287523 TABLE DATA public sms_log neondb_owner
+5470; 0 25066 TABLE DATA public subscriptions neondb_owner
+5496; 0 41358 TABLE DATA public sync_jobs neondb_owner
+5471; 0 25081 TABLE DATA public task_activity_logs neondb_owner
+5472; 0 25088 TABLE DATA public task_assignments neondb_owner
+5473; 0 25096 TABLE DATA public task_comments neondb_owner
+5474; 0 25104 TABLE DATA public task_reminders neondb_owner
+5475; 0 25112 TABLE DATA public tasks neondb_owner
+5476; 0 25123 TABLE DATA public team_members neondb_owner
+5477; 0 25127 TABLE DATA public teams neondb_owner
+5478; 0 25135 TABLE DATA public templates neondb_owner
+5538; 0 287172 TABLE DATA public tenant_prompt_overrides neondb_owner
+5479; 0 25145 TABLE DATA public tenants neondb_owner
+5545; 0 295000 TABLE DATA public units neondb_owner
+5480; 0 25153 TABLE DATA public uploaded_files neondb_owner
+5482; 0 25162 TABLE DATA public usage_tracking neondb_owner
+5483; 0 25169 TABLE DATA public user_page_views neondb_owner
+5484; 0 25178 TABLE DATA public user_sessions neondb_owner
+5485; 0 25187 TABLE DATA public users neondb_owner
+5486; 0 25200 TABLE DATA public valuation_cost_alerts neondb_owner
+5487; 0 25207 TABLE DATA public valuation_usage_log neondb_owner
+5510; 0 188513 TABLE DATA public visitor_events neondb_owner
+5488; 0 25216 TABLE DATA public visitor_logs neondb_owner
+5500; 0 41391 TABLE DATA public vn_districts neondb_owner
+5498; 0 41380 TABLE DATA public vn_provinces neondb_owner
+5489; 0 25224 TABLE DATA public wf_tasks neondb_owner
+5571; 0 0 SEQUENCE SET public agent_observations_id_seq neondb_owner
+5572; 0 0 SEQUENCE SET public agent_system_change_log_id_seq neondb_owner
+5573; 0 0 SEQUENCE SET public avm_calibration_id_seq neondb_owner
+5574; 0 0 SEQUENCE SET public bank_rates_id_seq neondb_owner
+5575; 0 0 SEQUENCE SET public booking_events_id_seq neondb_owner
+5576; 0 0 SEQUENCE SET public buyer_otp_log_id_seq neondb_owner
+5577; 0 0 SEQUENCE SET public buyer_push_notification_log_id_seq neondb_owner
+5578; 0 0 SEQUENCE SET public email_send_metrics_id_seq neondb_owner
+5579; 0 0 SEQUENCE SET public error_logs_id_seq neondb_owner
+5580; 0 0 SEQUENCE SET public land_price_zones_id_seq neondb_owner
+5581; 0 0 SEQUENCE SET public market_price_history_id_seq neondb_owner
+5582; 0 0 SEQUENCE SET public schema_versions_id_seq neondb_owner
+5583; 0 0 SEQUENCE SET public uploaded_files_id_seq neondb_owner
+5584; 0 0 SEQUENCE SET public vn_districts_id_seq neondb_owner
+5585; 0 0 SEQUENCE SET public vn_provinces_id_seq neondb_owner
+4519; 2606 25257 CONSTRAINT public agent_observations agent_observations_pkey neondb_owner
+4984; 2606 287152 CONSTRAINT public agent_prompt_versions agent_prompt_versions_pkey neondb_owner
+4943; 2606 189352 CONSTRAINT public agent_runs agent_runs_pkey neondb_owner
+4525; 2606 25259 CONSTRAINT public agent_system_change_log agent_system_change_log_pkey neondb_owner
+4530; 2606 25261 CONSTRAINT public ai_agent_memories ai_agent_memories_pkey neondb_owner
+4535; 2606 25263 CONSTRAINT public ai_agents ai_agents_pkey neondb_owner
+4537; 2606 25265 CONSTRAINT public ai_agents ai_agents_tenant_id_name_key neondb_owner
+4541; 2606 25267 CONSTRAINT public ai_cost_plan_quotas ai_cost_plan_quotas_pkey neondb_owner
+4544; 2606 25269 CONSTRAINT public ai_feedback ai_feedback_pkey neondb_owner
+4550; 2606 25271 CONSTRAINT public ai_governance_logs ai_governance_logs_pkey neondb_owner
+4553; 2606 25273 CONSTRAINT public ai_reward_signals ai_reward_signals_pkey neondb_owner
+4555; 2606 25275 CONSTRAINT public ai_reward_signals ai_reward_signals_tenant_id_intent_key neondb_owner
+4557; 2606 25277 CONSTRAINT public ai_safety_logs ai_safety_logs_pkey neondb_owner
+4559; 2606 25279 CONSTRAINT public ai_usage_log ai_usage_log_pkey neondb_owner
+4564; 2606 25281 CONSTRAINT public articles articles_pkey neondb_owner
+4566; 2606 25283 CONSTRAINT public articles articles_tenant_id_slug_key neondb_owner
+4569; 2606 25285 CONSTRAINT public audit_logs audit_logs_pkey neondb_owner
+4572; 2606 25287 CONSTRAINT public avm_calibration avm_calibration_location_key_key neondb_owner
+4574; 2606 25289 CONSTRAINT public avm_calibration avm_calibration_pkey neondb_owner
+4578; 2606 25291 CONSTRAINT public bank_rates bank_rates_pkey neondb_owner
+4936; 2606 189308 CONSTRAINT public booking_events booking_events_pkey neondb_owner
+4926; 2606 189286 CONSTRAINT public bookings bookings_pkey neondb_owner
+4928; 2606 189288 CONSTRAINT public bookings bookings_vnpay_txn_ref_key neondb_owner
+4890; 2606 189152 CONSTRAINT public buyer_devices buyer_devices_device_id_key neondb_owner
+4892; 2606 189150 CONSTRAINT public buyer_devices buyer_devices_pkey neondb_owner
+4913; 2606 189212 CONSTRAINT public buyer_favorites buyer_favorites_buyer_user_id_listing_id_key neondb_owner
+4915; 2606 189210 CONSTRAINT public buyer_favorites buyer_favorites_pkey neondb_owner
+4910; 2606 189202 CONSTRAINT public buyer_otp_log buyer_otp_log_pkey neondb_owner
+4901; 2606 189180 CONSTRAINT public buyer_push_notification_log buyer_push_notification_log_device_id_saved_search_id_listi_key neondb_owner
+4903; 2606 189178 CONSTRAINT public buyer_push_notification_log buyer_push_notification_log_pkey neondb_owner
+4896; 2606 189165 CONSTRAINT public buyer_saved_searches buyer_saved_searches_pkey neondb_owner
+4906; 2606 189191 CONSTRAINT public buyer_users buyer_users_phone_key neondb_owner
+4908; 2606 189189 CONSTRAINT public buyer_users buyer_users_pkey neondb_owner
+4583; 2606 25293 CONSTRAINT public campaign_costs campaign_costs_pkey neondb_owner
+4802; 2606 40989 CONSTRAINT public campaign_recipients campaign_recipients_pkey neondb_owner
+4799; 2606 40977 CONSTRAINT public campaigns campaigns_pkey neondb_owner
+4970; 2606 221290 CONSTRAINT public chat_sessions chat_sessions_pkey neondb_owner
+4972; 2606 221292 CONSTRAINT public chat_sessions chat_sessions_session_id_key neondb_owner
+4867; 2606 188478 CONSTRAINT public commission_ledger commission_ledger_listing_id_key neondb_owner
+4869; 2606 188476 CONSTRAINT public commission_ledger commission_ledger_pkey neondb_owner
+4862; 2606 188451 CONSTRAINT public commission_policies commission_policies_pkey neondb_owner
+4820; 2606 41357 CONSTRAINT public connector_configs connector_configs_pkey neondb_owner
+5009; 2606 287503 CONSTRAINT public consent_records consent_records_pkey neondb_owner
+4585; 2606 25295 CONSTRAINT public contracts contracts_pkey neondb_owner
+4918; 2606 189237 CONSTRAINT public conversations conversations_pkey neondb_owner
+5019; 2606 294995 CONSTRAINT public custom_fields custom_fields_pkey neondb_owner
+5021; 2606 294997 CONSTRAINT public custom_fields custom_fields_tenant_id_entity_field_key_key neondb_owner
+5012; 2606 287515 CONSTRAINT public data_erasure_requests data_erasure_requests_pkey neondb_owner
+4590; 2606 25297 CONSTRAINT public departments departments_pkey neondb_owner
+4592; 2606 188500 CONSTRAINT public departments departments_tenant_name_unique neondb_owner
+5005; 2606 287216 CONSTRAINT public developers developers_pkey neondb_owner
+4595; 2606 25299 CONSTRAINT public documents documents_pkey neondb_owner
+4597; 2606 25301 CONSTRAINT public email_campaign_log email_campaign_log_pkey neondb_owner
+4811; 2606 41039 CONSTRAINT public email_log email_log_pkey neondb_owner
+4885; 2606 189127 CONSTRAINT public email_send_metrics email_send_metrics_pkey neondb_owner
+4601; 2606 25303 CONSTRAINT public enterprise_config enterprise_config_pkey neondb_owner
+4603; 2606 25305 CONSTRAINT public enterprise_config enterprise_config_tenant_key neondb_owner
+4605; 2606 25307 CONSTRAINT public error_logs error_logs_pkey neondb_owner
+4610; 2606 25309 CONSTRAINT public favorites favorites_pkey neondb_owner
+4979; 2606 221349 CONSTRAINT public feedback_events feedback_events_pkey neondb_owner
+4981; 2606 221351 CONSTRAINT public feedback_events feedback_events_session_id_message_id_key neondb_owner
+4959; 2606 213115 CONSTRAINT public follow_up_sends follow_up_sends_pkey neondb_owner
+4955; 2606 213095 CONSTRAINT public follow_up_sequences follow_up_sequences_pkey neondb_owner
+4619; 2606 25311 CONSTRAINT public interactions interactions_pkey neondb_owner
+4838; 2606 139605 CONSTRAINT public knowledge_chunks knowledge_chunks_pkey neondb_owner
+4840; 2606 139607 CONSTRAINT public knowledge_chunks knowledge_chunks_tenant_id_source_type_source_id_chunk_inde_key neondb_owner
+4835; 2606 41418 CONSTRAINT public land_price_zones land_price_zones_pkey neondb_owner
+4848; 2606 155659 CONSTRAINT public lead_email_log lead_email_log_pkey neondb_owner
+4993; 2606 287167 CONSTRAINT public lead_journey_memory lead_journey_memory_pkey neondb_owner
+4633; 2606 25313 CONSTRAINT public leads leads_pkey neondb_owner
+4637; 2606 25315 CONSTRAINT public listing_access listing_access_listing_id_partner_tenant_id_key neondb_owner
+4639; 2606 25317 CONSTRAINT public listing_access listing_access_pkey neondb_owner
+4856; 2606 155692 CONSTRAINT public listing_price_refresh_log listing_price_refresh_log_pkey neondb_owner
+4657; 2606 25319 CONSTRAINT public listings listings_pkey neondb_owner
+4663; 2606 25321 CONSTRAINT public market_price_history market_price_history_pkey neondb_owner
+4924; 2606 189260 CONSTRAINT public messages messages_pkey neondb_owner
+4665; 2606 25323 CONSTRAINT public newsletter_subscribers newsletter_subscribers_email_key neondb_owner
+4667; 2606 25325 CONSTRAINT public newsletter_subscribers newsletter_subscribers_pkey neondb_owner
+4671; 2606 25327 CONSTRAINT public notifications notifications_pkey neondb_owner
+4675; 2606 25329 CONSTRAINT public password_reset_tokens password_reset_tokens_pkey neondb_owner
+4677; 2606 25331 CONSTRAINT public password_reset_tokens password_reset_tokens_token_key neondb_owner
+4966; 2606 213163 CONSTRAINT public payment_transactions payment_transactions_idempotency_key_key neondb_owner
+4968; 2606 213161 CONSTRAINT public payment_transactions payment_transactions_pkey neondb_owner
+4681; 2606 25333 CONSTRAINT public project_access project_access_pkey neondb_owner
+4683; 2606 25335 CONSTRAINT public project_access project_access_project_id_partner_tenant_id_key neondb_owner
+4859; 2606 188429 CONSTRAINT public project_floor_plans project_floor_plans_pkey neondb_owner
+4852; 2606 155677 CONSTRAINT public project_price_matrix project_price_matrix_pkey neondb_owner
+4689; 2606 25337 CONSTRAINT public projects projects_pkey neondb_owner
+5003; 2606 287194 CONSTRAINT public prompt_performance_log prompt_performance_log_pkey neondb_owner
+4883; 2606 189103 CONSTRAINT public prompt_promote_log prompt_promote_log_pkey neondb_owner
+4691; 2606 25339 CONSTRAINT public prompt_templates prompt_templates_pkey neondb_owner
+4977; 2606 221338 CONSTRAINT public prompt_variants prompt_variants_pkey neondb_owner
+4697; 2606 25341 CONSTRAINT public proposals proposals_pkey neondb_owner
+4699; 2606 25343 CONSTRAINT public proposals proposals_token_key neondb_owner
+4701; 2606 25345 CONSTRAINT public routing_rules routing_rules_pkey neondb_owner
+4703; 2606 25347 CONSTRAINT public schema_versions schema_versions_pkey neondb_owner
+4705; 2606 25349 CONSTRAINT public schema_versions schema_versions_version_key neondb_owner
+4707; 2606 25351 CONSTRAINT public scoring_configs scoring_configs_pkey neondb_owner
+4709; 2606 25353 CONSTRAINT public scoring_configs scoring_configs_tenant_id_key neondb_owner
+4940; 2606 189337 CONSTRAINT public seo_geo_snapshots seo_geo_snapshots_pkey neondb_owner
+4712; 2606 25355 CONSTRAINT public seo_overrides seo_overrides_pkey neondb_owner
+4808; 2606 41009 CONSTRAINT public seo_target_keywords seo_target_keywords_pkey neondb_owner
+4951; 2606 213006 CONSTRAINT public sequence_enrollments sequence_enrollments_pkey neondb_owner
+4714; 2606 25357 CONSTRAINT public sequences sequences_pkey neondb_owner
+4818; 2606 41063 CONSTRAINT public sessions sessions_pkey neondb_owner
+5017; 2606 287532 CONSTRAINT public sms_log sms_log_pkey neondb_owner
+4716; 2606 25359 CONSTRAINT public subscriptions subscriptions_pkey neondb_owner
+4718; 2606 25361 CONSTRAINT public subscriptions subscriptions_tenant_id_key neondb_owner
+4822; 2606 41373 CONSTRAINT public sync_jobs sync_jobs_pkey neondb_owner
+4721; 2606 25363 CONSTRAINT public task_activity_logs task_activity_logs_pkey neondb_owner
+4725; 2606 25365 CONSTRAINT public task_assignments task_assignments_pkey neondb_owner
+4727; 2606 25367 CONSTRAINT public task_assignments task_assignments_task_id_user_id_key neondb_owner
+4730; 2606 25369 CONSTRAINT public task_comments task_comments_pkey neondb_owner
+4733; 2606 25371 CONSTRAINT public task_reminders task_reminders_pkey neondb_owner
+4737; 2606 25373 CONSTRAINT public tasks tasks_pkey neondb_owner
+4739; 2606 25375 CONSTRAINT public team_members team_members_pkey neondb_owner
+4741; 2606 25377 CONSTRAINT public teams teams_pkey neondb_owner
+4743; 2606 25379 CONSTRAINT public templates templates_pkey neondb_owner
+4996; 2606 287181 CONSTRAINT public tenant_prompt_overrides tenant_prompt_overrides_pkey neondb_owner
+4998; 2606 287183 CONSTRAINT public tenant_prompt_overrides tenant_prompt_overrides_tenant_id_key neondb_owner
+4746; 2606 25381 CONSTRAINT public tenants tenants_domain_key neondb_owner
+4748; 2606 25383 CONSTRAINT public tenants tenants_pkey neondb_owner
+4953; 2606 286832 CONSTRAINT public sequence_enrollments unique_sequence_lead_enrollment neondb_owner
+5025; 2606 295011 CONSTRAINT public units units_pkey neondb_owner
+5027; 2606 295013 CONSTRAINT public units units_tenant_id_code_key neondb_owner
+4753; 2606 25385 CONSTRAINT public uploaded_files uploaded_files_pkey neondb_owner
+4755; 2606 25387 CONSTRAINT public uploaded_files uploaded_files_tenant_id_filename_key neondb_owner
+4758; 2606 25389 CONSTRAINT public usage_tracking usage_tracking_pkey neondb_owner
+4760; 2606 25391 CONSTRAINT public usage_tracking usage_tracking_tenant_id_metric_type_period_key neondb_owner
+4764; 2606 25393 CONSTRAINT public user_page_views user_page_views_pkey neondb_owner
+4767; 2606 25395 CONSTRAINT public user_sessions user_sessions_pkey neondb_owner
+4773; 2606 25397 CONSTRAINT public users users_pkey neondb_owner
+4775; 2606 25399 CONSTRAINT public users users_tenant_id_email_key neondb_owner
+4777; 2606 25401 CONSTRAINT public valuation_cost_alerts valuation_cost_alerts_pkey neondb_owner
+4782; 2606 25403 CONSTRAINT public valuation_usage_log valuation_usage_log_pkey neondb_owner
+4880; 2606 188522 CONSTRAINT public visitor_events visitor_events_pkey neondb_owner
+4788; 2606 25405 CONSTRAINT public visitor_logs visitor_logs_pkey neondb_owner
+4829; 2606 41399 CONSTRAINT public vn_districts vn_districts_code_key neondb_owner
+4831; 2606 41397 CONSTRAINT public vn_districts vn_districts_pkey neondb_owner
+4824; 2606 41389 CONSTRAINT public vn_provinces vn_provinces_code_key neondb_owner
+4826; 2606 41387 CONSTRAINT public vn_provinces vn_provinces_pkey neondb_owner
+4797; 2606 25407 CONSTRAINT public wf_tasks wf_tasks_pkey neondb_owner
+4531; 1259 25408 INDEX public idx_agent_memories_agent neondb_owner
+4532; 1259 25409 INDEX public idx_agent_memories_lead neondb_owner
+4533; 1259 25410 INDEX public idx_agent_memories_listing neondb_owner
+4985; 1259 287155 INDEX public idx_agent_prompt_versions_agent neondb_owner
+4986; 1259 287154 INDEX public idx_agent_prompt_versions_lookup neondb_owner
+4944; 1259 189353 INDEX public idx_agent_runs_agent_started neondb_owner
+4945; 1259 189354 INDEX public idx_agent_runs_started_desc neondb_owner
+4946; 1259 189355 INDEX public idx_agent_runs_status_started neondb_owner
+4538; 1259 188937 INDEX public idx_ai_agents_knowledge_filter neondb_owner
+4542; 1259 25411 INDEX public idx_ai_cost_plan_quotas_tenant neondb_owner
+4545; 1259 25412 INDEX public idx_ai_feedback_dedup neondb_owner
+4546; 1259 25413 INDEX public idx_ai_feedback_intent neondb_owner
+4547; 1259 25414 INDEX public idx_ai_feedback_intent_recency neondb_owner
+4548; 1259 25415 INDEX public idx_ai_feedback_tenant_rating neondb_owner
+4551; 1259 25416 INDEX public idx_ai_logs_tenant_ts neondb_owner
+4560; 1259 25417 INDEX public idx_ai_usage_created neondb_owner
+4561; 1259 25418 INDEX public idx_ai_usage_feature_period neondb_owner
+4562; 1259 25419 INDEX public idx_ai_usage_tenant_period neondb_owner
+4520; 1259 25420 INDEX public idx_ao_created neondb_owner
+4521; 1259 25421 INDEX public idx_ao_intent neondb_owner
+4522; 1259 25422 INDEX public idx_ao_obs_type neondb_owner
+4523; 1259 25423 INDEX public idx_ao_tenant_node neondb_owner
+4567; 1259 25424 INDEX public idx_articles_tenant_status neondb_owner
+4526; 1259 25425 INDEX public idx_ascl_created neondb_owner
+4527; 1259 25426 INDEX public idx_ascl_tenant neondb_owner
+4528; 1259 25427 INDEX public idx_ascl_type neondb_owner
+4570; 1259 25428 INDEX public idx_audit_logs_tenant neondb_owner
+4575; 1259 25429 INDEX public idx_avm_cal_location neondb_owner
+4576; 1259 25430 INDEX public idx_avm_cal_updated neondb_owner
+4579; 1259 25431 INDEX public idx_bank_rates_created neondb_owner
+4580; 1259 25432 INDEX public idx_bank_rates_slug neondb_owner
+4581; 1259 25433 INDEX public idx_bank_rates_tenant neondb_owner
+4937; 1259 189314 INDEX public idx_booking_events_booking neondb_owner
+4929; 1259 189294 INDEX public idx_bookings_buyer_user neondb_owner
+4930; 1259 189296 INDEX public idx_bookings_listing neondb_owner
+4931; 1259 1310720 INDEX public idx_bookings_one_active_per_listing neondb_owner
+4932; 1259 1310721 INDEX public idx_bookings_pending_expiry neondb_owner
+4933; 1259 189295 INDEX public idx_bookings_status_created neondb_owner
+4934; 1259 189297 INDEX public idx_bookings_tenant neondb_owner
+4893; 1259 189272 INDEX public idx_buyer_devices_buyer_user_id neondb_owner
+4894; 1259 189153 INDEX public idx_buyer_devices_token neondb_owner
+4916; 1259 189218 INDEX public idx_buyer_favorites_user_created neondb_owner
+4911; 1259 189203 INDEX public idx_buyer_otp_phone_created neondb_owner
+4904; 1259 189181 INDEX public idx_buyer_push_log_sent neondb_owner
+4897; 1259 189167 INDEX public idx_buyer_saved_searches_active neondb_owner
+4898; 1259 189166 INDEX public idx_buyer_saved_searches_device neondb_owner
+4899; 1259 189224 INDEX public idx_buyer_saved_searches_user neondb_owner
+4800; 1259 40978 INDEX public idx_campaigns_tenant_status neondb_owner
+4803; 1259 40995 INDEX public idx_camprec_campaign neondb_owner
+4804; 1259 40997 INDEX public idx_camprec_email neondb_owner
+4805; 1259 40996 INDEX public idx_camprec_tenant neondb_owner
+4973; 1259 221299 INDEX public idx_chat_sessions_lead_id neondb_owner
+4974; 1259 221298 INDEX public idx_chat_sessions_session_id neondb_owner
+4870; 1259 188490 INDEX public idx_cled_partner_status neondb_owner
+4871; 1259 188489 INDEX public idx_cled_project_status neondb_owner
+4872; 1259 188492 INDEX public idx_cled_sales_user neondb_owner
+4873; 1259 188491 INDEX public idx_cled_tenant_sale_date neondb_owner
+5010; 1259 287504 INDEX public idx_consent_records_visitor neondb_owner
+4586; 1259 25434 INDEX public idx_contracts_assigned_to neondb_owner
+4587; 1259 25435 INDEX public idx_contracts_created_by_id neondb_owner
+4588; 1259 25436 INDEX public idx_contracts_tenant_status neondb_owner
+4919; 1259 189250 INDEX public idx_conversations_agent_recent neondb_owner
+4920; 1259 189249 INDEX public idx_conversations_buyer_recent neondb_owner
+4863; 1259 188457 INDEX public idx_cpol_project_active neondb_owner
+4864; 1259 188458 INDEX public idx_cpol_tenant neondb_owner
+5022; 1259 294998 INDEX public idx_custom_fields_tenant_entity neondb_owner
+5013; 1259 287516 INDEX public idx_data_erasure_requests_status neondb_owner
+4593; 1259 25437 INDEX public idx_departments_tenant neondb_owner
+5006; 1259 287223 INDEX public idx_developers_tenant_name neondb_owner
+5007; 1259 287222 INDEX public idx_developers_tenant_slug neondb_owner
+4598; 1259 25438 INDEX public idx_ecl_tenant_sent neondb_owner
+4599; 1259 25439 INDEX public idx_ecl_user_campaign neondb_owner
+4812; 1259 41042 INDEX public idx_email_log_recipient neondb_owner
+4813; 1259 41040 INDEX public idx_email_log_tenant_dedupe neondb_owner
+4814; 1259 41041 INDEX public idx_email_log_tenant_sent_at neondb_owner
+4606; 1259 25440 INDEX public idx_error_logs_resolved neondb_owner
+4607; 1259 25441 INDEX public idx_error_logs_tenant_created neondb_owner
+4608; 1259 25442 INDEX public idx_error_logs_type neondb_owner
+4886; 1259 189134 INDEX public idx_esm_kind_created neondb_owner
+4887; 1259 189135 INDEX public idx_esm_success_created neondb_owner
+4888; 1259 189133 INDEX public idx_esm_tenant_created neondb_owner
+4982; 1259 221352 INDEX public idx_feedback_events_agent neondb_owner
+4960; 1259 213121 INDEX public idx_fup_sends_due neondb_owner
+4961; 1259 213122 INDEX public idx_fup_sends_seq neondb_owner
+4956; 1259 213102 INDEX public idx_fup_seq_lead neondb_owner
+4957; 1259 213101 INDEX public idx_fup_seq_tenant neondb_owner
+4611; 1259 25443 INDEX public idx_interactions_lead neondb_owner
+4612; 1259 25444 INDEX public idx_interactions_lead_dir neondb_owner
+4613; 1259 25445 INDEX public idx_interactions_lead_ts neondb_owner
+4614; 1259 25446 INDEX public idx_interactions_tenant neondb_owner
+4615; 1259 25447 INDEX public idx_interactions_tenant_lead_ts neondb_owner
+4616; 1259 25448 INDEX public idx_interactions_tenant_ts neondb_owner
+4617; 1259 25449 INDEX public idx_interactions_unread neondb_owner
+4832; 1259 41424 INDEX public idx_land_price_province neondb_owner
+4833; 1259 41425 INDEX public idx_land_price_type neondb_owner
+4842; 1259 212994 INDEX public idx_lead_email_log_lead_campaign neondb_owner
+4843; 1259 212995 INDEX public idx_lead_email_log_tenant neondb_owner
+4988; 1259 287170 INDEX public idx_lead_journey_event neondb_owner
+4989; 1259 287169 INDEX public idx_lead_journey_session neondb_owner
+4990; 1259 287171 INDEX public idx_lead_journey_source neondb_owner
+4991; 1259 287168 INDEX public idx_lead_journey_tenant_lead neondb_owner
+4620; 1259 25450 INDEX public idx_leads_created_at neondb_owner
+4621; 1259 25451 INDEX public idx_leads_created_by neondb_owner
+4622; 1259 25452 INDEX public idx_leads_cursor neondb_owner
+4623; 1259 25453 INDEX public idx_leads_tenant_assigned neondb_owner
+4624; 1259 25454 INDEX public idx_leads_tenant_phone neondb_owner
+4625; 1259 25455 INDEX public idx_leads_tenant_stage neondb_owner
+4626; 1259 188511 INDEX public idx_leads_tenant_utm_campaign neondb_owner
+4627; 1259 188510 INDEX public idx_leads_tenant_utm_source neondb_owner
+4628; 1259 188512 INDEX public idx_leads_tenant_visitor neondb_owner
+4629; 1259 25456 INDEX public idx_leads_thread_status neondb_owner
+4630; 1259 25457 INDEX public idx_leads_updated neondb_owner
+4631; 1259 25458 INDEX public idx_leads_won_at neondb_owner
+4844; 1259 155661 INDEX public idx_lel_email_campaign neondb_owner
+4845; 1259 155660 INDEX public idx_lel_lead_campaign neondb_owner
+4846; 1259 155662 INDEX public idx_lel_tenant_sent neondb_owner
+4634; 1259 25459 INDEX public idx_listing_access_listing neondb_owner
+4635; 1259 25460 INDEX public idx_listing_access_partner neondb_owner
+4640; 1259 25461 INDEX public idx_listings_code_trgm neondb_owner
+4641; 1259 25462 INDEX public idx_listings_created_by neondb_owner
+4642; 1259 1310722 INDEX public idx_listings_hold_expiry neondb_owner
+4643; 1259 25463 INDEX public idx_listings_location_trgm neondb_owner
+4644; 1259 25464 INDEX public idx_listings_price neondb_owner
+4645; 1259 25465 INDEX public idx_listings_project_id neondb_owner
+4646; 1259 25466 INDEX public idx_listings_tenant_area neondb_owner
+4647; 1259 25467 INDEX public idx_listings_tenant_assigned neondb_owner
+4648; 1259 25468 INDEX public idx_listings_tenant_bedrooms neondb_owner
+4649; 1259 1359872 INDEX public idx_listings_tenant_code_norm neondb_owner
+4650; 1259 25469 INDEX public idx_listings_tenant_cursor neondb_owner
+4651; 1259 25470 INDEX public idx_listings_tenant_price neondb_owner
+4652; 1259 25471 INDEX public idx_listings_tenant_status neondb_owner
+4653; 1259 25472 INDEX public idx_listings_tenant_status_type neondb_owner
+4654; 1259 25473 INDEX public idx_listings_tenant_type neondb_owner
+4655; 1259 25474 INDEX public idx_listings_title_trgm neondb_owner
+4853; 1259 155693 INDEX public idx_lprl_listing neondb_owner
+4854; 1259 155694 INDEX public idx_lprl_tenant_refreshed neondb_owner
+4922; 1259 189266 INDEX public idx_messages_conv_created neondb_owner
+4658; 1259 1335316 INDEX public idx_mph_listing_id neondb_owner
+4659; 1259 25475 INDEX public idx_mph_location_key neondb_owner
+4660; 1259 25476 INDEX public idx_mph_recorded_at neondb_owner
+4661; 1259 25477 INDEX public idx_mph_source neondb_owner
+4668; 1259 25478 INDEX public idx_notifications_unread neondb_owner
+4669; 1259 25479 INDEX public idx_notifications_user neondb_owner
+4962; 1259 213176 INDEX public idx_payment_tx_provider_session neondb_owner
+4963; 1259 213175 INDEX public idx_payment_tx_status neondb_owner
+4964; 1259 213174 INDEX public idx_payment_tx_tenant_created neondb_owner
+4857; 1259 188436 INDEX public idx_pfp_tenant_updated neondb_owner
+4999; 1259 287197 INDEX public idx_ppl_logged_at neondb_owner
+5000; 1259 287195 INDEX public idx_ppl_tenant_agent neondb_owner
+5001; 1259 287196 INDEX public idx_ppl_version neondb_owner
+4849; 1259 155683 INDEX public idx_ppm_project neondb_owner
+4850; 1259 155684 INDEX public idx_ppm_tenant neondb_owner
+4678; 1259 25480 INDEX public idx_project_access_partner neondb_owner
+4679; 1259 25481 INDEX public idx_project_access_project neondb_owner
+4684; 1259 287230 INDEX public idx_projects_developer neondb_owner
+4685; 1259 25482 INDEX public idx_projects_tenant_code neondb_owner
+4686; 1259 25483 INDEX public idx_projects_tenant_created neondb_owner
+4687; 1259 25484 INDEX public idx_projects_tenant_status neondb_owner
+4881; 1259 189114 INDEX public idx_prompt_promote_log_tpl neondb_owner
+4975; 1259 221339 INDEX public idx_prompt_variants_agent neondb_owner
+4693; 1259 25485 INDEX public idx_proposals_created_by_id neondb_owner
+4694; 1259 25486 INDEX public idx_proposals_lead neondb_owner
+4695; 1259 25487 INDEX public idx_proposals_tenant_status neondb_owner
+4672; 1259 25488 INDEX public idx_prt_token neondb_owner
+4673; 1259 25489 INDEX public idx_prt_user neondb_owner
+4938; 1259 189339 INDEX public idx_seo_geo_snapshots_date_desc neondb_owner
+4710; 1259 25490 INDEX public idx_seo_overrides_updated neondb_owner
+4806; 1259 41011 INDEX public idx_seo_target_keywords_tenant_updated neondb_owner
+4947; 1259 213012 INDEX public idx_seq_enroll_seq_id neondb_owner
+4948; 1259 213013 INDEX public idx_seq_enroll_tenant neondb_owner
+4949; 1259 286833 INDEX public idx_seq_enrollments_lead_email neondb_owner
+4815; 1259 41070 INDEX public idx_sessions_created neondb_owner
+4816; 1259 41069 INDEX public idx_sessions_user neondb_owner
+5014; 1259 287534 INDEX public idx_sms_log_recipient neondb_owner
+5015; 1259 287533 INDEX public idx_sms_log_tenant_dedupe neondb_owner
+4719; 1259 25491 INDEX public idx_task_activity_task neondb_owner
+4722; 1259 25492 INDEX public idx_task_assignments_task neondb_owner
+4723; 1259 25493 INDEX public idx_task_assignments_user neondb_owner
+4728; 1259 25494 INDEX public idx_task_comments_task neondb_owner
+4731; 1259 188503 INDEX public idx_task_reminders_pending neondb_owner
+4735; 1259 25495 INDEX public idx_tasks_tenant_assigned neondb_owner
+4994; 1259 287184 INDEX public idx_tenant_prompt_overrides_tenant neondb_owner
+4744; 1259 41053 INDEX public idx_tenants_approval_status neondb_owner
+5023; 1259 295014 INDEX public idx_units_tenant_status neondb_owner
+4751; 1259 25496 INDEX public idx_uploaded_files_lookup neondb_owner
+4756; 1259 25497 INDEX public idx_usage_tenant_period neondb_owner
+4761; 1259 25498 INDEX public idx_user_page_views_tenant_user_visited neondb_owner
+4762; 1259 25499 INDEX public idx_user_page_views_tenant_visited neondb_owner
+4765; 1259 25500 INDEX public idx_user_sessions_user_expires neondb_owner
+4768; 1259 188509 INDEX public idx_users_tenant_department neondb_owner
+4769; 1259 25501 INDEX public idx_users_tenant_role neondb_owner
+4770; 1259 287454 INDEX public idx_users_totp_enabled neondb_owner
+4771; 1259 25502 INDEX public idx_users_verification_token neondb_owner
+4778; 1259 25503 INDEX public idx_valuation_usage_created neondb_owner
+4779; 1259 25504 INDEX public idx_valuation_usage_tenant_period neondb_owner
+4780; 1259 25505 INDEX public idx_valuation_usage_user_period neondb_owner
+4874; 1259 188527 INDEX public idx_visitor_events_project neondb_owner
+4875; 1259 188523 INDEX public idx_visitor_events_tenant_created neondb_owner
+4876; 1259 188526 INDEX public idx_visitor_events_tenant_utm_campaign neondb_owner
+4877; 1259 188525 INDEX public idx_visitor_events_tenant_utm_source neondb_owner
+4878; 1259 188524 INDEX public idx_visitor_events_visitor_created neondb_owner
+4783; 1259 25506 INDEX public idx_visitor_logs_country neondb_owner
+4784; 1259 25507 INDEX public idx_visitor_logs_listing neondb_owner
+4785; 1259 1343490 INDEX public idx_visitor_logs_listing_ip_created neondb_owner
+4786; 1259 25508 INDEX public idx_visitor_logs_tenant_created neondb_owner
+4827; 1259 41426 INDEX public idx_vn_districts_province neondb_owner
+4789; 1259 25509 INDEX public idx_wf_tasks_created_by neondb_owner
+4790; 1259 25510 INDEX public idx_wf_tasks_deadline neondb_owner
+4791; 1259 25511 INDEX public idx_wf_tasks_department neondb_owner
+4792; 1259 25512 INDEX public idx_wf_tasks_project neondb_owner
+4793; 1259 25513 INDEX public idx_wf_tasks_tenant neondb_owner
+4794; 1259 25514 INDEX public idx_wf_tasks_tenant_priority neondb_owner
+4795; 1259 25515 INDEX public idx_wf_tasks_tenant_status neondb_owner
+4836; 1259 139609 INDEX public knowledge_chunks_embedding_hnsw_idx neondb_owner
+4841; 1259 139610 INDEX public knowledge_chunks_tenant_source_idx neondb_owner
+4539; 1259 188529 INDEX public uniq_ai_agents_tenant_role neondb_owner
+4921; 1259 189248 INDEX public uniq_conversations_buyer_listing neondb_owner
+4692; 1259 188532 INDEX public uniq_prompt_templates_tenant_name neondb_owner
+4749; 1259 188495 INDEX public uniq_tenants_custom_domain neondb_owner
+4750; 1259 188494 INDEX public uniq_tenants_subdomain_slug neondb_owner
+4987; 1259 287153 INDEX public uq_agent_prompt_active neondb_owner
+4865; 1259 188459 INDEX public uq_cpol_one_active_per_project neondb_owner
+4860; 1259 188435 INDEX public uq_pfp_project_tower_floor neondb_owner
+4941; 1259 189338 INDEX public uq_seo_geo_snapshots_date neondb_owner
+4809; 1259 41010 INDEX public uq_seo_target_keywords_tenant_kw neondb_owner
+4734; 1259 188502 INDEX public uq_task_reminders_dedupe neondb_owner
+5159; 2620 139612 TRIGGER public knowledge_chunks knowledge_chunks_updated_at neondb_owner
+5154; 2620 287540 TRIGGER public contracts trg_audit_log_enforce neondb_owner
+5155; 2620 287538 TRIGGER public leads trg_audit_log_enforce neondb_owner
+5156; 2620 287539 TRIGGER public listings trg_audit_log_enforce neondb_owner
+5157; 2620 287537 TRIGGER public users trg_audit_log_enforce neondb_owner
+5158; 2620 25516 TRIGGER public wf_tasks update_wf_task_timestamp neondb_owner
+5028; 2606 25517 FK CONSTRAINT public ai_agent_memories ai_agent_memories_agent_id_fkey neondb_owner
+5029; 2606 25522 FK CONSTRAINT public ai_agent_memories ai_agent_memories_lead_id_fkey neondb_owner
+5030; 2606 25527 FK CONSTRAINT public ai_agent_memories ai_agent_memories_listing_id_fkey neondb_owner
+5031; 2606 25532 FK CONSTRAINT public ai_agent_memories ai_agent_memories_tenant_id_fkey neondb_owner
+5032; 2606 25537 FK CONSTRAINT public ai_agents ai_agents_tenant_id_fkey neondb_owner
+5033; 2606 25542 FK CONSTRAINT public ai_cost_plan_quotas ai_cost_plan_quotas_tenant_id_fkey neondb_owner
+5034; 2606 25547 FK CONSTRAINT public ai_feedback ai_feedback_lead_id_fkey neondb_owner
+5035; 2606 25552 FK CONSTRAINT public ai_feedback ai_feedback_tenant_id_fkey neondb_owner
+5036; 2606 25557 FK CONSTRAINT public ai_feedback ai_feedback_user_id_fkey neondb_owner
+5037; 2606 25562 FK CONSTRAINT public ai_governance_logs ai_governance_logs_tenant_id_fkey neondb_owner
+5038; 2606 25567 FK CONSTRAINT public ai_reward_signals ai_reward_signals_tenant_id_fkey neondb_owner
+5039; 2606 25572 FK CONSTRAINT public ai_safety_logs ai_safety_logs_tenant_id_fkey neondb_owner
+5040; 2606 25577 FK CONSTRAINT public ai_safety_logs ai_safety_logs_user_id_fkey neondb_owner
+5041; 2606 25582 FK CONSTRAINT public ai_usage_log ai_usage_log_tenant_id_fkey neondb_owner
+5042; 2606 25587 FK CONSTRAINT public ai_usage_log ai_usage_log_user_id_fkey neondb_owner
+5043; 2606 25592 FK CONSTRAINT public articles articles_author_id_fkey neondb_owner
+5044; 2606 25597 FK CONSTRAINT public articles articles_tenant_id_fkey neondb_owner
+5045; 2606 25602 FK CONSTRAINT public audit_logs audit_logs_tenant_id_fkey neondb_owner
+5146; 2606 189309 FK CONSTRAINT public booking_events booking_events_booking_id_fkey neondb_owner
+5145; 2606 189289 FK CONSTRAINT public bookings bookings_buyer_user_id_fkey neondb_owner
+5139; 2606 189267 FK CONSTRAINT public buyer_devices buyer_devices_buyer_user_id_fkey neondb_owner
+5141; 2606 189213 FK CONSTRAINT public buyer_favorites buyer_favorites_buyer_user_id_fkey neondb_owner
+5140; 2606 189219 FK CONSTRAINT public buyer_saved_searches buyer_saved_searches_buyer_user_id_fkey neondb_owner
+5046; 2606 25607 FK CONSTRAINT public campaign_costs campaign_costs_tenant_id_fkey neondb_owner
+5127; 2606 40990 FK CONSTRAINT public campaign_recipients campaign_recipients_campaign_id_fkey neondb_owner
+5152; 2606 221293 FK CONSTRAINT public chat_sessions chat_sessions_lead_id_fkey neondb_owner
+5134; 2606 188484 FK CONSTRAINT public commission_ledger commission_ledger_policy_id_fkey neondb_owner
+5135; 2606 188479 FK CONSTRAINT public commission_ledger commission_ledger_project_id_fkey neondb_owner
+5133; 2606 188452 FK CONSTRAINT public commission_policies commission_policies_project_id_fkey neondb_owner
+5047; 2606 25612 FK CONSTRAINT public contracts contracts_assigned_to_id_fkey neondb_owner
+5048; 2606 25617 FK CONSTRAINT public contracts contracts_created_by_id_fkey neondb_owner
+5049; 2606 25622 FK CONSTRAINT public contracts contracts_lead_id_fkey neondb_owner
+5050; 2606 25627 FK CONSTRAINT public contracts contracts_listing_id_fkey neondb_owner
+5051; 2606 25632 FK CONSTRAINT public contracts contracts_proposal_id_fkey neondb_owner
+5052; 2606 25637 FK CONSTRAINT public contracts contracts_tenant_id_fkey neondb_owner
+5142; 2606 189243 FK CONSTRAINT public conversations conversations_agent_user_id_fkey neondb_owner
+5143; 2606 189238 FK CONSTRAINT public conversations conversations_buyer_user_id_fkey neondb_owner
+5053; 2606 25642 FK CONSTRAINT public departments departments_tenant_id_fkey neondb_owner
+5153; 2606 287217 FK CONSTRAINT public developers developers_tenant_id_fkey neondb_owner
+5054; 2606 25647 FK CONSTRAINT public documents documents_tenant_id_fkey neondb_owner
+5138; 2606 189128 FK CONSTRAINT public email_send_metrics email_send_metrics_tenant_id_fkey neondb_owner
+5055; 2606 25652 FK CONSTRAINT public enterprise_config enterprise_config_tenant_id_fkey neondb_owner
+5056; 2606 25657 FK CONSTRAINT public favorites favorites_listing_id_fkey neondb_owner
+5057; 2606 25662 FK CONSTRAINT public favorites favorites_tenant_id_fkey neondb_owner
+5058; 2606 25667 FK CONSTRAINT public favorites favorites_user_id_fkey neondb_owner
+5068; 2606 25672 FK CONSTRAINT public listings fk_listings_project_id neondb_owner
+5149; 2606 213116 FK CONSTRAINT public follow_up_sends follow_up_sends_sequence_id_fkey neondb_owner
+5148; 2606 213096 FK CONSTRAINT public follow_up_sequences follow_up_sequences_lead_id_fkey neondb_owner
+5059; 2606 25677 FK CONSTRAINT public interactions interactions_lead_id_fkey neondb_owner
+5060; 2606 25682 FK CONSTRAINT public interactions interactions_sender_id_fkey neondb_owner
+5061; 2606 25687 FK CONSTRAINT public interactions interactions_tenant_id_fkey neondb_owner
+5130; 2606 41419 FK CONSTRAINT public land_price_zones land_price_zones_province_code_fkey neondb_owner
+5062; 2606 25692 FK CONSTRAINT public leads leads_assigned_to_fkey neondb_owner
+5063; 2606 25697 FK CONSTRAINT public leads leads_created_by_fkey neondb_owner
+5064; 2606 25702 FK CONSTRAINT public leads leads_tenant_id_fkey neondb_owner
+5065; 2606 25707 FK CONSTRAINT public listing_access listing_access_granted_by_fkey neondb_owner
+5066; 2606 25712 FK CONSTRAINT public listing_access listing_access_listing_id_fkey neondb_owner
+5067; 2606 25717 FK CONSTRAINT public listing_access listing_access_partner_tenant_id_fkey neondb_owner
+5069; 2606 25722 FK CONSTRAINT public listings listings_assigned_to_fkey neondb_owner
+5070; 2606 25727 FK CONSTRAINT public listings listings_created_by_fkey neondb_owner
+5071; 2606 25732 FK CONSTRAINT public listings listings_project_id_fkey neondb_owner
+5072; 2606 25737 FK CONSTRAINT public listings listings_tenant_id_fkey neondb_owner
+5144; 2606 189261 FK CONSTRAINT public messages messages_conversation_id_fkey neondb_owner
+5073; 2606 25742 FK CONSTRAINT public password_reset_tokens password_reset_tokens_user_id_fkey neondb_owner
+5150; 2606 213164 FK CONSTRAINT public payment_transactions payment_transactions_tenant_id_fkey neondb_owner
+5151; 2606 213169 FK CONSTRAINT public payment_transactions payment_transactions_user_id_fkey neondb_owner
+5074; 2606 25747 FK CONSTRAINT public project_access project_access_granted_by_fkey neondb_owner
+5075; 2606 25752 FK CONSTRAINT public project_access project_access_partner_tenant_id_fkey neondb_owner
+5076; 2606 25757 FK CONSTRAINT public project_access project_access_project_id_fkey neondb_owner
+5132; 2606 188430 FK CONSTRAINT public project_floor_plans project_floor_plans_project_id_fkey neondb_owner
+5131; 2606 155678 FK CONSTRAINT public project_price_matrix project_price_matrix_project_id_fkey neondb_owner
+5077; 2606 287225 FK CONSTRAINT public projects projects_developer_id_fkey neondb_owner
+5078; 2606 25762 FK CONSTRAINT public projects projects_tenant_id_fkey neondb_owner
+5136; 2606 189109 FK CONSTRAINT public prompt_promote_log prompt_promote_log_template_id_fkey neondb_owner
+5137; 2606 189104 FK CONSTRAINT public prompt_promote_log prompt_promote_log_tenant_id_fkey neondb_owner
+5079; 2606 25767 FK CONSTRAINT public prompt_templates prompt_templates_tenant_id_fkey neondb_owner
+5080; 2606 25772 FK CONSTRAINT public proposals proposals_created_by_fkey neondb_owner
+5081; 2606 25777 FK CONSTRAINT public proposals proposals_lead_id_fkey neondb_owner
+5082; 2606 25782 FK CONSTRAINT public proposals proposals_listing_id_fkey neondb_owner
+5083; 2606 25787 FK CONSTRAINT public proposals proposals_tenant_id_fkey neondb_owner
+5084; 2606 25792 FK CONSTRAINT public routing_rules routing_rules_tenant_id_fkey neondb_owner
+5085; 2606 25797 FK CONSTRAINT public scoring_configs scoring_configs_tenant_id_fkey neondb_owner
+5147; 2606 213007 FK CONSTRAINT public sequence_enrollments sequence_enrollments_sequence_id_fkey neondb_owner
+5086; 2606 25802 FK CONSTRAINT public sequences sequences_created_by_fkey neondb_owner
+5087; 2606 25807 FK CONSTRAINT public sequences sequences_tenant_id_fkey neondb_owner
+5128; 2606 41064 FK CONSTRAINT public sessions sessions_tenant_id_fkey neondb_owner
+5088; 2606 25812 FK CONSTRAINT public subscriptions subscriptions_tenant_id_fkey neondb_owner
+5089; 2606 25817 FK CONSTRAINT public task_activity_logs task_activity_logs_task_id_fkey neondb_owner
+5090; 2606 25822 FK CONSTRAINT public task_activity_logs task_activity_logs_tenant_id_fkey neondb_owner
+5091; 2606 25827 FK CONSTRAINT public task_activity_logs task_activity_logs_user_id_fkey neondb_owner
+5092; 2606 25832 FK CONSTRAINT public task_assignments task_assignments_assigned_by_fkey neondb_owner
+5093; 2606 25837 FK CONSTRAINT public task_assignments task_assignments_task_id_fkey neondb_owner
+5094; 2606 25842 FK CONSTRAINT public task_assignments task_assignments_tenant_id_fkey neondb_owner
+5095; 2606 25847 FK CONSTRAINT public task_assignments task_assignments_user_id_fkey neondb_owner
+5096; 2606 25852 FK CONSTRAINT public task_comments task_comments_task_id_fkey neondb_owner
+5097; 2606 25857 FK CONSTRAINT public task_comments task_comments_tenant_id_fkey neondb_owner
+5098; 2606 25862 FK CONSTRAINT public task_comments task_comments_user_id_fkey neondb_owner
+5099; 2606 25867 FK CONSTRAINT public task_reminders task_reminders_created_by_fkey neondb_owner
+5100; 2606 25872 FK CONSTRAINT public task_reminders task_reminders_task_id_fkey neondb_owner
+5101; 2606 25877 FK CONSTRAINT public task_reminders task_reminders_tenant_id_fkey neondb_owner
+5102; 2606 25882 FK CONSTRAINT public tasks tasks_assigned_to_fkey neondb_owner
+5103; 2606 25887 FK CONSTRAINT public tasks tasks_lead_id_fkey neondb_owner
+5104; 2606 25892 FK CONSTRAINT public tasks tasks_tenant_id_fkey neondb_owner
+5105; 2606 25897 FK CONSTRAINT public team_members team_members_team_id_fkey neondb_owner
+5106; 2606 25902 FK CONSTRAINT public team_members team_members_tenant_id_fkey neondb_owner
+5107; 2606 25907 FK CONSTRAINT public team_members team_members_user_id_fkey neondb_owner
+5108; 2606 25912 FK CONSTRAINT public teams teams_lead_id_fkey neondb_owner
+5109; 2606 25917 FK CONSTRAINT public teams teams_tenant_id_fkey neondb_owner
+5110; 2606 25922 FK CONSTRAINT public templates templates_tenant_id_fkey neondb_owner
+5111; 2606 25927 FK CONSTRAINT public usage_tracking usage_tracking_tenant_id_fkey neondb_owner
+5112; 2606 25932 FK CONSTRAINT public user_page_views user_page_views_session_id_fkey neondb_owner
+5113; 2606 25937 FK CONSTRAINT public user_page_views user_page_views_tenant_id_fkey neondb_owner
+5114; 2606 25942 FK CONSTRAINT public user_page_views user_page_views_user_id_fkey neondb_owner
+5115; 2606 25947 FK CONSTRAINT public user_sessions user_sessions_tenant_id_fkey neondb_owner
+5116; 2606 25952 FK CONSTRAINT public user_sessions user_sessions_user_id_fkey neondb_owner
+5117; 2606 188504 FK CONSTRAINT public users users_department_id_fkey neondb_owner
+5118; 2606 25957 FK CONSTRAINT public users users_tenant_id_fkey neondb_owner
+5119; 2606 25962 FK CONSTRAINT public valuation_cost_alerts valuation_cost_alerts_tenant_id_fkey neondb_owner
+5120; 2606 25967 FK CONSTRAINT public valuation_usage_log valuation_usage_log_tenant_id_fkey neondb_owner
+5121; 2606 25972 FK CONSTRAINT public valuation_usage_log valuation_usage_log_user_id_fkey neondb_owner
+5122; 2606 25977 FK CONSTRAINT public visitor_logs visitor_logs_tenant_id_fkey neondb_owner
+5129; 2606 41400 FK CONSTRAINT public vn_districts vn_districts_province_code_fkey neondb_owner
+5123; 2606 25982 FK CONSTRAINT public wf_tasks wf_tasks_created_by_fkey neondb_owner
+5124; 2606 25987 FK CONSTRAINT public wf_tasks wf_tasks_department_id_fkey neondb_owner
+5125; 2606 25992 FK CONSTRAINT public wf_tasks wf_tasks_project_id_fkey neondb_owner
+5126; 2606 25997 FK CONSTRAINT public wf_tasks wf_tasks_tenant_id_fkey neondb_owner
+5305; 0 24685 ROW SECURITY public ai_agent_memories neondb_owner
+5358; 3256 26002 POLICY public ai_agent_memories ai_agent_memories_tenant_isolation neondb_owner
+5306; 0 24694 ROW SECURITY public ai_agents neondb_owner
+5359; 3256 26003 POLICY public ai_agents ai_agents_tenant_isolation neondb_owner
+5307; 0 24710 ROW SECURITY public ai_feedback neondb_owner
+5360; 3256 26004 POLICY public ai_feedback ai_feedback_tenant_isolation neondb_owner
+5308; 0 24719 ROW SECURITY public ai_governance_logs neondb_owner
+5361; 3256 26005 POLICY public ai_governance_logs ai_governance_logs_tenant_isolation neondb_owner
+5309; 0 24732 ROW SECURITY public ai_reward_signals neondb_owner
+5362; 3256 26006 POLICY public ai_reward_signals ai_reward_signals_tenant_isolation neondb_owner
+5310; 0 24747 ROW SECURITY public ai_safety_logs neondb_owner
+5311; 0 24767 ROW SECURITY public articles neondb_owner
+5363; 3256 26007 POLICY public articles articles_tenant_isolation neondb_owner
+5312; 0 24783 ROW SECURITY public audit_logs neondb_owner
+5364; 3256 26008 POLICY public audit_logs audit_logs_tenant_isolation neondb_owner
+5313; 0 24816 ROW SECURITY public campaign_costs neondb_owner
+5365; 3256 26009 POLICY public campaign_costs campaign_costs_tenant_isolation neondb_owner
+5349; 0 188461 ROW SECURITY public commission_ledger neondb_owner
+5348; 0 188438 ROW SECURITY public commission_policies neondb_owner
+5314; 0 24825 ROW SECURITY public contracts neondb_owner
+5356; 0 294984 ROW SECURITY public custom_fields neondb_owner
+5315; 0 24839 ROW SECURITY public departments neondb_owner
+5366; 3256 26011 POLICY public departments departments_tenant_isolation neondb_owner
+5354; 0 287204 ROW SECURITY public developers neondb_owner
+5316; 0 24846 ROW SECURITY public documents neondb_owner
+5345; 0 41030 ROW SECURITY public email_log neondb_owner
+5317; 0 24862 ROW SECURITY public enterprise_config neondb_owner
+5318; 0 24882 ROW SECURITY public favorites neondb_owner
+5353; 0 213103 ROW SECURITY public follow_up_sends neondb_owner
+5352; 0 213083 ROW SECURITY public follow_up_sequences neondb_owner
+5319; 0 24887 ROW SECURITY public interactions neondb_owner
+5367; 3256 26012 POLICY public interactions interactions_tenant_isolation neondb_owner
+5346; 0 139594 ROW SECURITY public knowledge_chunks neondb_owner
+5412; 3256 139608 POLICY public knowledge_chunks knowledge_chunks_tenant_isolation neondb_owner
+5320; 0 24898 ROW SECURITY public leads neondb_owner
+5321; 0 24922 ROW SECURITY public listings neondb_owner
+5322; 0 24960 ROW SECURITY public notifications neondb_owner
+5347; 0 188417 ROW SECURITY public project_floor_plans neondb_owner
+5323; 0 24982 ROW SECURITY public projects neondb_owner
+5350; 0 189094 ROW SECURITY public prompt_promote_log neondb_owner
+5324; 0 24992 ROW SECURITY public prompt_templates neondb_owner
+5368; 3256 26015 POLICY public prompt_templates prompt_templates_tenant_isolation neondb_owner
+5325; 0 25003 ROW SECURITY public proposals neondb_owner
+5369; 3256 26016 POLICY public proposals proposals_tenant_isolation neondb_owner
+5326; 0 25016 ROW SECURITY public routing_rules neondb_owner
+5327; 0 25034 ROW SECURITY public scoring_configs neondb_owner
+5370; 3256 26017 POLICY public scoring_configs scoring_configs_tenant_isolation neondb_owner
+5351; 0 212996 ROW SECURITY public sequence_enrollments neondb_owner
+5328; 0 25052 ROW SECURITY public sequences neondb_owner
+5371; 3256 26018 POLICY public sequences sequences_tenant_isolation neondb_owner
+5355; 0 287523 ROW SECURITY public sms_log neondb_owner
+5329; 0 25066 ROW SECURITY public subscriptions neondb_owner
+5330; 0 25081 ROW SECURITY public task_activity_logs neondb_owner
+5372; 3256 26020 POLICY public task_activity_logs task_activity_logs_tenant_isolation neondb_owner
+5331; 0 25088 ROW SECURITY public task_assignments neondb_owner
+5373; 3256 26021 POLICY public task_assignments task_assignments_tenant_isolation neondb_owner
+5332; 0 25096 ROW SECURITY public task_comments neondb_owner
+5374; 3256 26022 POLICY public task_comments task_comments_tenant_isolation neondb_owner
+5333; 0 25104 ROW SECURITY public task_reminders neondb_owner
+5375; 3256 26023 POLICY public task_reminders task_reminders_tenant_isolation neondb_owner
+5334; 0 25112 ROW SECURITY public tasks neondb_owner
+5376; 3256 26024 POLICY public tasks tasks_tenant_isolation neondb_owner
+5335; 0 25123 ROW SECURITY public team_members neondb_owner
+5336; 0 25127 ROW SECURITY public teams neondb_owner
+5337; 0 25135 ROW SECURITY public templates neondb_owner
+5377; 3256 26026 POLICY public ai_safety_logs tenant_isolation_policy neondb_owner
+5378; 3256 26027 POLICY public articles tenant_isolation_policy neondb_owner
+5379; 3256 26028 POLICY public audit_logs tenant_isolation_policy neondb_owner
+5380; 3256 26029 POLICY public campaign_costs tenant_isolation_policy neondb_owner
+5381; 3256 26030 POLICY public documents tenant_isolation_policy neondb_owner
+5382; 3256 26031 POLICY public enterprise_config tenant_isolation_policy neondb_owner
+5383; 3256 26032 POLICY public favorites tenant_isolation_policy neondb_owner
+5419; 3256 213124 POLICY public follow_up_sends tenant_isolation_policy neondb_owner
+5418; 3256 213123 POLICY public follow_up_sequences tenant_isolation_policy neondb_owner
+5416; 3256 189115 POLICY public prompt_promote_log tenant_isolation_policy neondb_owner
+5384; 3256 26034 POLICY public prompt_templates tenant_isolation_policy neondb_owner
+5385; 3256 26035 POLICY public routing_rules tenant_isolation_policy neondb_owner
+5386; 3256 26036 POLICY public scoring_configs tenant_isolation_policy neondb_owner
+5417; 3256 213014 POLICY public sequence_enrollments tenant_isolation_policy neondb_owner
+5387; 3256 26037 POLICY public sequences tenant_isolation_policy neondb_owner
+5388; 3256 26039 POLICY public tasks tenant_isolation_policy neondb_owner
+5389; 3256 26040 POLICY public team_members tenant_isolation_policy neondb_owner
+5390; 3256 26041 POLICY public teams tenant_isolation_policy neondb_owner
+5391; 3256 26042 POLICY public templates tenant_isolation_policy neondb_owner
+5392; 3256 26043 POLICY public usage_tracking tenant_isolation_policy neondb_owner
+5393; 3256 26044 POLICY public user_page_views tenant_isolation_policy neondb_owner
+5394; 3256 26045 POLICY public user_sessions tenant_isolation_policy neondb_owner
+5407; 3256 41046 POLICY public ai_feedback tenant_isolation_v2 neondb_owner
+5405; 3256 41044 POLICY public audit_logs tenant_isolation_v2 neondb_owner
+5415; 3256 188493 POLICY public commission_ledger tenant_isolation_v2 neondb_owner
+5414; 3256 188460 POLICY public commission_policies tenant_isolation_v2 neondb_owner
+5401; 3256 41028 POLICY public contracts tenant_isolation_v2 neondb_owner
+5422; 3256 294999 POLICY public custom_fields tenant_isolation_v2 neondb_owner
+5420; 3256 287245 POLICY public developers tenant_isolation_v2 neondb_owner
+5404; 3256 41043 POLICY public email_log tenant_isolation_v2 neondb_owner
+5398; 3256 41025 POLICY public leads tenant_isolation_v2 neondb_owner
+5399; 3256 41026 POLICY public listings tenant_isolation_v2 neondb_owner
+5402; 3256 41048 POLICY public notifications tenant_isolation_v2 neondb_owner
+5413; 3256 188437 POLICY public project_floor_plans tenant_isolation_v2 neondb_owner
+5400; 3256 41027 POLICY public projects tenant_isolation_v2 neondb_owner
+5421; 3256 287535 POLICY public sms_log tenant_isolation_v2 neondb_owner
+5403; 3256 41029 POLICY public subscriptions tenant_isolation_v2 neondb_owner
+5409; 3256 41049 POLICY public tasks tenant_isolation_v2 neondb_owner
+5408; 3256 41047 POLICY public team_members tenant_isolation_v2 neondb_owner
+5423; 3256 295015 POLICY public units tenant_isolation_v2 neondb_owner
+5406; 3256 41045 POLICY public uploaded_files tenant_isolation_v2 neondb_owner
+5410; 3256 41050 POLICY public user_page_views tenant_isolation_v2 neondb_owner
+5397; 3256 41024 POLICY public users tenant_isolation_v2 neondb_owner
+5411; 3256 41051 POLICY public valuation_usage_log tenant_isolation_v2 neondb_owner
+5357; 0 295000 ROW SECURITY public units neondb_owner
+5338; 0 25153 ROW SECURITY public uploaded_files neondb_owner
+5339; 0 25162 ROW SECURITY public usage_tracking neondb_owner
+5395; 3256 26046 POLICY public usage_tracking usage_tracking_tenant_isolation neondb_owner
+5340; 0 25169 ROW SECURITY public user_page_views neondb_owner
+5341; 0 25178 ROW SECURITY public user_sessions neondb_owner
+5342; 0 25187 ROW SECURITY public users neondb_owner
+5343; 0 25207 ROW SECURITY public valuation_usage_log neondb_owner
+5344; 0 25224 ROW SECURITY public wf_tasks neondb_owner
+5396; 3256 26048 POLICY public wf_tasks wf_tasks_tenant_isolation neondb_owner

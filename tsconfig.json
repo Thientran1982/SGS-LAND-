@@ -36,7 +36,7 @@
     },
     "allowImportingTsExtensions": true,
     "noEmit": true,
-    "strictNullChecks": false,
-    "noImplicitAny": false
+    "strictNullChecks": true,
+    "noImplicitAny": true
   }
 }

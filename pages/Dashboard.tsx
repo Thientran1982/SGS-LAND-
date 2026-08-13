@@ -611,7 +611,7 @@ export const Dashboard: React.FC = () => {
                     </div>
                     <div className="flex items-center gap-2 shrink-0">
                         <a
-                            href="/#/huong-dan-su-dung"
+                            href="/huong-dan-su-dung"
                             className="px-3 py-1.5 bg-sgs-verified hover:bg-sgs-verified text-white text-xs font-bold rounded-lg transition-colors whitespace-nowrap"
                         >
                             {language === 'vn' ? 'Xem hướng dẫn' : 'View guide'} →
@@ -773,7 +773,7 @@ export const Dashboard: React.FC = () => {
                     <BentoCard title={t('dash.activity_title')} className="h-full bg-[var(--bg-surface)] dark:bg-sgs-primary-deep border border-[var(--glass-border)] dark:border-white/10 overflow-hidden flex flex-col">
                         <div className="flex-1 overflow-y-auto no-scrollbar -mx-2 px-2 mt-2">
                             <div className="flex flex-col gap-2">
-                                {(analytics.recentActivities || []).map((act, idx) => (
+                                {(analytics.recentActivities || []).map((act: any, idx: number) => (
                                     <ActivityItem key={act.id != null ? `${act.id}-${idx}` : idx} activity={act} />
                                 ))}
                                 {(!analytics.recentActivities || analytics.recentActivities.length === 0) && (

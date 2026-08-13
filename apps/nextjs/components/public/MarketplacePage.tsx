@@ -9,7 +9,7 @@ type L = "vi" | "en";
 import dynamic from "next/dynamic";
 import {
   Search, MapPin, Bed, ChevronLeft, ChevronRight, ChevronDown, Check,
-  LayoutGrid, List as ListIcon, Columns, Map as MapIcon, BadgeCheck, Eye, Heart, SlidersHorizontal, Star, Camera,
+  LayoutGrid, List as ListIcon, Columns, Map as MapIcon, BadgeCheck, Eye, Heart, Star, Camera, X,
 } from "lucide-react";
 import type { Listing } from "@/types";
 import Image from "next/image";
@@ -184,6 +184,18 @@ function Dropdown({ value, options, onChange, minWidth = 140 }: { value: string;
   );
 }
 
+function ActiveChip({ label, onRemove }) {
+  return (
+    <span className="inline-flex items-center gap-1 shrink-0 text-xs font-medium pl-3 pr-1.5 py-1 rounded-full whitespace-nowrap"
+      style={{ background: "var(--primary-subtle)", color: "var(--primary-600)" }}>
+      {label}
+      <button type="button" onClick={onRemove} aria-label="remove filter" className="rounded-full p-0.5 hover:opacity-70 transition-opacity">
+        <X className="w-3 h-3" />
+      </button>
+    </span>
+  );
+}
+
 /* ── Listing card ─────────────────────────────────────────── */
 function ListingCard({ listing, list, eager }: { listing: any; list?: boolean; eager?: boolean }) {
   const lang = useLang();
@@ -336,7 +348,6 @@ export function MarketplacePage({ initialListings, totalCount, totalPages, searc
   const pathname = usePathname();
   const [search, setSearch] = useState(sp.q ?? "");
   const [view, setView] = useState<"GRID" | "LIST" | "BOARD" | "MAP">("GRID");
-  const [filtersOpen, setFiltersOpen] = useState(false);
 
   const pushParams = useCallback((mut: (p: URLSearchParams) => void) => {
     const params = new URLSearchParams();
@@ -356,7 +367,14 @@ export function MarketplacePage({ initialListings, totalCount, totalPages, searc
   const handleSearch = (e: React.FormEvent) => { e.preventDefault(); setParam("q", search.trim()); };
   const currentPage = parseInt(sp.page ?? "1");
   const activePriceLabel = (PRICE_OPTIONS(lang).find((pr) => pr.min === (sp.minPrice ?? "") && pr.max === (sp.maxPrice ?? "")) || PRICE_OPTIONS(lang)[0]).label;
-  const activeFilterCount = [sp.transaction, sp.type, sp.area, sp.minPrice || sp.maxPrice].filter(Boolean).length;
+  const activeTab = sp.type === "PROJECT" ? "PROJECT" : (sp.transaction === "SALE" || sp.transaction === "RENT" ? sp.transaction : "");
+  const setTransactionTab = (tab) => {
+    pushParams((p) => {
+      if (sp.type === "PROJECT") p.delete("type");
+      if (tab === activeTab) { p.delete("transaction"); return; }
+      p.set("transaction", tab);
+    });
+  };
 
   const VIEWS = [
     { id: "GRID", icon: LayoutGrid }, { id: "LIST", icon: ListIcon }, { id: "BOARD", icon: Columns }, { id: "MAP", icon: MapIcon },
@@ -379,9 +397,6 @@ export function MarketplacePage({ initialListings, totalCount, totalPages, searc
         <h1 className="text-xl sm:text-2xl font-bold mb-1" style={{ color: "var(--text-primary)" }}>
           {sp.q ? tt(lang, `Kết quả cho "${sp.q}"`, `Results for "${sp.q}"`) : tt(lang, "Tìm kiếm Bất Động Sản", "Search Properties")}
         </h1>
-        <p className="text-xs sm:text-sm" style={{ color: "var(--text-secondary)" }}>
-          {totalCount.toLocaleString()}{tt(lang, " bất động sản phù hợp · Kho hàng cập nhật realtime", " matching properties · Inventory updated in real time")}
-        </p>
       </div>
 
       {/* Search bar */}
@@ -392,50 +407,63 @@ export function MarketplacePage({ initialListings, totalCount, totalPages, searc
         <button type="submit" className="absolute right-1.5 top-1/2 -translate-y-1/2 px-5 py-2 rounded-lg text-sm font-semibold text-white" style={{ background: "var(--primary-600)" }}>{tt(lang, "Tìm", "Search")}</button>
       </form>
 
-      {/* Toolbar: view switcher + filters (mobile: collapsible) */}
-        <div className="flex items-center gap-2 flex-wrap pb-1 mb-3">
-          <div className="flex p-0.5 rounded-lg shrink-0" style={{ background: "var(--bg-elevated)" }}>
-            {VIEWS.map((v) => {
-              const Icon = v.icon;
-              const active = view === v.id;
-              return (
-                <button key={v.id} type="button" onClick={() => setView(v.id)} aria-label={v.id}
-                  className="p-2 rounded-md transition-colors" style={active ? { background: "var(--bg-surface)", color: "var(--primary-600)" } : { color: "var(--text-tertiary)" }}>
-                  <Icon className="w-4 h-4" />
-                </button>
-              );
-            })}
-          </div>
-
-          <button type="button" onClick={() => setFiltersOpen((o) => !o)} aria-expanded={filtersOpen}
-            className="sm:hidden flex-1 min-w-0 h-10 px-3 rounded-xl text-xs font-semibold flex items-center justify-center gap-1.5" style={boxStyle}>
-            <SlidersHorizontal className="w-4 h-4 shrink-0" style={{ color: "var(--text-tertiary)" }} />
-            <span className="truncate">{tt(lang, "Bộ lọc", "Filters")}</span>
-            {activeFilterCount > 0 && (
-              <span className="px-1.5 rounded-full text-[10px] font-bold text-white shrink-0" style={{ background: "var(--primary-600)" }}>{activeFilterCount}</span>
-            )}
-            <ChevronDown className={`w-4 h-4 shrink-0 transition-transform ${filtersOpen ? "rotate-180" : ""}`} style={{ color: "var(--text-tertiary)" }} />
+      {/* Primary row: transaction segmented control + view switcher */}
+      <div className="flex items-center justify-between gap-2 flex-wrap pb-1 mb-3">
+        <div className="flex items-center gap-1 p-0.5 rounded-lg shrink-0" style={{ background: "var(--bg-elevated)" }}>
+          <button type="button" onClick={() => setTransactionTab("SALE")}
+            className="px-3 sm:px-4 h-9 rounded-md text-sm font-semibold transition-colors whitespace-nowrap"
+            style={activeTab === "SALE" ? { background: "var(--bg-surface)", color: "var(--primary-600)" } : { color: "var(--text-tertiary)" }}>
+            Bán
           </button>
-
-          <div className="w-px h-6 shrink-0 hidden sm:block" style={{ background: "var(--border-default)" }} />
-
-          <div className={`${filtersOpen ? "grid" : "hidden"} grid-cols-2 gap-2 basis-full min-w-0 sm:basis-auto sm:flex sm:flex-wrap sm:items-center sm:gap-2`}>
-            <Dropdown value={sp.transaction ?? ""} options={TRANSACTION_OPTIONS(lang)} onChange={(v) => setParam("transaction", v)} minWidth={140} />
-            <Dropdown value={sp.type ?? ""} options={TYPE_OPTIONS(lang)} onChange={(v) => setParam("type", v)} minWidth={140} />
-            <Dropdown value={sp.area ?? ""} options={LOCATION_OPTIONS(lang)} onChange={(v) => setParam("area", v)} minWidth={150} />
-            <Dropdown value={activePriceLabel} options={PRICE_OPTIONS(lang).map((o) => ({ label: o.label, value: o.label }))}
-              onChange={(label) => { const pr = PRICE_OPTIONS(lang).find((x) => x.label === label) || PRICE_OPTIONS(lang)[0]; pushParams((p) => { p.delete("minPrice"); p.delete("maxPrice"); if (pr.min) p.set("minPrice", pr.min); if (pr.max) p.set("maxPrice", pr.max); }); }}
-              minWidth={140} />
-          </div>
+          <button type="button" onClick={() => setTransactionTab("RENT")}
+            className="px-3 sm:px-4 h-9 rounded-md text-sm font-semibold transition-colors whitespace-nowrap"
+            style={activeTab === "RENT" ? { background: "var(--bg-surface)", color: "var(--primary-600)" } : { color: "var(--text-tertiary)" }}>
+            Cho thuê
+          </button>
+          <Link href={lang === "en" ? "/en/du-an" : "/du-an"}
+            className="px-3 sm:px-4 h-9 rounded-md text-sm font-semibold transition-colors whitespace-nowrap flex items-center"
+            style={{ color: "var(--text-tertiary)" }}>
+            Dự án
+          </Link>
         </div>
 
-        {/* Location chips */}
-      <div className="flex items-center gap-2 overflow-x-auto no-scrollbar pb-2 mb-5 -mx-4 px-4 sm:mx-0 sm:px-0">
-        <span className="text-xs shrink-0 font-medium hidden sm:inline" style={{ color: "var(--text-tertiary)" }}>{tt(lang, "Tất cả vị trí:", "All locations:")}</span>
-        {LOCATION_CHIPS.map((c) => (
-          <Link key={c.href} href={lang === "en" ? "/en" + c.href : c.href} className="shrink-0 text-xs font-medium px-3 py-1 rounded-full transition-all whitespace-nowrap hover:opacity-80"
-            style={{ background: "var(--bg-elevated)", border: "1px solid var(--border-default)", color: "var(--text-secondary)" }}>{chipLabel(c.label, lang)}</Link>
-        ))}
+        <div className="flex p-0.5 rounded-lg shrink-0" style={{ background: "var(--bg-elevated)" }}>
+          {VIEWS.map((v) => {
+            const Icon = v.icon;
+            const active = view === v.id;
+            return (
+              <button key={v.id} type="button" onClick={() => setView(v.id)} aria-label={v.id}
+                className="p-2 rounded-md transition-colors" style={active ? { background: "var(--bg-surface)", color: "var(--primary-600)" } : { color: "var(--text-tertiary)" }}>
+                <Icon className="w-4 h-4" />
+              </button>
+            );
+          })}
+        </div>
+      </div>
+      {/* Secondary row: refine filters */}
+      <div className="flex flex-wrap items-center gap-2 pb-1 mb-3">
+        <Dropdown value={sp.type ?? ""} options={TYPE_OPTIONS(lang)} onChange={(v) => setParam("type", v)} minWidth={140} />
+        <Dropdown value={sp.area ?? ""} options={LOCATION_OPTIONS(lang)} onChange={(v) => setParam("area", v)} minWidth={150} />
+        <Dropdown value={activePriceLabel} options={PRICE_OPTIONS(lang).map((o) => ({ label: o.label, value: o.label }))}
+          onChange={(label) => { const pr = PRICE_OPTIONS(lang).find((x) => x.label === label) || PRICE_OPTIONS(lang)[0]; pushParams((p) => { p.delete("minPrice"); p.delete("maxPrice"); if (pr.min) p.set("minPrice", pr.min); if (pr.max) p.set("maxPrice", pr.max); }); }}
+          minWidth={140} />
+      </div>
+
+      {/* Result count + active filter chips */}
+      <div className="flex items-center gap-2 overflow-x-auto no-scrollbar pb-2 mb-5 -mx-4 px-4 sm:mx-0 sm:px-0 [mask-image:linear-gradient(to_right,black_88%,transparent)] [-webkit-mask-image:linear-gradient(to_right,black_88%,transparent)]">
+        <span className="text-sm font-medium shrink-0 whitespace-nowrap" style={{ color: "var(--text-secondary)" }}>{totalCount} kết quả</span>
+        {sp.type && sp.type !== "PROJECT" && (
+          <ActiveChip label={TYPE_OPTIONS(lang).find((o) => o.value === sp.type)?.label ?? sp.type}
+            onRemove={() => pushParams((p) => p.delete("type"))} />
+        )}
+        {sp.area && (
+          <ActiveChip label={LOCATION_OPTIONS(lang).find((o) => o.value === sp.area)?.label ?? sp.area}
+            onRemove={() => pushParams((p) => p.delete("area"))} />
+        )}
+        {(sp.minPrice || sp.maxPrice) && (
+          <ActiveChip label={activePriceLabel}
+            onRemove={() => pushParams((p) => { p.delete("minPrice"); p.delete("maxPrice"); })} />
+        )}
       </div>
 
       {/* Content */}

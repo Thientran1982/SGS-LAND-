@@ -256,7 +256,7 @@ export const HelpCenter: React.FC = () => {
                         </div>
                     </div>
                     <a
-                        href={`/#/huong-dan-su-dung`}
+                        href="/huong-dan-su-dung"
                         className="shrink-0 px-4 py-2 bg-sgs-verified hover:bg-emerald-400 text-white text-xs font-bold rounded-lg transition-colors whitespace-nowrap"
                     >
                         Xem hướng dẫn →

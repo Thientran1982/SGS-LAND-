@@ -45,7 +45,7 @@ interface BiData {
 // -----------------------------------------------------------------------------
 // 2. HELPER COMPONENTS
 // -----------------------------------------------------------------------------
-const useDraggableScroll = (ref: React.RefObject<HTMLDivElement>, trigger?: any) => {
+const useDraggableScroll = (ref: React.RefObject<HTMLDivElement | null>, trigger?: any) => {
     useEffect(() => {
         const node = ref.current;
         if (!node) return;

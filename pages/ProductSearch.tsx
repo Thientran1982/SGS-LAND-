@@ -29,7 +29,7 @@ const ICONS = {
     X: <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
 };
 // --- HOOK: DRAGGABLE SCROLL ---
-const useDraggableScroll = (ref: React.RefObject<HTMLDivElement>, trigger?: any) => {
+const useDraggableScroll = (ref: React.RefObject<HTMLDivElement | null>, trigger?: any) => {
     useEffect(() => {
         const node = ref.current;
         if (!node) return;

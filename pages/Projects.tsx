@@ -961,25 +961,25 @@ function PriceMatrixPanel({ project, canEdit, onClose }: { project: Project; can
                         <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
                             <div>
                                 <label className="block text-xs text-[var(--text-tertiary)] mb-1">Tòa / Tower</label>
-                                <input value={form.tower ?? ''} onChange={e => setForm((f) => ({ ...f, tower: e.target.value }))}
+                                <input value={form.tower ?? ''} onChange={e => setForm((f: any) => ({ ...f, tower: e.target.value }))}
                                     placeholder="A, B, C... (bỏ trống = tất cả)"
                                     className="w-full h-8 px-2 text-xs border border-[var(--glass-border)] rounded-lg bg-[var(--bg-app)] text-[var(--text-primary)] focus:outline-none focus:ring-1 focus:ring-emerald-400" />
                             </div>
                             <div>
                                 <label className="block text-xs text-[var(--text-tertiary)] mb-1">Tầng từ</label>
-                                <input type="number" min={1} max={200} value={form.floor_from} onChange={e => setForm((f) => ({ ...f, floor_from: e.target.value }))}
+                                <input type="number" min={1} max={200} value={form.floor_from} onChange={e => setForm((f: any) => ({ ...f, floor_from: e.target.value }))}
                                     className="w-full h-8 px-2 text-xs border border-[var(--glass-border)] rounded-lg bg-[var(--bg-app)] text-[var(--text-primary)] focus:outline-none focus:ring-1 focus:ring-emerald-400" />
                             </div>
                             <div>
                                 <label className="block text-xs text-[var(--text-tertiary)] mb-1">Tầng đến</label>
-                                <input type="number" min={1} max={200} value={form.floor_to} onChange={e => setForm((f) => ({ ...f, floor_to: e.target.value }))}
+                                <input type="number" min={1} max={200} value={form.floor_to} onChange={e => setForm((f: any) => ({ ...f, floor_to: e.target.value }))}
                                     className="w-full h-8 px-2 text-xs border border-[var(--glass-border)] rounded-lg bg-[var(--bg-app)] text-[var(--text-primary)] focus:outline-none focus:ring-1 focus:ring-emerald-400" />
                             </div>
                             <div>
                                 <label className="block text-xs text-[var(--text-tertiary)] mb-1">Hướng</label>
                                 <SelectDropdown
                                     value={form.direction}
-                                    onChange={v => setForm((f) => ({ ...f, direction: v }))}
+                                    onChange={v => setForm((f: any) => ({ ...f, direction: v }))}
                                     options={DIRECTIONS}
                                     labelMap={DIR_LABEL}
                                 />
@@ -988,26 +988,26 @@ function PriceMatrixPanel({ project, canEdit, onClose }: { project: Project; can
                                 <label className="block text-xs text-[var(--text-tertiary)] mb-1">Loại phòng</label>
                                 <SelectDropdown
                                     value={form.bedroom_type}
-                                    onChange={v => setForm((f) => ({ ...f, bedroom_type: v }))}
+                                    onChange={v => setForm((f: any) => ({ ...f, bedroom_type: v }))}
                                     options={BEDROOM_TYPES}
                                     labelMap={BEDROOM_LABEL}
                                 />
                             </div>
                             <div>
                                 <label className="block text-xs text-[var(--text-tertiary)] mb-1">Giá gốc (tr/m²)</label>
-                                <input type="number" min={0} step={0.01} value={form.base_price_sqm} onChange={e => setForm((f) => ({ ...f, base_price_sqm: e.target.value }))}
+                                <input type="number" min={0} step={0.01} value={form.base_price_sqm} onChange={e => setForm((f: any) => ({ ...f, base_price_sqm: e.target.value }))}
                                     placeholder="VD: 85.5"
                                     className="w-full h-8 px-2 text-xs border border-[var(--glass-border)] rounded-lg bg-[var(--bg-app)] text-[var(--text-primary)] focus:outline-none focus:ring-1 focus:ring-emerald-400" />
                             </div>
                             <div>
                                 <label className="block text-xs text-[var(--text-tertiary)] mb-1">Điều chỉnh (%)</label>
-                                <input type="number" step={0.1} value={form.adjustment_pct} onChange={e => setForm((f) => ({ ...f, adjustment_pct: e.target.value }))}
+                                <input type="number" step={0.1} value={form.adjustment_pct} onChange={e => setForm((f: any) => ({ ...f, adjustment_pct: e.target.value }))}
                                     placeholder="0"
                                     className="w-full h-8 px-2 text-xs border border-[var(--glass-border)] rounded-lg bg-[var(--bg-app)] text-[var(--text-primary)] focus:outline-none focus:ring-1 focus:ring-emerald-400" />
                             </div>
                             <div className="col-span-2 sm:col-span-2">
                                 <label className="block text-xs text-[var(--text-tertiary)] mb-1">Ghi chú</label>
-                                <input value={form.notes ?? ''} onChange={e => setForm((f) => ({ ...f, notes: e.target.value }))}
+                                <input value={form.notes ?? ''} onChange={e => setForm((f: any) => ({ ...f, notes: e.target.value }))}
                                     placeholder="VD: Tầng cao view kênh đào, tăng giá 5%"
                                     className="w-full h-8 px-2 text-xs border border-[var(--glass-border)] rounded-lg bg-[var(--bg-app)] text-[var(--text-primary)] focus:outline-none focus:ring-1 focus:ring-emerald-400" />
                             </div>
@@ -1929,7 +1929,7 @@ function ProjectListingsPanel({ project, canCreate, isAdmin, userRole, onClose, 
             const s = (l.status || '').toUpperCase() as keyof typeof c;
             if (s in c) c[s]++;
         }
-        setStats((prev) => prev ? {
+        setStats((prev: any) => prev ? {
             ...prev,
             availableCount: c.AVAILABLE,
             holdCount:      c.HOLD,

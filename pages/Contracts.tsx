@@ -7,7 +7,7 @@ import { ContractModal } from '../components/ContractModal';
 import { Dropdown } from '../components/Dropdown';
 import { ConfirmModal } from '../components/ConfirmModal';
 import { SeoHead } from '../components/SeoHead';
-const useDraggableScroll = (ref: React.RefObject<HTMLDivElement>, trigger?: any) => {
+const useDraggableScroll = (ref: React.RefObject<HTMLDivElement | null>, trigger?: any) => {
     useEffect(() => {
         const node = ref.current;
         if (!node) return;

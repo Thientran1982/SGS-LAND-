@@ -712,6 +712,9 @@ app.use(globalMutationAudit);
 
               // 3e) INSERT ADMIN user (cùng transaction → atomic). Set tenant context để
               //     RLS policy đánh giá đúng + cột tenant_id lấy từ current_setting.
+              if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(newTenantId)) {
+                throw new Error('Invalid newTenantId format (expected UUID) before SET LOCAL app.current_tenant_id');
+              }
               await client.query(`SET LOCAL app.current_tenant_id = '${newTenantId}'`);
               const userInsert = await client.query(
                 `INSERT INTO users

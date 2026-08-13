@@ -78,7 +78,7 @@ const formatSource = (source: string, t: (k: string) => string): string => {
 };
 // --- HOOK: DRAGGABLE SCROLL (Desktop) ---
 // Enhanced to accept a dependency trigger (like viewMode) to re-bind listeners
-const useDraggableScroll = (ref: React.RefObject<HTMLDivElement>, trigger?: any) => {
+const useDraggableScroll = (ref: React.RefObject<HTMLDivElement | null>, trigger?: any) => {
     useEffect(() => {
         const node = ref.current;
         if (!node) return;
@@ -310,7 +310,7 @@ const LeadRow = memo(({ lead, isSelected, onSelect, onClick, onProposal, onDupli
                 <td className={`px-4 ${paddingY} text-xs text-[var(--text-tertiary)] dark:text-slate-400 whitespace-nowrap`}>
                     <div className="flex items-center gap-1.5">
                         {ICONS.USER}
-                        {lead.assignedToName || users.find(u => u.value === lead.assignedTo)?.label || t('inbox.unassigned')}
+                        {lead.assignedToName || users.find((u: any) => u.value === lead.assignedTo)?.label || t('inbox.unassigned')}
                     </div>
                 </td>
             )}
@@ -1424,7 +1424,7 @@ export const Leads: React.FC = () => {
                                             <div className="text-2xs font-bold text-[var(--text-tertiary)] uppercase mb-0.5">{t('leads.score')}</div>
                                             <div className="flex items-center justify-end gap-1.5">
                                                 <div className="w-12 h-1.5 bg-[var(--glass-surface-hover)] rounded-full overflow-hidden">
-                                                    <div className={`h-full rounded-full ${lead.score?.score >= 70 ? 'bg-emerald-500' : lead.score?.score >= 40 ? 'bg-amber-500' : 'bg-rose-500'}`} style={{ width: `${lead.score?.score || 0}%` }} />
+                                                    <div className={`h-full rounded-full ${(lead.score?.score || 0) >= 70 ? 'bg-emerald-500' : (lead.score?.score || 0) >= 40 ? 'bg-amber-500' : 'bg-rose-500'}`} style={{ width: `${lead.score?.score || 0}%` }} />
                                                 </div>
                                                 <span className="text-xs font-bold text-[var(--text-primary)]">{lead.score?.score || 0}</span>
                                             </div>

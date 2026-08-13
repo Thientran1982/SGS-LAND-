@@ -268,7 +268,7 @@ export const ApprovalInbox: React.FC = () => {
                     leadIds.length ? Promise.all(leadIds.map(id => db.getLeadById(id))) : []
                 ]);                
                 const listMap: Record<string, Listing> = {};
-                listRes.data.forEach(l => listMap[l.id] = l);
+                listRes.data.forEach((l: any) => listMap[l.id] = l);
                 setListings(listMap);
                 const leadMap: Record<string, Lead> = {};
                 leadRes.forEach(l => { if (l) leadMap[l.id] = l; });

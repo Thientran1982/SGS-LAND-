@@ -133,8 +133,7 @@ COMMISSION_RATE = "0.02"
 MARKET_CACHE_TTL_HOURS = "6"
 BREVO_FROM_EMAIL = "noreply@sgsland.vn"
 BREVO_FROM_NAME = "SGS LAND"
-EMAIL_WEBHOOK_TOKEN = "sgs-test-2026"
-INITIAL_ADMIN_PASSWORD_HASH = "$2b$12$rMWDtnPG8BdssWxA1kTgC.z563nD/musE8Hs1qeMck20jLYa4z0Ue"
+# EMAIL_WEBHOOK_TOKEN va INITIAL_ADMIN_PASSWORD_HASH da bi xoa 2026-08-13: khong duoc code nao tham chieu (dead config), va gia tri that da bi commit vao git history truoc do. Neu can dung that, dat qua Replit Secrets, khong ghi truc tiep o day.
 ALLOWED_ORIGINS = "https://sgsland.vn,https://www.sgsland.vn"
 
 [userenv.development]

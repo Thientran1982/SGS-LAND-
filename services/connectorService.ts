@@ -100,7 +100,7 @@ class ConnectorService {
         const config = configs.find(c => c.id === connectorId);        
         if (!config) throw new Error("Connector config not found");
         if (config.status !== 'ACTIVE') throw new Error("Connector is PAUSED or DISABLED");
-        const adapter = ADAPTER_REGISTRY[config.type];
+        const adapter = ADAPTER_REGISTRY[config.type as ConnectorType];
         if (!adapter) throw new Error(`No adapter registered for type: ${config.type}`);
         // 2. Determine Compliance Policy (Dynamic PII Redaction)
         const compliance = await db.getComplianceConfig();

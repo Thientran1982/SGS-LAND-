@@ -955,8 +955,8 @@ export const AdminUsers: React.FC = () => {
                 isOpen={!!userToStatusChange}
                 title={t('common.confirm')}
                 message={userToStatusChange?.status === CommonStatus.ACTIVE 
-                    ? t('admin.users.confirm_deactivate', { name: userToStatusChange?.name }) 
-                    : t('admin.users.confirm_activate', { name: userToStatusChange?.name })}
+                    ? t('admin.users.confirm_deactivate', { name: userToStatusChange?.name ?? '' }) 
+                    : t('admin.users.confirm_activate', { name: userToStatusChange?.name ?? '' })}
                 confirmLabel={userToStatusChange?.status === CommonStatus.ACTIVE ? t('common.disabled') : t('common.enabled')}
                 cancelLabel={t('common.cancel')}
                 onConfirm={confirmStatusChange}

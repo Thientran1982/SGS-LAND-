@@ -1225,7 +1225,7 @@ LOẠI HÌNH BĐS → property_type (chuẩn hoá):
             plan.confidence = rawConf > 1 ? Math.max(0, Math.min(1, rawConf / 100)) : Math.max(0, Math.min(1, rawConf));
             const confPct = Math.round(plan.confidence * 100);
             const secIntentsArr = Array.isArray(plan.additional_intents)
-                ? plan.additional_intents.filter(i => i && i !== plan.next_step).slice(0, 2)
+                ? plan.additional_intents.filter((i: any) => i && i !== plan.next_step).slice(0, 2)
                 : [];
             const secIntentsStr = secIntentsArr.length > 0 ? ` [+ ${secIntentsArr.join(', ')}]` : '';
             this.updateTrace(state.trace, `→ ${plan.next_step}${secIntentsStr} (conf: ${confPct}%)${entityStr}`, GENAI_CONFIG.MODELS.ROUTER);
@@ -1341,7 +1341,7 @@ LOẠI HÌNH BĐS → property_type (chuẩn hoá):
         // Node 2a: Inventory Agent
         graph.addNode('INVENTORY_AGENT', async (state) => {
             state.trace.push({ id: 'INVENTORY', node: 'INVENTORY_AGENT', status: 'RUNNING', timestamp: Date.now() });
-            const extraction = state.plan.extraction || {};
+            const extraction = state.plan?.extraction || {};
             let budgetMax = extraction.budget_max;
             if (!budgetMax) budgetMax = parseBudgetFromMessage(state.userMessage);
             // ── Project-catalog lookup: resolve project name → project_code ────────────
@@ -1451,7 +1451,7 @@ ${favIds.size > 0 ? '5. Nếu có BĐS trùng watchlist: ghi chú "★ ĐÃ LƯU
         // Node 2b: Finance Agent
         graph.addNode('FINANCE_AGENT', async (state) => {
             state.trace.push({ id: 'FINANCE', node: 'FINANCE_AGENT', status: 'RUNNING', timestamp: Date.now() });
-            const extraction = state.plan.extraction || {};
+            const extraction = state.plan?.extraction || {};
 
             // ── Loan scenario detection ────────────────────────────────────────────
             const msg = state.userMessage.toLowerCase();
@@ -1574,7 +1574,7 @@ PHÂN TÍCH TÀI CHÍNH — KỊCH BẢN: ${loanScenario} (bullet point, max 180
         // Node 2c: Legal Agent
         graph.addNode('LEGAL_AGENT', async (state) => {
             state.trace.push({ id: 'LEGAL', node: 'LEGAL_AGENT', status: 'RUNNING', timestamp: Date.now() });
-            const extraction = state.plan.extraction || {};
+            const extraction = state.plan?.extraction || {};
             const term = extraction.legal_concern || 'PINK_BOOK';
             const legalInfo = await TOOL_EXECUTOR.get_legal_info(state.tenantId, term);
 
@@ -1646,7 +1646,7 @@ Viết tiếng Việt, bullet point, tối đa 180 từ. Tuyệt đối không t
         graph.addNode('SALES_AGENT', async (state) => {
             state.trace.push({ id: 'SALES', node: 'SALES_AGENT', status: 'RUNNING', timestamp: Date.now() });
             const location = await TOOL_EXECUTOR.get_showroom_location(state.tenantId);
-            const extraction = state.plan.extraction || {};
+            const extraction = state.plan?.extraction || {};
 
             // ── Visitor profile & time preference detection ────────────────────────
             const msg = state.userMessage.toLowerCase();
@@ -1754,7 +1754,7 @@ Viết tiếng Việt, bullet point, thực tế, tối đa 150 từ. Đây là 
         // Node 2e: Marketing Agent
         graph.addNode('MARKETING_AGENT', async (state) => {
             state.trace.push({ id: 'MARKETING', node: 'MARKETING_AGENT', status: 'RUNNING', timestamp: Date.now() });
-            const extraction = state.plan.extraction || {};
+            const extraction = state.plan?.extraction || {};
             const marketingInfo = await TOOL_EXECUTOR.get_marketing_info(state.tenantId, extraction.marketing_campaign);
 
             // ── Buyer segmentation for campaign matching ───────────────────────────
@@ -1823,7 +1823,7 @@ Viết tiếng Việt, bullet point, thực tế, tối đa 160 từ.`;
         // Node 2f: Contract Agent
         graph.addNode('CONTRACT_AGENT', async (state) => {
             state.trace.push({ id: 'CONTRACT', node: 'CONTRACT_AGENT', status: 'RUNNING', timestamp: Date.now() });
-            const extraction = state.plan.extraction || {};
+            const extraction = state.plan?.extraction || {};
             const contractType = extraction.contract_type || 'Sales';
             const contractInfo = await TOOL_EXECUTOR.get_contract_info(state.tenantId, contractType);
 

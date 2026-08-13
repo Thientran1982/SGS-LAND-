@@ -191,8 +191,8 @@ interface ListingCardProps {
     t: any;
     formatCurrency: (n: number) => string;
     onToggleFavorite: (id: string) => void;
-    onEdit: (item: Listing) => void;
-    onDelete: (id: string) => void;
+    onEdit?: (item: Listing) => void;
+    onDelete?: (id: string) => void;
     onCopy?: (code: string) => void;
     onDuplicate?: (id: string) => void;
     onClick?: () => void;
@@ -323,8 +323,8 @@ export const ListingCard = memo(({ item, t, formatCurrency, onToggleFavorite, on
                                 {attrs.legalStatus && <div className="w-px h-6 bg-[var(--glass-surface-hover)] dark:bg-white/10 mx-1"></div>}
                                 <ListingActionMenu 
                                     listing={item}
-                                    onEdit={() => onEdit(item)}
-                                    onDelete={() => onDelete(item.id)}
+                                    onEdit={() => onEdit?.(item)}
+                                    onDelete={() => onDelete?.(item.id)}
                                     onCopy={onCopy}
                                     onDuplicate={() => onDuplicate && onDuplicate(item.id)}
                                     t={t}

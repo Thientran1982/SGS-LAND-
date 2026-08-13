@@ -72,7 +72,7 @@ function fmtTenor(min: number | null, max: number | null) {
   if (max) return `Tối đa ${toYr(max)}`;
   return `Từ ${toYr(min!)}`;
 }
-function getAuthHeaders() {
+function getAuthHeaders(): Record<string, string> {
   const token = localStorage.getItem('sgs_token') || sessionStorage.getItem('sgs_token');
   return token ? { Authorization: `Bearer ${token}` } : {};
 }
