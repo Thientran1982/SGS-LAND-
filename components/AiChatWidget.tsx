@@ -16,6 +16,8 @@ import { useSocket } from '../services/websocket';
 import { useTranslation } from '../services/i18n';
 import { MessageBubble } from './ChatUI';
 import { Interaction, Channel, Direction } from '../types';
+// Endpoint + ten su kien socket dung chung voi widget cua Next.js (packages/chat-widget).
+import { CHAT_ENDPOINTS, CHAT_SOCKET_EVENTS } from '@sgs/chat-widget';
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 const HOTLINE = '0971132378';
@@ -70,7 +72,7 @@ function hasEscalationKeyword(text: string): boolean {
 
 // ─── API helpers ──────────────────────────────────────────────────────────────
 async function publicCreateLead(name: string, phone: string, source = 'WIDGET') {
-    const res = await fetch('/api/public/leads', {
+    const res = await fetch(CHAT_ENDPOINTS.publicCreateLead, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ name, phone, source, stage: 'NEW' }),
@@ -85,7 +87,7 @@ async function publicSendMessage(
     direction: 'INBOUND' | 'OUTBOUND' = 'INBOUND',
     metadata?: object,
 ) {
-    const res = await fetch('/api/public/livechat/message', {
+    const res = await fetch(CHAT_ENDPOINTS.livechatMessage, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ leadId, content, direction, metadata: metadata || {} }),
@@ -96,7 +98,7 @@ async function publicSendMessage(
 }
 
 async function publicGetMessages(leadId: string) {
-    const res = await fetch(`/api/public/livechat/messages/${leadId}`);
+    const res = await fetch(CHAT_ENDPOINTS.livechatMessages(leadId));
     if (!res.ok) return null;
     return res.json() as Promise<{
         messages: Interaction[];
@@ -105,7 +107,7 @@ async function publicGetMessages(leadId: string) {
 }
 
 async function apiCaptureLead(leadId: string | null, data: { name: string; phone: string; notes?: string }) {
-    const res = await fetch('/api/public/livechat/capture-lead', {
+    const res = await fetch(CHAT_ENDPOINTS.livechatCaptureLead, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ leadId, ...data }),
@@ -115,7 +117,7 @@ async function apiCaptureLead(leadId: string | null, data: { name: string; phone
 }
 
 async function apiEscalateToHuman(leadId: string, reason: string, priority: 'normal' | 'high' | 'urgent' = 'normal') {
-    const res = await fetch('/api/public/livechat/escalate', {
+    const res = await fetch(CHAT_ENDPOINTS.livechatEscalate, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ leadId, reason, priority }),
@@ -124,7 +126,7 @@ async function apiEscalateToHuman(leadId: string, reason: string, priority: 'nor
 }
 
 async function apiBookViewing(leadId: string, dateText: string, notes?: string) {
-    const res = await fetch('/api/public/livechat/book-viewing', {
+    const res = await fetch(CHAT_ENDPOINTS.livechatBookViewing, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ leadId, dateText, notes }),
@@ -239,7 +241,7 @@ export function AiChatWidget({ isOpen, onClose, initialQuery }: AiChatWidgetProp
     // ── Socket: join room & handle events ──
     useEffect(() => {
         if (!leadId) return;
-        socket.emit('join_livechat_room', leadId);
+        socket.emit(CHAT_SOCKET_EVENTS.joinRoom, leadId);
         const onMsg = (data: any) => {
             const msg: Interaction = data?.message ?? data;
             if (!msg || msg.leadId !== leadId || isSysMsg(msg)) return;
@@ -262,12 +264,12 @@ export function AiChatWidget({ isOpen, onClose, initialQuery }: AiChatWidgetProp
             setModeNotice(toHuman ? 'HUMAN_TAKEOVER' : 'AI_ACTIVE');
             setIsThinking(false);
         };
-        socket.on('receive_message', onMsg);
-        socket.on('ai_mode_changed', onMode);
+        socket.on(CHAT_SOCKET_EVENTS.receiveMessage, onMsg);
+        socket.on(CHAT_SOCKET_EVENTS.aiModeChanged, onMode);
         return () => {
-            socket.off('receive_message', onMsg);
-            socket.off('ai_mode_changed', onMode);
-            socket.emit('leave_room', leadId);
+            socket.off(CHAT_SOCKET_EVENTS.receiveMessage, onMsg);
+            socket.off(CHAT_SOCKET_EVENTS.aiModeChanged, onMode);
+            socket.emit(CHAT_SOCKET_EVENTS.leaveRoom, leadId);
         };
     }, [leadId, socket]);
 
@@ -346,7 +348,7 @@ export function AiChatWidget({ isOpen, onClose, initialQuery }: AiChatWidgetProp
                 saveSessionMsgs(next);
                 return next;
             });
-            socket.emit('send_message', { room: leadId, message: msg });
+            socket.emit(CHAT_SOCKET_EVENTS.sendMessage, { room: leadId, message: msg });
         } catch {
             const temp: Interaction = {
                 id: `temp-${Date.now()}`,
@@ -373,7 +375,7 @@ export function AiChatWidget({ isOpen, onClose, initialQuery }: AiChatWidgetProp
         if (autoReplyTimer.current) clearTimeout(autoReplyTimer.current);
         autoReplyTimer.current = setTimeout(async () => {
             try {
-                const res = await fetch('/api/public/ai/livechat', {
+                const res = await fetch(CHAT_ENDPOINTS.minhReply, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ leadId, message: content, lang: language }),
@@ -392,7 +394,7 @@ export function AiChatWidget({ isOpen, onClose, initialQuery }: AiChatWidgetProp
                             }
                             return next;
                         });
-                        socket.emit('send_message', { room: leadId, message: aiMsg });
+                        socket.emit(CHAT_SOCKET_EVENTS.sendMessage, { room: leadId, message: aiMsg });
                     }
                 } else {
                     const fallback = await publicSendMessage(leadId, t('livechat.auto_reply'), 'OUTBOUND', { isAgent: true }).catch(() => null);

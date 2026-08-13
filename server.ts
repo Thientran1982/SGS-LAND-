@@ -52,7 +52,7 @@ import { createAdvisorRoutes } from "./server/routes/advisorRoutes";
 import { createProjectRoutes } from "./server/routes/projectRoutes";
 import { createCommissionRoutes } from "./server/routes/commissionRoutes";
 import { createTenantRoutes } from "./server/routes/tenantRoutes";
-import { resolveTenantByHost, startCustomDomainVerifyCron } from "./server/services/tenantBrandingService";
+import { resolveTenantByHost, startCustomDomainVerifyCron, stopCustomDomainVerifyCron } from "./server/services/tenantBrandingService";
 import { createTaskRoutes } from "./server/routes/taskRoutes";
 import { createDepartmentRoutes } from "./server/routes/departmentRoutes";
 import { createTaskReportRoutes } from "./server/routes/taskReportRoutes";
@@ -71,15 +71,15 @@ import { createChatFollowUpCronRouter } from "./server/routes/chatFollowUpCronRo
 import { createBackupRouter } from "./server/routes/backupRoutes";
 import { createListingPriceRefreshRouter } from "./server/routes/listingPriceRefreshRoutes";
 import { createTaskReminderCronRouter } from "./server/routes/taskReminderCronRoutes";
-import { createCampaignSchedulerCronRouter, startCampaignSchedulerCron } from "./server/routes/campaignSchedulerCronRoutes";
-import { startBookingLifecycleCron } from "./server/services/bookingLifecycleService";
+import { createCampaignSchedulerCronRouter, startCampaignSchedulerCron, stopCampaignSchedulerCron } from "./server/routes/campaignSchedulerCronRoutes";
+import { startBookingLifecycleCron, stopBookingLifecycleCron } from "./server/services/bookingLifecycleService";
 import { createGeoMonitorCronRouter } from "./server/routes/geoMonitorCronRoutes";
 import { createBuyerPushRoutes } from "./server/routes/buyerPushRoutes";
 import { createBuyerAuthRoutes } from "./server/routes/buyerAuthRoutes";
 import { createBuyerRoutes } from "./server/routes/buyerRoutes";
 import { createConversationRoutes, createAgentConversationRoutes } from "./server/routes/conversationRoutes";
 import { createBookingRoutes } from "./server/routes/bookingRoutes";
-import { startBuyerPushCron } from "./server/services/pushNotificationService";
+import { startBuyerPushCron, stopBuyerPushCron } from "./server/services/pushNotificationService";
 import { createCampaignRouter } from "./server/routes/campaignRoutes";
 import { createErrorLogRoutes, initErrorLogRepo } from "./server/routes/errorLogRoutes";
 import { marketDataService } from "./server/services/marketDataService";
@@ -1474,6 +1474,14 @@ app.use(globalMutationAudit);
       });
       return;
     }
+
+    // RELIABILITY FIX (audit Medium): khong handler nao khop voi upgrade request nay.
+    // Truoc day socket bi bo lung (khong destroy) -> ro ri ket noi + file descriptor
+    // cho den khi het TCP timeout. Tra loi 404 roi dong han socket.
+    try {
+      socket.write('HTTP/1.1 404 Not Found\r\nConnection: close\r\n\r\n');
+    } catch (e) { /* socket co the da dong */ }
+    socket.destroy();
   });
 
   // Setup BullMQ Worker — capture instance so we can close it on shutdown
@@ -2385,9 +2393,12 @@ app.get('/api/public/listings/:slugId', apiRateLimit, async (req: express.Reques
       const history = await interactionRepository.findByLead(PUBLIC_TENANT, leadId);
       const historyWithLatest = history; // includes the already-saved visitor message
 
-      const { aiService } = await import('./server/ai');
-      const t = serverT(lang || 'vn');
-      const result = await aiService.processMessage(lead, msgContent, historyWithLatest, t, PUBLIC_TENANT, lang || 'vn');
+      const { aiService, detectMessageLang } = await import('./server/ai');
+      // Reply in the language the customer actually typed (Vietnamese without diacritics too),
+      // not just the UI language the widget sent.
+      const replyLang = detectMessageLang(msgContent, lang || 'vn');
+      const t = serverT(replyLang);
+      const result = await aiService.processMessage(lead, msgContent, historyWithLatest, t, PUBLIC_TENANT, replyLang);
 
       const aiReply = await interactionRepository.create(PUBLIC_TENANT, {
         leadId,
@@ -6320,7 +6331,15 @@ app.use('/api/v1', (req, _res, next) => {
     }
   });
 
+  // RELIABILITY FIX (audit Low): shutdown phai idempotent - SIGTERM roi SIGINT
+  // (hoac supervisor gui lai) khong duoc chay lai toan bo tien trinh dong ket noi.
+  let shuttingDown = false;
   const shutdown = async (signal: string) => {
+    if (shuttingDown) {
+      logger.warn(`Received ${signal} while already shutting down - ignored.`);
+      return;
+    }
+    shuttingDown = true;
     logger.info(`Received ${signal}. Shutting down gracefully...`);
     // Close Socket.io first — notifies clients of disconnect before HTTP closes
     try {
@@ -6341,6 +6360,15 @@ app.use('/api/v1', (req, _res, next) => {
         marketDataService.stop();
         logger.info('Market data service stopped.');
       } catch (e) { /* ignore */ }
+      // RELIABILITY FIX (audit Medium): dung TAT CA in-process cron khi shutdown,
+      // truoc day chi co marketDataService duoc stop() nen cac timer khac van chay
+      // trong luc pool dang dong -> log loi ECONNRESET luc tat may.
+      try { stopBookingLifecycleCron(); } catch (e) { /* ignore */ }
+      try { stopBuyerPushCron(); } catch (e) { /* ignore */ }
+      try { stopCustomDomainVerifyCron(); } catch (e) { /* ignore */ }
+      try { stopCampaignSchedulerCron(); } catch (e) { /* ignore */ }
+      try { priceCalibrationService.stop(); } catch (e) { /* ignore */ }
+      logger.info('In-process cron timers stopped.');
       try {
         await pool.end();
         logger.info('Database pool closed.');

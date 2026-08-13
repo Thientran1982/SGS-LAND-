@@ -5,6 +5,9 @@
 
 @import "tailwindcss";
 
+/* Quet class Tailwind trong package dung chung (ngoai root cua app Next). */
+@source "../../../packages/chat-widget/src";
+
 /* ─── Design Tokens — Light Mode ─────────────────────────── */
 @layer base {
   :root,

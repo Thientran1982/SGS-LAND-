@@ -53,6 +53,27 @@ WATCHDOG_INTERVAL_SECS="${WATCHDOG_INTERVAL_SECS:-30}"
 WATCHDOG_TIMEOUT_SECS="${WATCHDOG_TIMEOUT_SECS:-5}"
 WATCHDOG_MAX_FAILURES="${WATCHDOG_MAX_FAILURES:-3}"
 WATCHDOG_GRACE_SECS="${WATCHDOG_GRACE_SECS:-90}"
+
+# 2026-08-12 PRODUCTION OUTAGE FIX (VM memory saturation)
+#   Evidence: Reserved VM = 0.5 vCPU / 2 GiB. Deployment "Infrastructure monitoring"
+#   showed memory pinned at ~1875 MiB (~92% of the VM) with CPU bursting to 150% while
+#   stdout logging AND HTTP responses stopped dead at 2026-08-11T21:36:08Z. The Google
+#   load balancer still completed TCP + TLS to the VM but no HTTP byte ever came back,
+#   i.e. both Node processes were alive and livelocked in GC, never exiting, so neither
+#   restart loop ever fired and downtime was unbounded (10h+).
+#   Three gaps this closes:
+#     1) Neither Node process had a heap cap, so backend + frontend defaults together
+#        could claim more memory than the whole VM has.
+#     2) The watchdog only probed the BACKEND. The FRONTEND owns the public port
+#        (5000 -> externalPort 80), so a wedged frontend was completely invisible.
+#     3) Nothing watched the VM memory floor, so the thrashing state was never broken.
+FRONTEND_URL="http://localhost:${FRONTEND_PORT}"
+FRONTEND_HEALTH_PATH="${FRONTEND_HEALTH_PATH:-/api/live}"
+BACKEND_MAX_OLD_SPACE_MB="${BACKEND_MAX_OLD_SPACE_MB:-384}"
+FRONTEND_MAX_OLD_SPACE_MB="${FRONTEND_MAX_OLD_SPACE_MB:-512}"
+MEMORY_GUARD_INTERVAL_SECS="${MEMORY_GUARD_INTERVAL_SECS:-60}"
+MEMORY_GUARD_MIN_AVAIL_MB="${MEMORY_GUARD_MIN_AVAIL_MB:-192}"
+MEMORY_GUARD_MAX_STRIKES="${MEMORY_GUARD_MAX_STRIKES:-2}"
 BACKOFF_MAX_SECS="${BACKOFF_MAX_SECS:-30}"
 SHUTDOWN_GRACE_SECS="${SHUTDOWN_GRACE_SECS:-15}"
 
@@ -137,7 +158,9 @@ run_backend_loop() {
   local restarts=0 pid exit_code sleep_secs
   while ! is_shutting_down; do
     log "starting backend (node server.js) on port ${BACKEND_PORT} (restart #${restarts})"
-    PORT="${BACKEND_PORT}" NODE_ENV=production node server.js &
+    PORT="${BACKEND_PORT}" NODE_ENV=production \
+      NODE_OPTIONS="--max-old-space-size=${BACKEND_MAX_OLD_SPACE_MB} ${NODE_OPTIONS:-}" \
+      node server.js &
     pid=$!
     echo "$pid" > "$BACKEND_PID_FILE"
     wait "$pid"
@@ -157,7 +180,9 @@ run_frontend_loop() {
   sleep 5
   while ! is_shutting_down; do
     log "starting frontend (next start) on port ${FRONTEND_PORT} (restart #${restarts})"
-    BACKEND_URL="${BACKEND_URL}" npx --prefix apps/nextjs next start apps/nextjs -p "${FRONTEND_PORT}" &
+    BACKEND_URL="${BACKEND_URL}" NODE_ENV=production \
+      NODE_OPTIONS="--max-old-space-size=${FRONTEND_MAX_OLD_SPACE_MB} ${NODE_OPTIONS:-}" \
+      npx --prefix apps/nextjs next start apps/nextjs -p "${FRONTEND_PORT}" &
     pid=$!
     echo "$pid" > "$FRONTEND_PID_FILE"
     wait "$pid"
@@ -174,6 +199,83 @@ run_frontend_loop() {
 # Watchdog: catches the "alive but wedged" case that an exit-code-only
 # supervisor is blind to. Probes /health (liveness only, no DB call) so a Neon
 # outage does NOT trigger a pointless restart loop.
+# Watchdog for the FRONTEND, i.e. the process that owns the PUBLIC port
+# (localPort 5000 -> externalPort 80 in .replit). The backend watchdog above cannot see a
+# wedged frontend, and a wedged frontend is exactly what the load balancer hangs on.
+# It probes ${FRONTEND_HEALTH_PATH}, a Next route handler that touches neither the Express
+# backend nor Neon/Upstash, so a database outage cannot cause a pointless restart loop.
+run_frontend_watchdog_loop() {
+  local failures=0 pid
+  sleep "$WATCHDOG_GRACE_SECS"
+  while ! is_shutting_down; do
+    sleep "$WATCHDOG_INTERVAL_SECS"
+    is_shutting_down && break
+    pid="$(read_pid "$FRONTEND_PID_FILE")"
+    if ! alive "$pid"; then
+      failures=0
+      continue
+    fi
+    if curl -fsS -m "$WATCHDOG_TIMEOUT_SECS" -o /dev/null "${FRONTEND_URL}${FRONTEND_HEALTH_PATH}"; then
+      if [ "$failures" -gt 0 ]; then
+        log "watchdog: frontend ${FRONTEND_HEALTH_PATH} recovered after ${failures} failure(s)"
+      fi
+      failures=0
+    else
+      failures=$((failures + 1))
+      log "watchdog: frontend ${FRONTEND_HEALTH_PATH} FAILED (${failures}/${WATCHDOG_MAX_FAILURES}) pid=${pid}"
+      if [ "$failures" -ge "$WATCHDOG_MAX_FAILURES" ]; then
+        log "watchdog: frontend alive but not answering - SIGKILL pid ${pid} to force a restart"
+        kill -KILL "$pid" 2>/dev/null
+        failures=0
+        sleep 10
+      fi
+    fi
+  done
+}
+
+rss_mb() {
+  local pid="${1:-}" kb
+  [ -n "$pid" ] || { echo 0; return; }
+  kb="$(ps -o rss= -p "$pid" 2>/dev/null | tr -d " ")"
+  [ -n "$kb" ] || { echo 0; return; }
+  echo $((kb / 1024))
+}
+
+# Memory guard. The outage signature was a VM with almost no memory left: Node does not
+# die in that state, it livelocks in GC, so no exit code ever reaches the restart loops and
+# no HTTP response is ever produced. Recycling the frontend (the larger consumer) breaks
+# the spiral in ~2 minutes instead of never.
+run_memory_guard_loop() {
+  local strikes=0 avail_kb avail_mb be fe
+  sleep "$WATCHDOG_GRACE_SECS"
+  while ! is_shutting_down; do
+    sleep "$MEMORY_GUARD_INTERVAL_SECS"
+    is_shutting_down && break
+    avail_kb="$(awk "/^MemAvailable:/ {print \$2; exit}" /proc/meminfo 2>/dev/null)"
+    [ -n "$avail_kb" ] || continue
+    avail_mb=$((avail_kb / 1024))
+    if [ "$avail_mb" -ge "$MEMORY_GUARD_MIN_AVAIL_MB" ]; then
+      strikes=0
+      continue
+    fi
+    strikes=$((strikes + 1))
+    be="$(read_pid "$BACKEND_PID_FILE")"
+    fe="$(read_pid "$FRONTEND_PID_FILE")"
+    log "memory guard: MemAvailable=${avail_mb}MB under ${MEMORY_GUARD_MIN_AVAIL_MB}MB (${strikes}/${MEMORY_GUARD_MAX_STRIKES}) backend_rss=$(rss_mb "$be")MB frontend_rss=$(rss_mb "$fe")MB"
+    if [ "$strikes" -ge "$MEMORY_GUARD_MAX_STRIKES" ]; then
+      if alive "$fe"; then
+        log "memory guard: recycling frontend pid ${fe} to reclaim memory"
+        kill -KILL "$fe" 2>/dev/null
+      elif alive "$be"; then
+        log "memory guard: frontend already down - recycling backend pid ${be}"
+        kill -KILL "$be" 2>/dev/null
+      fi
+      strikes=0
+      sleep 30
+    fi
+  done
+}
+
 run_watchdog_loop() {
   local failures=0 pid
   sleep "$WATCHDOG_GRACE_SECS"
@@ -211,9 +313,14 @@ FRONTEND_LOOP_PID=$!
 
 if command -v curl >/dev/null 2>&1; then
   run_watchdog_loop &
+  run_frontend_watchdog_loop &
   log "watchdog enabled (every ${WATCHDOG_INTERVAL_SECS}s, ${WATCHDOG_MAX_FAILURES} strikes, probe ${BACKEND_URL}/health)"
 else
   log "curl not found  watchdog disabled"
 fi
+
+run_memory_guard_loop &
+log "memory guard enabled (every ${MEMORY_GUARD_INTERVAL_SECS}s, floor ${MEMORY_GUARD_MIN_AVAIL_MB}MB MemAvailable, ${MEMORY_GUARD_MAX_STRIKES} strikes)"
+log "heap caps: backend=${BACKEND_MAX_OLD_SPACE_MB}MB frontend=${FRONTEND_MAX_OLD_SPACE_MB}MB"
 
 wait "$BACKEND_LOOP_PID" "$FRONTEND_LOOP_PID"

@@ -262,6 +262,123 @@ function getClient(): GoogleGenAI {
   return _client;
 }
 
+/**
+ * Gemini tra ve HTTP 429 ("You exceeded your current quota") theo tung dot.
+ * Do duoc 2026-08-11: 2/8 lan goi lien tiep that bai 429 du API key hop le.
+ * Truoc day moi loi deu bi bat thanh 500 + thong bao chung, nen widget hien
+ * "AI tu van gap su co" va khach tuong agent da chet. Retry co backoff.
+ */
+function statusOf(err: any): number {
+  const s = err?.status ?? err?.code;
+  if (typeof s === 'number') return s;
+  const msg = String(err?.message || '');
+  const m = msg.match(/"code"\s*:\s*(\d{3})/) || msg.match(/\b(429|500|502|503|504)\b/);
+  return m ? Number(m[1]) : 0;
+}
+
+const RETRYABLE_STATUS = new Set([429, 500, 502, 503, 504]);
+
+// Khi Gemini tra 429 (het quota RPM/RPD) thi retry lien tuc chi lam can quota
+// nhanh hon. Do duoc 2026-08-11: 8 request lien tiep x 3 lan thu = 7/8 bi 429.
+// Vi vay mo circuit breaker: trong thoi gian cooldown, tra 429 ngay lap tuc
+// ma khong goi Gemini nua.
+let quotaBlockedUntil = 0;
+
+function retryDelaySeconds(err: any): number {
+  const m = String(err?.message || '').match(/"retryDelay"\s*:\s*"(\d+)s"/);
+  return m ? Number(m[1]) : 0;
+}
+
+function quotaError(seconds: number): Error & { status: number } {
+  const e = new Error(`Gemini quota cooldown, retry after ${seconds}s`) as Error & { status: number };
+  e.status = 429;
+  return e;
+}
+
+export function landingAiQuotaCooldownMs(): number {
+  return Math.max(0, quotaBlockedUntil - Date.now());
+}
+
+/**
+ * Free tier cua Gemini gioi han RPM rat thap: do 2026-08-12, goi lan 2 trong
+ * cung 6 giay da tra 429 (retryAfter 59s). Truoc day 429 lam khoa toan bo
+ * widget bang cooldown -> khach thay "tro ly qua tai" va tuong chat da chet.
+ * Nay ta xoay vong qua cac model du phong (moi model 1 quota rieng) truoc khi
+ * chiu thua. Ghi de bang env LANDING_AI_MODELS neu can.
+ */
+const MODEL_CHAIN: string[] = String(
+  process.env.LANDING_AI_MODELS ||
+    'gemini-2.5-flash,gemini-flash-latest,gemini-flash-lite-latest'
+)
+  .split(',')
+  .map((m) => m.trim())
+  .filter(Boolean);
+
+/** Model da tung tu choi thinkingConfig -> lan sau khoi gui cho do 1 vong 400. */
+const NO_THINKING_MODELS = new Set<string>();
+
+async function generateWithRetry(params: any, attempts = 2): Promise<any> {
+  const cooldown = landingAiQuotaCooldownMs();
+  if (cooldown > 0) throw quotaError(Math.ceil(cooldown / 1000));
+
+  const models = [params?.model, ...MODEL_CHAIN].filter(
+    (m, idx, arr) => Boolean(m) && arr.indexOf(m) === idx
+  ) as string[];
+
+  let lastErr: any;
+  for (const model of models) {
+    let attemptParams: any = { ...params, model };
+    let strippedThinking = false;
+    if (NO_THINKING_MODELS.has(model) && attemptParams?.config?.thinkingConfig) {
+      const cfg0 = { ...attemptParams.config };
+      delete cfg0.thinkingConfig;
+      attemptParams = { ...attemptParams, config: cfg0 };
+      strippedThinking = true;
+    }
+    for (let i = 0; i < attempts; i++) {
+      try {
+        const result = await getClient().models.generateContent(attemptParams);
+        if (model !== models[0]) logger.warn(`[LandingAI] Tra loi bang model du phong ${model}`);
+        return result;
+      } catch (err: any) {
+        lastErr = err;
+        const st = statusOf(err);
+        // Gemini 3.x (gemini-flash-latest) khong chap nhan thinkingBudget: 0 ->
+        // 400 INVALID_ARGUMENT. Bo thinkingConfig roi goi lai chinh model do.
+        if (st === 400 && !strippedThinking && attemptParams?.config?.thinkingConfig) {
+          strippedThinking = true;
+          NO_THINKING_MODELS.add(model);
+          const cfg = { ...attemptParams.config };
+          delete cfg.thinkingConfig;
+          attemptParams = { ...attemptParams, config: cfg };
+          logger.warn(`[LandingAI] ${model} 400 - bo thinkingConfig va thu lai`);
+          i -= 1;
+          continue;
+        }
+        if (st === 429 || st === 404 || st === 400) {
+          logger.warn(`[LandingAI] ${model} tra ${st} - thu model du phong tiep theo`);
+          break;
+        }
+        if (RETRYABLE_STATUS.has(st) && i < attempts - 1) {
+          const backoff = 500 * Math.pow(2, i) + Math.floor(Math.random() * 200);
+          logger.warn(`[LandingAI] ${model} ${st} - retry sau ${backoff}ms`);
+          await new Promise((r) => setTimeout(r, backoff));
+          continue;
+        }
+        if (!RETRYABLE_STATUS.has(st)) throw err;
+        break;
+      }
+    }
+  }
+
+  if (statusOf(lastErr) === 429) {
+    const wait = retryDelaySeconds(lastErr) || 30;
+    quotaBlockedUntil = Date.now() + wait * 1000;
+    logger.warn(`[LandingAI] Tat ca model deu 429 - mo cooldown ${wait}s`);
+  }
+  throw lastErr;
+}
+
 export function createLandingAiRoutes(): Router {
   const router = Router();
 
@@ -318,7 +435,7 @@ export function createLandingAiRoutes(): Router {
         parts: [{ text: m.content }],
       }));
 
-      const result = await getClient().models.generateContent({
+      const result = await generateWithRetry({
         model: 'gemini-2.5-flash',
         contents,
         config: {
@@ -339,9 +456,31 @@ export function createLandingAiRoutes(): Router {
 
       return res.json({ ok: true, reply });
     } catch (err: any) {
-      logger.error(`[LandingAI] Error: ${err?.message || err}`);
+      const st = statusOf(err);
+      logger.error(`[LandingAI] Error status=${st}: ${err?.message || err}`);
+      // Phan biet loi tam thoi (quota/overload) voi loi that su, de widget
+      // biet nen retry thay vi hien thong bao "AI gap su co" vinh vien.
+      if (st === 429) {
+        res.setHeader('Retry-After', '20');
+        return res.status(429).json({
+          ok: false,
+          code: 'AI_QUOTA_EXCEEDED',
+          retryAfter: Math.max(5, Math.ceil(landingAiQuotaCooldownMs() / 1000)) || 20,
+          error: 'Trợ lý AI đang quá tải. Vui lòng thử lại sau vài giây hoặc gọi hotline 0971 132 378.',
+        });
+      }
+      if (st === 503 || st === 504) {
+        res.setHeader('Retry-After', '10');
+        return res.status(503).json({
+          ok: false,
+          code: 'AI_UNAVAILABLE',
+          retryAfter: 10,
+          error: 'Trợ lý AI tạm thời không khả dụng. Vui lòng thử lại sau ít phút.',
+        });
+      }
       return res.status(500).json({
         ok: false,
+        code: 'AI_ERROR',
         error: 'AI tư vấn gặp sự cố. Vui lòng thử lại hoặc gọi hotline 0971 132 378.',
       });
     }

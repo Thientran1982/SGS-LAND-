@@ -46,6 +46,12 @@
       ],
       "@/lib/*": [
         "./lib/*"
+      ],
+      "@sgs/chat-widget": [
+        "../../packages/chat-widget/src/index.ts"
+      ],
+      "@sgs/chat-widget/*": [
+        "../../packages/chat-widget/src/*"
       ]
     }
   },
@@ -55,7 +61,9 @@
     "**/*.tsx",
     ".next/types/**/*.ts",
     "../../../../types/**/*.ts",
-    "../../../../types.ts"
+    "../../../../types.ts",
+    "../../packages/chat-widget/src/**/*.ts",
+    "../../packages/chat-widget/src/**/*.tsx"
   ],
   "exclude": [
     "node_modules",

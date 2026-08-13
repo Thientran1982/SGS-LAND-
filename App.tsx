@@ -506,6 +506,10 @@ const useRouter = () => {
         const _seg = target.split('?')[0].replace(/\/+$/, '');
         if (_seg === '/login') { window.location.href = target; return; }
         if (_seg === '/home' || _seg === '') { window.location.href = '/'; return; }
+        // /marketplace (San Giao Dich) is a Next.js page: apps/nextjs/app/(public)/marketplace.
+        // Client-side routing would render the legacy Vite pages/ProductSearch.tsx instead,
+        // so hand off with a full-page navigation exactly like /home and /login.
+        if (_seg === '/marketplace' || _seg.startsWith('/marketplace/')) { window.location.href = target; return; }
         window.history.pushState(null, '', target);
         setRoute(getPathData());
     }, [getPathData]);

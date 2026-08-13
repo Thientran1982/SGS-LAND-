@@ -464,13 +464,45 @@ async function getAgentSystemInstruction(tenantId: string): Promise<string> {
     const defaultPersona = DEFAULT_WRITER_PERSONA(brandName);
     return getPromptTemplate(tenantId, 'WRITER_PERSONA', defaultPersona);
 }
-// Detect customer message language: return 'en' if no Vietnamese diacritics present
-function detectMessageLang(msg: string, hint?: string): string {
-    if (hint && hint !== 'vn') return hint; // explicit non-vn lang from client → trust it
+// Detect the language the CUSTOMER actually typed in.
+// Vietnamese is very often typed WITHOUT diacritics ("gia dat long thanh bao nhieu"),
+// so a plain "no diacritics -> English" test is wrong. Score unaccented Vietnamese
+// markers against English markers; the client lang hint is only a tie-breaker.
+const VN_ASCII_HINTS = new Set([
+  'toi','minh','em','anh','chi','ban','chao','xin','cam','khong','ko','duoc','cua','voi','cho',
+  'nhe','oi','vay','nao','sao','dau','bao','nhieu','muon','tim','hoi','xem','mua','thue','gia',
+  'dat','nha','ho','chung','cu','dien','tich','ngu','ty','trieu','vuong','quan','huyen','phuong',
+  'tinh','pho','duong','lien','tu','van','thong','giup','lam','vui','long','hien','tai','thanh',
+  'toan','ngan','lai','suat','hop','dong','song','tro','biet','moi','ngay','thang','nam','gap',
+  'luon','rat','nhat','hon','tot','ro','goi','thoai','zalo','deu','vi','tri','sodo','bds','dc',
+])
+const EN_WORD_HINTS = new Set([
+  'the','is','are','am','was','you','your','yours','we','our','and','or','but','for','with','of',
+  'to','in','on','at','how','what','when','where','which','who','why','could','would','should',
+  'does','did','have','has','want','need','looking','look','price','prices','cost','buy','rent',
+  'sell','property','properties','apartment','house','land','villa','hello','thanks','thank',
+  'please','this','that','there','about','tell','show','info','information','available','much',
+  'many','area','bedroom','bedrooms','payment','loan','interest','rate','contact','call','email',
+  'budget','invest','investment',
+])
+export function detectMessageLang(msg: string, hint?: string): string {
+    if (hint && hint !== 'vn' && hint !== 'en') return hint; // explicit 3rd language from client
+    const raw = String(msg ?? '');
     const vnPattern = /[àáảãạăắặẳẵăâấầẩẫậèéẻẽẹêếềểễệìíỉĩịòóỏõọôốồổỗộơớờởỡợùúủũụưứừửữựỳýỷỹỵđÀÁẢÃẠĂẮẶẲẴĂÂẤẦẨẪẬÈÉẺẼẸÊẾỀỂỄỆÌÍỈĨỊÒÓỎÕỌÔỐỒỔỖỘƠỚỜỞỠỢÙÚỦŨỤƯỨỪỬỮỰỲÝỶỸỴĐ]/;
-    if (vnPattern.test(msg)) return 'vn'; // Vietnamese characters detected → Vietnamese
-    if (/[a-zA-Z]/.test(msg)) return 'en'; // Latin letters, no Vietnamese → English
-    return 'vn'; // fallback (emoji/numbers only)
+    if (vnPattern.test(raw)) return 'vn'; // real Vietnamese diacritics -> Vietnamese
+    const lower = raw.toLowerCase();
+    // kh / ngh / nh + vowel at a syllable start is a Vietnamese-only shape
+    let vnScore = /\b(kh|ngh|nh)[aeiouy]/.test(lower) ? 2 : 0;
+    let enScore = 0;
+    for (const w of lower.replace(/[^a-z0-9\s]/g, ' ').split(/\s+/)) {
+        if (!w) continue;
+        if (VN_ASCII_HINTS.has(w)) vnScore += 2;
+        else if (EN_WORD_HINTS.has(w)) enScore += 2;
+    }
+    if (vnScore > 0 && vnScore >= enScore) return 'vn'; // unaccented Vietnamese
+    if (enScore > vnScore) return 'en';
+    if (hint === 'en') return 'en'; // no signal in the text -> follow the UI language
+    return 'vn'; // default: Vietnamese site
 }
 // Shared utility: extract Vietnamese budget from message (fallback when ROUTER misses)
 function parseBudgetFromMessage(msg: string): number | undefined {
@@ -2035,8 +2067,8 @@ PHÂN TÍCH LEAD (bullet point, sắc bén):
             const salutation = _gender === 'MALE' ? 'anh' : _gender === 'FEMALE' ? 'chị' : 'anh/chị';
             const Salutation = salutation.charAt(0).toUpperCase() + salutation.slice(1);
             const langInstruction = (state.lang === 'en')
-                ? 'Answer in English. Address the customer professionally.'
-                : `Trả lời bằng Tiếng Việt tự nhiên. Xưng "em", gọi khách là "${salutation}". Không dùng bản dịch máy.`;
+                ? 'Answer in English. Address the customer professionally. Mirror the customer language: if the customer writes Vietnamese (even without diacritics), answer in Vietnamese instead.'
+                : `Trả lời bằng Tiếng Việt tự nhiên. Xưng "em", gọi khách là "${salutation}". Không dùng bản dịch máy. Khách có thể gõ tiếng Việt KHÔNG DẤU - vẫn phải trả lời bằng tiếng Việt có dấu đầy đủ, tuyệt đối không trả lời bằng tiếng Anh.`;
 
             const INTENT_LABELS: Record<string, string> = {
                 SEARCH_INVENTORY: 'Tìm kiếm kho hàng',

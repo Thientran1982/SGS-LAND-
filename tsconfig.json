@@ -26,6 +26,12 @@
     "paths": {
       "@/*": [
         "./*"
+      ],
+      "@sgs/chat-widget": [
+        "./packages/chat-widget/src/index.ts"
+      ],
+      "@sgs/chat-widget/*": [
+        "./packages/chat-widget/src/*"
       ]
     },
     "allowImportingTsExtensions": true,

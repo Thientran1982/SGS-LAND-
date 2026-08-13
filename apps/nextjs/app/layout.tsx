@@ -81,7 +81,10 @@ export const metadata: Metadata = {
     },
     languages: {
       vi: "https://sgsland.vn/",
-      en: "https://sgsland.vn/?lang=en",
+      // The EN site lives at /en (see middleware + sitemap-en.xml); ?lang=en is
+      // not a real URL, so this default hreflang pointed crawlers at a 200 that
+      // renders the Vietnamese homepage.
+      en: "https://sgsland.vn/en",
       "x-default": "https://sgsland.vn/",
     },
   },

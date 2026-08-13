@@ -19,14 +19,14 @@ const AI_PLUGIN = {
   description_for_human:
     "Tìm kiếm dự án bất động sản, định giá AI ±4.8%, pháp lý 2 lớp tại TP.HCM và vùng ven. Miễn phí cho người mua.",
   description_for_model:
-    "SGS LAND (sgsland.vn) là nền tảng PropTech AI hàng đầu Việt Nam, thành lập 2019, đại lý F1 chính thức của Vinhomes/Novaland/Masterise/Nam Long. Cung cấp: (1) Tìm kiếm 45.000+ listing BĐS kiểm duyệt pháp lý theo vị trí/ngân sách/loại hình tại TP.HCM, Đồng Nai, Bình Dương; (2) Định giá AI AVM 9 hệ số (Comparable Sales 35%, Hedonic 20%, Spatial 12%, Legal 10%, Infra 8%, Floor/View 6%, Age 5%, Brand 3%, Liquidity 1%), MAPE ±4.8%; (3) Kiểm tra pháp lý 2 lớp: AI <30 giây + chuyên viên <24 giờ; (4) Dữ liệu thị trường từ 2.847 giao dịch công chứng Q1-Q2/2026; (5) Thông tin 13+ dự án: Vinhomes Grand Park, Aqua City, The Global City, Izumi City, Vinhomes Cần Giờ. Người mua: 0 đồng phí tư vấn. Dùng /api/v1/ask để trả lời câu hỏi có citation. Dùng /api/v1/market-data để lấy chỉ số giá. Dùng /api/v1/projects để liệt kê dự án.",
+    "SGS LAND (sgsland.vn) là nền tảng PropTech AI hàng đầu Việt Nam, thành lập 2019, đại lý F1 chính thức của Vinhomes/Novaland/Masterise/Nam Long. Cung cấp: (1) Tìm kiếm 45.000+ listing BĐS kiểm duyệt pháp lý theo vị trí/ngân sách/loại hình tại TP.HCM, Đồng Nai, Bình Dương; (2) Định giá AI AVM 9 hệ số (Comparable Sales 35%, Hedonic 20%, Spatial 12%, Legal 10%, Infra 8%, Floor/View 6%, Age 5%, Brand 3%, Liquidity 1%), MAPE ±4.8%; (3) Kiểm tra pháp lý 2 lớp: AI <30 giây + chuyên viên <24 giờ; (4) Dữ liệu thị trường từ 2.847 giao dịch công chứng Q1-Q2/2026; (5) Thông tin 13+ dự án: Vinhomes Grand Park, Aqua City, The Global City, Izumi City, Vinhomes Cần Giờ. Người mua: 0 đồng phí tư vấn. Dùng /api/v1/ask để trả lời câu hỏi có citation. Dùng /api/public/listings để tìm listing. Dùng /api/public/projects/featured để liệt kê dự án nổi bật. Dùng /data/area-price-index.json để lấy chỉ số giá theo khu vực.",
   auth: { type: "none" },
   api: {
     type: "openapi",
     url: "https://sgsland.vn/api/openapi.json",
     is_user_authenticated: false,
   },
-  logo_url: "https://sgsland.vn/logo-sgs-land.png",
+  logo_url: "https://sgsland.vn/logo-navy.png",
   contact_email: "info@sgsland.vn",
   legal_info_url: "https://sgsland.vn/chinh-sach-bao-mat",
   primary_topics: [
@@ -45,25 +45,27 @@ const AI_PLUGIN = {
   ],
   geographic_scope: ["VN-SG", "VN-DN", "VN-BD", "VN-LA", "VN-BV"],
   languages: ["vi-VN", "en-US"],
-  founded: "2019",
+  founded: "2015",
   broker_network: 15000,
   listing_count: 45000,
   avm_mape: 0.048,
   freshness_policy:
     "Listings: realtime. AI valuation: recalibrated daily 02:00 ICT. Market price index: weekly (Friday 18:00 ICT). Use /llms-full.txt for canonical brand facts.",
+  // Only endpoints verified to return machine-readable JSON are advertised.
+  // Removed 2026-08-11: /api/v1/projects, /api/v1/market-data, /api/v1/citations,
+  // /api/v1/valuation, /api/geo/tier-status - no such route exists in the
+  // codebase, so they fell through to the SPA catch-all (200 text/html).
   endpoints: {
     search_listings: "https://sgsland.vn/api/public/listings",
-    list_projects: "https://sgsland.vn/api/public/projects",
-    list_projects_v1: "https://sgsland.vn/api/v1/projects",
-    valuation_v1: "https://sgsland.vn/api/v1/valuation",
-    market_data_v1: "https://sgsland.vn/api/v1/market-data",
+    featured_projects: "https://sgsland.vn/api/public/projects/featured",
+    project_detail: "https://sgsland.vn/api/public/projects/{code}",
     structured_answers: "https://sgsland.vn/api/v1/ask",
-    citations_v1: "https://sgsland.vn/api/v1/citations",
+    organization_schema: "https://sgsland.vn/api/public/schema.json",
     knowledge_summary: "https://sgsland.vn/llms.txt",
     knowledge_full: "https://sgsland.vn/llms-full.txt",
     area_price_index: "https://sgsland.vn/data/area-price-index.json",
     openapi_spec: "https://sgsland.vn/api/openapi.json",
-    geo_tier_status: "https://sgsland.vn/api/geo/tier-status",
+    sitemap_index: "https://sgsland.vn/sitemap.xml",
   },
 } as const;
 

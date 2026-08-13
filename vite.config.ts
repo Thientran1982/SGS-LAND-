@@ -9,6 +9,26 @@ export default defineConfig(({ mode }) => {
         port: 5000,
         host: '0.0.0.0',
         allowedHosts: true,
+      // Dev-only proxy. Trong production, Express tu serve dist/ nen /api la
+      // same-origin va khong can proxy. Nhung khi chay `vite` dev doc lap thi
+      // moi request /api truoc day roi vao chinh Vite -> tra index.html, khien
+      // widget "goi API khong duoc". BACKEND_URL mac dinh trung voi .replit dev
+      // workflow (Express o 5001).
+      proxy: {
+        '/api': {
+          target: env.BACKEND_URL || 'http://localhost:5001',
+          changeOrigin: true,
+        },
+        '/socket.io': {
+          target: env.BACKEND_URL || 'http://localhost:5001',
+          changeOrigin: true,
+          ws: true,
+        },
+        '/uploads': {
+          target: env.BACKEND_URL || 'http://localhost:5001',
+          changeOrigin: true,
+        },
+      },
         warmup: {
           clientFiles: [
             './pages/Dashboard.tsx',
@@ -40,6 +60,8 @@ export default defineConfig(({ mode }) => {
       resolve: {
         alias: {
           '@': path.resolve(__dirname, '.'),
+      // Widget chat dung chung voi Next.js (Phuong an B) - 1 nguon su that duy nhat.
+      '@sgs/chat-widget': path.resolve(__dirname, 'packages/chat-widget/src/index.ts'),
         }
       },
       optimizeDeps: {

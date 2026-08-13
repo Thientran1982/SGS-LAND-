@@ -27,8 +27,6 @@ const FOOTER_SUPPORT = [
   { vi: "Live Chat AI",       en: "Live Chat AI",    href: "/livechat" },
   { vi: "Trung tâm hỗ trợ",   en: "Help Center",     href: "/help-center" },
   { vi: "Hướng dẫn sử dụng",  en: "User Guide",      href: "/huong-dan-su-dung" },
-  { vi: "Chính sách bảo mật",  en: "Privacy Policy",  href: "/privacy-policy" },
-  { vi: "Điều khoản sử dụng",  en: "Terms of Service", href: "/terms-of-service" },
 ];
 const FOOTER_ABOUT = [
   { vi: "Về chúng tôi",     en: "About Us",             href: "/about-us" },

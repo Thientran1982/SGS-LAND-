@@ -7,6 +7,8 @@
     "dev": "tsx server.ts",
     "start": "node server.js",
     "build": "node ./node_modules/vite/bin/vite.js build && esbuild server.ts --bundle --external:http-proxy-middleware --external:http-proxy --platform=node --format=esm --outfile=server.js --external:pg --external:bcrypt --external:socket.io --external:@socket.io/redis-adapter --external:redis --external:ioredis --external:bullmq --external:nodemailer --external:multer --external:file-type --external:pdf-parse --external:mammoth --external:pdfjs-dist --external:exceljs --external:ws --external:y-websocket --external:yjs --external:@google/genai --external:openai --external:@anthropic-ai/sdk --external:vite --external:express --external:cookie-parser --external:jsonwebtoken --external:helmet --external:dotenv --external:sharp --external:compression --external:cheerio --external:jsdom --external:canvas",
+    "build:all": "node scripts/build-all.mjs",
+    "build:next": "cd apps/nextjs && npm run build",
     "preview": "vite preview",
     "lint": "tsc --noEmit",
     "seed": "tsx server/seed.ts",
@@ -58,7 +60,7 @@
     "date-fns": "^4.1.0",
     "dompurify": "^3.4.1",
     "dotenv": "^17.4.1",
-    "esbuild": "^0.27.7",
+    "esbuild": "^0.28.2",
     "exceljs": "^4.4.0",
     "express": "^5.2.1",
     "file-type": "^21.3.4",
@@ -75,8 +77,7 @@
     "motion": "^12.38.0",
     "multer": "^2.1.1",
     "node-fetch": "^3.3.2",
-    "nodemailer": "^8.0.5",
-    "npm": "^11.12.1",
+    "nodemailer": "^9.0.5",
     "openai": "^6.46.0",
     "pdf-parse": "^2.4.5",
     "pdfjs-dist": "^4.10.38",
@@ -109,7 +110,8 @@
     "brace-expansion": "^5.0.5",
     "tinyglobby": {
       "picomatch": "^4.0.4"
-    }
+    },
+    "uuid": "^11.1.1"
   },
   "devDependencies": {
     "@playwright/test": "^1.59.1",
@@ -129,7 +131,7 @@
     "@vitest/coverage-v8": "^4.1.8",
     "ioredis-mock": "^8.13.1",
     "jsdom": "^29.1.1",
-    "sharp": "^0.34.5",
+    "sharp": "^0.35.3",
     "typescript": "~5.8.2",
     "vite": "^6.4.2",
     "vitest": "^4.1.8"

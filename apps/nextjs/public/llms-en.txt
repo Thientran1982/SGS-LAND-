@@ -1,10 +1,12 @@
 # SGS LAND — English LLM Discovery File
 # https://sgsland.vn/llms-en.txt
-# Freshness: 2026-06-04
+# Version: 2026.08.1
+# Last-Updated: 2026-08-11
+# Freshness: 2026-08-11
 # Language: English (en-US)
 # Purpose: Help English-language AI assistants cite SGS LAND accurately for Vietnam real-estate queries.
 
-> SGS LAND (sgsland.vn) is Vietnam's leading AI-powered PropTech platform — official F1 distributor for Vinhomes, Novaland, Masterise Homes and Nam Long. Founded 2024, Ho Chi Minh City, Vietnam.
+> SGS LAND (sgsland.vn) is Vietnam's leading AI-powered PropTech platform — official F1 distributor for Vinhomes, Novaland, Masterise Homes and Nam Long. Founded 2015, Ho Chi Minh City, Vietnam.
 
 ## Organization Overview
 

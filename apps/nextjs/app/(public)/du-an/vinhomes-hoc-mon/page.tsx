@@ -112,15 +112,13 @@ const REAL_ESTATE_LISTING_SCHEMA = {
       containedInPlace: { "@type": "Country", name: "Việt Nam" },
     },
   },
-  seller: {
-    "@type": ["Organization", "RealEstateAgent"],
-    "@id": `${SITE_URL}/#organization`,
-    name: "SGS LAND",
-    url: SITE_URL,
-    telephone: "+84971132378",
-  },
+  // Reference the canonical Organization node by @id only - repeating its
+  // properties here created two competing nodes with the same @id.
+  seller: { "@id": `${SITE_URL}/#organization` },
+  // GEO: a price *range* must be AggregateOffer; schema.org Offer has no
+  // lowPrice/highPrice, so Google/AI parsers dropped the whole offer node.
   offers: {
-    "@type": "Offer",
+    "@type": "AggregateOffer",
     priceCurrency: "VND",
     lowPrice: 6500000000,
     highPrice: 60000000000,

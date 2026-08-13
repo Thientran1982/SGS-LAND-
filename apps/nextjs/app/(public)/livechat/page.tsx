@@ -1,6 +1,7 @@
 // @ts-nocheck
 import type { Metadata } from "next";
 import { MessageCircle } from "lucide-react";
+import LiveChatPanel from "@/components/public/LiveChatPanel";
 
 export const metadata: Metadata = {
   title: "Live Chat AI BĐS",
@@ -23,19 +24,7 @@ export default function LiveChatPage() {
         </p>
       </div>
 
-      <div className="p-6 rounded-2xl mb-8" style={{ background: "var(--bg-elevated)", border: "1px solid var(--border-default)" }}>
-        <p className="text-sm mb-4" style={{ color: "var(--text-secondary)" }}>
-          Widget chat AI đang tải... Nếu không thấy, click vào icon chat ở góc dưới phải màn hình.
-        </p>
-        <div className="flex flex-wrap justify-center gap-2">
-          {["Giá căn hộ Thủ Đức?", "Aqua City pháp lý thế nào?", "Cosmo MCC còn căn nào?", "Lãi suất vay mua nhà hiện tại?"].map((q) => (
-            <span key={q} className="px-3 py-1.5 rounded-full text-xs font-medium cursor-pointer hover:opacity-80 transition-opacity"
-              style={{ background: "var(--primary-subtle)", color: "var(--primary-600)", border: "1px solid var(--primary-600)" }}>
-              {q}
-            </span>
-          ))}
-        </div>
-      </div>
+      <LiveChatPanel />
 
       <p className="text-xs" style={{ color: "var(--text-tertiary)" }}>
         Hotline hỗ trợ: <a href="tel:0971132378" className="font-semibold" style={{ color: "var(--primary-600)" }}>0971 132 378</a>

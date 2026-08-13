@@ -33,6 +33,8 @@ export class PriceCalibrationService {
   private static instance: PriceCalibrationService;
   private pool: Pool | null = null;
   private calibrationTimer: NodeJS.Timeout | null = null;
+  // RELIABILITY FIX (audit Medium): theo doi timer khoi dong de stop() don sach
+  private startupTimer: NodeJS.Timeout | null = null;
   private isRunning = false;
 
   private constructor() {}
@@ -47,8 +49,13 @@ export class PriceCalibrationService {
   /** Inject the PG pool from server startup */
   init(pool: Pool): void {
     this.pool = pool;
+    // RELIABILITY FIX (audit Medium): guard chong dang ky timer trung neu init() bi goi lai
+    if (this.calibrationTimer) {
+      return;
+    }
     // Run calibration at startup (after 30s delay) then every 6 hours
-    setTimeout(() => this.calibrateAll().catch(e => logger.error('[Calibration] startup error:', e.message)), 30_000);
+    this.startupTimer = setTimeout(() => this.calibrateAll().catch(e => logger.error('[Calibration] startup error:', e.message)), 30_000);
+    if (typeof (this.startupTimer as any).unref === 'function') (this.startupTimer as any).unref();
     this.calibrationTimer = setInterval(
       () => this.calibrateAll().catch(e => logger.error('[Calibration] scheduled error:', e.message)),
       6 * 60 * 60 * 1_000,
@@ -60,6 +67,10 @@ export class PriceCalibrationService {
   }
 
   stop(): void {
+    if (this.startupTimer) {
+      clearTimeout(this.startupTimer);
+      this.startupTimer = null;
+    }
     if (this.calibrationTimer) {
       clearInterval(this.calibrationTimer);
       this.calibrationTimer = null;

@@ -8,6 +8,7 @@
  */
 
 import sharp from 'sharp';
+import type { Sharp } from 'sharp';
 import path from 'path';
 import { existsSync } from 'fs';
 
@@ -354,7 +355,7 @@ export async function generateOgImage(slug: string): Promise<Buffer | null> {
   const photoPath = cfg.photoFile ? path.join(ROOT, cfg.photoFile) : null;
   const hasPhoto = photoPath !== null && existsSync(photoPath);
 
-  let image: sharp.Sharp;
+  let image: Sharp;
 
   if (hasPhoto) {
     const overlay = buildPhotoOverlay();

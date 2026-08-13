@@ -224,7 +224,12 @@ function fmtPrice(price: number): string {
 async function scraperApiFetch(targetUrl: string, render = true) {
   const key = process.env.SCRAPERAPI_KEY;
   if (!key) throw new Error('SCRAPERAPI_KEY chưa được cấu hình');
-  const proxyUrl = `http://api.scraperapi.com?api_key=${key}&url=${encodeURIComponent(targetUrl)}&country_code=vn${render ? '&render=true' : ''}`;
+  // alonhadat / batdongsan / muaban sit behind Cloudflare. Without premium=true ScraperAPI
+  // answers HTTP 500 "Protected domains may require adding premium=true" after ~55s, which
+  // is past the abort timeout below - the whole scrape run then reports an error.
+  // Verified 2026-08: premium=true returns 200 in ~3s. SCRAPERAPI_PREMIUM=false opts out
+  // (premium requests consume more ScraperAPI credits).
+  const proxyUrl = `http://api.scraperapi.com?api_key=${key}&url=${encodeURIComponent(targetUrl)}&country_code=vn${process.env.SCRAPERAPI_PREMIUM === 'false' ? '' : '&premium=true'}${render ? '&render=true' : ''}`;
   return fetch(proxyUrl, { signal: AbortSignal.timeout(45_000) });
 }
 

@@ -2,7 +2,10 @@
 import type { MetadataRoute } from "next";
 const BASE = "https://sgsland.vn";
 export function sitemapVi(): MetadataRoute.Sitemap {
-  const now = new Date();
+  // A lastmod that is always "today" carries no information and is discounted
+// by Google and by AI crawlers. Use a stable content date and bump it when
+// the URL set / page content below actually changes.
+const now = new Date("2026-08-11T00:00:00Z");
   const staticRoutes: MetadataRoute.Sitemap = [
     { url: `${BASE}/`,                            lastModified: now, changeFrequency: "daily",   priority: 1.0 },
     { url: `${BASE}/marketplace`,                 lastModified: now, changeFrequency: "hourly",  priority: 0.9 },

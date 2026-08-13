@@ -134,11 +134,14 @@ export function rateLimit(options: {
 
     const redis = await getUpstashClient();
     if (redis) {
-      const redisKey = `rl:${name}:${key}`;
+      // COST FIX (audit Medium): truoc day moi request ton 2 lenh Upstash (INCR + TTL).
+      // Gan so hieu cua so vao key (fixed window) => resetAt tinh duoc tai cho,
+      // bo han lenh TTL. Con 1 lenh/request (+1 EXPIRE cho request dau moi cua so).
+      const windowIndex = Math.floor(Date.now() / windowMs);
+      const redisKey = `rl:${name}:${key}:${windowIndex}`;
       try {
         count = await upstashIncr(redis, redisKey, windowSecs);
-        const ttl = await redis.ttl(redisKey) as number;
-        resetAt = Date.now() + (ttl > 0 ? ttl * 1000 : windowMs);
+        resetAt = (windowIndex + 1) * windowMs;
         } catch (redisErr: any) {
         // H2 FIX: Distinguish quota errors (Upstash free tier) from network errors.
         const msg = String(redisErr?.message || redisErr || '');
