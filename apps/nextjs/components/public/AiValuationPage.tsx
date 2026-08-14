@@ -1108,11 +1108,11 @@ export const AiValuation: React.FC = () => {
                             Định Giá Thời Gian Thực
                         </div>
                         <h1 className="text-4xl md:text-6xl font-black mb-6 leading-tight">
-                            Định Giá Bất Động Sản <br/>
-                            <span className="text-transparent bg-clip-text bg-gradient-to-r from-sgs-accent to-sgs-accent-text">Bằng AI — Sai Số ±5–12%</span>
+                            Định Giá Bất Động Sản{' '}
+                            <span className="text-transparent bg-clip-text bg-gradient-to-r from-sgs-accent to-sgs-accent-text">Bằng AI</span>
                         </h1>
                         <p className="text-xl text-slate-400 mb-5 max-w-2xl mx-auto">
-                            Nhập địa chỉ — AI phân tích thị trường thực tế. Điền càng đủ, sai số càng nhỏ.
+                            Nhập địa chỉ — AI phân tích thị trường thực tế.
                         </p>
 
                         <div className="bg-slate-800/50 backdrop-blur-xl border border-slate-700 p-2 rounded-2xl max-w-2xl mx-auto flex items-center gap-1 md:gap-2 shadow-2xl relative z-20 group focus-within:ring-2 focus-within:ring-sgs-primary/50 transition-all mt-3">
@@ -1182,24 +1182,6 @@ export const AiValuation: React.FC = () => {
                                     {ex}
                                 </button>
                             ))}
-                        </div>
-
-                        {/* Hint strip below search */}
-                        <div className="mt-5 flex items-center justify-center gap-4 md:gap-6 text-xs text-sgs-text-muted">
-                            <span className="flex items-center gap-1.5">
-                                <span className="w-1.5 h-1.5 rounded-full bg-sgs-accent"></span>
-                                Địa chỉ → <b className="text-sgs-accent-text">75%</b>
-                            </span>
-                            <span className="text-slate-700">→</span>
-                            <span className="flex items-center gap-1.5">
-                                <span className="w-1.5 h-1.5 rounded-full bg-orange-400"></span>
-                                + Chi tiết → <b className="text-orange-400">90%</b>
-                            </span>
-                            <span className="text-slate-700">→</span>
-                            <span className="flex items-center gap-1.5">
-                                <span className="w-1.5 h-1.5 rounded-full bg-sgs-verified"></span>
-                                + Đầy đủ → <b className="text-sgs-verified">98%</b>
-                            </span>
                         </div>
 
                         {/* Valuation History */}

@@ -19,14 +19,16 @@ const FOOTER_PROJECTS = [
   { label: "Khu đô thị Thủ Thiêm",      href: "/du-an/thu-thiem" },
   { label: "Sơn Kim Land",             href: "/du-an/son-kim-land" },
 ];
-const FOOTER_SUPPORT = [
-  { vi: "Tìm kiếm BĐS",      en: "Property Search", href: "/marketplace" },
-  { vi: "Định giá AI",        en: "AI Valuation",    href: "/ai-valuation" },
-  { vi: "Lãi suất ngân hàng", en: "Bank Rates",      href: "/lai-suat-ngan-hang" },
-  { vi: "CRM Bất Động Sản",   en: "Real Estate CRM", href: "/crm-platform" },
-  { vi: "Live Chat AI",       en: "Live Chat AI",    href: "/livechat" },
-  { vi: "Trung tâm hỗ trợ",   en: "Help Center",     href: "/help-center" },
-  { vi: "Hướng dẫn sử dụng",  en: "User Guide",      href: "/huong-dan-su-dung" },
+const FOOTER_SUPPORT_CUSTOMER = [
+  { vi: "Tìm kiếm BĐS", en: "Property Search", href: "/marketplace" },
+  { vi: "Định giá AI", en: "AI Valuation", href: "/ai-valuation" },
+  { vi: "Lãi suất ngân hàng", en: "Bank Rates", href: "/lai-suat-ngan-hang" },
+  { vi: "Trò chuyện với Minh", en: "Chat with Minh", href: "/livechat" },
+  { vi: "Hướng dẫn sử dụng", en: "User Guide", href: "/huong-dan-su-dung" },
+];
+const FOOTER_SUPPORT_AGENT = [
+  { vi: "CRM Bất Động Sản", en: "Real Estate CRM", href: "/crm-platform" },
+  { vi: "Trung tâm hỗ trợ", en: "Help Center", href: "/help-center" },
 ];
 const FOOTER_ABOUT = [
   { vi: "Về chúng tôi",     en: "About Us",             href: "/about-us" },
@@ -102,7 +104,7 @@ export function PublicFooter() {
           <div>
             <h3
               className="text-xs font-semibold uppercase mb-4"
-              style={{ color: "#D4A855", letterSpacing: "0.12em" }}
+              style={{ color: "#C6923D", letterSpacing: "0.12em" }}
             >
               {lang === "vi" ? "Dự Án Nổi Bật" : "Featured Projects"}
             </h3>
@@ -126,12 +128,39 @@ export function PublicFooter() {
           <div>
             <h3
               className="text-xs font-semibold uppercase mb-4"
-              style={{ color: "#D4A855", letterSpacing: "0.12em" }}
+              style={{ color: "#C6923D", letterSpacing: "0.12em" }}
             >
               {lang === "vi" ? "Dịch Vụ" : "Services"}
             </h3>
+            <p
+              className="text-xs font-semibold uppercase mb-2.5"
+              style={{ color: "var(--sgs-on-dark-muted)", letterSpacing: "0.08em" }}
+            >
+              {lang === "vi" ? "Dành cho khách hàng" : "For Customers"}
+            </p>
+            <ul className="space-y-2.5 mb-5">
+              {FOOTER_SUPPORT_CUSTOMER.map((link) => (
+                <li key={link.href}>
+                  <Link
+                    href={lang === "en" ? "/en" + link.href : link.href}
+                    className="text-sm transition-colors block"
+                    style={{ color: "#B9C6D4" }}
+                    onMouseEnter={e => linkHover(e, true)}
+                    onMouseLeave={e => linkHover(e, false)}
+                  >
+                    {lang === "vi" ? link.vi : link.en}
+                  </Link>
+                </li>
+              ))}
+            </ul>
+            <p
+              className="text-xs font-semibold uppercase mb-2.5"
+              style={{ color: "var(--sgs-on-dark-muted)", letterSpacing: "0.08em" }}
+            >
+              {lang === "vi" ? "Dành cho môi giới" : "For Agents"}
+            </p>
             <ul className="space-y-2.5">
-              {FOOTER_SUPPORT.map((link) => (
+              {FOOTER_SUPPORT_AGENT.map((link) => (
                 <li key={link.href}>
                   <Link
                     href={lang === "en" ? "/en" + link.href : link.href}
@@ -150,7 +179,7 @@ export function PublicFooter() {
           <div>
             <h3
               className="text-xs font-semibold uppercase mb-4"
-              style={{ color: "#D4A855", letterSpacing: "0.12em" }}
+              style={{ color: "#C6923D", letterSpacing: "0.12em" }}
             >
               {lang === "vi" ? "Về SGS LAND" : "About SGS LAND"}
             </h3>
@@ -169,18 +198,20 @@ export function PublicFooter() {
                 </li>
               ))}
             </ul>
-            <div
-              className="space-y-1 pt-4"
-              style={{ borderTop: "1px solid rgba(255,255,255,0.07)" }}
-            >
-              <p className="text-xs" style={{ color: "var(--sgs-on-dark-muted)" }}>{tt(lang, "Cấp ngày: 01/01/2018 tại TP.HCM", "Issued: 01/01/2018 in Ho Chi Minh City")}</p>
-              <p className="text-xs" style={{ color: "var(--sgs-on-dark-muted)" }}>API: <a href="/developers" style={{ color: "#B9C6D4" }}>developers</a></p>
-            </div>
           </div>
         </div>
         {/* ── Bottom bar ────────────────────────────────── */}
-        <div className="flex flex-wrap gap-2 pt-6 pb-1"
-          style={{ borderTop: "1px solid rgba(255,255,255,0.07)" }}>
+        <div
+          className="pt-10"
+          style={{ borderTop: "1px solid rgba(255,255,255,0.07)" }}
+        >
+          <p
+            className="text-xs font-semibold uppercase mb-3"
+            style={{ color: "var(--sgs-on-dark-muted)", letterSpacing: "0.08em" }}
+          >
+            {lang === "vi" ? "Khu vực nổi bật" : "Featured Areas"}
+          </p>
+          <div className="flex flex-wrap gap-2 pb-1">
           {FOOTER_ABOUT.filter((l) => l.vi.startsWith("BĐS") || l.vi === "Nhà phố Trung Tâm").map((link) => (
             <Link
               key={link.href}
@@ -194,10 +225,17 @@ export function PublicFooter() {
             </Link>
           ))}
         </div>
+        </div>
+
+        <div className="flex justify-end pt-4">
+          <p className="text-xs" style={{ color: "var(--sgs-on-dark-muted)" }}>
+            API: <a href="/developers" style={{ color: "#B9C6D4" }} onMouseEnter={e => linkHover(e, true)} onMouseLeave={e => linkHover(e, false)}>developers</a>
+          </p>
+        </div>
 
         <div className="flex flex-col sm:flex-row items-center justify-between gap-3 pt-5 pb-20 sm:pb-6 sm:pr-24">
           <p className="text-xs" style={{ color: "var(--sgs-on-dark-muted)" }}>
-            © {FOOTER_YEAR} SGS LAND. {lang === "vi" ? "Bảo lưu mọi quyền." : "All rights reserved."}
+            © {FOOTER_YEAR} SGS LAND. {lang === "vi" ? "Bảo lưu mọi quyền." : "All rights reserved."} · {tt(lang, "Cấp ngày: 01/01/2018 tại TP.HCM", "Issued: 01/01/2018 in Ho Chi Minh City")}
           </p>
           <div className="flex items-center gap-3 flex-wrap justify-center sm:justify-end">
             {LEGAL_LINKS.map((link) => (

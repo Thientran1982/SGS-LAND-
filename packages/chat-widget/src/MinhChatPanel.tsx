@@ -238,7 +238,7 @@ export function MinhChatPanel({
   }
 
   return (
-    <div className={wrapper} style={S.panel}>
+    <div className={wrapper + " " + heightClass} style={S.panel}>
       {showHeader && (
         <div className="flex items-center gap-3 px-4 py-3 border-b" style={S.header}>
           <div className="w-9 h-9 rounded-full flex items-center justify-center shrink-0" style={S.brand}>
@@ -303,7 +303,7 @@ export function MinhChatPanel({
       ) : (
         <>
           <div
-            className={"flex-1 overflow-y-auto px-4 py-4 space-y-3 " + heightClass}
+            className={"flex-1 min-h-0 overflow-y-auto px-4 py-4 space-y-3 " + heightClass}
             aria-live="polite"
           >
             {messages.map((m) => (

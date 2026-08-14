@@ -158,7 +158,7 @@ export function AiChatWidget({ transport, apiBase }: AiChatWidgetProps = {}) {
           {/* Messages */}
           {!minimized && (
             <>
-              <div className="flex-1 overflow-y-auto thin-scrollbar p-4 space-y-3">
+              <div className="flex-1 min-h-0 overflow-y-auto thin-scrollbar p-4 space-y-3">
                 {messages.map((msg) => (
                   <div key={msg.id} className={`flex gap-2 ${msg.role === "user" ? "flex-row-reverse" : "flex-row"}`}>
                     {msg.role === "assistant" && (
