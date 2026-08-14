@@ -2594,30 +2594,36 @@ export const AiValuation: React.FC = () => {
                     </div>
                 )}
             </div>
-            {/* Features Footer */}
+            {/* Compact trust signals — keep the valuation wizard as the primary action. */}
             {step === 'ADDRESS' && (
-                <section className="py-20 px-6 max-w-6xl mx-auto border-t border-slate-800 mt-20">
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-                        <div className="bg-slate-800/50 p-8 rounded-[32px] border border-slate-700 hover:border-sgs-primary/50 transition-colors group">
-                            <div className="mb-6 group-hover:scale-110 transition-transform duration-300">{ICONS.AI_CHIP}</div>
-                            <h3 className="text-xl font-bold text-white mb-3">SGS Định Giá AI™</h3>
-                            <p className="text-slate-400 leading-relaxed">Thuật toán độc quyền: so sánh giá thị trường + phân tích dòng tiền tương lai.</p>
+                <section className="max-w-5xl mx-auto px-4 pt-10 pb-12 border-t border-slate-800 mt-12">
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                        <div className="bg-slate-800/50 p-4 rounded-2xl border border-slate-700 hover:border-sgs-primary/50 transition-colors group flex items-start gap-3">
+                            <div className="shrink-0 mt-0.5 group-hover:scale-110 transition-transform duration-300 [&>svg]:!w-8 [&>svg]:!h-8">{ICONS.AI_CHIP}</div>
+                            <div className="min-w-0">
+                                <h3 className="text-sm font-bold text-white mb-1">SGS Định Giá AI™</h3>
+                                <p className="text-slate-400 text-xs leading-relaxed">So sánh thị trường và phân tích dòng tiền.</p>
+                            </div>
                         </div>
-                        <div className="bg-slate-800/50 p-8 rounded-[32px] border border-slate-700 hover:border-sgs-primary/50 transition-colors group">
-                            <div className="mb-6 group-hover:scale-110 transition-transform duration-300">{ICONS.DATA}</div>
-                            <h3 className="text-xl font-bold text-white mb-3">Dữ Liệu Siêu Lớn</h3>
-                            <p className="text-slate-400 leading-relaxed">Cập nhật mỗi ngày từ 50+ nguồn uy tín: Chính phủ, sàn giao dịch, mạng xã hội.</p>
+                        <div className="bg-slate-800/50 p-4 rounded-2xl border border-slate-700 hover:border-sgs-primary/50 transition-colors group flex items-start gap-3">
+                            <div className="shrink-0 mt-0.5 group-hover:scale-110 transition-transform duration-300 [&>svg]:!w-8 [&>svg]:!h-8">{ICONS.DATA}</div>
+                            <div className="min-w-0">
+                                <h3 className="text-sm font-bold text-white mb-1">Dữ Liệu Siêu Lớn</h3>
+                                <p className="text-slate-400 text-xs leading-relaxed">Cập nhật mỗi ngày từ hơn 50 nguồn.</p>
+                            </div>
                         </div>
-                        <div className="bg-slate-800/50 p-8 rounded-[32px] border border-slate-700 hover:border-rose-500/50 transition-colors group">
-                            <div className="mb-6 group-hover:scale-110 transition-transform duration-300">{ICONS.LOCK}</div>
-                            <h3 className="text-xl font-bold text-white mb-3">Bảo Mật Ngân Hàng</h3>
-                            <p className="text-slate-400 leading-relaxed">Dữ liệu của bạn được mã hóa tuyệt đối, không chia sẻ với bên thứ ba.</p>
+                        <div className="bg-slate-800/50 p-4 rounded-2xl border border-slate-700 hover:border-rose-500/50 transition-colors group flex items-start gap-3">
+                            <div className="shrink-0 mt-0.5 group-hover:scale-110 transition-transform duration-300 [&>svg]:!w-8 [&>svg]:!h-8">{ICONS.LOCK}</div>
+                            <div className="min-w-0">
+                                <h3 className="text-sm font-bold text-white mb-1">Bảo Mật Ngân Hàng</h3>
+                                <p className="text-slate-400 text-xs leading-relaxed">Mã hóa dữ liệu, không chia sẻ bên thứ ba.</p>
+                            </div>
                         </div>
                     </div>
                 </section>
             )}
         </div>
-        {createPortal(
+        {typeof document !== 'undefined' && createPortal(
             toast ? (
                 <div className={`fixed bottom-6 right-6 z-[200] px-5 py-3 rounded-xl shadow-2xl flex items-center gap-3 animate-enter border ${toast.type === 'error' ? 'bg-rose-900/95 border-red-500 text-white' : 'bg-sgs-primary-deep/95 border-sgs-verified text-white'}`}>
                     <span className="font-bold text-sm">{toast.msg}</span>
@@ -2625,7 +2631,7 @@ export const AiValuation: React.FC = () => {
             ) : null,
             document.body
         )}
-        {showHistoryModal && createPortal(
+        {typeof document !== 'undefined' && showHistoryModal && createPortal(
             <div className="fixed inset-0 z-[350] bg-black/80 backdrop-blur-sm flex items-center justify-center p-4" onClick={() => setShowHistoryModal(false)}>
                 <div
                     className="max-w-2xl w-full bg-slate-800 border border-slate-700 rounded-2xl shadow-2xl flex flex-col overflow-hidden max-h-[80vh]"
@@ -2675,7 +2681,7 @@ export const AiValuation: React.FC = () => {
             </div>,
             document.body
         )}
-        {showGuestGate && createPortal(
+        {typeof document !== 'undefined' && showGuestGate && createPortal(
             <div className="fixed inset-0 z-[300] bg-black/80 backdrop-blur-sm flex items-center justify-center p-4" onClick={() => setShowGuestGate(false)}>
                 <div
                     className="max-w-sm w-full bg-slate-800 border border-slate-700 rounded-2xl p-7 flex flex-col items-center gap-5 text-center shadow-2xl"
@@ -2729,7 +2735,7 @@ export const AiValuation: React.FC = () => {
             </div>,
             document.body
         )}
-        {showQuotaGate && createPortal(
+        {typeof document !== 'undefined' && showQuotaGate && createPortal(
             <div className="fixed inset-0 z-[300] bg-black/80 backdrop-blur-sm flex items-center justify-center p-4" onClick={() => setShowQuotaGate(false)}>
                 <div
                     className="max-w-sm w-full bg-slate-800 border border-slate-700 rounded-2xl p-7 flex flex-col items-center gap-5 text-center shadow-2xl"
@@ -2805,12 +2811,13 @@ export const AiValuation: React.FC = () => {
             document.body
         )}
 
-  {/* AVM EDUCATION SECTION — for AEO/GEO */}
+  {/* Supporting education stays below the primary wizard and is hidden once the flow starts. */}
+  {step === 'ADDRESS' && (
   <section className="py-16 px-4 bg-slate-50 mt-8">
     <div className="max-w-4xl mx-auto">
-      <h2 className="text-3xl font-bold text-slate-800 mb-3">Cách SGS Định Giá AI™ Hoạt Động — 9 Hệ Số AVM</h2>
-      <p className="text-slate-500 mb-10 max-w-2xl">Mô hình AVM (Automated Valuation Model) của SGS LAND sử dụng 9 hệ số chính để tính toán giá trị bất động sản với độ chính xác ±4.8% MAPE trên 2.400+ giao dịch công chứng thực tế.</p>
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-5 mb-12">
+      <h2 className="text-2xl font-bold text-slate-800 mb-2">Cách SGS Định Giá AI™ hoạt động</h2>
+      <p className="text-slate-500 text-sm mb-6 max-w-2xl">Mô hình AVM dùng 9 hệ số chính và 2.400+ giao dịch thực tế để đưa ra mức giá tham khảo với sai số mục tiêu ±4.8%.</p>
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-6">
         {[
           {no:'1',name:'Vị trí vi mô',plain:'Khoảng cách đến trung tâm, bệnh viện, trường học, chợ trong bán kính 500m. Đường hẻm hay mặt tiền, ngõ thông hay cụt.',weight:'25%'},
           {no:'2',name:'Diện tích sử dụng',plain:'Diện tích đất (m²) × hệ số hình dạng lô đất. Đất vuông vắn > đất méo. Diện tích xây dựng ≠ diện tích đất.',weight:'18%'},
@@ -2822,75 +2829,81 @@ export const AiValuation: React.FC = () => {
           {no:'8',name:'Tiện ích nội khu',plain:'Dự án có hồ bơi, gym, bảo vệ 24/7 không? Phí quản lý cao nhưng tăng giá cho thuê và bán lại.',weight:'1.5%'},
           {no:'9',name:'Điều chỉnh thị trường',plain:'Điều chỉnh theo mùa (Q1 thường thấp hơn Q3-Q4), lãi suất ngân hàng, và tâm lý thị trường.',weight:'0.5%'},
         ].map((f)=>(
-          <div key={f.no} className="bg-[var(--bg-surface)] rounded-2xl border border-slate-200 p-5 shadow-sm">
-            <div className="flex items-center gap-2 mb-2">
-              <span className="w-7 h-7 rounded-full bg-blue-600 text-white text-sm font-bold flex items-center justify-center shrink-0">{f.no}</span>
-              <span className="font-bold text-slate-700">{f.name}</span>
-              <span className="ml-auto text-xs bg-blue-50 text-blue-600 px-2 py-0.5 rounded-full font-medium">{f.weight}</span>
+          <div key={f.no} className="bg-[var(--bg-surface)] rounded-xl border border-slate-200 p-3.5 shadow-sm">
+            <div className="flex items-center gap-2 mb-1.5">
+              <span className="w-6 h-6 rounded-full bg-blue-600 text-white text-xs font-bold flex items-center justify-center shrink-0">{f.no}</span>
+              <span className="font-bold text-sm text-slate-700">{f.name}</span>
+              <span className="ml-auto text-[11px] bg-blue-50 text-blue-600 px-1.5 py-0.5 rounded-full font-medium">{f.weight}</span>
             </div>
-            <p className="text-slate-500 text-sm leading-relaxed">{f.plain}</p>
+            <p className="text-slate-500 text-xs leading-relaxed pl-8">{f.plain}</p>
           </div>
         ))}
       </div>
 
-      {/* Case Study */}
-      <div className="mb-12">
-        <h2 className="text-2xl font-bold text-slate-800 mb-3">Case Study: Định Giá Căn 2PN Vinhomes Grand Park</h2>
-        <p className="text-slate-500 text-sm mb-6">Ví dụ thực tế cách SGS Định Giá AI™ tính toán từng bước cho căn hộ 2PN tại Vinhomes Grand Park, TP.Thủ Đức.</p>
-        <div className="bg-[var(--bg-surface)] rounded-2xl border border-slate-200 p-6 shadow-sm">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div>
-              <h3 className="font-bold text-slate-700 mb-3 text-base">Thông Tin Đầu Vào</h3>
-              <ul className="space-y-1 text-sm text-slate-600">
-                {[['Địa chỉ','Phân khu The Rainbow, Vinhomes Grand Park, TP.Thủ Đức'],['Diện tích','68m² (sàn) + 4m² ban công'],['Tầng','Tầng 15/22'],['Hướng','Đông Nam, view hồ công viên'],['Tuổi nhà','2022 (4 năm tuổi)'],['Nội thất','Cơ bản, chưa cải tạo'],['Pháp lý','Sổ hồng riêng']].map(([k,v])=>(
-                  <li key={k} className="flex gap-2"><span className="text-slate-400 shrink-0">{k}:</span><span className="font-medium">{v}</span></li>
-                ))}
-              </ul>
+      {/* Reference material is available on demand instead of taking over the page. */}
+      <details className="mb-6 rounded-2xl border border-slate-200 bg-[var(--bg-surface)] shadow-sm group">
+        <summary className="cursor-pointer list-none px-4 py-3.5 flex items-center justify-between gap-3 font-bold text-sm text-slate-700 hover:bg-slate-50">
+          <span>Ví dụ minh họa & so sánh với thẩm định viên</span>
+          <span className="text-blue-600 text-xs shrink-0 group-open:hidden">Mở rộng +</span>
+          <span className="text-slate-400 text-xs shrink-0 hidden group-open:inline">Thu gọn −</span>
+        </summary>
+        <div className="border-t border-slate-200 px-4 py-5 space-y-8">
+          {/* Case Study */}
+          <div>
+            <h2 className="text-xl font-bold text-slate-800 mb-2">Case Study: Căn 2PN Vinhomes Grand Park</h2>
+            <p className="text-slate-500 text-sm mb-4">Ví dụ cách SGS Định Giá AI™ tính toán cho căn hộ 2PN tại TP.Thủ Đức.</p>
+            <div className="bg-slate-50 rounded-xl border border-slate-200 p-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                <div>
+                  <h3 className="font-bold text-slate-700 mb-2 text-sm">Thông tin đầu vào</h3>
+                  <ul className="space-y-1 text-xs text-slate-600">
+                    {[['Địa chỉ','Phân khu The Rainbow, Vinhomes Grand Park, TP.Thủ Đức'],['Diện tích','68m² (sàn) + 4m² ban công'],['Tầng','Tầng 15/22'],['Hướng','Đông Nam, view hồ công viên'],['Tuổi nhà','2022 (4 năm tuổi)'],['Nội thất','Cơ bản, chưa cải tạo'],['Pháp lý','Sổ hồng riêng']].map(([k,v])=>(
+                      <li key={k} className="flex gap-2"><span className="text-slate-400 shrink-0">{k}:</span><span className="font-medium">{v}</span></li>
+                    ))}
+                  </ul>
+                </div>
+                <div>
+                  <h3 className="font-bold text-slate-700 mb-2 text-sm">Kết quả định giá AI</h3>
+                  <div className="text-2xl font-bold text-blue-600 mb-1">3,85 tỷ đồng</div>
+                  <div className="text-xs text-slate-400 mb-3">Khoảng dao động: 3,62 – 4,08 tỷ | Độ tin cậy: 87%</div>
+                  <ul className="space-y-1 text-xs text-slate-600">
+                    {[['Giá so sánh thị trường (×22%)','+3,60 tỷ'],['Điều chỉnh tầng (+15)','+80 triệu'],['Hướng Đông Nam + view hồ','+120 triệu'],['Khấu hao 4 năm tuổi','-45 triệu'],['Nội thất cơ bản','-30 triệu'],['Điều chỉnh thị trường Q2/2026','+25 triệu']].map(([k,v])=>(
+                      <li key={k} className="flex justify-between gap-3"><span>{k}</span><span className={v.startsWith('+')?'text-green-600 font-medium':v.startsWith('-')?'text-red-500 font-medium':'font-medium'}>{v}</span></li>
+                    ))}
+                  </ul>
+                </div>
+              </div>
             </div>
-            <div>
-              <h3 className="font-bold text-slate-700 mb-3 text-base">Kết Quả Định Giá AI</h3>
-              <div className="text-3xl font-bold text-blue-600 mb-1">3,85 tỷ đồng</div>
-              <div className="text-sm text-slate-400 mb-4">Khoảng dao động: 3,62 – 4,08 tỷ | Độ tin cậy: 87%</div>
-              <ul className="space-y-2 text-sm text-slate-600">
-                {[['Giá so sánh thị trường (×22%)','+3,60 tỷ'],['Điều chỉnh tầng (+15)','+80 triệu'],['Hướng Đông Nam + view hồ','+120 triệu'],['Khấu hao 4 năm tuổi','-45 triệu'],['Nội thất cơ bản','-30 triệu'],['Điều chỉnh thị trường Q2/2026','+25 triệu']].map(([k,v])=>(
-                  <li key={k} className="flex justify-between"><span>{k}</span><span className={v.startsWith('+')?'text-green-600 font-medium':v.startsWith('-')?'text-red-500 font-medium':'font-medium'}>{v}</span></li>
-                ))}
-              </ul>
+          </div>
+
+          {/* AI vs Traditional */}
+          <div>
+            <h2 className="text-xl font-bold text-slate-800 mb-3">AI vs thẩm định viên truyền thống</h2>
+            <div className="overflow-x-auto">
+              <table className="w-full text-xs border-collapse min-w-[560px]">
+                <thead><tr className="bg-slate-700 text-white"><th className="px-3 py-2 text-left">Tiêu chí</th><th className="px-3 py-2 text-center">SGS AI</th><th className="px-3 py-2 text-center">Thẩm định viên</th></tr></thead>
+                <tbody>{[['Thời gian','3-5 phút','3-7 ngày'],['Chi phí','Miễn phí','1-5 triệu đồng'],['Độ chính xác','±4.8% MAPE','±3-5%'],['Dữ liệu so sánh','2.400+ giao dịch','5-10 căn thủ công'],['Cập nhật thị trường','Hàng ngày','Theo kinh nghiệm'],['Phù hợp cho','Tham khảo, sàng lọc','Vay, tranh chấp pháp lý']].map(([tc,ai,tv],i)=>(
+                  <tr key={i} className={i%2===0?'bg-white':'bg-slate-50'}><td className="px-3 py-2 font-medium text-slate-600">{tc}</td><td className="px-3 py-2 text-center text-blue-600 font-medium">{ai}</td><td className="px-3 py-2 text-center text-slate-500">{tv}</td></tr>
+                ))}</tbody>
+              </table>
+            </div>
+            <div className="mt-3 p-3 bg-amber-50 border border-amber-200 rounded-xl text-xs text-amber-800">
+              <strong>Nên dùng thẩm định viên:</strong> Vay ngân hàng, tranh chấp pháp lý, BĐS đặc thù hoặc đất nông nghiệp chuyển đổi mục đích.
             </div>
           </div>
         </div>
-      </div>
-
-      {/* AI vs Traditional */}
-      <div className="mb-12">
-        <h2 className="text-2xl font-bold text-slate-800 mb-3">So Sánh: Định Giá AI vs Thẩm Định Viên Truyền Thống</h2>
-        <div className="overflow-x-auto">
-          <table className="w-full text-sm border-collapse">
-            <thead><tr className="bg-slate-700 text-white"><th className="px-4 py-2 text-left">Tiêu Chí</th><th className="px-4 py-2 text-center">SGS Định Giá AI™</th><th className="px-4 py-2 text-center">Thẩm Định Viên Truyền Thống</th></tr></thead>
-            <tbody>{[[' Thời gian','3-5 phút','3-7 ngày'],['Chi phí','Miễn phí','1-5 triệu đồng'],['Độ chính xác (tổng thể)','±4.8% MAPE','±3-5% (chuyên gia giỏi)'],['Dữ liệu so sánh','2.400+ giao dịch thực tế','5-10 căn so sánh thủ công'],['Cập nhật thị trường','Hàng ngày (tự động)','Theo kinh nghiệm cá nhân'],['Pháp lý kiểm tra','Tự động từ dữ liệu công khai','Kiểm tra thực địa, hồ sơ gốc'],['Phù hợp cho','Tham khảo nhanh, sàng lọc BĐS','Vay ngân hàng, tranh chấp pháp lý']].map(([tc,ai,tv],i)=>(
-              <tr key={i} className={i%2===0?'bg-white':'bg-slate-50'}><td className="px-4 py-2 font-medium text-slate-600">{tc}</td><td className="px-4 py-2 text-center text-blue-600 font-medium">{ai}</td><td className="px-4 py-2 text-center text-slate-500">{tv}</td></tr>
-            ))}</tbody>
-          </table>
-        </div>
-        <div className="mt-4 p-4 bg-amber-50 border border-amber-200 rounded-xl text-sm text-amber-800">
-          <strong>⚠️ Khi nào NÊN dùng thẩm định viên truyền thống:</strong> Vay ngân hàng (bắt buộc có thẩm định viên độc lập), tranh chấp pháp lý, nhà đặc thù (di sản, biệt thự luxury &gt;20 tỷ), đất nông nghiệp chuyển đổi mục đích sử dụng.
-        </div>
-      </div>
+      </details>
 
       {/* FAQ */}
       <div>
-        <h2 className="text-2xl font-bold text-slate-800 mb-4">Câu Hỏi Thường Gặp — Định Giá BĐS Bằng AI</h2>
+        <h2 className="text-xl font-bold text-slate-800 mb-3">Câu hỏi thường gặp</h2>
         <div className="space-y-3">{[
           {q:'Định giá AI có chính xác không? Sai số bao nhiêu?',a:'SGS Định Giá AI™ đạt sai số ±4.8% MAPE (Mean Absolute Percentage Error) trên tập test 2.400+ giao dịch công chứng tại TP.HCM. Tương đương với căn hộ 3 tỷ, sai số tối đa khoảng ±144 triệu đồng. Độ chính xác phụ thuộc vào mức độ điền đầy đủ thông tin.'},
           {q:'Định giá AI dùng dữ liệu gì?',a:'SGS AVM sử dụng: (1) 2.400+ giao dịch công chứng thực tế, (2) Giá đăng bán trên 5 sàn BĐS lớn, (3) Dữ liệu quy hoạch và hạ tầng từ cổng thông tin chính phủ, (4) Dữ liệu về tiện ích từ OpenStreetMap và Google Places, (5) Xu hướng giá theo quý được cập nhật hàng ngày.'},
           {q:'Kết quả định giá AI có thể dùng để vay ngân hàng không?',a:'Không. Ngân hàng yêu cầu thẩm định viên độc lập được cấp phép (Chứng chỉ thẩm định giá — Bộ Tài chính) cho mục đích vay. SGS Định Giá AI™ phù hợp để tham khảo nhanh, đàm phán giá, sàng lọc cơ hội đầu tư, không thay thế thẩm định chính thức.'},
-          {q:'Tại sao kết quả định giá của tôi thấp hơn giá tôi mua?',a:'Có nhiều lý do: (1) Thị trường đã điều chỉnh sau khi bạn mua, (2) Bạn mua với giá cao hơn thị trường (sốt đất, phí môi giới cao), (3) Tình trạng pháp lý hoặc vị trí cụ thể chưa được phản ánh đầy đủ. Liên hệ chuyên gia SGS LAND để có đánh giá chi tiết hơn.'},
           {q:'Định giá AI có tính phí không?',a:'SGS Định Giá AI™ cung cấp 3 lượt định giá miễn phí/tháng. Từ lượt thứ 4 cần đăng ký tài khoản. Gói Premium không giới hạn lượt định giá, xuất báo cáo PDF đầy đủ, so sánh lịch sử giá, và tư vấn chuyên gia: chỉ từ 99.000 đồng/tháng.'},
           {q:'Làm sao để có kết quả định giá chính xác nhất?',a:'Để có sai số tối thiểu: Điền đầy đủ địa chỉ chi tiết (số nhà, tên hẻm/đường) + loại BĐS + diện tích + số tầng + tuổi nhà + tình trạng pháp lý + nội thất. Độ chính xác tăng từ ±12% (chỉ địa chỉ) lên ±4.8% (điền đầy đủ).'},
-          {q:'AI định giá có tính đến view (hướng nhìn) và tầng không?',a:'Có. SGS AVM tính điều chỉnh +2-5% cho tầng cao (trên tầng 10), +3-8% cho hướng Đông Nam/Nam, +5-12% cho view hồ/sông/công viên. Những điều chỉnh này dựa trên phân tích thống kê từ dữ liệu giao dịch thực tế.'},
-          {q:'Định giá bất động sản ở ngoài TP.HCM có chính xác không?',a:'SGS AVM hiện có độ chính xác cao nhất tại TP.HCM (đặc biệt các quận nội thành và Thủ Đức). Tại Bình Dương, Đồng Nai và Long An, độ chính xác giảm còn ±8-12% do mật độ dữ liệu giao dịch thấp hơn. Chúng tôi đang bổ sung dữ liệu tại các tỉnh thành này.'},
           {q:'Thời gian để có kết quả định giá AI là bao lâu?',a:'Kết quả định giá AI của SGS LAND xuất hiện ngay lập tức — thường trong vòng 2-5 giây sau khi nhập địa chỉ. Hệ thống SGS-AVM phân tích đồng thời hơn 2.400+ giao dịch thực tế gần đó, đối chiếu với dữ liệu quy hoạch từ cổng thông tin chính phủ và chỉ số thị trường cập nhật hàng ngày. Kết quả bao gồm giá trị ước tính, khoảng dao động ±4.8%, và báo cáo PDF có thể tải về. Gói Premium có thêm lịch sử giá 24 tháng và phân tích xu hướng khu vực.'},
-          {q:'SGS LAND có hỗ trợ định giá bất động sản thương mại không?',a:'Có, SGS-AVM hỗ trợ định giá cả bất động sản thương mại bao gồm: shophouse, nhà phố thương mại, văn phòng, nhà xưởng và đất thương mại. Đối với BĐS thương mại, hệ thống áp dụng thêm các hệ số hiệu chỉnh về mật độ giao thông, khả năng tiếp cận, và tiềm năng kinh doanh khu vực. Độ chính xác cho BĐS thương mại đạt ±6-8%, thấp hơn nhà ở do dữ liệu giao dịch ít hơn. Nên dùng kết quả AI như tham chiếu ban đầu trước khi thuê thẩm định viên chuyên nghiệp.'},
         ].map((item,idx)=>(
           <details key={idx} className="border border-slate-200 rounded-xl overflow-hidden bg-[var(--bg-surface)]">
             <summary className="px-4 py-3 cursor-pointer font-medium text-slate-700 hover:bg-slate-50 flex items-center justify-between list-none">
@@ -2902,6 +2915,7 @@ export const AiValuation: React.FC = () => {
       </div>
     </div>
   </section>
+  )}
 
         </>
     );
