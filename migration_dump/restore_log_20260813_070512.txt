@@ -1,0 +1,32 @@
+nohup: ignoring input
+pg_restore: error: COPY failed for table "uploaded_files": server closed the connection unexpectedly
+	This probably means the server terminated abnormally
+	before or while processing the request.
+server closed the connection unexpectedly
+	This probably means the server terminated abnormally
+	before or while processing the request.
+pg_restore: error: could not commit database transaction: no connection to the server
+Command was: COMMIT
+pg_restore: error: could not set "default_tablespace" to "": no connection to the server
+pg_restore: error: could not execute query: no connection to the server
+Command was: CREATE INDEX idx_uploaded_files_lookup ON public.uploaded_files USING btree (tenant_id, filename);
+
+
+pg_restore: error: could not execute query: no connection to the server
+Command was: ALTER TABLE ONLY public.uploaded_files
+    ADD CONSTRAINT uploaded_files_pkey PRIMARY KEY (id);
+
+
+pg_restore: error: could not execute query: no connection to the server
+Command was: ALTER TABLE ONLY public.uploaded_files
+    ADD CONSTRAINT uploaded_files_tenant_id_filename_key UNIQUE (tenant_id, filename);
+
+
+pg_restore: error: could not execute query: no connection to the server
+Command was: ALTER TABLE public.uploaded_files ENABLE ROW LEVEL SECURITY;
+
+pg_restore: error: could not execute query: no connection to the server
+Command was: CREATE POLICY tenant_isolation_v2 ON public.uploaded_files USING ((((NULLIF(current_setting('app.current_tenant_id'::text, true), ''::text) IS NOT NULL) AND ((tenant_id)::text = NULLIF(current_setting('app.current_tenant_id'::text, true), ''::text))) OR (current_setting('app.bypass_rls'::text, true) = 'on'::text))) WITH CHECK ((((NULLIF(current_setting('app.current_tenant_id'::text, true), ''::text) IS NOT NULL) AND ((tenant_id)::text = NULLIF(current_setting('app.current_tenant_id'::text, true), ''::text))) OR (current_setting('app.bypass_rls'::text, true) = 'on'::text)));
+
+
+pg_restore: error: reconnection failed: connection to server at "pg-3fd9e320-sgsland.l.aivencloud.com" (168.144.190.218), port 22059 failed: FATAL:  the database system is in recovery mode

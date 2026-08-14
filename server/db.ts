@@ -1,4 +1,5 @@
 import { Pool, PoolClient, types } from 'pg';
+import path from 'path';
 import dotenv from 'dotenv';
 dotenv.config();
 // Parse numeric (OID 1700) and int8 (OID 20) columns as JS numbers instead of strings
@@ -11,9 +12,18 @@ function sanitiseConnectionString(raw: string | undefined): string | undefined {
   if (!raw) return raw;
   return raw.replace(/[?&]channel_binding=[^&]*/g, (m) => (m.startsWith('?') ? '?' : '')).replace(/\?&/, '?').replace(/\?$/, '');
 }
-const DB_CONNECTION_STRING = sanitiseConnectionString(
+function withAivenCaCert(url) {
+  if (!url) return url;
+  if (!url.includes('aivencloud.com')) return url;
+  if (url.includes('sslrootcert=')) return url;
+  const caPath = path.join(process.cwd(), 'certs', 'aiven-ca.pem');
+  const sep = url.includes('?') ? '&' : '?';
+  return `${url}${sep}sslrootcert=${caPath}`;
+}
+
+const DB_CONNECTION_STRING = withAivenCaCert(sanitiseConnectionString(
   process.env.NEON_DATABASE_URL || process.env.PROD_DATABASE_URL || process.env.DATABASE_URL
-);
+));
 if (process.env.NEON_DATABASE_URL) {
   console.log('[DB] Using NEON_DATABASE_URL — nguồn dữ liệu chính thức duy nhất');
 } else if (process.env.PROD_DATABASE_URL) {
