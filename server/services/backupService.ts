@@ -29,10 +29,8 @@ export interface BackupResult {
  */
 function getDbUrl(): string {
   const url =
-    process.env.PROD_DATABASE_URL ||
-    process.env.NEON_DATABASE_URL ||
-    process.env.DATABASE_URL;
-  if (!url) throw new Error('No database URL configured');
+    process.env.AIVEN_DATABASE_URL;
+  if (!url) throw new Error('AIVEN_DATABASE_URL is not configured');
   return url.replace(/[?&]channel_binding=[^&]*/g, (m) => (m.startsWith('?') ? '?' : ''))
     .replace(/\?&/, '?')
     .replace(/\?$/, '');
@@ -131,7 +129,7 @@ export async function runBackup(): Promise<BackupResult> {
             `\nTải file: GET https://sgsland.vn/api/admin/backups/${filename}\n` +
             `(Cần đăng nhập admin)\n\n` +
             `Lưu ý: file backup nằm trên /tmp của server, có thể mất sau redeploy. ` +
-            `Khuyến nghị bật Neon PITR để khôi phục theo timestamp bất kỳ.`,
+             `Khuyến nghị bật backup/PITR trên Aiven để khôi phục theo timestamp bất kỳ.`,
         });
       } catch (e: any) {
         logger.warn(`[Backup] Email báo cáo lỗi: ${e.message}`);

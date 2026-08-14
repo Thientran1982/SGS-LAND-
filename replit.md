@@ -14,7 +14,7 @@ SGS Land is an AI-powered real estate CRM and management platform for the Vietna
     *   **Seed**: `npm run db:seed`
 *   **Required Environment Variables**:
     *   `JWT_SECRET`
-    *   `POSTGRES_URL`
+    *   `AIVEN_DATABASE_URL`
     *   `VNPAY_TMN_CODE`, `VNPAY_HASH_SECRET`, `VNPAY_RETURN_URL`, `VNPAY_IPN_URL` (for VNPay integration)
     *   `EXPO_PUBLIC_API_BASE_URL` (for mobile app)
     *   `EXPO_PUBLIC_SENTRY_DSN` (for mobile app Sentry)

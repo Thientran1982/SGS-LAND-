@@ -1,6 +1,6 @@
 # Huong dan gan developer_id cho projects (de muc "Du an cua X" co du lieu)
 
-> BAN tu chay tren Neon. Toi KHONG tu chay tren production.
+> BAN tu chay tren Aiven. Toi KHONG tu chay tren production.
 > Bang developers + cot projects.developer_id da tao boi migration 110.
 > Seed 8 chu dau tu boi migration 111.
 
@@ -57,6 +57,6 @@ Lap lai cho cac cap khac, vi du:
 
 ## Luu y RLS
 
-Chay bang owner connection (Neon SQL editor) khong bi RLS chan.
+Chay bang owner connection (Aiven SQL client) khong bi RLS chan.
 Neu chay bang app connection, SET app.current_tenant_id = '<TENANT_UUID>' truoc moi cau lenh.
 UPDATE co the chay lai an toan (idempotent neu dieu kien match on dinh).

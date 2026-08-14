@@ -11,7 +11,7 @@
  * run concurrently with the request path.
  *
  * Interval defaults to 15 minutes to match the other in-process crons - the
- * Neon instance scales to zero, so we deliberately avoid a chatty 1m tick.
+ * Use a moderate cadence so the managed database is not queried unnecessarily.
  */
 import type { Pool } from 'pg';
 import { logger } from '../middleware/logger';

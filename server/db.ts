@@ -5,14 +5,13 @@ dotenv.config();
 // Parse numeric (OID 1700) and int8 (OID 20) columns as JS numbers instead of strings
 types.setTypeParser(1700, (val: string) => parseFloat(val));
 types.setTypeParser(20, (val: string) => parseInt(val, 10));
-// NEON_DATABASE_URL là nguồn dữ liệu duy nhất (đã đồng bộ đầy đủ từ PROD 20/04/2026).
-// Ưu tiên NEON_DATABASE_URL → PROD_DATABASE_URL (backup) → DATABASE_URL (runtime).
+// AIVEN_DATABASE_URL is the only supported database connection string.
 // Strip libpq-only params (e.g. channel_binding) that node-pg does not recognise.
 function sanitiseConnectionString(raw: string | undefined): string | undefined {
   if (!raw) return raw;
   return raw.replace(/[?&]channel_binding=[^&]*/g, (m) => (m.startsWith('?') ? '?' : '')).replace(/\?&/, '?').replace(/\?$/, '');
 }
-function withAivenCaCert(url) {
+ function withAivenCaCert(url: string | undefined): string | undefined {
   if (!url) return url;
   if (!url.includes('aivencloud.com')) return url;
   if (url.includes('sslrootcert=')) return url;
@@ -22,17 +21,16 @@ function withAivenCaCert(url) {
 }
 
 const DB_CONNECTION_STRING = withAivenCaCert(sanitiseConnectionString(
-  process.env.NEON_DATABASE_URL || process.env.PROD_DATABASE_URL || process.env.DATABASE_URL
+  process.env.AIVEN_DATABASE_URL
 ));
-if (process.env.NEON_DATABASE_URL) {
-  console.log('[DB] Using NEON_DATABASE_URL — nguồn dữ liệu chính thức duy nhất');
-} else if (process.env.PROD_DATABASE_URL) {
-  console.log('[DB] Using PROD_DATABASE_URL (fallback)');
+if (!DB_CONNECTION_STRING) {
+  throw new Error('[DB] AIVEN_DATABASE_URL is required');
 }
+console.log('[DB] Using AIVEN_DATABASE_URL');
 export const pool = new Pool({
   connectionString: DB_CONNECTION_STRING,
-  max: 20,                       // 20 connections — supports 1000+ concurrent users (Neon allows 25-100 depending on plan)
-  idleTimeoutMillis: 240000,     // 4 min — evict idle connections before Neon's 5-min hard timeout
+  max: 20,                       // Keep the pool bounded for the Aiven service plan.
+  idleTimeoutMillis: 240000,     // 4 min — evict idle connections while keeping the API pool healthy
   connectionTimeoutMillis: 15000,
   statement_timeout: 30000,
   keepAlive: true,               // Send TCP keepalive packets to detect dead connections
@@ -73,8 +71,8 @@ export async function withTenantContext<T>(
     // SET LOCAL ROLE: chuyển sang role NOBYPASSRLS để Postgres thực thi policy RLS.
     // Phải SET ROLE TRƯỚC khi đặt app.current_tenant_id để policy đánh giá đúng.
     await client.query(`SET LOCAL ROLE ${APP_DB_ROLE}`);
-    // CRITICAL: neondb_owner có row_security=off mặc định (do BYPASSRLS).
-    // Sau khi SET LOCAL ROLE sgs_app (không có BYPASSRLS), phải bật lại row_security=on
+    // The database owner may have row_security=off by default due to BYPASSRLS.
+    // After SET LOCAL ROLE sgs_app (without BYPASSRLS), enable row_security=on
     // để PostgreSQL thực thi RLS policy đúng cách thay vì throw "query would be affected".
     await client.query('SET LOCAL row_security = on');
     await client.query(`SET LOCAL app.current_tenant_id = '${sanitized}'`);
@@ -124,7 +122,7 @@ export async function withRlsBypass<T>(
   try {
     await client.query('BEGIN');
     await client.query(`SET LOCAL ROLE ${APP_DB_ROLE}`);
-    // Bật lại row_security=on cho sgs_app (session default của neondb_owner là off).
+    // Enable row_security=on for sgs_app (the database owner session may default to off).
     // bypass được xử lý bằng app.bypass_rls='on' trong RLS policy, không phải row_security=off.
     await client.query('SET LOCAL row_security = on');
     await client.query("SET LOCAL app.bypass_rls = 'on'");

@@ -13,12 +13,9 @@ import { AUTHORS } from "../apps/nextjs/data/authors";
 const TENANT_ID = "00000000-0000-0000-0000-000000000001";
 
 async function main() {
-  // Same resolution order as server/db.ts so we always seed the DB the app reads.
-  const conn =
-    process.env.NEON_DATABASE_URL ||
-    process.env.PROD_DATABASE_URL ||
-    process.env.DATABASE_URL;
-  if (!conn) throw new Error("No database connection string found");
+  // Use the same Aiven database as the running application.
+  const conn = process.env.AIVEN_DATABASE_URL;
+  if (!conn) throw new Error("AIVEN_DATABASE_URL is not configured");
   const pool = new Pool({ connectionString: conn });
   const client = await pool.connect();
   let inserted = 0;

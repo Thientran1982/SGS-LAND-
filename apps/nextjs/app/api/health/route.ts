@@ -8,7 +8,7 @@ export const dynamic = 'force-dynamic';
 // Vi Next chay o port public (5000) va rewrite /api/:path* -> backend chi la
 // afterFiles, route handler nay CHE endpoint /api/health that cua Express
 // (server.ts:3994, port 5001). Ket qua: uptime monitor goi
-// https://<domain>/api/health luon thay 200 "ok" du Neon/Upstash chet.
+// https://<domain>/api/health luon thay 200 "ok" du database/Upstash chet.
 //
 // Gio route nay proxy nguyen van sang backend va GIU NGUYEN status code, nen
 // 503 tu backend (DB/Redis down) di duoc ra ngoai. Neu backend khong reachable

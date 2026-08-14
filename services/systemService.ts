@@ -45,7 +45,7 @@ const getEnv = (key: string, defaultValue: string = ''): string => {
 };
 const ENV_VARS = {
     NODE_ENV: getEnv('NODE_ENV', 'production'),
-    DATABASE_URL: getEnv('DATABASE_URL', 'postgres://mock:5432/db'),
+    AIVEN_DATABASE_URL: getEnv('AIVEN_DATABASE_URL', ''),
     API_KEY: getEnv('API_KEY', ''), 
     EMAIL_SERVICE_KEY: getEnv('EMAIL_SERVICE_KEY', ''),
     PUBLIC_BASE_URL: typeof window !== 'undefined' ? window.location.origin : '',

@@ -2,7 +2,7 @@
 
 Backend module that ingests real-estate listings (with images) for **6 regions**
 — TP.HCM, Đồng Nai, Bình Dương, Bà Rịa - Vũng Tàu, Long An, Tây Ninh — into
-Neon PostgreSQL + PostGIS for **internal reference-price / market analytics**.
+Aiven PostgreSQL + PostGIS for **internal reference-price / market analytics**.
 
 ## Data-source policy (read first)
 
@@ -46,7 +46,7 @@ app.use('/api/market', apiRateLimit, createMarketRoutes(authenticateToken));
 ## Setup
 
 1. Ensure secrets exist (see `.env.example`). Already present in this project:
-   Neon, Upstash Redis, QStash. **Add**: Cloudinary + Mapbox keys.
+   Aiven, Upstash Redis, QStash. **Add**: Cloudinary + Mapbox keys.
 2. Run the migration (creates PostGIS table + image-dedup table):
    ```bash
    tsx server/market/db/migrate.ts

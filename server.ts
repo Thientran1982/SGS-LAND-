@@ -1500,7 +1500,7 @@ app.use(globalMutationAudit);
   logger.info("Socket.io using in-memory adapter (Upstash REST — no TCP pub/sub needed for single-instance).");
 
   // Initialize DB schema via migration runner (with retry for cold-start DB wakeup)
-  if (process.env.DATABASE_URL) {
+  if (process.env.AIVEN_DATABASE_URL) {
     const MAX_MIGRATION_ATTEMPTS = 3;
     let migrationOk = false;
     for (let attempt = 1; attempt <= MAX_MIGRATION_ATTEMPTS; attempt++) {
@@ -1526,7 +1526,7 @@ app.use(globalMutationAudit);
 
     // ── Tenant white-label (task #28): cron 5 phút verify TXT custom domain ──
     try {
-      startCustomDomainVerifyCron({ intervalMs: 30 * 60 * 1000 }); // Neon scale-to-zero fix 2026-07-22: 5min->30min, no QStash counterpart
+      startCustomDomainVerifyCron({ intervalMs: 30 * 60 * 1000 }); // Keep the in-process cadence moderate for the managed database.
       logger.info('[tenant] Custom-domain TXT verify cron started (30min interval)');
     } catch (err: any) {
       logger.warn(`[tenant] Failed to start TXT verify cron: ${err?.message || err}`);
@@ -1551,7 +1551,7 @@ app.use(globalMutationAudit);
     priceCalibrationService.init(pool);
     logger.info('[PriceCalibration] Self-learning calibration engine initialized');
   } else {
-    console.warn("DATABASE_URL not set. Skipping database migrations.");
+    console.warn("AIVEN_DATABASE_URL not set. Skipping database migrations.");
   }
 
   const PUBLIC_TENANT = DEFAULT_TENANT_ID;
@@ -4030,8 +4030,8 @@ app.get('/api/public/listings/:slugId', apiRateLimit, async (req: express.Reques
   app.get("/api/health", async (req, res) => {
     res.setHeader('Cache-Control', 'no-store');
     try {
-      // RELIABILITY FIX (audit): systemService.checkHealth() ping Neon bang
-      // pool.query('SELECT 1') KHONG co timeout, nen khi Neon dang cold start
+      // RELIABILITY FIX (audit): systemService.checkHealth() pings the database
+      // with pool.query('SELECT 1') and needs a timeout when the service is unavailable.
       // health probe co the treo ti connectionTimeoutMillis (15s, server/db.ts:26).
       // Boc withTimeout + fallback de probe luon tra ve trong ~1.2s.
       let health: any;
@@ -4111,7 +4111,7 @@ app.get('/api/public/listings/:slugId', apiRateLimit, async (req: express.Reques
       // RELIABILITY FIX (audit): truoc day endpoint luon tra HTTP 200 ke ca khi
       // database.status === 'down' (chi doi field trong body), nen uptime monitor,
       // load balancer va dbApi.ping() (services/dbApi.ts:1442 chi doc res.ok)
-      // khong bao gio phat hien su co. Gio: Neon down => 503 (readiness fail),
+      // khong bao gio phat hien su co. Gio: database down => 503 (readiness fail),
       // Upstash down => van 200 nhung status='degraded' (co in-memory fallback).
       // /health (server.ts) van la liveness probe tra 200 khong phu thuoc DB.
       const dbDown = components.database.status !== 'healthy';
@@ -4705,10 +4705,10 @@ app.get('/api/public/listings/:slugId', apiRateLimit, async (req: express.Reques
       '';
     app.use(createCampaignSchedulerCronRouter(pool, campaignSchedulerSecret));
     try {
-      startCampaignSchedulerCron(pool, { intervalMs: 15 * 60 * 1000 }); // Neon scale-to-zero fix 2026-07-22: giam tu 5p xuong 15p (QSTASH_TOKEN hien invalid nen khong the xac nhan QStash schedule con hoat dong, giu interval vua phai an toan hon)
+      startCampaignSchedulerCron(pool, { intervalMs: 15 * 60 * 1000 }); // Keep the in-process cadence moderate when QStash is unavailable.
       // Booking lifecycle: expire abandoned PENDING deposits and hand paid
       // holds back to the market once hold_expires_at elapses. Same 15m
-      // cadence as the campaign cron to stay friendly to Neon scale-to-zero.
+      // cadence as the campaign cron to avoid unnecessary database wakeups.
       startBookingLifecycleCron(pool, { intervalMs: 15 * 60 * 1000 });
     } catch (err: any) {
       logger.warn(`[CampaignScheduler] Không thể khởi động in-process cron: ${err?.message || err}`);
@@ -4757,7 +4757,7 @@ app.get('/api/public/listings/:slugId', apiRateLimit, async (req: express.Reques
       logger.warn(`[VNPay] config invalid at boot: ${err?.message || err}`);
     }
     try {
-      startBuyerPushCron(pool, { intervalMs: 60 * 60 * 1000 }); // Neon scale-to-zero fix 2026-07-22: no QStash schedule found for this job, was 15min
+      startBuyerPushCron(pool, { intervalMs: 60 * 60 * 1000 }); // No QStash schedule found for this job, so keep a conservative cadence.
     } catch (err: any) {
       logger.warn(`[push] Không thể khởi động in-process buyer-push cron: ${err?.message || err}`);
     }
@@ -4785,7 +4785,7 @@ app.get('/api/public/listings/:slugId', apiRateLimit, async (req: express.Reques
 
   app.get("/api/courses", authenticateToken, async (req, res) => {
     try {
-      if (!process.env.DATABASE_URL) {
+      if (!process.env.AIVEN_DATABASE_URL) {
         return res.json([]); // Return empty array if no DB
       }
       const tenantId = (req as any).tenantId;
@@ -4801,7 +4801,7 @@ app.get('/api/public/listings/:slugId', apiRateLimit, async (req: express.Reques
 
   app.post("/api/courses", authenticateToken, async (req, res) => {
     try {
-      if (!process.env.DATABASE_URL) {
+      if (!process.env.AIVEN_DATABASE_URL) {
         return res.status(503).json({ error: 'Database not configured' });
       }
       const { title, description, level } = req.body;
@@ -4988,7 +4988,7 @@ app.get('/api/public/listings/:slugId', apiRateLimit, async (req: express.Reques
 
   app.get('/sitemap-listings.xml', async (_req: express.Request, res: express.Response) => {
     try {
-      // neondb_owner có BYPASSRLS + row_security=off mặc định → query thẳng pool không cần transaction/role switch
+      // Database owner có BYPASSRLS + row_security=off mặc định → query thẳng pool không cần transaction/role switch
       // Public listings = AVAILABLE / BOOKING / OPENING (cùng filter với
       // /api/public/listings). Trước đây dùng 'ACTIVE' (legacy CRM status)
       // khiến sitemap rỗng → Googlebot không thể discover product pages.
@@ -5079,7 +5079,7 @@ app.get('/api/public/listings/:slugId', apiRateLimit, async (req: express.Reques
 
   app.get('/sitemap-news.xml', async (_req: express.Request, res: express.Response) => {
     try {
-      // neondb_owner có BYPASSRLS + row_security=off mặc định → query thẳng pool
+      // Database owner có BYPASSRLS + row_security=off mặc định → query thẳng pool
       const result = await pool.query(
         `SELECT id, slug, title, updated_at, published_at FROM articles
          WHERE status = 'PUBLISHED'

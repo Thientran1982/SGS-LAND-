@@ -401,7 +401,7 @@ export const SystemStatus: React.FC = () => {
                     setLogs(systemService.getRecentLogs());
                 }
             }
-        // Reliability fix: 1s -> 30s. Poll 1 giay/tab lam Neon khong bao gio
+        // Reliability fix: 1s -> 30s. Polling every second per tab keeps the database
         // autosuspend va dot ~3 command Upstash/giay qua rate limiter.
         }, 30_000);
         return () => clearInterval(interval);

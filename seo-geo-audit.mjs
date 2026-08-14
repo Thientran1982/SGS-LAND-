@@ -615,7 +615,7 @@ function buildFixesTodo(perPage, robots, sitemapInfo) {
     no_local_biz_schema:    'Thêm JSON-LD `RealEstateAgent` hoặc `LocalBusiness` ở homepage với address, geo, telephone, openingHours.',
     no_authority_outlinks:  'Thêm 1-2 outbound link tới site authority (.gov.vn, baochinhphu.vn, cafef.vn) trong các bài về quy định/pháp lý.',
     slow_ttfb:              'TTFB > 600ms. Bật cache CDN (Cloudflare Cache Everything cho static), pre-warm SSR cho route public, kiểm tra DB query chậm.',
-    http_5xx:               'Server lỗi 5xx — kiểm tra log production ngay, có thể do Neon connection pool / Redis / dependency.',
+    http_5xx:               'Server lỗi 5xx — kiểm tra log production ngay, có thể do Aiven connection pool / Redis / dependency.',
     http_404:               'URL trả 404 — kiểm tra route, redirect 301 sang URL mới nếu đã đổi.',
   };
   for (const f of byCode.values()) {

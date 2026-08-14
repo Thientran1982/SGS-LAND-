@@ -15,7 +15,7 @@ const POLICY_NAME = 'tenant_isolation_v2';
  * Migration 070 — Tạo role `sgs_app` (NOBYPASSRLS) và làm chính sách RLS NULL-safe.
  *
  * Vì sao cần:
- *   • Trên Neon, role `neondb_owner` có thuộc tính `rolbypassrls = TRUE` mặc định và
+ *   • The database owner may have `rolbypassrls = TRUE` by default and
  *     KHÔNG thể tự revoke (permission denied). Khi runtime kết nối bằng owner,
  *     mọi policy RLS đều bị bỏ qua, kể cả khi đã `FORCE ROW LEVEL SECURITY`.
  *   • Cách khắc phục: tạo role không có BYPASSRLS, ứng dụng `SET LOCAL ROLE sgs_app`
@@ -28,9 +28,9 @@ const POLICY_NAME = 'tenant_isolation_v2';
 export default {
   id: '070_app_role_and_safe_policy',
   description:
-    'Create NOBYPASSRLS app role + NULL-safe RLS policy (Neon owner cannot self-revoke BYPASSRLS)',
+    'Create NOBYPASSRLS app role + NULL-safe RLS policy (owner cannot self-revoke BYPASSRLS)',
   async up(client: PoolClient): Promise<void> {
-    // 1) Tạo role app (idempotent). KHÔNG ALTER role nếu đã tồn tại — Neon
+    // 1) Tạo role app (idempotent). KHÔNG ALTER role nếu đã tồn tại
     //    không cho non-superuser thay đổi thuộc tính SUPERUSER/BYPASSRLS.
     await client.query(`
       DO $$

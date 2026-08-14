@@ -19,7 +19,7 @@ const isDryRun = process.argv.includes('--dry-run');
 const isRollback = process.argv.includes('--rollback');
 
 const pool = new Pool({
-  connectionString: process.env.NEON_DATABASE_URL || process.env.PROD_DATABASE_URL || process.env.DATABASE_URL,
+  connectionString: process.env.AIVEN_DATABASE_URL,
 });
 
 const action = isRollback

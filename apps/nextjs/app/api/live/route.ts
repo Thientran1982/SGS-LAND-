@@ -4,7 +4,7 @@ import { NextResponse } from 'next/server';
 // LIVENESS PROBE for the Next.js process (the one that owns the PUBLIC port:
 // .replit maps localPort 5000 -> externalPort 80).
 //
-// It deliberately touches NOTHING: no Express backend call, no Neon, no Upstash.
+// It deliberately touches NOTHING: no Express backend call, no database, no Upstash.
 // The only thing it proves is that this Node process still has a working event
 // loop and can still write a response.
 //
@@ -16,7 +16,7 @@ import { NextResponse } from 'next/server';
 // probed the Express backend (/api/health on port 5001), never the frontend.
 //
 // /api/health must NOT be reused for this: it proxies to the backend on purpose
-// and mirrors its status code, so a Neon outage would return 503 here and make
+// and mirrors its status code, so a database outage would return 503 here and make
 // the supervisor restart a perfectly healthy frontend in a loop.
 // ---------------------------------------------------------------------------
 export const dynamic = 'force-dynamic';

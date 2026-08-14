@@ -40,7 +40,7 @@
 #      SIGKILLs after N consecutive failures so the loop restarts it.
 #   4) CAPPED BACKOFF (2s -> BACKOFF_MAX_SECS) instead of a flat 2s: every boot
 #      runs migrations and (in prod) registers QStash schedules, so a bad deploy
-#      crash-looping at full speed burns quota and hammers Neon.
+#      crash-looping at full speed burns quota and hammers the database.
 # ---------------------------------------------------------------------------
 set -u
 
@@ -197,13 +197,13 @@ run_frontend_loop() {
 }
 
 # Watchdog: catches the "alive but wedged" case that an exit-code-only
-# supervisor is blind to. Probes /health (liveness only, no DB call) so a Neon
+# supervisor is blind to. Probes /health (liveness only, no DB call) so a database
 # outage does NOT trigger a pointless restart loop.
 # Watchdog for the FRONTEND, i.e. the process that owns the PUBLIC port
 # (localPort 5000 -> externalPort 80 in .replit). The backend watchdog above cannot see a
 # wedged frontend, and a wedged frontend is exactly what the load balancer hangs on.
 # It probes ${FRONTEND_HEALTH_PATH}, a Next route handler that touches neither the Express
-# backend nor Neon/Upstash, so a database outage cannot cause a pointless restart loop.
+# backend nor the database/Upstash, so a database outage cannot cause a pointless restart loop.
 run_frontend_watchdog_loop() {
   local failures=0 pid
   sleep "$WATCHDOG_GRACE_SECS"
