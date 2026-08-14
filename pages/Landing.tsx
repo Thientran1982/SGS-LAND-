@@ -286,7 +286,14 @@ function MapHero({ lang, onChatOpen }: { lang: Lang; onChatOpen: () => void }) {
                   <p style={{ fontSize:"12.5px", color:"var(--lp-muted)", marginTop:"2px" }}>{proj.loc[lang]}</p>
                   <div style={{ fontSize:"13px", fontWeight:600, color:"var(--lp-navy)", marginTop:"8px", display:"flex", justifyContent:"space-between", alignItems:"center" }}>
                     <span>{proj.price[lang]}</span>
-                    <em className="lp-serif" style={{ fontStyle:"italic", fontWeight:340, color:"var(--lp-gold)", fontSize:"12px" }}>{lang==="vi" ? "Xem dự án →" : "View project →"}</em>
+                    <a
+                      href={pin.href}
+                      className="lp-serif"
+                      style={{ fontStyle:"italic", fontWeight:340, color:"var(--lp-gold)", fontSize:"12px", textDecoration:"none", cursor:"pointer" }}
+                      aria-label={`${lang === "vi" ? "Xem dự án" : "View project"}: ${proj.name}`}
+                    >
+                      {lang==="vi" ? "Xem dự án →" : "View project →"}
+                    </a>
                   </div>
                 </div>
               </div>

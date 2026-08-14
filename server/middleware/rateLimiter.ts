@@ -1,4 +1,5 @@
 import { Request, Response, NextFunction } from 'express';
+import { createHash } from 'node:crypto';
 
 interface RateLimitEntry {
   count: number;
@@ -220,12 +221,20 @@ export const authRateLimit = rateLimit({
 });
 
 // H3 FIX: Stricter rate limit specifically for login & password endpoints.
-// Prevents brute-force attacks: 5 attempts / 15 min per IP.
+// Prevents brute-force attacks: 10 attempts / 15 min per IP + email identity.
 export const loginRateLimit = rateLimit({
-  name: 'login',
+  // v2 intentionally invalidates the old IP-only Redis buckets. Those buckets
+  // could be shared by every visitor behind the same proxy/NAT.
+  name: 'login_v2',
   windowMs: 15 * 60_000,
-  maxRequests: 5,
-  keyFn: (req) => getClientIp(req),
+  maxRequests: 10,
+  keyFn: (req) => {
+    const email = String((req.body as any)?.email || '').trim().toLowerCase();
+    const emailKey = email
+      ? createHash('sha256').update(email).digest('hex').slice(0, 24)
+      : 'anonymous';
+    return `${getClientIp(req)}|${emailKey}`;
+  },
   message: 'Quá nhiều lần thử đăng nhập. Vui lòng thử lại sau 15 phút.',
 });
 
