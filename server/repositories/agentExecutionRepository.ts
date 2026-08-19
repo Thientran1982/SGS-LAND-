@@ -1,6 +1,6 @@
 import { withTenantContext } from '../db';
 
-export type AgentExecutionStatus = 'RUNNING' | 'SUCCESS' | 'ERROR' | 'BLOCKED';
+export type AgentExecutionStatus = 'RUNNING' | 'SUCCESS' | 'ERROR' | 'BLOCKED' | 'WAITING_APPROVAL';
 export type AgentExecutionStepStatus = 'PENDING' | 'RUNNING' | 'SUCCESS' | 'ERROR' | 'SKIPPED' | 'BLOCKED';
 
 export interface AgentExecution {
@@ -257,6 +257,40 @@ class AgentExecutionRepository {
       if ((result.rowCount ?? 0) !== 1) {
         throw new Error(`AGENT_EXECUTION_LEASE_LOST:${executionId}`);
       }
+    });
+  }
+
+  async pauseForApproval(params: {
+    tenantId: string;
+    executionId: string;
+    claimToken: string;
+    approvalRequestId: string;
+    stepKey: string;
+  }): Promise<void> {
+    await withTenantContext(params.tenantId, async client => {
+      const result = await client.query(
+        `UPDATE agent_executions
+            SET status='WAITING_APPROVAL', current_step=$3, approval_request_id=$4,
+                paused_at=NOW(), lease_expires_at=NOW(), updated_at=NOW()
+          WHERE id=$1 AND tenant_id=$2 AND claim_token=$5 AND status='RUNNING'`,
+        [params.executionId, params.tenantId, params.stepKey, params.approvalRequestId, params.claimToken],
+      );
+      if ((result.rowCount ?? 0) !== 1) throw new Error(`AGENT_EXECUTION_LEASE_LOST:${params.executionId}`);
+    });
+  }
+
+  async resumeApproved(tenantId: string, executionId: string, stepKey: string): Promise<AgentExecution | null> {
+    return withTenantContext(tenantId, async client => {
+      const result = await client.query(
+        `UPDATE agent_executions
+            SET status='RUNNING', current_step=$3, attempt=attempt+1,
+                claim_token=gen_random_uuid(), finished_at=NULL,
+                paused_at=NULL, lease_expires_at=NOW()+INTERVAL '2 minutes', updated_at=NOW()
+          WHERE id=$1 AND tenant_id=$2 AND status='WAITING_APPROVAL'
+          RETURNING *`,
+        [executionId, tenantId, stepKey],
+      );
+      return result.rows[0] ? mapExecution(result.rows[0]) : null;
     });
   }
 
