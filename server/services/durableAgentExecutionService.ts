@@ -11,6 +11,7 @@ import {
 import { getOrchestrationDecision } from './orchestrationMode';
 import { runWithSubagentPolicy } from './subagentPolicy';
 import { approvalRequestRepository, type HighImpactAction } from '../repositories/approvalRequestRepository';
+import { runLangGraphOrchestration } from './langGraphOrchestrationAdapter';
 
 export interface DurableAgentResult<T> {
   runId: string;
@@ -66,9 +67,7 @@ export async function runDurableAgentExecution<T extends {
   } | undefined;
 }): Promise<DurableAgentResult<T>> {
   const orchestration = getOrchestrationDecision();
-  if (orchestration.mode === 'langgraph') {
-    throw new Error('LANGGRAPH_ORCHESTRATION_ADAPTER_NOT_SHIPPED');
-  }
+  logger.info(`[DurableAgent] orchestration mode=${orchestration.mode} enabled=${orchestration.enabled}`);
   if (!orchestration.enabled) {
     logger.warn(`[DurableAgent] Orchestration gate kept TypeScript mode: ${orchestration.reason}`);
   }
@@ -233,7 +232,9 @@ export async function runDurableAgentExecution<T extends {
     });
   }
 
-    const result = await params.execute(resumeContext);
+    const result = orchestration.mode === 'langgraph'
+      ? await runLangGraphOrchestration({ resume: resumeContext, execute: params.execute })
+      : await params.execute(resumeContext);
     assertLease();
     const completedSteps = Array.isArray(result.steps) ? result.steps.slice(0, execution.maxSteps) : [];
     await agentExecutionRepository.saveStep({

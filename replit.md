@@ -52,7 +52,7 @@ SGS Land is an AI-powered real estate CRM and management platform for the Vietna
 
 *   **Multi-tenancy via PostgreSQL RLS**: Tenant isolation is enforced at the database level using Row Level Security, with a dedicated `sgs_app` role to prevent bypasses, ensuring data separation for different real estate agencies/vendors.
 *   **Unified Backend Server**: A single Node.js Express server handles both API requests and serves the frontend in development, simplifying deployment and development workflows.
-*   **AI Integration via gated durable pipeline**: The current TypeScript orchestration provides tenant-scoped execution, leases, fencing, checkpoints, guardrails, approval and outbox recovery. LangGraph remains behind an explicit decision gate and is not a production dependency until replay/fan-out/human-in-graph criteria are proven.
+*   **AI Integration via durable LangGraph adapter**: Durable execution remains the outer boundary for tenant scope, leases, fencing, checkpoints, guardrails, approvals and outbox recovery. The approved LangGraph runtime now owns the orchestration adapter boundary, with explicit environment flags for immediate rollback to the TypeScript path.
 *   **SEO & GEO Optimization**: A 3-layer SEO strategy combines SSR, client-side meta management (React Helmet), and dynamic DOM manipulation, complemented by GEO for localized, entity-rich content.
 *   **Anonymous Device-based Mobile Push Notifications**: To support early mobile app features without requiring immediate user authentication, push notifications are managed via stable UUIDs per device installation, enabling targeted communication for saved searches.
 
