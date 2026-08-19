@@ -11,6 +11,7 @@ import { createHash } from 'crypto';
 import { recordAiUsage } from '../services/aiUsageService';
 import { aiRolloutService, decideRollout } from '../services/aiRolloutService';
 import { assessFeedback, autonomousLearningService } from '../services/autonomousLearningService';
+import { agentOutboundRepository } from '../repositories/agentOutboundRepository';
 
 export function createAiGovernanceRoutes(authenticateToken: any, optionalAuth?: any) {
   const router = Router();
@@ -64,6 +65,36 @@ export function createAiGovernanceRoutes(authenticateToken: any, optionalAuth?: 
       res.json(result);
     } catch (error) {
       res.status(500).json({ error: 'Failed to activate kill switch' });
+    }
+  });
+
+  router.get('/delivery/unknown', authenticateToken, async (req: Request, res: Response) => {
+    try {
+      const user = (req as any).user;
+      if (!['SUPER_ADMIN', 'ADMIN'].includes(user?.role)) return res.status(403).json({ error: 'Admin only' });
+      const limit = Math.max(1, Math.min(Number(req.query.limit) || 50, 200));
+      res.json(await agentOutboundRepository.listUnknown(user.tenantId, limit));
+    } catch {
+      res.status(500).json({ error: 'Failed to list unknown deliveries' });
+    }
+  });
+
+  router.post('/delivery/:id/reconcile', authenticateToken, async (req: Request, res: Response) => {
+    try {
+      const user = (req as any).user;
+      if (!['SUPER_ADMIN', 'ADMIN'].includes(user?.role)) return res.status(403).json({ error: 'Admin only' });
+      if (!['SENT', 'FAILED'].includes(req.body?.status) || !String(req.body?.note || '').trim()) {
+        return res.status(400).json({ error: 'status SENT|FAILED and note are required' });
+      }
+      const row = await agentOutboundRepository.reconcileUnknown({
+        tenantId: user.tenantId, deliveryId: req.params.id as string,
+        status: req.body.status, providerMessageId: req.body.providerMessageId,
+        note: String(req.body.note),
+      });
+      if (!row) return res.status(404).json({ error: 'Unknown delivery not found or already reconciled' });
+      res.json(row);
+    } catch {
+      res.status(500).json({ error: 'Failed to reconcile delivery' });
     }
   });
 

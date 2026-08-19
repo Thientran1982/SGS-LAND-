@@ -385,12 +385,16 @@ async function triggerAutoReply(
           deliveryKey: delivery.deliveryKey || `agent-outbound:${delivery.id}`,
         });
         if (!sendResult.success) {
-          await agentOutboundRepository.markFailed({
-            tenantId,
-            deliveryId: delivery.id,
-            claimToken: delivery.claimToken,
-            error: sendResult.error || 'Channel provider rejected outbound message',
-          });
+          const mark = sendResult.ambiguous
+            ? agentOutboundRepository.markUnknown({
+              tenantId, deliveryId: delivery.id, claimToken: delivery.claimToken,
+              error: sendResult.error || 'Provider outcome unknown; automatic resend blocked',
+            })
+            : agentOutboundRepository.markFailed({
+              tenantId, deliveryId: delivery.id, claimToken: delivery.claimToken,
+              error: sendResult.error || 'Channel provider rejected outbound message',
+            });
+          await mark;
           await interactionRepository.updateThreadAiMode(tenantId, lead.id, 'HUMAN_TAKEOVER');
           throw new Error(sendResult.error || `Gui ${channel} that bai`);
         }

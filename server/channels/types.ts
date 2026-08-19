@@ -16,6 +16,8 @@ export interface SendResult {
   messageId?: string;
   error?: string;
   deliveryGuarantee?: 'provider_idempotent' | 'provider_unverified' | 'local_only';
+  /** Provider outcome is unknown; callers must not retry automatically. */
+  ambiguous?: boolean;
 }
 
 export interface OutboundDeliveryContext {

@@ -60,6 +60,7 @@ interface EmailResult {
   status: EmailStatus;
   messageId?: string;
   error?: string;
+  ambiguous?: boolean;
 }
 // ── Quota & dedupe helpers ────────────────────────────────────────────────────
 // Hạn mức email/30 ngày theo gói cước (per tenant). Có thể override qua env.
@@ -140,6 +141,33 @@ async function findDeliveryDedupe(tenantId: string, dedupeKey: string): Promise<
     logger.warn(`[EmailService] delivery dedupe lookup failed: ${err.message}`);
     return false;
   }
+}
+type DeliveryClaim = { state: 'CLAIMED' | 'SENT' | 'UNKNOWN' | 'FAILED'; providerMessageId?: string };
+async function claimDelivery(tenantId: string, deliveryKey: string, recipient: string): Promise<DeliveryClaim> {
+  return withRlsBypass(async client => {
+    const inserted = await client.query(
+      `INSERT INTO email_delivery_claims (tenant_id,delivery_key,recipient)
+       VALUES ($1::uuid,$2,$3) ON CONFLICT (tenant_id,delivery_key) DO NOTHING RETURNING status`,
+      [tenantId, deliveryKey, recipient],
+    );
+    if (inserted.rowCount) return { state: 'CLAIMED' };
+    const row = (await client.query(
+      `SELECT status, provider_message_id FROM email_delivery_claims
+       WHERE tenant_id=$1::uuid AND delivery_key=$2 FOR UPDATE`,
+      [tenantId, deliveryKey],
+    )).rows[0];
+    if (row?.status === 'SENT') return { state: 'SENT', providerMessageId: row.provider_message_id || undefined };
+    if (row?.status === 'UNKNOWN' || row?.status === 'SENDING') return { state: 'UNKNOWN' };
+    return { state: 'FAILED' };
+  });
+}
+async function finishDelivery(tenantId: string, deliveryKey: string, result: EmailResult, provider?: string) {
+  await withRlsBypass(client => client.query(
+    `UPDATE email_delivery_claims SET status=$3, provider=$4, provider_message_id=$5, error=$6, updated_at=NOW()
+     WHERE tenant_id=$1::uuid AND delivery_key=$2`,
+    [tenantId, deliveryKey, result.success ? 'SENT' : (result.status === 'failed' ? 'UNKNOWN' : 'FAILED'),
+      provider || null, result.messageId || null, result.error || null],
+  ));
 }
 async function countSentLast30Days(tenantId: string): Promise<number> {
   try {
@@ -423,6 +451,14 @@ async function deliverEmail(
  */
 async function sendEmail(tenantId: string, options: EmailOptions): Promise<EmailResult> {
   const dedupeKey = makeDedupeKey(tenantId, options);
+  if (options.deliveryKey) {
+    const claim = await claimDelivery(tenantId, options.deliveryKey, options.to);
+    if (claim.state === 'SENT') return { success: true, status: 'deduped', messageId: claim.providerMessageId };
+    if (claim.state !== 'CLAIMED') {
+      logger.warn(`[EmailService] delivery key ${options.deliveryKey} is ${claim.state}; resend blocked`);
+      return { success: false, status: 'failed', error: `EMAIL_DELIVERY_${claim.state}`, ambiguous: claim.state === 'UNKNOWN' };
+    }
+  }
   if (options.deliveryKey && await findDeliveryDedupe(tenantId, dedupeKey)) {
     await logEmail({
       tenantId,
@@ -480,7 +516,14 @@ async function sendEmail(tenantId: string, options: EmailOptions): Promise<Email
     }
   }
   // 3) Gửi
-  const { result, provider } = await deliverEmail(tenantId, options);
+  let result: EmailResult;
+  let provider: string | undefined;
+  try {
+    ({ result, provider } = await deliverEmail(tenantId, options));
+  } catch (error: any) {
+    result = { success: false, status: 'failed', error: error?.message || String(error), ambiguous: true };
+  }
+  if (options.deliveryKey) await finishDelivery(tenantId, options.deliveryKey, result, provider);
   // 4) Log
   await logEmail({
     tenantId,
@@ -700,7 +743,7 @@ async function sendSequenceEmail(
     subject,
     html: emailBase(body, 'Email này được gửi tự động qua SGS LAND Automation.'),
     text: plainText,
-    deliveryKey: deliveryKey ? `agent-outbound:${deliveryKey}` : undefined,
+    deliveryKey,
     dedupeKey: deliveryKey ? `agent-outbound:${deliveryKey}` : undefined,
   });
 }

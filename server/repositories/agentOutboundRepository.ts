@@ -10,6 +10,8 @@ export interface OutboundClaim {
   deliveryKey?: string;
 }
 
+export type OutboundReconciliation = 'SENT' | 'FAILED';
+
 class AgentOutboundRepository {
   async createAndClaim(params: {
     tenantId: string;
@@ -123,6 +125,17 @@ class AgentOutboundRepository {
     ).then(() => undefined));
   }
 
+  async markUnknown(params: {
+    tenantId: string; deliveryId: string; claimToken: string; error: string;
+  }): Promise<void> {
+    await withTenantContext(params.tenantId, client => client.query(
+      `UPDATE agent_outbound_deliveries
+          SET status='UNKNOWN', error_text=$4, updated_at=NOW()
+        WHERE id=$1 AND tenant_id=$2 AND claim_token=$3 AND status='SENDING'`,
+      [params.deliveryId, params.tenantId, params.claimToken, params.error.slice(0, 4000)],
+    ).then(() => undefined));
+  }
+
   async recoverStaleSending(): Promise<Array<{ tenantId: string; leadId: string; deliveryId: string }>> {
     // This is the only cross-tenant operation. The migration grants the app
     // role EXECUTE on a SECURITY DEFINER function with one narrow UPDATE.
@@ -132,6 +145,33 @@ class AgentOutboundRepository {
       leadId: row.lead_id,
       deliveryId: row.delivery_id,
     }));
+  }
+
+  async listUnknown(tenantId: string, limit = 50): Promise<any[]> {
+    return withTenantContext(tenantId, async client => (await client.query(
+      `SELECT id, execution_id, interaction_id, lead_id, channel, delivery_key,
+              attempt, provider_message_id, error_text, claimed_at, updated_at
+         FROM agent_outbound_deliveries
+        WHERE tenant_id=$1 AND status='UNKNOWN'
+        ORDER BY updated_at DESC LIMIT $2`, [tenantId, limit],
+    )).rows);
+  }
+
+  async reconcileUnknown(params: {
+    tenantId: string; deliveryId: string; status: OutboundReconciliation;
+    providerMessageId?: string; note: string;
+  }): Promise<any | null> {
+    return withTenantContext(params.tenantId, async client => {
+      const result = await client.query(
+        `UPDATE agent_outbound_deliveries
+            SET status=$3, provider_message_id=COALESCE($4,provider_message_id),
+                error_text=$5, updated_at=NOW(), sent_at=CASE WHEN $3='SENT' THEN COALESCE(sent_at,NOW()) ELSE sent_at END
+          WHERE tenant_id=$1 AND id=$2 AND status='UNKNOWN'
+          RETURNING *`,
+        [params.tenantId, params.deliveryId, params.status, params.providerMessageId || null, params.note.slice(0, 1000)],
+      );
+      return result.rows[0] || null;
+    });
   }
 }
 

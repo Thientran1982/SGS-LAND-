@@ -8,7 +8,6 @@
  */
 import { logger } from '../middleware/logger';
 import { enterpriseConfigRepository } from '../repositories/enterpriseConfigRepository';
-import { withRetry, isTransientError } from '../utils/retry';
 const FB_GRAPH_API = 'https://graph.facebook.com/v19.0/me/messages';
 export interface FacebookSendResult {
   success: boolean;
@@ -36,24 +35,17 @@ export async function sendFacebookTextMessage(
     };
     const url = `${FB_GRAPH_API}?access_token=${encodeURIComponent(pageAccessToken)}`;
 
-    const json: any = await withRetry(
-      async () => {
-        const response = await fetch(url, {
+    const response = await fetch(url, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(body),
         });
-        if (!response.ok) {
-          const err: any = new Error(`HTTP ${response.status}`);
-          err.status = response.status;
-          throw err;
-        }
-        return response.json();
-      },
-      3,
-      2000,
-      isTransientError
-    );
+    if (!response.ok) {
+      const err: any = new Error(`HTTP ${response.status}`);
+      err.status = response.status;
+      throw err;
+    }
+    const json: any = await response.json();
     if (json.error) {
       logger.warn(`[Facebook] Send failed: code=${json.error.code} message=${json.error.message}`);
       return {
