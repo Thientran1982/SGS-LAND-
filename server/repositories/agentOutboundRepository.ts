@@ -120,19 +120,13 @@ class AgentOutboundRepository {
   }
 
   async recoverStaleSending(): Promise<Array<{ tenantId: string; leadId: string; deliveryId: string }>> {
-    const result = await pool.query(
-      `UPDATE agent_outbound_deliveries
-          SET status = 'UNKNOWN',
-              error_text = COALESCE(error_text, 'Delivery claim expired; automatic resend blocked'),
-              updated_at = NOW()
-        WHERE status = 'SENDING'
-          AND claimed_at < NOW() - INTERVAL '5 minutes'
-        RETURNING id, tenant_id, lead_id`,
-    );
+    // This is the only cross-tenant operation. The migration grants the app
+    // role EXECUTE on a SECURITY DEFINER function with one narrow UPDATE.
+    const result = await pool.query(`SELECT * FROM recover_stale_agent_deliveries()`);
     return result.rows.map(row => ({
       tenantId: row.tenant_id,
       leadId: row.lead_id,
-      deliveryId: row.id,
+      deliveryId: row.delivery_id,
     }));
   }
 }

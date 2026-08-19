@@ -23,6 +23,30 @@ const MAX_IN_MEMORY_ATTEMPTS = 3;
 const IN_MEMORY_BACKOFF_MS = 2000;
 let outboundRecoveryTimer: NodeJS.Timeout | null = null;
 
+async function recoverStaleOutboundDeliveries(io: Server): Promise<void> {
+  try {
+    const { agentOutboundRepository } = await import('./repositories/agentOutboundRepository');
+    const { interactionRepository } = await import('./repositories/interactionRepository');
+    const stale = await agentOutboundRepository.recoverStaleSending();
+    for (const delivery of stale) {
+      await interactionRepository.updateThreadAiMode(
+        delivery.tenantId,
+        delivery.leadId,
+        'HUMAN_TAKEOVER',
+      );
+      io.to(`tenant:${delivery.tenantId}`).emit('escalate_to_human', {
+        leadId: delivery.leadId,
+        reason: `Outbound delivery ${delivery.deliveryId} expired; manual verification required`,
+      });
+    }
+    if (stale.length > 0) {
+      logger.warn(`[AutoReply] ${stale.length} stale outbound delivery claim(s) moved to UNKNOWN`);
+    }
+  } catch (error) {
+    logger.error('[AutoReply] Outbound recovery scan failed:', error);
+  }
+}
+
 function stableEventKey(platform: string, payload: any, hint?: string): string {
   if (hint) return hint;
   const candidates = [
@@ -316,6 +340,7 @@ async function triggerAutoReply(
     // ambiguous and never resent automatically because providers do not expose
     // a portable idempotency key.
     const { agentOutboundRepository } = await import('./repositories/agentOutboundRepository');
+    await recoverStaleOutboundDeliveries(io);
     const delivery = await agentOutboundRepository.createAndClaim({
       tenantId,
       executionId: execution.runId,
@@ -845,32 +870,11 @@ export function setupWebhookWorker(io: Server) {
     runWithRetry(job);
   }
   if (!outboundRecoveryTimer) {
-    const recover = async () => {
-      try {
-        const { agentOutboundRepository } = await import('./repositories/agentOutboundRepository');
-        const { interactionRepository } = await import('./repositories/interactionRepository');
-        const stale = await agentOutboundRepository.recoverStaleSending();
-        for (const delivery of stale) {
-          await interactionRepository.updateThreadAiMode(
-            delivery.tenantId,
-            delivery.leadId,
-            'HUMAN_TAKEOVER',
-          );
-          io.to(`tenant:${delivery.tenantId}`).emit('escalate_to_human', {
-            leadId: delivery.leadId,
-            reason: `Outbound delivery ${delivery.deliveryId} expired in SENDING; manual verification required`,
-          });
-        }
-        if (stale.length > 0) {
-          logger.warn(`[AutoReply] ${stale.length} stale outbound delivery claim(s) moved to UNKNOWN`);
-        }
-      } catch (error) {
-        logger.error('[AutoReply] Outbound recovery scan failed:', error);
-      }
-    };
-    outboundRecoveryTimer = setInterval(recover, 60_000);
+    outboundRecoveryTimer = setInterval(() => {
+      void recoverStaleOutboundDeliveries(io);
+    }, 60_000);
     outboundRecoveryTimer.unref?.();
-    void recover();
+    void recoverStaleOutboundDeliveries(io);
   }
   return {
     on: () => {},

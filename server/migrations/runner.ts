@@ -144,6 +144,7 @@ import m124 from './124_fix_uploaded_files_unique';
 import m125 from './125_webhook_idempotency';
 import m126 from './126_agent_orchestration';
 import m127 from './127_agent_execution_fencing_outbox';
+import m128 from './128_agent_delivery_recovery_function';
 
 dotenv.config();
 
@@ -284,6 +285,7 @@ const MIGRATION_REGISTRY: Record<string, Migration> = {
   '125_webhook_idempotency.ts': m125,
   '126_agent_orchestration.ts': m126,
   '127_agent_execution_fencing_outbox.ts': m127,
+  '128_agent_delivery_recovery_function.ts': m128,
 };
 
 async function ensureSchemaVersionsTable(client: PoolClient): Promise<void> {
