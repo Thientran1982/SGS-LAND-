@@ -3,6 +3,7 @@ import helmet from "helmet";
 import compression from "compression";
 import path from "path";
 import fs from "fs";
+import { createHash } from "crypto";
 import { Server } from "socket.io";
 import http from "http";
 import cookieParser from "cookie-parser";
@@ -1154,6 +1155,7 @@ app.use(globalMutationAudit);
       const tenantId = (req as any).tenantId;
       const userId = (req as any).user?.id;
       const { aiService } = await import('./server/ai');
+      const { runDurableAgentExecution } = await import('./server/services/durableAgentExecutionService');
       const t = serverT(lang || 'vn');
       let userFavorites: any[] = [];
       if (userId) {
@@ -1169,11 +1171,50 @@ app.use(globalMutationAudit);
           }));
         } catch { }
       }
-      const result = await aiService.processMessage(lead, userMessage, history, t, tenantId, lang || 'vn', userFavorites);
-      if (result.escalated && lead?.id) {
+      const suppliedKey = String(req.header('Idempotency-Key') || '').trim();
+      const requestFingerprint = createHash('sha256')
+        .update(JSON.stringify({
+          tenantId,
+          userId,
+          leadId: lead?.id || null,
+          userMessage: String(userMessage || '').slice(0, 2000),
+          history: Array.isArray(history) ? history.slice(-6) : [],
+          lang: lang || 'vn',
+        }))
+        .digest('hex');
+      const idempotencyKey = suppliedKey
+        ? `authenticated:${suppliedKey.slice(0, 180)}`
+        : `authenticated:${requestFingerprint}`;
+      const execution = await runDurableAgentExecution({
+        tenantId,
+        idempotencyKey,
+        sessionId: lead?.id ? `lead:${lead.id}` : `user:${userId || 'anonymous'}`,
+        leadId: lead?.id,
+        triggerSource: 'authenticated-process-message',
+        message: String(userMessage || ''),
+        execute: async () => aiService.processMessage(
+          lead,
+          userMessage,
+          history,
+          t,
+          tenantId,
+          lang || 'vn',
+          userFavorites,
+        ),
+      });
+      const result = execution.result;
+      if (!execution.cached && result.escalated && lead?.id) {
         broadcastIo?.to(`tenant:${tenantId}`).emit('escalate_to_human', { leadId: lead.id });
       }
-      res.json(result);
+      res.json({
+        ...result,
+        runId: execution.runId,
+        traceId: execution.traceId,
+        resumed: execution.resumed,
+        cached: execution.cached,
+        needsVerification: execution.guardrail.requiresVerification,
+        guardrailFlags: execution.guardrail.flags,
+      });
     } catch (error) {
       sendAiError(res, error, 'process-message');
     }

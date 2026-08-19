@@ -9,6 +9,7 @@ import {
   type GuardrailReport,
 } from '../ai/agentGuardrails';
 import { getOrchestrationDecision } from './orchestrationMode';
+import { runWithSubagentPolicy } from './subagentPolicy';
 
 export interface DurableAgentResult<T> {
   runId: string;
@@ -109,6 +110,7 @@ export async function runDurableAgentExecution<T extends {
       step.output?.inputHash === inputHash,
     );
     if (existing) return (existing.output?.value ?? existing.output) as T;
+    logger.info(`[DurableAgent] subagent replay step=${stepKey} execution=${execution.id}`);
     await agentExecutionRepository.saveStep({
       tenantId: params.tenantId,
       executionId: execution.id,
@@ -119,7 +121,8 @@ export async function runDurableAgentExecution<T extends {
       input: { ...input, inputHash },
     });
     try {
-      const value = await execute();
+      const startedAt = Date.now();
+      const value = await runWithSubagentPolicy(execute);
       await agentExecutionRepository.saveStep({
         tenantId: params.tenantId,
         executionId: execution.id,
@@ -130,8 +133,10 @@ export async function runDurableAgentExecution<T extends {
         input: { ...input, inputHash },
         output: { value, inputHash },
       });
+      logger.info(`[DurableAgent] subagent success step=${stepKey} execution=${execution.id} durationMs=${Date.now() - startedAt}`);
       return value;
     } catch (error: any) {
+      logger.warn(`[DurableAgent] subagent failed step=${stepKey} execution=${execution.id} error=${String(error?.message || error)}`);
       await agentExecutionRepository.saveStep({
         tenantId: params.tenantId,
         executionId: execution.id,

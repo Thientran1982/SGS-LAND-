@@ -1123,12 +1123,18 @@ async function handle_live_chat_core(args: Record<string, any>): Promise<any> {
                             });
                         }
                     }
-                    const [primaryResult, supportingResult] = await Promise.all([
+                    const [primaryResult, supportingResult] = await Promise.allSettled([
                         primaryPromise,
                         supportingPromise || Promise.resolve(null),
                     ]);
-                    const primary = primaryResult;
-                    supportingKnowledge = supportingResult;
+                    if (primaryResult.status === 'rejected') throw primaryResult.reason;
+                    const primary = primaryResult.value;
+                    if (supportingResult.status === 'fulfilled') {
+                        supportingKnowledge = supportingResult.value;
+                    } else {
+                        logger.warn(`[LiveChatEngine] grounding subagent failed: ${String(supportingResult.reason?.message || supportingResult.reason)}`);
+                        specialistError = 'knowledge_grounding_unavailable';
+                    }
                     specialistOutput = supportingKnowledge
                         ? { primary, supportingKnowledge }
                         : primary;

@@ -5,3 +5,4 @@
 - [Production EIO static assets](production-eio-assets.md) — Replit VM overlay filesystem returns EIO on large streamed files; fix with fs.readFile + retry
 - [Provider delivery capabilities](provider-delivery-capabilities.md) — Zalo/Facebook lack portable idempotency/status lookup; UNKNOWN must not be blindly resent
 - [SeoHead test cleanup](seohead-test-cleanup.md) — unmount Helmet-managed SeoHead before manually removing head nodes
+- [LangGraph runtime history](langgraph-runtime-history.md) — the former “LangGraph core” is native TypeScript, not a shipped LangGraph runtime
