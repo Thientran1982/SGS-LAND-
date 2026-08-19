@@ -286,6 +286,7 @@ async function triggerAutoReply(
       leadId: lead.id,
       triggerSource: `${channel.toLowerCase()}-webhook`,
       message: inboundText,
+      approval: aiResultApproval(lead.id, inboundText),
       execute: () => aiService.processMessage(
         lead,
         inboundText,

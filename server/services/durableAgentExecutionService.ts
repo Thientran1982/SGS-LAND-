@@ -10,6 +10,7 @@ import {
 } from '../ai/agentGuardrails';
 import { getOrchestrationDecision } from './orchestrationMode';
 import { runWithSubagentPolicy } from './subagentPolicy';
+import { approvalRequestRepository, type HighImpactAction } from '../repositories/approvalRequestRepository';
 
 export interface DurableAgentResult<T> {
   runId: string;
@@ -18,6 +19,7 @@ export interface DurableAgentResult<T> {
   guardrail: GuardrailReport;
   resumed: boolean;
   cached: boolean;
+  approvalRequestId?: string;
 }
 
 export interface DurableResumeContext {
@@ -55,6 +57,13 @@ export async function runDurableAgentExecution<T extends {
   message: string;
   execute: (resume: DurableResumeContext) => Promise<T>;
   maxSteps?: number;
+  approval?: {
+    leadId: string;
+    actionType: HighImpactAction;
+    payload: Record<string, any>;
+    stepKey?: string;
+    idempotencyKey?: string;
+  };
 }): Promise<DurableAgentResult<T>> {
   const orchestration = getOrchestrationDecision();
   if (orchestration.mode === 'langgraph') {
@@ -280,6 +289,42 @@ export async function runDurableAgentExecution<T extends {
       status: outputGuardrail.blocked ? 'BLOCKED' : 'SUCCESS',
       output: outputGuardrail,
     });
+    if (params.approval && !outputGuardrail.blocked) {
+      const approval = await approvalRequestRepository.create({
+        tenantId: params.tenantId,
+        leadId: params.approval.leadId,
+        actionType: params.approval.actionType,
+        payload: params.approval.payload,
+        executionId: execution.id,
+        stepKey: params.approval.stepKey || '05_APPROVAL_INTERRUPT',
+        idempotencyKey: params.approval.idempotencyKey || `${execution.id}:${params.approval.actionType}`,
+      });
+      await agentExecutionRepository.saveStep({
+        tenantId: params.tenantId,
+        executionId: execution.id,
+        claimToken,
+        stepKey: params.approval.stepKey || '05_APPROVAL_INTERRUPT',
+        specialist: 'APPROVAL_BROKER',
+        status: 'BLOCKED',
+        output: { approvalRequestId: approval.id, actionType: params.approval.actionType },
+      });
+      await agentExecutionRepository.pauseForApproval({
+        tenantId: params.tenantId,
+        executionId: execution.id,
+        claimToken,
+        approvalRequestId: approval.id,
+        stepKey: params.approval.stepKey || '05_APPROVAL_INTERRUPT',
+      });
+      return {
+        runId: execution.id,
+        traceId: execution.traceId,
+        result: guardedResult,
+        guardrail: outputGuardrail,
+        resumed: claim.resumed,
+        cached: false,
+        approvalRequestId: approval.id,
+      };
+    }
     await agentExecutionRepository.finish({
       tenantId: params.tenantId,
       executionId: execution.id,
