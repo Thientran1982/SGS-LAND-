@@ -1,37 +1,61 @@
-import { leadRepository } from '../repositories/leadRepository';
-import { approvalRequestRepository } from '../repositories/approvalRequestRepository';
-import { agentExecutionRepository } from '../repositories/agentExecutionRepository';
+import { withTenantContext } from '../db';
 
 const LEAD_STAGES = new Set(['NEW', 'CONTACTED', 'QUALIFIED', 'PROPOSAL', 'NEGOTIATION', 'WON', 'LOST']);
 
+export function buildChangeLeadStageApproval(result: any, leadId: string, idempotencyKey: string) {
+  if (result?.suggestedAction !== 'CHANGE_LEAD_STAGE') return undefined;
+  const targetStage = String(result?.suggestedActionPayload?.targetStage || '');
+  if (!LEAD_STAGES.has(targetStage)) return undefined;
+  return {
+    leadId,
+    actionType: 'CHANGE_LEAD_STAGE' as const,
+    payload: { targetStage, userMessage: String(result?.userMessage || '').slice(0, 500) },
+    idempotencyKey: `${idempotencyKey}:CHANGE_LEAD_STAGE:${targetStage}`,
+  };
+}
+
 export async function executeApprovedAction(tenantId: string, approvalId: string, reviewerId: string): Promise<any> {
-  const request = await approvalRequestRepository.findById(tenantId, approvalId);
-  if (!request) throw new Error('APPROVAL_NOT_FOUND');
-  if (request.status !== 'APPROVED') throw new Error('APPROVAL_NOT_APPROVED');
-  if (request.reviewedBy !== reviewerId && !request.resumedAt) throw new Error('APPROVAL_REVIEWER_MISMATCH');
-  if (request.expiresAt && new Date(request.expiresAt).getTime() < Date.now()) throw new Error('APPROVAL_EXPIRED');
-  if (request.actionType !== 'CHANGE_LEAD_STAGE') throw new Error(`APPROVAL_ACTION_UNSUPPORTED:${request.actionType}`);
+  return withTenantContext(tenantId, async client => {
+    const approvalResult = await client.query(
+      `SELECT * FROM approval_requests
+        WHERE tenant_id=$1 AND id=$2
+        FOR UPDATE`,
+      [tenantId, approvalId],
+    );
+    const request = approvalResult.rows[0];
+    if (!request) throw new Error('APPROVAL_NOT_FOUND');
+    if (request.status !== 'APPROVED') throw new Error('APPROVAL_NOT_APPROVED');
+    if (request.reviewed_by !== reviewerId) throw new Error('APPROVAL_REVIEWER_MISMATCH');
+    if (request.expires_at && new Date(request.expires_at).getTime() < Date.now()) throw new Error('APPROVAL_EXPIRED');
+    if (request.resumed_at) return { approvalId, actionType: request.action_type, executed: false, reason: 'ALREADY_EXECUTED' };
+    if (request.action_type !== 'CHANGE_LEAD_STAGE') throw new Error(`APPROVAL_ACTION_UNSUPPORTED:${request.action_type}`);
+    const targetStage = String(request.payload?.targetStage || '');
+    if (!LEAD_STAGES.has(targetStage)) throw new Error('APPROVAL_INVALID_TARGET_STAGE');
 
-  const targetStage = String(request.payload?.targetStage || '');
-  if (!LEAD_STAGES.has(targetStage)) throw new Error('APPROVAL_INVALID_TARGET_STAGE');
-  const lead = await leadRepository.update(tenantId, request.leadId, { stage: targetStage }, reviewerId, 'ADMIN');
-  if (!lead) throw new Error('APPROVAL_LEAD_NOT_FOUND');
+    const leadResult = await client.query(
+      `UPDATE leads SET stage=$3, updated_at=CURRENT_TIMESTAMP
+        WHERE id=$1 AND tenant_id=current_setting('app.current_tenant_id', true)::uuid
+        RETURNING id, stage`,
+      [request.lead_id, tenantId, targetStage],
+    );
+    if (!leadResult.rows[0]) throw new Error('APPROVAL_LEAD_NOT_FOUND');
 
-  if (request.executionId) {
-    const execution = await agentExecutionRepository.get(tenantId, request.executionId);
-    if (execution?.status === 'WAITING_APPROVAL') {
-      await agentExecutionRepository.resumeApproved(tenantId, request.executionId, request.stepKey || 'APPROVAL_RESUME');
-      const resumed = await agentExecutionRepository.get(tenantId, request.executionId);
-      if (resumed) {
-        await agentExecutionRepository.finish({
-          tenantId,
-          executionId: resumed.id,
-          claimToken: resumed.claimToken,
-          status: 'SUCCESS',
-          output: { approvalId, actionType: request.actionType, leadId: request.leadId, targetStage },
-        });
-      }
+    if (request.execution_id) {
+      const executionResult = await client.query(
+        `UPDATE agent_executions
+            SET status='SUCCESS', current_step='END', output_json=$3::jsonb,
+                approval_request_id=$4, paused_at=NULL, finished_at=NOW(),
+                lease_expires_at=NOW(), updated_at=NOW()
+          WHERE id=$1 AND tenant_id=$2 AND status='WAITING_APPROVAL'
+          RETURNING id`,
+        [request.execution_id, tenantId, JSON.stringify({ approvalId, actionType: request.action_type, leadId: request.lead_id, targetStage }), approvalId],
+      );
+      if (request.execution_id && !executionResult.rows[0]) throw new Error('APPROVAL_EXECUTION_NOT_WAITING');
     }
-  }
-  return { approvalId, actionType: request.actionType, leadId: request.leadId, targetStage, executed: true };
+    await client.query(
+      `UPDATE approval_requests SET resumed_at=NOW() WHERE tenant_id=$1 AND id=$2 AND resumed_at IS NULL`,
+      [tenantId, approvalId],
+    );
+    return { approvalId, actionType: request.action_type, leadId: request.lead_id, targetStage, executed: true };
+  });
 }

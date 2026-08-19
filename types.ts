@@ -835,7 +835,8 @@ export interface AgentTraceResponse {
     steps: AgentTraceStep[];
     artifact?: AgentArtifact;
     groundingMetadata?: GroundingMetadata;
-    suggestedAction?: 'CREATE_PROPOSAL' | 'SEND_DOCS' | 'BOOK_VIEWING' | 'COPY_CONTENT' | 'NONE';
+    suggestedAction?: 'CREATE_PROPOSAL' | 'SEND_DOCS' | 'BOOK_VIEWING' | 'CHANGE_LEAD_STAGE' | 'COPY_CONTENT' | 'NONE';
+    suggestedActionPayload?: Record<string, unknown>;
     confidence: number;
     sentiment: 'POSITIVE' | 'NEUTRAL' | 'NEGATIVE' | 'ANGRY';
     escalated?: boolean;

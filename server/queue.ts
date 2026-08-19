@@ -2,6 +2,7 @@ import { Server } from 'socket.io';
 import { logger } from './middleware/logger';
 import { getAdapter } from './channels/registry';
 import { isHighImpactAction } from './repositories/approvalRequestRepository';
+import { buildChangeLeadStageApproval } from './services/approvalActionExecutor';
 import { createHash } from 'crypto';
 // ---------------------------------------------------------------------------
 // Queue — Upstash QStash (production) hoặc in-memory (dev/fallback)
@@ -286,7 +287,9 @@ async function triggerAutoReply(
       leadId: lead.id,
       triggerSource: `${channel.toLowerCase()}-webhook`,
       message: inboundText,
-      approval: aiResultApproval(lead.id, inboundText),
+      approval: (result: any) => {
+        return buildChangeLeadStageApproval(result, lead.id, `${channel}:${inboundEventId}`);
+      },
       execute: () => aiService.processMessage(
         lead,
         inboundText,

@@ -1017,6 +1017,7 @@ export type AgentState = {
     artifact?: AgentArtifact;
     finalResponse: string;
     suggestedAction: 'NONE' | 'CREATE_PROPOSAL' | 'SEND_DOCS' | 'BOOK_VIEWING';
+  suggestedActionPayload?: Record<string, any>;
     plan?: RouterPlan;
     t: (k: string) => string;
     error?: Error;
@@ -3080,14 +3081,24 @@ ${dataFreshnessNote}`;
             const nodeCount = finalState.trace.filter(s => s.status === 'DONE').length;
             const pipelineMultiplier = Math.max(1, nodeCount);
             writeSafetyLog(effectiveTenantId, 'CHAT', usedModel, latencyMs, userMessage, finalState.finalResponse, pipelineMultiplier).catch(() => {});
-            return { 
+            const requestedStage = (() => {
+                const match = userMessage.match(/(?:chuyển|đổi|đưa)\s+(?:lead\s+)?(?:sang|vào)\s+(new|contacted|qualified|proposal|negotiation|won|lost|mới|đã liên hệ|tiềm năng|đề xuất|thương lượng|thắng|mất)/i);
+                const map: Record<string, string> = {
+                    'mới': 'NEW', 'đã liên hệ': 'CONTACTED', 'tiềm năng': 'QUALIFIED',
+                    'đề xuất': 'PROPOSAL', 'thương lượng': 'NEGOTIATION', 'thắng': 'WON', 'mất': 'LOST',
+                };
+                return match ? (map[match[1].toLowerCase()] || match[1].toUpperCase()) : undefined;
+            })();
+            const suggestedAction = requestedStage ? 'CHANGE_LEAD_STAGE' : finalState.suggestedAction;
+            return {
                 agent: 'SGS_AGENT',
                 content: finalState.finalResponse, 
                 steps: finalState.trace, 
                 artifact: finalState.artifact,
                 confidence: (() => { const c = finalState.plan?.confidence || 0.95; const n = c > 1 ? c / 100 : c; return Math.max(0, Math.min(1, n)); })(),
                 sentiment: 'NEUTRAL',
-                suggestedAction: finalState.suggestedAction,
+                suggestedAction,
+                suggestedActionPayload: requestedStage ? { targetStage: requestedStage } : undefined,
                 escalated: finalState.escalated,
                 isSysMsg: finalState.isSysMsg,
                 intent: finalState.plan?.next_step,

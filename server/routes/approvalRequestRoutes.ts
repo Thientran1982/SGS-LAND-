@@ -32,13 +32,9 @@ export function createApprovalRequestRoutes(authenticateToken: any) {
       const note = typeof req.body?.note === 'string' ? req.body.note.slice(0, 1000) : undefined;
       const updated = await approvalRequestRepository.setStatus(user.tenantId, String(req.params.id), 'APPROVED', user.id, note);
       if (!updated) return res.status(404).json({ error: 'Approval request not found or already reviewed' });
-      const resumed = await approvalRequestRepository.markResumed(user.tenantId, updated.id);
-      if (!resumed) {
-        return res.json({ ...updated, resumeStatus: 'ALREADY_RESUMED' });
-      }
       const { executeApprovedAction } = await import('../services/approvalActionExecutor');
       const result = await executeApprovedAction(user.tenantId, updated.id, user.id);
-      res.json({ ...resumed, resumeStatus: 'EXECUTED', result });
+      res.json({ ...updated, resumeStatus: result.executed ? 'EXECUTED' : 'ALREADY_EXECUTED', result });
     } catch (error) {
       console.error('[approval-requests] approve error:', error);
       res.status(500).json({ error: 'Failed to approve request' });

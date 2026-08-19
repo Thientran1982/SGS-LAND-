@@ -57,13 +57,13 @@ export async function runDurableAgentExecution<T extends {
   message: string;
   execute: (resume: DurableResumeContext) => Promise<T>;
   maxSteps?: number;
-  approval?: {
+  approval?: (result: T) => {
     leadId: string;
     actionType: HighImpactAction;
     payload: Record<string, any>;
     stepKey?: string;
     idempotencyKey?: string;
-  };
+  } | undefined;
 }): Promise<DurableAgentResult<T>> {
   const orchestration = getOrchestrationDecision();
   if (orchestration.mode === 'langgraph') {
@@ -289,31 +289,32 @@ export async function runDurableAgentExecution<T extends {
       status: outputGuardrail.blocked ? 'BLOCKED' : 'SUCCESS',
       output: outputGuardrail,
     });
-    if (params.approval && !outputGuardrail.blocked) {
+    const approvalSpec = params.approval?.(guardedResult);
+    if (approvalSpec && !outputGuardrail.blocked) {
       const approval = await approvalRequestRepository.create({
         tenantId: params.tenantId,
-        leadId: params.approval.leadId,
-        actionType: params.approval.actionType,
-        payload: params.approval.payload,
+        leadId: approvalSpec.leadId,
+        actionType: approvalSpec.actionType,
+        payload: approvalSpec.payload,
         executionId: execution.id,
-        stepKey: params.approval.stepKey || '05_APPROVAL_INTERRUPT',
-        idempotencyKey: params.approval.idempotencyKey || `${execution.id}:${params.approval.actionType}`,
+        stepKey: approvalSpec.stepKey || '05_APPROVAL_INTERRUPT',
+        idempotencyKey: approvalSpec.idempotencyKey || `${execution.id}:${approvalSpec.actionType}`,
       });
       await agentExecutionRepository.saveStep({
         tenantId: params.tenantId,
         executionId: execution.id,
         claimToken,
-        stepKey: params.approval.stepKey || '05_APPROVAL_INTERRUPT',
+        stepKey: approvalSpec.stepKey || '05_APPROVAL_INTERRUPT',
         specialist: 'APPROVAL_BROKER',
         status: 'BLOCKED',
-        output: { approvalRequestId: approval.id, actionType: params.approval.actionType },
+        output: { approvalRequestId: approval.id, actionType: approvalSpec.actionType },
       });
       await agentExecutionRepository.pauseForApproval({
         tenantId: params.tenantId,
         executionId: execution.id,
         claimToken,
         approvalRequestId: approval.id,
-        stepKey: params.approval.stepKey || '05_APPROVAL_INTERRUPT',
+        stepKey: approvalSpec.stepKey || '05_APPROVAL_INTERRUPT',
       });
       return {
         runId: execution.id,
