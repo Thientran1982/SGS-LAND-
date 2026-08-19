@@ -3,7 +3,7 @@
  * Bubble noi o goc man hinh, mo khung chat voi agent Minh.
  * Dung chung MinhChatPanel voi trang /livechat nen khong fork logic.
  */
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { MessageCircle, X } from "lucide-react";
 import { MinhChatPanel } from "./MinhChatPanel";
 
@@ -15,6 +15,12 @@ export interface MinhChatWidgetProps {
 
 export function MinhChatWidget({ apiBase, source = "WIDGET" }: MinhChatWidgetProps) {
   const [open, setOpen] = useState(false);
+
+  useEffect(() => {
+    const openHandler = () => setOpen(true);
+    window.addEventListener("sgs-open-chat", openHandler);
+    return () => window.removeEventListener("sgs-open-chat", openHandler);
+  }, []);
   return (
     <>
       {open ? (

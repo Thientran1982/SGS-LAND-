@@ -26,7 +26,7 @@ import {
     DEFAULT_VALUATION_SEARCH_SYSTEM,
     DEFAULT_VALUATION_RENTAL_SYSTEM,
 } from './ai/defaultPrompts';
-import { GENAI_CONFIG, SAFE_MODEL_FALLBACK, DEPRECATED_MODEL_PREFIXES, ensureSafeModel, getProviderForModel, getModelCost, isProviderConfigured, MODEL_REGISTRY, TASK_MODELS, taskProfile } from './ai/modelPolicy';
+import { GENAI_CONFIG, SAFE_MODEL_FALLBACK, DEPRECATED_MODEL_PREFIXES, ensureSafeModel, getProviderForModel, getModelCost, isProviderConfigured, MODEL_REGISTRY, TASK_MODELS, taskProfile, CROSS_PROVIDER_FALLBACK } from './ai/modelPolicy';
 import { generateWithPolicy } from './ai/providers';
 // -----------------------------------------------------------------------------
 // 1. CONFIGURATION & SCHEMA DEFINITIONS
@@ -45,9 +45,9 @@ const THINKING_MAXIMUM   = { thinkingBudget: 24576 } as const;
 // I4: Gemini Fallback Chain — primary → flash → legacy
 // Handles model timeouts and overload errors gracefully
 const FALLBACK_CHAIN = [
-  'gemini-2.5-pro',    // primary — highest quality
-  'gemini-2.5-flash',  // fallback-1 — fast & cost-efficient
-  'gemini-2.0-flash',  // fallback-2 — stable legacy
+  'gemini-2.5-flash',              // primary -- verified working (gemini-2.5-pro retired by Google, 404, as of 2026-08)
+  'gemini-3-flash-preview',        // fallback-1 -- verified working
+  'gemini-3.1-flash-lite-preview', // fallback-2 -- verified working (gemini-2.0-flash retired by Google, 404)
 ] as const;
 /**
  * I4: generateWithFallback
@@ -59,40 +59,39 @@ async function generateWithFallback(
 ): Promise<Awaited<ReturnType<ReturnType<typeof getAiClient>['models']['generateContent']>>> {
   const primaryModel = requestConfig.model as string;
 
-  // ===== MULTI-PROVIDER DISPATCH =====
-  // Neu model thuoc provider khac Google (OpenAI/Anthropic/xAI) va da cau hinh key,
-  // dispatch qua adapter layer. Neu chua cau hinh -> tu dong ha ve Gemini native ben duoi.
-  // Cac call dung Google Search grounding / streaming KHONG di qua ham nay nen van an toan.
+  // ===== Trich xuat prompt/system dung chung cho moi nhanh multi-provider =====
+  const _cfg: any = (requestConfig as any).config || {};
+  const _contents: any = (requestConfig as any).contents;
+  const _prompt = typeof _contents === 'string'
+    ? _contents
+    : (Array.isArray(_contents)
+        ? _contents.map((c: any) => typeof c === 'string' ? c : (c?.parts?.map((p: any) => p?.text || '').join('') || c?.text || '')).join('\n')
+        : String(_contents ?? ''));
+  const _system = typeof _cfg.systemInstruction === 'string'
+    ? _cfg.systemInstruction
+    : (_cfg.systemInstruction?.parts?.map((p: any) => p?.text || '').join('') || undefined);
+  const _temperature = typeof _cfg.temperature === 'number' ? _cfg.temperature : undefined;
+  const _maxOutputTokens = typeof _cfg.maxOutputTokens === 'number' ? _cfg.maxOutputTokens : undefined;
+  const _jsonMode = _cfg.responseMimeType === 'application/json';
+
+  // ===== MULTI-PROVIDER DISPATCH (primary model thuoc provider khac Google) =====
   const _provider = getProviderForModel(primaryModel);
   if (_provider !== 'google' && isProviderConfigured(_provider)) {
     try {
-      const _cfg: any = (requestConfig as any).config || {};
-      const _contents: any = (requestConfig as any).contents;
-      const _prompt = typeof _contents === 'string'
-        ? _contents
-        : (Array.isArray(_contents)
-            ? _contents.map((c: any) => typeof c === 'string' ? c : (c?.parts?.map((p: any) => p?.text || '').join('') || c?.text || '')).join('\n')
-            : String(_contents ?? ''));
-      const _system = typeof _cfg.systemInstruction === 'string'
-        ? _cfg.systemInstruction
-        : (_cfg.systemInstruction?.parts?.map((p: any) => p?.text || '').join('') || undefined);
       const _res = await generateWithPolicy({
         model: primaryModel,
         system: _system,
         prompt: _prompt,
-        temperature: typeof _cfg.temperature === 'number' ? _cfg.temperature : undefined,
-        maxOutputTokens: typeof _cfg.maxOutputTokens === 'number' ? _cfg.maxOutputTokens : undefined,
-        jsonMode: _cfg.responseMimeType === 'application/json',
+        temperature: _temperature,
+        maxOutputTokens: _maxOutputTokens,
+        jsonMode: _jsonMode,
       });
-      // Tra ve object tuong thich shape Gemini (callers chi doc .text).
       return { text: _res.text } as any;
     } catch (err) {
       console.warn(`[MULTI-PROVIDER] ${_provider} failed for ${primaryModel}, falling back to Gemini native:`, (err as any)?.message || err);
-      // roi xuong duoi -> Gemini native fallback chain
     }
   }
 
-  // Build attempt chain: start with primary, then fallback
   const chain = [primaryModel, ...FALLBACK_CHAIN.filter(m => m !== primaryModel)];
   let lastErr: unknown;
   for (const model of chain) {
@@ -107,16 +106,40 @@ async function generateWithFallback(
       return result;
     } catch (err: any) {
       const isRetriable = err?.status === 503 || err?.status === 429 ||
-        err?.code === 'DEADLINE_EXCEEDED' || /timeout|overload|unavailable/i.test(err?.message || '');
+        err?.code === 'DEADLINE_EXCEEDED' || /timeout|overload|unavailable/i.test(err?.message || '') ||
+        err?.status === 404 || err?.error?.status === 'NOT_FOUND' || /no longer available|model not found/i.test(err?.message || '');
       if (isRetriable) {
         lastErr = err;
         console.warn(`[I4-Fallback] Model ${model} retriable error (${err?.status || err?.code}), trying next...`);
         continue;
       }
-      throw err; // non-retriable error — bubble up immediately
+      throw err;
     }
   }
-  throw lastErr; // all models exhausted
+
+  // ===== CROSS-PROVIDER FALLBACK =====
+  // Toan bo chain Gemini da het (quota/loi) -> tu dong chuyen sang Claude/Grok
+  for (const fb of CROSS_PROVIDER_FALLBACK) {
+    if (!isProviderConfigured(fb.provider)) continue;
+    try {
+      console.warn(`[CROSS-PROVIDER-FALLBACK] Gemini chain het/loi, dang thu ${fb.provider}:${fb.model}...`);
+      const _res = await generateWithPolicy({
+        model: fb.model,
+        system: _system,
+        prompt: _prompt,
+        temperature: _temperature,
+        maxOutputTokens: _maxOutputTokens,
+        jsonMode: _jsonMode,
+      });
+      console.log(`[CROSS-PROVIDER-FALLBACK] Thanh cong voi ${fb.provider}:${fb.model}`);
+      return { text: _res.text } as any;
+    } catch (err: any) {
+      console.warn(`[CROSS-PROVIDER-FALLBACK] ${fb.provider}:${fb.model} that bai:`, err?.message || err);
+      lastErr = err;
+    }
+  }
+
+  throw lastErr; // all models & all providers exhausted
 }
 
 // ----- SINGLETON: reuse GoogleGenAI instance -----
@@ -966,7 +989,7 @@ const TOOL_EXECUTOR = {
 // -----------------------------------------------------------------------------
 export type FollowupResult = {
     message: string;
-    channel: 'ZALO' | 'EMAIL' | 'CALL' | 'SMS';
+    channel: 'ZALO' | 'FACEBOOK' | 'EMAIL' | 'CALL' | 'SMS';
     sequenceType: 'A' | 'B' | 'C';
     /** T+2H | T+24H | T+72H | T+7D | T+14D | T+30D */
     sequenceStep: string;
@@ -3379,7 +3402,7 @@ Write a customer persona analysis in 4 points. Each point 2-3 sentences, concise
         history: Interaction[];
         /** Fractional days since the last INBOUND message (0.25 = 6 h) */
         daysSinceLastContact: number;
-        channel?: 'ZALO' | 'EMAIL' | 'CALL' | 'SMS';
+        channel?: 'ZALO' | 'FACEBOOK' | 'EMAIL' | 'CALL' | 'SMS';
         /** A = post-viewing | B = post-quote | C = cold re-engagement */
         sequenceType?: 'A' | 'B' | 'C';
         /** price | legal | competitor | market | partner */
@@ -3408,11 +3431,12 @@ Write a customer persona analysis in 4 points. Each point 2-3 sentences, concise
         );
 
         // ── Auto-detect channel ────────────────────────────────────────────
-        const channel: 'ZALO' | 'EMAIL' | 'CALL' | 'SMS' = params.channel || (
-            lead.socialIds?.zalo  ? 'ZALO'  :
-            lead.email            ? 'EMAIL' :
-            'ZALO'
-        );
+    const channel: 'ZALO' | 'FACEBOOK' | 'EMAIL' | 'CALL' | 'SMS' = params.channel || (
+      lead.socialIds?.zalo ? 'ZALO' :
+      lead.socialIds?.facebook ? 'FACEBOOK' :
+      lead.email ? 'EMAIL' :
+      'CALL' // FIX: khong con mac dinh sai ve ZALO khi khong co tin hieu kenh nao -- CALL an toan nhat
+    );
 
         const scheduledHour =
             channel === 'EMAIL' ? 8
@@ -3444,6 +3468,7 @@ Write a customer persona analysis in 4 points. Each point 2-3 sentences, concise
         };
         const CH_GUIDE: Record<string, string> = {
             ZALO:  '≤ 150 từ | emoji nhẹ (1-2) | tự nhiên, gần gũi',
+            FACEBOOK: '≤ 150 từ | emoji nhẹ (1-2) | tự nhiên, gần gũi',
             SMS:   '≤ 160 ký tự | không emoji | formal',
             EMAIL: 'Subject line ở dòng đầu (Subject: ...) | ≤ 300 từ | formal | CTA cuối',
             CALL:  'Script ≤ 3 phút: Chào → Mục đích → Câu hỏi mở → Hẹn tiếp theo',

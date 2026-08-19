@@ -13,7 +13,11 @@ export function NewsAdminBar() {
     let alive = true;
     fetch("/api/auth/me", { credentials: "include", cache: "no-store" })
       .then((r) => (r.ok ? r.json() : null))
-      .then((u: { role?: string } | null) => {
+      // /api/auth/me responds { user: {...} }, not the flat user object --
+      // unwrap it here, otherwise u.role is always undefined and the bar
+      // (and its "Dang tin moi" link) silently never shows for anyone.
+      .then((d: { user?: { role?: string } } | null) => {
+        const u = d?.user;
         if (alive && u && u.role) setRole(String(u.role));
       })
       .catch(() => {});

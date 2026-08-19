@@ -661,6 +661,11 @@ const SLUG_KEYWORDS: Record<string, string> = {
   "masteri-cosmo-central": "Masteri Cosmo Central The Global City, Masteri Cosmo o dau, Masteri Cosmo Thu Duc, Masteri Cosmo gia bao nhieu, can ho The Global City 2026",
   "legacy-66": "can ho Legacy 66 Quan 5, Legacy 66 gia bao nhieu, Legacy 66 ban phong nao, mua can ho Legacy 66",
   "diamond-sky-van-phuc-city": "Diamond Sky Van Phuc City, Diamond Sky Thu Duc, can ho Diamond Sky gia bao nhieu, can ho Van Phuc City 2026",
+  "vinhomes-grand-park": "Vinhomes Grand Park Quan 9, Vinhomes Grand Park Thu Duc, can ho Vinhomes Grand Park, Vinhomes Grand Park gia bao nhieu, mua ban Vinhomes Grand Park 2026",
+  "the-global-city": "The Global City Quan 2, The Global City An Phu, can ho The Global City, SOHO The Global City, gia ban The Global City 2026",
+  "izumi-city": "Izumi City Nam Long, Izumi City Bien Hoa, Izumi City Dong Nai, dat nen Izumi City, biet thu Izumi City, gia Izumi City 2026",
+  "masteri-park-place": "Masteri Park Place, Masteri Park Place The Global City, can ho Masteri Park Place, gia ban Masteri Park Place 2026",
+  "thu-thiem": "Khu do thi Thu Thiem, ban dat nen Thu Thiem, quy hoach Thu Thiem 2026, gia dat Thu Thiem, du an Thu Thiem",
 };
 export async function generateMetadata({
   params,

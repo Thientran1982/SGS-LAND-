@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { CATEGORIES } from "@/data/categories";
+import FormSelect from "@/components/ui/FormSelect";
 
 /** Roles allowed to create articles (mirrors CAN_UPLOAD in knowledgeRoutes.ts). */
 const CAN_POST = ["SUPER_ADMIN", "ADMIN", "TEAM_LEAD", "SALES", "MARKETING"];
@@ -29,6 +30,7 @@ const inputStyle: React.CSSProperties = {
 export default function ArticleComposer() {
   const [me, setMe] = useState<Me | null>(null);
   const [checked, setChecked] = useState(false);
+  const [meCheckError, setMeCheckError] = useState(false);
   const [csrf, setCsrf] = useState("");
 
   const [title, setTitle] = useState("");
@@ -41,6 +43,11 @@ export default function ArticleComposer() {
   const [tags, setTags] = useState("");
   const [featured, setFeatured] = useState(false);
   const [status, setStatus] = useState("PUBLISHED");
+  const [images, setImages] = useState<string[]>([]);
+  const [videos, setVideos] = useState<string[]>([]);
+  const [uploadingImage, setUploadingImage] = useState(false);
+  const [uploadingVideo, setUploadingVideo] = useState(false);
+  const [uploadError, setUploadError] = useState("");
 
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
@@ -48,14 +55,22 @@ export default function ArticleComposer() {
 
   useEffect(() => {
     fetch("/api/auth/me", { credentials: "include", cache: "no-store" })
-      .then((r) => (r.ok ? r.json() : null))
-      .then((u: Me | null) => {
+      .then((r) => {
+        if (r.status === 401) return null;
+        if (!r.ok) throw new Error(`auth check failed: ${r.status}`);
+        return r.json();
+      })
+      // /api/auth/me responds { user: {...} }, not the flat user object --
+      // unwrap it here, otherwise this always looks logged-out and the
+      // composer never renders even for a valid admin session.
+      .then((d: { user?: Me } | null) => {
+        const u = d?.user;
         if (u && u.role) {
           setMe(u);
           setAuthor(u.name || "");
         }
       })
-      .catch(() => {})
+      .catch(() => setMeCheckError(true))
       .finally(() => setChecked(true));
 
     fetch("/api/csrf-token", { credentials: "include", cache: "no-store" })
@@ -90,6 +105,8 @@ export default function ArticleComposer() {
           category,
           author: author.trim() || undefined,
           coverImage: coverImage.trim() || undefined,
+          images: images.length ? images : undefined,
+          videos: videos.length ? videos : undefined,
           excerpt: excerpt.trim() || undefined,
           content,
           tags: tags
@@ -114,6 +131,54 @@ export default function ArticleComposer() {
     }
   }
 
+  async function uploadFiles(fileList: FileList | null, kind: "image" | "video") {
+    if (!fileList || fileList.length === 0) return;
+    setUploadError("");
+    const setUploading = kind === "image" ? setUploadingImage : setUploadingVideo;
+    setUploading(true);
+    try {
+      const fd = new FormData();
+      Array.from(fileList).forEach((f) => fd.append("files", f, f.name));
+      const res = await fetch("/api/upload", {
+        method: "POST",
+        credentials: "include",
+        headers: { ...(csrf ? { "X-CSRF-Token": csrf } : {}) },
+        body: fd,
+      });
+      const body = await res.json().catch(() => null);
+      if (!res.ok) {
+        throw new Error((body && body.error) || "Tải lên thất bại. Vui lòng thử lại.");
+      }
+      const uploaded: { url: string }[] = (body && body.files) || [];
+      const urls = uploaded.map((f) => f.url).filter(Boolean);
+      if (kind === "image") {
+        setImages((prev) => {
+          const next = [...prev, ...urls];
+          if (!coverImage.trim() && next[0]) setCoverImage(next[0]);
+          return next;
+        });
+      } else {
+        setVideos((prev) => [...prev, ...urls]);
+      }
+      if (body && Array.isArray(body.warnings) && body.warnings.length) {
+        setUploadError(body.warnings.join(" "));
+      }
+    } catch (err) {
+      setUploadError(err instanceof Error ? err.message : "Tải lên thất bại. Vui lòng thử lại.");
+    } finally {
+      setUploading(false);
+    }
+  }
+
+  function removeImage(url: string) {
+    setImages((prev) => prev.filter((u) => u !== url));
+    if (coverImage === url) setCoverImage("");
+  }
+
+  function removeVideo(url: string) {
+    setVideos((prev) => prev.filter((u) => u !== url));
+  }
+
   if (!checked) {
     return (
       <p className="py-16 text-center text-sm" style={{ color: "var(--text-secondary)" }}>
@@ -122,6 +187,26 @@ export default function ArticleComposer() {
     );
   }
 
+  if (meCheckError) {
+    return (
+      <div
+        className="py-12 px-6 rounded-2xl text-center"
+        style={{ background: "var(--bg-elevated)", border: "1px solid var(--border-default)" }}
+      >
+        <p className="font-semibold mb-4" style={{ color: "var(--text-primary)" }}>
+          Không thể kiểm tra phiên đăng nhập. Vui lòng tải lại trang.
+        </p>
+        <button
+          type="button"
+          onClick={() => window.location.reload()}
+          className="inline-block px-6 py-2.5 rounded-xl text-white text-sm font-semibold"
+          style={{ background: "var(--primary-600)" }}
+        >
+          Tải lại
+        </button>
+      </div>
+    );
+  }
   if (!me) {
     return (
       <div
@@ -222,18 +307,11 @@ export default function ArticleComposer() {
           <label className="block text-sm font-semibold mb-1.5" style={{ color: "var(--text-primary)" }}>
             Danh mục
           </label>
-          <select
+          <FormSelect
             value={category}
-            onChange={(e) => setCategory(e.target.value)}
-            className="w-full px-3.5 py-2.5 rounded-xl text-sm"
-            style={inputStyle}
-          >
-            {CATEGORIES.map((c) => (
-              <option key={c.slug} value={c.slug}>
-                {c.name}
-              </option>
-            ))}
-          </select>
+            onChange={setCategory}
+            options={CATEGORIES.map((c) => ({ value: c.slug, label: c.name }))}
+          />
         </div>
       </div>
 
@@ -262,6 +340,92 @@ export default function ArticleComposer() {
           />
         </div>
       </div>
+
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+        <div>
+          <label className="block text-sm font-semibold mb-1.5" style={{ color: "var(--text-primary)" }}>
+            Hình ảnh
+          </label>
+          <input
+            type="file"
+            accept="image/jpeg,image/png,image/webp,image/gif"
+            multiple
+            disabled={uploadingImage}
+            onChange={(e) => {
+              uploadFiles(e.target.files, "image");
+              e.target.value = "";
+            }}
+            className="w-full text-sm"
+          />
+          <p className="text-xs mt-1" style={{ color: "var(--text-tertiary)" }}>
+            {uploadingImage ? "Đang tải ảnh lên..." : "JPG, PNG, WEBP, GIF - tối đa 10MB/ảnh."}
+          </p>
+          {images.length ? (
+            <div className="flex flex-wrap gap-2 mt-2">
+              {images.map((url) => (
+                <div key={url} className="relative">
+                  <img
+                    src={url}
+                    alt=""
+                    className="w-16 h-16 object-cover rounded-lg"
+                    style={{ border: "1px solid var(--border-default)" }}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => removeImage(url)}
+                    className="absolute -top-1.5 -right-1.5 w-5 h-5 rounded-full text-white text-xs leading-none flex items-center justify-center"
+                    style={{ background: "#dc2626" }}
+                    aria-label="Xoá ảnh"
+                  >
+                    x
+                  </button>
+                </div>
+              ))}
+            </div>
+          ) : null}
+        </div>
+        <div>
+          <label className="block text-sm font-semibold mb-1.5" style={{ color: "var(--text-primary)" }}>
+            Video
+          </label>
+          <input
+            type="file"
+            accept="video/mp4,video/webm,video/ogg,video/quicktime,video/x-msvideo"
+            multiple
+            disabled={uploadingVideo}
+            onChange={(e) => {
+              uploadFiles(e.target.files, "video");
+              e.target.value = "";
+            }}
+            className="w-full text-sm"
+          />
+          <p className="text-xs mt-1" style={{ color: "var(--text-tertiary)" }}>
+            {uploadingVideo ? "Đang tải video lên..." : "MP4, WEBM, MOV, AVI - tối đa 100MB/video."}
+          </p>
+          {videos.length ? (
+            <ul className="mt-2 space-y-1">
+              {videos.map((url) => (
+                <li
+                  key={url}
+                  className="flex items-center justify-between gap-2 text-xs"
+                  style={{ color: "var(--text-secondary)" }}
+                >
+                  <span className="truncate">{url.split("/").pop()}</span>
+                  <button type="button" onClick={() => removeVideo(url)} style={{ color: "#dc2626" }}>
+                    Xoá
+                  </button>
+                </li>
+              ))}
+            </ul>
+          ) : null}
+        </div>
+      </div>
+
+      {uploadError ? (
+        <p className="text-sm font-medium" style={{ color: "#dc2626" }}>
+          {uploadError}
+        </p>
+      ) : null}
 
       <div>
         <label className="block text-sm font-semibold mb-1.5" style={{ color: "var(--text-primary)" }}>
@@ -306,15 +470,14 @@ export default function ArticleComposer() {
           <label className="block text-sm font-semibold mb-1.5" style={{ color: "var(--text-primary)" }}>
             Trạng thái
           </label>
-          <select
+          <FormSelect
             value={status}
-            onChange={(e) => setStatus(e.target.value)}
-            className="w-full px-3.5 py-2.5 rounded-xl text-sm"
-            style={inputStyle}
-          >
-            <option value="PUBLISHED">Xuất bản ngay</option>
-            <option value="DRAFT">Lưu nháp</option>
-          </select>
+            onChange={setStatus}
+            options={[
+              { value: "PUBLISHED", label: "Xuất bản ngay" },
+              { value: "DRAFT", label: "Lưu nháp" },
+            ]}
+          />
         </div>
       </div>
 

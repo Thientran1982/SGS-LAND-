@@ -52,6 +52,7 @@ import { createAdvisorRoutes } from "./server/routes/advisorRoutes";
 import { createProjectRoutes } from "./server/routes/projectRoutes";
 import { createCommissionRoutes } from "./server/routes/commissionRoutes";
 import { createTenantRoutes } from "./server/routes/tenantRoutes";
+import { createApprovalRequestRoutes } from "./server/routes/approvalRequestRoutes";
 import { resolveTenantByHost, startCustomDomainVerifyCron, stopCustomDomainVerifyCron } from "./server/services/tenantBrandingService";
 import { createTaskRoutes } from "./server/routes/taskRoutes";
 import { createDepartmentRoutes } from "./server/routes/departmentRoutes";
@@ -124,7 +125,27 @@ async function startServer() {
   // Without trust proxy: req.ip = proxy IP (rate limiter bans every user from same edge),
   // req.secure = false (Secure cookie may not be set), and X-Forwarded-* headers ignored.
   // Trust 2 hops: Cloudflare → Replit edge → app.
-  app.set('trust proxy', 2);
+  // Trust any loopback/private-network hop and stop at the first public
+  // address. A fixed hop-count (e.g. `2`) is fragile here: this app sits
+  // behind Cloudflare + Replit's edge PLUS our own Next.js rewrite layer
+  // (apps/nextjs/next.config.ts proxies /dashboard, /api, etc. to this
+  // Express app over loopback via BACKEND_URL), and that adds an extra
+  // hop that varies between dev and prod. Verified via a temporary
+  // GET /api/__debug_ip probe that the real chain is:
+  //   client -> Replit edge (10.x internal) -> Next.js loopback (127.0.0.1) -> app
+  // With trust proxy=2, req.ip incorrectly resolved to the shared Replit
+  // edge IP instead of the real visitor -- fine for req.ip callers, but a
+  // latent bug for anything (secure cookies, req.secure, future rate
+  // limiters keyed on req.ip) that trusts it.
+  app.set('trust proxy', (ip: string) => {
+    return (
+      ip === '127.0.0.1' ||
+      ip === '::1' ||
+      /^10\./.test(ip) ||
+      /^172\.(1[6-9]|2\d|3[0-1])\./.test(ip) ||
+      /^192\.168\./.test(ip)
+    );
+  });
   const PORT = parseInt(process.env.PORT || '5000', 10);
 
   // Gzip compression — reduces JS/CSS/JSON payload by ~70-80%
@@ -1711,7 +1732,7 @@ function sanitizePublicListingFeed(row: any): Record<string, any> {
       const CACHE_KEY_PARAMS = ['page', 'pageSize', 'cursor', 'cursorMode',
         'projectCode', 'type', 'types', 'transaction', 'priceMin', 'priceMax',
         'bedroomsMin', 'areaMin', 'areaMax',
-        'search', 'location', 'isVerified'];
+        'search', 'location', 'isVerified', 'direction', 'legalStatus', 'sort'];
       const cacheKey = `pl:${PUBLIC_TENANT}|${
         CACHE_KEY_PARAMS
           .filter(k => req.query[k] !== undefined)
@@ -1763,6 +1784,11 @@ function sanitizePublicListingFeed(row: any): Record<string, any> {
         }
       }
       if (req.query.isVerified === 'true') filters.isVerified = true;
+      if (req.query.direction) filters.direction = req.query.direction as string;
+      if (req.query.legalStatus) filters.legalStatus = req.query.legalStatus as string;
+      const sortParam = String(req.query.sort || '');
+      const publicSortBy: 'newest' | 'price_asc' | 'price_desc' =
+        sortParam === 'price_asc' || sortParam === 'price_desc' ? sortParam : 'newest';
       let result: any;
       if (req.query.cursor !== undefined || req.query.cursorMode === 'true') {
         const cursor = (req.query.cursor as string) || undefined;
@@ -1773,7 +1799,7 @@ function sanitizePublicListingFeed(row: any): Record<string, any> {
           sortBy: 'popular',
         });
       } else {
-        result = await listingRepository.findListings(PUBLIC_TENANT, { page, pageSize }, filters);
+        result = await listingRepository.findListings(PUBLIC_TENANT, { page, pageSize }, filters, undefined, undefined, publicSortBy);
       }
     // Allow-list BEFORE caching so the cached payload is public-safe too.
     if (result && Array.isArray(result.data)) {
@@ -1833,6 +1859,189 @@ function sanitizePublicListingFeed(row: any): Record<string, any> {
       res.json([]);
     }
   });
+
+  // ---------------------------------------------------------------------
+  // GET /api/public/listings/facets - Facet options + benchmark thuc te (B2C).
+  // - topAreas: top 4 khu vuc theo so luong tin (gop theo ten tinh chuan hoa).
+  // - types/legalStatus/direction: DISTINCT thuc te kem so luong (rong neu
+  //   khong co du lieu that - KHONG hardcode option).
+  // - priceBenchmarks: gia/m2 trung binh theo (tinh, loai hinh), chi tra ve
+  //   khi co toi thieu 3 tin de so sanh (du y nghia thong ke).
+  // ---------------------------------------------------------------------
+  app.get('/api/public/listings/facets', apiRateLimit, async (req: express.Request, res: express.Response) => {
+    try {
+      const STATUS_OK = "('AVAILABLE','OPENING','BOOKING','BEST_MARKET')";
+      const facetsData = await withRlsBypass(async (client) => {
+        const loc = await client.query(
+          `SELECT TRIM(SPLIT_PART(location, ',', -1)) AS raw_loc, COUNT(*)::int AS n
+           FROM listings
+           WHERE tenant_id = $1 AND status IN ${STATUS_OK}
+             AND location IS NOT NULL AND location <> ''
+           GROUP BY raw_loc`,
+          [PUBLIC_TENANT],
+        );
+        const type = await client.query(
+          `SELECT type AS v, COUNT(*)::int AS n
+           FROM listings
+           WHERE tenant_id = $1 AND status IN ${STATUS_OK}
+             AND type IS NOT NULL AND type <> ''
+           GROUP BY type ORDER BY n DESC`,
+          [PUBLIC_TENANT],
+        );
+        const legal = await client.query(
+          `SELECT attributes->>'legalStatus' AS v, COUNT(*)::int AS n
+           FROM listings
+           WHERE tenant_id = $1 AND status IN ${STATUS_OK}
+             AND attributes->>'legalStatus' IS NOT NULL AND attributes->>'legalStatus' <> ''
+           GROUP BY v ORDER BY n DESC`,
+          [PUBLIC_TENANT],
+        );
+        const dir = await client.query(
+          `SELECT attributes->>'direction' AS v, COUNT(*)::int AS n
+           FROM listings
+           WHERE tenant_id = $1 AND status IN ${STATUS_OK}
+             AND attributes->>'direction' IS NOT NULL AND attributes->>'direction' <> ''
+           GROUP BY v ORDER BY n DESC`,
+          [PUBLIC_TENANT],
+        );
+        const price = await client.query(
+          `SELECT TRIM(SPLIT_PART(location, ',', -1)) AS raw_loc, type,
+                  AVG(price::numeric / NULLIF(area, 0)) AS avg_ppm2, COUNT(*)::int AS n
+           FROM listings
+           WHERE tenant_id = $1 AND status IN ${STATUS_OK}
+             AND price > 0 AND area > 0
+             AND location IS NOT NULL AND location <> ''
+             AND type IS NOT NULL AND type <> ''
+           GROUP BY raw_loc, type
+           HAVING COUNT(*) >= 3`,
+          [PUBLIC_TENANT],
+        );
+        return { loc, type, legal, dir, price };
+      });
+
+      const areaCounts = new Map<string, number>();
+      for (const row of facetsData.loc.rows) {
+        const name = normalizeToProvince(row.raw_loc);
+        if (!name) continue;
+        areaCounts.set(name, (areaCounts.get(name) || 0) + Number(row.n));
+      }
+      const topAreas = [...areaCounts.entries()]
+        .map(([name, count]) => ({ name, count }))
+        .sort((a, b) => b.count - a.count)
+        .slice(0, 4);
+
+      const priceMap = new Map<string, { sum: number; n: number }>();
+      for (const row of facetsData.price.rows) {
+        const province = String(row.raw_loc || '').trim();
+        if (!province) continue;
+        const key = `${province}|${row.type}`;
+        const n = Number(row.n);
+        const avg = Number(row.avg_ppm2);
+        const cur = priceMap.get(key) || { sum: 0, n: 0 };
+        cur.sum += avg * n;
+        cur.n += n;
+        priceMap.set(key, cur);
+      }
+      const priceBenchmarks: Record<string, { avgPricePerM2: number; sampleSize: number }> = {};
+      for (const [key, { sum, n }] of priceMap.entries()) {
+        if (n < 3) continue;
+        priceBenchmarks[key] = { avgPricePerM2: Math.round(sum / n), sampleSize: n };
+      }
+
+      res.json({
+        topAreas,
+        types: facetsData.type.rows.map((r: any) => ({ value: r.v, count: Number(r.n) })),
+        legalStatus: facetsData.legal.rows.map((r: any) => ({ value: r.v, count: Number(r.n) })),
+        direction: facetsData.dir.rows.map((r: any) => ({ value: r.v, count: Number(r.n) })),
+        priceBenchmarks,
+      });
+    } catch (err) {
+      console.error('[public/listings/facets] error:', err);
+      res.json({ topAreas: [], types: [], legalStatus: [], direction: [], priceBenchmarks: {} });
+    }
+  });
+
+  // ---------------------------------------------------------------------
+  // GET /api/public/listings/map - Diem ban do nhe ky, loc theo viewport bbox
+  // tren cot coordinates JSONB (tuong duong thuc dung cua PostGIS ST_DWithin,
+  // vi DB hien chua cai extension PostGIS).
+  // ---------------------------------------------------------------------
+  app.get('/api/public/listings/map', apiRateLimit, async (req: express.Request, res: express.Response) => {
+    try {
+      const minLat = Number(req.query.minLat);
+      const maxLat = Number(req.query.maxLat);
+      const minLng = Number(req.query.minLng);
+      const maxLng = Number(req.query.maxLng);
+      const hasBbox = [minLat, maxLat, minLng, maxLng].every((v) => Number.isFinite(v));
+
+      const conditions: string[] = [
+        `tenant_id = $1`,
+        `status IN ('AVAILABLE','OPENING','BOOKING','BEST_MARKET')`,
+        `coordinates IS NOT NULL`,
+      ];
+      const values: any[] = [PUBLIC_TENANT];
+      if (hasBbox) {
+        conditions.push(`(coordinates->>'lat')::float8 BETWEEN $${values.length + 1} AND $${values.length + 2}`);
+        values.push(minLat, maxLat);
+        conditions.push(`(coordinates->>'lng')::float8 BETWEEN $${values.length + 1} AND $${values.length + 2}`);
+        values.push(minLng, maxLng);
+      }
+      if (req.query.type) {
+        conditions.push(`type = $${values.length + 1}`);
+        values.push(req.query.type);
+      }
+      if (req.query.transaction) {
+        conditions.push(`transaction = $${values.length + 1}`);
+        values.push(req.query.transaction);
+      }
+      if (req.query.legalStatus) {
+        conditions.push(`attributes->>'legalStatus' = $${values.length + 1}`);
+        values.push(req.query.legalStatus);
+      }
+      if (req.query.direction) {
+        conditions.push(`attributes->>'direction' = $${values.length + 1}`);
+        values.push(req.query.direction);
+      }
+
+      const result = await withRlsBypass((client) =>
+        client.query(
+          `SELECT id, code, title, price, currency, type, transaction,
+                  coordinates, is_verified, images
+           FROM listings
+           WHERE ${conditions.join(' AND ')}
+           ORDER BY created_at DESC
+           LIMIT 500`,
+          values,
+        ),
+      );
+
+      const points = result.rows
+        .map((row: any) => {
+          const coords = row.coordinates || {};
+          const firstImage = Array.isArray(row.images) && row.images.length > 0 ? row.images[0] : null;
+          return {
+            id: row.id,
+            code: row.code,
+            title: row.title,
+            price: row.price !== null ? Number(row.price) : null,
+            currency: row.currency,
+            type: row.type,
+            transaction: row.transaction,
+            lat: coords.lat !== undefined ? Number(coords.lat) : null,
+            lng: coords.lng !== undefined ? Number(coords.lng) : null,
+            isVerified: !!row.is_verified,
+            image: firstImage,
+          };
+        })
+        .filter((p: any) => Number.isFinite(p.lat) && Number.isFinite(p.lng));
+
+      res.json({ points, truncated: result.rows.length >= 500 });
+    } catch (err) {
+      console.error('[public/listings/map] error:', err);
+      res.json({ points: [], truncated: false });
+    }
+  });
+
 
   // ── Public listing DETAIL (B2C #1) ────────────────────────────────────────
   // GET /api/public/listings/:slugId
@@ -3909,6 +4118,7 @@ app.get('/api/public/listings/:slugId', apiRateLimit, async (req: express.Reques
   app.use('/api/projects', apiRateLimit, createProjectRoutes(authenticateToken));
   app.use('/api/commissions', apiRateLimit, createCommissionRoutes(authenticateToken));
   app.use('/api/tenant', apiRateLimit, createTenantRoutes(authenticateToken));
+app.use('/api/approval-requests', apiRateLimit, createApprovalRequestRoutes(authenticateToken));
 
   // ─── PUBLIC mini-site cho từng dự án (no auth, server-side cache 5min) ────
   // Không bọc apiRateLimit chung — endpoint này có rate limit riêng
@@ -4728,21 +4938,22 @@ app.get('/api/public/listings/:slugId', apiRateLimit, async (req: express.Reques
       process.env.BUYER_PUSH_CRON_SECRET ||
       process.env.JWT_SECRET?.slice(0, 32) ||
       '';
-    app.use(apiRateLimit, createBuyerPushRoutes(pool, buyerPushSecret, JWT_SECRET));
+    app.use('/api', apiRateLimit);
+    app.use(createBuyerPushRoutes(pool, buyerPushSecret, JWT_SECRET));
     // Task #52 — Buyer phone+OTP login + favorites/saved-searches/leads sync.
     // Reuse the global JWT_SECRET; tokens are scoped via `aud: 'buyer'` so
     // they cannot be cross-used against admin/agent endpoints.
-    app.use(apiRateLimit, createBuyerAuthRoutes(JWT_SECRET));
-    app.use(apiRateLimit, createBuyerRoutes(pool, JWT_SECRET));
-    app.use(apiRateLimit, createConversationRoutes(JWT_SECRET, io));
-    app.use(apiRateLimit, createAgentConversationRoutes(authenticateToken, io));
+    app.use(createBuyerAuthRoutes(JWT_SECRET));
+    app.use(createBuyerRoutes(pool, JWT_SECRET));
+    app.use(createConversationRoutes(JWT_SECRET, io));
+    app.use(createAgentConversationRoutes(authenticateToken, io));
     // Task #56 — Buyer deposit booking + VNPay. Public IPN/return endpoints
     // live on the same router; the buyer-scoped routes use the same JWT.
     // Apply the standard API rate limiter to booking + VNPay endpoints —
     // protects /api/bookings* and /api/payments/vnpay/* from brute-force /
     // replay floods. The IPN endpoint is also covered; VNPay's normal
     // retry budget (5 attempts) sits well under the 600 req/min limit.
-    app.use(apiRateLimit, createBookingRoutes(pool, JWT_SECRET, io));
+    app.use(createBookingRoutes(pool, JWT_SECRET, io));
     // Echo VNPay return/IPN URL on boot so ops can cross-check against the
     // VNPay merchant portal (the portal is the source of truth for IPN URL;
     // see server/config/env.ts for why we still validate the env var).

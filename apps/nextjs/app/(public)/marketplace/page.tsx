@@ -36,6 +36,9 @@ interface SearchParams {
   bedrooms?: string;
   page?: string;
   transaction?: string;
+  legalStatus?: string;
+  direction?: string;
+  sort?: string;
 }
 
 // SSR — always fetch fresh data, critical for search/SEO
@@ -74,6 +77,9 @@ export default async function MarketplaceRoute({
     if (priceMax) url.searchParams.set("priceMax", priceMax);
     if (sp.bedrooms) url.searchParams.set("bedroomsMin", sp.bedrooms);
     if (sp.transaction) url.searchParams.set("transaction", sp.transaction);
+    if (sp.legalStatus) url.searchParams.set("legalStatus", sp.legalStatus);
+    if (sp.direction) url.searchParams.set("direction", sp.direction);
+    if (sp.sort) url.searchParams.set("sort", sp.sort);
     url.searchParams.set("page", sp.page ?? "1");
     url.searchParams.set("pageSize", "20");
 
@@ -86,6 +92,22 @@ export default async function MarketplaceRoute({
     }
   } catch {}
 
+  // Facets thuc: khu vuc noi bat, loai hinh/phap ly/huong DISTINCT that,
+  // benchmark gia/m2 - dung cho Hero search + pill dong + insight line.
+  // KHONG fake khi API loi - facets = null, cac khoi lien quan se an di.
+  let facets: {
+    topAreas: { name: string; count: number }[];
+    types: { value: string; count: number }[];
+    legalStatus: { value: string; count: number }[];
+    direction: { value: string; count: number }[];
+    priceBenchmarks: Record<string, { avgPricePerM2: number; sampleSize: number }>;
+  } | null = null;
+  try {
+    const facetsUrl = `${process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000"}/api/public/listings/facets`;
+    const facetsRes = await fetch(facetsUrl, { cache: "no-store" });
+    if (facetsRes.ok) facets = await facetsRes.json();
+  } catch {}
+
   return (
     <Suspense fallback={<div className="h-screen flex items-center justify-center" style={{ color: "var(--text-tertiary)" }}>Đang tải...</div>}>
       <MarketplacePage
@@ -93,6 +115,7 @@ export default async function MarketplaceRoute({
         totalCount={totalCount}
         totalPages={totalPages}
         searchParams={sp}
+        facets={facets}
       />
     </Suspense>
   );

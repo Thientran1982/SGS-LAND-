@@ -85,8 +85,13 @@ export function middleware(request: NextRequest) {
 
   // ── Redirect logged-in users away from auth pages ───────
   if (isAuthenticated && AUTH_ONLY_ROUTES.some((r) => pathname.startsWith(r))) {
+    const redirectParam = request.nextUrl.searchParams.get("redirect");
+    const safeRedirect =
+      redirectParam && redirectParam.startsWith("/") && !redirectParam.startsWith("//")
+        ? redirectParam
+        : null;
     return NextResponse.redirect(
-      new URL(lang === "en" ? "/en/dashboard" : "/dashboard", request.url),
+      new URL(safeRedirect || (lang === "en" ? "/en/dashboard" : "/dashboard"), request.url),
     );
   }
 

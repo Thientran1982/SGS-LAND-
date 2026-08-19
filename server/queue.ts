@@ -1,5 +1,7 @@
 import { Server } from 'socket.io';
 import { logger } from './middleware/logger';
+import { getAdapter } from './channels/registry';
+import { isHighImpactAction } from './repositories/approvalRequestRepository';
 // ---------------------------------------------------------------------------
 // Queue — Upstash QStash (production) hoặc in-memory (dev/fallback)
 //
@@ -193,6 +195,20 @@ async function triggerAutoReply(
       logger.warn(`[AutoReply] AI không trả về nội dung cho lead ${lead.id}`);
       return;
     }
+
+    // Permission Broker: neu AI de xuat hanh dong high-impact, tao approval_request
+    // PENDING de nhan vien duyet (tab moi trong Inbox) thay vi de suggestedAction
+    // nam im khong ai xu ly. AI van tra loi tin nhan binh thuong o duoi.
+    if (isHighImpactAction(aiResult.suggestedAction)) {
+      const { approvalRequestRepository } = await import('./repositories/approvalRequestRepository');
+      approvalRequestRepository.create({
+        tenantId,
+        leadId: lead.id,
+        channel,
+        actionType: aiResult.suggestedAction,
+        payload: { userMessage: inboundText?.slice(0, 500), aiReply: aiResult.content?.slice(0, 500) },
+      }).catch((err: any) => logger.error('[PermissionBroker] Loi tao approval_request:', err));
+    }
     // 4. Lưu tin trả lời vào DB
     const aiInteraction = await interactionRepository.create(tenantId, {
       leadId: lead.id,
@@ -210,44 +226,13 @@ async function triggerAutoReply(
         userMessage: inboundText?.slice(0, 300),
       },
     });
-    // 5. Gửi qua kênh thực tế
-    if (channel === 'ZALO') {
-      const zaloId: string | undefined = lead.socialIds?.zalo;
-      if (zaloId) {
-        const { sendZaloTextMessage, getZaloAccessToken } = await import('./services/zaloService');
-        const token = await getZaloAccessToken(tenantId);
-        if (token) {
-          const result = await sendZaloTextMessage(token, zaloId, aiResult.content);
-          if (!result.success) logger.warn(`[AutoReply] Gửi Zalo thất bại: ${result.error}`);
-        } else {
-          logger.warn('[AutoReply] Không tìm thấy Zalo OA Access Token cho tenant ' + tenantId);
-        }
-      }
-    } else if (channel === 'FACEBOOK') {
-      const fbId: string | undefined = lead.socialIds?.facebook;
-      if (fbId) {
-        const { sendFacebookTextMessage, getFacebookDefaultPage } = await import('./services/facebookService');
-        const page = await getFacebookDefaultPage(tenantId);
-        if (page?.accessToken) {
-          const result = await sendFacebookTextMessage(page.accessToken, fbId, aiResult.content);
-          if (!result.success) logger.warn(`[AutoReply] Gửi Facebook thất bại: ${result.error}`);
-        } else {
-          logger.warn('[AutoReply] Không tìm thấy Facebook Page Access Token cho tenant ' + tenantId);
-        }
-      }
-    } else if (channel === 'EMAIL') {
-      if (lead.email) {
-        const { emailService } = await import('./services/emailService');
-        const result = await emailService.sendSequenceEmail(
-          tenantId,
-          lead.email,
-          'Phản hồi từ SGS LAND',
-          aiResult.content
-        );
-        if (!result.success) logger.warn(`[AutoReply] Gửi Email thất bại: ${result.error}`);
-      } else {
-        logger.warn(`[AutoReply] Lead ${lead.id} không có địa chỉ email`);
-      }
+    // 5. Gui qua kenh thuc te (qua ChannelAdapter chung -- xem server/channels/)
+    const adapter = getAdapter(channel);
+    if (adapter) {
+      const sendResult = await adapter.sendOutbound(tenantId, lead, aiResult.content);
+      if (!sendResult.success) logger.warn(`[AutoReply] Gui ${channel} that bai: ${sendResult.error}`);
+    } else {
+      logger.warn(`[AutoReply] Khong tim thay ChannelAdapter cho kenh ${channel}`);
     }
     // 6. Phát socket event cho UI cập nhật realtime
     io.to(lead.id).emit('receive_message', {

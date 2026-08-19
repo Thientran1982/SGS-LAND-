@@ -80,7 +80,7 @@ async function callJudge(client: GoogleGenAI, userInput: string, aiOutput: strin
   }
   try {
     const res = await client.models.generateContent({
-      model: 'gemini-2.5-flash-lite',
+      model: 'gemini-2.5-flash',
       contents: `INPUT NGƯỜI DÙNG:\n"""${userInput}"""\n\nCÂU TRẢ LỜI AI:\n"""${aiOutput.slice(0, 4000)}"""\n\nChấm theo schema.`,
       config: {
         systemInstruction: JUDGE_INSTRUCTION,
@@ -127,7 +127,7 @@ const INTENT_TO_AGENT: Record<string, string> = {
 
 async function callRouter(client: GoogleGenAI, input: string): Promise<{ intent: string; additional: string[]; raw: string }> {
   const res = await client.models.generateContent({
-    model: 'gemini-2.5-flash-lite',
+    model: 'gemini-2.5-flash',
     contents: `Tin nhắn khách hàng:\n"${input}"\n\nPhân tích intent và trả về JSON.`,
     config: {
       systemInstruction: DEFAULT_ROUTER_INSTRUCTION,

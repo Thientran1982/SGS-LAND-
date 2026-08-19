@@ -138,6 +138,9 @@ import m118 from './118_booking_lifecycle_guards';
 import m119 from './119_market_price_history_listing_uuid';
 import m120 from './120_visitor_logs_view_dedupe_index';
 import m121 from './121_listings_code_lookup_index';
+import m122 from './122_wf_tasks_primary_key';
+import m123 from './123_approval_requests';
+import m124 from './124_fix_uploaded_files_unique';
 
 dotenv.config();
 
@@ -272,6 +275,9 @@ const MIGRATION_REGISTRY: Record<string, Migration> = {
   '119_market_price_history_listing_uuid.ts': m119,
   '120_visitor_logs_view_dedupe_index.ts': m120,
   '121_listings_code_lookup_index.ts': m121,
+  '122_wf_tasks_primary_key.ts': m122,
+  '123_approval_requests.ts': m123,
+  '124_fix_uploaded_files_unique.ts': m124,
 };
 
 async function ensureSchemaVersionsTable(client: PoolClient): Promise<void> {

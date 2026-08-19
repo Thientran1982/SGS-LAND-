@@ -2,7 +2,34 @@
 "use client";
 import { useState } from "react";
 import { Send, CheckCircle } from "lucide-react";
+import { TopicSelect } from "./TopicSelect";
 type FormState = { name: string; email: string; phone: string; subject: string; message: string };
+const SUBJECT_OPTIONS = [
+  { value: "Tư vấn mua BĐS", label: "Tư vấn mua BĐS" },
+  { value: "Ký gửi BĐS", label: "Ký gửi BĐS" },
+  { value: "Giải pháp CRM doanh nghiệp", label: "Giải pháp CRM doanh nghiệp" },
+  { value: "Định giá BĐS", label: "Định giá BĐS" },
+  { value: "Hỗ trợ kỹ thuật", label: "Hỗ trợ kỹ thuật" },
+  { value: "Khác", label: "Khác" },
+];
+
+async function getCsrfToken(): Promise<string> {
+  const fromCookie = () => {
+    if (typeof document === "undefined") return "";
+    const m = document.cookie.match(/(?:^|;\s*)csrf_token=([^;]+)/);
+    return m ? decodeURIComponent(m[1]) : "";
+  };
+  const existing = fromCookie();
+  if (existing) return existing;
+  try {
+    const r = await fetch("/api/csrf-token", { credentials: "include" });
+    const j = await r.json().catch(() => ({}));
+    return j?.csrfToken || fromCookie();
+  } catch {
+    return fromCookie();
+  }
+}
+
 export function ContactForm() {
   const [form, setForm] = useState<FormState>({ name: "", email: "", phone: "", subject: "", message: "" });
   const [status, setStatus] = useState<"idle" | "loading" | "success" | "error">("idle");
@@ -10,9 +37,11 @@ export function ContactForm() {
     e.preventDefault();
     setStatus("loading");
     try {
-      const res = await fetch("/api/contact", {
+      const csrfToken = await getCsrfToken();
+      const res = await fetch("/api/public/contact", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        headers: { "Content-Type": "application/json", "X-CSRF-Token": csrfToken },
         body: JSON.stringify(form),
       });
       setStatus(res.ok ? "success" : "error");
@@ -54,6 +83,7 @@ export function ContactForm() {
         <label className="block text-xs font-medium mb-1.5" style={{ color: "var(--text-secondary)" }}>Email</label>
         <input
           type="email"
+          required
           placeholder="email@example.com"
           value={form.email}
           onChange={(e) => setForm((p) => ({ ...p, email: e.target.value }))}
@@ -62,22 +92,13 @@ export function ContactForm() {
         />
       </div>
       <div>
-        <label className="block text-xs font-medium mb-1.5" style={{ color: "var(--text-secondary)" }}>Chủ đề *</label>
-        <select
-          required
-          value={form.subject}
-          onChange={(e) => setForm((p) => ({ ...p, subject: e.target.value }))}
-          className="w-full px-3 py-2.5 rounded-xl text-sm outline-none transition-all focus:ring-2 focus:ring-indigo-500/30"
-          style={{ background: "var(--bg-elevated)", border: "1.5px solid var(--border-default)", color: "var(--text-primary)" }}
-        >
-          <option value="">Chọn chủ đề...</option>
-          <option>Tư vấn mua BĐS</option>
-          <option>Ký gửi BĐS</option>
-          <option>Giải pháp CRM doanh nghiệp</option>
-          <option>Định giá BĐS</option>
-          <option>Hỗ trợ kỹ thuật</option>
-          <option>Khác</option>
-        </select>
+        <label className="block text-xs font-medium mb-1.5" style={{ color: "var(--text-secondary)" }}>Chủ đề</label>
+        <TopicSelect
+            value={form.subject}
+            onChange={(v) => setForm((p) => ({ ...p, subject: v }))}
+            placeholder="Chọn chủ đề..."
+            options={SUBJECT_OPTIONS}
+          />
       </div>
       <div>
         <label className="block text-xs font-medium mb-1.5" style={{ color: "var(--text-secondary)" }}>Nội dung *</label>

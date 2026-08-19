@@ -86,13 +86,13 @@ export function PublicFooter() {
             </p>
             <div className="flex flex-col gap-1.5">
               <a href="tel:+84971132378" className="text-xs flex items-center gap-2" style={{ color: "#B9C6D4" }} onMouseEnter={e => linkHover(e, true)} onMouseLeave={e => linkHover(e, false)}>
-                📞 0971 132 378
+                0971 132 378
               </a>
               <p className="text-xs flex items-start gap-2 mb-1" style={{ color: "#B9C6D4" }}>
-                📍 {tt(lang, "122 - 124 B2, Khu đô thị Sala, Phường An Khánh, TP.HCM, Việt Nam", "122 - 124 B2, Sala Urban Area, An Khanh Ward, HCMC, Vietnam")}
+                {tt(lang, "122 - 124 B2, Khu đô thị Sala, Phường An Khánh, TP.HCM, Việt Nam", "122 - 124 B2, Sala Urban Area, An Khanh Ward, HCMC, Vietnam")}
               </p>
               <a href="mailto:info@sgsland.vn" className="text-xs" style={{ color: "#B9C6D4" }} onMouseEnter={e => linkHover(e, true)} onMouseLeave={e => linkHover(e, false)}>
-                ✉ info@sgsland.vn
+                info@sgsland.vn
               </a>
               <p className="text-xs mt-1" style={{ color: "#7A91A8" }}>
                 {lang === "vi" ? "Hỗ trợ 7/7 · 8:00 - 18:00" : "Support 7/7 · 8:00 - 18:00"}

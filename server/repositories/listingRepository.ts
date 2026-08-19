@@ -22,6 +22,8 @@ export interface ListingFilters {
   floor_lte?: number;
   /** Filter by cardinal direction stored in attributes JSONB (attributes->>'direction'), ILIKE match */
   direction?: string;
+  /** Filter by legal status stored in attributes JSONB (attributes->>'legalStatus'), exact match */
+  legalStatus?: string;
   /** Filter by tower/block stored in attributes JSONB (attributes->>'tower'), ILIKE match */
   tower?: string;
 }
@@ -113,6 +115,10 @@ export class ListingRepository extends BaseRepository {
     if (filters?.direction) {
       conditions.push(`attributes->>'direction' ILIKE $${paramIndex++}`);
       values.push(`%${filters.direction}%`);
+    }
+    if (filters?.legalStatus) {
+      conditions.push(`attributes->>'legalStatus' = $${paramIndex++}`);
+      values.push(filters.legalStatus);
     }
     if (filters?.tower) {
       conditions.push(`attributes->>'tower' ILIKE $${paramIndex++}`);
@@ -387,8 +393,13 @@ export class ListingRepository extends BaseRepository {
     pagination: PaginationParams,
     filters?: ListingFilters,
     userId?: string,
-    userRole?: string
+    userRole?: string,
+    sortBy?: 'newest' | 'price_asc' | 'price_desc',
   ): Promise<PaginatedResult<any>> {
+    const listOrderClause =
+      sortBy === 'price_asc' ? 'l.price ASC NULLS LAST' :
+      sortBy === 'price_desc' ? 'l.price DESC NULLS LAST' :
+      'l.created_at DESC';
     return this.withTenant(tenantId, async (client) => {
       const conditions: string[] = [];
       const values: any[] = [];
@@ -458,7 +469,7 @@ export class ListingRepository extends BaseRepository {
                   u.role   AS assigned_to_role
            FROM (
              SELECT * FROM listings l ${whereClause}
-             ORDER BY l.created_at DESC
+             ORDER BY ${listOrderClause}
              LIMIT $${paramIndex} OFFSET $${paramIndex + 1}
            ) AS sub
            LEFT JOIN users u ON u.id = sub.assigned_to`,

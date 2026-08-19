@@ -27,7 +27,16 @@ interface Props {
   searchParams: {
     q?: string; type?: string; area?: string; minPrice?: string;
     maxPrice?: string; bedrooms?: string; page?: string; transaction?: string;
+    legalStatus?: string; direction?: string; sort?: string;
   };
+  facets?: {
+    topAreas: { name: string; count: number }[];
+    types: { value: string; count: number }[];
+    legalStatus: { value: string; count: number }[];
+    direction: { value: string; count: number }[];
+    priceBenchmarks: Record<string, { avgPricePerM2: number; sampleSize: number }>;
+  } | null;
+  locations?: string[];
 }
 
 const TRANSACTION_OPTIONS = (g: L) => [
@@ -44,11 +53,9 @@ const TYPE_OPTIONS = (g: L) => [
   { label: tt(g, "Thương mại", "Commercial"), value: "Commercial" },
   { label: tt(g, "Văn phòng", "Office"), value: "Office" },
 ];
-const LOCATION_OPTIONS = (g: L) => [
+const LOCATION_OPTIONS = (g: L, locs?: string[]) => [
   { label: tt(g, "Tất cả vị trí", "All locations"), value: "" },
-  { label: "Đồng Nai", value: "Đồng Nai" }, { label: "TP.HCM", value: "TP.HCM" },
-  { label: "Bình Dương", value: "Bình Dương" }, { label: "Long An", value: "Long An" },
-  { label: "Bà Rịa - Vũng Tàu", value: "Bà Rịa" },
+  ...(((locs || []).length > 0) ? (locs as string[]).map((loc) => ({ label: loc, value: loc })) : []),
 ];
 const PRICE_OPTIONS = (g: L) => [
   { label: tt(g, "Tất cả mức giá", "Any price"), min: "", max: "" },
@@ -168,7 +175,7 @@ function Dropdown({ value, options, onChange, minWidth = 140 }: { value: string;
         <ChevronDown className={`w-4 h-4 shrink-0 transition-transform ${open ? "rotate-180" : ""}`} style={{ color: "var(--text-tertiary)" }} />
       </button>
       {open && (
-        <div className="absolute z-50 mt-1 left-0 min-w-full rounded-xl shadow-2xl overflow-hidden py-1"
+        <div className="absolute z-50 mt-1 left-0 min-w-full rounded-xl shadow-2xl overflow-hidden"
           style={{ background: "var(--bg-surface)", border: "1px solid var(--border-default)" }}>
           {options.map((o) => (
             <button key={o.value} type="button" onClick={() => { onChange(o.value); setOpen(false); }}
@@ -197,7 +204,7 @@ function ActiveChip({ label, onRemove }) {
 }
 
 /* ── Listing card ─────────────────────────────────────────── */
-function ListingCard({ listing, list, eager }: { listing: any; list?: boolean; eager?: boolean }) {
+function ListingCard({ listing, list, eager, facets }: { listing: any; list?: boolean; eager?: boolean; facets?: { priceBenchmarks: Record<string, { avgPricePerM2: number; sampleSize: number }> } | null }) {
   const lang = useLang();
   const slug = `${(listing.title || "bds").toLowerCase().replace(/\s+/g, "-").replace(/[^a-z0-9-]/g, "").slice(0, 40)}-${listing.id}`;
   const isRent = String(listing.transaction || "").toUpperCase() === "RENT";
@@ -317,6 +324,24 @@ function ListingCard({ listing, list, eager }: { listing: any; list?: boolean; e
               {isRent && <span className="text-xs font-semibold ml-0.5" style={{ color: "var(--text-tertiary)" }}>{rentSuffix(lang)}</span>}
             </p>
             {ppm && <p className="text-[12px] font-medium mt-0.5 truncate" style={{ color: "var(--text-tertiary)" }}>{ppm}</p>}
+            {(() => {
+              if (!facets || area <= 0) return null;
+              const locKey = String(listing.location || "").split(",").pop()?.trim() || "";
+              const bench = facets.priceBenchmarks?.[`${locKey}|${listing.type}`];
+              if (!bench || bench.sampleSize < 3 || !bench.avgPricePerM2) return null;
+              const listingPpm = (Number(listing.price) || 0) / area;
+              if (!listingPpm) return null;
+              const diffPct = Math.round(((listingPpm - bench.avgPricePerM2) / bench.avgPricePerM2) * 100);
+              if (diffPct === 0) return null;
+              const isBelow = diffPct < 0;
+              return (
+                <p className="text-[11px] font-semibold mt-1" style={{ color: isBelow ? "var(--color-success)" : "var(--sgs-accent)" }}>
+                  {isBelow
+                    ? tt(lang, `Th\u1ea5p h\u01a1n ${Math.abs(diffPct)}% so v\u1edbi TB khu v\u1ef1c`, `${Math.abs(diffPct)}% below area average`)
+                    : tt(lang, `Cao h\u01a1n ${Math.abs(diffPct)}% so v\u1edbi TB khu v\u1ef1c`, `${Math.abs(diffPct)}% above area average`)}
+                </p>
+              );
+            })()}
           </div>
           <div className="flex items-center gap-3 text-xs shrink-0" style={{ color: "var(--text-tertiary)" }}>
             {area > 0 ? <span>{area}{"m\u00b2"}</span> : null}
@@ -342,12 +367,42 @@ function ListingCard({ listing, list, eager }: { listing: any; list?: boolean; e
   );
 }
 
-export function MarketplacePage({ initialListings, totalCount, totalPages, searchParams: sp }: Props) {
+export function MarketplacePage({ initialListings, totalCount, totalPages, searchParams: sp, facets, locations }: Props) {
   const lang = useLang();
   const router = useRouter();
   const pathname = usePathname();
   const [search, setSearch] = useState(sp.q ?? "");
   const [view, setView] = useState<"GRID" | "LIST" | "BOARD" | "MAP">("GRID");
+  const [heroOpen, setHeroOpen] = useState(false);
+  const heroRef = useRef<HTMLDivElement>(null);
+  const [recentSearches, setRecentSearches] = useState<string[]>([]);
+  useEffect(() => {
+    try {
+      const raw = JSON.parse(window.localStorage.getItem("sgs:recentSearches") || "[]");
+      setRecentSearches(Array.isArray(raw) ? raw : []);
+    } catch {}
+  }, []);
+  useEffect(() => {
+    const h = (e: MouseEvent) => { if (heroRef.current && !heroRef.current.contains(e.target as Node)) setHeroOpen(false); };
+    document.addEventListener("mousedown", h);
+    return () => document.removeEventListener("mousedown", h);
+  }, []);
+  const saveRecentSearch = (q: string) => {
+    if (!q.trim()) return;
+    try {
+      const raw = JSON.parse(window.localStorage.getItem("sgs:recentSearches") || "[]");
+      const list: string[] = Array.isArray(raw) ? raw : [];
+      const next = [q, ...list.filter((x: string) => x !== q)].slice(0, 5);
+      window.localStorage.setItem("sgs:recentSearches", JSON.stringify(next));
+      setRecentSearches(next);
+    } catch {}
+  };
+  const AI_PRESETS = [
+    { label: tt(lang, "C\u0103n h\u1ed9 d\u01b0\u1edbi 3 t\u1ef7", "Apartments under 3B"), apply: (p: URLSearchParams) => { p.set("type", "Apartment"); p.set("maxPrice", "3"); } },
+    { label: tt(lang, "Nh\u00e0 ph\u1ed1 cho thu\u00ea", "Townhouses for rent"), apply: (p: URLSearchParams) => { p.set("type", "Townhouse"); p.set("transaction", "RENT"); } },
+    { label: tt(lang, "\u0110\u1ea5t n\u1ec1n s\u1ed5 h\u1ed3ng", "Land with Pink Book"), apply: (p: URLSearchParams) => { p.set("type", "Land"); p.set("legalStatus", "PinkBook"); } },
+    { label: tt(lang, "C\u0103n h\u1ed9 2-3 ph\u00f2ng ng\u1ee7", "2-3 bedroom apartments"), apply: (p: URLSearchParams) => { p.set("type", "Apartment"); p.set("bedrooms", "2"); } },
+  ];
 
   const pushParams = useCallback((mut: (p: URLSearchParams) => void) => {
     const params = new URLSearchParams();
@@ -358,13 +413,16 @@ export function MarketplacePage({ initialListings, totalCount, totalPages, searc
     if (sp.maxPrice) params.set("maxPrice", sp.maxPrice);
     if (sp.bedrooms) params.set("bedrooms", sp.bedrooms);
     if (sp.transaction) params.set("transaction", sp.transaction);
+    if (sp.legalStatus) params.set("legalStatus", sp.legalStatus);
+    if (sp.direction) params.set("direction", sp.direction);
+    if (sp.sort) params.set("sort", sp.sort);
     mut(params);
     params.delete("page");
     router.push(`${pathname}?${params.toString()}`);
   }, [sp, pathname, router]);
 
   const setParam = (key: string, value: string) => pushParams((p) => { if (value) p.set(key, value); else p.delete(key); });
-  const handleSearch = (e: React.FormEvent) => { e.preventDefault(); setParam("q", search.trim()); };
+  const handleSearch = (e: React.FormEvent) => { e.preventDefault(); saveRecentSearch(search.trim()); setHeroOpen(false); setParam("q", search.trim()); };
   const currentPage = parseInt(sp.page ?? "1");
   const activePriceLabel = (PRICE_OPTIONS(lang).find((pr) => pr.min === (sp.minPrice ?? "") && pr.max === (sp.maxPrice ?? "")) || PRICE_OPTIONS(lang)[0]).label;
   const activeTab = sp.type === "PROJECT" ? "PROJECT" : (sp.transaction === "SALE" || sp.transaction === "RENT" ? sp.transaction : "");
@@ -392,38 +450,113 @@ export function MarketplacePage({ initialListings, totalCount, totalPages, searc
 
   return (
     <div className="max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8 pb-10 pt-6 sm:pt-24">
-      {/* Header */}
-      <div className="mb-4">
-        <h1 className="text-xl sm:text-2xl font-bold mb-1" style={{ color: "var(--text-primary)" }}>
-          {sp.q ? tt(lang, `Kết quả cho "${sp.q}"`, `Results for "${sp.q}"`) : tt(lang, "Tìm kiếm Bất Động Sản", "Search Properties")}
-        </h1>
+      {/* Hero: navy panel, serif heading, expandable smart search (real data
+          only - "gan day" from localStorage, "AI" presets set real filters,
+          "noi bat" areas from real GROUP BY counts via /api/public/listings/facets). */}
+      <div className="relative left-1/2 -translate-x-1/2 w-screen mb-8 -mt-6 sm:-mt-24 overflow-hidden">
+        <div className="absolute inset-0" style={{ background: "var(--sgs-hero-deep)" }} />
+        <div className="absolute inset-0 opacity-[0.08] pointer-events-none" style={{
+          backgroundImage:
+            "repeating-radial-gradient(circle at 12% 20%, transparent 0, transparent 38px, rgba(255,255,255,0.7) 39px, transparent 40px), repeating-radial-gradient(circle at 88% 75%, transparent 0, transparent 46px, rgba(255,255,255,0.7) 47px, transparent 48px)",
+        }} />
+        <div className="relative max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8 pt-16 pb-10 sm:pt-28 sm:pb-14">
+          <h2 className="text-2xl sm:text-4xl font-bold mb-2" style={{ fontFamily: "var(--font-serif)", color: "var(--text-inverse)" }}>
+            {tt(lang, "T\u00ecm ng\u00f4i nh\u00e0 m\u01a1 \u01b0\u1edbc c\u1ee7a b\u1ea1n", "Find your dream property")}
+          </h2>
+          <p className="text-sm sm:text-base mb-6" style={{ color: "rgba(255,255,255,0.72)" }}>
+            {tt(lang, "H\u00e0ng ngh\u00ecn b\u1ea5t \u0111\u1ed9ng s\u1ea3n \u0111\u00e3 x\u00e1c th\u1ef1c tr\u00ean kh\u1eafp \u0110\u00f4ng Nam B\u1ed9", "Thousands of verified properties across the Southeast region")}
+          </p>
+          <div ref={heroRef} className="relative max-w-2xl">
+            {!heroOpen ? (
+              <button type="button" onClick={() => setHeroOpen(true)}
+                className="w-full flex items-center gap-3 px-5 py-3.5 rounded-full text-left transition-colors shadow-xl"
+                style={{ background: "var(--bg-surface)", color: "var(--text-tertiary)" }}>
+                <Search className="w-4 h-4 shrink-0" />
+                <span className="flex-1 text-sm truncate">{tt(lang, "T\u00ecm theo t\u00ean, d\u1ef1 \u00e1n, khu v\u1ef1c, m\u00e3 code...", "Search by name, project, area or code...")}</span>
+                <span className="text-[11px] px-1.5 py-0.5 rounded border shrink-0 hidden sm:inline" style={{ borderColor: "var(--border-default)" }}>K</span>
+              </button>
+            ) : (
+              <div className="rounded-2xl shadow-2xl overflow-hidden" style={{ background: "var(--bg-surface)" }}>
+                <form onSubmit={handleSearch} className="relative p-3 border-b" style={{ borderColor: "var(--border-default)" }}>
+                  <Search className="absolute left-6 top-1/2 -translate-y-1/2 w-4 h-4" style={{ color: "var(--text-tertiary)" }} />
+                  <input autoFocus value={search} onChange={(e) => setSearch(e.target.value)}
+                    placeholder={tt(lang, "T\u00ecm theo t\u00ean, d\u1ef1 \u00e1n, khu v\u1ef1c, m\u00e3 code...", "Search by name, project, area or code...")}
+                    className="w-full pl-9 pr-4 py-2.5 rounded-xl text-sm outline-none" style={{ background: "var(--bg-input)", color: "var(--text-primary)" }} />
+                </form>
+                <div className="p-4 grid gap-5 sm:grid-cols-3 max-h-[60vh] overflow-y-auto">
+                  <div>
+                    <h4 className="text-xs font-bold uppercase tracking-wide mb-2" style={{ color: "var(--text-tertiary)" }}>
+                      {tt(lang, "T\u00ecm g\u1ea7n \u0111\u00e2y", "Recent searches")}
+                    </h4>
+                    {recentSearches.length === 0 ? (
+                      <p className="text-xs" style={{ color: "var(--text-tertiary)" }}>{tt(lang, "Ch\u01b0a c\u00f3 t\u00ecm ki\u1ebfm g\u1ea7n \u0111\u00e2y", "No recent searches yet")}</p>
+                    ) : (
+                      <ul className="flex flex-col gap-1">
+                        {recentSearches.map((q) => (
+                          <li key={q}>
+                            <button type="button" onClick={() => { setSearch(q); saveRecentSearch(q); setHeroOpen(false); setParam("q", q); }}
+                              className="text-xs text-left hover:opacity-70 transition-opacity truncate w-full" style={{ color: "var(--text-secondary)" }}>{q}</button>
+                          </li>
+                        ))}
+                      </ul>
+                    )}
+                  </div>
+                  <div>
+                    <h4 className="text-xs font-bold uppercase tracking-wide mb-2" style={{ color: "var(--text-tertiary)" }}>
+                      {tt(lang, "G\u1ee3i \u00fd theo AI", "AI suggestions")}
+                    </h4>
+                    <ul className="flex flex-col gap-1">
+                      {AI_PRESETS.map((preset) => (
+                        <li key={preset.label}>
+                          <button type="button" onClick={() => { setHeroOpen(false); pushParams((p) => { p.delete("type"); p.delete("area"); p.delete("minPrice"); p.delete("maxPrice"); p.delete("bedrooms"); p.delete("transaction"); p.delete("legalStatus"); p.delete("direction"); preset.apply(p); }); }}
+                            className="text-xs text-left hover:opacity-70 transition-opacity w-full" style={{ color: "var(--text-secondary)" }}>{preset.label}</button>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                  <div>
+                    <h4 className="text-xs font-bold uppercase tracking-wide mb-2" style={{ color: "var(--text-tertiary)" }}>
+                      {tt(lang, "Khu v\u1ef1c n\u1ed5i b\u1eadt", "Popular areas")}
+                    </h4>
+                    {(!facets || facets.topAreas.length === 0) ? (
+                      <p className="text-xs" style={{ color: "var(--text-tertiary)" }}>{tt(lang, "Ch\u01b0a c\u00f3 d\u1eef li\u1ec7u", "No data yet")}</p>
+                    ) : (
+                      <ul className="flex flex-col gap-1">
+                        {facets.topAreas.map((a) => (
+                          <li key={a.name}>
+                            <button type="button" onClick={() => { setHeroOpen(false); setParam("area", a.name); }}
+                              className="text-xs text-left hover:opacity-70 transition-opacity w-full flex items-center justify-between gap-2" style={{ color: "var(--text-secondary)" }}>
+                              <span className="truncate">{a.name}</span>
+                              <span className="shrink-0" style={{ color: "var(--text-tertiary)" }}>{a.count} {tt(lang, "tin \u0111\u0103ng", "listings")}</span>
+                            </button>
+                          </li>
+                        ))}
+                      </ul>
+                    )}
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
       </div>
-
-      {/* Search bar */}
-      <form onSubmit={handleSearch} className="relative mb-3">
-        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4" style={{ color: "var(--text-tertiary)" }} />
-        <input value={search} onChange={(e) => setSearch(e.target.value)} placeholder={tt(lang, "Tìm theo tên, dự án, khu vực, mã code...", "Search by name, project, area or code...")}
-          className="w-full pl-9 pr-24 py-3 rounded-xl text-sm outline-none" style={boxStyle} />
-        <button type="submit" className="absolute right-1.5 top-1/2 -translate-y-1/2 px-5 py-2 rounded-lg text-sm font-semibold text-white" style={{ background: "var(--primary-600)" }}>{tt(lang, "Tìm", "Search")}</button>
-      </form>
-
       {/* Primary row: transaction segmented control + view switcher */}
       <div className="flex items-center justify-between gap-2 flex-wrap pb-1 mb-3">
         <div className="flex items-center gap-1 p-0.5 rounded-lg shrink-0" style={{ background: "var(--bg-elevated)" }}>
           <button type="button" onClick={() => setTransactionTab("SALE")}
             className="px-3 sm:px-4 h-9 rounded-md text-sm font-semibold transition-colors whitespace-nowrap"
             style={activeTab === "SALE" ? { background: "var(--bg-surface)", color: "var(--primary-600)" } : { color: "var(--text-tertiary)" }}>
-            Bán
+            {tt(lang, "Bán", "For sale")}
           </button>
           <button type="button" onClick={() => setTransactionTab("RENT")}
             className="px-3 sm:px-4 h-9 rounded-md text-sm font-semibold transition-colors whitespace-nowrap"
             style={activeTab === "RENT" ? { background: "var(--bg-surface)", color: "var(--primary-600)" } : { color: "var(--text-tertiary)" }}>
-            Cho thuê
+            {tt(lang, "Cho thuê", "For rent")}
           </button>
           <Link href={lang === "en" ? "/en/du-an" : "/du-an"}
             className="px-3 sm:px-4 h-9 rounded-md text-sm font-semibold transition-colors whitespace-nowrap flex items-center"
             style={{ color: "var(--text-tertiary)" }}>
-            Dự án
+            {tt(lang, "Dự án", "Projects")}
           </Link>
         </div>
 
@@ -443,10 +576,38 @@ export function MarketplacePage({ initialListings, totalCount, totalPages, searc
       {/* Secondary row: refine filters */}
       <div className="flex flex-wrap items-center gap-2 pb-1 mb-3">
         <Dropdown value={sp.type ?? ""} options={TYPE_OPTIONS(lang)} onChange={(v) => setParam("type", v)} minWidth={140} />
-        <Dropdown value={sp.area ?? ""} options={LOCATION_OPTIONS(lang)} onChange={(v) => setParam("area", v)} minWidth={150} />
+        <Dropdown value={sp.area ?? ""} options={LOCATION_OPTIONS(lang, locations)} onChange={(v) => setParam("area", v)} minWidth={150} />
         <Dropdown value={activePriceLabel} options={PRICE_OPTIONS(lang).map((o) => ({ label: o.label, value: o.label }))}
           onChange={(label) => { const pr = PRICE_OPTIONS(lang).find((x) => x.label === label) || PRICE_OPTIONS(lang)[0]; pushParams((p) => { p.delete("minPrice"); p.delete("maxPrice"); if (pr.min) p.set("minPrice", pr.min); if (pr.max) p.set("maxPrice", pr.max); }); }}
           minWidth={140} />
+        <Dropdown
+          value={sp.sort ?? ""}
+          options={[
+            { label: tt(lang, "M\u1edbi nh\u1ea5t", "Newest"), value: "" },
+            { label: tt(lang, "Gi\u00e1: Th\u1ea5p \u0111\u1ebfn cao", "Price: Low to high"), value: "price_asc" },
+            { label: tt(lang, "Gi\u00e1: Cao \u0111\u1ebfn th\u1ea5p", "Price: High to low"), value: "price_desc" },
+          ]}
+          onChange={(v) => setParam("sort", v)}
+          minWidth={150}
+        />
+        {!!facets && facets.legalStatus.length > 0 && (
+          <Dropdown
+            value={sp.legalStatus ?? ""}
+            options={[{ label: tt(lang, "T\u1ea5t c\u1ea3 ph\u00e1p l\u00fd", "All legal status"), value: "" },
+              ...facets.legalStatus.map((f) => ({ label: bi(LEGAL_LABELS, f.value, lang) || f.value, value: f.value }))]}
+            onChange={(v) => setParam("legalStatus", v)}
+            minWidth={150}
+          />
+        )}
+        {!!facets && facets.direction.length > 0 && (
+          <Dropdown
+            value={sp.direction ?? ""}
+            options={[{ label: tt(lang, "T\u1ea5t c\u1ea3 h\u01b0\u1edbng", "All directions"), value: "" },
+              ...facets.direction.map((f) => ({ label: bi(DIRECTION_LABELS, f.value, lang) || f.value, value: f.value }))]}
+            onChange={(v) => setParam("direction", v)}
+            minWidth={150}
+          />
+        )}
       </div>
 
       {/* Result count + active filter chips */}
@@ -457,12 +618,20 @@ export function MarketplacePage({ initialListings, totalCount, totalPages, searc
             onRemove={() => pushParams((p) => p.delete("type"))} />
         )}
         {sp.area && (
-          <ActiveChip label={LOCATION_OPTIONS(lang).find((o) => o.value === sp.area)?.label ?? sp.area}
+          <ActiveChip label={LOCATION_OPTIONS(lang, locations).find((o) => o.value === sp.area)?.label ?? sp.area}
             onRemove={() => pushParams((p) => p.delete("area"))} />
         )}
         {(sp.minPrice || sp.maxPrice) && (
           <ActiveChip label={activePriceLabel}
             onRemove={() => pushParams((p) => { p.delete("minPrice"); p.delete("maxPrice"); })} />
+        )}
+        {sp.legalStatus && (
+          <ActiveChip label={bi(LEGAL_LABELS, sp.legalStatus, lang) || sp.legalStatus}
+            onRemove={() => pushParams((p) => p.delete("legalStatus"))} />
+        )}
+        {sp.direction && (
+          <ActiveChip label={bi(DIRECTION_LABELS, sp.direction, lang) || sp.direction}
+            onRemove={() => pushParams((p) => p.delete("direction"))} />
         )}
       </div>
 
@@ -474,7 +643,14 @@ export function MarketplacePage({ initialListings, totalCount, totalPages, searc
           <p className="text-sm" style={{ color: "var(--text-secondary)" }}>{tt(lang, "Thử thay đổi tiêu chí tìm kiếm hoặc mở rộng khu vực", "Try adjusting your filters or widening the area")}</p>
         </div>
       ) : view === "MAP" ? (
-        <MarketplaceMap listings={initialListings} />
+        <div className="relative">
+          <MarketplaceMap listings={initialListings} />
+          <button type="button" onClick={() => setView("GRID")}
+            className="lg:hidden fixed left-1/2 -translate-x-1/2 bottom-6 z-40 flex items-center gap-2 px-5 py-3 rounded-full shadow-2xl text-sm font-semibold"
+            style={{ background: "var(--sgs-hero-deep)", color: "var(--text-inverse)" }}>
+            <ListIcon className="w-4 h-4" /> {tt(lang, "Quay l\u1ea1i danh s\u00e1ch", "Back to list")}
+          </button>
+        </div>
       ) : view === "BOARD" ? (
         <div className="flex gap-4 no-scrollbar pb-2" style={{ overflowX: "auto", WebkitOverflowScrolling: "touch" }}>
           {boards.map(([label, items]) => (
@@ -493,18 +669,22 @@ export function MarketplacePage({ initialListings, totalCount, totalPages, searc
             </div>
           ))}
         </div>
-      ) : view === "LIST" ? (
-        <div className="flex flex-col gap-4">
-          {initialListings.map((l: any, i: number) => <ListingCard key={l.id} listing={l} list eager={i < 2} />)}
-        </div>
       ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
-          {initialListings.map((l: any, i: number) => <ListingCard key={l.id} listing={l} eager={i < 4} />)}
-        </div>
-      )}
-
-      {/* Pagination (grid/list only) */}
-      {totalPages > 1 && view !== "MAP" && view !== "BOARD" && (
+        <div className="lg:flex lg:gap-6 lg:items-start">
+          <div className="hidden lg:block lg:w-[42%] lg:shrink-0 lg:sticky" style={{ top: 96, height: "calc(100vh - 120px)" }}>
+            <MarketplaceMap listings={initialListings} />
+          </div>
+          <div className="lg:flex-1 lg:min-w-0 lg:max-h-[calc(100vh-120px)] lg:overflow-y-auto lg:pr-1">
+            {view === "LIST" ? (
+              <div className="flex flex-col gap-4">
+                {initialListings.map((l: any, i: number) => <ListingCard key={l.id} listing={l} facets={facets} list eager={i < 2} />)}
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-5">
+                {initialListings.map((l: any, i: number) => <ListingCard key={l.id} listing={l} facets={facets} eager={i < 4} />)}
+              </div>
+            )}
+            {totalPages > 1 && (
         <div className="flex items-center justify-center gap-2 mt-10">
           <Link href={`${pathname}?${new URLSearchParams({ ...sp, page: String(Math.max(1, currentPage - 1)) }).toString()}`}
             className={`flex items-center gap-1 px-4 py-2 rounded-xl text-sm font-medium ${currentPage <= 1 ? "opacity-40 pointer-events-none" : ""}`}
@@ -518,6 +698,16 @@ export function MarketplacePage({ initialListings, totalCount, totalPages, searc
             {tt(lang, "Tiếp", "Next")} <ChevronRight className="w-4 h-4" />
           </Link>
         </div>
+            )}
+          </div>
+        </div>
+      )}
+      {(view === "GRID" || view === "LIST") && (
+        <button type="button" onClick={() => setView("MAP")}
+          className="lg:hidden fixed left-1/2 -translate-x-1/2 bottom-6 z-40 flex items-center gap-2 px-5 py-3 rounded-full shadow-2xl text-sm font-semibold"
+          style={{ background: "var(--sgs-hero-deep)", color: "var(--text-inverse)" }}>
+          <MapIcon className="w-4 h-4" /> {tt(lang, "Xem b\u1ea3n \u0111\u1ed3", "View map")}
+        </button>
       )}
     </div>
   );

@@ -40,34 +40,14 @@ const PublicProjectMicrosite = lazyLoad(() => import('./pages/PublicProjectMicro
 const UUID_TOKEN_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 const isProjectCodeToken = (t: string | undefined | null): boolean =>
     !!t && /^[A-Za-z0-9][A-Za-z0-9_-]{0,63}$/.test(t) && !UUID_TOKEN_RE.test(t);
-const Landing = lazyLoad(() => import('./pages/Landing'), 'Landing');
-const ProductSearch = lazyLoad(() => import('./pages/ProductSearch'), 'ProductSearch');
 // Ensure these match file names exactly
-const AiValuation = lazyLoad(() => import('./pages/AiValuation'), 'AiValuation');
 const AiAdvisor = lazyLoad(() => import('./pages/AiAdvisor'), 'AiAdvisor'); 
-const CrmLanding = lazyLoad(() => import('./pages/CrmLanding'), 'CrmLanding'); 
 const ListingDetail = lazyLoad(() => import('./pages/ListingDetail'), 'ListingDetail'); 
-const AboutUs = lazyLoad(() => import('./pages/AboutUs'), 'AboutUs');
 const Methodology = lazyLoad(() => import('./pages/Methodology'), 'Methodology');
 const PressMedia = lazyLoad(() => import('./pages/PressMedia'), 'PressMedia');
-const News = lazyLoad(() => import('./pages/News'), 'News');
 const Glossary = lazyLoad(() => import('./pages/Glossary'), 'Glossary');
 const MarketReport = lazyLoad(() => import('./pages/MarketReport'), 'MarketReport');
-const Contact = lazyLoad(() => import('./pages/Contact'), 'Contact'); 
-const Careers = lazyLoad(() => import('./pages/Careers'), 'Careers'); 
-const HelpCenter = lazyLoad(() => import('./pages/HelpCenter'), 'HelpCenter'); 
-const UserGuide  = lazyLoad(() => import('./pages/UserGuide'), 'UserGuide');
-const ApiDocs = lazyLoad(() => import('./pages/ApiDocs'), 'ApiDocs'); 
-const PublicStatus = lazyLoad(() => import('./pages/PublicStatus'), 'PublicStatus');
-const LiveChat = lazyLoad(() => import('./pages/LiveChat'), 'LiveChat');
-const PrivacyPolicy = lazyLoad(() => import('./pages/Legal'), 'PrivacyPolicy');
-const TermsOfService = lazyLoad(() => import('./pages/Legal'), 'TermsOfService');
-const CookieSettings = lazyLoad(() => import('./pages/Legal'), 'CookieSettings');
-const Consignment = lazyLoad(() => import('./pages/Consignment'), 'Consignment');
-const BankRates = lazyLoad(() => import('./pages/BankRates'), 'BankRates');
 const LocalLandingPage = lazyLoad(() => import('./pages/LocalLandingPage'), 'LocalLandingPage');
-const ProjectLandingPage = lazyLoad(() => import('./pages/ProjectLandingPage'), 'ProjectLandingPage');
-const DeveloperPage = lazyLoad(() => import('./pages/DeveloperPage'), 'DeveloperPage');
 // Private Pages - Core
 const Dashboard = lazyLoad(() => import('./pages/Dashboard'), 'Dashboard');
 const Leads = lazyLoad(() => import('./pages/Leads'), 'Leads');
@@ -150,8 +130,6 @@ registerPrefetch(ROUTES.TASK_DETAIL,        () => import('./pages/TaskDetail'));
 registerPrefetch(ROUTES.EMPLOYEES,          () => import('./pages/Employees'));
 registerPrefetch(ROUTES.TASK_REPORTS,       () => import('./pages/TaskReports'));
 registerPrefetch(ROUTES.COMMISSIONS,        () => import('./pages/Commissions'));
-registerPrefetch(ROUTES.SEARCH,             () => import('./pages/ProductSearch'));
-registerPrefetch(ROUTES.LANDING,            () => import('./pages/Landing'));
 // Placeholder for Mobile App
 const MobileApp = () => {
     const { t } = useTranslation();
@@ -177,40 +155,11 @@ const MobileApp = () => {
 // Comprehensive mapping of ALL routes to their components
 const PAGE_REGISTRY: Record<string, React.ComponentType<any>> = {
     // Public
-    [ROUTES.LANDING]: Landing,
-    [ROUTES.SEARCH]: ProductSearch,
-    [ROUTES.AI_VALUATION]: AiValuation,
     [ROUTES.AI_ADVISOR]: AiAdvisor, 
-    [ROUTES.CRM_SOLUTION]: CrmLanding,
-    [ROUTES.ABOUT]: AboutUs,
   [ROUTES.METHODOLOGY]: Methodology,
   [ROUTES.PRESS_MEDIA]: PressMedia,
-    [ROUTES.NEWS]: News,
             [ROUTES.GLOSSARY]: Glossary,
             [ROUTES.MARKET_REPORT]: MarketReport,
-    [ROUTES.CONTACT]: Contact,
-    [ROUTES.CAREERS]: Careers,
-    [ROUTES.HELP_CENTER]: HelpCenter,
-    [ROUTES.USER_GUIDE]: UserGuide,
-    [ROUTES.API_DOCS]: ApiDocs,
-    [ROUTES.STATUS_PUBLIC]: PublicStatus,
-    [ROUTES.LIVE_CHAT]: LiveChat,
-    [ROUTES.PRIVACY]: PrivacyPolicy,
-    [ROUTES.TERMS]: TermsOfService,
-    [ROUTES.COOKIES]: CookieSettings,
-    [ROUTES.KY_GUI]: Consignment,
-    [ROUTES.BANK_RATES]: BankRates,
-    [ROUTES.BDS_DONG_NAI]: LocalLandingPage,
-    [ROUTES.BDS_LONG_THANH]: LocalLandingPage,
-    [ROUTES.BDS_THU_DUC]: LocalLandingPage,
-    [ROUTES.BDS_BINH_DUONG]: LocalLandingPage,
-    [ROUTES.BDS_QUAN_7]: LocalLandingPage,
-    [ROUTES.BDS_PHU_NHUAN]: LocalLandingPage,
-    [ROUTES.BDS_BINH_CHANH]: LocalLandingPage,
-    [ROUTES.BDS_BINH_THANH]: LocalLandingPage,
-    [ROUTES.BDS_LONG_AN]: LocalLandingPage,
-    [ROUTES.DAU_TU_BDS]: LocalLandingPage,
-    [ROUTES.PHAP_LY_NHA_DAT]: LocalLandingPage,
       [ROUTES.AEO_GIA_NHA_PHO_THU_DUC_2026]: LocalLandingPage,
       [ROUTES.AEO_BIET_THU_AQUA_CITY_GIA_BAO_NHIEU_2026]: LocalLandingPage,
       [ROUTES.AEO_CAN_HO_VINHOMES_GRAND_PARK_GIA_BAO_NHIEU]: LocalLandingPage,
@@ -261,8 +210,6 @@ const PAGE_REGISTRY: Record<string, React.ComponentType<any>> = {
       [ROUTES.AEO_SO_SANH_MUA_VA_THUE_NHA_O_VIET_NAM]: LocalLandingPage,
       [ROUTES.AEO_QUA_TRINH_VAY_MUA_NHA_BAO_NHIEU_BUOC]: LocalLandingPage,
       [ROUTES.AEO_LAM_THE_NAO_DE_CHON_MOI_GIOI_BDS_TOT]: LocalLandingPage,
-    [ROUTES.DU_AN]: ProjectLandingPage,
-    [ROUTES.CHU_DAU_TU]: DeveloperPage,
     [ROUTES.LOGIN]: Login,
     [ROUTES.LISTING]: ListingDetail, 
     [ROUTES.LISTING_BDS]: ListingDetail,
@@ -313,37 +260,6 @@ const PAGE_REGISTRY: Record<string, React.ComponentType<any>> = {
 // List of routes that do NOT require authentication and should NOT render the App Sidebar
 const PUBLIC_ROUTES = new Set([
     '', // Root
-    ROUTES.LANDING,
-    ROUTES.SEARCH,
-    ROUTES.AI_VALUATION,
-    ROUTES.CRM_SOLUTION,
-    ROUTES.ABOUT,
-    ROUTES.NEWS,
-    ROUTES.CONTACT,
-    ROUTES.CAREERS,
-    ROUTES.HELP_CENTER,
-    ROUTES.USER_GUIDE,
-    ROUTES.API_DOCS,
-    ROUTES.STATUS_PUBLIC,
-    ROUTES.LIVE_CHAT,
-    ROUTES.PRIVACY,
-    ROUTES.TERMS,
-    ROUTES.COOKIES,
-    ROUTES.KY_GUI,
-    ROUTES.BANK_RATES,
-    ROUTES.BDS_DONG_NAI,
-    ROUTES.BDS_LONG_THANH,
-    ROUTES.BDS_THU_DUC,
-    ROUTES.BDS_BINH_DUONG,
-    ROUTES.BDS_QUAN_7,
-    ROUTES.BDS_PHU_NHUAN,
-    ROUTES.BDS_BINH_CHANH,
-    ROUTES.BDS_BINH_THANH,
-    ROUTES.BDS_LONG_AN,
-    ROUTES.DAU_TU_BDS,
-    ROUTES.PHAP_LY_NHA_DAT,
-    ROUTES.DU_AN,
-    ROUTES.CHU_DAU_TU,
     ROUTES.LOGIN,
     ROUTES.RESET_PASSWORD,
     ROUTES.VERIFY_EMAIL,

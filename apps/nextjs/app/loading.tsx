@@ -60,7 +60,7 @@ export default function RootLoading() {
           letterSpacing: "0.025em",
         }}
       >
-        SGS LAND ...
+        ...
       </p>
       {/* Progress bar */}
       <div

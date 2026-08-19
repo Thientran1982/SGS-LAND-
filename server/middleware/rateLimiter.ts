@@ -258,7 +258,14 @@ export const passwordResetRateLimit = rateLimit({
 export const apiRateLimit = rateLimit({
   name: 'api',
   windowMs: 60_000,
-  maxRequests: 1200,
+  // Bumped 1200 -> 3000: this ONE bucket is shared by ~26 different /api/*
+  // route groups, PLUS several always-on frontend poll loops (dashboard
+  // metrics every 30s, notifications every 60s in the global Layout, reports
+  // silent-refresh every 60s) that run continuously per logged-in user, on
+  // top of normal clicking and multiple open tabs/sessions for the same
+  // account. 1200/min was tipping over from background polling alone.
+  maxRequests: 3000,
+  message: 'Quá nhiều yêu cầu. Vui lòng thử lại sau ít phút.',
 });
 
 export const webhookRateLimit = rateLimit({

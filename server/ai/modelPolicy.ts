@@ -35,13 +35,13 @@ export interface ModelSpec {
 export const MODEL_REGISTRY: Record<string, ModelSpec> = {
   // ---- Google Gemini 3.x (preview) ----
   'gemini-3.1-pro-preview':        { id: 'gemini-3.1-pro-preview',        provider: 'google', costPer1k: 0.008000, preview: true,  supportsThinking: true },
-  'gemini-3-pro-preview':          { id: 'gemini-3-pro-preview',          provider: 'google', costPer1k: 0.007000, preview: true,  supportsThinking: true },
+  'gemini-3-pro-preview':          { id: 'gemini-3-pro-preview',          provider: 'google', costPer1k: 0.007000, preview: true,  supportsThinking: true, deprecated: true },
   'gemini-3.1-flash-lite-preview': { id: 'gemini-3.1-flash-lite-preview', provider: 'google', costPer1k: 0.000200, preview: true,  supportsThinking: true },
   'gemini-3-flash-preview':        { id: 'gemini-3-flash-preview',        provider: 'google', costPer1k: 0.000500, preview: true,  supportsThinking: true },
   // ---- Google Gemini 2.5 (stable — recommended) ----
-  'gemini-2.5-pro':        { id: 'gemini-2.5-pro',        provider: 'google', costPer1k: 0.005000, supportsThinking: true },
+  'gemini-2.5-pro':        { id: 'gemini-2.5-pro',        provider: 'google', costPer1k: 0.005000, supportsThinking: true, deprecated: true },
   'gemini-2.5-flash':      { id: 'gemini-2.5-flash',      provider: 'google', costPer1k: 0.000375, supportsThinking: true },
-  'gemini-2.5-flash-lite': { id: 'gemini-2.5-flash-lite', provider: 'google', costPer1k: 0.000100, supportsThinking: true },
+  'gemini-2.5-flash-lite': { id: 'gemini-2.5-flash-lite', provider: 'google', costPer1k: 0.000100, supportsThinking: true, deprecated: true },
   // ---- Google Gemini 2.0 / 1.5 (deprecated — auto-upgraded) ----
   'gemini-2.0-flash':      { id: 'gemini-2.0-flash',      provider: 'google', costPer1k: 0.000150, deprecated: true },
   'gemini-2.0-flash-lite': { id: 'gemini-2.0-flash-lite', provider: 'google', costPer1k: 0.000075, deprecated: true },
@@ -200,14 +200,34 @@ Object.assign(MODEL_REGISTRY, {
   'gpt-4.1':     { id: 'gpt-4.1',     provider: 'openai' as AiProvider, costPer1k: 0.002000 },
   'gpt-4.1-mini':{ id: 'gpt-4.1-mini',provider: 'openai' as AiProvider, costPer1k: 0.000400 },
   // ---- Anthropic (Claude) ----
-  'claude-3-5-sonnet-latest': { id: 'claude-3-5-sonnet-latest', provider: 'anthropic' as AiProvider, costPer1k: 0.003000, supportsThinking: true },
-  'claude-3-5-haiku-latest':  { id: 'claude-3-5-haiku-latest',  provider: 'anthropic' as AiProvider, costPer1k: 0.000800 },
-  'claude-3-7-sonnet-latest': { id: 'claude-3-7-sonnet-latest', provider: 'anthropic' as AiProvider, costPer1k: 0.003000, supportsThinking: true },
-  // ---- xAI (Grok) ----
-  'grok-2':       { id: 'grok-2',       provider: 'xai' as AiProvider, costPer1k: 0.002000 },
-  'grok-2-mini':  { id: 'grok-2-mini',  provider: 'xai' as AiProvider, costPer1k: 0.000500 },
-  'grok-beta':    { id: 'grok-beta',    provider: 'xai' as AiProvider, costPer1k: 0.005000 },
+  // ---- Anthropic (Claude) -- CU, xac nhan CHET 2026-08-18 (404 not_found_error, EOL) ----
+  'claude-3-5-sonnet-latest': { id: 'claude-3-5-sonnet-latest', provider: 'anthropic' as AiProvider, costPer1k: 0.003000, supportsThinking: true, deprecated: true },
+  'claude-3-5-haiku-latest': { id: 'claude-3-5-haiku-latest', provider: 'anthropic' as AiProvider, costPer1k: 0.000800, deprecated: true },
+  'claude-3-7-sonnet-latest': { id: 'claude-3-7-sonnet-latest', provider: 'anthropic' as AiProvider, costPer1k: 0.003000, supportsThinking: true, deprecated: true },
+  // ---- Anthropic (Claude) -- xac nhan DANG HOAT DONG (live probe 2026-08-18) ----
+  'claude-sonnet-4-5': { id: 'claude-sonnet-4-5', provider: 'anthropic' as AiProvider, costPer1k: 0.003000, supportsThinking: true },
+  'claude-opus-4-5': { id: 'claude-opus-4-5', provider: 'anthropic' as AiProvider, costPer1k: 0.015000, supportsThinking: true },
+  'claude-haiku-4-5': { id: 'claude-haiku-4-5', provider: 'anthropic' as AiProvider, costPer1k: 0.000800 },
+  // ---- xAI (Grok) -- CU, xac nhan CHET 2026-08-18 (400 Model not found) ----
+  'grok-2': { id: 'grok-2', provider: 'xai' as AiProvider, costPer1k: 0.002000, deprecated: true },
+  'grok-2-mini': { id: 'grok-2-mini', provider: 'xai' as AiProvider, costPer1k: 0.000500, deprecated: true },
+  'grok-beta': { id: 'grok-beta', provider: 'xai' as AiProvider, costPer1k: 0.005000, deprecated: true },
+  // ---- xAI (Grok) -- ten model HOP LE (live probe 2026-08-18), nhung account dang HET CREDIT (403) ----
+  // Se tu dong hoat dong ngay khi tai khoan xAI duoc nap them credit, khong can sua code.
+  'grok-4': { id: 'grok-4', provider: 'xai' as AiProvider, costPer1k: 0.005000 },
+  'grok-3': { id: 'grok-3', provider: 'xai' as AiProvider, costPer1k: 0.003000 },
+  'grok-3-mini': { id: 'grok-3-mini', provider: 'xai' as AiProvider, costPer1k: 0.000500 },
 });
+
+/**
+ * Danh sach provider/model dung de fallback CHEO PROVIDER khi toan bo
+ * FALLBACK_CHAIN cua Gemini da het (quota/loi). Thu theo dung thu tu.
+ * Chi provider da cau hinh API key (Secret) moi duoc thu.
+ */
+export const CROSS_PROVIDER_FALLBACK: { provider: AiProvider; model: string }[] = [
+  { provider: 'anthropic', model: process.env.AI_FALLBACK_ANTHROPIC_MODEL || 'claude-sonnet-4-5' },
+  { provider: 'xai', model: process.env.AI_FALLBACK_XAI_MODEL || 'grok-4' },
+];
 
 /** Ten bien moi truong (Secret) chua API key cua tung provider. */
 export const PROVIDER_ENV_KEYS: Record<AiProvider, string[]> = {

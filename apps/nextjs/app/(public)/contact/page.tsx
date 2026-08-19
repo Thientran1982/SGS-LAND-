@@ -1,5 +1,6 @@
 // @ts-nocheck
 import type { Metadata } from "next";
+import { Phone, Mail, MapPin, Linkedin } from "lucide-react";
 import { ContactForm } from "@/components/public/ContactForm";
 
 export const metadata: Metadata = {
@@ -27,14 +28,14 @@ export default function ContactPage() {
         {/* Contact Info */}
         <div className="space-y-6">
           {[
-            { icon: "📞", label: "Hotline", value: "0971 132 378", href: "tel:+84971132378" },
-            { icon: "✉️", label: "Email", value: "info@sgsland.vn", href: "mailto:info@sgsland.vn" },
-            { icon: "📍", label: "Địa chỉ", value: "TP. Hồ Chí Minh, Việt Nam" },
-            { icon: "🔗", label: "LinkedIn", value: "linkedin.com/company/sgsland", href: "https://www.linkedin.com/company/sgsland" },
+            { icon: Phone, label: "Hotline", value: "0971 132 378", href: "tel:+84971132378" },
+            { icon: Mail, label: "Email", value: "info@sgsland.vn", href: "mailto:info@sgsland.vn" },
+            { icon: MapPin, label: "Địa chỉ", value: "TP. Hồ Chí Minh, Việt Nam" },
+            { icon: Linkedin, label: "LinkedIn", value: "linkedin.com/company/sgsland", href: "https://www.linkedin.com/company/sgsland" },
           ].map((c) => (
             <div key={c.label} className="flex items-start gap-4 p-5 rounded-2xl"
               style={{ background: "var(--bg-elevated)", border: "1px solid var(--border-default)" }}>
-              <span className="text-2xl">{c.icon}</span>
+              <span className="text-2xl"><c.icon className="w-6 h-6" style={{ color: "var(--primary-600)" }} /></span>
               <div>
                 <p className="text-xs font-medium mb-1" style={{ color: "var(--text-tertiary)" }}>{c.label}</p>
                 {c.href ? (
