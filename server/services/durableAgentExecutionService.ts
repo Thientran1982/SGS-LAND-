@@ -7,6 +7,7 @@ import {
   inspectAgentOutput,
   type GuardrailReport,
 } from '../ai/agentGuardrails';
+import { getOrchestrationDecision } from './orchestrationMode';
 
 export interface DurableAgentResult<T> {
   runId: string;
@@ -41,6 +42,13 @@ export async function runDurableAgentExecution<T extends {
   execute: (resume: DurableResumeContext) => Promise<T>;
   maxSteps?: number;
 }): Promise<DurableAgentResult<T>> {
+  const orchestration = getOrchestrationDecision();
+  if (orchestration.mode === 'langgraph') {
+    throw new Error('LANGGRAPH_ORCHESTRATION_ADAPTER_NOT_SHIPPED');
+  }
+  if (!orchestration.enabled) {
+    logger.warn(`[DurableAgent] Orchestration gate kept TypeScript mode: ${orchestration.reason}`);
+  }
   const claim = await agentExecutionRepository.claim({
     tenantId: params.tenantId,
     idempotencyKey: params.idempotencyKey,
