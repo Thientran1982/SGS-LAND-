@@ -20,6 +20,10 @@ import { DEFAULT_TENANT_ID } from '../constants';
 import { applyAVM, getRegionalBasePrice } from '../valuationEngine';
 import { logger } from '../middleware/logger';
 import { agentRepository } from '../repositories/agentRepository';
+import { generateWithPolicy } from './providers';
+import { TASK_MODELS } from './modelPolicy';
+import { recordAiUsage } from '../services/aiUsageService';
+import { randomUUID } from 'crypto';
 
 // Prompt-injection sanitizer for live-chat user content (message, leadName, history).
 // User text is interpolated into the LLM prompt, so neutralize escape vectors and
@@ -32,6 +36,51 @@ function sanitizeChatInput(str: any, maxLen = 600): string {
   out = out.replace(/^[ \t]*(AI|Assistant|System|Khach|Kh\u00e1ch)[ \t]*:/gim, "-");
   out = out.replace(/\b(ignore|system\s+prompt|instruction|override|jailbreak|forget\s+everything)\b/gi, "[x]");
   return out.trim();
+}
+
+async function generateLiveChatText(params: {
+    tenantId?: string;
+    feature: string;
+    prompt: string;
+    system?: string;
+    model?: string;
+    maxOutputTokens?: number;
+    jsonMode?: boolean;
+    timeoutMs?: number;
+}): Promise<string> {
+    const traceId = randomUUID();
+    const startedAt = Date.now();
+    const model = params.model || (params.jsonMode ? TASK_MODELS.EXTRACTOR : TASK_MODELS.WRITER);
+    const request = generateWithPolicy({
+        model,
+        system: params.system,
+        prompt: params.prompt,
+        maxOutputTokens: params.maxOutputTokens,
+        jsonMode: params.jsonMode,
+    });
+    let result: Awaited<typeof request>;
+    try {
+        result = await Promise.race([
+            request,
+            new Promise<never>((_, reject) =>
+                setTimeout(() => reject(new Error(`AI timeout after ${params.timeoutMs || 15000}ms`)), params.timeoutMs || 15000),
+            ),
+        ]);
+    } catch (error: any) {
+        logger.error(`[LiveChatEngine] AI call failed trace=${traceId} feature=${params.feature} model=${model}: ${error?.message || error}`);
+        throw error;
+    }
+    recordAiUsage({
+        tenantId: params.tenantId,
+        feature: params.feature,
+        model: result.model,
+        promptLen: params.prompt.length + (params.system?.length || 0),
+        responseLen: result.text.length,
+        latencyMs: Date.now() - startedAt,
+        source: `live_chat:${result.provider}:trace=${traceId}`,
+    }).catch(() => {});
+    logger.info(`[LiveChatEngine] AI trace=${traceId} feature=${params.feature} provider=${result.provider} model=${result.model} latencyMs=${Date.now() - startedAt}`);
+    return result.text;
 }
 
 // ---------------------------------------------------------------------------
@@ -626,6 +675,8 @@ function handle_get_market_stats(args: Record<string, any>): any {
             found: false,
             message: `Chưa có dữ liệu cụ thể cho "${area}". Sử dụng benchmark HCM trung bình: 55 triệu/m² sàn (Q1-Q2/2026).`,
             fallbackMedian: 55_000_000,
+            source: 'SGS-AVM Benchmark Q1-Q2/2026',
+            needsVerification: true,
         };
     }
     const [zone, data] = match;
@@ -636,6 +687,7 @@ function handle_get_market_stats(args: Record<string, any>): any {
         maxPricePerM2: data.max * 1_000_000,
         unit: data.unit,
         source: 'SGS-AVM Benchmark Q1-Q2/2026',
+        needsVerification: true,
         yoyGrowth: zone.includes('long thành') ? '20-35%' :
                    zone.includes('thủ đức')   ? '10-18%' :
                    zone.includes('quận 1')    ? '5-10%'  : '8-15%',
@@ -680,6 +732,8 @@ function handle_get_valuation(args: Record<string, any>): any {
             region:         regional.region,
             brandPremium:   brandMult > 1 ? `${((brandMult - 1) * 100).toFixed(0)}% (${developer})` : null,
             methodologyVersion: 'SGS-AVM v2.1 — 9 hệ số',
+            source: 'SGS-AVM calculation from regional benchmark',
+            needsVerification: true,
         };
     } catch (e: any) {
         return { error: e.message, address, area };
@@ -775,15 +829,16 @@ async function handle_legal_qa(args: Record<string, any>): Promise<any> {
     if (q.includes('lệ phí') || q.includes('trước bạ')) return { question, answer: 'Lệ phí trước bạ = 0.5% × giá HĐ. Người mua chịu. VD: BĐS 5 tỷ → 25 triệu.', sources: ['NĐ 10/2022/NĐ-CP'] };
     if (q.includes('đặt cọc')) return { question, answer: 'Đặt cọc tối đa 5% giá bán trước khi ký HĐMB chính thức. Thanh toán tổng không vượt 95% trước khi có sổ hồng. [Luật KDBĐS 2023 Điều 23, 24, 25]', sources: ['Luật KDBĐS 2023 Điều 23, 24, 25'] };
 
-    // Use Gemini for complex questions
+    // Use the shared model policy for complex questions.
     try {
-        const ai = getGemini();
-        const resp = await ai.models.generateContent({
-            model: 'gemini-2.5-flash',
-            contents: `Bạn là chuyên gia pháp lý BĐS Việt Nam. Trả lời ngắn gọn (tối đa 150 từ), có trích dẫn điều luật cụ thể.\n\nCâu hỏi: ${question}\n\nKhung pháp lý áp dụng: Luật Đất đai 2024, Luật Nhà ở 2023, Luật KDBĐS 2023, NĐ 101/2024.`,
-            config: { maxOutputTokens: 300, thinkingConfig: { thinkingBudget: 0 } as any },
+        const answer = await generateLiveChatText({
+            tenantId,
+            feature: 'LIVE_CHAT_LEGAL_QA',
+            maxOutputTokens: 300,
+            system: 'Bạn là chuyên gia pháp lý BĐS Việt Nam. Trả lời ngắn gọn (tối đa 150 từ), có trích dẫn điều luật cụ thể. Nếu không đủ dữ liệu, phải nói rõ cần xác minh.',
+            prompt: `Câu hỏi: ${sanitizeChatInput(question, 1200)}\n\nKhung pháp lý áp dụng: Luật Đất đai 2024, Luật Nhà ở 2023, Luật KDBĐS 2023, NĐ 101/2024.`,
         });
-        return { question, answer: resp.text?.trim() || 'Không có dữ liệu.', sources: ['Gemini Legal QA + KB SGS Land'] };
+        return { question, answer: answer.trim() || 'Không có dữ liệu.', sources: ['SGS Land Legal KB + shared AI policy'], needsVerification: true };
     } catch {
         return { question, answer: LEGAL_RULES_KB, sources: ['KB tĩnh SGS Land'] };
     }
@@ -1037,19 +1092,18 @@ ${contextBlock}${kbBlock}`;
         : msg;
 
     try {
-        const ai = getGemini();
-        const resp = await ai.models.generateContent({
-            model: 'gemini-2.5-flash',
-            contents: [
-                { role: 'user', parts: [{ text: systemPrompt + '\n\n---\n' + userPrompt }] },
-            ],
-            config: { maxOutputTokens: 400, thinkingConfig: { thinkingBudget: 0 } as any },
+        const response = await generateLiveChatText({
+            tenantId,
+            feature: 'LIVE_CHAT_RESPONSE',
+            maxOutputTokens: 400,
+            system: systemPrompt,
+            prompt: userPrompt,
         });
 
         return {
             sessionId: sessionId || `sess_${Date.now()}`,
             intent: detectedIntent,
-            response: resp.text?.trim() || 'Không có phản hồi từ AI.',
+            response: response.trim() || 'Không có phản hồi từ AI.',
             suggestedNextTool: suggestedTool,
             suggestedAction: detectedIntent === 'VALUATION'  ? 'Gọi get_valuation với địa chỉ cụ thể' :
                              detectedIntent === 'SEARCH'     ? 'Gọi search_listings với bộ lọc giá/khu vực' :
@@ -1103,18 +1157,13 @@ Trả về JSON với các trường sau:
 }`;
 
     try {
-        const ai = getGemini();
-        const resp = await ai.models.generateContent({
-            model: 'gemini-2.5-flash',
-            contents: [{ role: 'user', parts: [{ text: prompt }] }],
-            config: {
-                maxOutputTokens: 800,
-                responseMimeType: 'application/json',
-                thinkingConfig: { thinkingBudget: 0 } as any,
-            },
+        const raw = await generateLiveChatText({
+            tenantId,
+            feature: 'LIVE_CHAT_SESSION_ANALYSIS',
+            maxOutputTokens: 800,
+            prompt,
+            jsonMode: true,
         });
-
-        const raw = resp.text?.trim() || '{}';
         let analysis: any;
         try { analysis = JSON.parse(raw); } catch { analysis = { raw }; }
 
@@ -1191,13 +1240,14 @@ async function handle_get_platform_knowledge(args: Record<string, any>): Promise
     // For project domain: query AI with context
     if (d === 'project' || d === 'dự án') {
         try {
-            const ai = getGemini();
-            const resp = await ai.models.generateContent({
-                model: 'gemini-2.5-flash',
-                contents: [{ role: 'user', parts: [{ text: `Bạn là chuyên gia BĐS Việt Nam. Cung cấp thông tin về dự án "${q}" (HCM/Đồng Nai/Bình Dương). Bao gồm: CĐT, vị trí, giá tham khảo, pháp lý hiện tại, ưu/nhược điểm. Tối đa 200 từ, tiếng Việt.` }] }],
-                config: { maxOutputTokens: 500, thinkingConfig: { thinkingBudget: 0 } as any },
+            const knowledge = await generateLiveChatText({
+                tenantId,
+                feature: 'LIVE_CHAT_PROJECT_KNOWLEDGE',
+                maxOutputTokens: 500,
+                system: 'Bạn là chuyên gia BĐS Việt Nam. Chỉ sử dụng thông tin có nguồn hoặc nói rõ phần nào cần xác minh; không tự bịa giá, pháp lý hay tiến độ.',
+                prompt: `Cung cấp thông tin về dự án "${sanitizeChatInput(q, 200)}" (HCM/Đồng Nai/Bình Dương). Bao gồm: CĐT, vị trí, giá tham khảo, pháp lý hiện tại, ưu/nhược điểm. Tối đa 200 từ, tiếng Việt.`,
             });
-            return { domain, query, knowledge: resp.text?.trim(), source: 'Gemini + SGS Land KB', cached: false };
+            return { domain, query, knowledge: knowledge.trim(), source: 'Shared AI policy + SGS Land KB', cached: false, needsVerification: true };
         } catch (e: any) {
             return { domain, query, error: e.message, knowledge: null };
         }
@@ -1739,6 +1789,29 @@ export const liveChatEngine = {
     async callTool(toolName: string, args: Record<string, any>): Promise<any> {
         const handler = HANDLERS[toolName];
         if (!handler) throw new Error(`Tool "${toolName}" không tồn tại. Có ${Object.keys(HANDLERS).length} tools.`);
+        const definition = TOOL_MANIFEST.find(tool => tool.name === toolName);
+        if (definition) {
+            const errors: string[] = [];
+            for (const [name, rule] of Object.entries(definition.params)) {
+                const value = args?.[name];
+                if (rule.required && (value === undefined || value === null || value === '')) {
+                    errors.push(`${name} là bắt buộc`);
+                    continue;
+                }
+                if (value === undefined || value === null) continue;
+                const valid = rule.type === 'string'
+                    ? typeof value === 'string'
+                    : rule.type === 'number'
+                        ? typeof value === 'number' && Number.isFinite(value)
+                        : rule.type === 'string[]'
+                            ? Array.isArray(value) && value.every(item => typeof item === 'string')
+                            : true;
+                if (!valid) errors.push(`${name} phải có kiểu ${rule.type}`);
+            }
+            if (errors.length > 0) {
+                throw new Error(`Tham số tool không hợp lệ: ${errors.join('; ')}`);
+            }
+        }
         const t0 = Date.now();
         const result = await handler(args);
         logger.info(`[LiveChatEngine] ${toolName} — ${Date.now() - t0}ms`);

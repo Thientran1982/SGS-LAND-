@@ -43,19 +43,24 @@ export class InteractionRepository extends BaseRepository {
     metadata?: any;
     status?: string;
     senderId?: string;
+    externalEventId?: string;
   }): Promise<any> {
     return this.withTenant(tenantId, async (client) => {
       const result = await client.query(
         `INSERT INTO interactions (
-          tenant_id, lead_id, channel, direction, type, content, metadata, status, sender_id
+          tenant_id, lead_id, channel, direction, type, content, metadata, status, sender_id, external_event_id
         ) VALUES (
           current_setting('app.current_tenant_id', true)::uuid,
-          $1, $2, $3, $4, $5, $6, $7, $8
-        ) RETURNING *`,
+          $1, $2, $3, $4, $5, $6, $7, $8, $9
+        )
+        ON CONFLICT (tenant_id, channel, external_event_id)
+        WHERE external_event_id IS NOT NULL
+        DO UPDATE SET id = interactions.id
+        RETURNING *`,
         [
           data.leadId, data.channel, data.direction, data.type || 'TEXT',
           data.content, data.metadata ? JSON.stringify(data.metadata) : null,
-          data.status || 'SENT', data.senderId || null,
+          data.status || 'SENT', data.senderId || null, data.externalEventId || null,
         ]
       );
       return this.rowToEntity(result.rows[0]);

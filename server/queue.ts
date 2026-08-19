@@ -2,6 +2,7 @@ import { Server } from 'socket.io';
 import { logger } from './middleware/logger';
 import { getAdapter } from './channels/registry';
 import { isHighImpactAction } from './repositories/approvalRequestRepository';
+import { createHash } from 'crypto';
 // ---------------------------------------------------------------------------
 // Queue — Upstash QStash (production) hoặc in-memory (dev/fallback)
 //
@@ -20,6 +21,57 @@ const inMemoryJobs: any[] = [];
 let inMemoryProcessor: ((job: any) => Promise<void>) | null = null;
 const MAX_IN_MEMORY_ATTEMPTS = 3;
 const IN_MEMORY_BACKOFF_MS = 2000;
+
+function stableEventKey(platform: string, payload: any, hint?: string): string {
+  if (hint) return hint;
+  const candidates = [
+    payload?.message?.msg_id,
+    payload?.message?.message_id,
+    payload?.message?.mid,
+    payload?.mid,
+    payload?.event_id,
+    payload?.id,
+    payload?.timestamp && payload?.sender?.id
+      ? `${payload.event_name || 'event'}:${payload.sender.id}:${payload.timestamp}`
+      : undefined,
+  ].filter(Boolean);
+  if (candidates[0]) return String(candidates[0]);
+  return createHash('sha256').update(JSON.stringify(payload || {})).digest('hex');
+}
+
+async function claimWebhookEvent(
+  tenantId: string,
+  platform: string,
+  eventKey: string,
+): Promise<boolean> {
+  const { withTenantContext } = await import('./db');
+  return withTenantContext(tenantId, async (client) => {
+    const result = await client.query(
+      `INSERT INTO webhook_events (platform, event_key, tenant_id)
+       VALUES ($1, $2, $3)
+       ON CONFLICT (platform, event_key) DO UPDATE
+       SET attempts = webhook_events.attempts + 1,
+           status = 'PROCESSING',
+           locked_at = NOW(),
+           tenant_id = EXCLUDED.tenant_id
+       WHERE webhook_events.status = 'PROCESSING'
+         AND webhook_events.locked_at < NOW() - INTERVAL '10 minutes'
+       RETURNING id`,
+      [platform, eventKey, tenantId],
+    );
+    return (result.rowCount ?? 0) > 0;
+  });
+}
+
+async function markWebhookProcessed(tenantId: string, platform: string, eventKey: string): Promise<void> {
+  const { withTenantContext } = await import('./db');
+  await withTenantContext(tenantId, (client) => client.query(
+    `UPDATE webhook_events
+        SET status = 'PROCESSED', processed_at = NOW()
+      WHERE platform = $1 AND event_key = $2`,
+    [platform, eventKey],
+  ));
+}
 function runWithRetry(job: any, attempt = 1): void {
   setTimeout(async () => {
     try {
@@ -288,6 +340,11 @@ export async function processWebhookJob(io: Server, job: any): Promise<void> {
       return;
     }
     const tenantId = foundTenant;
+    const eventKey = stableEventKey('zalo', payload);
+    if (!(await claimWebhookEvent(tenantId, 'zalo', eventKey))) {
+      logger.info(`[Zalo Webhook] Bỏ qua event trùng ${eventKey}`);
+      return;
+    }
     const senderId = sender?.id as string | undefined;
     if (!senderId) {
       logger.warn('[Zalo Webhook] Thiếu sender.id trong payload');
@@ -326,11 +383,15 @@ export async function processWebhookJob(io: Server, job: any): Promise<void> {
           logger.warn('[Zalo] Lỗi tạo thông báo follow:', err.message);
         }
       })();
+      await markWebhookProcessed(tenantId, 'zalo', eventKey);
       return;
     }
     if (event_name === 'user_send_text') {
       const textContent = message?.text as string;
-      if (!textContent) return;
+      if (!textContent) {
+        await markWebhookProcessed(tenantId, 'zalo', eventKey);
+        return;
+      }
       const lead = await upsertLeadBySocialId(tenantId, 'zalo', senderId, sender?.display_name);
       const leadId = lead.id;
       const { interactionRepository } = await import('./repositories/interactionRepository');
@@ -340,6 +401,7 @@ export async function processWebhookJob(io: Server, job: any): Promise<void> {
         direction: 'INBOUND',
         type: 'TEXT',
         content: textContent,
+        externalEventId: eventKey,
         metadata: {
           platform: 'zalo',
           senderId,
@@ -414,6 +476,7 @@ export async function processWebhookJob(io: Server, job: any): Promise<void> {
       triggerAutoReply(io, tenantId, lead, textContent, 'ZALO').catch((err) =>
         logger.error('[Zalo] Lỗi triggerAutoReply:', err)
       );
+      await markWebhookProcessed(tenantId, 'zalo', eventKey);
     }
     if (event_name === 'user_send_image') {
       const imgUrl = message?.attachments?.[0]?.payload?.url as string | undefined;
@@ -425,6 +488,7 @@ export async function processWebhookJob(io: Server, job: any): Promise<void> {
         direction: 'INBOUND',
         type: 'IMAGE',
         content: imgUrl || '[Hình ảnh]',
+        externalEventId: `${eventKey}:image`,
         metadata: { platform: 'zalo', senderId, oaId, imageUrl: imgUrl },
       });
       io.to(lead.id).emit('receive_message', { room: lead.id, message: savedInteraction, isWebhook: true });
@@ -433,6 +497,7 @@ export async function processWebhookJob(io: Server, job: any): Promise<void> {
       triggerAutoReply(io, tenantId, lead, '[Khách gửi hình ảnh]', 'ZALO').catch((err) =>
         logger.error('[Zalo] Lỗi triggerAutoReply (image):', err)
       );
+      await markWebhookProcessed(tenantId, 'zalo', eventKey);
     }
   }
   // -------------------------------------------------------------------------
@@ -459,6 +524,11 @@ export async function processWebhookJob(io: Server, job: any): Promise<void> {
       for (const webhookEvent of messagingEvents) {
         const senderId = webhookEvent.sender?.id as string | undefined;
         if (!senderId || senderId === pageId) continue;
+        const eventKey = stableEventKey('facebook', webhookEvent, `${pageId}:${webhookEvent.message?.mid || webhookEvent.timestamp || JSON.stringify(webhookEvent)}`);
+        if (!(await claimWebhookEvent(tenantId, 'facebook', eventKey))) {
+          logger.info(`[Facebook Webhook] Bỏ qua event trùng ${eventKey}`);
+          continue;
+        }
         const messageText = webhookEvent.message?.text as string | undefined;
         if (messageText) {
           const lead = await upsertLeadBySocialId(tenantId, 'facebook', senderId);
@@ -470,6 +540,7 @@ export async function processWebhookJob(io: Server, job: any): Promise<void> {
             direction: 'INBOUND',
             type: 'TEXT',
             content: messageText,
+            externalEventId: eventKey,
             metadata: {
               platform: 'facebook',
               senderId,
@@ -500,6 +571,7 @@ export async function processWebhookJob(io: Server, job: any): Promise<void> {
           triggerAutoReply(io, tenantId, lead, messageText, 'FACEBOOK').catch((err) =>
             logger.error('[Facebook] Lỗi triggerAutoReply:', err)
           );
+          await markWebhookProcessed(tenantId, 'facebook', eventKey);
         }
         const attachments = webhookEvent.message?.attachments as any[] | undefined;
         if (attachments?.length && !messageText) {
@@ -514,6 +586,7 @@ export async function processWebhookJob(io: Server, job: any): Promise<void> {
             direction: 'INBOUND',
             type: contentType,
             content: contentText,
+            externalEventId: eventKey,
             metadata: { platform: 'facebook', senderId, pageId, attachmentType: attachment.type },
           });
           io.to(lead.id).emit('receive_message', { room: lead.id, message: savedInteraction, isWebhook: true });
@@ -522,6 +595,7 @@ export async function processWebhookJob(io: Server, job: any): Promise<void> {
           triggerAutoReply(io, tenantId, lead, `[Khách gửi ${attachment.type || 'file'}]`, 'FACEBOOK').catch((err) =>
             logger.error('[Facebook] Lỗi triggerAutoReply (attachment):', err)
           );
+          await markWebhookProcessed(tenantId, 'facebook', eventKey);
         }
         const postback = webhookEvent.postback;
         if (postback) {
@@ -534,12 +608,14 @@ export async function processWebhookJob(io: Server, job: any): Promise<void> {
             direction: 'INBOUND',
             type: 'TEXT',
             content: pbContent,
+            externalEventId: eventKey,
             metadata: { platform: 'facebook', senderId, pageId, postbackPayload: postback.payload },
           });
           // Auto-reply cho postback
           triggerAutoReply(io, tenantId, lead, pbContent, 'FACEBOOK').catch((err) =>
             logger.error('[Facebook] Lỗi triggerAutoReply (postback):', err)
           );
+          await markWebhookProcessed(tenantId, 'facebook', eventKey);
         }
       }
     }
@@ -558,6 +634,11 @@ export async function processWebhookJob(io: Server, job: any): Promise<void> {
       return;
     }
     const tenantId = payloadTenantId;
+    const eventKey = stableEventKey('email', payload);
+    if (!(await claimWebhookEvent(tenantId, 'email', eventKey))) {
+      logger.info(`[Email Webhook] Bỏ qua event trùng ${eventKey}`);
+      return;
+    }
     const fromEmail = (from.match(/<(.+?)>/) || [])[1] || from.trim();
     const senderName = fromName || (from.match(/^(.+?)\s*</) || [])[1]?.trim() || fromEmail.split('@')[0];
     const { leadRepository } = await import('./repositories/leadRepository');
@@ -601,6 +682,7 @@ export async function processWebhookJob(io: Server, job: any): Promise<void> {
         direction: 'INBOUND',
         type: 'TEXT',
         content: content.slice(0, 5000),
+        externalEventId: eventKey,
         metadata: {
           platform: 'email',
           fromEmail,
@@ -617,6 +699,7 @@ export async function processWebhookJob(io: Server, job: any): Promise<void> {
       triggerAutoReply(io, tenantId, lead, emailBody || subject || content, 'EMAIL').catch((err) =>
         logger.error('[Email] Lỗi triggerAutoReply:', err)
       );
+      await markWebhookProcessed(tenantId, 'email', eventKey);
     } catch (err) {
       logger.error('[Email] Không thể tạo interaction:', err);
     }

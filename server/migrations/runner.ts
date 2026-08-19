@@ -141,6 +141,7 @@ import m121 from './121_listings_code_lookup_index';
 import m122 from './122_wf_tasks_primary_key';
 import m123 from './123_approval_requests';
 import m124 from './124_fix_uploaded_files_unique';
+import m125 from './125_webhook_idempotency';
 
 dotenv.config();
 
@@ -278,6 +279,7 @@ const MIGRATION_REGISTRY: Record<string, Migration> = {
   '122_wf_tasks_primary_key.ts': m122,
   '123_approval_requests.ts': m123,
   '124_fix_uploaded_files_unique.ts': m124,
+  '125_webhook_idempotency.ts': m125,
 };
 
 async function ensureSchemaVersionsTable(client: PoolClient): Promise<void> {
