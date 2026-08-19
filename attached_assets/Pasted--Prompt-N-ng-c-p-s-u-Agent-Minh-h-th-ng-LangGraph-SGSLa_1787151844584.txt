@@ -1,0 +1,83 @@
+# Prompt: Nâng cấp sâu Agent "Minh" & hệ thống LangGraph (SGSLand)
+
+> Cách dùng: copy toàn bộ nội dung dưới đây, điền vào các mục `[ĐIỀN...]`, rồi đưa cho Claude Code / coding agent của bạn để thực thi. Prompt được thiết kế theo mô hình **Audit → Plan → Implement → Verify** để tránh việc AI code lụi mà không hiểu hệ thống hiện tại.
+
+---
+
+## VAI TRÒ
+
+Bạn là kiến trúc sư AI Agent cấp senior, chuyên sâu về LangGraph (multi-agent orchestration), có kinh nghiệm triển khai production cho hệ thống bán hàng/CSKH real-time qua Zalo OA. Nhiệm vụ của bạn là **audit và nâng cấp sâu** hệ thống agent "Minh" hiện tại của SGSLand — không phải viết lại từ đầu, mà là nâng cấp có kiểm soát, giữ nguyên phần đang chạy tốt.
+
+## BỐI CẢNH HỆ THỐNG HIỆN TẠI
+
+- Agent bán hàng AI tên **"Minh"**, giao tiếp qua **Zalo OA**, xây trên **LangGraph**
+- Backend: Node.js/Express trên Replit
+- Database: Neon PostgreSQL + PostGIS (đang có kế hoạch migrate sang Aiven)
+- Cache/Queue: Upstash Redis + QStash cho background jobs
+- Có tích hợp TikTok Lead Gen API (xác thực HMAC)
+- Có hệ thống RBAC leads/CRM riêng
+- Phạm vi nghiệp vụ: môi giới bất động sản 6 tỉnh thành phía Nam (TPHCM, Đồng Nai, Bình Dương, BR-VT, Long An, Tây Ninh)
+- Ngôn ngữ vận hành: LangGraph phiên bản **[ĐIỀN: Python hay JS/TS?]**
+
+> Nếu thiếu thông tin nào ở trên, agent hãy tự đọc source code trong repo trước, không suy đoán.
+
+## MỤC TIÊU NÂNG CẤP
+
+[ĐIỀN mục tiêu chính — ví dụ: "giảm tỷ lệ trả lời sai/lệch ngữ cảnh", "thêm khả năng multi-agent chuyên biệt hóa (agent tư vấn giá, agent lịch hẹn, agent pháp lý)", "tăng độ tin cậy khi gọi tool/database", "giảm chi phí token", "thêm observability để debug production"]
+
+Nếu chưa xác định rõ, hãy để agent tự đề xuất ưu tiên sau bước Audit ở dưới.
+
+## PHẠM VI CẦN AUDIT & NÂNG CẤP (đánh dấu ưu tiên nếu cần)
+
+### 1. Kiến trúc Graph & State
+- [ ] Xem lại state schema hiện tại: có đang lưu quá nhiều/quá ít context không?
+- [ ] Kiểm tra routing logic (conditional edges) — có đang xử lý đúng các nhánh hội thoại phức tạp (đổi ý, hỏi lại, im lặng giữa chừng) không?
+- [ ] Đánh giá có nên tách thành **multi-agent chuyên biệt** (supervisor pattern) thay vì 1 agent xử lý tất cả không — ví dụ: agent tư vấn sản phẩm, agent chốt lịch hẹn, agent xử lý khiếu nại
+- [ ] Kiểm tra checkpointing/persistence — state có được lưu đúng giữa các lượt hội thoại qua Zalo (nhất là khi user quay lại sau vài giờ/vài ngày) không?
+
+### 2. Tool-calling & Tích hợp dữ liệu
+- [ ] Rà soát toàn bộ tool hiện có (tra cứu bất động sản, PostGIS spatial query, tạo lead, đặt lịch hẹn...) — schema mô tả tool đã đủ rõ cho model chọn đúng chưa?
+- [ ] Kiểm tra xử lý lỗi khi tool fail (timeout DB, Redis miss...) — agent có graceful fallback không hay sẽ "bịa" thông tin?
+- [ ] Đánh giá có cần thêm RAG (retrieval) cho dữ liệu bất động sản cập nhật liên tục không, thay vì nhồi hết vào prompt
+
+### 3. Prompt Engineering theo từng agent/node
+- [ ] Review system prompt của Minh — có đang rõ ràng về: giọng văn, giới hạn (không tự ý cam kết giá/pháp lý), cách xử lý câu hỏi ngoài phạm vi không?
+- [ ] Kiểm tra few-shot examples (nếu có) có còn phù hợp với nghiệp vụ hiện tại không
+
+### 4. Guardrails & An toàn nghiệp vụ
+- [ ] Agent có tránh tự ý cam kết giá, pháp lý, hoặc thông tin chưa xác thực không?
+- [ ] Có cơ chế escalate qua người thật (sale/admin) khi gặp câu hỏi nhạy cảm hoặc khách hàng bức xúc không?
+- [ ] Rate limiting / chống spam từ 1 số điện thoại/Zalo ID
+
+### 5. Observability & Testing
+- [ ] Có logging đủ chi tiết (input, tool calls, latency, token usage theo từng node) để debug khi agent trả lời sai không?
+- [ ] Có bộ test case (eval set) mô phỏng hội thoại thật để so sánh trước/sau khi nâng cấp không — nếu chưa có, đề xuất bộ test tối thiểu
+- [ ] Có theo dõi chi phí (token/tháng) và độ trễ trung bình không?
+
+### 6. Hiệu năng & Chi phí
+- [ ] Model đang dùng là gì, có đang overkill (dùng model lớn cho task đơn giản) không?
+- [ ] Có cơ hội cache câu trả lời cho câu hỏi lặp lại (FAQ về khu vực, quy trình mua bán) không?
+
+## QUY TRÌNH THỰC HIỆN (bắt buộc theo thứ tự)
+
+1. **AUDIT** — Đọc toàn bộ code liên quan đến agent Minh trong repo, liệt kê hiện trạng theo 6 mục trên, chỉ ra rõ điểm yếu/rủi ro cụ thể (kèm trích dẫn file/dòng code)
+2. **PLAN** — Đề xuất kế hoạch nâng cấp theo mức độ ưu tiên (Critical / Nên làm / Có thể làm sau), nêu rõ đánh đổi (trade-off) của từng đề xuất, đặc biệt nếu đề xuất tách multi-agent
+3. **XÁC NHẬN** — Dừng lại, trình bày plan cho tôi duyệt trước khi sửa code. Không tự ý refactor lớn khi chưa được đồng ý.
+4. **IMPLEMENT** — Thực hiện từng phần theo plan đã duyệt, mỗi lần 1 nhóm thay đổi nhỏ, có thể test độc lập
+5. **VERIFY** — Sau mỗi thay đổi, chạy test/eval set để đảm bảo không phá vỡ hành vi đang hoạt động tốt
+
+## RÀNG BUỘC
+
+- Không phá vỡ các tích hợp đang chạy: Zalo OA webhook, TikTok Lead Gen HMAC verification, RBAC CRM
+- Giữ tương thích với kế hoạch migrate DB từ Neon sang Aiven đang triển khai song song — không hardcode logic phụ thuộc connection string cũ
+- Ưu tiên thay đổi có thể rollback dễ dàng (feature flag / branch riêng), không sửa trực tiếp trên nhánh production
+
+## ĐỊNH DẠNG KẾT QUẢ MONG MUỐN
+
+- Báo cáo Audit dạng bảng: [Hạng mục | Hiện trạng | Rủi ro | Đề xuất]
+- Kế hoạch nâng cấp theo giai đoạn, có ước lượng effort
+- Code thay đổi kèm giải thích lý do (không chỉ "đây là code mới")
+
+---
+
+**[ĐIỀN thêm nếu có]:** Đường dẫn repo, các pain point cụ thể đã gặp trong production (ví dụ: agent trả lời sai giá, agent quên context, lỗi khi Redis down...), hoặc log lỗi gần đây để agent audit đúng trọng tâm thay vì audit chung chung.
