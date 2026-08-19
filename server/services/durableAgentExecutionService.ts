@@ -1,4 +1,5 @@
 import { logger } from '../middleware/logger';
+import { createHash } from 'crypto';
 import { agentExecutionRepository } from '../repositories/agentExecutionRepository';
 import type { AgentExecutionStepRecord } from '../repositories/agentExecutionRepository';
 import {
@@ -23,6 +24,18 @@ export interface DurableResumeContext {
   attempt: number;
   completedSteps: AgentExecutionStepRecord[];
   specialistOutput?: unknown;
+  runSubagent: <T>(params: SubagentRequest<T>) => Promise<T>;
+}
+
+interface SubagentRequest<T> {
+  stepKey: string;
+  specialist: string;
+  input: Record<string, any>;
+  execute: () => Promise<T>;
+}
+
+function checkpointHash(input: Record<string, any>): string {
+  return createHash('sha256').update(JSON.stringify(input, Object.keys(input).sort())).digest('hex');
 }
 
 export async function runDurableAgentExecution<T extends {
@@ -84,6 +97,53 @@ export async function runDurableAgentExecution<T extends {
     attempt: execution.attempt,
     completedSteps: checkpointRows.filter(step => step.status === 'SUCCESS' || step.status === 'SKIPPED'),
     specialistOutput: specialistCheckpoint?.output?.specialistOutput,
+    runSubagent: async () => {
+      throw new Error('DURABLE_SUBAGENT_RUNNER_NOT_INITIALIZED');
+    },
+  };
+  resumeContext.runSubagent = async <T>({ stepKey, specialist, input, execute }: SubagentRequest<T>) => {
+    const inputHash = checkpointHash(input);
+    const existing = checkpointRows.find(step =>
+      step.stepKey === stepKey &&
+      step.status === 'SUCCESS' &&
+      step.output?.inputHash === inputHash,
+    );
+    if (existing) return (existing.output?.value ?? existing.output) as T;
+    await agentExecutionRepository.saveStep({
+      tenantId: params.tenantId,
+      executionId: execution.id,
+      claimToken,
+      stepKey,
+      specialist,
+      status: 'RUNNING',
+      input: { ...input, inputHash },
+    });
+    try {
+      const value = await execute();
+      await agentExecutionRepository.saveStep({
+        tenantId: params.tenantId,
+        executionId: execution.id,
+        claimToken,
+        stepKey,
+        specialist,
+        status: 'SUCCESS',
+        input: { ...input, inputHash },
+        output: { value, inputHash },
+      });
+      return value;
+    } catch (error: any) {
+      await agentExecutionRepository.saveStep({
+        tenantId: params.tenantId,
+        executionId: execution.id,
+        claimToken,
+        stepKey,
+        specialist,
+        status: 'ERROR',
+        input: { ...input, inputHash },
+        errorText: error?.message || String(error),
+      });
+      throw error;
+    }
   };
   let heartbeatError: Error | null = null;
   const heartbeat = setInterval(() => {

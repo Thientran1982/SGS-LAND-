@@ -1097,8 +1097,43 @@ async function handle_live_chat_core(args: Record<string, any>): Promise<any> {
             try {
                 const handler = HANDLERS[plan.tool];
                 if (handler) {
-                    specialistOutput = await handler(plan.args);
+                    const runSubagent = args.resumeContext?.runSubagent || (async ({ execute }: any) => execute());
+                    const primaryPromise = runSubagent({
+                        stepKey: `03.01_${plan.tool}`,
+                        specialist: plan.tool,
+                        input: plan.args,
+                        execute: () => handler(plan.args),
+                    });
+                    const evidenceDomains: Record<string, string> = {
+                        LEGAL: 'legal',
+                        FINANCE: 'bank',
+                        PROJECT: 'project',
+                    };
+                    const evidenceDomain = evidenceDomains[detectedIntent];
+                    let supportingKnowledge: any = null;
+                    let supportingPromise: Promise<any> | null = null;
+                    if (evidenceDomain) {
+                        const knowledgeHandler = HANDLERS.get_platform_knowledge;
+                        if (knowledgeHandler) {
+                            supportingPromise = runSubagent({
+                                stepKey: `03.02_KNOWLEDGE_${evidenceDomain}`,
+                                specialist: 'KNOWLEDGE_GROUNDING',
+                                input: { tenantId, domain: evidenceDomain, query: msg },
+                                execute: () => knowledgeHandler({ tenantId, domain: evidenceDomain, query: msg }),
+                            });
+                        }
+                    }
+                    const [primaryResult, supportingResult] = await Promise.all([
+                        primaryPromise,
+                        supportingPromise || Promise.resolve(null),
+                    ]);
+                    const primary = primaryResult;
+                    supportingKnowledge = supportingResult;
+                    specialistOutput = supportingKnowledge
+                        ? { primary, supportingKnowledge }
+                        : primary;
                     executedTools.push(plan.tool);
+                    if (supportingKnowledge) executedTools.push('get_platform_knowledge');
                 }
             } catch (error: any) {
                 specialistError = error?.message || String(error);
