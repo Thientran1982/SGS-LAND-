@@ -146,7 +146,8 @@ class FeedbackRepository extends BaseRepository {
       const result = await client.query(
         `SELECT user_message, ai_response
          FROM ai_feedback 
-         WHERE intent = $1 AND rating = 1 AND user_message IS NOT NULL AND ai_response IS NOT NULL
+         WHERE intent = $1 AND rating = 1 AND signal_eligible = TRUE
+           AND user_message IS NOT NULL AND ai_response IS NOT NULL
          ORDER BY created_at DESC LIMIT $2`,
         [intent, limit]
       );
@@ -162,7 +163,8 @@ class FeedbackRepository extends BaseRepository {
       const result = await client.query(
         `SELECT user_message, correction, ai_response
          FROM ai_feedback 
-         WHERE intent = $1 AND rating = -1 AND correction IS NOT NULL AND correction != ''
+         WHERE intent = $1 AND rating = -1 AND signal_eligible = TRUE
+           AND correction IS NOT NULL AND correction != ''
          ORDER BY created_at DESC LIMIT $2`,
         [intent, limit]
       );
@@ -181,21 +183,23 @@ class FeedbackRepository extends BaseRepository {
            COUNT(*) FILTER (WHERE rating = 1)::int as positive,
            COUNT(*) FILTER (WHERE rating = -1)::int as negative,
            ROUND(AVG(rating)::numeric, 2) as avg_score
-         FROM ai_feedback WHERE intent = $1`,
+         FROM ai_feedback WHERE intent = $1 AND signal_eligible = TRUE`,
         [intent]
       );
       const { positive, negative, avg_score } = statsRes.rows[0];
 
       const topRes = await client.query(
         `SELECT user_message, ai_response FROM ai_feedback
-         WHERE intent = $1 AND rating = 1 AND user_message IS NOT NULL AND ai_response IS NOT NULL
+         WHERE intent = $1 AND rating = 1 AND signal_eligible = TRUE
+           AND user_message IS NOT NULL AND ai_response IS NOT NULL
          ORDER BY created_at DESC LIMIT 3`,
         [intent]
       );
 
       const negRes = await client.query(
         `SELECT user_message, correction FROM ai_feedback
-         WHERE intent = $1 AND rating = -1 AND correction IS NOT NULL AND correction != ''
+         WHERE intent = $1 AND rating = -1 AND signal_eligible = TRUE
+           AND correction IS NOT NULL AND correction != ''
          ORDER BY created_at DESC LIMIT 5`,
         [intent]
       );

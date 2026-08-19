@@ -7,3 +7,4 @@
 - [SeoHead test cleanup](seohead-test-cleanup.md) — unmount Helmet-managed SeoHead before manually removing head nodes
 - [LangGraph runtime history](langgraph-runtime-history.md) — the former “LangGraph core” is native TypeScript, not a shipped LangGraph runtime
 - [Approval action policies](approval-action-policies.md) — high-impact actions need structured payloads; payment approval only verifies already-confirmed provider state
+- [Autonomous learning guardrails](autonomous-learning-guardrails.md) — untrusted feedback/calibration must pass provenance, poisoning, consent, regression, and promotion gates

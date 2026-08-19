@@ -20,6 +20,7 @@
  */
 
 import { Pool } from 'pg';
+import { createHash } from 'crypto';
 import { logger } from '../middleware/logger';
 
 const CALIBRATION_WINDOW_DAYS = 90;
@@ -28,6 +29,22 @@ const AI_WEIGHT_WITH_TXN  = 0.35;
 const COMPS_WEIGHT         = 0.15;
 const AI_WEIGHT_NO_TXN     = 0.70;
 const COMPS_WEIGHT_NO_TXN  = 0.30;
+
+export function validateCalibrationSamples(samples: Array<{ price: number; count: number }>): {
+  safe: boolean; poisoningScore: number; driftScore: number; reason?: string;
+} {
+  const prices = samples.filter(s => Number.isFinite(s.price) && s.price > 0).map(s => s.price);
+  if (!prices.length) return { safe: false, poisoningScore: 1, driftScore: 0, reason: 'no_valid_samples' };
+  const min = Math.min(...prices);
+  const max = Math.max(...prices);
+  const poisoningScore = max / min > 4 ? 1 : max / min > 2.5 ? 0.5 : 0;
+  return {
+    safe: poisoningScore < 1,
+    poisoningScore,
+    driftScore: 0,
+    reason: poisoningScore >= 1 ? 'source_spread_exceeds_safety_limit' : undefined,
+  };
+}
 
 export class PriceCalibrationService {
   private static instance: PriceCalibrationService;
@@ -235,7 +252,37 @@ export class PriceCalibrationService {
 
       const totalSamples = Object.values(bySource).reduce((s, v) => s + v.cnt, 0);
       const avgConfidence = Math.min(95, 50 + Math.min(totalSamples, 20) * 2 + (txnPrice > 0 ? 10 : 0));
+      const sampleGuard = validateCalibrationSamples(Object.values(bySource).map(value => ({
+        price: value.avg, count: value.cnt,
+      })));
+      if (!sampleGuard.safe) {
+        logger.warn(`[Calibration] rejected poisoned sample set for "${locationKey}": ${sampleGuard.reason}`);
+        await this.pool.query(
+          `INSERT INTO ai_calibration_versions
+           (tenant_id,location_key,version,input_fingerprint,calibrated_price_per_m2,sample_count,
+            quality_score,drift_score,poisoning_score,status,metadata_json)
+           VALUES ($1,$2,COALESCE((SELECT MAX(version)+1 FROM ai_calibration_versions WHERE location_key=$2),1),
+            $3,$4,$5,$6,$7,$8,'REJECTED',$9::jsonb)`,
+          [null, locationKey, createHash('sha256').update(JSON.stringify(bySource)).digest('hex'),
+            calibrated, totalSamples, avgConfidence / 100, sampleGuard.driftScore,
+            sampleGuard.poisoningScore, JSON.stringify({ reason: sampleGuard.reason })],
+        );
+        return false;
+      }
+      const inputFingerprint = createHash('sha256').update(JSON.stringify({
+        locationKey, bySource, calibrated, windowDays: CALIBRATION_WINDOW_DAYS,
+      })).digest('hex');
 
+      await this.pool.query(
+        `INSERT INTO ai_calibration_versions
+           (tenant_id,location_key,version,input_fingerprint,calibrated_price_per_m2,sample_count,
+            quality_score,drift_score,poisoning_score,status,metadata_json)
+         VALUES ($1,$2,COALESCE((SELECT MAX(version)+1 FROM ai_calibration_versions WHERE tenant_id IS NULL AND location_key=$2),1),
+           $3,$4,$5,$6,$7,$8,'ACTIVE',$9::jsonb)
+         ON CONFLICT (tenant_id, location_key, version) DO NOTHING`,
+        [null, locationKey, inputFingerprint, calibrated, totalSamples, avgConfidence / 100,
+          sampleGuard.driftScore, sampleGuard.poisoningScore, JSON.stringify({ sourceCounts: bySource })],
+      );
       await this.pool.query(
         `INSERT INTO avm_calibration
            (location_key, location_display, calibrated_price_per_m2, property_type,

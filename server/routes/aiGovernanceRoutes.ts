@@ -10,6 +10,7 @@ import { scoreAiEvalCase } from '../ai/evaluationScorer';
 import { createHash } from 'crypto';
 import { recordAiUsage } from '../services/aiUsageService';
 import { aiRolloutService, decideRollout } from '../services/aiRolloutService';
+import { assessFeedback, autonomousLearningService } from '../services/autonomousLearningService';
 
 export function createAiGovernanceRoutes(authenticateToken: any, optionalAuth?: any) {
   const router = Router();
@@ -266,7 +267,7 @@ export function createAiGovernanceRoutes(authenticateToken: any, optionalAuth?: 
       const safeAgentNode = typeof agentNode === 'string' ? agentNode.slice(0, 50) : undefined;
       const safeMetadata = metadata && typeof metadata === 'object' && !Array.isArray(metadata) ? metadata : undefined;
 
-      const feedback = await feedbackRepository.create(tenantId, {
+       const feedback = await feedbackRepository.create(tenantId, {
         interactionId, leadId, userId, rating,
         correction: safeCorrection,
         agentNode: safeAgentNode,
@@ -276,6 +277,17 @@ export function createAiGovernanceRoutes(authenticateToken: any, optionalAuth?: 
         model: typeof model === 'string' ? model.slice(0, 100) : undefined,
         metadata: safeMetadata,
       });
+
+      if (tenantId && feedback?.id) {
+        const assessment = assessFeedback({
+          rating, correction: safeCorrection, userMessage: safeUserMessage,
+          aiResponse: safeAiResponse, metadata: safeMetadata,
+        });
+        await autonomousLearningService.adjudicateFeedback(tenantId, feedback.id, assessment);
+        const consent = req.body?.consent === true ? 'OPTED_IN'
+          : req.body?.consent === false ? 'OPTED_OUT' : 'NOT_REQUIRED';
+        await autonomousLearningService.setConsent(tenantId, feedback.id, consent);
+      }
 
       // RLHF reward signal — only meaningful for tenant-scoped (authenticated) feedback
       if (safeIntent && tenantId) {
@@ -356,6 +368,34 @@ export function createAiGovernanceRoutes(authenticateToken: any, optionalAuth?: 
     } catch (error) {
       console.error('Error recomputing reward signals:', error);
       res.status(500).json({ error: 'Failed to recompute' });
+    }
+  });
+
+  router.get('/learning/dashboard', authenticateToken, async (req: Request, res: Response) => {
+    try {
+      res.json(await autonomousLearningService.listDashboard((req as any).user.tenantId));
+    } catch (error) {
+      console.error('Error fetching autonomous learning dashboard:', error);
+      res.status(500).json({ error: 'Failed to fetch learning dashboard' });
+    }
+  });
+
+  router.post('/learning/feedback/:id/adjudicate', authenticateToken, async (req: Request, res: Response) => {
+    try {
+      const user = (req as any).user;
+      if (!['SUPER_ADMIN', 'ADMIN'].includes(user?.role)) return res.status(403).json({ error: 'Admin only' });
+      const assessment = assessFeedback({
+        rating: req.body?.rating === -1 ? -1 : 1,
+        correction: req.body?.correction,
+        userMessage: req.body?.userMessage,
+        aiResponse: req.body?.aiResponse,
+        metadata: req.body?.metadata,
+      });
+      const row = await autonomousLearningService.adjudicateFeedback(user.tenantId, req.params.id as string, assessment);
+      if (!row) return res.status(404).json({ error: 'Feedback not found' });
+      res.json(row);
+    } catch (error) {
+      res.status(500).json({ error: 'Failed to adjudicate feedback' });
     }
   });
 

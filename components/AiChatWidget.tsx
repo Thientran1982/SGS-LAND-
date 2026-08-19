@@ -275,56 +275,6 @@ export function AiChatWidget({ isOpen, onClose, initialQuery }: AiChatWidgetProp
         };
         socket.on(CHAT_SOCKET_EVENTS.receiveMessage, onMsg);
         socket.on(CHAT_SOCKET_EVENTS.aiModeChanged, onMode);
-        const formatRecTime = (sec: number) => `${String(Math.floor(sec / 60)).padStart(2, "0")}:${String(sec % 60).padStart(2, "0")}`;
-
-    const stopRecordingInternal = useCallback(() => {
-      if (recognitionRef.current) {
-        try { recognitionRef.current.stop(); } catch {}
-        recognitionRef.current = null;
-      }
-      if (recordTimerRef.current) {
-        clearInterval(recordTimerRef.current);
-        recordTimerRef.current = null;
-      }
-      setIsRecording(false);
-      setRecordSeconds(0);
-    }, []);
-
-    const startRecording = useCallback(() => {
-      const SR: any = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
-      if (!SR) return;
-      voiceTranscriptRef.current = "";
-      const recognition = new SR();
-      recognition.lang = language === "en" ? "en-US" : "vi-VN";
-      recognition.continuous = true;
-      recognition.interimResults = true;
-      recognition.onresult = (e: any) => {
-        let text = "";
-        for (let i = 0; i < e.results.length; i++) text += e.results[i][0].transcript;
-        voiceTranscriptRef.current = text;
-      };
-      recognition.onerror = () => stopRecordingInternal();
-      recognitionRef.current = recognition;
-      try { recognition.start(); } catch { return; }
-      setIsRecording(true);
-      setRecordSeconds(0);
-      recordTimerRef.current = setInterval(() => {
-        setRecordSeconds(sec => sec + 1);
-        setWaveformPoints(Array.from({ length: 10 }, (_, i) => `${i * 12},${4 + Math.round(Math.random() * 16)}`).join(" "));
-      }, 1000);
-    }, [language, stopRecordingInternal]);
-
-    const cancelRecording = useCallback(() => {
-      voiceTranscriptRef.current = "";
-      stopRecordingInternal();
-    }, [stopRecordingInternal]);
-
-    const confirmRecording = useCallback(() => {
-      const text = voiceTranscriptRef.current.trim();
-      stopRecordingInternal();
-      if (text) handleSend(text);
-    }, [stopRecordingInternal, handleSend]);
-
     return () => {
             socket.off(CHAT_SOCKET_EVENTS.receiveMessage, onMsg);
             socket.off(CHAT_SOCKET_EVENTS.aiModeChanged, onMode);
@@ -467,6 +417,54 @@ export function AiChatWidget({ isOpen, onClose, initialQuery }: AiChatWidgetProp
             }
         }, 500);
     }, [input, leadId, isHumanMode, language, socket, t]);
+
+    const formatRecTime = (sec: number) =>
+        `${String(Math.floor(sec / 60)).padStart(2, "0")}:${String(sec % 60).padStart(2, "0")}`;
+    const stopRecordingInternal = useCallback(() => {
+        if (recognitionRef.current) {
+            try { recognitionRef.current.stop(); } catch { /* browser may already be stopped */ }
+            recognitionRef.current = null;
+        }
+        if (recordTimerRef.current) {
+            clearInterval(recordTimerRef.current);
+            recordTimerRef.current = null;
+        }
+        setIsRecording(false);
+        setRecordSeconds(0);
+    }, []);
+    const startRecording = useCallback(() => {
+        const SR: any = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+        if (!SR) return;
+        voiceTranscriptRef.current = "";
+        const recognition = new SR();
+        recognition.lang = language === "en" ? "en-US" : "vi-VN";
+        recognition.continuous = true;
+        recognition.interimResults = true;
+        recognition.onresult = (event: any) => {
+            let text = "";
+            for (let i = 0; i < event.results.length; i++) text += event.results[i][0].transcript;
+            voiceTranscriptRef.current = text;
+        };
+        recognition.onerror = () => stopRecordingInternal();
+        recognitionRef.current = recognition;
+        try { recognition.start(); } catch { return; }
+        setIsRecording(true);
+        setRecordSeconds(0);
+        recordTimerRef.current = setInterval(() => {
+            setRecordSeconds(seconds => seconds + 1);
+            setWaveformPoints(Array.from({ length: 10 }, (_, i) =>
+                `${i * 12},${4 + Math.round(Math.random() * 16)}`).join(" "));
+        }, 1000);
+    }, [language, stopRecordingInternal]);
+    const cancelRecording = useCallback(() => {
+        voiceTranscriptRef.current = "";
+        stopRecordingInternal();
+    }, [stopRecordingInternal]);
+    const confirmRecording = useCallback(() => {
+        const text = voiceTranscriptRef.current.trim();
+        stopRecordingInternal();
+        if (text) handleSend(text);
+    }, [handleSend, stopRecordingInternal]);
 
     // ── Mechanism 1 & 2: Submit capture form ──
     const handleCaptureSubmit = async (e: React.FormEvent) => {
