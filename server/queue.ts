@@ -376,7 +376,10 @@ async function triggerAutoReply(
         throw new Error(error);
       }
       try {
-        const sendResult = await adapter.sendOutbound(tenantId, lead, aiResult.content);
+        const sendResult = await adapter.sendOutbound(tenantId, lead, aiResult.content, {
+          deliveryId: delivery.id,
+          deliveryKey: delivery.deliveryKey || `agent-outbound:${delivery.id}`,
+        });
         if (!sendResult.success) {
           await agentOutboundRepository.markFailed({
             tenantId,

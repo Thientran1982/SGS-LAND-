@@ -25,7 +25,8 @@ export interface FacebookSendResult {
 export async function sendFacebookTextMessage(
   pageAccessToken: string,
   recipientId: string,
-  text: string
+  text: string,
+  deliveryKey?: string,
 ): Promise<FacebookSendResult> {
   try {
     const body = {
@@ -60,7 +61,7 @@ export async function sendFacebookTextMessage(
         error: `Facebook API error ${json.error.code}: ${json.error.message}`,
       };
     }
-    logger.info(`[Facebook] Message sent to ${recipientId}, msgId=${json.message_id}`);
+    logger.info(`[Facebook] Message sent to ${recipientId}, msgId=${json.message_id}, deliveryKey=${deliveryKey || 'none'}`);
     return {
       success: true,
       messageId: json.message_id,

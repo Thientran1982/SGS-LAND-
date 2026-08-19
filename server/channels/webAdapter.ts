@@ -10,6 +10,6 @@ import type { ChannelAdapter, SendResult } from './types';
 export const webAdapter: ChannelAdapter = {
   channel: 'WEB',
   async sendOutbound(): Promise<SendResult> {
-    return { success: true };
+    return { success: true, deliveryGuarantee: 'local_only' };
   },
 };

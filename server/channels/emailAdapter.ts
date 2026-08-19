@@ -1,8 +1,8 @@
-import type { ChannelAdapter, SendResult } from './types';
+import type { ChannelAdapter, SendResult, OutboundDeliveryContext } from './types';
 
 export const emailAdapter: ChannelAdapter = {
   channel: 'EMAIL',
-  async sendOutbound(tenantId: string, lead: any, content: string): Promise<SendResult> {
+  async sendOutbound(tenantId: string, lead: any, content: string, context?: OutboundDeliveryContext): Promise<SendResult> {
     if (!lead?.email) {
       return { success: false, error: 'Lead khong co dia chi email' };
     }
@@ -11,8 +11,9 @@ export const emailAdapter: ChannelAdapter = {
       tenantId,
       lead.email,
       'Phan hoi tu SGS LAND',
-      content
+      content,
+      context?.deliveryKey,
     );
-    return result;
+    return { ...result, deliveryGuarantee: 'provider_unverified' };
   },
 };

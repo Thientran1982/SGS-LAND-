@@ -1,8 +1,8 @@
-import type { ChannelAdapter, SendResult } from './types';
+import type { ChannelAdapter, SendResult, OutboundDeliveryContext } from './types';
 
 export const zaloAdapter: ChannelAdapter = {
   channel: 'ZALO',
-  async sendOutbound(tenantId: string, lead: any, content: string): Promise<SendResult> {
+  async sendOutbound(tenantId: string, lead: any, content: string, context?: OutboundDeliveryContext): Promise<SendResult> {
     const zaloId: string | undefined = lead?.socialIds?.zalo;
     if (!zaloId) {
       return { success: false, error: 'Lead khong co Zalo socialId' };
@@ -12,6 +12,7 @@ export const zaloAdapter: ChannelAdapter = {
     if (!token) {
       return { success: false, error: 'Khong tim thay Zalo OA Access Token cho tenant' };
     }
-    return sendZaloTextMessage(token, zaloId, content);
+    const result = await sendZaloTextMessage(token, zaloId, content, context?.deliveryKey);
+    return { ...result, deliveryGuarantee: 'provider_unverified' };
   },
 };

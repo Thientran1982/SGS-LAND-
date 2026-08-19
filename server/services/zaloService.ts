@@ -24,7 +24,8 @@ export interface ZaloSendResult {
 export async function sendZaloTextMessage(
   accessToken: string,
   userId: string,
-  text: string
+  text: string,
+  deliveryKey?: string,
 ): Promise<ZaloSendResult> {
   try {
     const body = {
@@ -56,7 +57,7 @@ export async function sendZaloTextMessage(
       logger.warn(`[Zalo] Send failed: error=${json.error} message=${json.message}`);
       return { success: false, error: `Zalo API error ${json.error}: ${json.message}` };
     }
-    logger.info(`[Zalo] Message sent to ${userId}, msgId=${json.data?.message_id}`);
+    logger.info(`[Zalo] Message sent to ${userId}, msgId=${json.data?.message_id}, deliveryKey=${deliveryKey || 'none'}`);
     return { success: true, messageId: json.data?.message_id };
   } catch (err: any) {
     logger.error('[Zalo] Network error sending message:', err);

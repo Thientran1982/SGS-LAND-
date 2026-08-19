@@ -46,6 +46,8 @@ interface EmailOptions {
   skipQuota?: boolean;
   /** Brevo tags (vd: ['campaign:abc', 'variant:A']) — chuyển thẳng xuống provider. */
   tags?: string[];
+  /** Stable outbox key used for provider Message-ID and durable dedupe. */
+  deliveryKey?: string;
 }
 type EmailStatus =
   | 'sent'
@@ -118,6 +120,25 @@ async function findRecentDedupe(
   } catch (err: any) {
     logger.warn(`[EmailService] dedupe lookup failed: ${err.message}`);
     return false; // fail-open: thà gửi lặp còn hơn nuốt mất email quan trọng
+  }
+}
+
+async function findDeliveryDedupe(tenantId: string, dedupeKey: string): Promise<boolean> {
+  try {
+    return await withRlsBypass(async (client) => {
+      const r = await client.query(
+        `SELECT 1 FROM email_log
+          WHERE tenant_id = $1::uuid
+            AND dedupe_key = $2
+            AND status IN ('sent','queued_no_smtp')
+          LIMIT 1`,
+        [tenantId, dedupeKey],
+      );
+      return (r.rowCount ?? 0) > 0;
+    });
+  } catch (err: any) {
+    logger.warn(`[EmailService] delivery dedupe lookup failed: ${err.message}`);
+    return false;
   }
 }
 async function countSentLast30Days(tenantId: string): Promise<number> {
@@ -342,6 +363,10 @@ async function deliverEmail(
       html: options.html,
       text: options.text,
       tags: options.tags,
+      headers: options.deliveryKey ? {
+        'X-SGS-Land-Delivery-Key': options.deliveryKey,
+        'Message-ID': `<${crypto.createHash('sha256').update(options.deliveryKey).digest('hex')}@sgsland.vn>`,
+      } : undefined,
     });
     if (result.success) {
       return {
@@ -370,6 +395,10 @@ async function deliverEmail(
       subject: options.subject,
       text: options.text,
       html: options.html,
+      headers: options.deliveryKey ? {
+        'X-SGS-Land-Delivery-Key': options.deliveryKey,
+        'Message-ID': `<${crypto.createHash('sha256').update(options.deliveryKey).digest('hex')}@sgsland.vn>`,
+      } : undefined,
     });
     logger.info(`[EmailService] Email sent via SMTP: ${info.messageId}`);
     return {
@@ -394,6 +423,17 @@ async function deliverEmail(
  */
 async function sendEmail(tenantId: string, options: EmailOptions): Promise<EmailResult> {
   const dedupeKey = makeDedupeKey(tenantId, options);
+  if (options.deliveryKey && await findDeliveryDedupe(tenantId, dedupeKey)) {
+    await logEmail({
+      tenantId,
+      recipient: options.to,
+      subject: options.subject,
+      template: options.template,
+      dedupeKey,
+      status: 'deduped',
+    });
+    return { success: true, status: 'deduped' };
+  }
   const dedupeWindow = options.dedupeWindowMinutes ?? 10;
   // 1) Dedupe
   if (dedupeWindow > 0) {
@@ -642,7 +682,13 @@ async function sendInviteEmail(tenantId: string, to: string, userName: string, r
     dedupeKey: `invite:${to.toLowerCase()}:${loginUrl}`,
   });
 }
-async function sendSequenceEmail(tenantId: string, to: string, subject: string, content: string): Promise<EmailResult> {
+async function sendSequenceEmail(
+  tenantId: string,
+  to: string,
+  subject: string,
+  content: string,
+  deliveryKey?: string,
+): Promise<EmailResult> {
   const plainText = content.replace(/<[^>]*>/g, '').trim();
   const body = `
     <h2 style="color:#0F172A;font-size:18px;font-weight:bold;margin:0 0 20px;font-family:Arial,sans-serif;">${escapeHtml(subject)}</h2>
@@ -654,6 +700,8 @@ async function sendSequenceEmail(tenantId: string, to: string, subject: string, 
     subject,
     html: emailBase(body, 'Email này được gửi tự động qua SGS LAND Automation.'),
     text: plainText,
+    deliveryKey: deliveryKey ? `agent-outbound:${deliveryKey}` : undefined,
+    dedupeKey: deliveryKey ? `agent-outbound:${deliveryKey}` : undefined,
   });
 }
 // ── Contact form — internal notification (to info@sgsland.vn) ─────────────────

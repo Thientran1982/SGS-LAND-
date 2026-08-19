@@ -15,6 +15,12 @@ export interface SendResult {
   success: boolean;
   messageId?: string;
   error?: string;
+  deliveryGuarantee?: 'provider_idempotent' | 'provider_unverified' | 'local_only';
+}
+
+export interface OutboundDeliveryContext {
+  deliveryId: string;
+  deliveryKey: string;
 }
 
 export interface ChannelAdapter {
@@ -29,5 +35,10 @@ export interface ChannelAdapter {
    * response cua /api/public/ai/livechat) tra ve { success: true } ngay,
    * khong goi API ngoai nao ca.
    */
-  sendOutbound(tenantId: string, lead: any, content: string): Promise<SendResult>;
+  sendOutbound(
+    tenantId: string,
+    lead: any,
+    content: string,
+    context?: OutboundDeliveryContext,
+  ): Promise<SendResult>;
 }

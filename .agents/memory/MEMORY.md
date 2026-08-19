@@ -3,3 +3,4 @@
 - [Next.js Public Site Setup](nextjs-public-site-setup.md) — Next.js runs on port 3001 (separate from Express CRM port 5000); all public components must have "use client"
 - [Express v5 route wildcards](express-v5-wildcards.md) — use /assets/*path not /assets/* — path-to-regexp v8 requires named wildcards
 - [Production EIO static assets](production-eio-assets.md) — Replit VM overlay filesystem returns EIO on large streamed files; fix with fs.readFile + retry
+- [Provider delivery capabilities](provider-delivery-capabilities.md) — Zalo/Facebook lack portable idempotency/status lookup; UNKNOWN must not be blindly resent

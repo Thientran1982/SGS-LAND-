@@ -7,6 +7,7 @@ export interface OutboundClaim {
   id: string;
   state: OutboundClaimState;
   claimToken?: string;
+  deliveryKey?: string;
 }
 
 class AgentOutboundRepository {
@@ -20,10 +21,11 @@ class AgentOutboundRepository {
   }): Promise<OutboundClaim> {
     return withTenantContext(params.tenantId, async client => {
       const contentHash = createHash('sha256').update(params.content).digest('hex');
+      const insertDeliveryKey = `agent-outbound:${params.executionId}`;
       await client.query(
         `INSERT INTO agent_outbound_deliveries
-          (tenant_id, execution_id, interaction_id, lead_id, channel, content_hash)
-         VALUES ($1,$2,$3,$4,$5,$6)
+          (tenant_id, execution_id, interaction_id, lead_id, channel, content_hash, delivery_key)
+         VALUES ($1,$2,$3,$4,$5,$6,$7)
          ON CONFLICT (tenant_id, execution_id) DO NOTHING`,
         [
           params.tenantId,
@@ -32,6 +34,7 @@ class AgentOutboundRepository {
           params.leadId,
           params.channel,
           contentHash,
+          insertDeliveryKey,
         ],
       );
       const selected = await client.query(
@@ -45,15 +48,16 @@ class AgentOutboundRepository {
       if (row.content_hash !== contentHash || row.channel !== params.channel || row.lead_id !== params.leadId) {
         throw new Error(`OUTBOUND_DELIVERY_CONFLICT:${row.id}`);
       }
-      if (row.status === 'SENT') return { id: row.id, state: 'SENT' };
-      if (row.status === 'FAILED') return { id: row.id, state: 'FAILED' };
+      const deliveryKey = row.delivery_key || `agent-outbound:${row.id}`;
+      if (row.status === 'SENT') return { id: row.id, state: 'SENT', deliveryKey };
+      if (row.status === 'FAILED') return { id: row.id, state: 'FAILED', deliveryKey };
       if (row.status === 'SENDING' || row.status === 'UNKNOWN') {
         if (
           row.status === 'SENDING'
           && row.claimed_at
           && new Date(row.claimed_at).getTime() > Date.now() - 5 * 60_000
         ) {
-          return { id: row.id, state: 'BUSY' };
+          return { id: row.id, state: 'BUSY', deliveryKey };
         }
         if (row.status === 'SENDING') {
           await client.query(
@@ -65,7 +69,7 @@ class AgentOutboundRepository {
             [row.id, params.tenantId],
           );
         }
-        return { id: row.id, state: 'AMBIGUOUS' };
+        return { id: row.id, state: 'AMBIGUOUS', deliveryKey };
       }
 
       const claimToken = randomUUID();
@@ -79,7 +83,7 @@ class AgentOutboundRepository {
           WHERE id = $1 AND tenant_id = $2 AND status = 'PENDING'`,
         [row.id, params.tenantId, claimToken],
       );
-      return { id: row.id, state: 'SEND', claimToken };
+      return { id: row.id, state: 'SEND', claimToken, deliveryKey };
     });
   }
 
