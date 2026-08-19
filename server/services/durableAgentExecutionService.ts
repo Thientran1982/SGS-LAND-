@@ -11,7 +11,6 @@ import {
 import { getOrchestrationDecision } from './orchestrationMode';
 import { runWithSubagentPolicy } from './subagentPolicy';
 import { approvalRequestRepository, type HighImpactAction } from '../repositories/approvalRequestRepository';
-import { runLangGraphOrchestration } from './langGraphOrchestrationAdapter';
 
 export interface DurableAgentResult<T> {
   runId: string;
@@ -309,9 +308,9 @@ export async function runDurableAgentExecution<T extends {
     });
   }
 
-    const result = orchestration.mode === 'langgraph'
-      ? await runLangGraphOrchestration({ resume: resumeContext, execute: params.execute })
-      : await params.execute(resumeContext);
+    // The gate is intentionally observed, but no LangGraph runtime is linked
+    // until the exit criteria in the decision record are met.
+    const result = await params.execute(resumeContext);
     assertLease();
     const completedSteps = Array.isArray(result.steps) ? result.steps.slice(0, execution.maxSteps) : [];
     await agentExecutionRepository.saveStep({
