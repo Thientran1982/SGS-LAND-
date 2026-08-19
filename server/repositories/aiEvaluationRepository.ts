@@ -47,11 +47,16 @@ export const aiEvaluationRepository = {
       await client.query(
         `UPDATE ai_evaluation_runs SET completed_cases=(SELECT COUNT(*) FROM ai_evaluation_results WHERE run_id=$1),
           summary_json=(SELECT COALESCE(jsonb_build_object(
-            'intentAccuracy', AVG((scores_json->>'intentAccuracy')::numeric),
+             'intentAccuracy', AVG((scores_json->>'intentAccuracy')::numeric),
+             'agentAccuracy', AVG((scores_json->>'agentAccuracy')::numeric),
             'groundedness', AVG((scores_json->>'groundedness')::numeric),
+             'requiredFacts', AVG((scores_json->>'requiredFacts')::numeric),
             'toolSuccess', AVG((scores_json->>'toolSuccess')::numeric),
             'escalationRecall', AVG((scores_json->>'escalationRecall')::numeric),
             'safety', AVG((scores_json->>'safety')::numeric),
+             'zaloFormat', AVG((scores_json->>'zaloFormat')::numeric),
+             'hallucination', AVG((scores_json->>'hallucination')::numeric),
+             'latencyP50', percentile_cont(0.50) WITHIN GROUP (ORDER BY latency_ms),
             'latencyP95', percentile_cont(0.95) WITHIN GROUP (ORDER BY latency_ms)
           ), '{}'::jsonb) FROM ai_evaluation_results WHERE run_id=$1)
          WHERE id=$1`, [runId],
@@ -64,12 +69,39 @@ export const aiEvaluationRepository = {
       `SELECT * FROM ai_evaluation_runs WHERE tenant_id=$1 ORDER BY created_at DESC LIMIT $2`, [tenantId, limit],
     )).rows);
   },
-  async compare(tenantId: string, baselineId: string, candidateId: string) {
+  async breakdown(tenantId: string, runId: string) {
     return withTenantContext(tenantId, async client => (await client.query(
+      `SELECT expected_intent AS intent, COUNT(*)::int AS cases,
+              AVG((scores_json->>'intentAccuracy')::numeric) AS intent_accuracy,
+              AVG((scores_json->>'groundedness')::numeric) AS groundedness,
+              AVG((scores_json->>'toolSuccess')::numeric) AS tool_success,
+              AVG((scores_json->>'escalationRecall')::numeric) AS escalation_recall,
+              AVG((scores_json->>'safety')::numeric) AS safety,
+              AVG((scores_json->>'hallucination')::numeric) AS hallucination,
+              percentile_cont(0.95) WITHIN GROUP (ORDER BY latency_ms) AS latency_p95
+         FROM ai_evaluation_results
+        WHERE tenant_id=$1 AND run_id=$2
+        GROUP BY expected_intent ORDER BY expected_intent`, [tenantId, runId],
+    )).rows);
+  },
+  async compare(tenantId: string, baselineId: string, candidateId: string) {
+    return withTenantContext(tenantId, async client => {
+      const runs = (await client.query(
       `SELECT variant, id, name, fixture_version, prompt_version, prompt_hash, model, provider,
               total_cases, completed_cases, summary_json, created_at
          FROM ai_evaluation_runs
         WHERE tenant_id=$1 AND id = ANY($2::uuid[])`, [tenantId, [baselineId, candidateId]],
-    )).rows);
+      )).rows;
+      const cases = (await client.query(
+        `SELECT COALESCE(b.case_id,c.case_id) AS case_id,
+                b.scores_json AS baseline_scores, c.scores_json AS candidate_scores,
+                b.output_text AS baseline_output, c.output_text AS candidate_output
+           FROM (SELECT * FROM ai_evaluation_results WHERE tenant_id=$1 AND run_id=$2) b
+           FULL OUTER JOIN (SELECT * FROM ai_evaluation_results WHERE tenant_id=$1 AND run_id=$3) c
+             ON c.case_id=b.case_id
+          ORDER BY case_id`, [tenantId, baselineId, candidateId],
+      )).rows;
+      return { runs, cases };
+    });
   },
 };

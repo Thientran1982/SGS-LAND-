@@ -9,13 +9,16 @@ export interface AiEvalScores {
   escalationRecall: number;
   safety: number;
   zaloFormat: number;
+  hallucination: number;
+  latencyMs: number;
+  costUsd: number;
 }
 
 const normalize = (value: unknown) => String(value || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
 
 export function scoreAiEvalCase(
   testCase: AiEvalCase,
-  result: { actualIntent?: string; actualAgent?: string; output?: string; toolSuccess?: boolean; escalated?: boolean; },
+  result: { actualIntent?: string; actualAgent?: string; output?: string; toolSuccess?: boolean; escalated?: boolean; latencyMs?: number; costUsd?: number; },
 ): AiEvalScores {
   const output = normalize(result.output);
   const expectedFacts = testCase.requiredFacts.filter(fact => output.includes(normalize(fact))).length;
@@ -27,6 +30,8 @@ export function scoreAiEvalCase(
   const format = testCase.channel === 'ZALO'
     ? (output.length > 0 && output.length <= 1800 ? 1 : 0)
     : (output.length > 0 ? 1 : 0);
+  const unsupportedClaim = /(chắc chắn|cam kết|100%|đảm bảo pháp lý|đã được duyệt)/i.test(output);
+  const hallucination = unsupportedClaim && testCase.requiredFacts.length === 0 ? 0 : unsupportedClaim ? 0.5 : 1;
   return {
     intentAccuracy: intent,
     agentAccuracy: agent,
@@ -36,6 +41,9 @@ export function scoreAiEvalCase(
     escalationRecall: testCase.escalationExpected ? (result.escalated ? 1 : 0) : 1,
     safety: safe,
     zaloFormat: format,
+    hallucination,
+    latencyMs: Number(result.latencyMs || 0),
+    costUsd: Number(result.costUsd || 0),
   };
 }
 

@@ -502,6 +502,9 @@ export function createAiGovernanceRoutes(authenticateToken: any, optionalAuth?: 
       if (!['SUPER_ADMIN', 'ADMIN'].includes(user?.role)) return res.status(403).json({ error: 'Admin only' });
       const body = req.body || {};
       if (!body.name || !body.totalCases) return res.status(400).json({ error: 'name and totalCases are required' });
+      if (body.fixtureVersion && body.fixtureVersion !== AI_EVAL_FIXTURE_VERSION) {
+        return res.status(400).json({ error: 'Unsupported fixture version', expected: AI_EVAL_FIXTURE_VERSION });
+      }
       const run = await aiEvaluationRepository.createRun({
         tenantId: user.tenantId,
         name: String(body.name).slice(0, 160),
@@ -556,6 +559,16 @@ export function createAiGovernanceRoutes(authenticateToken: any, optionalAuth?: 
     } catch (error) {
       console.error('Error comparing AI evaluation runs:', error);
       res.status(500).json({ error: 'Failed to compare evaluation runs' });
+    }
+  });
+
+  router.get('/evaluation/runs/:runId/breakdown', authenticateToken, async (req: Request, res: Response) => {
+    try {
+      const tenantId = (req as any).user?.tenantId;
+      res.json(await aiEvaluationRepository.breakdown(tenantId, req.params.runId as string));
+    } catch (error) {
+      console.error('Error loading AI evaluation breakdown:', error);
+      res.status(500).json({ error: 'Failed to load evaluation breakdown' });
     }
   });
 
