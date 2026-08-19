@@ -87,6 +87,7 @@ const Marketplace = lazyLoad(() => import('./pages/Marketplace'), 'Marketplace')
 const DataPlatform = lazyLoad(() => import('./pages/DataPlatform'), 'DataPlatform');
 const SecurityCompliance = lazyLoad(() => import('./pages/SecurityCompliance'), 'SecurityCompliance');
 const AiGovernance = lazyLoad(() => import('./pages/AiGovernance'), 'AiGovernance');
+const AiEvaluation = lazyLoad(() => import('./pages/AiEvaluation'), 'AiEvaluation');
 const SeoManager = lazyLoad(() => import('./pages/SeoManager'), 'SeoManager');
 const ErrorMonitor = lazyLoad(() => import('./pages/ErrorMonitor'), 'ErrorMonitor');
 const ScraperDashboard = lazyLoad(() => import('./pages/ScraperDashboard'), 'ScraperDashboard');
@@ -113,6 +114,7 @@ registerPrefetch(ROUTES.SYSTEM,             () => import('./pages/SystemStatus')
 registerPrefetch(ROUTES.ADMIN_USERS,         () => import('./pages/AdminUsers'));
 registerPrefetch(ROUTES.ENTERPRISE_SETTINGS, () => import('./pages/EnterpriseSettings'));
 registerPrefetch(ROUTES.ADMIN_AI_COST,       () => import('./pages/AdminAiCost'));
+registerPrefetch(ROUTES.AI_EVALUATION,       () => import('./pages/AiEvaluation'));
 registerPrefetch(ROUTES.BILLING,            () => import('./pages/Billing'));
 registerPrefetch(ROUTES.CHECKOUT,           () => import('./pages/Checkout'));
 registerPrefetch(ROUTES.MARKETPLACE,         () => import('./pages/Marketplace'));
@@ -236,6 +238,7 @@ const PAGE_REGISTRY: Record<string, React.ComponentType<any>> = {
     [ROUTES.ADMIN_USERS]: AdminUsers,
     [ROUTES.ENTERPRISE_SETTINGS]: EnterpriseSettings,
     [ROUTES.ADMIN_AI_COST]: AdminAiCost,
+    [ROUTES.AI_EVALUATION]: AiEvaluation,
     [ROUTES.BILLING]: Billing,
     [ROUTES.CHECKOUT]: Checkout,
     [ROUTES.MARKETPLACE]: Marketplace,
@@ -453,6 +456,7 @@ const SUPER_ADMIN_ONLY_ROUTES: Set<string> = new Set([
     ROUTES.BILLING,
     ROUTES.SECURITY,
     ROUTES.AI_GOVERNANCE,
+    ROUTES.AI_EVALUATION,
     ROUTES.SEO_MANAGER,
     ROUTES.ERROR_MONITOR,
     ROUTES.SCRAPER,

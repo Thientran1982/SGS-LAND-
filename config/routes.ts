@@ -121,6 +121,7 @@ export const ROUTES = {
     DATA_PLATFORM: 'data-platform',
     SECURITY: 'security',
     AI_GOVERNANCE: 'ai-governance',
+    AI_EVALUATION: 'ai-evaluation',
     SEO_MANAGER: 'seo-manager',
     ERROR_MONITOR: 'error-monitor',
     PROFILE: 'profile',

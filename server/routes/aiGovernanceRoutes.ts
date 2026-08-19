@@ -4,6 +4,11 @@ import { feedbackRepository } from '../repositories/feedbackRepository';
 import { GoogleGenAI } from '@google/genai';
 import { sendAiError } from '../utils/aiErrorHandler';
 import { listAvailableModels } from '../ai/modelPolicy';
+import { aiEvaluationRepository } from '../repositories/aiEvaluationRepository';
+import { AI_EVAL_CASES, AI_EVAL_FIXTURE_VERSION } from '../ai/evaluationFixture';
+import { scoreAiEvalCase } from '../ai/evaluationScorer';
+import { createHash } from 'crypto';
+import { recordAiUsage } from '../services/aiUsageService';
 
 export function createAiGovernanceRoutes(authenticateToken: any, optionalAuth?: any) {
   const router = Router();
@@ -346,10 +351,97 @@ export function createAiGovernanceRoutes(authenticateToken: any, optionalAuth?: 
           : undefined,
       });
       const latencyMs = Date.now() - start;
+      const tenantId = (req as any).user?.tenantId;
+      await recordAiUsage({
+        tenantId,
+        feature: 'ai_evaluation_simulate',
+        model: effectiveModel,
+        promptLen: String(userInput).length + String(systemPrompt || '').length,
+        responseLen: (response.text || '').length,
+        latencyMs,
+        source: `evaluation:${req.body?.variant || 'candidate'}`,
+      }).catch(() => {});
       res.json({ output: response.text || '', latencyMs, model: effectiveModel });
     } catch (error: any) {
       console.error('Error running prompt simulation:', error);
       sendAiError(res, error, 'aiGovernanceRoutes/simulate');
+    }
+  });
+
+  router.get('/evaluation/fixture', authenticateToken, async (_req: Request, res: Response) => {
+    res.json({ version: AI_EVAL_FIXTURE_VERSION, count: AI_EVAL_CASES.length, cases: AI_EVAL_CASES });
+  });
+
+  router.get('/evaluation/runs', authenticateToken, async (req: Request, res: Response) => {
+    try {
+      const tenantId = (req as any).user?.tenantId;
+      res.json(await aiEvaluationRepository.listRuns(tenantId));
+    } catch (error) {
+      console.error('Error listing AI evaluation runs:', error);
+      res.status(500).json({ error: 'Failed to list evaluation runs' });
+    }
+  });
+
+  router.post('/evaluation/runs', authenticateToken, async (req: Request, res: Response) => {
+    try {
+      const user = (req as any).user;
+      if (!['SUPER_ADMIN', 'ADMIN'].includes(user?.role)) return res.status(403).json({ error: 'Admin only' });
+      const body = req.body || {};
+      if (!body.name || !body.totalCases) return res.status(400).json({ error: 'name and totalCases are required' });
+      const run = await aiEvaluationRepository.createRun({
+        tenantId: user.tenantId,
+        name: String(body.name).slice(0, 160),
+        fixtureVersion: body.fixtureVersion || AI_EVAL_FIXTURE_VERSION,
+        variant: body.variant,
+        promptVersion: body.promptVersion,
+        promptHash: body.promptHash,
+        model: body.model,
+        provider: body.provider,
+        metadata: body.metadata,
+        totalCases: Math.min(1000, Number(body.totalCases)),
+        createdBy: user.id,
+      });
+      res.status(201).json(run);
+    } catch (error) {
+      console.error('Error creating AI evaluation run:', error);
+      res.status(500).json({ error: 'Failed to create evaluation run' });
+    }
+  });
+
+  router.post('/evaluation/runs/:runId/score', authenticateToken, async (req: Request, res: Response) => {
+    try {
+      const user = (req as any).user;
+      if (!['SUPER_ADMIN', 'ADMIN'].includes(user?.role)) return res.status(403).json({ error: 'Admin only' });
+      const body = req.body || {};
+      const testCase = AI_EVAL_CASES.find(item => item.id === body.caseId);
+      if (!testCase) return res.status(400).json({ error: 'Unknown fixture case' });
+      const scores = scoreAiEvalCase(testCase, body);
+      const result = await aiEvaluationRepository.addResult(user.tenantId, req.params.runId as string, {
+        ...body,
+        caseId: testCase.id,
+        channel: testCase.channel,
+        inputHash: createHash('sha256').update(testCase.input).digest('hex').slice(0, 32),
+        expectedIntent: testCase.expectedIntent,
+        expectedAgent: testCase.expectedAgent,
+        scores,
+      });
+      res.status(201).json({ result, scores });
+    } catch (error) {
+      console.error('Error scoring AI evaluation case:', error);
+      res.status(500).json({ error: 'Failed to score evaluation case' });
+    }
+  });
+
+  router.get('/evaluation/compare', authenticateToken, async (req: Request, res: Response) => {
+    try {
+      const tenantId = (req as any).user?.tenantId;
+      const baselineId = String(req.query.baselineId || '');
+      const candidateId = String(req.query.candidateId || '');
+      if (!baselineId || !candidateId) return res.status(400).json({ error: 'baselineId and candidateId are required' });
+      res.json(await aiEvaluationRepository.compare(tenantId, baselineId, candidateId));
+    } catch (error) {
+      console.error('Error comparing AI evaluation runs:', error);
+      res.status(500).json({ error: 'Failed to compare evaluation runs' });
     }
   });
 
