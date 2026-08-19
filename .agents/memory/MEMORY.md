@@ -4,3 +4,4 @@
 - [Express v5 route wildcards](express-v5-wildcards.md) — use /assets/*path not /assets/* — path-to-regexp v8 requires named wildcards
 - [Production EIO static assets](production-eio-assets.md) — Replit VM overlay filesystem returns EIO on large streamed files; fix with fs.readFile + retry
 - [Provider delivery capabilities](provider-delivery-capabilities.md) — Zalo/Facebook lack portable idempotency/status lookup; UNKNOWN must not be blindly resent
+- [SeoHead test cleanup](seohead-test-cleanup.md) — unmount Helmet-managed SeoHead before manually removing head nodes

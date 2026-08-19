@@ -1091,9 +1091,9 @@ async function handle_live_chat_core(args: Record<string, any>): Promise<any> {
     };
     const plan = executionPlans[detectedIntent];
     const executedTools: string[] = [];
-    let specialistOutput: any = null;
+    let specialistOutput: any = args.resumeContext?.specialistOutput || null;
     let specialistError: string | null = null;
-    if (plan) {
+    if (plan && !specialistOutput) {
         const toolGuardrail = inspectToolRequest(plan.tool);
         if (toolGuardrail.safe) {
             try {
@@ -1152,6 +1152,7 @@ ${contextBlock}${kbBlock}${specialistBlock}`;
             sources: specialistOutput
                 ? [{ tool: plan?.tool, source: specialistOutput.source || 'SGS Land tenant-scoped data' }]
                 : [],
+            specialistOutput,
             uncertainty: specialistOutput ? 'LOW' : 'HIGH',
             missingData: specialistOutput ? [] : [specialistError || 'specialist_data'],
             groundingStatus: specialistOutput ? 'GROUNDED' : 'INSUFFICIENT_DATA',
@@ -1181,11 +1182,12 @@ async function handle_live_chat(args: Record<string, any>): Promise<any> {
         leadId: args.context?.leadId,
         triggerSource: 'live-chat-engine',
         message,
-        execute: async () => {
+        execute: async (resumeContext) => {
             const raw = await handle_live_chat_core({
                 ...args,
                 tenantId,
                 sessionId: effectiveSessionId,
+                resumeContext,
             });
             return {
                 ...raw,

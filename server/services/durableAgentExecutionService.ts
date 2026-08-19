@@ -1,5 +1,6 @@
 import { logger } from '../middleware/logger';
 import { agentExecutionRepository } from '../repositories/agentExecutionRepository';
+import type { AgentExecutionStepRecord } from '../repositories/agentExecutionRepository';
 import {
   blockedAgentResponse,
   inspectAgentInput,
@@ -16,6 +17,13 @@ export interface DurableAgentResult<T> {
   cached: boolean;
 }
 
+export interface DurableResumeContext {
+  executionId: string;
+  attempt: number;
+  completedSteps: AgentExecutionStepRecord[];
+  specialistOutput?: unknown;
+}
+
 export async function runDurableAgentExecution<T extends {
   content?: string;
   suggestedAction?: string | null;
@@ -30,7 +38,7 @@ export async function runDurableAgentExecution<T extends {
   leadId?: string;
   triggerSource: string;
   message: string;
-  execute: () => Promise<T>;
+  execute: (resume: DurableResumeContext) => Promise<T>;
   maxSteps?: number;
 }): Promise<DurableAgentResult<T>> {
   const claim = await agentExecutionRepository.claim({
@@ -59,6 +67,16 @@ export async function runDurableAgentExecution<T extends {
   }
 
   const claimToken = execution.claimToken;
+  const checkpointRows = await agentExecutionRepository.getSteps(params.tenantId, execution.id);
+  const specialistCheckpoint = checkpointRows.find(
+    step => step.stepKey === '03_SPECIALIST_PIPELINE' && step.status === 'SUCCESS',
+  );
+  const resumeContext: DurableResumeContext = {
+    executionId: execution.id,
+    attempt: execution.attempt,
+    completedSteps: checkpointRows.filter(step => step.status === 'SUCCESS' || step.status === 'SKIPPED'),
+    specialistOutput: specialistCheckpoint?.output?.specialistOutput,
+  };
   let heartbeatError: Error | null = null;
   const heartbeat = setInterval(() => {
     agentExecutionRepository
@@ -74,15 +92,17 @@ export async function runDurableAgentExecution<T extends {
 
   try {
   const inputGuardrail = inspectAgentInput(params.message);
-  await agentExecutionRepository.saveStep({
-    tenantId: params.tenantId,
-    executionId: execution.id,
-    claimToken,
-    stepKey: '01_INPUT_GUARDRAIL',
-    specialist: 'GUARDRAIL',
-    status: inputGuardrail.blocked ? 'BLOCKED' : 'SUCCESS',
-    output: inputGuardrail,
-  });
+  if (!checkpointRows.some(step => step.stepKey === '01_INPUT_GUARDRAIL' && step.status === 'SUCCESS')) {
+    await agentExecutionRepository.saveStep({
+      tenantId: params.tenantId,
+      executionId: execution.id,
+      claimToken,
+      stepKey: '01_INPUT_GUARDRAIL',
+      specialist: 'GUARDRAIL',
+      status: inputGuardrail.blocked ? 'BLOCKED' : 'SUCCESS',
+      output: inputGuardrail,
+    });
+  }
   if (inputGuardrail.blocked) {
     const blocked = {
       content: blockedAgentResponse(inputGuardrail.reason),
@@ -109,25 +129,29 @@ export async function runDurableAgentExecution<T extends {
   }
 
   assertLease();
-  await agentExecutionRepository.saveStep({
-    tenantId: params.tenantId,
-    executionId: execution.id,
-    claimToken,
-    stepKey: '02_SUPERVISOR',
-    specialist: 'SUPERVISOR',
-    status: 'SUCCESS',
-    output: { decision: 'EXECUTE_EXISTING_PIPELINE', maxSteps: execution.maxSteps },
-  });
-  await agentExecutionRepository.saveStep({
-    tenantId: params.tenantId,
-    executionId: execution.id,
-    claimToken,
-    stepKey: '03_SPECIALIST_PIPELINE',
-    specialist: 'SPECIALIST_PIPELINE',
-    status: 'RUNNING',
-  });
+  if (!checkpointRows.some(step => step.stepKey === '02_SUPERVISOR' && step.status === 'SUCCESS')) {
+    await agentExecutionRepository.saveStep({
+      tenantId: params.tenantId,
+      executionId: execution.id,
+      claimToken,
+      stepKey: '02_SUPERVISOR',
+      specialist: 'SUPERVISOR',
+      status: 'SUCCESS',
+      output: { decision: 'EXECUTE_EXISTING_PIPELINE', maxSteps: execution.maxSteps },
+    });
+  }
+  if (!specialistCheckpoint) {
+    await agentExecutionRepository.saveStep({
+      tenantId: params.tenantId,
+      executionId: execution.id,
+      claimToken,
+      stepKey: '03_SPECIALIST_PIPELINE',
+      specialist: 'SPECIALIST_PIPELINE',
+      status: 'RUNNING',
+    });
+  }
 
-    const result = await params.execute();
+    const result = await params.execute(resumeContext);
     assertLease();
     const completedSteps = Array.isArray(result.steps) ? result.steps.slice(0, execution.maxSteps) : [];
     await agentExecutionRepository.saveStep({
@@ -138,6 +162,7 @@ export async function runDurableAgentExecution<T extends {
       specialist: String((result as any).intent || 'SPECIALIST_PIPELINE'),
       status: 'SUCCESS',
       output: {
+        specialistOutput: (result as any).specialistOutput,
         specialistSteps: completedSteps.map((step: any) => ({
           agent: step.agent || step.node || step.name || 'unknown',
           status: step.status || 'DONE',

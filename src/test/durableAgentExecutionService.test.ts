@@ -4,6 +4,7 @@ const { repo } = vi.hoisted(() => ({
   repo: {
     claim: vi.fn(),
     saveStep: vi.fn(),
+    getSteps: vi.fn(),
     finish: vi.fn(),
   },
 }));
@@ -55,6 +56,7 @@ describe('durable agent execution service', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     repo.saveStep.mockResolvedValue(undefined);
+    repo.getSteps.mockResolvedValue([]);
     repo.finish.mockResolvedValue(undefined);
   });
 
@@ -119,6 +121,51 @@ describe('durable agent execution service', () => {
       status: 'ERROR',
       errorText: 'provider timeout',
     }));
+  });
+
+  it('passes completed specialist output to the resumed pipeline', async () => {
+    repo.claim.mockResolvedValue({
+      execution: execution({ attempt: 2 }),
+      claimed: true,
+      resumed: true,
+    });
+    repo.getSteps.mockResolvedValue([
+      {
+        stepKey: '01_INPUT_GUARDRAIL',
+        specialist: 'GUARDRAIL',
+        status: 'SUCCESS',
+        input: {},
+        output: { safe: true },
+        errorText: null,
+        attempt: 1,
+      },
+      {
+        stepKey: '03_SPECIALIST_PIPELINE',
+        specialist: 'SEARCH',
+        status: 'SUCCESS',
+        input: { tool: 'search_listings' },
+        output: { specialistOutput: { source: 'tenant-db', listings: [{ id: 'l1' }] } },
+        errorText: null,
+        attempt: 1,
+      },
+    ]);
+    const execute = vi.fn().mockImplementation(async (resume: any) => ({
+      content: 'resumed synthesis',
+      specialistOutput: resume.specialistOutput,
+      steps: [{ agent: 'SEARCH', status: 'DONE' }],
+    }));
+
+    const result = await runDurableAgentExecution({
+      ...baseParams,
+      message: 'find an apartment',
+      execute,
+    });
+
+    expect(execute).toHaveBeenCalledWith(expect.objectContaining({
+      attempt: 2,
+      specialistOutput: { source: 'tenant-db', listings: [{ id: 'l1' }] },
+    }));
+    expect(result.resumed).toBe(true);
   });
 
   it('blocks and escalates an invalid empty provider output', async () => {

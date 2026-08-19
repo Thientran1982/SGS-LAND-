@@ -41,13 +41,13 @@ describe("SeoHead", () => {
   });
 
   it("renders without crashing with required props", async () => {
-    expect(() =>
-      render(
-        <HelmetProvider>
-          <SeoHead title="Test Page" description="Test description" canonicalPath="/test" />
-        </HelmetProvider>
-      )
-    ).not.toThrow();
+    const { unmount } = render(
+      <HelmetProvider>
+        <SeoHead title="Test Page" description="Test description" canonicalPath="/test" />
+      </HelmetProvider>
+    );
+    expect(document.title).toBe("Test Page");
+    unmount();
   });
 
   it("sets page title", async () => {

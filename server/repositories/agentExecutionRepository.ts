@@ -28,6 +28,16 @@ export interface ClaimExecutionResult {
   resumed: boolean;
 }
 
+export interface AgentExecutionStepRecord {
+  stepKey: string;
+  specialist: string;
+  status: AgentExecutionStepStatus;
+  input: Record<string, any>;
+  output: Record<string, any> | null;
+  errorText: string | null;
+  attempt: number;
+}
+
 function mapExecution(row: any): AgentExecution {
   return {
     id: row.id,
@@ -168,6 +178,27 @@ class AgentExecutionRepository {
           params.errorText?.slice(0, 4000) || null,
         ],
       );
+    });
+  }
+
+  async getSteps(tenantId: string, executionId: string): Promise<AgentExecutionStepRecord[]> {
+    return withTenantContext(tenantId, async client => {
+      const result = await client.query(
+        `SELECT step_key, specialist, status, input_json, output_json, error_text, attempt
+           FROM agent_execution_steps
+          WHERE tenant_id = $1 AND execution_id = $2
+          ORDER BY step_key ASC`,
+        [tenantId, executionId],
+      );
+      return result.rows.map(row => ({
+        stepKey: row.step_key,
+        specialist: row.specialist,
+        status: row.status,
+        input: row.input_json || {},
+        output: row.output_json || null,
+        errorText: row.error_text,
+        attempt: row.attempt,
+      }));
     });
   }
 
