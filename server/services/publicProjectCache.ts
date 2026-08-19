@@ -13,9 +13,9 @@
  *   `evictPublicProjectCacheByTenant(tenantId)` (toàn bộ entries của tenant đó —
  *   gọi khi update branding). Cũng được gọi từ projectRoutes / listingRoutes
  *   khi mutate.
- * - Multi-instance: cache là per-process. Yêu cầu invalidation < 30s thoả mãn
- *   bằng TTL ngắn + best-effort evict; multi-instance cần Redis-backed cache.
+ * - Multi-instance: backed by shared Redis with bounded local fallback.
  */
+import { sharedCacheDeleteByPattern, sharedCacheDeleteByPrefix, sharedCacheGet, sharedCacheKey, sharedCacheSet } from './sharedCache';
 const TTL_MS = 25 * 1000;
 const MAX_ENTRIES = 500;
 interface Entry {
@@ -32,9 +32,12 @@ function buildKey(tenantId: string | null | undefined, code: string): string {
   const c = String(code || '').trim().toUpperCase();
   return `${t}|${c}`;
 }
-export function getPublicProjectCache(code: string, tenantId?: string | null): any | null {
+export async function getPublicProjectCache(code: string, tenantId?: string | null): Promise<any | null> {
   const key = buildKey(tenantId, code);
   if (!key.endsWith('|') === false && key === `${tenantId || '*'}|`) return null;
+  const sharedKey = sharedCacheKey({ tenantId: tenantId || '*', namespace: 'public-project', projectCode: code });
+  const shared = await sharedCacheGet<any>(sharedKey);
+  if (shared !== null) return shared;
   const entry = store.get(key);
   if (!entry) return null;
   if (entry.expiresAt < Date.now()) {
@@ -49,12 +52,12 @@ export function getPublicProjectCache(code: string, tenantId?: string | null): a
  * - `projectTenantId`: tenantId thực tế của project, để evict by tenant khi
  *   branding thay đổi (kể cả entries trong bucket "*").
  */
-export function setPublicProjectCache(
+export async function setPublicProjectCache(
   code: string,
   value: any,
   bucketTenantId?: string | null,
   projectTenantId?: string | null,
-): void {
+): Promise<void> {
   const c = String(code || '').trim().toUpperCase();
   if (!c) return;
   const bucket = (bucketTenantId && String(bucketTenantId).trim()) || '*';
@@ -68,15 +71,21 @@ export function setPublicProjectCache(
     if (oldestKey !== undefined) store.delete(oldestKey);
   }
   store.set(key, { value, bucket, projectTenantId: ptid, expiresAt: Date.now() + TTL_MS });
+  await sharedCacheSet(
+    sharedCacheKey({ tenantId: bucket, namespace: 'public-project', projectCode: c }),
+    value,
+    TTL_MS,
+  );
 }
 /** Evict mọi entry của 1 project code, ở MỌI tenant bucket. */
-export function evictPublicProjectCache(code: string | null | undefined): void {
+export async function evictPublicProjectCache(code: string | null | undefined): Promise<void> {
   const c = String(code || '').trim().toUpperCase();
   if (!c) return;
   const suffix = `|${c}`;
   for (const key of store.keys()) {
     if (key.endsWith(suffix)) store.delete(key);
   }
+  await sharedCacheDeleteByPattern(`*:public-project:${String(c).toLowerCase()}`);
 }
 /**
  * Evict mọi entry thuộc 1 tenant — gọi khi update branding/subdomain.
@@ -84,12 +93,13 @@ export function evictPublicProjectCache(code: string | null | undefined): void {
  * cached dưới bucket "*" (apex `sgsland.vn/p/<code>`) mà project thuộc tenant
  * này — đảm bảo branding mới có hiệu lực < 30s trên mọi đường truy cập.
  */
-export function evictPublicProjectCacheByTenant(tenantId: string | null | undefined): void {
+export async function evictPublicProjectCacheByTenant(tenantId: string | null | undefined): Promise<void> {
   const t = (tenantId && String(tenantId).trim()) || '';
   if (!t) return;
   for (const [key, entry] of store.entries()) {
     if (entry.bucket === t || entry.projectTenantId === t) store.delete(key);
   }
+  await sharedCacheDeleteByPrefix(`${t.toLowerCase()}:public-project`);
 }
 export function clearPublicProjectCache(): void {
   store.clear();
