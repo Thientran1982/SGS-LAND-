@@ -61,7 +61,7 @@ const HOME_PAGE: SsrPage = {
       name: 'SGS LAND',
       url: APP,
       logo: { '@type': 'ImageObject', url: `${APP}/logo.png`, width: 200, height: 60 },
-      foundingDate: '2019',
+      foundingDate: '2024',
       address: {
         '@type': 'PostalAddress',
         streetAddress: '122 - 124 B2, Khu đô thị Sala, Phường An Khánh',

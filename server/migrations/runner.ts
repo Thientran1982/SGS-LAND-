@@ -148,6 +148,7 @@ import m128 from './128_agent_delivery_recovery_function';
 import m129 from './129_agent_delivery_keys';
 import m130 from './130_ai_evaluation_runs';
 import m131 from './131_approval_interrupt_rollout';
+import m132 from './132_autonomous_learning_control_plane';
 
 dotenv.config();
 
@@ -292,6 +293,7 @@ const MIGRATION_REGISTRY: Record<string, Migration> = {
   '129_agent_delivery_keys.ts': m129,
   '130_ai_evaluation_runs.ts': m130,
   '131_approval_interrupt_rollout.ts': m131,
+  '132_autonomous_learning_control_plane.ts': m132,
 };
 
 async function ensureSchemaVersionsTable(client: PoolClient): Promise<void> {

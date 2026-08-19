@@ -326,7 +326,7 @@ export const MessageBubble = memo(({ msg, t, formatTime, formatCurrency, formatD
                 {/* Avatar Column */}
                 <div className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 shadow-sm border overflow-hidden
                     ${isOutbound 
-                        ? (isAgent ? 'bg-gradient-to-br from-sgs-primary to-sgs-primary-deep border-transparent text-white' : 'bg-slate-900 border-slate-800 text-white') 
+                        ? (isAgent ? 'bg-[var(--cw-navy,#0B1D26)] border-transparent text-white' : 'bg-slate-900 border-slate-800 text-white') 
                         : 'bg-[var(--bg-surface)] border-[var(--glass-border)] text-[var(--text-secondary)]'
                     }`}
                 >
@@ -343,8 +343,8 @@ export const MessageBubble = memo(({ msg, t, formatTime, formatCurrency, formatD
                     <div className={`
                         relative px-4 py-3 rounded-2xl text-sm shadow-sm border w-fit max-w-full
                         ${isOutbound 
-                            ? 'bg-sgs-primary text-white border-sgs-primary rounded-tr-none' 
-                            : 'bg-[var(--bg-surface)] text-[var(--text-primary)] border-[var(--glass-border)] rounded-tl-none'
+                            ? 'bg-[var(--cw-navy,#0B1D26)] text-white border-[var(--cw-navy,#0B1D26)] rounded-tr-none' 
+                            : 'bg-[var(--cw-paper,#FFFFFF)] text-[var(--cw-ink,#26221C)] border-[var(--cw-line,#EAE4D4)] rounded-tl-none'
                         }
                     `}>
                         {/* Content */}
@@ -372,7 +372,7 @@ export const MessageBubble = memo(({ msg, t, formatTime, formatCurrency, formatD
                     {/* Metadata & Grounding */}
                     <div className="mt-1 flex flex-col gap-1 w-full">
                         <div className={`flex items-center gap-2 text-xs2 ${isOutbound ? 'justify-end' : 'justify-start'}`}>
-                            <span className="text-[var(--text-secondary)] font-mono">{formatTime(msg.timestamp)}</span>
+                            <span className="text-[var(--cw-ink-dim,#8A8474)] font-mono cw-mono">{formatTime(msg.timestamp)}</span>
                             {isOutbound && (
                                 <span className={`font-bold ${msg.status === 'READ' ? 'text-sgs-primary' : 'text-[var(--text-secondary)]'}`}>
                                     {msg.status === 'PENDING' ? t('inbox.status_sending') : msg.status === 'READ' ? t('inbox.status_read') : t('inbox.status_received')}

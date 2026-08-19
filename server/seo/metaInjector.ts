@@ -14,7 +14,7 @@ const APP_URL = (process.env.APP_URL || 'https://sgsland.vn').replace(/\/$/, '')
 const DEFAULT_IMAGE = `${APP_URL}/og-image.jpg`;
 
 // ─── Reusable JSON-LD fragments for E-E-A-T (used across all area + project pages) ─
-const SGS_RATING = { '@type': 'AggregateRating', ratingValue: 4.8, reviewCount: 127, bestRating: 5, worstRating: 1 };
+const SGS_RATING = undefined; // Disabled 2026-08-19: fabricated aggregateRating (4.8/127) not backed by a verified third-party review platform &mdash; SEO/GEO audit finding. Re-enable once genuine reviews (e.g. Google Business Profile) are integrated.
 const SGS_PARENT_ORG = { '@id': `${APP_URL}/#org` };
 const SGS_FAQ_META = {
   name: 'Câu hỏi thường gặp về bất động sản SGS LAND',
@@ -80,7 +80,7 @@ const STATIC_PAGE_META: Record<string, {
         { '@type': 'State', name: 'Bà Rịa - Vũng Tàu', containedInPlace: { '@type': 'Country', name: 'Việt Nam' } },
           ],
           knowsAbout: ['Bất động sản TP.HCM', 'Căn hộ TP.HCM', 'Nhà phố TP.HCM', 'Biệt thự Đồng Nai', 'Định giá AI', 'Aqua City Novaland', 'The Global City Masterise', 'Izumi City Nam Long', 'Vinhomes Cần Giờ', 'Vinhomes Grand Park', 'Masterise Homes', 'Grand Marina Saigon', 'Vạn Phúc City', 'Thủ Thiêm', 'Đồng Nai', 'Long Thành', 'TP.HCM', 'Bình Dương', 'TP Thủ Đức'],
-          foundingDate: '2019-01-01',
+          foundingDate: '2024-01-01',
           numberOfEmployees: { '@type': 'QuantitativeValue', value: 50 },
           award: 'Top Proptech Việt Nam 2025',
           founder: { '@type': 'Person', name: 'Trần Minh Thiện', jobTitle: 'Founder & CEO' },
@@ -618,7 +618,7 @@ const STATIC_PAGE_META: Record<string, {
           legalName: 'Công ty TNHH SGS Land',
           alternateName: ['SGS Land', 'SGS LAND Enterprise', 'sgsland.vn'],
           url: APP_URL,
-          foundingDate: '2019',
+          foundingDate: '2024',
           publishingPrinciples: `${APP_URL}/chinh-sach-bien-tap`,
           description: 'SGS LAND — nền tảng công nghệ bất động sản B2B2C hàng đầu Việt Nam. 15.000+ môi giới, 45.000+ sản phẩm, 1 tỷ USD+ giao dịch. Dịch vụ: định giá AI (AVM ±5%), CRM đa kênh, phân phối dự án, ký gửi BĐS.',
           numberOfEmployees: { '@type': 'QuantitativeValue', value: 50 },
@@ -1413,32 +1413,7 @@ const STATIC_PAGE_META: Record<string, {
           aggregateRating: SGS_RATING,
           parentOrganization: SGS_PARENT_ORG,
           dateModified: '2026-04-18',
-          review: [
-            {
-              '@type': 'Review',
-              itemReviewed: { '@id': `${APP_URL}/du-an/aqua-city#project` },
-              author: { '@type': 'Person', name: 'Nguyễn Minh Hoàng' },
-              datePublished: '2026-03-12',
-              reviewRating: { '@type': 'Rating', ratingValue: 5, bestRating: 5, worstRating: 1 },
-              reviewBody: 'Mua biệt thự Aqua City Đảo Phượng Hoàng qua SGS LAND, pháp lý sổ hồng riêng từng căn, đội ngũ tư vấn chuyên sâu về quy hoạch Long Hưng - Biên Hòa. Đặt cọc giữ chỗ trong 24h, thủ tục nhanh, minh bạch chính sách CK của Novaland.',
-            },
-            {
-              '@type': 'Review',
-              itemReviewed: { '@id': `${APP_URL}/du-an/aqua-city#project` },
-              author: { '@type': 'Person', name: 'Trần Thị Mai' },
-              datePublished: '2026-02-25',
-              reviewRating: { '@type': 'Rating', ratingValue: 5, bestRating: 5, worstRating: 1 },
-              reviewBody: 'So sánh Aqua City vs Izumi City rất chi tiết, cuối cùng chọn nhà phố The Suite vì gần trường quốc tế Tesla. Hỗ trợ vay BIDV 70% giải ngân theo tiến độ, ân hạn gốc 24 tháng.',
-            },
-            {
-              '@type': 'Review',
-              itemReviewed: { '@id': `${APP_URL}/du-an/aqua-city#project` },
-              author: { '@type': 'Person', name: 'Lê Tuấn Anh' },
-              datePublished: '2026-01-18',
-              reviewRating: { '@type': 'Rating', ratingValue: 4, bestRating: 5, worstRating: 1 },
-              reviewBody: 'Cho thuê lại biệt thự đơn lập đạt yield 4.2%/năm cho expat Hàn-Nhật làm việc tại KCN Long Bình. Hài lòng dịch vụ vận hành Novaland Property Management.',
-            },
-          ],
+          review: undefined,
           '@id': `${APP_URL}/du-an/aqua-city#project`,
           name: 'Aqua City Novaland',
           description: 'Đại đô thị sinh thái 1.000ha do Novaland phát triển tại Long Hưng, Biên Hòa, Đồng Nai',
@@ -1556,32 +1531,7 @@ const STATIC_PAGE_META: Record<string, {
           aggregateRating: SGS_RATING,
           parentOrganization: SGS_PARENT_ORG,
           dateModified: '2026-04-18',
-          review: [
-            {
-              '@type': 'Review',
-              itemReviewed: { '@id': `${APP_URL}/du-an/vinhomes-can-gio#project` },
-              author: { '@type': 'Person', name: 'Phạm Quang Vinh' },
-              datePublished: '2026-03-28',
-              reviewRating: { '@type': 'Rating', ratingValue: 5, bestRating: 5, worstRating: 1 },
-              reviewBody: 'Đặt chỗ ưu tiên Vinhomes Cần Giờ giai đoạn 1 qua SGS LAND, vị trí siêu đô thị lấn biển 2.870ha quá tiềm năng. Đại lý phân phối chính thức nên cập nhật liên tục tiến độ san lấp và lộ trình mở bán dự kiến Q3/2026.',
-            },
-            {
-              '@type': 'Review',
-              itemReviewed: { '@id': `${APP_URL}/du-an/vinhomes-can-gio#project` },
-              author: { '@type': 'Person', name: 'Vũ Hương Giang' },
-              datePublished: '2026-03-05',
-              reviewRating: { '@type': 'Rating', ratingValue: 5, bestRating: 5, worstRating: 1 },
-              reviewBody: 'Thông tin pháp lý chuẩn xác, không kiểu cò mồi thổi giá. Tư vấn rõ ràng về cầu Cần Giờ 11.000 tỷ và quy hoạch giao thông kết nối Quận 7. Tin tưởng vào uy tín Vingroup và đội ngũ SGS LAND.',
-            },
-            {
-              '@type': 'Review',
-              itemReviewed: { '@id': `${APP_URL}/du-an/vinhomes-can-gio#project` },
-              author: { '@type': 'Person', name: 'Hoàng Tiến Dũng' },
-              datePublished: '2026-02-14',
-              reviewRating: { '@type': 'Rating', ratingValue: 5, bestRating: 5, worstRating: 1 },
-              reviewBody: 'Mua từ xa qua SGS LAND, nhận hỗ trợ ký hợp đồng đặt cọc online, không cần bay từ Hà Nội vào TP.HCM. Quy trình đặt chỗ Vinhomes Cần Giờ minh bạch, có biên lai chính chủ, sau đó chuyển HĐMB qua Vinhomes.',
-            },
-          ],
+          review: undefined,
           '@id': `${APP_URL}/du-an/vinhomes-can-gio#project`,
           name: 'Vinhomes Cần Giờ (Green Paradise)',
           alternateName: 'Vinhomes Green Paradise',
@@ -3001,32 +2951,7 @@ const STATIC_PAGE_META: Record<string, {
           aggregateRating: SGS_RATING,
           parentOrganization: SGS_PARENT_ORG,
           dateModified: '2026-04-18',
-          review: [
-            {
-              '@type': 'Review',
-              itemReviewed: { '@id': `${APP_URL}/du-an/vinhomes-grand-park#project` },
-              author: { '@type': 'Person', name: 'Nguyễn Thanh Tú' },
-              datePublished: '2026-03-22',
-              reviewRating: { '@type': 'Rating', ratingValue: 5, bestRating: 5, worstRating: 1 },
-              reviewBody: 'Mua căn S5.02 2PN 71m² qua SGS LAND, đã nhận nhà tháng 1/2026, sổ hồng đang chờ cấp. TP Thủ Đức phát triển nhanh nhờ Metro số 1 và cầu Thủ Thiêm 2. Dịch vụ tư vấn nhiệt tình từ lúc xem nhà mẫu đến khi bàn giao.',
-            },
-            {
-              '@type': 'Review',
-              itemReviewed: { '@id': `${APP_URL}/du-an/vinhomes-grand-park#project` },
-              author: { '@type': 'Person', name: 'Đỗ Văn Hùng' },
-              datePublished: '2026-02-08',
-              reviewRating: { '@type': 'Rating', ratingValue: 4, bestRating: 5, worstRating: 1 },
-              reviewBody: 'Cho thuê căn 2PN The Origami giá 14tr/tháng, lấp đầy nhanh do gần Khu Công Nghệ Cao và ĐH Quốc Gia. Yield ~5%/năm, ổn định. Hỗ trợ tìm khách thuê qua mạng lưới SGS LAND.',
-            },
-            {
-              '@type': 'Review',
-              itemReviewed: { '@id': `${APP_URL}/du-an/vinhomes-grand-park#project` },
-              author: { '@type': 'Person', name: 'Phan Mỹ Linh' },
-              datePublished: '2026-01-30',
-              reviewRating: { '@type': 'Rating', ratingValue: 5, bestRating: 5, worstRating: 1 },
-              reviewBody: 'Tham quan The Origami + The Beverly trong cùng buổi, tư vấn so sánh chi tiết về view, hướng, tiến độ. Cuối cùng chọn The Beverly vì view sông Đồng Nai đẹp. Pháp lý sổ hồng riêng đầy đủ.',
-            },
-          ],
+          review: undefined,
           '@id': `${APP_URL}/du-an/vinhomes-grand-park#project`,
           name: 'Vinhomes Grand Park',
           description: 'Siêu đô thị 271ha với 44 tòa tháp tại TP Thủ Đức, TP.HCM',

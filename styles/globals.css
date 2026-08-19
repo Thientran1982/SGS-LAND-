@@ -249,3 +249,22 @@ html.dark body {
     .lp-rv { opacity:1; transform:none; }
   }
 /* === LP-ROOT CRITICAL END === */
+
+
+/* ==== SGS Chat Widget v2  scoped redesign tokens ==== */
+.sgs-chat-v2 {
+  --cw-navy: #0B1D26;
+  --cw-parchment: #F5F1E6;
+  --cw-paper: #FFFFFF;
+  --cw-gold: #C6923D;
+  --cw-ink: #26221C;
+  --cw-ink-dim: #8A8474;
+  --cw-line: #EAE4D4;
+  --cw-rec: #E4685A;
+  font-family: 'Be Vietnam Pro', system-ui, sans-serif;
+}
+.sgs-chat-v2 .cw-name { font-family: 'Fraunces', Georgia, serif; }
+.sgs-chat-v2 .cw-mono { font-family: 'IBM Plex Mono', monospace; }
+.sgs-chat-v2 * { transition-duration: 180ms; }
+@keyframes cwBlink { 0%,100% { opacity: 1; } 50% { opacity: .25; } }
+.cw-rec-dot { animation: cwBlink 1s ease-in-out infinite; }

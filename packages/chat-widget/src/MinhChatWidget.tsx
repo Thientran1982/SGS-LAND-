@@ -46,7 +46,7 @@ export function MinhChatWidget({ apiBase, source = "WIDGET" }: MinhChatWidgetPro
           right: 16,
           bottom: 20,
           zIndex: 2147483000,
-          background: "var(--primary-600, #1B3A5C)",
+          background: "var(--cw-navy, #0B1D26)",
         }}
       >
         {open ? <X className="w-6 h-6" /> : <MessageCircle className="w-6 h-6" />}

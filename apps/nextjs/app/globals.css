@@ -442,3 +442,6 @@
    Chua khoang trong mot lan tai main; trang chu tu co khoang trong hero rieng. */
 main.sgs-main { padding-top: 65px; }
 main.sgs-main:has(> .lp-root) { padding-top: 0; }
+
+/* SGS Chat Widget v2  voice recording indicator */
+@keyframes cwBlink { 0%, 100% { opacity: 1; } 50% { opacity: .25; } }

@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from "next";
-import { Inter, JetBrains_Mono, Noto_Serif_Display, Be_Vietnam_Pro, IBM_Plex_Mono } from "next/font/google";
+import { Inter, JetBrains_Mono, Noto_Serif_Display, Be_Vietnam_Pro, IBM_Plex_Mono, Fraunces } from "next/font/google";
 import "./globals.css";
 import { getLang } from "@/lib/lang";
 import { LangProvider } from "@/components/shared/LangProvider";
@@ -37,6 +37,12 @@ const ibmPlexMono = IBM_Plex_Mono({
   variable: "--font-ibm-plex-mono",
   display: "swap",
   weight: ["400", "500"],
+});
+const fraunces = Fraunces({
+  subsets: ["latin"],
+  variable: "--font-fraunces",
+  display: "swap",
+  weight: ["500", "600"],
 });
 // ─── Global Metadata ───────────────────────────────────────
 export const metadata: Metadata = {
@@ -171,7 +177,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
         <script async src="https://www.googletagmanager.com/gtag/js?id=G-3LBRB691S4" />
       </head>
       <body
-        className={`${inter.variable} ${jetbrainsMono.variable} ${notoSerifDisplay.variable} ${beVietnamPro.variable} ${ibmPlexMono.variable} font-sans antialiased`}
+        className={`${inter.variable} ${jetbrainsMono.variable} ${notoSerifDisplay.variable} ${beVietnamPro.variable} ${ibmPlexMono.variable} ${fraunces.variable} font-sans antialiased`}
         style={{ background: "var(--bg-app)", color: "var(--text-primary)" }}
       >
         {/* Inline <script> tags live at the top of <body>, not in <head>:

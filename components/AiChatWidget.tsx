@@ -11,7 +11,7 @@
  */
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { X, Send, Bot, Sparkles, User, RefreshCw, Phone, Calendar, PhoneCall } from 'lucide-react';
+import { X, Send, Bot, Sparkles, User, RefreshCw, Phone, Calendar, PhoneCall, Mic, Check } from 'lucide-react';
 import { useSocket } from '../services/websocket';
 import { useTranslation } from '../services/i18n';
 import { MessageBubble } from './ChatUI';
@@ -198,6 +198,15 @@ export function AiChatWidget({ isOpen, onClose, initialQuery }: AiChatWidgetProp
 
     const messagesEndRef = useRef<HTMLDivElement>(null);
     const inputRef = useRef<HTMLTextAreaElement>(null);
+
+    //  Voice input (client-side only: Web Speech API, no backend) 
+    const [isRecording, setIsRecording] = useState(false);
+    const [recordSeconds, setRecordSeconds] = useState(0);
+    const [waveformPoints, setWaveformPoints] = useState("0,12 12,12 24,12 36,12 48,12 60,12 72,12 84,12 96,12 108,12");
+    const [voiceSupported] = useState<boolean>(() => typeof window !== "undefined" && !!((window as any).SpeechRecognition || (window as any).webkitSpeechRecognition));
+    const recognitionRef = useRef<any>(null);
+    const recordTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+    const voiceTranscriptRef = useRef("");
     const autoReplyTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
     // ── Restore session ──
@@ -266,7 +275,57 @@ export function AiChatWidget({ isOpen, onClose, initialQuery }: AiChatWidgetProp
         };
         socket.on(CHAT_SOCKET_EVENTS.receiveMessage, onMsg);
         socket.on(CHAT_SOCKET_EVENTS.aiModeChanged, onMode);
-        return () => {
+        const formatRecTime = (sec: number) => `${String(Math.floor(sec / 60)).padStart(2, "0")}:${String(sec % 60).padStart(2, "0")}`;
+
+    const stopRecordingInternal = useCallback(() => {
+      if (recognitionRef.current) {
+        try { recognitionRef.current.stop(); } catch {}
+        recognitionRef.current = null;
+      }
+      if (recordTimerRef.current) {
+        clearInterval(recordTimerRef.current);
+        recordTimerRef.current = null;
+      }
+      setIsRecording(false);
+      setRecordSeconds(0);
+    }, []);
+
+    const startRecording = useCallback(() => {
+      const SR: any = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+      if (!SR) return;
+      voiceTranscriptRef.current = "";
+      const recognition = new SR();
+      recognition.lang = language === "en" ? "en-US" : "vi-VN";
+      recognition.continuous = true;
+      recognition.interimResults = true;
+      recognition.onresult = (e: any) => {
+        let text = "";
+        for (let i = 0; i < e.results.length; i++) text += e.results[i][0].transcript;
+        voiceTranscriptRef.current = text;
+      };
+      recognition.onerror = () => stopRecordingInternal();
+      recognitionRef.current = recognition;
+      try { recognition.start(); } catch { return; }
+      setIsRecording(true);
+      setRecordSeconds(0);
+      recordTimerRef.current = setInterval(() => {
+        setRecordSeconds(sec => sec + 1);
+        setWaveformPoints(Array.from({ length: 10 }, (_, i) => `${i * 12},${4 + Math.round(Math.random() * 16)}`).join(" "));
+      }, 1000);
+    }, [language, stopRecordingInternal]);
+
+    const cancelRecording = useCallback(() => {
+      voiceTranscriptRef.current = "";
+      stopRecordingInternal();
+    }, [stopRecordingInternal]);
+
+    const confirmRecording = useCallback(() => {
+      const text = voiceTranscriptRef.current.trim();
+      stopRecordingInternal();
+      if (text) handleSend(text);
+    }, [stopRecordingInternal, handleSend]);
+
+    return () => {
             socket.off(CHAT_SOCKET_EVENTS.receiveMessage, onMsg);
             socket.off(CHAT_SOCKET_EVENTS.aiModeChanged, onMode);
             socket.emit(CHAT_SOCKET_EVENTS.leaveRoom, leadId);
@@ -497,7 +556,7 @@ export function AiChatWidget({ isOpen, onClose, initialQuery }: AiChatWidgetProp
                     animate={{ opacity: 1, y: 0, scale: 1 }}
                     exit={{ opacity: 0, y: 24, scale: 0.95 }}
                     transition={{ type: 'spring', stiffness: 360, damping: 30 }}
-                    className="fixed bottom-24 md:bottom-28 right-4 md:right-6 z-[60] w-[calc(100vw-2rem)] max-w-sm rounded-2xl overflow-hidden shadow-2xl border border-[var(--glass-border)] flex flex-col"
+                    className="sgs-chat-v2 fixed bottom-24 md:bottom-28 right-4 md:right-6 z-[60] w-[calc(100vw-2rem)] max-w-sm rounded-2xl overflow-hidden shadow-2xl border border-[var(--cw-line,#EAE4D4)] flex flex-col"
                     style={{
                         height: '540px',
                         maxHeight: 'calc(100dvh - 14rem)',
@@ -507,7 +566,7 @@ export function AiChatWidget({ isOpen, onClose, initialQuery }: AiChatWidgetProp
                     {/* ── Header ── */}
                     <div
                         className="shrink-0 flex items-center justify-between px-4 py-3 text-white"
-                        style={{ background: 'linear-gradient(135deg, var(--sgs-primary-deep) 0%, var(--sgs-primary) 100%)' }}
+                        style={{ background: 'var(--cw-navy,#0B1D26)' }}
                     >
                         <div className="flex items-center gap-2.5 min-w-0">
                             {/* Avatar */}
@@ -519,7 +578,7 @@ export function AiChatWidget({ isOpen, onClose, initialQuery }: AiChatWidgetProp
                                 <span className="absolute -bottom-0.5 -right-0.5 w-3 h-3 bg-emerald-400 border-2 border-white rounded-full" />
                             </div>
                             <div className="min-w-0">
-                                <p className="font-bold text-sm leading-tight">SGS LAND AI</p>
+                                <p className="cw-name font-semibold text-[15px] leading-tight">SGS LAND AI</p>
                                 <p className="text-white/75 text-xs leading-tight">
                                     {isHumanMode ? t('livechat.agent_assisting') : t('livechat.ai_online')}
                                 </p>
@@ -594,7 +653,7 @@ export function AiChatWidget({ isOpen, onClose, initialQuery }: AiChatWidgetProp
                                 <button
                                     type="submit"
                                     className="w-full py-2.5 rounded-xl text-sm font-bold text-white transition-opacity hover:opacity-90 active:scale-95"
-                                    style={{ background: 'linear-gradient(135deg, var(--sgs-primary-deep), var(--sgs-primary))' }}
+                                    style={{ background: 'var(--cw-navy,#0B1D26)' }}
                                 >
                                     {t('livechat.start_chat')}
                                 </button>
@@ -609,7 +668,7 @@ export function AiChatWidget({ isOpen, onClose, initialQuery }: AiChatWidgetProp
                         /* Chat view */
                         <>
                             {/* Messages */}
-                            <div className="flex-1 overflow-y-auto no-scrollbar p-3 space-y-3 bg-[var(--glass-surface)]/50">
+                            <div className="flex-1 overflow-y-auto no-scrollbar p-3 space-y-3 bg-[var(--cw-parchment,#F5F1E6)]">
                                 {/* Mode notice banner */}
                                 {modeNotice && (
                                     <div className="flex justify-center py-0.5">
@@ -639,7 +698,7 @@ export function AiChatWidget({ isOpen, onClose, initialQuery }: AiChatWidgetProp
                                                     key={qr.labelKey}
                                                     type="button"
                                                     onClick={() => handleSend(t(qr.msgKey))}
-                                                    className="text-xs px-3 py-1.5 rounded-full border border-sgs-border bg-sgs-champagne text-sgs-primary hover:bg-sgs-champagne transition-colors font-medium whitespace-nowrap"
+                                                    className="text-xs px-3 py-1.5 rounded-full border border-[var(--cw-line,#EAE4D4)] bg-[var(--cw-paper,#FFFFFF)] text-[var(--cw-ink,#26221C)] hover:border-[var(--cw-gold,#C6923D)] transition-colors font-medium whitespace-nowrap"
                                                 >
                                                     {t(qr.labelKey)}
                                                 </button>
@@ -753,7 +812,7 @@ export function AiChatWidget({ isOpen, onClose, initialQuery }: AiChatWidgetProp
                                                         type="submit"
                                                         disabled={captureSubmitting || !captureData.phone.trim()}
                                                         className="w-full py-2.5 rounded-xl text-sm font-bold text-white transition-all hover:opacity-90 active:scale-95 disabled:opacity-50"
-                                                        style={{ background: 'linear-gradient(135deg, var(--sgs-primary-deep), var(--sgs-primary))' }}
+                                                        style={{ background: 'var(--cw-navy,#0B1D26)' }}
                                                     >
                                                         {captureSubmitting ? t('livechat.sending') : (
                                                             captureMode === 'ESCALATION' ? t('livechat.connect_agent') : t('livechat.send_callback')
@@ -806,11 +865,28 @@ export function AiChatWidget({ isOpen, onClose, initialQuery }: AiChatWidgetProp
                                     {/* User avatar */}
                                     <div
                                         className="w-7 h-7 rounded-full shrink-0 flex items-center justify-center text-white text-xs font-bold shadow-sm mb-1"
-                                        style={{ background: 'linear-gradient(135deg, var(--sgs-hero-deep), var(--sgs-primary-deep))' }}
+                                        style={{ background: 'var(--cw-navy,#0B1D26)' }}
                                     >
                                         {userInitial}
                                     </div>
-                                    <div className="flex-1 flex items-end gap-2 bg-[var(--glass-surface)] p-2 rounded-xl border border-[var(--glass-border)] focus-within:border-sgs-primary focus-within:ring-2 focus-within:ring-sgs-primary/15 transition-all">
+                                    <div className={`flex-1 flex items-end gap-2 p-2 rounded-xl border transition-all ${isRecording ? "border-transparent" : "bg-[var(--cw-paper,#FFFFFF)] border-[var(--cw-line,#EAE4D4)] focus-within:border-[var(--cw-navy,#0B1D26)] focus-within:ring-2 focus-within:ring-[var(--cw-navy,#0B1D26)]/10"}`} style={isRecording ? { background: "var(--cw-navy,#0B1D26)" } : undefined}>
+                  {isRecording && (
+                    <>
+                      <span className="w-2.5 h-2.5 rounded-full shrink-0 cw-rec-dot mb-1.5 ml-1" style={{ background: "var(--cw-rec,#E4685A)" }} />
+                      <svg viewBox="0 0 120 20" className="flex-1 h-8" preserveAspectRatio="none">
+                        <polyline points={waveformPoints} fill="none" stroke="var(--cw-gold,#C6923D)" strokeWidth="1.5" />
+                      </svg>
+                      <span className="cw-mono text-xs text-white/80 tabular-nums shrink-0 mb-1.5">{formatRecTime(recordSeconds)}</span>
+                      <button type="button" onClick={cancelRecording} aria-label="Hủy ghi âm" className="w-8 h-8 rounded-full flex items-center justify-center text-white/70 hover:text-white shrink-0 transition-colors">
+                        <X className="w-4 h-4" />
+                      </button>
+                      <button type="button" onClick={confirmRecording} aria-label="Gửi ghi âm" className="w-8 h-8 rounded-full flex items-center justify-center shrink-0 transition-transform active:scale-95" style={{ background: "var(--cw-gold,#C6923D)" }}>
+                        <Check className="w-4 h-4 text-white" />
+                      </button>
+                    </>
+                  )}
+                  {!isRecording && (
+                    <>
                                         <textarea
                                             ref={inputRef}
                                             value={input}
@@ -823,19 +899,32 @@ export function AiChatWidget({ isOpen, onClose, initialQuery }: AiChatWidgetProp
                                             }}
                                             placeholder={t('livechat.input_placeholder')}
                                             rows={1}
-                                            className="flex-1 bg-transparent border-none text-[16px] md:text-sm outline-none max-h-24 min-h-[36px] py-1.5 px-2 resize-none placeholder:text-[var(--text-muted)] no-scrollbar"
+                                            className="flex-1 bg-transparent border-none text-[16px] md:text-sm outline-none max-h-24 min-h-[36px] py-1.5 px-2 resize-none placeholder:text-[var(--cw-ink-dim,#8A8474)] no-scrollbar"
                                         />
+                  {voiceSupported && !isRecording && (
+                    <button
+                      type="button"
+                      onClick={startRecording}
+                      className="w-9 h-9 rounded-lg flex items-center justify-center text-[var(--cw-ink-dim,#8A8474)] hover:text-[var(--cw-navy,#0B1D26)] shrink-0 transition-colors"
+                      aria-label="Ghi âm giọng nói"
+                    >
+                      <Mic className="w-4 h-4" />
+                    </button>
+                  )}
                                         <button
                                             type="button"
                                             onClick={() => handleSend()}
                                             disabled={!input.trim() || isThinking}
                                             className="w-9 h-9 rounded-lg flex items-center justify-center text-white shrink-0 disabled:opacity-40 transition-all active:scale-95"
-                                            style={{ background: 'linear-gradient(135deg, var(--sgs-primary-deep), var(--sgs-primary))' }}
+                                            style={{ background: 'var(--cw-navy,#0B1D26)' }}
                                             aria-label="Gửi"
                                         >
                                             <Send className="w-4 h-4" />
                                         </button>
-                                    </div>
+                                    
+                    </>
+                  )}
+                </div>
                                 </div>
                                 <p className="text-center text-[10px] text-slate-400 mt-2 font-medium">
                                     {t('livechat.powered_by')} <span className="font-bold text-[var(--text-tertiary)]">SGS Land AI</span>

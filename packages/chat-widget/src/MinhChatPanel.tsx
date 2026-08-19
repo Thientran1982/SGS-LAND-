@@ -4,7 +4,7 @@
  * Dung chung cho trang /livechat va cho bubble noi (MinhChatWidget).
  */
 import React, { useCallback, useEffect, useRef, useState } from "react";
-import { Bot, Headset, Loader2, RefreshCw, Send } from "lucide-react";
+import { Bot, Headset, Loader2, RefreshCw, Send, Mic, Check, X } from "lucide-react";
 import { createMinhSession } from "./core/minhSession";
 import type { MinhSession, MinhThreadStatus } from "./core/minhSession";
 import type { ChatMessage } from "./core/types";
@@ -28,34 +28,34 @@ const CSS = (v: string, f: string) => "var(" + v + ", " + f + ")";
 
 /** Dung design token cua site (globals.css) de hop ca light va dark mode. */
 const S: Record<string, React.CSSProperties> = {
-  panel: { background: CSS("--bg-surface", "#ffffff"), borderColor: CSS("--border-default", "#E4E1D8") },
-  header: { background: CSS("--primary-subtle", "#E8EEF5"), borderColor: CSS("--border-default", "#E4E1D8") },
-  brand: { background: CSS("--primary-600", "#1B3A5C") },
-  title: { color: CSS("--text-primary", "#16202B") },
-  sub: { color: CSS("--text-secondary", "#475569") },
-  muted: { color: CSS("--text-tertiary", "#94A3B8") },
+  panel: { background: CSS("--cw-parchment", "#F5F1E6"), borderColor: CSS("--cw-line", "#EAE4D4"), fontFamily: "var(--font-be-vietnam), system-ui, sans-serif" },
+  header: { background: CSS("--cw-navy", "#0B1D26"), borderColor: CSS("--cw-navy", "#0B1D26") },
+  brand: { background: CSS("--cw-gold", "#C6923D") },
+  title: { color: CSS("--cw-paper", "#FFFFFF"), fontFamily: "var(--font-fraunces), Georgia, serif", fontWeight: 600 },
+  sub: { color: "rgba(255,255,255,0.72)" },
+  muted: { color: CSS("--cw-ink-dim", "#8A8474"), fontFamily: "var(--font-ibm-plex-mono), monospace" },
   field: {
-    background: CSS("--bg-input", "#F8FAFC"),
-    borderColor: CSS("--border-strong", "#CBD5E1"),
-    color: CSS("--text-primary", "#16202B"),
+    background: CSS("--cw-paper", "#FFFFFF"),
+    borderColor: CSS("--cw-line", "#EAE4D4"),
+    color: CSS("--cw-ink", "#26221C"),
   },
-  primaryBtn: { background: CSS("--primary-600", "#1B3A5C"), color: CSS("--text-inverse", "#ffffff") },
+  primaryBtn: { background: CSS("--cw-navy", "#0B1D26"), color: CSS("--cw-paper", "#FFFFFF") },
   bubbleUser: {
-    background: CSS("--primary-600", "#1B3A5C"),
-    borderColor: CSS("--primary-600", "#1B3A5C"),
-    color: CSS("--text-inverse", "#ffffff"),
+    background: CSS("--cw-navy", "#0B1D26"),
+    borderColor: CSS("--cw-navy", "#0B1D26"),
+    color: CSS("--cw-paper", "#FFFFFF"),
   },
   bubbleAi: {
-    background: CSS("--bg-app", "#FAF8F4"),
-    borderColor: CSS("--border-default", "#E4E1D8"),
-    color: CSS("--text-primary", "#16202B"),
+    background: CSS("--cw-paper", "#FFFFFF"),
+    borderColor: CSS("--cw-line", "#EAE4D4"),
+    color: CSS("--cw-ink", "#26221C"),
   },
   chip: {
-    background: CSS("--primary-subtle", "#E8EEF5"),
-    borderColor: CSS("--border-default", "#E4E1D8"),
-    color: CSS("--primary-600", "#1B3A5C"),
+    background: CSS("--cw-paper", "#FFFFFF"),
+    borderColor: CSS("--cw-line", "#EAE4D4"),
+    color: CSS("--cw-ink", "#26221C"),
   },
-  bar: { borderColor: CSS("--border-default", "#E4E1D8") },
+  bar: { background: CSS("--cw-paper", "#FFFFFF"), borderColor: CSS("--cw-line", "#EAE4D4") },
 };
 
 export interface MinhChatPanelProps {
@@ -92,6 +92,15 @@ export function MinhChatPanel({
   const [error, setError] = useState("");
   const [lastFailed, setLastFailed] = useState("");
   const [mode, setMode] = useState<MinhThreadStatus>("AI_ACTIVE");
+
+  // Voice input (client-side only via Web Speech API, no new backend endpoint)
+  const [isRecording, setIsRecording] = useState(false);
+  const [recordSeconds, setRecordSeconds] = useState(0);
+  const [waveformPoints, setWaveformPoints] = useState("0,12 12,12 24,12 36,12 48,12 60,12 72,12 84,12 96,12 108,12");
+  const [voiceSupported] = useState<boolean>(() => typeof window !== "undefined" && !!((window as any).SpeechRecognition || (window as any).webkitSpeechRecognition));
+  const recognitionRef = useRef<any>(null);
+  const recordTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const voiceTranscriptRef = useRef("");
 
   const bottomRef = useRef<HTMLDivElement | null>(null);
 
@@ -224,6 +233,56 @@ export function MinhChatPanel({
       void send();
     }
   };
+
+  const formatRecTime = (sec: number) => `${String(Math.floor(sec / 60)).padStart(2, "0")}:${String(sec % 60).padStart(2, "0")}`;
+
+  const stopRecordingInternal = useCallback(() => {
+    if (recognitionRef.current) {
+      try { recognitionRef.current.stop(); } catch {}
+      recognitionRef.current = null;
+    }
+    if (recordTimerRef.current) {
+      clearInterval(recordTimerRef.current);
+      recordTimerRef.current = null;
+    }
+    setIsRecording(false);
+    setRecordSeconds(0);
+  }, []);
+
+  const startRecording = useCallback(() => {
+    const SR: any = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+    if (!SR) return;
+    voiceTranscriptRef.current = "";
+    const recognition = new SR();
+    recognition.lang = "vi-VN";
+    recognition.continuous = true;
+    recognition.interimResults = true;
+    recognition.onresult = (e: any) => {
+      let text = "";
+      for (let i = 0; i < e.results.length; i++) text += e.results[i][0].transcript;
+      voiceTranscriptRef.current = text;
+    };
+    recognition.onerror = () => stopRecordingInternal();
+    recognitionRef.current = recognition;
+    try { recognition.start(); } catch { return; }
+    setIsRecording(true);
+    setRecordSeconds(0);
+    recordTimerRef.current = setInterval(() => {
+      setRecordSeconds((sec) => sec + 1);
+      setWaveformPoints(Array.from({ length: 10 }, (_, i) => `${i * 12},${4 + Math.round(Math.random() * 16)}`).join(" "));
+    }, 1000);
+  }, [stopRecordingInternal]);
+
+  const cancelRecording = useCallback(() => {
+    voiceTranscriptRef.current = "";
+    stopRecordingInternal();
+  }, [stopRecordingInternal]);
+
+  const confirmRecording = useCallback(() => {
+    const text = voiceTranscriptRef.current.trim();
+    stopRecordingInternal();
+    if (text) void send(text);
+  }, [stopRecordingInternal, send]);
 
   const wrapper =
     "flex flex-col rounded-2xl border overflow-hidden " +
@@ -370,6 +429,22 @@ export function MinhChatPanel({
           ) : null}
 
           <div className="flex items-end gap-2 border-t p-3" style={S.bar}>
+            {isRecording ? (
+          <div className="flex-1 flex items-center gap-2 rounded-xl px-3 py-2" style={{ background: "var(--cw-navy, #0B1D26)" }}>
+            <span className="w-2.5 h-2.5 rounded-full shrink-0" style={{ background: "var(--cw-rec, #E4685A)", animation: "cwBlink 1s ease-in-out infinite" }} />
+            <svg viewBox="0 0 120 20" className="flex-1 h-6" preserveAspectRatio="none">
+              <polyline points={waveformPoints} fill="none" stroke="var(--cw-gold, #C6923D)" strokeWidth="1.5" />
+            </svg>
+            <span className="text-xs text-white/80 tabular-nums shrink-0" style={{ fontFamily: "var(--font-ibm-plex-mono), monospace" }}>{formatRecTime(recordSeconds)}</span>
+            <button type="button" onClick={cancelRecording} aria-label="Hủy ghi âm" className="inline-flex h-8 w-8 items-center justify-center rounded-full text-white/70 hover:text-white shrink-0 transition-colors">
+              <X className="w-4 h-4" />
+            </button>
+            <button type="button" onClick={confirmRecording} aria-label="Gửi ghi âm" className="inline-flex h-8 w-8 items-center justify-center rounded-full shrink-0" style={{ background: "var(--cw-gold, #C6923D)" }}>
+              <Check className="w-4 h-4 text-white" />
+            </button>
+          </div>
+        ) : (
+          <>
             <textarea
               value={input}
               onChange={(e) => setInput(e.target.value)}
@@ -380,6 +455,17 @@ export function MinhChatPanel({
               className="flex-1 resize-none rounded-xl border px-3 py-2 text-sm outline-none max-h-28"
               style={S.field}
             />
+            {voiceSupported && (
+              <button
+                type="button"
+                onClick={startRecording}
+                aria-label="Ghi âm giọng nói"
+                className="inline-flex h-10 w-10 items-center justify-center rounded-xl shrink-0 transition-colors"
+                style={{ color: "var(--cw-ink-dim, #8A8474)" }}
+              >
+                <Mic className="w-4 h-4" />
+              </button>
+            )}
             <button
               type="button"
               onClick={() => void send()}
@@ -390,6 +476,8 @@ export function MinhChatPanel({
             >
               <Send className="w-4 h-4" />
             </button>
+          </>
+        )}
           </div>
         </>
       )}
