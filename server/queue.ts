@@ -21,6 +21,7 @@ const inMemoryJobs: any[] = [];
 let inMemoryProcessor: ((job: any) => Promise<void>) | null = null;
 const MAX_IN_MEMORY_ATTEMPTS = 3;
 const IN_MEMORY_BACKOFF_MS = 2000;
+let outboundRecoveryTimer: NodeJS.Timeout | null = null;
 
 function stableEventKey(platform: string, payload: any, hint?: string): string {
   if (hint) return hint;
@@ -69,6 +70,16 @@ async function markWebhookProcessed(tenantId: string, platform: string, eventKey
     `UPDATE webhook_events
         SET status = 'PROCESSED', processed_at = NOW()
       WHERE platform = $1 AND event_key = $2`,
+    [platform, eventKey],
+  ));
+}
+
+async function releaseWebhookEvent(tenantId: string, platform: string, eventKey: string): Promise<void> {
+  const { withTenantContext } = await import('./db');
+  await withTenantContext(tenantId, client => client.query(
+    `UPDATE webhook_events
+        SET locked_at = NOW() - INTERVAL '11 minutes'
+      WHERE platform = $1 AND event_key = $2 AND status = 'PROCESSING'`,
     [platform, eventKey],
   ));
 }
@@ -208,7 +219,8 @@ async function triggerAutoReply(
   tenantId: string,
   lead: any,
   inboundText: string,
-  channel: 'ZALO' | 'FACEBOOK' | 'EMAIL'
+  channel: 'ZALO' | 'FACEBOOK' | 'EMAIL',
+  inboundEventId: string,
 ): Promise<void> {
   try {
     // 1. Kiểm tra thread_status — chỉ auto-reply khi AI_ACTIVE
@@ -241,8 +253,26 @@ async function triggerAutoReply(
       }
     } catch { }
     const { aiService } = await import('./ai');
+    const { runDurableAgentExecution } = await import('./services/durableAgentExecutionService');
     const t = (key: string) => key;
-    const aiResult = await aiService.processMessage(lead, inboundText, history, t, tenantId, 'vn', autoReplyFavorites);
+    const execution = await runDurableAgentExecution({
+      tenantId,
+      idempotencyKey: `${channel.toLowerCase()}:${inboundEventId}`,
+      sessionId: lead.id,
+      leadId: lead.id,
+      triggerSource: `${channel.toLowerCase()}-webhook`,
+      message: inboundText,
+      execute: () => aiService.processMessage(
+        lead,
+        inboundText,
+        history,
+        t,
+        tenantId,
+        'vn',
+        autoReplyFavorites,
+      ),
+    });
+    const aiResult = execution.result;
     if (!aiResult?.content) {
       logger.warn(`[AutoReply] AI không trả về nội dung cho lead ${lead.id}`);
       return;
@@ -276,28 +306,93 @@ async function triggerAutoReply(
         escalated: aiResult.escalated ?? false,
         intent: aiResult.intent,
         userMessage: inboundText?.slice(0, 300),
+        agentRunId: execution.runId,
+        traceId: execution.traceId,
+        needsVerification: execution.guardrail.requiresVerification,
       },
+      externalEventId: `agent:${execution.runId}`,
     });
-    // 5. Gui qua kenh thuc te (qua ChannelAdapter chung -- xem server/channels/)
+    // 5. Durable delivery claim. SENDING from an earlier process is treated as
+    // ambiguous and never resent automatically because providers do not expose
+    // a portable idempotency key.
+    const { agentOutboundRepository } = await import('./repositories/agentOutboundRepository');
+    const delivery = await agentOutboundRepository.createAndClaim({
+      tenantId,
+      executionId: execution.runId,
+      interactionId: aiInteraction.id,
+      leadId: lead.id,
+      channel,
+      content: aiResult.content,
+    });
     const adapter = getAdapter(channel);
-    if (adapter) {
-      const sendResult = await adapter.sendOutbound(tenantId, lead, aiResult.content);
-      if (!sendResult.success) logger.warn(`[AutoReply] Gui ${channel} that bai: ${sendResult.error}`);
-    } else {
-      logger.warn(`[AutoReply] Khong tim thay ChannelAdapter cho kenh ${channel}`);
+    if (delivery.state === 'BUSY') {
+      throw new Error(`OUTBOUND_DELIVERY_IN_PROGRESS:${delivery.id}`);
+    }
+    if (delivery.state === 'AMBIGUOUS' || delivery.state === 'FAILED') {
+      await interactionRepository.updateThreadAiMode(tenantId, lead.id, 'HUMAN_TAKEOVER');
+      io.to(`tenant:${tenantId}`).emit('escalate_to_human', {
+        leadId: lead.id,
+        reason: `Outbound ${channel} delivery requires manual verification (${delivery.state})`,
+      });
+      throw new Error(`OUTBOUND_DELIVERY_${delivery.state}:${delivery.id}`);
+    }
+    if (delivery.state === 'SEND') {
+      if (!adapter || !delivery.claimToken) {
+        const error = `Khong tim thay ChannelAdapter cho kenh ${channel}`;
+        if (delivery.claimToken) {
+          await agentOutboundRepository.markFailed({
+            tenantId,
+            deliveryId: delivery.id,
+            claimToken: delivery.claimToken,
+            error,
+          });
+        }
+        await interactionRepository.updateThreadAiMode(tenantId, lead.id, 'HUMAN_TAKEOVER');
+        throw new Error(error);
+      }
+      try {
+        const sendResult = await adapter.sendOutbound(tenantId, lead, aiResult.content);
+        if (!sendResult.success) {
+          await agentOutboundRepository.markFailed({
+            tenantId,
+            deliveryId: delivery.id,
+            claimToken: delivery.claimToken,
+            error: sendResult.error || 'Channel provider rejected outbound message',
+          });
+          await interactionRepository.updateThreadAiMode(tenantId, lead.id, 'HUMAN_TAKEOVER');
+          throw new Error(sendResult.error || `Gui ${channel} that bai`);
+        }
+        await agentOutboundRepository.markSent({
+          tenantId,
+          deliveryId: delivery.id,
+          claimToken: delivery.claimToken,
+          providerMessageId: sendResult.messageId,
+        });
+      } catch (error: any) {
+        await agentOutboundRepository.markFailed({
+          tenantId,
+          deliveryId: delivery.id,
+          claimToken: delivery.claimToken,
+          error: error?.message || String(error),
+        }).catch(() => {});
+        await interactionRepository.updateThreadAiMode(tenantId, lead.id, 'HUMAN_TAKEOVER');
+        throw error;
+      }
     }
     // 6. Phát socket event cho UI cập nhật realtime
-    io.to(lead.id).emit('receive_message', {
-      room: lead.id,
-      message: aiInteraction,
-      isAi: true,
-    });
-    io.to(`tenant:${tenantId}`).emit('new_inbound_message', {
-      leadId: lead.id,
-      message: aiInteraction,
-      source: channel,
-      isAi: true,
-    });
+    if (!execution.cached) {
+      io.to(lead.id).emit('receive_message', {
+        room: lead.id,
+        message: aiInteraction,
+        isAi: true,
+      });
+      io.to(`tenant:${tenantId}`).emit('new_inbound_message', {
+        leadId: lead.id,
+        message: aiInteraction,
+        source: channel,
+        isAi: true,
+      });
+    }
     logger.info(`[AutoReply] AI đã trả lời lead ${lead.id} qua ${channel} (confidence=${aiResult.confidence})`);
     // 7. Nếu AI đề xuất chuyển agent → cập nhật HUMAN_TAKEOVER
     if (aiResult.escalated) {
@@ -315,6 +410,25 @@ async function triggerAutoReply(
     }
   } catch (err: any) {
     logger.error(`[AutoReply] Lỗi khi tạo auto-reply cho lead ${lead.id} (${channel}):`, err);
+    throw err;
+  }
+}
+
+async function triggerWebhookAutoReply(
+  io: Server,
+  tenantId: string,
+  lead: any,
+  inboundText: string,
+  channel: 'ZALO' | 'FACEBOOK' | 'EMAIL',
+  inboundEventId: string,
+  platform: string,
+  eventKey: string,
+): Promise<void> {
+  try {
+    await triggerAutoReply(io, tenantId, lead, inboundText, channel, inboundEventId);
+  } catch (error) {
+    await releaseWebhookEvent(tenantId, platform, eventKey).catch(() => {});
+    throw error;
   }
 }
 // ---------------------------------------------------------------------------
@@ -473,8 +587,8 @@ export async function processWebhookJob(io: Server, job: any): Promise<void> {
         }
       })();
       // Auto-reply qua Zalo
-      triggerAutoReply(io, tenantId, lead, textContent, 'ZALO').catch((err) =>
-        logger.error('[Zalo] Lỗi triggerAutoReply:', err)
+      await triggerWebhookAutoReply(
+        io, tenantId, lead, textContent, 'ZALO', savedInteraction.id, 'zalo', eventKey,
       );
       await markWebhookProcessed(tenantId, 'zalo', eventKey);
     }
@@ -494,8 +608,8 @@ export async function processWebhookJob(io: Server, job: any): Promise<void> {
       io.to(lead.id).emit('receive_message', { room: lead.id, message: savedInteraction, isWebhook: true });
       io.to(`tenant:${tenantId}`).emit('new_inbound_message', { leadId: lead.id, message: savedInteraction, source: 'Zalo' });
       // Trả lời tự động khi nhận hình ảnh
-      triggerAutoReply(io, tenantId, lead, '[Khách gửi hình ảnh]', 'ZALO').catch((err) =>
-        logger.error('[Zalo] Lỗi triggerAutoReply (image):', err)
+      await triggerWebhookAutoReply(
+        io, tenantId, lead, '[Khách gửi hình ảnh]', 'ZALO', savedInteraction.id, 'zalo', eventKey,
       );
       await markWebhookProcessed(tenantId, 'zalo', eventKey);
     }
@@ -568,8 +682,8 @@ export async function processWebhookJob(io: Server, job: any): Promise<void> {
             }
           })();
           // Auto-reply qua Facebook Messenger
-          triggerAutoReply(io, tenantId, lead, messageText, 'FACEBOOK').catch((err) =>
-            logger.error('[Facebook] Lỗi triggerAutoReply:', err)
+          await triggerWebhookAutoReply(
+            io, tenantId, lead, messageText, 'FACEBOOK', savedInteraction.id, 'facebook', eventKey,
           );
           await markWebhookProcessed(tenantId, 'facebook', eventKey);
         }
@@ -592,8 +706,15 @@ export async function processWebhookJob(io: Server, job: any): Promise<void> {
           io.to(lead.id).emit('receive_message', { room: lead.id, message: savedInteraction, isWebhook: true });
           io.to(`tenant:${tenantId}`).emit('new_inbound_message', { leadId: lead.id, message: savedInteraction, source: 'Facebook' });
           // Auto-reply cho file/ảnh
-          triggerAutoReply(io, tenantId, lead, `[Khách gửi ${attachment.type || 'file'}]`, 'FACEBOOK').catch((err) =>
-            logger.error('[Facebook] Lỗi triggerAutoReply (attachment):', err)
+          await triggerWebhookAutoReply(
+            io,
+            tenantId,
+            lead,
+            `[Khách gửi ${attachment.type || 'file'}]`,
+            'FACEBOOK',
+            savedInteraction.id,
+            'facebook',
+            eventKey,
           );
           await markWebhookProcessed(tenantId, 'facebook', eventKey);
         }
@@ -602,7 +723,7 @@ export async function processWebhookJob(io: Server, job: any): Promise<void> {
           const lead = await upsertLeadBySocialId(tenantId, 'facebook', senderId);
           const { interactionRepository } = await import('./repositories/interactionRepository');
           const pbContent = postback.title || postback.payload || '[Postback]';
-          await interactionRepository.create(tenantId, {
+          const savedInteraction = await interactionRepository.create(tenantId, {
             leadId: lead.id,
             channel: 'FACEBOOK',
             direction: 'INBOUND',
@@ -612,8 +733,8 @@ export async function processWebhookJob(io: Server, job: any): Promise<void> {
             metadata: { platform: 'facebook', senderId, pageId, postbackPayload: postback.payload },
           });
           // Auto-reply cho postback
-          triggerAutoReply(io, tenantId, lead, pbContent, 'FACEBOOK').catch((err) =>
-            logger.error('[Facebook] Lỗi triggerAutoReply (postback):', err)
+          await triggerWebhookAutoReply(
+            io, tenantId, lead, pbContent, 'FACEBOOK', savedInteraction.id, 'facebook', eventKey,
           );
           await markWebhookProcessed(tenantId, 'facebook', eventKey);
         }
@@ -696,12 +817,20 @@ export async function processWebhookJob(io: Server, job: any): Promise<void> {
       io.to(`tenant:${tenantId}`).emit('new_inbound_message', { leadId: lead.id, message: savedInteraction, source: 'Email' });
       // Auto-reply qua Email (Brevo)
       const emailBody = subject ? `${body || ''}` : (body || '');
-      triggerAutoReply(io, tenantId, lead, emailBody || subject || content, 'EMAIL').catch((err) =>
-        logger.error('[Email] Lỗi triggerAutoReply:', err)
+      await triggerWebhookAutoReply(
+        io,
+        tenantId,
+        lead,
+        emailBody || subject || content,
+        'EMAIL',
+        savedInteraction.id,
+        'email',
+        eventKey,
       );
       await markWebhookProcessed(tenantId, 'email', eventKey);
     } catch (err) {
       logger.error('[Email] Không thể tạo interaction:', err);
+      throw err;
     }
   }
 }
@@ -715,8 +844,41 @@ export function setupWebhookWorker(io: Server) {
     const job = inMemoryJobs.shift();
     runWithRetry(job);
   }
+  if (!outboundRecoveryTimer) {
+    const recover = async () => {
+      try {
+        const { agentOutboundRepository } = await import('./repositories/agentOutboundRepository');
+        const { interactionRepository } = await import('./repositories/interactionRepository');
+        const stale = await agentOutboundRepository.recoverStaleSending();
+        for (const delivery of stale) {
+          await interactionRepository.updateThreadAiMode(
+            delivery.tenantId,
+            delivery.leadId,
+            'HUMAN_TAKEOVER',
+          );
+          io.to(`tenant:${delivery.tenantId}`).emit('escalate_to_human', {
+            leadId: delivery.leadId,
+            reason: `Outbound delivery ${delivery.deliveryId} expired in SENDING; manual verification required`,
+          });
+        }
+        if (stale.length > 0) {
+          logger.warn(`[AutoReply] ${stale.length} stale outbound delivery claim(s) moved to UNKNOWN`);
+        }
+      } catch (error) {
+        logger.error('[AutoReply] Outbound recovery scan failed:', error);
+      }
+    };
+    outboundRecoveryTimer = setInterval(recover, 60_000);
+    outboundRecoveryTimer.unref?.();
+    void recover();
+  }
   return {
     on: () => {},
-    close: async () => {},
+    close: async () => {
+      if (outboundRecoveryTimer) {
+        clearInterval(outboundRecoveryTimer);
+        outboundRecoveryTimer = null;
+      }
+    },
   };
 }

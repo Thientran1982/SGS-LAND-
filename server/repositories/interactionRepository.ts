@@ -34,6 +34,30 @@ export class InteractionRepository extends BaseRepository {
     });
   }
 
+  async findInboundForAgentRun(
+    tenantId: string,
+    leadId: string,
+    options: { interactionId?: string; content?: string },
+  ): Promise<any | null> {
+    return this.withTenant(tenantId, async client => {
+      const result = options.interactionId
+        ? await client.query(
+            `SELECT * FROM interactions
+              WHERE id = $1 AND lead_id = $2 AND direction = 'INBOUND'
+              LIMIT 1`,
+            [options.interactionId, leadId],
+          )
+        : await client.query(
+            `SELECT * FROM interactions
+              WHERE lead_id = $1 AND direction = 'INBOUND' AND content = $2
+              ORDER BY timestamp DESC
+              LIMIT 1`,
+            [leadId, options.content || ''],
+          );
+      return result.rows[0] ? this.rowToEntity(result.rows[0]) : null;
+    });
+  }
+
   async create(tenantId: string, data: {
     leadId: string;
     channel: string;

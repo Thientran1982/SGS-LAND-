@@ -2553,7 +2553,7 @@ app.get('/api/public/listings/:slugId', apiRateLimit, async (req: express.Reques
   // Public LiveChat: send a message (inbound from visitor or outbound welcome/system) — no auth, rate limited
   app.post('/api/public/livechat/message', livechatRateLimit, async (req: express.Request, res: express.Response) => {
     try {
-      const { leadId, content, direction, metadata } = req.body;
+      const { leadId, content, direction, metadata, idempotencyKey } = req.body;
       if (!leadId || !String(content || '').trim()) {
         return res.status(400).json({ error: 'leadId và content bắt buộc' }) as any;
       }
@@ -2566,7 +2566,10 @@ app.get('/api/public/listings/:slugId', apiRateLimit, async (req: express.Reques
         direction: resolvedDirection,
         type: 'TEXT',
         content: String(content).trim().slice(0, 2000),
-        metadata: metadata || {}
+        metadata: metadata || {},
+        externalEventId: idempotencyKey
+          ? `web-inbound:${String(idempotencyKey).slice(0, 160)}`
+          : undefined,
       });
       // Push real-time updates to authenticated agents in Inbox
       // 1. Active chat pane (anyone currently viewing this lead's conversation)
@@ -2583,7 +2586,7 @@ app.get('/api/public/listings/:slugId', apiRateLimit, async (req: express.Reques
   // Public AI endpoint: LiveChat widget AI reply (no auth required — uses rate limiting only)
   app.post('/api/public/ai/livechat', livechatRateLimit, aiRateLimit, async (req: express.Request, res: express.Response) => {
     try {
-      const { leadId, message, lang } = req.body;
+      const { leadId, message, lang, inboundInteractionId } = req.body;
       if (!leadId || !String(message || '').trim()) {
         return res.status(400).json({ error: 'leadId và message là bắt buộc' }) as any;
       }
@@ -2604,13 +2607,42 @@ app.get('/api/public/listings/:slugId', apiRateLimit, async (req: express.Reques
       // This avoids persisting a duplicate INBOUND record.
       const history = await interactionRepository.findByLead(PUBLIC_TENANT, leadId);
       const historyWithLatest = history; // includes the already-saved visitor message
+      const inboundInteraction = await interactionRepository.findInboundForAgentRun(
+        PUBLIC_TENANT,
+        leadId,
+        inboundInteractionId
+          ? { interactionId: String(inboundInteractionId) }
+          : { content: msgContent },
+      );
+      if (!inboundInteraction?.id) {
+        return res.status(409).json({
+          error: 'Tin nhắn đến chưa được lưu. Vui lòng gửi lại tin nhắn.',
+        }) as any;
+      }
 
       const { aiService, detectMessageLang } = await import('./server/ai');
+      const { runDurableAgentExecution } = await import('./server/services/durableAgentExecutionService');
       // Reply in the language the customer actually typed (Vietnamese without diacritics too),
       // not just the UI language the widget sent.
       const replyLang = detectMessageLang(msgContent, lang || 'vn');
       const t = serverT(replyLang);
-      const result = await aiService.processMessage(lead, msgContent, historyWithLatest, t, PUBLIC_TENANT, replyLang);
+      const execution = await runDurableAgentExecution({
+        tenantId: PUBLIC_TENANT,
+        idempotencyKey: `web:${inboundInteraction.id}`,
+        sessionId: leadId,
+        leadId,
+        triggerSource: 'public-livechat',
+        message: msgContent,
+        execute: () => aiService.processMessage(
+          lead,
+          msgContent,
+          historyWithLatest,
+          t,
+          PUBLIC_TENANT,
+          replyLang,
+        ),
+      });
+      const result = execution.result;
 
       const aiReply = await interactionRepository.create(PUBLIC_TENANT, {
         leadId,
@@ -2626,11 +2658,24 @@ app.get('/api/public/listings/:slugId', apiRateLimit, async (req: express.Reques
           aiConfidence: result.confidence,
           escalated: result.escalated ?? false,
           ...(result.isSysMsg ? { isSysMsg: true } : {}),
+          agentRunId: execution.runId,
+          traceId: execution.traceId,
+          needsVerification: execution.guardrail.requiresVerification,
         },
+        externalEventId: `agent:${execution.runId}`,
       });
-      // Notify Inbox of the AI reply so agents see the outgoing response too
-      broadcastIo?.to(leadId).emit('receive_message', { room: leadId, message: aiReply });
-      broadcastIo?.to(`tenant:${PUBLIC_TENANT}`).emit('new_inbound_message', { leadId, message: aiReply });
+      // A cached execution is a retry: return the same interaction without duplicate socket fan-out.
+      if (!execution.cached) {
+        broadcastIo?.to(leadId).emit('receive_message', { room: leadId, message: aiReply });
+        broadcastIo?.to(`tenant:${PUBLIC_TENANT}`).emit('new_inbound_message', { leadId, message: aiReply });
+      }
+      if (result.escalated) {
+        await interactionRepository.updateThreadAiMode(PUBLIC_TENANT, leadId, 'HUMAN_TAKEOVER');
+        broadcastIo?.to(`tenant:${PUBLIC_TENANT}`).emit('escalate_to_human', {
+          leadId,
+          reason: 'Independent agent guardrail requested human review',
+        });
+      }
 
       res.json({ reply: aiReply, artifact: result.artifact, suggestedAction: result.suggestedAction });
     } catch (error) {

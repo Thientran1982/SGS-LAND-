@@ -11,7 +11,7 @@
 import { CHAT_SOCKET_EVENTS } from "./endpoints";
 import { ChatTransportError } from "./types";
 import type { ChatMessage, ChatTransport } from "./types";
-import { createMinhClient } from "./minhTransport";
+import { createClientRequestId, createMinhClient } from "./minhTransport";
 
 export const MINH_LEAD_STORAGE_KEY = "livechat_lead_id";
 export const MINH_NAME_STORAGE_KEY = "livechat_lead_name";
@@ -131,12 +131,13 @@ export function createMinhSession(options: MinhSessionOptions = {}): MinhSession
   async function ask(text: string, lang?: string) {
     if (!leadId) throw new ChatTransportError("missing_lead_id", { code: "NO_LEAD" });
     let saved: any = null;
+    const requestId = createClientRequestId();
     try {
-      saved = await client.sendMessage(leadId, text, "INBOUND");
+      saved = await client.sendMessage(leadId, text, "INBOUND", {}, requestId);
     } catch {
       saved = null;
     }
-    const data: any = await client.ask(leadId, text, lang);
+    const data: any = await client.ask(leadId, text, lang, saved?.id);
     const userMsg =
       interactionToMessage(saved) ||
       ({ id: "local-" + Date.now(), role: "user", content: text, ts: Date.now() } as ChatMessage);

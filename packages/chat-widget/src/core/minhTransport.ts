@@ -18,6 +18,15 @@ async function postJson<T>(path: string, body: any, apiBase?: string, errCode = 
   return (await res.json()) as T;
 }
 
+function createClientRequestId(): string {
+  try {
+    if (typeof crypto !== "undefined" && typeof crypto.randomUUID === "function") {
+      return crypto.randomUUID();
+    }
+  } catch {}
+  return `msg-${Date.now()}-${Math.random().toString(36).slice(2, 12)}`;
+}
+
 /**
  * Client REST cho agent Minh (LangGraph) qua cac route public cua Express:
  * server.ts mount /api/public/leads, /api/public/livechat/*, /api/public/ai/livechat.
@@ -33,10 +42,16 @@ export function createMinhClient(apiBase?: string) {
         "create_lead_failed",
       );
     },
-    async sendMessage(leadId: string, content: string, direction: "INBOUND" | "OUTBOUND" = "INBOUND", metadata?: object) {
+    async sendMessage(
+      leadId: string,
+      content: string,
+      direction: "INBOUND" | "OUTBOUND" = "INBOUND",
+      metadata?: object,
+      idempotencyKey?: string,
+    ) {
       const data = await postJson<{ message: any }>(
         CHAT_ENDPOINTS.livechatMessage,
-        { leadId, content, direction, metadata: metadata || {} },
+        { leadId, content, direction, metadata: metadata || {}, idempotencyKey },
         apiBase,
         "send_failed",
       );
@@ -76,8 +91,13 @@ export function createMinhClient(apiBase?: string) {
       );
     },
     /** POST /api/public/ai/livechat -> { reply, artifact?, suggestedAction?, noReply? } */
-    ask(leadId: string, message: string, lang?: string) {
-      return postJson<any>(CHAT_ENDPOINTS.minhReply, { leadId, message, lang }, apiBase, "ai_failed");
+    ask(leadId: string, message: string, lang?: string, inboundInteractionId?: string) {
+      return postJson<any>(
+        CHAT_ENDPOINTS.minhReply,
+        { leadId, message, lang, inboundInteractionId },
+        apiBase,
+        "ai_failed",
+      );
     },
   };
 }
@@ -92,9 +112,13 @@ export function createMinhTransport(getLeadId: () => string | null, apiBase?: st
     async send(input) {
       const leadId = getLeadId();
       if (!leadId) throw new ChatTransportError("missing_lead_id", { code: "NO_LEAD" });
-      const data = await client.ask(leadId, input.text, input.lang);
+      const requestId = createClientRequestId();
+      const inbound = await client.sendMessage(leadId, input.text, "INBOUND", {}, requestId);
+      const data = await client.ask(leadId, input.text, input.lang, inbound?.id);
       const reply = typeof data?.reply === "string" ? data.reply : data?.reply?.content || "";
       return { reply, raw: data };
     },
   };
 }
+
+export { createClientRequestId };
