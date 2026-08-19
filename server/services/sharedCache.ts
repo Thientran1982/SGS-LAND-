@@ -1,7 +1,7 @@
 import { Redis } from '@upstash/redis';
 import { logger } from '../middleware/logger';
 
-const PREFIX = 'sgs:cache:v1:';
+const PREFIX = 'sgs:cache:v2:';
 const MAX_LOCAL_ENTRIES = 1000;
 const local = new Map<string, { value: unknown; expiresAt: number }>();
 let redis: Redis | null | undefined;
@@ -9,6 +9,9 @@ let redisFailures = 0;
 let hits = 0;
 let misses = 0;
 let fallbackReads = 0;
+let fallbackWrites = 0;
+let invalidations = 0;
+let ttlWrites = 0;
 
 function getRedis(): Redis | null {
   if (redis !== undefined) return redis;
@@ -67,12 +70,14 @@ export async function sharedCacheGet<T>(key: string): Promise<T | null> {
 export async function sharedCacheSet(key: string, value: unknown, ttlMs: number): Promise<void> {
   const namespaced = fullKey(key);
   localSet(namespaced, value, ttlMs);
+  ttlWrites++;
   const client = getRedis();
   if (!client) return;
   try {
     await client.set(namespaced, value, { ex: Math.max(1, Math.ceil(ttlMs / 1000)) });
   } catch (error: any) {
     redisFailures++;
+    fallbackWrites++;
     logger.warn(`[SharedCache] Redis SET fallback: ${error?.message || error}`);
   }
 }
@@ -82,14 +87,17 @@ export async function sharedCacheDelete(key: string): Promise<void> {
   local.delete(namespaced);
   const client = getRedis();
   if (!client) return;
-  try { await client.del(namespaced); } catch (error: any) {
+  try { await client.del(namespaced); invalidations++; } catch (error: any) {
     redisFailures++;
     logger.warn(`[SharedCache] Redis DEL fallback: ${error?.message || error}`);
   }
 }
 
 export async function sharedCacheDeleteByPrefix(prefix: string): Promise<number> {
-  for (const key of local.keys()) if (key.startsWith(fullKey(prefix))) local.delete(key);
+  for (const key of Array.from(local.keys())) if (key.startsWith(fullKey(prefix))) {
+    local.delete(key);
+    invalidations++;
+  }
   const client = getRedis();
   if (!client) return 0;
   let cursor = 0;
@@ -100,7 +108,8 @@ export async function sharedCacheDeleteByPrefix(prefix: string): Promise<number>
       cursor = Number(result[0]);
       const keys = result[1] as string[];
       if (keys.length) {
-        deleted += await client.del(...keys);
+         deleted += await client.del(...keys);
+         invalidations += keys.length;
       }
     } while (cursor !== 0);
   } catch (error: any) {
@@ -112,8 +121,13 @@ export async function sharedCacheDeleteByPrefix(prefix: string): Promise<number>
 
 export async function sharedCacheDeleteByPattern(pattern: string): Promise<number> {
   const fullPattern = `${PREFIX}${pattern}`;
-  for (const key of local.keys()) {
-    if (key.startsWith(PREFIX) && key.slice(PREFIX.length).includes(pattern.replace(/\*/g, ''))) local.delete(key);
+  const glob = new RegExp(`^${pattern.split('*').map(part => part.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')).join('.*')}$`);
+  for (const key of Array.from(local.keys())) {
+    const raw = key.slice(PREFIX.length);
+    if (key.startsWith(PREFIX) && glob.test(raw)) {
+      local.delete(key);
+      invalidations++;
+    }
   }
   const client = getRedis();
   if (!client) return 0;
@@ -158,5 +172,8 @@ export function sharedCacheKey(parts: {
 }
 
 export function sharedCacheStats() {
-  return { localEntries: local.size, hits, misses, fallbackReads, redisFailures, redisConfigured: !!getRedis() };
+  return {
+    localEntries: local.size, hits, misses, fallbackReads, fallbackWrites,
+    invalidations, ttlWrites, redisFailures, redisConfigured: !!getRedis(),
+  };
 }

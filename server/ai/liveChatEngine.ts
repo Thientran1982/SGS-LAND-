@@ -30,6 +30,7 @@ import {
     sharedCacheDeleteByPrefix,
     sharedCacheGet,
     sharedCacheSet,
+  sharedCacheKey,
     sharedCacheStats,
 } from '../services/sharedCache';
 
@@ -110,13 +111,28 @@ const KB_TTL_DEFAULT  = 30 * 60 * 1000; // 30 min
 const KB_TTL_SHORT    =  5 * 60 * 1000; //  5 min (listings — more volatile)
 
 async function kbGet(key: string): Promise<any | null> {
-    return sharedCacheGet(key);
+    return sharedCacheGet(sharedKbKey(key));
 }
 async function kbSet(key: string, data: any, ttlMs = KB_TTL_DEFAULT): Promise<void> {
-    await sharedCacheSet(key, data, ttlMs);
+    await sharedCacheSet(sharedKbKey(key), data, ttlMs);
 }
 async function kbClear(prefix?: string): Promise<number> {
-    return sharedCacheDeleteByPrefix(prefix || '');
+    const raw = prefix || '';
+    const match = raw.match(/^[^:]+:([^:]+):?/);
+    const tenantId = match?.[1];
+    return tenantId
+        ? sharedCacheDeleteByPrefix(`${tenantId}:ai-kb`)
+        : 0;
+}
+function sharedKbKey(key: string): string {
+    const parts = String(key).split(':');
+    const tenantId = parts.length > 1 ? parts[1] : DEFAULT_TENANT_ID;
+    return sharedCacheKey({
+        tenantId,
+        namespace: 'ai-kb',
+        version: 2,
+        dimensions: { cacheKey: key },
+    });
 }
 
 // ---------------------------------------------------------------------------

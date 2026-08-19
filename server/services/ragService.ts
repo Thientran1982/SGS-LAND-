@@ -7,6 +7,8 @@
  *  3. GENERATION: Context chunks + user query → Gemini → câu trả lời có căn cứ
  */
 import { pool } from '../db';
+import { sharedCacheGet, sharedCacheSet, sharedCacheDeleteByPrefix, sharedCacheKey } from './sharedCache';
+import { createHash } from 'crypto';
 // ── Constants ──────────────────────────────────────────────────────────────
 const EMBEDDING_MODEL   = 'models/gemini-embedding-001'; // 3072 dims, reduced to 768
 const EMBEDDING_DIMS    = 768;                           // outputDimensionality
@@ -16,8 +18,16 @@ const DEFAULT_TOP_K     = 5;     // số chunk trả về khi search
 const MIN_SIMILARITY    = 0.35;  // loại chunk quá xa
 // ── Embedding cache (in-memory, TTL 10 min) ───────────────────────────────
 const embedCache = new Map<string, { vec: number[]; exp: number }>();
-async function embedText(text: string): Promise<number[]> {
-  const key = text.slice(0, 200);
+async function embedText(text: string, tenantId: string): Promise<number[]> {
+  const contentHash = createHash('sha256').update(text.slice(0, 10000)).digest('hex');
+  const key = sharedCacheKey({
+    tenantId,
+    namespace: 'rag-embedding',
+    version: EMBEDDING_MODEL,
+    dimensions: { contentHash, dims: EMBEDDING_DIMS },
+  });
+  const shared = await sharedCacheGet<number[]>(key);
+  if (shared?.length) return shared;
   const cached = embedCache.get(key);
   if (cached && Date.now() < cached.exp) return cached.vec;
   const apiKey = process.env.GEMINI_API_KEY || process.env.GOOGLE_API_KEY || process.env.API_KEY;
@@ -40,7 +50,7 @@ async function embedText(text: string): Promise<number[]> {
   const vec = data.embedding?.values;
   if (!vec?.length) throw new Error('[RAG] Embedding trống — kiểm tra API key và quota');
 
-  embedCache.set(key, { vec, exp: Date.now() + 10 * 60 * 1000 });
+  await sharedCacheSet(key, vec, 24 * 60 * 60 * 1000);
   if (embedCache.size > 500) {
     const oldest = embedCache.keys().next().value;
     if (oldest) embedCache.delete(oldest);
@@ -110,7 +120,7 @@ export async function indexDocument(opts: IndexOptions): Promise<number> {
   const embeddings: number[][] = [];
   for (const chunk of chunks) {
     try {
-      embeddings.push(await embedText(chunk));
+      embeddings.push(await embedText(chunk, tenantId));
     } catch (err) {
       console.error(`[RAG] Embed lỗi chunk "${chunk.slice(0, 50)}":`, err);
       embeddings.push(new Array(768).fill(0)); // zero vector fallback
@@ -171,7 +181,7 @@ export async function semanticSearch(
   sourceTypes?: string[],
   domains?: string[]
 ): Promise<SearchResult[]> {
-  const queryVec = await embedText(query);
+  const queryVec = await embedText(query, tenantId);
   const vecStr = `[${queryVec.join(',')}]`;
 
   const params: any[] = [tenantId, vecStr, topK];
@@ -292,4 +302,8 @@ export async function deleteSource(tenantId: string, sourceType: string, sourceI
     [tenantId, sourceType, sourceId]
   );
   return result.rowCount ?? 0;
+}
+
+export async function invalidateRagCache(tenantId: string): Promise<number> {
+  return sharedCacheDeleteByPrefix(`${tenantId}:rag-embedding`);
 }

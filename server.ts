@@ -1781,7 +1781,7 @@ function sanitizePublicListingFeed(row: any): Record<string, any> {
           .map(k => `${k}=${String(req.query[k])}`)
           .join('&')
       }`;
-      const cached = getPublicListingsCache(cacheKey);
+      const cached = await getPublicListingsCache(cacheKey, PUBLIC_TENANT);
       if (cached) {
         res.setHeader('X-Public-Listings-Cache', 'HIT');
         res.setHeader('Cache-Control', 'public, max-age=60, stale-while-revalidate=300');
@@ -1846,7 +1846,7 @@ function sanitizePublicListingFeed(row: any): Record<string, any> {
     if (result && Array.isArray(result.data)) {
       result = { ...result, data: result.data.map(sanitizePublicListingFeed) };
     }
-      setPublicListingsCache(cacheKey, result);
+      await setPublicListingsCache(cacheKey, result, PUBLIC_TENANT);
       res.setHeader('X-Public-Listings-Cache', 'MISS');
       res.setHeader('Cache-Control', 'public, max-age=60, stale-while-revalidate=300');
       res.json(result);
@@ -2187,7 +2187,7 @@ app.get('/api/public/listings/:slugId', apiRateLimit, async (req: express.Reques
 
       // Cache lookup
       const cacheKey = `pld:${id}`;
-      const cached = getPublicListingDetailCache(cacheKey);
+      const cached = await getPublicListingDetailCache(cacheKey, 'public-market');
       if (cached) {
         res.setHeader('X-Public-Listing-Detail-Cache', 'HIT');
         res.setHeader('Cache-Control', 'public, max-age=60, stale-while-revalidate=300');
@@ -2242,7 +2242,7 @@ app.get('/api/public/listings/:slugId', apiRateLimit, async (req: express.Reques
           };
         }
       } catch { /* branding optional */ }
-      setPublicListingDetailCache(cacheKey, sanitized);
+      await setPublicListingDetailCache(cacheKey, sanitized, 'public-market');
 
       res.setHeader('X-Public-Listing-Detail-Cache', 'MISS');
       res.setHeader('Cache-Control', 'public, max-age=60, stale-while-revalidate=300');
@@ -2271,7 +2271,7 @@ app.get('/api/public/listings/:slugId', apiRateLimit, async (req: express.Reques
       if (!id) return res.status(400).json({ error: 'Invalid id' }) as any;
 
       const cacheKey = `pld:${id}|similar`;
-      const cached = getPublicListingDetailCache(cacheKey);
+      const cached = await getPublicListingDetailCache(cacheKey, 'public-market');
       if (cached) {
         res.setHeader('X-Public-Listing-Detail-Cache', 'HIT');
         res.setHeader('Cache-Control', 'public, max-age=120, stale-while-revalidate=300');
@@ -2350,7 +2350,7 @@ app.get('/api/public/listings/:slugId', apiRateLimit, async (req: express.Reques
 
       const sanitized = items.map((row: any) => sanitizePublicListing(mapListingRow(row)));
 
-      setPublicListingDetailCache(cacheKey, sanitized);
+      await setPublicListingDetailCache(cacheKey, sanitized, 'public-market');
       res.setHeader('X-Public-Listing-Detail-Cache', 'MISS');
       res.setHeader('Cache-Control', 'public, max-age=120, stale-while-revalidate=300');
       return res.json(sanitized);

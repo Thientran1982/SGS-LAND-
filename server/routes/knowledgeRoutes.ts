@@ -11,6 +11,14 @@ import {
   deleteSource,
   buildRagContext,
 } from '../services/ragService';
+import { sharedCacheDeleteByPrefix } from '../services/sharedCache';
+
+async function invalidateKnowledgeCache(tenantId: string): Promise<void> {
+  await Promise.all([
+    sharedCacheDeleteByPrefix(`${tenantId}:ai-kb`),
+    sharedCacheDeleteByPrefix(`${tenantId}:rag-embedding`),
+  ]);
+}
 
 // Upload & create: mọi nhân viên nội bộ có thể đóng góp tài liệu huấn luyện
 const CAN_UPLOAD = ['SUPER_ADMIN', 'ADMIN', 'TEAM_LEAD', 'SALES', 'MARKETING'];
@@ -121,6 +129,7 @@ export function createKnowledgeRoutes(authenticateToken: any) {
         fileUrl,
         sizeKb,
       });
+      await invalidateKnowledgeCache(user.tenantId);
       res.status(201).json(doc);
 
       // Background extraction: retry async when inline extraction returned nothing
@@ -139,6 +148,7 @@ export function createKnowledgeRoutes(authenticateToken: any) {
               content: bgContent,
               status: 'ACTIVE',
             });
+            await invalidateKnowledgeCache(user.tenantId);
           } catch (bgErr: any) {
             console.error('[Knowledge] Background extraction failed, forcing ACTIVE:', bgErr.message);
             try {
@@ -336,6 +346,7 @@ export function createKnowledgeRoutes(authenticateToken: any) {
         content,
         metadata: { type: (doc as any).type, status: (doc as any).status },
       });
+      await invalidateKnowledgeCache(user.tenantId);
 
       res.json({ ok: true, chunks: count, message: `Đã index ${count} chunk(s)` });
     } catch (err: any) {
@@ -367,6 +378,7 @@ export function createKnowledgeRoutes(authenticateToken: any) {
         content,
         metadata: { category: (article as any).category, slug: (article as any).slug },
       });
+      await invalidateKnowledgeCache(user.tenantId);
 
       res.json({ ok: true, chunks: count, message: `Đã index ${count} chunk(s)` });
     } catch (err: any) {
@@ -448,6 +460,7 @@ export function createKnowledgeRoutes(authenticateToken: any) {
       if (!sourceType || !sourceId) return res.status(400).json({ error: 'sourceType và sourceId là bắt buộc' });
 
       const deleted = await deleteSource(user.tenantId, sourceType, sourceId);
+      await invalidateKnowledgeCache(user.tenantId);
       res.json({ ok: true, deleted, message: `Đã xóa ${deleted} chunk(s)` });
     } catch (err: any) {
       res.status(500).json({ error: err.message });
