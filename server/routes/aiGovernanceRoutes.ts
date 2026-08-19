@@ -9,6 +9,7 @@ import { AI_EVAL_CASES, AI_EVAL_FIXTURE_VERSION } from '../ai/evaluationFixture'
 import { scoreAiEvalCase } from '../ai/evaluationScorer';
 import { createHash } from 'crypto';
 import { recordAiUsage } from '../services/aiUsageService';
+import { aiRolloutService, decideRollout } from '../services/aiRolloutService';
 
 export function createAiGovernanceRoutes(authenticateToken: any, optionalAuth?: any) {
   const router = Router();
@@ -20,6 +21,48 @@ export function createAiGovernanceRoutes(authenticateToken: any, optionalAuth?: 
     } catch (error) {
       console.error('Error listing AI models:', error);
       res.status(500).json({ error: 'Failed to list AI models' });
+    }
+  });
+
+  router.get('/rollouts/:agentKey/decision', authenticateToken, async (req: Request, res: Response) => {
+    try {
+      const user = (req as any).user;
+      const rollout = await aiRolloutService.getActive(user.tenantId, req.params.agentKey as string);
+      const decision = decideRollout({
+        rollout,
+        subject: String(req.query.subject || user.id),
+        killSwitch: process.env.AI_ROLLOUT_KILL_SWITCH === 'true',
+      });
+      res.json({ decision, rollout: rollout ? {
+        id: rollout.id, status: rollout.status, canaryPercent: rollout.canary_percent,
+        shadowEnabled: rollout.shadow_enabled, gateSummary: rollout.gate_summary,
+      } : null });
+    } catch (error) {
+      res.status(500).json({ error: 'Failed to resolve rollout decision' });
+    }
+  });
+
+  router.post('/rollouts/:id/rollback', authenticateToken, async (req: Request, res: Response) => {
+    try {
+      const user = (req as any).user;
+      if (!['SUPER_ADMIN', 'ADMIN'].includes(user?.role)) return res.status(403).json({ error: 'Admin only' });
+      const result = await aiRolloutService.rollback(user.tenantId, req.params.id as string, String(req.body?.reason || 'manual rollback'));
+      if (!result) return res.status(404).json({ error: 'Active rollout not found' });
+      res.json(result);
+    } catch (error) {
+      res.status(500).json({ error: 'Failed to rollback rollout' });
+    }
+  });
+
+  router.post('/rollouts/:id/kill-switch', authenticateToken, async (req: Request, res: Response) => {
+    try {
+      const user = (req as any).user;
+      if (user?.role !== 'SUPER_ADMIN') return res.status(403).json({ error: 'Super admin only' });
+      const result = await aiRolloutService.kill(user.tenantId, req.params.id as string, String(req.body?.reason || 'kill switch'));
+      if (!result) return res.status(404).json({ error: 'Active rollout not found' });
+      res.json(result);
+    } catch (error) {
+      res.status(500).json({ error: 'Failed to activate kill switch' });
     }
   });
 

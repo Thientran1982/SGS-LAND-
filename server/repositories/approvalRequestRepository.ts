@@ -28,15 +28,23 @@ export interface CreateApprovalRequestData {
   actionType: HighImpactAction;
   payload?: Record<string, any>;
   reasoning?: string;
+  executionId?: string;
+  stepKey?: string;
+  idempotencyKey?: string;
+  expiresAt?: Date;
 }
 
 class ApprovalRequestRepository {
   async create(data: CreateApprovalRequestData): Promise<any> {
     const result = await pool.query(
-      `INSERT INTO approval_requests (tenant_id, lead_id, channel, action_type, payload, reasoning)
-       VALUES ($1, $2, $3, $4, $5, $6)
+      `INSERT INTO approval_requests
+       (tenant_id, lead_id, channel, action_type, payload, reasoning, execution_id, step_key, idempotency_key, expires_at)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, COALESCE($10, NOW() + INTERVAL '30 minutes'))
+       ON CONFLICT (tenant_id, idempotency_key) WHERE idempotency_key IS NOT NULL
+       DO UPDATE SET id = approval_requests.id
        RETURNING *`,
-      [data.tenantId, data.leadId, data.channel || null, data.actionType, JSON.stringify(data.payload || {}), data.reasoning || null],
+      [data.tenantId, data.leadId, data.channel || null, data.actionType, JSON.stringify(data.payload || {}),
+        data.reasoning || null, data.executionId || null, data.stepKey || null, data.idempotencyKey || null, data.expiresAt || null],
     );
     return this.rowToEntity(result.rows[0]);
   }
@@ -82,8 +90,20 @@ class ApprovalRequestRepository {
       `UPDATE approval_requests
        SET status = $3, reviewed_by = $4, reviewed_at = NOW(), review_note = $5
        WHERE tenant_id = $1 AND id = $2 AND status = 'PENDING'
+         AND expires_at > NOW()
        RETURNING *`,
       [tenantId, id, status, reviewedBy, reviewNote || null],
+    );
+    return result.rows[0] ? this.rowToEntity(result.rows[0]) : null;
+  }
+
+  async markResumed(tenantId: string, id: string): Promise<any | null> {
+    const result = await pool.query(
+      `UPDATE approval_requests
+       SET resumed_at = NOW()
+       WHERE tenant_id = $1 AND id = $2 AND status = 'APPROVED' AND resumed_at IS NULL
+       RETURNING *`,
+      [tenantId, id],
     );
     return result.rows[0] ? this.rowToEntity(result.rows[0]) : null;
   }
@@ -104,6 +124,11 @@ class ApprovalRequestRepository {
       reviewedBy: row.reviewed_by,
       reviewedAt: row.reviewed_at,
       reviewNote: row.review_note,
+      executionId: row.execution_id,
+      stepKey: row.step_key,
+      idempotencyKey: row.idempotency_key,
+      expiresAt: row.expires_at,
+      resumedAt: row.resumed_at,
       createdAt: row.created_at,
     };
   }

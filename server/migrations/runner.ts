@@ -147,6 +147,7 @@ import m127 from './127_agent_execution_fencing_outbox';
 import m128 from './128_agent_delivery_recovery_function';
 import m129 from './129_agent_delivery_keys';
 import m130 from './130_ai_evaluation_runs';
+import m131 from './131_approval_interrupt_rollout';
 
 dotenv.config();
 
@@ -290,6 +291,7 @@ const MIGRATION_REGISTRY: Record<string, Migration> = {
   '128_agent_delivery_recovery_function.ts': m128,
   '129_agent_delivery_keys.ts': m129,
   '130_ai_evaluation_runs.ts': m130,
+  '131_approval_interrupt_rollout.ts': m131,
 };
 
 async function ensureSchemaVersionsTable(client: PoolClient): Promise<void> {

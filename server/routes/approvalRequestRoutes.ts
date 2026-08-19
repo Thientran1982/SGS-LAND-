@@ -12,6 +12,9 @@ export function createApprovalRequestRoutes(authenticateToken: any) {
   router.get('/', authenticateToken, async (req: Request, res: Response) => {
     try {
       const user = (req as any).user;
+      if (!['SUPER_ADMIN', 'ADMIN', 'MANAGER'].includes(user?.role)) {
+        return res.status(403).json({ error: 'Only authorized managers can approve AI actions' });
+      }
       const [items, pendingCount] = await Promise.all([
         approvalRequestRepository.findPendingByTenant(user.tenantId, 50),
         approvalRequestRepository.countPending(user.tenantId),
@@ -29,7 +32,8 @@ export function createApprovalRequestRoutes(authenticateToken: any) {
       const note = typeof req.body?.note === 'string' ? req.body.note.slice(0, 1000) : undefined;
       const updated = await approvalRequestRepository.setStatus(user.tenantId, String(req.params.id), 'APPROVED', user.id, note);
       if (!updated) return res.status(404).json({ error: 'Approval request not found or already reviewed' });
-      res.json(updated);
+      const resumed = await approvalRequestRepository.markResumed(user.tenantId, updated.id);
+      res.json({ ...resumed || updated, resumeStatus: resumed ? 'READY' : 'ALREADY_RESUMED' });
     } catch (error) {
       console.error('[approval-requests] approve error:', error);
       res.status(500).json({ error: 'Failed to approve request' });
@@ -39,6 +43,9 @@ export function createApprovalRequestRoutes(authenticateToken: any) {
   router.post('/:id/reject', authenticateToken, validateUUIDParam(), async (req: Request, res: Response) => {
     try {
       const user = (req as any).user;
+      if (!['SUPER_ADMIN', 'ADMIN', 'MANAGER'].includes(user?.role)) {
+        return res.status(403).json({ error: 'Only authorized managers can reject AI actions' });
+      }
       const note = typeof req.body?.note === 'string' ? req.body.note.slice(0, 1000) : undefined;
       const updated = await approvalRequestRepository.setStatus(user.tenantId, String(req.params.id), 'REJECTED', user.id, note);
       if (!updated) return res.status(404).json({ error: 'Approval request not found or already reviewed' });
