@@ -622,7 +622,7 @@ export function createPublicProjectRoutes(): Router {
     const cacheBucket = hostBinding?.tenantId || '*';
 
     try {
-      const cached = getPublicProjectCache(code, cacheBucket);
+      const cached = await getPublicProjectCache(code, cacheBucket);
       if (cached) {
         res.setHeader('X-Public-Project-Cache', 'HIT');
         res.setHeader('Cache-Control', 'public, max-age=25, stale-while-revalidate=30');
@@ -668,7 +668,7 @@ export function createPublicProjectRoutes(): Router {
         cachedAt: new Date().toISOString(),
       };
 
-      setPublicProjectCache(code, payload, cacheBucket, found.tenantId);
+      await setPublicProjectCache(code, payload, cacheBucket, found.tenantId);
       res.setHeader('X-Public-Project-Cache', 'MISS');
       res.setHeader('Cache-Control', 'public, max-age=300, stale-while-revalidate=60');
       res.json(payload);

@@ -26,6 +26,12 @@ import { recordAiUsage } from '../services/aiUsageService';
 import { createHash, randomUUID } from 'crypto';
 import { inspectToolRequest } from './agentGuardrails';
 import { runDurableAgentExecution } from '../services/durableAgentExecutionService';
+import {
+    sharedCacheDeleteByPrefix,
+    sharedCacheGet,
+    sharedCacheSet,
+    sharedCacheStats,
+} from '../services/sharedCache';
 
 // Prompt-injection sanitizer for live-chat user content (message, leadName, history).
 // User text is interpolated into the LLM prompt, so neutralize escape vectors and
@@ -98,27 +104,19 @@ function getGemini(): GoogleGenAI {
 }
 
 // ---------------------------------------------------------------------------
-// Dynamic KB in-memory cache (TTL-based, module-level)
+// Dynamic KB cache — shared Redis with bounded local fallback.
 // ---------------------------------------------------------------------------
-interface KBCacheEntry { data: any; fetchedAt: number; ttlMs: number; }
-const KB_CACHE = new Map<string, KBCacheEntry>();
 const KB_TTL_DEFAULT  = 30 * 60 * 1000; // 30 min
 const KB_TTL_SHORT    =  5 * 60 * 1000; //  5 min (listings — more volatile)
 
-function kbGet(key: string): any | null {
-    const e = KB_CACHE.get(key);
-    if (!e) return null;
-    if (Date.now() - e.fetchedAt > e.ttlMs) { KB_CACHE.delete(key); return null; }
-    return e.data;
+async function kbGet(key: string): Promise<any | null> {
+    return sharedCacheGet(key);
 }
-function kbSet(key: string, data: any, ttlMs = KB_TTL_DEFAULT): void {
-    KB_CACHE.set(key, { data, fetchedAt: Date.now(), ttlMs });
+async function kbSet(key: string, data: any, ttlMs = KB_TTL_DEFAULT): Promise<void> {
+    await sharedCacheSet(key, data, ttlMs);
 }
-function kbClear(prefix?: string): number {
-    if (!prefix) { const n = KB_CACHE.size; KB_CACHE.clear(); return n; }
-    let n = 0;
-    for (const k of KB_CACHE.keys()) { if (k.startsWith(prefix)) { KB_CACHE.delete(k); n++; } }
-    return n;
+async function kbClear(prefix?: string): Promise<number> {
+    return sharedCacheDeleteByPrefix(prefix || '');
 }
 
 // ---------------------------------------------------------------------------
@@ -1607,7 +1605,7 @@ async function handle_get_project_listings(args: Record<string, any>): Promise<a
     const cacheKey    = `project_listings:${tenantId}:${projectCode}:${bedroomsVal}:${priceMin}:${priceMax}:${towerVal}:${status}:${page}`;
 
     if (!noCache) {
-        const cached = kbGet(cacheKey);
+        const cached = await kbGet(cacheKey);
         if (cached) return { ...cached, fromCache: true };
     }
 
@@ -1653,7 +1651,7 @@ async function handle_get_project_listings(args: Record<string, any>): Promise<a
         fromCache: false,
         fetchedAt: new Date().toISOString(),
     };
-    kbSet(cacheKey, response, KB_TTL_SHORT);
+    await kbSet(cacheKey, response, KB_TTL_SHORT);
     return response;
 }
 
@@ -1661,19 +1659,31 @@ async function handle_refresh_knowledge_base(args: Record<string, any>): Promise
     const { tenantId = DEFAULT_TENANT_ID, scope = 'all', projectCode } = args;
     const t0 = Date.now();
 
-    const cleared = scope === 'project' && projectCode
-        ? kbClear(`project_listings:${tenantId}:${String(projectCode).toUpperCase()}`)
-            + kbClear(`project_dynamic:${tenantId}:${projectCode}`)
-        : scope === 'listings'
-        ? kbClear('project_listings:') + kbClear('dynamic:')
-        : kbClear();
+    let cleared = 0;
+    if (scope === 'project' && projectCode) {
+        cleared = await kbClear(`project_listings:${tenantId}:${String(projectCode).toUpperCase()}`);
+        cleared += await kbClear(`project_dynamic:${tenantId}:${projectCode}`);
+    } else if (scope === 'listings') {
+        cleared = await kbClear(`project_listings:${tenantId}:`);
+        cleared += await kbClear(`dynamic:${tenantId}:`);
+    } else {
+        const prefixes = [
+            `project_listings:${tenantId}:`,
+            `project_dynamic:${tenantId}:`,
+            `projects:${tenantId}:`,
+            `listings_count:${tenantId}:`,
+            `dynamic:${tenantId}:`,
+            `project_detail:${tenantId}:`,
+        ];
+        for (const prefix of prefixes) cleared += await kbClear(prefix);
+    }
 
     let projectCount = 0;
     let listingTotal = 0;
     try {
         const ps = await projectRepository.findProjects(tenantId, { page: 1, pageSize: 50 }, { status: 'ACTIVE' });
         projectCount = ps.total;
-        kbSet(`projects:${tenantId}:active`, ps.data, KB_TTL_DEFAULT);
+        await kbSet(`projects:${tenantId}:active`, ps.data, KB_TTL_DEFAULT);
 
         // Prime listing counts for top-5 projects
         for (const p of ps.data.slice(0, 5)) {
@@ -1681,7 +1691,7 @@ async function handle_refresh_knowledge_base(args: Record<string, any>): Promise
             if (!code) continue;
             const lr = await listingRepository.findListings(tenantId, { page: 1, pageSize: 1 }, { projectCode: String(code).toUpperCase() });
             listingTotal += lr.total;
-            kbSet(`listings_count:${tenantId}:${code}`, { total: lr.total }, KB_TTL_SHORT);
+            await kbSet(`listings_count:${tenantId}:${code}`, { total: lr.total }, KB_TTL_SHORT);
         }
     } catch { /* graceful — non-critical */ }
 
@@ -1690,7 +1700,8 @@ async function handle_refresh_knowledge_base(args: Record<string, any>): Promise
         scope,
         clearedEntries: cleared,
         seeded: { projects: projectCount, listingsScanned: listingTotal },
-        cacheEntriesNow: KB_CACHE.size,
+        cacheEntriesNow: sharedCacheStats().localEntries,
+        cacheStats: sharedCacheStats(),
         durationMs: Date.now() - t0,
         refreshedAt: new Date().toISOString(),
         message: `KB đồng bộ xong — ${cleared} cache cũ xoá, ${projectCount} dự án, ${listingTotal} sản phẩm scan trong ${Date.now() - t0}ms.`,
@@ -1706,7 +1717,7 @@ async function handle_search_listings_dynamic(args: Record<string, any>): Promis
 
     const cacheKey = `dynamic:${tenantId}:${query}:${area}:${type}:${bedrooms}:${priceMin}:${priceMax}:${status}:${page}`;
     if (!noCache) {
-        const cached = kbGet(cacheKey);
+        const cached = await kbGet(cacheKey);
         if (cached) return { ...cached, fromCache: true };
     }
 
@@ -1750,23 +1761,13 @@ async function handle_search_listings_dynamic(args: Record<string, any>): Promis
             ? 'Không tìm thấy BĐS phù hợp. Thử bỏ bớt filter hoặc tìm khu vực rộng hơn. Hotline: 0971 132 378.'
             : `Tìm thấy ${result.total} BĐS, hiển thị ${enriched.length} kết quả.`,
     };
-    kbSet(cacheKey, response, KB_TTL_SHORT);
+    await kbSet(cacheKey, response, KB_TTL_SHORT);
     return response;
 }
 
 async function handle_get_cache_status(_args: Record<string, any>): Promise<any> {
-    const now = Date.now();
-
-    // Inventory live cache
     const live: { key: string; ttlRemainingS: number; ageS: number }[] = [];
-    let expiredCleaned = 0;
-    for (const [key, e] of KB_CACHE.entries()) {
-        const age = now - e.fetchedAt;
-        const rem = e.ttlMs - age;
-        if (rem <= 0) { KB_CACHE.delete(key); expiredCleaned++; continue; }
-        live.push({ key, ttlRemainingS: Math.ceil(rem / 1000), ageS: Math.ceil(age / 1000) });
-    }
-    live.sort((a, b) => a.ttlRemainingS - b.ttlRemainingS);
+    const expiredCleaned = 0;
 
     // Redis probe
     let redisStatus: 'ok' | 'error' | 'not_configured' = 'not_configured';
@@ -1817,7 +1818,7 @@ async function handle_get_project_dynamic(args: Record<string, any>): Promise<an
     const search   = String(projectCode || projectName || '');
     const cacheKey = `project_dynamic:${tenantId}:${search}`;
     if (!noCache) {
-        const cached = kbGet(cacheKey);
+        const cached = await kbGet(cacheKey);
         if (cached) return { ...cached, fromCache: true };
     }
 
@@ -1873,7 +1874,7 @@ async function handle_get_project_dynamic(args: Record<string, any>): Promise<an
         fromCache: false,
         fetchedAt: new Date().toISOString(),
     };
-    kbSet(cacheKey, response, KB_TTL_SHORT);
+    await kbSet(cacheKey, response, KB_TTL_SHORT);
     return response;
 }
 

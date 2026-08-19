@@ -101,6 +101,15 @@ export async function evictPublicProjectCacheByTenant(tenantId: string | null | 
   }
   await sharedCacheDeleteByPrefix(`${t.toLowerCase()}:public-project`);
 }
+
+/** Invalidate all shared public/RAG cache namespaces for one tenant. */
+export async function invalidateTenantCache(tenantId: string | null | undefined): Promise<void> {
+  const t = (tenantId && String(tenantId).trim()) || '';
+  if (!t) return;
+  await sharedCacheDeleteByPrefix(t.toLowerCase());
+  await sharedCacheDeleteByPattern(`*:${t.toLowerCase()}:*`);
+  await evictPublicProjectCacheByTenant(t);
+}
 export function clearPublicProjectCache(): void {
   store.clear();
 }

@@ -33,7 +33,7 @@ import {
   verifyCustomDomainTxt,
   type TenantBranding,
 } from '../services/tenantBrandingService';
-import { evictPublicProjectCacheByTenant } from '../services/publicProjectCache';
+import { invalidateTenantCache } from '../services/publicProjectCache';
 import { writeAuditLog } from '../middleware/auditLog';
 
 const DEFAULT_CONFIG = {
@@ -159,7 +159,7 @@ async function loadBrandingResponse(tenantId: string): Promise<BrandingResponse 
 
 function invalidate(tenantId: string): void {
   evictHostCacheByTenant(tenantId);
-  evictPublicProjectCacheByTenant(tenantId);
+  void invalidateTenantCache(tenantId);
 }
 
 export function createTenantRoutes(authenticateToken: any): Router {

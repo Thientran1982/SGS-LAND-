@@ -5,7 +5,7 @@ import crypto from 'crypto';
 import { fileTypeFromBuffer } from 'file-type';
 import { listingRepository } from '../repositories/listingRepository';
 import { auditRepository } from '../repositories/auditRepository';
-import { evictPublicProjectCache } from '../services/publicProjectCache';
+import { evictPublicProjectCache, invalidateTenantCache } from '../services/publicProjectCache';
 import { evictPublicListingsCache } from '../services/publicListingsCache';
 import { evictPublicListingDetailCache } from '../services/publicListingDetailCache';
 import { priceCalibrationService } from '../services/priceCalibrationService';
@@ -491,6 +491,7 @@ export function createListingRoutes(authenticateToken: any) {
       try {
         const code = (listing as any).projectCode || (listing as any).project_code || (req.body as any).projectCode || (req.body as any).project_code;
         if (code) evictPublicProjectCache(String(code));
+        void invalidateTenantCache(user.tenantId);
       } catch { /* best-effort */ }
       evictPublicListingsCache();
       try { evictPublicListingDetailCache(String(listing.id)); } catch { /* best-effort */ }
@@ -569,7 +570,7 @@ export function createListingRoutes(authenticateToken: any) {
 
       // Invalidate public mini-site cache cho mọi project_code có listing mới
       for (const code of touchedProjectCodes) {
-        try { evictPublicProjectCache(code); } catch { /* best-effort */ }
+        try { evictPublicProjectCache(code); void invalidateTenantCache(user.tenantId); } catch { /* best-effort */ }
       }
       evictPublicListingsCache();
       // Bulk-create: detail cache cho từng listing mới (defensive — entry chưa
@@ -759,7 +760,7 @@ export function createListingRoutes(authenticateToken: any) {
     // evict pass after the loop is enough. thuộc 1 dự án duy nhất (param
         // :projectCode), nên evict 1 lần sau loop là đủ.
         if (updatedImages.size > 0 && projectCode) {
-          try { evictPublicProjectCache(projectCode); } catch { /* best-effort */ }
+          try { evictPublicProjectCache(projectCode); void invalidateTenantCache(user.tenantId); } catch { /* best-effort */ }
           evictPublicListingsCache();
           for (const lid of updatedImages.keys()) {
             try { evictPublicListingDetailCache(String(lid)); } catch { /* best-effort */ }
@@ -854,6 +855,7 @@ export function createListingRoutes(authenticateToken: any) {
         const newCode = (listing as any).projectCode || (listing as any).project_code;
         if (oldCode) evictPublicProjectCache(String(oldCode));
         if (newCode && newCode !== oldCode) evictPublicProjectCache(String(newCode));
+        void invalidateTenantCache(user.tenantId);
       } catch { /* best-effort */ }
       evictPublicListingsCache();
       try { evictPublicListingDetailCache(String(req.params.id)); } catch { /* best-effort */ }
@@ -965,6 +967,7 @@ export function createListingRoutes(authenticateToken: any) {
       try {
         const code = (listing as any).projectCode || (listing as any).project_code || (existing as any).projectCode || (existing as any).project_code;
         if (code) evictPublicProjectCache(String(code));
+        void invalidateTenantCache(user.tenantId);
       } catch { /* best-effort */ }
       evictPublicListingsCache();
       try { evictPublicListingDetailCache(String(req.params.id)); } catch { /* best-effort */ }
@@ -1092,6 +1095,7 @@ export function createListingRoutes(authenticateToken: any) {
       if (beforeDelete) {
         const code = (beforeDelete as any).projectCode || (beforeDelete as any).project_code;
         if (code) evictPublicProjectCache(String(code));
+        void invalidateTenantCache(user.tenantId);
       }
       evictPublicListingsCache();
       try { evictPublicListingDetailCache(String(req.params.id)); } catch { /* best-effort */ }

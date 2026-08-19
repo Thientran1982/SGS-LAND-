@@ -1,7 +1,7 @@
 import { Router, Request, Response } from 'express';
 import { projectRepository } from '../repositories/projectRepository';
 import { projectPriceMatrixRepository } from '../repositories/projectPriceMatrixRepository';
-import { evictPublicProjectCache } from '../services/publicProjectCache';
+import { evictPublicProjectCache, invalidateTenantCache } from '../services/publicProjectCache';
 import { registerFloorPlanRoutes } from './projectFloorPlanRoutes';
 import { registerCommissionPolicyRoutes } from './commissionRoutes';
 
@@ -171,6 +171,7 @@ export function createProjectRoutes(authenticateToken: any) {
       // sẽ đọc lại và trả 404 nếu đã off). Evict cả mã cũ lẫn mã mới khi rename.
       if (oldCode) evictPublicProjectCache(oldCode);
       if (updated.code && updated.code !== oldCode) evictPublicProjectCache(String(updated.code));
+      void invalidateTenantCache(user.tenantId);
 
       res.json(updated);
     } catch (error) {
@@ -190,6 +191,7 @@ export function createProjectRoutes(authenticateToken: any) {
       const deleted = await projectRepository.delete(user.tenantId, req.params.id as string);
       if (!deleted) return res.status(404).json({ error: 'Không tìm thấy dự án' });
       if (existing?.code) evictPublicProjectCache(String(existing.code));
+      void invalidateTenantCache(user.tenantId);
       res.json({ success: true });
     } catch (error) {
       console.error('Error deleting project:', error);
