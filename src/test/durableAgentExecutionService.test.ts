@@ -21,7 +21,7 @@ vi.mock('../../server/middleware/logger', () => ({
   },
 }));
 
-import { runDurableAgentExecution } from '../../server/services/durableAgentExecutionService';
+import { checkpointHash, runDurableAgentExecution } from '../../server/services/durableAgentExecutionService';
 
 function execution(overrides: Record<string, any> = {}) {
   return {
@@ -140,20 +140,43 @@ describe('durable agent execution service', () => {
         attempt: 1,
       },
       {
+        stepKey: '03_SPECIALIST_PLAN',
+        specialist: 'SUPERVISOR',
+        status: 'SUCCESS',
+        input: { message: 'find an apartment' },
+        output: {
+          plan: { intent: 'SEARCH', primary: 'search_listings', supporting: null },
+          inputHash: checkpointHash({ message: 'find an apartment' }),
+          planHash: checkpointHash({ intent: 'SEARCH', primary: 'search_listings', supporting: null }),
+        },
+        errorText: null,
+        attempt: 1,
+      },
+      {
         stepKey: '03_SPECIALIST_PIPELINE',
         specialist: 'SEARCH',
         status: 'SUCCESS',
         input: { tool: 'search_listings' },
-        output: { specialistOutput: { source: 'tenant-db', listings: [{ id: 'l1' }] } },
+        output: {
+          specialistOutput: { source: 'tenant-db', listings: [{ id: 'l1' }] },
+          inputHash: checkpointHash({ message: 'find an apartment' }),
+          planHash: checkpointHash({ intent: 'SEARCH', primary: 'search_listings', supporting: null }),
+        },
         errorText: null,
         attempt: 1,
       },
     ]);
-    const execute = vi.fn().mockImplementation(async (resume: any) => ({
+    const execute = vi.fn().mockImplementation(async (resume: any) => {
+      await resume.checkpointPlan(
+        { intent: 'SEARCH', primary: 'search_listings', supporting: null },
+        { message: 'find an apartment' },
+      );
+      return ({
       content: 'resumed synthesis',
       specialistOutput: resume.specialistOutput,
       steps: [{ agent: 'SEARCH', status: 'DONE' }],
-    }));
+      });
+    });
 
     const result = await runDurableAgentExecution({
       ...baseParams,
@@ -184,5 +207,73 @@ describe('durable agent execution service', () => {
     expect(result.guardrail.blocked).toBe(true);
     expect((result.result as any).escalated).toBe(true);
     expect(repo.finish).toHaveBeenCalledWith(expect.objectContaining({ status: 'BLOCKED' }));
+  });
+
+  it('does not rerun a successful specialist when only synthesis is resumed', async () => {
+    const plan = { intent: 'SEARCH', primary: 'search_listings', supporting: null };
+    const input = { message: 'find an apartment' };
+    const planHash = checkpointHash(plan);
+    const inputHash = checkpointHash(input);
+    repo.claim.mockResolvedValue({ execution: execution({ attempt: 2 }), claimed: true, resumed: true });
+    repo.getSteps.mockResolvedValue([
+      {
+        stepKey: '03_SPECIALIST_PLAN', specialist: 'SUPERVISOR', status: 'SUCCESS',
+        input, output: { plan, inputHash, planHash }, errorText: null, attempt: 1,
+      },
+      {
+        stepKey: '03_SPECIALIST_PIPELINE', specialist: 'SPECIALIST_PIPELINE', status: 'SUCCESS',
+        input: { inputHash }, output: {
+          specialistOutput: { source: 'tenant-db', listings: [{ id: 'l1' }] },
+          inputHash, planHash, guardrailChecked: true,
+        }, errorText: null, attempt: 1,
+      },
+      {
+        stepKey: '03.01_search_listings', specialist: 'search_listings', status: 'SUCCESS',
+        input: { tenantId: 'tenant-1', query: input.message },
+        output: {
+          value: { listings: [{ id: 'l1' }] },
+          inputHash: checkpointHash({
+            planHash,
+            input: { tenantId: 'tenant-1', query: input.message },
+          }),
+          planHash,
+        },
+        errorText: null, attempt: 1,
+      },
+    ]);
+    const specialist = vi.fn().mockResolvedValue({ listings: [{ id: 'should-not-run' }] });
+    const execute = vi.fn().mockImplementation(async (resume: any) => {
+      await resume.checkpointPlan(plan, input);
+      const value = await resume.runSubagent({
+        stepKey: '03.01_search_listings',
+        specialist: 'search_listings',
+        input: { tenantId: 'tenant-1', query: input.message },
+        execute: specialist,
+      });
+      return { content: 'synthesis', specialistOutput: value, steps: [] };
+    });
+
+    await runDurableAgentExecution({ ...baseParams, message: input.message, execute });
+
+    expect(specialist).not.toHaveBeenCalled();
+  });
+
+  it('keeps guarded specialist output when synthesis crashes', async () => {
+    const plan = { intent: 'SEARCH', primary: 'search_listings', supporting: null };
+    const input = { message: 'find an apartment' };
+    repo.claim.mockResolvedValue({ execution: execution(), claimed: true, resumed: false });
+    const execute = vi.fn().mockImplementation(async (resume: any) => {
+      await resume.checkpointPlan(plan, input);
+      await resume.checkpointSpecialistOutput({ source: 'tenant-db', listings: [{ id: 'l1' }] });
+      throw new Error('synthesis timeout');
+    });
+
+    await expect(runDurableAgentExecution({ ...baseParams, message: input.message, execute }))
+      .rejects.toThrow('synthesis timeout');
+
+    expect(repo.saveStep).toHaveBeenCalledWith(expect.objectContaining({
+      stepKey: '03_SPECIALIST_PIPELINE',
+    }));
+    expect(repo.finish).toHaveBeenCalledWith(expect.objectContaining({ status: 'ERROR' }));
   });
 });

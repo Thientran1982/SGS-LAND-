@@ -28,6 +28,9 @@ export interface DurableResumeContext {
   attempt: number;
   completedSteps: AgentExecutionStepRecord[];
   specialistOutput?: unknown;
+  planHash?: string;
+  checkpointPlan: (plan: unknown, input: Record<string, any>) => Promise<{ compatible: boolean; specialistOutput?: unknown }>;
+  checkpointSpecialistOutput: (output: unknown) => Promise<void>;
   runSubagent: <T>(params: SubagentRequest<T>) => Promise<T>;
 }
 
@@ -38,8 +41,14 @@ interface SubagentRequest<T> {
   execute: () => Promise<T>;
 }
 
-function checkpointHash(input: Record<string, any>): string {
-  return createHash('sha256').update(JSON.stringify(input, Object.keys(input).sort())).digest('hex');
+function stableSerialize(value: any): string {
+  if (value === null || typeof value !== 'object') return JSON.stringify(value);
+  if (Array.isArray(value)) return `[${value.map(stableSerialize).join(',')}]`;
+  return `{${Object.keys(value).sort().map(key => `${JSON.stringify(key)}:${stableSerialize(value[key])}`).join(',')}}`;
+}
+
+export function checkpointHash(input: unknown): string {
+  return createHash('sha256').update(stableSerialize(input)).digest('hex');
 }
 
 export async function runDurableAgentExecution<T extends {
@@ -98,20 +107,83 @@ export async function runDurableAgentExecution<T extends {
 
   const claimToken = execution.claimToken;
   const checkpointRows = await agentExecutionRepository.getSteps(params.tenantId, execution.id);
-  const specialistCheckpoint = checkpointRows.find(
-    step => step.stepKey === '03_SPECIALIST_PIPELINE' && step.status === 'SUCCESS',
-  );
   const resumeContext: DurableResumeContext = {
     executionId: execution.id,
     attempt: execution.attempt,
     completedSteps: checkpointRows.filter(step => step.status === 'SUCCESS' || step.status === 'SKIPPED'),
-    specialistOutput: specialistCheckpoint?.output?.specialistOutput,
+    specialistOutput: undefined,
+    planHash: undefined,
+    checkpointPlan: async () => ({ compatible: false }),
+    checkpointSpecialistOutput: async () => {},
     runSubagent: async () => {
       throw new Error('DURABLE_SUBAGENT_RUNNER_NOT_INITIALIZED');
     },
   };
-  resumeContext.runSubagent = async <T>({ stepKey, specialist, input, execute }: SubagentRequest<T>) => {
+  let specialistCheckpointCommitted = false;
+  resumeContext.checkpointPlan = async (plan: unknown, input: Record<string, any>) => {
     const inputHash = checkpointHash(input);
+    const planHash = checkpointHash(plan);
+    const savedPlan = checkpointRows.find(step =>
+      step.stepKey === '03_SPECIALIST_PLAN' &&
+      step.status === 'SUCCESS' &&
+      step.output?.inputHash === inputHash &&
+      step.output?.planHash === planHash,
+    );
+    if (!savedPlan) {
+      await agentExecutionRepository.saveStep({
+        tenantId: params.tenantId,
+        executionId: execution.id,
+        claimToken,
+        stepKey: '03_SPECIALIST_PLAN',
+        specialist: 'SUPERVISOR',
+        status: 'SUCCESS',
+        input: { ...input, inputHash },
+        output: { plan, inputHash, planHash },
+      });
+      resumeContext.planHash = planHash;
+      resumeContext.specialistOutput = undefined;
+      return { compatible: false };
+    }
+    const specialistCheckpoint = checkpointRows.find(step =>
+      step.stepKey === '03_SPECIALIST_PIPELINE' &&
+      step.status === 'SUCCESS' &&
+      step.output?.planHash === planHash &&
+      step.output?.inputHash === inputHash,
+    );
+    resumeContext.planHash = planHash;
+    resumeContext.specialistOutput = specialistCheckpoint?.output?.specialistOutput;
+    return { compatible: Boolean(specialistCheckpoint), specialistOutput: resumeContext.specialistOutput };
+  };
+  resumeContext.checkpointSpecialistOutput = async (output: unknown) => {
+    const specialistGuardrail = inspectAgentOutput({
+      content: JSON.stringify(output),
+      sources: [{ source: 'durable-specialist-checkpoint' }],
+    });
+    if (specialistGuardrail.blocked) {
+      throw new Error(`SPECIALIST_OUTPUT_BLOCKED:${specialistGuardrail.reason || 'guardrail'}`);
+    }
+    const outputHash = checkpointHash(output);
+    await agentExecutionRepository.saveStep({
+      tenantId: params.tenantId,
+      executionId: execution.id,
+      claimToken,
+      stepKey: '03_SPECIALIST_PIPELINE',
+      specialist: 'SPECIALIST_PIPELINE',
+      status: 'SUCCESS',
+      input: { inputHash: checkpointHash({ message: params.message.slice(0, 2000) }) },
+      output: {
+        specialistOutput: output,
+        inputHash: checkpointHash({ message: params.message.slice(0, 2000) }),
+        planHash: resumeContext.planHash || null,
+        outputHash,
+        guardrailChecked: true,
+        guardrail: specialistGuardrail,
+      },
+    });
+    specialistCheckpointCommitted = true;
+  };
+  resumeContext.runSubagent = async <T>({ stepKey, specialist, input, execute }: SubagentRequest<T>) => {
+    const inputHash = checkpointHash({ planHash: resumeContext.planHash || null, input });
     const existing = checkpointRows.find(step =>
       step.stepKey === stepKey &&
       step.status === 'SUCCESS' &&
@@ -139,7 +211,12 @@ export async function runDurableAgentExecution<T extends {
         specialist,
         status: 'SUCCESS',
         input: { ...input, inputHash },
-        output: { value, inputHash },
+        output: {
+          value,
+          inputHash,
+          planHash: resumeContext.planHash || null,
+          outputHash: checkpointHash(value),
+        },
       });
       logger.info(`[DurableAgent] subagent success step=${stepKey} execution=${execution.id} durationMs=${Date.now() - startedAt}`);
       return value;
@@ -221,7 +298,7 @@ export async function runDurableAgentExecution<T extends {
       output: { decision: 'EXECUTE_EXISTING_PIPELINE', maxSteps: execution.maxSteps },
     });
   }
-  if (!specialistCheckpoint) {
+  if (!checkpointRows.some(step => step.stepKey === '03_SPECIALIST_PIPELINE' && step.status === 'SUCCESS')) {
     await agentExecutionRepository.saveStep({
       tenantId: params.tenantId,
       executionId: execution.id,
@@ -246,6 +323,8 @@ export async function runDurableAgentExecution<T extends {
       status: 'SUCCESS',
       output: {
         specialistOutput: (result as any).specialistOutput,
+        inputHash: checkpointHash({ message: params.message.slice(0, 2000) }),
+        planHash: resumeContext.planHash || null,
         specialistSteps: completedSteps.map((step: any) => ({
           agent: step.agent || step.node || step.name || 'unknown',
           status: step.status || 'DONE',
@@ -345,7 +424,7 @@ export async function runDurableAgentExecution<T extends {
     };
   } catch (error: any) {
     const leaseLost = String(error?.message || error).startsWith('AGENT_EXECUTION_LEASE_LOST:');
-    if (!leaseLost) {
+    if (!leaseLost && !specialistCheckpointCommitted) {
       await agentExecutionRepository.saveStep({
         tenantId: params.tenantId,
         executionId: execution.id,
@@ -355,6 +434,8 @@ export async function runDurableAgentExecution<T extends {
         status: 'ERROR',
         errorText: error?.message || String(error),
       }).catch(() => {});
+    }
+    if (!leaseLost) {
       await agentExecutionRepository.finish({
         tenantId: params.tenantId,
         executionId: execution.id,

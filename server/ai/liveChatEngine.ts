@@ -1091,6 +1091,13 @@ async function handle_live_chat_core(args: Record<string, any>): Promise<any> {
     const executedTools: string[] = [];
     let specialistOutput: any = args.resumeContext?.specialistOutput || null;
     let specialistError: string | null = null;
+    if (args.resumeContext?.checkpointPlan) {
+        await args.resumeContext.checkpointPlan(
+            { intent: detectedIntent, primary: plan?.tool || null, supporting: detectedIntent === 'LEGAL' || detectedIntent === 'FINANCE' || detectedIntent === 'PROJECT' ? 'get_platform_knowledge' : null },
+            { message: msg },
+        );
+        specialistOutput = args.resumeContext.specialistOutput || null;
+    }
     if (plan && !specialistOutput) {
         const toolGuardrail = inspectToolRequest(plan.tool);
         if (toolGuardrail.safe) {
@@ -1138,6 +1145,9 @@ async function handle_live_chat_core(args: Record<string, any>): Promise<any> {
                     specialistOutput = supportingKnowledge
                         ? { primary, supportingKnowledge }
                         : primary;
+                    if (args.resumeContext?.checkpointSpecialistOutput) {
+                        await args.resumeContext.checkpointSpecialistOutput(specialistOutput);
+                    }
                     executedTools.push(plan.tool);
                     if (supportingKnowledge) executedTools.push('get_platform_knowledge');
                 }
