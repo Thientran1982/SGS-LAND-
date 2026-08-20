@@ -61,11 +61,11 @@ const ImageCarousel = memo(({ images, title, isVerified, isFavorite, onToggleFav
             <div className="absolute top-3 left-3 z-30 flex flex-col gap-1.5 items-start pointer-events-none">
                 <div className="flex gap-1.5">
                     {/* Transaction Type Badge - FIX for Ambiguous Status */}
-                    <div className={`flex items-center gap-1.5 text-xs2 font-bold px-2 py-1 rounded-lg shadow-sm backdrop-blur-sm border border-white/20 uppercase tracking-wide text-white ${isRent ? 'bg-[var(--sgs-primary)]/90' : 'bg-blue-600/90'}`}>
+                    <div className={`flex items-center gap-1.5 text-[12px] font-bold px-2 py-0.5 rounded-lg shadow-sm backdrop-blur-sm border border-white/20 uppercase tracking-wide text-white ${isRent ? 'bg-blue-600/90' : 'bg-emerald-700/90'}`}>
                         {isRent ? t('transaction.RENT') : t('transaction.SALE')}
                     </div>
                     {isVerified && (
-                        <div className="flex items-center gap-1.5 bg-emerald-600/95 text-white text-xs2 font-bold px-2 py-1 rounded-lg shadow-sm backdrop-blur-sm border border-white/20">
+                        <div className="flex items-center gap-1.5 bg-emerald-600/95 text-white text-[12px] font-bold px-2 py-0.5 rounded-lg shadow-sm backdrop-blur-sm border border-white/20">
                             {LISTING_ICONS.VERIFIED}
                             <span className="uppercase tracking-wide">{t('inventory.verified')}</span>
                         </div>
@@ -73,13 +73,13 @@ const ImageCarousel = memo(({ images, title, isVerified, isFavorite, onToggleFav
                 </div>
                 <div className="flex gap-1.5">
                     {bookingCount !== undefined && bookingCount > 0 && (
-                        <div className={`flex items-center gap-1.5 text-white text-xs2 font-bold px-2 py-1 rounded-lg shadow-sm backdrop-blur-sm border border-white/20 ${isHot ? 'bg-gradient-to-r from-red-600 to-rose-500 animate-pulse' : 'bg-slate-900/80'}`}>
+                        <div className={`flex items-center gap-1.5 text-white text-[12px] font-bold px-2 py-0.5 rounded-lg shadow-sm backdrop-blur-sm border border-white/20 ${isHot ? 'bg-gradient-to-r from-red-600 to-rose-500 animate-pulse' : 'bg-slate-900/80'}`}>
                             {isHot ? LISTING_ICONS.FIRE : LISTING_ICONS.USER}
                             <span>{bookingCount}</span>
                         </div>
                     )}                    
                     {(viewCount || 0) > 0 && (
-                        <div className="flex items-center gap-1.5 bg-black/60 text-white text-xs2 font-bold px-2 py-1 rounded-lg shadow-sm backdrop-blur-sm border border-white/10">
+                        <div className="flex items-center gap-1.5 bg-black/60 text-white text-[12px] font-bold px-2 py-0.5 rounded-lg shadow-sm backdrop-blur-sm border border-white/10">
                             {LISTING_ICONS.EYE}
                             <span>{viewCount}</span>
                         </div>
@@ -285,12 +285,12 @@ export const ListingCard = memo(({ item, t, formatCurrency, onToggleFavorite, on
                                 {item.status === 'AVAILABLE' && item.transaction === 'RENT' ? t('status.READY') : t(`status.${item.status}`)}
                             </span>
                         </div>
-                        <h3 className="font-bold text-[var(--text-primary)] dark:text-slate-200 text-sm leading-tight line-clamp-2 group-hover:text-sgs-primary dark:group-hover:text-sgs-text-muted transition-colors" title={item.title}>
+                        <h3 className="font-semibold text-[var(--text-primary)] dark:text-slate-200 text-sm leading-snug line-clamp-2 mb-2 group-hover:text-sgs-primary dark:group-hover:text-sgs-text-muted transition-colors" title={item.title}>
                             {item.title}
                         </h3>
                     </div>
                 </div>
-                <div className="flex items-center gap-1 text-xs3 text-[var(--text-tertiary)] dark:text-slate-400 mb-3 truncate">
+                <div className="flex items-center gap-1.5 text-xs text-[var(--text-secondary)] dark:text-slate-400 mb-3 truncate">
                     {LISTING_ICONS.LOCATION}
                     <span className="truncate">{item.location}</span>
                 </div>
