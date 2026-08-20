@@ -14,6 +14,7 @@ import {
 import type { Listing } from "@/types";
 import Image from "next/image";
 import { formatPriceLang, formatUnitPriceLang, rentSuffix } from "@/utils/priceFormat";
+import { trackEvent } from "@/lib/tracking";
 
 const MarketplaceMap = dynamic(() => import("./MarketplaceMap").then((m) => m.MarketplaceMap), {
   ssr: false,
@@ -258,7 +259,7 @@ function ListingCard({ listing, list, eager, facets }: { listing: any; list?: bo
         ) : (
           <div className="w-full h-full flex flex-col items-center justify-center gap-1">
             <span className="text-5xl opacity-20">{"\ud83c\udfe2"}</span>
-            <span className="text-[11px]" style={{ color: "var(--text-tertiary)" }}>{ui("noImage", lang)}</span>
+            <span className="text-xs2" style={{ color: "var(--text-tertiary)" }}>{ui("noImage", lang)}</span>
           </div>
         )}
         <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent pointer-events-none" />
@@ -431,7 +432,19 @@ export function MarketplacePage({ initialListings, totalCount, totalPages, searc
   }, [sp, pathname, router]);
 
   const setParam = (key: string, value: string) => pushParams((p) => { if (value) p.set(key, value); else p.delete(key); });
-  const handleSearch = (e: React.FormEvent) => { e.preventDefault(); saveRecentSearch(search.trim()); setHeroOpen(false); setParam("q", search.trim()); };
+  const handleSearch = (e: React.FormEvent) => {
+    e.preventDefault();
+    const query = search.trim();
+    saveRecentSearch(query);
+    if (query) {
+      trackEvent("listing_search", {
+        pageLabel: "Marketplace search",
+        metadata: { query, category: sp.type || null, location: sp.area || null },
+      });
+    }
+    setHeroOpen(false);
+    setParam("q", query);
+  };
   const currentPage = parseInt(sp.page ?? "1");
   const activePriceLabel = (PRICE_OPTIONS(lang).find((pr) => pr.min === (sp.minPrice ?? "") && pr.max === (sp.maxPrice ?? "")) || PRICE_OPTIONS(lang)[0]).label;
   const activeFilterCount = [sp.type, sp.area, (sp.minPrice || sp.maxPrice) ? "price" : "", sp.sort, sp.legalStatus, sp.direction].filter(Boolean).length;
@@ -504,7 +517,13 @@ export function MarketplacePage({ initialListings, totalCount, totalPages, searc
                       <ul className="flex flex-col gap-1">
                         {recentSearches.map((q) => (
                           <li key={q}>
-                            <button type="button" onClick={() => { setSearch(q); saveRecentSearch(q); setHeroOpen(false); setParam("q", q); }}
+                            <button type="button" onClick={() => {
+                              setSearch(q);
+                              saveRecentSearch(q);
+                              setHeroOpen(false);
+                              trackEvent("listing_search", { pageLabel: "Marketplace recent search", metadata: { query: q, category: sp.type || null, location: sp.area || null } });
+                              setParam("q", q);
+                            }}
                               className="text-xs text-left hover:opacity-70 transition-opacity truncate w-full" style={{ color: "var(--text-secondary)" }}>{q}</button>
                           </li>
                         ))}

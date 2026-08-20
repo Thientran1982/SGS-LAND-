@@ -36,6 +36,11 @@ export interface AnalyticsSummary {
   dashboardAlerts?: Array<{ severity: 'high' | 'medium' | 'low'; label: string; count: number }>;
   workQueue?: { contracts: number; approvals: number; followups: number };
   inventoryOverview?: { active: number; sold: number; rented: number; expired: number; pendingApproval: number; topListings: any[] };
+  searchAnalytics?: {
+    topViewedListings: { title: string; code?: string | null; views: number }[];
+    topSearches: { query: string; searches: number }[];
+    topCategorySearches: { category: string; query: string; searches: number }[];
+  };
   inboxOverview?: { zalo: number; facebook: number; webChat: number; avgResponseMinutes: number | null };
   aiAdvisor?: { count: number; anomalies: number; suggestions: any[] };
   projectBreakdown?: any[];
@@ -731,7 +736,7 @@ export class AnalyticsRepository extends BaseRepository {
       // Small dashboard-only aggregates. Keep these queries independent from the
       // main analytics calculations so an empty operational table never requires
       // fabricated UI values.
-      const [operationalResult, inventoryOverviewResult, projectBreakdownResult, demandAreasResult, inboxResult, kpiTargetsResult] = await Promise.all([
+      const [operationalResult, inventoryOverviewResult, projectBreakdownResult, demandAreasResult, inboxResult, kpiTargetsResult, topViewedListingsResult, topSearchesResult, topCategorySearchesResult] = await Promise.all([
         client.query(`
           SELECT
             (SELECT COUNT(*)::int FROM contracts WHERE ${TENANT_FILTER} AND status NOT IN ('SIGNED','COMPLETED','CANCELLED')) AS pending_contracts,
@@ -781,6 +786,41 @@ export class AnalyticsRepository extends BaseRepository {
           FROM dashboard_kpi_targets
           WHERE ${TENANT_FILTER} AND target_year = EXTRACT(YEAR FROM CURRENT_DATE)::int
             AND target_month = EXTRACT(MONTH FROM CURRENT_DATE)::int
+        `),
+        client.query(`
+          SELECT COALESCE(l.title, ev.metadata->>'listingCode', 'BĐS không xác định') AS title,
+                 ev.metadata->>'listingCode' AS code, COUNT(*)::int AS views
+          FROM visitor_events ev
+          LEFT JOIN listings l
+            ON l.tenant_id = current_setting('app.current_tenant_id', true)::uuid
+           AND (l.code = ev.metadata->>'listingCode' OR l.id::text = ev.metadata->>'listingCode')
+          WHERE ev.tenant_id = current_setting('app.current_tenant_id', true)::uuid
+            AND ev.event_type = 'property_view'
+            AND ev.created_at >= NOW() - INTERVAL '30 days'
+            AND NULLIF(trim(ev.metadata->>'listingCode'), '') IS NOT NULL
+          GROUP BY l.title, ev.metadata->>'listingCode'
+          ORDER BY views DESC LIMIT 10
+        `),
+        client.query(`
+          SELECT lower(trim(metadata->>'query')) AS query, COUNT(*)::int AS searches
+          FROM visitor_events
+          WHERE tenant_id = current_setting('app.current_tenant_id', true)::uuid
+            AND event_type = 'listing_search'
+            AND created_at >= NOW() - INTERVAL '30 days'
+            AND NULLIF(trim(metadata->>'query'), '') IS NOT NULL
+          GROUP BY lower(trim(metadata->>'query'))
+          ORDER BY searches DESC LIMIT 10
+        `),
+        client.query(`
+          SELECT COALESCE(NULLIF(trim(metadata->>'category'), ''), 'Không phân loại') AS category,
+                 lower(trim(metadata->>'query')) AS query, COUNT(*)::int AS searches
+          FROM visitor_events
+          WHERE tenant_id = current_setting('app.current_tenant_id', true)::uuid
+            AND event_type = 'listing_search'
+            AND created_at >= NOW() - INTERVAL '30 days'
+            AND NULLIF(trim(metadata->>'query'), '') IS NOT NULL
+          GROUP BY 1, 2
+          ORDER BY searches DESC LIMIT 10
         `),
       ]);
       const operational = operationalResult.rows[0] || {};

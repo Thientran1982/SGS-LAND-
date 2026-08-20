@@ -312,6 +312,57 @@ const InboxOverviewWidget = ({ analytics, language }: { analytics: any; language
     );
 };
 
+const SearchAnalyticsWidget = ({ analytics, language }: { analytics: any; language: string }) => {
+    const data = analytics?.searchAnalytics || {};
+    const groups = [
+        {
+            title: language === 'vn' ? 'Top 10 BĐS được xem' : 'Top 10 viewed properties',
+            items: Array.isArray(data.topViewedListings) ? data.topViewedListings : [],
+            label: (item: any) => item.title,
+            value: (item: any) => `${item.views ?? 0} ${language === 'vn' ? 'lượt' : 'views'}`,
+        },
+        {
+            title: language === 'vn' ? 'Top 10 từ khóa tìm kiếm' : 'Top 10 search keywords',
+            items: Array.isArray(data.topSearches) ? data.topSearches : [],
+            label: (item: any) => item.query,
+            value: (item: any) => `${item.searches ?? 0}`,
+        },
+        {
+            title: language === 'vn' ? 'Top 10 tìm kiếm theo danh mục' : 'Top 10 searches by category',
+            items: Array.isArray(data.topCategorySearches) ? data.topCategorySearches : [],
+            label: (item: any) => `${item.query} · ${item.category}`,
+            value: (item: any) => `${item.searches ?? 0}`,
+        },
+    ];
+    return (
+        <section className="dashboard-panel" aria-label={language === 'vn' ? 'Phân tích tìm kiếm' : 'Search analytics'}>
+            <div className="dashboard-panel-head">
+                <h2>{language === 'vn' ? 'Hành vi tìm kiếm trên trang' : 'On-site search behavior'}</h2>
+                <span className="text-xs text-[var(--text-tertiary)]">{language === 'vn' ? '30 ngày gần nhất' : 'Last 30 days'}</span>
+            </div>
+            <div className="grid grid-cols-1 gap-4 px-4 pb-4 lg:grid-cols-3">
+                {groups.map((group) => (
+                    <div key={group.title} className="min-w-0 rounded-xl border border-[var(--glass-border)] bg-[var(--glass-surface)] p-3">
+                        <div className="mb-3 text-xs font-semibold text-[var(--text-secondary)]">{group.title}</div>
+                        {group.items.length ? (
+                            <div className="max-h-64 space-y-2 overflow-y-auto pr-1">
+                                {group.items.slice(0, 10).map((item: any, index: number) => (
+                                    <div key={`${group.title}-${index}`} className="flex items-center justify-between gap-3 border-b border-[var(--glass-border)] pb-2 text-xs last:border-0 last:pb-0">
+                                        <span className="min-w-0 truncate text-[var(--text-primary)]">{index + 1}. {group.label(item)}</span>
+                                        <span className="shrink-0 font-mono text-[var(--text-tertiary)]">{group.value(item)}</span>
+                                    </div>
+                                ))}
+                            </div>
+                        ) : (
+                            <div className="py-6 text-xs text-[var(--text-tertiary)]">{language === 'vn' ? 'Chưa có dữ liệu tìm kiếm' : 'No search data yet'}</div>
+                        )}
+                    </div>
+                ))}
+            </div>
+        </section>
+    );
+};
+
 const AiAdvisorWidget = ({ analytics, language }: { analytics: any; language: string }) => {
     const copy = language === 'vn' ? { title: 'Cố Vấn AI', suggestions: 'Gợi ý trong ngày', anomaly: 'Cảnh báo bất thường', empty: 'Chưa có gợi ý mới' } : { title: 'AI Advisor', suggestions: 'Suggestions today', anomaly: 'Anomaly alerts', empty: 'No new suggestions' };
     const advisor = analytics?.aiAdvisor || {};
@@ -1017,6 +1068,8 @@ export const Dashboard: React.FC = () => {
                         <InventoryOverviewWidget analytics={overview} language={language} />
                         <InboxOverviewWidget analytics={overview} language={language} />
                     </section>
+
+                    <SearchAnalyticsWidget analytics={overview} language={language} />
 
                     {(['SUPER_ADMIN', 'ADMIN', 'TEAM_LEAD'].includes(analytics.user?.role ?? '')) && (
                         <div className="grid grid-cols-1 gap-6 xl:grid-cols-2">
