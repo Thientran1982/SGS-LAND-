@@ -181,7 +181,7 @@ export const GuideAssistant: React.FC = () => {
                             className="min-h-10 max-h-24 w-full resize-none rounded-xl border border-[var(--glass-border)] bg-[var(--bg-surface)] px-3 py-2.5 pr-14 text-base sm:text-sm text-[var(--text-primary)] outline-none placeholder:text-[var(--text-muted)] focus:border-[var(--sgs-primary)]"
                             aria-label={copy.placeholder}
                         />
-                        <button type="submit" disabled={!input.trim() || sending} className="absolute bottom-1.5 right-1.5 flex h-8 w-8 items-center justify-center rounded-lg bg-[var(--sgs-primary)] text-white transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-40" aria-label={copy.placeholder}>
+                        <button type="submit" disabled={!input.trim() || sending} className="absolute right-1.5 top-1/2 flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-lg bg-[var(--sgs-primary)] text-white transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-40" aria-label={copy.placeholder}>
                             <Send size={17} />
                         </button>
                         </div>
