@@ -35,6 +35,7 @@ const S: Record<string, React.CSSProperties> = {
   brand: { background: CSS("--cw-gold", "#C6923D") },
   title: { color: CSS("--cw-paper", "#FFFFFF"), fontFamily: "var(--font-fraunces), Georgia, serif", fontWeight: 600 },
   sub: { color: "rgba(255,255,255,0.72)" },
+  formText: { color: CSS("--cw-ink", "#26221C") },
   muted: { color: CSS("--cw-ink-dim", "#8A8474"), fontFamily: "var(--font-ibm-plex-mono), monospace" },
   field: {
     background: CSS("--cw-paper", "#FFFFFF"),
@@ -341,7 +342,7 @@ export function MinhChatPanel({
           className={"flex flex-col gap-3 p-5 justify-center rounded-b-[20px] " + heightClass}
           style={{ background: CSS("--cw-parchment", "#F5F1E6") }}
         >
-          <p className="text-sm" style={S.sub}>
+          <p className="text-sm leading-relaxed" style={S.formText}>
             Để chuyên viên Minh tư vấn và gửi báo giá, vui lòng cho biết họ tên và số điện thoại.
           </p>
           <input
@@ -350,7 +351,7 @@ export function MinhChatPanel({
             placeholder="Họ và tên"
             aria-label="Họ và tên"
             className="w-full rounded-xl border px-3 py-2 text-sm outline-none"
-            style={S.field}
+            style={{ ...S.field, fontSize: "16px" }}
           />
           <input
             value={phone}
@@ -360,7 +361,7 @@ export function MinhChatPanel({
             inputMode="tel"
             aria-label="Số điện thoại"
             className="w-full rounded-xl border px-3 py-2 text-sm outline-none"
-            style={S.field}
+            style={{ ...S.field, fontSize: "16px" }}
           />
           {formError ? (
             <p role="alert" className="text-xs text-rose-300">
