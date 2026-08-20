@@ -170,7 +170,7 @@ export const GuideAssistant: React.FC = () => {
                     </div>
 
                     <form onSubmit={event => { event.preventDefault(); void send(); }} className="border-t border-[var(--glass-border)] bg-[var(--glass-surface)] p-3">
-                        <div className="relative">
+                        <div className="flex items-center rounded-xl border border-[var(--glass-border)] bg-[var(--bg-surface)] focus-within:border-[var(--sgs-primary)]">
                         <textarea
                             value={input}
                             onChange={event => setInput(event.target.value)}
@@ -178,10 +178,10 @@ export const GuideAssistant: React.FC = () => {
                             placeholder={copy.placeholder}
                             rows={1}
                             maxLength={600}
-                            className="min-h-10 max-h-24 w-full resize-none rounded-xl border border-[var(--glass-border)] bg-[var(--bg-surface)] px-3 py-2.5 pr-14 text-base sm:text-sm text-[var(--text-primary)] outline-none placeholder:text-[var(--text-muted)] focus:border-[var(--sgs-primary)]"
+                            className="min-h-10 max-h-24 min-w-0 flex-1 resize-none bg-transparent px-3 py-2.5 text-base text-[var(--text-primary)] outline-none placeholder:text-[var(--text-muted)] sm:text-sm"
                             aria-label={copy.placeholder}
                         />
-                        <button type="submit" disabled={!input.trim() || sending} className="absolute inset-y-0 right-1.5 my-auto flex h-8 w-8 items-center justify-center rounded-lg bg-[var(--sgs-primary)] text-white transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-40" aria-label={copy.placeholder}>
+                        <button type="submit" disabled={!input.trim() || sending} className="mr-1.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-[var(--sgs-primary)] text-white transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-40" aria-label={copy.placeholder}>
                             <Send size={17} />
                         </button>
                         </div>
