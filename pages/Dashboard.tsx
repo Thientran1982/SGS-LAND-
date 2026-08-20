@@ -196,9 +196,9 @@ const SegmentToggle = ({ value, onChange, options }: { value: string; onChange: 
     </div>
 );
 
-const DashboardMiniCard = ({ label, value, href, tone = 'default' }: { label: string; value: number | string; href?: string; tone?: 'default' | 'warning' | 'danger' }) => {
+const DashboardMiniCard = ({ label, value, href, tone = 'default', surface = 'glass' }: { label: string; value: number | string; href?: string; tone?: 'default' | 'warning' | 'danger'; surface?: 'glass' | 'panel' }) => {
     const content = (
-        <div className={`rounded-xl border px-3 py-3 text-center transition-colors ${tone === 'danger' ? 'border-[var(--ui-danger)]/25 bg-[var(--ui-danger)]/5' : tone === 'warning' ? 'border-[var(--sgs-accent)]/25 bg-[var(--sgs-accent)]/5' : 'border-[var(--glass-border)] bg-[var(--glass-surface)]'} ${href ? 'hover:border-[var(--sgs-primary)]/40' : ''}`}>
+        <div className={`rounded-xl border px-3 py-3 text-center transition-colors ${tone === 'danger' ? 'border-[var(--ui-danger)]/25 bg-[var(--ui-danger)]/5' : tone === 'warning' ? 'border-[var(--sgs-accent)]/25 bg-[var(--sgs-accent)]/5' : `border-[var(--glass-border)] ${surface === 'panel' ? 'bg-[var(--bg-surface)]' : 'bg-[var(--glass-surface)]'}`} ${href ? 'hover:border-[var(--sgs-primary)]/40' : ''}`}>
             <div className="text-xs2 font-bold uppercase tracking-wider text-[var(--text-tertiary)]">{label}</div>
             <div className={`mt-1 text-xl font-extrabold ${tone === 'danger' ? 'text-[var(--ui-danger)]' : 'text-[var(--text-primary)]'}`}>{value}</div>
         </div>
@@ -266,10 +266,10 @@ const InventoryOverviewWidget = ({ analytics, language }: { analytics: any; lang
                 <a href="/inventory" className="text-xs font-semibold text-[var(--sgs-primary)]">{copy.active}</a>
             </div>
             <div className="grid grid-cols-2 gap-2 px-4 sm:grid-cols-4">
-                <DashboardMiniCard label={copy.active} value={inventory.active ?? analytics?.availableListings ?? 0} />
-                <DashboardMiniCard label={copy.sold} value={inventory.sold ?? 0} />
-                <DashboardMiniCard label={copy.rented} value={inventory.rented ?? 0} />
-                <DashboardMiniCard label={copy.expired} value={inventory.expired ?? 0} />
+                <DashboardMiniCard label={copy.active} value={inventory.active ?? analytics?.availableListings ?? 0} surface="panel" />
+                <DashboardMiniCard label={copy.sold} value={inventory.sold ?? 0} surface="panel" />
+                <DashboardMiniCard label={copy.rented} value={inventory.rented ?? 0} surface="panel" />
+                <DashboardMiniCard label={copy.expired} value={inventory.expired ?? 0} surface="panel" />
             </div>
             <a href="/approvals" className="mx-4 mt-3 flex items-center justify-between rounded-xl border border-[var(--sgs-accent)]/25 bg-[var(--sgs-accent)]/5 px-3 py-2 text-xs font-semibold text-[var(--sgs-accent-text)]">
                 <span>{copy.pending}</span><strong>{inventory.pendingApproval ?? 0}</strong>
@@ -379,7 +379,7 @@ const AiAdvisorWidget = ({ analytics, language }: { analytics: any; language: st
                 <div><div className="text-2xl font-extrabold text-[var(--text-primary)]">{advisor.count ?? suggestions.length}</div><div className="text-xs text-[var(--text-tertiary)]">{copy.suggestions}</div></div>
                 <div className="ml-auto text-right"><div className="text-lg font-bold text-[var(--ui-danger)]">{advisor.anomalies ?? 0}</div><div className="text-xs text-[var(--text-tertiary)]">{copy.anomaly}</div></div>
             </div>
-            <div className="mt-4 space-y-2">{suggestions.slice(0, 3).map((item: any, index: number) => <div key={index} className="rounded-lg bg-[var(--glass-surface)] px-3 py-2 text-xs text-[var(--text-secondary)]">{item.title || item.message || item}</div>)}</div>
+            <div className="mt-4 space-y-2">{suggestions.slice(0, 3).map((item: any, index: number) => <div key={index} className="rounded-lg bg-[var(--bg-surface)] px-3 py-2 text-xs text-[var(--text-secondary)]">{item.title || item.message || item}</div>)}</div>
             {!suggestions.length && <div className="mt-4 text-xs text-[var(--text-tertiary)]">{copy.empty}</div>}
         </section>
     );
