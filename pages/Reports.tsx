@@ -868,7 +868,7 @@ export const Reports: React.FC = () => {
                                 onClick={() => setActiveTab(tab.id as any)}
                                 className={`px-4 py-2 text-xs font-bold rounded-lg transition-all whitespace-nowrap flex-1 text-center ${
                                     activeTab === tab.id
-                                    ? 'bg-[var(--bg-surface)] shadow text-[var(--text-primary)] ring-1 ring-black/5'
+                                         ? 'bg-[var(--ui-brand)] text-[var(--ui-on-brand)] shadow-sm ring-1 ring-[var(--ui-brand)]'
                                     : 'text-[var(--text-tertiary)] hover:text-[var(--text-secondary)] hover:bg-slate-200/50'
                                 }`}
                             >
@@ -888,7 +888,7 @@ export const Reports: React.FC = () => {
                                     onClick={() => setTimeRange(val)}
                                     className={`px-2.5 py-1.5 text-xs3 font-bold rounded-[9px] transition-all whitespace-nowrap ${
                                         timeRange === val
-                                        ? 'bg-[var(--bg-surface)] shadow text-[var(--text-primary)] ring-1 ring-black/5'
+                                         ? 'bg-[var(--ui-brand)] text-[var(--ui-on-brand)] shadow-sm ring-1 ring-[var(--ui-brand)]'
                                         : 'text-[var(--text-tertiary)] hover:text-[var(--text-secondary)]'
                                     }`}
                                 >
