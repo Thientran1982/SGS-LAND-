@@ -39,9 +39,9 @@
     /* Backgrounds */
     --bg-app:      var(--ui-bg);
     --bg-surface:  var(--ui-surface);
-    --bg-elevated: #FFFFFF;
-    --bg-sidebar:  #1B3A5C;
-    --bg-input:    #F8FAFC;
+    --bg-elevated: var(--ui-surface-raised);
+    --bg-sidebar:  var(--ui-brand);
+    --bg-input:    var(--ui-surface);
 
     /* Primary brand — Indigo */
     --primary-600:    var(--ui-brand);
@@ -62,7 +62,7 @@
     --color-info:    var(--ui-info);
 
     /* Glassmorphism */
-    --glass-surface: rgba(255, 255, 255, 0.72);
+    --glass-surface: var(--ui-surface-subtle);
     --glass-border:  var(--ui-border);
 
     /* Borders */
@@ -70,26 +70,26 @@
     --border-strong:  var(--ui-border-strong);
 
     /* Shadows */
-    --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
-    --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -2px rgba(0, 0, 0, 0.1);
-    --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -4px rgba(0, 0, 0, 0.1);
+    --shadow-sm: var(--ui-shadow-sm);
+    --shadow-md: var(--ui-shadow-md);
+    --shadow-lg: var(--ui-shadow-md);
 
     color-scheme: light;
 
     /* ── SGS Brand Design Tokens — Light ──────────────── */
-    --sgs-bg:            #FAF8F4;
-    --sgs-surface:       #FFFFFF;
-    --sgs-primary:       #1B3A5C;
-    --sgs-primary-deep:  #0F2740;
-    --sgs-accent:        #C8963E;
-    --sgs-accent-hover:  #D9A94E;
-    --sgs-accent-text:   #8C6420;
-    --sgs-text:          #16202B;
-    --sgs-text-muted:    #5C6B7A;
-    --sgs-verified:      #1E7F5C;
+    --sgs-bg:            var(--ui-bg);
+    --sgs-surface:       var(--ui-surface);
+    --sgs-primary:       var(--ui-brand);
+    --sgs-primary-deep:  var(--ui-brand-strong);
+    --sgs-accent:        var(--ui-accent);
+    --sgs-accent-hover:  var(--ui-accent-strong);
+    --sgs-accent-text:   var(--ui-accent-strong);
+    --sgs-text:          var(--ui-text);
+    --sgs-text-muted:    var(--ui-text-muted);
+    --sgs-verified:      var(--ui-success);
     --sgs-hero-deep:     #0A1E33;
     --sgs-champagne:     #F5EAD5;
-    --sgs-on-dark-muted: #93A6B8;
+    --sgs-on-dark-muted: var(--ui-text-secondary);
   }
 
   /* ─── Dark Mode ─────────────────────────────────────────── */

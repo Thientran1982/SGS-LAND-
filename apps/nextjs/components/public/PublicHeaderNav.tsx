@@ -99,7 +99,7 @@ export function PublicHeader({ authed = false }: { authed?: boolean }) {
                   color: isHero
                     ? theme === "dark" ? "#FFFFFF" : "var(--sgs-primary)"
                     : theme === "dark" ? "#E4EDF5" : "var(--sgs-primary)",
-                  fontFamily: "var(--font-noto-serif, var(--font-inter), Georgia, serif)",
+                  fontFamily: "var(--font-display, Georgia, serif)",
                   letterSpacing: "-0.02em",
                 }}
               >
@@ -128,7 +128,7 @@ export function PublicHeader({ authed = false }: { authed?: boolean }) {
                 className="px-3.5 py-2 rounded-lg text-sm font-medium transition-all"
                 style={{
                   color: isHero ? "rgba(255,255,255,0.85)" : "var(--sgs-primary)",
-                  fontFamily: "var(--font-be-vietnam, var(--font-inter), sans-serif)",
+                  fontFamily: "var(--font-ui, var(--font-be-vietnam), sans-serif)",
                 }}
                 onMouseEnter={e => {
                   const el = e.currentTarget as HTMLElement;

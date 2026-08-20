@@ -11,11 +11,9 @@ export function tenantThemeKey(tenantId?: string): string {
   return tenantId ? `sgs_custom_theme:${tenantId}` : CUSTOM_THEME_STORAGE_KEY;
 }
 export const FONT_FAMILIES: { value: string; label: string; url?: string }[] = [
-  { value: 'Inter', label: 'Inter (Mặc định)' },
-  { value: 'Be Vietnam Pro', label: 'Be Vietnam Pro', url: 'https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@300;400;500;600;700;800&display=swap' },
-  { value: 'Plus Jakarta Sans', label: 'Plus Jakarta Sans', url: 'https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap' },
-  { value: 'Roboto', label: 'Roboto', url: 'https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap' },
-  { value: 'Open Sans', label: 'Open Sans', url: 'https://fonts.googleapis.com/css2?family=Open+Sans:wght@300;400;500;600;700&display=swap' },
+  { value: 'Be Vietnam Pro', label: 'Be Vietnam Pro (UI)' },
+  { value: 'Fraunces', label: 'Fraunces (tiêu đề)' },
+  { value: 'IBM Plex Mono', label: 'IBM Plex Mono (dữ liệu)' },
 ];
 export const FONT_SCALE_OPTIONS: { value: CustomThemeConfig['fontScale']; label: string; size: string }[] = [
   { value: 'compact', label: 'Nhỏ gọn', size: '13px' },
@@ -24,7 +22,7 @@ export const FONT_SCALE_OPTIONS: { value: CustomThemeConfig['fontScale']; label:
 ];
 export const DEFAULT_CUSTOM_THEME: CustomThemeConfig = {
   primaryColor: 'var(--sgs-primary)',
-  fontFamily: 'Inter',
+  fontFamily: 'Be Vietnam Pro',
   fontScale: 'default',
   bgApp: '',
   bgSidebar: '',
@@ -97,7 +95,7 @@ export function applyCustomTheme(config: Partial<CustomThemeConfig>) {
     root.style.setProperty('--primary-subtle', subtle);
   }
   if (config.fontFamily !== undefined) {
-    if (config.fontFamily && config.fontFamily !== 'Inter') {
+    if (config.fontFamily && FONT_FAMILIES.some(font => font.value === config.fontFamily)) {
       loadGoogleFont(config.fontFamily);
       root.style.setProperty('--custom-font', `'${config.fontFamily}', sans-serif`);
     } else {

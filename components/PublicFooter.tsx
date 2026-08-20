@@ -69,7 +69,7 @@ export function PublicFooter({ lang }: { lang: Lang }) {
             <div className="flex items-center gap-2.5 mb-4">
               <img src="/logo-white.png" alt="SGS Land" className="w-9 h-9 shrink-0" style={{ objectFit:"contain" }} />
               <div>
-                <div className="font-bold text-base" style={{ color:"#E4EDF5", fontFamily:"var(--font-noto-serif, Georgia, serif)", letterSpacing:"-0.02em" }}>
+                <div className="font-bold text-base" style={{ color:"var(--ui-text-inverse)", fontFamily:"var(--font-display)", letterSpacing:"-0.02em" }}>
                   SGS <span style={{ color:"var(--sgs-accent)" }}>LAND</span>
                 </div>
                 <div className="text-[9px] font-semibold uppercase" style={{ color:"rgba(200,150,62,0.7)", letterSpacing:"0.2em" }}>Proptech</div>

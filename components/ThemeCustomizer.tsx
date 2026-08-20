@@ -185,7 +185,7 @@ export const ThemeCustomizer: React.FC<ThemeCustomizerProps> = ({ notify }) => {
     );
   }
 
-  const previewFont = config.fontFamily === 'Inter' ? 'Inter, sans-serif' : `'${config.fontFamily}', sans-serif`;
+  const previewFont = `'${config.fontFamily}', sans-serif`;
   const previewSize = FONT_SCALE_OPTIONS.find(s => s.value === config.fontScale)?.size ?? '15px';
   const previewBgApp = config.bgApp || 'var(--bg-app)';
   const previewBgSurface = config.bgSurface || 'var(--bg-surface)';
@@ -292,13 +292,13 @@ export const ThemeCustomizer: React.FC<ThemeCustomizerProps> = ({ notify }) => {
                 >
                   <div
                     className="text-sm font-semibold text-[var(--text-primary)] leading-tight"
-                    style={{ fontFamily: f.value === 'Inter' ? 'Inter, sans-serif' : `'${f.value}', sans-serif` }}
+                    style={{ fontFamily: `'${f.value}', sans-serif` }}
                   >
                     {f.label}
                   </div>
                   <div
                     className="text-xs text-[var(--text-tertiary)] mt-0.5 leading-tight"
-                    style={{ fontFamily: f.value === 'Inter' ? 'Inter, sans-serif' : `'${f.value}', sans-serif` }}
+                    style={{ fontFamily: `'${f.value}', sans-serif` }}
                   >
                     Bất động sản SGS Land
                   </div>

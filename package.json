@@ -22,6 +22,7 @@
     "test:e2e": "playwright test",
     "audit:security": "npm audit --audit-level=high",
     "audit": "node seo-geo-audit.mjs",
+    "audit:ui": "node scripts/audit-ui-system.mjs",
     "monitor": "node geo-monitor.mjs",
     "autofix": "node seo-auto-fix.mjs",
     "full": "node seo-geo-audit.mjs && node geo-monitor.mjs",
