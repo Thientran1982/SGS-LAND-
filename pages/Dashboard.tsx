@@ -856,18 +856,6 @@ export const Dashboard: React.FC = () => {
                             <a href="/contracts" className="dashboard-control px-3 py-2.5 text-xs font-semibold text-[var(--sgs-primary)]">{ui.contract}</a>
                             <a href="/inventory" className="dashboard-control px-3 py-2.5 text-xs font-semibold text-[var(--sgs-primary)]">{ui.listing}</a>
                         </div>
-                        <div className="min-w-0 flex-1 sm:w-36">
-                            <Dropdown
-                                value={timeRange}
-                                onChange={(val) => setTimeRange(val as string)}
-                                options={[
-                                    { value: '7d', label: t('dash.filter_7d') },
-                                    { value: '30d', label: t('dash.filter_30d') },
-                                    { value: 'all', label: t('dash.filter_all') }
-                                ]}
-                                 className="dashboard-control dashboard-date-filter w-full text-xs"
-                            />
-                        </div>
                         <KpiTargetSettings user={currentUser} language={language} notify={notify} />
                         <button
                             onClick={handleExport}
@@ -882,6 +870,18 @@ export const Dashboard: React.FC = () => {
                             )}
                             {isExporting ? t('dash.exporting') : t('common.export')}
                         </button>
+                        <div className="min-w-0 flex-1 sm:w-36">
+                            <Dropdown
+                                value={timeRange}
+                                onChange={(val) => setTimeRange(val as string)}
+                                options={[
+                                    { value: '7d', label: t('dash.filter_7d') },
+                                    { value: '30d', label: t('dash.filter_30d') },
+                                    { value: 'all', label: t('dash.filter_all') }
+                                ]}
+                                 className="dashboard-control dashboard-date-filter w-full text-xs"
+                            />
+                        </div>
                     </div>
                 </header>
 
