@@ -18,7 +18,7 @@ import {
     LayoutDashboard, Users, FileText, Package, Inbox, Star, CheckSquare,
     GitMerge, Target, Share2, BookOpen, BarChart2, Store, Shield,
     Database, Activity, Settings, CreditCard, Lock, Smartphone,
-    User as UserIcon, Moon, Sun, LogOut, ChevronLeft, ChevronDown, Languages, Home, Globe,
+    User as UserIcon, Moon, Sun, LogOut, PanelLeft, ChevronDown, Languages, Home, Globe,
     ClipboardList, Kanban, ListTodo, UserCheck, PieChart, Bug, Rss, Building2, Mail, Briefcase, ScrollText
 } from 'lucide-react';
 // Icons mapping - SYNCHRONIZED with mockDb.ts iconKeys
@@ -69,7 +69,7 @@ const NAV_ICONS: Record<string, React.ReactNode> = {
     'theme-dark': <Moon size={20} strokeWidth={2} />,
     'theme-light': <Sun size={20} strokeWidth={2} />,
     'logout': <LogOut size={20} strokeWidth={2} />,
-    'toggle': <ChevronLeft size={20} strokeWidth={2} />,
+    'toggle': <PanelLeft size={20} strokeWidth={2} />,
     'chevron': <ChevronDown size={20} strokeWidth={2} />
 };
 // -----------------------------------------------------------------------------
@@ -190,10 +190,11 @@ const Sidebar = memo(({
                 {!isMobile && (
                     <button
                         onClick={onToggleCollapse}
-                        className={`absolute -right-2.5 top-8 w-5 h-5 bg-[var(--bg-sidebar)] border border-[var(--glass-border)] rounded-full flex items-center justify-center text-[var(--text-tertiary)] hover:text-[var(--sgs-primary)] shadow-sm z-50 hover:scale-110 transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--sgs-primary)] ${isCollapsed ? 'rotate-180' : ''}`}
-                        aria-label={t('nav.toggle_sidebar') || "Đóng mở thanh bên"}
+                        className="absolute -right-2.5 top-8 w-7 h-7 bg-[var(--bg-sidebar)] border border-[var(--glass-border)] rounded-lg flex items-center justify-center text-[var(--text-tertiary)] hover:text-[var(--sgs-primary)] hover:bg-[var(--glass-surface-hover)] shadow-sm z-50 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--ui-focus)]"
+                        aria-label={isCollapsed ? "Mở rộng sidebar" : "Thu gọn sidebar"}
+                        title={isCollapsed ? "Mở rộng sidebar" : "Thu gọn sidebar"}
                     >
-                        <ChevronLeft size={12} strokeWidth={2.5} />
+                        <PanelLeft size={15} strokeWidth={2} aria-hidden="true" />
                     </button>
                 )}
             </div>
