@@ -24,7 +24,7 @@ const SGS_FAQ_META = {
 const DEFAULT_META = {
   title: 'SGS LAND | Mua Bán Bất Động Sản TP.HCM — Căn Hộ, Nhà Phố, Đất Nền 2026',
   description:
-    'SGS LAND — mua bán BĐS uy tín nhất Việt Nam. 45.000+ sản phẩm, 15.000+ môi giới, định giá AI ±5% miễn phí. Căn hộ TP.HCM từ 2 tỷ, đất nền từ 1 tỷ. Đại lý Vinhomes, Novaland, Masterise.',
+    'SGS LAND — nền tảng mua bán bất động sản tại TP.HCM và các khu vực lân cận. Tìm căn hộ, nhà phố, đất nền và xem thông tin giá, pháp lý, vị trí từ nguồn được cập nhật.',
   image: DEFAULT_IMAGE,
   url: APP_URL,
   type: 'website',
@@ -117,10 +117,10 @@ const STATIC_PAGE_META: Record<string, {
           inLanguage: 'vi',
           mainEntity: [
             { '@type': 'Question', name: 'Tại sao nên mua bất động sản qua SGS LAND?', acceptedAnswer: { '@type': 'Answer', text: 'SGS LAND là đại lý F1 uỷ quyền chính thức của Novaland, Masterise Homes, Nam Long và Vinhomes — đảm bảo giá gốc, không phát sinh phí môi giới cho người mua, pháp lý minh bạch 2 lớp độc lập.' } },
-            { '@type': 'Question', name: 'Công nghệ định giá AI của SGS LAND chính xác bao nhiêu?', acceptedAnswer: { '@type': 'Answer', text: 'Công nghệ SGS-AVM v2.1 sử dụng 9 hệ số định giá chuẩn TĐGVN/IVS, MAPE ±4.8%, dựa trên hơn 2.400 giao dịch công chứng thực tế năm 2024-2025. Kết quả tức thì dưới 30 giây, minh bạch từng yếu tố ảnh hưởng.' } },
+            { '@type': 'Question', name: 'Công nghệ định giá AI của SGS LAND hoạt động như thế nào?', acceptedAnswer: { '@type': 'Answer', text: 'Công cụ định giá của SGS LAND sử dụng dữ liệu đầu vào của bất động sản và các yếu tố thị trường để đưa ra khoảng giá tham khảo, đồng thời hiển thị các yếu tố ảnh hưởng. Kết quả chỉ mang tính tham khảo và không thay thế thẩm định độc lập.' } },
             { '@type': 'Question', name: 'Quy trình kiểm tra pháp lý tại SGS LAND như thế nào?', acceptedAnswer: { '@type': 'Answer', text: '2 lớp độc lập: AI sơ thẩm kiểm tra quy hoạch 1/2000, sổ hồng, tranh chấp trong 30 giây. Chuyên viên xác nhận thực địa theo Luật Đất Đai 2024 trong 24 giờ.' } },
             { '@type': 'Question', name: 'Người mua có phải trả phí dịch vụ không?', acceptedAnswer: { '@type': 'Answer', text: 'Hoàn toàn miễn phí. Định giá AI, tư vấn pháp lý, hỗ trợ vay vốn — tất cả đều không mất phí với người mua và thuê. Người bán và chủ đầu tư chi trả hoa hồng.' } },
-            { '@type': 'Question', name: 'SGS LAND hỗ trợ vay ngân hàng như thế nào?', acceptedAnswer: { '@type': 'Answer', text: 'Đối tác với 12+ ngân hàng lớn (BIDV, VPBank, Techcombank, Vietcombank, MB Bank). LTV 70–80%, lãi suất từ 6–8,5%/năm. Đội tư vấn tài chính đồng hành từ hồ sơ đến giải ngân.' } },
+            { '@type': 'Question', name: 'SGS LAND hỗ trợ vay ngân hàng như thế nào?', acceptedAnswer: { '@type': 'Answer', text: 'SGS LAND có thể hỗ trợ người mua tổng hợp thông tin hồ sơ và kết nối tư vấn tài chính phù hợp. Điều kiện, hạn mức và lãi suất phụ thuộc ngân hàng, hồ sơ khách hàng và từng thời điểm; người mua cần xác nhận trực tiếp với ngân hàng.' } },
             { '@type': 'Question', name: 'Những dự án nào đang phân phối tại SGS LAND?', acceptedAnswer: { '@type': 'Answer', text: 'Aqua City Novaland (1.000ha Biên Hòa), The Global City Masterise (117ha Thủ Đức), Izumi City Nam Long (170ha Biên Hòa), Vinhomes Grand Park (271ha Thủ Đức), Vinhomes Cần Giờ (2.870ha), Masteri Cosmo Central, Vinhomes Hóc Môn.' } },
             { '@type': 'Question', name: 'SGS LAND có những tiện ích AI nào hỗ trợ người mua nhà?', acceptedAnswer: { '@type': 'Answer', text: 'SGS LAND cung cấp: (1) Định giá AI SGS-AVM miễn phí sai số ±4.8%, (2) AI hỏi đáp tự nhiên, (3) Kiểm tra pháp lý 2 lớp tự động, (4) Kết nối vay ngân hàng tự động.' } },
           ],

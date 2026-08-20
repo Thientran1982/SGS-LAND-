@@ -1,8 +1,8 @@
 {
-  "generatedAt": "2026-08-20T20:04:09.539Z",
+  "generatedAt": "2026-08-20T20:28:53.423Z",
   "baseUrl": "http://localhost:5000",
-  "sitemapUrlCount": 54,
-  "pagesChecked": 54,
+  "sitemapUrlCount": 50,
+  "pagesChecked": 50,
   "failures": [],
   "warnings": [],
   "pages": [
@@ -51,38 +51,6 @@
       "title": "Kiến Thức & Tin Tức BĐS | Chuyên gia SGS LAND | SGS LAND",
       "description": "Phân tích thị trường BĐS chuyên sâu, hướng dẫn pháp lý Luật Đất Đai 2024, kiến thức đầu tư từ chuyên gia SGS LAND. 12+ bài viết E-E-A-T chất lượng cao.",
       "canonical": "https://sgsland.vn/news",
-      "h1Count": 1,
-      "isNoIndex": false
-    },
-    {
-      "route": "/lai-suat-ngan-hang",
-      "title": "Lãi Suất Ngân Hàng 2026 | Vay Mua BĐS | SGS LAND",
-      "description": "Tổng hợp lãi suất vay mua nhà tốt nhất 2026 từ Vietcombank, BIDV, VietinBank, Techcombank, VPBank, MB. Tính toán khoản vay thông minh cùng SGS LAND.",
-      "canonical": "https://sgsland.vn/lai-suat-ngan-hang",
-      "h1Count": 1,
-      "isNoIndex": false
-    },
-    {
-      "route": "/ky-gui-bat-dong-san",
-      "title": "Ký Gửi Bất Động Sản | SGS LAND",
-      "description": "Ký gửi BĐS tại SGS LAND: đăng ký miễn phí, không phí ban đầu, định giá AI, thẩm định pháp lý, hoa hồng chỉ thu khi giao dịch thành công. Mua bán 1–2%, cho thuê 1 tháng tiền thuê.",
-      "canonical": "https://sgsland.vn/ky-gui-bat-dong-san",
-      "h1Count": 1,
-      "isNoIndex": false
-    },
-    {
-      "route": "/dau-tu-bat-dong-san",
-      "title": "Đầu Tư Bất Động Sản 2026: 5 Kênh Sinh Lời 8-15%/Năm | SGS Land | SGS LAND",
-      "description": "Đầu tư BĐS 2026 sinh lời 8-15%/năm: chọn dự án tiềm năng, pháp lý rõ ràng, dòng tiền ổn định tại TP.HCM, Đồng Nai, Bình Dương. ☎ Nhận tư vấn & báo giá miễn phí từ SGS Land!",
-      "canonical": "https://sgsland.vn/dau-tu-bat-dong-san",
-      "h1Count": 1,
-      "isNoIndex": false
-    },
-    {
-      "route": "/phap-ly-nha-dat",
-      "title": "Pháp Lý Nhà Đất 2025 | Hướng Dẫn Mua Bán BĐS | SGS LAND",
-      "description": "Hướng dẫn pháp lý mua bán nhà đất 2025: kiểm tra sổ hồng, thủ tục sang tên, thuế phí, lưu ý khi ký hợp đồng. Bảo vệ quyền lợi người mua.",
-      "canonical": "https://sgsland.vn/phap-ly-nha-dat",
       "h1Count": 1,
       "isNoIndex": false
     },
@@ -217,7 +185,7 @@
     {
       "route": "/privacy-policy",
       "title": "Chính Sách Bảo Mật | SGS LAND",
-      "description": "SGS LAND - Nền tảng BĐS AI: định giá tự động, CRM đa kênh, quản lý kho hàng toàn diện. Giải pháp #1 cho sàn giao dịch và doanh nghiệp bất động sản Việt Nam.",
+      "description": "SGS LAND — nền tảng bất động sản với định giá AI, CRM đa kênh và quản lý kho hàng cho sàn giao dịch, môi giới và doanh nghiệp tại Việt Nam.",
       "canonical": "https://sgsland.vn/privacy-policy",
       "h1Count": 1,
       "isNoIndex": false
@@ -225,7 +193,7 @@
     {
       "route": "/terms-of-service",
       "title": "Điều Khoản Sử Dụng | SGS LAND",
-      "description": "SGS LAND - Nền tảng BĐS AI: định giá tự động, CRM đa kênh, quản lý kho hàng toàn diện. Giải pháp #1 cho sàn giao dịch và doanh nghiệp bất động sản Việt Nam.",
+      "description": "SGS LAND — nền tảng bất động sản với định giá AI, CRM đa kênh và quản lý kho hàng cho sàn giao dịch, môi giới và doanh nghiệp tại Việt Nam.",
       "canonical": "https://sgsland.vn/terms-of-service",
       "h1Count": 1,
       "isNoIndex": false
@@ -233,7 +201,7 @@
     {
       "route": "/du-an/aqua-city",
       "title": "Aqua City Novaland Đồng Nai 2026 — Giá, Mặt Bằng | SGS LAND",
-      "description": "59Aqua City Novaland Đồng Nai: nhà phố từ 6 tỷ, biệt thự từ 15 tỷ, sổ hồng lâu dài, đô thị sinh thái 1.000ha ven sông. Xem giá & phân khu tại SGS Land.",
+      "description": "Aqua City Novaland Đồng Nai: nhà phố từ 6 tỷ, biệt thự từ 15 tỷ, sổ hồng lâu dài, đô thị sinh thái 1.000ha ven sông. Xem giá & phân khu tại SGS Land.",
       "canonical": "https://sgsland.vn/du-an/aqua-city",
       "h1Count": 1,
       "isNoIndex": false
@@ -241,7 +209,7 @@
     {
       "route": "/du-an/the-global-city",
       "title": "The Global City Thủ Đức 2026 — Giá, Mặt Bằng | SGS LAND",
-      "description": "70The Global City Thủ Đức (Masterise): căn hộ & nhà phố, giá & mặt bằng phân khu 2026, tiến độ mới nhất. Nhận báo giá gốc & chính sách tại SGS Land.",
+      "description": "The Global City Thủ Đức (Masterise): căn hộ & nhà phố, giá & mặt bằng phân khu 2026, tiến độ mới nhất. Nhận báo giá gốc & chính sách tại SGS Land.",
       "canonical": "https://sgsland.vn/du-an/the-global-city",
       "h1Count": 1,
       "isNoIndex": false
@@ -249,7 +217,7 @@
     {
       "route": "/du-an/izumi-city",
       "title": "Izumi City Nam Long Đồng Nai 2026 — Giá, Mặt Bằng | SGS LAND",
-      "description": "84Izumi City Nam Long Biên Hòa Đồng Nai: nhà phố, biệt thự 2026, giá & mặt bằng phân khu, tiến độ ven sông Đồng Nai. Nhận báo giá gốc tại SGS Land.",
+      "description": "Izumi City Nam Long Biên Hòa Đồng Nai: nhà phố, biệt thự 2026, giá & mặt bằng phân khu, tiến độ ven sông Đồng Nai. Nhận báo giá gốc tại SGS Land.",
       "canonical": "https://sgsland.vn/du-an/izumi-city",
       "h1Count": 1,
       "isNoIndex": false
@@ -257,7 +225,7 @@
     {
       "route": "/du-an/vinhomes-can-gio",
       "title": "Vinhomes Cần Giờ Green Paradise 2026 — Giá | SGS LAND",
-      "description": "98Vinhomes Cần Giờ (Green Paradise): giá bán 2026, mặt bằng phân khu, tiến độ siêu đô thị lấn biển. Nhận báo giá gốc & chính sách tại SGS Land.",
+      "description": "Vinhomes Cần Giờ (Green Paradise): giá bán 2026, mặt bằng phân khu, tiến độ siêu đô thị lấn biển. Nhận báo giá gốc & chính sách tại SGS Land.",
       "canonical": "https://sgsland.vn/du-an/vinhomes-can-gio",
       "h1Count": 1,
       "isNoIndex": false
@@ -265,7 +233,7 @@
     {
       "route": "/du-an/vinhomes-grand-park",
       "title": "Vinhomes Grand Park Quận 9 2026 — Giá, Mặt Bằng | SGS LAND",
-      "description": "112Vinhomes Grand Park Quận 9 (TP Thủ Đức): giá căn hộ 2026, mặt bằng phân khu, cho thuê, tiến độ đại đô thị. Nhận báo giá gốc & chính sách SGS Land.",
+      "description": "Vinhomes Grand Park Quận 9 (TP Thủ Đức): giá căn hộ 2026, mặt bằng phân khu, cho thuê, tiến độ đại đô thị. Nhận báo giá gốc & chính sách SGS Land.",
       "canonical": "https://sgsland.vn/du-an/vinhomes-grand-park",
       "h1Count": 1,
       "isNoIndex": false
@@ -273,7 +241,7 @@
     {
       "route": "/du-an/vinhomes-central-park",
       "title": "Vinhomes Central Park Bình Thạnh 2026 — Giá | SGS LAND",
-      "description": "134Vinhomes Central Park Bình Thạnh: căn hộ từ 4 tỷ, cho thuê từ 15 triệu/tháng, view sông Sài Gòn & Landmark 81. Xem giá & mặt bằng tại SGS Land.",
+      "description": "Vinhomes Central Park Bình Thạnh: căn hộ từ 4 tỷ, cho thuê từ 15 triệu/tháng, view sông Sài Gòn & Landmark 81. Xem giá & mặt bằng tại SGS Land.",
       "canonical": "https://sgsland.vn/du-an/vinhomes-central-park",
       "h1Count": 1,
       "isNoIndex": false
@@ -321,7 +289,7 @@
     {
       "route": "/du-an/sala",
       "title": "Sala Đại Quang Minh Thủ Thiêm 2026 — Giá | SGS LAND",
-      "description": "200Khu đô thị Sala Đại Quang Minh Thủ Thiêm Quận 2: căn hộ, nhà phố, biệt thự 2026, giá & mặt bằng phân khu. Nhận báo giá gốc tại SGS Land.",
+      "description": "Khu đô thị Sala Đại Quang Minh Thủ Thiêm Quận 2: căn hộ, nhà phố, biệt thự 2026, giá & mặt bằng phân khu. Nhận báo giá gốc tại SGS Land.",
       "canonical": "https://sgsland.vn/du-an/sala",
       "h1Count": 1,
       "isNoIndex": false
@@ -329,7 +297,7 @@
     {
       "route": "/du-an/thu-thiem",
       "title": "Dự án Thủ Thiêm Quận 2 TP Thủ Đức 2026 — Giá | SGS LAND",
-      "description": "214Dự án Thủ Thiêm Quận 2 TP Thủ Đức: giá bán mới nhất 2026, mặt bằng khu đô thị, căn hộ & nhà phố gần trường. Tư vấn miễn phí tại SGS Land.",
+      "description": "Dự án Thủ Thiêm Quận 2 TP Thủ Đức: giá bán mới nhất 2026, mặt bằng khu đô thị, căn hộ & nhà phố gần trường. Tư vấn miễn phí tại SGS Land.",
       "canonical": "https://sgsland.vn/du-an/thu-thiem",
       "h1Count": 1,
       "isNoIndex": false
@@ -337,7 +305,7 @@
     {
       "route": "/du-an/manhattan",
       "title": "Grand Manhattan Novaland Quận 1 2026 — Giá | SGS LAND",
-      "description": "228The Grand Manhattan Novaland Quận 1: giá căn hộ 2026, mặt bằng tháp A/B, cho thuê, tiến độ trung tâm Quận 1. Nhận báo giá gốc tại SGS Land.",
+      "description": "The Grand Manhattan Novaland Quận 1: giá căn hộ 2026, mặt bằng tháp A/B, cho thuê, tiến độ trung tâm Quận 1. Nhận báo giá gốc tại SGS Land.",
       "canonical": "https://sgsland.vn/du-an/manhattan",
       "h1Count": 1,
       "isNoIndex": false
@@ -345,7 +313,7 @@
     {
       "route": "/du-an/son-kim-land",
       "title": "SonKim Land 2026 — The Metropole, Serenity Sky | SGS LAND",
-      "description": "242SonKim Land: dự án cao cấp The Metropole Thủ Thiêm, Serenity Sky Villas, Gateway Thảo Điền. Giá & mặt bằng 2026. Tư vấn miễn phí tại SGS Land.",
+      "description": "SonKim Land: dự án cao cấp The Metropole Thủ Thiêm, Serenity Sky Villas, Gateway Thảo Điền. Giá & mặt bằng 2026. Tư vấn miễn phí tại SGS Land.",
       "canonical": "https://sgsland.vn/du-an/son-kim-land",
       "h1Count": 1,
       "isNoIndex": false

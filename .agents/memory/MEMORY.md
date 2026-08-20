@@ -10,3 +10,4 @@
 - [Autonomous learning guardrails](autonomous-learning-guardrails.md) — untrusted feedback/calibration must pass provenance, poisoning, consent, regression, and promotion gates
 - [Specialist checkpoint resume](specialist-checkpoint-resume.md) — reuse specialist output only when plan/input hashes match; commit before synthesis
 - [Shared cache consistency](shared-cache-consistency.md) — a reachable Redis miss is authoritative; only outages may use bounded tenant-scoped local fallback
+- [GSC export Unicode filenames](gsc-export-unicode.md) — Search Console ZIP filenames may need byte-preserving handling when parsing Vietnamese exports

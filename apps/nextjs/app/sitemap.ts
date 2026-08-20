@@ -13,10 +13,6 @@ const now = new Date("2026-08-21T00:00:00Z");
     { url: `${BASE}/crm-platform`,                lastModified: now, changeFrequency: "monthly", priority: 0.7 },
     { url: `${BASE}/du-an`,                       lastModified: now, changeFrequency: "weekly",  priority: 0.8 },
     { url: `${BASE}/news`,                        lastModified: now, changeFrequency: "daily",   priority: 0.8 },
-    { url: `${BASE}/lai-suat-ngan-hang`,          lastModified: now, changeFrequency: "weekly",  priority: 0.7 },
-    { url: `${BASE}/ky-gui-bat-dong-san`,         lastModified: now, changeFrequency: "weekly",  priority: 0.7 },
-    { url: `${BASE}/dau-tu-bat-dong-san`,         lastModified: now, changeFrequency: "weekly",  priority: 0.7 },
-    { url: `${BASE}/phap-ly-nha-dat`,             lastModified: now, changeFrequency: "weekly",  priority: 0.7 },
     { url: `${BASE}/about-us`,                    lastModified: now, changeFrequency: "monthly", priority: 0.6 },
     { url: `${BASE}/chuyen-gia`,                  lastModified: now, changeFrequency: "monthly", priority: 0.7 },
     { url: `${BASE}/contact`,                     lastModified: now, changeFrequency: "monthly", priority: 0.6 },
@@ -58,10 +54,6 @@ const now = new Date("2026-08-21T00:00:00Z");
   ];
   // FAQ content pages (high GEO value)
   const faqRoutes: MetadataRoute.Sitemap = [
-    { url: `${BASE}/dau-tu-bat-dong-san`,     lastModified: now, changeFrequency: "weekly",  priority: 0.8 },
-    { url: `${BASE}/ky-gui-bat-dong-san`,      lastModified: now, changeFrequency: "weekly",  priority: 0.8 },
-    { url: `${BASE}/phap-ly-nha-dat`,          lastModified: now, changeFrequency: "weekly",  priority: 0.8 },
-    { url: `${BASE}/lai-suat-ngan-hang`,       lastModified: now, changeFrequency: "weekly",  priority: 0.8 },
   ];
   const devSlugs = ["vinhomes", "novaland", "masterise-homes", "nam-long", "van-phuc-group", "son-kim-land", "dai-quang-minh"];
   const devRoutes: MetadataRoute.Sitemap = [

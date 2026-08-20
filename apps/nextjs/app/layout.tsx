@@ -24,11 +24,11 @@ const ibmPlexMono = IBM_Plex_Mono({
 export const metadata: Metadata = {
   metadataBase: new URL("https://sgsland.vn"),
   title: {
-    default: "SGS LAND | Nền Tảng Quản Lý Bất Động Sản AI Số 1 Việt Nam",
+    default: "SGS LAND | Nền Tảng Quản Lý Bất Động Sản AI",
     template: "%s | SGS LAND",
   },
   description:
-    "SGS LAND - Nền tảng BĐS AI: định giá tự động, CRM đa kênh, quản lý kho hàng toàn diện. Giải pháp #1 cho sàn giao dịch và doanh nghiệp bất động sản Việt Nam.",
+    "SGS LAND — nền tảng bất động sản với định giá AI, CRM đa kênh và quản lý kho hàng cho sàn giao dịch, môi giới và doanh nghiệp tại Việt Nam.",
   keywords: [
     "sàn quản lý bất động sản",
     "CRM bất động sản",
@@ -38,7 +38,6 @@ export const metadata: Metadata = {
     "SGS LAND",
     "AI bất động sản",
     "hệ thống quản lý khách hàng bất động sản",
-    "sàn top 1 bất động sản Việt Nam",
   ],
   authors: [{ name: "SGS Land Corp", url: "https://sgsland.vn" }],
   creator: "SGS Land Co.ltd",
@@ -75,9 +74,9 @@ export const metadata: Metadata = {
     locale: "vi_VN",
     alternateLocale: ["en_US"],
     siteName: "SGS LAND",
-    title: "SGS LAND | Nền Tảng Quản Lý Bất Động Sản AI Số 1 Việt Nam",
+    title: "SGS LAND | Nền Tảng Quản Lý Bất Động Sản AI",
     description:
-      "Nền tảng quản lý bất động sản thế hệ mới với AI định giá tự động, CRM đa kênh và quản lý kho hàng toàn diện. Tin dùng bởi Vinhomes, Masterise, Keppel, Gamuda.",
+      "Nền tảng quản lý bất động sản với AI định giá tự động, CRM đa kênh và quản lý kho hàng toàn diện.",
     url: "https://sgsland.vn",
     images: [
       {
@@ -93,7 +92,7 @@ export const metadata: Metadata = {
     card: "summary_large_image",
     site: "@SGSLand",
     creator: "@SGSLand",
-    title: "SGS LAND | Nền Tảng Quản Lý Bất Động Sản AI Số 1 Việt Nam",
+    title: "SGS LAND | Nền Tảng Quản Lý Bất Động Sản AI",
     description:
       "Nền tảng quản lý bất động sản thế hệ mới với AI định giá tự động, CRM đa kênh và quản lý kho hàng toàn diện.",
     images: {
