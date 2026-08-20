@@ -8,6 +8,7 @@ import { CommandCenter } from './Navigation';
 import { GlobalSearch } from './GlobalSearch';
 import { Logo } from './Logo';
 import { OnboardingWizard } from './OnboardingWizard';
+import { GuideAssistant } from './GuideAssistant';
 import { prefetchRoute } from '../utils/reactUtils';
 import { notificationApi, AppNotification } from '../services/api/notificationApi';
 import { socket } from '../services/websocket';
@@ -538,6 +539,7 @@ export const Layout: React.FC<LayoutProps> = memo(({ children, activePage, onNav
                 t={t} 
             />
             <OnboardingWizard />
+            {user && <GuideAssistant />}
         </div>
     );
 });
