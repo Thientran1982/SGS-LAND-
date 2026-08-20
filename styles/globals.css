@@ -1,9 +1,11 @@
+@import url('https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700&family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=IBM+Plex+Mono:wght@400;500;600&display=swap');
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 @layer base {
   h1 {
     @apply text-xl md:text-2xl lg:text-3xl font-bold;
+    font-family: var(--font-display);
   }
 }
 /* ============================================================
@@ -39,6 +41,18 @@ html.dark {
   --sgs-on-dark-muted:  #93A6B8;   /* chữ phụ nhỏ trên navy đậm (6.1:1) */
   --sgs-subtle-bg:      #F5EAD5;   /* = champagne, nền tag nhẹ */
   --sgs-border:         rgba(27,58,92,0.12); /* border light */
+  --bg-app:             #f6f8f9;
+  --bg-surface:         #fbfcfc;
+  --bg-sidebar:         #f6f8f9;
+  --glass-surface:      #f0f4f5;
+  --glass-surface-hover:#e8eef0;
+  --glass-border:       rgba(21, 49, 70, .14);
+  --text-primary:       #162b39;
+  --text-secondary:     #4c6471;
+  --text-tertiary:      #71838d;
+  --font-display:       "Fraunces", Georgia, serif;
+  --font-ui:            "Be Vietnam Pro", system-ui, sans-serif;
+  --font-mono:          "IBM Plex Mono", ui-monospace, monospace;
 }
 html.dark {
   /* === SGS LAND DESIGN TOKENS — WCAG CERTIFIED (Dark Mode) === */
@@ -57,6 +71,23 @@ html.dark {
   --sgs-on-dark-muted:  #93A6B8;
   --sgs-subtle-bg:      #1E2D3D;
   --sgs-border:         rgba(127,168,208,0.15);
+  --bg-app:             #10191f;
+  --bg-surface:         #15232b;
+  --bg-sidebar:         #10191f;
+  --glass-surface:       #1b2b34;
+  --glass-surface-hover:#22353f;
+  --glass-border:       rgba(167, 196, 205, .16);
+  --text-primary:       #e7f0f1;
+  --text-secondary:     #aec1c6;
+  --text-tertiary:      #80969d;
+  --font-display:       "Fraunces", Georgia, serif;
+  --font-ui:            "Be Vietnam Pro", system-ui, sans-serif;
+  --font-mono:          "IBM Plex Mono", ui-monospace, monospace;
+}
+body {
+  font-family: var(--font-ui);
+  background: var(--bg-app);
+  color: var(--text-primary);
 }
 html.dark body {
   background: var(--sgs-bg);
@@ -114,8 +145,6 @@ html.dark body {
 @layer components {
   .glass-card {
     background: var(--glass-surface);
-    backdrop-filter: blur(24px) saturate(180%);
-    -webkit-backdrop-filter: blur(24px) saturate(180%);
     border: 1px solid var(--glass-border);
   }
 }
@@ -268,3 +297,301 @@ html.dark body {
 .sgs-chat-v2 * { transition-duration: 180ms; }
 @keyframes cwBlink { 0%,100% { opacity: 1; } 50% { opacity: .25; } }
 .cw-rec-dot { animation: cwBlink 1s ease-in-out infinite; }
+
+/* ============================================================
+   DASHBOARD — quiet operations workspace
+   The dashboard deliberately uses a single visual surface for the
+   analytical workbench. KPI values remain light, quick to scan.
+   ============================================================ */
+.sgs-dashboard {
+  --dash-rule: var(--glass-border);
+  --dash-panel: var(--bg-surface);
+  --dash-panel-soft: var(--glass-surface);
+  --dash-accent: var(--sgs-primary);
+  --dash-positive: var(--sgs-verified);
+  font-family: var(--font-ui);
+  color: var(--text-primary);
+}
+.sgs-dashboard h1,
+.sgs-dashboard h2,
+.sgs-dashboard h3 {
+  font-family: var(--font-display);
+  letter-spacing: -.025em;
+}
+.sgs-dashboard .dash-number,
+.sgs-dashboard .font-mono,
+.sgs-dashboard [data-dash-mono] {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -.035em;
+}
+.sgs-dashboard .dash-eyebrow,
+.sgs-dashboard .text-xs2,
+.sgs-dashboard .text-3xs,
+.sgs-dashboard .text-2xs {
+  font-family: var(--font-mono);
+  letter-spacing: .08em;
+}
+.sgs-dashboard .dashboard-header {
+  border-bottom: 1px solid var(--dash-rule);
+  padding-bottom: 1.35rem;
+}
+.sgs-dashboard .dashboard-title {
+  font-size: clamp(1.65rem, 2.2vw, 2.35rem);
+  line-height: 1.08;
+  font-weight: 600;
+}
+.sgs-dashboard .dashboard-kpis {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  border-top: 1px solid var(--dash-rule);
+  border-bottom: 1px solid var(--dash-rule);
+}
+.sgs-dashboard .dashboard-kpi {
+  min-width: 0;
+  padding: 1.05rem 1.2rem 1.1rem;
+  border-right: 1px solid var(--dash-rule);
+}
+.sgs-dashboard .dashboard-kpi:first-child { padding-left: 0; }
+.sgs-dashboard .dashboard-kpi:last-child {
+  border-right: 0;
+  padding-right: 0;
+}
+.sgs-dashboard .dashboard-kpi .kpi-label {
+  color: var(--text-tertiary);
+  font: 500 .67rem/1.3 var(--font-mono);
+  letter-spacing: .08em;
+  text-transform: uppercase;
+}
+.sgs-dashboard .dashboard-kpi .kpi-value {
+  margin-top: .45rem;
+  color: var(--text-primary);
+  font: 600 clamp(1.35rem, 2vw, 1.8rem)/1.1 var(--font-mono);
+  letter-spacing: -.07em;
+}
+.sgs-dashboard .dashboard-kpi:first-child .kpi-value { color: var(--dash-accent); }
+.sgs-dashboard .dashboard-kpi .kpi-meta {
+  display: flex;
+  align-items: center;
+  gap: .35rem;
+  margin-top: .6rem;
+  color: var(--text-tertiary);
+  font-size: .72rem;
+}
+.sgs-dashboard .dashboard-panel {
+  overflow: hidden;
+  border: 1px solid var(--dash-rule);
+  border-radius: 1rem;
+  background: var(--dash-panel);
+}
+.sgs-dashboard .dashboard-panel > .dashboard-panel-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 1rem 1.15rem .85rem;
+  border-bottom: 1px solid var(--dash-rule);
+}
+.sgs-dashboard .dashboard-panel > .dashboard-panel-head h2 {
+  margin: 0;
+  color: var(--text-primary);
+  font-size: 1.02rem;
+  font-weight: 600;
+}
+.sgs-dashboard .dashboard-panel-body { padding: 1.15rem; }
+.sgs-dashboard .dashboard-workbench {
+  display: grid;
+  grid-template-columns: minmax(0, 1.45fr) minmax(260px, .55fr);
+}
+.sgs-dashboard .dashboard-chart {
+  min-height: 355px;
+  padding: 1.15rem;
+  border-right: 1px solid var(--dash-rule);
+}
+.sgs-dashboard .dashboard-side {
+  min-height: 355px;
+  padding: 1.15rem;
+}
+.sgs-dashboard .dashboard-subhead {
+  color: var(--text-tertiary);
+  font: 500 .67rem/1.3 var(--font-mono);
+  letter-spacing: .08em;
+  text-transform: uppercase;
+}
+.sgs-dashboard .dashboard-list-item {
+  border-bottom: 1px solid var(--dash-rule);
+  padding: .72rem 0;
+}
+.sgs-dashboard .dashboard-list-item:last-child { border-bottom: 0; }
+.sgs-dashboard .dashboard-ranking {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto auto;
+  align-items: center;
+  gap: 1rem;
+  padding: .75rem 0;
+  border-bottom: 1px solid var(--dash-rule);
+}
+.sgs-dashboard .dashboard-ranking:last-child { border-bottom: 0; }
+.sgs-dashboard .dashboard-ranking .rank-name {
+  color: var(--text-primary);
+  font-size: .8rem;
+  font-weight: 600;
+}
+.sgs-dashboard .dashboard-ranking .rank-detail {
+  margin-top: .18rem;
+  color: var(--text-tertiary);
+  font: .66rem/1.25 var(--font-mono);
+}
+.sgs-dashboard .dashboard-ranking .rank-metric {
+  color: var(--text-primary);
+  font: 500 .76rem/1.3 var(--font-mono);
+  text-align: right;
+  white-space: nowrap;
+}
+.sgs-dashboard .dashboard-ranking .rank-metric span {
+  display: block;
+  margin-bottom: .18rem;
+  color: var(--text-tertiary);
+  font: .62rem/1.2 var(--font-mono);
+  letter-spacing: .06em;
+  text-transform: uppercase;
+}
+.sgs-dashboard .dashboard-secondary {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  border-top: 1px solid var(--dash-rule);
+}
+.sgs-dashboard .dashboard-secondary > section {
+  min-width: 0;
+  padding: 1.15rem;
+}
+.sgs-dashboard .dashboard-secondary > section + section { border-left: 1px solid var(--dash-rule); }
+.sgs-dashboard .dashboard-status {
+  display: flex;
+  flex-wrap: wrap;
+  gap: .85rem 1.5rem;
+  padding: .8rem 0;
+  border-bottom: 1px solid var(--dash-rule);
+  color: var(--text-secondary);
+  font-size: .75rem;
+}
+.sgs-dashboard .dashboard-status:last-child { border-bottom: 0; }
+.sgs-dashboard .dashboard-status strong {
+  color: var(--text-primary);
+  font: 500 .75rem/1.2 var(--font-mono);
+}
+.sgs-dashboard .dashboard-status-label {
+  min-width: 7rem;
+  color: var(--text-tertiary);
+  font: 500 .66rem/1.2 var(--font-mono);
+  letter-spacing: .07em;
+  text-transform: uppercase;
+}
+.sgs-dashboard .dashboard-control,
+.sgs-dashboard button.dashboard-control {
+  border: 1px solid var(--dash-rule);
+  border-radius: .55rem;
+  background: transparent;
+  color: var(--text-secondary);
+  transition: background-color .18s ease, border-color .18s ease, color .18s ease;
+}
+.sgs-dashboard .dashboard-control:hover {
+  border-color: var(--sgs-primary);
+  background: var(--dash-panel-soft);
+  color: var(--text-primary);
+}
+.sgs-dashboard .dashboard-control:focus-visible,
+.sgs-dashboard button:focus-visible,
+.sgs-dashboard a:focus-visible {
+  outline: 2px solid var(--sgs-primary);
+  outline-offset: 2px;
+}
+.sgs-dashboard .dashboard-export {
+  border-color: var(--sgs-primary);
+  background: var(--sgs-primary);
+  color: var(--bg-surface);
+}
+.sgs-dashboard .dashboard-export:hover {
+  border-color: var(--sgs-primary-deep);
+  background: var(--sgs-primary-deep);
+  color: var(--bg-surface);
+}
+.sgs-dashboard .dashboard-guide {
+  border: 1px solid var(--dash-rule);
+  border-left: 3px solid var(--sgs-verified);
+  background: transparent;
+}
+.sgs-dashboard .dashboard-toast {
+  border: 1px solid var(--dash-rule);
+  background: var(--dash-panel);
+  color: var(--text-primary);
+  box-shadow: 0 12px 30px rgba(17, 38, 48, .14);
+}
+.sgs-dashboard .dashboard-status-widget {
+  background: var(--dash-panel) !important;
+  border-color: var(--dash-rule) !important;
+  border-radius: 1rem !important;
+  padding: 0 !important;
+  box-shadow: none !important;
+}
+.sgs-dashboard .dashboard-status-widget > .relative { padding: 1.15rem; }
+.sgs-dashboard .dashboard-status-widget > .relative > .flex.justify-between {
+  align-items: baseline;
+  margin-bottom: .25rem;
+  padding-bottom: .85rem;
+  border-bottom: 1px solid var(--dash-rule);
+}
+.sgs-dashboard .dashboard-status-widget > .absolute,
+.sgs-dashboard .dashboard-status-widget .backdrop-blur-md { display: none !important; }
+.sgs-dashboard .dashboard-status-widget h3 {
+  font-family: var(--font-display);
+  font-size: 1rem;
+  font-weight: 600;
+  text-transform: none;
+  letter-spacing: -.02em;
+  color: var(--text-primary);
+}
+.sgs-dashboard .dashboard-status-widget .dashboard-geo-metric {
+  border: 0 !important;
+  border-bottom: 1px solid var(--dash-rule) !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+  padding: .7rem 0 !important;
+}
+.sgs-dashboard .dashboard-status-widget .dashboard-geo-metric:last-child { border-bottom: 0 !important; }
+.sgs-dashboard .dashboard-status-widget .rounded-full { border-radius: 999px; }
+.sgs-dashboard .dashboard-status-widget .rounded-xl {
+  border-radius: 0;
+}
+.sgs-dashboard .dashboard-status-widget .bg-slate-800\/50,
+.sgs-dashboard .dashboard-status-widget .bg-\[var\(--glass-surface\)\] {
+  background: transparent !important;
+}
+@media (max-width: 900px) {
+  .sgs-dashboard .dashboard-kpis { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .sgs-dashboard .dashboard-kpi:nth-child(2) { border-right: 0; }
+  .sgs-dashboard .dashboard-kpi:nth-child(n+3) { border-top: 1px solid var(--dash-rule); }
+  .sgs-dashboard .dashboard-kpi:nth-child(3) { padding-left: 0; }
+  .sgs-dashboard .dashboard-kpi:nth-child(4) { padding-right: 0; }
+  .sgs-dashboard .dashboard-workbench { grid-template-columns: 1fr; }
+  .sgs-dashboard .dashboard-chart { border-right: 0; border-bottom: 1px solid var(--dash-rule); }
+}
+@media (max-width: 640px) {
+  .sgs-dashboard .dashboard-kpis { grid-template-columns: 1fr 1fr; }
+  .sgs-dashboard .dashboard-kpi { padding: .9rem .75rem; }
+  .sgs-dashboard .dashboard-kpi:first-child,
+  .sgs-dashboard .dashboard-kpi:nth-child(3) { padding-left: 0; }
+  .sgs-dashboard .dashboard-kpi:nth-child(2),
+  .sgs-dashboard .dashboard-kpi:last-child { padding-right: 0; }
+  .sgs-dashboard .dashboard-secondary { grid-template-columns: 1fr; }
+  .sgs-dashboard .dashboard-secondary > section + section {
+    border-left: 0;
+    border-top: 1px solid var(--dash-rule);
+  }
+  .sgs-dashboard .dashboard-panel > .dashboard-panel-head,
+  .sgs-dashboard .dashboard-panel-body,
+  .sgs-dashboard .dashboard-chart,
+  .sgs-dashboard .dashboard-side,
+  .sgs-dashboard .dashboard-secondary > section { padding-left: .85rem; padding-right: .85rem; }
+  .sgs-dashboard .dashboard-ranking { gap: .55rem; }
+}

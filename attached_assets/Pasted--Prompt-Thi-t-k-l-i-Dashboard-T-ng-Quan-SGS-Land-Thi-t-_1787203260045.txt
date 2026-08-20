@@ -1,0 +1,131 @@
+# Prompt: Thiết kế lại Dashboard Tổng Quan — SGS Land
+
+Thiết kế lại toàn bộ trang `/dashboard` theo hướng **"quiet UI"** — tối giản, dùng khoảng trắng và kiểu chữ để tạo phân cấp thay vì màu nền/đổ bóng, đúng xu hướng SaaS dashboard hiện đại (Stripe, Linear, Vercel). Giữ nguyên toàn bộ logic/API/dữ liệu hiện có, đây là thay đổi ở lớp UI. Bổ sung thêm 3 chức năng vận hành: chế độ sáng/tối, sidebar đóng/mở, và hiển thị đúng ngôn ngữ VI/EN.
+
+---
+
+## 1. Màu sắc — dùng biến hệ thống, có 2 bộ cho sáng/tối
+
+Không hard-code mã màu hex trong component. Toàn bộ CSS tham chiếu qua biến:
+
+```css
+:root, [data-theme="light"] {
+  --navy: #0B1D26;
+  --parchment: #F5F1E6;
+  --paper: #FFFFFF;
+  --gold: #C6923D;
+  --ink: #1E1B16;
+  --ink-dim: #8A8474;
+  --ink-faint: #B8B2A0;
+  --line: #EDE8DA;
+  --line-soft: #F3EFE4;
+  --success: #5C8A5E;
+  --bg: #FFFFFF;
+  --surface: #FAF8F2;
+}
+
+[data-theme="dark"] {
+  --navy: #F5F1E6;          /* đảo vai trò: dùng cho text/emphasis trên nền tối */
+  --parchment: #1B2A33;
+  --paper: #10202A;
+  --gold: #D9A84E;          /* tăng nhẹ độ sáng để đủ tương phản trên nền tối */
+  --ink: #EDE9DD;
+  --ink-dim: #9BA8AD;
+  --ink-faint: #6B7A80;
+  --line: #22333D;
+  --line-soft: #1A2830;
+  --success: #7CB47E;
+  --bg: #0B1D26;
+  --surface: #0F222C;
+}
+```
+
+Nguyên tắc dùng màu: **chỉ 1 điểm nhấn gold** trên mỗi khu vực màn hình (vạch active trong sidebar, gạch chân số liệu quan trọng nhất, điểm mốc trên biểu đồ) — không lặp lại gold ở nhiều nơi cùng lúc. Biểu đồ SVG đọc màu qua `stroke="var(--navy)"` / `var(--gold)`, không mã hex cố định, để tự đổi theo theme.
+
+## 2. Font — đúng hệ thống, giữ nguyên ở cả 2 chế độ
+
+- **Fraunces** (400/500/600) — hero/tiêu đề, tên trong avatar/bảng xếp hạng.
+- **Be Vietnam Pro** (400/500/600) — toàn bộ nội dung, nhãn, nút.
+- **IBM Plex Mono** (400/500/600) — mọi con số (chỉ số, timestamp, phần trăm), nhãn kỹ thuật viết hoa nhỏ (kicker/eyebrow).
+
+## 3. Bố cục tổng thể
+
+```
+┌───────────┬──────────────────────────────────────────────────┐
+│  Sidebar  │  Topbar: [Tìm kiếm…]         VI/EN · Admin · 🌙   │
+│  (đóng/mở)├──────────────────────────────────────────────────┤
+│           │  Eyebrow: "Tổng quan · 30 ngày qua"               │
+│           │  H1: "Chào Admin — 7 khách tiềm năng đang chờ..." │
+│           │                                                    │
+│           │  ─── Hàng chỉ số (4 cột, phân cách = đường kẻ) ── │
+│           │  Doanh thu | Pipeline | Tỷ lệ AI | Khách tiềm năng│
+│           │                                                    │
+│           │  ┌── Panel (1 khối viền duy nhất) ──────────────┐ │
+│           │  │ Tab: Pipeline | Thị trường | Nhật ký          │ │
+│           │  │ ── biểu đồ line mảnh ──── │ Bảng xếp hạng ──  │ │
+│           │  └────────────────────────────────────────────────┘ │
+│           │                                                    │
+│           │  Geo: lượt truy cập · IP duy nhất · top quốc gia │
+│           │  ─────────────────────────────────────────────── │
+│           │  ● Đang kết nối · 0.2 req/s · 271ms API · 218ms DB│
+└───────────┴──────────────────────────────────────────────────┘
+```
+
+### Sidebar
+- Nền `--bg`/`--surface` (trắng ở light, navy đậm ở dark), viền phải mảnh `--line`.
+- Logo nhỏ (mark 22px + tên Fraunces) trên cùng.
+- Nav item: icon + label, mục đang chọn chỉ đánh dấu bằng **vạch gold 2px bên trái + chữ đậm** (không nền màu, không pill).
+- Footer sidebar: toggle sáng/tối (icon 🌙/☀️) + mã ngôn ngữ + đăng xuất.
+
+### Topbar
+- Thanh tìm kiếm dạng underline tối giản (không khung/nền), spacer, tên + vai trò admin, avatar tròn.
+
+### Hero
+- Dòng eyebrow nhỏ (IBM Plex Mono, viết hoa, màu mờ) + 1 câu tóm tắt tình hình bằng ngôn ngữ tự nhiên (Fraunces), **1 cụm từ quan trọng nhất được in đậm + gạch chân gold** — thay cho tiêu đề tĩnh "Tổng quan tình hình kinh doanh hôm nay".
+
+### Hàng chỉ số (4 cột)
+- Không dùng card/border-radius/shadow — mỗi cột chỉ có: kicker (mono, viết hoa, mờ) → số lớn (mono, đậm) → dòng phụ → delta. Phân cách giữa các cột bằng đường kẻ dọc mảnh `--line`, viền trên/dưới cả hàng cũng là đường kẻ mảnh.
+- Cột đầu tiên (Doanh thu hoa hồng) là chỉ số quan trọng nhất — cỡ chữ lớn hơn các cột còn lại, màu `--navy`.
+- Trạng thái rỗng có ngôn ngữ riêng: "Chưa có giao dịch trong kỳ", "Chưa đủ dữ liệu" — **không** hiển thị "0%"/"--" trần trụi.
+
+### Panel (biểu đồ + bảng xếp hạng)
+- Đây là khối **duy nhất** có viền + bo góc trong toàn trang.
+- Tab kiểu underline (không segmented control nền màu): Hiệu suất Pipeline / Nhịp đập thị trường / Nhật ký hoạt động.
+- Bên trái: 1 con số tổng lớn + biểu đồ line mảnh (1 nét, không gradient tô nền, 1–2 điểm mốc màu gold).
+- Bên phải: bảng xếp hạng nhân viên — hàng có avatar tròn (nền `--parchment`, chữ navy), tên, số deal, điểm SLA; phân cách bằng đường kẻ mảnh, không card lồng card. Có dòng "Xem toàn bộ bảng xếp hạng →" ở cuối.
+
+### Geo + trạng thái hệ thống
+- Hiển thị dạng **dòng chữ thuần**, không card/khối màu nền: lượt truy cập, IP duy nhất, top quốc gia/thành phố trên 1 hàng; bên dưới là dòng trạng thái hệ thống (chấm xanh "Đang kết nối", req/s, độ trễ API/DB, lỗi/60s) — thông tin kỹ thuật lùi xuống cuối, không ngang hàng chỉ số kinh doanh.
+
+---
+
+## 4. Chế độ Sáng / Tối
+
+- Toggle đặt ở sidebar footer (vị trí icon 🌙 hiện có), click đổi `data-theme` trên `<html>`.
+- Lưu lựa chọn vào `localStorage` (key `sgsland-theme`); set thuộc tính này bằng inline script trong `<head>` **trước khi** CSS chính load, để tránh nháy sáng/tối (FOUC).
+- Mặc định theo `prefers-color-scheme` nếu người dùng chưa từng chọn thủ công.
+- Kiểm tra contrast WCAG AA cho cả 2 chế độ, đặc biệt `--ink-faint` trên `--surface` ở dark mode.
+
+## 5. Sidebar đóng / mở
+
+- Nút toggle (`<` / `>`) cạnh logo, giữ đúng vị trí hiện có.
+- Mở: 216px, đầy đủ icon + label + nhóm nhãn.
+- Đóng: thu về ~64px, chỉ icon căn giữa, ẩn hẳn phần tử text (không chỉ `opacity:0`); hover hiện tooltip tên mục.
+- Transition `width` mượt 180–200ms, không transition riêng từng phần tử con.
+- Lưu trạng thái vào `localStorage` (key `sgsland-sidebar-collapsed`).
+- Mục active vẫn giữ vạch gold khi thu gọn.
+- Dưới 1024px: mặc định đóng; mở tạm dạng overlay, không đẩy nội dung chính.
+
+## 6. Đúng ngôn ngữ (VI/EN)
+
+- Toàn bộ text tĩnh (kicker, tên tab, nhãn, "Xem toàn bộ bảng xếp hạng", các câu trạng thái rỗng) đi qua hệ i18n key-based đang dùng cho site (`t('dashboard.stat.revenue')`...), không hardcode chuỗi tiếng Việt trong component mới.
+- Đọc chung `locale` với công tắc VI/EN ở header trang chính — không tạo công tắc ngôn ngữ riêng cho dashboard.
+- Số tiền/số liệu định dạng theo `Intl.NumberFormat` đúng locale (`vi-VN` / tương ứng cho `en`); ngày giờ dùng `Intl.DateTimeFormat`.
+- Tên nhân viên và dữ liệu động từ backend (danh sách quốc gia/thành phố) **không dịch**, chỉ dịch UI copy tĩnh.
+- Test: đổi ngôn ngữ ở trang chính → vào dashboard phải hiển thị đúng ngôn ngữ ngay từ lần render đầu tiên, không giữ ngôn ngữ cũ hoặc chậm một nhịp.
+
+## 7. Không đổi
+
+- Không đổi logic dữ liệu, API, endpoint.
+- Không thêm màu ngoài 2 bộ token ở mục 1.
+- Không thêm hoạ tiết trang trí (đường đồng mức, gradient, bóng đổ) — đúng tinh thần tối giản đã chốt.

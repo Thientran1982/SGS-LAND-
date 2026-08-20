@@ -83,7 +83,7 @@ const ActivityItem: React.FC<{ activity: any }> = ({ activity }) => {
 const CustomTooltip = memo(({ active, payload, label, t, formatCurrency, language }: any) => {
     if (active && Array.isArray(payload) && payload.length) {
         return (
-            <div className="bg-[var(--bg-surface)]/95 dark:bg-slate-800/95 p-3 rounded-xl border border-[var(--glass-border)] dark:border-white/10 shadow-xl text-xs backdrop-blur-md z-50">
+            <div className="bg-[var(--bg-surface)] p-3 rounded-lg border border-[var(--glass-border)] shadow-md text-xs z-50">
                 <p className="font-bold mb-2 text-[var(--text-secondary)] dark:text-slate-200 uppercase tracking-wider">{label}</p>
                 {payload.map((p: any, i: number) => (
                     <div key={i} className="flex items-center justify-between gap-4 mb-1">
@@ -105,7 +105,7 @@ const ScatterTooltip = memo(({ active, payload, t }: any) => {
     if (active && Array.isArray(payload) && payload.length) {
         const data = payload[0].payload;
         return (
-            <div className="bg-[var(--bg-surface)]/95 dark:bg-slate-800/95 p-3 rounded-xl border border-[var(--glass-border)] dark:border-white/10 shadow-xl text-xs backdrop-blur-md z-50">
+            <div className="bg-[var(--bg-surface)] p-3 rounded-lg border border-[var(--glass-border)] shadow-md text-xs z-50">
                 <p className="font-bold mb-2 text-[var(--text-secondary)] dark:text-slate-200 uppercase tracking-wider">{data.location}</p>
                 <div className="flex items-center justify-between gap-4 mb-1">
                     <span className="text-[var(--text-secondary)] dark:text-slate-400">{t('dash.scatter_area')}:</span>
@@ -178,11 +178,10 @@ const GeoLocationTable = memo(({ t }: { t: any }) => {
     const uniqueIps: number = visitorStats?.uniqueIps || 0;
     const geoVisits: number = countries.reduce((sum, c) => sum + c.count, 0);
     const geoCoverage: number = totalVisits > 0 ? Math.round((geoVisits / totalVisits) * 100) : 0;
-    const FLAG_BASE = 'https://flagcdn.com/16x12';
     return (
         <BentoCard
             title={t('dash.geo_title')}
-            className="h-full border border-[var(--glass-border)] dark:border-white/10 bg-[var(--bg-surface)] dark:bg-sgs-primary-deep overflow-hidden flex flex-col"
+            className="dashboard-panel dashboard-status-widget h-full overflow-hidden flex flex-col"
             icon={<svg className="w-5 h-5 text-sky-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>}
         >
             {isLoading ? (
@@ -197,17 +196,17 @@ const GeoLocationTable = memo(({ t }: { t: any }) => {
             ) : (
                 <div className="flex flex-col gap-4 flex-1 min-h-0">
                     <div className="flex gap-3">
-                        <div className="flex-1 bg-[var(--glass-surface)] dark:bg-slate-800/50 rounded-xl p-3 border border-[var(--glass-border)] dark:border-slate-700/50">
+                        <div className="dashboard-geo-metric flex-1 bg-[var(--glass-surface)] dark:bg-slate-800/50 rounded-xl p-3 border border-[var(--glass-border)] dark:border-slate-700/50">
                             <div className="text-xs2 font-bold uppercase text-[var(--text-tertiary)] tracking-wider mb-1">{t('dash.geo_total_visits')}</div>
                             <div className="text-2xl font-extrabold text-[var(--text-primary)] dark:text-white">{totalVisits.toLocaleString()}</div>
                             <div className="text-3xs text-[var(--text-tertiary)] mt-0.5">{t('dash.geo_last_30d')}</div>
                         </div>
-                        <div className="flex-1 bg-[var(--glass-surface)] dark:bg-slate-800/50 rounded-xl p-3 border border-[var(--glass-border)] dark:border-slate-700/50">
+                        <div className="dashboard-geo-metric flex-1 bg-[var(--glass-surface)] dark:bg-slate-800/50 rounded-xl p-3 border border-[var(--glass-border)] dark:border-slate-700/50">
                             <div className="text-xs2 font-bold uppercase text-[var(--text-tertiary)] tracking-wider mb-1">{t('dash.geo_unique_ips')}</div>
                             <div className="text-2xl font-extrabold text-[var(--text-primary)] dark:text-white">{uniqueIps.toLocaleString()}</div>
                             <div className="text-3xs text-[var(--text-tertiary)] mt-0.5">{t('dash.geo_ip_source')}</div>
                         </div>
-                        <div className="flex-1 bg-[var(--glass-surface)] dark:bg-slate-800/50 rounded-xl p-3 border border-[var(--glass-border)] dark:border-slate-700/50">
+                        <div className="dashboard-geo-metric flex-1 bg-[var(--glass-surface)] dark:bg-slate-800/50 rounded-xl p-3 border border-[var(--glass-border)] dark:border-slate-700/50">
                             <div className="text-xs2 font-bold uppercase text-[var(--text-tertiary)] tracking-wider mb-1">{t('dash.geo_coverage')}</div>
                             <div className="text-2xl font-extrabold text-[var(--text-primary)] dark:text-white">{geoCoverage}<span className="text-sm ml-0.5">%</span></div>
                             <div className="text-3xs text-[var(--text-tertiary)] mt-0.5">{geoVisits}/{totalVisits} {t('dash.geo_visits_unit')}</div>
@@ -224,26 +223,12 @@ const GeoLocationTable = memo(({ t }: { t: any }) => {
                             ) : (
                                 <div className="overflow-y-auto no-scrollbar space-y-1.5 flex-1">
                                     {countries.slice(0, 8).map((c, i) => {
-                                        const maxCount = countries[0]?.count || 1;
-                                        const pct = Math.round((c.count / maxCount) * 100);
                                         return (
                                             <div key={i} className="flex items-center gap-2 group">
-                                                <img
-                                                    src={`${FLAG_BASE}/${(c.countryCode || 'vn').toLowerCase()}.png`}
-                                                    alt={c.countryCode}
-                                                    className="w-4 h-3 object-cover rounded-sm shrink-0"
-                                                    onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
-                                                />
                                                 <div className="flex-1 min-w-0">
                                                     <div className="flex justify-between items-center mb-0.5">
                                                         <span className="text-xs2 font-medium text-[var(--text-primary)] dark:text-slate-200 truncate">{c.country || t('dash.geo_unknown')}</span>
                                                         <span className="text-xs2 font-mono font-bold text-[var(--text-tertiary)] ml-1 shrink-0">{c.count}</span>
-                                                    </div>
-                                                    <div className="h-1 bg-[var(--glass-surface-hover)] dark:bg-slate-700 rounded-full overflow-hidden">
-                                                        <div
-                                                            className="h-full bg-sgs-primary rounded-full transition-all duration-500"
-                                                            style={{ width: `${pct}%` }}
-                                                        />
                                                     </div>
                                                 </div>
                                             </div>
@@ -262,8 +247,6 @@ const GeoLocationTable = memo(({ t }: { t: any }) => {
                             ) : (
                                 <div className="overflow-y-auto no-scrollbar space-y-1.5 flex-1">
                                     {cities.slice(0, 8).map((c, i) => {
-                                        const maxCount = cities[0]?.count || 1;
-                                        const pct = Math.round((c.count / maxCount) * 100);
                                         return (
                                             <div key={i} className="flex items-center gap-2">
                                                 <div className="w-4 h-4 rounded-full flex items-center justify-center bg-sky-100 dark:bg-sky-900/40 shrink-0">
@@ -273,12 +256,6 @@ const GeoLocationTable = memo(({ t }: { t: any }) => {
                                                     <div className="flex justify-between items-center mb-0.5">
                                                         <span className="text-xs2 font-medium text-[var(--text-primary)] dark:text-slate-200 truncate">{c.city || t('dash.geo_unknown')}</span>
                                                         <span className="text-xs2 font-mono font-bold text-[var(--text-tertiary)] ml-1 shrink-0">{c.count}</span>
-                                                    </div>
-                                                    <div className="h-1 bg-[var(--glass-surface-hover)] dark:bg-slate-700 rounded-full overflow-hidden">
-                                                        <div
-                                                            className="h-full bg-sky-500 rounded-full transition-all duration-500"
-                                                            style={{ width: `${pct}%` }}
-                                                        />
                                                     </div>
                                                 </div>
                                             </div>
@@ -327,9 +304,9 @@ const RealtimeTrafficWidget = memo(({ t, theme }: any) => {
     return (
         <BentoCard 
             title={t('dash.traffic_title')}
-            className="h-full border border-[var(--glass-border)] dark:border-white/10 bg-[var(--bg-surface)] dark:bg-sgs-primary-deep"
+             className="dashboard-panel dashboard-status-widget h-full"
             contentClassName="justify-start"
-            icon={<svg className="w-5 h-5 text-sky-500 animate-pulse" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" /></svg>}
+             icon={<svg className="w-5 h-5 text-[var(--sgs-primary)]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" /></svg>}
         >
             <div className="flex justify-between items-start mb-4">
                 <div className="flex gap-5 flex-wrap">
@@ -352,7 +329,7 @@ const RealtimeTrafficWidget = memo(({ t, theme }: any) => {
                 </div>
                 <div className={`flex items-center gap-2 px-2 py-1 rounded-full border shrink-0 ${isConnected ? 'bg-emerald-50 border-emerald-100 dark:bg-emerald-900/20 dark:border-emerald-800' : 'bg-amber-50 border-amber-100 dark:bg-amber-900/20 dark:border-amber-800'}`}>
                     <span className="relative flex h-2 w-2">
-                      <span className={`animate-ping absolute inline-flex h-full w-full rounded-full opacity-75 ${isConnected ? 'bg-emerald-400' : 'bg-amber-400'}`}></span>
+                      <span className={`absolute inline-flex h-full w-full rounded-full opacity-20 ${isConnected ? 'bg-emerald-400' : 'bg-amber-400'}`}></span>
                       <span className={`relative inline-flex rounded-full h-2 w-2 ${isConnected ? 'bg-emerald-500' : 'bg-amber-500'}`}></span>
                     </span>
                     <span className={`text-xs2 font-bold uppercase ${isConnected ? 'text-emerald-700 dark:text-emerald-400' : 'text-amber-700 dark:text-amber-400'}`}>
@@ -365,10 +342,6 @@ const RealtimeTrafficWidget = memo(({ t, theme }: any) => {
                     <ResponsiveContainer width="100%" height={150} minHeight={100} minWidth={150}>
                         <ComposedChart data={data}>
                             <defs>
-                                <linearGradient id="latencyGradient" x1="0" y1="0" x2="0" y2="1">
-                                    <stop offset="5%" stopColor={colors.info || '#3E6D9C'} stopOpacity={0.3}/>
-                                    <stop offset="95%" stopColor={colors.info || '#3E6D9C'} stopOpacity={0}/>
-                                </linearGradient>
                             </defs>
                             <XAxis dataKey="time" hide />
                             <Tooltip content={<CustomTooltip t={t} language={language} />} cursor={{stroke: colors.grid || 'var(--sgs-border)', strokeWidth: 1}} />
@@ -376,16 +349,16 @@ const RealtimeTrafficWidget = memo(({ t, theme }: any) => {
                                 type="monotone" 
                                 dataKey="latency" 
                                 name={t('dash.avg_latency')}
-                                stroke={colors.info || '#3E6D9C'} 
+                                 stroke="var(--sgs-primary)"
                                 strokeWidth={2}
-                                fill="url(#latencyGradient)" 
+                                 fill="var(--sgs-subtle-bg)"
                                 isAnimationActive={false} 
                             />
                             <Line 
                                 type="step" 
                                 dataKey="rps" 
                                 name={t('dash.requests_sec')}
-                                stroke={colors.warning || '#F59E0B'} 
+                                 stroke="var(--sgs-accent)"
                                 strokeWidth={2} 
                                 dot={false}
                                 isAnimationActive={false}
@@ -440,13 +413,13 @@ export const Dashboard: React.FC = () => {
                 scale: 2, // Retina quality
                 useCORS: true,
                 logging: false,
-                backgroundColor: document.documentElement.classList.contains('dark') ? '#050505' : '#FAFAFA',
+                backgroundColor: getComputedStyle(document.documentElement).getPropertyValue('--bg-app').trim(),
                 onclone: (clonedDoc) => {
                     // Ensure fonts are loaded in the clone
                     const style = clonedDoc.createElement('style');
                     style.innerHTML = `
-                        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
-                        * { font-family: 'Inter', sans-serif !important; }
+                         @import url('https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700&family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=IBM+Plex+Mono:wght@400;500;600&display=swap');
+                         * { font-family: 'Be Vietnam Pro', sans-serif !important; }
                     `;
                     clonedDoc.head.appendChild(style);
                 }
@@ -530,370 +503,208 @@ export const Dashboard: React.FC = () => {
     const currentUser = (analytics as any)?.user;
     const userName = currentUser?.name ? currentUser.name.split(' ').slice(-1)[0] : '';
     const scopeKey: string = (analytics as any)?.scopeLabel || 'company';
-    const isSalesScope = scopeKey === 'personal';
-    const scopeLabel = isSalesScope ? t('dash.scope_personal') : t('dash.scope_company');
+    const scopeLabel = scopeKey === 'personal' ? t('dash.scope_personal') : t('dash.scope_company');
     return (
     <>
       <SeoHead title="Dashboard | SGS LAND" description="Bảng điều khiển tổng quan SGS LAND - quản lý bất động sản, phân tích thị trường và theo dõi hiệu suất kinh doanh." canonicalPath="/dashboard" />
-        <div className="space-y-6 p-4 sm:p-6 pb-24 animate-enter max-w-[1600px] mx-auto">
-            {/* Header */}
-            <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 mb-2">
-                {/* Left: title + subtitle + badges */}
-                <div className="min-w-0">
-                    <h1 className="text-2xl font-extrabold text-[var(--text-primary)] dark:text-white tracking-tight">
-                        {userName ? `${t('dash.greeting_morning')} ${userName}! 👋` : t('dash.greeting_morning')}
-                    </h1>
-                    <p className="text-sm text-[var(--text-tertiary)] dark:text-slate-400 font-medium mt-0.5">
-                        {t('dash.overview_subtitle')}
-                    </p>
-                    {/* Badges row — separate line so they never crowd the subtitle */}
-                    <div className="flex items-center gap-2 mt-2 flex-wrap">
-                        {/* Scope badge */}
-                        <span className={`text-xs2 font-bold px-2 py-1 rounded-full border flex items-center gap-1 shrink-0 ${
-                            isSalesScope
-                                ? 'bg-sgs-primary/10 text-sgs-primary border-sgs-primary/20 dark:bg-sgs-primary/20 dark:text-sgs-on-dark-muted dark:border-sgs-primary/40'
-                                : 'bg-[var(--glass-surface-hover)] text-[var(--text-tertiary)] border-[var(--glass-border)] dark:bg-slate-800 dark:text-slate-400 dark:border-slate-700'
-                        }`}>
-                            <svg className="w-3 h-3 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" /></svg>
-                            {scopeLabel}
-                        </span>
-                        {/* Last updated badge */}
-                        <span className="text-xs2 text-[var(--text-tertiary)] bg-[var(--glass-surface-hover)] dark:bg-slate-800 dark:text-slate-400 px-2 py-1 rounded-full flex items-center gap-1 font-medium border border-[var(--glass-border)] dark:border-slate-700 shrink-0">
-                            {ICONS.REFRESH} {lastUpdated.toLocaleTimeString()}
-                        </span>
-                    </div>
-                </div>               
-                {/* Right: filter + export — full width on mobile, auto on desktop */}
-                <div className="flex items-center gap-2 w-full md:w-auto shrink-0">
-                    <div className="flex-1 md:flex-none md:w-36 z-20">
-                        <Dropdown 
-                            value={timeRange}
-                            onChange={(val) => setTimeRange(val as string)}
-                            options={[
-                                { value: '7d', label: t('dash.filter_7d') },
-                                { value: '30d', label: t('dash.filter_30d') },
-                                { value: 'all', label: t('dash.filter_all') }
-                            ]}
-                            className="text-xs"
-                        />
-                    </div>
-                    <button 
-                        onClick={handleExport}
-                        disabled={isExporting}
-                        className="shrink-0 bg-sgs-primary hover:bg-sgs-primary text-white text-xs font-bold px-4 py-2.5 rounded-xl shadow-lg transition-all active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
-                    >
-                        {isExporting ? (
-                            <div className="w-3 h-3 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
-                        ) : (
-                            <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" /></svg>
-                        )}
-                        {isExporting ? t('dash.exporting') : t('common.export')}
-                    </button>
-                </div>
-            </div>
-            {/* Getting Started Banner — shown until dismissed or user has 5+ leads */}
-            {(analytics.totalLeads ?? 0) < 5 && !localStorage.getItem('sgs_guide_dismissed') && (
-                <div className="flex items-center justify-between gap-4 px-4 py-3 rounded-2xl bg-gradient-to-r from-emerald-900/40 to-sgs-primary-deep/60 border border-emerald-800/40">
-                    <div className="flex items-center gap-3">
-                        <span className="text-emerald-400 shrink-0">
-                            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M13 10V3L4 14h7v7l9-11h-7z" /></svg>
-                        </span>
-                        <div>
-                            <p className="text-sm font-bold text-white">
-                                {language === 'vn' ? 'Bắt đầu với SGS LAND' : 'Getting started with SGS LAND'}
-                            </p>
-                            <p className="text-xs text-slate-400">
-                                {language === 'vn'
-                                    ? 'Xem hướng dẫn sử dụng 12 tính năng — hoàn thành trong 15 phút.'
-                                    : 'Read the full feature guide — complete in 15 minutes.'}
-                            </p>
+        <div className="sgs-dashboard min-h-full overflow-y-auto px-4 py-5 sm:px-6 lg:px-8 pb-24 animate-enter">
+            <div className="mx-auto max-w-[1480px] space-y-6">
+                <header className="dashboard-header flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
+                    <div className="min-w-0">
+                        <div className="dash-eyebrow text-[var(--text-tertiary)]">{scopeLabel}</div>
+                        <h1 className="dashboard-title mt-2 text-[var(--text-primary)]">
+                            {userName ? `${t('dash.greeting_morning')} ${userName}` : t('dash.greeting_morning')}
+                        </h1>
+                        <p className="mt-2 max-w-xl text-sm leading-6 text-[var(--text-secondary)]">{t('dash.overview_subtitle')}</p>
+                        <div className="mt-3 flex items-center gap-2 text-xs text-[var(--text-tertiary)]">
+                            {ICONS.REFRESH}
+                            <span>{lastUpdated.toLocaleTimeString()}</span>
                         </div>
                     </div>
-                    <div className="flex items-center gap-2 shrink-0">
-                        <a
-                            href="/huong-dan-su-dung"
-                            className="px-3 py-1.5 bg-sgs-verified hover:bg-sgs-verified text-white text-xs font-bold rounded-lg transition-colors whitespace-nowrap"
-                        >
-                            {language === 'vn' ? 'Xem hướng dẫn' : 'View guide'} →
-                        </a>
+                    <div className="flex w-full items-center gap-2 sm:w-auto">
+                        <div className="min-w-0 flex-1 sm:w-36">
+                            <Dropdown
+                                value={timeRange}
+                                onChange={(val) => setTimeRange(val as string)}
+                                options={[
+                                    { value: '7d', label: t('dash.filter_7d') },
+                                    { value: '30d', label: t('dash.filter_30d') },
+                                    { value: 'all', label: t('dash.filter_all') }
+                                ]}
+                                className="dashboard-control w-full text-xs"
+                            />
+                        </div>
                         <button
-                            onClick={(e) => { localStorage.setItem('sgs_guide_dismissed', '1'); (e.currentTarget.closest('[data-guide-banner]') as HTMLElement | null)?.remove(); }}
-                            data-guide-banner
-                            className="text-sgs-text-muted hover:text-slate-400 transition-colors p-1"
-                            title="Ẩn"
+                            onClick={handleExport}
+                            disabled={isExporting}
+                            className="dashboard-control dashboard-export flex shrink-0 items-center gap-2 px-3.5 py-2.5 text-xs font-semibold disabled:cursor-not-allowed disabled:opacity-50"
+                            aria-label={isExporting ? t('dash.exporting') : t('common.export')}
                         >
-                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
+                            {isExporting ? (
+                                <div className="h-3 w-3 rounded-full border-2 border-current border-t-transparent animate-spin" />
+                            ) : (
+                                <svg className="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" /></svg>
+                            )}
+                            {isExporting ? t('dash.exporting') : t('common.export')}
                         </button>
                     </div>
-                </div>
-            )}
-            {/* MAIN GRID LAYOUT */}
-            <div ref={dashboardRef} className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">               
-                {/* TIER 1: North Star Metrics (KPI Cards) — Unified Layout */}
-                {/* 1. Revenue (Doanh Thu Hoa Hồng) */}
-                <div className="md:col-span-1 lg:col-span-1 overflow-hidden rounded-[32px]">
-                    <BentoCard
-                        title={t('dash.revenue_title')}
-                        className="h-full min-h-[180px] bg-gradient-to-br from-sgs-primary to-sgs-primary-deep text-white border-none shadow-xl [&_h3]:!text-white/70 overflow-hidden"
-                    >
-                        <div className="flex flex-col justify-between h-full gap-4">
-                            <div>
-                                <div className="text-3xl font-black tracking-tight mt-2 text-white break-words">
-                                    {formatCompactNumber(analytics.revenue || 0)}
-                                </div>
-                                <div className="text-xs2 text-white/70 font-bold uppercase tracking-wider mt-1">
-                                    {t('dash.revenue_subtitle')}
-                                </div>
-                            </div>
-                            <div className="bg-[var(--bg-surface)]/10 p-3 rounded-xl backdrop-blur-sm border border-white/10 text-xs flex items-center gap-2">
-                                <span className={`font-bold flex items-center gap-1 ${(analytics.revenueDelta ?? 0) >= 0 ? 'text-emerald-300' : 'text-rose-300'}`}>
-                                    {(analytics.revenueDelta ?? 0) >= 0 ? ICONS.TREND_UP : ICONS.TREND_DOWN}
-                                    {Math.abs(analytics.revenueDelta || 0)}%
-                                </span>
-                                <span className="text-white/70 font-medium">{t('dash.vs_last_period')}</span>
-                            </div>
+                </header>
+
+                {(analytics.totalLeads ?? 0) < 5 && !localStorage.getItem('sgs_guide_dismissed') && (
+                    <div className="dashboard-guide flex flex-col gap-3 px-4 py-3 sm:flex-row sm:items-center sm:justify-between" data-guide-banner>
+                        <div>
+                            <p className="text-sm font-semibold text-[var(--text-primary)]">
+                                {language === 'vn' ? 'Bắt đầu với SGS LAND' : 'Getting started with SGS LAND'}
+                            </p>
+                            <p className="mt-1 text-xs text-[var(--text-secondary)]">
+                                {language === 'vn' ? 'Xem hướng dẫn sử dụng 12 tính năng — hoàn thành trong 15 phút.' : 'Read the full feature guide — complete in 15 minutes.'}
+                            </p>
                         </div>
-                    </BentoCard>
-                </div>
-                {/* 2. Pipeline Value (Giá Trị Pipeline) */}
-                <div className="md:col-span-1 lg:col-span-1 overflow-hidden rounded-[32px]">
-                    <BentoCard title={t('dash.pipeline_value')} className="h-full min-h-[180px] bg-[var(--bg-surface)] dark:bg-sgs-primary-deep border border-[var(--glass-border)] dark:border-white/10 overflow-hidden">
-                        <div className="flex flex-col justify-between h-full gap-4">
-                            <div>
-                                <div className="text-3xl font-extrabold text-[var(--text-primary)] dark:text-white tracking-tight mt-2 break-words">
-                                    {formatCompactNumber(analytics.pipelineValue || 0)}
-                                </div>
-                                <div className="text-xs2 text-[var(--text-tertiary)] dark:text-slate-400 font-bold uppercase tracking-wider mt-1">
-                                    {t('dash.win_probability')}: <span className="text-sgs-primary dark:text-sgs-text-muted">{analytics.winProbability || 0}%</span>
-                                </div>
-                            </div>
-                            <div className="bg-[var(--glass-surface)] dark:bg-slate-800/50 p-3 rounded-xl border border-[var(--glass-border)] dark:border-slate-700/50 text-xs flex items-center gap-2">
-                                <TrendIndicator value={analytics.pipelineValueDelta || 0} label={t('dash.vs_last_period')} />
-                            </div>
+                        <div className="flex items-center gap-3">
+                            <a href="/huong-dan-su-dung" className="text-xs font-semibold text-[var(--sgs-primary)] underline underline-offset-4">
+                                {language === 'vn' ? 'Xem hướng dẫn' : 'View guide'}
+                            </a>
+                            <button
+                                onClick={(e) => {
+                                    localStorage.setItem('sgs_guide_dismissed', '1');
+                                    (e.currentTarget.closest('[data-guide-banner]') as HTMLElement | null)?.remove();
+                                }}
+                                className="rounded p-1 text-[var(--text-tertiary)] hover:text-[var(--text-primary)]"
+                                title={language === 'vn' ? 'Ẩn' : 'Dismiss'}
+                                aria-label={language === 'vn' ? 'Ẩn hướng dẫn' : 'Dismiss guide'}
+                            >
+                                <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
+                            </button>
                         </div>
-                    </BentoCard>
-                </div>
-                {/* 3. AI Deflection Rate (Tỷ Lệ Tự Động Hóa AI) */}
-                <div className="md:col-span-1 lg:col-span-1 overflow-hidden rounded-[32px]">
-                    <BentoCard title={t('dash.ai_deflection_rate')} className="h-full min-h-[180px] bg-[var(--bg-surface)] dark:bg-sgs-primary-deep border border-[var(--glass-border)] dark:border-white/10 overflow-hidden">
-                        <div className="flex flex-col justify-between h-full gap-4">
-                            <div>
-                                <div className="flex items-center gap-2 mt-2">
-                                    <div className="relative h-10 w-10 shrink-0">
-                                        <svg className="w-10 h-10 -rotate-90" viewBox="0 0 40 40">
-                                            <circle cx="20" cy="20" r="16" fill="none" stroke="currentColor" className="text-emerald-100 dark:text-emerald-900/30" strokeWidth="4" />
-                                            <circle cx="20" cy="20" r="16" fill="none" stroke="currentColor" className="text-sgs-verified" strokeWidth="4" strokeLinecap="round"
-                                                strokeDasharray={`${((analytics.aiDeflectionRate || 0) / 100) * 2 * Math.PI * 16} ${2 * Math.PI * 16}`} />
-                                        </svg>
-                                        <div className="absolute inset-0 flex items-center justify-center text-sgs-verified dark:text-emerald-400">
-                                            {ICONS.AI}
-                                        </div>
-                                    </div>
-                                    <div className="text-3xl font-extrabold text-[var(--text-primary)] dark:text-white">{analytics.aiDeflectionRate || 0}%</div>
-                                </div>
-                                <div className="text-xs2 text-sgs-verified dark:text-emerald-400 font-bold uppercase tracking-wider mt-1">{t('dash.resolved_by_ai')}</div>
-                            </div>
-                            <div className="bg-[var(--glass-surface)] dark:bg-slate-800/50 p-3 rounded-xl border border-[var(--glass-border)] dark:border-slate-700/50 text-xs flex items-center gap-2">
-                                <TrendIndicator value={analytics.aiDeflectionRateDelta || 0} label={t('dash.vs_last_period')} />
-                            </div>
+                    </div>
+                )}
+
+                <div ref={dashboardRef} className="space-y-6">
+                    <section className="dashboard-kpis" aria-label={t('dash.overview_subtitle')}>
+                        <div className="dashboard-kpi">
+                            <div className="kpi-label">{t('dash.revenue_title')}</div>
+                            <div className="kpi-value dash-number break-words">{formatCompactNumber(analytics.revenue || 0)}</div>
+                            <div className="kpi-meta"><TrendIndicator value={analytics.revenueDelta || 0} label={t('dash.vs_last_period')} /></div>
                         </div>
-                    </BentoCard>
-                </div>
-                {/* 4. Sales Velocity (Tốc Độ Bán Hàng) */}
-                <div className="md:col-span-1 lg:col-span-1 overflow-hidden rounded-[32px]">
-                    <BentoCard title={t('dash.sales_velocity')} className="h-full min-h-[180px] bg-[var(--bg-surface)] dark:bg-sgs-primary-deep border border-[var(--glass-border)] dark:border-white/10 overflow-hidden">
-                        <div className="flex flex-col justify-between h-full gap-4">
-                            <div>
-                                <div className="text-3xl font-extrabold text-[var(--text-primary)] dark:text-white mt-2">
-                                    {analytics.salesVelocity > 0 && analytics.salesVelocity < 1 ? '< 1' : (analytics.salesVelocity || '--')}
+                        <div className="dashboard-kpi">
+                            <div className="kpi-label">{t('dash.pipeline_value')}</div>
+                            <div className="kpi-value dash-number break-words">{formatCompactNumber(analytics.pipelineValue || 0)}</div>
+                            <div className="kpi-meta">{t('dash.win_probability')}: <strong className="dash-number text-[var(--sgs-primary)]">{analytics.winProbability || 0}%</strong></div>
+                        </div>
+                        <div className="dashboard-kpi">
+                            <div className="kpi-label">{t('dash.ai_deflection_rate')}</div>
+                            <div className="kpi-value dash-number">{analytics.aiDeflectionRate || 0}%</div>
+                            <div className="kpi-meta"><TrendIndicator value={analytics.aiDeflectionRateDelta || 0} label={t('dash.vs_last_period')} /></div>
+                        </div>
+                        <div className="dashboard-kpi">
+                            <div className="kpi-label">{t('dash.sales_velocity')}</div>
+                            <div className="kpi-value dash-number">{analytics.salesVelocity > 0 && analytics.salesVelocity < 1 ? '< 1' : (analytics.salesVelocity || '--')}</div>
+                            <div className="kpi-meta">{analytics.salesVelocity > 0 ? t('dash.days_to_close') : t('dash.no_closed_deals')} <TrendIndicator value={analytics.salesVelocityDelta || 0} label="" /></div>
+                        </div>
+                    </section>
+
+                    <section className="dashboard-panel" aria-label={t('dash.pipeline_title')}>
+                        <div className="dashboard-panel-head">
+                            <h2>{t('dash.pipeline_title')}</h2>
+                            <div className="flex items-center gap-4 text-right">
+                                <div>
+                                    <div className="dashboard-subhead">{t('dash.total_leads')}</div>
+                                    <div className="dash-number mt-1 text-lg font-semibold text-[var(--text-primary)]">{analytics.totalLeads}</div>
                                 </div>
-                                <div className="text-xs2 text-[var(--text-tertiary)] dark:text-slate-400 font-bold uppercase tracking-wider mt-1">
-                                    {analytics.salesVelocity > 0 ? t('dash.days_to_close') : t('dash.no_closed_deals')}
+                                <div className="hidden sm:block">
+                                    <div className="dashboard-subhead">{t('dash.conversion')}</div>
+                                    <div className="dash-number mt-1 text-lg font-semibold text-[var(--sgs-verified)]">{!isNaN(analytics.conversionRate) ? analytics.conversionRate : 0}%</div>
                                 </div>
                             </div>
-                            <div className="bg-[var(--glass-surface)] dark:bg-slate-800/50 p-3 rounded-xl border border-[var(--glass-border)] dark:border-slate-700/50 text-xs flex items-center gap-2">
-                                <TrendIndicator value={analytics.salesVelocityDelta || 0} label={t('dash.vs_last_period')} />
-                            </div>
                         </div>
-                    </BentoCard>
-                </div>
-                {/* TIER 2: The Engine (Charts & Activity) */}
-                <div className="md:col-span-2 lg:col-span-3 min-h-[420px]">
-                    <BentoCard 
-                        title={t('dash.pipeline_title')}
-                        className="h-full border border-[var(--glass-border)] dark:border-white/10 bg-[var(--bg-surface)] dark:bg-sgs-primary-deep"
-                    >
-                        <div className="flex justify-between items-end mb-4">
-                            <div>
-                                <div className="text-4xl font-extrabold text-[var(--text-primary)] dark:text-white tracking-tight">{analytics.totalLeads}</div>
-                                <TrendIndicator value={analytics.totalLeadsDelta} label={t('dash.total_leads')} />
-                            </div>
-                            <div className="text-right hidden sm:block">
-                                <div className="text-xs2 uppercase font-bold text-[var(--text-tertiary)] tracking-wider mb-1">{t('dash.conversion')}</div>
-                                <div className="text-lg font-bold text-sgs-verified dark:text-emerald-400">{!isNaN(analytics.conversionRate) ? analytics.conversionRate : 0}%</div>
-                            </div>
-                        </div>
-                        <div className="flex-1 w-full min-h-[250px] relative">
-                            {analytics.leadsTrend && analytics.leadsTrend.length > 0 ? (
-                                <ResponsiveContainer width="100%" height="100%" minHeight={200} minWidth={200}>
-                                    <ComposedChart data={analytics.leadsTrend}>
-                                        <defs>
-                                            <linearGradient id="barGradient" x1="0" y1="0" x2="0" y2="1">
-                                                <stop offset="0%" stopColor={chartTheme.colors.primary} stopOpacity={0.8}/>
-                                                <stop offset="100%" stopColor={chartTheme.colors.primary} stopOpacity={0.2}/>
-                                            </linearGradient>
-                                        </defs>
-                                        <CartesianGrid strokeDasharray="3 3" vertical={false} stroke={chartTheme.colors.grid} opacity={0.5} />
-                                        <XAxis dataKey="date" hide />
-                                        <Tooltip content={<CustomTooltip t={t} formatCurrency={formatCurrency} language={language} />} cursor={{fill: 'transparent'}} />
-                                        <Bar 
-                                            dataKey="count" 
-                                            fill="url(#barGradient)" 
-                                            barSize={20} 
-                                            radius={[4, 4, 0, 0]}
-                                            name={t('dash.chart_new_leads')}
-                                        />
-                                        <Line 
-                                            type="monotone" 
-                                            dataKey="count" 
-                                            stroke={chartTheme.colors.secondary} 
-                                            strokeWidth={3} 
-                                            dot={{r: 3, fill: chartTheme.colors.background, stroke: chartTheme.colors.secondary, strokeWidth: 2}}
-                                            name={t('dash.chart_trend')}
-                                        />
-                                    </ComposedChart>
-                                </ResponsiveContainer>
-                            ) : (
-                                <EmptyState message={t('dash.chart_empty')} />
-                            )}
-                        </div>
-                    </BentoCard>
-                </div>
-                <div className="md:col-span-2 lg:col-span-1 min-h-[420px]">
-                    <BentoCard title={t('dash.activity_title')} className="h-full bg-[var(--bg-surface)] dark:bg-sgs-primary-deep border border-[var(--glass-border)] dark:border-white/10 overflow-hidden flex flex-col">
-                        <div className="flex-1 overflow-y-auto no-scrollbar -mx-2 px-2 mt-2">
-                            <div className="flex flex-col gap-2">
-                                {(analytics.recentActivities || []).map((act: any, idx: number) => (
-                                    <ActivityItem key={act.id != null ? `${act.id}-${idx}` : idx} activity={act} />
-                                ))}
-                                {(!analytics.recentActivities || analytics.recentActivities.length === 0) && (
-                                    <div className="py-10">
-                                        <EmptyState message={t('dash.activity_empty')} />
-                                    </div>
-                                )}
-                            </div>
-                        </div>
-                    </BentoCard>
-                </div>
-                {/* TIER 3: Market Pulse & Leaderboard */}
-                <div className="md:col-span-2 lg:col-span-2 min-h-[400px]">
-                    <BentoCard
-                        title={t('dash.market_pulse_title')}
-                        className="h-full border border-[var(--glass-border)] dark:border-white/10 bg-[var(--bg-surface)] dark:bg-sgs-primary-deep"
-                    >
-                        <div className="flex-1 w-full h-[320px] relative mt-4 flex flex-col">
-                            {analytics.marketPulse && analytics.marketPulse.length > 0 ? (
-                                <>
-                                    <div className="flex-1 min-h-[200px]">
+                        <div className="dashboard-workbench">
+                            <div className="dashboard-chart">
+                                <div className="mb-3 flex items-center justify-between">
+                                    <TrendIndicator value={analytics.totalLeadsDelta} label={t('dash.total_leads')} />
+                                    <span className="dashboard-subhead">{timeRange}</span>
+                                </div>
+                                <div className="h-[260px] w-full min-w-0 sm:h-[300px]">
+                                    {analytics.leadsTrend && analytics.leadsTrend.length > 0 ? (
                                         <ResponsiveContainer width="100%" height="100%" minHeight={200} minWidth={200}>
-                                            <ScatterChart margin={{ top: 20, right: 20, bottom: 20, left: 20 }}>
+                                            <ComposedChart data={analytics.leadsTrend}>
+                                                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke={chartTheme.colors.grid} opacity={0.5} />
+                                                <XAxis dataKey="date" hide />
+                                                <Tooltip content={<CustomTooltip t={t} formatCurrency={formatCurrency} language={language} />} cursor={{fill: 'transparent'}} />
+                                                <Bar dataKey="count" fill="var(--sgs-primary)" barSize={18} radius={[2, 2, 0, 0]} name={t('dash.chart_new_leads')} />
+                                                <Line type="monotone" dataKey="count" stroke="var(--sgs-accent)" strokeWidth={2} dot={{r: 3, fill: 'var(--bg-surface)', stroke: 'var(--sgs-accent)', strokeWidth: 2}} name={t('dash.chart_trend')} />
+                                            </ComposedChart>
+                                        </ResponsiveContainer>
+                                    ) : <EmptyState message={t('dash.chart_empty')} />}
+                                </div>
+                            </div>
+                            <div className="dashboard-side">
+                                <div className="dashboard-subhead mb-2">{t('dash.activity_title')}</div>
+                                <div className="max-h-[315px] overflow-y-auto no-scrollbar">
+                                    {(analytics.recentActivities || []).map((act: any, idx: number) => (
+                                        <ActivityItem key={act.id != null ? `${act.id}-${idx}` : idx} activity={act} />
+                                    ))}
+                                    {(!analytics.recentActivities || analytics.recentActivities.length === 0) && <div className="py-10"><EmptyState message={t('dash.activity_empty')} /></div>}
+                                </div>
+                            </div>
+                        </div>
+                        <div className="dashboard-secondary">
+                            <section>
+                                <div className="dashboard-subhead mb-2">{t('dash.market_pulse_title')}</div>
+                                <div className="h-[270px] w-full min-w-0">
+                                    {analytics.marketPulse && analytics.marketPulse.length > 0 ? (
+                                        <ResponsiveContainer width="100%" height="100%" minHeight={200} minWidth={200}>
+                                            <ScatterChart margin={{ top: 15, right: 15, bottom: 15, left: 5 }}>
                                                 <CartesianGrid strokeDasharray="3 3" stroke={chartTheme.colors.grid} opacity={0.5} />
-                                                <XAxis type="number" dataKey="area" name={t('dash.scatter_area')} unit="m²" stroke={chartTheme.colors.text} fontSize={12} tickLine={false} axisLine={false} />
-                                                <YAxis type="number" dataKey="price" name={t('dash.scatter_price')} unit={` ${t('dash.scatter_price_unit')}`} stroke={chartTheme.colors.text} fontSize={12} tickLine={false} axisLine={false} tickFormatter={(v: number) => v.toLocaleString('vi-VN', { maximumFractionDigits: 1 })} />
-                                                <ZAxis type="number" dataKey="interest" range={[100, 1000]} name={t('dash.scatter_interest')} />
+                                                <XAxis type="number" dataKey="area" name={t('dash.scatter_area')} unit="m²" stroke={chartTheme.colors.text} fontSize={11} tickLine={false} axisLine={false} />
+                                                <YAxis type="number" dataKey="price" name={t('dash.scatter_price')} unit={` ${t('dash.scatter_price_unit')}`} stroke={chartTheme.colors.text} fontSize={11} tickLine={false} axisLine={false} tickFormatter={(v: number) => v.toLocaleString('vi-VN', { maximumFractionDigits: 1 })} />
+                                                <ZAxis type="number" dataKey="interest" range={[100, 850]} name={t('dash.scatter_interest')} />
                                                 <Tooltip cursor={{ strokeDasharray: '3 3' }} content={<ScatterTooltip t={t} />} />
-                                                <Scatter name={t('dash.scatter_interest')} data={analytics.marketPulse} opacity={0.7}>
+                                                <Scatter name={t('dash.scatter_interest')} data={analytics.marketPulse} opacity={0.78}>
                                                     {analytics.marketPulse.map((entry: any, index: number) => {
-                                                        // Generate a color based on location
-                                                        const colors = ['#3E6D9C', 'var(--sgs-verified)', '#F59E0B', '#D14545', '#C8963E', '#4A7C8C', '#14B8A6'];
+                                                        const colors = ['var(--sgs-primary)', 'var(--sgs-verified)', 'var(--sgs-accent)', 'var(--sgs-accent-text)', 'var(--sgs-primary-deep)', 'var(--sgs-text-muted)'];
                                                         const hash = entry.location.split('').reduce((acc: number, char: string) => acc + char.charCodeAt(0), 0);
-                                                        const color = colors[hash % colors.length];
-                                                        return <Cell key={`cell-${index}`} fill={color} />;
+                                                        return <Cell key={`cell-${index}`} fill={colors[hash % colors.length]} />;
                                                     })}
                                                 </Scatter>
                                             </ScatterChart>
                                         </ResponsiveContainer>
-                                    </div>
-                                    <div className="flex flex-wrap items-center justify-center gap-3 pt-2 pb-1">
-                                        {Array.from(new Set(analytics.marketPulse.map((item: any) => item.location))).map((loc: any, idx: number) => {
-                                            const colors = ['#3E6D9C', 'var(--sgs-verified)', '#F59E0B', '#D14545', '#C8963E', '#4A7C8C', '#14B8A6'];
-                                            const hash = loc.split('').reduce((acc: number, char: string) => acc + char.charCodeAt(0), 0);
-                                            const color = colors[hash % colors.length];
-                                            return (
-                                                <div key={idx} className="flex items-center gap-1.5">
-                                                    <div className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: color }}></div>
-                                                    <span className="text-xs2 font-medium text-[var(--text-secondary)] dark:text-slate-400">{loc}</span>
-                                                </div>
-                                            );
-                                        })}
-                                    </div>
-                                </>
-                            ) : (
-                                <EmptyState message={t('dash.market_pulse_empty')} />
-                            )}
-                        </div>
-                    </BentoCard>
-                </div>
-                <div className="md:col-span-2 lg:col-span-2 min-h-[400px]">
-                    <BentoCard
-                        title={t('dash.leaderboard_title')}
-                        className="h-full border border-[var(--glass-border)] dark:border-white/10 bg-[var(--bg-surface)] dark:bg-sgs-primary-deep overflow-hidden flex flex-col"
-                    >
-                        <div className="flex-1 overflow-y-auto no-scrollbar -mx-2 px-2 mt-4">
-                            <div className="flex flex-col gap-3">
-                                {(analytics.agentLeaderboard || []).map((agent: any, idx: number) => (
-                                    <div key={agent.id ?? agent.name ?? idx} className="flex items-center justify-between p-3 rounded-xl bg-[var(--glass-surface)] dark:bg-slate-800/50 border border-[var(--glass-border)] dark:border-slate-700/50 hover:border-sgs-border dark:hover:border-sgs-primary/40 transition-colors">
-                                        <div className="flex items-center gap-3">
-                                            <div className="relative">
+                                    ) : <EmptyState message={t('dash.market_pulse_empty')} />}
+                                </div>
+                                <div className="flex flex-wrap gap-x-3 gap-y-1">
+                                    {Array.from(new Set(analytics.marketPulse?.map((item: any) => item.location) || [])).map((loc: any, idx: number) => (
+                                        <span key={idx} className="text-xs text-[var(--text-secondary)]">{loc}</span>
+                                    ))}
+                                </div>
+                            </section>
+                            <section>
+                                <div className="dashboard-subhead mb-2">{t('dash.leaderboard_title')}</div>
+                                <div className="max-h-[305px] overflow-y-auto no-scrollbar">
+                                    {(analytics.agentLeaderboard || []).map((agent: any, idx: number) => (
+                                        <div key={agent.id ?? agent.name ?? idx} className="dashboard-ranking">
+                                            <div className="flex min-w-0 items-center gap-2.5">
                                                 <AgentAvatar name={agent.name} avatar={agent.avatar} />
-                                                {idx < 3 && (
-                                                    <div className={`absolute -top-1 -right-1 w-4 h-4 rounded-full flex items-center justify-center text-3xs font-bold text-white shadow-sm ${idx === 0 ? 'bg-amber-400' : idx === 1 ? 'bg-slate-400' : 'bg-amber-600'}`}>
-                                                        {idx + 1}
-                                                    </div>
-                                                )}
-                                            </div>
-                                            <div>
-                                                <div className="font-bold text-sm text-[var(--text-primary)] dark:text-white">{agent.name}</div>
-                                                <div className="text-xs2 text-[var(--text-tertiary)] dark:text-slate-400 font-medium">{agent.deals} {t('dash.deals_closed')}</div>
-                                            </div>
-                                        </div>
-                                        <div className="flex items-center gap-4 text-right">
-                                            <div>
-                                                <div className="text-xs2 uppercase font-bold text-[var(--text-tertiary)] tracking-wider mb-0.5">{t('dash.close_rate')}</div>
-                                                <div className="font-bold text-sgs-verified dark:text-emerald-400 text-sm">{agent.closeRate}%</div>
-                                            </div>
-                                            <div className="w-px h-8 bg-slate-200 dark:bg-slate-700"></div>
-                                            <div>
-                                                <div className="text-xs2 uppercase font-bold text-[var(--text-tertiary)] tracking-wider mb-0.5">{t('dash.sla_score')}</div>
-                                                <div className="flex items-center gap-1 justify-end">
-                                                    <span className={`font-bold text-sm ${agent.slaScore >= 90 ? 'text-sgs-primary dark:text-sgs-on-dark-muted' : 'text-amber-600 dark:text-amber-400'}`}>{agent.slaScore}/100</span>
+                                                <div className="min-w-0">
+                                                    <div className="rank-name truncate">{agent.name}</div>
+                                                    <div className="rank-detail">{agent.deals} {t('dash.deals_closed')}</div>
                                                 </div>
-                                                <div className="text-2xs text-[var(--text-secondary)] font-medium">{t('dash.avg_abbr')}: {agent.avgResponseMinutes != null ? `${agent.avgResponseMinutes} ${t('dash.minutes')}` : 'N/A'}</div>
                                             </div>
+                                            <div className="rank-metric"><span>{t('dash.close_rate')}</span>{agent.closeRate}%</div>
+                                            <div className="rank-metric"><span>{t('dash.sla_score')}</span>{agent.slaScore}/100</div>
                                         </div>
-                                    </div>
-                                ))}
-                                {(!analytics.agentLeaderboard || analytics.agentLeaderboard.length === 0) && (
-                                    <div className="py-10">
-                                        <EmptyState message={t('dash.leaderboard_empty')} />
-                                    </div>
-                                )}
-                            </div>
+                                    ))}
+                                    {(!analytics.agentLeaderboard || analytics.agentLeaderboard.length === 0) && <div className="py-10"><EmptyState message={t('dash.leaderboard_empty')} /></div>}
+                                </div>
+                            </section>
                         </div>
-                    </BentoCard>
+                    </section>
+
+                    {(['SUPER_ADMIN', 'ADMIN', 'TEAM_LEAD'].includes(analytics.user?.role ?? '')) && (
+                        <div className="grid grid-cols-1 gap-6 xl:grid-cols-2">
+                            <GeoLocationTable t={t} />
+                            <RealtimeTrafficWidget t={t} theme={chartTheme} />
+                        </div>
+                    )}
                 </div>
-                {/* TIER 4: Geolocation Table (Admin & Team Lead Only) */}
-                {(['SUPER_ADMIN', 'ADMIN', 'TEAM_LEAD'].includes(analytics.user?.role ?? '')) && (
-                    <div className="md:col-span-2 lg:col-span-2 min-h-[400px]">
-                        <GeoLocationTable t={t} />
-                    </div>
-                )}
-                {/* TIER 4: Realtime Traffic (Admin & Team Lead Only) */}
-                {(['SUPER_ADMIN', 'ADMIN', 'TEAM_LEAD'].includes(analytics.user?.role ?? '')) && (
-                    <div className="md:col-span-2 lg:col-span-2 h-[400px]">
-                        <RealtimeTrafficWidget t={t} theme={chartTheme} />
-                    </div>
-                )}
             </div>
         </div>
         {createPortal(
