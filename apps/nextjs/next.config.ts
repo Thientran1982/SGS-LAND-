@@ -151,6 +151,10 @@ const nextConfig: NextConfig = {
     return [
       { source: "/search",                  destination: "/marketplace",             permanent: true },
       { source: "/bat-dong-san",            destination: "/marketplace",             permanent: true },
+      { source: "/mua",                    destination: "/marketplace?transaction=SALE", permanent: false },
+      { source: "/thue",                   destination: "/marketplace?transaction=RENT", permanent: false },
+      { source: "/en/mua",                 destination: "/en/marketplace?transaction=SALE", permanent: false },
+      { source: "/en/thue",                destination: "/en/marketplace?transaction=RENT", permanent: false },
       { source: "/lai-suat-vay-ngan-hang",  destination: "/lai-suat-ngan-hang",      permanent: true },
       { source: "/lai-suat-vay-mua-nha",    destination: "/lai-suat-ngan-hang",      permanent: true },
       { source: "/nha-pho-trung-tam",       destination: "/du-an/nha-pho-trung-tam", permanent: true },
