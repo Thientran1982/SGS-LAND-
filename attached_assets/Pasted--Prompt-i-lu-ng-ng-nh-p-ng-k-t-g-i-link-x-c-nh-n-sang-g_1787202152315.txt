@@ -1,0 +1,44 @@
+# Prompt: Đổi luồng đăng nhập/đăng ký từ "gửi link xác nhận" sang "gửi mã code"
+
+Hệ thống hiện tại: khi người dùng đăng ký/đăng nhập, backend gửi email chứa **link xác nhận** (magic link), người dùng bấm vào link để hoàn tất đăng nhập. Yêu cầu: đổi sang gửi **mã code 6 số (OTP)** qua email, người dùng nhập mã vào form trên web để hoàn tất đăng nhập — bỏ hoàn toàn cơ chế link.
+
+## 1. Backend — sinh và xác thực mã OTP
+
+- Thay hàm sinh magic-link token bằng hàm sinh **mã số ngẫu nhiên 6 chữ số** (ví dụ `crypto.randomInt(100000, 999999)`), không dùng token dạng chuỗi dài/URL-safe.
+- Lưu mã trong bảng hiện có (hoặc bảng mới `login_otp` nếu chưa có) với các cột: `email`, `otp_code` (hash bằng bcrypt/argon2 trước khi lưu, không lưu plaintext), `expires_at` (hết hạn sau **5 phút**), `attempts` (đếm số lần nhập sai), `used_at`.
+- Giới hạn: tối đa **5 lần nhập sai** trước khi mã bị vô hiệu và yêu cầu gửi lại; tối đa **3 lần gửi mã** trong 15 phút cho cùng một email (rate limit chống spam, có thể dùng Upstash Redis đang sẵn có).
+- Endpoint mới/sửa:
+  - `POST /api/auth/request-otp` — nhận `email`, sinh mã, lưu hash + thời hạn, gửi email qua Zoho Mail (info@sgsland.vn) đang cấu hình sẵn. Trả về `{ success: true, expiresInSeconds: 300 }`, **không** trả mã về client.
+  - `POST /api/auth/verify-otp` — nhận `email` + `code`, so khớp hash, kiểm tra hạn và số lần thử, nếu đúng thì tạo session/JWT như luồng đăng nhập cũ, đánh dấu `used_at`, xoá/vô hiệu các mã cũ chưa dùng của email đó.
+- Xoá toàn bộ code liên quan đến sinh/verify magic-link token (route xác nhận qua query param, middleware kiểm tra token trong URL).
+
+## 2. Email template
+
+- Bỏ nút/link "Xác nhận đăng nhập" trong template hiện có.
+- Thay bằng: mã 6 số hiển thị lớn, rõ ràng, dễ đọc (font mono, cỡ chữ lớn, có khoảng cách giữa các số, ví dụ `1 2 3 4 5 6`).
+- Ghi rõ thời hạn hiệu lực ("Mã có hiệu lực trong 5 phút") và dòng cảnh báo bảo mật ("Không chia sẻ mã này với bất kỳ ai, kể cả nhân viên SGS Land").
+- Giữ nguyên bố cục thương hiệu hiện có (navy `#0B1D26`, gold `#C6923D`, logo header) — chỉ đổi phần nội dung trung tâm từ nút link sang khối mã số.
+
+### 2b. Đúng ngôn ngữ theo lựa chọn của người dùng
+
+- Web hiện có bộ chuyển ngôn ngữ VI/EN ở header — endpoint `request-otp` phải nhận thêm tham số `locale` (`vi` hoặc `en`), lấy từ ngôn ngữ đang hiển thị trên trang khi người dùng bấm "Gửi mã" (không suy đoán qua `Accept-Language` của trình duyệt, vì có thể sai với lựa chọn thủ công của người dùng).
+- Lưu `locale` cùng bản ghi OTP (hoặc lấy từ hồ sơ user nếu đã đăng ký trước đó) để dùng lại khi gửi email OTP tiếp theo.
+- Tạo 2 bản template email (`vi` và `en`), chọn đúng bản theo `locale` khi gửi — không chỉ dịch nội dung mà cả tiêu đề email (subject line): `"Mã đăng nhập của bạn"` / `"Your login code"`.
+- Toàn bộ text động trong flow OTP (label ô nhập, thông báo lỗi "Mã không đúng, còn X lần thử", nút "Gửi lại mã", đồng hồ đếm ngược) phải đi qua cùng hệ thống i18n hiện có của frontend, không hardcode tiếng Việt trong component mới.
+- Nếu user chưa từng chọn ngôn ngữ (lần đầu vào site, mặc định theo hệ thống), dùng ngôn ngữ mặc định hiện tại của site làm fallback.
+
+## 3. Frontend
+
+- Bước 1: form nhập email như cũ → bấm "Gửi mã" → gọi `POST /api/auth/request-otp`.
+- Bước 2 (màn hình mới thay cho "Kiểm tra email của bạn"): 6 ô input riêng biệt (hoặc 1 input numeric 6 số), tự động focus ô tiếp theo khi gõ, dán (paste) mã từ email được tự động điền đủ 6 ô.
+- Hiển thị đồng hồ đếm ngược thời hạn (5:00 → 0:00), khi hết hạn disable nút xác nhận và hiện nút "Gửi lại mã" (disable trong khoảng rate-limit nếu vừa gửi).
+- Khi nhập sai: hiện lỗi rõ ràng ("Mã không đúng, còn X lần thử") ngay dưới ô nhập, không reload trang.
+- Khi đúng: gọi `verify-otp`, redirect như luồng đăng nhập thành công hiện tại (giữ nguyên session/JWT/cookie logic phía sau, không đổi).
+- Xoá toàn bộ trang/route xử lý xác nhận qua link (`/verify?token=...` hoặc tương đương) nếu không còn dùng cho mục đích nào khác.
+
+## 4. Bảo mật & vận hành
+
+- Không log mã OTP plaintext ở bất kỳ đâu (console, error tracking, analytics).
+- Đảm bảo mã bị vô hiệu ngay sau khi dùng thành công (chống replay).
+- Nếu hệ thống hiện có analytics/tracking cho tỉ lệ hoàn tất đăng nhập qua link, cập nhật để theo dõi tương đương cho luồng OTP (request → verify → success rate).
+- Kiểm thử: email không tồn tại trong hệ thống (nếu là đăng ký mới thì tạo mới, nếu đăng nhập thì báo lỗi phù hợp), mã hết hạn, mã sai quá số lần, gửi lại mã liên tục, hai tab cùng yêu cầu mã cho cùng email.
