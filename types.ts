@@ -996,6 +996,11 @@ export interface AnalyticsSummary {
         pendingApproval: number;
         topListings: Array<{ id?: string; title?: string; name?: string; views?: number; viewCount?: number }>;
     };
+    searchAnalytics?: {
+        topViewedListings: Array<{ title: string; code?: string | null; views: number }>;
+        topSearches: Array<{ query: string; searches: number }>;
+        topCategorySearches: Array<{ category: string; query: string; searches: number }>;
+    };
     inboxOverview?: { zalo: number; facebook: number; webChat: number; avgResponseMinutes: number | null };
     aiAdvisor?: { count: number; anomalies: number; suggestions: Array<{ title?: string; message?: string } | string> };
     projectBreakdown?: Array<{ id?: string; name: string; count?: number; leads?: number }>;

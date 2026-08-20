@@ -875,6 +875,22 @@ export class AnalyticsRepository extends BaseRepository {
           pendingApproval: Number(inventoryOverview.pending_approval || 0),
           topListings: [],
         },
+        searchAnalytics: {
+          topViewedListings: topViewedListingsResult.rows.map((row: any) => ({
+            title: row.title,
+            code: row.code,
+            views: Number(row.views || 0),
+          })),
+          topSearches: topSearchesResult.rows.map((row: any) => ({
+            query: row.query,
+            searches: Number(row.searches || 0),
+          })),
+          topCategorySearches: topCategorySearchesResult.rows.map((row: any) => ({
+            category: row.category,
+            query: row.query,
+            searches: Number(row.searches || 0),
+          })),
+        },
         inboxOverview: {
           zalo: Number(inboxOverview.zalo || 0),
           facebook: Number(inboxOverview.facebook || 0),
