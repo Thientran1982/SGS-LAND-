@@ -6,6 +6,9 @@ export function createAgentAuditRoutes(authenticateToken: any): Router {
   router.get('/', authenticateToken, async (req: Request, res: Response) => {
     try {
       const user = (req as any).user;
+      if (!['SUPER_ADMIN', 'ADMIN', 'TEAM_LEAD'].includes(user?.role)) {
+        return res.status(403).json({ error: 'Bạn không có quyền xem nhật ký Agent Minh.' });
+      }
       const result = await agentAuditRepository.list(user.tenantId, {
         sessionId: typeof req.query.sessionId === 'string' ? req.query.sessionId : undefined,
         runId: typeof req.query.runId === 'string' ? req.query.runId : undefined,
