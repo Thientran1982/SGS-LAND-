@@ -686,7 +686,7 @@ export async function generateMetadata({
     : `Dự án ${slug} | SGS LAND`;
   const description = en
     ? meta
-      ? `${meta.name} — ${meta.loc}. ${meta.priceRange}. Authorised tier-1 agent SGS LAND: independent advice, two-layer legal check and free AI valuation.`
+      ? `${meta.name} — ${meta.loc}. ${meta.priceRange}. Indicative project information from SGS LAND; verify current price, legal status, progress and distribution authorization against original documents.`
       : "Detailed real estate project information from SGS LAND."
     : meta?.metaDescription ??
       meta?.desc ??
@@ -742,13 +742,10 @@ export default async function ProjectPage({
     developer: meta?.dev ?? listItem?.developer ?? "",
     location: meta?.loc ?? listItem?.location ?? "",
     description: meta?.desc ?? listItem?.description ?? "",
-     slug,
-     developer: meta?.dev ?? listItem?.developer ?? "",
-     location: meta?.loc ?? listItem?.location ?? "",
-     description: meta?.desc ?? listItem?.description ?? "",
-     images: [],
-     amenities: [],
-   };
+    slug,
+    images: [],
+    amenities: [],
+  };
   // ─── JSON-LD schemas ──────────────────────────────────
   const listingSchema = getRealEstateListingSchema({
     name: projectData.name,

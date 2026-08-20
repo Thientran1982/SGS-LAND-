@@ -160,8 +160,6 @@ export const PAGE_META: Record<string, SsrPage> = {
         offers: {
           '@type': 'AggregateOffer',
           priceCurrency: 'VND',
-          lowPrice: 0,
-          highPrice: 0,
           availability: 'https://schema.org/PreOrder',
         },
         address: {

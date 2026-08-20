@@ -1,9 +1,11 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { SchemaScript } from "@/components/SchemaScript";
+import { getBreadcrumbSchema, getFAQSchema, SITE_URL } from "@/lib/schema";
 
 export const metadata: Metadata = {
   title: "Aqua City Có Nên Mua Không 2026? Phân Tích Toàn Diện",
-  description: "Phân tích chi tiết: Aqua City Novaland có nên mua không năm 2026? Pháp lý, tiến độ, giá bán, cho thuê, rủi ro và cơ hội đầu tư. Cập nhật mới nhất từ SGS Land.",
+  description: "Phân tích tham khảo Aqua City Novaland: pháp lý, tiến độ, giá, cho thuê và rủi ro. Các dữ liệu giao dịch cần được xác minh bằng hồ sơ hiện hành trước khi quyết định.",
   keywords: ["Aqua City có nên mua không", "Aqua City 2026", "đầu tư Aqua City Novaland", "Aqua City pháp lý 2026", "mua nhà Aqua City"],
   openGraph: {
     title: "Aqua City Có Nên Mua Không 2026? Phân Tích Toàn Diện",
@@ -16,9 +18,31 @@ export const metadata: Metadata = {
   },
 };
 
+const FAQ = [
+  {
+    question: "Aqua City có nên mua không?",
+    answer: "Không có câu trả lời chung cho mọi người mua. Cần đối chiếu mục tiêu sử dụng, khả năng tài chính, tình trạng pháp lý của đúng sản phẩm, tiến độ và điều khoản hợp đồng bằng tài liệu hiện hành trước khi đặt cọc.",
+  },
+  {
+    question: "Giá Aqua City hiện tại bao nhiêu?",
+    answer: "Giá Aqua City thay đổi theo phân khu, loại hình, diện tích, tình trạng pháp lý và thời điểm giao dịch. Các khoảng giá trên trang chỉ là tham khảo, không thay thế bảng giá hoặc xác nhận giao dịch mới nhất.",
+  },
+  {
+    question: "Aqua City đã có sổ hồng chưa?",
+    answer: "Tình trạng giấy chứng nhận có thể khác nhau theo từng lô và phân khu. Người mua cần yêu cầu bản sao hồ sơ gốc và kiểm tra tình trạng thế chấp, quy hoạch, nghĩa vụ tài chính trước khi ký hoặc đặt cọc.",
+  },
+];
+
 export default function AquaCityCoNenMuaPage() {
+  const breadcrumb = getBreadcrumbSchema([
+    { name: "Trang chủ", url: SITE_URL },
+    { name: "BĐS Đồng Nai", url: `${SITE_URL}/bat-dong-san-dong-nai` },
+    { name: "Aqua City có nên mua không", url: `${SITE_URL}/bat-dong-san-dong-nai/aqua-city-co-nen-mua-khong-2026` },
+  ]);
   return (
-    <main className="max-w-4xl mx-auto px-4 py-8">
+    <>
+      <SchemaScript schemas={[getFAQSchema(FAQ, `${SITE_URL}/bat-dong-san-dong-nai/aqua-city-co-nen-mua-khong-2026#faq`), breadcrumb]} />
+      <main className="max-w-4xl mx-auto px-4 py-8">
       <nav className="text-sm text-gray-500 mb-6">
         <Link href="/">Trang chủ</Link> &rsaquo;{" "}
         <Link href="/bat-dong-san-dong-nai">BĐS Đồng Nai</Link> &rsaquo;{" "}
@@ -30,11 +54,11 @@ export default function AquaCityCoNenMuaPage() {
       </h1>
 
       <div className="bg-yellow-50 border-l-4 border-yellow-500 p-4 mb-8">
-        <p className="text-yellow-800 font-medium">⚡ Cập nhật tháng 6/2026: Aqua City đã được tháo gỡ pháp lý tại nhiều phân khu, Novaland đẩy mạnh bàn giao và tái khởi động các hạng mục còn lại.</p>
+        <p className="text-yellow-800 font-medium">Thông tin tham khảo: tình trạng pháp lý, giá và tiến độ Aqua City có thể khác nhau theo từng phân khu và thời điểm. Hãy xác minh hồ sơ gốc trước khi giao dịch.</p>
       </div>
 
-      <p className="text-lg text-gray-600 mb-8 leading-relaxed">
-        Aqua City (Novaland) là đại đô thị 1.000ha tại Nhơn Trạch, Đồng Nai — một trong những dự án bất động sản gây nhiều tranh cãi nhất ở Việt Nam trong giai đoạn 2022–2024. Sau quá trình tháo gỡ pháp lý căng thẳng, thị trường hiện đang đặt câu hỏi: Aqua City 2026 có nên mua không? Bài viết này cung cấp phân tích khách quan và toàn diện để giúp nhà đầu tư đưa ra quyết định đúng đắn.
+        <p className="answer-box text-lg text-gray-600 mb-8 leading-relaxed">
+         Aqua City Novaland là khu đô thị tại Long Hưng, Biên Hòa, Đồng Nai. Có nên mua hay không phụ thuộc vào mục tiêu sử dụng, tài chính và hồ sơ pháp lý của đúng sản phẩm; bài viết này phân tích các yếu tố cần kiểm tra, không phải khuyến nghị đầu tư.
       </p>
 
       <section className="mb-10">
@@ -142,7 +166,7 @@ export default function AquaCityCoNenMuaPage() {
         <h2 className="text-2xl font-semibold text-gray-800 mb-4">5. Kết Luận: Aqua City Có Nên Mua Không?</h2>
         <div className="bg-blue-50 border border-blue-200 rounded-xl p-6">
           <p className="text-gray-700 leading-relaxed mb-4">
-            <strong>Khuyến nghị của SGS Land:</strong> Aqua City NÊN mua nếu bạn là nhà đầu tư dài hạn (5–10 năm), có khả năng tài chính chịu được rủi ro thanh khoản ngắn hạn, và PHẢI chọn đúng phân khu đã có pháp lý rõ ràng (Phoenix Central, Phoenix South).
+            <strong>Khung đánh giá tham khảo:</strong> Chỉ cân nhắc Aqua City sau khi xác minh pháp lý của đúng lô, khả năng tài chính, thanh khoản dự kiến và điều khoản hợp đồng; không nên xem nội dung này là khuyến nghị mua.
           </p>
           <p className="text-gray-700 leading-relaxed mb-4">
             <strong>KHÔNG nên mua</strong> nếu: bạn cần thanh khoản trong 1–3 năm, hoặc bạn mua các phân khu còn vướng pháp lý, hoặc bạn dùng đòn bẩy tài chính (vay ngân hàng) quá mức.
@@ -179,6 +203,7 @@ export default function AquaCityCoNenMuaPage() {
           <Link href="/bat-dong-san-dong-nai" className="border border-white text-white px-6 py-3 rounded-lg font-semibold text-center">Xem BĐS Đồng Nai</Link>
         </div>
       </section>
-    </main>
+      </main>
+    </>
   );
 }

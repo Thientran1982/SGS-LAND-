@@ -1,18 +1,32 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { SchemaScript } from "@/components/SchemaScript";
+import { getBreadcrumbSchema, getFAQSchema, SITE_URL } from "@/lib/schema";
 export const metadata: Metadata = {
   title: "Aqua City vs Izumi City So Sánh 2026 | Nên Mua Dự Án Nào?",
-  description: "So sánh chi tiết Aqua City (Novaland) và Izumi City (Nam Long) 2026: quy mô, pháp lý, tiến độ, giá bán, tiện ích và khuyến nghị từ SGS Land.",
+  description: "So sánh tham khảo Aqua City và Izumi City về vị trí, quy mô, pháp lý, tiến độ và giá. Xác minh dữ liệu từng sản phẩm bằng hồ sơ hiện hành trước khi giao dịch.",
   keywords: ["Aqua City vs Izumi City","so sánh Aqua City Izumi City","Aqua City hay Izumi City","Novaland hay Nam Long","BĐS Long Thành 2026"],
   openGraph: { title: "Aqua City vs Izumi City 2026 – So Sánh Toàn Diện", description: "So sánh Aqua City Novaland và Izumi City Nam Long: pháp lý, tiến độ, giá bán 2026.", url: "https://sgsland.vn/bat-dong-san-dong-nai/aqua-city-vs-izumi-city-so-sanh", type: "article" },
   alternates: { canonical: "https://sgsland.vn/bat-dong-san-dong-nai/aqua-city-vs-izumi-city-so-sanh", languages: { "vi-VN": "https://sgsland.vn/bat-dong-san-dong-nai/aqua-city-vs-izumi-city-so-sanh", "en-US": "https://sgsland.vn/en/bat-dong-san-dong-nai/aqua-city-vs-izumi-city-so-sanh", "x-default": "https://sgsland.vn/bat-dong-san-dong-nai/aqua-city-vs-izumi-city-so-sanh" } },
 };
+const FAQ = [
+  { question: "Aqua City hay Izumi City tốt hơn?", answer: "Không có lựa chọn tốt nhất cho mọi người mua. Hãy so sánh đúng sản phẩm theo mục tiêu sử dụng, ngân sách, hồ sơ pháp lý, tiến độ và thanh khoản tại thời điểm giao dịch." },
+  { question: "Giá Aqua City và Izumi City bao nhiêu?", answer: "Giá thay đổi theo phân khu, diện tích, loại hình và thời điểm. Các khoảng giá trong bài chỉ mang tính tham khảo; cần xác nhận bảng giá và giao dịch thực tế trước khi quyết định." },
+  { question: "Pháp lý hai dự án cần kiểm tra gì?", answer: "Kiểm tra quy hoạch, quyết định giao đất, giấy phép, giấy chứng nhận hoặc điều kiện cấp giấy, nghĩa vụ tài chính, thế chấp và điều khoản hợp đồng của đúng sản phẩm." },
+];
 export default function Page() {
+  const breadcrumb = getBreadcrumbSchema([
+    { name: "Trang chủ", url: SITE_URL },
+    { name: "BĐS Đồng Nai", url: `${SITE_URL}/bat-dong-san-dong-nai` },
+    { name: "So sánh Aqua City và Izumi City", url: `${SITE_URL}/bat-dong-san-dong-nai/aqua-city-vs-izumi-city-so-sanh` },
+  ]);
   return (
-    <main className="max-w-4xl mx-auto px-4 py-8">
+    <>
+      <SchemaScript schemas={[getFAQSchema(FAQ, `${SITE_URL}/bat-dong-san-dong-nai/aqua-city-vs-izumi-city-so-sanh#faq`), breadcrumb]} />
+      <main className="max-w-4xl mx-auto px-4 py-8">
       <nav className="text-sm text-gray-500 mb-6"><Link href="/">Trang chủ</Link> &rsaquo; <Link href="/bat-dong-san-dong-nai">BĐS Đồng Nai</Link> &rsaquo; <span>Aqua City vs Izumi City so sánh</span></nav>
       <h1 className="text-3xl font-bold text-gray-900 mb-4">Aqua City vs Izumi City 2026 – So Sánh Toàn Diện & Khuyến Nghị</h1>
-      <p className="text-lg text-gray-600 mb-8 leading-relaxed">Aqua City (Novaland) và Izumi City (Nam Long) là hai đại dự án đô thị lớn nhất tại huyện Long Thành, tỉnh Đồng Nai. Cả hai cùng hưởng lợi từ sân bay Long Thành và đường Vành đai 3, nhưng có nhiều điểm khác biệt quan trọng về quy mô, pháp lý, tiến độ và triết lý phát triển. Bài viết so sánh chi tiết để giúp nhà đầu tư đưa ra quyết định đúng đắn năm 2026.</p>
+      <p className="answer-box text-lg text-gray-600 mb-8 leading-relaxed">Aqua City và Izumi City là hai dự án tại Đồng Nai có khác biệt về vị trí, quy mô, sản phẩm, pháp lý và tiến độ. Bài viết cung cấp khung so sánh tham khảo; các số liệu và nhận định cần được đối chiếu với hồ sơ chính thức và thị trường tại thời điểm giao dịch.</p>
       <section className="mb-10">
         <h2 className="text-2xl font-semibold text-gray-800 mb-4">1. So Sánh Tổng Quan Hai Dự Án</h2>
         <div className="overflow-x-auto">
@@ -85,5 +99,6 @@ export default function Page() {
         </div>
       </section>
     </main>
+    </>
   );
 }
