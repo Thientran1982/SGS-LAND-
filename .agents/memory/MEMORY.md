@@ -12,3 +12,4 @@
 - [Shared cache consistency](shared-cache-consistency.md) — a reachable Redis miss is authoritative; only outages may use bounded tenant-scoped local fallback
 - [GSC export Unicode filenames](gsc-export-unicode.md) — Search Console ZIP filenames may need byte-preserving handling when parsing Vietnamese exports
 - [GEO monitor evidence](geo-monitor-evidence.md) — unavailable measurements must remain explicit, with provider and per-page provenance
+- [Project page GEO audit](project-page-geo-audit.md) — audit rendered sitemap project pages for direct answers, metadata, schema and provenance caveats

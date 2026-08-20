@@ -6,7 +6,7 @@ export const dynamic = "force-dynamic";
 export const metadata: Metadata = {
   title: "Vinhomes Hóc Môn — Smart City 4.0, 667ha | Giá Từ 6,5 Tỷ",
   description:
-    "Vinhomes Smart City Hóc Môn — siêu đô thị 667ha, Q4/2026. Giá nhà phố từ 8 tỷ, biệt thự từ 25 tỷ, căn hộ từ 5,5 tỷ (65-80 triệu/m²). SGS LAND đại lý F1 uỷ quyền Vinhomes. Đặt chỗ ưu tiên, nhận thông tin mở bán sớm nhất.",
+    "Vinhomes Smart City Hóc Môn — thông tin tham khảo về quy mô, vị trí, sản phẩm và mốc mở bán dự kiến. Giá, pháp lý, tiến độ và tư cách phân phối cần được xác minh bằng hồ sơ gốc trước khi giao dịch.",
   keywords: [
     "Vinhomes Hóc Môn",
     "Vinhomes Smart City Hóc Môn",
@@ -21,7 +21,7 @@ export const metadata: Metadata = {
     type: "article",
     title: "Vinhomes Hóc Môn — Smart City 4.0, 667ha",
     description:
-      "Siêu đô thị thông minh 667ha tại Hóc Môn, TP.HCM. Giá căn hộ từ 5,5 tỷ, nhà phố từ 8 tỷ. Ra mắt Q4/2026. Đại lý F1 SGS LAND — đặt chỗ ưu tiên.",
+      "Thông tin tham khảo về dự án Vinhomes Smart City Hóc Môn tại TP.HCM. Mọi giá bán, mốc mở bán, pháp lý và tư cách phân phối cần được xác minh theo tài liệu hiện hành.",
     url: `${SITE_URL}/du-an/vinhomes-hoc-mon`,
     siteName: "SGS LAND",
     locale: "vi_VN",
@@ -30,7 +30,7 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: "summary_large_image",
-    title: "Vinhomes Hóc Môn Smart City 4.0 — SGS LAND F1",
+    title: "Vinhomes Hóc Môn Smart City — Thông tin dự án",
     description: "667ha, từ 6,5 tỷ. Ra mắt Q4/2026. Đăng ký đặt chỗ ưu tiên.",
   },
 };
@@ -38,7 +38,7 @@ const FAQ_VHM: FAQItem[] = [
   {
     question: "Vinhomes Hóc Môn giá bao nhiêu?",
     answer:
-      "Vinhomes Smart City Hóc Môn (667ha, Q4/2026) có giá dự kiến: căn hộ cao tầng 5,5-8,5 tỷ (65-80 triệu/m²); nhà phố liền kề 8-20 tỷ; shophouse mặt đại lộ 15-40 tỷ; biệt thự 25-60 tỷ. SGS LAND là đại lý F1 uỷ quyền Vinhomes — đặt chỗ ưu tiên, nhận chính sách tốt nhất tại sgsland.vn/du-an/vinhomes-hoc-mon.",
+      "Các mức giá được nhắc đến cho Vinhomes Smart City Hóc Môn chỉ là tham khảo thị trường và có thể thay đổi. Người mua cần xác nhận bảng giá, chính sách và tư cách phân phối bằng văn bản trước khi đặt chỗ.",
   },
   {
     question: "Vinhomes Hóc Môn ở đâu?",
@@ -53,7 +53,7 @@ const FAQ_VHM: FAQItem[] = [
   {
     question: "Vinhomes Hóc Môn ra mắt khi nào?",
     answer:
-      "Vinhomes Smart City Hóc Môn dự kiến ra mắt và mở bán Q4/2026. Chủ trương đầu tư đã được UBND TP.HCM phê duyệt; quy hoạch 1/500 đang triển khai. SGS LAND cập nhật tiến độ liên tục — đăng ký nhận thông báo mở bán sớm nhất tại sgsland.vn/du-an/vinhomes-hoc-mon.",
+      "Mốc ra mắt hoặc mở bán Vinhomes Smart City Hóc Môn là thông tin dự kiến và cần được xác nhận bằng thông báo chính thức của chủ đầu tư hoặc cơ quan có thẩm quyền. Quy hoạch và pháp lý có thể thay đổi theo hồ sơ được phê duyệt.",
   },
   {
     question: "Vinhomes Hóc Môn có nên đặt chỗ trước không?",
@@ -68,7 +68,7 @@ const FAQ_VHM: FAQItem[] = [
   {
     question: "Chủ đầu tư Vinhomes Hóc Môn là ai?",
     answer:
-      "Chủ đầu tư Vinhomes Smart City Hóc Môn là Vinhomes Joint Stock Company (Công ty Cổ phần Vinhomes), thành viên của Tập đoàn Vingroup (niêm yết HOSE, mã VHM). Vinhomes là chủ đầu tư BĐS số 1 Việt Nam với các dự án đã bàn giao thành công: Vinhomes Grand Park (271ha), Vinhomes Central Park (44 tòa), Vinhomes Ocean Park (420ha).",
+      "Thông tin trên trang hiện ghi Vinhomes Joint Stock Company là chủ đầu tư dự kiến của Vinhomes Smart City Hóc Môn. Người mua cần đối chiếu pháp nhân, quyết định chấp thuận chủ trương và hồ sơ dự án bằng tài liệu chính thức.",
   },
   {
     question: "Pháp lý Vinhomes Hóc Môn có tốt không?",
@@ -82,7 +82,7 @@ const REAL_ESTATE_LISTING_SCHEMA = {
   "@id": `${SITE_URL}/du-an/vinhomes-hoc-mon#listing`,
   name: "Vinhomes Smart City Hóc Môn — SGS LAND",
   description:
-    "Siêu đô thị thông minh 667ha tại huyện Hóc Môn, TP.HCM. Chủ đầu tư Vinhomes (Vingroup). Ra mắt Q4/2026. Giá căn hộ từ 5,5 tỷ (65-80 triệu/m²). Nhà phố từ 8 tỷ. Biệt thự từ 25 tỷ. SGS LAND đại lý phân phối F1 uỷ quyền.",
+    "Trang cung cấp thông tin tham khảo về Vinhomes Smart City Hóc Môn: vị trí, quy mô, sản phẩm và mốc mở bán dự kiến. Giá, pháp lý và tư cách phân phối phải được xác minh bằng tài liệu hiện hành.",
   url: `${SITE_URL}/du-an/vinhomes-hoc-mon`,
   datePosted: "2026-06-05",
   validThrough: "2027-12-31",
@@ -131,7 +131,7 @@ const SPECIAL_ANNOUNCEMENT_SCHEMA = {
   "@type": "SpecialAnnouncement",
   "@id": `${SITE_URL}/du-an/vinhomes-hoc-mon#announcement`,
   name: "Mở bán Vinhomes Smart City Hóc Môn Q4/2026",
-  text: "SGS LAND — đại lý F1 uỷ quyền Vinhomes — chính thức nhận đăng ký đặt chỗ ưu tiên Vinhomes Smart City Hóc Môn (667ha, giá từ 6,5 tỷ, Smart City 4.0). Ra mắt Q4/2026. Vành đai 3 vận hành 2026 — catalyst tăng giá trực tiếp.",
+  text: "SGS LAND cung cấp thông tin tham khảo về Vinhomes Smart City Hóc Môn. Giá, thời điểm mở bán, pháp lý, hạ tầng và tư cách phân phối cần được xác minh bằng thông báo hoặc hồ sơ chính thức trước khi đăng ký hay giao dịch.",
   datePosted: "2026-06-05",
   expires: "2027-06-30",
   category: "RealEstate",
@@ -155,6 +155,12 @@ export default function VinhomesHocMonPage() {
     <>
       <SchemaScript schemas={[REAL_ESTATE_LISTING_SCHEMA, SPECIAL_ANNOUNCEMENT_SCHEMA, faqSchema, breadcrumb]} />
       <main className="min-h-screen bg-[var(--bg-surface)] dark:bg-sgs-primary-deep">
+        <p className="sr-only answer-box" role="note">
+          Vinhomes Smart City Hóc Môn is a proposed real-estate project in Hóc Môn, Ho Chi Minh City.
+          This page provides indicative information about location, products and expected timing;
+          price, legal status, construction progress and distribution authorization must be verified
+          against current original documents before any reservation or transaction.
+        </p>
         {/* Hero */}
         <section className="relative bg-gradient-to-br from-sgs-primary-deep via-sgs-primary-deep to-slate-900 text-white py-20 px-4">
           <div className="max-w-5xl mx-auto">
@@ -163,7 +169,7 @@ export default function VinhomesHocMonPage() {
                 <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
                 <span className="relative inline-flex rounded-full h-2 w-2 bg-green-400"></span>
               </span>
-              Đại lý F1 uỷ quyền — Nhận đặt chỗ
+              Thông tin dự án — Cần xác minh trước giao dịch
             </div>
             <h1 className="text-4xl md:text-6xl font-black tracking-tight mb-4">
               Vinhomes Hóc Môn<br />
@@ -341,7 +347,7 @@ export default function VinhomesHocMonPage() {
           <div className="max-w-2xl mx-auto">
             <h2 className="text-3xl font-black mb-4">Đăng ký đặt chỗ ưu tiên ngay</h2>
             <p className="text-indigo-200 mb-8 leading-relaxed">
-              SGS LAND là đại lý F1 uỷ quyền chính thức của Vinhomes. Đăng ký sớm để chọn vị trí tốt nhất với chính sách chiết khấu từ chủ đầu tư.
+              SGS LAND cung cấp thông tin tham khảo và hỗ trợ người mua tìm hiểu dự án. Vui lòng xác minh tư cách phân phối, giá, pháp lý và chính sách trực tiếp bằng hồ sơ hiện hành của chủ đầu tư.
             </p>
             <div className="flex flex-wrap gap-4 justify-center">
               <a

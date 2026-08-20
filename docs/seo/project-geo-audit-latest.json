@@ -1,0 +1,462 @@
+{
+  "generatedAt": "2026-08-20T20:54:31.446Z",
+  "base": "http://localhost:5000",
+  "methodology": "Rendered HTML audit for project sitemap URLs: status, metadata, H1, direct answer, visible FAQ, JSON-LD and provenance caveat.",
+  "total": 17,
+  "passed": 17,
+  "averageScore": 100,
+  "results": [
+    {
+      "slug": "aqua-city",
+      "url": "http://localhost:5000/du-an/aqua-city",
+      "status": 200,
+      "score": 100,
+      "title": "Aqua City Novaland Đồng Nai 2026 — Giá, Mặt Bằng | SGS LAND",
+      "description": "Aqua City Novaland Đồng Nai: nhà phố từ 6 tỷ, biệt thự từ 15 tỷ, sổ hồng lâu dài, đô thị sinh thái 1.000ha ven sông. Xem giá & phân khu tại SGS Land.",
+      "canonical": "https://sgsland.vn/du-an/aqua-city",
+      "h1": [
+        "Nhà phố Aqua City Novaland Đồng Nai"
+      ],
+      "schemaTypes": [
+        "WebSite",
+        "Organization",
+        "LocalBusiness",
+        "RealEstateAgent",
+        "ItemPage",
+        "Dataset",
+        "RealEstateListing",
+        "BreadcrumbList",
+        "FAQPage",
+        "VideoObject",
+        "SpecialAnnouncement"
+      ],
+      "directAnswer": true,
+      "visibleFaq": true,
+      "issues": []
+    },
+    {
+      "slug": "the-global-city",
+      "url": "http://localhost:5000/du-an/the-global-city",
+      "status": 200,
+      "score": 100,
+      "title": "The Global City Thủ Đức 2026 — Giá, Mặt Bằng | SGS LAND",
+      "description": "The Global City Thủ Đức (Masterise): căn hộ & nhà phố, giá & mặt bằng phân khu 2026, tiến độ mới nhất. Nhận báo giá gốc & chính sách tại SGS Land.",
+      "canonical": "https://sgsland.vn/du-an/the-global-city",
+      "h1": [
+        "The Global City"
+      ],
+      "schemaTypes": [
+        "WebSite",
+        "Organization",
+        "LocalBusiness",
+        "RealEstateAgent",
+        "ItemPage",
+        "Dataset",
+        "RealEstateListing",
+        "BreadcrumbList",
+        "FAQPage",
+        "VideoObject",
+        "SpecialAnnouncement"
+      ],
+      "directAnswer": true,
+      "visibleFaq": true,
+      "issues": []
+    },
+    {
+      "slug": "izumi-city",
+      "url": "http://localhost:5000/du-an/izumi-city",
+      "status": 200,
+      "score": 100,
+      "title": "Izumi City Nam Long Đồng Nai 2026 — Giá, Mặt Bằng | SGS LAND",
+      "description": "Izumi City Nam Long Biên Hòa Đồng Nai: nhà phố, biệt thự 2026, giá & mặt bằng phân khu, tiến độ ven sông Đồng Nai. Nhận báo giá gốc tại SGS Land.",
+      "canonical": "https://sgsland.vn/du-an/izumi-city",
+      "h1": [
+        "Izumi City Nam Long"
+      ],
+      "schemaTypes": [
+        "WebSite",
+        "Organization",
+        "LocalBusiness",
+        "RealEstateAgent",
+        "ItemPage",
+        "Dataset",
+        "RealEstateListing",
+        "BreadcrumbList",
+        "FAQPage",
+        "SpecialAnnouncement"
+      ],
+      "directAnswer": true,
+      "visibleFaq": true,
+      "issues": []
+    },
+    {
+      "slug": "vinhomes-can-gio",
+      "url": "http://localhost:5000/du-an/vinhomes-can-gio",
+      "status": 200,
+      "score": 100,
+      "title": "Vinhomes Cần Giờ Green Paradise 2026 — Giá | SGS LAND",
+      "description": "Vinhomes Cần Giờ (Green Paradise): giá bán 2026, mặt bằng phân khu, tiến độ siêu đô thị lấn biển. Nhận báo giá gốc & chính sách tại SGS Land.",
+      "canonical": "https://sgsland.vn/du-an/vinhomes-can-gio",
+      "h1": [
+        "Vinhomes Cần Giờ"
+      ],
+      "schemaTypes": [
+        "WebSite",
+        "Organization",
+        "LocalBusiness",
+        "RealEstateAgent",
+        "ItemPage",
+        "Dataset",
+        "RealEstateListing",
+        "BreadcrumbList",
+        "FAQPage",
+        "VideoObject",
+        "SpecialAnnouncement"
+      ],
+      "directAnswer": true,
+      "visibleFaq": true,
+      "issues": []
+    },
+    {
+      "slug": "vinhomes-grand-park",
+      "url": "http://localhost:5000/du-an/vinhomes-grand-park",
+      "status": 200,
+      "score": 100,
+      "title": "Vinhomes Grand Park Quận 9 2026 — Giá, Mặt Bằng | SGS LAND",
+      "description": "Vinhomes Grand Park Quận 9 (TP Thủ Đức): giá căn hộ 2026, mặt bằng phân khu, cho thuê, tiến độ đại đô thị. Nhận báo giá gốc & chính sách SGS Land.",
+      "canonical": "https://sgsland.vn/du-an/vinhomes-grand-park",
+      "h1": [
+        "Vinhomes Grand Park"
+      ],
+      "schemaTypes": [
+        "WebSite",
+        "Organization",
+        "LocalBusiness",
+        "RealEstateAgent",
+        "ItemPage",
+        "Dataset",
+        "RealEstateListing",
+        "BreadcrumbList",
+        "FAQPage",
+        "SpecialAnnouncement"
+      ],
+      "directAnswer": true,
+      "visibleFaq": true,
+      "issues": []
+    },
+    {
+      "slug": "vinhomes-central-park",
+      "url": "http://localhost:5000/du-an/vinhomes-central-park",
+      "status": 200,
+      "score": 100,
+      "title": "Vinhomes Central Park Bình Thạnh 2026 — Giá | SGS LAND",
+      "description": "Vinhomes Central Park Bình Thạnh: căn hộ từ 4 tỷ, cho thuê từ 15 triệu/tháng, view sông Sài Gòn & Landmark 81. Xem giá & mặt bằng tại SGS Land.",
+      "canonical": "https://sgsland.vn/du-an/vinhomes-central-park",
+      "h1": [
+        "Vinhomes Central Park Bình Thạnh – Căn hộ Landmark 81"
+      ],
+      "schemaTypes": [
+        "WebSite",
+        "Organization",
+        "LocalBusiness",
+        "RealEstateAgent",
+        "ItemPage",
+        "Dataset",
+        "RealEstateListing",
+        "BreadcrumbList",
+        "FAQPage"
+      ],
+      "directAnswer": true,
+      "visibleFaq": true,
+      "issues": []
+    },
+    {
+      "slug": "masterise-homes",
+      "url": "http://localhost:5000/du-an/masterise-homes",
+      "status": 200,
+      "score": 100,
+      "title": "Masterise Homes | Dự án BĐS | SGS LAND | SGS LAND",
+      "description": "Hệ sinh thái căn hộ hạng sang Masterise Homes tại Quận 1, Quận 2, Bình Thạnh TP.HCM.",
+      "canonical": "https://sgsland.vn/du-an/masterise-homes",
+      "h1": [
+        "Masterise Homes"
+      ],
+      "schemaTypes": [
+        "WebSite",
+        "Organization",
+        "LocalBusiness",
+        "RealEstateAgent",
+        "ItemPage",
+        "Dataset",
+        "RealEstateListing",
+        "BreadcrumbList",
+        "FAQPage"
+      ],
+      "directAnswer": true,
+      "visibleFaq": true,
+      "issues": []
+    },
+    {
+      "slug": "lumiere",
+      "url": "http://localhost:5000/du-an/lumiere",
+      "status": 200,
+      "score": 100,
+      "title": "Lumière Riverside | Dự án BĐS | SGS LAND | SGS LAND",
+      "description": "Căn hộ hạng sang ven sông Sài Gòn, tầm nhìn panorama, tiện ích 5 sao.",
+      "canonical": "https://sgsland.vn/du-an/lumiere",
+      "h1": [
+        "Lumière Riverside"
+      ],
+      "schemaTypes": [
+        "WebSite",
+        "Organization",
+        "LocalBusiness",
+        "RealEstateAgent",
+        "ItemPage",
+        "Dataset",
+        "RealEstateListing",
+        "BreadcrumbList",
+        "FAQPage"
+      ],
+      "directAnswer": true,
+      "visibleFaq": true,
+      "issues": []
+    },
+    {
+      "slug": "waterpoint",
+      "url": "http://localhost:5000/du-an/waterpoint",
+      "status": 200,
+      "score": 100,
+      "title": "Waterpoint Nam Long | Dự án BĐS | SGS LAND | SGS LAND",
+      "description": "Đô thị sông nước 355ha, vị trí cửa ngõ TP.HCM, pháp lý minh bạch sổ hồng từng căn.",
+      "canonical": "https://sgsland.vn/du-an/waterpoint",
+      "h1": [
+        "Waterpoint Nam Long"
+      ],
+      "schemaTypes": [
+        "WebSite",
+        "Organization",
+        "LocalBusiness",
+        "RealEstateAgent",
+        "ItemPage",
+        "Dataset",
+        "RealEstateListing",
+        "BreadcrumbList",
+        "FAQPage"
+      ],
+      "directAnswer": true,
+      "visibleFaq": true,
+      "issues": []
+    },
+    {
+      "slug": "the-privia",
+      "url": "http://localhost:5000/du-an/the-privia",
+      "status": 200,
+      "score": 100,
+      "title": "The Privia Khang Điền | Dự án BĐS | SGS LAND | SGS LAND",
+      "description": "Khu căn hộ cao cấp 7.5ha, tiện ích nội khu đẳng cấp, pháp lý sổ hồng.",
+      "canonical": "https://sgsland.vn/du-an/the-privia",
+      "h1": [
+        "The Privia Khang Điền"
+      ],
+      "schemaTypes": [
+        "WebSite",
+        "Organization",
+        "LocalBusiness",
+        "RealEstateAgent",
+        "ItemPage",
+        "Dataset",
+        "RealEstateListing",
+        "BreadcrumbList",
+        "FAQPage"
+      ],
+      "directAnswer": true,
+      "visibleFaq": true,
+      "issues": []
+    },
+    {
+      "slug": "van-phuc-city",
+      "url": "http://localhost:5000/du-an/van-phuc-city",
+      "status": 200,
+      "score": 100,
+      "title": "Văn Phúc City | Dự án BĐS | SGS LAND | SGS LAND",
+      "description": "Khu đô thị phức hợp 198ha ven sông Sài Gòn, tiêu chuẩn quốc tế, pháp lý sổ hồng.",
+      "canonical": "https://sgsland.vn/du-an/van-phuc-city",
+      "h1": [
+        "Văn Phúc City"
+      ],
+      "schemaTypes": [
+        "WebSite",
+        "Organization",
+        "LocalBusiness",
+        "RealEstateAgent",
+        "ItemPage",
+        "Dataset",
+        "RealEstateListing",
+        "BreadcrumbList",
+        "FAQPage"
+      ],
+      "directAnswer": true,
+      "visibleFaq": true,
+      "issues": []
+    },
+    {
+      "slug": "sala",
+      "url": "http://localhost:5000/du-an/sala",
+      "status": 200,
+      "score": 100,
+      "title": "Sala Đại Quang Minh Thủ Thiêm 2026 — Giá | SGS LAND",
+      "description": "Khu đô thị Sala Đại Quang Minh Thủ Thiêm Quận 2: căn hộ, nhà phố, biệt thự 2026, giá & mặt bằng phân khu. Nhận báo giá gốc tại SGS Land.",
+      "canonical": "https://sgsland.vn/du-an/sala",
+      "h1": [
+        "Sala Đại Quang Minh"
+      ],
+      "schemaTypes": [
+        "WebSite",
+        "Organization",
+        "LocalBusiness",
+        "RealEstateAgent",
+        "ItemPage",
+        "Dataset",
+        "RealEstateListing",
+        "BreadcrumbList",
+        "FAQPage"
+      ],
+      "directAnswer": true,
+      "visibleFaq": true,
+      "issues": []
+    },
+    {
+      "slug": "thu-thiem",
+      "url": "http://localhost:5000/du-an/thu-thiem",
+      "status": 200,
+      "score": 100,
+      "title": "Dự án Thủ Thiêm Quận 2 TP Thủ Đức 2026 — Giá | SGS LAND",
+      "description": "Dự án Thủ Thiêm Quận 2 TP Thủ Đức: giá bán mới nhất 2026, mặt bằng khu đô thị, căn hộ & nhà phố gần trường. Tư vấn miễn phí tại SGS Land.",
+      "canonical": "https://sgsland.vn/du-an/thu-thiem",
+      "h1": [
+        "Thủ Thiêm"
+      ],
+      "schemaTypes": [
+        "WebSite",
+        "Organization",
+        "LocalBusiness",
+        "RealEstateAgent",
+        "ItemPage",
+        "Dataset",
+        "RealEstateListing",
+        "BreadcrumbList",
+        "FAQPage"
+      ],
+      "directAnswer": true,
+      "visibleFaq": true,
+      "issues": []
+    },
+    {
+      "slug": "manhattan",
+      "url": "http://localhost:5000/du-an/manhattan",
+      "status": 200,
+      "score": 100,
+      "title": "Grand Manhattan Novaland Quận 1 2026 — Giá | SGS LAND",
+      "description": "The Grand Manhattan Novaland Quận 1: giá căn hộ 2026, mặt bằng tháp A/B, cho thuê, tiến độ trung tâm Quận 1. Nhận báo giá gốc tại SGS Land.",
+      "canonical": "https://sgsland.vn/du-an/manhattan",
+      "h1": [
+        "Manhattan"
+      ],
+      "schemaTypes": [
+        "WebSite",
+        "Organization",
+        "LocalBusiness",
+        "RealEstateAgent",
+        "ItemPage",
+        "Dataset",
+        "RealEstateListing",
+        "BreadcrumbList",
+        "FAQPage"
+      ],
+      "directAnswer": true,
+      "visibleFaq": true,
+      "issues": []
+    },
+    {
+      "slug": "son-kim-land",
+      "url": "http://localhost:5000/du-an/son-kim-land",
+      "status": 200,
+      "score": 100,
+      "title": "SonKim Land 2026 — The Metropole, Serenity Sky | SGS LAND",
+      "description": "SonKim Land: dự án cao cấp The Metropole Thủ Thiêm, Serenity Sky Villas, Gateway Thảo Điền. Giá & mặt bằng 2026. Tư vấn miễn phí tại SGS Land.",
+      "canonical": "https://sgsland.vn/du-an/son-kim-land",
+      "h1": [
+        "Sơn Kim Land"
+      ],
+      "schemaTypes": [
+        "WebSite",
+        "Organization",
+        "LocalBusiness",
+        "RealEstateAgent",
+        "ItemPage",
+        "Dataset",
+        "RealEstateListing",
+        "BreadcrumbList",
+        "FAQPage"
+      ],
+      "directAnswer": true,
+      "visibleFaq": true,
+      "issues": []
+    },
+    {
+      "slug": "vinhomes-hoc-mon",
+      "url": "http://localhost:5000/du-an/vinhomes-hoc-mon",
+      "status": 200,
+      "score": 100,
+      "title": "Vinhomes Hóc Môn — Smart City 4.0, 667ha | Giá Từ 6,5 Tỷ | SGS LAND",
+      "description": "Vinhomes Smart City Hóc Môn — thông tin tham khảo về quy mô, vị trí, sản phẩm và mốc mở bán dự kiến. Giá, pháp lý, tiến độ và tư cách phân phối cần được xác minh bằng hồ sơ gốc trước khi giao dịch.",
+      "canonical": "https://sgsland.vn/du-an/vinhomes-hoc-mon",
+      "h1": [
+        "Vinhomes Hóc MônSmart City 4.0"
+      ],
+      "schemaTypes": [
+        "WebSite",
+        "Organization",
+        "LocalBusiness",
+        "RealEstateAgent",
+        "ItemPage",
+        "Dataset",
+        "RealEstateListing",
+        "Place",
+        "SpecialAnnouncement",
+        "FAQPage",
+        "BreadcrumbList"
+      ],
+      "directAnswer": true,
+      "visibleFaq": true,
+      "issues": []
+    },
+    {
+      "slug": "masteri-cosmo-central",
+      "url": "http://localhost:5000/du-an/masteri-cosmo-central",
+      "status": 200,
+      "score": 100,
+      "title": "Masteri Cosmo Central The Global City Thủ Đức | Dự án BĐS | SGS LAND | SGS LAND",
+      "description": "Masteri Cosmo Central tại The Global City Thủ Đức – dự án căn hộ All-in-One 6 tòa tháp, quần 2 cũ, cách trung tâm 10 phút. Masteri Cosmo ở đâu? Tọa lạc tại An Phú, nơi giao thoa giữa Thủ Thêem và Quận 2. Tổng 3.000 căn, giá từ 6,429 tỷ/căn. Loại: studio, 1PN+, 2PN, 3PN. Tiện ích 5 sao: hồ bơi sky, clubhouse, trung tâm thương mại. Masteri Cosmo Central The Global City – từ khóa SEO chính. Mở bán 2026.",
+      "canonical": "https://sgsland.vn/du-an/masteri-cosmo-central",
+      "h1": [
+        "Masteri Cosmo Central The Global City Thủ Đức"
+      ],
+      "schemaTypes": [
+        "WebSite",
+        "Organization",
+        "LocalBusiness",
+        "RealEstateAgent",
+        "ItemPage",
+        "Dataset",
+        "RealEstateListing",
+        "BreadcrumbList",
+        "FAQPage"
+      ],
+      "directAnswer": true,
+      "visibleFaq": true,
+      "issues": []
+    }
+  ]
+}

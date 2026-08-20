@@ -23,6 +23,7 @@
     "audit:security": "npm audit --audit-level=high",
     "audit": "node seo-geo-audit.mjs",
     "audit:seo-regression": "node scripts/seo-regression.mjs",
+    "audit:project-geo": "node scripts/project-geo-audit.mjs",
     "report:gsc-opportunities": "node scripts/gsc-opportunity-report.mjs",
     "audit:ui": "node scripts/audit-ui-system.mjs",
     "test:contrast": "node scripts/check-theme-contrast.mjs",

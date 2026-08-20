@@ -466,11 +466,11 @@ function buildProjectFAQEn(slug: string, name: string, dev: string, loc: string,
   return [
     {
       question: `How much does ${name} cost in 2026?`,
-      answer: `${name} in ${loc} is priced at ${priceRange} (as of June 2026). SGS LAND is an authorised tier-1 distribution agent and provides independent advice plus a free legal check for buyers. Get an accurate valuation at sgsland.vn/en/ai-valuation.`,
+      answer: `${name} in ${loc} is shown by SGS LAND with an indicative range of ${priceRange} (content updated in 2026). Actual pricing depends on the sub-zone, unit, timing and sales policy; verify the developer's original price list before transacting.`,
     },
     {
       question: `Does ${name} have a pink book (land title) yet?`,
-      answer: `The legal status of ${name} is verified by SGS LAND in two layers: an automated AI check in 30 seconds and a legal specialist review within 24 hours. Details of the title status for each sub-zone are at sgsland.vn/en/du-an/${slug}.`,
+      answer: `The legal status of ${name} must be verified for the specific sub-zone and transaction date. Check original title, planning, contract and developer documents, and obtain independent professional advice before paying a deposit.`,
     },
     {
       question: `Is ${name} worth buying?`,
@@ -478,7 +478,7 @@ function buildProjectFAQEn(slug: string, name: string, dev: string, loc: string,
     },
     {
       question: `Does SGS LAND distribute ${name}?`,
-      answer: `Yes. SGS LAND (sgsland.vn) is an officially authorised distribution agent for ${dev}, the developer of ${name}. Buyers receive independent advice, a two-layer legal check and a free AI valuation. Hotline: +84 971 132 378.`,
+      answer: `SGS LAND provides project information and buyer-support services for ${name}. Distribution authorization, inventory and sales policy depend on the current project agreement with ${dev}; request written confirmation before relying on an agency claim. Hotline: +84 971 132 378.`,
     },
     {
       question: `Where is ${name} and how central is it?`,
@@ -490,7 +490,7 @@ function buildProjectFAQEn(slug: string, name: string, dev: string, loc: string,
     },
     {
       question: `What is the construction progress of ${name} in 2025–2026?`,
-      answer: `SGS LAND updates the construction progress of ${name} every month, and the AI valuation flags any risk of delay automatically. See the latest update at sgsland.vn/en/du-an/${slug}.`,
+      answer: `Construction progress for ${name} should be checked against the developer's latest official notice and project documents. The SGS LAND page is informational and should not replace a current progress certificate or independent legal review.`,
     },
     {
       question: `How does ${name} compare with nearby projects?`,
@@ -498,7 +498,7 @@ function buildProjectFAQEn(slug: string, name: string, dev: string, loc: string,
     },
     {
       question: `What are the mortgage terms for ${name}?`,
-      answer: `Buyers of ${name} can borrow up to 70% of value from partner banks, with 0% promotional interest for the first 12–24 months. SGS LAND handles the loan paperwork and affordability calculation free of charge. See 2026 bank rates at sgsland.vn/en/lai-suat-ngan-hang.`,
+      answer: `Mortgage eligibility for ${name} depends on the bank, income evidence, collateral and current lending policy. Confirm the loan-to-value, promotional period, interest rate and disbursement conditions directly with the bank.`,
     },
     {
       question: `What is the SGS LAND hotline for ${name}?`,
@@ -518,11 +518,11 @@ function buildProjectFAQ(slug: string, name: string, dev: string, loc: string, p
   return [
     {
       question: `${name} giá bao nhiêu năm 2026?`,
-      answer: `${name} tại ${loc} có ${priceRange} (tháng 6/2026). SGS LAND là đại lý F1 phân phối uỷ quyền, cung cấp tư vấn độc lập và kiểm tra pháp lý miễn phí cho người mua. Định giá chính xác tại sgsland.vn/ai-valuation.`,
+      answer: `${name} tại ${loc} được SGS LAND hiển thị với mức tham khảo ${priceRange} (cập nhật nội dung: 2026). Giá thực tế phụ thuộc phân khu, diện tích, thời điểm và chính sách bán hàng; người mua nên xác nhận bảng giá gốc trước khi giao dịch.`,
     },
     {
       question: `${name} có pháp lý sổ hồng chưa?`,
-      answer: `Pháp lý ${name} đã được SGS LAND kiểm tra 2 lớp: AI tự động trong 30 giây và chuyên viên pháp lý trong 24 giờ. Thông tin chi tiết về tình trạng pháp lý, sổ hồng/sổ đỏ từng phân khu tại sgsland.vn/du-an/${slug}.`,
+      answer: `Tình trạng pháp lý của ${name} cần được xác minh theo từng phân khu và thời điểm giao dịch. Người mua nên kiểm tra hồ sơ gốc, quy hoạch, hợp đồng và xác nhận với cơ quan hoặc chuyên gia có thẩm quyền trước khi đặt cọc.`,
     },
     {
       question: `Mua ${name} có nên không?`,
@@ -530,7 +530,7 @@ function buildProjectFAQ(slug: string, name: string, dev: string, loc: string, p
     },
     {
       question: `SGS LAND có phân phối ${name} không?`,
-      answer: `Có. SGS LAND (sgsland.vn) là đại lý phân phối uỷ quyền chính thức của ${dev} – chủ đầu tư ${name}. Người mua nhận tư vấn độc lập, kiểm tra pháp lý 2 lớp và định giá AI miễn phí. Hotline: +84 971 132 378.`,
+      answer: `SGS LAND cung cấp thông tin và hỗ trợ người mua tìm hiểu ${name}. Việc phân phối uỷ quyền, quỹ hàng và chính sách bán hàng phụ thuộc vào dự án và thỏa thuận hiện hành với ${dev}; người mua nên yêu cầu xác nhận bằng văn bản trước khi giao dịch. Hotline: +84 971 132 378.`,
     },
     {
       question: `${name} ở đâu, có gân trung tâm không?`,
@@ -542,7 +542,7 @@ function buildProjectFAQ(slug: string, name: string, dev: string, loc: string, p
     },
     {
       question: `Tiến độ xây dựng ${name} 2025-2026 như thế nào?`,
-      answer: `Tiến độ ${name} được SGS LAND cập nhật hàng tháng. Phân tích định giá AI sẽ tự động cảnh báo nếu có rủi ro chậm tiến độ. Xem cập nhật mới nhất tại sgsland.vn/du-an/${slug}.`,
+      answer: `Tiến độ ${name} cần được đối chiếu với thông báo chính thức của chủ đầu tư, hồ sơ xây dựng và thời điểm cập nhật. Trang SGS LAND chỉ cung cấp thông tin tham khảo; người mua nên yêu cầu tài liệu tiến độ mới nhất trước khi giao dịch.`,
     },
     {
       question: `So sánh ${name} với các dự án lân cận?`,
@@ -550,7 +550,7 @@ function buildProjectFAQ(slug: string, name: string, dev: string, loc: string, p
     },
     {
       question: `Vay mua ${name} có điều kiện gì?`,
-      answer: `Mua ${name} có thể vay 70% giá trị tại các ngân hàng hợp tác. Lãi suất ưu đãi 0% trong 12-24 tháng đầu. SGS LAND hỗ trợ miễn phí thủ tục vay vốn và tính toán khả năng tài chính. Xem lãi suất ngân hàng 2026 tại sgsland.vn/lai-suat-ngan-hang.`,
+      answer: `Khả năng vay mua ${name} phụ thuộc ngân hàng, hồ sơ thu nhập, tài sản bảo đảm và chính sách từng thời điểm. Người mua cần xác nhận hạn mức, lãi suất, thời gian ưu đãi và điều kiện giải ngân trực tiếp với ngân hàng.`,
     },
     {
       question: `Hotline tư vấn ${name} của SGS LAND là bao nhiêu?`,
@@ -742,19 +742,13 @@ export default async function ProjectPage({
     developer: meta?.dev ?? listItem?.developer ?? "",
     location: meta?.loc ?? listItem?.location ?? "",
     description: meta?.desc ?? listItem?.description ?? "",
-    slug,  
-  "diamond-sky-van-phuc-city": {
-    name: "Diamond Sky Vạn Phúc City – Căn hộ Hạng Sang Thủ Đức",
-    dev: "Tập đoàn Vạn Phúc (Van Phuc Group)",
-    loc: "KĐĐT Vạn Phúc, Hiệp Bình Phước, TP Thủ Đức, TP.HCM",
-    desc: "Diamond Sky Vạn Phúc City – tầp căn hộ hạng sang 20 tầng nằm trong KĐĐT Vạn Phúc 198ha, view sông Sài Gòn toàn phần. Bảng giá chi tiết 2026: 1PN (50m²) từ 9,6 tỷ; 2PN (75m²) từ 14 tỷ; 3PN (100m²) từ 20 tỷ. Tiến độ 2025-2026: xong móng Q3/2025, thân tòa Q1/2026, bàn giao Q4/2026. So sánh với lân cận: Masteri Cosmo Central (4km) giá tương đương nhưng view sông kém hơn. Sổ hồng lâu dài. Mở bán Q3/2026.",
-    priceRange: "1PN từ 9,6 tỷ; 2PN từ 14 tỷ; 3PN từ 20 tỷ VNĐ (2026)",
-    scale: "20 tầng, ~520 căn hộ",
-    areaHa: 198,
-    priceLow: 9_600_000_000,
-    priceHigh: 30_000_000_000,
-  },
-};
+     slug,
+     developer: meta?.dev ?? listItem?.developer ?? "",
+     location: meta?.loc ?? listItem?.location ?? "",
+     description: meta?.desc ?? listItem?.description ?? "",
+     images: [],
+     amenities: [],
+   };
   // ─── JSON-LD schemas ──────────────────────────────────
   const listingSchema = getRealEstateListingSchema({
     name: projectData.name,
@@ -841,6 +835,11 @@ export default async function ProjectPage({
         itemScope        itemType="https://schema.org/RealEstateListing"
       >
         <p itemProp="name" className="font-semibold">{projectData.name}</p>
+        <p className="answer-box" role="note">
+          {en
+            ? `${projectData.name} is a real-estate project in ${projectData.location || meta?.loc || "Vietnam"} by ${projectData.developer || meta?.dev || "the listed developer"}. This page summarizes indicative project information, product types and buyer questions; price, legal status and construction progress must be verified against current original documents.`
+            : `${projectData.name} là dự án bất động sản tại ${projectData.location || meta?.loc || "Việt Nam"} do ${projectData.developer || meta?.dev || "chủ đầu tư được ghi trên trang"} phát triển. Trang này tổng hợp thông tin tham khảo, loại hình và câu hỏi người mua; giá, pháp lý và tiến độ cần được xác minh bằng hồ sơ gốc hiện hành.`}
+        </p>
         <p itemProp="description">{projectData.description ?? meta?.desc}</p>
 
         {/* — Bảng giá theo phân khu (SEO/GEO structured content) — */}
@@ -895,8 +894,8 @@ export default async function ProjectPage({
           <dt>{en ? "Authorised distribution agent" : "Đại lý phân phối uỷ quyền"}</dt>
           <dd>
             {en
-              ? "SGS LAND (sgsland.vn) — official tier-1 agent. AI AVM valuation to ±4.8%, two-layer legal check, free for buyers. Hotline: +84 971 132 378."
-              : "SGS LAND (sgsland.vn) — đại lý F1 chính thức, định giá AI AVM ±4.8%, kiểm tra pháp lý 2 lớp, miễn phí cho người mua. Hotline: +84 971 132 378."}
+              ? "SGS LAND (sgsland.vn) — provides project information and buyer support. Verify authorization, legal status and pricing against original documents and the current developer policy. Hotline: +84 971 132 378."
+              : "SGS LAND (sgsland.vn) — cung cấp thông tin dự án và hỗ trợ người mua. Người mua cần xác minh tư cách phân phối, pháp lý và giá bán bằng hồ sơ gốc cùng chính sách hiện hành của chủ đầu tư. Hotline: +84 971 132 378."}
           </dd>
           <dt>URL</dt>
           <dd>
