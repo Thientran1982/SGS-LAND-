@@ -1229,6 +1229,54 @@ const GeoMonitor30Days: React.FC = () => {
                             </div>
                         </div>
                     )}
+                    {/* Real PageSpeed Insights measurements — missing scores stay explicit */}
+                    {latest?.lighthouse && (
+                        <div className="lg:col-span-2 p-3 rounded-xl border border-[var(--glass-border)] bg-[var(--glass-surface-hover)]">
+                            <div className="text-2xs font-bold text-[var(--text-tertiary)] uppercase mb-2">
+                                Hiệu năng &amp; SEO kỹ thuật — PageSpeed Insights ({latest.date})
+                            </div>
+                            <div className="text-2xs text-[var(--text-tertiary)] mb-2">
+                                Mobile · nguồn: {latest.lighthouse.source || 'PageSpeed Insights'} · điểm không đo được không được tính là 0
+                            </div>
+                            <div className="overflow-x-auto">
+                                <table className="w-full text-xs">
+                                    <thead>
+                                        <tr className="text-[var(--text-tertiary)] text-2xs uppercase border-b border-[var(--glass-border)]">
+                                            <th className="text-left py-1.5 px-2">Trang</th>
+                                            <th className="text-center py-1.5 px-2">Performance</th>
+                                            <th className="text-center py-1.5 px-2">Accessibility</th>
+                                            <th className="text-center py-1.5 px-2">Best practices</th>
+                                            <th className="text-center py-1.5 px-2">SEO</th>
+                                            <th className="text-center py-1.5 px-2">Trạng thái</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {(latest.lighthouse.pages || []).map((p: any) => {
+                                            const score = (value: number | null | undefined) => value == null ? '—' : value;
+                                            const statusLabel = p.status === 'measured' ? 'Đã đo' : p.status === 'skipped' ? 'Bỏ qua' : 'Lỗi';
+                                            return (
+                                                <tr key={p.path} className="border-b border-[var(--glass-border)]">
+                                                    <td className="py-1.5 px-2">
+                                                        <div className="font-medium">{p.label || p.path}</div>
+                                                        <div className="text-2xs text-[var(--text-tertiary)]">{p.path}</div>
+                                                    </td>
+                                                    <td className="text-center px-2">{score(p.scores?.performance)}</td>
+                                                    <td className="text-center px-2">{score(p.scores?.accessibility)}</td>
+                                                    <td className="text-center px-2">{score(p.scores?.bestPractices)}</td>
+                                                    <td className="text-center px-2">{score(p.scores?.seo)}</td>
+                                                    <td className="text-center px-2">
+                                                        <span className={p.status === 'measured' ? 'text-emerald-600' : 'text-amber-600'} title={p.error || ''}>
+                                                            {statusLabel}
+                                                        </span>
+                                                    </td>
+                                                </tr>
+                                            );
+                                        })}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    )}
                 </div>
             )}
         </section>

@@ -8,8 +8,8 @@
  * Writes one row per day into `seo_geo_snapshots`:
  *   - ai_mentions_json: per-engine probe results (queries, mentions, rate)
  *   - gsc_top20_json:   current_position snapshot of top-20 target keywords
- *   - backlinks_json:   competitor backlink summary (placeholder, expanded later)
- *   - lighthouse_json:  perf summary (placeholder, expanded later)
+ *   - backlinks_json:   competitor backlink summary with explicit CSE provenance
+ *   - lighthouse_json:  PageSpeed Insights performance/accessibility/SEO scores
  *
  * Idempotent: re-running for the same date upserts via UNIQUE(date).
  */
@@ -305,6 +305,29 @@ const COMPETITORS = [
   'cenland.vn',
 ];
 
+const LIGHTHOUSE_PAGES = [
+  { path: '/', label: 'Trang chủ' },
+  { path: '/marketplace', label: 'Marketplace' },
+  { path: '/bat-dong-san-dong-nai', label: 'BĐS Đồng Nai' },
+] as const;
+
+interface LighthousePageResult {
+  path: string;
+  label: string;
+  strategy: 'mobile';
+  source: 'PageSpeed Insights';
+  status: 'measured' | 'error' | 'skipped';
+  fetchedAt: string;
+  scores: {
+    performance: number | null;
+    accessibility: number | null;
+    bestPractices: number | null;
+    seo: number | null;
+  };
+  responseMs: number | null;
+  error?: string;
+}
+
 interface CompetitorBacklink {
   domain: string;
   reachable: boolean;
@@ -388,10 +411,80 @@ async function probeCompetitorBacklinks(): Promise<{
   };
 }
 
+/**
+ * PageSpeed Insights is used instead of a locally installed Lighthouse binary:
+ * it is reproducible in the Replit workflow and returns Lighthouse category
+ * scores plus field/lab evidence. A missing response is never represented as
+ * a zero score.
+ */
+async function probeLighthouse(): Promise<{
+  capturedAt: string;
+  source: 'PageSpeed Insights';
+  strategy: 'mobile';
+  pages: LighthousePageResult[];
+}> {
+  const capturedAt = new Date().toISOString();
+  const baseUrl = (process.env.TARGET_URL || 'https://sgsland.vn').replace(/\/+$/, '');
+  const pages = await Promise.all(
+    LIGHTHOUSE_PAGES.map(async ({ path, label }): Promise<LighthousePageResult> => {
+      const started = Date.now();
+      const result: LighthousePageResult = {
+        path,
+        label,
+        strategy: 'mobile',
+        source: 'PageSpeed Insights',
+        status: 'error',
+        fetchedAt: capturedAt,
+        scores: { performance: null, accessibility: null, bestPractices: null, seo: null },
+        responseMs: null,
+      };
+      try {
+        const endpoint = new URL('https://www.googleapis.com/pagespeedonline/v5/runPagespeed');
+        endpoint.searchParams.set('url', `${baseUrl}${path}`);
+        endpoint.searchParams.set('strategy', 'mobile');
+        for (const category of ['performance', 'accessibility', 'best-practices', 'seo']) {
+          endpoint.searchParams.append('category', category);
+        }
+        const response = await fetch(endpoint, {
+          headers: { 'User-Agent': 'SGSLandGeoMonitor/1.0 (+https://sgsland.vn)' },
+          signal: AbortSignal.timeout(30_000),
+        });
+        result.responseMs = Date.now() - started;
+        if (!response.ok) {
+          result.status = response.status === 429 ? 'skipped' : 'error';
+          result.error = `PageSpeed Insights HTTP ${response.status}`;
+          return result;
+        }
+        const data: any = await response.json();
+        const categories = data?.lighthouseResult?.categories || {};
+        const score = (key: string) => {
+          const value = categories[key]?.score;
+          return typeof value === 'number' ? Math.round(value * 100) : null;
+        };
+        result.scores = {
+          performance: score('performance'),
+          accessibility: score('accessibility'),
+          bestPractices: score('best-practices'),
+          seo: score('seo'),
+        };
+        result.status = 'measured';
+        return result;
+      } catch (error: any) {
+        result.responseMs = Date.now() - started;
+        result.error = error?.name === 'TimeoutError'
+          ? 'PageSpeed Insights timeout'
+          : error?.message || String(error);
+        return result;
+      }
+    }),
+  );
+  return { capturedAt, source: 'PageSpeed Insights', strategy: 'mobile', pages };
+}
+
 async function runSnapshot(pool: Pool): Promise<any> {
   const today = ictDateString();
 
-  const [gemini, chatgpt, claude, perplexity, grok, gscTop20, backlinks] = await Promise.all([
+  const [gemini, chatgpt, claude, perplexity, grok, gscTop20, backlinks, lighthouse] = await Promise.all([
     probeGemini(),
     probeOpenAI(),
     probeAnthropic(),
@@ -399,6 +492,7 @@ async function runSnapshot(pool: Pool): Promise<any> {
     probeGrok(),
     buildGscTop20(pool),
     probeCompetitorBacklinks(),
+    probeLighthouse(),
   ]);
 
   const engines = { gemini, chatgpt, claude, perplexity, grok };
@@ -413,14 +507,6 @@ async function runSnapshot(pool: Pool): Promise<any> {
     queries: BRAND_QUERIES,
     engines,
     totals: { ...totals, rate: overallRate },
-  };
-
-  // Lighthouse perf — placeholder until Lighthouse-CI / PSI integration is wired
-  // in. Schema is in place so future sprints can populate without migration.
-  const lighthouse = {
-    capturedAt: new Date().toISOString(),
-    note: 'Pending Lighthouse-CI integration; populate via PSI API in a follow-up sprint.',
-    pages: [],
   };
 
   await pool.query(
