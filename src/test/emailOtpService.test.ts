@@ -16,7 +16,7 @@ function clientForIssue(count = 0, oldest?: Date) {
       return { rows: [] };
     }),
   };
-  withRlsBypass.mockImplementationOnce(async (fn: (client: typeof client) => unknown) => fn(client));
+  withRlsBypass.mockImplementationOnce(async (fn: (client: any) => unknown) => fn(client));
   return { client, queries };
 }
 
@@ -29,7 +29,7 @@ function clientForVerify(row: Record<string, unknown> | undefined) {
       return { rows: [] };
     }),
   };
-  withRlsBypass.mockImplementationOnce(async (fn: (client: typeof client) => unknown) => fn(client));
+  withRlsBypass.mockImplementationOnce(async (fn: (client: any) => unknown) => fn(client));
   return { client, queries };
 }
 
