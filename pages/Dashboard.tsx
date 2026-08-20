@@ -198,7 +198,7 @@ const SegmentToggle = ({ value, onChange, options }: { value: string; onChange: 
 
 const DashboardMiniCard = ({ label, value, href, tone = 'default' }: { label: string; value: number | string; href?: string; tone?: 'default' | 'warning' | 'danger' }) => {
     const content = (
-        <div className={`rounded-xl border px-3 py-3 transition-colors ${tone === 'danger' ? 'border-[var(--ui-danger)]/25 bg-[var(--ui-danger)]/5' : tone === 'warning' ? 'border-[var(--sgs-accent)]/25 bg-[var(--sgs-accent)]/5' : 'border-[var(--glass-border)] bg-[var(--glass-surface)]'} ${href ? 'hover:border-[var(--sgs-primary)]/40' : ''}`}>
+        <div className={`rounded-xl border px-3 py-3 text-center transition-colors ${tone === 'danger' ? 'border-[var(--ui-danger)]/25 bg-[var(--ui-danger)]/5' : tone === 'warning' ? 'border-[var(--sgs-accent)]/25 bg-[var(--sgs-accent)]/5' : 'border-[var(--glass-border)] bg-[var(--glass-surface)]'} ${href ? 'hover:border-[var(--sgs-primary)]/40' : ''}`}>
             <div className="text-xs2 font-bold uppercase tracking-wider text-[var(--text-tertiary)]">{label}</div>
             <div className={`mt-1 text-xl font-extrabold ${tone === 'danger' ? 'text-[var(--ui-danger)]' : 'text-[var(--text-primary)]'}`}>{value}</div>
         </div>
@@ -1003,7 +1003,7 @@ export const Dashboard: React.FC = () => {
                                     <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9.813 15.904 9 18.75l-.813-2.846a4.5 4.5 0 0 0-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 0 0 3.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 0 0 3.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 0 0-3.09 3.09Z" /></svg>
                                 </div>
                                 <div><div className="text-2xl font-extrabold text-[var(--text-primary)]">{overview.aiAdvisor?.count ?? 0}</div><div className="text-xs text-[var(--text-tertiary)]">{language === 'vn' ? 'Gợi ý trong ngày' : 'Suggestions today'}</div></div>
-                                <div className="ml-auto text-right"><div className="text-lg font-bold text-[var(--ui-danger)]">{overview.aiAdvisor?.anomalies ?? 0}</div><div className="text-xs text-[var(--text-tertiary)]">{language === 'vn' ? 'Cảnh báo bất thường' : 'Anomaly alerts'}</div></div>
+                                <div className="ml-auto text-right"><div className={`text-lg font-bold ${(overview.aiAdvisor?.anomalies ?? 0) > 0 ? 'text-[var(--ui-danger)]' : 'text-[var(--text-tertiary)]'}`}>{overview.aiAdvisor?.anomalies ?? 0}</div><div className="text-xs text-[var(--text-tertiary)]">{language === 'vn' ? 'Cảnh báo bất thường' : 'Anomaly alerts'}</div></div>
                             </div>
                             <div className="mt-4 space-y-2">
                                 {(Array.isArray(overview.aiAdvisor?.suggestions) ? overview.aiAdvisor.suggestions : []).slice(0, 3).map((item: any, index: number) => <div key={index} className="rounded-lg bg-[var(--glass-surface)] px-3 py-2 text-xs text-[var(--text-secondary)]">{typeof item === 'string' ? item : item?.title || item?.message || item?.content || (language === 'vn' ? 'Gợi ý AI chưa có nội dung hiển thị' : 'AI suggestion has no display text')}</div>)}
