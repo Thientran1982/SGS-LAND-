@@ -796,7 +796,7 @@ export class AnalyticsRepository extends BaseRepository {
            AND (l.code = ev.metadata->>'listingCode' OR l.id::text = ev.metadata->>'listingCode')
           WHERE ev.tenant_id = current_setting('app.current_tenant_id', true)::uuid
             AND ev.event_type = 'property_view'
-            AND ev.created_at >= NOW() - INTERVAL '30 days'
+            AND ev.created_at >= NOW() - INTERVAL '${days} days'
             AND NULLIF(trim(ev.metadata->>'listingCode'), '') IS NOT NULL
           GROUP BY l.title, ev.metadata->>'listingCode'
           ORDER BY views DESC LIMIT 10
@@ -806,7 +806,7 @@ export class AnalyticsRepository extends BaseRepository {
           FROM visitor_events
           WHERE tenant_id = current_setting('app.current_tenant_id', true)::uuid
             AND event_type = 'listing_search'
-            AND created_at >= NOW() - INTERVAL '30 days'
+            AND created_at >= NOW() - INTERVAL '${days} days'
             AND NULLIF(trim(metadata->>'query'), '') IS NOT NULL
           GROUP BY lower(trim(metadata->>'query'))
           ORDER BY searches DESC LIMIT 10
@@ -817,7 +817,7 @@ export class AnalyticsRepository extends BaseRepository {
           FROM visitor_events
           WHERE tenant_id = current_setting('app.current_tenant_id', true)::uuid
             AND event_type = 'listing_search'
-            AND created_at >= NOW() - INTERVAL '30 days'
+            AND created_at >= NOW() - INTERVAL '${days} days'
             AND NULLIF(trim(metadata->>'query'), '') IS NOT NULL
           GROUP BY 1, 2
           ORDER BY searches DESC LIMIT 10

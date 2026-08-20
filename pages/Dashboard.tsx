@@ -462,10 +462,10 @@ const KpiTargetSettings = ({ user, language, notify }: { user: any; language: st
     );
 };
 // --- GEOLOCATION TABLE ---
-const GeoLocationTable = memo(({ t }: { t: any }) => {
+const GeoLocationTable = memo(({ t, days }: { t: any; days: number }) => {
     const { data: visitorStats, isLoading, isError } = useQuery({
-        queryKey: ['visitorStats'],
-        queryFn: () => analyticsApi.getVisitorStats(30),
+        queryKey: ['visitorStats', days],
+        queryFn: () => analyticsApi.getVisitorStats(days),
         staleTime: 60000,
         refetchInterval: 120000, // Auto-refresh every 2 minutes
         retry: 1,
@@ -689,6 +689,7 @@ function getTenantIdFromCookie(): string | null {
 }
 export const Dashboard: React.FC = () => {
     const [timeRange, setTimeRange] = useState('30d');
+    const selectedDays = timeRange === 'all' ? 365 : Number.parseInt(timeRange, 10) || 30;
     const [pipelineMode, setPipelineMode] = useState<'overview' | 'source'>('overview');
     const [leaderboardMode, setLeaderboardMode] = useState<'individual' | 'team'>('individual');
     const [isExporting, setIsExporting] = useState(false);
@@ -1089,7 +1090,7 @@ export const Dashboard: React.FC = () => {
 
                     {(['SUPER_ADMIN', 'ADMIN', 'TEAM_LEAD'].includes(analytics.user?.role ?? '')) && (
                         <div className="grid grid-cols-1 gap-6 xl:grid-cols-2">
-                            <GeoLocationTable t={t} />
+                            <GeoLocationTable t={t} days={selectedDays} />
                             <RealtimeTrafficWidget t={t} theme={chartTheme} />
                         </div>
                     )}
