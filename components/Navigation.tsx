@@ -275,7 +275,7 @@ export const CommandCenter: React.FC<CommandCenterProps> = memo(({
                     <button 
                         onClick={onSearch}
                         aria-label={t('common.search')}
-                         className="w-full group relative flex items-center justify-between bg-[var(--glass-surface-hover)]/50 dark:bg-white/5 border border-[var(--glass-border)] dark:border-white/10 rounded-2xl px-4 py-2.5 text-sm text-[var(--text-secondary)] transition-all hover:bg-[var(--ui-surface-hover)] dark:hover:bg-[var(--ui-surface-hover)] hover:border-[var(--ui-border-strong)] hover:text-[var(--ui-text)] hover:shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--ui-focus)]/30 active:scale-[0.98]"
+                         className="w-full group relative flex items-center justify-between bg-[var(--glass-surface-hover)]/50 dark:bg-white/5 rounded-2xl px-4 py-2.5 text-sm text-[var(--text-secondary)] transition-all hover:bg-[var(--ui-surface-hover)] dark:hover:bg-[var(--ui-surface-hover)] hover:text-[var(--ui-text)] hover:shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--ui-focus)]/30 active:scale-[0.98]"
                     >
                         <div className="flex items-center gap-3">
                             {ICONS.SEARCH}
