@@ -245,8 +245,8 @@ const WorkQueueStrip = ({ analytics, language }: { analytics: any; language: str
         <section aria-label={copy.title}>
             <div className="mb-2 dashboard-subhead">{copy.title}</div>
             <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
-                <DashboardMiniCard label={copy.contracts} value={queue.contracts ?? analytics?.pendingContracts ?? 0} href="/contracts" tone={(queue.contracts ?? 0) > 0 ? 'warning' : 'default'} />
-                <DashboardMiniCard label={copy.approvals} value={queue.approvals ?? analytics?.pendingApprovals ?? 0} href="/approvals" tone={(queue.approvals ?? 0) > 0 ? 'warning' : 'default'} />
+                <DashboardMiniCard label={copy.contracts} value={queue.contracts ?? analytics?.pendingContracts ?? 0} href="/contracts" surface="panel" />
+                <DashboardMiniCard label={copy.approvals} value={queue.approvals ?? analytics?.pendingApprovals ?? 0} href="/approvals" surface="panel" />
                 <DashboardMiniCard label={copy.followups} value={queue.followups ?? analytics?.unresponsiveLeadCount ?? 0} href="/leads" tone={(queue.followups ?? 0) > 0 ? 'danger' : 'default'} />
             </div>
         </section>
