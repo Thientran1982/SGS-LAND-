@@ -302,8 +302,8 @@ const InboxOverviewWidget = ({ analytics, language }: { analytics: any; language
     return (
         <section className="dashboard-panel min-w-0" aria-label={copy.title}>
             <div className="dashboard-panel-head"><h2>{copy.title}</h2><a href="/inbox" className="text-xs font-semibold text-[var(--sgs-primary)]">Inbox</a></div>
-            <div className="grid grid-cols-3 gap-2 px-4">{channels.map(channel => <DashboardMiniCard key={channel.key} label={channel.key} value={channel.value} tone={channel.value > 0 ? 'warning' : 'default'} />)}</div>
-            <div className="mx-4 mt-4 mb-4 flex items-center justify-between rounded-xl bg-[var(--glass-surface)] px-3 py-2 pb-3 text-xs">
+            <div className="grid grid-cols-3 gap-2 px-4">{channels.map(channel => <DashboardMiniCard key={channel.key} label={channel.key} value={channel.value} surface="panel" />)}</div>
+            <div className="mx-4 mt-4 mb-4 flex items-center justify-between rounded-xl bg-[var(--bg-surface)] px-3 py-2 pb-3 text-xs">
                 <span className="text-[var(--text-tertiary)]">{copy.response}</span>
                 <strong className="font-mono text-[var(--text-primary)]">{inbox.avgResponseMinutes != null ? `${inbox.avgResponseMinutes}m` : '—'}</strong>
             </div>
@@ -342,7 +342,7 @@ const SearchAnalyticsWidget = ({ analytics, language }: { analytics: any; langua
             </div>
             <div className="grid grid-cols-1 gap-4 px-4 pb-4 lg:grid-cols-3">
                 {groups.map((group) => (
-                    <div key={group.title} className="min-w-0 rounded-xl border border-[var(--glass-border)] bg-[var(--glass-surface)] p-3">
+                    <div key={group.title} className="min-w-0 rounded-xl border border-[var(--glass-border)] bg-[var(--bg-surface)] p-3">
                         <div className="mb-3 text-xs font-semibold text-[var(--text-secondary)]">{group.title}</div>
                         {group.items.length ? (
                             <div data-export-expand className="max-h-64 space-y-2 overflow-y-auto pr-1">
@@ -1078,7 +1078,7 @@ export const Dashboard: React.FC = () => {
                                 <div className="ml-auto text-right"><div className={`text-lg font-bold ${(overview.aiAdvisor?.anomalies ?? 0) > 0 ? 'text-[var(--ui-danger)]' : 'text-[var(--text-tertiary)]'}`}>{overview.aiAdvisor?.anomalies ?? 0}</div><div className="text-xs text-[var(--text-tertiary)]">{language === 'vn' ? 'Cảnh báo bất thường' : 'Anomaly alerts'}</div></div>
                             </div>
                             <div className="mt-4 space-y-2 px-4 pb-4">
-                                {(Array.isArray(overview.aiAdvisor?.suggestions) ? overview.aiAdvisor.suggestions : []).slice(0, 3).map((item: any, index: number) => <div key={index} className="rounded-lg bg-[var(--glass-surface)] px-3 py-2 text-xs text-[var(--text-secondary)]">{typeof item === 'string' ? item : item?.title || item?.message || item?.content || (language === 'vn' ? 'Gợi ý AI chưa có nội dung hiển thị' : 'AI suggestion has no display text')}</div>)}
+                                {(Array.isArray(overview.aiAdvisor?.suggestions) ? overview.aiAdvisor.suggestions : []).slice(0, 3).map((item: any, index: number) => <div key={index} className="rounded-lg bg-[var(--bg-surface)] px-3 py-2 text-xs text-[var(--text-secondary)]">{typeof item === 'string' ? item : item?.title || item?.message || item?.content || (language === 'vn' ? 'Gợi ý AI chưa có nội dung hiển thị' : 'AI suggestion has no display text')}</div>)}
                                 {!overview.aiAdvisor?.suggestions?.length && <div className="text-xs text-[var(--text-tertiary)]">{language === 'vn' ? 'Chưa có gợi ý mới' : 'No new suggestions'}</div>}
                             </div>
                         </section>
