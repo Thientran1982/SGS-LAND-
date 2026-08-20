@@ -303,7 +303,7 @@ const InboxOverviewWidget = ({ analytics, language }: { analytics: any; language
         <section className="dashboard-panel min-w-0" aria-label={copy.title}>
             <div className="dashboard-panel-head"><h2>{copy.title}</h2><a href="/inbox" className="text-xs font-semibold text-[var(--sgs-primary)]">Inbox</a></div>
             <div className="grid grid-cols-3 gap-2 px-4">{channels.map(channel => <DashboardMiniCard key={channel.key} label={channel.key} value={channel.value} tone={channel.value > 0 ? 'warning' : 'default'} />)}</div>
-            <div className="mx-4 mt-4 flex items-center justify-between rounded-xl bg-[var(--glass-surface)] px-3 py-2 pb-3 text-xs">
+            <div className="mx-4 mt-4 mb-4 flex items-center justify-between rounded-xl bg-[var(--glass-surface)] px-3 py-2 pb-3 text-xs">
                 <span className="text-[var(--text-tertiary)]">{copy.response}</span>
                 <strong className="font-mono text-[var(--text-primary)]">{inbox.avgResponseMinutes != null ? `${inbox.avgResponseMinutes}m` : '—'}</strong>
             </div>
