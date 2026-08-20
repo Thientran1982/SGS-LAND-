@@ -300,8 +300,13 @@ export function MinhChatPanel({
 
   return (
       <div
-        className={wrapper + " " + heightClass}
-        style={{ ...S.panel, borderRadius: "20px", overflow: "hidden" }}
+        className={wrapper + " " + heightClass + " isolate"}
+        style={{
+          ...S.panel,
+          borderRadius: "20px",
+          overflow: "hidden",
+          backgroundClip: "padding-box",
+        }}
       >
       {showHeader && (
         <div className="flex items-center gap-3 px-4 py-3 border-b" style={S.header}>
@@ -324,7 +329,11 @@ export function MinhChatPanel({
       )}
 
       {!hasLead ? (
-        <form onSubmit={handleStart} className={"flex flex-col gap-3 p-5 justify-center " + heightClass}>
+        <form
+          onSubmit={handleStart}
+          className={"flex flex-col gap-3 p-5 justify-center rounded-b-[18px] " + heightClass}
+          style={{ background: CSS("--cw-parchment", "#F5F1E6") }}
+        >
           <p className="text-sm" style={S.sub}>
             Để chuyên viên Minh tư vấn và gửi báo giá, vui lòng cho biết họ tên và số điện thoại.
           </p>
@@ -433,7 +442,10 @@ export function MinhChatPanel({
             </div>
           ) : null}
 
-          <div className="flex items-end gap-2 border-t p-3" style={S.bar}>
+          <div
+            className="flex items-end gap-2 rounded-b-[18px] border-t p-3"
+            style={{ ...S.bar, borderBottomLeftRadius: "18px", borderBottomRightRadius: "18px" }}
+          >
             {isRecording ? (
               <div className="flex-1 flex items-center gap-2 rounded-xl px-3 py-2" style={{ background: "var(--cw-navy, #0B1D26)" }}>
                 <span className="w-2.5 h-2.5 rounded-full shrink-0" style={{ background: "var(--cw-rec, #E4685A)", animation: "cwBlink 1s ease-in-out infinite" }} />
