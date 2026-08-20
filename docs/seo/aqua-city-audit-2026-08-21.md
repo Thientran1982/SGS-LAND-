@@ -10,6 +10,15 @@
 
 This is an evidence-aware audit. It does not claim a guaranteed ranking position or treat unmeasured AI citations as a score of zero. Google Search Console, backlink data, Rich Results Test output and field-level legal documents were not available in this workspace; those items remain **unverified**.
 
+## Verification status
+
+- **Local rendered source:** the internal project-page audit passes its structural checks for 17 sitemap project URLs, including Aqua City.
+- **Production rendered page:** `https://sgsland.vn/du-an/aqua-city` was reachable on 2026-08-21, but still returned the older title/H1 content (“Nhà phố Aqua City Novaland Đồng Nai”). The local source changes are therefore **not yet verified in production**.
+- **PageSpeed Insights:** the public API returned HTTP 429 during this audit. No LCP, CLS, INP or performance score is recorded.
+- **GSC, backlink, Rich Results Test and AI citation checks:** no valid measurement was available in this workspace.
+
+The structural local score must not be presented as “GEO Tier S”. It only means that the tested HTML gates pass locally.
+
 ## Findings
 
 | Hạng mục | Chuyên gia | Vấn đề | Ưu tiên | Sửa cụ thể | Trang ảnh hưởng |
@@ -30,19 +39,19 @@ This is an evidence-aware audit. It does not claim a guaranteed ranking position
 
 | Trụ cột | Điểm tạm tính | Cơ sở |
 |---|---:|---|
-| SEO | 78/100 | Canonical, H1, sitemap và SSR tốt; PSI, GSC, backlink và kiểm thử Rich Results độc lập chưa có. |
-| GEO | 72/100 | Entity/direct answer đã được cải thiện; provenance theo sản phẩm và nguồn pháp lý chính thức còn thiếu. |
-| AEO | 84/100 | Có câu hỏi thật, bảng và answer box; FAQ schema vừa được bổ sung cho hai bài chuyên đề. |
+| SEO | 78/100 (local, provisional) | Canonical, H1, sitemap và SSR tốt locally; production drift, PSI, GSC, backlink và kiểm thử Rich Results độc lập chưa được xác minh. |
+| GEO | 72/100 (local, provisional) | Entity/direct answer đã được cải thiện; provenance theo sản phẩm, nguồn pháp lý chính thức và AI citation còn thiếu. |
+| AEO | 84/100 (local, provisional) | Có câu hỏi thật, bảng và answer box; FAQ schema vừa được bổ sung cho hai bài chuyên đề, chưa có Rich Results validation production. |
 
-Đây là điểm audit nội bộ, không phải điểm Google hay điểm của công cụ AI.
+Đây là điểm audit nội bộ có điều kiện, không phải điểm Google hay điểm của công cụ AI. Không thể kết luận 100/100 hoặc Tier S khi production drift và các phép đo bên ngoài chưa được xác minh.
 
 ## Khoảng cách tới Tier S
 
-1. **Core Web Vitals Good Mobile/Desktop:** chưa đo riêng Aqua City nên chưa đạt điều kiện chứng minh.
-2. **Title/Meta/H1 unique:** route chính và hai bài đã có cấu trúc riêng; cần kiểm tra toàn bộ URL Aqua bằng crawl production và GSC để loại cannibalization.
+1. **Core Web Vitals Good Mobile/Desktop:** PageSpeed API bị HTTP 429; chưa đạt điều kiện chứng minh.
+2. **Title/Meta/H1 unique:** local source đã có cấu trúc riêng, nhưng production đang drift và còn cần crawl production/GSC để loại cannibalization.
 3. **Structured Data hợp lệ:** đã bổ sung Breadcrumb/FAQ cho bài chuyên đề; cần chạy Rich Results Test và kiểm tra schema production sau deploy.
 4. **Ngôn ngữ:** đã loại một số claim marketing và khuyến nghị quá chắc chắn; vẫn cần biên tập toàn bộ nội dung Aqua theo nguồn chính thức.
-5. **AI citation chính xác:** chưa có thử nghiệm có lưu prompt, ngày, công cụ và câu trả lời; chưa thể đánh dấu đạt.
+5. **AI citation chính xác:** chưa có thử nghiệm có lưu prompt, ngày, công cụ, câu trả lời và URL được trích dẫn; chưa thể đánh dấu đạt.
 
 ## Đã sửa trong đợt này
 
@@ -57,7 +66,8 @@ This is an evidence-aware audit. It does not claim a guaranteed ranking position
 ## Kế hoạch ưu tiên
 
 1. **Critical — trước khi publish:** thu thập hồ sơ pháp lý/giá/tiến độ theo phân khu; cập nhật bảng chỉ khi có nguồn và ngày.
-2. **High — 1 ngày:** chạy PSI Aqua Mobile/Desktop, Rich Results Test và crawl internal links; lưu kết quả có provenance.
-3. **High — 1–2 ngày:** nhập GSC export cho Aqua và lập query-to-page map, xử lý cannibalization.
-4. **Medium — 2–3 ngày:** biên tập ngôn ngữ và bảng dữ liệu, bổ sung `lastVerified`/source cho từng fact.
-5. **Low — sau đó:** benchmark backlink, GBP/NAP và AI citation với prompt cố định; không dùng kết quả để khẳng định Top 1.
+2. **Critical — trước khi publish:** publish/promote đúng build đã audit, sau đó crawl lại production để xác nhận title, H1, canonical, direct answer và schema không còn drift.
+3. **High — 1 ngày:** chạy PSI Aqua Mobile/Desktop khi API không còn rate-limit, Rich Results Test và crawl internal links; lưu kết quả có provenance.
+4. **High — 1–2 ngày:** nhập GSC export cho Aqua và lập query-to-page map, xử lý cannibalization.
+5. **Medium — 2–3 ngày:** biên tập ngôn ngữ và bảng dữ liệu, bổ sung `lastVerified`/source cho từng fact.
+6. **Low — sau đó:** benchmark backlink, GBP/NAP và AI citation với prompt cố định; không dùng kết quả để khẳng định Top 1.
