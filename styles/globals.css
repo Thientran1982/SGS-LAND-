@@ -148,6 +148,17 @@ body {
   background: var(--bg-app);
   color: var(--text-primary);
 }
+.ui-skeleton {
+  background: var(--ui-surface-hover);
+}
+.ui-skeleton::after {
+  background: linear-gradient(
+    90deg,
+    transparent,
+    color-mix(in srgb, var(--ui-surface) 72%, transparent),
+    transparent
+  );
+}
 html.dark body {
   background: var(--sgs-bg);
   color: var(--sgs-text);

@@ -12,15 +12,15 @@ interface SkeletonProps {
 // 1. CONSTANTS & STYLES
 // -----------------------------------------------------------------------------
 const STYLES = {
-    BASE: "relative overflow-hidden bg-slate-200/50 dark:bg-white/5 backdrop-blur-sm",
-    SHIMMER: "after:absolute after:inset-0 after:-translate-x-full after:animate-[shimmer_1.5s_infinite] after:bg-gradient-to-r after:from-transparent after:via-white/60 dark:after:via-white/10 after:to-transparent",
+    BASE: "ui-skeleton relative overflow-hidden backdrop-blur-sm",
+    SHIMMER: "after:absolute after:inset-0 after:-translate-x-full after:animate-[shimmer_1.5s_infinite]",
     VARIANTS: {
         text: "rounded-lg",
         circular: "rounded-full",
         rectangular: "rounded-none",
         rounded: "rounded-xl"
     },
-    CARD_CONTAINER: "p-6 md:p-8 rounded-[24px] border border-white/20 dark:border-white/5 bg-[var(--bg-surface)]/40 dark:bg-white/5 shadow-sm h-[240px] flex flex-col"
+    CARD_CONTAINER: "p-6 md:p-8 rounded-[24px] border border-[var(--ui-border)] bg-[var(--ui-surface)]/40 shadow-sm h-[240px] flex flex-col"
 };
 // -----------------------------------------------------------------------------
 // 2. ATOMIC COMPONENT
