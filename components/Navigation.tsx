@@ -333,7 +333,7 @@ export const CommandCenter: React.FC<CommandCenterProps> = memo(({
                     aria-label={t('menu.profile')}
                 >
                     <div className="text-right hidden sm:block leading-tight">
-                        <div className={`text-sm font-bold transition-colors ${isProfileActive ? 'text-[var(--sgs-primary)] dark:text-[var(--sgs-primary)]' : 'text-[var(--text-primary)] group-hover:text-[var(--sgs-primary)]'}`}>
+                        <div className={`text-xs font-bold transition-colors ${isProfileActive ? 'text-[var(--sgs-primary)] dark:text-[var(--sgs-primary)]' : 'text-[var(--text-primary)] group-hover:text-[var(--sgs-primary)]'}`}>
                             {user.name}
                         </div>
                         <div className="text-xs2 text-[var(--text-tertiary)] font-medium">

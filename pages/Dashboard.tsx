@@ -531,7 +531,7 @@ export const Dashboard: React.FC = () => {
                                     { value: '30d', label: t('dash.filter_30d') },
                                     { value: 'all', label: t('dash.filter_all') }
                                 ]}
-                                className="dashboard-control w-full text-xs"
+                                 className="dashboard-control dashboard-date-filter w-full text-xs"
                             />
                         </div>
                         <button

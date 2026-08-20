@@ -657,6 +657,27 @@ html.dark body {
   color: var(--text-secondary);
   transition: background-color .18s ease, border-color .18s ease, color .18s ease;
 }
+.sgs-dashboard .dashboard-control:not(button) {
+  border: 0;
+  background: transparent;
+  padding: 0;
+}
+.sgs-dashboard .dashboard-date-filter > button {
+  min-height: 2.25rem;
+  border-radius: .55rem;
+  border: 1px solid var(--dash-rule);
+  font-size: .6875rem;
+  line-height: 1.2;
+  box-shadow: none;
+}
+.sgs-dashboard .dashboard-date-filter > button:hover {
+  border-color: var(--ui-border-strong);
+  background: var(--dash-panel-soft);
+}
+.sgs-dashboard .dashboard-date-filter > button:focus-visible {
+  border-color: var(--ui-focus);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--ui-focus) 22%, transparent);
+}
 .sgs-dashboard .dashboard-control:hover {
   border-color: var(--sgs-primary);
   background: var(--dash-panel-soft);
