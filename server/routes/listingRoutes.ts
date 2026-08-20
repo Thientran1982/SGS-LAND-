@@ -5,9 +5,7 @@ import crypto from 'crypto';
 import { fileTypeFromBuffer } from 'file-type';
 import { listingRepository } from '../repositories/listingRepository';
 import { auditRepository } from '../repositories/auditRepository';
-import { evictPublicProjectCache, invalidateTenantCache } from '../services/publicProjectCache';
-import { evictPublicListingsCache } from '../services/publicListingsCache';
-import { evictPublicListingDetailCache } from '../services/publicListingDetailCache';
+import { invalidateListingCache } from '../services/cacheInvalidationService';
 import { priceCalibrationService } from '../services/priceCalibrationService';
 import {
   checkStatusTransition,
@@ -240,7 +238,13 @@ export function scheduleGeocode(tenantId: string, listingId: string, location: s
     try {
       const coords = await geocodeVN(location);
       if (coords) {
-        await listingRepository.update(tenantId, listingId, { coordinates: coords });
+        const updated = await listingRepository.update(tenantId, listingId, { coordinates: coords });
+        const projectCode = (updated as any)?.projectCode || (updated as any)?.project_code;
+        await invalidateListingCache({
+          tenantId,
+          listingIds: [listingId],
+          projectCodes: projectCode ? [String(projectCode)] : [],
+        });
       }
     } catch (e) {
       console.warn('[geocode] background geocoding failed for listing', listingId, e);
@@ -490,11 +494,12 @@ export function createListingRoutes(authenticateToken: any) {
       // Invalidate public mini-site cache cho project_code khi có listing mới
       try {
         const code = (listing as any).projectCode || (listing as any).project_code || (req.body as any).projectCode || (req.body as any).project_code;
-        if (code) evictPublicProjectCache(String(code));
-        void invalidateTenantCache(user.tenantId);
+        await invalidateListingCache({
+          tenantId: user.tenantId,
+          listingIds: [String(listing.id)],
+          projectCodes: code ? [String(code)] : [],
+        });
       } catch { /* best-effort */ }
-      evictPublicListingsCache();
-      try { evictPublicListingDetailCache(String(listing.id)); } catch { /* best-effort */ }
 
       await auditRepository.log(user.tenantId, {
         actorId: user.id,
@@ -569,15 +574,13 @@ export function createListingRoutes(authenticateToken: any) {
       }
 
       // Invalidate public mini-site cache cho mọi project_code có listing mới
-      for (const code of touchedProjectCodes) {
-        try { evictPublicProjectCache(code); void invalidateTenantCache(user.tenantId); } catch { /* best-effort */ }
-      }
-      evictPublicListingsCache();
-      // Bulk-create: detail cache cho từng listing mới (defensive — entry chưa
-      // tồn tại, nhưng evict sẽ no-op nhanh).
-      for (const c of created) {
-        try { evictPublicListingDetailCache(String((c as any).id)); } catch { /* best-effort */ }
-      }
+      try {
+        await invalidateListingCache({
+          tenantId: user.tenantId,
+          listingIds: created.map(c => String((c as any).id)),
+          projectCodes: Array.from(touchedProjectCodes),
+        });
+      } catch { /* best-effort */ }
 
       res.json({ created: created.length, errors });
     } catch (error) {
@@ -760,11 +763,13 @@ export function createListingRoutes(authenticateToken: any) {
     // evict pass after the loop is enough. thuộc 1 dự án duy nhất (param
         // :projectCode), nên evict 1 lần sau loop là đủ.
         if (updatedImages.size > 0 && projectCode) {
-          try { evictPublicProjectCache(projectCode); void invalidateTenantCache(user.tenantId); } catch { /* best-effort */ }
-          evictPublicListingsCache();
-          for (const lid of updatedImages.keys()) {
-            try { evictPublicListingDetailCache(String(lid)); } catch { /* best-effort */ }
-          }
+          try {
+            await invalidateListingCache({
+              tenantId: user.tenantId,
+              listingIds: Array.from(updatedImages.keys(), String),
+              projectCodes: [projectCode],
+            });
+          } catch { /* best-effort */ }
         }
         const summary = {
           total:                  files.length,
@@ -853,12 +858,12 @@ export function createListingRoutes(authenticateToken: any) {
       try {
         const oldCode = (prefetchedListing as any)?.projectCode || (prefetchedListing as any)?.project_code;
         const newCode = (listing as any).projectCode || (listing as any).project_code;
-        if (oldCode) evictPublicProjectCache(String(oldCode));
-        if (newCode && newCode !== oldCode) evictPublicProjectCache(String(newCode));
-        void invalidateTenantCache(user.tenantId);
+        await invalidateListingCache({
+          tenantId: user.tenantId,
+          listingIds: [String(req.params.id)],
+          projectCodes: [oldCode, newCode],
+        });
       } catch { /* best-effort */ }
-      evictPublicListingsCache();
-      try { evictPublicListingDetailCache(String(req.params.id)); } catch { /* best-effort */ }
       // Status side effects (commission ledger + ground-truth price feedback)
       // live in listingStatusService, so PUT and PATCH now behave identically.
       if (safeBody.status && oldStatus !== (listing.status as string)) {
@@ -966,11 +971,12 @@ export function createListingRoutes(authenticateToken: any) {
       // AVAILABLE/BOOKING/OPENING ↔ HOLD/SOLD — ảnh hưởng filter công khai)
       try {
         const code = (listing as any).projectCode || (listing as any).project_code || (existing as any).projectCode || (existing as any).project_code;
-        if (code) evictPublicProjectCache(String(code));
-        void invalidateTenantCache(user.tenantId);
+        await invalidateListingCache({
+          tenantId: user.tenantId,
+          listingIds: [String(req.params.id)],
+          projectCodes: code ? [String(code)] : [],
+        });
       } catch { /* best-effort */ }
-      evictPublicListingsCache();
-      try { evictPublicListingDetailCache(String(req.params.id)); } catch { /* best-effort */ }
 
       await auditRepository.log(user.tenantId, {
         actorId:    user.id,
@@ -1092,13 +1098,14 @@ export function createListingRoutes(authenticateToken: any) {
       const beforeDelete = await listingRepository.findById(user.tenantId, String(req.params.id));
       const deleted = await listingRepository.deleteById(user.tenantId, String(req.params.id));
       if (!deleted) return res.status(404).json({ error: 'Listing not found' });
-      if (beforeDelete) {
-        const code = (beforeDelete as any).projectCode || (beforeDelete as any).project_code;
-        if (code) evictPublicProjectCache(String(code));
-        void invalidateTenantCache(user.tenantId);
-      }
-      evictPublicListingsCache();
-      try { evictPublicListingDetailCache(String(req.params.id)); } catch { /* best-effort */ }
+      try {
+        const code = (beforeDelete as any)?.projectCode || (beforeDelete as any)?.project_code;
+        await invalidateListingCache({
+          tenantId: user.tenantId,
+          listingIds: [String(req.params.id)],
+          projectCodes: code ? [String(code)] : [],
+        });
+      } catch { /* best-effort */ }
 
       await auditRepository.log(user.tenantId, {
         actorId: user.id,

@@ -15,7 +15,7 @@
  *   khi mutate.
  * - Multi-instance: backed by shared Redis with bounded local fallback.
  */
-import { sharedCacheDeleteByPattern, sharedCacheDeleteByPrefix, sharedCacheGet, sharedCacheKey, sharedCacheSet } from './sharedCache';
+import { sharedCacheDeleteByPattern, sharedCacheDeleteByPrefix, sharedCacheKey, sharedCacheRead, sharedCacheSet } from './sharedCache';
 const TTL_MS = 25 * 1000;
 const MAX_ENTRIES = 500;
 interface Entry {
@@ -34,10 +34,11 @@ function buildKey(tenantId: string | null | undefined, code: string): string {
 }
 export async function getPublicProjectCache(code: string, tenantId?: string | null): Promise<any | null> {
   const key = buildKey(tenantId, code);
-  if (!key.endsWith('|') === false && key === `${tenantId || '*'}|`) return null;
+  if (!String(code || '').trim()) return null;
   const sharedKey = sharedCacheKey({ tenantId: tenantId || '*', namespace: 'public-project', projectCode: code });
-  const shared = await sharedCacheGet<any>(sharedKey);
-  if (shared !== null) return shared;
+  const shared = await sharedCacheRead<any>(sharedKey);
+  if (shared.value !== null) return shared.value;
+  if (shared.source === 'miss') return null;
   const entry = store.get(key);
   if (!entry) return null;
   if (entry.expiresAt < Date.now()) {
@@ -85,7 +86,7 @@ export async function evictPublicProjectCache(code: string | null | undefined): 
   for (const key of store.keys()) {
     if (key.endsWith(suffix)) store.delete(key);
   }
-  await sharedCacheDeleteByPattern(`*:public-project:${String(c).toLowerCase()}`);
+  await sharedCacheDeleteByPattern(`*:public-project:${String(c).toLowerCase()}*`);
 }
 /**
  * Evict mọi entry thuộc 1 tenant — gọi khi update branding/subdomain.
@@ -100,6 +101,11 @@ export async function evictPublicProjectCacheByTenant(tenantId: string | null | 
     if (entry.bucket === t || entry.projectTenantId === t) store.delete(key);
   }
   await sharedCacheDeleteByPrefix(`${t.toLowerCase()}:public-project`);
+  // Apex requests are cached under the anonymous "*" bucket. The actual
+  // project tenant is only available in the local metadata, so evicting this
+  // small public namespace is the safe cross-instance option on a tenant
+  // branding mutation.
+  await sharedCacheDeleteByPrefix('_:public-project');
 }
 
 /** Invalidate all shared public/RAG cache namespaces for one tenant. */
@@ -107,7 +113,6 @@ export async function invalidateTenantCache(tenantId: string | null | undefined)
   const t = (tenantId && String(tenantId).trim()) || '';
   if (!t) return;
   await sharedCacheDeleteByPrefix(t.toLowerCase());
-  await sharedCacheDeleteByPattern(`*:${t.toLowerCase()}:*`);
   await evictPublicProjectCacheByTenant(t);
 }
 export function clearPublicProjectCache(): void {

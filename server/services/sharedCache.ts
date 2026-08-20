@@ -4,7 +4,8 @@ import { logger } from '../middleware/logger';
 const PREFIX = 'sgs:cache:v2:';
 const MAX_LOCAL_ENTRIES = 1000;
 const local = new Map<string, { value: unknown; expiresAt: number }>();
-let redis: Redis | null | undefined;
+type RedisClient = Pick<Redis, 'get' | 'set' | 'del' | 'scan'>;
+let redis: RedisClient | null | undefined;
 let redisFailures = 0;
 let hits = 0;
 let misses = 0;
@@ -13,12 +14,20 @@ let fallbackWrites = 0;
 let invalidations = 0;
 let ttlWrites = 0;
 
-function getRedis(): Redis | null {
+function getRedis(): RedisClient | null {
   if (redis !== undefined) return redis;
   const url = process.env.UPSTASH_REDIS_REST_URL;
   const token = process.env.UPSTASH_REDIS_REST_TOKEN;
   redis = url && token ? new Redis({ url, token }) : null;
   return redis;
+}
+
+/** Test-only dependency injection for deterministic Redis outage coverage. */
+export function setSharedCacheRedisForTesting(client: RedisClient | null | undefined): void {
+  if (process.env.NODE_ENV !== 'test') {
+    throw new Error('setSharedCacheRedisForTesting is only available in tests');
+  }
+  redis = client;
 }
 
 function fullKey(key: string): string {
@@ -43,7 +52,12 @@ function localSet(key: string, value: unknown, ttlMs: number): void {
   local.set(key, { value, expiresAt: Date.now() + ttlMs });
 }
 
-export async function sharedCacheGet<T>(key: string): Promise<T | null> {
+export type SharedCacheRead<T> = {
+  value: T | null;
+  source: 'redis' | 'fallback' | 'miss';
+};
+
+export async function sharedCacheRead<T>(key: string): Promise<SharedCacheRead<T>> {
   const namespaced = fullKey(key);
   const client = getRedis();
   if (client) {
@@ -52,10 +66,14 @@ export async function sharedCacheGet<T>(key: string): Promise<T | null> {
       if (value !== null && value !== undefined) {
         hits++;
         localSet(namespaced, value, 30_000);
-        return value;
+        return { value, source: 'redis' };
       }
+      // A successful Redis miss is authoritative. A value left in this
+      // process's fallback cache may have been invalidated by another
+      // instance, so it must never be returned in this case.
+      local.delete(namespaced);
       misses++;
-      return null;
+      return { value: null, source: 'miss' };
     } catch (error: any) {
       redisFailures++;
       fallbackReads++;
@@ -64,7 +82,11 @@ export async function sharedCacheGet<T>(key: string): Promise<T | null> {
   }
   const value = localGet<T>(namespaced);
   value === null ? misses++ : hits++;
-  return value;
+  return { value, source: 'fallback' };
+}
+
+export async function sharedCacheGet<T>(key: string): Promise<T | null> {
+  return (await sharedCacheRead<T>(key)).value;
 }
 
 export async function sharedCacheSet(key: string, value: unknown, ttlMs: number): Promise<void> {

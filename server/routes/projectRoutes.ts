@@ -1,7 +1,7 @@
 import { Router, Request, Response } from 'express';
 import { projectRepository } from '../repositories/projectRepository';
 import { projectPriceMatrixRepository } from '../repositories/projectPriceMatrixRepository';
-import { evictPublicProjectCache, invalidateTenantCache } from '../services/publicProjectCache';
+import { invalidateProjectCache } from '../services/cacheInvalidationService';
 import { registerFloorPlanRoutes } from './projectFloorPlanRoutes';
 import { registerCommissionPolicyRoutes } from './commissionRoutes';
 
@@ -169,9 +169,7 @@ export function createProjectRoutes(authenticateToken: any) {
       // Invalidate public mini-site cache khi project được sửa (kể cả khi
       // metadata.public_microsite được toggle on/off — lần fetch tiếp theo
       // sẽ đọc lại và trả 404 nếu đã off). Evict cả mã cũ lẫn mã mới khi rename.
-      if (oldCode) evictPublicProjectCache(oldCode);
-      if (updated.code && updated.code !== oldCode) evictPublicProjectCache(String(updated.code));
-      void invalidateTenantCache(user.tenantId);
+      await invalidateProjectCache(user.tenantId, [oldCode, updated.code ? String(updated.code) : null]);
 
       res.json(updated);
     } catch (error) {
@@ -190,8 +188,7 @@ export function createProjectRoutes(authenticateToken: any) {
       const existing = await projectRepository.findById(user.tenantId, req.params.id as string);
       const deleted = await projectRepository.delete(user.tenantId, req.params.id as string);
       if (!deleted) return res.status(404).json({ error: 'Không tìm thấy dự án' });
-      if (existing?.code) evictPublicProjectCache(String(existing.code));
-      void invalidateTenantCache(user.tenantId);
+      await invalidateProjectCache(user.tenantId, [existing?.code ? String(existing.code) : null]);
       res.json({ success: true });
     } catch (error) {
       console.error('Error deleting project:', error);

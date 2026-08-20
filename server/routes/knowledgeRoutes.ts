@@ -11,14 +11,7 @@ import {
   deleteSource,
   buildRagContext,
 } from '../services/ragService';
-import { sharedCacheDeleteByPrefix } from '../services/sharedCache';
-
-async function invalidateKnowledgeCache(tenantId: string): Promise<void> {
-  await Promise.all([
-    sharedCacheDeleteByPrefix(`${tenantId}:ai-kb`),
-    sharedCacheDeleteByPrefix(`${tenantId}:rag-embedding`),
-  ]);
-}
+import { invalidateKnowledgeCache } from '../services/cacheInvalidationService';
 
 // Upload & create: mọi nhân viên nội bộ có thể đóng góp tài liệu huấn luyện
 const CAN_UPLOAD = ['SUPER_ADMIN', 'ADMIN', 'TEAM_LEAD', 'SALES', 'MARKETING'];
@@ -184,6 +177,7 @@ export function createKnowledgeRoutes(authenticateToken: any) {
       }
       const doc = await documentRepository.update(user.tenantId, String(req.params.id), req.body);
       if (!doc) return res.status(404).json({ error: 'Document not found' });
+      await invalidateKnowledgeCache(user.tenantId);
       res.json(doc);
     } catch (error) {
       console.error('Error updating document:', error);
@@ -203,6 +197,7 @@ export function createKnowledgeRoutes(authenticateToken: any) {
 
       const deleted = await documentRepository.deleteById(user.tenantId, String(req.params.id));
       if (!deleted) return res.status(404).json({ error: 'Document not found' });
+      await invalidateKnowledgeCache(user.tenantId);
 
       // Delete physical file from storage
       if (doc.fileUrl) {

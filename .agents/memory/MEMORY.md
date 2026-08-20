@@ -9,3 +9,4 @@
 - [Approval action policies](approval-action-policies.md) — high-impact actions need structured payloads; payment approval only verifies already-confirmed provider state
 - [Autonomous learning guardrails](autonomous-learning-guardrails.md) — untrusted feedback/calibration must pass provenance, poisoning, consent, regression, and promotion gates
 - [Specialist checkpoint resume](specialist-checkpoint-resume.md) — reuse specialist output only when plan/input hashes match; commit before synthesis
+- [Shared cache consistency](shared-cache-consistency.md) — a reachable Redis miss is authoritative; only outages may use bounded tenant-scoped local fallback

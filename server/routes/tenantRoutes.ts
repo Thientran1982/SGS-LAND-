@@ -157,9 +157,9 @@ async function loadBrandingResponse(tenantId: string): Promise<BrandingResponse 
   };
 }
 
-function invalidate(tenantId: string): void {
+async function invalidate(tenantId: string): Promise<void> {
   evictHostCacheByTenant(tenantId);
-  void invalidateTenantCache(tenantId);
+  await invalidateTenantCache(tenantId);
 }
 
 export function createTenantRoutes(authenticateToken: any): Router {
@@ -220,7 +220,7 @@ export function createTenantRoutes(authenticateToken: any): Router {
           [u.tenantId, JSON.stringify(branding)]
         );
       });
-      invalidate(u.tenantId);
+      await invalidate(u.tenantId);
       writeAuditLog(u.tenantId, u.id, 'TENANT_BRANDING_UPDATE', 'tenant', u.tenantId, { branding }, req.ip);
       const data = await loadBrandingResponse(u.tenantId);
       res.json(data ?? { tenantId: u.tenantId, branding, binding: null });
@@ -254,7 +254,7 @@ export function createTenantRoutes(authenticateToken: any): Router {
           [u.tenantId, v.slug]
         );
       });
-      invalidate(u.tenantId);
+      await invalidate(u.tenantId);
       writeAuditLog(u.tenantId, u.id, 'TENANT_SUBDOMAIN_SET', 'tenant', u.tenantId, { slug: v.slug }, req.ip);
       const data = await loadBrandingResponse(u.tenantId);
       res.json(data);
@@ -272,7 +272,7 @@ export function createTenantRoutes(authenticateToken: any): Router {
       await withRlsBypass(async (client) => {
         await client.query(`UPDATE tenants SET subdomain_slug = NULL WHERE id = $1`, [u.tenantId]);
       });
-      invalidate(u.tenantId);
+      await invalidate(u.tenantId);
       writeAuditLog(u.tenantId, u.id, 'TENANT_SUBDOMAIN_REMOVE', 'tenant', u.tenantId, undefined, req.ip);
       const data = await loadBrandingResponse(u.tenantId);
       res.json(data);
@@ -313,7 +313,7 @@ export function createTenantRoutes(authenticateToken: any): Router {
           [u.tenantId, v.hostname, txtToken]
         );
       });
-      invalidate(u.tenantId);
+      await invalidate(u.tenantId);
       writeAuditLog(u.tenantId, u.id, 'TENANT_CUSTOM_DOMAIN_SET', 'tenant', u.tenantId, { hostname: v.hostname }, req.ip);
       const data = await loadBrandingResponse(u.tenantId);
       res.json(data);
@@ -359,7 +359,7 @@ export function createTenantRoutes(authenticateToken: any): Router {
             [u.tenantId]
           );
         });
-        invalidate(u.tenantId);
+        await invalidate(u.tenantId);
         writeAuditLog(u.tenantId, u.id, 'TENANT_CUSTOM_DOMAIN_VERIFIED', 'tenant', u.tenantId, { hostname: row.custom_domain }, req.ip);
         // Lần đầu verify (pending → verified) qua thao tác thủ công — nếu domain
         // chưa được Brevo authenticate, gửi thông báo cho admin để liên hệ ops.
@@ -396,7 +396,7 @@ export function createTenantRoutes(authenticateToken: any): Router {
           [u.tenantId]
         );
       });
-      invalidate(u.tenantId);
+      await invalidate(u.tenantId);
       writeAuditLog(u.tenantId, u.id, 'TENANT_CUSTOM_DOMAIN_REMOVE', 'tenant', u.tenantId, undefined, req.ip);
       const data = await loadBrandingResponse(u.tenantId);
       res.json(data);
