@@ -70,7 +70,7 @@ export function PublicHeader({ authed = false }: { authed?: boolean }) {
 
   return (
     <header
-      className="fixed top-0 left-0 right-0 z-50 transition-all duration-300"
+      className="ui-public-header fixed top-0 left-0 right-0 z-50 transition-all duration-300"
       style={{
         background:      isHero
           ? "linear-gradient(to bottom, rgba(10,30,51,0.72) 0%, rgba(10,30,51,0.0) 100%)"

@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from "next";
-import { Inter, JetBrains_Mono, Noto_Serif_Display, Be_Vietnam_Pro, IBM_Plex_Mono, Fraunces } from "next/font/google";
+import { Be_Vietnam_Pro, IBM_Plex_Mono, Fraunces } from "next/font/google";
 import "./globals.css";
 import { getLang } from "@/lib/lang";
 import { LangProvider } from "@/components/shared/LangProvider";
@@ -8,24 +8,6 @@ import ServiceWorkerRegister from "@/components/ServiceWorkerRegister";
 import ConsentBanner from "@/components/ConsentBanner";
 import { getOrganizationSchema, getWebsiteSchema, getEntityDisambiguationSchema, getMetricsSchema, getLocalBusinessSchema, getAggregateRatingSchema } from "@/lib/schema";
 // ─── Fonts (self-hosted by next/font — no Google Fonts request at runtime) ──
-const inter = Inter({
-  subsets: ["latin", "vietnamese"],
-  variable: "--font-inter",
-  display: "swap",
-  weight: ["300", "400", "500", "600", "700", "800"],
-});
-const jetbrainsMono = JetBrains_Mono({
-  subsets: ["latin"],
-  variable: "--font-jetbrains-mono",
-  display: "swap",
-  weight: ["400", "500"],
-});
-const notoSerifDisplay = Noto_Serif_Display({
-  subsets: ["latin", "vietnamese"],
-  variable: "--font-noto-serif",
-  display: "swap",
-  weight: ["400", "600", "700"],
-});
 const beVietnamPro = Be_Vietnam_Pro({
   subsets: ["latin", "vietnamese"],
   variable: "--font-be-vietnam",
@@ -36,13 +18,13 @@ const ibmPlexMono = IBM_Plex_Mono({
   subsets: ["latin"],
   variable: "--font-ibm-plex-mono",
   display: "swap",
-  weight: ["400", "500"],
+  weight: ["400", "500", "600"],
 });
 const fraunces = Fraunces({
   subsets: ["latin"],
   variable: "--font-fraunces",
   display: "swap",
-  weight: ["500", "600"],
+  weight: ["500", "600", "700"],
 });
 // ─── Global Metadata ───────────────────────────────────────
 export const metadata: Metadata = {
@@ -177,7 +159,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
         <script async src="https://www.googletagmanager.com/gtag/js?id=G-3LBRB691S4" />
       </head>
       <body
-        className={`${inter.variable} ${jetbrainsMono.variable} ${notoSerifDisplay.variable} ${beVietnamPro.variable} ${ibmPlexMono.variable} ${fraunces.variable} font-sans antialiased`}
+        className={`${beVietnamPro.variable} ${ibmPlexMono.variable} ${fraunces.variable} font-sans antialiased`}
         style={{ background: "var(--bg-app)", color: "var(--text-primary)" }}
       >
         {/* Inline <script> tags live at the top of <body>, not in <head>:

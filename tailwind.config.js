@@ -14,28 +14,33 @@ export default {
   theme: {
     extend: {
       fontFamily: {
-        sans: ['Inter', 'sans-serif'],
-        serif: ['"Noto Serif"', 'Georgia', 'serif'],
-        display: ['"Noto Serif"', 'Georgia', 'serif'],
-        mono: ['"JetBrains Mono"', 'monospace'],
+        sans: ['"Be Vietnam Pro"', 'system-ui', 'sans-serif'],
+        serif: ['"Fraunces"', 'Georgia', 'serif'],
+        display: ['"Fraunces"', 'Georgia', 'serif'],
+        mono: ['"IBM Plex Mono"', 'ui-monospace', 'monospace'],
       },
       fontSize: {
-        // Custom micro sizes
-        '3xs': ['7px',  { lineHeight: '11px' }],
-        '2xs': ['8px',  { lineHeight: '12px' }],
-        'xs2': ['9px',  { lineHeight: '13px' }],
-        'xs3': ['10px', { lineHeight: '14px' }],
-        // Compact scale — each step 1-2px smaller than previous sprint
-        'xs':   ['10px', { lineHeight: '14px' }],   // was 11px
-        'sm':   ['11px', { lineHeight: '16px' }],   // was 12px
-        'base': ['12px', { lineHeight: '18px' }],   // was 13px
-        'lg':   ['14px', { lineHeight: '20px' }],   // was 15px
-        'xl':   ['16px', { lineHeight: '22px' }],   // was 17px
-        '2xl':  ['19px', { lineHeight: '26px' }],   // was 20px
-        '3xl':  ['22px', { lineHeight: '28px' }],   // was 24px
-        '4xl':  ['26px', { lineHeight: '32px' }],   // was 28px
-        '5xl':  ['32px', { lineHeight: '38px' }],   // was 36px
-        '6xl':  ['40px', { lineHeight: '46px' }],   // was 44px
+        // Semantic scale. Legacy aliases remain available during migration.
+        '3xs': ['10px', { lineHeight: '14px' }],
+        '2xs': ['11px', { lineHeight: '16px' }],
+        'xs2': ['12px', { lineHeight: '16px' }],
+        'xs3': ['13px', { lineHeight: '18px' }],
+        'xs':   ['13px', { lineHeight: '18px' }],
+        'sm':   ['14px', { lineHeight: '20px' }],
+        'base': ['16px', { lineHeight: '24px' }],
+        'lg':   ['18px', { lineHeight: '28px' }],
+        'xl':   ['20px', { lineHeight: '28px' }],
+        '2xl':  ['24px', { lineHeight: '32px' }],
+        '3xl':  ['30px', { lineHeight: '38px' }],
+        '4xl':  ['36px', { lineHeight: '44px' }],
+        '5xl':  ['48px', { lineHeight: '56px' }],
+        '6xl':  ['60px', { lineHeight: '68px' }],
+        'ui-display': ['clamp(2rem, 4vw, 3.75rem)', { lineHeight: '1.05' }],
+        'ui-heading': ['clamp(1.5rem, 2.4vw, 2.25rem)', { lineHeight: '1.15' }],
+        'ui-body': ['1rem', { lineHeight: '1.5' }],
+        'ui-label': ['0.875rem', { lineHeight: '1.4' }],
+        'ui-kicker': ['0.75rem', { lineHeight: '1.35' }],
+        'ui-caption': ['0.8125rem', { lineHeight: '1.4' }],
       },
       colors: {
         // === SGS LAND DESIGN TOKENS (maps to CSS vars) ===

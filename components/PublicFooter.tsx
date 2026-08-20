@@ -60,7 +60,7 @@ function linkHover(e: React.MouseEvent<HTMLAnchorElement | HTMLElement>, hover: 
 export function PublicFooter({ lang }: { lang: Lang }) {
   const year = new Date().getFullYear();
   return (
-    <footer style={{ background:"var(--sgs-primary-deep)", borderTop:"1px solid rgba(200,150,62,0.2)" }}>
+    <footer className="ui-public-footer" style={{ background:"var(--sgs-primary-deep)", borderTop:"1px solid rgba(200,150,62,0.2)" }}>
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-14 pb-4">
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-10 pb-10"
           style={{ borderBottom:"1px solid rgba(255,255,255,0.07)" }}>

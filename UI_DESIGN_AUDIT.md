@@ -2,7 +2,7 @@
 
 **Audit date:** 2026-08-20  
 **Scope:** màu sắc, màu nút chức năng, màu chữ, font, cỡ chữ, dark mode và tính nhất quán trên CRM/Vite, public Next.js, auth, dashboard và shared components.  
-**Method:** read-only source scan, token inventory, representative page review và typecheck hiện tại. Chưa thay đổi UI trong audit này.
+**Method:** source scan, token inventory, representative page review, semantic-token migration và runtime/typecheck verification.
 
 ## Executive summary
 
@@ -296,8 +296,24 @@ The roles should map to a documented minimum size and line-height at mobile and 
 
 The screenshot showing “Hmm... We couldn't reach this app” was caused by opening the Replit development domain with `:5000`. The configured webview maps the local `5000` process to the default HTTPS domain; the correct public preview URL does not include `:5000`. This is unrelated to the UI color/font audit.
 
+## Implemented in this migration
+
+- Added the canonical `--ui-*` semantic contract for light and dark mode in both `styles/globals.css` and `apps/nextjs/app/globals.css`.
+- Kept legacy variables as compatibility aliases so existing pages do not lose behavior during migration.
+- Unified Tailwind `sans`, `display`, `serif` and `mono` mappings to Be Vietnam Pro, Fraunces and IBM Plex Mono.
+- Removed unused Inter, JetBrains Mono and Noto Serif font loading from the Next.js root layout and the Vite document font links.
+- Added shared `Button`, `IconButton`, `Field` and `Badge` primitives in `components/ui.tsx`.
+- Added shared states for primary, secondary, accent, danger, ghost, link, loading, disabled and keyboard focus.
+- Connected shared public footer/header surfaces to the canonical tokens.
+- Remapped landing-page and chat-widget font/color aliases to the canonical contract.
+- Raised the legacy micro-size aliases to readable semantic values while keeping their class names for non-breaking migration.
+
 ## Verification
 
 - `npm run lint` passed during the audit session.
-- No source files were modified by the audit itself.
-- This report is a baseline for a subsequent token/primitives migration; it intentionally does not apply a broad visual change without approval of the canonical palette and type contract.
+- `npm run lint` passed.
+- `cd apps/nextjs && npm run type-check` passed.
+- `cd apps/nextjs && npm run build` passed, generating all 114 routes.
+- `git diff --check` passed.
+- Workflow restart succeeded; `/` and `/login` returned HTTP 200 and were visually inspected after restart.
+- The remaining Socket.IO proxy timeout and invalid QStash token are pre-existing runtime/infrastructure concerns, not caused by this design-system migration.

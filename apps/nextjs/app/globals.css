@@ -12,38 +12,62 @@
 @layer base {
   :root,
   .light {
+    /* Canonical semantic contract shared with the CRM application. */
+    --ui-brand: #1B3A5C;
+    --ui-brand-strong: #0F2740;
+    --ui-accent: #C8963E;
+    --ui-accent-strong: #8C6420;
+    --ui-bg: #F7F9FA;
+    --ui-surface: #FFFFFF;
+    --ui-surface-raised: #FFFFFF;
+    --ui-surface-subtle: #F0F4F5;
+    --ui-surface-hover: #E8EEF0;
+    --ui-text: #16202B;
+    --ui-text-secondary: #4C6471;
+    --ui-text-muted: #5C6B7A;
+    --ui-text-disabled: #71838D;
+    --ui-text-inverse: #FFFFFF;
+    --ui-border: rgba(21,49,70,.14);
+    --ui-border-strong: rgba(27,58,92,.28);
+    --ui-success: #1E7F5C;
+    --ui-warning: #8C6420;
+    --ui-danger: #B42318;
+    --ui-info: #1B5E8A;
+    --ui-focus: #1B5E8A;
+    --ui-on-brand: #FFFFFF;
+    --ui-on-accent: #16202B;
     /* Backgrounds */
-    --bg-app:      #FAF8F4;
-    --bg-surface:  #FFFFFF;
+    --bg-app:      var(--ui-bg);
+    --bg-surface:  var(--ui-surface);
     --bg-elevated: #FFFFFF;
     --bg-sidebar:  #1B3A5C;
     --bg-input:    #F8FAFC;
 
     /* Primary brand — Indigo */
-    --primary-600:    #1B3A5C;
-    --primary-hover:  #0F2740;
-    --primary-subtle: #E8EEF5;
+    --primary-600:    var(--ui-brand);
+    --primary-hover:  var(--ui-brand-strong);
+    --primary-subtle: var(--ui-surface-subtle);
 
     /* Text */
-    --text-primary:   #16202B;
-    --text-secondary: #475569;
-    --text-tertiary:  #94A3B8;
-    --text-muted:     #CBD5E1;
-    --text-inverse:   #FFFFFF;
+    --text-primary:   var(--ui-text);
+    --text-secondary: var(--ui-text-secondary);
+    --text-tertiary:  var(--ui-text-muted);
+    --text-muted:     var(--ui-text-disabled);
+    --text-inverse:   var(--ui-text-inverse);
 
     /* Status */
-    --color-success: #10B981;
-    --color-warning: #F59E0B;
-    --color-danger:  #EF4444;
-    --color-info:    #3B82F6;
+    --color-success: var(--ui-success);
+    --color-warning: var(--ui-warning);
+    --color-danger:  var(--ui-danger);
+    --color-info:    var(--ui-info);
 
     /* Glassmorphism */
     --glass-surface: rgba(255, 255, 255, 0.72);
-    --glass-border:  rgba(148, 163, 184, 0.18);
+    --glass-border:  var(--ui-border);
 
     /* Borders */
-    --border-default: #E4E1D8;
-    --border-strong:  #CBD5E1;
+    --border-default: var(--ui-border);
+    --border-strong:  var(--ui-border-strong);
 
     /* Shadows */
     --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
@@ -70,32 +94,55 @@
 
   /* ─── Dark Mode ─────────────────────────────────────────── */
   .dark {
-    --bg-app:      #0B0F1A;
-    --bg-surface:  #16222F;
+    --ui-brand: #A9C7E5;
+    --ui-brand-strong: #7FA8D0;
+    --ui-accent: #D4A855;
+    --ui-accent-strong: #F0C978;
+    --ui-bg: #0E1620;
+    --ui-surface: #16222F;
+    --ui-surface-raised: #1B2B34;
+    --ui-surface-subtle: #1E2D3D;
+    --ui-surface-hover: #22353F;
+    --ui-text: #E8ECF1;
+    --ui-text-secondary: #AEC1C6;
+    --ui-text-muted: #9AAAB8;
+    --ui-text-disabled: #80969D;
+    --ui-text-inverse: #0E1620;
+    --ui-border: rgba(167,196,205,.18);
+    --ui-border-strong: rgba(167,196,205,.32);
+    --ui-success: #59D19D;
+    --ui-warning: #F0C978;
+    --ui-danger: #FF8A80;
+    --ui-info: #8DC7F0;
+    --ui-focus: #8DC7F0;
+    --ui-on-brand: #0E1620;
+    --ui-on-accent: #0E1620;
+    --bg-app:      var(--ui-bg);
+    --bg-surface:  var(--ui-surface);
     --bg-elevated: #1C2C3E;
     --bg-sidebar:  #0E1620;
     --bg-input:    #16222F;
 
-    --primary-600:    #1B3A5C;
-    --primary-hover:  #7FA8D0;
-    --primary-subtle: #E8EEF5;
+    --primary-600:    var(--ui-brand-strong);
+    --primary-hover:  var(--ui-brand);
+    --primary-subtle: var(--ui-surface-subtle);
 
-    --text-primary:   #F1F5F9;
-    --text-secondary: #94A3B8;
-    --text-tertiary:  #64748B;
-    --text-muted:     #334155;
-    --text-inverse:   #0F172A;
+    --text-primary:   var(--ui-text);
+    --text-secondary: var(--ui-text-secondary);
+    --text-tertiary:  var(--ui-text-muted);
+    --text-muted:     var(--ui-text-disabled);
+    --text-inverse:   var(--ui-text-inverse);
 
-    --color-success: #34D399;
-    --color-warning: #FBBF24;
-    --color-danger:  #F87171;
-    --color-info:    #60A5FA;
+    --color-success: var(--ui-success);
+    --color-warning: var(--ui-warning);
+    --color-danger:  var(--ui-danger);
+    --color-info:    var(--ui-info);
 
     --glass-surface: rgba(20, 25, 40, 0.80);
-    --glass-border:  rgba(148, 163, 184, 0.10);
+    --glass-border:  var(--ui-border);
 
-    --border-default: #1E2A3B;
-    --border-strong:  #2D3E54;
+    --border-default: var(--ui-border);
+    --border-strong:  var(--ui-border-strong);
 
     --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.3);
     --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.4), 0 2px 4px -2px rgba(0, 0, 0, 0.4);
@@ -120,32 +167,47 @@
   }
 }
 
+@layer components {
+  .ui-public-footer {
+    background: var(--ui-brand-strong) !important;
+    border-top-color: color-mix(in srgb, var(--ui-accent) 30%, transparent) !important;
+    color: var(--ui-text-inverse);
+  }
+  .ui-public-footer a,
+  .ui-public-footer p { color: var(--ui-text-secondary) !important; }
+  .ui-public-footer h3,
+  .ui-public-footer h4 { color: var(--ui-accent) !important; }
+  .ui-public-footer a:hover { color: var(--ui-accent) !important; }
+  .ui-public-footer > div > div { border-bottom-color: var(--ui-border) !important; }
+  .ui-public-header { font-family: var(--font-be-vietnam); }
+}
+
 /* ─── TailwindCSS v4 Theme Extension ─────────────────────── */
 @theme { --color-sgs-primary:var(--sgs-primary); --color-sgs-primary-deep:var(--sgs-primary-deep); --color-sgs-accent:var(--sgs-accent); --color-sgs-accent-hover:var(--sgs-accent-hover); --color-sgs-accent-text:var(--sgs-accent-text); --color-sgs-text:var(--sgs-text); --color-sgs-text-muted:var(--sgs-text-muted); --color-sgs-verified:var(--sgs-verified); --color-sgs-champagne:var(--sgs-champagne); --color-sgs-on-dark-muted:var(--sgs-on-dark-muted);
   /* Font families — use CSS variables injected by next/font so the
      self-hosted font files are resolved correctly in production.
      Falling back to the literal name "Inter" causes production failures
      because next/font serves Inter under a hashed internal name. */
-  --font-sans:    var(--font-be-vietnam), var(--font-inter), ui-sans-serif, system-ui, sans-serif;
-  --font-display: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
-  --font-mono:    var(--font-jetbrains-mono), ui-monospace, monospace;
-  --font-serif:   var(--font-noto-serif), "Noto Serif Display", Georgia, "Times New Roman", serif;
-  --font-body:    var(--font-be-vietnam), var(--font-inter), ui-sans-serif, sans-serif;
-  --font-mono-sgs: var(--font-ibm-plex-mono), var(--font-jetbrains-mono), ui-monospace, monospace;
+   --font-sans:    var(--font-be-vietnam), ui-sans-serif, system-ui, sans-serif;
+   --font-display: var(--font-fraunces), ui-sans-serif, system-ui, sans-serif;
+   --font-mono:    var(--font-ibm-plex-mono), ui-monospace, monospace;
+   --font-serif:   var(--font-fraunces), Georgia, serif;
+   --font-body:    var(--font-be-vietnam), ui-sans-serif, sans-serif;
+   --font-mono-sgs: var(--font-ibm-plex-mono), ui-monospace, monospace;
 
   /* Custom font sizes (compact scale) */
-  --font-size-3xs: 7px;
-  --font-size-2xs: 8px;
-  --font-size-xs:  10px;
-  --font-size-sm:  11px;
-  --font-size-base: 12px;
-  --font-size-lg:  14px;
-  --font-size-xl:  16px;
-  --font-size-2xl: 19px;
-  --font-size-3xl: 22px;
-  --font-size-4xl: 26px;
-  --font-size-5xl: 32px;
-  --font-size-6xl: 40px;
+   --font-size-3xs: 10px;
+   --font-size-2xs: 11px;
+   --font-size-xs:  13px;
+   --font-size-sm:  14px;
+   --font-size-base: 16px;
+   --font-size-lg:  18px;
+   --font-size-xl:  20px;
+   --font-size-2xl: 24px;
+   --font-size-3xl: 30px;
+   --font-size-4xl: 36px;
+   --font-size-5xl: 48px;
+   --font-size-6xl: 60px;
 
   /* Color tokens → CSS variables */
   --color-surface:           var(--sgs-surface);

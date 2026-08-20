@@ -61,7 +61,7 @@ const FOOTER_YEAR = new Date().getFullYear();
 export function PublicFooter() {
   const lang: Lang = useLang();
   return (
-    <footer style={{ background: "var(--sgs-primary-deep)", borderTop: "1px solid rgba(200,150,62,0.2)" }}>
+      <footer className="ui-public-footer" style={{ background: "var(--sgs-primary-deep)", borderTop: "1px solid rgba(200,150,62,0.2)" }}>
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-14 pb-4">
 
         {/* ── 4-column grid ─────────────────────────────── */}

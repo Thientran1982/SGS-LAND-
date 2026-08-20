@@ -25,61 +25,117 @@ html.dark {
 
 /* ── SGS Land public page design tokens ──────────────────────── */
 :root {
+  /* Canonical semantic contract. Legacy variables below alias these values. */
+  --ui-brand: #1B3A5C;
+  --ui-brand-strong: #0F2740;
+  --ui-accent: #C8963E;
+  --ui-accent-strong: #8C6420;
+  --ui-bg: #F7F9FA;
+  --ui-surface: #FFFFFF;
+  --ui-surface-raised: #FFFFFF;
+  --ui-surface-subtle: #F0F4F5;
+  --ui-surface-hover: #E8EEF0;
+  --ui-text: #16202B;
+  --ui-text-secondary: #4C6471;
+  --ui-text-muted: #5C6B7A;
+  --ui-text-disabled: #71838D;
+  --ui-text-inverse: #FFFFFF;
+  --ui-border: rgba(21,49,70,.14);
+  --ui-border-strong: rgba(27,58,92,.28);
+  --ui-success: #1E7F5C;
+  --ui-warning: #8C6420;
+  --ui-danger: #B42318;
+  --ui-info: #1B5E8A;
+  --ui-focus: #1B5E8A;
+  --ui-on-brand: #FFFFFF;
+  --ui-on-accent: #16202B;
+  --ui-shadow-sm: 0 1px 2px rgba(21,34,50,.08);
+  --ui-shadow-md: 0 8px 24px rgba(21,34,50,.12);
+  --ui-radius-sm: .375rem;
+  --ui-radius-md: .625rem;
+  --ui-radius-lg: .875rem;
+  --ui-radius-pill: 999px;
   /* === SGS LAND DESIGN TOKENS — WCAG CERTIFIED (Light Mode) === */
-  --sgs-bg:               #FFFFFF;   /* nền trang (trắng ngà âm) */
-  --sgs-surface:        #FFFFFF;   /* card, search bar, panel */
-  --sgs-primary:        #1B3A5C;   /* navy đậm — header, heading, nút phụ (11.6:1) */
-  --sgs-primary-deep:   #0F2740;   /* gradient hero, footer, CTA banner */
-  --sgs-accent:         #C8963E;   /* vàng đồng — CHỈ nền nút CTA, border, icon */
-  --sgs-accent-text:    #8C6420;   /* vàng đậm — giá tiền, link nhấn (5.3:1 PASS AA) */
-  --sgs-text:           #16202B;   /* chữ chính (15.8:1) */
-  --sgs-text-muted:     #5C6B7A;   /* chữ phụ (5.2:1 PASS AA) */
-  --sgs-text-heading:   #1B3A5C;   /* heading dùng primary navy */
-  --sgs-verified:       #1E7F5C;   /* badge Pháp lý đã kiểm duyệt (4.95:1) */
+  --sgs-bg:               var(--ui-surface);
+  --sgs-surface:          var(--ui-surface);
+  --sgs-primary:          var(--ui-brand);
+  --sgs-primary-deep:     var(--ui-brand-strong);
+  --sgs-accent:           var(--ui-accent);
+  --sgs-accent-text:      var(--ui-accent-strong);
+  --sgs-text:             var(--ui-text);
+  --sgs-text-muted:       var(--ui-text-muted);
+  --sgs-text-heading:     var(--ui-brand);
+  --sgs-verified:         var(--ui-success);
   --sgs-hero-deep:      #0A1E33;   /* đình gradient hero — navy mực đêm */
   --sgs-champagne:      #F5EAD5;   /* nền highlight mềm — chip AI, tag nổi bật */
   --sgs-on-dark-muted:  #93A6B8;   /* chữ phụ nhỏ trên navy đậm (6.1:1) */
   --sgs-subtle-bg:      #F5EAD5;   /* = champagne, nền tag nhẹ */
-  --sgs-border:         rgba(27,58,92,0.12); /* border light */
-  --bg-app:             #f6f8f9;
-  --bg-surface:         #fbfcfc;
-  --bg-sidebar:         #f6f8f9;
-  --glass-surface:      #f0f4f5;
-  --glass-surface-hover:#e8eef0;
-  --glass-border:       rgba(21, 49, 70, .14);
-  --text-primary:       #162b39;
-  --text-secondary:     #4c6471;
-  --text-tertiary:      #71838d;
+  --sgs-border:         var(--ui-border);
+  --bg-app:             var(--ui-bg);
+  --bg-surface:         var(--ui-surface);
+  --bg-sidebar:         var(--ui-bg);
+  --glass-surface:      var(--ui-surface-subtle);
+  --glass-surface-hover:var(--ui-surface-hover);
+  --glass-border:       var(--ui-border);
+  --text-primary:       var(--ui-text);
+  --text-secondary:     var(--ui-text-secondary);
+  --text-tertiary:      var(--ui-text-muted);
   --font-display:       "Fraunces", Georgia, serif;
   --font-ui:            "Be Vietnam Pro", system-ui, sans-serif;
   --font-mono:          "IBM Plex Mono", ui-monospace, monospace;
 }
 html.dark {
+  /* Dark-mode values for the same semantic contract. */
+  --ui-brand: #A9C7E5;
+  --ui-brand-strong: #7FA8D0;
+  --ui-accent: #D4A855;
+  --ui-accent-strong: #F0C978;
+  --ui-bg: #0E1620;
+  --ui-surface: #16222F;
+  --ui-surface-raised: #1B2B34;
+  --ui-surface-subtle: #1E2D3D;
+  --ui-surface-hover: #22353F;
+  --ui-text: #E8ECF1;
+  --ui-text-secondary: #AEC1C6;
+  --ui-text-muted: #9AAAB8;
+  --ui-text-disabled: #80969D;
+  --ui-text-inverse: #0E1620;
+  --ui-border: rgba(167,196,205,.18);
+  --ui-border-strong: rgba(167,196,205,.32);
+  --ui-success: #59D19D;
+  --ui-warning: #F0C978;
+  --ui-danger: #FF8A80;
+  --ui-info: #8DC7F0;
+  --ui-focus: #8DC7F0;
+  --ui-on-brand: #0E1620;
+  --ui-on-accent: #0E1620;
+  --ui-shadow-sm: 0 1px 2px rgba(0,0,0,.24);
+  --ui-shadow-md: 0 12px 30px rgba(0,0,0,.3);
   /* === SGS LAND DESIGN TOKENS — WCAG CERTIFIED (Dark Mode) === */
-  --sgs-bg:             #0E1620;
-  --sgs-surface:        #16222F;
-  --sgs-primary:        #7FA8D0;   /* navy sáng — heading, link (7.3:1) */
+  --sgs-bg:             var(--ui-bg);
+  --sgs-surface:        var(--ui-surface);
+  --sgs-primary:        var(--ui-brand-strong);
   --sgs-primary-deep:   #1B3A5C;
-  --sgs-accent:         #D4A855;   /* vàng dark mode — nút lẫn chữ (8.3:1) */
-  --sgs-accent-text:    #D4A855;
-  --sgs-text:           #E8ECF1;   /* chữ chính (15.3:1) */
-  --sgs-text-muted:     #9AAAB8;   /* chữ phụ */
-  --sgs-text-heading:   #7FA8D0;
-  --sgs-verified:       #3FB389;   /* badge xác thực */
+  --sgs-accent:         var(--ui-accent);
+  --sgs-accent-text:    var(--ui-accent-strong);
+  --sgs-text:           var(--ui-text);
+  --sgs-text-muted:     var(--ui-text-muted);
+  --sgs-text-heading:   var(--ui-brand);
+  --sgs-verified:       var(--ui-success);
   --sgs-hero-deep:      #0A1E33;
   --sgs-champagne:      rgba(212,168,85,0.12); /* warm-tinted dark surface (spec) */
-  --sgs-on-dark-muted:  #93A6B8;
-  --sgs-subtle-bg:      #1E2D3D;
-  --sgs-border:         rgba(127,168,208,0.15);
-  --bg-app:             #10191f;
-  --bg-surface:         #15232b;
-  --bg-sidebar:         #10191f;
-  --glass-surface:       #1b2b34;
-  --glass-surface-hover:#22353f;
-  --glass-border:       rgba(167, 196, 205, .16);
-  --text-primary:       #e7f0f1;
-  --text-secondary:     #aec1c6;
-  --text-tertiary:      #80969d;
+  --sgs-on-dark-muted:  var(--ui-text-secondary);
+  --sgs-subtle-bg:      var(--ui-surface-subtle);
+  --sgs-border:         var(--ui-border);
+  --bg-app:             var(--ui-bg);
+  --bg-surface:         var(--ui-surface);
+  --bg-sidebar:         var(--ui-bg);
+  --glass-surface:      var(--ui-surface-raised);
+  --glass-surface-hover:var(--ui-surface-hover);
+  --glass-border:       var(--ui-border);
+  --text-primary:       var(--ui-text);
+  --text-secondary:     var(--ui-text-secondary);
+  --text-tertiary:      var(--ui-text-muted);
   --font-display:       "Fraunces", Georgia, serif;
   --font-ui:            "Be Vietnam Pro", system-ui, sans-serif;
   --font-mono:          "IBM Plex Mono", ui-monospace, monospace;
@@ -143,11 +199,79 @@ html.dark body {
 }
 /* Glassmorphism utility */
 @layer components {
+  .ui-public-footer {
+    background: var(--ui-brand-strong) !important;
+    border-top-color: color-mix(in srgb, var(--ui-accent) 30%, transparent) !important;
+    color: var(--ui-text-inverse);
+  }
+  .ui-public-footer a,
+  .ui-public-footer p { color: var(--ui-text-secondary) !important; }
+  .ui-public-footer h3,
+  .ui-public-footer h4 { color: var(--ui-accent) !important; }
+  .ui-public-footer a:hover { color: var(--ui-accent) !important; }
+  .ui-public-footer > div > div { border-bottom-color: var(--ui-border) !important; }
+
   .glass-card {
     background: var(--glass-surface);
     border: 1px solid var(--glass-border);
   }
+
+  /* Shared functional primitives. Keep interaction states identical across apps. */
+  .ui-button {
+    display: inline-flex;
+    min-width: 0;
+    align-items: center;
+    justify-content: center;
+    gap: .5rem;
+    border: 1px solid transparent;
+    border-radius: var(--ui-radius-md);
+    font-family: var(--font-ui);
+    font-size: .875rem;
+    font-weight: 600;
+    line-height: 1.25rem;
+    white-space: nowrap;
+    transition: background-color 160ms ease, border-color 160ms ease, color 160ms ease, box-shadow 160ms ease, transform 160ms ease;
+    outline: none;
+  }
+  .ui-button:focus-visible,
+  .ui-input:focus-visible {
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--ui-focus) 28%, transparent);
+    border-color: var(--ui-focus);
+  }
+  .ui-button:hover:not(:disabled) { transform: translateY(-1px); }
+  .ui-button:active:not(:disabled) { transform: translateY(0); }
+  .ui-button:disabled { cursor: not-allowed; opacity: .52; }
+  .ui-button-sm { min-height: 2rem; padding: .375rem .75rem; font-size: .8125rem; }
+  .ui-button-md { min-height: 2.75rem; padding: .625rem 1rem; }
+  .ui-button-lg { min-height: 3rem; padding: .75rem 1.25rem; }
+  .ui-button-icon { width: 2.75rem; height: 2.75rem; padding: 0; }
+  .ui-button-primary { background: var(--ui-brand); color: var(--ui-on-brand); box-shadow: var(--ui-shadow-sm); }
+  .ui-button-primary:hover:not(:disabled) { background: var(--ui-brand-strong); }
+  .ui-button-secondary { background: var(--ui-surface); color: var(--ui-brand); border-color: var(--ui-border-strong); }
+  .ui-button-secondary:hover:not(:disabled) { background: var(--ui-surface-hover); }
+  .ui-button-accent { background: var(--ui-accent); color: var(--ui-on-accent); box-shadow: var(--ui-shadow-sm); }
+  .ui-button-accent:hover:not(:disabled) { background: var(--ui-accent-strong); }
+  .ui-button-danger { background: var(--ui-danger); color: var(--ui-text-inverse); }
+  .ui-button-danger:hover:not(:disabled) { filter: brightness(.92); }
+  .ui-button-ghost { background: transparent; color: var(--ui-text-secondary); }
+  .ui-button-ghost:hover:not(:disabled) { background: var(--ui-surface-hover); color: var(--ui-text); }
+  .ui-button-link { min-height: auto; padding: 0; border-radius: 0; background: transparent; color: var(--ui-brand); text-decoration: underline; text-underline-offset: 3px; }
+  .ui-button-link:hover:not(:disabled) { color: var(--ui-brand-strong); }
+  .ui-button-spinner { width: 1rem; height: 1rem; border: 2px solid currentColor; border-right-color: transparent; border-radius: 50%; animation: ui-spin .7s linear infinite; }
+  .ui-field { display: grid; gap: .375rem; color: var(--ui-text); }
+  .ui-field-label { font-size: .875rem; font-weight: 600; }
+  .ui-input { width: 100%; min-height: 2.75rem; border: 1px solid var(--ui-border-strong); border-radius: var(--ui-radius-md); background: var(--ui-surface); color: var(--ui-text); padding: .625rem .75rem; font: 400 .9375rem/1.4 var(--font-ui); outline: none; }
+  .ui-input::placeholder { color: var(--ui-text-disabled); }
+  .ui-input-error { border-color: var(--ui-danger); }
+  .ui-field-error { color: var(--ui-danger); font-size: .8125rem; }
+  .ui-badge { display: inline-flex; align-items: center; min-height: 1.5rem; padding: .125rem .5rem; border: 1px solid transparent; border-radius: var(--ui-radius-pill); font: 600 .75rem/1.25rem var(--font-ui); }
+  .ui-badge-neutral { color: var(--ui-text-secondary); background: var(--ui-surface-subtle); border-color: var(--ui-border); }
+  .ui-badge-success { color: var(--ui-success); background: color-mix(in srgb, var(--ui-success) 12%, transparent); }
+  .ui-badge-warning { color: var(--ui-warning); background: color-mix(in srgb, var(--ui-warning) 14%, transparent); }
+  .ui-badge-danger { color: var(--ui-danger); background: color-mix(in srgb, var(--ui-danger) 12%, transparent); }
+  .ui-badge-info { color: var(--ui-info); background: color-mix(in srgb, var(--ui-info) 12%, transparent); }
 }
+@keyframes ui-spin { to { transform: rotate(360deg); } }
 /* Animations */
 .animate-enter {
   animation: soft-enter 0.18s ease-out forwards;
@@ -236,22 +360,22 @@ html.dark body {
   .lp-sans  { font-family: var(--font-be-vietnam, system-ui, sans-serif); }
 
   .lp-root {
-      --font-noto-serif: "Noto Serif";
-      --font-inter: "Inter";
-      --font-be-vietnam: "Inter";
-      --font-ibm-plex-mono: "JetBrains Mono";
-    --lp-bg:    #F7F4EC; --lp-paper: #FBF9F3; --lp-ink: #152232;
-    --lp-muted: #68727F; --lp-soft:  #9AA2AC; --lp-hair: #E2DDD0;
-    --lp-line:  #C9C2B0; --lp-navy:  #1B3A5C; --lp-gold: #BE8F14;
-    --lp-ok:    #178A52; --lp-shadow: rgba(21,34,50,.14);
-    --lp-cardbg:#FBF9F3; --lp-navbg: rgba(247,244,236,.88);
+      --font-noto-serif: var(--font-display);
+      --font-inter: var(--font-ui);
+      --font-be-vietnam: var(--font-ui);
+      --font-ibm-plex-mono: var(--font-mono);
+    --lp-bg: var(--ui-bg); --lp-paper: var(--ui-surface); --lp-ink: var(--ui-text);
+    --lp-muted: var(--ui-text-secondary); --lp-soft: var(--ui-text-disabled); --lp-hair: var(--ui-border);
+    --lp-line: var(--ui-border-strong); --lp-navy: var(--ui-brand); --lp-gold: var(--ui-accent-strong);
+    --lp-ok: var(--ui-success); --lp-shadow: var(--ui-shadow-md);
+    --lp-cardbg: var(--ui-surface); --lp-navbg: color-mix(in srgb, var(--ui-bg) 88%, transparent);
   }
   .dark .lp-root {
-    --lp-bg:    #0E1621; --lp-paper: #152232; --lp-ink: #EDEAE0;
-    --lp-muted: #93A0B0; --lp-soft:  #6C7887; --lp-hair: #25334A;
-    --lp-line:  #31435F; --lp-navy:  #7FA8D4; --lp-gold: #D9B048;
-    --lp-ok:    #3FBF7F; --lp-shadow: rgba(0,0,0,.5);
-    --lp-cardbg:#16273C; --lp-navbg: rgba(14,22,33,.88);
+    --lp-bg: var(--ui-bg); --lp-paper: var(--ui-surface); --lp-ink: var(--ui-text);
+    --lp-muted: var(--ui-text-secondary); --lp-soft: var(--ui-text-disabled); --lp-hair: var(--ui-border);
+    --lp-line: var(--ui-border-strong); --lp-navy: var(--ui-brand-strong); --lp-gold: var(--ui-accent);
+    --lp-ok: var(--ui-success); --lp-shadow: var(--ui-shadow-md);
+    --lp-cardbg: var(--ui-surface-raised); --lp-navbg: color-mix(in srgb, var(--ui-bg) 88%, transparent);
   }
 
   @keyframes lp-ring { 0%{transform:scale(.4);opacity:.7} 80%{transform:scale(1.9);opacity:0} 100%{opacity:0} }
@@ -282,18 +406,18 @@ html.dark body {
 
 /* ==== SGS Chat Widget v2  scoped redesign tokens ==== */
 .sgs-chat-v2 {
-  --cw-navy: #0B1D26;
-  --cw-parchment: #F5F1E6;
-  --cw-paper: #FFFFFF;
-  --cw-gold: #C6923D;
-  --cw-ink: #26221C;
-  --cw-ink-dim: #8A8474;
-  --cw-line: #EAE4D4;
-  --cw-rec: #E4685A;
-  font-family: 'Be Vietnam Pro', system-ui, sans-serif;
+  --cw-navy: var(--ui-brand-strong);
+  --cw-parchment: var(--ui-bg);
+  --cw-paper: var(--ui-surface);
+  --cw-gold: var(--ui-accent);
+  --cw-ink: var(--ui-text);
+  --cw-ink-dim: var(--ui-text-muted);
+  --cw-line: var(--ui-border);
+  --cw-rec: var(--ui-danger);
+  font-family: var(--font-ui);
 }
-.sgs-chat-v2 .cw-name { font-family: 'Fraunces', Georgia, serif; }
-.sgs-chat-v2 .cw-mono { font-family: 'IBM Plex Mono', monospace; }
+.sgs-chat-v2 .cw-name { font-family: var(--font-display); }
+.sgs-chat-v2 .cw-mono { font-family: var(--font-mono); }
 .sgs-chat-v2 * { transition-duration: 180ms; }
 @keyframes cwBlink { 0%,100% { opacity: 1; } 50% { opacity: .25; } }
 .cw-rec-dot { animation: cwBlink 1s ease-in-out infinite; }
