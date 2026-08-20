@@ -449,27 +449,27 @@ export function MarketplacePage({ initialListings, totalCount, totalPages, searc
   }, [initialListings, lang]);
 
   return (
-    <div className="max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8 pb-10 pt-6 sm:pt-24">
+    <div className="max-w-[1600px] mx-auto px-3 sm:px-6 lg:px-8 pb-10 pt-3 sm:pt-24">
       {/* Hero: navy panel, serif heading, expandable smart search (real data
           only - "gan day" from localStorage, "AI" presets set real filters,
           "noi bat" areas from real GROUP BY counts via /api/public/listings/facets). */}
-      <div className="relative left-1/2 -translate-x-1/2 w-screen mb-8 -mt-6 sm:-mt-24 overflow-hidden">
+      <div className="relative left-1/2 -translate-x-1/2 w-screen mb-5 sm:mb-8 -mt-3 sm:-mt-24 overflow-hidden">
         <div className="absolute inset-0" style={{ background: "var(--sgs-hero-deep)" }} />
         <div className="absolute inset-0 opacity-[0.08] pointer-events-none" style={{
           backgroundImage:
             "repeating-radial-gradient(circle at 12% 20%, transparent 0, transparent 38px, rgba(255,255,255,0.7) 39px, transparent 40px), repeating-radial-gradient(circle at 88% 75%, transparent 0, transparent 46px, rgba(255,255,255,0.7) 47px, transparent 48px)",
         }} />
-        <div className="relative max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8 pt-16 pb-10 sm:pt-28 sm:pb-14">
-          <h2 className="text-2xl sm:text-4xl font-bold mb-2" style={{ fontFamily: "var(--font-serif)", color: "var(--text-inverse)" }}>
+        <div className="relative max-w-[1600px] mx-auto px-3 sm:px-6 lg:px-8 pt-10 pb-7 sm:pt-28 sm:pb-14">
+          <h2 className="text-xl sm:text-4xl font-bold mb-2 leading-tight" style={{ fontFamily: "var(--font-serif)", color: "var(--text-inverse)" }}>
             {tt(lang, "T\u00ecm ng\u00f4i nh\u00e0 m\u01a1 \u01b0\u1edbc c\u1ee7a b\u1ea1n", "Find your dream property")}
           </h2>
-          <p className="text-sm sm:text-base mb-6" style={{ color: "rgba(255,255,255,0.72)" }}>
+          <p className="text-xs sm:text-base mb-4 sm:mb-6 leading-relaxed" style={{ color: "rgba(255,255,255,0.72)" }}>
             {tt(lang, "H\u00e0ng ngh\u00ecn b\u1ea5t \u0111\u1ed9ng s\u1ea3n \u0111\u00e3 x\u00e1c th\u1ef1c tr\u00ean kh\u1eafp \u0110\u00f4ng Nam B\u1ed9", "Thousands of verified properties across the Southeast region")}
           </p>
           <div ref={heroRef} className="relative max-w-2xl">
             {!heroOpen ? (
               <button type="button" onClick={() => setHeroOpen(true)}
-                className="w-full flex items-center gap-3 px-5 py-3.5 rounded-full text-left transition-colors shadow-xl"
+                className="w-full flex items-center gap-3 px-4 py-3 rounded-full text-left transition-colors shadow-xl"
                 style={{ background: "var(--bg-surface)", color: "var(--text-tertiary)" }}>
                 <Search className="w-4 h-4 shrink-0" />
                 <span className="flex-1 text-sm truncate">{tt(lang, "T\u00ecm theo t\u00ean, d\u1ef1 \u00e1n, khu v\u1ef1c, m\u00e3 code...", "Search by name, project, area or code...")}</span>
