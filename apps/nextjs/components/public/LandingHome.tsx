@@ -14,6 +14,12 @@ const STYLE = `
     letter-spacing: -0.035em !important;
     word-spacing: normal !important;
     font-kerning: normal;
+    font-stretch: normal;
+    text-align: left !important;
+    text-indent: 0;
+    white-space: normal;
+    hyphens: none;
+    font-variant-ligatures: common-ligatures;
     text-rendering: optimizeLegibility;
   }
   .lp-sans  { font-family: var(--font-be-vietnam, system-ui, sans-serif); }
@@ -366,7 +372,7 @@ function ChapterHead({ no, title, side }: { no: string; title: React.ReactNode; 
     <div ref={ref as any} className={`lp-rv${inView ? " in" : ""}`}
       style={{ display:"flex", alignItems:"baseline", gap:"22px", marginBottom:"60px", borderTop:"1px solid var(--lp-hair)", paddingTop:"22px", flexWrap:"wrap" }}>
       <span className="lp-mono" style={{ color:"var(--lp-gold)", whiteSpace:"nowrap" }}>{no}</span>
-      <h2 className="lp-serif lp-hero-title" style={{ fontSize:"clamp(28px,4.8vw,64px)", fontWeight:550, lineHeight:1.03, color:"var(--lp-ink)" }}>
+      <h2 className="lp-serif lp-hero-title" style={{ display:"block", width:"fit-content", maxWidth:"100%", fontSize:"clamp(28px,4.8vw,64px)", fontWeight:550, lineHeight:1.03, color:"var(--lp-ink)" }}>
         {title}
       </h2>
       <span style={{ marginLeft:"auto", maxWidth:"300px", fontSize: "14px", color:"var(--lp-muted)", alignSelf:"flex-end" }}>{side}</span>
