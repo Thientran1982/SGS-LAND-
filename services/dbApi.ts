@@ -1112,33 +1112,41 @@ class DatabaseApiClient {
     }
     return res.json();
   }
-  async verifyEmail(token: string) {
-    const res = await fetch(`/api/auth/verify-email?token=${encodeURIComponent(token)}`, {
-      credentials: 'include',
-    });
-    if (!res.ok) {
-      const err = await res.json().catch(() => ({ error: 'Verification failed' }));
-      throw new Error(err.error || 'Verification failed');
-    }
-    const data = await res.json();
-    this._isLoggedOut = false;
-    _cache.clearAll();
-    this.cachedCurrentUser = data.user;
-    window.dispatchEvent(new CustomEvent('auth:login'));
-    return data;
-  }
-  async resendVerificationEmail(email: string) {
-    const res = await fetch('/api/auth/resend-verification', {
+  async requestEmailOtp(email: string, locale?: string) {
+    const res = await fetch('/api/auth/request-otp', {
       method: 'POST',
       credentials: 'include',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email }),
+      body: JSON.stringify({ email, locale }),
     });
+    const data = await res.json().catch(() => ({}));
     if (!res.ok) {
-      const err = await res.json().catch(() => ({ error: 'Failed to resend' }));
-      throw new Error(err.error || 'Failed to resend verification email');
+      const error: any = new Error(data.error || 'Failed to request verification code');
+      error.code = data.error;
+      error.retryAfterSeconds = data.retryAfterSeconds;
+      throw error;
     }
-    return res.json();
+    return data;
+  }
+  async verifyEmailOtp(email: string, code: string) {
+    const res = await fetch('/api/auth/verify-otp', {
+      method: 'POST',
+      credentials: 'include',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email, code }),
+    });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) {
+      const error: any = new Error(data.error || 'Verification failed');
+      error.code = data.error;
+      error.attemptsRemaining = data.attemptsRemaining;
+      throw error;
+    }
+    this._isLoggedOut = false;
+    _cache.clearAll();
+    this.cachedCurrentUser = data.user;
+    if (data.user) window.dispatchEvent(new CustomEvent('auth:login'));
+    return data;
   }
   async logout() {
     this._isLoggedOut = true;

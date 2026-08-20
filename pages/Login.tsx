@@ -145,7 +145,8 @@ export const Login: React.FC<LoginProps> = ({ onLoginSuccess }) => {
   const [isPersonalEmail, setIsPersonalEmail] = useState(false);
   const [tokenFromUrl, setTokenFromUrl] = useState(false);
   const [registeredEmail, setRegisteredEmail] = useState('');
-  const [devVerifyInfo, setDevVerifyInfo] = useState<{token: string; url: string} | null>(null);
+  const [emailOtp, setEmailOtp] = useState('');
+  const [otpSecondsLeft, setOtpSecondsLeft] = useState(300);
   const [devResetInfo, setDevResetInfo] = useState<{token: string; url: string} | null>(null);
   const [resending, setResending] = useState(false);
   const [resentSuccess, setResentSuccess] = useState('');
@@ -181,33 +182,7 @@ export const Login: React.FC<LoginProps> = ({ onLoginSuccess }) => {
   const handleHashTokens = useCallback((hash: string) => {
       // Support both legacy hash URLs and clean URLs.
       // After App.tsx converts #/xxx → /xxx, tokens move from hash to pathname/search.
-      // 1. Email verification: #/verify-email/{token} → /verify-email/{token}
-      const pathParts = window.location.pathname.split('/').filter(Boolean);
-      const verifyFromPath = pathParts[0] === 'verify-email' && pathParts[1] ? pathParts[1] : null;
-      const verifyMatch = hash.match(/\/verify-email\/([a-f0-9]+)/) || (verifyFromPath ? [null, verifyFromPath] : null);
-      if (verifyMatch) {
-          const token = verifyMatch[1];
-          window.history.replaceState(null, '', `/${ROUTES.LOGIN}`);
-          setLoading(true);
-          setGlobalError('');
-          db.verifyEmail(token)
-              .then((result: any) => {
-                  if (result?.needsApproval) {
-                      setRegisteredEmail(result.email || '');
-                      setView('PENDING_APPROVAL');
-                      setLoading(false);
-                  } else {
-                      setSuccessMsg(t('auth.verify_email_success'));
-                      setTimeout(() => onLoginSuccess(), 1000);
-                  }
-              })
-              .catch(() => {
-                  setGlobalError(t('auth.verify_email_invalid'));
-                  setLoading(false);
-              });
-          return true;
-      }
-      // 2. Password reset: #/login?reset_token={token} → /login?reset_token={token}
+      // Password reset remains a link-based flow; email verification is OTP-only.
       const resetFromSearch = new URLSearchParams(window.location.search).get('reset_token');
       const resetMatch = hash.match(/reset_token=([a-f0-9]+)/) || (resetFromSearch ? [null, resetFromSearch] : null);
       if (resetMatch) {
@@ -221,6 +196,11 @@ export const Login: React.FC<LoginProps> = ({ onLoginSuccess }) => {
       }
       return false;
   }, [t, onLoginSuccess]);
+  useEffect(() => {
+      if (view !== 'VERIFY_EMAIL' || otpSecondsLeft <= 0) return;
+      const timer = window.setInterval(() => setOtpSecondsLeft(value => Math.max(0, value - 1)), 1000);
+      return () => window.clearInterval(timer);
+  }, [view, otpSecondsLeft]);
   useEffect(() => {
       const savedEmail = localStorage.getItem('sgs_last_email');
       if (savedEmail) setEmail(savedEmail);
@@ -371,9 +351,8 @@ export const Login: React.FC<LoginProps> = ({ onLoginSuccess }) => {
           : await db.register(name.trim(), trimmedEmail, password);
         if (result?.needsVerification) {
           setRegisteredEmail(trimmedEmail);
-          if (result?.devVerifyToken) {
-            setDevVerifyInfo({ token: result.devVerifyToken, url: result.devVerifyUrl || '' });
-          }
+           setEmailOtp('');
+           setOtpSecondsLeft(300);
           setView('VERIFY_EMAIL');
           setLoading(false);
           return;
@@ -404,6 +383,8 @@ export const Login: React.FC<LoginProps> = ({ onLoginSuccess }) => {
       // Special case: login blocked because email not yet verified
       if (err?.code === 'EMAIL_NOT_VERIFIED') {
         setRegisteredEmail(err.email || email.trim());
+        setEmailOtp('');
+        setOtpSecondsLeft(300);
         setView('VERIFY_EMAIL');
         setLoading(false);
         return;
@@ -452,12 +433,43 @@ export const Login: React.FC<LoginProps> = ({ onLoginSuccess }) => {
     setResending(true);
     setResentSuccess('');
     try {
-      await db.resendVerificationEmail(targetEmail);
+      await db.requestEmailOtp(targetEmail, language);
+      setOtpSecondsLeft(300);
+      setEmailOtp('');
       setResentSuccess(t('auth.verify_email_resent'));
-    } catch {
-      setResentSuccess(t('auth.verify_email_resend_error'));
+    } catch (error: any) {
+      setResentSuccess(error?.code === 'OTP_RATE_LIMITED'
+        ? t('auth.verify_email_rate_limited')
+        : t('auth.verify_email_resend_error'));
     } finally {
       setResending(false);
+    }
+  };
+  const handleEmailOtpSubmit = async (event: React.FormEvent) => {
+    event.preventDefault();
+    if (!registeredEmail || !/^\d{6}$/.test(emailOtp)) return;
+    setLoading(true);
+    setGlobalError('');
+    setResentSuccess('');
+    try {
+      const result = await db.verifyEmailOtp(registeredEmail, emailOtp);
+      if (result?.needsApproval) {
+        setView('PENDING_APPROVAL');
+        return;
+      }
+      setSuccessMsg(t('auth.verify_email_success'));
+      window.setTimeout(() => onLoginSuccess(), 500);
+    } catch (error: any) {
+      const code = error?.code;
+      setGlobalError(code === 'OTP_EXPIRED'
+        ? t('auth.verify_email_expired')
+        : code === 'OTP_TOO_MANY_ATTEMPTS'
+          ? t('auth.verify_email_too_many_attempts')
+          : t('auth.verify_email_invalid'));
+      setEmailOtp('');
+      triggerShake();
+    } finally {
+      setLoading(false);
     }
   };
   const handleGoogleLogin = () => {
@@ -520,41 +532,60 @@ export const Login: React.FC<LoginProps> = ({ onLoginSuccess }) => {
                      t('auth.login_subtitle')}
                 </p>
             </div>
-            {/* ── VERIFY EMAIL VIEW ─────────────────────────── */}
+             {/* ── VERIFY EMAIL OTP VIEW ─────────────────────── */}
             {view === 'VERIFY_EMAIL' && (
-                <div className="space-y-5 animate-enter" style={{animationDelay: '0.2s'}}>
-                    {/* Envelope icon + email info */}
+                 <form onSubmit={handleEmailOtpSubmit} className={`space-y-5 animate-enter ${shake ? 'animate-[shake_0.5s_ease-in-out]' : ''}`} style={{animationDelay: '0.2s'}}>
                     <div className="bg-[var(--sgs-primary)]/100/10 border border-[var(--sgs-primary)]/20 rounded-2xl p-6 text-center">
                         <div className="text-5xl mb-4">✉️</div>
                         <p className="text-sm text-gray-400 mb-2">{t('auth.verify_email_sent_to')}</p>
                         <p className="text-white font-bold text-base mb-4 break-all">{registeredEmail}</p>
                         <p className="text-xs text-sgs-on-dark-muted leading-relaxed">{t('auth.verify_email_instruction')}</p>
                     </div>
-                    {/* Dev mode: show raw token for testing without email */}
-                    {devVerifyInfo && (
-                        <div className="bg-sgs-accent/10 p-4 rounded-xl border border-amber-500/30 animate-enter">
-                            <p className="text-xs2 font-bold text-sgs-accent-text uppercase tracking-wider mb-2">[DEV] Link xác minh (không có email thật):</p>
-                            <a href={devVerifyInfo.url} className="text-xs text-amber-200 break-all font-mono hover:underline">
-                                {devVerifyInfo.url}
-                            </a>
-                        </div>
-                    )}
-                    {/* Resend button */}
-                    {resentSuccess ? (
-                        <div className="text-emerald-200 text-xs font-medium bg-emerald-500/10 p-4 rounded-xl border border-emerald-500/20 text-center" role="status">
-                            {resentSuccess}
-                        </div>
-                    ) : (
-                        <button
-                            type="button"
-                            onClick={handleResendVerification}
-                            disabled={resending}
-                            className="w-full bg-white/5 border border-white/10 text-white/70 font-semibold rounded-xl py-3 text-sm hover:bg-white/10 hover:text-white transition-all disabled:opacity-50"
-                        >
-                            {resending ? t('auth.verify_email_resending') : t('auth.verify_email_resend')}
-                        </button>
-                    )}
-                </div>
+                     {globalError && <div className="text-rose-200 text-xs font-medium bg-rose-500/10 p-3 rounded-xl border border-rose-500/20" role="alert">{globalError}</div>}
+                     <div className="flex justify-center gap-2" onPaste={event => {
+                         const pasted = event.clipboardData.getData('text').replace(/\D/g, '').slice(0, 6);
+                         if (pasted) { event.preventDefault(); setEmailOtp(pasted); }
+                     }}>
+                         {Array.from({ length: 6 }, (_, index) => (
+                             <input
+                                 key={index}
+                                 aria-label={`${t('auth.verify_email_code_label')} ${index + 1}`}
+                                 inputMode="numeric"
+                                 autoComplete={index === 0 ? 'one-time-code' : 'off'}
+                                 maxLength={1}
+                                 autoFocus={index === 0}
+                                 value={emailOtp[index] || ''}
+                                 onChange={event => {
+                                     const value = event.target.value.replace(/\D/g, '').slice(-1);
+                                     const next = emailOtp.split('');
+                                     next[index] = value;
+                                     setEmailOtp(next.join('').slice(0, 6));
+                                     if (value) (event.currentTarget.nextElementSibling as HTMLInputElement | null)?.focus();
+                                 }}
+                                 onKeyDown={event => {
+                                     if (event.key === 'Backspace' && !emailOtp[index]) {
+                                         (event.currentTarget.previousElementSibling as HTMLInputElement | null)?.focus();
+                                     }
+                                 }}
+                                 className="w-11 h-14 bg-white/5 border border-white/10 focus:border-[var(--sgs-primary)]/60 focus:ring-2 focus:ring-[var(--sgs-primary)]/20 rounded-xl text-white text-center text-2xl font-mono outline-none transition-all"
+                             />
+                         ))}
+                     </div>
+                     <p className="text-center text-xs text-gray-400">
+                         {otpSecondsLeft > 0
+                           ? `${t('auth.verify_email_expires')} ${Math.floor(otpSecondsLeft / 60)}:${String(otpSecondsLeft % 60).padStart(2, '0')}`
+                           : t('auth.verify_email_expired')}
+                     </p>
+                     <button type="submit" disabled={loading || emailOtp.length !== 6 || otpSecondsLeft === 0}
+                         className="w-full bg-[var(--sgs-primary)] hover:bg-[var(--sgs-primary)]/100 disabled:bg-white/10 disabled:text-white/30 text-white font-bold rounded-xl py-3.5 text-sm transition-all">
+                         {loading ? t('auth.verify_email_verifying') : t('auth.verify_email_confirm')}
+                     </button>
+                     {resentSuccess && <div className="text-emerald-200 text-xs font-medium bg-emerald-500/10 p-3 rounded-xl border border-emerald-500/20 text-center" role="status">{resentSuccess}</div>}
+                     <button type="button" onClick={handleResendVerification} disabled={resending || otpSecondsLeft > 240}
+                         className="w-full bg-white/5 border border-white/10 text-white/70 font-semibold rounded-xl py-3 text-sm hover:bg-white/10 hover:text-white transition-all disabled:opacity-50">
+                         {resending ? t('auth.verify_email_resending') : t('auth.verify_email_resend')}
+                     </button>
+                 </form>
             )}
             {/* ── PENDING APPROVAL VIEW ─────────────────────── */}
             {view === 'PENDING_APPROVAL' && (
@@ -964,7 +995,7 @@ export const Login: React.FC<LoginProps> = ({ onLoginSuccess }) => {
                     </button>
                 )}                
                 {(view.startsWith('FORGOT') || view === 'VERIFY_EMAIL') && (
-                    <button type="button" onClick={() => { setView('LOGIN'); setGlobalError(''); setFieldErrors({}); setSuccessMsg(''); setDevVerifyInfo(null); setDevResetInfo(null); setResentSuccess(''); setTokenFromUrl(false); setOtp(''); }} className="text-white hover:text-sgs-on-dark-muted font-bold ml-1 transition-colors">
+                    <button type="button" onClick={() => { setView('LOGIN'); setGlobalError(''); setFieldErrors({}); setSuccessMsg(''); setDevResetInfo(null); setResentSuccess(''); setTokenFromUrl(false); setOtp(''); setEmailOtp(''); }} className="text-white hover:text-sgs-on-dark-muted font-bold ml-1 transition-colors">
                         ← {t('auth.verify_email_back_login')}
                     </button>
                 )}

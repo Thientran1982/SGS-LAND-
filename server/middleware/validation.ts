@@ -138,6 +138,14 @@ export const schemas = {
     password: { required: true, type: 'string' as const, minLength: 8 },
     name: { required: false, type: 'string' as const, maxLength: 200 },
   },
+  requestOtp: {
+    email: { required: true, type: 'email' as const },
+    locale: { required: false, type: 'string' as const, maxLength: 8 },
+  },
+  verifyOtp: {
+    email: { required: true, type: 'email' as const },
+    code: { required: true, type: 'string' as const, minLength: 6, maxLength: 6 },
+  },
   onboardVendor: {
     company: { required: false, type: 'string' as const, minLength: 2, maxLength: 200 },
     name: { required: true, type: 'string' as const, minLength: 1, maxLength: 200 },

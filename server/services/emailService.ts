@@ -552,43 +552,44 @@ async function testSmtpConnection(tenantId: string): Promise<EmailResult> {
   }
 }
 // ── Email templates ───────────────────────────────────────────────────────────
-async function sendVerificationEmail(tenantId: string, to: string, userName: string, verifyUrl: string): Promise<EmailResult> {
-  const safeName = escapeHtml(userName);
-  const safeUrl  = escapeHtml(verifyUrl);
+async function sendEmailOtp(tenantId: string, to: string, userName: string, code: string, locale: 'vn' | 'en' = 'vn'): Promise<EmailResult> {
+  const safeName = escapeHtml(userName || to.split('@')[0]);
+  const isEnglish = locale === 'en';
   const content = `
     <table width="100%" cellpadding="0" cellspacing="0" border="0">
       <tr><td align="center">${iconCircle('#E8EEF5', '')}</td></tr>
     </table>
     ${spacer(20)}
     <table width="100%" cellpadding="0" cellspacing="0" border="0">
-      <tr><td align="center"><h1 class="email-title" style="color:#0F172A;font-size:22px;font-weight:bold;margin:0;font-family:Arial,sans-serif;">Xác Minh Địa Chỉ Email</h1></td></tr>
-      <tr><td align="center" style="padding-top:6px;"><span style="color:#64748B;font-size:13px;font-family:Arial,sans-serif;">Một bước nữa để hoàn tất đăng ký</span></td></tr>
+      <tr><td align="center"><h1 class="email-title" style="color:#0F172A;font-size:22px;font-weight:bold;margin:0;font-family:Arial,sans-serif;">${isEnglish ? 'Verify your email address' : 'Xác minh địa chỉ email'}</h1></td></tr>
+      <tr><td align="center" style="padding-top:6px;"><span style="color:#64748B;font-size:13px;font-family:Arial,sans-serif;">${isEnglish ? 'Enter this code to finish signing in' : 'Nhập mã này để hoàn tất đăng nhập'}</span></td></tr>
     </table>
     ${spacer(24)}
     ${divider()}
-    <p style="color:#334155;font-size:15px;line-height:1.7;margin:0 0 8px;font-family:Arial,sans-serif;">Xin chào <strong>${safeName}</strong>,</p>
+    <p style="color:#334155;font-size:15px;line-height:1.7;margin:0 0 8px;font-family:Arial,sans-serif;">${isEnglish ? 'Hello' : 'Xin chào'} <strong>${safeName}</strong>,</p>
     <p style="color:#475569;font-size:14px;line-height:1.7;margin:0 0 28px;font-family:Arial,sans-serif;">
-      Cảm ơn bạn đã đăng ký tài khoản trên <strong>SGS LAND</strong>. Để kích hoạt tài khoản và bắt đầu sử dụng, vui lòng xác minh địa chỉ email của bạn.
+      ${isEnglish ? 'Use the verification code below for your SGS LAND account.' : 'Sử dụng mã xác minh dưới đây cho tài khoản SGS LAND của bạn.'}
     </p>
     <table width="100%" cellpadding="0" cellspacing="0" border="0">
-      <tr><td align="center">${primaryButton(safeUrl, 'Xác Minh Email Ngay')}</td></tr>
+      <tr><td align="center"><div style="display:inline-block;background:#0F172A;color:#C9A227;border-radius:10px;padding:18px 30px;font:700 34px/1 Arial,sans-serif;letter-spacing:10px;">${code}</div></td></tr>
     </table>
     ${spacer(24)}
-    ${linkBox(safeUrl)}
     ${spacer(20)}
     <p style="color:#94A3B8;font-size:12px;line-height:1.6;margin:0;text-align:center;font-family:Arial,sans-serif;">
-      Link xác minh có hiệu lực trong <strong>24 giờ</strong>.<br />Nếu bạn không thực hiện đăng ký này, vui lòng bỏ qua email.
+      ${isEnglish ? 'This code expires in <strong>5 minutes</strong>.<br />If you did not request this, you can ignore this email.' : 'Mã có hiệu lực trong <strong>5 phút</strong>.<br />Nếu bạn không yêu cầu, vui lòng bỏ qua email này.'}
     </p>
   `;
   return sendEmail(tenantId, {
     to,
-    subject: 'SGS LAND – Xác minh địa chỉ email của bạn',
+    subject: isEnglish ? 'SGS LAND – Your email verification code' : 'SGS LAND – Mã xác minh email của bạn',
     html: emailBase(content, 'Email này được gửi tự động, vui lòng không trả lời.'),
-    text: `Xin chào ${userName},\n\nXác minh email của bạn tại:\n${verifyUrl}\n\nLink hết hạn sau 24 giờ.\n\n— SGS LAND`,
-    template: 'verification',
+    text: isEnglish
+      ? `Hello ${userName},\n\nYour SGS LAND verification code is: ${code}\n\nThis code expires in 5 minutes.\n\n— SGS LAND`
+      : `Xin chào ${userName},\n\nMã xác minh SGS LAND của bạn là: ${code}\n\nMã hết hạn sau 5 phút.\n\n— SGS LAND`,
+    template: 'email_otp_verification',
     skipQuota: true,
-    // Mỗi link verify khác nhau → ép dedupe theo URL để cho phép resend hợp lệ
-    dedupeKey: `verification:${to.toLowerCase()}:${verifyUrl}`,
+    dedupeWindowMinutes: 0,
+    deliveryKey: `email-otp:${to.toLowerCase()}:${crypto.createHash('sha256').update(code).digest('hex')}`,
   });
 }
 async function sendPasswordResetEmail(tenantId: string, to: string, resetUrl: string, userName?: string): Promise<EmailResult> {
@@ -1915,7 +1916,7 @@ export const emailService = {
   sendListingBoost,
   sendEmail,
   sendPasswordResetEmail,
-  sendVerificationEmail,
+  sendEmailOtp,
   sendWelcomeEmail,
   sendInviteEmail,
   sendSequenceEmail,

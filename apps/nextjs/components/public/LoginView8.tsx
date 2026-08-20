@@ -87,7 +87,7 @@ const DICT: Record<string, string> = {
         "auth.pass_changed_success": "Đổi mật khẩu thành công. Vui lòng đăng nhập lại.",
         "auth.success_reset": "Email hướng dẫn đã được gửi.",
         "auth.verify_email_title": "Kiểm tra hộp thư của bạn",
-        "auth.verify_email_subtitle": "Chúng tôi đã gửi link xác minh đến email đăng ký.",
+        "auth.verify_email_subtitle": "Chúng tôi đã gửi mã OTP 6 số đến email đăng ký.",
         "auth.pending_approval_title": "Đang chờ phê duyệt",
         "auth.pending_approval_subtitle": "Workspace của bạn đang chờ SGS Land xem xét.",
         "auth.pending_approval_heading": "Đang Chờ Phê Duyệt",
@@ -104,16 +104,22 @@ const DICT: Record<string, string> = {
         "auth.rejected_account_label": "Tài khoản:",
         "auth.rejected_desc_before": "Workspace của bạn chưa được chấp thuận. Vui lòng kiểm tra email để biết lý do và liên hệ",
         "auth.rejected_desc_after": "để được hỗ trợ thêm.",
-        "auth.verify_email_sent_to": "Link xác minh đã được gửi tới:",
-        "auth.verify_email_instruction": "Mở email và nhấn nút \"Xác minh Email ngay\". Link có hiệu lực trong 24 giờ.",
-        "auth.verify_email_resend": "Gửi lại email xác minh",
+        "auth.verify_email_sent_to": "Mã xác minh đã được gửi tới:",
+        "auth.verify_email_instruction": "Nhập mã 6 số trong email. Mã có hiệu lực trong 5 phút.",
+        "auth.verify_email_code_label": "Số mã",
+        "auth.verify_email_expires": "Mã hết hạn sau",
+        "auth.verify_email_confirm": "Xác nhận mã",
+        "auth.verify_email_verifying": "Đang xác minh...",
+        "auth.verify_email_resend": "Gửi lại mã OTP",
         "auth.verify_email_resending": "Đang gửi...",
         "auth.verify_email_resent": "Đã gửi lại! Kiểm tra hộp thư của bạn.",
         "auth.verify_email_back_login": "Quay lại đăng nhập",
         "auth.verify_email_not_verified": "Email chưa được xác minh. Vui lòng kiểm tra hộp thư và nhấn link xác minh.",
         "auth.verify_email_resend_error": "Không thể gửi lại email. Vui lòng thử lại sau.",
         "auth.verify_email_success": "Email đã được xác minh! Đang đăng nhập...",
-        "auth.verify_email_invalid": "Link xác minh không hợp lệ hoặc đã hết hạn.",
+        "auth.verify_email_invalid": "Mã OTP không đúng. Vui lòng kiểm tra lại.",
+        "auth.verify_email_expired": "Mã OTP đã hết hạn. Vui lòng gửi mã mới.",
+        "auth.verify_email_rate_limited": "Bạn đã yêu cầu quá nhiều mã. Vui lòng thử lại sau.",
         "auth.mock_dev_msg": "[DEV MODE] Email: {email}, Token: {token}",
         "auth.error_rate_limit": "Quá nhiều lần thử. Vui lòng chờ vài phút và thử lại.",
         "auth.error_generic": "Đã có lỗi xảy ra. Vui lòng thử lại sau.",
@@ -254,7 +260,7 @@ const EN_DICT: Record<string, string> = {
         "auth.pass_changed_success": "Password changed successfully. Please login again.",
         "auth.success_reset": "Instruction email has been sent.",
         "auth.verify_email_title": "Check your inbox",
-        "auth.verify_email_subtitle": "We sent a verification link to your registration email.",
+        "auth.verify_email_subtitle": "We sent a 6-digit verification code to your registration email.",
         "auth.pending_approval_title": "Pending Approval",
         "auth.pending_approval_subtitle": "Your workspace is under review by SGS Land.",
         "auth.pending_approval_heading": "Pending Approval",
@@ -271,16 +277,22 @@ const EN_DICT: Record<string, string> = {
         "auth.rejected_account_label": "Account:",
         "auth.rejected_desc_before": "Your workspace has not been approved. Please check your email for the reason and contact",
         "auth.rejected_desc_after": "for further assistance.",
-        "auth.verify_email_sent_to": "Verification link sent to:",
-        "auth.verify_email_instruction": "Open the email and click \"Verify Email Now\". The link is valid for 24 hours.",
-        "auth.verify_email_resend": "Resend verification email",
+        "auth.verify_email_sent_to": "Verification code sent to:",
+        "auth.verify_email_instruction": "Enter the 6-digit code from the email. It expires in 5 minutes.",
+        "auth.verify_email_code_label": "Code digit",
+        "auth.verify_email_expires": "Code expires in",
+        "auth.verify_email_confirm": "Verify code",
+        "auth.verify_email_verifying": "Verifying...",
+        "auth.verify_email_resend": "Resend OTP",
         "auth.verify_email_resending": "Sending...",
         "auth.verify_email_resent": "Sent! Check your inbox.",
         "auth.verify_email_back_login": "Back to login",
         "auth.verify_email_not_verified": "Email not verified. Please check your inbox and click the verification link.",
         "auth.verify_email_resend_error": "Unable to resend email. Please try again later.",
         "auth.verify_email_success": "Email verified! Logging in...",
-        "auth.verify_email_invalid": "Verification link is invalid or has expired.",
+        "auth.verify_email_invalid": "The OTP is incorrect. Please check and try again.",
+        "auth.verify_email_expired": "The OTP has expired. Please request a new code.",
+        "auth.verify_email_rate_limited": "Too many code requests. Please try again later.",
         "auth.mock_dev_msg": "[DEV MODE] Email: {email}, Token: {token}",
         "auth.error_rate_limit": "Too many attempts. Please wait a few minutes and try again.",
         "auth.error_generic": "An error occurred. Please try again later.",
@@ -407,15 +419,18 @@ const db: any = {
     if (!res.ok) { const err = await res.json().catch(() => ({ error: 'Onboarding failed' })); throw new Error(err.error || 'Onboarding failed'); }
     return res.json();
   },
-  async verifyEmail(token: string) {
-    const res = await _api('/api/auth/verify-email?token=' + encodeURIComponent(token), {});
-    if (!res.ok) { const err = await res.json().catch(() => ({ error: 'Verification failed' })); throw new Error(err.error || 'Verification failed'); }
-    const data = await res.json(); try { window.dispatchEvent(new CustomEvent('auth:login')); } catch (e) {} return data;
+  async requestEmailOtp(email: string, locale?: string) {
+    const res = await _api('/api/auth/request-otp', { method: 'POST', body: JSON.stringify({ email, locale }) });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) { const e: any = new Error(data.error || 'Failed to request code'); e.code = data.error; throw e; }
+    return data;
   },
-  async resendVerificationEmail(email: string) {
-    const res = await _api('/api/auth/resend-verification', { method: 'POST', body: JSON.stringify({ email }) });
-    if (!res.ok) { const err = await res.json().catch(() => ({ error: 'Failed to resend' })); throw new Error(err.error || 'Failed to resend verification email'); }
-    return res.json();
+  async verifyEmailOtp(email: string, code: string) {
+    const res = await _api('/api/auth/verify-otp', { method: 'POST', body: JSON.stringify({ email, code }) });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) { const e: any = new Error(data.error || 'Verification failed'); e.code = data.error; throw e; }
+    if (data.user) try { window.dispatchEvent(new CustomEvent('auth:login')); } catch (e) {}
+    return data;
   },
   async requestPasswordReset(email: string) {
     const res = await _api('/api/auth/forgot-password', { method: 'POST', body: JSON.stringify({ email }) });
@@ -574,7 +589,8 @@ export function LoginPage() {
   const [isPersonalEmail, setIsPersonalEmail] = useState(false);
   const [tokenFromUrl, setTokenFromUrl] = useState(false);
   const [registeredEmail, setRegisteredEmail] = useState('');
-  const [devVerifyInfo, setDevVerifyInfo] = useState<{token: string; url: string} | null>(null);
+  const [emailOtp, setEmailOtp] = useState('');
+  const [otpSecondsLeft, setOtpSecondsLeft] = useState(300);
   const [devResetInfo, setDevResetInfo] = useState<{token: string; url: string} | null>(null);
   const [resending, setResending] = useState(false);
   const [resentSuccess, setResentSuccess] = useState('');
@@ -610,34 +626,9 @@ export function LoginPage() {
   const handleHashTokens = useCallback((hash: string) => {
       // Support both legacy hash URLs and clean URLs.
       // After App.tsx converts #/xxx → /xxx, tokens move from hash to pathname/search.
-      // 1. Email verification: #/verify-email/{token} → /verify-email/{token}
-      const pathParts = window.location.pathname.split('/').filter(Boolean);
-      const verifyFromPath = pathParts[0] === 'verify-email' && pathParts[1] ? pathParts[1] : null;
-      const verifyMatch = hash.match(/\/verify-email\/([a-f0-9]+)/) || (verifyFromPath ? [null, verifyFromPath] : null);
-      if (verifyMatch) {
-          const token = verifyMatch[1];
-          window.history.replaceState(null, '', `/${ROUTES.LOGIN}`);
-          setLoading(true);
-          setGlobalError('');
-          db.verifyEmail(token)
-              .then((result: any) => {
-                  if (result?.needsApproval) {
-                      setRegisteredEmail(result.email || '');
-                      setView('PENDING_APPROVAL');
-                      setLoading(false);
-                  } else {
-                      setSuccessMsg(t('auth.verify_email_success'));
-                      setTimeout(() => onLoginSuccess(), 1000);
-                  }
-              })
-              .catch(() => {
-                  setGlobalError(t('auth.verify_email_invalid'));
-                  setLoading(false);
-              });
-          return true;
-      }
-      // 2. Password reset: supports both /login?reset_token={token} (query)
+      // Password reset remains link-based; email verification is OTP-only.
       //    and /reset-password/{token} (path — used by the reset-password email link).
+      const pathParts = window.location.pathname.split('/').filter(Boolean);
       const resetFromSearch = new URLSearchParams(window.location.search).get('reset_token');
       const resetFromPath = pathParts[0] === 'reset-password' && pathParts[1] ? pathParts[1] : null;
       const resetMatch = hash.match(/reset_token=([a-f0-9]+)/) || (resetFromSearch ? [null, resetFromSearch] : null) || (resetFromPath ? [null, resetFromPath] : null);
@@ -652,6 +643,11 @@ export function LoginPage() {
       }
       return false;
   }, [t, onLoginSuccess]);
+  useEffect(() => {
+    if (view !== 'VERIFY_EMAIL' || otpSecondsLeft <= 0) return;
+    const timer = window.setInterval(() => setOtpSecondsLeft((value: number) => Math.max(0, value - 1)), 1000);
+    return () => window.clearInterval(timer);
+  }, [view, otpSecondsLeft]);
   useEffect(() => {
       const savedEmail = localStorage.getItem('sgs_last_email');
       if (savedEmail) setEmail(savedEmail);
@@ -802,9 +798,8 @@ export function LoginPage() {
           : await db.register(name.trim(), trimmedEmail, password);
         if (result?.needsVerification) {
           setRegisteredEmail(trimmedEmail);
-          if (result?.devVerifyToken) {
-            setDevVerifyInfo({ token: result.devVerifyToken, url: result.devVerifyUrl || '' });
-          }
+          setEmailOtp('');
+          setOtpSecondsLeft(300);
           setView('VERIFY_EMAIL');
           setLoading(false);
           return;
@@ -835,6 +830,8 @@ export function LoginPage() {
       // Special case: login blocked because email not yet verified
       if (err?.code === 'EMAIL_NOT_VERIFIED') {
         setRegisteredEmail(err.email || email.trim());
+        setEmailOtp('');
+        setOtpSecondsLeft(300);
         setView('VERIFY_EMAIL');
         setLoading(false);
         return;
@@ -883,12 +880,35 @@ export function LoginPage() {
     setResending(true);
     setResentSuccess('');
     try {
-      await db.resendVerificationEmail(targetEmail);
+      await db.requestEmailOtp(targetEmail, language);
+      setEmailOtp('');
+      setOtpSecondsLeft(300);
       setResentSuccess(t('auth.verify_email_resent'));
-    } catch {
-      setResentSuccess(t('auth.verify_email_resend_error'));
+    } catch (error: any) {
+      setResentSuccess(error?.code === 'OTP_RATE_LIMITED' ? t('auth.verify_email_rate_limited') : t('auth.verify_email_resend_error'));
     } finally {
       setResending(false);
+    }
+  };
+  const handleEmailOtpSubmit = async (event: React.FormEvent) => {
+    event.preventDefault();
+    if (!registeredEmail || !/^\d{6}$/.test(emailOtp)) return;
+    setLoading(true);
+    setGlobalError('');
+    try {
+      const result = await db.verifyEmailOtp(registeredEmail, emailOtp);
+      if (result?.needsApproval) {
+        setView('PENDING_APPROVAL');
+      } else {
+        setSuccessMsg(t('auth.verify_email_success'));
+        window.setTimeout(() => onLoginSuccess(), 500);
+      }
+    } catch (error: any) {
+      setGlobalError(error?.code === 'OTP_EXPIRED' ? t('auth.verify_email_expired') : t('auth.verify_email_invalid'));
+      setEmailOtp('');
+      triggerShake();
+    } finally {
+      setLoading(false);
     }
   };
   const handleGoogleLogin = () => {
@@ -947,41 +967,41 @@ export function LoginPage() {
                      t('auth.login_subtitle')}
                 </p>
             </div>
-            {/* ── VERIFY EMAIL VIEW ─────────────────────────── */}
+             {/* ── VERIFY EMAIL OTP VIEW ─────────────────────── */}
             {view === 'VERIFY_EMAIL' && (
-                <div className="space-y-5 animate-enter" style={{animationDelay: '0.2s'}}>
-                    {/* Envelope icon + email info */}
+                 <form onSubmit={handleEmailOtpSubmit} className={`space-y-5 animate-enter ${shake ? 'animate-[shake_0.5s_ease-in-out]' : ''}`} style={{animationDelay: '0.2s'}}>
                     <div className="bg-[var(--sgs-primary)]/100/10 border border-[var(--sgs-primary)]/20 rounded-2xl p-6 text-center">
                         <div className="text-5xl mb-4">✉️</div>
                         <p className="text-sm text-gray-400 mb-2">{t('auth.verify_email_sent_to')}</p>
                         <p className="text-white font-bold text-base mb-4 break-all">{registeredEmail}</p>
                         <p className="text-xs text-sgs-on-dark-muted leading-relaxed">{t('auth.verify_email_instruction')}</p>
                     </div>
-                    {/* Dev mode: show raw token for testing without email */}
-                    {devVerifyInfo && (
-                        <div className="bg-sgs-accent/10 p-4 rounded-xl border border-amber-500/30 animate-enter">
-                            <p className="text-xs2 font-bold text-sgs-accent-text uppercase tracking-wider mb-2">[DEV] Link xác minh (không có email thật):</p>
-                            <a href={devVerifyInfo.url} className="text-xs text-amber-200 break-all font-mono hover:underline">
-                                {devVerifyInfo.url}
-                            </a>
-                        </div>
-                    )}
-                    {/* Resend button */}
-                    {resentSuccess ? (
-                        <div className="text-emerald-200 text-xs font-medium bg-emerald-500/10 p-4 rounded-xl border border-emerald-500/20 text-center" role="status">
-                            {resentSuccess}
-                        </div>
-                    ) : (
-                        <button
-                            type="button"
-                            onClick={handleResendVerification}
-                            disabled={resending}
-                            className="w-full bg-white/5 border border-white/10 text-white/70 font-semibold rounded-xl py-3 text-sm hover:bg-white/10 hover:text-white transition-all disabled:opacity-50"
-                        >
-                            {resending ? t('auth.verify_email_resending') : t('auth.verify_email_resend')}
-                        </button>
-                    )}
-                </div>
+                     {globalError && <div className="text-rose-200 text-xs font-medium bg-rose-500/10 p-3 rounded-xl border border-rose-500/20" role="alert">{globalError}</div>}
+                     <div className="flex justify-center gap-2" onPaste={(event: any) => {
+                         const pasted = event.clipboardData.getData('text').replace(/\D/g, '').slice(0, 6);
+                         if (pasted) { event.preventDefault(); setEmailOtp(pasted); }
+                     }}>
+                         {Array.from({ length: 6 }, (_, index) => (
+                             <input key={index} aria-label={`${t('auth.verify_email_code_label')} ${index + 1}`} inputMode="numeric"
+                                 autoComplete={index === 0 ? 'one-time-code' : 'off'} maxLength={1} autoFocus={index === 0}
+                                 value={emailOtp[index] || ''} onChange={(event: any) => {
+                                     const value = event.target.value.replace(/\D/g, '').slice(-1);
+                                     const next = emailOtp.split(''); next[index] = value; setEmailOtp(next.join('').slice(0, 6));
+                                     if (value) event.currentTarget.nextElementSibling?.focus();
+                                 }} onKeyDown={(event: any) => {
+                                     if (event.key === 'Backspace' && !emailOtp[index]) event.currentTarget.previousElementSibling?.focus();
+                                 }} className="w-11 h-14 bg-white/5 border border-white/10 focus:border-[var(--sgs-primary)]/60 focus:ring-2 focus:ring-[var(--sgs-primary)]/20 rounded-xl text-white text-center text-2xl font-mono outline-none transition-all" />
+                         ))}
+                     </div>
+                     <p className="text-center text-xs text-gray-400">{otpSecondsLeft > 0 ? `${t('auth.verify_email_expires')} ${Math.floor(otpSecondsLeft / 60)}:${String(otpSecondsLeft % 60).padStart(2, '0')}` : t('auth.verify_email_expired')}</p>
+                     <button type="submit" disabled={loading || emailOtp.length !== 6 || otpSecondsLeft === 0} className="w-full bg-[var(--sgs-primary)] hover:bg-[var(--sgs-primary)]/100 disabled:bg-white/10 disabled:text-white/30 text-white font-bold rounded-xl py-3.5 text-sm transition-all">
+                         {loading ? t('auth.verify_email_verifying') : t('auth.verify_email_confirm')}
+                     </button>
+                     {resentSuccess && <div className="text-emerald-200 text-xs font-medium bg-emerald-500/10 p-3 rounded-xl border border-emerald-500/20 text-center" role="status">{resentSuccess}</div>}
+                     <button type="button" onClick={handleResendVerification} disabled={resending || otpSecondsLeft > 240} className="w-full bg-white/5 border border-white/10 text-white/70 font-semibold rounded-xl py-3 text-sm hover:bg-white/10 hover:text-white transition-all disabled:opacity-50">
+                         {resending ? t('auth.verify_email_resending') : t('auth.verify_email_resend')}
+                     </button>
+                 </form>
             )}
             {/* ── PENDING APPROVAL VIEW ─────────────────────── */}
             {view === 'PENDING_APPROVAL' && (
@@ -1391,7 +1411,7 @@ export function LoginPage() {
                     </button>
                 )}                
                 {(view.startsWith('FORGOT') || view === 'VERIFY_EMAIL') && (
-                    <button type="button" onClick={() => { setView('LOGIN'); setGlobalError(''); setFieldErrors({}); setSuccessMsg(''); setDevVerifyInfo(null); setDevResetInfo(null); setResentSuccess(''); setTokenFromUrl(false); setOtp(''); }} className="text-white hover:text-sgs-on-dark-muted font-bold ml-1 transition-colors">
+                    <button type="button" onClick={() => { setView('LOGIN'); setGlobalError(''); setFieldErrors({}); setSuccessMsg(''); setDevResetInfo(null); setResentSuccess(''); setTokenFromUrl(false); setOtp(''); setEmailOtp(''); }} className="text-white hover:text-sgs-on-dark-muted font-bold ml-1 transition-colors">
                         ← {t('auth.verify_email_back_login')}
                     </button>
                 )}

@@ -37,6 +37,7 @@ import { createUnitRoutes } from "./server/routes/unitRoutes";
 import { createEnterpriseRoutes } from "./server/routes/enterpriseRoutes";
 import { createSequenceRoutes } from "./server/routes/sequenceRoutes";
 import { emailService } from "./server/services/emailService";
+import { issueEmailOtp, verifyEmailOtp } from "./server/services/emailOtpService";
 import { createAiGovernanceRoutes } from "./server/routes/aiGovernanceRoutes";
 import { createAgentRoutes } from "./server/routes/agentRoutes";
 import { createSessionRoutes, createTemplateRoutes } from "./server/routes/sessionRoutes";
@@ -572,12 +573,6 @@ app.use(globalMutationAudit);
       });
       const isFirstUser = existingCount === 0;
 
-      // Generate a secure email verification token
-      const crypto = await import('crypto');
-      const rawToken = crypto.randomBytes(32).toString('hex');
-      const tokenHash = crypto.createHash('sha256').update(rawToken).digest('hex');
-      const tokenExpires = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24h
-
       const dbUser = await userRepository.create(tenantId, {
         name: name || email.split('@')[0],
         email,
@@ -586,32 +581,34 @@ app.use(globalMutationAudit);
         source: 'REGISTER',
         status: 'PENDING',
         emailVerified: false,
-        emailVerificationToken: tokenHash,
-        emailVerificationExpires: tokenExpires,
       });
 
-      // Build the verification URL using the canonical base URL helper
-      const baseUrl = resolveBaseUrl(req);
-      const verifyUrl = `${baseUrl}/verify-email/${rawToken}`;
+      const otp = await issueEmailOtp({
+        tenantId,
+        userId: dbUser.id,
+        email: dbUser.email,
+        locale: req.body?.locale,
+      });
+      if (!otp.ok) {
+        return res.status(429).json({ error: 'OTP_RATE_LIMITED', retryAfterSeconds: otp.retryAfterSeconds });
+      }
 
       // Respond immediately — don't block on email delivery under high registration load
-      const isDevMode = !isProduction;
       res.json({
         message: 'Registration successful. Please verify your email to continue.',
         needsVerification: true,
         email: dbUser.email,
         emailStatus: 'sending',
-        ...(isDevMode && { devVerifyToken: rawToken, devVerifyUrl: verifyUrl }),
       });
 
       // Fire-and-forget email after response is sent
-      emailService.sendVerificationEmail(tenantId, email, dbUser.name, verifyUrl).then((verifyResult) => {
+      emailService.sendEmailOtp(tenantId, email, dbUser.name, otp.code, req.body?.locale === 'en' ? 'en' : 'vn').then((verifyResult) => {
         writeAuditLog(tenantId, dbUser.id, 'REGISTER', 'auth', dbUser.id, { email, emailSent: verifyResult.success }, req.ip);
         if (!verifyResult.success) {
-          logger.error(`Failed to send verification email to ${email}: ${verifyResult.error}`);
+          logger.error(`Failed to send OTP email to ${email}: ${verifyResult.error}`);
         }
       }).catch(err => {
-        logger.error(`Failed to send verification email to ${email}: ${err.message}`);
+        logger.error(`Failed to send OTP email to ${email}: ${err.message}`);
         writeAuditLog(tenantId, dbUser.id, 'REGISTER', 'auth', dbUser.id, { email, emailSent: false }, req.ip);
       });
     } catch (error) {
@@ -659,11 +656,7 @@ app.use(globalMutationAudit);
             .replace(/^-+|-+$/g, '')
             .slice(0, 40) || 'vendor';
 
-        // 2) Sinh email-verify token TRƯỚC khi vào transaction (idempotent — không cần rollback)
-        const cryptoMod = await import('crypto');
-        const rawToken = cryptoMod.randomBytes(32).toString('hex');
-        const tokenHash = cryptoMod.createHash('sha256').update(rawToken).digest('hex');
-        const tokenExpires = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24h
+        // 2) Hash password trước transaction; email OTP được phát hành sau khi user đã commit.
         const passwordHash = await bcrypt.hash(password, 12);
 
         // 3) ATOMIC: tenant + subscription + ADMIN user trong MỘT transaction (1 client, 1 BEGIN/COMMIT).
@@ -745,9 +738,9 @@ app.use(globalMutationAudit);
                     email_verified, email_verification_token, email_verification_expires)
                  VALUES (current_setting('app.current_tenant_id', true)::uuid,
                          $1, $2, $3, 'ADMIN', $4, 'SELF_SIGNUP_VENDOR', 'PENDING',
-                         FALSE, $5, $6)
+                          FALSE, NULL, NULL)
                  RETURNING id, name, email`,
-                [trimmedName, trimmedEmail, passwordHash, phone?.trim() || null, tokenHash, tokenExpires]
+                [trimmedName, trimmedEmail, passwordHash, phone?.trim() || null]
               );
 
               // 3f) Seed 6 default departments cho tenant mới — phục vụ Task Management.
@@ -798,11 +791,17 @@ app.use(globalMutationAudit);
           email: created.userEmail,
         };
 
-        // 4) Respond immediately — don't block on email delivery under high registration load
-        const baseUrl = resolveBaseUrl(req);
-        const verifyUrl = `${baseUrl}/verify-email/${rawToken}`;
-        const isDevMode = !isProduction;
+        const otp = await issueEmailOtp({
+          tenantId: created.tenantId,
+          userId: created.userId,
+          email: created.userEmail,
+          locale: req.body?.locale,
+        });
+        if (!otp.ok) {
+          return res.status(429).json({ error: 'OTP_RATE_LIMITED', retryAfterSeconds: otp.retryAfterSeconds });
+        }
 
+        // 4) Respond immediately — don't block on email delivery under high registration load
         res.status(201).json({
           message:
             'Đăng ký thành công. Vui lòng kiểm tra email để kích hoạt workspace của bạn.',
@@ -813,12 +812,11 @@ app.use(globalMutationAudit);
           plan: 'INDIVIDUAL',
           trialDays: 14,
           emailStatus: 'sending',
-          ...(isDevMode && { devVerifyToken: rawToken, devVerifyUrl: verifyUrl }),
         });
 
         // Fire-and-forget email + audit after response is sent
         emailService
-          .sendVerificationEmail(created.tenantId, trimmedEmail, adminUser.name, verifyUrl)
+          .sendEmailOtp(created.tenantId, trimmedEmail, adminUser.name, otp.code, req.body?.locale === 'en' ? 'en' : 'vn')
           .then((verifyResult) => {
             writeAuditLog(
               created.tenantId,
@@ -830,11 +828,11 @@ app.use(globalMutationAudit);
               req.ip
             );
             if (!verifyResult.success) {
-              logger.error(`[onboard-vendor] Failed to send verify email to ${trimmedEmail}: ${verifyResult.error}`);
+               logger.error(`[onboard-vendor] Failed to send OTP email to ${trimmedEmail}: ${verifyResult.error}`);
             }
           })
           .catch((err) => {
-            logger.error(`[onboard-vendor] Failed to send verify email to ${trimmedEmail}: ${err.message}`);
+             logger.error(`[onboard-vendor] Failed to send OTP email to ${trimmedEmail}: ${err.message}`);
             writeAuditLog(
               created.tenantId,
               adminUser.id,
@@ -855,140 +853,136 @@ app.use(globalMutationAudit);
     }
   );
 
-  // ── Email Verification ──────────────────────────────────────────────────────
-  app.get("/api/auth/verify-email", authRateLimit, async (req, res) => {
-    try {
-      const rawToken = (req.query.token as string)?.trim();
-      if (!rawToken) return res.status(400).json({ error: 'Verification token is required' });
-
-      const crypto = await import('crypto');
-      const tokenHash = crypto.createHash('sha256').update(rawToken).digest('hex');
-
-      // Look up user by token CROSS-TENANT (vendor onboarding tạo user trong tenant mới,
-      // không phải DEFAULT_TENANT_ID). Token là sha256(32-byte random) → đủ collision-safe
-      // để dùng làm cross-tenant lookup; bypass RLS chỉ để tìm bản ghi, sau đó activate
-      // user trong đúng tenant của họ.
-      const user = await withRlsBypass(async (client) => {
+  // ── Email OTP verification ─────────────────────────────────────────────────
+  async function findPendingAuthUser(rawEmail: string) {
+    const email = rawEmail.trim().toLowerCase();
+    let tenantId = DEFAULT_TENANT_ID;
+    let user = await userRepository.findByEmail(tenantId, email);
+    if (!user) {
+      const candidates = await withRlsBypass(async (client) => {
         const r = await client.query(
-          `SELECT * FROM users WHERE email_verification_token = $1 AND email_verification_expires > NOW() LIMIT 1`,
-          [tokenHash]
+          `SELECT tenant_id FROM users WHERE LOWER(email) = $1 AND tenant_id <> $2 LIMIT 10`,
+          [email, DEFAULT_TENANT_ID],
         );
+        return r.rows as { tenant_id: string }[];
+      });
+      for (const candidate of candidates) {
+        const found = await userRepository.findByEmail(candidate.tenant_id, email).catch(() => null);
+        if (found) {
+          user = found;
+          tenantId = candidate.tenant_id;
+          break;
+        }
+      }
+    }
+    return user ? { tenantId, user } : null;
+  }
+
+  async function sendOtpForPendingUser(rawEmail: string, locale: string | undefined) {
+    const found = await findPendingAuthUser(rawEmail);
+    if (!found || found.user.emailVerified) return { kind: 'hidden' as const };
+    const otp = await issueEmailOtp({
+      tenantId: found.tenantId,
+      userId: found.user.id,
+      email: found.user.email,
+      locale,
+    });
+    if (!otp.ok) return { kind: 'rate_limited' as const, retryAfterSeconds: otp.retryAfterSeconds };
+    const result = await emailService.sendEmailOtp(
+      found.tenantId,
+      found.user.email,
+      found.user.name,
+      otp.code,
+      locale === 'en' ? 'en' : 'vn',
+    );
+    writeAuditLog(found.tenantId, found.user.id, 'EMAIL_OTP_REQUESTED', 'auth', found.user.id, {
+      email: found.user.email,
+      emailSent: result.success,
+    });
+    return { kind: 'sent' as const };
+  }
+
+  app.post("/api/auth/request-otp", authRateLimit, validateBody(schemas.requestOtp), async (req, res) => {
+    try {
+      const result = await sendOtpForPendingUser(req.body.email, req.body.locale);
+      if (result.kind === 'rate_limited') {
+        return res.status(429).json({ error: 'OTP_RATE_LIMITED', retryAfterSeconds: result.retryAfterSeconds });
+      }
+      return res.json({ message: 'If a pending account exists, a verification code has been sent.' });
+    } catch (error) {
+      logger.error('Request email OTP error:', error as any);
+      return res.status(500).json({ error: 'Failed to request verification code' });
+    }
+  });
+
+  app.post("/api/auth/verify-otp", authRateLimit, validateBody(schemas.verifyOtp), async (req, res) => {
+    try {
+      const result = await verifyEmailOtp({ email: req.body.email, code: req.body.code });
+      if (!result.ok) {
+        const status = result.reason === 'TOO_MANY_ATTEMPTS' ? 429 : 400;
+        return res.status(status).json({
+          error: result.reason === 'EXPIRED' ? 'OTP_EXPIRED'
+            : result.reason === 'TOO_MANY_ATTEMPTS' ? 'OTP_TOO_MANY_ATTEMPTS'
+            : 'OTP_INVALID',
+          attemptsRemaining: result.attemptsRemaining,
+        });
+      }
+      const user = await withRlsBypass(async (client) => {
+        const r = await client.query('SELECT * FROM users WHERE id = $1 AND tenant_id = $2 LIMIT 1', [result.userId, result.tenantId]);
         return r.rows[0] ? userRepository['rowToEntity']<any>(r.rows[0]) : null;
       });
-
-      if (!user) {
-        return res.status(400).json({ error: 'Invalid or expired verification token' });
-      }
-
-      const tenantId = user.tenantId as string;
-
-      // Mark email as verified. For SELF_SIGNUP_VENDOR accounts, activate the user but
-      // set the tenant to PENDING_APPROVAL — they must wait for SGSLand platform owner to
-      // review and approve before they can log in. For regular host-tenant accounts, activate
-      // immediately as before.
-      const isVendorSignup = user.source === 'SELF_SIGNUP_VENDOR' && tenantId !== DEFAULT_TENANT_ID;
-
-      await withTenantContext(tenantId, async (client) => {
+      if (!user) return res.status(400).json({ error: 'OTP_INVALID' });
+      const isVendorSignup = user.source === 'SELF_SIGNUP_VENDOR' && result.tenantId !== DEFAULT_TENANT_ID;
+      await withTenantContext(result.tenantId, async (client) => {
         await client.query(
-          `UPDATE users SET email_verified = TRUE, status = 'ACTIVE', email_verification_token = NULL, email_verification_expires = NULL WHERE id = $1`,
-          [user.id]
+          `UPDATE users SET email_verified = TRUE, status = 'ACTIVE',
+             email_verification_token = NULL, email_verification_expires = NULL
+           WHERE id = $1`,
+          [user.id],
         );
       });
-
       if (isVendorSignup) {
-        // Set tenant approval_status to PENDING_APPROVAL (uses RLS bypass since column has no tenant context)
         await withRlsBypass(async (client) => {
           await client.query(
-            `UPDATE tenants SET approval_status = 'PENDING_APPROVAL', config = config || '{"awaitingApproval": true}'::jsonb WHERE id = $1`,
-            [tenantId]
+            `UPDATE tenants SET approval_status = 'PENDING_APPROVAL',
+             config = config || '{"awaitingApproval": true}'::jsonb WHERE id = $1`,
+            [result.tenantId],
           );
         });
-
-        writeAuditLog(tenantId, user.id, 'EMAIL_VERIFIED', 'auth', user.id, { email: user.email, pendingApproval: true }, req.ip);
-
-        return res.json({
-          message: 'Email verified successfully. Your workspace is now pending approval.',
-          needsApproval: true,
-          email: user.email,
-        });
+        writeAuditLog(result.tenantId, user.id, 'EMAIL_OTP_VERIFIED', 'auth', user.id, { email: user.email, pendingApproval: true }, req.ip);
+        return res.json({ message: 'Email verified successfully. Your workspace is now pending approval.', needsApproval: true, email: user.email });
       }
-
-      // Regular account (host tenant) — log in immediately
-      const jwtPayload = { id: user.id, email: user.email, name: user.name, role: user.role, tenantId };
+      const jwtPayload = { id: user.id, email: user.email, name: user.name, role: user.role, tenantId: result.tenantId };
       const token = jwt.sign(jwtPayload, JWT_SECRET, { expiresIn: '24h' });
       res.cookie('token', token, cookieOptions);
-
-      await userRepository.updateLastLogin(tenantId, user.id);
-      writeAuditLog(tenantId, user.id, 'EMAIL_VERIFIED', 'auth', user.id, { email: user.email }, req.ip);
-
-      emailService.sendWelcomeEmail(tenantId, user.email, user.name).catch(() => {});
-
-      res.json({
+      await userRepository.updateLastLogin(result.tenantId, user.id);
+      writeAuditLog(result.tenantId, user.id, 'EMAIL_OTP_VERIFIED', 'auth', user.id, { email: user.email }, req.ip);
+      emailService.sendWelcomeEmail(result.tenantId, user.email, user.name).catch(() => {});
+      return res.json({
         message: 'Email verified successfully',
         user: userRepository.toPublicUser({ ...user, emailVerified: true, status: 'ACTIVE' }),
         token,
       });
     } catch (error) {
-      console.error('Email verification error:', error);
-      res.status(500).json({ error: 'Verification failed' });
+      logger.error('Email OTP verification error:', error as any);
+      return res.status(500).json({ error: 'Verification failed' });
     }
   });
 
-  // ── Resend Verification Email ───────────────────────────────────────────────
+  // Backward-compatible endpoint name; it now sends a code rather than a link.
   app.post("/api/auth/resend-verification", authRateLimit, async (req, res) => {
     const uniformDelay = () => new Promise(r => setTimeout(r, 200 + Math.random() * 300));
     try {
       const email = req.body.email?.trim();
       if (!email) return res.status(400).json({ error: 'Email is required' });
 
-      // Cross-tenant lookup: vendor accounts live in their own tenant, not DEFAULT_TENANT_ID.
-      // Try host tenant first; if not found, search all other tenants (same pattern as login).
-      let tenantId = DEFAULT_TENANT_ID;
-      let user = await userRepository.findByEmail(tenantId, email);
-      if (!user) {
-        const candidates = await withRlsBypass(async (client) => {
-          const r = await client.query(
-            `SELECT tenant_id FROM users WHERE LOWER(email) = LOWER($1) AND tenant_id <> $2 LIMIT 10`,
-            [email, DEFAULT_TENANT_ID]
-          );
-          return r.rows as { tenant_id: string }[];
-        });
-        for (const cand of candidates) {
-          const u = await userRepository.findByEmail(cand.tenant_id, email).catch(() => null);
-          if (u) { user = u; tenantId = cand.tenant_id; break; }
-        }
-      }
-
-      // Always respond the same to prevent email enumeration
-      if (!user || user.emailVerified) {
-        await uniformDelay();
-        return res.json({ message: 'If a pending account exists, a new verification email has been sent.' });
-      }
-
-      const crypto = await import('crypto');
-      const rawToken = crypto.randomBytes(32).toString('hex');
-      const tokenHash = crypto.createHash('sha256').update(rawToken).digest('hex');
-      const tokenExpires = new Date(Date.now() + 24 * 60 * 60 * 1000);
-
-      await withTenantContext(tenantId, async (client) => {
-        await client.query(
-          `UPDATE users SET email_verification_token = $1, email_verification_expires = $2 WHERE id = $3`,
-          [tokenHash, tokenExpires, user!.id]
-        );
-      });
-
-      const baseUrl = resolveBaseUrl(req);
-      const verifyUrl = `${baseUrl}/verify-email/${rawToken}`;
-
-      const result = await emailService.sendVerificationEmail(tenantId, email, user.name, verifyUrl).catch(() =>
-        ({ success: false, status: 'failed' as const })
-      );
-
+      const result = await sendOtpForPendingUser(email, req.body?.locale);
       await uniformDelay();
-      const isDevMode = !isProduction && result.status === 'queued_no_smtp';
+      if (result.kind === 'rate_limited') {
+        return res.status(429).json({ error: 'OTP_RATE_LIMITED', retryAfterSeconds: result.retryAfterSeconds });
+      }
       res.json({
-        message: 'If a pending account exists, a new verification email has been sent.',
-        ...(isDevMode && { devVerifyToken: rawToken, devVerifyUrl: verifyUrl }),
+        message: 'If a pending account exists, a verification code has been sent.',
       });
     } catch (error) {
       console.error('Resend verification error:', error);
