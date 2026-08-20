@@ -269,15 +269,17 @@ function ListingCard({ listing, list, eager, facets }: { listing: any; list?: bo
               {isRent ? tt(lang, "CHO THU\u00ca", "FOR RENT") : tt(lang, "B\u00c1N", "FOR SALE")}
             </span>
             {listing.isVerified && (
-              <span className="flex items-center gap-1 px-2 py-0.5 rounded-lg text-[12px] font-bold text-white shadow-sm backdrop-blur-sm" style={{ background: "rgba(5,150,105,0.95)" }}>
-                <BadgeCheck className="w-3.5 h-3.5" /> {tt(lang, "\u0110\u00c3 X\u00c1C TH\u1ef0C", "VERIFIED")}
+              <span title={tt(lang, "\u0110\u00c3 X\u00c1C TH\u1ef0C", "VERIFIED")} aria-label={tt(lang, "\u0110\u00c3 X\u00c1C TH\u1ef0C", "VERIFIED")}
+                className="flex items-center gap-1 px-2 py-0.5 rounded-lg text-[12px] font-bold text-white shadow-sm backdrop-blur-sm" style={{ background: "rgba(5,150,105,0.95)" }}>
+                <BadgeCheck className="w-3.5 h-3.5" /> <span className="hidden sm:inline">{tt(lang, "\u0110\u00c3 X\u00c1C TH\u1ef0C", "VERIFIED")}</span>
               </span>
             )}
           </div>
           <div className="flex gap-1.5">
             {isBest && (
-              <span className="flex items-center gap-1 px-2 py-0.5 rounded-lg text-[12px] font-bold shadow-sm backdrop-blur-sm uppercase" style={{ background: "rgba(250,204,21,0.95)", color: "#3f2d00" }}>
-                <Star className="w-3.5 h-3.5" /> {bi(STATUS_LABELS, "BEST_MARKET", lang)}
+              <span title={bi(STATUS_LABELS, "BEST_MARKET", lang)} aria-label={bi(STATUS_LABELS, "BEST_MARKET", lang)}
+                className="flex items-center gap-1 px-2 py-0.5 rounded-lg text-[12px] font-bold shadow-sm backdrop-blur-sm uppercase" style={{ background: "rgba(250,204,21,0.95)", color: "#3f2d00" }}>
+                <Star className="w-3.5 h-3.5" /> <span className="hidden sm:inline">{bi(STATUS_LABELS, "BEST_MARKET", lang)}</span>
               </span>
             )}
             {views > 0 && (
@@ -302,10 +304,10 @@ function ListingCard({ listing, list, eager, facets }: { listing: any; list?: bo
       <div className="p-3 sm:p-4 flex-1 min-w-0">
         <div className="flex items-center gap-2 mb-1.5 flex-wrap">
           {listing.code && (
-            <span className="font-mono text-[11px] font-bold px-1.5 py-0.5 rounded uppercase tracking-wider" style={{ background: "var(--bg-elevated)", color: "var(--text-secondary)" }}>{listing.code}</span>
+            <span className="font-mono text-xs font-bold px-1.5 py-0.5 rounded uppercase tracking-wider" style={{ background: "var(--bg-elevated)", color: "var(--text-secondary)" }}>{listing.code}</span>
           )}
           {statusLabel && (
-            <span className="text-[11px] font-bold px-1.5 py-0.5 rounded uppercase tracking-wider"
+            <span className="text-xs font-bold px-1.5 py-0.5 rounded uppercase tracking-wider"
               style={statusKey === "READY" || statusKey === "OPENING" || statusKey === "BEST_MARKET"
                 ? { background: "var(--primary-subtle)", color: "var(--primary-600)" }
                 : { background: "var(--bg-elevated)", color: "var(--text-tertiary)" }}>{statusLabel}</span>
@@ -335,7 +337,7 @@ function ListingCard({ listing, list, eager, facets }: { listing: any; list?: bo
               if (diffPct === 0) return null;
               const isBelow = diffPct < 0;
               return (
-                <p className="text-[11px] font-semibold mt-1" style={{ color: isBelow ? "var(--color-success)" : "var(--sgs-accent)" }}>
+                <p className="text-xs font-semibold mt-1" style={{ color: isBelow ? "var(--color-success)" : "var(--sgs-accent)" }}>
                   {isBelow
                     ? tt(lang, `Th\u1ea5p h\u01a1n ${Math.abs(diffPct)}% so v\u1edbi TB khu v\u1ef1c`, `${Math.abs(diffPct)}% below area average`)
                     : tt(lang, `Cao h\u01a1n ${Math.abs(diffPct)}% so v\u1edbi TB khu v\u1ef1c`, `${Math.abs(diffPct)}% above area average`)}
@@ -349,7 +351,7 @@ function ListingCard({ listing, list, eager, facets }: { listing: any; list?: bo
           </div>
         </div>
         {(direction || legal) && (
-          <div className="flex items-center gap-2 mt-2.5 pt-2.5 flex-wrap text-[11px]" style={{ borderTop: "1px solid var(--border-default)" }}>
+          <div className="flex items-center gap-2 mt-2.5 pt-2.5 flex-wrap text-xs" style={{ borderTop: "1px solid var(--border-default)" }}>
             {direction && (
               <span style={{ color: "var(--text-tertiary)" }}>
                 {ui("direction", lang)}: <b style={{ color: "var(--text-secondary)" }}>{direction}</b>
