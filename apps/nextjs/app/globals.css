@@ -344,8 +344,9 @@
 
   h1, h2, h3, h4, h5, h6 {
     @apply text-xl md:text-2xl lg:text-3xl font-bold;
-    letter-spacing: -0.02em;
+    letter-spacing: -0.02em !important;
     word-spacing: normal;
+    line-height: 1.12;
   }
 }
 
@@ -391,6 +392,7 @@
   .ui-title h3 {
     letter-spacing: -0.02em !important;
     word-spacing: normal !important;
+    line-height: 1.12 !important;
   }
   .glass-card {
     background: var(--glass-surface);
@@ -535,17 +537,17 @@
 
 /* Thang chu 7 bac cho tien ich Tailwind (12/14/16/20/28/40/64) */
 @theme {
-  --text-xs: 13px;
+  --text-xs: 12px;
   --text-sm: 14px;
   --text-base: 16px;
   --text-lg: 18px;
-  --text-xl: 20px;
-  --text-2xl: 24px;
-  --text-3xl: 30px;
+  --text-xl: 18px;
+  --text-2xl: 22px;
+  --text-3xl: 28px;
   --text-4xl: 36px;
   --text-5xl: 48px;
-  --text-6xl: 60px;
-  --text-7xl: 60px;
+  --text-6xl: 56px;
+  --text-7xl: 56px;
 }
 
 /* Header la position:fixed cao 65px. Truoc day khong trang nao chua cho no,
