@@ -234,6 +234,8 @@
    --font-mono-sgs: var(--font-ibm-plex-mono), ui-monospace, monospace;
 
   /* Custom font sizes (compact scale) */
+   --font-size-micro-8: 8px;
+   --font-size-micro-10: 10px;
   --font-size-3xs: 10px;
   --font-size-2xs: 11px;
   --font-size-xs:  13px;

@@ -22,6 +22,8 @@ export default {
       fontSize: {
         // Eight visual steps. Legacy aliases remain available but collapse to these steps.
         '3xs': ['12px', { lineHeight: '16px' }],
+        'micro-8': ['8px', { lineHeight: '12px' }],
+        'micro-10': ['10px', { lineHeight: '14px' }],
         '2xs': ['12px', { lineHeight: '16px' }],
         'xs2': ['12px', { lineHeight: '16px' }],
         'xs3': ['12px', { lineHeight: '16px' }],
