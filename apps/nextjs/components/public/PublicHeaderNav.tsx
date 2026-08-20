@@ -6,7 +6,7 @@ import { useState, useEffect } from "react";
 import { createPortal } from "react-dom";
 import { usePathname } from "next/navigation";
 import { useLang, switchLangPath } from "@/components/shared/useLang";
-import { Sun, Moon, Globe, User, Menu, X, Sparkles } from "lucide-react";
+import { Sun, Moon, Globe, User, Menu, X, Sparkles, ChevronDown } from "lucide-react";
 
 type Lang = "vi" | "en";
 type Theme = "light" | "dark";
@@ -14,6 +14,7 @@ type Theme = "light" | "dark";
 export function PublicHeader({ authed = false }: { authed?: boolean }) {
   const [scrolled, setScrolled]   = useState(false);
   const [menuOpen, setMenuOpen]   = useState(false);
+  const [realEstateOpen, setRealEstateOpen] = useState(false);
   const [theme, setTheme]         = useState<Theme>("light");
   // mounted flag: prevents typeof-document server/client branch that triggers hydration mismatch
   const [mounted, setMounted]     = useState(false);
@@ -57,14 +58,17 @@ export function PublicHeader({ authed = false }: { authed?: boolean }) {
     window.location.assign(switchLangPath(pathname || "/", next));
   };
 
+  const realEstateLinks = [
+    { href: "/mua",                 vi: "Mua",           en: "Buy"          },
+    { href: "/thue",                vi: "Thuê",          en: "Rent"         },
+    { href: "/du-an",              vi: "Dự Án",        en: "Projects"     },
+  ];
   const navLinks = [
-    { href: "/du-an",                vi: "Dự Án",        en: "Projects"     },
     { href: "/ai-valuation",         vi: "Định Giá AI",  en: "AI Valuation" },
-    { href: "/marketplace?transaction=SALE", vi: "Mua",          en: "Buy"          },
-    { href: "/marketplace?transaction=RENT",vi: "Thuê",         en: "Rent"         },
     { href: "/news",                 vi: "Tin Tức",      en: "News"         },
     { href: "/contact",              vi: "Liên Hệ",      en: "Contact"      },
   ];
+  const localizedHref = (href: string) => lang === "en" ? "/en" + href : href;
 
   const isHero = false; // hero is light — always use the light header treatment
 
@@ -121,10 +125,52 @@ export function PublicHeader({ authed = false }: { authed?: boolean }) {
 
           {/* ── Desktop Nav ───────────────────────────────── */}
           <nav className="hidden lg:flex items-center gap-0.5">
+            <div
+              className="relative"
+              onMouseEnter={() => setRealEstateOpen(true)}
+              onMouseLeave={() => setRealEstateOpen(false)}
+            >
+              <button
+                type="button"
+                onClick={() => setRealEstateOpen(open => !open)}
+                className="flex items-center gap-1 px-3.5 py-2 rounded-lg text-sm font-medium transition-all"
+                style={{
+                  color: isHero ? "rgba(255,255,255,0.85)" : "var(--sgs-primary)",
+                  fontFamily: "var(--font-ui, var(--font-be-vietnam), sans-serif)",
+                }}
+                aria-haspopup="menu"
+                aria-expanded={realEstateOpen}
+              >
+                {lang === "vi" ? "Bất Động Sản" : "Real Estate"}
+                <ChevronDown className={`w-3.5 h-3.5 transition-transform ${realEstateOpen ? "rotate-180" : ""}`} />
+              </button>
+              <div
+                className={`absolute left-0 top-full mt-1 min-w-44 rounded-xl p-1.5 shadow-lg transition-all ${
+                  realEstateOpen ? "visible translate-y-0 opacity-100" : "invisible -translate-y-1 opacity-0"
+                }`}
+                style={{
+                  background: "var(--hdr-panel)",
+                  border: "1px solid var(--hdr-border)",
+                }}
+                role="menu"
+              >
+                {realEstateLinks.map(link => (
+                  <Link
+                    key={link.href}
+                    href={localizedHref(link.href)}
+                    className="block rounded-lg px-3 py-2 text-sm font-medium transition-colors hover:bg-[rgba(27,58,92,0.06)]"
+                    style={{ color: "var(--sgs-primary)" }}
+                    role="menuitem"
+                  >
+                    {lang === "vi" ? link.vi : link.en}
+                  </Link>
+                ))}
+              </div>
+            </div>
             {navLinks.map((link) => (
               <Link
                 key={link.href}
-                href={lang === "en" ? "/en" + link.href : link.href}
+                href={localizedHref(link.href)}
                 className="px-3.5 py-2 rounded-lg text-sm font-medium transition-all"
                 style={{
                   color: isHero ? "rgba(255,255,255,0.85)" : "var(--sgs-primary)",
@@ -246,10 +292,37 @@ export function PublicHeader({ authed = false }: { authed?: boolean }) {
           }}
         >
           <div className="max-w-7xl mx-auto px-4 py-4 space-y-1">
+            <button
+              type="button"
+              onClick={() => setRealEstateOpen(open => !open)}
+              className="w-full flex items-center justify-between px-3 py-2.5 rounded-lg text-sm font-medium transition-colors hover:bg-sgs-bg"
+              style={{ color: "var(--sgs-primary)" }}
+              aria-haspopup="menu"
+              aria-expanded={realEstateOpen}
+            >
+              <span>{lang === "vi" ? "Bất Động Sản" : "Real Estate"}</span>
+              <ChevronDown className={`w-4 h-4 transition-transform ${realEstateOpen ? "rotate-180" : ""}`} />
+            </button>
+            {realEstateOpen && (
+              <div className="ml-3 space-y-1 border-l border-[var(--hdr-border)] pl-2" role="menu">
+                {realEstateLinks.map(link => (
+                  <Link
+                    key={link.href}
+                    href={localizedHref(link.href)}
+                    onClick={() => setMenuOpen(false)}
+                    className="block px-3 py-2 rounded-lg text-sm font-medium transition-colors hover:bg-sgs-bg"
+                    style={{ color: "var(--sgs-primary)" }}
+                    role="menuitem"
+                  >
+                    {lang === "vi" ? link.vi : link.en}
+                  </Link>
+                ))}
+              </div>
+            )}
             {navLinks.map((link) => (
               <Link
                 key={link.href}
-                href={lang === "en" ? "/en" + link.href : link.href}
+                href={localizedHref(link.href)}
                 onClick={() => setMenuOpen(false)}
                 className="block px-3 py-2.5 rounded-lg text-sm font-medium transition-colors hover:bg-sgs-bg"
                 style={{ color: "var(--sgs-primary)" }}
