@@ -190,7 +190,7 @@ const Sidebar = memo(({
                 {!isMobile && (
                     <button
                         onClick={onToggleCollapse}
-                        className="absolute -right-2.5 top-8 w-7 h-7 bg-[var(--bg-sidebar)] border border-[var(--glass-border)] rounded-lg flex items-center justify-center text-[var(--text-tertiary)] hover:text-[var(--sgs-primary)] hover:bg-[var(--glass-surface-hover)] shadow-sm z-50 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--ui-focus)]"
+                        className={`absolute top-1/2 -translate-y-1/2 ${isCollapsed ? 'right-1' : 'right-3'} w-7 h-7 bg-transparent border-0 rounded-lg flex items-center justify-center text-[var(--text-tertiary)] hover:text-[var(--sgs-primary)] hover:bg-[var(--glass-surface-hover)] z-50 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--ui-focus)]`}
                         aria-label={isCollapsed ? "Mở rộng sidebar" : "Thu gọn sidebar"}
                         title={isCollapsed ? "Mở rộng sidebar" : "Thu gọn sidebar"}
                     >
