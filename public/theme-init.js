@@ -16,7 +16,7 @@
                document.querySelector('meta[name="theme-color"]');
     if (theme === 'dark') {
       document.documentElement.classList.add('dark');
-      if (meta) meta.setAttribute('content', '#0D1F33');
+       if (meta) meta.setAttribute('content', '#0E1620');
     } else {
       document.documentElement.classList.remove('dark');
       document.documentElement.classList.add('light');
@@ -51,12 +51,11 @@
           document.documentElement.style.setProperty('--primary-subtle', '#' + lr + lg + lb);
         }
       }
-      if (ct && ct.fontFamily && ct.fontFamily !== 'Inter') {
+      if (ct && ct.fontFamily) {
         var fontUrls = {
           'Be Vietnam Pro': 'https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@300;400;500;600;700;800&display=swap',
-          'Plus Jakarta Sans': 'https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap',
-          'Roboto': 'https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap',
-          'Open Sans': 'https://fonts.googleapis.com/css2?family=Open+Sans:wght@300;400;500;600;700&display=swap'
+          'Fraunces': 'https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&display=swap',
+          'IBM Plex Mono': 'https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&display=swap'
         };
         var url = fontUrls[ct.fontFamily];
         if (url) {
@@ -73,10 +72,10 @@
         if (sz) document.documentElement.style.setProperty('--custom-font-size', sz);
       }
       var bgRules = [];
-      bgRules.push('--bg-app: #FFFFFF;');
-      bgRules.push('--bg-sidebar: #FFFFFF;');
-      bgRules.push('--bg-surface: #FFFFFF;');
-      bgRules.push('--bg-elevated: #FFFFFF;');
+       bgRules.push('--bg-app: var(--ui-bg);');
+       bgRules.push('--bg-sidebar: var(--ui-brand);');
+       bgRules.push('--bg-surface: var(--ui-surface);');
+       bgRules.push('--bg-elevated: var(--ui-surface-raised);');
       if (bgRules.length > 0) {
         var styleEl = document.createElement('style');
         styleEl.id = 'sgs-custom-theme-bg';

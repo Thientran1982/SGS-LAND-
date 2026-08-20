@@ -33,9 +33,9 @@ const eventLabels: Record<AuditEvent['event_type'], string> = {
 };
 
 const eventColors: Record<AuditEvent['event_type'], string> = {
-  CHAT_MESSAGE: 'bg-sky-500',
-  TOOL_EXECUTION: 'bg-violet-500',
-  ENTITY_OBSERVED: 'bg-emerald-500',
+  CHAT_MESSAGE: 'bg-[var(--ui-info)]',
+  TOOL_EXECUTION: 'bg-[var(--ui-accent)]',
+  ENTITY_OBSERVED: 'bg-[var(--ui-success)]',
 };
 
 function prettyJson(value: unknown) {
@@ -53,7 +53,7 @@ function shortId(value?: string) {
 }
 
 const AuditDetail = ({ event, onClose }: { event: AuditEvent; onClose: () => void }) => (
-  <div className="fixed inset-0 z-[180] flex items-center justify-center bg-slate-950/50 p-4 backdrop-blur-sm" role="dialog" aria-modal="true" aria-label="Chi tiết nhật ký">
+  <div className="fixed inset-0 z-[180] flex items-center justify-center bg-[color-mix(in_srgb,var(--ui-brand-strong)_55%,transparent)] p-4 backdrop-blur-sm" role="dialog" aria-modal="true" aria-label="Chi tiết nhật ký">
     <div className="max-h-[90vh] w-full max-w-3xl overflow-hidden rounded-2xl bg-[var(--bg-surface)] shadow-2xl">
       <div className="flex items-start justify-between border-b border-[var(--glass-border)] p-5">
         <div>
@@ -73,7 +73,7 @@ const AuditDetail = ({ event, onClose }: { event: AuditEvent; onClose: () => voi
         <div className="grid gap-4 lg:grid-cols-3">
           {([
             ['Input', event.input_json], ['Output', event.output_json], ['Metadata', event.metadata_json],
-          ] as Array<[string, unknown]>).map(([label, value]) => <div key={label} className="min-w-0"><p className="mb-2 text-xs font-bold uppercase tracking-wider text-[var(--text-secondary)]">{label}</p><pre className="max-h-72 overflow-auto rounded-xl bg-slate-950 p-3 text-[11px] leading-relaxed text-slate-200">{prettyJson(value)}</pre></div>)}
+          ] as Array<[string, unknown]>).map(([label, value]) => <div key={label} className="min-w-0"><p className="mb-2 text-xs font-bold uppercase tracking-wider text-[var(--text-secondary)]">{label}</p><pre className="max-h-72 overflow-auto rounded-xl bg-[var(--ui-brand-strong)] p-3 text-[11px] leading-relaxed text-[var(--ui-text-inverse)]">{prettyJson(value)}</pre></div>)}
         </div>
       </div>
     </div>

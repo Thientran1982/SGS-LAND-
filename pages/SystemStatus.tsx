@@ -33,7 +33,7 @@ const LogViewer = memo(({ logs, isPaused, togglePause, onClear, t }: { logs: Log
         }
     }, [logs, autoScroll]);
     return (
-                <div className="bg-[#0f1117] rounded-3xl shadow-xl overflow-hidden flex flex-col h-[600px] border border-slate-800 animate-enter ring-1 ring-white/10">
+                <div className="bg-[var(--ui-surface-raised)] rounded-3xl shadow-xl overflow-hidden flex flex-col h-[600px] border border-[var(--ui-border)] animate-enter ring-1 ring-[var(--ui-border)]">
             <div className="flex justify-between items-center p-3 border-b border-white/5 bg-[var(--bg-surface)]/5">
                 <div className="flex items-center gap-2">
                     <div className="w-2 h-2 rounded-full bg-sgs-verified animate-pulse"></div>
@@ -44,7 +44,7 @@ const LogViewer = memo(({ logs, isPaused, togglePause, onClear, t }: { logs: Log
                     <button onClick={togglePause} className="p-1.5 hover:bg-[var(--bg-surface)]/10 rounded text-[var(--text-secondary)] hover:text-white transition-colors" title={isPaused ? t('system.btn_resume') : t('system.btn_pause')}>
                         {isPaused ? ICONS.PLAY : ICONS.PAUSE}
                     </button>
-                    <button onClick={onClear} className="p-1.5 hover:bg-[var(--bg-surface)]/10 rounded text-[var(--text-secondary)] hover:text-rose-400 transition-colors" title={t('common.delete')}>
+                    <button onClick={onClear} className="p-1.5 hover:bg-[var(--ui-surface-hover)] rounded text-[var(--text-secondary)] hover:text-[var(--ui-danger)] transition-colors" title={t('common.delete')}>
                         {ICONS.TRASH}
                     </button>
                 </div>
@@ -65,7 +65,7 @@ const LogViewer = memo(({ logs, isPaused, togglePause, onClear, t }: { logs: Log
                         <span className="text-[var(--text-tertiary)] shrink-0 select-none w-16">
                             {new Date(log.timestamp).toLocaleTimeString([], { hour12: false, minute: '2-digit', second: '2-digit' })}
                         </span>
-                        <span className={`shrink-0 font-bold w-12 ${log.level === 'ERROR' ? 'text-rose-500' : log.level === 'WARN' ? 'text-amber-500' : 'text-emerald-500'}`}>
+                        <span className={`shrink-0 font-bold w-12 ${log.level === 'ERROR' ? 'text-[var(--ui-danger)]' : log.level === 'WARN' ? 'text-[var(--ui-warning)]' : 'text-[var(--ui-success)]'}`}>
                             {log.level}
                         </span>
                         <span className="text-[var(--text-secondary)] group-hover:text-slate-200">
@@ -82,8 +82,8 @@ const LogViewer = memo(({ logs, isPaused, togglePause, onClear, t }: { logs: Log
     );
 });
 const HealthHero = memo(({ health, theme, onBackup, onRestore, isRestoring, t }: { health: SystemHealth, theme: any, onBackup: () => void, onRestore: () => void, isRestoring: boolean, t: any }) => {
-    const statusColor = health.status === 'HEALTHY' ? 'text-emerald-500' : health.status === 'DEGRADED' ? 'text-amber-500' : 'text-rose-500';
-    const borderColor = health.status === 'HEALTHY' ? 'border-emerald-500' : health.status === 'DEGRADED' ? 'border-amber-500' : 'border-rose-500';
+    const statusColor = health.status === 'HEALTHY' ? 'text-[var(--ui-success)]' : health.status === 'DEGRADED' ? 'text-[var(--ui-warning)]' : 'text-[var(--ui-danger)]';
+    const borderColor = health.status === 'HEALTHY' ? 'border-[var(--ui-success)]' : health.status === 'DEGRADED' ? 'border-[var(--ui-warning)]' : 'border-[var(--ui-danger)]';
     const primaryColor = theme?.colors?.primary || 'var(--sgs-primary)';
     return (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 animate-enter">

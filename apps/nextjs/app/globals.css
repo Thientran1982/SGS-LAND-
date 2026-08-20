@@ -36,6 +36,8 @@
     --ui-focus: #1B5E8A;
     --ui-on-brand: #FFFFFF;
     --ui-on-accent: #16202B;
+    --ui-shadow-sm: 0 1px 2px rgba(21,34,50,.08);
+    --ui-shadow-md: 0 8px 24px rgba(21,34,50,.12);
     /* Backgrounds */
     --bg-app:      var(--ui-bg);
     --bg-surface:  var(--ui-surface);
@@ -117,6 +119,8 @@
     --ui-focus: #8DC7F0;
     --ui-on-brand: #0E1620;
     --ui-on-accent: #0E1620;
+    --ui-shadow-sm: 0 1px 2px rgba(0,0,0,.24);
+    --ui-shadow-md: 0 12px 30px rgba(0,0,0,.3);
     --bg-app:      var(--ui-bg);
     --bg-surface:  var(--ui-surface);
     --bg-elevated: #1C2C3E;
@@ -168,6 +172,40 @@
 }
 
 @layer components {
+  /* Keep functional controls identical to the CRM/Vite application. */
+  .ui-button {
+    display: inline-flex;
+    min-width: 0;
+    align-items: center;
+    justify-content: center;
+    gap: .5rem;
+    border: 1px solid transparent;
+    border-radius: var(--ui-radius-md);
+    font-family: var(--font-ui);
+    font-size: .875rem;
+    font-weight: 600;
+    line-height: 1.25rem;
+    white-space: nowrap;
+    transition: background-color 160ms ease, border-color 160ms ease, color 160ms ease, box-shadow 160ms ease, transform 160ms ease;
+    outline: none;
+  }
+  .ui-button:focus-visible {
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--ui-focus) 28%, transparent);
+    border-color: var(--ui-focus);
+  }
+  .ui-button:hover:not(:disabled) { transform: translateY(-1px); }
+  .ui-button:active:not(:disabled) { transform: translateY(0); }
+  .ui-button:disabled { cursor: not-allowed; opacity: .52; }
+  .ui-button-primary { background: var(--ui-brand); color: var(--ui-on-brand); box-shadow: var(--ui-shadow-sm); }
+  .ui-button-primary:hover:not(:disabled) { background: var(--ui-brand-strong); }
+  .ui-button-secondary { background: var(--ui-surface); color: var(--ui-brand); border-color: var(--ui-border-strong); }
+  .ui-button-secondary:hover:not(:disabled) { background: var(--ui-surface-hover); }
+  .ui-button-accent { background: var(--ui-accent); color: var(--ui-on-accent); box-shadow: var(--ui-shadow-sm); }
+  .ui-button-accent:hover:not(:disabled) { background: var(--ui-accent-strong); }
+  .ui-button-danger { background: var(--ui-danger); color: var(--ui-text-inverse); }
+  .ui-button-danger:hover:not(:disabled) { filter: brightness(.92); }
+  .ui-button-ghost { background: transparent; color: var(--ui-text-secondary); }
+  .ui-button-ghost:hover:not(:disabled) { background: var(--ui-surface-hover); color: var(--ui-text); }
   .ui-public-footer {
     background: var(--ui-brand-strong) !important;
     border-top-color: color-mix(in srgb, var(--ui-accent) 30%, transparent) !important;

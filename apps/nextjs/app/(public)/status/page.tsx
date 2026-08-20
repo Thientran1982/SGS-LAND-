@@ -36,7 +36,7 @@ export default function StatusPage() {
       {/* Operational hero */}
       <div
         className="p-8 rounded-3xl mb-10 flex items-center justify-between gap-4"
-        style={{ background: "var(--primary-600)", color: "#fff" }}
+        style={{ background: "var(--ui-brand)", color: "var(--ui-on-brand)" }}
       >
         <div>
           <h1 className="text-2xl md:text-3xl font-bold mb-2">
@@ -44,8 +44,8 @@ export default function StatusPage() {
           </h1>
           <p className="opacity-90 font-medium">Cập nhật lúc {updatedAt}</p>
         </div>
-        <div className="w-16 h-16 rounded-2xl flex items-center justify-center shrink-0" style={{ background: "rgba(255,255,255,0.18)" }}>
-          <CheckCircle className="w-8 h-8 text-white" />
+        <div className="w-16 h-16 rounded-2xl flex items-center justify-center shrink-0" style={{ background: "color-mix(in srgb, var(--ui-on-brand) 18%, transparent)" }}>
+          <CheckCircle className="w-8 h-8" style={{ color: "var(--ui-on-brand)" }} />
         </div>
       </div>
 
@@ -62,14 +62,14 @@ export default function StatusPage() {
             <div
               key={i}
               className="flex-1 rounded-sm"
-              style={{ height: `${b.height}%`, background: b.degraded ? "#f59e0b" : "#10b981" }}
+              style={{ height: `${b.height}%`, background: b.degraded ? "var(--ui-warning)" : "var(--ui-success)" }}
               title={b.degraded ? "Hiệu năng giảm nhẹ" : "Hoạt động tốt"}
             />
           ))}
         </div>
         <div className="flex justify-between text-xs font-bold mt-3 uppercase tracking-wider" style={{ color: "var(--text-tertiary)" }}>
           <span>90 ngày trước</span>
-          <span style={{ color: "#10b981" }}>99,99%</span>
+          <span style={{ color: "var(--ui-success)" }}>99,99%</span>
           <span>Hôm nay</span>
         </div>
       </div>
@@ -87,10 +87,10 @@ export default function StatusPage() {
           >
             <span className="font-bold" style={{ color: "var(--text-secondary)" }}>{name}</span>
             <div className="flex items-center gap-2">
-              <span className="text-xs font-bold uppercase tracking-wider" style={{ color: "#10b981" }}>
+              <span className="text-xs font-bold uppercase tracking-wider" style={{ color: "var(--ui-success)" }}>
                 Hoạt động tốt
               </span>
-              <div className="w-2 h-2 rounded-full" style={{ background: "#10b981" }} />
+              <div className="w-2 h-2 rounded-full" style={{ background: "var(--ui-success)" }} />
             </div>
           </div>
         ))}

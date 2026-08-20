@@ -58,7 +58,7 @@ html.dark {
   --ui-radius-lg: .875rem;
   --ui-radius-pill: 999px;
   /* === SGS LAND DESIGN TOKENS — WCAG CERTIFIED (Light Mode) === */
-  --sgs-bg:               var(--ui-surface);
+  --sgs-bg:               var(--ui-bg);
   --sgs-surface:          var(--ui-surface);
   --sgs-primary:          var(--ui-brand);
   --sgs-primary-deep:     var(--ui-brand-strong);
@@ -116,8 +116,8 @@ html.dark {
   /* === SGS LAND DESIGN TOKENS — WCAG CERTIFIED (Dark Mode) === */
   --sgs-bg:             var(--ui-bg);
   --sgs-surface:        var(--ui-surface);
-  --sgs-primary:        var(--ui-brand-strong);
-  --sgs-primary-deep:   #1B3A5C;
+   --sgs-primary:        var(--ui-brand);
+   --sgs-primary-deep:   var(--ui-brand-strong);
   --sgs-accent:         var(--ui-accent);
   --sgs-accent-text:    var(--ui-accent-strong);
   --sgs-text:           var(--ui-text);
@@ -125,7 +125,7 @@ html.dark {
   --sgs-text-heading:   var(--ui-brand);
   --sgs-verified:       var(--ui-success);
   --sgs-hero-deep:      #0A1E33;
-  --sgs-champagne:      rgba(212,168,85,0.12); /* warm-tinted dark surface (spec) */
+   --sgs-champagne:      var(--ui-accent-strong);
   --sgs-on-dark-muted:  var(--ui-text-secondary);
   --sgs-subtle-bg:      var(--ui-surface-subtle);
   --sgs-border:         var(--ui-border);
