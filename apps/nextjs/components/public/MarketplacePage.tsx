@@ -426,7 +426,7 @@ export function MarketplacePage({ initialListings, totalCount, totalPages, searc
   const handleSearch = (e: React.FormEvent) => { e.preventDefault(); saveRecentSearch(search.trim()); setHeroOpen(false); setParam("q", search.trim()); };
   const currentPage = parseInt(sp.page ?? "1");
   const activePriceLabel = (PRICE_OPTIONS(lang).find((pr) => pr.min === (sp.minPrice ?? "") && pr.max === (sp.maxPrice ?? "")) || PRICE_OPTIONS(lang)[0]).label;
-  const activeFilterCount = [sp.type, sp.area, sp.minPrice, sp.maxPrice, sp.sort, sp.legalStatus, sp.direction].filter(Boolean).length;
+  const activeFilterCount = [sp.type, sp.area, (sp.minPrice || sp.maxPrice) ? "price" : "", sp.sort, sp.legalStatus, sp.direction].filter(Boolean).length;
   const activeTab = sp.type === "PROJECT" ? "PROJECT" : (sp.transaction === "SALE" || sp.transaction === "RENT" ? sp.transaction : "");
   const setTransactionTab = (tab) => {
     pushParams((p) => {
@@ -475,7 +475,7 @@ export function MarketplacePage({ initialListings, totalCount, totalPages, searc
                 style={{ background: "var(--bg-surface)", color: "var(--text-tertiary)" }}>
                 <Search className="w-4 h-4 shrink-0" />
                 <span className="flex-1 text-sm truncate">{tt(lang, "T\u00ecm theo t\u00ean, d\u1ef1 \u00e1n, khu v\u1ef1c, m\u00e3 code...", "Search by name, project, area or code...")}</span>
-                <span className="text-[11px] px-1.5 py-0.5 rounded border shrink-0 hidden sm:inline" style={{ borderColor: "var(--border-default)" }}>K</span>
+                <span className="text-xs px-1.5 py-0.5 rounded border shrink-0 hidden sm:inline" style={{ borderColor: "var(--border-default)" }}>K</span>
               </button>
             ) : (
               <div className="rounded-2xl shadow-2xl overflow-hidden" style={{ background: "var(--bg-surface)" }}>
