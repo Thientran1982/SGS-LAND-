@@ -55,7 +55,9 @@ const S: Record<string, React.CSSProperties> = {
     borderColor: CSS("--cw-line", "#EAE4D4"),
     color: CSS("--cw-ink", "#26221C"),
   },
-  bar: { background: CSS("--cw-paper", "#FFFFFF"), borderColor: CSS("--cw-line", "#EAE4D4") },
+  // Composer belongs to the panel surface; using --cw-paper here created a
+  // white horizontal strip against the parchment chat background.
+  bar: { background: CSS("--cw-parchment", "#F5F1E6"), borderColor: CSS("--cw-line", "#EAE4D4") },
 };
 
 export interface MinhChatPanelProps {
@@ -285,7 +287,7 @@ export function MinhChatPanel({
   }, [stopRecordingInternal, send]);
 
   const wrapper =
-    "flex flex-col rounded-2xl border overflow-hidden " +
+    "flex flex-col rounded-[20px] border overflow-hidden " +
     className;
 
   if (!ready) {
@@ -297,7 +299,10 @@ export function MinhChatPanel({
   }
 
   return (
-    <div className={wrapper + " " + heightClass} style={S.panel}>
+      <div
+        className={wrapper + " " + heightClass}
+        style={{ ...S.panel, borderRadius: "20px", overflow: "hidden" }}
+      >
       {showHeader && (
         <div className="flex items-center gap-3 px-4 py-3 border-b" style={S.header}>
           <div className="w-9 h-9 rounded-full flex items-center justify-center shrink-0" style={S.brand}>
