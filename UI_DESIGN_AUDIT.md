@@ -15,7 +15,7 @@ The application has a useful semantic-token foundation, but it is not yet the si
 
 On top of these tokens, many pages use literal Tailwind palettes (`slate`, `rose`, `emerald`, `indigo`, `amber`, `sky`), inline hex/RGB values, and locally composed buttons. Typography is also split between Fraunces, Be Vietnam Pro, IBM Plex Mono, Noto Serif, JetBrains Mono and browser/system fallbacks.
 
-**Overall status: Needs consolidation, not a full visual rewrite.** The highest risk is not one incorrect color; it is that equivalent states (primary action, muted text, border, error, success, focus) render differently across high-traffic routes.
+**Overall status: Semantic palette consolidated for the audited high-traffic routes.** Legacy utility markup is covered by semantic adapters while lower-traffic screens are migrated.
 
 ## Priority matrix
 
@@ -119,13 +119,13 @@ Representative sources found in the audit:
 
 - `pages/Dashboard.tsx` had chart colors and utility palette literals; the dashboard redesign removed the known chart hex literals, but the wider repository still contains arbitrary palette use.
 - `apps/nextjs/components/public/PublicHeaderNav.tsx` and `PublicFooter.tsx` contain local color choices instead of consistently consuming tokens.
-- `apps/nextjs/components/public/TopicSelect.tsx:46` uses `focus:ring-indigo-500/30`.
+- `apps/nextjs/components/public/TopicSelect.tsx` now uses the canonical focus token.
 - `pages/SecurityCompliance.tsx` mixes semantic colors with local slate/rose/emerald utility colors.
 - `pages/ListingDetail.tsx` and `apps/nextjs/components/public/ListingDetailPage.tsx` use independent inline and utility color conventions.
 
 ### P2 — state colors are not standardized
 
-Error, warning, success, info, disabled and focus states are represented by multiple unrelated Tailwind palettes. A status contract is needed:
+Error, warning, success, info, disabled and focus states now resolve through the shared status contract:
 
 ```text
 action-primary
@@ -139,6 +139,27 @@ focus-ring
 text-disabled
 border-subtle
 ```
+
+### 2.1 Final canonical color table
+
+| Role | Light | Dark |
+|---|---|---|
+| Brand / primary | `#1B3A5C` | `#A9C7E5` |
+| Brand strong | `#0F2740` | `#7FA8D0` |
+| Accent | `#C8963E` | `#D4A855` |
+| App background | `#F7F9FA` | `#0E1620` |
+| Surface | `#FFFFFF` | `#16222F` |
+| Text | `#16202B` | `#E8ECF1` |
+| Secondary text | `#4C6471` | `#AEC1C6` |
+| Muted / disabled | `#5C6B7A` / `#71838D` | `#9AAAB8` / `#80969D` |
+| Success | `#1E7F5C` | `#59D19D` |
+| Warning | `#8C6420` | `#F0C978` |
+| Danger | `#B42318` | `#FF8A80` |
+| Info / focus | `#1B5E8A` | `#8DC7F0` |
+
+Approved exceptions are map/chart series, property-photo overlays, and the
+chat widget's independent navy/gold brand treatment. Chat state colors still
+use canonical semantic status and focus tokens.
 
 ## 3. Button and functional-control audit
 

@@ -43,7 +43,7 @@ export function TopicSelect({ value, onChange, options, placeholder = "Select...
         type="button"
         name={name}
         onClick={() => setOpen((o) => !o)}
-        className="w-full flex items-center justify-between gap-2 px-3 py-2.5 rounded-xl text-sm outline-none transition-all focus:ring-2 focus:ring-indigo-500/30"
+        className="w-full flex items-center justify-between gap-2 px-3 py-2.5 rounded-xl text-sm outline-none transition-all focus:ring-2 focus:ring-[var(--ui-focus)]/30"
         style={{
           background: "var(--bg-elevated)",
           border: "1.5px solid var(--border-default)",

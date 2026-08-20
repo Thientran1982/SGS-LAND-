@@ -451,20 +451,20 @@
 :root {
   /* Nen header lay dung tong kem cua trang (truoc day trang thuan => lech mau,
      doc nhu mot vat lieu khac dan len trang). Mot duong hairline, khong do bong. */
-  --hdr-bg: rgba(247,244,238,0.82);
-  --hdr-panel: rgba(247,244,238,0.98);
-  --hdr-border: rgba(27,58,92,0.10);
+  --hdr-bg: color-mix(in srgb, var(--ui-bg) 82%, transparent);
+  --hdr-panel: color-mix(in srgb, var(--ui-bg) 98%, transparent);
+  --hdr-border: color-mix(in srgb, var(--ui-brand) 10%, transparent);
   --hdr-shadow: none;
-  --hdr-chip: rgba(27,58,92,0.07);
-  --hdr-muted: rgba(27,58,92,0.72);
+  --hdr-chip: color-mix(in srgb, var(--ui-brand) 7%, transparent);
+  --hdr-muted: color-mix(in srgb, var(--ui-brand) 72%, transparent);
 }
 .dark {
-  --hdr-bg: rgba(11,15,26,0.82);
-  --hdr-panel: rgba(11,15,26,0.98);
-  --hdr-border: rgba(255,255,255,0.08);
+  --hdr-bg: color-mix(in srgb, var(--ui-bg) 82%, transparent);
+  --hdr-panel: color-mix(in srgb, var(--ui-bg) 98%, transparent);
+  --hdr-border: color-mix(in srgb, var(--ui-text-inverse) 8%, transparent);
   --hdr-shadow: none;
-  --hdr-chip: rgba(255,255,255,0.08);
-  --hdr-muted: rgba(226,235,245,0.78);
+  --hdr-chip: color-mix(in srgb, var(--ui-text) 8%, transparent);
+  --hdr-muted: color-mix(in srgb, var(--ui-text) 78%, transparent);
 }
 
 /* Nut phu trong header: khong vien, chi hien nen khi hover */
@@ -560,3 +560,12 @@ main.sgs-main:has(> .lp-root) { padding-top: 0; }
 
 /* SGS Chat Widget v2  voice recording indicator */
 @keyframes cwBlink { 0%, 100% { opacity: 1; } 50% { opacity: .25; } }
+
+/* Semantic state adapters for legacy public-route utility markup. Decorative
+   map/chart series retain their intentional palette. */
+.text-rose-500, .text-rose-600, .text-red-600 { color: var(--ui-danger); }
+.text-emerald-500, .text-emerald-600, .text-emerald-700 { color: var(--ui-success); }
+.text-indigo-500, .text-blue-500, .text-blue-600 { color: var(--ui-info); }
+.bg-rose-50, .bg-red-50 { background: color-mix(in srgb, var(--ui-danger) 10%, transparent); }
+.bg-emerald-50, .bg-emerald-100 { background: color-mix(in srgb, var(--ui-success) 12%, transparent); }
+.border-rose-100, .border-red-200 { border-color: color-mix(in srgb, var(--ui-danger) 25%, transparent); }

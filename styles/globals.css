@@ -282,6 +282,32 @@ html.dark body {
   .ui-badge-info { color: var(--ui-info); background: color-mix(in srgb, var(--ui-info) 12%, transparent); }
 }
 @keyframes ui-spin { to { transform: rotate(360deg); } }
+
+/* Legacy route adapters: keep existing utility markup on the canonical
+   semantic palette while individual screens are migrated to UI primitives. */
+.sgs-dashboard .text-rose-600,
+.sgs-dashboard .text-rose-500,
+.sgs-dashboard .text-red-500 { color: var(--ui-danger) !important; }
+.sgs-dashboard .text-emerald-600,
+.sgs-dashboard .text-emerald-700,
+.sgs-dashboard .text-green-600 { color: var(--ui-success) !important; }
+.sgs-dashboard .text-blue-600,
+.sgs-dashboard .text-indigo-600 { color: var(--ui-info) !important; }
+.sgs-dashboard .bg-rose-50,
+.sgs-dashboard .bg-red-50 { background: color-mix(in srgb, var(--ui-danger) 10%, transparent) !important; }
+.sgs-dashboard .bg-emerald-50,
+.sgs-dashboard .bg-emerald-100 { background: color-mix(in srgb, var(--ui-success) 12%, transparent) !important; }
+.sgs-dashboard .border-rose-100,
+.sgs-dashboard .border-red-500 { border-color: color-mix(in srgb, var(--ui-danger) 25%, transparent) !important; }
+.sgs-dashboard .hover\:text-rose-500:hover { color: var(--ui-danger) !important; }
+.sgs-dashboard .hover\:bg-rose-50:hover { background: color-mix(in srgb, var(--ui-danger) 10%, transparent) !important; }
+
+/* Security/compliance uses the same state roles, including its portalled toast. */
+.text-rose-500, .text-rose-600 { color: var(--ui-danger); }
+.text-blue-500 { color: var(--ui-info); }
+.text-emerald-100 { color: var(--ui-on-brand); }
+.bg-rose-50 { background: color-mix(in srgb, var(--ui-danger) 10%, transparent); }
+.border-rose-100 { border-color: color-mix(in srgb, var(--ui-danger) 25%, transparent); }
 /* Animations */
 .animate-enter {
   animation: soft-enter 0.18s ease-out forwards;

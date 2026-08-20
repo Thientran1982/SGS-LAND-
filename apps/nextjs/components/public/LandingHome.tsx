@@ -28,18 +28,18 @@ const STYLE = `
 
   /* light / dark token bridge */
   .lp-root {
-    --lp-bg:    #F7F4EC; --lp-paper: #FBF9F3; --lp-ink: #152232;
-    --lp-muted: #68727F; --lp-soft:  #9AA2AC; --lp-hair: #E2DDD0;
-    --lp-line:  #C9C2B0; --lp-navy:  #1B3A5C; --lp-gold: #BE8F14;
-    --lp-ok:    #178A52; --lp-shadow: rgba(21,34,50,.14);
-    --lp-cardbg:#FBF9F3; --lp-navbg: rgba(247,244,236,.88);
+    --lp-bg: var(--ui-bg); --lp-paper: var(--ui-surface); --lp-ink: var(--ui-text);
+    --lp-muted: var(--ui-text-secondary); --lp-soft: var(--ui-text-disabled); --lp-hair: var(--ui-border);
+    --lp-line: var(--ui-border-strong); --lp-navy: var(--ui-brand); --lp-gold: var(--ui-accent-strong);
+    --lp-ok: var(--ui-success); --lp-shadow: var(--ui-shadow-md);
+    --lp-cardbg: var(--ui-surface); --lp-navbg: color-mix(in srgb, var(--ui-bg) 88%, transparent);
   }
   .dark .lp-root {
-    --lp-bg:    #0E1621; --lp-paper: #152232; --lp-ink: #EDEAE0;
-    --lp-muted: #93A0B0; --lp-soft:  #6C7887; --lp-hair: #25334A;
-    --lp-line:  #31435F; --lp-navy:  #7FA8D4; --lp-gold: #D9B048;
-    --lp-ok:    #3FBF7F; --lp-shadow: rgba(0,0,0,.5);
-    --lp-cardbg:#16273C; --lp-navbg: rgba(14,22,33,.88);
+    --lp-bg: var(--ui-bg); --lp-paper: var(--ui-surface); --lp-ink: var(--ui-text);
+    --lp-muted: var(--ui-text-secondary); --lp-soft: var(--ui-text-disabled); --lp-hair: var(--ui-border);
+    --lp-line: var(--ui-border-strong); --lp-navy: var(--ui-brand-strong); --lp-gold: var(--ui-accent);
+    --lp-ok: var(--ui-success); --lp-shadow: var(--ui-shadow-md);
+    --lp-cardbg: var(--ui-surface-raised); --lp-navbg: color-mix(in srgb, var(--ui-bg) 88%, transparent);
   }
 
   /* pin animations */
