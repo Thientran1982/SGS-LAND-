@@ -544,7 +544,7 @@ export function MarketplacePage({ initialListings, totalCount, totalPages, searc
       </div>
       {/* Primary row: transaction segmented control + view switcher */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 pb-1 mb-3">
-        <div className="flex items-center gap-1 p-0.5 rounded-lg w-full sm:w-auto" style={{ background: "var(--primary-subtle)", border: "1px solid var(--border-default)" }}>
+        <div className="flex items-center gap-1 p-0.5 rounded-lg w-full sm:w-auto" style={{ background: "var(--bg-app)" }}>
           <button type="button" onClick={() => setTransactionTab("SALE")}
             className="px-3 sm:px-4 h-9 rounded-md text-sm font-semibold transition-colors whitespace-nowrap"
             style={activeTab === "SALE" ? { background: "var(--primary-600)", color: "var(--text-inverse)" } : { color: "var(--text-secondary)" }}>
@@ -567,12 +567,12 @@ export function MarketplacePage({ initialListings, totalCount, totalPages, searc
             className="sm:hidden h-9 px-3 rounded-lg flex items-center gap-2 text-sm font-semibold transition-colors"
             style={filtersOpen || activeFilterCount > 0
               ? { background: "var(--primary-600)", color: "var(--text-inverse)" }
-              : { background: "var(--primary-subtle)", color: "var(--primary-600)", border: "1px solid var(--border-default)" }}>
+              : { background: "var(--bg-app)", color: "var(--primary-600)" }}>
             <SlidersHorizontal className="w-4 h-4" />
             <span>{tt(lang, "Bộ lọc", "Filters")}</span>
             {activeFilterCount > 0 && <span className="min-w-5 h-5 px-1 rounded-full text-xs flex items-center justify-center" style={{ background: filtersOpen ? "rgba(255,255,255,.22)" : "var(--primary-600)", color: "var(--text-inverse)" }}>{activeFilterCount}</span>}
           </button>
-          <div className="flex self-end p-0.5 rounded-lg shrink-0" style={{ background: "var(--primary-subtle)", border: "1px solid var(--border-default)" }}>
+          <div className="flex self-end p-0.5 rounded-lg shrink-0" style={{ background: "var(--bg-app)" }}>
           {VIEWS.map((v) => {
             const Icon = v.icon;
             const active = view === v.id;
