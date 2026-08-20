@@ -16,6 +16,7 @@ import { Router, Request, Response } from 'express';
 import { liveChatEngine } from '../ai/liveChatEngine';
 import { logger } from '../middleware/logger';
 import { sendAiError } from '../utils/aiErrorHandler';
+import { detectGuideDataGroup, renderGuideDataSummary } from '../ai/guideDataSources';
 
 const AI_TOOLS = new Set([
     'handle_live_chat',
@@ -31,6 +32,7 @@ const GUIDE_SAFE_TOOLS = new Set([
     'get_valuation_methodology',
     'get_price_index',
     'get_longthanh_market',
+    'get_guide_data_summary',
 ]);
 
 export function createLiveChatAgentRoutes(
@@ -83,7 +85,19 @@ export function createLiveChatAgentRoutes(
                 });
             }
 
-            const args = { ...((req.body as Record<string, any>) || {}), tenantId: user.tenantId };
+            const body = (req.body as Record<string, any>) || {};
+            if (toolName === 'get_guide_data_summary') {
+                const validGroups = new Set(['dashboard', 'leads', 'inventory', 'inbox', 'contracts']);
+                if (!validGroups.has(body.group) || !['vn', 'en'].includes(body.language)) {
+                    return res.status(400).json({
+                        error: 'group hoặc language không hợp lệ.',
+                        code: 'GUIDE_DATA_CONTRACT_INVALID',
+                    });
+                }
+            }
+            const args = toolName === 'get_guide_data_summary'
+                ? { group: body.group, timeRange: body.timeRange, language: body.language, tenantId: user.tenantId, userId: user.id, role: user.role }
+                : { ...body, tenantId: user.tenantId };
             const t0 = Date.now();
 
             try {
@@ -104,6 +118,7 @@ export function createLiveChatAgentRoutes(
     router.post('/chat', authenticateToken, aiRateLimit, async (req: Request, res: Response) => {
         const user = (req as any).user;
         const { message, sessionId, context } = (req.body as any) || {};
+        const language = context?.language === 'en' ? 'en' : context?.language === 'vn' ? 'vn' : null;
 
         if (!message || typeof message !== 'string' || !message.trim()) {
             return res.status(400).json({ error: 'message không được trống.' });
@@ -113,11 +128,37 @@ export function createLiveChatAgentRoutes(
             // Do not send guide questions through handle_live_chat: that
             // dispatcher can select CRM tools from user-controlled keywords.
             if (context?.mode === 'platform_guide') {
+                if (!language) {
+                    return res.status(400).json({ error: 'language phải là vn hoặc en.', code: 'GUIDE_LANGUAGE_INVALID' });
+                }
+                const group = detectGuideDataGroup(message);
+                if (group) {
+                    const data = await liveChatEngine.callTool('get_guide_data_summary', {
+                        tenantId: user.tenantId,
+                        userId: user.id,
+                        role: user.role,
+                        group,
+                        timeRange: context?.timeRange || '30d',
+                        language,
+                    });
+                    return res.json({
+                        sessionId,
+                        intent: `GUIDE_${group.toUpperCase()}`,
+                        response: renderGuideDataSummary(data),
+                        sources: [{ tool: 'get_guide_data_summary', source: 'Scoped CRM summary' }],
+                        dataScope: data.scope,
+                        freshness: data.freshness,
+                        status: data.status,
+                        group,
+                        executedTools: ['get_guide_data_summary'],
+                    });
+                }
                 const knowledge = await liveChatEngine.callTool('get_platform_knowledge', {
                     tenantId: user.tenantId,
                     domain: 'platform',
                     query: message.slice(0, 600),
                     sessionId,
+                    language,
                 });
                 return res.json({
                     sessionId,
@@ -127,6 +168,7 @@ export function createLiveChatAgentRoutes(
                         : 'Tôi chưa có thông tin hướng dẫn đã xác minh cho câu hỏi này.',
                     sources: knowledge?.source ? [{ tool: 'get_platform_knowledge', source: knowledge.source }] : [],
                     groundingStatus: knowledge?.knowledge ? 'GROUNDED' : 'INSUFFICIENT_DATA',
+                    language,
                     executedTools: ['get_platform_knowledge'],
                 });
             }
@@ -174,7 +216,11 @@ export function createLiveChatAgentRoutes(
     // ── POST /knowledge — shortcut: get_platform_knowledge ───────────────
     router.post('/knowledge', authenticateToken, aiRateLimit, async (req: Request, res: Response) => {
         const user = (req as any).user;
-        const { domain, query } = (req.body as any) || {};
+        const { domain, query, language: requestedLanguage } = (req.body as any) || {};
+        if (requestedLanguage !== undefined && requestedLanguage !== 'vn' && requestedLanguage !== 'en') {
+            return res.status(400).json({ error: 'language phải là vn hoặc en.', code: 'GUIDE_LANGUAGE_INVALID' });
+        }
+        const language = requestedLanguage === 'en' ? 'en' : 'vn';
 
         if (!domain || !query) {
             return res.status(400).json({ error: 'domain và query là bắt buộc.', validDomains: ['area', 'project', 'bank', 'legal', 'platform', 'longthanh', 'valuation'] });
@@ -185,6 +231,7 @@ export function createLiveChatAgentRoutes(
                 tenantId: user.tenantId,
                 domain,
                 query,
+                language,
             });
             return res.json(result);
         } catch (e: any) {

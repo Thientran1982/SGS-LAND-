@@ -34,6 +34,7 @@ import {
   sharedCacheKey,
     sharedCacheStats,
 } from '../services/sharedCache';
+import { getGuideDataSummary } from './guideDataSources';
 
 // Prompt-injection sanitizer for live-chat user content (message, leadName, history).
 // User text is interpolated into the LLM prompt, so neutralize escape vectors and
@@ -509,6 +510,19 @@ const TOOL_MANIFEST: ToolDefinition[] = [
             tenantId: { type: 'string', required: true,  description: 'Tenant ID' },
             domain:   { type: 'string', required: true,  description: 'area|project|bank|legal|platform|valuation' },
             query:    { type: 'string', required: true,  description: 'Câu hỏi / từ khoá tra cứu' },
+        },
+    },
+    {
+        name: 'get_guide_data_summary',
+        description: 'Summary read-only theo RBAC cho Dashboard, Leads, Inventory, Inbox hoặc Contracts.',
+        category: 'chat',
+        params: {
+            tenantId: { type: 'string', required: true, description: 'Tenant ID từ session server' },
+            userId: { type: 'string', required: true, description: 'User ID từ session server' },
+            role: { type: 'string', required: true, description: 'Role từ session server' },
+            group: { type: 'string', required: true, description: 'dashboard|leads|inventory|inbox|contracts' },
+            timeRange: { type: 'string', required: false, description: '7d|30d|all' },
+            language: { type: 'string', required: true, description: 'vn|en' },
         },
     },
 ];
@@ -1447,7 +1461,8 @@ Trả về JSON với các trường sau:
 // TOOL 22: get_platform_knowledge (NEW)
 // ────────────────────────────────────────────────────────────────────────────
 async function handle_get_platform_knowledge(args: Record<string, any>): Promise<any> {
-    const { tenantId, domain, query } = args;
+    const { tenantId, domain, query, language = 'vn' } = args;
+    const isEnglish = language === 'en';
     const d = (domain || '').toLowerCase().trim();
     const q = (query || '').trim();
 
@@ -1471,7 +1486,9 @@ async function handle_get_platform_knowledge(args: Record<string, any>): Promise
     if (d === 'platform' || d === 'tính năng' || d === 'hướng dẫn') {
         return {
             domain, query,
-            knowledge: `SGS Land Platform — các tính năng chính:\n• Dashboard /dashboard — KPI, thống kê lead, doanh số\n• Leads /leads — CRM quản lý khách hàng\n• Kho hàng /inventory — đăng và quản lý BĐS\n• Định giá AI /ai-valuation — SGS-AVM v2.1\n• Hợp đồng /contracts — tạo và theo dõi\n• AI Governance /ai-governance — quản lý prompt AI`,
+            knowledge: isEnglish
+                ? `SGS Land Platform — main features:\n• Dashboard /dashboard — KPIs, lead statistics, revenue\n• Leads /leads — customer relationship management\n• Inventory /inventory — create and manage listings\n• AI Valuation /ai-valuation — SGS-AVM v2.1\n• Contracts /contracts — create and track contracts\n• AI Governance /ai-governance — manage AI prompts`
+                : `SGS Land Platform — các tính năng chính:\n• Dashboard /dashboard — KPI, thống kê lead, doanh số\n• Leads /leads — CRM quản lý khách hàng\n• Kho hàng /inventory — đăng và quản lý BĐS\n• Định giá AI /ai-valuation — SGS-AVM v2.1\n• Hợp đồng /contracts — tạo và theo dõi\n• AI Governance /ai-governance — quản lý prompt AI`,
             source: 'SGS Land Platform Guide',
             cached: true,
         };
@@ -1485,7 +1502,7 @@ async function handle_get_platform_knowledge(args: Record<string, any>): Promise
                 feature: 'LIVE_CHAT_PROJECT_KNOWLEDGE',
                 maxOutputTokens: 500,
                 system: 'Bạn là chuyên gia BĐS Việt Nam. Chỉ sử dụng thông tin có nguồn hoặc nói rõ phần nào cần xác minh; không tự bịa giá, pháp lý hay tiến độ.',
-                prompt: `Cung cấp thông tin về dự án "${sanitizeChatInput(q, 200)}" (HCM/Đồng Nai/Bình Dương). Bao gồm: CĐT, vị trí, giá tham khảo, pháp lý hiện tại, ưu/nhược điểm. Tối đa 200 từ, tiếng Việt.`,
+                 prompt: `${isEnglish ? 'Provide' : 'Cung cấp'} thông tin ${isEnglish ? 'about' : 'về'} dự án "${sanitizeChatInput(q, 200)}" (HCM/Đồng Nai/Bình Dương). ${isEnglish ? 'Include developer, location, indicative price, current legal status, pros/cons. Maximum 200 words, in English.' : 'Bao gồm: CĐT, vị trí, giá tham khảo, pháp lý hiện tại, ưu/nhược điểm. Tối đa 200 từ, tiếng Việt.'}`,
             });
             return { domain, query, knowledge: knowledge.trim(), source: 'Shared AI policy + SGS Land KB', cached: false, needsVerification: true };
         } catch (e: any) {
@@ -1524,6 +1541,11 @@ const HANDLERS: Record<string, ToolHandler> = {
     handle_live_chat:           handle_live_chat,
     analyze_chat_session:       handle_analyze_chat_session,
     get_platform_knowledge:     handle_get_platform_knowledge,
+    get_guide_data_summary:     (args) => getGuideDataSummary({
+        tenantId: String(args.tenantId || ''),
+        userId: String(args.userId || ''),
+        role: String(args.role || ''),
+    }, args.group, args.timeRange, args.language),
     // Dynamic knowledge tools v3
     get_project_listings:       handle_get_project_listings,
     refresh_knowledge_base:     handle_refresh_knowledge_base,

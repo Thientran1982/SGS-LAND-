@@ -8,11 +8,17 @@ type ChatMessage = {
     role: 'user' | 'assistant';
     content: string;
     sources?: Array<{ tool?: string; source?: string }>;
+    dataScope?: 'personal' | 'company';
+    freshness?: string;
+    status?: 'ok' | 'empty' | 'forbidden';
 };
 
 type AssistantResponse = {
     response?: string;
     sources?: Array<{ tool?: string; source?: string }>;
+    dataScope?: 'personal' | 'company';
+    freshness?: string;
+    status?: 'ok' | 'empty' | 'forbidden';
 };
 
 const MAX_HISTORY = 12;
@@ -34,7 +40,7 @@ export const GuideAssistant: React.FC = () => {
         placeholder: 'Bạn muốn hỏi điều gì?',
         welcome: 'Xin chào! Tôi có thể hướng dẫn cách dùng SGS LAND hoặc tra cứu số liệu trong phạm vi quyền của bạn.',
         suggestion1: 'Tôi có thể làm gì trên Dashboard?',
-        suggestion2: 'Tóm tắt dữ liệu kinh doanh hiện tại',
+        suggestion2: 'Tóm tắt các lead hiện tại',
         suggestion3: 'Làm thế nào để tạo một lead?',
         empty: 'Chưa có cuộc trò chuyện',
         reset: 'Bắt đầu lại',
@@ -50,7 +56,7 @@ export const GuideAssistant: React.FC = () => {
         placeholder: 'What would you like to ask?',
         welcome: 'Hello! I can guide you through SGS LAND or look up metrics within your access scope.',
         suggestion1: 'What can I do on the Dashboard?',
-        suggestion2: 'Summarize the current business data',
+        suggestion2: 'Summarize the current leads',
         suggestion3: 'How do I create a lead?',
         empty: 'No conversation yet',
         reset: 'Start over',
@@ -88,6 +94,7 @@ export const GuideAssistant: React.FC = () => {
                 sessionId: sessionIdRef.current,
                 context: {
                     mode: 'platform_guide',
+                    language,
                     history,
                 },
             });
@@ -99,6 +106,9 @@ export const GuideAssistant: React.FC = () => {
                 role: 'assistant',
                 content: response,
                 sources: Array.isArray(result?.sources) ? result.sources : [],
+                dataScope: result?.dataScope,
+                freshness: result?.freshness,
+                status: result?.status,
             }]);
         } catch {
             setError(copy.error);
@@ -151,7 +161,9 @@ export const GuideAssistant: React.FC = () => {
                                     <div className="whitespace-pre-wrap">{message.content}</div>
                                     {message.role === 'assistant' && (
                                         <div className="mt-2 border-t border-[var(--glass-border)]/70 pt-1.5 text-[10px] text-[var(--text-tertiary)]">
-                                            {message.sources?.length ? `${copy.source}: ${message.sources.map(source => source.source || source.tool).filter(Boolean).join(', ')}` : copy.scope}
+                                     {message.sources?.length
+                                         ? `${copy.source}: ${message.sources.map(source => source.source || source.tool).filter(Boolean).join(', ')}${message.dataScope ? ` · ${message.dataScope === 'personal' ? (isVietnamese ? 'cá nhân' : 'personal') : (isVietnamese ? 'công ty' : 'company')}` : ''}${message.freshness ? ` · ${new Date(message.freshness).toLocaleString(isVietnamese ? 'vi-VN' : 'en-US')}` : ''}`
+                                         : copy.scope}
                                         </div>
                                     )}
                                 </div>
