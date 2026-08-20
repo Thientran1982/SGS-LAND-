@@ -196,18 +196,18 @@
    --font-mono-sgs: var(--font-ibm-plex-mono), ui-monospace, monospace;
 
   /* Custom font sizes (compact scale) */
-   --font-size-3xs: 10px;
-   --font-size-2xs: 11px;
-   --font-size-xs:  13px;
-   --font-size-sm:  14px;
-   --font-size-base: 16px;
-   --font-size-lg:  18px;
-   --font-size-xl:  20px;
-   --font-size-2xl: 24px;
-   --font-size-3xl: 30px;
-   --font-size-4xl: 36px;
-   --font-size-5xl: 48px;
-   --font-size-6xl: 60px;
+  --font-size-3xs: 10px;
+  --font-size-2xs: 11px;
+  --font-size-xs:  13px;
+  --font-size-sm:  14px;
+  --font-size-base: 16px;
+  --font-size-lg:  18px;
+  --font-size-xl:  20px;
+  --font-size-2xl: 24px;
+  --font-size-3xl: 30px;
+  --font-size-4xl: 36px;
+  --font-size-5xl: 48px;
+  --font-size-6xl: 60px;
 
   /* Color tokens → CSS variables */
   --color-surface:           var(--sgs-surface);
@@ -304,7 +304,11 @@
   }
   *::-webkit-scrollbar { display: none; }
 
-  h1 { @apply text-xl md:text-2xl lg:text-3xl font-bold; }
+  h1, h2, h3, h4, h5, h6 {
+    @apply text-xl md:text-2xl lg:text-3xl font-bold;
+    letter-spacing: -0.02em;
+    word-spacing: normal;
+  }
 }
 
 /* ─── Utility Classes ─────────────────────────────────────── */
@@ -343,6 +347,13 @@
 
 /* ─── Components ──────────────────────────────────────────── */
 @layer components {
+  .ui-title,
+  .ui-title h1,
+  .ui-title h2,
+  .ui-title h3 {
+    letter-spacing: -0.02em !important;
+    word-spacing: normal !important;
+  }
   .glass-card {
     background: var(--glass-surface);
     backdrop-filter: blur(24px) saturate(180%);
@@ -486,17 +497,17 @@
 
 /* Thang chu 7 bac cho tien ich Tailwind (12/14/16/20/28/40/64) */
 @theme {
-  --text-xs: 12px;
+  --text-xs: 13px;
   --text-sm: 14px;
   --text-base: 16px;
-  --text-lg: 20px;
+  --text-lg: 18px;
   --text-xl: 20px;
-  --text-2xl: 28px;
-  --text-3xl: 28px;
-  --text-4xl: 40px;
-  --text-5xl: 40px;
-  --text-6xl: 64px;
-  --text-7xl: 64px;
+  --text-2xl: 24px;
+  --text-3xl: 30px;
+  --text-4xl: 36px;
+  --text-5xl: 48px;
+  --text-6xl: 60px;
+  --text-7xl: 60px;
 }
 
 /* Header la position:fixed cao 65px. Truoc day khong trang nao chua cho no,

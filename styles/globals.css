@@ -3,9 +3,11 @@
 @tailwind components;
 @tailwind utilities;
 @layer base {
-  h1 {
+  h1, h2, h3, h4, h5, h6 {
     @apply text-xl md:text-2xl lg:text-3xl font-bold;
     font-family: var(--font-display);
+    letter-spacing: -0.02em;
+    word-spacing: normal;
   }
 }
 /* ============================================================
@@ -199,6 +201,13 @@ html.dark body {
 }
 /* Glassmorphism utility */
 @layer components {
+  .ui-title,
+  .ui-title h1,
+  .ui-title h2,
+  .ui-title h3 {
+    letter-spacing: -0.02em !important;
+    word-spacing: normal !important;
+  }
   .ui-public-footer {
     background: var(--ui-brand-strong) !important;
     border-top-color: color-mix(in srgb, var(--ui-accent) 30%, transparent) !important;
@@ -440,7 +449,8 @@ html.dark body {
 .sgs-dashboard h2,
 .sgs-dashboard h3 {
   font-family: var(--font-display);
-  letter-spacing: -.025em;
+  letter-spacing: -0.02em;
+  word-spacing: normal;
 }
 .sgs-dashboard .dash-number,
 .sgs-dashboard .font-mono,
