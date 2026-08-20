@@ -296,7 +296,7 @@ function ListingCard({ listing, list, eager, facets }: { listing: any; list?: bo
         </div>
         {/* Save - a real control, no longer a decorative icon */}
         <button type="button" onClick={toggleFav} aria-pressed={fav} aria-label={savedLabel} title={savedLabel}
-          className="absolute top-3 right-3 w-8 h-8 rounded-full flex items-center justify-center bg-black/25 backdrop-blur-sm transition-transform active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white">
+          className={`absolute right-3 w-8 h-8 rounded-full flex items-center justify-center bg-black/25 backdrop-blur-sm transition-transform active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white ${list ? "top-auto bottom-3 sm:top-3 sm:bottom-auto" : "top-3"}`}>
           <Heart className={`w-4 h-4 ${fav ? "text-rose-400" : "text-white"}`} fill={fav ? "currentColor" : "none"} />
         </button>
       </div>
