@@ -541,8 +541,8 @@ export function MarketplacePage({ initialListings, totalCount, totalPages, searc
         </div>
       </div>
       {/* Primary row: transaction segmented control + view switcher */}
-      <div className="flex items-center justify-between gap-2 flex-wrap pb-1 mb-3">
-        <div className="flex items-center gap-1 p-0.5 rounded-lg shrink-0" style={{ background: "var(--bg-elevated)" }}>
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 pb-1 mb-3">
+        <div className="flex items-center gap-1 p-0.5 rounded-lg w-full sm:w-auto" style={{ background: "var(--bg-elevated)" }}>
           <button type="button" onClick={() => setTransactionTab("SALE")}
             className="px-3 sm:px-4 h-9 rounded-md text-sm font-semibold transition-colors whitespace-nowrap"
             style={activeTab === "SALE" ? { background: "var(--bg-surface)", color: "var(--primary-600)" } : { color: "var(--text-tertiary)" }}>
@@ -560,7 +560,7 @@ export function MarketplacePage({ initialListings, totalCount, totalPages, searc
           </Link>
         </div>
 
-        <div className="flex p-0.5 rounded-lg shrink-0" style={{ background: "var(--bg-elevated)" }}>
+        <div className="flex self-end p-0.5 rounded-lg shrink-0" style={{ background: "var(--bg-elevated)" }}>
           {VIEWS.map((v) => {
             const Icon = v.icon;
             const active = view === v.id;
@@ -574,13 +574,13 @@ export function MarketplacePage({ initialListings, totalCount, totalPages, searc
         </div>
       </div>
       {/* Secondary row: refine filters */}
-      <div className="flex flex-wrap items-center gap-2 pb-1 mb-3">
-        <Dropdown value={sp.type ?? ""} options={TYPE_OPTIONS(lang)} onChange={(v) => setParam("type", v)} minWidth={140} />
-        <Dropdown value={sp.area ?? ""} options={LOCATION_OPTIONS(lang, locations)} onChange={(v) => setParam("area", v)} minWidth={150} />
-        <Dropdown value={activePriceLabel} options={PRICE_OPTIONS(lang).map((o) => ({ label: o.label, value: o.label }))}
+      <div className="grid grid-cols-2 sm:flex sm:flex-wrap items-center gap-2 pb-1 mb-3">
+        <div className="min-w-0"><Dropdown value={sp.type ?? ""} options={TYPE_OPTIONS(lang)} onChange={(v) => setParam("type", v)} minWidth={0} /></div>
+        <div className="min-w-0"><Dropdown value={sp.area ?? ""} options={LOCATION_OPTIONS(lang, locations)} onChange={(v) => setParam("area", v)} minWidth={0} /></div>
+        <div className="min-w-0"><Dropdown value={activePriceLabel} options={PRICE_OPTIONS(lang).map((o) => ({ label: o.label, value: o.label }))}
           onChange={(label) => { const pr = PRICE_OPTIONS(lang).find((x) => x.label === label) || PRICE_OPTIONS(lang)[0]; pushParams((p) => { p.delete("minPrice"); p.delete("maxPrice"); if (pr.min) p.set("minPrice", pr.min); if (pr.max) p.set("maxPrice", pr.max); }); }}
-          minWidth={140} />
-        <Dropdown
+          minWidth={0} /></div>
+        <div className="min-w-0"><Dropdown
           value={sp.sort ?? ""}
           options={[
             { label: tt(lang, "M\u1edbi nh\u1ea5t", "Newest"), value: "" },
@@ -588,25 +588,25 @@ export function MarketplacePage({ initialListings, totalCount, totalPages, searc
             { label: tt(lang, "Gi\u00e1: Cao \u0111\u1ebfn th\u1ea5p", "Price: High to low"), value: "price_desc" },
           ]}
           onChange={(v) => setParam("sort", v)}
-          minWidth={150}
-        />
+          minWidth={0}
+        /></div>
         {!!facets && facets.legalStatus.length > 0 && (
-          <Dropdown
+          <div className="min-w-0"><Dropdown
             value={sp.legalStatus ?? ""}
             options={[{ label: tt(lang, "T\u1ea5t c\u1ea3 ph\u00e1p l\u00fd", "All legal status"), value: "" },
               ...facets.legalStatus.map((f) => ({ label: bi(LEGAL_LABELS, f.value, lang) || f.value, value: f.value }))]}
             onChange={(v) => setParam("legalStatus", v)}
-            minWidth={150}
-          />
+            minWidth={0}
+          /></div>
         )}
         {!!facets && facets.direction.length > 0 && (
-          <Dropdown
+          <div className="min-w-0"><Dropdown
             value={sp.direction ?? ""}
             options={[{ label: tt(lang, "T\u1ea5t c\u1ea3 h\u01b0\u1edbng", "All directions"), value: "" },
               ...facets.direction.map((f) => ({ label: bi(DIRECTION_LABELS, f.value, lang) || f.value, value: f.value }))]}
             onChange={(v) => setParam("direction", v)}
-            minWidth={150}
-          />
+            minWidth={0}
+          /></div>
         )}
       </div>
 
@@ -644,9 +644,9 @@ export function MarketplacePage({ initialListings, totalCount, totalPages, searc
         </div>
       ) : view === "MAP" ? (
         <div className="relative">
-          <MarketplaceMap listings={initialListings} />
+          <MarketplaceMap listings={initialListings} height="min(620px, 68vh)" />
           <button type="button" onClick={() => setView("GRID")}
-            className="lg:hidden fixed left-1/2 -translate-x-1/2 bottom-6 z-40 flex items-center gap-2 px-5 py-3 rounded-full shadow-2xl text-sm font-semibold"
+            className="lg:hidden fixed left-1/2 -translate-x-1/2 bottom-20 z-40 flex items-center gap-2 px-5 py-3 rounded-full shadow-2xl text-sm font-semibold"
             style={{ background: "var(--sgs-hero-deep)", color: "var(--text-inverse)" }}>
             <ListIcon className="w-4 h-4" /> {tt(lang, "Quay l\u1ea1i danh s\u00e1ch", "Back to list")}
           </button>
@@ -680,7 +680,7 @@ export function MarketplacePage({ initialListings, totalCount, totalPages, searc
                 {initialListings.map((l: any, i: number) => <ListingCard key={l.id} listing={l} facets={facets} list eager={i < 2} />)}
               </div>
             ) : (
-              <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-5">
+              <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-3 sm:gap-5">
                 {initialListings.map((l: any, i: number) => <ListingCard key={l.id} listing={l} facets={facets} eager={i < 4} />)}
               </div>
             )}
@@ -704,7 +704,7 @@ export function MarketplacePage({ initialListings, totalCount, totalPages, searc
       )}
       {(view === "GRID" || view === "LIST") && (
         <button type="button" onClick={() => setView("MAP")}
-          className="lg:hidden fixed left-1/2 -translate-x-1/2 bottom-6 z-40 flex items-center gap-2 px-5 py-3 rounded-full shadow-2xl text-sm font-semibold"
+          className="lg:hidden fixed left-1/2 -translate-x-1/2 bottom-20 z-40 flex items-center gap-2 px-5 py-3 rounded-full shadow-2xl text-sm font-semibold"
           style={{ background: "var(--sgs-hero-deep)", color: "var(--text-inverse)" }}>
           <MapIcon className="w-4 h-4" /> {tt(lang, "Xem b\u1ea3n \u0111\u1ed3", "View map")}
         </button>
