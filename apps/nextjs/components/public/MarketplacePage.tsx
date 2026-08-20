@@ -274,6 +274,12 @@ function ListingCard({ listing, list, eager, facets }: { listing: any; list?: bo
                 <BadgeCheck className="w-3.5 h-3.5" /> <span className="hidden sm:inline">{tt(lang, "\u0110\u00c3 X\u00c1C TH\u1ef0C", "VERIFIED")}</span>
               </span>
             )}
+            {list && (
+              <button type="button" onClick={toggleFav} aria-pressed={fav} aria-label={savedLabel} title={savedLabel}
+                className="sm:hidden w-7 h-7 rounded-lg flex items-center justify-center bg-black/35 backdrop-blur-sm transition-transform active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white">
+                <Heart className={`w-3.5 h-3.5 ${fav ? "text-rose-300" : "text-white"}`} fill={fav ? "currentColor" : "none"} />
+              </button>
+            )}
           </div>
           <div className="flex gap-1.5">
             {isBest && (
@@ -296,7 +302,7 @@ function ListingCard({ listing, list, eager, facets }: { listing: any; list?: bo
         </div>
         {/* Save - a real control, no longer a decorative icon */}
         <button type="button" onClick={toggleFav} aria-pressed={fav} aria-label={savedLabel} title={savedLabel}
-          className={`absolute right-3 w-8 h-8 rounded-full flex items-center justify-center bg-black/25 backdrop-blur-sm transition-transform active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white ${list ? "top-auto bottom-3 sm:top-3 sm:bottom-auto" : "top-3"}`}>
+          className={`absolute right-3 w-8 h-8 rounded-full items-center justify-center bg-black/25 backdrop-blur-sm transition-transform active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white ${list ? "hidden sm:flex top-3" : "flex top-3"}`}>
           <Heart className={`w-4 h-4 ${fav ? "text-rose-400" : "text-white"}`} fill={fav ? "currentColor" : "none"} />
         </button>
       </div>
