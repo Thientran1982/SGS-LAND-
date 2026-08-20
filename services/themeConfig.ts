@@ -12,7 +12,7 @@ export function tenantThemeKey(tenantId?: string): string {
 }
 export const FONT_FAMILIES: { value: string; label: string; url?: string }[] = [
   { value: 'Be Vietnam Pro', label: 'Be Vietnam Pro (UI)' },
-  { value: 'Fraunces', label: 'Fraunces (tiêu đề)' },
+  { value: 'Inter', label: 'Inter (tiêu đề)' },
   { value: 'IBM Plex Mono', label: 'IBM Plex Mono (dữ liệu)' },
 ];
 export const FONT_SCALE_OPTIONS: { value: CustomThemeConfig['fontScale']; label: string; size: string }[] = [

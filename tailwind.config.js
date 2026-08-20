@@ -15,8 +15,8 @@ export default {
     extend: {
       fontFamily: {
         sans: ['"Be Vietnam Pro"', 'system-ui', 'sans-serif'],
-        serif: ['"Fraunces"', 'Georgia', 'serif'],
-        display: ['"Fraunces"', 'Georgia', 'serif'],
+        serif: ['"Inter"', '"Be Vietnam Pro"', 'system-ui', 'sans-serif'],
+        display: ['"Inter"', '"Be Vietnam Pro"', 'system-ui', 'sans-serif'],
         mono: ['"IBM Plex Mono"', 'ui-monospace', 'monospace'],
       },
       fontSize: {
