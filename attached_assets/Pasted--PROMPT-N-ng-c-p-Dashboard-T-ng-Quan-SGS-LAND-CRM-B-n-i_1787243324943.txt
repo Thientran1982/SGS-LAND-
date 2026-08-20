@@ -1,0 +1,90 @@
+# PROMPT: Nâng cấp Dashboard "Tổng Quan" — SGS LAND CRM
+> Bản đã đối chiếu với hiện trạng thực tế (2 ảnh chụp màn hình `dashboard`) để **không tạo trùng chức năng**.
+
+## 0. Nguyên tắc bắt buộc về Design System
+
+Không hardcode màu/font mới. Kế thừa đúng theme hiện có của SGS LAND, quan sát được từ UI hiện tại:
+- **Màu chủ đạo (primary):** xanh navy đậm (logo "SGS LAND", các cột bar chart trong "Hiệu Suất Pipeline")
+- **Màu nhấn (accent):** cam/vàng cam (đường line trong chart "Hiệu Suất Pipeline")
+- **Màu semantic:** xanh lá (success — % tăng trưởng, tỷ lệ chốt dương), đỏ (danger — số liệu "Lỗi/60s", avatar nhân viên "Duong Manh Hang"), teal/xanh ngọc và đỏ dùng luân phiên cho avatar nhân viên trong bảng xếp hạng
+- **Nền:** trắng cho card, nền trang xám rất nhạt, border mảnh giữa các card
+- **Typography:** label viết HOA, cỡ nhỏ, màu xám (VD: "DOANH THU HOA HỒNG", "TỔNG LƯỢT TRUY CẬP"); số liệu chính cỡ lớn, đậm, màu đen/navy; log hoạt động dùng font có vẻ monospace cho các mã kiểm thử (VD: "TEST_ROUTER_PROBE_3")
+- **Icon:** dùng chung bộ icon line-style đang thấy ở sidebar (Trang Chủ, Cố Vấn AI, Sàn Giao Dịch...)
+- **Component có sẵn để tái sử dụng:** Card metric (label + số lớn + % thay đổi + icon mũi tên), Card có header + dropdown thời gian, Table hàng có avatar tròn màu, Progress/chart (bar + line kết hợp, bubble chart), Badge trạng thái màu (VD: "ĐANG KẾT NỐI...")
+
+---
+
+## 1. Rà soát hiện trạng Dashboard "Tổng Quan" (từ ảnh chụp)
+
+| Đã có sẵn | Vị trí | Ghi chú |
+|---|---|---|
+| Thanh tiêu đề + đồng hồ realtime + dropdown "30 ngày qua" + nút "Xuất báo cáo" | Trên cùng | Chỉ có 1 nút hành động (xuất báo cáo), chưa có quick action tạo mới |
+| 4 KPI card: Doanh Thu Hoa Hồng, Giá Trị Pipeline, Tỷ Lệ Tự Động Hóa AI, Tốc Độ Bán Hàng | Hàng ngang đầu trang | Chỉ hiện số thực tế + % so với kỳ trước, **không có mục tiêu/target** |
+| "Hiệu Suất Pipeline" (Tổng khách tiềm năng, Tỷ lệ chốt, chart 30D) | Card lớn giữa trang | Chưa có breakdown theo nguồn khách hàng |
+| "Nhật Ký Hoạt Động" | Cột phải cạnh Hiệu Suất Pipeline | Đang lẫn log kiểm thử (TEST_...), không phải hộp thư khách hàng |
+| "Nhịp Đập Thị Trường" (bubble chart Giá vs Diện tích) | Giữa trang, dưới Hiệu Suất Pipeline | Chưa breakdown theo Dự án cụ thể (Vinhomes, Masterise...) |
+| "Bảng Xếp Hạng Nhân Viên" (Tỷ lệ chốt, Điểm SLA) | Cột phải | Chỉ liệt kê từng cá nhân, chưa có so sánh team/phòng ban, chưa cảnh báo quá tải |
+| "Geolocation & Lưu Lượng Khách" (Tổng lượt truy cập, IP, Top quốc gia/thành phố) | Dưới cùng bên trái | Là traffic web, chưa có heatmap nhu cầu BĐS theo khu vực |
+| "Lưu Lượng Hệ Thống" (Yêu cầu/s, độ trễ API/DB, Lỗi/60s, trạng thái kết nối) | Dưới cùng bên phải | Là cảnh báo kỹ thuật hệ thống, **chưa gộp chung với cảnh báo nghiệp vụ** (hợp đồng, khách hàng...) |
+| Sidebar có sẵn nhưng KHÔNG có tóm tắt trên Tổng Quan | Kho Bất Động Sản, Hộp Thư Đa Kênh, Cố Vấn AI, Phê Duyệt | Đây là 4 khoảng trống thật sự, cần widget mới hoàn toàn |
+
+**Kết luận:** Không phải cả 10 mục đều là "thêm mới" — 5 mục nên **chỉnh sửa/bổ sung vào widget đã có**, chỉ 4-5 mục là widget hoàn toàn mới.
+
+---
+
+## 2. Chi tiết từng mục — phân loại SỬA (bổ sung) vs MỚI
+
+### [SỬA] #1 — Mục tiêu & Hiệu suất
+Bổ sung **ngay trong 4 KPI card hiện có** (Doanh Thu Hoa Hồng, Giá Trị Pipeline, Tốc Độ Bán Hàng): thêm 1 dòng progress bar nhỏ + "X% mục tiêu tháng" bên dưới số liệu hiện tại. Không tạo card KPI mới, không đổi kích thước card.
+```json
+{ "monthly_target": 0, "monthly_actual": 0, "quarter_target": 0, "quarter_actual": 0 }
+```
+
+### [MỚI] #2 — Kho Bất Động Sản
+Chưa tồn tại trên Tổng Quan. Thêm 1 card mới ngang hàng với "Nhịp Đập Thị Trường": số Active/Đã bán/Đã cho thuê/Hết hạn + badge "Tin chờ duyệt" (liên kết Phê Duyệt) + top 3-5 BĐS xem nhiều tuần này.
+
+### [MỚI] #3 — Việc Cần Làm & Phê Duyệt
+Chưa tồn tại. Đặt ngay dưới thanh tiêu đề, trên cả 4 KPI card. Dải mini-card: Hợp đồng chờ ký / sắp hết hạn, Yêu cầu chờ phê duyệt, Khách chưa phản hồi > X giờ.
+
+### [MỚI, tách biệt với "Nhật Ký Hoạt Động"] #4 — Hộp Thư Đa Kênh
+"Nhật Ký Hoạt Động" hiện tại là log hệ thống/test, KHÔNG phải hộp thư khách hàng — cần widget riêng: tin chưa đọc theo kênh (Zalo/Facebook/Web chat) + thời gian phản hồi trung bình.
+
+### [MỚI, phân biệt với card "Tỷ Lệ Tự Động Hóa AI"] #5 — Cố Vấn AI
+Card "Tỷ Lệ Tự Động Hóa AI" (100%) hiện chỉ là 1 chỉ số vận hành, KHÔNG phải gợi ý/cảnh báo. Cần thêm widget riêng: danh sách gợi ý AI trong ngày + cảnh báo bất thường (khách rời pipeline).
+
+### [SỬA] #6 — Phân tích nguồn khách hàng
+Gắn thêm 1 tab/toggle "Theo nguồn" ngay trong card "Hiệu Suất Pipeline" đã có (cạnh số "Tổng Khách Tiềm Năng: 7"), thay vì tạo card riêng — tránh trùng bố cục.
+
+### [SỬA] #7 — So sánh theo Dự án / Khu vực
+- Phần "Dự án": thêm bảng nhỏ bên dưới/cạnh chart "Nhịp Đập Thị Trường" (Giá vs Diện tích) hiện có, lọc theo tên dự án (Vinhomes, Masterise, Aqua City...) — không vẽ chart mới trùng trục.
+- Phần "Khu vực nhu cầu cao": mở rộng widget "Geolocation & Lưu Lượng Khách" đã có (đang có Top quốc gia/thành phố) bằng lớp heatmap nhu cầu BĐS, không tạo bản đồ riêng.
+
+### [SỬA] #8 — Đội nhóm
+Thêm toggle "Theo cá nhân / Theo team" ngay trong "Bảng Xếp Hạng Nhân Viên" đã có + badge nhỏ "Quá tải" cạnh tên nhân viên có nhiều khách chưa follow-up, không tạo bảng mới.
+
+### [MỚI] #9 — Quick Actions
+Chưa tồn tại (chỉ có nút "Xuất báo cáo"). Thêm cụm nút "+ Thêm khách hàng / + Tạo hợp đồng / + Đăng tin BĐS" ngay cạnh nút "Xuất báo cáo" ở thanh tiêu đề.
+
+### [MỚI, nhưng tái dùng data từ "Lưu Lượng Hệ Thống"] #10 — Trung Tâm Cảnh Báo Ưu Tiên
+"Lưu Lượng Hệ Thống" đã có số "Lỗi/60s" và trạng thái kết nối — đây là 1 NGUỒN dữ liệu, không phải bản thân trung tâm cảnh báo. Cần 1 banner mới trên cùng gộp: lỗi hệ thống (lấy từ Lưu Lượng Hệ Thống) + hợp đồng sắp hết hạn + khách chưa phản hồi + cảnh báo AI, sắp xếp theo mức độ nghiêm trọng.
+
+---
+
+## 3. Thứ tự bố cục đề xuất sau khi hợp nhất
+
+1. **[MỚI]** Trung Tâm Cảnh Báo Ưu Tiên
+2. Thanh tiêu đề hiện có + **[SỬA]** thêm cụm Quick Actions cạnh "Xuất báo cáo"
+3. **[MỚI]** Việc Cần Làm & Phê Duyệt
+4. 4 KPI card hiện có — **[SỬA]** thêm target/progress bar
+5. **[MỚI]** Cố Vấn AI — Gợi ý & Cảnh báo
+6. "Hiệu Suất Pipeline" hiện có — **[SỬA]** thêm tab Nguồn khách hàng | "Nhật Ký Hoạt Động" hiện có (giữ nguyên, nên lọc bỏ log TEST_... khỏi production)
+7. **[MỚI]** Kho Bất Động Sản | **[MỚI]** Hộp Thư Đa Kênh — 2 cột
+8. "Nhịp Đập Thị Trường" hiện có — **[SỬA]** thêm bảng theo Dự án
+9. "Geolocation & Lưu Lượng Khách" hiện có — **[SỬA]** thêm lớp heatmap nhu cầu
+10. "Bảng Xếp Hạng Nhân Viên" hiện có — **[SỬA]** thêm toggle Team + badge quá tải
+11. "Lưu Lượng Hệ Thống" hiện có (giữ nguyên, là nguồn data cho mục 1)
+
+## 4. Ghi chú triển khai
+- Ưu tiên **mở rộng component đã có** (thêm tab/toggle/dòng phụ) trước khi tạo card mới, để giữ mật độ thông tin và bố cục nhất quán với phần đã build.
+- Dữ liệu test (`TEST_ROUTER_PROBE`, `TEST_FALLBACK_PROBE`...) trong Nhật Ký Hoạt Động nên có cờ `is_test` để lọc khỏi giao diện production.
+- Toàn bộ widget mới dùng chung style card/table/badge/progress đã quan sát được (nền trắng, border mảnh, label hoa cỡ nhỏ, số liệu lớn đậm).
