@@ -227,9 +227,9 @@
      Falling back to the literal name "Inter" causes production failures
      because next/font serves Inter under a hashed internal name. */
    --font-sans:    var(--font-be-vietnam), ui-sans-serif, system-ui, sans-serif;
-   --font-display: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
+   --font-display: var(--font-be-vietnam), ui-sans-serif, system-ui, sans-serif;
    --font-mono:    var(--font-ibm-plex-mono), ui-monospace, monospace;
-   --font-serif:   var(--font-inter), ui-sans-serif, system-ui, sans-serif;
+   --font-serif:   var(--font-be-vietnam), ui-sans-serif, system-ui, sans-serif;
    --font-body:    var(--font-be-vietnam), ui-sans-serif, sans-serif;
    --font-mono-sgs: var(--font-ibm-plex-mono), ui-monospace, monospace;
 

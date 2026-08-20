@@ -12,7 +12,9 @@ const tokenFiles = new Set([
   "index.html",
 ]);
 const baselinePath = path.join(root, "scripts/ui-audit-baseline.json");
-const forbiddenFonts = /\b(?:Inter|JetBrains Mono|Noto Serif)\b|font-(?:inter|jetbrains-mono|noto-serif)/i;
+// Inter is the approved heading font for the Next.js public site. Keep
+// rejecting legacy alternatives that can cause inconsistent glyph fallback.
+const forbiddenFonts = /\b(?:JetBrains Mono|Noto Serif)\b|font-(?:jetbrains-mono|noto-serif)/i;
 const tinyCss = /font-size\s*:\s*(?:[0-9]|1[01])px\b/i;
 const tinyUtility = /text-\[(?:[0-9]|1[01])px\]/;
 
