@@ -239,6 +239,74 @@ export class InteractionRepository extends BaseRepository {
       };
     });
   }
+
+  /**
+   * Read-only aggregate for the in-product guide.
+   * Restricted roles are scoped through the same assigned-lead rule as Inbox.
+   * No message content, lead names, or contact fields are returned.
+   */
+  async getGuideInboxSummary(
+    tenantId: string,
+    userId: string,
+    userRole: string,
+    since?: string,
+  ): Promise<{ zalo: number; facebook: number; webChat: number; avgResponseMinutes: number | null }> {
+    return this.withTenant(tenantId, async (client) => {
+      const restrictedRoles = ['SALES', 'MARKETING', 'VIEWER'];
+      const fullScopeRoles = ['SUPER_ADMIN', 'ADMIN', 'MANAGER', 'TEAM_LEAD'];
+      if (!userId || (!restrictedRoles.includes(userRole) && !fullScopeRoles.includes(userRole))) {
+        return { zalo: 0, facebook: 0, webChat: 0, avgResponseMinutes: null };
+      }
+
+      const joins = restrictedRoles.includes(userRole)
+        ? 'INNER JOIN leads scoped_lead ON scoped_lead.id = inbound.lead_id AND scoped_lead.assigned_to = $1'
+        : '';
+      const values: any[] = restrictedRoles.includes(userRole) ? [userId] : [];
+      const sinceClause = since
+        ? `AND inbound.timestamp >= $${values.length + 1}::timestamptz`
+        : '';
+      if (since) values.push(since);
+
+      const result = await client.query(`
+        SELECT
+          COUNT(*) FILTER (
+            WHERE UPPER(COALESCE(inbound.channel, '')) = 'ZALO'
+          )::int AS zalo,
+          COUNT(*) FILTER (
+            WHERE UPPER(COALESCE(inbound.channel, '')) IN ('FACEBOOK', 'MESSENGER')
+          )::int AS facebook,
+          COUNT(*) FILTER (
+            WHERE UPPER(COALESCE(inbound.channel, '')) NOT IN ('ZALO', 'FACEBOOK', 'MESSENGER')
+          )::int AS web_chat,
+          ROUND(AVG(EXTRACT(EPOCH FROM (outbound.timestamp - inbound.timestamp)) / 60))::int
+            AS avg_response_minutes
+        FROM interactions inbound
+        ${joins}
+        LEFT JOIN LATERAL (
+          SELECT timestamp
+          FROM interactions outbound
+          WHERE outbound.tenant_id = inbound.tenant_id
+            AND outbound.lead_id = inbound.lead_id
+            AND outbound.direction = 'OUTBOUND'
+            AND outbound.timestamp > inbound.timestamp
+          ORDER BY outbound.timestamp ASC
+          LIMIT 1
+        ) outbound ON true
+        WHERE inbound.tenant_id = current_setting('app.current_tenant_id', true)::uuid
+          AND inbound.direction = 'INBOUND'
+          AND inbound.status != 'READ'
+          ${sinceClause}
+      `, values);
+
+      const row = result.rows[0] || {};
+      return {
+        zalo: Number(row.zalo || 0),
+        facebook: Number(row.facebook || 0),
+        webChat: Number(row.web_chat || 0),
+        avgResponseMinutes: row.avg_response_minutes == null ? null : Number(row.avg_response_minutes),
+      };
+    });
+  }
 }
 
 export const interactionRepository = new InteractionRepository();

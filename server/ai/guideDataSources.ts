@@ -1,4 +1,5 @@
 import { analyticsRepository, AnalyticsSummary } from '../repositories/analyticsRepository';
+import { interactionRepository } from '../repositories/interactionRepository';
 
 export type GuideDataGroup = 'dashboard' | 'leads' | 'inventory' | 'inbox' | 'contracts';
 export type GuideLanguage = 'vn' | 'en';
@@ -20,6 +21,14 @@ export interface GuideSummaryResult {
 
 function number(value: unknown): number {
   return Number(value || 0);
+}
+
+function sinceForTimeRange(timeRange: string): string | undefined {
+  if (timeRange === 'all' || !timeRange) return undefined;
+  const days = Number.parseInt(timeRange, 10);
+  if (!Number.isFinite(days) || days <= 0) return undefined;
+  const boundedDays = Math.min(days, 3650);
+  return new Date(Date.now() - boundedDays * 24 * 60 * 60 * 1000).toISOString();
 }
 
 /**
@@ -55,9 +64,7 @@ export async function getGuideDataSummary(
       summary: {},
     };
   }
-  // Inbox aggregates currently have no safe per-user projection. Fail closed
-  // for restricted roles instead of showing tenant-wide unread counts.
-  if (group === 'inbox' && !fullScopeRoles.has(identity.role)) {
+  if (group === 'inbox' && !fullScopeRoles.has(identity.role) && !personalScopeRoles.has(identity.role)) {
     return {
       group,
       language,
@@ -65,6 +72,24 @@ export async function getGuideDataSummary(
       scope: 'personal',
       freshness: new Date().toISOString(),
       summary: {},
+    };
+  }
+
+  if (group === 'inbox') {
+    const inbox = await interactionRepository.getGuideInboxSummary(
+      identity.tenantId,
+      identity.userId,
+      identity.role,
+      sinceForTimeRange(timeRange),
+    );
+    const hasData = Object.values(inbox).some(value => typeof value === 'number' ? value > 0 : value !== null);
+    return {
+      group,
+      language,
+      status: hasData ? 'ok' : 'empty',
+      scope: personalScopeRoles.has(identity.role) ? 'personal' : 'company',
+      freshness: new Date().toISOString(),
+      summary: inbox,
     };
   }
 

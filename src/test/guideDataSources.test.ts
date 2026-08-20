@@ -43,4 +43,17 @@ describe('guide data sources', () => {
       summary: {},
     })).toContain('No data is available');
   });
+
+  it('labels restricted Inbox summaries as personal scope', () => {
+    const output = renderGuideDataSummary({
+      group: 'inbox',
+      language: 'en',
+      status: 'ok',
+      scope: 'personal',
+      freshness: '2026-08-21T00:00:00.000Z',
+      summary: { zalo: 2, facebook: 0, webChat: 1, avgResponseMinutes: 8 },
+    });
+    expect(output).toContain('personal scope');
+    expect(output).toContain('Unread messages');
+  });
 });
