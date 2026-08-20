@@ -51,46 +51,44 @@ export default async function MarketplaceRoute({
 }) {
   const sp = await searchParams;
 
-  // Fetch first-page results SSR for SEO / initial hydration
+  // Fetch results and facets in parallel. Both are needed for the initial
+  // page, but serial requests made every filter navigation feel stuck.
   let initialListings: Listing[] = [];
   let totalCount = 0;
   let totalPages = 1;
+  const apiBase = process.env.BACKEND_URL || process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
+  const listingsUrl = new URL(`${apiBase}/api/public/listings`);
+  const toVnd = (v?: string): string => {
+    const n = parseFloat(String(v));
+    return Number.isFinite(n) && n > 0 ? String(Math.round(n * 1_000_000_000)) : "";
+  };
+  const priceMin = toVnd(sp.minPrice);
+  const priceMax = toVnd(sp.maxPrice);
+  if (sp.q) listingsUrl.searchParams.set("search", sp.q);
+  if (sp.type) listingsUrl.searchParams.set("type", sp.type);
+  if (sp.area) listingsUrl.searchParams.set("location", sp.area);
+  if (priceMin) listingsUrl.searchParams.set("priceMin", priceMin);
+  if (priceMax) listingsUrl.searchParams.set("priceMax", priceMax);
+  if (sp.bedrooms) listingsUrl.searchParams.set("bedroomsMin", sp.bedrooms);
+  if (sp.transaction) listingsUrl.searchParams.set("transaction", sp.transaction);
+  if (sp.legalStatus) listingsUrl.searchParams.set("legalStatus", sp.legalStatus);
+  if (sp.direction) listingsUrl.searchParams.set("direction", sp.direction);
+  if (sp.sort) listingsUrl.searchParams.set("sort", sp.sort);
+  listingsUrl.searchParams.set("page", sp.page ?? "1");
+  listingsUrl.searchParams.set("pageSize", "20");
 
-  try {
-    const url = new URL(
-      `${process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000"}/api/public/listings`
-    );
-    // The Express feed expects search / location / priceMin / priceMax /
-    // bedroomsMin / pageSize. The old q / area / minPrice / maxPrice /
-    // bedrooms / limit names were silently ignored, so no filter (and no page
-    // size) ever reached the API. Price dropdown values are in billions (ty).
-    const toVnd = (v?: string): string => {
-      const n = parseFloat(String(v));
-      return Number.isFinite(n) && n > 0 ? String(Math.round(n * 1_000_000_000)) : "";
-    };
-    const priceMin = toVnd(sp.minPrice);
-    const priceMax = toVnd(sp.maxPrice);
-    if (sp.q) url.searchParams.set("search", sp.q);
-    if (sp.type) url.searchParams.set("type", sp.type);
-    if (sp.area) url.searchParams.set("location", sp.area);
-    if (priceMin) url.searchParams.set("priceMin", priceMin);
-    if (priceMax) url.searchParams.set("priceMax", priceMax);
-    if (sp.bedrooms) url.searchParams.set("bedroomsMin", sp.bedrooms);
-    if (sp.transaction) url.searchParams.set("transaction", sp.transaction);
-    if (sp.legalStatus) url.searchParams.set("legalStatus", sp.legalStatus);
-    if (sp.direction) url.searchParams.set("direction", sp.direction);
-    if (sp.sort) url.searchParams.set("sort", sp.sort);
-    url.searchParams.set("page", sp.page ?? "1");
-    url.searchParams.set("pageSize", "20");
+  const listingsRequest = fetch(listingsUrl.toString(), { cache: "no-store" });
+  const facetsRequest = fetch(`${apiBase}/api/public/listings/facets`, { cache: "no-store" });
+  const [listingsResult, facetsResult] = await Promise.allSettled([listingsRequest, facetsRequest]);
 
-    const res = await fetch(url.toString(), { cache: "no-store" });
-    if (res.ok) {
-      const data = await res.json();
+  if (listingsResult.status === "fulfilled" && listingsResult.value.ok) {
+    try {
+      const data = await listingsResult.value.json();
       initialListings = data.data ?? [];
       totalCount = data.total ?? 0;
       totalPages = data.totalPages ?? 1;
-    }
-  } catch {}
+    } catch {}
+  }
 
   // Facets thuc: khu vuc noi bat, loai hinh/phap ly/huong DISTINCT that,
   // benchmark gia/m2 - dung cho Hero search + pill dong + insight line.
@@ -102,11 +100,11 @@ export default async function MarketplaceRoute({
     direction: { value: string; count: number }[];
     priceBenchmarks: Record<string, { avgPricePerM2: number; sampleSize: number }>;
   } | null = null;
-  try {
-    const facetsUrl = `${process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000"}/api/public/listings/facets`;
-    const facetsRes = await fetch(facetsUrl, { cache: "no-store" });
-    if (facetsRes.ok) facets = await facetsRes.json();
-  } catch {}
+  if (facetsResult.status === "fulfilled" && facetsResult.value.ok) {
+    try {
+      facets = await facetsResult.value.json();
+    } catch {}
+  }
 
   return (
     <Suspense fallback={<div className="h-screen flex items-center justify-center" style={{ color: "var(--text-tertiary)" }}>Đang tải...</div>}>
