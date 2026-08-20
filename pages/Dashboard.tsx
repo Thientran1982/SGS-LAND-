@@ -265,17 +265,17 @@ const InventoryOverviewWidget = ({ analytics, language }: { analytics: any; lang
                 <h2>{copy.title}</h2>
                 <a href="/inventory" className="text-xs font-semibold text-[var(--sgs-primary)]">{copy.active}</a>
             </div>
-            <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+            <div className="grid grid-cols-2 gap-2 px-4 sm:grid-cols-4">
                 <DashboardMiniCard label={copy.active} value={inventory.active ?? analytics?.availableListings ?? 0} />
                 <DashboardMiniCard label={copy.sold} value={inventory.sold ?? 0} />
                 <DashboardMiniCard label={copy.rented} value={inventory.rented ?? 0} />
                 <DashboardMiniCard label={copy.expired} value={inventory.expired ?? 0} />
             </div>
-            <a href="/approvals" className="mt-3 flex items-center justify-between rounded-xl border border-[var(--sgs-accent)]/25 bg-[var(--sgs-accent)]/5 px-3 py-2 text-xs font-semibold text-[var(--sgs-accent-text)]">
+            <a href="/approvals" className="mx-4 mt-3 flex items-center justify-between rounded-xl border border-[var(--sgs-accent)]/25 bg-[var(--sgs-accent)]/5 px-3 py-2 text-xs font-semibold text-[var(--sgs-accent-text)]">
                 <span>{copy.pending}</span><strong>{inventory.pendingApproval ?? 0}</strong>
             </a>
-            <div className="mt-4 dashboard-subhead">{copy.top}</div>
-            <div className="mt-2 space-y-2">
+            <div className="mx-4 mt-4 dashboard-subhead">{copy.top}</div>
+            <div className="mx-4 mt-2 space-y-2 pb-4">
                 {topListings.length ? topListings.slice(0, 5).map((listing: any, index: number) => (
                     <div key={listing.id ?? index} className="flex items-center justify-between gap-3 text-xs">
                         <span className="truncate text-[var(--text-primary)]">{listing.title || listing.name}</span>
@@ -298,12 +298,12 @@ const InboxOverviewWidget = ({ analytics, language }: { analytics: any; language
     return (
         <section className="dashboard-panel min-w-0" aria-label={copy.title}>
             <div className="dashboard-panel-head"><h2>{copy.title}</h2><a href="/inbox" className="text-xs font-semibold text-[var(--sgs-primary)]">Inbox</a></div>
-            <div className="grid grid-cols-3 gap-2">{channels.map(channel => <DashboardMiniCard key={channel.key} label={channel.key} value={channel.value} tone={channel.value > 0 ? 'warning' : 'default'} />)}</div>
-            <div className="mt-4 flex items-center justify-between rounded-xl bg-[var(--glass-surface)] px-3 py-2 text-xs">
+            <div className="grid grid-cols-3 gap-2 px-4">{channels.map(channel => <DashboardMiniCard key={channel.key} label={channel.key} value={channel.value} tone={channel.value > 0 ? 'warning' : 'default'} />)}</div>
+            <div className="mx-4 mt-4 flex items-center justify-between rounded-xl bg-[var(--glass-surface)] px-3 py-2 text-xs">
                 <span className="text-[var(--text-tertiary)]">{copy.response}</span>
                 <strong className="font-mono text-[var(--text-primary)]">{inbox.avgResponseMinutes != null ? `${inbox.avgResponseMinutes}m` : '—'}</strong>
             </div>
-            {!channels.some(channel => channel.value > 0) && <div className="mt-3 text-xs text-[var(--text-tertiary)]">{copy.empty}</div>}
+            {!channels.some(channel => channel.value > 0) && <div className="mx-4 mt-3 pb-4 text-xs text-[var(--text-tertiary)]">{copy.empty}</div>}
         </section>
     );
 };
@@ -998,14 +998,14 @@ export const Dashboard: React.FC = () => {
                                 <h2>{language === 'vn' ? 'Cố Vấn AI' : 'AI Advisor'}</h2>
                                 <a href="/ai-governance" className="text-xs font-semibold text-[var(--sgs-primary)]">AI</a>
                             </div>
-                            <div className="flex items-center gap-3">
+                            <div className="flex items-center gap-3 px-4">
                                 <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-[var(--sgs-primary)]/10 text-[var(--sgs-primary)]" aria-hidden="true">
                                     <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9.813 15.904 9 18.75l-.813-2.846a4.5 4.5 0 0 0-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 0 0 3.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 0 0 3.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 0 0-3.09 3.09Z" /></svg>
                                 </div>
                                 <div><div className="text-2xl font-extrabold text-[var(--text-primary)]">{overview.aiAdvisor?.count ?? 0}</div><div className="text-xs text-[var(--text-tertiary)]">{language === 'vn' ? 'Gợi ý trong ngày' : 'Suggestions today'}</div></div>
                                 <div className="ml-auto text-right"><div className={`text-lg font-bold ${(overview.aiAdvisor?.anomalies ?? 0) > 0 ? 'text-[var(--ui-danger)]' : 'text-[var(--text-tertiary)]'}`}>{overview.aiAdvisor?.anomalies ?? 0}</div><div className="text-xs text-[var(--text-tertiary)]">{language === 'vn' ? 'Cảnh báo bất thường' : 'Anomaly alerts'}</div></div>
                             </div>
-                            <div className="mt-4 space-y-2">
+                            <div className="mt-4 space-y-2 px-4 pb-4">
                                 {(Array.isArray(overview.aiAdvisor?.suggestions) ? overview.aiAdvisor.suggestions : []).slice(0, 3).map((item: any, index: number) => <div key={index} className="rounded-lg bg-[var(--glass-surface)] px-3 py-2 text-xs text-[var(--text-secondary)]">{typeof item === 'string' ? item : item?.title || item?.message || item?.content || (language === 'vn' ? 'Gợi ý AI chưa có nội dung hiển thị' : 'AI suggestion has no display text')}</div>)}
                                 {!overview.aiAdvisor?.suggestions?.length && <div className="text-xs text-[var(--text-tertiary)]">{language === 'vn' ? 'Chưa có gợi ý mới' : 'No new suggestions'}</div>}
                             </div>
