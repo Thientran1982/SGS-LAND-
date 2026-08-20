@@ -430,54 +430,53 @@ export function MinhChatPanel({
 
           <div className="flex items-end gap-2 border-t p-3" style={S.bar}>
             {isRecording ? (
-          <div className="flex-1 flex items-center gap-2 rounded-xl px-3 py-2" style={{ background: "var(--cw-navy, #0B1D26)" }}>
-            <span className="w-2.5 h-2.5 rounded-full shrink-0" style={{ background: "var(--cw-rec, #E4685A)", animation: "cwBlink 1s ease-in-out infinite" }} />
-            <svg viewBox="0 0 120 20" className="flex-1 h-6" preserveAspectRatio="none">
-              <polyline points={waveformPoints} fill="none" stroke="var(--cw-gold, #C6923D)" strokeWidth="1.5" />
-            </svg>
-            <span className="text-xs text-white/80 tabular-nums shrink-0" style={{ fontFamily: "var(--font-ibm-plex-mono), monospace" }}>{formatRecTime(recordSeconds)}</span>
-            <button type="button" onClick={cancelRecording} aria-label="Hủy ghi âm" className="inline-flex h-8 w-8 items-center justify-center rounded-full text-white/70 hover:text-white shrink-0 transition-colors">
-              <X className="w-4 h-4" />
-            </button>
-            <button type="button" onClick={confirmRecording} aria-label="Gửi ghi âm" className="inline-flex h-8 w-8 items-center justify-center rounded-full shrink-0" style={{ background: "var(--cw-gold, #C6923D)" }}>
-              <Check className="w-4 h-4 text-white" />
-            </button>
-          </div>
-        ) : (
-          <>
-            <textarea
-              value={input}
-              onChange={(e) => setInput(e.target.value)}
-              onKeyDown={handleKey}
-              rows={1}
-              placeholder="Nhập câu hỏi của bạn..."
-              aria-label="Nội dung tin nhắn"
-              className="flex-1 resize-none rounded-xl border px-3 py-2 text-sm outline-none max-h-28"
-              style={S.field}
-            />
-            {voiceSupported && (
-              <button
-                type="button"
-                onClick={startRecording}
-                aria-label="Ghi âm giọng nói"
-                className="inline-flex h-10 w-10 items-center justify-center rounded-xl shrink-0 transition-colors"
-                style={{ color: "var(--cw-ink-dim, #8A8474)" }}
-              >
-                <Mic className="w-4 h-4" />
-              </button>
+              <div className="flex-1 flex items-center gap-2 rounded-xl px-3 py-2" style={{ background: "var(--cw-navy, #0B1D26)" }}>
+                <span className="w-2.5 h-2.5 rounded-full shrink-0" style={{ background: "var(--cw-rec, #E4685A)", animation: "cwBlink 1s ease-in-out infinite" }} />
+                <svg viewBox="0 0 120 20" className="flex-1 h-6" preserveAspectRatio="none">
+                  <polyline points={waveformPoints} fill="none" stroke="var(--cw-gold, #C6923D)" strokeWidth="1.5" />
+                </svg>
+                <span className="text-xs text-white/80 tabular-nums shrink-0" style={{ fontFamily: "var(--font-ibm-plex-mono), monospace" }}>{formatRecTime(recordSeconds)}</span>
+                <button type="button" onClick={cancelRecording} aria-label="Hủy ghi âm" className="inline-flex h-8 w-8 items-center justify-center rounded-full text-white/70 hover:text-white shrink-0 transition-colors">
+                  <X className="w-4 h-4" />
+                </button>
+                <button type="button" onClick={confirmRecording} aria-label="Gửi ghi âm" className="inline-flex h-8 w-8 items-center justify-center rounded-full shrink-0" style={{ background: "var(--cw-gold, #C6923D)" }}>
+                  <Check className="w-4 h-4 text-white" />
+                </button>
+              </div>
+            ) : (
+              <div className="flex-1 flex items-end gap-1 rounded-xl border px-2 py-1" style={S.field}>
+                <textarea
+                  value={input}
+                  onChange={(e) => setInput(e.target.value)}
+                  onKeyDown={handleKey}
+                  rows={1}
+                  placeholder="Nhập câu hỏi của bạn..."
+                  aria-label="Nội dung tin nhắn"
+                  className="min-w-0 flex-1 resize-none border-0 bg-transparent px-1 py-2 text-sm outline-none max-h-28"
+                />
+                {voiceSupported && (
+                  <button
+                    type="button"
+                    onClick={startRecording}
+                    aria-label="Ghi âm giọng nói"
+                    className="inline-flex h-9 w-9 items-center justify-center rounded-lg shrink-0 transition-colors hover:bg-black/5"
+                    style={{ color: "var(--cw-ink-dim, #8A8474)" }}
+                  >
+                    <Mic className="w-4 h-4" />
+                  </button>
+                )}
+                <button
+                  type="button"
+                  onClick={() => void send()}
+                  disabled={loading || !input.trim()}
+                  aria-label="Gửi tin nhắn"
+                  className="inline-flex h-9 w-9 items-center justify-center rounded-lg disabled:opacity-40"
+                  style={S.primaryBtn}
+                >
+                  <Send className="w-4 h-4" />
+                </button>
+              </div>
             )}
-            <button
-              type="button"
-              onClick={() => void send()}
-              disabled={loading || !input.trim()}
-              aria-label="Gửi tin nhắn"
-              className="inline-flex h-10 w-10 items-center justify-center rounded-xl disabled:opacity-40"
-              style={S.primaryBtn}
-            >
-              <Send className="w-4 h-4" />
-            </button>
-          </>
-        )}
           </div>
         </>
       )}
