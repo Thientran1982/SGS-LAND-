@@ -289,7 +289,7 @@ export function MinhChatPanel({
   }, [stopRecordingInternal, send]);
 
   const wrapper =
-    "flex flex-col rounded-[20px] border overflow-hidden " +
+    "flex flex-col rounded-[20px] overflow-hidden " +
     className;
 
   if (!ready) {
@@ -309,6 +309,7 @@ export function MinhChatPanel({
         style={{
           ...S.panel,
           borderRadius: "20px",
+          border: "0",
           overflow: "hidden",
           backgroundClip: "padding-box",
           clipPath: "inset(0 round 20px)",

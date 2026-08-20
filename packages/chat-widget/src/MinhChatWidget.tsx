@@ -25,8 +25,8 @@ export function MinhChatWidget({ apiBase, source = "WIDGET" }: MinhChatWidgetPro
     <>
       {open ? (
         <div
-          className="shadow-2xl"
-          style={{ position: "fixed", right: 16, bottom: 92, zIndex: 2147483000, width: "min(92vw, 380px)" }}
+          className="rounded-[20px] overflow-hidden shadow-2xl"
+          style={{ position: "fixed", right: 16, bottom: 92, zIndex: 2147483000, width: "min(92vw, 380px)", borderRadius: "20px" }}
         >
           <MinhChatPanel
             apiBase={apiBase}
