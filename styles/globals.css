@@ -6,8 +6,9 @@
   h1, h2, h3, h4, h5, h6 {
     @apply text-xl md:text-2xl lg:text-3xl font-bold;
     font-family: var(--font-display);
-    letter-spacing: -0.02em;
+    letter-spacing: -0.02em !important;
     word-spacing: normal;
+    line-height: 1.12;
   }
 }
 /* ============================================================
@@ -365,7 +366,7 @@ html.dark body {
 /* === LP-ROOT CRITICAL (globalized from Landing.tsx) START === */
 .lp-wrap { max-width: 1380px; margin: 0 auto; padding: 0 clamp(20px,4vw,60px); }
   .lp-serif { font-family: var(--font-noto-serif, Georgia, serif); }
-  .lp-mono  { font-family: var(--font-ibm-plex-mono, monospace); font-size: 11px; letter-spacing: .16em; text-transform: uppercase; }
+  .lp-mono  { font-family: var(--font-ibm-plex-mono, monospace); font-size: 12px; letter-spacing: .12em; text-transform: uppercase; }
   .lp-sans  { font-family: var(--font-be-vietnam, system-ui, sans-serif); }
 
   .lp-root {
@@ -449,8 +450,9 @@ html.dark body {
 .sgs-dashboard h2,
 .sgs-dashboard h3 {
   font-family: var(--font-display);
-  letter-spacing: -0.02em;
+  letter-spacing: -0.02em !important;
   word-spacing: normal;
+  line-height: 1.12;
 }
 .sgs-dashboard .dash-number,
 .sgs-dashboard .font-mono,
@@ -493,7 +495,7 @@ html.dark body {
 }
 .sgs-dashboard .dashboard-kpi .kpi-label {
   color: var(--text-tertiary);
-  font: 500 .67rem/1.3 var(--font-mono);
+   font: 500 .75rem/1.3 var(--font-mono);
   letter-spacing: .08em;
   text-transform: uppercase;
 }
@@ -501,7 +503,7 @@ html.dark body {
   margin-top: .45rem;
   color: var(--text-primary);
   font: 600 clamp(1.35rem, 2vw, 1.8rem)/1.1 var(--font-mono);
-  letter-spacing: -.07em;
+   letter-spacing: -.03em;
 }
 .sgs-dashboard .dashboard-kpi:first-child .kpi-value { color: var(--dash-accent); }
 .sgs-dashboard .dashboard-kpi .kpi-meta {
