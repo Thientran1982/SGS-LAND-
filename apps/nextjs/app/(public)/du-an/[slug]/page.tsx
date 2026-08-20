@@ -840,7 +840,7 @@ export default async function ProjectPage({
         aria-label={en ? `Project information: ${projectData.name}` : `Thông tin dự án ${projectData.name}`}
         itemScope        itemType="https://schema.org/RealEstateListing"
       >
-        <h1 itemProp="name">{projectData.name}</h1>
+        <p itemProp="name" className="font-semibold">{projectData.name}</p>
         <p itemProp="description">{projectData.description ?? meta?.desc}</p>
 
         {/* — Bảng giá theo phân khu (SEO/GEO structured content) — */}

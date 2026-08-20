@@ -22,6 +22,7 @@
     "test:e2e": "playwright test",
     "audit:security": "npm audit --audit-level=high",
     "audit": "node seo-geo-audit.mjs",
+    "audit:seo-regression": "node scripts/seo-regression.mjs",
     "audit:ui": "node scripts/audit-ui-system.mjs",
     "test:contrast": "node scripts/check-theme-contrast.mjs",
     "test:visual": "node scripts/visual-regression.mjs",

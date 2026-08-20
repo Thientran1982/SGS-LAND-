@@ -108,13 +108,16 @@ export default async function MarketplaceRoute({
 
   return (
     <Suspense fallback={<div className="h-screen flex items-center justify-center" style={{ color: "var(--text-tertiary)" }}>Đang tải...</div>}>
-      <MarketplacePage
-        initialListings={initialListings}
-        totalCount={totalCount}
-        totalPages={totalPages}
-        searchParams={sp}
-        facets={facets}
-      />
+      <>
+        <h1 className="sr-only">Tìm kiếm bất động sản tại Việt Nam</h1>
+        <MarketplacePage
+          initialListings={initialListings}
+          totalCount={totalCount}
+          totalPages={totalPages}
+          searchParams={sp}
+          facets={facets}
+        />
+      </>
     </Suspense>
   );
 }

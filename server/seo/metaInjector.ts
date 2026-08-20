@@ -3563,7 +3563,8 @@ export function buildListingMeta(listing: any): MetaData {
 export function buildArticleMeta(article: any): MetaData {
   const rawExcerpt =
     article.excerpt ||
-    (article.content ? article.content.replace(/<[^>]+>/g, '').slice(0, 160) : '');
+    (article.content ? article.content.replace(/<[^>]+>/g, '').slice(0, 160) : '') ||
+    (article.title ? `${article.title} — phân tích, dữ liệu và thông tin bất động sản được SGS LAND biên tập.` : '');
   const title = article.title ? `${article.title} - Tin Tức BĐS | SGS LAND` : DEFAULT_META.title;
   const description = rawExcerpt.slice(0, 300) || DEFAULT_META.description;
   const image = article.coverImage || article.cover_image || DEFAULT_IMAGE;

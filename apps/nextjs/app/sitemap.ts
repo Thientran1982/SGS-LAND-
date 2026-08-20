@@ -5,7 +5,7 @@ export function sitemapVi(): MetadataRoute.Sitemap {
   // A lastmod that is always "today" carries no information and is discounted
 // by Google and by AI crawlers. Use a stable content date and bump it when
 // the URL set / page content below actually changes.
-const now = new Date("2026-08-11T00:00:00Z");
+const now = new Date("2026-08-21T00:00:00Z");
   const staticRoutes: MetadataRoute.Sitemap = [
     { url: `${BASE}/`,                            lastModified: now, changeFrequency: "daily",   priority: 1.0 },
     { url: `${BASE}/marketplace`,                 lastModified: now, changeFrequency: "hourly",  priority: 0.9 },
@@ -22,7 +22,6 @@ const now = new Date("2026-08-11T00:00:00Z");
     { url: `${BASE}/contact`,                     lastModified: now, changeFrequency: "monthly", priority: 0.6 },
     { url: `${BASE}/careers`,                     lastModified: now, changeFrequency: "weekly",  priority: 0.6 },
     { url: `${BASE}/help-center`,                 lastModified: now, changeFrequency: "weekly",  priority: 0.6 },
-    { url: `${BASE}/livechat`,                    lastModified: now, changeFrequency: "monthly", priority: 0.5 },
     // Local landing pages
     { url: `${BASE}/bat-dong-san-dong-nai`,       lastModified: now, changeFrequency: "weekly",  priority: 0.7 },
     { url: `${BASE}/bat-dong-san-long-thanh`,     lastModified: now, changeFrequency: "weekly",  priority: 0.7 },
@@ -63,11 +62,6 @@ const now = new Date("2026-08-11T00:00:00Z");
     { url: `${BASE}/ky-gui-bat-dong-san`,      lastModified: now, changeFrequency: "weekly",  priority: 0.8 },
     { url: `${BASE}/phap-ly-nha-dat`,          lastModified: now, changeFrequency: "weekly",  priority: 0.8 },
     { url: `${BASE}/lai-suat-ngan-hang`,       lastModified: now, changeFrequency: "weekly",  priority: 0.8 },
-    { url: `${BASE}/lai-suat-ngan-hang-moi-nhat`, lastModified: now, changeFrequency: "weekly", priority: 0.7 },
-    { url: `${BASE}/mua-nha-lan-dau`,          lastModified: now, changeFrequency: "weekly",  priority: 0.8 },
-    { url: `${BASE}/can-ho-duoi-2-ty-tphcm`,   lastModified: now, changeFrequency: "weekly",  priority: 0.8 },
-    { url: `${BASE}/mua-hay-thue-nha-tphcm`,   lastModified: now, changeFrequency: "weekly",  priority: 0.8 },
-    { url: `${BASE}/vinhomes-hoc-mon`,         lastModified: now, changeFrequency: "weekly",  priority: 0.9 },
   ];
   const devSlugs = ["vinhomes", "novaland", "masterise-homes", "nam-long", "van-phuc-group", "son-kim-land", "dai-quang-minh"];
   const devRoutes: MetadataRoute.Sitemap = [
