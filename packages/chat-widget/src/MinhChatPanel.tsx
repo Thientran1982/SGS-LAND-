@@ -28,7 +28,9 @@ const CSS = (v: string, f: string) => "var(" + v + ", " + f + ")";
 
 /** Dung design token cua site (globals.css) de hop ca light va dark mode. */
 const S: Record<string, React.CSSProperties> = {
-  panel: { background: CSS("--cw-parchment", "#F5F1E6"), borderColor: CSS("--cw-line", "#EAE4D4"), fontFamily: "var(--font-be-vietnam), system-ui, sans-serif" },
+  // The outer border used to remain visible as a pale-gold crescent at the
+  // bottom corners. Match it to the panel surface so the radius is seamless.
+  panel: { background: CSS("--cw-parchment", "#F5F1E6"), borderColor: CSS("--cw-parchment", "#F5F1E6"), fontFamily: "var(--font-be-vietnam), system-ui, sans-serif" },
   header: { background: CSS("--cw-navy", "#0B1D26"), borderColor: CSS("--cw-navy", "#0B1D26") },
   brand: { background: CSS("--cw-gold", "#C6923D") },
   title: { color: CSS("--cw-paper", "#FFFFFF"), fontFamily: "var(--font-fraunces), Georgia, serif", fontWeight: 600 },
