@@ -763,6 +763,28 @@ html.dark body {
   .sgs-dashboard .dashboard-chart { border-right: 0; border-bottom: 1px solid var(--dash-rule); }
 }
 @media (max-width: 640px) {
+  .sgs-dashboard {
+    padding: 1rem .85rem 5rem;
+  }
+  .sgs-dashboard .dashboard-header {
+    gap: 1rem;
+    padding-bottom: 1rem;
+  }
+  .sgs-dashboard .dashboard-title {
+    margin-top: .4rem;
+    font-size: 1.45rem;
+  }
+  .sgs-dashboard .dashboard-header > div:last-child {
+    width: 100%;
+  }
+  .sgs-dashboard .dashboard-date-filter > button,
+  .sgs-dashboard .dashboard-export {
+    min-height: 2.2rem;
+  }
+  .sgs-dashboard .dashboard-export {
+    flex: 1;
+    justify-content: center;
+  }
   .sgs-dashboard .dashboard-kpis { grid-template-columns: 1fr 1fr; }
   .sgs-dashboard .dashboard-kpi { padding: .9rem .75rem; }
   .sgs-dashboard .dashboard-kpi:first-child,
@@ -780,4 +802,44 @@ html.dark body {
   .sgs-dashboard .dashboard-side,
   .sgs-dashboard .dashboard-secondary > section { padding-left: .85rem; padding-right: .85rem; }
   .sgs-dashboard .dashboard-ranking { gap: .55rem; }
+  .sgs-dashboard .dashboard-panel > .dashboard-panel-head {
+    align-items: flex-start;
+    gap: .65rem;
+    padding-top: .85rem;
+    padding-bottom: .75rem;
+  }
+  .sgs-dashboard .dashboard-panel > .dashboard-panel-head h2 {
+    font-size: .95rem;
+  }
+  .sgs-dashboard .dashboard-chart,
+  .sgs-dashboard .dashboard-side {
+    min-height: 0;
+  }
+  .sgs-dashboard .dashboard-chart {
+    padding-top: .9rem;
+    padding-bottom: .9rem;
+  }
+  .sgs-dashboard .dashboard-chart > div.h-\[260px\] {
+    height: 220px;
+  }
+  .sgs-dashboard .dashboard-kpi .kpi-label {
+    font-size: .63rem;
+    letter-spacing: .045em;
+    line-height: 1.25;
+  }
+  .sgs-dashboard .dashboard-kpi .kpi-value {
+    margin-top: .3rem;
+    font-size: 1.15rem;
+  }
+  .sgs-dashboard .dashboard-kpi .kpi-meta {
+    margin-top: .4rem;
+    font-size: .62rem;
+    line-height: 1.3;
+  }
+  .sgs-dashboard .dashboard-ranking .rank-metric {
+    font-size: .68rem;
+  }
+  .sgs-dashboard .dashboard-ranking .rank-metric span {
+    font-size: .55rem;
+  }
 }
