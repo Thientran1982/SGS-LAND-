@@ -294,7 +294,10 @@ export function MinhChatPanel({
 
   if (!ready) {
     return (
-      <div className={wrapper + " " + heightClass + " items-center justify-center"} style={S.panel}>
+      <div
+        className={wrapper + " " + heightClass + " items-center justify-center"}
+        style={{ ...S.panel, borderRadius: "20px", clipPath: "inset(0 round 20px)" }}
+      >
         <Loader2 className="w-6 h-6 animate-spin text-slate-400" />
       </div>
     );
@@ -308,6 +311,7 @@ export function MinhChatPanel({
           borderRadius: "20px",
           overflow: "hidden",
           backgroundClip: "padding-box",
+          clipPath: "inset(0 round 20px)",
         }}
       >
       {showHeader && (
@@ -333,7 +337,7 @@ export function MinhChatPanel({
       {!hasLead ? (
         <form
           onSubmit={handleStart}
-          className={"flex flex-col gap-3 p-5 justify-center rounded-b-[18px] " + heightClass}
+          className={"flex flex-col gap-3 p-5 justify-center rounded-b-[20px] " + heightClass}
           style={{ background: CSS("--cw-parchment", "#F5F1E6") }}
         >
           <p className="text-sm" style={S.sub}>
@@ -445,8 +449,8 @@ export function MinhChatPanel({
           ) : null}
 
           <div
-            className="flex items-end gap-2 rounded-b-[18px] border-t p-3"
-            style={{ ...S.bar, borderBottomLeftRadius: "18px", borderBottomRightRadius: "18px" }}
+            className="flex items-end gap-2 rounded-b-[20px] border-t p-3"
+            style={{ ...S.bar, borderBottomLeftRadius: "20px", borderBottomRightRadius: "20px" }}
           >
             {isRecording ? (
               <div className="flex-1 flex items-center gap-2 rounded-xl px-3 py-2" style={{ background: "var(--cw-navy, #0B1D26)" }}>

@@ -92,6 +92,15 @@
     --sgs-hero-deep:     #0A1E33;
     --sgs-champagne:     #F5EAD5;
     --sgs-on-dark-muted: var(--ui-text-secondary);
+
+    /* Shared Minh chat palette — follows the public semantic theme. */
+    --cw-parchment: var(--ui-surface-subtle);
+    --cw-paper: var(--ui-surface);
+    --cw-line: var(--ui-border);
+    --cw-ink: var(--ui-text);
+    --cw-ink-dim: var(--ui-text-muted);
+    --cw-navy: var(--ui-brand-strong);
+    --cw-gold: var(--ui-accent);
   }
 
   /* ─── Dark Mode ─────────────────────────────────────────── */
