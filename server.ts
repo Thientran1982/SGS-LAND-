@@ -60,6 +60,7 @@ import { createDepartmentRoutes } from "./server/routes/departmentRoutes";
 import { createTaskReportRoutes } from "./server/routes/taskReportRoutes";
 import { createLandingLeadRoutes } from "./server/routes/landingLeadRoutes";
 import { createLandingAiRoutes } from "./server/routes/landingAiRoutes";
+import { createAgentAuditRoutes } from "./server/routes/agentAuditRoutes";
 import { createLiveChatAgentRoutes } from "./server/routes/liveChatAgentRoutes";
 import { liveChatEngine } from "./server/ai/liveChatEngine";
 import { createPublicProjectRoutes } from "./server/routes/publicProjectRoutes";
@@ -4256,6 +4257,7 @@ app.use('/api/approval-requests', apiRateLimit, createApprovalRequestRoutes(auth
   app.use('/api/landing-leads', apiRateLimit, createLandingLeadRoutes());
   app.use('/api/landing-ai', aiRateLimit, createLandingAiRoutes());
   app.use('/api/live-chat', createLiveChatAgentRoutes(authenticateToken, aiRateLimit, apiRateLimit));
+  app.use('/api/agent-audit', apiRateLimit, createAgentAuditRoutes(authenticateToken));
 
   // Bounds a promise so a stalled dependency (DB/Redis) never blocks the
   // /api/health SLA of <1s — rejects with a labeled timeout error instead.

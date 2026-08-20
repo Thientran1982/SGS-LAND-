@@ -23,6 +23,7 @@ import { agentRepository } from '../repositories/agentRepository';
 import { generateWithPolicy } from './providers';
 import { TASK_MODELS } from './modelPolicy';
 import { recordAiUsage } from '../services/aiUsageService';
+import { agentAuditRepository } from '../repositories/agentAuditRepository';
 import { createHash, randomUUID } from 'crypto';
 import { inspectToolRequest } from './agentGuardrails';
 import { runDurableAgentExecution } from '../services/durableAgentExecutionService';
@@ -1265,6 +1266,43 @@ async function handle_live_chat(args: Record<string, any>): Promise<any> {
         },
     });
     const { content, steps, ...result } = execution.result as any;
+    const auditBase = {
+        tenantId,
+        sessionId: effectiveSessionId,
+        leadId: args.context?.leadId,
+        runId: execution.runId,
+        traceId: execution.traceId,
+    };
+    await agentAuditRepository.record(tenantId, {
+        ...auditBase,
+        eventKey: `chat:${execution.runId}:in`,
+        eventType: 'CHAT_MESSAGE',
+        direction: 'INBOUND',
+        status: 'SUCCESS',
+        input: { message },
+        metadata: { source: 'live-chat-engine' },
+    }).catch(error => logger.warn(`[LiveChatAudit] inbound record failed: ${error?.message || error}`));
+    await agentAuditRepository.record(tenantId, {
+        ...auditBase,
+        eventKey: `chat:${execution.runId}:out`,
+        eventType: 'CHAT_MESSAGE',
+        direction: 'OUTBOUND',
+        status: 'SUCCESS',
+        output: { content, intent: result.intent, sources: result.sources, groundingStatus: result.groundingStatus },
+        metadata: { source: 'live-chat-engine', cached: execution.cached, resumed: execution.resumed },
+    }).catch(error => logger.warn(`[LiveChatAudit] outbound record failed: ${error?.message || error}`));
+    for (const step of (steps || []) as Array<Record<string, any>>) {
+        await agentAuditRepository.record(tenantId, {
+            ...auditBase,
+            eventKey: `tool:${execution.runId}:${String(step.agent)}`,
+            eventType: 'TOOL_EXECUTION',
+            toolName: String(step.agent),
+            status: String(step.status || 'SUCCESS'),
+            output: { specialistOutput: result.specialistOutput, sources: result.sources },
+            metadata: { source: 'durable-live-chat', cached: execution.cached, resumed: execution.resumed },
+        }).catch(error => logger.warn(`[LiveChatAudit] tool record failed: ${error?.message || error}`));
+    }
+    await recordObservedEntities(tenantId, auditBase, result.specialistOutput, result.sources);
     return {
         ...result,
         response: content,
@@ -1275,6 +1313,47 @@ async function handle_live_chat(args: Record<string, any>): Promise<any> {
         needsVerification: execution.guardrail.requiresVerification,
         guardrailFlags: execution.guardrail.flags,
     };
+}
+
+function recordObservedEntities(
+    tenantId: string,
+    base: { sessionId: string; leadId?: string; runId: string; traceId: string },
+    value: any,
+    sources?: any[],
+): Promise<void> {
+    const found: Array<{ type: string; id?: string; code?: string; parentId?: string }> = [];
+    const visit = (node: any, parentId?: string): void => {
+        if (!node || typeof node !== 'object') return;
+        if (Array.isArray(node)) return node.slice(0, 100).forEach(item => visit(item, parentId));
+        const id = node.id || node.listingId || node.projectId;
+        const code = node.code || node.projectCode;
+        if (node.listingId || node.pricePerM2 || node.bedrooms || node.propertyType) {
+            found.push({ type: 'LISTING', id: node.listingId || node.id, code: node.code, parentId });
+        } else if (node.projectId || node.projectCode || node.projectName) {
+            found.push({ type: 'PROJECT', id: node.projectId || node.id, code: node.projectCode || node.code });
+        } else if (id || code) {
+            found.push({ type: 'PROJECT_ITEM', id, code, parentId });
+        }
+        Object.entries(node).slice(0, 80).forEach(([key, child]) => {
+            if (key !== 'input' && key !== 'output' && key !== 'metadata') visit(child, node.projectId || node.projectCode || parentId);
+        });
+    };
+    visit(value);
+    const unique = new Map(found.map(item => [`${item.type}:${item.id || item.code || 'unknown'}`, item]));
+    return Promise.all(Array.from(unique.values()).slice(0, 200).map((item, index) =>
+        agentAuditRepository.record(tenantId, {
+            ...base,
+            eventKey: `entity:${base.runId}:${item.type}:${item.id || item.code || index}`,
+            eventType: 'ENTITY_OBSERVED',
+            entityType: item.type,
+            entityId: item.id,
+            entityCode: item.code,
+            parentEntityType: item.parentId ? 'PROJECT' : undefined,
+            parentEntityId: item.parentId,
+            output: { sources },
+            metadata: { source: 'durable-live-chat' },
+        }).catch(error => logger.warn(`[LiveChatAudit] entity record failed: ${error?.message || error}`)),
+    )).then(() => undefined);
 }
 
 // ────────────────────────────────────────────────────────────────────────────
@@ -1978,7 +2057,38 @@ export const liveChatEngine = {
         }
         const t0 = Date.now();
         const result = await handler(args);
-        logger.info(`[LiveChatEngine] ${toolName} — ${Date.now() - t0}ms`);
+        const latencyMs = Date.now() - t0;
+        const tenantId = String(args.tenantId || DEFAULT_TENANT_ID);
+        const auditHash = createHash('sha256')
+            .update(`${toolName}|${JSON.stringify(args)}`)
+            .digest('hex')
+            .slice(0, 32);
+        await agentAuditRepository.record(tenantId, {
+            eventKey: `direct-tool:${toolName}:${auditHash}`,
+            eventType: 'TOOL_EXECUTION',
+            toolName,
+            status: 'SUCCESS',
+            input: args,
+            output: result,
+            sessionId: args.sessionId,
+            leadId: args.leadId || args.context?.leadId,
+            runId: args.runId,
+            traceId: args.traceId,
+            latencyMs,
+            metadata: { source: 'live-chat-tool-dispatcher' },
+        }).catch(error => logger.warn(`[LiveChatAudit] direct tool record failed: ${error?.message || error}`));
+        await recordObservedEntities(
+            tenantId,
+            {
+                sessionId: String(args.sessionId || ''),
+                leadId: args.leadId || args.context?.leadId,
+                runId: String(args.runId || `direct-${auditHash}`),
+                traceId: String(args.traceId || auditHash),
+            },
+            result,
+            result?.sources,
+        );
+        logger.info(`[LiveChatEngine] ${toolName} — ${latencyMs}ms`);
         return result;
     },
 

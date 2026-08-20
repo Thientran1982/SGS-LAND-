@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
-import { render, waitFor } from "@testing-library/react";
+import { render } from "@testing-library/react";
 import { HelmetProvider } from "react-helmet-async";
 import React from "react";
 import { SeoHead } from "../../components/SeoHead";
@@ -12,6 +12,21 @@ function getMeta(name: string, attr: "name" | "property" = "name"): string {
 
 function getTitle(): string {
   return document.title ?? "";
+}
+
+async function waitFor(assertion: () => void, timeoutMs = 1000): Promise<void> {
+  const deadline = Date.now() + timeoutMs;
+  let lastError: unknown;
+  while (Date.now() < deadline) {
+    try {
+      assertion();
+      return;
+    } catch (error) {
+      lastError = error;
+      await new Promise(resolve => setTimeout(resolve, 10));
+    }
+  }
+  throw lastError;
 }
 
 async function renderAndWait(props: Partial<Parameters<typeof SeoHead>[0]> & { title: string; description: string }) {
@@ -58,25 +73,25 @@ describe("SeoHead", () => {
 
   it("sets description meta tag", async () => {
     const unmount = await renderAndWait({ title: "Page", description: "My test description" });
-    await waitFor(() => expect(getMeta("description")).toBe("My test description"));
+    expect(getMeta("description")).toBe("My test description");
     unmount();
   });
 
   it("sets robots to index follow by default (noindex=false)", async () => {
     const unmount = await renderAndWait({ title: "Page", description: "Desc", noindex: false });
-    await waitFor(() => expect(getMeta("robots")).toContain("index"));
+    expect(getMeta("robots")).toContain("index");
     unmount();
   });
 
   it("sets robots to noindex when noindex=true", async () => {
     const unmount = await renderAndWait({ title: "Hidden Page", description: "Desc", noindex: true });
-    await waitFor(() => expect(getMeta("robots")).toContain("noindex"));
+    expect(getMeta("robots")).toContain("noindex");
     unmount();
   });
 
   it("sets og:type to website by default", async () => {
     const unmount = await renderAndWait({ title: "Page", description: "Desc" });
-    await waitFor(() => expect(getMeta("og:type", "property")).toBe("website"));
+    expect(getMeta("og:type", "property")).toBe("website");
     unmount();
   });
 
