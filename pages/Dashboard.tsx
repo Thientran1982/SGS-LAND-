@@ -345,7 +345,7 @@ const SearchAnalyticsWidget = ({ analytics, language }: { analytics: any; langua
                     <div key={group.title} className="min-w-0 rounded-xl border border-[var(--glass-border)] bg-[var(--glass-surface)] p-3">
                         <div className="mb-3 text-xs font-semibold text-[var(--text-secondary)]">{group.title}</div>
                         {group.items.length ? (
-                            <div className="max-h-64 space-y-2 overflow-y-auto pr-1">
+                            <div data-export-expand className="max-h-64 space-y-2 overflow-y-auto pr-1">
                                 {group.items.slice(0, 10).map((item: any, index: number) => (
                                     <div key={`${group.title}-${index}`} className="flex items-center justify-between gap-3 border-b border-[var(--glass-border)] pb-2 text-xs last:border-0 last:pb-0">
                                         <span className="min-w-0 truncate text-[var(--text-primary)]">{index + 1}. {group.label(item)}</span>
@@ -715,6 +715,22 @@ export const Dashboard: React.FC = () => {
                 logging: false,
                 backgroundColor: getComputedStyle(document.documentElement).getPropertyValue('--bg-app').trim(),
                 onclone: (clonedDoc) => {
+                    const root = clonedDoc.querySelector('[data-dashboard-export-root]');
+                    if (root) {
+                        const header = clonedDoc.createElement('div');
+                        header.setAttribute('data-export-header', '');
+                        header.style.cssText = 'padding:24px 28px 18px;border-bottom:1px solid #d7dde5;background:#ffffff;color:#172033;font-family:Arial,sans-serif;';
+                        const title = language === 'vn' ? 'SGS LAND — Báo cáo Tổng quan' : 'SGS LAND — Dashboard Report';
+                        const period = language === 'vn' ? `Kỳ dữ liệu: ${timeRange}` : `Data period: ${timeRange}`;
+                        const scope = analytics?.scopeLabel ? `${language === 'vn' ? 'Phạm vi' : 'Scope'}: ${analytics.scopeLabel}` : '';
+                        header.innerHTML = `<div style="font-size:20px;font-weight:700;">${title}</div><div style="margin-top:8px;font-size:12px;color:#657184;">${period}${scope ? ` &nbsp;•&nbsp; ${scope}` : ''} &nbsp;•&nbsp; ${language === 'vn' ? 'Xuất lúc' : 'Generated'}: ${new Date().toLocaleString(language === 'vn' ? 'vi-VN' : 'en-US')}</div>`;
+                        root.prepend(header);
+                    }
+                    clonedDoc.querySelectorAll('[data-export-expand]').forEach((element) => {
+                        const node = element as HTMLElement;
+                        node.style.maxHeight = 'none';
+                        node.style.overflow = 'visible';
+                    });
                     // Ensure fonts are loaded in the clone
                     const style = clonedDoc.createElement('style');
                     style.innerHTML = `
@@ -908,7 +924,7 @@ export const Dashboard: React.FC = () => {
                     </div>
                 )}
 
-                <div ref={dashboardRef} className="space-y-6">
+                <div ref={dashboardRef} data-dashboard-export-root className="space-y-6">
                     <section className="dashboard-kpis" aria-label={t('dash.overview_subtitle')}>
                         <div className="dashboard-kpi">
                             <div className="kpi-label">{t('dash.revenue_title')}</div>
