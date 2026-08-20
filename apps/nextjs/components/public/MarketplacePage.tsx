@@ -544,35 +544,46 @@ export function MarketplacePage({ initialListings, totalCount, totalPages, searc
       </div>
       {/* Primary row: transaction segmented control + view switcher */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 pb-1 mb-3">
-        <div className="flex items-center gap-1 p-0.5 rounded-lg w-full sm:w-auto" style={{ background: "var(--bg-elevated)" }}>
+        <div className="flex items-center gap-1 p-0.5 rounded-lg w-full sm:w-auto" style={{ background: "var(--primary-subtle)", border: "1px solid var(--border-default)" }}>
           <button type="button" onClick={() => setTransactionTab("SALE")}
             className="px-3 sm:px-4 h-9 rounded-md text-sm font-semibold transition-colors whitespace-nowrap"
-            style={activeTab === "SALE" ? { background: "var(--primary-subtle)", color: "var(--primary-600)" } : { color: "var(--text-tertiary)" }}>
+            style={activeTab === "SALE" ? { background: "var(--primary-600)", color: "var(--text-inverse)" } : { color: "var(--text-secondary)" }}>
             {tt(lang, "Bán", "For sale")}
           </button>
           <button type="button" onClick={() => setTransactionTab("RENT")}
             className="px-3 sm:px-4 h-9 rounded-md text-sm font-semibold transition-colors whitespace-nowrap"
-            style={activeTab === "RENT" ? { background: "var(--primary-subtle)", color: "var(--primary-600)" } : { color: "var(--text-tertiary)" }}>
+            style={activeTab === "RENT" ? { background: "var(--primary-600)", color: "var(--text-inverse)" } : { color: "var(--text-secondary)" }}>
             {tt(lang, "Cho thuê", "For rent")}
           </button>
           <Link href={lang === "en" ? "/en/du-an" : "/du-an"}
             className="px-3 sm:px-4 h-9 rounded-md text-sm font-semibold transition-colors whitespace-nowrap flex items-center"
-            style={{ color: "var(--text-tertiary)" }}>
+            style={{ color: "var(--text-secondary)" }}>
             {tt(lang, "Dự án", "Projects")}
           </Link>
         </div>
 
-        <div className="flex self-end p-0.5 rounded-lg shrink-0" style={{ background: "var(--bg-elevated)" }}>
+        <div className="flex items-center justify-between sm:justify-end gap-2 w-full sm:w-auto">
+          <button type="button" onClick={() => setFiltersOpen((open) => !open)}
+            className="sm:hidden h-9 px-3 rounded-lg flex items-center gap-2 text-sm font-semibold transition-colors"
+            style={filtersOpen || activeFilterCount > 0
+              ? { background: "var(--primary-600)", color: "var(--text-inverse)" }
+              : { background: "var(--primary-subtle)", color: "var(--primary-600)", border: "1px solid var(--border-default)" }}>
+            <SlidersHorizontal className="w-4 h-4" />
+            <span>{tt(lang, "Bộ lọc", "Filters")}</span>
+            {activeFilterCount > 0 && <span className="min-w-5 h-5 px-1 rounded-full text-xs flex items-center justify-center" style={{ background: filtersOpen ? "rgba(255,255,255,.22)" : "var(--primary-600)", color: "var(--text-inverse)" }}>{activeFilterCount}</span>}
+          </button>
+          <div className="flex self-end p-0.5 rounded-lg shrink-0" style={{ background: "var(--primary-subtle)", border: "1px solid var(--border-default)" }}>
           {VIEWS.map((v) => {
             const Icon = v.icon;
             const active = view === v.id;
             return (
               <button key={v.id} type="button" onClick={() => setView(v.id)} aria-label={v.id}
-                className="p-2 rounded-md transition-colors" style={active ? { background: "var(--bg-surface)", color: "var(--primary-600)" } : { color: "var(--text-tertiary)" }}>
+                className="p-2 rounded-md transition-colors" style={active ? { background: "var(--primary-600)", color: "var(--text-inverse)" } : { color: "var(--text-secondary)" }}>
                 <Icon className="w-4 h-4" />
               </button>
             );
           })}
+          </div>
         </div>
       </div>
       {/* Secondary row: refine filters */}
@@ -612,17 +623,6 @@ export function MarketplacePage({ initialListings, totalCount, totalPages, searc
         )}
       </div>
       <div className="sm:hidden mb-3">
-        <button type="button" onClick={() => setFiltersOpen((open) => !open)}
-          className="w-full h-10 px-3 rounded-xl flex items-center justify-between gap-2 text-sm font-semibold transition-colors"
-          style={filtersOpen || activeFilterCount > 0
-            ? { background: "var(--primary-subtle)", color: "var(--primary-600)", border: "1px solid var(--primary-600)" }
-            : { background: "var(--bg-elevated)", color: "var(--text-secondary)", border: "1px solid var(--border-default)" }}>
-          <span className="flex items-center gap-2"><SlidersHorizontal className="w-4 h-4" />{tt(lang, "Bộ lọc", "Filters")}</span>
-          <span className="flex items-center gap-2">
-            {activeFilterCount > 0 && <span className="min-w-5 h-5 px-1 rounded-full text-xs flex items-center justify-center" style={{ background: "var(--primary-600)", color: "var(--text-inverse)" }}>{activeFilterCount}</span>}
-            <ChevronDown className={`w-4 h-4 transition-transform ${filtersOpen ? "rotate-180" : ""}`} />
-          </span>
-        </button>
         {filtersOpen && (
           <div className="mt-2 p-3 rounded-2xl grid grid-cols-2 gap-2" style={{ background: "var(--bg-elevated)", border: "1px solid var(--border-default)" }}>
             <div className="min-w-0"><Dropdown value={sp.type ?? ""} options={TYPE_OPTIONS(lang)} onChange={(v) => setParam("type", v)} minWidth={0} /></div>
