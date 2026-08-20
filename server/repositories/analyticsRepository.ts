@@ -786,7 +786,15 @@ export class AnalyticsRepository extends BaseRepository {
       const operational = operationalResult.rows[0] || {};
       const inventoryOverview = inventoryOverviewResult.rows[0] || {};
       const inboxOverview = inboxResult.rows[0] || {};
-      const aiSuggestions = recentActivities.filter((activity: any) => activity.type === 'AI').slice(0, 3);
+      const aiSuggestions = recentActivities
+        .filter((activity: any) => activity.type === 'AI')
+        .slice(0, 3)
+        .map((activity: any) => ({
+          id: activity.id,
+          title: activity.content,
+          message: activity.content,
+          time: activity.time,
+        }));
       const configuredTargets = new Map(kpiTargetsResult.rows.map((row: any) => [row.metric, {
         monthly_target: Number(row.monthly_target),
         quarter_target: Number(row.quarter_target),

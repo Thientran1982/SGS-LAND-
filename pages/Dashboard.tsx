@@ -903,7 +903,7 @@ export const Dashboard: React.FC = () => {
                                 </div>
                                 <div className="h-[260px] w-full min-w-0 sm:h-[300px]">
                                     {pipelineMode === 'source' ? (
-                                        <div className="space-y-3 px-2 pt-4">
+                                        <div className="max-h-[285px] space-y-3 overflow-y-auto px-2 pt-4 pr-3">
                                             {sourceData.length ? sourceData.map(([source, count]: any) => (
                                                 <div key={source}>
                                                     <div className="mb-1 flex justify-between text-xs"><span className="text-[var(--text-secondary)]">{source}</span><strong className="font-mono text-[var(--text-primary)]">{count}</strong></div>
@@ -1006,7 +1006,7 @@ export const Dashboard: React.FC = () => {
                                 <div className="ml-auto text-right"><div className="text-lg font-bold text-[var(--ui-danger)]">{overview.aiAdvisor?.anomalies ?? 0}</div><div className="text-xs text-[var(--text-tertiary)]">{language === 'vn' ? 'Cảnh báo bất thường' : 'Anomaly alerts'}</div></div>
                             </div>
                             <div className="mt-4 space-y-2">
-                                {(Array.isArray(overview.aiAdvisor?.suggestions) ? overview.aiAdvisor.suggestions : []).slice(0, 3).map((item: any, index: number) => <div key={index} className="rounded-lg bg-[var(--glass-surface)] px-3 py-2 text-xs text-[var(--text-secondary)]">{typeof item === 'string' ? item : item?.title || item?.message || ''}</div>)}
+                                {(Array.isArray(overview.aiAdvisor?.suggestions) ? overview.aiAdvisor.suggestions : []).slice(0, 3).map((item: any, index: number) => <div key={index} className="rounded-lg bg-[var(--glass-surface)] px-3 py-2 text-xs text-[var(--text-secondary)]">{typeof item === 'string' ? item : item?.title || item?.message || item?.content || (language === 'vn' ? 'Gợi ý AI chưa có nội dung hiển thị' : 'AI suggestion has no display text')}</div>)}
                                 {!overview.aiAdvisor?.suggestions?.length && <div className="text-xs text-[var(--text-tertiary)]">{language === 'vn' ? 'Chưa có gợi ý mới' : 'No new suggestions'}</div>}
                             </div>
                         </section>
