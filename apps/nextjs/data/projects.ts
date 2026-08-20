@@ -326,7 +326,9 @@ export const PROJECT_CONFIG: Record<string, ProjectConfig> = {
             { label: 'Vị trí', value: 'Long Hưng, Biên Hòa, Đồng Nai' },
             { label: 'Khoảng cách TP.HCM', value: 'Cần đo theo tuyến và thời điểm' },
             { label: 'Loại hình', value: 'Theo danh mục sản phẩm được xác minh' },
-            { label: 'Mức giá tham khảo', value: 'Nhà phố từ 6 tỷ; biệt thự từ 8,5 tỷ; shophouse từ 10 tỷ' },
+            { label: 'Nhà phố', value: 'Từ 6 tỷ (giá tham khảo)' },
+            { label: 'Biệt thự', value: 'Từ 8,5 tỷ (giá tham khảo)' },
+            { label: 'Shophouse', value: 'Từ 10 tỷ (giá tham khảo)' },
             { label: 'Pháp lý', value: 'Cần kiểm tra hồ sơ của từng sản phẩm' },
             { label: 'Tiến độ', value: 'Cần đối chiếu thông báo và thực địa' },
         ],
@@ -356,8 +358,8 @@ export const PROJECT_CONFIG: Record<string, ProjectConfig> = {
                 a: 'Không có câu trả lời chung cho việc mua Aqua City. Người mua cần xác minh hồ sơ pháp lý của đúng sản phẩm, tiến độ, tiện ích đã vận hành, giá giao dịch, thanh khoản và khả năng tài chính trước khi quyết định.',
             },
             {
-                q: 'Giá căn hộ Aqua City hiện nay là bao nhiêu?',
-                a: 'Giá Aqua City thay đổi theo phân khu, loại hình, diện tích, pháp lý, điều kiện thanh toán và thời điểm. Cần xác nhận bằng bảng giá hoặc dữ liệu giao dịch có ngày của đúng sản phẩm.',
+                q: 'Giá Aqua City hiện nay là bao nhiêu?',
+                a: 'Bảng giá tham khảo Aqua City: nhà phố từ 6 tỷ, biệt thự từ 8,5 tỷ và shophouse từ 10 tỷ. Đây là mức giá khởi điểm tham khảo, thay đổi theo phân khu, diện tích, pháp lý, điều kiện thanh toán và thời điểm; cần xác nhận bảng giá của đúng sản phẩm.',
             },
             {
                 q: 'Aqua City cách TP.HCM bao xa?',

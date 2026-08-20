@@ -421,7 +421,7 @@ const GEO_BODY_DATA: Record<string, {
       'Aqua City Novaland được giới thiệu là khu đô thị tại Long Hưng, Biên Hòa, Đồng Nai. ' +
       'Giá, pháp lý, tiến độ, sản phẩm và thời gian di chuyển có thể khác nhau theo phân khu và thời điểm; người mua cần kiểm tra tài liệu chính thức của đúng sản phẩm trước khi giao dịch.',
     stats: [
-      'Giá: chưa có bảng dữ liệu giao dịch có ngày và nguồn đủ để khẳng định một mức giá chung cho toàn Aqua City.',
+      'Giá tham khảo: nhà phố từ 6 tỷ, biệt thự từ 8,5 tỷ, shophouse từ 10 tỷ; mức giá thay đổi theo phân khu, sản phẩm, pháp lý và thời điểm.',
       'Pháp lý: cần kiểm tra theo từng phân khu, lô và loại sản phẩm; không suy luận tình trạng giấy chứng nhận của lô này từ lô khác.',
       'Tiến độ: cần đối chiếu thông báo mới nhất của chủ đầu tư, hồ sơ xây dựng và thực địa.',
       'Hạ tầng và thời gian di chuyển: chỉ ghi nhận sau khi kiểm tra nguồn cơ quan quản lý và tuyến đường thực tế.',

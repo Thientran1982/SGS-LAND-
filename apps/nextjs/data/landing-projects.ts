@@ -108,7 +108,9 @@ const AQUA_CITY: LandingProject = {
     { k: "Tổng sản phẩm", v: "Cần đối chiếu hồ sơ dự án hiện hành" },
     { k: "Cây xanh & mặt nước", v: "Cần đối chiếu quy hoạch được công bố" },
     { k: "Hạ tầng kết nối", v: "Đối chiếu bản đồ, tuyến đường và tiến độ thực tế" },
-    { k: "Giá tham khảo", v: "Nhà phố từ 6 tỷ; biệt thự từ 8,5 tỷ; shophouse từ 10 tỷ" },
+    { k: "Nhà phố", v: "Từ 6 tỷ (giá tham khảo)" },
+    { k: "Biệt thự", v: "Từ 8,5 tỷ (giá tham khảo)" },
+    { k: "Shophouse", v: "Từ 10 tỷ (giá tham khảo)" },
     { k: "Tư cách phân phối", v: "Yêu cầu xác nhận bằng văn bản trước giao dịch" },
   ],
   locationIntro:

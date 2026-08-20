@@ -126,14 +126,13 @@ export default function AquaCityCoNenMuaPage() {
               </tr>
             </thead>
             <tbody>
-              <tr className="bg-gray-50"><td className="border px-4 py-3">Nhà phố thương mại</td><td className="border px-4 py-3">Theo sản phẩm</td><td className="border px-4 py-3">Cần xác minh</td><td className="border px-4 py-3 text-blue-700 font-bold">Cần xác minh</td><td className="border px-4 py-3 text-yellow-700">Chưa tính</td></tr>
-              <tr><td className="border px-4 py-3">Nhà phố vườn</td><td className="border px-4 py-3">Theo sản phẩm</td><td className="border px-4 py-3">Cần xác minh</td><td className="border px-4 py-3 text-blue-700 font-bold">Cần xác minh</td><td className="border px-4 py-3 text-yellow-700">Chưa tính</td></tr>
-              <tr className="bg-gray-50"><td className="border px-4 py-3">Biệt thự đơn lập</td><td className="border px-4 py-3">Theo sản phẩm</td><td className="border px-4 py-3">Cần xác minh</td><td className="border px-4 py-3 text-blue-700 font-bold">Cần xác minh</td><td className="border px-4 py-3 text-yellow-700">Chưa tính</td></tr>
-              <tr><td className="border px-4 py-3">Shophouse</td><td className="border px-4 py-3">Theo sản phẩm</td><td className="border px-4 py-3">Cần xác minh</td><td className="border px-4 py-3 text-blue-700 font-bold">Cần xác minh</td><td className="border px-4 py-3 text-yellow-700">Chưa tính</td></tr>
+              <tr className="bg-gray-50"><td className="border px-4 py-3">Nhà phố</td><td className="border px-4 py-3">Theo sản phẩm</td><td className="border px-4 py-3">Từ 6 tỷ</td><td className="border px-4 py-3 text-blue-700 font-bold">Từ 6 tỷ</td><td className="border px-4 py-3 text-yellow-700">Giá tham khảo</td></tr>
+              <tr><td className="border px-4 py-3">Biệt thự</td><td className="border px-4 py-3">Theo sản phẩm</td><td className="border px-4 py-3">Từ 8,5 tỷ</td><td className="border px-4 py-3 text-blue-700 font-bold">Từ 8,5 tỷ</td><td className="border px-4 py-3 text-yellow-700">Giá tham khảo</td></tr>
+              <tr className="bg-gray-50"><td className="border px-4 py-3">Shophouse</td><td className="border px-4 py-3">Theo sản phẩm</td><td className="border px-4 py-3">Từ 10 tỷ</td><td className="border px-4 py-3 text-blue-700 font-bold">Từ 10 tỷ</td><td className="border px-4 py-3 text-yellow-700">Giá tham khảo</td></tr>
             </tbody>
           </table>
         </div>
-        <p className="text-gray-600 text-sm italic mt-2">*Chưa có dữ liệu giao dịch có nguồn và ngày đủ để tính bảng chênh lệch. Không dùng bảng này để định giá hoặc kết luận cơ hội đầu tư.</p>
+        <p className="text-gray-600 text-sm italic mt-2">*Mức “từ” là giá tham khảo do SGS Land cung cấp, không phải cam kết giá giao dịch hay bảng giá chính thức của chủ đầu tư. Giá thực tế thay đổi theo phân khu, diện tích, pháp lý, điều kiện thanh toán và ngày cập nhật.</p>
       </section>
 
       <section className="mb-10">
