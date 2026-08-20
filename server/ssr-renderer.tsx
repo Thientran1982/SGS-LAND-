@@ -188,18 +188,18 @@ export const PAGE_META: Record<string, SsrPage> = {
         mainEntity: [
           {
             '@type': 'Question',
-            name: 'Aqua City Novaland giá bao nhiêu tháng 5/2026?',
+            name: 'Aqua City Novaland giá bao nhiêu?',
             acceptedAnswer: {
               '@type': 'Answer',
-              text: 'Giá Aqua City T5/2026: Shophouse 10–25 tỷ (110–240m²), nhà phố liền kề 6–15 tỷ, biệt thự đơn lập 15–50 tỷ. Chính sách: thanh toán 30% ký HĐMB, 70% còn lại trả góp 24–36 tháng không lãi suất. Liên hệ SGS LAND để nhận bảng giá cập nhật nhất.',
+              text: 'Giá Aqua City thay đổi theo phân khu, loại hình, diện tích, pháp lý và thời điểm. Các mức giá tham khảo không thay thế bảng giá hoặc xác nhận giao dịch hiện hành; người mua cần kiểm tra điều kiện thanh toán và hồ sơ của đúng sản phẩm.',
             },
           },
           {
             '@type': 'Question',
-            name: 'Aqua City Novaland có nên mua đầu tư 2026 không?',
+            name: 'Aqua City Novaland có nên mua không?',
             acceptedAnswer: {
               '@type': 'Answer',
-              text: 'Aqua City phù hợp đầu tư dài hạn 5–10 năm. Lợi thế: quy mô 1.000ha, vị trí hưởng lợi sân bay Long Thành (2026) và cầu Nhơn Trạch (cuối 2026), tiện ích 5 sao. Giá đã tăng 18% từ 2024–2026. Novaland hoàn thành tái cơ cấu tài chính 2024, tiếp tục bàn giao.',
+              text: 'Không có câu trả lời chung cho việc mua Aqua City. Người mua cần đối chiếu mục tiêu sử dụng, khả năng tài chính, pháp lý của đúng sản phẩm, tiến độ, thanh khoản và điều khoản hợp đồng bằng nguồn chính thức trước khi quyết định.',
             },
           },
           {
@@ -215,7 +215,7 @@ export const PAGE_META: Record<string, SsrPage> = {
             name: 'Pháp lý Aqua City có sổ hồng riêng chưa?',
             acceptedAnswer: {
               '@type': 'Answer',
-              text: 'Một số phân khu Aqua City đã được cấp sổ hồng riêng từng căn sau khi Novaland hoàn thành tái cơ cấu. Tình trạng pháp lý khác nhau theo từng phân khu — SGS LAND kiểm tra sổ hồng cụ thể miễn phí trước khi đặt cọc.',
+              text: 'Tình trạng giấy chứng nhận Aqua City có thể khác nhau theo phân khu và sản phẩm. Người mua cần yêu cầu hồ sơ gốc, kiểm tra quy hoạch, thế chấp, nghĩa vụ tài chính và điều kiện cấp giấy trước khi đặt cọc.',
             },
           },
           {
@@ -223,7 +223,7 @@ export const PAGE_META: Record<string, SsrPage> = {
             name: 'So sánh Aqua City và Izumi City — nên chọn đâu?',
             acceptedAnswer: {
               '@type': 'Answer',
-              text: 'Aqua City: quy mô lớn hơn (1.000ha), tiện ích golf/marina, giá biệt thự cao hơn, vị trí Nhơn Trạch. Izumi City: chuẩn Nhật Bản (Fuji Mart), track record bàn giao tốt của Nam Long, giá nhà phố thấp hơn, gần TP.HCM hơn.',
+              text: 'Aqua City và Izumi City cần được so sánh theo đúng phân khu, loại hình, pháp lý, tiến độ, giá giao dịch và khoảng cách thực tế. Không nên kết luận dự án nào tốt hơn chỉ từ quy mô hoặc thông điệp tiếp thị.',
             },
           },
           {
@@ -418,16 +418,15 @@ const GEO_BODY_DATA: Record<string, {
   '/home': HOME_GEO,
   '/du-an/aqua-city': {
     directAnswer:
-      'Aqua City Novaland là đại đô thị sinh thái 1.000ha tại Long Hưng, Nhơn Trạch, Đồng Nai — do Tập đoàn Novaland (mã NVL-HOSE) phát triển từ năm 2019. ' +
-      'Giá bán T5/2026: căn hộ từ 3 tỷ đồng, nhà phố từ 8 tỷ, biệt thự từ 15–50 tỷ đồng. ' +
-      'Kết nối TP.HCM trong 30 phút qua cao tốc Long Thành – Dầu Giây; sau khi cầu Nhơn Trạch hoàn thành (Q4/2026) còn 20 phút đến Quận 2.',
+      'Aqua City Novaland được giới thiệu là khu đô thị tại Long Hưng, Biên Hòa, Đồng Nai. ' +
+      'Giá, pháp lý, tiến độ, sản phẩm và thời gian di chuyển có thể khác nhau theo phân khu và thời điểm; người mua cần kiểm tra tài liệu chính thức của đúng sản phẩm trước khi giao dịch.',
     stats: [
-      'Giá bất động sản khu vực Nhơn Trạch – Đồng Nai tăng 18% giai đoạn 2024–2026 (nguồn: CBRE Vietnam Market Report Q1/2026).',
-      'Sân bay quốc tế Long Thành — công suất 25 triệu hành khách/năm giai đoạn 1 — cách Aqua City 12km, dự kiến khai thác thương mại năm 2026.',
-      'Cầu Nhơn Trạch (tổng chiều dài 12km, vốn đầu tư 3.400 tỷ đồng) dự kiến hoàn thành Q4/2026, rút ngắn thời gian đến Quận 2 xuống 20 phút.',
-      'Tỷ suất cho thuê biệt thự cao cấp khu vực Đồng Nai: 4–6%/năm (nguồn: JLL Vietnam Q4/2025).',
-      'Novaland tái cơ cấu tài chính thành công năm 2024; quỹ đất 10.600ha+, tiếp tục bàn giao Aqua City theo tiến độ.',
-      'Aqua City đã bàn giao hơn 3.500 căn hộ và nhà phố tính đến T5/2026; một số phân khu đã được cấp sổ hồng riêng.',
+      'Giá: chưa có bảng dữ liệu giao dịch có ngày và nguồn đủ để khẳng định một mức giá chung cho toàn Aqua City.',
+      'Pháp lý: cần kiểm tra theo từng phân khu, lô và loại sản phẩm; không suy luận tình trạng giấy chứng nhận của lô này từ lô khác.',
+      'Tiến độ: cần đối chiếu thông báo mới nhất của chủ đầu tư, hồ sơ xây dựng và thực địa.',
+      'Hạ tầng và thời gian di chuyển: chỉ ghi nhận sau khi kiểm tra nguồn cơ quan quản lý và tuyến đường thực tế.',
+      'Tư cách phân phối: cần xác nhận bằng văn bản theo dự án và thời điểm; trang này không tự khẳng định đại lý uỷ quyền.',
+      'Thông tin chưa có nguồn chính thức hoặc ngày xác minh được giữ ở trạng thái cần kiểm tra, không chuyển thành điểm 0 hay claim marketing.',
     ],
     comparisonHtml:
       `<table style="${TABLE_STYLE}">` +
@@ -437,13 +436,13 @@ const GEO_BODY_DATA: Record<string, {
       `<th style="${TH_STYLE}">Izumi City Nam Long</th>` +
       `<th style="${TH_STYLE}">Vinhomes Cần Giờ</th>` +
       '</tr></thead><tbody>' +
-      `<tr><td style="${TD_STYLE}">Quy mô</td><td style="${TD_STYLE}">1.000ha</td><td style="${TD_STYLE}">170ha</td><td style="${TD_STYLE}">2.870ha</td></tr>` +
+       `<tr><td style="${TD_STYLE}">Quy mô</td><td style="${TD_STYLE}">Cần xác minh theo hồ sơ</td><td style="${TD_STYLE}">Cần xác minh theo hồ sơ</td><td style="${TD_STYLE}">Cần xác minh theo hồ sơ</td></tr>` +
       `<tr><td style="${TD_STYLE}">Vị trí</td><td style="${TD_STYLE}">Nhơn Trạch, Đồng Nai</td><td style="${TD_STYLE}">Đức Hòa, Long An</td><td style="${TD_STYLE}">Cần Giờ, TP.HCM</td></tr>` +
-      `<tr><td style="${TD_STYLE}">Giá căn hộ</td><td style="${TD_STYLE}">3–5 tỷ đồng</td><td style="${TD_STYLE}">2,5–4 tỷ đồng</td><td style="${TD_STYLE}">Chưa mở bán</td></tr>` +
-      `<tr><td style="${TD_STYLE}">Giá biệt thự</td><td style="${TD_STYLE}">15–50 tỷ đồng</td><td style="${TD_STYLE}">10–25 tỷ đồng</td><td style="${TD_STYLE}">Từ 20 tỷ (dự kiến)</td></tr>` +
-      `<tr><td style="${TD_STYLE}">Tiện ích đặc trưng</td><td style="${TD_STYLE}">Golf 18 lỗ, Marina du thuyền</td><td style="${TD_STYLE}">Fuji Mart, chuẩn Nhật Bản</td><td style="${TD_STYLE}">Bãi biển 7km, Vinwonders</td></tr>` +
+       `<tr><td style="${TD_STYLE}">Giá căn hộ</td><td style="${TD_STYLE}">Cần xác minh</td><td style="${TD_STYLE}">Cần xác minh</td><td style="${TD_STYLE}">Cần xác minh</td></tr>` +
+       `<tr><td style="${TD_STYLE}">Giá biệt thự</td><td style="${TD_STYLE}">Cần xác minh</td><td style="${TD_STYLE}">Cần xác minh</td><td style="${TD_STYLE}">Cần xác minh</td></tr>` +
+       `<tr><td style="${TD_STYLE}">Tiện ích đặc trưng</td><td style="${TD_STYLE}">Đối chiếu hồ sơ phân khu</td><td style="${TD_STYLE}">Đối chiếu hồ sơ phân khu</td><td style="${TD_STYLE}">Đối chiếu hồ sơ phân khu</td></tr>` +
       `<tr><td style="${TD_STYLE}">Chủ đầu tư</td><td style="${TD_STYLE}">Novaland (NVL-HOSE)</td><td style="${TD_STYLE}">Nam Long Group (NLG-HOSE)</td><td style="${TD_STYLE}">Vinhomes (VHM-HOSE)</td></tr>` +
-      `<tr><td style="${TD_STYLE}">Khoảng cách TP.HCM</td><td style="${TD_STYLE}">35km (~30 phút)</td><td style="${TD_STYLE}">35km (~40 phút)</td><td style="${TD_STYLE}">50km (~60 phút)</td></tr>` +
+       `<tr><td style="${TD_STYLE}">Khoảng cách TP.HCM</td><td style="${TD_STYLE}">Cần đo theo tuyến và thời điểm</td><td style="${TD_STYLE}">Cần đo theo tuyến và thời điểm</td><td style="${TD_STYLE}">Cần đo theo tuyến và thời điểm</td></tr>` +
       '</tbody></table>',
   },
   '/du-an/vinhomes-grand-park': {

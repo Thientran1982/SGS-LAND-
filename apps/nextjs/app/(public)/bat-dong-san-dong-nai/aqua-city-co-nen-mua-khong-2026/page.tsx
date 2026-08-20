@@ -66,54 +66,54 @@ export default function AquaCityCoNenMuaPage() {
         <div className="grid md:grid-cols-2 gap-6 mb-6">
           <div className="space-y-3">
             <div className="flex justify-between border-b pb-2"><span className="text-gray-600">Chủ đầu tư</span><span className="font-semibold">Novaland Group</span></div>
-            <div className="flex justify-between border-b pb-2"><span className="text-gray-600">Vị trí</span><span className="font-semibold">Nhơn Trạch, Đồng Nai</span></div>
-            <div className="flex justify-between border-b pb-2"><span className="text-gray-600">Quy mô</span><span className="font-semibold">~1.000 ha</span></div>
+            <div className="flex justify-between border-b pb-2"><span className="text-gray-600">Vị trí được giới thiệu</span><span className="font-semibold">Long Hưng, Biên Hòa, Đồng Nai</span></div>
+            <div className="flex justify-between border-b pb-2"><span className="text-gray-600">Quy mô</span><span className="font-semibold">Cần đối chiếu hồ sơ</span></div>
             <div className="flex justify-between border-b pb-2"><span className="text-gray-600">Loại hình</span><span className="font-semibold">Nhà phố, biệt thự, shophouse</span></div>
           </div>
           <div className="space-y-3">
-            <div className="flex justify-between border-b pb-2"><span className="text-gray-600">Giá 2026</span><span className="font-semibold text-blue-700">5–18 tỷ/căn</span></div>
-            <div className="flex justify-between border-b pb-2"><span className="text-gray-600">Tiến độ xây dựng</span><span className="font-semibold text-green-600">60–80% (tùy phân khu)</span></div>
-            <div className="flex justify-between border-b pb-2"><span className="text-gray-600">Pháp lý</span><span className="font-semibold text-yellow-600">Đang hoàn thiện theo từng lô</span></div>
-            <div className="flex justify-between border-b pb-2"><span className="text-gray-600">Khoảng cách CBD</span><span className="font-semibold">30–35km (qua cầu Nhơn Trạch)</span></div>
+            <div className="flex justify-between border-b pb-2"><span className="text-gray-600">Giá 2026</span><span className="font-semibold text-blue-700">Cần xác minh theo sản phẩm</span></div>
+            <div className="flex justify-between border-b pb-2"><span className="text-gray-600">Tiến độ xây dựng</span><span className="font-semibold text-green-600">Cần xác minh theo phân khu</span></div>
+            <div className="flex justify-between border-b pb-2"><span className="text-gray-600">Pháp lý</span><span className="font-semibold text-yellow-600">Cần kiểm tra hồ sơ từng lô</span></div>
+            <div className="flex justify-between border-b pb-2"><span className="text-gray-600">Khoảng cách CBD</span><span className="font-semibold">Cần đo theo tuyến và thời điểm</span></div>
           </div>
         </div>
         <p className="text-gray-700 leading-relaxed">
-          Aqua City được quy hoạch theo mô hình "thành phố trong thành phố" với 9 phân khu chức năng, trung tâm thương mại Aqua Central Square, chuỗi khách sạn 5 sao, bệnh viện quốc tế, trường đại học và hệ thống 4km bờ sông mặt nước. Đây là đại dự án có tầm nhìn dài hạn nhưng cũng đối mặt với nhiều thách thức pháp lý và tài chính kể từ 2022.
+          Aqua City có các thông tin quy hoạch, sản phẩm và tiện ích được công bố khác nhau theo từng tài liệu. Cần phân biệt tiện ích đã vận hành, đang xây dựng và mới nằm trong quy hoạch; các thông tin về pháp lý, tiến độ và tài chính phải được kiểm tra bằng tài liệu chính thức có ngày cập nhật.
         </p>
       </section>
 
       <section className="mb-10">
         <h2 className="text-2xl font-semibold text-gray-800 mb-4">2. Tình Trạng Pháp Lý Aqua City 2026</h2>
         <p className="text-gray-700 leading-relaxed mb-4">
-          Pháp lý là yếu tố quan trọng nhất khi quyết định mua Aqua City. Dưới đây là tổng hợp tình hình pháp lý theo từng phân khu tính đến tháng 6/2026:
+          Pháp lý là yếu tố quan trọng nhất khi quyết định mua Aqua City. Bài viết không gắn nhãn đạt/chưa đạt cho từng phân khu khi chưa có bộ hồ sơ gốc và ngày xác minh tương ứng. Người mua cần kiểm tra quy hoạch, quyết định giao đất, giấy phép, thế chấp, nghĩa vụ tài chính và điều kiện cấp giấy của đúng sản phẩm.
         </p>
         <div className="space-y-4">
           <div className="border rounded-lg p-4">
             <div className="flex items-center justify-between mb-2">
               <h3 className="font-semibold text-gray-800">Phoenix Central & Phoenix South</h3>
-              <span className="bg-green-100 text-green-800 text-xs px-3 py-1 rounded-full font-medium">✅ Pháp lý đã ổn</span>
+              <span className="bg-yellow-100 text-yellow-800 text-xs px-3 py-1 rounded-full font-medium">Cần xác minh</span>
             </div>
-            <p className="text-gray-700 text-sm">Đây là các phân khu sớm nhất và có tình trạng pháp lý tốt nhất. Nhiều căn đã được cấp sổ hồng, đang bàn giao cho khách hàng. Giao dịch thứ cấp diễn ra bình thường.</p>
+            <p className="text-gray-700 text-sm">Không suy luận tình trạng pháp lý, bàn giao hoặc thanh khoản của từng căn từ tên phân khu. Yêu cầu hồ sơ gốc và xác nhận bằng văn bản cho đúng sản phẩm.</p>
           </div>
           <div className="border rounded-lg p-4">
             <div className="flex items-center justify-between mb-2">
               <h3 className="font-semibold text-gray-800">The Suite & Aqua Marine</h3>
               <span className="bg-yellow-100 text-yellow-800 text-xs px-3 py-1 rounded-full font-medium">⚬ Đang hoàn thiện</span>
             </div>
-            <p className="text-gray-700 text-sm">Pháp lý đang trong quá trình hoàn thiện thủ tục. Một số lô đã có quyết định giao đất, đang chờ cấp sổ. Dự kiến hoàn thiện trong Q3–Q4/2026.</p>
+            <p className="text-gray-700 text-sm">Tình trạng hồ sơ và mốc hoàn thiện cần được kiểm tra theo từng lô bằng tài liệu hiện hành; không sử dụng mốc dự kiến nếu chưa có nguồn chính thức.</p>
           </div>
           <div className="border rounded-lg p-4">
             <div className="flex items-center justify-between mb-2">
               <h3 className="font-semibold text-gray-800">Aqua Residences & Aqua Town</h3>
               <span className="bg-red-100 text-red-800 text-xs px-3 py-1 rounded-full font-medium">⚠️ Còn vướng mắc</span>
             </div>
-            <p className="text-gray-700 text-sm">Vẫn còn vướng mắc về quy hoạch phân khu và chuyển đổi mục đích sử dụng đất. Khuyến nghị: chỉ mua khi đã có đủ pháp lý rõ ràng.</p>
+            <p className="text-gray-700 text-sm">Nếu chưa có đủ hồ sơ để xác minh quy hoạch, mục đích sử dụng đất và điều kiện giao dịch, nên dừng thẩm định và không đặt cọc.</p>
           </div>
         </div>
       </section>
 
       <section className="mb-10">
-        <h2 className="text-2xl font-semibold text-gray-800 mb-4">3. Giá Thứ Cấp Aqua City Tháng 6/2026</h2>
+        <h2 className="text-2xl font-semibold text-gray-800 mb-4">3. Giá Thứ Cấp Aqua City — Dữ Liệu Cần Xác Minh</h2>
         <div className="overflow-x-auto">
           <table className="w-full border-collapse border border-gray-300 text-sm">
             <thead className="bg-blue-900 text-white">
@@ -126,14 +126,14 @@ export default function AquaCityCoNenMuaPage() {
               </tr>
             </thead>
             <tbody>
-              <tr className="bg-gray-50"><td className="border px-4 py-3">Nhà phố thương mại</td><td className="border px-4 py-3">80–100m²</td><td className="border px-4 py-3">8–12 tỷ</td><td className="border px-4 py-3 text-blue-700 font-bold">6–10 tỷ</td><td className="border px-4 py-3 text-red-600">-15% đến -25%</td></tr>
-              <tr><td className="border px-4 py-3">Nhà phố vườn</td><td className="border px-4 py-3">100–150m²</td><td className="border px-4 py-3">9–14 tỷ</td><td className="border px-4 py-3 text-blue-700 font-bold">7–12 tỷ</td><td className="border px-4 py-3 text-red-600">-15% đến -20%</td></tr>
-              <tr className="bg-gray-50"><td className="border px-4 py-3">Biệt thự đơn lập</td><td className="border px-4 py-3">200–350m²</td><td className="border px-4 py-3">15–25 tỷ</td><td className="border px-4 py-3 text-blue-700 font-bold">12–20 tỷ</td><td className="border px-4 py-3 text-red-600">-10% đến -20%</td></tr>
-              <tr><td className="border px-4 py-3">Shophouse</td><td className="border px-4 py-3">60–80m²</td><td className="border px-4 py-3">7–10 tỷ</td><td className="border px-4 py-3 text-blue-700 font-bold">5–8 tỷ</td><td className="border px-4 py-3 text-red-600">-20% đến -30%</td></tr>
+              <tr className="bg-gray-50"><td className="border px-4 py-3">Nhà phố thương mại</td><td className="border px-4 py-3">Theo sản phẩm</td><td className="border px-4 py-3">Cần xác minh</td><td className="border px-4 py-3 text-blue-700 font-bold">Cần xác minh</td><td className="border px-4 py-3 text-yellow-700">Chưa tính</td></tr>
+              <tr><td className="border px-4 py-3">Nhà phố vườn</td><td className="border px-4 py-3">Theo sản phẩm</td><td className="border px-4 py-3">Cần xác minh</td><td className="border px-4 py-3 text-blue-700 font-bold">Cần xác minh</td><td className="border px-4 py-3 text-yellow-700">Chưa tính</td></tr>
+              <tr className="bg-gray-50"><td className="border px-4 py-3">Biệt thự đơn lập</td><td className="border px-4 py-3">Theo sản phẩm</td><td className="border px-4 py-3">Cần xác minh</td><td className="border px-4 py-3 text-blue-700 font-bold">Cần xác minh</td><td className="border px-4 py-3 text-yellow-700">Chưa tính</td></tr>
+              <tr><td className="border px-4 py-3">Shophouse</td><td className="border px-4 py-3">Theo sản phẩm</td><td className="border px-4 py-3">Cần xác minh</td><td className="border px-4 py-3 text-blue-700 font-bold">Cần xác minh</td><td className="border px-4 py-3 text-yellow-700">Chưa tính</td></tr>
             </tbody>
           </table>
         </div>
-        <p className="text-gray-600 text-sm italic mt-2">*Giá thứ cấp 2026 đã giảm đáng kể so với giá gốc do áp lực thanh khoản của thị trường. Đây là cơ hội mua giá tốt cho nhà đầu tư dài hạn.</p>
+        <p className="text-gray-600 text-sm italic mt-2">*Chưa có dữ liệu giao dịch có nguồn và ngày đủ để tính bảng chênh lệch. Không dùng bảng này để định giá hoặc kết luận cơ hội đầu tư.</p>
       </section>
 
       <section className="mb-10">
@@ -142,21 +142,21 @@ export default function AquaCityCoNenMuaPage() {
           <div className="bg-red-50 border border-red-200 rounded-lg p-5">
             <h3 className="font-semibold text-red-800 mb-3">❌ Rủi Ro Cần Biết</h3>
             <ul className="space-y-2 text-sm text-gray-700">
-              <li>• Pháp lý chưa hoàn thiện toàn bộ dự án (một số phân khu vẫn còn vướng)</li>
-              <li>• Cơ sở hạ tầng kết nối chưa đồng bộ — đường cầu Nhơn Trạch đang thi công</li>
-              <li>• Tiện ích thương mại vận hành chưa đầy đủ — dân cư thưa thớt</li>
-              <li>• Thanh khoản thứ cấp khó khăn do thị trường vẫn còn e ngại</li>
-              <li>• Novaland vẫn đang tái cơ cấu tài chính, tiến độ có thể bị ảnh hưởng</li>
+              <li>• Pháp lý, quy hoạch và điều kiện giao dịch phải kiểm tra theo từng sản phẩm</li>
+              <li>• Hạ tầng và thời gian kết nối cần xác minh theo tiến độ thực tế</li>
+              <li>• Tiện ích cần phân biệt phần đã vận hành với phần còn trong quy hoạch</li>
+              <li>• Thanh khoản phụ thuộc sản phẩm, giá và điều kiện thị trường tại thời điểm bán</li>
+              <li>• Tiến độ và nghĩa vụ của các bên phải đối chiếu với hợp đồng, thông báo chính thức</li>
             </ul>
           </div>
           <div className="bg-green-50 border border-green-200 rounded-lg p-5">
             <h3 className="font-semibold text-green-800 mb-3">✅ Cơ Hội Đầu Tư</h3>
             <ul className="space-y-2 text-sm text-gray-700">
-              <li>• Giá thứ cấp đã giảm 15–30% — mua giá tốt hơn giá gốc</li>
-              <li>• Cầu Nhơn Trạch (đường Vành đai 3) hoàn thành sẽ rút ngắn kết nối với TPHCM</li>
-              <li>• Sân bay Long Thành 2026 đi vào giai đoạn hoàn thiện tạo sức hút khu vực</li>
-              <li>• Quy mô 1.000ha — hệ sinh thái lớn khi hoàn thiện sẽ rất hấp dẫn</li>
-              <li>• Nhà đầu tư dài hạn (5–10 năm) có thể đạt lợi nhuận cao khi hạ tầng hoàn chỉnh</li>
+              <li>• Có thể so sánh giá chỉ khi cùng loại sản phẩm, điều kiện thanh toán và ngày giao dịch</li>
+              <li>• Hạ tầng liên vùng là yếu tố tham khảo, không phải cam kết tăng giá</li>
+              <li>• Có thể khảo sát nhu cầu ở và dịch vụ thực tế theo từng phân khu</li>
+              <li>• Có thể yêu cầu bộ hồ sơ và lịch sử giao dịch để thẩm định độc lập</li>
+              <li>• Quyết định dài hạn chỉ phù hợp khi dòng tiền không phụ thuộc vào dự báo lợi nhuận</li>
             </ul>
           </div>
         </div>
@@ -172,7 +172,7 @@ export default function AquaCityCoNenMuaPage() {
             <strong>KHÔNG nên mua</strong> nếu: bạn cần thanh khoản trong 1–3 năm, hoặc bạn mua các phân khu còn vướng pháp lý, hoặc bạn dùng đòn bẩy tài chính (vay ngân hàng) quá mức.
           </p>
           <p className="text-gray-700 leading-relaxed">
-            Tiềm năng dài hạn của Aqua City vẫn rất lớn nhờ quy mô, vị trí và hạ tầng kết nối đang hoàn thiện. Nhưng cần kiên nhẫn và thẩm định kỹ pháp lý từng lô trước khi xuống tiền.
+            Không thể định lượng tiềm năng dài hạn khi thiếu dữ liệu giao dịch, tiến độ và hồ sơ có ngày xác minh. Người mua cần hoàn tất thẩm định độc lập đúng sản phẩm trước khi xuống tiền.
           </p>
         </div>
       </section>
@@ -181,11 +181,11 @@ export default function AquaCityCoNenMuaPage() {
         <h2 className="text-2xl font-semibold text-gray-800 mb-4">FAQ – Aqua City 2026</h2>
         <div className="space-y-4">
           {[
-            { q: "Aqua City đã cấp sổ hồng chưa?", a: "Một số phân khu đã được cấp sổ hồng (Phoenix Central). Các phân khu khác đang hoàn thiện thủ tục, dự kiến có sổ trong 2026–2027. Cần hỏi cụ thể từng lô trước khi mua." },
-            { q: "Aqua City có dân cư ở thực tế chưa?", a: "Đã có một số hộ dân vào ở tại phân khu Phoenix. Mật độ dân cư hiện còn thưa, dự kiến tăng nhanh khi cầu Nhơn Trạch và sân bay Long Thành đi vào hoạt động." },
-            { q: "Mua Aqua City thuê được không?", a: "Tiềm năng cho thuê hiện còn hạn chế do dân cư thưa. Tuy nhiên, khi hạ tầng khu vực hoàn chỉnh (2027–2030), giá thuê được dự báo sẽ tăng mạnh. Shophouse mặt tiền đường lớn có thể cho thuê kinh doanh từ 15–30 triệu/tháng." },
-            { q: "Novaland có bị phá sản không?", a: "Novaland đang trong quá trình tái cơ cấu tài chính dưới sự hỗ trợ của Nhà nước và ngân hàng. Tập đoàn vẫn hoạt động và tiếp tục thi công, bàn giao dự án. Rủi ro phá sản là thấp nhưng không bằng không." },
-            { q: "Cầu Nhơn Trạch bao giờ xong?", a: "Cầu Nhơn Trạch (nằm trên đường Vành đai 3 TP.HCM) dự kiến hoàn thành trong năm 2026. Khi thông xe, thời gian di chuyển từ Aqua City về trung tâm TPHCM sẽ rút ngắn xuống còn 20–25 phút." },
+            { q: "Aqua City đã cấp sổ hồng chưa?", a: "Tình trạng giấy chứng nhận phải kiểm tra theo từng lô và phân khu bằng hồ sơ gốc, cùng thông tin về thế chấp, quy hoạch, nghĩa vụ tài chính và điều kiện cấp giấy." },
+            { q: "Aqua City có dân cư ở thực tế chưa?", a: "Mức độ cư trú có thể khác nhau theo phân khu. Hãy khảo sát thực địa và yêu cầu dữ liệu vận hành có thể xác minh, không suy luận cho toàn dự án." },
+            { q: "Mua Aqua City cho thuê được không?", a: "Khả năng cho thuê phụ thuộc vị trí, sản phẩm, tiện ích đã vận hành, nhu cầu địa phương và giá thuê thực tế. Chưa nên dùng tỷ suất thuê hoặc dự báo tăng giá khi chưa có dữ liệu cùng thời điểm." },
+            { q: "Tình hình Novaland ảnh hưởng người mua thế nào?", a: "Cần sử dụng thông tin công bố chính thức và điều khoản hợp đồng để đánh giá nghĩa vụ, tiến độ và rủi ro; bài viết không đưa ra kết luận về khả năng tài chính hoặc phá sản của doanh nghiệp." },
+            { q: "Cầu Nhơn Trạch bao giờ xong?", a: "Mốc hoàn thành phải được kiểm tra theo thông báo mới nhất của cơ quan quản lý dự án. Không nên dùng một mốc dự kiến để cam kết thời gian di chuyển hoặc lợi nhuận." },
           ].map((item, i) => (
             <div key={i} className="border border-gray-200 rounded-lg p-5">
               <h3 className="font-semibold text-gray-800 mb-2">Q: {item.q}</h3>

@@ -51,17 +51,17 @@ export default function Page() {
         <div className="space-y-5">
           <div>
             <h3 className="text-xl font-semibold text-gray-800 mb-3">2.1 Quy Mô Và Tầm Nhìn Dự Án</h3>
-            <p className="text-gray-700 leading-relaxed mb-3">Aqua City với 1.000ha là đại dự án hàng đầu Đông Nam Á, được thiết kế như một đô thị hoàn chỉnh với đầy đủ chức năng từ dân cư, thương mại, giáo dục, y tế đến khách sạn và công viên giải trí ven sông. Khi hoàn chỉnh, Aqua City có thể trở thành một "thành phố vệ tinh" thực sự cho TP.HCM.</p>
+            <p className="text-gray-700 leading-relaxed mb-3">Aqua City được giới thiệu là khu đô thị quy mô lớn tại Đồng Nai với các nhóm sản phẩm nhà ở và tiện ích theo phân khu. Quy mô, chức năng quy hoạch và mức độ hoàn thiện cần được đối chiếu với hồ sơ dự án hiện hành; không nên suy ra kết quả đầu tư từ quy mô quảng bá.</p>
             <p className="text-gray-700 leading-relaxed">Izumi City 170ha nhỏ hơn nhưng có điểm nhấn rõ ràng: Japan Town 10ha là sản phẩm độc đáo không có ở bất kỳ dự án BĐS nào khác tại Việt Nam, tạo ra định vị thương hiệu rất mạnh và thu hút nhóm khách hàng yêu thích phong cách Nhật Bản.</p>
           </div>
           <div>
             <h3 className="text-xl font-semibold text-gray-800 mb-3">2.2 Pháp Lý – Yếu Tố Quyết Định</h3>
             <p className="text-gray-700 leading-relaxed mb-3">Đây là sự khác biệt lớn nhất giữa hai dự án. Izumi City của Nam Long Group có lịch sử pháp lý minh bạch, ít vướng mắc. Phân khu Sakura (Giai đoạn 1) đã được cấp sổ hồng. Nam Long không vướng vào cuộc khủng hoảng trái phiếu doanh nghiệp năm 2022–2023 như Novaland.</p>
-            <p className="text-gray-700 leading-relaxed">Aqua City (Novaland) có lịch sử pháp lý phức tạp hơn nhiều. Một số phân khu đã được tháo gỡ pháp lý và cấp sổ hồng, nhưng vẫn còn một số phân khu đang xử lý. Novaland đang trong quá trình tái cơ cấu tài chính, điều này tạo ra rủi ro nhất định cho người mua.</p>
+            <p className="text-gray-700 leading-relaxed">Tình trạng pháp lý Aqua City có thể khác nhau theo phân khu và sản phẩm. Người mua cần kiểm tra quy hoạch, quyết định giao đất, giấy phép, điều kiện cấp giấy, thế chấp và nghĩa vụ tài chính bằng tài liệu chính thức trước khi đặt cọc; bài viết không thay thế thẩm định pháp lý.</p>
           </div>
           <div>
             <h3 className="text-xl font-semibold text-gray-800 mb-3">2.3 Giá & Tiềm Năng Đầu Tư</h3>
-            <p className="text-gray-700 leading-relaxed mb-3">Giá thứ cấp Aqua City đã giảm 15–30% so với giá gốc — đây có thể là cơ hội mua giá tốt cho nhà đầu tư dài hạn. Nếu Aqua City hoàn thiện pháp lý và hạ tầng trong 3–5 năm tới, tiềm năng tăng giá rất lớn.</p>
+            <p className="text-gray-700 leading-relaxed mb-3">Chênh lệch giữa giá gốc và giá thứ cấp Aqua City phải được tính từ giao dịch hoặc bảng giá có ngày, cùng loại sản phẩm và cùng điều kiện thanh toán. Bài viết không sử dụng tỷ lệ giảm hoặc dự báo tăng giá khi chưa có nguồn kiểm chứng tương ứng.</p>
             <p className="text-gray-700 leading-relaxed">Izumi City giữ giá ổn định hơn, không có mức sụt giảm mạnh như Aqua City. Yield cho thuê EHome Southgate khoảng 5–7%/năm — đây là mức tốt cho nhà đầu tư cần dòng tiền ngay.</p>
           </div>
         </div>
@@ -70,8 +70,8 @@ export default function Page() {
         <h2 className="text-2xl font-semibold text-gray-800 mb-4">3. Kết Luận: Nên Chọn Aqua City Hay Izumi City?</h2>
         <div className="grid md:grid-cols-2 gap-6">
           <div className="bg-blue-50 border border-blue-200 rounded-xl p-5">
-            <h3 className="font-semibold text-blue-800 mb-3 text-lg">🏙️ Chọn Aqua City nếu:</h3>
-            <ul className="space-y-2 text-gray-700 text-sm"><li>✓ Đầu tư dài hạn 5–10 năm, chịu được rủi ro</li><li>✓ Mua phân khu Phoenix (đã có sổ hồng)</li><li>✓ Muốn mua giá thứ cấp thấp hơn giá gốc 15–30%</li><li>✓ Kỳ vọng tăng giá mạnh khi Vành đai 3 & sân bay xong</li></ul>
+            <h3 className="font-semibold text-blue-800 mb-3 text-lg">🏙️ Cân nhắc Aqua City khi:</h3>
+            <ul className="space-y-2 text-gray-700 text-sm"><li>✓ Hồ sơ pháp lý của đúng sản phẩm đã được kiểm tra độc lập</li><li>✓ Giá, tiến độ và điều khoản thanh toán có tài liệu cập nhật</li><li>✓ Khả năng tài chính phù hợp mà không phụ thuộc vào dự báo tăng giá</li><li>✓ Mục tiêu sử dụng và thời gian nắm giữ phù hợp với thanh khoản thực tế</li></ul>
           </div>
           <div className="bg-green-50 border border-green-200 rounded-xl p-5">
             <h3 className="font-semibold text-green-800 mb-3 text-lg">🌸 Chọn Izumi City nếu:</h3>
@@ -82,9 +82,9 @@ export default function Page() {
       <section className="mb-10">
         <h2 className="text-2xl font-semibold text-gray-800 mb-4">4. FAQ – Aqua City vs Izumi City</h2>
         <div className="space-y-3">
-          {[{q:"Aqua City hay Izumi City tốt hơn?",a:"Không có câu trả lời tuyệt đối. Aqua City tốt hơn cho nhà đầu tư dài hạn chịu rủi ro. Izumi City tốt hơn cho người mua ở thực và đầu tư an toàn trung hạn."},
-            {q:"Dự án nào gần sân bay Long Thành hơn?",a:"Cả hai đều cách sân bay Long Thành khoảng 15–20km. Aqua City tại Nhơn Trạch, Izumi City tại Long Thành — khoảng cách không chênh lệch đáng kể."},
-            {q:"Giá Aqua City hay Izumi City rẻ hơn?",a:"Hiện tại giá thứ cấp Aqua City nhà phố từ 5–10 tỷ (giảm so với giá gốc). Izumi City nhà phố từ 3,5–5,5 tỷ. Izumi City có giá tiếp cận dễ hơn cho người mua đầu tiên."},
+          {[{q:"Aqua City hay Izumi City tốt hơn?",a:"Không có lựa chọn tốt nhất cho mọi người mua. So sánh cần dựa trên mục tiêu sử dụng, ngân sách, hồ sơ pháp lý, tiến độ và thanh khoản của đúng sản phẩm tại thời điểm giao dịch."},
+            {q:"Dự án nào gần sân bay Long Thành hơn?",a:"Khoảng cách cần được đo từ đúng phân khu đến điểm hạ tầng cụ thể; không nên dùng khoảng cách quảng bá thay cho bản đồ và thời gian di chuyển thực tế có ngày cập nhật."},
+            {q:"Giá Aqua City hay Izumi City rẻ hơn?",a:"Giá phụ thuộc loại hình, diện tích, phân khu, pháp lý và điều kiện thanh toán. Các mức giá trong bài chỉ là tham khảo và cần được xác nhận bằng bảng giá hoặc giao dịch hiện hành."},
           ].map((item,i) => (
             <div key={i} className="border rounded-lg p-4"><h3 className="font-semibold text-gray-800 mb-1">Q: {item.q}</h3><p className="text-gray-700 text-sm">A: {item.a}</p></div>
           ))}

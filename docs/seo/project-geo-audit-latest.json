@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-08-20T21:07:09.135Z",
+  "generatedAt": "2026-08-20T21:26:38.531Z",
   "base": "http://localhost:5000",
   "methodology": "Rendered HTML audit for project sitemap URLs: status, metadata, H1, direct answer, visible FAQ, JSON-LD and provenance caveat.",
   "total": 17,
