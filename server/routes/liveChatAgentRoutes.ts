@@ -24,6 +24,15 @@ const AI_TOOLS = new Set([
     'legal_qa',
 ]);
 
+// The in-product guide is knowledge-only. It must not become a generic
+// database proxy for leads, contacts, contracts, or user performance.
+const GUIDE_SAFE_TOOLS = new Set([
+    'get_platform_knowledge',
+    'get_valuation_methodology',
+    'get_price_index',
+    'get_longthanh_market',
+]);
+
 export function createLiveChatAgentRoutes(
     authenticateToken: any,
     aiRateLimit: any,
@@ -33,7 +42,7 @@ export function createLiveChatAgentRoutes(
 
     // ── GET /tools — manifest of all 22 tools ─────────────────────────────
     router.get('/tools', authenticateToken, (_req: Request, res: Response) => {
-        const tools = liveChatEngine.listTools();
+        const tools = liveChatEngine.listTools().filter(tool => GUIDE_SAFE_TOOLS.has(tool.name));
         res.json({
             count: tools.length,
             tools,
@@ -59,6 +68,13 @@ export function createLiveChatAgentRoutes(
         async (req: Request, res: Response) => {
             const toolName = Array.isArray(req.params.toolName) ? req.params.toolName[0] : req.params.toolName;
             const user = (req as any).user;
+
+            if (!GUIDE_SAFE_TOOLS.has(toolName)) {
+                return res.status(403).json({
+                    error: 'Tool này không được phép gọi từ trợ lý hướng dẫn.',
+                    code: 'GUIDE_TOOL_FORBIDDEN',
+                });
+            }
 
             if (!liveChatEngine.hasTool(toolName)) {
                 return res.status(404).json({
@@ -94,13 +110,31 @@ export function createLiveChatAgentRoutes(
         }
 
         try {
-            const result = await liveChatEngine.callTool('handle_live_chat', {
-                tenantId: user.tenantId,
-                message,
-                sessionId,
-                context: context || {},
+            // Do not send guide questions through handle_live_chat: that
+            // dispatcher can select CRM tools from user-controlled keywords.
+            if (context?.mode === 'platform_guide') {
+                const knowledge = await liveChatEngine.callTool('get_platform_knowledge', {
+                    tenantId: user.tenantId,
+                    domain: 'platform',
+                    query: message.slice(0, 600),
+                    sessionId,
+                });
+                return res.json({
+                    sessionId,
+                    intent: 'PLATFORM_GUIDE',
+                    response: typeof knowledge?.knowledge === 'string'
+                        ? knowledge.knowledge
+                        : 'Tôi chưa có thông tin hướng dẫn đã xác minh cho câu hỏi này.',
+                    sources: knowledge?.source ? [{ tool: 'get_platform_knowledge', source: knowledge.source }] : [],
+                    groundingStatus: knowledge?.knowledge ? 'GROUNDED' : 'INSUFFICIENT_DATA',
+                    executedTools: ['get_platform_knowledge'],
+                });
+            }
+
+            return res.status(403).json({
+                error: 'Trợ lý hướng dẫn chỉ hỗ trợ truy vấn kiến thức đã xác minh.',
+                code: 'GUIDE_MODE_REQUIRED',
             });
-            return res.json(result);
         } catch (e: any) {
             logger.error('[liveChatAgentRoutes] /chat error:', e);
             return sendAiError(res, e, 'liveChatAgentRoutes');
@@ -111,6 +145,13 @@ export function createLiveChatAgentRoutes(
     router.post('/analyze', authenticateToken, aiRateLimit, async (req: Request, res: Response) => {
         const user = (req as any).user;
         const { messages, sessionId, leadId } = (req.body as any) || {};
+
+        if (!['SUPER_ADMIN', 'ADMIN', 'MANAGER', 'TEAM_LEAD'].includes(user.role)) {
+            return res.status(403).json({
+                error: 'Bạn không có quyền phân tích phiên chat CRM.',
+                code: 'CHAT_ANALYSIS_FORBIDDEN',
+            });
+        }
 
         if (!Array.isArray(messages) || messages.length === 0) {
             return res.status(400).json({ error: 'messages[] không được trống.' });
