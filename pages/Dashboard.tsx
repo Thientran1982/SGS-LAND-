@@ -584,9 +584,9 @@ const RealtimeTrafficWidget = memo(({ t, theme }: any) => {
                     </span>
                 </div>
             </div>            
-            <div className="h-[130px] w-full -ml-2 relative">
+            <div className="mb-4 h-[130px] w-full -ml-2 relative">
                 {data.length > 0 ? (
-                    <ResponsiveContainer width="100%" height={150} minHeight={100} minWidth={150}>
+                    <ResponsiveContainer width="100%" height={130} minHeight={100} minWidth={150}>
                         <ComposedChart data={data}>
                             <defs>
                             </defs>
@@ -1026,7 +1026,7 @@ export const Dashboard: React.FC = () => {
                     )}
                     <section className="dashboard-panel" aria-label={ui.demand}>
                         <div className="dashboard-panel-head"><h2>{ui.demand}</h2><span className="text-xs text-[var(--text-tertiary)]">{overview.demandAreas?.length ?? 0}</span></div>
-                        <div className="grid grid-cols-1 gap-2 px-4 sm:grid-cols-2 lg:grid-cols-4">
+                        <div className="grid grid-cols-1 gap-2 px-4 pb-4 sm:grid-cols-2 lg:grid-cols-4">
                             {(overview.demandAreas || []).slice(0, 8).map((area: any, index: number) => (
                                 <div key={area.name ?? index} className="rounded-xl border border-[var(--glass-border)] bg-[var(--glass-surface)] px-3 py-3">
                                     <div className="flex items-center justify-between gap-2 text-xs"><span className="truncate text-[var(--text-secondary)]">{area.name}</span><strong className="font-mono text-[var(--sgs-primary)]">{area.score ?? area.count ?? 0}</strong></div>
@@ -1034,7 +1034,7 @@ export const Dashboard: React.FC = () => {
                                 </div>
                             ))}
                         </div>
-                        {!overview.demandAreas?.length && <div className="mx-4 py-3 text-xs text-[var(--text-tertiary)]">{language === 'vn' ? 'Chưa có dữ liệu nhu cầu theo khu vực' : 'No area demand data yet'}</div>}
+                        {!overview.demandAreas?.length && <div className="mx-4 mb-4 py-3 text-xs text-[var(--text-tertiary)]">{language === 'vn' ? 'Chưa có dữ liệu nhu cầu theo khu vực' : 'No area demand data yet'}</div>}
                     </section>
                 </div>
             </div>
