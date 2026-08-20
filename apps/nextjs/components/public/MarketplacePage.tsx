@@ -240,10 +240,10 @@ function ListingCard({ listing, list, eager, facets }: { listing: any; list?: bo
   const savedLabel = fav ? ui("saved", lang) : ui("save", lang);
   return (
     <Link href={lang === "en" ? `/en/bds/${slug}` : `/bds/${slug}`}
-      className={`group block rounded-3xl overflow-hidden hover:shadow-token-lg transition-all hover:-translate-y-1 ${list ? "sm:flex" : ""}`}
+      className={`group block rounded-3xl overflow-hidden hover:shadow-token-lg transition-all hover:-translate-y-1 ${list ? "flex" : ""}`}
       style={{ background: "var(--bg-surface)", border: "1px solid var(--border-default)" }}>
       {/* Image */}
-      <div className={`relative overflow-hidden ${list ? "sm:w-72 h-52 sm:h-auto shrink-0" : "aspect-[4/3]"}`} style={{ background: "var(--bg-elevated)" }}>
+      <div className={`relative overflow-hidden ${list ? "w-32 h-32 sm:w-72 sm:h-auto shrink-0" : "aspect-[4/3]"}`} style={{ background: "var(--bg-elevated)" }}>
         {src && !imgFailed ? (
           optimized ? (
             <Image src={src} alt={listing.title || ""} fill sizes={sizes} priority={!!eager}
@@ -299,7 +299,7 @@ function ListingCard({ listing, list, eager, facets }: { listing: any; list?: bo
         </button>
       </div>
       {/* Body */}
-      <div className="p-4 flex-1">
+      <div className="p-3 sm:p-4 flex-1 min-w-0">
         <div className="flex items-center gap-2 mb-1.5 flex-wrap">
           {listing.code && (
             <span className="font-mono text-[11px] font-bold px-1.5 py-0.5 rounded uppercase tracking-wider" style={{ background: "var(--bg-elevated)", color: "var(--text-secondary)" }}>{listing.code}</span>
