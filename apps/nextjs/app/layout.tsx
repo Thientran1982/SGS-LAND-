@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from "next";
-import { Be_Vietnam_Pro, IBM_Plex_Mono, Fraunces } from "next/font/google";
+import { Be_Vietnam_Pro, IBM_Plex_Mono, Inter } from "next/font/google";
 import "./globals.css";
 import { getLang } from "@/lib/lang";
 import { LangProvider } from "@/components/shared/LangProvider";
@@ -20,14 +20,11 @@ const ibmPlexMono = IBM_Plex_Mono({
   display: "swap",
   weight: ["400", "500", "600"],
 });
-const fraunces = Fraunces({
-  // Fraunces needs the Vietnamese subset here. Without it, accented
-  // characters silently fall back one glyph at a time, which makes headings
-  // look like they have broken spacing or detached diacritics.
+const inter = Inter({
   subsets: ["latin", "vietnamese"],
-  variable: "--font-fraunces",
+  variable: "--font-inter",
   display: "swap",
-  weight: ["500", "600", "700"],
+  weight: ["400", "500", "600", "700"],
 });
 // ─── Global Metadata ───────────────────────────────────────
 export const metadata: Metadata = {
@@ -162,7 +159,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
         <script async src="https://www.googletagmanager.com/gtag/js?id=G-3LBRB691S4" />
       </head>
       <body
-        className={`${beVietnamPro.variable} ${ibmPlexMono.variable} ${fraunces.variable} font-sans antialiased`}
+        className={`${beVietnamPro.variable} ${ibmPlexMono.variable} ${inter.variable} font-sans antialiased`}
         style={{ background: "var(--bg-app)", color: "var(--text-primary)" }}
       >
         {/* Inline <script> tags live at the top of <body>, not in <head>:

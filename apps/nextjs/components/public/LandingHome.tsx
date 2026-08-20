@@ -8,7 +8,9 @@ type Lang = "vi" | "en";
 // ─── Dark-mode CSS vars injected once ──────────────────────────────────────
 const STYLE = `
   .lp-wrap { max-width: 1380px; margin: 0 auto; padding: 0 clamp(20px,4vw,64px); }
-  .lp-serif { font-family: var(--font-display, Georgia, serif); }
+  /* Inter is used for all public headings so Vietnamese diacritics are
+     rendered by one consistent, self-hosted glyph set. */
+  .lp-serif { font-family: var(--font-inter, Inter, system-ui, sans-serif); }
   .lp-mono  { font-family: var(--font-ibm-plex-mono, monospace); font-size: 12px; letter-spacing: .16em; text-transform: uppercase; }
   .lp-hero-title {
     letter-spacing: -0.035em !important;
