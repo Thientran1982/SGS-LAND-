@@ -130,9 +130,9 @@ export const PAGE_META: Record<string, SsrPage> = {
   '/': HOME_PAGE,
   '/home': HOME_PAGE,
   '/du-an/aqua-city': {
-    title: 'Aqua City Novaland | Bảng Giá & Pháp Lý Mới Nhất T5/2026 — SGS LAND',
+    title: 'Aqua City Novaland Đồng Nai | Thông Tin Dự Án — SGS LAND',
     description:
-      'Aqua City Novaland Biên Hoà: shophouse từ 12 tỷ, biệt thự từ 15 tỷ. Cập nhật bảng giá, tiến độ xây dựng, pháp lý T5/2026. Đại lý ủy quyền chính thức SGS LAND.',
+      'Aqua City Novaland tại Biên Hòa, Đồng Nai: thông tin tham khảo về vị trí, sản phẩm, giá, tiến độ và pháp lý. Các dữ liệu giao dịch cần được xác minh bằng hồ sơ hiện hành.',
     h1: 'Aqua City Novaland',
     keywords:
       'aqua city novaland, aqua city bảng giá 2026, aqua city Biên Hoà đồng nai, biệt thự aqua city giá bao nhiêu, aqua city có nên mua không, dự án aqua city, nhà phố aqua city giá bao nhiêu, shophouse aqua city giá bao nhiêu, giá bán aqua city',
@@ -154,16 +154,15 @@ export const PAGE_META: Record<string, SsrPage> = {
         '@id': `${APP}/du-an/aqua-city#project`,
         name: 'Aqua City Novaland',
         description:
-          'Đại đô thị sinh thái 1.000ha do Novaland phát triển tại Long Hưng – Biên Hoà, Đồng Nai. Shophouse từ 10 tỷ, nhà phố từ 6 tỷ, biệt thự từ 15 tỷ.',
+          'Aqua City Novaland là khu đô thị tại Long Hưng – Biên Hòa, Đồng Nai. Giá, pháp lý, tiến độ và sản phẩm cần được xác minh theo từng phân khu bằng tài liệu hiện hành.',
         url: `${APP}/du-an/aqua-city`,
         image: `${APP}/og/du-an/aqua-city`,
         offers: {
           '@type': 'AggregateOffer',
           priceCurrency: 'VND',
-          lowPrice: 3_000_000_000,
-          highPrice: 50_000_000_000,
-          offerCount: 120,
-          availability: 'https://schema.org/InStock',
+          lowPrice: 0,
+          highPrice: 0,
+          availability: 'https://schema.org/PreOrder',
         },
         address: {
           '@type': 'PostalAddress',
@@ -184,7 +183,7 @@ export const PAGE_META: Record<string, SsrPage> = {
           'Công viên 100.000m² mặt nước',
           'Trung tâm thương mại Nova Mall',
         ],
-        dateModified: '2026-05-01',
+        dateModified: '2026-08-21',
       },
       {
         '@type': 'FAQPage',
