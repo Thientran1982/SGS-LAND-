@@ -671,8 +671,8 @@ export function MarketplacePage({ initialListings, totalCount, totalPages, searc
         </div>
       ) : (
         <div className="lg:flex lg:gap-6 lg:items-start">
-          <div className="hidden lg:block lg:w-[42%] lg:shrink-0 lg:sticky" style={{ top: 96, height: "calc(100vh - 120px)" }}>
-            <MarketplaceMap listings={initialListings} />
+          <div className="hidden lg:block lg:w-[42%] lg:shrink-0 lg:sticky overflow-hidden rounded-2xl" style={{ top: 96, height: "calc(100vh - 120px)" }}>
+            <MarketplaceMap listings={initialListings} height="100%" />
           </div>
           <div className="lg:flex-1 lg:min-w-0 lg:max-h-[calc(100vh-120px)] lg:overflow-y-auto lg:pr-1">
             {view === "LIST" ? (

@@ -11,7 +11,7 @@ function priceLabel(price: number): string {
   return price >= 1e9 ? `${(price / 1e9).toFixed(1).replace(".", ",")} tỷ` : `${Math.round(price / 1e6)} tr`;
 }
 
-export function MarketplaceMap({ listings }: { listings: any[] }) {
+export function MarketplaceMap({ listings, height = "620px" }: { listings: any[]; height?: string }) {
   const ref = useRef<HTMLDivElement>(null);
   const mapRef = useRef<any>(null);
 
@@ -20,7 +20,11 @@ export function MarketplaceMap({ listings }: { listings: any[] }) {
     (async () => {
       const L = (await import("leaflet")).default || (await import("leaflet"));
       if (cancelled || !ref.current || mapRef.current) return;
-      const map = L.map(ref.current, { scrollWheelZoom: false }).setView([10.85, 106.75], 10);
+      const map = L.map(ref.current, {
+        scrollWheelZoom: true,
+        wheelDebounceTime: 80,
+        wheelPxPerZoomLevel: 60,
+      }).setView([10.85, 106.75], 10);
       mapRef.current = map;
       L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
         attribution: "&copy; OpenStreetMap",
@@ -138,7 +142,7 @@ export function MarketplaceMap({ listings }: { listings: any[] }) {
     <div
       ref={ref}
       className="w-full rounded-2xl overflow-hidden"
-      style={{ height: "620px", border: "1px solid var(--border-default)", zIndex: 0 }}
+      style={{ height, border: "1px solid var(--border-default)", zIndex: 0 }}
     />
   );
 }
