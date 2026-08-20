@@ -665,8 +665,11 @@ html.dark body {
 .sgs-dashboard .dashboard-control:focus-visible,
 .sgs-dashboard button:focus-visible,
 .sgs-dashboard a:focus-visible {
-  outline: 2px solid var(--sgs-primary);
-  outline-offset: 2px;
+   outline: none;
+}
+.sgs-dashboard button.dashboard-control:focus-visible {
+  border-color: var(--ui-focus);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--ui-focus) 22%, transparent);
 }
 .sgs-dashboard .dashboard-export {
   border-color: var(--sgs-primary);
