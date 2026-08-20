@@ -9,7 +9,7 @@ type L = "vi" | "en";
 import dynamic from "next/dynamic";
 import {
   Search, MapPin, Bed, ChevronLeft, ChevronRight, ChevronDown, Check,
-  LayoutGrid, List as ListIcon, Columns, Map as MapIcon, BadgeCheck, Eye, Heart, Star, Camera, X,
+  LayoutGrid, List as ListIcon, Columns, Map as MapIcon, BadgeCheck, Eye, Heart, Star, Camera, X, SlidersHorizontal,
 } from "lucide-react";
 import type { Listing } from "@/types";
 import Image from "next/image";
@@ -374,6 +374,7 @@ export function MarketplacePage({ initialListings, totalCount, totalPages, searc
   const [search, setSearch] = useState(sp.q ?? "");
   const [view, setView] = useState<"GRID" | "LIST" | "BOARD" | "MAP">("GRID");
   const [heroOpen, setHeroOpen] = useState(false);
+  const [filtersOpen, setFiltersOpen] = useState(false);
   const heroRef = useRef<HTMLDivElement>(null);
   const [recentSearches, setRecentSearches] = useState<string[]>([]);
   useEffect(() => {
@@ -425,6 +426,7 @@ export function MarketplacePage({ initialListings, totalCount, totalPages, searc
   const handleSearch = (e: React.FormEvent) => { e.preventDefault(); saveRecentSearch(search.trim()); setHeroOpen(false); setParam("q", search.trim()); };
   const currentPage = parseInt(sp.page ?? "1");
   const activePriceLabel = (PRICE_OPTIONS(lang).find((pr) => pr.min === (sp.minPrice ?? "") && pr.max === (sp.maxPrice ?? "")) || PRICE_OPTIONS(lang)[0]).label;
+  const activeFilterCount = [sp.type, sp.area, sp.minPrice, sp.maxPrice, sp.sort, sp.legalStatus, sp.direction].filter(Boolean).length;
   const activeTab = sp.type === "PROJECT" ? "PROJECT" : (sp.transaction === "SALE" || sp.transaction === "RENT" ? sp.transaction : "");
   const setTransactionTab = (tab) => {
     pushParams((p) => {
@@ -545,12 +547,12 @@ export function MarketplacePage({ initialListings, totalCount, totalPages, searc
         <div className="flex items-center gap-1 p-0.5 rounded-lg w-full sm:w-auto" style={{ background: "var(--bg-elevated)" }}>
           <button type="button" onClick={() => setTransactionTab("SALE")}
             className="px-3 sm:px-4 h-9 rounded-md text-sm font-semibold transition-colors whitespace-nowrap"
-            style={activeTab === "SALE" ? { background: "var(--bg-surface)", color: "var(--primary-600)" } : { color: "var(--text-tertiary)" }}>
+            style={activeTab === "SALE" ? { background: "var(--primary-subtle)", color: "var(--primary-600)" } : { color: "var(--text-tertiary)" }}>
             {tt(lang, "Bán", "For sale")}
           </button>
           <button type="button" onClick={() => setTransactionTab("RENT")}
             className="px-3 sm:px-4 h-9 rounded-md text-sm font-semibold transition-colors whitespace-nowrap"
-            style={activeTab === "RENT" ? { background: "var(--bg-surface)", color: "var(--primary-600)" } : { color: "var(--text-tertiary)" }}>
+            style={activeTab === "RENT" ? { background: "var(--primary-subtle)", color: "var(--primary-600)" } : { color: "var(--text-tertiary)" }}>
             {tt(lang, "Cho thuê", "For rent")}
           </button>
           <Link href={lang === "en" ? "/en/du-an" : "/du-an"}
@@ -574,7 +576,7 @@ export function MarketplacePage({ initialListings, totalCount, totalPages, searc
         </div>
       </div>
       {/* Secondary row: refine filters */}
-      <div className="grid grid-cols-2 sm:flex sm:flex-wrap items-center gap-2 pb-1 mb-3">
+      <div className="hidden sm:flex sm:flex-wrap items-center gap-2 pb-1 mb-3">
         <div className="min-w-0"><Dropdown value={sp.type ?? ""} options={TYPE_OPTIONS(lang)} onChange={(v) => setParam("type", v)} minWidth={0} /></div>
         <div className="min-w-0"><Dropdown value={sp.area ?? ""} options={LOCATION_OPTIONS(lang, locations)} onChange={(v) => setParam("area", v)} minWidth={0} /></div>
         <div className="min-w-0"><Dropdown value={activePriceLabel} options={PRICE_OPTIONS(lang).map((o) => ({ label: o.label, value: o.label }))}
@@ -607,6 +609,45 @@ export function MarketplacePage({ initialListings, totalCount, totalPages, searc
             onChange={(v) => setParam("direction", v)}
             minWidth={0}
           /></div>
+        )}
+      </div>
+      <div className="sm:hidden mb-3">
+        <button type="button" onClick={() => setFiltersOpen((open) => !open)}
+          className="w-full h-10 px-3 rounded-xl flex items-center justify-between gap-2 text-sm font-semibold transition-colors"
+          style={filtersOpen || activeFilterCount > 0
+            ? { background: "var(--primary-subtle)", color: "var(--primary-600)", border: "1px solid var(--primary-600)" }
+            : { background: "var(--bg-elevated)", color: "var(--text-secondary)", border: "1px solid var(--border-default)" }}>
+          <span className="flex items-center gap-2"><SlidersHorizontal className="w-4 h-4" />{tt(lang, "Bộ lọc", "Filters")}</span>
+          <span className="flex items-center gap-2">
+            {activeFilterCount > 0 && <span className="min-w-5 h-5 px-1 rounded-full text-xs flex items-center justify-center" style={{ background: "var(--primary-600)", color: "var(--text-inverse)" }}>{activeFilterCount}</span>}
+            <ChevronDown className={`w-4 h-4 transition-transform ${filtersOpen ? "rotate-180" : ""}`} />
+          </span>
+        </button>
+        {filtersOpen && (
+          <div className="mt-2 p-3 rounded-2xl grid grid-cols-2 gap-2" style={{ background: "var(--bg-elevated)", border: "1px solid var(--border-default)" }}>
+            <div className="min-w-0"><Dropdown value={sp.type ?? ""} options={TYPE_OPTIONS(lang)} onChange={(v) => setParam("type", v)} minWidth={0} /></div>
+            <div className="min-w-0"><Dropdown value={sp.area ?? ""} options={LOCATION_OPTIONS(lang, locations)} onChange={(v) => setParam("area", v)} minWidth={0} /></div>
+            <div className="min-w-0"><Dropdown value={activePriceLabel} options={PRICE_OPTIONS(lang).map((o) => ({ label: o.label, value: o.label }))}
+              onChange={(label) => { const pr = PRICE_OPTIONS(lang).find((x) => x.label === label) || PRICE_OPTIONS(lang)[0]; pushParams((p) => { p.delete("minPrice"); p.delete("maxPrice"); if (pr.min) p.set("minPrice", pr.min); if (pr.max) p.set("maxPrice", pr.max); }); }}
+              minWidth={0} /></div>
+            <div className="min-w-0"><Dropdown value={sp.sort ?? ""} options={[
+              { label: tt(lang, "Mới nhất", "Newest"), value: "" },
+              { label: tt(lang, "Giá: Thấp đến cao", "Price: Low to high"), value: "price_asc" },
+              { label: tt(lang, "Giá: Cao đến thấp", "Price: High to low"), value: "price_desc" },
+            ]} onChange={(v) => setParam("sort", v)} minWidth={0} /></div>
+            {!!facets && facets.legalStatus.length > 0 && (
+              <div className="min-w-0"><Dropdown value={sp.legalStatus ?? ""} options={[
+                { label: tt(lang, "Tất cả pháp lý", "All legal status"), value: "" },
+                ...facets.legalStatus.map((f) => ({ label: bi(LEGAL_LABELS, f.value, lang) || f.value, value: f.value })),
+              ]} onChange={(v) => setParam("legalStatus", v)} minWidth={0} /></div>
+            )}
+            {!!facets && facets.direction.length > 0 && (
+              <div className="min-w-0"><Dropdown value={sp.direction ?? ""} options={[
+                { label: tt(lang, "Tất cả hướng", "All directions"), value: "" },
+                ...facets.direction.map((f) => ({ label: bi(DIRECTION_LABELS, f.value, lang) || f.value, value: f.value })),
+              ]} onChange={(v) => setParam("direction", v)} minWidth={0} /></div>
+            )}
+          </div>
         )}
       </div>
 
