@@ -2,6 +2,10 @@ import { api } from './apiClient';
 export const analyticsApi = {
   getSummary: (timeRange?: string): Promise<any> =>
     api.get('/api/analytics/summary', timeRange ? { timeRange } : undefined),
+  getKpiTargets: (year?: number, month?: number): Promise<any[]> =>
+    api.get('/api/analytics/kpi-targets', year && month ? { year, month } : undefined),
+  updateKpiTargets: (data: { year: number; month: number; targets: Array<{ metric: string; monthlyTarget: number; quarterTarget: number }> }): Promise<any[]> =>
+    api.put('/api/analytics/kpi-targets', data),
   getAuditLogs: (page = 1, pageSize = 50, filters?: Record<string, any>): Promise<any> =>
     api.get('/api/enterprise/audit-logs', { page, pageSize, ...filters }),
   getBiMarts: (timeRange?: string): Promise<any> =>

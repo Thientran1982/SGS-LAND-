@@ -28,6 +28,50 @@ export function createAnalyticsRoutes(authenticateToken: any) {
     }
   });
 
+  router.get('/kpi-targets', authenticateToken, async (req: Request, res: Response) => {
+    try {
+      const user = (req as any).user;
+      if (PARTNER_ROLES.includes(user.role)) return res.status(403).json({ error: 'Không có quyền truy cập' });
+      const now = new Date();
+      const year = Math.min(2100, Math.max(2020, Number(req.query.year) || now.getFullYear()));
+      const month = Math.min(12, Math.max(1, Number(req.query.month) || now.getMonth() + 1));
+      res.json(await analyticsRepository.getKpiTargets(user.tenantId, year, month));
+    } catch (error) {
+      console.error('Error fetching KPI targets:', error);
+      res.status(500).json({ error: 'Failed to fetch KPI targets' });
+    }
+  });
+
+  router.put('/kpi-targets', authenticateToken, async (req: Request, res: Response) => {
+    try {
+      const user = (req as any).user;
+      if (!['SUPER_ADMIN', 'ADMIN', 'TEAM_LEAD'].includes(user.role)) {
+        return res.status(403).json({ error: 'Only admins and team leads can update KPI targets' });
+      }
+      const now = new Date();
+      const year = Math.min(2100, Math.max(2020, Number(req.body?.year) || now.getFullYear()));
+      const month = Math.min(12, Math.max(1, Number(req.body?.month) || now.getMonth() + 1));
+      const input = Array.isArray(req.body?.targets) ? req.body.targets : [];
+      const allowed = new Set(['revenue', 'pipeline', 'salesVelocity']);
+      if (input.length !== 3 || new Set(input.map((item: any) => item?.metric)).size !== 3 || input.some((item: any) => !allowed.has(item?.metric))) {
+        return res.status(400).json({ error: 'targets must include revenue, pipeline, and salesVelocity exactly once' });
+      }
+      const targets = input.map((item: any) => {
+        const monthlyTarget = Number(item.monthlyTarget);
+        const quarterTarget = Number(item.quarterTarget);
+        if (!Number.isFinite(monthlyTarget) || monthlyTarget < 0 || !Number.isFinite(quarterTarget) || quarterTarget < 0) {
+          throw new Error('KPI targets must be non-negative numbers');
+        }
+        return { metric: item.metric, monthlyTarget, quarterTarget };
+      });
+      res.json(await analyticsRepository.upsertKpiTargets(user.tenantId, user.id, year, month, targets));
+    } catch (error: any) {
+      if (error?.message?.includes('KPI targets')) return res.status(400).json({ error: error.message });
+      console.error('Error updating KPI targets:', error);
+      res.status(500).json({ error: 'Failed to update KPI targets' });
+    }
+  });
+
   // audit-logs endpoint lives in enterpriseRoutes (/api/enterprise/audit-logs)
   // to avoid duplicate routes and to keep enterprise/compliance endpoints together
 

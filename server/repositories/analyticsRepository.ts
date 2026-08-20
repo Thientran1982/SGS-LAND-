@@ -76,6 +76,74 @@ export class AnalyticsRepository extends BaseRepository {
     super('leads');
   }
 
+  async getKpiTargets(tenantId: string, year: number, month: number): Promise<any[]> {
+    return this.withTenant(tenantId, async (client) => {
+      const result = await client.query(
+        `SELECT metric, target_year, target_month, monthly_target, quarter_target, updated_at
+         FROM dashboard_kpi_targets
+         WHERE tenant_id = current_setting('app.current_tenant_id', true)::uuid
+           AND target_year = $1 AND target_month = $2
+         ORDER BY metric`,
+        [year, month],
+      );
+      return result.rows.map((row: any) => ({
+        metric: row.metric,
+        year: Number(row.target_year),
+        month: Number(row.target_month),
+        monthlyTarget: Number(row.monthly_target),
+        quarterTarget: Number(row.quarter_target),
+        updatedAt: row.updated_at,
+      }));
+    });
+  }
+
+  async upsertKpiTargets(
+    tenantId: string,
+    userId: string,
+    year: number,
+    month: number,
+    targets: Array<{ metric: string; monthlyTarget: number; quarterTarget: number }>,
+  ): Promise<any[]> {
+    return this.withTenant(tenantId, async (client) => {
+      await client.query('BEGIN');
+      try {
+        for (const target of targets) {
+          await client.query(
+            `INSERT INTO dashboard_kpi_targets
+              (tenant_id, metric, target_year, target_month, monthly_target, quarter_target, updated_by)
+             VALUES (current_setting('app.current_tenant_id', true)::uuid, $1, $2, $3, $4, $5, $6)
+             ON CONFLICT (tenant_id, metric, target_year, target_month)
+             DO UPDATE SET monthly_target = EXCLUDED.monthly_target,
+                           quarter_target = EXCLUDED.quarter_target,
+                           updated_by = EXCLUDED.updated_by,
+                           updated_at = NOW()`,
+            [target.metric, year, month, target.monthlyTarget, target.quarterTarget, userId],
+          );
+        }
+        await client.query('COMMIT');
+      } catch (error) {
+        await client.query('ROLLBACK');
+        throw error;
+      }
+      const result = await client.query(
+        `SELECT metric, target_year, target_month, monthly_target, quarter_target, updated_at
+         FROM dashboard_kpi_targets
+         WHERE tenant_id = current_setting('app.current_tenant_id', true)::uuid
+           AND target_year = $1 AND target_month = $2
+         ORDER BY metric`,
+        [year, month],
+      );
+      return result.rows.map((row: any) => ({
+        metric: row.metric,
+        year: Number(row.target_year),
+        month: Number(row.target_month),
+        monthlyTarget: Number(row.monthly_target),
+        quarterTarget: Number(row.quarter_target),
+        updatedAt: row.updated_at,
+      }));
+    });
+  }
+
   /**
    * Get analytics summary.
    * @param tenantId  - tenant isolation (required)
@@ -663,7 +731,7 @@ export class AnalyticsRepository extends BaseRepository {
       // Small dashboard-only aggregates. Keep these queries independent from the
       // main analytics calculations so an empty operational table never requires
       // fabricated UI values.
-      const [operationalResult, inventoryOverviewResult, projectBreakdownResult, demandAreasResult, inboxResult] = await Promise.all([
+      const [operationalResult, inventoryOverviewResult, projectBreakdownResult, demandAreasResult, inboxResult, kpiTargetsResult] = await Promise.all([
         client.query(`
           SELECT
             (SELECT COUNT(*)::int FROM contracts WHERE ${TENANT_FILTER} AND status NOT IN ('SIGNED','COMPLETED','CANCELLED')) AS pending_contracts,
@@ -708,11 +776,30 @@ export class AnalyticsRepository extends BaseRepository {
           ) outbound ON true
           WHERE inbound.${TENANT_FILTER}
         `),
+        client.query(`
+          SELECT metric, monthly_target, quarter_target
+          FROM dashboard_kpi_targets
+          WHERE ${TENANT_FILTER} AND target_year = EXTRACT(YEAR FROM CURRENT_DATE)::int
+            AND target_month = EXTRACT(MONTH FROM CURRENT_DATE)::int
+        `),
       ]);
       const operational = operationalResult.rows[0] || {};
       const inventoryOverview = inventoryOverviewResult.rows[0] || {};
       const inboxOverview = inboxResult.rows[0] || {};
       const aiSuggestions = recentActivities.filter((activity: any) => activity.type === 'AI').slice(0, 3);
+      const configuredTargets = new Map(kpiTargetsResult.rows.map((row: any) => [row.metric, {
+        monthly_target: Number(row.monthly_target),
+        quarter_target: Number(row.quarter_target),
+      }]));
+      const targetFor = (metric: string, actual: number) => {
+        const configured = configuredTargets.get(metric) || { monthly_target: 0, quarter_target: 0 };
+        return {
+          monthly_target: configured.monthly_target,
+          monthly_actual: actual,
+          quarter_target: configured.quarter_target,
+          quarter_actual: actual,
+        };
+      };
 
       return {
         totalLeads: leadStats.total,
@@ -763,9 +850,9 @@ export class AnalyticsRepository extends BaseRepository {
         marketPulse,
         agentLeaderboard,
         targets: {
-          revenue: { monthly_target: 0, monthly_actual: revenue, quarter_target: 0, quarter_actual: revenue },
-          pipeline: { monthly_target: 0, monthly_actual: pipelineValue, quarter_target: 0, quarter_actual: pipelineValue },
-          salesVelocity: { monthly_target: 0, monthly_actual: salesVelocity, quarter_target: 0, quarter_actual: salesVelocity },
+          revenue: targetFor('revenue', revenue),
+          pipeline: targetFor('pipeline', pipelineValue),
+          salesVelocity: targetFor('salesVelocity', salesVelocity),
         },
         workQueue: {
           contracts: Number(operational.pending_contracts || 0),

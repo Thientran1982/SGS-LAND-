@@ -5,7 +5,7 @@ import {
     AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, 
     BarChart, Bar, Line, ComposedChart, Legend, ScatterChart, Scatter, ZAxis, Cell
 } from 'recharts';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { db } from '../services/dbApi';
 import { analyticsApi } from '../services/api/analyticsApi';
 import { AnalyticsSummary } from '../types';
@@ -327,6 +327,83 @@ const AiAdvisorWidget = ({ analytics, language }: { analytics: any; language: st
             <div className="mt-4 space-y-2">{suggestions.slice(0, 3).map((item: any, index: number) => <div key={index} className="rounded-lg bg-[var(--glass-surface)] px-3 py-2 text-xs text-[var(--text-secondary)]">{item.title || item.message || item}</div>)}</div>
             {!suggestions.length && <div className="mt-4 text-xs text-[var(--text-tertiary)]">{copy.empty}</div>}
         </section>
+    );
+};
+
+const KpiTargetSettings = ({ user, language, notify }: { user: any; language: string; notify: (message: string, type?: 'success' | 'error') => void }) => {
+    const canEdit = ['SUPER_ADMIN', 'ADMIN', 'TEAM_LEAD'].includes(user?.role);
+    const [open, setOpen] = useState(false);
+    const [period, setPeriod] = useState(() => {
+        const now = new Date();
+        return { year: now.getFullYear(), month: now.getMonth() + 1 };
+    });
+    const [draft, setDraft] = useState<Record<string, { monthlyTarget: string; quarterTarget: string }>>({});
+    const queryClient = useQueryClient();
+    const targetsQuery = useQuery({
+        queryKey: ['dashboardKpiTargets', period.year, period.month],
+        queryFn: () => analyticsApi.getKpiTargets(period.year, period.month),
+        enabled: open && canEdit,
+        staleTime: 30000,
+    });
+    useEffect(() => {
+        const next: Record<string, { monthlyTarget: string; quarterTarget: string }> = {};
+        for (const item of targetsQuery.data || []) {
+            next[item.metric] = { monthlyTarget: String(item.monthlyTarget ?? 0), quarterTarget: String(item.quarterTarget ?? 0) };
+        }
+        setDraft(next);
+    }, [targetsQuery.data]);
+    const saveMutation = useMutation({
+        mutationFn: () => analyticsApi.updateKpiTargets({
+            year: period.year,
+            month: period.month,
+            targets: ['revenue', 'pipeline', 'salesVelocity'].map(metric => ({
+                metric,
+                monthlyTarget: Number(draft[metric]?.monthlyTarget || 0),
+                quarterTarget: Number(draft[metric]?.quarterTarget || 0),
+            })),
+        }),
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ['dashboardKpiTargets'] });
+            queryClient.invalidateQueries({ queryKey: ['dashboardAnalytics'] });
+            notify(language === 'vn' ? 'Đã lưu mục tiêu KPI' : 'KPI targets saved');
+            setOpen(false);
+        },
+        onError: () => notify(language === 'vn' ? 'Không thể lưu mục tiêu KPI' : 'Unable to save KPI targets', 'error'),
+    });
+    if (!canEdit) return null;
+    const copy = language === 'vn'
+        ? { button: 'Cấu hình KPI', title: 'Cấu hình mục tiêu KPI', month: 'Tháng áp dụng', monthly: 'Mục tiêu tháng', quarter: 'Mục tiêu quý', revenue: 'Doanh thu', pipeline: 'Giá trị pipeline', velocity: 'Sales velocity (ngày)', cancel: 'Hủy', save: 'Lưu mục tiêu', loading: 'Đang tải...' }
+        : { button: 'Configure KPI', title: 'KPI target settings', month: 'Effective month', monthly: 'Monthly target', quarter: 'Quarter target', revenue: 'Revenue', pipeline: 'Pipeline value', velocity: 'Sales velocity (days)', cancel: 'Cancel', save: 'Save targets', loading: 'Loading...' };
+    const labels: Record<string, string> = { revenue: copy.revenue, pipeline: copy.pipeline, salesVelocity: copy.velocity };
+    return (
+        <>
+            <button type="button" onClick={() => setOpen(true)} className="dashboard-control px-3 py-2.5 text-xs font-semibold text-[var(--sgs-primary)]">{copy.button}</button>
+            {open && (
+                <div className="fixed inset-0 z-[80] flex items-center justify-center bg-black/30 p-4 backdrop-blur-sm" role="dialog" aria-modal="true" aria-label={copy.title}>
+                    <div className="w-full max-w-2xl rounded-2xl border border-[var(--glass-border)] bg-[var(--bg-surface)] p-5 shadow-2xl">
+                        <div className="flex items-start justify-between gap-4">
+                            <div><h2 className="text-lg font-bold text-[var(--text-primary)]">{copy.title}</h2><p className="mt-1 text-xs text-[var(--text-tertiary)]">{language === 'vn' ? 'Mục tiêu được lưu riêng cho tenant và tháng đã chọn.' : 'Targets are saved per tenant and selected month.'}</p></div>
+                            <button type="button" onClick={() => setOpen(false)} className="rounded-lg px-2 py-1 text-lg text-[var(--text-tertiary)] hover:bg-[var(--glass-surface)]" aria-label={copy.cancel}>×</button>
+                        </div>
+                        <label className="mt-5 block text-xs font-semibold text-[var(--text-secondary)]">{copy.month}
+                            <input type="month" value={`${period.year}-${String(period.month).padStart(2, '0')}`} onChange={event => { const [year, month] = event.target.value.split('-').map(Number); if (year && month) setPeriod({ year, month }); }} className="mt-1.5 block w-full rounded-lg border border-[var(--glass-border)] bg-[var(--bg-surface)] px-3 py-2 text-sm text-[var(--text-primary)]" />
+                        </label>
+                        {targetsQuery.isLoading ? <div className="py-10 text-center text-sm text-[var(--text-tertiary)]">{copy.loading}</div> : (
+                            <div className="mt-5 space-y-3">
+                                {['revenue', 'pipeline', 'salesVelocity'].map(metric => (
+                                    <div key={metric} className="grid grid-cols-1 gap-2 rounded-xl border border-[var(--glass-border)] bg-[var(--glass-surface)] p-3 sm:grid-cols-[1fr_1fr_1fr] sm:items-center">
+                                        <div className="text-sm font-semibold text-[var(--text-primary)]">{labels[metric]}</div>
+                                        <label className="text-xs text-[var(--text-tertiary)]">{copy.monthly}<input type="number" min="0" step="any" value={draft[metric]?.monthlyTarget ?? ''} onChange={event => setDraft(current => ({ ...current, [metric]: { monthlyTarget: event.target.value, quarterTarget: current[metric]?.quarterTarget ?? '' } }))} className="mt-1 block w-full rounded-lg border border-[var(--glass-border)] bg-[var(--bg-surface)] px-2.5 py-2 text-sm text-[var(--text-primary)]" /></label>
+                                        <label className="text-xs text-[var(--text-tertiary)]">{copy.quarter}<input type="number" min="0" step="any" value={draft[metric]?.quarterTarget ?? ''} onChange={event => setDraft(current => ({ ...current, [metric]: { monthlyTarget: current[metric]?.monthlyTarget ?? '', quarterTarget: event.target.value } }))} className="mt-1 block w-full rounded-lg border border-[var(--glass-border)] bg-[var(--bg-surface)] px-2.5 py-2 text-sm text-[var(--text-primary)]" /></label>
+                                    </div>
+                                ))}
+                            </div>
+                        )}
+                        <div className="mt-5 flex justify-end gap-2"><button type="button" onClick={() => setOpen(false)} className="dashboard-control px-4 py-2 text-xs font-semibold">{copy.cancel}</button><button type="button" disabled={saveMutation.isPending || targetsQuery.isLoading} onClick={() => saveMutation.mutate()} className="rounded-lg bg-[var(--sgs-primary)] px-4 py-2 text-xs font-bold text-white disabled:opacity-50">{saveMutation.isPending ? copy.loading : copy.save}</button></div>
+                    </div>
+                </div>
+            )}
+        </>
     );
 };
 // --- GEOLOCATION TABLE ---
@@ -719,6 +796,7 @@ export const Dashboard: React.FC = () => {
                                  className="dashboard-control dashboard-date-filter w-full text-xs"
                             />
                         </div>
+                        <KpiTargetSettings user={currentUser} language={language} notify={notify} />
                         <button
                             onClick={handleExport}
                             disabled={isExporting}
@@ -915,7 +993,23 @@ export const Dashboard: React.FC = () => {
                     </section>
 
                     <section className="grid grid-cols-1 gap-6 xl:grid-cols-3" aria-label={language === 'vn' ? 'Tóm tắt vận hành' : 'Operations summary'}>
-                        <AiAdvisorWidget analytics={overview} language={language} />
+                        <section className="dashboard-panel" aria-label={language === 'vn' ? 'Cố Vấn AI' : 'AI Advisor'}>
+                            <div className="dashboard-panel-head">
+                                <h2>{language === 'vn' ? 'Cố Vấn AI' : 'AI Advisor'}</h2>
+                                <a href="/ai-governance" className="text-xs font-semibold text-[var(--sgs-primary)]">AI</a>
+                            </div>
+                            <div className="flex items-center gap-3">
+                                <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-[var(--sgs-primary)]/10 text-[var(--sgs-primary)]" aria-hidden="true">
+                                    <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9.813 15.904 9 18.75l-.813-2.846a4.5 4.5 0 0 0-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 0 0 3.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 0 0 3.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 0 0-3.09 3.09Z" /></svg>
+                                </div>
+                                <div><div className="text-2xl font-extrabold text-[var(--text-primary)]">{overview.aiAdvisor?.count ?? 0}</div><div className="text-xs text-[var(--text-tertiary)]">{language === 'vn' ? 'Gợi ý trong ngày' : 'Suggestions today'}</div></div>
+                                <div className="ml-auto text-right"><div className="text-lg font-bold text-[var(--ui-danger)]">{overview.aiAdvisor?.anomalies ?? 0}</div><div className="text-xs text-[var(--text-tertiary)]">{language === 'vn' ? 'Cảnh báo bất thường' : 'Anomaly alerts'}</div></div>
+                            </div>
+                            <div className="mt-4 space-y-2">
+                                {(Array.isArray(overview.aiAdvisor?.suggestions) ? overview.aiAdvisor.suggestions : []).slice(0, 3).map((item: any, index: number) => <div key={index} className="rounded-lg bg-[var(--glass-surface)] px-3 py-2 text-xs text-[var(--text-secondary)]">{typeof item === 'string' ? item : item?.title || item?.message || ''}</div>)}
+                                {!overview.aiAdvisor?.suggestions?.length && <div className="text-xs text-[var(--text-tertiary)]">{language === 'vn' ? 'Chưa có gợi ý mới' : 'No new suggestions'}</div>}
+                            </div>
+                        </section>
                         <InventoryOverviewWidget analytics={overview} language={language} />
                         <InboxOverviewWidget analytics={overview} language={language} />
                     </section>
