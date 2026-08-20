@@ -980,6 +980,27 @@ export interface AnalyticsSummary {
     agentLeaderboard?: Array<{ userId: UserId; name: string; avatar: string; score: number; deals: number }>;
     /** Describes data scope: "Toàn công ty" | "Dữ liệu của bạn" */
     scopeLabel?: string;
+    targets?: Record<string, {
+        monthly_target: number;
+        monthly_actual: number;
+        quarter_target: number;
+        quarter_actual: number;
+    }>;
+    dashboardAlerts?: Array<{ severity: 'high' | 'medium' | 'low'; label: string; count: number }>;
+    workQueue?: { contracts: number; approvals: number; followups: number };
+    inventoryOverview?: {
+        active: number;
+        sold: number;
+        rented: number;
+        expired: number;
+        pendingApproval: number;
+        topListings: Array<{ id?: string; title?: string; name?: string; views?: number; viewCount?: number }>;
+    };
+    inboxOverview?: { zalo: number; facebook: number; webChat: number; avgResponseMinutes: number | null };
+    aiAdvisor?: { count: number; anomalies: number; suggestions: Array<{ title?: string; message?: string } | string> };
+    projectBreakdown?: Array<{ id?: string; name: string; count?: number; leads?: number }>;
+    demandAreas?: Array<{ name: string; count?: number; score?: number }>;
+    teamLeaderboard?: Array<{ id?: string; name: string; avatar?: string | null; deals?: number; closeRate?: number; slaScore?: number; overloaded?: boolean }>;
 }
 export interface CampaignCost {
     id: UUID;

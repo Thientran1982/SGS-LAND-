@@ -163,6 +163,172 @@ const AgentAvatar = ({ name, avatar }: { name: string; avatar?: string }) => {
         </div>
     );
 };
+
+const ProgressBar = ({ value, label, muted = false }: { value: number; label: string; muted?: boolean }) => {
+    const safeValue = Math.max(0, Math.min(100, Number(value) || 0));
+    return (
+        <div className="mt-3">
+            <div className="flex items-center justify-between gap-2 text-xs2 font-semibold uppercase tracking-wider text-[var(--text-tertiary)]">
+                <span>{label}</span>
+                <span className={muted ? 'text-[var(--text-tertiary)]' : 'text-[var(--sgs-primary)]'}>{muted ? '—' : `${safeValue}%`}</span>
+            </div>
+            <div className="mt-1.5 h-1.5 overflow-hidden rounded-full bg-[var(--glass-surface-hover)]">
+                <div className="h-full rounded-full bg-[var(--sgs-primary)] transition-all" style={{ width: `${safeValue}%` }} />
+            </div>
+        </div>
+    );
+};
+
+const SegmentToggle = ({ value, onChange, options }: { value: string; onChange: (value: string) => void; options: { value: string; label: string }[] }) => (
+    <div className="flex items-center gap-1 rounded-lg bg-[var(--glass-surface)] p-1" role="tablist">
+        {options.map(option => (
+            <button
+                key={option.value}
+                type="button"
+                role="tab"
+                aria-selected={value === option.value}
+                onClick={() => onChange(option.value)}
+                className={`rounded-md px-2.5 py-1 text-xs font-semibold transition-colors ${value === option.value ? 'bg-[var(--bg-surface)] text-[var(--sgs-primary)] shadow-sm' : 'text-[var(--text-tertiary)] hover:text-[var(--text-primary)]'}`}
+            >
+                {option.label}
+            </button>
+        ))}
+    </div>
+);
+
+const DashboardMiniCard = ({ label, value, href, tone = 'default' }: { label: string; value: number | string; href?: string; tone?: 'default' | 'warning' | 'danger' }) => {
+    const content = (
+        <div className={`rounded-xl border px-3 py-3 transition-colors ${tone === 'danger' ? 'border-[var(--ui-danger)]/25 bg-[var(--ui-danger)]/5' : tone === 'warning' ? 'border-[var(--sgs-accent)]/25 bg-[var(--sgs-accent)]/5' : 'border-[var(--glass-border)] bg-[var(--glass-surface)]'} ${href ? 'hover:border-[var(--sgs-primary)]/40' : ''}`}>
+            <div className="text-xs2 font-bold uppercase tracking-wider text-[var(--text-tertiary)]">{label}</div>
+            <div className={`mt-1 text-xl font-extrabold ${tone === 'danger' ? 'text-[var(--ui-danger)]' : 'text-[var(--text-primary)]'}`}>{value}</div>
+        </div>
+    );
+    return href ? <a href={href} className="block min-w-0">{content}</a> : content;
+};
+
+const PriorityAlertCenter = ({ analytics, language }: { analytics: any; language: string }) => {
+    const copy = language === 'vn'
+        ? { title: 'Trung Tâm Cảnh Báo Ưu Tiên', empty: 'Không có cảnh báo ưu tiên', system: 'Hệ thống', followup: 'Khách chưa phản hồi', contract: 'Hợp đồng sắp hết hạn', ai: 'Cảnh báo AI' }
+        : { title: 'Priority Alert Center', empty: 'No priority alerts', system: 'System', followup: 'Unresponsive leads', contract: 'Expiring contracts', ai: 'AI alert' };
+    const alerts = Array.isArray(analytics?.dashboardAlerts) ? analytics.dashboardAlerts : [];
+    return (
+        <section className="dashboard-panel border-l-4 border-l-[var(--sgs-accent)] px-4 py-3 sm:px-5" aria-label={copy.title}>
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+                <div className="flex items-center gap-2 shrink-0">
+                    {ICONS.WARNING}
+                    <h2 className="dashboard-subhead">{copy.title}</h2>
+                </div>
+                <div className="flex min-w-0 flex-1 flex-wrap gap-2">
+                    {(alerts.length ? alerts : [
+                        analytics?.systemAlertCount > 0 ? { severity: 'high', label: copy.system, count: analytics.systemAlertCount } : null,
+                        analytics?.unresponsiveLeadCount > 0 ? { severity: 'medium', label: copy.followup, count: analytics.unresponsiveLeadCount } : null,
+                        analytics?.expiringContractCount > 0 ? { severity: 'medium', label: copy.contract, count: analytics.expiringContractCount } : null,
+                        analytics?.aiAlertCount > 0 ? { severity: 'low', label: copy.ai, count: analytics.aiAlertCount } : null,
+                    ].filter(Boolean)).map((alert: any, index: number) => (
+                        <span key={`${alert.label}-${index}`} className={`inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs font-semibold ${alert.severity === 'high' ? 'border-[var(--ui-danger)]/25 bg-[var(--ui-danger)]/5 text-[var(--ui-danger)]' : alert.severity === 'medium' ? 'border-[var(--sgs-accent)]/30 bg-[var(--sgs-accent)]/5 text-[var(--sgs-accent-text)]' : 'border-[var(--sgs-primary)]/20 bg-[var(--sgs-primary)]/5 text-[var(--sgs-primary)]'}`}>
+                            {alert.label} <strong>{alert.count ?? ''}</strong>
+                        </span>
+                    ))}
+                    {!alerts.length && !analytics?.systemAlertCount && !analytics?.unresponsiveLeadCount && !analytics?.expiringContractCount && !analytics?.aiAlertCount && <span className="text-xs text-[var(--text-tertiary)]">{copy.empty}</span>}
+                </div>
+            </div>
+        </section>
+    );
+};
+
+const WorkQueueStrip = ({ analytics, language }: { analytics: any; language: string }) => {
+    const copy = language === 'vn'
+        ? { title: 'Việc Cần Làm & Phê Duyệt', contracts: 'Hợp đồng cần xử lý', approvals: 'Yêu cầu chờ duyệt', followups: 'Khách cần follow-up' }
+        : { title: 'Tasks & Approvals', contracts: 'Contracts to handle', approvals: 'Pending approvals', followups: 'Leads to follow up' };
+    const queue = analytics?.workQueue || {};
+    return (
+        <section aria-label={copy.title}>
+            <div className="mb-2 dashboard-subhead">{copy.title}</div>
+            <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
+                <DashboardMiniCard label={copy.contracts} value={queue.contracts ?? analytics?.pendingContracts ?? 0} href="/contracts" tone={(queue.contracts ?? 0) > 0 ? 'warning' : 'default'} />
+                <DashboardMiniCard label={copy.approvals} value={queue.approvals ?? analytics?.pendingApprovals ?? 0} href="/approvals" tone={(queue.approvals ?? 0) > 0 ? 'warning' : 'default'} />
+                <DashboardMiniCard label={copy.followups} value={queue.followups ?? analytics?.unresponsiveLeadCount ?? 0} href="/leads" tone={(queue.followups ?? 0) > 0 ? 'danger' : 'default'} />
+            </div>
+        </section>
+    );
+};
+
+const InventoryOverviewWidget = ({ analytics, language }: { analytics: any; language: string }) => {
+    const copy = language === 'vn'
+        ? { title: 'Kho Bất Động Sản', active: 'Đang hoạt động', sold: 'Đã bán', rented: 'Đã cho thuê', expired: 'Hết hạn', pending: 'Tin chờ duyệt', top: 'Xem nhiều tuần này', empty: 'Chưa có dữ liệu nổi bật' }
+        : { title: 'Property Inventory', active: 'Active', sold: 'Sold', rented: 'Rented', expired: 'Expired', pending: 'Pending approval', top: 'Most viewed this week', empty: 'No featured data yet' };
+    const inventory = analytics?.inventoryOverview || {};
+    const topListings = Array.isArray(inventory.topListings) ? inventory.topListings : [];
+    return (
+        <section className="dashboard-panel min-w-0" aria-label={copy.title}>
+            <div className="dashboard-panel-head">
+                <h2>{copy.title}</h2>
+                <a href="/inventory" className="text-xs font-semibold text-[var(--sgs-primary)]">{copy.active}</a>
+            </div>
+            <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+                <DashboardMiniCard label={copy.active} value={inventory.active ?? analytics?.availableListings ?? 0} />
+                <DashboardMiniCard label={copy.sold} value={inventory.sold ?? 0} />
+                <DashboardMiniCard label={copy.rented} value={inventory.rented ?? 0} />
+                <DashboardMiniCard label={copy.expired} value={inventory.expired ?? 0} />
+            </div>
+            <a href="/approvals" className="mt-3 flex items-center justify-between rounded-xl border border-[var(--sgs-accent)]/25 bg-[var(--sgs-accent)]/5 px-3 py-2 text-xs font-semibold text-[var(--sgs-accent-text)]">
+                <span>{copy.pending}</span><strong>{inventory.pendingApproval ?? 0}</strong>
+            </a>
+            <div className="mt-4 dashboard-subhead">{copy.top}</div>
+            <div className="mt-2 space-y-2">
+                {topListings.length ? topListings.slice(0, 5).map((listing: any, index: number) => (
+                    <div key={listing.id ?? index} className="flex items-center justify-between gap-3 text-xs">
+                        <span className="truncate text-[var(--text-primary)]">{listing.title || listing.name}</span>
+                        <span className="shrink-0 font-mono text-[var(--text-tertiary)]">{listing.views ?? listing.viewCount ?? 0}</span>
+                    </div>
+                )) : <div className="py-3 text-xs text-[var(--text-tertiary)]">{copy.empty}</div>}
+            </div>
+        </section>
+    );
+};
+
+const InboxOverviewWidget = ({ analytics, language }: { analytics: any; language: string }) => {
+    const copy = language === 'vn' ? { title: 'Hộp Thư Đa Kênh', response: 'Phản hồi trung bình', empty: 'Chưa có tin nhắn chưa đọc' } : { title: 'Omnichannel Inbox', response: 'Average response', empty: 'No unread messages' };
+    const inbox = analytics?.inboxOverview || {};
+    const channels = [
+        { key: 'Zalo', value: inbox.zalo ?? 0 },
+        { key: 'Facebook', value: inbox.facebook ?? 0 },
+        { key: 'Web chat', value: inbox.webChat ?? inbox.web_chat ?? 0 },
+    ];
+    return (
+        <section className="dashboard-panel min-w-0" aria-label={copy.title}>
+            <div className="dashboard-panel-head"><h2>{copy.title}</h2><a href="/inbox" className="text-xs font-semibold text-[var(--sgs-primary)]">Inbox</a></div>
+            <div className="grid grid-cols-3 gap-2">{channels.map(channel => <DashboardMiniCard key={channel.key} label={channel.key} value={channel.value} tone={channel.value > 0 ? 'warning' : 'default'} />)}</div>
+            <div className="mt-4 flex items-center justify-between rounded-xl bg-[var(--glass-surface)] px-3 py-2 text-xs">
+                <span className="text-[var(--text-tertiary)]">{copy.response}</span>
+                <strong className="font-mono text-[var(--text-primary)]">{inbox.avgResponseMinutes != null ? `${inbox.avgResponseMinutes}m` : '—'}</strong>
+            </div>
+            {!channels.some(channel => channel.value > 0) && <div className="mt-3 text-xs text-[var(--text-tertiary)]">{copy.empty}</div>}
+        </section>
+    );
+};
+
+const AiAdvisorWidget = ({ analytics, language }: { analytics: any; language: string }) => {
+    const copy = language === 'vn' ? { title: 'Cố Vấn AI', suggestions: 'Gợi ý trong ngày', anomaly: 'Cảnh báo bất thường', empty: 'Chưa có gợi ý mới' } : { title: 'AI Advisor', suggestions: 'Suggestions today', anomaly: 'Anomaly alerts', empty: 'No new suggestions' };
+    const advisor = analytics?.aiAdvisor || {};
+    const suggestions = Array.isArray(advisor.suggestions) ? advisor.suggestions : [];
+    return (
+        <section className="dashboard-panel" aria-label={copy.title}>
+            <div className="dashboard-panel-head"><h2>{copy.title}</h2><a href="/ai-governance" className="text-xs font-semibold text-[var(--sgs-primary)]">AI</a></div>
+            <div className="flex items-center gap-3">
+                <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-[var(--sgs-primary)]/10 text-[var(--sgs-primary)]" aria-hidden="true">
+                    <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9.813 15.904 9 18.75l-.813-2.846a4.5 4.5 0 0 0-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 0 0 3.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 0 0 3.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 0 0-3.09 3.09Z" />
+                    </svg>
+                </div>
+                <div><div className="text-2xl font-extrabold text-[var(--text-primary)]">{advisor.count ?? suggestions.length}</div><div className="text-xs text-[var(--text-tertiary)]">{copy.suggestions}</div></div>
+                <div className="ml-auto text-right"><div className="text-lg font-bold text-[var(--ui-danger)]">{advisor.anomalies ?? 0}</div><div className="text-xs text-[var(--text-tertiary)]">{copy.anomaly}</div></div>
+            </div>
+            <div className="mt-4 space-y-2">{suggestions.slice(0, 3).map((item: any, index: number) => <div key={index} className="rounded-lg bg-[var(--glass-surface)] px-3 py-2 text-xs text-[var(--text-secondary)]">{item.title || item.message || item}</div>)}</div>
+            {!suggestions.length && <div className="mt-4 text-xs text-[var(--text-tertiary)]">{copy.empty}</div>}
+        </section>
+    );
+};
 // --- GEOLOCATION TABLE ---
 const GeoLocationTable = memo(({ t }: { t: any }) => {
     const { data: visitorStats, isLoading, isError } = useQuery({
@@ -391,6 +557,8 @@ function getTenantIdFromCookie(): string | null {
 }
 export const Dashboard: React.FC = () => {
     const [timeRange, setTimeRange] = useState('30d');
+    const [pipelineMode, setPipelineMode] = useState<'overview' | 'source'>('overview');
+    const [leaderboardMode, setLeaderboardMode] = useState<'individual' | 'team'>('individual');
     const [isExporting, setIsExporting] = useState(false);
     const [toast, setToast] = useState<{ msg: string; type: 'success' | 'error' } | null>(null);
     const notify = useCallback((msg: string, type: 'success' | 'error' = 'success') => {
@@ -504,6 +672,18 @@ export const Dashboard: React.FC = () => {
     const userName = currentUser?.name ? currentUser.name.split(' ').slice(-1)[0] : '';
     const scopeKey: string = (analytics as any)?.scopeLabel || 'company';
     const scopeLabel = scopeKey === 'personal' ? t('dash.scope_personal') : t('dash.scope_company');
+    const overview: any = analytics;
+    const ui = language === 'vn'
+        ? { quick: 'Thao tác nhanh', addLead: '+ Thêm khách hàng', contract: '+ Tạo hợp đồng', listing: '+ Đăng tin BĐS', target: 'mục tiêu tháng', targetUnset: 'Chưa thiết lập mục tiêu', source: 'Theo nguồn', overview: 'Tổng quan', project: 'Theo dự án', demand: 'Nhu cầu theo khu vực', team: 'Theo team', individual: 'Theo cá nhân', overloaded: 'Quá tải' }
+        : { quick: 'Quick actions', addLead: '+ Add lead', contract: '+ Create contract', listing: '+ Add listing', target: 'monthly target', targetUnset: 'Target not set', source: 'By source', overview: 'Overview', project: 'By project', demand: 'Demand by area', team: 'By team', individual: 'By person', overloaded: 'Overloaded' };
+    const kpiTarget = (key: string, actual: number) => {
+        const target = Number(overview?.targets?.[key]?.monthly_target ?? overview?.targets?.[key]?.monthlyTarget ?? 0);
+        return { target, progress: target > 0 ? Math.round((actual / target) * 100) : 0 };
+    };
+    const revenueTarget = kpiTarget('revenue', Number(overview.revenue || 0));
+    const pipelineTarget = kpiTarget('pipeline', Number(overview.pipelineValue || 0));
+    const velocityTarget = kpiTarget('salesVelocity', Number(overview.salesVelocity || 0));
+    const sourceData = Object.entries(overview.leadsBySource || {}).sort(([, a]: any, [, b]: any) => b - a);
     return (
     <>
       <SeoHead title="Dashboard | SGS LAND" description="Bảng điều khiển tổng quan SGS LAND - quản lý bất động sản, phân tích thị trường và theo dõi hiệu suất kinh doanh." canonicalPath="/dashboard" />
@@ -521,7 +701,12 @@ export const Dashboard: React.FC = () => {
                             <span>{lastUpdated.toLocaleTimeString()}</span>
                         </div>
                     </div>
-                    <div className="flex w-full items-center gap-2 sm:w-auto">
+                    <div className="flex w-full flex-wrap items-center gap-2 sm:w-auto sm:flex-nowrap">
+                        <div className="hidden items-center gap-2 xl:flex">
+                            <a href="/leads" className="dashboard-control px-3 py-2.5 text-xs font-semibold text-[var(--sgs-primary)]">{ui.addLead}</a>
+                            <a href="/contracts" className="dashboard-control px-3 py-2.5 text-xs font-semibold text-[var(--sgs-primary)]">{ui.contract}</a>
+                            <a href="/inventory" className="dashboard-control px-3 py-2.5 text-xs font-semibold text-[var(--sgs-primary)]">{ui.listing}</a>
+                        </div>
                         <div className="min-w-0 flex-1 sm:w-36">
                             <Dropdown
                                 value={timeRange}
@@ -549,6 +734,17 @@ export const Dashboard: React.FC = () => {
                         </button>
                     </div>
                 </header>
+
+                <PriorityAlertCenter analytics={overview} language={language} />
+                <div className="xl:hidden">
+                    <div className="mb-2 dashboard-subhead">{ui.quick}</div>
+                    <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
+                        <a href="/leads" className="dashboard-control px-3 py-2.5 text-center text-xs font-semibold text-[var(--sgs-primary)]">{ui.addLead}</a>
+                        <a href="/contracts" className="dashboard-control px-3 py-2.5 text-center text-xs font-semibold text-[var(--sgs-primary)]">{ui.contract}</a>
+                        <a href="/inventory" className="dashboard-control px-3 py-2.5 text-center text-xs font-semibold text-[var(--sgs-primary)]">{ui.listing}</a>
+                    </div>
+                </div>
+                <WorkQueueStrip analytics={overview} language={language} />
 
                 {(analytics.totalLeads ?? 0) < 5 && !localStorage.getItem('sgs_guide_dismissed') && (
                     <div className="dashboard-guide flex flex-col gap-3 px-4 py-3 sm:flex-row sm:items-center sm:justify-between" data-guide-banner>
@@ -585,11 +781,13 @@ export const Dashboard: React.FC = () => {
                             <div className="kpi-label">{t('dash.revenue_title')}</div>
                             <div className="kpi-value dash-number break-words">{formatCompactNumber(analytics.revenue || 0)}</div>
                             <div className="kpi-meta"><TrendIndicator value={analytics.revenueDelta || 0} label={t('dash.vs_last_period')} /></div>
+                            <ProgressBar value={revenueTarget.progress} label={revenueTarget.target > 0 ? `${revenueTarget.progress}% ${ui.target}` : ui.targetUnset} muted={revenueTarget.target === 0} />
                         </div>
                         <div className="dashboard-kpi">
                             <div className="kpi-label">{t('dash.pipeline_value')}</div>
                             <div className="kpi-value dash-number break-words">{formatCompactNumber(analytics.pipelineValue || 0)}</div>
                             <div className="kpi-meta">{t('dash.win_probability')}: <strong className="dash-number text-[var(--sgs-primary)]">{analytics.winProbability || 0}%</strong></div>
+                            <ProgressBar value={pipelineTarget.progress} label={pipelineTarget.target > 0 ? `${pipelineTarget.progress}% ${ui.target}` : ui.targetUnset} muted={pipelineTarget.target === 0} />
                         </div>
                         <div className="dashboard-kpi">
                             <div className="kpi-label">{t('dash.ai_deflection_rate')}</div>
@@ -600,13 +798,15 @@ export const Dashboard: React.FC = () => {
                             <div className="kpi-label">{t('dash.sales_velocity')}</div>
                             <div className="kpi-value dash-number">{analytics.salesVelocity > 0 && analytics.salesVelocity < 1 ? '< 1' : (analytics.salesVelocity || '--')}</div>
                             <div className="kpi-meta">{analytics.salesVelocity > 0 ? t('dash.days_to_close') : t('dash.no_closed_deals')} <TrendIndicator value={analytics.salesVelocityDelta || 0} label="" /></div>
+                            <ProgressBar value={velocityTarget.progress} label={velocityTarget.target > 0 ? `${velocityTarget.progress}% ${ui.target}` : ui.targetUnset} muted={velocityTarget.target === 0} />
                         </div>
                     </section>
 
                     <section className="dashboard-panel" aria-label={t('dash.pipeline_title')}>
                         <div className="dashboard-panel-head">
                             <h2>{t('dash.pipeline_title')}</h2>
-                            <div className="flex items-center gap-4 text-right">
+                            <div className="flex items-center gap-3 text-right">
+                                <SegmentToggle value={pipelineMode} onChange={(value) => setPipelineMode(value as 'overview' | 'source')} options={[{ value: 'overview', label: ui.overview }, { value: 'source', label: ui.source }]} />
                                 <div>
                                     <div className="dashboard-subhead">{t('dash.total_leads')}</div>
                                     <div className="dash-number mt-1 text-lg font-semibold text-[var(--text-primary)]">{analytics.totalLeads}</div>
@@ -624,7 +824,16 @@ export const Dashboard: React.FC = () => {
                                     <span className="dashboard-subhead">{timeRange}</span>
                                 </div>
                                 <div className="h-[260px] w-full min-w-0 sm:h-[300px]">
-                                    {analytics.leadsTrend && analytics.leadsTrend.length > 0 ? (
+                                    {pipelineMode === 'source' ? (
+                                        <div className="space-y-3 px-2 pt-4">
+                                            {sourceData.length ? sourceData.map(([source, count]: any) => (
+                                                <div key={source}>
+                                                    <div className="mb-1 flex justify-between text-xs"><span className="text-[var(--text-secondary)]">{source}</span><strong className="font-mono text-[var(--text-primary)]">{count}</strong></div>
+                                                    <div className="h-2 rounded-full bg-[var(--glass-surface-hover)]"><div className="h-full rounded-full bg-[var(--sgs-primary)]" style={{ width: `${analytics.totalLeads ? Math.min(100, (count / analytics.totalLeads) * 100) : 0}%` }} /></div>
+                                                </div>
+                                            )) : <EmptyState message={language === 'vn' ? 'Chưa có dữ liệu nguồn khách hàng' : 'No lead source data'} />}
+                                        </div>
+                                    ) : analytics.leadsTrend && analytics.leadsTrend.length > 0 ? (
                                         <ResponsiveContainer width="100%" height="100%" minHeight={200} minWidth={200}>
                                             <ComposedChart data={analytics.leadsTrend}>
                                                 <CartesianGrid strokeDasharray="3 3" vertical={false} stroke={chartTheme.colors.grid} opacity={0.5} />
@@ -648,8 +857,8 @@ export const Dashboard: React.FC = () => {
                             </div>
                         </div>
                         <div className="dashboard-secondary">
-                            <section>
-                                <div className="dashboard-subhead mb-2">{t('dash.market_pulse_title')}</div>
+                         <section>
+                                <div className="mb-2 flex items-center justify-between gap-2"><div className="dashboard-subhead">{t('dash.market_pulse_title')}</div><SegmentToggle value="pulse" onChange={() => undefined} options={[{ value: 'pulse', label: ui.overview }]} /></div>
                                 <div className="h-[270px] w-full min-w-0">
                                     {analytics.marketPulse && analytics.marketPulse.length > 0 ? (
                                         <ResponsiveContainer width="100%" height="100%" minHeight={200} minWidth={200}>
@@ -675,16 +884,23 @@ export const Dashboard: React.FC = () => {
                                         <span key={idx} className="text-xs text-[var(--text-secondary)]">{loc}</span>
                                     ))}
                                 </div>
+                                <div className="mt-4 border-t border-[var(--glass-border)] pt-3">
+                                    <div className="mb-2 flex items-center justify-between"><div className="dashboard-subhead">{ui.project}</div><span className="text-xs text-[var(--text-tertiary)]">{overview.projectBreakdown?.length ?? 0}</span></div>
+                                    <div className="space-y-2">
+                                        {(overview.projectBreakdown || []).slice(0, 4).map((project: any, index: number) => <div key={project.id ?? index} className="flex items-center justify-between gap-3 text-xs"><span className="truncate text-[var(--text-secondary)]">{project.name}</span><span className="font-mono text-[var(--text-tertiary)]">{project.leads ?? project.count ?? 0}</span></div>)}
+                                        {!overview.projectBreakdown?.length && <div className="text-xs text-[var(--text-tertiary)]">{language === 'vn' ? 'Chưa có dữ liệu dự án' : 'No project data yet'}</div>}
+                                    </div>
+                                </div>
                             </section>
                             <section>
-                                <div className="dashboard-subhead mb-2">{t('dash.leaderboard_title')}</div>
+                                <div className="mb-2 flex items-center justify-between gap-2"><div className="dashboard-subhead">{t('dash.leaderboard_title')}</div><SegmentToggle value={leaderboardMode} onChange={(value) => setLeaderboardMode(value as 'individual' | 'team')} options={[{ value: 'individual', label: ui.individual }, { value: 'team', label: ui.team }]} /></div>
                                 <div className="max-h-[305px] overflow-y-auto no-scrollbar">
-                                    {(analytics.agentLeaderboard || []).map((agent: any, idx: number) => (
+                                    {(leaderboardMode === 'team' ? (overview.teamLeaderboard || []) : (analytics.agentLeaderboard || [])).map((agent: any, idx: number) => (
                                         <div key={agent.id ?? agent.name ?? idx} className="dashboard-ranking">
                                             <div className="flex min-w-0 items-center gap-2.5">
                                                 <AgentAvatar name={agent.name} avatar={agent.avatar} />
                                                 <div className="min-w-0">
-                                                    <div className="rank-name truncate">{agent.name}</div>
+                                                     <div className="flex items-center gap-1.5"><div className="rank-name truncate">{agent.name}</div>{agent.overloaded && <span className="rounded-full bg-[var(--ui-danger)]/10 px-1.5 py-0.5 text-xs font-bold text-[var(--ui-danger)]">{ui.overloaded}</span>}</div>
                                                     <div className="rank-detail">{agent.deals} {t('dash.deals_closed')}</div>
                                                 </div>
                                             </div>
@@ -692,10 +908,16 @@ export const Dashboard: React.FC = () => {
                                             <div className="rank-metric"><span>{t('dash.sla_score')}</span>{agent.slaScore}/100</div>
                                         </div>
                                     ))}
-                                    {(!analytics.agentLeaderboard || analytics.agentLeaderboard.length === 0) && <div className="py-10"><EmptyState message={t('dash.leaderboard_empty')} /></div>}
+                                    {(!(leaderboardMode === 'team' ? overview.teamLeaderboard : analytics.agentLeaderboard)?.length) && <div className="py-10"><EmptyState message={t('dash.leaderboard_empty')} /></div>}
                                 </div>
                             </section>
                         </div>
+                    </section>
+
+                    <section className="grid grid-cols-1 gap-6 xl:grid-cols-3" aria-label={language === 'vn' ? 'Tóm tắt vận hành' : 'Operations summary'}>
+                        <AiAdvisorWidget analytics={overview} language={language} />
+                        <InventoryOverviewWidget analytics={overview} language={language} />
+                        <InboxOverviewWidget analytics={overview} language={language} />
                     </section>
 
                     {(['SUPER_ADMIN', 'ADMIN', 'TEAM_LEAD'].includes(analytics.user?.role ?? '')) && (
@@ -704,6 +926,18 @@ export const Dashboard: React.FC = () => {
                             <RealtimeTrafficWidget t={t} theme={chartTheme} />
                         </div>
                     )}
+                    <section className="dashboard-panel" aria-label={ui.demand}>
+                        <div className="dashboard-panel-head"><h2>{ui.demand}</h2><span className="text-xs text-[var(--text-tertiary)]">{overview.demandAreas?.length ?? 0}</span></div>
+                        <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-4">
+                            {(overview.demandAreas || []).slice(0, 8).map((area: any, index: number) => (
+                                <div key={area.name ?? index} className="rounded-xl border border-[var(--glass-border)] bg-[var(--glass-surface)] px-3 py-3">
+                                    <div className="flex items-center justify-between gap-2 text-xs"><span className="truncate text-[var(--text-secondary)]">{area.name}</span><strong className="font-mono text-[var(--sgs-primary)]">{area.score ?? area.count ?? 0}</strong></div>
+                                    <div className="mt-2 h-1.5 rounded-full bg-[var(--glass-surface-hover)]"><div className="h-full rounded-full bg-[var(--sgs-accent)]" style={{ width: `${Math.min(100, Number(area.score ?? area.count ?? 0))}%` }} /></div>
+                                </div>
+                            ))}
+                        </div>
+                        {!overview.demandAreas?.length && <div className="py-3 text-xs text-[var(--text-tertiary)]">{language === 'vn' ? 'Chưa có dữ liệu nhu cầu theo khu vực' : 'No area demand data yet'}</div>}
+                    </section>
                 </div>
             </div>
         </div>

@@ -32,6 +32,15 @@ export interface AnalyticsSummary {
   // Scope context for the frontend to display correctly
   scopeLabel: 'personal' | 'company'; // stable i18n key — frontend translates
   commissionRate: number;              // actual rate from env (e.g. 0.02 = 2%)
+  targets?: Record<string, { monthly_target: number; monthly_actual: number; quarter_target: number; quarter_actual: number }>;
+  dashboardAlerts?: Array<{ severity: 'high' | 'medium' | 'low'; label: string; count: number }>;
+  workQueue?: { contracts: number; approvals: number; followups: number };
+  inventoryOverview?: { active: number; sold: number; rented: number; expired: number; pendingApproval: number; topListings: any[] };
+  inboxOverview?: { zalo: number; facebook: number; webChat: number; avgResponseMinutes: number | null };
+  aiAdvisor?: { count: number; anomalies: number; suggestions: any[] };
+  projectBreakdown?: any[];
+  demandAreas?: any[];
+  teamLeaderboard?: any[];
 }
 
 const GRADE_PROBABILITY: Record<string, number> = {
@@ -651,6 +660,60 @@ export class AnalyticsRepository extends BaseRepository {
         };
       });
 
+      // Small dashboard-only aggregates. Keep these queries independent from the
+      // main analytics calculations so an empty operational table never requires
+      // fabricated UI values.
+      const [operationalResult, inventoryOverviewResult, projectBreakdownResult, demandAreasResult, inboxResult] = await Promise.all([
+        client.query(`
+          SELECT
+            (SELECT COUNT(*)::int FROM contracts WHERE ${TENANT_FILTER} AND status NOT IN ('SIGNED','COMPLETED','CANCELLED')) AS pending_contracts,
+            (SELECT COUNT(*)::int FROM approval_requests WHERE ${TENANT_FILTER} AND status = 'PENDING') AS pending_approvals,
+            (SELECT COUNT(*)::int FROM leads WHERE ${TENANT_FILTER} AND stage NOT IN ('WON','LOST') AND updated_at < NOW() - INTERVAL '24 hours') AS followups
+        `),
+        client.query(`
+          SELECT
+            COUNT(*) FILTER (WHERE status IN ('AVAILABLE','OPENING','BOOKING'))::int AS active,
+            COUNT(*) FILTER (WHERE status = 'SOLD')::int AS sold,
+            COUNT(*) FILTER (WHERE status = 'RENTED')::int AS rented,
+            COUNT(*) FILTER (WHERE status IN ('INACTIVE','EXPIRED'))::int AS expired,
+            COUNT(*) FILTER (WHERE status = 'PENDING_APPROVAL')::int AS pending_approval
+          FROM listings WHERE ${TENANT_FILTER}
+        `),
+        client.query(`
+          SELECT COALESCE(project_code, 'Chưa phân loại') AS name, COUNT(*)::int AS count
+          FROM listings WHERE ${TENANT_FILTER}
+          GROUP BY COALESCE(project_code, 'Chưa phân loại')
+          ORDER BY count DESC LIMIT 8
+        `),
+        client.query(`
+          SELECT COALESCE(NULLIF(attributes->>'region',''), NULLIF(attributes->>'city',''), 'Chưa xác định') AS name,
+                 COUNT(*)::int AS count
+          FROM leads WHERE ${TENANT_FILTER}
+          GROUP BY 1 ORDER BY count DESC LIMIT 8
+        `),
+        client.query(`
+          SELECT
+            COUNT(*) FILTER (WHERE direction = 'INBOUND' AND status != 'READ' AND UPPER(COALESCE(channel,'')) = 'ZALO')::int AS zalo,
+            COUNT(*) FILTER (WHERE direction = 'INBOUND' AND status != 'READ' AND UPPER(COALESCE(channel,'')) IN ('FACEBOOK','MESSENGER'))::int AS facebook,
+            COUNT(*) FILTER (WHERE direction = 'INBOUND' AND status != 'READ' AND UPPER(COALESCE(channel,'')) NOT IN ('ZALO','FACEBOOK','MESSENGER'))::int AS web_chat,
+            ROUND(AVG(EXTRACT(EPOCH FROM (outbound.timestamp - inbound.timestamp)) / 60))::int AS avg_response_minutes
+          FROM interactions inbound
+          LEFT JOIN LATERAL (
+            SELECT timestamp FROM interactions outbound
+            WHERE outbound.tenant_id = inbound.tenant_id
+              AND outbound.lead_id = inbound.lead_id
+              AND outbound.direction = 'OUTBOUND'
+              AND outbound.timestamp > inbound.timestamp
+            ORDER BY outbound.timestamp ASC LIMIT 1
+          ) outbound ON true
+          WHERE inbound.${TENANT_FILTER}
+        `),
+      ]);
+      const operational = operationalResult.rows[0] || {};
+      const inventoryOverview = inventoryOverviewResult.rows[0] || {};
+      const inboxOverview = inboxResult.rows[0] || {};
+      const aiSuggestions = recentActivities.filter((activity: any) => activity.type === 'AI').slice(0, 3);
+
       return {
         totalLeads: leadStats.total,
         newLeads: leadStats.new_leads,
@@ -699,6 +762,34 @@ export class AnalyticsRepository extends BaseRepository {
         recentActivities,
         marketPulse,
         agentLeaderboard,
+        targets: {
+          revenue: { monthly_target: 0, monthly_actual: revenue, quarter_target: 0, quarter_actual: revenue },
+          pipeline: { monthly_target: 0, monthly_actual: pipelineValue, quarter_target: 0, quarter_actual: pipelineValue },
+          salesVelocity: { monthly_target: 0, monthly_actual: salesVelocity, quarter_target: 0, quarter_actual: salesVelocity },
+        },
+        workQueue: {
+          contracts: Number(operational.pending_contracts || 0),
+          approvals: Number(operational.pending_approvals || 0),
+          followups: Number(operational.followups || 0),
+        },
+        inventoryOverview: {
+          active: Number(inventoryOverview.active || 0),
+          sold: Number(inventoryOverview.sold || 0),
+          rented: Number(inventoryOverview.rented || 0),
+          expired: Number(inventoryOverview.expired || 0),
+          pendingApproval: Number(inventoryOverview.pending_approval || 0),
+          topListings: [],
+        },
+        inboxOverview: {
+          zalo: Number(inboxOverview.zalo || 0),
+          facebook: Number(inboxOverview.facebook || 0),
+          webChat: Number(inboxOverview.web_chat || 0),
+          avgResponseMinutes: inboxOverview.avg_response_minutes == null ? null : Number(inboxOverview.avg_response_minutes),
+        },
+        aiAdvisor: { count: aiSuggestions.length, anomalies: 0, suggestions: aiSuggestions },
+        projectBreakdown: projectBreakdownResult.rows,
+        demandAreas: demandAreasResult.rows,
+        teamLeaderboard: [],
         scopeLabel,
         commissionRate,
       };
