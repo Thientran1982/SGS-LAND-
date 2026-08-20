@@ -21,7 +21,10 @@ const ibmPlexMono = IBM_Plex_Mono({
   weight: ["400", "500", "600"],
 });
 const fraunces = Fraunces({
-  subsets: ["latin"],
+  // Fraunces needs the Vietnamese subset here. Without it, accented
+  // characters silently fall back one glyph at a time, which makes headings
+  // look like they have broken spacing or detached diacritics.
+  subsets: ["latin", "vietnamese"],
   variable: "--font-fraunces",
   display: "swap",
   weight: ["500", "600", "700"],
