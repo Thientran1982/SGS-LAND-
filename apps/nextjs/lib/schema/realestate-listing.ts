@@ -43,7 +43,7 @@ export interface RealEstateListingSchema {
     latitude: number;
     longitude: number;
   };
-  offers: {
+  offers?: {
     "@type": "AggregateOffer";
     priceCurrency: "VND";
     lowPrice?: number;
@@ -114,14 +114,16 @@ export function getRealEstateListingSchema(project: RealEstateProject): RealEsta
         longitude: (project.geo as any).lng ?? project.geo.longitude,
       },
     }),
-    offers: {
-      "@type": "AggregateOffer",
-      priceCurrency: "VND",
-      ...(project.price_low !== undefined && { lowPrice: project.price_low }),
-      ...(project.price_high !== undefined && { highPrice: project.price_high }),
-      ...(project.total_units !== undefined && { offerCount: project.total_units }),
-      availability: "https://schema.org/InStock",
-    },
+    ...((project.price_low !== undefined || project.price_high !== undefined || project.total_units !== undefined) && {
+      offers: {
+        "@type": "AggregateOffer",
+        priceCurrency: "VND",
+        ...(project.price_low !== undefined && { lowPrice: project.price_low }),
+        ...(project.price_high !== undefined && { highPrice: project.price_high }),
+        ...(project.total_units !== undefined && { offerCount: project.total_units }),
+        availability: "https://schema.org/InStock",
+      },
+    }),
     ...(project.area_ha !== undefined && {
       floorSize: {
         "@type": "QuantitativeValue",

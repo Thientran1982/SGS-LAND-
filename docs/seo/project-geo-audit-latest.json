@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-08-20T21:33:20.730Z",
+  "generatedAt": "2026-08-21T02:48:29.321Z",
   "base": "http://localhost:5000",
   "methodology": "Rendered HTML audit for project sitemap URLs: status, metadata, H1, direct answer, visible FAQ, JSON-LD and provenance caveat.",
   "total": 17,
@@ -15,7 +15,7 @@
       "description": "Aqua City Novaland Đồng Nai: thông tin tham khảo về vị trí, phân khu, sản phẩm, giá, pháp lý và tiến độ. Xác minh hồ sơ gốc trước khi giao dịch.",
       "canonical": "https://sgsland.vn/du-an/aqua-city",
       "h1": [
-        "Aqua City Novaland Đồng Nai"
+        "Thông tin dự án Aqua City Novaland"
       ],
       "schemaTypes": [
         "WebSite",

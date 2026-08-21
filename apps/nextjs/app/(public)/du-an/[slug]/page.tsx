@@ -773,7 +773,7 @@ export default async function ProjectPage({
   const announcementSchema = getSpecialAnnouncementSchema(slug);
   // Serialised JSON for noscript layer
   const aptMeta = APARTMENT_COMPLEX_META[slug];
-  const apartmentSchema = aptMeta ? getApartmentComplexSchema({
+  const apartmentSchema = aptMeta && slug !== "aqua-city" ? getApartmentComplexSchema({
     name: projectData.name,
     url: `${SITE_URL}/du-an/${slug}`,
     description: projectData.description,
@@ -909,7 +909,12 @@ export default async function ProjectPage({
         </section>
       </article>
       {/* ── Interactive client component ── */}
-      <ProjectDetailPage project={projectData} slug={slug} config={resolveProjectConfig(slug)} />
+      <ProjectDetailPage
+        project={projectData}
+        slug={slug}
+        config={resolveProjectConfig(slug)}
+        landingProject={LANDING_PROJECTS[slug] ?? null}
+      />
     </>
   );
 }
