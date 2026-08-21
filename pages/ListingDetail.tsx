@@ -268,43 +268,43 @@ const FinancialSuite = memo(({ price, formatCurrency, t }: { price: number, form
                             {/* Card 1: Dòng tiền cho thuê */}
                             <div className="bg-sgs-champagne rounded-2xl p-4 border border-sgs-verified/20">
                                 <div className="text-xs text-sgs-verified font-bold uppercase tracking-wider mb-1">{t('calc.gross_yield')}</div>
-                                <div className="text-2xl font-black text-sgs-verified">{grossYield.toFixed(2)}%<span className="text-sm font-medium text-sgs-verified ml-1">{t('calc.per_year')}</span></div>
+                                <div className="text-xl font-black text-sgs-verified break-words">{grossYield.toFixed(2)}%<span className="text-xs font-medium text-sgs-verified ml-1">{t('calc.per_year')}</span></div>
                                 <div className="mt-2 space-y-1.5 text-xs">
-                                    <div className="flex justify-between items-center">
-                                        <span className="text-sgs-verified">{t('calc.annual_cashflow')}</span>
-                                        <span className="font-bold text-sgs-verified">{formatCurrency(annualRevenue)}</span>
+                                    <div className="flex justify-between items-center gap-2">
+                                        <span className="text-sgs-verified min-w-0 truncate">{t('calc.annual_cashflow')}</span>
+                                        <span className="font-bold text-sgs-verified break-all text-right">{formatCurrency(annualRevenue)}</span>
                                     </div>
-                                    <div className="flex justify-between items-center">
-                                        <span className="text-sgs-verified">{t('calc.payback_period')}</span>
-                                        <span className="font-bold text-sgs-verified">{paybackYears > 0 ? paybackYears.toFixed(1) : '---'}{t('calc.years')}</span>
+                                    <div className="flex justify-between items-center gap-2">
+                                        <span className="text-sgs-verified min-w-0 truncate">{t('calc.payback_period')}</span>
+                                        <span className="font-bold text-sgs-verified break-all text-right">{paybackYears > 0 ? paybackYears.toFixed(1) : '---'}{t('calc.years')}</span>
                                     </div>
                                 </div>
                             </div>
                             {/* Card 2: Tăng giá vốn */}
                             <div className="bg-sgs-champagne rounded-2xl p-4 border border-sgs-border">
                                 <div className="text-xs text-sgs-primary font-bold uppercase tracking-wider mb-1">{t('calc.projected_price_label')}</div>
-                                <div className="text-2xl font-black text-sgs-primary break-words">{price > 0 ? formatCurrency(projectedPrice) : '---'}</div>
+                                <div className="text-xl font-black text-sgs-primary break-all">{price > 0 ? formatCurrency(projectedPrice) : '---'}</div>
                                 <div className="mt-2 space-y-1.5 text-xs">
-                                    <div className="flex justify-between items-center">
-                                        <span className="text-sgs-primary">{t('calc.capital_gain')}</span>
-                                        <span className="font-bold text-sgs-primary">+{formatCurrency(capitalGain)}</span>
+                                    <div className="flex justify-between items-center gap-2">
+                                        <span className="text-sgs-primary min-w-0 truncate">{t('calc.capital_gain')}</span>
+                                        <span className="font-bold text-sgs-primary break-all text-right">+{formatCurrency(capitalGain)}</span>
                                     </div>
-                                    <div className="flex justify-between items-center">
-                                        <span className="text-sgs-primary">{t('calc.total_rental_income')} ({holdingYears}{t('calc.years')})</span>
-                                        <span className="font-bold text-sgs-primary">+{formatCurrency(totalRentalIncome)}</span>
+                                    <div className="flex justify-between items-center gap-2">
+                                        <span className="text-sgs-primary min-w-0 truncate">{t('calc.total_rental_income')} ({holdingYears}{t('calc.years')})</span>
+                                        <span className="font-bold text-sgs-primary break-all text-right">+{formatCurrency(totalRentalIncome)}</span>
                                     </div>
                                 </div>
                             </div>
                             {/* Card 3: Tổng lợi nhuận */}
                             <div className="bg-sgs-champagne/60 rounded-2xl p-4 border border-sgs-border">
                                 <div className="text-xs text-sgs-accent-text font-bold uppercase tracking-wider mb-1">{t('calc.total_profit')}</div>
-                                <div className="text-2xl font-black text-sgs-primary break-words">{formatCurrency(totalProfit)}</div>
+                                <div className="text-xl font-black text-sgs-primary break-all">{formatCurrency(totalProfit)}</div>
                                 <div className="mt-2 space-y-1.5 text-xs">
-                                    <div className="flex justify-between items-center">
+                                    <div className="flex justify-between items-center gap-2">
                                         <span className="text-sgs-text-muted">{t('calc.total_roi')}</span>
                                         <span className="font-bold text-sgs-primary">{totalROI.toFixed(1)}%</span>
                                     </div>
-                                    <div className="flex justify-between items-center">
+                                    <div className="flex justify-between items-center gap-2">
                                         <span className="text-sgs-text-muted">{t('calc.annualized_return')}</span>
                                         <span className="font-bold text-sgs-primary">{annualizedReturn.toFixed(2)}%{t('calc.per_year')}</span>
                                     </div>
