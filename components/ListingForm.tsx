@@ -291,7 +291,7 @@ export const ListingForm: React.FC<ListingFormProps> = memo(({ isOpen, onClose, 
                 credentials: 'include',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
-                    model: 'gemini-2.0-flash',
+                    model: 'gemini-3-flash-preview',
                     temperature: 0.55,
                     systemInstruction: `You are a real-estate listing copywriter for SGS LAND. Write the final listing description in ${outputLanguage}. Use only facts present in the input; never invent amenities, distances, legal status, returns, or guarantees. Do not include phone numbers, owner names, commission, or internal information.`,
                     prompt: `Write or improve the real-estate listing description using the following data:\n${JSON.stringify(facts, null, 2)}\n\nRequirements: write 2-4 short, natural paragraphs suitable for a property listing, highlighting only verified facts. Omit empty fields. Return only the description content, without a title, markdown, or explanation. The output language must be ${outputLanguage}.`,
