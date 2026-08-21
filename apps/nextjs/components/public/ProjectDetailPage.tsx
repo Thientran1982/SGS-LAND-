@@ -154,6 +154,11 @@ function RichProjectDetail({ project, config, landing }: { project: ProjectDetai
     ],
   } : null;
   const englishConfig = lang === "en" ? (PROJECT_CONFIG_EN[landing.slug] || areaEnglishConfig) : null;
+  const displayStats = (englishCopy?.stats || landing.stats).map((stat) => ({
+    ...stat,
+    num: translateAreaValue(stat.num),
+    lbl: translateAreaLabel(stat.lbl),
+  }));
   const image = project.images?.[0] || ({
     "manhattan": "/images/projects/masterise-homes.webp",
     "thu-thiem": "/images/projects/the-global-city.webp",
@@ -244,7 +249,7 @@ function RichProjectDetail({ project, config, landing }: { project: ProjectDetai
             </aside>
           </div>
           <div className="mt-7 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
-             {(englishCopy?.stats || landing.stats).map((stat) => <div key={stat.lbl} className="rounded-2xl border p-4" style={surface}><p className="text-lg font-bold" style={{ color: "var(--sgs-accent-text)" }}>{stat.num}</p><p className="mt-1 text-xs leading-5" style={{ color: "var(--text-tertiary)" }}>{stat.lbl}</p></div>)}
+             {displayStats.map((stat) => <div key={stat.lbl} className="rounded-2xl border p-4" style={surface}><p className="text-lg font-bold" style={{ color: "var(--sgs-accent-text)" }}>{stat.num}</p><p className="mt-1 text-xs leading-5" style={{ color: "var(--text-tertiary)" }}>{stat.lbl}</p></div>)}
           </div>
         </section>
 
