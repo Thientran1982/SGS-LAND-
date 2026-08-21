@@ -1689,12 +1689,9 @@ export const ListingDetail: React.FC = () => {
                     {listing.type === PropertyType.PROJECT && (
                         <ProjectUnits projectCode={listing.code} parentLocation={listing.location} parentContactPhone={listing.contactPhone} t={t} formatCurrency={formatCurrency} formatCompactNumber={formatCompactNumber} />
                     )}
-                    {/* Financial Tools & AI Valuation — Plan B */}
+                    {/* AI Valuation — kept in the content column; the loan calculator sits in the sidebar like the public Next.js detail */}
                     {listing.type !== PropertyType.PROJECT && (
                         <div className="flex flex-col gap-8 mt-8">
-                            <div className="min-w-0">
-                                <FinancialSuite price={listing.price} formatCurrency={formatCurrency} t={t} />
-                            </div>
                             {/* ── Valuation Card ─────────────────────────────────── */}
                             <div className="bg-[var(--bg-surface)] rounded-[24px] border border-[var(--glass-border)] shadow-sm overflow-hidden flex flex-col min-w-0">
                                 {/* Header */}
@@ -1978,12 +1975,12 @@ export const ListingDetail: React.FC = () => {
                 </div>
                 {/* Sidebar */}
                 <div className="space-y-6">
-                    <div className="bg-[var(--bg-surface)] p-6 rounded-[32px] border border-[var(--glass-border)] shadow-xl sticky top-24">
-                        <div className="mb-6">
-                            <div className="text-sm text-[var(--text-tertiary)] font-bold uppercase tracking-wider mb-1">
+                    <div className="bg-[var(--bg-surface)] p-5 rounded-2xl border border-[var(--glass-border)] shadow-sm sticky top-24">
+                        <div className="mb-4">
+                            <div className="text-xs text-[var(--text-tertiary)] font-bold uppercase tracking-wider mb-1">
                                 {listing.type === PropertyType.PROJECT ? t('inventory.min_price') : t('inventory.label_price')}
                             </div>
-                            <div className="text-3xl font-black text-[var(--text-primary)] tracking-tight leading-tight">
+                            <div className="text-2xl font-black text-[var(--text-primary)] tracking-tight leading-tight">
                                 {formatCompactNumber(listing.price)}
                                 <span className="text-lg font-bold text-[var(--text-tertiary)] ml-1">₫</span>
                             </div>
@@ -1995,15 +1992,15 @@ export const ListingDetail: React.FC = () => {
                             )}
                         </div>
                         {/* Hidden on mobile — replaced by the fixed bottom CTA bar (lg:hidden) */}
-                        <div className="hidden lg:block space-y-3">
-                        <button onClick={() => setBookingOpen(true)} className="w-full py-4 bg-sgs-primary-deep text-white font-bold rounded-xl shadow-lg hover:bg-slate-800 transition-all active:scale-95 flex items-center justify-center gap-2">
+                        <div className="hidden lg:grid grid-cols-2 gap-2">
+                        <button onClick={() => setBookingOpen(true)} className="w-full py-2.5 bg-sgs-primary-deep text-white font-bold rounded-xl shadow-lg hover:bg-slate-800 transition-all active:scale-95 flex items-center justify-center gap-2 text-xs">
                             {ICONS.CALENDAR} {t('detail.book_viewing')}
                         </button>
                         {listing.contactPhone ? (
                             <a
                                 href={`tel:${listing.contactPhone}`}
                                 onClick={handleContact}
-                                className="w-full py-4 border rounded-xl font-bold transition-all flex items-center justify-center gap-2 bg-sgs-champagne border-sgs-verified/30 text-sgs-verified hover:bg-sgs-champagne active:scale-95"
+                                className="w-full py-2.5 border rounded-xl font-bold transition-all flex items-center justify-center gap-2 bg-[var(--bg-surface)] border-[var(--glass-border)] text-[var(--text-primary)] hover:bg-[var(--glass-surface)] active:scale-95 text-xs"
                             >
                                 {ICONS.PHONE}
                                 {showPhone
@@ -2012,12 +2009,15 @@ export const ListingDetail: React.FC = () => {
                                 }
                             </a>
                         ) : (
-                            <div className="w-full py-4 border rounded-xl font-bold transition-all flex items-center justify-center gap-2 bg-[var(--bg-surface)] border-[var(--glass-border)] text-[var(--text-secondary)] cursor-not-allowed opacity-60">
+                            <div className="w-full py-2.5 border rounded-xl font-bold transition-all flex items-center justify-center gap-2 bg-[var(--bg-surface)] border-[var(--glass-border)] text-[var(--text-secondary)] cursor-not-allowed opacity-60 text-xs">
                                 {ICONS.PHONE} {t('common.contact_on_site')}
                             </div>
                         )}
                         </div>
                     </div>
+                    {listing.type !== PropertyType.PROJECT && (
+                        <FinancialSuite price={listing.price} formatCurrency={formatCurrency} t={t} />
+                    )}
                 </div>
             </div>
             {/* Similar Listings */}
