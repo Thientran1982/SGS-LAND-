@@ -77,6 +77,9 @@ function RichProjectDetail({ project, config, landing }: { project: ProjectDetai
   const englishCopy = lang === "en" ? PROJECT_DETAIL_EN[landing.slug] : null;
   const englishConfig = lang === "en" ? PROJECT_CONFIG_EN[landing.slug] : null;
   const image = project.images?.[0] || ({
+    "manhattan": "/images/projects/masterise-homes.webp",
+    "thu-thiem": "/images/projects/the-global-city.webp",
+    "son-kim-land": "/images/projects/masterise-homes.webp",
     "vinhomes-grand-park": "/images/projects/vinhomes-grand-park.webp",
     "vinhomes-central-park": "/images/projects/vinhomes-grand-park.webp",
     "diamond-sky-van-phuc-city": "/images/projects/diamond-sky-van-phuc-city.jpg",
