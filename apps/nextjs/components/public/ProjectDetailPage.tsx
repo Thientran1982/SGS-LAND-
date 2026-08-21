@@ -51,6 +51,39 @@ const surface = {
   borderColor: "var(--border-default)",
 };
 
+const EN_DETAIL_COPY: Record<string, { desc: string; meta: string; location: string }> = {
+  "aqua-city": {
+    desc: "Aqua City Novaland is a reference overview of the township in Long Hung, Bien Hoa, Dong Nai, covering location, products, reference pricing and verification notes.",
+    meta: "Recorded developer: Novaland · Long Hung, Bien Hoa, Dong Nai · Reference information",
+    location: "Aqua City is located in Long Hung, Bien Hoa, Dong Nai. Verify project boundaries and travel times by phase, route and date.",
+  },
+  "the-global-city": {
+    desc: "The Global City is a 117.4-hectare mixed-use township developed by Masterise Homes in Binh Trung Ward, Thu Duc City. This page summarizes reference pricing, legal status and progress.",
+    meta: "Developer: Masterise Homes · 117.4 ha · Binh Trung Ward, Thu Duc City",
+    location: "The Global City is located on Do Xuan Hop, Song Hanh and Lien Phuong roads in Binh Trung Ward, Thu Duc City. Travel times and boundaries should be checked by phase.",
+  },
+  "izumi-city": {
+    desc: "Izumi City is a 170-hectare riverside township in Long Hung, Bien Hoa, developed by Nam Long and Hankyu Hanshin Properties. Pricing, legal status and progress are reference information and require verification.",
+    meta: "Developers: Nam Long and Hankyu Hanshin · 170 ha · Long Hung, Bien Hoa, Dong Nai",
+    location: "Izumi City is located at the Huong Lo 2–Nam Cao intersection in Long Hung, Bien Hoa, Dong Nai, near major regional transport routes.",
+  },
+  "vinhomes-grand-park": {
+    desc: "Vinhomes Grand Park is a 271-hectare township developed by Vingroup in Thu Duc City, with a 36-hectare central park. Pricing and legal information below are reference information.",
+    meta: "Developer: Vingroup/Vinhomes · 271 ha · Tang Nhon Phu and Long Binh, Ho Chi Minh City",
+    location: "Vinhomes Grand Park is on Nguyen Xien Street in Tang Nhon Phu and Long Binh. Verify phase-specific legal status, handover and travel times.",
+  },
+  "vinhomes-central-park": {
+    desc: "Vinhomes Central Park is a completed riverside township near Landmark 81 in Binh Thanh, Ho Chi Minh City. The current market is primarily secondary sales and rentals.",
+    meta: "Developer: Vingroup/Vinhomes · approx. 43.9 ha · Nguyen Huu Canh Street, Binh Thanh",
+    location: "Vinhomes Central Park is on Nguyen Huu Canh Street beside the Saigon River and Landmark 81, about 3 km from District 1.",
+  },
+  "diamond-sky-van-phuc-city": {
+    desc: "Diamond Sky is a high-rise apartment phase within Van Phuc City, a 198-hectare riverside township in Hiep Binh Phuoc, Thu Duc City. Pricing, legal status and handover require phase-specific verification.",
+    meta: "Developer: Van Phuc Group · within 198-ha Van Phuc City · Hiep Binh Phuoc, Thu Duc City",
+    location: "Diamond Sky is within Van Phuc City in Hiep Binh Phuoc, Thu Duc City, near National Highway 13, Binh Loi Bridge and Pham Van Dong Street.",
+  },
+};
+
 function SectionHeading({ eyebrow, title, intro }: { eyebrow: string; title: string; intro?: string }) {
   return (
     <div className="mb-6 max-w-3xl">
@@ -72,6 +105,7 @@ function Tag({ children, tone = "neutral" }: { children: React.ReactNode; tone?:
 
 function RichProjectDetail({ project, config, landing }: { project: ProjectDetail; config?: ProjectConfig | null; landing: LandingProject }) {
   const lang = useLang();
+  const englishCopy = EN_DETAIL_COPY[landing.slug];
   const image = project.images?.[0] || ({
     "vinhomes-grand-park": "/images/projects/vinhomes-grand-park.webp",
     "vinhomes-central-park": "/images/projects/vinhomes-grand-park.webp",
@@ -109,9 +143,9 @@ function RichProjectDetail({ project, config, landing }: { project: ProjectDetai
             <div className="flex flex-col justify-center p-6 sm:p-9">
               <p className="text-xs font-bold uppercase tracking-[.16em]" style={{ color: "var(--sgs-accent-text)" }}>{landing.eyebrow}</p>
               <h1 className="mt-3 text-3xl font-bold tracking-[-.045em] sm:text-4xl" style={{ color: "var(--text-primary)" }}>{tt(lang, "Thông tin dự án", "Project information")} {landing.titleShort}</h1>
-              <p className="mt-4 flex items-start gap-2 text-sm leading-6" style={{ color: "var(--text-secondary)" }}><MapPin className="mt-1 h-4 w-4 shrink-0" style={{ color: "var(--sgs-accent-text)" }} />{landing.heroMeta}</p>
+              <p className="mt-4 flex items-start gap-2 text-sm leading-6" style={{ color: "var(--text-secondary)" }}><MapPin className="mt-1 h-4 w-4 shrink-0" style={{ color: "var(--sgs-accent-text)" }} />{lang === "en" && englishCopy ? englishCopy.meta : landing.heroMeta}</p>
               <p className="answer-box mt-5 rounded-2xl border-l-4 px-4 py-4 text-sm leading-6" role="note" style={{ borderColor: "var(--sgs-accent)", background: "var(--ui-surface-subtle)", color: "var(--text-secondary)" }}>
-                 {landing.desc} {tt(lang, "Trang này tổng hợp thông tin tham khảo về vị trí, sản phẩm, giá và hồ sơ; giá, pháp lý, tiến độ và tiện ích cần được xác minh theo đúng sản phẩm trước giao dịch.", "This page summarizes reference information about location, products, pricing and documents; pricing, legal status, progress and amenities must be verified for the specific property before a transaction.")}
+                 {lang === "en" && englishCopy ? englishCopy.desc : landing.desc} {tt(lang, "Trang này tổng hợp thông tin tham khảo về vị trí, sản phẩm, giá và hồ sơ; giá, pháp lý, tiến độ và tiện ích cần được xác minh theo đúng sản phẩm trước giao dịch.", "This page summarizes reference information about location, products, pricing and documents; pricing, legal status, progress and amenities must be verified for the specific property before a transaction.")}
               </p>
               <div className="mt-6 flex flex-wrap gap-3">
                 <a href="tel:+84971132378" className="inline-flex items-center gap-2 rounded-xl px-4 py-3 text-sm font-bold text-white" style={{ background: "var(--ui-brand)" }}><Phone className="h-4 w-4" /> {tt(lang, "Liên hệ hỏi thông tin", "Contact for information")}</a>
@@ -156,11 +190,11 @@ function RichProjectDetail({ project, config, landing }: { project: ProjectDetai
         </section>
 
         <section id="vi-tri" className="scroll-mt-20 border-t py-12 sm:py-16" style={{ borderColor: "var(--border-default)" }}>
-          <SectionHeading eyebrow={tt(lang, "03 · Vị trí", "03 · Location")} title={`${landing.titleShort} ${tt(lang, "ở đâu?", "— where is it?")}`} intro={landing.locationIntro} />
+          <SectionHeading eyebrow={tt(lang, "03 · Vị trí", "03 · Location")} title={`${landing.titleShort} ${tt(lang, "ở đâu?", "— where is it?")}`} intro={lang === "en" && englishCopy ? englishCopy.location : landing.locationIntro} />
           <div className="grid gap-6 lg:grid-cols-[.9fr_1.1fr]">
             <div className="rounded-2xl border p-6" style={{ ...surface, background: "var(--ui-surface-subtle)" }}>
               <div className="flex items-center gap-2"><MapPin className="h-5 w-5" style={{ color: "var(--sgs-accent-text)" }} /><h3 className="font-bold" style={{ color: "var(--text-primary)" }}>{tt(lang, "Địa điểm tham khảo", "Reference location")}</h3></div>
-              <p className="mt-4 text-sm leading-7" style={{ color: "var(--text-secondary)" }}>{landing.heroMeta}. {tt(lang, "Ranh dự án và thời gian di chuyển cần đối chiếu theo phân khu, tuyến đường và thời điểm.", "Project boundaries and travel times should be checked by phase, route and date.")}</p>
+              <p className="mt-4 text-sm leading-7" style={{ color: "var(--text-secondary)" }}>{lang === "en" && englishCopy ? englishCopy.location : landing.heroMeta}. {tt(lang, "Ranh dự án và thời gian di chuyển cần đối chiếu theo phân khu, tuyến đường và thời điểm.", "Project boundaries and travel times should be checked by phase, route and date.")}</p>
               <div className="mt-5 flex flex-wrap gap-2"><Tag>{tt(lang, "Đối chiếu bản đồ thực tế", "Check against the actual map")}</Tag></div>
             </div>
             <div className="overflow-hidden rounded-2xl border" style={surface}><iframe title={`Bản đồ vị trí ${landing.titleShort}`} src={landing.googleMapsEmbedSrc} className="h-[300px] w-full border-0 sm:h-[360px]" loading="lazy" referrerPolicy="no-referrer-when-downgrade" /><p className="px-4 py-3 text-xs" style={{ color: "var(--text-tertiary)" }}>Bản đồ chỉ mang tính tham khảo vị trí, không thay thế hồ sơ ranh giới dự án.</p></div>
