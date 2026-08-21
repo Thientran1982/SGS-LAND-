@@ -144,7 +144,8 @@ function toThumbnailUrl(src: string, width = 800): string {
 
 /* Anonymous visitors have no favourites API yet - persist locally so the heart
    is a real control instead of a dead icon inside the card link. */
-const FAV_KEY = "sgs:favorites";
+// Keep the same key as the listing detail page and the Vite public flow.
+const FAV_KEY = "sgs_favorites";
 const readFavs = (): string[] => {
   try {
     const v = JSON.parse(window.localStorage.getItem(FAV_KEY) || "[]");
@@ -205,7 +206,7 @@ function ActiveChip({ label, onRemove }) {
 }
 
 /* ── Listing card ─────────────────────────────────────────── */
-function ListingCard({ listing, list, eager, facets }: { listing: any; list?: boolean; eager?: boolean; facets?: { priceBenchmarks: Record<string, { avgPricePerM2: number; sampleSize: number }> } | null }) {
+export function PublicListingCard({ listing, list, eager, facets }: { listing: any; list?: boolean; eager?: boolean; facets?: { priceBenchmarks: Record<string, { avgPricePerM2: number; sampleSize: number }> } | null }) {
   const lang = useLang();
   const slug = `${(listing.title || "bds").toLowerCase().replace(/\s+/g, "-").replace(/[^a-z0-9-]/g, "").slice(0, 40)}-${listing.id}`;
   const isRent = String(listing.transaction || "").toUpperCase() === "RENT";
@@ -730,7 +731,7 @@ export function MarketplacePage({ initialListings, totalCount, totalPages, searc
               <div className="flex flex-col gap-3" style={{ maxHeight: "70vh", overflowY: "auto", WebkitOverflowScrolling: "touch", paddingRight: "6px", scrollbarWidth: "thin" }}>
                 {items.map((l: any) => (
                   <div key={l.id} style={{ flexShrink: 0 }}>
-                    <ListingCard listing={l} />
+                    <PublicListingCard listing={l} />
                   </div>
                 ))}
               </div>
@@ -745,11 +746,11 @@ export function MarketplacePage({ initialListings, totalCount, totalPages, searc
           <div className="lg:flex-1 lg:min-w-0 lg:max-h-[calc(100vh-120px)] lg:overflow-y-auto lg:pr-1">
             {view === "LIST" ? (
               <div className="flex flex-col gap-4">
-                {initialListings.map((l: any, i: number) => <ListingCard key={l.id} listing={l} facets={facets} list eager={i < 2} />)}
+                {initialListings.map((l: any, i: number) => <PublicListingCard key={l.id} listing={l} facets={facets} list eager={i < 2} />)}
               </div>
             ) : (
               <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-3 sm:gap-5">
-                {initialListings.map((l: any, i: number) => <ListingCard key={l.id} listing={l} facets={facets} eager={i < 4} />)}
+                {initialListings.map((l: any, i: number) => <PublicListingCard key={l.id} listing={l} facets={facets} eager={i < 4} />)}
               </div>
             )}
             {totalPages > 1 && (

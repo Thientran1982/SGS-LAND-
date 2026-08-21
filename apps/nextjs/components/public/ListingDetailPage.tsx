@@ -6,6 +6,7 @@ import Link from "next/link";
 import dynamic from "next/dynamic";
 import { useLang } from "@/components/shared/useLang";
 import { tt } from "@/lib/i18n";
+import { PublicListingCard } from "./MarketplacePage";
 type L = "vi" | "en";
 import { MapPin, Bed, Bath, Square, Phone, Share2, Heart, ArrowLeft, CheckCircle, Calendar, Landmark, Eye, ChevronDown } from "lucide-react";
 interface Listing {
@@ -17,6 +18,7 @@ interface Listing {
   bedrooms?: number;
   bathrooms?: number;
   location?: string;
+  contactPhone?: string;
   coordinates?: { lat?: number; lng?: number };
   projectCode?: string;
   type?: string;
@@ -403,11 +405,14 @@ export function ListingDetailPage({ listing, similarListings }: Props) {
                 style={{ background: "var(--sgs-primary, #1B3A5C)" }}>
                 <Calendar className="h-4 w-4 shrink-0" /> <span className="truncate">{tt(lang, "Đặt lịch", "Book viewing")}</span>
               </button>
-              <a href="tel:+84971132378"
+              {listing.contactPhone ? <a href={`tel:${listing.contactPhone}`}
                 className="flex min-w-0 flex-1 items-center justify-center gap-1.5 rounded-xl border px-2 py-3 text-xs font-bold transition-transform hover:-translate-y-0.5 sm:text-sm"
                 style={{ borderColor: "var(--sgs-primary, #1B3A5C)", color: "var(--sgs-primary, #1B3A5C)", background: "transparent" }}>
                 <Phone className="h-4 w-4 shrink-0" /> <span className="truncate">{tt(lang, "Gọi điện", "Call")}</span>
-              </a>
+              </a> : <div className="flex min-w-0 flex-1 items-center justify-center gap-1.5 rounded-xl border px-2 py-3 text-xs font-bold opacity-60 sm:text-sm"
+                style={{ borderColor: "var(--border-default)", color: "var(--text-tertiary)" }}>
+                <Phone className="h-4 w-4 shrink-0" /> <span className="truncate">{tt(lang, "Chưa có số", "No phone")}</span>
+              </div>}
             </div>
             <p className="text-xs text-center mt-4" style={{ color: "var(--text-muted)" }}>
               {tt(lang, "SGS LAND — Đại lý uỷ quyền chính thức", "SGS LAND — Officially authorised agent")}
@@ -483,59 +488,9 @@ export function ListingDetailPage({ listing, similarListings }: Props) {
         <section className="mt-16">
           <h2 className="text-xl font-bold mb-6" style={{ color: "var(--text-primary)" }}>{tt(lang, "Bất Động Sản Phù Hợp Khác", "Other Matching Properties")}</h2>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
-            {similarListings.slice(0, 3).map((l) => {
-              const slug = `${(l.title || "bds").toLowerCase().replace(/\s+/g, "-").replace(/[^a-z0-9-]/g, "").slice(0, 40)}-${l.id}`;
-              const img = l.images && l.images[0];
-              const rent = String(l.transaction).toUpperCase() === "RENT";
-              const ppm = l.area ? (l.price / l.area / 1e6).toFixed(1) + tt(lang, " Triệu/m²", "M/m²") : "";
-              return (
-                <Link key={l.id} href={lang === "en" ? `/en/bds/${slug}` : `/bds/${slug}`}
-                  className="group block rounded-3xl overflow-hidden hover:shadow-token-lg transition-all hover:-translate-y-1"
-                  style={{ background: "var(--bg-surface)", border: "1px solid var(--border-default)" }}>
-                  <div className="relative aspect-[4/3] overflow-hidden" style={{ background: "var(--bg-elevated)" }}>
-                    {img ? (
-                      <img src={img} alt={l.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
-                    ) : (
-                      <div className="w-full h-full flex items-center justify-center text-5xl opacity-20">🏢</div>
-                    )}
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent pointer-events-none" />
-                    <div className="absolute top-3 left-3 flex flex-col gap-1.5 items-start">
-                      <div className="flex gap-1.5">
-                        <span className="px-2 py-0.5 rounded-lg text-[12px] font-bold text-white shadow-sm backdrop-blur-sm"
-                          style={{ background: rent ? "rgba(37,99,235,0.9)" : "rgba(11,107,84,0.92)" }}>{rent ? tt(lang, "CHO THUÊ", "FOR RENT") : tt(lang, "BÁN", "FOR SALE")}</span>
-                        {l.isVerified && (
-                          <span className="flex items-center gap-1 px-2 py-0.5 rounded-lg text-[12px] font-bold text-white shadow-sm backdrop-blur-sm"
-                            style={{ background: "rgba(5,150,105,0.95)" }}><CheckCircle className="w-3.5 h-3.5" /> {tt(lang, "ĐÃ XÁC THỰC", "VERIFIED")}</span>
-                        )}
-                      </div>
-                      {(l.viewCount || 0) > 0 && (
-                        <span className="flex items-center gap-1 px-2 py-0.5 rounded-lg text-[12px] font-bold text-white shadow-sm backdrop-blur-sm"
-                          style={{ background: "rgba(0,0,0,0.6)" }}><Eye className="w-3.5 h-3.5" /> {l.viewCount}</span>
-                      )}
-                    </div>
-                    <div className="absolute top-3 right-3 w-8 h-8 rounded-full flex items-center justify-center bg-black/25 backdrop-blur-sm">
-                      <Heart className="w-4 h-4 text-white" />
-                    </div>
-                  </div>
-                  <div className="p-4">
-                    <h3 className="font-semibold text-sm mb-2 line-clamp-2 leading-snug" style={{ color: "var(--text-primary)" }}>{l.title}</h3>
-                    <div className="flex items-center gap-1.5 mb-3 text-xs" style={{ color: "var(--text-secondary)" }}>
-                      <MapPin className="w-3 h-3 shrink-0" /><span className="truncate">{l.location}</span>
-                    </div>
-                    <div className="flex items-end justify-between gap-2">
-                      <div className="min-w-0">
-                        <p className="font-extrabold text-lg leading-none" style={{ color: "var(--primary-600)" }}>{formatPrice(l.price, lang)}</p>
-                        {ppm && <p className="text-[12px] font-medium mt-0.5 truncate" style={{ color: "var(--text-tertiary)" }}>{ppm}</p>}
-                      </div>
-                      <div className="flex items-center gap-3 text-xs shrink-0" style={{ color: "var(--text-tertiary)" }}>
-                        {l.area ? <span>{l.area}m²</span> : null}
-                        {l.bedrooms ? <span className="flex items-center gap-1"><Bed className="w-3 h-3" />{l.bedrooms}PN</span> : null}
-                      </div>
-                    </div>
-                  </div>
-                </Link>
-              );
-            })}
+            {similarListings.slice(0, 3).map((l) => (
+              <PublicListingCard key={l.id} listing={l} eager />
+            ))}
           </div>
         </section>
       )}
