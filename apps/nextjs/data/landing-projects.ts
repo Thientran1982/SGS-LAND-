@@ -930,7 +930,7 @@ const DIAMOND_SKY_VAN_PHUC_CITY: LandingProject = {
     { k: "Loại hình", v: "Căn hộ cao tầng (Diamond Sky), ngoài ra KĐT có biệt thự, nhà phố, shophouse đã bàn giao" },
     { k: "Hạ tầng kết nối", v: "Quốc lộ 13, cầu Bình Lợi, trục Phạm Văn Đồng, cách trung tâm Quận 1 khoảng 12km" },
     { k: "Tình trạng pháp lý", v: "Cần xác minh cụ thể theo từng toà/giai đoạn tại thời điểm giao dịch" },
-    { k: "Hotline tư vấn", v: "0971 132 378 (SGS Land – đại lý ủy quyền chính thức)" },
+    { k: "Kênh tư vấn", v: "0971 132 378 (SGS LAND – cung cấp thông tin tham khảo)" },
   ],
   locationIntro: "Diamond Sky nằm trong khu đô thị Vạn Phúc City tại phường Hiệp Bình Phước, TP Thủ Đức – khu vực bán đảo được bao quanh bởi 3 mặt sông Sài Gòn. Từ đây di chuyển ra trung tâm Quận 1 khoảng 12km qua Quốc lộ 13, cầu Bình Lợi và trục đường Phạm Văn Đồng.",
   googleMapsEmbedSrc: "https://www.google.com/maps?q=Van+Phuc+City+Diamond+Sky+Hiep+Binh+Phuoc+TP+Thu+Duc&output=embed",
