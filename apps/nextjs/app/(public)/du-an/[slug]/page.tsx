@@ -60,6 +60,10 @@ const AQUA_STYLE_DETAIL_SLUGS = new Set([
   "masteri-park-place",
   "masteri-cosmo-central",
   "eco-retreat-long-an",
+  "legacy-66",
+  "nha-pho-trung-tam",
+  "bat-dong-san-thu-duc",
+  "bat-dong-san-long-thanh",
 ]);
 
 function getAquaStyleLanding(slug: string): LandingProject | null {
@@ -76,7 +80,18 @@ function getAquaStyleLanding(slug: string): LandingProject | null {
     amenities?: { title: string; items: string[] }[];
     faqs?: { q: string; a: string }[];
   } | null;
-  const project = ALL_PROJECTS.find((item) => item.slug === slug);
+  const listedProject = ALL_PROJECTS.find((item) => item.slug === slug);
+  const metaProject = PROJECT_META[slug];
+  const project = listedProject || (metaProject ? {
+    name: metaProject.name,
+    developer: metaProject.dev,
+    location: metaProject.loc,
+    scale: metaProject.scale,
+    priceRange: metaProject.priceRange,
+    projectType: "Danh mục bất động sản",
+    status: "Cần xác minh",
+    description: metaProject.desc,
+  } : null);
   if (!config || !project) return null;
 
   const details = config.details || [
@@ -111,6 +126,10 @@ function getAquaStyleLanding(slug: string): LandingProject | null {
     "vinhomes-can-gio": { lat: 10.4124, lng: 106.9524 },
     sala: { lat: 10.8025, lng: 106.7414 },
     "vinhomes-hoc-mon": { lat: 10.8835, lng: 106.5937 },
+    "legacy-66": { lat: 10.7548, lng: 106.6642 },
+    "nha-pho-trung-tam": { lat: 10.7769, lng: 106.7009 },
+    "bat-dong-san-thu-duc": { lat: 10.8492, lng: 106.7537 },
+    "bat-dong-san-long-thanh": { lat: 10.965, lng: 106.841 },
   };
   const geo = coordinates[slug] || (slug === "manhattan"
     ? { lat: 10.7769, lng: 106.7009 }
