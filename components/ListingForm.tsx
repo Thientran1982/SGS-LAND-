@@ -542,6 +542,24 @@ export const ListingForm: React.FC<ListingFormProps> = memo(({ isOpen, onClose, 
         );
     };
     if (!isOpen) return null;
+    const reviewAttrs = formData.attributes || {};
+    const reviewRows = [
+        { label: 'Mã tin', value: formData.code },
+        { label: 'Dự án', value: formData.projectCode },
+        { label: 'Điện thoại liên hệ', value: formData.contactPhone },
+        { label: 'Tên chủ nhà', value: formData.ownerName },
+        { label: 'Điện thoại chủ nhà', value: formData.ownerPhone },
+        { label: 'Hoa hồng', value: formData.commission ? `${formData.commission} ${formData.commissionUnit === 'FIXED' ? 'VND' : '%'}` : undefined },
+        { label: 'Pháp lý', value: reviewAttrs.legalStatus ? t(`legal.${reviewAttrs.legalStatus}`) : undefined },
+        { label: 'Hướng', value: reviewAttrs.direction ? t(`direction.${reviewAttrs.direction}`) : undefined },
+        { label: 'Nội thất', value: reviewAttrs.furniture ? t(`furniture.${reviewAttrs.furniture}`) : undefined },
+        { label: 'Phòng ngủ', value: formData.bedrooms || undefined },
+        { label: 'Phòng tắm', value: formData.bathrooms || undefined },
+        { label: 'Mặt tiền', value: reviewAttrs.frontage ? `${reviewAttrs.frontage} m` : undefined },
+        { label: 'Lộ giới', value: reviewAttrs.roadWidth ? `${reviewAttrs.roadWidth} m` : undefined },
+        { label: 'Tọa độ', value: formData.coordinates?.lat && formData.coordinates?.lng ? `${formData.coordinates.lat}, ${formData.coordinates.lng}` : undefined },
+        { label: 'Mô tả', value: reviewAttrs.description },
+    ].filter(row => row.value !== undefined && row.value !== null && String(row.value).trim() !== '');
     return createPortal(
         <div className="fixed inset-0 z-[10000] flex items-center justify-center p-4" role="dialog" aria-modal="true" aria-labelledby="listing-form-title">
             <div className="absolute inset-0 bg-black/50 backdrop-blur-sm animate-fade-in" onClick={!isSubmitting ? onClose : undefined} />
@@ -999,11 +1017,30 @@ export const ListingForm: React.FC<ListingFormProps> = memo(({ isOpen, onClose, 
                                  <h4 className="mb-4 text-sm font-bold text-sgs-primary">Kiểm tra thông tin trước khi đăng</h4>
                                  <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                                      <div><span className="text-xs text-[var(--text-tertiary)]">Tiêu đề</span><p className="font-semibold text-[var(--text-primary)]">{formData.title || 'Chưa nhập'}</p></div>
-                                     <div><span className="text-xs text-[var(--text-tertiary)]">Giao dịch / Loại hình</span><p className="font-semibold text-[var(--text-primary)]">{t(`transaction.${formData.transaction}`)} · {t(`property.${formData.type}`)}</p></div>
+                                     <div><span className="text-xs text-[var(--text-tertiary)]">Giao dịch / Loại hình</span><p className="font-semibold text-[var(--text-primary)]">{t(`transaction.${String(formData.transaction || '').toUpperCase()}`)} · {t(`property.${String(formData.type || '').toUpperCase()}`)}</p></div>
+                                     <div><span className="text-xs text-[var(--text-tertiary)]">Trạng thái</span><p className="font-semibold text-[var(--text-primary)]">{t(`status.${String(formData.status || '').toUpperCase()}`)}</p></div>
                                      <div><span className="text-xs text-[var(--text-tertiary)]">Giá</span><p className="font-semibold text-[var(--text-primary)]">{priceShort ? `${priceShort} ${UNITS[priceUnit === UNITS.BILLION.value ? 'BILLION' : priceUnit === UNITS.MILLION.value ? 'MILLION' : 'ONE'].label}` : 'Chưa nhập'}</p></div>
                                      <div><span className="text-xs text-[var(--text-tertiary)]">Diện tích</span><p className="font-semibold text-[var(--text-primary)]">{formData.area ? `${formData.area} m²` : 'Chưa nhập'}</p></div>
                                      {!isProjectUnit && <div className="sm:col-span-2"><span className="text-xs text-[var(--text-tertiary)]">Địa chỉ</span><p className="font-semibold text-[var(--text-primary)]">{formData.location || 'Chưa nhập'}</p></div>}
                                  </div>
+                             </div>
+                             <div className="rounded-2xl border border-[var(--glass-border)] bg-[var(--bg-surface)] p-5 shadow-sm">
+                                 <div className="mb-3 flex items-center justify-between gap-3">
+                                     <h4 className="text-sm font-bold text-sgs-primary">Thông tin đã ghi nhận</h4>
+                                     <span className="text-xs font-semibold text-[var(--text-tertiary)]">{reviewRows.length} trường</span>
+                                 </div>
+                                 <div className="grid grid-cols-1 gap-x-5 gap-y-3 sm:grid-cols-2">
+                                     {reviewRows.map(row => (
+                                         <div key={row.label} className={row.label === 'Mô tả' ? 'sm:col-span-2' : ''}>
+                                             <span className="text-xs text-[var(--text-tertiary)]">{row.label}</span>
+                                             <p className="break-words font-semibold text-[var(--text-primary)]">{String(row.value)}</p>
+                                         </div>
+                                     ))}
+                                 </div>
+                             </div>
+                             <div className="rounded-2xl border border-[var(--glass-border)] bg-[var(--bg-surface)] p-4 text-sm text-[var(--text-secondary)]">
+                                 <p className="font-semibold text-sgs-primary">Hình ảnh và xác thực</p>
+                                 <p className="mt-1">{images.length} ảnh đã chọn{formData.isVerified ? ' · Đã xác thực' : ''}</p>
                              </div>
                              <div className="rounded-2xl border border-sgs-border bg-sgs-champagne/40 p-4 text-sm text-[var(--text-secondary)]">
                                  <p className="font-semibold text-sgs-primary">Đã sẵn sàng đăng tin?</p>
