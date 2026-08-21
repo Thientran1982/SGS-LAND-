@@ -65,9 +65,12 @@ const ImageCarousel = memo(({ images, title, isVerified, isFavorite, onToggleFav
                         {isRent ? t('transaction.RENT') : t('transaction.SALE')}
                     </div>
                     {isVerified && (
-                        <div className="flex items-center gap-1.5 bg-emerald-600/95 text-white text-[12px] font-bold px-2 py-0.5 rounded-lg shadow-sm backdrop-blur-sm border border-white/20">
+                        <div
+                            title={t('inventory.verified')}
+                            aria-label={t('inventory.verified')}
+                            className="flex items-center justify-center bg-emerald-600/95 text-white text-[12px] font-bold p-1 rounded-lg shadow-sm backdrop-blur-sm border border-white/20"
+                        >
                             {LISTING_ICONS.VERIFIED}
-                            <span className="uppercase tracking-wide">{t('inventory.verified')}</span>
                         </div>
                     )}
                 </div>
