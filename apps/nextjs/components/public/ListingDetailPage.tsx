@@ -1,13 +1,13 @@
 // @ts-nocheck
 "use client";
-import React, { useState, useEffect, useMemo } from "react";
+import React, { useState, useEffect, useMemo, useRef } from "react";
 import { trackPropertyView } from "@/lib/tracking";
 import Link from "next/link";
 import dynamic from "next/dynamic";
 import { useLang } from "@/components/shared/useLang";
 import { tt } from "@/lib/i18n";
 type L = "vi" | "en";
-import { MapPin, Bed, Bath, Square, Phone, Share2, Heart, ArrowLeft, CheckCircle, Calendar, Landmark, Eye } from "lucide-react";
+import { MapPin, Bed, Bath, Square, Phone, Share2, Heart, ArrowLeft, CheckCircle, Calendar, Landmark, Eye, ChevronDown } from "lucide-react";
 interface Listing {
   id: string;
   code?: string;
@@ -51,6 +51,61 @@ function formatUnitPrice(price: number, area?: number, g: L = "vi"): string {
   const unitPrice = price / area / 1e6;
   return g === "en" ? `${unitPrice.toFixed(1)}M/m²` : `${unitPrice.toFixed(1)} triệu/m²`;
 }
+
+function TimePicker({ value, onChange, lang }: { value: string; onChange: (value: string) => void; lang: L }) {
+  const [open, setOpen] = useState(false);
+  const rootRef = useRef<HTMLDivElement>(null);
+  const times = ["08:00", "09:00", "10:00", "11:00", "14:00", "15:00", "16:00", "17:00", "18:00"];
+
+  useEffect(() => {
+    if (!open) return;
+    const closeOnOutsideClick = (event: MouseEvent) => {
+      if (rootRef.current && !rootRef.current.contains(event.target as Node)) setOpen(false);
+    };
+    document.addEventListener("mousedown", closeOnOutsideClick);
+    return () => document.removeEventListener("mousedown", closeOnOutsideClick);
+  }, [open]);
+
+  return (
+    <div ref={rootRef} className="relative">
+      <button
+        type="button"
+        aria-haspopup="listbox"
+        aria-expanded={open}
+        aria-label={tt(lang, "Chọn giờ xem nhà", "Choose viewing time")}
+        onClick={() => setOpen((current) => !current)}
+        className="mt-1 flex w-full items-center justify-between rounded-lg px-3 py-2 text-left text-sm"
+        style={{ background: "var(--bg-elevated)", border: "1px solid var(--border-default)", color: "var(--text-primary)" }}
+      >
+        <span>{value}</span>
+        <ChevronDown className={`h-4 w-4 transition-transform ${open ? "rotate-180" : ""}`} style={{ color: "var(--text-tertiary)" }} />
+      </button>
+      {open && (
+        <div
+          role="listbox"
+          aria-label={tt(lang, "Các giờ có thể đặt", "Available viewing times")}
+          className="absolute inset-x-0 top-full z-30 mt-1 max-h-52 overflow-y-auto rounded-xl p-1 shadow-lg"
+          style={{ background: "var(--bg-surface, #fff)", border: "1px solid var(--border-default)" }}
+        >
+          {times.map((time) => (
+            <button
+              key={time}
+              type="button"
+              role="option"
+              aria-selected={time === value}
+              onClick={() => { onChange(time); setOpen(false); }}
+              className="w-full rounded-lg px-3 py-2 text-left text-sm transition-colors hover:bg-[var(--primary-subtle)]"
+              style={{ color: time === value ? "var(--sgs-primary, #1B3A5C)" : "var(--text-primary)", fontWeight: time === value ? 700 : 500 }}
+            >
+              {time}
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
 function LoanCalculator({ price }: { price: number }) {
   const lang = useLang();
   const [ratio, setRatio] = useState(70);
@@ -392,12 +447,7 @@ export function ListingDetailPage({ listing, similarListings }: Props) {
                   </div>
                   <div>
                     <label className="text-xs font-semibold" style={{ color: "var(--text-secondary)" }}>{tt(lang, "Giờ", "Time")}</label>
-                    <select value={bk.time} onChange={(e) => setBk({ ...bk, time: e.target.value })}
-                      className="w-full mt-1 px-3 py-2 rounded-lg text-sm" style={{ background: "var(--bg-elevated)", border: "1px solid var(--border-default)", color: "var(--text-primary)" }}>
-                      {["08:00", "09:00", "10:00", "11:00", "14:00", "15:00", "16:00", "17:00", "18:00"].map((t) => (
-                        <option key={t} value={t}>{t}</option>
-                      ))}
-                    </select>
+                    <TimePicker value={bk.time} onChange={(time) => setBk({ ...bk, time })} lang={lang} />
                   </div>
                 </div>
                 <div>
