@@ -226,7 +226,7 @@ export const ListingCard = memo(({ item, t, formatCurrency, onToggleFavorite, on
             return (
                 <div className={wrapperClass}>
                     {attrs.developer && <GridItem label={t('inventory.label_developer')} value={attrs.developer} />}
-                    {(item.totalUnits || attrs.totalUnits) && <GridItem label={t('inventory.label_total_units')} value={item.totalUnits || (attrs.totalUnits as string)} />}
+                    {Boolean(item.totalUnits || attrs.totalUnits) && <GridItem label={t('inventory.label_total_units')} value={String(item.totalUnits || attrs.totalUnits)} />}
                     {attrs.handoverYear && <GridItem label={t('inventory.label_handover')} value={attrs.handoverYear} />}
                 </div>
             );
@@ -296,8 +296,10 @@ export const ListingCard = memo(({ item, t, formatCurrency, onToggleFavorite, on
                 </div>
                 <div className="flex items-end justify-between gap-2 mt-auto pt-1">
                     <div className="min-w-0 flex-1">
-                        <div className="text-lg font-extrabold text-[var(--text-primary)] dark:text-white tracking-tight leading-none">
+                        <div className="text-2xs font-bold text-[var(--text-secondary)] uppercase mb-0.5">
                             {isProject ? t('inventory.min_price') : t('inventory.label_price')}
+                        </div>
+                        <div className="text-lg font-extrabold text-[var(--text-primary)] dark:text-white tracking-tight leading-none">
                             {formatSmartPrice(item.price, t)}
                         </div>
                         {item.area > 0 && item.type !== PropertyType.PROJECT && (

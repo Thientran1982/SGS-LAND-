@@ -1593,19 +1593,13 @@ export const ListingDetail: React.FC = () => {
                     </button>
                 </div>
             </div>
-            {/* Gallery (Bento Grid) */}
+            {/* Gallery — public detail style */}
             <div className="max-w-7xl mx-auto px-4 py-5 md:px-6 md:py-8">
                 {/* Dynamic Grid Layout based on image count */}
-                <div className={`grid gap-4 rounded-[32px] overflow-hidden h-[400px] md:h-[500px] relative group
-                    ${displayImages.length === 1 ? 'grid-cols-1' : ''}
-                    ${displayImages.length === 2 ? 'grid-cols-1 md:grid-cols-2' : ''}
-                    ${displayImages.length >= 3 ? 'grid-cols-1 md:grid-cols-4' : ''}
-                `}>
+                <div className="grid grid-cols-1 gap-0 rounded-2xl overflow-hidden aspect-video relative group bg-[var(--bg-elevated)]">
                     {/* Main Image (Always First) */}
                     <div 
-                        className={`h-full relative cursor-pointer overflow-hidden
-                            ${displayImages.length >= 3 ? 'md:col-span-2' : ''}
-                        `}
+                        className="h-full relative cursor-pointer overflow-hidden"
                         onClick={() => { setLightboxIndex(0); setLightboxOpen(true); }}
                     >
                         <img src={optimizedImageUrl(displayImages[0] || NO_IMAGE_URL, 1280)} className="w-full h-full object-cover transition-transform duration-700 hover:scale-105" alt="Main" loading="eager" decoding="async" fetchPriority="high" onError={(e) => { (e.target as HTMLImageElement).src = NO_IMAGE_URL; }} />
@@ -1613,11 +1607,7 @@ export const ListingDetail: React.FC = () => {
                     </div>
                     {/* Secondary Images (Right Side) */}
                     {displayImages.length > 1 && (
-                        <div className={`hidden md:grid gap-4 h-full
-                            ${displayImages.length === 2 ? 'grid-cols-1' : ''} 
-                            ${displayImages.length === 3 ? 'grid-cols-1 grid-rows-2' : ''}
-                            ${displayImages.length >= 4 ? 'grid-cols-2 grid-rows-2 md:col-span-2' : ''}
-                        `}>
+                        <div className="hidden">
                             {displayImages.slice(1).map((img, idx) => (
                                 <div key={idx} className="relative cursor-pointer overflow-hidden h-full w-full" onClick={() => { setLightboxIndex(idx + 1); setLightboxOpen(true); }}>
                                     <img src={optimizedImageUrl(img || NO_IMAGE_URL, 640)} className="w-full h-full object-cover transition-transform duration-700 hover:scale-105" alt={`Gallery ${idx}`} loading="lazy" decoding="async" onError={(e) => { (e.target as HTMLImageElement).src = NO_IMAGE_URL; }} />
@@ -1639,6 +1629,21 @@ export const ListingDetail: React.FC = () => {
                         {t('common.view_all')} ({images.length})
                     </button>
                 </div>
+                {images.length > 1 && (
+                    <div className="flex gap-2 p-3 overflow-x-auto no-scrollbar rounded-b-2xl bg-[var(--bg-elevated)]">
+                        {images.map((img, idx) => (
+                            <button
+                                key={idx}
+                                type="button"
+                                onClick={() => { setLightboxIndex(idx); setLightboxOpen(true); }}
+                                className={`shrink-0 w-16 h-12 rounded-lg overflow-hidden border-2 transition-all ${idx === 0 ? 'border-indigo-500' : 'border-transparent opacity-60 hover:opacity-100'}`}
+                                aria-label={`${t('common.view_all')} ${idx + 1}`}
+                            >
+                                <img src={optimizedImageUrl(img || NO_IMAGE_URL, 160)} className="w-full h-full object-cover" alt="" loading="lazy" decoding="async" />
+                            </button>
+                        ))}
+                    </div>
+                )}
             </div>
             {/* Content */}
             <div className="max-w-7xl mx-auto px-6 grid grid-cols-1 lg:grid-cols-3 gap-12">
