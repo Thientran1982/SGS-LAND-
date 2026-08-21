@@ -154,6 +154,7 @@ import m134 from './134_agent_audit_ledger';
 import m135 from './135_email_otp_verification';
 import m136 from './136_dashboard_kpi_targets';
 import m137 from './137_campaign_recipient_dedupe';
+import m138 from './138_campaign_recurrence';
 
 dotenv.config();
 
@@ -304,6 +305,7 @@ const MIGRATION_REGISTRY: Record<string, Migration> = {
   '135_email_otp_verification.ts': m135,
   '136_dashboard_kpi_targets.ts': m136,
   '137_campaign_recipient_dedupe.ts': m137,
+  '138_campaign_recurrence.ts': m138,
 };
 
 async function ensureSchemaVersionsTable(client: PoolClient): Promise<void> {

@@ -38,19 +38,25 @@ export interface CampaignSchedulerTickResult {
 export async function tickCampaignScheduler(pool: Pool): Promise<CampaignSchedulerTickResult> {
   const due = await pool.query(
     `UPDATE campaigns
-        SET last_run_at = NOW()
+        SET last_run_at = NOW(),
+            scheduled_at = CASE recurrence_type
+              WHEN 'DAILY' THEN scheduled_at + INTERVAL '1 day'
+              WHEN 'WEEKLY' THEN scheduled_at + INTERVAL '1 week'
+              WHEN 'MONTHLY' THEN scheduled_at + INTERVAL '1 month'
+              ELSE scheduled_at
+            END
       WHERE id IN (
         SELECT id FROM campaigns
          WHERE status = 'ACTIVE'
            AND schedule_type = 'SCHEDULED'
            AND scheduled_at IS NOT NULL
            AND scheduled_at <= NOW()
-           AND last_run_at IS NULL
+           AND (last_run_at IS NULL OR recurrence_type <> 'ONCE')
          ORDER BY scheduled_at ASC
          LIMIT 50
          FOR UPDATE SKIP LOCKED
       )
-      RETURNING id, name, tenant_id`,
+       RETURNING id, name, tenant_id, recurrence_type`,
   );
 
   const result: CampaignSchedulerTickResult = { picked: due.rowCount || 0, sent: 0, failed: 0, results: [] };
@@ -63,11 +69,13 @@ export async function tickCampaignScheduler(pool: Pool): Promise<CampaignSchedul
       result.failed += r.failed;
       result.results.push({ id: row.id, name: row.name, queued: r.queued, sent: r.sent, failed: r.failed, error: r.error });
 
-      if (r.queued > 0 && r.failed === 0) {
+      if (r.queued > 0 && r.failed === 0 && row.recurrence_type === 'ONCE') {
         await pool.query(
           `UPDATE campaigns SET status='COMPLETED', updated_at=NOW() WHERE id=$1`,
           [row.id],
         );
+      } else if (r.queued > 0 && r.failed === 0 && row.recurrence_type !== 'ONCE') {
+        logger.info(`[CampaignScheduler] ${row.name} — recurring ${row.recurrence_type}, next run scheduled`);
       } else if (r.failed > 0) {
         await pool.query(
           `UPDATE campaigns SET status='PAUSED', updated_at=NOW() WHERE id=$1`,

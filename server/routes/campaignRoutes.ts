@@ -27,6 +27,7 @@ import { runCampaign, countAudience, signTrackingUrl, AudienceFilter, AbTestConf
 
 const ALLOWED_CHANNELS = new Set(['EMAIL']);
 const ALLOWED_SCHEDULE = new Set(['NOW', 'SCHEDULED']);
+const ALLOWED_RECURRENCE = new Set(['ONCE', 'DAILY', 'WEEKLY', 'MONTHLY']);
 
 function validateSchedule(scheduleType: string, scheduledAt: unknown): string | null {
   if (scheduleType !== 'SCHEDULED') return null;
@@ -165,18 +166,22 @@ export function createCampaignRouter(pool: Pool, authenticateToken: RequestHandl
 
       const channel = ALLOWED_CHANNELS.has(body.channel) ? body.channel : 'EMAIL';
       const scheduleType = ALLOWED_SCHEDULE.has(body.schedule_type) ? body.schedule_type : 'NOW';
+      const recurrenceType = ALLOWED_RECURRENCE.has(body.recurrence_type) ? body.recurrence_type : 'ONCE';
 
       if (!body.name || typeof body.name !== 'string') {
         return res.status(400).json({ error: 'Thiếu tên chiến dịch' });
       }
       const scheduleError = validateSchedule(scheduleType, body.scheduled_at);
       if (scheduleError) return res.status(400).json({ error: scheduleError });
+      if (recurrenceType !== 'ONCE' && scheduleType !== 'SCHEDULED') {
+        return res.status(400).json({ error: 'Chiến dịch lặp cần dùng lịch hẹn giờ' });
+      }
 
       const r = await pool.query(
         `INSERT INTO campaigns
            (tenant_id, name, description, channel, status, audience,
-            subject, body_html, schedule_type, scheduled_at, ab_test, created_by)
-         VALUES ($1,$2,$3,$4,'DRAFT',$5,$6,$7,$8,$9,$10,$11)
+            subject, body_html, schedule_type, scheduled_at, recurrence_type, ab_test, created_by)
+         VALUES ($1,$2,$3,$4,'DRAFT',$5,$6,$7,$8,$9,$10,$11,$12)
          RETURNING *`,
         [
           tenantId,
@@ -188,6 +193,7 @@ export function createCampaignRouter(pool: Pool, authenticateToken: RequestHandl
           body.body_html || null,
           scheduleType,
           body.scheduled_at || null,
+          recurrenceType,
           JSON.stringify(body.ab_test || { enabled: false }),
           userId,
         ],
@@ -229,7 +235,7 @@ export function createCampaignRouter(pool: Pool, authenticateToken: RequestHandl
     try {
       const tenantId = getTenantId(req);
       const exist = await pool.query(
-        `SELECT status FROM campaigns WHERE id = $1 AND tenant_id = $2`,
+        `SELECT status, schedule_type, scheduled_at, recurrence_type FROM campaigns WHERE id = $1 AND tenant_id = $2`,
         [req.params.id, tenantId],
       );
       if (!exist.rowCount) return res.status(404).json({ error: 'Không tìm thấy' });
@@ -250,6 +256,9 @@ export function createCampaignRouter(pool: Pool, authenticateToken: RequestHandl
       if (body.ab_test !== undefined) set('ab_test', JSON.stringify(body.ab_test || { enabled: false }));
       if (body.schedule_type !== undefined && ALLOWED_SCHEDULE.has(body.schedule_type)) set('schedule_type', body.schedule_type);
       if (body.scheduled_at !== undefined) set('scheduled_at', body.scheduled_at || null);
+      if (body.recurrence_type !== undefined && ALLOWED_RECURRENCE.has(body.recurrence_type)) {
+        set('recurrence_type', body.recurrence_type);
+      }
 
       const nextScheduleType = body.schedule_type !== undefined && ALLOWED_SCHEDULE.has(body.schedule_type)
         ? body.schedule_type
@@ -257,8 +266,14 @@ export function createCampaignRouter(pool: Pool, authenticateToken: RequestHandl
       const nextScheduledAt = body.scheduled_at !== undefined
         ? body.scheduled_at || null
         : exist.rows[0].scheduled_at;
+      const nextRecurrence = body.recurrence_type !== undefined && ALLOWED_RECURRENCE.has(body.recurrence_type)
+        ? body.recurrence_type
+        : (exist.rows[0].recurrence_type || 'ONCE');
       const scheduleError = validateSchedule(nextScheduleType, nextScheduledAt);
       if (scheduleError) return res.status(400).json({ error: scheduleError });
+      if (nextRecurrence !== 'ONCE' && nextScheduleType !== 'SCHEDULED') {
+        return res.status(400).json({ error: 'Chiến dịch lặp cần dùng lịch hẹn giờ' });
+      }
 
       if (!fields.length) return res.status(400).json({ error: 'Không có thay đổi' });
 
