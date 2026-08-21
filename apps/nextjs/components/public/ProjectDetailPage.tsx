@@ -80,6 +80,10 @@ const AREA_DETAIL_SLUGS = new Set([
   "nha-pho-trung-tam",
   "bat-dong-san-thu-duc",
   "bat-dong-san-long-thanh",
+  "bat-dong-san-binh-chanh",
+  "bat-dong-san-can-gio",
+  "bat-dong-san-hoc-mon",
+  "bat-dong-san-binh-duong",
 ]);
 
 function RichProjectDetail({ project, config, landing }: { project: ProjectDetail; config?: ProjectConfig | null; landing: LandingProject }) {
@@ -104,6 +108,10 @@ function RichProjectDetail({ project, config, landing }: { project: ProjectDetai
     "bat-dong-san-quan-7": "/images/projects/the-global-city.webp",
     "bat-dong-san-long-an": "/images/projects/aqua-city.png",
     "bat-dong-san-dong-nai": "/images/projects/izumi-city.webp",
+    "bat-dong-san-binh-chanh": "/images/projects/aqua-city.png",
+    "bat-dong-san-can-gio": "/images/projects/vinhomes-can-gio.webp",
+    "bat-dong-san-hoc-mon": "/images/projects/vinhomes-grand-park.webp",
+    "bat-dong-san-binh-duong": "/images/projects/vinhomes-grand-park.webp",
     "vinhomes-grand-park": "/images/projects/vinhomes-grand-park.webp",
     "vinhomes-central-park": "/images/projects/vinhomes-grand-park.webp",
     "diamond-sky-van-phuc-city": "/images/projects/diamond-sky-van-phuc-city.jpg",
@@ -133,13 +141,13 @@ function RichProjectDetail({ project, config, landing }: { project: ProjectDetai
               <div className="absolute inset-0 bg-gradient-to-t from-[#062f25]/90 via-[#062f25]/15 to-transparent" />
               <div className="absolute bottom-6 left-5 right-5 text-white sm:bottom-8 sm:left-8">
                 <div className="mb-3 flex flex-wrap gap-2"><Tag tone="accent">{tt(lang, "Thông tin tham khảo", "Reference information")}</Tag><Tag>{tt(lang, "Cập nhật", "Updated")} {lastUpdated}</Tag></div>
-                <p className="text-xs font-semibold uppercase tracking-[.16em] text-white/75">{tt(lang, "Dự án bất động sản", "Real estate project")}</p>
+                 <p className="text-xs font-semibold uppercase tracking-[.16em] text-white/75">{AREA_DETAIL_SLUGS.has(landing.slug) ? tt(lang, "Khu vực bất động sản", "Real estate area") : tt(lang, "Dự án bất động sản", "Real estate project")}</p>
                 <p className="mt-2 text-2xl font-bold tracking-[-.04em] sm:text-4xl">{landing.titleShort}</p>
               </div>
             </div>
             <div className="flex flex-col justify-center p-6 sm:p-9">
               <p className="text-xs font-bold uppercase tracking-[.16em]" style={{ color: "var(--sgs-accent-text)" }}>{englishCopy?.eyebrow || landing.eyebrow}</p>
-              <h1 className="mt-3 text-3xl font-bold tracking-[-.045em] sm:text-4xl" style={{ color: "var(--text-primary)" }}>{tt(lang, "Thông tin dự án", "Project information")} {landing.titleShort}</h1>
+               <h1 className="mt-3 text-3xl font-bold tracking-[-.045em] sm:text-4xl" style={{ color: "var(--text-primary)" }}>{AREA_DETAIL_SLUGS.has(landing.slug) ? tt(lang, "Thông tin khu vực", "Area information") : tt(lang, "Thông tin dự án", "Project information")} {landing.titleShort}</h1>
               <p className="mt-4 flex items-start gap-2 text-sm leading-6" style={{ color: "var(--text-secondary)" }}><MapPin className="mt-1 h-4 w-4 shrink-0" style={{ color: "var(--sgs-accent-text)" }} />{englishCopy?.heroMeta || landing.heroMeta}</p>
               <p className="answer-box mt-5 rounded-2xl border-l-4 px-4 py-4 text-sm leading-6" role="note" style={{ borderColor: "var(--sgs-accent)", background: "var(--ui-surface-subtle)", color: "var(--text-secondary)" }}>
                  {englishCopy?.desc || landing.desc} {tt(lang, "Trang này tổng hợp thông tin tham khảo về vị trí, sản phẩm, giá và hồ sơ; giá, pháp lý, tiến độ và tiện ích cần được xác minh theo đúng sản phẩm trước giao dịch.", "This page summarizes reference information about location, products, pricing and documents; pricing, legal status, progress and amenities must be verified for the specific property before a transaction.")}
@@ -159,7 +167,7 @@ function RichProjectDetail({ project, config, landing }: { project: ProjectDetai
         </nav>
 
         <section id="tong-quan" className="scroll-mt-20 py-12 sm:py-16">
-          <SectionHeading eyebrow={tt(lang, "01 · Tổng quan", "01 · Overview")} title={`${landing.titleShort} ${tt(lang, "là dự án gì?", "— what is it?")}`} intro={tt(lang, "Câu trả lời ngắn gọn cho người đang tìm hiểu entity, vị trí và mức độ xác minh thông tin.", "A concise answer for readers researching the entity, location and verification status.")} />
+           <SectionHeading eyebrow={tt(lang, "01 · Tổng quan", "01 · Overview")} title={`${landing.titleShort} ${AREA_DETAIL_SLUGS.has(landing.slug) ? tt(lang, "là khu vực nào?", "— what area is it?") : tt(lang, "là dự án gì?", "— what is it?")}`} intro={tt(lang, "Câu trả lời ngắn gọn cho người đang tìm hiểu khu vực, vị trí và mức độ xác minh thông tin.", "A concise answer for readers researching the area, location and verification status.")} />
           <div className="grid gap-6 lg:grid-cols-[1.25fr_.75fr]">
             <div className="space-y-4 text-sm leading-7" style={{ color: "var(--text-secondary)" }}>
               {(englishCopy?.overviewParas || landing.overviewParas).map((paragraph) => <p key={paragraph}>{paragraph}</p>)}
@@ -177,7 +185,7 @@ function RichProjectDetail({ project, config, landing }: { project: ProjectDetai
         </section>
 
         <section id="thong-tin" className="scroll-mt-20 border-t py-12 sm:py-16" style={{ borderColor: "var(--border-default)" }}>
-          <SectionHeading eyebrow={tt(lang, "02 · Entity", "02 · Entity")} title={tt(lang, "Thông tin nhận diện dự án", "Project identity")} intro={`${tt(lang, "Bảng tóm tắt giúp người đọc và hệ thống trả lời AI hiểu cùng một entity", "A summary table helps readers and AI systems identify the same entity")} ${landing.titleShort}, ${tt(lang, "không trộn với sản phẩm riêng lẻ.", "without confusing it with individual products.")}`} />
+           <SectionHeading eyebrow={tt(lang, "02 · Entity", "02 · Entity")} title={AREA_DETAIL_SLUGS.has(landing.slug) ? tt(lang, "Thông tin nhận diện khu vực", "Area identity") : tt(lang, "Thông tin nhận diện dự án", "Project identity")} intro={`${tt(lang, "Bảng tóm tắt giúp người đọc và hệ thống trả lời AI hiểu cùng một khu vực", "A summary table helps readers and AI systems identify the same area")} ${landing.titleShort}, ${tt(lang, "không trộn với sản phẩm hoặc dự án riêng lẻ.", "without confusing it with individual properties or projects.")}`} />
           <div className="overflow-x-auto rounded-2xl border" style={surface}>
             <table className="w-full min-w-[620px] border-collapse text-sm">
              <tbody>{(englishCopy?.entityTable || landing.entityTable).filter((row) => !/hotline|đại lý ủy quyền|distribution status/i.test(`${row.k} ${row.v}`)).map((row, index) => <tr key={row.k} style={{ background: index % 2 ? "var(--ui-surface-subtle)" : "transparent" }}><th scope="row" className="w-[30%] px-5 py-4 text-left font-medium" style={{ color: "var(--text-tertiary)" }}>{row.k}</th><td className="px-5 py-4 font-semibold" style={{ color: "var(--text-primary)" }}>{row.v}</td></tr>)}</tbody>

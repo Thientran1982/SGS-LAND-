@@ -12,6 +12,10 @@ const AREA_SLUGS = new Set([
   "nha-pho-trung-tam",
   "bat-dong-san-thu-duc",
   "bat-dong-san-long-thanh",
+  "bat-dong-san-binh-chanh",
+  "bat-dong-san-can-gio",
+  "bat-dong-san-hoc-mon",
+  "bat-dong-san-binh-duong",
 ]);
 
 export async function generateMetadata({
