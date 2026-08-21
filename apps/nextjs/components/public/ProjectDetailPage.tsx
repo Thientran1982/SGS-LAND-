@@ -68,9 +68,15 @@ function Tag({ children, tone = "neutral" }: { children: React.ReactNode; tone?:
   return <span className="inline-flex items-center rounded-full px-3 py-1.5 text-xs font-semibold" style={colors[tone]}>{children}</span>;
 }
 
-function AquaCityDetail({ project, config, landing }: { project: ProjectDetail; config?: ProjectConfig | null; landing: LandingProject }) {
-  const image = project.images?.[0] || "/images/projects/aqua-city.png";
-  const priceRows = landing.entityTable.filter((row) => ["Nhà phố", "Biệt thự", "Shophouse"].includes(row.k));
+function RichProjectDetail({ project, config, landing }: { project: ProjectDetail; config?: ProjectConfig | null; landing: LandingProject }) {
+  const image = project.images?.[0] || `/images/projects/${landing.slug}.jpg`;
+  const priceRows = (config?.details || [])
+    .filter((row) => /giá|mức giá|price/i.test(row.label))
+    .map((row) => ({ k: row.label, v: row.value }));
+  if (priceRows.length === 0) {
+    const fallbackPrice = landing.entityTable.find((row) => /giá|price/i.test(row.k));
+    if (fallbackPrice) priceRows.push({ k: fallbackPrice.k, v: fallbackPrice.v });
+  }
   const lastUpdated = "21/08/2026";
 
   return (
@@ -79,7 +85,7 @@ function AquaCityDetail({ project, config, landing }: { project: ProjectDetail; 
         <nav aria-label="Breadcrumb" className="mb-6 flex flex-wrap items-center gap-2 text-xs" style={{ color: "var(--text-tertiary)" }}>
           <Link href="/" className="hover:underline">Trang chủ</Link><span>/</span>
           <Link href="/du-an" className="hover:underline">Dự án</Link><span>/</span>
-          <span style={{ color: "var(--text-primary)" }}>Aqua City Novaland</span>
+          <span style={{ color: "var(--text-primary)" }}>{project.name}</span>
         </nav>
 
         <section className="overflow-hidden rounded-3xl border shadow-[var(--ui-shadow-sm)]" style={surface}>
@@ -90,15 +96,15 @@ function AquaCityDetail({ project, config, landing }: { project: ProjectDetail; 
               <div className="absolute bottom-6 left-5 right-5 text-white sm:bottom-8 sm:left-8">
                 <div className="mb-3 flex flex-wrap gap-2"><Tag tone="accent">Thông tin tham khảo</Tag><Tag>Cập nhật {lastUpdated}</Tag></div>
                 <p className="text-xs font-semibold uppercase tracking-[.16em] text-white/75">Khu đô thị tại Đồng Nai</p>
-                <p className="mt-2 text-2xl font-bold tracking-[-.04em] sm:text-4xl">Aqua City Novaland</p>
+                <p className="mt-2 text-2xl font-bold tracking-[-.04em] sm:text-4xl">{landing.titleShort}</p>
               </div>
             </div>
             <div className="flex flex-col justify-center p-6 sm:p-9">
-              <p className="text-xs font-bold uppercase tracking-[.16em]" style={{ color: "var(--sgs-accent-text)" }}>Aqua City Đồng Nai</p>
-              <h1 className="mt-3 text-3xl font-bold tracking-[-.045em] sm:text-4xl" style={{ color: "var(--text-primary)" }}>Thông tin dự án Aqua City Novaland</h1>
-              <p className="mt-4 flex items-start gap-2 text-sm leading-6" style={{ color: "var(--text-secondary)" }}><MapPin className="mt-1 h-4 w-4 shrink-0" style={{ color: "var(--sgs-accent-text)" }} />Long Hưng, Biên Hòa, Đồng Nai · Chủ đầu tư được ghi nhận: Novaland</p>
+              <p className="text-xs font-bold uppercase tracking-[.16em]" style={{ color: "var(--sgs-accent-text)" }}>{landing.eyebrow}</p>
+              <h1 className="mt-3 text-3xl font-bold tracking-[-.045em] sm:text-4xl" style={{ color: "var(--text-primary)" }}>Thông tin dự án {landing.titleShort}</h1>
+              <p className="mt-4 flex items-start gap-2 text-sm leading-6" style={{ color: "var(--text-secondary)" }}><MapPin className="mt-1 h-4 w-4 shrink-0" style={{ color: "var(--sgs-accent-text)" }} />{project.location || landing.heroMeta}</p>
               <p className="answer-box mt-5 rounded-2xl border-l-4 px-4 py-4 text-sm leading-6" role="note" style={{ borderColor: "var(--sgs-accent)", background: "var(--ui-surface-subtle)", color: "var(--text-secondary)" }}>
-                Aqua City Novaland được giới thiệu là khu đô thị tại Long Hưng, Biên Hòa, Đồng Nai do Novaland phát triển. Trang này tổng hợp thông tin tham khảo về vị trí, sản phẩm, giá và hồ sơ; giá, pháp lý, tiến độ và tiện ích cần được xác minh theo đúng sản phẩm trước giao dịch.
+                {landing.desc} Trang này tổng hợp thông tin tham khảo về vị trí, sản phẩm, giá và hồ sơ; giá, pháp lý, tiến độ và tiện ích cần được xác minh theo đúng sản phẩm trước giao dịch.
               </p>
               <div className="mt-6 flex flex-wrap gap-3">
                 <a href="tel:+84971132378" className="inline-flex items-center gap-2 rounded-xl px-4 py-3 text-sm font-bold text-white" style={{ background: "var(--ui-brand)" }}><Phone className="h-4 w-4" /> Liên hệ hỏi thông tin</a>
@@ -108,14 +114,14 @@ function AquaCityDetail({ project, config, landing }: { project: ProjectDetail; 
           </div>
         </section>
 
-        <nav aria-label="Mục lục trang Aqua City" className="sticky top-0 z-20 -mx-4 mt-6 overflow-x-auto border-y px-4 py-3 backdrop-blur sm:mx-0 sm:rounded-2xl sm:border" style={{ background: "color-mix(in srgb, var(--bg-page) 92%, transparent)", borderColor: "var(--border-default)" }}>
+        <nav aria-label={`Mục lục trang ${landing.titleShort}`} className="sticky top-0 z-20 -mx-4 mt-6 overflow-x-auto border-y px-4 py-3 backdrop-blur sm:mx-0 sm:rounded-2xl sm:border" style={{ background: "color-mix(in srgb, var(--bg-page) 92%, transparent)", borderColor: "var(--border-default)" }}>
           <div className="flex min-w-max gap-5 text-xs font-semibold" style={{ color: "var(--text-secondary)" }}>
             {landing.navLinks.map((link) => <a key={link.href} href={link.href} className="transition hover:text-[var(--ui-brand)]">{link.label}</a>)}
           </div>
         </nav>
 
         <section id="tong-quan" className="scroll-mt-20 py-12 sm:py-16">
-          <SectionHeading eyebrow="01 · Tổng quan" title="Aqua City là dự án gì?" intro="Câu trả lời ngắn gọn cho người đang tìm hiểu entity, vị trí và mức độ xác minh thông tin." />
+          <SectionHeading eyebrow="01 · Tổng quan" title={`${landing.titleShort} là dự án gì?`} intro="Câu trả lời ngắn gọn cho người đang tìm hiểu entity, vị trí và mức độ xác minh thông tin." />
           <div className="grid gap-6 lg:grid-cols-[1.25fr_.75fr]">
             <div className="space-y-4 text-sm leading-7" style={{ color: "var(--text-secondary)" }}>
               {landing.overviewParas.map((paragraph) => <p key={paragraph}>{paragraph}</p>)}
@@ -133,7 +139,7 @@ function AquaCityDetail({ project, config, landing }: { project: ProjectDetail; 
         </section>
 
         <section id="thong-tin" className="scroll-mt-20 border-t py-12 sm:py-16" style={{ borderColor: "var(--border-default)" }}>
-          <SectionHeading eyebrow="02 · Entity" title="Thông tin nhận diện dự án" intro="Bảng tóm tắt giúp người đọc và hệ thống trả lời AI hiểu cùng một entity, không trộn Aqua City với sản phẩm riêng lẻ." />
+          <SectionHeading eyebrow="02 · Entity" title="Thông tin nhận diện dự án" intro={`Bảng tóm tắt giúp người đọc và hệ thống trả lời AI hiểu cùng một entity ${landing.titleShort}, không trộn với sản phẩm riêng lẻ.`} />
           <div className="overflow-x-auto rounded-2xl border" style={surface}>
             <table className="w-full min-w-[620px] border-collapse text-sm">
               <tbody>{landing.entityTable.map((row, index) => <tr key={row.k} style={{ background: index % 2 ? "var(--ui-surface-subtle)" : "transparent" }}><th scope="row" className="w-[30%] px-5 py-4 text-left font-medium" style={{ color: "var(--text-tertiary)" }}>{row.k}</th><td className="px-5 py-4 font-semibold" style={{ color: "var(--text-primary)" }}>{row.v}</td></tr>)}</tbody>
@@ -143,19 +149,19 @@ function AquaCityDetail({ project, config, landing }: { project: ProjectDetail; 
         </section>
 
         <section id="vi-tri" className="scroll-mt-20 border-t py-12 sm:py-16" style={{ borderColor: "var(--border-default)" }}>
-          <SectionHeading eyebrow="03 · Vị trí" title="Aqua City ở đâu?" intro={landing.locationIntro} />
+          <SectionHeading eyebrow="03 · Vị trí" title={`${landing.titleShort} ở đâu?`} intro={landing.locationIntro} />
           <div className="grid gap-6 lg:grid-cols-[.9fr_1.1fr]">
             <div className="rounded-2xl border p-6" style={{ ...surface, background: "var(--ui-surface-subtle)" }}>
               <div className="flex items-center gap-2"><MapPin className="h-5 w-5" style={{ color: "var(--sgs-accent-text)" }} /><h3 className="font-bold" style={{ color: "var(--text-primary)" }}>Địa điểm tham khảo</h3></div>
               <p className="mt-4 text-sm leading-7" style={{ color: "var(--text-secondary)" }}>Long Hưng, TP. Biên Hòa, tỉnh Đồng Nai. Tọa độ tham khảo: 10.9282°N, 106.7992°E. Ranh dự án và thời gian di chuyển cần đối chiếu theo phân khu, tuyến đường và thời điểm.</p>
               <div className="mt-5 flex flex-wrap gap-2"><Tag>Đồng Nai</Tag><Tag>Long Hưng</Tag><Tag>Đối chiếu bản đồ thực tế</Tag></div>
             </div>
-            <div className="overflow-hidden rounded-2xl border" style={surface}><iframe title="Bản đồ vị trí Aqua City Novaland" src={landing.googleMapsEmbedSrc} className="h-[300px] w-full border-0 sm:h-[360px]" loading="lazy" referrerPolicy="no-referrer-when-downgrade" /><p className="px-4 py-3 text-xs" style={{ color: "var(--text-tertiary)" }}>Bản đồ chỉ mang tính tham khảo vị trí, không thay thế hồ sơ ranh giới dự án.</p></div>
+            <div className="overflow-hidden rounded-2xl border" style={surface}><iframe title={`Bản đồ vị trí ${landing.titleShort}`} src={landing.googleMapsEmbedSrc} className="h-[300px] w-full border-0 sm:h-[360px]" loading="lazy" referrerPolicy="no-referrer-when-downgrade" /><p className="px-4 py-3 text-xs" style={{ color: "var(--text-tertiary)" }}>Bản đồ chỉ mang tính tham khảo vị trí, không thay thế hồ sơ ranh giới dự án.</p></div>
           </div>
         </section>
 
         <section id="bang-gia" className="scroll-mt-20 border-t py-12 sm:py-16" style={{ borderColor: "var(--border-default)" }}>
-          <SectionHeading eyebrow="04 · Sản phẩm & giá" title="Giá Aqua City theo loại hình" intro="Mức khởi điểm tham khảo hiện có trong dữ liệu SGS LAND; giá thực tế thay đổi theo phân khu, diện tích, pháp lý, thanh toán và thời điểm." />
+          <SectionHeading eyebrow="04 · Sản phẩm & giá" title={`Giá ${landing.titleShort} theo loại hình`} intro="Mức tham khảo hiện có trong dữ liệu SGS LAND; giá thực tế thay đổi theo phân khu, diện tích, pháp lý, thanh toán và thời điểm." />
           <div className="grid gap-4 md:grid-cols-3">
             {priceRows.map((row) => <div key={row.k} className="rounded-2xl border p-5" style={surface}><p className="text-sm font-semibold" style={{ color: "var(--text-secondary)" }}>{row.k}</p><p className="mt-3 text-2xl font-bold tracking-[-.03em]" style={{ color: "var(--sgs-accent-text)" }}>{row.v.replace(" (giá tham khảo)", "")}</p><p className="mt-3 text-xs leading-5" style={{ color: "var(--text-tertiary)" }}>Giá tham khảo · cần xác nhận theo sản phẩm</p></div>)}
           </div>
@@ -175,12 +181,12 @@ function AquaCityDetail({ project, config, landing }: { project: ProjectDetail; 
         </section>
 
         <section id="faq" className="scroll-mt-20 border-t py-12 sm:py-16" style={{ borderColor: "var(--border-default)" }}>
-          <SectionHeading eyebrow="07 · FAQ" title="Câu hỏi thường gặp về Aqua City" intro="Các câu trả lời được viết để trả lời trực tiếp, nhưng không thay thế hồ sơ gốc hoặc tư vấn chuyên môn độc lập." />
+          <SectionHeading eyebrow="07 · FAQ" title={`Câu hỏi thường gặp về ${landing.titleShort}`} intro="Các câu trả lời được viết để trả lời trực tiếp, nhưng không thay thế hồ sơ gốc hoặc tư vấn chuyên môn độc lập." />
           <div className="space-y-3">{landing.faq.map((item) => <details key={item.q} className="group rounded-2xl border px-5 py-4" style={surface}><summary className="flex cursor-pointer list-none items-center justify-between gap-4 text-sm font-bold" style={{ color: "var(--text-primary)" }}>{item.q}<ArrowRight className="h-4 w-4 shrink-0 transition-transform group-open:rotate-90" style={{ color: "var(--sgs-accent-text)" }} /></summary><p className="mt-3 max-w-4xl text-sm leading-7" style={{ color: "var(--text-secondary)" }}>{item.a}</p></details>)}</div>
         </section>
 
         <section id="lien-he" className="scroll-mt-20 rounded-3xl p-6 sm:p-9" style={{ background: "var(--ui-brand)", color: "var(--ui-on-brand)" }}>
-          <div className="flex flex-col gap-6 sm:flex-row sm:items-center sm:justify-between"><div><p className="text-xs font-bold uppercase tracking-[.16em] opacity-75">Bước tiếp theo</p><h2 className="mt-2 text-2xl font-bold tracking-[-.03em]">Cần kiểm tra Aqua City theo sản phẩm cụ thể?</h2><p className="mt-2 max-w-2xl text-sm leading-6 opacity-85">Gửi nhu cầu để nhận thông tin tham khảo. Giá, pháp lý, tiến độ và tư cách phân phối vẫn cần được xác nhận bằng tài liệu hiện hành.</p></div><a href="tel:+84971132378" className="inline-flex shrink-0 items-center justify-center gap-2 rounded-xl bg-white px-5 py-3 text-sm font-bold" style={{ color: "var(--ui-brand)" }}><Phone className="h-4 w-4" /> 0971 132 378</a></div>
+          <div className="flex flex-col gap-6 sm:flex-row sm:items-center sm:justify-between"><div><p className="text-xs font-bold uppercase tracking-[.16em] opacity-75">Bước tiếp theo</p><h2 className="mt-2 text-2xl font-bold tracking-[-.03em]">Cần kiểm tra {landing.titleShort} theo sản phẩm cụ thể?</h2><p className="mt-2 max-w-2xl text-sm leading-6 opacity-85">Gửi nhu cầu để nhận thông tin tham khảo. Giá, pháp lý, tiến độ và tư cách phân phối vẫn cần được xác nhận bằng tài liệu hiện hành.</p></div><a href="tel:+84971132378" className="inline-flex shrink-0 items-center justify-center gap-2 rounded-xl bg-white px-5 py-3 text-sm font-bold" style={{ color: "var(--ui-brand)" }}><Phone className="h-4 w-4" /> 0971 132 378</a></div>
         </section>
 
         {config?.relatedProjects && config.relatedProjects.length > 0 && <section className="py-12"><SectionHeading eyebrow="Đọc thêm" title="Dự án và khu vực liên quan" /><div className="flex flex-wrap gap-3">{config.relatedProjects.map((related) => <Link key={related.slug} href={`/du-an/${related.slug}`} className="inline-flex items-center gap-2 rounded-xl border px-4 py-3 text-sm font-semibold transition hover:-translate-y-0.5" style={surface}><Building2 className="h-4 w-4" style={{ color: "var(--sgs-accent-text)" }} />{related.name}<ArrowRight className="h-4 w-4" /></Link>)}</div></section>}
@@ -190,7 +196,9 @@ function AquaCityDetail({ project, config, landing }: { project: ProjectDetail; 
 }
 
 export function ProjectDetailPage({ project, slug, config, landingProject }: Props) {
-  if (slug === "aqua-city" && landingProject) return <AquaCityDetail project={project} config={config} landing={landingProject} />;
+  if (["aqua-city", "the-global-city", "izumi-city"].includes(slug) && landingProject) {
+    return <RichProjectDetail project={project} config={config} landing={landingProject} />;
+  }
 
   return (
     <main className="mx-auto max-w-5xl px-4 py-10 sm:px-6 lg:px-8">
