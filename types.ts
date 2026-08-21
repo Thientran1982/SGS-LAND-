@@ -278,6 +278,9 @@ export interface Lead {
     // Flexible attributes but prefer strongly typed preferences for matching
     attributes?: Record<string, string | number | boolean | string[]>;
     preferences?: LeadPreferences;
+    marketingEmailConsent?: boolean;
+    marketingEmailConsentAt?: ISOString;
+    marketingEmailConsentSource?: string;
     // Denormalized from latest linked contract (via LATERAL JOIN)
     contractId?: string;
     contractPaymentSchedule?: PaymentMilestone[];

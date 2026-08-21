@@ -24,6 +24,8 @@ interface Project {
   description?: string;
 }
 export function MiniSiteProjectPage({ project }: { project: Project }) {
+  const [lead, setLead] = useState({ name: "", phone: "", email: "", consent: false });
+  const [leadState, setLeadState] = useState("");
   const [filterBR, setFilterBR] = useState<number | null>(null);
   const [filterMaxPrice, setFilterMaxPrice] = useState<number | null>(null);
   const bedroomGroups = useMemo(() => {
@@ -49,6 +51,28 @@ export function MiniSiteProjectPage({ project }: { project: Project }) {
   const uniqueBedrooms = [...new Set(listings.map((l) => l.bedrooms).filter(Boolean))].sort() as number[];
   const minPrice = listings.length ? Math.min(...listings.map((l) => l.price)) : 0;
   const maxPrice = listings.length ? Math.max(...listings.map((l) => l.price)) : 0;
+  const submitLead = async (event: React.FormEvent) => {
+    event.preventDefault();
+    setLeadState("Đang gửi...");
+    try {
+      const response = await fetch(`/api/public/projects/${encodeURIComponent(project.code)}/leads`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name: lead.name,
+          phone: lead.phone,
+          email: lead.email,
+          marketingEmailConsent: lead.consent,
+          source: "public_microsite",
+        }),
+      });
+      const data = await response.json().catch(() => ({}));
+      if (!response.ok) throw new Error(data.error || "Không gửi được yêu cầu");
+      setLeadState(data.deduped ? data.message : "Đã gửi thông tin. Chuyên viên sẽ liên hệ sớm.");
+    } catch (error) {
+      setLeadState(error instanceof Error ? error.message : "Không gửi được yêu cầu");
+    }
+  };
   return (
     <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
       {/* Hero */}
@@ -187,6 +211,28 @@ export function MiniSiteProjectPage({ project }: { project: Project }) {
             Để lại thông tin
           </Link>
         </div>
+        <form onSubmit={submitLead} className="max-w-xl mx-auto mt-6 grid gap-3 text-left">
+          <input required placeholder="Họ và tên" value={lead.name}
+            onChange={(e) => setLead({ ...lead, name: e.target.value })}
+            className="rounded-xl border px-4 py-3 text-sm" />
+          <input required placeholder="Số điện thoại" value={lead.phone}
+            onChange={(e) => setLead({ ...lead, phone: e.target.value })}
+            className="rounded-xl border px-4 py-3 text-sm" />
+          <input type="email" placeholder="Email (không bắt buộc)" value={lead.email}
+            onChange={(e) => setLead({ ...lead, email: e.target.value })}
+            className="rounded-xl border px-4 py-3 text-sm" />
+          <label className="flex gap-2 items-start text-xs" style={{ color: "var(--text-secondary)" }}>
+            <input type="checkbox" checked={lead.consent}
+              onChange={(e) => setLead({ ...lead, consent: e.target.checked })}
+              className="mt-0.5" />
+            <span>Tôi đồng ý nhận email về thông tin dự án, bảng giá và ưu đãi.</span>
+          </label>
+          <button type="submit" className="rounded-xl px-5 py-3 text-sm font-semibold text-white"
+            style={{ background: "var(--primary-600)" }}>
+            Gửi thông tin tư vấn
+          </button>
+          {leadState && <p role="status" className="text-center text-sm" style={{ color: "var(--text-secondary)" }}>{leadState}</p>}
+        </form>
       </div>
     </div>
   );

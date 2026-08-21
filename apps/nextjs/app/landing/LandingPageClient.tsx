@@ -67,6 +67,8 @@ export default function LandingPageClient({ slug }: Props) {
           interests,
           source: `landing-${slug}`,
           project: slug,
+          marketingEmailConsent:
+            (form.elements.namedItem("marketingEmailConsent") as HTMLInputElement)?.checked === true,
         };
         try {
           const res = await fetch("/api/leads", {

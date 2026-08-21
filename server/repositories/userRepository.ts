@@ -29,6 +29,9 @@ export interface UserRow {
   emailVerificationExpires?: string | null;
   departmentId?: string | null;
   departmentName?: string | null;
+  marketingEmailConsent?: boolean;
+  marketingEmailConsentAt?: string | null;
+  marketingEmailConsentSource?: string | null;
 }
 
 export class UserRepository extends BaseRepository {
@@ -106,7 +109,11 @@ export class UserRepository extends BaseRepository {
       const values: any[] = [];
       let paramIndex = 2;
 
-      const allowedFields = ['name', 'role', 'avatar', 'status', 'phone', 'bio', 'metadata', 'permissions', 'departmentId'];
+      const allowedFields = [
+        'name', 'role', 'avatar', 'status', 'phone', 'bio', 'metadata',
+        'permissions', 'departmentId', 'marketingEmailConsent',
+        'marketingEmailConsentAt', 'marketingEmailConsentSource',
+      ];
       for (const field of allowedFields) {
         if ((data as any)[field] !== undefined) {
           updates.push(`${this.camelToSnake(field)} = $${paramIndex}`);

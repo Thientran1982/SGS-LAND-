@@ -447,6 +447,21 @@ export default async function LandingProjectPage({
                   </div>
                 </div>
 
+                <div className="lp-form-full" style={{ marginTop: 12 }}>
+                  <label style={{ display: "flex", gap: 10, alignItems: "flex-start", cursor: "pointer", fontWeight: 400 }}>
+                    <input
+                      name="marketingEmailConsent"
+                      type="checkbox"
+                      value="true"
+                      style={{ marginTop: 3, accentColor: "#0f766e" }}
+                    />
+                    <span>
+                      Tôi đồng ý nhận email về thông tin dự án, bảng giá và ưu đãi từ SGS Land.
+                      Bạn có thể hủy đăng ký bất cứ lúc nào.
+                    </span>
+                  </label>
+                </div>
+
                 <div className="lp-form-full">
                   <label>Quan tâm đến</label>
                   <div className="lp-chips" role="group" aria-label="Loại sản phẩm quan tâm">

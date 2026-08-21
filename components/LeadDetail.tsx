@@ -365,6 +365,24 @@ export const LeadDetail: React.FC<LeadDetailProps> = ({ lead, onClose, onUpdate,
                         <DetailField label={t('leads.email')}>
                             <input value={formData.email || ''} onChange={e => handleInputChange('email', e.target.value)} className={STYLES.INPUT} />
                         </DetailField>
+                        <div className="sm:col-span-2 flex items-start gap-3 rounded-xl border border-[var(--glass-border)] bg-[var(--glass-surface)] p-3">
+                            <input
+                                id="lead-marketing-email-consent"
+                                type="checkbox"
+                                checked={formData.marketingEmailConsent === true}
+                                onChange={e => handleInputChange('marketingEmailConsent', e.target.checked)}
+                                className="mt-1 h-4 w-4 accent-[var(--sgs-primary)]"
+                            />
+                            <label htmlFor="lead-marketing-email-consent" className="text-sm text-[var(--text-secondary)] cursor-pointer">
+                                Đồng ý nhận email marketing
+                                {formData.marketingEmailConsentAt && (
+                                    <span className="block text-xs text-[var(--text-tertiary)] mt-1">
+                                        Ghi nhận: {new Date(formData.marketingEmailConsentAt).toLocaleString('vi-VN')}
+                                        {formData.marketingEmailConsentSource ? ` · Nguồn: ${formData.marketingEmailConsentSource}` : ''}
+                                    </span>
+                                )}
+                            </label>
+                        </div>
                         <DetailField label={t('leads.address')} className="sm:col-span-2">
                             <input value={formData.address || ''} onChange={e => handleInputChange('address', e.target.value)} className={STYLES.INPUT} />
                         </DetailField>

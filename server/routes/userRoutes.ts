@@ -101,6 +101,37 @@ export function createUserRoutes(authenticateToken: any, jwtSecret?: string) {
     }
   });
 
+  router.patch('/:id/marketing-consent', authenticateToken, async (req: Request, res: Response) => {
+    try {
+      const user = (req as any).user;
+      if (!['SUPER_ADMIN', 'ADMIN', 'TEAM_LEAD'].includes(user.role)) {
+        return res.status(403).json({ error: 'Chỉ quản trị viên hoặc trưởng nhóm được cập nhật consent email' });
+      }
+      if (typeof req.body?.consent !== 'boolean') {
+        return res.status(400).json({ error: 'consent phải là true hoặc false' });
+      }
+      const consent = req.body.consent;
+      const updated = await userRepository.update(user.tenantId, String(req.params.id), {
+        marketingEmailConsent: consent,
+        marketingEmailConsentAt: new Date().toISOString(),
+        marketingEmailConsentSource: String(req.body?.source || 'crm').slice(0, 100),
+      });
+      if (!updated) return res.status(404).json({ error: 'Không tìm thấy người dùng' });
+      await auditRepository.log(user.tenantId, {
+        actorId: user.id,
+        action: consent ? 'MARKETING_EMAIL_OPT_IN' : 'MARKETING_EMAIL_OPT_OUT',
+        entityType: 'USER',
+        entityId: String(req.params.id),
+        details: `Marketing email consent=${consent}`,
+        ipAddress: req.ip,
+      });
+      res.json({ ok: true, user: userRepository.toPublicUser(updated) });
+    } catch (error) {
+      console.error('Error updating user marketing email consent:', error);
+      res.status(500).json({ error: 'Không thể cập nhật consent email' });
+    }
+  });
+
   router.post('/', authenticateToken, async (req: Request, res: Response) => {
     try {
       const user = (req as any).user;

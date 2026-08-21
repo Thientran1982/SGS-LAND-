@@ -693,6 +693,9 @@ export function createPublicProjectRoutes(): Router {
       const email = String(body.email || '').trim().slice(0, 200);
       const note = String(body.note || '').trim().slice(0, 1000);
       const interest = String(body.interest || '').trim().slice(0, 200);
+      // Consent is explicit opt-in. Missing or malformed checkbox values are
+      // intentionally treated as opt-out, never as consent.
+      const marketingEmailConsent = body.marketingEmailConsent === true;
 
       if (!name || !phone) {
         return res.status(400).json({
@@ -783,9 +786,11 @@ export function createPublicProjectRoutes(): Router {
           `INSERT INTO leads
              (tenant_id, name, phone, email, source, stage, notes, tags, metadata,
               utm_source, utm_medium, utm_campaign, utm_term, utm_content,
-              landing_page, first_referrer, gclid, fbclid, visitor_id)
+              landing_page, first_referrer, gclid, fbclid, visitor_id,
+              marketing_email_consent, marketing_email_consent_at, marketing_email_consent_source)
              VALUES ($1, $2, $3, $4, $5, 'NEW', $6, $7::jsonb, $8::jsonb,
-                     $9, $10, $11, $12, $13, $14, $15, $16, $17, $18)
+                     $9, $10, $11, $12, $13, $14, $15, $16, $17, $18,
+                     $19, CASE WHEN $19 THEN NOW() ELSE NULL END, CASE WHEN $19 THEN $20 ELSE NULL END)
              RETURNING id`,
           [
             found.tenantId,
@@ -798,6 +803,8 @@ export function createPublicProjectRoutes(): Router {
             JSON.stringify(metadata),
             utm_source, utm_medium, utm_campaign, utm_term, utm_content,
             landing_page, first_referrer, gclid, fbclid, visitor_id,
+            marketingEmailConsent,
+            `public_microsite:${code}`,
           ]
         ));
         leadId = result.rows[0]?.id ?? null;
