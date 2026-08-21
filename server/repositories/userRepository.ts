@@ -126,7 +126,10 @@ export class UserRepository extends BaseRepository {
       if (updates.length === 0) return this.findById(tenantId, id);
 
       const result = await client.query(
-        `UPDATE users SET ${updates.join(', ')} WHERE id = $1 RETURNING *`,
+        `UPDATE users SET ${updates.join(', ')}
+         WHERE id = $1
+           AND tenant_id = current_setting('app.current_tenant_id', true)::uuid
+         RETURNING *`,
         [id, ...values]
       );
       return result.rows[0] ? this.rowToEntity<UserRow>(result.rows[0]) : null;

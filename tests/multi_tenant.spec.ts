@@ -67,6 +67,81 @@ test.describe('Multi-tenant isolation', () => {
     expect(typeof bodyA.totalLeads).toBe('number');
     expect(typeof bodyB.totalLeads).toBe('number');
   });
+
+  test('Public form consent stays with the project tenant', async ({ request }) => {
+    test.skip(
+      !process.env.PUBLIC_PROJECT_CODE_A ||
+        !process.env.PUBLIC_PROJECT_CODE_B ||
+        !process.env.TENANT_A_EMAIL ||
+        !process.env.TENANT_B_EMAIL,
+      'Set PUBLIC_PROJECT_CODE_A/B and tenant credentials to run consent isolation'
+    );
+
+    const tokenA = await loginApi(request, process.env.TENANT_A_EMAIL!, process.env.TENANT_A_PASS!);
+    const tokenB = await loginApi(request, process.env.TENANT_B_EMAIL!, process.env.TENANT_B_PASS!);
+    if (!tokenA || !tokenB) {
+      test.skip(true, 'Login failed — check TENANT credentials');
+      return;
+    }
+
+    const suffix = String(Date.now()).slice(-8);
+    const phoneA = `09${suffix.slice(0, 8)}`;
+    const phoneB = `08${suffix.slice(0, 8)}`;
+    const submit = (code: string, data: Record<string, unknown>) =>
+      request.post(`${BASE_URL}/api/public/projects/${code}/leads`, { data });
+
+    const consentedA = await submit(process.env.PUBLIC_PROJECT_CODE_A!, {
+      name: 'Consent tenant A',
+      phone: phoneA,
+      email: `consent-a-${suffix}@example.test`,
+      marketingEmailConsent: true,
+    });
+    const consentedB = await submit(process.env.PUBLIC_PROJECT_CODE_B!, {
+      name: 'Consent tenant B',
+      phone: phoneB,
+      email: `consent-b-${suffix}@example.test`,
+      marketingEmailConsent: true,
+    });
+    expect(consentedA.status()).toBe(201);
+    expect(consentedB.status()).toBe(201);
+
+    const withoutConsent = await submit(process.env.PUBLIC_PROJECT_CODE_A!, {
+      name: 'No consent tenant A',
+      phone: `07${suffix.slice(0, 8)}`,
+      email: `no-consent-${suffix}@example.test`,
+    });
+    expect(withoutConsent.status()).toBe(201);
+
+    const findLead = async (token: string, phone: string) => {
+      const response = await request.get(
+        `${BASE_URL}/api/leads?search=${encodeURIComponent(phone)}&pageSize=10`,
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      expect(response.status()).toBe(200);
+      const body = await response.json();
+      const lead = body.data?.find((item: any) => item.phone === phone);
+      expect(lead).toBeTruthy();
+      return lead;
+    };
+
+    const leadA = await findLead(tokenA, phoneA);
+    const leadB = await findLead(tokenB, phoneB);
+    const leadWithoutConsent = await findLead(tokenA, `07${suffix.slice(0, 8)}`);
+
+    for (const lead of [leadA, leadB]) {
+      expect(lead.marketingEmailConsent).toBe(true);
+      expect(lead.marketingEmailConsentAt).toBeTruthy();
+      expect(lead.marketingEmailConsentSource).toMatch(/^public_microsite:/);
+    }
+    expect(leadWithoutConsent.marketingEmailConsent).toBe(false);
+    expect(leadWithoutConsent.marketingEmailConsentAt).toBeNull();
+    expect(leadWithoutConsent.marketingEmailConsentSource).toBeNull();
+
+    const crossTenantRead = await request.get(`${BASE_URL}/api/leads/${leadB.id}`, {
+      headers: { Authorization: `Bearer ${tokenA}` },
+    });
+    expect(crossTenantRead.status()).toBe(404);
+  });
 });
 test.describe('API pagination boundaries', () => {
   test('pageSize=0 is handled (defaults to minimum)', async ({ request }) => {
