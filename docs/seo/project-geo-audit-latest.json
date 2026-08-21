@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-08-21T03:00:34.732Z",
+  "generatedAt": "2026-08-21T03:09:03.361Z",
   "base": "http://localhost:5000",
   "methodology": "Rendered HTML audit for project sitemap URLs: status, metadata, H1, direct answer, visible FAQ, JSON-LD and provenance caveat.",
   "total": 17,
@@ -126,7 +126,7 @@
       "description": "Vinhomes Grand Park Quận 9 (TP Thủ Đức): giá căn hộ 2026, mặt bằng phân khu, cho thuê, tiến độ đại đô thị. Nhận báo giá gốc & chính sách SGS Land.",
       "canonical": "https://sgsland.vn/du-an/vinhomes-grand-park",
       "h1": [
-        "Vinhomes Grand Park"
+        "Thông tin dự án Vinhomes Grand Park"
       ],
       "schemaTypes": [
         "WebSite",
@@ -153,7 +153,7 @@
       "description": "Vinhomes Central Park Bình Thạnh: căn hộ từ 4 tỷ, cho thuê từ 15 triệu/tháng, view sông Sài Gòn & Landmark 81. Xem giá & mặt bằng tại SGS Land.",
       "canonical": "https://sgsland.vn/du-an/vinhomes-central-park",
       "h1": [
-        "Vinhomes Central Park Bình Thạnh – Căn hộ Landmark 81"
+        "Thông tin dự án Vinhomes Central Park"
       ],
       "schemaTypes": [
         "WebSite",

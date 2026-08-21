@@ -69,7 +69,11 @@ function Tag({ children, tone = "neutral" }: { children: React.ReactNode; tone?:
 }
 
 function RichProjectDetail({ project, config, landing }: { project: ProjectDetail; config?: ProjectConfig | null; landing: LandingProject }) {
-  const image = project.images?.[0] || `/images/projects/${landing.slug}.jpg`;
+  const image = project.images?.[0] || ({
+    "vinhomes-grand-park": "/images/projects/vinhomes-grand-park.webp",
+    "vinhomes-central-park": "/images/projects/vinhomes-grand-park.webp",
+    "diamond-sky-van-phuc-city": "/images/projects/diamond-sky-van-phuc-city.jpg",
+  }[landing.slug] || `/images/projects/${landing.slug}.jpg`);
   const priceRows = (config?.details || [])
     .filter((row) => /giá|mức giá|price/i.test(row.label))
     .map((row) => ({ k: row.label, v: row.value }));
@@ -196,7 +200,7 @@ function RichProjectDetail({ project, config, landing }: { project: ProjectDetai
 }
 
 export function ProjectDetailPage({ project, slug, config, landingProject }: Props) {
-  if (["aqua-city", "the-global-city", "izumi-city"].includes(slug) && landingProject) {
+  if (["aqua-city", "the-global-city", "izumi-city", "vinhomes-grand-park", "vinhomes-central-park", "diamond-sky-van-phuc-city"].includes(slug) && landingProject) {
     return <RichProjectDetail project={project} config={config} landing={landingProject} />;
   }
 
