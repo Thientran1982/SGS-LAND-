@@ -101,7 +101,7 @@ async function MarketReportContent({ langPromise }: { langPromise: ReturnType<ty
       "@type": "ListItem",
       position: index + 1,
       name: area.area,
-      url: `${SITE_URL}${areaHref(area.slug)}`,
+      url: `${SITE_URL}${en ? `/en${areaHref(area.slug)}` : areaHref(area.slug)}`,
     })),
   };
   const dataset = {
@@ -189,18 +189,18 @@ async function MarketReportContent({ langPromise }: { langPromise: ReturnType<ty
 
         <section className="mt-12" aria-labelledby="bang-chi-so">
           <div className="mb-5">
-            <p className="text-xs font-bold uppercase tracking-[.16em]" style={{ color: "var(--primary-600)" }}>01 · So sánh khu vực</p>
-            <h2 id="bang-chi-so" className="mt-2 text-3xl font-bold" style={{ color: "var(--text-primary)" }}>Bảng chỉ số giá tham khảo</h2>
+            <p className="text-xs font-bold uppercase tracking-[.16em]" style={{ color: "var(--primary-600)" }}>01 · {en ? "Area comparison" : "So sánh khu vực"}</p>
+            <h2 id="bang-chi-so" className="mt-2 text-3xl font-bold" style={{ color: "var(--text-primary)" }}>{en ? "Reference price index table" : "Bảng chỉ số giá tham khảo"}</h2>
             <p className="mt-2 text-sm leading-6" style={{ color: "var(--text-secondary)" }}>
-              Nhấn vào tên khu vực để xem vị trí, loại hình, khoảng giá và checklist xác minh riêng.
+              {en ? "Select an area to view its location, property types, price range and verification checklist." : "Nhấn vào tên khu vực để xem vị trí, loại hình, khoảng giá và checklist xác minh riêng."}
             </p>
           </div>
           <div className="overflow-x-auto rounded-2xl border" style={{ borderColor: "var(--border)", background: "var(--bg-elevated)" }}>
             <table className="w-full min-w-[760px] text-sm">
-              <caption className="sr-only">So sánh giá bất động sản tham khảo theo khu vực</caption>
+              <caption className="sr-only">{en ? "Reference real estate price comparison by area" : "So sánh giá bất động sản tham khảo theo khu vực"}</caption>
               <thead>
                 <tr style={{ background: "var(--ui-surface-subtle)" }}>
-                  {["Khu vực", "Giá tham khảo bình quân", "Biến động so với cùng kỳ", "Khoảng giá tham khảo", "Điểm tham chiếu", "Kỳ dữ liệu"].map((heading) => (
+                  {(en ? ["Area", "Reference average", "Year-on-year movement", "Reference range", "Reference point", "Data period"] : ["Khu vực", "Giá tham khảo bình quân", "Biến động so với cùng kỳ", "Khoảng giá tham khảo", "Điểm tham chiếu", "Kỳ dữ liệu"]).map((heading) => (
                     <th key={heading} className="p-4 text-left font-semibold" style={{ color: "var(--text-primary)" }}>{heading}</th>
                   ))}
                 </tr>
@@ -208,11 +208,11 @@ async function MarketReportContent({ langPromise }: { langPromise: ReturnType<ty
               <tbody>
                 {sorted.map((area) => (
                   <tr key={area.slug} className="border-t" style={{ borderColor: "var(--border)" }}>
-                    <td className="p-4"><Link href={areaHref(area.slug)} className="font-semibold hover:underline" style={{ color: "var(--primary-600)" }}>{area.area}</Link></td>
-                    <td className="p-4 font-semibold" style={{ color: "var(--text-primary)" }}>{area.avgPricePerSqm} triệu/m²</td>
-                    <td className="p-4" style={{ color: "var(--text-secondary)" }}>{typeof area.yoyChangePct === "number" ? `+${area.yoyChangePct}%` : "Chưa có dữ liệu"}</td>
-                    <td className="p-4" style={{ color: "var(--text-secondary)" }}>{area.priceRange ? `${area.priceRange} triệu/m²` : "Chưa xác định"}</td>
-                    <td className="p-4" style={{ color: "var(--text-secondary)" }}>{area.topProject || "Chưa có"}</td>
+                    <td className="p-4"><Link href={href(areaHref(area.slug))} className="font-semibold hover:underline" style={{ color: "var(--primary-600)" }}>{area.area}</Link></td>
+                    <td className="p-4 font-semibold" style={{ color: "var(--text-primary)" }}>{area.avgPricePerSqm} {en ? "million VND/m²" : "triệu/m²"}</td>
+                    <td className="p-4" style={{ color: "var(--text-secondary)" }}>{typeof area.yoyChangePct === "number" ? `+${area.yoyChangePct}%` : en ? "No data" : "Chưa có dữ liệu"}</td>
+                    <td className="p-4" style={{ color: "var(--text-secondary)" }}>{area.priceRange ? `${area.priceRange} ${en ? "million VND/m²" : "triệu/m²"}` : en ? "Not available" : "Chưa xác định"}</td>
+                    <td className="p-4" style={{ color: "var(--text-secondary)" }}>{area.topProject || (en ? "Not available" : "Chưa có")}</td>
                     <td className="p-4" style={{ color: "var(--text-tertiary)" }}>{area.quarter || AREA_META.quarter}</td>
                   </tr>
                 ))}
@@ -220,36 +220,32 @@ async function MarketReportContent({ langPromise }: { langPromise: ReturnType<ty
             </table>
           </div>
           <p className="mt-4 text-xs leading-5" style={{ color: "var(--text-tertiary)" }}>
-            Nguồn hiển thị: bộ dữ liệu khu vực của SGS LAND. Các nhãn “tham khảo” và “điểm tham chiếu” không phải bảng giá, hồ sơ pháp lý hoặc cam kết thanh khoản.
+            {en ? "Source: SGS LAND area dataset. “Reference” labels are not official price lists, legal documents or liquidity commitments." : "Nguồn hiển thị: bộ dữ liệu khu vực của SGS LAND. Các nhãn “tham khảo” và “điểm tham chiếu” không phải bảng giá, hồ sơ pháp lý hoặc cam kết thanh khoản."}
           </p>
         </section>
 
         <div className="mt-12 grid gap-6 lg:grid-cols-2">
           <section id="phuong-phap" className="scroll-mt-24 rounded-2xl border p-6" style={{ borderColor: "var(--border)", background: "var(--bg-elevated)" }}>
-            <p className="text-xs font-bold uppercase tracking-[.16em]" style={{ color: "var(--primary-600)" }}>02 · Phương pháp</p>
-            <h2 className="mt-2 text-2xl font-bold" style={{ color: "var(--text-primary)" }}>Cách đọc và sử dụng dữ liệu</h2>
+            <p className="text-xs font-bold uppercase tracking-[.16em]" style={{ color: "var(--primary-600)" }}>02 · {en ? "Methodology" : "Phương pháp"}</p>
+            <h2 className="mt-2 text-2xl font-bold" style={{ color: "var(--text-primary)" }}>{en ? "How to read and use the data" : "Cách đọc và sử dụng dữ liệu"}</h2>
             <ol className="mt-4 space-y-3 text-sm leading-6" style={{ color: "var(--text-secondary)" }}>
-              <li><strong style={{ color: "var(--text-primary)" }}>Giá bình quân:</strong> dùng để so sánh cấp khu vực, không đại diện cho mọi sản phẩm.</li>
-              <li><strong style={{ color: "var(--text-primary)" }}>Khoảng giá:</strong> là phạm vi tham khảo trong bộ dữ liệu, cần đối chiếu theo loại hình và pháp lý.</li>
-              <li><strong style={{ color: "var(--text-primary)" }}>Biến động cùng kỳ:</strong> là chỉ báo của bộ dữ liệu, không phải dự báo giá tương lai.</li>
+              {en ? <><li><strong style={{ color: "var(--text-primary)" }}>Average price:</strong> compares areas but does not represent every property.</li><li><strong style={{ color: "var(--text-primary)" }}>Price range:</strong> is a dataset reference and must be checked by property type and legal status.</li><li><strong style={{ color: "var(--text-primary)" }}>Year-on-year movement:</strong> is a dataset indicator, not a price forecast.</li></> : <><li><strong style={{ color: "var(--text-primary)" }}>Giá bình quân:</strong> dùng để so sánh cấp khu vực, không đại diện cho mọi sản phẩm.</li><li><strong style={{ color: "var(--text-primary)" }}>Khoảng giá:</strong> là phạm vi tham khảo trong bộ dữ liệu, cần đối chiếu theo loại hình và pháp lý.</li><li><strong style={{ color: "var(--text-primary)" }}>Biến động cùng kỳ:</strong> là chỉ báo của bộ dữ liệu, không phải dự báo giá tương lai.</li></>}
             </ol>
           </section>
           <section id="gioi-han" className="scroll-mt-24 rounded-2xl border p-6" style={{ borderColor: "var(--border)", background: "var(--bg-elevated)" }}>
-            <p className="text-xs font-bold uppercase tracking-[.16em]" style={{ color: "var(--primary-600)" }}>03 · Giới hạn</p>
-            <h2 className="mt-2 text-2xl font-bold" style={{ color: "var(--text-primary)" }}>Điều cần xác minh trước giao dịch</h2>
+            <p className="text-xs font-bold uppercase tracking-[.16em]" style={{ color: "var(--primary-600)" }}>03 · {en ? "Limitations" : "Giới hạn"}</p>
+            <h2 className="mt-2 text-2xl font-bold" style={{ color: "var(--text-primary)" }}>{en ? "What to verify before a transaction" : "Điều cần xác minh trước giao dịch"}</h2>
             <ul className="mt-4 space-y-3 text-sm leading-6" style={{ color: "var(--text-secondary)" }}>
-              <li>Giá chào bán, giá giao dịch và chi phí sở hữu của đúng tài sản.</li>
-              <li>Quy hoạch, pháp lý, thế chấp, điều kiện chuyển nhượng và tiến độ.</li>
-              <li>Ranh khu vực, thời gian di chuyển và tình trạng hạ tầng tại thời điểm xem.</li>
+              {en ? <><li>Asking price, transaction price and ownership costs for the specific asset.</li><li>Planning, legal status, encumbrances, transfer conditions and progress.</li><li>Area boundaries, travel time and infrastructure conditions at the time of review.</li></> : <><li>Giá chào bán, giá giao dịch và chi phí sở hữu của đúng tài sản.</li><li>Quy hoạch, pháp lý, thế chấp, điều kiện chuyển nhượng và tiến độ.</li><li>Ranh khu vực, thời gian di chuyển và tình trạng hạ tầng tại thời điểm xem.</li></>}
             </ul>
           </section>
         </div>
 
         <section className="mt-12" aria-labelledby="faq">
-          <p className="text-xs font-bold uppercase tracking-[.16em]" style={{ color: "var(--primary-600)" }}>04 · Câu hỏi thường gặp</p>
-          <h2 id="faq" className="mt-2 text-3xl font-bold" style={{ color: "var(--text-primary)" }}>Giải đáp về báo cáo thị trường</h2>
+          <p className="text-xs font-bold uppercase tracking-[.16em]" style={{ color: "var(--primary-600)" }}>04 · {en ? "FAQ" : "Câu hỏi thường gặp"}</p>
+          <h2 id="faq" className="mt-2 text-3xl font-bold" style={{ color: "var(--text-primary)" }}>{en ? "Market report FAQs" : "Giải đáp về báo cáo thị trường"}</h2>
           <div className="mt-5 space-y-3">
-            {FAQ_ITEMS.map((item) => (
+            {faqItems.map((item) => (
               <details key={item.question} className="rounded-2xl border px-5 py-4" style={{ borderColor: "var(--border)", background: "var(--bg-elevated)" }}>
                 <summary className="cursor-pointer font-semibold" style={{ color: "var(--text-primary)" }}>{item.question}</summary>
                 <p className="mt-3 text-sm leading-7" style={{ color: "var(--text-secondary)" }}>{item.answer}</p>
@@ -259,9 +255,9 @@ async function MarketReportContent({ langPromise }: { langPromise: ReturnType<ty
         </section>
 
         <footer className="mt-12 flex flex-wrap gap-3">
-          <Link href="/khu-vuc" className="rounded-xl px-6 py-3 font-semibold text-white" style={{ background: "var(--primary-600)" }}>Xem toàn bộ khu vực</Link>
-          <Link href="/ai-valuation" className="rounded-xl border px-6 py-3 font-semibold" style={{ borderColor: "var(--border)", color: "var(--text-primary)" }}>Định giá tham khảo</Link>
-          <Link href="/lai-suat-ngan-hang" className="rounded-xl border px-6 py-3 font-semibold" style={{ borderColor: "var(--border)", color: "var(--text-primary)" }}>Lãi suất & chỉ số vay</Link>
+          <Link href={href("/khu-vuc")} className="rounded-xl px-6 py-3 font-semibold text-white" style={{ background: "var(--primary-600)" }}>{en ? "View all areas" : "Xem toàn bộ khu vực"}</Link>
+          <Link href={href("/ai-valuation")} className="rounded-xl border px-6 py-3 font-semibold" style={{ borderColor: "var(--border)", color: "var(--text-primary)" }}>{en ? "Reference valuation" : "Định giá tham khảo"}</Link>
+          <Link href={href("/lai-suat-ngan-hang")} className="rounded-xl border px-6 py-3 font-semibold" style={{ borderColor: "var(--border)", color: "var(--text-primary)" }}>{en ? "Rates & financing index" : "Lãi suất & chỉ số vay"}</Link>
         </footer>
       </div>
     </main>
