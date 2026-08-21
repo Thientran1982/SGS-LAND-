@@ -203,12 +203,12 @@ export const GuideAssistant: React.FC = () => {
             <button
                 type="button"
                 onClick={() => setOpen(value => !value)}
-                className="fixed bottom-4 right-4 sm:right-6 z-[139] flex h-12 items-center gap-2 rounded-full bg-[var(--sgs-primary)] px-4 text-sm font-bold text-white shadow-lg shadow-[var(--sgs-primary)]/25 transition-transform hover:scale-[1.02] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--sgs-primary)] focus-visible:ring-offset-2"
+                className="group fixed bottom-4 right-4 sm:right-6 z-[139] flex h-12 w-12 items-center justify-center gap-2 overflow-hidden rounded-full bg-[var(--sgs-primary)] px-3 text-sm font-bold text-white shadow-lg shadow-[var(--sgs-primary)]/25 transition-[width,transform] duration-200 hover:w-auto hover:scale-[1.02] focus-visible:w-auto focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--sgs-primary)] focus-visible:ring-offset-2"
                 aria-label={open ? copy.close : copy.open}
                 title={open ? copy.close : copy.open}
             >
                 {open ? <ChevronDown size={18} /> : <MessageCircle size={18} />}
-                <span className="hidden sm:inline">{copy.title}</span>
+                <span className="max-w-0 overflow-hidden whitespace-nowrap opacity-0 transition-[max-width,opacity] duration-200 group-hover:max-w-[10rem] group-hover:opacity-100 group-focus-visible:max-w-[10rem] group-focus-visible:opacity-100">{copy.title}</span>
             </button>
         </>
     );
