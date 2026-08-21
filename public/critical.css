@@ -325,6 +325,36 @@ html.dark .logo-adaptive { filter: brightness(0) invert(1); }
 .sgs-pin-sale    { background-color: #1b3a5c !important; }
 .sgs-pin-rent    { background-color: #7c3aed !important; }
 .sgs-pin-project { background-color: #2563eb !important; }
+
+/* Marketplace price pills — match the public Next.js map. */
+.sgs-market-pin-container {
+  background: transparent !important;
+  border: none !important;
+  overflow: visible !important;
+}
+.sgs-market-pin {
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  min-width: 64px;
+  height: 24px;
+  box-sizing: border-box !important;
+  padding: 4px 9px !important;
+  border-radius: 999px !important;
+  background: var(--pin-bg, #1b3a5c) !important;
+  color: #fff !important;
+  border: 2px solid #c8963e !important;
+  box-shadow: 0 2px 6px var(--pin-glow, rgba(0,0,0,.28)) !important;
+  white-space: nowrap !important;
+  font: 700 12px/1 system-ui,-apple-system,sans-serif !important;
+  cursor: pointer !important;
+  transition: transform .15s ease, box-shadow .15s ease !important;
+}
+.sgs-market-pin:hover,
+.sgs-market-pin-active {
+  transform: scale(1.08);
+  box-shadow: 0 4px 12px var(--pin-glow, rgba(0,0,0,.32)) !important;
+}
 /* Tail triangles — box-sizing:content-box is critical: Leaflet's .leaflet-container*
    rule sets box-sizing:border-box globally, which collapses width:0/height:0 borders
    to nothing, breaking the CSS border-trick triangle. content-box overrides this. */

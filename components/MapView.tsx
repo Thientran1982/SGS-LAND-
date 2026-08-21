@@ -254,23 +254,12 @@ function priceIcon(label: string, approximate: boolean, transaction?: string, ac
     const shadow = active
         ? `drop-shadow(0 0 0 2.5px #fff) drop-shadow(0 6px 18px ${glow})`
         : `drop-shadow(0 2px 8px ${glow})`;
-    const colorClass  = pinColorClass(transaction, propertyType);
-    const activeClass = active ? ' sgs-pin-active' : '';
     const approx = approximate ? '<span style="opacity:0.72;font-size:10px;margin-right:2px">~</span>' : '';
-    // SVG triangle instead of CSS border-trick: the border trick is unreliable inside
-    // Leaflet because .leaflet-container* sets box-sizing:border-box globally, which
-    // collapses width:0/height:0 elements' borders to nothing regardless of !important.
-    // An inline SVG is 100% reliable — it is not affected by any CSS box-model rules.
     return L.divIcon({
-        className: 'custom-map-pin-container',
-        html: `<div class="sgs-pin-outer${activeClass}" style="filter:${shadow};">` +
-              `<div class="sgs-pin-bubble ${colorClass}${activeClass}">${approx}${label}</div>` +
-              `<svg width="20" height="11" viewBox="0 0 20 11" xmlns="http://www.w3.org/2000/svg" style="display:block;margin-top:-1px;flex-shrink:0;">` +
-              `<polygon points="0,0 20,0 10,11" fill="${bg}"/>` +
-              `</svg>` +
-              `</div>`,
-        iconSize: [0, 0],
-        iconAnchor: [0, 0],
+        className: 'sgs-market-pin-container',
+        html: `<div class="sgs-market-pin${active ? ' sgs-market-pin-active' : ''}" style="--pin-bg:${bg};--pin-glow:${glow};filter:${shadow};">${approx}${label}</div>`,
+        iconSize: [64, 26],
+        iconAnchor: [32, 13],
     });
 }
 function clusterIcon(count: number, dominantTx?: string, language = 'vn'): L.DivIcon {
@@ -344,13 +333,10 @@ const MapView: React.FC<MapViewProps> = memo(({
                 // by zeroing _animatingZoom before removal.
             });
             L.control.zoom({ position: detailStyle ? 'topleft' : 'bottomright' }).addTo(map);
-            // Detail maps use the same pale Carto Light treatment as the public Next.js page.
-            // Marketplace keeps Voyager because its price pins need stronger map contrast.
-            L.tileLayer(detailStyle
-                ? 'https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png'
-                : 'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
+            // Use the same neutral OSM treatment as the public Next.js marketplace map.
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
                 subdomains: 'abcd', maxZoom: 20,
-                attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OSM</a> &copy; <a href="https://carto.com/">CARTO</a>',
+                attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OSM</a>',
             }).addTo(map);
             const lg = L.layerGroup().addTo(map);
             layerGroup.current = lg;
