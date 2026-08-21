@@ -56,6 +56,21 @@ function formatUnitPrice(price: number, area?: number, g: L = "vi"): string {
   return g === "en" ? `${unitPrice.toFixed(1)}M/m²` : `${unitPrice.toFixed(1)} triệu/m²`;
 }
 
+const LEGAL_INFO_LABELS: Record<string, [string, string]> = {
+  Contract: ["HĐMB", "Sale contract"],
+  PinkBook: ["Sổ Hồng", "Pink book"],
+  RedBook: ["Sổ Đỏ", "Red book"],
+  Handover: ["Đã bàn giao", "Handed over"],
+  Waiting: ["Đang chờ sổ", "Title pending"],
+};
+
+function formatLegalInfo(value: unknown, lang: L): string {
+  const key = String(value ?? "").trim();
+  if (!key || key === "Available" || key === "Updating") return "";
+  const label = LEGAL_INFO_LABELS[key];
+  return label ? (lang === "en" ? label[1] : label[0]) : key;
+}
+
 function TimePicker({ value, onChange, lang }: { value: string; onChange: (value: string) => void; lang: L }) {
   const [open, setOpen] = useState(false);
   const rootRef = useRef<HTMLDivElement>(null);
@@ -199,6 +214,8 @@ export function ListingDetailPage({ listing, similarListings }: Props) {
   const [bk, setBk] = useState({ name: "", phone: "", date: "", time: "09:00", notes: "" });
   const [bkState, setBkState] = useState({ loading: false, ok: "", err: "" });
   const listingCode = listing.code || listing.id;
+  const legalInfo = formatLegalInfo(listing.legalStatus || listing.attributes?.legalStatus, lang);
+  const locationInfo = String(listing.location || "").trim();
   const engagementRef = useRef({ startedAt: 0, maxScroll: 0, leaveSent: false, exitShown: false });
 
   // Favourites persist locally so the heart survives a reload (no public API).
@@ -499,22 +516,22 @@ export function ListingDetailPage({ listing, similarListings }: Props) {
             </p>
           </div>
            <LoanCalculator price={listing.price} listingCode={listingCode} />
-           {(listing.legalStatus || attr.legalStatus || listing.location || similarListings.length > 0) && (
+           {(legalInfo || locationInfo || similarListings.length > 0) && (
              <div className="p-5 rounded-2xl" style={{ background: "var(--bg-elevated)", border: "1px solid var(--border-default)" }}>
                <h3 className="text-sm font-bold mb-3" style={{ color: "var(--text-primary)" }}>
                  {tt(lang, "Thông tin bạn có thể cần", "Helpful information")}
                </h3>
                <div className="space-y-2 text-sm" style={{ color: "var(--text-secondary)" }}>
-                 {(listing.legalStatus || attr.legalStatus) && (
+                 {legalInfo && (
                    <div className="flex items-start justify-between gap-3">
                      <span>{tt(lang, "Pháp lý", "Legal status")}</span>
-                     <strong style={{ color: "var(--text-primary)" }}>{listing.legalStatus || attr.legalStatus}</strong>
+                     <strong style={{ color: "var(--text-primary)" }}>{legalInfo}</strong>
                    </div>
                  )}
-                 {listing.location && (
+                 {locationInfo && (
                    <div className="flex items-start justify-between gap-3">
                      <span>{tt(lang, "Khu vực", "Area")}</span>
-                     <strong className="text-right" style={{ color: "var(--text-primary)" }}>{listing.location}</strong>
+                     <strong className="text-right" style={{ color: "var(--text-primary)" }}>{locationInfo}</strong>
                    </div>
                  )}
                  {similarListings.length > 0 && (
