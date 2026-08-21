@@ -2863,7 +2863,9 @@ app.get('/api/public/listings/:slugId', apiRateLimit, async (req: express.Reques
       const result = await liveChatEngine.callTool('get_project_listings', {
         tenantId:    PUBLIC_TENANT,
         projectCode: String(projectCode),
-        bedrooms:    bedrooms ?? pn,
+        bedrooms:    (bedrooms ?? pn) != null
+          ? publicFiniteNumber(bedrooms ?? pn, 1)
+          : undefined,
         priceMin:    publicFiniteNumber(priceMin, 0),
         priceMax:    publicFiniteNumber(priceMax, 0),
         tower:       tower ?? block,

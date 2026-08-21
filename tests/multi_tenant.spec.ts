@@ -197,4 +197,38 @@ test.describe('API pagination boundaries', () => {
     expect(Array.isArray(body.projects)).toBeTruthy();
     expect(body.projects.length).toBeLessThanOrEqual(8);
   });
+  test('live-chat project listings keep malformed filters bounded', async ({ request }) => {
+    const res = await request.get(
+      `${BASE_URL}/api/public/livechat/project-listings?projectCode=__malformed-filter-regression__&bedrooms=NaN&priceMin=not-a-number&priceMax=-999&limit=999999&page=-10&noCache=true`
+    );
+    expect(res.status()).toBe(200);
+    const body = await res.json();
+    expect(Array.isArray(body.listings)).toBeTruthy();
+    expect(body.listings.length).toBeLessThanOrEqual(100);
+    expect(body.page).toBe(1);
+  });
+  test('live-chat dynamic search keeps malformed filters bounded', async ({ request }) => {
+    const res = await request.get(
+      `${BASE_URL}/api/public/livechat/search-dynamic?query=__malformed-filter-regression__&bedrooms=NaN&priceMin=not-a-number&priceMax=-999&limit=999999&page=not-a-number&noCache=true`
+    );
+    expect(res.status()).toBe(200);
+    const body = await res.json();
+    expect(Array.isArray(body.listings)).toBeTruthy();
+    expect(body.listings.length).toBeLessThanOrEqual(20);
+    expect(body.page).toBe(1);
+  });
+  test('live-chat project info keeps malformed listing limits bounded', async ({ request }) => {
+    const projectCode = process.env.PUBLIC_PROJECT_CODE_A || '__missing-project__';
+    const res = await request.get(
+      `${BASE_URL}/api/public/livechat/project-info/${encodeURIComponent(projectCode)}?listingLimit=not-a-number&withListings=true&noCache=true`
+    );
+    expect([200, 404]).toContain(res.status());
+    const body = await res.json();
+    if (res.status() === 200) {
+      expect(Array.isArray(body.listings)).toBeTruthy();
+      expect(body.listings.length).toBeLessThanOrEqual(20);
+    } else {
+      expect(body.found).toBe(false);
+    }
+  });
 });
