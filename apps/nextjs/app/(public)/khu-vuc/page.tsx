@@ -17,6 +17,7 @@ const AREA_DETAIL_SLUGS = new Set([
   "bat-dong-san-can-gio",
   "bat-dong-san-hoc-mon",
   "bat-dong-san-binh-duong",
+  "bat-dong-san-phu-nhuan",
 ]);
 
 function areaHref(slug: string) {

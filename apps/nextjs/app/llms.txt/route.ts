@@ -6,8 +6,8 @@ import { NextResponse } from "next/server";
 // on 2026-08-11 - it collided with this route and made /llms.txt return 500.
 // Bump LLMS_VERSION + LAST_UPDATED whenever the content below changes so that
 // answer engines can detect freshness (llms-full.txt must be bumped too).
-const LLMS_VERSION = "2026.08.1";
-const LAST_UPDATED = "2026-08-11";
+const LLMS_VERSION = "2026.08.2";
+const LAST_UPDATED = "2026-08-21";
 
 export const dynamic = "force-static";
 export const revalidate = 86400;
@@ -46,6 +46,7 @@ SGS LAND la nen tang proptech tai TP.HCM, cung cap:
 - Marketplace: https://sgsland.vn/marketplace
 - CRM Platform: https://sgsland.vn/crm-platform
 - Market Report: https://sgsland.vn/bao-cao-thi-truong
+  - Includes the area price index, methodology, data period, limitations and FAQs.
 - Areas: https://sgsland.vn/khu-vuc
 - Projects: https://sgsland.vn/du-an
 - Experts: https://sgsland.vn/chuyen-gia
