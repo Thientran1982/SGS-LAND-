@@ -13,7 +13,7 @@ import {
   Sparkles,
 } from "lucide-react";
 import type { LandingProject } from "@/data/landing-projects";
-import { PROJECT_DETAIL_EN } from "@/data/project-detail-en";
+import { PROJECT_DETAIL_EN, type ProjectDetailEnglishCopy } from "@/data/project-detail-en";
 import { PROJECT_CONFIG_EN } from "@/data/project-config-en";
 import { useLang } from "@/components/shared/useLang";
 import { tt } from "@/lib/i18n";
@@ -89,7 +89,30 @@ const AREA_DETAIL_SLUGS = new Set([
 
 function RichProjectDetail({ project, config, landing }: { project: ProjectDetail; config?: ProjectConfig | null; landing: LandingProject }) {
   const lang = useLang();
-  const englishCopy = lang === "en" ? PROJECT_DETAIL_EN[landing.slug] : null;
+  const isArea = AREA_DETAIL_SLUGS.has(landing.slug);
+  const areaEnglishCopy: ProjectDetailEnglishCopy | null = lang === "en" && isArea ? {
+    eyebrow: "Area reference",
+    desc: `Reference information about ${landing.titleShort}: location, products, pricing and verification points. Always confirm current documents and terms for the specific property.`,
+    heroImageAlt: `${landing.titleShort} area reference`,
+    heroSub: "Area reference",
+    heroMeta: `Reference location: ${landing.heroMeta}`,
+    overviewParas: [
+      `${landing.titleShort} is presented as an area-level real estate reference page, not as a single development or a guarantee of pricing, legal status or returns.`,
+      "Use this page to understand the area, then verify the exact property, planning information, legal documents, asking price and operating status before making a transaction.",
+    ],
+    entityTable: landing.entityTable.map((row) => ({
+      ...row,
+      k: row.k.replace(/^Khu vực$/i, "Area").replace(/^Vị trí$/i, "Location").replace(/^Giá tham khảo$/i, "Reference price").replace(/^Khoảng giá$/i, "Reference range").replace(/^Loại hình$/i, "Property types").replace(/^Điểm tham chiếu$/i, "Reference point").replace(/^Kỳ dữ liệu$/i, "Data period"),
+    })),
+    locationIntro: `Reference location for ${landing.titleShort}: ${landing.heroMeta}`,
+    faq: [],
+    navLinks: landing.navLinks.map((link) => ({
+      href: link.href,
+      label: link.label.replace(/^Tổng quan$/i, "Overview").replace(/^Thông tin$/i, "Identity").replace(/^Vị trí$/i, "Location").replace(/^Sản phẩm & giá$/i, "Products & pricing").replace(/^Tiện ích & kết nối$/i, "Amenities & connectivity").replace(/^FAQ$/i, "FAQ"),
+    })),
+    stats: landing.stats,
+  } : null;
+  const englishCopy = lang === "en" ? (PROJECT_DETAIL_EN[landing.slug] || areaEnglishCopy) : null;
   const englishConfig = lang === "en" ? PROJECT_CONFIG_EN[landing.slug] : null;
   const image = project.images?.[0] || ({
     "manhattan": "/images/projects/masterise-homes.webp",
@@ -131,7 +154,7 @@ function RichProjectDetail({ project, config, landing }: { project: ProjectDetai
       <div className="mx-auto max-w-6xl px-4 py-6 sm:px-6 sm:py-10 lg:px-8">
         <nav aria-label="Breadcrumb" className="mb-6 flex flex-wrap items-center gap-2 text-xs" style={{ color: "var(--text-tertiary)" }}>
           <Link href="/" className="hover:underline">{tt(lang, "Trang chủ", "Home")}</Link><span>/</span>
-           <Link href={AREA_DETAIL_SLUGS.has(landing.slug) ? "/khu-vuc" : "/du-an"} className="hover:underline">{AREA_DETAIL_SLUGS.has(landing.slug) ? tt(lang, "Khu vực", "Areas") : tt(lang, "Dự án", "Projects")}</Link><span>/</span>
+           <Link href={AREA_DETAIL_SLUGS.has(landing.slug) ? (lang === "en" ? "/en/khu-vuc" : "/khu-vuc") : (lang === "en" ? "/en/du-an" : "/du-an")} className="hover:underline">{AREA_DETAIL_SLUGS.has(landing.slug) ? tt(lang, "Khu vực", "Areas") : tt(lang, "Dự án", "Projects")}</Link><span>/</span>
           <span style={{ color: "var(--text-primary)" }}>{project.name}</span>
         </nav>
 
