@@ -290,24 +290,24 @@ export function ListingDetailPage({ listing, similarListings }: Props) {
               const LEGAL: Record<string, string> = lang === "en"
                 ? { Contract: "Sale contract", PinkBook: "Pink book", RedBook: "Red book", Handover: "Handed over", Waiting: "Title pending", Available: "Updating" }
                 : { Contract: "HĐMB", PinkBook: "Sổ Hồng", RedBook: "Sổ Đỏ", Handover: "Bàn giao", Waiting: "Chờ sổ", Available: "Đang cập nhật" };
-              const items = [
-                { label: tt(lang, "Diện tích", "Land area"), value: listing.area ? listing.area + " m²" : "--" },
-                { label: tt(lang, "DT xây dựng", "Built-up area"), value: listing.builtArea ? listing.builtArea + " m²" : "--" },
-                { label: tt(lang, "Mặt tiền", "Frontage"), value: attr.frontage ? attr.frontage + "m" : "--" },
-                { label: tt(lang, "Lộ giới", "Road width"), value: attr.roadWidth ? attr.roadWidth + "m" : "--" },
-                { label: tt(lang, "Hướng", "Direction"), value: attr.direction ? (DIR[attr.direction] || attr.direction) : "--" },
-                { label: tt(lang, "Pháp lý", "Legal status"), value: attr.legalStatus ? (LEGAL[attr.legalStatus] || attr.legalStatus) : "--" },
-              ];
-              return (
-                <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 mb-6">
-                  {items.map((a, i) => (
-                    <div key={i} className="p-4 rounded-xl" style={{ background: "var(--bg-elevated)", border: "1px solid var(--border-default)" }}>
-                      <div className="text-[12px] uppercase font-semibold mb-1" style={{ color: "var(--text-tertiary)" }}>{a.label}</div>
-                      <div className="text-base font-bold truncate" style={{ color: "var(--text-primary)" }}>{a.value}</div>
-                    </div>
-                  ))}
-                </div>
-              );
+               const items = [
+                 { label: tt(lang, "Diện tích", "Land area"), value: listing.area ? listing.area + " m²" : "" },
+                 { label: tt(lang, "DT xây dựng", "Built-up area"), value: listing.builtArea ? listing.builtArea + " m²" : "" },
+                 { label: tt(lang, "Mặt tiền", "Frontage"), value: attr.frontage ? attr.frontage + "m" : "" },
+                 { label: tt(lang, "Lộ giới", "Road width"), value: attr.roadWidth ? attr.roadWidth + "m" : "" },
+                 { label: tt(lang, "Hướng", "Direction"), value: attr.direction ? (DIR[attr.direction] || attr.direction) : "" },
+                 { label: tt(lang, "Pháp lý", "Legal status"), value: attr.legalStatus ? (LEGAL[attr.legalStatus] || attr.legalStatus) : "" },
+               ].filter((item) => item.value);
+               return items.length > 0 ? (
+                 <div className="grid grid-cols-2 gap-3 mb-6 sm:grid-cols-3">
+                   {items.map((a) => (
+                     <div key={a.label} className="p-4 rounded-xl" style={{ background: "var(--bg-elevated)", border: "1px solid var(--border-default)" }}>
+                       <div className="text-[12px] uppercase font-semibold mb-1" style={{ color: "var(--text-tertiary)" }}>{a.label}</div>
+                       <div className="text-base font-bold truncate" style={{ color: "var(--text-primary)" }}>{a.value}</div>
+                     </div>
+                   ))}
+                 </div>
+               ) : null;
             })()}
             {/* Description */}
             {(listing.description || attr.description) && (
