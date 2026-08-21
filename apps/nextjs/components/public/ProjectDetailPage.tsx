@@ -124,7 +124,7 @@ function RichProjectDetail({ project, config, landing }: { project: ProjectDetai
       href: link.href,
       label: link.label.replace(/^Tổng quan$/i, "Overview").replace(/^Thông tin$/i, "Identity").replace(/^Vị trí$/i, "Location").replace(/^Sản phẩm & giá$/i, "Products & pricing").replace(/^Tiện ích & kết nối$/i, "Amenities & connectivity").replace(/^FAQ$/i, "FAQ"),
     })),
-    stats: landing.stats.map((stat) => ({ ...stat, lbl: translateAreaLabel(stat.lbl) })),
+    stats: landing.stats.map((stat) => ({ ...stat, num: translateAreaValue(stat.num), lbl: translateAreaLabel(stat.lbl) })),
   } : null;
   const englishCopy = lang === "en" ? (PROJECT_DETAIL_EN[landing.slug] || areaEnglishCopy) : null;
   const areaAmenityText: Record<string, string[]> = {
