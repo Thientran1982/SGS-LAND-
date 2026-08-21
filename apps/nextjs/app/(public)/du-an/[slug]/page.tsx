@@ -123,7 +123,7 @@ function getAquaStyleLanding(slug: string): LandingProject | null {
     heroGradient: "linear-gradient(rgba(6,48,31,.72),rgba(6,48,31,.55))",
     theme: { primary: "#0B3B32", deep: "#062F25", soft: "#E6F0EC", gold: "#C6923D", goldSoft: "#E7C98A", cream: "#F5F1E6" },
     geo,
-    stats: stats.length ? stats : [{ num: config.scale, lbl: "Quy mô" }],
+    stats: stats.length ? stats : [{ num: project.scale || "Cần xác minh", lbl: "Quy mô" }],
     heroH1: projectName,
     heroSub: description,
     heroMeta: `${developer} | ${location} | ${project.scale || "Quy mô cần xác minh"}`,

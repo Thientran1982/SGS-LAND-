@@ -213,7 +213,7 @@ function RichProjectDetail({ project, config, landing }: { project: ProjectDetai
 }
 
 export function ProjectDetailPage({ project, slug, config, landingProject }: Props) {
-  if (["aqua-city", "the-global-city", "izumi-city", "vinhomes-grand-park", "vinhomes-central-park", "diamond-sky-van-phuc-city", "manhattan", "thu-thiem", "son-kim-land"].includes(slug) && landingProject) {
+  if (["aqua-city", "the-global-city", "izumi-city", "vinhomes-grand-park", "vinhomes-central-park", "diamond-sky-van-phuc-city", "manhattan", "thu-thiem", "son-kim-land", "vinhomes-can-gio", "sala", "vinhomes-hoc-mon"].includes(slug) && landingProject) {
     return <RichProjectDetail project={project} config={config} landing={landingProject} />;
   }
 
