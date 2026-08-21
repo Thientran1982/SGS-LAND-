@@ -82,6 +82,9 @@ const AQUA_STYLE_DETAIL_SLUGS = new Set([
   "bat-dong-san-quan-7",
   "bat-dong-san-long-an",
   "bat-dong-san-dong-nai",
+  "nha-pho-trung-tam",
+  "bat-dong-san-thu-duc",
+  "bat-dong-san-long-thanh",
 ]);
 
 const AREA_DETAIL_SLUGS = new Set([

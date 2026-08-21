@@ -36,13 +36,13 @@ const FOOTER_ABOUT = [
   { vi: "Tuyển dụng",       en: "Careers",              href: "/careers" },
   { vi: "Liên hệ",          en: "Contact",              href: "/contact" },
   { vi: "Chủ đầu tư",       en: "Developers",           href: "/chu-dau-tu" },
-  { vi: "BĐS Thủ Đức",      en: "Thu Duc Properties",   href: "/bat-dong-san-thu-duc" },
-  { vi: "BĐS Long Thành",    en: "Long Thanh Properties", href: "/bat-dong-san-long-thanh" },
+  { vi: "BĐS Thủ Đức",      en: "Thu Duc Properties",   href: "/khu-vuc/bat-dong-san-thu-duc" },
+  { vi: "BĐS Long Thành",    en: "Long Thanh Properties", href: "/khu-vuc/bat-dong-san-long-thanh" },
   { vi: "BĐS Đồng Nai",      en: "Dong Nai Properties",  href: "/khu-vuc/bat-dong-san-dong-nai" },
   { vi: "BĐS Bình Thạnh",    en: "Binh Thanh Properties", href: "/khu-vuc/bat-dong-san-binh-thanh" },
   { vi: "BĐS Quận 7",        en: "District 7 Properties", href: "/khu-vuc/bat-dong-san-quan-7" },
   { vi: "BĐS Long An",       en: "Long An Properties",   href: "/khu-vuc/bat-dong-san-long-an" },
-  { vi: "Nhà phố Trung Tâm",  en: "Central Townhouses",   href: "/du-an/nha-pho-trung-tam" },
+  { vi: "Nhà phố Trung Tâm",  en: "Central Townhouses",   href: "/khu-vuc/nha-pho-trung-tam" },
   { vi: "Trạng thái hệ thống", en: "System Status",        href: "/status" },
 ];
 const LEGAL_LINKS = [

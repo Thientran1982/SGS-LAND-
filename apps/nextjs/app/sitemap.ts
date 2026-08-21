@@ -20,9 +20,9 @@ const now = new Date("2026-08-21T00:00:00Z");
     { url: `${BASE}/help-center`,                 lastModified: now, changeFrequency: "weekly",  priority: 0.6 },
     // Local landing pages
     { url: `${BASE}/khu-vuc/bat-dong-san-dong-nai`, lastModified: now, changeFrequency: "weekly", priority: 0.7 },
-    { url: `${BASE}/bat-dong-san-long-thanh`,     lastModified: now, changeFrequency: "weekly",  priority: 0.7 },
+    { url: `${BASE}/khu-vuc/bat-dong-san-long-thanh`, lastModified: now, changeFrequency: "weekly", priority: 0.7 },
     { url: `${BASE}/bat-dong-san-nhon-trach`,     lastModified: now, changeFrequency: "weekly",  priority: 0.7 },
-    { url: `${BASE}/bat-dong-san-thu-duc`,        lastModified: now, changeFrequency: "weekly",  priority: 0.7 },
+    { url: `${BASE}/khu-vuc/bat-dong-san-thu-duc`, lastModified: now, changeFrequency: "weekly", priority: 0.7 },
     { url: `${BASE}/bat-dong-san-binh-duong`,     lastModified: now, changeFrequency: "weekly",  priority: 0.7 },
     { url: `${BASE}/khu-vuc/bat-dong-san-quan-7`, lastModified: now, changeFrequency: "weekly", priority: 0.7 },
     { url: `${BASE}/bat-dong-san-phu-nhuan`,      lastModified: now, changeFrequency: "weekly",  priority: 0.7 },
