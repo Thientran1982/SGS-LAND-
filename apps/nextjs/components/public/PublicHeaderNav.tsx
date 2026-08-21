@@ -5,7 +5,7 @@ import Link from "next/link";
 import { useState, useEffect } from "react";
 import { createPortal } from "react-dom";
 import { usePathname } from "next/navigation";
-import { useLang, switchLangPath } from "@/components/shared/useLang";
+import { useLang, switchLangPath, VI_PUBLIC_PATHS } from "@/components/shared/useLang";
 import { Sun, Moon, Globe, User, Menu, X, Sparkles, ChevronDown } from "lucide-react";
 
 type Lang = "vi" | "en";
@@ -73,7 +73,10 @@ export function PublicHeader({ authed = false }: { authed?: boolean }) {
     { href: "/news",                 vi: "Tin Tức",      en: "News"         },
     { href: "/contact",              vi: "Liên Hệ",      en: "Contact"      },
   ];
-  const localizedHref = (href: string) => lang === "en" ? "/en" + href : href;
+  const localizedHref = (href: string) => {
+    const viPath = VI_PUBLIC_PATHS[href] || href;
+    return lang === "en" ? "/en" + href : viPath;
+  };
 
   const isHero = false; // hero is light — always use the light header treatment
 

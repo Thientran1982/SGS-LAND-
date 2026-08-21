@@ -1,0 +1,1 @@
+export { default, generateMetadata, dynamic } from "../news/page";

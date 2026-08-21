@@ -16,7 +16,7 @@ import { getBreadcrumbSchema, SITE_URL } from "@/lib/schema";
 import { getLang } from "@/lib/lang";
 export async function generateMetadata(): Promise<Metadata> {
   const en = (await getLang()) === "en";
-  const url = `${SITE_URL}${en ? "/en" : ""}/news`;
+  const url = `${SITE_URL}${en ? "/en/news" : "/tin-tuc"}`;
   const title = en ? "Real Estate Knowledge & News | SGS LAND Experts" : "Kiến Thức & Tin Tức BĐS | Chuyên gia SGS LAND";
   const description = en
     ? "In-depth real estate market analysis, legal guidance and investment knowledge from SGS LAND experts."
@@ -52,7 +52,7 @@ function ArticleCard({ article, prefix = "", lang = "vi" }: { article: Article; 
       style={{ background: "var(--bg-elevated)", border: "1px solid var(--border-default)" }}
       itemScope      itemType="https://schema.org/Article"
     >
-      <Link href={`${prefix}/news/${article.slug}`} className="block aspect-[16/9] relative overflow-hidden shrink-0" tabIndex={-1} aria-hidden>
+      <Link href={`${prefix}/${article.slug}`} className="block aspect-[16/9] relative overflow-hidden shrink-0" tabIndex={-1} aria-hidden>
         <Image
           src={article.coverImage}
           alt={article.title}
@@ -85,7 +85,7 @@ function ArticleCard({ article, prefix = "", lang = "vi" }: { article: Article; 
           style={{ color: "var(--text-primary)" }}
           itemProp="headline"
         >
-          <Link href={`${prefix}/news/${article.slug}`}>{article.title}</Link>
+          <Link href={`${prefix}/${article.slug}`}>{article.title}</Link>
         </h2>
         <p className="text-sm leading-relaxed mb-4 line-clamp-2" style={{ color: "var(--text-secondary)" }} itemProp="description">
           {article.excerpt}
@@ -102,7 +102,7 @@ function ArticleCard({ article, prefix = "", lang = "vi" }: { article: Article; 
               </span>
             </div>
           )}
-          <Link href={`${prefix}/news/${article.slug}`} className="flex items-center gap-1 text-xs font-semibold"
+          <Link href={`${prefix}/${article.slug}`} className="flex items-center gap-1 text-xs font-semibold"
             style={{ color: "var(--primary-600)" }}>
             {lang === "en" ? "Read more" : "Đọc tiếp"} <ArrowRight className="w-3 h-3" />
           </Link>
@@ -120,7 +120,7 @@ function FeaturedArticle({ article, prefix = "", lang = "vi" }: { article: Artic
       className="group grid grid-cols-1 md:grid-cols-2 gap-0 rounded-2xl overflow-hidden mb-10"
       style={{ background: "var(--bg-elevated)", border: "1px solid var(--border-default)" }}
     >
-      <Link href={`${prefix}/news/${article.slug}`} className="block aspect-video md:aspect-auto relative overflow-hidden" aria-hidden tabIndex={-1}>
+      <Link href={`${prefix}/${article.slug}`} className="block aspect-video md:aspect-auto relative overflow-hidden" aria-hidden tabIndex={-1}>
         <Image
           src={article.coverImage}
           alt={article.title}
@@ -143,7 +143,7 @@ function FeaturedArticle({ article, prefix = "", lang = "vi" }: { article: Artic
         )}
         <h2 className="text-xl sm:text-2xl font-extrabold leading-tight mb-3 group-hover:text-sgs-primary transition-colors"
           style={{ color: "var(--text-primary)" }}>
-          <Link href={`${prefix}/news/${article.slug}`}>{article.title}</Link>
+          <Link href={`${prefix}/${article.slug}`}>{article.title}</Link>
         </h2>
         <p className="text-sm leading-relaxed mb-5 line-clamp-3" style={{ color: "var(--text-secondary)" }}>
           {article.excerpt}
@@ -160,29 +160,29 @@ function FeaturedArticle({ article, prefix = "", lang = "vi" }: { article: Artic
 export default async function NewsPage() {
   const lang = await getLang();
   const en = lang === "en";
-  const prefix = lang === "en" ? "/en" : "";
+  const prefix = en ? "/en/news" : "/tin-tuc";
   // Single source of truth: the Postgres `articles` table (via /api/public/articles)
   const all = await getAllArticles();
   const featured = all.filter((a) => a.featured).slice(0, 1);
   const rest = all.filter((a) => a.slug !== featured[0]?.slug);
   const breadcrumb = getBreadcrumbSchema([
     { name: "Trang chủ", url: SITE_URL },
-    { name: "Kiến thức & Tin tức", url: `${SITE_URL}/news` },
+    { name: en ? "Knowledge & News" : "Kiến thức & Tin tức", url: `${SITE_URL}${en ? "/en/news" : "/tin-tuc"}` },
   ]);
   const collectionSchema = {
     "@context": "https://schema.org",
     "@type": "CollectionPage",
-    "@id": `${SITE_URL}/news#collection`,
+    "@id": `${SITE_URL}${en ? "/en/news" : "/tin-tuc"}#collection`,
     name: "Kiến thức & Tin tức BĐS — SGS LAND",
-    url: `${SITE_URL}/news`,
-    inLanguage: "vi",
+    url: `${SITE_URL}${en ? "/en/news" : "/tin-tuc"}`,
+    inLanguage: en ? "en" : "vi",
     publisher: { "@id": `${SITE_URL}/#organization` },
     mainEntity: {
       "@type": "ItemList",
       itemListElement: all.map((a, i) => ({
         "@type": "ListItem",
         position: i + 1,
-        url: `${SITE_URL}/news/${a.slug}`,
+        url: `${SITE_URL}${en ? "/en/news" : "/tin-tuc"}/${a.slug}`,
         name: a.title,
       })),
     },

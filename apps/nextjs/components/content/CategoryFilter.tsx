@@ -12,8 +12,8 @@ export function CategoryFilter({ categories, lang = "vi", className = "" }: Cate
   const params = useSearchParams();
   const active = params?.get("category") ?? "all";
   function select(slug: string) {
-    const prefix = lang === "en" ? "/en" : "";
-    const url = slug === "all" ? `${prefix}/news` : `${prefix}/news?category=${slug}`;
+    const base = lang === "en" ? "/en/news" : "/tin-tuc";
+    const url = slug === "all" ? base : `${base}?category=${slug}`;
     router.push(url, { scroll: false });
   }
   return (

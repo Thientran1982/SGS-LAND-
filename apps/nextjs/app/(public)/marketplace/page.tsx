@@ -8,7 +8,7 @@ import { getLang, langAlternates } from "@/lib/lang";
 export async function generateMetadata(): Promise<Metadata> {
   const lang = await getLang();
   const en = lang === "en";
-  const url = en ? "https://sgsland.vn/en/marketplace" : "https://sgsland.vn/marketplace";
+  const url = en ? "https://sgsland.vn/en/marketplace" : "https://sgsland.vn/bat-dong-san";
   return {
     title: en
       ? "Property Search | SGS LAND Marketplace"

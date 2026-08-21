@@ -26,7 +26,8 @@ export async function generateMetadata({
 }): Promise<Metadata> {
   const { slug } = await params;
   const lang = await getLang();
-  const canonicalUrl = `https://sgsland.vn/news/${slug}`;
+  const newsBase = lang === "en" ? "https://sgsland.vn/en/news" : "https://sgsland.vn/tin-tuc";
+  const canonicalUrl = `${newsBase}/${slug}`;
   const article = await getArticleBySlug(slug);
   if (!article) {
     return {
@@ -48,6 +49,7 @@ export default async function ArticlePage({
   params: Promise<{ slug: string }>;
 }) {
   const { slug } = await params;
+  const lang = await getLang();
   const article = await getArticleBySlug(slug);
   if (!article) notFound();
 
@@ -59,9 +61,9 @@ export default async function ArticlePage({
 
   const breadcrumb = getBreadcrumbSchema([
     { name: "Trang chủ", url: SITE_URL },
-    { name: "Kiến thức & Tin tức", url: `${SITE_URL}/news` },
-    ...(category ? [{ name: category.name, url: `${SITE_URL}/news?category=${category.slug}` }] : []),
-    { name: article.title, url: `${SITE_URL}/news/${slug}` },
+    { name: lang === "en" ? "Knowledge & News" : "Kiến thức & Tin tức", url: `${SITE_URL}${lang === "en" ? "/en/news" : "/tin-tuc"}` },
+    ...(category ? [{ name: category.name, url: `${SITE_URL}${lang === "en" ? "/en/news" : "/tin-tuc"}?category=${category.slug}` }] : []),
+    { name: article.title, url: `${SITE_URL}${lang === "en" ? "/en/news" : "/tin-tuc"}/${slug}` },
   ]);
 
   return (

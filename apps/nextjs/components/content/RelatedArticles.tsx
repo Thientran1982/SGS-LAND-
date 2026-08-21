@@ -32,7 +32,7 @@ export function RelatedArticles({ articles, categories, lang = "vi", className =
           return (
             <Link
               key={article.slug}
-              href={`${lang === "en" ? "/en" : ""}/news/${article.slug}`}
+              href={`${lang === "en" ? "/en/news" : "/tin-tuc"}/${article.slug}`}
               className="group block p-4 rounded-xl transition-transform hover:scale-[1.01]"
               style={{
                 background: "var(--bg-elevated)",
