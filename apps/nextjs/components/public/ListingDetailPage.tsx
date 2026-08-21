@@ -569,6 +569,7 @@ export function ListingDetailPage({ listing, similarListings }: Props) {
                <p className="mt-1 text-xs" style={{ color: "var(--text-secondary)" }}>{tt(lang, "Bạn có thể lưu tin hoặc đặt lịch xem nhanh với SGS LAND.", "Save it or book a viewing with SGS LAND.")}</p>
              </div>
              <button type="button" onClick={() => { toggleFav(); setExitPromptOpen(false); trackListingEvent("exit_intent_action", listingCode, { action: "save" }); }} className="shrink-0 rounded-xl px-3 py-2 text-xs font-bold text-white" style={{ background: "var(--sgs-primary, #1B3A5C)" }}>{tt(lang, "Lưu tin", "Save")}</button>
+             <button type="button" onClick={() => { setExitPromptOpen(false); setBkState({ loading: false, ok: "", err: "" }); setBookOpen(true); trackListingEvent("exit_intent_action", listingCode, { action: "booking" }); }} className="shrink-0 rounded-xl px-3 py-2 text-xs font-bold" style={{ color: "var(--sgs-primary, #1B3A5C)", border: "1px solid var(--sgs-primary, #1B3A5C)" }}>{tt(lang, "Đặt lịch", "Book")}</button>
              <button type="button" onClick={() => { setExitPromptOpen(false); trackListingEvent("exit_intent_dismiss", listingCode); }} aria-label={tt(lang, "Đóng", "Close")} className="shrink-0 rounded-lg px-2 py-2 text-sm" style={{ color: "var(--text-tertiary)" }}>✕</button>
            </div>
          </div>
