@@ -18,6 +18,8 @@ export const analyticsApi = {
     api.delete(`/api/analytics/campaign-costs/${id}`),
   getVisitorStats: (days?: number): Promise<any> =>
     api.get('/api/analytics/visitors', days ? { days } : undefined),
+  getVisitorFunnel: (days = 30, filters?: { projectCode?: string; source?: string }): Promise<any> =>
+    api.get('/api/analytics/visitor-funnel', { days, ...filters }),
   getSystemMetrics: (): Promise<any> =>
     api.get('/api/system/metrics'),
 };

@@ -40,6 +40,13 @@ export interface VisitorFunnelStats {
   ctaInteractions: number;
   returningVisitors48h: number;
   averageTimeOnPageMs: number;
+  topSources: { value: string; count: number }[];
+  topProjects: { value: string; count: number }[];
+}
+
+export interface VisitorFunnelFilters {
+  projectCode?: string;
+  source?: string;
 }
 
 class VisitorRepository {
@@ -172,13 +179,25 @@ class VisitorRepository {
     };
   }
 
-  async getFunnelStats(tenantId: string, days = 30): Promise<VisitorFunnelStats> {
+  async getFunnelStats(tenantId: string, days = 30, filters: VisitorFunnelFilters = {}): Promise<VisitorFunnelStats> {
     const safeDays = Math.max(1, Math.min(Math.floor(days), 365));
+    const values: any[] = [tenantId, safeDays];
+    const clauses = ['tenant_id = $1', "created_at >= NOW() - ($2 || ' days')::interval"];
+    if (filters.projectCode) {
+      values.push(filters.projectCode);
+      clauses.push(`project_code = $${values.length}`);
+    }
+    if (filters.source) {
+      values.push(filters.source);
+      clauses.push(`COALESCE(NULLIF(utm_source, ''), NULLIF(referrer, ''), 'direct') = $${values.length}`);
+    }
+    const where = clauses.join(' AND ');
     const result = await pool.query(
       `WITH events AS (
-         SELECT visitor_id, session_id, event_type, metadata, created_at
+         SELECT visitor_id, session_id, event_type, metadata, created_at, project_code,
+                COALESCE(NULLIF(utm_source, ''), NULLIF(referrer, ''), 'direct') AS traffic_source
          FROM visitor_events
-         WHERE tenant_id = $1 AND created_at >= NOW() - ($2 || ' days')::interval
+         WHERE ${where}
        ),
        property_views AS (
          SELECT visitor_id, created_at
@@ -209,8 +228,26 @@ class VisitorRepository {
          (SELECT COALESCE(ROUND(AVG(NULLIF((metadata->>'timeOnPageMs')::numeric, 0))), 0)::int
             FROM events WHERE event_type = 'page_leave'
               AND metadata->>'timeOnPageMs' ~ '^[0-9]+$') AS average_time_on_page_ms`,
-      [tenantId, safeDays],
+      values,
     );
+    const [sources, projects] = await Promise.all([
+      pool.query(
+        `SELECT COALESCE(NULLIF(utm_source, ''), NULLIF(referrer, ''), 'direct') AS value,
+                COUNT(*)::int AS count
+           FROM visitor_events
+          WHERE tenant_id = $1 AND created_at >= NOW() - ($2 || ' days')::interval
+          GROUP BY 1 ORDER BY count DESC LIMIT 20`,
+        [tenantId, safeDays],
+      ),
+      pool.query(
+        `SELECT project_code AS value, COUNT(*)::int AS count
+           FROM visitor_events
+          WHERE tenant_id = $1 AND created_at >= NOW() - ($2 || ' days')::interval
+            AND project_code IS NOT NULL AND project_code <> ''
+          GROUP BY project_code ORDER BY count DESC LIMIT 20`,
+        [tenantId, safeDays],
+      ),
+    ]);
     const row = result.rows[0] || {};
     return {
       periodDays: safeDays,
@@ -223,6 +260,8 @@ class VisitorRepository {
       ctaInteractions: Number(row.cta_interactions || 0),
       returningVisitors48h: Number(row.returning_visitors_48h || 0),
       averageTimeOnPageMs: Number(row.average_time_on_page_ms || 0),
+      topSources: sources.rows.map(r => ({ value: String(r.value), count: Number(r.count) })),
+      topProjects: projects.rows.map(r => ({ value: String(r.value), count: Number(r.count) })),
     };
   }
 }

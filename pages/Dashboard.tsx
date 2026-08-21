@@ -670,6 +670,61 @@ const RealtimeTrafficWidget = memo(({ t, theme }: any) => {
         </BentoCard>
     );
 });
+const VisitorFunnelWidget = memo(({ days, language }: { days: number; language: string }) => {
+    const [projectCode, setProjectCode] = useState('');
+    const [source, setSource] = useState('');
+    const query = useQuery({
+        queryKey: ['visitorFunnel', days, projectCode, source],
+        queryFn: () => analyticsApi.getVisitorFunnel(days, { ...(projectCode ? { projectCode } : {}), ...(source ? { source } : {}) }),
+        staleTime: 60000,
+        refetchInterval: 120000,
+        retry: 1,
+    });
+    const data = query.data;
+    const isVn = language === 'vn';
+    const sessions = Number(data?.sessions || 0);
+    const exitRate = sessions ? Math.round((Number(data?.pageLeaves || 0) / sessions) * 100) : 0;
+    const avgSeconds = Math.round(Number(data?.averageTimeOnPageMs || 0) / 1000);
+    const stages = [
+        [isVn ? 'Lượt xem tin' : 'Property views', Number(data?.propertyViews || 0), 'bg-[var(--sgs-primary)]'],
+        [isVn ? 'Phiên truy cập' : 'Sessions', sessions, 'bg-cyan-500'],
+        [isVn ? 'Phiên đọc sâu' : 'Engaged sessions', Number(data?.engagedSessions || 0), 'bg-emerald-500'],
+        [isVn ? 'Cuộn 50%' : 'Scrolled 50%', Number(data?.scroll50 || 0), 'bg-amber-500'],
+        [isVn ? 'Tương tác CTA' : 'CTA interactions', Number(data?.ctaInteractions || 0), 'bg-violet-500'],
+    ];
+    return <section className="dashboard-panel" aria-label={isVn ? 'Funnel hành vi người xem' : 'Viewer behavior funnel'}>
+        <div className="dashboard-panel-head flex-wrap gap-3">
+            <div><h2>{isVn ? 'Funnel hành vi người xem' : 'Viewer behavior funnel'}</h2><p className="mt-1 text-xs font-normal text-[var(--text-tertiary)]">{isVn ? 'Chất lượng phiên đọc và tín hiệu mua hàng.' : 'Reading quality and buying signals.'}</p></div>
+            <div className="flex flex-wrap gap-2">
+                <select aria-label={isVn ? 'Lọc theo tin' : 'Filter by listing'} value={projectCode} onChange={e => setProjectCode(e.target.value)} className="dashboard-control px-2.5 py-2 text-xs text-[var(--text-primary)]">
+                    <option value="">{isVn ? 'Tất cả tin' : 'All listings'}</option>
+                    {(data?.topProjects || []).map((item: any) => <option key={item.value} value={item.value}>{item.value}</option>)}
+                </select>
+                <select aria-label={isVn ? 'Lọc theo nguồn traffic' : 'Filter by traffic source'} value={source} onChange={e => setSource(e.target.value)} className="dashboard-control px-2.5 py-2 text-xs text-[var(--text-primary)]">
+                    <option value="">{isVn ? 'Tất cả nguồn' : 'All sources'}</option>
+                    {(data?.topSources || []).map((item: any) => <option key={item.value} value={item.value}>{item.value === 'direct' ? (isVn ? 'Trực tiếp' : 'Direct') : item.value}</option>)}
+                </select>
+            </div>
+        </div>
+        {query.isLoading ? <div className="flex h-40 items-center justify-center"><div className="h-6 w-6 animate-spin rounded-full border-2 border-[var(--sgs-primary)] border-t-transparent" /></div> : query.isError ? <div className="px-4 py-10 text-center text-xs text-[var(--text-tertiary)]">{isVn ? 'Không thể tải dữ liệu funnel.' : 'Unable to load funnel data.'}</div> : <>
+            <div className="grid grid-cols-2 gap-3 px-4 pt-1 sm:grid-cols-4">
+                {[
+                    [isVn ? 'Phiên đọc sâu' : 'Engaged sessions', Number(data?.engagedSessions || 0).toLocaleString()],
+                    [isVn ? 'Thời gian xem TB' : 'Avg. view time', avgSeconds >= 60 ? `${Math.floor(avgSeconds / 60)}m ${avgSeconds % 60}s` : `${avgSeconds}s`],
+                    [isVn ? 'Tỷ lệ rời trang' : 'Exit rate', `${exitRate}%`],
+                    [isVn ? 'Tương tác CTA' : 'CTA interactions', Number(data?.ctaInteractions || 0).toLocaleString()],
+                ].map(([label, value]) => <div key={label} className="rounded-xl border border-[var(--glass-border)] bg-[var(--glass-surface)] p-3"><div className="text-[10px] font-bold uppercase tracking-wider text-[var(--text-tertiary)]">{label}</div><div className="mt-1 text-xl font-extrabold text-[var(--text-primary)]">{value}</div></div>)}
+            </div>
+            <div className="grid gap-3 px-4 py-4 lg:grid-cols-[1fr_220px]">
+                <div className="space-y-3">{stages.map(([label, value, color]) => {
+                    const width = sessions ? Math.min(100, Math.max(2, (Number(value) / sessions) * 100)) : 2;
+                    return <div key={label}><div className="mb-1 flex justify-between text-xs"><span className="text-[var(--text-secondary)]">{label}</span><strong className="font-mono text-[var(--text-primary)]">{Number(value).toLocaleString()}</strong></div><div className="h-2.5 rounded-full bg-[var(--glass-surface-hover)]"><div className={`h-full rounded-full ${color}`} style={{ width: `${width}%` }} /></div></div>;
+                })}</div>
+                <div className="rounded-xl border border-[var(--glass-border)] bg-[var(--glass-surface)] p-3"><div className="text-xs font-bold text-[var(--text-primary)]">{isVn ? 'Khách quay lại' : 'Returning visitors'}</div><div className="mt-2 text-2xl font-extrabold text-[var(--sgs-primary)]">{Number(data?.returningVisitors48h || 0).toLocaleString()}</div><div className="mt-1 text-[11px] text-[var(--text-tertiary)]">{isVn ? 'trong vòng 48 giờ' : 'within 48 hours'}</div></div>
+            </div>
+        </>}
+    </section>;
+});
 // --- MAIN DASHBOARD ---
 /**
  * Read the current user's tenantId from the JWT cookie without an extra API call.
@@ -877,6 +932,7 @@ export const Dashboard: React.FC = () => {
                                 options={[
                                     { value: '7d', label: t('dash.filter_7d') },
                                     { value: '30d', label: t('dash.filter_30d') },
+                                    { value: '90d', label: language === 'vn' ? '90 ngày' : '90 days' },
                                     { value: 'all', label: t('dash.filter_all') }
                                 ]}
                                  className="dashboard-control dashboard-date-filter w-full text-xs"
@@ -1089,10 +1145,13 @@ export const Dashboard: React.FC = () => {
                     <SearchAnalyticsWidget analytics={overview} language={language} />
 
                     {(['SUPER_ADMIN', 'ADMIN', 'TEAM_LEAD'].includes(analytics.user?.role ?? '')) && (
-                        <div className="grid grid-cols-1 gap-6 xl:grid-cols-2">
-                            <GeoLocationTable t={t} days={selectedDays} />
-                            <RealtimeTrafficWidget t={t} theme={chartTheme} />
-                        </div>
+                        <>
+                            <VisitorFunnelWidget days={selectedDays} language={language} />
+                            <div className="grid grid-cols-1 gap-6 xl:grid-cols-2">
+                                <GeoLocationTable t={t} days={selectedDays} />
+                                <RealtimeTrafficWidget t={t} theme={chartTheme} />
+                            </div>
+                        </>
                     )}
                     <section className="dashboard-panel" aria-label={ui.demand}>
                         <div className="dashboard-panel-head"><h2>{ui.demand}</h2><span className="text-xs text-[var(--text-tertiary)]">{overview.demandAreas?.length ?? 0}</span></div>

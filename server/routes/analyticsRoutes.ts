@@ -201,7 +201,9 @@ export function createAnalyticsRoutes(authenticateToken: any) {
         return res.status(403).json({ error: 'Không có quyền truy cập' });
       }
       const days = Math.max(1, Math.min(parseInt(req.query.days as string) || 30, 365));
-      const stats = await visitorRepository.getFunnelStats(user.tenantId, days);
+      const projectCode = typeof req.query.projectCode === 'string' ? req.query.projectCode.trim().slice(0, 200) : undefined;
+      const source = typeof req.query.source === 'string' ? req.query.source.trim().slice(0, 500) : undefined;
+      const stats = await visitorRepository.getFunnelStats(user.tenantId, days, { projectCode, source });
       res.json(stats);
     } catch (error) {
       console.error('Error fetching visitor funnel:', error);
