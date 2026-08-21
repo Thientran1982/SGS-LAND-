@@ -679,6 +679,16 @@ function safeFunnelNumber(value: unknown): number {
     }
 }
 
+function safeFunnelFilterOptions(value: unknown): { value: string }[] {
+    if (!Array.isArray(value)) return [];
+    return value.filter((item): item is { value: string } => (
+        item !== null
+        && typeof item === 'object'
+        && typeof (item as { value?: unknown }).value === 'string'
+        && (item as { value: string }).value.length > 0
+    ));
+}
+
 export const VisitorFunnelWidget = memo(({ days, language }: { days: number; language: string }) => {
     const [projectCode, setProjectCode] = useState('');
     const [source, setSource] = useState('');
@@ -695,6 +705,8 @@ export const VisitorFunnelWidget = memo(({ days, language }: { days: number; lan
     const pageLeaves = safeFunnelNumber(data?.pageLeaves);
     const exitRate = sessions ? Math.round((pageLeaves / sessions) * 100) : 0;
     const avgSeconds = Math.round(safeFunnelNumber(data?.averageTimeOnPageMs) / 1000);
+    const topProjects = safeFunnelFilterOptions(data?.topProjects);
+    const topSources = safeFunnelFilterOptions(data?.topSources);
     const stages = [
         [isVn ? 'Lượt xem tin' : 'Property views', safeFunnelNumber(data?.propertyViews), 'bg-[var(--sgs-primary)]'],
         [isVn ? 'Phiên truy cập' : 'Sessions', sessions, 'bg-cyan-500'],
@@ -708,11 +720,11 @@ export const VisitorFunnelWidget = memo(({ days, language }: { days: number; lan
             <div className="flex flex-wrap gap-2">
                 <select aria-label={isVn ? 'Lọc theo tin' : 'Filter by listing'} value={projectCode} onChange={e => setProjectCode(e.target.value)} className="dashboard-control px-2.5 py-2 text-xs text-[var(--text-primary)]">
                     <option value="">{isVn ? 'Tất cả tin' : 'All listings'}</option>
-                    {(data?.topProjects || []).map((item: any) => <option key={item.value} value={item.value}>{item.value}</option>)}
+                    {topProjects.map(item => <option key={item.value} value={item.value}>{item.value}</option>)}
                 </select>
                 <select aria-label={isVn ? 'Lọc theo nguồn traffic' : 'Filter by traffic source'} value={source} onChange={e => setSource(e.target.value)} className="dashboard-control px-2.5 py-2 text-xs text-[var(--text-primary)]">
                     <option value="">{isVn ? 'Tất cả nguồn' : 'All sources'}</option>
-                    {(data?.topSources || []).map((item: any) => <option key={item.value} value={item.value}>{item.value === 'direct' ? (isVn ? 'Trực tiếp' : 'Direct') : item.value}</option>)}
+                    {topSources.map(item => <option key={item.value} value={item.value}>{item.value === 'direct' ? (isVn ? 'Trực tiếp' : 'Direct') : item.value}</option>)}
                 </select>
             </div>
         </div>

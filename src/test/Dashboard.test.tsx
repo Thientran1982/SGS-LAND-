@@ -89,4 +89,31 @@ describe("VisitorFunnelWidget", () => {
     expect(screen.getByText("0%")).toBeVisible();
     expect(screen.getAllByText("0").length).toBeGreaterThanOrEqual(7);
   });
+
+  it("keeps filter controls usable when filter lists are missing or malformed", async () => {
+    vi.spyOn(analyticsApi, "getVisitorFunnel").mockResolvedValueOnce({
+      sessions: 4,
+      topProjects: [
+        null,
+        "not-an-option",
+        { value: "Villa A" },
+        { value: undefined },
+      ],
+      topSources: {
+        value: "not-an-array",
+      },
+    });
+
+    renderWidget();
+
+    await screen.findByText("Avg. view time");
+    const listingFilter = screen.getByRole("combobox", { name: "Filter by listing" });
+    const sourceFilter = screen.getByRole("combobox", { name: "Filter by traffic source" });
+
+    expect(listingFilter).toHaveTextContent("All listings");
+    expect(listingFilter).toHaveTextContent("Villa A");
+    expect(sourceFilter).toHaveTextContent("All sources");
+    expect(sourceFilter).not.toHaveTextContent("not-an-array");
+    expect(screen.getAllByRole("option")).toHaveLength(3);
+  });
 });
