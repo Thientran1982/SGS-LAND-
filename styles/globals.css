@@ -854,3 +854,36 @@ html.dark body {
     font-size: .55rem;
   }
 }
+
+/* ============================================================
+   AUTHENTICATED VITE CRM — compact type scale
+   Keep the public Next.js pages and login screen unchanged. The
+   signed-in Vite workspace is scoped by Layout so every private
+   route gets the same denser, quieter reading scale.
+   ============================================================ */
+.crm-vite-app {
+  font-size: 15px;
+}
+.crm-vite-app .text-3xs { font-size: .5625rem !important; }
+.crm-vite-app .text-2xs { font-size: .625rem !important; }
+.crm-vite-app .text-xs  { font-size: .6875rem !important; }
+.crm-vite-app .text-sm  { font-size: .8125rem !important; }
+.crm-vite-app .text-base { font-size: .875rem !important; }
+.crm-vite-app .text-lg  { font-size: 1.0625rem !important; }
+.crm-vite-app .text-xl  { font-size: 1.125rem !important; }
+.crm-vite-app .text-2xl { font-size: 1.35rem !important; }
+.crm-vite-app .text-3xl { font-size: 1.7rem !important; }
+.crm-vite-app .text-4xl { font-size: 2.15rem !important; }
+.crm-vite-app .text-5xl { font-size: 2.7rem !important; }
+.crm-vite-app .text-6xl { font-size: 3.3rem !important; }
+.crm-vite-app .text-7xl { font-size: 4rem !important; }
+.crm-vite-app h1 { font-size: 1.7rem; }
+.crm-vite-app h2 { font-size: 1.35rem; }
+.crm-vite-app h3 { font-size: 1.125rem; }
+.crm-vite-app h4,
+.crm-vite-app h5,
+.crm-vite-app h6 { font-size: 1rem; }
+@media (min-width: 768px) {
+  .crm-vite-app h1 { font-size: 2.15rem; }
+  .crm-vite-app h2 { font-size: 1.7rem; }
+}
