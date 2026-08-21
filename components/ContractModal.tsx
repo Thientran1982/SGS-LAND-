@@ -227,8 +227,8 @@ export const ContractModal: React.FC<ContractModalProps> = ({ contract, initialD
             setLoading(false);
         }
     };
-    const inputClass = "w-full border border-[var(--glass-border)] rounded-xl px-4 py-2 text-[16px] focus:ring-2 focus:ring-[var(--sgs-primary)]/20 focus:border-[var(--sgs-primary)] outline-none transition-all bg-[var(--glass-surface)] focus:bg-[var(--bg-surface)]";
-    const labelClass = "block text-xs font-bold text-[var(--text-tertiary)] uppercase tracking-wider mb-1";
+    const inputClass = "w-full border border-[var(--glass-border)] rounded-xl px-3.5 py-2 text-sm focus:ring-2 focus:ring-[var(--sgs-primary)]/20 focus:border-[var(--sgs-primary)] outline-none transition-all bg-[var(--glass-surface)] focus:bg-[var(--bg-surface)]";
+    const labelClass = "block text-[11px] font-bold text-[var(--text-tertiary)] uppercase tracking-wider mb-1";
 
     const scheduleCount = (formData.paymentSchedule || []).length;
 
@@ -244,7 +244,7 @@ export const ContractModal: React.FC<ContractModalProps> = ({ contract, initialD
                 {/* Header */}
                 <div className="flex items-start justify-between px-4 sm:px-6 pt-4 sm:pt-5 pb-3 sm:pb-4 border-b border-[var(--glass-border)] shrink-0 gap-3">
                     <div className="flex flex-col min-w-0 flex-1">
-                        <h2 id="contract-modal-title" className="text-base sm:text-xl font-bold text-[var(--text-primary)] leading-tight">
+                        <h2 id="contract-modal-title" className="text-sm sm:text-lg font-bold text-[var(--text-primary)] leading-tight">
                             {contract
                                 ? t('contracts.modal_edit_title')
                                 : formData.type === ContractType.RESERVATION
@@ -290,13 +290,12 @@ export const ContractModal: React.FC<ContractModalProps> = ({ contract, initialD
                                 key={tab.id}
                                 type="button"
                                 onClick={() => handleTabChange(tab.id)}
-                                className={`flex items-center justify-center gap-1.5 px-3 sm:px-5 py-3 text-xs font-bold border-b-2 transition-all whitespace-nowrap flex-1 ${
+                                className={`flex items-center justify-center px-3 sm:px-5 py-2.5 text-[11px] font-bold border-b-2 transition-all whitespace-nowrap flex-1 ${
                                     activeTab === tab.id
                                         ? tab.activeColor + ' border-current'
                                         : 'border-transparent text-[var(--text-tertiary)] hover:text-[var(--text-secondary)] hover:bg-[var(--glass-surface)]'
                                 }`}
                             >
-                                {tab.icon}
                                 <span className="hidden sm:inline">{t(tab.labelKey)}</span>
                                 {tab.id === 'schedule' && scheduleCount > 0 && (
                                     <span className="bg-sgs-verified text-white text-[10px] font-bold rounded-full w-4 h-4 flex items-center justify-center">
@@ -307,8 +306,7 @@ export const ContractModal: React.FC<ContractModalProps> = ({ contract, initialD
                         ))}
                     </div>
                     {/* Mobile: current tab name indicator */}
-                    <div className="sm:hidden flex items-center justify-center gap-2 py-1.5 bg-[var(--glass-surface)] text-xs font-semibold text-[var(--text-secondary)]">
-                        {TABS.find(tab => tab.id === activeTab)?.icon}
+                    <div className="sm:hidden flex items-center justify-center gap-2 py-1.5 bg-[var(--glass-surface)] text-[11px] font-semibold text-[var(--text-secondary)]">
                         <span>{t(TABS.find(tab => tab.id === activeTab)?.labelKey || '')}</span>
                         <span className="text-[var(--text-muted)]">({TABS.findIndex(tab => tab.id === activeTab) + 1}/{TABS.length})</span>
                     </div>

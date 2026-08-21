@@ -122,7 +122,7 @@ html, body {
   margin: 0; padding: 0;
   overflow: hidden;
   font-family: var(--custom-font, 'Inter', sans-serif);
-  font-size: var(--custom-font-size, 15px);
+  font-size: var(--custom-font-size, 14px);
   background-color: var(--sgs-bg);
   color: var(--sgs-text);
   -webkit-font-smoothing: antialiased;
