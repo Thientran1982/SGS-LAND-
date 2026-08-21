@@ -120,9 +120,9 @@ export default function MarketReportPage() {
           </p>
         </header>
 
-        <section className="mt-8 rounded-3xl border p-6 sm:p-8" style={{ borderColor: "var(--border)", background: "var(--bg-elevated)" }}>
-          <p className="text-xs font-bold uppercase tracking-[.16em]" style={{ color: "var(--primary-600)" }}>Tóm tắt nhanh</p>
-          <h2 className="mt-2 text-2xl font-bold" style={{ color: "var(--text-primary)" }}>Báo cáo cho thấy gì?</h2>
+        <section id="tong-quan" aria-labelledby="tong-quan-title" className="mt-8 scroll-mt-24 rounded-3xl border p-6 sm:p-8" style={{ borderColor: "var(--border)", background: "var(--bg-elevated)" }}>
+          <p className="text-xs font-bold uppercase tracking-[.16em]" style={{ color: "var(--primary-600)" }}>Tổng quan báo cáo</p>
+          <h2 id="tong-quan-title" className="mt-2 text-2xl font-bold" style={{ color: "var(--text-primary)" }}>Báo cáo cho thấy gì?</h2>
           <p className="mt-3 max-w-4xl text-base leading-7" style={{ color: "var(--text-secondary)" }}>
             Trong bộ dữ liệu hiện tại, {highest.area} có giá tham khảo bình quân cao nhất ở mức {highest.avgPricePerSqm} triệu/m².
             {fastestGrowth && ` ${fastestGrowth.area} có mức biến động tham khảo cao nhất, +${fastestGrowth.yoyChangePct}% so với cùng kỳ.`}
