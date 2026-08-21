@@ -6,10 +6,20 @@
  */
 import { MinhChatPanel } from "@sgs/chat-widget";
 
-export default function LiveChatPanel() {
+export default function LiveChatPanel({
+  source = "WEB",
+  title,
+  description,
+}: {
+  source?: string;
+  title?: string;
+  description?: string;
+}) {
   return (
     <MinhChatPanel
-      source="WEB"
+      source={source}
+      title={title}
+      description={description}
       heightClass="h-[520px]"
       className="bg-slate-900/60 shadow-2xl"
     />

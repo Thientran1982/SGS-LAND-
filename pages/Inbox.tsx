@@ -277,6 +277,16 @@ export const Inbox: React.FC = () => {
         },
         staleTime: 60_000,
     });
+    const buildLiveChatUrl = useCallback((channel: string) => {
+        const params = new URLSearchParams({
+            title: widgetTitle,
+            desc: widgetDesc,
+            source: channel,
+            lang: language,
+        });
+        if (currentUser?.id) params.set('agent', currentUser.id);
+        return `${window.location.origin}/livechat?${params.toString()}`;
+    }, [widgetTitle, widgetDesc, currentUser?.id, language]);
     // Auto-generate short link when widget modal opens (debounced on title/desc/channel changes)
     useEffect(() => {
         if (!isWidgetModalOpen) return;
@@ -1125,13 +1135,13 @@ export const Inbox: React.FC = () => {
                                             ) : (
                                                 <input
                                                     readOnly
-                                                    value={shortLink || `${window.location.origin}/livechat${currentUser?.id ? `?agent=${currentUser.id}&source=${linkChannel}&lang=${language}` : `?source=${linkChannel}`}`}
+                                                    value={shortLink || buildLiveChatUrl(linkChannel)}
                                                     className="flex-1 min-w-0 bg-[var(--glass-surface)] border border-[var(--glass-border)] rounded-xl px-4 py-2 text-sm text-[var(--text-secondary)] font-mono"
                                                 />
                                             )}
                                             <button
                                                 onClick={() => {
-                                                    const link = shortLink || `${window.location.origin}/livechat${currentUser?.id ? `?agent=${currentUser.id}&source=${linkChannel}&lang=${language}` : `?source=${linkChannel}`}`;
+                                                     const link = shortLink || buildLiveChatUrl(linkChannel);
                                                     navigator.clipboard.writeText(link).catch(() => {});
                                                     notify(t('inbox.widget_link_copied'), 'success');
                                                 }}
@@ -1149,7 +1159,7 @@ export const Inbox: React.FC = () => {
                                                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" /></svg>
                                             </button>
                                             <a
-                                                href={shortLink || `${window.location.origin}/livechat${currentUser?.id ? `?agent=${currentUser.id}&source=${linkChannel}&lang=${language}` : `?source=${linkChannel}`}`}
+                                                 href={shortLink || buildLiveChatUrl(linkChannel)}
                                                 target="_blank"
                                                 rel="noreferrer"
                                                 title={t('inbox.widget_open_link')}
@@ -1189,12 +1199,12 @@ export const Inbox: React.FC = () => {
                                             <textarea
                                                 readOnly
                                                 rows={5}
-                                                value={`<script>\n  window.SGSLAND_CHAT_URL = "${window.location.origin}/livechat?title=${encodeURIComponent(widgetTitle)}&desc=${encodeURIComponent(widgetDesc)}${currentUser?.id ? `&agent=${currentUser.id}` : ''}&source=${embedChannel}&lang=${language}";\n</script>\n<script src="${window.location.origin}/widget.js" async></script>`}
+                                                 value={`<script>\n  window.SGSLAND_CHAT_URL = "${buildLiveChatUrl(embedChannel)}";\n</script>\n<script src="${window.location.origin}/widget.js" async></script>`}
                                                 className="w-full bg-sgs-primary-deep text-emerald-400 border border-slate-800 rounded-xl px-4 py-3 text-xs font-mono resize-none leading-relaxed no-scrollbar"
                                             />
                                             <button
                                                 onClick={() => {
-                                                    const embedBase = `${window.location.origin}/livechat?title=${encodeURIComponent(widgetTitle)}&desc=${encodeURIComponent(widgetDesc)}${currentUser?.id ? `&agent=${currentUser.id}` : ''}&source=${embedChannel}&lang=${language}`;
+                                                     const embedBase = buildLiveChatUrl(embedChannel);
                                                     const embedCode = `<script>\n  window.SGSLAND_CHAT_URL = "${embedBase}";\n</script>\n<script src="${window.location.origin}/widget.js" async></script>`;
                                                     navigator.clipboard.writeText(embedCode).catch(() => {});
                                                     notify(t('inbox.widget_embed_copied'), 'success');
@@ -1235,7 +1245,7 @@ export const Inbox: React.FC = () => {
                                         <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 sm:gap-6 bg-[var(--glass-surface)] p-4 rounded-xl border border-[var(--glass-border)]">
                                             <div className="bg-[var(--bg-surface)] p-2 rounded-xl shadow-sm border border-[var(--glass-border)] shrink-0 mx-auto sm:mx-0">
                                                 {(() => {
-                                                    const qrData = `${window.location.origin}/livechat?title=${encodeURIComponent(widgetTitle)}&desc=${encodeURIComponent(widgetDesc)}${currentUser?.id ? `&agent=${currentUser.id}` : ''}&source=${qrChannel}&lang=${language}`;
+                                                     const qrData = buildLiveChatUrl(qrChannel);
                                                     return <img src={`https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(qrData)}`} alt={t('inbox.widget_qr_label')} className="w-32 h-32" onError={e => { (e.target as HTMLImageElement).style.display = 'none'; }} />;
                                                 })()}
                                             </div>
@@ -1244,7 +1254,7 @@ export const Inbox: React.FC = () => {
                                                 <p className="text-xs text-[var(--text-tertiary)] mb-4 leading-relaxed">{t('inbox.widget_qr_desc')}</p>
                                                 <a
                                                     href={(() => {
-                                                        const qrData = `${window.location.origin}/livechat?title=${encodeURIComponent(widgetTitle)}&desc=${encodeURIComponent(widgetDesc)}${currentUser?.id ? `&agent=${currentUser.id}` : ''}&source=${qrChannel}&lang=${language}`;
+                                                         const qrData = buildLiveChatUrl(qrChannel);
                                                         return `https://api.qrserver.com/v1/create-qr-code/?size=500x500&data=${encodeURIComponent(qrData)}`;
                                                     })()}
                                                     download="livechat-qr.png"

@@ -71,6 +71,8 @@ export interface MinhChatPanelProps {
   /** Class chieu cao cho vung tin nhan. */
   heightClass?: string;
   showHeader?: boolean;
+  title?: string;
+  description?: string;
 }
 
 export function MinhChatPanel({
@@ -79,6 +81,8 @@ export function MinhChatPanel({
   className = "",
   heightClass = "h-[460px]",
   showHeader = true,
+  title = "SGS Land Live Chat",
+  description = "Chúng tôi sẵn sàng hỗ trợ bạn 24/7",
 }: MinhChatPanelProps) {
   const sessionRef = useRef<MinhSession | null>(null);
   if (!sessionRef.current) sessionRef.current = createMinhSession({ apiBase, source });
@@ -340,11 +344,11 @@ export function MinhChatPanel({
             )}
           </div>
           <div className="min-w-0">
-            <p className="text-sm font-semibold leading-tight" style={S.title}>Chuyên viên Minh</p>
+            <p className="text-sm font-semibold leading-tight truncate" style={S.title}>{title}</p>
             <p className="text-xs leading-tight" style={S.sub}>
               {mode === "HUMAN_TAKEOVER"
                 ? "Chuyên viên đang trả lời trực tiếp"
-                : "Trợ lý AI của SGS LAND - phản hồi ngay"}
+                : description}
             </p>
           </div>
         </div>
