@@ -1,59 +1,45 @@
 modules = ["nodejs-20", "web", "python-3.11", "postgresql-16"]
 [agent]
 expertMode = true
-
 [nix]
 channel = "stable-25_05"
 packages = ["psmisc"]
-
 [workflows]
 runButton = "Project"
-
 [[workflows.workflow]]
 name = "Project"
 mode = "parallel"
 author = "agent"
-
 [[workflows.workflow.tasks]]
 task = "workflow.run"
 args = "Start application"
-
 [[workflows.workflow.tasks]]
 task = "workflow.run"
 args = "typecheck"
-
 [[workflows.workflow]]
 name = "Start application"
 author = "agent"
-
 [workflows.workflow.metadata]
 outputType = "webview"
-
 [[workflows.workflow.tasks]]
 task = "shell.exec"
 args = "fuser -k 5000/tcp 5001/tcp 2>/dev/null; sleep 1; PORT=5001 npm run dev & sleep 8 && cd apps/nextjs && BACKEND_URL=http://localhost:5001 npm run dev -- --hostname 0.0.0.0 --port 5000"
 waitForPort = 5000
-
 [[workflows.workflow]]
 name = "typecheck"
 author = "agent"
-
 [[workflows.workflow.tasks]]
 task = "shell.exec"
 args = "npm run lint"
-
 [workflows.workflow.metadata]
 isValidation = true
-
 [[workflows.workflow]]
 name = "Next.js Public Site"
 author = "agent"
-
 [[workflows.workflow.tasks]]
 task = "shell.exec"
 args = "cd apps/nextjs && npm run dev -- --port 3001"
 waitForPort = 3001
-
 [workflows.workflow.metadata]
 outputType = "console"
 
@@ -121,38 +107,29 @@ externalPort = 3002
 [[ports]]
 localPort = 23638
 externalPort = 4200
-
 [deployment]
 deploymentTarget = "vm"
 run = ["sh", "-c", "PORT_BACKEND=5001 PORT=5000 bash scripts/supervisor.sh"]
 build = ["sh", "-c", "npm run build && cd apps/nextjs && npm install && BACKEND_URL=http://localhost:5001 npm run build"]
-
 [userenv]
-
 [userenv.shared]
 COMMISSION_RATE = "0.02"
 MARKET_CACHE_TTL_HOURS = "6"
 BREVO_FROM_EMAIL = "noreply@sgsland.vn"
 BREVO_FROM_NAME = "SGS LAND"
-# EMAIL_WEBHOOK_TOKEN va INITIAL_ADMIN_PASSWORD_HASH da bi xoa 2026-08-13: khong duoc code nao tham chieu (dead config), va gia tri that da bi commit vao git history truoc do. Neu can dung that, dat qua Replit Secrets, khong ghi truc tiep o day.
 ALLOWED_ORIGINS = "https://sgsland.vn,https://www.sgsland.vn"
 AI_ORCHESTRATION_MODE = "langgraph"
 LANGGRAPH_ORCHESTRATION_ADAPTER_READY = "true"
 LANGGRAPH_ORCHESTRATION_APPROVED = "true"
-
 [userenv.development]
 NODE_ENV = "development"
 PORT = "5000"
-
 [userenv.production]
 NODE_ENV = "production"
 PORT = "5000"
 APP_URL = "https://sgsland.vn"
-
 [objectStorage]
 defaultBucketID = "replit-objstore-b2bda06e-8535-430b-b2ac-45839c6a59c1"
-
 [postMerge]
 path = "scripts/post-merge.sh"
 timeoutMs = 120000
-# JWT_SECRET must be set via Replit Secrets (not here) — see replit.md for setup instructions
