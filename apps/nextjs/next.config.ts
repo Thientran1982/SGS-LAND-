@@ -157,7 +157,7 @@ const nextConfig: NextConfig = {
       { source: "/en/thue",                destination: "/en/marketplace?transaction=RENT", permanent: false },
       { source: "/lai-suat-vay-ngan-hang",  destination: "/lai-suat-ngan-hang",      permanent: true },
       { source: "/lai-suat-vay-mua-nha",    destination: "/lai-suat-ngan-hang",      permanent: true },
-      { source: "/nha-pho-trung-tam",       destination: "/du-an/nha-pho-trung-tam", permanent: true },
+      { source: "/nha-pho-trung-tam",       destination: "/khu-vuc/nha-pho-trung-tam", permanent: true },
       { source: "/landing/aqua-city", destination: "/du-an/aqua-city", permanent: true },
     ];
   },
