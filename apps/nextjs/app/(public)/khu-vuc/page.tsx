@@ -67,7 +67,7 @@ export default function KhuVucPage() {
           className="text-sm font-semibold uppercase tracking-wider mb-3"
           style={{ color: "var(--primary-600)" }}
         >
-          Bản đồ khu vực
+          BẢN ĐỒ KHU VỰC · GIÁ THAM KHẢO
         </p>
         <h1
           className="text-4xl font-bold mb-4"
@@ -79,8 +79,9 @@ export default function KhuVucPage() {
           className="text-lg max-w-2xl mx-auto"
           style={{ color: "var(--text-secondary)" }}
         >
-          Giá tham khảo và dự án nổi bật của {AREA_PRICES.length} khu vực trọng
-          điểm tại TP.HCM và vùng ven. Nhấn vào từng khu vực để xem chi tiết.
+          Tổng hợp giá tham khảo và thông tin khu vực của {AREA_PRICES.length} địa bàn
+          tại TP.HCM và vùng ven. Nhấn vào từng card để xem vị trí, sản phẩm,
+          dữ liệu tham chiếu và checklist cần xác minh.
         </p>
       </header>
 
@@ -107,26 +108,29 @@ export default function KhuVucPage() {
                   className="text-sm font-semibold"
                   style={{ color: "var(--primary-600)" }}
                 >
-                  +{a.yoyChangePct}% YoY
+                  +{a.yoyChangePct}% so với cùng kỳ
                 </span>
               )}
             </div>
             <p className="text-sm mb-1" style={{ color: "var(--text-secondary)" }}>
-              Giá trung bình:{" "}
+              Giá tham khảo bình quân:{" "}
               <strong style={{ color: "var(--text-primary)" }}>
                 {a.avgPricePerSqm} triệu/m²
               </strong>
             </p>
             {a.priceRange && (
               <p className="text-sm" style={{ color: "var(--text-secondary)" }}>
-                Khoảng giá: {a.priceRange} triệu/m²
+                Khoảng giá tham khảo: {a.priceRange} triệu/m²
               </p>
             )}
             {a.topProject && (
               <p className="text-sm mt-1" style={{ color: "var(--text-secondary)" }}>
-                Dự án nổi bật: {a.topProject}
+                Điểm tham chiếu: {a.topProject}
               </p>
             )}
+            <p className="text-xs mt-4" style={{ color: "var(--text-tertiary)" }}>
+              Dữ liệu tham khảo · {a.quarter ?? "chưa xác định"}
+            </p>
           </Link>
         ))}
       </div>

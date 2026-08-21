@@ -84,6 +84,17 @@ const AQUA_STYLE_DETAIL_SLUGS = new Set([
   "bat-dong-san-dong-nai",
 ]);
 
+const AREA_DETAIL_SLUGS = new Set([
+  "bat-dong-san-quan-7",
+  "bat-dong-san-long-an",
+  "bat-dong-san-dong-nai",
+  "bat-dong-san-binh-thanh",
+]);
+
+function getDetailBasePath(slug: string) {
+  return AREA_DETAIL_SLUGS.has(slug) ? `/khu-vuc/${slug}` : `/du-an/${slug}`;
+}
+
 function getAquaStyleLanding(slug: string): LandingProject | null {
   const existing = LANDING_PROJECTS[slug];
   if (existing) return existing;
@@ -898,10 +909,12 @@ export default async function ProjectPage({
     price_low: meta?.priceLow,
     price_high: meta?.priceHigh,
   });
+  const detailPath = getDetailBasePath(slug);
+  const isArea = AREA_DETAIL_SLUGS.has(slug);
   const breadcrumbSchema = getBreadcrumbSchema([
     { name: en ? "Home" : "Trang chủ", url: en ? `${SITE_URL}/en` : SITE_URL },
-    { name: en ? "Property projects" : "Dự án BĐS", url: en ? `${SITE_URL}/en/du-an` : `${SITE_URL}/du-an` },
-    { name: projectData.name, url: `${SITE_URL}/du-an/${slug}` },
+    { name: en ? (isArea ? "Areas" : "Property projects") : (isArea ? "Khu vực" : "Dự án BĐS"), url: en ? `${SITE_URL}/en/${isArea ? "khu-vuc" : "du-an"}` : `${SITE_URL}/${isArea ? "khu-vuc" : "du-an"}` },
+    { name: projectData.name, url: `${SITE_URL}${detailPath}` },
   ]);
   const orgSchema = getOrganizationSchema();
   const faqItems = buildProjectFAQ(
@@ -912,14 +925,14 @@ export default async function ProjectPage({
     meta?.priceRange || (en ? "Contact SGS LAND for the latest price list" : "Liên hệ SGS LAND để biết giá cập nhật"),
     en
   );
-  const faqSchema = getFAQSchema(faqItems, `${SITE_URL}/du-an/${slug}#faq`);
+  const faqSchema = getFAQSchema(faqItems, `${SITE_URL}${detailPath}#faq`);
   const videoSchema = getVideoSchema(slug);
   const announcementSchema = getSpecialAnnouncementSchema(slug);
   // Serialised JSON for noscript layer
   const aptMeta = APARTMENT_COMPLEX_META[slug];
   const apartmentSchema = aptMeta && slug !== "aqua-city" ? getApartmentComplexSchema({
     name: projectData.name,
-    url: `${SITE_URL}/du-an/${slug}`,
+     url: `${SITE_URL}${detailPath}`,
     description: projectData.description,
     location: projectData.location,
     developer: projectData.developer,
@@ -1034,8 +1047,8 @@ export default async function ProjectPage({
           </dd>
           <dt>URL</dt>
           <dd>
-            <a href={`https://sgsland.vn/du-an/${slug}`}>
-              https://sgsland.vn/du-an/{slug}
+            <a href={`https://sgsland.vn${detailPath}`}>
+              https://sgsland.vn{detailPath}
             </a>
           </dd>
         </dl>

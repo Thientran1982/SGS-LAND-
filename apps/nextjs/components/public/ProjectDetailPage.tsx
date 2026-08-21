@@ -72,6 +72,13 @@ function Tag({ children, tone = "neutral" }: { children: React.ReactNode; tone?:
   return <span className="inline-flex items-center rounded-full px-3 py-1.5 text-xs font-semibold" style={colors[tone]}>{children}</span>;
 }
 
+const AREA_DETAIL_SLUGS = new Set([
+  "bat-dong-san-quan-7",
+  "bat-dong-san-long-an",
+  "bat-dong-san-dong-nai",
+  "bat-dong-san-binh-thanh",
+]);
+
 function RichProjectDetail({ project, config, landing }: { project: ProjectDetail; config?: ProjectConfig | null; landing: LandingProject }) {
   const lang = useLang();
   const englishCopy = lang === "en" ? PROJECT_DETAIL_EN[landing.slug] : null;
@@ -112,7 +119,7 @@ function RichProjectDetail({ project, config, landing }: { project: ProjectDetai
       <div className="mx-auto max-w-6xl px-4 py-6 sm:px-6 sm:py-10 lg:px-8">
         <nav aria-label="Breadcrumb" className="mb-6 flex flex-wrap items-center gap-2 text-xs" style={{ color: "var(--text-tertiary)" }}>
           <Link href="/" className="hover:underline">{tt(lang, "Trang chủ", "Home")}</Link><span>/</span>
-          <Link href="/du-an" className="hover:underline">{tt(lang, "Dự án", "Projects")}</Link><span>/</span>
+           <Link href={AREA_DETAIL_SLUGS.has(landing.slug) ? "/khu-vuc" : "/du-an"} className="hover:underline">{AREA_DETAIL_SLUGS.has(landing.slug) ? tt(lang, "Khu vực", "Areas") : tt(lang, "Dự án", "Projects")}</Link><span>/</span>
           <span style={{ color: "var(--text-primary)" }}>{project.name}</span>
         </nav>
 
