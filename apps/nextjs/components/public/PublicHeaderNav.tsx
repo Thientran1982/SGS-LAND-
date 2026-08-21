@@ -57,7 +57,10 @@ export function PublicHeader({ authed = false }: { authed?: boolean }) {
     window.dispatchEvent(new CustomEvent("sgs-lang-change", { detail: next }));
     // Middleware can rewrite /en/* before usePathname() sees it; use the
     // browser URL so language switching preserves the current page and slug.
-    window.location.assign(switchLangPath(window.location.pathname || pathname || "/", next));
+    const current = new URL(window.location.href);
+    current.pathname = switchLangPath(current.pathname || pathname || "/", next);
+    // Keep marketplace filters and any article query state when changing language.
+    window.location.assign(`${current.pathname}${current.search}${current.hash}`);
   };
 
   const realEstateLinks = [

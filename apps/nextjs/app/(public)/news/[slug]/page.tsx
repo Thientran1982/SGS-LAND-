@@ -12,6 +12,7 @@ import { TrustBadges } from "@/components/content/TrustBadges";
 import { ArticleSchema } from "@/components/content/ArticleSchema";
 import { SchemaScript } from "@/components/SchemaScript";
 import { getBreadcrumbSchema, SITE_URL } from "@/lib/schema";
+import { getLang } from "@/lib/lang";
 
 export async function generateStaticParams() {
   const all = await getAllArticles();
@@ -24,6 +25,7 @@ export async function generateMetadata({
   params: Promise<{ slug: string }>;
 }): Promise<Metadata> {
   const { slug } = await params;
+  const lang = await getLang();
   const canonicalUrl = `https://sgsland.vn/news/${slug}`;
   const article = await getArticleBySlug(slug);
   if (!article) {
@@ -156,6 +158,7 @@ export default async function ArticlePage({
               author={author}
               relatedArticles={relatedArticles}
               categories={CATEGORIES}
+        lang={lang}
             />
           </article>
 

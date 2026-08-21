@@ -6,9 +6,10 @@ import type { Category } from "@/data/categories";
 interface RelatedArticlesProps {
   articles: Article[];
   categories: Category[];
+  lang?: "vi" | "en";
   className?: string;
 }
-export function RelatedArticles({ articles, categories, className = "" }: RelatedArticlesProps) {
+export function RelatedArticles({ articles, categories, lang = "vi", className = "" }: RelatedArticlesProps) {
   if (!articles.length) return null;
   const catMap = Object.fromEntries(categories.map((c) => [c.slug, c]));
 
@@ -31,7 +32,7 @@ export function RelatedArticles({ articles, categories, className = "" }: Relate
           return (
             <Link
               key={article.slug}
-              href={`/news/${article.slug}`}
+              href={`${lang === "en" ? "/en" : ""}/news/${article.slug}`}
               className="group block p-4 rounded-xl transition-transform hover:scale-[1.01]"
               style={{
                 background: "var(--bg-elevated)",

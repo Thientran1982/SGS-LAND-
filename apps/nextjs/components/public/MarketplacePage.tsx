@@ -272,8 +272,8 @@ export function PublicListingCard({ listing, list, eager, facets }: { listing: a
             </span>
             {listing.isVerified && (
               <span title={tt(lang, "\u0110\u00c3 X\u00c1C TH\u1ef0C", "VERIFIED")} aria-label={tt(lang, "\u0110\u00c3 X\u00c1C TH\u1ef0C", "VERIFIED")}
-                className="flex items-center gap-1 px-2 py-0.5 rounded-lg text-[12px] font-bold text-white shadow-sm backdrop-blur-sm" style={{ background: "rgba(5,150,105,0.95)" }}>
-                <BadgeCheck className="w-3.5 h-3.5" /> <span className="hidden sm:inline">{tt(lang, "\u0110\u00c3 X\u00c1C TH\u1ef0C", "VERIFIED")}</span>
+                className="flex items-center justify-center w-7 h-7 rounded-lg text-white shadow-sm backdrop-blur-sm" style={{ background: "rgba(5,150,105,0.95)" }}>
+                <BadgeCheck className="w-4 h-4" aria-hidden />
               </span>
             )}
             {list && (

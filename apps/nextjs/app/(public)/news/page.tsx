@@ -13,6 +13,7 @@ import { AuthorCard } from "@/components/content/AuthorCard";
 import { NewsAdminBar } from "@/components/content/NewsAdminBar";
 import { SchemaScript } from "@/components/SchemaScript";
 import { getBreadcrumbSchema, SITE_URL } from "@/lib/schema";
+import { getLang } from "@/lib/lang";
 export const metadata: Metadata = {
   title: "Kiến Thức & Tin Tức BĐS | Chuyên gia SGS LAND",
   description:
@@ -36,7 +37,7 @@ export const dynamic = "force-dynamic";
 function formatDate(iso: string) {
   return new Date(iso).toLocaleDateString("vi-VN", { day: "2-digit", month: "2-digit", year: "numeric" });
 }
-function ArticleCard({ article }: { article: Article }) {
+function ArticleCard({ article, prefix = "" }: { article: Article; prefix?: string }) {
   const cat = CATEGORIES.find((c) => c.slug === article.category);
   const author = AUTHORS.find((a) => a.slug === article.author);
   const catColor = cat?.color ?? "var(--primary-600)";
@@ -46,7 +47,7 @@ function ArticleCard({ article }: { article: Article }) {
       style={{ background: "var(--bg-elevated)", border: "1px solid var(--border-default)" }}
       itemScope      itemType="https://schema.org/Article"
     >
-      <Link href={`/news/${article.slug}`} className="block aspect-[16/9] relative overflow-hidden shrink-0" tabIndex={-1} aria-hidden>
+      <Link href={`${prefix}/news/${article.slug}`} className="block aspect-[16/9] relative overflow-hidden shrink-0" tabIndex={-1} aria-hidden>
         <Image
           src={article.coverImage}
           alt={article.title}
@@ -79,7 +80,7 @@ function ArticleCard({ article }: { article: Article }) {
           style={{ color: "var(--text-primary)" }}
           itemProp="headline"
         >
-          <Link href={`/news/${article.slug}`}>{article.title}</Link>
+          <Link href={`${prefix}/news/${article.slug}`}>{article.title}</Link>
         </h2>
         <p className="text-sm leading-relaxed mb-4 line-clamp-2" style={{ color: "var(--text-secondary)" }} itemProp="description">
           {article.excerpt}
@@ -96,7 +97,7 @@ function ArticleCard({ article }: { article: Article }) {
               </span>
             </div>
           )}
-          <Link href={`/news/${article.slug}`} className="flex items-center gap-1 text-xs font-semibold"
+          <Link href={`${prefix}/news/${article.slug}`} className="flex items-center gap-1 text-xs font-semibold"
             style={{ color: "var(--primary-600)" }}>
             Đọc tiếp <ArrowRight className="w-3 h-3" />
           </Link>
@@ -105,7 +106,7 @@ function ArticleCard({ article }: { article: Article }) {
     </article>
   );
 }
-function FeaturedArticle({ article }: { article: Article }) {
+function FeaturedArticle({ article, prefix = "" }: { article: Article; prefix?: string }) {
   const cat = CATEGORIES.find((c) => c.slug === article.category);
   const author = AUTHORS.find((a) => a.slug === article.author);
   const catColor = cat?.color ?? "var(--primary-600)";
@@ -114,7 +115,7 @@ function FeaturedArticle({ article }: { article: Article }) {
       className="group grid grid-cols-1 md:grid-cols-2 gap-0 rounded-2xl overflow-hidden mb-10"
       style={{ background: "var(--bg-elevated)", border: "1px solid var(--border-default)" }}
     >
-      <Link href={`/news/${article.slug}`} className="block aspect-video md:aspect-auto relative overflow-hidden" aria-hidden tabIndex={-1}>
+      <Link href={`${prefix}/news/${article.slug}`} className="block aspect-video md:aspect-auto relative overflow-hidden" aria-hidden tabIndex={-1}>
         <Image
           src={article.coverImage}
           alt={article.title}
@@ -137,7 +138,7 @@ function FeaturedArticle({ article }: { article: Article }) {
         )}
         <h2 className="text-xl sm:text-2xl font-extrabold leading-tight mb-3 group-hover:text-sgs-primary transition-colors"
           style={{ color: "var(--text-primary)" }}>
-          <Link href={`/news/${article.slug}`}>{article.title}</Link>
+          <Link href={`${prefix}/news/${article.slug}`}>{article.title}</Link>
         </h2>
         <p className="text-sm leading-relaxed mb-5 line-clamp-3" style={{ color: "var(--text-secondary)" }}>
           {article.excerpt}
@@ -152,6 +153,8 @@ function FeaturedArticle({ article }: { article: Article }) {
   );
 }
 export default async function NewsPage() {
+  const lang = await getLang();
+  const prefix = lang === "en" ? "/en" : "";
   // Single source of truth: the Postgres `articles` table (via /api/public/articles)
   const all = await getAllArticles();
   const featured = all.filter((a) => a.featured).slice(0, 1);
@@ -198,14 +201,14 @@ export default async function NewsPage() {
           <CategoryFilter categories={CATEGORIES} className="mb-8" />
         </Suspense>
         {/* Featured article */}
-        {featured[0] && <FeaturedArticle article={featured[0]} />}
+        {featured[0] && <FeaturedArticle article={featured[0]} prefix={prefix} />}
         {/* Main grid + sidebar */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           {/* Articles grid */}
           <div className="lg:col-span-2">
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
               {rest.map((article) => (
-                <ArticleCard key={article.slug} article={article} />
+                <ArticleCard key={article.slug} article={article} prefix={prefix} />
               ))}
             </div>
           </div>

@@ -23,6 +23,7 @@ interface ArticleFooterProps {
   author: Author;
   relatedArticles: Article[];
   categories: Category[];
+  lang?: "vi" | "en";
   className?: string;
 }
 export function ArticleFooter({
@@ -30,6 +31,7 @@ export function ArticleFooter({
   author,
   relatedArticles,
   categories,
+  lang = "vi",
   className = "",
 }: ArticleFooterProps) {
   return (
@@ -111,7 +113,7 @@ export function ArticleFooter({
       </div>
       {/* Related articles */}
       {relatedArticles.length > 0 && (
-        <RelatedArticles articles={relatedArticles} categories={categories} />
+        <RelatedArticles articles={relatedArticles} categories={categories} lang={lang} />
       )}
       {/* CTA */}
       <div
