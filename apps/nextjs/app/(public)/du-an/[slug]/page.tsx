@@ -97,6 +97,7 @@ const AREA_DETAIL_SLUGS = new Set([
   "bat-dong-san-dong-nai",
   "bat-dong-san-long-thanh",
   "bat-dong-san-thu-duc",
+  "nha-pho-trung-tam",
   "bat-dong-san-binh-thanh",
   "bat-dong-san-binh-chanh",
   "bat-dong-san-can-gio",

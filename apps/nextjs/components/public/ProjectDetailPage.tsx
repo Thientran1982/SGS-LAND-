@@ -95,6 +95,10 @@ function RichProjectDetail({ project, config, landing }: { project: ProjectDetai
     "bat-dong-san-thu-duc": "Thu Duc Real Estate",
     "bat-dong-san-long-thanh": "Long Thanh Real Estate",
     "bat-dong-san-dong-nai": "Dong Nai Real Estate",
+    "bat-dong-san-binh-thanh": "Binh Thanh Real Estate",
+    "bat-dong-san-quan-7": "District 7 Real Estate",
+    "bat-dong-san-hoc-mon": "Hoc Mon Real Estate",
+    "nha-pho-trung-tam": "Central Townhouses",
   };
   const displayTitle = lang === "en" && isArea ? (areaEnglishNames[landing.slug] || landing.titleShort) : landing.titleShort;
   const translateAreaValue = (value: string) => lang === "en" && isArea
@@ -132,6 +136,10 @@ function RichProjectDetail({ project, config, landing }: { project: ProjectDetai
     "bat-dong-san-thu-duc": ["Metro Line 1", "Vietnam National University area", "High-tech park", "Retail centres", "Schools and hospitals", "Modern parks", "24/7 security"],
     "bat-dong-san-long-thanh": ["Near Long Thanh Airport", "Developing transport infrastructure", "Industrial parks", "Educational amenities", "Healthcare facilities", "Retail centres", "24/7 security"],
     "bat-dong-san-dong-nai": ["Coordinated transport infrastructure", "Nearby industrial parks", "Schools and hospitals", "Retail centres", "Green parks", "24/7 security", "Connections to Ho Chi Minh City"],
+    "bat-dong-san-binh-thanh": ["Central location", "Saigon River access", "Retail centres", "Schools and hospitals", "Swimming pools and gyms", "Green spaces", "24/7 security"],
+    "bat-dong-san-quan-7": ["Phu My Hung urban area", "Crescent Mall and retail centres", "International schools", "FV Hospital area", "Modern parks", "Dining and services", "24/7 security"],
+    "bat-dong-san-hoc-mon": ["Northwest Ho Chi Minh City location", "Developing transport infrastructure", "Nearby schools and hospitals", "Green spaces", "Local retail and services", "Residential communities", "Connections to central districts"],
+    "nha-pho-trung-tam": ["Central urban location", "Convenient retail and services", "Schools and hospitals", "Public transport access", "Dining and entertainment", "Established residential community", "Verify property-specific amenities"],
   };
   const areaEnglishConfig: ProjectConfig | null = lang === "en" && isArea && areaAmenityText[landing.slug] ? {
     details: (config?.details || []).map((row) => ({
