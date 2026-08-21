@@ -75,7 +75,7 @@ function LoanCalculator({ price }: { price: number }) {
   const inp = { background: "var(--bg-surface)", border: "1px solid var(--border-default)", color: "var(--text-primary)" };
   return (
     <div className="p-6 rounded-2xl" style={{ background: "var(--bg-elevated)", border: "1px solid var(--border-default)" }}>
-      <div className="flex mb-5 -mx-6 -mt-6" style={{ borderBottom: "1px solid var(--border-default)" }}>
+      <div className="flex mb-5 -mx-6 -mt-6 overflow-hidden rounded-t-2xl" style={{ borderBottom: "1px solid var(--border-default)" }}>
         <button onClick={() => setTab("loan")} className="flex-1 py-3.5 text-xs font-bold uppercase tracking-wide transition-colors" style={{ background: tab === "loan" ? "var(--sgs-primary, #1B3A5C)" : "transparent", color: tab === "loan" ? "#fff" : "var(--text-secondary)" }}>{tt(lang, "Vay Ngân Hàng", "Bank Loan")}</button>
         <button onClick={() => setTab("roi")} className="flex-1 py-3.5 text-xs font-bold uppercase tracking-wide transition-colors" style={{ background: tab === "roi" ? "var(--sgs-primary, #1B3A5C)" : "transparent", color: tab === "roi" ? "#fff" : "var(--text-secondary)" }}>{tt(lang, "Hiệu Quả Đầu Tư", "Investment Return")}</button>
       </div>
@@ -265,7 +265,7 @@ export function ListingDetailPage({ listing, similarListings }: Props) {
                     </span>
                   )}
                 </div>
-                <h1 className="text-2xl font-bold leading-tight" style={{ color: "var(--text-primary)" }}>
+                <h1 className="text-xl font-bold leading-tight sm:text-2xl" style={{ color: "var(--text-primary)" }}>
                   {listing.title}
                 </h1>
               </div>
@@ -342,16 +342,16 @@ export function ListingDetailPage({ listing, similarListings }: Props) {
                 ~ {formatUnitPrice(listing.price, listing.area, lang)}
               </p>
             )}
-            <div className="space-y-3">
+            <div className="flex gap-2">
               <button type="button" onClick={() => { setBkState({ loading: false, ok: "", err: "" }); setBookOpen(true); }}
-                className="flex items-center justify-center gap-2 w-full py-3.5 rounded-xl text-sm font-bold text-white transition-transform hover:-translate-y-0.5"
+                className="flex min-w-0 flex-1 items-center justify-center gap-1.5 rounded-xl px-2 py-3 text-xs font-bold text-white transition-transform hover:-translate-y-0.5 sm:text-sm"
                 style={{ background: "var(--sgs-primary, #1B3A5C)" }}>
-                <Calendar className="w-4 h-4" /> {tt(lang, "Đặt Lịch Xem Nhà", "Book a Viewing")}
+                <Calendar className="h-4 w-4 shrink-0" /> <span className="truncate">{tt(lang, "Đặt lịch", "Book viewing")}</span>
               </button>
               <a href="tel:+84971132378"
-                className="flex items-center justify-center gap-2 w-full py-3.5 rounded-xl text-sm font-bold transition-transform hover:-translate-y-0.5"
-                style={{ background: "var(--sgs-accent, #C8963E)", color: "var(--sgs-primary-deep, #0A1E33)" }}>
-                <Phone className="w-4 h-4" /> {tt(lang, "Gọi Điện Ngay", "Call Now")}
+                className="flex min-w-0 flex-1 items-center justify-center gap-1.5 rounded-xl border px-2 py-3 text-xs font-bold transition-transform hover:-translate-y-0.5 sm:text-sm"
+                style={{ borderColor: "var(--sgs-primary, #1B3A5C)", color: "var(--sgs-primary, #1B3A5C)", background: "transparent" }}>
+                <Phone className="h-4 w-4 shrink-0" /> <span className="truncate">{tt(lang, "Gọi điện", "Call")}</span>
               </a>
             </div>
             <p className="text-xs text-center mt-4" style={{ color: "var(--text-muted)" }}>
