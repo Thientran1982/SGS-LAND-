@@ -253,9 +253,27 @@ function priceIcon(label: string, approximate: boolean, transaction?: string, ac
         ? `drop-shadow(0 0 0 2.5px #fff) drop-shadow(0 6px 18px ${glow})`
         : `drop-shadow(0 2px 8px ${glow})`;
     const approx = approximate ? '<span style="opacity:0.72;font-size:10px;margin-right:2px">~</span>' : '';
+    const pinStyle = [
+        `display:inline-flex`,
+        `align-items:center`,
+        `justify-content:center`,
+        `min-width:64px`,
+        `height:24px`,
+        `box-sizing:border-box`,
+        `padding:4px 9px`,
+        `border-radius:999px`,
+        `background:${bg}`,
+        `color:#fff`,
+        `border:2px solid #c8963e`,
+        `box-shadow:0 2px 6px ${glow}`,
+        `white-space:nowrap`,
+        `font:700 12px/1 system-ui,-apple-system,sans-serif`,
+        `cursor:pointer`,
+        `filter:${shadow}`,
+    ].join(';');
     return L.divIcon({
         className: 'sgs-market-pin-container',
-        html: `<div class="sgs-market-pin${active ? ' sgs-market-pin-active' : ''}" style="--pin-bg:${bg};--pin-glow:${glow};filter:${shadow};">${approx}${label}</div>`,
+        html: `<div class="sgs-market-pin${active ? ' sgs-market-pin-active' : ''}" style="${pinStyle}">${approx}${label}</div>`,
         iconSize: [64, 26],
         iconAnchor: [32, 13],
     });
