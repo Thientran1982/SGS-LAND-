@@ -1,7 +1,7 @@
 // @ts-nocheck
 "use client";
 import React, { useState, useEffect, useMemo, useRef } from "react";
-import { trackPropertyView } from "@/lib/tracking";
+import { trackListingEvent, trackPropertyView } from "@/lib/tracking";
 import Link from "next/link";
 import dynamic from "next/dynamic";
 import { useLang } from "@/components/shared/useLang";
@@ -110,7 +110,7 @@ function TimePicker({ value, onChange, lang }: { value: string; onChange: (value
   );
 }
 
-function LoanCalculator({ price }: { price: number }) {
+function LoanCalculator({ price, listingCode }: { price: number; listingCode: string }) {
   const lang = useLang();
   const [ratio, setRatio] = useState(70);
   const [years, setYears] = useState(20);
@@ -135,21 +135,21 @@ function LoanCalculator({ price }: { price: number }) {
   return (
     <div className="p-6 rounded-2xl" style={{ background: "var(--bg-elevated)", border: "1px solid var(--border-default)" }}>
       <div className="flex mb-5 -mx-6 -mt-6 overflow-hidden rounded-t-2xl" style={{ borderBottom: "1px solid var(--border-default)" }}>
-        <button onClick={() => setTab("loan")} className="flex-1 py-3.5 text-xs font-bold uppercase tracking-wide transition-colors" style={{ background: tab === "loan" ? "var(--sgs-primary, #1B3A5C)" : "transparent", color: tab === "loan" ? "#fff" : "var(--text-secondary)" }}>{tt(lang, "Vay Ngân Hàng", "Bank Loan")}</button>
-        <button onClick={() => setTab("roi")} className="flex-1 py-3.5 text-xs font-bold uppercase tracking-wide transition-colors" style={{ background: tab === "roi" ? "var(--sgs-primary, #1B3A5C)" : "transparent", color: tab === "roi" ? "#fff" : "var(--text-secondary)" }}>{tt(lang, "Hiệu Quả Đầu Tư", "Investment Return")}</button>
+         <button onClick={() => { setTab("loan"); trackListingEvent("calculator_interaction", listingCode, { action: "loan_tab" }); }} className="flex-1 py-3.5 text-xs font-bold uppercase tracking-wide transition-colors" style={{ background: tab === "loan" ? "var(--sgs-primary, #1B3A5C)" : "transparent", color: tab === "loan" ? "#fff" : "var(--text-secondary)" }}>{tt(lang, "Vay Ngân Hàng", "Bank Loan")}</button>
+         <button onClick={() => { setTab("roi"); trackListingEvent("calculator_interaction", listingCode, { action: "roi_tab" }); }} className="flex-1 py-3.5 text-xs font-bold uppercase tracking-wide transition-colors" style={{ background: tab === "roi" ? "var(--sgs-primary, #1B3A5C)" : "transparent", color: tab === "roi" ? "#fff" : "var(--text-secondary)" }}>{tt(lang, "Hiệu Quả Đầu Tư", "Investment Return")}</button>
       </div>
       {tab === "loan" ? (
       <div className="space-y-4">
         <div>
           <div className="flex justify-between text-xs font-semibold mb-1" style={{ color: "var(--text-secondary)" }}><span>{tt(lang, "TỶ LỆ VAY", "LOAN RATIO")}</span><span>{ratio}%</span></div>
-          <input type="range" min={0} max={90} step={5} value={ratio} onChange={(e) => setRatio(+e.target.value)} className="w-full" style={{ accentColor: "var(--sgs-primary, #1B3A5C)" }} />
+           <input type="range" min={0} max={90} step={5} value={ratio} onChange={(e) => { setRatio(+e.target.value); trackListingEvent("calculator_interaction", listingCode, { action: "loan_ratio" }); }} className="w-full" style={{ accentColor: "var(--sgs-primary, #1B3A5C)" }} />
           <div className="text-[12px] mt-1" style={{ color: "var(--text-tertiary)" }}>{tt(lang, "Vốn tự có", "Your equity")}: {vnd(own)}</div>
         </div>
         <div className="grid grid-cols-2 gap-4">
           <div><div className="text-xs font-semibold mb-1" style={{ color: "var(--text-secondary)" }}>{tt(lang, "THỜI HẠN (NĂM)", "TERM (YEARS)")}</div>
-            <input type="number" min={1} max={35} value={years} onChange={(e) => setYears(Math.max(1, +e.target.value || 1))} className="w-full px-3 py-2 rounded-lg text-sm" style={inp} /></div>
+             <input type="number" min={1} max={35} value={years} onChange={(e) => { setYears(Math.max(1, +e.target.value || 1)); trackListingEvent("calculator_interaction", listingCode, { action: "loan_term" }); }} className="w-full px-3 py-2 rounded-lg text-sm" style={inp} /></div>
           <div><div className="text-xs font-semibold mb-1" style={{ color: "var(--text-secondary)" }}>{tt(lang, "LÃI SUẤT (%)", "INTEREST RATE (%)")}</div>
-            <input type="number" min={0} max={20} step={0.1} value={rate} onChange={(e) => setRate(Math.max(0, +e.target.value || 0))} className="w-full px-3 py-2 rounded-lg text-sm" style={inp} /></div>
+             <input type="number" min={0} max={20} step={0.1} value={rate} onChange={(e) => { setRate(Math.max(0, +e.target.value || 0)); trackListingEvent("calculator_interaction", listingCode, { action: "interest_rate" }); }} className="w-full px-3 py-2 rounded-lg text-sm" style={inp} /></div>
         </div>
         <div className="p-4 rounded-xl" style={{ background: "var(--primary-subtle, rgba(27,58,92,0.06))" }}>
           <div className="text-xs font-semibold mb-1" style={{ color: "var(--text-secondary)" }}>{tt(lang, "TRẢ HÀNG THÁNG (ƯỚC TÍNH)", "ESTIMATED MONTHLY PAYMENT")}</div>
@@ -172,7 +172,7 @@ function LoanCalculator({ price }: { price: number }) {
         </div>
         <div>
           <div className="flex justify-between text-xs font-semibold mb-1" style={{ color: "var(--text-secondary)" }}><span>{tt(lang, "THỜI GIAN NẮM GIỮ", "HOLDING PERIOD")}</span><span>{hold} {tt(lang, "năm", "years")}</span></div>
-          <input type="range" min={1} max={15} value={hold} onChange={(e) => setHold(+e.target.value)} className="w-full" style={{ accentColor: "var(--sgs-primary, #1B3A5C)" }} />
+           <input type="range" min={1} max={15} value={hold} onChange={(e) => { setHold(+e.target.value); trackListingEvent("calculator_interaction", listingCode, { action: "holding_period" }); }} className="w-full" style={{ accentColor: "var(--sgs-primary, #1B3A5C)" }} />
         </div>
         <div className="p-4 rounded-xl" style={{ background: "var(--primary-subtle, rgba(27,58,92,0.06))" }}>
           <div className="flex justify-between text-sm py-1"><span style={{ color: "var(--text-tertiary)" }}>{tt(lang, "Thu nhập cho thuê", "Rental income")} ({hold} {tt(lang, "năm", "yrs")})</span><span className="font-semibold" style={{ color: "var(--text-primary)" }}>{vnd(rentIncome)}</span></div>
@@ -195,8 +195,11 @@ export function ListingDetailPage({ listing, similarListings }: Props) {
   const [copied, setCopied] = useState(false);
   const [isFav, setIsFav] = useState(false);
   const [bookOpen, setBookOpen] = useState(false);
+  const [exitPromptOpen, setExitPromptOpen] = useState(false);
   const [bk, setBk] = useState({ name: "", phone: "", date: "", time: "09:00", notes: "" });
   const [bkState, setBkState] = useState({ loading: false, ok: "", err: "" });
+  const listingCode = listing.code || listing.id;
+  const engagementRef = useRef({ startedAt: 0, maxScroll: 0, leaveSent: false, exitShown: false });
 
   // Favourites persist locally so the heart survives a reload (no public API).
   useEffect(() => {
@@ -212,6 +215,7 @@ export function ListingDetailPage({ listing, similarListings }: Props) {
       const next = arr.indexOf(listing.id) >= 0 ? arr.filter((x) => x !== listing.id) : arr.concat([listing.id]);
       localStorage.setItem("sgs_favorites", JSON.stringify(next));
       setIsFav(next.indexOf(listing.id) >= 0);
+      trackListingEvent("favorite_click", listingCode, { saved: next.indexOf(listing.id) >= 0 });
     } catch { setIsFav((v) => !v); }
   };
 
@@ -221,6 +225,7 @@ export function ListingDetailPage({ listing, similarListings }: Props) {
       setBkState({ loading: false, ok: "", err: tt(lang, "Vui lòng nhập họ tên, số điện thoại và chọn ngày.", "Please enter your name, phone number and pick a date.") });
       return;
     }
+    trackListingEvent("booking_submit", listingCode, { hasNotes: Boolean(bk.notes.trim()) });
     setBkState({ loading: true, ok: "", err: "" });
     const dateText = bk.date + " " + bk.time;
     try {
@@ -254,15 +259,90 @@ export function ListingDetailPage({ listing, similarListings }: Props) {
   };
 
   useEffect(() => {
-    trackPropertyView(listing.code || listing.id, listing.title);
+    trackPropertyView(listingCode, listing.title);
+    trackListingEvent("engagement_start", listingCode, { pageType: "listing_detail" });
+    const state = engagementRef.current;
+    state.startedAt = Date.now();
+    state.maxScroll = 0;
+    state.leaveSent = false;
+    const timeMarks = [10, 30, 60].map((seconds) => window.setTimeout(
+      () => trackListingEvent(`engagement_${seconds}s`, listingCode, {
+        timeOnPageMs: Date.now() - state.startedAt,
+        scrollDepth: state.maxScroll,
+      }),
+      seconds * 1000,
+    ));
+    const scrollMarks = new Set<number>();
+    const onScroll = () => {
+      const max = Math.max(1, document.documentElement.scrollHeight - window.innerHeight);
+      const depth = Math.min(100, Math.round((window.scrollY / max) * 100));
+      state.maxScroll = Math.max(state.maxScroll, depth);
+      [50, 90].forEach((mark) => {
+        if (depth >= mark && !scrollMarks.has(mark)) {
+          scrollMarks.add(mark);
+          trackListingEvent(`scroll_${mark}`, listingCode, { scrollDepth: depth });
+        }
+      });
+    };
+    let leaveTimer: number | undefined;
+    const sendLeave = (reason: string) => {
+      if (state.leaveSent) return;
+      state.leaveSent = true;
+      trackListingEvent("page_leave", listingCode, {
+        leaveReason: reason,
+        timeOnPageMs: Math.max(0, Date.now() - state.startedAt),
+        scrollDepth: state.maxScroll,
+      });
+    };
+    const onVisibility = () => {
+      if (document.visibilityState === "hidden") {
+        leaveTimer = window.setTimeout(() => sendLeave("tab_hidden"), 1500);
+      } else if (leaveTimer) {
+        window.clearTimeout(leaveTimer);
+        leaveTimer = undefined;
+      }
+    };
+    const onPageHide = () => sendLeave("pagehide");
+    window.addEventListener("scroll", onScroll, { passive: true });
+    document.addEventListener("visibilitychange", onVisibility);
+    window.addEventListener("pagehide", onPageHide);
+    return () => {
+      timeMarks.forEach(window.clearTimeout);
+      if (leaveTimer) window.clearTimeout(leaveTimer);
+      window.removeEventListener("scroll", onScroll);
+      document.removeEventListener("visibilitychange", onVisibility);
+      window.removeEventListener("pagehide", onPageHide);
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [listing.id]);
+
+  useEffect(() => {
+    const state = engagementRef.current;
+    const timer = window.setTimeout(() => {
+      if (window.innerWidth < 768 || state.exitShown || state.maxScroll < 50) return;
+      state.exitShown = true;
+      setExitPromptOpen(true);
+      trackListingEvent("exit_intent_shown", listingCode, { timeOnPageMs: Date.now() - state.startedAt });
+    }, 20000);
+    const onMouseOut = (event: MouseEvent) => {
+      if (event.clientY > 0 || window.innerWidth < 768 || state.exitShown || state.maxScroll < 50) return;
+      state.exitShown = true;
+      setExitPromptOpen(true);
+      trackListingEvent("exit_intent_shown", listingCode, { timeOnPageMs: Date.now() - state.startedAt });
+    };
+    document.addEventListener("mouseout", onMouseOut);
+    return () => {
+      window.clearTimeout(timer);
+      document.removeEventListener("mouseout", onMouseOut);
+    };
+  }, [listingCode]);
   const handleShare = async () => {
     const url = window.location.href;
     if (navigator.share) {
-      try { await navigator.share({ title: listing.title, text: listing.title, url }); return; } catch {}
+      try { await navigator.share({ title: listing.title, text: listing.title, url }); trackListingEvent("share_click", listingCode, { method: "native" }); return; } catch {}
     }
     try { await navigator.clipboard.writeText(url); } catch {}
+    trackListingEvent("share_click", listingCode, { method: "clipboard" });
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
   };
@@ -290,7 +370,7 @@ export function ListingDetailPage({ listing, similarListings }: Props) {
                 className="w-full h-full object-cover"
                 onError={(e) => { (e.target as HTMLImageElement).src = "/images/placeholder.jpg"; }}
               />
-              <button onClick={handleShare}
+                <button onClick={() => { trackListingEvent("share_click", listingCode, { location: "gallery" }); void handleShare(); }}
                 className="absolute top-4 right-4 p-2 rounded-xl glass-card transition-all hover:scale-105"
                 title={copied ? tt(lang, "Đã copy!", "Copied!") : tt(lang, "Chia sẻ", "Share")}>
                 {copied ? <CheckCircle className="w-5 h-5 text-sgs-verified" /> : <Share2 className="w-5 h-5" style={{ color: "var(--text-primary)" }} />}
@@ -299,7 +379,7 @@ export function ListingDetailPage({ listing, similarListings }: Props) {
             {images.length > 1 && (
               <div className="flex gap-2 p-3 overflow-x-auto thin-scrollbar">
                 {images.map((img, i) => (
-                  <button key={i} onClick={() => setCurrentImg(i)}
+                   <button key={i} onClick={() => { setCurrentImg(i); trackListingEvent("gallery_interaction", listingCode, { imageIndex: i }); }}
                     className={`shrink-0 w-16 h-12 rounded-lg overflow-hidden border-2 transition-all ${i === currentImg ? "border-indigo-500" : "border-transparent opacity-60"}`}>
                     <img src={img} className="w-full h-full object-cover" alt="" />
                   </button>
@@ -328,7 +408,7 @@ export function ListingDetailPage({ listing, similarListings }: Props) {
                   {listing.title}
                 </h1>
               </div>
-              <button onClick={toggleFav} aria-label={tt(lang, "Yêu thích", "Favourite")}
+                  <button onClick={toggleFav} aria-label={tt(lang, "Yêu thích", "Favourite")}
                 className="p-2 rounded-xl transition-all hover:scale-110"
                 style={{ background: "var(--bg-elevated)", border: "1px solid var(--border-default)" }}>
                 <Heart className={`w-5 h-5 ${isFav ? "fill-red-500 text-red-500" : ""}`}
@@ -379,8 +459,8 @@ export function ListingDetailPage({ listing, similarListings }: Props) {
             )}
             {(listing.coordinates?.lat || listing.location) && (
               <div>
-                <div className="mt-6 rounded-2xl overflow-hidden" style={{ border: "1px solid var(--border-default)", height: "340px" }}>
-                  <ListingMap lat={listing.coordinates?.lat} lng={listing.coordinates?.lng} title={listing.title} location={listing.location} projectCode={listing.projectCode} />
+                   <div onClick={() => trackListingEvent("map_interaction", listingCode)} className="mt-6 rounded-2xl overflow-hidden" style={{ border: "1px solid var(--border-default)", height: "340px" }}>
+                     <ListingMap lat={listing.coordinates?.lat} lng={listing.coordinates?.lng} title={listing.title} location={listing.location} projectCode={listing.projectCode} />
                 </div>
               </div>
             )}
@@ -400,12 +480,12 @@ export function ListingDetailPage({ listing, similarListings }: Props) {
               </p>
             )}
             <div className="flex gap-2">
-              <button type="button" onClick={() => { setBkState({ loading: false, ok: "", err: "" }); setBookOpen(true); }}
+                 <button type="button" onClick={() => { trackListingEvent("booking_open", listingCode); setBkState({ loading: false, ok: "", err: "" }); setBookOpen(true); }}
                 className="flex min-w-0 flex-1 items-center justify-center gap-1.5 rounded-xl px-2 py-3 text-xs font-bold text-white transition-transform hover:-translate-y-0.5 sm:text-sm"
                 style={{ background: "var(--sgs-primary, #1B3A5C)" }}>
                 <Calendar className="h-4 w-4 shrink-0" /> <span className="truncate">{tt(lang, "Đặt lịch", "Book viewing")}</span>
               </button>
-              {listing.contactPhone ? <a href={`tel:${listing.contactPhone}`}
+              {listing.contactPhone ? <a onClick={() => trackListingEvent("contact_click", listingCode, { channel: "phone" })} href={`tel:${listing.contactPhone}`}
                 className="flex min-w-0 flex-1 items-center justify-center gap-1.5 rounded-xl border px-2 py-3 text-xs font-bold transition-transform hover:-translate-y-0.5 sm:text-sm"
                 style={{ borderColor: "var(--sgs-primary, #1B3A5C)", color: "var(--sgs-primary, #1B3A5C)", background: "transparent" }}>
                 <Phone className="h-4 w-4 shrink-0" /> <span className="truncate">{tt(lang, "Gọi điện", "Call")}</span>
@@ -418,7 +498,7 @@ export function ListingDetailPage({ listing, similarListings }: Props) {
               {tt(lang, "SGS LAND — Đại lý uỷ quyền chính thức", "SGS LAND — Officially authorised agent")}
             </p>
           </div>
-          <LoanCalculator price={listing.price} />
+           <LoanCalculator price={listing.price} listingCode={listingCode} />
         </div>
       </div>
       {bookOpen && (
