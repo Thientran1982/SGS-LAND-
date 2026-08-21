@@ -235,6 +235,14 @@ function formatPrice(price: number, language: string, _ignored?: (v: number) => 
     }
     return price.toLocaleString();
 }
+function directionsUrl(listing: any): string {
+    const lat = listing.coordinates?.lat;
+    const lng = listing.coordinates?.lng;
+    const destination = (lat != null && lng != null && (lat !== 0 || lng !== 0))
+        ? `${lat},${lng}`
+        : (listing.location || listing.title || '');
+    return `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(destination)}`;
+}
 // ── Pin HTML builders (2026 design) ──────────────────────────────────────────
 function pinColorClass(transaction?: string, propertyType?: string): string {
     if (propertyType?.toUpperCase() === 'PROJECT') return 'sgs-pin-project';
@@ -716,17 +724,32 @@ const MapView: React.FC<MapViewProps> = memo(({
                             <div style={{ fontSize: 10, color: 'var(--text-secondary, #94a3b8)', marginBottom: 11, overflow: 'hidden', whiteSpace: 'nowrap', textOverflow: 'ellipsis' }}>
                                 {sel.listing.location}
                             </div>
-                            <button onClick={() => onNavigate(sel.listing.id)} style={{
-                                width: '100%', background: tokens.bg,
-                                backgroundImage: 'linear-gradient(135deg,rgba(255,255,255,0.12),transparent)',
-                                color: '#fff', fontSize: 12, fontWeight: 700,
-                                padding: '10px 0', borderRadius: 12, border: 'none', cursor: 'pointer',
-                                letterSpacing: '0.2px', transition: 'opacity 0.15s',
-                            }}
-                                onMouseEnter={e => (e.currentTarget.style.opacity = '0.88')}
-                                onMouseLeave={e => (e.currentTarget.style.opacity = '1')}>
-                                {t('common.learn_more') || 'Xem Chi Tiết'}
-                            </button>
+                            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 7 }}>
+                                <button onClick={() => onNavigate(sel.listing.id)} style={{
+                                    width: '100%', background: tokens.bg,
+                                    backgroundImage: 'linear-gradient(135deg,rgba(255,255,255,0.12),transparent)',
+                                    color: '#fff', fontSize: 11, fontWeight: 700,
+                                    padding: '9px 4px', borderRadius: 10, border: 'none', cursor: 'pointer',
+                                    letterSpacing: '0.1px', transition: 'opacity 0.15s',
+                                }}
+                                    onMouseEnter={e => (e.currentTarget.style.opacity = '0.88')}
+                                    onMouseLeave={e => (e.currentTarget.style.opacity = '1')}>
+                                    {t('common.learn_more') || 'Xem Chi Tiết'}
+                                </button>
+                                <a href={directionsUrl(sel.listing)} target="_blank" rel="noreferrer"
+                                    onClick={e => e.stopPropagation()}
+                                    style={{
+                                        width: '100%', background: 'transparent',
+                                        color: tokens.bg, fontSize: 11, fontWeight: 700,
+                                        padding: '8px 4px', borderRadius: 10, border: `1px solid ${tokens.bg}`,
+                                        cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center',
+                                        textDecoration: 'none', transition: 'opacity 0.15s',
+                                    }}
+                                    onMouseEnter={e => (e.currentTarget.style.opacity = '0.72')}
+                                    onMouseLeave={e => (e.currentTarget.style.opacity = '1')}>
+                                    Chỉ đường
+                                </a>
+                            </div>
                         </div>
                     </div>
                 )}
