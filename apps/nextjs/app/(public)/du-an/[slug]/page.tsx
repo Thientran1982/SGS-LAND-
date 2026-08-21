@@ -274,8 +274,11 @@ const PROJECT_META: Record<
     dev: "Novaland",
     loc: "Long Hưng, Biên Hòa, Đồng Nai",
     desc: "Aqua City Novaland là khu đô thị tại Long Hưng, Biên Hòa, Đồng Nai. Trang này tổng hợp thông tin tham khảo về vị trí, sản phẩm, phân khu và các câu hỏi người mua; giá bán, pháp lý và tiến độ cần được xác minh theo từng sản phẩm bằng hồ sơ hiện hành.",
-    priceRange: "Giá tham khảo theo từng phân khu và sản phẩm; cần xác minh",
-    scale: "Cần xác minh theo hồ sơ dự án",
+     priceRange: "Biệt thự đảo từ 6,5 tỷ; sản phẩm khoảng 8–50 tỷ VNĐ/căn (2026)",
+     scale: "Khoảng 1.000 ha",
+     areaHa: 1000,
+     priceLow: 6_500_000_000,
+     priceHigh: 50_000_000_000,
     metaTitle: "Aqua City Novaland Đồng Nai 2026 — Giá, Mặt Bằng",
     metaDescription: "Aqua City Novaland Đồng Nai: thông tin tham khảo về vị trí, phân khu, sản phẩm, giá, pháp lý và tiến độ. Xác minh hồ sơ gốc trước khi giao dịch.",
     subdivisions: [
