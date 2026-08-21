@@ -1107,18 +1107,18 @@ export const Inbox: React.FC = () => {
                                         {/* Channel selector — choose platform to share link */}
                                         <div className="flex flex-wrap gap-1.5 mb-2">
                                             {([
-                                                { key: 'LINK' as const, label: t('inbox.widget_channel_link'), activeClass: 'bg-[var(--sgs-primary)]/100 text-white border-[var(--sgs-primary)] shadow-sm' },
-                                                { key: 'ZALO' as const, label: 'Zalo', activeClass: 'bg-blue-500 text-white border-blue-500 shadow-sm' },
-                                                { key: 'FACEBOOK' as const, label: 'Facebook', activeClass: 'bg-sky-600 text-white border-sky-600 shadow-sm' },
-                                                { key: 'TIKTOK' as const, label: 'TikTok', activeClass: 'bg-rose-500 text-white border-rose-500 shadow-sm' },
-                                                { key: 'SMS' as const, label: 'SMS', activeClass: 'bg-[var(--sgs-primary)]/100 text-white border-[var(--sgs-primary)] shadow-sm' },
+                                                 { key: 'LINK' as const, label: t('inbox.widget_channel_link'), activeClass: 'bg-white !text-sgs-primary-deep border-white shadow-sm' },
+                                                 { key: 'ZALO' as const, label: 'Zalo', activeClass: 'bg-white !text-sgs-primary-deep border-white shadow-sm' },
+                                                 { key: 'FACEBOOK' as const, label: 'Facebook', activeClass: 'bg-white !text-sgs-primary-deep border-white shadow-sm' },
+                                                 { key: 'TIKTOK' as const, label: 'TikTok', activeClass: 'bg-white !text-sgs-primary-deep border-white shadow-sm' },
+                                                 { key: 'SMS' as const, label: 'SMS', activeClass: 'bg-white !text-sgs-primary-deep border-white shadow-sm' },
                                             ]).map(({ key, label, activeClass }) => (
                                                 <button
                                                     key={key}
                                                     onClick={() => setLinkChannel(key)}
                                                      className={`flex-1 min-w-[60px] py-1.5 text-xs font-semibold rounded-lg transition-all border ${
                                                         linkChannel === key
-                                                             ? `${activeClass} !text-white`
+                                                             ? activeClass
                                                             : 'bg-[var(--glass-surface)] text-[var(--text-secondary)] border-[var(--glass-border)] hover:border-[var(--sgs-primary)]'
                                                     }`}
                                                 >
@@ -1176,18 +1176,18 @@ export const Inbox: React.FC = () => {
                                         {/* Embed channel selector */}
                                         <div className="flex flex-wrap gap-1.5 mb-2">
                                             {([
-                                                { key: 'EMBED' as const, label: t('inbox.widget_channel_embed'), activeClass: 'bg-[var(--sgs-primary)]/100 text-white border-[var(--sgs-primary)] shadow-sm' },
-                                                { key: 'ZALO' as const, label: 'Zalo', activeClass: 'bg-blue-500 text-white border-blue-500 shadow-sm' },
-                                                { key: 'FACEBOOK' as const, label: 'Facebook', activeClass: 'bg-sky-600 text-white border-sky-600 shadow-sm' },
-                                                { key: 'TIKTOK' as const, label: 'TikTok', activeClass: 'bg-rose-500 text-white border-rose-500 shadow-sm' },
-                                                { key: 'SMS' as const, label: 'SMS', activeClass: 'bg-[var(--sgs-primary)]/100 text-white border-[var(--sgs-primary)] shadow-sm' },
+                                                 { key: 'EMBED' as const, label: t('inbox.widget_channel_embed'), activeClass: 'bg-white !text-sgs-primary-deep border-white shadow-sm' },
+                                                 { key: 'ZALO' as const, label: 'Zalo', activeClass: 'bg-white !text-sgs-primary-deep border-white shadow-sm' },
+                                                 { key: 'FACEBOOK' as const, label: 'Facebook', activeClass: 'bg-white !text-sgs-primary-deep border-white shadow-sm' },
+                                                 { key: 'TIKTOK' as const, label: 'TikTok', activeClass: 'bg-white !text-sgs-primary-deep border-white shadow-sm' },
+                                                 { key: 'SMS' as const, label: 'SMS', activeClass: 'bg-white !text-sgs-primary-deep border-white shadow-sm' },
                                             ]).map(({ key, label, activeClass }) => (
                                                 <button
                                                     key={key}
                                                     onClick={() => setEmbedChannel(key)}
                                                      className={`flex-1 min-w-[60px] py-1.5 text-xs font-semibold rounded-lg transition-all border ${
                                                         embedChannel === key
-                                                             ? `${activeClass} !text-white`
+                                                             ? activeClass
                                                             : 'bg-[var(--glass-surface)] text-[var(--text-secondary)] border-[var(--glass-border)] hover:border-[var(--sgs-primary)]'
                                                     }`}
                                                 >
@@ -1223,18 +1223,18 @@ export const Inbox: React.FC = () => {
                                         {/* QR channel selector */}
                                         <div className="flex flex-wrap gap-1.5 mb-3">
                                             {([
-                                                { key: 'QR' as const, label: t('inbox.widget_channel_qr'), activeClass: 'bg-[var(--sgs-primary)]/100 text-white border-[var(--sgs-primary)] shadow-sm' },
-                                                { key: 'ZALO' as const, label: 'Zalo', activeClass: 'bg-blue-500 text-white border-blue-500 shadow-sm' },
-                                                { key: 'FACEBOOK' as const, label: 'Facebook', activeClass: 'bg-sky-600 text-white border-sky-600 shadow-sm' },
-                                                { key: 'TIKTOK' as const, label: 'TikTok', activeClass: 'bg-rose-500 text-white border-rose-500 shadow-sm' },
-                                                { key: 'SMS' as const, label: 'SMS', activeClass: 'bg-[var(--sgs-primary)]/100 text-white border-[var(--sgs-primary)] shadow-sm' },
+                                                 { key: 'QR' as const, label: t('inbox.widget_channel_qr'), activeClass: 'bg-white !text-sgs-primary-deep border-white shadow-sm' },
+                                                 { key: 'ZALO' as const, label: 'Zalo', activeClass: 'bg-white !text-sgs-primary-deep border-white shadow-sm' },
+                                                 { key: 'FACEBOOK' as const, label: 'Facebook', activeClass: 'bg-white !text-sgs-primary-deep border-white shadow-sm' },
+                                                 { key: 'TIKTOK' as const, label: 'TikTok', activeClass: 'bg-white !text-sgs-primary-deep border-white shadow-sm' },
+                                                 { key: 'SMS' as const, label: 'SMS', activeClass: 'bg-white !text-sgs-primary-deep border-white shadow-sm' },
                                             ]).map(({ key, label, activeClass }) => (
                                                 <button
                                                     key={key}
                                                     onClick={() => setQrChannel(key)}
                                                      className={`flex-1 min-w-[60px] py-1.5 text-xs font-semibold rounded-lg transition-all border ${
                                                         qrChannel === key
-                                                             ? `${activeClass} !text-white`
+                                                             ? activeClass
                                                             : 'bg-[var(--glass-surface)] text-[var(--text-secondary)] border-[var(--glass-border)] hover:border-[var(--sgs-primary)]'
                                                     }`}
                                                 >
