@@ -362,8 +362,12 @@ export function createPublicProjectRoutes(): Router {
   // "featured" thành mã dự án.
   router.get('/featured', async (req: Request, res: Response) => {
     try {
-      const limitRaw = Number(req.query.limit ?? 8);
-      const limit = Math.max(1, Math.min(20, Number.isFinite(limitRaw) ? limitRaw : 8));
+      const limitRaw = typeof req.query.limit === 'string' && req.query.limit.trim()
+        ? Number(req.query.limit)
+        : NaN;
+      const limit = Number.isInteger(limitRaw)
+        ? Math.max(1, Math.min(20, limitRaw))
+        : 8;
       // Featured selection rule:
       //  1) Curated set: any project with `metadata.is_featured='true'` —
       //     this is the explicit "is_featured" flag from the product spec

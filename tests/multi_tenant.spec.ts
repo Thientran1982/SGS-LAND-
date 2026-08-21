@@ -181,4 +181,20 @@ test.describe('API pagination boundaries', () => {
     expect(body.pageSize).toBe(1);
     expect(body.data.length).toBeLessThanOrEqual(1);
   });
+  test('public listing filters ignore malformed numeric and repeated values', async ({ request }) => {
+    const res = await request.get(
+      `${BASE_URL}/api/public/listings?page=-4&pageSize=-10&priceMin=not-a-number&priceMax=NaN&bedroomsMin=oops&types=HOUSE&types=APARTMENT`
+    );
+    expect(res.status()).toBe(200);
+    const body = await res.json();
+    expect(Array.isArray(body.data)).toBeTruthy();
+    expect(body.data.length).toBeLessThanOrEqual(500);
+  });
+  test('featured projects use a bounded limit for malformed values', async ({ request }) => {
+    const res = await request.get(`${BASE_URL}/api/public/projects/featured?limit=not-a-number`);
+    expect(res.status()).toBe(200);
+    const body = await res.json();
+    expect(Array.isArray(body.projects)).toBeTruthy();
+    expect(body.projects.length).toBeLessThanOrEqual(8);
+  });
 });

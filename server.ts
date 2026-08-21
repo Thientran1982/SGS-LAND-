@@ -1754,10 +1754,25 @@ function sanitizePublicListingFeed(row: any): Record<string, any> {
   return out;
 }
 
+function publicQueryString(value: unknown): string | undefined {
+  return typeof value === 'string' && value.trim() ? value : undefined;
+}
+
+function boundedPublicInteger(value: unknown, fallback: number, min: number, max: number): number {
+  const parsed = typeof value === 'string' && value.trim() ? Number(value) : NaN;
+  return Number.isInteger(parsed) ? Math.max(min, Math.min(max, parsed)) : fallback;
+}
+
+function publicFiniteNumber(value: unknown, min?: number): number | undefined {
+  const parsed = typeof value === 'string' && value.trim() ? Number(value) : NaN;
+  if (!Number.isFinite(parsed) || (min !== undefined && parsed < min)) return undefined;
+  return parsed;
+}
+
   app.get('/api/public/listings', apiRateLimit, async (req: express.Request, res: express.Response) => {
     try {
-      const page = parseInt(req.query.page as string) || 1;
-      const pageSize = Math.min(parseInt(req.query.pageSize as string) || 20, 500);
+      const page = boundedPublicInteger(req.query.page, 1, 1, Number.MAX_SAFE_INTEGER);
+      const pageSize = boundedPublicInteger(req.query.pageSize, 20, 1, 500);
 
       // Server-side cache 5 phút cho public listings feed (LRU per-process).
       // Mọi mutate trên listings (create/update/delete/bulk/status) sẽ
@@ -1784,34 +1799,41 @@ function sanitizePublicListingFeed(row: any): Record<string, any> {
       }
 
       const filters: any = { status_in: ['AVAILABLE', 'OPENING', 'BOOKING', 'BEST_MARKET'] };
-      if (req.query.projectCode) {
-        filters.projectCode = req.query.projectCode as string;
+      const projectCode = publicQueryString(req.query.projectCode);
+      if (projectCode) {
+        filters.projectCode = projectCode;
       } else {
         // Exclude project-catalog units (listings that belong to a project's product list)
         // from the public feed. They should only appear when explicitly queried by projectCode.
         filters.noProjectCode = true;
       }
-      if (req.query.type) filters.type = req.query.type as string;
-      if (req.query.types) filters.type_in = (req.query.types as string).split(',');
-      if (req.query.transaction) filters.transaction = req.query.transaction as string;
-      if (req.query.priceMin) filters.price_gte = parseFloat(req.query.priceMin as string);
-      if (req.query.priceMax) filters.price_lte = parseFloat(req.query.priceMax as string);
+      const type = publicQueryString(req.query.type);
+      if (type) filters.type = type;
+      const types = publicQueryString(req.query.types);
+      if (types) filters.type_in = types.split(',').map(value => value.trim()).filter(Boolean);
+      const transaction = publicQueryString(req.query.transaction);
+      if (transaction) filters.transaction = transaction;
+      const priceMin = publicFiniteNumber(req.query.priceMin, 0);
+      const priceMax = publicFiniteNumber(req.query.priceMax, 0);
+      if (priceMin !== undefined) filters.price_gte = priceMin;
+      if (priceMax !== undefined) filters.price_lte = priceMax;
       // Mobile-driven extra filters (mirrored on listingRepository).
-      if (req.query.bedroomsMin) {
-        const n = parseInt(req.query.bedroomsMin as string, 10);
-        if (Number.isFinite(n) && n > 0) filters.bedrooms_gte = n;
+      if (publicQueryString(req.query.bedroomsMin)) {
+        const n = publicFiniteNumber(req.query.bedroomsMin, 1);
+        if (n !== undefined && Number.isInteger(n)) filters.bedrooms_gte = n;
       }
-      if (req.query.areaMin) {
-        const n = parseFloat(req.query.areaMin as string);
-        if (Number.isFinite(n) && n > 0) filters.area_gte = n;
+      if (publicQueryString(req.query.areaMin)) {
+        const n = publicFiniteNumber(req.query.areaMin, 0);
+        if (n !== undefined && n > 0) filters.area_gte = n;
       }
-      if (req.query.areaMax) {
-        const n = parseFloat(req.query.areaMax as string);
-        if (Number.isFinite(n) && n > 0) filters.area_lte = n;
+      if (publicQueryString(req.query.areaMax)) {
+        const n = publicFiniteNumber(req.query.areaMax, 0);
+        if (n !== undefined && n > 0) filters.area_lte = n;
       }
-      if (req.query.search) filters.search = req.query.search as string;
-      if (req.query.location) {
-        const province = req.query.location as string;
+      const search = publicQueryString(req.query.search);
+      if (search) filters.search = search;
+      const province = publicQueryString(req.query.location);
+      if (province) {
         const aliases = VN_PROVINCE_ALIASES[province];
         if (aliases?.length) {
           filters.location_any = aliases;
@@ -1820,9 +1842,11 @@ function sanitizePublicListingFeed(row: any): Record<string, any> {
         }
       }
       if (req.query.isVerified === 'true') filters.isVerified = true;
-      if (req.query.direction) filters.direction = req.query.direction as string;
-      if (req.query.legalStatus) filters.legalStatus = req.query.legalStatus as string;
-      const sortParam = String(req.query.sort || '');
+      const direction = publicQueryString(req.query.direction);
+      if (direction) filters.direction = direction;
+      const legalStatus = publicQueryString(req.query.legalStatus);
+      if (legalStatus) filters.legalStatus = legalStatus;
+      const sortParam = publicQueryString(req.query.sort) || '';
       const publicSortBy: 'newest' | 'price_asc' | 'price_desc' =
         sortParam === 'price_asc' || sortParam === 'price_desc' ? sortParam : 'newest';
       let result: any;
@@ -2840,12 +2864,12 @@ app.get('/api/public/listings/:slugId', apiRateLimit, async (req: express.Reques
         tenantId:    PUBLIC_TENANT,
         projectCode: String(projectCode),
         bedrooms:    bedrooms ?? pn,
-        priceMin:    priceMin ? Number(priceMin) : undefined,
-        priceMax:    priceMax ? Number(priceMax) : undefined,
+        priceMin:    publicFiniteNumber(priceMin, 0),
+        priceMax:    publicFiniteNumber(priceMax, 0),
         tower:       tower ?? block,
         status:      status || 'AVAILABLE',
-        limit:       limit  ? Math.min(Number(limit), 100) : 50,
-        page:        page   ? Number(page) : 1,
+        limit:       boundedPublicInteger(limit, 50, 1, 100),
+        page:        boundedPublicInteger(page, 1, 1, Number.MAX_SAFE_INTEGER),
         noCache:     noCache === 'true',
       });
       res.json(result);
@@ -2865,12 +2889,12 @@ app.get('/api/public/listings/:slugId', apiRateLimit, async (req: express.Reques
         query:    query    ? String(query)    : undefined,
         area:     area     ? String(area)     : undefined,
         type:     type     ? String(type)     : undefined,
-        bedrooms: bedrooms ? Number(bedrooms) : undefined,
-        priceMin: priceMin ? Number(priceMin) : undefined,
-        priceMax: priceMax ? Number(priceMax) : undefined,
+        bedrooms: bedrooms ? publicFiniteNumber(bedrooms, 1) : undefined,
+        priceMin: publicFiniteNumber(priceMin, 0),
+        priceMax: publicFiniteNumber(priceMax, 0),
         status:   status   || 'AVAILABLE',
-        limit:    limit    ? Math.min(Number(limit), 20) : 10,
-        page:     page     ? Number(page) : 1,
+        limit:    boundedPublicInteger(limit, 10, 1, 20),
+        page:     boundedPublicInteger(page, 1, 1, Number.MAX_SAFE_INTEGER),
         noCache:  noCache  === 'true',
       });
       res.json(result);
@@ -2889,7 +2913,7 @@ app.get('/api/public/listings/:slugId', apiRateLimit, async (req: express.Reques
         tenantId:      PUBLIC_TENANT,
         projectCode:   req.params.code,
         withListings:  withListings  !== 'false',
-        listingLimit:  listingLimit  ? Math.min(Number(listingLimit), 100) : 20,
+        listingLimit:  boundedPublicInteger(listingLimit, 20, 1, 100),
         listingStatus: listingStatus || 'AVAILABLE',
         noCache:       noCache       === 'true',
       });
