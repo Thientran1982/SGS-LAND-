@@ -117,9 +117,9 @@ function buildAudienceQuery(
     conds.push(`(u.last_login_at IS NULL OR u.last_login_at < NOW() - ($${params.length}::int || ' days')::INTERVAL)`);
   }
   if (filter.has_listings === false) {
-    conds.push(`NOT EXISTS (SELECT 1 FROM listings l WHERE l.created_by = u.id)`);
+    conds.push(`NOT EXISTS (SELECT 1 FROM listings l WHERE l.tenant_id = u.tenant_id AND l.created_by = u.id)`);
   } else if (filter.has_listings === true) {
-    conds.push(`EXISTS (SELECT 1 FROM listings l WHERE l.created_by = u.id)`);
+    conds.push(`EXISTS (SELECT 1 FROM listings l WHERE l.tenant_id = u.tenant_id AND l.created_by = u.id)`);
   }
   const select = countOnly
     ? `SELECT COUNT(*)::int AS count`
@@ -195,12 +195,45 @@ export async function runCampaign(
   let queued = 0;
   const recipientIds: { id: string; email: string; name: string | null; variant: 'A' | 'B' }[] = [];
   for (const row of audience) {
+    const existing = await pool.query(
+      `SELECT id, email, name, variant, status
+         FROM campaign_recipients
+        WHERE campaign_id = $1 AND lower(email) = lower($2)
+        LIMIT 1`,
+      [campaignId, row.email],
+    );
+    if (existing.rowCount) {
+      const prior = existing.rows[0];
+      if (prior.status === 'FAILED') {
+        await pool.query(
+          `UPDATE campaign_recipients
+              SET status='PENDING', error=NULL, name=$2
+            WHERE id=$1`,
+          [prior.id, row.name],
+        );
+        queued++;
+        recipientIds.push({
+          id: prior.id,
+          email: prior.email,
+          name: prior.name,
+          variant: prior.variant === 'B' ? 'B' : 'A',
+        });
+      }
+      // SENT/OPENED/CLICKED and UNSUBSCRIBED recipients are terminal for
+      // this campaign and must never be sent again.
+      continue;
+    }
     const variant: 'A' | 'B' = ab.enabled && Math.random() * 100 < splitPct ? 'B' : 'A';
     const ins = await pool.query(
       `INSERT INTO campaign_recipients
          (campaign_id, tenant_id, lead_id, user_id, email, name, variant, status)
-       VALUES ($1, $2, $3::uuid, $4::uuid, $5, $6, $7, 'PENDING')
-       ON CONFLICT DO NOTHING
+       SELECT $1, $2, $3::uuid, $4::uuid, $5, $6, $7, 'PENDING'
+        WHERE NOT EXISTS (
+          SELECT 1
+            FROM campaign_recipients existing
+           WHERE existing.campaign_id = $1
+             AND lower(existing.email) = lower($5)
+        )
        RETURNING id`,
       [campaignId, c.tenant_id, row.lead_id, row.user_id, row.email, row.name, variant],
     );

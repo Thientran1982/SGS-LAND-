@@ -63,9 +63,14 @@ export async function tickCampaignScheduler(pool: Pool): Promise<CampaignSchedul
       result.failed += r.failed;
       result.results.push({ id: row.id, name: row.name, queued: r.queued, sent: r.sent, failed: r.failed, error: r.error });
 
-      if (r.queued > 0) {
+      if (r.queued > 0 && r.failed === 0) {
         await pool.query(
           `UPDATE campaigns SET status='COMPLETED', updated_at=NOW() WHERE id=$1`,
+          [row.id],
+        );
+      } else if (r.failed > 0) {
+        await pool.query(
+          `UPDATE campaigns SET status='PAUSED', updated_at=NOW() WHERE id=$1`,
           [row.id],
         );
       }

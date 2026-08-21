@@ -28,6 +28,17 @@ import { runCampaign, countAudience, signTrackingUrl, AudienceFilter, AbTestConf
 const ALLOWED_CHANNELS = new Set(['EMAIL']);
 const ALLOWED_SCHEDULE = new Set(['NOW', 'SCHEDULED']);
 
+function validateSchedule(scheduleType: string, scheduledAt: unknown): string | null {
+  if (scheduleType !== 'SCHEDULED') return null;
+  if (typeof scheduledAt !== 'string' || !scheduledAt.trim()) {
+    return 'Chiến dịch hẹn giờ cần có thời điểm gửi';
+  }
+  const parsed = new Date(scheduledAt);
+  if (!Number.isFinite(parsed.getTime())) return 'Thời điểm gửi không hợp lệ';
+  if (parsed.getTime() <= Date.now()) return 'Thời điểm gửi phải ở tương lai';
+  return null;
+}
+
 function requireAdminOrLead(req: Request, res: Response, next: NextFunction) {
   const user = (req as any).user;
   if (!user || !['SUPER_ADMIN', 'ADMIN', 'TEAM_LEAD'].includes(user.role)) {
@@ -66,19 +77,17 @@ export function createCampaignRouter(pool: Pool, authenticateToken: RequestHandl
     if (!/^[0-9a-f-]{36}$/i.test(id)) return;
     pool.query(
       `UPDATE campaign_recipients
-          SET opened_at = COALESCE(opened_at, NOW()),
-              status = CASE WHEN status IN ('SENT','OPENED','CLICKED') THEN 'OPENED' ELSE status END
-        WHERE id = $1`,
+          SET opened_at = NOW(),
+              status = CASE WHEN status IN ('SENT','OPENED') THEN 'OPENED' ELSE status END
+        WHERE id = $1 AND opened_at IS NULL
+        RETURNING campaign_id`,
       [id],
     ).then(async (r) => {
       if (r.rowCount) {
         await pool.query(
           `UPDATE campaigns SET open_count = open_count + 1
-             WHERE id = (SELECT campaign_id FROM campaign_recipients WHERE id = $1)
-               AND NOT EXISTS (
-                 SELECT 1 FROM campaign_recipients WHERE id = $1 AND opened_at < NOW() - INTERVAL '1 second'
-               )`,
-          [id],
+             WHERE id = $1`,
+          [r.rows[0].campaign_id],
         ).catch(() => null);
       }
     }).catch(() => null);
@@ -98,17 +107,18 @@ export function createCampaignRouter(pool: Pool, authenticateToken: RequestHandl
     if (sigOk) {
       pool.query(
         `UPDATE campaign_recipients
-            SET clicked_at = COALESCE(clicked_at, NOW()),
+            SET clicked_at = NOW(),
                 opened_at  = COALESCE(opened_at, NOW()),
                 status = 'CLICKED'
-          WHERE id = $1`,
+          WHERE id = $1 AND clicked_at IS NULL
+          RETURNING campaign_id`,
         [id],
       ).then(async (r) => {
         if (r.rowCount) {
           await pool.query(
             `UPDATE campaigns SET click_count = click_count + 1
-               WHERE id = (SELECT campaign_id FROM campaign_recipients WHERE id = $1)`,
-            [id],
+               WHERE id = $1`,
+            [r.rows[0].campaign_id],
           ).catch(() => null);
         }
       }).catch(() => null);
@@ -159,6 +169,8 @@ export function createCampaignRouter(pool: Pool, authenticateToken: RequestHandl
       if (!body.name || typeof body.name !== 'string') {
         return res.status(400).json({ error: 'Thiếu tên chiến dịch' });
       }
+      const scheduleError = validateSchedule(scheduleType, body.scheduled_at);
+      if (scheduleError) return res.status(400).json({ error: scheduleError });
 
       const r = await pool.query(
         `INSERT INTO campaigns
@@ -239,6 +251,15 @@ export function createCampaignRouter(pool: Pool, authenticateToken: RequestHandl
       if (body.schedule_type !== undefined && ALLOWED_SCHEDULE.has(body.schedule_type)) set('schedule_type', body.schedule_type);
       if (body.scheduled_at !== undefined) set('scheduled_at', body.scheduled_at || null);
 
+      const nextScheduleType = body.schedule_type !== undefined && ALLOWED_SCHEDULE.has(body.schedule_type)
+        ? body.schedule_type
+        : exist.rows[0].schedule_type;
+      const nextScheduledAt = body.scheduled_at !== undefined
+        ? body.scheduled_at || null
+        : exist.rows[0].scheduled_at;
+      const scheduleError = validateSchedule(nextScheduleType, nextScheduledAt);
+      if (scheduleError) return res.status(400).json({ error: scheduleError });
+
       if (!fields.length) return res.status(400).json({ error: 'Không có thay đổi' });
 
       params.push(req.params.id, tenantId);
@@ -279,20 +300,22 @@ export function createCampaignRouter(pool: Pool, authenticateToken: RequestHandl
       const c = cur.rows[0];
       if (c.status === 'ACTIVE') return res.status(409).json({ error: 'Đã ACTIVE' });
       if (!c.subject || !c.body_html) return res.status(400).json({ error: 'Cần điền subject và nội dung trước khi kích hoạt' });
+      if (c.schedule_type === 'SCHEDULED') {
+        const scheduleError = validateSchedule(c.schedule_type, c.scheduled_at);
+        if (scheduleError) return res.status(400).json({ error: scheduleError });
+      }
 
-      await pool.query(`UPDATE campaigns SET status='ACTIVE', updated_at=NOW() WHERE id=$1`, [c.id]);
+      await pool.query(`UPDATE campaigns SET status='ACTIVE', last_error=NULL, updated_at=NOW() WHERE id=$1 AND tenant_id=$2`, [c.id, tenantId]);
 
       let runResult: any = null;
       if (c.schedule_type === 'NOW') {
         runResult = await runCampaign(pool, c.id, publicBaseUrl());
-        if (runResult.queued === 0 || runResult.failed > 0 && runResult.sent === 0) {
-          // Không có ai để gửi → đánh dấu COMPLETED
-          if (runResult.queued === 0) {
-            await pool.query(`UPDATE campaigns SET status='COMPLETED', updated_at=NOW() WHERE id=$1`, [c.id]);
-          }
-        } else {
-          await pool.query(`UPDATE campaigns SET status='COMPLETED', updated_at=NOW() WHERE id=$1`, [c.id]);
-        }
+        const nextStatus = runResult.queued === 0
+          ? 'COMPLETED'
+          : runResult.failed > 0
+            ? 'PAUSED'
+            : 'COMPLETED';
+        await pool.query(`UPDATE campaigns SET status=$2, updated_at=NOW() WHERE id=$1 AND tenant_id=$3`, [c.id, nextStatus, tenantId]);
       }
 
       const fresh = await pool.query(`SELECT * FROM campaigns WHERE id=$1`, [c.id]);
@@ -327,10 +350,12 @@ export function createCampaignRouter(pool: Pool, authenticateToken: RequestHandl
       if (!cur.rowCount) return res.status(404).json({ error: 'Không tìm thấy' });
       // Cho phép chạy thủ công nếu ACTIVE (không cần activate lại)
       if (cur.rows[0].status !== 'ACTIVE') {
-        // Tự động kích hoạt tạm thời để chạy
-        await pool.query(`UPDATE campaigns SET status='ACTIVE', updated_at=NOW() WHERE id=$1`, [cur.rows[0].id]);
+        return res.status(409).json({ error: 'Chỉ có thể chạy ngay khi chiến dịch đang ACTIVE' });
       }
       const result = await runCampaign(pool, cur.rows[0].id, publicBaseUrl());
+      if (result.failed > 0) {
+        await pool.query(`UPDATE campaigns SET status='PAUSED', updated_at=NOW() WHERE id=$1 AND tenant_id=$2`, [cur.rows[0].id, tenantId]);
+      }
       res.json(result);
     } catch (err: any) {
       logger.error('[Campaign] Lỗi run-now:', err.message);
