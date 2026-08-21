@@ -86,6 +86,7 @@ const AQUA_STYLE_DETAIL_SLUGS = new Set([
   "bat-dong-san-can-gio",
   "bat-dong-san-hoc-mon",
   "bat-dong-san-binh-duong",
+  "bat-dong-san-phu-nhuan",
   "nha-pho-trung-tam",
   "bat-dong-san-thu-duc",
   "bat-dong-san-long-thanh",
@@ -195,6 +196,7 @@ function getAquaStyleLanding(slug: string): LandingProject | null {
     "bat-dong-san-can-gio": { lat: 10.411, lng: 106.954 },
     "bat-dong-san-hoc-mon": { lat: 10.889, lng: 106.596 },
     "bat-dong-san-binh-duong": { lat: 11.016, lng: 106.656 },
+    "bat-dong-san-phu-nhuan": { lat: 10.799, lng: 106.678 },
   };
   const geo = coordinates[slug] || (slug === "manhattan"
     ? { lat: 10.7769, lng: 106.7009 }
@@ -878,9 +880,12 @@ export async function generateMetadata({
   const { slug } = await params;
   const en = (await getLang()) === "en";
   const meta = PROJECT_META[slug];
+  const areaName = en && AREA_DETAIL_SLUGS.has(slug)
+    ? (AREA_ENGLISH_NAMES[slug] || meta?.name || slug)
+    : meta?.name;
   const title = en
     ? meta
-      ? `${meta.name} | Property project`
+      ? `${areaName} | ${AREA_DETAIL_SLUGS.has(slug) ? "Area reference" : "Property project"}`
       : `Project ${slug} | SGS LAND`
     : meta?.metaTitle
     ? meta.metaTitle
@@ -889,7 +894,7 @@ export async function generateMetadata({
     : `Dự án ${slug} | SGS LAND`;
   const description = en
     ? meta
-      ? `${meta.name} — ${meta.loc}. ${meta.priceRange}. Indicative project information from SGS LAND; verify current price, legal status, progress and distribution authorization against original documents.`
+      ? `${areaName} — ${meta.loc}. ${meta.priceRange}. ${AREA_DETAIL_SLUGS.has(slug) ? "Indicative area information" : "Indicative project information"} from SGS LAND; verify current price, legal status, progress and distribution authorization against original documents.`
       : "Detailed real estate project information from SGS LAND."
     : meta?.metaDescription ??
       meta?.desc ??
@@ -952,11 +957,16 @@ export default async function ProjectPage({
   const schemaProjectName = en && AREA_DETAIL_SLUGS.has(slug)
     ? (AREA_ENGLISH_NAMES[slug] || projectData.name)
     : projectData.name;
+  const schemaLocation = en && AREA_DETAIL_SLUGS.has(slug)
+    ? (projectData.location || meta?.loc || "Vietnam")
+      .replace(/TP\.?HCM/gi, "Ho Chi Minh City")
+      .replace(/Quận\s+/gi, "District ")
+    : (projectData.location || meta?.loc || "");
   const schemaProjectDescription = en && AREA_DETAIL_SLUGS.has(slug)
     ? `${schemaProjectName} is an area-level real estate reference page, not a single development. Verify the specific property, legal documents, pricing and operating status before a transaction.`
     : projectData.description;
-  const schemaProjectDeveloper = en && slug === "nha-pho-trung-tam"
-    ? "Multiple individual and organizational owners"
+  const schemaProjectDeveloper = en && AREA_DETAIL_SLUGS.has(slug)
+    ? (slug === "nha-pho-trung-tam" ? "Multiple individual and organizational owners" : "Multiple developers")
     : projectData.developer;
   const schemaPriceRange = en && AREA_DETAIL_SLUGS.has(slug)
     ? "Reference figures vary by sub-zone and property; verify current pricing against dated documents"
@@ -966,7 +976,7 @@ export default async function ProjectPage({
     name: schemaProjectName,
     slug,
     description: schemaProjectDescription,
-    location: projectData.location,
+    location: schemaLocation,
     developer: schemaProjectDeveloper,
     images: projectData.images,
     amenities: projectData.amenities,
@@ -1045,13 +1055,13 @@ export default async function ProjectPage({
        */}
       <article
         className="sr-only"
-        aria-label={en ? `Project information: ${projectData.name}` : `Thông tin dự án ${projectData.name}`}
+         aria-label={en ? `Area information: ${schemaProjectName}` : `Thông tin dự án ${projectData.name}`}
         itemScope        itemType="https://schema.org/RealEstateListing"
       >
         <p itemProp="name" className="font-semibold">{schemaProjectName}</p>
         <p className="answer-box" role="note">
           {en
-             ? `${schemaProjectName} is an area-level real-estate reference in ${projectData.location || meta?.loc || "Vietnam"} with multiple individual and organizational owners. This page summarizes indicative area information and buyer questions; price, legal status and property conditions must be verified against current original documents.`
+             ? `${schemaProjectName} is an area-level real-estate reference in ${schemaLocation} with multiple individual and organizational owners. This page summarizes indicative area information and buyer questions; price, legal status and property conditions must be verified against current original documents.`
             : `${projectData.name} là dự án bất động sản tại ${projectData.location || meta?.loc || "Việt Nam"} do ${projectData.developer || meta?.dev || "chủ đầu tư được ghi trên trang"} phát triển. Trang này tổng hợp thông tin tham khảo, loại hình và câu hỏi người mua; giá, pháp lý và tiến độ cần được xác minh bằng hồ sơ gốc hiện hành.`}
         </p>
         <p itemProp="description">{schemaProjectDescription ?? meta?.desc}</p>
@@ -1089,10 +1099,10 @@ export default async function ProjectPage({
         )}
         <dl>
           <dt>{en ? "Developer" : "Chủ đầu tư"}</dt>
-          <dd itemProp="brand">{projectData.developer || meta?.dev}</dd>
+           <dd itemProp="brand">{en && AREA_DETAIL_SLUGS.has(slug) ? schemaProjectDeveloper : (projectData.developer || meta?.dev)}</dd>
 
           <dt>{en ? "Location" : "Vị trí"}</dt>
-          <dd itemProp="address">{projectData.location || meta?.loc}</dd>
+           <dd itemProp="address">{schemaLocation}</dd>
           {meta?.scale && (
             <>
               <dt>{en ? "Scale" : "Quy mô"}</dt>
@@ -1102,7 +1112,7 @@ export default async function ProjectPage({
           {meta?.priceRange && (
             <>
               <dt>{en ? "Indicative price" : "Giá tham khảo"}</dt>
-              <dd itemProp="offers">{meta.priceRange}</dd>
+               <dd itemProp="offers">{en && AREA_DETAIL_SLUGS.has(slug) ? schemaPriceRange : meta.priceRange}</dd>
             </>
           )}
           <dt>{en ? "Authorised distribution agent" : "Đại lý phân phối uỷ quyền"}</dt>

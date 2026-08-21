@@ -105,7 +105,7 @@ function RichProjectDetail({ project, config, landing }: { project: ProjectDetai
   };
   const displayTitle = lang === "en" && isArea ? (areaEnglishNames[landing.slug] || landing.titleShort) : landing.titleShort;
   const translateAreaValue = (value: string) => lang === "en" && isArea
-    ? value.replace(/Nhiều chủ đầu tư/gi, "Multiple developers").replace(/Nhiều CĐT/gi, "Multiple developers").replace(/Nhiều Chủ Sở Hữu Cá Nhân & Tổ Chức/gi, "Multiple individual and organizational owners").replace(/Nhiều khu vực nội thành/gi, "Multiple central districts").replace(/Cần xác minh theo khu vực/gi, "To be verified by area").replace(/Cần xác minh/gi, "To be verified").replace(/Danh mục bất động sản/gi, "Real estate category").replace(/Bất động sản/gi, "Real estate").replace(/khu trung tâm TP\.?HCM/gi, "central Ho Chi Minh City").replace(/TP\.?HCM/gi, "Ho Chi Minh City").replace(/Quận\s+/gi, "District ").replace(/Đất nền/gi, "Land lots").replace(/biệt thự/gi, "villas").replace(/Căn hộ/gi, "Apartments").replace(/nhà phố liền kề/gi, "attached townhouses").replace(/nhà phố/gi, "Townhouses").replace(/Nhà mặt tiền/gi, "Street-front houses").replace(/nhà hẻm/gi, "alley houses").replace(/liền kề/gi, "attached townhouses").replace(/Sổ hồng chính chủ, thổ cư ổn định/gi, "Registered ownership certificate, established residential land status").replace(/Tài sản tích lũy bền vững qua thế hệ/gi, "Long-term intergenerational asset").replace(/Kinh doanh, đầu tư cho thuê, tích lũy/gi, "Business, rental investment and long-term holding").replace(/triệu\/m²/gi, "million VND/m²").replace(/triệu\/tháng/gi, "million VND/month").replace(/\(mặt tiền lớn\)/gi, "(large frontage)").replace(/VNĐ/gi, "VND")
+    ? value.replace(/Nhiều chủ đầu tư/gi, "Multiple developers").replace(/Nhiều CĐT/gi, "Multiple developers").replace(/Nhiều Chủ Sở Hữu Cá Nhân & Tổ Chức/gi, "Multiple individual and organizational owners").replace(/Nhiều khu vực nội thành/gi, "Multiple central districts").replace(/Cần xác minh theo khu vực/gi, "To be verified by area").replace(/Cần xác minh theo hồ sơ hiện hành/gi, "To be verified against current documents").replace(/Cần xác minh theo sản phẩm/gi, "To be verified by property").replace(/Cần xác minh/gi, "To be verified").replace(/Danh mục bất động sản/gi, "Real estate category").replace(/Bất động sản/gi, "Real estate").replace(/khu trung tâm TP\.?HCM/gi, "central Ho Chi Minh City").replace(/TP\.?HCM/gi, "Ho Chi Minh City").replace(/Quận\s+/gi, "District ").replace(/\btừ\b/gi, "from").replace(/Đất nền/gi, "Land lots").replace(/biệt thự/gi, "villas").replace(/Căn hộ/gi, "Apartments").replace(/nhà phố liền kề/gi, "attached townhouses").replace(/nhà phố/gi, "Townhouses").replace(/Nhà mặt tiền/gi, "Street-front houses").replace(/nhà hẻm/gi, "alley houses").replace(/liền kề/gi, "attached townhouses").replace(/Sổ hồng chính chủ, thổ cư ổn định/gi, "Registered ownership certificate, established residential land status").replace(/Tài sản tích lũy bền vững qua thế hệ/gi, "Long-term intergenerational asset").replace(/Kinh doanh, đầu tư cho thuê, tích lũy/gi, "Business, rental investment and long-term holding").replace(/pháp lý minh bạch/gi, "clear legal status").replace(/triệu\/m²/gi, "million VND/m²").replace(/triệu\/tháng/gi, "million VND/month").replace(/\(mặt tiền lớn\)/gi, "(large frontage)").replace(/VNĐ/gi, "VND")
     : value;
   const translateAreaLabel = (label: string) => lang === "en" && isArea
     ? label.replace(/^Chủ đầu tư$/i, "Developer").replace(/^Vị trí$/i, "Location").replace(/^Quy mô$/i, "Scale").replace(/^Loại hình$/i, "Property types").replace(/^Giá tham khảo$/i, "Reference price").replace(/^Tình trạng$/i, "Status").replace(/^Kỳ dữ liệu$/i, "Data period").replace(/^Giá mặt tiền Q1$/i, "District 1 frontage price").replace(/^Giá hẻm Q1$/i, "District 1 alley-house price").replace(/^Giá hẻm xe hơi Q3$/i, "District 3 car-access alley price").replace(/^Giá thuê mặt bằng$/i, "Commercial space rent").replace(/^Cho thuê mặt bằng$/i, "Commercial space rent").replace(/^Pháp lý$/i, "Legal status").replace(/^Đặc điểm$/i, "Key characteristics").replace(/^Phù hợp$/i, "Suitable for").replace(/^Khu vực$/i, "Area").replace(/^Tên khu vực$/i, "Area name")
@@ -155,13 +155,22 @@ function RichProjectDetail({ project, config, landing }: { project: ProjectDetai
     "bat-dong-san-phu-nhuan": ["Established inner-city location", "Local retail and services", "Schools and healthcare access", "Public transport access", "Dining and everyday amenities", "Established residential communities", "Verify property-specific amenities"],
     "nha-pho-trung-tam": ["Central urban location", "Convenient retail and services", "Schools and hospitals", "Public transport access", "Dining and entertainment", "Established residential community", "Verify property-specific amenities"],
   };
+  const safeAreaAmenities = areaAmenityText[landing.slug] || [
+    "Reference location and local access",
+    "Transport and infrastructure to verify",
+    "Schools and healthcare access",
+    "Retail and daily services",
+    "Residential communities",
+    "Public spaces and local amenities",
+    "Verify property-specific amenities",
+  ];
   const areaEnglishConfig: ProjectConfig | null = lang === "en" && isArea ? {
-    details: (config?.details || []).map((row) => ({
+    details: (config?.details?.length ? config.details : landing.entityTable).map((row) => ({
       ...row,
-      label: translateAreaLabel(row.label),
-      value: translateAreaValue(row.value),
+      label: translateAreaLabel("label" in row ? row.label : row.k),
+      value: translateAreaValue("value" in row ? row.value : row.v),
     })),
-    amenities: [{ title: "Area amenities and status to verify", items: areaAmenityText[landing.slug] }],
+    amenities: [{ title: "Area amenities and status to verify", items: safeAreaAmenities }],
     faqs: [
       { q: `What is ${displayTitle}?`, a: `${displayTitle} is an area-level real estate reference page, not a single project. Verify the specific property and current documents before a transaction.` },
       { q: "Are the prices official?", a: "No. Prices shown are references from the available dataset and must be checked against the specific property, date and legal documents." },
