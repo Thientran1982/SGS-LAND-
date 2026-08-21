@@ -1682,7 +1682,7 @@ export const ListingDetail: React.FC = () => {
                     {/* Map — hiển thị luôn khi có địa chỉ; MapView tự geocode qua Nominatim nếu coordinates null */}
                     {listing.location && (
                         <div className="h-80 rounded-[24px] overflow-hidden border border-[var(--glass-border)] shadow-sm relative z-0">
-                            <MapView listings={[listing]} onNavigate={() => {}} formatCurrency={formatCurrency} formatUnitPrice={formatUnitPrice} t={t} language={language} />
+                            <MapView listings={[listing]} onNavigate={() => {}} formatCurrency={formatCurrency} formatUnitPrice={formatUnitPrice} t={t} language={language} detailStyle />
                         </div>
                     )}
                     {/* Project Units - New Section */}

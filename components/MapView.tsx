@@ -308,10 +308,11 @@ interface MapViewProps {
     formatCompactNumber?: (val: number) => string;
     t: any;
     language?: string;
+    detailStyle?: boolean;
 }
 // ── Component ─────────────────────────────────────────────────────────────────
 const MapView: React.FC<MapViewProps> = memo(({
-    listings, onNavigate, formatCurrency, formatUnitPrice, formatCompactNumber, t, language = 'vn'
+    listings, onNavigate, formatCurrency, formatUnitPrice, formatCompactNumber, t, language = 'vn', detailStyle = false
 }) => {
     const mapRef       = useRef<HTMLDivElement>(null);
     const mapInst      = useRef<L.Map | null>(null);
@@ -342,9 +343,12 @@ const MapView: React.FC<MapViewProps> = memo(({
                 // The _leaflet_pos crash on unmount is handled in the cleanup below
                 // by zeroing _animatingZoom before removal.
             });
-            L.control.zoom({ position: 'bottomright' }).addTo(map);
-            // 2026: Clean minimal tile — CartoDB Voyager has warmer roads
-            L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
+            L.control.zoom({ position: detailStyle ? 'topleft' : 'bottomright' }).addTo(map);
+            // Detail maps use the same pale Carto Light treatment as the public Next.js page.
+            // Marketplace keeps Voyager because its price pins need stronger map contrast.
+            L.tileLayer(detailStyle
+                ? 'https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png'
+                : 'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
                 subdomains: 'abcd', maxZoom: 20,
                 attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OSM</a> &copy; <a href="https://carto.com/">CARTO</a>',
             }).addTo(map);
@@ -382,7 +386,7 @@ const MapView: React.FC<MapViewProps> = memo(({
             layerGroup.current = null;
         };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, []);
+    }, [detailStyle]);
     // Deselect the currently active pin (restore normal icon)
     const deselectPin = useCallback(() => {
         if (activeMarker.current) {
@@ -451,7 +455,14 @@ const MapView: React.FC<MapViewProps> = memo(({
                 const label  = formatPrice(listing.price, language, formatCompactNumber, t);
                 const isActive = selectedIdRef.current === listing.id;
                 const pType  = listing.type as string;
-                const icon   = priceIcon(label, approximate, listing.transaction as string, isActive, pType);
+                const icon = detailStyle
+                    ? L.divIcon({
+                        className: 'sgs-listing-detail-marker',
+                        html: '<div style="width:34px;height:34px;border-radius:50% 50% 50% 0;transform:rotate(-45deg);background:#1B3A5C;border:3px solid #fff;box-shadow:0 4px 14px rgba(15,39,64,.35);display:flex;align-items:center;justify-content:center"><span style="transform:rotate(45deg);color:#fff;font-size:16px">⌂</span></div>',
+                        iconSize: [34, 34],
+                        iconAnchor: [17, 34],
+                    })
+                    : priceIcon(label, approximate, listing.transaction as string, isActive, pType);
                 // Use collision-adjusted display point when markers would otherwise overlap,
                 // otherwise fall back to micro-jitter for real GPS or the raw fallback point.
                 const displayPoint: [number, number] = overridePoint.get(String(listing.id))
@@ -463,7 +474,9 @@ const MapView: React.FC<MapViewProps> = memo(({
                     // Deselect previous
                     deselectPin();
                     // Activate this pin
-                    const activeIcon = priceIcon(label, approximate, listing.transaction as string, true, pType);
+                    const activeIcon = detailStyle
+                        ? icon
+                        : priceIcon(label, approximate, listing.transaction as string, true, pType);
                     marker.setIcon(activeIcon);
                     marker.setZIndexOffset(500);
                     activeMarker.current = { marker, entry: cluster[0] };
@@ -495,7 +508,7 @@ const MapView: React.FC<MapViewProps> = memo(({
             }
         });
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [language, formatCompactNumber, t, deselectPin]);
+    }, [language, formatCompactNumber, t, deselectPin, detailStyle]);
     // Keep stable refs in sync so event listeners (zoomend, click) always
     // call the most recent version of these callbacks.
     useEffect(() => { renderClustersRef.current = renderClusters; }, [renderClusters]);
@@ -634,8 +647,8 @@ const MapView: React.FC<MapViewProps> = memo(({
             `}</style>
             <div style={{ position: 'relative', width: '100%', height: '100%' }}>
                 <div ref={mapRef} style={{ width: '100%', height: '100%', background: '#e8e8e0' }} />
-                {/* ── Legend (2026: minimal top-right chip) ── */}
-                <div style={{
+                {/* Marketplace legend; detail maps use the simpler public overlay below. */}
+                {!detailStyle && <div style={{
                     position: 'absolute', top: 12, right: 12,
                     display: 'flex', gap: 6, zIndex: 900,
                     pointerEvents: 'none',
@@ -661,9 +674,46 @@ const MapView: React.FC<MapViewProps> = memo(({
                             </div>
                         );
                     })}
-                </div>
+                </div>}
+                {detailStyle && listings[0] && (
+                    <>
+                        <div style={{
+                            position: 'absolute', top: 10, left: 10, maxWidth: 'calc(100% - 56px)',
+                            background: 'rgba(255,255,255,0.94)', border: '1px solid rgba(21,49,70,.14)',
+                            borderRadius: 12, padding: '8px 12px', boxShadow: '0 2px 8px rgba(15,39,64,.12)',
+                            zIndex: 900, pointerEvents: 'none', fontFamily: 'system-ui,-apple-system,sans-serif',
+                        }}>
+                            <div style={{ fontSize: 12, fontWeight: 800, color: '#16202B', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                                {listings[0].title || 'Vị trí bất động sản'}
+                            </div>
+                            {listings[0].location && (
+                                <div style={{ fontSize: 11, color: '#5C6B7A', marginTop: 2, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                                    {listings[0].location}
+                                </div>
+                            )}
+                            {!hasTrustedCoords(listings[0]) && (
+                                <div style={{ fontSize: 10, color: '#7B8794', marginTop: 2 }}>Vị trí tham khảo theo địa chỉ</div>
+                            )}
+                        </div>
+                        <a
+                            href={directionsUrl(listings[0])}
+                            target="_blank"
+                            rel="noreferrer"
+                            onClick={e => e.stopPropagation()}
+                            style={{
+                                position: 'absolute', bottom: 10, left: 10, zIndex: 900,
+                                display: 'inline-flex', alignItems: 'center', gap: 5,
+                                background: '#1B3A5C', color: '#fff', borderRadius: 8,
+                                padding: '6px 9px', fontSize: 10, fontWeight: 700,
+                                textDecoration: 'none', boxShadow: '0 2px 6px rgba(15,39,64,.24)',
+                            }}
+                        >
+                            ↗ Chỉ đường
+                        </a>
+                    </>
+                )}
                 {/* ── Single-listing detail panel (glassmorphism 2026) ── */}
-                {sel && tokens && (
+                {!detailStyle && sel && tokens && (
                     <div className="sgs-panel" style={{
                         position: 'absolute', bottom: 24, left: 16, width: 276,
                         background: 'rgba(255,255,255,0.92)',
@@ -754,7 +804,7 @@ const MapView: React.FC<MapViewProps> = memo(({
                     </div>
                 )}
                 {/* ── Cluster list panel ── */}
-                {clusterGroup && !sel && (
+                {!detailStyle && clusterGroup && !sel && (
                     <div className="sgs-panel" style={{
                         position: 'absolute', bottom: 24, left: 16, width: 284,
                         background: 'rgba(255,255,255,0.92)',
