@@ -138,7 +138,7 @@ const FinancialSuite = memo(({ price, formatCurrency, t }: { price: number, form
         ? (Math.pow((projectedPrice + totalRentalIncome) / price, 1 / holdingYears) - 1) * 100
         : 0;
     return (
-        <div className="bg-[var(--bg-surface)] rounded-[24px] border border-[var(--glass-border)] shadow-sm overflow-hidden h-full">
+        <div className="bg-[var(--bg-surface)] rounded-2xl border border-[var(--glass-border)] shadow-sm overflow-hidden h-auto self-start">
             <div className="flex border-b border-[var(--glass-border)]">
                 <button
                     onClick={() => setMode('LOAN')}
