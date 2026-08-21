@@ -69,6 +69,7 @@ export const ListingForm: React.FC<ListingFormProps> = memo(({ isOpen, onClose, 
     const [projectsLoading, setProjectsLoading] = useState(false);
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [isUploading, setIsUploading] = useState(false);
+    const [step, setStep] = useState(0);
     const [errors, setErrors] = useState<Record<string, string>>({});
     const [uploadError, setUploadError] = useState<string>('');
     const [isDragging, setIsDragging] = useState(false);
@@ -148,6 +149,7 @@ export const ListingForm: React.FC<ListingFormProps> = memo(({ isOpen, onClose, 
     useEffect(() => {
         if (isOpen) {
             setErrors({});
+            setStep(0);
             // Load Projects for Dropdown from the Projects API
             setProjectsLoading(true);
             db.getProjects(1, 200).then(res => {
@@ -325,6 +327,19 @@ export const ListingForm: React.FC<ListingFormProps> = memo(({ isOpen, onClose, 
             setIsSubmitting(false);
         }
     };
+    const handleNextStep = () => {
+        if (step === 0) {
+            if (!validate()) {
+                setTimeout(() => {
+                    const el = document.querySelector('.border-rose-300') as HTMLElement | null;
+                    if (el) { el.scrollIntoView({ behavior: 'smooth', block: 'center' }); el.focus?.(); }
+                }, 50);
+                return;
+            }
+        }
+        setStep(current => Math.min(current + 1, 2));
+    };
+    const handlePreviousStep = () => setStep(current => Math.max(current - 1, 0));
     // --- OPTIONS MEMOIZATION ---
     const directionOptions = useMemo(() => [
         { value: '', label: '\u2014' },
@@ -539,9 +554,36 @@ export const ListingForm: React.FC<ListingFormProps> = memo(({ isOpen, onClose, 
                         {ICONS.CLOSE}
                     </button>
                 </div>                
+                 <div className="px-6 py-3 border-b border-[var(--glass-border)] bg-[var(--bg-surface)] shrink-0">
+                     <div className="flex items-center gap-2" aria-label="Tiến trình đăng tin">
+                         {[
+                             { label: 'Thông tin chính', hint: 'Tiêu đề, giá, địa chỉ' },
+                             { label: 'Phân loại & ảnh', hint: 'Loại hình, trạng thái, hình ảnh' },
+                             { label: 'Xem lại & đăng', hint: 'Kiểm tra trước khi lưu' },
+                         ].map((item, index) => (
+                             <React.Fragment key={item.label}>
+                                 <button
+                                     type="button"
+                                     onClick={() => index < step ? setStep(index) : undefined}
+                                     className={`min-w-0 flex-1 text-left ${index < step ? 'cursor-pointer' : 'cursor-default'}`}
+                                     aria-current={step === index ? 'step' : undefined}
+                                 >
+                                     <div className={`flex items-center gap-2 text-xs font-bold ${step === index ? 'text-sgs-primary' : index < step ? 'text-sgs-verified' : 'text-[var(--text-tertiary)]'}`}>
+                                         <span className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-[11px] ${step === index ? 'bg-sgs-primary text-white' : index < step ? 'bg-emerald-100 text-sgs-verified' : 'bg-[var(--glass-surface-hover)]'}`}>
+                                             {index < step ? '✓' : index + 1}
+                                         </span>
+                                         <span className="truncate">{item.label}</span>
+                                     </div>
+                                     <span className="hidden pl-8 text-[10px] text-[var(--text-tertiary)] sm:block truncate">{item.hint}</span>
+                                 </button>
+                                 {index < 2 && <span className={`h-px flex-1 ${index < step ? 'bg-emerald-300' : 'bg-[var(--glass-border)]'}`} />}
+                             </React.Fragment>
+                         ))}
+                     </div>
+                 </div>
                 {/* Scroll Container: Added no-scrollbar */}
                 <div className="flex-1 overflow-y-auto p-6 bg-[var(--glass-surface)]/50 overscroll-contain no-scrollbar">
-                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                     {step === 0 && <div className="grid grid-cols-1 gap-6">
                         <div className="space-y-4">
                             <div className="bg-[var(--bg-surface)] p-5 rounded-2xl border border-[var(--glass-border)] shadow-sm space-y-4">
                                 <h4 className="text-xs font-bold text-sgs-primary uppercase tracking-wide">{t('inventory.section_general')}</h4>
@@ -844,8 +886,10 @@ export const ListingForm: React.FC<ListingFormProps> = memo(({ isOpen, onClose, 
                                 {renderDynamicFields()}
                             </div>
                         </div>
+                     </div>}
 
-                        <div className="space-y-4">
+                     {step === 1 && <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                         <div className="space-y-4">
                             <div className="bg-[var(--bg-surface)] p-5 rounded-2xl border border-[var(--glass-border)] shadow-sm space-y-4">
                                 <div className="flex justify-between items-center mb-2">
                                     <h4 className="text-xs font-bold text-sgs-primary uppercase tracking-wide">{t('inventory.section_class')}</h4>
@@ -947,14 +991,39 @@ export const ListingForm: React.FC<ListingFormProps> = memo(({ isOpen, onClose, 
                                 <input type="file" multiple accept="image/*" ref={fileInputRef} className="hidden" onChange={handleImageUpload} />
                             </div>
                         </div>
-                    </div>
+                     </div>}
+
+                     {step === 2 && (
+                         <div className="mx-auto w-full max-w-2xl space-y-4">
+                             <div className="rounded-2xl border border-[var(--glass-border)] bg-[var(--bg-surface)] p-5 shadow-sm">
+                                 <h4 className="mb-4 text-sm font-bold text-sgs-primary">Kiểm tra thông tin trước khi đăng</h4>
+                                 <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                                     <div><span className="text-xs text-[var(--text-tertiary)]">Tiêu đề</span><p className="font-semibold text-[var(--text-primary)]">{formData.title || 'Chưa nhập'}</p></div>
+                                     <div><span className="text-xs text-[var(--text-tertiary)]">Giao dịch / Loại hình</span><p className="font-semibold text-[var(--text-primary)]">{t(`transaction.${formData.transaction}`)} · {t(`property.${formData.type}`)}</p></div>
+                                     <div><span className="text-xs text-[var(--text-tertiary)]">Giá</span><p className="font-semibold text-[var(--text-primary)]">{priceShort ? `${priceShort} ${UNITS[priceUnit === UNITS.BILLION.value ? 'BILLION' : priceUnit === UNITS.MILLION.value ? 'MILLION' : 'ONE'].label}` : 'Chưa nhập'}</p></div>
+                                     <div><span className="text-xs text-[var(--text-tertiary)]">Diện tích</span><p className="font-semibold text-[var(--text-primary)]">{formData.area ? `${formData.area} m²` : 'Chưa nhập'}</p></div>
+                                     {!isProjectUnit && <div className="sm:col-span-2"><span className="text-xs text-[var(--text-tertiary)]">Địa chỉ</span><p className="font-semibold text-[var(--text-primary)]">{formData.location || 'Chưa nhập'}</p></div>}
+                                 </div>
+                             </div>
+                             <div className="rounded-2xl border border-sgs-border bg-sgs-champagne/40 p-4 text-sm text-[var(--text-secondary)]">
+                                 <p className="font-semibold text-sgs-primary">Đã sẵn sàng đăng tin?</p>
+                                 <p className="mt-1">Bạn có thể quay lại bước trước để chỉnh sửa. Hệ thống sẽ tự lưu ảnh, tọa độ và các trường thông tin cùng tin đăng.</p>
+                             </div>
+                         </div>
+                     )}
                 </div>                
                 <div className="p-6 border-t border-[var(--glass-border)] bg-[var(--bg-surface)] rounded-b-[24px] flex gap-3 shrink-0">
-                    <button onClick={onClose} disabled={isSubmitting} className="flex-1 py-3 bg-[var(--glass-surface-hover)] text-[var(--text-secondary)] font-bold rounded-xl hover:bg-slate-200 transition-colors disabled:opacity-70">{t('common.cancel')}</button>
-                    <button onClick={handleSubmit} disabled={isSubmitting} className="flex-1 py-3 bg-sgs-primary text-white font-bold rounded-xl shadow-lg hover:bg-sgs-primary transition-all hover:-translate-y-0.5 disabled:opacity-70 flex items-center justify-center gap-2">
-                        {isSubmitting && <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>}
-                        {initialData && initialData.id ? t('inventory.update_submit') : t('inventory.create_submit')}
-                    </button>
+                     <button onClick={step > 0 ? handlePreviousStep : onClose} disabled={isSubmitting} className="flex-1 py-3 bg-[var(--glass-surface-hover)] text-[var(--text-secondary)] font-bold rounded-xl hover:bg-slate-200 transition-colors disabled:opacity-70">{step > 0 ? 'Quay lại' : t('common.cancel')}</button>
+                     {step < 2 ? (
+                         <button onClick={handleNextStep} disabled={isSubmitting} className="flex-1 py-3 bg-sgs-primary text-white font-bold rounded-xl shadow-lg hover:bg-sgs-primary transition-all hover:-translate-y-0.5 disabled:opacity-70">
+                             Tiếp tục
+                         </button>
+                     ) : (
+                         <button onClick={handleSubmit} disabled={isSubmitting} className="flex-1 py-3 bg-sgs-primary text-white font-bold rounded-xl shadow-lg hover:bg-sgs-primary transition-all hover:-translate-y-0.5 disabled:opacity-70 flex items-center justify-center gap-2">
+                             {isSubmitting && <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>}
+                             {initialData && initialData.id ? t('inventory.update_submit') : t('inventory.create_submit')}
+                         </button>
+                     )}
                 </div>
             </div>
         </div>,
