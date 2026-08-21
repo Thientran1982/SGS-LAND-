@@ -98,11 +98,13 @@ function RichProjectDetail({ project, config, landing }: { project: ProjectDetai
     "bat-dong-san-binh-thanh": "Binh Thanh Real Estate",
     "bat-dong-san-quan-7": "District 7 Real Estate",
     "bat-dong-san-hoc-mon": "Hoc Mon Real Estate",
+    "bat-dong-san-can-gio": "Can Gio Real Estate",
+    "bat-dong-san-binh-duong": "Binh Duong Real Estate",
     "nha-pho-trung-tam": "Central Townhouses",
   };
   const displayTitle = lang === "en" && isArea ? (areaEnglishNames[landing.slug] || landing.titleShort) : landing.titleShort;
   const translateAreaValue = (value: string) => lang === "en" && isArea
-    ? value.replace(/Nhiều chủ đầu tư/gi, "Multiple developers").replace(/Nhiều CĐT/gi, "Multiple developers").replace(/Nhiều Chủ Sở Hữu Cá Nhân & Tổ Chức/gi, "Multiple individual and organizational owners").replace(/Nhiều khu vực nội thành/gi, "Multiple central districts").replace(/Cần xác minh/gi, "To be verified").replace(/Danh mục bất động sản/gi, "Real estate category").replace(/khu trung tâm TP\.?HCM/gi, "central Ho Chi Minh City").replace(/TP\.?HCM/gi, "Ho Chi Minh City").replace(/Quận\s+/gi, "District ").replace(/Đất nền/gi, "Land lots").replace(/biệt thự/gi, "villas").replace(/Căn hộ/gi, "Apartments").replace(/nhà phố liền kề/gi, "attached townhouses").replace(/nhà phố/gi, "Townhouses").replace(/Nhà mặt tiền/gi, "Street-front houses").replace(/nhà hẻm/gi, "alley houses").replace(/liền kề/gi, "attached townhouses").replace(/Sổ hồng chính chủ, thổ cư ổn định/gi, "Registered ownership certificate, established residential land status").replace(/Tài sản tích lũy bền vững qua thế hệ/gi, "Long-term intergenerational asset").replace(/Kinh doanh, đầu tư cho thuê, tích lũy/gi, "Business, rental investment and long-term holding").replace(/triệu\/m²/gi, "million VND/m²").replace(/triệu\/tháng/gi, "million VND/month").replace(/\(mặt tiền lớn\)/gi, "(large frontage)").replace(/VNĐ/gi, "VND")
+    ? value.replace(/Nhiều chủ đầu tư/gi, "Multiple developers").replace(/Nhiều CĐT/gi, "Multiple developers").replace(/Nhiều Chủ Sở Hữu Cá Nhân & Tổ Chức/gi, "Multiple individual and organizational owners").replace(/Nhiều khu vực nội thành/gi, "Multiple central districts").replace(/Cần xác minh theo khu vực/gi, "To be verified by area").replace(/Cần xác minh/gi, "To be verified").replace(/Danh mục bất động sản/gi, "Real estate category").replace(/khu trung tâm TP\.?HCM/gi, "central Ho Chi Minh City").replace(/TP\.?HCM/gi, "Ho Chi Minh City").replace(/Quận\s+/gi, "District ").replace(/Đất nền/gi, "Land lots").replace(/biệt thự/gi, "villas").replace(/Căn hộ/gi, "Apartments").replace(/nhà phố liền kề/gi, "attached townhouses").replace(/nhà phố/gi, "Townhouses").replace(/Nhà mặt tiền/gi, "Street-front houses").replace(/nhà hẻm/gi, "alley houses").replace(/liền kề/gi, "attached townhouses").replace(/Sổ hồng chính chủ, thổ cư ổn định/gi, "Registered ownership certificate, established residential land status").replace(/Tài sản tích lũy bền vững qua thế hệ/gi, "Long-term intergenerational asset").replace(/Kinh doanh, đầu tư cho thuê, tích lũy/gi, "Business, rental investment and long-term holding").replace(/triệu\/m²/gi, "million VND/m²").replace(/triệu\/tháng/gi, "million VND/month").replace(/\(mặt tiền lớn\)/gi, "(large frontage)").replace(/VNĐ/gi, "VND")
     : value;
   const translateAreaLabel = (label: string) => lang === "en" && isArea
     ? label.replace(/^Chủ đầu tư$/i, "Developer").replace(/^Vị trí$/i, "Location").replace(/^Quy mô$/i, "Scale").replace(/^Loại hình$/i, "Property types").replace(/^Giá tham khảo$/i, "Reference price").replace(/^Tình trạng$/i, "Status").replace(/^Kỳ dữ liệu$/i, "Data period").replace(/^Giá mặt tiền Q1$/i, "District 1 frontage price").replace(/^Giá hẻm Q1$/i, "District 1 alley-house price").replace(/^Giá hẻm xe hơi Q3$/i, "District 3 car-access alley price").replace(/^Giá thuê mặt bằng$/i, "Commercial space rent").replace(/^Cho thuê mặt bằng$/i, "Commercial space rent").replace(/^Pháp lý$/i, "Legal status").replace(/^Đặc điểm$/i, "Key characteristics").replace(/^Phù hợp$/i, "Suitable for")
@@ -196,10 +198,16 @@ function RichProjectDetail({ project, config, landing }: { project: ProjectDetai
   }[landing.slug] || `/images/projects/${landing.slug}.jpg`);
   const priceRows = (englishConfig?.details || config?.details || [])
     .filter((row) => /giá|mức giá|price/i.test(row.label))
-    .map((row) => ({ k: row.label, v: row.value }));
+    .map((row) => ({
+      k: lang === "en" && isArea ? translateAreaLabel(row.label) : row.label,
+      v: lang === "en" && isArea ? translateAreaValue(row.value) : row.value,
+    }));
   if (priceRows.length === 0) {
     const fallbackPrice = landing.entityTable.find((row) => /giá|price/i.test(row.k));
-    if (fallbackPrice) priceRows.push({ k: fallbackPrice.k, v: fallbackPrice.v });
+    if (fallbackPrice) priceRows.push({
+      k: lang === "en" && isArea ? translateAreaLabel(fallbackPrice.k) : fallbackPrice.k,
+      v: lang === "en" && isArea ? translateAreaValue(fallbackPrice.v) : fallbackPrice.v,
+    });
   }
   const lastUpdated = "21/08/2026";
 

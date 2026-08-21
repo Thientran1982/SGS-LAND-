@@ -113,6 +113,8 @@ const AREA_ENGLISH_NAMES: Record<string, string> = {
   "bat-dong-san-binh-thanh": "Binh Thanh Real Estate",
   "bat-dong-san-quan-7": "District 7 Real Estate",
   "bat-dong-san-hoc-mon": "Hoc Mon Real Estate",
+  "bat-dong-san-can-gio": "Can Gio Real Estate",
+  "bat-dong-san-binh-duong": "Binh Duong Real Estate",
   "nha-pho-trung-tam": "Central Townhouses",
 };
 
