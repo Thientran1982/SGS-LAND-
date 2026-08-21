@@ -29,6 +29,19 @@ export interface VisitorStats {
   topListings: { listingId: string; count: number }[];
 }
 
+export interface VisitorFunnelStats {
+  periodDays: number;
+  propertyViews: number;
+  sessions: number;
+  engagedSessions: number;
+  pageLeaves: number;
+  scroll50: number;
+  scroll90: number;
+  ctaInteractions: number;
+  returningVisitors48h: number;
+  averageTimeOnPageMs: number;
+}
+
 class VisitorRepository {
   async log(data: VisitorLogInput): Promise<void> {
     try {
@@ -156,6 +169,60 @@ class VisitorRepository {
       topPages: pages.rows.map(r => ({ page: r.page, count: parseInt(r.count) })),
       dailyVisits: daily.rows.map(r => ({ date: String(r.date).slice(0, 10), count: parseInt(r.count) })),
       topListings: listings.rows.map(r => ({ listingId: r.listing_id, count: parseInt(r.count) })),
+    };
+  }
+
+  async getFunnelStats(tenantId: string, days = 30): Promise<VisitorFunnelStats> {
+    const safeDays = Math.max(1, Math.min(Math.floor(days), 365));
+    const result = await pool.query(
+      `WITH events AS (
+         SELECT visitor_id, session_id, event_type, metadata, created_at
+         FROM visitor_events
+         WHERE tenant_id = $1 AND created_at >= NOW() - ($2 || ' days')::interval
+       ),
+       property_views AS (
+         SELECT visitor_id, created_at
+         FROM events
+         WHERE event_type = 'property_view'
+       ),
+       returning AS (
+         SELECT DISTINCT p1.visitor_id
+         FROM property_views p1
+         JOIN property_views p2
+           ON p1.visitor_id = p2.visitor_id
+          AND p2.created_at > p1.created_at
+          AND p2.created_at <= p1.created_at + interval '48 hours'
+       )
+       SELECT
+         (SELECT COUNT(*)::int FROM property_views) AS property_views,
+         (SELECT COUNT(DISTINCT COALESCE(session_id, visitor_id))::int FROM events) AS sessions,
+         (SELECT COUNT(DISTINCT COALESCE(session_id, visitor_id))::int FROM events
+           WHERE event_type IN ('engagement_30s', 'engagement_60s', 'scroll_50', 'calculator_interaction',
+                                'favorite_click', 'share_click', 'contact_click', 'booking_open', 'chat_open')) AS engaged_sessions,
+         (SELECT COUNT(*)::int FROM events WHERE event_type = 'page_leave') AS page_leaves,
+         (SELECT COUNT(*)::int FROM events WHERE event_type = 'scroll_50') AS scroll_50,
+         (SELECT COUNT(*)::int FROM events WHERE event_type = 'scroll_90') AS scroll_90,
+         (SELECT COUNT(*)::int FROM events WHERE event_type IN ('favorite_click', 'share_click', 'contact_click',
+                                'booking_open', 'booking_submit', 'chat_open', 'similar_listing_click',
+                                'calculator_interaction')) AS cta_interactions,
+         (SELECT COUNT(*)::int FROM returning) AS returning_visitors_48h,
+         (SELECT COALESCE(ROUND(AVG(NULLIF((metadata->>'timeOnPageMs')::numeric, 0))), 0)::int
+            FROM events WHERE event_type = 'page_leave'
+              AND metadata->>'timeOnPageMs' ~ '^[0-9]+$') AS average_time_on_page_ms`,
+      [tenantId, safeDays],
+    );
+    const row = result.rows[0] || {};
+    return {
+      periodDays: safeDays,
+      propertyViews: Number(row.property_views || 0),
+      sessions: Number(row.sessions || 0),
+      engagedSessions: Number(row.engaged_sessions || 0),
+      pageLeaves: Number(row.page_leaves || 0),
+      scroll50: Number(row.scroll_50 || 0),
+      scroll90: Number(row.scroll_90 || 0),
+      ctaInteractions: Number(row.cta_interactions || 0),
+      returningVisitors48h: Number(row.returning_visitors_48h || 0),
+      averageTimeOnPageMs: Number(row.average_time_on_page_ms || 0),
     };
   }
 }

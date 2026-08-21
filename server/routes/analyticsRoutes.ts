@@ -194,5 +194,20 @@ export function createAnalyticsRoutes(authenticateToken: any) {
     }
   });
 
+  router.get('/visitor-funnel', authenticateToken, async (req: Request, res: Response) => {
+    try {
+      const user = (req as any).user;
+      if (PARTNER_ROLES.includes(user.role)) {
+        return res.status(403).json({ error: 'Không có quyền truy cập' });
+      }
+      const days = Math.max(1, Math.min(parseInt(req.query.days as string) || 30, 365));
+      const stats = await visitorRepository.getFunnelStats(user.tenantId, days);
+      res.json(stats);
+    } catch (error) {
+      console.error('Error fetching visitor funnel:', error);
+      res.status(500).json({ error: 'Failed to fetch visitor funnel' });
+    }
+  });
+
   return router;
 }

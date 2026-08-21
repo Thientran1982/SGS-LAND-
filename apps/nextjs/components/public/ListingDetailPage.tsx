@@ -499,9 +499,64 @@ export function ListingDetailPage({ listing, similarListings }: Props) {
             </p>
           </div>
            <LoanCalculator price={listing.price} listingCode={listingCode} />
-        </div>
-      </div>
-      {bookOpen && (
+           {(listing.legalStatus || attr.legalStatus || listing.location || similarListings.length > 0) && (
+             <div className="p-5 rounded-2xl" style={{ background: "var(--bg-elevated)", border: "1px solid var(--border-default)" }}>
+               <h3 className="text-sm font-bold mb-3" style={{ color: "var(--text-primary)" }}>
+                 {tt(lang, "Thông tin bạn có thể cần", "Helpful information")}
+               </h3>
+               <div className="space-y-2 text-sm" style={{ color: "var(--text-secondary)" }}>
+                 {(listing.legalStatus || attr.legalStatus) && (
+                   <div className="flex items-start justify-between gap-3">
+                     <span>{tt(lang, "Pháp lý", "Legal status")}</span>
+                     <strong style={{ color: "var(--text-primary)" }}>{listing.legalStatus || attr.legalStatus}</strong>
+                   </div>
+                 )}
+                 {listing.location && (
+                   <div className="flex items-start justify-between gap-3">
+                     <span>{tt(lang, "Khu vực", "Area")}</span>
+                     <strong className="text-right" style={{ color: "var(--text-primary)" }}>{listing.location}</strong>
+                   </div>
+                 )}
+                 {similarListings.length > 0 && (
+                   <div className="flex items-start justify-between gap-3">
+                     <span>{tt(lang, "Tin tương tự", "Similar properties")}</span>
+                     <strong style={{ color: "var(--primary-600)" }}>{similarListings.length}</strong>
+                   </div>
+                 )}
+               </div>
+             </div>
+           )}
+         </div>
+       </div>
+       <div className="fixed bottom-0 inset-x-0 z-40 border-t p-2 sm:hidden" style={{ background: "var(--bg-surface)", borderColor: "var(--border-default)", paddingBottom: "max(8px, env(safe-area-inset-bottom))" }}>
+         <div className="grid grid-cols-3 gap-2 max-w-lg mx-auto">
+           <button type="button" onClick={toggleFav} className="rounded-xl px-2 py-3 text-xs font-bold" style={{ background: "var(--bg-elevated)", color: "var(--text-primary)" }}>
+             <Heart className={`w-4 h-4 mx-auto mb-1 ${isFav ? "fill-red-500 text-red-500" : ""}`} style={{ color: isFav ? undefined : "var(--text-tertiary)" }} />
+             {isFav ? tt(lang, "Đã lưu", "Saved") : tt(lang, "Lưu tin", "Save")}
+           </button>
+           <button type="button" onClick={() => { trackListingEvent("booking_open", listingCode, { location: "mobile_sticky_cta" }); setBkState({ loading: false, ok: "", err: "" }); setBookOpen(true); }} className="rounded-xl px-2 py-3 text-xs font-bold text-white" style={{ background: "var(--sgs-primary, #1B3A5C)" }}>
+             <Calendar className="w-4 h-4 mx-auto mb-1" />
+             {tt(lang, "Đặt lịch", "Book viewing")}
+           </button>
+           <a href={`/livechat?listing=${encodeURIComponent(listingCode)}`} onClick={() => trackListingEvent("chat_open", listingCode, { location: "mobile_sticky_cta" })} className="rounded-xl px-2 py-3 text-xs font-bold text-center" style={{ background: "var(--primary-subtle)", color: "var(--primary-600)" }}>
+             <span className="block text-base leading-4 mb-1">💬</span>
+             {tt(lang, "Chat", "Chat")}
+           </a>
+         </div>
+       </div>
+       {exitPromptOpen && (
+         <div className="fixed inset-x-0 bottom-5 z-[2100] hidden md:block px-4" role="dialog" aria-label={tt(lang, "Lưu tin trước khi rời đi", "Save this property before leaving")}>
+           <div className="mx-auto flex max-w-xl items-center gap-4 rounded-2xl p-4 shadow-2xl" style={{ background: "var(--bg-surface)", border: "1px solid var(--border-default)" }}>
+             <div className="min-w-0 flex-1">
+               <p className="font-bold text-sm" style={{ color: "var(--text-primary)" }}>{tt(lang, "Muốn lưu tin này để xem lại?", "Want to save this property for later?")}</p>
+               <p className="mt-1 text-xs" style={{ color: "var(--text-secondary)" }}>{tt(lang, "Bạn có thể lưu tin hoặc đặt lịch xem nhanh với SGS LAND.", "Save it or book a viewing with SGS LAND.")}</p>
+             </div>
+             <button type="button" onClick={() => { toggleFav(); setExitPromptOpen(false); trackListingEvent("exit_intent_action", listingCode, { action: "save" }); }} className="shrink-0 rounded-xl px-3 py-2 text-xs font-bold text-white" style={{ background: "var(--sgs-primary, #1B3A5C)" }}>{tt(lang, "Lưu tin", "Save")}</button>
+             <button type="button" onClick={() => { setExitPromptOpen(false); trackListingEvent("exit_intent_dismiss", listingCode); }} aria-label={tt(lang, "Đóng", "Close")} className="shrink-0 rounded-lg px-2 py-2 text-sm" style={{ color: "var(--text-tertiary)" }}>✕</button>
+           </div>
+         </div>
+       )}
+       {bookOpen && (
         <div onClick={() => setBookOpen(false)}
           style={{ position: "fixed", inset: 0, background: "rgba(10,30,51,.55)", zIndex: 2000, display: "flex", alignItems: "center", justifyContent: "center", padding: "16px" }}>
           <div onClick={(e) => e.stopPropagation()} className="w-full max-w-md rounded-2xl"
@@ -568,9 +623,11 @@ export function ListingDetailPage({ listing, similarListings }: Props) {
         <section className="mt-16">
           <h2 className="text-xl font-bold mb-6" style={{ color: "var(--text-primary)" }}>{tt(lang, "Bất Động Sản Phù Hợp Khác", "Other Matching Properties")}</h2>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
-            {similarListings.slice(0, 3).map((l) => (
-              <PublicListingCard key={l.id} listing={l} eager />
-            ))}
+             {similarListings.slice(0, 3).map((l) => (
+              <div key={l.id} onClick={() => trackListingEvent("similar_listing_click", listingCode, { targetListingCode: l.code || l.id })}>
+                <PublicListingCard listing={l} eager />
+              </div>
+             ))}
           </div>
         </section>
       )}
