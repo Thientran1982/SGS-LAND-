@@ -1076,9 +1076,9 @@ export const Inbox: React.FC = () => {
                             <div className="p-4 md:p-6 overflow-y-auto no-scrollbar">
                                 <div className="space-y-6">
                                     {/* Widget Customization */}
-                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 bg-[var(--glass-surface)] rounded-xl p-4 border border-[var(--glass-border)]">
+                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 bg-sgs-primary-deep rounded-xl p-4 border border-slate-800">
                                         <div>
-                                            <label className="block text-xs font-bold text-[var(--text-secondary)] mb-1.5">{t('inbox.widget_title_label')}</label>
+                                            <label className="block text-xs font-bold text-white mb-1.5">{t('inbox.widget_title_label')}</label>
                                             <input
                                                 value={widgetTitle}
                                                 onChange={e => setWidgetTitle(e.target.value)}
@@ -1087,7 +1087,7 @@ export const Inbox: React.FC = () => {
                                             />
                                         </div>
                                         <div>
-                                            <label className="block text-xs font-bold text-[var(--text-secondary)] mb-1.5">{t('inbox.widget_desc_label')}</label>
+                                            <label className="block text-xs font-bold text-white mb-1.5">{t('inbox.widget_desc_label')}</label>
                                             <input
                                                 value={widgetDesc}
                                                 onChange={e => setWidgetDesc(e.target.value)}
@@ -1116,9 +1116,9 @@ export const Inbox: React.FC = () => {
                                                 <button
                                                     key={key}
                                                     onClick={() => setLinkChannel(key)}
-                                                    className={`flex-1 min-w-[60px] py-1.5 text-xs font-semibold rounded-lg transition-all border ${
+                                                     className={`flex-1 min-w-[60px] py-1.5 text-xs font-semibold rounded-lg transition-all border ${
                                                         linkChannel === key
-                                                            ? activeClass
+                                                             ? `${activeClass} !text-white`
                                                             : 'bg-[var(--glass-surface)] text-[var(--text-secondary)] border-[var(--glass-border)] hover:border-[var(--sgs-primary)]'
                                                     }`}
                                                 >
@@ -1185,9 +1185,9 @@ export const Inbox: React.FC = () => {
                                                 <button
                                                     key={key}
                                                     onClick={() => setEmbedChannel(key)}
-                                                    className={`flex-1 min-w-[60px] py-1.5 text-xs font-semibold rounded-lg transition-all border ${
+                                                     className={`flex-1 min-w-[60px] py-1.5 text-xs font-semibold rounded-lg transition-all border ${
                                                         embedChannel === key
-                                                            ? activeClass
+                                                             ? `${activeClass} !text-white`
                                                             : 'bg-[var(--glass-surface)] text-[var(--text-secondary)] border-[var(--glass-border)] hover:border-[var(--sgs-primary)]'
                                                     }`}
                                                 >
@@ -1232,9 +1232,9 @@ export const Inbox: React.FC = () => {
                                                 <button
                                                     key={key}
                                                     onClick={() => setQrChannel(key)}
-                                                    className={`flex-1 min-w-[60px] py-1.5 text-xs font-semibold rounded-lg transition-all border ${
+                                                     className={`flex-1 min-w-[60px] py-1.5 text-xs font-semibold rounded-lg transition-all border ${
                                                         qrChannel === key
-                                                            ? activeClass
+                                                             ? `${activeClass} !text-white`
                                                             : 'bg-[var(--glass-surface)] text-[var(--text-secondary)] border-[var(--glass-border)] hover:border-[var(--sgs-primary)]'
                                                     }`}
                                                 >
@@ -1242,7 +1242,7 @@ export const Inbox: React.FC = () => {
                                                 </button>
                                             ))}
                                         </div>
-                                        <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 sm:gap-6 bg-[var(--glass-surface)] p-4 rounded-xl border border-[var(--glass-border)]">
+                                         <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 sm:gap-6 bg-sgs-primary-deep p-4 rounded-xl border border-slate-800">
                                             <div className="bg-[var(--bg-surface)] p-2 rounded-xl shadow-sm border border-[var(--glass-border)] shrink-0 mx-auto sm:mx-0">
                                                 {(() => {
                                                      const qrData = buildLiveChatUrl(qrChannel);
@@ -1250,8 +1250,8 @@ export const Inbox: React.FC = () => {
                                                 })()}
                                             </div>
                                             <div className="text-center sm:text-left">
-                                                <h4 className="font-bold text-[var(--text-primary)] text-sm mb-1">{t('inbox.widget_qr_title')}</h4>
-                                                <p className="text-xs text-[var(--text-tertiary)] mb-4 leading-relaxed">{t('inbox.widget_qr_desc')}</p>
+                                                 <h4 className="font-bold text-white text-sm mb-1">{t('inbox.widget_qr_title')}</h4>
+                                                 <p className="text-xs text-slate-300 mb-4 leading-relaxed">{t('inbox.widget_qr_desc')}</p>
                                                 <a
                                                     href={(() => {
                                                          const qrData = buildLiveChatUrl(qrChannel);
