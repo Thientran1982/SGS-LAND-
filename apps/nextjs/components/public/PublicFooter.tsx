@@ -19,6 +19,11 @@ const FOOTER_PROJECTS = [
   { label: "Khu đô thị Thủ Thiêm",      href: "/du-an/thu-thiem" },
   { label: "Sơn Kim Land",             href: "/du-an/son-kim-land" },
 ];
+const FOOTER_PROJECTS_EN: Record<string, string> = {
+  "Vinhomes Cần Giờ": "Vinhomes Can Gio",
+  "Vinhomes Hóc Môn": "Vinhomes Hoc Mon",
+  "Khu đô thị Thủ Thiêm": "Thu Thiem Urban Area",
+};
 const FOOTER_SUPPORT_CUSTOMER = [
   { vi: "Tìm kiếm BĐS", en: "Property Search", href: "/marketplace" },
   { vi: "Định giá AI", en: "AI Valuation", href: "/ai-valuation" },
@@ -118,7 +123,7 @@ export function PublicFooter() {
                     onMouseEnter={e => linkHover(e, true)}
                     onMouseLeave={e => linkHover(e, false)}
                   >
-                    {link.label}
+                     {lang === "en" ? (FOOTER_PROJECTS_EN[link.label] || link.label) : link.label}
                   </Link>
                 </li>
               ))}

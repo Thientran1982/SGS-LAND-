@@ -126,7 +126,15 @@ function RichProjectDetail({ project, config, landing }: { project: ProjectDetai
     faq: [],
     navLinks: landing.navLinks.map((link) => ({
       href: link.href,
-      label: link.label.replace(/^Tổng quan$/i, "Overview").replace(/^Thông tin$/i, "Identity").replace(/^Vị trí$/i, "Location").replace(/^Sản phẩm & giá$/i, "Products & pricing").replace(/^Tiện ích & kết nối$/i, "Amenities & connectivity").replace(/^FAQ$/i, "FAQ"),
+      label: link.label
+        .replace(/^Tổng quan$/i, "Overview")
+        .replace(/^Thông tin(?: dự án)?$/i, "Identity")
+        .replace(/^Vị trí$/i, "Location")
+        .replace(/^Sản phẩm(?: & giá)?$|^Bảng giá$/i, "Products & pricing")
+        .replace(/^Tiện ích(?: & kết nối)?$/i, "Amenities & connectivity")
+        .replace(/^Thẩm định$/i, "Due diligence")
+        .replace(/^FAQ$/i, "FAQ")
+        .replace(/^Liên hệ$/i, "Contact"),
     })),
     stats: landing.stats.map((stat) => ({ ...stat, num: translateAreaValue(stat.num), lbl: translateAreaLabel(stat.lbl) })),
   } : null;
@@ -305,7 +313,7 @@ function RichProjectDetail({ project, config, landing }: { project: ProjectDetai
           <div className="flex flex-col gap-6 sm:flex-row sm:items-center sm:justify-between"><div><p className="text-xs font-bold uppercase tracking-[.16em] opacity-75">{tt(lang, "Bước tiếp theo", "Next step")}</p><h2 className="mt-2 text-2xl font-bold tracking-[-.03em]">{tt(lang, "Cần kiểm tra", "Need to verify")} {displayTitle} {tt(lang, "theo sản phẩm cụ thể?", "for a specific property?")}</h2><p className="mt-2 max-w-2xl text-sm leading-6 opacity-85">{tt(lang, "Gửi nhu cầu để nhận thông tin tham khảo. Giá, pháp lý, tiến độ và tư cách phân phối vẫn cần được xác nhận bằng tài liệu hiện hành.", "Send your request for reference information. Pricing, legal status, progress and distribution status must be confirmed with current documents.")}</p></div><a href="tel:+84971132378" className="inline-flex shrink-0 items-center justify-center gap-2 rounded-xl bg-white px-5 py-3 text-sm font-bold" style={{ color: "var(--ui-brand)" }}><Phone className="h-4 w-4" /> 0971 132 378</a></div>
         </section>
 
-        {config?.relatedProjects && config.relatedProjects.length > 0 && <section className="py-12"><SectionHeading eyebrow={tt(lang, "Đọc thêm", "Read more")} title={tt(lang, "Dự án và khu vực liên quan", "Related projects and areas")} /><div className="flex flex-wrap gap-3">{config.relatedProjects.map((related) => <Link key={related.slug} href={`/du-an/${related.slug}`} className="inline-flex items-center gap-2 rounded-xl border px-4 py-3 text-sm font-semibold transition hover:-translate-y-0.5" style={surface}><Building2 className="h-4 w-4" style={{ color: "var(--sgs-accent-text)" }} />{related.name}<ArrowRight className="h-4 w-4" /></Link>)}</div></section>}
+         {config?.relatedProjects && config.relatedProjects.length > 0 && <section className="py-12"><SectionHeading eyebrow={tt(lang, "Đọc thêm", "Read more")} title={tt(lang, "Dự án và khu vực liên quan", "Related projects and areas")} /><div className="flex flex-wrap gap-3">{config.relatedProjects.map((related) => <Link key={related.slug} href={`${lang === "en" ? "/en" : ""}/du-an/${related.slug}`} className="inline-flex items-center gap-2 rounded-xl border px-4 py-3 text-sm font-semibold transition hover:-translate-y-0.5" style={surface}><Building2 className="h-4 w-4" style={{ color: "var(--sgs-accent-text)" }} />{related.name}<ArrowRight className="h-4 w-4" /></Link>)}</div></section>}
       </div>
     </main>
   );

@@ -105,6 +105,16 @@ const AREA_DETAIL_SLUGS = new Set([
   "bat-dong-san-binh-duong",
   "bat-dong-san-phu-nhuan",
 ]);
+const AREA_ENGLISH_NAMES: Record<string, string> = {
+  "bat-dong-san-long-an": "Long An Real Estate",
+  "bat-dong-san-thu-duc": "Thu Duc Real Estate",
+  "bat-dong-san-long-thanh": "Long Thanh Real Estate",
+  "bat-dong-san-dong-nai": "Dong Nai Real Estate",
+  "bat-dong-san-binh-thanh": "Binh Thanh Real Estate",
+  "bat-dong-san-quan-7": "District 7 Real Estate",
+  "bat-dong-san-hoc-mon": "Hoc Mon Real Estate",
+  "nha-pho-trung-tam": "Central Townhouses",
+};
 
 function getDetailBasePath(slug: string) {
   return AREA_DETAIL_SLUGS.has(slug) ? `/khu-vuc/${slug}` : `/du-an/${slug}`;
@@ -936,13 +946,25 @@ export default async function ProjectPage({
     images: [],
     amenities: [],
   };
+  const schemaProjectName = en && AREA_DETAIL_SLUGS.has(slug)
+    ? (AREA_ENGLISH_NAMES[slug] || projectData.name)
+    : projectData.name;
+  const schemaProjectDescription = en && AREA_DETAIL_SLUGS.has(slug)
+    ? `${schemaProjectName} is an area-level real estate reference page, not a single development. Verify the specific property, legal documents, pricing and operating status before a transaction.`
+    : projectData.description;
+  const schemaProjectDeveloper = en && slug === "nha-pho-trung-tam"
+    ? "Multiple individual and organizational owners"
+    : projectData.developer;
+  const schemaPriceRange = en && AREA_DETAIL_SLUGS.has(slug)
+    ? "Reference figures vary by sub-zone and property; verify current pricing against dated documents"
+    : (meta?.priceRange || (en ? "Contact SGS LAND for the latest price list" : "Liên hệ SGS LAND để biết giá cập nhật"));
   // ─── JSON-LD schemas ──────────────────────────────────
   const listingSchema = getRealEstateListingSchema({
-    name: projectData.name,
+    name: schemaProjectName,
     slug,
-    description: projectData.description,
+    description: schemaProjectDescription,
     location: projectData.location,
-    developer: projectData.developer,
+    developer: schemaProjectDeveloper,
     images: projectData.images,
     amenities: projectData.amenities,
     total_units: projectData.total_units ?? projectData.listing_count,
@@ -955,15 +977,15 @@ export default async function ProjectPage({
   const breadcrumbSchema = getBreadcrumbSchema([
     { name: en ? "Home" : "Trang chủ", url: en ? `${SITE_URL}/en` : SITE_URL },
     { name: en ? (isArea ? "Areas" : "Property projects") : (isArea ? "Khu vực" : "Dự án BĐS"), url: en ? `${SITE_URL}/en/${isArea ? "khu-vuc" : "du-an"}` : `${SITE_URL}/${isArea ? "khu-vuc" : "du-an"}` },
-    { name: projectData.name, url: `${SITE_URL}${detailPath}` },
+    { name: schemaProjectName, url: `${SITE_URL}${detailPath}` },
   ]);
   const orgSchema = getOrganizationSchema();
   const faqItems = buildProjectFAQ(
     slug,
-    projectData.name,
-    projectData.developer || meta?.dev || "",
+    schemaProjectName,
+    schemaProjectDeveloper || meta?.dev || "",
     projectData.location || meta?.loc || "",
-    meta?.priceRange || (en ? "Contact SGS LAND for the latest price list" : "Liên hệ SGS LAND để biết giá cập nhật"),
+    schemaPriceRange,
     en
   );
   const faqSchema = getFAQSchema(faqItems, `${SITE_URL}${detailPath}#faq`);
@@ -974,7 +996,7 @@ export default async function ProjectPage({
   const apartmentSchema = aptMeta && slug !== "aqua-city" ? getApartmentComplexSchema({
     name: projectData.name,
      url: `${SITE_URL}${detailPath}`,
-    description: projectData.description,
+     description: schemaProjectDescription,
     location: projectData.location,
     developer: projectData.developer,
     numberOfRooms: aptMeta.numberOfRooms,
@@ -1023,13 +1045,13 @@ export default async function ProjectPage({
         aria-label={en ? `Project information: ${projectData.name}` : `Thông tin dự án ${projectData.name}`}
         itemScope        itemType="https://schema.org/RealEstateListing"
       >
-        <p itemProp="name" className="font-semibold">{projectData.name}</p>
+        <p itemProp="name" className="font-semibold">{schemaProjectName}</p>
         <p className="answer-box" role="note">
           {en
-            ? `${projectData.name} is a real-estate project in ${projectData.location || meta?.loc || "Vietnam"} by ${projectData.developer || meta?.dev || "the listed developer"}. This page summarizes indicative project information, product types and buyer questions; price, legal status and construction progress must be verified against current original documents.`
+             ? `${schemaProjectName} is an area-level real-estate reference in ${projectData.location || meta?.loc || "Vietnam"} with multiple individual and organizational owners. This page summarizes indicative area information and buyer questions; price, legal status and property conditions must be verified against current original documents.`
             : `${projectData.name} là dự án bất động sản tại ${projectData.location || meta?.loc || "Việt Nam"} do ${projectData.developer || meta?.dev || "chủ đầu tư được ghi trên trang"} phát triển. Trang này tổng hợp thông tin tham khảo, loại hình và câu hỏi người mua; giá, pháp lý và tiến độ cần được xác minh bằng hồ sơ gốc hiện hành.`}
         </p>
-        <p itemProp="description">{projectData.description ?? meta?.desc}</p>
+        <p itemProp="description">{schemaProjectDescription ?? meta?.desc}</p>
 
         {/* — Bảng giá theo phân khu (SEO/GEO structured content) — */}
         {meta?.subdivisions && meta.subdivisions.length > 0 && (
@@ -1095,7 +1117,7 @@ export default async function ProjectPage({
         </dl>
         {/* FAQ section for AI extraction */}
         <section aria-label={en ? "Frequently asked questions" : "Câu hỏi thường gặp"}>
-          <h2>{en ? `Frequently asked questions about ${projectData.name}` : `Câu hỏi thường gặp về ${projectData.name}`}</h2>
+           <h2>{en ? `Frequently asked questions about ${schemaProjectName}` : `Câu hỏi thường gặp về ${projectData.name}`}</h2>
           {faqItems.map((item, i) => (
             <div key={i} itemScope itemType="https://schema.org/Question">
               <h3 itemProp="name">{item.question}</h3>
