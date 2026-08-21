@@ -18,6 +18,7 @@ interface Listing {
   bathrooms?: number;
   location?: string;
   coordinates?: { lat?: number; lng?: number };
+  projectCode?: string;
   type?: string;
   status?: string;
   description?: string;
@@ -376,9 +377,8 @@ export function ListingDetailPage({ listing, similarListings }: Props) {
             )}
             {(listing.coordinates?.lat || listing.location) && (
               <div>
-                <h3 className="font-semibold mb-3 mt-2" style={{ color: "var(--text-primary)" }}>{tt(lang, "Vị trí trên bản đồ", "Location on map")}</h3>
                 <div className="rounded-2xl overflow-hidden" style={{ border: "1px solid var(--border-default)", height: "340px" }}>
-                  <ListingMap lat={listing.coordinates?.lat} lng={listing.coordinates?.lng} title={listing.title} location={listing.location} />
+                  <ListingMap lat={listing.coordinates?.lat} lng={listing.coordinates?.lng} title={listing.title} location={listing.location} projectCode={listing.projectCode} />
                 </div>
                 {listing.location && <p className="text-xs mt-2 flex items-center gap-1" style={{ color: "var(--text-tertiary)" }}><MapPin className="w-3 h-3" />{listing.location}</p>}
               </div>

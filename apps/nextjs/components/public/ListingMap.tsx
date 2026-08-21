@@ -13,9 +13,16 @@ interface ListingMapProps {
   lng?: number;
   title?: string;
   location?: string;
+  projectCode?: string;
 }
 
-const HCMC_CENTER: Coordinates = { lat: 10.7769, lng: 106.7009 };
+const PROJECT_FALLBACKS: Array<[string, number, number]> = [
+  ["vinhomes-central-park", 10.7952, 106.7218],
+  ["vinhomes-grand-park", 10.8430, 106.8430],
+  ["aqua-city", 10.8710, 106.9050],
+  ["izumi-city", 10.9000, 106.9300],
+  ["the-global-city", 10.8020, 106.7580],
+];
 
 function validCoordinates(lat?: number, lng?: number): lat is number {
   return Number.isFinite(lat) && Number.isFinite(lng) &&
@@ -30,25 +37,32 @@ function mapsUrl(coords?: Coordinates, location?: string) {
   return `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(destination)}`;
 }
 
+function fallbackCoordinates(projectCode?: string, title?: string, location?: string): Coordinates | null {
+  const haystack = `${projectCode || ""} ${title || ""} ${location || ""}`.toLowerCase().replace(/_/g, "-");
+  const match = PROJECT_FALLBACKS.find(([key]) => haystack.includes(key));
+  return match ? { lat: match[1], lng: match[2] } : null;
+}
+
 function escapeHtml(value: string) {
   return value.replace(/[&<>"']/g, (char) => ({
     "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#039;",
   }[char] || char));
 }
 
-export default function ListingMap({ lat, lng, title, location }: ListingMapProps) {
+export default function ListingMap({ lat, lng, title, location, projectCode }: ListingMapProps) {
   const ref = useRef<HTMLDivElement>(null);
   const mapRef = useRef<L.Map | null>(null);
+  const fallback = fallbackCoordinates(projectCode, title, location);
   const [resolved, setResolved] = useState<Coordinates | null>(
-    validCoordinates(lat, lng) ? { lat, lng } : null,
+    validCoordinates(lat, lng) ? { lat, lng } : fallback,
   );
-  const [geocoding, setGeocoding] = useState(!validCoordinates(lat, lng) && Boolean(location));
+  const [geocoding, setGeocoding] = useState(!validCoordinates(lat, lng) && !fallback && Boolean(location));
   const exact = validCoordinates(lat, lng);
 
   useEffect(() => {
     let cancelled = false;
-    if (exact || !location) {
-      setResolved(exact ? { lat: lat!, lng: lng! } : null);
+    if (exact || fallback || !location) {
+      setResolved(exact ? { lat: lat!, lng: lng! } : fallback);
       setGeocoding(false);
       return;
     }
@@ -67,7 +81,7 @@ export default function ListingMap({ lat, lng, title, location }: ListingMapProp
       .finally(() => { if (!cancelled) setGeocoding(false); });
 
     return () => { cancelled = true; };
-  }, [lat, lng, location, exact]);
+  }, [lat, lng, location, projectCode, title, exact, fallback?.lat, fallback?.lng]);
 
   useEffect(() => {
     if (!ref.current || mapRef.current || !resolved) return;
@@ -122,8 +136,8 @@ export default function ListingMap({ lat, lng, title, location }: ListingMapProp
         <MapPin className="h-7 w-7" />
         <p className="text-sm">Chưa có tọa độ chính xác cho sản phẩm này.</p>
         {location && (
-          <a href={mapsUrl(undefined, location)} target="_blank" rel="noreferrer" className="inline-flex items-center gap-2 rounded-lg px-3 py-2 text-xs font-bold text-white" style={{ background: "var(--sgs-primary, #1B3A5C)" }}>
-            <Navigation className="h-3.5 w-3.5" /> Mở chỉ đường theo địa chỉ
+          <a href={mapsUrl(undefined, location)} target="_blank" rel="noreferrer" aria-label="Mở chỉ đường" className="inline-flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-[11px] font-semibold text-white" style={{ background: "var(--sgs-primary, #1B3A5C)" }}>
+            <Navigation className="h-3 w-3" /> Chỉ đường
           </a>
         )}
       </div>
@@ -143,9 +157,8 @@ export default function ListingMap({ lat, lng, title, location }: ListingMapProp
           </div>
         </div>
       </div>
-      <a href={mapsUrl(resolved, location)} target="_blank" rel="noreferrer" className="absolute bottom-3 left-3 z-[500] inline-flex items-center gap-2 rounded-xl px-3 py-2 text-xs font-bold text-white shadow-lg transition-transform hover:-translate-y-0.5" style={{ background: "var(--sgs-primary, #1B3A5C)" }}>
-        <Navigation className="h-3.5 w-3.5" />
-        Chỉ đường đến sản phẩm
+      <a href={mapsUrl(resolved, location)} target="_blank" rel="noreferrer" aria-label="Chỉ đường đến sản phẩm" className="absolute bottom-3 left-3 z-[500] inline-flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-[11px] font-semibold text-white shadow-md transition-opacity hover:opacity-90" style={{ background: "var(--sgs-primary, #1B3A5C)" }}>
+        <Navigation className="h-3 w-3" /> Chỉ đường
       </a>
     </div>
   );
