@@ -18,7 +18,7 @@ const PROJECTS = ALL_PROJECTS.map((p) => ({
   price: p.slug === "aqua-city"
     ? "Từ 6 tỷ"
     : p.slug === "diamond-sky-van-phuc-city"
-      ? "Từ 9,6 tỷ – Từ 190 triệu/m²"
+      ? "Từ 190 triệu/m²"
       : p.priceRange,
   type: p.projectType,
   badge: p.status,
