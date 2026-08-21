@@ -49,6 +49,11 @@ export interface VisitorFunnelFilters {
   source?: string;
 }
 
+function safeMetric(value: unknown): number {
+  const metric = Number(value ?? 0);
+  return Number.isFinite(metric) && metric >= 0 ? metric : 0;
+}
+
 class VisitorRepository {
   async log(data: VisitorLogInput): Promise<void> {
     try {
@@ -251,17 +256,17 @@ class VisitorRepository {
     const row = result.rows[0] || {};
     return {
       periodDays: safeDays,
-      propertyViews: Number(row.property_views || 0),
-      sessions: Number(row.sessions || 0),
-      engagedSessions: Number(row.engaged_sessions || 0),
-      pageLeaves: Number(row.page_leaves || 0),
-      scroll50: Number(row.scroll_50 || 0),
-      scroll90: Number(row.scroll_90 || 0),
-      ctaInteractions: Number(row.cta_interactions || 0),
-      returningVisitors48h: Number(row.returning_visitors_48h || 0),
-      averageTimeOnPageMs: Number(row.average_time_on_page_ms || 0),
-      topSources: sources.rows.map(r => ({ value: String(r.value), count: Number(r.count) })),
-      topProjects: projects.rows.map(r => ({ value: String(r.value), count: Number(r.count) })),
+      propertyViews: safeMetric(row.property_views),
+      sessions: safeMetric(row.sessions),
+      engagedSessions: safeMetric(row.engaged_sessions),
+      pageLeaves: safeMetric(row.page_leaves),
+      scroll50: safeMetric(row.scroll_50),
+      scroll90: safeMetric(row.scroll_90),
+      ctaInteractions: safeMetric(row.cta_interactions),
+      returningVisitors48h: safeMetric(row.returning_visitors_48h),
+      averageTimeOnPageMs: safeMetric(row.average_time_on_page_ms),
+      topSources: sources.rows.map(r => ({ value: String(r.value), count: safeMetric(r.count) })),
+      topProjects: projects.rows.map(r => ({ value: String(r.value), count: safeMetric(r.count) })),
     };
   }
 }
