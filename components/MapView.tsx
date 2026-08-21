@@ -13,16 +13,12 @@ const CLUSTER_RADIUS_PX = 60;
 let nominatimReachable = true;
 let nominatimTrippedAt = 0;
 // ── Transaction → design tokens ──────────────────────────────────────────────
-// Priority: PropertyType.PROJECT → blue-600 | TransactionType.RENT → [var(--sgs-primary)] | default → [var(--sgs-primary)]
+// Marketplace pins use the same SGS navy/champagne treatment as the Next.js map.
 // bg values MUST match the CSS classes in critical.css (.sgs-pin-sale/rent/project).
 // NOTE: PropertyType.PROJECT = 'Project' (PascalCase enum value stored in DB).
 //       Compare case-insensitively so we match 'Project', 'PROJECT', 'project', etc.
 function pinTokens(transaction?: string, propertyType?: string) {
-    if (propertyType?.toUpperCase() === 'PROJECT')
-        return { bg: '#2563eb', glow: 'rgba(37,99,235,0.40)' };       // blue-600 — Dự án
-    if (transaction?.toUpperCase() === 'RENT')
-        return { bg: '#1B3A5C', glow: 'rgba(124,58,237,0.40)' };      // [var(--sgs-primary)] — Thuê
-    return { bg: '#4f46e5', glow: 'rgba(79,70,229,0.40)' };           // [var(--sgs-primary)] — Bán
+    return { bg: '#1B3A5C', glow: 'rgba(27,58,92,0.32)' };
 }
 // ── Geo utilities ────────────────────────────────────────────────────────────
 const hasRealCoords = (listing: any): boolean => {
@@ -546,8 +542,15 @@ const MapView: React.FC<MapViewProps> = memo(({
                         const point = cached ?? getFallbackPoint(listing);
                         resolved.push({ listing, point, approximate: !cached });
                         bounds.extend(point);
-                    } else {
+                    } else if (detailStyle) {
+                        // Detail pages can refine one location without blocking the
+                        // initial map. Marketplace uses deterministic fallbacks only,
+                        // matching the fast public Next.js map.
                         toGeocode.push(listing);
+                    } else {
+                        const point = getFallbackPoint(listing);
+                        resolved.push({ listing, point, approximate: true });
+                        bounds.extend(point);
                     }
                 }
             }

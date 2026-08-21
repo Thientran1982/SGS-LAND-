@@ -323,8 +323,8 @@ html.dark .logo-adaptive { filter: brightness(0) invert(1); }
 }
 /* Three pin colors */
 .sgs-pin-sale    { background-color: #1b3a5c !important; }
-.sgs-pin-rent    { background-color: #7c3aed !important; }
-.sgs-pin-project { background-color: #2563eb !important; }
+.sgs-pin-rent    { background-color: #1b3a5c !important; }
+.sgs-pin-project { background-color: #1b3a5c !important; }
 
 /* Marketplace price pills — match the public Next.js map. */
 .sgs-market-pin-container {
@@ -366,8 +366,8 @@ html.dark .logo-adaptive { filter: brightness(0) invert(1); }
   margin-top: -1px !important;
 }
 .sgs-pin-tail.sgs-pin-sale    { border-top: 11px solid #1b3a5c !important; }
-.sgs-pin-tail.sgs-pin-rent    { border-top: 11px solid #7c3aed !important; }
-.sgs-pin-tail.sgs-pin-project { border-top: 11px solid #2563eb !important; }
+.sgs-pin-tail.sgs-pin-rent    { border-top: 11px solid #1b3a5c !important; }
+.sgs-pin-tail.sgs-pin-project { border-top: 11px solid #1b3a5c !important; }
 /* Cluster outer wrapper — inline-flex so it self-sizes inside the 0×0 Leaflet marker */
 .sgs-cluster-outer {
   display: inline-flex !important;
@@ -394,8 +394,8 @@ html.dark .logo-adaptive { filter: brightness(0) invert(1); }
   background-image: linear-gradient(135deg,rgba(255,255,255,0.22) 0%,transparent 55%) !important;
 }
 .sgs-cluster-pill.sgs-pin-sale    { background-color: #1b3a5c !important; }
-.sgs-cluster-pill.sgs-pin-rent    { background-color: #7c3aed !important; }
-.sgs-cluster-pill.sgs-pin-project { background-color: #2563eb !important; }
+.sgs-cluster-pill.sgs-pin-rent    { background-color: #1b3a5c !important; }
+.sgs-cluster-pill.sgs-pin-project { background-color: #1b3a5c !important; }
 /* Legacy cluster bubble + tail (kept for safety, not used by current clusterIcon) */
 .sgs-cluster-bubble {
   color: #fff !important;
@@ -417,8 +417,8 @@ html.dark .logo-adaptive { filter: brightness(0) invert(1); }
   background-image: linear-gradient(135deg,rgba(255,255,255,0.18) 0%,transparent 55%) !important;
 }
 .sgs-cluster-bubble.sgs-pin-sale    { background-color: #1b3a5c !important; }
-.sgs-cluster-bubble.sgs-pin-rent    { background-color: #7c3aed !important; }
-.sgs-cluster-bubble.sgs-pin-project { background-color: #2563eb !important; }
+.sgs-cluster-bubble.sgs-pin-rent    { background-color: #1b3a5c !important; }
+.sgs-cluster-bubble.sgs-pin-project { background-color: #1b3a5c !important; }
 .sgs-cluster-tail {
   box-sizing: content-box !important;
   width: 0 !important; height: 0 !important;
@@ -427,8 +427,8 @@ html.dark .logo-adaptive { filter: brightness(0) invert(1); }
   margin-top: -1px !important;
 }
 .sgs-cluster-tail.sgs-pin-sale    { border-top: 13px solid #1b3a5c !important; }
-.sgs-cluster-tail.sgs-pin-rent    { border-top: 13px solid #7c3aed !important; }
-.sgs-cluster-tail.sgs-pin-project { border-top: 13px solid #2563eb !important; }
+.sgs-cluster-tail.sgs-pin-rent    { border-top: 13px solid #1b3a5c !important; }
+.sgs-cluster-tail.sgs-pin-project { border-top: 13px solid #1b3a5c !important; }
 
 /* --- LANDING PAGE ANIMATIONS --- */
 @keyframes scroll-x {
