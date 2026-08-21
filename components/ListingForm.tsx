@@ -575,8 +575,8 @@ export const ListingForm: React.FC<ListingFormProps> = memo(({ isOpen, onClose, 
                  <div className="px-6 py-3 border-b border-[var(--glass-border)] bg-[var(--bg-surface)] shrink-0">
                      <div className="flex items-center gap-2" aria-label="Tiến trình đăng tin">
                          {[
-                             { label: 'Thông tin chính', hint: 'Tiêu đề, giá, địa chỉ' },
-                             { label: 'Phân loại & ảnh', hint: 'Loại hình, trạng thái, hình ảnh' },
+                             { label: 'Thông tin chính', hint: 'Tiêu đề, phân loại, trạng thái, giá, địa chỉ' },
+                             { label: 'Ký gửi, hoa hồng & ảnh', hint: 'Thông tin chủ nhà, hoa hồng, hình ảnh' },
                              { label: 'Xem lại & đăng', hint: 'Kiểm tra trước khi lưu' },
                          ].map((item, index) => (
                              <React.Fragment key={item.label}>
@@ -657,56 +657,6 @@ export const ListingForm: React.FC<ListingFormProps> = memo(({ isOpen, onClose, 
                                         placeholder="0912..." 
                                     />
                                     {errors.contactPhone && <p className="text-xs2 text-rose-500 mt-1">{errors.contactPhone}</p>}
-                                </div>
-                                )}
-                                {/* CONSIGNMENT INFO (OWNER & COMMISSION) — hidden for project units */}
-                                {!isProjectUnit && (
-                                <div className="p-4 bg-[var(--glass-surface)] rounded-xl border border-[var(--glass-border)] space-y-4">
-                                    <h5 className="text-xs2 font-black text-[var(--text-secondary)] uppercase tracking-widest">{t('inventory.section_consignment')}</h5>
-                                    <div className="grid grid-cols-2 gap-4">
-                                        <div>
-                                            <label className="text-xs3 font-bold text-[var(--text-tertiary)] uppercase mb-1 block">{t('inventory.label_owner_name')}</label>
-                                            <input 
-                                                value={formData.ownerName || ''} 
-                                                onChange={e => setFormData({...formData, ownerName: e.target.value})} 
-                                                className="w-full border border-[var(--glass-border)] rounded-xl px-3 py-2.5 text-sm focus:border-sgs-primary outline-none bg-[var(--bg-surface)]" 
-                                                placeholder={t('common.placeholder_fullname')}
-                                            />
-                                        </div>
-                                        <div>
-                                            <label className="text-xs3 font-bold text-[var(--text-tertiary)] uppercase mb-1 block">{t('inventory.label_owner_phone')}</label>
-                                            <input 
-                                                type="tel" inputMode="tel" value={formData.ownerPhone || ''} 
-                                                onChange={e => setFormData({...formData, ownerPhone: e.target.value})} 
-                                                className={`w-full border rounded-xl px-3 py-2.5 text-sm focus:border-[var(--sgs-primary)] outline-none bg-[var(--bg-surface)] font-mono ${errors.ownerPhone ? 'border-rose-300 bg-rose-50' : 'border-[var(--glass-border)]'}`}
-                                                placeholder="09..."
-                                            />
-                                            {errors.ownerPhone && <p className="text-xs2 text-rose-500 mt-1">{errors.ownerPhone}</p>}
-                                        </div>
-                                        <div className="col-span-2">
-                                            <label className="text-xs3 font-bold text-[var(--text-tertiary)] uppercase mb-1 block">{t('inventory.label_commission')}</label>
-                                            <div className="flex gap-2">
-                                                <input 
-                                                    type="number"
-                                                    value={formData.commission || ''} 
-                                                    onChange={e => setFormData({...formData, commission: Number(e.target.value)})} 
-                                                    className="w-full border border-[var(--glass-border)] rounded-xl px-3 py-2.5 text-sm focus:border-sgs-primary outline-none bg-[var(--bg-surface)] font-bold" 
-                                                    placeholder={formData.commissionUnit === 'FIXED' ? '50000000' : '1.5'}
-                                                />
-                                                <div className="w-24 shrink-0">
-                                                    <Dropdown
-                                                        value={formData.commissionUnit || 'PERCENT'}
-                                                        onChange={v => setFormData({...formData, commissionUnit: v as any})}
-                                                        options={commissionUnitOptions}
-                                                        className="w-full"
-                                                    />
-                                                </div>
-                                            </div>
-                                            <p className="text-xs2 text-sgs-accent-text dark:text-sgs-accent-text mt-1.5 font-medium">
-                                                {t('inventory.label_commission_hint')}
-                                            </p>
-                                        </div>
-                                    </div>
                                 </div>
                                 )}
                                 {/* LOCATION + COORDINATES — hidden for project units (inherited from parent) */}
@@ -899,7 +849,45 @@ export const ListingForm: React.FC<ListingFormProps> = memo(({ isOpen, onClose, 
                                 </div>
                                 )}
                             </div>
-                            <div className="bg-[var(--bg-surface)] p-5 rounded-2xl border border-[var(--glass-border)] shadow-sm space-y-4">
+                             <div className="bg-[var(--bg-surface)] p-5 rounded-2xl border border-[var(--glass-border)] shadow-sm space-y-4">
+                                 <div className="flex items-center justify-between gap-3">
+                                     <h4 className="text-xs font-bold text-sgs-primary uppercase tracking-wide">Phân loại tin đăng</h4>
+                                     {!isProjectUnit && (
+                                         <label className="flex items-center gap-2 cursor-pointer select-none bg-sgs-champagne px-2 py-1 rounded-lg border border-sgs-border">
+                                             <input
+                                                 type="checkbox"
+                                                 checked={!!formData.isVerified}
+                                                 disabled={!canVerify}
+                                                 title={canVerify ? undefined : 'Chỉ Trưởng nhóm / Quản trị viên mới được đánh dấu đã xác thực'}
+                                                 onChange={e => { if (canVerify) setFormData({...formData, isVerified: e.target.checked}); }}
+                                                 className="w-3.5 h-3.5 accent-[var(--sgs-primary)] rounded border-slate-300 focus:ring-sgs-primary"
+                                             />
+                                             <span className="text-xs2 font-bold text-sgs-primary uppercase">{t('inventory.verified')}</span>
+                                         </label>
+                                     )}
+                                 </div>
+                                 <Dropdown
+                                     label={t('inventory.label_transaction')}
+                                     value={formData.transaction as string}
+                                     onChange={v => setFormData({...formData, transaction: v as TransactionType})}
+                                     options={transactionOptions}
+                                 />
+                                 <div className="grid grid-cols-2 gap-4">
+                                     <Dropdown
+                                         label={t('inventory.label_type')}
+                                         value={formData.type as string}
+                                         onChange={v => setFormData({...formData, type: v as PropertyType})}
+                                         options={typeOptions}
+                                     />
+                                     <Dropdown
+                                         label={t('inventory.label_status')}
+                                         value={formData.status as string}
+                                         onChange={v => setFormData({...formData, status: v as ListingStatus})}
+                                         options={statusOptions}
+                                     />
+                                 </div>
+                             </div>
+                             <div className="bg-[var(--bg-surface)] p-5 rounded-2xl border border-[var(--glass-border)] shadow-sm space-y-4">
                                 <h4 className="text-xs font-bold text-sgs-primary uppercase tracking-wide">{t('inventory.section_details')}</h4>
                                 {renderDynamicFields()}
                             </div>
@@ -908,57 +896,57 @@ export const ListingForm: React.FC<ListingFormProps> = memo(({ isOpen, onClose, 
 
                      {step === 1 && <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                          <div className="space-y-4">
+                            {!isProjectUnit && (
                             <div className="bg-[var(--bg-surface)] p-5 rounded-2xl border border-[var(--glass-border)] shadow-sm space-y-4">
-                                <div className="flex justify-between items-center mb-2">
-                                    <h4 className="text-xs font-bold text-sgs-primary uppercase tracking-wide">{t('inventory.section_class')}</h4>
-                                    {/* VERIFIED — hidden for project units */}
-                                    {!isProjectUnit && (
-                                    <label className="flex items-center gap-2 cursor-pointer select-none bg-sgs-champagne px-2 py-1 rounded-lg border border-sgs-border">
-                                        <input 
-                                            type="checkbox" 
-                                            checked={!!formData.isVerified} 
-                                            disabled={!canVerify}
-                                        title={canVerify ? undefined : 'Ch\u1ec9 Tr\u01b0\u1edfng nh\u00f3m / Qu\u1ea3n tr\u1ecb vi\u00ean m\u1edbi \u0111\u01b0\u1ee3c \u0111\u00e1nh d\u1ea5u \u0111\u00e3 x\u00e1c th\u1ef1c'}
-                                        onChange={e => { if (!canVerify) return; setFormData({...formData, isVerified: e.target.checked}); }}
-                                            className="w-3.5 h-3.5 accent-[var(--sgs-primary)] rounded border-slate-300 focus:ring-sgs-primary"
-                                        />
-                                        <span className="text-xs2 font-bold text-sgs-primary uppercase flex items-center gap-1">
-                                            {t('inventory.verified')}
-                                        </span>
-                                    </label>
-                                    )}
-                                </div>
-                                <div className="mb-4">
-                                    <Dropdown
-                                        label={t('inventory.label_transaction')}
-                                        value={formData.transaction as string}
-                                        onChange={v => setFormData({...formData, transaction: v as TransactionType})}
-                                        options={transactionOptions}
-                                    />
-                                </div>
+                                <h4 className="text-xs font-bold text-sgs-primary uppercase tracking-wide">Ký gửi và hoa hồng</h4>
                                 <div className="grid grid-cols-2 gap-4">
                                     <div>
-                                        <Dropdown
-                                            label={t('inventory.label_type')}
-                                            value={formData.type as string}
-                                            onChange={v => setFormData({...formData, type: v as PropertyType})}
-                                            options={typeOptions}
+                                        <label className="text-xs3 font-bold text-[var(--text-tertiary)] uppercase mb-1 block">{t('inventory.label_owner_name')}</label>
+                                        <input
+                                            value={formData.ownerName || ''}
+                                            onChange={e => setFormData({...formData, ownerName: e.target.value})}
+                                            className="w-full border border-[var(--glass-border)] rounded-xl px-3 py-2.5 text-sm focus:border-sgs-primary outline-none bg-[var(--bg-surface)]"
+                                            placeholder={t('common.placeholder_fullname')}
                                         />
                                     </div>
                                     <div>
-                                        <Dropdown
-                                            label={t('inventory.label_status')}
-                                            value={formData.status as string}
-                                            onChange={v => setFormData({...formData, status: v as ListingStatus})}
-                                            options={statusOptions}
+                                        <label className="text-xs3 font-bold text-[var(--text-tertiary)] uppercase mb-1 block">{t('inventory.label_owner_phone')}</label>
+                                        <input
+                                            type="tel" inputMode="tel" value={formData.ownerPhone || ''}
+                                            onChange={e => setFormData({...formData, ownerPhone: e.target.value})}
+                                            className={`w-full border rounded-xl px-3 py-2.5 text-sm focus:border-[var(--sgs-primary)] outline-none bg-[var(--bg-surface)] font-mono ${errors.ownerPhone ? 'border-rose-300 bg-rose-50' : 'border-[var(--glass-border)]'}`}
+                                            placeholder="09..."
                                         />
+                                        {errors.ownerPhone && <p className="text-xs2 text-rose-500 mt-1">{errors.ownerPhone}</p>}
+                                    </div>
+                                    <div className="col-span-2">
+                                        <label className="text-xs3 font-bold text-[var(--text-tertiary)] uppercase mb-1 block">{t('inventory.label_commission')}</label>
+                                        <div className="flex gap-2">
+                                            <input
+                                                type="number"
+                                                value={formData.commission || ''}
+                                                onChange={e => setFormData({...formData, commission: Number(e.target.value)})}
+                                                className="w-full border border-[var(--glass-border)] rounded-xl px-3 py-2.5 text-sm focus:border-sgs-primary outline-none bg-[var(--bg-surface)] font-bold"
+                                                placeholder={formData.commissionUnit === 'FIXED' ? '50000000' : '1.5'}
+                                            />
+                                            <div className="w-24 shrink-0">
+                                                <Dropdown
+                                                    value={formData.commissionUnit || 'PERCENT'}
+                                                    onChange={v => setFormData({...formData, commissionUnit: v as any})}
+                                                    options={commissionUnitOptions}
+                                                    className="w-full"
+                                                />
+                                            </div>
+                                        </div>
+                                        <p className="text-xs2 text-sgs-accent-text dark:text-sgs-accent-text mt-1.5 font-medium">{t('inventory.label_commission_hint')}</p>
                                     </div>
                                 </div>
-                            </div>                            
+                            </div>
+                            )}
                             {/* IMAGES SECTION */}
                             <div className="bg-[var(--bg-surface)] p-5 rounded-2xl border border-[var(--glass-border)] shadow-sm flex-1">
                                 <div className="flex justify-between items-center mb-4">
-                                    <h4 className="text-xs font-bold text-sgs-primary uppercase tracking-wide">{t('inventory.label_images')}</h4>
+                                    <h4 className="text-xs font-bold text-sgs-primary uppercase tracking-wide">Ký gửi, hoa hồng & hình ảnh</h4>
                                     <span className="text-xs2 text-[var(--text-secondary)] font-bold bg-[var(--glass-surface-hover)] px-2 py-1 rounded">{t('inventory.files_selected', {count: images.length})}</span>
                                 </div>
                                 {uploadError && (
