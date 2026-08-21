@@ -670,7 +670,7 @@ const RealtimeTrafficWidget = memo(({ t, theme }: any) => {
         </BentoCard>
     );
 });
-const VisitorFunnelWidget = memo(({ days, language }: { days: number; language: string }) => {
+export const VisitorFunnelWidget = memo(({ days, language }: { days: number; language: string }) => {
     const [projectCode, setProjectCode] = useState('');
     const [source, setSource] = useState('');
     const query = useQuery({
