@@ -775,38 +775,38 @@ export const Inventory: React.FC = () => {
             </div>
             {/* Metrics Section */}
             <div ref={metricsRef} className="px-3 md:px-5 py-2 md:py-2.5 border-b border-[var(--glass-border)] bg-[var(--glass-surface)]/50 flex overflow-x-auto no-scrollbar gap-2 md:gap-3 flex-none scroll-smooth cursor-grab active:cursor-grabbing">
-                <div className="bg-[var(--bg-surface)] px-2.5 md:px-3 py-2 rounded-xl border border-[var(--glass-border)] shadow-sm min-w-[90px] md:flex-1 shrink-0">
+                {(stats.totalCount || totalItems) > 0 && <div className="bg-[var(--bg-surface)] px-2.5 md:px-3 py-2 rounded-xl border border-[var(--glass-border)] shadow-sm min-w-[90px] md:flex-1 shrink-0">
                     <div className="text-2xs font-bold text-[var(--text-secondary)] uppercase tracking-wider mb-0.5 truncate">{t('inventory.total_listings')}</div>
                     <div className="text-base md:text-xl font-black text-[var(--text-primary)]">{stats.totalCount || totalItems}</div>
-                </div>
-                <div className="bg-[var(--bg-surface)] px-2.5 md:px-3 py-2 rounded-xl border border-emerald-100 shadow-sm min-w-[90px] md:flex-1 shrink-0">
+                </div>}
+                {stats.availableCount > 0 && <div className="bg-[var(--bg-surface)] px-2.5 md:px-3 py-2 rounded-xl border border-emerald-100 shadow-sm min-w-[90px] md:flex-1 shrink-0">
                     <div className="text-2xs font-bold text-sgs-verified uppercase tracking-wider mb-0.5 truncate">{t('status.AVAILABLE')}</div>
                     <div className="text-base md:text-xl font-black text-sgs-verified">{stats.availableCount}</div>
-                </div>
-                <div className="bg-[var(--bg-surface)] px-2.5 md:px-3 py-2 rounded-xl border border-amber-100 shadow-sm min-w-[90px] md:flex-1 shrink-0">
+                </div>}
+                {stats.holdCount > 0 && <div className="bg-[var(--bg-surface)] px-2.5 md:px-3 py-2 rounded-xl border border-amber-100 shadow-sm min-w-[90px] md:flex-1 shrink-0">
                     <div className="text-2xs font-bold text-sgs-accent-text uppercase tracking-wider mb-0.5 truncate">{t('status.HOLD')}</div>
                     <div className="text-base md:text-xl font-black text-sgs-accent-text">{stats.holdCount}</div>
-                </div>
-                <div className="bg-[var(--bg-surface)] px-2.5 md:px-3 py-2 rounded-xl border border-orange-100 shadow-sm min-w-[90px] md:flex-1 shrink-0">
+                </div>}
+                {stats.bookingCount > 0 && <div className="bg-[var(--bg-surface)] px-2.5 md:px-3 py-2 rounded-xl border border-orange-100 shadow-sm min-w-[90px] md:flex-1 shrink-0">
                     <div className="text-2xs font-bold text-orange-500 uppercase tracking-wider mb-0.5 truncate">{t('status.BOOKING')}</div>
                     <div className="text-base md:text-xl font-black text-orange-600">{stats.bookingCount}</div>
-                </div>
-                <div className="bg-[var(--bg-surface)] px-2.5 md:px-3 py-2 rounded-xl border border-sgs-border shadow-sm min-w-[90px] md:flex-1 shrink-0">
+                </div>}
+                {stats.openingCount > 0 && <div className="bg-[var(--bg-surface)] px-2.5 md:px-3 py-2 rounded-xl border border-sgs-border shadow-sm min-w-[90px] md:flex-1 shrink-0">
                     <div className="text-2xs font-bold text-sgs-primary uppercase tracking-wider mb-0.5 truncate">{t('status.OPENING')}</div>
                     <div className="text-base md:text-xl font-black text-sgs-primary">{stats.openingCount}</div>
-                </div>
-                <div className="bg-[var(--bg-surface)] px-2.5 md:px-3 py-2 rounded-xl border border-teal-100 shadow-sm min-w-[90px] md:flex-1 shrink-0">
+                </div>}
+                {stats.rentedCount > 0 && <div className="bg-[var(--bg-surface)] px-2.5 md:px-3 py-2 rounded-xl border border-teal-100 shadow-sm min-w-[90px] md:flex-1 shrink-0">
                     <div className="text-2xs font-bold text-teal-500 uppercase tracking-wider mb-0.5 truncate">{t('status.RENTED')}</div>
                     <div className="text-base md:text-xl font-black text-teal-600">{stats.rentedCount}</div>
-                </div>
-                <div className="bg-[var(--bg-surface)] px-2.5 md:px-3 py-2 rounded-xl border border-[var(--glass-border)] shadow-sm min-w-[90px] md:flex-1 shrink-0">
+                </div>}
+                {stats.soldCount > 0 && <div className="bg-[var(--bg-surface)] px-2.5 md:px-3 py-2 rounded-xl border border-[var(--glass-border)] shadow-sm min-w-[90px] md:flex-1 shrink-0">
                     <div className="text-2xs font-bold text-[var(--text-tertiary)] uppercase tracking-wider mb-0.5 truncate">{t('status.SOLD')}</div>
                     <div className="text-base md:text-xl font-black text-[var(--text-secondary)]">{stats.soldCount}</div>
-                </div>
-                <div className="bg-[var(--bg-surface)] px-2.5 md:px-3 py-2 rounded-xl border border-rose-100 shadow-sm min-w-[90px] md:flex-1 shrink-0">
+                </div>}
+                {stats.inactiveCount > 0 && <div className="bg-[var(--bg-surface)] px-2.5 md:px-3 py-2 rounded-xl border border-rose-100 shadow-sm min-w-[90px] md:flex-1 shrink-0">
                     <div className="text-2xs font-bold text-rose-500 uppercase tracking-wider mb-0.5 truncate">{t('status.INACTIVE')}</div>
                     <div className="text-base md:text-xl font-black text-rose-600">{stats.inactiveCount}</div>
-                </div>
+                </div>}
                     {/* Khác / Không xác định */}
                     {/* BEST_MARKET: previously folded into "other" (or nothing), so the tiles never summed to totalCount */}
                     {stats.bestMarketCount > 0 && (
