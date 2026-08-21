@@ -2944,8 +2944,11 @@ app.get('/api/public/listings/:slugId', apiRateLimit, async (req: express.Reques
 
   app.get('/api/public/articles', apiRateLimit, async (req: express.Request, res: express.Response) => {
     try {
-      const page = parseInt(req.query.page as string) || 1;
-      const pageSize = Math.min(parseInt(req.query.pageSize as string) || 50, 200);
+      // Keep invalid pagination from reaching SQL as a negative LIMIT/OFFSET.
+      // Public callers include crawlers and form regression checks, so bad
+      // query strings should fall back to the first bounded page.
+      const page = Math.max(1, parseInt(req.query.page as string, 10) || 1);
+      const pageSize = Math.max(1, Math.min(parseInt(req.query.pageSize as string, 10) || 50, 200));
       // Public feed = published articles only (single source of truth: Postgres)
       const filters: any = { status: 'PUBLISHED' };
       if (req.query.category) filters.category = req.query.category;

@@ -160,6 +160,25 @@ test.describe('API pagination boundaries', () => {
   });
   test('page=-1 is handled (defaults to 1)', async ({ request }) => {
     const res = await request.get(`${BASE_URL}/api/public/articles?page=-1`);
-    expect(res.status()).not.toBe(500);
+    expect(res.status()).toBe(200);
+    const body = await res.json();
+    expect(body.page).toBe(1);
+    expect(body.pageSize).toBeGreaterThanOrEqual(1);
+    expect(body.pageSize).toBeLessThanOrEqual(200);
+  });
+  test('malformed pagination values use bounded defaults', async ({ request }) => {
+    const res = await request.get(`${BASE_URL}/api/public/articles?page=not-a-number&pageSize=not-a-number`);
+    expect(res.status()).toBe(200);
+    const body = await res.json();
+    expect(body.page).toBe(1);
+    expect(body.pageSize).toBe(50);
+    expect(Array.isArray(body.data)).toBeTruthy();
+  });
+  test('negative pageSize is clamped to the minimum', async ({ request }) => {
+    const res = await request.get(`${BASE_URL}/api/public/articles?pageSize=-10`);
+    expect(res.status()).toBe(200);
+    const body = await res.json();
+    expect(body.pageSize).toBe(1);
+    expect(body.data.length).toBeLessThanOrEqual(1);
   });
 });
