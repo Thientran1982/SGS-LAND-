@@ -312,7 +312,7 @@ export function ListingDetailPage({ listing, similarListings }: Props) {
             {/* Description */}
             {(listing.description || attr.description) && (
               <div className="p-4 rounded-2xl" style={{ background: "var(--bg-elevated)", border: "1px solid var(--border-default)" }}>
-                <h3 className="font-semibold mb-2" style={{ color: "var(--text-primary)" }}>{tt(lang, "Thông Tin Chi Tiết", "Property Details")}</h3>
+                <h3 className="mb-2 text-sm font-semibold" style={{ color: "var(--text-primary)" }}>{tt(lang, "Thông Tin Chi Tiết", "Property Details")}</h3>
                 <p className="text-sm leading-relaxed whitespace-pre-line" style={{ color: "var(--text-secondary)" }}>
                   {listing.description || attr.description}
                 </p>
