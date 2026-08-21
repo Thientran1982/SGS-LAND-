@@ -113,7 +113,25 @@ function RichProjectDetail({ project, config, landing }: { project: ProjectDetai
     stats: landing.stats,
   } : null;
   const englishCopy = lang === "en" ? (PROJECT_DETAIL_EN[landing.slug] || areaEnglishCopy) : null;
-  const englishConfig = lang === "en" ? PROJECT_CONFIG_EN[landing.slug] : null;
+  const areaAmenityText: Record<string, string[]> = {
+    "bat-dong-san-long-an": ["Clean climate", "New transport infrastructure", "Nearby industrial parks", "Educational amenities", "Ecological parks", "24/7 security", "Connections to Ho Chi Minh City"],
+    "bat-dong-san-thu-duc": ["Metro Line 1", "Vietnam National University area", "High-tech park", "Retail centres", "Schools and hospitals", "Modern parks", "24/7 security"],
+    "bat-dong-san-long-thanh": ["Near Long Thanh Airport", "Developing transport infrastructure", "Industrial parks", "Educational amenities", "Healthcare facilities", "Retail centres", "24/7 security"],
+    "bat-dong-san-dong-nai": ["Coordinated transport infrastructure", "Nearby industrial parks", "Schools and hospitals", "Retail centres", "Green parks", "24/7 security", "Connections to Ho Chi Minh City"],
+  };
+  const areaEnglishConfig: ProjectConfig | null = lang === "en" && isArea && areaAmenityText[landing.slug] ? {
+    details: (config?.details || []).map((row) => ({
+      ...row,
+      label: row.label.replace(/^Chủ đầu tư$/i, "Developer").replace(/^Vị trí$/i, "Location").replace(/^Quy mô$/i, "Scale").replace(/^Loại hình$/i, "Property types").replace(/^Giá tham khảo$/i, "Reference price").replace(/^Tình trạng$/i, "Status"),
+    })),
+    amenities: [{ title: "Area amenities and status to verify", items: areaAmenityText[landing.slug] }],
+    faqs: [
+      { q: `What is ${landing.titleShort}?`, a: `${landing.titleShort} is an area-level real estate reference page, not a single project. Verify the specific property and current documents before a transaction.` },
+      { q: "Are the prices official?", a: "No. Prices shown are references from the available dataset and must be checked against the specific property, date and legal documents." },
+      { q: "What should buyers verify?", a: "Verify planning, legal status, ownership costs, infrastructure status, transfer conditions and the actual availability of the property." },
+    ],
+  } : null;
+  const englishConfig = lang === "en" ? (PROJECT_CONFIG_EN[landing.slug] || areaEnglishConfig) : null;
   const image = project.images?.[0] || ({
     "manhattan": "/images/projects/masterise-homes.webp",
     "thu-thiem": "/images/projects/the-global-city.webp",
