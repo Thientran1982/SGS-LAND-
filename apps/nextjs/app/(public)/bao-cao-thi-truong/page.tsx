@@ -120,6 +120,16 @@ export default function MarketReportPage() {
           </p>
         </header>
 
+        <nav aria-label="Mục lục báo cáo thị trường" className="mt-8 overflow-x-auto rounded-2xl border px-4 py-3" style={{ borderColor: "var(--border)", background: "var(--bg-elevated)" }}>
+          <div className="flex min-w-max gap-5 text-sm font-semibold" style={{ color: "var(--text-secondary)" }}>
+            <a href="#tong-quan" className="hover:underline" style={{ color: "var(--primary-600)" }}>Tổng quan báo cáo</a>
+            <a href="#bang-chi-so" className="hover:underline">Bảng chỉ số</a>
+            <a href="#phuong-phap" className="hover:underline">Phương pháp</a>
+            <a href="#gioi-han" className="hover:underline">Giới hạn dữ liệu</a>
+            <a href="#faq" className="hover:underline">Câu hỏi thường gặp</a>
+          </div>
+        </nav>
+
         <section id="tong-quan" aria-labelledby="tong-quan-title" className="mt-8 scroll-mt-24 rounded-3xl border p-6 sm:p-8" style={{ borderColor: "var(--border)", background: "var(--bg-elevated)" }}>
           <p className="text-xs font-bold uppercase tracking-[.16em]" style={{ color: "var(--primary-600)" }}>Tổng quan báo cáo</p>
           <h2 id="tong-quan-title" className="mt-2 text-2xl font-bold" style={{ color: "var(--text-primary)" }}>Báo cáo cho thấy gì?</h2>
@@ -182,7 +192,7 @@ export default function MarketReportPage() {
         </section>
 
         <div className="mt-12 grid gap-6 lg:grid-cols-2">
-          <section className="rounded-2xl border p-6" style={{ borderColor: "var(--border)", background: "var(--bg-elevated)" }}>
+          <section id="phuong-phap" className="scroll-mt-24 rounded-2xl border p-6" style={{ borderColor: "var(--border)", background: "var(--bg-elevated)" }}>
             <p className="text-xs font-bold uppercase tracking-[.16em]" style={{ color: "var(--primary-600)" }}>02 · Phương pháp</p>
             <h2 className="mt-2 text-2xl font-bold" style={{ color: "var(--text-primary)" }}>Cách đọc và sử dụng dữ liệu</h2>
             <ol className="mt-4 space-y-3 text-sm leading-6" style={{ color: "var(--text-secondary)" }}>
@@ -191,7 +201,7 @@ export default function MarketReportPage() {
               <li><strong style={{ color: "var(--text-primary)" }}>Biến động cùng kỳ:</strong> là chỉ báo của bộ dữ liệu, không phải dự báo giá tương lai.</li>
             </ol>
           </section>
-          <section className="rounded-2xl border p-6" style={{ borderColor: "var(--border)", background: "var(--bg-elevated)" }}>
+          <section id="gioi-han" className="scroll-mt-24 rounded-2xl border p-6" style={{ borderColor: "var(--border)", background: "var(--bg-elevated)" }}>
             <p className="text-xs font-bold uppercase tracking-[.16em]" style={{ color: "var(--primary-600)" }}>03 · Giới hạn</p>
             <h2 className="mt-2 text-2xl font-bold" style={{ color: "var(--text-primary)" }}>Điều cần xác minh trước giao dịch</h2>
             <ul className="mt-4 space-y-3 text-sm leading-6" style={{ color: "var(--text-secondary)" }}>
