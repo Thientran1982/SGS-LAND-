@@ -57,6 +57,9 @@ const AQUA_STYLE_DETAIL_SLUGS = new Set([
   "vinhomes-can-gio",
   "sala",
   "vinhomes-hoc-mon",
+  "masteri-park-place",
+  "masteri-cosmo-central",
+  "eco-retreat-long-an",
 ]);
 
 function getAquaStyleLanding(slug: string): LandingProject | null {
@@ -434,7 +437,7 @@ const PROJECT_META: Record<
   },
   "eco-retreat-long-an": {
     name: "Eco Retreat Long An",
-    dev: "Eco Land",
+    dev: "Eco Park",
     loc: "Long An",
     desc: "Khu nghỉ dưỡng sinh thái cao cấp tại Long An, hòa mình vào thiên nhiên, chuẩn resort 5 sao.",
     priceRange: "Biệt thự từ 2,5 tỷ; nhà vườn từ 1,8 tỷ VNĐ",
