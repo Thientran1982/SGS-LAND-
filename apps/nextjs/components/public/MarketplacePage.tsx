@@ -15,6 +15,7 @@ import type { Listing } from "@/types";
 import Image from "next/image";
 import { formatPriceLang, formatUnitPriceLang, rentSuffix } from "@/utils/priceFormat";
 import { trackEvent } from "@/lib/tracking";
+import { slugifyListingTitle } from "@/lib/listingSlug";
 
 const MarketplaceMap = dynamic(() => import("./MarketplaceMap").then((m) => m.MarketplaceMap), {
   ssr: false,
@@ -208,7 +209,7 @@ function ActiveChip({ label, onRemove }) {
 /* ── Listing card ─────────────────────────────────────────── */
 export function PublicListingCard({ listing, list, eager, facets }: { listing: any; list?: boolean; eager?: boolean; facets?: { priceBenchmarks: Record<string, { avgPricePerM2: number; sampleSize: number }> } | null }) {
   const lang = useLang();
-  const slug = `${(listing.title || "bds").toLowerCase().replace(/\s+/g, "-").replace(/[^a-z0-9-]/g, "").slice(0, 40)}-${listing.id}`;
+  const slug = `${slugifyListingTitle(listing.title)}-${listing.id}`;
   const isRent = String(listing.transaction || "").toUpperCase() === "RENT";
   const attrs = listing.attributes || {};
   const area = Number(listing.area) || 0;

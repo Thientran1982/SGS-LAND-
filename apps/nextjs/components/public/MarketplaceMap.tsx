@@ -2,6 +2,7 @@
 "use client";
 import { useEffect, useRef } from "react";
 import "leaflet/dist/leaflet.css";
+import { slugifyListingTitle } from "@/lib/listingSlug";
 
 function formatPrice(price: number): string {
   return price >= 1e9 ? `${(price / 1e9).toFixed(2)} tỷ` : `${Math.round(price / 1e6)} triệu`;
@@ -109,7 +110,7 @@ export function MarketplaceMap({ listings, height = "620px" }: { listings: any[]
             iconAnchor: [32, 12],
           });
           const m = L.marker([lat, lng], { icon, riseOnHover: true }).addTo(map);
-          const slug = `${(l.title || "bds").toLowerCase().replace(/\s+/g, "-").replace(/[^a-z0-9-]/g, "").slice(0, 40)}-${l.id}`;
+          const slug = `${slugifyListingTitle(l.title)}-${l.id}`;
           const img = (l.images && l.images[0]) || "";
           m.bindPopup(
             `<a href="/bds/${slug}" style="display:block;text-decoration:none;color:inherit;width:232px">` +

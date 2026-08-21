@@ -1,16 +1,12 @@
 // @ts-nocheck
 import { NextResponse } from "next/server";
+import { slugifyListingTitle } from "@/lib/listingSlug";
 
 const BASE = "https://sgsland.vn";
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
 
 function slugifyListing(title: string, code: string): string {
-  const base = (title || "")
-    .toLowerCase()
-    .replace(/\s+/g, "-")
-    .replace(/[^a-z0-9-]/g, "")
-    .slice(0, 40);
-  return `${base}-${code}`;
+  return `${slugifyListingTitle(title)}-${code}`;
 }
 
 function esc(s: string): string {
