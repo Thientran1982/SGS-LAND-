@@ -4,18 +4,20 @@ import { useRouter, useSearchParams } from "next/navigation";
 import type { Category } from "@/data/categories";
 interface CategoryFilterProps {
   categories: Category[];
+  lang?: "vi" | "en";
   className?: string;
 }
-export function CategoryFilter({ categories, className = "" }: CategoryFilterProps) {
+export function CategoryFilter({ categories, lang = "vi", className = "" }: CategoryFilterProps) {
   const router = useRouter();
   const params = useSearchParams();
   const active = params?.get("category") ?? "all";
   function select(slug: string) {
-    const url = slug === "all" ? "/news" : `/news?category=${slug}`;
+    const prefix = lang === "en" ? "/en" : "";
+    const url = slug === "all" ? `${prefix}/news` : `${prefix}/news?category=${slug}`;
     router.push(url, { scroll: false });
   }
   return (
-    <div className={`flex gap-2 overflow-x-auto no-scrollbar -mx-4 px-4 pb-1 sm:mx-0 sm:px-0 sm:flex-wrap sm:overflow-visible sm:pb-0 ${className}`} role="group" aria-label="Lọc theo chuyên mục">
+    <div className={`flex gap-2 overflow-x-auto no-scrollbar -mx-4 px-4 pb-1 sm:mx-0 sm:px-0 sm:flex-wrap sm:overflow-visible sm:pb-0 ${className}`} role="group" aria-label={lang === "en" ? "Filter by category" : "Lọc theo chuyên mục"}>
       <button
         onClick={() => select("all")}
         className="px-4 py-1.5 rounded-full text-sm font-medium transition-colors shrink-0 whitespace-nowrap"
@@ -26,7 +28,7 @@ export function CategoryFilter({ categories, className = "" }: CategoryFilterPro
         }}
         aria-pressed={active === "all"}
       >
-        Tất cả
+        {lang === "en" ? "All" : "Tất cả"}
       </button>
       {categories.map((cat) => (
         <button
