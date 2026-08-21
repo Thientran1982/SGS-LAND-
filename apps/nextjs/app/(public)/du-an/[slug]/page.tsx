@@ -49,6 +49,57 @@ import {
 } from "@/lib/schema";
 import type { FAQItem } from "@/lib/schema";
 import { getLang, langAlternates } from "@/lib/lang";
+
+const AQUA_STYLE_DETAIL_SLUGS = new Set(["manhattan", "thu-thiem", "son-kim-land"]);
+
+function getAquaStyleLanding(slug: string): LandingProject | null {
+  const existing = LANDING_PROJECTS[slug];
+  if (existing) return existing;
+  if (!AQUA_STYLE_DETAIL_SLUGS.has(slug)) return null;
+
+  const config = PROJECT_CONFIG[slug];
+  const project = ALL_PROJECTS.find((item) => item.slug === slug);
+  if (!config || !project) return null;
+
+  const details = config.details || [];
+  const stats = details.slice(0, 5).map((row) => ({ num: row.value, lbl: row.label }));
+  return {
+    slug,
+    titleFull: `${config.name} – Thông tin dự án | SGS LAND`,
+    titleShort: config.name,
+    eyebrow: `${config.developer} • ${config.location} • Thông tin tham khảo`,
+    desc: config.heroDescription,
+    keywords: `${config.name}, ${config.location}, giá ${config.name}, pháp lý ${config.name}, SGS Land`,
+    heroImageAlt: `${config.name} tại ${config.location} — thông tin vị trí, sản phẩm và hồ sơ tham khảo`,
+    heroGradient: "linear-gradient(rgba(6,48,31,.72),rgba(6,48,31,.55))",
+    theme: { primary: "#0B3B32", deep: "#062F25", soft: "#E6F0EC", gold: "#C6923D", goldSoft: "#E7C98A", cream: "#F5F1E6" },
+    geo: slug === "manhattan" ? { lat: 10.7769, lng: 106.7009 } : { lat: 10.7891, lng: 106.7265 },
+    stats: stats.length ? stats : [{ num: config.scale, lbl: "Quy mô" }],
+    heroH1: config.name,
+    heroSub: config.heroDescription,
+    heroMeta: `${config.developer} | ${config.location} | ${config.scale}`,
+    overviewParas: [config.heroDescription, `Thông tin sản phẩm, giá, tiện ích và hồ sơ của ${config.name} cần được đối chiếu theo đúng phân khu hoặc sản phẩm và tài liệu hiện hành trước giao dịch.`],
+    entityTable: details.map((row) => ({ k: row.label, v: row.value })),
+    locationIntro: `${config.name} được ghi nhận tại ${config.location}. Ranh dự án, thời gian di chuyển và tình trạng từng sản phẩm cần được kiểm tra theo bản đồ, tuyến đường và thời điểm thực tế.`,
+    googleMapsEmbedSrc: `https://www.google.com/maps?q=${encodeURIComponent(config.location)}&output=embed`,
+    faq: config.faqs || [],
+    navLinks: [
+      { href: "#tong-quan", label: "Tổng quan" },
+      { href: "#thong-tin", label: "Thông tin dự án" },
+      { href: "#vi-tri", label: "Vị trí" },
+      { href: "#bang-gia", label: "Bảng giá" },
+      { href: "#tien-ich", label: "Tiện ích" },
+      { href: "#tham-dinh", label: "Thẩm định" },
+      { href: "#faq", label: "FAQ" },
+      { href: "#lien-he", label: "Liên hệ" },
+    ],
+    schemaName: config.name,
+    schemaDev: config.developer,
+    schemaLocality: config.location,
+    schemaRegion: "TP.HCM",
+    schemaAmenities: (config.amenities || []).flatMap((group) => group.items),
+  };
+}
 // ─── Static project data (SEO seed) ──────────────────────
 const PROJECT_META: Record<
   string,
@@ -913,7 +964,7 @@ export default async function ProjectPage({
         project={projectData}
         slug={slug}
         config={resolveProjectConfig(slug)}
-        landingProject={LANDING_PROJECTS[slug] ?? null}
+        landingProject={getAquaStyleLanding(slug)}
       />
     </>
   );
