@@ -336,13 +336,13 @@ export function ListingDetailPage({ listing, similarListings }: Props) {
       document.removeEventListener("mouseout", onMouseOut);
     };
   }, [listingCode]);
-  const handleShare = async () => {
+  const handleShare = async (location = "gallery") => {
     const url = window.location.href;
     if (navigator.share) {
-      try { await navigator.share({ title: listing.title, text: listing.title, url }); trackListingEvent("share_click", listingCode, { method: "native" }); return; } catch {}
+      try { await navigator.share({ title: listing.title, text: listing.title, url }); trackListingEvent("share_click", listingCode, { method: "native", location }); return; } catch {}
     }
     try { await navigator.clipboard.writeText(url); } catch {}
-    trackListingEvent("share_click", listingCode, { method: "clipboard" });
+    trackListingEvent("share_click", listingCode, { method: "clipboard", location });
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
   };
@@ -370,7 +370,7 @@ export function ListingDetailPage({ listing, similarListings }: Props) {
                 className="w-full h-full object-cover"
                 onError={(e) => { (e.target as HTMLImageElement).src = "/images/placeholder.jpg"; }}
               />
-                <button onClick={() => { trackListingEvent("share_click", listingCode, { location: "gallery" }); void handleShare(); }}
+                <button onClick={() => void handleShare("gallery")}
                 className="absolute top-4 right-4 p-2 rounded-xl glass-card transition-all hover:scale-105"
                 title={copied ? tt(lang, "Đã copy!", "Copied!") : tt(lang, "Chia sẻ", "Share")}>
                 {copied ? <CheckCircle className="w-5 h-5 text-sgs-verified" /> : <Share2 className="w-5 h-5" style={{ color: "var(--text-primary)" }} />}
