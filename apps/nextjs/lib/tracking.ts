@@ -72,6 +72,19 @@ export function trackPropertyView(listingCode: string | undefined | null, pageLa
   trackEvent("property_view", { pageLabel, metadata: { listingCode } });
 }
 
+export function trackListingEvent(
+  eventType: string,
+  listingCode: string | undefined | null,
+  metadata: Record<string, unknown> = {},
+  pageLabel?: string,
+): void {
+  if (!listingCode) return;
+  trackEvent(eventType, {
+    pageLabel,
+    metadata: { listingCode, ...metadata },
+  });
+}
+
 export function trackPageView(pageLabel?: string): void {
   trackEvent("pageview", { pageLabel });
 }

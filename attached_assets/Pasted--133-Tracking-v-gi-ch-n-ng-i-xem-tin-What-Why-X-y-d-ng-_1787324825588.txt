@@ -1,0 +1,37 @@
+#133 - Tracking và giữ chân người xem tin
+What & Why
+Xây dựng MVP để SGS LAND biết người dùng đã xem tin bao lâu, cuộn đến đâu, rời trang ở bước nào và có tương tác gì trước khi rời đi. Đồng thời bổ sung các thông tin hữu ích và CTA phù hợp để người dùng lưu tin, xem tin tương tự, chat hoặc đặt lịch thay vì rời trang vì thiếu thông tin.
+
+Done looks like
+Hệ thống ghi nhận engagement_start, các mốc thời gian 10/30/60 giây, scroll 50/90 và page_leave cho trang chi tiết tin.
+Event rời trang dùng sendBeacon/fallback keepalive, không gửi trùng khi người dùng đổi tab rồi quay lại hoặc chuyển route.
+Không ghi behavioral event khi người dùng chưa đồng ý cookie BEHAVIORAL.
+Các hành động gallery, bản đồ, calculator, yêu thích, chia sẻ, gọi điện, chat và đặt lịch được đo theo mã tin.
+Mobile có CTA cố định nhưng không che nội dung; người dùng có thể lưu tin, xem tin tương tự, chat hoặc đặt lịch.
+Trang chi tiết có các khối thông tin hữu ích dựa trên dữ liệu thật: giá/pháp lý/chi phí/tin tương tự; không dùng số liệu hoặc placeholder giả.
+Exit intent chỉ áp dụng desktop, sau khi người dùng đã có mức tương tác tối thiểu; mobile không hiện popup gây khó chịu.
+Dashboard/API có thể phân biệt lượt xem, phiên đọc sâu, tương tác CTA, rời trang và quay lại trong 48 giờ.
+Có test hoặc kiểm tra xác nhận consent, dedupe event, mobile CTA và không làm hỏng build hiện tại.
+Out of scope
+Follow-up SMS/email tự động theo hành vi.
+Cá nhân hóa nâng cao dựa trên lịch sử nhiều phiên.
+A/B testing nhiều biến thể và hệ thống tự động chọn biến thể thắng.
+Thay đổi chính sách consent, lưu trữ hoặc xóa dữ liệu cá nhân hiện hành.
+Steps
+Chuẩn hóa schema event và helper tracking cho thời gian xem, scroll depth, tương tác và rời trang; giữ consent gate, session identity và tenant isolation hiện có.
+Tích hợp lifecycle tracking vào trang chi tiết tin, bao gồm timer theo mốc, visibilitychange, pagehide, route change và dedupe khi quay lại tab hoặc refresh.
+Gắn tracking cho các điểm tương tác có ý định cao: gallery, map, calculator, favorite, share, call, chat, booking và tin tương tự.
+Xây dựng CTA giữ chân ưu tiên mobile và các khối thông tin hữu ích; chỉ hiển thị nội dung có nguồn dữ liệu thật và không chặn thao tác đọc tin.
+Thêm exit intent desktop có điều kiện, cùng trạng thái đóng/không làm phiền trong session; không triển khai popup exit intent trên mobile.
+Bổ sung truy vấn/API tổng hợp funnel và chỉ số engaged session, thời gian xem, scroll, exit và CTA conversion cho màn hình quản trị hiện có.
+Kiểm thử consent, event dedupe, pagehide beacon, responsive mobile/desktop, build và các đường dẫn đặt lịch/chat hiện hành.
+Relevant files
+apps/nextjs/lib/tracking.ts
+server/routes/visitorTrackingRoutes.ts
+server/repositories/visitorRepository.ts
+server/routes/analyticsRoutes.ts
+apps/nextjs/components/public/ListingDetailPage.tsx
+apps/nextjs/components/public/MarketplacePage.tsx
+apps/nextjs/components/ConsentBanner.tsx
+server/migrations/088_visitor_tracking_and_lead_attribution.ts
+server/migrations/120_visitor_logs_view_dedupe_index.ts
