@@ -307,7 +307,7 @@ export function createCampaignRouter(pool: Pool, authenticateToken: RequestHandl
     try {
       const tenantId = getTenantId(req);
       const cur = await pool.query(
-        `SELECT id, status, schedule_type, subject, body_html FROM campaigns
+         `SELECT id, status, schedule_type, scheduled_at, subject, body_html FROM campaigns
           WHERE id = $1 AND tenant_id = $2`,
         [req.params.id, tenantId],
       );
@@ -325,12 +325,15 @@ export function createCampaignRouter(pool: Pool, authenticateToken: RequestHandl
       let runResult: any = null;
       if (c.schedule_type === 'NOW') {
         runResult = await runCampaign(pool, c.id, publicBaseUrl());
-        const nextStatus = runResult.queued === 0
-          ? 'COMPLETED'
-          : runResult.failed > 0
-            ? 'PAUSED'
-            : 'COMPLETED';
-        await pool.query(`UPDATE campaigns SET status=$2, updated_at=NOW() WHERE id=$1 AND tenant_id=$3`, [c.id, nextStatus, tenantId]);
+         const nextStatus = !runResult.ok || runResult.failed > 0 ? 'PAUSED' : 'COMPLETED';
+         await pool.query(
+           `UPDATE campaigns
+               SET status=$2,
+                   last_error=$4,
+                   updated_at=NOW()
+             WHERE id=$1 AND tenant_id=$3`,
+           [c.id, nextStatus, tenantId, runResult.error || (runResult.failed > 0 ? `${runResult.failed} email lỗi` : null)],
+         );
       }
 
       const fresh = await pool.query(`SELECT * FROM campaigns WHERE id=$1`, [c.id]);
@@ -368,8 +371,15 @@ export function createCampaignRouter(pool: Pool, authenticateToken: RequestHandl
         return res.status(409).json({ error: 'Chỉ có thể chạy ngay khi chiến dịch đang ACTIVE' });
       }
       const result = await runCampaign(pool, cur.rows[0].id, publicBaseUrl());
-      if (result.failed > 0) {
-        await pool.query(`UPDATE campaigns SET status='PAUSED', updated_at=NOW() WHERE id=$1 AND tenant_id=$2`, [cur.rows[0].id, tenantId]);
+       if (!result.ok || result.failed > 0) {
+         await pool.query(
+           `UPDATE campaigns
+               SET status='PAUSED',
+                   last_error=$3,
+                   updated_at=NOW()
+             WHERE id=$1 AND tenant_id=$2`,
+           [cur.rows[0].id, tenantId, result.error || `${result.failed} email lỗi`],
+         );
       }
       res.json(result);
     } catch (err: any) {
