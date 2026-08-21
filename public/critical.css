@@ -53,6 +53,19 @@
   --sgs-on-dark-muted:  #93A6B8;
   --sgs-subtle-bg:      #F5EAD5;
   --sgs-border:         rgba(27,58,92,0.12);
+
+  /* Shared semantic typography contract with the Next.js public app. */
+  --font-size-micro-8: 8px;
+  --font-size-micro-10: 10px;
+  --font-size-3xs: 11px;
+  --font-size-2xs: 12px;
+  --font-size-xs: 13px;
+  --font-size-sm: 14px;
+  --font-size-base: 16px;
+  --font-size-lg: 18px;
+  --font-size-xl: 20px;
+  --font-size-2xl: 24px;
+  --font-size-3xl: 30px;
 }
 
 .dark {
@@ -129,6 +142,16 @@ html, body {
   overscroll-behavior: none;
   transition: background-color 0.3s ease, color 0.3s ease;
 }
+
+.ui-display { font-size: clamp(2.25rem, 5vw, 3.5rem); line-height: 1.05; }
+.ui-page-title { font-size: clamp(1.75rem, 3vw, 2rem); line-height: 1.12; }
+.ui-heading { font-size: clamp(1.25rem, 2.4vw, 1.5rem); line-height: 1.2; }
+.ui-card-title { font-size: 1.125rem; line-height: 1.35; }
+.ui-body { font-size: .875rem; line-height: 1.5; }
+.ui-label { font-size: .8125rem; line-height: 1.4; }
+.ui-table-header { font-size: .75rem; line-height: 1.35; }
+.ui-caption { font-size: .6875rem; line-height: 1.4; }
+.ui-badge { font-size: .75rem; line-height: 1.25rem; }
 
 /* --- OPTIMIZED AURORA BACKGROUND (GPU Accelerated) --- */
 #app-background {

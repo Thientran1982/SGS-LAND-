@@ -101,6 +101,12 @@
     --cw-ink-dim: var(--ui-text-muted);
     --cw-navy: var(--ui-brand-strong);
     --cw-gold: var(--ui-accent);
+
+    /* Shared typography contract. Marketing pages may opt into their own
+       responsive display scale, but use the same font roles underneath. */
+    --font-ui: var(--font-be-vietnam), ui-sans-serif, system-ui, sans-serif;
+    --font-display-ui: var(--font-be-vietnam), ui-sans-serif, system-ui, sans-serif;
+    --font-mono-ui: var(--font-ibm-plex-mono), ui-monospace, monospace;
   }
 
   /* ─── Dark Mode ─────────────────────────────────────────── */
@@ -180,6 +186,16 @@
   }
 }
 
+/* next/font variables are attached to <body>. Keep the semantic aliases on
+   the same element so components can resolve them without a network font. */
+body {
+  --font-ui: var(--font-be-vietnam), ui-sans-serif, system-ui, sans-serif;
+  --font-display-ui: var(--font-be-vietnam), ui-sans-serif, system-ui, sans-serif;
+  --font-mono-ui: var(--font-ibm-plex-mono), ui-monospace, monospace;
+  font-family: var(--font-ui);
+  font-size: 14px;
+}
+
 @layer components {
   /* Keep functional controls identical to the CRM/Vite application. */
   .ui-button {
@@ -242,12 +258,12 @@
    --font-body:    var(--font-be-vietnam), ui-sans-serif, sans-serif;
    --font-mono-sgs: var(--font-ibm-plex-mono), ui-monospace, monospace;
 
-  /* Custom font sizes (compact scale) */
+   /* Shared semantic font sizes. */
    --font-size-micro-8: 8px;
    --font-size-micro-10: 10px;
-  --font-size-3xs: 10px;
-  --font-size-2xs: 11px;
-  --font-size-xs:  13px;
+   --font-size-3xs: 11px;
+   --font-size-2xs: 12px;
+   --font-size-xs:  13px;
   --font-size-sm:  14px;
   --font-size-base: 16px;
   --font-size-lg:  18px;
@@ -256,7 +272,16 @@
   --font-size-3xl: 30px;
   --font-size-4xl: 36px;
   --font-size-5xl: 48px;
-  --font-size-6xl: 60px;
+   --font-size-6xl: 56px;
+   --font-size-ui-display: clamp(2.25rem, 5vw, 3.5rem);
+   --font-size-ui-page-title: clamp(1.75rem, 3vw, 2rem);
+   --font-size-ui-heading: clamp(1.25rem, 2.4vw, 1.5rem);
+   --font-size-ui-card-title: 1.125rem;
+   --font-size-ui-body: .875rem;
+   --font-size-ui-label: .8125rem;
+   --font-size-ui-table-header: .75rem;
+   --font-size-ui-caption: .6875rem;
+   --font-size-ui-badge: .75rem;
 
   /* Color tokens → CSS variables */
   --color-surface:           var(--sgs-surface);
@@ -354,11 +379,17 @@
   *::-webkit-scrollbar { display: none; }
 
   h1, h2, h3, h4, h5, h6 {
-    @apply text-xl md:text-2xl lg:text-3xl font-bold;
+    font-weight: 700;
     letter-spacing: -0.02em !important;
     word-spacing: normal;
-    line-height: 1.12;
+    line-height: 1.2;
   }
+  h1 { font-size: 1.875rem; line-height: 1.12; }
+  h2 { font-size: 1.5rem; }
+  h3 { font-size: 1.25rem; }
+  h4 { font-size: 1.125rem; }
+  h5 { font-size: 1rem; }
+  h6 { font-size: .875rem; }
 }
 
 /* ─── Utility Classes ─────────────────────────────────────── */

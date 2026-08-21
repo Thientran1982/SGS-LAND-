@@ -4,12 +4,18 @@
 @tailwind utilities;
 @layer base {
   h1, h2, h3, h4, h5, h6 {
-    @apply text-xl md:text-2xl lg:text-3xl font-bold;
+    font-weight: 700;
     font-family: var(--font-display);
     letter-spacing: -0.02em !important;
     word-spacing: normal;
-    line-height: 1.12;
+    line-height: 1.2;
   }
+  h1 { font-size: 1.875rem; line-height: 1.12; }
+  h2 { font-size: 1.5rem; }
+  h3 { font-size: 1.25rem; }
+  h4 { font-size: 1.125rem; }
+  h5 { font-size: 1rem; }
+  h6 { font-size: .875rem; }
 }
 /* ============================================================
    GLOBAL RESETS & UTILITIES
@@ -86,6 +92,29 @@ html.dark {
   --font-display:       "Inter", "Be Vietnam Pro", system-ui, sans-serif;
   --font-ui:            "Be Vietnam Pro", system-ui, sans-serif;
   --font-mono:          "IBM Plex Mono", ui-monospace, monospace;
+}
+
+/* Shared semantic typography contract. Use these roles instead of inventing
+   page-specific pixel values; Tailwind utilities may still override them
+   intentionally in existing screens. */
+.ui-display { font-size: clamp(2.25rem, 5vw, 3.5rem); line-height: 1.05; }
+.ui-page-title { font-size: clamp(1.75rem, 3vw, 2rem); line-height: 1.12; }
+.ui-heading { font-size: clamp(1.25rem, 2.4vw, 1.5rem); line-height: 1.2; }
+.ui-card-title { font-size: 1.125rem; line-height: 1.35; }
+.ui-body { font-size: .875rem; line-height: 1.5; }
+.ui-label { font-size: .8125rem; line-height: 1.4; }
+.ui-table-header { font-size: .75rem; line-height: 1.35; }
+.ui-caption { font-size: .6875rem; line-height: 1.4; }
+.ui-badge { font-size: .75rem; line-height: 1.25rem; }
+
+/* Keep touch controls readable on mobile while allowing compact desktop forms. */
+.crm-vite-app input:not([type="checkbox"]):not([type="radio"]),
+.crm-vite-app select,
+.crm-vite-app textarea { font-size: .875rem; }
+@media (max-width: 767px) {
+  .crm-vite-app input:not([type="checkbox"]):not([type="radio"]),
+  .crm-vite-app select,
+  .crm-vite-app textarea { font-size: 1rem; }
 }
 html.dark {
   /* Dark-mode values for the same semantic contract. */
@@ -862,28 +891,27 @@ html.dark body {
    route gets the same denser, quieter reading scale.
    ============================================================ */
 .crm-vite-app {
-  font-size: 15px;
+  font-size: 14px;
 }
-.crm-vite-app .text-3xs { font-size: .5625rem !important; }
-.crm-vite-app .text-2xs { font-size: .625rem !important; }
-.crm-vite-app .text-xs  { font-size: .6875rem !important; }
-.crm-vite-app .text-sm  { font-size: .8125rem !important; }
-.crm-vite-app .text-base { font-size: .875rem !important; }
-.crm-vite-app .text-lg  { font-size: 1.0625rem !important; }
-.crm-vite-app .text-xl  { font-size: 1.125rem !important; }
-.crm-vite-app .text-2xl { font-size: 1.35rem !important; }
-.crm-vite-app .text-3xl { font-size: 1.7rem !important; }
-.crm-vite-app .text-4xl { font-size: 2.15rem !important; }
-.crm-vite-app .text-5xl { font-size: 2.7rem !important; }
-.crm-vite-app .text-6xl { font-size: 3.3rem !important; }
+.crm-vite-app .text-3xs { font-size: .6875rem !important; }
+.crm-vite-app .text-2xs { font-size: .75rem !important; }
+.crm-vite-app .text-xs  { font-size: .8125rem !important; }
+.crm-vite-app .text-sm  { font-size: .875rem !important; }
+.crm-vite-app .text-base { font-size: 1rem !important; }
+.crm-vite-app .text-lg  { font-size: 1.125rem !important; }
+.crm-vite-app .text-xl  { font-size: 1.25rem !important; }
+.crm-vite-app .text-2xl { font-size: 1.5rem !important; }
+.crm-vite-app .text-3xl { font-size: 1.875rem !important; }
+.crm-vite-app .text-4xl { font-size: 2.25rem !important; }
+.crm-vite-app .text-5xl { font-size: 3rem !important; }
+.crm-vite-app .text-6xl { font-size: 3.5rem !important; }
 .crm-vite-app .text-7xl { font-size: 4rem !important; }
-.crm-vite-app h1 { font-size: 1.7rem; }
-.crm-vite-app h2 { font-size: 1.35rem; }
-.crm-vite-app h3 { font-size: 1.125rem; }
-.crm-vite-app h4,
-.crm-vite-app h5,
-.crm-vite-app h6 { font-size: 1rem; }
+.crm-vite-app h1 { font-size: 1.875rem; }
+.crm-vite-app h2 { font-size: 1.5rem; }
+.crm-vite-app h3 { font-size: 1.25rem; }
+.crm-vite-app h4 { font-size: 1.125rem; }
+.crm-vite-app h5 { font-size: 1rem; }
+.crm-vite-app h6 { font-size: .875rem; }
 @media (min-width: 768px) {
-  .crm-vite-app h1 { font-size: 2.15rem; }
-  .crm-vite-app h2 { font-size: 1.7rem; }
+  .crm-vite-app h1 { font-size: 2rem; }
 }
