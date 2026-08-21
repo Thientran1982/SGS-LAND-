@@ -100,14 +100,15 @@ function RichProjectDetail({ project, config, landing }: { project: ProjectDetai
     "bat-dong-san-hoc-mon": "Hoc Mon Real Estate",
     "bat-dong-san-can-gio": "Can Gio Real Estate",
     "bat-dong-san-binh-duong": "Binh Duong Real Estate",
+    "bat-dong-san-phu-nhuan": "Phu Nhuan Real Estate",
     "nha-pho-trung-tam": "Central Townhouses",
   };
   const displayTitle = lang === "en" && isArea ? (areaEnglishNames[landing.slug] || landing.titleShort) : landing.titleShort;
   const translateAreaValue = (value: string) => lang === "en" && isArea
-    ? value.replace(/Nhiều chủ đầu tư/gi, "Multiple developers").replace(/Nhiều CĐT/gi, "Multiple developers").replace(/Nhiều Chủ Sở Hữu Cá Nhân & Tổ Chức/gi, "Multiple individual and organizational owners").replace(/Nhiều khu vực nội thành/gi, "Multiple central districts").replace(/Cần xác minh theo khu vực/gi, "To be verified by area").replace(/Cần xác minh/gi, "To be verified").replace(/Danh mục bất động sản/gi, "Real estate category").replace(/khu trung tâm TP\.?HCM/gi, "central Ho Chi Minh City").replace(/TP\.?HCM/gi, "Ho Chi Minh City").replace(/Quận\s+/gi, "District ").replace(/Đất nền/gi, "Land lots").replace(/biệt thự/gi, "villas").replace(/Căn hộ/gi, "Apartments").replace(/nhà phố liền kề/gi, "attached townhouses").replace(/nhà phố/gi, "Townhouses").replace(/Nhà mặt tiền/gi, "Street-front houses").replace(/nhà hẻm/gi, "alley houses").replace(/liền kề/gi, "attached townhouses").replace(/Sổ hồng chính chủ, thổ cư ổn định/gi, "Registered ownership certificate, established residential land status").replace(/Tài sản tích lũy bền vững qua thế hệ/gi, "Long-term intergenerational asset").replace(/Kinh doanh, đầu tư cho thuê, tích lũy/gi, "Business, rental investment and long-term holding").replace(/triệu\/m²/gi, "million VND/m²").replace(/triệu\/tháng/gi, "million VND/month").replace(/\(mặt tiền lớn\)/gi, "(large frontage)").replace(/VNĐ/gi, "VND")
+    ? value.replace(/Nhiều chủ đầu tư/gi, "Multiple developers").replace(/Nhiều CĐT/gi, "Multiple developers").replace(/Nhiều Chủ Sở Hữu Cá Nhân & Tổ Chức/gi, "Multiple individual and organizational owners").replace(/Nhiều khu vực nội thành/gi, "Multiple central districts").replace(/Cần xác minh theo khu vực/gi, "To be verified by area").replace(/Cần xác minh/gi, "To be verified").replace(/Danh mục bất động sản/gi, "Real estate category").replace(/Bất động sản/gi, "Real estate").replace(/khu trung tâm TP\.?HCM/gi, "central Ho Chi Minh City").replace(/TP\.?HCM/gi, "Ho Chi Minh City").replace(/Quận\s+/gi, "District ").replace(/Đất nền/gi, "Land lots").replace(/biệt thự/gi, "villas").replace(/Căn hộ/gi, "Apartments").replace(/nhà phố liền kề/gi, "attached townhouses").replace(/nhà phố/gi, "Townhouses").replace(/Nhà mặt tiền/gi, "Street-front houses").replace(/nhà hẻm/gi, "alley houses").replace(/liền kề/gi, "attached townhouses").replace(/Sổ hồng chính chủ, thổ cư ổn định/gi, "Registered ownership certificate, established residential land status").replace(/Tài sản tích lũy bền vững qua thế hệ/gi, "Long-term intergenerational asset").replace(/Kinh doanh, đầu tư cho thuê, tích lũy/gi, "Business, rental investment and long-term holding").replace(/triệu\/m²/gi, "million VND/m²").replace(/triệu\/tháng/gi, "million VND/month").replace(/\(mặt tiền lớn\)/gi, "(large frontage)").replace(/VNĐ/gi, "VND")
     : value;
   const translateAreaLabel = (label: string) => lang === "en" && isArea
-    ? label.replace(/^Chủ đầu tư$/i, "Developer").replace(/^Vị trí$/i, "Location").replace(/^Quy mô$/i, "Scale").replace(/^Loại hình$/i, "Property types").replace(/^Giá tham khảo$/i, "Reference price").replace(/^Tình trạng$/i, "Status").replace(/^Kỳ dữ liệu$/i, "Data period").replace(/^Giá mặt tiền Q1$/i, "District 1 frontage price").replace(/^Giá hẻm Q1$/i, "District 1 alley-house price").replace(/^Giá hẻm xe hơi Q3$/i, "District 3 car-access alley price").replace(/^Giá thuê mặt bằng$/i, "Commercial space rent").replace(/^Cho thuê mặt bằng$/i, "Commercial space rent").replace(/^Pháp lý$/i, "Legal status").replace(/^Đặc điểm$/i, "Key characteristics").replace(/^Phù hợp$/i, "Suitable for")
+    ? label.replace(/^Chủ đầu tư$/i, "Developer").replace(/^Vị trí$/i, "Location").replace(/^Quy mô$/i, "Scale").replace(/^Loại hình$/i, "Property types").replace(/^Giá tham khảo$/i, "Reference price").replace(/^Tình trạng$/i, "Status").replace(/^Kỳ dữ liệu$/i, "Data period").replace(/^Giá mặt tiền Q1$/i, "District 1 frontage price").replace(/^Giá hẻm Q1$/i, "District 1 alley-house price").replace(/^Giá hẻm xe hơi Q3$/i, "District 3 car-access alley price").replace(/^Giá thuê mặt bằng$/i, "Commercial space rent").replace(/^Cho thuê mặt bằng$/i, "Commercial space rent").replace(/^Pháp lý$/i, "Legal status").replace(/^Đặc điểm$/i, "Key characteristics").replace(/^Phù hợp$/i, "Suitable for").replace(/^Khu vực$/i, "Area").replace(/^Tên khu vực$/i, "Area name")
     : label;
   const areaEnglishCopy: ProjectDetailEnglishCopy | null = lang === "en" && isArea ? {
     eyebrow: "Area reference",
@@ -140,7 +141,7 @@ function RichProjectDetail({ project, config, landing }: { project: ProjectDetai
     })),
     stats: landing.stats.map((stat) => ({ ...stat, num: translateAreaValue(stat.num), lbl: translateAreaLabel(stat.lbl) })),
   } : null;
-  const englishCopy = lang === "en" ? (PROJECT_DETAIL_EN[landing.slug] || areaEnglishCopy) : null;
+  const englishCopy = lang === "en" && isArea ? areaEnglishCopy : lang === "en" ? PROJECT_DETAIL_EN[landing.slug] || null : null;
   const areaAmenityText: Record<string, string[]> = {
     "bat-dong-san-long-an": ["Clean climate", "New transport infrastructure", "Nearby industrial parks", "Educational amenities", "Ecological parks", "24/7 security", "Connections to Ho Chi Minh City"],
     "bat-dong-san-thu-duc": ["Metro Line 1", "Vietnam National University area", "High-tech park", "Retail centres", "Schools and hospitals", "Modern parks", "24/7 security"],
@@ -149,9 +150,12 @@ function RichProjectDetail({ project, config, landing }: { project: ProjectDetai
     "bat-dong-san-binh-thanh": ["Central location", "Saigon River access", "Retail centres", "Schools and hospitals", "Swimming pools and gyms", "Green spaces", "24/7 security"],
     "bat-dong-san-quan-7": ["Phu My Hung urban area", "Crescent Mall and retail centres", "International schools", "FV Hospital area", "Modern parks", "Dining and services", "24/7 security"],
     "bat-dong-san-hoc-mon": ["Northwest Ho Chi Minh City location", "Developing transport infrastructure", "Nearby schools and hospitals", "Green spaces", "Local retail and services", "Residential communities", "Connections to central districts"],
+    "bat-dong-san-can-gio": ["Coastal and island-area setting", "Developing transport infrastructure", "Waterfront and ecological areas", "Local retail and services", "Schools and healthcare access", "Tourism and hospitality activity", "Verify property-specific amenities"],
+    "bat-dong-san-binh-duong": ["Industrial and residential districts", "Regional transport connections", "Employment centres", "Schools and healthcare access", "Retail and daily services", "Green and public spaces", "Verify property-specific amenities"],
+    "bat-dong-san-phu-nhuan": ["Established inner-city location", "Local retail and services", "Schools and healthcare access", "Public transport access", "Dining and everyday amenities", "Established residential communities", "Verify property-specific amenities"],
     "nha-pho-trung-tam": ["Central urban location", "Convenient retail and services", "Schools and hospitals", "Public transport access", "Dining and entertainment", "Established residential community", "Verify property-specific amenities"],
   };
-  const areaEnglishConfig: ProjectConfig | null = lang === "en" && isArea && areaAmenityText[landing.slug] ? {
+  const areaEnglishConfig: ProjectConfig | null = lang === "en" && isArea ? {
     details: (config?.details || []).map((row) => ({
       ...row,
       label: translateAreaLabel(row.label),
@@ -164,7 +168,7 @@ function RichProjectDetail({ project, config, landing }: { project: ProjectDetai
       { q: "What should buyers verify?", a: "Verify planning, legal status, ownership costs, infrastructure status, transfer conditions and the actual availability of the property." },
     ],
   } : null;
-  const englishConfig = lang === "en" ? (PROJECT_CONFIG_EN[landing.slug] || areaEnglishConfig) : null;
+  const englishConfig = lang === "en" && isArea ? areaEnglishConfig : lang === "en" ? PROJECT_CONFIG_EN[landing.slug] || null : null;
   const displayStats = (englishCopy?.stats || landing.stats).map((stat) => ({
     ...stat,
     num: translateAreaValue(stat.num),
@@ -321,14 +325,14 @@ function RichProjectDetail({ project, config, landing }: { project: ProjectDetai
           <div className="flex flex-col gap-6 sm:flex-row sm:items-center sm:justify-between"><div><p className="text-xs font-bold uppercase tracking-[.16em] opacity-75">{tt(lang, "Bước tiếp theo", "Next step")}</p><h2 className="mt-2 text-2xl font-bold tracking-[-.03em]">{tt(lang, "Cần kiểm tra", "Need to verify")} {displayTitle} {tt(lang, "theo sản phẩm cụ thể?", "for a specific property?")}</h2><p className="mt-2 max-w-2xl text-sm leading-6 opacity-85">{tt(lang, "Gửi nhu cầu để nhận thông tin tham khảo. Giá, pháp lý, tiến độ và tư cách phân phối vẫn cần được xác nhận bằng tài liệu hiện hành.", "Send your request for reference information. Pricing, legal status, progress and distribution status must be confirmed with current documents.")}</p></div><a href="tel:+84971132378" className="inline-flex shrink-0 items-center justify-center gap-2 rounded-xl bg-white px-5 py-3 text-sm font-bold" style={{ color: "var(--ui-brand)" }}><Phone className="h-4 w-4" /> 0971 132 378</a></div>
         </section>
 
-         {config?.relatedProjects && config.relatedProjects.length > 0 && <section className="py-12"><SectionHeading eyebrow={tt(lang, "Đọc thêm", "Read more")} title={tt(lang, "Dự án và khu vực liên quan", "Related projects and areas")} /><div className="flex flex-wrap gap-3">{config.relatedProjects.map((related) => <Link key={related.slug} href={`${lang === "en" ? "/en" : ""}/du-an/${related.slug}`} className="inline-flex items-center gap-2 rounded-xl border px-4 py-3 text-sm font-semibold transition hover:-translate-y-0.5" style={surface}><Building2 className="h-4 w-4" style={{ color: "var(--sgs-accent-text)" }} />{related.name}<ArrowRight className="h-4 w-4" /></Link>)}</div></section>}
+          {config?.relatedProjects && config.relatedProjects.length > 0 && <section className="py-12"><SectionHeading eyebrow={tt(lang, "Đọc thêm", "Read more")} title={tt(lang, "Dự án và khu vực liên quan", "Related projects and areas")} /><div className="flex flex-wrap gap-3">{config.relatedProjects.map((related) => <Link key={related.slug} href={`${lang === "en" ? "/en" : ""}/du-an/${related.slug}`} className="inline-flex items-center gap-2 rounded-xl border px-4 py-3 text-sm font-semibold transition hover:-translate-y-0.5" style={surface}><Building2 className="h-4 w-4" style={{ color: "var(--sgs-accent-text)" }} />{lang === "en" && isArea ? translateAreaValue(related.name) : related.name}<ArrowRight className="h-4 w-4" /></Link>)}</div></section>}
       </div>
     </main>
   );
 }
 
 export function ProjectDetailPage({ project, slug, config, landingProject }: Props) {
-  if (["aqua-city", "the-global-city", "izumi-city", "vinhomes-grand-park", "vinhomes-central-park", "diamond-sky-van-phuc-city", "manhattan", "thu-thiem", "son-kim-land", "vinhomes-can-gio", "sala", "vinhomes-hoc-mon", "masteri-park-place", "masteri-cosmo-central", "eco-retreat-long-an", "legacy-66", "nha-pho-trung-tam", "bat-dong-san-thu-duc", "bat-dong-san-long-thanh", "bat-dong-san-binh-thanh", "bat-dong-san-quan-7", "bat-dong-san-long-an", "bat-dong-san-dong-nai", "bat-dong-san-binh-chanh", "bat-dong-san-can-gio", "bat-dong-san-hoc-mon", "bat-dong-san-binh-duong"].includes(slug) && landingProject) {
+  if (["aqua-city", "the-global-city", "izumi-city", "vinhomes-grand-park", "vinhomes-central-park", "diamond-sky-van-phuc-city", "manhattan", "thu-thiem", "son-kim-land", "vinhomes-can-gio", "sala", "vinhomes-hoc-mon", "masteri-park-place", "masteri-cosmo-central", "eco-retreat-long-an", "legacy-66", "nha-pho-trung-tam", "bat-dong-san-thu-duc", "bat-dong-san-long-thanh", "bat-dong-san-binh-thanh", "bat-dong-san-quan-7", "bat-dong-san-long-an", "bat-dong-san-dong-nai", "bat-dong-san-binh-chanh", "bat-dong-san-can-gio", "bat-dong-san-hoc-mon", "bat-dong-san-binh-duong", "bat-dong-san-phu-nhuan"].includes(slug) && landingProject) {
     return <RichProjectDetail project={project} config={config} landing={landingProject} />;
   }
 
