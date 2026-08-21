@@ -603,6 +603,44 @@ export const ListingForm: React.FC<ListingFormProps> = memo(({ isOpen, onClose, 
                 <div className="flex-1 overflow-y-auto p-6 bg-[var(--glass-surface)]/50 overscroll-contain no-scrollbar">
                      {step === 0 && <div className="grid grid-cols-1 gap-6">
                         <div className="space-y-4">
+                             <div className="bg-[var(--bg-surface)] p-5 rounded-2xl border border-[var(--glass-border)] shadow-sm space-y-4">
+                                 <div className="flex items-center justify-between gap-3">
+                                     <h4 className="text-xs font-bold text-sgs-primary uppercase tracking-wide">Phân loại tin đăng</h4>
+                                     {!isProjectUnit && (
+                                         <label className="flex items-center gap-2 cursor-pointer select-none bg-sgs-champagne px-2 py-1 rounded-lg border border-sgs-border">
+                                             <input
+                                                 type="checkbox"
+                                                 checked={!!formData.isVerified}
+                                                 disabled={!canVerify}
+                                                 title={canVerify ? undefined : 'Chỉ Trưởng nhóm / Quản trị viên mới được đánh dấu đã xác thực'}
+                                                 onChange={e => { if (canVerify) setFormData({...formData, isVerified: e.target.checked}); }}
+                                                 className="w-3.5 h-3.5 accent-[var(--sgs-primary)] rounded border-slate-300 focus:ring-sgs-primary"
+                                             />
+                                             <span className="text-xs2 font-bold text-sgs-primary uppercase">{t('inventory.verified')}</span>
+                                         </label>
+                                     )}
+                                 </div>
+                                 <Dropdown
+                                     label={t('inventory.label_transaction')}
+                                     value={formData.transaction as string}
+                                     onChange={v => setFormData({...formData, transaction: v as TransactionType})}
+                                     options={transactionOptions}
+                                 />
+                                 <div className="grid grid-cols-2 gap-4">
+                                     <Dropdown
+                                         label={t('inventory.label_type')}
+                                         value={formData.type as string}
+                                         onChange={v => setFormData({...formData, type: v as PropertyType})}
+                                         options={typeOptions}
+                                     />
+                                     <Dropdown
+                                         label={t('inventory.label_status')}
+                                         value={formData.status as string}
+                                         onChange={v => setFormData({...formData, status: v as ListingStatus})}
+                                         options={statusOptions}
+                                     />
+                                 </div>
+                             </div>
                             <div className="bg-[var(--bg-surface)] p-5 rounded-2xl border border-[var(--glass-border)] shadow-sm space-y-4">
                                 <h4 className="text-xs font-bold text-sgs-primary uppercase tracking-wide">{t('inventory.section_general')}</h4>
                                 <div className="grid grid-cols-2 gap-4">
@@ -849,44 +887,6 @@ export const ListingForm: React.FC<ListingFormProps> = memo(({ isOpen, onClose, 
                                 </div>
                                 )}
                             </div>
-                             <div className="bg-[var(--bg-surface)] p-5 rounded-2xl border border-[var(--glass-border)] shadow-sm space-y-4">
-                                 <div className="flex items-center justify-between gap-3">
-                                     <h4 className="text-xs font-bold text-sgs-primary uppercase tracking-wide">Phân loại tin đăng</h4>
-                                     {!isProjectUnit && (
-                                         <label className="flex items-center gap-2 cursor-pointer select-none bg-sgs-champagne px-2 py-1 rounded-lg border border-sgs-border">
-                                             <input
-                                                 type="checkbox"
-                                                 checked={!!formData.isVerified}
-                                                 disabled={!canVerify}
-                                                 title={canVerify ? undefined : 'Chỉ Trưởng nhóm / Quản trị viên mới được đánh dấu đã xác thực'}
-                                                 onChange={e => { if (canVerify) setFormData({...formData, isVerified: e.target.checked}); }}
-                                                 className="w-3.5 h-3.5 accent-[var(--sgs-primary)] rounded border-slate-300 focus:ring-sgs-primary"
-                                             />
-                                             <span className="text-xs2 font-bold text-sgs-primary uppercase">{t('inventory.verified')}</span>
-                                         </label>
-                                     )}
-                                 </div>
-                                 <Dropdown
-                                     label={t('inventory.label_transaction')}
-                                     value={formData.transaction as string}
-                                     onChange={v => setFormData({...formData, transaction: v as TransactionType})}
-                                     options={transactionOptions}
-                                 />
-                                 <div className="grid grid-cols-2 gap-4">
-                                     <Dropdown
-                                         label={t('inventory.label_type')}
-                                         value={formData.type as string}
-                                         onChange={v => setFormData({...formData, type: v as PropertyType})}
-                                         options={typeOptions}
-                                     />
-                                     <Dropdown
-                                         label={t('inventory.label_status')}
-                                         value={formData.status as string}
-                                         onChange={v => setFormData({...formData, status: v as ListingStatus})}
-                                         options={statusOptions}
-                                     />
-                                 </div>
-                             </div>
                              <div className="bg-[var(--bg-surface)] p-5 rounded-2xl border border-[var(--glass-border)] shadow-sm space-y-4">
                                 <h4 className="text-xs font-bold text-sgs-primary uppercase tracking-wide">{t('inventory.section_details')}</h4>
                                 {renderDynamicFields()}
