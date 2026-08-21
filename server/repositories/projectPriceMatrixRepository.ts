@@ -61,10 +61,10 @@ export const projectPriceMatrixRepository = {
     return rows[0];
   },
 
-  async updateRow(tenantId: string, id: string, input: Partial<PriceMatrixInput>): Promise<PriceMatrixRow | null> {
+  async updateRow(tenantId: string, projectId: string, id: string, input: Partial<PriceMatrixInput>): Promise<PriceMatrixRow | null> {
     const sets: string[] = ['updated_at = NOW()'];
-    const vals: any[] = [tenantId, id];
-    let p = 3;
+    const vals: any[] = [tenantId, projectId, id];
+    let p = 4;
 
     if (input.tower !== undefined)       { sets.push(`tower = $${p++}`);          vals.push(input.tower ?? null); }
     if (input.floor_from !== undefined)  { sets.push(`floor_from = $${p++}`);     vals.push(input.floor_from); }
@@ -78,16 +78,16 @@ export const projectPriceMatrixRepository = {
 
     const { rows } = await pool.query(
       `UPDATE project_price_matrix SET ${sets.join(', ')}
-       WHERE tenant_id = $1 AND id = $2 RETURNING *`,
+       WHERE tenant_id = $1 AND project_id = $2 AND id = $3 RETURNING *`,
       vals
     );
     return rows[0] ?? null;
   },
 
-  async deleteRow(tenantId: string, id: string): Promise<boolean> {
+  async deleteRow(tenantId: string, projectId: string, id: string): Promise<boolean> {
     const { rowCount } = await pool.query(
-      `DELETE FROM project_price_matrix WHERE tenant_id = $1 AND id = $2`,
-      [tenantId, id]
+      `DELETE FROM project_price_matrix WHERE tenant_id = $1 AND project_id = $2 AND id = $3`,
+      [tenantId, projectId, id]
     );
     return (rowCount ?? 0) > 0;
   },

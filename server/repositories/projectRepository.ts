@@ -289,21 +289,22 @@ export class ProjectRepository extends BaseRepository {
     // -------------------------------------------------------------------------
 
     // Get all listing_access grants for a specific listing (cross-tenant)
-    async getListingAccess(listingId: string): Promise<any[]> {
+    async getListingAccess(tenantId: string, listingId: string): Promise<any[]> {
         const { pool } = await import('../db');
         const result = await pool.query(
             `SELECT la.*, t.name as partner_tenant_name, t.domain as partner_tenant_domain
              FROM listing_access la
              JOIN tenants t ON t.id = la.partner_tenant_id
-             WHERE la.listing_id = $1
+             JOIN listings l ON l.id = la.listing_id AND l.tenant_id = $1
+             WHERE la.listing_id = $2
              ORDER BY la.granted_at DESC`,
-            [listingId]
+            [tenantId, listingId]
         );
         return result.rows;
     }
 
     // Grant a partner tenant access to a specific listing
-    async grantListingAccess(data: {
+    async grantListingAccess(tenantId: string, data: {
         listingId: string;
         partnerTenantId: string;
         grantedBy: string;
@@ -320,12 +321,15 @@ export class ProjectRepository extends BaseRepository {
 
         const result = await pool.query(
             `INSERT INTO listing_access (listing_id, partner_tenant_id, granted_by, expires_at, note, status)
-             VALUES ($1, $2, $3, $4, $5, 'ACTIVE')
+             SELECT l.id, $2, $3, $4, $5, 'ACTIVE'
+             FROM listings l
+             WHERE l.id = $1 AND l.tenant_id = $6
              ON CONFLICT (listing_id, partner_tenant_id)
              DO UPDATE SET status = 'ACTIVE', expires_at = $4, note = $5, granted_by = $3, granted_at = NOW()
              RETURNING *`,
-            [data.listingId, data.partnerTenantId, data.grantedBy, data.expiresAt || null, data.note || null]
+            [data.listingId, data.partnerTenantId, data.grantedBy, data.expiresAt || null, data.note || null, tenantId]
         );
+        if (!result.rows[0]) throw new Error('Listing not found or access denied');
         return {
             ...result.rows[0],
             partner_tenant_name: partnerCheck.rows[0].name,
@@ -334,12 +338,13 @@ export class ProjectRepository extends BaseRepository {
     }
 
     // Revoke a partner tenant's access to a specific listing
-    async revokeListingAccess(listingId: string, partnerTenantId: string): Promise<boolean> {
+    async revokeListingAccess(tenantId: string, listingId: string, partnerTenantId: string): Promise<boolean> {
         const { pool } = await import('../db');
         const result = await pool.query(
             `UPDATE listing_access SET status = 'REVOKED'
-             WHERE listing_id = $1 AND partner_tenant_id = $2`,
-            [listingId, partnerTenantId]
+             WHERE listing_id = $1 AND partner_tenant_id = $2
+               AND listing_id IN (SELECT id FROM listings WHERE id = $1 AND tenant_id = $3)`,
+            [listingId, partnerTenantId, tenantId]
         );
         return (result.rowCount ?? 0) > 0;
     }

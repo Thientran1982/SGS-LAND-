@@ -258,7 +258,7 @@ export function createProjectRoutes(authenticateToken: any) {
     try {
       const user = (req as any).user;
       if (!ADMIN_ROLES.includes(user.role)) return res.status(403).json({ error: 'Không có quyền thực hiện' });
-      const accesses = await projectRepository.getListingAccess(req.params.listingId as string);
+      const accesses = await projectRepository.getListingAccess(user.tenantId, req.params.listingId as string);
       res.json(accesses);
     } catch (error) {
       console.error('Error fetching listing access:', error);
@@ -275,7 +275,7 @@ export function createProjectRoutes(authenticateToken: any) {
       const { partnerTenantId, expiresAt, note } = req.body;
       if (!partnerTenantId) return res.status(400).json({ error: 'Vui lòng chọn đối tác' });
 
-      const access = await projectRepository.grantListingAccess({
+       const access = await projectRepository.grantListingAccess(user.tenantId, {
         listingId: req.params.listingId as string,
         partnerTenantId,
         grantedBy: user.id,
@@ -297,6 +297,7 @@ export function createProjectRoutes(authenticateToken: any) {
       if (!ADMIN_ROLES.includes(user.role)) return res.status(403).json({ error: 'Không có quyền thực hiện' });
 
       const revoked = await projectRepository.revokeListingAccess(
+        user.tenantId,
         req.params.listingId as string,
         req.params.partnerTenantId as string
       );
@@ -315,6 +316,8 @@ export function createProjectRoutes(authenticateToken: any) {
     try {
       const user = (req as any).user;
       const projectId = req.params.id as string;
+      const project = await projectRepository.findById(user.tenantId, projectId);
+      if (!project) return res.status(404).json({ error: 'Không tìm thấy dự án' });
       const rows = await projectPriceMatrixRepository.findByProject(user.tenantId, projectId);
       res.json(rows);
     } catch (error) {
@@ -330,6 +333,8 @@ export function createProjectRoutes(authenticateToken: any) {
       if (!ADMIN_ROLES.includes(user.role) && !['TEAM_LEAD'].includes(user.role))
         return res.status(403).json({ error: 'Không có quyền thực hiện' });
       const projectId = req.params.id as string;
+      const project = await projectRepository.findById(user.tenantId, projectId);
+      if (!project) return res.status(404).json({ error: 'Không tìm thấy dự án' });
       const row = await projectPriceMatrixRepository.upsertRow(user.tenantId, projectId, {
         ...req.body,
         updated_by: user.userId,
@@ -347,8 +352,11 @@ export function createProjectRoutes(authenticateToken: any) {
       const user = (req as any).user;
       if (!ADMIN_ROLES.includes(user.role) && !['TEAM_LEAD'].includes(user.role))
         return res.status(403).json({ error: 'Không có quyền thực hiện' });
+      const projectId = req.params.id as string;
+      const project = await projectRepository.findById(user.tenantId, projectId);
+      if (!project) return res.status(404).json({ error: 'Không tìm thấy dự án' });
       const updated = await projectPriceMatrixRepository.updateRow(
-        user.tenantId, req.params.rowId as string, { ...req.body, updated_by: user.userId }
+        user.tenantId, projectId, req.params.rowId as string, { ...req.body, updated_by: user.userId }
       );
       if (!updated) return res.status(404).json({ error: 'Không tìm thấy dòng bảng giá' });
       res.json(updated);
@@ -364,7 +372,10 @@ export function createProjectRoutes(authenticateToken: any) {
       const user = (req as any).user;
       if (!ADMIN_ROLES.includes(user.role) && !['TEAM_LEAD'].includes(user.role))
         return res.status(403).json({ error: 'Không có quyền thực hiện' });
-      const deleted = await projectPriceMatrixRepository.deleteRow(user.tenantId, req.params.rowId as string);
+      const projectId = req.params.id as string;
+      const project = await projectRepository.findById(user.tenantId, projectId);
+      if (!project) return res.status(404).json({ error: 'Không tìm thấy dự án' });
+      const deleted = await projectPriceMatrixRepository.deleteRow(user.tenantId, projectId, req.params.rowId as string);
       if (!deleted) return res.status(404).json({ error: 'Không tìm thấy dòng bảng giá' });
       res.json({ success: true });
     } catch (error) {
@@ -377,6 +388,9 @@ export function createProjectRoutes(authenticateToken: any) {
   router.get('/:id/price-matrix/lookup', authenticateToken, async (req: Request, res: Response) => {
     try {
       const user = (req as any).user;
+      const projectId = req.params.id as string;
+      const project = await projectRepository.findById(user.tenantId, projectId);
+      if (!project) return res.status(404).json({ error: 'Không tìm thấy dự án' });
       const result = await projectPriceMatrixRepository.lookupPrice(user.tenantId, req.params.id as string, {
         floor:       Number(req.query.floor) || 1,
         direction:   req.query.direction as string,
