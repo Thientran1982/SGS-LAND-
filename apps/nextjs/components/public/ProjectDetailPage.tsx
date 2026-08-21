@@ -90,6 +90,10 @@ function RichProjectDetail({ project, config, landing }: { project: ProjectDetai
     "nha-pho-trung-tam": "/images/projects/aqua-city.png",
     "bat-dong-san-thu-duc": "/images/projects/vinhomes-grand-park.webp",
     "bat-dong-san-long-thanh": "/images/projects/izumi-city.webp",
+    "bat-dong-san-binh-thanh": "/images/projects/vinhomes-grand-park.webp",
+    "bat-dong-san-quan-7": "/images/projects/the-global-city.webp",
+    "bat-dong-san-long-an": "/images/projects/aqua-city.png",
+    "bat-dong-san-dong-nai": "/images/projects/izumi-city.webp",
     "vinhomes-grand-park": "/images/projects/vinhomes-grand-park.webp",
     "vinhomes-central-park": "/images/projects/vinhomes-grand-park.webp",
     "diamond-sky-van-phuc-city": "/images/projects/diamond-sky-van-phuc-city.jpg",
@@ -220,7 +224,7 @@ function RichProjectDetail({ project, config, landing }: { project: ProjectDetai
 }
 
 export function ProjectDetailPage({ project, slug, config, landingProject }: Props) {
-  if (["aqua-city", "the-global-city", "izumi-city", "vinhomes-grand-park", "vinhomes-central-park", "diamond-sky-van-phuc-city", "manhattan", "thu-thiem", "son-kim-land", "vinhomes-can-gio", "sala", "vinhomes-hoc-mon", "masteri-park-place", "masteri-cosmo-central", "eco-retreat-long-an", "legacy-66", "nha-pho-trung-tam", "bat-dong-san-thu-duc", "bat-dong-san-long-thanh"].includes(slug) && landingProject) {
+  if (["aqua-city", "the-global-city", "izumi-city", "vinhomes-grand-park", "vinhomes-central-park", "diamond-sky-van-phuc-city", "manhattan", "thu-thiem", "son-kim-land", "vinhomes-can-gio", "sala", "vinhomes-hoc-mon", "masteri-park-place", "masteri-cosmo-central", "eco-retreat-long-an", "legacy-66", "nha-pho-trung-tam", "bat-dong-san-thu-duc", "bat-dong-san-long-thanh", "bat-dong-san-binh-thanh", "bat-dong-san-quan-7", "bat-dong-san-long-an", "bat-dong-san-dong-nai"].includes(slug) && landingProject) {
     return <RichProjectDetail project={project} config={config} landing={landingProject} />;
   }
 
