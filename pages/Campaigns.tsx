@@ -161,12 +161,13 @@ export const Campaigns: React.FC = () => {
       )}
       <div className="flex items-start justify-between mb-6">
         <div>
-          <h1 className="text-2xl font-bold text-[var(--text-primary)]">Chiến dịch tự động</h1>
+          <h1 className="text-2xl font-bold text-[var(--text-primary)]">Chiến dịch email</h1>
           <p className="text-sm text-[var(--text-tertiary)] mt-1">
-            Tạo, kích hoạt và theo dõi các chiến dịch email tự động gửi cho lead/user theo điều kiện.
+            Tạo, hẹn giờ, kích hoạt và theo dõi hiệu quả email gửi cho lead hoặc user theo điều kiện.
           </p>
         </div>
         <button
+          type="button"
           onClick={() => setEditing(emptyCampaign())}
           className="px-4 py-2 bg-sgs-primary text-white rounded-lg font-semibold hover:bg-sgs-primary text-sm"
         >
@@ -179,6 +180,7 @@ export const Campaigns: React.FC = () => {
         <div className="py-16 text-center bg-[var(--bg-surface)] rounded-xl border border-[var(--glass-border)]">
           <p className="text-[var(--text-tertiary)] mb-4">Chưa có chiến dịch nào.</p>
           <button
+            type="button"
             onClick={() => setEditing(emptyCampaign())}
             className="px-4 py-2 bg-sgs-primary text-white rounded-lg font-semibold hover:bg-sgs-primary text-sm"
           >
@@ -527,8 +529,12 @@ const CampaignDrawer: React.FC<DrawerProps> = ({ initial, onClose, onSaved, onEr
             <div className="flex gap-2">
               {[['NOW', 'Gửi ngay khi kích hoạt'], ['SCHEDULED', 'Hẹn giờ']].map(([v, l]) => (
                 <button
+                  type="button"
                   key={v}
-                  onClick={() => upd({ schedule_type: v as any })}
+                  onClick={() => upd({
+                    schedule_type: v as any,
+                    ...(v === 'NOW' ? { recurrence_type: 'ONCE' as const } : {}),
+                  })}
                   className={`px-3 py-1.5 rounded-lg text-sm font-medium border ${
                     (form.schedule_type || 'NOW') === v
                       ? 'bg-[var(--sgs-primary)] text-white border-[var(--sgs-primary)]'
@@ -556,7 +562,8 @@ const CampaignDrawer: React.FC<DrawerProps> = ({ initial, onClose, onSaved, onEr
               <select
                 value={form.recurrence_type || 'ONCE'}
                 onChange={e => upd({ recurrence_type: e.target.value as Campaign['recurrence_type'] })}
-                className="px-3 py-2 border rounded-lg"
+                disabled={form.schedule_type !== 'SCHEDULED'}
+                className="px-3 py-2 border rounded-lg disabled:opacity-60 disabled:cursor-not-allowed"
               >
                 <option value="ONCE">Một lần</option>
                 <option value="DAILY">Hàng ngày</option>
