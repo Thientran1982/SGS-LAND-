@@ -670,6 +670,15 @@ const RealtimeTrafficWidget = memo(({ t, theme }: any) => {
         </BentoCard>
     );
 });
+function safeFunnelNumber(value: unknown): number {
+    try {
+        const numericValue = Number(value);
+        return Number.isFinite(numericValue) ? numericValue : 0;
+    } catch {
+        return 0;
+    }
+}
+
 export const VisitorFunnelWidget = memo(({ days, language }: { days: number; language: string }) => {
     const [projectCode, setProjectCode] = useState('');
     const [source, setSource] = useState('');
@@ -682,15 +691,16 @@ export const VisitorFunnelWidget = memo(({ days, language }: { days: number; lan
     });
     const data = query.data;
     const isVn = language === 'vn';
-    const sessions = Number(data?.sessions || 0);
-    const exitRate = sessions ? Math.round((Number(data?.pageLeaves || 0) / sessions) * 100) : 0;
-    const avgSeconds = Math.round(Number(data?.averageTimeOnPageMs || 0) / 1000);
+    const sessions = safeFunnelNumber(data?.sessions);
+    const pageLeaves = safeFunnelNumber(data?.pageLeaves);
+    const exitRate = sessions ? Math.round((pageLeaves / sessions) * 100) : 0;
+    const avgSeconds = Math.round(safeFunnelNumber(data?.averageTimeOnPageMs) / 1000);
     const stages = [
-        [isVn ? 'Lượt xem tin' : 'Property views', Number(data?.propertyViews || 0), 'bg-[var(--sgs-primary)]'],
+        [isVn ? 'Lượt xem tin' : 'Property views', safeFunnelNumber(data?.propertyViews), 'bg-[var(--sgs-primary)]'],
         [isVn ? 'Phiên truy cập' : 'Sessions', sessions, 'bg-cyan-500'],
-        [isVn ? 'Phiên đọc sâu' : 'Engaged sessions', Number(data?.engagedSessions || 0), 'bg-emerald-500'],
-        [isVn ? 'Cuộn 50%' : 'Scrolled 50%', Number(data?.scroll50 || 0), 'bg-amber-500'],
-        [isVn ? 'Tương tác CTA' : 'CTA interactions', Number(data?.ctaInteractions || 0), 'bg-violet-500'],
+        [isVn ? 'Phiên đọc sâu' : 'Engaged sessions', safeFunnelNumber(data?.engagedSessions), 'bg-emerald-500'],
+        [isVn ? 'Cuộn 50%' : 'Scrolled 50%', safeFunnelNumber(data?.scroll50), 'bg-amber-500'],
+        [isVn ? 'Tương tác CTA' : 'CTA interactions', safeFunnelNumber(data?.ctaInteractions), 'bg-violet-500'],
     ];
     return <section className="dashboard-panel" aria-label={isVn ? 'Funnel hành vi người xem' : 'Viewer behavior funnel'}>
         <div className="dashboard-panel-head flex-wrap gap-3">
@@ -709,10 +719,10 @@ export const VisitorFunnelWidget = memo(({ days, language }: { days: number; lan
         {query.isLoading ? <div className="flex h-40 items-center justify-center"><div className="h-6 w-6 animate-spin rounded-full border-2 border-[var(--sgs-primary)] border-t-transparent" /></div> : query.isError ? <div className="px-4 py-10 text-center text-xs text-[var(--text-tertiary)]">{isVn ? 'Không thể tải dữ liệu funnel.' : 'Unable to load funnel data.'}</div> : <>
             <div className="grid grid-cols-2 gap-3 px-4 pt-1 sm:grid-cols-4">
                 {[
-                    [isVn ? 'Phiên đọc sâu' : 'Engaged sessions', Number(data?.engagedSessions || 0).toLocaleString()],
+                    [isVn ? 'Phiên đọc sâu' : 'Engaged sessions', safeFunnelNumber(data?.engagedSessions).toLocaleString()],
                     [isVn ? 'Thời gian xem TB' : 'Avg. view time', avgSeconds >= 60 ? `${Math.floor(avgSeconds / 60)}m ${avgSeconds % 60}s` : `${avgSeconds}s`],
                     [isVn ? 'Tỷ lệ rời trang' : 'Exit rate', `${exitRate}%`],
-                    [isVn ? 'Tương tác CTA' : 'CTA interactions', Number(data?.ctaInteractions || 0).toLocaleString()],
+                    [isVn ? 'Tương tác CTA' : 'CTA interactions', safeFunnelNumber(data?.ctaInteractions).toLocaleString()],
                 ].map(([label, value]) => <div key={label} className="rounded-xl border border-[var(--glass-border)] bg-[var(--glass-surface)] p-3"><div className="text-[10px] font-bold uppercase tracking-wider text-[var(--text-tertiary)]">{label}</div><div className="mt-1 text-xl font-extrabold text-[var(--text-primary)]">{value}</div></div>)}
             </div>
             <div className="grid gap-3 px-4 py-4 lg:grid-cols-[1fr_220px]">
@@ -720,7 +730,7 @@ export const VisitorFunnelWidget = memo(({ days, language }: { days: number; lan
                     const width = sessions ? Math.min(100, Math.max(2, (Number(value) / sessions) * 100)) : 2;
                     return <div key={label}><div className="mb-1 flex justify-between text-xs"><span className="text-[var(--text-secondary)]">{label}</span><strong className="font-mono text-[var(--text-primary)]">{Number(value).toLocaleString()}</strong></div><div className="h-2.5 rounded-full bg-[var(--glass-surface-hover)]"><div className={`h-full rounded-full ${color}`} style={{ width: `${width}%` }} /></div></div>;
                 })}</div>
-                <div className="rounded-xl border border-[var(--glass-border)] bg-[var(--glass-surface)] p-3"><div className="text-xs font-bold text-[var(--text-primary)]">{isVn ? 'Khách quay lại' : 'Returning visitors'}</div><div className="mt-2 text-2xl font-extrabold text-[var(--sgs-primary)]">{Number(data?.returningVisitors48h || 0).toLocaleString()}</div><div className="mt-1 text-[11px] text-[var(--text-tertiary)]">{isVn ? 'trong vòng 48 giờ' : 'within 48 hours'}</div></div>
+                <div className="rounded-xl border border-[var(--glass-border)] bg-[var(--glass-surface)] p-3"><div className="text-xs font-bold text-[var(--text-primary)]">{isVn ? 'Khách quay lại' : 'Returning visitors'}</div><div className="mt-2 text-2xl font-extrabold text-[var(--sgs-primary)]">{safeFunnelNumber(data?.returningVisitors48h).toLocaleString()}</div><div className="mt-1 text-[11px] text-[var(--text-tertiary)]">{isVn ? 'trong vòng 48 giờ' : 'within 48 hours'}</div></div>
             </div>
         </>}
     </section>;

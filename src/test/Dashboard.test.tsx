@@ -65,4 +65,28 @@ describe("VisitorFunnelWidget", () => {
     const funnel = screen.getByRole("region", { name: "Viewer behavior funnel" });
     expect(funnel.textContent).not.toMatch(/NaN|undefined/);
   });
+
+  it("falls back to zero for malformed and non-finite funnel metrics", async () => {
+    vi.spyOn(analyticsApi, "getVisitorFunnel").mockResolvedValueOnce({
+      sessions: "not-a-number",
+      pageLeaves: Infinity,
+      averageTimeOnPageMs: NaN,
+      propertyViews: "-",
+      engagedSessions: Number.POSITIVE_INFINITY,
+      scroll50: Number.NEGATIVE_INFINITY,
+      ctaInteractions: "invalid",
+      returningVisitors48h: undefined,
+      topProjects: [],
+      topSources: [],
+    });
+
+    renderWidget();
+
+    await screen.findByText("Avg. view time");
+    const funnel = screen.getByRole("region", { name: "Viewer behavior funnel" });
+    expect(funnel.textContent).not.toMatch(/NaN|undefined|Infinity/);
+    expect(screen.getByText("0s")).toBeVisible();
+    expect(screen.getByText("0%")).toBeVisible();
+    expect(screen.getAllByText("0").length).toBeGreaterThanOrEqual(7);
+  });
 });
