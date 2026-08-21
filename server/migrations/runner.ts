@@ -157,6 +157,7 @@ import m137 from './137_campaign_recipient_dedupe';
 import m138 from './138_campaign_recurrence';
 import m139 from './139_seed_default_campaigns';
 import m140 from './140_refresh_default_sequences';
+import m141 from './141_marketing_email_consent';
 
 dotenv.config();
 
@@ -310,6 +311,7 @@ const MIGRATION_REGISTRY: Record<string, Migration> = {
   '138_campaign_recurrence.ts': m138,
   '139_seed_default_campaigns.ts': m139,
   '140_refresh_default_sequences.ts': m140,
+  '141_marketing_email_consent.ts': m141,
 };
 
 async function ensureSchemaVersionsTable(client: PoolClient): Promise<void> {

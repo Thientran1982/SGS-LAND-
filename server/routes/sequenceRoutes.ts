@@ -197,6 +197,19 @@ export function createSequenceRoutes(pool: Pool, authenticateToken: any) {
       if (!lead || !lead.email) {
         return res.status(400).json({ error: 'Lead with email is required' });
       }
+      const consent = await pool.query(
+        `SELECT 1
+           FROM leads
+          WHERE tenant_id = $1
+            AND lower(email) = lower($2)
+            AND COALESCE(marketing_email_consent, false) = true
+            AND NOT (COALESCE(opt_out_channels, '[]'::jsonb) @> '"email"'::jsonb)
+          LIMIT 1`,
+        [user.tenantId, lead.email],
+      );
+      if (!consent.rowCount) {
+        return res.status(403).json({ error: 'Lead chưa đồng ý nhận email marketing hoặc đã hủy đăng ký' });
+      }
 
       const base = publicBaseUrl();
       const results: Array<{ step: number; type: string; status: string; error?: string }> = [];

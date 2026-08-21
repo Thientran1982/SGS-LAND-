@@ -417,9 +417,44 @@ export function createCampaignRouter(pool: Pool, authenticateToken: RequestHandl
     }
     try {
       await pool.query(
-        `UPDATE campaign_recipients SET status='UNSUBSCRIBED' WHERE id=$1`,
+        `WITH recipient AS (
+           SELECT tenant_id, lead_id, user_id
+             FROM campaign_recipients
+            WHERE id = $1
+         )
+         UPDATE campaign_recipients
+            SET status='UNSUBSCRIBED'
+          WHERE id=$1`,
         [recipientId],
       );
+      await pool.query(
+        `WITH recipient AS (
+           SELECT tenant_id, lead_id, user_id
+             FROM campaign_recipients
+            WHERE id = $1
+         )
+         UPDATE leads l
+            SET marketing_email_consent = false,
+                marketing_email_consent_at = NOW()
+           FROM recipient r
+          WHERE r.lead_id = l.id
+            AND r.tenant_id = l.tenant_id`,
+        [recipientId],
+      ).catch(() => null);
+      await pool.query(
+        `WITH recipient AS (
+           SELECT tenant_id, user_id
+             FROM campaign_recipients
+            WHERE id = $1
+         )
+         UPDATE users u
+            SET marketing_email_consent = false,
+                marketing_email_consent_at = NOW()
+           FROM recipient r
+          WHERE r.user_id = u.id
+            AND u.tenant_id::text = r.tenant_id`,
+        [recipientId],
+      ).catch(() => null);
       res.send(
         '<!DOCTYPE html><html lang="vi"><head><meta charset="utf-8"><title>Đã hủy đăng ký</title></head>' +
         '<body style="font-family:sans-serif;text-align:center;padding:60px;">' +

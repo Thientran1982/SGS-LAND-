@@ -1,5 +1,3 @@
-import { pool } from '../db';
-
 /**
  * Auto-enroll a lead into all ACTIVE sequences whose triggerEvent matches the new stage.
  * Called whenever a lead's stage changes in leadRoutes.
@@ -16,19 +14,27 @@ export async function enrollLeadToMatchingSequences(
   try {
     if (!leadEmail) return;
 
-    const seqRes = await pool.query(
+    const seqRes = await _pool.query(
       `SELECT id, name FROM sequences
        WHERE tenant_id = $1
          AND is_active = true
          AND trigger_event = $2
-         AND jsonb_array_length(COALESCE(steps, '[]'::jsonb)) > 0`,
-      [tenantId, newStage],
+         AND jsonb_array_length(COALESCE(steps, '[]'::jsonb)) > 0
+         AND EXISTS (
+           SELECT 1
+             FROM leads l
+            WHERE l.tenant_id = $1
+              AND lower(l.email) = lower($3)
+              AND COALESCE(l.marketing_email_consent, false) = true
+              AND NOT (COALESCE(l.opt_out_channels, '[]'::jsonb) @> '"email"'::jsonb)
+         )`,
+      [tenantId, newStage, leadEmail],
     );
 
     if (!seqRes.rowCount) return;
 
     for (const seq of seqRes.rows) {
-      await pool.query(
+      await _pool.query(
         `INSERT INTO sequence_enrollments
            (tenant_id, sequence_id, lead_email, lead_name, step_index, status)
          VALUES ($1, $2, $3, $4, 0, 'PENDING')

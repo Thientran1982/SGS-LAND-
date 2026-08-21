@@ -23,6 +23,7 @@ export interface AudienceFilter {
   inactive_days_min?: number;
   has_listings?: boolean;
   user_status?: string[];
+  require_marketing_consent?: boolean;
 }
 export interface AbTestConfig {
   enabled: boolean;
@@ -77,7 +78,13 @@ function buildAudienceQuery(
 ): { sql: string; params: any[] } {
   const source = filter.source === 'users' ? 'users' : 'leads';
   if (source === 'leads') {
-    const conds: string[] = [`l.tenant_id = $1`, `l.email IS NOT NULL`, `l.email <> ''`];
+    const conds: string[] = [
+      `l.tenant_id = $1`,
+      `l.email IS NOT NULL`,
+      `l.email <> ''`,
+      `COALESCE(l.marketing_email_consent, false) = true`,
+      `NOT (COALESCE(l.opt_out_channels, '[]'::jsonb) @> '"email"'::jsonb)`,
+    ];
     const params: any[] = [tenantId];
     const stages = (filter.lead_stages || []).filter(s => ALLOWED_LEAD_STAGES.has(s));
     if (stages.length) {
@@ -105,7 +112,12 @@ function buildAudienceQuery(
     };
   }
   // users
-  const conds: string[] = [`u.tenant_id = $1`, `u.email IS NOT NULL`, `u.email <> ''`];
+  const conds: string[] = [
+    `u.tenant_id = $1`,
+    `u.email IS NOT NULL`,
+    `u.email <> ''`,
+    `COALESCE(u.marketing_email_consent, false) = true`,
+  ];
   const params: any[] = [tenantId];
   const status = (filter.user_status || ['ACTIVE']).filter(s => ALLOWED_USER_STATUS.has(s));
   if (status.length) {

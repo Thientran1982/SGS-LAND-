@@ -380,7 +380,7 @@ const CampaignDrawer: React.FC<DrawerProps> = ({ initial, onClose, onSaved, onEr
             </Field>
           </Section>
           {/* Audience */}
-          <Section title="Đối tượng nhận" subtitle="Chọn điều kiện lọc — số lượng cập nhật theo thời gian thực">
+           <Section title="Đối tượng nhận" subtitle="Chỉ người đã đồng ý nhận email marketing và chưa hủy đăng ký mới được tính vào audience">
             <Field label="Nguồn dữ liệu">
               <div className="flex gap-2">
                 {[['leads', 'Leads'], ['users', 'Users']].map(([v, l]) => (
@@ -497,7 +497,7 @@ const CampaignDrawer: React.FC<DrawerProps> = ({ initial, onClose, onSaved, onEr
               </>
             )}
             <div className="bg-sgs-champagne border border-sgs-border rounded-lg px-4 py-3">
-              <div className="text-xs text-sgs-primary uppercase font-semibold">Số người sẽ nhận</div>
+               <div className="text-xs text-sgs-primary uppercase font-semibold">Số người đủ điều kiện nhận</div>
               <div className="text-2xl font-bold text-sgs-primary mt-1">
                 {audLoading ? '...' : audCount ?? '—'}
                 <span className="text-sm font-normal text-sgs-primary ml-2">người</span>
