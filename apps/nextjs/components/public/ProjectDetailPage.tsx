@@ -98,8 +98,11 @@ function RichProjectDetail({ project, config, landing }: { project: ProjectDetai
   };
   const displayTitle = lang === "en" && isArea ? (areaEnglishNames[landing.slug] || landing.titleShort) : landing.titleShort;
   const translateAreaValue = (value: string) => lang === "en" && isArea
-    ? value.replace(/Nhiều chủ đầu tư/gi, "Multiple developers").replace(/Cần xác minh/gi, "To be verified").replace(/Danh mục bất động sản/gi, "Real estate category")
+    ? value.replace(/Nhiều chủ đầu tư/gi, "Multiple developers").replace(/Cần xác minh/gi, "To be verified").replace(/Danh mục bất động sản/gi, "Real estate category").replace(/Đất nền/gi, "Land lots").replace(/biệt thự/gi, "villas").replace(/Căn hộ/gi, "Apartments").replace(/nhà phố/gi, "Townhouses").replace(/VNĐ/gi, "VND")
     : value;
+  const translateAreaLabel = (label: string) => lang === "en" && isArea
+    ? label.replace(/^Chủ đầu tư$/i, "Developer").replace(/^Vị trí$/i, "Location").replace(/^Quy mô$/i, "Scale").replace(/^Loại hình$/i, "Property types").replace(/^Giá tham khảo$/i, "Reference price").replace(/^Tình trạng$/i, "Status").replace(/^Kỳ dữ liệu$/i, "Data period")
+    : label;
   const areaEnglishCopy: ProjectDetailEnglishCopy | null = lang === "en" && isArea ? {
     eyebrow: "Area reference",
     desc: `Reference information about ${displayTitle}: location, products, pricing and verification points. Always confirm current documents and terms for the specific property.`,
@@ -112,7 +115,7 @@ function RichProjectDetail({ project, config, landing }: { project: ProjectDetai
     ],
     entityTable: landing.entityTable.map((row) => ({
       ...row,
-      k: row.k.replace(/^Khu vực$/i, "Area").replace(/^Vị trí$/i, "Location").replace(/^Giá tham khảo$/i, "Reference price").replace(/^Khoảng giá$/i, "Reference range").replace(/^Loại hình$/i, "Property types").replace(/^Điểm tham chiếu$/i, "Reference point").replace(/^Kỳ dữ liệu$/i, "Data period"),
+      k: translateAreaLabel(row.k).replace(/^Khu vực$/i, "Area").replace(/^Khoảng giá$/i, "Reference range").replace(/^Điểm tham chiếu$/i, "Reference point"),
       v: translateAreaValue(row.v),
     })),
     locationIntro: `Reference location for ${displayTitle}: ${translateAreaValue(landing.heroMeta)}`,
@@ -121,7 +124,7 @@ function RichProjectDetail({ project, config, landing }: { project: ProjectDetai
       href: link.href,
       label: link.label.replace(/^Tổng quan$/i, "Overview").replace(/^Thông tin$/i, "Identity").replace(/^Vị trí$/i, "Location").replace(/^Sản phẩm & giá$/i, "Products & pricing").replace(/^Tiện ích & kết nối$/i, "Amenities & connectivity").replace(/^FAQ$/i, "FAQ"),
     })),
-    stats: landing.stats,
+    stats: landing.stats.map((stat) => ({ ...stat, lbl: translateAreaLabel(stat.lbl) })),
   } : null;
   const englishCopy = lang === "en" ? (PROJECT_DETAIL_EN[landing.slug] || areaEnglishCopy) : null;
   const areaAmenityText: Record<string, string[]> = {
