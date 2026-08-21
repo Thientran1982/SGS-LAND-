@@ -678,7 +678,9 @@ const MapView: React.FC<MapViewProps> = memo(({
                 {detailStyle && listings[0] && (
                     <>
                         <div style={{
-                            position: 'absolute', top: 10, left: 10, maxWidth: 'calc(100% - 56px)',
+                            position: 'absolute', top: 10, left: 10,
+                            width: 'min(250px, calc(100% - 56px))',
+                            maxWidth: '250px',
                             background: 'rgba(255,255,255,0.94)', border: '1px solid rgba(21,49,70,.14)',
                             borderRadius: 12, padding: '8px 12px', boxShadow: '0 2px 8px rgba(15,39,64,.12)',
                             zIndex: 900, pointerEvents: 'none', fontFamily: 'system-ui,-apple-system,sans-serif',
