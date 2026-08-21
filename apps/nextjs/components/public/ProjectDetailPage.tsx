@@ -12,6 +12,7 @@ import {
   ShieldAlert,
   Sparkles,
 } from "lucide-react";
+import type { LucideIcon } from "lucide-react";
 import type { LandingProject } from "@/data/landing-projects";
 import { PROJECT_DETAIL_EN, type ProjectDetailEnglishCopy } from "@/data/project-detail-en";
 import { PROJECT_CONFIG_EN } from "@/data/project-config-en";
@@ -223,6 +224,26 @@ function RichProjectDetail({ project, config, landing }: { project: ProjectDetai
     });
   }
   const lastUpdated = "21/08/2026";
+  const dueDiligenceCards: [string, string, string, LucideIcon][] = [
+    [
+      "01",
+      tt(lang, "Hồ sơ pháp lý", "Legal documents"),
+      tt(lang, "Đối chiếu quy hoạch, hợp đồng, thế chấp, nghĩa vụ tài chính và điều kiện cấp giấy của đúng sản phẩm.", "Cross-check planning, contracts, mortgages, financial obligations and certificate conditions for the specific property."),
+      FileSearch,
+    ],
+    [
+      "02",
+      tt(lang, "Giá & dòng tiền", "Price & cash flow"),
+      tt(lang, "So sánh giá có ngày, chi phí sở hữu, khả năng vay, thanh khoản và dữ liệu cho thuê nếu có.", "Compare dated prices, ownership costs, borrowing capacity, liquidity and rental data where available."),
+      ClipboardCheck,
+    ],
+    [
+      "03",
+      tt(lang, "Thực địa & tiến độ", "Site & progress"),
+      tt(lang, "Khảo sát phân khu, tiện ích đã vận hành, tỷ lệ bàn giao và thông báo mới nhất của chủ thể liên quan.", "Survey the phase, operating amenities, handover rate and latest notices from relevant parties."),
+      Building2,
+    ],
+  ];
 
   return (
     <main className="bg-[var(--bg-page)]">
@@ -336,7 +357,7 @@ function RichProjectDetail({ project, config, landing }: { project: ProjectDetai
         <section id="tham-dinh" className="scroll-mt-20 border-t py-12 sm:py-16" style={{ borderColor: "var(--border-default)" }}>
           <SectionHeading eyebrow={tt(lang, "06 · Khung thẩm định", "06 · Due diligence")} title={tt(lang, "Cần kiểm tra gì trước khi quyết định?", "What should you verify before deciding?")} intro={tt(lang, "Một checklist trung lập giúp người mua tự kiểm tra thay vì dựa vào một kết luận mua hoặc đầu tư chung.", "A neutral checklist helps buyers verify facts instead of relying on a blanket purchase or investment conclusion.")} />
           <div className="grid gap-4 sm:grid-cols-3">
-             {[["01", tt(lang, "Hồ sơ pháp lý", "Legal documents"), tt(lang, "Đối chiếu quy hoạch, hợp đồng, thế chấp, nghĩa vụ tài chính và điều kiện cấp giấy của đúng sản phẩm.", "Cross-check planning, contracts, mortgages, financial obligations and certificate conditions for the specific property."), FileSearch], ["02", tt(lang, "Giá & dòng tiền", "Price & cash flow"), tt(lang, "So sánh giá có ngày, chi phí sở hữu, khả năng vay, thanh khoản và dữ liệu cho thuê nếu có.", "Compare dated prices, ownership costs, borrowing capacity, liquidity and rental data where available."), ClipboardCheck], ["03", tt(lang, "Thực địa & tiến độ", "Site & progress"), tt(lang, "Khảo sát phân khu, tiện ích đã vận hành, tỷ lệ bàn giao và thông báo mới nhất của chủ thể liên quan.", "Survey the phase, operating amenities, handover rate and latest notices from relevant parties."), Building2]].map(([number, title, text, Icon]) => <div key={String(number)} className="rounded-2xl border p-5" style={surface}><span className="text-xs font-bold" style={{ color: "var(--sgs-accent-text)" }}>{number}</span><Icon className="mt-4 h-5 w-5" style={{ color: "var(--ui-brand)" }} /><h3 className="mt-3 font-bold" style={{ color: "var(--text-primary)" }}>{String(title)}</h3><p className="mt-2 text-sm leading-6" style={{ color: "var(--text-secondary)" }}>{String(text)}</p></div>)}
+             {dueDiligenceCards.map(([number, title, text, Icon]) => <div key={number} className="rounded-2xl border p-5" style={surface}><span className="text-xs font-bold" style={{ color: "var(--sgs-accent-text)" }}>{number}</span><Icon className="mt-4 h-5 w-5" style={{ color: "var(--ui-brand)" }} /><h3 className="mt-3 font-bold" style={{ color: "var(--text-primary)" }}>{title}</h3><p className="mt-2 text-sm leading-6" style={{ color: "var(--text-secondary)" }}>{text}</p></div>)}
           </div>
         </section>
 
