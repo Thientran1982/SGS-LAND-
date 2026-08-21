@@ -90,21 +90,32 @@ const AREA_DETAIL_SLUGS = new Set([
 function RichProjectDetail({ project, config, landing }: { project: ProjectDetail; config?: ProjectConfig | null; landing: LandingProject }) {
   const lang = useLang();
   const isArea = AREA_DETAIL_SLUGS.has(landing.slug);
+  const areaEnglishNames: Record<string, string> = {
+    "bat-dong-san-long-an": "Long An Real Estate",
+    "bat-dong-san-thu-duc": "Thu Duc Real Estate",
+    "bat-dong-san-long-thanh": "Long Thanh Real Estate",
+    "bat-dong-san-dong-nai": "Dong Nai Real Estate",
+  };
+  const displayTitle = lang === "en" && isArea ? (areaEnglishNames[landing.slug] || landing.titleShort) : landing.titleShort;
+  const translateAreaValue = (value: string) => lang === "en" && isArea
+    ? value.replace(/Nhiều chủ đầu tư/gi, "Multiple developers").replace(/Cần xác minh/gi, "To be verified").replace(/Danh mục bất động sản/gi, "Real estate category")
+    : value;
   const areaEnglishCopy: ProjectDetailEnglishCopy | null = lang === "en" && isArea ? {
     eyebrow: "Area reference",
-    desc: `Reference information about ${landing.titleShort}: location, products, pricing and verification points. Always confirm current documents and terms for the specific property.`,
-    heroImageAlt: `${landing.titleShort} area reference`,
+    desc: `Reference information about ${displayTitle}: location, products, pricing and verification points. Always confirm current documents and terms for the specific property.`,
+    heroImageAlt: `${displayTitle} area reference`,
     heroSub: "Area reference",
-    heroMeta: `Reference location: ${landing.heroMeta}`,
+    heroMeta: `Reference location: ${translateAreaValue(landing.heroMeta)}`,
     overviewParas: [
-      `${landing.titleShort} is presented as an area-level real estate reference page, not as a single development or a guarantee of pricing, legal status or returns.`,
+      `${displayTitle} is presented as an area-level real estate reference page, not as a single development or a guarantee of pricing, legal status or returns.`,
       "Use this page to understand the area, then verify the exact property, planning information, legal documents, asking price and operating status before making a transaction.",
     ],
     entityTable: landing.entityTable.map((row) => ({
       ...row,
       k: row.k.replace(/^Khu vực$/i, "Area").replace(/^Vị trí$/i, "Location").replace(/^Giá tham khảo$/i, "Reference price").replace(/^Khoảng giá$/i, "Reference range").replace(/^Loại hình$/i, "Property types").replace(/^Điểm tham chiếu$/i, "Reference point").replace(/^Kỳ dữ liệu$/i, "Data period"),
+      v: translateAreaValue(row.v),
     })),
-    locationIntro: `Reference location for ${landing.titleShort}: ${landing.heroMeta}`,
+    locationIntro: `Reference location for ${displayTitle}: ${translateAreaValue(landing.heroMeta)}`,
     faq: [],
     navLinks: landing.navLinks.map((link) => ({
       href: link.href,
@@ -126,7 +137,7 @@ function RichProjectDetail({ project, config, landing }: { project: ProjectDetai
     })),
     amenities: [{ title: "Area amenities and status to verify", items: areaAmenityText[landing.slug] }],
     faqs: [
-      { q: `What is ${landing.titleShort}?`, a: `${landing.titleShort} is an area-level real estate reference page, not a single project. Verify the specific property and current documents before a transaction.` },
+      { q: `What is ${displayTitle}?`, a: `${displayTitle} is an area-level real estate reference page, not a single project. Verify the specific property and current documents before a transaction.` },
       { q: "Are the prices official?", a: "No. Prices shown are references from the available dataset and must be checked against the specific property, date and legal documents." },
       { q: "What should buyers verify?", a: "Verify planning, legal status, ownership costs, infrastructure status, transfer conditions and the actual availability of the property." },
     ],
@@ -173,7 +184,7 @@ function RichProjectDetail({ project, config, landing }: { project: ProjectDetai
         <nav aria-label="Breadcrumb" className="mb-6 flex flex-wrap items-center gap-2 text-xs" style={{ color: "var(--text-tertiary)" }}>
           <Link href="/" className="hover:underline">{tt(lang, "Trang chủ", "Home")}</Link><span>/</span>
            <Link href={AREA_DETAIL_SLUGS.has(landing.slug) ? (lang === "en" ? "/en/khu-vuc" : "/khu-vuc") : (lang === "en" ? "/en/du-an" : "/du-an")} className="hover:underline">{AREA_DETAIL_SLUGS.has(landing.slug) ? tt(lang, "Khu vực", "Areas") : tt(lang, "Dự án", "Projects")}</Link><span>/</span>
-          <span style={{ color: "var(--text-primary)" }}>{project.name}</span>
+           <span style={{ color: "var(--text-primary)" }}>{displayTitle}</span>
         </nav>
 
         <section className="overflow-hidden rounded-3xl border shadow-[var(--ui-shadow-sm)]" style={surface}>
@@ -184,12 +195,12 @@ function RichProjectDetail({ project, config, landing }: { project: ProjectDetai
               <div className="absolute bottom-6 left-5 right-5 text-white sm:bottom-8 sm:left-8">
                 <div className="mb-3 flex flex-wrap gap-2"><Tag tone="accent">{tt(lang, "Thông tin tham khảo", "Reference information")}</Tag><Tag>{tt(lang, "Cập nhật", "Updated")} {lastUpdated}</Tag></div>
                  <p className="text-xs font-semibold uppercase tracking-[.16em] text-white/75">{AREA_DETAIL_SLUGS.has(landing.slug) ? tt(lang, "Khu vực bất động sản", "Real estate area") : tt(lang, "Dự án bất động sản", "Real estate project")}</p>
-                <p className="mt-2 text-2xl font-bold tracking-[-.04em] sm:text-4xl">{landing.titleShort}</p>
+                <p className="mt-2 text-2xl font-bold tracking-[-.04em] sm:text-4xl">{displayTitle}</p>
               </div>
             </div>
             <div className="flex flex-col justify-center p-6 sm:p-9">
               <p className="text-xs font-bold uppercase tracking-[.16em]" style={{ color: "var(--sgs-accent-text)" }}>{englishCopy?.eyebrow || landing.eyebrow}</p>
-               <h1 className="mt-3 text-3xl font-bold tracking-[-.045em] sm:text-4xl" style={{ color: "var(--text-primary)" }}>{AREA_DETAIL_SLUGS.has(landing.slug) ? tt(lang, "Thông tin khu vực", "Area information") : tt(lang, "Thông tin dự án", "Project information")} {landing.titleShort}</h1>
+               <h1 className="mt-3 text-3xl font-bold tracking-[-.045em] sm:text-4xl" style={{ color: "var(--text-primary)" }}>{AREA_DETAIL_SLUGS.has(landing.slug) ? tt(lang, "Thông tin khu vực", "Area information") : tt(lang, "Thông tin dự án", "Project information")} {displayTitle}</h1>
               <p className="mt-4 flex items-start gap-2 text-sm leading-6" style={{ color: "var(--text-secondary)" }}><MapPin className="mt-1 h-4 w-4 shrink-0" style={{ color: "var(--sgs-accent-text)" }} />{englishCopy?.heroMeta || landing.heroMeta}</p>
               <p className="answer-box mt-5 rounded-2xl border-l-4 px-4 py-4 text-sm leading-6" role="note" style={{ borderColor: "var(--sgs-accent)", background: "var(--ui-surface-subtle)", color: "var(--text-secondary)" }}>
                  {englishCopy?.desc || landing.desc} {tt(lang, "Trang này tổng hợp thông tin tham khảo về vị trí, sản phẩm, giá và hồ sơ; giá, pháp lý, tiến độ và tiện ích cần được xác minh theo đúng sản phẩm trước giao dịch.", "This page summarizes reference information about location, products, pricing and documents; pricing, legal status, progress and amenities must be verified for the specific property before a transaction.")}
@@ -202,14 +213,14 @@ function RichProjectDetail({ project, config, landing }: { project: ProjectDetai
           </div>
         </section>
 
-        <nav aria-label={`Mục lục trang ${landing.titleShort}`} className="sticky top-0 z-20 -mx-4 mt-6 overflow-x-auto border-y px-4 py-3 backdrop-blur sm:mx-0 sm:rounded-2xl sm:border" style={{ background: "color-mix(in srgb, var(--bg-page) 92%, transparent)", borderColor: "var(--border-default)" }}>
+        <nav aria-label={`${tt(lang, "Mục lục trang", "Page contents")} ${displayTitle}`} className="sticky top-0 z-20 -mx-4 mt-6 overflow-x-auto border-y px-4 py-3 backdrop-blur sm:mx-0 sm:rounded-2xl sm:border" style={{ background: "color-mix(in srgb, var(--bg-page) 92%, transparent)", borderColor: "var(--border-default)" }}>
           <div className="flex min-w-max gap-5 text-xs font-semibold" style={{ color: "var(--text-secondary)" }}>
              {(englishCopy?.navLinks || landing.navLinks).map((link) => <a key={link.href} href={link.href} className="transition hover:text-[var(--ui-brand)]">{link.label}</a>)}
           </div>
         </nav>
 
         <section id="tong-quan" className="scroll-mt-20 py-12 sm:py-16">
-           <SectionHeading eyebrow={tt(lang, "01 · Tổng quan", "01 · Overview")} title={`${landing.titleShort} ${AREA_DETAIL_SLUGS.has(landing.slug) ? tt(lang, "là khu vực nào?", "— what area is it?") : tt(lang, "là dự án gì?", "— what is it?")}`} intro={tt(lang, "Câu trả lời ngắn gọn cho người đang tìm hiểu khu vực, vị trí và mức độ xác minh thông tin.", "A concise answer for readers researching the area, location and verification status.")} />
+           <SectionHeading eyebrow={tt(lang, "01 · Tổng quan", "01 · Overview")} title={`${displayTitle} ${AREA_DETAIL_SLUGS.has(landing.slug) ? tt(lang, "là khu vực nào?", "— what area is it?") : tt(lang, "là dự án gì?", "— what is it?")}`} intro={tt(lang, "Câu trả lời ngắn gọn cho người đang tìm hiểu khu vực, vị trí và mức độ xác minh thông tin.", "A concise answer for readers researching the area, location and verification status.")} />
           <div className="grid gap-6 lg:grid-cols-[1.25fr_.75fr]">
             <div className="space-y-4 text-sm leading-7" style={{ color: "var(--text-secondary)" }}>
               {(englishCopy?.overviewParas || landing.overviewParas).map((paragraph) => <p key={paragraph}>{paragraph}</p>)}
@@ -227,7 +238,7 @@ function RichProjectDetail({ project, config, landing }: { project: ProjectDetai
         </section>
 
         <section id="thong-tin" className="scroll-mt-20 border-t py-12 sm:py-16" style={{ borderColor: "var(--border-default)" }}>
-           <SectionHeading eyebrow={tt(lang, "02 · Entity", "02 · Entity")} title={AREA_DETAIL_SLUGS.has(landing.slug) ? tt(lang, "Thông tin nhận diện khu vực", "Area identity") : tt(lang, "Thông tin nhận diện dự án", "Project identity")} intro={`${tt(lang, "Bảng tóm tắt giúp người đọc và hệ thống trả lời AI hiểu cùng một khu vực", "A summary table helps readers and AI systems identify the same area")} ${landing.titleShort}, ${tt(lang, "không trộn với sản phẩm hoặc dự án riêng lẻ.", "without confusing it with individual properties or projects.")}`} />
+           <SectionHeading eyebrow={tt(lang, "02 · Entity", "02 · Entity")} title={AREA_DETAIL_SLUGS.has(landing.slug) ? tt(lang, "Thông tin nhận diện khu vực", "Area identity") : tt(lang, "Thông tin nhận diện dự án", "Project identity")} intro={`${tt(lang, "Bảng tóm tắt giúp người đọc và hệ thống trả lời AI hiểu cùng một khu vực", "A summary table helps readers and AI systems identify the same area")} ${displayTitle}, ${tt(lang, "không trộn với sản phẩm hoặc dự án riêng lẻ.", "without confusing it with individual properties or projects.")}`} />
           <div className="overflow-x-auto rounded-2xl border" style={surface}>
             <table className="w-full min-w-[620px] border-collapse text-sm">
              <tbody>{(englishCopy?.entityTable || landing.entityTable).filter((row) => !/hotline|đại lý ủy quyền|distribution status/i.test(`${row.k} ${row.v}`)).map((row, index) => <tr key={row.k} style={{ background: index % 2 ? "var(--ui-surface-subtle)" : "transparent" }}><th scope="row" className="w-[30%] px-5 py-4 text-left font-medium" style={{ color: "var(--text-tertiary)" }}>{row.k}</th><td className="px-5 py-4 font-semibold" style={{ color: "var(--text-primary)" }}>{row.v}</td></tr>)}</tbody>
@@ -237,19 +248,19 @@ function RichProjectDetail({ project, config, landing }: { project: ProjectDetai
         </section>
 
         <section id="vi-tri" className="scroll-mt-20 border-t py-12 sm:py-16" style={{ borderColor: "var(--border-default)" }}>
-           <SectionHeading eyebrow={tt(lang, "03 · Vị trí", "03 · Location")} title={`${landing.titleShort} ${tt(lang, "ở đâu?", "— where is it?")}`} intro={englishCopy?.locationIntro || landing.locationIntro} />
+           <SectionHeading eyebrow={tt(lang, "03 · Vị trí", "03 · Location")} title={`${displayTitle} ${tt(lang, "ở đâu?", "— where is it?")}`} intro={englishCopy?.locationIntro || landing.locationIntro} />
           <div className="grid gap-6 lg:grid-cols-[.9fr_1.1fr]">
             <div className="rounded-2xl border p-6" style={{ ...surface, background: "var(--ui-surface-subtle)" }}>
               <div className="flex items-center gap-2"><MapPin className="h-5 w-5" style={{ color: "var(--sgs-accent-text)" }} /><h3 className="font-bold" style={{ color: "var(--text-primary)" }}>{tt(lang, "Địa điểm tham khảo", "Reference location")}</h3></div>
                <p className="mt-4 text-sm leading-7" style={{ color: "var(--text-secondary)" }}>{englishCopy?.locationIntro || landing.heroMeta}. {tt(lang, "Ranh dự án và thời gian di chuyển cần đối chiếu theo phân khu, tuyến đường và thời điểm.", "Project boundaries and travel times should be checked by phase, route and date.")}</p>
               <div className="mt-5 flex flex-wrap gap-2"><Tag>{tt(lang, "Đối chiếu bản đồ thực tế", "Check against the actual map")}</Tag></div>
             </div>
-             <div className="overflow-hidden rounded-2xl border" style={surface}><iframe title={`${tt(lang, "Bản đồ vị trí", "Location map")} ${landing.titleShort}`} src={landing.googleMapsEmbedSrc} className="h-[300px] w-full border-0 sm:h-[360px]" loading="lazy" referrerPolicy="no-referrer-when-downgrade" /><p className="px-4 py-3 text-xs" style={{ color: "var(--text-tertiary)" }}>{tt(lang, "Bản đồ chỉ mang tính tham khảo vị trí, không thay thế hồ sơ ranh giới dự án.", "The map is for location reference only and does not replace official project boundary documents.")}</p></div>
+             <div className="overflow-hidden rounded-2xl border" style={surface}><iframe title={`${tt(lang, "Bản đồ vị trí", "Location map")} ${displayTitle}`} src={landing.googleMapsEmbedSrc} className="h-[300px] w-full border-0 sm:h-[360px]" loading="lazy" referrerPolicy="no-referrer-when-downgrade" /><p className="px-4 py-3 text-xs" style={{ color: "var(--text-tertiary)" }}>{tt(lang, "Bản đồ chỉ mang tính tham khảo vị trí, không thay thế hồ sơ ranh giới dự án.", "The map is for location reference only and does not replace official project boundary documents.")}</p></div>
           </div>
         </section>
 
         <section id="bang-gia" className="scroll-mt-20 border-t py-12 sm:py-16" style={{ borderColor: "var(--border-default)" }}>
-          <SectionHeading eyebrow={tt(lang, "04 · Sản phẩm & giá", "04 · Products & pricing")} title={`${tt(lang, "Giá", "Prices for")} ${landing.titleShort}`} intro={tt(lang, "Mức tham khảo hiện có trong dữ liệu SGS LAND; giá thực tế thay đổi theo phân khu, diện tích, pháp lý, thanh toán và thời điểm.", "These are SGS LAND reference figures; actual prices vary by phase, size, legal status, payment terms and date.")} />
+          <SectionHeading eyebrow={tt(lang, "04 · Sản phẩm & giá", "04 · Products & pricing")} title={`${tt(lang, "Giá", "Prices for")} ${displayTitle}`} intro={tt(lang, "Mức tham khảo hiện có trong dữ liệu SGS LAND; giá thực tế thay đổi theo phân khu, diện tích, pháp lý, thanh toán và thời điểm.", "These are SGS LAND reference figures; actual prices vary by phase, size, legal status, payment terms and date.")} />
           <div className="grid gap-4 md:grid-cols-3">
             {priceRows.map((row) => <div key={row.k} className="rounded-2xl border p-5" style={surface}><p className="text-sm font-semibold" style={{ color: "var(--text-secondary)" }}>{row.k}</p><p className="mt-3 text-2xl font-bold tracking-[-.03em]" style={{ color: "var(--sgs-accent-text)" }}>{row.v.replace(" (giá tham khảo)", "")}</p><p className="mt-3 text-xs leading-5" style={{ color: "var(--text-tertiary)" }}>{tt(lang, "Giá tham khảo · cần xác nhận theo sản phẩm", "Reference price · verify for the specific property")}</p></div>)}
           </div>
@@ -269,12 +280,12 @@ function RichProjectDetail({ project, config, landing }: { project: ProjectDetai
         </section>
 
         <section id="faq" className="scroll-mt-20 border-t py-12 sm:py-16" style={{ borderColor: "var(--border-default)" }}>
-          <SectionHeading eyebrow={tt(lang, "07 · FAQ", "07 · FAQ")} title={`${tt(lang, "Câu hỏi thường gặp về", "Frequently asked questions about")} ${landing.titleShort}`} intro={tt(lang, "Các câu trả lời được viết để trả lời trực tiếp, nhưng không thay thế hồ sơ gốc hoặc tư vấn chuyên môn độc lập.", "Answers are written directly but do not replace source documents or independent professional advice.")} />
+           <SectionHeading eyebrow={tt(lang, "07 · FAQ", "07 · FAQ")} title={`${tt(lang, "Câu hỏi thường gặp về", "Frequently asked questions about")} ${displayTitle}`} intro={tt(lang, "Các câu trả lời được viết để trả lời trực tiếp, nhưng không thay thế hồ sơ gốc hoặc tư vấn chuyên môn độc lập.", "Answers are written directly but do not replace source documents or independent professional advice.")} />
            <div className="space-y-3">{(englishConfig?.faqs || englishCopy?.faq || landing.faq).map((item) => <details key={item.q} className="group rounded-2xl border px-5 py-4" style={surface}><summary className="flex cursor-pointer list-none items-center justify-between gap-4 text-sm font-bold" style={{ color: "var(--text-primary)" }}>{item.q}<ArrowRight className="h-4 w-4 shrink-0 transition-transform group-open:rotate-90" style={{ color: "var(--sgs-accent-text)" }} /></summary><p className="mt-3 max-w-4xl text-sm leading-7" style={{ color: "var(--text-secondary)" }}>{item.a}</p></details>)}</div>
         </section>
 
         <section id="lien-he" className="scroll-mt-20 rounded-3xl p-6 sm:p-9" style={{ background: "var(--ui-brand)", color: "var(--ui-on-brand)" }}>
-          <div className="flex flex-col gap-6 sm:flex-row sm:items-center sm:justify-between"><div><p className="text-xs font-bold uppercase tracking-[.16em] opacity-75">{tt(lang, "Bước tiếp theo", "Next step")}</p><h2 className="mt-2 text-2xl font-bold tracking-[-.03em]">{tt(lang, "Cần kiểm tra", "Need to verify")} {landing.titleShort} {tt(lang, "theo sản phẩm cụ thể?", "for a specific property?")}</h2><p className="mt-2 max-w-2xl text-sm leading-6 opacity-85">{tt(lang, "Gửi nhu cầu để nhận thông tin tham khảo. Giá, pháp lý, tiến độ và tư cách phân phối vẫn cần được xác nhận bằng tài liệu hiện hành.", "Send your request for reference information. Pricing, legal status, progress and distribution status must be confirmed with current documents.")}</p></div><a href="tel:+84971132378" className="inline-flex shrink-0 items-center justify-center gap-2 rounded-xl bg-white px-5 py-3 text-sm font-bold" style={{ color: "var(--ui-brand)" }}><Phone className="h-4 w-4" /> 0971 132 378</a></div>
+          <div className="flex flex-col gap-6 sm:flex-row sm:items-center sm:justify-between"><div><p className="text-xs font-bold uppercase tracking-[.16em] opacity-75">{tt(lang, "Bước tiếp theo", "Next step")}</p><h2 className="mt-2 text-2xl font-bold tracking-[-.03em]">{tt(lang, "Cần kiểm tra", "Need to verify")} {displayTitle} {tt(lang, "theo sản phẩm cụ thể?", "for a specific property?")}</h2><p className="mt-2 max-w-2xl text-sm leading-6 opacity-85">{tt(lang, "Gửi nhu cầu để nhận thông tin tham khảo. Giá, pháp lý, tiến độ và tư cách phân phối vẫn cần được xác nhận bằng tài liệu hiện hành.", "Send your request for reference information. Pricing, legal status, progress and distribution status must be confirmed with current documents.")}</p></div><a href="tel:+84971132378" className="inline-flex shrink-0 items-center justify-center gap-2 rounded-xl bg-white px-5 py-3 text-sm font-bold" style={{ color: "var(--ui-brand)" }}><Phone className="h-4 w-4" /> 0971 132 378</a></div>
         </section>
 
         {config?.relatedProjects && config.relatedProjects.length > 0 && <section className="py-12"><SectionHeading eyebrow={tt(lang, "Đọc thêm", "Read more")} title={tt(lang, "Dự án và khu vực liên quan", "Related projects and areas")} /><div className="flex flex-wrap gap-3">{config.relatedProjects.map((related) => <Link key={related.slug} href={`/du-an/${related.slug}`} className="inline-flex items-center gap-2 rounded-xl border px-4 py-3 text-sm font-semibold transition hover:-translate-y-0.5" style={surface}><Building2 className="h-4 w-4" style={{ color: "var(--sgs-accent-text)" }} />{related.name}<ArrowRight className="h-4 w-4" /></Link>)}</div></section>}
