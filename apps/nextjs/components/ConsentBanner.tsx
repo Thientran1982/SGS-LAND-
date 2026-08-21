@@ -153,13 +153,13 @@ export default function ConsentBanner() {
         background: "#ffffff",
         borderTop: "1px solid #e5e7eb",
         boxShadow: "0 -4px 20px rgba(0,0,0,0.08)",
-        padding: 16,
+         padding: "10px 16px",
       }}
     >
       <div style={{ maxWidth: 960, margin: "0 auto" }}>
         {!showDetails ? (
           <div style={{ display: "flex", flexWrap: "wrap", gap: 12, alignItems: "center", justifyContent: "space-between" }}>
-            <p style={{ margin: 0, fontSize: 14, color: "#4b5563", flex: "1 1 320px" }}>
+             <p style={{ margin: 0, fontSize: 13, lineHeight: 1.45, color: "#4b5563", flex: "1 1 320px", maxWidth: 690 }}>
               {tt(lang,
                 "SGS LAND sử dụng cookie thiết yếu để vận hành website và cookie tùy chọn (nếu bạn đồng ý) để cá nhân hóa gợi ý bất động sản phù hợp hơn. Xem ",
                 "SGS LAND uses essential cookies to operate the site and optional cookies (with your consent) to personalise property recommendations. See ")}

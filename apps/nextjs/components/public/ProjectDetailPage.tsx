@@ -248,9 +248,18 @@ function RichProjectDetail({ project, config, landing }: { project: ProjectDetai
               <p className="text-xs font-bold uppercase tracking-[.16em]" style={{ color: "var(--sgs-accent-text)" }}>{englishCopy?.eyebrow || landing.eyebrow}</p>
                <h1 className="mt-3 text-3xl font-bold tracking-[-.045em] sm:text-4xl" style={{ color: "var(--text-primary)" }}>{AREA_DETAIL_SLUGS.has(landing.slug) ? tt(lang, "Thông tin khu vực", "Area information") : tt(lang, "Thông tin dự án", "Project information")} {displayTitle}</h1>
               <p className="mt-4 flex items-start gap-2 text-sm leading-6" style={{ color: "var(--text-secondary)" }}><MapPin className="mt-1 h-4 w-4 shrink-0" style={{ color: "var(--sgs-accent-text)" }} />{englishCopy?.heroMeta || landing.heroMeta}</p>
-              <p className="answer-box mt-5 rounded-2xl border-l-4 px-4 py-4 text-sm leading-6" role="note" style={{ borderColor: "var(--sgs-accent)", background: "var(--ui-surface-subtle)", color: "var(--text-secondary)" }}>
-                 {englishCopy?.desc || landing.desc} {tt(lang, "Trang này tổng hợp thông tin tham khảo về vị trí, sản phẩm, giá và hồ sơ; giá, pháp lý, tiến độ và tiện ích cần được xác minh theo đúng sản phẩm trước giao dịch.", "This page summarizes reference information about location, products, pricing and documents; pricing, legal status, progress and amenities must be verified for the specific property before a transaction.")}
-              </p>
+               <p className="answer-box mt-5 rounded-2xl border-l-4 px-4 py-3 text-sm leading-6" role="note" style={{ borderColor: "var(--sgs-accent)", background: "var(--ui-surface-subtle)", color: "var(--text-secondary)" }}>
+                  {tt(lang, "Thông tin tham khảo. Giá, pháp lý, tiến độ và tiện ích cần được xác minh theo đúng sản phẩm trước giao dịch.", "Reference information only. Verify pricing, legal status, progress and amenities for the specific property before a transaction.")}
+               </p>
+               {priceRows[0] && (
+                 <div className="mt-4 rounded-2xl border px-4 py-3" style={{ ...surface, background: "var(--ui-surface-subtle)" }}>
+                   <div className="flex flex-wrap items-baseline justify-between gap-2">
+                     <span className="text-xs font-semibold uppercase tracking-[.12em]" style={{ color: "var(--text-tertiary)" }}>{priceRows[0].k}</span>
+                     <span className="text-lg font-bold" style={{ color: "var(--sgs-accent-text)" }}>{priceRows[0].v.replace(" (giá tham khảo)", "")}</span>
+                   </div>
+                   <p className="mt-1 text-xs" style={{ color: "var(--text-tertiary)" }}>{tt(lang, "Mức tham khảo · cần xác nhận theo sản phẩm", "Reference figure · verify for the specific property")}</p>
+                 </div>
+               )}
               <div className="mt-6 flex flex-wrap gap-3">
                 <a href="tel:+84971132378" className="inline-flex items-center gap-2 rounded-xl px-4 py-3 text-sm font-bold text-white" style={{ background: "var(--ui-brand)" }}><Phone className="h-4 w-4" /> {tt(lang, "Liên hệ hỏi thông tin", "Contact for information")}</a>
                 <Link href="#bang-gia" className="inline-flex items-center gap-2 rounded-xl border px-4 py-3 text-sm font-bold" style={{ borderColor: "var(--ui-border-strong)", color: "var(--ui-brand)" }}>{tt(lang, "Xem giá tham khảo", "View reference prices")} <ArrowRight className="h-4 w-4" /></Link>
@@ -259,9 +268,18 @@ function RichProjectDetail({ project, config, landing }: { project: ProjectDetai
           </div>
         </section>
 
-        <nav aria-label={`${tt(lang, "Mục lục trang", "Page contents")} ${displayTitle}`} className="sticky top-0 z-20 -mx-4 mt-6 overflow-x-auto border-y px-4 py-3 backdrop-blur sm:mx-0 sm:rounded-2xl sm:border" style={{ background: "color-mix(in srgb, var(--bg-page) 92%, transparent)", borderColor: "var(--border-default)" }}>
-          <div className="flex min-w-max gap-5 text-xs font-semibold" style={{ color: "var(--text-secondary)" }}>
-             {(englishCopy?.navLinks || landing.navLinks).map((link) => <a key={link.href} href={link.href} className="transition hover:text-[var(--ui-brand)]">{link.label}</a>)}
+        <section aria-label={tt(lang, "Thông tin nhanh", "Quick facts")} className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
+          {displayStats.map((stat) => (
+            <div key={stat.lbl} className="rounded-2xl border px-4 py-3" style={surface}>
+              <p className="text-base font-bold leading-tight sm:text-lg" style={{ color: "var(--sgs-accent-text)" }}>{stat.num}</p>
+              <p className="mt-1 text-[11px] leading-4" style={{ color: "var(--text-tertiary)" }}>{stat.lbl}</p>
+            </div>
+          ))}
+        </section>
+
+         <nav aria-label={`${tt(lang, "Mục lục trang", "Page contents")} ${displayTitle}`} className="sticky top-0 z-20 -mx-4 mt-6 overflow-x-auto border-y px-4 py-3 backdrop-blur sm:mx-0 sm:rounded-2xl sm:border" style={{ background: "color-mix(in srgb, var(--bg-page) 92%, transparent)", borderColor: "var(--border-default)" }}>
+           <div className="flex min-w-max gap-4 text-xs font-semibold sm:gap-5" style={{ color: "var(--text-secondary)" }}>
+              {(englishCopy?.navLinks || landing.navLinks).map((link) => <a key={link.href} href={link.href} className="whitespace-nowrap transition hover:text-[var(--ui-brand)]">{link.label}</a>)}
           </div>
         </nav>
 
@@ -277,9 +295,6 @@ function RichProjectDetail({ project, config, landing }: { project: ProjectDetai
                 {[tt(lang, "Pháp lý của đúng phân khu và sản phẩm", "Legal documents for the specific phase and property"), tt(lang, "Bảng giá, chính sách và tình trạng quỹ hàng có ngày cập nhật", "Dated pricing, policies and inventory status"), tt(lang, "Tiến độ bàn giao, tiện ích đã vận hành và chi phí sở hữu", "Handover progress, operating amenities and ownership costs")].map((item) => <li key={item} className="flex gap-2"><CheckCircle2 className="mt-1 h-4 w-4 shrink-0" style={{ color: "var(--sgs-accent-text)" }} />{item}</li>)}
               </ul>
             </aside>
-          </div>
-          <div className="mt-7 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
-             {displayStats.map((stat) => <div key={stat.lbl} className="rounded-2xl border p-4" style={surface}><p className="text-lg font-bold" style={{ color: "var(--sgs-accent-text)" }}>{stat.num}</p><p className="mt-1 text-xs leading-5" style={{ color: "var(--text-tertiary)" }}>{stat.lbl}</p></div>)}
           </div>
         </section>
 
