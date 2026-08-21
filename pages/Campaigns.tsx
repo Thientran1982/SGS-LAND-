@@ -29,6 +29,7 @@ interface Campaign {
   body_html?: string | null;
   schedule_type: 'NOW' | 'SCHEDULED';
   scheduled_at: string | null;
+  recurrence_type?: 'ONCE' | 'DAILY' | 'WEEKLY' | 'MONTHLY';
   ab_test: AbTestConfig;
   send_count: number;
   open_count: number;
@@ -50,6 +51,12 @@ const STATUS_LABEL: Record<string, string> = {
   PAUSED:    'Tạm dừng',
   COMPLETED: 'Hoàn thành',
 };
+const RECURRENCE_LABEL: Record<string, string> = {
+  ONCE: 'Một lần',
+  DAILY: 'Hàng ngày',
+  WEEKLY: 'Hàng tuần',
+  MONTHLY: 'Hàng tháng',
+};
 const emptyCampaign = (): Partial<Campaign> => ({
   name: '',
   description: '',
@@ -59,6 +66,7 @@ const emptyCampaign = (): Partial<Campaign> => ({
   body_html: '<p>Chào {{name}},</p><p>Nội dung email...</p><p>Xem thêm: <a href="https://sgsland.vn">SGS Land</a></p>',
   schedule_type: 'NOW',
   scheduled_at: null,
+  recurrence_type: 'ONCE',
   ab_test: { enabled: false, split_pct: 50 },
 });
 // ─── Helpers ────────────────────────────────────────────────────────────────
@@ -200,6 +208,11 @@ export const Campaigns: React.FC = () => {
                     <div className="font-semibold text-[var(--text-primary)]">{c.name}</div>
                     {c.description && <div className="text-xs text-[var(--text-tertiary)] truncate max-w-xs">{c.description}</div>}
                     {c.last_error && <div className="text-xs text-rose-600 mt-1">⚠ {c.last_error}</div>}
+                    {c.recurrence_type && c.recurrence_type !== 'ONCE' && (
+                      <div className="text-xs text-sgs-primary mt-1">
+                        Lặp {RECURRENCE_LABEL[c.recurrence_type] || c.recurrence_type}
+                      </div>
+                    )}
                   </td>
                   <td className="px-4 py-3">
                     <span className={`inline-block px-2 py-0.5 rounded-md text-xs font-semibold border ${STATUS_COLORS[c.status]}`}>
@@ -311,6 +324,7 @@ const CampaignDrawer: React.FC<DrawerProps> = ({ initial, onClose, onSaved, onEr
         body_html: form.body_html || '',
         schedule_type: form.schedule_type || 'NOW',
         scheduled_at: form.scheduled_at || null,
+        recurrence_type: form.recurrence_type || 'ONCE',
         ab_test: form.ab_test || { enabled: false },
       };
       if (isEdit) {
@@ -538,6 +552,21 @@ const CampaignDrawer: React.FC<DrawerProps> = ({ initial, onClose, onSaved, onEr
                 </p>
               </Field>
             )}
+            <Field label="Chu kỳ lặp">
+              <select
+                value={form.recurrence_type || 'ONCE'}
+                onChange={e => upd({ recurrence_type: e.target.value as Campaign['recurrence_type'] })}
+                className="px-3 py-2 border rounded-lg"
+              >
+                <option value="ONCE">Một lần</option>
+                <option value="DAILY">Hàng ngày</option>
+                <option value="WEEKLY">Hàng tuần</option>
+                <option value="MONTHLY">Hàng tháng</option>
+              </select>
+              <p className="text-xs text-[var(--text-tertiary)] mt-1">
+                Chu kỳ lặp chỉ áp dụng cho lịch hẹn giờ.
+              </p>
+            </Field>
           </Section>
           {/* A/B Test */}
           <Section title="A/B Test (tùy chọn)">
