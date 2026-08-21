@@ -267,7 +267,21 @@ export function MinhChatPanel({
       for (let i = 0; i < e.results.length; i++) text += e.results[i][0].transcript;
       voiceTranscriptRef.current = text;
     };
-    recognition.onerror = () => stopRecordingInternal();
+    recognition.onerror = (event: any) => {
+      if (event?.error !== "aborted") {
+        setError(
+          event?.error === "not-allowed" || event?.error === "service-not-allowed"
+            ? "Microphone access is blocked. Please allow microphone access in your browser and try again."
+            : "Voice input could not start. Please try again or type your message.",
+        );
+      }
+      stopRecordingInternal();
+    };
+    recognition.onend = () => {
+      // Chrome can end recognition after a silence/network interruption
+      // without firing an error. Do not leave the composer stuck in recording mode.
+      if (recognitionRef.current === recognition) stopRecordingInternal();
+    };
     recognitionRef.current = recognition;
     try { recognition.start(); } catch { return; }
     setIsRecording(true);
