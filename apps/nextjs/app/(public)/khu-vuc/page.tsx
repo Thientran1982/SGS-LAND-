@@ -5,6 +5,17 @@ import { AREA_PRICES } from "@/data/areas";
 
 const PAGE_URL = `${SITE_URL}/khu-vuc`;
 
+const AREA_DETAIL_SLUGS = new Set([
+  "bat-dong-san-quan-7",
+  "bat-dong-san-long-an",
+  "bat-dong-san-dong-nai",
+  "bat-dong-san-binh-thanh",
+]);
+
+function areaHref(slug: string) {
+  return AREA_DETAIL_SLUGS.has(slug) ? `/khu-vuc/${slug}` : `/${slug}`;
+}
+
 export const metadata: Metadata = {
   title: "Bất Động Sản Theo Khu Vực TP.HCM & Vùng Ven",
   description:
@@ -30,7 +41,7 @@ export default function KhuVucPage() {
       "@type": "ListItem",
       position: i + 1,
       name: `Bất động sản ${a.area}`,
-      url: `${SITE_URL}/${a.slug}`,
+      url: `${SITE_URL}${areaHref(a.slug)}`,
     })),
   };
 
@@ -77,7 +88,7 @@ export default function KhuVucPage() {
         {AREA_PRICES.map((a) => (
           <Link
             key={a.slug}
-            href={`/${a.slug}`}
+            href={areaHref(a.slug)}
             className="block p-6 rounded-2xl border hover:shadow-md transition"
             style={{
               borderColor: "var(--border)",

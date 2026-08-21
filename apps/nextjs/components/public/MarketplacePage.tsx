@@ -82,9 +82,9 @@ const CHIP_EN: Record<string, string> = {
 const chipLabel = (label: string, g: "vi" | "en") => (g === "en" ? CHIP_EN[label] || label : label);
 
 const LOCATION_CHIPS = [
-  { label: "BĐS Đồng Nai", href: "/bat-dong-san-dong-nai" }, { label: "BĐS Long Thành", href: "/bat-dong-san-long-thanh" },
+  { label: "BĐS Đồng Nai", href: "/khu-vuc/bat-dong-san-dong-nai" }, { label: "BĐS Long Thành", href: "/bat-dong-san-long-thanh" },
   { label: "BĐS Thủ Đức", href: "/bat-dong-san-thu-duc" }, { label: "BĐS Bình Dương", href: "/bat-dong-san-binh-duong" },
-  { label: "BĐS Quận 7", href: "/bat-dong-san-quan-7" }, { label: "BĐS Phú Nhuận", href: "/bat-dong-san-phu-nhuan" },
+  { label: "BĐS Quận 7", href: "/khu-vuc/bat-dong-san-quan-7" }, { label: "BĐS Phú Nhuận", href: "/bat-dong-san-phu-nhuan" },
   { label: "BĐS Bình Chánh", href: "/bat-dong-san-binh-chanh" }, { label: "Aqua City", href: "/du-an/aqua-city" },
   { label: "Vinhomes Grand Park", href: "/du-an/vinhomes-grand-park" }, { label: "Izumi City", href: "/du-an/izumi-city" },
   { label: "The Global City", href: "/du-an/the-global-city" }, { label: "Thủ Thiêm", href: "/du-an/thu-thiem" },
