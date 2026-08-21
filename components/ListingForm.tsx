@@ -262,6 +262,51 @@ export const ListingForm: React.FC<ListingFormProps> = memo(({ isOpen, onClose, 
             attributes: { ...prev.attributes, [key]: value }
         }));
     };
+    const [isGeneratingDescription, setIsGeneratingDescription] = useState(false);
+    const [descriptionAiError, setDescriptionAiError] = useState('');
+    const generateDescription = async () => {
+        if (isGeneratingDescription) return;
+        setIsGeneratingDescription(true);
+        setDescriptionAiError('');
+        const attrs = formData.attributes || {};
+        const facts = {
+            giaoDich: formData.transaction,
+            loaiBds: formData.type,
+            trangThai: formData.status,
+            tieuDe: formData.title,
+            duAn: formData.projectCode,
+            diaChi: formData.location,
+            gia: priceShort ? `${priceShort} ${priceUnit === UNITS.BILLION.value ? 'tỷ' : priceUnit === UNITS.MILLION.value ? 'triệu' : 'VND'}` : undefined,
+            dienTich: formData.area ? `${formData.area} m²` : undefined,
+            dienTichXayDung: formData.builtArea ? `${formData.builtArea} m²` : undefined,
+            phongNgu: formData.bedrooms || undefined,
+            phongTam: formData.bathrooms || undefined,
+            chiTiet: attrs,
+            moTaHienTai: attrs.description || undefined,
+        };
+        try {
+            const response = await fetch('/api/ai/generate-content', {
+                method: 'POST',
+                credentials: 'include',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    model: 'gemini-2.0-flash',
+                    temperature: 0.55,
+                    systemInstruction: 'Bạn là chuyên viên viết nội dung bất động sản Việt Nam. Chỉ sử dụng thông tin có trong dữ liệu đầu vào, không tự bịa tiện ích, khoảng cách, pháp lý, lợi nhuận hay cam kết. Viết tiếng Việt rõ ràng, trung thực, dễ đọc. Không đưa số điện thoại, tên chủ nhà, hoa hồng hoặc thông tin nội bộ vào mô tả.',
+                    prompt: `Hãy viết lại mô tả tin đăng bất động sản từ dữ liệu sau:\n${JSON.stringify(facts, null, 2)}\n\nYêu cầu: viết 2-4 đoạn ngắn, nêu điểm nổi bật có thật, trình bày tự nhiên để đăng tin. Nếu có trường dữ liệu trống thì bỏ qua. Chỉ trả về nội dung mô tả, không thêm tiêu đề, markdown hoặc lời giải thích.`,
+                }),
+            });
+            const result = await response.json().catch(() => ({}));
+            if (!response.ok) throw new Error(result.error || 'Không thể tạo mô tả lúc này');
+            const generated = String(result.text || '').trim().replace(/^```(?:text|markdown)?\s*/i, '').replace(/\s*```$/i, '').trim();
+            if (!generated) throw new Error('AI chưa tạo được nội dung');
+            updateAttribute('description', generated);
+        } catch (error: any) {
+            setDescriptionAiError(error?.message || 'Không thể tạo mô tả lúc này');
+        } finally {
+            setIsGeneratingDescription(false);
+        }
+    };
     const validate = () => {
         const newErrors: Record<string, string> = {};
         if (!formData.title?.trim()) newErrors.title = t('validation.title_required');
@@ -876,7 +921,23 @@ export const ListingForm: React.FC<ListingFormProps> = memo(({ isOpen, onClose, 
                                 {/* DESCRIPTION — hidden for project units */}
                                 {!isProjectUnit && (
                                 <div>
-                                    <label className="text-xs3 font-bold text-[var(--text-tertiary)] uppercase mb-1 block">{t('inventory.label_desc')}</label>
+                                     <div className="mb-1 flex items-center justify-between gap-3">
+                                         <label className="text-xs3 font-bold text-[var(--text-tertiary)] uppercase">{t('inventory.label_desc')}</label>
+                                         <button
+                                             type="button"
+                                             onClick={generateDescription}
+                                             disabled={isGeneratingDescription}
+                                             className="inline-flex items-center gap-1.5 rounded-lg border border-sgs-border bg-sgs-champagne px-2.5 py-1.5 text-xs2 font-bold text-sgs-primary transition-colors hover:bg-sgs-champagne/70 disabled:cursor-wait disabled:opacity-60"
+                                             aria-busy={isGeneratingDescription}
+                                         >
+                                             {isGeneratingDescription ? (
+                                                 <span className="h-3 w-3 animate-spin rounded-full border-2 border-sgs-primary/30 border-t-sgs-primary" />
+                                             ) : (
+                                                 <span aria-hidden="true">✦</span>
+                                             )}
+                                             {isGeneratingDescription ? 'Đang viết...' : 'AI viết mô tả'}
+                                         </button>
+                                     </div>
                                     <textarea
                                         value={(formData.attributes?.description as string) || ''}
                                         onChange={e => updateAttribute('description', e.target.value)}
@@ -884,6 +945,8 @@ export const ListingForm: React.FC<ListingFormProps> = memo(({ isOpen, onClose, 
                                         className="w-full border border-[var(--glass-border)] rounded-xl px-3 py-2.5 text-sm focus:border-sgs-primary outline-none resize-none"
                                         placeholder={t('inventory.placeholder_notes')}
                                     />
+                                     <p className="mt-1.5 text-xs2 text-[var(--text-tertiary)]">AI sẽ dùng thông tin đã nhập ở trên để viết bản nháp. Bạn có thể chỉnh sửa trước khi đăng.</p>
+                                     {descriptionAiError && <p className="mt-1 text-xs2 text-rose-500">{descriptionAiError}</p>}
                                 </div>
                                 )}
                             </div>
