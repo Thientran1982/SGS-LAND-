@@ -55,7 +55,9 @@ export function PublicHeader({ authed = false }: { authed?: boolean }) {
     const next: Lang = lang === "vi" ? "en" : "vi";
     try { localStorage.setItem("sgs-lang", next); } catch {}
     window.dispatchEvent(new CustomEvent("sgs-lang-change", { detail: next }));
-    window.location.assign(switchLangPath(pathname || "/", next));
+    // Middleware can rewrite /en/* before usePathname() sees it; use the
+    // browser URL so language switching preserves the current page and slug.
+    window.location.assign(switchLangPath(window.location.pathname || pathname || "/", next));
   };
 
   const realEstateLinks = [
