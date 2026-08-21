@@ -138,7 +138,7 @@ const FinancialSuite = memo(({ price, formatCurrency, t }: { price: number, form
         ? (Math.pow((projectedPrice + totalRentalIncome) / price, 1 / holdingYears) - 1) * 100
         : 0;
     return (
-        <div className="bg-[var(--bg-surface)] rounded-2xl border border-[var(--glass-border)] shadow-sm overflow-hidden h-auto self-start">
+        <div className="bg-[var(--bg-surface)] rounded-2xl border border-[var(--glass-border)] shadow-sm overflow-hidden h-auto self-start min-w-0 w-full">
             <div className="flex border-b border-[var(--glass-border)]">
                 <button
                     onClick={() => setMode('LOAN')}
@@ -155,10 +155,10 @@ const FinancialSuite = memo(({ price, formatCurrency, t }: { price: number, form
                 </button>
             </div>
 
-            <div className="p-6">
+            <div className="p-4 min-w-0">
                 {mode === 'LOAN' ? (
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-8 animate-enter">
-                        <div className="space-y-5">
+                    <div className="grid grid-cols-1 gap-4 animate-enter min-w-0">
+                        <div className="space-y-4 min-w-0">
                             <div>
                                 <div className="flex justify-between mb-2">
                                     <label className="text-xs font-bold text-[var(--text-tertiary)] uppercase">{t('calc.loan_ratio')}</label>
@@ -198,9 +198,9 @@ const FinancialSuite = memo(({ price, formatCurrency, t }: { price: number, form
                                 </div>
                             </div>
                         </div>
-                        <div className="bg-sgs-champagne rounded-2xl p-5 border border-sgs-border flex flex-col justify-center min-w-0">
+                        <div className="bg-sgs-champagne rounded-2xl p-4 border border-sgs-border flex flex-col justify-center min-w-0 overflow-hidden">
                             <div className="text-xs text-sgs-primary font-bold uppercase tracking-wider mb-1 truncate">{t('calc.monthly_payment')}</div>
-                            <div className="text-2xl md:text-3xl font-black text-sgs-primary mb-4 break-words">{formatCurrency(monthlyPayment)}</div>
+                            <div className="text-xl font-black text-sgs-primary mb-3 break-all">{formatCurrency(monthlyPayment)}</div>
                             <div className="space-y-2 text-sm">
                                 <div className="flex justify-between items-center gap-2 flex-wrap">
                                     <span className="text-sgs-text-muted truncate">{t('calc.total_principal')}</span>
@@ -214,7 +214,7 @@ const FinancialSuite = memo(({ price, formatCurrency, t }: { price: number, form
                         </div>
                     </div>
                 ) : (
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6 animate-enter">
+                    <div className="grid grid-cols-1 gap-4 animate-enter min-w-0">
                         {/* ── LEFT: Inputs ── */}
                         <div className="space-y-4">
                             <div>
