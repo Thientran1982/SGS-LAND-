@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { ArrowRight, ChevronDown, MapPin, Search, SlidersHorizontal, X } from "lucide-react";
+import { ArrowRight, Check, ChevronDown, MapPin, Search, SlidersHorizontal, X } from "lucide-react";
 import { useMemo, useState } from "react";
 
 export interface DirectoryProject {
@@ -121,17 +121,26 @@ function FeaturedProject({ project }: { project: DirectoryProject }) {
   );
 }
 
-function FilterSelect({ label, value, onChange, options }: { label: string; value: string; onChange: (value: string) => void; options: { value: string; label: string }[] }) {
+function FilterDropdown({ label, value, onChange, options, open, onToggle, onClose }: { label: string; value: string; onChange: (value: string) => void; options: { value: string; label: string }[]; open: boolean; onToggle: () => void; onClose: () => void }) {
+  const selectedLabel = options.find((option) => option.value === value)?.label || options[0]?.label;
   return (
-    <label className="relative flex min-w-0 flex-1 flex-col gap-1.5">
+    <div className="relative min-w-0 flex-1">
       <span className="text-[11px] font-semibold uppercase tracking-[.1em]" style={{ color: "var(--text-tertiary)" }}>{label}</span>
-      <span className="relative">
-        <select value={value} onChange={(event) => onChange(event.target.value)} className="h-11 w-full appearance-none rounded-xl border bg-transparent px-3 pr-9 text-sm outline-none transition focus:ring-2" style={{ borderColor: "var(--border-default)", color: "var(--text-primary)", backgroundColor: "var(--bg-input)" }}>
-          {options.map((option) => <option key={option.value || "all"} value={option.value}>{option.label}</option>)}
-        </select>
-        <ChevronDown className="pointer-events-none absolute right-3 top-3 h-4 w-4" style={{ color: "var(--text-tertiary)" }} />
-      </span>
-    </label>
+      <button type="button" aria-expanded={open} onClick={onToggle} className="mt-1.5 flex h-11 w-full items-center justify-between gap-2 rounded-xl border px-3 text-left text-sm outline-none transition focus:ring-2" style={{ borderColor: open ? "var(--ui-brand)" : "var(--border-default)", color: "var(--text-primary)", backgroundColor: "var(--bg-input)" }}>
+        <span className="truncate">{selectedLabel}</span>
+        <ChevronDown className={`h-4 w-4 shrink-0 transition-transform ${open ? "rotate-180" : ""}`} style={{ color: "var(--text-tertiary)" }} />
+      </button>
+      {open && (
+        <div className="absolute inset-x-0 top-[calc(100%+6px)] z-40 max-h-64 overflow-y-auto rounded-xl border p-1.5 shadow-[var(--ui-shadow-md)]" style={{ borderColor: "var(--border-default)", background: "var(--bg-elevated)" }} role="listbox">
+          {options.map((option) => (
+            <button key={option.value || "all"} type="button" role="option" aria-selected={value === option.value} onClick={() => { onChange(option.value); onClose(); }} className="flex w-full items-center justify-between rounded-lg px-3 py-2.5 text-left text-sm transition hover:bg-[var(--ui-surface-hover)]" style={{ color: value === option.value ? "var(--ui-brand)" : "var(--text-primary)" }}>
+              <span>{option.label}</span>
+              {value === option.value && <Check className="h-4 w-4 shrink-0" />}
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
   );
 }
 
@@ -141,6 +150,8 @@ export default function ProjectDirectoryClient({ projects }: { projects: Directo
   const [type, setType] = useState("");
   const [price, setPrice] = useState("");
   const [visibleCount, setVisibleCount] = useState(INITIAL_VISIBLE);
+  const [filtersOpen, setFiltersOpen] = useState(false);
+  const [openDropdown, setOpenDropdown] = useState<"province" | "price" | "type" | null>(null);
 
   const provinces = useMemo(() => [...new Set(projects.map((project) => project.province))].sort((a, b) => a.localeCompare(b, "vi")), [projects]);
   const filtered = useMemo(() => projects.filter((project) => matchesProject(project, query, province, type, price)), [projects, query, province, type, price]);
@@ -167,17 +178,23 @@ export default function ProjectDirectoryClient({ projects }: { projects: Directo
       </header>
 
       <section className="mb-8 rounded-2xl border p-3 shadow-[var(--ui-shadow-sm)] sm:p-4" style={{ background: "var(--bg-elevated)", borderColor: "var(--border-default)" }} aria-label="Tìm kiếm và bộ lọc dự án">
-        <div className="relative">
+        <div className="flex items-center gap-2">
+          <div className="relative min-w-0 flex-1">
           <Search className="absolute left-3.5 top-3.5 h-4.5 w-4.5" style={{ color: "var(--text-tertiary)" }} />
           <input value={query} onChange={(event) => { setQuery(event.target.value); setVisibleCount(INITIAL_VISIBLE); }} placeholder="Tìm theo tên dự án, chủ đầu tư hoặc khu vực..." className="h-12 w-full rounded-xl border bg-transparent pl-11 pr-10 text-sm outline-none transition focus:ring-2" style={{ borderColor: "var(--border-default)", color: "var(--text-primary)", backgroundColor: "var(--bg-input)" }} />
           {query && <button type="button" onClick={() => setQuery("")} aria-label="Xóa tìm kiếm" className="absolute right-3 top-3 rounded-full p-1" style={{ color: "var(--text-tertiary)" }}><X className="h-4 w-4" /></button>}
+          </div>
+          <button type="button" aria-expanded={filtersOpen} aria-controls="project-filters" onClick={() => { setFiltersOpen((open) => !open); setOpenDropdown(null); }} className="inline-flex h-12 shrink-0 items-center gap-2 rounded-xl border px-3 text-sm font-semibold transition hover:-translate-y-0.5 sm:px-4" style={{ borderColor: filtersOpen || hasFilters ? "var(--ui-brand)" : "var(--border-default)", color: filtersOpen || hasFilters ? "var(--ui-brand)" : "var(--text-secondary)", background: filtersOpen || hasFilters ? "var(--ui-surface-subtle)" : "var(--bg-input)" }}>
+            <SlidersHorizontal className="h-4 w-4" />
+            <span className="hidden sm:inline">Bộ lọc</span>
+            {hasFilters && <span className="flex h-5 min-w-5 items-center justify-center rounded-full bg-[var(--ui-brand)] px-1 text-[11px] text-[var(--ui-on-brand)]">{[province, price, type].filter(Boolean).length}</span>}
+          </button>
         </div>
-        <div className="mt-3 flex items-end gap-3 border-t pt-3" style={{ borderColor: "var(--border-default)" }}>
-          <SlidersHorizontal className="mb-3 hidden h-4 w-4 shrink-0 sm:block" style={{ color: "var(--sgs-accent-text)" }} />
-          <FilterSelect label="Khu vực" value={province} onChange={(value) => { setProvince(value); setVisibleCount(INITIAL_VISIBLE); }} options={[{ value: "", label: "Tất cả khu vực" }, ...provinces.map((item) => ({ value: item, label: item }))]} />
-          <FilterSelect label="Mức giá" value={price} onChange={(value) => { setPrice(value); setVisibleCount(INITIAL_VISIBLE); }} options={[{ value: "", label: "Tất cả mức giá" }, { value: "under-10", label: "Dưới 10 tỷ" }, { value: "10-20", label: "10 – 20 tỷ" }, { value: "over-20", label: "Trên 20 tỷ" }, { value: "sqm", label: "Theo triệu/m²" }, { value: "contact", label: "Liên hệ" }]} />
-          <FilterSelect label="Loại hình" value={type} onChange={(value) => { setType(value); setVisibleCount(INITIAL_VISIBLE); }} options={[{ value: "", label: "Tất cả loại hình" }, ...[...new Set(projects.map((project) => project.typeGroup))].sort((a, b) => a.localeCompare(b, "vi")).map((item) => ({ value: item, label: item }))]} />
-        </div>
+        {filtersOpen && <div id="project-filters" className="mt-3 flex flex-col gap-3 border-t pt-3 sm:flex-row sm:items-end" style={{ borderColor: "var(--border-default)" }}>
+          <FilterDropdown label="Khu vực" value={province} onChange={(value) => { setProvince(value); setVisibleCount(INITIAL_VISIBLE); }} open={openDropdown === "province"} onToggle={() => setOpenDropdown(openDropdown === "province" ? null : "province")} onClose={() => setOpenDropdown(null)} options={[{ value: "", label: "Tất cả khu vực" }, ...provinces.map((item) => ({ value: item, label: item }))]} />
+          <FilterDropdown label="Mức giá" value={price} onChange={(value) => { setPrice(value); setVisibleCount(INITIAL_VISIBLE); }} open={openDropdown === "price"} onToggle={() => setOpenDropdown(openDropdown === "price" ? null : "price")} onClose={() => setOpenDropdown(null)} options={[{ value: "", label: "Tất cả mức giá" }, { value: "under-10", label: "Dưới 10 tỷ" }, { value: "10-20", label: "10 – 20 tỷ" }, { value: "over-20", label: "Trên 20 tỷ" }, { value: "sqm", label: "Theo triệu/m²" }, { value: "contact", label: "Liên hệ" }]} />
+          <FilterDropdown label="Loại hình" value={type} onChange={(value) => { setType(value); setVisibleCount(INITIAL_VISIBLE); }} open={openDropdown === "type"} onToggle={() => setOpenDropdown(openDropdown === "type" ? null : "type")} onClose={() => setOpenDropdown(null)} options={[{ value: "", label: "Tất cả loại hình" }, ...[...new Set(projects.map((project) => project.typeGroup))].sort((a, b) => a.localeCompare(b, "vi")).map((item) => ({ value: item, label: item }))]} />
+        </div>}
         <div className="mt-3 flex items-center justify-between gap-3 text-sm">
           <p style={{ color: "var(--text-secondary)" }}><strong style={{ color: "var(--text-primary)" }}>{filtered.length}</strong> kết quả phù hợp</p>
           {hasFilters && <button type="button" onClick={clearFilters} className="font-semibold hover:underline" style={{ color: "var(--sgs-accent-text)" }}>Xóa bộ lọc</button>}
