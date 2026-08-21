@@ -383,6 +383,9 @@ export class LeadRepository extends BaseRepository {
     score?: any;
     socialIds?: any;
     optOutChannels?: string[];
+    marketingEmailConsent?: boolean;
+    marketingEmailConsentAt?: Date | string;
+    marketingEmailConsentSource?: string;
     attributes?: any;
     preferences?: any;
   }): Promise<any> {
@@ -390,10 +393,11 @@ export class LeadRepository extends BaseRepository {
       const result = await client.query(
         `INSERT INTO leads (
           tenant_id, name, phone, email, address, source, stage, assigned_to,
-          tags, notes, score, social_ids, opt_out_channels, attributes, preferences
+          tags, notes, score, social_ids, opt_out_channels, attributes, preferences,
+          marketing_email_consent, marketing_email_consent_at, marketing_email_consent_source
         ) VALUES (
           current_setting('app.current_tenant_id', true)::uuid,
-          $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14
+          $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17
         ) RETURNING *`,
         [
           data.name, data.phone, data.email || null, data.address || null,
@@ -404,6 +408,9 @@ export class LeadRepository extends BaseRepository {
           JSON.stringify(data.optOutChannels || []),
           data.attributes ? JSON.stringify(data.attributes) : null,
           data.preferences ? JSON.stringify(data.preferences) : null,
+          data.marketingEmailConsent === true,
+          data.marketingEmailConsentAt || null,
+          data.marketingEmailConsentSource || null,
         ]
       );
       return this.rowToEntity(result.rows[0]);
@@ -430,6 +437,9 @@ export class LeadRepository extends BaseRepository {
         name: 'name', phone: 'phone', email: 'email', address: 'address',
         source: 'source', stage: 'stage', assignedTo: 'assigned_to',
         notes: 'notes', slaBreached: 'sla_breached',
+        marketingEmailConsent: 'marketing_email_consent',
+        marketingEmailConsentAt: 'marketing_email_consent_at',
+        marketingEmailConsentSource: 'marketing_email_consent_source',
       };
       const jsonFields = ['tags', 'score', 'socialIds', 'optOutChannels', 'attributes', 'preferences'];
 

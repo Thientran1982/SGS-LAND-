@@ -69,24 +69,27 @@ export async function tickCampaignScheduler(pool: Pool): Promise<CampaignSchedul
       result.failed += r.failed;
       result.results.push({ id: row.id, name: row.name, queued: r.queued, sent: r.sent, failed: r.failed, error: r.error });
 
-      if (r.queued > 0 && r.failed === 0 && row.recurrence_type === 'ONCE') {
+      if (!r.ok || r.failed > 0) {
+        const errorMessage = r.error || (r.failed > 0 ? 'Một hoặc nhiều recipient gửi thất bại' : 'Campaign không chạy thành công');
+        await pool.query(
+          `UPDATE campaigns
+              SET status='PAUSED', last_error=$2, updated_at=NOW()
+            WHERE id=$1`,
+          [row.id, errorMessage],
+        );
+      } else if (r.queued > 0 && row.recurrence_type === 'ONCE') {
         await pool.query(
           `UPDATE campaigns SET status='COMPLETED', updated_at=NOW() WHERE id=$1`,
           [row.id],
         );
-      } else if (r.queued > 0 && r.failed === 0 && row.recurrence_type !== 'ONCE') {
+      } else if (r.queued > 0 && row.recurrence_type !== 'ONCE') {
         logger.info(`[CampaignScheduler] ${row.name} — recurring ${row.recurrence_type}, next run scheduled`);
-      } else if (r.failed > 0) {
-        await pool.query(
-          `UPDATE campaigns SET status='PAUSED', updated_at=NOW() WHERE id=$1`,
-          [row.id],
-        );
       }
       logger.info(`[CampaignScheduler] ${row.name} — queued=${r.queued} sent=${r.sent} failed=${r.failed}`);
     } catch (err: any) {
       result.failed++;
       await pool.query(
-        `UPDATE campaigns SET last_error=$2, updated_at=NOW() WHERE id=$1`,
+        `UPDATE campaigns SET status='PAUSED', last_error=$2, updated_at=NOW() WHERE id=$1`,
         [row.id, `Scheduler run failed: ${err.message}`],
       );
       result.results.push({ id: row.id, name: row.name, queued: 0, sent: 0, failed: 0, error: err.message });
