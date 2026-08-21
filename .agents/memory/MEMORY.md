@@ -16,3 +16,4 @@
 - [Project detail localization](project-detail-i18n.md) — maintain reviewed English project content separately from Vietnamese source data
 - [Area English projections](area-english-projections.md) — area pages need localized nav labels and schema projections even when source data remains Vietnamese
 - [Vite detail navigation](vite-detail-navigation.md) — Vite SPA listing links must use hash routes; plain /listing paths return preview 404
+- [Project ownership boundaries](project-ownership-boundaries.md) — child project resources must be authorized through their tenant-owned parent
