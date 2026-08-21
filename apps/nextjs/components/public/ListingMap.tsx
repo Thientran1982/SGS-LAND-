@@ -111,7 +111,7 @@ export default function ListingMap({ lat, lng, title, location, projectCode }: L
     marker.bindPopup(
       `<strong>${popupTitle}</strong>${popupLocation ? `<br><span style="font-size:12px;color:#5C6B7A">${popupLocation}</span>` : ""}`,
       { closeButton: true, autoPan: true },
-    ).openPopup();
+    );
 
     const timer = window.setTimeout(() => map.invalidateSize(), 250);
     return () => {

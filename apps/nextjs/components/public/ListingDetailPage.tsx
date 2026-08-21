@@ -377,7 +377,7 @@ export function ListingDetailPage({ listing, similarListings }: Props) {
             )}
             {(listing.coordinates?.lat || listing.location) && (
               <div>
-                <div className="rounded-2xl overflow-hidden" style={{ border: "1px solid var(--border-default)", height: "340px" }}>
+                <div className="mt-6 rounded-2xl overflow-hidden" style={{ border: "1px solid var(--border-default)", height: "340px" }}>
                   <ListingMap lat={listing.coordinates?.lat} lng={listing.coordinates?.lng} title={listing.title} location={listing.location} projectCode={listing.projectCode} />
                 </div>
                 {listing.location && <p className="text-xs mt-2 flex items-center gap-1" style={{ color: "var(--text-tertiary)" }}><MapPin className="w-3 h-3" />{listing.location}</p>}
