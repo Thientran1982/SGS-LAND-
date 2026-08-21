@@ -53,39 +53,6 @@ const surface = {
   borderColor: "var(--border-default)",
 };
 
-const EN_DETAIL_COPY: Record<string, { desc: string; meta: string; location: string }> = {
-  "aqua-city": {
-    desc: "Aqua City Novaland is a reference overview of the township in Long Hung, Bien Hoa, Dong Nai, covering location, products, reference pricing and verification notes.",
-    meta: "Recorded developer: Novaland · Long Hung, Bien Hoa, Dong Nai · Reference information",
-    location: "Aqua City is located in Long Hung, Bien Hoa, Dong Nai. Verify project boundaries and travel times by phase, route and date.",
-  },
-  "the-global-city": {
-    desc: "The Global City is a 117.4-hectare mixed-use township developed by Masterise Homes in Binh Trung Ward, Thu Duc City. This page summarizes reference pricing, legal status and progress.",
-    meta: "Developer: Masterise Homes · 117.4 ha · Binh Trung Ward, Thu Duc City",
-    location: "The Global City is located on Do Xuan Hop, Song Hanh and Lien Phuong roads in Binh Trung Ward, Thu Duc City. Travel times and boundaries should be checked by phase.",
-  },
-  "izumi-city": {
-    desc: "Izumi City is a 170-hectare riverside township in Long Hung, Bien Hoa, developed by Nam Long and Hankyu Hanshin Properties. Pricing, legal status and progress are reference information and require verification.",
-    meta: "Developers: Nam Long and Hankyu Hanshin · 170 ha · Long Hung, Bien Hoa, Dong Nai",
-    location: "Izumi City is located at the Huong Lo 2–Nam Cao intersection in Long Hung, Bien Hoa, Dong Nai, near major regional transport routes.",
-  },
-  "vinhomes-grand-park": {
-    desc: "Vinhomes Grand Park is a 271-hectare township developed by Vingroup in Thu Duc City, with a 36-hectare central park. Pricing and legal information below are reference information.",
-    meta: "Developer: Vingroup/Vinhomes · 271 ha · Tang Nhon Phu and Long Binh, Ho Chi Minh City",
-    location: "Vinhomes Grand Park is on Nguyen Xien Street in Tang Nhon Phu and Long Binh. Verify phase-specific legal status, handover and travel times.",
-  },
-  "vinhomes-central-park": {
-    desc: "Vinhomes Central Park is a completed riverside township near Landmark 81 in Binh Thanh, Ho Chi Minh City. The current market is primarily secondary sales and rentals.",
-    meta: "Developer: Vingroup/Vinhomes · approx. 43.9 ha · Nguyen Huu Canh Street, Binh Thanh",
-    location: "Vinhomes Central Park is on Nguyen Huu Canh Street beside the Saigon River and Landmark 81, about 3 km from District 1.",
-  },
-  "diamond-sky-van-phuc-city": {
-    desc: "Diamond Sky is a high-rise apartment phase within Van Phuc City, a 198-hectare riverside township in Hiep Binh Phuoc, Thu Duc City. Pricing, legal status and handover require phase-specific verification.",
-    meta: "Developer: Van Phuc Group · within 198-ha Van Phuc City · Hiep Binh Phuoc, Thu Duc City",
-    location: "Diamond Sky is within Van Phuc City in Hiep Binh Phuoc, Thu Duc City, near National Highway 13, Binh Loi Bridge and Pham Van Dong Street.",
-  },
-};
-
 function SectionHeading({ eyebrow, title, intro }: { eyebrow: string; title: string; intro?: string }) {
   return (
     <div className="mb-6 max-w-3xl">
