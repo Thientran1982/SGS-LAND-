@@ -705,8 +705,17 @@ export const VisitorFunnelWidget = memo(({ days, language }: { days: number; lan
     const pageLeaves = safeFunnelNumber(data?.pageLeaves);
     const exitRate = sessions ? Math.round((pageLeaves / sessions) * 100) : 0;
     const avgSeconds = Math.round(safeFunnelNumber(data?.averageTimeOnPageMs) / 1000);
-    const topProjects = safeFunnelFilterOptions(data?.topProjects);
-    const topSources = safeFunnelFilterOptions(data?.topSources);
+    const topProjects = useMemo(() => safeFunnelFilterOptions(data?.topProjects), [data?.topProjects]);
+    const topSources = useMemo(() => safeFunnelFilterOptions(data?.topSources), [data?.topSources]);
+    useEffect(() => {
+        if (!data) return;
+        if (projectCode && !topProjects.some(item => item.value === projectCode)) {
+            setProjectCode('');
+        }
+        if (source && !topSources.some(item => item.value === source)) {
+            setSource('');
+        }
+    }, [projectCode, source, topProjects, topSources]);
     const stages = [
         [isVn ? 'Lượt xem tin' : 'Property views', safeFunnelNumber(data?.propertyViews), 'bg-[var(--sgs-primary)]'],
         [isVn ? 'Phiên truy cập' : 'Sessions', sessions, 'bg-cyan-500'],

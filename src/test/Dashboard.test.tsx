@@ -1,7 +1,8 @@
 import React from "react";
-import { render, screen } from "@testing-library/react";
+import { render, screen, waitFor } from "@testing-library/react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { afterEach, describe, expect, it, vi } from "vitest";
+import userEvent from "@testing-library/user-event";
 import { VisitorFunnelWidget } from "../../pages/Dashboard";
 import { analyticsApi } from "../../services/api/analyticsApi";
 
@@ -115,5 +116,61 @@ describe("VisitorFunnelWidget", () => {
     expect(sourceFilter).toHaveTextContent("All sources");
     expect(sourceFilter).not.toHaveTextContent("not-an-array");
     expect(screen.getAllByRole("option")).toHaveLength(3);
+  });
+
+  it("clears a selected listing when a refresh removes it", async () => {
+    const getVisitorFunnel = vi.spyOn(analyticsApi, "getVisitorFunnel")
+      .mockResolvedValueOnce({
+        sessions: 4,
+        topProjects: [{ value: "Villa A" }, { value: "Villa B" }],
+        topSources: [{ value: "direct" }],
+      })
+      .mockResolvedValueOnce({
+        sessions: 3,
+        topProjects: [{ value: "Villa B" }],
+        topSources: [{ value: "direct" }],
+      })
+      .mockResolvedValueOnce({
+        sessions: 3,
+        topProjects: [{ value: "Villa B" }],
+        topSources: [{ value: "direct" }],
+      });
+    const user = userEvent.setup();
+    renderWidget();
+
+    const listingFilter = await screen.findByRole("combobox", { name: "Filter by listing" });
+    await screen.findByRole("option", { name: "Villa A" });
+    await user.selectOptions(listingFilter, "Villa A");
+
+    await waitFor(() => expect(getVisitorFunnel).toHaveBeenCalledWith(30, { projectCode: "Villa A" }));
+    await waitFor(() => expect(listingFilter).toHaveValue(""));
+  });
+
+  it("clears a selected traffic source when a refresh removes it", async () => {
+    const getVisitorFunnel = vi.spyOn(analyticsApi, "getVisitorFunnel")
+      .mockResolvedValueOnce({
+        sessions: 4,
+        topProjects: [{ value: "Villa A" }],
+        topSources: [{ value: "google" }, { value: "direct" }],
+      })
+      .mockResolvedValueOnce({
+        sessions: 3,
+        topProjects: [{ value: "Villa A" }],
+        topSources: [{ value: "direct" }],
+      })
+      .mockResolvedValueOnce({
+        sessions: 3,
+        topProjects: [{ value: "Villa A" }],
+        topSources: [{ value: "direct" }],
+      });
+    const user = userEvent.setup();
+    renderWidget();
+
+    const sourceFilter = await screen.findByRole("combobox", { name: "Filter by traffic source" });
+    await screen.findByRole("option", { name: "google" });
+    await user.selectOptions(sourceFilter, "google");
+
+    await waitFor(() => expect(getVisitorFunnel).toHaveBeenCalledWith(30, { source: "google" }));
+    await waitFor(() => expect(sourceFilter).toHaveValue(""));
   });
 });
