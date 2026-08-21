@@ -9,7 +9,22 @@ export const metadata: Metadata = {
 };
 export const dynamic = "force-dynamic";
 const HOT = new Set(["aqua-city","the-global-city","vinhomes-can-gio","vinhomes-hoc-mon","masteri-cosmo-central"]);
-const PROJECTS = ALL_PROJECTS.map((p) => ({ slug: p.slug, name: p.name, dev: p.developer, loc: p.location, scale: p.scale, price: p.priceRange, type: p.projectType, badge: p.status, hot: HOT.has(p.slug), img: p.img }));
+const PROJECTS = ALL_PROJECTS.map((p) => ({
+  slug: p.slug,
+  name: p.name,
+  dev: p.developer,
+  loc: p.location,
+  scale: p.scale,
+  price: p.slug === "aqua-city"
+    ? "Từ 6 tỷ"
+    : p.slug === "diamond-sky-van-phuc-city"
+      ? "Từ 9,6 tỷ – Từ 190 triệu/m²"
+      : p.priceRange,
+  type: p.projectType,
+  badge: p.status,
+  hot: HOT.has(p.slug),
+  img: p.img,
+}));
 export default function DuAnPage() {
   return (
     <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
