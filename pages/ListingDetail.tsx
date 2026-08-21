@@ -1535,7 +1535,15 @@ export const ListingDetail: React.FC = () => {
             { label: t('pub.type'), value: t(`property.${listing.type.toUpperCase()}`) },
         ];
     };
-    const attributes = getAttributes();
+    // Do not render empty metadata cards. Values such as "--", "undefined m²"
+    // and zero-area placeholders are treated as missing rather than useful data.
+    const attributes = getAttributes().filter(({ value }) => {
+        if (value === null || value === undefined) return false;
+        const text = String(value).trim();
+        if (!text || /^(--|-|n\/a|null|undefined)$/i.test(text)) return false;
+        if (/^(undefined|null|0(?:\.0+)?)\s*(m²|m)?$/i.test(text)) return false;
+        return true;
+    });
     // Safe images array (ensure at least one item or empty for logic)
     const images = listing.images && listing.images.length > 0 ? listing.images : [PLACEHOLDER_IMG];
     const hasMoreImages = images.length > 5;
