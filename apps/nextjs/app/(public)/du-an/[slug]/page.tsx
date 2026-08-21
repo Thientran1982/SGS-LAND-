@@ -23,7 +23,21 @@ function resolveProjectConfig(slug: string) {
     };
   }
   const p = ALL_PROJECTS.find((x) => x.slug === slug);
-  if (!p) return null;
+  if (!p) {
+    const meta = PROJECT_META[slug];
+    if (!meta) return null;
+    return {
+      heroDescription: meta.desc,
+      details: [
+        { label: "Chủ đầu tư", value: meta.dev },
+        { label: "Vị trí", value: meta.loc },
+        { label: "Quy mô", value: meta.scale },
+        { label: "Loại hình", value: "Danh mục bất động sản — cần xác minh theo sản phẩm" },
+        { label: "Giá tham khảo", value: meta.priceRange },
+        { label: "Tình trạng", value: "Cần xác minh theo hồ sơ hiện hành" },
+      ],
+    };
+  }
   return {
     heroDescription: p.description,
     details: [
