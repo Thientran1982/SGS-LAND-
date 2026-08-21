@@ -162,10 +162,12 @@ interface PointEntry {
 }
 function buildClusters(entries: PointEntry[], map: L.Map): PointEntry[][] {
     if (!entries.length) return [];
-    // At close zoom: every listing is its own pin — no clustering.
-    // This also prevents listings at the same fallback district centroid from
-    // staying merged even when the user has zoomed all the way in.
-    if (map.getZoom() > CLUSTER_MAX_ZOOM) return entries.map(e => [e]);
+    // Keep one marker per listing at every zoom level, matching the public
+    // Next.js marketplace map. Collision spreading below prevents markers at
+    // the same fallback coordinate from disappearing behind one another.
+    // The old cluster→individual transition at zoom 14 could clear the layer
+    // during zoomend and leave no visible pins.
+    if (map.getZoom() >= 0) return entries.map(e => [e]);
     let screen: L.Point[];
     try {
         screen = entries.map(e => map.latLngToContainerPoint(L.latLng(e.point[0], e.point[1])));
