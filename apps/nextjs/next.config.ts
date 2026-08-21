@@ -158,6 +158,10 @@ const nextConfig: NextConfig = {
       { source: "/lai-suat-vay-ngan-hang",  destination: "/lai-suat-ngan-hang",      permanent: true },
       { source: "/lai-suat-vay-mua-nha",    destination: "/lai-suat-ngan-hang",      permanent: true },
       { source: "/nha-pho-trung-tam",       destination: "/khu-vuc/nha-pho-trung-tam", permanent: true },
+      { source: "/du-an/bat-dong-san-binh-thanh", destination: "/khu-vuc/bat-dong-san-binh-thanh", permanent: true },
+      { source: "/du-an/bat-dong-san-quan-7", destination: "/khu-vuc/bat-dong-san-quan-7", permanent: true },
+      { source: "/du-an/bat-dong-san-long-an", destination: "/khu-vuc/bat-dong-san-long-an", permanent: true },
+      { source: "/du-an/bat-dong-san-dong-nai", destination: "/khu-vuc/bat-dong-san-dong-nai", permanent: true },
       { source: "/landing/aqua-city", destination: "/du-an/aqua-city", permanent: true },
     ];
   },
