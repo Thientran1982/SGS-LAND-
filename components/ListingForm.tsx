@@ -28,7 +28,7 @@ const getUnits = (t: any) => ({
     ONE: { value: 1, label: 'VND' }
 });
 export const ListingForm: React.FC<ListingFormProps> = memo(({ isOpen, onClose, onSubmit, initialData, t, isProjectUnit = false }) => {
-    const { formatCurrency } = useTranslation();
+    const { formatCurrency, language } = useTranslation();
     // Default State
     const defaultState: Partial<Listing> = {
         code: '',
@@ -269,20 +269,21 @@ export const ListingForm: React.FC<ListingFormProps> = memo(({ isOpen, onClose, 
         setIsGeneratingDescription(true);
         setDescriptionAiError('');
         const attrs = formData.attributes || {};
+        const outputLanguage = language === 'en' ? 'English' : 'Vietnamese';
         const facts = {
-            giaoDich: formData.transaction,
-            loaiBds: formData.type,
-            trangThai: formData.status,
-            tieuDe: formData.title,
-            duAn: formData.projectCode,
-            diaChi: formData.location,
-            gia: priceShort ? `${priceShort} ${priceUnit === UNITS.BILLION.value ? 'tỷ' : priceUnit === UNITS.MILLION.value ? 'triệu' : 'VND'}` : undefined,
-            dienTich: formData.area ? `${formData.area} m²` : undefined,
-            dienTichXayDung: formData.builtArea ? `${formData.builtArea} m²` : undefined,
-            phongNgu: formData.bedrooms || undefined,
-            phongTam: formData.bathrooms || undefined,
-            chiTiet: attrs,
-            moTaHienTai: attrs.description || undefined,
+            transaction: formData.transaction,
+            propertyType: formData.type,
+            status: formData.status,
+            title: formData.title,
+            project: formData.projectCode,
+            address: formData.location,
+            price: priceShort ? `${priceShort} ${priceUnit === UNITS.BILLION.value ? (language === 'en' ? 'billion VND' : 'tỷ') : priceUnit === UNITS.MILLION.value ? (language === 'en' ? 'million VND' : 'triệu') : 'VND'}` : undefined,
+            area: formData.area ? `${formData.area} m²` : undefined,
+            builtArea: formData.builtArea ? `${formData.builtArea} m²` : undefined,
+            bedrooms: formData.bedrooms || undefined,
+            bathrooms: formData.bathrooms || undefined,
+            details: attrs,
+            existingDescription: attrs.description || undefined,
         };
         try {
             const response = await fetch('/api/ai/generate-content', {
@@ -292,8 +293,8 @@ export const ListingForm: React.FC<ListingFormProps> = memo(({ isOpen, onClose, 
                 body: JSON.stringify({
                     model: 'gemini-2.0-flash',
                     temperature: 0.55,
-                    systemInstruction: 'Bạn là chuyên viên viết nội dung bất động sản Việt Nam. Chỉ sử dụng thông tin có trong dữ liệu đầu vào, không tự bịa tiện ích, khoảng cách, pháp lý, lợi nhuận hay cam kết. Viết tiếng Việt rõ ràng, trung thực, dễ đọc. Không đưa số điện thoại, tên chủ nhà, hoa hồng hoặc thông tin nội bộ vào mô tả.',
-                    prompt: `Hãy viết lại mô tả tin đăng bất động sản từ dữ liệu sau:\n${JSON.stringify(facts, null, 2)}\n\nYêu cầu: viết 2-4 đoạn ngắn, nêu điểm nổi bật có thật, trình bày tự nhiên để đăng tin. Nếu có trường dữ liệu trống thì bỏ qua. Chỉ trả về nội dung mô tả, không thêm tiêu đề, markdown hoặc lời giải thích.`,
+                    systemInstruction: `You are a real-estate listing copywriter for SGS LAND. Write the final listing description in ${outputLanguage}. Use only facts present in the input; never invent amenities, distances, legal status, returns, or guarantees. Do not include phone numbers, owner names, commission, or internal information.`,
+                    prompt: `Write or improve the real-estate listing description using the following data:\n${JSON.stringify(facts, null, 2)}\n\nRequirements: write 2-4 short, natural paragraphs suitable for a property listing, highlighting only verified facts. Omit empty fields. Return only the description content, without a title, markdown, or explanation. The output language must be ${outputLanguage}.`,
                 }),
             });
             const result = await response.json().catch(() => ({}));
