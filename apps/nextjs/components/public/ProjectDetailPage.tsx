@@ -242,7 +242,7 @@ function RichProjectDetail({ project, config, landing }: { project: ProjectDetai
 }
 
 export function ProjectDetailPage({ project, slug, config, landingProject }: Props) {
-  if (["aqua-city", "the-global-city", "izumi-city", "vinhomes-grand-park", "vinhomes-central-park", "diamond-sky-van-phuc-city", "manhattan", "thu-thiem", "son-kim-land", "vinhomes-can-gio", "sala", "vinhomes-hoc-mon", "masteri-park-place", "masteri-cosmo-central", "eco-retreat-long-an", "legacy-66", "nha-pho-trung-tam", "bat-dong-san-thu-duc", "bat-dong-san-long-thanh", "bat-dong-san-binh-thanh", "bat-dong-san-quan-7", "bat-dong-san-long-an", "bat-dong-san-dong-nai"].includes(slug) && landingProject) {
+  if (["aqua-city", "the-global-city", "izumi-city", "vinhomes-grand-park", "vinhomes-central-park", "diamond-sky-van-phuc-city", "manhattan", "thu-thiem", "son-kim-land", "vinhomes-can-gio", "sala", "vinhomes-hoc-mon", "masteri-park-place", "masteri-cosmo-central", "eco-retreat-long-an", "legacy-66", "nha-pho-trung-tam", "bat-dong-san-thu-duc", "bat-dong-san-long-thanh", "bat-dong-san-binh-thanh", "bat-dong-san-quan-7", "bat-dong-san-long-an", "bat-dong-san-dong-nai", "bat-dong-san-binh-chanh", "bat-dong-san-can-gio", "bat-dong-san-hoc-mon", "bat-dong-san-binh-duong"].includes(slug) && landingProject) {
     return <RichProjectDetail project={project} config={config} landing={landingProject} />;
   }
 
