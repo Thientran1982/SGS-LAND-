@@ -4,7 +4,7 @@
  *
  * Before this module both POST /api/listings and PUT /api/listings/:id spread
  * the raw req.body straight into listingRepository, so any authenticated user
- * could set isVerified, viewCount, bookingCount, commission or holdExpiresAt
+ * could set isVerified, viewCount, bookingCount or holdExpiresAt
  * by adding one key to the JSON payload (classic mass assignment).
  *
  * Policy:
@@ -24,7 +24,7 @@ export const LISTING_WRITABLE_FIELDS: readonly string[] = [
   'code', 'title', 'location', 'price', 'currency', 'area', 'builtArea',
   'bedrooms', 'bathrooms', 'type', 'status', 'transaction', 'attributes',
   'images', 'coordinates', 'contactPhone', 'ownerName', 'ownerPhone',
-  'totalUnits', 'availableUnits',
+  'commission', 'commissionUnit', 'totalUnits', 'availableUnits',
   // project linkage - repository accepts both camelCase and snake_case
   'projectCode', 'project_code', 'projectId', 'project_id',
 ];
@@ -46,8 +46,6 @@ export const LISTING_SYSTEM_FIELDS: readonly string[] = [
 export const LISTING_PRIVILEGED_FIELDS: Record<string, readonly string[]> = {
   isVerified: ['SUPER_ADMIN', 'ADMIN', 'TEAM_LEAD'],
   authorizedAgents: ['SUPER_ADMIN', 'ADMIN', 'TEAM_LEAD'],
-  commission: ['SUPER_ADMIN', 'ADMIN'],
-  commissionUnit: ['SUPER_ADMIN', 'ADMIN'],
 };
 
 const WRITABLE_SET = new Set(LISTING_WRITABLE_FIELDS);
