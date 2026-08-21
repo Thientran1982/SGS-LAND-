@@ -100,7 +100,8 @@ function FeaturedProject({ project }: { project: DirectoryProject }) {
         <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/10 to-transparent" />
         <div className="absolute left-5 top-5 flex gap-2">
           <span className="rounded-full bg-[var(--sgs-accent)] px-3 py-1.5 text-[11px] font-bold tracking-[.08em] text-[var(--ui-on-accent)]">DỰ ÁN NỔI BẬT</span>
-          <StatusBadges project={project} />
+          {project.hot && <span className="rounded-full bg-[#b42318] px-2.5 py-1.5 text-[11px] font-bold tracking-wide text-white shadow-sm">ƯU TIÊN</span>}
+          <span className="rounded-full bg-white/95 px-2.5 py-1.5 text-[11px] font-semibold text-[var(--ui-brand)] shadow-sm backdrop-blur-sm">{project.badge}</span>
         </div>
         <div className="absolute bottom-5 left-5 right-5 text-white">
           <p className="mb-1 text-xs font-medium uppercase tracking-[.16em] text-white/75">Lựa chọn ưu tiên</p>
