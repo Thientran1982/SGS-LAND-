@@ -155,8 +155,9 @@ export const slugify = (text: string): string => {
 };
 
 // ---------------------------------------------------------------------------
-// SEO: Canonical detail URL for a property listing (real crawlable path)
-// Produces /bds/{slug}-{id} matching the SPA router (ROUTES.LISTING_BDS).
+// Detail URL for the Vite SPA. The app's router is hash-based; a plain
+// /listing/... pathname is handled by the preview server as a real URL and
+// therefore returns 404 before the SPA can render.
 // ---------------------------------------------------------------------------
 const detailSlug = (s: string): string => String(s || '')
   .toLowerCase()
@@ -168,5 +169,5 @@ const detailSlug = (s: string): string => String(s || '')
 
 export const detailHref = (item: { id: string; title?: string; code?: string; location?: string }): string => {
   const slug = detailSlug(item?.title || item?.code || item?.location || 'bat-dong-san') || 'bat-dong-san';
-  return `/${ROUTES.LISTING_BDS}/${slug}-${item.id}`;
+  return `/#/${ROUTES.LISTING_BDS}/${slug}-${item.id}`;
 };
