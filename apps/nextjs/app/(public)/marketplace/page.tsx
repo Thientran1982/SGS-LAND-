@@ -3,7 +3,7 @@ import type { Metadata } from "next";
 import { Suspense } from "react";
 import type { Listing } from "@/types";
 import { MarketplacePage } from "@/components/public/MarketplacePage";
-import { getLang, langAlternates } from "@/lib/lang";
+import { getLang } from "@/lib/lang";
 
 export async function generateMetadata(): Promise<Metadata> {
   const lang = await getLang();
@@ -16,7 +16,14 @@ export async function generateMetadata(): Promise<Metadata> {
     description: en
       ? "Search 45,000+ properties across Ho Chi Minh City, Dong Nai and Binh Duong. Filter by area, type, price and bedrooms. Verified legal status, real prices, updated continuously."
       : "Tìm kiếm 45.000+ bất động sản tại TP.HCM, Đồng Nai, Bình Dương. Lọc theo khu vực, loại, giá, số phòng ngủ. Pháp lý rõ ràng, giá thực, cập nhật liên tục.",
-    alternates: { canonical: url, ...langAlternates("/marketplace") },
+    alternates: {
+      canonical: url,
+      languages: {
+        "vi-VN": "https://sgsland.vn/bat-dong-san",
+        "en-US": "https://sgsland.vn/en/marketplace",
+        "x-default": "https://sgsland.vn/bat-dong-san",
+      },
+    },
     openGraph: {
       title: en ? "Property Search | SGS LAND Marketplace" : "Tìm kiếm Bất Động Sản | SGS LAND Marketplace",
       description: en

@@ -150,7 +150,6 @@ const nextConfig: NextConfig = {
   async redirects() {
     return [
       { source: "/search",                  destination: "/marketplace",             permanent: true },
-      { source: "/bat-dong-san",            destination: "/marketplace",             permanent: true },
       { source: "/mua",                    destination: "/marketplace?transaction=SALE", permanent: false },
       { source: "/thue",                   destination: "/marketplace?transaction=RENT", permanent: false },
       { source: "/en/mua",                 destination: "/en/marketplace?transaction=SALE", permanent: false },
