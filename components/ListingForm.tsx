@@ -607,7 +607,7 @@ export const ListingForm: React.FC<ListingFormProps> = memo(({ isOpen, onClose, 
         { label: 'Mô tả', value: reviewAttrs.description },
     ].filter(row => row.value !== undefined && row.value !== null && String(row.value).trim() !== '');
     return createPortal(
-        <div className="fixed inset-0 z-[10000] flex items-center justify-center p-4" role="dialog" aria-modal="true" aria-labelledby="listing-form-title">
+        <div className="listing-form-mobile-safe fixed inset-0 z-[10000] flex items-center justify-center p-4" role="dialog" aria-modal="true" aria-labelledby="listing-form-title">
             <div className="absolute inset-0 bg-black/50 backdrop-blur-sm animate-fade-in" onClick={!isSubmitting ? onClose : undefined} />
             <div className="bg-[var(--bg-surface)] w-full max-w-4xl rounded-[24px] shadow-2xl flex flex-col h-[90vh] md:h-auto md:max-h-[90vh] relative z-10 animate-scale-up overflow-hidden">
                 <div className="px-6 py-4 border-b border-[var(--glass-border)] flex justify-between items-center bg-[var(--bg-surface)] shrink-0">

@@ -116,6 +116,16 @@ html.dark {
   .crm-vite-app select,
   .crm-vite-app textarea { font-size: 1rem; }
 }
+/* ListingForm is rendered through a portal, outside .crm-vite-app. Keep
+   mobile controls at 16px so iOS does not zoom when a field is focused. */
+.listing-form-mobile-safe input:not([type="checkbox"]):not([type="radio"]),
+.listing-form-mobile-safe select,
+.listing-form-mobile-safe textarea { font-size: .875rem; }
+@media (max-width: 767px) {
+  .listing-form-mobile-safe input:not([type="checkbox"]):not([type="radio"]),
+  .listing-form-mobile-safe select,
+  .listing-form-mobile-safe textarea { font-size: 1rem; }
+}
 html.dark {
   /* Dark-mode values for the same semantic contract. */
   --ui-brand: #A9C7E5;

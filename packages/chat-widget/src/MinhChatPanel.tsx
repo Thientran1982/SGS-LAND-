@@ -496,6 +496,7 @@ export function MinhChatPanel({
                   placeholder="Nhập câu hỏi của bạn..."
                   aria-label="Nội dung tin nhắn"
                   className="min-w-0 flex-1 resize-none border-0 bg-transparent px-1 py-2 text-sm outline-none max-h-28"
+                  style={{ fontSize: "16px" }}
                 />
                 {voiceSupported && (
                   <button
