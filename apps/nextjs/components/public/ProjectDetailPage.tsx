@@ -95,14 +95,14 @@ function RichProjectDetail({ project, config, landing }: { project: ProjectDetai
               <div className="absolute inset-0 bg-gradient-to-t from-[#062f25]/90 via-[#062f25]/15 to-transparent" />
               <div className="absolute bottom-6 left-5 right-5 text-white sm:bottom-8 sm:left-8">
                 <div className="mb-3 flex flex-wrap gap-2"><Tag tone="accent">Thông tin tham khảo</Tag><Tag>Cập nhật {lastUpdated}</Tag></div>
-                <p className="text-xs font-semibold uppercase tracking-[.16em] text-white/75">Khu đô thị tại Đồng Nai</p>
+                <p className="text-xs font-semibold uppercase tracking-[.16em] text-white/75">Dự án bất động sản</p>
                 <p className="mt-2 text-2xl font-bold tracking-[-.04em] sm:text-4xl">{landing.titleShort}</p>
               </div>
             </div>
             <div className="flex flex-col justify-center p-6 sm:p-9">
               <p className="text-xs font-bold uppercase tracking-[.16em]" style={{ color: "var(--sgs-accent-text)" }}>{landing.eyebrow}</p>
               <h1 className="mt-3 text-3xl font-bold tracking-[-.045em] sm:text-4xl" style={{ color: "var(--text-primary)" }}>Thông tin dự án {landing.titleShort}</h1>
-              <p className="mt-4 flex items-start gap-2 text-sm leading-6" style={{ color: "var(--text-secondary)" }}><MapPin className="mt-1 h-4 w-4 shrink-0" style={{ color: "var(--sgs-accent-text)" }} />{project.location || landing.heroMeta}</p>
+              <p className="mt-4 flex items-start gap-2 text-sm leading-6" style={{ color: "var(--text-secondary)" }}><MapPin className="mt-1 h-4 w-4 shrink-0" style={{ color: "var(--sgs-accent-text)" }} />{landing.heroMeta}</p>
               <p className="answer-box mt-5 rounded-2xl border-l-4 px-4 py-4 text-sm leading-6" role="note" style={{ borderColor: "var(--sgs-accent)", background: "var(--ui-surface-subtle)", color: "var(--text-secondary)" }}>
                 {landing.desc} Trang này tổng hợp thông tin tham khảo về vị trí, sản phẩm, giá và hồ sơ; giá, pháp lý, tiến độ và tiện ích cần được xác minh theo đúng sản phẩm trước giao dịch.
               </p>
@@ -142,7 +142,7 @@ function RichProjectDetail({ project, config, landing }: { project: ProjectDetai
           <SectionHeading eyebrow="02 · Entity" title="Thông tin nhận diện dự án" intro={`Bảng tóm tắt giúp người đọc và hệ thống trả lời AI hiểu cùng một entity ${landing.titleShort}, không trộn với sản phẩm riêng lẻ.`} />
           <div className="overflow-x-auto rounded-2xl border" style={surface}>
             <table className="w-full min-w-[620px] border-collapse text-sm">
-              <tbody>{landing.entityTable.map((row, index) => <tr key={row.k} style={{ background: index % 2 ? "var(--ui-surface-subtle)" : "transparent" }}><th scope="row" className="w-[30%] px-5 py-4 text-left font-medium" style={{ color: "var(--text-tertiary)" }}>{row.k}</th><td className="px-5 py-4 font-semibold" style={{ color: "var(--text-primary)" }}>{row.v}</td></tr>)}</tbody>
+              <tbody>{landing.entityTable.filter((row) => !/hotline|đại lý ủy quyền/i.test(`${row.k} ${row.v}`)).map((row, index) => <tr key={row.k} style={{ background: index % 2 ? "var(--ui-surface-subtle)" : "transparent" }}><th scope="row" className="w-[30%] px-5 py-4 text-left font-medium" style={{ color: "var(--text-tertiary)" }}>{row.k}</th><td className="px-5 py-4 font-semibold" style={{ color: "var(--text-primary)" }}>{row.v}</td></tr>)}</tbody>
             </table>
           </div>
           <p className="mt-3 text-xs leading-5" style={{ color: "var(--text-tertiary)" }}>Cập nhật nội dung: {lastUpdated}. Dữ liệu có chữ “tham khảo” hoặc “cần đối chiếu” không phải bảng giá, hồ sơ pháp lý hay cam kết giao dịch.</p>

@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-08-21T02:48:29.321Z",
+  "generatedAt": "2026-08-21T03:00:34.732Z",
   "base": "http://localhost:5000",
   "methodology": "Rendered HTML audit for project sitemap URLs: status, metadata, H1, direct answer, visible FAQ, JSON-LD and provenance caveat.",
   "total": 17,
@@ -43,7 +43,7 @@
       "description": "The Global City Thủ Đức (Masterise): căn hộ & nhà phố, giá & mặt bằng phân khu 2026, tiến độ mới nhất. Nhận báo giá gốc & chính sách tại SGS Land.",
       "canonical": "https://sgsland.vn/du-an/the-global-city",
       "h1": [
-        "The Global City"
+        "Thông tin dự án The Global City"
       ],
       "schemaTypes": [
         "WebSite",
@@ -71,7 +71,7 @@
       "description": "Izumi City Nam Long Biên Hòa Đồng Nai: nhà phố, biệt thự 2026, giá & mặt bằng phân khu, tiến độ ven sông Đồng Nai. Nhận báo giá gốc tại SGS Land.",
       "canonical": "https://sgsland.vn/du-an/izumi-city",
       "h1": [
-        "Izumi City Nam Long"
+        "Thông tin dự án Izumi City Biên Hòa"
       ],
       "schemaTypes": [
         "WebSite",
