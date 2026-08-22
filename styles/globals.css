@@ -630,6 +630,10 @@ html.dark body {
   letter-spacing: .08em;
   text-transform: uppercase;
 }
+.sgs-dashboard .dashboard-chart-tooltip {
+  max-width: min(15rem, calc(100vw - 2rem));
+  overflow-wrap: anywhere;
+}
 .sgs-dashboard .dashboard-list-item {
   border-bottom: 1px solid var(--dash-rule);
   padding: .72rem 0;

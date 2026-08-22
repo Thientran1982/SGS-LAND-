@@ -84,7 +84,7 @@ const ActivityItem: React.FC<{ activity: any }> = ({ activity }) => {
 const CustomTooltip = memo(({ active, payload, label, t, formatCurrency, language }: any) => {
     if (active && Array.isArray(payload) && payload.length) {
         return (
-            <div className="bg-[var(--bg-surface)] p-3 rounded-lg border border-[var(--glass-border)] shadow-md text-xs z-50">
+            <div className="dashboard-chart-tooltip bg-[var(--bg-surface)] p-3 rounded-lg border border-[var(--glass-border)] shadow-md text-xs z-50">
                 <p className="font-bold mb-2 text-[var(--text-secondary)] dark:text-slate-200 uppercase tracking-wider">{label}</p>
                 {payload.map((p: any, i: number) => (
                     <div key={i} className="flex items-center justify-between gap-4 mb-1">
@@ -106,7 +106,7 @@ const ScatterTooltip = memo(({ active, payload, t }: any) => {
     if (active && Array.isArray(payload) && payload.length) {
         const data = payload[0].payload;
         return (
-            <div className="bg-[var(--bg-surface)] p-3 rounded-lg border border-[var(--glass-border)] shadow-md text-xs z-50">
+            <div className="dashboard-chart-tooltip bg-[var(--bg-surface)] p-3 rounded-lg border border-[var(--glass-border)] shadow-md text-xs z-50">
                 <p className="font-bold mb-2 text-[var(--text-secondary)] dark:text-slate-200 uppercase tracking-wider">{data.location}</p>
                 <div className="flex items-center justify-between gap-4 mb-1">
                     <span className="text-[var(--text-secondary)] dark:text-slate-400">{t('dash.scatter_area')}:</span>
