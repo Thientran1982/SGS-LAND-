@@ -187,7 +187,7 @@ const OverviewTab = memo(({ data, t, formatCurrency, formatCompactNumber, chartT
                     <h3 className="font-bold text-[var(--text-primary)] mb-3 sm:mb-4 text-sm sm:text-base">{t('reports.chart_source_mix')}</h3>
                     <div style={{ width: '100%', height: 260 }}>
                         {hasData ? (
-                            <ResponsiveContainer width="100%" height="100%">
+                            <ResponsiveContainer width="100%" height="100%" minWidth={200} minHeight={200}>
                                 <ComposedChart data={data.attribution} margin={{ top: 8, right: 48, bottom: 36, left: 8 }}>
                                     <CartesianGrid strokeDasharray="3 3" vertical={false} stroke={colors.grid} />
                                     <XAxis 
@@ -247,7 +247,7 @@ const OverviewTab = memo(({ data, t, formatCurrency, formatCompactNumber, chartT
                     <p className="text-xs2 sm:text-xs3 text-[var(--text-secondary)] mb-2 sm:mb-3">{t('reports.chart_conversion_desc')}</p>
                     <div style={{ width: '100%', height: 260 }}>
                         {hasTrend ? (
-                            <ResponsiveContainer width="100%" height="100%">
+                            <ResponsiveContainer width="100%" height="100%" minWidth={200} minHeight={200}>
                                 <AreaChart data={trendData} margin={{ top: 8, right: 16, left: 4, bottom: 36 }}>
                                     <defs>
                                         <linearGradient id="convGradient" x1="0" y1="0" x2="0" y2="1">

@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-08-21T03:10:34.202Z",
+  "generatedAt": "2026-08-22T05:07:03.596Z",
   "base": "http://localhost:5000",
   "methodology": "Rendered HTML audit for project sitemap URLs: status, metadata, H1, direct answer, visible FAQ, JSON-LD and provenance caveat.",
   "total": 17,
@@ -98,7 +98,7 @@
       "description": "Vinhomes Cần Giờ (Green Paradise): giá bán 2026, mặt bằng phân khu, tiến độ siêu đô thị lấn biển. Nhận báo giá gốc & chính sách tại SGS Land.",
       "canonical": "https://sgsland.vn/du-an/vinhomes-can-gio",
       "h1": [
-        "Vinhomes Cần Giờ"
+        "Thông tin dự án Vinhomes Cần Giờ"
       ],
       "schemaTypes": [
         "WebSite",
@@ -309,7 +309,7 @@
       "description": "Khu đô thị Sala Đại Quang Minh Thủ Thiêm Quận 2: căn hộ, nhà phố, biệt thự 2026, giá & mặt bằng phân khu. Nhận báo giá gốc tại SGS Land.",
       "canonical": "https://sgsland.vn/du-an/sala",
       "h1": [
-        "Sala Đại Quang Minh"
+        "Thông tin dự án Sala Đại Quang Minh"
       ],
       "schemaTypes": [
         "WebSite",
@@ -335,7 +335,7 @@
       "description": "Dự án Thủ Thiêm Quận 2 TP Thủ Đức: giá bán mới nhất 2026, mặt bằng khu đô thị, căn hộ & nhà phố gần trường. Tư vấn miễn phí tại SGS Land.",
       "canonical": "https://sgsland.vn/du-an/thu-thiem",
       "h1": [
-        "Thủ Thiêm"
+        "Thông tin dự án Khu Đô Thị Thủ Thiêm"
       ],
       "schemaTypes": [
         "WebSite",
@@ -361,7 +361,7 @@
       "description": "The Grand Manhattan Novaland Quận 1: giá căn hộ 2026, mặt bằng tháp A/B, cho thuê, tiến độ trung tâm Quận 1. Nhận báo giá gốc tại SGS Land.",
       "canonical": "https://sgsland.vn/du-an/manhattan",
       "h1": [
-        "Manhattan"
+        "Thông tin dự án Grand Manhattan Novaland"
       ],
       "schemaTypes": [
         "WebSite",
@@ -387,7 +387,7 @@
       "description": "SonKim Land: dự án cao cấp The Metropole Thủ Thiêm, Serenity Sky Villas, Gateway Thảo Điền. Giá & mặt bằng 2026. Tư vấn miễn phí tại SGS Land.",
       "canonical": "https://sgsland.vn/du-an/son-kim-land",
       "h1": [
-        "Sơn Kim Land"
+        "Thông tin dự án Sơn Kim Land"
       ],
       "schemaTypes": [
         "WebSite",
@@ -441,7 +441,7 @@
       "description": "Masteri Cosmo Central tại The Global City Thủ Đức – dự án căn hộ All-in-One 6 tòa tháp, quần 2 cũ, cách trung tâm 10 phút. Masteri Cosmo ở đâu? Tọa lạc tại An Phú, nơi giao thoa giữa Thủ Thêem và Quận 2. Tổng 3.000 căn, giá từ 6,429 tỷ/căn. Loại: studio, 1PN+, 2PN, 3PN. Tiện ích 5 sao: hồ bơi sky, clubhouse, trung tâm thương mại. Masteri Cosmo Central The Global City – từ khóa SEO chính. Mở bán 2026.",
       "canonical": "https://sgsland.vn/du-an/masteri-cosmo-central",
       "h1": [
-        "Masteri Cosmo Central The Global City Thủ Đức"
+        "Thông tin dự án Masteri Cosmo Central"
       ],
       "schemaTypes": [
         "WebSite",

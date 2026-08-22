@@ -1,8 +1,8 @@
 {
-  "generatedAt": "2026-08-20T21:34:07.348Z",
+  "generatedAt": "2026-08-22T05:11:26.671Z",
   "baseUrl": "http://localhost:5000",
-  "sitemapUrlCount": 50,
-  "pagesChecked": 50,
+  "sitemapUrlCount": 52,
+  "pagesChecked": 52,
   "failures": [],
   "warnings": [],
   "pages": [
@@ -18,7 +18,7 @@
       "route": "/marketplace",
       "title": "Tìm kiếm Bất Động Sản | Marketplace SGS LAND | SGS LAND",
       "description": "Tìm kiếm 45.000+ bất động sản tại TP.HCM, Đồng Nai, Bình Dương. Lọc theo khu vực, loại, giá, số phòng ngủ. Pháp lý rõ ràng, giá thực, cập nhật liên tục.",
-      "canonical": "https://sgsland.vn/marketplace",
+      "canonical": "https://sgsland.vn/bat-dong-san",
       "h1Count": 1,
       "isNoIndex": false
     },
@@ -49,8 +49,8 @@
     {
       "route": "/news",
       "title": "Kiến Thức & Tin Tức BĐS | Chuyên gia SGS LAND | SGS LAND",
-      "description": "Phân tích thị trường BĐS chuyên sâu, hướng dẫn pháp lý Luật Đất Đai 2024, kiến thức đầu tư từ chuyên gia SGS LAND. 12+ bài viết E-E-A-T chất lượng cao.",
-      "canonical": "https://sgsland.vn/news",
+      "description": "Phân tích thị trường BĐS chuyên sâu, hướng dẫn pháp lý và kiến thức đầu tư từ chuyên gia SGS LAND.",
+      "canonical": "https://sgsland.vn/tin-tuc",
       "h1Count": 1,
       "isNoIndex": false
     },
@@ -95,18 +95,26 @@
       "isNoIndex": false
     },
     {
-      "route": "/bat-dong-san-dong-nai",
-      "title": "Bất Động Sản Đồng Nai 2026 – Giá Bán, Dự Án & Tư Vấn Đầu Tư | SGS Land | SGS LAND",
-      "description": "Bất động sản Đồng Nai 2026: giá bán, danh sách dự án nhà phố, biệt thự, đất nền Long Thành, Biên Hòa, Nhơn Trạch. Cập nhật Aqua City, Izumi City, tiến độ & pháp lý. ☎ Tư vấn mua bán BĐS Đồng Nai miễn phí từ SGS Land!",
-      "canonical": "https://sgsland.vn/bat-dong-san-dong-nai",
+      "route": "/bao-cao-thi-truong",
+      "title": "Báo cáo thị trường bất động sản TP.HCM 2026 | SGS LAND | SGS LAND",
+      "description": "Báo cáo giá bất động sản theo khu vực TP.HCM và vùng ven: giá tham khảo bình quân, khoảng giá, biến động cùng kỳ, kỳ dữ liệu, phương pháp và giới hạn sử dụng.",
+      "canonical": "https://sgsland.vn/bao-cao-thi-truong",
       "h1Count": 1,
       "isNoIndex": false
     },
     {
-      "route": "/bat-dong-san-long-thanh",
-      "title": "Bất Động Sản Long Thành 2026 | BĐS Hành Lang Sân Bay | SGS LAND",
-      "description": "3.200+ bất động sản Long Thành, Đồng Nai. Hưởng lợi từ Sân Bay Quốc Tế Long Thành, cao tốc Bến Lức — Long Thành. Đất nền, nhà phố, khu công nghiệp.",
-      "canonical": "https://sgsland.vn/bat-dong-san-long-thanh",
+      "route": "/khu-vuc/bat-dong-san-dong-nai",
+      "title": "Bất Động Sản Đồng Nai | Dự án BĐS | SGS LAND | SGS LAND",
+      "description": "Danh mục bất động sản tại Đồng Nai gồm nhiều khu vực và loại hình. Vị trí, giá, pháp lý, tiến độ và tiện ích cần được xác minh theo từng dự án hoặc sản phẩm.",
+      "canonical": "https://sgsland.vn/khu-vuc/bat-dong-san-dong-nai",
+      "h1Count": 1,
+      "isNoIndex": false
+    },
+    {
+      "route": "/khu-vuc/bat-dong-san-long-thanh",
+      "title": "Bất Động Sản Long Thành | Dự án BĐS | SGS LAND | SGS LAND",
+      "description": "Danh mục bất động sản tại Long Thành, Đồng Nai. Tác động của hạ tầng, giá và khả năng khai thác cần được đối chiếu theo vị trí, thời điểm và hồ sơ cụ thể.",
+      "canonical": "https://sgsland.vn/khu-vuc/bat-dong-san-long-thanh",
       "h1Count": 1,
       "isNoIndex": false
     },
@@ -119,66 +127,74 @@
       "isNoIndex": false
     },
     {
-      "route": "/bat-dong-san-thu-duc",
-      "title": "Bất Động Sản Thủ Đức 2026 | The Global City, Thủ Thiêm | SGS LAND",
-      "description": "BDS Thu Duc 2026: Masteri Cosmo The Global City tu 6,4 ty, Empire City Thu Thiem, can ho Thu Thiem gia bao nhieu. Quy hoach Thu Duc 2026, du an moi nhat. SGS LAND - dai ly F1 Masterise Homes.",
-      "canonical": "https://sgsland.vn/bat-dong-san-thu-duc",
+      "route": "/khu-vuc/bat-dong-san-thu-duc",
+      "title": "Bất Động Sản Thủ Đức | Dự án BĐS | SGS LAND | SGS LAND",
+      "description": "Danh mục bất động sản tại TP Thủ Đức, TP.HCM. Sản phẩm, giá, pháp lý, tiến độ và kết nối cần được kiểm tra theo từng khu vực và dự án.",
+      "canonical": "https://sgsland.vn/khu-vuc/bat-dong-san-thu-duc",
       "h1Count": 1,
       "isNoIndex": false
     },
     {
-      "route": "/bat-dong-san-binh-duong",
-      "title": "Bất Động Sản Bình Dương 2025 | SGS LAND",
-      "description": "6400+ bất động sản Bình Dương — nhà phố, căn hộ, đất nền.",
-      "canonical": "https://sgsland.vn/bat-dong-san-binh-duong",
+      "route": "/khu-vuc/bat-dong-san-binh-duong",
+      "title": "Bất Động Sản Bình Dương | Dự án BĐS | SGS LAND | SGS LAND",
+      "description": "Danh mục bất động sản theo khu vực tại Bình Dương. Loại hình, giá, hạ tầng, pháp lý và khả năng khai thác cần được đối chiếu theo địa bàn và sản phẩm cụ thể.",
+      "canonical": "https://sgsland.vn/khu-vuc/bat-dong-san-binh-duong",
       "h1Count": 1,
       "isNoIndex": false
     },
     {
-      "route": "/bat-dong-san-quan-7",
-      "title": "Bất Động Sản Quận 7 2025 | SGS LAND",
-      "description": "4100+ bất động sản Quận 7 — nhà phố, căn hộ, đất nền.",
-      "canonical": "https://sgsland.vn/bat-dong-san-quan-7",
+      "route": "/khu-vuc/bat-dong-san-quan-7",
+      "title": "Bất Động Sản Quận 7 | Dự án BĐS | SGS LAND | SGS LAND",
+      "description": "Danh mục bất động sản tại Quận 7, TP.HCM, gồm nhiều phân khu và loại hình. Tiện ích, giá, pháp lý và kết nối cần được đối chiếu theo từng dự án hoặc sản phẩm.",
+      "canonical": "https://sgsland.vn/khu-vuc/bat-dong-san-quan-7",
       "h1Count": 1,
       "isNoIndex": false
     },
     {
-      "route": "/bat-dong-san-phu-nhuan",
-      "title": "Bất Động Sản Phú Nhuận 2025 | SGS LAND",
-      "description": "2300+ bất động sản Phú Nhuận — nhà phố, căn hộ, đất nền.",
-      "canonical": "https://sgsland.vn/bat-dong-san-phu-nhuan",
+      "route": "/khu-vuc/bat-dong-san-phu-nhuan",
+      "title": "Bất Động Sản Phú Nhuận | Dự án BĐS | SGS LAND | SGS LAND",
+      "description": "Bất động sản Phú Nhuận – quận trung tâm TP.HCM, pháp lý minh bạch.",
+      "canonical": "https://sgsland.vn/khu-vuc/bat-dong-san-phu-nhuan",
       "h1Count": 1,
       "isNoIndex": false
     },
     {
-      "route": "/bat-dong-san-binh-chanh",
-      "title": "Bất Động Sản Bình Chánh | Nhà Đất Bình Chánh TP.HCM | SGS LAND",
-      "description": "Tìm BĐS Bình Chánh TP.HCM: đất nền, nhà phố, căn hộ giá tốt. Hạ tầng vành đai, KCN Vĩnh Lộc phát triển mạnh. Pháp lý rõ ràng, cập nhật liên tục.",
-      "canonical": "https://sgsland.vn/bat-dong-san-binh-chanh",
+      "route": "/khu-vuc/bat-dong-san-binh-chanh",
+      "title": "Bất Động Sản Bình Chánh | Dự án BĐS | SGS LAND | SGS LAND",
+      "description": "Danh mục bất động sản theo khu vực tại Bình Chánh, TP.HCM. Quy hoạch, hạ tầng, giá, pháp lý và kết nối cần được kiểm tra theo từng địa bàn và sản phẩm.",
+      "canonical": "https://sgsland.vn/khu-vuc/bat-dong-san-binh-chanh",
       "h1Count": 1,
       "isNoIndex": false
     },
     {
-      "route": "/bat-dong-san-can-gio",
-      "title": "Bất Động Sản Cần Giờ | Siêu Đô Thị Lấn Biển | SGS LAND",
-      "description": "BĐS Cần Giờ TP.HCM: cơ hội đầu tư đón sóng Vinhomes Cần Giờ 2.870ha và Metro số 4. Giá đất còn thấp, tiềm năng tăng trưởng cao nhất TP.HCM.",
-      "canonical": "https://sgsland.vn/bat-dong-san-can-gio",
+      "route": "/khu-vuc/bat-dong-san-can-gio",
+      "title": "Bất Động Sản Cần Giờ | Dự án BĐS | SGS LAND | SGS LAND",
+      "description": "Danh mục bất động sản theo khu vực tại Cần Giờ, TP.HCM. Quy hoạch, hạ tầng, pháp lý, môi trường và khả năng khai thác cần được kiểm tra theo từng địa bàn và sản phẩm.",
+      "canonical": "https://sgsland.vn/khu-vuc/bat-dong-san-can-gio",
       "h1Count": 1,
       "isNoIndex": false
     },
     {
-      "route": "/bat-dong-san-binh-thanh",
-      "title": "Bất Động Sản Bình Thạnh 2026 | Căn Hộ Cao Cấp Vỉn Sông | SGS LAND",
-      "description": "BDS Binh Thanh 2026: Can ho Vinhomes Central Park tu 4 ty, Lumiere Riverside, can ho cho thue Binh Thanh tu 15 trieu/thang. Gia dat Binh Thanh theo duong cap nhat. Xem du an, gia ban, cho thue tai sgsland.vn.",
-      "canonical": "https://sgsland.vn/bat-dong-san-binh-thanh",
+      "route": "/khu-vuc/bat-dong-san-hoc-mon",
+      "title": "Bất Động Sản Hóc Môn | Dự án BĐS | SGS LAND | SGS LAND",
+      "description": "Danh mục bất động sản theo khu vực tại Hóc Môn, TP.HCM. Quy hoạch, hạ tầng, giá, pháp lý và kết nối cần được đối chiếu theo từng địa bàn và sản phẩm.",
+      "canonical": "https://sgsland.vn/khu-vuc/bat-dong-san-hoc-mon",
       "h1Count": 1,
       "isNoIndex": false
     },
     {
-      "route": "/bat-dong-san-long-an",
-      "title": "Bất Động Sản Long An | Đất Nền Long An Giá Tốt | SGS LAND",
-      "description": "Tìm BĐS Long An: đất nền, nhà phố, Waterpoint Nam Long. Giá tốt, pháp lý rõ ràng, giáp TP.HCM, tiềm năng đầu tư cao nhờ hạ tầng kết nối đang hoàn thiện.",
-      "canonical": "https://sgsland.vn/bat-dong-san-long-an",
+      "route": "/khu-vuc/bat-dong-san-binh-thanh",
+      "title": "Bất Động Sản Bình Thạnh | Dự án BĐS | SGS LAND | SGS LAND",
+      "description": "Danh mục bất động sản tại Bình Thạnh, TP.HCM gồm căn hộ, nhà phố và các sản phẩm khác. Giá, pháp lý, tiện ích và khả năng khai thác cần được thẩm định theo từng tài sản.",
+      "canonical": "https://sgsland.vn/khu-vuc/bat-dong-san-binh-thanh",
+      "h1Count": 1,
+      "isNoIndex": false
+    },
+    {
+      "route": "/khu-vuc/bat-dong-san-long-an",
+      "title": "Bất Động Sản Long An | Dự án BĐS | SGS LAND | SGS LAND",
+      "description": "Danh mục bất động sản theo khu vực tại Long An. Khoảng cách, hạ tầng, giá, pháp lý và khả năng khai thác cần được xác minh theo tuyến đường, khu vực và sản phẩm.",
+      "canonical": "https://sgsland.vn/khu-vuc/bat-dong-san-long-an",
       "h1Count": 1,
       "isNoIndex": false
     },

@@ -22,3 +22,4 @@
 - [Sequence journey design](sequence-journey-design.md) — separate lead-stage triggers prevent overlapping journeys while content journeys drive both care and site traffic
 - [Preview proxy error handling](preview-proxy-error-handling.md) — HTTP and WebSocket proxy failures pass different response types; feature-detect before writing or destroying
 - [GEO database environment](geo-database-environment.md) — runtime GEO tables use the app’s configured database, not necessarily the generic database-tool default
+- [Analytics SQL naming](analytics-sql-naming.md) — avoid PostgreSQL reserved words as CTE names because runtime-only analytics queries can fail despite mocked tests

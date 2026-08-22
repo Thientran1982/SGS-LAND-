@@ -1,0 +1,81 @@
+{
+  "timestamp": "2026-08-22T05:10:08.165Z",
+  "target": "https://sgsland.vn",
+  "overall": {
+    "avg": 0,
+    "label": "CRITICAL",
+    "counts": {
+      "CRITICAL": 0,
+      "WARN": 0,
+      "INFO": 0
+    },
+    "best": {
+      "url": "-",
+      "score": 0
+    },
+    "worst": {
+      "url": "-",
+      "score": 0
+    }
+  },
+  "robots": {
+    "issues": [
+      {
+        "level": "CRITICAL",
+        "code": "no_robots",
+        "message": "robots.txt không tồn tại / không truy cập được"
+      }
+    ],
+    "facts": {}
+  },
+  "sitemap": {
+    "error": "Sitemap không truy cập được (HTTP 0)"
+  },
+  "lighthouse": {
+    "skipped": "lighthouse / chrome-launcher chưa cài (npm install lighthouse chrome-launcher để chạy CWV)"
+  },
+  "perPage": [],
+  "topIssues": [],
+  "pagesCrawled": [
+    {
+      "url": "https://sgsland.vn/",
+      "status": 0,
+      "ttfb": 20002
+    },
+    {
+      "url": "https://sgsland.vn/du-an/aqua-city",
+      "status": 0,
+      "ttfb": 20001
+    },
+    {
+      "url": "https://sgsland.vn/du-an/the-global-city",
+      "status": 0,
+      "ttfb": 20002
+    },
+    {
+      "url": "https://sgsland.vn/du-an/izumi-city",
+      "status": 0,
+      "ttfb": 20007
+    },
+    {
+      "url": "https://sgsland.vn/du-an/vinhomes-can-gio",
+      "status": 0,
+      "ttfb": 20001
+    },
+    {
+      "url": "https://sgsland.vn/du-an/masterise-homes",
+      "status": 0,
+      "ttfb": 20001
+    },
+    {
+      "url": "https://sgsland.vn/about-us",
+      "status": 0,
+      "ttfb": 20001
+    },
+    {
+      "url": "https://sgsland.vn/news",
+      "status": 0,
+      "ttfb": 20001
+    }
+  ]
+}

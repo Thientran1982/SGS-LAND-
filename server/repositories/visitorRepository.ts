@@ -209,7 +209,7 @@ class VisitorRepository {
          FROM events
          WHERE event_type = 'property_view'
        ),
-       returning AS (
+        returning_visitors AS (
          SELECT DISTINCT p1.visitor_id
          FROM property_views p1
          JOIN property_views p2
@@ -229,7 +229,7 @@ class VisitorRepository {
          (SELECT COUNT(*)::int FROM events WHERE event_type IN ('favorite_click', 'share_click', 'contact_click',
                                 'booking_open', 'booking_submit', 'chat_open', 'similar_listing_click',
                                 'calculator_interaction')) AS cta_interactions,
-         (SELECT COUNT(*)::int FROM returning) AS returning_visitors_48h,
+          (SELECT COUNT(*)::int FROM returning_visitors) AS returning_visitors_48h,
          (SELECT COALESCE(ROUND(AVG(NULLIF((metadata->>'timeOnPageMs')::numeric, 0))), 0)::int
             FROM events WHERE event_type = 'page_leave'
               AND metadata->>'timeOnPageMs' ~ '^[0-9]+$') AS average_time_on_page_ms`,

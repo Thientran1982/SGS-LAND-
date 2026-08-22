@@ -2,7 +2,7 @@
 /**
  * seo-geo-audit.mjs — SGS Land full SEO + GEO audit tool
  *
- * Crawls https://sgsland.vn (max 50 pages) and produces:
+ * Crawls AUDIT_BASE_URL (defaults to https://sgsland.vn, max 50 pages) and produces:
  *   - reports/sgsland-audit-<ts>.json   (raw)
  *   - reports/sgsland-audit-<ts>.md     (human-readable)
  *   - reports/FIXES-TODO.md             (prioritized P0/P1/P2 fix list)
@@ -11,7 +11,7 @@
  * are installed they run automatically; otherwise the section is gracefully
  * skipped with an INFO note.
  *
- * Run: node seo-geo-audit.mjs   (or `npm run audit`)
+ * Run: node seo-geo-audit.mjs   (or `AUDIT_BASE_URL=http://127.0.0.1:5000 npm run audit`)
  */
 import { writeFile, mkdir } from 'node:fs/promises';
 import path from 'node:path';
@@ -19,8 +19,8 @@ import * as cheerio from 'cheerio';
 // ──────────────────────────────────────────────────────────────────────────────
 // Config
 // ──────────────────────────────────────────────────────────────────────────────
-const TARGET_HOST = 'sgsland.vn';
-const BASE_URL = 'https://sgsland.vn';
+const BASE_URL = (process.env.AUDIT_BASE_URL || process.env.TARGET_URL || 'https://sgsland.vn').replace(/\/+$/, '');
+const TARGET_HOST = new URL(BASE_URL).hostname;
 const REPORTS_DIR = path.resolve('./reports');
 const TIMESTAMP = new Date().toISOString().replace(/[:.]/g, '-').slice(0, 19);
 const MAX_PAGES = 50;

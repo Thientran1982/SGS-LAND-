@@ -1129,7 +1129,7 @@ const GeoMonitor30Days: React.FC = () => {
                             Tỉ lệ AI nhắc đến SGS Land theo engine (%)
                         </div>
                         <div className="h-56">
-                            <ResponsiveContainer width="100%" height="100%">
+                            <ResponsiveContainer width="100%" height="100%" minWidth={200} minHeight={200}>
                                 <LineChart data={mentionData}>
                                     <CartesianGrid strokeDasharray="3 3" stroke="rgba(127,127,127,0.2)" />
                                     <XAxis dataKey="date" tick={{ fontSize: 10 }} />
@@ -1155,7 +1155,7 @@ const GeoMonitor30Days: React.FC = () => {
                             </div>
                         ) : (
                             <div className="h-56">
-                                <ResponsiveContainer width="100%" height="100%">
+                                <ResponsiveContainer width="100%" height="100%" minWidth={200} minHeight={200}>
                                     <LineChart data={positionData}>
                                         <CartesianGrid strokeDasharray="3 3" stroke="rgba(127,127,127,0.2)" />
                                         <XAxis dataKey="date" tick={{ fontSize: 10 }} />
