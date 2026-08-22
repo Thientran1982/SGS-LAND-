@@ -20,3 +20,4 @@
 - [Campaign delivery safety](campaign-delivery-safety.md) — recipient identity is unique per campaign; terminal states never resend and delivery failures pause for retry
 - [Recurring campaign schedules](recurring-campaign-schedules.md) — recurring campaigns advance scheduled_at atomically before delivery and remain ACTIVE after successful runs
 - [Sequence journey design](sequence-journey-design.md) — separate lead-stage triggers prevent overlapping journeys while content journeys drive both care and site traffic
+- [Preview proxy error handling](preview-proxy-error-handling.md) — HTTP and WebSocket proxy failures pass different response types; feature-detect before writing or destroying
