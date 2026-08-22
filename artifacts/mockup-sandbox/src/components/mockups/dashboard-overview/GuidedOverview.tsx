@@ -103,11 +103,14 @@ function Panel({ title, subtitle, action, children, className = '' }: { title: s
 
 type DropdownOption = { value: string; label: string };
 
-function getSmartGreeting(language: Language, hour: number) {
+function getSmartGreeting(language: Language, hour: number, returning: boolean) {
   const period = hour < 5 ? 'evening' : hour < 12 ? 'morning' : hour < 18 ? 'afternoon' : 'evening';
   const english = { morning: 'Good morning', afternoon: 'Good afternoon', evening: 'Good evening' };
   const vietnamese = { morning: 'Chào buổi sáng', afternoon: 'Chào buổi chiều', evening: 'Chào buổi tối' };
-  return `${(language === 'vn' ? vietnamese : english)[period]}, Minh`;
+  const prefix = returning
+    ? (language === 'vn' ? 'Chào mừng trở lại' : 'Welcome back')
+    : (language === 'vn' ? vietnamese : english)[period];
+  return `${prefix}, Minh`;
 }
 
 function Dropdown({ value, options, onChange, ariaLabel }: { value: string; options: DropdownOption[]; onChange: (value: string) => void; ariaLabel: string }) {
@@ -142,11 +145,29 @@ export function GuidedOverview() {
   const dragRef = useRef<{ startX: number; startY: number; originX: number; originY: number; moved: boolean } | null>(null);
   const [toast, setToast] = useState('');
   const t = labels[language];
-  const greeting = getSmartGreeting(language, new Date().getHours());
+  const [visitContext] = useState(() => {
+    if (typeof window === 'undefined') return { returning: false, count: 0 };
+    try {
+      const saved = window.localStorage.getItem('sgsland-dashboard-visit');
+      const previous = saved ? JSON.parse(saved) as { count?: number; lastVisitedAt?: string } : null;
+      return { returning: Boolean(previous?.lastVisitedAt), count: (previous?.count ?? 0) + 1 };
+    } catch {
+      return { returning: false, count: 0 };
+    }
+  });
+  const greeting = getSmartGreeting(language, new Date().getHours(), visitContext.returning);
 
   useEffect(() => {
     setAssistantPosition({ x: Math.max(16, window.innerWidth - 72), y: Math.max(16, window.innerHeight - 78) });
   }, []);
+
+  useEffect(() => {
+    try {
+      window.localStorage.setItem('sgsland-dashboard-visit', JSON.stringify({ count: visitContext.count, lastVisitedAt: new Date().toISOString() }));
+    } catch {
+      // The greeting remains time-aware if browser storage is unavailable.
+    }
+  }, [visitContext.count]);
 
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
