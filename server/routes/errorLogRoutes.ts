@@ -2,7 +2,7 @@ import { Router, Request, Response } from 'express';
 import { ErrorLogRepository } from '../repositories/errorLogRepository';
 import { Pool } from 'pg';
 
-const ADMIN_ROLES = new Set(['ADMIN', 'TEAM_LEAD']);
+const ADMIN_ROLES = new Set(['SUPER_ADMIN', 'ADMIN', 'TEAM_LEAD']);
 const DEFAULT_TENANT_ID = process.env.DEFAULT_TENANT_ID || 'default';
 
 export function createErrorLogRoutes(authenticateToken: any, pool: Pool) {
