@@ -246,9 +246,9 @@ const WorkQueueStrip = ({ analytics, language }: { analytics: any; language: str
         <section aria-label={copy.title}>
             <div className="mb-2 dashboard-subhead">{copy.title}</div>
             <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
-                <DashboardMiniCard label={copy.contracts} value={queue.contracts ?? analytics?.pendingContracts ?? 0} href="/contracts" tone="danger" />
-                <DashboardMiniCard label={copy.approvals} value={queue.approvals ?? analytics?.pendingApprovals ?? 0} href="/approvals" tone="danger" />
-                <DashboardMiniCard label={copy.followups} value={queue.followups ?? analytics?.unresponsiveLeadCount ?? 0} href="/leads" tone={(queue.followups ?? 0) > 0 ? 'danger' : 'default'} />
+                <DashboardMiniCard label={copy.contracts} value={queue.contracts ?? analytics?.pendingContracts ?? 0} href="/contracts" tone="danger" surface="panel" />
+                <DashboardMiniCard label={copy.approvals} value={queue.approvals ?? analytics?.pendingApprovals ?? 0} href="/approvals" tone="danger" surface="panel" />
+                <DashboardMiniCard label={copy.followups} value={queue.followups ?? analytics?.unresponsiveLeadCount ?? 0} href="/leads" tone={(queue.followups ?? 0) > 0 ? 'danger' : 'default'} surface="panel" />
             </div>
         </section>
     );
@@ -990,9 +990,9 @@ export const Dashboard: React.FC = () => {
                     </div>
                     <div className="flex w-full flex-wrap items-center gap-2 sm:w-auto sm:flex-nowrap">
                         <div className="hidden items-center gap-2 xl:flex">
-                            <a href="/leads" className="dashboard-control px-3 py-2.5 text-xs font-semibold text-[var(--sgs-primary)]">{ui.addLead}</a>
-                            <a href="/contracts" className="dashboard-control px-3 py-2.5 text-xs font-semibold text-[var(--sgs-primary)]">{ui.contract}</a>
-                            <a href="/inventory" className="dashboard-control px-3 py-2.5 text-xs font-semibold text-[var(--sgs-primary)]">{ui.listing}</a>
+                            <a href="/leads" className="dashboard-control quick-action px-3 py-2.5 text-xs font-semibold text-[var(--sgs-primary)]">{ui.addLead}</a>
+                            <a href="/contracts" className="dashboard-control quick-action px-3 py-2.5 text-xs font-semibold text-[var(--sgs-primary)]">{ui.contract}</a>
+                            <a href="/inventory" className="dashboard-control quick-action px-3 py-2.5 text-xs font-semibold text-[var(--sgs-primary)]">{ui.listing}</a>
                         </div>
                         <KpiTargetSettings user={currentUser} language={language} notify={notify} />
                         <button
@@ -1028,9 +1028,9 @@ export const Dashboard: React.FC = () => {
                 <div className="xl:hidden">
                     <div className="mb-2 dashboard-subhead">{ui.quick}</div>
                     <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
-                        <a href="/leads" className="dashboard-control px-3 py-2.5 text-center text-xs font-semibold text-[var(--sgs-primary)]">{ui.addLead}</a>
-                        <a href="/contracts" className="dashboard-control px-3 py-2.5 text-center text-xs font-semibold text-[var(--sgs-primary)]">{ui.contract}</a>
-                        <a href="/inventory" className="dashboard-control px-3 py-2.5 text-center text-xs font-semibold text-[var(--sgs-primary)]">{ui.listing}</a>
+                        <a href="/leads" className="dashboard-control quick-action px-3 py-2.5 text-center text-xs font-semibold text-[var(--sgs-primary)]">{ui.addLead}</a>
+                        <a href="/contracts" className="dashboard-control quick-action px-3 py-2.5 text-center text-xs font-semibold text-[var(--sgs-primary)]">{ui.contract}</a>
+                        <a href="/inventory" className="dashboard-control quick-action px-3 py-2.5 text-center text-xs font-semibold text-[var(--sgs-primary)]">{ui.listing}</a>
                     </div>
                 </div>
                 <WorkQueueStrip analytics={overview} language={language} />

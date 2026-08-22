@@ -556,12 +556,14 @@ html.dark body {
 .sgs-dashboard .dashboard-kpis {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
+  background: var(--dash-panel);
   border-top: 1px solid var(--dash-rule);
   border-bottom: 1px solid var(--dash-rule);
 }
 .sgs-dashboard .dashboard-kpi {
   min-width: 0;
   padding: 1.05rem 1.2rem 1.1rem;
+  background: var(--dash-panel);
   border-right: 1px solid var(--dash-rule);
 }
 .sgs-dashboard .dashboard-kpi:first-child { padding-left: 0; }
@@ -711,6 +713,11 @@ html.dark body {
   border: 0;
   background: transparent;
   padding: 0;
+}
+.sgs-dashboard a.dashboard-control.quick-action {
+  border: 1px solid var(--dash-rule);
+  background: var(--dash-panel);
+  padding: .625rem .75rem;
 }
 .sgs-dashboard .dashboard-date-filter > button {
   min-height: 2.25rem;
