@@ -20,6 +20,17 @@ function renderWidget() {
   );
 }
 
+function renderWidgetInLanguage(language: "en" | "vn") {
+  const queryClient = new QueryClient({
+    defaultOptions: { queries: { retry: false } },
+  });
+  return render(
+    <QueryClientProvider client={queryClient}>
+      <VisitorFunnelWidget days={30} language={language} />
+    </QueryClientProvider>,
+  );
+}
+
 describe("VisitorFunnelWidget", () => {
   afterEach(() => {
     vi.restoreAllMocks();
@@ -89,6 +100,31 @@ describe("VisitorFunnelWidget", () => {
     expect(screen.getByText("0s")).toBeVisible();
     expect(screen.getByText("0%")).toBeVisible();
     expect(screen.getAllByText("0").length).toBeGreaterThanOrEqual(7);
+  });
+
+  it("keeps funnel labels and filters in Vietnamese", async () => {
+    vi.spyOn(analyticsApi, "getVisitorFunnel").mockResolvedValueOnce({
+      sessions: 1,
+      pageLeaves: 0,
+      averageTimeOnPageMs: 1000,
+      engagedSessions: 1,
+      ctaInteractions: 0,
+      returningVisitors48h: 0,
+      topProjects: [],
+      topSources: [{ value: "direct" }],
+    });
+
+    renderWidgetInLanguage("vn");
+
+    expect(await screen.findByRole("region", { name: "Funnel hành vi người xem" })).toBeVisible();
+    expect(await screen.findByText("Phiên đọc sâu")).toBeVisible();
+    expect(screen.getByText("Thời gian xem TB")).toBeVisible();
+    expect(screen.getByText("Tỷ lệ rời trang")).toBeVisible();
+    expect(screen.getByText("Tương tác CTA")).toBeVisible();
+    expect(screen.getByText("Khách quay lại")).toBeVisible();
+    expect(screen.getByRole("combobox", { name: "Lọc theo tin" })).toHaveTextContent("Tất cả tin");
+    expect(screen.getByRole("combobox", { name: "Lọc theo nguồn traffic" })).toHaveTextContent("Tất cả nguồn");
+    expect(screen.queryByText("Engaged sessions")).toBeNull();
   });
 
   it("keeps filter controls usable when filter lists are missing or malformed", async () => {
