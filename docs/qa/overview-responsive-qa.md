@@ -50,3 +50,20 @@ This environment does not provide a usable authenticated account, and the task�
 - Preview smoke check: the configured `Start application` workflow restarted successfully and served the public site cleanly at 1280×720; no browser console errors were reported.
 - Route boundary check: `GET /dashboard` returned `307` with `Location: /login?redirect=%2Fdashboard`, confirming that this environment has no signed-in session available for the Overview route.
 - Browser/device limitation: Chromium could not launch because `libglib-2.0.so.0` is unavailable. Therefore desktop, tablet, and mobile authenticated interaction checks—including themes, state transitions, chart tooltip, keyboard focus, sidebar/routes, analytics requests, and Guide assistant behavior—remain unverified with a real account. No device-specific regression was observable in the available unauthenticated preview.
+- Evidence screenshot: [1280×720 `/dashboard` route-boundary capture](screenshots/overview-authenticated-check-blocked-1280.jpg) shows the expected login screen rather than an authenticated Overview.
+- Browser runner evidence: `npm run test:e2e -- --project=chromium` reached Playwright but Chromium exited with code 127 before any page/test interaction because `libglib-2.0.so.0` is missing. This is an environment prerequisite failure, not an Overview assertion result.
+
+## Sign-off checklist
+
+| Required authenticated check | Result | Evidence |
+| --- | --- | --- |
+| Overview at 1280px+ | Blocked | No usable signed-in session; route-boundary screenshot above. |
+| Overview at 768–1279px | Blocked | Chromium cannot launch; no authenticated tablet viewport available. |
+| Overview under 768px | Blocked | Chromium cannot launch; no authenticated mobile viewport available. |
+| Light and dark themes | Blocked | Theme tokens and CSS branches reviewed; runtime switching requires signed-in browser access. |
+| Loading, empty, and error-retry states | Passed (automated) | Focused Overview suite: 8/8 tests passed. |
+| Chart tooltip | Blocked | Tooltip implementation reviewed; pointer interaction requires signed-in browser access. |
+| Keyboard focus | Blocked | Focus-visible implementation reviewed; tab traversal requires signed-in browser access. |
+| Sidebar and routes | Blocked | Route links reviewed; authenticated navigation requires signed-in browser access. |
+| Analytics requests | Blocked | Query wiring covered by component tests; authenticated request/response behavior requires signed-in browser access. |
+| Guide assistant overlay | Blocked | Overlay implementation reviewed; authenticated open, retry, focus, and responsive checks require signed-in browser access. |
