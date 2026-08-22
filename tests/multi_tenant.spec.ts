@@ -218,17 +218,25 @@ test.describe('API pagination boundaries', () => {
     expect(body.page).toBe(1);
   });
   test('live-chat project info keeps malformed listing limits bounded', async ({ request }) => {
-    const projectCode = process.env.PUBLIC_PROJECT_CODE_A || '__missing-project__';
-    const res = await request.get(
-      `${BASE_URL}/api/public/livechat/project-info/${encodeURIComponent(projectCode)}?listingLimit=not-a-number&withListings=true&noCache=true`
+    // MCC is the stable public project fixture used by the live-chat public
+    // tenant. Keep this regression tied to a found project rather than
+    // accepting a not-found response when PUBLIC_PROJECT_CODE_A is absent.
+    const foundRes = await request.get(
+      `${BASE_URL}/api/public/livechat/project-info/mcc?listingLimit=not-a-number&withListings=true&noCache=true`
     );
-    expect([200, 404]).toContain(res.status());
-    const body = await res.json();
-    if (res.status() === 200) {
-      expect(Array.isArray(body.listings)).toBeTruthy();
-      expect(body.listings.length).toBeLessThanOrEqual(20);
-    } else {
-      expect(body.found).toBe(false);
-    }
+    expect(foundRes.status()).toBe(200);
+    const foundBody = await foundRes.json();
+    expect(foundBody.found).toBe(true);
+    expect(foundBody.project.code).toBe('mcc');
+    expect(Array.isArray(foundBody.listings)).toBeTruthy();
+    expect(foundBody.listings.length).toBeLessThanOrEqual(20);
+    expect(foundBody.listingStats.shown).toBeLessThanOrEqual(20);
+
+    const missingRes = await request.get(
+      `${BASE_URL}/api/public/livechat/project-info/__missing-project__?withListings=true&noCache=true`
+    );
+    expect(missingRes.status()).toBe(404);
+    const missingBody = await missingRes.json();
+    expect(missingBody.found).toBe(false);
   });
 });
