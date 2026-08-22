@@ -35,3 +35,12 @@ Date: 2026-08-22
 ## Release limitation
 
 This environment does not provide a usable authenticated account, and the task’s Playwright browser cannot launch because a required system library is unavailable. Consequently, a real-account interaction pass across physical device sizes remains a release follow-up; this record covers the available responsive implementation review, component state tests, and preview smoke check.
+
+## Release verification run (2026-08-22)
+
+- Focused Overview tests: `npm test -- --run src/test/Dashboard.test.tsx` — 8 tests passed.
+- TypeScript validation: `npm run lint` — passed.
+- Formatting check: `git diff --check` — passed.
+- Preview smoke check: the configured `Start application` workflow restarted successfully and served the public site cleanly at 1280×720; no browser console errors were reported.
+- Route boundary check: `GET /dashboard` returned `307` with `Location: /login?redirect=%2Fdashboard`, confirming that this environment has no signed-in session available for the Overview route.
+- Browser/device limitation: Chromium could not launch because `libglib-2.0.so.0` is unavailable. Therefore desktop, tablet, and mobile authenticated interaction checks—including themes, state transitions, chart tooltip, keyboard focus, sidebar/routes, analytics requests, and Guide assistant behavior—remain unverified with a real account. No device-specific regression was observable in the available unauthenticated preview.
