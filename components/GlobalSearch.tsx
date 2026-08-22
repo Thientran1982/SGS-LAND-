@@ -172,8 +172,6 @@ export const GlobalSearch: React.FC<GlobalSearchProps> = ({ isOpen, onClose, onN
     // --- RENDER ROW ---
     const renderRow = (item: SearchItem, idx: number) => {
         const isSelected = idx === selectedIndex;
-        const Icon = ICONS[item.icon] || ICONS.SEARCH;
-        const isHistory = (item as any).isHistory;
         return (
             <div 
                 key={`${item.type}-${item.id}-${idx}`} 
@@ -185,13 +183,6 @@ export const GlobalSearch: React.FC<GlobalSearchProps> = ({ isOpen, onClose, onN
                         : 'hover:bg-[var(--glass-surface)] border-transparent'
                 }`}
             >
-                <div className={`p-2 rounded-xl transition-colors shrink-0 ${
-                    isSelected 
-                        ? 'bg-[var(--sgs-primary)]/12 dark:bg-[var(--sgs-primary)]/25 text-sgs-primary dark:text-[var(--sgs-primary)]' 
-                        : 'bg-[var(--glass-surface-hover)] text-[var(--text-tertiary)] group-hover:bg-[var(--glass-surface)] group-hover:text-[var(--text-secondary)]'
-                }`}>
-                    {isHistory ? ICONS.HISTORY : Icon}
-                </div>
                 <div className="min-w-0 flex-1">
                     <div className={`font-semibold text-sm truncate ${
                         isSelected 
@@ -224,9 +215,7 @@ export const GlobalSearch: React.FC<GlobalSearchProps> = ({ isOpen, onClose, onN
             <div className="w-full max-w-2xl bg-[var(--bg-surface)] rounded-2xl shadow-2xl overflow-hidden relative z-10 flex flex-col max-h-[70vh] animate-scale-up ring-1 ring-black/10 dark:ring-white/10">                
                 {/* SEARCH INPUT */}
                 <div className="flex items-center gap-3 px-4 py-3.5 bg-[var(--bg-surface)] border-b border-[var(--glass-border)] group">
-                    <div className={`shrink-0 transition-colors ${loading ? 'text-sgs-primary' : 'text-[var(--text-tertiary)] group-focus-within:text-[var(--sgs-primary)]'}`}>
-                        {loading ? ICONS.LOADING : ICONS.SEARCH}
-                    </div>
+                     {loading && <div className="shrink-0">{ICONS.LOADING}</div>}
                     <input 
                         ref={inputRef}
                         className="flex-1 text-base sm:text-lg outline-none text-[var(--text-primary)] placeholder:text-[var(--text-muted)] bg-transparent h-9"
@@ -236,12 +225,12 @@ export const GlobalSearch: React.FC<GlobalSearchProps> = ({ isOpen, onClose, onN
                     />
                     <div className="flex items-center gap-2 shrink-0">
                         {query && (
-                            <button 
+                             <button
                                 onClick={() => { setQuery(''); inputRef.current?.focus(); }} 
-                                className="text-[var(--text-tertiary)] hover:text-[var(--text-primary)] transition-colors p-1.5 rounded-full hover:bg-[var(--glass-surface-hover)] flex items-center justify-center" 
+                                 className="text-xs font-semibold text-[var(--text-tertiary)] hover:text-[var(--text-primary)] transition-colors px-2 py-1 rounded-lg hover:bg-[var(--glass-surface-hover)]"
                                 title={t('common.clear_search')}
                             >
-                                {ICONS.CLEAR}
+                                 {t('common.clear_search')}
                             </button>
                         )}
                         <kbd className="hidden sm:flex items-center text-xs2 text-[var(--text-muted)] bg-[var(--glass-surface-hover)] border border-[var(--glass-border)] px-1.5 py-0.5 rounded-md font-mono">
@@ -318,16 +307,7 @@ export const GlobalSearch: React.FC<GlobalSearchProps> = ({ isOpen, onClose, onN
                 </div>
                 {/* FOOTER */}
                 <div className="px-4 py-2 bg-[var(--glass-surface)] border-t border-[var(--glass-border)] flex justify-between items-center select-none">
-                    <div className="flex items-center gap-3 text-xs2 text-[var(--text-muted)]">
-                        <span className="hidden sm:flex items-center gap-1">
-                            <kbd className="bg-[var(--glass-surface-hover)] border border-[var(--glass-border)] px-1 py-0.5 rounded text-xs2 font-mono">↑↓</kbd>
-                            <span>{t('search.navigate')}</span>
-                        </span>
-                        <span className="hidden sm:flex items-center gap-1">
-                            <kbd className="bg-[var(--glass-surface-hover)] border border-[var(--glass-border)] px-1 py-0.5 rounded text-xs2 font-mono">↵</kbd>
-                            <span>{t('search.select')}</span>
-                        </span>
-                    </div>
+                     <div className="flex items-center gap-3 text-xs2 text-[var(--text-muted)]" aria-hidden="true" />
                     {query && totalResults > 0 && (
                         <span className="text-xs2 font-mono text-[var(--text-tertiary)]">
                             {totalResults} {t('search.matches')}
