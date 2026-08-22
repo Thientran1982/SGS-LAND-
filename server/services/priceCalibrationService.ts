@@ -22,6 +22,12 @@
 import { Pool } from 'pg';
 import { createHash } from 'crypto';
 import { logger } from '../middleware/logger';
+import { valuationGoldSet, type VerifiedTransaction } from '../data/valuationGoldSet';
+import {
+  evaluateValuationGoldSet,
+  type GoldSetEvaluation,
+  type ValuationPrediction,
+} from './valuationEvaluationService';
 
 const CALIBRATION_WINDOW_DAYS = 90;
 const TRANSACTION_WEIGHT = 0.50;
@@ -400,6 +406,45 @@ export class PriceCalibrationService {
     } catch {
       return null;
     }
+  }
+
+  /**
+   * Backtest the currently active location calibrations against verified
+   * transactions. This intentionally does not write calibration data: a
+   * report is evidence for a separate, guarded promotion decision.
+   */
+  async backtestGoldSet(
+    transactions: readonly VerifiedTransaction[] = valuationGoldSet,
+  ): Promise<GoldSetEvaluation> {
+    const predictions: ValuationPrediction[] = [];
+    if (this.pool) {
+      const { rows } = await this.pool.query<{
+        location_key: string;
+        property_type: string;
+        calibrated_price_per_m2: string;
+      }>(
+        `SELECT location_key, property_type, calibrated_price_per_m2
+         FROM avm_calibration
+         WHERE location_key = ANY($1::text[])`,
+        [[...new Set(transactions.map(row => row.locationKey))]],
+      );
+      const bySegment = new Map(rows.map(row => [
+        `${row.location_key}\u0000${row.property_type}`,
+        Number(row.calibrated_price_per_m2),
+      ]));
+      for (const transaction of transactions) {
+        const price = bySegment.get(`${transaction.locationKey}\u0000${transaction.propertyType}`);
+        predictions.push(price && price > 0
+          ? {
+              transactionId: transaction.id,
+              predictedPricePerM2: price,
+              intervalMin: Math.round(price * 0.85),
+              intervalMax: Math.round(price * 1.15),
+            }
+          : { transactionId: transaction.id, predictedPricePerM2: null, rejected: true });
+      }
+    }
+    return evaluateValuationGoldSet(transactions, predictions);
   }
 
   // ── Admin: price history for a location ───────────────────────────────────
