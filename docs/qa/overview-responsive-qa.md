@@ -4,6 +4,32 @@ Date: 2026-08-22
 
 ## Coverage
 
+### Reproducible signed-in fixture
+
+The authenticated pass is now isolated from shared accounts. `tests/fixtures/overview-fixture.ts`
+intercepts the auth, analytics, visitor, and Guide assistant requests inside each Playwright
+browser context and returns deterministic seeded data. It uses no credentials and does not write
+to the database. Run the full responsive evidence suite with:
+
+```sh
+npm run test:e2e -- --project=overview-desktop --project=overview-tablet --project=overview-mobile
+```
+
+Each run writes screenshots and `overview-request-trace.json` under `test-results/overview/`;
+Playwright HTML output is written to `playwright-report/`. CI should retain both directories as
+release artifacts. Failed runs also retain Playwright traces. The fixture's `.invalid` email is
+display data only and is never submitted to the application.
+
+The suite also starts the Overview in a seeded analytics error state, verifies the visible retry
+branch, and confirms that the seeded data returns after retry. The same tests run in all three
+viewport projects, so responsive evidence is produced independently for desktop, tablet, and
+mobile.
+
+In this environment, TypeScript validation passed and Playwright enumerated all six fixture
+checks, but execution was blocked before page creation because Chromium could not load the
+system library `libglib-2.0.so.0`. This is an environment prerequisite failure; CI with the
+browser runtime installed will execute the checks and publish the evidence described above.
+
 | Surface | Result | Notes |
 | --- | --- | --- |
 | 1280px+ | Blocked: no signed-in session | Unauthenticated preview rendered at 1280×720; the Overview’s 12-column desktop grid and span rules were verified in implementation. |
