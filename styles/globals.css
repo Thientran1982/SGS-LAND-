@@ -781,6 +781,7 @@ html.dark body {
 .sgs-dashboard .dashboard-kpi-settings svg,
 .sgs-dashboard .dashboard-export svg {
   flex: 0 0 auto;
+  display: none;
 }
 .sgs-dashboard .dashboard-action-icon {
   display: none;
@@ -895,6 +896,10 @@ html.dark body {
     display: none;
   }
   .sgs-dashboard .dashboard-action-icon {
+    display: block;
+  }
+  .sgs-dashboard .dashboard-kpi-settings svg,
+  .sgs-dashboard .dashboard-export svg {
     display: block;
   }
   .sgs-dashboard .dashboard-kpi-settings,
