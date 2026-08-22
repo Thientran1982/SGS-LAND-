@@ -292,6 +292,15 @@ export const CommandCenter: React.FC<CommandCenterProps> = memo(({
                         {ICONS.SEARCH_MOBILE}
                     </span>
                 </button>
+                {/* Desktop search icon */}
+                <button
+                    onClick={onSearch}
+                    className="hidden sm:flex h-9 w-9 items-center justify-center rounded-xl text-[var(--text-tertiary)] transition-colors hover:bg-[var(--glass-surface-hover)] hover:text-[var(--text-primary)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sgs-primary"
+                    aria-label={t('common.search')}
+                    title={t('common.search')}
+                >
+                    {ICONS.SEARCH_MOBILE}
+                </button>
                 {/* Notification Bell */}
                 <div ref={panelRef} className="relative">
                     <button
@@ -325,8 +334,8 @@ export const CommandCenter: React.FC<CommandCenterProps> = memo(({
                 <button
                     onClick={() => onNavigate(ROUTES.HELP_CENTER)}
                     className="hidden sm:flex h-9 w-9 items-center justify-center rounded-xl text-[var(--text-tertiary)] transition-colors hover:bg-[var(--glass-surface-hover)] hover:text-[var(--text-primary)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sgs-primary"
-                    aria-label={t('common.help')}
-                    title={t('common.help')}
+                    aria-label={t('nav.help')}
+                    title={t('nav.help')}
                 >
                     <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke="currentColor" strokeWidth={1.8} d="M9.2 9a3 3 0 1 1 5.2 2c-.9.8-1.9 1.2-1.9 2.5M12 17h.01M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18Z" /></svg>
                 </button>

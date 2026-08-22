@@ -1374,7 +1374,8 @@ class DatabaseApiClient {
       { id: 'campaigns', labelKey: 'menu.campaigns', route: ROUTES.CAMPAIGNS, iconKey: ROUTES.CAMPAIGNS },
       { id: 'scoring', labelKey: 'menu.scoring-rules', route: ROUTES.SCORING_RULES, iconKey: ROUTES.SCORING_RULES },
       { id: 'knowledge', labelKey: 'menu.knowledge', route: ROUTES.KNOWLEDGE, iconKey: ROUTES.KNOWLEDGE },
-      { id: 'rep', labelKey: 'menu.reports', route: ROUTES.REPORTS, iconKey: ROUTES.REPORTS }
+      { id: 'rep', labelKey: 'menu.reports', route: ROUTES.REPORTS, iconKey: ROUTES.REPORTS },
+      { id: 'commissions', labelKey: 'menu.commissions', route: ROUTES.COMMISSIONS, iconKey: ROUTES.COMMISSIONS }
     ]};
     // SALES: dự án (xem rổ hàng), tài liệu, báo cáo
     const opsBasic = { id: 'ops', labelKey: 'menu.operations', items: [
@@ -1395,6 +1396,7 @@ class DatabaseApiClient {
       { id: 'users', labelKey: 'menu.admin-users', route: ROUTES.ADMIN_USERS, iconKey: ROUTES.ADMIN_USERS },
       { id: 'set', labelKey: 'menu.enterprise-settings', route: ROUTES.ENTERPRISE_SETTINGS, iconKey: ROUTES.ENTERPRISE_SETTINGS },
       { id: 'agent-audit', labelKey: 'menu.agent-audit', route: ROUTES.AGENT_AUDIT, iconKey: ROUTES.AGENT_AUDIT },
+      { id: 'ai-evaluation', labelKey: 'menu.ai-evaluation', route: ROUTES.AI_EVALUATION, iconKey: ROUTES.AI_EVALUATION },
       { id: 'valuation-accuracy', labelKey: 'menu.valuation-accuracy', route: ROUTES.VALUATION_ACCURACY, iconKey: ROUTES.VALUATION_ACCURACY },
     ];
     // Các công cụ chỉ SUPER_ADMIN thấy: hệ thống, chi phí, bảo mật, hạ tầng, v.v.
@@ -1406,6 +1408,7 @@ class DatabaseApiClient {
       { id: 'billing', labelKey: 'menu.billing', route: ROUTES.BILLING, iconKey: ROUTES.BILLING },
       { id: 'security', labelKey: 'menu.security', route: ROUTES.SECURITY, iconKey: ROUTES.SECURITY },
       { id: 'ai-gov', labelKey: 'menu.ai-governance', route: ROUTES.AI_GOVERNANCE, iconKey: ROUTES.AI_GOVERNANCE },
+      { id: 'ai-evaluation', labelKey: 'menu.ai-evaluation', route: ROUTES.AI_EVALUATION, iconKey: ROUTES.AI_EVALUATION },
       { id: 'valuation-accuracy', labelKey: 'menu.valuation-accuracy', route: ROUTES.VALUATION_ACCURACY, iconKey: ROUTES.VALUATION_ACCURACY },
       { id: 'agent-audit', labelKey: 'menu.agent-audit', route: ROUTES.AGENT_AUDIT, iconKey: ROUTES.AGENT_AUDIT },
       { id: 'seo', labelKey: 'menu.seo-manager', route: ROUTES.SEO_MANAGER, iconKey: ROUTES.SEO_MANAGER },
@@ -1413,6 +1416,7 @@ class DatabaseApiClient {
       { id: 'scraper', labelKey: 'menu.scraper', route: ROUTES.SCRAPER, iconKey: ROUTES.SCRAPER },
       { id: 'data', labelKey: 'menu.data-platform', route: ROUTES.DATA_PLATFORM, iconKey: ROUTES.DATA_PLATFORM },
       { id: 'system', labelKey: 'menu.system', route: ROUTES.SYSTEM, iconKey: ROUTES.SYSTEM },
+      { id: 'marketplace-apps', labelKey: 'menu.marketplace-apps', route: ROUTES.MARKETPLACE, iconKey: ROUTES.MARKETPLACE },
     ];
     // ADMIN/TEAM_LEAD: chỉ thấy người dùng + cài đặt doanh nghiệp
     const sys = { id: 'sys', labelKey: 'menu.ecosystem', items: sysAdminItems };

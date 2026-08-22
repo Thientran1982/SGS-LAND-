@@ -239,16 +239,25 @@ const PriorityAlertCenter = ({ analytics, language }: { analytics: any; language
 
 const WorkQueueStrip = ({ analytics, language }: { analytics: any; language: string }) => {
     const copy = language === 'vn'
-        ? { title: 'Việc Cần Làm & Phê Duyệt', contracts: 'Hợp đồng cần xử lý', approvals: 'Yêu cầu chờ duyệt', followups: 'Khách cần follow-up' }
-        : { title: 'Tasks & Approvals', contracts: 'Contracts to handle', approvals: 'Pending approvals', followups: 'Leads to follow up' };
+        ? { title: 'Việc Cần Làm & Phê Duyệt', subtitle: 'Bước tiếp theo cần xử lý', contracts: 'Hợp đồng cần xử lý', approvals: 'Yêu cầu chờ duyệt', followups: 'Khách cần follow-up' }
+        : { title: 'Tasks & Approvals', subtitle: 'What needs a next step', contracts: 'Contracts to handle', approvals: 'Pending approvals', followups: 'Leads to follow up' };
     const queue = analytics?.workQueue || {};
     return (
-        <section aria-label={copy.title}>
-            <div className="mb-2 dashboard-subhead">{copy.title}</div>
-            <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
-                <DashboardMiniCard label={copy.contracts} value={queue.contracts ?? analytics?.pendingContracts ?? 0} href="/contracts" tone="danger" />
-                <DashboardMiniCard label={copy.approvals} value={queue.approvals ?? analytics?.pendingApprovals ?? 0} href="/approvals" tone="danger" />
-                <DashboardMiniCard label={copy.followups} value={queue.followups ?? analytics?.unresponsiveLeadCount ?? 0} href="/leads" tone={(queue.followups ?? 0) > 0 ? 'danger' : 'default'} />
+        <section className="dashboard-panel" aria-label={copy.title}>
+            <div className="dashboard-panel-head">
+                <div><h2>{copy.title}</h2><p className="mt-1 text-xs font-normal text-[var(--text-tertiary)]">{copy.subtitle}</p></div>
+            </div>
+            <div className="grid grid-cols-1 divide-y divide-[var(--glass-border)] sm:grid-cols-3 sm:divide-x sm:divide-y-0">
+                {[
+                    { label: copy.contracts, value: queue.contracts ?? analytics?.pendingContracts ?? 0, href: '/contracts' },
+                    { label: copy.approvals, value: queue.approvals ?? analytics?.pendingApprovals ?? 0, href: '/approvals' },
+                    { label: copy.followups, value: queue.followups ?? analytics?.unresponsiveLeadCount ?? 0, href: '/leads' },
+                ].map((item) => (
+                    <a key={item.href} href={item.href} className="group flex items-center justify-between gap-3 px-4 py-3.5 transition-colors hover:bg-[var(--glass-surface)]">
+                        <span className="min-w-0 truncate text-xs font-semibold text-[var(--text-secondary)]">{item.label}</span>
+                        <span className="flex items-center gap-2"><strong className={`font-mono text-lg ${Number(item.value) > 0 ? 'text-[var(--ui-danger)]' : 'text-[var(--text-primary)]'}`}>{item.value}</strong><span className="text-sm text-[var(--text-tertiary)] transition-transform group-hover:translate-x-0.5" aria-hidden="true">›</span></span>
+                    </a>
+                ))}
             </div>
         </section>
     );
@@ -988,11 +997,6 @@ export const Dashboard: React.FC = () => {
                         </div>
                     </div>
                     <div className="flex w-full flex-wrap items-center gap-2 sm:w-auto sm:flex-nowrap">
-                        <div className="hidden items-center gap-2 xl:flex">
-                            <a href="/leads" className="dashboard-control px-3 py-2.5 text-xs font-semibold text-[var(--sgs-primary)]">{ui.addLead}</a>
-                            <a href="/contracts" className="dashboard-control px-3 py-2.5 text-xs font-semibold text-[var(--sgs-primary)]">{ui.contract}</a>
-                            <a href="/inventory" className="dashboard-control px-3 py-2.5 text-xs font-semibold text-[var(--sgs-primary)]">{ui.listing}</a>
-                        </div>
                         <KpiTargetSettings user={currentUser} language={language} notify={notify} />
                         <button
                             onClick={handleExport}
@@ -1024,7 +1028,7 @@ export const Dashboard: React.FC = () => {
                 </header>
 
                 <PriorityAlertCenter analytics={overview} language={language} />
-                <div className="xl:hidden">
+                <div>
                     <div className="mb-2 dashboard-subhead">{ui.quick}</div>
                     <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
                         <a href="/leads" className="dashboard-control px-3 py-2.5 text-center text-xs font-semibold text-[var(--sgs-primary)]">{ui.addLead}</a>
@@ -1064,6 +1068,7 @@ export const Dashboard: React.FC = () => {
                 )}
 
                 <div ref={dashboardRef} data-dashboard-export-root className="space-y-6">
+                    <div className="dashboard-subhead">{ui.overview}</div>
                     <section className="dashboard-kpis" aria-label={t('dash.overview_subtitle')}>
                         <div className="dashboard-kpi">
                             <div className="kpi-label">{t('dash.revenue_title')}</div>
