@@ -1244,52 +1244,53 @@ export const AiValuation: React.FC = () => {
 
                 {/* STEP 2: DETAIL INPUT (THE REFINEMENT LAYER) */}
                 {step === 'DETAILS' && (
-                    <div className="max-w-xl mx-auto animate-enter">
-                        <div className="bg-slate-800 rounded-[32px] border border-slate-700 p-8 shadow-2xl">
+                    <div className="max-w-2xl mx-auto animate-enter">
+                        <div className="bg-slate-800/95 rounded-2xl border border-white/10 p-5 md:p-7 shadow-xl">
 
                             {/* ── LIVE ACCURACY METER ── */}
-                            <div className="bg-sgs-primary-deep/60 border border-slate-700/60 rounded-2xl p-4 mb-7">
+                            <div className="bg-white/[0.035] border border-white/10 rounded-xl p-4 mb-6">
                                 <div className="flex items-end justify-between mb-2">
                                     <div>
-                                        <div className="text-xs font-bold text-sgs-text-muted uppercase tracking-widest mb-0.5">Độ đầy đủ thông tin</div>
+                                        <div className="text-xs font-semibold text-slate-400 mb-0.5">Độ đầy đủ thông tin</div>
                                         <div className="flex items-baseline gap-2">
-                                            <span className="text-3xl font-black tabular-nums transition-all duration-500" style={{ color: accuracyColor }}>
+                                            <span className="text-2xl font-black tabular-nums transition-all duration-500" style={{ color: accuracyColor }}>
                                                 {accuracy.toFixed(1)}%
                                             </span>
-                                            <span className="text-xs font-bold px-2 py-0.5 rounded-full border transition-all duration-300"
+                                            <span className="text-[11px] font-medium px-2 py-0.5 rounded-md border transition-all duration-300"
                                                 style={{ color: accuracyColor, borderColor: accuracyColor + '40', background: accuracyColor + '18' }}>
                                                 {accuracyLabel}
                                             </span>
                                         </div>
                                     </div>
                                     <div className="text-right text-xs text-sgs-text-muted">
-                                        <div>Tối đa</div>
-                                        <div className="font-bold text-sgs-verified">98%</div>
+                                        <div>Mục tiêu</div>
+                                        <div className="font-semibold text-slate-300">98%</div>
                                     </div>
                                 </div>
                                 {/* Progress bar */}
-                                <div className="h-2 bg-slate-800 rounded-full overflow-hidden">
+                                <div className="h-1.5 bg-slate-900 rounded-full overflow-hidden">
                                     <div
                                         className="h-full rounded-full transition-all duration-500 ease-out"
-                                        style={{ width: `${accuracy}%`, background: `linear-gradient(90deg, #eab308, ${accuracyColor})` }}
+                                        style={{ width: `${accuracy}%`, background: accuracyColor }}
                                     />
                                 </div>
-                                <div className="mt-2 text-xs text-sgs-text-muted">
+                                <div className="mt-2 text-[11px] leading-relaxed text-sgs-text-muted">
                                     {accuracy < 98
                                         ? `Điền thêm ${accuracy < 80 ? (isApartmentOrProject ? 'diện tích, vị trí đường, số phòng ngủ' : 'diện tích, vị trí đường, ngang × dài') : accuracy < 88 ? (isApartmentOrProject && bedrooms === null ? 'số phòng ngủ, hướng nhà' : 'hướng nhà, mặt tiền') : accuracy < 95 ? 'năm xây dựng, nội thất' : 'thuê dự kiến'} để thu hẹp sai số`
-                                        : '✓ Dữ liệu đầy đủ — AI định giá với sai số ±5%!'}
+                                        : 'Dữ liệu đầy đủ — có thể bắt đầu định giá.'}
                                 </div>
                             </div>
 
-                            <div className="space-y-6">
+                            <div className="space-y-5">
                                 {/* Address Readonly + Auto-Detect Badge */}
-                                <div className="bg-sgs-primary-deep/50 p-4 rounded-xl border border-slate-700 flex items-center gap-3">
+                                <div className="bg-sgs-primary-deep/50 px-4 py-3 rounded-xl border border-white/10 flex items-center gap-3">
                                     <div className="text-sgs-verified">{ICONS.SEARCH}</div>
                                     <div className="flex-1 min-w-0">
-                                        <div className="truncate text-slate-300 font-medium">{address}</div>
+                                        <div className="text-[11px] text-slate-500 mb-0.5">Địa chỉ</div>
+                                        <div className="truncate text-slate-200 font-medium">{address}</div>
                                         {autoDetectedType && (
                                             <div className="flex items-center gap-1.5 mt-1">
-                                                <span className="text-xs bg-sgs-primary/20 text-sgs-on-dark-muted border border-sgs-primary/30 px-2 py-0.5 rounded-full font-bold">
+                                                <span className="text-[11px] bg-sgs-verified/10 text-sgs-verified border border-sgs-verified/20 px-2 py-0.5 rounded-md font-medium">
                                                     Tự nhận dạng: {PROPERTY_TYPE_LABELS[autoDetectedType] ?? autoDetectedType}
                                                 </span>
                                                 <button
@@ -1304,7 +1305,7 @@ export const AiValuation: React.FC = () => {
                                 </div>
 
                                 {/* Inputs */}
-                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
+                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
                                     {/* ── Diện Tích với placeholder thông minh theo loại ── */}
                                     {(() => {
                                         const isLandType = propertyType.startsWith('land_');
@@ -1431,10 +1432,9 @@ export const AiValuation: React.FC = () => {
 
                                 {/* ── NGANG × DÀI CALCULATOR — chỉ hiện với nhà đất (không phải căn hộ) ── */}
                                 {!isApartment && (
-                                    <div className="bg-sgs-primary-deep/50 border border-slate-700/60 rounded-2xl p-4">
-                                        <div className="text-xs font-bold text-[var(--text-tertiary)] uppercase tracking-widest mb-3">
-                                            Kích Thước (Ngang × Dài)
-                                            <span className="text-sgs-text-muted normal-case font-normal ml-1">— tự động tính diện tích</span>
+                                     <div className="bg-sgs-primary-deep/50 border border-white/10 rounded-xl p-3.5">
+                                         <div className="text-xs font-semibold text-slate-300 mb-3">
+                                             Kích thước <span className="text-slate-500 font-normal">(tùy chọn)</span>
                                         </div>
                                         <div className="flex items-center gap-2">
                                             <div className="flex-1">
@@ -1490,7 +1490,7 @@ export const AiValuation: React.FC = () => {
 
                                 <div>
                                     <label className="text-xs font-bold text-[var(--text-tertiary)] uppercase block mb-2">Tình Trạng Pháp Lý <span className="text-red-500 font-black">*</span></label>
-                                    <div className="grid grid-cols-2 gap-2">
+                                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                                         {[
                                             { id: 'PINK_BOOK', label: 'Sổ Hồng / Sổ Đỏ', badge: 'Đầy đủ', badgeColor: 'text-sgs-verified' },
                                             { id: 'PENDING',   label: 'Đang làm sổ',      badge: '-8%',     badgeColor: 'text-sky-400',    title: 'Đang trong quá trình cấp sổ — rủi ro thấp' },
@@ -1515,7 +1515,7 @@ export const AiValuation: React.FC = () => {
 
                                     {/* Nhóm: Nhà ở */}
                                     <div className="text-xs text-sgs-text-muted font-bold uppercase tracking-widest mb-2">Nhà ở</div>
-                                    <div className="grid grid-cols-3 gap-2 mb-4">
+                                     <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 mb-4">
                                         {[
                                             { id: 'townhouse_center', label: 'Nhà phố nội đô' },
                                             { id: 'townhouse_suburb', label: 'Nhà phố ngoại thành' },
@@ -1533,7 +1533,7 @@ export const AiValuation: React.FC = () => {
 
                                     {/* Nhóm: Thương mại & Công nghiệp */}
                                     <div className="text-xs text-sgs-text-muted font-bold uppercase tracking-widest mb-2">Thương mại & Công nghiệp</div>
-                                    <div className="grid grid-cols-3 gap-2 mb-4">
+                                     <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 mb-4">
                                         {[
                                             { id: 'shophouse', label: 'Shophouse' },
                                             { id: 'office', label: 'Văn phòng' },
@@ -1548,7 +1548,7 @@ export const AiValuation: React.FC = () => {
 
                                     {/* Nhóm: Đất */}
                                     <div className="text-xs text-sgs-text-muted font-bold uppercase tracking-widest mb-2">Đất</div>
-                                    <div className="grid grid-cols-2 gap-2 mb-4">
+                                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 mb-4">
                                         {[
                                             { id: 'land_urban', label: 'Đất thổ cư nội đô' },
                                             { id: 'land_suburban', label: 'Đất thổ cư ngoại thành' },
@@ -1791,11 +1791,11 @@ export const AiValuation: React.FC = () => {
                                         !area || parseFloat(area) <= 0 || !!areaError ||
                                         !!(yearBuilt && (parseInt(yearBuilt) < 1975 || parseInt(yearBuilt) > CURRENT_YEAR))
                                     }
-                                    className="w-full bg-sgs-primary hover:bg-sgs-primary-deep text-white font-bold py-4 rounded-xl shadow-lg shadow-sgs-primary/20 transition-all active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed mt-2 text-lg flex items-center justify-center gap-3"
+                                     className="w-full bg-sgs-verified hover:bg-sgs-verified/90 text-white font-bold py-3.5 rounded-xl transition-all active:scale-[0.99] disabled:opacity-50 disabled:cursor-not-allowed mt-1 text-base flex items-center justify-center gap-3"
                                 >
-                                    <span>Định Giá Ngay</span>
-                                    <span className={`text-sm font-bold rounded-full px-3 py-0.5 ${accuracy >= 90 ? 'bg-sgs-verified/30 text-sgs-verified' : accuracy >= 75 ? 'bg-sgs-accent/20 text-sgs-accent-text' : 'bg-white/10 text-white/70'}`}>
-                                        {accuracy >= 90 ? '✓ ' : ''}{accuracy.toFixed(0)}% dữ liệu
+                                    <span>Định giá</span>
+                                    <span className={`text-[11px] font-semibold rounded-md px-2 py-0.5 ${accuracy >= 90 ? 'bg-white/15 text-white' : accuracy >= 75 ? 'bg-black/10 text-white/80' : 'bg-white/10 text-white/70'}`}>
+                                        {accuracy.toFixed(0)}% dữ liệu
                                     </span>
                                 </button>
                             </div>
