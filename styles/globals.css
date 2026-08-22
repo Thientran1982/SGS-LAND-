@@ -565,6 +565,10 @@ html.dark body {
   padding: 1.05rem 1.2rem 1.1rem;
   background: var(--dash-panel);
   border-right: 1px solid var(--dash-rule);
+  transition: background-color .18s ease;
+}
+.sgs-dashboard .dashboard-command-panel .dashboard-kpi:hover {
+  background: var(--dash-panel-soft);
 }
 .sgs-dashboard .dashboard-kpi:first-child { padding-left: 0; }
 .sgs-dashboard .dashboard-kpi:last-child {

@@ -265,7 +265,7 @@ const InventoryOverviewWidget = ({ analytics, language }: { analytics: any; lang
                 <h2>{copy.title}</h2>
                 <a href="/inventory" className="text-xs font-semibold text-[var(--sgs-primary)]">{copy.active}</a>
             </div>
-            <div className="grid grid-cols-2 gap-2 px-4 sm:grid-cols-4">
+            <div className="grid grid-cols-2 gap-2 px-4 py-4 sm:grid-cols-4">
                 <DashboardMiniCard label={copy.active} value={inventory.active ?? analytics?.availableListings ?? 0} surface="panel" />
                 <DashboardMiniCard label={copy.sold} value={inventory.sold ?? 0} surface="panel" />
                 <DashboardMiniCard label={copy.rented} value={inventory.rented ?? 0} surface="panel" />
