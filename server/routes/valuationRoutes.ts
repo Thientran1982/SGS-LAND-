@@ -34,6 +34,7 @@ import {
 import { getFeatureBreakdown } from '../services/aiUsageService';
 import { sendAiError } from '../utils/aiErrorHandler';
 import { valuationGoldSet } from '../data/valuationGoldSet';
+import { notificationRepository } from '../repositories/notificationRepository';
 
 function normalizeAddrKey(addr: string): string {
   return addr.toLowerCase()
@@ -1197,6 +1198,22 @@ export function createValuationRoutes(
       const config = await priceCalibrationService.updateDriftThresholds(
         { maeVndPerM2, mape, consecutiveRuns }, String(user.id),
       );
+      try {
+        const { thresholds } = config;
+        await notificationRepository.createForTenantAdmins(String(user.tenantId), {
+          type: 'drift_threshold_changed',
+          title: 'Valuation drift thresholds updated',
+          body: `${user.name || user.email || 'An administrator'} updated the drift thresholds to version ${config.version}: MAE ${thresholds.maeVndPerM2.toLocaleString('en-US')} VND/m², MAPE ${(thresholds.mape * 100).toLocaleString('en-US')}%, ${thresholds.consecutiveRuns} consecutive runs.`,
+          metadata: {
+            authorId: String(user.id),
+            authorName: user.name || user.email || null,
+            version: config.version,
+            thresholds,
+          },
+        });
+      } catch (notificationError: any) {
+        logger.warn('[Valuation drift-thresholds] notification failed after commit', notificationError);
+      }
       return res.json({ config, history: await priceCalibrationService.getDriftThresholdHistory() });
     } catch (err: any) {
       logger.error('[Valuation drift-thresholds] update error', err);

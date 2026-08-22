@@ -9,6 +9,13 @@ export interface CreateNotificationData {
   metadata?: Record<string, any>;
 }
 
+export interface CreateAdminNotificationData {
+  type: string;
+  title: string;
+  body?: string;
+  metadata?: Record<string, any>;
+}
+
 class NotificationRepository {
   async create(data: CreateNotificationData): Promise<any> {
     const result = await pool.query(
@@ -18,6 +25,31 @@ class NotificationRepository {
       [data.tenantId, data.userId, data.type, data.title, data.body || null, JSON.stringify(data.metadata || {})]
     );
     return this.rowToEntity(result.rows[0]);
+  }
+
+  /**
+   * Create one notification for every active administrator in a tenant.
+   * The caller owns error handling because this is commonly best-effort work
+   * performed after the primary operation has already committed.
+   */
+  async createForTenantAdmins(tenantId: string, data: CreateAdminNotificationData): Promise<void> {
+    const result = await pool.query<{ id: string }>(
+      `SELECT id
+       FROM users
+       WHERE tenant_id = $1
+         AND status = 'ACTIVE'
+         AND role IN ('SUPER_ADMIN', 'ADMIN', 'TEAM_LEAD')`,
+      [tenantId],
+    );
+
+    await Promise.all(result.rows.map(({ id }) => this.create({
+      tenantId,
+      userId: id,
+      type: data.type,
+      title: data.title,
+      body: data.body,
+      metadata: data.metadata,
+    })));
   }
 
   async findByUser(tenantId: string, userId: string, limit = 30): Promise<any[]> {
