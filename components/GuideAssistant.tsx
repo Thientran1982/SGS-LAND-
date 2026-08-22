@@ -31,8 +31,63 @@ export const GuideAssistant: React.FC = () => {
     const [sending, setSending] = useState(false);
     const [error, setError] = useState('');
     const [messages, setMessages] = useState<ChatMessage[]>([]);
+    const [togglePosition, setTogglePosition] = useState<{ left: number; top: number } | null>(null);
     const endRef = useRef<HTMLDivElement>(null);
     const sessionIdRef = useRef(`guide-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`);
+    const togglePositionRef = useRef(togglePosition);
+    const dragOffsetRef = useRef({ x: 0, y: 0 });
+    const dragStartRef = useRef({ x: 0, y: 0 });
+    const draggingRef = useRef(false);
+    const movedRef = useRef(false);
+
+    useEffect(() => {
+        try {
+            const saved = window.localStorage.getItem('sgs_guide_toggle_position');
+            if (saved) {
+                const position = JSON.parse(saved);
+                if (Number.isFinite(position?.left) && Number.isFinite(position?.top)) {
+                    setTogglePosition({ left: position.left, top: position.top });
+                }
+            }
+        } catch {
+            // Ignore malformed local position and use the default corner.
+        }
+    }, []);
+
+    useEffect(() => {
+        togglePositionRef.current = togglePosition;
+    }, [togglePosition]);
+
+    const handleTogglePointerDown = (event: React.PointerEvent<HTMLButtonElement>) => {
+        if (event.button !== 0) return;
+        const rect = event.currentTarget.getBoundingClientRect();
+        dragOffsetRef.current = { x: event.clientX - rect.left, y: event.clientY - rect.top };
+        dragStartRef.current = { x: event.clientX, y: event.clientY };
+        draggingRef.current = true;
+        movedRef.current = false;
+        event.currentTarget.setPointerCapture(event.pointerId);
+    };
+
+    const handleTogglePointerMove = (event: React.PointerEvent<HTMLButtonElement>) => {
+        if (!draggingRef.current) return;
+        const deltaX = Math.abs(event.clientX - dragStartRef.current.x);
+        const deltaY = Math.abs(event.clientY - dragStartRef.current.y);
+        if (deltaX > 4 || deltaY > 4) movedRef.current = true;
+        const width = event.currentTarget.offsetWidth;
+        const height = event.currentTarget.offsetHeight;
+        const left = Math.max(8, Math.min(window.innerWidth - width - 8, event.clientX - dragOffsetRef.current.x));
+        const top = Math.max(8, Math.min(window.innerHeight - height - 8, event.clientY - dragOffsetRef.current.y));
+        setTogglePosition({ left, top });
+    };
+
+    const handleTogglePointerUp = (event: React.PointerEvent<HTMLButtonElement>) => {
+        if (!draggingRef.current) return;
+        draggingRef.current = false;
+        if (event.currentTarget.hasPointerCapture(event.pointerId)) event.currentTarget.releasePointerCapture(event.pointerId);
+        if (movedRef.current && togglePositionRef.current) {
+            window.localStorage.setItem('sgs_guide_toggle_position', JSON.stringify(togglePositionRef.current));
+        }
+    };
 
     const copy = isVietnamese ? {
         title: 'Trợ lý hướng dẫn',
@@ -202,8 +257,12 @@ export const GuideAssistant: React.FC = () => {
             )}
             <button
                 type="button"
-                onClick={() => setOpen(value => !value)}
-                 className="group fixed bottom-4 right-4 sm:right-6 z-[139] flex h-12 w-12 items-center justify-center gap-0 overflow-hidden rounded-full bg-[var(--sgs-primary)] px-3 text-sm font-bold text-white shadow-lg shadow-[var(--sgs-primary)]/25 transition-[width,transform] duration-200 hover:w-auto hover:scale-[1.02] focus-visible:w-auto focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--sgs-primary)] focus-visible:ring-offset-2"
+                onClick={() => { if (!movedRef.current) setOpen(value => !value); movedRef.current = false; }}
+                onPointerDown={handleTogglePointerDown}
+                onPointerMove={handleTogglePointerMove}
+                onPointerUp={handleTogglePointerUp}
+                style={togglePosition ? { left: togglePosition.left, top: togglePosition.top, right: 'auto', bottom: 'auto' } : undefined}
+                className="group fixed bottom-4 right-4 sm:right-6 z-[139] flex h-12 w-12 touch-none cursor-grab items-center justify-center gap-0 overflow-hidden rounded-full bg-[var(--sgs-primary)] px-3 text-sm font-bold text-white shadow-lg shadow-[var(--sgs-primary)]/25 transition-[width,transform] duration-200 hover:w-auto hover:scale-[1.02] active:cursor-grabbing focus-visible:w-auto focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--sgs-primary)] focus-visible:ring-offset-2"
                 aria-label={open ? copy.close : copy.open}
                 title={open ? copy.close : copy.open}
             >
