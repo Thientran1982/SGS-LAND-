@@ -1,4 +1,4 @@
-import { useState, type ReactNode } from 'react';
+import { useEffect, useRef, useState, type PointerEvent, type ReactNode } from 'react';
 import {
   Activity, ArrowUpRight, Bell, Bot, CheckCircle2, ChevronRight, CircleHelp, FileCheck2, FileText, Globe2, Home,
   LayoutDashboard, ListChecks, MapPin, MessageCircle, MoreHorizontal, PanelLeftClose, PanelLeftOpen, RefreshCw,
@@ -32,6 +32,7 @@ const labels = {
     realtime: 'Realtime traffic', live: 'Live now', activePages: 'Active pages', topPage: 'Top page', direct: 'Direct / unknown',
     demand: 'Demand by area', demandSub: 'Search and enquiry interest by location', updated: 'Updated just now', focus: 'Focus mode', focused: 'Focus mode on',
      lightMode: 'Light mode', darkMode: 'Dark mode',
+     assistant: 'Guidance assistant', assistantIntro: 'Ask for help understanding this workspace or deciding what to do next.', assistantAction: 'Show me what needs attention',
   },
   vn: {
     overview: 'Tổng quan', company: 'Không gian công ty', greeting: 'Chào buổi sáng, Minh',
@@ -55,6 +56,7 @@ const labels = {
     realtime: 'Lưu lượng thời gian thực', live: 'Đang online', activePages: 'Trang đang xem', topPage: 'Trang nổi bật', direct: 'Trực tiếp / chưa rõ',
     demand: 'Nhu cầu theo khu vực', demandSub: 'Mức độ quan tâm từ tìm kiếm và hỏi đáp', updated: 'Vừa cập nhật', focus: 'Chế độ tập trung', focused: 'Đã bật tập trung',
      lightMode: 'Chế độ sáng', darkMode: 'Chế độ tối',
+     assistant: 'Trợ lý hướng dẫn', assistantIntro: 'Hỏi để hiểu workspace hoặc biết việc nên làm tiếp theo.', assistantAction: 'Cho tôi biết việc cần chú ý',
   },
 };
 
@@ -97,8 +99,15 @@ export function GuidedOverview() {
   const [focusMode, setFocusMode] = useState(false);
   const [darkMode, setDarkMode] = useState(false);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+  const [assistantOpen, setAssistantOpen] = useState(false);
+  const [assistantPosition, setAssistantPosition] = useState({ x: 0, y: 0 });
+  const dragRef = useRef<{ startX: number; startY: number; originX: number; originY: number; moved: boolean } | null>(null);
   const [toast, setToast] = useState('');
   const t = labels[language];
+
+  useEffect(() => {
+    setAssistantPosition({ x: Math.max(16, window.innerWidth - 72), y: Math.max(16, window.innerHeight - 78) });
+  }, []);
 
   const notify = (message: string) => {
     setToast(message);
@@ -170,7 +179,38 @@ export function GuidedOverview() {
         </div>
       </main>
     </div>
-    {toast && <div className="g-toast" role="status">{toast}</div>}
+     <div className="g-assistant-layer">
+       {assistantOpen && <section className="g-assistant-panel" style={{ left: Math.max(12, assistantPosition.x - 238), top: Math.max(12, assistantPosition.y - 224) }} aria-label={t.assistant}>
+         <div className="g-assistant-head"><span className="g-assistant-icon"><Bot size={15} /></span><div><strong>{t.assistant}</strong><small>{bilingual('Workspace guidance', 'Hướng dẫn workspace')}</small></div><button type="button" aria-label={bilingual('Close assistant', 'Đóng trợ lý')} onClick={() => setAssistantOpen(false)}>×</button></div>
+         <p>{t.assistantIntro}</p>
+         <button type="button" className="g-assistant-action" onClick={() => act(t.assistantAction)}><Sparkles size={13} />{t.assistantAction}<ChevronRight size={13} /></button>
+       </section>}
+       <button
+         type="button"
+         className={`g-assistant-fab ${assistantOpen ? 'active' : ''}`}
+         style={{ left: assistantPosition.x, top: assistantPosition.y }}
+         aria-label={t.assistant}
+         title={t.assistant}
+         onPointerDown={(event: PointerEvent<HTMLButtonElement>) => {
+           event.currentTarget.setPointerCapture(event.pointerId);
+           dragRef.current = { startX: event.clientX, startY: event.clientY, originX: assistantPosition.x, originY: assistantPosition.y, moved: false };
+         }}
+         onPointerMove={(event: PointerEvent<HTMLButtonElement>) => {
+           const drag = dragRef.current;
+           if (!drag) return;
+           const dx = event.clientX - drag.startX;
+           const dy = event.clientY - drag.startY;
+           if (Math.abs(dx) + Math.abs(dy) > 4) drag.moved = true;
+           if (drag.moved) setAssistantPosition({ x: Math.min(Math.max(8, drag.originX + dx), window.innerWidth - 54), y: Math.min(Math.max(8, drag.originY + dy), window.innerHeight - 54) });
+         }}
+         onPointerUp={() => {
+           const moved = dragRef.current?.moved;
+           dragRef.current = null;
+           if (!moved) setAssistantOpen((open) => !open);
+         }}
+       ><MessageCircle size={20} /></button>
+     </div>
+     {toast && <div className="g-toast" role="status">{toast}</div>}
   </div>;
 }
 
