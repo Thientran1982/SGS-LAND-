@@ -1363,7 +1363,7 @@ class DatabaseApiClient {
       { id: 'inbox', labelKey: 'menu.inbox', route: ROUTES.INBOX, iconKey: ROUTES.INBOX },
       { id: 'fav', labelKey: 'menu.favorites', route: ROUTES.FAVORITES, iconKey: ROUTES.FAVORITES }
     );
-    const core = { id: 'core', labelKey: 'menu.core', items: coreItems };
+    const core = { id: 'core', labelKey: 'menu.operations', items: coreItems };
     const ops = { id: 'ops', labelKey: 'menu.operations', items: [
       { id: 'projects', labelKey: 'menu.projects', route: ROUTES.PROJECTS, iconKey: ROUTES.PROJECTS },
       { id: 'approvals', labelKey: 'menu.approvals', route: ROUTES.APPROVALS, iconKey: ROUTES.APPROVALS },
@@ -1433,6 +1433,12 @@ class DatabaseApiClient {
       { id: 'task-kanban', labelKey: 'menu.task-kanban', route: ROUTES.TASK_KANBAN, iconKey: ROUTES.TASK_KANBAN },
       { id: 'tasks', labelKey: 'menu.tasks', route: ROUTES.TASKS, iconKey: ROUTES.TASKS },
     ]};
+    // The sidebar presents business operations, management, and ecosystem as
+    // the three top-level groups. Task management remains fully represented
+    // inside Management instead of becoming a separate top-level section.
+    const management = { id: 'management', labelKey: 'menu.management', items: [...ops.items, ...taskMgmt.items] };
+    const managementBasic = { id: 'management', labelKey: 'menu.management', items: [...opsBasic.items, ...taskMgmtBasic.items] };
+    const managementMarketing = { id: 'management', labelKey: 'menu.management', items: [...opsMarketing.items, ...taskMgmtBasic.items] };
     const partnerCore = { id: 'partner-core', labelKey: 'menu.partner_core', items: [
       { id: 'projects', labelKey: 'menu.projects', route: ROUTES.PROJECTS, iconKey: ROUTES.PROJECTS },
       { id: 'inv', labelKey: 'menu.inventory', route: ROUTES.INVENTORY, iconKey: ROUTES.INVENTORY },
@@ -1441,17 +1447,17 @@ class DatabaseApiClient {
       return [partnerCore];
     }
     if (role === UserRole.SUPER_ADMIN) {
-      return [core, ops, taskMgmt, sysSuperAdmin];
+      return [core, management, sysSuperAdmin];
     }
     if (role === UserRole.ADMIN || role === UserRole.TEAM_LEAD) {
-      return [core, ops, taskMgmt, sys];
+      return [core, management, sys];
     } else if (role === UserRole.MARKETING) {
-      return [core, opsMarketing, taskMgmtBasic];
+      return [core, managementMarketing];
     } else if (role === UserRole.SALES) {
-      return [core, opsBasic, taskMgmtBasic];
+      return [core, managementBasic];
     }
     // VIEWER + bất kỳ role không xác định: chỉ core + task kanban cơ bản (read-only UX)
-    return [core, taskMgmtBasic];
+    return [core, managementBasic];
   }
   async ping(): Promise<boolean> {
     try {
