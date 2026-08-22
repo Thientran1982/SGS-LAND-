@@ -28,3 +28,4 @@
 - [Valuation location matching](valuation-location-matching.md) — historical rows must match full location keys; token matching causes cross-province price contamination
 - [Dashboard color direction](dashboard-color-direction.md) — keep the existing clean SGS LAND palette; improve hierarchy and flow without changing the color system
 - [Dashboard greeting localization](dashboard-greeting-localization.md) — use the real user and locale; keep returning-visit context tenant-scoped and browser-local
+- [Dashboard data integrity](dashboard-data-integrity.md) — analytics outages must stay visible as errors, never synthetic all-zero business metrics
