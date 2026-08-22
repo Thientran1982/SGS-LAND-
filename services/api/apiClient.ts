@@ -58,8 +58,17 @@ async function request<T>(path: string, options: RequestOptions = {}): Promise<T
     throw new Error('Unauthorized');
   }
   if (response.status === 403) {
-    const errorData = await response.json().catch(() => ({ error: 'FORBIDDEN', message: 'Forbidden: Access denied' }));
-    const error = new Error(errorData.message || 'Forbidden: Access denied');
+    const errorData = await response.json().catch(() => ({ error: 'FORBIDDEN' }));
+    const serverMessage = typeof errorData.message === 'string' ? errorData.message.trim() : '';
+    const serverError = typeof errorData.error === 'string' ? errorData.error.trim().toLowerCase() : '';
+    const isGenericForbidden = !serverMessage ||
+      ['forbidden', 'access denied', 'forbidden: access denied'].includes(serverMessage.toLowerCase()) ||
+      ['forbidden', 'access denied', 'forbidden: access denied'].includes(serverError);
+    const error = new Error(
+      isGenericForbidden
+        ? 'Bạn không có quyền truy cập chức năng này.'
+        : serverMessage,
+    );
     (error as any).status = 403;
     (error as any).data = errorData;
     throw error;

@@ -128,7 +128,7 @@ describe("apiClient - request", () => {
     let thrown: any;
     try { await api.get("/api/admin"); } catch (e) { thrown = e; }
     expect(thrown.status).toBe(403);
-    expect(thrown.message).toBe("Forbidden: Access denied");
+    expect(thrown.message).toBe("Bạn không có quyền truy cập chức năng này.");
   });
 
   it("403 with non-parseable JSON falls back to FORBIDDEN defaults", async () => {
@@ -141,7 +141,7 @@ describe("apiClient - request", () => {
     let thrown: any;
     try { await api.get("/api/restricted"); } catch (e) { thrown = e; }
     expect(thrown.status).toBe(403);
-    expect(thrown.message).toBe("Forbidden: Access denied");
+    expect(thrown.message).toBe("Bạn không có quyền truy cập chức năng này.");
   });
 
   it("non-ok response throws with status and message from body", async () => {
