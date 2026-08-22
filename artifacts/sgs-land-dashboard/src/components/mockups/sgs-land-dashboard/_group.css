@@ -1,0 +1,292 @@
+@import url('https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=DM+Sans:wght@400;500;600;700&family=Instrument+Serif:ital@0;1&display=swap');
+
+.sgs-dashboard {
+  --sgs-ink: #1d2b2b;
+  --sgs-ink-soft: #4a5a58;
+  --sgs-muted: #87928f;
+  --sgs-paper: #f6f8f7;
+  --sgs-surface: #ffffff;
+  --sgs-sidebar: #edf3f0;
+  --sgs-line: #dfe7e3;
+  --sgs-green: #187968;
+  --sgs-green-deep: #10584e;
+  --sgs-mint: #d8ede6;
+  --sgs-coral: #d96b5e;
+  --sgs-sand: #f4eddf;
+  --sgs-yellow: #e8bb52;
+  --sgs-shadow: 0 12px 30px rgba(29, 60, 53, .07);
+  min-height: 100vh;
+  background: var(--sgs-paper);
+  color: var(--sgs-ink);
+  font-family: 'DM Sans', sans-serif;
+  font-size: 13px;
+  overflow-x: hidden;
+  transition: background .25s ease, color .25s ease;
+}
+
+.sgs-dashboard::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  opacity: .2;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 160 160' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='.05'/%3E%3C/svg%3E");
+  z-index: 20;
+}
+
+.sgs-dashboard.is-dark {
+  --sgs-ink: #e5eeea;
+  --sgs-ink-soft: #b4c3bd;
+  --sgs-muted: #82958d;
+  --sgs-paper: #172320;
+  --sgs-surface: #22332f;
+  --sgs-sidebar: #1c2d29;
+  --sgs-line: #334741;
+  --sgs-mint: #254d44;
+  --sgs-sand: #4b4437;
+  --sgs-shadow: 0 14px 32px rgba(0,0,0,.17);
+}
+
+.sgs-frame { display: flex; min-height: 100vh; }
+.sgs-sidebar {
+  position: fixed; z-index: 10; inset: 0 auto 0 0; width: 232px;
+  display: flex; flex-direction: column; padding: 25px 14px 15px;
+  background: var(--sgs-sidebar); border-right: 1px solid var(--sgs-line);
+  transition: width .25s ease, transform .25s ease;
+}
+.sgs-sidebar.is-collapsed { width: 73px; }
+.sgs-brand { display: flex; align-items: center; gap: 10px; padding: 0 11px 31px; }
+.sgs-mark {
+  width: 30px; height: 30px; flex: 0 0 30px; display: grid; place-items: center;
+  color: #f5faf7; background: var(--sgs-green); border-radius: 8px 8px 8px 2px;
+}
+.sgs-mark svg { width: 18px; height: 18px; stroke-width: 1.8; }
+.sgs-brand-name { font-size: 15px; letter-spacing: .17em; font-weight: 700; white-space: nowrap; }
+.sgs-brand-sub { display: block; color: var(--sgs-muted); font: 9px 'DM Mono', monospace; letter-spacing: .11em; margin-top: 2px; }
+.sgs-sidebar.is-collapsed .sgs-brand { padding-left: 7px; }
+.sgs-sidebar.is-collapsed .sgs-brand-name, .sgs-sidebar.is-collapsed .sgs-brand-sub,
+.sgs-sidebar.is-collapsed .sgs-workspace, .sgs-sidebar.is-collapsed .sgs-nav span,
+.sgs-sidebar.is-collapsed .sgs-section-label, .sgs-sidebar.is-collapsed .sgs-user-meta { display: none; }
+.sgs-workspace { color: var(--sgs-muted); font: 9px 'DM Mono', monospace; letter-spacing: .09em; padding: 0 12px 10px; text-transform: uppercase; }
+.sgs-nav { display: grid; gap: 3px; }
+.sgs-section-label { color: var(--sgs-muted); font: 9px 'DM Mono', monospace; letter-spacing: .14em; padding: 20px 12px 7px; text-transform: uppercase; }
+.sgs-nav button, .sgs-sidebar-footer button {
+  width: 100%; border: 0; background: transparent; color: var(--sgs-ink-soft); display: flex;
+  align-items: center; gap: 11px; min-height: 37px; padding: 0 12px; border-radius: 7px;
+  cursor: pointer; text-align: left; font: 500 12px 'DM Sans', sans-serif; transition: background .18s, color .18s, transform .18s;
+}
+.sgs-nav button:hover, .sgs-sidebar-footer button:hover { background: color-mix(in srgb, var(--sgs-surface) 60%, transparent); color: var(--sgs-green); transform: translateX(2px); }
+.sgs-nav button.active { background: var(--sgs-surface); color: var(--sgs-green); box-shadow: 0 2px 9px rgba(29,60,53,.05); }
+.sgs-nav svg, .sgs-sidebar-footer svg { width: 16px; height: 16px; stroke-width: 1.7; flex: 0 0 auto; }
+.sgs-sidebar-footer { margin-top: auto; display: grid; gap: 4px; padding-top: 16px; border-top: 1px solid var(--sgs-line); }
+.sgs-user { display: flex; align-items: center; gap: 9px; padding: 17px 9px 2px; }
+.sgs-avatar { width: 29px; height: 29px; display:grid; place-items:center; flex:0 0 29px; border-radius: 50%; background: var(--sgs-green); color:#fff; font: 10px 'DM Mono', monospace; }
+.sgs-user-meta { min-width: 0; }
+.sgs-user-meta strong, .sgs-user-meta small { display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.sgs-user-meta strong { font-size: 11px; }
+.sgs-user-meta small { color: var(--sgs-muted); font-size: 10px; margin-top: 2px; }
+
+.sgs-main { width: calc(100% - 232px); margin-left: 232px; transition: width .25s ease, margin-left .25s ease; }
+.sgs-sidebar.is-collapsed + .sgs-main { width: calc(100% - 73px); margin-left: 73px; }
+.sgs-topbar { height: 68px; display:flex; align-items:center; justify-content:space-between; gap:18px; padding: 0 38px; background: color-mix(in srgb, var(--sgs-paper) 88%, transparent); border-bottom:1px solid var(--sgs-line); }
+.sgs-top-left, .sgs-top-actions, .sgs-search-trigger, .sgs-top-button { display:flex; align-items:center; }
+.sgs-top-left { gap: 22px; min-width:0; }
+.sgs-menu { border: 0; background: transparent; padding: 5px; color: var(--sgs-muted); cursor:pointer; }
+.sgs-menu:hover { color: var(--sgs-green); }
+.sgs-breadcrumb { color: var(--sgs-muted); font: 10px 'DM Mono', monospace; letter-spacing: .04em; }
+.sgs-breadcrumb b { color: var(--sgs-ink-soft); font-weight: 500; }
+.sgs-top-actions { gap: 8px; }
+.sgs-top-button, .sgs-search-trigger { min-height:32px; border:1px solid var(--sgs-line); border-radius: 6px; padding: 0 9px; background: var(--sgs-surface); color:var(--sgs-ink-soft); cursor:pointer; font: 11px 'DM Sans', sans-serif; gap:7px; }
+.sgs-top-button:hover, .sgs-search-trigger:hover { border-color: var(--sgs-green); color:var(--sgs-green); }
+.sgs-search-trigger { width: 164px; justify-content:space-between; color: var(--sgs-muted); }
+.sgs-search-trigger kbd { border:1px solid var(--sgs-line); padding: 1px 4px; border-radius: 3px; font: 9px 'DM Mono', monospace; }
+.sgs-content { max-width: 1470px; padding: 31px 38px 60px; margin: 0 auto; }
+.sgs-eyebrow { color:var(--sgs-green); font: 10px 'DM Mono', monospace; letter-spacing:.13em; text-transform:uppercase; }
+.sgs-hero { display:flex; justify-content:space-between; align-items:end; gap:30px; margin-bottom: 23px; }
+.sgs-hero h1 { margin: 7px 0 0; color:var(--sgs-ink); font: 400 clamp(34px, 4vw, 51px)/.99 'Instrument Serif', Georgia, serif; letter-spacing:-.025em; }
+.sgs-hero h1 em { color:var(--sgs-green); }
+.sgs-hero-note { max-width: 245px; color:var(--sgs-muted); font-size: 11px; line-height: 1.55; text-align:right; }
+.sgs-hero-note b { color:var(--sgs-ink-soft); font-weight:600; }
+.sgs-demo { display:inline-flex; align-items:center; gap:5px; color:var(--sgs-green); background:var(--sgs-mint); border-radius:100px; padding:4px 8px; font: 9px 'DM Mono', monospace; letter-spacing:.02em; }
+
+.sgs-alert { display:flex; align-items:center; gap:12px; background: var(--sgs-green-deep); color:#e8f4ee; padding: 12px 15px; border-radius: 7px; margin-bottom: 21px; }
+.sgs-alert-icon { display:grid; place-items:center; width: 25px; height:25px; background:rgba(255,255,255,.12); border-radius:50%; flex:0 0 25px; }
+.sgs-alert svg { width:14px; }
+.sgs-alert-copy { flex:1; font-size:11px; }
+.sgs-alert-copy strong { font-weight:600; margin-right:5px; }
+.sgs-alert-copy span { color:#b7d5ca; }
+.sgs-alert button { border:0; color:#fff; background:transparent; cursor:pointer; font: 10px 'DM Mono', monospace; text-decoration:underline; text-underline-offset:3px; }
+
+.sgs-section-head { display:flex; align-items:center; justify-content:space-between; gap:14px; margin: 27px 0 10px; }
+.sgs-section-head h2 { margin:0; color:var(--sgs-ink); font-size:13px; font-weight:600; letter-spacing:-.01em; }
+.sgs-section-head p { margin:3px 0 0; color:var(--sgs-muted); font-size:10px; }
+.sgs-section-head .sgs-more { color:var(--sgs-green); font: 10px 'DM Mono', monospace; border:0; background:transparent; cursor:pointer; }
+.sgs-quick-grid { display:grid; grid-template-columns: 1.35fr 1fr 1fr; gap: 10px; }
+.sgs-quick { display:flex; align-items:center; gap:12px; border:1px solid var(--sgs-line); padding:13px 14px; background:var(--sgs-surface); border-radius:7px; text-align:left; cursor:pointer; color:var(--sgs-ink); transition: transform .2s, border-color .2s, box-shadow .2s; }
+.sgs-quick:hover { transform:translateY(-2px); border-color:var(--sgs-green); box-shadow:var(--sgs-shadow); }
+.sgs-quick.primary { background:var(--sgs-mint); border-color:transparent; }
+.sgs-quick-icon { display:grid; place-items:center; color:var(--sgs-green); background:var(--sgs-paper); width:28px; height:28px; border-radius:6px; flex:0 0 28px; }
+.sgs-quick-icon svg { width:15px; }
+.sgs-quick strong, .sgs-quick small { display:block; }
+.sgs-quick strong { font-size:11px; font-weight:600; }
+.sgs-quick small { color:var(--sgs-muted); font-size:10px; margin-top:3px; }
+
+.sgs-queue-grid { display:grid; grid-template-columns: 1fr 1fr; gap:10px; }
+.sgs-panel { background:var(--sgs-surface); border:1px solid var(--sgs-line); border-radius:7px; box-shadow:0 1px 1px rgba(29,60,53,.015); }
+.sgs-panel-head { display:flex; align-items:flex-start; justify-content:space-between; padding:15px 16px 11px; border-bottom:1px solid var(--sgs-line); }
+.sgs-panel-title { display:flex; gap:9px; align-items:center; }
+.sgs-panel-title h3 { margin:0; font-size:12px; font-weight:600; }
+.sgs-panel-title p { margin:3px 0 0; color:var(--sgs-muted); font-size:10px; }
+.sgs-panel-title > svg { color:var(--sgs-green); width:16px; }
+.sgs-count { border-radius:100px; min-width:20px; padding:3px 6px; text-align:center; background:var(--sgs-sand); color:#99752a; font:10px 'DM Mono', monospace; }
+.sgs-queue-list { padding:4px 7px 7px; }
+.sgs-queue-item { display:flex; align-items:center; width:100%; gap:10px; padding:9px; color:var(--sgs-ink); background:transparent; border:0; border-bottom:1px solid var(--sgs-line); cursor:pointer; text-align:left; }
+.sgs-queue-item:last-child { border-bottom:0; }
+.sgs-queue-item:hover { background:var(--sgs-paper); }
+.sgs-queue-item > svg { margin-left:auto; color:var(--sgs-muted); width:13px; }
+.sgs-queue-icon { width:25px;height:25px;display:grid;place-items:center;border-radius:6px;background:var(--sgs-paper);color:var(--sgs-green);flex:0 0 25px; }
+.sgs-queue-icon svg { width:13px; }
+.sgs-queue-copy { min-width:0; }
+.sgs-queue-copy strong, .sgs-queue-copy small { display:block; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.sgs-queue-copy strong { font-size:10px; font-weight:600; }
+.sgs-queue-copy small { color:var(--sgs-muted); font-size:9px; margin-top:3px; }
+.sgs-queue-status { margin-left:auto; color:var(--sgs-coral); background:#f9e8e4; border-radius:4px; padding:3px 5px; font:8px 'DM Mono', monospace; white-space:nowrap; }
+.is-dark .sgs-queue-status { background:#573d39; }
+
+.sgs-guide { display:grid; grid-template-columns: 1.2fr 2fr; gap:20px; padding:18px 19px; background:var(--sgs-sand); border:1px solid color-mix(in srgb, var(--sgs-yellow) 35%, var(--sgs-line)); border-radius:7px; }
+.sgs-guide-copy h3 { margin:0 0 7px; font:400 21px 'Instrument Serif', Georgia, serif; }
+.sgs-guide-copy p { color:var(--sgs-ink-soft); line-height:1.5; font-size:10px; margin:0; max-width:275px; }
+.sgs-guide-steps { display:grid; grid-template-columns:repeat(3, 1fr); align-items:center; gap:0; }
+.sgs-step { position:relative; padding:0 14px 0 37px; min-height:34px; }
+.sgs-step:not(:last-child)::after { content:''; position:absolute; top:16px; right:-1px; width:18px; height:1px; background:var(--sgs-yellow); }
+.sgs-step-number { position:absolute; left:0; top:0; display:grid; place-items:center; width:25px; height:25px; border-radius:50%; background:var(--sgs-surface); color:var(--sgs-green); font:10px 'DM Mono', monospace; border:1px solid var(--sgs-yellow); }
+.sgs-step strong { display:block; font-size:10px; font-weight:600; }
+.sgs-step small { display:block; color:var(--sgs-muted); font-size:9px; margin-top:3px; }
+
+.sgs-kpi-grid { display:grid; grid-template-columns:repeat(4,1fr); gap:10px; }
+.sgs-kpi { padding:15px 16px 14px; position:relative; overflow:hidden; min-height:105px; border:1px solid var(--sgs-line); border-radius:7px; background:var(--sgs-surface); }
+.sgs-kpi::after { content:''; position:absolute; right:-19px; bottom:-23px; width:77px; height:77px; border-radius:50%; background:var(--sgs-mint); opacity:.55; }
+.sgs-kpi small { display:block; color:var(--sgs-muted); font-size:10px; }
+.sgs-kpi strong { display:block; margin:9px 0 4px; color:var(--sgs-ink); font:500 23px 'DM Mono', monospace; letter-spacing:-.06em; }
+.sgs-kpi-note { display:flex; align-items:center; gap:5px; color:var(--sgs-muted); font-size:9px; }
+.sgs-kpi-note em { color:var(--sgs-green); font-style:normal; font-family:'DM Mono',monospace; }
+.sgs-kpi-note em.down { color:var(--sgs-coral); }
+.sgs-progress { height:3px; margin-top:10px; background:var(--sgs-line); border-radius:3px; overflow:hidden; }
+.sgs-progress i { display:block; height:100%; background:var(--sgs-green); border-radius:3px; }
+.sgs-kpi-target { color:var(--sgs-muted); font:8px 'DM Mono', monospace; margin-top:4px; display:block; }
+
+.sgs-analytics-grid { display:grid; grid-template-columns:1.38fr 1fr; gap:10px; }
+.sgs-chart-panel { min-height:282px; }
+.sgs-chart-tools { display:flex; gap:5px; }
+.sgs-toggle { display:flex; background:var(--sgs-paper); border-radius:5px; padding:2px; }
+.sgs-toggle button { border:0; background:transparent; color:var(--sgs-muted); padding:4px 7px; border-radius:4px; font:9px 'DM Mono',monospace; cursor:pointer; }
+.sgs-toggle button.active { background:var(--sgs-surface); box-shadow:0 1px 3px rgba(0,0,0,.08); color:var(--sgs-green); }
+.sgs-select { border:1px solid var(--sgs-line); background:var(--sgs-surface); color:var(--sgs-ink-soft); border-radius:5px; padding:4px 7px; font:9px 'DM Mono',monospace; outline:none; cursor:pointer; }
+.sgs-chart { padding:18px 17px 13px; }
+.sgs-chart svg { width:100%; height:165px; overflow:visible; }
+.sgs-chart-gridline { stroke:var(--sgs-line); stroke-dasharray:2 4; stroke-width:1; }
+.sgs-chart-label { fill:var(--sgs-muted); font:9px 'DM Mono',monospace; }
+.sgs-chart-area { fill:var(--sgs-mint); opacity:.46; }
+.sgs-chart-line { fill:none; stroke:var(--sgs-green); stroke-width:2.2; stroke-linecap:round; stroke-linejoin:round; }
+.sgs-chart-dot { fill:var(--sgs-surface); stroke:var(--sgs-green); stroke-width:2; }
+.sgs-chart-legend { display:flex; gap:15px; border-top:1px solid var(--sgs-line); padding-top:10px; color:var(--sgs-muted); font-size:9px; }
+.sgs-legend-dot { width:6px; height:6px; background:var(--sgs-green); border-radius:50%; display:inline-block; margin-right:5px; }
+.sgs-legend-dot.coral { background:var(--sgs-coral); }
+.sgs-source-list { padding:10px 16px 13px; }
+.sgs-source-row { display:grid; grid-template-columns: 92px 1fr 42px; gap:10px; align-items:center; padding:10px 0; border-bottom:1px solid var(--sgs-line); }
+.sgs-source-row:last-child { border-bottom:0; }
+.sgs-source-row > span { font-size:10px; color:var(--sgs-ink-soft); }
+.sgs-source-row > b { color:var(--sgs-ink); font:10px 'DM Mono', monospace; text-align:right; }
+.sgs-bar { height:5px; background:var(--sgs-paper); border-radius:4px; overflow:hidden; }
+.sgs-bar i { display:block; height:100%; background:var(--sgs-green); border-radius:4px; }
+.sgs-bar i.coral { background:var(--sgs-coral); }
+.sgs-bar i.yellow { background:var(--sgs-yellow); }
+
+.sgs-lower-grid { display:grid; grid-template-columns:1.02fr 1fr 1fr; gap:10px; }
+.sgs-mini-panel { min-height:230px; }
+.sgs-mini-body { padding:13px 16px; }
+.sgs-team-row { display:flex; align-items:center; gap:9px; padding:8px 0; border-bottom:1px solid var(--sgs-line); }
+.sgs-team-row:last-child { border-bottom:0; }
+.sgs-team-initial { width:24px; height:24px; display:grid; place-items:center; background:var(--sgs-mint); color:var(--sgs-green); border-radius:50%; font:9px 'DM Mono',monospace; }
+.sgs-team-row strong { font-size:10px; font-weight:600; display:block; }
+.sgs-team-row small { color:var(--sgs-muted); font-size:9px; display:block; margin-top:2px; }
+.sgs-team-row b { margin-left:auto; font:10px 'DM Mono',monospace; color:var(--sgs-ink-soft); }
+.sgs-metric { display:flex; justify-content:space-between; align-items:end; border-bottom:1px solid var(--sgs-line); padding:10px 0; }
+.sgs-metric:first-child { padding-top:0; }
+.sgs-metric:last-child { border-bottom:0; }
+.sgs-metric span { color:var(--sgs-muted); font-size:10px; }
+.sgs-metric strong { font:500 16px 'DM Mono',monospace; }
+.sgs-metric em { color:var(--sgs-green); font:9px 'DM Mono',monospace; font-style:normal; margin-left:7px; }
+.sgs-activity { display:flex; gap:9px; padding:8px 0; }
+.sgs-activity-mark { width:6px; height:6px; flex:0 0 6px; margin-top:4px; border-radius:50%; background:var(--sgs-green); }
+.sgs-activity p { margin:0; font-size:10px; line-height:1.4; }
+.sgs-activity small { display:block; color:var(--sgs-muted); font:9px 'DM Mono',monospace; margin-top:3px; }
+.sgs-footer-note { display:flex; align-items:center; justify-content:space-between; margin-top:22px; padding-top:14px; border-top:1px solid var(--sgs-line); color:var(--sgs-muted); font-size:9px; }
+.sgs-footer-note span { display:flex; gap:5px; align-items:center; }
+
+.sgs-toast { position:fixed; z-index:50; left:50%; bottom:24px; transform:translateX(-50%); display:flex; align-items:center; gap:8px; padding:10px 14px; color:#eff8f3; background:var(--sgs-green-deep); border-radius:6px; box-shadow:0 8px 25px rgba(0,0,0,.17); font-size:11px; animation:sgs-toast-in .2s ease both; }
+@keyframes sgs-toast-in { from { opacity:0; transform:translate(-50%, 6px); } to { opacity:1; transform:translate(-50%, 0); } }
+.sgs-modal-backdrop { position:fixed; z-index:40; inset:0; display:grid; place-items:start center; padding-top:14vh; background:rgba(22,38,34,.28); backdrop-filter:blur(4px); }
+.sgs-search-modal { width:min(560px, calc(100% - 30px)); background:var(--sgs-surface); border:1px solid var(--sgs-line); border-radius:9px; box-shadow:0 25px 70px rgba(20,45,38,.2); overflow:hidden; }
+.sgs-search-input { display:flex; align-items:center; gap:9px; padding:15px; border-bottom:1px solid var(--sgs-line); }
+.sgs-search-input svg { color:var(--sgs-green); width:17px; }
+.sgs-search-input input { flex:1; border:0; outline:0; background:transparent; color:var(--sgs-ink); font:14px 'DM Sans',sans-serif; }
+.sgs-search-input input::placeholder { color:var(--sgs-muted); }
+.sgs-search-results { max-height:330px; overflow:auto; padding:7px; }
+.sgs-search-result { display:flex; gap:10px; align-items:center; width:100%; border:0; background:transparent; color:var(--sgs-ink); padding:10px; border-radius:5px; text-align:left; cursor:pointer; }
+.sgs-search-result:hover { background:var(--sgs-paper); }
+.sgs-search-result > svg { color:var(--sgs-green); width:15px; }
+.sgs-search-result strong, .sgs-search-result small { display:block; }
+.sgs-search-result strong { font-size:11px; }
+.sgs-search-result small { color:var(--sgs-muted); font-size:9px; margin-top:3px; }
+.sgs-empty { color:var(--sgs-muted); padding:20px; text-align:center; font-size:11px; }
+
+.sgs-assistant-layer { position:fixed; z-index:35; inset:0; pointer-events:none; }
+.sgs-assistant-fab { position:fixed; display:grid; place-items:center; width:48px; height:48px; border:0; border-radius:50%; color:#fff; background:var(--sgs-green); cursor:grab; pointer-events:auto; box-shadow:0 9px 23px rgba(24,121,104,.28); touch-action:none; }
+.sgs-assistant-fab:active { cursor:grabbing; }
+.sgs-assistant-fab.active { background:var(--sgs-green-deep); }
+.sgs-assistant-fab svg { width:21px; }
+.sgs-assistant-panel { position:fixed; pointer-events:auto; width:245px; padding:15px; border:1px solid var(--sgs-line); border-radius:9px; background:var(--sgs-surface); box-shadow:0 16px 35px rgba(20,45,38,.16); }
+.sgs-assistant-head { display:flex; gap:9px; align-items:center; }
+.sgs-assistant-icon { display:grid; place-items:center; width:29px; height:29px; color:var(--sgs-green); background:var(--sgs-mint); border-radius:7px; }
+.sgs-assistant-head strong { font-size:11px; display:block; }
+.sgs-assistant-head small { display:block; margin-top:2px; color:var(--sgs-muted); font-size:9px; }
+.sgs-assistant-panel p { color:var(--sgs-ink-soft); font-size:10px; line-height:1.5; margin:13px 0; }
+.sgs-assistant-panel button { border:1px solid var(--sgs-line); background:var(--sgs-paper); color:var(--sgs-green); border-radius:5px; padding:7px 9px; font:10px 'DM Sans',sans-serif; cursor:pointer; }
+.sgs-focused .sgs-sidebar, .sgs-focused .sgs-topbar, .sgs-focused .sgs-footer-note, .sgs-focused .sgs-guide, .sgs-focused .sgs-lower-grid { display:none; }
+.sgs-focused .sgs-main { width:100%; margin:0; }
+.sgs-focused .sgs-content { max-width:1150px; padding-top:44px; }
+
+@media (max-width: 1120px) {
+  .sgs-content, .sgs-topbar { padding-left:24px; padding-right:24px; }
+  .sgs-lower-grid { grid-template-columns:1fr 1fr; }
+  .sgs-lower-grid .sgs-mini-panel:last-child { grid-column:1 / -1; }
+}
+@media (max-width: 820px) {
+  .sgs-sidebar { transform:translateX(-100%); width:232px; box-shadow:var(--sgs-shadow); }
+  .sgs-sidebar.mobile-open { transform:translateX(0); }
+  .sgs-main, .sgs-sidebar.is-collapsed + .sgs-main { width:100%; margin-left:0; }
+  .sgs-content, .sgs-topbar { padding-left:17px; padding-right:17px; }
+  .sgs-topbar { height:59px; }
+  .sgs-search-trigger { width:34px; padding:0; justify-content:center; }
+  .sgs-search-trigger span, .sgs-search-trigger kbd, .sgs-breadcrumb { display:none; }
+  .sgs-top-actions { gap:5px; }
+  .sgs-hero { align-items:flex-start; flex-direction:column; gap:12px; }
+  .sgs-hero-note { text-align:left; max-width:390px; }
+  .sgs-quick-grid, .sgs-queue-grid, .sgs-analytics-grid { grid-template-columns:1fr; }
+  .sgs-guide { grid-template-columns:1fr; gap:17px; }
+  .sgs-guide-copy p { max-width:none; }
+  .sgs-kpi-grid { grid-template-columns:1fr 1fr; }
+  .sgs-lower-grid { grid-template-columns:1fr; }
+  .sgs-lower-grid .sgs-mini-panel:last-child { grid-column:auto; }
+}
+@media (max-width: 470px) {
+  .sgs-content { padding-top:22px; padding-bottom:35px; }
+  .sgs-hero h1 { font-size:39px; }
+  .sgs-kpi { min-height:98px; padding:13px; }
+  .sgs-kpi strong { font-size:19px; }
+  .sgs-guide-steps { grid-template-columns:1fr; gap:13px; }
+  .sgs-step { padding-left:37px; }
+  .sgs-step:not(:last-child)::after { left:12px; top:28px; width:1px; height:13px; }
+  .sgs-section-head { margin-top:22px; }
+}
