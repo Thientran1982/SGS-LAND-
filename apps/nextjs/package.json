@@ -3,9 +3,9 @@
   "version": "1.0.0",
   "private": true,
   "scripts": {
-    "dev": "next dev --turbopack",
-    "build": "next build --turbopack",
-    "preview:prod": "next build --turbopack && next start",
+    "dev": "next dev",
+    "build": "next build",
+    "preview:prod": "next build && next start",
     "start": "next start",
     "lint": "next lint",
     "type-check": "tsc --noEmit"
