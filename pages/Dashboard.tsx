@@ -1094,23 +1094,32 @@ export const Dashboard: React.FC = () => {
                     <section className="dashboard-panel" aria-label={t('dash.pipeline_title')}>
                         <div className="dashboard-panel-head">
                             <h2>{t('dash.pipeline_title')}</h2>
-                            <div className="flex items-center gap-3 text-right">
-                                <SegmentToggle value={pipelineMode} onChange={(value) => setPipelineMode(value as 'overview' | 'source')} options={[{ value: 'overview', label: ui.overview }, { value: 'source', label: ui.source }]} />
-                                <div>
-                                    <div className="dashboard-subhead">{t('dash.total_leads')}</div>
-                                    <div className="dash-number mt-1 text-lg font-semibold text-[var(--text-primary)]">{analytics.totalLeads}</div>
-                                </div>
-                                <div className="hidden sm:block">
-                                    <div className="dashboard-subhead">{t('dash.conversion')}</div>
-                                    <div className="dash-number mt-1 text-lg font-semibold text-[var(--sgs-verified)]">{!isNaN(analytics.conversionRate) ? analytics.conversionRate : 0}%</div>
-                                </div>
-                            </div>
+                            <SegmentToggle value={pipelineMode} onChange={(value) => setPipelineMode(value as 'overview' | 'source')} options={[{ value: 'overview', label: ui.overview }, { value: 'source', label: ui.source }]} />
                         </div>
                         <div className="dashboard-workbench">
                             <div className="dashboard-chart">
-                                <div className="mb-3 flex items-center justify-between">
-                                    <TrendIndicator value={analytics.totalLeadsDelta} label={t('dash.total_leads')} />
-                                    <span className="dashboard-subhead">{timeRange}</span>
+                                <div className="mb-4 grid grid-cols-2 gap-2 sm:grid-cols-4">
+                                    <div className="rounded-xl border border-[var(--glass-border)] bg-[var(--bg-surface)] px-3 py-2.5">
+                                        <div className="dashboard-subhead">{t('dash.total_leads')}</div>
+                                        <div className="dash-number mt-1 text-xl font-bold text-[var(--text-primary)]">{analytics.totalLeads ?? 0}</div>
+                                    </div>
+                                    <div className="rounded-xl border border-[var(--glass-border)] bg-[var(--bg-surface)] px-3 py-2.5">
+                                        <div className="dashboard-subhead">{t('dash.conversion')}</div>
+                                        <div className="dash-number mt-1 text-xl font-bold text-[var(--sgs-verified)]">{!isNaN(analytics.conversionRate) ? analytics.conversionRate : 0}%</div>
+                                    </div>
+                                    <div className="col-span-2 flex items-center justify-between rounded-xl border border-[var(--glass-border)] bg-[var(--bg-surface)] px-3 py-2.5 sm:col-span-2">
+                                        <TrendIndicator value={analytics.totalLeadsDelta} label={t('dash.vs_last_period')} />
+                                        <span className="dashboard-subhead">{timeRange}</span>
+                                    </div>
+                                </div>
+                                <div className="mb-2 flex items-center justify-between gap-3">
+                                    <div className="dashboard-subhead">{pipelineMode === 'source' ? ui.source : language === 'vn' ? 'Khách mới theo ngày' : 'New leads by day'}</div>
+                                    {pipelineMode === 'overview' && (
+                                        <div className="flex items-center gap-3 text-xs text-[var(--text-tertiary)]" aria-label={language === 'vn' ? 'Chú giải biểu đồ' : 'Chart legend'}>
+                                            <span className="inline-flex items-center gap-1.5"><span className="h-2 w-2 rounded-sm bg-[var(--sgs-primary)]" />{t('dash.chart_new_leads')}</span>
+                                            <span className="inline-flex items-center gap-1.5"><span className="h-0.5 w-3 bg-[var(--sgs-accent)]" />{t('dash.chart_trend')}</span>
+                                        </div>
+                                    )}
                                 </div>
                                 <div className="h-[260px] w-full min-w-0 sm:h-[300px]">
                                     {pipelineMode === 'source' ? (
