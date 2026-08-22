@@ -1142,8 +1142,10 @@ export function createValuationRoutes(
     }
     try {
       const report = await priceCalibrationService.backtestGoldSet();
+      const history = await priceCalibrationService.getEvaluationHistory();
       return res.json({
         report,
+        history,
         dataset: {
           name: 'Verified valuation gold set',
           sampleCount: valuationGoldSet.length,

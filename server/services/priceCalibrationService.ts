@@ -444,7 +444,68 @@ export class PriceCalibrationService {
           : { transactionId: transaction.id, predictedPricePerM2: null, rejected: true });
       }
     }
-    return evaluateValuationGoldSet(transactions, predictions);
+    const evaluation = evaluateValuationGoldSet(transactions, predictions);
+    await this.saveEvaluationRun(evaluation);
+    return evaluation;
+  }
+
+  private async saveEvaluationRun(evaluation: GoldSetEvaluation): Promise<void> {
+    if (!this.pool) return;
+    try {
+      await this.pool.query(
+        `INSERT INTO valuation_evaluation_runs
+          (evaluated_at, sample_count, evaluated_count, rejected_count, reject_rate,
+           mae, mape, median_absolute_error, interval_coverage)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)`,
+        [
+          evaluation.evaluatedAt, evaluation.sampleCount, evaluation.evaluatedCount,
+          evaluation.rejectedCount, evaluation.rejectRate, evaluation.mae, evaluation.mape,
+          evaluation.medianAbsoluteError, evaluation.intervalCoverage,
+        ],
+      );
+    } catch (error: any) {
+      // Reporting remains available if an older database has not migrated yet.
+      logger.warn(`[Calibration] Could not persist evaluation run: ${error?.message || error}`);
+    }
+  }
+
+  async getEvaluationHistory(limit = 30): Promise<Array<{
+    evaluatedAt: string;
+    sampleCount: number;
+    evaluatedCount: number;
+    rejectedCount: number;
+    rejectRate: number;
+    mae: number | null;
+    mape: number | null;
+    medianAbsoluteError: number | null;
+    intervalCoverage: number | null;
+  }>> {
+    if (!this.pool) return [];
+    try {
+      const safeLimit = Math.max(1, Math.min(100, Math.floor(limit)));
+      const { rows } = await this.pool.query(
+        `SELECT evaluated_at, sample_count, evaluated_count, rejected_count, reject_rate,
+                mae, mape, median_absolute_error, interval_coverage
+         FROM valuation_evaluation_runs
+         ORDER BY evaluated_at DESC
+         LIMIT $1`,
+        [safeLimit],
+      );
+      return rows.map((row: any) => ({
+        evaluatedAt: new Date(row.evaluated_at).toISOString(),
+        sampleCount: Number(row.sample_count),
+        evaluatedCount: Number(row.evaluated_count),
+        rejectedCount: Number(row.rejected_count),
+        rejectRate: Number(row.reject_rate),
+        mae: row.mae == null ? null : Number(row.mae),
+        mape: row.mape == null ? null : Number(row.mape),
+        medianAbsoluteError: row.median_absolute_error == null ? null : Number(row.median_absolute_error),
+        intervalCoverage: row.interval_coverage == null ? null : Number(row.interval_coverage),
+      })).reverse();
+    } catch (error: any) {
+      logger.warn(`[Calibration] Could not read evaluation history: ${error?.message || error}`);
+      return [];
+    }
   }
 
   // ── Admin: price history for a location ───────────────────────────────────

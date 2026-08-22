@@ -160,6 +160,7 @@ import m140 from './140_refresh_default_sequences';
 import m141 from './141_marketing_email_consent';
 import m142 from './142_seed_geo_target_keywords';
 import m143 from './143_complete_geo_keyword_metadata';
+import m144 from './144_valuation_evaluation_history';
 
 dotenv.config();
 
@@ -316,6 +317,7 @@ const MIGRATION_REGISTRY: Record<string, Migration> = {
   '141_marketing_email_consent.ts': m141,
   '142_seed_geo_target_keywords.ts': m142,
   '143_complete_geo_keyword_metadata.ts': m143,
+  '144_valuation_evaluation_history.ts': m144,
 };
 
 async function ensureSchemaVersionsTable(client: PoolClient): Promise<void> {

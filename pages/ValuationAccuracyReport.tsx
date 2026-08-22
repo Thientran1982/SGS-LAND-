@@ -18,6 +18,7 @@ type Metrics = {
 type Group = Metrics & { locationKey: string; propertyType: string };
 type ResponseData = {
   report: Metrics & { evaluatedAt: string; groups: Group[] };
+  history: Array<Metrics & { evaluatedAt: string }>;
   dataset: { name: string; sampleCount: number; unitLabel: string; sources: string[] };
   disclaimer: string;
 };
@@ -34,6 +35,50 @@ function MetricCard({ label, value, detail }: { label: string; value: string; de
       <p className="text-sm text-slate-500">{label}</p>
       <p className="mt-2 text-2xl font-bold text-slate-900">{value}</p>
       {detail && <p className="mt-1 text-xs text-slate-500">{detail}</p>}
+    </div>
+  );
+}
+
+function TrendChart({ history }: { history: ResponseData['history'] }) {
+  if (history.length < 2) {
+    return <p className="rounded-xl bg-slate-50 p-5 text-sm text-slate-500">Cần ít nhất hai lần chạy để hiển thị xu hướng.</p>;
+  }
+  const width = 720;
+  const height = 220;
+  const pad = { top: 20, right: 20, bottom: 42, left: 58 };
+  const maeValues = history.map(run => run.mae == null ? 0 : run.mae);
+  const mapeValues = history.map(run => run.mape == null ? 0 : run.mape * 100);
+  const maxMae = Math.max(...maeValues, 1);
+  const maxMape = Math.max(...mapeValues, 1);
+  const point = (value: number, index: number, maxValue: number) => {
+    const x = pad.left + (index / Math.max(history.length - 1, 1)) * (width - pad.left - pad.right);
+    const y = pad.top + (1 - value / maxValue) * (height - pad.top - pad.bottom);
+    return `${x},${y}`;
+  };
+  const maePoints = maeValues.map((value, index) => point(value, index, maxMae)).join(' ');
+  const mapePoints = mapeValues.map((value, index) => point(value, index, maxMape)).join(' ');
+  const first = history[0];
+  const last = history[history.length - 1];
+  const rising = last.mae != null && first.mae != null && last.mae > first.mae ||
+    last.mape != null && first.mape != null && last.mape > first.mape;
+  return (
+    <div>
+      <div className="mb-3 flex flex-wrap items-center gap-4 text-xs text-slate-600">
+        <span className="inline-flex items-center gap-1.5"><i className="h-2.5 w-2.5 rounded-full bg-indigo-600" /> MAE (VND/m²)</span>
+        <span className="inline-flex items-center gap-1.5"><i className="h-2.5 w-2.5 rounded-full bg-amber-500" /> MAPE (%)</span>
+        <span className={`ml-auto rounded-full px-2.5 py-1 font-medium ${rising ? 'bg-amber-100 text-amber-800' : 'bg-emerald-100 text-emerald-800'}`}>
+          {rising ? 'Có dấu hiệu sai số tăng' : 'Chưa thấy sai số tăng'}
+        </span>
+      </div>
+      <div className="overflow-x-auto">
+        <svg viewBox={`0 0 ${width} ${height}`} className="h-56 min-w-[620px] w-full" role="img" aria-label="Xu hướng MAE và MAPE theo các lần backtest">
+          <line x1={pad.left} y1={height - pad.bottom} x2={width - pad.right} y2={height - pad.bottom} stroke="#cbd5e1" />
+          <polyline points={maePoints} fill="none" stroke="#4f46e5" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" />
+          <polyline points={mapePoints} fill="none" stroke="#f59e0b" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" />
+          {history.map((run, index) => <text key={run.evaluatedAt} x={point(0, index, 1).split(',')[0]} y={height - 16} textAnchor="middle" fontSize="10" fill="#64748b">{new Date(run.evaluatedAt).toLocaleDateString('vi-VN')}</text>)}
+        </svg>
+      </div>
+      <p className="text-xs text-slate-500">Mỗi đường dùng thang tương đối riêng để không che khuất metric còn lại; MAPE được quy đổi sang phần trăm. Mỗi điểm là một lần chạy.</p>
     </div>
   );
 }
@@ -114,6 +159,13 @@ const ValuationAccuracyReport: React.FC = () => {
               <MetricCard label="Đã đánh giá" value={report.evaluatedCount.toLocaleString('vi-VN')} detail={`${formatPercent(report.evaluatedCount / Math.max(report.sampleCount, 1))} trên tổng mẫu`} />
               <MetricCard label="Bị reject" value={report.rejectedCount.toLocaleString('vi-VN')} detail={`Reject rate: ${formatPercent(report.rejectRate)}`} />
             </div>
+            <section className="rounded-2xl bg-white p-5 shadow-sm">
+              <div className="mb-4 flex flex-wrap items-start justify-between gap-2">
+                <div><h2 className="font-semibold text-slate-900">Xu hướng sai số theo thời gian</h2><p className="text-xs text-slate-500">Tối đa 30 lần chạy gần nhất · dùng để phát hiện model drift trước promotion</p></div>
+                <span className="text-xs text-slate-500">{data.history.length} lần chạy đã lưu</span>
+              </div>
+              <TrendChart history={data.history} />
+            </section>
 
             <section className="overflow-hidden rounded-2xl bg-white shadow-sm">
               <div className="flex flex-wrap items-center justify-between gap-2 border-b border-slate-100 px-5 py-4">
