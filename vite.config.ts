@@ -9,6 +9,21 @@ export default defineConfig(({ mode }) => {
         port: 5000,
         host: '0.0.0.0',
         allowedHosts: true,
+        // Keep the CRM watcher scoped to application source. Watching the
+        // workspace's generated caches, skills, artifacts, and the separate
+        // Next app exhausts Linux inotify and makes valid modules appear
+        // missing in the preview.
+        watch: {
+          ignored: [
+            '**/node_modules/**',
+            '**/.git/**',
+            '**/.cache/**',
+            '**/.local/**',
+            '**/.agents/**',
+            '**/artifacts/**',
+            '**/apps/nextjs/.next/**',
+          ],
+        },
       // Dev-only proxy. Trong production, Express tu serve dist/ nen /api la
       // same-origin va khong can proxy. Nhung khi chay `vite` dev doc lap thi
       // moi request /api truoc day roi vao chinh Vite -> tra index.html, khien
