@@ -57,6 +57,13 @@ plus the `playwright-report/` HTML report. It also uploads `deployment-url.txt`,
 tested URL, commit, workflow, and run ID alongside that evidence. The fixture and artifact paths
 are intentionally shared with the local release job so evidence can be compared directly.
 
+When both release jobs pass, `overview-compare` downloads those two evidence bundles and uploads
+`overview-responsive-comparison-${{ github.run_id }}`. The comparison contains JSON and Markdown
+reports listing added, missing, and changed artifacts by viewport and artifact type. Screenshot
+changes include dimensions, changed-pixel counts, and mean pixel delta. Request traces are compared
+after replacing each origin with `<origin>`, so the local/deployed host difference is not reported as
+a false regression; HTML and Playwright trace artifacts are compared byte-for-byte.
+
 In this environment, TypeScript validation passed and Playwright enumerated all six fixture
 checks, but execution was blocked before page creation because Chromium could not load the
 system library `libglib-2.0.so.0`. This is an environment prerequisite failure; CI with the
