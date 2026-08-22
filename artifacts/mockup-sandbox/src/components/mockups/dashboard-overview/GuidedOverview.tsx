@@ -1,7 +1,7 @@
 import { useState, type ReactNode } from 'react';
 import {
   Activity, ArrowUpRight, Bell, Bot, CheckCircle2, ChevronRight, CircleHelp, FileCheck2, FileText, Globe2, Home,
-  LayoutDashboard, ListChecks, MapPin, MessageCircle, MoreHorizontal, RefreshCw,
+  LayoutDashboard, ListChecks, MapPin, MessageCircle, MoreHorizontal, PanelLeftClose, PanelLeftOpen, RefreshCw,
   Search, Settings2, Sparkles, Sun, Moon, Target, UserRound, Users,
 } from 'lucide-react';
 import './_group.css';
@@ -96,6 +96,7 @@ export function GuidedOverview() {
   const [leaderMode, setLeaderMode] = useState<'individual' | 'team'>('individual');
   const [focusMode, setFocusMode] = useState(false);
   const [darkMode, setDarkMode] = useState(false);
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [toast, setToast] = useState('');
   const t = labels[language];
 
@@ -107,8 +108,8 @@ export function GuidedOverview() {
   const bilingual = (en: string, vi: string) => language === 'vn' ? vi : en;
 
   return <div className={`guided-overview ${focusMode ? 'g-focused' : ''} ${darkMode ? 'g-dark' : ''}`}>
-    <div className="g-shell">
-      <aside className="g-sidebar" aria-label="Primary navigation">
+     <div className="g-shell">
+       <aside className={`g-sidebar ${sidebarCollapsed ? 'g-sidebar-collapsed' : ''}`} aria-label="Primary navigation">
         <div className="g-brand"><span className="g-brand-mark">S</span><strong>SGS LAND</strong></div>
         <div className="g-workspace">{t.company}</div>
         <nav className="g-nav">
@@ -118,7 +119,7 @@ export function GuidedOverview() {
       </aside>
 
       <main className="g-main">
-         <header className="g-topbar"><div className="g-crumb">SGS LAND <span>/</span> {t.overview}</div><div className="g-top-actions"><button type="button" aria-label={darkMode ? t.lightMode : t.darkMode} title={darkMode ? t.lightMode : t.darkMode} className="g-theme-toggle" onClick={() => { setDarkMode(!darkMode); act(darkMode ? t.lightMode : t.darkMode); }}>{darkMode ? <Sun /> : <Moon />}<span>{darkMode ? 'Light' : 'Dark'}</span></button><button type="button" aria-label="Search" onClick={() => act(bilingual('Open search', 'Mở tìm kiếm'))}><Search /></button><button type="button" aria-label="Notifications" onClick={() => act(bilingual('Open notifications', 'Mở thông báo'))}><Bell /></button><button type="button" aria-label="Help" onClick={() => act(bilingual('Open help', 'Mở trợ giúp'))}><CircleHelp /></button><div className="g-lang"><button type="button" onClick={() => setLanguage('en')} className={language === 'en' ? 'selected' : ''}>EN</button><span>/</span><button type="button" onClick={() => setLanguage('vn')} className={language === 'vn' ? 'selected' : ''}>VI</button></div></div></header>
+         <header className="g-topbar"><div className="g-topbar-left"><button type="button" className="g-sidebar-toggle" aria-label={sidebarCollapsed ? bilingual('Open sidebar', 'Mở sidebar') : bilingual('Close sidebar', 'Đóng sidebar')} title={sidebarCollapsed ? bilingual('Open sidebar', 'Mở sidebar') : bilingual('Close sidebar', 'Đóng sidebar')} onClick={() => setSidebarCollapsed(!sidebarCollapsed)}>{sidebarCollapsed ? <PanelLeftOpen /> : <PanelLeftClose />}</button><div className="g-crumb">SGS LAND <span>/</span> {t.overview}</div></div><div className="g-top-actions"><button type="button" aria-label="Search" title={bilingual('Search', 'Tìm kiếm')} onClick={() => act(bilingual('Open search', 'Mở tìm kiếm'))}><Search /></button><button type="button" aria-label="Notifications" title={bilingual('Notifications', 'Thông báo')} onClick={() => act(bilingual('Open notifications', 'Mở thông báo'))}><Bell /></button><button type="button" aria-label="Help" title={bilingual('Help', 'Trợ giúp')} onClick={() => act(bilingual('Open help', 'Mở trợ giúp'))}><CircleHelp /></button><button type="button" aria-label={darkMode ? t.lightMode : t.darkMode} title={darkMode ? t.lightMode : t.darkMode} className="g-theme-toggle" onClick={() => { setDarkMode(!darkMode); act(darkMode ? t.lightMode : t.darkMode); }}>{darkMode ? <Sun /> : <Moon />}<span>{darkMode ? 'Light' : 'Dark'}</span></button><div className="g-lang"><button type="button" onClick={() => setLanguage('en')} className={language === 'en' ? 'selected' : ''}>EN</button><span>/</span><button type="button" onClick={() => setLanguage('vn')} className={language === 'vn' ? 'selected' : ''}>VI</button></div></div></header>
         <div className="g-content">
           <section className="g-hero"><div><div className="g-eyebrow">{t.company}</div><h1>{t.greeting}</h1><p>{t.intro}</p></div><div className="g-hero-tools"><select value={range} onChange={e => { setRange(e.target.value); act(e.target.options[e.target.selectedIndex].text); }} aria-label="Select time range"><option value="7d">{bilingual('Last 7 days', '7 ngày qua')}</option><option value="30d">{t.range}</option><option value="90d">{bilingual('Last 90 days', '90 ngày qua')}</option><option value="all">{bilingual('All time', 'Tất cả thời gian')}</option></select><button className="g-button secondary" type="button" onClick={() => act(t.export)}><ArrowUpRight size={14} />{t.export}</button></div></section>
 
