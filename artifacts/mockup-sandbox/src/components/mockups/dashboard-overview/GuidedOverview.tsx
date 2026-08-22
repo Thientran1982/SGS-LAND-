@@ -2,7 +2,7 @@ import { useEffect, useRef, useState, type PointerEvent, type ReactNode } from '
 import {
   Activity, ArrowUpRight, Bell, Bot, CheckCircle2, ChevronRight, CircleHelp, FileCheck2, FileText, Globe2, Home,
   LayoutDashboard, ListChecks, MapPin, MessageCircle, MoreHorizontal, PanelLeftClose, PanelLeftOpen, RefreshCw,
-  Search, Settings2, Sparkles, Sun, Moon, Target, UserRound, Users,
+  Search, Settings2, Sparkles, Sun, Moon, Target, UserRound, Users, ChevronDown,
 } from 'lucide-react';
 import './_group.css';
 import sgslandLogo from './sgsland-logo.svg';
@@ -91,9 +91,27 @@ function Panel({ title, subtitle, action, children, className = '' }: { title: s
   return <section className={`g-panel ${className}`}><div className="g-panel-head"><div><h2>{title}</h2>{subtitle && <p>{subtitle}</p>}</div>{action}</div>{children}</section>;
 }
 
+type DropdownOption = { value: string; label: string };
+
+function Dropdown({ value, options, onChange, ariaLabel }: { value: string; options: DropdownOption[]; onChange: (value: string) => void; ariaLabel: string }) {
+  const [open, setOpen] = useState(false);
+  const selected = options.find(option => option.value === value) ?? options[0];
+
+  return <div className={`g-dropdown ${open ? 'open' : ''}`}>
+    <button type="button" className="g-dropdown-trigger" aria-label={ariaLabel} aria-haspopup="listbox" aria-expanded={open} onClick={() => setOpen(!open)}>
+      <span>{selected.label}</span><ChevronDown size={12} />
+    </button>
+    {open && <div className="g-dropdown-menu" role="listbox" aria-label={ariaLabel}>
+      {options.map(option => <button key={option.value} type="button" role="option" aria-selected={option.value === value} className={option.value === value ? 'selected' : ''} onClick={() => { onChange(option.value); setOpen(false); }}>{option.label}</button>)}
+    </div>}
+  </div>;
+}
+
 export function GuidedOverview() {
   const [language, setLanguage] = useState<Language>('en');
   const [range, setRange] = useState('30d');
+  const [listingFilter, setListingFilter] = useState('all');
+  const [sourceFilter, setSourceFilter] = useState('all');
   const [activeNav, setActiveNav] = useState('Overview');
   const [leadMode, setLeadMode] = useState<ViewMode>('overview');
   const [leaderMode, setLeaderMode] = useState<'individual' | 'team'>('individual');
@@ -131,7 +149,7 @@ export function GuidedOverview() {
       <main className="g-main">
          <header className="g-topbar"><div className="g-topbar-left"><button type="button" className="g-sidebar-toggle" aria-label={sidebarCollapsed ? bilingual('Open sidebar', 'Mở sidebar') : bilingual('Close sidebar', 'Đóng sidebar')} title={sidebarCollapsed ? bilingual('Open sidebar', 'Mở sidebar') : bilingual('Close sidebar', 'Đóng sidebar')} onClick={() => setSidebarCollapsed(!sidebarCollapsed)}>{sidebarCollapsed ? <PanelLeftOpen /> : <PanelLeftClose />}</button><div className="g-crumb">{t.overview}</div></div><div className="g-top-actions"><button type="button" aria-label="Search" title={bilingual('Search', 'Tìm kiếm')} onClick={() => act(bilingual('Open search', 'Mở tìm kiếm'))}><Search /></button><button type="button" aria-label="Notifications" title={bilingual('Notifications', 'Thông báo')} onClick={() => act(bilingual('Open notifications', 'Thông báo'))}><Bell /></button><button type="button" aria-label="Help" title={bilingual('Help', 'Trợ giúp')} onClick={() => act(bilingual('Open help', 'Trợ giúp'))}><CircleHelp /></button><button type="button" aria-label={darkMode ? t.lightMode : t.darkMode} title={darkMode ? t.lightMode : t.darkMode} className="g-theme-toggle" onClick={() => { setDarkMode(!darkMode); act(darkMode ? t.lightMode : t.darkMode); }}>{darkMode ? <Sun /> : <Moon />}<span>{darkMode ? 'Light' : 'Dark'}</span></button><div className="g-lang"><button type="button" onClick={() => setLanguage('en')} className={language === 'en' ? 'selected' : ''}>EN</button><span>/</span><button type="button" onClick={() => setLanguage('vn')} className={language === 'vn' ? 'selected' : ''}>VI</button></div></div></header>
         <div className="g-content">
-          <section className="g-hero"><div><div className="g-eyebrow">{t.company}</div><h1>{t.greeting}</h1><p>{t.intro}</p></div><div className="g-hero-tools"><select value={range} onChange={e => { setRange(e.target.value); act(e.target.options[e.target.selectedIndex].text); }} aria-label="Select time range"><option value="7d">{bilingual('Last 7 days', '7 ngày qua')}</option><option value="30d">{t.range}</option><option value="90d">{bilingual('Last 90 days', '90 ngày qua')}</option><option value="all">{bilingual('All time', 'Tất cả thời gian')}</option></select><button className="g-button secondary" type="button" onClick={() => act(t.export)}><ArrowUpRight size={14} />{t.export}</button></div></section>
+           <section className="g-hero"><div><div className="g-eyebrow">{t.company}</div><h1>{t.greeting}</h1><p>{t.intro}</p></div><div className="g-hero-tools"><Dropdown value={range} onChange={value => { setRange(value); act(value === '7d' ? bilingual('Last 7 days', '7 ngày qua') : value === '90d' ? bilingual('Last 90 days', '90 ngày qua') : value === 'all' ? bilingual('All time', 'Tất cả thời gian') : t.range); }} ariaLabel={bilingual('Select time range', 'Chọn khoảng thời gian')} options={[{ value: '7d', label: bilingual('Last 7 days', '7 ngày qua') }, { value: '30d', label: t.range }, { value: '90d', label: bilingual('Last 90 days', '90 ngày qua') }, { value: 'all', label: bilingual('All time', 'Tất cả thời gian') }]} /><button className="g-button secondary" type="button" onClick={() => act(t.export)}><ArrowUpRight size={14} />{t.export}</button></div></section>
 
           <section className="g-priority"><div className="g-priority-mark"><Bell size={15} /></div><div><strong>{t.prioritySub}</strong><p>{t.priorityBody}</p></div><button type="button" onClick={() => act(t.review)}>{t.review}<ChevronRight size={13} /></button></section>
 
@@ -169,7 +187,7 @@ export function GuidedOverview() {
 
           <Panel title={t.searchBehavior} subtitle={bilingual('Last 30 days', '30 ngày gần nhất')} className="g-search-panel"><div className="g-search-cols">{[[t.viewed, listings], [t.keywords, keywords], [t.categories, categorySearches]].map(([title, items]) => <div className="g-search-group" key={title as string}><h3>{title as string}</h3>{(items as string[][]).map(([name, value], index) => <div key={name}><span>{index + 1}. {name}</span><strong>{value}{title === t.viewed ? bilingual(' views', ' lượt') : ''}</strong></div>)}</div>)}</div></Panel>
 
-          <Panel title={t.visitors} subtitle={t.visitorsSub} action={<div className="g-filter-row"><select aria-label="Filter by listing"><option>{t.allListings}</option><option>The Marq District 1</option><option>Landmark Riverside</option></select><select aria-label="Filter by traffic source"><option>{t.allSources}</option><option>Facebook</option><option>Website</option></select></div>}><div className="g-funnel-metrics">{[[t.engaged, '1,248'], [t.avgView, '1m 42s'], [t.exit, '32%'], [t.cta, '186']].map(([name, value]) => <div key={name}><small>{name}</small><strong>{value}</strong></div>)}</div><div className="g-funnel-body"><div className="g-funnel-bars">{[[t.propertyViews, '4,860', '100%'], [t.sessions, '2,940', '61%'], [t.engaged, '1,248', '42%'], [t.scroll, '842', '29%'], [t.cta, '186', '6%']].map(([name, value, width], index) => <div key={name}><div><span>{name}</span><b>{value}</b></div><i className={`funnel-${index}`} style={{ width }} /></div>)}</div><div className="g-returning"><UserRound size={17} /><small>{t.returning}</small><strong>384</strong><span>{bilingual('within 48 hours', 'trong vòng 48 giờ')}</span></div></div></Panel>
+          <Panel title={t.visitors} subtitle={t.visitorsSub} action={<div className="g-filter-row"><Dropdown value={listingFilter} onChange={setListingFilter} ariaLabel={bilingual('Filter by listing', 'Lọc theo tin đăng')} options={[{ value: 'all', label: t.allListings }, { value: 'marq', label: 'The Marq District 1' }, { value: 'landmark', label: 'Landmark Riverside' }]} /><Dropdown value={sourceFilter} onChange={setSourceFilter} ariaLabel={bilingual('Filter by traffic source', 'Lọc theo nguồn truy cập')} options={[{ value: 'all', label: t.allSources }, { value: 'facebook', label: 'Facebook' }, { value: 'website', label: 'Website' }]} /></div>}><div className="g-funnel-metrics">{[[t.engaged, '1,248'], [t.avgView, '1m 42s'], [t.exit, '32%'], [t.cta, '186']].map(([name, value]) => <div key={name}><small>{name}</small><strong>{value}</strong></div>)}</div><div className="g-funnel-body"><div className="g-funnel-bars">{[[t.propertyViews, '4,860', '100%'], [t.sessions, '2,940', '61%'], [t.engaged, '1,248', '42%'], [t.scroll, '842', '29%'], [t.cta, '186', '6%']].map(([name, value, width], index) => <div key={name}><div><span>{name}</span><b>{value}</b></div><i className={`funnel-${index}`} style={{ width }} /></div>)}</div><div className="g-returning"><UserRound size={17} /><small>{t.returning}</small><strong>384</strong><span>{bilingual('within 48 hours', 'trong vòng 48 giờ')}</span></div></div></Panel>
 
           <div className="g-two-col">
             <Panel title={t.geo} subtitle={t.geoSub}><div className="g-geo-metrics"><div><small>{t.totalVisits}</small><strong>8,642</strong><span>{bilingual('Last 30 days', '30 ngày qua')}</span></div><div><small>{t.uniqueIps}</small><strong>6,918</strong><span>{bilingual('IP source', 'Nguồn IP')}</span></div><div><small>{t.coverage}</small><strong>93%</strong><span>8,042 / 8,642</span></div></div><div className="g-geo-table"><div className="g-geo-head"><span>{t.countries}</span><span>{t.cities}</span></div><div className="g-geo-row"><span><Globe2 size={13} />Vietnam <b>7,988</b></span><span><MapPin size={13} />Ho Chi Minh City <b>4,210</b></span></div><div className="g-geo-row"><span><Globe2 size={13} />Singapore <b>42</b></span><span><MapPin size={13} />Hanoi <b>1,084</b></span></div><div className="g-geo-row"><span><Globe2 size={13} />United States <b>31</b></span><span><MapPin size={13} />Thu Duc <b>728</b></span></div></div></Panel>
