@@ -191,7 +191,7 @@ export const Dropdown = memo(<T extends string | number>({
                     ref={listboxRef}
                     role="listbox"
                     tabIndex={-1}
-                    className={STYLES.MENU}
+                    className={`${STYLES.MENU} ${className.includes('dashboard-date-filter') ? 'dashboard-date-menu' : ''}`}
                     style={{ 
                         // Use coords directly — auto-flip may have changed direction vs placement prop
                         ...(coords.bottom !== undefined ? { bottom: coords.bottom } : { top: coords.top }),

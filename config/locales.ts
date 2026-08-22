@@ -646,8 +646,8 @@ export const DICTIONARY = {
 
         "dash.greeting_morning": "Xin chào,",
         "dash.overview_subtitle": "Tổng quan tình hình kinh doanh hôm nay.",
-        "dash.filter_7d": "7 ngày qua",
-        "dash.filter_30d": "30 ngày qua",
+        "dash.filter_7d": "7 ngày",
+        "dash.filter_30d": "30 ngày",
         "dash.filter_all": "Toàn bộ",
         "dash.total_leads": "Tổng Khách Tiềm Năng",
         "dash.conversion": "Tỷ lệ chốt",
@@ -3095,8 +3095,8 @@ export const DICTIONARY = {
 
         "dash.greeting_morning": "Hello,",
         "dash.overview_subtitle": "Overview of today's business situation.",
-        "dash.filter_7d": "Last 7 days",
-        "dash.filter_30d": "Last 30 days",
+        "dash.filter_7d": "7 days",
+        "dash.filter_30d": "30 days",
         "dash.filter_all": "All time",
         "dash.total_leads": "Total Leads",
         "dash.conversion": "Conversion Rate",

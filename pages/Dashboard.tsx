@@ -1050,7 +1050,7 @@ export const Dashboard: React.FC = () => {
 
                 <div ref={dashboardRef} data-dashboard-export-root className="space-y-6">
                     <section className="dashboard-panel dashboard-command-panel overflow-hidden" aria-label={language === 'vn' ? 'Điều hành nhanh và KPI' : 'Quick actions and KPIs'}>
-                        <div className="border-b border-[var(--dash-rule)] p-4 sm:p-5">
+                         <div className="p-4 sm:p-5">
                             <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
                                 <a href="/leads" className="dashboard-control quick-action px-3 py-2.5 text-center text-xs font-semibold text-[var(--sgs-primary)]">{ui.addLead}</a>
                                 <a href="/contracts" className="dashboard-control quick-action px-3 py-2.5 text-center text-xs font-semibold text-[var(--sgs-primary)]">{ui.contract}</a>

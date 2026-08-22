@@ -726,9 +726,15 @@ html.dark body {
   min-height: 2.25rem;
   border-radius: .55rem;
   border: 1px solid var(--dash-rule);
-  font-size: .6875rem;
+  font-size: .625rem;
   line-height: 1.2;
   box-shadow: none;
+}
+.dashboard-date-menu {
+  font-size: .6875rem;
+}
+.dashboard-date-menu button {
+  font-size: .6875rem;
 }
 .sgs-dashboard .dashboard-date-filter > button:hover {
   border-color: var(--ui-border-strong);
