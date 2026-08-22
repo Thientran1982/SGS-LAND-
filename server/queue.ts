@@ -127,7 +127,20 @@ function runWithRetry(job: any, attempt = 1): void {
 // Kiểm tra QStash có được cấu hình không
 // ---------------------------------------------------------------------------
 export function isQStashEnabled(): boolean {
-  return !!(process.env.QSTASH_TOKEN && process.env.QSTASH_CURRENT_SIGNING_KEY);
+  return !!(getQstashToken() && process.env.QSTASH_CURRENT_SIGNING_KEY);
+}
+
+export function getQstashToken(): string {
+  return (process.env.QSTASH_TOKEN || '').trim().replace(/^["']|["']$/g, '');
+}
+
+// Configuration alone is not enough for production scheduling: an expired or
+// copied token can still be present in the environment. This state is set only
+// after the read-only QStash API check succeeds during boot.
+let qstashVerified = false;
+
+export function isQstashVerified(): boolean {
+  return qstashVerified;
 }
 // ---------------------------------------------------------------------------
 // Startup token verification
@@ -139,21 +152,27 @@ export function isQStashEnabled(): boolean {
 // effects) so a broken/expired QSTASH_TOKEN is impossible to miss: it prints
 // one clear line saying exactly whether the token is valid or not.
 // ---------------------------------------------------------------------------
-export async function verifyQstashTokenAtStartup(): Promise<void> {
-  if (!process.env.QSTASH_TOKEN) {
+export async function verifyQstashTokenAtStartup(): Promise<boolean> {
+  const token = getQstashToken();
+  if (!token) {
+    qstashVerified = false;
     logger.info('[Queue] QStash token check bỏ qua — QSTASH_TOKEN chưa được cấu hình (dùng in-memory queue).');
-    return;
+    return false;
   }
   try {
     const { Client } = await import('@upstash/qstash');
-    const client = new Client({ token: process.env.QSTASH_TOKEN });
+    const client = new Client({ token });
     // schedules.list() is a cheap, read-only, no-side-effect call — perfect
     // for an auth check without touching any real schedule/job.
     await client.schedules.list();
+    qstashVerified = true;
     logger.info('[Queue] QStash token hợp lệ — kết nối Upstash QStash thành công.');
+    return true;
   } catch (err: any) {
+    qstashVerified = false;
     const detail = err?.message || String(err);
-    logger.error(`[Queue] QStash token lỗi: ${detail}. Tất cả cron sẽ fallback về in-process setInterval (kém bền vững hơn khi restart). Vào Upstash dashboard để lấy token mới.`);
+    logger.error(`[Queue] QStash scheduler NOT READY — token lỗi: ${detail}. Production schedules sẽ không được đăng ký; in-process fallback chỉ là biện pháp tạm thời và không bền vững sau restart. Vào Upstash dashboard để lấy token mới.`);
+    return false;
   }
 }
 function getReceiverUrl(): string {
@@ -173,17 +192,17 @@ function getReceiverUrl(): string {
 // ---------------------------------------------------------------------------
 const QSTASH_ENABLED = isQStashEnabled();
 if (QSTASH_ENABLED) {
-  logger.info('[Queue] Sử dụng Upstash QStash (job bền vững, retry tự động).');
+  logger.info('[Queue] QStash đã được cấu hình — đang chờ xác thực kết nối trước khi gửi job production.');
 } else {
   logger.info('[Queue] Sử dụng in-memory queue (fallback). Cấu hình QSTASH_TOKEN để kích hoạt QStash.');
 }
 export const webhookQueue = {
   add: async (name: string, data: any) => {
     const job = { name, data, id: `job-${Date.now()}-${Math.random().toString(36).slice(2, 7)}` };
-    if (isQStashEnabled()) {
+    if (isQstashVerified()) {
       try {
         const { Client } = await import('@upstash/qstash');
-        const client = new Client({ token: process.env.QSTASH_TOKEN! });
+        const client = new Client({ token: getQstashToken() });
         const receiverUrl = getReceiverUrl();
         await client.publishJSON({
           url: receiverUrl,

@@ -15,7 +15,7 @@ import { pool, withTenantContext, withRlsBypass } from "./server/db";
 import bcrypt from "bcrypt";
 import { runPendingMigrations } from "./server/migrations/runner";
 import { systemService } from "./server/services/systemService";
-import { webhookQueue, setupWebhookWorker, processWebhookJob, isQStashEnabled, verifyQstashTokenAtStartup } from "./server/queue";
+import { webhookQueue, setupWebhookWorker, processWebhookJob, isQStashEnabled, isQstashVerified, getQstashToken, verifyQstashTokenAtStartup } from "./server/queue";
 import { userRepository } from "./server/repositories/userRepository";
 import { listingRepository } from "./server/repositories/listingRepository";
 import { leadRepository } from "./server/repositories/leadRepository";
@@ -1601,7 +1601,7 @@ app.use(globalMutationAudit);
     // Makes a bad/expired QSTASH_TOKEN impossible to miss at boot (see
     // verifyQstashTokenAtStartup() for why — every cron already logs a 401
     // but those lines are easy to miss among the rest of startup output).
-    verifyQstashTokenAtStartup();
+    await verifyQstashTokenAtStartup();
 
     // ── Init self-learning price calibration engine ──────────────────────────
     // Must run AFTER migrations so market_price_history & avm_calibration tables exist
@@ -4395,7 +4395,10 @@ app.use('/api/approval-requests', apiRateLimit, createApprovalRequestRoutes(auth
         aiService: { status: health.checks?.aiService ? 'healthy' : 'unconfigured' },
         redis: { status: (process.env.UPSTASH_REDIS_REST_URL && process.env.UPSTASH_REDIS_REST_TOKEN) ? 'upstash-rest' : 'in-memory-fallback' },
         websocket: { status: 'healthy', adapter: 'in-memory' },
-        queue: { status: 'healthy', type: isQStashEnabled() ? 'qstash' : 'in-memory' },
+        queue: {
+          status: isQStashEnabled() && !isQstashVerified() ? 'degraded' : 'healthy',
+          type: isQStashEnabled() ? (isQstashVerified() ? 'qstash' : 'in-memory-fallback') : 'in-memory',
+        },
       };
 
       // Real Postgres ping (with latency), capped so a slow DB never blocks
@@ -6366,9 +6369,9 @@ app.use('/api/v1', (req, _res, next) => {
       logger.info('[QStash] Bo qua dang ky schedule: chi dang ky khi NODE_ENV=production va co PROD_DOMAIN.');
     }
     // Đăng ký QStash daily schedule cho RLHF recompute
-    if (isQStashEnabled()) {
+    if (isQstashVerified()) {
       try {
-        const qstashToken = process.env.QSTASH_TOKEN!;
+        const qstashToken = getQstashToken();
         const rlhfSecret = process.env.RLHF_CRON_SECRET || process.env.JWT_SECRET?.slice(0, 32) || '';
         const devDomain = process.env.REPLIT_DEV_DOMAIN;
         const prodDomain = process.env.REPLIT_DOMAINS?.split(',')[0]?.trim() || process.env.APP_DOMAIN;
@@ -6414,7 +6417,7 @@ app.use('/api/v1', (req, _res, next) => {
           const engScheduleId  = 'engagement-email-daily';
           const engScheduleUrl = `https://${appDomain2}/api/internal/engagement-email-cron`;
           const engQstashEp    = `https://qstash.upstash.io/v2/schedules/${engScheduleId}`;
-          const qstashToken    = process.env.QSTASH_TOKEN!;
+          const qstashToken    = getQstashToken();
           const engBody        = JSON.stringify({ secret: engagementSecret });
 
           const engResp = await fetch(engQstashEp, {
@@ -6454,7 +6457,7 @@ app.use('/api/v1', (req, _res, next) => {
           const bkScheduleId  = 'backup-db-daily';
           const bkScheduleUrl = `https://${appDomain3}/api/internal/backup-cron`;
           const bkQstashEp    = `https://qstash.upstash.io/v2/schedules/${bkScheduleId}`;
-          const qstashToken   = process.env.QSTASH_TOKEN!;
+          const qstashToken   = getQstashToken();
           const bkBody        = JSON.stringify({ secret: backupSecret });
 
           const bkResp = await fetch(bkQstashEp, {
@@ -6499,7 +6502,7 @@ app.use('/api/v1', (req, _res, next) => {
           const prResp = await fetch(prQstashEp, {
             method: 'POST',
             headers: {
-              'Authorization': `Bearer ${process.env.QSTASH_TOKEN!}`,
+              'Authorization': `Bearer ${getQstashToken()}`,
               'Content-Type': 'application/json',
               'Upstash-Destination': prScheduleUrl,
               'Upstash-Cron': '0 21 * * *', // 4:00 SA ICT = 21:00 UTC
@@ -6538,7 +6541,7 @@ app.use('/api/v1', (req, _res, next) => {
           const trResp = await fetch(trQstashEp, {
             method: 'POST',
             headers: {
-              'Authorization': `Bearer ${process.env.QSTASH_TOKEN!}`,
+              'Authorization': `Bearer ${getQstashToken()}`,
               'Content-Type': 'application/json',
               'Upstash-Destination': trScheduleUrl,
               'Upstash-Cron': '5 * * * *', // mỗi giờ phút :05
@@ -6577,7 +6580,7 @@ app.use('/api/v1', (req, _res, next) => {
           const geoResp = await fetch(geoQstashEp, {
             method: 'POST',
             headers: {
-              'Authorization': `Bearer ${process.env.QSTASH_TOKEN!}`,
+              'Authorization': `Bearer ${getQstashToken()}`,
               'Content-Type': 'application/json',
               'Upstash-Destination': geoScheduleUrl,
               'Upstash-Cron': '30 21 * * *', // 4:30 SA ICT = 21:30 UTC
@@ -6616,7 +6619,7 @@ app.use('/api/v1', (req, _res, next) => {
           const csResp = await fetch(csQstashEp, {
             method: 'POST',
             headers: {
-              'Authorization': `Bearer ${process.env.QSTASH_TOKEN!}`,
+              'Authorization': `Bearer ${getQstashToken()}`,
               'Content-Type': 'application/json',
               'Upstash-Destination': csScheduleUrl,
               'Upstash-Cron': '*/5 * * * *', // mỗi 5 phút
@@ -6655,7 +6658,7 @@ app.use('/api/v1', (req, _res, next) => {
           const cfResp = await fetch(cfQstashEp, {
             method: 'POST',
             headers: {
-              'Authorization': `Bearer ${process.env.QSTASH_TOKEN!}`,
+              'Authorization': `Bearer ${getQstashToken()}`,
               'Content-Type': 'application/json',
               'Upstash-Destination': cfScheduleUrl,
               'Upstash-Cron': '0 2 * * *', // 9:00 SA ICT = 2:00 UTC
