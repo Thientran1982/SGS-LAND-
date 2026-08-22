@@ -233,7 +233,7 @@ const Sidebar = memo(({
                                                 w-full flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all group relative focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--sgs-primary)]
                                                 ${isCollapsed ? 'justify-center px-0' : ''}
                                                 ${isActive
-                                                    ? 'bg-gradient-to-r from-[var(--sgs-primary)]/10 to-transparent dark:from-[var(--sgs-primary)]/25 text-sgs-primary dark:text-[var(--sgs-primary)] shadow-sm border-l-4 border-[var(--sgs-primary)]'
+                                                    ? `bg-gradient-to-r from-[var(--sgs-primary)]/10 to-transparent dark:from-[var(--sgs-primary)]/25 text-sgs-primary dark:text-[var(--sgs-primary)] shadow-sm ${isCollapsed ? 'border-l-0' : 'border-l-4 border-[var(--sgs-primary)]'}`
                                                     : 'text-[var(--text-secondary)] hover:bg-[var(--glass-surface-hover)] hover:text-[var(--text-primary)] border-l-4 border-transparent'}
                                             `}
                                         >

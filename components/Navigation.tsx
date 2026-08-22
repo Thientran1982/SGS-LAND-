@@ -70,10 +70,10 @@ export const UserAvatar = memo(({ user, isActive }: { user: User, isActive?: boo
     }, [user.avatar]);
     const hasAvatar = !!user.avatar && !imgError;
     return (
-        <div className={`w-7 h-7 sm:w-8 sm:h-8 rounded-full p-0.5 border-2 shadow-lg transition-all duration-300 relative overflow-hidden flex items-center justify-center bg-[var(--glass-surface-hover)] dark:bg-slate-800
+        <div className={`w-7 h-7 sm:w-8 sm:h-8 rounded-full shadow-lg transition-all duration-300 relative overflow-hidden flex items-center justify-center bg-[var(--glass-surface-hover)] dark:bg-slate-800
             ${isActive 
-                ? 'border-[var(--sgs-primary)] shadow-[var(--sgs-primary)]/20' 
-                : 'border-white dark:border-white/10 group-hover:border-[var(--sgs-primary)] group-hover:shadow-[var(--sgs-primary)]/20'}`
+                ? 'shadow-[var(--sgs-primary)]/20'
+                : 'group-hover:shadow-[var(--sgs-primary)]/20'}`
         }>
             {hasAvatar ? (
                 <img 
