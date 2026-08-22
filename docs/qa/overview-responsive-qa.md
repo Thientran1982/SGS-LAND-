@@ -23,6 +23,15 @@ Date: 2026-08-22
 - `git diff --check` — passed.
 - Preview smoke check — app starts and the unauthenticated boundary renders.
 
+## Release verification run
+
+Date: 2026-08-22
+
+- The configured application workflow restarted successfully. The public preview rendered cleanly at 1280×720, and `/dashboard` returned the expected unauthenticated redirect (307); no signed-in Overview was available.
+- The responsive implementation remains covered for desktop (1280px+), tablet (768–1279px), and mobile (under 768px) through the CSS review and component tests above. No sidebar, route, or analytics API contract changes were present in the working tree.
+- The browser-based device check remains blocked: Chromium fails before launching because `libglib-2.0.so.0` is unavailable. A real authenticated account and physical-device pass are still required before release.
+- No device-specific visual regression was observed in the available preview; this is not a substitute for the blocked signed-in pass.
+
 ## Release limitation
 
 This environment does not provide a usable authenticated account, and the task’s Playwright browser cannot launch because a required system library is unavailable. Consequently, a real-account interaction pass across physical device sizes remains a release follow-up; this record covers the available responsive implementation review, component state tests, and preview smoke check.
