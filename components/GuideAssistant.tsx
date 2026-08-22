@@ -203,12 +203,14 @@ export const GuideAssistant: React.FC = () => {
             <button
                 type="button"
                 onClick={() => setOpen(value => !value)}
-                className="group fixed bottom-4 right-4 sm:right-6 z-[139] flex h-12 w-12 items-center justify-center gap-2 overflow-hidden rounded-full bg-[var(--sgs-primary)] px-3 text-sm font-bold text-white shadow-lg shadow-[var(--sgs-primary)]/25 transition-[width,transform] duration-200 hover:w-auto hover:scale-[1.02] focus-visible:w-auto focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--sgs-primary)] focus-visible:ring-offset-2"
+                 className="group fixed bottom-4 right-4 sm:right-6 z-[139] flex h-12 w-12 items-center justify-center gap-0 overflow-hidden rounded-full bg-[var(--sgs-primary)] px-3 text-sm font-bold text-white shadow-lg shadow-[var(--sgs-primary)]/25 transition-[width,transform] duration-200 hover:w-auto hover:scale-[1.02] focus-visible:w-auto focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--sgs-primary)] focus-visible:ring-offset-2"
                 aria-label={open ? copy.close : copy.open}
                 title={open ? copy.close : copy.open}
             >
-                {open ? <ChevronDown size={18} /> : <MessageCircle size={18} />}
-                <span className="max-w-0 overflow-hidden whitespace-nowrap opacity-0 transition-[max-width,opacity] duration-200 group-hover:max-w-[10rem] group-hover:opacity-100 group-focus-visible:max-w-[10rem] group-focus-visible:opacity-100">{copy.title}</span>
+                 <span className="flex h-5 w-5 shrink-0 items-center justify-center" aria-hidden="true">
+                     {open ? <ChevronDown size={18} /> : <MessageCircle size={18} />}
+                 </span>
+                 <span className="ml-0 max-w-0 overflow-hidden whitespace-nowrap opacity-0 transition-[max-width,opacity,margin] duration-200 group-hover:ml-2 group-hover:max-w-[10rem] group-hover:opacity-100 group-focus-visible:ml-2 group-focus-visible:max-w-[10rem] group-focus-visible:opacity-100">{copy.title}</span>
             </button>
         </>
     );

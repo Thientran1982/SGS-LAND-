@@ -863,10 +863,10 @@ html.dark body {
   }
   .sgs-dashboard .dashboard-kpis { grid-template-columns: 1fr 1fr; }
   .sgs-dashboard .dashboard-kpi { padding: .9rem .75rem; }
-  .sgs-dashboard .dashboard-kpi:first-child,
-  .sgs-dashboard .dashboard-kpi:nth-child(3) { padding-left: 0; }
-  .sgs-dashboard .dashboard-kpi:nth-child(2),
-  .sgs-dashboard .dashboard-kpi:last-child { padding-right: 0; }
+   .sgs-dashboard .dashboard-kpi {
+     padding-left: .75rem;
+     padding-right: .75rem;
+   }
   .sgs-dashboard .dashboard-secondary { grid-template-columns: 1fr; }
   .sgs-dashboard .dashboard-secondary > section + section {
     border-left: 0;
