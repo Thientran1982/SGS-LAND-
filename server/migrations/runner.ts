@@ -158,6 +158,8 @@ import m138 from './138_campaign_recurrence';
 import m139 from './139_seed_default_campaigns';
 import m140 from './140_refresh_default_sequences';
 import m141 from './141_marketing_email_consent';
+import m142 from './142_seed_geo_target_keywords';
+import m143 from './143_complete_geo_keyword_metadata';
 
 dotenv.config();
 
@@ -312,6 +314,8 @@ const MIGRATION_REGISTRY: Record<string, Migration> = {
   '139_seed_default_campaigns.ts': m139,
   '140_refresh_default_sequences.ts': m140,
   '141_marketing_email_consent.ts': m141,
+  '142_seed_geo_target_keywords.ts': m142,
+  '143_complete_geo_keyword_metadata.ts': m143,
 };
 
 async function ensureSchemaVersionsTable(client: PoolClient): Promise<void> {

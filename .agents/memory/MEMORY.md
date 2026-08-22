@@ -21,3 +21,4 @@
 - [Recurring campaign schedules](recurring-campaign-schedules.md) — recurring campaigns advance scheduled_at atomically before delivery and remain ACTIVE after successful runs
 - [Sequence journey design](sequence-journey-design.md) — separate lead-stage triggers prevent overlapping journeys while content journeys drive both care and site traffic
 - [Preview proxy error handling](preview-proxy-error-handling.md) — HTTP and WebSocket proxy failures pass different response types; feature-detect before writing or destroying
+- [GEO database environment](geo-database-environment.md) — runtime GEO tables use the app’s configured database, not necessarily the generic database-tool default

@@ -1515,7 +1515,10 @@ const GeoAiSearch: React.FC = () => {
                             </div>
                         </div>
                         <div className="p-3 rounded-xl border border-[var(--glass-border)] bg-[var(--glass-surface-hover)]">
-                            <div className="text-2xs font-bold text-[var(--text-tertiary)] uppercase mb-2">Bot AI được phép crawl ({status.bots.filter(b=>b.allowed).length}/{status.bots.length})</div>
+                            <div className="text-2xs font-bold text-[var(--text-tertiary)] uppercase mb-2">Chính sách robots — được phép ({status.bots.filter(b=>b.allowed).length}/{status.bots.length})</div>
+                            <div className="text-[10px] text-[var(--text-tertiary)] mb-2">
+                                Allow chỉ xác nhận quyền truy cập; chưa phải bằng chứng bot đã crawl. Bằng chứng crawl cần access log theo User-Agent.
+                            </div>
                             <div className="space-y-1 text-xs">
                                 {status.bots.map((b) => (
                                     <div key={b.userAgent} className="flex items-center justify-between gap-2">
