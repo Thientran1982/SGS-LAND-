@@ -27,3 +27,4 @@
 - [Live-chat regression fixture](livechat-regression-fixture.md) — use the stable public `mcc` project for found-project boundary checks, not optional tenant-specific env codes
 - [Valuation location matching](valuation-location-matching.md) — historical rows must match full location keys; token matching causes cross-province price contamination
 - [Next.js Turbopack watcher exhaustion](nextjs-turbopack-watchers.md) — ENOSPC can surface as misleading missing React modules after repeated preview restarts; clear .next and restart
+- [SPA loading ownership](spa-loading-ownership.md) — keep one React-controlled loading fallback; a static Vite index loader duplicates Next/SPA route loading
