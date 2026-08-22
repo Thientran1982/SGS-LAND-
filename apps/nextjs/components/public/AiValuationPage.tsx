@@ -601,8 +601,6 @@ export const AiValuation: React.FC = () => {
         setFurnishing('');
         setRoadTypeSelect('');
         setRoadWidth('');
-        setArea('');
-        setAreaError('');
     };
     const validateDetails = () => {
         if (!propertyType) {
@@ -819,11 +817,14 @@ export const AiValuation: React.FC = () => {
         let aiResult: any;
         // Road type label for AI context (e.g. "Hẻm xe hơi (≥4m)")
         const roadTypeLabelMap: Record<string, string> = {
+            internal_small: 'Đường nội khu nhỏ (≤6m)',
+            internal_large: 'Đường nội khu lớn (8–12m)',
             alley_moto: 'Hẻm xe máy (<4m)',
             alley_car:  'Hẻm xe hơi (≥4m)',
             minor:      'Mặt tiền đường nhỏ (4–8m)',
             major:      'Mặt tiền đường lớn (>8m)',
             boulevard:  'Đại lộ / Trục chính (≥20m)',
+            custom:     'Lộ giới tùy chỉnh',
         };
         const roadTypeLabel = roadTypeSelect ? roadTypeLabelMap[roadTypeSelect] || '' : '';
         // Collect optional advanced fields
@@ -1471,20 +1472,20 @@ export const AiValuation: React.FC = () => {
                                                             onClick={() => handleRoadTypeSelect(opt.id, opt.width)}
                                                             className={`flex items-center justify-between px-3 py-2.5 rounded-xl text-xs font-bold transition-all border ${
                                                                 roadTypeSelect === opt.id
-                                                                    ? 'bg-sky-500/20 border-sky-500 text-sky-300'
-                                                                    : 'bg-slate-900 text-slate-400 border-slate-700 hover:border-sky-500/50 hover:text-slate-200'
+                                                                    ? 'bg-sgs-verified/15 border-sgs-verified text-sgs-verified'
+                                                                    : 'bg-slate-900 text-slate-400 border-slate-700 hover:border-sgs-verified/50 hover:text-slate-200'
                                                             }`}
                                                         >
                                                             <span className="truncate pr-1">{opt.label}</span>
-                                                            <span className={`text-[12px] shrink-0 font-bold ${roadTypeSelect === opt.id ? 'text-sky-400' : 'text-slate-600'}`}>{opt.hint}</span>
+                                                            <span className={`text-[12px] shrink-0 font-bold ${roadTypeSelect === opt.id ? 'text-sgs-verified' : 'text-slate-600'}`}>{opt.hint}</span>
                                                         </button>
                                                     ))}
                                                 </div>
                                                 {roadTypeSelect ? (
-                                                    <div className="flex items-center gap-1.5 mt-2 text-xs text-sky-400/80">
+                                                    <div className="flex items-center gap-1.5 mt-2 text-xs text-sgs-verified/80">
                                                         <svg className="w-3 h-3 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" /></svg>
                                                         Lộ giới tương đương {roadWidth}m
-                                                        <button type="button" onClick={() => { const v = prompt('Nhập lộ giới chính xác (m):', roadWidth); if (v && !isNaN(parseFloat(v))) setRoadWidth(v); }} className="ml-1 text-sky-500 underline underline-offset-2 hover:text-sky-400">Chỉnh lại</button>
+                                                        <button type="button" onClick={() => { const v = prompt('Nhập lộ giới chính xác (m):', roadWidth); if (v && !isNaN(parseFloat(v)) && parseFloat(v) > 0) { setRoadWidth(v); setRoadTypeSelect('custom'); } }} className="ml-1 text-sgs-verified underline underline-offset-2 hover:text-sgs-verified/80">Chỉnh lại</button>
                                                     </div>
                                                 ) : (
                                                     <div className="text-xs text-sgs-text-muted mt-1.5 italic">Chọn loại đường để AI tính hệ số vị trí</div>
@@ -1563,7 +1564,7 @@ export const AiValuation: React.FC = () => {
                                         ].map(opt => (
                                             <button
                                                 key={opt.id}
-                                                onClick={() => setLegal(opt.id as any)}
+                                                onClick={() => { setLegal(opt.id as any); setDetailsError(''); }}
                                                 title={opt.title}
                                                 className={`py-2.5 rounded-xl text-xs font-bold transition-all border flex flex-col items-center gap-0.5 ${legal === opt.id ? 'bg-sgs-verified text-[var(--text-primary)] border-sgs-verified' : 'bg-slate-900 text-slate-400 border-slate-700 hover:border-sgs-primary/50'}`}
                                             >
@@ -2186,7 +2187,7 @@ export const AiValuation: React.FC = () => {
                             {(() => {
                                 const legalChip = legal === 'PINK_BOOK' ? 'Sổ Hồng' : legal === 'CONTRACT' ? 'HĐ Mua Bán' : legal === 'PENDING' ? 'Đang làm sổ' : 'Vi Bằng';
                                 const dirLabels: Record<string,string> = { N:'Bắc', S:'Nam', E:'Đông', W:'Tây', NE:'Đông Bắc', SE:'Đông Nam', SW:'Tây Nam', NW:'Tây Bắc' };
-                                const roadTypeLabelMap: Record<string,string> = { alley_moto:'Hẻm xe máy', alley_car:'Hẻm xe hơi', minor:'Đường nhỏ', major:'Đường lớn', boulevard:'Đại lộ' };
+                                const roadTypeLabelMap: Record<string,string> = { internal_small:'Đường nội khu nhỏ', internal_large:'Đường nội khu lớn', alley_moto:'Hẻm xe máy', alley_car:'Hẻm xe hơi', minor:'Đường nhỏ', major:'Đường lớn', boulevard:'Đại lộ', custom:'Lộ giới tùy chỉnh' };
                                 const chips: string[] = [];
                                 chips.push(PROPERTY_TYPE_LABELS[propertyType] || 'Nhà phố');
                                 chips.push(`${parseFloat(area) || 0}m²`);
