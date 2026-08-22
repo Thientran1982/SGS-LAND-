@@ -14,6 +14,7 @@ afterEach(async () => {
   await Promise.all(temporaryDirectories.splice(0).map(directory => rm(directory, { recursive: true, force: true })));
 });
 
+
 async function createComparison() {
   const root = await mkdtemp(path.join(tmpdir(), "overview-visual-policy-"));
   temporaryDirectories.push(root);
@@ -152,5 +153,50 @@ describe("overview visual comparison policy", () => {
     expect(summary).toContain("mean absolute delta: **0.02** (limit: not configured)");
     expect(summary).toContain("## Reviewed exceptions");
     expect(summary).toContain("Reviewed exception: Reviewed mobile rendering change");
+  });
+
+  it("keeps a large blocked comparison compact while representing every artifact", async () => {
+    const fixture = await createComparison();
+    const artifactNames = Array.from({ length: 13 }, (_, index) => `overview-desktop-${index}.png`);
+    await Promise.all(artifactNames.map(async artifact => {
+      await writeImage(path.join(fixture.local, artifact), 10, 10);
+      await writeImage(path.join(fixture.deployed, artifact), 10, 10, 2, 1);
+    }));
+
+    await runComparison(fixture, {
+      viewports: { desktop: { maxChangedPixelRatio: 0.01 } },
+    }, [], true);
+
+    const summary = await readFile(path.join(fixture.output, "overview-release-summary.md"), "utf8");
+    expect(summary).toContain("**Blocked:** 13 unapproved visual regressions exceeded");
+    expect(summary).toContain("Show 13 unapproved blocked regressions details");
+    for (const artifact of artifactNames) expect(summary).toContain(artifact);
+    expect(summary.split("<details>", 1)[0]).not.toContain("viewport: `desktop`; changed-pixel ratio:");
+    expect(summary).toContain("Complete evidence: `overview-evidence-comparison.json`");
+  });
+
+  it("keeps large reviewed exceptions separate from blocked regressions", async () => {
+    const fixture = await createComparison();
+    const artifactNames = Array.from({ length: 13 }, (_, index) => `overview-mobile-${index}.png`);
+    const exceptions = artifactNames.map(artifact => ({
+      artifact,
+      viewport: "mobile",
+      reason: `Reviewed exception ${artifact}`,
+    }));
+    await Promise.all(artifactNames.map(async artifact => {
+      await writeImage(path.join(fixture.local, artifact), 10, 10);
+      await writeImage(path.join(fixture.deployed, artifact), 10, 10, 2, 1);
+    }));
+
+    const report = await runComparison(fixture, {
+      viewports: { mobile: { maxChangedPixelRatio: 0.01 } },
+    }, exceptions);
+    expect(report.summary.thresholdExceeded).toBe(0);
+    const summary = await readFile(path.join(fixture.output, "overview-release-summary.md"), "utf8");
+    expect(summary).toContain("**Passed:** no unapproved visual regression");
+    expect(summary).toContain("## Reviewed exceptions");
+    expect(summary).toContain("Show 13 reviewed exception details");
+    expect(summary).not.toContain("## Blocked regressions");
+    for (const exception of exceptions) expect(summary).toContain(exception.reason);
   });
 });

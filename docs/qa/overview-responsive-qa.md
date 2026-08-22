@@ -78,9 +78,13 @@ The command emits a GitHub Actions `::error` for every unapproved breach, includ
 the artifact, viewport, measured changed-pixel ratio, mean delta, and their configured
 limits. It exits with status 1, so `overview-compare` blocks the workflow while still
 uploading its report. The workflow also publishes `overview-release-summary.md` directly
-in the GitHub Actions job summary. This summary lists every blocked artifact with its
-viewport, measured ratio and mean delta, and configured limits, while keeping reviewed
-exceptions in a separate section.
+in the GitHub Actions job summary. For small comparisons, the summary lists each blocked
+artifact with its viewport, measured ratio and mean delta, and configured limits. When
+more than 12 artifacts are blocked (or reviewed as exceptions), the visible summary
+switches to a compact per-viewport index and puts the complete item details in an
+expandable section. Every artifact remains named in that index and in the uploaded JSON
+and Markdown reports, while reviewed exceptions stay in a separate section and never
+appear as unapproved blocked regressions.
 
 When a difference is intentional, add an exact artifact (or `*`) and optional viewport
 match to `.github/overview-visual-exceptions.json`, with a review reason. The Markdown

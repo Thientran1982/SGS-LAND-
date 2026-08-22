@@ -197,6 +197,45 @@ function regressionSummary(item) {
   ].join(' ');
 }
 
+const RELEASE_SUMMARY_DETAIL_LIMIT = 12;
+
+function compactRegressionIndex(items) {
+  const byViewport = new Map();
+  for (const item of items) {
+    const artifacts = byViewport.get(item.viewport) || [];
+    artifacts.push(item.artifact);
+    byViewport.set(item.viewport, artifacts);
+  }
+  return [
+    '| Viewport | Blocked artifacts | Count |',
+    '| --- | --- | ---: |',
+    ...[...byViewport.entries()]
+      .sort(([left], [right]) => left.localeCompare(right))
+      .map(([viewport, artifacts]) => `| \`${viewport}\` | ${artifacts.join('<br>')} | ${artifacts.length} |`),
+  ];
+}
+
+function compactReleaseSection(title, items, detailLabel) {
+  if (items.length <= RELEASE_SUMMARY_DETAIL_LIMIT) {
+    return [title, '', ...items.map(regressionSummary), ''];
+  }
+  return [
+    title,
+    '',
+    `All ${items.length} ${detailLabel} are represented below. Expand the details for measured values and configured limits; the complete evidence report remains available as an uploaded artifact.`,
+    '',
+    ...compactRegressionIndex(items),
+    '',
+    '<details>',
+    `<summary>Show ${items.length} ${detailLabel} details</summary>`,
+    '',
+    ...items.map(regressionSummary),
+    '',
+    '</details>',
+    '',
+  ];
+}
+
 const [localFiles, deployedFiles] = await Promise.all([filesUnder(localRoot), filesUnder(deployedRoot)]);
 const names = [...new Set([...localFiles.keys(), ...deployedFiles.keys()])].sort();
 const differences = [];
@@ -272,17 +311,27 @@ const summaryLines = [
   '',
 ];
 if (failures.length) {
-  summaryLines.push('## Blocked regressions', '', ...failures.map(regressionSummary), '');
+  summaryLines.push(...compactReleaseSection('## Blocked regressions', failures, 'unapproved blocked regressions'));
 }
 if (reviewedExceptions.length) {
-  summaryLines.push(
-    '## Reviewed exceptions',
-    '',
-    'These differences are covered by a reviewed exception and did not block the release:',
-    '',
-    ...reviewedExceptions.map((item) => `${regressionSummary(item)} Reviewed exception: ${item.evaluation.exception.reason}`),
-    '',
-  );
+  summaryLines.push('## Reviewed exceptions', '', 'These differences are covered by a reviewed exception and did not block the release:', '');
+  if (reviewedExceptions.length <= RELEASE_SUMMARY_DETAIL_LIMIT) {
+    summaryLines.push(...reviewedExceptions.map((item) => `${regressionSummary(item)} Reviewed exception: ${item.evaluation.exception.reason}`), '');
+  } else {
+    summaryLines.push(
+      `All ${reviewedExceptions.length} reviewed exceptions remain separate from blocked regressions. Expand the details for reasons and measured values.`,
+      '',
+      ...compactRegressionIndex(reviewedExceptions),
+      '',
+      '<details>',
+      `<summary>Show ${reviewedExceptions.length} reviewed exception details</summary>`,
+      '',
+      ...reviewedExceptions.map((item) => `${regressionSummary(item)} Reviewed exception: ${item.evaluation.exception.reason}`),
+      '',
+      '</details>',
+      '',
+    );
+  }
 }
 summaryLines.push(
   'Complete evidence: `overview-evidence-comparison.json` and `overview-evidence-comparison.md`.',
