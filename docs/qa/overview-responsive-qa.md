@@ -51,6 +51,7 @@ This environment does not provide a usable authenticated account, and the task�
 - Route boundary check: `GET /dashboard` returned `307` with `Location: /login?redirect=%2Fdashboard`, confirming that this environment has no signed-in session available for the Overview route.
 - Browser/device limitation: Chromium could not launch because `libglib-2.0.so.0` is unavailable. Therefore desktop, tablet, and mobile authenticated interaction checks—including themes, state transitions, chart tooltip, keyboard focus, sidebar/routes, analytics requests, and Guide assistant behavior—remain unverified with a real account. No device-specific regression was observable in the available unauthenticated preview.
 - Evidence screenshot: [1280×720 `/dashboard` route-boundary capture](screenshots/overview-authenticated-check-blocked-1280.jpg) shows the expected login screen rather than an authenticated Overview.
+- Fresh evidence screenshot: [1280×720 `/dashboard` preview capture](screenshots/overview-authenticated-check-blocked-1280-current.jpg) taken after the application workflow restart on 2026-08-22 shows the same expected login boundary; browser console contained no application errors.
 - Browser runner evidence: `npm run test:e2e -- --project=chromium` reached Playwright but Chromium exited with code 127 before any page/test interaction because `libglib-2.0.so.0` is missing. This is an environment prerequisite failure, not an Overview assertion result.
 
 ## Sign-off checklist
