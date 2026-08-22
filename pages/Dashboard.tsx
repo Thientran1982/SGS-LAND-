@@ -810,6 +810,8 @@ export const Dashboard: React.FC = () => {
     const [pipelineMode, setPipelineMode] = useState<'overview' | 'source'>('overview');
     const [leaderboardMode, setLeaderboardMode] = useState<'individual' | 'team'>('individual');
     const [isExporting, setIsExporting] = useState(false);
+    const [isReturningUser, setIsReturningUser] = useState(false);
+    const visitRecordedForRef = useRef<string | null>(null);
     const [toast, setToast] = useState<{ msg: string; type: 'success' | 'error' } | null>(null);
     const notify = useCallback((msg: string, type: 'success' | 'error' = 'success') => {
         setToast({ msg, type });
@@ -912,6 +914,18 @@ export const Dashboard: React.FC = () => {
             if (refreshTimerRef.current) clearTimeout(refreshTimerRef.current);
         };
     }, [scheduleRefetch]);
+    useEffect(() => {
+        const userId = typeof analytics?.user?.id === 'string' ? analytics.user.id : '';
+        if (!userId || visitRecordedForRef.current === userId) return;
+        visitRecordedForRef.current = userId;
+        try {
+            const visitKey = `sgs_dashboard_last_visit:${userId}`;
+            setIsReturningUser(Boolean(localStorage.getItem(visitKey)));
+            localStorage.setItem(visitKey, new Date().toISOString());
+        } catch {
+            // Greeting remains usable when browser storage is unavailable.
+        }
+    }, [analytics?.user?.id]);
     if (isLoading) return <DashboardSkeleton />;
     if (isError) {
         return (
@@ -937,9 +951,12 @@ export const Dashboard: React.FC = () => {
     const currentUser = (analytics as any)?.user;
     const userName = typeof currentUser?.name === 'string' ? currentUser.name.trim() : '';
     const hour = new Date().getHours();
-    const greeting = language === 'vn'
+    const timeGreeting = language === 'vn'
         ? hour < 12 ? 'Chào buổi sáng,' : hour < 18 ? 'Chào buổi chiều,' : 'Chào buổi tối,'
         : hour < 12 ? 'Good morning,' : hour < 18 ? 'Good afternoon,' : 'Good evening,';
+    const greeting = isReturningUser
+        ? language === 'vn' ? 'Chào mừng bạn quay lại,' : 'Welcome back,'
+        : timeGreeting;
     const scopeKey: string = (analytics as any)?.scopeLabel || 'company';
     const scopeLabel = scopeKey === 'personal' ? t('dash.scope_personal') : t('dash.scope_company');
     const overview: any = analytics;
