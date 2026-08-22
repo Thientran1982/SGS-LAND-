@@ -19,6 +19,15 @@ type Group = Metrics & { locationKey: string; propertyType: string };
 type ResponseData = {
   report: Metrics & { evaluatedAt: string; groups: Group[] };
   history: Array<Metrics & { evaluatedAt: string }>;
+  drift: {
+    status: 'CLEAR' | 'WARNING' | 'BLOCKED';
+    promotionBlocked: boolean;
+    thresholds: { maeVndPerM2: number; mape: number; consecutiveRuns: number };
+    consecutiveRunsRequired: number;
+    consecutiveMaeRuns: number;
+    consecutiveMapeRuns: number;
+    reasons: string[];
+  };
   dataset: { name: string; sampleCount: number; unitLabel: string; sources: string[] };
   disclaimer: string;
 };
@@ -36,6 +45,40 @@ function MetricCard({ label, value, detail }: { label: string; value: string; de
       <p className="mt-2 text-2xl font-bold text-slate-900">{value}</p>
       {detail && <p className="mt-1 text-xs text-slate-500">{detail}</p>}
     </div>
+  );
+}
+
+function DriftStatus({ drift }: { drift: ResponseData['drift'] }) {
+  const blocked = drift.status === 'BLOCKED';
+  const warning = drift.status === 'WARNING';
+  const colors = blocked
+    ? 'border-red-200 bg-red-50 text-red-900'
+    : warning ? 'border-amber-200 bg-amber-50 text-amber-900'
+      : 'border-emerald-200 bg-emerald-50 text-emerald-900';
+  const title = blocked ? 'Đang chặn promotion do drift'
+    : warning ? 'Cảnh báo drift cần xem xét' : 'Chưa phát hiện drift';
+  return (
+    <section className={`rounded-2xl border p-5 ${colors}`} aria-label="Trạng thái drift">
+      <div className="flex items-start gap-3">
+        <AlertTriangle className="mt-0.5 h-5 w-5 shrink-0" />
+        <div className="min-w-0">
+          <h2 className="font-semibold">{title}</h2>
+          <p className="mt-1 text-sm">
+            {blocked
+              ? 'Tín hiệu này yêu cầu giữ promotion hiện tại để review; không tự thay đổi quyết định promotion.'
+              : warning
+                ? 'Một metric đã vượt ngưỡng hoặc đang tăng liên tiếp, nhưng chưa đủ điều kiện chặn.'
+                : 'Các metric hiện nằm dưới ngưỡng cảnh báo định lượng.'}
+          </p>
+          <div className="mt-3 grid gap-2 text-xs sm:grid-cols-3">
+            <span>MAE: {drift.consecutiveMaeRuns}/{drift.consecutiveRunsRequired} lần tăng · ngưỡng {formatVnd(drift.thresholds.maeVndPerM2)}</span>
+            <span>MAPE: {drift.consecutiveMapeRuns}/{drift.consecutiveRunsRequired} lần tăng · ngưỡng {formatPercent(drift.thresholds.mape)}</span>
+            <span>Trạng thái audit: {drift.status}</span>
+          </div>
+          {drift.reasons.length > 0 && <p className="mt-3 text-xs font-medium">Lý do: {drift.reasons.join(', ')}</p>}
+        </div>
+      </div>
+    </section>
   );
 }
 
@@ -148,6 +191,7 @@ const ValuationAccuracyReport: React.FC = () => {
         {error && <div className="rounded-xl bg-red-50 p-4 text-sm text-red-700">{error}</div>}
         {loading ? <div className="rounded-2xl bg-white p-8 text-slate-500">Đang chạy backtest…</div> : report && (
           <>
+            {data?.drift && <DriftStatus drift={data.drift} />}
             <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
               <MetricCard label="MAE" value={formatVnd(report.mae)} detail="Sai số tuyệt đối trung bình" />
               <MetricCard label="MAPE" value={formatPercent(report.mape)} detail="Sai số phần trăm tuyệt đối trung bình" />

@@ -30,6 +30,77 @@ export interface GoldSetEvaluation extends EvaluationMetrics {
   predictions: ValuationPrediction[];
 }
 
+export const VALUATION_DRIFT_THRESHOLDS = {
+  maeVndPerM2: 20_000_000,
+  mape: 0.2,
+  consecutiveRuns: 3,
+} as const;
+
+export type ValuationEvaluationHistoryPoint = Pick<EvaluationMetrics, 'mae' | 'mape'> & {
+  evaluatedAt?: string;
+};
+
+export type ValuationDriftAssessment = {
+  status: 'CLEAR' | 'WARNING' | 'BLOCKED';
+  promotionBlocked: boolean;
+  thresholds: typeof VALUATION_DRIFT_THRESHOLDS;
+  consecutiveRunsRequired: number;
+  consecutiveMaeRuns: number;
+  consecutiveMapeRuns: number;
+  reasons: string[];
+};
+
+/**
+ * Detects a sustained, quantitatively significant deterioration in saved
+ * evaluations. This is a signal for a separate promotion workflow; it does
+ * not replace or mutate the existing promotion decision.
+ */
+export function assessValuationDrift(
+  history: readonly ValuationEvaluationHistoryPoint[],
+  thresholds = VALUATION_DRIFT_THRESHOLDS,
+): ValuationDriftAssessment {
+  const consecutiveIncreasingRuns = (metric: 'mae' | 'mape'): number => {
+    if (!history.length) return 0;
+    const latestValue = history[history.length - 1][metric];
+    if (latestValue == null || !Number.isFinite(latestValue)) return 0;
+    let count = 1;
+    for (let index = history.length - 1; index > 0; index--) {
+      const current = history[index][metric];
+      const previous = history[index - 1][metric];
+      if (current == null || previous == null || !Number.isFinite(current) ||
+        !Number.isFinite(previous) || current <= previous) break;
+      count++;
+    }
+    return count;
+  };
+
+  const consecutiveMaeRuns = consecutiveIncreasingRuns('mae');
+  const consecutiveMapeRuns = consecutiveIncreasingRuns('mape');
+  const latest = [...history].reverse().find(point =>
+    (point.mae != null && Number.isFinite(point.mae)) ||
+    (point.mape != null && Number.isFinite(point.mape)),
+  );
+  const maeThresholdReached = latest?.mae != null && latest.mae >= thresholds.maeVndPerM2;
+  const mapeThresholdReached = latest?.mape != null && latest.mape >= thresholds.mape;
+  const maeBlocked = maeThresholdReached && consecutiveMaeRuns >= thresholds.consecutiveRuns;
+  const mapeBlocked = mapeThresholdReached && consecutiveMapeRuns >= thresholds.consecutiveRuns;
+  const reasons: string[] = [];
+  if (maeBlocked) reasons.push('mae_above_threshold_with_consecutive_increases');
+  if (mapeBlocked) reasons.push('mape_above_threshold_with_consecutive_increases');
+  const warning = (maeThresholdReached || mapeThresholdReached) ||
+    consecutiveMaeRuns >= 2 || consecutiveMapeRuns >= 2;
+
+  return {
+    status: maeBlocked || mapeBlocked ? 'BLOCKED' : warning ? 'WARNING' : 'CLEAR',
+    promotionBlocked: maeBlocked || mapeBlocked,
+    thresholds,
+    consecutiveRunsRequired: thresholds.consecutiveRuns,
+    consecutiveMaeRuns,
+    consecutiveMapeRuns,
+    reasons,
+  };
+}
+
 const median = (values: number[]): number | null => {
   if (!values.length) return null;
   const sorted = [...values].sort((a, b) => a - b);

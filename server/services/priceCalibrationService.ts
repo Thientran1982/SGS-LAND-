@@ -27,6 +27,8 @@ import {
   evaluateValuationGoldSet,
   type GoldSetEvaluation,
   type ValuationPrediction,
+  assessValuationDrift,
+  type ValuationDriftAssessment,
 } from './valuationEvaluationService';
 
 const CALIBRATION_WINDOW_DAYS = 90;
@@ -506,6 +508,11 @@ export class PriceCalibrationService {
       logger.warn(`[Calibration] Could not read evaluation history: ${error?.message || error}`);
       return [];
     }
+  }
+
+  async getEvaluationDrift(limit = 30): Promise<ValuationDriftAssessment> {
+    const history = await this.getEvaluationHistory(limit);
+    return assessValuationDrift(history);
   }
 
   // ── Admin: price history for a location ───────────────────────────────────

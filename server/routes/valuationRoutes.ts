@@ -1143,9 +1143,11 @@ export function createValuationRoutes(
     try {
       const report = await priceCalibrationService.backtestGoldSet();
       const history = await priceCalibrationService.getEvaluationHistory();
+      const drift = await priceCalibrationService.getEvaluationDrift();
       return res.json({
         report,
         history,
+        drift,
         dataset: {
           name: 'Verified valuation gold set',
           sampleCount: valuationGoldSet.length,

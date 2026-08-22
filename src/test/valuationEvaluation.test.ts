@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { evaluateValuationGoldSet, shouldPromoteCalibration } from '../../server/services/valuationEvaluationService';
+import { assessValuationDrift, evaluateValuationGoldSet, shouldPromoteCalibration } from '../../server/services/valuationEvaluationService';
 import type { VerifiedTransaction } from '../../server/data/valuationGoldSet';
 
 const transaction = (id: string, locationKey = 'hcm|q1'): VerifiedTransaction => ({
@@ -37,5 +37,36 @@ describe('valuation gold-set evaluation', () => {
     expect(shouldPromoteCalibration(candidate, baseline)).toEqual({
       promote: false, reasons: ['interval_coverage_worse_than_baseline'],
     });
+  });
+
+  it('blocks promotion signal after three rising MAE runs over the threshold', () => {
+    const assessment = assessValuationDrift([
+      { mae: 21_000_000, mape: 0.1 },
+      { mae: 22_000_000, mape: 0.11 },
+      { mae: 23_000_000, mape: 0.12 },
+    ]);
+    expect(assessment.status).toBe('BLOCKED');
+    expect(assessment.promotionBlocked).toBe(true);
+    expect(assessment.consecutiveMaeRuns).toBe(3);
+    expect(assessment.reasons).toContain('mae_above_threshold_with_consecutive_increases');
+  });
+
+  it('warns but does not block before the consecutive-run requirement', () => {
+    const assessment = assessValuationDrift([
+      { mae: 19_000_000, mape: 0.1 },
+      { mae: 21_000_000, mape: 0.1 },
+    ]);
+    expect(assessment.status).toBe('WARNING');
+    expect(assessment.promotionBlocked).toBe(false);
+  });
+
+  it('does not bridge a missing metric when counting consecutive increases', () => {
+    const assessment = assessValuationDrift([
+      { mae: 21_000_000, mape: null },
+      { mae: null, mape: 0.1 },
+      { mae: 23_000_000, mape: 0.2 },
+    ]);
+    expect(assessment.consecutiveMaeRuns).toBe(1);
+    expect(assessment.promotionBlocked).toBe(false);
   });
 });
