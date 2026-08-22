@@ -33,6 +33,7 @@ import {
 } from '../services/valuationUsageService';
 import { getFeatureBreakdown } from '../services/aiUsageService';
 import { sendAiError } from '../utils/aiErrorHandler';
+import { valuationGoldSet } from '../data/valuationGoldSet';
 
 function normalizeAddrKey(addr: string): string {
   return addr.toLowerCase()
@@ -1129,6 +1130,34 @@ export function createValuationRoutes(
         isFresh: new Date(e.expiresAt) > new Date(),
       })),
     });
+  });
+
+  // ──────────────────────────────────────────────────────────────────────────
+  // ADMIN: Verified gold-set valuation accuracy report
+  // ──────────────────────────────────────────────────────────────────────────
+  router.get('/admin/evaluation-report', authenticateToken, async (req: Request, res: Response) => {
+    const user = (req as any).user;
+    if (!['SUPER_ADMIN', 'ADMIN'].includes(user?.role)) {
+      return res.status(403).json({ error: 'Admin only' });
+    }
+    try {
+      const report = await priceCalibrationService.backtestGoldSet();
+      return res.json({
+        report,
+        dataset: {
+          name: 'Verified valuation gold set',
+          sampleCount: valuationGoldSet.length,
+          verifiedOnly: true,
+          unit: 'VND_PER_M2',
+          unitLabel: 'VND/m²',
+          sources: [...new Set(valuationGoldSet.map(row => row.verificationSource))],
+        },
+        disclaimer: 'Đây là backtest trên gold set giao dịch đã xác minh, không phải dữ liệu giao dịch trực tiếp hay báo giá cho khách hàng.',
+      });
+    } catch (err: any) {
+      logger.error('[Valuation evaluation-report] error', err);
+      return res.status(500).json({ error: 'Không thể chạy báo cáo sai số định giá' });
+    }
   });
 
   // ──────────────────────────────────────────────────────────────────────────

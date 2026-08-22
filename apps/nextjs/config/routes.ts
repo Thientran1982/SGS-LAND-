@@ -66,6 +66,7 @@ export const ROUTES = {
   ADMIN_USERS:    "/admin-users",
   ENTERPRISE:     "/enterprise-settings",
   ADMIN_AI_COST:  "/admin-ai-cost",
+  VALUATION_ACCURACY: "/valuation-accuracy",
   BILLING:        "/billing",
   VENDOR:         "/vendor-management",
   TASK_DASHBOARD: "/task-dashboard",
@@ -82,7 +83,7 @@ export const PRIVATE_PREFIXES = [
   "/sequences", "/campaigns", "/knowledge", "/scoring-rules",
   "/marketplace-apps", "/data-platform", "/security", "/ai-governance",
   "/seo-manager", "/error-monitor", "/profile", "/admin-users",
-  "/enterprise-settings", "/admin-ai-cost", "/billing", "/checkout",
+  "/enterprise-settings", "/admin-ai-cost", "/valuation-accuracy", "/billing", "/checkout",
   "/vendor-management", "/task-dashboard", "/task-kanban", "/tasks",
   "/employees", "/task-reports", "/scraper",
 ] as const;

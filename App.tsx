@@ -88,6 +88,7 @@ const DataPlatform = lazyLoad(() => import('./pages/DataPlatform'), 'DataPlatfor
 const SecurityCompliance = lazyLoad(() => import('./pages/SecurityCompliance'), 'SecurityCompliance');
 const AiGovernance = lazyLoad(() => import('./pages/AiGovernance'), 'AiGovernance');
 const AiEvaluation = lazyLoad(() => import('./pages/AiEvaluation'), 'AiEvaluation');
+const ValuationAccuracyReport = lazyLoad(() => import('./pages/ValuationAccuracyReport'), 'ValuationAccuracyReport');
 const AgentAudit = lazyLoad(() => import('./pages/AgentAudit'), 'AgentAudit');
 const SeoManager = lazyLoad(() => import('./pages/SeoManager'), 'SeoManager');
 const ErrorMonitor = lazyLoad(() => import('./pages/ErrorMonitor'), 'ErrorMonitor');
@@ -116,6 +117,7 @@ registerPrefetch(ROUTES.ADMIN_USERS,         () => import('./pages/AdminUsers'))
 registerPrefetch(ROUTES.ENTERPRISE_SETTINGS, () => import('./pages/EnterpriseSettings'));
 registerPrefetch(ROUTES.ADMIN_AI_COST,       () => import('./pages/AdminAiCost'));
 registerPrefetch(ROUTES.AI_EVALUATION,       () => import('./pages/AiEvaluation'));
+registerPrefetch(ROUTES.VALUATION_ACCURACY,  () => import('./pages/ValuationAccuracyReport'));
 registerPrefetch(ROUTES.AGENT_AUDIT,         () => import('./pages/AgentAudit'));
 registerPrefetch(ROUTES.BILLING,            () => import('./pages/Billing'));
 registerPrefetch(ROUTES.CHECKOUT,           () => import('./pages/Checkout'));
@@ -241,6 +243,7 @@ const PAGE_REGISTRY: Record<string, React.ComponentType<any>> = {
     [ROUTES.ENTERPRISE_SETTINGS]: EnterpriseSettings,
     [ROUTES.ADMIN_AI_COST]: AdminAiCost,
     [ROUTES.AI_EVALUATION]: AiEvaluation,
+    [ROUTES.VALUATION_ACCURACY]: ValuationAccuracyReport,
     [ROUTES.AGENT_AUDIT]: AgentAudit,
     [ROUTES.BILLING]: Billing,
     [ROUTES.CHECKOUT]: Checkout,
@@ -452,6 +455,7 @@ const ADMIN_ONLY_ROUTES: Set<string> = new Set([
     ROUTES.ADMIN_USERS,
     ROUTES.ENTERPRISE_SETTINGS,
     ROUTES.AGENT_AUDIT,
+    ROUTES.VALUATION_ACCURACY,
 ]);
 // Routes chỉ dành riêng cho SUPER_ADMIN (quản trị viên cấp cao nhất)
 const SUPER_ADMIN_ONLY_ROUTES: Set<string> = new Set([

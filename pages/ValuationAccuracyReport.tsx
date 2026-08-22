@@ -1,0 +1,144 @@
+import React, { useCallback, useEffect, useState } from 'react';
+import { RefreshCw, ShieldCheck, AlertTriangle, BarChart3 } from 'lucide-react';
+import { SeoHead } from '../components/SeoHead';
+import { db } from '../services/dbApi';
+import { api } from '../services/api/apiClient';
+import type { User } from '../types';
+
+type Metrics = {
+  sampleCount: number;
+  evaluatedCount: number;
+  rejectedCount: number;
+  rejectRate: number;
+  mae: number | null;
+  mape: number | null;
+  medianAbsoluteError: number | null;
+  intervalCoverage: number | null;
+};
+type Group = Metrics & { locationKey: string; propertyType: string };
+type ResponseData = {
+  report: Metrics & { evaluatedAt: string; groups: Group[] };
+  dataset: { name: string; sampleCount: number; unitLabel: string; sources: string[] };
+  disclaimer: string;
+};
+
+const formatVnd = (value: number | null) =>
+  value == null ? '—' : `${Math.round(value).toLocaleString('vi-VN')} VND/m²`;
+const formatPercent = (value: number | null) =>
+  value == null ? '—' : `${(value * 100).toFixed(1)}%`;
+const dateTime = (value: string) => new Date(value).toLocaleString('vi-VN');
+
+function MetricCard({ label, value, detail }: { label: string; value: string; detail?: string }) {
+  return (
+    <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+      <p className="text-sm text-slate-500">{label}</p>
+      <p className="mt-2 text-2xl font-bold text-slate-900">{value}</p>
+      {detail && <p className="mt-1 text-xs text-slate-500">{detail}</p>}
+    </div>
+  );
+}
+
+const ValuationAccuracyReport: React.FC = () => {
+  const [user, setUser] = useState<User | null>(null);
+  const [data, setData] = useState<ResponseData | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [running, setRunning] = useState(false);
+  const [error, setError] = useState('');
+
+  const load = useCallback(async () => {
+    setLoading(true);
+    setError('');
+    try {
+      const response = await api.get<ResponseData>('/api/valuation/admin/evaluation-report');
+      setData(response);
+    } catch (err: any) {
+      setError(err?.message || 'Không thể tải báo cáo.');
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    db.getCurrentUser().then(setUser).catch(() => setUser(null));
+    load();
+  }, [load]);
+
+  const runBacktest = async () => {
+    setRunning(true);
+    await load();
+    setRunning(false);
+  };
+
+  const report = data?.report;
+  const isAdmin = ['ADMIN', 'SUPER_ADMIN'].includes(user?.role || '');
+
+  if (!loading && user && !isAdmin) {
+    return <div className="min-h-screen bg-slate-50 p-8 text-slate-700">Bạn không có quyền xem báo cáo này.</div>;
+  }
+
+  return (
+    <div className="min-h-screen bg-slate-50 p-6 md:p-8">
+      <SeoHead title="Sai số định giá | SGS Land" description="Báo cáo backtest độ chính xác mô hình định giá trên gold set đã xác minh" />
+      <div className="mx-auto max-w-7xl space-y-6">
+        <header className="flex flex-wrap items-start justify-between gap-4">
+          <div>
+            <p className="text-sm font-semibold uppercase tracking-widest text-indigo-600">AI Governance · Admin</p>
+            <h1 className="mt-1 text-3xl font-bold text-slate-900">Báo cáo sai số định giá</h1>
+            <p className="mt-2 max-w-3xl text-slate-600">
+              Backtest mô hình hiện tại trên gold set giao dịch đã xác minh, phân rã theo khu vực và loại bất động sản.
+            </p>
+          </div>
+          <button onClick={runBacktest} disabled={loading || running}
+            className="inline-flex items-center gap-2 rounded-xl bg-slate-900 px-4 py-2.5 text-sm font-semibold text-white disabled:opacity-50">
+            <RefreshCw className={`h-4 w-4 ${running ? 'animate-spin' : ''}`} />
+            {running ? 'Đang chạy…' : 'Chạy lại backtest'}
+          </button>
+        </header>
+
+        <div className="flex items-start gap-3 rounded-2xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900">
+          <AlertTriangle className="mt-0.5 h-5 w-5 shrink-0" />
+          <p><strong>Lưu ý:</strong> {data?.disclaimer || 'Báo cáo này là kết quả đánh giá offline trên dữ liệu đã xác minh, không phải dữ liệu giao dịch trực tiếp.'}</p>
+        </div>
+
+        {error && <div className="rounded-xl bg-red-50 p-4 text-sm text-red-700">{error}</div>}
+        {loading ? <div className="rounded-2xl bg-white p-8 text-slate-500">Đang chạy backtest…</div> : report && (
+          <>
+            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+              <MetricCard label="MAE" value={formatVnd(report.mae)} detail="Sai số tuyệt đối trung bình" />
+              <MetricCard label="MAPE" value={formatPercent(report.mape)} detail="Sai số phần trăm tuyệt đối trung bình" />
+              <MetricCard label="Median absolute error" value={formatVnd(report.medianAbsoluteError)} detail="Trung vị sai số tuyệt đối" />
+              <MetricCard label="Interval coverage" value={formatPercent(report.intervalCoverage)} detail="Khoảng dự báo ±15%" />
+            </div>
+            <div className="grid gap-4 sm:grid-cols-3">
+              <MetricCard label="Mẫu gold set" value={report.sampleCount.toLocaleString('vi-VN')} detail={`${data?.dataset.name} · ${data?.dataset.unitLabel}`} />
+              <MetricCard label="Đã đánh giá" value={report.evaluatedCount.toLocaleString('vi-VN')} detail={`${formatPercent(report.evaluatedCount / Math.max(report.sampleCount, 1))} trên tổng mẫu`} />
+              <MetricCard label="Bị reject" value={report.rejectedCount.toLocaleString('vi-VN')} detail={`Reject rate: ${formatPercent(report.rejectRate)}`} />
+            </div>
+
+            <section className="overflow-hidden rounded-2xl bg-white shadow-sm">
+              <div className="flex flex-wrap items-center justify-between gap-2 border-b border-slate-100 px-5 py-4">
+                <div><h2 className="font-semibold text-slate-900">Phân rã theo khu vực / loại BĐS</h2><p className="text-xs text-slate-500">Tất cả giá đều tính bằng VND/m²</p></div>
+                <span className="inline-flex items-center gap-1 text-xs text-slate-500"><ShieldCheck className="h-4 w-4 text-emerald-600" /> Dữ liệu đã xác minh</span>
+              </div>
+              <div className="overflow-x-auto">
+                <table className="w-full min-w-[780px] text-left text-sm">
+                  <thead className="bg-slate-50 text-xs uppercase tracking-wide text-slate-500"><tr>
+                    <th className="px-5 py-3">Location key</th><th className="px-5 py-3">Loại BĐS</th><th className="px-5 py-3">Mẫu</th><th className="px-5 py-3">MAE</th><th className="px-5 py-3">MAPE</th><th className="px-5 py-3">Coverage</th><th className="px-5 py-3">Reject</th>
+                  </tr></thead>
+                  <tbody>{report.groups.map(group => <tr key={`${group.locationKey}-${group.propertyType}`} className="border-t border-slate-100">
+                    <td className="px-5 py-3 font-medium text-slate-800">{group.locationKey}</td><td className="px-5 py-3 text-slate-600">{group.propertyType}</td><td className="px-5 py-3">{group.sampleCount}</td><td className="px-5 py-3">{formatVnd(group.mae)}</td><td className="px-5 py-3">{formatPercent(group.mape)}</td><td className="px-5 py-3">{formatPercent(group.intervalCoverage)}</td><td className="px-5 py-3">{group.rejectedCount} ({formatPercent(group.rejectRate)})</td>
+                  </tr>)}</tbody>
+                </table>
+              </div>
+            </section>
+            <footer className="flex flex-wrap items-center gap-2 text-xs text-slate-500">
+              <BarChart3 className="h-4 w-4" /> Chạy lúc: {dateTime(report.evaluatedAt)} · Nguồn xác minh: {data?.dataset.sources.join(', ')}
+            </footer>
+          </>
+        )}
+      </div>
+    </div>
+  );
+};
+
+export default ValuationAccuracyReport;

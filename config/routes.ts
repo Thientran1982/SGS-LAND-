@@ -122,6 +122,7 @@ export const ROUTES = {
     SECURITY: 'security',
     AI_GOVERNANCE: 'ai-governance',
     AI_EVALUATION: 'ai-evaluation',
+    VALUATION_ACCURACY: 'valuation-accuracy',
     AGENT_AUDIT: 'agent-audit',
     SEO_MANAGER: 'seo-manager',
     ERROR_MONITOR: 'error-monitor',
