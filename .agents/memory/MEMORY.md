@@ -32,3 +32,4 @@
 - [Dashboard profile resilience](dashboard-profile-resilience.md) — optional profile failures must not block a valid analytics overview
 - [Dashboard layout structure](dashboard-layout-structure.md) — keep the overview hierarchy as independent semantic rows matching the Design Tool
 - [Standalone artifact dependencies](standalone-artifact-dependencies.md) — new artifact previews may need a local dependency install before Vite resolves packages
+- [Artifact watcher limit](artifact-watcher-limit.md) — scope preview tooling and use polling when multiple Vite artifact servers exhaust file watchers
