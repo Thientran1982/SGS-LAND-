@@ -1,5 +1,63 @@
 import { BaseRepository, PaginatedResult, PaginationParams } from './baseRepository';
 
+/** Shared normalization used by valuation comparable provenance checks. */
+export function normalizeComparableLocation(value: unknown): string {
+  return String(value || '')
+    .toLowerCase()
+    .replace(/đ/g, 'd')
+    .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+    .replace(/[^a-z0-9\s]/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
+export function normalizeComparableType(value: unknown): string {
+  const type = normalizeComparableLocation(value);
+  if (type === 'project') return 'project';
+  if (type.includes('apartment') || type.includes('can ho') || type.includes('chung cu')) return 'apartment';
+  if (type.includes('villa') || type.includes('biet thu')) return 'villa';
+  if (type.includes('shophouse') || type.includes('shop house')) return 'shophouse';
+  if (type.includes('land') || type.includes('dat')) return 'land';
+  if (type.includes('office') || type.includes('van phong')) return 'office';
+  if (type.includes('warehouse') || type.includes('kho')) return 'warehouse';
+  return 'townhouse';
+}
+
+/** Rejects cross-project/cross-province candidates before they reach a median. */
+export function isComparableLocationMatch(target: unknown, candidate: unknown): boolean {
+  const targetText = normalizeComparableLocation(target);
+  const candidateText = normalizeComparableLocation(candidate);
+  const project = targetText.match(/\b(aqua\s*city|aquacity|vinhomes?\s+grand\s+park|grand\s+park)\b/);
+  if (project) {
+    const projectKey = project[1].replace(/\s+/g, ' ');
+    if (projectKey.includes('aqua')) {
+      if (!/\baqua\s*city\b|\baquacity\b/.test(candidateText)) return false;
+    } else if (!/\bvinhomes?\s+grand\s+park\b|\bgrand\s+park\b/.test(candidateText)) {
+      return false;
+    }
+  }
+  const regions: RegExp[] = [
+    /\bq\s*1\b|\bquan\s*1\b|\bdistrict\s*1\b/,
+    /\bq\s*2\b|\bquan\s*2\b|\bdistrict\s*2\b/,
+    /\bq\s*7\b|\bquan\s*7\b|\bdistrict\s*7\b/,
+    /\bq\s*9\b|\bquan\s*9\b|\bdistrict\s*9\b/,
+    /\bbinh thanh\b/, /\bthu duc\b/, /\bbien hoa\b/, /\bdong nai\b/,
+    /\bhcm\b|\btp hcm\b|\bho chi minh\b|\bsaigon\b/,
+  ];
+  for (const region of regions) {
+    if (region.test(targetText)) {
+      const hcm = region.source.includes('hcm');
+      if (hcm
+        ? !(/\bhcm\b|\btp hcm\b|\bho chi minh\b|\bsaigon\b/.test(candidateText))
+        : !region.test(candidateText)) return false;
+    }
+  }
+  if (!project && !regions.some(region => region.test(targetText))) {
+    return candidateText.includes(targetText.slice(0, 50));
+  }
+  return true;
+}
+
 export interface ListingFilters {
   type?: string;
   type_in?: string[];
@@ -881,19 +939,35 @@ export class ListingRepository extends BaseRepository {
       const areaMin = params.area * 0.60;
       const areaMax = params.area * 1.60;
 
-      // Extract district-level keyword from location for fuzzy matching
-      // e.g. "123 Nguyễn Văn Linh, Quận 7, TP.HCM" → search for "quận 7" or "q.7"
-      const locationParts = params.location.split(/[,;]/);
-      const district = (locationParts[1] || locationParts[0] || params.location).trim().slice(0, 50);
+      const normalizedTarget = normalizeComparableLocation(params.location);
+      const aliases = [
+        { rx: /\bq\s*1\b|\bquan\s*1\b|\bdistrict\s*1\b/, key: 'quan 1', sql: 'quận 1' },
+        { rx: /\bq\s*2\b|\bquan\s*2\b|\bdistrict\s*2\b/, key: 'quan 2', sql: 'quận 2' },
+        { rx: /\bq\s*7\b|\bquan\s*7\b|\bdistrict\s*7\b/, key: 'quan 7', sql: 'quận 7' },
+        { rx: /\bq\s*9\b|\bquan\s*9\b|\bdistrict\s*9\b/, key: 'quan 9', sql: 'quận 9' },
+        { rx: /\bbinh thanh\b/, key: 'binh thanh', sql: 'Bình Thạnh' },
+        { rx: /\bthu duc\b/, key: 'thu duc', sql: 'Thủ Đức' },
+        { rx: /\bbien hoa\b/, key: 'bien hoa', sql: 'Biên Hòa' },
+        { rx: /\bdong nai\b/, key: 'dong nai', sql: 'Đồng Nai' },
+        { rx: /\bhcm\b|\btp hcm\b|\bho chi minh\b|\bsaigon\b/, key: 'ho chi minh', sql: 'HCM' },
+      ];
+      const projects = [
+        { rx: /\baqua\s*city|\baquacity\b/, key: 'aqua city' },
+        { rx: /\bvinhomes?\s+grand\s+park\b|\bgrand\s+park\b/, key: 'grand park' },
+      ];
+      const targetProject = projects.find(p => p.rx.test(normalizedTarget))?.key;
+      const targetRegions = aliases.filter(a => a.rx.test(normalizedTarget)).map(a => a.key);
+      // A project is a stronger provenance signal than a district. For ordinary
+      // addresses require every explicit regional anchor (e.g. district + province).
+      const locationPattern = targetProject
+        || aliases.find(a => targetRegions.includes(a.key))?.sql
+        || params.location.slice(0, 50);
 
       const maxSamples = params.maxSamples || 20;
 
-      // Map broad property type category
-      const typeFilter = params.propertyType
-        ? `AND type ILIKE $4`
-        : '';
-      const values: any[] = [areaMin, areaMax, `%${district}%`];
-      if (params.propertyType) values.push(`%${params.propertyType.split('_')[0]}%`);
+      // SQL is deliberately only a candidate pre-filter. The full normalized
+      // location and type provenance checks below are authoritative.
+      const values: any[] = [areaMin, areaMax, `%${locationPattern}%`];
 
       const query = `
         SELECT
@@ -905,14 +979,20 @@ export class ListingRepository extends BaseRepository {
           AND price > 0
           AND area > 0
           AND status IN ('AVAILABLE', 'SOLD', 'HOLD')
-          ${typeFilter}
         ORDER BY updated_at DESC
-        LIMIT ${maxSamples * 3}
+          LIMIT ${Math.max(maxSamples * 10, 100)}
       `;
 
       const result = await client.query(query, values);
 
-      if (result.rows.length === 0) {
+      const targetType = params.propertyType ? normalizeComparableType(params.propertyType) : null;
+      const acceptedRows = result.rows.filter((row: any) => {
+        if (!isComparableLocationMatch(params.location, row.location)) return false;
+        if (targetType && normalizeComparableType(row.type) !== targetType) return false;
+        return true;
+      });
+
+      if (acceptedRows.length === 0) {
         return {
           count: 0, medianPricePerM2: 0, avgPricePerM2: 0,
           p25PricePerM2: 0, p75PricePerM2: 0, minPricePerM2: 0, maxPricePerM2: 0,
@@ -920,9 +1000,9 @@ export class ListingRepository extends BaseRepository {
         };
       }
 
-      const prices = result.rows
+      const validRows = acceptedRows.filter((r: any) => Number(r.price_per_m2) > 0 && Number(r.price_per_m2) < 1_000_000_000);
+      const prices = validRows
         .map((r: any) => Number(r.price_per_m2))
-        .filter((p: number) => p > 0 && p < 1_000_000_000)  // sanity filter
         .sort((a: number, b: number) => a - b);
 
       if (prices.length === 0) {
@@ -938,7 +1018,7 @@ export class ListingRepository extends BaseRepository {
       const p25 = prices[Math.floor(prices.length * 0.25)];
       const p75 = prices[Math.floor(prices.length * 0.75)];
 
-      const samples = result.rows
+      const samples = validRows
         .slice(0, maxSamples)
         .map((r: any) => ({
           id: r.id,

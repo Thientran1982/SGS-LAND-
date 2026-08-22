@@ -2726,22 +2726,22 @@ YÊU CẦU VIẾT PHẢN HỒI:
             const resolvedPTypeFromExt: string = PROP_TYPE_NORMALIZE[rawPType] || rawPType || 'townhouse_center';
 
             try {
-                // Query internal DB for comparable listings
+                // Use the same provenance-aware comparable engine as the HTTP
+                // valuation route. Do not use a broad `search` here: it can
+                // combine a project/district from another province and its
+                // median then contaminates the AVM.
                 let internalCompsMedian: number | undefined;
                 let internalCompsCount = 0;
                 try {
-                    const compsFilters: ListingFilters = { status: 'AVAILABLE' };
-                    if (address) compsFilters.search = address;
-                    const compsResult = await listingRepository.findListings(state.tenantId, { page: 1, pageSize: 20 }, compsFilters);
-                    if (compsResult.data.length > 0) {
-                        const pricesPerM2 = compsResult.data
-                            .filter((l: any) => l.price > 0 && l.area > 0)
-                            .map((l: any) => l.price / l.area);
-                        if (pricesPerM2.length > 0) {
-                            pricesPerM2.sort((a: number, b: number) => a - b);
-                            internalCompsMedian = pricesPerM2[Math.floor(pricesPerM2.length / 2)];
-                            internalCompsCount = pricesPerM2.length;
-                        }
+                    const compsResult = await listingRepository.findComparables(state.tenantId, {
+                        location: address,
+                        area: Number(area),
+                        propertyType: resolvedPTypeFromExt,
+                        maxSamples: 15,
+                    });
+                    if (compsResult.count >= 2) {
+                        internalCompsMedian = compsResult.medianPricePerM2;
+                        internalCompsCount = compsResult.count;
                     }
                 } catch { /* internal comps are optional — silent fallback */ }
 

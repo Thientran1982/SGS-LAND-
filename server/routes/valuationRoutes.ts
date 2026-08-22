@@ -680,6 +680,12 @@ export function createValuationRoutes(
           count: internalCompsCount,
           samples: comparables.slice(0, 5),
           medianPricePerM2: internalCompsMedian || null,
+          medianPriceUnit: 'VND/m²',
+          locationProvenance: {
+            requestedLocation: addressClean,
+            matching: 'normalized project/district/province',
+            propertyType: resolvedPropertyType,
+          },
         },
         // Human-readable summary
         summary: {
@@ -799,6 +805,12 @@ export function createValuationRoutes(
           ? `${(comps.medianPricePerM2 / 1_000_000).toFixed(0)} triệu/m²`
           : 'N/A',
         searchParams: { location, area, propertyType },
+        locationProvenance: {
+          requestedLocation: location,
+          matching: 'normalized project/district/province',
+          propertyType: propertyType || null,
+          priceUnit: 'VND/m²',
+        },
       });
     } catch (err: any) {
       logger.error('[Valuation] Comparables error:', err);
