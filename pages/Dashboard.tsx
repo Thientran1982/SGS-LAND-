@@ -17,6 +17,7 @@ import { Dropdown } from '../components/Dropdown';
 import { SelectDropdown } from '../components/task/SelectDropdown';
 import { useSocket, socket } from '../services/websocket';
 import { SeoHead } from '../components/SeoHead';
+import { ROUTES } from '../config/routes';
 // --- ICONS ---
 const ICONS = {
     TREND_UP: <svg className="w-3 h-3 text-sgs-verified dark:text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" /></svg>,
@@ -249,9 +250,9 @@ const WorkQueueStrip = ({ analytics, language }: { analytics: any; language: str
             </div>
             <div className="grid grid-cols-1 divide-y divide-[var(--glass-border)] sm:grid-cols-3 sm:divide-x sm:divide-y-0">
                 {[
-                    { label: copy.contracts, value: queue.contracts ?? analytics?.pendingContracts ?? 0, href: '/contracts' },
-                    { label: copy.approvals, value: queue.approvals ?? analytics?.pendingApprovals ?? 0, href: '/approvals' },
-                    { label: copy.followups, value: queue.followups ?? analytics?.unresponsiveLeadCount ?? 0, href: '/leads' },
+                    { label: copy.contracts, value: queue.contracts ?? analytics?.pendingContracts ?? 0, href: `/${ROUTES.CONTRACTS}` },
+                    { label: copy.approvals, value: queue.approvals ?? analytics?.pendingApprovals ?? 0, href: `/${ROUTES.APPROVALS}` },
+                    { label: copy.followups, value: queue.followups ?? analytics?.unresponsiveLeadCount ?? 0, href: `/${ROUTES.LEADS}` },
                 ].map((item) => (
                     <a key={item.href} href={item.href} className="group flex items-center justify-between gap-3 px-4 py-3.5 transition-colors hover:bg-[var(--glass-surface)]">
                         <span className="min-w-0 truncate text-xs font-semibold text-[var(--text-secondary)]">{item.label}</span>
@@ -273,7 +274,7 @@ const InventoryOverviewWidget = ({ analytics, language }: { analytics: any; lang
         <section className="dashboard-panel min-w-0" aria-label={copy.title}>
             <div className="dashboard-panel-head">
                 <h2>{copy.title}</h2>
-                <a href="/inventory" className="text-xs font-semibold text-[var(--sgs-primary)]">{copy.active}</a>
+                <a href={`/${ROUTES.INVENTORY}`} className="text-xs font-semibold text-[var(--sgs-primary)]">{copy.active}</a>
             </div>
             <div className="grid grid-cols-2 gap-2 px-4 sm:grid-cols-4">
                 <DashboardMiniCard label={copy.active} value={inventory.active ?? analytics?.availableListings ?? 0} surface="panel" />
@@ -281,7 +282,7 @@ const InventoryOverviewWidget = ({ analytics, language }: { analytics: any; lang
                 <DashboardMiniCard label={copy.rented} value={inventory.rented ?? 0} surface="panel" />
                 <DashboardMiniCard label={copy.expired} value={inventory.expired ?? 0} surface="panel" />
             </div>
-            <a href="/approvals" className="mx-4 mt-3 flex items-center justify-between rounded-xl border border-[var(--sgs-accent)]/25 bg-[var(--sgs-accent)]/5 px-3 py-2 text-xs font-semibold text-[var(--sgs-accent-text)]">
+            <a href={`/${ROUTES.APPROVALS}`} className="mx-4 mt-3 flex items-center justify-between rounded-xl border border-[var(--sgs-accent)]/25 bg-[var(--sgs-accent)]/5 px-3 py-2 text-xs font-semibold text-[var(--sgs-accent-text)]">
                 <span>{copy.pending}</span><strong>{inventory.pendingApproval ?? 0}</strong>
             </a>
             <div className="mx-4 mt-4 dashboard-subhead">{copy.top}</div>
@@ -311,7 +312,7 @@ const InboxOverviewWidget = ({ analytics, language }: { analytics: any; language
     ];
     return (
         <section className="dashboard-panel min-w-0" aria-label={copy.title}>
-            <div className="dashboard-panel-head"><h2>{copy.title}</h2><a href="/inbox" className="text-xs font-semibold text-[var(--sgs-primary)]">Inbox</a></div>
+            <div className="dashboard-panel-head"><h2>{copy.title}</h2><a href={`/${ROUTES.INBOX}`} className="text-xs font-semibold text-[var(--sgs-primary)]">Inbox</a></div>
             <div className="grid grid-cols-3 gap-2 px-4">{channels.map(channel => <DashboardMiniCard key={channel.key} label={channel.key} value={channel.value} surface="panel" />)}</div>
             <div className="mx-4 mt-4 mb-4 flex items-center justify-between rounded-xl bg-[var(--bg-surface)] px-3 py-2 pb-3 text-xs">
                 <span className="text-[var(--text-tertiary)]">{copy.response}</span>
@@ -1031,9 +1032,9 @@ export const Dashboard: React.FC = () => {
                 <div>
                     <div className="mb-2 dashboard-subhead">{ui.quick}</div>
                     <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
-                        <a href="/leads" className="dashboard-control px-3 py-2.5 text-center text-xs font-semibold text-[var(--sgs-primary)]">{ui.addLead}</a>
-                        <a href="/contracts" className="dashboard-control px-3 py-2.5 text-center text-xs font-semibold text-[var(--sgs-primary)]">{ui.contract}</a>
-                        <a href="/inventory" className="dashboard-control px-3 py-2.5 text-center text-xs font-semibold text-[var(--sgs-primary)]">{ui.listing}</a>
+                        <a href={`/${ROUTES.LEADS}`} className="dashboard-control px-3 py-2.5 text-center text-xs font-semibold text-[var(--sgs-primary)]">{ui.addLead}</a>
+                        <a href={`/${ROUTES.CONTRACTS}`} className="dashboard-control px-3 py-2.5 text-center text-xs font-semibold text-[var(--sgs-primary)]">{ui.contract}</a>
+                        <a href={`/${ROUTES.INVENTORY}`} className="dashboard-control px-3 py-2.5 text-center text-xs font-semibold text-[var(--sgs-primary)]">{ui.listing}</a>
                     </div>
                 </div>
                 <WorkQueueStrip analytics={overview} language={language} />
@@ -1049,7 +1050,7 @@ export const Dashboard: React.FC = () => {
                             </p>
                         </div>
                         <div className="flex items-center gap-3">
-                            <a href="/huong-dan-su-dung" className="text-xs font-semibold text-[var(--sgs-primary)] underline underline-offset-4">
+                            <a href={`/${ROUTES.USER_GUIDE}`} className="text-xs font-semibold text-[var(--sgs-primary)] underline underline-offset-4">
                                 {language === 'vn' ? 'Xem hướng dẫn' : 'View guide'}
                             </a>
                             <button
@@ -1211,7 +1212,7 @@ export const Dashboard: React.FC = () => {
                         <section className="dashboard-panel" aria-label={language === 'vn' ? 'Cố Vấn AI' : 'AI Advisor'}>
                             <div className="dashboard-panel-head">
                                 <h2>{language === 'vn' ? 'Cố Vấn AI' : 'AI Advisor'}</h2>
-                                <a href="/ai-governance" className="text-xs font-semibold text-[var(--sgs-primary)]">AI</a>
+                                <a href={`/${ROUTES.AI_GOVERNANCE}`} className="text-xs font-semibold text-[var(--sgs-primary)]">AI</a>
                             </div>
                             <div className="flex items-center gap-3 px-4">
                                 <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-[var(--sgs-primary)]/10 text-[var(--sgs-primary)]" aria-hidden="true">

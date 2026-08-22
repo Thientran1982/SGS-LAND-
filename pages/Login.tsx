@@ -507,8 +507,8 @@ export const Login: React.FC<LoginProps> = ({ onLoginSuccess }) => {
                 >
                     {language.toUpperCase()}
                 </button>
-                <button 
-                    onClick={() => window.location.hash = `#/${ROUTES.LANDING}`}
+                <button
+                    onClick={() => { window.location.href = '/'; }}
                     className="text-xs font-bold text-sgs-text-muted hover:text-white transition-colors"
                 >
                     {t('legal.back_home')}
