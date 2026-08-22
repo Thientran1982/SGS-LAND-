@@ -881,10 +881,12 @@ html.dark body {
    }
    .sgs-dashboard .dashboard-date-filter-wrap {
      flex: 0 0 5.75rem;
+     width: 5.75rem;
    }
    .sgs-dashboard .dashboard-date-filter > button {
      padding-left: .55rem;
      padding-right: .55rem;
+     white-space: nowrap;
    }
   .sgs-dashboard .dashboard-mobile-label {
     display: none;
