@@ -64,6 +64,26 @@ changes include dimensions, changed-pixel counts, and mean pixel delta. Request 
 after replacing each origin with `<origin>`, so the local/deployed host difference is not reported as
 a false regression; HTML and Playwright trace artifacts are compared byte-for-byte.
 
+### Visual regression release gate
+
+The comparison job evaluates screenshot changes against
+`.github/overview-visual-thresholds.json`. Each viewport may set `maxChangedPixels`
+(an absolute count), `maxChangedPixelRatio` (changed pixels divided by the image
+pixel count), and/or `maxMeanAbsoluteDelta` (the average per-channel 0–255 delta).
+A screenshot is blocked when any configured limit is exceeded; a dimension change
+always exceeds the threshold. The checked-in policy currently allows up to 1%
+changed pixels and a mean delta of 2 for desktop, tablet, and mobile.
+
+The command emits a GitHub Actions `::error` for every unapproved breach and exits
+with status 1, so `overview-compare` blocks the workflow while still uploading its
+report. When a difference is intentional, add an exact artifact (or `*`) and
+optional viewport match to `.github/overview-visual-exceptions.json`, with a review
+reason. The Markdown report labels it `expected exception` and includes the reason,
+measured values, and limits. Exceptions are separate from the seeded fixture:
+reviewers can approve a known rendering or deployment difference without weakening
+the fixture’s behavioral assertions. Remove exceptions once the underlying
+difference is resolved.
+
 In this environment, TypeScript validation passed and Playwright enumerated all six fixture
 checks, but execution was blocked before page creation because Chromium could not load the
 system library `libglib-2.0.so.0`. This is an environment prerequisite failure; CI with the

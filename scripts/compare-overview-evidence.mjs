@@ -12,10 +12,29 @@ for (let index = 2; index < process.argv.length; index += 1) {
 const localRoot = args.get('--local');
 const deployedRoot = args.get('--deployed');
 const outputRoot = args.get('--output') || 'overview-comparison';
+const thresholdsPath = args.get('--thresholds');
+const exceptionsPath = args.get('--exceptions');
 if (!localRoot || !deployedRoot) {
-  console.error('Usage: node scripts/compare-overview-evidence.mjs --local <dir> --deployed <dir> [--output <dir>]');
+  console.error('Usage: node scripts/compare-overview-evidence.mjs --local <dir> --deployed <dir> [--output <dir>] [--thresholds <file>] [--exceptions <file>]');
   process.exit(1);
 }
+
+async function readJson(file, fallback) {
+  if (!file) return fallback;
+  try {
+    return JSON.parse(await fs.readFile(file, 'utf8'));
+  } catch (error) {
+    console.error(`Could not read JSON policy ${file}: ${error.message}`);
+    process.exit(1);
+  }
+}
+
+const thresholdPolicy = await readJson(thresholdsPath, {});
+const configuredThresholds = thresholdPolicy.viewports || thresholdPolicy;
+const configuredExceptions = await readJson(exceptionsPath, []);
+const exceptions = Array.isArray(configuredExceptions)
+  ? configuredExceptions
+  : configuredExceptions.exceptions || [];
 
 const typeFor = (file) => {
   const lower = file.toLowerCase();
@@ -112,6 +131,37 @@ async function imageDifference(localFile, deployedFile) {
   }
 }
 
+function thresholdFor(viewport) {
+  return configuredThresholds[viewport] || configuredThresholds.all || null;
+}
+
+function exceptionFor(item) {
+  return exceptions.find((exception) =>
+    (exception.artifact === item.artifact || exception.artifact === '*') &&
+    (!exception.viewport || exception.viewport === item.viewport || exception.viewport === '*')
+  ) || null;
+}
+
+function evaluateImage(item) {
+  const image = item.image;
+  const thresholds = thresholdFor(item.viewport);
+  if (!image || !thresholds) return null;
+  const changedPixelRatio = image.totalPixels
+    ? Number((image.changedPixels / image.totalPixels).toFixed(6))
+    : null;
+  const exceeded = image.dimensionsChanged ||
+    (thresholds.maxChangedPixels != null && image.changedPixels > thresholds.maxChangedPixels) ||
+    (thresholds.maxChangedPixelRatio != null && changedPixelRatio > thresholds.maxChangedPixelRatio) ||
+    (thresholds.maxMeanAbsoluteDelta != null && image.meanAbsoluteDelta > thresholds.maxMeanAbsoluteDelta);
+  const exception = exceeded ? exceptionFor(item) : null;
+  return {
+    changedPixelRatio,
+    thresholds,
+    exceeded,
+    exception: exception ? { reason: exception.reason || 'No reason supplied' } : null,
+  };
+}
+
 const [localFiles, deployedFiles] = await Promise.all([filesUnder(localRoot), filesUnder(deployedRoot)]);
 const names = [...new Set([...localFiles.keys(), ...deployedFiles.keys()])].sort();
 const differences = [];
@@ -130,7 +180,10 @@ for (const name of names) {
     difference.localSha256 = await digest(localFile, type);
     difference.deployedSha256 = await digest(deployedFile, type);
     if (difference.localSha256 === difference.deployedSha256) continue;
-    if (type === 'screenshot') difference.image = await imageDifference(localFile, deployedFile);
+    if (type === 'screenshot') {
+      difference.image = await imageDifference(localFile, deployedFile);
+      difference.evaluation = evaluateImage(difference);
+    }
   }
   differences.push(difference);
 }
@@ -145,6 +198,8 @@ const report = {
     changed: differences.filter((item) => item.status === 'changed').length,
     addedInDeployed: differences.filter((item) => item.status === 'added-in-deployed').length,
     missingInDeployed: differences.filter((item) => item.status === 'missing-in-deployed').length,
+    thresholdExceeded: differences.filter((item) => item.evaluation?.exceeded && !item.evaluation.exception).length,
+    expectedExceptions: differences.filter((item) => item.evaluation?.exception).length,
   },
 };
 await fs.mkdir(outputRoot, { recursive: true });
@@ -158,11 +213,24 @@ const lines = [
   '| --- | --- | --- | --- | --- |',
 ];
 for (const item of differences) {
+  const evaluation = item.evaluation;
   const detail = item.image
-    ? `${item.image.changedPixels ?? 'dimension'} pixels changed${item.image.meanAbsoluteDelta == null ? '' : ` (mean delta ${item.image.meanAbsoluteDelta})`}`
+    ? `${item.image.changedPixels ?? 'dimension'} pixels changed${item.image.meanAbsoluteDelta == null ? '' : ` (mean delta ${item.image.meanAbsoluteDelta})`}${evaluation?.changedPixelRatio == null ? '' : ` (ratio ${evaluation.changedPixelRatio})`}`
     : item.status === 'changed' ? 'content digest differs' : 'artifact only present on one side';
-  lines.push(`| ${item.viewport} | ${item.type} | ${item.status} | ${item.artifact} | ${detail} |`);
+  const disposition = evaluation?.exception
+    ? `expected exception: ${evaluation.exception.reason}`
+    : evaluation?.exceeded
+      ? 'THRESHOLD EXCEEDED'
+      : item.status;
+  lines.push(`| ${item.viewport} | ${item.type} | ${disposition} | ${item.artifact} | ${detail}${evaluation?.thresholds ? `; limits: ${JSON.stringify(evaluation.thresholds)}` : ''} |`);
 }
 if (!differences.length) lines.push('| all | all | identical | — | No differences detected |');
 await fs.writeFile(path.join(outputRoot, 'overview-evidence-comparison.md'), `${lines.join('\n')}\n`);
-console.log(`Compared ${report.comparedArtifacts} artifacts; found ${differences.length} difference(s).`);
+const failures = differences.filter((item) => item.evaluation?.exceeded && !item.evaluation.exception);
+if (failures.length) {
+  for (const item of failures) {
+    console.error(`::error title=Overview visual regression::${item.artifact} (${item.viewport}) exceeded its visual threshold. See overview-evidence-comparison.md for measured values and limits.`);
+  }
+  process.exitCode = 1;
+}
+console.log(`Compared ${report.comparedArtifacts} artifacts; found ${differences.length} difference(s); ${failures.length} threshold failure(s).`);

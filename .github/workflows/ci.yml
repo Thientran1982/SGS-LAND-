@@ -187,7 +187,12 @@ jobs:
           path: evidence/deployed
 
       - name: Compare local and deployed Overview evidence
-        run: node scripts/compare-overview-evidence.mjs --local evidence/local --deployed evidence/deployed
+        run: |
+          node scripts/compare-overview-evidence.mjs \
+            --local evidence/local \
+            --deployed evidence/deployed \
+            --thresholds .github/overview-visual-thresholds.json \
+            --exceptions .github/overview-visual-exceptions.json
 
       - name: Upload Overview comparison
         if: always()
