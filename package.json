@@ -20,7 +20,6 @@
     "migrate:dry": "tsx server/migrations/cli.ts --dry-run",
     "migrate:rollback": "tsx server/migrations/cli.ts --rollback",
     "test:e2e": "playwright test",
-    "test:e2e:overview": "node scripts/verify-playwright-runtime.mjs && playwright test --project=overview-desktop --project=overview-tablet --project=overview-mobile",
     "audit:security": "npm audit --audit-level=high",
     "audit": "node seo-geo-audit.mjs",
     "audit:seo-regression": "node scripts/seo-regression.mjs",
