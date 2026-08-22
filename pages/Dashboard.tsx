@@ -962,8 +962,8 @@ export const Dashboard: React.FC = () => {
     const scopeLabel = scopeKey === 'personal' ? t('dash.scope_personal') : t('dash.scope_company');
     const overview: any = analytics;
     const ui = language === 'vn'
-        ? { quick: 'Thao tác nhanh', addLead: '+ Thêm khách hàng', contract: '+ Tạo hợp đồng', listing: '+ Đăng tin BĐS', target: 'mục tiêu tháng', source: 'Theo nguồn', overview: 'Tổng quan', project: 'Theo dự án', demand: 'Nhu cầu theo khu vực', team: 'Theo team', individual: 'Theo cá nhân', overloaded: 'Quá tải' }
-        : { quick: 'Quick actions', addLead: '+ Add lead', contract: '+ Create contract', listing: '+ Add listing', target: 'monthly target', source: 'By source', overview: 'Overview', project: 'By project', demand: 'Demand by area', team: 'By team', individual: 'By person', overloaded: 'Overloaded' };
+         ? { quick: 'Thao tác nhanh', addLead: 'Thêm khách hàng', contract: 'Tạo hợp đồng', listing: 'Đăng tin BĐS', target: 'mục tiêu tháng', source: 'Theo nguồn', overview: 'Tổng quan', project: 'Theo dự án', demand: 'Nhu cầu theo khu vực', team: 'Theo team', individual: 'Theo cá nhân', overloaded: 'Quá tải' }
+         : { quick: 'Quick actions', addLead: 'Add lead', contract: 'Create contract', listing: 'Add listing', target: 'monthly target', source: 'By source', overview: 'Overview', project: 'By project', demand: 'Demand by area', team: 'By team', individual: 'By person', overloaded: 'Overloaded' };
     const kpiTarget = (key: string, actual: number) => {
         const target = Number(overview?.targets?.[key]?.monthly_target ?? overview?.targets?.[key]?.monthlyTarget ?? 0);
         return { target, progress: target > 0 ? Math.round((actual / target) * 100) : 0 };
