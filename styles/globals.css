@@ -719,6 +719,9 @@ html.dark body {
   background: var(--dash-panel);
   padding: .625rem .75rem;
 }
+.sgs-dashboard .dashboard-command-panel .dashboard-kpi:first-child {
+  padding-left: 1.2rem;
+}
 .sgs-dashboard .dashboard-date-filter > button {
   min-height: 2.25rem;
   border-radius: .55rem;

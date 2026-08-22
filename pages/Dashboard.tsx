@@ -244,7 +244,6 @@ const WorkQueueStrip = ({ analytics, language }: { analytics: any; language: str
     const queue = analytics?.workQueue || {};
     return (
         <section aria-label={copy.title}>
-            <div className="mb-2 dashboard-subhead">{copy.title}</div>
             <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
                 <DashboardMiniCard label={copy.contracts} value={queue.contracts ?? analytics?.pendingContracts ?? 0} href="/contracts" tone="danger" surface="panel" />
                 <DashboardMiniCard label={copy.approvals} value={queue.approvals ?? analytics?.pendingApprovals ?? 0} href="/approvals" tone="danger" surface="panel" />
@@ -1052,7 +1051,6 @@ export const Dashboard: React.FC = () => {
                 <div ref={dashboardRef} data-dashboard-export-root className="space-y-6">
                     <section className="dashboard-panel dashboard-command-panel overflow-hidden" aria-label={language === 'vn' ? 'Điều hành nhanh và KPI' : 'Quick actions and KPIs'}>
                         <div className="border-b border-[var(--dash-rule)] p-4 sm:p-5">
-                            <div className="mb-3 dashboard-subhead">{ui.quick}</div>
                             <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
                                 <a href="/leads" className="dashboard-control quick-action px-3 py-2.5 text-center text-xs font-semibold text-[var(--sgs-primary)]">{ui.addLead}</a>
                                 <a href="/contracts" className="dashboard-control quick-action px-3 py-2.5 text-center text-xs font-semibold text-[var(--sgs-primary)]">{ui.contract}</a>
