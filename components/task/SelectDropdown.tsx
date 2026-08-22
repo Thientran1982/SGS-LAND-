@@ -18,6 +18,7 @@ interface Props {
   error?: boolean;
   disabled?: boolean;
   ariaLabel?: string;
+  surface?: 'primary' | 'secondary';
 }
 
 export function SelectDropdown({
@@ -30,6 +31,7 @@ export function SelectDropdown({
   error = false,
   disabled = false,
   ariaLabel,
+  surface = 'secondary',
 }: Props) {
   const [open, setOpen] = useState(false);
   const [coords, setCoords] = useState<{ top?: number; bottom?: number; left: number; width: number }>({ left: 0, width: 0 });
@@ -77,6 +79,9 @@ export function SelectDropdown({
     onChange(val);
     setOpen(false);
   };
+  const enabledSurfaceClass = surface === 'primary'
+    ? 'bg-[var(--bg-surface)] text-[var(--text-primary)]'
+    : 'bg-[var(--glass-surface-hover)] text-[var(--text-primary)]';
 
   return (
     <>
@@ -90,7 +95,7 @@ export function SelectDropdown({
         aria-haspopup="listbox"
         onClick={() => { if (disabled) return; open ? setOpen(false) : openMenu(); }}
         style={{ height }}
-        className={`w-full flex items-center justify-between gap-2 px-3 text-sm border rounded-xl focus:outline-none focus:ring-2 focus:ring-[var(--sgs-primary)]/30 transition-colors ${disabled ? 'bg-[var(--glass-surface)] opacity-60 cursor-not-allowed border-[var(--glass-border)]' : 'bg-[var(--glass-surface-hover)] text-[var(--text-primary)]'} ${!disabled && (error ? 'border-rose-400' : open ? 'border-[var(--sgs-primary)] ring-2 ring-[var(--sgs-primary)]/20' : 'border-[var(--glass-border)] hover:border-[var(--sgs-primary)]')} ${className}`}
+        className={`w-full flex items-center justify-between gap-2 px-3 text-sm border rounded-xl focus:outline-none focus:ring-2 focus:ring-[var(--sgs-primary)]/30 transition-colors ${disabled ? 'bg-[var(--glass-surface)] opacity-60 cursor-not-allowed border-[var(--glass-border)]' : enabledSurfaceClass} ${!disabled && (error ? 'border-rose-400' : open ? 'border-[var(--sgs-primary)] ring-2 ring-[var(--sgs-primary)]/20' : 'border-[var(--glass-border)] hover:border-[var(--sgs-primary)]')} ${className}`}
       >
         <span className="flex items-center gap-2 min-w-0 flex-1 truncate">
           {selected?.dot && (

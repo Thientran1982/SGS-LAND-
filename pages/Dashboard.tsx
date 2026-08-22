@@ -749,6 +749,7 @@ export const VisitorFunnelWidget = memo(({ days, language }: { days: number; lan
                         options={listingOptions}
                         ariaLabel={isVn ? 'Lọc theo tin' : 'Filter by listing'}
                         placeholder={isVn ? 'Tất cả tin' : 'All listings'}
+                        surface="primary"
                         className="text-xs"
                         height={34}
                     />
@@ -760,6 +761,7 @@ export const VisitorFunnelWidget = memo(({ days, language }: { days: number; lan
                         options={sourceOptions}
                         ariaLabel={isVn ? 'Lọc theo nguồn traffic' : 'Filter by traffic source'}
                         placeholder={isVn ? 'Tất cả nguồn' : 'All sources'}
+                        surface="primary"
                         className="text-xs"
                         height={34}
                     />

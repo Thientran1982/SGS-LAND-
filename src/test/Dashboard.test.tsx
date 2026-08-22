@@ -124,6 +124,10 @@ describe("VisitorFunnelWidget", () => {
     expect(screen.getByText("Khách quay lại")).toBeVisible();
     expect(screen.getByRole("combobox", { name: "Lọc theo tin" })).toHaveTextContent("Tất cả tin");
     expect(screen.getByRole("combobox", { name: "Lọc theo nguồn traffic" })).toHaveTextContent("Tất cả nguồn");
+    expect(screen.getByRole("combobox", { name: "Lọc theo tin" })).toHaveClass("bg-[var(--bg-surface)]");
+    expect(screen.getByRole("combobox", { name: "Lọc theo nguồn traffic" })).toHaveClass("bg-[var(--bg-surface)]");
+    expect(screen.getByRole("combobox", { name: "Lọc theo tin" })).not.toHaveClass("bg-[var(--glass-surface-hover)]");
+    expect(screen.getByRole("combobox", { name: "Lọc theo nguồn traffic" })).not.toHaveClass("bg-[var(--glass-surface-hover)]");
     expect(screen.queryByText("Engaged sessions")).toBeNull();
   });
 
@@ -142,7 +146,7 @@ describe("VisitorFunnelWidget", () => {
     const primarySurfaceCards = funnel.querySelectorAll(".bg-\\[var\\(--bg-surface\\)\\]");
     const secondarySurfaceCards = funnel.querySelectorAll(".bg-\\[var\\(--glass-surface\\)\\]");
 
-    expect(primarySurfaceCards).toHaveLength(5);
+    expect(primarySurfaceCards).toHaveLength(7);
     expect(secondarySurfaceCards).toHaveLength(0);
   });
 
