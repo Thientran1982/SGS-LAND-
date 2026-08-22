@@ -212,23 +212,27 @@ const PriorityAlertCenter = ({ analytics, language }: { analytics: any; language
         ? { title: 'Trung Tâm Cảnh Báo Ưu Tiên', empty: 'Không có cảnh báo ưu tiên', system: 'Hệ thống', followup: 'Khách chưa phản hồi', contract: 'Hợp đồng sắp hết hạn', ai: 'Cảnh báo AI' }
         : { title: 'Priority Alert Center', empty: 'No priority alerts', system: 'System', followup: 'Unresponsive leads', contract: 'Expiring contracts', ai: 'AI alert' };
     const alerts = Array.isArray(analytics?.dashboardAlerts) ? analytics.dashboardAlerts : [];
-    const resolvedAlerts = alerts.length ? alerts : [
-        analytics?.systemAlertCount > 0 ? { severity: 'high', label: copy.system, count: analytics.systemAlertCount } : null,
-        analytics?.unresponsiveLeadCount > 0 ? { severity: 'medium', label: copy.followup, count: analytics.unresponsiveLeadCount } : null,
-        analytics?.expiringContractCount > 0 ? { severity: 'medium', label: copy.contract, count: analytics.expiringContractCount } : null,
-        analytics?.aiAlertCount > 0 ? { severity: 'low', label: copy.ai, count: analytics.aiAlertCount } : null,
-    ].filter(Boolean);
-    const attentionText = resolvedAlerts.length
-        ? resolvedAlerts.map((alert: any) => `${alert.label}${alert.count != null ? ` · ${alert.count}` : ''}`).join('  ·  ')
-        : copy.empty;
     return (
-        <section className="dashboard-attention" aria-label={copy.title}>
-            <div className="dashboard-attention-icon">{ICONS.WARNING}</div>
-            <div className="min-w-0">
-                <strong className="block text-xs text-[var(--text-primary)]">{resolvedAlerts.length ? (language === 'vn' ? 'Có việc cần bạn chú ý' : 'Items need your attention') : copy.empty}</strong>
-                <p className="mt-1 truncate text-xs text-[var(--text-tertiary)]">{attentionText}</p>
+        <section className="dashboard-panel border-l-4 border-l-[var(--sgs-accent)] px-4 py-3 sm:px-5" aria-label={copy.title}>
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+                <div className="flex items-center gap-2 shrink-0">
+                    {ICONS.WARNING}
+                    <h2 className="dashboard-subhead">{copy.title}</h2>
+                </div>
+                <div className="flex min-w-0 flex-1 flex-wrap gap-2">
+                    {(alerts.length ? alerts : [
+                        analytics?.systemAlertCount > 0 ? { severity: 'high', label: copy.system, count: analytics.systemAlertCount } : null,
+                        analytics?.unresponsiveLeadCount > 0 ? { severity: 'medium', label: copy.followup, count: analytics.unresponsiveLeadCount } : null,
+                        analytics?.expiringContractCount > 0 ? { severity: 'medium', label: copy.contract, count: analytics.expiringContractCount } : null,
+                        analytics?.aiAlertCount > 0 ? { severity: 'low', label: copy.ai, count: analytics.aiAlertCount } : null,
+                    ].filter(Boolean)).map((alert: any, index: number) => (
+                        <span key={`${alert.label}-${index}`} className={`inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs font-semibold ${alert.severity === 'high' ? 'border-[var(--ui-danger)]/25 bg-[var(--ui-danger)]/5 text-[var(--ui-danger)]' : alert.severity === 'medium' ? 'border-[var(--sgs-accent)]/30 bg-[var(--sgs-accent)]/5 text-[var(--sgs-accent-text)]' : 'border-[var(--sgs-primary)]/20 bg-[var(--sgs-primary)]/5 text-[var(--sgs-primary)]'}`}>
+                            {alert.label} <strong>{alert.count ?? ''}</strong>
+                        </span>
+                    ))}
+                    {!alerts.length && !analytics?.systemAlertCount && !analytics?.unresponsiveLeadCount && !analytics?.expiringContractCount && !analytics?.aiAlertCount && <span className="text-xs text-[var(--text-tertiary)]">{copy.empty}</span>}
+                </div>
             </div>
-            <a href="/approvals" className="ml-auto shrink-0 text-xs font-semibold text-[var(--sgs-primary)]">{language === 'vn' ? 'Xem hàng đợi' : 'Review queue'} <span aria-hidden="true">›</span></a>
         </section>
     );
 };
@@ -1027,14 +1031,14 @@ export const Dashboard: React.FC = () => {
                 <div>
                     <div className="mb-2 dashboard-subhead">{ui.quick}</div>
                     <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
-                        <a href="/leads" className="dashboard-control dashboard-quick-action px-3 py-2.5 text-xs font-semibold text-[var(--sgs-primary)]"><span className="dashboard-quick-icon">{ICONS.USER}</span><span className="flex-1">{ui.addLead}</span><span aria-hidden="true">›</span></a>
-                        <a href="/contracts" className="dashboard-control dashboard-quick-action px-3 py-2.5 text-xs font-semibold text-[var(--sgs-primary)]"><span className="dashboard-quick-icon">{ICONS.CHECK}</span><span className="flex-1">{ui.contract}</span><span aria-hidden="true">›</span></a>
-                        <a href="/inventory" className="dashboard-control dashboard-quick-action px-3 py-2.5 text-xs font-semibold text-[var(--sgs-primary)]"><span className="dashboard-quick-icon">{ICONS.CLOUD}</span><span className="flex-1">{ui.listing}</span><span aria-hidden="true">›</span></a>
+                        <a href="/leads" className="dashboard-control px-3 py-2.5 text-center text-xs font-semibold text-[var(--sgs-primary)]">{ui.addLead}</a>
+                        <a href="/contracts" className="dashboard-control px-3 py-2.5 text-center text-xs font-semibold text-[var(--sgs-primary)]">{ui.contract}</a>
+                        <a href="/inventory" className="dashboard-control px-3 py-2.5 text-center text-xs font-semibold text-[var(--sgs-primary)]">{ui.listing}</a>
                     </div>
                 </div>
                 <WorkQueueStrip analytics={overview} language={language} />
 
-                {!localStorage.getItem('sgs_guide_dismissed') && (
+                {(analytics.totalLeads ?? 0) < 5 && !localStorage.getItem('sgs_guide_dismissed') && (
                     <div className="dashboard-guide flex flex-col gap-3 px-4 py-3 sm:flex-row sm:items-center sm:justify-between" data-guide-banner>
                         <div>
                             <p className="text-sm font-semibold text-[var(--text-primary)]">
@@ -1091,121 +1095,117 @@ export const Dashboard: React.FC = () => {
                         </div>
                     </section>
 
-                    <div className="dashboard-main-grid">
-                        <section className="dashboard-panel" aria-label={t('dash.pipeline_title')}>
-                            <div className="dashboard-panel-head">
-                                <div><h2>{t('dash.pipeline_title')}</h2><p className="mt-1 text-xs text-[var(--text-tertiary)]">{language === 'vn' ? 'Khách mới và tín hiệu đủ điều kiện' : 'New leads and qualification signals'}</p></div>
-                                <div className="flex items-center gap-3 text-right">
-                                    <SegmentToggle value={pipelineMode} onChange={(value) => setPipelineMode(value as 'overview' | 'source')} options={[{ value: 'overview', label: ui.overview }, { value: 'source', label: ui.source }]} />
+                    <section className="dashboard-panel" aria-label={t('dash.pipeline_title')}>
+                        <div className="dashboard-panel-head">
+                            <h2>{t('dash.pipeline_title')}</h2>
+                            <div className="flex items-center gap-3 text-right">
+                                <SegmentToggle value={pipelineMode} onChange={(value) => setPipelineMode(value as 'overview' | 'source')} options={[{ value: 'overview', label: ui.overview }, { value: 'source', label: ui.source }]} />
+                                <div>
+                                    <div className="dashboard-subhead">{t('dash.total_leads')}</div>
+                                    <div className="dash-number mt-1 text-lg font-semibold text-[var(--text-primary)]">{analytics.totalLeads}</div>
+                                </div>
+                                <div className="hidden sm:block">
+                                    <div className="dashboard-subhead">{t('dash.conversion')}</div>
+                                    <div className="dash-number mt-1 text-lg font-semibold text-[var(--sgs-verified)]">{!isNaN(analytics.conversionRate) ? analytics.conversionRate : 0}%</div>
                                 </div>
                             </div>
-                            <div className="dashboard-workbench">
-                                <div className="dashboard-chart">
-                                    <div className="mb-3 flex items-center justify-between">
-                                        <TrendIndicator value={analytics.totalLeadsDelta} label={t('dash.total_leads')} />
-                                        <span className="dashboard-subhead">{timeRange}</span>
+                        </div>
+                        <div className="dashboard-workbench">
+                            <div className="dashboard-chart">
+                                <div className="mb-3 flex items-center justify-between">
+                                    <TrendIndicator value={analytics.totalLeadsDelta} label={t('dash.total_leads')} />
+                                    <span className="dashboard-subhead">{timeRange}</span>
+                                </div>
+                                <div className="h-[260px] w-full min-w-0 sm:h-[300px]">
+                                    {pipelineMode === 'source' ? (
+                                        <div className="max-h-[285px] space-y-3 overflow-y-auto px-2 pt-4 pr-3">
+                                            {sourceData.length ? sourceData.map(([source, count]: any) => (
+                                                <div key={source}>
+                                                    <div className="mb-1 flex justify-between text-xs"><span className="text-[var(--text-secondary)]">{source}</span><strong className="font-mono text-[var(--text-primary)]">{count}</strong></div>
+                                                    <div className="h-2 rounded-full bg-[var(--glass-surface-hover)]"><div className="h-full rounded-full bg-[var(--sgs-primary)]" style={{ width: `${analytics.totalLeads ? Math.min(100, (count / analytics.totalLeads) * 100) : 0}%` }} /></div>
+                                                </div>
+                                            )) : <EmptyState message={language === 'vn' ? 'Chưa có dữ liệu nguồn khách hàng' : 'No lead source data'} />}
+                                        </div>
+                                    ) : analytics.leadsTrend && analytics.leadsTrend.length > 0 ? (
+                                        <ResponsiveContainer width="100%" height="100%" minHeight={200} minWidth={200}>
+                                            <ComposedChart data={analytics.leadsTrend}>
+                                                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke={chartTheme.colors.grid} opacity={0.5} />
+                                                <XAxis dataKey="date" hide />
+                                                <Tooltip content={<CustomTooltip t={t} formatCurrency={formatCurrency} language={language} />} cursor={{fill: 'transparent'}} />
+                                                <Bar dataKey="count" fill="var(--sgs-primary)" barSize={18} radius={[2, 2, 0, 0]} name={t('dash.chart_new_leads')} />
+                                                <Line type="monotone" dataKey="count" stroke="var(--sgs-accent)" strokeWidth={2} dot={{r: 3, fill: 'var(--bg-surface)', stroke: 'var(--sgs-accent)', strokeWidth: 2}} name={t('dash.chart_trend')} />
+                                            </ComposedChart>
+                                        </ResponsiveContainer>
+                                    ) : <EmptyState message={t('dash.chart_empty')} />}
+                                </div>
+                            </div>
+                            <div className="dashboard-side">
+                                <div className="dashboard-subhead mb-2">{t('dash.activity_title')}</div>
+                                <div className="max-h-[315px] overflow-y-auto no-scrollbar">
+                                    {(analytics.recentActivities || []).map((act: any, idx: number) => (
+                                        <ActivityItem key={act.id != null ? `${act.id}-${idx}` : idx} activity={act} />
+                                    ))}
+                                    {(!analytics.recentActivities || analytics.recentActivities.length === 0) && <div className="py-10"><EmptyState message={t('dash.activity_empty')} /></div>}
+                                </div>
+                            </div>
+                        </div>
+                        <div className="dashboard-secondary">
+                         <section>
+                                <div className="mb-2 flex items-center justify-between gap-2"><div className="dashboard-subhead">{t('dash.market_pulse_title')}</div><SegmentToggle value="pulse" onChange={() => undefined} options={[{ value: 'pulse', label: ui.overview }]} /></div>
+                                <div className="h-[270px] w-full min-w-0">
+                                    {analytics.marketPulse && analytics.marketPulse.length > 0 ? (
+                                        <ResponsiveContainer width="100%" height="100%" minHeight={200} minWidth={200}>
+                                            <ScatterChart margin={{ top: 15, right: 15, bottom: 15, left: 5 }}>
+                                                <CartesianGrid strokeDasharray="3 3" stroke={chartTheme.colors.grid} opacity={0.5} />
+                                                <XAxis type="number" dataKey="area" name={t('dash.scatter_area')} unit="m²" stroke={chartTheme.colors.text} fontSize={11} tickLine={false} axisLine={false} />
+                                                <YAxis type="number" dataKey="price" name={t('dash.scatter_price')} unit={` ${t('dash.scatter_price_unit')}`} stroke={chartTheme.colors.text} fontSize={11} tickLine={false} axisLine={false} tickFormatter={(v: number) => v.toLocaleString('vi-VN', { maximumFractionDigits: 1 })} />
+                                                <ZAxis type="number" dataKey="interest" range={[100, 850]} name={t('dash.scatter_interest')} />
+                                                <Tooltip cursor={{ strokeDasharray: '3 3' }} content={<ScatterTooltip t={t} />} />
+                                                <Scatter name={t('dash.scatter_interest')} data={analytics.marketPulse} opacity={0.78}>
+                                                    {analytics.marketPulse.map((entry: any, index: number) => {
+                                                        const colors = ['var(--sgs-primary)', 'var(--sgs-verified)', 'var(--sgs-accent)', 'var(--sgs-accent-text)', 'var(--sgs-primary-deep)', 'var(--sgs-text-muted)'];
+                                                        const hash = entry.location.split('').reduce((acc: number, char: string) => acc + char.charCodeAt(0), 0);
+                                                        return <Cell key={`cell-${index}`} fill={colors[hash % colors.length]} />;
+                                                    })}
+                                                </Scatter>
+                                            </ScatterChart>
+                                        </ResponsiveContainer>
+                                    ) : <EmptyState message={t('dash.market_pulse_empty')} />}
+                                </div>
+                                <div className="flex flex-wrap gap-x-3 gap-y-1">
+                                    {Array.from(new Set(analytics.marketPulse?.map((item: any) => item.location) || [])).map((loc: any, idx: number) => (
+                                        <span key={idx} className="text-xs text-[var(--text-secondary)]">{loc}</span>
+                                    ))}
+                                </div>
+                                <div className="mt-4 border-t border-[var(--glass-border)] pt-3">
+                                    <div className="mb-2 flex items-center justify-between"><div className="dashboard-subhead">{ui.project}</div><span className="text-xs text-[var(--text-tertiary)]">{overview.projectBreakdown?.length ?? 0}</span></div>
+                                    <div className="space-y-2">
+                                        {(overview.projectBreakdown || []).slice(0, 4).map((project: any, index: number) => <div key={project.id ?? index} className="flex items-center justify-between gap-3 text-xs"><span className="truncate text-[var(--text-secondary)]">{project.name}</span><span className="font-mono text-[var(--text-tertiary)]">{project.leads ?? project.count ?? 0}</span></div>)}
+                                        {!overview.projectBreakdown?.length && <div className="text-xs text-[var(--text-tertiary)]">{language === 'vn' ? 'Chưa có dữ liệu dự án' : 'No project data yet'}</div>}
                                     </div>
-                                    <div className="h-[260px] w-full min-w-0 sm:h-[300px]">
-                                        {pipelineMode === 'source' ? (
-                                            <div className="max-h-[285px] space-y-3 overflow-y-auto px-2 pt-4 pr-3">
-                                                {sourceData.length ? sourceData.map(([source, count]: any) => (
-                                                    <div key={source}>
-                                                        <div className="mb-1 flex justify-between text-xs"><span className="text-[var(--text-secondary)]">{source}</span><strong className="font-mono text-[var(--text-primary)]">{count}</strong></div>
-                                                        <div className="h-2 rounded-full bg-[var(--glass-surface-hover)]"><div className="h-full rounded-full bg-[var(--sgs-primary)]" style={{ width: `${analytics.totalLeads ? Math.min(100, (count / analytics.totalLeads) * 100) : 0}%` }} /></div>
-                                                    </div>
-                                                )) : <EmptyState message={language === 'vn' ? 'Chưa có dữ liệu nguồn khách hàng' : 'No lead source data'} />}
+                                </div>
+                            </section>
+                            <section>
+                                <div className="mb-2 flex items-center justify-between gap-2"><div className="dashboard-subhead">{t('dash.leaderboard_title')}</div><SegmentToggle value={leaderboardMode} onChange={(value) => setLeaderboardMode(value as 'individual' | 'team')} options={[{ value: 'individual', label: ui.individual }, { value: 'team', label: ui.team }]} /></div>
+                                <div className="max-h-[305px] overflow-y-auto no-scrollbar">
+                                    {(leaderboardMode === 'team' ? (overview.teamLeaderboard || []) : (analytics.agentLeaderboard || [])).map((agent: any, idx: number) => (
+                                        <div key={agent.id ?? agent.name ?? idx} className="dashboard-ranking">
+                                            <div className="flex min-w-0 items-center gap-2.5">
+                                                <AgentAvatar name={agent.name} avatar={agent.avatar} />
+                                                <div className="min-w-0">
+                                                     <div className="flex items-center gap-1.5"><div className="rank-name truncate">{agent.name}</div>{agent.overloaded && <span className="rounded-full bg-[var(--ui-danger)]/10 px-1.5 py-0.5 text-xs font-bold text-[var(--ui-danger)]">{ui.overloaded}</span>}</div>
+                                                    <div className="rank-detail">{agent.deals} {t('dash.deals_closed')}</div>
+                                                </div>
                                             </div>
-                                        ) : analytics.leadsTrend && analytics.leadsTrend.length > 0 ? (
-                                            <ResponsiveContainer width="100%" height="100%" minHeight={200} minWidth={200}>
-                                                <ComposedChart data={analytics.leadsTrend}>
-                                                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke={chartTheme.colors.grid} opacity={0.5} />
-                                                    <XAxis dataKey="date" hide />
-                                                    <Tooltip content={<CustomTooltip t={t} formatCurrency={formatCurrency} language={language} />} cursor={{fill: 'transparent'}} />
-                                                    <Bar dataKey="count" fill="var(--sgs-primary)" barSize={18} radius={[2, 2, 0, 0]} name={t('dash.chart_new_leads')} />
-                                                    <Line type="monotone" dataKey="count" stroke="var(--sgs-accent)" strokeWidth={2} dot={{r: 3, fill: 'var(--bg-surface)', stroke: 'var(--sgs-accent)', strokeWidth: 2}} name={t('dash.chart_trend')} />
-                                                </ComposedChart>
-                                            </ResponsiveContainer>
-                                        ) : <EmptyState message={t('dash.chart_empty')} />}
-                                    </div>
+                                            <div className="rank-metric"><span>{t('dash.close_rate')}</span>{agent.closeRate}%</div>
+                                            <div className="rank-metric"><span>{t('dash.sla_score')}</span>{agent.slaScore}/100</div>
+                                        </div>
+                                    ))}
+                                    {(!(leaderboardMode === 'team' ? overview.teamLeaderboard : analytics.agentLeaderboard)?.length) && <div className="py-10"><EmptyState message={t('dash.leaderboard_empty')} /></div>}
                                 </div>
-                                <div className="dashboard-side">
-                                    <div className="dashboard-subhead mb-2">{t('dash.total_leads')}</div>
-                                    <div className="dash-number text-3xl font-semibold text-[var(--text-primary)]">{analytics.totalLeads}</div>
-                                    <div className="mt-2 text-xs text-[var(--text-tertiary)]">{t('dash.conversion')}: <strong className="text-[var(--sgs-verified)]">{!isNaN(analytics.conversionRate) ? analytics.conversionRate : 0}%</strong></div>
-                                    <div className="mt-8 border-t border-[var(--dash-rule)] pt-4">
-                                        <div className="dashboard-subhead mb-2">{language === 'vn' ? 'Phân bổ lead' : 'Lead distribution'}</div>
-                                        {(sourceData.slice(0, 4)).map(([source, count]: any) => <div key={source} className="mb-3"><div className="mb-1 flex justify-between text-xs"><span className="truncate text-[var(--text-secondary)]">{source}</span><strong className="font-mono text-[var(--text-primary)]">{count}</strong></div><div className="h-1.5 rounded-full bg-[var(--glass-surface-hover)]"><div className="h-full rounded-full bg-[var(--sgs-accent)]" style={{ width: `${analytics.totalLeads ? Math.min(100, (count / analytics.totalLeads) * 100) : 0}%` }} /></div></div>)}
-                                    </div>
-                                </div>
-                            </div>
-                        </section>
-                        <section className="dashboard-panel" aria-label={t('dash.market_pulse_title')}>
-                            <div className="dashboard-panel-head">
-                                <div><h2>{t('dash.market_pulse_title')}</h2><p className="mt-1 text-xs text-[var(--text-tertiary)]">{language === 'vn' ? 'Nhu cầu theo khu vực và mức giá' : 'Demand signals by area and price'}</p></div>
-                                <span className="text-xs font-semibold text-[var(--sgs-primary)]">{ui.overview}</span>
-                            </div>
-                            <div className="h-[270px] w-full min-w-0 px-3 pt-3">
-                                {analytics.marketPulse && analytics.marketPulse.length > 0 ? (
-                                    <ResponsiveContainer width="100%" height="100%" minHeight={200} minWidth={200}>
-                                        <ScatterChart margin={{ top: 15, right: 15, bottom: 15, left: 5 }}>
-                                            <CartesianGrid strokeDasharray="3 3" stroke={chartTheme.colors.grid} opacity={0.5} />
-                                            <XAxis type="number" dataKey="area" name={t('dash.scatter_area')} unit="m²" stroke={chartTheme.colors.text} fontSize={11} tickLine={false} axisLine={false} />
-                                            <YAxis type="number" dataKey="price" name={t('dash.scatter_price')} unit={` ${t('dash.scatter_price_unit')}`} stroke={chartTheme.colors.text} fontSize={11} tickLine={false} axisLine={false} tickFormatter={(v: number) => v.toLocaleString('vi-VN', { maximumFractionDigits: 1 })} />
-                                            <ZAxis type="number" dataKey="interest" range={[100, 850]} name={t('dash.scatter_interest')} />
-                                            <Tooltip cursor={{ strokeDasharray: '3 3' }} content={<ScatterTooltip t={t} />} />
-                                            <Scatter name={t('dash.scatter_interest')} data={analytics.marketPulse} opacity={0.78}>
-                                                {analytics.marketPulse.map((entry: any, index: number) => {
-                                                    const colors = ['var(--sgs-primary)', 'var(--sgs-verified)', 'var(--sgs-accent)', 'var(--sgs-accent-text)', 'var(--sgs-primary-deep)', 'var(--sgs-text-muted)'];
-                                                    const hash = String(entry.location || '').split('').reduce((acc: number, char: string) => acc + char.charCodeAt(0), 0);
-                                                    return <Cell key={`cell-${index}`} fill={colors[hash % colors.length]} />;
-                                                })}
-                                            </Scatter>
-                                        </ScatterChart>
-                                    </ResponsiveContainer>
-                                ) : <EmptyState message={t('dash.market_pulse_empty')} />}
-                            </div>
-                            <div className="flex flex-wrap gap-x-3 gap-y-1 px-4 pb-4">
-                                {Array.from(new Set(analytics.marketPulse?.map((item: any) => item.location) || [])).map((loc: any, idx: number) => <span key={idx} className="text-xs text-[var(--text-secondary)]">{loc}</span>)}
-                            </div>
-                        </section>
-                    </div>
-
-                    <div className="dashboard-two-grid">
-                        <section className="dashboard-panel" aria-label={t('dash.activity_title')}>
-                            <div className="dashboard-panel-head"><div><h2>{t('dash.activity_title')}</h2><p className="mt-1 text-xs text-[var(--text-tertiary)]">{language === 'vn' ? 'Thay đổi mới nhất trong workspace' : 'Latest changes across the workspace'}</p></div><span className="text-xs font-semibold text-[var(--sgs-primary)]">{language === 'vn' ? 'Xem tất cả' : 'View all'}</span></div>
-                            <div className="px-4 pb-3">{(analytics.recentActivities || []).slice(0, 5).map((act: any, idx: number) => <ActivityItem key={act.id != null ? `${act.id}-${idx}` : idx} activity={act} />)}{(!analytics.recentActivities || analytics.recentActivities.length === 0) && <div className="py-10"><EmptyState message={t('dash.activity_empty')} /></div>}</div>
-                        </section>
-                        <section className="dashboard-panel" aria-label={ui.project}>
-                            <div className="dashboard-panel-head"><div><h2>{ui.project}</h2><p className="mt-1 text-xs text-[var(--text-tertiary)]">{language === 'vn' ? 'Khách hàng và pipeline theo dự án' : 'Leads and pipeline by project'}</p></div><span className="text-xs text-[var(--text-tertiary)]">{overview.projectBreakdown?.length ?? 0}</span></div>
-                            <div className="space-y-1 px-4 pb-3">{(overview.projectBreakdown || []).slice(0, 5).map((project: any, index: number) => <div key={project.id ?? index} className="flex items-center justify-between gap-3 border-b border-[var(--dash-rule)] py-3 text-xs last:border-0"><span className="truncate text-[var(--text-secondary)]">{project.name}</span><span className="font-mono text-[var(--text-tertiary)]">{project.leads ?? project.count ?? 0}</span></div>)}{!overview.projectBreakdown?.length && <div className="py-8 text-xs text-[var(--text-tertiary)]">{language === 'vn' ? 'Chưa có dữ liệu dự án' : 'No project data yet'}</div>}</div>
-                        </section>
-                    </div>
-
-                    <div className="dashboard-subhead">{language === 'vn' ? 'Tín hiệu & hiệu suất' : 'Signals & performance'}</div>
-                    <div className="dashboard-three-grid">
-                        <section className="dashboard-panel" aria-label={t('dash.leaderboard_title')}>
-                            <div className="dashboard-panel-head"><h2>{t('dash.leaderboard_title')}</h2><SegmentToggle value={leaderboardMode} onChange={(value) => setLeaderboardMode(value as 'individual' | 'team')} options={[{ value: 'individual', label: ui.individual }, { value: 'team', label: ui.team }]} /></div>
-                            <div className="max-h-[305px] overflow-y-auto px-4 pb-2 no-scrollbar">
-                                {(leaderboardMode === 'team' ? (overview.teamLeaderboard || []) : (analytics.agentLeaderboard || [])).map((agent: any, idx: number) => <div key={agent.id ?? agent.name ?? idx} className="dashboard-ranking"><div className="flex min-w-0 items-center gap-2.5"><AgentAvatar name={agent.name} avatar={agent.avatar} /><div className="min-w-0"><div className="flex items-center gap-1.5"><div className="rank-name truncate">{agent.name}</div>{agent.overloaded && <span className="rounded-full bg-[var(--ui-danger)]/10 px-1.5 py-0.5 text-xs font-bold text-[var(--ui-danger)]">{ui.overloaded}</span>}</div><div className="rank-detail">{agent.deals} {t('dash.deals_closed')}</div></div></div><div className="rank-metric"><span>{t('dash.close_rate')}</span>{agent.closeRate}%</div><div className="rank-metric"><span>{t('dash.sla_score')}</span>{agent.slaScore}/100</div></div>)}
-                                {(!(leaderboardMode === 'team' ? overview.teamLeaderboard : analytics.agentLeaderboard)?.length) && <div className="py-10"><EmptyState message={t('dash.leaderboard_empty')} /></div>}
-                            </div>
-                        </section>
-                        <section className="dashboard-panel" aria-label={language === 'vn' ? 'Cố Vấn AI' : 'AI Advisor'}>
-                            <div className="dashboard-panel-head"><h2>{language === 'vn' ? 'Cố Vấn AI' : 'AI Advisor'}</h2><a href="/ai-governance" className="text-xs font-semibold text-[var(--sgs-primary)]">AI</a></div>
-                            <div className="flex items-center gap-3 px-4"><div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-[var(--sgs-primary)]/10 text-[var(--sgs-primary)]">{ICONS.AI}</div><div><div className="text-2xl font-extrabold text-[var(--text-primary)]">{overview.aiAdvisor?.count ?? 0}</div><div className="text-xs text-[var(--text-tertiary)]">{language === 'vn' ? 'Gợi ý trong ngày' : 'Suggestions today'}</div></div><div className="ml-auto text-right"><div className="text-lg font-bold text-[var(--ui-danger)]">{overview.aiAdvisor?.anomalies ?? 0}</div><div className="text-xs text-[var(--text-tertiary)]">{language === 'vn' ? 'Cảnh báo bất thường' : 'Anomaly alerts'}</div></div></div>
-                            <div className="mt-4 space-y-2 px-4 pb-4">{(Array.isArray(overview.aiAdvisor?.suggestions) ? overview.aiAdvisor.suggestions : []).slice(0, 3).map((item: any, index: number) => <div key={index} className="rounded-lg bg-[var(--bg-surface)] px-3 py-2 text-xs text-[var(--text-secondary)]">{typeof item === 'string' ? item : item?.title || item?.message || item?.content}</div>)}{!overview.aiAdvisor?.suggestions?.length && <div className="text-xs text-[var(--text-tertiary)]">{language === 'vn' ? 'Chưa có gợi ý mới' : 'No new suggestions'}</div>}</div>
-                        </section>
-                        <InventoryOverviewWidget analytics={overview} language={language} />
-                    </div>
-
-                    <div className="dashboard-two-grid">
-                        <InboxOverviewWidget analytics={overview} language={language} />
-                        <section className="dashboard-panel" aria-label={ui.demand}>
-                            <div className="dashboard-panel-head"><h2>{ui.demand}</h2><span className="text-xs text-[var(--text-tertiary)]">{overview.demandAreas?.length ?? 0}</span></div>
-                            <div className="grid grid-cols-1 gap-2 px-4 pb-4 sm:grid-cols-2">{(overview.demandAreas || []).slice(0, 8).map((area: any, index: number) => <div key={area.name ?? index} className="rounded-xl border border-[var(--glass-border)] bg-[var(--bg-surface)] px-3 py-3"><div className="flex items-center justify-between gap-2 text-xs"><span className="truncate text-[var(--text-secondary)]">{area.name}</span><strong className="font-mono text-[var(--sgs-primary)]">{area.score ?? area.count ?? 0}</strong></div><div className="mt-2 h-1.5 rounded-full bg-[var(--glass-surface-hover)]"><div className="h-full rounded-full bg-[var(--sgs-accent)]" style={{ width: `${Math.min(100, Number(area.score ?? area.count ?? 0))}%` }} /></div></div>)}</div>
-                            {!overview.demandAreas?.length && <div className="mx-4 mb-4 py-3 text-xs text-[var(--text-tertiary)]">{language === 'vn' ? 'Chưa có dữ liệu nhu cầu theo khu vực' : 'No area demand data yet'}</div>}
-                        </section>
-                    </div>
+                            </section>
+                        </div>
+                    </section>
 
                     <section className="grid grid-cols-1 gap-6 xl:grid-cols-3" aria-label={language === 'vn' ? 'Tóm tắt vận hành' : 'Operations summary'}>
                         <section className="dashboard-panel" aria-label={language === 'vn' ? 'Cố Vấn AI' : 'AI Advisor'}>
