@@ -166,14 +166,14 @@
   --g-surface: #FFFFFF;
   --g-secondary: #F0F4F5;
   --g-hover: #E8EEF0;
-  --g-brand: #5146D8;
-  --g-brand-strong: #3730A3;
-  --g-accent: #7C6FF0;
-  --g-success: #2F8F83;
-  --g-text: #20213A;
-  --g-text-secondary: #54566F;
-  --g-muted: #73758A;
-  --g-line: rgba(67,56,202,.15);
+  --g-brand: #1B3A5C;
+  --g-brand-strong: #0F2740;
+  --g-accent: #C8963E;
+  --g-success: #1E7F5C;
+  --g-text: #16202B;
+  --g-text-secondary: #4C6471;
+  --g-muted: #5C6B7A;
+  --g-line: rgba(27,58,92,.14);
   background:var(--g-bg); color:var(--g-text); font-family:'Be Vietnam Pro',sans-serif;
 }
 .guided-overview .g-shell { display:flex; min-height:100dvh; }
