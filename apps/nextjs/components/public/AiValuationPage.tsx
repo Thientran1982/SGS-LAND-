@@ -1415,12 +1415,11 @@ export const AiValuation: React.FC = () => {
                                                             else if (v > 50000) setAreaError('Diện tích tối đa 50,000m²');
                                                             else setAreaError('');
                                                         }}
-                                                        className={`w-full bg-slate-900 border rounded-xl px-4 py-3 text-white font-bold focus:border-sgs-verified outline-none transition-all ${areaError ? 'border-red-500/70' : 'border-slate-700'}`}
+                                                         className={`w-full appearance-none [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none bg-slate-900 border rounded-xl px-4 py-3 text-white font-bold focus:border-sgs-verified outline-none transition-all ${areaError ? 'border-red-500/70' : 'border-slate-700'}`}
                                                         placeholder={areaPlaceholder}
                                                         min="1"
                                                         autoFocus
                                                     />
-                                                    <div className="absolute right-4 inset-y-0 flex items-center pointer-events-none text-[var(--text-tertiary)] text-sm">{ICONS.HOME}</div>
                                                 </div>
                                                 {areaError && (
                                                     <div className="text-red-500 text-xs mt-1 flex items-center gap-1">
@@ -1501,43 +1500,53 @@ export const AiValuation: React.FC = () => {
                                          <div className="text-xs font-semibold text-slate-300 mb-3">
                                              Kích thước <span className="text-slate-500 font-normal">(tùy chọn)</span>
                                         </div>
-                                        <div className="flex items-center gap-2">
-                                            <div className="flex-1">
-                                                <input
-                                                    type="number"
-                                                    value={ngang}
-                                                    onChange={e => handleNgangChange(e.target.value)}
-                                                    className="w-full bg-slate-800 border border-slate-700 rounded-xl px-3 py-2.5 text-white font-bold text-center focus:border-sgs-verified outline-none transition-all"
-                                                    placeholder="Ngang (m)"
-                                                    min="1"
-                                                    step="0.1"
-                                                />
+                                         <div className="grid grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)_auto_minmax(0,1fr)] items-start gap-2">
+                                             <div className="min-w-0">
+                                                 <div className="relative">
+                                                     <input
+                                                         type="number"
+                                                         value={ngang}
+                                                         onChange={e => handleNgangChange(e.target.value)}
+                                                         className="w-full appearance-none [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none bg-slate-800 border border-slate-700 rounded-xl pl-3 pr-8 py-2.5 text-white font-bold text-center focus:border-sgs-verified outline-none transition-all"
+                                                         placeholder="Ngang (m)"
+                                                         min="1"
+                                                         step="0.1"
+                                                     />
+                                                     <svg className="absolute right-2.5 top-1/2 -translate-y-1/2 w-3.5 h-5 text-sgs-text-muted pointer-events-none" viewBox="0 0 12 20" fill="none" aria-hidden="true">
+                                                         <path d="M6 1.5v17M2.5 5L6 1.5 9.5 5M2.5 15L6 18.5 9.5 15" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                                                     </svg>
+                                                 </div>
                                                 <div className="text-center text-xs text-sgs-text-muted mt-1">Chiều ngang</div>
                                             </div>
-                                            <div className="text-sgs-text-muted font-bold text-lg select-none pb-4">×</div>
-                                            <div className="flex-1">
-                                                <input
-                                                    type="number"
-                                                    value={dai}
-                                                    onChange={e => handleDaiChange(e.target.value)}
-                                                    className="w-full bg-slate-800 border border-slate-700 rounded-xl px-3 py-2.5 text-white font-bold text-center focus:border-sgs-verified outline-none transition-all"
-                                                    placeholder="Dài (m)"
-                                                    min="1"
-                                                    step="0.1"
-                                                />
+                                             <div className="text-sgs-text-muted font-bold text-lg select-none pt-2.5">×</div>
+                                             <div className="min-w-0">
+                                                 <div className="relative">
+                                                     <input
+                                                         type="number"
+                                                         value={dai}
+                                                         onChange={e => handleDaiChange(e.target.value)}
+                                                         className="w-full appearance-none [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none bg-slate-800 border border-slate-700 rounded-xl pl-3 pr-8 py-2.5 text-white font-bold text-center focus:border-sgs-verified outline-none transition-all"
+                                                         placeholder="Dài (m)"
+                                                         min="1"
+                                                         step="0.1"
+                                                     />
+                                                     <svg className="absolute right-2.5 top-1/2 -translate-y-1/2 w-3.5 h-5 text-sgs-text-muted pointer-events-none" viewBox="0 0 12 20" fill="none" aria-hidden="true">
+                                                         <path d="M6 1.5v17M2.5 5L6 1.5 9.5 5M2.5 15L6 18.5 9.5 15" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                                                     </svg>
+                                                 </div>
                                                 <div className="text-center text-xs text-sgs-text-muted mt-1">Chiều dài</div>
                                             </div>
-                                            <div className="text-sgs-text-muted font-bold text-lg select-none pb-4">=</div>
-                                            <div className="flex-1 text-center pb-4">
+                                             <div className="text-sgs-text-muted font-bold text-lg select-none pt-2.5">=</div>
+                                             <div className="min-w-0 text-center">
                                                 {ngang && dai && parseFloat(ngang) > 0 && parseFloat(dai) > 0 ? (
-                                                    <div className="bg-sgs-verified/10 border border-sgs-verified/30 rounded-xl px-3 py-2.5">
+                                                     <div className="h-[42px] bg-sgs-verified/10 border border-sgs-verified/30 rounded-xl px-3 py-2.5">
                                                         <span className="text-sgs-verified font-black text-lg">
                                                             {Math.round(parseFloat(ngang) * parseFloat(dai))}
                                                         </span>
                                                         <span className="text-sgs-verified/70 text-xs font-bold"> m²</span>
                                                     </div>
                                                 ) : (
-                                                    <div className="bg-slate-800 border border-slate-700 rounded-xl px-3 py-2.5">
+                                                     <div className="h-[42px] bg-slate-800 border border-slate-700 rounded-xl px-3 py-2.5">
                                                         <span className="text-sgs-text-muted text-sm">? m²</span>
                                                     </div>
                                                 )}
