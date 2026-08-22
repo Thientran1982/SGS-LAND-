@@ -1,313 +1,179 @@
-import { useState } from 'react';
+import { useState, type ReactNode } from 'react';
 import {
-  Activity,
-  ArrowUpRight,
-  Bell,
-  Bot,
-  ChevronRight,
-  CircleHelp,
-  FileText,
-  Home,
-  LayoutDashboard,
-  Maximize2,
-  MessageSquareText,
-  RefreshCw,
-  Search,
-  Settings2,
-  Target,
-  Users,
-  X,
+  Activity, ArrowUpRight, Bell, Bot, CheckCircle2, ChevronRight, CircleHelp, FileCheck2, FileText, Globe2, Home,
+  LayoutDashboard, ListChecks, MapPin, MessageCircle, MoreHorizontal, RefreshCw,
+  Search, Settings2, Sparkles, Target, UserRound, Users,
 } from 'lucide-react';
 import './_group.css';
 
 type Language = 'en' | 'vn';
+type ViewMode = 'overview' | 'source';
 
-const sample = {
-  revenue: '₫2.84B',
-  pipeline: '₫14.6B',
-  aiDeflection: '68.4%',
-  velocity: '21.6 days',
-  trend: [42, 58, 47, 67, 53, 74, 64, 84, 70, 91, 78, 96],
-  newLeads: [18, 24, 16, 29, 21, 31, 27, 36, 30, 42, 34, 47],
-};
-
-const copy = {
+const labels = {
   en: {
-    overview: 'Overview',
-    company: 'Company workspace',
-    greeting: 'Good morning, Minh',
-    intro: 'A clear view of today’s work — start with what needs your attention, then follow the signals.',
-    period: 'Last 30 days',
-    export: 'Export report',
-    attention: '2 items need your attention',
-    attentionSub: 'One high-intent lead is waiting for a reply. Three contracts are ready for review.',
-    review: 'Review queue',
-    quick: 'Quick actions',
-    addLead: 'Add lead',
-    addListing: 'Add listing',
-    createContract: 'Create contract',
-    revenue: 'Revenue',
-    pipeline: 'Open pipeline',
-    ai: 'AI deflection rate',
-    velocity: 'Sales velocity',
-    compared: 'vs previous period',
-    target: 'of monthly target',
-    noTarget: 'Target not set yet',
-    work: 'Work queue',
-    workSub: 'The next useful step, in one place',
-    reply: 'Reply to lead',
-    replySub: 'High intent · source: Facebook',
-    contracts: 'Review contracts',
-    contractsSub: 'Awaiting your approval',
-    listings: 'Complete listings',
-    listingsSub: 'Drafts missing a cover image',
-    open: 'Open',
-    leadFlow: 'Lead flow',
-    leadFlowSub: 'New leads by day',
-    trend: 'Trend',
-    source: 'Source',
-    activity: 'Recent activity',
-    activitySub: 'Latest changes across the workspace',
-    projects: 'Projects',
-    projectsSub: 'Leads by project',
-    viewAll: 'View all',
-    updated: 'Updated just now',
-    emptyTarget: 'No target configured',
-    focus: 'Focus mode',
-    focused: 'Focus mode on',
+    overview: 'Overview', company: 'Company workspace', greeting: 'Good morning, Minh',
+    intro: 'Your operating view for today. Start with the work that needs a decision, then read the signals behind it.',
+    range: 'Last 30 days', export: 'Export report', priority: 'Priority attention',
+    prioritySub: '2 items need your attention now', priorityBody: 'A high-intent lead is waiting for a reply · 3 contracts are ready for review',
+    review: 'Review queue', quick: 'Quick actions', addLead: 'Add lead', addListing: 'Add listing', createContract: 'Create contract',
+    queue: 'Tasks & approvals', queueSub: 'What needs a next step', contracts: 'Contracts to handle', approvals: 'Pending approvals', followups: 'Leads to follow up',
+    guide: 'Getting started with SGS LAND', guideSub: 'You have the essentials in place. Follow the next three steps to make this workspace useful from day one.', guideAction: 'Open setup guide',
+    revenue: 'Revenue', pipeline: 'Open pipeline', aiRate: 'AI deflection rate', velocity: 'Sales velocity', previous: 'vs previous period', target: 'of monthly target', targetUnset: 'Target not set',
+    leads: 'Lead pipeline', leadsSub: 'New leads and qualification signals', trend: 'Overview', source: 'By source', totalLeads: 'Total leads', conversion: 'Conversion',
+    activity: 'Recent activity', activitySub: 'Latest changes across the workspace', viewAll: 'View all',
+    market: 'Market pulse', marketSub: 'Demand signals by area and price', locations: 'Locations', project: 'Project breakdown',
+    leaderboard: 'Team performance', individual: 'Individual', team: 'Team', closeRate: 'Close rate', sla: 'SLA score', deals: 'deals closed',
+    advisor: 'AI Advisor', suggestions: 'Suggestions today', anomalies: 'Anomaly alerts', suggestionOne: 'Follow up with 4 high-intent leads before noon.', suggestionTwo: 'Riverside demand is up 18% this period.', suggestionThree: 'One listing has views but no enquiries.',
+    inventory: 'Property inventory', active: 'Active', sold: 'Sold', rented: 'Rented', expired: 'Expired', pending: 'Pending approval', topViewed: 'Most viewed this week',
+    inbox: 'Omnichannel inbox', response: 'Average response', unread: 'unread conversations',
+    searchBehavior: 'On-site search behavior', viewed: 'Top viewed properties', keywords: 'Top search keywords', categories: 'Top searches by category',
+    visitors: 'Viewer behavior funnel', visitorsSub: 'Reading quality and buying signals', allListings: 'All listings', allSources: 'All sources', engaged: 'Engaged sessions', avgView: 'Avg. view time', exit: 'Exit rate', cta: 'CTA interactions', returning: 'Returning visitors', propertyViews: 'Property views', sessions: 'Sessions', scroll: 'Scrolled 50%',
+    geo: 'Visitor geography', geoSub: 'Where visits are coming from', totalVisits: 'Total visits', uniqueIps: 'Unique IPs', coverage: 'Geo coverage', countries: 'Top countries', cities: 'Top cities',
+    realtime: 'Realtime traffic', live: 'Live now', activePages: 'Active pages', topPage: 'Top page', direct: 'Direct / unknown',
+    demand: 'Demand by area', demandSub: 'Search and enquiry interest by location', updated: 'Updated just now', focus: 'Focus mode', focused: 'Focus mode on',
   },
   vn: {
-    overview: 'Tổng quan',
-    company: 'Không gian công ty',
-    greeting: 'Chào buổi sáng, Minh',
-    intro: 'Nắm nhanh công việc hôm nay — xử lý điều cần chú ý trước, rồi theo dõi các tín hiệu.',
-    period: '30 ngày qua',
-    export: 'Xuất báo cáo',
-    attention: '2 việc cần bạn chú ý',
-    attentionSub: 'Một khách hàng tiềm năng đang chờ phản hồi. Ba hợp đồng sẵn sàng để duyệt.',
-    review: 'Xem hàng đợi',
-    quick: 'Thao tác nhanh',
-    addLead: 'Thêm khách hàng',
-    addListing: 'Đăng tin BĐS',
-    createContract: 'Tạo hợp đồng',
-    revenue: 'Doanh thu',
-    pipeline: 'Giá trị pipeline',
-    ai: 'Tỷ lệ AI xử lý',
-    velocity: 'Tốc độ bán hàng',
-    compared: 'so với kỳ trước',
-    target: 'trên mục tiêu tháng',
-    noTarget: 'Chưa thiết lập mục tiêu',
-    work: 'Hàng đợi công việc',
-    workSub: 'Bước tiếp theo hữu ích, ở một nơi',
-    reply: 'Trả lời khách hàng',
-    replySub: 'Nhu cầu cao · nguồn: Facebook',
-    contracts: 'Duyệt hợp đồng',
-    contractsSub: 'Đang chờ bạn phê duyệt',
-    listings: 'Hoàn thiện tin đăng',
-    listingsSub: 'Tin nháp thiếu ảnh bìa',
-    open: 'Mở',
-    leadFlow: 'Luồng khách hàng',
-    leadFlowSub: 'Khách hàng mới theo ngày',
-    trend: 'Xu hướng',
-    source: 'Nguồn',
-    activity: 'Hoạt động gần đây',
-    activitySub: 'Thay đổi mới nhất trong workspace',
-    projects: 'Dự án',
-    projectsSub: 'Khách hàng theo dự án',
-    viewAll: 'Xem tất cả',
-    updated: 'Vừa cập nhật',
-    emptyTarget: 'Chưa có mục tiêu',
-    focus: 'Chế độ tập trung',
-    focused: 'Đã bật tập trung',
+    overview: 'Tổng quan', company: 'Không gian công ty', greeting: 'Chào buổi sáng, Minh',
+    intro: 'Toàn cảnh vận hành hôm nay. Xử lý việc cần quyết định trước, rồi đọc các tín hiệu phía sau.',
+    range: '30 ngày qua', export: 'Xuất báo cáo', priority: 'Việc cần chú ý',
+    prioritySub: '2 việc cần bạn chú ý ngay', priorityBody: 'Một khách hàng nhu cầu cao đang chờ phản hồi · 3 hợp đồng sẵn sàng duyệt',
+    review: 'Xem hàng đợi', quick: 'Thao tác nhanh', addLead: 'Thêm khách hàng', addListing: 'Đăng tin BĐS', createContract: 'Tạo hợp đồng',
+    queue: 'Việc cần làm & phê duyệt', queueSub: 'Bước tiếp theo cần xử lý', contracts: 'Hợp đồng cần xử lý', approvals: 'Yêu cầu chờ duyệt', followups: 'Khách cần follow-up',
+    guide: 'Bắt đầu với SGS LAND', guideSub: 'Bạn đã có những phần cần thiết. Hoàn thành ba bước tiếp theo để workspace hữu ích ngay từ ngày đầu.', guideAction: 'Mở hướng dẫn',
+    revenue: 'Doanh thu', pipeline: 'Giá trị pipeline', aiRate: 'Tỷ lệ AI xử lý', velocity: 'Tốc độ bán hàng', previous: 'so với kỳ trước', target: 'trên mục tiêu tháng', targetUnset: 'Chưa thiết lập mục tiêu',
+    leads: 'Pipeline khách hàng', leadsSub: 'Khách mới và tín hiệu đủ điều kiện', trend: 'Tổng quan', source: 'Theo nguồn', totalLeads: 'Tổng khách hàng', conversion: 'Chuyển đổi',
+    activity: 'Hoạt động gần đây', activitySub: 'Thay đổi mới nhất trong workspace', viewAll: 'Xem tất cả',
+    market: 'Tín hiệu thị trường', marketSub: 'Nhu cầu theo khu vực và mức giá', locations: 'Khu vực', project: 'Theo dự án',
+    leaderboard: 'Hiệu suất team', individual: 'Cá nhân', team: 'Team', closeRate: 'Tỷ lệ chốt', sla: 'Điểm SLA', deals: 'giao dịch đã chốt',
+    advisor: 'Cố vấn AI', suggestions: 'Gợi ý trong ngày', anomalies: 'Cảnh báo bất thường', suggestionOne: 'Theo dõi 4 khách hàng nhu cầu cao trước buổi trưa.', suggestionTwo: 'Nhu cầu Riverside tăng 18% trong kỳ này.', suggestionThree: 'Một tin đăng có lượt xem nhưng chưa có hỏi đáp.',
+    inventory: 'Kho bất động sản', active: 'Đang hoạt động', sold: 'Đã bán', rented: 'Đã cho thuê', expired: 'Hết hạn', pending: 'Tin chờ duyệt', topViewed: 'Xem nhiều tuần này',
+    inbox: 'Hộp thư đa kênh', response: 'Phản hồi trung bình', unread: 'hội thoại chưa đọc',
+    searchBehavior: 'Hành vi tìm kiếm trên trang', viewed: 'Top BĐS được xem', keywords: 'Top từ khóa tìm kiếm', categories: 'Top tìm kiếm theo danh mục',
+    visitors: 'Funnel hành vi người xem', visitorsSub: 'Chất lượng phiên đọc và tín hiệu mua hàng', allListings: 'Tất cả tin', allSources: 'Tất cả nguồn', engaged: 'Phiên đọc sâu', avgView: 'Thời gian xem TB', exit: 'Tỷ lệ rời trang', cta: 'Tương tác CTA', returning: 'Khách quay lại', propertyViews: 'Lượt xem tin', sessions: 'Phiên truy cập', scroll: 'Cuộn 50%',
+    geo: 'Địa lý người xem', geoSub: 'Lượt truy cập đến từ đâu', totalVisits: 'Tổng lượt truy cập', uniqueIps: 'IP duy nhất', coverage: 'Độ phủ địa lý', countries: 'Quốc gia nổi bật', cities: 'Thành phố nổi bật',
+    realtime: 'Lưu lượng thời gian thực', live: 'Đang online', activePages: 'Trang đang xem', topPage: 'Trang nổi bật', direct: 'Trực tiếp / chưa rõ',
+    demand: 'Nhu cầu theo khu vực', demandSub: 'Mức độ quan tâm từ tìm kiếm và hỏi đáp', updated: 'Vừa cập nhật', focus: 'Chế độ tập trung', focused: 'Đã bật tập trung',
   },
 };
 
 const navItems = [
-  { label: 'Overview', vi: 'Tổng quan', icon: LayoutDashboard },
-  { label: 'Leads', vi: 'Khách hàng', icon: Users },
-  { label: 'Listings', vi: 'Kho BĐS', icon: Home },
-  { label: 'Contracts', vi: 'Hợp đồng', icon: FileText },
-  { label: 'Market valuation', vi: 'Định giá thị trường', icon: Target },
-  { label: 'AI guidance', vi: 'Hướng dẫn AI', icon: Bot },
-  { label: 'Visitor analytics', vi: 'Phân tích truy cập', icon: Activity },
-];
+  ['Overview', 'Tổng quan', LayoutDashboard], ['Leads', 'Khách hàng', Users], ['Listings', 'Kho BĐS', Home],
+  ['Contracts', 'Hợp đồng', FileText], ['Market valuation', 'Định giá thị trường', Target],
+  ['AI guidance', 'Hướng dẫn AI', Bot], ['Visitor analytics', 'Phân tích truy cập', Activity],
+] as const;
 
 const activities = [
-  ['Nguyễn An', 'moved to Qualified', '8 min ago'],
-  ['Landmark Riverside', 'new listing published', '34 min ago'],
-  ['Trần Hà', 'received an AI reply', '1 hr ago'],
-  ['Horizon Villas', 'contract draft updated', '2 hrs ago'],
+  ['Nguyễn An', 'moved to Qualified', '8 min ago'], ['Landmark Riverside', 'new listing published', '34 min ago'],
+  ['Trần Hà', 'received an AI reply', '1 hr ago'], ['Horizon Villas', 'contract draft updated', '2 hrs ago'],
 ];
+const leaderboard = [
+  ['Minh Nguyễn', '12', '38%', '94'], ['Linh Phạm', '9', '31%', '91'], ['Huy Trần', '7', '28%', '88'],
+];
+const individualLeaderboard = [
+  ['Minh Nguyễn', '12', '38%', '94'], ['Linh Phạm', '9', '31%', '91'], ['Huy Trần', '7', '28%', '88'],
+];
+const teamLeaderboard = [
+  ['North team', '21', '34%', '93'], ['Central team', '14', '29%', '90'], ['South team', '11', '25%', '87'],
+];
+const chartValues = [38, 52, 44, 61, 48, 68, 58, 77, 63, 86, 72, 92];
+const sourceValues = [['Facebook', '42%', '20'], ['Website', '30%', '14'], ['Referral', '19%', '9'], ['Other', '9%', '4']];
+const listings = [['The Marq District 1', '186 views'], ['Landmark Riverside', '142 views'], ['Horizon Villas', '119 views']];
+const keywords = [['villa thao dien', '84'], ['can ho quan 2', '61'], ['nha pho district 1', '47']];
+const categorySearches = [['Apartment · 2 bedrooms', '56'], ['Villa · Riverside', '39'], ['Townhouse · District 1', '27']];
+const demand = [['Thao Dien', '86'], ['District 1', '74'], ['Thu Duc', '63'], ['Binh Thanh', '51'], ['Phu Nhuan', '38'], ['District 7', '31']];
 
-const projects = [
-  ['The Marq District 1', '38 leads', '₫5.8B'],
-  ['Landmark Riverside', '26 leads', '₫4.1B'],
-  ['Horizon Villas', '19 leads', '₫2.7B'],
-];
+function Panel({ title, subtitle, action, children, className = '' }: { title: string; subtitle?: string; action?: ReactNode; children: ReactNode; className?: string }) {
+  return <section className={`g-panel ${className}`}><div className="g-panel-head"><div><h2>{title}</h2>{subtitle && <p>{subtitle}</p>}</div>{action}</div>{children}</section>;
+}
 
 export function GuidedOverview() {
   const [language, setLanguage] = useState<Language>('en');
   const [range, setRange] = useState('30d');
   const [activeNav, setActiveNav] = useState('Overview');
-  const [leadView, setLeadView] = useState<'overview' | 'source'>('overview');
-  const [expanded, setExpanded] = useState(false);
+  const [leadMode, setLeadMode] = useState<ViewMode>('overview');
+  const [leaderMode, setLeaderMode] = useState<'individual' | 'team'>('individual');
   const [focusMode, setFocusMode] = useState(false);
   const [toast, setToast] = useState('');
-  const t = copy[language];
+  const t = labels[language];
 
   const notify = (message: string) => {
     setToast(message);
     window.setTimeout(() => setToast(''), 2600);
   };
+  const act = (message: string) => notify(language === 'vn' ? `${message} · bản thử nghiệm` : `${message} · mockup action`);
+  const bilingual = (en: string, vi: string) => language === 'vn' ? vi : en;
 
-  const action = (message: string) => notify(language === 'vn' ? `${message} — bản thử nghiệm` : `${message} — mockup action`);
+  return <div className={`guided-overview ${focusMode ? 'g-focused' : ''}`}>
+    <div className="g-shell">
+      <aside className="g-sidebar" aria-label="Primary navigation">
+        <div className="g-brand"><span className="g-brand-mark">S</span><strong>SGS LAND</strong></div>
+        <div className="g-workspace">{t.company}</div>
+        <nav className="g-nav">
+          {navItems.map(([en, vi, Icon]) => <button key={en} type="button" className={activeNav === en ? 'active' : ''} onClick={() => { setActiveNav(en); if (en !== 'Overview') act(language === 'vn' ? vi : en); }}><Icon /><span>{language === 'vn' ? vi : en}</span></button>)}
+        </nav>
+        <div className="g-sidebar-bottom"><button type="button" onClick={() => act(bilingual('Open settings', 'Mở cài đặt'))}><Settings2 size={15} /> <span>{bilingual('Settings', 'Cài đặt')}</span></button><div className="g-profile"><span className="g-avatar">MN</span><div><strong>Minh Nguyễn</strong><small>{bilingual('Team lead', 'Trưởng team')}</small></div></div></div>
+      </aside>
 
-  return (
-    <div className={`guided-overview ${focusMode ? 'is-focused' : ''}`}>
-      <div className="shell">
-        <aside className="sidebar" aria-label="Primary navigation">
-          <div className="brand">
-            <div className="brand-mark">S</div>
-            <div className="brand-name">SGS LAND</div>
+      <main className="g-main">
+        <header className="g-topbar"><div className="g-crumb">SGS LAND <span>/</span> {t.overview}</div><div className="g-top-actions"><button type="button" aria-label="Search" onClick={() => act(bilingual('Open search', 'Mở tìm kiếm'))}><Search /></button><button type="button" aria-label="Notifications" onClick={() => act(bilingual('Open notifications', 'Mở thông báo'))}><Bell /></button><button type="button" aria-label="Help" onClick={() => act(bilingual('Open help', 'Mở trợ giúp'))}><CircleHelp /></button><div className="g-lang"><button type="button" onClick={() => setLanguage('en')} className={language === 'en' ? 'selected' : ''}>EN</button><span>/</span><button type="button" onClick={() => setLanguage('vn')} className={language === 'vn' ? 'selected' : ''}>VI</button></div></div></header>
+        <div className="g-content">
+          <section className="g-hero"><div><div className="g-eyebrow">{t.company}</div><h1>{t.greeting}</h1><p>{t.intro}</p></div><div className="g-hero-tools"><select value={range} onChange={e => { setRange(e.target.value); act(e.target.options[e.target.selectedIndex].text); }} aria-label="Select time range"><option value="7d">{bilingual('Last 7 days', '7 ngày qua')}</option><option value="30d">{t.range}</option><option value="90d">{bilingual('Last 90 days', '90 ngày qua')}</option><option value="all">{bilingual('All time', 'Tất cả thời gian')}</option></select><button className="g-button secondary" type="button" onClick={() => act(t.export)}><ArrowUpRight size={14} />{t.export}</button></div></section>
+
+          <section className="g-priority"><div className="g-priority-mark"><Bell size={15} /></div><div><strong>{t.prioritySub}</strong><p>{t.priorityBody}</p></div><button type="button" onClick={() => act(t.review)}>{t.review}<ChevronRight size={13} /></button></section>
+
+          <div className="g-section-kicker">{t.quick}</div>
+          <div className="g-quick-actions"><button type="button" onClick={() => act(t.addLead)}><Users /><span>{t.addLead}</span><ChevronRight /></button><button type="button" onClick={() => act(t.addListing)}><Home /><span>{t.addListing}</span><ChevronRight /></button><button type="button" onClick={() => act(t.createContract)}><FileCheck2 /><span>{t.createContract}</span><ChevronRight /></button></div>
+
+          <Panel title={t.queue} subtitle={t.queueSub} className="g-queue-panel"><div className="g-queue-grid"><QueueItem icon={<FileText />} label={t.contracts} count="3" detail={bilingual('Contracts need review', 'Hợp đồng cần xem')} onClick={() => act(t.contracts)} /><QueueItem icon={<CheckCircle2 />} label={t.approvals} count="2" detail={bilingual('Listing approvals', 'Tin đăng chờ duyệt')} onClick={() => act(t.approvals)} /><QueueItem icon={<MessageCircle />} label={t.followups} count="4" detail={bilingual('No reply in 48 hours', 'Chưa phản hồi trong 48 giờ')} onClick={() => act(t.followups)} /></div></Panel>
+
+          <section className="g-guide"><div className="g-guide-icon"><ListChecks size={18} /></div><div><strong>{t.guide}</strong><p>{t.guideSub}</p></div><button type="button" onClick={() => act(t.guideAction)}>{t.guideAction}<ChevronRight size={13} /></button></section>
+
+          <div className="g-section-kicker">{t.overview}</div>
+          <section className="g-kpis"><Kpi label={t.revenue} value="₫2.84B" note="↑ 12.6%" noteText={t.previous} progress="71%" targetLabel={t.target} color="brand" /><Kpi label={t.pipeline} value="₫14.6B" note="47.2%" noteText={bilingual('win probability', 'xác suất thắng')} progress="54%" targetLabel={t.target} color="accent" /><Kpi label={t.aiRate} value="68.4%" note="↑ 4.8%" noteText={t.previous} targetLabel={t.targetUnset} /><Kpi label={t.velocity} value="21.6 days" note="↓ 3.4 days" noteText={t.previous} progress="63%" targetLabel={t.target} color="success" /></section>
+
+          <div className="g-two-col g-main-grid">
+            <Panel title={t.leads} subtitle={`${t.leadsSub} · ${range}`} action={<div className="g-panel-tools"><div className="g-tabs"><button className={leadMode === 'overview' ? 'active' : ''} type="button" onClick={() => setLeadMode('overview')}>{t.trend}</button><button className={leadMode === 'source' ? 'active' : ''} type="button" onClick={() => setLeadMode('source')}>{t.source}</button></div><button className="g-icon-btn" type="button" aria-label="Expand lead pipeline" onClick={() => act(bilingual('Open detailed pipeline', 'Mở pipeline chi tiết'))}><MoreHorizontal size={16} /></button></div>} className="g-lead-panel"><div className="g-lead-summary"><strong>47</strong> {bilingual('new leads', 'khách hàng mới')}<span className="g-positive">↑ 18.4%</span><em>{t.totalLeads}: 186 · {t.conversion}: 12.7%</em></div>{leadMode === 'overview' ? <div className="g-chart">{chartValues.map((value, i) => <div className="g-chart-col" key={i}><i style={{ height: `${value * .78}%` }} /><b>{['01','03','05','07','09','11','13','15','17','19','21','23'][i]}</b></div>)}</div> : <div className="g-source-list">{sourceValues.map(([name, pct, count]) => <div className="g-source-row" key={name}><span>{name}</span><div><i style={{ width: pct }} /></div><strong>{count}</strong></div>)}</div>}<div className="g-chart-legend"><span><i />{bilingual('New leads', 'Khách mới')}</span><span><i className="soft" />{bilingual('Qualified', 'Đủ điều kiện')}</span></div></Panel>
+            <Panel title={t.market} subtitle={t.marketSub} action={<button className="g-link-btn" type="button" onClick={() => act(bilingual('Open market analysis', 'Mở phân tích thị trường'))}>{bilingual('Details', 'Chi tiết')} <ArrowUpRight size={12} /></button>}><div className="g-market-map"><div className="g-map-ring ring-one" /><div className="g-map-ring ring-two" /><MapPin className="g-map-pin" size={22} /><span className="g-map-label label-one">Thao Dien</span><span className="g-map-label label-two">District 1</span><span className="g-map-label label-three">Thu Duc</span></div><div className="g-location-chips"><span><i />Thao Dien <b>86</b></span><span><i className="gold" />District 1 <b>74</b></span><span><i className="sage" />Thu Duc <b>63</b></span></div></Panel>
           </div>
-          <div className="workspace">{t.company}</div>
-          <nav className="nav">
-            {navItems.map(({ label, vi, icon: Icon }) => (
-              <button
-                type="button"
-                key={label}
-                className={activeNav === label ? 'active' : ''}
-                onClick={() => {
-                  setActiveNav(label);
-                  if (label !== 'Overview') action(language === 'vn' ? vi : label);
-                }}
-              >
-                <Icon />
-                <span>{language === 'vn' ? vi : label}</span>
-              </button>
-            ))}
-          </nav>
-          <div className="sidebar-footer">
-            <div className="profile">
-              <div className="avatar">MN</div>
-              <div>
-                <strong>Minh Nguyễn</strong>
-                <span>Team lead</span>
-              </div>
-            </div>
+
+          <div className="g-two-col">
+            <Panel title={t.activity} subtitle={t.activitySub} action={<button className="g-link-btn" type="button" onClick={() => act(t.viewAll)}>{t.viewAll}<ChevronRight size={12} /></button>}><div className="g-activity-list">{activities.map(([name, change, time]) => <div className="g-activity" key={name}><span className="g-activity-dot" /><div><strong>{name}</strong><p>{change}</p></div><time>{time}</time></div>)}</div></Panel>
+            <Panel title={t.project} subtitle={bilingual('Leads and pipeline by project', 'Khách hàng và pipeline theo dự án')} action={<button className="g-link-btn" type="button" onClick={() => act(bilingual('Open projects', 'Mở dự án'))}>{t.viewAll}<ChevronRight size={12} /></button>}><div className="g-project-list">{[['The Marq District 1', '38 leads', '₫5.8B'], ['Landmark Riverside', '26 leads', '₫4.1B'], ['Horizon Villas', '19 leads', '₫2.7B']].map(([name, leads, value]) => <div className="g-project" key={name}><div><strong>{name}</strong><small>{leads}</small></div><b>{value}</b></div>)}</div></Panel>
           </div>
-        </aside>
 
-        <main className="main">
-          <header className="topbar">
-            <div className="crumb">SGS LAND <span>/</span> {t.overview}</div>
-            <div className="top-actions">
-              <button className="top-icon" type="button" aria-label="Search" onClick={() => action(language === 'vn' ? 'Mở tìm kiếm' : 'Open search')}><Search /></button>
-              <button className="top-icon" type="button" aria-label="Notifications" onClick={() => action(language === 'vn' ? 'Mở thông báo' : 'Open notifications')}><Bell /></button>
-              <button className="top-icon" type="button" aria-label="Help" onClick={() => action(language === 'vn' ? 'Mở trợ giúp' : 'Open help')}><CircleHelp /></button>
-              <div className="language">
-                <button type="button" onClick={() => setLanguage('en')} aria-pressed={language === 'en'}>EN</button>
-                <span> / </span>
-                <button type="button" onClick={() => setLanguage('vn')} aria-pressed={language === 'vn'}>VI</button>
-              </div>
-            </div>
-          </header>
-
-          <div className="content">
-            <div className="headline">
-              <div>
-                <div className="eyebrow">{t.company}</div>
-                <h1 className="display">{t.greeting}</h1>
-                <p className="intro">{t.intro}</p>
-              </div>
-              <div className="headline-tools">
-                <select className="range" value={range} onChange={(event) => { setRange(event.target.value); action(event.target.value === '7d' ? '7 day view' : event.target.value === '90d' ? '90 day view' : '30 day view'); }} aria-label="Select time range">
-                  <option value="7d">{language === 'vn' ? '7 ngày qua' : 'Last 7 days'}</option>
-                  <option value="30d">{language === 'vn' ? '30 ngày qua' : 'Last 30 days'}</option>
-                  <option value="90d">{language === 'vn' ? '90 ngày qua' : 'Last 90 days'}</option>
-                  <option value="all">{language === 'vn' ? 'Tất cả thời gian' : 'All time'}</option>
-                </select>
-                <button className="outline-btn" type="button" onClick={() => action(t.export)}><ArrowUpRight size={14} />{t.export}</button>
-              </div>
-            </div>
-
-            <section className="attention" aria-label={t.attention}>
-              <div className="attention-copy">
-                <span className="attention-dot" />
-                <div><strong>{t.attention}</strong><span>{t.attentionSub}</span></div>
-              </div>
-              <button className="attention-link" type="button" onClick={() => action(t.review)}>{t.review} <ChevronRight size={13} /></button>
-            </section>
-
-            <div className="section-head">
-              <div className="section-label">{t.quick}</div>
-            </div>
-            <div className="quick-actions">
-              <button type="button" onClick={() => action(t.addLead)}><Users size={15} /><span>{t.addLead}</span><ChevronRight size={13} /></button>
-              <button type="button" onClick={() => action(t.addListing)}><Home size={15} /><span>{t.addListing}</span><ChevronRight size={13} /></button>
-              <button type="button" onClick={() => action(t.createContract)}><FileText size={15} /><span>{t.createContract}</span><ChevronRight size={13} /></button>
-            </div>
-
-            <div className="metrics" aria-label={t.overview}>
-              <div className="metric"><div className="metric-label">{t.revenue}</div><div className="metric-value mono">{sample.revenue}</div><div className="metric-note"><span className="positive">↑ 12.6%</span> {t.compared}</div><div className="bar"><i style={{ width: '71%' }} /></div></div>
-              <div className="metric"><div className="metric-label">{t.pipeline}</div><div className="metric-value mono">{sample.pipeline}</div><div className="metric-note"><span className="positive">47.2%</span> {language === 'vn' ? 'xác suất thắng' : 'win probability'}</div><div className="bar"><i style={{ width: '54%' }} /></div></div>
-              <div className="metric"><div className="metric-label">{t.ai}</div><div className="metric-value mono">{sample.aiDeflection}</div><div className="metric-note"><span className="positive">↑ 4.8%</span> {t.compared}</div></div>
-              <div className="metric"><div className="metric-label">{t.velocity}</div><div className="metric-value mono">{sample.velocity}</div><div className="metric-note"><span className="positive">↓ 3.4 days</span> {t.compared}</div><div className="bar"><i style={{ width: '63%' }} /></div></div>
-            </div>
-
-            <div className="work-grid">
-              <section className={`panel lead-panel ${expanded ? 'expanded' : ''}`}>
-                <div className="panel-head">
-                  <div><div className="panel-title">{t.leadFlow}</div><div className="panel-subtitle">{t.leadFlowSub} · {range}</div></div>
-                  <div className="panel-controls">
-                    <div className="segmented" role="tablist" aria-label="Lead chart view">
-                      <button type="button" className={leadView === 'overview' ? 'active' : ''} onClick={() => setLeadView('overview')}>{t.trend}</button>
-                      <button type="button" className={leadView === 'source' ? 'active' : ''} onClick={() => setLeadView('source')}>{t.source}</button>
-                    </div>
-                    <button className="expand-btn" type="button" aria-label={expanded ? 'Collapse chart' : 'Expand chart'} onClick={() => setExpanded(!expanded)}>{expanded ? <X size={15} /> : <Maximize2 size={15} />}</button>
-                  </div>
-                </div>
-                {leadView === 'overview' ? (
-                  <div className="chart-wrap">
-                    <div className="chart-meta"><span>47 {language === 'vn' ? 'khách hàng mới' : 'new leads'}</span><span className="positive">↑ 18.4%</span></div>
-                    <div className="chart" aria-label="New leads trend">
-                      {sample.trend.map((height, index) => <div className="chart-col" key={index}><i style={{ height: `${height * .7}%` }} /><i style={{ height: `${sample.newLeads[index] * 1.7}%` }} /><em>{['01','03','05','07','09','11','13','15','17','19','21','23'][index]}</em></div>)}
-                    </div>
-                    <div className="chart-legend"><span><i className="legend-dot" />{language === 'vn' ? 'Khách đủ điều kiện' : 'Qualified'}</span><span><i className="legend-dot muted" />{language === 'vn' ? 'Tất cả khách mới' : 'All new leads'}</span></div>
-                  </div>
-                ) : (
-                  <div className="source-list">
-                    {[['Facebook', '42%', '20'], ['Website', '30%', '14'], ['Referral', '19%', '9'], ['Other', '9%', '4']].map(([source, percentage, count]) => <div className="source-row" key={source}><span>{source}</span><div className="source-bar"><i style={{ width: percentage }} /></div><strong className="mono">{count}</strong></div>)}
-                  </div>
-                )}
-              </section>
-
-              <section className="panel">
-                <div className="panel-head"><div><div className="panel-title">{t.work}</div><div className="panel-subtitle">{t.workSub}</div></div><button className="top-icon" type="button" aria-label="Refresh work queue" onClick={() => action(language === 'vn' ? 'Đã làm mới hàng đợi' : 'Queue refreshed')}><RefreshCw size={14} /></button></div>
-                <div className="queue">
-                  <div className="queue-row"><div className="queue-left"><div className="queue-icon warn"><MessageSquareText /></div><div><div className="queue-name">{t.reply}</div><div className="queue-detail">{t.replySub}</div></div></div><button className="queue-action" type="button" onClick={() => action(t.reply)}>{t.open}</button></div>
-                  <div className="queue-row"><div className="queue-left"><div className="queue-icon"><FileText /></div><div><div className="queue-name">{t.contracts}</div><div className="queue-detail">{t.contractsSub}</div></div></div><button className="queue-action" type="button" onClick={() => action(t.contracts)}>{t.open}</button></div>
-                  <div className="queue-row"><div className="queue-left"><div className="queue-icon"><Home /></div><div><div className="queue-name">{t.listings}</div><div className="queue-detail">{t.listingsSub}</div></div></div><button className="queue-action" type="button" onClick={() => action(t.listings)}>{t.open}</button></div>
-                </div>
-              </section>
-            </div>
-
-            <div className="lower-grid">
-              <section className="panel">
-                <div className="panel-head"><div><div className="panel-title">{t.activity}</div><div className="panel-subtitle">{t.activitySub}</div></div><button className="queue-action" type="button" onClick={() => action(t.viewAll)}>{t.viewAll} <ChevronRight size={12} /></button></div>
-                <div className="list">{activities.map(([name, change, time]) => <div className="activity" key={`${name}-${change}`}><span className="activity-mark" /><div><strong>{name}</strong><p>{change}</p></div><time>{time}</time></div>)}</div>
-              </section>
-              <section className="panel">
-                <div className="panel-head"><div><div className="panel-title">{t.projects}</div><div className="panel-subtitle">{t.projectsSub}</div></div><button className="queue-action" type="button" onClick={() => action(language === 'vn' ? 'Mở phân tích dự án' : 'Open project analytics')}><ArrowUpRight size={13} /></button></div>
-                <div className="list">{projects.map(([name, count, value]) => <div className="project" key={name}><div><div className="project-name">{name}</div><div className="project-meta">{count}</div></div><div className="project-value">{value}</div></div>)}</div>
-              </section>
-            </div>
-
-            <div className="footer-note"><span><RefreshCw size={11} /> {t.updated} · {language === 'vn' ? 'Phạm vi: công ty' : 'Scope: company'}</span><button type="button" onClick={() => { setFocusMode(!focusMode); notify(focusMode ? t.focus : t.focused); }}><Settings2 size={11} /> {focusMode ? t.focused : t.focus}</button></div>
+          <div className="g-section-kicker">{bilingual('Signals & performance', 'Tín hiệu & hiệu suất')}</div>
+          <div className="g-three-col">
+            <Panel title={t.leaderboard} subtitle={bilingual('Close rate and service quality', 'Tỷ lệ chốt và chất lượng dịch vụ')} action={<div className="g-tabs"><button className={leaderMode === 'individual' ? 'active' : ''} type="button" onClick={() => setLeaderMode('individual')}>{t.individual}</button><button className={leaderMode === 'team' ? 'active' : ''} type="button" onClick={() => setLeaderMode('team')}>{t.team}</button></div>}><div className="g-rank-head"><span>{leaderMode === 'individual' ? bilingual('Agent', 'Nhân viên') : t.team}</span><span>{t.closeRate}</span><span>{t.sla}</span></div>{(leaderMode === 'individual' ? individualLeaderboard : teamLeaderboard).map(([name, deal, close, sla], index) => <div className="g-rank" key={name}><span className="g-rank-person"><i>{index + 1}</i><strong>{name}</strong><small>{deal} {t.deals}</small></span><b>{close}</b><b className="g-sla">{sla}/100</b></div>)}</Panel>
+            <Panel title={t.advisor} subtitle={bilingual('A daily layer of guidance', 'Lớp hướng dẫn mỗi ngày')} action={<button className="g-link-btn" type="button" onClick={() => act(bilingual('Open AI guidance', 'Mở hướng dẫn AI'))}><Bot size={13} /> AI</button>}><div className="g-advisor-stats"><div><Sparkles /><strong>7</strong><small>{t.suggestions}</small></div><div><Activity /><strong className="g-warning">1</strong><small>{t.anomalies}</small></div></div><div className="g-suggestions"><button type="button" onClick={() => act(t.suggestionOne)}>{t.suggestionOne}<ChevronRight /></button><button type="button" onClick={() => act(t.suggestionTwo)}>{t.suggestionTwo}<ChevronRight /></button><button type="button" onClick={() => act(t.suggestionThree)}>{t.suggestionThree}<ChevronRight /></button></div></Panel>
+            <Panel title={t.inventory} subtitle={bilingual('Current listing health', 'Tình trạng tin đăng hiện tại')} action={<button className="g-link-btn" type="button" onClick={() => act(t.active)}>{t.active}<ArrowUpRight size={12} /></button>}><div className="g-inventory-stats">{[['42', t.active], ['18', t.sold], ['7', t.rented], ['3', t.expired]].map(([value, label]) => <div key={label}><strong>{value}</strong><small>{label}</small></div>)}</div><button className="g-pending" type="button" onClick={() => act(t.pending)}><span>{t.pending}</span><b>5</b><ChevronRight size={13} /></button><div className="g-sub-kicker">{t.topViewed}</div><div className="g-mini-list">{listings.map(([name, views]) => <div key={name}><span>{name}</span><small>{views}</small></div>)}</div></Panel>
           </div>
-        </main>
-      </div>
-      {toast && <div className="toast" role="status">{toast}</div>}
+
+          <div className="g-two-col">
+            <Panel title={t.inbox} subtitle={bilingual('Messages needing a response', 'Tin nhắn cần phản hồi')} action={<button className="g-link-btn" type="button" onClick={() => act('Inbox')}>Inbox<ArrowUpRight size={12} /></button>}><div className="g-channel-grid">{[['Zalo', '12'], ['Facebook', '8'], ['Web chat', '4']].map(([name, count]) => <button type="button" key={name} onClick={() => act(name)}><MessageCircle size={14} /><strong>{count}</strong><small>{name}</small></button>)}</div><div className="g-response"><span>{t.response}</span><strong>14m</strong><small>· 24 {t.unread}</small></div></Panel>
+            <Panel title={t.demand} subtitle={t.demandSub} action={<button className="g-link-btn" type="button" onClick={() => act(bilingual('Open demand analysis', 'Mở phân tích nhu cầu'))}>{t.viewAll}<ArrowUpRight size={12} /></button>}><div className="g-demand-list">{demand.slice(0, 4).map(([name, score]) => <div key={name}><span>{name}</span><div><i style={{ width: `${score}%` }} /></div><strong>{score}</strong></div>)}</div></Panel>
+          </div>
+
+          <Panel title={t.searchBehavior} subtitle={bilingual('Last 30 days', '30 ngày gần nhất')} className="g-search-panel"><div className="g-search-cols">{[[t.viewed, listings], [t.keywords, keywords], [t.categories, categorySearches]].map(([title, items]) => <div className="g-search-group" key={title as string}><h3>{title as string}</h3>{(items as string[][]).map(([name, value], index) => <div key={name}><span>{index + 1}. {name}</span><strong>{value}{title === t.viewed ? bilingual(' views', ' lượt') : ''}</strong></div>)}</div>)}</div></Panel>
+
+          <Panel title={t.visitors} subtitle={t.visitorsSub} action={<div className="g-filter-row"><select aria-label="Filter by listing"><option>{t.allListings}</option><option>The Marq District 1</option><option>Landmark Riverside</option></select><select aria-label="Filter by traffic source"><option>{t.allSources}</option><option>Facebook</option><option>Website</option></select></div>}><div className="g-funnel-metrics">{[[t.engaged, '1,248'], [t.avgView, '1m 42s'], [t.exit, '32%'], [t.cta, '186']].map(([name, value]) => <div key={name}><small>{name}</small><strong>{value}</strong></div>)}</div><div className="g-funnel-body"><div className="g-funnel-bars">{[[t.propertyViews, '4,860', '100%'], [t.sessions, '2,940', '61%'], [t.engaged, '1,248', '42%'], [t.scroll, '842', '29%'], [t.cta, '186', '6%']].map(([name, value, width], index) => <div key={name}><div><span>{name}</span><b>{value}</b></div><i className={`funnel-${index}`} style={{ width }} /></div>)}</div><div className="g-returning"><UserRound size={17} /><small>{t.returning}</small><strong>384</strong><span>{bilingual('within 48 hours', 'trong vòng 48 giờ')}</span></div></div></Panel>
+
+          <div className="g-two-col">
+            <Panel title={t.geo} subtitle={t.geoSub}><div className="g-geo-metrics"><div><small>{t.totalVisits}</small><strong>8,642</strong><span>{bilingual('Last 30 days', '30 ngày qua')}</span></div><div><small>{t.uniqueIps}</small><strong>6,918</strong><span>{bilingual('IP source', 'Nguồn IP')}</span></div><div><small>{t.coverage}</small><strong>93%</strong><span>8,042 / 8,642</span></div></div><div className="g-geo-table"><div className="g-geo-head"><span>{t.countries}</span><span>{t.cities}</span></div><div className="g-geo-row"><span><Globe2 size={13} />Vietnam <b>7,988</b></span><span><MapPin size={13} />Ho Chi Minh City <b>4,210</b></span></div><div className="g-geo-row"><span><Globe2 size={13} />Singapore <b>42</b></span><span><MapPin size={13} />Hanoi <b>1,084</b></span></div><div className="g-geo-row"><span><Globe2 size={13} />United States <b>31</b></span><span><MapPin size={13} />Thu Duc <b>728</b></span></div></div></Panel>
+            <Panel title={t.realtime} subtitle={bilingual('Live website activity', 'Hoạt động website trực tiếp')} action={<span className="g-live"><i />{t.live}</span>}><div className="g-realtime-number"><strong>18</strong><span>{bilingual('visitors on site', 'người đang truy cập')}</span></div><div className="g-realtime-grid"><div><small>{t.activePages}</small><strong>7</strong></div><div><small>{t.topPage}</small><strong>/landmark-riverside</strong></div><div><small>{t.direct}</small><strong>6</strong></div></div><div className="g-traffic-line"><i /><i /><i /><i /><i /><i /><i /><i /></div></Panel>
+          </div>
+
+          <div className="g-footer-note"><span><RefreshCw size={12} /> {t.updated} · {bilingual('Scope: company', 'Phạm vi: công ty')}</span><button type="button" onClick={() => { setFocusMode(!focusMode); notify(focusMode ? t.focus : t.focused); }}><Settings2 size={12} /> {focusMode ? t.focused : t.focus}</button></div>
+        </div>
+      </main>
     </div>
-  );
+    {toast && <div className="g-toast" role="status">{toast}</div>}
+  </div>;
+}
+
+function QueueItem({ icon, label, count, detail, onClick }: { icon: ReactNode; label: string; count: string; detail: string; onClick: () => void }) {
+  return <button className="g-queue-item" type="button" onClick={onClick}><span className="g-queue-icon">{icon}</span><span><strong>{label}</strong><small>{detail}</small></span><b>{count}</b><ChevronRight size={14} /></button>;
+}
+
+function Kpi({ label, value, note, noteText, progress, targetLabel, color = 'brand' }: { label: string; value: string; note: string; noteText: string; progress?: string; targetLabel: string; color?: string }) {
+  return <div className={`g-kpi ${color}`}><small>{label}</small><strong>{value}</strong><span className="g-kpi-note"><em>{note}</em>{noteText}</span>{progress ? <><div className="g-progress"><i style={{ width: progress }} /></div><span className="g-target">{progress} {targetLabel}</span></> : <span className="g-target muted">{targetLabel}</span>}</div>;
 }
