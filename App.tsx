@@ -676,33 +676,17 @@ const AppShell: React.FC = () => {
         navigate(ROUTES.LOGIN);
     }, [navigate]);
     // --- RENDERER ---
-    // Full-screen spinner for initial auth check / public page load
-    const SmallSpinner = (
-        <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-[var(--bg-app)]">
+    // One loading owner for auth checks, public lazy pages and private route chunks.
+    // A single full-screen fallback prevents splash/skeleton/spinner transitions.
+    const RouteLoading = (
+        <div
+            className="fixed inset-0 z-[9999] flex items-center justify-center bg-[var(--bg-app)]"
+            role="status"
+            aria-live="polite"
+            aria-busy="true"
+            aria-label={t('common.loading') || 'Đang tải'}
+        >
             <div className="w-8 h-8 border-2 border-[var(--glass-border)] border-t-[var(--primary-600)] rounded-full animate-spin" />
-        </div>
-    );
-    // Skeleton shown inside the main content area while a private page chunk loads.
-    // Sidebar + header remain visible — only the content slot shows this.
-    const PageSkeleton = (
-        <div className="p-4 sm:p-6 space-y-5 animate-pulse w-full">
-            <div className="flex items-center justify-between">
-                <div className="space-y-2">
-                    <div className="h-6 w-44 bg-slate-100 dark:bg-white/5 rounded-xl" />
-                    <div className="h-3 w-28 bg-slate-100 dark:bg-white/5 rounded-lg" />
-                </div>
-                <div className="h-9 w-28 bg-slate-100 dark:bg-white/5 rounded-xl" />
-            </div>
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4">
-                {[...Array(4)].map((_, i) => (
-                    <div key={i} className="h-24 bg-slate-100 dark:bg-white/5 rounded-2xl" />
-                ))}
-            </div>
-            <div className="space-y-2.5">
-                {[...Array(6)].map((_, i) => (
-                    <div key={i} className="h-11 bg-slate-100 dark:bg-white/5 rounded-xl" style={{ opacity: 1 - i * 0.12 }} />
-                ))}
-            </div>
         </div>
     );
     // --- LOADING STATE: fully self-contained, never falls through ---
@@ -717,7 +701,7 @@ const AppShell: React.FC = () => {
             if (route.base === ROUTES.LOGIN) {
                 return (
                     <ErrorBoundary>
-                        <Suspense fallback={SmallSpinner}>
+                        <Suspense fallback={RouteLoading}>
                             <Login onLoginSuccess={handleLoginSuccess} />
                         </Suspense>
                     </ErrorBoundary>
@@ -728,7 +712,7 @@ const AppShell: React.FC = () => {
                 return (
                     <div className="h-[100dvh] w-full overflow-y-auto show-scrollbar bg-[var(--bg-app)]">
                         <ErrorBoundary>
-                            <Suspense fallback={SmallSpinner}>
+                            <Suspense fallback={RouteLoading}>
                                 {token?.startsWith('contract_') ? <PublicContract token={token} /> :
                                  isProjectCodeToken(token) ? <PublicProjectMicrosite projectCode={token!} /> :
                                  token ? <PublicProposal token={token} /> :
@@ -743,7 +727,7 @@ const AppShell: React.FC = () => {
                 return (
                     <div className="h-[100dvh] w-full overflow-y-auto show-scrollbar bg-[var(--bg-app)]">
                         <ErrorBoundary>
-                            <Suspense fallback={SmallSpinner}>
+                            <Suspense fallback={RouteLoading}>
                                 <PublicPage />
                             </Suspense>
                         </ErrorBoundary>
@@ -752,7 +736,7 @@ const AppShell: React.FC = () => {
             }
         }
         // Private route or unknown — tiny spinner, no text
-        return SmallSpinner;
+        return RouteLoading;
     }
     // 2. Public Pages Routing (Guest or Auth user on public page)
     if (authState === 'GUEST' || (PUBLIC_ROUTES.has(route.base) && authState === 'AUTH' && route.base !== ROUTES.LANDING)) {
@@ -783,7 +767,7 @@ const AppShell: React.FC = () => {
                         className="relative z-[60]"
                     >
                         <ErrorBoundary>
-                            <Suspense fallback={SmallSpinner}>
+                            <Suspense fallback={RouteLoading}>
                                 <Login onLoginSuccess={handleLoginSuccess} />
                             </Suspense>
                         </ErrorBoundary>
@@ -807,7 +791,7 @@ const AppShell: React.FC = () => {
                             className="h-[100dvh] w-full overflow-y-auto show-scrollbar bg-[var(--bg-app)]"
                         >
                             <ErrorBoundary>
-                                <Suspense fallback={SmallSpinner}>
+                                <Suspense fallback={RouteLoading}>
                                     <PublicContract token={token} />
                                 </Suspense>
                             </ErrorBoundary>
@@ -827,7 +811,7 @@ const AppShell: React.FC = () => {
                             className="h-[100dvh] w-full overflow-y-auto show-scrollbar bg-[var(--bg-app)]"
                         >
                             <ErrorBoundary>
-                                <Suspense fallback={SmallSpinner}>
+                                <Suspense fallback={RouteLoading}>
                                     <PublicProjectMicrosite projectCode={token!} />
                                 </Suspense>
                             </ErrorBoundary>
@@ -845,7 +829,7 @@ const AppShell: React.FC = () => {
                         className="h-[100dvh] w-full overflow-y-auto show-scrollbar bg-[var(--bg-app)]"
                     >
                         <ErrorBoundary>
-                            <Suspense fallback={SmallSpinner}>
+                                <Suspense fallback={RouteLoading}>
                                 {token ? <PublicProposal token={token} /> : <ErrorState message={t('pub.not_found')} />}
                             </Suspense>
                         </ErrorBoundary>
@@ -866,7 +850,7 @@ const AppShell: React.FC = () => {
                         className="h-[100dvh] w-full overflow-y-auto show-scrollbar bg-[var(--bg-app)]"
                     >
                         <ErrorBoundary>
-                            <Suspense fallback={SmallSpinner}>
+                            <Suspense fallback={RouteLoading}>
                                 <TargetComponent />
                             </Suspense>
                         </ErrorBoundary>
@@ -998,7 +982,7 @@ const AppShell: React.FC = () => {
                                 } as React.CSSProperties}
                             >
                                 <ErrorBoundary>
-                                    <Suspense fallback={PageSkeleton}>
+                                    <Suspense fallback={RouteLoading}>
                                         <Comp />
                                     </Suspense>
                                 </ErrorBoundary>

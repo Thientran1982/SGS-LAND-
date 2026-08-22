@@ -125,8 +125,8 @@ const renderFatalError = (message: string) => {
 // Global Error Listener for non-React errors (Script load errors, etc.)
 window.addEventListener('error', (event) => {
     const root = document.getElementById('root');
-    // Only hijack if the app hasn't mounted or is empty/loading
-    if (!root || root.innerHTML.trim().length === 0 || root.querySelector('.initial-loader')) {
+    // Only hijack if the app hasn't mounted or is still empty.
+    if (!root || root.innerHTML.trim().length === 0) {
         renderFatalError(String(event.message));
     }
     console.error("[FATAL]", event.message, event.error);
