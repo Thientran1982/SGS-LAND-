@@ -979,7 +979,7 @@ export const Dashboard: React.FC = () => {
             <div className="mx-auto max-w-[1480px] space-y-6">
                 <header className="dashboard-header flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
                     <div className="min-w-0">
-                        <div className="dash-eyebrow text-[var(--text-tertiary)]">{scopeLabel}</div>
+                         <div className="dashboard-scope-label dash-eyebrow text-[var(--text-tertiary)]">{scopeLabel}</div>
                         <h1 className="dashboard-title mt-2 text-[var(--text-primary)]">
                             {userName ? `${greeting} ${userName}` : greeting}
                         </h1>

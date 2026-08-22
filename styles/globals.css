@@ -891,10 +891,27 @@ html.dark body {
   }
   .sgs-dashboard .dashboard-kpi-settings,
   .sgs-dashboard .dashboard-export {
+     width: 2.75rem;
+     height: 2.75rem;
+     flex: 0 0 2.75rem;
     justify-content: center;
     gap: 0;
-    padding-left: .7rem;
-    padding-right: .7rem;
+     padding-left: 0;
+     padding-right: 0;
+   }
+   .sgs-dashboard .dashboard-date-filter-wrap {
+     order: 1;
+     flex: 1 1 auto;
+   }
+   .sgs-dashboard .dashboard-kpi-settings,
+   .sgs-dashboard .dashboard-export {
+     order: 2;
+   }
+   .sgs-dashboard .dashboard-kpi-settings {
+     margin-left: auto;
+   }
+   .sgs-dashboard .dashboard-scope-label {
+     display: none;
   }
   .sgs-dashboard .dashboard-secondary { grid-template-columns: 1fr; }
   .sgs-dashboard .dashboard-secondary > section + section {
