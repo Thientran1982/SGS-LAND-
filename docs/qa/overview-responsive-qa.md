@@ -36,7 +36,7 @@ Date: 2026-08-22
 
 ## Release disposition
 
-**Blocked for final signed-in release sign-off.** The implementation and automated checks are green, but the required real-account device pass could not be completed in this environment.
+**Not signed off: authenticated device pass unavailable.** The implementation and focused automated checks are green, but this environment still cannot provide the signed-in session and browser prerequisites required to produce desktop, tablet, and mobile Overview evidence.
 
 ## Release limitation
 
@@ -54,6 +54,15 @@ This environment does not provide a usable authenticated account, and the task�
 - Fresh evidence screenshot: [1280×720 `/dashboard` preview capture](screenshots/overview-authenticated-check-blocked-1280-current.jpg) taken after the application workflow restart on 2026-08-22 shows the same expected login boundary; browser console contained no application errors.
 - Browser runner evidence: `npm run test:e2e -- --project=chromium` reached Playwright but Chromium exited with code 127 before any page/test interaction because `libglib-2.0.so.0` is missing. This is an environment prerequisite failure, not an Overview assertion result.
 
+## Release verification run (2026-08-22, final environment check)
+
+- The `Start application` workflow was restarted successfully and remained healthy. The backend served on port 5001 and the Next.js preview served on port 5000.
+- `GET /dashboard` returned `307` with `Location: /login?redirect=%2Fdashboard`; no authenticated session or test credentials are available in this environment.
+- The preview capture tool produced a clean 1280×720 route-boundary screenshot with no application errors: [current 1280×720 capture](screenshots/overview-authenticated-check-blocked-1280-current.jpg).
+- A direct `npx playwright screenshot` attempt was blocked before page creation because Chromium cannot load `libglib-2.0.so.0`. No tablet or mobile authenticated screenshots could be created.
+- Focused automated coverage remains green: `npm test -- --run src/test/Dashboard.test.tsx` — 8 tests passed. TypeScript validation (`npm run lint`) and `git diff --check` also passed.
+- This run supplies fresh environment and route-boundary evidence only. It does not convert any authenticated check to pass or fail because the Overview never became available in a signed-in session.
+
 ## Sign-off checklist
 
 | Required authenticated check | Result | Evidence |
@@ -68,3 +77,5 @@ This environment does not provide a usable authenticated account, and the task�
 | Sidebar and routes | Blocked | Route links reviewed; authenticated navigation requires signed-in browser access. |
 | Analytics requests | Blocked | Query wiring covered by component tests; authenticated request/response behavior requires signed-in browser access. |
 | Guide assistant overlay | Blocked | Overlay implementation reviewed; authenticated open, retry, focus, and responsive checks require signed-in browser access. |
+
+The blocked results above are intentionally retained: replacing them with pass/fail would claim an authenticated interaction that did not occur.
