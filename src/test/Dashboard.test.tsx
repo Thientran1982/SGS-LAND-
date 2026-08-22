@@ -112,10 +112,12 @@ describe("VisitorFunnelWidget", () => {
     const sourceFilter = screen.getByRole("combobox", { name: "Filter by traffic source" });
 
     expect(listingFilter).toHaveTextContent("All listings");
-    expect(listingFilter).toHaveTextContent("Villa A");
     expect(sourceFilter).toHaveTextContent("All sources");
-    expect(sourceFilter).not.toHaveTextContent("not-an-array");
+    await user.click(listingFilter);
+    expect(await screen.findByRole("option", { name: "Villa A" })).toBeVisible();
+    expect(screen.queryByRole("option", { name: "not-an-array" })).toBeNull();
     expect(screen.getAllByRole("option")).toHaveLength(3);
+    await user.click(listingFilter);
   });
 
   it("clears a selected listing when a refresh removes it", async () => {
@@ -139,11 +141,11 @@ describe("VisitorFunnelWidget", () => {
     renderWidget();
 
     const listingFilter = await screen.findByRole("combobox", { name: "Filter by listing" });
-    await screen.findByRole("option", { name: "Villa A" });
-    await user.selectOptions(listingFilter, "Villa A");
+    await user.click(listingFilter);
+    await user.click(await screen.findByRole("option", { name: "Villa A" }));
 
     await waitFor(() => expect(getVisitorFunnel).toHaveBeenCalledWith(30, { projectCode: "Villa A" }));
-    await waitFor(() => expect(listingFilter).toHaveValue(""));
+    await waitFor(() => expect(listingFilter).toHaveTextContent("All listings"));
   });
 
   it("clears a selected traffic source when a refresh removes it", async () => {
@@ -167,10 +169,10 @@ describe("VisitorFunnelWidget", () => {
     renderWidget();
 
     const sourceFilter = await screen.findByRole("combobox", { name: "Filter by traffic source" });
-    await screen.findByRole("option", { name: "google" });
-    await user.selectOptions(sourceFilter, "google");
+    await user.click(sourceFilter);
+    await user.click(await screen.findByRole("option", { name: "google" }));
 
     await waitFor(() => expect(getVisitorFunnel).toHaveBeenCalledWith(30, { source: "google" }));
-    await waitFor(() => expect(sourceFilter).toHaveValue(""));
+    await waitFor(() => expect(sourceFilter).toHaveTextContent("All sources"));
   });
 });

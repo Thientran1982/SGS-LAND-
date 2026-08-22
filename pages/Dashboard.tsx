@@ -14,6 +14,7 @@ import { useTheme } from '../services/theme';
 import { DashboardSkeleton } from '../components/Skeleton';
 import { GlassBento as BentoCard } from '../components/GlassBento';
 import { Dropdown } from '../components/Dropdown';
+import { SelectDropdown } from '../components/task/SelectDropdown';
 import { useSocket, socket } from '../services/websocket';
 import { SeoHead } from '../components/SeoHead';
 // --- ICONS ---
@@ -689,27 +690,6 @@ function safeFunnelFilterOptions(value: unknown): { value: string }[] {
     ));
 }
 
-const FunnelFilterSelect = ({
-    value,
-    onChange,
-    options,
-    ariaLabel,
-}: {
-    value: string;
-    onChange: (value: string) => void;
-    options: { value: string; label: string }[];
-    ariaLabel: string;
-}) => (
-    <select
-        aria-label={ariaLabel}
-        value={value}
-        onChange={event => onChange(event.target.value)}
-        className="dashboard-control w-full px-2.5 py-2 text-xs text-[var(--text-primary)]"
-    >
-        {options.map(option => <option key={option.value} value={option.value}>{option.label}</option>)}
-    </select>
-);
-
 export const VisitorFunnelWidget = memo(({ days, language }: { days: number; language: string }) => {
     const [projectCode, setProjectCode] = useState('');
     const [source, setSource] = useState('');
@@ -761,19 +741,25 @@ export const VisitorFunnelWidget = memo(({ days, language }: { days: number; lan
             <div><h2>{isVn ? 'Funnel hành vi người xem' : 'Viewer behavior funnel'}</h2><p className="mt-1 text-xs font-normal text-[var(--text-tertiary)]">{isVn ? 'Chất lượng phiên đọc và tín hiệu mua hàng.' : 'Reading quality and buying signals.'}</p></div>
             <div className="flex flex-wrap gap-2">
                 <div className="w-40">
-                    <FunnelFilterSelect
+                    <SelectDropdown
                         value={projectCode}
                         onChange={setProjectCode}
                         options={listingOptions}
                         ariaLabel={isVn ? 'Lọc theo tin' : 'Filter by listing'}
+                        placeholder={isVn ? 'Tất cả tin' : 'All listings'}
+                        className="text-xs"
+                        height={34}
                     />
                 </div>
                 <div className="w-40">
-                    <FunnelFilterSelect
+                    <SelectDropdown
                         value={source}
                         onChange={setSource}
                         options={sourceOptions}
                         ariaLabel={isVn ? 'Lọc theo nguồn traffic' : 'Filter by traffic source'}
+                        placeholder={isVn ? 'Tất cả nguồn' : 'All sources'}
+                        className="text-xs"
+                        height={34}
                     />
                 </div>
             </div>
