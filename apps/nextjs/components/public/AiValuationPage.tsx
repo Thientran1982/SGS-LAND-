@@ -526,8 +526,8 @@ export const AiValuation: React.FC = () => {
     const [address, setAddress] = useState('');
     const [area, setArea] = useState<string>('');
     const [roadWidth, setRoadWidth] = useState<string>('');
-    const [legal, setLegal] = useState<'PINK_BOOK' | 'CONTRACT' | 'PENDING' | 'WAITING'>('PINK_BOOK');
-    const [propertyType, setPropertyType] = useState<string>('townhouse_center');
+    const [legal, setLegal] = useState<'PINK_BOOK' | 'CONTRACT' | 'PENDING' | 'WAITING' | ''>('');
+    const [propertyType, setPropertyType] = useState<string>('');
     const [autoDetectedType, setAutoDetectedType] = useState<string | null>(null); // null = user hasn't changed
     // Advanced AVM inputs (Kfl, Kdir, Kmf, Kfurn)
     const [direction, setDirection] = useState<string>('');
@@ -547,6 +547,7 @@ export const AiValuation: React.FC = () => {
     // inline validation
     const [addressError, setAddressError] = useState<string>('');
     const [areaError, setAreaError] = useState<string>('');
+    const [detailsError, setDetailsError] = useState<string>('');
     // Typewriter placeholder animation
     const [typedPlaceholder, setTypedPlaceholder] = useState<string>('');
     const twIndexRef = React.useRef(0);
@@ -559,11 +560,12 @@ export const AiValuation: React.FC = () => {
     const handleRoadTypeSelect = (id: string, width: number) => {
         setRoadTypeSelect(id);
         setRoadWidth(String(width));
+        setDetailsError('');
     };
     const handleYearBuiltChange = (val: string) => {
         setYearBuilt(val);
         const y = parseInt(val);
-        if (!isNaN(y) && y >= 1900 && y <= CURRENT_YEAR) {
+        if (!isNaN(y) && y >= 1975 && y <= CURRENT_YEAR) {
             setBuildingAge(String(CURRENT_YEAR - y));
         } else {
             setBuildingAge('');
@@ -574,11 +576,73 @@ export const AiValuation: React.FC = () => {
         setFrontageWidth(val); // ngang = mặt tiền
         const n = parseFloat(val), d = parseFloat(dai);
         if (n > 0 && d > 0) setArea(String(Math.round(n * d)));
+        else if (val === '' || dai === '') setArea('');
     };
     const handleDaiChange = (val: string) => {
         setDai(val);
         const n = parseFloat(ngang), d = parseFloat(val);
         if (n > 0 && d > 0) setArea(String(Math.round(n * d)));
+        else if (val === '' || ngang === '') setArea('');
+    };
+    const handlePropertyTypeChange = (nextType: string) => {
+        setPropertyType(nextType);
+        setAutoDetectedType(null);
+        setDetailsError('');
+        // Conditional inputs must not survive a type switch and silently
+        // change the next valuation with values from the previous property.
+        setBedrooms(null);
+        setFloorLevel('');
+        setFrontageWidth('');
+        setNgang('');
+        setDai('');
+        setYearBuilt('');
+        setBuildingAge('');
+        setMonthlyRent('');
+        setFurnishing('');
+        setRoadTypeSelect('');
+        setRoadWidth('');
+        setArea('');
+        setAreaError('');
+    };
+    const validateDetails = () => {
+        if (!propertyType) {
+            setDetailsError('Vui lòng chọn loại bất động sản.');
+            return false;
+        }
+        if (!area || parseFloat(area) <= 0 || !!areaError) {
+            setDetailsError('Vui lòng nhập diện tích hợp lệ.');
+            return false;
+        }
+        if (!roadTypeSelect || !roadWidth || parseFloat(roadWidth) <= 0) {
+            setDetailsError('Vui lòng chọn vị trí đường để tính đúng hệ số vị trí.');
+            return false;
+        }
+        if (!legal) {
+            setDetailsError('Vui lòng chọn tình trạng pháp lý.');
+            return false;
+        }
+        if ((ngang && !dai) || (!ngang && dai)) {
+            setDetailsError('Vui lòng nhập đủ chiều ngang và chiều dài, hoặc xóa cả hai.');
+            return false;
+        }
+        if (frontageWidth && parseFloat(frontageWidth) <= 0) {
+            setDetailsError('Mặt tiền phải lớn hơn 0m.');
+            return false;
+        }
+        if (floorLevel && parseFloat(floorLevel) <= 0) {
+            setDetailsError('Tầng phải lớn hơn 0.');
+            return false;
+        }
+        if (monthlyRent && parseFloat(monthlyRent) < 0) {
+            setDetailsError('Giá thuê không thể là số âm.');
+            return false;
+        }
+        if (yearBuilt && (parseInt(yearBuilt) < 1975 || parseInt(yearBuilt) > CURRENT_YEAR)) {
+            setDetailsError(`Năm xây dựng phải từ 1975 đến ${CURRENT_YEAR}.`);
+            return false;
+        }
+        setDetailsError('');
+        return true;
     };
     const isApartment = propertyType.startsWith('apartment') || propertyType === 'penthouse';
     const isApartmentOrProject = isApartment || propertyType === 'project';
@@ -979,8 +1043,8 @@ export const AiValuation: React.FC = () => {
         setAddress('');
         setArea('');
         setRoadWidth('');
-        setPropertyType('townhouse_center');
-        setLegal('PINK_BOOK');
+        setPropertyType('');
+        setLegal('');
         setAutoDetectedType(null);
         setDirection('');
         setFrontageWidth('');
@@ -1489,7 +1553,7 @@ export const AiValuation: React.FC = () => {
                                 )}
 
                                 <div>
-                                    <label className="text-xs font-bold text-[var(--text-tertiary)] uppercase block mb-2">Tình Trạng Pháp Lý <span className="text-red-500 font-black">*</span></label>
+                                     <label className="text-xs font-bold text-[var(--text-tertiary)] uppercase block mb-2">Tình Trạng Pháp Lý <span className="text-red-500 font-black">*</span></label>
                                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                                         {[
                                             { id: 'PINK_BOOK', label: 'Sổ Hồng / Sổ Đỏ', badge: 'Đầy đủ', badgeColor: 'text-sgs-verified' },
@@ -1511,7 +1575,7 @@ export const AiValuation: React.FC = () => {
                                 </div>
 
                                 <div>
-                                    <label className="text-xs font-bold text-[var(--text-tertiary)] uppercase block mb-3">Loại Bất Động Sản</label>
+                                     <label className="text-xs font-bold text-[var(--text-tertiary)] uppercase block mb-3">Loại Bất Động Sản <span className="text-red-500 font-black">*</span></label>
 
                                     {/* Nhóm: Nhà ở */}
                                     <div className="text-xs text-sgs-text-muted font-bold uppercase tracking-widest mb-2">Nhà ở</div>
@@ -1523,8 +1587,8 @@ export const AiValuation: React.FC = () => {
                                             { id: 'apartment_center', label: 'Căn hộ trung tâm' },
                                             { id: 'apartment_suburb', label: 'Căn hộ ngoại ô' },
                                             { id: 'penthouse', label: 'Penthouse' },
-                                        ].map(opt => (
-                                            <button key={opt.id} onClick={() => { setPropertyType(opt.id); setAutoDetectedType(null); }}
+                                         ].map(opt => (
+                                             <button key={opt.id} onClick={() => handlePropertyTypeChange(opt.id)}
                                                 className={`py-2 px-2 rounded-xl text-xs font-bold transition-all border text-left leading-tight ${propertyType === opt.id ? 'bg-sgs-primary text-white border-sgs-primary' : 'bg-slate-900 text-slate-400 border-slate-700 hover:border-sgs-primary/50'}`}>
                                                 {opt.label}
                                             </button>
@@ -1538,8 +1602,8 @@ export const AiValuation: React.FC = () => {
                                             { id: 'shophouse', label: 'Shophouse' },
                                             { id: 'office', label: 'Văn phòng' },
                                             { id: 'warehouse', label: 'Nhà xưởng / Kho' },
-                                        ].map(opt => (
-                                            <button key={opt.id} onClick={() => { setPropertyType(opt.id); setAutoDetectedType(null); }}
+                                         ].map(opt => (
+                                             <button key={opt.id} onClick={() => handlePropertyTypeChange(opt.id)}
                                                 className={`py-2 px-2 rounded-xl text-xs font-bold transition-all border text-left leading-tight ${propertyType === opt.id ? 'bg-sgs-primary text-white border-sgs-primary' : 'bg-slate-900 text-slate-400 border-slate-700 hover:border-sgs-primary/50'}`}>
                                                 {opt.label}
                                             </button>
@@ -1554,8 +1618,8 @@ export const AiValuation: React.FC = () => {
                                             { id: 'land_suburban', label: 'Đất thổ cư ngoại thành' },
                                             { id: 'land_agricultural', label: 'Đất nông nghiệp' },
                                             { id: 'land_industrial', label: 'Đất khu công nghiệp' },
-                                        ].map(opt => (
-                                            <button key={opt.id} onClick={() => { setPropertyType(opt.id); setAutoDetectedType(null); }}
+                                         ].map(opt => (
+                                             <button key={opt.id} onClick={() => handlePropertyTypeChange(opt.id)}
                                                 className={`py-2 px-2 rounded-xl text-xs font-bold transition-all border text-left leading-tight ${propertyType === opt.id ? 'bg-sgs-primary text-white border-sgs-primary' : 'bg-slate-900 text-slate-400 border-slate-700 hover:border-sgs-primary/50'}`}>
                                                 {opt.label}
                                             </button>
@@ -1567,8 +1631,8 @@ export const AiValuation: React.FC = () => {
                                     <div className="grid grid-cols-1 gap-2">
                                         {[
                                             { id: 'project', label: 'Dự án / Căn hộ off-plan (chưa bàn giao)' },
-                                        ].map(opt => (
-                                            <button key={opt.id} onClick={() => { setPropertyType(opt.id); setAutoDetectedType(null); }}
+                                         ].map(opt => (
+                                             <button key={opt.id} onClick={() => handlePropertyTypeChange(opt.id)}
                                                 className={`py-2 px-3 rounded-xl text-xs font-bold transition-all border text-left leading-tight ${propertyType === opt.id ? 'bg-sgs-primary text-white border-sgs-primary' : 'bg-slate-900 text-slate-400 border-slate-700 hover:border-sgs-primary/50'}`}>
                                                 {opt.label}
                                             </button>
@@ -1779,14 +1843,20 @@ export const AiValuation: React.FC = () => {
                                     </div>
                                 )}
 
-                                {!roadTypeSelect && area && parseFloat(area) > 0 && (
+                                 {!roadTypeSelect && area && parseFloat(area) > 0 && (
                                     <div className="flex items-start gap-2 bg-sgs-accent/10 border border-sgs-accent/30 rounded-xl px-4 py-2.5 text-xs text-sgs-accent-text">
                                         <svg className="w-3.5 h-3.5 shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z" /></svg>
                                         <span>Chọn <b>Vị trí đường</b> để AI tính hệ số vị trí chính xác hơn. Nếu bỏ qua, hệ thống dùng hẻm 3m mặc định.</span>
                                     </div>
                                 )}
-                                <button 
-                                    onClick={runCalculation}
+                                 {detailsError && (
+                                     <div className="flex items-start gap-2 text-xs text-red-400 bg-red-500/10 border border-red-500/20 rounded-lg px-3 py-2.5" role="alert">
+                                         <svg className="w-3.5 h-3.5 shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 01-1.71-3L13.71 3.86a2 2 0 00-3.42 0z" /></svg>
+                                         <span>{detailsError}</span>
+                                     </div>
+                                 )}
+                                 <button 
+                                     onClick={() => { if (validateDetails()) runCalculation(); }}
                                     disabled={
                                         !area || parseFloat(area) <= 0 || !!areaError ||
                                         !!(yearBuilt && (parseInt(yearBuilt) < 1975 || parseInt(yearBuilt) > CURRENT_YEAR))
