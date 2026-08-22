@@ -705,6 +705,7 @@ html.dark body {
   border-radius: .55rem;
   background: transparent;
   color: var(--text-secondary);
+  white-space: nowrap;
   transition: background-color .18s ease, border-color .18s ease, color .18s ease;
 }
 .sgs-dashboard .dashboard-control:not(button) {
@@ -736,7 +737,8 @@ html.dark body {
 .sgs-dashboard .dashboard-control:focus-visible,
 .sgs-dashboard button:focus-visible,
 .sgs-dashboard a:focus-visible {
-   outline: none;
+  outline: 2px solid var(--ui-focus);
+  outline-offset: 2px;
 }
 .sgs-dashboard button.dashboard-control:focus-visible {
   border-color: var(--ui-focus);
@@ -921,6 +923,9 @@ html.dark body {
   .sgs-dashboard .dashboard-export {
     flex: 1;
     justify-content: center;
+  }
+  .sgs-dashboard .dashboard-header > div:last-child > * {
+    min-width: 0;
   }
   .sgs-dashboard .dashboard-kpis { grid-template-columns: 1fr 1fr; }
   .sgs-dashboard .dashboard-kpi { padding: .9rem .75rem; }

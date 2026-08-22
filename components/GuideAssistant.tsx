@@ -132,10 +132,10 @@ export const GuideAssistant: React.FC = () => {
                             <h2 className="truncate text-sm font-bold text-[var(--text-primary)]">{copy.title}</h2>
                             <p className="mt-0.5 text-[11px] leading-4 text-[var(--text-tertiary)]">{copy.subtitle}</p>
                         </div>
-                        <button type="button" onClick={reset} className="rounded-lg p-2 text-[var(--text-tertiary)] hover:bg-[var(--glass-surface-hover)] hover:text-[var(--text-primary)]" title={copy.reset} aria-label={copy.reset}>
+                        <button type="button" onClick={reset} className="rounded-lg p-2 text-[var(--text-tertiary)] hover:bg-[var(--glass-surface-hover)] hover:text-[var(--text-primary)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--sgs-primary)] focus-visible:ring-offset-2" title={copy.reset} aria-label={copy.reset}>
                             <RefreshCw size={16} />
                         </button>
-                        <button type="button" onClick={() => setOpen(false)} className="rounded-lg p-2 text-[var(--text-tertiary)] hover:bg-[var(--glass-surface-hover)] hover:text-[var(--text-primary)]" title={copy.close} aria-label={copy.close}>
+                        <button type="button" onClick={() => setOpen(false)} className="rounded-lg p-2 text-[var(--text-tertiary)] hover:bg-[var(--glass-surface-hover)] hover:text-[var(--text-primary)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--sgs-primary)] focus-visible:ring-offset-2" title={copy.close} aria-label={copy.close}>
                             <X size={17} />
                         </button>
                     </header>
@@ -148,7 +148,7 @@ export const GuideAssistant: React.FC = () => {
                                 </div>
                                 <div className="space-y-2">
                                     {[copy.suggestion1, copy.suggestion2, copy.suggestion3].map(item => (
-                                        <button key={item} type="button" onClick={() => send(item)} className="block w-full rounded-xl border border-[var(--glass-border)] px-3 py-2 text-left text-xs font-medium text-[var(--text-secondary)] transition-colors hover:border-[var(--sgs-primary)]/40 hover:bg-[var(--sgs-primary)]/5">
+                                    <button key={item} type="button" onClick={() => send(item)} className="block w-full rounded-xl border border-[var(--glass-border)] px-3 py-2 text-left text-xs font-medium text-[var(--text-secondary)] transition-colors hover:border-[var(--sgs-primary)]/40 hover:bg-[var(--sgs-primary)]/5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--sgs-primary)] focus-visible:ring-offset-2">
                                             {item}
                                         </button>
                                     ))}
