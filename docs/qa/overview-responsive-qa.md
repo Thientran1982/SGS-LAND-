@@ -20,6 +20,13 @@ Playwright HTML output is written to `playwright-report/`. CI should retain both
 release artifacts. Failed runs also retain Playwright traces. The fixture's `.invalid` email is
 display data only and is never submitted to the application.
 
+The CI release job installs Chromium and its required Linux libraries with
+`npx playwright install --with-deps chromium`. Before the responsive suite starts,
+`scripts/verify-playwright-runtime.mjs` launches and closes a headless browser. If a system
+dependency is missing, the preflight stops the suite and prints the install command plus the
+browser launch error, rather than reporting a misleading test failure. CI retains both
+`test-results/overview/` and `playwright-report/` for every run.
+
 The suite also starts the Overview in a seeded analytics error state, verifies the visible retry
 branch, and confirms that the seeded data returns after retry. The same tests run in all three
 viewport projects, so responsive evidence is produced independently for desktop, tablet, and

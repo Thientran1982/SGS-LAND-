@@ -33,6 +33,58 @@ jobs:
       - name: Build
         run: npm run build
 
+  overview-release:
+    name: Overview Responsive Release Checks
+    runs-on: ubuntu-latest
+    needs: build
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Install Playwright Chromium and Linux dependencies
+        run: npx playwright install --with-deps chromium
+
+      - name: Verify browser runtime before Overview suite
+        run: node scripts/verify-playwright-runtime.mjs
+
+      - name: Start application
+        run: |
+          PORT=5000 npm run dev > /tmp/overview-application.log 2>&1 &
+          echo $! > /tmp/overview-application.pid
+          for attempt in {1..30}; do
+            if curl --fail --silent http://127.0.0.1:5000/ >/dev/null; then
+              exit 0
+            fi
+            sleep 2
+          done
+          echo "::error::Application did not become ready for the Overview release checks."
+          cat /tmp/overview-application.log
+          exit 1
+
+      - name: Run Overview responsive release checks
+        run: npm run test:e2e:overview
+
+      - name: Upload Overview evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: overview-responsive-${{ github.run_id }}
+          path: |
+            test-results/overview/
+            playwright-report/
+          if-no-files-found: warn
+          retention-days: 14
+
   security:
     name: Security Audit
     runs-on: ubuntu-latest
