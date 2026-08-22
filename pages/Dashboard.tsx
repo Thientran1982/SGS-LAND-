@@ -962,8 +962,8 @@ export const Dashboard: React.FC = () => {
     const scopeLabel = scopeKey === 'personal' ? t('dash.scope_personal') : t('dash.scope_company');
     const overview: any = analytics;
     const ui = language === 'vn'
-         ? { quick: 'Thao tác nhanh', addLead: 'Thêm khách hàng', contract: 'Tạo hợp đồng', listing: 'Đăng tin BĐS', target: 'mục tiêu tháng', source: 'Theo nguồn', overview: 'Tổng quan', project: 'Theo dự án', demand: 'Nhu cầu theo khu vực', team: 'Theo team', individual: 'Theo cá nhân', overloaded: 'Quá tải' }
-         : { quick: 'Quick actions', addLead: 'Add lead', contract: 'Create contract', listing: 'Add listing', target: 'monthly target', source: 'By source', overview: 'Overview', project: 'By project', demand: 'Demand by area', team: 'By team', individual: 'By person', overloaded: 'Overloaded' };
+         ? { quick: 'Thao tác nhanh', addLead: '+ Thêm khách hàng', contract: '+ Tạo hợp đồng', listing: '+ Đăng tin BĐS', target: 'mục tiêu tháng', source: 'Theo nguồn', overview: 'Tổng quan', project: 'Theo dự án', demand: 'Nhu cầu theo khu vực', team: 'Theo team', individual: 'Theo cá nhân', overloaded: 'Quá tải' }
+         : { quick: 'Quick actions', addLead: '+ Add lead', contract: '+ Create contract', listing: '+ Add listing', target: 'monthly target', source: 'By source', overview: 'Overview', project: 'By project', demand: 'Demand by area', team: 'By team', individual: 'By person', overloaded: 'Overloaded' };
     const kpiTarget = (key: string, actual: number) => {
         const target = Number(overview?.targets?.[key]?.monthly_target ?? overview?.targets?.[key]?.monthlyTarget ?? 0);
         return { target, progress: target > 0 ? Math.round((actual / target) * 100) : 0 };
@@ -1055,15 +1055,15 @@ export const Dashboard: React.FC = () => {
                          <div className="p-4 sm:p-5">
                             <div className="grid grid-cols-3 gap-2">
                                 <a href="/leads" className="dashboard-control quick-action flex items-center justify-center gap-1.5 px-2 py-2.5 text-center text-xs font-semibold text-[var(--sgs-primary)]" aria-label={ui.addLead} title={ui.addLead}>
-                                    <svg className="h-4 w-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M15 20.25v-1.5a4.5 4.5 0 0 0-4.5-4.5h-3A4.5 4.5 0 0 0 3 18.75v1.5M9 10.25a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7Zm8-5v7m3.5-3.5h-7" /></svg>
+                                    <svg className="dashboard-action-icon h-4 w-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M15 20.25v-1.5a4.5 4.5 0 0 0-4.5-4.5h-3A4.5 4.5 0 0 0 3 18.75v1.5M9 10.25a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7Zm8-5v7m3.5-3.5h-7" /></svg>
                                     <span className="dashboard-mobile-label">{ui.addLead}</span>
                                 </a>
                                 <a href="/contracts" className="dashboard-control quick-action flex items-center justify-center gap-1.5 px-2 py-2.5 text-center text-xs font-semibold text-[var(--sgs-primary)]" aria-label={ui.contract} title={ui.contract}>
-                                    <svg className="h-4 w-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M6 3.75h9l3 3v13.5H6V3.75Zm8.5.5v3h3M8.5 11h7m-7 3.5h7m-7 3.5h4" /></svg>
+                                    <svg className="dashboard-action-icon h-4 w-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M6 3.75h9l3 3v13.5H6V3.75Zm8.5.5v3h3M8.5 11h7m-7 3.5h7m-7 3.5h4" /></svg>
                                     <span className="dashboard-mobile-label">{ui.contract}</span>
                                 </a>
                                 <a href="/inventory" className="dashboard-control quick-action flex items-center justify-center gap-1.5 px-2 py-2.5 text-center text-xs font-semibold text-[var(--sgs-primary)]" aria-label={ui.listing} title={ui.listing}>
-                                    <svg className="h-4 w-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="m4 10 8-6 8 6v9.5H4V10Zm4 9.5v-5h8v5M9 10h.01M12 10h.01M15 10h.01" /></svg>
+                                    <svg className="dashboard-action-icon h-4 w-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="m4 10 8-6 8 6v9.5H4V10Zm4 9.5v-5h8v5M9 10h.01M12 10h.01M15 10h.01" /></svg>
                                     <span className="dashboard-mobile-label">{ui.listing}</span>
                                 </a>
                             </div>
