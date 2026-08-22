@@ -16,6 +16,16 @@ export interface CreateAdminNotificationData {
   metadata?: Record<string, any>;
 }
 
+export interface NotificationOperationalEvent {
+  id: string;
+  tenantId: string;
+  eventType: string;
+  payload: Record<string, any>;
+  resolvedAt: string | null;
+  resolvedBy: string | null;
+  createdAt: string;
+}
+
 class NotificationRepository {
   async create(data: CreateNotificationData): Promise<any> {
     const result = await pool.query(
@@ -50,6 +60,65 @@ class NotificationRepository {
       body: data.body,
       metadata: data.metadata,
     })));
+  }
+
+  async recordOperationalEvent(
+    tenantId: string,
+    eventType: string,
+    payload: Record<string, any>,
+  ): Promise<NotificationOperationalEvent> {
+    const result = await pool.query(
+      `INSERT INTO notification_operational_events (tenant_id, event_type, payload)
+       VALUES ($1, $2, $3)
+       RETURNING *`,
+      [tenantId, eventType, JSON.stringify(payload)],
+    );
+    return this.operationalEventToEntity(result.rows[0]);
+  }
+
+  async findOperationalEvents(
+    tenantId: string,
+    eventType?: string,
+    limit = 60,
+  ): Promise<NotificationOperationalEvent[]> {
+    const result = await pool.query(
+      `SELECT *
+       FROM notification_operational_events
+       WHERE tenant_id = $1
+         AND ($2::text IS NULL OR event_type = $2)
+       ORDER BY created_at DESC
+       LIMIT $3`,
+      [tenantId, eventType ?? null, limit],
+    );
+    return result.rows.map(row => this.operationalEventToEntity(row));
+  }
+
+  async findOperationalEventById(
+    tenantId: string,
+    id: string,
+  ): Promise<NotificationOperationalEvent | null> {
+    const result = await pool.query(
+      `SELECT *
+       FROM notification_operational_events
+       WHERE tenant_id = $1 AND id = $2`,
+      [tenantId, id],
+    );
+    return result.rows[0] ? this.operationalEventToEntity(result.rows[0]) : null;
+  }
+
+  async resolveOperationalEvent(
+    tenantId: string,
+    id: string,
+    resolvedBy: string,
+  ): Promise<NotificationOperationalEvent | null> {
+    const result = await pool.query(
+      `UPDATE notification_operational_events
+       SET resolved_at = NOW(), resolved_by = $3
+       WHERE tenant_id = $1 AND id = $2 AND resolved_at IS NULL
+       RETURNING *`,
+      [tenantId, id, resolvedBy],
+    );
+    return result.rows[0] ? this.operationalEventToEntity(result.rows[0]) : null;
   }
 
   async findByUser(tenantId: string, userId: string, limit = 30): Promise<any[]> {
@@ -179,6 +248,18 @@ class NotificationRepository {
       body: row.body,
       metadata: row.metadata,
       readAt: row.read_at,
+      createdAt: row.created_at,
+    };
+  }
+
+  private operationalEventToEntity(row: Record<string, any>): NotificationOperationalEvent {
+    return {
+      id: row.id,
+      tenantId: row.tenant_id,
+      eventType: row.event_type,
+      payload: row.payload || {},
+      resolvedAt: row.resolved_at,
+      resolvedBy: row.resolved_by,
       createdAt: row.created_at,
     };
   }

@@ -42,6 +42,34 @@ async function putJson(
   }
 }
 
+async function requestJson(
+  app: express.Express,
+  method: 'GET' | 'POST',
+  path: string,
+): Promise<{ status: number; body: any }> {
+  const server = http.createServer(app);
+  await new Promise<void>(resolve => server.listen(0, '127.0.0.1', resolve));
+  const address = server.address();
+  const port = typeof address === 'object' && address ? address.port : 0;
+  try {
+    const response = await fetch(`http://127.0.0.1:${port}${path}`, { method });
+    return { status: response.status, body: await response.json() };
+  } finally {
+    await new Promise<void>(resolve => server.close(() => resolve()));
+  }
+}
+
+function adminApp() {
+  return express()
+    .use(express.json())
+    .use('/api/valuation', createValuationRoutes(
+      authenticatedAsAdmin(),
+      (_req: express.Request, _res: express.Response, next: express.NextFunction) => next(),
+      (_req: express.Request, _res: express.Response, next: express.NextFunction) => next(),
+      (_req: express.Request, _res: express.Response, next: express.NextFunction) => next(),
+    ));
+}
+
 function authenticatedAsAdmin() {
   return (_req: express.Request, _res: express.Response, next: express.NextFunction) => {
     (_req as any).user = {
@@ -132,16 +160,9 @@ describe('valuation drift threshold notifications', () => {
       .mockRejectedValue(new Error('notification store unavailable'));
     const operationalSignalSpy = vi.spyOn(logger, 'warn');
 
-    const app = express()
-      .use(express.json())
-      .use('/api/valuation', createValuationRoutes(
-        authenticatedAsAdmin(),
-        (_req: express.Request, _res: express.Response, next: express.NextFunction) => next(),
-        (_req: express.Request, _res: express.Response, next: express.NextFunction) => next(),
-        (_req: express.Request, _res: express.Response, next: express.NextFunction) => next(),
-      ));
+    const recordEventSpy = vi.spyOn(notificationRepository, 'recordOperationalEvent').mockResolvedValue({} as any);
 
-    const response = await putJson(app, '/api/valuation/admin/drift-thresholds', thresholds);
+    const response = await putJson(adminApp(), '/api/valuation/admin/drift-thresholds', thresholds);
 
     expect(response.status).toBe(200);
     expect(response.body).toEqual({ config, history });
@@ -158,7 +179,68 @@ describe('valuation drift threshold notifications', () => {
       },
     );
     expect(JSON.stringify(response.body)).not.toContain('notification store unavailable');
+    expect(recordEventSpy).toHaveBeenCalledWith(
+      'tenant-1',
+      'valuation_drift_threshold_notification_failed',
+      expect.objectContaining({
+        thresholdVersion: 19,
+        notification: expect.objectContaining({
+          type: 'drift_threshold_changed',
+          metadata: expect.objectContaining({ version: 19, thresholds }),
+        }),
+      }),
+    );
     operationalSignalSpy.mockRestore();
     notificationSpy.mockRestore();
+    recordEventSpy.mockRestore();
+  });
+
+  it('lists tenant-scoped operational events for admins', async () => {
+    const event = {
+      id: 'event-1',
+      tenantId: 'tenant-1',
+      eventType: 'valuation_drift_threshold_notification_failed',
+      payload: { thresholdVersion: 19 },
+      resolvedAt: null,
+    };
+    const findSpy = vi.spyOn(notificationRepository, 'findOperationalEvents').mockResolvedValue([event] as any);
+
+    const response = await requestJson(adminApp(), 'GET', '/api/valuation/admin/operational-events');
+
+    expect(response.status).toBe(200);
+    expect(response.body).toEqual({ events: [event] });
+    expect(findSpy).toHaveBeenCalledWith('tenant-1', undefined);
+    findSpy.mockRestore();
+  });
+
+  it('retries the stored notification and resolves the event without updating thresholds', async () => {
+    const event = {
+      id: 'event-1',
+      tenantId: 'tenant-1',
+      eventType: 'valuation_drift_threshold_notification_failed',
+      payload: {
+        thresholdVersion: 19,
+        notification: {
+          type: 'drift_threshold_changed',
+          title: 'Valuation drift thresholds updated',
+          body: 'version 19',
+          metadata: { version: 19, thresholds: { maeVndPerM2: 29_000_000 } },
+        },
+      },
+      resolvedAt: null,
+    };
+    const findSpy = vi.spyOn(notificationRepository, 'findOperationalEventById').mockResolvedValue(event as any);
+    const createSpy = vi.spyOn(notificationRepository, 'createForTenantAdmins').mockResolvedValue();
+    const resolveSpy = vi.spyOn(notificationRepository, 'resolveOperationalEvent').mockResolvedValue({ ...event, resolvedAt: 'now' } as any);
+
+    const response = await requestJson(adminApp(), 'POST', '/api/valuation/admin/operational-events/event-1/retry');
+
+    expect(response.status).toBe(200);
+    expect(createSpy).toHaveBeenCalledWith('tenant-1', event.payload.notification);
+    expect(resolveSpy).toHaveBeenCalledWith('tenant-1', 'event-1', 'author-1');
+    expect(updateDriftThresholds).not.toHaveBeenCalled();
+    findSpy.mockRestore();
+    createSpy.mockRestore();
+    resolveSpy.mockRestore();
   });
 });

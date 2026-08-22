@@ -1183,6 +1183,51 @@ export function createValuationRoutes(
     }
   });
 
+  router.get('/admin/operational-events', authenticateToken, async (req: Request, res: Response) => {
+    const user = (req as any).user;
+    if (!['SUPER_ADMIN', 'ADMIN'].includes(user?.role)) return res.status(403).json({ error: 'Admin only' });
+    try {
+      const eventType = req.query.eventType ? String(req.query.eventType) : undefined;
+      const events = await notificationRepository.findOperationalEvents(String(user.tenantId), eventType);
+      return res.json({ events });
+    } catch (err: any) {
+      logger.error('[Valuation operational-events] read error', err);
+      return res.status(500).json({ error: 'Không thể đọc sự kiện vận hành' });
+    }
+  });
+
+  router.post('/admin/operational-events/:id/retry', authenticateToken, async (req: Request, res: Response) => {
+    const user = (req as any).user;
+    if (!['SUPER_ADMIN', 'ADMIN'].includes(user?.role)) return res.status(403).json({ error: 'Admin only' });
+    const tenantId = String(user.tenantId);
+    const eventId = String(req.params.id);
+    try {
+      const event = await notificationRepository.findOperationalEventById(tenantId, eventId);
+      if (!event) return res.status(404).json({ error: 'Operational event not found' });
+      if (event.eventType !== 'valuation_drift_threshold_notification_failed') {
+        return res.status(400).json({ error: 'This operational event is not retryable' });
+      }
+      if (event.resolvedAt) return res.status(409).json({ error: 'Operational event already resolved', event });
+
+      const notification = event.payload.notification;
+      if (!notification || typeof notification !== 'object') {
+        return res.status(422).json({ error: 'Operational event has no retry payload' });
+      }
+      await notificationRepository.createForTenantAdmins(tenantId, notification);
+      const resolved = await notificationRepository.resolveOperationalEvent(tenantId, eventId, String(user.id));
+      if (!resolved) return res.status(409).json({ error: 'Operational event was resolved concurrently' });
+      return res.json({ event: resolved, retried: true });
+    } catch (err: any) {
+      logger.warn('[Operational] valuation drift-threshold notification retry failed', {
+        event: 'valuation_drift_threshold_notification_retry_failed',
+        tenantId,
+        eventId,
+        errorType: err instanceof Error ? err.name : typeof err,
+      });
+      return res.status(503).json({ error: 'Notification retry failed; the event remains open' });
+    }
+  });
+
   router.put('/admin/drift-thresholds', authenticateToken, async (req: Request, res: Response) => {
     const user = (req as any).user;
     if (!['SUPER_ADMIN', 'ADMIN'].includes(user?.role)) return res.status(403).json({ error: 'Admin only' });
@@ -1212,6 +1257,17 @@ export function createValuationRoutes(
           },
         });
       } catch (notificationError: any) {
+        const notification = {
+          type: 'drift_threshold_changed',
+          title: 'Valuation drift thresholds updated',
+          body: `${user.name || user.email || 'An administrator'} updated the drift thresholds to version ${config.version}: MAE ${config.thresholds.maeVndPerM2.toLocaleString('en-US')} VND/m², MAPE ${(config.thresholds.mape * 100).toLocaleString('en-US')}%, ${config.thresholds.consecutiveRuns} consecutive runs.`,
+          metadata: {
+            authorId: String(user.id),
+            authorName: user.name || user.email || null,
+            version: config.version,
+            thresholds: config.thresholds,
+          },
+        };
         logger.warn('[Operational] valuation drift-threshold notification delivery failed after commit', {
           event: 'valuation_drift_threshold_notification_failed',
           tenantId: String(user.tenantId),
@@ -1219,6 +1275,24 @@ export function createValuationRoutes(
           notificationType: 'drift_threshold_changed',
           errorType: notificationError instanceof Error ? notificationError.name : typeof notificationError,
         });
+        try {
+          await notificationRepository.recordOperationalEvent(
+            String(user.tenantId),
+            'valuation_drift_threshold_notification_failed',
+            {
+              tenantId: String(user.tenantId),
+              thresholdVersion: config.version,
+              notificationType: 'drift_threshold_changed',
+              notification,
+            },
+          );
+        } catch (eventError: any) {
+          logger.error('[Operational] could not persist drift-threshold notification failure', {
+            tenantId: String(user.tenantId),
+            thresholdVersion: config.version,
+            errorType: eventError instanceof Error ? eventError.name : typeof eventError,
+          });
+        }
       }
       return res.json({ config, history: await priceCalibrationService.getDriftThresholdHistory() });
     } catch (err: any) {
