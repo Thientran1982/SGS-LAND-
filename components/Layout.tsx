@@ -107,10 +107,6 @@ interface SidebarContentProps {
     isMobile: boolean;
     onToggleCollapse: () => void;
     onLogoutClick: () => void;
-    onToggleTheme: () => void;
-    onToggleLang: () => void;
-    themeMode: 'light' | 'dark';
-    lang: string;
     menuGroups: NavGroup[];
     t: (k: string) => string;
     user: User | null;
@@ -122,15 +118,13 @@ const Sidebar = memo(({
     isMobile, 
     onToggleCollapse, 
     onLogoutClick, 
-    onToggleTheme, 
-    onToggleLang,
-    themeMode,
-    lang,
     menuGroups,
     t,
     user
 }: SidebarContentProps) => {
     const isCollapsed = !isMobile && collapsed;    
+    const [profileOpen, setProfileOpen] = useState(false);
+    const profileRef = React.useRef<HTMLDivElement>(null);
     // Persist open groups
     const [openGroups, setOpenGroups] = useState<Record<string, boolean>>(() => {
         try {
@@ -157,6 +151,16 @@ const Sidebar = memo(({
             setOpenGroups(prev => ({ ...prev, [activeGroup.id]: true }));
         }
     }, [activePage, menuGroups]);
+    useEffect(() => {
+        if (!profileOpen) return;
+        const handleOutsideClick = (event: MouseEvent) => {
+            if (profileRef.current && !profileRef.current.contains(event.target as Node)) {
+                setProfileOpen(false);
+            }
+        };
+        document.addEventListener('mousedown', handleOutsideClick);
+        return () => document.removeEventListener('mousedown', handleOutsideClick);
+    }, [profileOpen]);
     const toggleGroup = (groupId: string) => {
         setOpenGroups(prev => ({ ...prev, [groupId]: !prev[groupId] }));
     };
@@ -264,32 +268,60 @@ const Sidebar = memo(({
                 <div className="h-10 w-full shrink-0"></div>
             </nav>
             {/* 3. Profile and footer controls */}
-            <div className="px-2 py-1.5 border-t border-[var(--glass-border)] space-y-1 shrink-0 bg-[var(--bg-app)] z-20 rounded-b-[24px]">
+            <div className="relative px-2 py-1.5 border-t border-[var(--glass-border)] space-y-1 shrink-0 bg-[var(--bg-app)] z-20 rounded-b-[24px]">
                 {user && (
-                    <button
-                        onClick={() => onNavigate(ROUTES.PROFILE)}
-                        className={`w-full flex items-center ${isCollapsed ? 'justify-center' : 'gap-2.5 px-2'} min-h-[44px] rounded-xl text-left hover:bg-[var(--glass-surface-hover)] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sgs-primary group`}
-                        title={t('menu.profile')}
-                        aria-label={t('menu.profile')}
-                    >
-                        <UserAvatar user={user} isActive={activePage === ROUTES.PROFILE} />
-                        {!isCollapsed && (
-                            <span className="min-w-0 leading-tight">
-                                <span className={`block truncate text-xs font-bold ${activePage === ROUTES.PROFILE ? 'text-[var(--sgs-primary)]' : 'text-[var(--text-primary)]'}`}>{user.name}</span>
-                                <span className="block truncate text-xs2 font-medium text-[var(--text-tertiary)]">{t(`role.${user.role?.toUpperCase()}`) || user.role}</span>
-                            </span>
+                    <div ref={profileRef} className="relative">
+                        {profileOpen && (
+                            <div
+                                role="menu"
+                                aria-label={t('menu.profile')}
+                                className={`absolute bottom-full mb-2 ${isCollapsed ? 'left-0 w-64' : 'left-0 right-0'} rounded-2xl border border-[var(--glass-border)] bg-[var(--bg-surface)] p-2 shadow-2xl z-50`}
+                            >
+                                <div className="flex items-center gap-3 rounded-xl px-3 py-2.5">
+                                    <UserAvatar user={user} isActive={activePage === ROUTES.PROFILE} />
+                                    <div className="min-w-0 leading-tight">
+                                        <div className="truncate text-sm font-bold text-[var(--text-primary)]">{user.name}</div>
+                                        <div className="truncate text-xs2 font-medium text-[var(--text-tertiary)]">{t(`role.${user.role?.toUpperCase()}`) || user.role}</div>
+                                    </div>
+                                </div>
+                                <div className="my-1 border-t border-[var(--glass-border)]" />
+                                <button
+                                    type="button"
+                                    role="menuitem"
+                                    onClick={() => { setProfileOpen(false); onNavigate(ROUTES.PROFILE); }}
+                                    className="w-full rounded-xl px-3 py-2.5 text-left text-xs font-semibold text-[var(--text-secondary)] hover:bg-[var(--glass-surface-hover)] hover:text-[var(--text-primary)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sgs-primary"
+                                >
+                                    {t('menu.profile')}
+                                </button>
+                                <button
+                                    type="button"
+                                    role="menuitem"
+                                    onClick={() => { setProfileOpen(false); onLogoutClick(); }}
+                                    className="w-full rounded-xl px-3 py-2.5 text-left text-xs font-bold text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-900/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-rose-400"
+                                >
+                                    {t('menu.logout')}
+                                </button>
+                            </div>
                         )}
-                    </button>
+                        <button
+                            type="button"
+                            onClick={() => setProfileOpen(prev => !prev)}
+                            className={`w-full flex items-center ${isCollapsed ? 'justify-center' : 'gap-2.5 px-2'} min-h-[44px] rounded-xl text-left hover:bg-[var(--glass-surface-hover)] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sgs-primary group`}
+                            title={t('menu.profile')}
+                            aria-label={t('menu.profile')}
+                            aria-expanded={profileOpen}
+                            aria-haspopup="menu"
+                        >
+                            <UserAvatar user={user} isActive={activePage === ROUTES.PROFILE} />
+                            {!isCollapsed && (
+                                <span className="min-w-0 leading-tight">
+                                    <span className={`block truncate text-xs font-bold ${activePage === ROUTES.PROFILE ? 'text-[var(--sgs-primary)]' : 'text-[var(--text-primary)]'}`}>{user.name}</span>
+                                    <span className="block truncate text-xs2 font-medium text-[var(--text-tertiary)]">{t(`role.${user.role?.toUpperCase()}`) || user.role}</span>
+                                </span>
+                            )}
+                        </button>
+                    </div>
                 )}
-                <button
-                    onClick={onLogoutClick}
-                    className={`w-full flex items-center justify-center min-h-[32px] p-1.5 rounded-lg text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-900/20 transition-colors border border-transparent hover:border-rose-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-rose-400 cursor-pointer ${!isCollapsed ? 'gap-2' : ''}`}
-                    title={t('menu.logout')}
-                    aria-label={t('menu.logout')}
-                >
-                    {NAV_ICONS['logout']}
-                    {!isCollapsed && <span className="text-xs font-bold">{t('menu.logout')}</span>}
-                </button>
             </div>
         </div>
     );
@@ -435,14 +467,10 @@ export const Layout: React.FC<LayoutProps> = memo(({ children, activePage, onNav
         activePage,
         onNavigate: handleNavigate,
         onLogoutClick: handleLogoutClick,
-        onToggleTheme: toggleTheme,
-        onToggleLang: () => setLanguage(language === 'en' ? 'vn' : 'en'),
-        themeMode: theme,
-        lang: language,
         menuGroups,
         t,
         user
-    }), [activePage, handleNavigate, handleLogoutClick, toggleTheme, language, theme, menuGroups, t, setLanguage]);
+    }), [activePage, handleNavigate, handleLogoutClick, menuGroups, t, user]);
     return (
         <div className="crm-vite-app fixed inset-0 h-[100dvh] supports-[height:100cqh]:h-[100cqh] w-full bg-[var(--bg-app)] p-0 sm:p-2 md:p-3 flex gap-0 sm:gap-2 md:gap-3 overflow-hidden font-sans text-[var(--text-primary)] transition-colors duration-300 relative selection:bg-[var(--sgs-primary)]/30">
             {/* SIDEBAR ISLAND (Desktop/Tablet) */}
