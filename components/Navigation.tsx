@@ -1,7 +1,6 @@
 import React, { useState, memo, useMemo, useRef, useEffect } from 'react';
 import { User } from '../types';
 import { useTranslation } from '../services/i18n';
-import { useTheme } from '../services/theme';
 import { ROUTES } from '../config/routes';
 import { AppNotification } from '../services/api/notificationApi';
 interface CommandCenterProps {
@@ -233,8 +232,7 @@ export const CommandCenter: React.FC<CommandCenterProps> = memo(({
     onDeleteNotification,
     onDeleteAllRead,
 }) => {
-    const { t, language, setLanguage } = useTranslation();
-    const { theme, toggleTheme } = useTheme();
+    const { t } = useTranslation();
     const [panelOpen, setPanelOpen] = useState(false);
     const panelRef = useRef<HTMLDivElement>(null);
     // Close panel on outside click
@@ -254,7 +252,7 @@ export const CommandCenter: React.FC<CommandCenterProps> = memo(({
             {/* Background Blur Layer */}
             <div className="absolute inset-0 bg-[var(--bg-app)]/80 backdrop-blur-xl border-b border-[var(--glass-border)] shadow-sm z-0 rounded-none sm:rounded-t-[24px]"></div>
 
-            {/* LEFT: Mobile Menu + Breadcrumb */}
+            {/* LEFT: Mobile Menu + Global Search */}
             <div className="flex items-center gap-2 sm:gap-4 relative z-10 flex-1 min-w-0 mr-2">
                 <button
                     onClick={onMenuClick}
@@ -272,15 +270,21 @@ export const CommandCenter: React.FC<CommandCenterProps> = memo(({
                         {title}
                     </span>
                 )}
-                {/* Current page breadcrumb (desktop) */}
-                <div className="hidden md:flex items-center gap-2 text-xs font-semibold text-[var(--text-secondary)]">
-                    <span className="h-7 w-7 items-center justify-center rounded-lg bg-[var(--glass-surface-hover)] text-[var(--text-tertiary)] lg:flex" aria-hidden="true">
-                        <svg className="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M4 5a1 1 0 011-1h5a1 1 0 011 1v5a1 1 0 01-1 1H5a1 1 0 01-1-1V5Zm8 0a1 1 0 011-1h5a1 1 0 011 1v5a1 1 0 01-1 1h-5a1 1 0 01-1-1V5ZM4 14a1 1 0 011-1h5a1 1 0 011 1v5a1 1 0 01-1 1H5a1 1 0 01-1-1v-5Zm8 0a1 1 0 011-1h5a1 1 0 011 1v5a1 1 0 01-1 1h-5a1 1 0 01-1-1v-5Z" /></svg>
-                    </span>
-                    <span>{title}</span>
+                {/* Global Search Trigger (Desktop) */}
+                <div className="hidden md:flex flex-1 max-w-lg relative z-10">
+                    <button 
+                        onClick={onSearch}
+                        aria-label={t('common.search')}
+                         className="w-full group relative flex items-center justify-between bg-[var(--glass-surface-hover)]/50 dark:bg-white/5 rounded-2xl px-4 py-2.5 text-sm text-[var(--text-secondary)] transition-all hover:bg-[var(--ui-surface-hover)] dark:hover:bg-[var(--ui-surface-hover)] hover:text-[var(--ui-text)] hover:shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--ui-focus)]/30 active:scale-[0.98]"
+                    >
+                        <div className="flex items-center gap-3">
+                            {ICONS.SEARCH}
+                            <span className="font-medium">{t('common.search')}</span>
+                        </div>
+                    </button>
                 </div>
             </div>
-            {/* RIGHT: Search, notifications, help, theme, language and profile */}
+            {/* RIGHT: Notification Bell + Actions & Profile */}
             <div className="flex items-center gap-2 sm:gap-3 relative z-10 shrink-0">
                 {/* Mobile Search Icon */}
                 <button
@@ -291,15 +295,6 @@ export const CommandCenter: React.FC<CommandCenterProps> = memo(({
                     <span className="h-9 w-9 flex items-center justify-center rounded-xl text-[var(--text-tertiary)] group-hover:bg-[var(--glass-surface-hover)] group-hover:text-[var(--text-primary)] group-active:scale-95 transition-all">
                         {ICONS.SEARCH_MOBILE}
                     </span>
-                </button>
-                {/* Desktop search icon */}
-                <button
-                    onClick={onSearch}
-                    className="hidden sm:flex h-9 w-9 items-center justify-center rounded-xl text-[var(--text-tertiary)] transition-colors hover:bg-[var(--glass-surface-hover)] hover:text-[var(--text-primary)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sgs-primary"
-                    aria-label={t('common.search')}
-                    title={t('common.search')}
-                >
-                    {ICONS.SEARCH_MOBILE}
                 </button>
                 {/* Notification Bell */}
                 <div ref={panelRef} className="relative">
@@ -329,34 +324,6 @@ export const CommandCenter: React.FC<CommandCenterProps> = memo(({
                             t={t}
                         />
                     )}
-                </div>
-                {/* Help / guidance */}
-                <button
-                    onClick={() => onNavigate(ROUTES.HELP_CENTER)}
-                    className="hidden sm:flex h-9 w-9 items-center justify-center rounded-xl text-[var(--text-tertiary)] transition-colors hover:bg-[var(--glass-surface-hover)] hover:text-[var(--text-primary)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sgs-primary"
-                    aria-label={t('nav.help')}
-                    title={t('nav.help')}
-                >
-                    <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke="currentColor" strokeWidth={1.8} d="M9.2 9a3 3 0 1 1 5.2 2c-.9.8-1.9 1.2-1.9 2.5M12 17h.01M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18Z" /></svg>
-                </button>
-                {/* Theme */}
-                <button
-                    onClick={toggleTheme}
-                    className="hidden sm:flex h-9 w-9 items-center justify-center rounded-xl text-[var(--text-tertiary)] transition-colors hover:bg-[var(--glass-surface-hover)] hover:text-[var(--text-primary)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sgs-primary"
-                    aria-label={t(theme === 'dark' ? 'nav.mode_light' : 'nav.mode_dark')}
-                    title={t(theme === 'dark' ? 'nav.mode_light' : 'nav.mode_dark')}
-                >
-                    {theme === 'dark' ? (
-                        <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round" d="M12 3v1m0 16v1m9-9h-1M4 12H3m16.4 6.4-.7-.7M5.3 5.3l-.7-.7m14.8 0-.7.7M5.3 18.7l-.7.7M16 12a4 4 0 1 1-8 0 4 4 0 0 1 8 0Z" /></svg>
-                    ) : (
-                        <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round" d="M21 12.8A8.5 8.5 0 1 1 11.2 3 6.5 6.5 0 0 0 21 12.8Z" /></svg>
-                    )}
-                </button>
-                {/* Language */}
-                <div className="hidden items-center gap-0.5 rounded-lg border border-[var(--glass-border)] px-1 py-0.5 text-[10px] font-bold sm:flex" aria-label={t('nav.lang_switch')}>
-                    <button type="button" onClick={() => setLanguage('en')} className={`rounded px-1.5 py-1 transition-colors ${language === 'en' ? 'bg-[var(--sgs-primary)] text-white' : 'text-[var(--text-tertiary)] hover:text-[var(--text-primary)]'}`} aria-pressed={language === 'en'}>EN</button>
-                    <span className="text-[var(--text-tertiary)]">/</span>
-                    <button type="button" onClick={() => setLanguage('vn')} className={`rounded px-1.5 py-1 transition-colors ${language === 'vn' ? 'bg-[var(--sgs-primary)] text-white' : 'text-[var(--text-tertiary)] hover:text-[var(--text-primary)]'}`} aria-pressed={language === 'vn'}>VI</button>
                 </div>
                 {/* Profile */}
                 <button

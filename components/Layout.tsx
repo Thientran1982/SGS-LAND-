@@ -20,7 +20,7 @@ import {
     GitMerge, Target, Share2, BookOpen, BarChart2, Store, Shield,
     Database, Activity, Settings, CreditCard, Lock, Smartphone,
     User as UserIcon, Moon, Sun, LogOut, PanelLeft, ChevronDown, Languages, Home, Globe,
-    ClipboardList, Kanban, ListTodo, UserCheck, PieChart, Bug, Rss, Building2, Mail, Briefcase, ScrollText, Percent
+    ClipboardList, Kanban, ListTodo, UserCheck, PieChart, Bug, Rss, Building2, Mail, Briefcase, ScrollText
 } from 'lucide-react';
 // Icons mapping - SYNCHRONIZED with mockDb.ts iconKeys
 const NAV_ICONS: Record<string, React.ReactNode> = {
@@ -47,7 +47,6 @@ const NAV_ICONS: Record<string, React.ReactNode> = {
     // Ecosystem
     [ROUTES.MARKETPLACE]: <Store size={20} strokeWidth={2} />,
     [ROUTES.AI_GOVERNANCE]: <Shield size={20} strokeWidth={2} />,
-    [ROUTES.AI_EVALUATION]: <Shield size={20} strokeWidth={2} />,
     [ROUTES.AGENT_AUDIT]: <ScrollText size={20} strokeWidth={2} />,
     [ROUTES.DATA_PLATFORM]: <Database size={20} strokeWidth={2} />,
     [ROUTES.SYSTEM]: <Activity size={20} strokeWidth={2} />,
@@ -65,7 +64,6 @@ const NAV_ICONS: Record<string, React.ReactNode> = {
     [ROUTES.TASKS]: <ListTodo size={20} strokeWidth={2} />,
     [ROUTES.EMPLOYEES]: <UserCheck size={20} strokeWidth={2} />,
     [ROUTES.TASK_REPORTS]: <PieChart size={20} strokeWidth={2} />,
-    [ROUTES.COMMISSIONS]: <Percent size={20} strokeWidth={2} />,
     // Other
     'mobile_app': <Smartphone size={20} strokeWidth={2} />,
     'profile': <UserIcon size={20} strokeWidth={2} />,

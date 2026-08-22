@@ -579,9 +579,20 @@ class DatabaseApiClient {
     }
   }
   async getAnalytics(timeRange?: string, _language?: string) {
-    // Do not turn an analytics/API outage into believable-looking zeroes.
-    // Dashboard owns the translated error state and can offer a retry.
-    return analyticsApi.getSummary(timeRange);
+    try {
+      return await analyticsApi.getSummary(timeRange);
+    } catch (error) {
+      console.error('getAnalytics error:', error);
+      return {
+        totalLeads: 0, newLeads: 0, wonLeads: 0, lostLeads: 0,
+        totalListings: 0, availableListings: 0,
+        totalProposals: 0, approvedProposals: 0,
+        totalContracts: 0, signedContracts: 0,
+        revenue: 0, pipelineValue: 0, winProbability: 0, aiDeflectionRate: 0,
+        leadsByStage: {}, leadsBySource: {},
+        revenueByMonth: [],
+      };
+    }
   }
   async getAuditLogs(page = 1, pageSize = 50, filters?: { entityType?: string; action?: string; actorId?: string; since?: string }) {
     try {
@@ -1340,7 +1351,6 @@ class DatabaseApiClient {
       { id: 'home', labelKey: 'menu.home', route: ROUTES.LANDING, iconKey: ROUTES.LANDING },
       { id: 'dash', labelKey: 'menu.dashboard', route: ROUTES.DASHBOARD, iconKey: ROUTES.DASHBOARD },
       { id: 'ai-advisor', labelKey: 'menu.ai-advisor', route: ROUTES.AI_ADVISOR, iconKey: ROUTES.AI_ADVISOR },
-      { id: 'mobile-app', labelKey: 'menu.mobile-app', route: ROUTES.MOBILE_APP, iconKey: ROUTES.MOBILE_APP },
     ];
     if (isHostTenant) {
       coreItems.push({ id: 'search', labelKey: 'menu.marketplace', route: ROUTES.SEARCH, iconKey: ROUTES.SEARCH });
@@ -1352,7 +1362,7 @@ class DatabaseApiClient {
       { id: 'inbox', labelKey: 'menu.inbox', route: ROUTES.INBOX, iconKey: ROUTES.INBOX },
       { id: 'fav', labelKey: 'menu.favorites', route: ROUTES.FAVORITES, iconKey: ROUTES.FAVORITES }
     );
-    const core = { id: 'core', labelKey: 'menu.operations', items: coreItems };
+    const core = { id: 'core', labelKey: 'menu.core', items: coreItems };
     const ops = { id: 'ops', labelKey: 'menu.operations', items: [
       { id: 'projects', labelKey: 'menu.projects', route: ROUTES.PROJECTS, iconKey: ROUTES.PROJECTS },
       { id: 'approvals', labelKey: 'menu.approvals', route: ROUTES.APPROVALS, iconKey: ROUTES.APPROVALS },
@@ -1364,8 +1374,7 @@ class DatabaseApiClient {
       { id: 'campaigns', labelKey: 'menu.campaigns', route: ROUTES.CAMPAIGNS, iconKey: ROUTES.CAMPAIGNS },
       { id: 'scoring', labelKey: 'menu.scoring-rules', route: ROUTES.SCORING_RULES, iconKey: ROUTES.SCORING_RULES },
       { id: 'knowledge', labelKey: 'menu.knowledge', route: ROUTES.KNOWLEDGE, iconKey: ROUTES.KNOWLEDGE },
-      { id: 'rep', labelKey: 'menu.reports', route: ROUTES.REPORTS, iconKey: ROUTES.REPORTS },
-      { id: 'commissions', labelKey: 'menu.commissions', route: ROUTES.COMMISSIONS, iconKey: ROUTES.COMMISSIONS }
+      { id: 'rep', labelKey: 'menu.reports', route: ROUTES.REPORTS, iconKey: ROUTES.REPORTS }
     ]};
     // SALES: dự án (xem rổ hàng), tài liệu, báo cáo
     const opsBasic = { id: 'ops', labelKey: 'menu.operations', items: [
@@ -1397,7 +1406,6 @@ class DatabaseApiClient {
       { id: 'billing', labelKey: 'menu.billing', route: ROUTES.BILLING, iconKey: ROUTES.BILLING },
       { id: 'security', labelKey: 'menu.security', route: ROUTES.SECURITY, iconKey: ROUTES.SECURITY },
       { id: 'ai-gov', labelKey: 'menu.ai-governance', route: ROUTES.AI_GOVERNANCE, iconKey: ROUTES.AI_GOVERNANCE },
-      { id: 'ai-evaluation', labelKey: 'menu.ai-evaluation', route: ROUTES.AI_EVALUATION, iconKey: ROUTES.AI_EVALUATION },
       { id: 'valuation-accuracy', labelKey: 'menu.valuation-accuracy', route: ROUTES.VALUATION_ACCURACY, iconKey: ROUTES.VALUATION_ACCURACY },
       { id: 'agent-audit', labelKey: 'menu.agent-audit', route: ROUTES.AGENT_AUDIT, iconKey: ROUTES.AGENT_AUDIT },
       { id: 'seo', labelKey: 'menu.seo-manager', route: ROUTES.SEO_MANAGER, iconKey: ROUTES.SEO_MANAGER },
@@ -1405,7 +1413,6 @@ class DatabaseApiClient {
       { id: 'scraper', labelKey: 'menu.scraper', route: ROUTES.SCRAPER, iconKey: ROUTES.SCRAPER },
       { id: 'data', labelKey: 'menu.data-platform', route: ROUTES.DATA_PLATFORM, iconKey: ROUTES.DATA_PLATFORM },
       { id: 'system', labelKey: 'menu.system', route: ROUTES.SYSTEM, iconKey: ROUTES.SYSTEM },
-      { id: 'marketplace-apps', labelKey: 'menu.marketplace-apps', route: ROUTES.MARKETPLACE, iconKey: ROUTES.MARKETPLACE },
     ];
     // ADMIN/TEAM_LEAD: chỉ thấy người dùng + cài đặt doanh nghiệp
     const sys = { id: 'sys', labelKey: 'menu.ecosystem', items: sysAdminItems };
@@ -1422,12 +1429,6 @@ class DatabaseApiClient {
       { id: 'task-kanban', labelKey: 'menu.task-kanban', route: ROUTES.TASK_KANBAN, iconKey: ROUTES.TASK_KANBAN },
       { id: 'tasks', labelKey: 'menu.tasks', route: ROUTES.TASKS, iconKey: ROUTES.TASKS },
     ]};
-    // The sidebar presents business operations, management, and ecosystem as
-    // the three top-level groups. Task management remains fully represented
-    // inside Management instead of becoming a separate top-level section.
-    const management = { id: 'management', labelKey: 'menu.management', items: [...ops.items, ...taskMgmt.items] };
-    const managementBasic = { id: 'management', labelKey: 'menu.management', items: [...opsBasic.items, ...taskMgmtBasic.items] };
-    const managementMarketing = { id: 'management', labelKey: 'menu.management', items: [...opsMarketing.items, ...taskMgmtBasic.items] };
     const partnerCore = { id: 'partner-core', labelKey: 'menu.partner_core', items: [
       { id: 'projects', labelKey: 'menu.projects', route: ROUTES.PROJECTS, iconKey: ROUTES.PROJECTS },
       { id: 'inv', labelKey: 'menu.inventory', route: ROUTES.INVENTORY, iconKey: ROUTES.INVENTORY },
@@ -1436,17 +1437,17 @@ class DatabaseApiClient {
       return [partnerCore];
     }
     if (role === UserRole.SUPER_ADMIN) {
-      return [core, management, sysSuperAdmin];
+      return [core, ops, taskMgmt, sysSuperAdmin];
     }
     if (role === UserRole.ADMIN || role === UserRole.TEAM_LEAD) {
-      return [core, management, sys];
+      return [core, ops, taskMgmt, sys];
     } else if (role === UserRole.MARKETING) {
-      return [core, managementMarketing];
+      return [core, opsMarketing, taskMgmtBasic];
     } else if (role === UserRole.SALES) {
-      return [core, managementBasic];
+      return [core, opsBasic, taskMgmtBasic];
     }
     // VIEWER + bất kỳ role không xác định: chỉ core + task kanban cơ bản (read-only UX)
-    return [core, managementBasic];
+    return [core, taskMgmtBasic];
   }
   async ping(): Promise<boolean> {
     try {

@@ -17,7 +17,6 @@ import { Dropdown } from '../components/Dropdown';
 import { SelectDropdown } from '../components/task/SelectDropdown';
 import { useSocket, socket } from '../services/websocket';
 import { SeoHead } from '../components/SeoHead';
-import { ROUTES } from '../config/routes';
 // --- ICONS ---
 const ICONS = {
     TREND_UP: <svg className="w-3 h-3 text-sgs-verified dark:text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" /></svg>,
@@ -240,25 +239,16 @@ const PriorityAlertCenter = ({ analytics, language }: { analytics: any; language
 
 const WorkQueueStrip = ({ analytics, language }: { analytics: any; language: string }) => {
     const copy = language === 'vn'
-        ? { title: 'Việc Cần Làm & Phê Duyệt', subtitle: 'Bước tiếp theo cần xử lý', contracts: 'Hợp đồng cần xử lý', approvals: 'Yêu cầu chờ duyệt', followups: 'Khách cần follow-up' }
-        : { title: 'Tasks & Approvals', subtitle: 'What needs a next step', contracts: 'Contracts to handle', approvals: 'Pending approvals', followups: 'Leads to follow up' };
+        ? { title: 'Việc Cần Làm & Phê Duyệt', contracts: 'Hợp đồng cần xử lý', approvals: 'Yêu cầu chờ duyệt', followups: 'Khách cần follow-up' }
+        : { title: 'Tasks & Approvals', contracts: 'Contracts to handle', approvals: 'Pending approvals', followups: 'Leads to follow up' };
     const queue = analytics?.workQueue || {};
     return (
-        <section className="dashboard-panel" aria-label={copy.title}>
-            <div className="dashboard-panel-head">
-                <div><h2>{copy.title}</h2><p className="mt-1 text-xs font-normal text-[var(--text-tertiary)]">{copy.subtitle}</p></div>
-            </div>
-            <div className="grid grid-cols-1 divide-y divide-[var(--glass-border)] sm:grid-cols-3 sm:divide-x sm:divide-y-0">
-                {[
-                    { label: copy.contracts, value: queue.contracts ?? analytics?.pendingContracts ?? 0, href: `/${ROUTES.CONTRACTS}` },
-                    { label: copy.approvals, value: queue.approvals ?? analytics?.pendingApprovals ?? 0, href: `/${ROUTES.APPROVALS}` },
-                    { label: copy.followups, value: queue.followups ?? analytics?.unresponsiveLeadCount ?? 0, href: `/${ROUTES.LEADS}` },
-                ].map((item) => (
-                    <a key={item.href} href={item.href} className="group flex items-center justify-between gap-3 px-4 py-3.5 transition-colors hover:bg-[var(--glass-surface)]">
-                        <span className="min-w-0 truncate text-xs font-semibold text-[var(--text-secondary)]">{item.label}</span>
-                        <span className="flex items-center gap-2"><strong className={`font-mono text-lg ${Number(item.value) > 0 ? 'text-[var(--ui-danger)]' : 'text-[var(--text-primary)]'}`}>{item.value}</strong><span className="text-sm text-[var(--text-tertiary)] transition-transform group-hover:translate-x-0.5" aria-hidden="true">›</span></span>
-                    </a>
-                ))}
+        <section aria-label={copy.title}>
+            <div className="mb-2 dashboard-subhead">{copy.title}</div>
+            <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
+                <DashboardMiniCard label={copy.contracts} value={queue.contracts ?? analytics?.pendingContracts ?? 0} href="/contracts" tone="danger" />
+                <DashboardMiniCard label={copy.approvals} value={queue.approvals ?? analytics?.pendingApprovals ?? 0} href="/approvals" tone="danger" />
+                <DashboardMiniCard label={copy.followups} value={queue.followups ?? analytics?.unresponsiveLeadCount ?? 0} href="/leads" tone={(queue.followups ?? 0) > 0 ? 'danger' : 'default'} />
             </div>
         </section>
     );
@@ -274,7 +264,7 @@ const InventoryOverviewWidget = ({ analytics, language }: { analytics: any; lang
         <section className="dashboard-panel min-w-0" aria-label={copy.title}>
             <div className="dashboard-panel-head">
                 <h2>{copy.title}</h2>
-                <a href={`/${ROUTES.INVENTORY}`} className="text-xs font-semibold text-[var(--sgs-primary)]">{copy.active}</a>
+                <a href="/inventory" className="text-xs font-semibold text-[var(--sgs-primary)]">{copy.active}</a>
             </div>
             <div className="grid grid-cols-2 gap-2 px-4 sm:grid-cols-4">
                 <DashboardMiniCard label={copy.active} value={inventory.active ?? analytics?.availableListings ?? 0} surface="panel" />
@@ -282,7 +272,7 @@ const InventoryOverviewWidget = ({ analytics, language }: { analytics: any; lang
                 <DashboardMiniCard label={copy.rented} value={inventory.rented ?? 0} surface="panel" />
                 <DashboardMiniCard label={copy.expired} value={inventory.expired ?? 0} surface="panel" />
             </div>
-            <a href={`/${ROUTES.APPROVALS}`} className="mx-4 mt-3 flex items-center justify-between rounded-xl border border-[var(--sgs-accent)]/25 bg-[var(--sgs-accent)]/5 px-3 py-2 text-xs font-semibold text-[var(--sgs-accent-text)]">
+            <a href="/approvals" className="mx-4 mt-3 flex items-center justify-between rounded-xl border border-[var(--sgs-accent)]/25 bg-[var(--sgs-accent)]/5 px-3 py-2 text-xs font-semibold text-[var(--sgs-accent-text)]">
                 <span>{copy.pending}</span><strong>{inventory.pendingApproval ?? 0}</strong>
             </a>
             <div className="mx-4 mt-4 dashboard-subhead">{copy.top}</div>
@@ -312,7 +302,7 @@ const InboxOverviewWidget = ({ analytics, language }: { analytics: any; language
     ];
     return (
         <section className="dashboard-panel min-w-0" aria-label={copy.title}>
-            <div className="dashboard-panel-head"><h2>{copy.title}</h2><a href={`/${ROUTES.INBOX}`} className="text-xs font-semibold text-[var(--sgs-primary)]">Inbox</a></div>
+            <div className="dashboard-panel-head"><h2>{copy.title}</h2><a href="/inbox" className="text-xs font-semibold text-[var(--sgs-primary)]">Inbox</a></div>
             <div className="grid grid-cols-3 gap-2 px-4">{channels.map(channel => <DashboardMiniCard key={channel.key} label={channel.key} value={channel.value} surface="panel" />)}</div>
             <div className="mx-4 mt-4 mb-4 flex items-center justify-between rounded-xl bg-[var(--bg-surface)] px-3 py-2 pb-3 text-xs">
                 <span className="text-[var(--text-tertiary)]">{copy.response}</span>
@@ -814,15 +804,6 @@ function getTenantIdFromCookie(): string | null {
         return null;
     }
 }
-
-function getDashboardGreetingKey(language: string, returning: boolean): string {
-    if (returning) return 'dash.greeting_welcome_back';
-    const hour = new Date().getHours();
-    if (hour < 12) return 'dash.greeting_morning';
-    if (hour < 18) return 'dash.greeting_afternoon';
-    return 'dash.greeting_evening';
-}
-
 export const Dashboard: React.FC = () => {
     const [timeRange, setTimeRange] = useState('30d');
     const selectedDays = timeRange === 'all' ? 365 : Number.parseInt(timeRange, 10) || 30;
@@ -840,16 +821,6 @@ export const Dashboard: React.FC = () => {
     // Namespaces the React Query cache by tenant so that switching between
     // admin accounts in the same browser never shows a stale tenant's data.
     const cacheTenantId = useMemo(() => getTenantIdFromCookie(), []);
-    const [returningUser, setReturningUser] = useState(false);
-    useEffect(() => {
-        const visitKey = `sgs_dashboard_last_visit:${cacheTenantId ?? 'current'}`;
-        try {
-            setReturningUser(Boolean(localStorage.getItem(visitKey)));
-            localStorage.setItem(visitKey, new Date().toISOString());
-        } catch {
-            // Time-aware greeting remains available when browser storage is unavailable.
-        }
-    }, [cacheTenantId]);
     const handleExport = async () => {
         if (!dashboardRef.current) return;
         setIsExporting(true);      
@@ -967,11 +938,10 @@ export const Dashboard: React.FC = () => {
     const userName = currentUser?.name ? currentUser.name.split(' ').slice(-1)[0] : '';
     const scopeKey: string = (analytics as any)?.scopeLabel || 'company';
     const scopeLabel = scopeKey === 'personal' ? t('dash.scope_personal') : t('dash.scope_company');
-    const greeting = t(getDashboardGreetingKey(language, returningUser));
     const overview: any = analytics;
     const ui = language === 'vn'
-         ? { quick: 'Thao tác nhanh', addLead: 'Thêm khách hàng', contract: 'Tạo hợp đồng', listing: 'Đăng tin BĐS', target: 'mục tiêu tháng', targetUnset: 'Chưa thiết lập mục tiêu', source: 'Theo nguồn', overview: 'Tổng quan', project: 'Theo dự án', demand: 'Nhu cầu theo khu vực', team: 'Theo team', individual: 'Theo cá nhân', overloaded: 'Quá tải' }
-        : { quick: 'Quick actions', addLead: 'Add lead', contract: 'Create contract', listing: 'Add listing', target: 'monthly target', targetUnset: 'Target not set', source: 'By source', overview: 'Overview', project: 'By project', demand: 'Demand by area', team: 'By team', individual: 'By person', overloaded: 'Overloaded' };
+        ? { quick: 'Thao tác nhanh', addLead: '+ Thêm khách hàng', contract: '+ Tạo hợp đồng', listing: '+ Đăng tin BĐS', target: 'mục tiêu tháng', targetUnset: 'Chưa thiết lập mục tiêu', source: 'Theo nguồn', overview: 'Tổng quan', project: 'Theo dự án', demand: 'Nhu cầu theo khu vực', team: 'Theo team', individual: 'Theo cá nhân', overloaded: 'Quá tải' }
+        : { quick: 'Quick actions', addLead: '+ Add lead', contract: '+ Create contract', listing: '+ Add listing', target: 'monthly target', targetUnset: 'Target not set', source: 'By source', overview: 'Overview', project: 'By project', demand: 'Demand by area', team: 'By team', individual: 'By person', overloaded: 'Overloaded' };
     const kpiTarget = (key: string, actual: number) => {
         const target = Number(overview?.targets?.[key]?.monthly_target ?? overview?.targets?.[key]?.monthlyTarget ?? 0);
         return { target, progress: target > 0 ? Math.round((actual / target) * 100) : 0 };
@@ -989,15 +959,20 @@ export const Dashboard: React.FC = () => {
                     <div className="min-w-0">
                         <div className="dash-eyebrow text-[var(--text-tertiary)]">{scopeLabel}</div>
                         <h1 className="dashboard-title mt-2 text-[var(--text-primary)]">
-                            {userName ? `${greeting} ${userName}` : greeting}
+                            {userName ? `${t('dash.greeting_morning')} ${userName}` : t('dash.greeting_morning')}
                         </h1>
                         <p className="mt-2 max-w-xl text-sm leading-6 text-[var(--text-secondary)]">{t('dash.overview_subtitle')}</p>
                         <div className="mt-3 flex items-center gap-2 text-xs text-[var(--text-tertiary)]">
                             {ICONS.REFRESH}
-                             <span>{lastUpdated.toLocaleTimeString(language === 'vn' ? 'vi-VN' : 'en-US')}</span>
+                            <span>{lastUpdated.toLocaleTimeString()}</span>
                         </div>
                     </div>
                     <div className="flex w-full flex-wrap items-center gap-2 sm:w-auto sm:flex-nowrap">
+                        <div className="hidden items-center gap-2 xl:flex">
+                            <a href="/leads" className="dashboard-control px-3 py-2.5 text-xs font-semibold text-[var(--sgs-primary)]">{ui.addLead}</a>
+                            <a href="/contracts" className="dashboard-control px-3 py-2.5 text-xs font-semibold text-[var(--sgs-primary)]">{ui.contract}</a>
+                            <a href="/inventory" className="dashboard-control px-3 py-2.5 text-xs font-semibold text-[var(--sgs-primary)]">{ui.listing}</a>
+                        </div>
                         <KpiTargetSettings user={currentUser} language={language} notify={notify} />
                         <button
                             onClick={handleExport}
@@ -1029,12 +1004,12 @@ export const Dashboard: React.FC = () => {
                 </header>
 
                 <PriorityAlertCenter analytics={overview} language={language} />
-                <div>
+                <div className="xl:hidden">
                     <div className="mb-2 dashboard-subhead">{ui.quick}</div>
                     <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
-                        <a href={`/${ROUTES.LEADS}`} className="dashboard-control px-3 py-2.5 text-center text-xs font-semibold text-[var(--sgs-primary)]">{ui.addLead}</a>
-                        <a href={`/${ROUTES.CONTRACTS}`} className="dashboard-control px-3 py-2.5 text-center text-xs font-semibold text-[var(--sgs-primary)]">{ui.contract}</a>
-                        <a href={`/${ROUTES.INVENTORY}`} className="dashboard-control px-3 py-2.5 text-center text-xs font-semibold text-[var(--sgs-primary)]">{ui.listing}</a>
+                        <a href="/leads" className="dashboard-control px-3 py-2.5 text-center text-xs font-semibold text-[var(--sgs-primary)]">{ui.addLead}</a>
+                        <a href="/contracts" className="dashboard-control px-3 py-2.5 text-center text-xs font-semibold text-[var(--sgs-primary)]">{ui.contract}</a>
+                        <a href="/inventory" className="dashboard-control px-3 py-2.5 text-center text-xs font-semibold text-[var(--sgs-primary)]">{ui.listing}</a>
                     </div>
                 </div>
                 <WorkQueueStrip analytics={overview} language={language} />
@@ -1050,7 +1025,7 @@ export const Dashboard: React.FC = () => {
                             </p>
                         </div>
                         <div className="flex items-center gap-3">
-                            <a href={`/${ROUTES.USER_GUIDE}`} className="text-xs font-semibold text-[var(--sgs-primary)] underline underline-offset-4">
+                            <a href="/huong-dan-su-dung" className="text-xs font-semibold text-[var(--sgs-primary)] underline underline-offset-4">
                                 {language === 'vn' ? 'Xem hướng dẫn' : 'View guide'}
                             </a>
                             <button
@@ -1069,7 +1044,6 @@ export const Dashboard: React.FC = () => {
                 )}
 
                 <div ref={dashboardRef} data-dashboard-export-root className="space-y-6">
-                    <div className="dashboard-subhead">{ui.overview}</div>
                     <section className="dashboard-kpis" aria-label={t('dash.overview_subtitle')}>
                         <div className="dashboard-kpi">
                             <div className="kpi-label">{t('dash.revenue_title')}</div>
@@ -1212,7 +1186,7 @@ export const Dashboard: React.FC = () => {
                         <section className="dashboard-panel" aria-label={language === 'vn' ? 'Cố Vấn AI' : 'AI Advisor'}>
                             <div className="dashboard-panel-head">
                                 <h2>{language === 'vn' ? 'Cố Vấn AI' : 'AI Advisor'}</h2>
-                                <a href={`/${ROUTES.AI_GOVERNANCE}`} className="text-xs font-semibold text-[var(--sgs-primary)]">AI</a>
+                                <a href="/ai-governance" className="text-xs font-semibold text-[var(--sgs-primary)]">AI</a>
                             </div>
                             <div className="flex items-center gap-3 px-4">
                                 <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-[var(--sgs-primary)]/10 text-[var(--sgs-primary)]" aria-hidden="true">
