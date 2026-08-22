@@ -46,7 +46,7 @@ interface EngineResult {
 }
 
 async function probeGemini(): Promise<EngineResult> {
-  const apiKey = process.env.GEMINI_API_KEY;
+  const apiKey = process.env.GEMINI_API_KEY || process.env.GOOGLE_API_KEY || process.env.API_KEY;
   const out: EngineResult = { engine: 'gemini', queries: 0, mentions: 0, rate: 0, details: [] };
   if (!apiKey) {
     out.skipped = 'no GEMINI_API_KEY';
@@ -504,8 +504,17 @@ async function runSnapshot(pool: Pool): Promise<any> {
 
   const aiMentions = {
     capturedAt: new Date().toISOString(),
+    source: 'Provider API answer probes — not crawler access logs',
+    methodology: '5 fixed prompts per configured provider; a mention means the returned answer or citation contains SGS LAND.',
     queries: BRAND_QUERIES,
-    engines,
+    engines: Object.fromEntries(Object.entries(engines).map(([name, engine]) => {
+      const errors = engine.details.filter((detail) => !!detail.error).length;
+      return [name, {
+        ...engine,
+        status: engine.skipped ? 'skipped' : errors > 0 && errors === engine.queries ? 'error' : 'measured',
+        errorCount: errors,
+      }];
+    })),
     totals: { ...totals, rate: overallRate },
   };
 

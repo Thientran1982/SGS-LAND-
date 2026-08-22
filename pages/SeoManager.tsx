@@ -1176,25 +1176,35 @@ const GeoMonitor30Days: React.FC = () => {
                             <div className="text-2xs font-bold text-[var(--text-tertiary)] uppercase mb-2">
                                 Snapshot mới nhất ({latest.date}) — chi tiết theo engine
                             </div>
+                            <div className="text-2xs text-[var(--text-tertiary)] mb-2">
+                                Nguồn: {latest.aiMentions.source || 'Provider API answer probes'} · Đây là phép đo câu trả lời AI, không phải log bot crawl.
+                            </div>
                             <div className="grid grid-cols-2 md:grid-cols-5 gap-2">
                                 {ENGINES.map((e) => {
                                     const er = latest.aiMentions.engines[e];
                                     const rate = er?.queries > 0 ? Math.round((er.rate || 0) * 100) : null;
+                                    const status = er?.status || (er?.skipped ? 'skipped' : er?.queries ? 'measured' : 'unavailable');
+                                    const statusLabel = status === 'measured' ? 'Đã đo' : status === 'error' ? 'API lỗi' : status === 'skipped' ? 'Bỏ qua' : 'Chưa đo';
+                                    const statusClass = status === 'measured' ? 'text-emerald-600' : status === 'error' ? 'text-rose-600' : 'text-amber-600';
                                     return (
                                         <div key={e} className="p-2 rounded-lg bg-[var(--bg-surface)] border border-[var(--glass-border)]">
                                             <div className="flex items-center justify-between">
                                                 <span className="text-xs font-bold capitalize" style={{ color: COLORS[e] }}>{e}</span>
-                                                {er?.skipped ? (
-                                                    <span className="text-2xs text-[var(--text-tertiary)]">skipped</span>
+                                                {status !== 'measured' ? (
+                                                    <span className={`text-2xs font-bold ${statusClass}`}>{statusLabel}</span>
                                                 ) : (
                                                     <span className="text-xs font-bold">{rate ?? '—'}%</span>
                                                 )}
                                             </div>
                                             <div className="text-2xs text-[var(--text-tertiary)] mt-0.5">
-                                                {er?.skipped
-                                                    ? er.skipped
-                                                    : `${er?.mentions ?? 0}/${er?.queries ?? 0} queries`}
+                                                {er?.skipped || (er?.errorCount ? `${er.errorCount}/${er.queries} truy vấn lỗi` : `${er?.mentions ?? 0}/${er?.queries ?? 0} truy vấn có mention`)}
                                             </div>
+                                            {er?.skipped && <div className="text-[10px] text-amber-600 mt-1">{er.skipped}</div>}
+                                            {er?.details?.some((d: any) => d.error) && (
+                                                <div className="text-[10px] text-rose-600 mt-1 truncate" title={er.details.filter((d: any) => d.error).map((d: any) => d.error).join('; ')}>
+                                                    {er.details.find((d: any) => d.error)?.error}
+                                                </div>
+                                            )}
                                         </div>
                                     );
                                 })}
