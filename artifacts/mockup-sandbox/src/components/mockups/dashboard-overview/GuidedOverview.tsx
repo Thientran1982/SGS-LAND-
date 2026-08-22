@@ -2,7 +2,7 @@ import { useState, type ReactNode } from 'react';
 import {
   Activity, ArrowUpRight, Bell, Bot, CheckCircle2, ChevronRight, CircleHelp, FileCheck2, FileText, Globe2, Home,
   LayoutDashboard, ListChecks, MapPin, MessageCircle, MoreHorizontal, RefreshCw,
-  Search, Settings2, Sparkles, Target, UserRound, Users,
+  Search, Settings2, Sparkles, Sun, Moon, Target, UserRound, Users,
 } from 'lucide-react';
 import './_group.css';
 
@@ -31,6 +31,7 @@ const labels = {
     geo: 'Visitor geography', geoSub: 'Where visits are coming from', totalVisits: 'Total visits', uniqueIps: 'Unique IPs', coverage: 'Geo coverage', countries: 'Top countries', cities: 'Top cities',
     realtime: 'Realtime traffic', live: 'Live now', activePages: 'Active pages', topPage: 'Top page', direct: 'Direct / unknown',
     demand: 'Demand by area', demandSub: 'Search and enquiry interest by location', updated: 'Updated just now', focus: 'Focus mode', focused: 'Focus mode on',
+     lightMode: 'Light mode', darkMode: 'Dark mode',
   },
   vn: {
     overview: 'Tổng quan', company: 'Không gian công ty', greeting: 'Chào buổi sáng, Minh',
@@ -53,6 +54,7 @@ const labels = {
     geo: 'Địa lý người xem', geoSub: 'Lượt truy cập đến từ đâu', totalVisits: 'Tổng lượt truy cập', uniqueIps: 'IP duy nhất', coverage: 'Độ phủ địa lý', countries: 'Quốc gia nổi bật', cities: 'Thành phố nổi bật',
     realtime: 'Lưu lượng thời gian thực', live: 'Đang online', activePages: 'Trang đang xem', topPage: 'Trang nổi bật', direct: 'Trực tiếp / chưa rõ',
     demand: 'Nhu cầu theo khu vực', demandSub: 'Mức độ quan tâm từ tìm kiếm và hỏi đáp', updated: 'Vừa cập nhật', focus: 'Chế độ tập trung', focused: 'Đã bật tập trung',
+     lightMode: 'Chế độ sáng', darkMode: 'Chế độ tối',
   },
 };
 
@@ -93,6 +95,7 @@ export function GuidedOverview() {
   const [leadMode, setLeadMode] = useState<ViewMode>('overview');
   const [leaderMode, setLeaderMode] = useState<'individual' | 'team'>('individual');
   const [focusMode, setFocusMode] = useState(false);
+  const [darkMode, setDarkMode] = useState(false);
   const [toast, setToast] = useState('');
   const t = labels[language];
 
@@ -103,7 +106,7 @@ export function GuidedOverview() {
   const act = (message: string) => notify(language === 'vn' ? `${message} · bản thử nghiệm` : `${message} · mockup action`);
   const bilingual = (en: string, vi: string) => language === 'vn' ? vi : en;
 
-  return <div className={`guided-overview ${focusMode ? 'g-focused' : ''}`}>
+  return <div className={`guided-overview ${focusMode ? 'g-focused' : ''} ${darkMode ? 'g-dark' : ''}`}>
     <div className="g-shell">
       <aside className="g-sidebar" aria-label="Primary navigation">
         <div className="g-brand"><span className="g-brand-mark">S</span><strong>SGS LAND</strong></div>
@@ -115,7 +118,7 @@ export function GuidedOverview() {
       </aside>
 
       <main className="g-main">
-        <header className="g-topbar"><div className="g-crumb">SGS LAND <span>/</span> {t.overview}</div><div className="g-top-actions"><button type="button" aria-label="Search" onClick={() => act(bilingual('Open search', 'Mở tìm kiếm'))}><Search /></button><button type="button" aria-label="Notifications" onClick={() => act(bilingual('Open notifications', 'Mở thông báo'))}><Bell /></button><button type="button" aria-label="Help" onClick={() => act(bilingual('Open help', 'Mở trợ giúp'))}><CircleHelp /></button><div className="g-lang"><button type="button" onClick={() => setLanguage('en')} className={language === 'en' ? 'selected' : ''}>EN</button><span>/</span><button type="button" onClick={() => setLanguage('vn')} className={language === 'vn' ? 'selected' : ''}>VI</button></div></div></header>
+         <header className="g-topbar"><div className="g-crumb">SGS LAND <span>/</span> {t.overview}</div><div className="g-top-actions"><button type="button" aria-label={darkMode ? t.lightMode : t.darkMode} title={darkMode ? t.lightMode : t.darkMode} className="g-theme-toggle" onClick={() => { setDarkMode(!darkMode); act(darkMode ? t.lightMode : t.darkMode); }}>{darkMode ? <Sun /> : <Moon />}<span>{darkMode ? 'Light' : 'Dark'}</span></button><button type="button" aria-label="Search" onClick={() => act(bilingual('Open search', 'Mở tìm kiếm'))}><Search /></button><button type="button" aria-label="Notifications" onClick={() => act(bilingual('Open notifications', 'Mở thông báo'))}><Bell /></button><button type="button" aria-label="Help" onClick={() => act(bilingual('Open help', 'Mở trợ giúp'))}><CircleHelp /></button><div className="g-lang"><button type="button" onClick={() => setLanguage('en')} className={language === 'en' ? 'selected' : ''}>EN</button><span>/</span><button type="button" onClick={() => setLanguage('vn')} className={language === 'vn' ? 'selected' : ''}>VI</button></div></div></header>
         <div className="g-content">
           <section className="g-hero"><div><div className="g-eyebrow">{t.company}</div><h1>{t.greeting}</h1><p>{t.intro}</p></div><div className="g-hero-tools"><select value={range} onChange={e => { setRange(e.target.value); act(e.target.options[e.target.selectedIndex].text); }} aria-label="Select time range"><option value="7d">{bilingual('Last 7 days', '7 ngày qua')}</option><option value="30d">{t.range}</option><option value="90d">{bilingual('Last 90 days', '90 ngày qua')}</option><option value="all">{bilingual('All time', 'Tất cả thời gian')}</option></select><button className="g-button secondary" type="button" onClick={() => act(t.export)}><ArrowUpRight size={14} />{t.export}</button></div></section>
 
