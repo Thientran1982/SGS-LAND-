@@ -2,7 +2,7 @@ import { useEffect, useRef, useState, type PointerEvent, type ReactNode } from '
 import {
   Activity, ArrowUpRight, Bell, Bot, CheckCircle2, ChevronRight, CircleHelp, FileCheck2, FileText, Globe2, Home,
   LayoutDashboard, ListChecks, MapPin, MessageCircle, MoreHorizontal, PanelLeftClose, PanelLeftOpen, RefreshCw,
-  Search, Settings2, Sparkles, Sun, Moon, Target, UserRound, Users, ChevronDown,
+  Search, Settings2, Sparkles, Sun, Moon, Target, UserRound, Users, ChevronDown, X, ArrowRight,
 } from 'lucide-react';
 import './_group.css';
 import sgslandLogo from './sgsland-logo.svg';
@@ -86,6 +86,16 @@ const listings = [['The Marq District 1', '186 views'], ['Landmark Riverside', '
 const keywords = [['villa thao dien', '84'], ['can ho quan 2', '61'], ['nha pho district 1', '47']];
 const categorySearches = [['Apartment · 2 bedrooms', '56'], ['Villa · Riverside', '39'], ['Townhouse · District 1', '27']];
 const demand = [['Thao Dien', '86'], ['District 1', '74'], ['Thu Duc', '63'], ['Binh Thanh', '51'], ['Phu Nhuan', '38'], ['District 7', '31']];
+const smartSearchItems = [
+  { type: 'Listing', label: 'The Marq District 1', detail: '186 views' },
+  { type: 'Listing', label: 'Landmark Riverside', detail: '142 views' },
+  { type: 'Lead', label: 'Nguyễn An', detail: 'Qualified · 8 min ago' },
+  { type: 'Lead', label: 'Trần Hà', detail: 'AI reply · 1 hr ago' },
+  { type: 'Area', label: 'Thao Dien', detail: 'Demand score 86' },
+  { type: 'Area', label: 'District 1', detail: 'Demand score 74' },
+  { type: 'Action', label: 'Open lead pipeline', detail: 'View qualification signals' },
+  { type: 'Action', label: 'Review pending approvals', detail: '2 items need attention' },
+];
 
 function Panel({ title, subtitle, action, children, className = '' }: { title: string; subtitle?: string; action?: ReactNode; children: ReactNode; className?: string }) {
   return <section className={`g-panel ${className}`}><div className="g-panel-head"><div><h2>{title}</h2>{subtitle && <p>{subtitle}</p>}</div>{action}</div>{children}</section>;
@@ -112,6 +122,8 @@ export function GuidedOverview() {
   const [range, setRange] = useState('30d');
   const [listingFilter, setListingFilter] = useState('all');
   const [sourceFilter, setSourceFilter] = useState('all');
+  const [searchOpen, setSearchOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
   const [activeNav, setActiveNav] = useState('Overview');
   const [leadMode, setLeadMode] = useState<ViewMode>('overview');
   const [leaderMode, setLeaderMode] = useState<'individual' | 'team'>('individual');
@@ -128,12 +140,28 @@ export function GuidedOverview() {
     setAssistantPosition({ x: Math.max(16, window.innerWidth - 72), y: Math.max(16, window.innerHeight - 78) });
   }, []);
 
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') setSearchOpen(false);
+      if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === 'k') {
+        event.preventDefault();
+        setSearchOpen(true);
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, []);
+
   const notify = (message: string) => {
     setToast(message);
     window.setTimeout(() => setToast(''), 2600);
   };
-  const act = (message: string) => notify(language === 'vn' ? `${message} · bản thử nghiệm` : `${message} · mockup action`);
+  const act = (message: string) => {
+    if (message === 'Open search' || message === 'Mở tìm kiếm') setSearchOpen(true);
+    notify(language === 'vn' ? `${message} · bản thử nghiệm` : `${message} · mockup action`);
+  };
   const bilingual = (en: string, vi: string) => language === 'vn' ? vi : en;
+  const filteredSearchItems = smartSearchItems.filter(item => `${item.label} ${item.detail} ${item.type}`.toLowerCase().includes(searchQuery.trim().toLowerCase()));
 
   return <div className={`guided-overview ${focusMode ? 'g-focused' : ''} ${darkMode ? 'g-dark' : ''}`}>
      <div className="g-shell">
@@ -148,6 +176,11 @@ export function GuidedOverview() {
 
       <main className="g-main">
          <header className="g-topbar"><div className="g-topbar-left"><button type="button" className="g-sidebar-toggle" aria-label={sidebarCollapsed ? bilingual('Open sidebar', 'Mở sidebar') : bilingual('Close sidebar', 'Đóng sidebar')} title={sidebarCollapsed ? bilingual('Open sidebar', 'Mở sidebar') : bilingual('Close sidebar', 'Đóng sidebar')} onClick={() => setSidebarCollapsed(!sidebarCollapsed)}>{sidebarCollapsed ? <PanelLeftOpen /> : <PanelLeftClose />}</button><div className="g-crumb">{t.overview}</div></div><div className="g-top-actions"><button type="button" aria-label="Search" title={bilingual('Search', 'Tìm kiếm')} onClick={() => act(bilingual('Open search', 'Mở tìm kiếm'))}><Search /></button><button type="button" aria-label="Notifications" title={bilingual('Notifications', 'Thông báo')} onClick={() => act(bilingual('Open notifications', 'Thông báo'))}><Bell /></button><button type="button" aria-label="Help" title={bilingual('Help', 'Trợ giúp')} onClick={() => act(bilingual('Open help', 'Trợ giúp'))}><CircleHelp /></button><button type="button" aria-label={darkMode ? t.lightMode : t.darkMode} title={darkMode ? t.lightMode : t.darkMode} className="g-theme-toggle" onClick={() => { setDarkMode(!darkMode); act(darkMode ? t.lightMode : t.darkMode); }}>{darkMode ? <Sun /> : <Moon />}<span>{darkMode ? 'Light' : 'Dark'}</span></button><div className="g-lang"><button type="button" onClick={() => setLanguage('en')} className={language === 'en' ? 'selected' : ''}>EN</button><span>/</span><button type="button" onClick={() => setLanguage('vn')} className={language === 'vn' ? 'selected' : ''}>VI</button></div></div></header>
+        {searchOpen && <section className="g-smart-search" role="dialog" aria-modal="true" aria-label={bilingual('Smart search', 'Tìm kiếm thông minh')}>
+          <div className="g-smart-search-head"><Search size={16} /><input autoFocus value={searchQuery} onChange={event => setSearchQuery(event.target.value)} onKeyDown={event => { if (event.key === 'Escape') setSearchOpen(false); }} placeholder={bilingual('Search leads, listings, areas or actions…', 'Tìm khách hàng, tin đăng, khu vực hoặc thao tác…')} aria-label={bilingual('Search workspace', 'Tìm trong workspace')} /><kbd>ESC</kbd><button type="button" onClick={() => { setSearchOpen(false); setSearchQuery(''); }} aria-label={bilingual('Close search', 'Đóng tìm kiếm')}><X size={15} /></button></div>
+          <div className="g-smart-search-hint">{bilingual('Search across your workspace', 'Tìm kiếm trong toàn bộ workspace')} <span>⌘ K</span></div>
+          <div className="g-smart-search-results">{filteredSearchItems.length ? filteredSearchItems.map(item => <button type="button" className="g-smart-result" key={`${item.type}-${item.label}`} onClick={() => { setSearchOpen(false); setSearchQuery(''); act(item.label); }}><span className={`g-smart-result-icon ${item.type.toLowerCase()}`}><Search size={13} /></span><span><strong>{language === 'vn' && item.type === 'Action' ? item.label.replace('Open', 'Mở') : item.label}</strong><small>{item.detail}</small></span><em>{item.type}<ArrowRight size={12} /></em></button>) : <div className="g-smart-empty">{bilingual('No matching workspace results', 'Không tìm thấy kết quả phù hợp')}<small>{bilingual('Try a name, project, area or action', 'Hãy thử tên, dự án, khu vực hoặc thao tác')}</small></div>}</div>
+        </section>}
         <div className="g-content">
            <section className="g-hero"><div><div className="g-eyebrow">{t.company}</div><h1>{t.greeting}</h1><p>{t.intro}</p></div><div className="g-hero-tools"><Dropdown value={range} onChange={value => { setRange(value); act(value === '7d' ? bilingual('Last 7 days', '7 ngày qua') : value === '90d' ? bilingual('Last 90 days', '90 ngày qua') : value === 'all' ? bilingual('All time', 'Tất cả thời gian') : t.range); }} ariaLabel={bilingual('Select time range', 'Chọn khoảng thời gian')} options={[{ value: '7d', label: bilingual('Last 7 days', '7 ngày qua') }, { value: '30d', label: t.range }, { value: '90d', label: bilingual('Last 90 days', '90 ngày qua') }, { value: 'all', label: bilingual('All time', 'Tất cả thời gian') }]} /><button className="g-button secondary" type="button" onClick={() => act(t.export)}><ArrowUpRight size={14} />{t.export}</button></div></section>
 
