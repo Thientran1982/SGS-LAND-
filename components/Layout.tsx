@@ -320,8 +320,14 @@ export const Layout: React.FC<LayoutProps> = memo(({ children, activePage, onNav
     const [isSearchOpen, setIsSearchOpen] = useState(false);
     const [notifications, setNotifications] = useState<AppNotification[]>([]);
     const [unreadCount, setUnreadCount] = useState(0);
+    const [viewportWidth, setViewportWidth] = useState(() => typeof window === 'undefined' ? 1440 : window.innerWidth);
     const { t, language, setLanguage } = useTranslation();
     const { theme, toggleTheme } = useTheme();
+    useEffect(() => {
+        const handleResize = () => setViewportWidth(window.innerWidth);
+        window.addEventListener('resize', handleResize);
+        return () => window.removeEventListener('resize', handleResize);
+    }, []);
     useEffect(() => {
         let pollInterval: ReturnType<typeof setInterval> | null = null;
         const fetchNotifications = () => {
@@ -450,8 +456,10 @@ export const Layout: React.FC<LayoutProps> = memo(({ children, activePage, onNav
         menuGroups,
         t
     }), [activePage, handleNavigate, handleLogoutClick, toggleTheme, language, theme, menuGroups, t, setLanguage]);
+    const isDashboard = activePage === ROUTES.DASHBOARD;
+    const compactDashboard = isDashboard && viewportWidth <= 1100;
     return (
-        <div className="crm-vite-app fixed inset-0 h-[100dvh] supports-[height:100cqh]:h-[100cqh] w-full bg-[var(--bg-app)] p-0 sm:p-2 md:p-3 flex gap-0 sm:gap-2 md:gap-3 overflow-hidden font-sans text-[var(--text-primary)] transition-colors duration-300 relative selection:bg-[var(--sgs-primary)]/30">
+        <div className={`crm-vite-app ${isDashboard ? 'crm-dashboard-shell' : ''} ${compactDashboard ? 'crm-dashboard-compact' : ''} fixed inset-0 h-[100dvh] supports-[height:100cqh]:h-[100cqh] w-full bg-[var(--bg-app)] p-0 sm:p-2 md:p-3 flex gap-0 sm:gap-2 md:gap-3 overflow-hidden font-sans text-[var(--text-primary)] transition-colors duration-300 relative selection:bg-[var(--sgs-primary)]/30`}>
             {/* SIDEBAR ISLAND (Desktop/Tablet) */}
             <aside 
                 className={`
@@ -466,7 +474,7 @@ export const Layout: React.FC<LayoutProps> = memo(({ children, activePage, onNav
                 <Sidebar 
                     {...sidebarProps} 
                     isMobile={false} 
-                    collapsed={desktopCollapsed} 
+                    collapsed={desktopCollapsed || compactDashboard} 
                     onToggleCollapse={() => setDesktopCollapsed(!desktopCollapsed)} 
                 />
             </aside>
