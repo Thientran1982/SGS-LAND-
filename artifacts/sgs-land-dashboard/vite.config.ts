@@ -35,9 +35,16 @@ export default defineConfig({
     react(),
     tailwindcss(),
     runtimeErrorOverlay(),
-    // Keep this standalone preview scoped to its own artifact. Cartographer
-    // watches the whole artifacts tree and can exhaust the container's file
-    // watcher limit when several artifact servers are open at once.
+    ...(process.env.NODE_ENV !== 'production' &&
+    process.env.REPL_ID !== undefined
+      ? [
+          await import('@replit/vite-plugin-cartographer').then((m) =>
+            m.cartographer({
+              root: path.resolve(import.meta.dirname, '..'),
+            }),
+          ),
+        ]
+      : []),
   ],
   resolve: {
     alias: {
@@ -54,10 +61,6 @@ export default defineConfig({
     strictPort: true,
     host: '0.0.0.0',
     allowedHosts: true,
-    watch: {
-      usePolling: true,
-      interval: 1000,
-    },
     fs: {
       strict: true,
     },

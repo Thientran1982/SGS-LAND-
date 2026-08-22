@@ -902,16 +902,10 @@ export const Dashboard: React.FC = () => {
     const { data: analytics, isLoading, isError, refetch, dataUpdatedAt } = useQuery({
         queryKey: ['dashboardAnalytics', timeRange, language, cacheTenantId],
         queryFn: async () => {
-            const data = await db.getAnalytics(timeRange, language);
-            let user = null;
-            try {
-                user = await db.getCurrentUser();
-            } catch (error) {
-                // The dashboard's business metrics remain usable when the
-                // optional profile request fails. Analytics errors still
-                // propagate so outages never become synthetic zeroes.
-                console.warn('[Dashboard] Could not load current user profile:', error);
-            }
+            const [data, user] = await Promise.all([
+                db.getAnalytics(timeRange, language),
+                db.getCurrentUser(),
+            ]);
             return { ...data, user };
         },
         refetchInterval: 30000, // Auto-refresh every 30s as baseline
