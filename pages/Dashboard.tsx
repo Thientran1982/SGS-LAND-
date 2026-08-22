@@ -969,8 +969,8 @@ export const Dashboard: React.FC = () => {
     const greeting = t(getDashboardGreetingKey(language, returningUser));
     const overview: any = analytics;
     const ui = language === 'vn'
-        ? { quick: 'Thao tác nhanh', addLead: '+ Thêm khách hàng', contract: '+ Tạo hợp đồng', listing: '+ Đăng tin BĐS', target: 'mục tiêu tháng', targetUnset: 'Chưa thiết lập mục tiêu', source: 'Theo nguồn', overview: 'Tổng quan', project: 'Theo dự án', demand: 'Nhu cầu theo khu vực', team: 'Theo team', individual: 'Theo cá nhân', overloaded: 'Quá tải' }
-        : { quick: 'Quick actions', addLead: '+ Add lead', contract: '+ Create contract', listing: '+ Add listing', target: 'monthly target', targetUnset: 'Target not set', source: 'By source', overview: 'Overview', project: 'By project', demand: 'Demand by area', team: 'By team', individual: 'By person', overloaded: 'Overloaded' };
+         ? { quick: 'Thao tác nhanh', addLead: 'Thêm khách hàng', contract: 'Tạo hợp đồng', listing: 'Đăng tin BĐS', target: 'mục tiêu tháng', targetUnset: 'Chưa thiết lập mục tiêu', source: 'Theo nguồn', overview: 'Tổng quan', project: 'Theo dự án', demand: 'Nhu cầu theo khu vực', team: 'Theo team', individual: 'Theo cá nhân', overloaded: 'Quá tải' }
+        : { quick: 'Quick actions', addLead: 'Add lead', contract: 'Create contract', listing: 'Add listing', target: 'monthly target', targetUnset: 'Target not set', source: 'By source', overview: 'Overview', project: 'By project', demand: 'Demand by area', team: 'By team', individual: 'By person', overloaded: 'Overloaded' };
     const kpiTarget = (key: string, actual: number) => {
         const target = Number(overview?.targets?.[key]?.monthly_target ?? overview?.targets?.[key]?.monthlyTarget ?? 0);
         return { target, progress: target > 0 ? Math.round((actual / target) * 100) : 0 };
@@ -993,7 +993,7 @@ export const Dashboard: React.FC = () => {
                         <p className="mt-2 max-w-xl text-sm leading-6 text-[var(--text-secondary)]">{t('dash.overview_subtitle')}</p>
                         <div className="mt-3 flex items-center gap-2 text-xs text-[var(--text-tertiary)]">
                             {ICONS.REFRESH}
-                            <span>{lastUpdated.toLocaleTimeString()}</span>
+                             <span>{lastUpdated.toLocaleTimeString(language === 'vn' ? 'vi-VN' : 'en-US')}</span>
                         </div>
                     </div>
                     <div className="flex w-full flex-wrap items-center gap-2 sm:w-auto sm:flex-nowrap">

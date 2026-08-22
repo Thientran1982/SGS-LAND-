@@ -579,20 +579,9 @@ class DatabaseApiClient {
     }
   }
   async getAnalytics(timeRange?: string, _language?: string) {
-    try {
-      return await analyticsApi.getSummary(timeRange);
-    } catch (error) {
-      console.error('getAnalytics error:', error);
-      return {
-        totalLeads: 0, newLeads: 0, wonLeads: 0, lostLeads: 0,
-        totalListings: 0, availableListings: 0,
-        totalProposals: 0, approvedProposals: 0,
-        totalContracts: 0, signedContracts: 0,
-        revenue: 0, pipelineValue: 0, winProbability: 0, aiDeflectionRate: 0,
-        leadsByStage: {}, leadsBySource: {},
-        revenueByMonth: [],
-      };
-    }
+    // Do not turn an analytics/API outage into believable-looking zeroes.
+    // Dashboard owns the translated error state and can offer a retry.
+    return analyticsApi.getSummary(timeRange);
   }
   async getAuditLogs(page = 1, pageSize = 50, filters?: { entityType?: string; action?: string; actorId?: string; since?: string }) {
     try {
