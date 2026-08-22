@@ -803,6 +803,89 @@ html.dark body {
 .sgs-dashboard .dashboard-status-widget .bg-\[var\(--glass-surface\)\] {
   background: transparent !important;
 }
+
+/* Dashboard overview layout — follows the approved Design Tool composition.
+   Scoped to the overview shell so other CRM pages keep their existing island. */
+.crm-dashboard-shell {
+  padding: 0 !important;
+  gap: 0 !important;
+}
+.crm-dashboard-shell > aside {
+  width: 232px;
+  flex-basis: 232px;
+  border-right: 1px solid var(--glass-border);
+  background: var(--glass-surface);
+  border-radius: 0;
+}
+.crm-dashboard-shell > main {
+  border-radius: 0;
+  background: var(--bg-surface);
+}
+.crm-dashboard-shell .sgs-dashboard {
+  padding: 1.85rem 2.25rem 3.5rem;
+  background: var(--bg-surface);
+}
+.crm-dashboard-shell .sgs-dashboard > .mx-auto {
+  max-width: 1410px;
+}
+.crm-dashboard-shell .sgs-dashboard .dashboard-header {
+  border-bottom: 0;
+  padding-bottom: 1.6rem;
+}
+.crm-dashboard-shell .sgs-dashboard .dashboard-title {
+  font-size: clamp(2rem, 2.5vw, 2.55rem);
+  letter-spacing: -.035em;
+}
+.crm-dashboard-shell .sgs-dashboard .dashboard-panel {
+  border-radius: .55rem;
+  box-shadow: none;
+}
+.crm-dashboard-shell .sgs-dashboard .dashboard-kpis {
+  gap: .65rem;
+  border: 0;
+}
+.crm-dashboard-shell .sgs-dashboard .dashboard-kpi {
+  min-height: 8.4rem;
+  padding: 1rem 1.05rem;
+  border: 1px solid var(--dash-rule);
+  border-radius: .55rem;
+  background: var(--dash-panel);
+}
+.crm-dashboard-shell .sgs-dashboard .dashboard-kpi:first-child,
+.crm-dashboard-shell .sgs-dashboard .dashboard-kpi:last-child {
+  padding-left: 1.05rem;
+  padding-right: 1.05rem;
+}
+.crm-dashboard-shell .sgs-dashboard .dashboard-kpi .kpi-value {
+  margin-top: .65rem;
+  font-size: clamp(1.3rem, 2vw, 1.65rem);
+}
+.crm-dashboard-shell .sgs-dashboard .dashboard-control {
+  background: var(--dash-panel);
+}
+.crm-dashboard-shell .sgs-dashboard .dashboard-guide {
+  border-left-color: var(--sgs-accent);
+  background: var(--dash-panel-soft);
+}
+.crm-dashboard-shell .sgs-dashboard .dashboard-workbench {
+  grid-template-columns: minmax(0, 1.55fr) minmax(290px, .8fr);
+}
+.crm-dashboard-shell .sgs-dashboard .dashboard-chart {
+  min-height: 330px;
+}
+.crm-dashboard-shell .sgs-dashboard .dashboard-secondary {
+  background: var(--dash-panel-soft);
+}
+@media (max-width: 767px) {
+  .crm-dashboard-shell > aside {
+    width: 0;
+    flex-basis: 0;
+    border-right: 0;
+  }
+  .crm-dashboard-shell .sgs-dashboard {
+    padding: 1.35rem .9rem 4rem;
+  }
+}
 @media (max-width: 900px) {
   .sgs-dashboard .dashboard-kpis { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .sgs-dashboard .dashboard-kpi:nth-child(2) { border-right: 0; }
