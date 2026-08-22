@@ -24,6 +24,21 @@ const STYLE = `
     font-variant-ligatures: common-ligatures;
     text-rendering: optimizeLegibility;
   }
+  @media (max-width: 640px) {
+    .lp-map-hero-copy {
+      text-align: center !important;
+    }
+    .lp-map-hero-copy h1 {
+      width: auto !important;
+      text-align: center !important;
+    }
+    .lp-map-hero-copy p {
+      max-width: 100% !important;
+      margin-left: auto !important;
+      margin-right: auto !important;
+      text-align: center !important;
+    }
+  }
   .lp-sans  { font-family: var(--font-be-vietnam, system-ui, sans-serif); }
 
   /* light / dark token bridge */
@@ -164,7 +179,7 @@ function MapHero({ lang, onChatOpen }: { lang: Lang; onChatOpen: () => void }) {
     <section id="ban-do" style={{ padding: "120px 0 0", background: "var(--lp-bg)" }}>
       <div className="lp-wrap">
         <div style={{ display:"grid", alignItems:"end", gap:"24px", marginBottom:"26px" }}
-          className="grid grid-cols-1 sm:[grid-template-columns:1fr_auto]">
+          className="lp-map-hero-copy grid grid-cols-1 sm:[grid-template-columns:1fr_auto]">
           <h1
             className="lp-serif"
             style={{
@@ -180,7 +195,7 @@ function MapHero({ lang, onChatOpen }: { lang: Lang; onChatOpen: () => void }) {
             }
           </h1>
           <p style={{ maxWidth:"320px", fontSize:"14px", color:"var(--lp-muted)", textAlign:"right", opacity: visible ? 1 : 0, transition:"opacity .75s ease .3s" }}
-            className="max-sm:text-left">
+             className="lp-map-hero-description">
             {lang === "vi"
               ? "Mua đúng giá, pháp lý rõ ràng. 15.000+ môi giới và 45.000+ bất động sản chờ bạn tại Tp.HCM - Đồng Nai - Tây Ninh."
               : "Buy at the right price, clear legal status. 15000+ agents and 45.000+ properties waiting for you across HCMC - Dong Nai - Tay Ninh."}
