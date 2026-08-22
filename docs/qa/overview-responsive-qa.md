@@ -32,6 +32,31 @@ branch, and confirms that the seeded data returns after retry. The same tests ru
 viewport projects, so responsive evidence is produced independently for desktop, tablet, and
 mobile.
 
+### Deployed-build verification
+
+The local CI release job verifies the application started by the workflow. The
+`overview-deployed` job runs the same fixture and viewport projects against a deployed origin:
+
+```sh
+BASE_URL=https://your-deployment.example npm run test:e2e:overview
+```
+
+For GitHub Actions, set the repository variable `DEPLOYMENT_URL`, or manually dispatch the
+workflow with its `deployment_url` input (the input takes precedence). The job first runs the
+browser runtime preflight, then checks that the deployment responds, and only then runs the
+responsive suite. This makes failures actionable:
+
+| Failure message/category | Meaning |
+| --- | --- |
+| `Deployment reachability` | The URL is missing, unavailable, or cannot be reached from the runner. |
+| Browser preflight / launch error | Chromium or a required Linux dependency cannot start; this is not an Overview assertion result. |
+| `Overview assertion` | The deployed page was reachable and Chromium started, but the seeded Overview behavior failed. |
+
+Every deployed-build run uploads the same `test-results/overview/` screenshots and request traces
+plus the `playwright-report/` HTML report. It also uploads `deployment-url.txt`, which records the
+tested URL, commit, workflow, and run ID alongside that evidence. The fixture and artifact paths
+are intentionally shared with the local release job so evidence can be compared directly.
+
 In this environment, TypeScript validation passed and Playwright enumerated all six fixture
 checks, but execution was blocked before page creation because Chromium could not load the
 system library `libglib-2.0.so.0`. This is an environment prerequisite failure; CI with the

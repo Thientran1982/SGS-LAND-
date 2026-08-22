@@ -10,6 +10,9 @@ export default defineConfig({
     ['html', { outputFolder: 'playwright-report', open: 'never' }],
   ],
   use: {
+    // Set BASE_URL to the deployed origin to run the unchanged Overview fixture
+    // against a release build. Relative page URLs keep local and deployed runs
+    // identical.
     baseURL: process.env.BASE_URL || 'http://localhost:5000',
     trace: 'retain-on-failure',
     screenshot: 'on',

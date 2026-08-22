@@ -4,6 +4,12 @@ on:
     branches: [main, master, 'claude/**']
   pull_request:
     branches: [main, master]
+  workflow_dispatch:
+    inputs:
+      deployment_url:
+        description: 'Deployed origin to verify (overrides the DEPLOYMENT_URL repository variable)'
+        required: false
+        type: string
 
 permissions:
   contents: read
@@ -80,6 +86,70 @@ jobs:
         with:
           name: overview-responsive-${{ github.run_id }}
           path: |
+            test-results/overview/
+            playwright-report/
+          if-no-files-found: warn
+          retention-days: 14
+
+  overview-deployed:
+    name: Overview Responsive Deployed Build
+    runs-on: ubuntu-latest
+    needs: build
+    # Configure DEPLOYMENT_URL as a repository variable for push/PR checks, or
+    # provide deployment_url when manually dispatching this workflow.
+    if: ${{ inputs.deployment_url != '' || vars.DEPLOYMENT_URL != '' }}
+    env:
+      BASE_URL: ${{ inputs.deployment_url || vars.DEPLOYMENT_URL }}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Record deployment target
+        run: |
+          printf 'deployment_url=%s\ncommit=%s\nworkflow=%s\nrun_id=%s\n' \
+            "$BASE_URL" "$GITHUB_SHA" "$GITHUB_WORKFLOW" "$GITHUB_RUN_ID" \
+            > deployment-url.txt
+
+      - name: Install Playwright Chromium and Linux dependencies
+        run: npx playwright install --with-deps chromium
+
+      - name: Verify browser runtime before deployed Overview suite
+        run: node scripts/verify-playwright-runtime.mjs
+
+      - name: Verify deployed build reachability
+        run: |
+          if ! curl --fail --silent --show-error --location \
+            --connect-timeout 10 --max-time 30 "$BASE_URL/" \
+            -o /tmp/overview-deployed-home.html; then
+            echo "::error title=Deployment reachability::The configured deployment URL could not be reached: $BASE_URL"
+            exit 1
+          fi
+          echo "Deployment reachable: $BASE_URL"
+
+      - name: Run Overview responsive checks against deployed build
+        run: |
+          if ! npx playwright test --project=overview-desktop --project=overview-tablet --project=overview-mobile; then
+            echo "::error title=Overview assertion::The deployed origin was reachable and the browser started, but an Overview responsive check failed."
+            exit 1
+          fi
+
+      - name: Upload deployed Overview evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: overview-responsive-deployed-${{ github.run_id }}
+          path: |
+            deployment-url.txt
             test-results/overview/
             playwright-report/
           if-no-files-found: warn
