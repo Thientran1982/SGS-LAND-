@@ -451,7 +451,7 @@ export const Layout: React.FC<LayoutProps> = memo(({ children, activePage, onNav
         t
     }), [activePage, handleNavigate, handleLogoutClick, toggleTheme, language, theme, menuGroups, t, setLanguage]);
     return (
-        <div className={`crm-vite-app ${activePage === ROUTES.DASHBOARD ? 'crm-dashboard-shell' : ''} fixed inset-0 h-[100dvh] supports-[height:100cqh]:h-[100cqh] w-full bg-[var(--bg-app)] p-0 sm:p-2 md:p-3 flex gap-0 sm:gap-2 md:gap-3 overflow-hidden font-sans text-[var(--text-primary)] transition-colors duration-300 relative selection:bg-[var(--sgs-primary)]/30`}>
+        <div className="crm-vite-app fixed inset-0 h-[100dvh] supports-[height:100cqh]:h-[100cqh] w-full bg-[var(--bg-app)] p-0 sm:p-2 md:p-3 flex gap-0 sm:gap-2 md:gap-3 overflow-hidden font-sans text-[var(--text-primary)] transition-colors duration-300 relative selection:bg-[var(--sgs-primary)]/30">
             {/* SIDEBAR ISLAND (Desktop/Tablet) */}
             <aside 
                 className={`
