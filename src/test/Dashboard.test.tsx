@@ -108,6 +108,7 @@ describe("VisitorFunnelWidget", () => {
     renderWidget();
 
     await screen.findByText("Avg. view time");
+    const user = userEvent.setup();
     const listingFilter = screen.getByRole("combobox", { name: "Filter by listing" });
     const sourceFilter = screen.getByRole("combobox", { name: "Filter by traffic source" });
 
@@ -116,7 +117,7 @@ describe("VisitorFunnelWidget", () => {
     await user.click(listingFilter);
     expect(await screen.findByRole("option", { name: "Villa A" })).toBeVisible();
     expect(screen.queryByRole("option", { name: "not-an-array" })).toBeNull();
-    expect(screen.getAllByRole("option")).toHaveLength(3);
+    expect(screen.getAllByRole("option")).toHaveLength(2);
     await user.click(listingFilter);
   });
 

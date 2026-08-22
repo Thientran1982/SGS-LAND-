@@ -114,6 +114,8 @@ export function SelectDropdown({
               <button
                 key={opt.value}
                 type="button"
+                role="option"
+                aria-selected={value === opt.value}
                 onClick={() => handleSelect(opt.value)}
                 className={`w-full flex items-center gap-2.5 px-3 py-2 text-sm text-left transition-colors ${value === opt.value ? 'bg-[var(--sgs-primary)]/10 dark:bg-[var(--sgs-primary)]/25 text-sgs-primary dark:text-[var(--sgs-primary)]' : 'text-[var(--text-primary)] hover:bg-[var(--glass-surface-hover)]'}`}
               >
