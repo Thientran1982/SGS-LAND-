@@ -20,6 +20,35 @@ Allow: /api/openapi.json
 Allow: /api/public/schema.json
 Allow: /.well-known/ai-plugin.json
 
+# Explicit AI crawler policy. These entries make the allow decision visible to
+# providers that do not treat the wildcard group as an AI-crawl declaration.
+# Keep the private application areas blocked in every explicit group.
+User-agent: GPTBot
+User-agent: OAI-SearchBot
+User-agent: ChatGPT-User
+User-agent: Claude-Web
+User-agent: Anthropic-AI
+User-agent: ClaudeBot
+User-agent: Claude-SearchBot
+User-agent: Gemini-WebFetch
+User-agent: Google-Extended
+User-agent: PerplexityBot
+User-agent: YouBot
+User-agent: CCBot
+Allow: /
+Allow: /llms.txt
+Allow: /llms-full.txt
+Allow: /llms-en.txt
+Allow: /api/openapi.json
+Allow: /api/public/schema.json
+Allow: /.well-known/ai-plugin.json
+Disallow: /dashboard
+Disallow: /leads
+Disallow: /contracts
+Disallow: /inbox
+Disallow: /api/
+Disallow: /login
+
 Sitemap: https://sgsland.vn/sitemap.xml
 Sitemap: https://sgsland.vn/sitemap-en.xml
 Sitemap: https://sgsland.vn/sitemap-answers.xml
