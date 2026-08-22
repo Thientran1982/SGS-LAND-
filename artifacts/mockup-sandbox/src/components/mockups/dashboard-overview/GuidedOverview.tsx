@@ -5,6 +5,7 @@ import {
   Search, Settings2, Sparkles, Sun, Moon, Target, UserRound, Users,
 } from 'lucide-react';
 import './_group.css';
+import sgslandLogo from './sgsland-logo.svg';
 
 type Language = 'en' | 'vn';
 type ViewMode = 'overview' | 'source';
@@ -119,7 +120,7 @@ export function GuidedOverview() {
   return <div className={`guided-overview ${focusMode ? 'g-focused' : ''} ${darkMode ? 'g-dark' : ''}`}>
      <div className="g-shell">
        <aside className={`g-sidebar ${sidebarCollapsed ? 'g-sidebar-collapsed' : ''}`} aria-label="Primary navigation">
-        <div className="g-brand"><span className="g-brand-mark">S</span><strong>SGS LAND</strong></div>
+         <div className="g-brand"><span className="g-brand-mark"><img src={sgslandLogo} alt="" aria-hidden="true" /></span><strong>SGS LAND</strong></div>
         <div className="g-workspace">{t.company}</div>
         <nav className="g-nav">
           {navItems.map(([en, vi, Icon]) => <button key={en} type="button" className={activeNav === en ? 'active' : ''} onClick={() => { setActiveNav(en); if (en !== 'Overview') act(language === 'vn' ? vi : en); }}><Icon /><span>{language === 'vn' ? vi : en}</span></button>)}

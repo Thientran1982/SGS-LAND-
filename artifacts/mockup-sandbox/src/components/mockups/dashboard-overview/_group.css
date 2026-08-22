@@ -190,6 +190,7 @@
 .guided-overview .g-sidebar.g-sidebar-collapsed .g-profile { justify-content:center; }
 .guided-overview .g-brand { display:flex; gap:10px; align-items:center; padding:0 11px 27px; color:var(--g-brand); }
 .guided-overview .g-brand-mark { width:30px; height:30px; border-radius:7px; display:grid; place-items:center; background:var(--g-brand); color:#FFFFFF; font:600 16px 'Fraunces',serif; }
+.guided-overview .g-brand-mark img { width:100%; height:100%; display:block; object-fit:contain; border-radius:inherit; }
 .guided-overview .g-brand strong { font-size:14px; letter-spacing:.09em; }
 .guided-overview .g-workspace { color:var(--g-muted); font-size:9px; text-transform:uppercase; letter-spacing:.14em; padding:0 11px 10px; }
 .guided-overview .g-nav { display:grid; gap:3px; }
