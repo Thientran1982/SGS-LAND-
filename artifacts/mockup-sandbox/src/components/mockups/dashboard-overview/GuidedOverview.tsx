@@ -103,6 +103,13 @@ function Panel({ title, subtitle, action, children, className = '' }: { title: s
 
 type DropdownOption = { value: string; label: string };
 
+function getSmartGreeting(language: Language, hour: number) {
+  const period = hour < 5 ? 'evening' : hour < 12 ? 'morning' : hour < 18 ? 'afternoon' : 'evening';
+  const english = { morning: 'Good morning', afternoon: 'Good afternoon', evening: 'Good evening' };
+  const vietnamese = { morning: 'Chào buổi sáng', afternoon: 'Chào buổi chiều', evening: 'Chào buổi tối' };
+  return `${(language === 'vn' ? vietnamese : english)[period]}, Minh`;
+}
+
 function Dropdown({ value, options, onChange, ariaLabel }: { value: string; options: DropdownOption[]; onChange: (value: string) => void; ariaLabel: string }) {
   const [open, setOpen] = useState(false);
   const selected = options.find(option => option.value === value) ?? options[0];
@@ -135,6 +142,7 @@ export function GuidedOverview() {
   const dragRef = useRef<{ startX: number; startY: number; originX: number; originY: number; moved: boolean } | null>(null);
   const [toast, setToast] = useState('');
   const t = labels[language];
+  const greeting = getSmartGreeting(language, new Date().getHours());
 
   useEffect(() => {
     setAssistantPosition({ x: Math.max(16, window.innerWidth - 72), y: Math.max(16, window.innerHeight - 78) });
@@ -182,7 +190,7 @@ export function GuidedOverview() {
           <div className="g-smart-search-results">{filteredSearchItems.length ? filteredSearchItems.map(item => <button type="button" className="g-smart-result" key={`${item.type}-${item.label}`} onClick={() => { setSearchOpen(false); setSearchQuery(''); act(item.label); }}><span className={`g-smart-result-icon ${item.type.toLowerCase()}`}><Search size={13} /></span><span><strong>{language === 'vn' && item.type === 'Action' ? item.label.replace('Open', 'Mở') : item.label}</strong><small>{item.detail}</small></span><em>{item.type}<ArrowRight size={12} /></em></button>) : <div className="g-smart-empty">{bilingual('No matching workspace results', 'Không tìm thấy kết quả phù hợp')}<small>{bilingual('Try a name, project, area or action', 'Hãy thử tên, dự án, khu vực hoặc thao tác')}</small></div>}</div>
         </section>}
         <div className="g-content">
-           <section className="g-hero"><div><div className="g-eyebrow">{t.company}</div><h1>{t.greeting}</h1><p>{t.intro}</p></div><div className="g-hero-tools"><Dropdown value={range} onChange={value => { setRange(value); act(value === '7d' ? bilingual('Last 7 days', '7 ngày qua') : value === '90d' ? bilingual('Last 90 days', '90 ngày qua') : value === 'all' ? bilingual('All time', 'Tất cả thời gian') : t.range); }} ariaLabel={bilingual('Select time range', 'Chọn khoảng thời gian')} options={[{ value: '7d', label: bilingual('Last 7 days', '7 ngày qua') }, { value: '30d', label: t.range }, { value: '90d', label: bilingual('Last 90 days', '90 ngày qua') }, { value: 'all', label: bilingual('All time', 'Tất cả thời gian') }]} /><button className="g-button secondary" type="button" onClick={() => act(t.export)}><ArrowUpRight size={14} />{t.export}</button></div></section>
+           <section className="g-hero"><div><div className="g-eyebrow">{t.company}</div><h1>{greeting}</h1><p>{t.intro}</p></div><div className="g-hero-tools"><Dropdown value={range} onChange={value => { setRange(value); act(value === '7d' ? bilingual('Last 7 days', '7 ngày qua') : value === '90d' ? bilingual('Last 90 days', '90 ngày qua') : value === 'all' ? bilingual('All time', 'Tất cả thời gian') : t.range); }} ariaLabel={bilingual('Select time range', 'Chọn khoảng thời gian')} options={[{ value: '7d', label: bilingual('Last 7 days', '7 ngày qua') }, { value: '30d', label: t.range }, { value: '90d', label: bilingual('Last 90 days', '90 ngày qua') }, { value: 'all', label: bilingual('All time', 'Tất cả thời gian') }]} /><button className="g-button secondary" type="button" onClick={() => act(t.export)}><ArrowUpRight size={14} />{t.export}</button></div></section>
 
           <section className="g-priority"><div className="g-priority-mark"><Bell size={15} /></div><div><strong>{t.prioritySub}</strong><p>{t.priorityBody}</p></div><button type="button" onClick={() => act(t.review)}>{t.review}<ChevronRight size={13} /></button></section>
 
