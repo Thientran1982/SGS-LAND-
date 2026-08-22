@@ -901,7 +901,8 @@ html.dark body {
    }
    .sgs-dashboard .dashboard-date-filter-wrap {
      order: 1;
-     flex: 1 1 auto;
+     flex: 0 0 4.75rem;
+     width: 4.75rem;
    }
    .sgs-dashboard .dashboard-kpi-settings,
    .sgs-dashboard .dashboard-export {
