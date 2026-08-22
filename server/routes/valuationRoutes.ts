@@ -1212,7 +1212,13 @@ export function createValuationRoutes(
           },
         });
       } catch (notificationError: any) {
-        logger.warn('[Valuation drift-thresholds] notification failed after commit', notificationError);
+        logger.warn('[Operational] valuation drift-threshold notification delivery failed after commit', {
+          event: 'valuation_drift_threshold_notification_failed',
+          tenantId: String(user.tenantId),
+          thresholdVersion: config.version,
+          notificationType: 'drift_threshold_changed',
+          errorType: notificationError instanceof Error ? notificationError.name : typeof notificationError,
+        });
       }
       return res.json({ config, history: await priceCalibrationService.getDriftThresholdHistory() });
     } catch (err: any) {

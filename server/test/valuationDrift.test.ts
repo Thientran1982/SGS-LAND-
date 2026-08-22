@@ -19,6 +19,7 @@ vi.mock('../services/priceCalibrationService', () => ({
 
 const { notificationRepository } = await import('../repositories/notificationRepository');
 const { createValuationRoutes } = await import('../routes/valuationRoutes');
+const { logger } = await import('../middleware/logger');
 
 async function putJson(
   app: express.Express,
@@ -129,6 +130,7 @@ describe('valuation drift threshold notifications', () => {
     const notificationSpy = vi
       .spyOn(notificationRepository, 'createForTenantAdmins')
       .mockRejectedValue(new Error('notification store unavailable'));
+    const operationalSignalSpy = vi.spyOn(logger, 'warn');
 
     const app = express()
       .use(express.json())
@@ -145,6 +147,18 @@ describe('valuation drift threshold notifications', () => {
     expect(response.body).toEqual({ config, history });
     expect(updateDriftThresholds).toHaveBeenCalledWith(thresholds, 'author-1');
     expect(getDriftThresholdHistory).toHaveBeenCalledOnce();
+    expect(operationalSignalSpy).toHaveBeenCalledWith(
+      '[Operational] valuation drift-threshold notification delivery failed after commit',
+      {
+        event: 'valuation_drift_threshold_notification_failed',
+        tenantId: 'tenant-1',
+        thresholdVersion: 19,
+        notificationType: 'drift_threshold_changed',
+        errorType: 'Error',
+      },
+    );
+    expect(JSON.stringify(response.body)).not.toContain('notification store unavailable');
+    operationalSignalSpy.mockRestore();
     notificationSpy.mockRestore();
   });
 });
