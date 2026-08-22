@@ -935,13 +935,17 @@ export const Dashboard: React.FC = () => {
     if (!analytics) return null;
     const lastUpdated = new Date(dataUpdatedAt || Date.now());
     const currentUser = (analytics as any)?.user;
-    const userName = currentUser?.name ? currentUser.name.split(' ').slice(-1)[0] : '';
+    const userName = typeof currentUser?.name === 'string' ? currentUser.name.trim() : '';
+    const hour = new Date().getHours();
+    const greeting = language === 'vn'
+        ? hour < 12 ? 'Chào buổi sáng,' : hour < 18 ? 'Chào buổi chiều,' : 'Chào buổi tối,'
+        : hour < 12 ? 'Good morning,' : hour < 18 ? 'Good afternoon,' : 'Good evening,';
     const scopeKey: string = (analytics as any)?.scopeLabel || 'company';
     const scopeLabel = scopeKey === 'personal' ? t('dash.scope_personal') : t('dash.scope_company');
     const overview: any = analytics;
     const ui = language === 'vn'
-        ? { quick: 'Thao tác nhanh', addLead: '+ Thêm khách hàng', contract: '+ Tạo hợp đồng', listing: '+ Đăng tin BĐS', target: 'mục tiêu tháng', targetUnset: 'Chưa thiết lập mục tiêu', source: 'Theo nguồn', overview: 'Tổng quan', project: 'Theo dự án', demand: 'Nhu cầu theo khu vực', team: 'Theo team', individual: 'Theo cá nhân', overloaded: 'Quá tải' }
-        : { quick: 'Quick actions', addLead: '+ Add lead', contract: '+ Create contract', listing: '+ Add listing', target: 'monthly target', targetUnset: 'Target not set', source: 'By source', overview: 'Overview', project: 'By project', demand: 'Demand by area', team: 'By team', individual: 'By person', overloaded: 'Overloaded' };
+        ? { quick: 'Thao tác nhanh', addLead: '+ Thêm khách hàng', contract: '+ Tạo hợp đồng', listing: '+ Đăng tin BĐS', target: 'mục tiêu tháng', source: 'Theo nguồn', overview: 'Tổng quan', project: 'Theo dự án', demand: 'Nhu cầu theo khu vực', team: 'Theo team', individual: 'Theo cá nhân', overloaded: 'Quá tải' }
+        : { quick: 'Quick actions', addLead: '+ Add lead', contract: '+ Create contract', listing: '+ Add listing', target: 'monthly target', source: 'By source', overview: 'Overview', project: 'By project', demand: 'Demand by area', team: 'By team', individual: 'By person', overloaded: 'Overloaded' };
     const kpiTarget = (key: string, actual: number) => {
         const target = Number(overview?.targets?.[key]?.monthly_target ?? overview?.targets?.[key]?.monthlyTarget ?? 0);
         return { target, progress: target > 0 ? Math.round((actual / target) * 100) : 0 };
@@ -959,7 +963,7 @@ export const Dashboard: React.FC = () => {
                     <div className="min-w-0">
                         <div className="dash-eyebrow text-[var(--text-tertiary)]">{scopeLabel}</div>
                         <h1 className="dashboard-title mt-2 text-[var(--text-primary)]">
-                            {userName ? `${t('dash.greeting_morning')} ${userName}` : t('dash.greeting_morning')}
+                            {userName ? `${greeting} ${userName}` : greeting}
                         </h1>
                         <p className="mt-2 max-w-xl text-sm leading-6 text-[var(--text-secondary)]">{t('dash.overview_subtitle')}</p>
                         <div className="mt-3 flex items-center gap-2 text-xs text-[var(--text-tertiary)]">
@@ -1049,13 +1053,13 @@ export const Dashboard: React.FC = () => {
                             <div className="kpi-label">{t('dash.revenue_title')}</div>
                             <div className="kpi-value dash-number break-words">{formatCompactNumber(analytics.revenue || 0)}</div>
                             <div className="kpi-meta"><TrendIndicator value={analytics.revenueDelta || 0} label={t('dash.vs_last_period')} /></div>
-                            <ProgressBar value={revenueTarget.progress} label={revenueTarget.target > 0 ? `${revenueTarget.progress}% ${ui.target}` : ui.targetUnset} muted={revenueTarget.target === 0} />
+                            {revenueTarget.target > 0 && <ProgressBar value={revenueTarget.progress} label={`${revenueTarget.progress}% ${ui.target}`} />}
                         </div>
                         <div className="dashboard-kpi">
                             <div className="kpi-label">{t('dash.pipeline_value')}</div>
                             <div className="kpi-value dash-number break-words">{formatCompactNumber(analytics.pipelineValue || 0)}</div>
                             <div className="kpi-meta">{t('dash.win_probability')}: <strong className="dash-number text-[var(--sgs-primary)]">{analytics.winProbability || 0}%</strong></div>
-                            <ProgressBar value={pipelineTarget.progress} label={pipelineTarget.target > 0 ? `${pipelineTarget.progress}% ${ui.target}` : ui.targetUnset} muted={pipelineTarget.target === 0} />
+                            {pipelineTarget.target > 0 && <ProgressBar value={pipelineTarget.progress} label={`${pipelineTarget.progress}% ${ui.target}`} />}
                         </div>
                         <div className="dashboard-kpi">
                             <div className="kpi-label">{t('dash.ai_deflection_rate')}</div>
@@ -1066,7 +1070,7 @@ export const Dashboard: React.FC = () => {
                             <div className="kpi-label">{t('dash.sales_velocity')}</div>
                             <div className="kpi-value dash-number">{analytics.salesVelocity > 0 && analytics.salesVelocity < 1 ? '< 1' : (analytics.salesVelocity || '--')}</div>
                             <div className="kpi-meta">{analytics.salesVelocity > 0 ? t('dash.days_to_close') : t('dash.no_closed_deals')} <TrendIndicator value={analytics.salesVelocityDelta || 0} label="" /></div>
-                            <ProgressBar value={velocityTarget.progress} label={velocityTarget.target > 0 ? `${velocityTarget.progress}% ${ui.target}` : ui.targetUnset} muted={velocityTarget.target === 0} />
+                            {velocityTarget.target > 0 && <ProgressBar value={velocityTarget.progress} label={`${velocityTarget.progress}% ${ui.target}`} />}
                         </div>
                     </section>
 
