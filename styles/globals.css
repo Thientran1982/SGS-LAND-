@@ -630,6 +630,9 @@ html.dark body {
   min-height: 355px;
   padding: 1.15rem;
 }
+.sgs-dashboard .dashboard-scroll-list {
+  max-height: min(40vh, 360px);
+}
 .sgs-dashboard .dashboard-subhead {
   color: var(--text-tertiary);
   font: 500 .67rem/1.3 var(--font-mono);
@@ -887,6 +890,9 @@ html.dark body {
   .sgs-dashboard .dashboard-chart,
   .sgs-dashboard .dashboard-side {
     min-height: 0;
+  }
+  .sgs-dashboard .dashboard-scroll-list {
+    max-height: min(50vh, 320px);
   }
   .sgs-dashboard .dashboard-chart {
     padding-top: .9rem;
