@@ -29,3 +29,4 @@
 - [Dashboard color direction](dashboard-color-direction.md) — keep the existing clean SGS LAND palette; improve hierarchy and flow without changing the color system
 - [Dashboard greeting localization](dashboard-greeting-localization.md) — use the real user and locale; keep returning-visit context tenant-scoped and browser-local
 - [Dashboard data integrity](dashboard-data-integrity.md) — analytics outages must stay visible as errors, never synthetic all-zero business metrics
+- [Dashboard layout structure](dashboard-layout-structure.md) — keep the overview hierarchy as independent semantic rows matching the Design Tool
