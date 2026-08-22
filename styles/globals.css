@@ -814,16 +814,10 @@ html.dark body {
    blocks. The DOM order remains the reading order; span helpers let future
    blocks share the same 12-column contract without affecting other routes. */
 .sgs-dashboard .dashboard-overview-grid {
-  display: grid;
-  grid-template-columns: repeat(12, minmax(0, 1fr));
-  gap: 2rem 1.5rem;
+  display: block;
 }
 .sgs-dashboard .dashboard-overview-grid > * {
   min-width: 0;
-  grid-column: 1 / -1;
-}
-.sgs-dashboard [data-dashboard-export-root] {
-  display: contents;
 }
 .sgs-dashboard .dashboard-overview-grid > .dashboard-overview-block {
   grid-column: 1 / -1;
@@ -861,34 +855,7 @@ html.dark body {
 .sgs-dashboard .dashboard-panel-head p {
   overflow-wrap: anywhere;
 }
-@media (min-width: 1280px) {
-  .sgs-dashboard .dashboard-overview-grid > .dashboard-block-kpis {
-    grid-column: 1 / -1;
-  }
-  .sgs-dashboard .dashboard-overview-grid > .dashboard-block-two-col {
-    grid-column: span 6;
-  }
-  .sgs-dashboard .dashboard-overview-grid > .dashboard-block-three-col {
-    grid-column: span 4;
-  }
-}
-@media (max-width: 1279px) {
-  .sgs-dashboard .dashboard-overview-grid {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-  .sgs-dashboard .dashboard-overview-grid > .dashboard-block-two-col,
-  .sgs-dashboard .dashboard-overview-grid > .dashboard-block-three-col {
-    grid-column: span 1;
-  }
-}
 @media (max-width: 767px) {
-  .sgs-dashboard .dashboard-overview-grid {
-    grid-template-columns: minmax(0, 1fr);
-    gap: 1.5rem;
-  }
-  .sgs-dashboard .dashboard-overview-grid > * {
-    grid-column: 1 / -1 !important;
-  }
   .sgs-dashboard .dashboard-footer-status {
     align-items: flex-start;
     flex-direction: column;

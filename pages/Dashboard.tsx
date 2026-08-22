@@ -983,7 +983,7 @@ export const Dashboard: React.FC = () => {
     <>
       <SeoHead title="Dashboard | SGS LAND" description="Bảng điều khiển tổng quan SGS LAND - quản lý bất động sản, phân tích thị trường và theo dõi hiệu suất kinh doanh." canonicalPath="/dashboard" />
         <div className="sgs-dashboard min-h-full overflow-y-auto px-4 py-5 sm:px-6 lg:px-8 pb-24 animate-enter">
-            <div className="dashboard-overview-grid mx-auto max-w-[1480px]">
+            <div className="mx-auto max-w-[1480px] space-y-6">
                 <header className="dashboard-overview-block dashboard-block-welcome dashboard-header flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
                     <div className="min-w-0">
                         <div className="dash-eyebrow text-[var(--text-tertiary)]">{scopeLabel}</div>
@@ -1067,8 +1067,8 @@ export const Dashboard: React.FC = () => {
                     </div>
                 )}
 
-                <div ref={dashboardRef} data-dashboard-export-root className="contents">
-                    <div className="dashboard-overview-block dashboard-block-section-label dashboard-subhead">{ui.overview}</div>
+                <div ref={dashboardRef} data-dashboard-export-root className="space-y-6">
+                    <div className="dashboard-subhead">{ui.overview}</div>
                     <section className="dashboard-overview-block dashboard-block-kpis dashboard-kpis" aria-label={t('dash.overview_subtitle')}>
                         <div className="dashboard-kpi">
                             <div className="kpi-label">{t('dash.revenue_title')}</div>
