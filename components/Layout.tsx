@@ -197,7 +197,7 @@ const Sidebar = memo(({
                 )}
             </div>
             {/* 2. Navigation Items (Scrollable) */}
-            <nav className="flex-1 overflow-y-auto no-scrollbar py-4 px-3 overscroll-contain min-h-0 space-y-4">
+            <nav className={`flex-1 overflow-y-auto no-scrollbar py-4 overscroll-contain min-h-0 space-y-4 ${isCollapsed ? 'px-2' : 'px-3'}`}>
                 {menuGroups?.map((group) => {
                     const isOpen = openGroups[group.id] || isCollapsed; 
                     const hasActiveChild = group.items?.some(i => i.route === activePage);
@@ -472,7 +472,7 @@ export const Layout: React.FC<LayoutProps> = memo(({ children, activePage, onNav
                     bg-[var(--bg-app)]
                     rounded-none sm:rounded-[24px] shadow-none border-none
                     flex flex-col shrink-0 no-scrollbar
-                    ${desktopCollapsed ? 'w-0 md:w-[76px]' : 'w-0 md:w-64'} 
+                     ${desktopCollapsed ? 'w-0 md:w-16' : 'w-0 md:w-64'}
                     hidden md:flex overflow-visible
                 `}
             >
