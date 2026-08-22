@@ -345,7 +345,7 @@ export function PublicHeader({ authed = false }: { authed?: boolean }) {
               <button
                 onClick={toggleLang}
                 className="flex-1 flex items-center justify-center gap-1.5 text-xs font-semibold py-2.5 rounded-lg"
-                style={{ background: "var(--hdr-panel)", border: "1px solid var(--hdr-border)", color: "var(--sgs-primary)" }}
+                style={{ background: "var(--hdr-panel)", border: "none", color: "var(--sgs-primary)" }}
                 aria-label="Chuyển ngôn ngữ"
               >
                 {lang.toUpperCase()}
@@ -353,7 +353,7 @@ export function PublicHeader({ authed = false }: { authed?: boolean }) {
               <button
                 onClick={() => setTheme(t => t === "light" ? "dark" : "light")}
                 className="flex-1 flex items-center justify-center gap-1.5 text-xs font-semibold py-2.5 rounded-lg"
-                style={{ background: "var(--hdr-panel)", border: "1px solid var(--hdr-border)", color: "var(--sgs-primary)" }}
+                style={{ background: "var(--hdr-panel)", border: "none", color: "var(--sgs-primary)" }}
                 aria-label="Chuyển chế độ sáng tối"
               >
                 {theme === "light" ? <Moon className="w-4 h-4" /> : <Sun className="w-4 h-4" />}
