@@ -28,6 +28,8 @@ import {
   type GoldSetEvaluation,
   type ValuationPrediction,
   assessValuationDrift,
+  VALUATION_DRIFT_THRESHOLDS,
+  type ValuationDriftThresholds,
   type ValuationDriftAssessment,
 } from './valuationEvaluationService';
 
@@ -37,6 +39,13 @@ const AI_WEIGHT_WITH_TXN  = 0.35;
 const COMPS_WEIGHT         = 0.15;
 const AI_WEIGHT_NO_TXN     = 0.70;
 const COMPS_WEIGHT_NO_TXN  = 0.30;
+
+export interface ValuationDriftThresholdConfig {
+  version: number;
+  thresholds: ValuationDriftThresholds;
+  updatedAt: string | null;
+  updatedBy: string | null;
+}
 
 export function validateCalibrationSamples(samples: Array<{ price: number; count: number }>): {
   safe: boolean; poisoningScore: number; driftScore: number; reason?: string;
@@ -447,22 +456,28 @@ export class PriceCalibrationService {
       }
     }
     const evaluation = evaluateValuationGoldSet(transactions, predictions);
-    await this.saveEvaluationRun(evaluation);
+    const thresholdConfig = await this.getDriftThresholdConfig();
+    evaluation.thresholdVersion = thresholdConfig.version;
+    evaluation.appliedThresholds = thresholdConfig.thresholds;
+    await this.saveEvaluationRun(evaluation, thresholdConfig);
     return evaluation;
   }
 
-  private async saveEvaluationRun(evaluation: GoldSetEvaluation): Promise<void> {
+  private async saveEvaluationRun(evaluation: GoldSetEvaluation, thresholdConfig: ValuationDriftThresholdConfig): Promise<void> {
     if (!this.pool) return;
     try {
       await this.pool.query(
         `INSERT INTO valuation_evaluation_runs
           (evaluated_at, sample_count, evaluated_count, rejected_count, reject_rate,
-           mae, mape, median_absolute_error, interval_coverage)
-         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)`,
+           mae, mape, median_absolute_error, interval_coverage,
+           threshold_version, threshold_mae_vnd_per_m2, threshold_mape, threshold_consecutive_runs)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)`,
         [
           evaluation.evaluatedAt, evaluation.sampleCount, evaluation.evaluatedCount,
           evaluation.rejectedCount, evaluation.rejectRate, evaluation.mae, evaluation.mape,
           evaluation.medianAbsoluteError, evaluation.intervalCoverage,
+          thresholdConfig.version, thresholdConfig.thresholds.maeVndPerM2,
+          thresholdConfig.thresholds.mape, thresholdConfig.thresholds.consecutiveRuns,
         ],
       );
     } catch (error: any) {
@@ -481,13 +496,16 @@ export class PriceCalibrationService {
     mape: number | null;
     medianAbsoluteError: number | null;
     intervalCoverage: number | null;
+    thresholdVersion: number | null;
+    thresholds: ValuationDriftThresholds | null;
   }>> {
     if (!this.pool) return [];
     try {
       const safeLimit = Math.max(1, Math.min(100, Math.floor(limit)));
       const { rows } = await this.pool.query(
         `SELECT evaluated_at, sample_count, evaluated_count, rejected_count, reject_rate,
-                mae, mape, median_absolute_error, interval_coverage
+               mae, mape, median_absolute_error, interval_coverage,
+               threshold_version, threshold_mae_vnd_per_m2, threshold_mape, threshold_consecutive_runs
          FROM valuation_evaluation_runs
          ORDER BY evaluated_at DESC
          LIMIT $1`,
@@ -503,6 +521,12 @@ export class PriceCalibrationService {
         mape: row.mape == null ? null : Number(row.mape),
         medianAbsoluteError: row.median_absolute_error == null ? null : Number(row.median_absolute_error),
         intervalCoverage: row.interval_coverage == null ? null : Number(row.interval_coverage),
+        thresholdVersion: row.threshold_version == null ? null : Number(row.threshold_version),
+        thresholds: row.threshold_version == null ? null : {
+          maeVndPerM2: Number(row.threshold_mae_vnd_per_m2),
+          mape: Number(row.threshold_mape),
+          consecutiveRuns: Number(row.threshold_consecutive_runs),
+        },
       })).reverse();
     } catch (error: any) {
       logger.warn(`[Calibration] Could not read evaluation history: ${error?.message || error}`);
@@ -512,7 +536,80 @@ export class PriceCalibrationService {
 
   async getEvaluationDrift(limit = 30): Promise<ValuationDriftAssessment> {
     const history = await this.getEvaluationHistory(limit);
-    return assessValuationDrift(history);
+    const config = await this.getDriftThresholdConfig();
+    return assessValuationDrift(history, config.thresholds);
+  }
+
+  async getDriftThresholdConfig(): Promise<ValuationDriftThresholdConfig> {
+    if (!this.pool) return { version: 1, thresholds: { ...VALUATION_DRIFT_THRESHOLDS }, updatedAt: null, updatedBy: null };
+    try {
+      const { rows } = await this.pool.query(`SELECT version, mae_vnd_per_m2, mape, consecutive_runs, updated_at, updated_by
+        FROM valuation_drift_threshold_configs WHERE id = 1`);
+      if (!rows.length) return { version: 1, thresholds: { ...VALUATION_DRIFT_THRESHOLDS }, updatedAt: null, updatedBy: null };
+      const row = rows[0];
+      return {
+        version: Number(row.version),
+        thresholds: { maeVndPerM2: Number(row.mae_vnd_per_m2), mape: Number(row.mape), consecutiveRuns: Number(row.consecutive_runs) },
+        updatedAt: row.updated_at ? new Date(row.updated_at).toISOString() : null,
+        updatedBy: row.updated_by ?? null,
+      };
+    } catch (error: any) {
+      logger.warn(`[Calibration] Could not read drift thresholds: ${error?.message || error}`);
+      return { version: 1, thresholds: { ...VALUATION_DRIFT_THRESHOLDS }, updatedAt: null, updatedBy: null };
+    }
+  }
+
+  async getDriftThresholdHistory(limit = 50): Promise<Array<{
+    version: number; changedAt: string; authorId: string | null;
+    oldThresholds: ValuationDriftThresholds | null; newThresholds: ValuationDriftThresholds;
+  }>> {
+    if (!this.pool) return [];
+    const { rows } = await this.pool.query(`SELECT version, changed_at, author_id,
+      old_mae_vnd_per_m2, new_mae_vnd_per_m2, old_mape, new_mape,
+      old_consecutive_runs, new_consecutive_runs
+      FROM valuation_drift_threshold_changes ORDER BY version DESC LIMIT $1`, [Math.min(100, Math.max(1, Math.floor(limit)))]);
+    return rows.map((row: any) => ({
+      version: Number(row.version), changedAt: new Date(row.changed_at).toISOString(), authorId: row.author_id,
+      oldThresholds: row.old_mae_vnd_per_m2 == null ? null : {
+        maeVndPerM2: Number(row.old_mae_vnd_per_m2), mape: Number(row.old_mape), consecutiveRuns: Number(row.old_consecutive_runs),
+      },
+      newThresholds: {
+        maeVndPerM2: Number(row.new_mae_vnd_per_m2), mape: Number(row.new_mape), consecutiveRuns: Number(row.new_consecutive_runs),
+      },
+    }));
+  }
+
+  async updateDriftThresholds(thresholds: ValuationDriftThresholds, authorId: string): Promise<ValuationDriftThresholdConfig> {
+    if (!this.pool) throw new Error('Database unavailable');
+    const client = await this.pool.connect();
+    try {
+      await client.query('BEGIN');
+      const { rows } = await client.query(`SELECT version, mae_vnd_per_m2, mape, consecutive_runs, updated_at, updated_by
+        FROM valuation_drift_threshold_configs WHERE id = 1 FOR UPDATE`);
+      const row = rows[0];
+      const current: ValuationDriftThresholdConfig = row ? {
+        version: Number(row.version),
+        thresholds: { maeVndPerM2: Number(row.mae_vnd_per_m2), mape: Number(row.mape), consecutiveRuns: Number(row.consecutive_runs) },
+        updatedAt: row.updated_at ? new Date(row.updated_at).toISOString() : null,
+        updatedBy: row.updated_by ?? null,
+      } : { version: 1, thresholds: { ...VALUATION_DRIFT_THRESHOLDS }, updatedAt: null, updatedBy: null };
+      const version = current.version + 1;
+      await client.query(`UPDATE valuation_drift_threshold_configs SET version=$1, mae_vnd_per_m2=$2, mape=$3,
+        consecutive_runs=$4, updated_by=$5, updated_at=NOW() WHERE id=1`,
+        [version, thresholds.maeVndPerM2, thresholds.mape, thresholds.consecutiveRuns, authorId]);
+      await client.query(`INSERT INTO valuation_drift_threshold_changes
+        (version, author_id, old_mae_vnd_per_m2, new_mae_vnd_per_m2, old_mape, new_mape, old_consecutive_runs, new_consecutive_runs)
+        VALUES ($1,$2,$3,$4,$5,$6,$7,$8)`,
+        [version, authorId, current.thresholds.maeVndPerM2, thresholds.maeVndPerM2, current.thresholds.mape,
+          thresholds.mape, current.thresholds.consecutiveRuns, thresholds.consecutiveRuns]);
+      await client.query('COMMIT');
+      return { version, thresholds, updatedAt: new Date().toISOString(), updatedBy: authorId };
+    } catch (error) {
+      await client.query('ROLLBACK');
+      throw error;
+    } finally {
+      client.release();
+    }
   }
 
   // ── Admin: price history for a location ───────────────────────────────────

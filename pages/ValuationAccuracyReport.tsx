@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useState } from 'react';
-import { RefreshCw, ShieldCheck, AlertTriangle, BarChart3 } from 'lucide-react';
+import { RefreshCw, ShieldCheck, AlertTriangle, BarChart3, Save } from 'lucide-react';
 import { SeoHead } from '../components/SeoHead';
 import { db } from '../services/dbApi';
 import { api } from '../services/api/apiClient';
@@ -17,12 +17,12 @@ type Metrics = {
 };
 type Group = Metrics & { locationKey: string; propertyType: string };
 type ResponseData = {
-  report: Metrics & { evaluatedAt: string; groups: Group[] };
-  history: Array<Metrics & { evaluatedAt: string }>;
+  report: Metrics & { evaluatedAt: string; groups: Group[]; thresholdVersion?: number; appliedThresholds?: Thresholds };
+  history: Array<Metrics & { evaluatedAt: string; thresholdVersion: number | null; thresholds: Thresholds | null }>;
   drift: {
     status: 'CLEAR' | 'WARNING' | 'BLOCKED';
     promotionBlocked: boolean;
-    thresholds: { maeVndPerM2: number; mape: number; consecutiveRuns: number };
+    thresholds: Thresholds;
     consecutiveRunsRequired: number;
     consecutiveMaeRuns: number;
     consecutiveMapeRuns: number;
@@ -30,7 +30,10 @@ type ResponseData = {
   };
   dataset: { name: string; sampleCount: number; unitLabel: string; sources: string[] };
   disclaimer: string;
+  thresholdConfig: { version: number; thresholds: Thresholds; updatedAt: string | null; updatedBy: string | null };
+  thresholdHistory: Array<{ version: number; changedAt: string; authorId: string | null; oldThresholds: Thresholds | null; newThresholds: Thresholds }>;
 };
+type Thresholds = { maeVndPerM2: number; mape: number; consecutiveRuns: number };
 
 const formatVnd = (value: number | null) =>
   value == null ? '—' : `${Math.round(value).toLocaleString('vi-VN')} VND/m²`;
@@ -122,6 +125,20 @@ function TrendChart({ history }: { history: ResponseData['history'] }) {
         </svg>
       </div>
       <p className="text-xs text-slate-500">Mỗi đường dùng thang tương đối riêng để không che khuất metric còn lại; MAPE được quy đổi sang phần trăm. Mỗi điểm là một lần chạy.</p>
+      <div className="mt-4 overflow-x-auto">
+        <table className="w-full min-w-[620px] text-left text-xs text-slate-600">
+          <thead className="border-b border-slate-100 text-slate-500"><tr>
+            <th className="py-2">Thời điểm</th><th>Phiên bản ngưỡng</th><th>MAE</th><th>MAPE</th><th>Số lần liên tiếp</th>
+          </tr></thead>
+          <tbody>{[...history].reverse().map(run => <tr key={`threshold-${run.evaluatedAt}`} className="border-b border-slate-50">
+            <td className="py-2">{dateTime(run.evaluatedAt)}</td>
+            <td>{run.thresholdVersion == null ? 'Không lưu phiên bản' : `v${run.thresholdVersion}`}</td>
+            <td>{run.thresholds ? formatVnd(run.thresholds.maeVndPerM2) : '—'}</td>
+            <td>{run.thresholds ? formatPercent(run.thresholds.mape) : '—'}</td>
+            <td>{run.thresholds?.consecutiveRuns ?? '—'}</td>
+          </tr>)}</tbody>
+        </table>
+      </div>
     </div>
   );
 }
@@ -132,6 +149,8 @@ const ValuationAccuracyReport: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [running, setRunning] = useState(false);
   const [error, setError] = useState('');
+  const [savingThresholds, setSavingThresholds] = useState(false);
+  const [thresholdDraft, setThresholdDraft] = useState<Thresholds | null>(null);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -139,6 +158,7 @@ const ValuationAccuracyReport: React.FC = () => {
     try {
       const response = await api.get<ResponseData>('/api/valuation/admin/evaluation-report');
       setData(response);
+      setThresholdDraft(response.thresholdConfig.thresholds);
     } catch (err: any) {
       setError(err?.message || 'Không thể tải báo cáo.');
     } finally {
@@ -155,6 +175,22 @@ const ValuationAccuracyReport: React.FC = () => {
     setRunning(true);
     await load();
     setRunning(false);
+  };
+
+  const saveThresholds = async () => {
+    if (!thresholdDraft) return;
+    setSavingThresholds(true);
+    setError('');
+    try {
+      const response = await api.put<{ config: ResponseData['thresholdConfig']; thresholdHistory: ResponseData['thresholdHistory'] }>(
+        '/api/valuation/admin/drift-thresholds', thresholdDraft,
+      );
+      setData(current => current ? { ...current, thresholdConfig: response.config, thresholdHistory: response.thresholdHistory } : current);
+    } catch (err: any) {
+      setError(err?.message || 'Không thể lưu ngưỡng drift.');
+    } finally {
+      setSavingThresholds(false);
+    }
   };
 
   const report = data?.report;
@@ -189,9 +225,59 @@ const ValuationAccuracyReport: React.FC = () => {
         </div>
 
         {error && <div className="rounded-xl bg-red-50 p-4 text-sm text-red-700">{error}</div>}
+        {isAdmin && thresholdDraft && data?.thresholdConfig && (
+          <section className="rounded-2xl border border-indigo-100 bg-white p-5 shadow-sm">
+            <div className="flex flex-wrap items-start justify-between gap-3">
+              <div>
+                <h2 className="font-semibold text-slate-900">Ngưỡng phát hiện drift</h2>
+                <p className="mt-1 text-xs text-slate-500">Phiên bản hiện tại: v{data.thresholdConfig.version}. Thay đổi chỉ áp dụng cho các lần đánh giá mới.</p>
+              </div>
+              <button onClick={saveThresholds} disabled={savingThresholds}
+                className="inline-flex items-center gap-2 rounded-xl bg-indigo-600 px-3 py-2 text-sm font-semibold text-white disabled:opacity-50">
+                <Save className="h-4 w-4" /> {savingThresholds ? 'Đang lưu…' : 'Lưu ngưỡng'}
+              </button>
+            </div>
+            <div className="mt-4 grid gap-4 sm:grid-cols-3">
+              <label className="text-sm font-medium text-slate-700">MAE (VND/m²)
+                <input type="number" min="1" max="1000000000" step="100000"
+                  value={thresholdDraft.maeVndPerM2}
+                  onChange={event => setThresholdDraft({ ...thresholdDraft, maeVndPerM2: Number(event.target.value) })}
+                  className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 font-normal" />
+              </label>
+              <label className="text-sm font-medium text-slate-700">MAPE (%)
+                <input type="number" min="0.01" max="200" step="0.1"
+                  value={thresholdDraft.mape * 100}
+                  onChange={event => setThresholdDraft({ ...thresholdDraft, mape: Number(event.target.value) / 100 })}
+                  className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 font-normal" />
+              </label>
+              <label className="text-sm font-medium text-slate-700">Последовательных запусков
+                <input type="number" min="1" max="100" step="1"
+                  value={thresholdDraft.consecutiveRuns}
+                  onChange={event => setThresholdDraft({ ...thresholdDraft, consecutiveRuns: Number(event.target.value) })}
+                  className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 font-normal" />
+              </label>
+            </div>
+            {data.thresholdHistory.length > 0 && (
+              <div className="mt-5 overflow-x-auto">
+                <h3 className="mb-2 text-sm font-semibold text-slate-800">История изменений</h3>
+                <table className="w-full min-w-[620px] text-left text-xs text-slate-600">
+                  <thead className="border-b border-slate-100 text-slate-500"><tr><th className="py-2">Версия</th><th>Время</th><th>Автор</th><th>Старые значения</th><th>Новые значения</th></tr></thead>
+                  <tbody>{data.thresholdHistory.map(change => <tr key={change.version} className="border-b border-slate-50">
+                    <td className="py-2 font-medium">v{change.version}</td><td>{dateTime(change.changedAt)}</td><td>{change.authorId || '—'}</td>
+                    <td>{change.oldThresholds ? `${formatVnd(change.oldThresholds.maeVndPerM2)} · ${formatPercent(change.oldThresholds.mape)} · ${change.oldThresholds.consecutiveRuns}` : '—'}</td>
+                    <td>{formatVnd(change.newThresholds.maeVndPerM2)} · {formatPercent(change.newThresholds.mape)} · {change.newThresholds.consecutiveRuns}</td>
+                  </tr>)}</tbody>
+                </table>
+              </div>
+            )}
+          </section>
+        )}
         {loading ? <div className="rounded-2xl bg-white p-8 text-slate-500">Đang chạy backtest…</div> : report && (
           <>
             {data?.drift && <DriftStatus drift={data.drift} />}
+            {report.thresholdVersion && report.appliedThresholds && (
+              <p className="text-xs text-slate-500">Backtest này đã áp dụng bộ ngưỡng phiên bản v{report.thresholdVersion}: MAE {formatVnd(report.appliedThresholds.maeVndPerM2)} · MAPE {formatPercent(report.appliedThresholds.mape)} · {report.appliedThresholds.consecutiveRuns} lần liên tiếp.</p>
+            )}
             <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
               <MetricCard label="MAE" value={formatVnd(report.mae)} detail="Sai số tuyệt đối trung bình" />
               <MetricCard label="MAPE" value={formatPercent(report.mape)} detail="Sai số phần trăm tuyệt đối trung bình" />

@@ -1144,10 +1144,14 @@ export function createValuationRoutes(
       const report = await priceCalibrationService.backtestGoldSet();
       const history = await priceCalibrationService.getEvaluationHistory();
       const drift = await priceCalibrationService.getEvaluationDrift();
+      const thresholdConfig = await priceCalibrationService.getDriftThresholdConfig();
+      const thresholdHistory = await priceCalibrationService.getDriftThresholdHistory();
       return res.json({
         report,
         history,
         drift,
+        thresholdConfig,
+        thresholdHistory,
         dataset: {
           name: 'Verified valuation gold set',
           sampleCount: valuationGoldSet.length,
@@ -1161,6 +1165,42 @@ export function createValuationRoutes(
     } catch (err: any) {
       logger.error('[Valuation evaluation-report] error', err);
       return res.status(500).json({ error: 'Không thể chạy báo cáo sai số định giá' });
+    }
+  });
+
+  router.get('/admin/drift-thresholds', authenticateToken, async (req: Request, res: Response) => {
+    const user = (req as any).user;
+    if (!['SUPER_ADMIN', 'ADMIN'].includes(user?.role)) return res.status(403).json({ error: 'Admin only' });
+    try {
+      return res.json({
+        config: await priceCalibrationService.getDriftThresholdConfig(),
+        history: await priceCalibrationService.getDriftThresholdHistory(),
+      });
+    } catch (err: any) {
+      logger.error('[Valuation drift-thresholds] read error', err);
+      return res.status(500).json({ error: 'Không thể đọc cấu hình drift' });
+    }
+  });
+
+  router.put('/admin/drift-thresholds', authenticateToken, async (req: Request, res: Response) => {
+    const user = (req as any).user;
+    if (!['SUPER_ADMIN', 'ADMIN'].includes(user?.role)) return res.status(403).json({ error: 'Admin only' });
+    const maeVndPerM2 = Number(req.body?.maeVndPerM2);
+    const mape = Number(req.body?.mape);
+    const consecutiveRuns = Number(req.body?.consecutiveRuns);
+    if (!Number.isFinite(maeVndPerM2) || maeVndPerM2 <= 0 || maeVndPerM2 > 1_000_000_000 ||
+        !Number.isFinite(mape) || mape <= 0 || mape > 2 ||
+        !Number.isInteger(consecutiveRuns) || consecutiveRuns < 1 || consecutiveRuns > 100) {
+      return res.status(400).json({ error: 'Пороги должны быть положительными: MAE ≤ 1 млрд VND/m², MAPE ≤ 200%, последовательных запусков 1–100' });
+    }
+    try {
+      const config = await priceCalibrationService.updateDriftThresholds(
+        { maeVndPerM2, mape, consecutiveRuns }, String(user.id),
+      );
+      return res.json({ config, history: await priceCalibrationService.getDriftThresholdHistory() });
+    } catch (err: any) {
+      logger.error('[Valuation drift-thresholds] update error', err);
+      return res.status(500).json({ error: 'Không удалось сохранить пороги drift' });
     }
   });
 

@@ -28,6 +28,8 @@ export interface GoldSetEvaluation extends EvaluationMetrics {
   evaluatedAt: string;
   groups: EvaluationGroup[];
   predictions: ValuationPrediction[];
+  thresholdVersion?: number;
+  appliedThresholds?: ValuationDriftThresholds;
 }
 
 export const VALUATION_DRIFT_THRESHOLDS = {
@@ -36,6 +38,12 @@ export const VALUATION_DRIFT_THRESHOLDS = {
   consecutiveRuns: 3,
 } as const;
 
+export type ValuationDriftThresholds = {
+  maeVndPerM2: number;
+  mape: number;
+  consecutiveRuns: number;
+};
+
 export type ValuationEvaluationHistoryPoint = Pick<EvaluationMetrics, 'mae' | 'mape'> & {
   evaluatedAt?: string;
 };
@@ -43,7 +51,7 @@ export type ValuationEvaluationHistoryPoint = Pick<EvaluationMetrics, 'mae' | 'm
 export type ValuationDriftAssessment = {
   status: 'CLEAR' | 'WARNING' | 'BLOCKED';
   promotionBlocked: boolean;
-  thresholds: typeof VALUATION_DRIFT_THRESHOLDS;
+  thresholds: ValuationDriftThresholds;
   consecutiveRunsRequired: number;
   consecutiveMaeRuns: number;
   consecutiveMapeRuns: number;
@@ -57,7 +65,7 @@ export type ValuationDriftAssessment = {
  */
 export function assessValuationDrift(
   history: readonly ValuationEvaluationHistoryPoint[],
-  thresholds = VALUATION_DRIFT_THRESHOLDS,
+  thresholds: ValuationDriftThresholds = VALUATION_DRIFT_THRESHOLDS,
 ): ValuationDriftAssessment {
   const consecutiveIncreasingRuns = (metric: 'mae' | 'mape'): number => {
     if (!history.length) return 0;
