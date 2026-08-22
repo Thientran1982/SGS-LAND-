@@ -260,7 +260,7 @@ export const CommandCenter: React.FC<CommandCenterProps> = memo(({
             {/* Background Blur Layer */}
             <div className="absolute inset-0 bg-[var(--bg-app)]/80 backdrop-blur-xl border-b border-[var(--glass-border)] shadow-sm z-0 rounded-none sm:rounded-t-[24px]"></div>
 
-            {/* LEFT: Mobile Menu + Global Search */}
+            {/* LEFT: Mobile Menu + Page Title */}
             <div className="flex items-center gap-2 sm:gap-4 relative z-10 flex-1 min-w-0 mr-2">
                 <button
                     onClick={onMenuClick}
@@ -278,54 +278,16 @@ export const CommandCenter: React.FC<CommandCenterProps> = memo(({
                         {title}
                     </span>
                 )}
-                {/* Global Search Trigger (Desktop) */}
-                <div className="hidden md:flex flex-1 max-w-lg relative z-10">
-                    <button 
-                        onClick={onSearch}
-                        aria-label={t('common.search')}
-                         className="w-full group relative flex items-center justify-between bg-[var(--glass-surface-hover)]/50 dark:bg-white/5 rounded-2xl px-4 py-2.5 text-sm text-[var(--text-secondary)] transition-all hover:bg-[var(--ui-surface-hover)] dark:hover:bg-[var(--ui-surface-hover)] hover:text-[var(--ui-text)] hover:shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--ui-focus)]/30 active:scale-[0.98]"
-                    >
-                        <div className="flex items-center gap-3">
-                            {ICONS.SEARCH}
-                            <span className="font-medium">{t('common.search')}</span>
-                        </div>
-                    </button>
-                </div>
             </div>
-            {/* RIGHT: Theme/language controls + notification bell */}
-            <div className="flex items-center gap-2 sm:gap-3 relative z-10 shrink-0">
-                {/* Mobile Search Icon */}
+            {/* RIGHT: Search, notification, theme, language */}
+            <div className="flex items-center gap-0.5 sm:gap-1 relative z-10 shrink-0">
                 <button
                     onClick={onSearch}
-                    className="md:hidden group flex items-center justify-center min-h-[44px] min-w-[44px] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sgs-primary focus-visible:rounded-xl"
+                    className="group flex items-center justify-center min-h-[44px] min-w-[44px] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sgs-primary focus-visible:rounded-xl"
                     aria-label={t('common.search')}
                 >
                     <span className="h-9 w-9 flex items-center justify-center rounded-xl text-[var(--text-tertiary)] group-hover:bg-[var(--glass-surface-hover)] group-hover:text-[var(--text-primary)] group-active:scale-95 transition-all">
                         {ICONS.SEARCH_MOBILE}
-                    </span>
-                </button>
-                <button
-                    onClick={onToggleTheme}
-                    className="group flex items-center justify-center min-h-[44px] min-w-[44px] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sgs-primary focus-visible:rounded-xl"
-                    title={t(themeMode === 'dark' ? 'nav.mode_light' : 'nav.mode_dark')}
-                    aria-label={t(themeMode === 'dark' ? 'nav.mode_light' : 'nav.mode_dark')}
-                >
-                    <span className="h-9 w-9 flex items-center justify-center rounded-xl text-[var(--text-tertiary)] group-hover:bg-[var(--glass-surface-hover)] group-hover:text-[var(--text-primary)] group-active:scale-95 transition-all">
-                        {themeMode === 'dark' ? (
-                            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 2v2m0 16v2M4.93 4.93l1.41 1.41m11.32 11.32 1.41 1.41M2 12h2m16 0h2M4.93 19.07l1.41-1.41m11.32-11.32 1.41-1.41" /></svg>
-                        ) : (
-                            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z" /></svg>
-                        )}
-                    </span>
-                </button>
-                <button
-                    onClick={onToggleLang}
-                    className="group flex items-center justify-center min-h-[44px] min-w-[44px] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sgs-primary focus-visible:rounded-xl"
-                    title={t('nav.lang_switch')}
-                    aria-label={t('nav.lang_switch')}
-                >
-                    <span className="h-9 min-w-9 px-1.5 flex items-center justify-center rounded-xl text-xs font-extrabold tracking-tight text-[var(--text-tertiary)] group-hover:bg-[var(--glass-surface-hover)] group-hover:text-[var(--text-primary)] group-active:scale-95 transition-all">
-                        {lang.toUpperCase()}
                     </span>
                 </button>
                 {/* Notification Bell */}
@@ -357,6 +319,30 @@ export const CommandCenter: React.FC<CommandCenterProps> = memo(({
                         />
                     )}
                 </div>
+                <button
+                    onClick={onToggleTheme}
+                    className="group flex items-center justify-center min-h-[44px] min-w-[44px] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sgs-primary focus-visible:rounded-xl"
+                    title={t(themeMode === 'dark' ? 'nav.mode_light' : 'nav.mode_dark')}
+                    aria-label={t(themeMode === 'dark' ? 'nav.mode_light' : 'nav.mode_dark')}
+                >
+                    <span className="h-9 w-9 flex items-center justify-center rounded-xl text-[var(--text-tertiary)] group-hover:bg-[var(--glass-surface-hover)] group-hover:text-[var(--text-primary)] group-active:scale-95 transition-all">
+                        {themeMode === 'dark' ? (
+                            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 2v2m0 16v2M4.93 4.93l1.41 1.41m11.32 11.32 1.41 1.41M2 12h2m16 0h2M4.93 19.07l1.41-1.41m11.32-11.32 1.41-1.41" /></svg>
+                        ) : (
+                            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z" /></svg>
+                        )}
+                    </span>
+                </button>
+                <button
+                    onClick={onToggleLang}
+                    className="group flex items-center justify-center min-h-[44px] min-w-[44px] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sgs-primary focus-visible:rounded-xl"
+                    title={t('nav.lang_switch')}
+                    aria-label={t('nav.lang_switch')}
+                >
+                    <span className="h-9 min-w-9 px-1.5 flex items-center justify-center rounded-xl text-xs font-extrabold tracking-tight text-[var(--text-tertiary)] group-hover:bg-[var(--glass-surface-hover)] group-hover:text-[var(--text-primary)] group-active:scale-95 transition-all">
+                        {lang.toUpperCase()}
+                    </span>
+                </button>
             </div>
         </div>
         </header>

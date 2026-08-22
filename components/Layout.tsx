@@ -185,15 +185,6 @@ const Sidebar = memo(({
                         </span>
                     </div>
                 </button>                
-                {isCollapsed && (
-                    <button
-                        onClick={() => onNavigate(ROUTES.DASHBOARD)}
-                        className="w-8 h-8 text-sgs-primary animate-scale-up absolute"
-                        aria-label={t('nav.go_to_dashboard') || "Đi đến Tổng quan"}
-                    >
-                        <Logo className="w-full h-full" />
-                    </button>
-                )}                
                 {!isMobile && (
                     <button
                         onClick={onToggleCollapse}
