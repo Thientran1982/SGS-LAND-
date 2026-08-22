@@ -4,7 +4,7 @@ import { useTheme } from '../services/theme';
 import { db } from '../services/dbApi';
 import { User, NavGroup } from '../types';
 import { ROUTES } from '../config/routes';
-import { CommandCenter } from './Navigation';
+import { CommandCenter, UserAvatar } from './Navigation';
 import { GlobalSearch } from './GlobalSearch';
 import { Logo } from './Logo';
 import { OnboardingWizard } from './OnboardingWizard';
@@ -113,6 +113,7 @@ interface SidebarContentProps {
     lang: string;
     menuGroups: NavGroup[];
     t: (k: string) => string;
+    user: User | null;
 }
 const Sidebar = memo(({ 
     activePage, 
@@ -126,7 +127,8 @@ const Sidebar = memo(({
     themeMode,
     lang,
     menuGroups,
-    t 
+    t,
+    user
 }: SidebarContentProps) => {
     const isCollapsed = !isMobile && collapsed;    
     // Persist open groups
@@ -261,32 +263,24 @@ const Sidebar = memo(({
                 })}
                 <div className="h-10 w-full shrink-0"></div>
             </nav>
-            {/* 3. Footer Controls */}
+            {/* 3. Profile and footer controls */}
             <div className="px-2 py-1.5 border-t border-[var(--glass-border)] space-y-1 shrink-0 bg-[var(--bg-app)] z-20 rounded-b-[24px]">
-                <div className={`grid ${isCollapsed ? 'grid-cols-1' : 'grid-cols-2'} gap-1`}>
+                {user && (
                     <button
-                        onClick={onToggleTheme}
-                        className="flex items-center justify-center min-h-[32px] p-1.5 rounded-lg text-[var(--text-secondary)] hover:bg-[var(--glass-surface-hover)] hover:text-sgs-primary transition-colors border border-transparent hover:border-[var(--glass-border)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sgs-primary group relative"
-                        title={t(themeMode === 'dark' ? 'nav.mode_light' : 'nav.mode_dark')}
-                        aria-label={t(themeMode === 'dark' ? 'nav.mode_light' : 'nav.mode_dark')}
+                        onClick={() => onNavigate(ROUTES.PROFILE)}
+                        className={`w-full flex items-center ${isCollapsed ? 'justify-center' : 'gap-2.5 px-2'} min-h-[44px] rounded-xl text-left hover:bg-[var(--glass-surface-hover)] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sgs-primary group`}
+                        title={t('menu.profile')}
+                        aria-label={t('menu.profile')}
                     >
-                        <div className="transition-transform group-hover:rotate-12">
-                            {NAV_ICONS[themeMode === 'dark' ? 'theme-light' : 'theme-dark']}
-                        </div>
-                        {!isCollapsed && <span className="sr-only">{t('nav.mode_switch')}</span>}
+                        <UserAvatar user={user} isActive={activePage === ROUTES.PROFILE} />
+                        {!isCollapsed && (
+                            <span className="min-w-0 leading-tight">
+                                <span className={`block truncate text-xs font-bold ${activePage === ROUTES.PROFILE ? 'text-[var(--sgs-primary)]' : 'text-[var(--text-primary)]'}`}>{user.name}</span>
+                                <span className="block truncate text-xs2 font-medium text-[var(--text-tertiary)]">{t(`role.${user.role?.toUpperCase()}`) || user.role}</span>
+                            </span>
+                        )}
                     </button>
-
-                    <button
-                        onClick={onToggleLang}
-                        className="flex items-center justify-center min-h-[32px] p-1.5 rounded-lg text-[var(--text-secondary)] hover:bg-[var(--glass-surface-hover)] hover:text-sgs-primary transition-colors border border-transparent hover:border-[var(--glass-border)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sgs-primary group"
-                        title={t('nav.lang_switch')}
-                        aria-label={t('nav.lang_switch')}
-                    >
-                        <span className="w-5 h-5 flex items-center justify-center text-xs2 font-extrabold tracking-tighter transition-transform group-hover:scale-110">
-                            {lang.toUpperCase()}
-                        </span>
-                    </button>
-                </div>
+                )}
                 <button
                     onClick={onLogoutClick}
                     className={`w-full flex items-center justify-center min-h-[32px] p-1.5 rounded-lg text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-900/20 transition-colors border border-transparent hover:border-rose-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-rose-400 cursor-pointer ${!isCollapsed ? 'gap-2' : ''}`}
@@ -446,7 +440,8 @@ export const Layout: React.FC<LayoutProps> = memo(({ children, activePage, onNav
         themeMode: theme,
         lang: language,
         menuGroups,
-        t
+        t,
+        user
     }), [activePage, handleNavigate, handleLogoutClick, toggleTheme, language, theme, menuGroups, t, setLanguage]);
     return (
         <div className="crm-vite-app fixed inset-0 h-[100dvh] supports-[height:100cqh]:h-[100cqh] w-full bg-[var(--bg-app)] p-0 sm:p-2 md:p-3 flex gap-0 sm:gap-2 md:gap-3 overflow-hidden font-sans text-[var(--text-primary)] transition-colors duration-300 relative selection:bg-[var(--sgs-primary)]/30">
@@ -513,6 +508,10 @@ export const Layout: React.FC<LayoutProps> = memo(({ children, activePage, onNav
                             onMarkAllRead={handleMarkAllRead}
                             onDeleteNotification={handleDeleteNotification}
                             onDeleteAllRead={handleDeleteAllRead}
+                            onToggleTheme={toggleTheme}
+                            onToggleLang={() => setLanguage(language === 'en' ? 'vn' : 'en')}
+                            themeMode={theme}
+                            lang={language}
                         />
                     )}
                 </div>                

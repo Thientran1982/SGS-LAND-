@@ -16,6 +16,10 @@ interface CommandCenterProps {
     onMarkAllRead?: () => void;
     onDeleteNotification?: (id: string) => void;
     onDeleteAllRead?: () => void;
+    onToggleTheme: () => void;
+    onToggleLang: () => void;
+    themeMode: 'light' | 'dark';
+    lang: string;
 }
 // -----------------------------------------------------------------------------
 // 1. ASSETS
@@ -59,7 +63,7 @@ const NOTIF_ICON: Record<string, React.ReactNode> = {
 // -----------------------------------------------------------------------------
 // 4. SUB-COMPONENTS
 // -----------------------------------------------------------------------------
-const UserAvatar = memo(({ user, isActive }: { user: User, isActive?: boolean }) => {
+export const UserAvatar = memo(({ user, isActive }: { user: User, isActive?: boolean }) => {
     const [imgError, setImgError] = useState(false);
     React.useEffect(() => {
         setImgError(false);
@@ -231,6 +235,10 @@ export const CommandCenter: React.FC<CommandCenterProps> = memo(({
     onMarkAllRead,
     onDeleteNotification,
     onDeleteAllRead,
+    onToggleTheme,
+    onToggleLang,
+    themeMode,
+    lang,
 }) => {
     const { t } = useTranslation();
     const [panelOpen, setPanelOpen] = useState(false);
@@ -284,7 +292,7 @@ export const CommandCenter: React.FC<CommandCenterProps> = memo(({
                     </button>
                 </div>
             </div>
-            {/* RIGHT: Notification Bell + Actions & Profile */}
+            {/* RIGHT: Theme/language controls + notification bell */}
             <div className="flex items-center gap-2 sm:gap-3 relative z-10 shrink-0">
                 {/* Mobile Search Icon */}
                 <button
@@ -294,6 +302,30 @@ export const CommandCenter: React.FC<CommandCenterProps> = memo(({
                 >
                     <span className="h-9 w-9 flex items-center justify-center rounded-xl text-[var(--text-tertiary)] group-hover:bg-[var(--glass-surface-hover)] group-hover:text-[var(--text-primary)] group-active:scale-95 transition-all">
                         {ICONS.SEARCH_MOBILE}
+                    </span>
+                </button>
+                <button
+                    onClick={onToggleTheme}
+                    className="group flex items-center justify-center min-h-[44px] min-w-[44px] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sgs-primary focus-visible:rounded-xl"
+                    title={t(themeMode === 'dark' ? 'nav.mode_light' : 'nav.mode_dark')}
+                    aria-label={t(themeMode === 'dark' ? 'nav.mode_light' : 'nav.mode_dark')}
+                >
+                    <span className="h-9 w-9 flex items-center justify-center rounded-xl text-[var(--text-tertiary)] group-hover:bg-[var(--glass-surface-hover)] group-hover:text-[var(--text-primary)] group-active:scale-95 transition-all">
+                        {themeMode === 'dark' ? (
+                            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 2v2m0 16v2M4.93 4.93l1.41 1.41m11.32 11.32 1.41 1.41M2 12h2m16 0h2M4.93 19.07l1.41-1.41m11.32-11.32 1.41-1.41" /></svg>
+                        ) : (
+                            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z" /></svg>
+                        )}
+                    </span>
+                </button>
+                <button
+                    onClick={onToggleLang}
+                    className="group flex items-center justify-center min-h-[44px] min-w-[44px] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sgs-primary focus-visible:rounded-xl"
+                    title={t('nav.lang_switch')}
+                    aria-label={t('nav.lang_switch')}
+                >
+                    <span className="h-9 min-w-9 px-1.5 flex items-center justify-center rounded-xl text-xs font-extrabold tracking-tight text-[var(--text-tertiary)] group-hover:bg-[var(--glass-surface-hover)] group-hover:text-[var(--text-primary)] group-active:scale-95 transition-all">
+                        {lang.toUpperCase()}
                     </span>
                 </button>
                 {/* Notification Bell */}
@@ -325,23 +357,6 @@ export const CommandCenter: React.FC<CommandCenterProps> = memo(({
                         />
                     )}
                 </div>
-                {/* Profile */}
-                <button
-                    onClick={() => onNavigate(ROUTES.PROFILE)}
-                    className="flex items-center gap-2 sm:gap-3 pl-1 group cursor-pointer min-h-[44px] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sgs-primary focus-visible:ring-offset-2 rounded-xl"
-                    title={t('menu.profile')}
-                    aria-label={t('menu.profile')}
-                >
-                    <div className="text-right hidden sm:block leading-tight">
-                        <div className={`text-xs font-bold transition-colors ${isProfileActive ? 'text-[var(--sgs-primary)] dark:text-[var(--sgs-primary)]' : 'text-[var(--text-primary)] group-hover:text-[var(--sgs-primary)]'}`}>
-                            {user.name}
-                        </div>
-                        <div className="text-xs2 text-[var(--text-tertiary)] font-medium">
-                            {t(`role.${user.role?.toUpperCase()}`) || user.role}
-                        </div>
-                    </div>                    
-                    <UserAvatar user={user} isActive={isProfileActive} />
-                </button>
             </div>
         </div>
         </header>
