@@ -1141,7 +1141,7 @@ export const Dashboard: React.FC = () => {
                             </div>
                             <div className="dashboard-side">
                                 <div className="dashboard-subhead mb-2">{t('dash.activity_title')}</div>
-                                <div className="max-h-[315px] overflow-y-auto no-scrollbar">
+                                 <div className="max-h-[240px] overflow-y-auto no-scrollbar">
                                     {(analytics.recentActivities || []).map((act: any, idx: number) => (
                                         <ActivityItem key={act.id != null ? `${act.id}-${idx}` : idx} activity={act} />
                                     ))}
@@ -1196,7 +1196,7 @@ export const Dashboard: React.FC = () => {
                             </section>
                             <section>
                                 <div className="mb-2 flex items-center justify-between gap-2"><div className="dashboard-subhead">{t('dash.leaderboard_title')}</div><SegmentToggle value={leaderboardMode} onChange={(value) => setLeaderboardMode(value as 'individual' | 'team')} options={[{ value: 'individual', label: ui.individual }, { value: 'team', label: ui.team }]} /></div>
-                                <div className="max-h-[305px] overflow-y-auto no-scrollbar">
+                                 <div className="max-h-[240px] overflow-y-auto no-scrollbar">
                                     {(leaderboardMode === 'team' ? (overview.teamLeaderboard || []) : (analytics.agentLeaderboard || [])).map((agent: any, idx: number) => (
                                         <div key={agent.id ?? agent.name ?? idx} className="dashboard-ranking">
                                             <div className="flex min-w-0 items-center gap-2.5">
