@@ -30,6 +30,17 @@ export interface AiVisibilityStatus {
   bots: { name: string; allowed: boolean; userAgent: string }[];
   sitemaps: { url: string; ok: boolean; status: number }[];
 }
+export type SeoAuditStatus = 'pass' | 'warn' | 'fail' | 'unavailable';
+export interface SeoAuditItem {
+  id: string;
+  label: string;
+  status: SeoAuditStatus;
+  severity?: 'critical' | 'high' | 'medium' | 'low' | 'info';
+  detail: string;
+  tip?: string;
+  source?: string;
+  checkedAt?: string;
+}
 const seoApi = {
   async getAll(): Promise<Record<string, SeoOverride>> {
     return api.get('/api/seo-overrides');
@@ -60,7 +71,7 @@ const seoApi = {
   async seedDefaultKeywords(): Promise<{ success: boolean; inserted: number; skipped: number; total: number }> {
     return api.post('/api/seo/target-keywords/seed-defaults', {});
   },
-  async auditUrl(path: string): Promise<{ target: string; fetchedAt: string; items: Array<{ id: string; label: string; status: 'pass' | 'warn' | 'fail'; detail: string; tip?: string }> }> {
+  async auditUrl(path: string): Promise<{ target: string; fetchedAt: string; items: SeoAuditItem[] }> {
     return api.post('/api/seo/audit-url', { path });
   },
   // ── GEO Monitor (Sprint #64 follow-up) ───────────────────────────────────

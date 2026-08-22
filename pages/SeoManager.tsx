@@ -5,7 +5,7 @@ import { UserRole } from '../types';
 import { useTranslation } from '../services/i18n';
 import { ROUTE_SEO, SEOConfig, getSEOOverrides, saveSEOOverride, clearSEOOverride, updatePageSEO } from '../utils/seo';
 import { copyToClipboard } from '../utils/clipboard';
-import seoApi, { SeoOverride, TargetKeyword, AiVisibilityStatus } from '../services/api/seoApi';
+import seoApi, { SeoOverride, TargetKeyword, AiVisibilityStatus, SeoAuditItem } from '../services/api/seoApi';
 import { Dropdown } from '../components/Dropdown';
 import {
     LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, Legend,
@@ -28,8 +28,11 @@ type TabId = 'SERP' | 'META' | 'HEALTH' | 'SCHEMA' | 'GEO';
 interface HealthResult {
     id: string;
     label: string;
-    status: 'pass' | 'warn' | 'fail';
+    status: 'pass' | 'warn' | 'fail' | 'unavailable';
     detail: string;
+    severity?: 'critical' | 'high' | 'medium' | 'low' | 'info';
+    source?: string;
+    checkedAt?: string;
 }
 // ── Helpers ────────────────────────────────────────────────────────────────────
 
@@ -563,16 +566,20 @@ const HealthChecklist: React.FC = () => {
     const run = useCallback(async () => {
         setLoading(true);
         const checks: HealthResult[] = [];
-        const check = (id: string, label: string, pass: boolean, warn?: boolean, detail?: string): HealthResult => ({
+        const checkedAt = new Date().toISOString();
+        const check = (id: string, label: string, pass: boolean, warn?: boolean, detail?: string, source = 'Rendered DOM'): HealthResult => ({
             id, label,
             status: pass ? 'pass' : warn ? 'warn' : 'fail',
             detail: detail ?? (pass ? 'OK' : 'Cần kiểm tra'),
+            severity: pass ? 'info' : warn ? 'medium' : 'high',
+            source,
+            checkedAt,
         });
         // 1. Canonical present
         const canonical = document.getElementById('canonical-url') as HTMLLinkElement | null;
-        const hasCanonical = !!canonical?.href && canonical.href !== window.location.origin + '/';
+        const hasCanonical = !!canonical?.href && /^https:\/\/sgsland\.vn(\/|$)/i.test(canonical.href);
         checks.push(check('canonical', 'Thẻ Canonical', hasCanonical, false,
-            hasCanonical ? canonical!.href : 'Thẻ canonical không có href'));
+            hasCanonical ? canonical!.href : 'Canonical thiếu hoặc không trỏ về sgsland.vn'));
         // 2. OG image is hosted HTTPS URL
         const ogImg = document.querySelector<HTMLMetaElement>('meta[property="og:image"]')?.content ?? '';
         const ogImgOk = ogImg.startsWith('https://') && !ogImg.startsWith('data:');
@@ -597,8 +604,12 @@ const HealthChecklist: React.FC = () => {
         // 5. Structured data count
         const jsonLdCount = document.querySelectorAll('script[type="application/ld+json"]').length;
         const jsonLdOk = jsonLdCount >= 5;
-        checks.push(check('jsonld', 'Dữ Liệu Có Cấu Trúc (JSON-LD)', jsonLdOk, jsonLdCount >= 3,
-            `${jsonLdCount} schema(s) (khuyến nghị ≥ 5)`));
+        let invalidJsonLd = 0;
+        document.querySelectorAll<HTMLScriptElement>('script[type="application/ld+json"]').forEach((script) => {
+            try { JSON.parse(script.textContent ?? '{}'); } catch { invalidJsonLd++; }
+        });
+        checks.push(check('jsonld', 'Dữ Liệu Có Cấu Trúc (JSON-LD)', jsonLdOk && invalidJsonLd === 0, jsonLdCount >= 3 && invalidJsonLd === 0,
+            `${jsonLdCount} schema(s), ${invalidJsonLd} block lỗi (khuyến nghị ≥ 5)`, 'Rendered DOM / JSON.parse'));
         // 6. Page title length
         const titleLen = document.title.length;
         const titleOk = titleLen >= 30 && titleLen <= 60;
@@ -646,14 +657,17 @@ const HealthChecklist: React.FC = () => {
 
     useEffect(() => { run(); }, [run]);
     const passCount = results.filter(r => r.status === 'pass').length;
-    const score = results.length ? Math.round((passCount / results.length) * 100) : 0;
+    const scoredResults = results.filter(r => r.status !== 'unavailable');
+    const score = scoredResults.length ? Math.round((passCount / scoredResults.length) * 100) : 0;
     const scoreColor = score >= 90 ? 'text-emerald-600' : score >= 70 ? 'text-amber-500' : 'text-rose-500';
-    const statusIcon = (s: 'pass' | 'warn' | 'fail') =>
+    const statusIcon = (s: HealthResult['status']) =>
         s === 'pass' ? <span className="text-sgs-verified">{ICONS.CHECK}</span>
+        : s === 'unavailable' ? <span className="text-slate-400">—</span>
         : s === 'warn' ? <span className="text-sgs-accent-text">{ICONS.WARN}</span>
         : <span className="text-rose-500">{ICONS.ERROR}</span>;
-    const statusBg = (s: 'pass' | 'warn' | 'fail') =>
+    const statusBg = (s: HealthResult['status']) =>
         s === 'pass' ? 'bg-emerald-50 dark:bg-emerald-900/10 border-emerald-100 dark:border-emerald-900/30'
+        : s === 'unavailable' ? 'bg-slate-50 dark:bg-slate-800/40 border-slate-200 dark:border-slate-700'
         : s === 'warn' ? 'bg-amber-50 dark:bg-amber-900/10 border-amber-100 dark:border-amber-900/30'
         : 'bg-rose-50 dark:bg-rose-900/10 border-rose-100 dark:border-rose-900/30';
     if (loading) return (
@@ -683,6 +697,9 @@ const HealthChecklist: React.FC = () => {
                         <div className="min-w-0">
                             <div className="text-xs font-bold text-[var(--text-primary)] leading-tight">{r.label}</div>
                             <div className="text-2xs text-[var(--text-secondary)] mt-0.5 truncate" title={r.detail}>{r.detail}</div>
+                            <div className="text-[10px] text-[var(--text-muted)] mt-1">
+                                {r.source ?? '—'} · {r.checkedAt ? new Date(r.checkedAt).toLocaleTimeString('vi-VN') : '—'} · {r.severity ?? 'info'}
+                            </div>
                         </div>
                     </div>
                 ))}
