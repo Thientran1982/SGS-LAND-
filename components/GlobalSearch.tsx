@@ -233,9 +233,6 @@ export const GlobalSearch: React.FC<GlobalSearchProps> = ({ isOpen, onClose, onN
                                  {t('common.clear_search')}
                             </button>
                         )}
-                        <kbd className="hidden sm:flex items-center text-xs2 text-[var(--text-muted)] bg-[var(--glass-surface-hover)] border border-[var(--glass-border)] px-1.5 py-0.5 rounded-md font-mono">
-                            ESC
-                        </kbd>
                     </div>
                 </div>
                 {/* RESULTS LIST */}
@@ -305,15 +302,13 @@ export const GlobalSearch: React.FC<GlobalSearchProps> = ({ isOpen, onClose, onN
                         </>
                     )}
                 </div>
-                {/* FOOTER */}
-                <div className="px-4 py-2 bg-[var(--glass-surface)] border-t border-[var(--glass-border)] flex justify-between items-center select-none">
-                     <div className="flex items-center gap-3 text-xs2 text-[var(--text-muted)]" aria-hidden="true" />
-                    {query && totalResults > 0 && (
+                {query && totalResults > 0 && (
+                    <div className="px-4 py-2 bg-[var(--bg-surface)] border-t border-[var(--glass-border)] flex justify-end items-center select-none">
                         <span className="text-xs2 font-mono text-[var(--text-tertiary)]">
                             {totalResults} {t('search.matches')}
                         </span>
-                    )}
-                </div>
+                    </div>
+                )}
             </div>
         </div>
     );

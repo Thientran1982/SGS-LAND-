@@ -237,7 +237,7 @@ const Sidebar = memo(({
                                                     : 'text-[var(--text-secondary)] hover:bg-[var(--glass-surface-hover)] hover:text-[var(--text-primary)] border-l-4 border-transparent'}
                                             `}
                                         >
-                                            <div className={`w-5 h-5 shrink-0 flex items-center justify-center transition-transform duration-300 ${isActive ? 'scale-110' : 'group-hover:scale-110'} ${isActive ? 'text-[var(--sgs-primary)] dark:text-[var(--sgs-primary)]' : 'text-[var(--text-tertiary)] group-hover:text-[var(--text-primary)]'}`}>
+                                            <div className={`w-5 h-5 shrink-0 flex items-center justify-center [&>svg]:block transition-transform duration-300 ${!isCollapsed && isActive ? 'scale-110' : !isCollapsed ? 'group-hover:scale-110' : ''} ${isActive ? 'text-[var(--sgs-primary)] dark:text-[var(--sgs-primary)]' : 'text-[var(--text-tertiary)] group-hover:text-[var(--text-primary)]'}`}>
                                                 {Icon}
                                             </div>                                            
                                             {!isCollapsed && (
