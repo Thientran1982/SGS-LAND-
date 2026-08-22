@@ -212,27 +212,23 @@ const PriorityAlertCenter = ({ analytics, language }: { analytics: any; language
         ? { title: 'Trung Tâm Cảnh Báo Ưu Tiên', empty: 'Không có cảnh báo ưu tiên', system: 'Hệ thống', followup: 'Khách chưa phản hồi', contract: 'Hợp đồng sắp hết hạn', ai: 'Cảnh báo AI' }
         : { title: 'Priority Alert Center', empty: 'No priority alerts', system: 'System', followup: 'Unresponsive leads', contract: 'Expiring contracts', ai: 'AI alert' };
     const alerts = Array.isArray(analytics?.dashboardAlerts) ? analytics.dashboardAlerts : [];
+    const resolvedAlerts = alerts.length ? alerts : [
+        analytics?.systemAlertCount > 0 ? { severity: 'high', label: copy.system, count: analytics.systemAlertCount } : null,
+        analytics?.unresponsiveLeadCount > 0 ? { severity: 'medium', label: copy.followup, count: analytics.unresponsiveLeadCount } : null,
+        analytics?.expiringContractCount > 0 ? { severity: 'medium', label: copy.contract, count: analytics.expiringContractCount } : null,
+        analytics?.aiAlertCount > 0 ? { severity: 'low', label: copy.ai, count: analytics.aiAlertCount } : null,
+    ].filter(Boolean);
+    const attentionText = resolvedAlerts.length
+        ? resolvedAlerts.map((alert: any) => `${alert.label}${alert.count != null ? ` · ${alert.count}` : ''}`).join('  ·  ')
+        : copy.empty;
     return (
-        <section className="dashboard-panel border-l-4 border-l-[var(--sgs-accent)] px-4 py-3 sm:px-5" aria-label={copy.title}>
-            <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
-                <div className="flex items-center gap-2 shrink-0">
-                    {ICONS.WARNING}
-                    <h2 className="dashboard-subhead">{copy.title}</h2>
-                </div>
-                <div className="flex min-w-0 flex-1 flex-wrap gap-2">
-                    {(alerts.length ? alerts : [
-                        analytics?.systemAlertCount > 0 ? { severity: 'high', label: copy.system, count: analytics.systemAlertCount } : null,
-                        analytics?.unresponsiveLeadCount > 0 ? { severity: 'medium', label: copy.followup, count: analytics.unresponsiveLeadCount } : null,
-                        analytics?.expiringContractCount > 0 ? { severity: 'medium', label: copy.contract, count: analytics.expiringContractCount } : null,
-                        analytics?.aiAlertCount > 0 ? { severity: 'low', label: copy.ai, count: analytics.aiAlertCount } : null,
-                    ].filter(Boolean)).map((alert: any, index: number) => (
-                        <span key={`${alert.label}-${index}`} className={`inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs font-semibold ${alert.severity === 'high' ? 'border-[var(--ui-danger)]/25 bg-[var(--ui-danger)]/5 text-[var(--ui-danger)]' : alert.severity === 'medium' ? 'border-[var(--sgs-accent)]/30 bg-[var(--sgs-accent)]/5 text-[var(--sgs-accent-text)]' : 'border-[var(--sgs-primary)]/20 bg-[var(--sgs-primary)]/5 text-[var(--sgs-primary)]'}`}>
-                            {alert.label} <strong>{alert.count ?? ''}</strong>
-                        </span>
-                    ))}
-                    {!alerts.length && !analytics?.systemAlertCount && !analytics?.unresponsiveLeadCount && !analytics?.expiringContractCount && !analytics?.aiAlertCount && <span className="text-xs text-[var(--text-tertiary)]">{copy.empty}</span>}
-                </div>
+        <section className="dashboard-attention" aria-label={copy.title}>
+            <div className="dashboard-attention-icon">{ICONS.WARNING}</div>
+            <div className="min-w-0">
+                <strong className="block text-xs text-[var(--text-primary)]">{resolvedAlerts.length ? (language === 'vn' ? 'Có việc cần bạn chú ý' : 'Items need your attention') : copy.empty}</strong>
+                <p className="mt-1 truncate text-xs text-[var(--text-tertiary)]">{attentionText}</p>
             </div>
+            <a href="/approvals" className="ml-auto shrink-0 text-xs font-semibold text-[var(--sgs-primary)]">{language === 'vn' ? 'Xem hàng đợi' : 'Review queue'} <span aria-hidden="true">›</span></a>
         </section>
     );
 };
@@ -1031,14 +1027,14 @@ export const Dashboard: React.FC = () => {
                 <div>
                     <div className="mb-2 dashboard-subhead">{ui.quick}</div>
                     <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
-                        <a href="/leads" className="dashboard-control px-3 py-2.5 text-center text-xs font-semibold text-[var(--sgs-primary)]">{ui.addLead}</a>
-                        <a href="/contracts" className="dashboard-control px-3 py-2.5 text-center text-xs font-semibold text-[var(--sgs-primary)]">{ui.contract}</a>
-                        <a href="/inventory" className="dashboard-control px-3 py-2.5 text-center text-xs font-semibold text-[var(--sgs-primary)]">{ui.listing}</a>
+                        <a href="/leads" className="dashboard-control dashboard-quick-action px-3 py-2.5 text-xs font-semibold text-[var(--sgs-primary)]"><span className="dashboard-quick-icon">{ICONS.USER}</span><span className="flex-1">{ui.addLead}</span><span aria-hidden="true">›</span></a>
+                        <a href="/contracts" className="dashboard-control dashboard-quick-action px-3 py-2.5 text-xs font-semibold text-[var(--sgs-primary)]"><span className="dashboard-quick-icon">{ICONS.CHECK}</span><span className="flex-1">{ui.contract}</span><span aria-hidden="true">›</span></a>
+                        <a href="/inventory" className="dashboard-control dashboard-quick-action px-3 py-2.5 text-xs font-semibold text-[var(--sgs-primary)]"><span className="dashboard-quick-icon">{ICONS.CLOUD}</span><span className="flex-1">{ui.listing}</span><span aria-hidden="true">›</span></a>
                     </div>
                 </div>
                 <WorkQueueStrip analytics={overview} language={language} />
 
-                {(analytics.totalLeads ?? 0) < 5 && !localStorage.getItem('sgs_guide_dismissed') && (
+                {!localStorage.getItem('sgs_guide_dismissed') && (
                     <div className="dashboard-guide flex flex-col gap-3 px-4 py-3 sm:flex-row sm:items-center sm:justify-between" data-guide-banner>
                         <div>
                             <p className="text-sm font-semibold text-[var(--text-primary)]">
