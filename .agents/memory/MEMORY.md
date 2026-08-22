@@ -30,3 +30,4 @@
 - [Dashboard greeting localization](dashboard-greeting-localization.md) — use the real user and locale; keep returning-visit context tenant-scoped and browser-local
 - [Dashboard data integrity](dashboard-data-integrity.md) — analytics outages must stay visible as errors, never synthetic all-zero business metrics
 - [Dashboard layout structure](dashboard-layout-structure.md) — keep the overview hierarchy as independent semantic rows matching the Design Tool
+- [Standalone artifact dependencies](standalone-artifact-dependencies.md) — new artifact previews may need a local dependency install before Vite resolves packages
