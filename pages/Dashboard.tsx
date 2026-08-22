@@ -431,7 +431,10 @@ const KpiTargetSettings = ({ user, language, notify }: { user: any; language: st
     const labels: Record<string, string> = { revenue: copy.revenue, pipeline: copy.pipeline, salesVelocity: copy.velocity };
     return (
         <>
-            <button type="button" onClick={() => setOpen(true)} className="dashboard-control px-3 py-2.5 text-xs font-semibold text-[var(--sgs-primary)]">{copy.button}</button>
+            <button type="button" onClick={() => setOpen(true)} className="dashboard-control dashboard-kpi-settings flex items-center gap-1.5 px-3 py-2.5 text-xs font-semibold text-[var(--sgs-primary)]">
+                <svg className="h-3.5 w-3.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M10.5 3.75h3l.55 2.2a7.5 7.5 0 0 1 1.7.98l2.16-.7 1.5 2.6-1.62 1.56c.16.6.24 1.2.24 1.86s-.08 1.27-.24 1.86l1.62 1.56-1.5 2.6-2.16-.7a7.5 7.5 0 0 1-1.7.98l-.55 2.2h-3l-.55-2.2a7.5 7.5 0 0 1-1.7-.98l-2.16.7-1.5-2.6 1.62-1.56a7.5 7.5 0 0 1-.24-1.86c0-.66.08-1.27.24-1.86L4.59 8.83l1.5-2.6 2.16.7a7.5 7.5 0 0 1 1.7-.98l.55-2.2Z" /><circle cx="12" cy="12" r="2.5" strokeWidth={1.8} /></svg>
+                <span>{copy.button}</span>
+            </button>
             {open && (
                 <div className="fixed inset-0 z-[80] flex items-center justify-center bg-black/30 p-4 backdrop-blur-sm" role="dialog" aria-modal="true" aria-label={copy.title}>
                     <div className="w-full max-w-2xl rounded-2xl border border-[var(--glass-border)] bg-[var(--bg-surface)] p-5 shadow-2xl">
@@ -1001,7 +1004,7 @@ export const Dashboard: React.FC = () => {
                             )}
                             {isExporting ? t('dash.exporting') : t('common.export')}
                         </button>
-                        <div className="min-w-0 flex-1 sm:w-36">
+                        <div className="dashboard-date-filter-wrap min-w-0 flex-1 sm:w-36">
                             <Dropdown
                                 value={timeRange}
                                 onChange={(val) => setTimeRange(val as string)}

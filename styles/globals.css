@@ -778,6 +778,10 @@ html.dark body {
   background: var(--sgs-primary-deep);
   color: var(--bg-surface);
 }
+.sgs-dashboard .dashboard-kpi-settings svg,
+.sgs-dashboard .dashboard-export svg {
+  flex: 0 0 auto;
+}
 .sgs-dashboard .dashboard-guide {
   border: 1px solid var(--dash-rule);
   border-left: 3px solid var(--sgs-verified);
@@ -866,6 +870,21 @@ html.dark body {
    .sgs-dashboard .dashboard-kpi {
      padding-left: .75rem;
      padding-right: .75rem;
+   }
+   .sgs-dashboard .dashboard-command-panel .dashboard-kpi:first-child,
+   .sgs-dashboard .dashboard-kpi:nth-child(3) {
+     padding-left: .75rem;
+   }
+   .sgs-dashboard .dashboard-kpi:nth-child(2),
+   .sgs-dashboard .dashboard-kpi:nth-child(4) {
+     padding-right: .75rem;
+   }
+   .sgs-dashboard .dashboard-date-filter-wrap {
+     flex: 0 0 5.75rem;
+   }
+   .sgs-dashboard .dashboard-date-filter > button {
+     padding-left: .55rem;
+     padding-right: .55rem;
    }
   .sgs-dashboard .dashboard-secondary { grid-template-columns: 1fr; }
   .sgs-dashboard .dashboard-secondary > section + section {
