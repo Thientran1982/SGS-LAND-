@@ -433,7 +433,7 @@ const KpiTargetSettings = ({ user, language, notify }: { user: any; language: st
         <>
             <button type="button" onClick={() => setOpen(true)} className="dashboard-control dashboard-kpi-settings flex items-center gap-1.5 px-3 py-2.5 text-xs font-semibold text-[var(--sgs-primary)]">
                 <svg className="h-3.5 w-3.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M10.5 3.75h3l.55 2.2a7.5 7.5 0 0 1 1.7.98l2.16-.7 1.5 2.6-1.62 1.56c.16.6.24 1.2.24 1.86s-.08 1.27-.24 1.86l1.62 1.56-1.5 2.6-2.16-.7a7.5 7.5 0 0 1-1.7.98l-.55 2.2h-3l-.55-2.2a7.5 7.5 0 0 1-1.7-.98l-2.16.7-1.5-2.6 1.62-1.56a7.5 7.5 0 0 1-.24-1.86c0-.66.08-1.27.24-1.86L4.59 8.83l1.5-2.6 2.16.7a7.5 7.5 0 0 1 1.7-.98l.55-2.2Z" /><circle cx="12" cy="12" r="2.5" strokeWidth={1.8} /></svg>
-                <span>{copy.button}</span>
+                <span className="dashboard-mobile-label">{copy.button}</span>
             </button>
             {open && (
                 <div className="fixed inset-0 z-[80] flex items-center justify-center bg-black/30 p-4 backdrop-blur-sm" role="dialog" aria-modal="true" aria-label={copy.title}>
@@ -1002,7 +1002,7 @@ export const Dashboard: React.FC = () => {
                             ) : (
                                 <svg className="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" /></svg>
                             )}
-                            {isExporting ? t('dash.exporting') : t('common.export')}
+                            <span className="dashboard-mobile-label">{isExporting ? t('dash.exporting') : t('common.export')}</span>
                         </button>
                         <div className="dashboard-date-filter-wrap min-w-0 flex-1 sm:w-36">
                             <Dropdown
@@ -1053,10 +1053,19 @@ export const Dashboard: React.FC = () => {
                 <div ref={dashboardRef} data-dashboard-export-root className="space-y-6">
                     <section className="dashboard-panel dashboard-command-panel overflow-hidden" aria-label={language === 'vn' ? 'Điều hành nhanh và KPI' : 'Quick actions and KPIs'}>
                          <div className="p-4 sm:p-5">
-                            <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
-                                <a href="/leads" className="dashboard-control quick-action px-3 py-2.5 text-center text-xs font-semibold text-[var(--sgs-primary)]">{ui.addLead}</a>
-                                <a href="/contracts" className="dashboard-control quick-action px-3 py-2.5 text-center text-xs font-semibold text-[var(--sgs-primary)]">{ui.contract}</a>
-                                <a href="/inventory" className="dashboard-control quick-action px-3 py-2.5 text-center text-xs font-semibold text-[var(--sgs-primary)]">{ui.listing}</a>
+                            <div className="grid grid-cols-3 gap-2">
+                                <a href="/leads" className="dashboard-control quick-action flex items-center justify-center gap-1.5 px-2 py-2.5 text-center text-xs font-semibold text-[var(--sgs-primary)]" aria-label={ui.addLead} title={ui.addLead}>
+                                    <svg className="h-4 w-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M15 20.25v-1.5a4.5 4.5 0 0 0-4.5-4.5h-3A4.5 4.5 0 0 0 3 18.75v1.5M9 10.25a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7Zm8-5v7m3.5-3.5h-7" /></svg>
+                                    <span className="dashboard-mobile-label">{ui.addLead}</span>
+                                </a>
+                                <a href="/contracts" className="dashboard-control quick-action flex items-center justify-center gap-1.5 px-2 py-2.5 text-center text-xs font-semibold text-[var(--sgs-primary)]" aria-label={ui.contract} title={ui.contract}>
+                                    <svg className="h-4 w-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M6 3.75h9l3 3v13.5H6V3.75Zm8.5.5v3h3M8.5 11h7m-7 3.5h7m-7 3.5h4" /></svg>
+                                    <span className="dashboard-mobile-label">{ui.contract}</span>
+                                </a>
+                                <a href="/inventory" className="dashboard-control quick-action flex items-center justify-center gap-1.5 px-2 py-2.5 text-center text-xs font-semibold text-[var(--sgs-primary)]" aria-label={ui.listing} title={ui.listing}>
+                                    <svg className="h-4 w-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="m4 10 8-6 8 6v9.5H4V10Zm4 9.5v-5h8v5M9 10h.01M12 10h.01M15 10h.01" /></svg>
+                                    <span className="dashboard-mobile-label">{ui.listing}</span>
+                                </a>
                             </div>
                         </div>
                         <div className="p-4 sm:p-5">

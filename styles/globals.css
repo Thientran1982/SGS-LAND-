@@ -886,6 +886,16 @@ html.dark body {
      padding-left: .55rem;
      padding-right: .55rem;
    }
+  .sgs-dashboard .dashboard-mobile-label {
+    display: none;
+  }
+  .sgs-dashboard .dashboard-kpi-settings,
+  .sgs-dashboard .dashboard-export {
+    justify-content: center;
+    gap: 0;
+    padding-left: .7rem;
+    padding-right: .7rem;
+  }
   .sgs-dashboard .dashboard-secondary { grid-template-columns: 1fr; }
   .sgs-dashboard .dashboard-secondary > section + section {
     border-left: 0;
