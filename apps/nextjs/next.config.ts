@@ -107,6 +107,10 @@ const nextConfig: NextConfig = {
       // Truoc day Next tra 404 HTML cho /health tren port public 5000.
       { source: "/health", destination: `${BACKEND_URL}/health` },
       { source: "/api/:path*",        destination: `${BACKEND_URL}/api/:path*` },
+      // Socket.IO's first polling request can be emitted without the trailing
+      // slash. Match it explicitly so Next does not redirect it to HTML/308
+      // before the request reaches the Express Socket.IO server.
+      { source: "/socket.io",         destination: `${BACKEND_URL}/socket.io/` },
       { source: "/socket.io/:path*",  destination: `${BACKEND_URL}/socket.io/:path*` },
       { source: "/yjs/:path*",        destination: `${BACKEND_URL}/yjs/:path*` },
       { source: "/uploads/:path*",    destination: `${BACKEND_URL}/uploads/:path*` },
