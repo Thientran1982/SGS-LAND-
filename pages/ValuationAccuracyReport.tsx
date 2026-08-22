@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useState } from 'react';
-import { RefreshCw, ShieldCheck, AlertTriangle, BarChart3, Save } from 'lucide-react';
+import { RefreshCw, ShieldCheck, AlertTriangle, BarChart3, Save, RotateCcw, CheckCircle2 } from 'lucide-react';
 import { SeoHead } from '../components/SeoHead';
 import { db } from '../services/dbApi';
 import { api } from '../services/api/apiClient';
@@ -34,12 +34,136 @@ type ResponseData = {
   thresholdHistory: Array<{ version: number; changedAt: string; authorId: string | null; oldThresholds: Thresholds | null; newThresholds: Thresholds }>;
 };
 type Thresholds = { maeVndPerM2: number; mape: number; consecutiveRuns: number };
+type OperationalEvent = {
+  id: string;
+  tenantId: string;
+  eventType: string;
+  payload: {
+    thresholdVersion?: number;
+    notification?: { title?: string; body?: string; type?: string };
+  };
+  resolvedAt: string | null;
+  resolvedBy: string | null;
+  createdAt: string;
+};
 
 const formatVnd = (value: number | null) =>
   value == null ? '—' : `${Math.round(value).toLocaleString('vi-VN')} VND/m²`;
 const formatPercent = (value: number | null) =>
   value == null ? '—' : `${(value * 100).toFixed(1)}%`;
 const dateTime = (value: string) => new Date(value).toLocaleString('vi-VN');
+
+function DriftNotificationEvents() {
+  const [events, setEvents] = useState<OperationalEvent[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
+  const [retryingId, setRetryingId] = useState<string | null>(null);
+  const [feedback, setFeedback] = useState<{ id: string; message: string; success: boolean } | null>(null);
+
+  const loadEvents = useCallback(async () => {
+    setLoading(true);
+    setError('');
+    try {
+      const response = await api.get<{ events: OperationalEvent[] }>(
+        '/api/valuation/admin/operational-events',
+        { eventType: 'valuation_drift_threshold_notification_failed' },
+      );
+      setEvents(response.events || []);
+    } catch (err: any) {
+      setError(err?.message || 'Không thể tải sự kiện gửi thông báo drift.');
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    loadEvents();
+  }, [loadEvents]);
+
+  const retry = async (event: OperationalEvent) => {
+    setRetryingId(event.id);
+    setFeedback(null);
+    try {
+      const response = await api.post<{ event: OperationalEvent; retried: boolean }>(
+        `/api/valuation/admin/operational-events/${encodeURIComponent(event.id)}/retry`,
+      );
+      setEvents(current => current.map(item => item.id === event.id ? response.event : item));
+      setFeedback({ id: event.id, message: 'Đã gửi lại thông báo cho các quản trị viên.', success: true });
+    } catch (err: any) {
+      setFeedback({ id: event.id, message: err?.message || 'Gửi lại thông báo thất bại; sự kiện vẫn đang mở.', success: false });
+    } finally {
+      setRetryingId(null);
+    }
+  };
+
+  return (
+    <section className="overflow-hidden rounded-2xl bg-white shadow-sm">
+      <div className="flex flex-wrap items-start justify-between gap-3 border-b border-slate-100 px-5 py-4">
+        <div>
+          <h2 className="font-semibold text-slate-900">Thông báo drift bị bỏ lỡ</h2>
+          <p className="mt-1 text-xs text-slate-500">Theo dõi các lần gửi cảnh báo ngưỡng thất bại và xử lý lại từ workspace.</p>
+        </div>
+        <button
+          onClick={loadEvents}
+          disabled={loading}
+          className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 px-3 py-2 text-xs font-semibold text-slate-700 disabled:opacity-50"
+        >
+          <RefreshCw className={`h-3.5 w-3.5 ${loading ? 'animate-spin' : ''}`} /> Làm mới
+        </button>
+      </div>
+      {error && <div className="mx-5 my-4 rounded-lg bg-red-50 p-3 text-sm text-red-700">{error}</div>}
+      {loading ? (
+        <div className="p-5 text-sm text-slate-500">Đang tải sự kiện…</div>
+      ) : events.length === 0 ? (
+        <div className="p-5 text-sm text-slate-500">Chưa có sự kiện gửi thông báo drift nào.</div>
+      ) : (
+        <div className="divide-y divide-slate-100">
+          {events.map(event => {
+            const open = !event.resolvedAt;
+            const notification = event.payload?.notification;
+            return (
+              <div key={event.id} className="p-5">
+                <div className="flex flex-wrap items-start justify-between gap-3">
+                  <div className="min-w-0">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <span className={`inline-flex items-center gap-1 rounded-full px-2 py-1 text-xs font-semibold ${open ? 'bg-amber-100 text-amber-800' : 'bg-emerald-100 text-emerald-800'}`}>
+                        {open ? <AlertTriangle className="h-3.5 w-3.5" /> : <CheckCircle2 className="h-3.5 w-3.5" />}
+                        {open ? 'Đang mở' : 'Đã xử lý'}
+                      </span>
+                      <span className="text-xs text-slate-500">{dateTime(event.createdAt)}</span>
+                    </div>
+                    <h3 className="mt-2 font-medium text-slate-900">{notification?.title || 'Gửi thông báo drift thất bại'}</h3>
+                    {notification?.body && <p className="mt-1 text-sm text-slate-600">{notification.body}</p>}
+                  </div>
+                  {open && (
+                    <button
+                      onClick={() => retry(event)}
+                      disabled={retryingId === event.id}
+                      className="inline-flex shrink-0 items-center gap-1.5 rounded-lg bg-indigo-600 px-3 py-2 text-xs font-semibold text-white disabled:opacity-50"
+                    >
+                      <RotateCcw className={`h-3.5 w-3.5 ${retryingId === event.id ? 'animate-spin' : ''}`} />
+                      {retryingId === event.id ? 'Đang gửi lại…' : 'Gửi lại'}
+                    </button>
+                  )}
+                </div>
+                <dl className="mt-4 grid gap-2 text-xs text-slate-600 sm:grid-cols-3">
+                  <div><dt className="text-slate-400">Tenant</dt><dd className="font-mono">{event.tenantId}</dd></div>
+                  <div><dt className="text-slate-400">Phiên bản ngưỡng</dt><dd className="font-semibold">{event.payload?.thresholdVersion == null ? '—' : `v${event.payload.thresholdVersion}`}</dd></div>
+                  <div><dt className="text-slate-400">{open ? 'Mã sự kiện' : 'Xử lý lúc'}</dt><dd className="font-mono">{open ? event.id : dateTime(event.resolvedAt!)}</dd></div>
+                </dl>
+                {feedback?.id === event.id && (
+                  <p className={`mt-3 text-xs font-medium ${feedback.success ? 'text-emerald-700' : 'text-red-700'}`} role="status">
+                    {feedback.message}
+                  </p>
+                )}
+              </div>
+            );
+          })}
+        </div>
+      )}
+    </section>
+  );
+}
 
 function MetricCard({ label, value, detail }: { label: string; value: string; detail?: string }) {
   return (
@@ -296,6 +420,7 @@ const ValuationAccuracyReport: React.FC = () => {
               </div>
               <TrendChart history={data.history} />
             </section>
+            <DriftNotificationEvents />
 
             <section className="overflow-hidden rounded-2xl bg-white shadow-sm">
               <div className="flex flex-wrap items-center justify-between gap-2 border-b border-slate-100 px-5 py-4">
