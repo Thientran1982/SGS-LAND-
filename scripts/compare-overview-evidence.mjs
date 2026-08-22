@@ -162,6 +162,41 @@ function evaluateImage(item) {
   };
 }
 
+function displayValue(value) {
+  return value == null ? 'not measured' : String(value);
+}
+
+function thresholdDetails(evaluation) {
+  if (!evaluation?.thresholds) return 'no configured visual limit';
+  const limits = [];
+  if (evaluation.thresholds.maxChangedPixels != null) {
+    limits.push(`changed pixels ≤ ${evaluation.thresholds.maxChangedPixels}`);
+  }
+  if (evaluation.thresholds.maxChangedPixelRatio != null) {
+    limits.push(`ratio ≤ ${evaluation.thresholds.maxChangedPixelRatio}`);
+  }
+  if (evaluation.thresholds.maxMeanAbsoluteDelta != null) {
+    limits.push(`mean delta ≤ ${evaluation.thresholds.maxMeanAbsoluteDelta}`);
+  }
+  return limits.length ? limits.join('; ') : 'no configured visual limit';
+}
+
+function regressionSummary(item) {
+  const evaluation = item.evaluation;
+  const image = item.image;
+  if (!evaluation || !image) {
+    return `- **${item.artifact}** — viewport: \`${item.viewport}\`; ${item.status === 'changed' ? 'content digest differs' : 'artifact only present on one side'}.`;
+  }
+  return [
+    `- **${item.artifact}** — viewport: \`${item.viewport}\`;`,
+    `changed-pixel ratio: **${displayValue(evaluation.changedPixelRatio)}**`,
+    `(limit: ${evaluation.thresholds?.maxChangedPixelRatio ?? 'not configured'});`,
+    `mean absolute delta: **${displayValue(image.meanAbsoluteDelta)}**`,
+    `(limit: ${evaluation.thresholds?.maxMeanAbsoluteDelta ?? 'not configured'});`,
+    `configured limits: ${thresholdDetails(evaluation)}.`,
+  ].join(' ');
+}
+
 const [localFiles, deployedFiles] = await Promise.all([filesUnder(localRoot), filesUnder(deployedRoot)]);
 const names = [...new Set([...localFiles.keys(), ...deployedFiles.keys()])].sort();
 const differences = [];
@@ -227,9 +262,36 @@ for (const item of differences) {
 if (!differences.length) lines.push('| all | all | identical | — | No differences detected |');
 await fs.writeFile(path.join(outputRoot, 'overview-evidence-comparison.md'), `${lines.join('\n')}\n`);
 const failures = differences.filter((item) => item.evaluation?.exceeded && !item.evaluation.exception);
+const reviewedExceptions = differences.filter((item) => item.evaluation?.exception);
+const summaryLines = [
+  '# Overview visual regression release check',
+  '',
+  failures.length
+    ? `**Blocked:** ${failures.length} unapproved visual regression${failures.length === 1 ? '' : 's'} exceeded the configured limit${failures.length === 1 ? '' : 's'}.`
+    : '**Passed:** no unapproved visual regression exceeded its configured limit.',
+  '',
+];
+if (failures.length) {
+  summaryLines.push('## Blocked regressions', '', ...failures.map(regressionSummary), '');
+}
+if (reviewedExceptions.length) {
+  summaryLines.push(
+    '## Reviewed exceptions',
+    '',
+    'These differences are covered by a reviewed exception and did not block the release:',
+    '',
+    ...reviewedExceptions.map((item) => `${regressionSummary(item)} Reviewed exception: ${item.evaluation.exception.reason}`),
+    '',
+  );
+}
+summaryLines.push(
+  'Complete evidence: `overview-evidence-comparison.json` and `overview-evidence-comparison.md`.',
+  '',
+);
+await fs.writeFile(path.join(outputRoot, 'overview-release-summary.md'), `${summaryLines.join('\n')}\n`);
 if (failures.length) {
   for (const item of failures) {
-    console.error(`::error title=Overview visual regression::${item.artifact} (${item.viewport}) exceeded its visual threshold. See overview-evidence-comparison.md for measured values and limits.`);
+    console.error(`::error title=Overview visual regression::${item.artifact} (${item.viewport}) exceeded its visual threshold: ratio ${displayValue(item.evaluation.changedPixelRatio)} (limit ${item.evaluation.thresholds?.maxChangedPixelRatio ?? 'not configured'}), mean delta ${displayValue(item.image?.meanAbsoluteDelta)} (limit ${item.evaluation.thresholds?.maxMeanAbsoluteDelta ?? 'not configured'}). See overview-release-summary.md for details.`);
   }
   process.exitCode = 1;
 }

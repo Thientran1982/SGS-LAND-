@@ -74,12 +74,18 @@ A screenshot is blocked when any configured limit is exceeded; a dimension chang
 always exceeds the threshold. The checked-in policy currently allows up to 1%
 changed pixels and a mean delta of 2 for desktop, tablet, and mobile.
 
-The command emits a GitHub Actions `::error` for every unapproved breach and exits
-with status 1, so `overview-compare` blocks the workflow while still uploading its
-report. When a difference is intentional, add an exact artifact (or `*`) and
-optional viewport match to `.github/overview-visual-exceptions.json`, with a review
-reason. The Markdown report labels it `expected exception` and includes the reason,
-measured values, and limits. Exceptions are separate from the seeded fixture:
+The command emits a GitHub Actions `::error` for every unapproved breach, including
+the artifact, viewport, measured changed-pixel ratio, mean delta, and their configured
+limits. It exits with status 1, so `overview-compare` blocks the workflow while still
+uploading its report. The workflow also publishes `overview-release-summary.md` directly
+in the GitHub Actions job summary. This summary lists every blocked artifact with its
+viewport, measured ratio and mean delta, and configured limits, while keeping reviewed
+exceptions in a separate section.
+
+When a difference is intentional, add an exact artifact (or `*`) and optional viewport
+match to `.github/overview-visual-exceptions.json`, with a review reason. The Markdown
+evidence report labels it `expected exception` and includes the reason, measured values,
+and limits. Exceptions are separate from the seeded fixture:
 reviewers can approve a known rendering or deployment difference without weakening
 the fixture’s behavioral assertions. Remove exceptions once the underlying
 difference is resolved.

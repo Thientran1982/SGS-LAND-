@@ -145,5 +145,12 @@ describe("overview visual comparison policy", () => {
     expect(report.summary.thresholdExceeded).toBe(1);
     expect(await readFile(path.join(fixture.output, "overview-evidence-comparison.md"), "utf8"))
       .toContain("expected exception: Reviewed mobile rendering change");
+    const summary = await readFile(path.join(fixture.output, "overview-release-summary.md"), "utf8");
+    expect(summary).toContain("## Blocked regressions");
+    expect(summary).toContain("viewport: `tablet`");
+    expect(summary).toContain("changed-pixel ratio: **0.02** (limit: 0.01)");
+    expect(summary).toContain("mean absolute delta: **0.02** (limit: not configured)");
+    expect(summary).toContain("## Reviewed exceptions");
+    expect(summary).toContain("Reviewed exception: Reviewed mobile rendering change");
   });
 });

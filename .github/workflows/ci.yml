@@ -194,6 +194,10 @@ jobs:
             --thresholds .github/overview-visual-thresholds.json \
             --exceptions .github/overview-visual-exceptions.json
 
+      - name: Summarize Overview visual regression release check
+        if: always()
+        run: cat overview-comparison/overview-release-summary.md >> "$GITHUB_STEP_SUMMARY"
+
       - name: Upload Overview comparison
         if: always()
         uses: actions/upload-artifact@v4
