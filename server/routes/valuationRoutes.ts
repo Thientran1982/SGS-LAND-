@@ -858,6 +858,7 @@ export function createValuationRoutes(
 
       // ── 1. Look up market_price_history (regional_table rows preferred) ──
       const histResult = await pool.query<{
+        location_key: string;
         location_display: string;
         price_per_m2: string;
         price_min: string | null;
@@ -869,6 +870,7 @@ export function createValuationRoutes(
         similarity: number;
       }>(
         `SELECT
+           location_key,
            location_display,
            price_per_m2,
            price_min,
@@ -877,25 +879,35 @@ export function createValuationRoutes(
            trend_text,
            source,
            recorded_at,
-           -- simple contains-score: 1 if exact, 0.5 if partial
+           -- Only exact keys or meaningful full-location containment are valid.
+           -- Never match on a first/last token: "Quan 1, TP.HCM" must not
+           -- accidentally match "Long An" because both contain "an".
            CASE
              WHEN location_key = $1 THEN 1.0
-             WHEN location_key LIKE '%' || SPLIT_PART($1, ' ', 1) || '%' THEN 0.6
-             WHEN $1 LIKE '%' || SPLIT_PART(location_key, ' ', 1) || '%' THEN 0.5
+             WHEN $1 LIKE '%' || location_key || '%' THEN 0.9
+             WHEN location_key LIKE '%' || $1 || '%' THEN 0.8
              ELSE 0.0
            END AS similarity
          FROM market_price_history
          WHERE
            location_key = $1
            OR (
-             length($1) >= 6
-             AND (
-               location_key LIKE '%' || SPLIT_PART($1, ' ', array_length(string_to_array($1,' '),1)) || '%'
-               OR $1 LIKE '%' || SPLIT_PART(location_key, ' ', array_length(string_to_array(location_key,' '),1)) || '%'
-             )
+              length(location_key) >= 8
+              AND $1 LIKE '%' || location_key || '%'
+            )
+            OR (
+              length($1) >= 8
+              AND location_key LIKE '%' || $1 || '%'
            )
-         ORDER BY similarity DESC, recorded_at DESC
-         LIMIT 5`,
+          ORDER BY
+            similarity DESC,
+            CASE source
+              WHEN 'transaction' THEN 3
+              WHEN 'regional_table' THEN 2
+              ELSE 1
+            END DESC,
+            recorded_at DESC
+          LIMIT 20`,
         [normalKey]
       );
 
@@ -924,8 +936,15 @@ export function createValuationRoutes(
       if (safeRows.length > 0) {
         const row = safeRows[0];
         pricePerM2     = parseInt(row.price_per_m2, 10);
-        priceMin       = row.price_min ? parseInt(row.price_min, 10) : Math.round(pricePerM2 * 0.85);
-        priceMax       = row.price_max ? parseInt(row.price_max, 10) : Math.round(pricePerM2 * 1.15);
+        const candidateMin = row.price_min ? parseInt(row.price_min, 10) : NaN;
+        const candidateMax = row.price_max ? parseInt(row.price_max, 10) : NaN;
+        // Stored AI ranges can be malformed or wider than the selected
+        // location. Keep the preview bounded and symmetric when that happens.
+        const validRange = Number.isFinite(candidateMin) && Number.isFinite(candidateMax)
+          && candidateMin > 0 && candidateMin <= pricePerM2
+          && candidateMax >= pricePerM2 && candidateMax <= pricePerM2 * 2.5;
+        priceMin       = validRange ? candidateMin : Math.round(pricePerM2 * 0.85);
+        priceMax       = validRange ? candidateMax : Math.round(pricePerM2 * 1.15);
         // Always prefer the user's input as the display label so the UI mirrors
         // the listing address exactly (no surprise district/province swap).
         locationDisplay = location;

@@ -25,3 +25,4 @@
 - [Analytics SQL naming](analytics-sql-naming.md) — avoid PostgreSQL reserved words as CTE names because runtime-only analytics queries can fail despite mocked tests
 - [Replit preview port mapping](replit-preview-port-mapping.md) — expose one canonical webview port; redundant public proxy mappings can create misleading replit.dev:<port> URLs
 - [Live-chat regression fixture](livechat-regression-fixture.md) — use the stable public `mcc` project for found-project boundary checks, not optional tenant-specific env codes
+- [Valuation location matching](valuation-location-matching.md) — historical rows must match full location keys; token matching causes cross-province price contamination
