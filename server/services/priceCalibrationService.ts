@@ -8,7 +8,7 @@
  * Flow:
  *  1. MarketDataService writes every AI/comps fetch → market_price_history
  *  2. When a listing status → SOLD, the transaction price is recorded
- *  3. calibrateAll() (called nightly + on-demand) re-runs weighted average
+ *  3. calibrateAll() (called nightly + on-demand) re-runs a robust weighted median
  *  4. ValuationEngine reads avm_calibration FIRST before static regional table
  *
  * Weight scheme (configurable per location):
@@ -191,7 +191,7 @@ export class PriceCalibrationService {
     try {
       const { rows } = await this.pool.query<{
         source: string;
-        avg_price: string;
+        median_price: string;
         cnt: string;
         location_display: string;
         property_type: string;
@@ -199,61 +199,88 @@ export class PriceCalibrationService {
       }>(
         `SELECT
            source,
-           ROUND(AVG(price_per_m2)) AS avg_price,
+           ROUND((PERCENTILE_CONT(0.5) WITHIN GROUP (ORDER BY price_per_m2))) AS median_price,
            COUNT(*)::text            AS cnt,
            MAX(location_display)     AS location_display,
-           MAX(property_type)        AS property_type,
+           property_type,
            MAX(trend_text)           AS avg_trend_text
          FROM market_price_history
          WHERE location_key = $1
            AND recorded_at  > NOW() - INTERVAL '${CALIBRATION_WINDOW_DAYS} days'
            AND price_per_m2 > 1000000
-         GROUP BY source`,
+          GROUP BY source, property_type`,
         [locationKey],
       );
       if (rows.length === 0) return false;
 
-      const bySource: Record<string, { avg: number; cnt: number }> = {};
+      // A location key can contain observations from several property segments.
+      // Never blend those prices. Prefer a segment with verified transactions;
+      // otherwise use the segment with the most observations.
+      const segmentScores = new Map<string, { txn: number; total: number }>();
+      for (const row of rows) {
+        const segment = row.property_type || 'townhouse_center';
+        const score = segmentScores.get(segment) || { txn: 0, total: 0 };
+        score.total += parseInt(row.cnt, 10) || 0;
+        if (row.source === 'transaction') score.txn += parseInt(row.cnt, 10) || 0;
+        segmentScores.set(segment, score);
+      }
+      const propertyType = [...segmentScores.entries()]
+        .sort((a, b) => b[1].txn - a[1].txn || b[1].total - a[1].total)[0]?.[0]
+        || 'townhouse_center';
+      const segmentRows = rows.filter(row => (row.property_type || 'townhouse_center') === propertyType);
+
+      const bySource: Record<string, { median: number; cnt: number }> = {};
       let locationDisplay = locationKey;
-      let propertyType = 'townhouse_center';
       let trendText: string | null = null;
 
-      for (const r of rows) {
-        bySource[r.source] = { avg: parseInt(r.avg_price, 10), cnt: parseInt(r.cnt, 10) };
+      for (const r of segmentRows) {
+        bySource[r.source] = { median: parseInt(r.median_price, 10), cnt: parseInt(r.cnt, 10) };
         locationDisplay = r.location_display || locationDisplay;
-        propertyType = r.property_type || propertyType;
         trendText = trendText || r.avg_trend_text || null;
       }
 
-      const aiPrice    = bySource['ai_search']?.avg ?? bySource['blended']?.avg ?? 0;
-      const compsPrice = bySource['internal_comps']?.avg ?? 0;
-      const txnPrice   = bySource['transaction']?.avg ?? 0;
+      const aiPrice    = bySource['ai_search']?.median ?? bySource['blended']?.median ?? 0;
+      const compsPrice = bySource['internal_comps']?.median ?? 0;
+      const txnPrice   = bySource['transaction']?.median ?? 0;
 
       let calibrated: number;
       let aiW = 0, compsW = 0, txnW = 0;
 
       if (txnPrice > 0) {
-        // Full tripartite blend
-        txnW   = TRANSACTION_WEIGHT;
-        aiW    = aiPrice    > 0 ? AI_WEIGHT_WITH_TXN                                : TRANSACTION_WEIGHT + AI_WEIGHT_WITH_TXN;
-        compsW = compsPrice > 0 ? COMPS_WEIGHT                                      : 0;
-        const useAi    = aiPrice    > 0 ? aiPrice    : txnPrice;
-        const useComps = compsPrice > 0 ? compsPrice : txnPrice;
-        calibrated = Math.round(txnPrice * txnW + useAi * aiW + useComps * compsW);
+        // Renormalize only over sources that really exist. Substituting the
+        // transaction value for a missing source silently over-weighted it.
+        txnW = TRANSACTION_WEIGHT;
+        aiW = aiPrice > 0 ? AI_WEIGHT_WITH_TXN : 0;
+        compsW = compsPrice > 0 ? COMPS_WEIGHT : 0;
       } else if (aiPrice > 0 && compsPrice > 0) {
         aiW    = AI_WEIGHT_NO_TXN;
         compsW = COMPS_WEIGHT_NO_TXN;
-        calibrated = Math.round(aiPrice * aiW + compsPrice * compsW);
-      } else {
-        calibrated = aiPrice || compsPrice;
+      } else if (aiPrice > 0) {
+        aiW = 1;
+      } else if (compsPrice > 0) {
+        compsW = 1;
       }
+      const weightTotal = aiW + compsW + txnW;
+      if (weightTotal <= 0) return false;
+      aiW /= weightTotal;
+      compsW /= weightTotal;
+      txnW /= weightTotal;
+      calibrated = Math.round(
+        (aiPrice * aiW) + (compsPrice * compsW) + (txnPrice * txnW)
+      );
 
       if (!calibrated || calibrated < 1_000_000) return false;
 
       const totalSamples = Object.values(bySource).reduce((s, v) => s + v.cnt, 0);
-      const avgConfidence = Math.min(95, 50 + Math.min(totalSamples, 20) * 2 + (txnPrice > 0 ? 10 : 0));
+      const sourceCount = Object.keys(bySource).length;
+      // Confidence reflects evidence breadth, not just the fact that a row
+      // exists. Keep sparse, non-transactional calibration below "high".
+      const avgConfidence = Math.min(
+        txnPrice > 0 && totalSamples >= 5 ? 90 : 82,
+        42 + Math.min(totalSamples, 20) * 2 + (txnPrice > 0 ? 10 : 0) + Math.max(0, sourceCount - 1) * 4,
+      );
       const sampleGuard = validateCalibrationSamples(Object.values(bySource).map(value => ({
-        price: value.avg, count: value.cnt,
+        price: value.median, count: value.cnt,
       })));
       if (!sampleGuard.safe) {
         logger.warn(`[Calibration] rejected poisoned sample set for "${locationKey}": ${sampleGuard.reason}`);

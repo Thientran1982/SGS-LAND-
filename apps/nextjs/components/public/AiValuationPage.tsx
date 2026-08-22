@@ -1019,6 +1019,8 @@ export const AiValuation: React.FC = () => {
             coefficients: aiResult.coefficients,
             formula: aiResult.formula,
             confidence,
+            valuationStatus: aiResult.valuationStatus || 'ESTIMATE',
+            sources: aiResult.sources,
             marketTrend: aiResult.marketTrend || 'Đang cập nhật',
             chartData,
             isRealtime: aiResult.isRealtime ?? true,
@@ -2143,6 +2145,12 @@ export const AiValuation: React.FC = () => {
                     <div className="animate-enter pb-24">
                         {/* ── MAIN PRICE CARD ── */}
                         <div className="bg-slate-800 rounded-[32px] border border-slate-700 p-8 shadow-2xl relative overflow-hidden mb-6">
+                            {valuation.valuationStatus && valuation.valuationStatus !== 'ESTIMATE' && (
+                                <div className="mb-5 rounded-2xl border border-amber-400/40 bg-amber-400/10 px-4 py-3 text-sm text-amber-100">
+                                    <strong>{valuation.valuationStatus === 'INSUFFICIENT_DATA' ? 'Chưa đủ dữ liệu để kết luận' : 'Cần thẩm định thêm'}</strong>
+                                    <span className="ml-2 text-amber-200/80">Kết quả dưới đây chỉ là tham khảo, không phải giá giao dịch đã xác minh.</span>
+                                </div>
+                            )}
                             <div className="flex flex-col md:flex-row justify-between items-end mb-8 gap-6">
                                 <div>
                                     <h3 className="text-slate-400 uppercase text-xs font-bold tracking-widest mb-2 flex items-center gap-2">
@@ -2161,6 +2169,9 @@ export const AiValuation: React.FC = () => {
                                         {' '}—{' '}
                                         <span className={!currentUser ? 'blur-sm select-none pointer-events-none' : ''}>{formatVND(valuation.range[1])}</span>
                                     </div>
+                                    {valuation.sources?.provenanceNote && (
+                                        <div className="mt-2 max-w-xl text-xs text-slate-500">{valuation.sources.provenanceNote}</div>
+                                    )}
                                     {!currentUser && (
                                         <div className="mt-4 inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-sgs-verified/10 border border-sgs-verified/30 text-sgs-verified text-xs font-semibold">
                                             <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" /></svg>

@@ -9,7 +9,7 @@
  */
 
 import { Router, Request, Response } from 'express';
-import { applyAVM, getRegionalBasePrice, estimateFallbackRent, PROPERTY_TYPE_PRICE_MULT } from '../valuationEngine';
+import { applyAVM, getRegionalBasePrice, PROPERTY_TYPE_PRICE_MULT } from '../valuationEngine';
 import type { LegalStatus, PropertyType } from '../valuationEngine';
 import { marketDataService } from '../services/marketDataService';
 import { priceCalibrationService } from '../services/priceCalibrationService';
@@ -583,9 +583,9 @@ export function createValuationRoutes(
       if (monthlyRentInput !== undefined && !isNaN(Number(monthlyRentInput)) && Number(monthlyRentInput) > 0) {
         monthlyRent = Number(monthlyRentInput); // engine uses triệu VNĐ unit
       }
-      if (!monthlyRent) {
-        monthlyRent = estimateFallbackRent(marketBasePrice * areaNum, resolvedPropertyType, areaNum);
-      }
+      // Income capitalization must not use a synthetic rent estimate. A rent
+      // value is allowed only when the user supplied it explicitly (or a
+      // future source provides provenance and timestamp for it).
 
       // NOTE on blending: when we hit the cache, `marketBasePrice` already IS the cache price.
       // Passing cachedMarketPrice = marketBasePrice would double-count it (same value treated as
@@ -632,6 +632,11 @@ export function createValuationRoutes(
       const finalRangeMin   = applyRlhf(avmResult.rangeMin);
       const finalRangeMax   = applyRlhf(avmResult.rangeMax);
       const finalCompsPrice = avmResult.compsPrice ? applyRlhf(avmResult.compsPrice) : undefined;
+      const valuationStatus = internalCompsCount === 0 && marketDataSource !== 'AI_LIVE'
+        ? 'REVIEW_REQUIRED'
+        : avmResult.confidence < 55
+          ? 'INSUFFICIENT_DATA'
+          : 'ESTIMATE';
 
       // ── Record usage for cost report (fire-and-forget) ────────────────────
       try {
@@ -661,6 +666,7 @@ export function createValuationRoutes(
         rangeMin: finalRangeMin,
         rangeMax: finalRangeMax,
         confidence: avmResult.confidence,
+         valuationStatus,
         marketTrend: avmResult.marketTrend,
         factors: avmResult.factors,
         coefficients: avmResult.coefficients,
@@ -675,6 +681,9 @@ export function createValuationRoutes(
           cacheExpiresAt: cacheEntry?.expiresAt,
           rlhfFactor: rlhfFactor !== 1.0 ? rlhfFactor : undefined,
           rlhfSamples: rlhfSamples > 0 ? rlhfSamples : undefined,
+           provenanceNote: marketDataSource === 'AI_LIVE'
+             ? 'AI market estimate; not a verified transaction price'
+             : 'Reference data; not a verified transaction price',
         },
         comparables: {
           count: internalCompsCount,

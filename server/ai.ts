@@ -2785,7 +2785,6 @@ YÊU CẦU VIẾT PHẢN HỒI:
                             const marketBasePrice = (resolvedPType === 'townhouse_center' || resolvedPType === 'townhouse_suburb')
                                 ? marketEntry.pricePerM2
                                 : Math.round(marketEntry.pricePerM2 * cacheTypeMult);
-                            const fallbackRent = estimateFallbackRent(marketBasePrice * area, resolvedPType, area);
                             const avmResult = applyAVM({
                                 marketBasePrice,
                                 area,
@@ -2794,7 +2793,10 @@ YÊU CẦU VIẾT PHẢN HỒI:
                                 confidence: marketEntry.confidence,
                                 marketTrend: marketEntry.marketTrend,
                                 propertyType: resolvedPType,
-                                monthlyRent: fallbackRent,
+                                 // Do not manufacture rent for the income
+                                 // approach. It may be used only when the user
+                                 // or a sourced market record supplied it.
+                                 monthlyRent: undefined,
                                 direction,
                                 floorLevel,
                                 frontageWidth,
@@ -4101,7 +4103,7 @@ GIÁ THUÊ (từ DỮ LIỆU GIÁ THUÊ):
             const recencyPenalty = dataRecency === 'older' ? 5 : dataRecency === 'last_year' ? 2 : 0;
 
             // ── Sanity check against property-type-aware regional baseline ────────
-            const { getRegionalBasePrice, estimateFallbackRent: getFallbackRent } = await import('./valuationEngine');
+            const { getRegionalBasePrice } = await import('./valuationEngine');
             const resolvedPropertyType = (propertyType || aiData.propertyTypeEstimate || 'townhouse_center') as import('./valuationEngine').PropertyType;
             const regional = getRegionalBasePrice(address, resolvedPropertyType);
             let regionRef  = regional.price;
@@ -4195,15 +4197,15 @@ GIÁ THUÊ (từ DỮ LIỆU GIÁ THUÊ):
             // ── Rent sanity check ─────────────────────────────────────────────────
             // AI-derived rent in triệu/tháng for the property (full area).
             // Sanity: 0.001–15 triệu/m²/month covers all types (agri → penthouse).
-            // If outside this range → AI likely returned wrong unit (USD/m²/month without converting,
-            // or per-m² value instead of total, or VNĐ instead of triệu) → use type-specific fallback.
+                // If outside this range → AI likely returned the wrong unit.
+                // Do not replace it with synthetic rent: that would silently
+                // manufacture an income signal.
             let aiRentMedian: number = aiData.rentMedian || aiData.rentMin || 0;
             if (aiRentMedian > 0) {
                 const rentPerM2 = aiRentMedian / Math.max(1, area);
                 if (rentPerM2 < 0.001 || rentPerM2 > 15) {
-                    const estimatedTotal = marketBasePrice * area;
-                    aiRentMedian = getFallbackRent(estimatedTotal, resolvedPropertyType, area);
-                    logger.warn(`[Valuation AI] Rent sanity fail (${rentPerM2.toFixed(4)} tr/m²/th) → fallback ${aiRentMedian.toFixed(1)} tr/th`);
+                    aiRentMedian = 0;
+                    logger.warn(`[Valuation AI] Rent sanity fail (${rentPerM2.toFixed(4)} tr/m²/th) → income approach disabled`);
                 }
             }
             const monthlyRent: number = aiRentMedian;
@@ -4392,12 +4394,11 @@ Cần xác nhận: Giá giao dịch thực tế 1m² của ${extractRefDescripti
         } catch (error) {
             logger.error("[Valuation AI] Error:", error);
 
-            const regional = getRegionalBasePrice(address);
             const resolvedPropertyType = (propertyType || 'townhouse_center') as import('./valuationEngine').PropertyType;
-            const { estimateFallbackRent } = await import('./valuationEngine');
-            const fallbackRent = (advanced?.monthlyRent && advanced.monthlyRent > 0)
+            const regional = getRegionalBasePrice(address, resolvedPropertyType);
+            const monthlyRent = (advanced?.monthlyRent && advanced.monthlyRent > 0)
                 ? advanced.monthlyRent
-                : estimateFallbackRent(Math.round(regional.price * area), resolvedPropertyType, area);
+                : undefined;
             const avmResult = applyAVM({
                 marketBasePrice: regional.price,
                 area,
@@ -4406,7 +4407,7 @@ Cần xác nhận: Giá giao dịch thực tế 1m² của ${extractRefDescripti
                 confidence: regional.confidence,
                 marketTrend: `Ước tính theo khu vực ${address.replace(/\s+/g, ' ').trim().slice(0, 80)} — không có dữ liệu realtime`,
                 propertyType: resolvedPropertyType,
-                monthlyRent: fallbackRent,
+                monthlyRent,
                 // Advanced AVM coefficients from user input
                 floorLevel:    advanced?.floorLevel,
                 direction:     advanced?.direction as any,
