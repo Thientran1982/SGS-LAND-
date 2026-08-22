@@ -1,6 +1,7 @@
 import { useEffect, useState, type ComponentType } from 'react';
 
 import { modules as discoveredModules } from './.generated/mockup-components';
+import { Dashboard } from './components/mockups/sgs-land-dashboard/Dashboard';
 
 type ModuleMap = Record<string, () => Promise<Record<string, unknown>>>;
 
@@ -140,7 +141,10 @@ function App() {
     );
   }
 
-  return <Gallery />;
+  // This artifact represents the logged-in overview, so opening the root
+  // preview should show the selected dashboard rather than the scaffold
+  // gallery. The /preview/* route remains available for canvas iframes.
+  return <Dashboard />;
 }
 
 export default App;
