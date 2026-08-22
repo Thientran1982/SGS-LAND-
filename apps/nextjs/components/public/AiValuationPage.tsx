@@ -1009,22 +1009,22 @@ export const AiValuation: React.FC = () => {
         <>
         <div className="min-h-screen bg-sgs-primary-deep font-sans text-white pb-20 overflow-y-auto h-[100dvh] no-scrollbar">
             {/* Header */}
-            <div className="sticky top-0 bg-sgs-primary-deep/80 backdrop-blur-md z-50 border-b border-slate-800">
-                <div className="max-w-[1440px] mx-auto px-4 md:px-6 h-14 md:h-16 flex items-center justify-between gap-2">
-                    <button onClick={handleHome} className="flex items-center gap-1.5 text-sm font-bold text-slate-400 hover:text-white transition-colors min-h-[44px] shrink-0">
+            <div className="sticky top-0 bg-sgs-primary-deep/95 backdrop-blur-md z-50 border-b border-white/10">
+                <div className="max-w-6xl mx-auto px-5 md:px-8 h-[60px] md:h-[68px] flex items-center justify-between gap-4">
+                    <button onClick={handleHome} className="flex items-center gap-2 text-sm font-medium text-slate-400 hover:text-white transition-colors min-h-[44px] shrink-0">
                         {ICONS.BACK} <span className="hidden sm:inline">{t('common.go_back')}</span>
                     </button>
-                    <div className="flex items-center gap-2 min-w-0">
+                    <div className="flex items-center gap-2.5 min-w-0 absolute left-1/2 -translate-x-1/2">
                         <Logo className="w-5 h-5 sm:w-6 sm:h-6 text-sgs-verified shrink-0" />
-                        <span className="font-bold text-sm sm:text-lg tracking-wider hidden sm:inline truncate">SGS <span className="text-sgs-verified">ĐỊNH GIÁ AI™</span></span>
+                        <span className="font-semibold text-sm sm:text-base tracking-wide truncate">Định giá AI</span>
                     </div>
                     <div className="flex items-center gap-2 shrink-0">
                         {!currentUser && (
                             <span
-                                className={`hidden sm:inline-flex items-center gap-1 text-xs px-2.5 py-1 rounded-full font-medium border cursor-default select-none transition-colors ${
+                                className={`hidden md:inline-flex items-center gap-1 text-[11px] px-2 py-1 rounded-md font-medium border cursor-default select-none transition-colors ${
                                     guestUsed >= GUEST_DAILY_LIMIT
-                                        ? 'bg-rose-900/40 border-red-700/50 text-red-400'
-                                        : 'bg-slate-800 border-slate-700 text-slate-400'
+                                        ? 'bg-rose-900/30 border-red-700/50 text-red-400'
+                                        : 'bg-white/5 border-white/10 text-slate-400'
                                 }`}
                                 title="Lượt định giá miễn phí trong ngày"
                             >
@@ -1036,12 +1036,12 @@ export const AiValuation: React.FC = () => {
                         {currentUser && quotaInfo && !quotaInfo.isUnlimited && (
                             <button
                                 onClick={() => quotaInfo.remaining <= 0 ? setShowQuotaGate(true) : undefined}
-                                className={`hidden sm:inline-flex items-center gap-1.5 text-xs px-2.5 py-1 rounded-full font-medium border cursor-default select-none transition-colors ${
+                                className={`hidden md:inline-flex items-center gap-1.5 text-[11px] px-2 py-1 rounded-md font-medium border cursor-default select-none transition-colors ${
                                     quotaInfo.remaining <= 0
-                                        ? 'bg-rose-900/40 border-red-700/50 text-red-400 cursor-pointer'
+                                        ? 'bg-rose-900/30 border-red-700/50 text-red-400 cursor-pointer'
                                         : quotaInfo.remaining <= 3
-                                        ? 'bg-amber-900/40 border-amber-700/50 text-amber-300'
-                                        : 'bg-slate-800 border-slate-700 text-slate-400'
+                                        ? 'bg-amber-900/30 border-amber-700/50 text-amber-300'
+                                        : 'bg-white/5 border-white/10 text-slate-400'
                                 }`}
                                 title={`Quota định giá AI tháng này · ${quotaInfo.planLabel}`}
                             >
@@ -1053,19 +1053,19 @@ export const AiValuation: React.FC = () => {
                                     : `${quotaInfo.remaining}/${quotaInfo.limit} lượt`}
                             </button>
                         )}
-                        <button onClick={handleLogin} className="px-3 sm:px-6 py-2 bg-sgs-accent text-[var(--text)] font-bold rounded-xl hover:bg-sgs-accent transition-colors shadow-lg active:scale-95 text-xs sm:text-sm min-h-[44px] whitespace-nowrap">
+                        <button onClick={handleLogin} className="px-3.5 sm:px-5 py-2 bg-sgs-accent text-[var(--text)] font-bold rounded-lg hover:bg-sgs-accent transition-colors active:scale-95 text-xs sm:text-sm min-h-[40px] whitespace-nowrap">
                             {currentUser ? t('menu.dashboard') : t('auth.btn_login')}
                         </button>
                     </div>
                 </div>
             </div>
             {/* MAIN CONTENT AREA */}
-            <div className="max-w-4xl mx-auto px-6 pt-16 md:pt-24 relative">
-                {/* BACKGROUND FX */}
-                <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[600px] h-[600px] bg-sgs-verified/10 rounded-full blur-[100px] pointer-events-none"></div>
+            <div className="max-w-4xl mx-auto px-5 md:px-8 pt-10 md:pt-16 relative">
+                {/* Keep the first screen calm: one restrained accent instead of a large glow. */}
+                <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[360px] h-[220px] bg-sgs-verified/[0.06] rounded-full blur-[90px] pointer-events-none"></div>
                 {/* STEP INDICATOR */}
                 {step !== 'RESULT' && (
-                    <div className="flex items-center justify-center gap-2 mb-10">
+                    <div className="flex items-center justify-center gap-2 mb-8 md:mb-10">
                         {[
                             { key: 'ADDRESS',   label: 'Địa chỉ',   num: 1 },
                             { key: 'DETAILS',   label: 'Chi tiết',  num: 2 },
@@ -1090,7 +1090,7 @@ export const AiValuation: React.FC = () => {
                                                 </svg>
                                             ) : num}
                                         </div>
-                                        <span className={`text-[12px] font-bold transition-colors ${isActive ? 'text-sgs-verified' : isDone ? 'text-sgs-verified' : 'text-slate-600'}`}>{label}</span>
+                                         <span className={`text-[11px] font-medium transition-colors ${isActive ? 'text-sgs-verified' : isDone ? 'text-sgs-verified' : 'text-slate-600'}`}>{label}</span>
                                     </div>
                                     {i < arr.length - 1 && (
                                         <div className={`w-12 md:w-20 h-0.5 mb-4 rounded-full transition-all duration-300 ${isDone ? 'bg-sgs-verified' : 'bg-slate-700'}`} />
@@ -1103,24 +1103,19 @@ export const AiValuation: React.FC = () => {
                 {/* STEP 1: ADDRESS INPUT */}
                 {step === 'ADDRESS' && (
                     <div className="text-center animate-enter">
-                        <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-sgs-verified/10 border border-sgs-verified/20 text-sgs-verified text-xs font-bold uppercase tracking-widest mb-6">
-                            <span className="w-2 h-2 rounded-full bg-sgs-accent animate-pulse"></span>
-                            Định Giá Thời Gian Thực
-                        </div>
-                        <h1 className="text-4xl md:text-6xl font-black mb-6 leading-tight">
-                            Định Giá Bất Động Sản{' '}
-                            <span className="text-transparent bg-clip-text bg-gradient-to-r from-sgs-accent to-sgs-accent-text">Bằng AI</span>
+                        <h1 className="text-4xl md:text-6xl font-black mb-4 leading-[1.08] tracking-[-0.03em]">
+                            Định giá bất động sản
                         </h1>
-                        <p className="text-xl text-slate-400 mb-5 max-w-2xl mx-auto">
-                            Nhập địa chỉ — AI phân tích thị trường thực tế.
+                        <p className="text-base md:text-lg text-slate-400 mb-8 max-w-xl mx-auto">
+                            Nhập địa chỉ để xem mức giá tham khảo từ dữ liệu thị trường.
                         </p>
 
-                        <div className="bg-slate-800/50 backdrop-blur-xl border border-slate-700 p-2 rounded-2xl max-w-2xl mx-auto flex items-center gap-1 md:gap-2 shadow-2xl relative z-20 group focus-within:ring-2 focus-within:ring-sgs-primary/50 transition-all mt-3">
+                        <div className="bg-white/[0.06] border border-white/15 p-1.5 rounded-xl max-w-2xl mx-auto flex items-center gap-1 md:gap-2 shadow-xl relative z-20 group focus-within:border-sgs-verified/60 focus-within:ring-4 focus-within:ring-sgs-verified/10 transition-all">
                             <div className="pl-3 md:pl-4 shrink-0 text-slate-400 flex items-center justify-center">{ICONS.SEARCH}</div>
                             <input 
                                 value={address}
                                 onChange={(e) => { setAddress(e.target.value); setAutoDetectedType(null); }}
-                                className="flex-1 min-w-0 bg-transparent border-none outline-none text-white placeholder:text-sgs-text-muted text-base md:text-lg h-14"
+                                className="flex-1 min-w-0 bg-transparent border-none outline-none text-white placeholder:text-sgs-text-muted text-base md:text-lg h-12 md:h-14"
                                 placeholder={typedPlaceholder}
                                 onKeyDown={(e) => {
                                     if (e.key === 'Enter' && address) {
@@ -1153,9 +1148,9 @@ export const AiValuation: React.FC = () => {
                                     setStep('DETAILS');
                                 }}
                                 disabled={!address}
-                                className="shrink-0 bg-sgs-primary hover:bg-sgs-primary-deep text-white font-bold px-5 md:px-8 h-12 rounded-xl transition-all active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap text-sm md:text-base"
+                                     className="shrink-0 bg-sgs-verified hover:bg-sgs-verified/90 text-white font-bold px-4 md:px-7 h-11 md:h-12 rounded-lg transition-all active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap text-sm md:text-base"
                             >
-                                Định Giá →
+                                Tiếp tục
                             </button>
                         </div>
 
@@ -1167,17 +1162,16 @@ export const AiValuation: React.FC = () => {
                         )}
 
                         {/* Quick-search examples */}
-                        <div className="mt-4 flex flex-wrap items-center justify-center gap-2">
+                        <div className="mt-4 flex flex-wrap items-center justify-center gap-x-2 gap-y-1.5 text-xs text-slate-500">
+                            <span className="mr-1">Gợi ý:</span>
                             {[
                                 'Căn hộ Vinhomes Grand Park TP.Thủ Đức',
                                 'Nhà phố dự án Aqua City, Biên Hòa, Đồng Nai',
-                                'Biệt thự Sala Đại Quang Minh, TP.Thủ Đức',
-                                'Đất nền Long Thành, Đồng Nai',
                             ].map(ex => (
                                 <button
                                     key={ex}
                                     onClick={() => { setAddress(ex); const d = detectPropertyTypeFromText(ex); if (d) { setPropertyType(d); setAutoDetectedType(d); } }}
-                                    className="text-xs text-sgs-text-muted hover:text-sgs-verified border border-slate-700/60 hover:border-sgs-verified/40 bg-slate-800/40 hover:bg-sgs-verified/5 px-3 py-1.5 rounded-full transition-all"
+                                    className="text-xs text-slate-400 hover:text-sgs-verified underline underline-offset-4 decoration-slate-700 hover:decoration-sgs-verified/50 transition-all"
                                 >
                                     {ex}
                                 </button>
