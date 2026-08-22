@@ -55,6 +55,7 @@ const dateTime = (value: string) => new Date(value).toLocaleString('vi-VN');
 
 function DriftNotificationEvents() {
   const [events, setEvents] = useState<OperationalEvent[]>([]);
+  const [statusFilter, setStatusFilter] = useState<'all' | 'open' | 'resolved'>('all');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [retryingId, setRetryingId] = useState<string | null>(null);
@@ -80,6 +81,14 @@ function DriftNotificationEvents() {
     loadEvents();
   }, [loadEvents]);
 
+  const openCount = events.filter(event => !event.resolvedAt).length;
+  const resolvedCount = events.length - openCount;
+  const visibleEvents = events.filter(event => (
+    statusFilter === 'all' ||
+    (statusFilter === 'open' && !event.resolvedAt) ||
+    (statusFilter === 'resolved' && Boolean(event.resolvedAt))
+  ));
+
   const retry = async (event: OperationalEvent) => {
     setRetryingId(event.id);
     setFeedback(null);
@@ -102,23 +111,45 @@ function DriftNotificationEvents() {
         <div>
           <h2 className="font-semibold text-slate-900">Thông báo drift bị bỏ lỡ</h2>
           <p className="mt-1 text-xs text-slate-500">Theo dõi các lần gửi cảnh báo ngưỡng thất bại và xử lý lại từ workspace.</p>
+          <div className="mt-3 flex flex-wrap items-center gap-2 text-xs" aria-label="Tóm tắt sự kiện drift">
+            <span className="rounded-full bg-amber-50 px-2.5 py-1 font-semibold text-amber-800">Đang mở: {openCount}</span>
+            <span className="rounded-full bg-emerald-50 px-2.5 py-1 font-semibold text-emerald-800">Đã xử lý: {resolvedCount}</span>
+          </div>
         </div>
-        <button
-          onClick={loadEvents}
-          disabled={loading}
-          className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 px-3 py-2 text-xs font-semibold text-slate-700 disabled:opacity-50"
-        >
-          <RefreshCw className={`h-3.5 w-3.5 ${loading ? 'animate-spin' : ''}`} /> Làm mới
-        </button>
+        <div className="flex flex-wrap items-center gap-2">
+          <label className="flex items-center gap-2 text-xs font-semibold text-slate-600">
+            <span>Lọc trạng thái</span>
+            <select
+              value={statusFilter}
+              onChange={event => setStatusFilter(event.target.value as 'all' | 'open' | 'resolved')}
+              className="rounded-lg border border-slate-200 bg-white px-2.5 py-2 text-xs font-semibold text-slate-700"
+            >
+              <option value="all">Tất cả</option>
+              <option value="open">Đang mở</option>
+              <option value="resolved">Đã xử lý</option>
+            </select>
+          </label>
+          <button
+            onClick={loadEvents}
+            disabled={loading}
+            className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 px-3 py-2 text-xs font-semibold text-slate-700 disabled:opacity-50"
+          >
+            <RefreshCw className={`h-3.5 w-3.5 ${loading ? 'animate-spin' : ''}`} /> Làm mới
+          </button>
+        </div>
       </div>
       {error && <div className="mx-5 my-4 rounded-lg bg-red-50 p-3 text-sm text-red-700">{error}</div>}
       {loading ? (
         <div className="p-5 text-sm text-slate-500">Đang tải sự kiện…</div>
       ) : events.length === 0 ? (
         <div className="p-5 text-sm text-slate-500">Chưa có sự kiện gửi thông báo drift nào.</div>
+      ) : visibleEvents.length === 0 ? (
+        <div className="p-5 text-sm text-slate-500">
+          Không có sự kiện nào ở trạng thái {statusFilter === 'open' ? 'đang mở' : 'đã xử lý'}.
+        </div>
       ) : (
         <div className="divide-y divide-slate-100">
-          {events.map(event => {
+          {visibleEvents.map(event => {
             const open = !event.resolvedAt;
             const notification = event.payload?.notification;
             return (
