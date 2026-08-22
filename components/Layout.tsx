@@ -237,7 +237,7 @@ const Sidebar = memo(({
                                                     : 'text-[var(--text-secondary)] hover:bg-[var(--glass-surface-hover)] hover:text-[var(--text-primary)] border-l-4 border-transparent'}
                                             `}
                                         >
-                                            <div className={`w-5 h-5 shrink-0 flex items-center justify-center [&>svg]:block transition-transform duration-300 ${isCollapsed ? 'absolute left-1/2 -translate-x-1/2' : ''} ${!isCollapsed && isActive ? 'scale-110' : !isCollapsed ? 'group-hover:scale-110' : ''} ${isActive ? 'text-[var(--sgs-primary)] dark:text-[var(--sgs-primary)]' : 'text-[var(--text-tertiary)] group-hover:text-[var(--text-primary)]'}`}>
+                                            <div className={`w-5 h-5 shrink-0 flex items-center justify-center [&>svg]:block transition-transform duration-300 ${!isCollapsed && isActive ? 'scale-110' : !isCollapsed ? 'group-hover:scale-110' : ''} ${isActive ? 'text-[var(--sgs-primary)] dark:text-[var(--sgs-primary)]' : 'text-[var(--text-tertiary)] group-hover:text-[var(--text-primary)]'}`}>
                                                 {Icon}
                                             </div>                                            
                                             {!isCollapsed && (
@@ -270,7 +270,7 @@ const Sidebar = memo(({
                                 className={`absolute bottom-full mb-2 ${isCollapsed ? 'left-0 w-64' : 'left-0 right-0'} rounded-2xl border border-[var(--glass-border)] bg-[var(--bg-surface)] p-2 shadow-2xl z-50`}
                             >
                                 <div className="flex items-center gap-3 rounded-xl px-3 py-2.5">
-                             <UserAvatar user={user} isActive={activePage === ROUTES.PROFILE} showBorder={!isCollapsed} />
+                                    <UserAvatar user={user} isActive={activePage === ROUTES.PROFILE} />
                                     <div className="min-w-0 leading-tight">
                                         <div className="truncate text-sm font-bold text-[var(--text-primary)]">{user.name}</div>
                                         <div className="truncate text-xs2 font-medium text-[var(--text-tertiary)]">{t(`role.${user.role?.toUpperCase()}`) || user.role}</div>
