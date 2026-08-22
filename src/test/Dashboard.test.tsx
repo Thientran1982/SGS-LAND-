@@ -117,14 +117,33 @@ describe("VisitorFunnelWidget", () => {
     renderWidgetInLanguage("vn");
 
     expect(await screen.findByRole("region", { name: "Funnel hành vi người xem" })).toBeVisible();
-    expect(await screen.findByText("Phiên đọc sâu")).toBeVisible();
+    expect((await screen.findAllByText("Phiên đọc sâu")).length).toBeGreaterThanOrEqual(2);
     expect(screen.getByText("Thời gian xem TB")).toBeVisible();
     expect(screen.getByText("Tỷ lệ rời trang")).toBeVisible();
-    expect(screen.getByText("Tương tác CTA")).toBeVisible();
+    expect(screen.getAllByText("Tương tác CTA").length).toBeGreaterThanOrEqual(2);
     expect(screen.getByText("Khách quay lại")).toBeVisible();
     expect(screen.getByRole("combobox", { name: "Lọc theo tin" })).toHaveTextContent("Tất cả tin");
     expect(screen.getByRole("combobox", { name: "Lọc theo nguồn traffic" })).toHaveTextContent("Tất cả nguồn");
     expect(screen.queryByText("Engaged sessions")).toBeNull();
+  });
+
+  it("uses the primary surface for KPI cards and returning visitors", async () => {
+    vi.spyOn(analyticsApi, "getVisitorFunnel").mockResolvedValueOnce({
+      sessions: 1,
+      engagedSessions: 1,
+      topProjects: [],
+      topSources: [],
+    });
+
+    renderWidget();
+
+    await screen.findByText("Avg. view time");
+    const funnel = screen.getByRole("region", { name: "Viewer behavior funnel" });
+    const primarySurfaceCards = funnel.querySelectorAll(".bg-\\[var\\(--bg-surface\\)\\]");
+    const secondarySurfaceCards = funnel.querySelectorAll(".bg-\\[var\\(--glass-surface\\)\\]");
+
+    expect(primarySurfaceCards).toHaveLength(5);
+    expect(secondarySurfaceCards).toHaveLength(0);
   });
 
   it("keeps filter controls usable when filter lists are missing or malformed", async () => {

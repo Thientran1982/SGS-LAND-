@@ -724,10 +724,9 @@ export const VisitorFunnelWidget = memo(({ days, language }: { days: number; lan
         [isVn ? 'Cuộn 50%' : 'Scrolled 50%', safeFunnelNumber(data?.scroll50), 'bg-amber-500'],
         [isVn ? 'Tương tác CTA' : 'CTA interactions', safeFunnelNumber(data?.ctaInteractions), 'bg-violet-500'],
     ];
-    // Keep the five KPI cards on the same themed surface as the funnel panel.
-    // This avoids the lighter/darker mismatch between the summary cards and
-    // the surrounding dashboard panel in light and dark themes.
-    const metricCardClass = 'rounded-xl border border-[var(--glass-border)] bg-[var(--dash-panel)] p-3';
+    // These two card components must use the primary dashboard surface, not
+    // the secondary glass surface, so they visually belong to the funnel panel.
+    const metricCardClass = 'rounded-xl border border-[var(--glass-border)] bg-[var(--bg-surface)] p-3';
     const listingOptions = [
         { value: '', label: isVn ? 'Tất cả tin' : 'All listings' },
         ...topProjects.map(item => ({ value: item.value, label: item.value })),
