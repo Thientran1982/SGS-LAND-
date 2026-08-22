@@ -102,12 +102,13 @@ const CustomTooltip = memo(({ active, payload, label, t, formatCurrency, languag
     }
     return null;
 });
-const ScatterTooltip = memo(({ active, payload, t }: any) => {
+const ScatterTooltip = memo(({ active, payload, t, language }: any) => {
     if (active && Array.isArray(payload) && payload.length) {
         const data = payload[0].payload;
+        const location = data.location === 'Khác' && language !== 'vn' ? 'Other' : data.location;
         return (
             <div className="bg-[var(--bg-surface)] p-3 rounded-lg border border-[var(--glass-border)] shadow-md text-xs z-50">
-                <p className="font-bold mb-2 text-[var(--text-secondary)] dark:text-slate-200 uppercase tracking-wider">{data.location}</p>
+                <p className="font-bold mb-2 text-[var(--text-secondary)] dark:text-slate-200 uppercase tracking-wider">{location}</p>
                 <div className="flex items-center justify-between gap-4 mb-1">
                     <span className="text-[var(--text-secondary)] dark:text-slate-400">{t('dash.scatter_area')}:</span>
                     <span className="font-mono font-bold text-[var(--text-primary)] dark:text-white">{data.area} m²</span>
@@ -115,15 +116,13 @@ const ScatterTooltip = memo(({ active, payload, t }: any) => {
                 <div className="flex items-center justify-between gap-4 mb-1">
                     <span className="text-[var(--text-secondary)] dark:text-slate-400">{t('dash.scatter_price')}:</span>
                     <span className="font-mono font-bold text-[var(--text-primary)] dark:text-white">
-                        {typeof data.price === 'number'
-                            ? data.price.toLocaleString('vi-VN', { minimumFractionDigits: 0, maximumFractionDigits: 1 })
-                            : data.price} {t('dash.scatter_price_unit')}
+                        {Number(data.price).toLocaleString(language === 'vn' ? 'vi-VN' : 'en-US', { minimumFractionDigits: 0, maximumFractionDigits: 1 })} {t('dash.scatter_price_unit')}
                     </span>
                 </div>
                 {data.pricePerM2 > 0 && (
                     <div className="flex items-center justify-between gap-4 mb-1">
-                        <span className="text-[var(--text-secondary)] dark:text-slate-400">Giá/m²:</span>
-                        <span className="font-mono font-bold text-sgs-primary dark:text-sgs-text-muted">{Math.round(data.pricePerM2).toString().replace(/\B(?=(\d{3})+(?!\d))/g, '.')} tr/m²</span>
+                            <span className="text-[var(--text-secondary)] dark:text-slate-400">{language === 'vn' ? 'Giá/m²' : 'Price/m²'}:</span>
+                            <span className="font-mono font-bold text-sgs-primary dark:text-sgs-text-muted">{data.pricePerM2.toLocaleString(language === 'vn' ? 'vi-VN' : 'en-US')} {language === 'vn' ? 'triệu/m²' : 'M VND/m²'}</span>
                     </div>
                 )}
                 <div className="flex items-center justify-between gap-4 mb-1">
@@ -1161,7 +1160,7 @@ export const Dashboard: React.FC = () => {
                                                 <XAxis type="number" dataKey="area" name={t('dash.scatter_area')} unit="m²" stroke={chartTheme.colors.text} fontSize={11} tickLine={false} axisLine={false} />
                                                 <YAxis type="number" dataKey="price" name={t('dash.scatter_price')} unit={` ${t('dash.scatter_price_unit')}`} stroke={chartTheme.colors.text} fontSize={11} tickLine={false} axisLine={false} tickFormatter={(v: number) => v.toLocaleString('vi-VN', { maximumFractionDigits: 1 })} />
                                                 <ZAxis type="number" dataKey="interest" range={[100, 850]} name={t('dash.scatter_interest')} />
-                                                <Tooltip cursor={{ strokeDasharray: '3 3' }} content={<ScatterTooltip t={t} />} />
+                                                 <Tooltip cursor={{ strokeDasharray: '3 3' }} content={<ScatterTooltip t={t} language={language} />} />
                                                 <Scatter name={t('dash.scatter_interest')} data={analytics.marketPulse} opacity={0.78}>
                                                     {analytics.marketPulse.map((entry: any, index: number) => {
                                                         const colors = ['var(--sgs-primary)', 'var(--sgs-verified)', 'var(--sgs-accent)', 'var(--sgs-accent-text)', 'var(--sgs-primary-deep)', 'var(--sgs-text-muted)'];
@@ -1178,13 +1177,22 @@ export const Dashboard: React.FC = () => {
                                         <span key={idx} className="text-xs text-[var(--text-secondary)]">{loc}</span>
                                     ))}
                                 </div>
-                                <div className="mt-4 border-t border-[var(--glass-border)] pt-3">
-                                    <div className="mb-2 flex items-center justify-between"><div className="dashboard-subhead">{ui.project}</div><span className="text-xs text-[var(--text-tertiary)]">{overview.projectBreakdown?.length ?? 0}</span></div>
-                                    <div className="space-y-2">
-                                        {(overview.projectBreakdown || []).slice(0, 4).map((project: any, index: number) => <div key={project.id ?? index} className="flex items-center justify-between gap-3 text-xs"><span className="truncate text-[var(--text-secondary)]">{project.name}</span><span className="font-mono text-[var(--text-tertiary)]">{project.leads ?? project.count ?? 0}</span></div>)}
-                                        {!overview.projectBreakdown?.length && <div className="text-xs text-[var(--text-tertiary)]">{language === 'vn' ? 'Chưa có dữ liệu dự án' : 'No project data yet'}</div>}
-                                    </div>
-                                </div>
+                                 <div className="mt-4 border-t border-[var(--glass-border)] pt-3">
+                                     <div className="mb-2 flex items-center justify-between"><div className="dashboard-subhead">{ui.project}</div><span className="text-xs text-[var(--text-tertiary)]">{overview.projectBreakdown?.length ?? 0}</span></div>
+                                     <div className="h-[170px] w-full min-w-0">
+                                         {Array.isArray(overview.projectBreakdown) && overview.projectBreakdown.length > 0 ? (
+                                             <ResponsiveContainer width="100%" height="100%" minHeight={140} minWidth={160}>
+                                                 <BarChart data={overview.projectBreakdown.slice(0, 8)} layout="vertical" margin={{ top: 2, right: 8, bottom: 2, left: 8 }}>
+                                                     <CartesianGrid horizontal={false} strokeDasharray="3 3" stroke={chartTheme.colors.grid} opacity={0.5} />
+                                                     <XAxis type="number" allowDecimals={false} stroke={chartTheme.colors.text} fontSize={10} tickLine={false} axisLine={false} />
+                                                     <YAxis type="category" dataKey="name" width={72} tick={{ fill: chartTheme.colors.text, fontSize: 10 }} tickLine={false} axisLine={false} />
+                                                     <Tooltip cursor={{ fill: 'var(--glass-surface)' }} formatter={(value: number) => [value, language === 'vn' ? 'Sản phẩm' : 'Listings']} />
+                                                     <Bar dataKey="count" name={language === 'vn' ? 'Sản phẩm' : 'Listings'} fill="var(--sgs-primary)" radius={[0, 3, 3, 0]} barSize={14} />
+                                                 </BarChart>
+                                             </ResponsiveContainer>
+                                         ) : <EmptyState message={language === 'vn' ? 'Chưa có dữ liệu dự án' : 'No project data yet'} />}
+                                     </div>
+                                 </div>
                             </section>
                             <section>
                                 <div className="mb-2 flex items-center justify-between gap-2"><div className="dashboard-subhead">{t('dash.leaderboard_title')}</div><SegmentToggle value={leaderboardMode} onChange={(value) => setLeaderboardMode(value as 'individual' | 'team')} options={[{ value: 'individual', label: ui.individual }, { value: 'team', label: ui.team }]} /></div>
