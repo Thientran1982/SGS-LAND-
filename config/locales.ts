@@ -644,7 +644,10 @@ export const DICTIONARY = {
         "source.Microsite": "Microsite",
         "source.MICROSITE": "Microsite",
 
-        "dash.greeting_morning": "Xin chào,",
+        "dash.greeting_morning": "Chào buổi sáng,",
+        "dash.greeting_afternoon": "Chào buổi chiều,",
+        "dash.greeting_evening": "Chào buổi tối,",
+        "dash.greeting_welcome_back": "Chào mừng trở lại,",
         "dash.overview_subtitle": "Tổng quan tình hình kinh doanh hôm nay.",
         "dash.filter_7d": "7 ngày qua",
         "dash.filter_30d": "30 ngày qua",
@@ -3093,7 +3096,10 @@ export const DICTIONARY = {
         "source.Microsite": "Microsite",
         "source.MICROSITE": "Microsite",
 
-        "dash.greeting_morning": "Hello,",
+        "dash.greeting_morning": "Good morning,",
+        "dash.greeting_afternoon": "Good afternoon,",
+        "dash.greeting_evening": "Good evening,",
+        "dash.greeting_welcome_back": "Welcome back,",
         "dash.overview_subtitle": "Overview of today's business situation.",
         "dash.filter_7d": "Last 7 days",
         "dash.filter_30d": "Last 30 days",

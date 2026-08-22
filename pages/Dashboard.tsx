@@ -804,6 +804,15 @@ function getTenantIdFromCookie(): string | null {
         return null;
     }
 }
+
+function getDashboardGreetingKey(language: string, returning: boolean): string {
+    if (returning) return 'dash.greeting_welcome_back';
+    const hour = new Date().getHours();
+    if (hour < 12) return 'dash.greeting_morning';
+    if (hour < 18) return 'dash.greeting_afternoon';
+    return 'dash.greeting_evening';
+}
+
 export const Dashboard: React.FC = () => {
     const [timeRange, setTimeRange] = useState('30d');
     const selectedDays = timeRange === 'all' ? 365 : Number.parseInt(timeRange, 10) || 30;
@@ -821,6 +830,16 @@ export const Dashboard: React.FC = () => {
     // Namespaces the React Query cache by tenant so that switching between
     // admin accounts in the same browser never shows a stale tenant's data.
     const cacheTenantId = useMemo(() => getTenantIdFromCookie(), []);
+    const [returningUser, setReturningUser] = useState(false);
+    useEffect(() => {
+        const visitKey = `sgs_dashboard_last_visit:${cacheTenantId ?? 'current'}`;
+        try {
+            setReturningUser(Boolean(localStorage.getItem(visitKey)));
+            localStorage.setItem(visitKey, new Date().toISOString());
+        } catch {
+            // Time-aware greeting remains available when browser storage is unavailable.
+        }
+    }, [cacheTenantId]);
     const handleExport = async () => {
         if (!dashboardRef.current) return;
         setIsExporting(true);      
@@ -938,6 +957,7 @@ export const Dashboard: React.FC = () => {
     const userName = currentUser?.name ? currentUser.name.split(' ').slice(-1)[0] : '';
     const scopeKey: string = (analytics as any)?.scopeLabel || 'company';
     const scopeLabel = scopeKey === 'personal' ? t('dash.scope_personal') : t('dash.scope_company');
+    const greeting = t(getDashboardGreetingKey(language, returningUser));
     const overview: any = analytics;
     const ui = language === 'vn'
         ? { quick: 'Thao tác nhanh', addLead: '+ Thêm khách hàng', contract: '+ Tạo hợp đồng', listing: '+ Đăng tin BĐS', target: 'mục tiêu tháng', targetUnset: 'Chưa thiết lập mục tiêu', source: 'Theo nguồn', overview: 'Tổng quan', project: 'Theo dự án', demand: 'Nhu cầu theo khu vực', team: 'Theo team', individual: 'Theo cá nhân', overloaded: 'Quá tải' }
@@ -959,7 +979,7 @@ export const Dashboard: React.FC = () => {
                     <div className="min-w-0">
                         <div className="dash-eyebrow text-[var(--text-tertiary)]">{scopeLabel}</div>
                         <h1 className="dashboard-title mt-2 text-[var(--text-primary)]">
-                            {userName ? `${t('dash.greeting_morning')} ${userName}` : t('dash.greeting_morning')}
+                            {userName ? `${greeting} ${userName}` : greeting}
                         </h1>
                         <p className="mt-2 max-w-xl text-sm leading-6 text-[var(--text-secondary)]">{t('dash.overview_subtitle')}</p>
                         <div className="mt-3 flex items-center gap-2 text-xs text-[var(--text-tertiary)]">
