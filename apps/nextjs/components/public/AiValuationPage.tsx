@@ -392,7 +392,7 @@ function buildAgentSteps(
         `Khu vực: ${region.region}`,
         `Dải giá tham chiếu: ${region.baseMRange}`,
         region.streetHit
-            ? `Dữ liệu: Giao dịch dự án thực tế Q1/2026 ✓`
+            ? `Dữ liệu: Đã xác minh giao dịch dự án thực tế Q1/2026`
             : `Độ tin cậy khu vực: ${region.conf}% (${region.conf >= 60 ? 'Đủ dữ liệu' : region.conf >= 50 ? 'Dữ liệu hạn chế' : 'Ít giao dịch'})`,
         `Nguồn: ${sources.primary}`,
         `Báo cáo: ${sources.reports}`,
@@ -449,10 +449,10 @@ function buildAgentSteps(
         `Hoàn thiện kết quả định giá…`,
     ];
     return [
-        { icon: '🔍', title: 'Agent Nhận Diện BĐS', details: a1Details },
-        { icon: '📡', title: 'Agent Dữ Liệu Thị Trường', details: a2Details },
-        { icon: '⚙️', title: `Agent AVM — ${coeffLines.length} Hệ Số`, details: a3Details },
-        { icon: '✅', title: 'Agent Tổng Hợp & Kiểm Định', details: a4Details },
+        { icon: '01', title: 'Agent Nhận Diện BĐS', details: a1Details },
+        { icon: '02', title: 'Agent Dữ Liệu Thị Trường', details: a2Details },
+        { icon: '03', title: `Agent AVM — ${coeffLines.length} Hệ Số`, details: a3Details },
+        { icon: '04', title: 'Agent Tổng Hợp & Kiểm Định', details: a4Details },
     ];
 }
 export const AiValuation: React.FC = () => {
@@ -573,7 +573,11 @@ export const AiValuation: React.FC = () => {
     };
     const handleNgangChange = (val: string) => {
         setNgang(val);
-        setFrontageWidth(val); // ngang = mặt tiền
+        if (propertyType && !propertyType.startsWith('land_') && !propertyType.startsWith('apartment') && propertyType !== 'penthouse' && propertyType !== 'warehouse') {
+            setFrontageWidth(val); // ngang = mặt tiền for built landed property
+        } else {
+            setFrontageWidth('');
+        }
         const n = parseFloat(val), d = parseFloat(dai);
         if (n > 0 && d > 0) setArea(String(Math.round(n * d)));
         else if (val === '' || dai === '') setArea('');
@@ -644,19 +648,21 @@ export const AiValuation: React.FC = () => {
     };
     const isApartment = propertyType.startsWith('apartment') || propertyType === 'penthouse';
     const isApartmentOrProject = isApartment || propertyType === 'project';
+    const isLandProperty = propertyType.startsWith('land_');
+    const isWarehouseProperty = propertyType === 'warehouse';
     // Live Accuracy Meter — increases as user fills in more details
     const accuracy = (() => {
         let s = 75.12;
         if (area && parseFloat(area) > 0)         s += 5.22;
         if (roadTypeSelect || (roadWidth && parseFloat(roadWidth) > 0)) s += 4.33;
         if (isApartmentOrProject && bedrooms !== null) s += 3.50;
-        if (direction)                              s += 2.54;
-        if (!isApartment && frontageWidth && parseFloat(frontageWidth) > 0) s += 3.34;
+        if (direction && !isLandProperty && !isWarehouseProperty) s += 2.54;
+        if (!isApartment && !isLandProperty && !isWarehouseProperty && frontageWidth && parseFloat(frontageWidth) > 0) s += 3.34;
         if (!isApartment && ngang && dai && parseFloat(ngang) > 0 && parseFloat(dai) > 0) s += 1.50;
         if (isApartment && floorLevel && parseFloat(floorLevel) > 0)        s += 3.34;
-        if (buildingAge !== '')                     s += 2.63;
-        if (furnishing)                             s += 2.54;
-        if (monthlyRent && parseFloat(monthlyRent) > 0) s += 4.29;
+        if (!isLandProperty && buildingAge !== '') s += 2.63;
+        if (!isLandProperty && !isWarehouseProperty && furnishing) s += 2.54;
+        if (!isLandProperty && monthlyRent && parseFloat(monthlyRent) > 0) s += 4.29;
         return Math.min(s, 98);
     })();
     const accuracyLabel = accuracy < 80 ? 'Cơ bản' : accuracy < 88 ? 'Khá tốt' : accuracy < 95 ? 'Rất tốt' : 'Chuyên sâu';
@@ -1269,6 +1275,14 @@ export const AiValuation: React.FC = () => {
                                                     setLegal(h.legal);
                                                     setPropertyType(h.propertyType);
                                                     setAutoDetectedType(null);
+                                                     setDirection('');
+                                                     setFloorLevel('');
+                                                     setMonthlyRent('');
+                                                     setBuildingAge('');
+                                                     setFurnishing('');
+                                                     setBedrooms(null);
+                                                     setRoadTypeSelect('');
+                                                     setRoadWidth('');
                                                     setNgang('');
                                                     setDai('');
                                                     setFrontageWidth('');
@@ -1362,7 +1376,7 @@ export const AiValuation: React.FC = () => {
                                                     onClick={() => setAutoDetectedType(null)}
                                                     className="text-xs text-sgs-text-muted hover:text-slate-300"
                                                     title="Xoá nhận dạng tự động"
-                                                >✕</button>
+                                                ><span className="sr-only">Xóa nhận dạng tự động</span><svg className="w-3 h-3" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="m6 6 12 12M18 6 6 18" stroke="currentColor" strokeWidth="2" strokeLinecap="round" /></svg></button>
                                             </div>
                                         )}
                                     </div>
@@ -1495,7 +1509,7 @@ export const AiValuation: React.FC = () => {
                                 </div>
 
                                 {/* ── NGANG × DÀI CALCULATOR — chỉ hiện với nhà đất (không phải căn hộ) ── */}
-                                {!isApartment && (
+                                 {!!propertyType && !isApartment && (
                                      <div className="bg-sgs-primary-deep/50 border border-white/10 rounded-xl p-3.5">
                                          <div className="text-xs font-semibold text-slate-300 mb-3">
                                              Kích thước <span className="text-slate-500 font-normal">(tùy chọn)</span>
@@ -1655,7 +1669,7 @@ export const AiValuation: React.FC = () => {
                                     <div>
                                         <label className="text-xs font-bold text-[var(--text-tertiary)] uppercase block mb-2">
                                             Số Phòng Ngủ
-                                            <span className="text-sgs-verified ml-1 normal-case font-bold text-[12px]">★ quan trọng với căn hộ</span>
+                                            <span className="text-sgs-verified ml-1 normal-case font-bold text-[12px]">Thông tin quan trọng với căn hộ</span>
                                         </label>
                                         <div className="grid grid-cols-5 gap-2">
                                             {[
@@ -1685,7 +1699,8 @@ export const AiValuation: React.FC = () => {
                                     </div>
                                 )}
 
-                                {/* Hướng nhà */}
+                                {/* Hướng nhà — không áp dụng cho đất hoặc kho */}
+                                {!!propertyType && !propertyType.startsWith('land_') && propertyType !== 'warehouse' && (
                                 <div>
                                     <label className="text-xs font-bold text-[var(--text-tertiary)] uppercase block mb-2">
                                         Hướng Cửa Chính
@@ -1714,17 +1729,18 @@ export const AiValuation: React.FC = () => {
                                         ))}
                                     </div>
                                     {direction && (direction === 'Đông Nam' || direction === 'Nam') && (
-                                        <div className="text-sgs-verified/80 text-xs mt-1.5 italic">✓ Hướng {direction} thường có giá cao hơn 8–15% so với hướng Tây/Tây Bắc</div>
+                                        <div className="text-sgs-verified/80 text-xs mt-1.5 italic">Gợi ý: hướng {direction} thường có giá cao hơn 8–15% so với hướng Tây/Tây Bắc</div>
                                     )}
                                     {direction && direction !== 'Đông Nam' && direction !== 'Nam' && (
                                         <div className="text-sgs-text-muted text-xs mt-1.5 italic">Hướng {direction} — hệ số hướng được điều chỉnh tự động theo AVM</div>
                                     )}
                                 </div>
+                                )}
 
                                 {/* Mặt tiền / Tầng & Tuổi nhà */}
                                 {(() => {
                                     const isLand = propertyType.startsWith('land_');
-                                    const showFrontage = !isApartment && !isLand && propertyType !== 'warehouse';
+                                     const showFrontage = !!propertyType && !isApartment && !isLand && propertyType !== 'warehouse';
                                     const showFloor    = isApartment || propertyType === 'project';
                                     return (
                                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
@@ -1748,7 +1764,7 @@ export const AiValuation: React.FC = () => {
                                                         placeholder={propertyType === 'penthouse' ? '25' : '10'} min="1" />
                                                 </div>
                                             )}
-                                            {!isLand && (
+                                             {!!propertyType && !isLand && (
                                                 <div>
                                                     <label className="text-xs font-bold text-[var(--text-tertiary)] uppercase block mb-2">
                                                         {propertyType === 'warehouse' ? 'Năm Xây Xưởng' : 'Năm Xây Dựng'}
@@ -1782,7 +1798,7 @@ export const AiValuation: React.FC = () => {
                                 })()}
 
                                 {/* ── Thuê dự kiến — ẩn với đất nông nghiệp, đổi label với thương mại / dự án ── */}
-                                {propertyType !== 'land_agricultural' && (
+                                 {!!propertyType && !propertyType.startsWith('land_') && (
                                     <div>
                                         {(() => {
                                             const isCommercialType = ['shophouse', 'office', 'warehouse'].includes(propertyType);
@@ -1818,7 +1834,7 @@ export const AiValuation: React.FC = () => {
                                 )}
 
                                 {/* ── Nội thất — chỉ hiện với nhà ở / căn hộ (ẩn với đất, kho xưởng) ── */}
-                                {!propertyType.startsWith('land_') && propertyType !== 'warehouse' && (
+                                 {!!propertyType && !propertyType.startsWith('land_') && propertyType !== 'warehouse' && (
                                     <div>
                                         <label className="text-xs font-bold text-[var(--text-tertiary)] uppercase block mb-2">
                                             {propertyType === 'office' ? 'Tình Trạng VP' : 'Nội Thất'}
@@ -1856,7 +1872,7 @@ export const AiValuation: React.FC = () => {
                                  {!roadTypeSelect && area && parseFloat(area) > 0 && (
                                     <div className="flex items-start gap-2 bg-sgs-accent/10 border border-sgs-accent/30 rounded-xl px-4 py-2.5 text-xs text-sgs-accent-text">
                                         <svg className="w-3.5 h-3.5 shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z" /></svg>
-                                        <span>Chọn <b>Vị trí đường</b> để AI tính hệ số vị trí chính xác hơn. Nếu bỏ qua, hệ thống dùng hẻm 3m mặc định.</span>
+                                        <span>Chọn <b>Vị trí đường</b> để AI tính hệ số vị trí chính xác hơn. Đây là trường bắt buộc.</span>
                                     </div>
                                 )}
                                  {detailsError && (
@@ -2003,7 +2019,12 @@ export const AiValuation: React.FC = () => {
                                 {/* CTA: upgrade to deep AI analysis */}
                                 <div className="bg-gradient-to-br from-sgs-primary/30 to-sgs-primary/20 border border-sgs-verified/30 rounded-2xl p-4 mb-3">
                                     <div className="flex items-start gap-3">
-                                        <div className="text-2xl shrink-0">🤖</div>
+                                        <div className="w-9 h-9 shrink-0 rounded-xl border border-sgs-verified/30 bg-sgs-verified/10 flex items-center justify-center text-sgs-verified" aria-hidden="true">
+                                            <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none">
+                                                <path d="M12 3v3M8 9h8M7 7h10a2 2 0 0 1 2 2v7a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V9a2 2 0 0 1 2-2Z" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" />
+                                                <path d="M9 14h.01M15 14h.01M9 17h6M3 12H5M19 12h2" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" />
+                                            </svg>
+                                        </div>
                                         <div className="flex-1 min-w-0">
                                             <div className="font-bold text-white text-sm mb-1">Cần phân tích chính xác hơn?</div>
                                             <div className="text-xs text-slate-400 leading-relaxed">
@@ -2066,7 +2087,13 @@ export const AiValuation: React.FC = () => {
                                     >
                                         {/* Agent header */}
                                         <div className="flex items-center gap-3">
-                                            <span className={`text-xl shrink-0 ${status === 'active' ? 'animate-pulse' : ''}`}>
+                                                <span className={`w-8 h-8 rounded-xl border flex items-center justify-center text-[11px] font-black shrink-0 ${
+                                                    status === 'done'
+                                                        ? 'border-sgs-verified/50 text-sgs-verified bg-sgs-verified/10'
+                                                        : status === 'active'
+                                                        ? 'border-sgs-verified text-sgs-verified bg-sgs-verified/15 animate-pulse'
+                                                        : 'border-slate-700 text-slate-500 bg-slate-800/60'
+                                                }`}>
                                                 {agent.icon}
                                             </span>
                                             <span className={`font-bold text-sm flex-1 ${
