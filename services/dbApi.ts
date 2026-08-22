@@ -1351,6 +1351,7 @@ class DatabaseApiClient {
       { id: 'home', labelKey: 'menu.home', route: ROUTES.LANDING, iconKey: ROUTES.LANDING },
       { id: 'dash', labelKey: 'menu.dashboard', route: ROUTES.DASHBOARD, iconKey: ROUTES.DASHBOARD },
       { id: 'ai-advisor', labelKey: 'menu.ai-advisor', route: ROUTES.AI_ADVISOR, iconKey: ROUTES.AI_ADVISOR },
+      { id: 'mobile-app', labelKey: 'menu.mobile-app', route: ROUTES.MOBILE_APP, iconKey: ROUTES.MOBILE_APP },
     ];
     if (isHostTenant) {
       coreItems.push({ id: 'search', labelKey: 'menu.marketplace', route: ROUTES.SEARCH, iconKey: ROUTES.SEARCH });
@@ -1396,7 +1397,6 @@ class DatabaseApiClient {
       { id: 'users', labelKey: 'menu.admin-users', route: ROUTES.ADMIN_USERS, iconKey: ROUTES.ADMIN_USERS },
       { id: 'set', labelKey: 'menu.enterprise-settings', route: ROUTES.ENTERPRISE_SETTINGS, iconKey: ROUTES.ENTERPRISE_SETTINGS },
       { id: 'agent-audit', labelKey: 'menu.agent-audit', route: ROUTES.AGENT_AUDIT, iconKey: ROUTES.AGENT_AUDIT },
-      { id: 'ai-evaluation', labelKey: 'menu.ai-evaluation', route: ROUTES.AI_EVALUATION, iconKey: ROUTES.AI_EVALUATION },
       { id: 'valuation-accuracy', labelKey: 'menu.valuation-accuracy', route: ROUTES.VALUATION_ACCURACY, iconKey: ROUTES.VALUATION_ACCURACY },
     ];
     // Các công cụ chỉ SUPER_ADMIN thấy: hệ thống, chi phí, bảo mật, hạ tầng, v.v.
