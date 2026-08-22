@@ -3738,8 +3738,9 @@ app.get('/api/public/listings/:slugId', apiRateLimit, async (req: express.Reques
       const canonical = $('link[rel="canonical"]').attr('href') || '';
       items.push({
         id: 'canonical', label: 'Có canonical URL',
-        status: canonical ? 'pass' : 'fail',
+        status: !canonical ? 'fail' : (/^https:\/\/sgsland\.vn(\/|$)/i.test(canonical) ? 'pass' : 'fail'),
         detail: canonical || 'Chưa khai báo',
+        tip: 'Canonical phải là HTTPS và thuộc sgsland.vn.',
       });
 
       const jsonLdNodes = $('script[type="application/ld+json"]').toArray();
@@ -3750,6 +3751,7 @@ app.get('/api/public/listings/:slugId', apiRateLimit, async (req: express.Reques
       });
 
       const types: string[] = [];
+      let invalidJsonLd = 0;
       for (const node of jsonLdNodes) {
         try {
           const txt = $(node).text() || '{}';
@@ -3760,8 +3762,15 @@ app.get('/api/public/listings/:slugId', apiRateLimit, async (req: express.Reques
             if (Array.isArray(t)) types.push(...t.map(String));
             else if (t) types.push(String(t));
           }
-        } catch { /* skip malformed */ }
+        } catch { invalidJsonLd++; }
       }
+      items.push({
+        id: 'jsonld-integrity',
+        label: 'JSON-LD hợp lệ và đọc được',
+        status: invalidJsonLd === 0 ? 'pass' : 'fail',
+        detail: invalidJsonLd === 0 ? 'Tất cả block JSON-LD parse được' : `${invalidJsonLd} block không phải JSON hợp lệ`,
+        tip: 'Schema lỗi cú pháp không được công cụ tìm kiếm sử dụng.',
+      });
       const hasFaq = types.some((t) => t.includes('FAQPage'));
       items.push({
         id: 'faq', label: 'Có FAQPage schema (LLM rất ưu tiên trích dẫn FAQ)',
@@ -3811,7 +3820,19 @@ app.get('/api/public/listings/:slugId', apiRateLimit, async (req: express.Reques
         tip: 'Mỗi đoạn nên có "Theo SGS LAND..." để LLM dễ trích nguồn.',
       });
 
-      res.json({ target, fetchedAt: new Date().toISOString(), items });
+      const fetchedAt = new Date().toISOString();
+      const severityByStatus: Record<string, string> = { fail: 'high', warn: 'medium', pass: 'info' };
+      res.json({
+        target,
+        fetchedAt,
+        contractVersion: 'seo-audit.v1',
+        items: items.map((item) => ({
+          ...item,
+          severity: severityByStatus[item.status] || 'info',
+          source: target,
+          checkedAt: fetchedAt,
+        })),
+      });
     } catch (err: any) {
       const msg = err?.name === 'AbortError' ? 'Hết thời gian (12s) khi tải trang' : (err?.message || 'Lỗi không xác định');
       console.error('[GEO] audit-url error:', msg);
