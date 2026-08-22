@@ -213,7 +213,7 @@ const PriorityAlertCenter = ({ analytics, language }: { analytics: any; language
         : { title: 'Priority Alert Center', empty: 'No priority alerts', system: 'System', followup: 'Unresponsive leads', contract: 'Expiring contracts', ai: 'AI alert' };
     const alerts = Array.isArray(analytics?.dashboardAlerts) ? analytics.dashboardAlerts : [];
     return (
-        <section className="dashboard-panel border-l-4 border-l-[var(--sgs-accent)] px-4 py-3 sm:px-5" aria-label={copy.title}>
+        <section className="dashboard-overview-block dashboard-block-attention dashboard-panel border-l-4 border-l-[var(--sgs-accent)] px-4 py-3 sm:px-5" aria-label={copy.title}>
             <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
                 <div className="flex items-center gap-2 shrink-0">
                     {ICONS.WARNING}
@@ -243,7 +243,7 @@ const WorkQueueStrip = ({ analytics, language }: { analytics: any; language: str
         : { title: 'Tasks & Approvals', subtitle: 'What needs a next step', contracts: 'Contracts to handle', approvals: 'Pending approvals', followups: 'Leads to follow up' };
     const queue = analytics?.workQueue || {};
     return (
-        <section className="dashboard-panel" aria-label={copy.title}>
+        <section className="dashboard-overview-block dashboard-block-tasks dashboard-panel" aria-label={copy.title}>
             <div className="dashboard-panel-head">
                 <div><h2>{copy.title}</h2><p className="mt-1 text-xs font-normal text-[var(--text-tertiary)]">{copy.subtitle}</p></div>
             </div>
@@ -616,7 +616,7 @@ const RealtimeTrafficWidget = memo(({ t, theme }: any) => {
             contentClassName="justify-start"
              icon={<svg className="w-5 h-5 text-[var(--sgs-primary)]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" /></svg>}
         >
-            <div className="flex justify-between items-start mb-4">
+            <div className="flex justify-between items-start mb-4" aria-description={language === 'vn' ? 'Lưu lượng hệ thống trực tiếp, độ trễ và số lỗi hiện tại.' : 'Live system traffic, latency, and current error count.'}>
                 <div className="flex gap-5 flex-wrap">
                     <div>
                         <div className="text-2xl font-extrabold text-[var(--text-primary)] dark:text-white tracking-tight">{stats.rps}</div>
@@ -747,7 +747,7 @@ export const VisitorFunnelWidget = memo(({ days, language }: { days: number; lan
             label: item.value === 'direct' ? (isVn ? 'Trực tiếp' : 'Direct') : item.value,
         })),
     ];
-    return <section className="dashboard-panel" aria-label={isVn ? 'Funnel hành vi người xem' : 'Viewer behavior funnel'}>
+    return <section className="dashboard-panel" aria-label={isVn ? 'Funnel hành vi người xem' : 'Viewer behavior funnel'} aria-description={isVn ? 'Các bước từ lượt xem tin đến tương tác CTA và tỷ lệ chuyển đổi.' : 'Steps from property views to CTA interactions and conversion rate.'}>
         <div className="dashboard-panel-head flex-wrap gap-3">
             <div><h2>{isVn ? 'Funnel hành vi người xem' : 'Viewer behavior funnel'}</h2><p className="mt-1 text-xs font-normal text-[var(--text-tertiary)]">{isVn ? 'Chất lượng phiên đọc và tín hiệu mua hàng.' : 'Reading quality and buying signals.'}</p></div>
             <div className="flex flex-wrap gap-2">
@@ -983,8 +983,8 @@ export const Dashboard: React.FC = () => {
     <>
       <SeoHead title="Dashboard | SGS LAND" description="Bảng điều khiển tổng quan SGS LAND - quản lý bất động sản, phân tích thị trường và theo dõi hiệu suất kinh doanh." canonicalPath="/dashboard" />
         <div className="sgs-dashboard min-h-full overflow-y-auto px-4 py-5 sm:px-6 lg:px-8 pb-24 animate-enter">
-            <div className="mx-auto max-w-[1480px] space-y-6">
-                <header className="dashboard-header flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
+            <div className="dashboard-overview-grid mx-auto max-w-[1480px]">
+                <header className="dashboard-overview-block dashboard-block-welcome dashboard-header flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
                     <div className="min-w-0">
                         <div className="dash-eyebrow text-[var(--text-tertiary)]">{scopeLabel}</div>
                         <h1 className="dashboard-title mt-2 text-[var(--text-primary)]">
@@ -1028,7 +1028,7 @@ export const Dashboard: React.FC = () => {
                 </header>
 
                 <PriorityAlertCenter analytics={overview} language={language} />
-                <div>
+                <div className="dashboard-overview-block dashboard-block-quick">
                     <div className="mb-2 dashboard-subhead">{ui.quick}</div>
                     <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
                         <a href="/leads" className="dashboard-control px-3 py-2.5 text-center text-xs font-semibold text-[var(--sgs-primary)]">{ui.addLead}</a>
@@ -1039,7 +1039,7 @@ export const Dashboard: React.FC = () => {
                 <WorkQueueStrip analytics={overview} language={language} />
 
                 {(analytics.totalLeads ?? 0) < 5 && !localStorage.getItem('sgs_guide_dismissed') && (
-                    <div className="dashboard-guide flex flex-col gap-3 px-4 py-3 sm:flex-row sm:items-center sm:justify-between" data-guide-banner>
+                    <div className="dashboard-overview-block dashboard-block-guide dashboard-guide flex flex-col gap-3 px-4 py-3 sm:flex-row sm:items-center sm:justify-between" data-guide-banner>
                         <div>
                             <p className="text-sm font-semibold text-[var(--text-primary)]">
                                 {language === 'vn' ? 'Bắt đầu với SGS LAND' : 'Getting started with SGS LAND'}
@@ -1067,9 +1067,9 @@ export const Dashboard: React.FC = () => {
                     </div>
                 )}
 
-                <div ref={dashboardRef} data-dashboard-export-root className="space-y-6">
-                    <div className="dashboard-subhead">{ui.overview}</div>
-                    <section className="dashboard-kpis" aria-label={t('dash.overview_subtitle')}>
+                <div ref={dashboardRef} data-dashboard-export-root className="contents">
+                    <div className="dashboard-overview-block dashboard-block-section-label dashboard-subhead">{ui.overview}</div>
+                    <section className="dashboard-overview-block dashboard-block-kpis dashboard-kpis" aria-label={t('dash.overview_subtitle')}>
                         <div className="dashboard-kpi">
                             <div className="kpi-label">{t('dash.revenue_title')}</div>
                             <div className="kpi-value dash-number break-words">{formatCompactNumber(analytics.revenue || 0)}</div>
@@ -1095,7 +1095,7 @@ export const Dashboard: React.FC = () => {
                         </div>
                     </section>
 
-                    <section className="dashboard-panel" aria-label={t('dash.pipeline_title')}>
+                    <section className="dashboard-overview-block dashboard-block-pipeline dashboard-panel" aria-label={t('dash.pipeline_title')} aria-description={language === 'vn' ? 'Biểu đồ phễu khách hàng và nhịp thị trường theo thời gian đã chọn.' : 'Lead pipeline and market pulse for the selected time range.'}>
                         <div className="dashboard-panel-head">
                             <h2>{t('dash.pipeline_title')}</h2>
                             <div className="flex items-center gap-3 text-right">
@@ -1142,7 +1142,7 @@ export const Dashboard: React.FC = () => {
                             <div className="dashboard-side">
                                 <div className="dashboard-subhead mb-2">{t('dash.activity_title')}</div>
                                 <div className="max-h-[315px] overflow-y-auto no-scrollbar">
-                                    {(analytics.recentActivities || []).map((act: any, idx: number) => (
+                                     {(analytics.recentActivities || []).slice(0, 5).map((act: any, idx: number) => (
                                         <ActivityItem key={act.id != null ? `${act.id}-${idx}` : idx} activity={act} />
                                     ))}
                                     {(!analytics.recentActivities || analytics.recentActivities.length === 0) && <div className="py-10"><EmptyState message={t('dash.activity_empty')} /></div>}
@@ -1188,7 +1188,7 @@ export const Dashboard: React.FC = () => {
                             <section>
                                 <div className="mb-2 flex items-center justify-between gap-2"><div className="dashboard-subhead">{t('dash.leaderboard_title')}</div><SegmentToggle value={leaderboardMode} onChange={(value) => setLeaderboardMode(value as 'individual' | 'team')} options={[{ value: 'individual', label: ui.individual }, { value: 'team', label: ui.team }]} /></div>
                                 <div className="max-h-[305px] overflow-y-auto no-scrollbar">
-                                    {(leaderboardMode === 'team' ? (overview.teamLeaderboard || []) : (analytics.agentLeaderboard || [])).map((agent: any, idx: number) => (
+                                     {(leaderboardMode === 'team' ? (overview.teamLeaderboard || []) : (analytics.agentLeaderboard || [])).slice(0, 5).map((agent: any, idx: number) => (
                                         <div key={agent.id ?? agent.name ?? idx} className="dashboard-ranking">
                                             <div className="flex min-w-0 items-center gap-2.5">
                                                 <AgentAvatar name={agent.name} avatar={agent.avatar} />
@@ -1207,7 +1207,7 @@ export const Dashboard: React.FC = () => {
                         </div>
                     </section>
 
-                    <section className="grid grid-cols-1 gap-6 xl:grid-cols-3" aria-label={language === 'vn' ? 'Tóm tắt vận hành' : 'Operations summary'}>
+                    <section className="dashboard-overview-block dashboard-block-operations grid grid-cols-1 gap-6 xl:grid-cols-3" aria-label={language === 'vn' ? 'Tóm tắt vận hành' : 'Operations summary'}>
                         <section className="dashboard-panel" aria-label={language === 'vn' ? 'Cố Vấn AI' : 'AI Advisor'}>
                             <div className="dashboard-panel-head">
                                 <h2>{language === 'vn' ? 'Cố Vấn AI' : 'AI Advisor'}</h2>
@@ -1229,21 +1229,25 @@ export const Dashboard: React.FC = () => {
                         <InboxOverviewWidget analytics={overview} language={language} />
                     </section>
 
-                    <SearchAnalyticsWidget analytics={overview} language={language} />
+                    <div className="dashboard-overview-block dashboard-block-search">
+                        <SearchAnalyticsWidget analytics={overview} language={language} />
+                    </div>
 
                     {(['SUPER_ADMIN', 'ADMIN', 'TEAM_LEAD'].includes(analytics.user?.role ?? '')) && (
                         <>
-                            <VisitorFunnelWidget days={selectedDays} language={language} />
-                            <div className="grid grid-cols-1 gap-6 xl:grid-cols-2">
+                            <div className="dashboard-overview-block dashboard-block-funnel">
+                                <VisitorFunnelWidget days={selectedDays} language={language} />
+                            </div>
+                            <div className="dashboard-overview-block dashboard-block-visitors grid grid-cols-1 gap-6 xl:grid-cols-2">
                                 <GeoLocationTable t={t} days={selectedDays} />
                                 <RealtimeTrafficWidget t={t} theme={chartTheme} />
                             </div>
                         </>
                     )}
-                    <section className="dashboard-panel" aria-label={ui.demand}>
+                    <section className="dashboard-overview-block dashboard-block-demand dashboard-panel" aria-label={ui.demand} aria-description={language === 'vn' ? 'Nhu cầu theo khu vực, sắp xếp theo điểm nhu cầu.' : 'Demand by area, ordered by demand score.'}>
                         <div className="dashboard-panel-head"><h2>{ui.demand}</h2><span className="text-xs text-[var(--text-tertiary)]">{overview.demandAreas?.length ?? 0}</span></div>
                         <div className="grid grid-cols-1 gap-2 px-4 pb-4 sm:grid-cols-2 lg:grid-cols-4">
-                            {(overview.demandAreas || []).slice(0, 8).map((area: any, index: number) => (
+                            {(overview.demandAreas || []).slice(0, 5).map((area: any, index: number) => (
                                 <div key={area.name ?? index} className="rounded-xl border border-[var(--glass-border)] bg-[var(--bg-surface)] px-3 py-3">
                                     <div className="flex items-center justify-between gap-2 text-xs"><span className="truncate text-[var(--text-secondary)]">{area.name}</span><strong className="font-mono text-[var(--sgs-primary)]">{area.score ?? area.count ?? 0}</strong></div>
                                     <div className="mt-2 h-1.5 rounded-full bg-[var(--glass-surface-hover)]"><div className="h-full rounded-full bg-[var(--sgs-accent)]" style={{ width: `${Math.min(100, Number(area.score ?? area.count ?? 0))}%` }} /></div>
@@ -1252,6 +1256,13 @@ export const Dashboard: React.FC = () => {
                         </div>
                         {!overview.demandAreas?.length && <div className="mx-4 mb-4 py-3 text-xs text-[var(--text-tertiary)]">{language === 'vn' ? 'Chưa có dữ liệu nhu cầu theo khu vực' : 'No area demand data yet'}</div>}
                     </section>
+                    <footer className="dashboard-footer-status" aria-label={language === 'vn' ? 'Trạng thái Dashboard' : 'Dashboard status'}>
+                        <span>{language === 'vn' ? 'Dữ liệu hiển thị theo phạm vi quyền truy cập hiện tại.' : 'Data is shown within your current access scope.'}</span>
+                        <span className="dashboard-footer-status__updated">
+                            {ICONS.REFRESH}
+                            {language === 'vn' ? 'Cập nhật lần cuối' : 'Last updated'} {lastUpdated.toLocaleTimeString(language === 'vn' ? 'vi-VN' : 'en-US')}
+                        </span>
+                    </footer>
                 </div>
             </div>
         </div>
