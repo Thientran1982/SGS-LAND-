@@ -989,11 +989,6 @@ export const Dashboard: React.FC = () => {
                         </div>
                     </div>
                     <div className="flex w-full flex-wrap items-center gap-2 sm:w-auto sm:flex-nowrap">
-                        <div className="hidden items-center gap-2 xl:flex">
-                            <a href="/leads" className="dashboard-control quick-action px-3 py-2.5 text-xs font-semibold text-[var(--sgs-primary)]">{ui.addLead}</a>
-                            <a href="/contracts" className="dashboard-control quick-action px-3 py-2.5 text-xs font-semibold text-[var(--sgs-primary)]">{ui.contract}</a>
-                            <a href="/inventory" className="dashboard-control quick-action px-3 py-2.5 text-xs font-semibold text-[var(--sgs-primary)]">{ui.listing}</a>
-                        </div>
                         <KpiTargetSettings user={currentUser} language={language} notify={notify} />
                         <button
                             onClick={handleExport}
@@ -1025,16 +1020,6 @@ export const Dashboard: React.FC = () => {
                 </header>
 
                 <PriorityAlertCenter analytics={overview} language={language} />
-                <div className="xl:hidden">
-                    <div className="mb-2 dashboard-subhead">{ui.quick}</div>
-                    <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
-                        <a href="/leads" className="dashboard-control quick-action px-3 py-2.5 text-center text-xs font-semibold text-[var(--sgs-primary)]">{ui.addLead}</a>
-                        <a href="/contracts" className="dashboard-control quick-action px-3 py-2.5 text-center text-xs font-semibold text-[var(--sgs-primary)]">{ui.contract}</a>
-                        <a href="/inventory" className="dashboard-control quick-action px-3 py-2.5 text-center text-xs font-semibold text-[var(--sgs-primary)]">{ui.listing}</a>
-                    </div>
-                </div>
-                <WorkQueueStrip analytics={overview} language={language} />
-
                 {(analytics.totalLeads ?? 0) < 5 && !localStorage.getItem('sgs_guide_dismissed') && (
                     <div className="dashboard-guide flex flex-col gap-3 px-4 py-3 sm:flex-row sm:items-center sm:justify-between" data-guide-banner>
                         <div>
@@ -1065,7 +1050,19 @@ export const Dashboard: React.FC = () => {
                 )}
 
                 <div ref={dashboardRef} data-dashboard-export-root className="space-y-6">
-                    <section className="dashboard-kpis" aria-label={t('dash.overview_subtitle')}>
+                    <section className="dashboard-panel dashboard-command-panel overflow-hidden" aria-label={language === 'vn' ? 'Điều hành nhanh và KPI' : 'Quick actions and KPIs'}>
+                        <div className="border-b border-[var(--dash-rule)] p-4 sm:p-5">
+                            <div className="mb-3 dashboard-subhead">{ui.quick}</div>
+                            <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
+                                <a href="/leads" className="dashboard-control quick-action px-3 py-2.5 text-center text-xs font-semibold text-[var(--sgs-primary)]">{ui.addLead}</a>
+                                <a href="/contracts" className="dashboard-control quick-action px-3 py-2.5 text-center text-xs font-semibold text-[var(--sgs-primary)]">{ui.contract}</a>
+                                <a href="/inventory" className="dashboard-control quick-action px-3 py-2.5 text-center text-xs font-semibold text-[var(--sgs-primary)]">{ui.listing}</a>
+                            </div>
+                        </div>
+                        <div className="p-4 sm:p-5">
+                            <WorkQueueStrip analytics={overview} language={language} />
+                        </div>
+                        <section className="dashboard-kpis" aria-label={t('dash.overview_subtitle')}>
                         <div className="dashboard-kpi">
                             <div className="kpi-label">{t('dash.revenue_title')}</div>
                             <div className="kpi-value dash-number break-words">{formatCompactNumber(analytics.revenue || 0)}</div>
@@ -1089,6 +1086,7 @@ export const Dashboard: React.FC = () => {
                             <div className="kpi-meta">{analytics.salesVelocity > 0 ? t('dash.days_to_close') : t('dash.no_closed_deals')} <TrendIndicator value={analytics.salesVelocityDelta || 0} label="" /></div>
                             {velocityTarget.target > 0 && <ProgressBar value={velocityTarget.progress} label={`${velocityTarget.progress}% ${ui.target}`} />}
                         </div>
+                        </section>
                     </section>
 
                     <section className="dashboard-panel" aria-label={t('dash.pipeline_title')}>
