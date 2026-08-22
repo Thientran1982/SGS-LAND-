@@ -876,6 +876,24 @@ html.dark body {
 .crm-dashboard-shell .sgs-dashboard .dashboard-secondary {
   background: var(--dash-panel-soft);
 }
+.crm-dashboard-shell .sgs-dashboard .dashboard-main-grid,
+.crm-dashboard-shell .sgs-dashboard .dashboard-two-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.12fr) minmax(0, .88fr);
+  gap: 1rem;
+}
+.crm-dashboard-shell .sgs-dashboard .dashboard-two-grid {
+  margin-top: 1rem;
+}
+.crm-dashboard-shell .sgs-dashboard .dashboard-three-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 1rem;
+  margin-top: 1rem;
+}
+.crm-dashboard-shell .sgs-dashboard .dashboard-three-grid + .dashboard-two-grid {
+  margin-top: 1rem;
+}
 @media (max-width: 767px) {
   .crm-dashboard-shell > aside {
     width: 0;
@@ -884,6 +902,11 @@ html.dark body {
   }
   .crm-dashboard-shell .sgs-dashboard {
     padding: 1.35rem .9rem 4rem;
+  }
+  .crm-dashboard-shell .sgs-dashboard .dashboard-main-grid,
+  .crm-dashboard-shell .sgs-dashboard .dashboard-two-grid,
+  .crm-dashboard-shell .sgs-dashboard .dashboard-three-grid {
+    grid-template-columns: 1fr;
   }
 }
 @media (max-width: 900px) {
