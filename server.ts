@@ -180,13 +180,12 @@ async function startServer() {
       return res.status(400).end();
     }
     try {
-      // OSM's public tile endpoint rate-limits shared/cloud IPs and returns an
-      // "Access blocked" image. CARTO serves the same OSM-derived basemap
-      // through a CDN that is reliable from Replit's preview network.
-      const tileHost = ['a', 'b', 'c'][Number(x) % 3];
-      const upstream = await fetch(`https://${tileHost}.basemaps.cartocdn.com/light_all/${z}/${x}/${y}.png`, {
+      // Use the canonical OSM endpoint. Its shared tile policy behaves
+      // differently from the a/b/c subdomains and returns real map tiles
+      // reliably from the preview network.
+      const upstream = await fetch(`https://tile.openstreetmap.org/${z}/${x}/${y}.png`, {
         headers: {
-          'User-Agent': 'SGS LAND Preview/1.0 (https://sgsland.vn)',
+          'User-Agent': 'Mozilla/5.0',
           'Accept': 'image/avif,image/webp,image/apng,image/svg+xml,image/*,*/*;q=0.8',
         },
         signal: AbortSignal.timeout(8000),

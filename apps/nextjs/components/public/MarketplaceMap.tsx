@@ -27,8 +27,8 @@ export function MarketplaceMap({ listings, height = "620px" }: { listings: any[]
         wheelPxPerZoomLevel: 60,
       }).setView([10.85, 106.75], 10);
       mapRef.current = map;
-      L.tileLayer("/api/map-tiles/{z}/{x}/{y}.png", {
-        attribution: "&copy; OpenStreetMap &copy; CARTO",
+      L.tileLayer("/api/map-tiles/{z}/{x}/{y}.png?v=2", {
+        attribution: "&copy; OpenStreetMap",
         maxZoom: 19,
       }).addTo(map);
 
