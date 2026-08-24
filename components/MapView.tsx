@@ -654,8 +654,8 @@ const MapView: React.FC<MapViewProps> = memo(({
                 /* Pin hover lift */
                 .leaflet-marker-icon:hover { z-index: 9999 !important; }
             `}</style>
-            <div style={{ position: 'relative', width: '100%', height: '100%' }}>
-                <div ref={mapRef} style={{ width: '100%', height: '100%', background: '#e8e8e0' }} />
+            <div style={{ position: 'relative', width: '100%', height: '100%', minHeight: detailStyle ? '320px' : '420px' }}>
+                <div ref={mapRef} style={{ width: '100%', height: '100%', minHeight: detailStyle ? '320px' : '420px', background: '#e8e8e0' }} />
                 {/* Marketplace legend; detail maps use the simpler public overlay below. */}
                 {!detailStyle && <div style={{
                     position: 'absolute', top: 12, right: 12,

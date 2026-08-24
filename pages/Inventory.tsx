@@ -1055,7 +1055,18 @@ export const Inventory: React.FC = () => {
                 )}
                 {/* MAP VIEW — absolute positioning for guaranteed pixel height independent of scroll/flex chain */}
                 {viewMode === 'MAP' && (
-                    <div className="absolute inset-0 p-4 sm:p-6" style={{ zIndex: 1 }}>
+                    <div
+                        className="absolute inset-0 p-4 sm:p-6"
+                        style={{
+                            zIndex: 1,
+                            // Do not rely on an ancestor's percentage height here.
+                            // In the production shell the flex chain can be
+                            // temporarily height-less while the route settles,
+                            // which makes Leaflet initialize against a 0px pane.
+                            height: '100%',
+                            minHeight: '420px',
+                        }}
+                    >
                         <div className="w-full h-full rounded-2xl overflow-hidden border border-[var(--glass-border)] shadow-sm relative">
                             <MapView
                                 listings={allFilteredListings.length > 0 ? allFilteredListings : listings}
