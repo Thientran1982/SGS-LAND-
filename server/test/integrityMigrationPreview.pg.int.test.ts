@@ -10,6 +10,7 @@ const testConnectionString = connectionString?.replace(
   /([?&])(?:sslmode|channel_binding)=[^&]*/g,
   '$1',
 ).replace(/[?&]$/, '');
+const useSsl = process.env.INTEGRITY_PG_SSL !== 'false';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const marketReportPath = path.resolve(
@@ -40,7 +41,7 @@ describePostgres('listing integrity previews against PostgreSQL', () => {
       // The integration URL may be a managed Aiven endpoint whose CA is only
       // configured for the application pool. This pool is test-only and its
       // random schema contains no production data.
-      ssl: { rejectUnauthorized: false },
+      ssl: useSsl ? { rejectUnauthorized: false } : false,
     });
     client = await pool.connect();
     schema = `integrity_preview_${process.pid}_${Date.now()}`;

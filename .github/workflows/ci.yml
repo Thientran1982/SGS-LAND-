@@ -33,6 +33,49 @@ jobs:
       - name: Build
         run: npm run build
 
+  integrity-preview:
+    name: PostgreSQL Integrity Preview
+    runs-on: ubuntu-latest
+    env:
+      # This database exists only inside the ephemeral GitHub Actions job.
+      # The test creates and drops its own schema inside it; no production
+      # connection or data is used.
+      INTEGRITY_PG_URL: postgresql://postgres:postgres@localhost:5432/integrity_preview
+      INTEGRITY_PG_SSL: 'false'
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: integrity_preview
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd="pg_isready -U postgres -d integrity_preview"
+          --health-interval=5s
+          --health-timeout=5s
+          --health-retries=12
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run PostgreSQL integrity previews
+        run: >-
+          npx vitest run
+          --config vitest.server.config.ts
+          server/test/integrityMigrationPreview.pg.int.test.ts
+
   security:
     name: Security Audit
     runs-on: ubuntu-latest
