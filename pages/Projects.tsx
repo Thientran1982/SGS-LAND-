@@ -3492,7 +3492,7 @@ export function Projects() {
                             placeholder={t('common.search') + '...'}
                             value={search}
                             onChange={e => setSearch(e.target.value)}
-                            className="w-full pl-9 pr-3 py-2 h-[38px] border border-[var(--glass-border)] rounded-xl bg-[var(--bg-app)] text-sm text-[var(--text-primary)] focus:outline-none focus:ring-2 focus:ring-sgs-primary"
+                            className="w-full pl-9 pr-3 h-10 border border-[var(--glass-border)] rounded-xl bg-[var(--bg-app)] text-sm text-[var(--text-primary)] focus:outline-none focus:ring-2 focus:ring-sgs-primary"
                         />
                     </div>
                     {/* Status filter */}
@@ -3505,7 +3505,8 @@ export function Projects() {
                                     { value: '', label: t('project.status') },
                                     ...(['ACTIVE','BOOKING','COMPLETED','ON_HOLD','SUSPENDED'].map(s => ({ value: s, label: t('project.status_' + s) })))
                                 ]}
-                                className="text-sm h-[38px]"
+                                className="text-sm"
+                                variant="compact-minimal"
                             />
                         </div>
                     )}
@@ -3519,7 +3520,7 @@ export function Projects() {
                     {/* Create button */}
                     {isAdmin && (
                         <button type="button" onClick={() => setFormTarget('new')}
-                            className="shrink-0 flex items-center gap-1.5 px-4 py-2 h-[38px] rounded-xl bg-sgs-primary text-white text-sm font-bold hover:bg-sgs-primary shadow-sm transition-colors">
+                            className="shrink-0 flex items-center gap-1.5 px-4 h-10 rounded-xl bg-sgs-primary text-white text-sm font-bold hover:bg-sgs-primary shadow-sm transition-colors">
                             {IC.PLUS} <span className="hidden xs:inline">{t('project.new')}</span>
                         </button>
                     )}
