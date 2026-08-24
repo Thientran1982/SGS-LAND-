@@ -9,6 +9,7 @@ import { Dropdown } from './Dropdown';
 import { ContractModal } from './ContractModal';
 import { useSocket } from '../services/websocket';
 import { AiCreditBadge, AiQuotaGate, type QuotaInfo } from './AiCreditBadge';
+import { formatLeadTagsInput, normalizeLeadEmail, normalizeLeadTags, normalizeVNPhone } from '../utils/leadNormalization';
 const fmtDots = (n: number) => Math.round(n).toString().replace(/\B(?=(\d{3})+(?!\d))/g, '.');
 const stripMarkdown = (text: string): string =>
     text
@@ -159,8 +160,10 @@ export const LeadDetail: React.FC<LeadDetailProps> = ({ lead, onClose, onUpdate,
     } | null>(null);
     const [loadingEditContract, setLoadingEditContract] = useState(false);
     const [activeViewers, setActiveViewers] = useState<any[]>([]);
+    const [currentUser, setCurrentUser] = useState<any>(null);
     const { t, formatDateTime, language } = useTranslation();
     const [users, setUsers] = useState<{value: string, label: string}[]>([]);
+    const canManageConsent = ['SUPER_ADMIN', 'ADMIN', 'TEAM_LEAD'].includes(currentUser?.role);
     const refreshAiSummary = async () => {
         setIsThinking(true);
         try {
@@ -184,6 +187,7 @@ export const LeadDetail: React.FC<LeadDetailProps> = ({ lead, onClose, onUpdate,
             const history = await db.getInteractions(lead.id);
             setInteractions(history.sort((a,b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()));            
             try {
+                setCurrentUser(await db.getCurrentUser());
                 const res = await db.getMembers();
                 setUsers([
                     { value: '', label: t('inbox.unassigned') },
@@ -239,7 +243,32 @@ export const LeadDetail: React.FC<LeadDetailProps> = ({ lead, onClose, onUpdate,
     const handleSave = async () => {
         setIsSaving(true);
         try {
-            await onUpdate(formData);
+            const normalizedPhone = normalizeVNPhone(formData.phone);
+            const normalizedEmail = normalizeLeadEmail(formData.email || '');
+            const normalizedTags = normalizeLeadTags(formData.tags || []);
+            const nextLead = {
+                ...formData,
+                name: formData.name.trim(),
+                phone: normalizedPhone,
+                email: normalizedEmail,
+                address: (formData.address || '').trim(),
+                tags: normalizedTags,
+            };
+            if (!VN_PHONE_REGEX.test(normalizedPhone)) {
+                setErrors({ phone: t('validation.phone_invalid') });
+                return;
+            }
+            if (normalizedEmail && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(normalizedEmail)) {
+                setErrors({ email: t('validation.email_invalid') });
+                return;
+            }
+            const consentChanged = canManageConsent &&
+                nextLead.marketingEmailConsent !== lead.marketingEmailConsent;
+            const { marketingEmailConsent: _consent, marketingEmailConsentAt: _consentAt, marketingEmailConsentSource: _consentSource, ...leadPayload } = nextLead;
+            if (consentChanged) {
+                await db.updateMarketingConsent(lead.id, nextLead.marketingEmailConsent === true, 'crm');
+            }
+            await onUpdate(leadPayload as Lead);
             if(isModal) onClose();
         } finally {
             setIsSaving(false);
@@ -247,6 +276,7 @@ export const LeadDetail: React.FC<LeadDetailProps> = ({ lead, onClose, onUpdate,
     };    
     const handleInputChange = (field: keyof Lead, value: any) => {
         setFormData(prev => ({ ...prev, [field]: value }));
+        if (errors[field]) setErrors(prev => ({ ...prev, [field]: '' }));
     };
     const handleScoreLead = async () => {
         if (!formData.id || isScoring) return;

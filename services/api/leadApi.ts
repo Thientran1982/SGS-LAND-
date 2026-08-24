@@ -13,6 +13,8 @@ export const leadApi = {
     api.post('/api/leads', data),
   updateLead: (id: string, data: Record<string, any>): Promise<any> =>
     api.put(`/api/leads/${id}`, data),
+  updateMarketingConsent: (id: string, consent: boolean, source = 'crm'): Promise<any> =>
+    api.patch(`/api/leads/${id}/marketing-consent`, { consent, source }),
   mergeLead: (id: string, data: Record<string, any>): Promise<any> =>
     api.patch(`/api/leads/${id}/merge`, data),
   deleteLead: (id: string): Promise<any> =>
