@@ -6,6 +6,7 @@ import { auditRepository } from '../repositories/auditRepository';
 import { routingRuleRepository } from '../repositories/routingRuleRepository';
 import { notificationRepository } from '../repositories/notificationRepository';
 import { enrollLeadToMatchingSequences } from '../services/sequenceService';
+import { normalizeLeadEmail, normalizeLeadTags, normalizeVNPhone } from '../../utils/leadNormalization';
 
 
 const STAGE_LABEL_VN: Record<string, string> = {
@@ -81,7 +82,7 @@ export function createLeadRoutes(authenticateToken: any, getBroadcast?: () => an
   router.get('/check-email', authenticateToken, async (req: Request, res: Response) => {
     try {
       const user = (req as any).user;
-      const email = (req.query.email as string)?.trim();
+      const email = normalizeLeadEmail(req.query.email as string);
       if (!email) return res.json({ duplicate: null });
 
       const duplicate = await leadRepository.checkDuplicateEmail(user.tenantId, email);
@@ -106,7 +107,7 @@ export function createLeadRoutes(authenticateToken: any, getBroadcast?: () => an
   router.get('/check-phone', authenticateToken, async (req: Request, res: Response) => {
     try {
       const user = (req as any).user;
-      const phone = (req.query.phone as string)?.trim();
+      const phone = normalizeVNPhone(req.query.phone as string);
       if (!phone) return res.json({ duplicate: null });
 
       const duplicate = await leadRepository.checkDuplicatePhone(user.tenantId, phone);
@@ -145,7 +146,10 @@ export function createLeadRoutes(authenticateToken: any, getBroadcast?: () => an
   router.post('/', authenticateToken, async (req: Request, res: Response) => {
     try {
       const user = (req as any).user;
-      const { name, phone, email, address, source, stage, assignedTo, tags, notes, preferences } = req.body;
+      const { name, phone: rawPhone, email: rawEmail, address, source, stage, assignedTo, tags, notes, preferences } = req.body;
+      const phone = normalizeVNPhone(rawPhone);
+      const email = normalizeLeadEmail(rawEmail);
+      const normalizedTags = normalizeLeadTags(tags);
 
       if (!name || !phone) {
         return res.status(400).json({ error: 'Name and phone are required' });
@@ -185,7 +189,7 @@ export function createLeadRoutes(authenticateToken: any, getBroadcast?: () => an
       if (!assignedTo && !isRestricted) {
         try {
           const autoAssignId = await routingRuleRepository.matchLead(user.tenantId, {
-            source, address, tags, preferences,
+            source, address, tags: normalizedTags, preferences,
           });
           if (autoAssignId) finalAssignedTo = autoAssignId;
         } catch (routingErr) {
@@ -194,9 +198,9 @@ export function createLeadRoutes(authenticateToken: any, getBroadcast?: () => an
       }
 
       const lead = await leadRepository.create(user.tenantId, {
-        name, phone, email, address, source, stage,
+        name: String(name).trim(), phone, email, address: String(address ?? '').trim(), source, stage,
         assignedTo: finalAssignedTo || user.id,
-        tags, notes, preferences,
+        tags: normalizedTags, notes, preferences,
       });
 
       await auditRepository.log(user.tenantId, {

@@ -5,10 +5,11 @@ import { useTranslation } from '../services/i18n';
 import { Dropdown } from './Dropdown';
 import { Lead, LEAD_SOURCES, VN_PHONE_REGEX, LeadStage } from '../types';
 import { useSocket } from '../services/websocket';
+import { formatLeadTagsInput, normalizeLeadEmail, normalizeLeadTags, normalizeVNPhone } from '../utils/leadNormalization';
 const ICONS = {
     DUPLICATE: <svg className="w-5 h-5 text-sgs-accent-text" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7v8a2 2 0 002 2h6M8 7V5a2 2 0 012-2h4.586a1 1 0 01.707.293l4.414 4.414a1 1 0 01.293.707V15a2 2 0 01-2 2h-2M8 7H6a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 00-2-2v-2" /></svg>
 };
-const FormInput = ({ label, value, onChange, placeholder, required, type = 'text', autoFocus, error, className = "" }: any) => (
+const FormInput = ({ label, value, onChange, onBlur, placeholder, required, type = 'text', autoFocus, error, className = "" }: any) => (
     <div className={`space-y-1 ${className}`}>
         <label className="text-xs font-bold text-[var(--text-tertiary)] uppercase ml-1 block">
             {label} {required && <span className="text-rose-500">*</span>}
@@ -17,6 +18,7 @@ const FormInput = ({ label, value, onChange, placeholder, required, type = 'text
             type={type}
             value={value}
             onChange={e => onChange(e.target.value)}
+            onBlur={onBlur}
             className={`w-full border rounded-xl px-4 py-2.5 text-[16px] outline-none focus:ring-2 transition-all ${error ? 'border-rose-300 focus:ring-rose-500/20 bg-rose-50' : 'border-[var(--glass-border)] focus:ring-[var(--sgs-primary)]/20 focus:border-[var(--sgs-primary)]'}`}
             placeholder={placeholder}
             required={required}
@@ -137,10 +139,12 @@ export const CreateLeadModal: React.FC<CreateLeadModalProps> = ({ onClose, onSuc
         if (!formData.name.trim()) {
             newErrors.name = t('auth.error_name_required');
         }
-        if (!VN_PHONE_REGEX.test(formData.phone)) {
+        const normalizedPhone = normalizeVNPhone(formData.phone);
+        const normalizedEmail = normalizeLeadEmail(formData.email);
+        if (!VN_PHONE_REGEX.test(normalizedPhone)) {
             newErrors.phone = t('validation.phone_invalid');
         }
-        if (formData.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
+        if (normalizedEmail && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(normalizedEmail)) {
             newErrors.email = t('validation.email_invalid');
         }        
         if (Object.keys(newErrors).length > 0) {
@@ -150,7 +154,7 @@ export const CreateLeadModal: React.FC<CreateLeadModalProps> = ({ onClose, onSuc
         setLoading(true);        
         try {
             // Use pre-detected phone warning if available, otherwise check API
-            const existing = phoneWarning ?? await db.checkDuplicateLead(formData.phone);            
+            const existing = phoneWarning ?? await db.checkDuplicateLead(normalizedPhone);
             if (existing) {
                 setDuplicateLead(existing);
                 setStep('MERGE');
@@ -160,9 +164,10 @@ export const CreateLeadModal: React.FC<CreateLeadModalProps> = ({ onClose, onSuc
             // Prepare payload
             const payload = {
                 ...formData,
+                phone: normalizedPhone,
+                email: normalizedEmail,
                 assignedTo: formData.assignedTo as any,
-                // Enhanced tag processing: Split by comma, trim spaces, remove empty strings
-                tags: formData.tags ? formData.tags.split(',').map(t => t.trim()).filter(Boolean) : []
+                tags: normalizeLeadTags(formData.tags)
             };
             const createdLead = await db.createLead(payload);
             socket?.emit("lead_created", createdLead);
@@ -185,7 +190,7 @@ export const CreateLeadModal: React.FC<CreateLeadModalProps> = ({ onClose, onSuc
         if (!duplicateLead) return;
         setLoading(true);
         try {
-            const newTags = formData.tags ? formData.tags.split(',').map(t => t.trim()).filter(Boolean) : [];
+            const newTags = normalizeLeadTags(formData.tags);
             // Additive-only: never send name (identity), only send fields the existing lead is missing
             const mergePayload: Record<string, any> = {
                 tags: newTags,
@@ -210,7 +215,7 @@ export const CreateLeadModal: React.FC<CreateLeadModalProps> = ({ onClose, onSuc
         if (formData.email && !duplicateLead.email) items.push(`Email: ${formData.email}`);
         if (formData.address && !duplicateLead.address) items.push(`Địa chỉ: ${formData.address}`);
         if (formData.notes) items.push('Ghi chú: được bổ sung');
-        const newTags = formData.tags ? formData.tags.split(',').map(t => t.trim()).filter(Boolean) : [];
+        const newTags = normalizeLeadTags(formData.tags);
         const addedTags = newTags.filter(tag => !(duplicateLead.tags || []).includes(tag));
         if (addedTags.length > 0) items.push(`Tags: +${addedTags.join(', ')}`);
         return items;
@@ -265,6 +270,7 @@ export const CreateLeadModal: React.FC<CreateLeadModalProps> = ({ onClose, onSuc
                                     label={t('leads.phone')} 
                                     value={formData.phone} 
                                     onChange={(v: string) => updateField('phone', v)} 
+                                    onBlur={() => updateField('phone', normalizeVNPhone(formData.phone))}
                                     placeholder={t('profile.placeholder_phone')}
                                     required
                                     error={errors.phone}
@@ -293,6 +299,7 @@ export const CreateLeadModal: React.FC<CreateLeadModalProps> = ({ onClose, onSuc
                                     label={t('leads.email')} 
                                     value={formData.email} 
                                     onChange={(v: string) => updateField('email', v)} 
+                                    onBlur={() => updateField('email', normalizeLeadEmail(formData.email))}
                                     placeholder={t('auth.placeholder_email')}
                                     type="text"
                                     error={errors.email}
@@ -345,6 +352,7 @@ export const CreateLeadModal: React.FC<CreateLeadModalProps> = ({ onClose, onSuc
                                 label={t('leads.tags')} 
                                 value={formData.tags} 
                                 onChange={(v: string) => updateField('tags', v)} 
+                                onBlur={() => updateField('tags', formatLeadTagsInput(formData.tags))}
                                 placeholder={t('leads.placeholder_tags') + ' (VD: VIP, căn hộ, Q2)'}
                             />
                             <div>
