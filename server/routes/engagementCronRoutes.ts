@@ -36,6 +36,7 @@ import {
   LeadCampaignType,
 } from '../repositories/campaignRepository';
 import { generateBoostSuggestions } from '../services/listingBoostService';
+import { runCustomerCare, runInactivityAlerts } from '../services/customerCareService';
 
 export function createEngagementCronRouter(pool: Pool, cronSecret: string): Router {
   const router = Router();
@@ -66,6 +67,8 @@ export function createEngagementCronRouter(pool: Pool, cronSecret: string): Rout
       nudge_login_7: { queried: 0, sent: 0, failed: 0 },
       nudge_listing_views: { queried: 0, sent: 0, failed: 0 },
       lead_nurture:  { queried: 0, sent: 0, failed: 0 },
+      care_followup: { queried: 0, sent: 0, failed: 0, skipped: 0, stopped: 0 },
+      care_inactivity: { queried: 0, sent: 0, failed: 0, skipped: 0 },
     };
 
     try {
@@ -198,6 +201,16 @@ export function createEngagementCronRouter(pool: Pool, cronSecret: string): Rout
         await processLead(pool, lead, 'LEAD_NURTURE', dryRun, stats.lead_nurture,
           () => emailService.sendLeadNurture(lead.tenant_id, lead.email, lead.name, lead.project_name));
       }
+
+      // ── SGS Care Agent: D1 / D3 / D5 / D7 ────────────────────────────────
+      const care = await runCustomerCare(pool, dryRun);
+      stats.care_followup = care;
+      logger.info(`[EngagementCron] CARE_FOLLOWUP: queried=${care.queried} sent=${care.sent} skipped=${care.skipped} failed=${care.failed}`);
+
+      // ── SGS Care Agent: internal inactivity notices ──────────────────────
+      const inactivity = await runInactivityAlerts(pool, dryRun);
+      stats.care_inactivity = inactivity;
+      logger.info(`[EngagementCron] CARE_INACTIVITY: queried=${inactivity.queried} sent=${inactivity.sent} skipped=${inactivity.skipped} failed=${inactivity.failed}`);
 
       const totalSent = Object.values(stats).reduce((s, x) => s + x.sent, 0);
       const totalFail = Object.values(stats).reduce((s, x) => s + x.failed, 0);
