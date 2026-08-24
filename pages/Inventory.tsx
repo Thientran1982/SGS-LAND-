@@ -756,7 +756,7 @@ export const Inventory: React.FC = () => {
         <div className="h-full flex flex-col relative">
             {/* Header & Controls */}
              <div className="sticky top-0 z-30 bg-[var(--bg-surface)]/95 backdrop-blur-xl border-b border-[var(--glass-border)] shadow-sm px-3 py-2 md:px-5 md:py-2.5 transition-all flex-none">
-                <div className="flex flex-col md:flex-row justify-between gap-2 md:gap-4">
+                <div className="flex flex-col md:flex-row md:items-center justify-between gap-2 md:gap-4">
                     <div className="flex items-center gap-2 w-full md:w-auto">
                         <div className="relative flex-1 md:w-64 group">
                             <div className="absolute left-3 top-1/2 -translate-y-1/2 flex items-center pointer-events-none text-[var(--text-secondary)] group-focus-within:text-sgs-primary transition-colors">
@@ -784,7 +784,7 @@ export const Inventory: React.FC = () => {
                             <button onClick={() => { setEditingListing(undefined); setIsCreateModalOpen(true); }} className="md:hidden shrink-0 w-10 h-10 bg-sgs-primary-deep text-white rounded-xl flex items-center justify-center shadow-lg active:scale-95">{ICONS.ADD}</button>
                         )}
                     </div>
-                    <div ref={filtersRef} className="flex gap-2 overflow-x-auto pb-1 px-1 -mx-1 no-scrollbar items-center scroll-smooth cursor-grab active:cursor-grabbing">
+                     <div ref={filtersRef} className="flex gap-2 overflow-x-auto pb-0 px-1 -mx-1 no-scrollbar items-center scroll-smooth cursor-grab active:cursor-grabbing">
                          <div className="w-fit min-w-0 shrink-0"><Dropdown value={transactionFilter} onChange={(v) => setTransactionFilter(v as string)} options={transactionOptions} variant="compact" /></div>
                          <div className="w-fit min-w-0 shrink-0"><Dropdown value={typeFilter} onChange={(v) => setTypeFilter(v as string)} options={typeOptions} variant="compact" /></div>
                          <div className="w-fit min-w-0 shrink-0"><Dropdown value={statusFilter} onChange={(v) => setStatusFilter(v as string)} options={statusOptions} variant="compact" /></div>

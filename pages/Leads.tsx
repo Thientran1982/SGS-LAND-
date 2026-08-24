@@ -1021,7 +1021,7 @@ export const Leads: React.FC = () => {
         <div className="h-full flex flex-col relative">
             {/* Header & Controls */}
              <div className="sticky top-0 z-30 bg-[var(--bg-surface)]/95 backdrop-blur-xl border-b border-[var(--glass-border)] shadow-sm px-3 py-2 md:px-5 md:py-2.5 transition-all flex-none">
-                <div className="flex flex-col md:flex-row justify-between gap-2 md:gap-4">
+                <div className="flex flex-col md:flex-row md:items-center justify-between gap-2 md:gap-4">
                     <div className="flex items-center gap-2 w-full md:w-auto">
                         <div className="relative flex-1 md:w-64 group">
                             <div className="absolute left-3 top-1/2 -translate-y-1/2 flex items-center pointer-events-none text-[var(--text-secondary)] group-focus-within:text-sgs-primary transition-colors">
@@ -1049,7 +1049,7 @@ export const Leads: React.FC = () => {
                     </div>
                     <div 
                         ref={filtersRef}
-                        className="flex gap-2 overflow-x-auto pb-2 px-1 -mx-1 no-scrollbar items-center scroll-smooth cursor-grab active:cursor-grabbing"
+                        className="flex gap-2 overflow-x-auto pb-0 px-1 -mx-1 no-scrollbar items-center scroll-smooth cursor-grab active:cursor-grabbing"
                     >
                         <div className="w-fit min-w-0 shrink-0"><Dropdown value={stageFilter} onChange={(val) => setStageFilter(val as string)} options={stageOptions} variant="compact" /></div>
                         <div className="w-fit min-w-0 shrink-0"><Dropdown value={sourceFilter} onChange={(val) => setSourceFilter(val as string)} options={sourceOptions} variant="compact" /></div>
@@ -1089,7 +1089,7 @@ export const Leads: React.FC = () => {
                                 <button
                                     ref={colSettingsBtnRef}
                                     onClick={() => setShowColumnSettings(v => !v)}
-                                     className={`h-10 flex items-center gap-1.5 px-2 rounded-xl border text-xs font-bold transition-all ${showColumnSettings ? 'bg-[var(--sgs-primary)]/10 border-[var(--sgs-primary)] text-[var(--sgs-primary)]' : 'bg-[var(--bg-surface)] border-[var(--glass-border)] text-[var(--text-secondary)] hover:bg-[var(--glass-surface)]'}`}
+                                     className={`h-10 flex items-center gap-1.5 px-2 rounded-xl text-xs font-bold transition-all ${showColumnSettings ? 'bg-[var(--sgs-primary)]/10 text-[var(--sgs-primary)]' : 'bg-[var(--glass-surface-hover)] text-[var(--text-secondary)] hover:bg-[var(--glass-surface)]'}`}
                                     title={t('leads.col_settings_title')}
                                 >
                                     <svg className="w-4 h-4 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4" /></svg>
@@ -1143,7 +1143,7 @@ export const Leads: React.FC = () => {
                                                     <button
                                                         key={d}
                                                         onClick={() => setDensity(d)}
-                                                        className={`flex-1 py-1.5 rounded-lg text-xs font-bold transition-all border ${density === d ? 'bg-[var(--sgs-primary)] text-white border-[var(--sgs-primary)]' : 'bg-[var(--glass-surface)] text-[var(--text-secondary)] border-[var(--glass-border)] hover:bg-[var(--glass-surface-hover)]'}`}
+                                                         className={`flex-1 py-1.5 rounded-lg text-xs font-bold transition-all ${density === d ? 'bg-[var(--sgs-primary)] text-white' : 'bg-[var(--glass-surface-hover)] text-[var(--text-secondary)] hover:bg-[var(--glass-surface)]'}`}
                                                     >
                                                         {d === 'compact' ? t('leads.density_compact') : d === 'normal' ? t('leads.density_normal') : t('leads.density_relaxed')}
                                                     </button>
@@ -1174,14 +1174,14 @@ export const Leads: React.FC = () => {
                         />
                         <button 
                             onClick={() => fileInputRef.current?.click()} 
-                            className="flex items-center gap-1 px-2 py-2 bg-[var(--bg-surface)] border border-[var(--glass-border)] text-[var(--text-secondary)] font-bold rounded-xl text-xs shadow-sm hover:bg-[var(--glass-surface)] transition-all whitespace-nowrap active:scale-95 shrink-0"
+                             className="h-10 flex items-center gap-1 px-2 bg-[var(--glass-surface-hover)] text-[var(--text-secondary)] font-bold rounded-xl text-xs hover:bg-[var(--glass-surface)] transition-all whitespace-nowrap active:scale-95 shrink-0"
                             title={t('leads.import_excel')}
                         >
                             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" /></svg>
                         </button>
                         <button 
                             onClick={handleExportExcel} 
-                            className="flex items-center gap-1 px-2 py-2 bg-[var(--bg-surface)] border border-[var(--glass-border)] text-[var(--text-secondary)] font-bold rounded-xl text-xs shadow-sm hover:bg-[var(--glass-surface)] transition-all whitespace-nowrap active:scale-95 shrink-0"
+                             className="h-10 flex items-center gap-1 px-2 bg-[var(--glass-surface-hover)] text-[var(--text-secondary)] font-bold rounded-xl text-xs hover:bg-[var(--glass-surface)] transition-all whitespace-nowrap active:scale-95 shrink-0"
                             title={t('leads.export_excel')}
                         >
                             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" /></svg>
