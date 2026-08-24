@@ -571,8 +571,8 @@ export function MarketplacePage({ initialListings, totalCount, totalPages, searc
           </div>
         </div>
       </div>
-      {/* One desktop control row: transaction tabs + every filter + view switcher. */}
-      <div className="flex flex-col sm:flex-row sm:items-center gap-2 pb-1 mb-3">
+      {/* Main control row: transaction tabs + basic filters + filter trigger. */}
+      <div className="relative flex flex-col sm:flex-row sm:items-center gap-2 pb-1 mb-3">
         <div className="flex items-center gap-1 p-0.5 rounded-lg shrink-0 w-full sm:w-auto" style={{ background: "var(--bg-app)" }}>
           <button type="button" onClick={() => setTransactionTab("SALE")}
             className="px-3 sm:px-4 h-9 rounded-md text-sm font-semibold transition-colors whitespace-nowrap"
@@ -598,29 +598,12 @@ export function MarketplacePage({ initialListings, totalCount, totalPages, searc
             <div className="min-w-0"><Dropdown value={activePriceLabel} options={PRICE_OPTIONS(lang).map((o) => ({ label: o.label, value: o.label }))}
               onChange={(label) => { const pr = PRICE_OPTIONS(lang).find((x) => x.label === label) || PRICE_OPTIONS(lang)[0]; pushParams((p) => { p.delete("minPrice"); p.delete("maxPrice"); if (pr.min) p.set("minPrice", pr.min); if (pr.max) p.set("maxPrice", pr.max); }); }}
               minWidth={0} /></div>
-            <div className="min-w-0"><Dropdown value={sp.sort ?? ""} options={[
-              { label: tt(lang, "Mới nhất", "Newest"), value: "" },
-              { label: tt(lang, "Giá: Thấp đến cao", "Price: Low to high"), value: "price_asc" },
-              { label: tt(lang, "Giá: Cao đến thấp", "Price: High to low"), value: "price_desc" },
-            ]} onChange={(v) => setParam("sort", v)} minWidth={0} /></div>
-            {!!facets && facets.legalStatus.length > 0 && (
-              <div className="min-w-0"><Dropdown value={sp.legalStatus ?? ""} options={[
-                { label: tt(lang, "Pháp lý", "Legal"), value: "" },
-                ...facets.legalStatus.map((f) => ({ label: bi(LEGAL_LABELS, f.value, lang) || f.value, value: f.value })),
-              ]} onChange={(v) => setParam("legalStatus", v)} minWidth={0} /></div>
-            )}
-            {!!facets && facets.direction.length > 0 && (
-              <div className="min-w-0"><Dropdown value={sp.direction ?? ""} options={[
-                { label: tt(lang, "Hướng", "Direction"), value: "" },
-                ...facets.direction.map((f) => ({ label: bi(DIRECTION_LABELS, f.value, lang) || f.value, value: f.value })),
-              ]} onChange={(v) => setParam("direction", v)} minWidth={0} /></div>
-            )}
           </div>
         </div>
 
         <div className="flex items-center justify-between sm:justify-end gap-2 w-full sm:w-auto shrink-0">
           <button type="button" onClick={() => setFiltersOpen((open) => !open)}
-            className="sm:hidden h-9 px-3 rounded-lg flex items-center gap-2 text-sm font-semibold transition-colors"
+            className="h-9 px-3 rounded-lg flex items-center gap-2 text-sm font-semibold transition-colors"
             style={filtersOpen || activeFilterCount > 0
               ? { background: "var(--primary-600)", color: "var(--text-inverse)" }
               : { background: "var(--bg-app)", color: "var(--primary-600)" }}>
