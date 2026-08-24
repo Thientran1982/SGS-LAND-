@@ -87,7 +87,7 @@ export const ProjectCommissionPanel: React.FC<Props> = ({ projectId, projectName
   return createPortal(
     <div className="fixed inset-0 z-[10002] bg-black/50 backdrop-blur-sm flex items-end sm:items-center justify-center p-2 sm:p-6 overflow-hidden"
          onClick={onClose}>
-      <div className="w-full max-w-5xl max-h-[calc(100vh-2rem)] bg-[var(--bg-surface)] dark:bg-sgs-primary-deep rounded-2xl shadow-2xl border border-[var(--glass-border)] my-4 flex flex-col overflow-hidden"
+      <div className="w-full max-w-5xl h-[calc(100vh-2rem)] max-h-[calc(100vh-2rem)] bg-[var(--bg-surface)] dark:bg-sgs-primary-deep rounded-2xl shadow-2xl border border-[var(--glass-border)] my-4 flex flex-col overflow-hidden"
            onClick={e => e.stopPropagation()}>
         <header className="shrink-0 flex items-center justify-between px-5 py-3 border-b border-[var(--glass-border)] bg-[var(--bg-surface)] dark:bg-sgs-primary-deep rounded-t-2xl">
           <div>
@@ -187,9 +187,9 @@ export const ProjectCommissionPanel: React.FC<Props> = ({ projectId, projectName
               <a href={commissionApi.exportXlsxUrl({ projectId })}
                  className="text-xs font-bold text-sgs-verified hover:underline">⬇ Xuất Excel</a>
             </div>
-            <div className="overflow-x-auto">
+            <div className="max-h-[min(42vh,24rem)] overflow-auto">
               <table className="w-full text-sm">
-                <thead className="bg-sgs-bg dark:bg-slate-800/60 text-xs uppercase text-[var(--text-tertiary)]">
+                <thead className="sticky top-0 z-10 bg-sgs-bg dark:bg-slate-800 text-xs uppercase text-[var(--text-tertiary)]">
                   <tr>
                     <th className="text-left px-3 py-2">Ngày</th>
                     <th className="text-left px-3 py-2">SP</th>
