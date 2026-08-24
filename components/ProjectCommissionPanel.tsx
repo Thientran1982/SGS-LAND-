@@ -87,7 +87,7 @@ export const ProjectCommissionPanel: React.FC<Props> = ({ projectId, projectName
   return createPortal(
     <div className="fixed inset-0 z-[10002] bg-black/50 backdrop-blur-sm flex items-end sm:items-center justify-center p-2 sm:p-6 overflow-hidden"
          onClick={onClose}>
-      <div className="w-full max-w-5xl h-[calc(100vh-2rem)] max-h-[calc(100vh-2rem)] bg-[var(--bg-surface)] dark:bg-sgs-primary-deep rounded-2xl shadow-2xl border border-[var(--glass-border)] my-4 flex flex-col overflow-hidden"
+      <div className="w-full max-w-5xl h-[calc(100vh-4rem)] max-h-[calc(100vh-4rem)] bg-[var(--bg-surface)] dark:bg-sgs-primary-deep rounded-2xl shadow-2xl border border-[var(--glass-border)] my-4 flex flex-col overflow-hidden"
            onClick={e => e.stopPropagation()}>
         <header className="shrink-0 flex items-center justify-between px-5 py-3 border-b border-[var(--glass-border)] bg-[var(--bg-surface)] dark:bg-sgs-primary-deep rounded-t-2xl">
           <div>
@@ -99,7 +99,10 @@ export const ProjectCommissionPanel: React.FC<Props> = ({ projectId, projectName
           </button>
         </header>
         {err && <div className="m-4 p-3 rounded-xl border border-rose-200 bg-rose-50 text-rose-700 text-sm">{err}</div>}
-        <section className="min-h-0 flex-1 overflow-y-auto p-5 space-y-5">
+        <section
+          className="min-h-0 flex-1 overflow-y-scroll p-5 space-y-5"
+          style={{ overscrollBehavior: 'contain', touchAction: 'pan-y', scrollbarGutter: 'stable' }}
+        >
           {/* Active policy */}
           <div className="rounded-xl border border-[var(--glass-border)] p-4">
             <div className="flex items-center justify-between gap-2">
@@ -187,7 +190,10 @@ export const ProjectCommissionPanel: React.FC<Props> = ({ projectId, projectName
               <a href={commissionApi.exportXlsxUrl({ projectId })}
                  className="text-xs font-bold text-sgs-verified hover:underline">⬇ Xuất Excel</a>
             </div>
-            <div className="max-h-[min(42vh,24rem)] overflow-auto">
+            <div
+              className="h-96 max-h-[42vh] overflow-y-scroll overflow-x-auto"
+              style={{ overscrollBehavior: 'contain', touchAction: 'pan-y' }}
+            >
               <table className="w-full text-sm">
                 <thead className="sticky top-0 z-10 bg-sgs-bg dark:bg-slate-800 text-xs uppercase text-[var(--text-tertiary)]">
                   <tr>
