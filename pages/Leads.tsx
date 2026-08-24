@@ -132,14 +132,15 @@ const useDraggableScroll = (ref: React.RefObject<HTMLDivElement | null>, trigger
     }, [ref, trigger]); // Re-run when trigger (viewMode) changes
 };
 // --- PAGINATION COMPONENT ---
-const CursorPaginationControl = memo(({ totalItems, pageSize, hasPrev, hasNext, onPrev, onNext, onPageSizeChange, t }: {
+const CursorPaginationControl = memo(({ totalItems, pageSize, hasPrev, hasNext, onPrev, onNext, onPageSizeChange, t, isLoading }: {
     totalItems: number; pageSize: number; hasPrev: boolean; hasNext: boolean;
     onPrev: () => void; onNext: () => void; onPageSizeChange: (s: number) => void; t: any;
+    isLoading?: boolean;
 }) => {
     const pageSizeOptions = [
-        { value: 15, label: '15' },
-        { value: 25, label: '25' },
-        { value: 50, label: '50' },
+        { value: 12, label: '12' },
+        { value: 24, label: '24' },
+        { value: 48, label: '48' },
         { value: 100, label: '100' },
     ];
     const btnCls = "w-9 h-9 flex items-center justify-center rounded-lg border border-[var(--glass-border)] bg-[var(--bg-surface)] text-[var(--text-secondary)] hover:bg-[var(--glass-surface)] disabled:opacity-40 disabled:cursor-not-allowed transition-all";
@@ -147,13 +148,13 @@ const CursorPaginationControl = memo(({ totalItems, pageSize, hasPrev, hasNext, 
         <>
             {/* Mobile */}
             <div className="flex sm:hidden items-center w-fit mx-auto gap-3 px-4 py-1.5 bg-[var(--bg-surface)] rounded-xl border border-[var(--glass-border)] shadow-sm">
-                <button onClick={onPrev} disabled={!hasPrev} className={btnCls}>
+                    <button onClick={onPrev} disabled={isLoading || !hasPrev} className={btnCls}>
                     <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" /></svg>
                 </button>
                 <span className="text-xs font-bold text-[var(--text-primary)] min-w-[56px] text-center">
                     {totalItems.toLocaleString('vi-VN')} {t('pagination.results')}
                 </span>
-                <button onClick={onNext} disabled={!hasNext} className={btnCls}>
+                    <button onClick={onNext} disabled={isLoading || !hasNext} className={btnCls}>
                     <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" /></svg>
                 </button>
             </div>
@@ -167,11 +168,11 @@ const CursorPaginationControl = memo(({ totalItems, pageSize, hasPrev, hasNext, 
                     <div className="min-w-[60px] mr-1">
                         <Dropdown value={pageSize} onChange={(v) => onPageSizeChange(Number(v))} options={pageSizeOptions} className="text-xs" placement="top" />
                     </div>
-                    <button onClick={onPrev} disabled={!hasPrev} className="px-3 py-1 rounded-lg border border-[var(--glass-border)] bg-[var(--bg-surface)] text-[var(--text-secondary)] text-xs font-semibold hover:bg-[var(--glass-surface)] disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-sm flex items-center gap-1">
+                        <button onClick={onPrev} disabled={isLoading || !hasPrev} className="px-3 py-1 rounded-lg border border-[var(--glass-border)] bg-[var(--bg-surface)] text-[var(--text-secondary)] text-xs font-semibold hover:bg-[var(--glass-surface)] disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-sm flex items-center gap-1">
                         <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" /></svg>
                         {t('pagination.prev')}
                     </button>
-                    <button onClick={onNext} disabled={!hasNext} className="px-3 py-1 rounded-lg border border-[var(--glass-border)] bg-[var(--bg-surface)] text-[var(--text-secondary)] text-xs font-semibold hover:bg-[var(--glass-surface)] disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-sm flex items-center gap-1">
+                    <button onClick={onNext} disabled={isLoading || !hasNext} className="px-3 py-1 rounded-lg border border-[var(--glass-border)] bg-[var(--bg-surface)] text-[var(--text-secondary)] text-xs font-semibold hover:bg-[var(--glass-surface)] disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-sm flex items-center gap-1">
                         {t('pagination.next')}
                         <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" /></svg>
                     </button>
@@ -278,7 +279,7 @@ const LeadRow = memo(({ lead, isSelected, onSelect, onClick, onProposal, onDupli
             )}
             {visibleColumns.has('stage') && (
                 <td className={`px-4 ${paddingY}`}>
-                    <span className={`inline-flex items-center px-2 py-0.5 rounded text-xs2 font-bold border uppercase tracking-wider whitespace-nowrap ${stageStyle.bg} ${stageStyle.color} ${stageStyle.border}`}>
+                    <span className={`inline-flex items-center px-2 py-0.5 rounded text-2xs font-bold border uppercase tracking-wider whitespace-nowrap ${stageStyle.bg} ${stageStyle.color} ${stageStyle.border}`}>
                         {t(`stage.${lead.stage}`)}
                     </span>
                 </td>
@@ -531,7 +532,7 @@ export const Leads: React.FC = () => {
     const [leads, setLeads] = useState<Lead[]>([]);
     const [selectedLeads, setSelectedLeads] = useState<Set<string>>(new Set());
     const [loading, setLoading] = useState(true);
-    const [pageSize, setPageSize] = useState(20);
+    const [pageSize, setPageSize] = useState(12);
     const [totalItems, setTotalItems] = useState(0);
     const [serverStats, setServerStats] = useState({ total: 0, newCount: 0, wonCount: 0, lostCount: 0, avgScore: 0, winRate: 0 });
     // Cursor-based pagination state
@@ -1410,7 +1411,7 @@ export const Leads: React.FC = () => {
                                                 )}
                                             </div>
                                         </div>
-                                        <span className={`text-2xs px-2 py-0.5 rounded-full font-bold uppercase border ${STAGE_CONFIG[lead.stage].bg} ${STAGE_CONFIG[lead.stage].color} ${STAGE_CONFIG[lead.stage].border}`}>
+                                        <span className={`text-[10px] px-2 py-0.5 rounded-full font-bold uppercase border ${STAGE_CONFIG[lead.stage].bg} ${STAGE_CONFIG[lead.stage].color} ${STAGE_CONFIG[lead.stage].border}`}>
                                             {t(`stage.${lead.stage}`)}
                                         </span>
                                     </div>
@@ -1494,6 +1495,7 @@ export const Leads: React.FC = () => {
                         onNext={handleCursorNext}
                         onPageSizeChange={(s) => setPageSize(s)}
                         t={t}
+                        isLoading={loading}
                     />
                 )}
             </div>
