@@ -295,7 +295,7 @@ class FeedbackRepository extends BaseRepository {
         params
       );
       const dataRes = await client.query(
-        `SELECT id, rating, correction, agent_node, intent, user_message, ai_response, model, created_at
+        `SELECT id, rating, correction, agent_node, intent, user_message, ai_response, model, metadata, created_at
          FROM ai_feedback ${where}
          ORDER BY created_at DESC
          LIMIT $${params.length + 1} OFFSET $${params.length + 2}`,

@@ -431,14 +431,24 @@ export const Inbox: React.FC = () => {
                 leadId: selectedLeadId || undefined,
                 rating,
                 correction,
-                agentNode: msg.metadata?.suggestedAction,
+                agentNode: msg.metadata?.agentNode || 'writer',
                 intent: msg.metadata?.intent,
                 userMessage: msg.metadata?.userMessage,
                 aiResponse: msg.content?.slice(0, 500),
+                metadata: {
+                    source: 'inbox_agent_message',
+                    agent: msg.metadata?.agentNode || 'writer',
+                    runId: msg.metadata?.runId,
+                    traceId: msg.metadata?.traceId,
+                    interactionId: msg.id,
+                },
             });
             return true;
-        } catch {
-            return false;
+        } catch (error: any) {
+            // A retry after refresh can hit the idempotency constraint. Treat
+            // that as already recorded so the message does not invite a
+            // second submission forever.
+            return error?.status === 409;
         }
     }, [selectedLeadId]);
     const handleSend = async () => {
@@ -477,6 +487,9 @@ export const Inbox: React.FC = () => {
                             isAi: true,
                             isAgent: true,
                             trace: aiResult.steps,
+                            runId: aiResult.runId,
+                            traceId: aiResult.traceId,
+                            agentNode: 'writer',
                             artifact: aiResult.artifact,
                             aiConfidence: aiResult.confidence,
                             aiSentiment: aiResult.sentiment,

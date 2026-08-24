@@ -291,13 +291,26 @@ export function createAiGovernanceRoutes(authenticateToken: any, optionalAuth?: 
       if (rating !== 1 && rating !== -1) {
         return res.status(400).json({ error: 'rating must be 1 (positive) or -1 (negative)' });
       }
+      // Authenticated feedback from Inbox must point to the persisted answer.
+      // Guest valuation feedback may remain interaction-less, but must provide
+      // an explicit trace/source in metadata for later adjudication.
+      if (tenantId && !interactionId && !metadata?.traceId) {
+        return res.status(400).json({ error: 'interactionId hoặc metadata.traceId là bắt buộc cho feedback đã xác thực' });
+      }
 
       const safeIntent = intent && VALID_INTENTS.has(intent) ? intent : (intent ? 'UNKNOWN' : null);
       const safeCorrection = typeof correction === 'string' ? correction.slice(0, 2000) : undefined;
       const safeUserMessage = typeof userMessage === 'string' ? userMessage.slice(0, 500) : undefined;
       const safeAiResponse = typeof aiResponse === 'string' ? aiResponse.slice(0, 2000) : undefined;
       const safeAgentNode = typeof agentNode === 'string' ? agentNode.slice(0, 50) : undefined;
-      const safeMetadata = metadata && typeof metadata === 'object' && !Array.isArray(metadata) ? metadata : undefined;
+      const safeMetadata = metadata && typeof metadata === 'object' && !Array.isArray(metadata)
+        ? {
+            ...metadata,
+            traceId: typeof metadata.traceId === 'string' ? metadata.traceId.slice(0, 120) : undefined,
+            runId: typeof metadata.runId === 'string' ? metadata.runId.slice(0, 120) : undefined,
+            source: typeof metadata.source === 'string' ? metadata.source.slice(0, 80) : 'unknown',
+          }
+        : undefined;
 
        const feedback = await feedbackRepository.create(tenantId, {
         interactionId, leadId, userId, rating,

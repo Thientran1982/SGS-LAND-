@@ -259,6 +259,7 @@ const AiFeedbackButtons = memo(({ msg, onFeedback }: { msg: any; onFeedback?: (r
                 <div className="flex items-center gap-1">
                     <button
                         onClick={() => handleFeedback(1)}
+                        aria-label="Đánh giá câu trả lời hữu ích"
                         className="p-1 rounded-md hover:bg-sgs-verified/20 text-white/60 hover:text-sgs-verified transition-colors"
                         title="Phản hồi tốt"
                     >
@@ -268,6 +269,7 @@ const AiFeedbackButtons = memo(({ msg, onFeedback }: { msg: any; onFeedback?: (r
                     </button>
                     <button
                         onClick={() => handleFeedback(-1)}
+                        aria-label="Đánh giá câu trả lời cần cải thiện"
                         className="p-1 rounded-md hover:bg-sgs-accent/20 text-white/60 hover:text-sgs-accent-text transition-colors"
                         title="Cần cải thiện"
                     >

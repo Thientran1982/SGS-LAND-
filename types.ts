@@ -846,6 +846,10 @@ export interface AgentTraceResponse {
     isSysMsg?: boolean;
     intent?: string;
     userMessage?: string;
+    runId?: string;
+    traceId?: string;
+    resumed?: boolean;
+    cached?: boolean;
 }
 export interface GraphState {
     messages: { role: 'user' | 'model' | 'system'; content: string; name?: string }[];
