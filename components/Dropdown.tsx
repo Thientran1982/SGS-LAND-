@@ -20,7 +20,7 @@ interface DropdownProps<T extends string | number> {
     icon?: React.ReactNode; // Leading icon
     error?: boolean; // Visual error state
     placement?: 'top' | 'bottom'; // Force direction
-    variant?: 'default' | 'minimal'; // Minimal controls for compact toolbars/pagination
+    variant?: 'default' | 'minimal' | 'compact'; // Compact controls for dense filter toolbars
 }
 // -----------------------------------------------------------------------------
 // 2. CONSTANTS & ASSETS
@@ -155,6 +155,8 @@ export const Dropdown = memo(<T extends string | number>({
     else buttonClass += ` ${STYLES.DEFAULT}`;    
     if (variant === 'minimal') {
         buttonClass += ' !min-h-0 !border-0 !bg-transparent !shadow-none px-2 py-1 text-xs rounded-lg hover:!bg-[var(--glass-surface-hover)]';
+    } else if (variant === 'compact') {
+        buttonClass += ' !min-h-[38px] px-2.5 py-2 text-xs rounded-lg';
     }
     if (isOpen && !disabled) {
         buttonClass += variant === 'minimal'
@@ -200,7 +202,7 @@ export const Dropdown = memo(<T extends string | number>({
                     ref={listboxRef}
                     role="listbox"
                     tabIndex={-1}
-                    className={`${STYLES.MENU} ${className.includes('dashboard-date-filter') ? 'dashboard-date-menu' : ''}`}
+                    className={`${STYLES.MENU} ${variant === 'compact' ? 'text-xs' : ''} ${className.includes('dashboard-date-filter') ? 'dashboard-date-menu' : ''}`}
                     style={{ 
                         // Use coords directly — auto-flip may have changed direction vs placement prop
                         ...(coords.bottom !== undefined ? { bottom: coords.bottom } : { top: coords.top }),
@@ -222,7 +224,7 @@ export const Dropdown = memo(<T extends string | number>({
                                         aria-selected={isSelected}
                                         type="button"
                                         onClick={() => handleSelect(opt.value as T)}
-                                        className={`${STYLES.OPTION} ${isSelected ? 'bg-[var(--sgs-primary)]/10 dark:bg-[var(--sgs-primary)]/25 text-sgs-primary dark:text-[var(--sgs-primary)] font-bold' : 'text-[var(--text-secondary)] dark:text-slate-300 hover:bg-[var(--glass-surface)] dark:hover:bg-slate-800 hover:text-[var(--text-primary)] dark:hover:text-white'}`}
+                                        className={`${STYLES.OPTION} ${variant === 'compact' ? 'text-xs' : ''} ${isSelected ? 'bg-[var(--sgs-primary)]/10 dark:bg-[var(--sgs-primary)]/25 text-sgs-primary dark:text-[var(--sgs-primary)] font-bold' : 'text-[var(--text-secondary)] dark:text-slate-300 hover:bg-[var(--glass-surface)] dark:hover:bg-slate-800 hover:text-[var(--text-primary)] dark:hover:text-white'}`}
                                     >
                                         {opt.icon && (
                                             <span className={`transition-transform duration-200 ${isSelected ? 'scale-110' : 'group-hover:scale-105'}`}>
