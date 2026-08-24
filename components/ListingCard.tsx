@@ -61,14 +61,14 @@ const ImageCarousel = memo(({ images, title, isVerified, isFavorite, onToggleFav
             <div className="absolute top-3 left-3 z-30 flex flex-col gap-1.5 items-start pointer-events-none">
                 <div className="flex gap-1.5">
                     {/* Transaction Type Badge - FIX for Ambiguous Status */}
-                    <div className={`flex items-center gap-1.5 text-[12px] font-bold px-2 py-0.5 rounded-lg shadow-sm backdrop-blur-sm border border-white/20 uppercase tracking-wide text-white ${isRent ? 'bg-blue-600/90' : 'bg-emerald-700/90'}`}>
+                    <div className={`flex items-center gap-1.5 text-[12px] font-bold px-2 py-0.5 rounded-lg shadow-sm backdrop-blur-sm border border-white/20 uppercase tracking-wide text-[var(--ui-text-inverse)] ${isRent ? 'bg-[var(--ui-info)]' : 'bg-[var(--ui-brand)]'}`}>
                         {isRent ? t('transaction.RENT') : t('transaction.SALE')}
                     </div>
                     {isVerified && (
                         <div
                             title={t('inventory.verified')}
                             aria-label={t('inventory.verified')}
-                            className="flex items-center justify-center bg-emerald-600/95 text-white text-[12px] font-bold p-1 rounded-lg shadow-sm backdrop-blur-sm border border-white/20"
+                            className="flex items-center justify-center bg-[var(--ui-success)] text-[var(--ui-text-inverse)] text-[12px] font-bold p-1 rounded-lg shadow-sm backdrop-blur-sm border border-white/20"
                         >
                             {LISTING_ICONS.VERIFIED}
                         </div>
@@ -76,13 +76,13 @@ const ImageCarousel = memo(({ images, title, isVerified, isFavorite, onToggleFav
                 </div>
                 <div className="flex gap-1.5">
                     {bookingCount !== undefined && bookingCount > 0 && (
-                        <div className={`flex items-center gap-1.5 text-white text-[12px] font-bold px-2 py-0.5 rounded-lg shadow-sm backdrop-blur-sm border border-white/20 ${isHot ? 'bg-gradient-to-r from-red-600 to-rose-500 animate-pulse' : 'bg-slate-900/80'}`}>
+                        <div className={`flex items-center gap-1.5 text-[12px] font-bold px-2 py-0.5 rounded-lg shadow-sm backdrop-blur-sm border border-white/20 ${isHot ? 'bg-[var(--ui-danger)] text-[var(--ui-text-inverse)] animate-pulse' : 'bg-[var(--ui-brand-strong)] text-[var(--ui-text-inverse)]'}`}>
                             {isHot ? LISTING_ICONS.FIRE : LISTING_ICONS.USER}
                             <span>{bookingCount}</span>
                         </div>
                     )}                    
                     {(viewCount || 0) > 0 && (
-                        <div className="flex items-center gap-1.5 bg-black/60 text-white text-[12px] font-bold px-2 py-0.5 rounded-lg shadow-sm backdrop-blur-sm border border-white/10">
+                        <div className="flex items-center gap-1.5 bg-[var(--ui-brand-strong)]/80 text-[var(--ui-text-inverse)] text-[12px] font-bold px-2 py-0.5 rounded-lg shadow-sm backdrop-blur-sm border border-white/10">
                             {LISTING_ICONS.EYE}
                             <span>{viewCount}</span>
                         </div>

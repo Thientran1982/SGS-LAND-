@@ -1604,7 +1604,7 @@ export const ListingDetail: React.FC = () => {
             {/* Gallery — public detail style */}
             <div className="max-w-7xl mx-auto px-4 py-4 md:px-6 md:py-6">
                 {/* Dynamic Grid Layout based on image count */}
-                <div className="grid grid-cols-1 md:grid-cols-[minmax(0,2fr)_minmax(220px,1fr)] md:grid-rows-2 gap-1.5 rounded-2xl overflow-hidden aspect-[4/3] md:aspect-[16/8] relative group bg-[var(--bg-elevated)]">
+                <div className="grid grid-cols-1 md:grid-cols-[minmax(0,3fr)_minmax(180px,1fr)] md:grid-rows-2 gap-1.5 rounded-2xl overflow-hidden aspect-[4/3] md:aspect-[16/8] relative group bg-[var(--bg-elevated)]">
                     {/* Main Image (Always First) */}
                     <div 
                         className="h-full md:row-span-2 relative cursor-pointer overflow-hidden"
@@ -1615,9 +1615,9 @@ export const ListingDetail: React.FC = () => {
                     </div>
                     {/* Secondary Images (Right Side) */}
                     {displayImages.length > 1 && (
-                        <div className="hidden md:grid grid-cols-2 gap-1.5 min-h-0">
+                        <div className="hidden md:grid md:row-span-2 grid-cols-2 grid-rows-2 gap-1.5 min-h-0">
                             {displayImages.slice(1).map((img, idx) => (
-                                <div key={idx} className="relative cursor-pointer overflow-hidden h-full w-full" onClick={() => { setLightboxIndex(idx + 1); setLightboxOpen(true); }}>
+                                <div key={idx} className={`relative cursor-pointer overflow-hidden h-full w-full ${displayImages.length === 2 ? 'col-span-2 row-span-2' : ''}`} onClick={() => { setLightboxIndex(idx + 1); setLightboxOpen(true); }}>
                                     <img src={optimizedImageUrl(img || NO_IMAGE_URL, 640)} className="w-full h-full object-cover transition-transform duration-700 hover:scale-105" alt={`Gallery ${idx}`} loading="lazy" decoding="async" onError={(e) => { (e.target as HTMLImageElement).src = NO_IMAGE_URL; }} />
                                     {/* Overlay for +More on the last item if needed */}
                                     {idx === displayImages.length - 2 && hasMoreImages && (
@@ -1651,10 +1651,10 @@ export const ListingDetail: React.FC = () => {
                 <div className="lg:col-span-2 space-y-8">
                     <div>
                         <div className="flex flex-wrap gap-2 mb-4">
-                            <span className="bg-sgs-champagne text-sgs-primary px-3 py-1 rounded-lg text-xs font-bold uppercase tracking-wide border border-sgs-border">{t(`property.${listing.type.toUpperCase()}`)}</span>
-                            <span className="bg-sgs-champagne text-sgs-verified px-3 py-1 rounded-lg text-[11px] font-bold uppercase tracking-wide border border-sgs-verified/20">{t(`status.${listing.status}`)}</span>
+                            <span className="bg-[var(--sgs-subtle-bg)] text-[var(--ui-brand)] px-3 py-1 rounded-lg text-xs font-bold uppercase tracking-wide border border-[var(--ui-border)]">{t(`property.${listing.type.toUpperCase()}`)}</span>
+                            <span className="bg-[var(--ui-surface-subtle)] text-[var(--ui-success)] px-3 py-1 rounded-lg text-[11px] font-bold uppercase tracking-wide border border-[var(--ui-border)]">{t(`status.${listing.status}`)}</span>
                         </div>
-                        <h1 className="text-3xl md:text-4xl font-black text-[var(--text-primary)] mb-2 leading-tight">{listing.title}</h1>
+                        <h1 className="text-2xl md:text-3xl font-black text-[var(--text-primary)] mb-2 leading-tight">{listing.title}</h1>
                         <div className="flex items-center gap-2 text-[var(--text-tertiary)] font-medium flex-wrap">
                             <span className="flex items-center gap-1">{ICONS.LOCATION} {listing.location}</span>
                             <span className="mx-2 text-[var(--text-secondary)] hidden sm:inline">|</span>
