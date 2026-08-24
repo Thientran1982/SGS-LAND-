@@ -183,6 +183,36 @@ const migration: Migration = {
       console.log(`[Migration 153] Cleaned ${result.rowCount} legacy listing(s)`, before);
     }
 
+    // Preserve every legacy listing while making the normalized code key
+    // unique. The first row keeps its public code; later duplicates receive a
+    // deterministic suffix derived from their UUID, so retries are stable and
+    // no row is silently deleted.
+    const duplicateCodes = await client.query(`
+      WITH ranked AS (
+        SELECT id, code,
+          ROW_NUMBER() OVER (
+            PARTITION BY tenant_id, upper(btrim(code))
+            ORDER BY id
+          ) AS duplicate_rank
+        FROM listings
+        WHERE code IS NOT NULL AND btrim(code) <> ''
+      )
+      SELECT id, code
+      FROM ranked
+      WHERE duplicate_rank > 1
+    `);
+    for (const row of duplicateCodes.rows) {
+      await client.query(
+        `UPDATE listings
+         SET code = left(btrim($1), 63) || '-DUP-' || replace($2::text, '-', '')
+         WHERE id = $2::uuid`,
+        [row.code, row.id],
+      );
+    }
+    if (duplicateCodes.rowCount) {
+      console.log(`[Migration 153] Renamed ${duplicateCodes.rowCount} duplicate listing code(s)`);
+    }
+
     for (const name of [
       'listings_status_ck', 'listings_transaction_ck', 'listings_type_ck',
       'listings_price_ck', 'listings_area_ck', 'listings_currency_ck',
