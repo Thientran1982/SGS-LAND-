@@ -81,6 +81,7 @@ import m059 from './059_fix_department_uuid';
 import m060 from './060_ai_agents';
 import m061 from './061_valuation_agent';
 import m062 from './062_valuation_usage_log';
+import m063 from './063_payment_transactions';
 import m064 from './064_valuation_cost_alerts_early_warning';
 import m065 from './065_ai_usage_log';
 import m066 from './066_ai_cost_plan_quotas';
@@ -129,6 +130,7 @@ import m108 from './108_lead_journey_memory';
 import m109 from './109_n1_n2_tables';
 import m110 from './110_developers';
 import m111 from './111_seed_developers';
+import m112 from './112_fix_developers_rls';
 import m113 from './113_admin_totp';
 import m114 from './114_visitor_consent_and_erasure';
 import m115 from './115_sms_log';
@@ -186,7 +188,7 @@ export interface Migration {
  * Add new migrations here in addition to creating the .ts file.
  * Order is determined by the sorted filename keys.
  */
-const MIGRATION_REGISTRY: Record<string, Migration> = {
+export const MIGRATION_REGISTRY: Record<string, Migration> = {
   '001_baseline_schema.ts': m001,
   '002_audit_logs_and_tasks.ts': m002,
   '003_ai_and_billing.ts': m003,
@@ -249,6 +251,7 @@ const MIGRATION_REGISTRY: Record<string, Migration> = {
   '060_ai_agents.ts': m060,
   '061_valuation_agent.ts': m061,
   '062_valuation_usage_log.ts': m062,
+  '063_payment_transactions.ts': m063,
   '064_valuation_cost_alerts_early_warning.ts': m064,
   '065_ai_usage_log.ts': m065,
   '066_ai_cost_plan_quotas.ts': m066,
@@ -297,6 +300,7 @@ const MIGRATION_REGISTRY: Record<string, Migration> = {
   '109_n1_n2_tables.ts': m109,
   '110_developers.ts': m110,
   '111_seed_developers.ts': m111,
+  '112_fix_developers_rls.ts': m112,
   '113_admin_totp.ts': m113,
   '114_visitor_consent_and_erasure.ts': m114,
   '115_sms_log.ts': m115,
