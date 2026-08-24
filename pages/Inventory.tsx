@@ -151,6 +151,7 @@ const CursorPaginationControl = memo(({
                             options={pageSizeOptions}
                             className="text-xs"
                             placement="top"
+                            variant="minimal"
                         />
                     </div>
                     <button

@@ -20,6 +20,7 @@ interface DropdownProps<T extends string | number> {
     icon?: React.ReactNode; // Leading icon
     error?: boolean; // Visual error state
     placement?: 'top' | 'bottom'; // Force direction
+    variant?: 'default' | 'minimal'; // Minimal controls for compact toolbars/pagination
 }
 // -----------------------------------------------------------------------------
 // 2. CONSTANTS & ASSETS
@@ -55,7 +56,8 @@ export const Dropdown = memo(<T extends string | number>({
     className = "",
     icon,
     error = false,
-    placement = 'bottom'
+    placement = 'bottom',
+    variant = 'default'
 }: DropdownProps<T>) => {
     const [isOpen, setIsOpen] = useState(false);
     // Flexible coords state to handle top or bottom positioning
@@ -151,7 +153,14 @@ export const Dropdown = memo(<T extends string | number>({
     if (disabled) buttonClass += ` ${STYLES.DISABLED}`;
     else if (error) buttonClass += ` ${STYLES.ERROR}`;
     else buttonClass += ` ${STYLES.DEFAULT}`;    
-    if (isOpen && !disabled) buttonClass += ` ${STYLES.OPEN}`;
+    if (variant === 'minimal') {
+        buttonClass += ' !min-h-0 !border-0 !bg-transparent !shadow-none px-2 py-1 text-xs rounded-lg hover:!bg-[var(--glass-surface-hover)]';
+    }
+    if (isOpen && !disabled) {
+        buttonClass += variant === 'minimal'
+            ? ' !bg-[var(--glass-surface-hover)] !ring-0'
+            : ` ${STYLES.OPEN}`;
+    }
     return (
         <div className={`relative ${className}`} ref={containerRef}>
             {label && (
