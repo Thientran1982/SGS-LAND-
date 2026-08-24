@@ -13,7 +13,14 @@ export function createDailyAdminReportRoutes(authenticateToken: any): Router {
     const user = admin(req,res); if (!user) return;
     const date = req.body?.report_date || req.body?.reportDate;
     if (date && !/^\d{4}-\d{2}-\d{2}$/.test(date)) return res.status(400).json({ error:'report_date không hợp lệ.' });
-    try { res.json(await runDailyReport(date, req.body?.force === true)); } catch { res.status(500).json({ error:'Không thể chạy báo cáo.' }); }
+    const force = req.body?.force === true;
+    if (force && req.body?.provider_verified !== true) {
+      return res.status(400).json({
+        error: 'Cần xác nhận đã kiểm tra trạng thái provider trước khi gửi thủ công.',
+        instruction: 'Dùng delivery key trong báo cáo để kiểm tra provider; chỉ đặt provider_verified=true khi provider xác nhận chưa nhận thư.',
+      });
+    }
+    try { res.json(await runDailyReport(date, force)); } catch { res.status(500).json({ error:'Không thể chạy báo cáo.' }); }
   });
   router.get('/daily', authenticateToken, async (req,res) => {
     const user=admin(req,res); if(!user) return;

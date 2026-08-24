@@ -2,6 +2,7 @@ import { PoolClient } from 'pg';
 import { withTenantContext, withRlsBypass } from '../db';
 import { emailService } from './emailService';
 import { logger } from '../middleware/logger';
+import { notificationRepository } from '../repositories/notificationRepository';
 
 export const REPORT_TIME_ZONE = 'Asia/Ho_Chi_Minh';
 const MISSING = 'chưa có dữ liệu';
@@ -132,6 +133,14 @@ export async function runDailyReport(reportDate = vnDate(), force = false) {
     const result = await withTenantContext(tenantId, async client => {
       const existing = await client.query('SELECT * FROM agent_report_log WHERE tenant_id=$1 AND report_date=$2::date', [tenantId, reportDate]);
       if (existing.rows[0]?.status === 'sent' && !force) return { tenantId, status: 'skipped', reason: 'already_sent' };
+      if (existing.rows[0]?.status === 'delivery_unknown' && !force) {
+        return {
+          tenantId,
+          status: 'delivery_unknown',
+          recipients: (existing.rows[0].recipients || emails).length,
+          manualAction: 'Kiểm tra provider bằng delivery key trước khi gửi thủ công; hệ thống không tự động gửi lại.',
+        };
+      }
       // A force-run retries delivery without rewriting the evidence captured
       // for a failed report.
       const summary = existing.rows[0]?.status === 'failed' && existing.rows[0]?.summary_snapshot
@@ -148,9 +157,35 @@ export async function runDailyReport(reportDate = vnDate(), force = false) {
         await new Promise(resolve => setTimeout(resolve, attempt * 100));
       }
       const ok = last?.every((x: any) => x.success);
+      const ambiguous = !ok && last?.some((x: any) => x.ambiguous);
+      const status = ok ? 'sent' : ambiguous ? 'delivery_unknown' : 'failed';
       await client.query(`UPDATE agent_report_log SET status=$3,error_detail=$4,sent_at=CASE WHEN $3='sent' THEN NOW() ELSE NULL END,updated_at=NOW() WHERE tenant_id=$1 AND report_date=$2::date`,
-        [tenantId, reportDate, ok ? 'sent' : 'failed', ok ? null : JSON.stringify(last)]);
-      return { tenantId, status: ok ? 'sent' : 'failed', recipients: emails.length };
+        [tenantId, reportDate, status, ok ? null : JSON.stringify(last)]);
+      if (ambiguous) {
+        const payload = {
+          reportDate,
+          recipients: emails,
+          deliveryKeys: emails.map(email => `daily-report:${tenantId}:${reportDate}:${email}`),
+          providerErrors: last.filter((x: any) => x.ambiguous).map((x: any) => x.error || 'provider timeout'),
+          manualAction: 'Xác minh trạng thái trên provider bằng delivery key. Chỉ gửi thủ công sau khi provider xác nhận chưa nhận thư.',
+        };
+        await notificationRepository.recordOperationalEvent(tenantId, 'daily_report_delivery_unknown', payload).catch(err =>
+          logger.error(`[DailyReport] could not persist unknown-delivery alert for tenant ${tenantId}`, err));
+        await notificationRepository.createForTenantAdmins(tenantId, {
+          type: 'daily_report_delivery_unknown',
+          title: `Báo cáo ngày ${reportDate} chưa xác định trạng thái gửi`,
+          body: `Provider timeout. Kiểm tra provider trước khi gửi lại; người nhận: ${emails.join(', ')}`,
+          metadata: payload,
+        }).catch(err => logger.error(`[DailyReport] could not create in-app alert for tenant ${tenantId}`, err));
+        await Promise.all(emails.map(email => emailService.sendDailyReportDeliveryAlertEmail(tenantId, email, reportDate, emails)
+          .catch(err => logger.error(`[DailyReport] could not email unknown-delivery alert to ${email}`, err))));
+      }
+      return {
+        tenantId,
+        status,
+        recipients: emails.length,
+        ...(ambiguous ? { manualAction: 'Kiểm tra provider bằng delivery key trước khi gửi thủ công; hệ thống không tự động gửi lại.' } : {}),
+      };
     });
     results.push(result);
   }

@@ -538,6 +538,28 @@ async function sendEmail(tenantId: string, options: EmailOptions): Promise<Email
   });
   return result;
 }
+
+async function sendDailyReportDeliveryAlertEmail(
+  tenantId: string,
+  to: string,
+  reportDate: string,
+  recipients: string[],
+): Promise<EmailResult> {
+  const subject = `[SGSLand] Cần kiểm tra gửi báo cáo ngày ${reportDate}`;
+  const recipientList = recipients.map(escapeHtml).join(', ');
+  const guidance = 'Không bấm gửi lại ngay. Hãy kiểm tra trạng thái trên provider bằng delivery key trước; chỉ gửi thủ công sau khi provider xác nhận chưa nhận thư.';
+  return sendEmail(tenantId, {
+    to,
+    subject,
+    template: 'daily_admin_report_delivery_alert',
+    html: `<div style="font-family:Arial,sans-serif;max-width:620px;color:#1e293b"><h2>Cần kiểm tra trạng thái gửi báo cáo</h2><p>Provider đã timeout nên chưa thể xác định báo cáo ngày <strong>${escapeHtml(reportDate)}</strong> có được nhận hay chưa.</p><p><strong>Người nhận bị ảnh hưởng:</strong> ${recipientList}</p><p style="color:#92400e"><strong>Hướng dẫn an toàn:</strong> ${escapeHtml(guidance)}</p></div>`,
+    text: `Cần kiểm tra trạng thái gửi báo cáo ngày ${reportDate}.\nProvider đã timeout, chưa thể xác định provider có nhận thư hay chưa.\nNgười nhận bị ảnh hưởng: ${recipients.join(', ')}\n\n${guidance}`,
+    dedupeKey: `daily-report-delivery-alert:${reportDate}:${to.toLowerCase()}`,
+    deliveryKey: `daily-report-delivery-alert:${tenantId}:${reportDate}:${to.toLowerCase()}`,
+    dedupeWindowMinutes: 0,
+    skipQuota: true,
+  });
+}
 async function testSmtpConnection(tenantId: string): Promise<EmailResult> {
   const smtp = await getSmtpConfig(tenantId);
   if (!smtp.enabled || !smtp.host || !smtp.user) {
@@ -1915,6 +1937,7 @@ async function sendListingBoost(
 export const emailService = {
   sendListingBoost,
   sendEmail,
+  sendDailyReportDeliveryAlertEmail,
   sendPasswordResetEmail,
   sendEmailOtp,
   sendWelcomeEmail,

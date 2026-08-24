@@ -3,6 +3,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 const state = vi.hoisted(() => ({
   report: null as any,
   sendEmail: vi.fn(),
+  sendDailyReportDeliveryAlertEmail: vi.fn(),
 }));
 
 const query = vi.hoisted(() => vi.fn(async (sql: string, params: any[] = []) => {
@@ -34,7 +35,17 @@ vi.mock('../db', () => ({
 }));
 
 vi.mock('../services/emailService', () => ({
-  emailService: { sendEmail: state.sendEmail },
+  emailService: {
+    sendEmail: state.sendEmail,
+    sendDailyReportDeliveryAlertEmail: state.sendDailyReportDeliveryAlertEmail,
+  },
+}));
+
+vi.mock('../repositories/notificationRepository', () => ({
+  notificationRepository: {
+    recordOperationalEvent: vi.fn().mockResolvedValue({}),
+    createForTenantAdmins: vi.fn().mockResolvedValue(undefined),
+  },
 }));
 
 import { buildReportSummary, renderReportEmail, runDailyReport } from '../services/dailyAdminReportService';
@@ -54,6 +65,7 @@ describe('daily admin report', () => {
   beforeEach(() => {
     state.report = null;
     state.sendEmail.mockReset();
+    state.sendDailyReportDeliveryAlertEmail.mockReset().mockResolvedValue({ success: true, status: 'sent' });
   });
 
   it('keeps unavailable sources explicit instead of inventing zeroes', () => {
@@ -87,7 +99,22 @@ describe('daily admin report', () => {
     state.sendEmail.mockResolvedValue({ success: false, status: 'failed', ambiguous: true, error: 'provider timeout' });
     await runDailyReport('2026-08-24');
     expect(state.sendEmail).toHaveBeenCalledTimes(1);
-    expect(state.report.status).toBe('failed');
+    expect(state.report.status).toBe('delivery_unknown');
+  });
+
+  it('records an unknown delivery and alerts admins without retrying it', async () => {
+    state.sendEmail.mockResolvedValue({ success: false, status: 'failed', ambiguous: true, error: 'provider timeout' });
+    const result = await runDailyReport('2026-08-24');
+    expect(result.results[0].status).toBe('delivery_unknown');
+    expect(result.results[0].manualAction).toContain('không tự động gửi lại');
+    expect(state.report.status).toBe('delivery_unknown');
+    expect(state.sendEmail).toHaveBeenCalledTimes(1);
+    expect(state.sendDailyReportDeliveryAlertEmail).toHaveBeenCalledWith(
+      '11111111-1111-1111-1111-111111111111',
+      'admin@example.com',
+      '2026-08-24',
+      ['admin@example.com'],
+    );
   });
 
   it('keeps the failed report snapshot when force-running delivery again', async () => {
