@@ -1089,7 +1089,7 @@ export const Leads: React.FC = () => {
                                 <button
                                     ref={colSettingsBtnRef}
                                     onClick={() => setShowColumnSettings(v => !v)}
-                                     className={`h-10 flex items-center gap-1.5 px-2 rounded-xl text-xs font-bold transition-all ${showColumnSettings ? 'bg-[var(--sgs-primary)]/10 text-[var(--sgs-primary)]' : 'bg-[var(--glass-surface-hover)] text-[var(--text-secondary)] hover:bg-[var(--glass-surface)]'}`}
+                                     className={`h-10 flex items-center gap-1.5 px-2 rounded-xl text-xs font-bold transition-all bg-transparent ${showColumnSettings ? 'text-[var(--sgs-primary)]' : 'text-[var(--text-secondary)]'}`}
                                     title={t('leads.col_settings_title')}
                                 >
                                     <svg className="w-4 h-4 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4" /></svg>
@@ -1143,7 +1143,7 @@ export const Leads: React.FC = () => {
                                                     <button
                                                         key={d}
                                                         onClick={() => setDensity(d)}
-                                                         className={`flex-1 py-1.5 rounded-lg text-xs font-bold transition-all ${density === d ? 'bg-[var(--sgs-primary)] text-white' : 'bg-[var(--glass-surface-hover)] text-[var(--text-secondary)] hover:bg-[var(--glass-surface)]'}`}
+                                                         className={`flex-1 py-1.5 rounded-lg text-xs font-bold transition-all bg-transparent ${density === d ? 'text-[var(--sgs-primary)]' : 'text-[var(--text-secondary)]'}`}
                                                     >
                                                         {d === 'compact' ? t('leads.density_compact') : d === 'normal' ? t('leads.density_normal') : t('leads.density_relaxed')}
                                                     </button>
@@ -1174,14 +1174,14 @@ export const Leads: React.FC = () => {
                         />
                         <button 
                             onClick={() => fileInputRef.current?.click()} 
-                             className="h-10 flex items-center gap-1 px-2 bg-[var(--glass-surface-hover)] text-[var(--text-secondary)] font-bold rounded-xl text-xs hover:bg-[var(--glass-surface)] transition-all whitespace-nowrap active:scale-95 shrink-0"
+                             className="h-10 flex items-center gap-1 px-2 bg-transparent text-[var(--text-secondary)] font-bold rounded-xl text-xs transition-all whitespace-nowrap active:scale-95 shrink-0"
                             title={t('leads.import_excel')}
                         >
                             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" /></svg>
                         </button>
                         <button 
                             onClick={handleExportExcel} 
-                             className="h-10 flex items-center gap-1 px-2 bg-[var(--glass-surface-hover)] text-[var(--text-secondary)] font-bold rounded-xl text-xs hover:bg-[var(--glass-surface)] transition-all whitespace-nowrap active:scale-95 shrink-0"
+                             className="h-10 flex items-center gap-1 px-2 bg-transparent text-[var(--text-secondary)] font-bold rounded-xl text-xs transition-all whitespace-nowrap active:scale-95 shrink-0"
                             title={t('leads.export_excel')}
                         >
                             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" /></svg>
