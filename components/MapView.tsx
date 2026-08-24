@@ -352,7 +352,7 @@ const MapView: React.FC<MapViewProps> = memo(({
             // Use the same neutral OSM treatment as the public Next.js marketplace map.
               const osmLayer = L.tileLayer('/api/map-tiles/{z}/{x}/{y}.png?v=3', {
                  maxZoom: 20,
-                attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OSM</a>',
+                 attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OSM</a> &copy; <a href="https://carto.com/attributions">CARTO</a>',
              });
              // Keep the tile source same-origin. Third-party fallback hosts can
              // return an HTML "Access blocked" placeholder inside Preview.

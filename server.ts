@@ -180,10 +180,10 @@ async function startServer() {
       return res.status(400).end();
     }
     try {
-      // Use the canonical OSM endpoint. Its shared tile policy behaves
-      // differently from the a/b/c subdomains and returns real map tiles
-      // reliably from the preview network.
-      const upstream = await fetch(`https://tile.openstreetmap.org/${z}/${x}/${y}.png`, {
+      // Fetch CARTO server-side. OSM currently returns a 200 PNG policy
+      // placeholder ("Access blocked") from this environment, which is
+      // indistinguishable from a real tile by status/content-type alone.
+      const upstream = await fetch(`https://basemaps.cartocdn.com/light_all/${z}/${x}/${y}.png`, {
         headers: {
           'User-Agent': 'Mozilla/5.0',
           'Accept': 'image/avif,image/webp,image/apng,image/svg+xml,image/*,*/*;q=0.8',

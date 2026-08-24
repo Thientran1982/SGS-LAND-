@@ -31,7 +31,7 @@ export function MarketplaceMap({ listings, height = "620px" }: { listings: any[]
       // avoided because the Replit Preview iframe can receive policy-block
       // placeholder images from third-party tile hosts.
       L.tileLayer("/api/map-tiles/{z}/{x}/{y}.png?v=3", {
-        attribution: "&copy; OpenStreetMap",
+        attribution: "&copy; OpenStreetMap &copy; CARTO",
         maxZoom: 19,
       }).addTo(map);
 
