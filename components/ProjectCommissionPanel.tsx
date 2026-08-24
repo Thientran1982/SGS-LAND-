@@ -100,7 +100,7 @@ export const ProjectCommissionPanel: React.FC<Props> = ({ projectId, projectName
         </header>
         {err && <div className="m-4 p-3 rounded-xl border border-rose-200 bg-rose-50 text-rose-700 text-sm">{err}</div>}
         <section
-          className="min-h-0 flex-1 overflow-y-scroll p-5 space-y-5"
+          className="min-h-0 flex-1 overflow-y-auto p-5 space-y-5"
           style={{ overscrollBehavior: 'contain', touchAction: 'pan-y', scrollbarGutter: 'stable' }}
         >
           {/* Active policy */}
@@ -190,12 +190,9 @@ export const ProjectCommissionPanel: React.FC<Props> = ({ projectId, projectName
               <a href={commissionApi.exportXlsxUrl({ projectId })}
                  className="text-xs font-bold text-sgs-verified hover:underline">⬇ Xuất Excel</a>
             </div>
-            <div
-              className="h-96 max-h-[42vh] overflow-y-scroll overflow-x-auto"
-              style={{ overscrollBehavior: 'contain', touchAction: 'pan-y' }}
-            >
+            <div className="overflow-x-auto">
               <table className="w-full text-sm">
-                <thead className="sticky top-0 z-10 bg-sgs-bg dark:bg-slate-800 text-xs uppercase text-[var(--text-tertiary)]">
+                <thead className="bg-sgs-bg dark:bg-slate-800 text-xs uppercase text-[var(--text-tertiary)]">
                   <tr>
                     <th className="text-left px-3 py-2">Ngày</th>
                     <th className="text-left px-3 py-2">SP</th>
