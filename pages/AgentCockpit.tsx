@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useState } from 'react';
-import { AlertTriangle, Bot, CheckCircle2, Clock3, RefreshCw, Send, ShieldCheck, XCircle, BarChart3, ClipboardCheck, RotateCcw } from 'lucide-react';
+import { AlertTriangle, Bot, CheckCircle2, Clock3, RefreshCw, Send, ShieldCheck, XCircle, BarChart3, ClipboardCheck, RotateCcw, Filter, PlayCircle } from 'lucide-react';
 import { api } from '../services/api/apiClient';
 
 type CockpitSummary = {
@@ -14,6 +14,7 @@ type CockpitSummary = {
   rollbackAudits: Array<{ entity_id: string; from_status: string; reason: string; created_at: string }>;
   generatedAt: string;
 };
+type OperatingEvent = { id: string; event_id: string; event_type: string; idempotency_key: string; urgency: number; status: string; attempts: number; last_error?: string; lease_expires_at?: string; lease_expired?: boolean; created_at: string; updated_at: string };
 type HumanQuestion = { id: string; agent_key: string; question: string; priority: number; created_at: string; context_json: Record<string, unknown> };
 
 const count = (rows: Array<{ status: string; count: number }> = [], status: string) => rows.find(row => row.status === status)?.count || 0;
@@ -27,19 +28,24 @@ export default function AgentCockpit() {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(true);
   const [approving, setApproving] = useState<string | null>(null);
+  const [events, setEvents] = useState<OperatingEvent[]>([]);
+  const [eventFilters, setEventFilters] = useState({ urgency: 'ALL', lease: 'ALL', deadLetter: 'ALL' });
+  const [replaying, setReplaying] = useState<string | null>(null);
 
   const load = useCallback(async () => {
     setLoading(true); setError('');
     try {
-      const [nextSummary, nextQuestions] = await Promise.all([
+      const query = new URLSearchParams(eventFilters).toString();
+      const [nextSummary, nextQuestions, nextEvents] = await Promise.all([
         api.get<CockpitSummary>('/api/agent-operating/cockpit'),
         api.get<HumanQuestion[]>('/api/agent-operating/questions'),
+        api.get<OperatingEvent[]>(`/api/agent-operating/events?${query}`),
       ]);
-      setSummary(nextSummary); setQuestions(nextQuestions);
+      setSummary(nextSummary); setQuestions(nextQuestions); setEvents(nextEvents);
     } catch (e: any) {
       setError(e?.message || 'Không thể tải Admin Cockpit.');
     } finally { setLoading(false); }
-  }, []);
+  }, [eventFilters]);
   useEffect(() => { void load(); }, [load]);
 
   const submitAnswer = async (id: string) => {
@@ -61,6 +67,15 @@ export default function AgentCockpit() {
     try { await api.post(`/api/agent-operating/shift-reports/${id}/review`, {}); await load(); }
     catch (e: any) { setError(e?.message || 'Không thể duyệt báo cáo ca.'); }
   };
+  const replayEvent = async (event: OperatingEvent) => {
+    const reason = window.prompt(`Lý do replay ${event.event_id}:`, 'Đã xử lý nguyên nhân lỗi, cho chạy lại có kiểm soát');
+    if (!reason?.trim()) return;
+    setReplaying(event.id);
+    try { await api.post(`/api/agent-operating/events/${event.id}/replay`, { reason: reason.trim() }); await load(); }
+    catch (e: any) { setError(e?.message || 'Không thể replay event.'); }
+    finally { setReplaying(null); }
+  };
+  const eventFilter = (key: keyof typeof eventFilters, value: string) => setEventFilters(current => ({ ...current, [key]: value }));
 
   return (
     <div className="mx-auto max-w-7xl space-y-6 p-6">
@@ -82,6 +97,25 @@ export default function AgentCockpit() {
             ['Đã hoàn tất', count(summary.executions, 'SUCCESS'), 'text-emerald-600'],
           ].map(([label, value, color]) => <div key={String(label)} className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm"><div className="text-xs font-medium text-slate-500">{label}</div><div className={`mt-2 text-2xl font-bold ${color}`}>{value}</div></div>)}
         </div>
+        <section className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
+          <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+            <div className="flex items-center gap-2"><Filter size={19} className="text-rose-600" /><div><h2 className="font-semibold text-slate-900">Event cần vận hành</h2><p className="text-xs text-slate-500">Event treo lease hoặc dead-letter được đưa lên đầu.</p></div></div>
+            <button onClick={() => void load()} className="inline-flex items-center gap-1 rounded-lg border border-slate-200 px-3 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50"><RefreshCw size={14} /> Làm mới</button>
+          </div>
+          <div className="mb-4 grid gap-2 sm:grid-cols-3">
+            <select aria-label="Lọc urgency" value={eventFilters.urgency} onChange={e => eventFilter('urgency', e.target.value)} className="rounded-lg border border-slate-200 px-3 py-2 text-sm"><option value="ALL">Mọi urgency</option><option value="HIGH">Cao (≥75)</option><option value="NORMAL">Vừa (40–74)</option><option value="LOW">Thấp (&lt;40)</option></select>
+            <select aria-label="Lọc lease" value={eventFilters.lease} onChange={e => eventFilter('lease', e.target.value)} className="rounded-lg border border-slate-200 px-3 py-2 text-sm"><option value="ALL">Mọi lease</option><option value="EXPIRED">Lease hết hạn</option><option value="ACTIVE">Đang giữ lease</option><option value="NONE">Không có lease</option></select>
+            <select aria-label="Lọc dead letter" value={eventFilters.deadLetter} onChange={e => eventFilter('deadLetter', e.target.value)} className="rounded-lg border border-slate-200 px-3 py-2 text-sm"><option value="ALL">Dead-letter &amp; khác</option><option value="YES">Chỉ dead-letter</option><option value="NO">Không dead-letter</option></select>
+          </div>
+          {events.length === 0 ? <div className="rounded-lg bg-slate-50 p-6 text-center text-sm text-slate-500">Không có event phù hợp bộ lọc.</div> : <div className="space-y-2">{events.map(event => {
+            const attention = event.status === 'DEAD_LETTER' || event.lease_expired;
+            return <div key={event.id} className={`rounded-lg border p-4 ${event.status === 'DEAD_LETTER' ? 'border-rose-200 bg-rose-50/40' : event.lease_expired ? 'border-amber-200 bg-amber-50/40' : 'border-slate-100'}`}>
+              <div className="flex flex-wrap items-start justify-between gap-3"><div><div className="flex flex-wrap items-center gap-2"><b className="text-sm text-slate-900">{event.event_type}</b><span className={`rounded-full px-2 py-0.5 text-[10px] font-bold ${event.status === 'DEAD_LETTER' ? 'bg-rose-100 text-rose-800' : event.status === 'PROCESSING' ? 'bg-amber-100 text-amber-800' : 'bg-slate-100 text-slate-700'}`}>{event.status}</span><span className="text-xs text-slate-500">Urgency {event.urgency}</span></div><p className="mt-1 text-xs text-slate-500">ID {event.event_id} · {new Date(event.created_at).toLocaleString('vi-VN')}</p></div>{(event.status === 'FAILED' || event.status === 'DEAD_LETTER') && <button onClick={() => void replayEvent(event)} disabled={replaying === event.id} className="inline-flex items-center gap-1 rounded-lg bg-indigo-600 px-3 py-2 text-xs font-semibold text-white disabled:opacity-50"><PlayCircle size={14} /> {replaying === event.id ? 'Đang replay…' : 'Replay có kiểm soát'}</button>}</div>
+              <div className="mt-3 grid gap-2 text-xs text-slate-600 sm:grid-cols-3"><span><b>Attempts:</b> {event.attempts}</span><span><b>Lease:</b> {event.lease_expires_at ? `${event.lease_expired ? 'Đã hết hạn' : 'Hết hạn'} ${new Date(event.lease_expires_at).toLocaleString('vi-VN')}` : 'Không có'}</span><span><b>Idempotency:</b> <code className="break-all">{event.idempotency_key}</code></span></div>
+              {(attention || event.last_error) && <div className="mt-3 rounded-md bg-white/80 px-3 py-2 text-xs"><b>{event.last_error ? 'Lỗi cuối: ' : ''}</b>{event.last_error || (event.lease_expired ? 'Worker không hoàn tất trước khi lease hết hạn.' : '')}</div>}
+            </div>;
+          })}</div>}
+        </section>
         <section className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
           <div className="mb-4 flex items-center gap-2"><ShieldCheck size={19} className="text-indigo-600" /><h2 className="font-semibold text-slate-900">Role cards & rollout</h2></div>
           <div className="grid gap-3 md:grid-cols-3">{summary.roleCards.map(card => {

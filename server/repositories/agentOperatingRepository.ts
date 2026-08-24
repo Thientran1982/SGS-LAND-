@@ -188,11 +188,51 @@ class AgentOperatingRepository {
     `, [tenantId, agentKey, JSON.stringify(DEFAULT_AGENT_ROLE_CARDS.find(card => card.agentKey === agentKey) || {}), approved ? 'APPROVED' : 'REJECTED', reviewerId, reason.slice(0, 1000)])).rows[0]);
   }
 
-  async listEvents(tenantId: string, limit = 100) {
-    return withTenantContext(tenantId, async client => (await client.query(
-      `SELECT * FROM agent_operating_events WHERE tenant_id=$1 ORDER BY created_at DESC LIMIT $2`,
-      [tenantId, Math.max(1, Math.min(limit, 200))],
-    )).rows);
+  async listEvents(tenantId: string, options: {
+    limit?: number;
+    urgency?: 'ALL' | 'HIGH' | 'NORMAL' | 'LOW';
+    lease?: 'ALL' | 'ACTIVE' | 'EXPIRED' | 'NONE';
+    deadLetter?: 'ALL' | 'YES' | 'NO';
+  } = {}) {
+    return withTenantContext(tenantId, async client => {
+      const where = ['tenant_id=$1'];
+      const urgency = options.urgency || 'ALL';
+      const lease = options.lease || 'ALL';
+      const deadLetter = options.deadLetter || 'ALL';
+      if (urgency === 'HIGH') where.push('urgency >= 75');
+      if (urgency === 'NORMAL') where.push('urgency >= 40 AND urgency < 75');
+      if (urgency === 'LOW') where.push('urgency < 40');
+      if (lease === 'ACTIVE') where.push("status='PROCESSING' AND lease_expires_at > NOW()");
+      if (lease === 'EXPIRED') where.push("status='PROCESSING' AND lease_expires_at <= NOW()");
+      if (lease === 'NONE') where.push('lease_expires_at IS NULL');
+      if (deadLetter === 'YES') where.push("status='DEAD_LETTER'");
+      if (deadLetter === 'NO') where.push("status <> 'DEAD_LETTER'");
+      return (await client.query(
+        `SELECT *, (status='PROCESSING' AND lease_expires_at <= NOW()) AS lease_expired
+           FROM agent_operating_events
+          WHERE ${where.join(' AND ')}
+          ORDER BY CASE WHEN status='DEAD_LETTER' THEN 0
+                        WHEN status='PROCESSING' AND lease_expires_at <= NOW() THEN 1 ELSE 2 END,
+                   urgency DESC, created_at DESC
+          LIMIT $2`,
+        [tenantId, Math.max(1, Math.min(Number(options.limit) || 100, 200))],
+      )).rows;
+    });
+  }
+
+  async replayEvent(tenantId: string, id: string, reason: string) {
+    return withTenantContext(tenantId, async client => {
+      const result = await client.query(
+        `UPDATE agent_operating_events
+            SET status='PENDING', attempts=0, available_at=NOW(),
+                lease_token=NULL, lease_expires_at=NULL, dead_lettered_at=NULL,
+                last_error=LEFT(CONCAT('[REPLAY] ', $3, ' | lỗi trước: ', COALESCE(last_error, 'không có')), 1000), updated_at=NOW()
+          WHERE tenant_id=$1 AND id=$2 AND status IN ('FAILED','DEAD_LETTER')
+          RETURNING *`,
+        [tenantId, id, reason.slice(0, 500)],
+      );
+      return result.rows[0] || null;
+    });
   }
 
   async cockpitSummary(tenantId: string) {
