@@ -1,0 +1,121 @@
+NHIỆM VỤ: Xây Agent Báo Cáo Hàng Ngày (Daily Admin Report Agent) cho SGSLand.
+
+MỤC TIÊU:
+Mỗi ngày, vào cuối giờ làm việc, hệ thống tự động thu thập toàn bộ dữ liệu hoạt động trong ngày,
+tổng hợp các chỉ số chính, và gửi email báo cáo cho admin — không cần ai bấm tay.
+
+GIẢ ĐỊNH CẦN XÁC NHẬN (đọc trước khi chạy):
+- Giờ gửi mặc định: 18:00 (Asia/Ho_Chi_Minh) — coi "cuối giờ" là cuối giờ làm việc. Nếu ý bạn là
+  cuối ngày (23:00-23:59) thì đổi CRON_EXPR bên dưới.
+- Người nhận admin: lấy từ bảng users có role="admin" hoặc từ biến môi trường ADMIN_REPORT_EMAILS
+  (danh sách email, phân tách bằng dấu phẩy) — cần bạn xác nhận cách nào đúng với hệ thống hiện tại.
+- Gửi qua Zoho Mail (info@sgsland.vn) vì đã tích hợp sẵn (theo ghi chú hệ thống trước đó).
+
+PHẦN 1 — THU THẬP & TỔNG HỢP DỮ LIỆU
+
+A. app/agents/daily_report.py
+
+   collect_daily_metrics(session, report_date) -> dict
+     Quét các nguồn dữ liệu đã có trong hệ thống, lọc theo report_date (00:00 -> 23:59 giờ VN):
+     - Leads/CRM: số lead mới, số lead theo trạng thái (mới/đang tư vấn/đã chốt/huỷ),
+       lead theo nguồn (Zalo OA "Minh", TikTok Lead Gen, web trực tiếp).
+     - Môi giới F1: số môi giới hoạt động trong ngày, số lead được phân bổ, top 5 F1 theo số lead xử lý.
+     - Dự án/Bất động sản: dự án được xem/tìm kiếm nhiều nhất, số tin đăng mới, số tin cập nhật giá.
+     - Task management: số công việc tạo mới, số công việc quá hạn, số công việc hoàn thành trong ngày
+       (dùng 8 bảng task management đã có).
+     - AI Sales Agent "Minh": số hội thoại, CSAT trung bình (nếu đã có signal support_csat từ Phase
+       memory/signals), số câu hỏi chưa trả lời được cần người xử lý.
+     - GEO/SEO (nếu có API/nguồn số liệu sẵn, KHÔNG bịa số nếu chưa có nguồn thật): traffic snapshot,
+       thứ hạng từ khoá theo dõi — bỏ qua mục này nếu chưa có tích hợp, đừng để trống bằng số giả.
+     - Lỗi hệ thống / cảnh báo: đọc từ log_decision hoặc bảng lỗi sẵn có (nếu có) — liệt kê sự cố đáng chú ý trong ngày.
+
+     Mỗi nguồn dữ liệu KHÔNG có sẵn trong DB hiện tại thì bỏ qua và ghi chú "chưa có dữ liệu" trong
+     báo cáo — không tự suy diễn hay làm tròn số liệu không có nguồn.
+
+   build_report_summary(metrics: dict) -> dict
+     Tổng hợp thành các khối cho email: tổng quan (3-5 chỉ số nổi bật nhất), leads, môi giới F1,
+     dự án/tin đăng, "Minh"/CSKH, công việc/task, cảnh báo cần chú ý.
+     So sánh với hôm qua/trung bình 7 ngày nếu có đủ dữ liệu lịch sử (tăng/giảm %).
+
+B. Bảng agent_report_log (lazily, theo mẫu decisions.py):
+     agent_report_log(id TEXT PK, report_date DATE, status TEXT (pending|sent|failed),
+                       recipients TEXT, summary_snapshot TEXT (json), error_detail TEXT NULL,
+                       sent_at TIMESTAMPTZ NULL, created_at)
+     UNIQUE(report_date) — chống gửi trùng nếu job bị gọi 2 lần trong ngày.
+
+PHẦN 2 — GỬI EMAIL
+
+C. app/agents/report_mailer.py
+   - render_report_email(summary: dict) -> (subject, html_body)
+       Subject: "[SGSLand] Báo cáo ngày {dd/mm/yyyy}"
+       HTML: các khối theo build_report_summary, dùng bảng đơn giản, không nhúng ảnh nặng.
+       KHÔNG đưa thông tin nhạy cảm của khách hàng cá nhân (SĐT, CCCD, địa chỉ đầy đủ) vào email —
+       chỉ số liệu tổng hợp/tên dự án/tên môi giới F1 (nội bộ), không PII khách hàng.
+   - send_report_email(session, report_date, recipients: list[str]) -> bool
+       Gửi qua Zoho Mail SMTP (dùng cấu hình mail hiện có của info@sgsland.vn).
+       Ghi lại vào agent_report_log (status=sent/failed, error_detail nếu lỗi).
+       Retry tối đa 3 lần nếu gửi lỗi (backoff ngắn), sau đó set status=failed và giữ lại để admin
+       có thể trigger gửi lại thủ công.
+
+D. run_daily_report(session, report_date=None) -> dict
+   - report_date mặc định = hôm nay (giờ VN).
+   - Idempotent: nếu agent_report_log đã có report_date với status=sent thì KHÔNG gửi lại
+     (trừ khi force=True truyền vào từ endpoint thủ công).
+   - Luồng: collect_daily_metrics -> build_report_summary -> render_report_email -> send_report_email
+     -> ghi agent_report_log.
+
+PHẦN 3 — LỊCH CHẠY TỰ ĐỘNG
+
+E. KHÔNG dùng Upstash QStash cho job này (hay hết token/quota, không đáng tin cho một job
+   chạy đều hàng ngày). Dùng 1 trong 2 cách sau — ưu tiên cách 1 vì không phụ thuộc dịch vụ ngoài
+   tốn phí:
+
+   Cách 1 (mặc định) — node-cron chạy ngay trong process backend đang chạy trên Replit:
+     - Thêm package `node-cron` (nhẹ, không cần service ngoài).
+     - app/jobs/scheduler.ts (hoặc .js theo codebase hiện tại): đăng ký
+       cron.schedule("0 18 * * *", () => runDailyReportJob(), { timezone: "Asia/Ho_Chi_Minh" })
+       CRON_EXPR mặc định "0 18 * * *" — đổi nếu giờ mong muốn khác.
+     - Chỉ đăng ký 1 lần lúc app khởi động (guard tránh đăng ký trùng khi hot-reload).
+     - Yêu cầu: Replit deployment phải ở chế độ Always On / Reserved VM (không phải chỉ chạy khi có
+       request) để job không bị bỏ lỡ lúc app "ngủ". Cần bạn xác nhận deployment hiện tại có Always On
+       hay không — nếu không có, chuyển sang Cách 2.
+
+   Cách 2 (dự phòng, hoặc dùng nếu app không Always On) — cron ngoài gọi webhook:
+     - Dùng GitHub Actions scheduled workflow (miễn phí, không giới hạn token như QStash) hoặc dịch
+       vụ cron ngoài miễn phí (cron-job.org) gọi:
+       POST /api/v1/ai/reports/daily/run mỗi ngày lúc 18:00 giờ VN.
+     - Xác thực bằng secret header tự quản lý (VD: X-Report-Cron-Secret so với biến môi trường
+       REPORT_CRON_SECRET) — không phụ thuộc QStash signature verification.
+     - Có thể chạy song song với Cách 1 làm lớp dự phòng — vì run_daily_report đã idempotent
+       (mục D), gọi trùng trong ngày không gây gửi email 2 lần.
+
+   Endpoint gọi run_daily_report(session) không kèm force — để tôn trọng tính idempotent ở mục D.
+
+F. Endpoint quản trị (append vào app/api/routers/ai.py):
+   - POST /api/v1/ai/reports/daily/run   (admin only, body: {report_date?, force?: bool}) — gửi/gửi lại thủ công.
+   - GET  /api/v1/ai/reports/daily?date=YYYY-MM-DD  (admin only) — xem lại summary_snapshot đã gửi, không cần gửi lại email.
+   - GET  /api/v1/ai/reports/daily/history?limit=30 (admin only) — danh sách các ngày đã gửi + trạng thái.
+
+PHẦN 4 — TEST
+
+G. tests/agents/test_daily_report.py
+   - collect_daily_metrics trả về dict đúng cấu trúc, các nguồn thiếu dữ liệu ghi "chưa có dữ liệu"
+     chứ không phải 0 giả hoặc bịa số.
+   - run_daily_report không gửi trùng email nếu gọi 2 lần cùng report_date (trừ force=True).
+   - send_report_email retry đúng số lần khi giả lập lỗi SMTP, và set status=failed sau khi hết retry.
+   - render_report_email không chứa PII khách hàng (test bằng regex tương tự scrub_pii nếu đã có từ
+     Phase memory).
+   - Endpoint /reports/daily/run từ chối user không phải admin.
+
+CẤM:
+- Cấm bịa số liệu cho nguồn dữ liệu chưa tích hợp (GEO traffic, v.v.) — để trống có ghi chú thay vì số giả.
+- Cấm gửi PII khách hàng cá nhân trong email tổng hợp.
+- Cấm gửi trùng báo cáo cùng một ngày khi không force.
+- Cấm sửa bảng có sẵn.
+
+VERIFY TRƯỚC KHI BÁO XONG:
+- Chạy thử run_daily_report thủ công cho 1 ngày có dữ liệu thật -> nhận được email ở hộp thư admin
+  test, nội dung khớp số liệu trong DB.
+- Gọi lại lần 2 cùng report_date -> không gửi email lần 2, log rõ lý do (đã sent).
+- pytest xanh toàn bộ tests/agents/test_daily_report.py.
+- Xác nhận QStash cron đã đăng ký đúng giờ và endpoint có verify signature (không public mở).
