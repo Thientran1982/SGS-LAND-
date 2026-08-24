@@ -70,6 +70,8 @@ const GDRIVE_HOST_RE = /^https:\/\/(?:drive|docs)\.google\.com\//i;
 const isValidDriveUrl = (url: string): boolean => {
     const s = url.trim();
     if (!s) return true; // optional
+    // Files selected with "Thêm tệp" are stored through the app upload endpoint.
+    if (s.startsWith('/api/upload/')) return true;
     try {
         const u = new URL(s);
         if (u.protocol !== 'https:') return false;
@@ -103,6 +105,9 @@ function ProjectFormModal({ project, onSave, onClose, t }: ProjectFormProps) {
     const [coverUploading, setCoverUploading] = useState(false);
     const [coverErr, setCoverErr] = useState('');
     const coverInputRef = useRef<HTMLInputElement | null>(null);
+    const driveFileInputRef = useRef<HTMLInputElement | null>(null);
+    const [driveUploading, setDriveUploading] = useState(false);
+    const [driveFileErr, setDriveFileErr] = useState('');
     const [saving, setSaving] = useState(false);
     const [err, setErr] = useState('');
     const handleCoverPick = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -134,6 +139,27 @@ function ProjectFormModal({ project, onSave, onClose, t }: ProjectFormProps) {
             if (text) set('driveUrl', text);
         } catch {
             // Clipboard có thể bị chặn (quyền hoặc HTTP) — bỏ qua, người dùng vẫn paste tay được
+        }
+    };
+    const handleDriveFilePick = async (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        e.target.value = '';
+        if (!file) return;
+        if (file.size > 25 * 1024 * 1024) {
+            setDriveFileErr('Tệp không được vượt quá 25MB');
+            return;
+        }
+        setDriveFileErr('');
+        setDriveUploading(true);
+        try {
+            const out = await db.uploadFiles([file]);
+            const url = out?.files?.[0]?.url;
+            if (!url) throw new Error('Không nhận được liên kết tệp');
+            set('driveUrl', url);
+        } catch (uploadErr: any) {
+            setDriveFileErr(uploadErr?.message || 'Không thể tải tệp lên');
+        } finally {
+            setDriveUploading(false);
         }
     };
     const handleSubmit = async (e: React.FormEvent) => {
@@ -198,7 +224,6 @@ function ProjectFormModal({ project, onSave, onClose, t }: ProjectFormProps) {
                 {/* Header — luôn hiển thị, không scroll */}
                 <div className="flex items-center justify-between px-6 py-4 border-b border-[var(--glass-border)] shrink-0">
                     <div className="flex items-center gap-2 text-sgs-primary">
-                        {IC.BLDG}
                         <h2 className="text-base font-bold">{project ? t('project.edit') : t('project.new')}</h2>
                     </div>
                     <button type="button" onClick={onClose} className="p-1.5 rounded-lg hover:bg-[var(--glass-surface-hover)] text-[var(--text-secondary)]" aria-label={t('common.close')}>{IC.X}</button>
@@ -233,6 +258,12 @@ function ProjectFormModal({ project, onSave, onClose, t }: ProjectFormProps) {
                         </div>
                         <div className="col-span-2">
                             <label htmlFor="pj-drive" className={labelCls}>{t('project.drive_url')}</label>
+                            <input
+                                ref={driveFileInputRef}
+                                type="file"
+                                className="hidden"
+                                onChange={handleDriveFilePick}
+                            />
                             <div className="flex gap-2">
                                 <div className="relative flex-1">
                                     <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--text-secondary)]" aria-hidden="true">
@@ -254,6 +285,14 @@ function ProjectFormModal({ project, onSave, onClose, t }: ProjectFormProps) {
                                 </div>
                                 <button
                                     type="button"
+                                    onClick={() => driveFileInputRef.current?.click()}
+                                    disabled={driveUploading}
+                                    className="shrink-0 px-3 py-2 rounded-xl border border-[var(--glass-border)] text-xs font-semibold text-[var(--text-secondary)] hover:bg-[var(--glass-surface-hover)] disabled:opacity-60"
+                                >
+                                    {driveUploading ? 'Đang tải...' : 'Thêm tệp'}
+                                </button>
+                                <button
+                                    type="button"
                                     onClick={handlePasteDrive}
                                     className="shrink-0 px-3 py-2 rounded-xl border border-[var(--glass-border)] text-xs font-semibold text-[var(--text-secondary)] hover:bg-[var(--glass-surface-hover)]"
                                     title={t('project.drive_paste')}
@@ -262,8 +301,8 @@ function ProjectFormModal({ project, onSave, onClose, t }: ProjectFormProps) {
                                 </button>
                                 {/* Nút "Mở Drive" đã ẩn trong form — dùng nút ngoài header Danh mục sản phẩm để mở. */}
                             </div>
-                            <p id="pj-drive-help" className={`mt-1 text-xs ${driveUrlTrim && !driveUrlValid ? 'text-rose-600' : 'text-[var(--text-secondary)]'}`}>
-                                {driveUrlTrim && !driveUrlValid ? t('project.error_drive_url_invalid') : t('project.drive_url_help')}
+                            <p id="pj-drive-help" className={`mt-1 text-xs ${driveFileErr || (driveUrlTrim && !driveUrlValid) ? 'text-rose-600' : 'text-[var(--text-secondary)]'}`}>
+                                {driveFileErr || (driveUrlTrim && !driveUrlValid ? t('project.error_drive_url_invalid') : 'Dán link Google Drive hoặc thêm tệp từ máy (tối đa 25MB).')}
                             </p>
                         </div>
                         <div className="col-span-2 grid grid-cols-1 sm:grid-cols-3 gap-4">
