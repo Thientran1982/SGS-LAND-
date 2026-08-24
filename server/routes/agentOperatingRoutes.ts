@@ -102,7 +102,7 @@ export function createAgentOperatingRoutes(authenticateToken: any): Router {
     const reason = String(req.body?.reason || '').trim();
     if (reason.length < 5) return res.status(400).json({ error: 'Cần nêu lý do replay (ít nhất 5 ký tự).' });
     try {
-      const row = await agentOperatingRepository.replayEvent(user.tenantId, req.params.id, reason);
+      const row = await agentOperatingRepository.replayEvent(user.tenantId, req.params.id, reason, user.id);
       if (!row) return res.status(409).json({ error: 'Event không còn ở trạng thái lỗi/dead-letter hoặc không tồn tại.' });
       res.json(row);
     } catch { res.status(500).json({ error: 'Không thể replay event.' }); }

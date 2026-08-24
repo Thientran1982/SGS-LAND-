@@ -167,6 +167,7 @@ import m147 from './147_auctions';
 import m148 from './148_auction_conversions';
 import m149 from './149_agent_operating_system';
 import m150 from './150_agent_event_leases';
+import m151 from './151_agent_event_replay_history';
 
 dotenv.config();
 
@@ -330,6 +331,7 @@ const MIGRATION_REGISTRY: Record<string, Migration> = {
   '148_auction_conversions.ts': m148,
   '149_agent_operating_system.ts': m149,
   '150_agent_event_leases.ts': m150,
+  '151_agent_event_replay_history.ts': m151,
 };
 
 async function ensureSchemaVersionsTable(client: PoolClient): Promise<void> {

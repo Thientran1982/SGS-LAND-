@@ -41,6 +41,14 @@ class AgentOperatingRepository {
          ) RETURNING *`,
         [tenantId, Math.max(1, Math.min(limit, 100))],
       );
+      if (result.rows.length > 0) {
+        await client.query(
+          `UPDATE agent_event_replay_history
+              SET result_status='PROCESSING'
+            WHERE tenant_id=$1 AND id = ANY($2::uuid[])`,
+          [tenantId, result.rows.map(row => row.active_replay_id).filter(Boolean)],
+        );
+      }
       return result.rows;
     });
   }
@@ -51,13 +59,21 @@ class AgentOperatingRepository {
         `UPDATE agent_operating_events
             SET status=$3, last_error=$4,
                 available_at=CASE WHEN $3='FAILED' THEN NOW()+LEAST(INTERVAL '15 minutes', INTERVAL '5 seconds' * POWER(2, GREATEST(attempts - 1, 0))) ELSE available_at END,
-                lease_token=NULL, lease_expires_at=NULL,
+            lease_token=NULL, lease_expires_at=NULL,
                 dead_lettered_at=CASE WHEN $3='DEAD_LETTER' THEN NOW() ELSE dead_lettered_at END,
                 updated_at=NOW()
           WHERE tenant_id=$1 AND id=$2 AND status='PROCESSING'
             AND ($5::uuid IS NULL OR lease_token=$5::uuid) RETURNING *`,
         [tenantId, id, status, error?.slice(0, 1000) || null, leaseToken || null],
       );
+      if (result.rows[0]?.active_replay_id) {
+        await client.query(
+          `UPDATE agent_event_replay_history
+              SET result_status=$3, result_error=$4, completed_at=NOW()
+            WHERE tenant_id=$1 AND id=$2 AND result_status IN ('PENDING','PROCESSING')`,
+          [tenantId, result.rows[0].active_replay_id, status, error?.slice(0, 1000) || null],
+        );
+      }
       return result.rows[0] || null;
     });
   }
@@ -208,29 +224,46 @@ class AgentOperatingRepository {
       if (deadLetter === 'YES') where.push("status='DEAD_LETTER'");
       if (deadLetter === 'NO') where.push("status <> 'DEAD_LETTER'");
       return (await client.query(
-        `SELECT *, (status='PROCESSING' AND lease_expires_at <= NOW()) AS lease_expired
-           FROM agent_operating_events
-          WHERE ${where.join(' AND ')}
-          ORDER BY CASE WHEN status='DEAD_LETTER' THEN 0
-                        WHEN status='PROCESSING' AND lease_expires_at <= NOW() THEN 1 ELSE 2 END,
-                   urgency DESC, created_at DESC
+        `SELECT e.*, (e.status='PROCESSING' AND e.lease_expires_at <= NOW()) AS lease_expired,
+                COALESCE((
+                  SELECT json_agg(rh ORDER BY rh.requested_at DESC)
+                    FROM agent_event_replay_history rh
+                   WHERE rh.tenant_id=e.tenant_id AND rh.event_id=e.id
+                ), '[]'::json) AS replay_history
+           FROM agent_operating_events e
+          WHERE ${where.map(clause => clause.replace(/\btenant_id\b/g, 'e.tenant_id')).join(' AND ')}
+          ORDER BY CASE WHEN e.status='DEAD_LETTER' THEN 0
+                        WHEN e.status='PROCESSING' AND e.lease_expires_at <= NOW() THEN 1 ELSE 2 END,
+                   e.urgency DESC, e.created_at DESC
           LIMIT $2`,
         [tenantId, Math.max(1, Math.min(Number(options.limit) || 100, 200))],
       )).rows;
     });
   }
 
-  async replayEvent(tenantId: string, id: string, reason: string) {
+  async replayEvent(tenantId: string, id: string, reason: string, operatorId: string) {
     return withTenantContext(tenantId, async client => {
+      const history = await client.query(
+        `INSERT INTO agent_event_replay_history (tenant_id, event_id, operator_id, reason, replay_number)
+         SELECT $1, id, $4, $3,
+                COALESCE((SELECT MAX(replay_number) FROM agent_event_replay_history WHERE tenant_id=$1 AND event_id=$2), 0) + 1
+           FROM agent_operating_events
+          WHERE tenant_id=$1 AND id=$2 AND status IN ('FAILED','DEAD_LETTER')
+         RETURNING *`,
+        [tenantId, id, reason.slice(0, 2000), operatorId],
+      );
+      if (!history.rows[0]) return null;
       const result = await client.query(
         `UPDATE agent_operating_events
             SET status='PENDING', attempts=0, available_at=NOW(),
                 lease_token=NULL, lease_expires_at=NULL, dead_lettered_at=NULL,
-                last_error=LEFT(CONCAT('[REPLAY] ', $3, ' | lỗi trước: ', COALESCE(last_error, 'không có')), 1000), updated_at=NOW()
+                active_replay_id=$3,
+                last_error=LEFT(CONCAT('[REPLAY] ', $4, ' | lỗi trước: ', COALESCE(last_error, 'không có')), 1000), updated_at=NOW()
           WHERE tenant_id=$1 AND id=$2 AND status IN ('FAILED','DEAD_LETTER')
           RETURNING *`,
-        [tenantId, id, reason.slice(0, 500)],
+        [tenantId, id, history.rows[0].id, reason.slice(0, 500)],
       );
+      if (!result.rows[0]) return null;
       return result.rows[0] || null;
     });
   }
