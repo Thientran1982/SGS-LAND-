@@ -2685,27 +2685,26 @@ function ProjectListingsPanel({ project, canCreate, isAdmin, userRole, onClose, 
                         ref={menuRef}
                         onClick={e => e.stopPropagation()}
                         style={{ position: 'fixed', top: menuPos.top, right: menuPos.right, zIndex: 10002 }}
-                        className="bg-[var(--bg-surface)] border border-[var(--glass-border)] rounded-xl shadow-xl py-1 min-w-[160px]"
+                        className="bg-[var(--bg-surface)] border border-[var(--glass-border)] rounded-xl shadow-xl overflow-hidden min-w-[160px]"
                     >
                         <button
                             type="button"
                             onClick={() => { setMenuOpenId(null); setEditTarget(menuListing); }}
-                            className="w-full text-left px-3 py-2 text-xs text-[var(--text-secondary)] hover:bg-[var(--glass-surface)] flex items-center gap-2"
+                            className="w-full text-left px-3 py-2.5 text-xs text-[var(--text-secondary)] hover:bg-[var(--glass-surface-hover)] flex items-center gap-2 first:rounded-t-xl"
                         >
                             {IC.EDIT} {t('common.edit')}
                         </button>
                         <button
                             type="button"
                             onClick={() => { setMenuOpenId(null); setContractTarget(menuListing); }}
-                            className="w-full text-left px-3 py-2 text-xs text-sgs-verified hover:bg-sgs-champagne flex items-center gap-2"
+                            className="w-full text-left px-3 py-2.5 text-xs text-sgs-verified hover:bg-sgs-champagne flex items-center gap-2"
                         >
                             {IC.CONTRACT} {t('detail.create_contract') || 'Hợp đồng'}
                         </button>
-                        <div className="border-t border-[var(--glass-border)] my-1" />
                         <button
                             type="button"
                             onClick={() => { setMenuOpenId(null); setDeleteTarget(menuListing); }}
-                            className="w-full text-left px-3 py-2 text-xs text-rose-600 hover:bg-rose-50 flex items-center gap-2"
+                            className="w-full text-left px-3 py-2.5 text-xs text-rose-600 hover:bg-rose-50 flex items-center gap-2 last:rounded-b-xl"
                         >
                             {IC.TRASH} {t('common.delete')}
                         </button>
