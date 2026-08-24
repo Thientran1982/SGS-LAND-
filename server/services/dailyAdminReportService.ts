@@ -215,6 +215,117 @@ export async function listDailyReports(tenantId: string, limit = 30) {
   return withTenantContext(tenantId, async client => (await client.query('SELECT * FROM agent_report_log WHERE tenant_id=$1 ORDER BY report_date DESC LIMIT $2', [tenantId, Math.min(Math.max(limit,1),100)])).rows);
 }
 
+const DAILY_REPORT_DELIVERY_KEY = /^daily-report:([0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}):(\d{4}-\d{2}-\d{2}):([^:]+@[^:]+)$/i;
+const BOUNCE_EVENTS = new Set(['bounced', 'bounce', 'hardbounce', 'softbounce', 'blocked', 'invalid', 'error']);
+
+export interface BrevoReportDeliveryEvent {
+  deliveryKey: string;
+  event: string;
+  email?: string;
+  messageId?: string;
+  timestamp?: number;
+  tags?: string[];
+}
+
+/**
+ * Apply a Brevo delivery event to the durable claim and its daily report.
+ * The tenant is derived from, and checked against, the delivery key; the
+ * webhook never trusts a global/default tenant for report delivery updates.
+ */
+export async function processBrevoReportDeliveryEvent(event: BrevoReportDeliveryEvent): Promise<{
+  matched: boolean;
+  tenantId?: string;
+  deliveryKey: string;
+  claimStatus?: string;
+  reportStatus?: string;
+}> {
+  const match = DAILY_REPORT_DELIVERY_KEY.exec(event.deliveryKey);
+  const eventName = String(event.event || '').replace(/[_\s-]/g, '').toLowerCase();
+  if (!match || (eventName !== 'delivered' && !BOUNCE_EVENTS.has(eventName))) {
+    return { matched: false, deliveryKey: event.deliveryKey };
+  }
+  const [, tenantId, reportDate, recipient] = match;
+  const isDelivered = eventName === 'delivered';
+
+  return withRlsBypass(async client => {
+    const claimResult = await client.query(
+      `SELECT status, provider_message_id FROM email_delivery_claims
+       WHERE tenant_id=$1::uuid AND delivery_key=$2 FOR UPDATE`,
+      [tenantId, event.deliveryKey],
+    );
+    if (!claimResult.rows[0]) {
+      return { matched: false, tenantId, deliveryKey: event.deliveryKey };
+    }
+
+    const previousClaimStatus = claimResult.rows[0].status;
+    const claimUpdate = await client.query(
+      `UPDATE email_delivery_claims
+       SET status = CASE
+           WHEN status = 'SENT' THEN 'SENT'
+           WHEN $3::boolean THEN 'SENT'
+           ELSE 'FAILED'
+         END,
+           provider='brevo',
+           provider_message_id=COALESCE($4, provider_message_id),
+           error=CASE WHEN $3::boolean THEN NULL ELSE $5 END,
+           updated_at=NOW()
+       WHERE tenant_id=$1::uuid AND delivery_key=$2
+       RETURNING status`,
+      [tenantId, event.deliveryKey, isDelivered, event.messageId || null, `Brevo event: ${event.event}`],
+    );
+    const claimStatus = claimUpdate.rows[0]?.status || previousClaimStatus;
+    const reportResult = await client.query(
+      `SELECT status, recipients FROM agent_report_log
+       WHERE tenant_id=$1::uuid AND report_date=$2::date FOR UPDATE`,
+      [tenantId, reportDate],
+    );
+    let reportStatus = reportResult.rows[0]?.status;
+    if (reportResult.rows[0] && reportStatus !== 'sent') {
+      if (!isDelivered) {
+        reportStatus = 'failed';
+      } else {
+        const recipients = Array.isArray(reportResult.rows[0].recipients)
+          ? reportResult.rows[0].recipients
+          : [];
+        const claimStatuses = await client.query(
+          `SELECT status FROM email_delivery_claims
+           WHERE tenant_id=$1::uuid
+             AND delivery_key LIKE $2`,
+          [tenantId, `daily-report:${tenantId}:${reportDate}:%`],
+        );
+        const expected = recipients.length || claimStatuses.rowCount || 1;
+        reportStatus = claimStatuses.rows.length >= expected &&
+          claimStatuses.rows.every((row: any) => row.status === 'SENT') ? 'sent' : reportStatus;
+      }
+      if (reportStatus !== reportResult.rows[0].status) {
+        await client.query(
+          `UPDATE agent_report_log
+           SET status=$3, sent_at=CASE WHEN $3='sent' THEN COALESCE(sent_at,NOW()) ELSE sent_at END,
+               updated_at=NOW()
+           WHERE tenant_id=$1::uuid AND report_date=$2::date`,
+          [tenantId, reportDate, reportStatus],
+        );
+      }
+    }
+
+    await client.query(
+      `INSERT INTO notification_operational_events (tenant_id, event_type, payload)
+       VALUES ($1::uuid, 'daily_report_delivery_event', $2::jsonb)`,
+      [tenantId, JSON.stringify({
+        deliveryKey: event.deliveryKey,
+        recipient,
+        event: event.event,
+        messageId: event.messageId || null,
+        timestamp: event.timestamp || null,
+        previousClaimStatus,
+        claimStatus,
+        reportStatus,
+      })],
+    );
+    return { matched: true, tenantId, deliveryKey: event.deliveryKey, claimStatus, reportStatus };
+  });
+}
+
 let schedulerStarted = false;
 export function startDailyReportScheduler() {
   if (schedulerStarted) return;

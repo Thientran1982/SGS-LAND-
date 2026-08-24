@@ -4802,6 +4802,7 @@ app.use('/api/approval-requests', apiRateLimit, createApprovalRequestRoutes(auth
   app.post("/api/webhooks/brevo", webhookRateLimit, async (req, res) => {
     try {
       const { parseBrevoInbound, parseBrevoEvents, verifyBrevoWebhookSignature } = await import('./server/services/brevoService');
+      const { processBrevoReportDeliveryEvent } = await import('./server/services/dailyAdminReportService');
       const rawBody: Buffer = (req as any).rawBody || Buffer.from(JSON.stringify(req.body));
       const brevoSecret = process.env.BREVO_WEBHOOK_SECRET;
       const brevoIsProduction = process.env.NODE_ENV === 'production';
@@ -4857,7 +4858,22 @@ app.use('/api/approval-requests', apiRateLimit, createApprovalRequestRoutes(auth
         if (events.length > 0) {
           for (const evt of events) {
             logger.info(`[Brevo Webhook] Event: ${evt.event} for ${evt.email}`);
-            // Future: update lead interaction status, track opens/clicks, handle bounces
+            const deliveryKeys = (evt.tags || [])
+              .filter(tag => tag.startsWith('delivery-key:'))
+              .map(tag => tag.slice('delivery-key:'.length));
+            for (const deliveryKey of deliveryKeys) {
+              const result = await processBrevoReportDeliveryEvent({
+                deliveryKey,
+                event: evt.event,
+                email: evt.email,
+                messageId: evt.messageId,
+                timestamp: evt.timestamp,
+                tags: evt.tags,
+              });
+              if (result.matched) {
+                logger.info(`[Brevo Webhook] Report delivery ${deliveryKey}: ${result.claimStatus}/${result.reportStatus}`);
+              }
+            }
           }
         }
       }

@@ -184,8 +184,21 @@ export function parseBrevoEvents(body: unknown): BrevoEmailEvent[] {
       messageId: e['message-id'] || e.messageId || e['msg-id'],
       subject: e.subject || e.Subject,
       timestamp: e.ts ? e.ts * 1000 : e.timestamp || Date.now(),
-      tags: e.tags || e.TAG || [],
+      tags: normalizeBrevoTags(e.tags || e.TAG || e.tag || []),
     }));
+}
+
+function normalizeBrevoTags(value: unknown): string[] {
+  if (Array.isArray(value)) return value.flatMap(item => normalizeBrevoTags(item));
+  if (typeof value !== 'string') return [];
+  const trimmed = value.trim();
+  if (!trimmed) return [];
+  try {
+    const parsed = JSON.parse(trimmed);
+    return Array.isArray(parsed) ? parsed.filter(item => typeof item === 'string') : [trimmed];
+  } catch {
+    return trimmed.split(',').map(tag => tag.trim()).filter(Boolean);
+  }
 }
 // ── Verify Brevo webhook signature ────────────────────────────────────────────
 // Brevo signs webhook payloads with an HMAC-SHA256 using the BREVO_WEBHOOK_SECRET
