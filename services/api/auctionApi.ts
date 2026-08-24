@@ -5,6 +5,7 @@ export const auctionApi = {
   create: (data: Record<string, any>) => api.post<any>('/api/auctions', data),
   bids: (id: string) => api.get<any[]>(`/api/auctions/${id}/bids`),
   updateStatus: (id: string, status: string) => api.patch<any>(`/api/auctions/${id}/status`, { status }),
+  convert: (id: string, target: 'booking' | 'contract') => api.post<any>(`/api/auctions/${id}/convert`, { target }),
   placeBid: (id: string, amount: number, idempotencyKey: string) =>
     api.post<any>(`/api/auctions/${id}/bids`, { amount, idempotencyKey }),
 };

@@ -36,6 +36,7 @@ export default function Auction() {
   const [saving, setSaving] = useState(false);
   const [bidAmount, setBidAmount] = useState('');
   const [busyAction, setBusyAction] = useState(false);
+  const [conversionMessage, setConversionMessage] = useState('');
   const [form, setForm] = useState({ listingId: '', title: '', startPrice: '', stepPrice: '', startsAt: dateInput(new Date()), endsAt: dateInput(new Date(Date.now() + 86400000)) });
 
   const load = async () => {
@@ -122,6 +123,17 @@ export default function Auction() {
     } catch (e: any) { setError(e?.message || 'Không thể ghi nhận lượt đặt giá'); }
     finally { setBusyAction(false); }
   };
+  const convertWinner = async (target: 'booking' | 'contract') => {
+    if (!selected) return;
+    setBusyAction(true); setError(''); setConversionMessage('');
+    try {
+      const result = await auctionApi.convert(selected.id, target);
+      setConversionMessage(result.created
+        ? target === 'booking' ? 'Đã tạo booking nội bộ chờ xác nhận.' : 'Đã tạo hợp đồng ở trạng thái bản nháp.'
+        : target === 'booking' ? 'Booking của phiên này đã tồn tại.' : 'Hợp đồng của phiên này đã tồn tại.');
+    } catch (e: any) { setError(e?.message || 'Không thể chuyển quy trình'); }
+    finally { setBusyAction(false); }
+  };
 
   return (
     <div style={{ maxWidth: 1100, margin: '0 auto', padding: '24px 16px' }}>
@@ -143,6 +155,7 @@ export default function Auction() {
       )}
       {selected && <div style={{ ...card, marginTop: 20 }}><div style={{ display: 'flex', justifyContent: 'space-between', gap: 12 }}><div><h2 style={{ fontSize: 18, fontWeight: 700 }}>{selected.title}</h2><p style={{ color: '#64748b', fontSize: 13 }}>Mã sản phẩm: {selected.listingCode || selected.listingId}</p></div><button type="button" onClick={() => setSelected(null)} style={{ border: 0, background: 'transparent', color: '#64748b' }}>Đóng</button></div>
         <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', margin: '14px 0' }}>{(['LIVE','PAUSED','ENDED','CANCELLED'] as const).map(s => <button key={s} type="button" disabled={busyAction || selected.status === s || selected.status === 'ENDED' || selected.status === 'CANCELLED'} onClick={() => changeStatus(s)} style={{ border: '1px solid #cbd5e1', borderRadius: 8, padding: '7px 10px', background: selected.status === s ? '#ecfdf5' : '#fff', color: '#334155' }}>{STATUS_META[s].label}</button>)}</div>
+        {selected.status === 'ENDED' && <div style={{ borderTop: '1px solid #f1f5f9', paddingTop: 14, marginBottom: 14 }}><div style={{ fontWeight: 700, marginBottom: 8 }}>Bước tiếp theo</div><div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}><button type="button" disabled={busyAction} onClick={() => convertWinner('booking')} style={{ border: 0, borderRadius: 8, padding: '8px 12px', background: '#0f766e', color: '#fff', fontWeight: 600 }}>Tạo booking nội bộ</button><button type="button" disabled={busyAction} onClick={() => convertWinner('contract')} style={{ border: '1px solid #0f766e', borderRadius: 8, padding: '8px 12px', background: '#fff', color: '#0f766e', fontWeight: 600 }}>Tạo hợp đồng nháp</button></div>{conversionMessage && <p style={{ color: '#047857', fontSize: 13, marginTop: 8 }}>{conversionMessage}</p>}</div>}
         {selected.status === 'LIVE' && <form onSubmit={placeBid} style={{ display: 'flex', gap: 8, marginBottom: 14 }}><input required type="number" min={Number(selected.currentBid) + Number(selected.stepPrice)} step="1" value={bidAmount} onChange={e => setBidAmount(e.target.value)} placeholder={`Tối thiểu ${fmtVnd(Number(selected.currentBid) + Number(selected.stepPrice))}`} style={{ flex: 1, border: '1px solid #cbd5e1', borderRadius: 8, padding: '9px 10px' }} /><button disabled={busyAction} style={{ border: 0, borderRadius: 8, padding: '9px 14px', background: '#047857', color: '#fff', fontWeight: 700 }}>Đặt giá</button></form>}
         <h3 style={{ fontWeight: 700, marginBottom: 8 }}>Lịch sử đặt giá ({bids.length})</h3>{bids.length === 0 ? <p style={{ color: '#94a3b8', fontSize: 13 }}>Chưa có lượt đặt giá.</p> : <div>{bids.map(b => <div key={b.id} style={{ display: 'flex', justifyContent: 'space-between', borderTop: '1px solid #f1f5f9', padding: '8px 0', fontSize: 13 }}><span>{b.bidderName || 'Người dùng'}</span><strong>{fmtVnd(Number(b.amount))}</strong></div>)}</div>}
       </div>}

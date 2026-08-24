@@ -144,6 +144,69 @@ class AuctionRepository extends BaseRepository {
       return result.rows.map(row => this.rowToEntity<any>(row));
     });
   }
+
+  async convert(tenantId: string, auctionId: string, target: 'booking' | 'contract', actorId: string) {
+    return this.withTenant(tenantId, async client => {
+      await client.query('BEGIN');
+      try {
+        const auctionResult = await client.query(`
+          SELECT a.*, l.title AS listing_title, l.address AS listing_address, l.type AS listing_type,
+                 u.name AS winner_name, u.email AS winner_email, u.phone AS winner_phone
+          FROM auction_sessions a
+          JOIN listings l ON l.id = a.listing_id AND l.tenant_id = a.tenant_id
+          JOIN users u ON u.id = a.winner_user_id
+          WHERE a.id = $1 AND a.tenant_id = $2
+          FOR UPDATE
+        `, [auctionId, tenantId]);
+        const a = auctionResult.rows[0];
+        if (!a) throw new Error('AUCTION_NOT_FOUND');
+        if (a.status !== 'ENDED' || !a.winner_user_id) throw new Error('AUCTION_NOT_SETTLED');
+        if (target === 'booking') {
+          const existing = await client.query('SELECT * FROM auction_bookings WHERE auction_id=$1 AND tenant_id=$2', [auctionId, tenantId]);
+          if (existing.rows[0]) {
+            await client.query('COMMIT');
+            return { type: 'booking', created: false, record: this.rowToEntity<any>(existing.rows[0]) };
+          }
+          const result = await client.query(`
+            INSERT INTO auction_bookings
+              (tenant_id, auction_id, listing_id, winner_user_id, amount, created_by)
+            VALUES ($1,$2,$3,$4,$5,$6) RETURNING *
+          `, [tenantId, auctionId, a.listing_id, a.winner_user_id, a.current_bid, actorId]);
+          await client.query('COMMIT');
+          return { type: 'booking', created: true, record: this.rowToEntity<any>(result.rows[0]) };
+        }
+        const existing = await client.query('SELECT * FROM contracts WHERE auction_id=$1 AND tenant_id=$2', [auctionId, tenantId]);
+        if (existing.rows[0]) {
+          await client.query('COMMIT');
+          return { type: 'contract', created: false, record: this.rowToEntity<any>(existing.rows[0]) };
+        }
+        const partyB = {
+          name: a.winner_name || a.winner_email,
+          phone: a.winner_phone,
+          email: a.winner_email,
+        };
+        const propertyDetails = { title: a.listing_title, address: a.listing_address, type: a.listing_type };
+        const result = await client.query(`
+          INSERT INTO contracts
+            (tenant_id, auction_id, listing_id, type, status, value, property_price,
+             party_a, party_b, property_details, metadata, created_by, created_by_id)
+          VALUES ($1,$2,$3,'PURCHASE','DRAFT',$4,$4,$5,$6,$7,$8,$9,$10)
+          RETURNING *
+        `, [
+          tenantId, auctionId, a.listing_id, a.current_bid,
+          JSON.stringify({ name: 'SGS Land', role: 'Bên bán' }),
+          JSON.stringify(partyB), JSON.stringify(propertyDetails),
+          JSON.stringify({ source: 'AUCTION', auctionId, winningBid: a.current_bid }),
+          a.winner_name || a.winner_email, actorId,
+        ]);
+        await client.query('COMMIT');
+        return { type: 'contract', created: true, record: this.rowToEntity<any>(result.rows[0]) };
+      } catch (error) {
+        await client.query('ROLLBACK');
+        throw error;
+      }
+    });
+  }
 }
 
 export const auctionRepository = new AuctionRepository();

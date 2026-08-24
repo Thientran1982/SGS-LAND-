@@ -49,6 +49,21 @@ export function createAuctionRoutes(authenticateToken: any, io?: any) {
       res.status(500).json({ error: 'Không thể tải lịch sử đặt giá' });
     }
   });
+  router.post('/:id/convert', authenticateToken, async (req: Request, res: Response) => {
+    try {
+      const user = (req as any).user;
+      if (!ADMIN_ROLES.has(user.role)) return res.status(403).json({ error: 'Không có quyền chuyển quy trình' });
+      const target = String(req.body?.target || '').toLowerCase();
+      if (target !== 'booking' && target !== 'contract') return res.status(400).json({ error: 'Loại quy trình không hợp lệ' });
+      const result = await auctionRepository.convert(user.tenantId, String(req.params.id), target, user.id);
+      res.status(result.created ? 201 : 200).json(result);
+    } catch (error: any) {
+      if (error.message === 'AUCTION_NOT_FOUND') return res.status(404).json({ error: 'Không tìm thấy phiên đấu giá' });
+      if (error.message === 'AUCTION_NOT_SETTLED') return res.status(409).json({ error: 'Chỉ phiên đã chốt người thắng mới được chuyển quy trình' });
+      console.error('[auction] conversion error:', error);
+      res.status(500).json({ error: 'Không thể chuyển quy trình sau đấu giá' });
+    }
+  });
   router.patch('/:id/status', authenticateToken, async (req: Request, res: Response) => {
     try {
       const user = (req as any).user;
