@@ -784,7 +784,7 @@ function ListingDetailPanel({ listing, canEdit, onEdit, onClose, onStatusChange,
                                             type="button"
                                             disabled={!!changingTo || isActive}
                                             onClick={() => handleStatusChange(s.value)}
-                                            className={`inline-flex items-center gap-1 text-xs font-bold px-3 py-1.5 rounded-full transition-all
+                                            className={`inline-flex items-center gap-1 text-xs2 font-bold px-3 py-1.5 rounded-full transition-all
                                                 ${isActive
                                                     ? `${STATUS_LISTING_COLOR[s.value] || s.idle} ring-2 ring-current/30 cursor-default`
                                                     : `${s.idle} hover:shadow-sm disabled:opacity-40 cursor-pointer`
