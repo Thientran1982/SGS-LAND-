@@ -1,5 +1,6 @@
 import { Pool } from 'pg';
 import { emailService } from './emailService';
+import { createHash } from 'crypto';
 
 export type CareDay = 'D1' | 'D3' | 'D5' | 'D7';
 const DAYS: Array<{ mark: CareDay; day: number }> = [{ mark: 'D1', day: 1 }, { mark: 'D3', day: 3 }, { mark: 'D5', day: 5 }, { mark: 'D7', day: 7 }];
@@ -99,4 +100,44 @@ export async function runInactivityAlerts(pool: Pool, dryRun = false) {
     } catch { result.failed++; }
   }
   return result;
+}
+
+export async function claimCareWebhook(pool: Pool, eventKey: string): Promise<boolean> {
+  const result = await pool.query(
+    `INSERT INTO webhook_events (platform,event_key,status) VALUES ('brevo-care',$1,'PROCESSED')
+     ON CONFLICT (platform,event_key) DO NOTHING RETURNING id`,
+    [eventKey.slice(0, 500)],
+  );
+  return Boolean(result.rowCount);
+}
+
+export async function processCareInboundReply(pool: Pool, from: string, subject?: string, eventKey?: string) {
+  const key = eventKey || createHash('sha256').update(`${from}|${subject || ''}`).digest('hex');
+  if (!(await claimCareWebhook(pool, `inbound:${key}`))) return { duplicate: true, matched: 0 };
+  const result = await pool.query(
+    `UPDATE leads SET status='replied', updated_at=NOW()
+     WHERE LOWER(email)=LOWER($1)
+       AND LOWER(COALESCE(status,'new')) NOT IN ('converted','opted_out')
+     RETURNING id,tenant_id`,
+    [from],
+  );
+  for (const row of result.rows) {
+    await pool.query(
+      `UPDATE care_followup_log SET replied_at=NOW(), status='SKIPPED'
+       WHERE tenant_id=$1 AND lead_id=$2 AND status NOT IN ('SENT','UNKNOWN')`,
+      [row.tenant_id, row.id],
+    );
+  }
+  return { duplicate: false, matched: result.rowCount || 0 };
+}
+
+export async function processCareTrackingEvent(pool: Pool, event: { event: string; email?: string; messageId?: string; timestamp?: number; tags?: string[] }) {
+  const key = event.messageId || `${event.event}|${event.email || ''}|${event.timestamp || ''}|${(event.tags || []).join(',')}`;
+  if (!(await claimCareWebhook(pool, `event:${key}`))) return { duplicate: true, matched: 0 };
+  const keys = (event.tags || []).filter(tag => tag.startsWith('delivery-key:')).map(tag => tag.slice(14));
+  if (!keys.length) return { duplicate: false, matched: 0 };
+  const column = event.event.toLowerCase() === 'opened' ? 'opened_at' : event.event.toLowerCase() === 'clicks' || event.event.toLowerCase() === 'clicked' ? 'clicked_at' : null;
+  if (!column) return { duplicate: false, matched: 0 };
+  const result = await pool.query(`UPDATE care_followup_log SET ${column}=COALESCE(${column},NOW()) WHERE delivery_key = ANY($1::text[])`, [keys]);
+  return { duplicate: false, matched: result.rowCount || 0 };
 }

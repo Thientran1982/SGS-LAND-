@@ -33,6 +33,7 @@ import { createAnalyticsRoutes } from "./server/routes/analyticsRoutes";
 import { createScoringRoutes } from "./server/routes/scoringRoutes";
 import { createRoutingRuleRoutes } from "./server/routes/routingRuleRoutes";
 import { createKnowledgeRoutes } from "./server/routes/knowledgeRoutes";
+import { processCareInboundReply, processCareTrackingEvent } from "./server/services/customerCareService";
 import { createCustomFieldRoutes } from "./server/routes/customFieldRoutes";
 import { createUnitRoutes } from "./server/routes/unitRoutes";
 import { createAuctionRoutes } from "./server/routes/auctionRoutes";
@@ -4843,6 +4844,7 @@ app.use('/api/approval-requests', apiRateLimit, createApprovalRequestRoutes(auth
         }
 
         logger.info(`[Brevo Webhook] Inbound email from ${parsed.from} | subject: ${parsed.subject}`);
+        await processCareInboundReply(pool, parsed.from, parsed.subject, (body.MessageID || body['Message-Id'] || body.messageId) as string | undefined);
 
         await webhookQueue.add('email-event', {
           platform: 'email',
@@ -4863,6 +4865,7 @@ app.use('/api/approval-requests', apiRateLimit, createApprovalRequestRoutes(auth
         if (events.length > 0) {
           for (const evt of events) {
             logger.info(`[Brevo Webhook] Event: ${evt.event} for ${evt.email}`);
+            await processCareTrackingEvent(pool, evt);
             const deliveryKeys = (evt.tags || [])
               .filter(tag => tag.startsWith('delivery-key:'))
               .map(tag => tag.slice('delivery-key:'.length));
