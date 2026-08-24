@@ -11,6 +11,7 @@ export type MatcherWeights = { location: number; price: number; legal: number; r
 export const DEFAULT_MATCHER_WEIGHTS: MatcherWeights = { location: 0.4, price: 0.25, legal: 0.2, rating: 0.15 };
 const VALID_KINDS = new Set<MemoryKind>(['fact', 'episodic', 'procedural']);
 const MAX_ITEMS = 200;
+const signalWriteFailures = new Map<string, { count: number; lastAt: string; lastError: string }>();
 
 export function scrubPii(input: unknown): string {
   return String(input ?? '')
@@ -183,7 +184,8 @@ export const agentMemoryService = {
     signalType: string; actorId?: string; subjectType: string; subjectId: string;
     payload?: Record<string, unknown>; dedupeKey?: string; provenance?: string;
   }) {
-    return withTenantContext(tenantId, async client => {
+    try {
+      return await withTenantContext(tenantId, async client => {
       const signalType = String(input.signalType).slice(0, 80);
       const subjectId = String(input.subjectId).slice(0, 200);
       const dedupeKey = input.dedupeKey ? String(input.dedupeKey).slice(0, 240) : `${signalType}:${input.subjectType}:${subjectId}`;
@@ -213,7 +215,81 @@ export const agentMemoryService = {
         `SELECT * FROM agent_signals WHERE tenant_id=$1 AND dedupe_key=$2`,
         [tenantId, dedupeKey],
       )).rows[0] || null;
+      });
+    } catch (error: any) {
+      const key = `${tenantId}:${String(input.signalType).slice(0, 80)}`;
+      const previous = signalWriteFailures.get(key);
+      signalWriteFailures.set(key, {
+        count: (previous?.count || 0) + 1,
+        lastAt: new Date().toISOString(),
+        lastError: String(error?.message || error).slice(0, 300),
+      });
+      throw error;
+    }
+  },
+
+  /**
+   * Compare learning-producing activity with the signals it should create.
+   * Activities must opt in through metadata.learningAction or
+   * metadata.expectedSignalType; successfully sent outbound contact is the
+   * built-in contact activity. This avoids treating ordinary page/inbox
+   * traffic as a false learning alarm.
+   */
+  async getSignalHealth(tenantId: string, options: { since?: Date; windowHours?: number } = {}) {
+    const windowHours = Math.max(1, Math.min(24 * 30, Number(options.windowHours) || 24));
+    const since = options.since || new Date(Date.now() - windowHours * 3600000);
+    const rows = await withTenantContext(tenantId, async client => (await client.query(
+      `WITH expected AS (
+         SELECT
+           COALESCE(NULLIF(metadata->>'learningAction',''),
+                    NULLIF(metadata->>'action',''),
+                    CASE WHEN direction='OUTBOUND' THEN 'contact' ELSE 'unspecified' END) AS action,
+           COALESCE(NULLIF(metadata->>'expectedSignalType',''), 'match_chosen') AS signal_type,
+           COUNT(*)::int AS expected_count
+         FROM interactions
+         WHERE tenant_id=$1 AND timestamp >= $2
+           AND ((metadata ? 'learningAction') OR (metadata ? 'expectedSignalType')
+                OR (direction='OUTBOUND' AND status='SENT'))
+         GROUP BY 1,2
+       ), recorded AS (
+         SELECT COALESCE(NULLIF(payload::jsonb->>'action',''), 'unspecified') AS action,
+                signal_type, COUNT(*)::int AS recorded_count
+         FROM agent_signals
+         WHERE tenant_id=$1 AND created_at >= $2
+         GROUP BY 1,2
+       )
+       SELECT e.action, e.signal_type, e.expected_count,
+              COALESCE(r.recorded_count,0)::int AS recorded_count
+       FROM expected e
+       LEFT JOIN recorded r ON r.action=e.action AND r.signal_type=e.signal_type
+       ORDER BY e.action, e.signal_type`,
+      [tenantId, since],
+    )).rows);
+    const byAction = rows.map((row: any) => {
+      const failures = signalWriteFailures.get(`${tenantId}:${row.signal_type}`);
+      const expected = Number(row.expected_count) || 0;
+      const recorded = Number(row.recorded_count) || 0;
+      const failed = failures && new Date(failures.lastAt) >= since ? failures.count : 0;
+      return {
+        action: row.action,
+        signalType: row.signal_type,
+        expectedSignals: expected,
+        recordedSignals: recorded,
+        failedSignals: failed,
+        status: failed > 0 ? 'SIGNAL_WRITE_FAILED' : recorded < expected ? 'SIGNAL_MISSING' : 'HEALTHY',
+      };
     });
+    const failures = [...signalWriteFailures.entries()]
+      .filter(([key, value]) => key.startsWith(`${tenantId}:`) && new Date(value.lastAt) >= since)
+      .map(([key, value]) => ({ signalType: key.slice(tenantId.length + 1), ...value }));
+    const hasActivity = byAction.length > 0;
+    return {
+      tenantId, windowHours, since: since.toISOString(),
+      activityStatus: hasActivity ? 'ACTIVE' : 'NO_ACTIVITY',
+      byAction,
+      alerts: byAction.filter((row: any) => row.status !== 'HEALTHY'),
+      writeFailures: failures,
+    };
   },
 
   async recordSuccessfulContactSignal(tenantId: string, input: {

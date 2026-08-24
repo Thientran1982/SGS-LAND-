@@ -120,6 +120,17 @@ export function createAgentMemoryRoutes(authenticateToken: RequestHandler): Rout
     }
   });
 
+  router.get('/signals/health', authenticateToken, async (req, res) => {
+    const user = requireAdmin(req, res); if (!user) return;
+    try {
+      res.json(await agentMemoryService.getSignalHealth(user.tenantId, {
+        windowHours: Number(req.query.windowHours) || 24,
+      }));
+    } catch (error: any) {
+      res.status(500).json({ error: error?.message || 'Không thể kiểm tra sức khỏe tín hiệu' });
+    }
+  });
+
   router.post('/reflection/run', authenticateToken, async (req, res) => {
     try {
       const user = (req as any).user;
