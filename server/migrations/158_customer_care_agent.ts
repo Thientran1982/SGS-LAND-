@@ -17,6 +17,9 @@ const migration: Migration = {
         error TEXT,
         UNIQUE (tenant_id, lead_id, day_mark)
       );
+      ALTER TABLE leads
+        ADD COLUMN IF NOT EXISTS care_status TEXT NOT NULL DEFAULT 'ACTIVE';
+      CREATE INDEX IF NOT EXISTS idx_leads_care_status ON leads (tenant_id, care_status);
       CREATE INDEX IF NOT EXISTS idx_care_followup_due ON care_followup_log (tenant_id, lead_id, day_mark, status);
       CREATE TABLE IF NOT EXISTS care_inactivity_alert_log (
         id UUID PRIMARY KEY DEFAULT gen_random_uuid(),

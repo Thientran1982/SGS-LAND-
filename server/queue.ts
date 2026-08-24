@@ -912,6 +912,8 @@ export async function processWebhookJob(io: Server, job: any): Promise<void> {
         },
       });
       logger.info(`[Email] Email đến đã lưu thành interaction ${savedInteraction.id}`);
+      const { recordInboundEmailReply } = await import('./services/customerCareService');
+      await recordInboundEmailReply(tenantId, lead.id);
       io.to(lead.id).emit('receive_message', { room: lead.id, message: savedInteraction, isWebhook: true });
       io.to(`tenant:${tenantId}`).emit('new_inbound_message', { leadId: lead.id, message: savedInteraction, source: 'Email' });
       // Auto-reply qua Email (Brevo)

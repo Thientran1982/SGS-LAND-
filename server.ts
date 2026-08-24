@@ -4822,7 +4822,8 @@ app.use('/api/approval-requests', apiRateLimit, createApprovalRequestRoutes(auth
           return res.status(403).json({ error: 'Invalid webhook signature' });
         }
       } else if (brevoIsProduction) {
-        logger.warn('[Brevo Webhook] BREVO_WEBHOOK_SECRET not set — accepting request (production). Set BREVO_WEBHOOK_SECRET for security.');
+        logger.warn('[Brevo Webhook] BREVO_WEBHOOK_SECRET not set — rejecting request in production.');
+        return res.status(500).json({ error: 'Brevo webhook authentication not configured' });
       }
 
       const body = req.body;
@@ -4870,6 +4871,16 @@ app.use('/api/approval-requests', apiRateLimit, createApprovalRequestRoutes(auth
               .filter(tag => tag.startsWith('delivery-key:'))
               .map(tag => tag.slice('delivery-key:'.length));
             for (const deliveryKey of deliveryKeys) {
+               const engagementEvent = String(evt.event).toLowerCase();
+               if (engagementEvent === 'opened' || engagementEvent === 'clicked') {
+                 const { recordCareEmailEngagement } = await import('./server/services/customerCareService');
+                 await recordCareEmailEngagement({
+                   deliveryKey,
+                   eventKey: `brevo:${evt.eventId || evt.messageId || evt.email}:${engagementEvent}:${evt.timestamp}:${deliveryKey}`,
+                   event: engagementEvent,
+                   timestamp: evt.timestamp,
+                 });
+               }
               const result = await processBrevoReportDeliveryEvent({
                 deliveryKey,
                 event: evt.event,

@@ -167,6 +167,7 @@ export function parseBrevoInbound(body: unknown): BrevoInboundEmail | null {
 export interface BrevoEmailEvent {
   event: 'delivered' | 'opened' | 'clicked' | 'bounced' | 'spam' | 'unsubscribed' | 'blocked' | string;
   email: string;
+  eventId?: string;
   messageId?: string;
   subject?: string;
   timestamp: number;
@@ -181,6 +182,7 @@ export function parseBrevoEvents(body: unknown): BrevoEmailEvent[] {
     .map(e => ({
       event: e.event || e.type || 'unknown',
       email: e.email || e.to || '',
+      eventId: e.id || e.eventId || e['event-id'],
       messageId: e['message-id'] || e.messageId || e['msg-id'],
       subject: e.subject || e.Subject,
       timestamp: e.ts ? e.ts * 1000 : e.timestamp || Date.now(),

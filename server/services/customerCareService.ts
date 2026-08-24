@@ -1,10 +1,12 @@
 import { Pool } from 'pg';
 import { emailService } from './emailService';
 import { createHash } from 'crypto';
+import { withRlsBypass } from '../db';
 
 export type CareDay = 'D1' | 'D3' | 'D5' | 'D7';
 const DAYS: Array<{ mark: CareDay; day: number }> = [{ mark: 'D1', day: 1 }, { mark: 'D3', day: 3 }, { mark: 'D5', day: 5 }, { mark: 'D7', day: 7 }];
 
+const CARE_DAYS: CareDay[] = ['D1', 'D3', 'D5', 'D7'];
 export function dayMark(firstContact: Date, now = new Date()): CareDay | null {
   const start = new Date(firstContact); start.setHours(0, 0, 0, 0);
   const today = new Date(now); today.setHours(0, 0, 0, 0);
@@ -30,6 +32,36 @@ export function careEmailContent(mark: CareDay, lead: any) {
   return { ...item, html: emailService.emailBase(`<h1 style="color:#0F172A;font-family:Arial,sans-serif;">${item.subject}</h1><p style="color:#475569;font:14px Arial;line-height:1.8;white-space:pre-line;">${item.text}</p><p><a href="${cta}" style="color:#1B3A5C;font-weight:bold;">Trao đổi với SGS LAND</a></p>`, 'Email chăm sóc tự động của SGS LAND.') };
 }
 
+/**
+ * Stop all not-yet-sent care milestones for a lead. This is deliberately
+ * tenant-scoped and idempotent: inbound webhook retries cannot create extra
+ * interactions or alter an already-sent milestone.
+ */
+export async function recordInboundEmailReply(tenantId: string, leadId: string): Promise<void> {
+  await withRlsBypass(async client => {
+    await client.query('BEGIN');
+    try {
+      await client.query(
+        `UPDATE leads SET care_status='REPLIED', updated_at=NOW()
+         WHERE tenant_id=$1::uuid AND id=$2::uuid`,
+        [tenantId, leadId],
+      );
+      for (const mark of CARE_DAYS) {
+        await client.query(
+          `INSERT INTO care_followup_log
+             (tenant_id, lead_id, day_mark, delivery_key, subject, status)
+           VALUES ($1::uuid,$2::uuid,$3,$4,$3,'SKIPPED')
+           ON CONFLICT (tenant_id, lead_id, day_mark) DO NOTHING`,
+          [tenantId, leadId, mark, `care-followup:${tenantId}:${leadId}:${mark}`],
+        );
+      }
+      await client.query('COMMIT');
+    } catch (error) {
+      await client.query('ROLLBACK');
+      throw error;
+    }
+  });
+}
 function escapeHtml(value: unknown): string {
   return String(value ?? '').replace(/[&<>"']/g, char => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[char] as string));
 }
@@ -43,7 +75,8 @@ export async function runCustomerCare(pool: Pool, dryRun = false) {
     FROM leads l LEFT JOIN users u ON u.id=l.assigned_to AND u.tenant_id=l.tenant_id
     WHERE l.email IS NOT NULL AND l.email <> ''
       AND COALESCE(l.marketing_email_consent,false)=true
-      AND LOWER(COALESCE(l.status,'new')) NOT IN ('replied','converted','opted_out','unresponsive')
+      AND LOWER(COALESCE(l.care_status,'active')) = 'active'
+      AND LOWER(COALESCE(l.stage,'new')) NOT IN ('replied','converted','opted_out','unresponsive','won')
       AND NOT (COALESCE(l.opt_out_channels, '[]'::jsonb) @> '"email"'::jsonb)
       AND NOT EXISTS (
         SELECT 1 FROM interactions i
@@ -58,6 +91,18 @@ export async function runCustomerCare(pool: Pool, dryRun = false) {
     if (!mark) continue;
     const existing = await pool.query(`SELECT status FROM care_followup_log WHERE tenant_id=$1 AND lead_id=$2 AND day_mark=$3`, [lead.tenant_id, lead.id, mark]);
     if (existing.rowCount) { result.skipped++; continue; }
+    // Re-check immediately before sending; the initial lead query may have
+    // been read before an inbound webhook or conversion was processed.
+    const current = await pool.query(
+      `SELECT care_status, stage FROM leads WHERE tenant_id=$1 AND id=$2`,
+      [lead.tenant_id, lead.id],
+    );
+    const currentCareStatus = String(current.rows[0]?.care_status || 'ACTIVE').toLowerCase();
+    const currentStage = String(current.rows[0]?.stage || '').toLowerCase();
+    if (currentCareStatus !== 'active' || ['replied', 'converted', 'opted_out', 'unresponsive', 'won'].includes(currentStage)) {
+      result.stopped++;
+      continue;
+    }
     const message = careEmailContent(mark, lead);
     if (dryRun) { result.sent++; continue; }
     const deliveryKey = `care-followup:${lead.tenant_id}:${lead.id}:${mark}`;
@@ -140,4 +185,52 @@ export async function processCareTrackingEvent(pool: Pool, event: { event: strin
   if (!column) return { duplicate: false, matched: 0 };
   const result = await pool.query(`UPDATE care_followup_log SET ${column}=COALESCE(${column},NOW()) WHERE delivery_key = ANY($1::text[])`, [keys]);
   return { duplicate: false, matched: result.rowCount || 0 };
+}
+
+export type CareEmailEngagement = 'opened' | 'clicked';
+
+/**
+ * Apply a Brevo open/click event only when its delivery tag resolves to an
+ * existing Care delivery. The webhook event key is claimed first, making
+ * provider retries harmless.
+ */
+export async function recordCareEmailEngagement(args: {
+  deliveryKey: string;
+  eventKey: string;
+  event: CareEmailEngagement;
+  timestamp?: number;
+}): Promise<{ matched: boolean; duplicate?: boolean; tenantId?: string; leadId?: string }> {
+  const match = /^care-followup:([0-9a-f-]{36}):([0-9a-f-]{36}):(D1|D3|D5|D7)$/.exec(args.deliveryKey);
+  if (!match) return { matched: false };
+  const [, tenantId, leadId] = match;
+  return withRlsBypass(async client => {
+    const careLog = await client.query(
+      `SELECT 1 FROM care_followup_log
+       WHERE tenant_id=$1::uuid AND lead_id=$2::uuid AND delivery_key=$3
+       LIMIT 1`,
+      [tenantId, leadId, args.deliveryKey],
+    );
+    if (!careLog.rowCount) return { matched: false, tenantId, leadId };
+    const claim = await client.query(
+      `INSERT INTO webhook_events (platform,event_key,tenant_id,status)
+       VALUES ('email-engagement',$1,$2::uuid,'PROCESSED')
+       ON CONFLICT (platform,event_key) DO NOTHING
+       RETURNING id`,
+      [args.eventKey, tenantId],
+    );
+    if (!claim.rowCount) return { matched: true, duplicate: true, tenantId, leadId };
+    const engagementStatus = args.event === 'clicked' ? 'CLICKED' : 'OPENED';
+    await client.query(
+      `UPDATE care_followup_log
+       SET engagement_status=CASE
+             WHEN engagement_status='CLICKED' THEN 'CLICKED'
+             WHEN $4='CLICKED' THEN 'CLICKED'
+             ELSE 'OPENED'
+           END,
+           engaged_at=COALESCE(engaged_at, COALESCE(to_timestamp($5::double precision / 1000), NOW()))
+       WHERE tenant_id=$1::uuid AND lead_id=$2::uuid AND delivery_key=$3`,
+      [tenantId, leadId, args.deliveryKey, engagementStatus, args.timestamp ?? null],
+    );
+    return { matched: true, tenantId, leadId };
+  });
 }
