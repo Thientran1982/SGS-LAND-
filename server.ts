@@ -16,6 +16,7 @@ import bcrypt from "bcrypt";
 import { runPendingMigrations } from "./server/migrations/runner";
 import { systemService } from "./server/services/systemService";
 import { webhookQueue, setupWebhookWorker, processWebhookJob, isQStashEnabled, isQstashVerified, getQstashToken, verifyQstashTokenAtStartup } from "./server/queue";
+import { startAgentOperatorWorker, setAgentOperatorIo } from "./server/services/agentOperatorDaemon";
 import { userRepository } from "./server/repositories/userRepository";
 import { listingRepository } from "./server/repositories/listingRepository";
 import { leadRepository } from "./server/repositories/leadRepository";
@@ -1604,6 +1605,12 @@ app.use(globalMutationAudit);
 
   // Setup BullMQ Worker — capture instance so we can close it on shutdown
   const webhookWorker = setupWebhookWorker(io);
+  setAgentOperatorIo(io);
+  const agentOperatorWorker = startAgentOperatorWorker(async () => {
+    const result = await withRlsBypass(client => client.query(`SELECT id FROM tenants`));
+    return result.rows.map((row: any) => String(row.id));
+  });
+  void agentOperatorWorker;
 
   // Start market data service — Redis persistence + background seed for all provinces
   marketDataService.start(io).catch((err: any) =>

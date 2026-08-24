@@ -230,6 +230,28 @@ export const webhookQueue = {
   },
   close: async () => {},
 };
+
+/** Publish an operating event and wake the durable operator worker. */
+export async function enqueueAgentOperatingEvent(
+  tenantId: string,
+  event: {
+    eventId: string;
+    eventType: string;
+    idempotencyKey: string;
+    actor: 'SYSTEM' | 'STAFF' | 'BUYER' | 'AGENT';
+    urgency?: number;
+    payload?: Record<string, unknown>;
+  },
+) {
+  const { agentOperatingRepository } = await import('./repositories/agentOperatingRepository');
+  const row = await agentOperatingRepository.enqueueEvent(tenantId, event);
+  await webhookQueue.add('agent-operating-event', {
+    platform: 'agent-operating',
+    tenantId,
+    eventId: row.id,
+  });
+  return row;
+}
 // ---------------------------------------------------------------------------
 // Helpers
 // ---------------------------------------------------------------------------
@@ -258,15 +280,28 @@ async function upsertLeadBySocialId(
 // ---------------------------------------------------------------------------
 // Auto-reply: gọi AI + gửi reply qua kênh tương ứng (fire-and-forget)
 // ---------------------------------------------------------------------------
-async function triggerAutoReply(
+export async function triggerAutoReply(
   io: Server,
   tenantId: string,
   lead: any,
   inboundText: string,
   channel: 'ZALO' | 'FACEBOOK' | 'EMAIL',
   inboundEventId: string,
+  fromOperator = false,
 ): Promise<void> {
   try {
+    if (!fromOperator) {
+      const { enqueueAgentOperatingEvent } = await import('./queue');
+      await enqueueAgentOperatingEvent(tenantId, {
+        eventId: `inbound:${channel}:${inboundEventId}`,
+        eventType: 'INBOUND_MESSAGE',
+        idempotencyKey: `inbound:${channel}:${inboundEventId}`,
+        actor: 'BUYER',
+        urgency: /gấp|khẩn|urgent|hôm nay|ngay/i.test(inboundText) ? 90 : 50,
+        payload: { lead, inboundText, channel, inboundEventId },
+      });
+      return;
+    }
     // 1. Kiểm tra thread_status — chỉ auto-reply khi AI_ACTIVE
     const { withTenantContext } = await import('./db');
     const statusResult = await withTenantContext(tenantId, async (client) => {
@@ -491,6 +526,15 @@ async function triggerWebhookAutoReply(
 // ---------------------------------------------------------------------------
 export async function processWebhookJob(io: Server, job: any): Promise<void> {
   const { platform, payload } = job.data;
+  if (platform === 'agent-operating') {
+    const { processAgentEvents } = await import('./services/agentOperatorDaemon');
+    const tenantId = String(job.data.tenantId || payload?.tenantId || '');
+    if (!tenantId) throw new Error('AGENT_EVENT_TENANT_REQUIRED');
+    // The database claim is the source of truth; duplicate QStash deliveries
+    // simply find no claimable work.
+    await processAgentEvents(tenantId, 25);
+    return;
+  }
   // -------------------------------------------------------------------------
   // ZALO
   // -------------------------------------------------------------------------

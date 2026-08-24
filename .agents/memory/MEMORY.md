@@ -29,3 +29,4 @@
 - [Next.js Turbopack watcher exhaustion](nextjs-turbopack-watchers.md) — ENOSPC can surface as misleading missing React modules after repeated preview restarts; clear .next and restart
 - [SPA loading ownership](spa-loading-ownership.md) — keep one React-controlled loading fallback; a static Vite index loader duplicates Next/SPA route loading
 - [Preview map tile policy](preview-map-tiles.md) — map tiles in the Preview iframe must use a same-origin proxy, not third-party client fallbacks
+- [Agent event worker payloads](agent-event-worker-payloads.md) — durable event payloads stay JSON-serializable; process-bound Socket.IO belongs in the worker, not QStash jobs

@@ -1255,6 +1255,20 @@ async function handle_live_chat(args: Record<string, any>): Promise<any> {
         .update(`${effectiveSessionId}|${message}|${historyTail}`)
         .digest('hex')
         .slice(0, 40);
+    // Persist the real chat event before/alongside processing. The execution
+    // idempotency key is shared with the durable runner, so a duplicate queue
+    // delivery can never create a second run.
+    if (!args.__fromOperator) {
+        const { enqueueAgentOperatingEvent } = await import('../queue');
+        await enqueueAgentOperatingEvent(tenantId, {
+            eventId: `live-chat:${messageHash}`,
+            eventType: 'LIVE_CHAT_MESSAGE',
+            idempotencyKey: `live-chat-event:${messageHash}`,
+            actor: 'BUYER',
+            urgency: /gấp|khẩn|urgent|hôm nay|ngay/i.test(message) ? 90 : 50,
+            payload: { ...args, message, sessionId: effectiveSessionId },
+        }).catch(error => logger.warn(`[LiveChatEvents] enqueue failed: ${error?.message || error}`));
+    }
     const execution = await runDurableAgentExecution({
         tenantId,
         idempotencyKey: `live-chat-tool:${messageHash}`,

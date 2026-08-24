@@ -6,6 +6,7 @@ export type OperatingEventInput = {
   eventType: string;
   idempotencyKey: string;
   actor: 'SYSTEM' | 'STAFF' | 'BUYER' | 'AGENT';
+  urgency?: number;
   payload?: Record<string, unknown>;
 };
 
@@ -14,12 +15,12 @@ class AgentOperatingRepository {
     return withTenantContext(tenantId, async client => {
       const result = await client.query(
         `INSERT INTO agent_operating_events
-          (tenant_id,event_id,event_type,idempotency_key,actor,payload_json)
-         VALUES ($1,$2,$3,$4,$5,$6::jsonb)
+          (tenant_id,event_id,event_type,idempotency_key,actor,payload_json,urgency)
+         VALUES ($1,$2,$3,$4,$5,$6::jsonb,$7)
          ON CONFLICT (tenant_id,idempotency_key) DO UPDATE
            SET updated_at=NOW()
          RETURNING *`,
-        [tenantId, event.eventId, event.eventType, event.idempotencyKey, event.actor, JSON.stringify(event.payload || {})],
+        [tenantId, event.eventId, event.eventType, event.idempotencyKey, event.actor, JSON.stringify(event.payload || {}), Math.max(0, Math.min(100, Number(event.urgency) || 50))],
       );
       return result.rows[0];
     });
@@ -28,12 +29,15 @@ class AgentOperatingRepository {
   async claimEvents(tenantId: string, limit = 25) {
     return withTenantContext(tenantId, async client => {
       const result = await client.query(
-        `UPDATE agent_operating_events SET status='PROCESSING', attempts=attempts+1, updated_at=NOW()
+        `UPDATE agent_operating_events SET status='PROCESSING', attempts=attempts+1,
+            lease_token=gen_random_uuid(), lease_expires_at=NOW()+INTERVAL '2 minutes',
+            updated_at=NOW()
          WHERE id IN (
            SELECT id FROM agent_operating_events
-            WHERE tenant_id=$1 AND status IN ('PENDING','FAILED')
-              AND available_at <= NOW() AND attempts < 3
-            ORDER BY created_at FOR UPDATE SKIP LOCKED LIMIT $2
+            WHERE tenant_id=$1
+              AND (status IN ('PENDING','FAILED') OR (status='PROCESSING' AND lease_expires_at < NOW()))
+              AND available_at <= NOW() AND attempts < 5
+            ORDER BY urgency DESC, created_at FOR UPDATE SKIP LOCKED LIMIT $2
          ) RETURNING *`,
         [tenantId, Math.max(1, Math.min(limit, 100))],
       );
@@ -41,13 +45,18 @@ class AgentOperatingRepository {
     });
   }
 
-  async finishEvent(tenantId: string, id: string, status: 'DONE' | 'FAILED' | 'DEAD_LETTER', error?: string) {
+  async finishEvent(tenantId: string, id: string, status: 'DONE' | 'FAILED' | 'DEAD_LETTER', error?: string, leaseToken?: string) {
     return withTenantContext(tenantId, async client => {
       const result = await client.query(
         `UPDATE agent_operating_events
-            SET status=$3, last_error=$4, available_at=CASE WHEN $3='FAILED' THEN NOW()+INTERVAL '1 minute' ELSE available_at END, updated_at=NOW()
-          WHERE tenant_id=$1 AND id=$2 RETURNING *`,
-        [tenantId, id, status, error?.slice(0, 1000) || null],
+            SET status=$3, last_error=$4,
+                available_at=CASE WHEN $3='FAILED' THEN NOW()+LEAST(INTERVAL '15 minutes', INTERVAL '5 seconds' * POWER(2, GREATEST(attempts - 1, 0))) ELSE available_at END,
+                lease_token=NULL, lease_expires_at=NULL,
+                dead_lettered_at=CASE WHEN $3='DEAD_LETTER' THEN NOW() ELSE dead_lettered_at END,
+                updated_at=NOW()
+          WHERE tenant_id=$1 AND id=$2 AND status='PROCESSING'
+            AND ($5::uuid IS NULL OR lease_token=$5::uuid) RETURNING *`,
+        [tenantId, id, status, error?.slice(0, 1000) || null, leaseToken || null],
       );
       return result.rows[0] || null;
     });
