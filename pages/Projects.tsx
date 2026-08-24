@@ -2205,9 +2205,6 @@ function ProjectListingsPanel({ project, canCreate, isAdmin, userRole, onClose, 
                                                 aria-label={t('project.actions_aria')}
                                                 title={t('project.actions_btn')}
                                             >
-                                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
-                                                </svg>
                                                 <span className="text-xs font-semibold">{t('project.actions_btn')}</span>
                                                 <svg className={`w-3 h-3 transition-transform ${actionsOpen ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
@@ -2218,7 +2215,7 @@ function ProjectListingsPanel({ project, canCreate, isAdmin, userRole, onClose, 
                                                     ref={actionsRef}
                                                     role="menu"
                                                     aria-label={t('project.actions_btn')}
-                                                    className="fixed z-[10001] min-w-[240px] rounded-xl bg-[var(--bg-surface)] dark:bg-slate-800 border border-[var(--glass-border)] shadow-2xl py-1.5"
+                                                    className="fixed z-[10001] min-w-[240px] rounded-xl bg-[var(--bg-surface)] dark:bg-slate-800 border border-[var(--glass-border)] shadow-2xl overflow-hidden"
                                                     style={{ top: actionsPos.top, right: actionsPos.right }}
                                                 >
                                                     {items.map(it => (
@@ -2229,7 +2226,7 @@ function ProjectListingsPanel({ project, canCreate, isAdmin, userRole, onClose, 
                                                             onClick={it.onClick}
                                                             disabled={it.disabled}
                                                             title={it.title}
-                                                            className={`w-full flex items-center gap-2.5 px-3 py-2 text-sm text-left transition-colors disabled:opacity-50 disabled:cursor-not-allowed hover:bg-[var(--glass-surface-hover)] ${it.accent === 'emerald' ? 'text-emerald-700 dark:text-emerald-300 font-semibold' : 'text-[var(--text-primary)]'}`}
+                                                            className={`w-full flex items-center gap-2.5 px-3 py-2.5 text-sm text-left transition-colors disabled:opacity-50 disabled:cursor-not-allowed hover:bg-[var(--glass-surface-hover)] first:rounded-t-xl last:rounded-b-xl ${it.accent === 'emerald' ? 'text-emerald-700 dark:text-emerald-300 font-semibold' : 'text-[var(--text-primary)]'}`}
                                                         >
                                                             <span className={`shrink-0 ${it.accent === 'emerald' ? 'text-emerald-600 dark:text-emerald-400' : 'text-[var(--text-secondary)]'}`}>{it.icon}</span>
                                                             <span className="flex-1 truncate">{it.label}</span>
