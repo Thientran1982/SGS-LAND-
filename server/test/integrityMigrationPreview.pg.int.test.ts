@@ -3,6 +3,7 @@ import { promises as fs } from 'node:fs';
 import path from 'node:path';
 import { Pool, PoolClient, QueryResultRow } from 'pg';
 import { fileURLToPath } from 'node:url';
+import { runPendingMigrations, rollbackLastMigration } from '../migrations/runner';
 
 const connectionString = process.env.INTEGRITY_PG_URL;
 const describePostgres = connectionString ? describe : describe.skip;
@@ -76,7 +77,8 @@ describePostgres('listing integrity previews against PostgreSQL', () => {
         applied_at TIMESTAMPTZ NOT NULL DEFAULT now()
       );
       CREATE TABLE schema_versions (
-        version TEXT PRIMARY KEY,
+        id SERIAL PRIMARY KEY,
+        version TEXT UNIQUE NOT NULL,
         description TEXT,
         applied_at TIMESTAMPTZ NOT NULL DEFAULT now()
       );
@@ -165,7 +167,6 @@ describePostgres('listing integrity previews against PostgreSQL', () => {
       );
     }
     await query(`INSERT INTO market_migrations (filename) VALUES ('001_market_listings.sql')`);
-    await query(`INSERT INTO schema_versions (version, description) VALUES ('152_previous.ts', 'fixture')`);
   });
 
   afterAll(async () => {
@@ -271,5 +272,133 @@ describePostgres('listing integrity previews against PostgreSQL', () => {
     )).rows;
     expect(afterRows).toEqual(beforeRows);
     expect(afterTracking).toEqual(beforeTracking);
+  });
+
+  it('applies and rolls back the integrity migration through the production runner', async () => {
+    const migrationFiles = (await fs.readdir(path.resolve(__dirname, '../migrations')))
+      .filter((file) => /^\d+_[^/]+\.ts$/.test(file) && file !== '153_listing_data_integrity.ts')
+      .sort();
+    for (const [index, file] of migrationFiles.entries()) {
+      await query(
+        'INSERT INTO schema_versions (version, description) VALUES ($1, $2)',
+        [file, `fixture migration ${index + 1}`],
+      );
+    }
+
+    // The report tests keep a client checked out to preserve their schema
+    // search_path. Release it while the actual runner obtains its own client.
+    client.release();
+    const runnerPool = new Pool({
+      connectionString: testConnectionString,
+      max: 1,
+      connectionTimeoutMillis: 10_000,
+      options: `-c search_path="${schema}"`,
+      ssl: useSsl ? { rejectUnauthorized: false } : false,
+    });
+    try {
+      await runPendingMigrations(runnerPool);
+
+      client = await pool.connect();
+      await client.query(`SET search_path TO "${schema}"`);
+      const applied = await query<{ version: string }>(
+        `SELECT version FROM schema_versions WHERE version = '153_listing_data_integrity.ts'`,
+      );
+      expect(applied.rows).toHaveLength(1);
+
+      const constraints = await query<{ conname: string }>(`
+        SELECT conname
+        FROM pg_constraint
+        WHERE conrelid = 'listings'::regclass
+          AND conname LIKE 'listings_%_ck'
+        ORDER BY conname
+      `);
+      expect(constraints.rows.map((row) => row.conname)).toEqual([
+        'listings_area_ck',
+        'listings_coordinates_ck',
+        'listings_currency_ck',
+        'listings_price_ck',
+        'listings_status_ck',
+        'listings_transaction_ck',
+        'listings_transaction_status_ck',
+        'listings_type_ck',
+      ]);
+
+      const index = await query<{ indexname: string }>(`
+        SELECT indexname
+        FROM pg_indexes
+        WHERE schemaname = current_schema()
+          AND indexname = 'idx_listings_tenant_code_norm_unique'
+      `);
+      expect(index.rows).toHaveLength(1);
+
+      const cleaned = await query<{
+        invalid_status: number;
+        invalid_transaction: number;
+        invalid_type: number;
+        invalid_price: number;
+        invalid_area: number;
+        invalid_currency: number;
+        invalid_coordinates: number;
+        contradictory_pair: number;
+      }>(`
+        SELECT
+          COUNT(*) FILTER (WHERE status IS NOT NULL AND status NOT IN
+            ('BOOKING','OPENING','AVAILABLE','HOLD','SOLD','RENTED','INACTIVE','BEST_MARKET'))::int AS invalid_status,
+          COUNT(*) FILTER (WHERE transaction IS NOT NULL AND transaction NOT IN ('SALE','RENT'))::int AS invalid_transaction,
+          COUNT(*) FILTER (WHERE type IS NOT NULL AND type NOT IN
+            ('APARTMENT','HOUSE','LAND','OFFICE','PENTHOUSE','TOWNHOUSE','VILLA'))::int AS invalid_type,
+          COUNT(*) FILTER (WHERE price IS NOT NULL AND price <= 0)::int AS invalid_price,
+          COUNT(*) FILTER (WHERE area IS NOT NULL AND area <= 0)::int AS invalid_area,
+          COUNT(*) FILTER (WHERE currency IS NOT NULL AND currency NOT IN ('VND','USD'))::int AS invalid_currency,
+          COUNT(*) FILTER (WHERE coordinates IS NOT NULL AND NOT (
+            jsonb_typeof(coordinates) = 'object'
+            AND (coordinates->>'lat')::numeric BETWEEN 8 AND 24
+            AND (coordinates->>'lng')::numeric BETWEEN 102 AND 110
+          ))::int AS invalid_coordinates,
+          COUNT(*) FILTER (WHERE (transaction = 'SALE' AND status = 'RENTED')
+            OR (transaction = 'RENT' AND status = 'SOLD'))::int AS contradictory_pair
+        FROM listings
+      `);
+      expect(cleaned.rows[0]).toEqual({
+        invalid_status: 0,
+        invalid_transaction: 0,
+        invalid_type: 0,
+        invalid_price: 0,
+        invalid_area: 0,
+        invalid_currency: 0,
+        invalid_coordinates: 0,
+        contradictory_pair: 0,
+      });
+
+      await rollbackLastMigration(runnerPool);
+
+      const afterRollback = await query<{ version: string }>(
+        `SELECT version FROM schema_versions WHERE version = '153_listing_data_integrity.ts'`,
+      );
+      expect(afterRollback.rows).toHaveLength(0);
+      const constraintsAfterRollback = await query<{ conname: string }>(`
+        SELECT conname
+        FROM pg_constraint
+        WHERE conrelid = 'listings'::regclass
+          AND conname LIKE 'listings_%_ck'
+      `);
+      expect(constraintsAfterRollback.rows).toHaveLength(0);
+      const indexAfterRollback = await query<{ indexname: string }>(`
+        SELECT indexname
+        FROM pg_indexes
+        WHERE schemaname = current_schema()
+          AND indexname = 'idx_listings_tenant_code_norm_unique'
+      `);
+      expect(indexAfterRollback.rows).toHaveLength(0);
+    } finally {
+      if (client) {
+        // The runner's pool is separate, so this client is safe to release
+        // before the fixture schema is removed by afterAll.
+        client.release();
+        client = await pool.connect();
+        await client.query(`SET search_path TO "${schema}"`);
+      }
+      await runnerPool.end();
+    }
   });
 });

@@ -34,7 +34,7 @@ jobs:
         run: npm run build
 
   integrity-preview:
-    name: PostgreSQL Integrity Preview
+    name: PostgreSQL Integrity & Migration Checks
     runs-on: ubuntu-latest
     env:
       # This database exists only inside the ephemeral GitHub Actions job.
@@ -70,7 +70,7 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Run PostgreSQL integrity previews
+      - name: Run PostgreSQL integrity and migration checks
         run: >-
           npx vitest run
           --config vitest.server.config.ts
