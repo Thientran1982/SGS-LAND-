@@ -1355,31 +1355,33 @@ class DatabaseApiClient {
     // họ chỉ nên quản lý sản phẩm của chính mình qua ROUTES.INVENTORY.
     const isHostTenant = !tenantId || tenantId === DEFAULT_TENANT_ID;
 
+    // Put the daily operating loop first. Public/home and secondary tools stay
+    // available, but should not displace the screens users work from all day.
     const coreItems: any[] = [
-      { id: 'home', labelKey: 'menu.home', route: ROUTES.LANDING, iconKey: ROUTES.LANDING },
       { id: 'dash', labelKey: 'menu.dashboard', route: ROUTES.DASHBOARD, iconKey: ROUTES.DASHBOARD },
+      { id: 'leads', labelKey: 'menu.leads', route: ROUTES.LEADS, iconKey: ROUTES.LEADS },
+      { id: 'inv', labelKey: 'menu.inventory', route: ROUTES.INVENTORY, iconKey: ROUTES.INVENTORY },
+      { id: 'inbox', labelKey: 'menu.inbox', route: ROUTES.INBOX, iconKey: ROUTES.INBOX },
+      { id: 'contracts', labelKey: 'menu.contracts', route: ROUTES.CONTRACTS, iconKey: ROUTES.CONTRACTS },
       { id: 'ai-advisor', labelKey: 'menu.ai-advisor', route: ROUTES.AI_ADVISOR, iconKey: ROUTES.AI_ADVISOR },
     ];
     if (isHostTenant) {
       coreItems.push({ id: 'search', labelKey: 'menu.marketplace', route: ROUTES.SEARCH, iconKey: ROUTES.SEARCH });
     }
     coreItems.push(
-      { id: 'leads', labelKey: 'menu.leads', route: ROUTES.LEADS, iconKey: ROUTES.LEADS },
-      { id: 'contracts', labelKey: 'menu.contracts', route: ROUTES.CONTRACTS, iconKey: ROUTES.CONTRACTS },
-      { id: 'inv', labelKey: 'menu.inventory', route: ROUTES.INVENTORY, iconKey: ROUTES.INVENTORY },
-      { id: 'inbox', labelKey: 'menu.inbox', route: ROUTES.INBOX, iconKey: ROUTES.INBOX },
-      { id: 'fav', labelKey: 'menu.favorites', route: ROUTES.FAVORITES, iconKey: ROUTES.FAVORITES }
+      { id: 'fav', labelKey: 'menu.favorites', route: ROUTES.FAVORITES, iconKey: ROUTES.FAVORITES },
+      { id: 'home', labelKey: 'menu.home', route: ROUTES.LANDING, iconKey: ROUTES.LANDING }
     );
     const core = { id: 'core', labelKey: 'menu.core', items: coreItems };
     const ops = { id: 'ops', labelKey: 'menu.operations', items: [
       { id: 'projects', labelKey: 'menu.projects', route: ROUTES.PROJECTS, iconKey: ROUTES.PROJECTS },
+      { id: 'unit-inventory', labelKey: 'menu.unit-inventory', route: ROUTES.UNIT_INVENTORY, iconKey: ROUTES.UNIT_INVENTORY },
       { id: 'approvals', labelKey: 'menu.approvals', route: ROUTES.APPROVALS, iconKey: ROUTES.APPROVALS },
-    { id: 'custom-fields', labelKey: 'menu.custom-fields', route: ROUTES.CUSTOM_FIELDS, iconKey: ROUTES.CUSTOM_FIELDS },
-    { id: 'auction', labelKey: 'menu.auction', route: ROUTES.AUCTION, iconKey: ROUTES.AUCTION },
-    { id: 'unit-inventory', labelKey: 'menu.unit-inventory', route: ROUTES.UNIT_INVENTORY, iconKey: ROUTES.UNIT_INVENTORY },
       { id: 'routing', labelKey: 'menu.routing-rules', route: ROUTES.ROUTING_RULES, iconKey: ROUTES.ROUTING_RULES },
-      { id: 'seq', labelKey: 'menu.sequences', route: ROUTES.SEQUENCES, iconKey: ROUTES.SEQUENCES },
       { id: 'campaigns', labelKey: 'menu.campaigns', route: ROUTES.CAMPAIGNS, iconKey: ROUTES.CAMPAIGNS },
+      { id: 'seq', labelKey: 'menu.sequences', route: ROUTES.SEQUENCES, iconKey: ROUTES.SEQUENCES },
+      { id: 'auction', labelKey: 'menu.auction', route: ROUTES.AUCTION, iconKey: ROUTES.AUCTION },
+      { id: 'custom-fields', labelKey: 'menu.custom-fields', route: ROUTES.CUSTOM_FIELDS, iconKey: ROUTES.CUSTOM_FIELDS },
       { id: 'scoring', labelKey: 'menu.scoring-rules', route: ROUTES.SCORING_RULES, iconKey: ROUTES.SCORING_RULES },
       { id: 'knowledge', labelKey: 'menu.knowledge', route: ROUTES.KNOWLEDGE, iconKey: ROUTES.KNOWLEDGE },
       { id: 'rep', labelKey: 'menu.reports', route: ROUTES.REPORTS, iconKey: ROUTES.REPORTS }
@@ -1407,19 +1409,19 @@ class DatabaseApiClient {
     ];
     // Các công cụ chỉ SUPER_ADMIN thấy: hệ thống, chi phí, bảo mật, hạ tầng, v.v.
     const sysSuperAdminItems = [
-      { id: 'vendors', labelKey: 'menu.vendor-management', route: ROUTES.VENDOR_MANAGEMENT, iconKey: ROUTES.VENDOR_MANAGEMENT },
       { id: 'users', labelKey: 'menu.admin-users', route: ROUTES.ADMIN_USERS, iconKey: ROUTES.ADMIN_USERS },
       { id: 'set', labelKey: 'menu.enterprise-settings', route: ROUTES.ENTERPRISE_SETTINGS, iconKey: ROUTES.ENTERPRISE_SETTINGS },
-      { id: 'ai-cost', labelKey: 'menu.admin-ai-cost', route: ROUTES.ADMIN_AI_COST, iconKey: ROUTES.ADMIN_AI_COST },
-      { id: 'billing', labelKey: 'menu.billing', route: ROUTES.BILLING, iconKey: ROUTES.BILLING },
+      { id: 'vendors', labelKey: 'menu.vendor-management', route: ROUTES.VENDOR_MANAGEMENT, iconKey: ROUTES.VENDOR_MANAGEMENT },
       { id: 'security', labelKey: 'menu.security', route: ROUTES.SECURITY, iconKey: ROUTES.SECURITY },
       { id: 'ai-gov', labelKey: 'menu.ai-governance', route: ROUTES.AI_GOVERNANCE, iconKey: ROUTES.AI_GOVERNANCE },
-      { id: 'valuation-accuracy', labelKey: 'menu.valuation-accuracy', route: ROUTES.VALUATION_ACCURACY, iconKey: ROUTES.VALUATION_ACCURACY },
       { id: 'agent-audit', labelKey: 'menu.agent-audit', route: ROUTES.AGENT_AUDIT, iconKey: ROUTES.AGENT_AUDIT },
-      { id: 'seo', labelKey: 'menu.seo-manager', route: ROUTES.SEO_MANAGER, iconKey: ROUTES.SEO_MANAGER },
-      { id: 'error-monitor', labelKey: 'menu.error-monitor', route: ROUTES.ERROR_MONITOR, iconKey: ROUTES.ERROR_MONITOR },
-      { id: 'scraper', labelKey: 'menu.scraper', route: ROUTES.SCRAPER, iconKey: ROUTES.SCRAPER },
+      { id: 'billing', labelKey: 'menu.billing', route: ROUTES.BILLING, iconKey: ROUTES.BILLING },
+      { id: 'ai-cost', labelKey: 'menu.admin-ai-cost', route: ROUTES.ADMIN_AI_COST, iconKey: ROUTES.ADMIN_AI_COST },
+      { id: 'valuation-accuracy', labelKey: 'menu.valuation-accuracy', route: ROUTES.VALUATION_ACCURACY, iconKey: ROUTES.VALUATION_ACCURACY },
       { id: 'data', labelKey: 'menu.data-platform', route: ROUTES.DATA_PLATFORM, iconKey: ROUTES.DATA_PLATFORM },
+      { id: 'seo', labelKey: 'menu.seo-manager', route: ROUTES.SEO_MANAGER, iconKey: ROUTES.SEO_MANAGER },
+      { id: 'scraper', labelKey: 'menu.scraper', route: ROUTES.SCRAPER, iconKey: ROUTES.SCRAPER },
+      { id: 'error-monitor', labelKey: 'menu.error-monitor', route: ROUTES.ERROR_MONITOR, iconKey: ROUTES.ERROR_MONITOR },
       { id: 'system', labelKey: 'menu.system', route: ROUTES.SYSTEM, iconKey: ROUTES.SYSTEM },
     ];
     // ADMIN/TEAM_LEAD: chỉ thấy người dùng + cài đặt doanh nghiệp
@@ -1428,14 +1430,14 @@ class DatabaseApiClient {
     const sysSuperAdmin = { id: 'sys', labelKey: 'menu.ecosystem', items: sysSuperAdminItems };
     const taskMgmt = { id: 'task', labelKey: 'menu.task_management', items: [
       { id: 'task-dashboard', labelKey: 'menu.task-dashboard', route: ROUTES.TASK_DASHBOARD, iconKey: ROUTES.TASK_DASHBOARD },
-      { id: 'task-kanban', labelKey: 'menu.task-kanban', route: ROUTES.TASK_KANBAN, iconKey: ROUTES.TASK_KANBAN },
       { id: 'tasks', labelKey: 'menu.tasks', route: ROUTES.TASKS, iconKey: ROUTES.TASKS },
+      { id: 'task-kanban', labelKey: 'menu.task-kanban', route: ROUTES.TASK_KANBAN, iconKey: ROUTES.TASK_KANBAN },
       { id: 'employees', labelKey: 'menu.employees', route: ROUTES.EMPLOYEES, iconKey: ROUTES.EMPLOYEES },
       { id: 'task-reports', labelKey: 'menu.task-reports', route: ROUTES.TASK_REPORTS, iconKey: ROUTES.TASK_REPORTS },
     ]};
     const taskMgmtBasic = { id: 'task', labelKey: 'menu.task_management', items: [
-      { id: 'task-kanban', labelKey: 'menu.task-kanban', route: ROUTES.TASK_KANBAN, iconKey: ROUTES.TASK_KANBAN },
       { id: 'tasks', labelKey: 'menu.tasks', route: ROUTES.TASKS, iconKey: ROUTES.TASKS },
+      { id: 'task-kanban', labelKey: 'menu.task-kanban', route: ROUTES.TASK_KANBAN, iconKey: ROUTES.TASK_KANBAN },
     ]};
     const partnerCore = { id: 'partner-core', labelKey: 'menu.partner_core', items: [
       { id: 'projects', labelKey: 'menu.projects', route: ROUTES.PROJECTS, iconKey: ROUTES.PROJECTS },
@@ -1445,14 +1447,14 @@ class DatabaseApiClient {
       return [partnerCore];
     }
     if (role === UserRole.SUPER_ADMIN) {
-      return [core, ops, taskMgmt, sysSuperAdmin];
+      return [core, taskMgmt, ops, sysSuperAdmin];
     }
     if (role === UserRole.ADMIN || role === UserRole.TEAM_LEAD) {
-      return [core, ops, taskMgmt, sys];
+      return [core, taskMgmt, ops, sys];
     } else if (role === UserRole.MARKETING) {
-      return [core, opsMarketing, taskMgmtBasic];
+      return [core, taskMgmtBasic, opsMarketing];
     } else if (role === UserRole.SALES) {
-      return [core, opsBasic, taskMgmtBasic];
+      return [core, taskMgmtBasic, opsBasic];
     }
     // VIEWER + bất kỳ role không xác định: chỉ core + task kanban cơ bản (read-only UX)
     return [core, taskMgmtBasic];
