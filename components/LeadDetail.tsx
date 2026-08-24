@@ -112,6 +112,12 @@ const TimelineItem = ({ item, t, formatDateTime }: any) => {
                 <div className={`text-sm p-3 rounded-lg border w-fit max-w-[90%] ${item.direction === Direction.OUTBOUND ? 'bg-[var(--bg-surface)] border-[var(--glass-border)] text-[var(--text-secondary)]' : 'bg-[var(--glass-surface)] border-[var(--glass-border)] text-[var(--text-secondary)]'}`}>
                     {item.content}
                 </div>
+                {item.status && item.status !== 'SENT' && (
+                    <p className={`mt-1 text-xs2 font-semibold ${item.status === 'FAILED' ? 'text-rose-600' : 'text-amber-600'}`}>
+                        {item.status === 'FAILED' ? 'Gửi thất bại' : 'Đang chờ gửi'}
+                        {item.metadata?.deliveryError ? ` · ${item.metadata.deliveryError}` : ''}
+                    </p>
+                )}
             </div>
         </div>
     );
@@ -146,6 +152,7 @@ export const LeadDetail: React.FC<LeadDetailProps> = ({ lead, onClose, onUpdate,
     const [activeChannel, setActiveChannel] = useState<Channel>(Channel.ZALO);
     const [messageContent, setMessageContent] = useState('');
     const [isSending, setIsSending] = useState(false);
+    const [sendFeedback, setSendFeedback] = useState<{ status: string; message?: string } | null>(null);
     const [isContractModalOpen, setIsContractModalOpen] = useState(false);
     const [editingContract, setEditingContract] = useState<Contract | null>(null);
     const [editingContractInitialTab, setEditingContractInitialTab] = useState<'parties' | 'property' | 'terms' | 'schedule'>('schedule');
@@ -223,16 +230,22 @@ export const LeadDetail: React.FC<LeadDetailProps> = ({ lead, onClose, onUpdate,
         };
     }, [lead.id, socket]);
     const handleSendMessage = async () => {
-        if (!messageContent.trim()) return;
+        if (!messageContent.trim() || !channelOptions.find(ch => ch.value === activeChannel)?.available) return;
         setIsSending(true);
+        setSendFeedback(null);
         try {
-            await db.sendInteraction(lead.id, messageContent, activeChannel);
+            const result = await db.sendInteraction(lead.id, messageContent, activeChannel);
             setMessageContent('');
+            setSendFeedback({
+                status: result?.status || 'SENT',
+                message: result?.deliveryWarning || result?.metadata?.deliveryError,
+            });
             // Refresh
             const history = await db.getInteractions(lead.id);
             setInteractions(history.sort((a,b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()));
         } catch (error) {
             console.error("Failed to send", error);
+            setSendFeedback({ status: 'FAILED', message: 'Không thể ghi nhận tin nhắn' });
         } finally {
             setIsSending(false);
         }
@@ -295,6 +308,16 @@ export const LeadDetail: React.FC<LeadDetailProps> = ({ lead, onClose, onUpdate,
         }
     };
     const stageOptions = Object.values(LeadStage).map(s => ({ value: s, label: t(`stage.${s}`) }));
+    const channelOptions = [
+        { value: Channel.ZALO, label: 'Zalo', available: !!lead.socialIds?.zalo },
+        { value: Channel.FACEBOOK, label: 'Facebook', available: !!lead.socialIds?.facebook },
+        { value: Channel.EMAIL, label: 'Email', available: !!lead.email },
+        { value: Channel.SMS, label: 'SMS', available: !!lead.phone },
+    ];
+    useEffect(() => {
+        const firstAvailable = channelOptions.find(ch => ch.available);
+        if (firstAvailable) setActiveChannel(firstAvailable.value);
+    }, [lead.id, lead.email, lead.phone, lead.socialIds?.zalo, lead.socialIds?.facebook]);
     // Fix: Translate raw source values if they are simple English words, or keep as is if proper nouns (Facebook/Zalo)
     const sourceOptions = LEAD_SOURCES.map(s => ({ 
         value: s, 
@@ -389,13 +412,13 @@ export const LeadDetail: React.FC<LeadDetailProps> = ({ lead, onClose, onUpdate,
                     <AIAnalysisCard summary={aiSummary} loading={isThinking} t={t} onRefresh={refreshAiSummary} quota={ariaQuota} onUpgrade={() => window.open('/pricing', '_blank')} />
 
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 md:gap-5 mb-8">
-                        <DetailField label={t('leads.phone')}>
-                            <input value={formData.phone} onChange={e => handleInputChange('phone', e.target.value)} className={STYLES.INPUT} />
+                        <DetailField label={t('leads.phone')} error={errors.phone}>
+                            <input type="tel" autoComplete="tel" value={formData.phone} onChange={e => handleInputChange('phone', e.target.value)} onBlur={() => handleInputChange('phone', normalizeVNPhone(formData.phone))} className={errors.phone ? STYLES.INPUT_ERROR : STYLES.INPUT} />
                         </DetailField>
-                        <DetailField label={t('leads.email')}>
-                            <input value={formData.email || ''} onChange={e => handleInputChange('email', e.target.value)} className={STYLES.INPUT} />
+                        <DetailField label={t('leads.email')} error={errors.email}>
+                            <input type="email" autoComplete="email" value={formData.email || ''} onChange={e => handleInputChange('email', e.target.value)} onBlur={() => handleInputChange('email', normalizeLeadEmail(formData.email || ''))} className={errors.email ? STYLES.INPUT_ERROR : STYLES.INPUT} />
                         </DetailField>
-                        <div className="sm:col-span-2 flex items-start gap-3 rounded-xl border border-[var(--glass-border)] bg-[var(--glass-surface)] p-3">
+                        {canManageConsent && <div className="sm:col-span-2 flex items-start gap-3 rounded-xl border border-[var(--glass-border)] bg-[var(--glass-surface)] p-3">
                             <input
                                 id="lead-marketing-email-consent"
                                 type="checkbox"
@@ -412,7 +435,7 @@ export const LeadDetail: React.FC<LeadDetailProps> = ({ lead, onClose, onUpdate,
                                     </span>
                                 )}
                             </label>
-                        </div>
+                        </div>}
                         <DetailField label={t('leads.address')} className="sm:col-span-2">
                             <input value={formData.address || ''} onChange={e => handleInputChange('address', e.target.value)} className={STYLES.INPUT} />
                         </DetailField>
@@ -421,6 +444,20 @@ export const LeadDetail: React.FC<LeadDetailProps> = ({ lead, onClose, onUpdate,
                         </DetailField>
                         <DetailField label={t('leads.source')}>
                             <Dropdown value={formData.source} onChange={(val) => handleInputChange('source', val)} options={sourceOptions} className="w-full" />
+                        </DetailField>
+                        <DetailField label={t('leads.tags')} className="sm:col-span-2">
+                            <input
+                                value={Array.isArray(formData.tags) ? formData.tags.join(', ') : (formData.tags || '')}
+                                onChange={e => handleInputChange('tags', e.target.value as any)}
+                                onBlur={() => handleInputChange('tags', formatLeadTagsInput(Array.isArray(formData.tags) ? formData.tags.join(', ') : String(formData.tags || '')) as any)}
+                                placeholder="VIP, căn hộ, Q2"
+                                className={STYLES.INPUT}
+                            />
+                            {normalizeLeadTags(formData.tags || []).length > 0 && (
+                                <div className="flex flex-wrap gap-1.5 pt-1">
+                                    {normalizeLeadTags(formData.tags || []).map(tag => <span key={tag.toLowerCase()} className="px-2 py-0.5 rounded-full bg-sgs-champagne text-sgs-primary text-xs2 font-semibold">{tag}</span>)}
+                                </div>
+                            )}
                         </DetailField>
                         {/* Social Profiles — auto-populated from Zalo/Facebook webhooks */}
                         {(lead.socialIds?.zalo || lead.socialIds?.facebook || lead.socialIds?.telegram) && (
@@ -614,9 +651,9 @@ export const LeadDetail: React.FC<LeadDetailProps> = ({ lead, onClose, onUpdate,
                     })()}
                     <div className="mb-8 bg-[var(--bg-surface)] p-4 rounded-2xl border border-[var(--glass-border)] shadow-sm">
                         <div className="flex items-center gap-2 mb-3 overflow-x-auto no-scrollbar pb-1">
-                            {[Channel.ZALO, Channel.EMAIL, Channel.SMS].map(ch => (
-                                <button key={ch} onClick={() => setActiveChannel(ch)} className={`px-3 py-1.5 rounded-lg text-xs font-bold flex items-center gap-2 transition-all ${activeChannel === ch ? 'bg-[var(--sgs-primary)]/10 text-sgs-primary ring-1 ring-[var(--sgs-primary)]' : 'bg-[var(--glass-surface)] text-[var(--text-tertiary)] hover:bg-[var(--glass-surface-hover)]'}`}>
-                                    {ch === Channel.ZALO ? ICONS.ZALO : ch === Channel.EMAIL ? ICONS.EMAIL : ICONS.SMS} {ch}
+                            {channelOptions.map(({ value: ch, label, available }) => (
+                                <button key={ch} disabled={!available} onClick={() => setActiveChannel(ch)} title={!available ? 'Chưa có thông tin hoặc kênh kết nối' : undefined} className={`px-3 py-1.5 rounded-lg text-xs font-bold flex items-center gap-2 transition-all ${activeChannel === ch ? 'bg-[var(--sgs-primary)]/10 text-sgs-primary ring-1 ring-[var(--sgs-primary)]' : 'bg-[var(--glass-surface)] text-[var(--text-tertiary)] hover:bg-[var(--glass-surface-hover)]'} ${!available ? 'opacity-40 cursor-not-allowed' : ''}`}>
+                                    {ch === Channel.ZALO ? ICONS.ZALO : ch === Channel.FACEBOOK ? <span className="text-sm font-bold">f</span> : ch === Channel.EMAIL ? ICONS.EMAIL : ICONS.SMS} {label}
                                 </button>
                             ))}
                         </div>
@@ -634,6 +671,12 @@ export const LeadDetail: React.FC<LeadDetailProps> = ({ lead, onClose, onUpdate,
                                     {isSending ? t('detail.sending') : t('detail.send')}
                                 </button>
                             </div>
+                            {sendFeedback && (
+                                <p className={`mt-2 text-xs font-semibold ${sendFeedback.status === 'SENT' ? 'text-emerald-600' : sendFeedback.status === 'FAILED' ? 'text-rose-600' : 'text-amber-600'}`}>
+                                    {sendFeedback.status === 'SENT' ? 'Đã gửi thành công' : sendFeedback.status === 'FAILED' ? 'Gửi thất bại' : 'Đã ghi nhận, đang chờ gửi'}
+                                    {sendFeedback.message ? ` · ${sendFeedback.message}` : ''}
+                                </p>
+                            )}
                         </div>
                     </div>
                     <div>

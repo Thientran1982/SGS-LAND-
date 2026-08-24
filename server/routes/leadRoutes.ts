@@ -277,6 +277,19 @@ export function createLeadRoutes(authenticateToken: any, getBroadcast?: () => an
   router.put('/:id', authenticateToken, validateUUIDParam(), async (req: Request, res: Response) => {
     try {
       const user = (req as any).user;
+      const consentFields = ['marketingEmailConsent', 'marketingEmailConsentAt', 'marketingEmailConsentSource'];
+      if (consentFields.some(field => req.body?.[field] !== undefined)) {
+        return res.status(400).json({ error: 'Consent email phải được cập nhật qua workflow riêng' });
+      }
+      const updateData = { ...req.body };
+      if (updateData.phone !== undefined) updateData.phone = normalizeVNPhone(updateData.phone);
+      if (updateData.email !== undefined) updateData.email = normalizeLeadEmail(updateData.email);
+      if (updateData.tags !== undefined) updateData.tags = normalizeLeadTags(updateData.tags);
+      if (updateData.name !== undefined) updateData.name = String(updateData.name).trim();
+      if (updateData.address !== undefined) updateData.address = String(updateData.address).trim();
+      if (updateData.phone !== undefined && !/^(03|05|07|08|09)[0-9]{8}$/.test(updateData.phone)) {
+        return res.status(400).json({ error: 'Số điện thoại không hợp lệ' });
+      }
 
       // Snapshot before update to detect assignment/stage changes
       const before = await leadRepository.findByIdWithAccess(
@@ -284,7 +297,7 @@ export function createLeadRoutes(authenticateToken: any, getBroadcast?: () => an
       );
 
       const lead = await leadRepository.update(
-        user.tenantId, String(req.params.id), req.body, user.id, user.role
+        user.tenantId, String(req.params.id), updateData, user.id, user.role
       );
       if (!lead) return res.status(404).json({ error: 'Lead not found or access denied' });
 
@@ -293,7 +306,7 @@ export function createLeadRoutes(authenticateToken: any, getBroadcast?: () => an
         action: 'UPDATE',
         entityType: 'LEAD',
         entityId: String(req.params.id),
-        details: `Updated lead fields: ${Object.keys(req.body).join(', ')}`,
+        details: `Updated lead fields: ${Object.keys(updateData).join(', ')}`,
         ipAddress: req.ip,
       });
 
@@ -440,7 +453,10 @@ export function createLeadRoutes(authenticateToken: any, getBroadcast?: () => an
 
       const resolvedChannel = (channel || 'INTERNAL').toUpperCase();
 
-      if (resolvedChannel === 'ZALO' && lead.socialIds?.zalo) {
+      if (resolvedChannel === 'ZALO' && !lead.socialIds?.zalo) {
+        deliveryStatus = 'PENDING';
+        deliveryError = 'Khách hàng chưa liên kết tài khoản Zalo';
+      } else if (resolvedChannel === 'ZALO' && lead.socialIds?.zalo) {
         try {
           const { sendZaloTextMessage, getZaloAccessToken } = await import('../services/zaloService');
           const accessToken = await getZaloAccessToken(user.tenantId);
@@ -461,7 +477,10 @@ export function createLeadRoutes(authenticateToken: any, getBroadcast?: () => an
         }
       }
 
-      if (resolvedChannel === 'FACEBOOK' && lead.socialIds?.facebook) {
+      if (resolvedChannel === 'FACEBOOK' && !lead.socialIds?.facebook) {
+        deliveryStatus = 'PENDING';
+        deliveryError = 'Khách hàng chưa liên kết tài khoản Facebook';
+      } else if (resolvedChannel === 'FACEBOOK' && lead.socialIds?.facebook) {
         try {
           const { sendFacebookTextMessage, getFacebookDefaultPage } = await import('../services/facebookService');
           const page = await getFacebookDefaultPage(user.tenantId);
@@ -480,6 +499,16 @@ export function createLeadRoutes(authenticateToken: any, getBroadcast?: () => an
           deliveryError = err.message;
           console.error('[Facebook] Outbound send error:', err);
         }
+      }
+      if (resolvedChannel === 'EMAIL') {
+        deliveryStatus = 'PENDING';
+        deliveryError = lead.email
+          ? 'Email chưa được kết nối với dịch vụ gửi thư'
+          : 'Khách hàng chưa có email';
+      }
+      if (resolvedChannel === 'SMS') {
+        deliveryStatus = 'PENDING';
+        deliveryError = 'SMS chưa được kết nối với dịch vụ gửi tin';
       }
       // ── End outbound delivery ───────────────────────────────────────────────
 

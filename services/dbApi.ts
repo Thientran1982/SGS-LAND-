@@ -186,6 +186,11 @@ class DatabaseApiClient {
     _cache.invalidate('leads:');
     return result;
   }
+  async updateMarketingConsent(id: string, consent: boolean, source = 'crm') {
+    const result = await leadApi.updateMarketingConsent(id, consent, source);
+    _cache.invalidate('leads:');
+    return result;
+  }
   async mergeLead(id: string, data: any) {
     const result = await leadApi.mergeLead(id, data);
     _cache.invalidate('leads:');
