@@ -7,6 +7,7 @@ import FormSelect from "@/components/ui/FormSelect";
 
 /** Roles allowed to create articles (mirrors CAN_UPLOAD in knowledgeRoutes.ts). */
 const CAN_POST = ["SUPER_ADMIN", "ADMIN", "TEAM_LEAD", "SALES", "MARKETING"];
+const CAN_MANAGE = ["SUPER_ADMIN", "ADMIN", "TEAM_LEAD"];
 
 type Me = { id: string; name: string; email: string; role: string };
 
@@ -27,7 +28,7 @@ const inputStyle: React.CSSProperties = {
   color: "var(--text-primary)",
 };
 
-export default function ArticleComposer() {
+export default function ArticleComposer({ articleId }: { articleId?: string }) {
   const [me, setMe] = useState<Me | null>(null);
   const [checked, setChecked] = useState(false);
   const [meCheckError, setMeCheckError] = useState(false);
@@ -79,7 +80,34 @@ export default function ArticleComposer() {
         if (d && d.csrfToken) setCsrf(d.csrfToken);
       })
       .catch(() => {});
-  }, []);
+
+    if (articleId) {
+      fetch(`/api/knowledge/articles/${encodeURIComponent(articleId)}`, {
+        credentials: "include",
+        cache: "no-store",
+      })
+        .then(async (r) => {
+          if (!r.ok) throw new Error("Không thể tải bài viết.");
+          return r.json();
+        })
+        .then((article) => {
+          setTitle(article.title || "");
+          setSlug(article.slug || "");
+          setCategory(article.category || CATEGORIES[0]?.slug || "phan-tich-thi-truong");
+          setAuthor(article.author || "");
+          setCoverImage(article.coverImage || article.image || "");
+          setExcerpt(article.excerpt || "");
+          setContent(article.content || "");
+          setTags(Array.isArray(article.tags) ? article.tags.join(", ") : "");
+          setFeatured(article.featured === true);
+          setStatus(String(article.status || "DRAFT").toUpperCase());
+          setImages(Array.isArray(article.images) ? article.images : []);
+          setVideos(Array.isArray(article.videos) ? article.videos : []);
+        })
+        .catch((e) => setError(e?.message || "Không thể tải bài viết."))
+        .finally(() => setChecked(true));
+    }
+  }, [articleId]);
 
   const finalSlug = useMemo(() => slug.trim() || slugify(title), [slug, title]);
 
@@ -92,8 +120,12 @@ export default function ArticleComposer() {
     }
     setSaving(true);
     try {
-      const res = await fetch("/api/knowledge/articles", {
-        method: "POST",
+      const res = await fetch(
+        articleId
+          ? `/api/knowledge/articles/${encodeURIComponent(articleId)}`
+          : "/api/knowledge/articles",
+        {
+        method: articleId ? "PUT" : "POST",
         credentials: "include",
         headers: {
           "Content-Type": "application/json",
@@ -116,16 +148,17 @@ export default function ArticleComposer() {
           featured,
           status,
         }),
-      });
+        },
+      );
       if (!res.ok) {
         const body = await res.json().catch(() => null);
-        setError((body && (body.error as string)) || "Không đăng được bài. Vui lòng thử lại.");
+        setError((body && (body.error as string)) || (articleId ? "Không thể lưu bài viết." : "Không đăng được bài. Vui lòng thử lại."));
         return;
       }
-      const created = await res.json();
-      setCreatedSlug(created?.slug || finalSlug);
+      const saved = await res.json();
+      setCreatedSlug(saved?.slug || finalSlug);
     } catch {
-      setError("Không đăng được bài. Vui lòng thử lại.");
+      setError(articleId ? "Không thể lưu bài viết. Vui lòng thử lại." : "Không đăng được bài. Vui lòng thử lại.");
     } finally {
       setSaving(false);
     }
@@ -227,6 +260,15 @@ export default function ArticleComposer() {
     );
   }
 
+  if (articleId && !CAN_MANAGE.includes(me.role)) {
+    return (
+      <div className="py-12 px-6 rounded-2xl text-center" style={{ background: "var(--bg-elevated)", border: "1px solid var(--border-default)" }}>
+        <p className="font-semibold" style={{ color: "var(--text-primary)" }}>Tài khoản của bạn không có quyền chỉnh sửa tin tức.</p>
+        <p className="text-sm mt-2" style={{ color: "var(--text-secondary)" }}>{me.email} · {me.role}</p>
+      </div>
+    );
+  }
+
   if (!CAN_POST.includes(me.role)) {
     return (
       <div
@@ -250,7 +292,7 @@ export default function ArticleComposer() {
         style={{ background: "var(--bg-elevated)", border: "1px solid var(--border-default)" }}
       >
         <p className="font-bold text-lg mb-4" style={{ color: "var(--text-primary)" }}>
-          Đăng bài thành công.
+          {articleId ? "Cập nhật bài viết thành công." : "Đăng bài thành công."}
         </p>
         <div className="flex flex-wrap items-center justify-center gap-3">
           <Link
@@ -499,7 +541,7 @@ export default function ArticleComposer() {
           className="px-6 py-2.5 rounded-xl text-white text-sm font-semibold disabled:opacity-60"
           style={{ background: "var(--primary-600)" }}
         >
-          {saving ? "Đang đăng..." : "Đăng bài"}
+          {saving ? (articleId ? "Đang lưu..." : "Đang đăng...") : (articleId ? "Lưu thay đổi" : "Đăng bài")}
         </button>
         <Link href="/news" className="text-sm font-medium" style={{ color: "var(--text-secondary)" }}>
           Quay lại Tin tức
