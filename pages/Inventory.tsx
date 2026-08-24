@@ -883,7 +883,7 @@ export const Inventory: React.FC = () => {
                         >
                         {/* GRID VIEW (DEFAULT) */}
                         {viewMode === 'GRID' && (
-                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+                                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 items-start">
                                 {loading ? (
                                     [1,2,3,4,5,6,7,8].map(i => (
                                         <div key={i} className="bg-[var(--glass-surface-hover)] rounded-[24px] animate-pulse flex flex-col overflow-hidden">
@@ -901,7 +901,7 @@ export const Inventory: React.FC = () => {
                                     ))
                                 ) : listings.length > 0 ? (
                                     listings.map(item => (
-                                        <div key={item.id} className="min-h-full">
+                                        <div key={item.id} className="w-full h-full">
                                             <ListingCard
                                                 item={{...item, isFavorite: favorites.has(item.id)}} t={t} formatCurrency={formatCurrency}
                                                 onToggleFavorite={handleToggleFavorite}
