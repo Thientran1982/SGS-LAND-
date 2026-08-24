@@ -147,7 +147,7 @@ const CursorPaginationControl = memo(({ totalItems, pageSize, hasPrev, hasNext, 
     return (
         <>
             {/* Mobile */}
-            <div className="flex sm:hidden items-center w-fit mx-auto gap-3 px-4 py-1.5 bg-[var(--bg-surface)] rounded-xl border border-[var(--glass-border)] shadow-sm">
+            <div className="flex sm:hidden items-center w-fit mx-auto gap-3 px-4 py-1.5 bg-transparent rounded-xl">
                     <button onClick={onPrev} disabled={isLoading || !hasPrev} className={btnCls}>
                     <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" /></svg>
                 </button>
@@ -159,20 +159,20 @@ const CursorPaginationControl = memo(({ totalItems, pageSize, hasPrev, hasNext, 
                 </button>
             </div>
             {/* Desktop */}
-            <div className="hidden sm:flex flex-row justify-between items-center px-4 py-1.5 bg-[var(--bg-surface)] rounded-xl border border-[var(--glass-border)] shadow-sm gap-2">
+            <div className="hidden sm:flex flex-row justify-between items-center px-4 py-1.5 bg-transparent gap-2">
                 <div className="flex text-xs text-[var(--text-tertiary)] font-medium items-center gap-1">
                     <span className="font-bold text-[var(--text-primary)]">{totalItems.toLocaleString('vi-VN')}</span>
                     <span>{t('pagination.results')}</span>
                 </div>
                 <div className="flex items-center gap-1.5">
                     <div className="min-w-[60px] mr-1">
-                        <Dropdown value={pageSize} onChange={(v) => onPageSizeChange(Number(v))} options={pageSizeOptions} className="text-xs" placement="top" />
+                        <Dropdown value={pageSize} onChange={(v) => onPageSizeChange(Number(v))} options={pageSizeOptions} className="text-xs" placement="top" variant="minimal" />
                     </div>
-                        <button onClick={onPrev} disabled={isLoading || !hasPrev} className="px-3 py-1 rounded-lg border border-[var(--glass-border)] bg-[var(--bg-surface)] text-[var(--text-secondary)] text-xs font-semibold hover:bg-[var(--glass-surface)] disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-sm flex items-center gap-1">
+                        <button onClick={onPrev} disabled={isLoading || !hasPrev} className="px-3 py-1 rounded-lg bg-transparent text-[var(--text-secondary)] text-xs font-semibold hover:bg-[var(--glass-surface-hover)] disabled:opacity-50 disabled:cursor-not-allowed transition-all flex items-center gap-1">
                         <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" /></svg>
                         {t('pagination.prev')}
                     </button>
-                    <button onClick={onNext} disabled={isLoading || !hasNext} className="px-3 py-1 rounded-lg border border-[var(--glass-border)] bg-[var(--bg-surface)] text-[var(--text-secondary)] text-xs font-semibold hover:bg-[var(--glass-surface)] disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-sm flex items-center gap-1">
+                    <button onClick={onNext} disabled={isLoading || !hasNext} className="px-3 py-1 rounded-lg bg-transparent text-[var(--text-secondary)] text-xs font-semibold hover:bg-[var(--glass-surface-hover)] disabled:opacity-50 disabled:cursor-not-allowed transition-all flex items-center gap-1">
                         {t('pagination.next')}
                         <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" /></svg>
                     </button>

@@ -55,11 +55,11 @@ const PaginationControl = memo(({ page, total, pageSize, onPageChange, onPageSiz
     return (
         <>
             {/* Mobile: slim icon-only bar */}
-                        <div className="flex sm:hidden items-center w-fit mx-auto gap-3 px-4 py-1.5 bg-[var(--bg-surface)] rounded-xl border border-[var(--glass-border)] shadow-sm">
+            <div className="flex sm:hidden items-center w-fit mx-auto gap-3 px-4 py-1.5 bg-transparent rounded-xl">
                 <button
                     onClick={() => onPageChange(page - 1)}
                     disabled={page === 1}
-                    className="w-9 h-9 flex items-center justify-center rounded-lg border border-[var(--glass-border)] bg-[var(--bg-surface)] text-[var(--text-secondary)] hover:bg-[var(--glass-surface)] disabled:opacity-40 disabled:cursor-not-allowed transition-all"
+                    className="w-9 h-9 flex items-center justify-center rounded-lg bg-transparent text-[var(--text-secondary)] hover:bg-[var(--glass-surface-hover)] disabled:opacity-40 disabled:cursor-not-allowed transition-all"
                 >
                     <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" /></svg>
                 </button>
@@ -67,13 +67,13 @@ const PaginationControl = memo(({ page, total, pageSize, onPageChange, onPageSiz
                 <button
                     onClick={() => onPageChange(page + 1)}
                     disabled={page === totalPages || total === 0}
-                    className="w-9 h-9 flex items-center justify-center rounded-lg border border-[var(--glass-border)] bg-[var(--bg-surface)] text-[var(--text-secondary)] hover:bg-[var(--glass-surface)] disabled:opacity-40 disabled:cursor-not-allowed transition-all"
+                    className="w-9 h-9 flex items-center justify-center rounded-lg bg-transparent text-[var(--text-secondary)] hover:bg-[var(--glass-surface-hover)] disabled:opacity-40 disabled:cursor-not-allowed transition-all"
                 >
                     <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" /></svg>
                 </button>
             </div>
             {/* Desktop: full bar */}
-            <div className="hidden sm:flex flex-row justify-between items-center px-4 py-1.5 bg-[var(--bg-surface)] rounded-xl border border-[var(--glass-border)] shadow-sm gap-2">
+            <div className="hidden sm:flex flex-row justify-between items-center px-4 py-1.5 bg-transparent gap-2">
                 <div className="flex text-xs text-[var(--text-tertiary)] font-medium items-center gap-1">
                     <span>{t('pagination.showing')}</span>
                     <span className="font-bold text-[var(--text-primary)]">{total > 0 ? start : 0}-{end}</span>
@@ -86,15 +86,16 @@ const PaginationControl = memo(({ page, total, pageSize, onPageChange, onPageSiz
                         <Dropdown
                             value={pageSize}
                             onChange={(v) => onPageSizeChange(Number(v))}
-                            options={[10, 20, 50, 100].map(n => ({ value: n, label: String(n) }))}
+                            options={[12, 24, 48, 100].map(n => ({ value: n, label: String(n) }))}
                             className="text-xs"
                             placement="top"
+                            variant="minimal"
                         />
                     </div>
                     <button
                         onClick={() => onPageChange(page - 1)}
                         disabled={page === 1}
-                        className="px-3 py-1 rounded-lg border border-[var(--glass-border)] bg-[var(--bg-surface)] text-[var(--text-secondary)] text-xs font-semibold hover:bg-[var(--glass-surface)] disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-sm flex items-center justify-center"
+                        className="px-3 py-1 rounded-lg bg-transparent text-[var(--text-secondary)] text-xs font-semibold hover:bg-[var(--glass-surface-hover)] disabled:opacity-50 disabled:cursor-not-allowed transition-all flex items-center justify-center"
                     >
                         {t('pagination.prev')}
                     </button>
@@ -104,7 +105,7 @@ const PaginationControl = memo(({ page, total, pageSize, onPageChange, onPageSiz
                     <button
                         onClick={() => onPageChange(page + 1)}
                         disabled={page === totalPages || total === 0}
-                        className="px-3 py-1 rounded-lg border border-[var(--glass-border)] bg-[var(--bg-surface)] text-[var(--text-secondary)] text-xs font-semibold hover:bg-[var(--glass-surface)] disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-sm flex items-center justify-center"
+                        className="px-3 py-1 rounded-lg bg-transparent text-[var(--text-secondary)] text-xs font-semibold hover:bg-[var(--glass-surface-hover)] disabled:opacity-50 disabled:cursor-not-allowed transition-all flex items-center justify-center"
                     >
                         {t('pagination.next')}
                     </button>
@@ -486,7 +487,7 @@ export const AdminUsers: React.FC = () => {
     const [roleFilter, setRoleFilter] = useState('ALL');
     const [statusFilter, setStatusFilter] = useState('ALL');
     const [page, setPage] = useState(1);
-    const [pageSize, setPageSize] = useState(10);
+    const [pageSize, setPageSize] = useState(12);
     const [sort, setSort] = useState<{ field: string, order: 'asc' | 'desc' }>({ field: 'createdAt', order: 'desc' });
     // Modals & Action States
     const [isInviteOpen, setIsInviteOpen] = useState(false);
