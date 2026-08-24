@@ -8,6 +8,78 @@ import { Migration } from './runner';
  */
 const migration: Migration = {
   description: 'Enforce listing status, transaction, type, money, area and coordinates',
+  async report(client: PoolClient): Promise<void> {
+    const reports = [
+      ['status', `
+        status IS NOT NULL AND upper(btrim(status)) NOT IN
+          ('BOOKING','OPENING','AVAILABLE','HOLD','SOLD','RENTED','INACTIVE','BEST_MARKET')`,
+        `CASE WHEN status IS NULL OR upper(btrim(status)) IN
+          ('BOOKING','OPENING','AVAILABLE','HOLD','SOLD','RENTED','INACTIVE','BEST_MARKET')
+          THEN upper(btrim(status)) ELSE 'INACTIVE' END`],
+      ['transaction', `transaction IS NOT NULL AND upper(btrim(transaction)) NOT IN ('SALE','RENT')`,
+        `CASE WHEN transaction IS NULL OR upper(btrim(transaction)) IN ('SALE','RENT')
+          THEN upper(btrim(transaction)) ELSE 'SALE' END`],
+      ['type', `type IS NOT NULL AND upper(btrim(type)) NOT IN
+          ('APARTMENT','HOUSE','LAND','OFFICE','PENTHOUSE','TOWNHOUSE','VILLA')`,
+        `CASE WHEN type IS NULL OR upper(btrim(type)) IN
+          ('APARTMENT','HOUSE','LAND','OFFICE','PENTHOUSE','TOWNHOUSE','VILLA')
+          THEN upper(btrim(type)) ELSE NULL END`],
+      ['price', `price IS NOT NULL AND price <= 0`, `CASE WHEN price IS NULL OR price > 0 THEN price ELSE NULL END`],
+      ['area', `area IS NOT NULL AND area <= 0`, `CASE WHEN area IS NULL OR area > 0 THEN area ELSE NULL END`],
+      ['currency', `currency IS NOT NULL AND upper(btrim(currency)) NOT IN ('VND','USD')`,
+        `CASE WHEN currency IS NULL OR upper(btrim(currency)) IN ('VND','USD')
+          THEN upper(btrim(currency)) ELSE 'VND' END`],
+      ['coordinates', `coordinates IS NOT NULL AND NOT (
+          jsonb_typeof(coordinates) = 'object'
+          AND coordinates->>'lat' ~ '^[+-]?[0-9]+(\\.[0-9]+)?$'
+          AND coordinates->>'lng' ~ '^[+-]?[0-9]+(\\.[0-9]+)?$'
+          AND (CASE WHEN coordinates->>'lat' ~ '^[+-]?[0-9]+(\\.[0-9]+)?$'
+            THEN (coordinates->>'lat')::numeric BETWEEN 8 AND 24 ELSE FALSE END)
+          AND (CASE WHEN coordinates->>'lng' ~ '^[+-]?[0-9]+(\\.[0-9]+)?$'
+            THEN (coordinates->>'lng')::numeric BETWEEN 102 AND 110 ELSE FALSE END)
+        )`, `CASE WHEN coordinates IS NULL THEN NULL ELSE
+          CASE WHEN jsonb_typeof(coordinates) = 'object'
+            AND coordinates->>'lat' ~ '^[+-]?[0-9]+(\\.[0-9]+)?$'
+            AND coordinates->>'lng' ~ '^[+-]?[0-9]+(\\.[0-9]+)?$'
+            AND (CASE WHEN coordinates->>'lat' ~ '^[+-]?[0-9]+(\\.[0-9]+)?$'
+              THEN (coordinates->>'lat')::numeric BETWEEN 8 AND 24 ELSE FALSE END)
+            AND (CASE WHEN coordinates->>'lng' ~ '^[+-]?[0-9]+(\\.[0-9]+)?$'
+              THEN (coordinates->>'lng')::numeric BETWEEN 102 AND 110 ELSE FALSE END)
+            THEN coordinates ELSE NULL END END`],
+    ] as const;
+
+    for (const [field, invalid, normalized] of reports) {
+      const result = await client.query(`
+        SELECT COALESCE(MAX(total_count), 0)::int AS count,
+          COALESCE(jsonb_agg(sample ORDER BY sample->>'id'), '[]'::jsonb) AS samples
+        FROM (
+          SELECT jsonb_build_object(
+            'id', id, 'before', ${field === 'coordinates' ? `coordinates` : field},
+            'after', ${normalized}
+          ) AS sample, COUNT(*) OVER () AS total_count
+          FROM listings
+          WHERE ${invalid}
+          ORDER BY id
+          LIMIT 5
+        ) preview
+      `);
+      const row = result.rows[0] ?? { count: 0, samples: [] };
+      console.log(`[Migration 153][dry-run] ${field}: ${row.count} row(s); samples=${JSON.stringify(row.samples)}`);
+    }
+
+    const pair = await client.query(`
+      SELECT COUNT(*)::int AS count,
+        COALESCE(jsonb_agg(jsonb_build_object('id', id, 'transaction', transaction, 'status', status)
+          ORDER BY id) FILTER (WHERE id IS NOT NULL), '[]'::jsonb) AS samples
+      FROM (
+        SELECT id, transaction, status FROM listings
+        WHERE (upper(btrim(transaction)) = 'SALE' AND upper(btrim(status)) = 'RENTED')
+           OR (upper(btrim(transaction)) = 'RENT' AND upper(btrim(status)) = 'SOLD')
+        ORDER BY id LIMIT 5
+      ) contradictory
+    `);
+    console.log(`[Migration 153][dry-run] transaction/status contradiction: ${pair.rows[0]?.count ?? 0} row(s); samples=${JSON.stringify(pair.rows[0]?.samples ?? [])}`);
+  },
   async up(client: PoolClient): Promise<void> {
     await client.query(`
       ALTER TABLE listings

@@ -176,6 +176,8 @@ dotenv.config();
 export interface Migration {
   up: (client: PoolClient) => Promise<void>;
   down?: (client: PoolClient) => Promise<void>;
+  /** Read-only preview of data changes that up() will make. */
+  report?: (client: PoolClient) => Promise<void>;
   description: string;
 }
 
@@ -391,6 +393,13 @@ export async function runPendingMigrations(pool: Pool, isDryRun = false): Promis
     }
 
     if (isDryRun) {
+      for (const file of pending) {
+        const migration = MIGRATION_REGISTRY[file];
+        if (migration?.report) {
+          console.log(`[migrations] Preview ${file}:`);
+          await migration.report(client);
+        }
+      }
       console.log('[migrations] Dry run — no changes applied.');
       await client.query('ROLLBACK');
       return;
