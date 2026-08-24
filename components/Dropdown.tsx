@@ -156,7 +156,7 @@ export const Dropdown = memo(<T extends string | number>({
     if (variant === 'minimal') {
         buttonClass += ' !min-h-0 !border-0 !bg-transparent !shadow-none px-2 py-1 text-xs rounded-lg hover:!bg-[var(--glass-surface-hover)]';
     } else if (variant === 'compact') {
-        buttonClass += ' !min-h-[38px] px-2.5 py-2 text-xs rounded-lg';
+        buttonClass += ' !h-10 !min-h-0 px-2.5 py-2 text-xs rounded-lg';
     }
     if (isOpen && !disabled) {
         buttonClass += variant === 'minimal'
