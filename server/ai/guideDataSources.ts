@@ -156,6 +156,15 @@ export async function getGuideDataSummary(
 
 export function detectGuideDataGroup(message: string): GuideDataGroup | null {
   const value = message.toLowerCase();
+  // A module keyword alone is not enough to make this a data question.
+  // Procedural/capability questions must go to the platform guide instead
+  // (for example, "Làm thế nào để tạo một lead?" is not a lead summary).
+  if (/(làm thế nào|cách nào|cách để|hướng dẫn|how do i|how can i|what can i|tôi có thể|có thể làm gì|tạo|thêm mới|chỉnh sửa|xóa|đăng|mở ở đâu|ở đâu|where can i|how to)/i.test(value)) {
+    return null;
+  }
+  if (!/(bao nhiêu|số liệu|thống kê|tóm tắt|tổng quan|hiện tại|hôm nay|đang có|chưa đọc|đã ký|available|count|summary|stats|metrics|how many|current)/i.test(value)) {
+    return null;
+  }
   if (/(dashboard|kpi|doanh thu|doanh số|pipeline|tổng quan|dashboard)/i.test(value)) return 'dashboard';
   if (/(lead|khách hàng tiềm năng|khách hàng|sales funnel)/i.test(value)) return 'leads';
   if (/(inventory|kho hàng|bất động sản|listing|sản phẩm)/i.test(value)) return 'inventory';

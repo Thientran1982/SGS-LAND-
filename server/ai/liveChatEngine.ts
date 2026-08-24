@@ -1484,11 +1484,33 @@ async function handle_get_platform_knowledge(args: Record<string, any>): Promise
         return { domain, query, knowledge: LONGTHANH_KB, source: 'SGS Land Market Intelligence', cached: true };
     }
     if (d === 'platform' || d === 'tính năng' || d === 'hướng dẫn') {
+        const normalizedQuery = q.toLowerCase();
+        const guide = isEnglish
+            ? normalizedQuery.includes('lead')
+                ? 'Leads workflow:\n1. Open Leads from the main navigation.\n2. Select New lead.\n3. Enter the required contact and qualification details.\n4. Save, then review the lead stage and owner.\nYou need the appropriate CRM permission to create or edit leads.'
+                : normalizedQuery.includes('dashboard')
+                    ? 'Dashboard workflow:\nOpen Dashboard from the main navigation to review KPIs, lead funnel, revenue and pipeline. Use the time-range and filter controls to change the reporting period. Dashboard figures are read-only summaries.'
+                    : normalizedQuery.includes('inventory') || normalizedQuery.includes('listing') || normalizedQuery.includes('bất động sản')
+                        ? 'Inventory workflow:\nOpen Inventory to search and filter listings. Use Grid, List, Board or Map view. Select New listing to add a property, or use the three-dot menu on a card to edit, duplicate or delete it when your role allows.'
+                        : normalizedQuery.includes('contract')
+                            ? 'Contracts workflow:\nOpen Contracts to create and track contract records, review their status and follow the approval process. Contract actions depend on your role and approval permissions.'
+                            : normalizedQuery.includes('inbox') || normalizedQuery.includes('message')
+                                ? 'Inbox workflow:\nOpen Inbox to review conversations from connected channels, assign or respond to conversations, and inspect the conversation history. Channel access depends on your account permissions.'
+                                : 'SGS Land Platform — main features:\n• Dashboard — KPIs, lead statistics and revenue\n• Leads — customer relationship management\n• Inventory — create and manage listings\n• AI Valuation — SGS-AVM v2.1\n• Contracts — create and track contracts\n• AI Governance — manage AI prompts'
+            : normalizedQuery.includes('lead') || normalizedQuery.includes('khách hàng')
+                ? 'Hướng dẫn Leads:\n1. Mở mục Leads trên thanh điều hướng.\n2. Chọn Tạo lead mới.\n3. Nhập thông tin liên hệ và nhu cầu bắt buộc.\n4. Lưu lại, sau đó kiểm tra giai đoạn và người phụ trách.\nBạn cần quyền CRM phù hợp để tạo hoặc chỉnh sửa lead.'
+                : normalizedQuery.includes('dashboard')
+                    ? 'Hướng dẫn Dashboard:\nMở Dashboard trên thanh điều hướng để xem KPI, phễu lead, doanh thu và pipeline. Dùng bộ lọc thời gian để đổi kỳ báo cáo. Các số liệu trên Dashboard là bản tóm tắt chỉ đọc.'
+                    : normalizedQuery.includes('inventory') || normalizedQuery.includes('listing') || normalizedQuery.includes('bất động sản') || normalizedQuery.includes('kho')
+                        ? 'Hướng dẫn Kho bất động sản:\nMở Kho để tìm kiếm và lọc sản phẩm. Có thể chuyển Grid, List, Board hoặc Map. Chọn Tạo sản phẩm để thêm BĐS; dùng menu ba chấm trên card để sửa, nhân bản hoặc xóa nếu tài khoản có quyền.'
+                        : normalizedQuery.includes('contract') || normalizedQuery.includes('hợp đồng')
+                            ? 'Hướng dẫn Hợp đồng:\nMở Hợp đồng để tạo và theo dõi hồ sơ, xem trạng thái và thực hiện quy trình phê duyệt. Các thao tác phụ thuộc vào vai trò và quyền phê duyệt.'
+                            : normalizedQuery.includes('inbox') || normalizedQuery.includes('tin nhắn') || normalizedQuery.includes('hội thoại')
+                                ? 'Hướng dẫn Inbox:\nMở Inbox để xem hội thoại từ các kênh đã kết nối, phân công hoặc trả lời và xem lịch sử trao đổi. Kênh hiển thị phụ thuộc vào quyền tài khoản.'
+                                : 'SGS Land — các tính năng chính:\n• Dashboard — KPI, thống kê lead, doanh số\n• Leads — CRM quản lý khách hàng\n• Kho bất động sản — tìm kiếm và quản lý BĐS\n• Định giá AI — SGS-AVM v2.1\n• Hợp đồng — tạo và theo dõi hợp đồng\n• AI Governance — quản lý prompt AI';
         return {
             domain, query,
-            knowledge: isEnglish
-                ? `SGS Land Platform — main features:\n• Dashboard /dashboard — KPIs, lead statistics, revenue\n• Leads /leads — customer relationship management\n• Inventory /inventory — create and manage listings\n• AI Valuation /ai-valuation — SGS-AVM v2.1\n• Contracts /contracts — create and track contracts\n• AI Governance /ai-governance — manage AI prompts`
-                : `SGS Land Platform — các tính năng chính:\n• Dashboard /dashboard — KPI, thống kê lead, doanh số\n• Leads /leads — CRM quản lý khách hàng\n• Kho hàng /inventory — đăng và quản lý BĐS\n• Định giá AI /ai-valuation — SGS-AVM v2.1\n• Hợp đồng /contracts — tạo và theo dõi\n• AI Governance /ai-governance — quản lý prompt AI`,
+            knowledge: guide,
             source: 'SGS Land Platform Guide',
             cached: true,
         };

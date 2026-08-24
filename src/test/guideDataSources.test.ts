@@ -7,7 +7,13 @@ describe('guide data sources', () => {
     expect(detectGuideDataGroup('How many listings are available in inventory?')).toBe('inventory');
     expect(detectGuideDataGroup('Có bao nhiêu hợp đồng đã ký?')).toBe('contracts');
     expect(detectGuideDataGroup('Tôi có tin nhắn Zalo chưa đọc không?')).toBe('inbox');
-    expect(detectGuideDataGroup('What can I do on the Dashboard?')).toBe('dashboard');
+    expect(detectGuideDataGroup('Tổng quan Dashboard hiện tại có những số liệu gì?')).toBe('dashboard');
+  });
+
+  it('does not misroute procedural questions to metric summaries', () => {
+    expect(detectGuideDataGroup('Làm thế nào để tạo một lead?')).toBeNull();
+    expect(detectGuideDataGroup('Tôi có thể làm gì trên Dashboard?')).toBeNull();
+    expect(detectGuideDataGroup('How do I create a listing?')).toBeNull();
   });
 
   it('renders localized summaries without exposing record-level PII', () => {
