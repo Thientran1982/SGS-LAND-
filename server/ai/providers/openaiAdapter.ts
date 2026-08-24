@@ -4,8 +4,7 @@ import { getProviderApiKey } from '../modelPolicy';
 import type { AiProvider } from '../modelPolicy';
 
 /**
- * Adapter dung chung cho OpenAI (ChatGPT) va xAI (Grok).
- * xAI dung API tuong thich OpenAI, chi khac baseURL.
+ * Adapter dùng cho các API tương thích OpenAI (OpenAI, xAI, OpenRouter).
  */
 export class OpenAiCompatibleAdapter implements ProviderAdapter {
   readonly name: string;
@@ -29,7 +28,16 @@ export class OpenAiCompatibleAdapter implements ProviderAdapter {
     if (!apiKey) {
       throw new Error(`Chua cau hinh API key cho provider '${this.provider}'. Vui long them Secret tuong ung.`);
     }
-    this.client = new OpenAI(this.baseURL ? { apiKey, baseURL: this.baseURL } : { apiKey });
+    this.client = new OpenAI({
+      apiKey,
+      ...(this.baseURL ? { baseURL: this.baseURL } : {}),
+      ...(this.provider === 'openrouter' ? {
+        defaultHeaders: {
+          'HTTP-Referer': process.env.OPENROUTER_HTTP_REFERER || 'https://sgsland.vn',
+          'X-Title': process.env.OPENROUTER_APP_TITLE || 'SGS LAND AI',
+        },
+      } : {}),
+    });
     return this.client;
   }
 

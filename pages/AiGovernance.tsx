@@ -1078,7 +1078,7 @@ export const AiGovernance: React.FC = () => {
         .then(r => r.ok ? r.json() : null)
         .then(d => {
           if (!d || !Array.isArray(d.groups) || d.groups.length === 0) return;
-          const meta: any = { google: { badge: 'Google', badgeColor: 'bg-[var(--sgs-primary)]/10 text-[var(--sgs-primary)] border-[var(--sgs-primary)]' }, openai: { badge: 'OpenAI', badgeColor: 'bg-emerald-100 text-emerald-700 border-emerald-200' }, anthropic: { badge: 'Claude', badgeColor: 'bg-amber-100 text-amber-700 border-amber-200' }, xai: { badge: 'xAI', badgeColor: 'bg-slate-100 text-slate-700 border-slate-200' } };
+          const meta: any = { google: { badge: 'Google', badgeColor: 'bg-[var(--sgs-primary)]/10 text-[var(--sgs-primary)] border-[var(--sgs-primary)]' }, openai: { badge: 'OpenAI', badgeColor: 'bg-emerald-100 text-emerald-700 border-emerald-200' }, anthropic: { badge: 'Claude', badgeColor: 'bg-amber-100 text-amber-700 border-amber-200' }, xai: { badge: 'xAI', badgeColor: 'bg-slate-100 text-slate-700 border-slate-200' }, openrouter: { badge: 'OpenRouter', badgeColor: 'bg-violet-100 text-violet-700 border-violet-200' } };
           const groups = d.groups.map((g: any) => ({
             label: g.label + (g.configured ? '' : ' (chưa cấu hình API key)'),
             badge: meta[g.provider]?.badge || g.provider,

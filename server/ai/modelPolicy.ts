@@ -4,15 +4,16 @@
  * Muc tieu: KHONG hardcode ten model (vd gemini-3) rai rac trong code.
  * Tat ca model / provider / gia / task-mapping / deprecation deu khai bao o day.
  * Ho tro nhieu nha cung cap (provider): Google Gemini (dang dung), va cac
- * diem cam san sang cho OpenAI (ChatGPT), Anthropic (Claude), xAI (Grok)...
+ * diem cam san sang cho OpenAI (ChatGPT), Anthropic (Claude), xAI (Grok),
+ * va OpenRouter (cac model ben thu ba).
  *
  * Cach doi model KHONG can sua code: dat bien moi truong (ENV):
  *   AI_MODEL_ROUTER, AI_MODEL_EXTRACTOR, AI_MODEL_WRITER, AI_MODEL_EMBEDDING
- *   AI_DEFAULT_PROVIDER  (google | openai | anthropic | xai)
+ *   AI_DEFAULT_PROVIDER  (google | openai | anthropic | xai | openrouter)
  *   AI_SAFE_FALLBACK     (ten model fallback an toan)
  */
 
-export type AiProvider = 'google' | 'openai' | 'anthropic' | 'xai';
+export type AiProvider = 'google' | 'openai' | 'anthropic' | 'xai' | 'openrouter';
 
 export interface ModelSpec {
   /** ID model dung khi goi API */
@@ -217,6 +218,13 @@ Object.assign(MODEL_REGISTRY, {
   'grok-4': { id: 'grok-4', provider: 'xai' as AiProvider, costPer1k: 0.005000 },
   'grok-3': { id: 'grok-3', provider: 'xai' as AiProvider, costPer1k: 0.003000 },
   'grok-3-mini': { id: 'grok-3-mini', provider: 'xai' as AiProvider, costPer1k: 0.000500 },
+  // ---- OpenRouter ----
+  // Có thể đổi slug bằng OPENROUTER_GLM_MODEL nếu OpenRouter cập nhật catalog.
+  [process.env.OPENROUTER_GLM_MODEL || 'z-ai/glm-5.2']: {
+    id: process.env.OPENROUTER_GLM_MODEL || 'z-ai/glm-5.2',
+    provider: 'openrouter' as AiProvider,
+    costPer1k: 0.001000,
+  },
 });
 
 /**
@@ -235,6 +243,7 @@ export const PROVIDER_ENV_KEYS: Record<AiProvider, string[]> = {
   openai:    ['OPENAI_API_KEY'],
   anthropic: ['ANTHROPIC_API_KEY'],
   xai:       ['XAI_API_KEY', 'GROK_API_KEY'],
+  openrouter:['OPENROUTER_API_KEY'],
 };
 
 /** Lay API key cua provider tu process.env (KHONG bao gio hardcode). */
@@ -276,8 +285,9 @@ const PROVIDER_LABELS: Record<AiProvider, string> = {
   openai: 'OpenAI (ChatGPT)',
   anthropic: 'Anthropic (Claude)',
   xai: 'xAI (Grok)',
+  openrouter: 'OpenRouter',
 };
-const PROVIDER_ORDER: AiProvider[] = ['google', 'openai', 'anthropic', 'xai'];
+const PROVIDER_ORDER: AiProvider[] = ['google', 'openai', 'anthropic', 'xai', 'openrouter'];
 export function listAvailableModels(): ProviderModelGroup[] {
   const groups = new Map<AiProvider, ModelInfo[]>();
   for (const spec of Object.values(MODEL_REGISTRY)) {
