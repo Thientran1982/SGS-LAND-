@@ -2,6 +2,7 @@
  * Migration CLI - run directly via:
  *   npx tsx server/migrations/cli.ts
  *   npx tsx server/migrations/cli.ts --dry-run
+ *   npx tsx server/migrations/cli.ts --status
  *   npx tsx server/migrations/cli.ts --rollback
  *
  * This is kept separate from runner.ts so that runner.ts can be safely
@@ -11,24 +12,43 @@
 import { fileURLToPath } from 'url';
 import dotenv from 'dotenv';
 import { pool } from '../db';
-import { runPendingMigrations, rollbackLastMigration } from './runner';
+import { getMigrationStatus, runPendingMigrations, rollbackLastMigration } from './runner';
 
 dotenv.config();
 
 const isDryRun = process.argv.includes('--dry-run');
 const isRollback = process.argv.includes('--rollback');
+const isStatus = process.argv.includes('--status') || process.argv.includes('--check');
 
 // Reuse the same configured pool as the running app (server/db.ts) so the
 // CLI picks up the same Aiven CA cert / connection-string sanitisation.
 // A bare `new Pool({ connectionString: process.env.AIVEN_DATABASE_URL })`
 // here previously failed every run with "self-signed certificate in
 // certificate chain" because it skipped that setup.
-const action = isRollback
-  ? rollbackLastMigration(pool)
-  : runPendingMigrations(pool, isDryRun);
+const action = isStatus
+  ? getMigrationStatus(pool).then((status) => {
+      console.log(`[migrations] Expected: ${status.expected.length}; applied: ${status.applied.length}`);
+      if (status.isConsistent) {
+        console.log('[migrations] STATUS OK: production database matches the migration registry.');
+        return;
+      }
+      if (status.missing.length > 0) {
+        console.error(`[migrations] Missing applied versions: ${status.missing.join(', ')}`);
+      }
+      if (status.unexpected.length > 0) {
+        console.error(`[migrations] Unexpected database versions: ${status.unexpected.join(', ')}`);
+      }
+      console.error(
+        '[migrations] STATUS FAILED: database drift detected. Apply or remove migrations through the deployment process, then rerun this check.',
+      );
+      process.exitCode = 1;
+    })
+  : isRollback
+    ? rollbackLastMigration(pool)
+    : runPendingMigrations(pool, isDryRun);
 
 action
-  .then(() => process.exit(0))
+  .then(() => process.exit(process.exitCode ?? 0))
   .catch((error) => {
     console.error('[migrations] Failed:', error);
     process.exit(1);

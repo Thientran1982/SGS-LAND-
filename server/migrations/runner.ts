@@ -8,6 +8,7 @@
  * Usage:
  *   npx tsx server/migrations/runner.ts          # run pending migrations
  *   npx tsx server/migrations/runner.ts --dry-run # preview without executing
+ *   npm run migrate:status                       # read-only registry check
  *
  * In server startup: call runPendingMigrations() before the app starts listening.
  *
@@ -362,6 +363,52 @@ async function getAppliedVersions(client: PoolClient): Promise<Set<string>> {
 
 function getMigrationFiles(): string[] {
   return Object.keys(MIGRATION_REGISTRY).sort();
+}
+
+export interface MigrationStatus {
+  expected: string[];
+  applied: string[];
+  missing: string[];
+  unexpected: string[];
+  isConsistent: boolean;
+}
+
+/**
+ * Read-only production migration consistency check.
+ *
+ * This deliberately does not call ensureSchemaVersionsTable(): a status
+ * check must not change a deployment database, including when the tracking
+ * table has not been created yet.
+ */
+export async function getMigrationStatus(pool: Pool): Promise<MigrationStatus> {
+  const client = await pool.connect();
+  try {
+    const result = await client.query('SELECT version FROM schema_versions ORDER BY version');
+    const expected = getMigrationFiles();
+    const applied = [...new Set(result.rows.map((row: { version: string }) => row.version))].sort();
+    const appliedSet = new Set(applied);
+    const expectedSet = new Set(expected);
+    const missing = expected.filter((version) => !appliedSet.has(version));
+    const unexpected = applied.filter((version) => !expectedSet.has(version));
+
+    return {
+      expected,
+      applied,
+      missing,
+      unexpected,
+      isConsistent: missing.length === 0 && unexpected.length === 0,
+    };
+  } catch (error) {
+    if ((error as { code?: string }).code === '42P01') {
+      throw new Error(
+        '[migrations] schema_versions does not exist; the database has no recorded migration history. ' +
+          'Run the migration command before starting the application.',
+      );
+    }
+    throw error;
+  } finally {
+    client.release();
+  }
 }
 
 // Arbitrary unique lock key for this app's migration process
