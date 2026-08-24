@@ -47,6 +47,14 @@ const formatModelName = (model: string) => {
         .trim();
 };
 interface SkillDefault { name: string; summary: string; notes: string; }
+interface GovernanceAgent {
+    id: string;
+    name: string;
+    displayName: string;
+    role: string;
+    active: boolean;
+    systemInstruction: string;
+}
 
 interface PromptsTabProps {
     prompts: PromptTemplate[];
@@ -70,6 +78,7 @@ interface PromptsTabProps {
     onToggleDiff: () => void;
     onSelectDiffVersion: (v: number) => void;
     t: any;
+    agents: GovernanceAgent[];
 }
 const ICONS = {
     ADD:          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" /></svg>,
@@ -464,25 +473,25 @@ const ConfigTab = memo(({ config, modelGroups, onSave, onUpdateConfig, t }: Conf
         </div>
     </div>
 ));
-const AGENT_SKILL_CATALOG: { key: string; agent: string; descKey: string }[] = [
-    { key: 'ROUTER_SYSTEM',           agent: 'Router',            descKey: 'ai.agent_router_desc' },
-    { key: 'WRITER_PERSONA',          agent: 'Writer',            descKey: 'ai.agent_writer_desc' },
-    { key: 'INVENTORY_SYSTEM',        agent: 'Inventory',         descKey: 'ai.agent_inventory_desc' },
-    { key: 'FINANCE_SYSTEM',          agent: 'Finance',           descKey: 'ai.agent_finance_desc' },
-    { key: 'LEGAL_SYSTEM',            agent: 'Legal',             descKey: 'ai.agent_legal_desc' },
-    { key: 'SALES_SYSTEM',            agent: 'Sales',             descKey: 'ai.agent_sales_desc' },
-    { key: 'MARKETING_SYSTEM',        agent: 'Marketing',         descKey: 'ai.agent_marketing_desc' },
-    { key: 'CONTRACT_SYSTEM',         agent: 'Contract',          descKey: 'ai.agent_contract_desc' },
-    { key: 'LEAD_ANALYST_SYSTEM',     agent: 'Lead Analyst',      descKey: 'ai.agent_lead_analyst_desc' },
-    { key: 'VALUATION_SYSTEM',        agent: 'Valuation Extract', descKey: 'ai.agent_valuation_desc' },
-    { key: 'VALUATION_SEARCH_SYSTEM', agent: 'Valuation Sale',    descKey: 'ai.agent_valuation_search_desc' },
-    { key: 'VALUATION_RENTAL_SYSTEM', agent: 'Valuation Rental',  descKey: 'ai.agent_valuation_rental_desc' },
-    { key: 'FOLLOWUP_SYSTEM',         agent: 'Follow Up',         descKey: 'ai.agent_followup_desc' },
+const AGENT_SKILL_CATALOG: { key: string; agent: string; descKey: string; runtimeRole: string; ownerIntent: string }[] = [
+    { key: 'ROUTER_SYSTEM', agent: 'Router', descKey: 'ai.agent_router_desc', runtimeRole: 'router', ownerIntent: 'Phân loại và định tuyến' },
+    { key: 'WRITER_PERSONA', agent: 'Writer', descKey: 'ai.agent_writer_desc', runtimeRole: 'writer', ownerIntent: 'DIRECT_ANSWER · CLARIFY' },
+    { key: 'INVENTORY_SYSTEM', agent: 'Inventory', descKey: 'ai.agent_inventory_desc', runtimeRole: 'inventory_specialist', ownerIntent: 'SEARCH_INVENTORY' },
+    { key: 'FINANCE_SYSTEM', agent: 'Finance', descKey: 'ai.agent_finance_desc', runtimeRole: 'finance_specialist', ownerIntent: 'CALCULATE_LOAN' },
+    { key: 'LEGAL_SYSTEM', agent: 'Legal', descKey: 'ai.agent_legal_desc', runtimeRole: 'legal_specialist', ownerIntent: 'EXPLAIN_LEGAL' },
+    { key: 'SALES_SYSTEM', agent: 'Sales', descKey: 'ai.agent_sales_desc', runtimeRole: 'sales_specialist', ownerIntent: 'DRAFT_BOOKING' },
+    { key: 'MARKETING_SYSTEM', agent: 'Marketing', descKey: 'ai.agent_marketing_desc', runtimeRole: 'marketing_specialist', ownerIntent: 'EXPLAIN_MARKETING' },
+    { key: 'CONTRACT_SYSTEM', agent: 'Contract', descKey: 'ai.agent_contract_desc', runtimeRole: 'contract_specialist', ownerIntent: 'DRAFT_CONTRACT' },
+    { key: 'LEAD_ANALYST_SYSTEM', agent: 'Lead Analyst', descKey: 'ai.agent_lead_analyst_desc', runtimeRole: 'lead_analyst', ownerIntent: 'ANALYZE_LEAD' },
+    { key: 'VALUATION_SYSTEM', agent: 'Valuation Extract', descKey: 'ai.agent_valuation_desc', runtimeRole: 'valuation_specialist', ownerIntent: 'ESTIMATE_VALUATION' },
+    { key: 'VALUATION_SEARCH_SYSTEM', agent: 'Valuation Sale', descKey: 'ai.agent_valuation_search_desc', runtimeRole: 'valuation_search', ownerIntent: 'ESTIMATE_VALUATION · giá bán' },
+    { key: 'VALUATION_RENTAL_SYSTEM', agent: 'Valuation Rental', descKey: 'ai.agent_valuation_rental_desc', runtimeRole: 'valuation_rental', ownerIntent: 'ESTIMATE_VALUATION · giá thuê' },
+    { key: 'FOLLOWUP_SYSTEM', agent: 'Follow Up', descKey: 'ai.agent_followup_desc', runtimeRole: 'followup_agent', ownerIntent: 'FOLLOWUP (nội bộ)' },
 ];
 const PromptsTab = memo(({ 
     prompts, promptDefaults, selectedPrompt, editContent, isEvalRunning, testInput, lastEvalRun,
     onSelect, onEditContent, onInsertVar, onRunSim, onSaveVersion, onPromoteVersion, onCreateOpen, onSetTestInput,
-    diffMode, diffLeftContent, diffRightVersion, onToggleDiff, onSelectDiffVersion, t
+    diffMode, diffLeftContent, diffRightVersion, onToggleDiff, onSelectDiffVersion, t, agents
 }: PromptsTabProps) => {
     const configuredKeys = new Set((prompts || []).map(p => p.name));
     const [hoveredKey, setHoveredKey] = useState<string | null>(null);
@@ -495,8 +504,10 @@ const PromptsTab = memo(({
                 <span className="text-[10px] text-[var(--text-tertiary)] italic">{t('ai.catalog_hover_hint')}</span>
             </div>
             <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2">
-                {AGENT_SKILL_CATALOG.map(({ key, agent, descKey }) => {
+                {AGENT_SKILL_CATALOG.map(({ key, agent, descKey, runtimeRole, ownerIntent }) => {
                     const configured = configuredKeys.has(key);
+                    const runtime = agents.find(a => a.role === runtimeRole);
+                    const runtimeReady = Boolean(runtime?.active);
                     const defInfo = promptDefaults[key];
                     const isHovered = hoveredKey === key;
                     return (
@@ -506,18 +517,23 @@ const PromptsTab = memo(({
                                 onMouseEnter={() => setHoveredKey(key)}
                                 onMouseLeave={() => setHoveredKey(null)}
                                 title={configured ? t('ai.catalog_configured_hint') : `${t('ai.catalog_create_hint')} "${key}"`}
-                                className={`p-2.5 rounded-xl border text-xs cursor-pointer transition-all select-none ${configured ? 'bg-emerald-50 border-emerald-200' : 'bg-[var(--glass-surface)] border-[var(--glass-border)] hover:border-[var(--sgs-primary)] hover:bg-[var(--sgs-primary)]/10'}`}
+                                className={`p-2.5 rounded-xl border text-xs cursor-pointer transition-all select-none ${runtimeReady ? 'bg-emerald-50 border-emerald-200' : 'bg-amber-50 border-amber-200'}`}
                             >
                                 <div className="flex items-center gap-1.5 mb-0.5">
-                                    {configured
+                                    {runtimeReady
                                         ? <span className="w-1.5 h-1.5 rounded-full bg-sgs-verified shrink-0"></span>
-                                        : <span className="w-1.5 h-1.5 rounded-full bg-[var(--text-tertiary)] opacity-40 shrink-0"></span>
+                                        : <span className="w-1.5 h-1.5 rounded-full bg-amber-500 shrink-0"></span>
                                     }
-                                    <span className={`font-bold truncate ${configured ? 'text-emerald-700' : 'text-[var(--text-secondary)]'}`}>{agent}</span>
-                                    {configured && <span className="ml-auto text-[9px] font-bold text-sgs-verified bg-sgs-champagne px-1 rounded">override</span>}
+                                    <span className={`font-bold truncate ${runtimeReady ? 'text-emerald-700' : 'text-amber-800'}`}>{agent}</span>
+                                    <span className={`ml-auto text-[9px] font-bold px-1 rounded ${runtimeReady ? 'text-emerald-700 bg-emerald-100' : 'text-amber-800 bg-amber-100'}`}>{runtimeReady ? 'runtime' : 'chưa nối'}</span>
                                 </div>
                                 <code className="text-[10px] text-[var(--text-tertiary)] font-mono block truncate">{key}</code>
                                 <p className="text-[10px] text-[var(--text-tertiary)] mt-0.5 leading-tight hidden sm:block">{t(descKey)}</p>
+                                <div className="mt-2 space-y-0.5 text-[10px]">
+                                    <div><span className="font-semibold text-[var(--text-tertiary)]">Agent:</span> <span className="text-[var(--text-secondary)]">{runtime ? `${runtime.displayName} (${runtime.name})` : 'Chưa có agent runtime'}</span></div>
+                                    <div><span className="font-semibold text-[var(--text-tertiary)]">Prompt:</span> <span className={configured ? 'text-emerald-700' : 'text-amber-700'}>{configured ? 'Đã cấu hình' : 'Chỉ prompt mặc định'}</span></div>
+                                    <div><span className="font-semibold text-[var(--text-tertiary)]">Owner intent:</span> <span className="text-[var(--text-secondary)]">{ownerIntent}</span></div>
+                                </div>
                             </div>
                             {/* Default skill info popover */}
                             {isHovered && defInfo && (
@@ -1010,6 +1026,7 @@ export const AiGovernance: React.FC = () => {
     const [config, setConfig] = useState<AiTenantConfig | null>(null);
     const [modelGroups, setModelGroups] = useState<any[]>(MODEL_GROUPS);
     const [prompts, setPrompts] = useState<PromptTemplate[]>([]);
+    const [agents, setAgents] = useState<GovernanceAgent[]>([]);
     const [safetyLogs, setSafetyLogs] = useState<AiSafetyLog[]>([]);
     const [loading, setLoading] = useState(true);
     const [activeTab, setActiveTab] = useState<'CONFIG' | 'PROMPTS' | 'SAFETY' | 'RLHF'>('CONFIG');
@@ -1053,14 +1070,18 @@ export const AiGovernance: React.FC = () => {
     const fetchData = useCallback(async () => {
         setLoading(true);
         try {
-            const [c, p, l] = await Promise.all([
+            const [c, p, l, a] = await Promise.all([
                 db.getAiConfig(),
                 db.getPromptTemplates(),
-                db.getAiSafetyLogs()
+                db.getAiSafetyLogs(),
+                fetch('/api/agents', { headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` } })
+                    .then(r => r.ok ? r.json() : [])
+                    .catch(() => [])
             ]);
             setConfig(c);
             setPrompts(p);
             setSafetyLogs(l);
+            setAgents(Array.isArray(a) ? a : []);
         } catch {
             // silent — UI stays with empty state
         } finally { setLoading(false); }
@@ -1237,6 +1258,7 @@ export const AiGovernance: React.FC = () => {
                     onToggleDiff={handleToggleDiff}
                     onSelectDiffVersion={handleSelectDiffVersion}
                     t={t}
+                    agents={agents}
                 />
             )}
             {activeTab === 'SAFETY' && (

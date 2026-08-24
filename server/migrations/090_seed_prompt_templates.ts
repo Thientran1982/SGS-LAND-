@@ -12,6 +12,7 @@ import {
   DEFAULT_VALUATION_SYSTEM,
   DEFAULT_VALUATION_SEARCH_SYSTEM,
   DEFAULT_VALUATION_RENTAL_SYSTEM,
+  DEFAULT_FOLLOWUP_SYSTEM,
 } from '../ai/defaultPrompts';
 
 const PROMPTS: Array<{ name: string; category: string; content: string; agentRole?: string }> = [
@@ -27,6 +28,7 @@ const PROMPTS: Array<{ name: string; category: string; content: string; agentRol
   { name: 'VALUATION_SYSTEM',         category: 'valuation',  content: DEFAULT_VALUATION_SYSTEM,          agentRole: 'valuation_specialist' },
   { name: 'VALUATION_SEARCH_SYSTEM',  category: 'valuation',  content: DEFAULT_VALUATION_SEARCH_SYSTEM },
   { name: 'VALUATION_RENTAL_SYSTEM',  category: 'valuation',  content: DEFAULT_VALUATION_RENTAL_SYSTEM },
+  { name: 'FOLLOWUP_SYSTEM',          category: 'background', content: DEFAULT_FOLLOWUP_SYSTEM,          agentRole: 'followup_agent' },
 ];
 
 const up = async (client: PoolClient): Promise<void> => {

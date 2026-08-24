@@ -10,22 +10,24 @@ export type AgentCapability = {
   intents: string[];
   mode: 'router' | 'specialist' | 'writer' | 'background';
   ragDomains?: string[];
+  /** Human-readable intent ownership used by AI Governance. */
+  ownerIntent?: string;
 };
 
 export const AGENT_ORCHESTRATION_REGISTRY: readonly AgentCapability[] = [
-  { skillKey: 'ROUTER_SYSTEM', role: 'router', intents: [], mode: 'router' },
-  { skillKey: 'WRITER_PERSONA', role: 'writer', intents: ['DIRECT_ANSWER', 'CLARIFY'], mode: 'writer', ragDomains: ['legal', 'finance', 'market', 'product'] },
-  { skillKey: 'INVENTORY_SYSTEM', role: 'inventory_specialist', intents: ['SEARCH_INVENTORY'], mode: 'specialist', ragDomains: ['product', 'market'] },
-  { skillKey: 'FINANCE_SYSTEM', role: 'finance_specialist', intents: ['CALCULATE_LOAN'], mode: 'specialist', ragDomains: ['finance', 'market'] },
-  { skillKey: 'LEGAL_SYSTEM', role: 'legal_specialist', intents: ['EXPLAIN_LEGAL'], mode: 'specialist', ragDomains: ['legal'] },
-  { skillKey: 'SALES_SYSTEM', role: 'sales_specialist', intents: ['DRAFT_BOOKING'], mode: 'specialist', ragDomains: ['product', 'market'] },
-  { skillKey: 'MARKETING_SYSTEM', role: 'marketing_specialist', intents: ['EXPLAIN_MARKETING'], mode: 'specialist', ragDomains: ['market', 'product'] },
-  { skillKey: 'CONTRACT_SYSTEM', role: 'contract_specialist', intents: ['DRAFT_CONTRACT'], mode: 'specialist', ragDomains: ['legal'] },
-  { skillKey: 'LEAD_ANALYST_SYSTEM', role: 'lead_analyst', intents: ['ANALYZE_LEAD'], mode: 'specialist', ragDomains: ['product'] },
-  { skillKey: 'VALUATION_SYSTEM', role: 'valuation_specialist', intents: ['ESTIMATE_VALUATION'], mode: 'specialist', ragDomains: ['market'] },
-  { skillKey: 'VALUATION_SEARCH_SYSTEM', role: 'valuation_search', intents: [], mode: 'specialist', ragDomains: ['market'] },
-  { skillKey: 'VALUATION_RENTAL_SYSTEM', role: 'valuation_rental', intents: [], mode: 'specialist', ragDomains: ['market'] },
-  { skillKey: 'FOLLOWUP_SYSTEM', role: 'followup_agent', intents: [], mode: 'background' },
+  { skillKey: 'ROUTER_SYSTEM', role: 'router', intents: [], mode: 'router', ownerIntent: 'Phân loại và định tuyến' },
+  { skillKey: 'WRITER_PERSONA', role: 'writer', intents: ['DIRECT_ANSWER', 'CLARIFY'], mode: 'writer', ragDomains: ['legal', 'finance', 'market', 'product'], ownerIntent: 'DIRECT_ANSWER · CLARIFY' },
+  { skillKey: 'INVENTORY_SYSTEM', role: 'inventory_specialist', intents: ['SEARCH_INVENTORY'], mode: 'specialist', ragDomains: ['product', 'market'], ownerIntent: 'SEARCH_INVENTORY' },
+  { skillKey: 'FINANCE_SYSTEM', role: 'finance_specialist', intents: ['CALCULATE_LOAN'], mode: 'specialist', ragDomains: ['finance', 'market'], ownerIntent: 'CALCULATE_LOAN' },
+  { skillKey: 'LEGAL_SYSTEM', role: 'legal_specialist', intents: ['EXPLAIN_LEGAL'], mode: 'specialist', ragDomains: ['legal'], ownerIntent: 'EXPLAIN_LEGAL' },
+  { skillKey: 'SALES_SYSTEM', role: 'sales_specialist', intents: ['DRAFT_BOOKING'], mode: 'specialist', ragDomains: ['product', 'market'], ownerIntent: 'DRAFT_BOOKING' },
+  { skillKey: 'MARKETING_SYSTEM', role: 'marketing_specialist', intents: ['EXPLAIN_MARKETING'], mode: 'specialist', ragDomains: ['market', 'product'], ownerIntent: 'EXPLAIN_MARKETING' },
+  { skillKey: 'CONTRACT_SYSTEM', role: 'contract_specialist', intents: ['DRAFT_CONTRACT'], mode: 'specialist', ragDomains: ['legal'], ownerIntent: 'DRAFT_CONTRACT' },
+  { skillKey: 'LEAD_ANALYST_SYSTEM', role: 'lead_analyst', intents: ['ANALYZE_LEAD'], mode: 'specialist', ragDomains: ['product'], ownerIntent: 'ANALYZE_LEAD' },
+  { skillKey: 'VALUATION_SYSTEM', role: 'valuation_specialist', intents: ['ESTIMATE_VALUATION'], mode: 'specialist', ragDomains: ['market'], ownerIntent: 'ESTIMATE_VALUATION' },
+  { skillKey: 'VALUATION_SEARCH_SYSTEM', role: 'valuation_search', intents: [], mode: 'specialist', ragDomains: ['market'], ownerIntent: 'ESTIMATE_VALUATION · giá bán' },
+  { skillKey: 'VALUATION_RENTAL_SYSTEM', role: 'valuation_rental', intents: [], mode: 'specialist', ragDomains: ['market'], ownerIntent: 'ESTIMATE_VALUATION · giá thuê' },
+  { skillKey: 'FOLLOWUP_SYSTEM', role: 'followup_agent', intents: [], mode: 'background', ownerIntent: 'FOLLOWUP (nội bộ)' },
 ];
 
 const byIntent = new Map(

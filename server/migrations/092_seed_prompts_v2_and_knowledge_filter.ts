@@ -12,6 +12,7 @@ import {
   DEFAULT_VALUATION_SYSTEM,
   DEFAULT_VALUATION_SEARCH_SYSTEM,
   DEFAULT_VALUATION_RENTAL_SYSTEM,
+  DEFAULT_FOLLOWUP_SYSTEM,
 } from '../ai/defaultPrompts';
 
 /**
@@ -40,6 +41,7 @@ const PROMPTS_V2: Array<{ name: string; content: string }> = [
   { name: 'VALUATION_SYSTEM',        content: DEFAULT_VALUATION_SYSTEM },
   { name: 'VALUATION_SEARCH_SYSTEM', content: DEFAULT_VALUATION_SEARCH_SYSTEM },
   { name: 'VALUATION_RENTAL_SYSTEM', content: DEFAULT_VALUATION_RENTAL_SYSTEM },
+  { name: 'FOLLOWUP_SYSTEM',         content: DEFAULT_FOLLOWUP_SYSTEM },
 ];
 
 // Per-agent RAG knowledge domain mapping (matches seed/knowledge/{domain}/ folders).
@@ -48,10 +50,13 @@ const AGENT_KNOWLEDGE_FILTER: Record<string, { domains: string[] }> = {
   contract_specialist:  { domains: ['legal'] },
   finance_specialist:   { domains: ['finance', 'market'] },
   valuation_specialist: { domains: ['market'] },
+  valuation_search:    { domains: ['market'] },
+  valuation_rental:    { domains: ['market'] },
   inventory_specialist: { domains: ['product', 'market'] },
   marketing_specialist: { domains: ['market', 'product'] },
   sales_specialist:     { domains: ['product', 'market'] },
   lead_analyst:         { domains: ['product'] },
+  followup_agent:       { domains: ['product'] },
   router:               { domains: [] },
   writer:               { domains: ['legal', 'finance', 'market', 'product'] },
 };

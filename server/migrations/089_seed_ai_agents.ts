@@ -94,6 +94,26 @@ const SEED_AGENTS: Array<{
       { id: 'memory_digest', name: 'Tóm tắt lịch sử', description: 'Compress >12 tin nhắn cũ' },
     ],
   },
+  {
+    role: 'lead_analyst',
+    name: 'LEAD_ANALYST',
+    display_name: 'Chuyên gia phân tích khách hàng',
+    description: 'Phân tích hồ sơ, nhu cầu và tiềm năng của lead cho đội ngũ kinh doanh.',
+    skills: [
+      { id: 'lead_profile_analysis', name: 'Phân tích hồ sơ lead', description: 'Tổng hợp nhu cầu, hành vi và mức độ phù hợp' },
+      { id: 'next_best_action', name: 'Đề xuất bước tiếp theo', description: 'Đưa ra hành động chăm sóc có căn cứ' },
+    ],
+  },
+  {
+    role: 'followup_agent',
+    name: 'FOLLOWUP_AGENT',
+    display_name: 'Trợ lý follow-up',
+    description: 'Soạn nội dung follow-up theo ngữ cảnh lead; không tự gửi nếu chưa qua luồng giao hàng.',
+    skills: [
+      { id: 'followup_drafting', name: 'Soạn follow-up', description: 'Cá nhân hóa nội dung theo lịch sử tương tác' },
+      { id: 'channel_awareness', name: 'Nhận biết kênh', description: 'Giữ đúng kênh và consent của lead' },
+    ],
+  },
 ];
 
 const up = async (client: PoolClient): Promise<void> => {
