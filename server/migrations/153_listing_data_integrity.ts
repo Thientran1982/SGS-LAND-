@@ -178,24 +178,6 @@ const migration: Migration = {
             THEN coordinates
           ELSE NULL
         END
-      WHERE (status IS NOT NULL AND upper(btrim(status)) NOT IN
-          ('BOOKING','OPENING','AVAILABLE','HOLD','SOLD','RENTED','INACTIVE','BEST_MARKET'))
-        OR (transaction IS NOT NULL AND upper(btrim(transaction)) NOT IN ('SALE','RENT'))
-        OR (type IS NOT NULL AND upper(btrim(type)) NOT IN
-          ('APARTMENT','HOUSE','LAND','OFFICE','PENTHOUSE','TOWNHOUSE','VILLA'))
-        OR (price IS NOT NULL AND price <= 0) OR (area IS NOT NULL AND area <= 0)
-        OR (currency IS NOT NULL AND upper(btrim(currency)) NOT IN ('VND','USD'))
-        OR (coordinates IS NOT NULL AND NOT (
-          jsonb_typeof(coordinates) = 'object'
-          AND coordinates->>'lat' ~ '^[+-]?[0-9]+(\\.[0-9]+)?$'
-          AND coordinates->>'lng' ~ '^[+-]?[0-9]+(\\.[0-9]+)?$'
-          AND (CASE WHEN coordinates->>'lat' ~ '^[+-]?[0-9]+(\\.[0-9]+)?$'
-            THEN (coordinates->>'lat')::numeric BETWEEN 8 AND 24 ELSE FALSE END)
-          AND (CASE WHEN coordinates->>'lng' ~ '^[+-]?[0-9]+(\\.[0-9]+)?$'
-            THEN (coordinates->>'lng')::numeric BETWEEN 102 AND 110 ELSE FALSE END)
-        ))
-        OR ((upper(btrim(transaction)) = 'SALE' AND upper(btrim(status)) = 'RENTED')
-          OR (upper(btrim(transaction)) = 'RENT' AND upper(btrim(status)) = 'SOLD'))
     `);
     if ((result.rowCount ?? 0) > 0) {
       console.log(`[Migration 153] Cleaned ${result.rowCount} legacy listing(s)`, before);
