@@ -163,6 +163,7 @@ import m143 from './143_complete_geo_keyword_metadata';
 import m144 from './144_valuation_evaluation_history';
 import m145 from './145_valuation_drift_thresholds';
 import m146 from './146_notification_operational_events';
+import m147 from './147_auctions';
 
 dotenv.config();
 
@@ -322,6 +323,7 @@ const MIGRATION_REGISTRY: Record<string, Migration> = {
   '144_valuation_evaluation_history.ts': m144,
   '145_valuation_drift_thresholds.ts': m145,
   '146_notification_operational_events.ts': m146,
+  '147_auctions.ts': m147,
 };
 
 async function ensureSchemaVersionsTable(client: PoolClient): Promise<void> {

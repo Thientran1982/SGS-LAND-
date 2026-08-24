@@ -34,6 +34,7 @@ import { createRoutingRuleRoutes } from "./server/routes/routingRuleRoutes";
 import { createKnowledgeRoutes } from "./server/routes/knowledgeRoutes";
 import { createCustomFieldRoutes } from "./server/routes/customFieldRoutes";
 import { createUnitRoutes } from "./server/routes/unitRoutes";
+import { createAuctionRoutes } from "./server/routes/auctionRoutes";
 import { createEnterpriseRoutes } from "./server/routes/enterpriseRoutes";
 import { createSequenceRoutes } from "./server/routes/sequenceRoutes";
 import { emailService } from "./server/services/emailService";
@@ -4289,6 +4290,7 @@ app.get('/api/public/listings/:slugId', apiRateLimit, async (req: express.Reques
   app.use('/api/upload', apiRateLimit, createUploadRoutes(authenticateToken));
   app.use('/api/custom-fields', apiRateLimit, createCustomFieldRoutes(authenticateToken));
   app.use('/api/units', apiRateLimit, createUnitRoutes(authenticateToken));
+  app.use('/api/auctions', apiRateLimit, createAuctionRoutes(authenticateToken));
   app.use('/uploads', createUploadServeRoute(authenticateToken));
   // SCIM 2.0 provisioning — uses its own Bearer token auth (no JWT required)
   app.use('/scim/v2', express.json({ type: ['application/json', 'application/scim+json'] }), createScimRoutes());
