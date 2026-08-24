@@ -373,7 +373,7 @@ const LeadRow = memo(({ lead, isSelected, onSelect, onClick, onProposal, onDupli
                     <div
                         ref={menuDivRef}
                         style={{ position: 'fixed', top: menuPos.top, right: menuPos.right, zIndex: 9999 }}
-                         className="w-48 bg-[var(--bg-surface)] rounded-2xl border-0 ring-0 outline-none overflow-hidden shadow-[0_8px_24px_rgba(15,23,42,0.14)] py-1.5 animate-enter"
+                         className="w-48 bg-[var(--bg-surface)] rounded-none border-0 ring-0 outline-none overflow-hidden shadow-none py-1.5 animate-enter"
                     >
                         <button onClick={(e) => { e.stopPropagation(); setMenuOpen(false); onClick(lead); }}
                              className="w-full flex items-center gap-2.5 px-3.5 py-1.5 text-xs text-[var(--text-secondary)] hover:bg-sgs-champagne hover:text-sgs-primary transition-colors">
@@ -389,7 +389,7 @@ const LeadRow = memo(({ lead, isSelected, onSelect, onClick, onProposal, onDupli
                         </button>
                         {canDelete && <>
                         <button onClick={(e) => { e.stopPropagation(); setMenuOpen(false); onDelete(lead); }}
-                             className="w-full flex items-center gap-2.5 px-3.5 py-1.5 text-xs text-rose-500 hover:bg-rose-50 hover:text-rose-600 transition-colors rounded-b-2xl">
+                             className="w-full flex items-center gap-2.5 px-3.5 py-1.5 text-xs text-rose-500 hover:bg-rose-50 hover:text-rose-600 transition-colors">
                             {ICONS.TRASH} <span>{t('common.delete')}</span>
                         </button>
                         </>}
@@ -495,7 +495,7 @@ const KanbanCard = memo(({ lead, onClick, onDelete, onProposal, canDelete, t, fo
                     ref={menuRef}
                     onClick={e => e.stopPropagation()}
                     style={{ position: 'fixed', top: menuPos.top, right: menuPos.right, zIndex: 9999 }}
-                     className="bg-[var(--bg-surface)] rounded-xl border-0 ring-0 outline-none overflow-hidden shadow-[0_8px_24px_rgba(15,23,42,0.14)] py-1 min-w-[160px]"
+                     className="bg-[var(--bg-surface)] rounded-none border-0 ring-0 outline-none overflow-hidden shadow-none py-1 min-w-[160px]"
                 >
                     <button
                         onClick={() => { setMenuOpen(false); onClick(lead); }}
@@ -514,7 +514,7 @@ const KanbanCard = memo(({ lead, onClick, onDelete, onProposal, canDelete, t, fo
                     {canDelete && <>
                     <button
                         onClick={() => { setMenuOpen(false); onDelete(lead); }}
-                         className="w-full text-left px-3 py-2 text-xs text-rose-600 hover:bg-rose-50 flex items-center gap-2 rounded-b-xl"
+                         className="w-full text-left px-3 py-2 text-xs text-rose-600 hover:bg-rose-50 flex items-center gap-2"
                     >
                         <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
                         {t('common.delete')}
