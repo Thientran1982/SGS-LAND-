@@ -2207,13 +2207,16 @@ function ProjectListingsPanel({ project, canCreate, isAdmin, userRole, onClose, 
                                                 ref={actionsBtnRef}
                                                 type="button"
                                                 onClick={toggleActionsMenu}
-                                                className="flex items-center px-3 py-2 h-[36px] rounded-xl border border-[var(--glass-border)] text-[var(--text-secondary)] text-sm hover:bg-[var(--glass-surface-hover)] transition-colors"
+                                                className="flex items-center gap-1.5 px-3 py-2 h-[36px] rounded-xl border border-[var(--glass-border)] text-[var(--text-secondary)] text-sm hover:bg-[var(--glass-surface-hover)] transition-colors"
                                                 aria-haspopup="menu"
                                                 aria-expanded={actionsOpen}
                                                 aria-label={t('project.actions_aria')}
                                                 title={t('project.actions_btn')}
                                             >
                                                 <span className="text-xs font-semibold">{t('project.actions_btn')}</span>
+                                                <svg className={`w-3 h-3 transition-transform ${actionsOpen ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                                                </svg>
                                             </button>
                                             {actionsOpen && createPortal(
                                                 <div
@@ -2231,9 +2234,8 @@ function ProjectListingsPanel({ project, canCreate, isAdmin, userRole, onClose, 
                                                             onClick={it.onClick}
                                                             disabled={it.disabled}
                                                             title={it.title}
-                                                            className={`w-full flex items-center gap-2.5 px-3 py-2.5 text-sm text-left transition-colors disabled:opacity-50 disabled:cursor-not-allowed hover:bg-[var(--glass-surface-hover)] first:rounded-t-xl last:rounded-b-xl ${it.accent === 'emerald' ? 'text-emerald-700 dark:text-emerald-300 font-semibold' : 'text-[var(--text-primary)]'}`}
+                                                             className={`w-full flex items-center px-3 py-2.5 text-sm text-left transition-colors disabled:opacity-50 disabled:cursor-not-allowed hover:bg-[var(--glass-surface-hover)] first:rounded-t-xl last:rounded-b-xl ${it.accent === 'emerald' ? 'text-emerald-700 dark:text-emerald-300 font-semibold' : 'text-[var(--text-primary)]'}`}
                                                         >
-                                                            <span className={`shrink-0 ${it.accent === 'emerald' ? 'text-emerald-600 dark:text-emerald-400' : 'text-[var(--text-secondary)]'}`}>{it.icon}</span>
                                                             <span className="flex-1 truncate">{it.label}</span>
                                                         </button>
                                                     ))}
@@ -2557,7 +2559,7 @@ function ProjectListingsPanel({ project, canCreate, isAdmin, userRole, onClose, 
                                                 <button
                                                     type="button"
                                                     onClick={e => openRowMenu(e, l.id)}
-                                                     className="w-7 h-7 rounded-lg flex items-center justify-center opacity-0 focus-visible:opacity-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sgs-primary"
+                                                     className="w-7 h-7 rounded-lg flex items-center justify-center transition-colors hover:bg-slate-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sgs-primary"
                                                     style={{ color: menuOpenId === l.id ? '#0D1526' : 'var(--sgs-on-dark-muted)' }}
                                                     title={t('common.actions')}
                                                      aria-label={t('common.actions')}
@@ -2697,21 +2699,21 @@ function ProjectListingsPanel({ project, canCreate, isAdmin, userRole, onClose, 
                             onClick={() => { setMenuOpenId(null); setEditTarget(menuListing); }}
                             className="w-full text-left px-3 py-2.5 text-xs text-[var(--text-secondary)] hover:bg-[var(--glass-surface-hover)] flex items-center gap-2 first:rounded-t-xl"
                         >
-                            {IC.EDIT} {t('common.edit')}
+                            {t('common.edit')}
                         </button>
                         <button
                             type="button"
                             onClick={() => { setMenuOpenId(null); setContractTarget(menuListing); }}
                             className="w-full text-left px-3 py-2.5 text-xs text-sgs-verified hover:bg-sgs-champagne flex items-center gap-2"
                         >
-                            {IC.CONTRACT} {t('detail.create_contract') || 'Hợp đồng'}
+                            {t('detail.create_contract') || 'Hợp đồng'}
                         </button>
                         <button
                             type="button"
                             onClick={() => { setMenuOpenId(null); setDeleteTarget(menuListing); }}
                             className="w-full text-left px-3 py-2.5 text-xs text-rose-600 hover:bg-rose-50 flex items-center gap-2 last:rounded-b-xl"
                         >
-                            {IC.TRASH} {t('common.delete')}
+                            {t('common.delete')}
                         </button>
                     </div>,
                     document.body
