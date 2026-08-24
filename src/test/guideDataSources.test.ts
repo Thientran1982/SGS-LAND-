@@ -16,6 +16,12 @@ describe('guide data sources', () => {
     expect(detectGuideDataGroup('How do I create a listing?')).toBeNull();
   });
 
+  it('does not classify operations and task guide questions as data summaries', () => {
+    expect(detectGuideDataGroup('Tôi có thể làm gì trong mục Quản lý công việc?')).toBeNull();
+    expect(detectGuideDataGroup('Hướng dẫn dùng bảng Kanban')).toBeNull();
+    expect(detectGuideDataGroup('Các mục vận hành gồm những gì?')).toBeNull();
+  });
+
   it('renders localized summaries without exposing record-level PII', () => {
     const vn = renderGuideDataSummary({
       group: 'leads',

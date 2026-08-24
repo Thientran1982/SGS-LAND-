@@ -1485,6 +1485,19 @@ async function handle_get_platform_knowledge(args: Record<string, any>): Promise
     }
     if (d === 'platform' || d === 'tính năng' || d === 'hướng dẫn') {
         const normalizedQuery = q.toLowerCase();
+        const asksOperations = /(vận hành|operations|phê duyệt|approval|dự án|project|đấu giá|auction|trường tùy chỉnh|custom field|kho đơn vị|unit inventory|quy tắc phân|routing|chuỗi tự động|sequence|chiến dịch|campaign|chấm điểm|scoring|cơ sở kiến thức|knowledge base|báo cáo|report)/i.test(normalizedQuery);
+        const asksTaskManagement = /(quản lý công việc|công việc|nhiệm vụ|task|kanban|phân công|nhân viên|employee|task report|báo cáo công việc)/i.test(normalizedQuery);
+        if (asksOperations || asksTaskManagement) {
+            const operationsGuide = isEnglish
+                ? 'Operations and task management:\nOperations — Projects (/projects) manages projects and their listings; Approvals (/approvals) reviews pending requests; Custom Fields (/custom-fields) configures extra fields; Auction (/auction) manages auctions; Unit Inventory (/unit-inventory) tracks project units; Routing Rules (/routing-rules) assigns leads; Auto Sequences (/sequences) automates follow-ups; Email Campaigns (/campaigns) manages campaigns; Scoring Rules (/scoring-rules) configures lead scoring; Knowledge Base (/knowledge) manages reference content; Reports (/reports) reviews analytics.\nTask Management — Task Overview (/task-dashboard) shows workload KPIs; Kanban (/task-kanban) manages status columns; Task List (/tasks) creates, filters and updates work; Employees & Assignments (/employees) manages assignees; Task Reports (/task-reports) reviews performance. Actions and visibility depend on role permissions.'
+                : 'Vận hành và quản lý công việc:\nVận hành — Dự án (/projects) quản lý dự án và rổ hàng; Phê duyệt (/approvals) xử lý các yêu cầu chờ duyệt; Trường tùy chỉnh (/custom-fields) cấu hình trường dữ liệu bổ sung; Đấu giá (/auction) quản lý phiên đấu giá; Kho đơn vị (/unit-inventory) theo dõi từng sản phẩm trong dự án; Quy tắc phân lead (/routing-rules) tự động giao lead; Chuỗi tự động (/sequences) tự động hóa follow-up; Chiến dịch email (/campaigns) quản lý chiến dịch; Luật chấm điểm (/scoring-rules) cấu hình điểm lead; Cơ sở kiến thức (/knowledge) quản lý tài liệu tham chiếu; Báo cáo (/reports) xem phân tích.\nQuản lý công việc — Tổng quan công việc (/task-dashboard) xem KPI khối lượng; Bảng Kanban (/task-kanban) quản lý theo cột trạng thái; Danh sách công việc (/tasks) tạo, lọc và cập nhật việc; Nhân viên & phân công (/employees) quản lý người thực hiện; Báo cáo công việc (/task-reports) xem hiệu suất. Khả năng nhìn thấy và thao tác phụ thuộc vào quyền tài khoản.';
+            return {
+                domain, query,
+                knowledge: operationsGuide,
+                source: 'SGS Land Platform Guide',
+                cached: true,
+            };
+        }
         const guide = isEnglish
             ? normalizedQuery.includes('lead')
                 ? 'Leads workflow:\n1. Open Leads from the main navigation.\n2. Select New lead.\n3. Enter the required contact and qualification details.\n4. Save, then review the lead stage and owner.\nYou need the appropriate CRM permission to create or edit leads.'
