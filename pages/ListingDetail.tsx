@@ -1604,7 +1604,7 @@ export const ListingDetail: React.FC = () => {
             {/* Gallery — public detail style */}
             <div className="max-w-7xl mx-auto px-4 py-4 md:px-6 md:py-6">
                 {/* Dynamic Grid Layout based on image count */}
-                <div className="grid grid-cols-1 md:grid-cols-[minmax(0,3fr)_minmax(180px,1fr)] md:grid-rows-2 gap-1.5 rounded-2xl overflow-hidden aspect-[4/3] md:aspect-[16/8] relative group bg-[var(--bg-elevated)]">
+                <div className={`grid grid-cols-1 gap-1.5 rounded-2xl overflow-hidden aspect-[4/3] relative group bg-[var(--bg-elevated)] ${displayImages.length > 1 ? 'md:grid-cols-[minmax(0,3fr)_minmax(180px,1fr)] md:grid-rows-2 md:aspect-[16/8]' : 'md:grid-cols-1 md:grid-rows-1 md:aspect-[16/8]'}`}>
                     {/* Main Image (Always First) */}
                     <div 
                         className="h-full md:row-span-2 relative cursor-pointer overflow-hidden"
