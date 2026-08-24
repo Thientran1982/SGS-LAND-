@@ -7,6 +7,7 @@ import { useTranslation } from '../services/i18n';
 import { Dropdown } from '../components/Dropdown';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell } from 'recharts';
 import { SeoHead } from '../components/SeoHead';
+import { AGENT_ORCHESTRATION_REGISTRY, getAgentRuntimeStatus } from '../server/ai/agentOrchestrationRegistry';
 interface ConfigTabProps {
     config: AiTenantConfig;
     modelGroups: any[];
@@ -473,21 +474,13 @@ const ConfigTab = memo(({ config, modelGroups, onSave, onUpdateConfig, t }: Conf
         </div>
     </div>
 ));
-const AGENT_SKILL_CATALOG: { key: string; agent: string; descKey: string; runtimeRole: string; ownerIntent: string }[] = [
-    { key: 'ROUTER_SYSTEM', agent: 'Router', descKey: 'ai.agent_router_desc', runtimeRole: 'router', ownerIntent: 'Phân loại và định tuyến' },
-    { key: 'WRITER_PERSONA', agent: 'Writer', descKey: 'ai.agent_writer_desc', runtimeRole: 'writer', ownerIntent: 'DIRECT_ANSWER · CLARIFY' },
-    { key: 'INVENTORY_SYSTEM', agent: 'Inventory', descKey: 'ai.agent_inventory_desc', runtimeRole: 'inventory_specialist', ownerIntent: 'SEARCH_INVENTORY' },
-    { key: 'FINANCE_SYSTEM', agent: 'Finance', descKey: 'ai.agent_finance_desc', runtimeRole: 'finance_specialist', ownerIntent: 'CALCULATE_LOAN' },
-    { key: 'LEGAL_SYSTEM', agent: 'Legal', descKey: 'ai.agent_legal_desc', runtimeRole: 'legal_specialist', ownerIntent: 'EXPLAIN_LEGAL' },
-    { key: 'SALES_SYSTEM', agent: 'Sales', descKey: 'ai.agent_sales_desc', runtimeRole: 'sales_specialist', ownerIntent: 'DRAFT_BOOKING' },
-    { key: 'MARKETING_SYSTEM', agent: 'Marketing', descKey: 'ai.agent_marketing_desc', runtimeRole: 'marketing_specialist', ownerIntent: 'EXPLAIN_MARKETING' },
-    { key: 'CONTRACT_SYSTEM', agent: 'Contract', descKey: 'ai.agent_contract_desc', runtimeRole: 'contract_specialist', ownerIntent: 'DRAFT_CONTRACT' },
-    { key: 'LEAD_ANALYST_SYSTEM', agent: 'Lead Analyst', descKey: 'ai.agent_lead_analyst_desc', runtimeRole: 'lead_analyst', ownerIntent: 'ANALYZE_LEAD' },
-    { key: 'VALUATION_SYSTEM', agent: 'Valuation Extract', descKey: 'ai.agent_valuation_desc', runtimeRole: 'valuation_specialist', ownerIntent: 'ESTIMATE_VALUATION' },
-    { key: 'VALUATION_SEARCH_SYSTEM', agent: 'Valuation Sale', descKey: 'ai.agent_valuation_search_desc', runtimeRole: 'valuation_search', ownerIntent: 'ESTIMATE_VALUATION · giá bán' },
-    { key: 'VALUATION_RENTAL_SYSTEM', agent: 'Valuation Rental', descKey: 'ai.agent_valuation_rental_desc', runtimeRole: 'valuation_rental', ownerIntent: 'ESTIMATE_VALUATION · giá thuê' },
-    { key: 'FOLLOWUP_SYSTEM', agent: 'Follow Up', descKey: 'ai.agent_followup_desc', runtimeRole: 'followup_agent', ownerIntent: 'FOLLOWUP (nội bộ)' },
-];
+const AGENT_SKILL_CATALOG = AGENT_ORCHESTRATION_REGISTRY.map(({ promptKey, displayName, descriptionKey, role, ownerIntent }) => ({
+    key: promptKey,
+    agent: displayName,
+    descKey: descriptionKey,
+    runtimeRole: role,
+    ownerIntent: ownerIntent || '',
+}));
 const PromptsTab = memo(({ 
     prompts, promptDefaults, selectedPrompt, editContent, isEvalRunning, testInput, lastEvalRun,
     onSelect, onEditContent, onInsertVar, onRunSim, onSaveVersion, onPromoteVersion, onCreateOpen, onSetTestInput,
@@ -507,7 +500,7 @@ const PromptsTab = memo(({
                 {AGENT_SKILL_CATALOG.map(({ key, agent, descKey, runtimeRole, ownerIntent }) => {
                     const configured = configuredKeys.has(key);
                     const runtime = agents.find(a => a.role === runtimeRole);
-                    const runtimeReady = Boolean(runtime?.active);
+                    const runtimeReady = getAgentRuntimeStatus(runtimeRole, agents) === 'runtime';
                     const defInfo = promptDefaults[key];
                     const isHovered = hoveredKey === key;
                     return (
