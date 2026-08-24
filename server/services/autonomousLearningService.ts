@@ -213,15 +213,22 @@ export const autonomousLearningService = {
   async rollbackCandidate(tenantId: string, candidateId: string, reason: string, metrics: Record<string, unknown> = {}, traceId?: string) {
     return withTenantContext(tenantId, async client => {
       const result = await client.query(
-        `UPDATE ai_learning_candidates SET status='ROLLED_BACK', last_known_good=FALSE
-         WHERE tenant_id=$1 AND id=$2 AND status IN ('SHADOW','CANARY','ACTIVE') RETURNING *`,
+        `WITH previous AS (
+           SELECT id, status AS previous_status FROM ai_learning_candidates
+           WHERE tenant_id=$1 AND id=$2 AND status IN ('SHADOW','CANARY','ACTIVE')
+         )
+         UPDATE ai_learning_candidates candidate
+         SET status='ROLLED_BACK', last_known_good=FALSE
+         FROM previous
+         WHERE candidate.tenant_id=$1 AND candidate.id=previous.id
+         RETURNING candidate.*, previous.previous_status`,
         [tenantId, candidateId],
       );
       if (result.rows[0]) await client.query(
         `INSERT INTO ai_promotion_decisions
          (tenant_id,candidate_id,from_status,to_status,decision,reason,metrics_json,trace_id)
          VALUES ($1,$2,$3,'ROLLED_BACK','ROLLBACK',$4,$5::jsonb,$6)`,
-        [tenantId, candidateId, result.rows[0].status, reason.slice(0, 1000), JSON.stringify(metrics), traceId || null],
+        [tenantId, candidateId, result.rows[0].previous_status, reason.slice(0, 1000), JSON.stringify(metrics), traceId || null],
       );
       return result.rows[0] || null;
     });

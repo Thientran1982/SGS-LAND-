@@ -69,8 +69,30 @@ const migration: Migration = {
         created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
         UNIQUE (tenant_id, agent_key, period_start, period_end)
       );
+      CREATE TABLE IF NOT EXISTS agent_shift_reports (
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        tenant_id UUID NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
+        report_date DATE NOT NULL,
+        shift TEXT NOT NULL DEFAULT 'ALL_DAY',
+        metrics_json JSONB NOT NULL DEFAULT '{}'::jsonb,
+        summary TEXT NOT NULL DEFAULT '',
+        reviewed BOOLEAN NOT NULL DEFAULT FALSE,
+        reviewed_by UUID,
+        reviewed_at TIMESTAMPTZ,
+        created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+        updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+        UNIQUE (tenant_id, report_date, shift)
+      );
+      ALTER TABLE agent_role_cards
+        ADD COLUMN IF NOT EXISTS approval_status TEXT NOT NULL DEFAULT 'PENDING'
+          CHECK (approval_status IN ('PENDING','APPROVED','REJECTED')),
+        ADD COLUMN IF NOT EXISTS approved_by UUID,
+        ADD COLUMN IF NOT EXISTS approved_at TIMESTAMPTZ,
+        ADD COLUMN IF NOT EXISTS approval_reason TEXT;
+      CREATE INDEX IF NOT EXISTS idx_agent_shift_reports_tenant_date
+        ON agent_shift_reports (tenant_id, report_date DESC);
     `);
-    for (const table of ['agent_operating_events', 'agent_human_questions', 'agent_role_cards', 'agent_kpi_snapshots']) {
+    for (const table of ['agent_operating_events', 'agent_human_questions', 'agent_role_cards', 'agent_kpi_snapshots', 'agent_shift_reports']) {
       await client.query(`
         ALTER TABLE ${table} ENABLE ROW LEVEL SECURITY;
         ALTER TABLE ${table} FORCE ROW LEVEL SECURITY;
@@ -84,7 +106,7 @@ const migration: Migration = {
     }
   },
   async down(client: PoolClient): Promise<void> {
-    await client.query('DROP TABLE IF EXISTS agent_kpi_snapshots, agent_role_cards, agent_human_questions, agent_operating_events CASCADE');
+    await client.query('DROP TABLE IF EXISTS agent_shift_reports, agent_kpi_snapshots, agent_role_cards, agent_human_questions, agent_operating_events CASCADE');
   },
 };
 
