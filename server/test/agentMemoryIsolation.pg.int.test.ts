@@ -11,9 +11,10 @@ const baseConnectionString = integrationUrl?.replace(
 const useSsl = process.env.INTEGRITY_PG_SSL !== 'false';
 
 let pool: Pool;
-let client: PoolClient;
+let client: PoolClient | undefined;
 let appPool: typeof import('../db').pool;
 let schema: string;
+let schemaCreated = false;
 let agentMemoryService: typeof import('../services/agentMemoryService').agentMemoryService;
 
 const tenantA = '11111111-1111-4111-8111-111111111111';
@@ -26,6 +27,7 @@ function connectionWithSchema(): string {
 }
 
 async function query(text: string, values?: unknown[]) {
+  if (!client) throw new Error('PostgreSQL fixture client is not connected');
   return client.query(text, values);
 }
 
@@ -34,12 +36,15 @@ describePostgres('agent memory tenant isolation against PostgreSQL', () => {
     schema = `agent_memory_isolation_${process.pid}_${Date.now()}`;
     pool = new Pool({
       connectionString: baseConnectionString,
-      max: 1,
+      // Keep the setup client available for fixture queries while the
+      // no-context assertion checks a second session under sgs_app.
+      max: 2,
       connectionTimeoutMillis: 10_000,
       ssl: useSsl ? { rejectUnauthorized: false } : false,
     });
     client = await pool.connect();
     await client.query(`CREATE SCHEMA "${schema}"`);
+    schemaCreated = true;
     await client.query(`SET search_path TO "${schema}", public`);
     await query(`
       CREATE TABLE tenants (id UUID PRIMARY KEY);
@@ -90,12 +95,19 @@ describePostgres('agent memory tenant isolation against PostgreSQL', () => {
   });
 
   afterAll(async () => {
-    await appPool?.end();
-    if (client) {
-      await client.query(`DROP SCHEMA IF EXISTS "${schema}" CASCADE`);
-      client.release();
+    try {
+      await appPool?.end();
+      // Release the setup client before cleanup so cleanup still works if
+      // setup or a test left its session in an unexpected state. This hook
+      // runs after failed tests as well as successful ones.
+      client?.release();
+      client = undefined;
+      if (schemaCreated && pool) {
+        await pool.query(`DROP SCHEMA IF EXISTS "${schema}" CASCADE`);
+      }
+    } finally {
+      await pool?.end();
     }
-    await pool?.end();
   });
 
   it('lists only the active tenant and cannot update, delete, or promote another tenant', async () => {
@@ -142,6 +154,7 @@ describePostgres('agent memory tenant isolation against PostgreSQL', () => {
     const noContext = await pool.connect();
     try {
       await noContext.query('BEGIN');
+      await noContext.query(`SET LOCAL search_path TO "${schema}", public`);
       await noContext.query('SET LOCAL ROLE sgs_app');
       await noContext.query('SET LOCAL row_security = on');
       expect((await noContext.query('SELECT * FROM agent_store')).rows).toEqual([]);

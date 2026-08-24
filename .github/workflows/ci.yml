@@ -73,6 +73,9 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      - name: Run PostgreSQL tenant-isolation regression
+        run: npm run test:tenant-isolation
+
       - name: Run PostgreSQL integrity and migration checks
         run: >-
           npx vitest run

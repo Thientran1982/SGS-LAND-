@@ -36,6 +36,7 @@
     "full": "node seo-geo-audit.mjs && node geo-monitor.mjs",
     "test": "vitest run --config vitest.config.ts",
     "test:cache:integration": "vitest run --config vitest.server.config.ts",
+    "test:tenant-isolation": "vitest run --config vitest.server.config.ts server/test/agentMemoryIsolation.pg.int.test.ts",
     "test:watch": "vitest --config vitest.config.ts",
     "test:coverage": "vitest run --config vitest.config.ts --coverage"
   },
