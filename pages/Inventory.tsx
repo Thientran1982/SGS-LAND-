@@ -104,7 +104,7 @@ const useDraggableScroll = (ref: React.RefObject<HTMLDivElement | null>, trigger
 // --- CURSOR PAGINATION COMPONENT ---
 // Cursor-based: no OFFSET, O(1) at any depth. Prev/next use a cursor stack.
 const CursorPaginationControl = memo(({
-    totalItems, pageSize, hasPrev, hasNext, onPrev, onNext, onPageSizeChange, t
+    totalItems, pageSize, hasPrev, hasNext, onPrev, onNext, onPageSizeChange, t, isLoading
 }: {
     totalItems: number;
     pageSize: number;
@@ -114,6 +114,7 @@ const CursorPaginationControl = memo(({
     onNext: () => void;
     onPageSizeChange: (s: number) => void;
     t: any;
+    isLoading?: boolean;
 }) => {
     const pageSizeOptions = [
         { value: 12, label: '12' },
@@ -126,13 +127,13 @@ const CursorPaginationControl = memo(({
         <>
             {/* Mobile */}
             <div className="flex sm:hidden items-center w-fit mx-auto gap-3 px-4 py-1.5 bg-[var(--bg-surface)] rounded-xl border border-[var(--glass-border)] shadow-sm">
-                <button onClick={onPrev} disabled={!hasPrev} className={btnCls}>
+                <button onClick={onPrev} disabled={isLoading || !hasPrev} className={btnCls}>
                     <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" /></svg>
                 </button>
                 <span className="text-xs font-bold text-[var(--text-primary)] min-w-[56px] text-center">
                     {totalItems > 0 ? totalItems.toLocaleString('vi-VN') : '0'} {t('pagination.results')}
                 </span>
-                <button onClick={onNext} disabled={!hasNext} className={btnCls}>
+                <button onClick={onNext} disabled={isLoading || !hasNext} className={btnCls}>
                     <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" /></svg>
                 </button>
             </div>
@@ -154,7 +155,7 @@ const CursorPaginationControl = memo(({
                     </div>
                     <button
                         onClick={onPrev}
-                        disabled={!hasPrev}
+                        disabled={isLoading || !hasPrev}
                         className="px-3 py-1 rounded-lg border border-[var(--glass-border)] bg-[var(--bg-surface)] text-[var(--text-secondary)] text-xs font-semibold hover:bg-[var(--glass-surface)] disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-sm flex items-center gap-1"
                     >
                         <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" /></svg>
@@ -162,7 +163,7 @@ const CursorPaginationControl = memo(({
                     </button>
                     <button
                         onClick={onNext}
-                        disabled={!hasNext}
+                        disabled={isLoading || !hasNext}
                         className="px-3 py-1 rounded-lg border border-[var(--glass-border)] bg-[var(--bg-surface)] text-[var(--text-secondary)] text-xs font-semibold hover:bg-[var(--glass-surface)] disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-sm flex items-center gap-1"
                     >
                         {t('pagination.next')}
@@ -583,6 +584,7 @@ export const Inventory: React.FC = () => {
     const filtersRef = useRef<HTMLDivElement>(null);
     const metricsRef = useRef<HTMLDivElement>(null);
     const listingScrollRef = useRef<HTMLDivElement>(null);
+    const listingsRequestIdRef = useRef(0);
     const [metricsCollapsed, setMetricsCollapsed] = useState(false);
     const lastScrollTopRef = useRef(0);
     // Apply Draggable Scroll Physics to containers
@@ -613,6 +615,7 @@ export const Inventory: React.FC = () => {
         setTimeout(() => setToast(null), 3000);
     }, []);
     const fetchListings = useCallback(async () => {
+        const requestId = ++listingsRequestIdRef.current;
         setLoading(true);
         try {
             const filters = { search: debouncedSearch, type: typeFilter, status: statusFilter, transaction: transactionFilter, noProjectCode: true };
@@ -620,17 +623,23 @@ export const Inventory: React.FC = () => {
                 db.getListingsCursor(pageSize, currentCursor, filters),
                 db.getFavorites(1, 1000),
             ]);
+            // Filter/page changes can leave an older request in flight. Never
+            // let its response overwrite the latest page or its metrics.
+            if (requestId !== listingsRequestIdRef.current) return;
             setListings(res.data || []);
             setTotalItems(res.total || 0);
             setNextCursor(res.nextCursor);
             setHasNext(res.hasNext);
-            if (res.stats) setStats(res.stats);
+            if (res.stats && Object.keys(res.stats).length > 0) {
+                setStats(prev => ({ ...prev, ...res.stats }));
+            }
             setFavorites(new Set(favs.data?.map((f: any) => f.id) || []));
         } catch (e) {
+            if (requestId !== listingsRequestIdRef.current) return;
             console.error(e);
             notify(t('common.error'), 'error');
         } finally {
-            setLoading(false);
+            if (requestId === listingsRequestIdRef.current) setLoading(false);
         }
     }, [debouncedSearch, typeFilter, statusFilter, transactionFilter, currentCursor, pageSize, notify, t]);
 
@@ -659,18 +668,25 @@ export const Inventory: React.FC = () => {
     }, [debouncedSearch, typeFilter, statusFilter, transactionFilter, pageSize]);
     // Cursor navigation handlers
     const handleCursorNext = useCallback(() => {
-        if (!nextCursor) return;
+        if (loading || !nextCursor) return;
+        listingScrollRef.current?.scrollTo({ top: 0, behavior: 'auto' });
+        lastScrollTopRef.current = 0;
+        setMetricsCollapsed(false);
         setCursorStack(prev => [...prev, currentCursor ?? '']);
         setCurrentCursor(nextCursor);
-    }, [nextCursor, currentCursor]);
+    }, [loading, nextCursor, currentCursor]);
     const handleCursorPrev = useCallback(() => {
+        if (loading) return;
+        listingScrollRef.current?.scrollTo({ top: 0, behavior: 'auto' });
+        lastScrollTopRef.current = 0;
+        setMetricsCollapsed(false);
         setCursorStack(prev => {
             const newStack = [...prev];
             const prevCursor = newStack.pop();
             setCurrentCursor(prevCursor === '' ? undefined : prevCursor);
             return newStack;
         });
-    }, []);
+    }, [loading]);
     // Grouping for Kanban (apply to all filtered items to show full board)
     const groupedListings = useMemo(() => {
         const groups: Record<string, Listing[]> = {};
@@ -1183,6 +1199,7 @@ export const Inventory: React.FC = () => {
                         onNext={handleCursorNext}
                         onPageSizeChange={(s: number) => setPageSize(s)}
                         t={t}
+                        isLoading={loading}
                     />
                 )}
             </div>
