@@ -373,24 +373,24 @@ const LeadRow = memo(({ lead, isSelected, onSelect, onClick, onProposal, onDupli
                     <div
                         ref={menuDivRef}
                         style={{ position: 'fixed', top: menuPos.top, right: menuPos.right, zIndex: 9999 }}
-                        className="w-48 bg-[var(--bg-surface)] rounded-2xl shadow-xl border border-[var(--glass-border)] py-1.5 animate-enter"
+                         className="w-48 bg-[var(--bg-surface)] rounded-2xl shadow-xl py-1.5 animate-enter"
                     >
                         <button onClick={(e) => { e.stopPropagation(); setMenuOpen(false); onClick(lead); }}
-                            className="w-full flex items-center gap-2.5 px-3.5 py-2 text-sm text-[var(--text-secondary)] hover:bg-sgs-champagne hover:text-sgs-primary transition-colors">
+                             className="w-full flex items-center gap-2.5 px-3.5 py-1.5 text-xs text-[var(--text-secondary)] hover:bg-sgs-champagne hover:text-sgs-primary transition-colors">
                             {ICONS.EDIT} <span>{t('common.edit')}</span>
                         </button>
                         <button onClick={(e) => { e.stopPropagation(); setMenuOpen(false); onProposal(lead); }}
-                            className="w-full flex items-center gap-2.5 px-3.5 py-2 text-sm text-[var(--text-secondary)] hover:bg-sgs-champagne hover:text-sgs-primary transition-colors">
+                             className="w-full flex items-center gap-2.5 px-3.5 py-1.5 text-xs text-[var(--text-secondary)] hover:bg-sgs-champagne hover:text-sgs-primary transition-colors">
                             {ICONS.PROPOSAL} <span>{t('leads.create_proposal')}</span>
                         </button>
                         <button onClick={(e) => { e.stopPropagation(); setMenuOpen(false); onDuplicate(lead.id); }}
-                            className="w-full flex items-center gap-2.5 px-3.5 py-2 text-sm text-[var(--text-secondary)] hover:bg-sgs-champagne hover:text-sgs-primary transition-colors">
+                             className="w-full flex items-center gap-2.5 px-3.5 py-1.5 text-xs text-[var(--text-secondary)] hover:bg-sgs-champagne hover:text-sgs-primary transition-colors">
                             {ICONS.DUPLICATE} <span>{t('common.duplicate')}</span>
                         </button>
                         {canDelete && <>
-                        <div className="my-1 mx-3 border-t border-[var(--glass-border)]" />
+                         <div className="my-1 mx-3" />
                         <button onClick={(e) => { e.stopPropagation(); setMenuOpen(false); onDelete(lead); }}
-                            className="w-full flex items-center gap-2.5 px-3.5 py-2 text-sm text-rose-500 hover:bg-rose-50 hover:text-rose-600 transition-colors">
+                             className="w-full flex items-center gap-2.5 px-3.5 py-1.5 text-xs text-rose-500 hover:bg-rose-50 hover:text-rose-600 transition-colors">
                             {ICONS.TRASH} <span>{t('common.delete')}</span>
                         </button>
                         </>}
@@ -496,7 +496,7 @@ const KanbanCard = memo(({ lead, onClick, onDelete, onProposal, canDelete, t, fo
                     ref={menuRef}
                     onClick={e => e.stopPropagation()}
                     style={{ position: 'fixed', top: menuPos.top, right: menuPos.right, zIndex: 9999 }}
-                    className="bg-[var(--bg-surface)] border border-[var(--glass-border)] rounded-xl shadow-xl py-1 min-w-[160px]"
+                     className="bg-[var(--bg-surface)] rounded-xl shadow-xl py-1 min-w-[160px]"
                 >
                     <button
                         onClick={() => { setMenuOpen(false); onClick(lead); }}
@@ -513,7 +513,7 @@ const KanbanCard = memo(({ lead, onClick, onDelete, onProposal, canDelete, t, fo
                         {t('leads.create_proposal')}
                     </button>
                     {canDelete && <>
-                    <div className="border-t border-[var(--glass-border)] my-1" />
+                     <div className="my-1" />
                     <button
                         onClick={() => { setMenuOpen(false); onDelete(lead); }}
                         className="w-full text-left px-3 py-2 text-xs text-rose-600 hover:bg-rose-50 flex items-center gap-2"
