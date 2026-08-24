@@ -582,12 +582,29 @@ export const Inventory: React.FC = () => {
     const tableRef = useRef<HTMLDivElement>(null);
     const filtersRef = useRef<HTMLDivElement>(null);
     const metricsRef = useRef<HTMLDivElement>(null);
+    const listingScrollRef = useRef<HTMLDivElement>(null);
+    const [metricsCollapsed, setMetricsCollapsed] = useState(false);
+    const lastScrollTopRef = useRef(0);
     // Apply Draggable Scroll Physics to containers
     useDraggableScroll(boardRef, viewMode);
     useDraggableScroll(tableRef, viewMode);
     useDraggableScroll(filtersRef, null);
     useDraggableScroll(metricsRef, null);
     useEffect(() => { localStorage.setItem('sgs_inv_view', viewMode); }, [viewMode]);
+    // Hide the metrics rail while scrolling down so the product grid/table gets
+    // the available vertical space. Reveal it again when the user scrolls up
+    // or returns to the top of the listing.
+    const handleListingScroll = useCallback((e: React.UIEvent<HTMLDivElement>) => {
+        const scrollTop = e.currentTarget.scrollTop;
+        const previousScrollTop = lastScrollTopRef.current;
+        lastScrollTopRef.current = scrollTop;
+
+        if (scrollTop <= 8 || scrollTop < previousScrollTop) {
+            setMetricsCollapsed(false);
+        } else if (scrollTop > previousScrollTop + 2) {
+            setMetricsCollapsed(true);
+        }
+    }, []);
     useEffect(() => {
         db.getCurrentUser().then(setCurrentUser);
     }, []);
@@ -774,7 +791,15 @@ export const Inventory: React.FC = () => {
                 </div>
             </div>
             {/* Metrics Section */}
-            <div ref={metricsRef} className="px-3 md:px-4 py-1.5 md:py-2 border-b border-[var(--glass-border)] bg-[var(--glass-surface)]/50 flex overflow-x-auto no-scrollbar gap-1.5 md:gap-2 flex-none scroll-smooth cursor-grab active:cursor-grabbing">
+            <div
+                ref={metricsRef}
+                aria-hidden={metricsCollapsed}
+                className={`px-3 md:px-4 border-b border-[var(--glass-border)] bg-[var(--glass-surface)]/50 flex overflow-x-auto no-scrollbar gap-1.5 md:gap-2 flex-none scroll-smooth cursor-grab active:cursor-grabbing transition-[max-height,padding,opacity] duration-200 ease-out ${
+                    metricsCollapsed
+                        ? 'max-h-0 py-0 opacity-0 pointer-events-none overflow-hidden border-b-0'
+                        : 'max-h-24 py-1.5 md:py-2 opacity-100'
+                }`}
+            >
                 {(stats.totalCount || totalItems) > 0 && <div className="bg-[var(--bg-surface)] px-2.5 md:px-3 py-1.5 md:py-2 rounded-xl border border-[var(--glass-border)] shadow-sm min-w-[90px] md:flex-1 shrink-0">
                     <div className="text-2xs font-bold text-[var(--text-secondary)] uppercase tracking-wider mb-0.5 truncate">{t('inventory.total_listings')}</div>
                     <div className="text-base md:text-xl font-black text-[var(--text-primary)]">{stats.totalCount || totalItems}</div>
@@ -826,7 +851,11 @@ export const Inventory: React.FC = () => {
             <div className="flex-1 overflow-hidden bg-[var(--bg-surface)] min-h-0 relative flex flex-col">
                 {/* GRID & LIST — inside overflow-auto so content can scroll */}
                 {(viewMode === 'GRID' || viewMode === 'LIST') && (
-                        <div className="flex-1 overflow-auto p-3 sm:p-3.5 no-scrollbar">
+                        <div
+                            ref={listingScrollRef}
+                            onScroll={handleListingScroll}
+                            className="flex-1 overflow-auto p-3 sm:p-3.5 no-scrollbar"
+                        >
                         {/* GRID VIEW (DEFAULT) */}
                         {viewMode === 'GRID' && (
                             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
