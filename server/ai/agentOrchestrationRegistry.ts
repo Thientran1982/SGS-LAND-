@@ -23,8 +23,8 @@ export const AGENT_ORCHESTRATION_REGISTRY: readonly AgentCapability[] = [
   { skillKey: 'CONTRACT_SYSTEM', role: 'contract_specialist', intents: ['DRAFT_CONTRACT'], mode: 'specialist', ragDomains: ['legal'] },
   { skillKey: 'LEAD_ANALYST_SYSTEM', role: 'lead_analyst', intents: ['ANALYZE_LEAD'], mode: 'specialist', ragDomains: ['product'] },
   { skillKey: 'VALUATION_SYSTEM', role: 'valuation_specialist', intents: ['ESTIMATE_VALUATION'], mode: 'specialist', ragDomains: ['market'] },
-  { skillKey: 'VALUATION_SEARCH_SYSTEM', role: 'valuation_specialist', intents: [], mode: 'specialist', ragDomains: ['market'] },
-  { skillKey: 'VALUATION_RENTAL_SYSTEM', role: 'valuation_specialist', intents: [], mode: 'specialist', ragDomains: ['market'] },
+  { skillKey: 'VALUATION_SEARCH_SYSTEM', role: 'valuation_search', intents: [], mode: 'specialist', ragDomains: ['market'] },
+  { skillKey: 'VALUATION_RENTAL_SYSTEM', role: 'valuation_rental', intents: [], mode: 'specialist', ragDomains: ['market'] },
   { skillKey: 'FOLLOWUP_SYSTEM', role: 'followup_agent', intents: [], mode: 'background' },
 ];
 

@@ -182,6 +182,8 @@ import m158 from './158_agent_signal_dedup';
 import m159 from './159_agent_signal_health';
 import m160 from './160_durable_signal_write_failures';
 import m161 from './161_care_email_tracking';
+import m162 from './162_seed_missing_runtime_agents';
+import m163 from './163_reconcile_runtime_agent_set';
 
 dotenv.config();
 
@@ -361,6 +363,8 @@ export const MIGRATION_REGISTRY: Record<string, Migration> = {
   '159_agent_signal_health.ts': m159,
   '160_durable_signal_write_failures.ts': m160,
   '161_care_email_tracking.ts': m161,
+  '162_seed_missing_runtime_agents.ts': m162,
+  '163_reconcile_runtime_agent_set.ts': m163,
 };
 
 async function ensureSchemaVersionsTable(client: PoolClient): Promise<void> {
