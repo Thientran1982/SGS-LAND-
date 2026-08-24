@@ -87,7 +87,7 @@ export const ProjectCommissionPanel: React.FC<Props> = ({ projectId, projectName
   return createPortal(
     <div className="fixed inset-0 z-[10002] bg-black/50 backdrop-blur-sm flex items-end sm:items-center justify-center p-2 sm:p-6 overflow-hidden"
          onClick={onClose}>
-      <div className="w-full max-w-5xl h-[calc(100vh-4rem)] max-h-[calc(100vh-4rem)] bg-[var(--bg-surface)] dark:bg-sgs-primary-deep rounded-2xl shadow-2xl border border-[var(--glass-border)] my-4 flex flex-col overflow-hidden"
+      <div className="w-full max-w-5xl h-[90vh] max-h-[90vh] bg-[var(--bg-surface)] dark:bg-sgs-primary-deep rounded-2xl shadow-2xl border border-[var(--glass-border)] my-4 flex flex-col overflow-hidden"
            onClick={e => e.stopPropagation()}>
         <header className="shrink-0 flex items-center justify-between px-5 py-3 border-b border-[var(--glass-border)] bg-[var(--bg-surface)] dark:bg-sgs-primary-deep rounded-t-2xl">
           <div>
@@ -98,11 +98,18 @@ export const ProjectCommissionPanel: React.FC<Props> = ({ projectId, projectName
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12"/></svg>
           </button>
         </header>
-        {err && <div className="m-4 p-3 rounded-xl border border-rose-200 bg-rose-50 text-rose-700 text-sm">{err}</div>}
         <section
-          className="min-h-0 flex-1 overflow-y-auto p-5 space-y-5"
-          style={{ overscrollBehavior: 'contain', touchAction: 'pan-y', scrollbarGutter: 'stable' }}
+          className="p-5 space-y-5"
+          style={{
+            height: 'calc(90vh - 4.5rem)',
+            overflowY: 'auto',
+            overscrollBehavior: 'contain',
+            touchAction: 'pan-y',
+            WebkitOverflowScrolling: 'touch',
+            scrollbarGutter: 'stable',
+          }}
         >
+          {err && <div className="p-3 rounded-xl border border-rose-200 bg-rose-50 text-rose-700 text-sm">{err}</div>}
           {/* Active policy */}
           <div className="rounded-xl border border-[var(--glass-border)] p-4">
             <div className="flex items-center justify-between gap-2">
