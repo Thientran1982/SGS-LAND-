@@ -30,3 +30,4 @@
 - [SPA loading ownership](spa-loading-ownership.md) — keep one React-controlled loading fallback; a static Vite index loader duplicates Next/SPA route loading
 - [Preview map tile policy](preview-map-tiles.md) — map tiles in the Preview iframe must use a same-origin proxy, not third-party client fallbacks
 - [Agent event worker payloads](agent-event-worker-payloads.md) — durable event payloads stay JSON-serializable; process-bound Socket.IO belongs in the worker, not QStash jobs
+- [Agent event lease heartbeats](agent-event-lease-heartbeats.md) — long-running inbound handlers renew their database lease to prevent concurrent reclaim

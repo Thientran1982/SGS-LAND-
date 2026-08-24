@@ -62,6 +62,19 @@ class AgentOperatingRepository {
     });
   }
 
+  async heartbeatEvent(tenantId: string, id: string, leaseToken: string) {
+    return withTenantContext(tenantId, async client => {
+      const result = await client.query(
+        `UPDATE agent_operating_events
+            SET lease_expires_at=NOW()+INTERVAL '2 minutes', updated_at=NOW()
+          WHERE tenant_id=$1 AND id=$2 AND status='PROCESSING' AND lease_token=$3
+          RETURNING id`,
+        [tenantId, id, leaseToken],
+      );
+      return (result.rowCount ?? 0) === 1;
+    });
+  }
+
   async createHumanQuestion(tenantId: string, input: {
     agentKey: string; question: string; leadId?: string; runId?: string; priority?: number; context?: Record<string, unknown>;
   }) {

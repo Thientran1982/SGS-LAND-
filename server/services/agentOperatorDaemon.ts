@@ -21,6 +21,14 @@ export async function processAgentEvents(tenantId: string, limit = 25) {
   const results: Array<{ id: string; status: string }> = [];
   for (const event of events) {
     const handler = handlers.get(event.event_type);
+    const heartbeat = setInterval(() => {
+      agentOperatingRepository.heartbeatEvent(event.tenant_id, event.id, event.lease_token)
+        .then(alive => {
+          if (!alive) logger.warn(`[AgentDaemon] event lease lost while processing event=${event.event_id}`);
+        })
+        .catch(error => logger.warn(`[AgentDaemon] event heartbeat failed event=${event.event_id}: ${error?.message || error}`));
+    }, 30_000);
+    heartbeat.unref?.();
     try {
       if (!handler) throw new Error(`NO_AGENT_EVENT_HANDLER:${event.event_type}`);
       await handler(event);
@@ -41,6 +49,9 @@ export async function processAgentEvents(tenantId: string, limit = 25) {
       }
       logger.warn(`[AgentDaemon] ${status} event=${event.event_id} type=${event.event_type}`);
       results.push({ id: event.id, status });
+    }
+    finally {
+      clearInterval(heartbeat);
     }
   }
   return results;
