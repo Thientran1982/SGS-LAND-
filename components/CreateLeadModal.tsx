@@ -92,7 +92,8 @@ export const CreateLeadModal: React.FC<CreateLeadModalProps> = ({ onClose, onSuc
     useEffect(() => {
         if (phoneCheckRef.current) clearTimeout(phoneCheckRef.current);
         // Only check if phone passes basic format validation
-        if (!VN_PHONE_REGEX.test(formData.phone)) {
+        const normalizedPhone = normalizeVNPhone(formData.phone);
+        if (!VN_PHONE_REGEX.test(normalizedPhone)) {
             setPhoneWarning(null);
             setPhoneChecking(false);
             return;
@@ -100,7 +101,7 @@ export const CreateLeadModal: React.FC<CreateLeadModalProps> = ({ onClose, onSuc
         setPhoneChecking(true);
         phoneCheckRef.current = setTimeout(async () => {
             try {
-                const existing = await db.checkDuplicateLead(formData.phone);
+                const existing = await db.checkDuplicateLead(normalizedPhone);
                 setPhoneWarning(existing);
             } catch {
                 setPhoneWarning(null);
@@ -113,7 +114,8 @@ export const CreateLeadModal: React.FC<CreateLeadModalProps> = ({ onClose, onSuc
     // Debounced email duplicate check — fires 700ms after the user stops typing a valid email
     useEffect(() => {
         if (emailCheckRef.current) clearTimeout(emailCheckRef.current);
-        const emailValid = formData.email && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email);
+        const normalizedEmail = normalizeLeadEmail(formData.email);
+        const emailValid = normalizedEmail && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(normalizedEmail);
         if (!emailValid) {
             setEmailWarning(null);
             setEmailChecking(false);
@@ -122,7 +124,7 @@ export const CreateLeadModal: React.FC<CreateLeadModalProps> = ({ onClose, onSuc
         setEmailChecking(true);
         emailCheckRef.current = setTimeout(async () => {
             try {
-                const existing = await db.checkDuplicateLeadByEmail(formData.email);
+                const existing = await db.checkDuplicateLeadByEmail(normalizedEmail);
                 setEmailWarning(existing);
             } catch {
                 setEmailWarning(null);
