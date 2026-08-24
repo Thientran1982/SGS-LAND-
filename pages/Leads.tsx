@@ -373,7 +373,7 @@ const LeadRow = memo(({ lead, isSelected, onSelect, onClick, onProposal, onDupli
                     <div
                         ref={menuDivRef}
                         style={{ position: 'fixed', top: menuPos.top, right: menuPos.right, zIndex: 9999 }}
-                         className="w-48 bg-[var(--bg-surface)] rounded-none border-0 ring-0 outline-none overflow-hidden shadow-none py-1.5 animate-enter"
+                         className="w-48 bg-[var(--bg-surface)] rounded-xl border-0 ring-0 outline-none overflow-hidden shadow-none py-1.5 animate-enter"
                     >
                         <button onClick={(e) => { e.stopPropagation(); setMenuOpen(false); onClick(lead); }}
                              className="w-full flex items-center gap-2.5 px-3.5 py-1.5 text-xs text-[var(--text-secondary)] hover:bg-sgs-champagne hover:text-sgs-primary transition-colors">
@@ -495,7 +495,7 @@ const KanbanCard = memo(({ lead, onClick, onDelete, onProposal, canDelete, t, fo
                     ref={menuRef}
                     onClick={e => e.stopPropagation()}
                     style={{ position: 'fixed', top: menuPos.top, right: menuPos.right, zIndex: 9999 }}
-                     className="bg-[var(--bg-surface)] rounded-none border-0 ring-0 outline-none overflow-hidden shadow-none py-1 min-w-[160px]"
+                     className="bg-[var(--bg-surface)] rounded-xl border-0 ring-0 outline-none overflow-hidden shadow-none py-1 min-w-[160px]"
                 >
                     <button
                         onClick={() => { setMenuOpen(false); onClick(lead); }}
