@@ -179,6 +179,7 @@ import m156 from './156_daily_report_delivery_replay';
 import m157 from './157_agent_memory_and_signals';
 import m158 from './158_agent_signal_dedup';
 import m159 from './159_agent_signal_health';
+import m160 from './160_durable_signal_write_failures';
 
 dotenv.config();
 
@@ -355,6 +356,7 @@ export const MIGRATION_REGISTRY: Record<string, Migration> = {
   '157_agent_memory_and_signals.ts': m157,
   '158_agent_signal_dedup.ts': m158,
   '159_agent_signal_health.ts': m159,
+  '160_durable_signal_write_failures.ts': m160,
 };
 
 async function ensureSchemaVersionsTable(client: PoolClient): Promise<void> {

@@ -11,6 +11,7 @@ export type MatcherWeights = { location: number; price: number; legal: number; r
 export const DEFAULT_MATCHER_WEIGHTS: MatcherWeights = { location: 0.4, price: 0.25, legal: 0.2, rating: 0.15 };
 const VALID_KINDS = new Set<MemoryKind>(['fact', 'episodic', 'procedural']);
 const MAX_ITEMS = 200;
+const SIGNAL_FAILURE_RETENTION_DAYS = 30;
 const signalWriteFailures = new Map<string, { count: number; lastAt: string; lastError: string }>();
 
 export function scrubPii(input: unknown): string {
@@ -35,6 +36,42 @@ function lexicalScore(value: string, query: string): number {
   const haystack = value.toLocaleLowerCase('vi-VN');
   const terms = query.toLocaleLowerCase('vi-VN').split(/\s+/).filter(Boolean);
   return terms.length ? terms.reduce((score, term) => score + (haystack.includes(term) ? 1 : 0), 0) / terms.length : 0;
+}
+
+async function persistSignalWriteFailure(
+  tenantId: string,
+  signalType: string,
+  error: unknown,
+): Promise<void> {
+  try {
+    const safeError = scrubPii(error instanceof Error ? error.message : error)
+      .replace(/\s+/g, ' ').trim().slice(0, 300);
+    await withTenantContext(tenantId, async client => {
+      await client.query(
+        `INSERT INTO agent_signal_write_failures
+           (tenant_id, signal_type, failure_count, first_failed_at, last_failed_at, last_error, updated_at)
+         VALUES ($1,$2,1,NOW(),NOW(),$3,NOW())
+         ON CONFLICT (tenant_id,signal_type) DO UPDATE SET
+           failure_count = LEAST(10000, agent_signal_write_failures.failure_count + 1),
+           last_failed_at = NOW(), last_error = EXCLUDED.last_error, updated_at = NOW()`,
+        [tenantId, signalType, safeError],
+      );
+      // Keep this aggregate bounded even if many signal types are emitted.
+      await client.query(
+        `DELETE FROM agent_signal_write_failures
+         WHERE tenant_id=$1 AND (
+           last_failed_at < NOW() - INTERVAL '${SIGNAL_FAILURE_RETENTION_DAYS} days'
+           OR signal_type IN (
+             SELECT signal_type FROM agent_signal_write_failures
+             WHERE tenant_id=$1 ORDER BY last_failed_at DESC OFFSET 100
+           )
+         )`,
+        [tenantId],
+      );
+    });
+  } catch {
+    // The in-process record below remains the fallback when the database itself is unavailable.
+  }
 }
 
 export function validateWeights(input: Partial<MatcherWeights>): MatcherWeights {
@@ -217,13 +254,16 @@ export const agentMemoryService = {
       )).rows[0] || null;
       });
     } catch (error: any) {
-      const key = `${tenantId}:${String(input.signalType).slice(0, 80)}`;
+      const signalType = String(input.signalType).slice(0, 80);
+      const key = `${tenantId}:${signalType}`;
+      const safeError = scrubPii(error?.message || error).replace(/\s+/g, ' ').slice(0, 300);
       const previous = signalWriteFailures.get(key);
       signalWriteFailures.set(key, {
         count: (previous?.count || 0) + 1,
         lastAt: new Date().toISOString(),
-        lastError: String(error?.message || error).slice(0, 300),
+        lastError: safeError,
       });
+      await persistSignalWriteFailure(tenantId, signalType, error);
       throw error;
     }
   },
@@ -238,7 +278,8 @@ export const agentMemoryService = {
   async getSignalHealth(tenantId: string, options: { since?: Date; windowHours?: number } = {}) {
     const windowHours = Math.max(1, Math.min(24 * 30, Number(options.windowHours) || 24));
     const since = options.since || new Date(Date.now() - windowHours * 3600000);
-    const rows = await withTenantContext(tenantId, async client => (await client.query(
+    const { rows, persistedFailures } = await withTenantContext(tenantId, async client => {
+      const rows = (await client.query(
       `WITH expected AS (
          SELECT
            COALESCE(NULLIF(metadata->>'learningAction',''),
@@ -264,12 +305,25 @@ export const agentMemoryService = {
        LEFT JOIN recorded r ON r.action=e.action AND r.signal_type=e.signal_type
        ORDER BY e.action, e.signal_type`,
       [tenantId, since],
-    )).rows);
+      )).rows;
+      const persistedFailures = ((await client.query(
+        `SELECT signal_type, failure_count, first_failed_at, last_failed_at, last_error
+         FROM agent_signal_write_failures
+         WHERE tenant_id=$1 AND last_failed_at >= $2
+         ORDER BY last_failed_at DESC`,
+        [tenantId, since],
+      ))?.rows || []) as any[];
+      return { rows, persistedFailures };
+    });
+    const durableByType = new Map(persistedFailures.map((failure: any) => [failure.signal_type, failure]));
     const byAction = rows.map((row: any) => {
       const failures = signalWriteFailures.get(`${tenantId}:${row.signal_type}`);
+      const durableFailure = durableByType.get(row.signal_type);
       const expected = Number(row.expected_count) || 0;
       const recorded = Number(row.recorded_count) || 0;
-      const failed = failures && new Date(failures.lastAt) >= since ? failures.count : 0;
+      const failed = durableFailure
+        ? Number(durableFailure.failure_count) || 0
+        : failures && new Date(failures.lastAt) >= since ? failures.count : 0;
       return {
         action: row.action,
         signalType: row.signal_type,
@@ -279,8 +333,29 @@ export const agentMemoryService = {
         status: failed > 0 ? 'SIGNAL_WRITE_FAILED' : recorded < expected ? 'SIGNAL_MISSING' : 'HEALTHY',
       };
     });
+    const persistedWriteFailures = persistedFailures.map((failure: any) => ({
+      signalType: failure.signal_type,
+      count: Number(failure.failure_count) || 0,
+      firstAt: new Date(failure.first_failed_at).toISOString(),
+      lastAt: new Date(failure.last_failed_at).toISOString(),
+      lastError: failure.last_error,
+    }));
+    const knownTypes = new Set(byAction.map((row: any) => row.signalType));
+    for (const failure of persistedWriteFailures) {
+      if (!knownTypes.has(failure.signalType)) {
+        byAction.push({
+          action: 'unspecified',
+          signalType: failure.signalType,
+          expectedSignals: 0,
+          recordedSignals: 0,
+          failedSignals: failure.count,
+          status: 'SIGNAL_WRITE_FAILED',
+        });
+      }
+    }
     const failures = [...signalWriteFailures.entries()]
       .filter(([key, value]) => key.startsWith(`${tenantId}:`) && new Date(value.lastAt) >= since)
+      .filter(([key]) => !durableByType.has(key.slice(tenantId.length + 1)))
       .map(([key, value]) => ({ signalType: key.slice(tenantId.length + 1), ...value }));
     const hasActivity = byAction.length > 0;
     return {
@@ -288,7 +363,7 @@ export const agentMemoryService = {
       activityStatus: hasActivity ? 'ACTIVE' : 'NO_ACTIVITY',
       byAction,
       alerts: byAction.filter((row: any) => row.status !== 'HEALTHY'),
-      writeFailures: failures,
+      writeFailures: [...persistedWriteFailures, ...failures],
     };
   },
 

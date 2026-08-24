@@ -16,6 +16,7 @@ describe('agent signal health', () => {
     query.mockResolvedValueOnce({ rows: [{
       action: 'contact', signal_type: 'match_chosen', expected_count: 2, recorded_count: 0,
     }] });
+    query.mockResolvedValueOnce({ rows: [] });
     const report = await agentMemoryService.getSignalHealth(tenantId, { windowHours: 6 });
     expect(report.activityStatus).toBe('ACTIVE');
     expect(report.byAction[0]).toMatchObject({
@@ -26,6 +27,7 @@ describe('agent signal health', () => {
 
   it('keeps an empty window distinct from a signal gap', async () => {
     query.mockResolvedValueOnce({ rows: [] });
+    query.mockResolvedValueOnce({ rows: [] });
     const report = await agentMemoryService.getSignalHealth(tenantId, { windowHours: 6 });
     expect(report).toMatchObject({ activityStatus: 'NO_ACTIVITY', byAction: [], alerts: [] });
   });
@@ -34,10 +36,36 @@ describe('agent signal health', () => {
     query.mockResolvedValueOnce({ rows: [{
       action: 'contact', signal_type: 'match_chosen', expected_count: 1, recorded_count: 1,
     }] });
+    query.mockResolvedValueOnce({ rows: [] });
     const report = await agentMemoryService.getSignalHealth(tenantId, { windowHours: 1 });
     expect(report.byAction[0]).toMatchObject({
       action: 'contact', signalType: 'match_chosen', status: 'HEALTHY',
     });
     expect(query.mock.calls[0][1][0]).toBe(tenantId);
+  });
+
+  it('surfaces a durable write failure after a process restart', async () => {
+    query.mockResolvedValueOnce({ rows: [] });
+    query.mockResolvedValueOnce({ rows: [{
+      signal_type: 'match_chosen',
+      failure_count: 2,
+      first_failed_at: '2026-08-24T08:00:00.000Z',
+      last_failed_at: '2026-08-24T09:00:00.000Z',
+      last_error: 'provider unavailable',
+    }] });
+
+    const report = await agentMemoryService.getSignalHealth(tenantId, { windowHours: 6 });
+    expect(report.writeFailures).toEqual([{
+      signalType: 'match_chosen',
+      count: 2,
+      firstAt: '2026-08-24T08:00:00.000Z',
+      lastAt: '2026-08-24T09:00:00.000Z',
+      lastError: 'provider unavailable',
+    }]);
+    expect(report.alerts[0]).toMatchObject({
+      signalType: 'match_chosen',
+      failedSignals: 2,
+      status: 'SIGNAL_WRITE_FAILED',
+    });
   });
 });

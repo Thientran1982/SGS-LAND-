@@ -34,3 +34,4 @@
 - [Email template consistency](email-template-consistency.md) — direct transactional senders must share the common layout, palette, table backgrounds, and reviewed Vietnamese copy
 - [Email report retry semantics](email-report-retry-semantics.md) — retry definitive failures, but never blindly retry ambiguous provider outcomes
 - [Provider delivery lookup](provider-delivery-lookup.md) — Brevo delivery verification uses a stable delivery-key tag; unsupported providers stay manual
+- [Durable signal health](durable-signal-health.md) — aggregate sanitized signal-write failures durably by tenant/type so restart does not erase operational alerts

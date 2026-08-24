@@ -125,4 +125,27 @@ describe('learning signal contracts', () => {
     expect(query.mock.calls[0][1][1]).toBe(tenantId);
     expect(query.mock.calls[0][1][6]).toContain('"action":"contact"');
   });
+
+  it('persists a bounded, scrubbed failure record when signal writing fails', async () => {
+    query.mockRejectedValueOnce(new Error('provider failed for test@example.com 0912345678'));
+    query.mockResolvedValueOnce({ rows: [] });
+    query.mockResolvedValueOnce({ rows: [] });
+
+    await expect(agentMemoryService.recordSignal(tenantId, {
+      signalType: 'match_chosen',
+      subjectType: 'lead',
+      subjectId: 'lead-1',
+    })).rejects.toThrow('provider failed');
+
+    const failureInsert = query.mock.calls.find(([sql]) =>
+      String(sql).includes('INSERT INTO agent_signal_write_failures'),
+    );
+    expect(failureInsert).toBeDefined();
+    if (failureInsert) {
+      expect(failureInsert[1][0]).toBe(tenantId);
+      expect(failureInsert[1][1]).toBe('match_chosen');
+      expect(failureInsert[1][2]).not.toContain('test@example.com');
+      expect(failureInsert[1][2]).not.toContain('0912345678');
+    }
+  });
 });
