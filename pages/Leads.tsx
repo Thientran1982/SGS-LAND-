@@ -816,8 +816,8 @@ export const Leads: React.FC = () => {
             notify(e.message || t('common.error'), 'error');
         }
     };
-    const stageOptions = useMemo(() => [{ value: 'ALL', label: t('leads.all_stages') }, ...Object.values(LeadStage).map(s => ({ value: s, label: t(`stage.${s}`) }))], [t]);
-    const sourceOptions = useMemo(() => [{ value: 'ALL', label: t('leads.all_sources') }, ...LEAD_SOURCES.map(s => ({ value: s, label: formatSource(s, t) }))], [t]);
+    const stageOptions = useMemo(() => [{ value: 'ALL', label: t('leads.stage') }, ...Object.values(LeadStage).map(s => ({ value: s, label: t(`stage.${s}`) }))], [t]);
+    const sourceOptions = useMemo(() => [{ value: 'ALL', label: t('leads.source') }, ...LEAD_SOURCES.map(s => ({ value: s, label: formatSource(s, t) }))], [t]);
     const fileInputRef = useRef<HTMLInputElement>(null);
     const handleExportExcel = async () => {
         try {
@@ -1046,8 +1046,8 @@ export const Leads: React.FC = () => {
                         ref={filtersRef}
                         className="flex gap-2 overflow-x-auto pb-2 px-1 -mx-1 no-scrollbar items-center scroll-smooth cursor-grab active:cursor-grabbing"
                     >
-                        <div className="min-w-[140px] shrink-0"><Dropdown value={stageFilter} onChange={(val) => setStageFilter(val as string)} options={stageOptions} className="text-xs" /></div>
-                        <div className="min-w-[140px] shrink-0"><Dropdown value={sourceFilter} onChange={(val) => setSourceFilter(val as string)} options={sourceOptions} className="text-xs" /></div>
+                        <div className="w-fit min-w-0 shrink-0"><Dropdown value={stageFilter} onChange={(val) => setStageFilter(val as string)} options={stageOptions} className="text-xs" /></div>
+                        <div className="w-fit min-w-0 shrink-0"><Dropdown value={sourceFilter} onChange={(val) => setSourceFilter(val as string)} options={sourceOptions} className="text-xs" /></div>
                         
                         {/* View Switcher */}
                         <div className="flex bg-[var(--glass-surface-hover)] p-1 rounded-xl shrink-0">
