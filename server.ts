@@ -171,6 +171,29 @@ async function startServer() {
   }));
   app.use(securityHeaders);
   app.use(corsMiddleware);
+  // Keep map tiles same-origin for the Vite/Next preview proxy. Direct
+  // third-party tile requests can be blocked by the embedded browser's
+  // resource policy even though the map and markers themselves render.
+  app.get('/api/map-tiles/:z/:x/:y.png', async (req, res) => {
+    const { z, x, y } = req.params;
+    if (!/^\d{1,2}$/.test(z) || !/^\d{1,7}$/.test(x) || !/^\d{1,7}$/.test(y)) {
+      return res.status(400).end();
+    }
+    try {
+      const tileHost = ['a', 'b', 'c'][Number(x) % 3];
+      const upstream = await fetch(`https://${tileHost}.tile.openstreetmap.org/${z}/${x}/${y}.png`, {
+        headers: { 'User-Agent': 'Mozilla/5.0' },
+        signal: AbortSignal.timeout(8000),
+      });
+      if (!upstream.ok) return res.status(upstream.status).end();
+      res.setHeader('Content-Type', upstream.headers.get('content-type') || 'image/png');
+      res.setHeader('Cache-Control', 'public, max-age=86400, stale-while-revalidate=604800');
+      res.send(Buffer.from(await upstream.arrayBuffer()));
+    } catch (error) {
+      logger.warn(`[MapTiles] upstream tile unavailable: ${error instanceof Error ? error.message : String(error)}`);
+      res.status(502).end();
+    }
+  });
   // Stripe webhook MUST be mounted before the global JSON parser so the raw
   // body is available for signature verification.
   app.use('/api/billing/webhook', createBillingWebhookRouter());

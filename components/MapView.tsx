@@ -350,8 +350,8 @@ const MapView: React.FC<MapViewProps> = memo(({
             });
             L.control.zoom({ position: detailStyle ? 'topleft' : 'bottomright' }).addTo(map);
             // Use the same neutral OSM treatment as the public Next.js marketplace map.
-             const osmLayer = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-                subdomains: 'abcd', maxZoom: 20,
+              const osmLayer = L.tileLayer('/api/map-tiles/{z}/{x}/{y}.png', {
+                 maxZoom: 20,
                 attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OSM</a>',
              });
              // Some embedded/proxied browsers intermittently block OSM tiles.
