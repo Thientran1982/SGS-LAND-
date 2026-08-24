@@ -165,7 +165,7 @@ async function finishDelivery(tenantId: string, deliveryKey: string, result: Ema
   await withRlsBypass(client => client.query(
     `UPDATE email_delivery_claims SET status=$3, provider=$4, provider_message_id=$5, error=$6, updated_at=NOW()
      WHERE tenant_id=$1::uuid AND delivery_key=$2`,
-    [tenantId, deliveryKey, result.success ? 'SENT' : (result.status === 'failed' ? 'UNKNOWN' : 'FAILED'),
+    [tenantId, deliveryKey, result.success ? 'SENT' : (result.ambiguous ? 'UNKNOWN' : 'FAILED'),
       provider || null, result.messageId || null, result.error || null],
   ));
 }

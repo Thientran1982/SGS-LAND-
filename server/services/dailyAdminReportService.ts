@@ -132,7 +132,11 @@ export async function runDailyReport(reportDate = vnDate(), force = false) {
     const result = await withTenantContext(tenantId, async client => {
       const existing = await client.query('SELECT * FROM agent_report_log WHERE tenant_id=$1 AND report_date=$2::date', [tenantId, reportDate]);
       if (existing.rows[0]?.status === 'sent' && !force) return { tenantId, status: 'skipped', reason: 'already_sent' };
-      const summary = buildReportSummary(await collectDailyMetrics(tenantId, reportDate));
+      // A force-run retries delivery without rewriting the evidence captured
+      // for a failed report.
+      const summary = existing.rows[0]?.status === 'failed' && existing.rows[0]?.summary_snapshot
+        ? existing.rows[0].summary_snapshot as DailyReportSummary
+        : buildReportSummary(await collectDailyMetrics(tenantId, reportDate));
       await client.query(`INSERT INTO agent_report_log(tenant_id,report_date,status,recipients,summary_snapshot)
         VALUES($1,$2,'pending',$3::jsonb,$4::jsonb) ON CONFLICT(tenant_id,report_date) DO UPDATE SET status='pending',recipients=$3::jsonb,summary_snapshot=$4::jsonb,error_detail=NULL,updated_at=NOW()`,
         [tenantId, reportDate, JSON.stringify(emails), JSON.stringify(summary)]);
@@ -140,7 +144,7 @@ export async function runDailyReport(reportDate = vnDate(), force = false) {
       let last: any;
       for (let attempt=1; attempt<=3; attempt++) {
         last = await Promise.all(emails.map(email => emailService.sendEmail(tenantId, { to: email, subject: mail.subject, html: mail.html, text: mail.text, template: 'daily_admin_report', dedupeKey: `daily-report:${reportDate}:${email}`, deliveryKey: `daily-report:${tenantId}:${reportDate}:${email}`, dedupeWindowMinutes: 0, skipQuota: true })));
-        if (last.every((x: any) => x.success)) break;
+        if (last.every((x: any) => x.success) || last.some((x: any) => x.ambiguous)) break;
         await new Promise(resolve => setTimeout(resolve, attempt * 100));
       }
       const ok = last?.every((x: any) => x.success);
