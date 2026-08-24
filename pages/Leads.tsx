@@ -182,7 +182,7 @@ const CursorPaginationControl = memo(({ totalItems, pageSize, hasPrev, hasNext, 
                 </div>
                 <div className="flex items-center gap-1.5">
                     <div className="min-w-[60px] mr-1">
-                        <Dropdown value={pageSize} onChange={(v) => onPageSizeChange(Number(v))} options={pageSizeOptions} className="text-xs" placement="top" variant="minimal" />
+                        <Dropdown value={pageSize} onChange={(v) => onPageSizeChange(Number(v))} options={pageSizeOptions} className="text-xs" placement="top" variant="compact" />
                     </div>
                         <button onClick={onPrev} disabled={isLoading || !hasPrev} className="px-3 py-1 rounded-lg bg-transparent text-[var(--text-secondary)] text-xs font-semibold hover:bg-[var(--glass-surface-hover)] disabled:opacity-50 disabled:cursor-not-allowed transition-all flex items-center gap-1">
                         <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" /></svg>
