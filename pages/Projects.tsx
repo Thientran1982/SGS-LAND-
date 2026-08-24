@@ -2039,9 +2039,6 @@ function ProjectListingsPanel({ project, canCreate, isAdmin, userRole, onClose, 
                         {/* Top row */}
                         <div className="flex items-center justify-between gap-3 px-5 py-3.5">
                             <div className="flex items-center gap-3 min-w-0">
-                                <div className="w-8 h-8 rounded-xl bg-sgs-champagne dark:bg-emerald-900/30 flex items-center justify-center shrink-0 text-sgs-verified">
-                                    {IC.LIST}
-                                </div>
                                 <div className="min-w-0">
                                     <div className="flex items-center gap-2 flex-wrap">
                                         <h2 className="text-base font-bold text-[var(--text-primary)]">{project.name}</h2>
@@ -2288,13 +2285,10 @@ function ProjectListingsPanel({ project, canCreate, isAdmin, userRole, onClose, 
                                 <button
                                     type="button"
                                     onClick={() => setViewMode('floorplan')}
-                                    className={`px-2.5 h-[30px] rounded-lg text-xs font-bold transition-colors flex items-center gap-1 ${viewMode === 'floorplan' ? 'bg-emerald-600 text-white' : 'text-[var(--text-secondary)] hover:bg-[var(--glass-surface-hover)]'}`}
+                                    className={`px-2.5 h-[30px] rounded-lg text-xs font-bold transition-colors ${viewMode === 'floorplan' ? 'bg-emerald-600 text-white' : 'text-[var(--text-secondary)] hover:bg-[var(--glass-surface-hover)]'}`}
                                     aria-pressed={viewMode === 'floorplan'}
                                     title={t('floorplan.view_floorplan') || 'Sa bàn tương tác'}
                                 >
-                                    <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l5.553 2.776A1 1 0 0021 18.882V8.118a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7" />
-                                    </svg>
                                     {t('floorplan.view_floorplan') || 'Sa bàn'}
                                 </button>
                             </div>
@@ -2345,7 +2339,7 @@ function ProjectListingsPanel({ project, canCreate, isAdmin, userRole, onClose, 
                                     </button>
                                     <button type="button" onClick={() => setAccessListings(selectedListings)}
                                         className="flex items-center gap-1.5 px-3 py-1.5 h-[36px] rounded-xl bg-sgs-primary text-white text-sm font-bold hover:bg-sgs-primary transition-colors">
-                                        {IC.LOCK} <span className="hidden sm:inline">{t('project.bulk_access_btn')}</span>
+                                        <span className="hidden sm:inline">{t('project.bulk_access_btn')}</span>
                                     </button>
                                     <button type="button" onClick={() => setSelected(new Set())}
                                         className="text-xs text-[var(--text-tertiary)] hover:text-rose-600 px-1 py-1.5">
@@ -2443,7 +2437,7 @@ function ProjectListingsPanel({ project, canCreate, isAdmin, userRole, onClose, 
                                     <div className="w-24 shrink-0">{t('project.listing_col_code')}</div>
                                     <div className="w-56 shrink-0">{t('project.listing_col_title')}</div>
                                     <div className="w-28 shrink-0">{t('project.listing_col_type')}</div>
-                                    <div className="w-32 shrink-0 pr-3">{t('project.listing_col_status')}</div>
+                                    <div className="w-36 shrink-0 pr-3">{t('project.listing_col_status')}</div>
                                     <div className="w-24 shrink-0">{t('project.listing_col_area')}</div>
                                     <div className="w-24 shrink-0">{isApartmentProject ? t('project.listing_col_clear_area') : t('project.listing_col_built_area')}</div>
                                     {isApartmentProject && (
@@ -2509,8 +2503,8 @@ function ProjectListingsPanel({ project, canCreate, isAdmin, userRole, onClose, 
                                                 {t(`property.${l.type?.toUpperCase()}`) || l.type}
                                             </span>
                                         </div>
-                                        <div className="w-28 shrink-0">
-                                            <span className={`text-xs font-bold px-2 py-0.5 rounded-full whitespace-nowrap ${STATUS_LISTING_COLOR[l.status] || 'bg-slate-100 text-slate-600'}`}>
+                                        <div className="w-36 shrink-0 pr-3 overflow-hidden">
+                                            <span className={`inline-block max-w-full truncate align-middle text-xs font-bold px-2 py-0.5 rounded-full whitespace-nowrap ${STATUS_LISTING_COLOR[l.status] || 'bg-slate-100 text-slate-600'}`}>
                                                 {t(`status.${l.status}`) || l.status}
                                             </span>
                                         </div>
@@ -2568,7 +2562,7 @@ function ProjectListingsPanel({ project, canCreate, isAdmin, userRole, onClose, 
                                                     className="flex items-center gap-1 px-2 py-1 rounded-lg text-xs font-semibold border whitespace-nowrap hover:bg-sgs-champagne"
                                                     style={{ color: '#1B3A5C', borderColor: '#DDD6FE' }}
                                                 >
-                                                    {IC.LOCK} {t('project.listing_access_single_btn')}
+                                                    {t('project.listing_access_single_btn')}
                                                 </button>
                                             </div>
                                         )}
