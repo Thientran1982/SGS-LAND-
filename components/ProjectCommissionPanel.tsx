@@ -42,15 +42,14 @@ export const ProjectCommissionPanel: React.FC<Props> = ({ projectId, projectName
     setLoading(true);
     setErr(null);
     try {
-      const emptyLedger: LedgerListResponse = { data: [], total: 0, page: 1, pageSize: 50, totalPages: 0 };
       const [p, l] = await Promise.all([
-        commissionApi.listPolicies(projectId).catch(() => ({ data: [] as CommissionPolicy[] })),
-        commissionApi.list({ projectId, page: 1, pageSize: 50 }).catch(() => emptyLedger),
+        commissionApi.listPolicies(projectId),
+        commissionApi.list({ projectId, page: 1, pageSize: 50 }),
       ]);
       setPolicies(p.data || []);
       setLedger(l.data || []);
       if (isAdmin) {
-        try { setSummary(await commissionApi.getProjectSummary(projectId)); } catch { setSummary(null); }
+        setSummary(await commissionApi.getProjectSummary(projectId));
       }
     } catch (e: any) {
       setErr(e?.message || 'Không tải được dữ liệu hoa hồng');
@@ -65,9 +64,9 @@ export const ProjectCommissionPanel: React.FC<Props> = ({ projectId, projectName
       setWorking(true);
       await commissionApi.createPolicy(projectId, { type, config });
       setShowEditor(false);
-      load();
+      await load();
     } catch (e: any) {
-      alert(e?.message || 'Không lưu được chính sách');
+      setErr(e?.message || 'Không lưu được chính sách');
     } finally {
       setWorking(false);
     }
@@ -77,9 +76,9 @@ export const ProjectCommissionPanel: React.FC<Props> = ({ projectId, projectName
     try {
       setWorking(true);
       await commissionApi.closeActivePolicy(projectId);
-      load();
+      await load();
     } catch (e: any) {
-      alert(e?.message || 'Lỗi đóng chính sách');
+      setErr(e?.message || 'Lỗi đóng chính sách');
     } finally {
       setWorking(false);
     }
@@ -309,20 +308,29 @@ const PolicyEditor: React.FC<{ onSubmit: (type: PolicyType, config: PolicyConfig
     { key: 'contract', label: 'Ký HĐMB', pct: 40, offsetDays: 30 },
     { key: 'handover', label: 'Bàn giao', pct: 30, offsetDays: 90 },
   ]);
+  const [validationError, setValidationError] = useState('');
   const submit = () => {
+    setValidationError('');
     if (type === 'FLAT') {
       const r = Number(flatRate);
-      if (!(r > 0 && r <= 100)) return alert('Tỷ lệ phải > 0 và ≤ 100');
+      if (!(r > 0 && r <= 100)) return setValidationError('Tỷ lệ phải lớn hơn 0 và không vượt quá 100%.');
       onSubmit('FLAT', { ratePct: r });
     } else if (type === 'TIERED') {
       const sorted = [...tiers].sort((a, b) => a.minUnitsThisMonth - b.minUnitsThisMonth);
-      if (sorted.some(t => !(t.ratePct > 0))) return alert('Tỷ lệ mỗi bậc phải > 0');
+      if (sorted.length === 0) return setValidationError('Cần có ít nhất một bậc hoa hồng.');
+      if (sorted.some(t => !(t.minUnitsThisMonth >= 0))) return setValidationError('Số sản phẩm tối thiểu phải từ 0 trở lên.');
+      if (sorted.some(t => !(t.ratePct > 0 && t.ratePct <= 100))) return setValidationError('Tỷ lệ mỗi bậc phải lớn hơn 0 và không vượt quá 100%.');
       onSubmit('TIERED', { tiers: sorted });
     } else {
       const r = Number(msRate);
-      if (!(r > 0 && r <= 100)) return alert('Tỷ lệ phải > 0 và ≤ 100');
+      if (!(r > 0 && r <= 100)) return setValidationError('Tỷ lệ cơ sở phải lớn hơn 0 và không vượt quá 100%.');
+      if (milestones.length === 0) return setValidationError('Cần có ít nhất một mốc tiến độ.');
+      if (milestones.some(m => !String(m.key).trim())) return setValidationError('Mỗi mốc tiến độ cần có key.');
+      if (milestones.some(m => !String(m.label).trim())) return setValidationError('Mỗi mốc tiến độ cần có nhãn.');
+      if (milestones.some(m => !(Number(m.pct) > 0 && Number(m.pct) <= 100))) return setValidationError('Phần trăm mỗi mốc phải lớn hơn 0 và không vượt quá 100%.');
+      if (milestones.some(m => !(Number(m.offsetDays) >= 0))) return setValidationError('Số ngày của mỗi mốc phải từ 0 trở lên.');
       const sum = milestones.reduce((s, m) => s + Number(m.pct || 0), 0);
-      if (Math.abs(sum - 100) > 0.01) return alert(`Tổng % các mốc phải = 100 (hiện tại: ${sum})`);
+      if (Math.abs(sum - 100) > 0.01) return setValidationError(`Tổng phần trăm các mốc phải bằng 100% (hiện tại: ${sum}%).`);
       onSubmit('MILESTONE', { ratePct: r, milestones });
     }
   };
@@ -396,6 +404,11 @@ const PolicyEditor: React.FC<{ onSubmit: (type: PolicyType, config: PolicyConfig
         </div>
       )}
       <div className="pt-2 border-t border-[var(--glass-border)]">
+        {validationError && (
+          <div role="alert" className="mb-3 rounded-lg border border-rose-200 bg-rose-50 px-3 py-2 text-xs font-medium text-rose-700">
+            {validationError}
+          </div>
+        )}
         <button type="button" onClick={submit} disabled={working}
           className="px-4 py-2 rounded-xl bg-sgs-verified text-white text-sm font-bold hover:bg-emerald-700 disabled:opacity-50">
           {working ? 'Đang lưu…' : 'Lưu chính sách'}
