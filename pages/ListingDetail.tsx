@@ -1602,12 +1602,12 @@ export const ListingDetail: React.FC = () => {
                 </div>
             </div>
             {/* Gallery — public detail style */}
-            <div className="max-w-7xl mx-auto px-4 py-5 md:px-6 md:py-8">
+            <div className="max-w-7xl mx-auto px-4 py-4 md:px-6 md:py-6">
                 {/* Dynamic Grid Layout based on image count */}
-                <div className="grid grid-cols-1 gap-0 rounded-2xl overflow-hidden aspect-video relative group bg-[var(--bg-elevated)]">
+                <div className="grid grid-cols-1 md:grid-cols-[minmax(0,2fr)_minmax(220px,1fr)] md:grid-rows-2 gap-1.5 rounded-2xl overflow-hidden aspect-[4/3] md:aspect-[16/8] relative group bg-[var(--bg-elevated)]">
                     {/* Main Image (Always First) */}
                     <div 
-                        className="h-full relative cursor-pointer overflow-hidden"
+                        className="h-full md:row-span-2 relative cursor-pointer overflow-hidden"
                         onClick={() => { setLightboxIndex(0); setLightboxOpen(true); }}
                     >
                         <img src={optimizedImageUrl(displayImages[0] || NO_IMAGE_URL, 1280)} className="w-full h-full object-cover transition-transform duration-700 hover:scale-105" alt="Main" loading="eager" decoding="async" fetchPriority="high" onError={(e) => { (e.target as HTMLImageElement).src = NO_IMAGE_URL; }} />
@@ -1615,7 +1615,7 @@ export const ListingDetail: React.FC = () => {
                     </div>
                     {/* Secondary Images (Right Side) */}
                     {displayImages.length > 1 && (
-                        <div className="hidden">
+                        <div className="hidden md:grid grid-cols-2 gap-1.5 min-h-0">
                             {displayImages.slice(1).map((img, idx) => (
                                 <div key={idx} className="relative cursor-pointer overflow-hidden h-full w-full" onClick={() => { setLightboxIndex(idx + 1); setLightboxOpen(true); }}>
                                     <img src={optimizedImageUrl(img || NO_IMAGE_URL, 640)} className="w-full h-full object-cover transition-transform duration-700 hover:scale-105" alt={`Gallery ${idx}`} loading="lazy" decoding="async" onError={(e) => { (e.target as HTMLImageElement).src = NO_IMAGE_URL; }} />
@@ -1654,7 +1654,7 @@ export const ListingDetail: React.FC = () => {
                 )}
             </div>
             {/* Content */}
-            <div className="max-w-7xl mx-auto px-6 grid grid-cols-1 lg:grid-cols-3 gap-12">
+            <div className="max-w-7xl mx-auto px-4 md:px-6 grid grid-cols-1 lg:grid-cols-3 gap-8 lg:gap-10">
                 <div className="lg:col-span-2 space-y-8">
                     <div>
                         <div className="flex flex-wrap gap-2 mb-4">
@@ -1689,7 +1689,7 @@ export const ListingDetail: React.FC = () => {
                     </div>
                     {/* Map — hiển thị luôn khi có địa chỉ; MapView tự geocode qua Nominatim nếu coordinates null */}
                     {listing.location && (
-                        <div className="h-80 rounded-[24px] overflow-hidden border border-[var(--glass-border)] shadow-sm relative z-0">
+                        <div className="h-[360px] min-h-[320px] rounded-[24px] overflow-hidden border border-[var(--glass-border)] shadow-sm relative z-0 bg-[#e8e8e0]">
                             <MapView listings={[listing]} onNavigate={() => {}} formatCurrency={formatCurrency} formatUnitPrice={formatUnitPrice} t={t} language={language} detailStyle />
                         </div>
                     )}

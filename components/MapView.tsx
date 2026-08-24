@@ -370,6 +370,12 @@ const MapView: React.FC<MapViewProps> = memo(({
             ro = new ResizeObserver(() => map.invalidateSize({ animate: false }));
             ro.observe(mapRef.current!);
             map.invalidateSize({ animate: false });
+             // Detail pages mount inside a scrolling content pane. A second
+             // measurement after layout prevents Leaflet from keeping a
+             // zero/partial viewport when the pane has just become visible.
+             requestAnimationFrame(() => {
+                 if (mapInst.current === map) map.invalidateSize({ animate: false });
+             });
         } catch (e) { console.error('Map init failed', e); }
         return () => {
             ro?.disconnect();
