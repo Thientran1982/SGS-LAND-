@@ -266,21 +266,23 @@ function ProjectFormModal({ project, onSave, onClose, t }: ProjectFormProps) {
                                 {driveUrlTrim && !driveUrlValid ? t('project.error_drive_url_invalid') : t('project.drive_url_help')}
                             </p>
                         </div>
-                        <div>
-                            <label className={labelCls}>{t('project.status')}</label>
-                            <Dropdown
-                                value={form.status}
-                                onChange={v => set('status', v as string)}
-                                options={['ACTIVE','BOOKING','COMPLETED','ON_HOLD','SUSPENDED'].map(s => ({ value: s, label: t('project.status_' + s) }))}
-                            />
-                        </div>
-                        <div>
-                            <label htmlFor="pj-open" className={labelCls}>{t('project.open_date')}</label>
-                            <input id="pj-open" type="date" className={inputCls} value={form.openDate} onChange={e => set('openDate', e.target.value)} />
-                        </div>
-                        <div>
-                            <label htmlFor="pj-handover" className={labelCls}>{t('project.handover_date')}</label>
-                            <input id="pj-handover" type="date" className={inputCls} value={form.handoverDate} onChange={e => set('handoverDate', e.target.value)} />
+                        <div className="col-span-2 grid grid-cols-1 sm:grid-cols-3 gap-4">
+                            <div>
+                                <label className={labelCls}>{t('project.status')}</label>
+                                <Dropdown
+                                    value={form.status}
+                                    onChange={v => set('status', v as string)}
+                                    options={['ACTIVE','BOOKING','COMPLETED','ON_HOLD','SUSPENDED'].map(s => ({ value: s, label: t('project.status_' + s) }))}
+                                />
+                            </div>
+                            <div>
+                                <label htmlFor="pj-open" className={labelCls}>{t('project.open_date')}</label>
+                                <input id="pj-open" type="date" className={inputCls} value={form.openDate} onChange={e => set('openDate', e.target.value)} />
+                            </div>
+                            <div>
+                                <label htmlFor="pj-handover" className={labelCls}>{t('project.handover_date')}</label>
+                                <input id="pj-handover" type="date" className={inputCls} value={form.handoverDate} onChange={e => set('handoverDate', e.target.value)} />
+                            </div>
                         </div>
                         {/* Cover image — single 16:9 hero photo for the project card */}
                         <div className="col-span-2">
@@ -3218,7 +3220,6 @@ function ProjectCardBase({ project, isAdmin, isPartner, onEdit, onDelete, onAcce
                     onClick={onListings}
                     className="w-full flex items-center justify-center gap-2 py-2 px-4 bg-[var(--glass-surface)] hover:bg-sgs-champagne dark:hover:bg-emerald-900/20 border border-[var(--glass-border)] hover:border-emerald-300 text-[var(--text-secondary)] hover:text-sgs-verified text-sm font-semibold rounded-xl transition-all"
                 >
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 10h16M4 14h16M4 18h16"/></svg>
                     {t('project.view_listings')}
                     {((project as any).listingCount || 0) > 0 && (
                         <span className="ml-auto px-2 py-0.5 bg-sgs-champagne text-sgs-verified text-xs font-bold rounded-full">
@@ -3231,7 +3232,6 @@ function ProjectCardBase({ project, isAdmin, isPartner, onEdit, onDelete, onAcce
                     onClick={onPriceMatrix}
                     className="w-full flex items-center justify-center gap-2 py-2 px-4 bg-[var(--glass-surface)] hover:bg-sgs-champagne border border-[var(--glass-border)] hover:border-[var(--sgs-primary)] text-[var(--text-secondary)] hover:text-sgs-primary text-sm font-semibold rounded-xl transition-all"
                 >
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 11h.01M12 11h.01M15 11h.01M4 19h16a2 2 0 002-2V7a2 2 0 00-2-2H4a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>
                     Bảng Giá
                 </button>
             </div>
@@ -3520,7 +3520,7 @@ export function Projects() {
                     {isAdmin && (
                         <button type="button" onClick={() => setFormTarget('new')}
                             className="shrink-0 flex items-center gap-1.5 px-4 h-10 rounded-xl bg-sgs-primary text-white text-sm font-bold hover:bg-sgs-primary shadow-sm transition-colors">
-                            {IC.PLUS} <span className="hidden xs:inline">{t('project.new')}</span>
+                            <span className="hidden xs:inline">{t('project.new')}</span>
                         </button>
                     )}
                 </div>
@@ -3545,7 +3545,7 @@ export function Projects() {
                         {isAdmin && (
                             <button type="button" onClick={() => setFormTarget('new')}
                                 className="mt-3 flex items-center gap-2 px-4 py-2 rounded-xl bg-sgs-primary text-white text-sm font-bold hover:bg-sgs-primary">
-                                {IC.PLUS} {t('project.new')}
+                                {t('project.new')}
                             </button>
                         )}
                     </div>
