@@ -1,0 +1,111 @@
+NHIỆM VỤ: Xây Phase 5 + 5.5 — Long-term Memory Store và vòng lặp tự học, theo plan §8.1 và §8.2.
+
+TIÊU CHÍ HOÀN THÀNH:
+Tuần 8: "Agent nhớ sở thích khách hàng / môi giới F1 qua các phiên."
+Tuần 9: "Matcher (gợi ý bất động sản) chính xác hơn theo hành vi thật."
+
+PHẦN 1 — LONG-TERM MEMORY (plan §8.1)
+
+A. app/agents/memory.py — bảng agent_store tạo lazily (CREATE TABLE IF NOT EXISTS, theo mẫu decisions.py):
+     agent_store(id TEXT PK, namespace TEXT, key TEXT, kind TEXT, value TEXT,
+                 importance REAL DEFAULT 0.5, hits INT DEFAULT 0,
+                 expires_at TIMESTAMPTZ NULL, created_at, updated_at,
+                 UNIQUE(namespace, key))
+     + index trên namespace.
+
+   Namespace quy ước: "customer:{user_id}" (khách mua/thuê), "agent:{user_id}" (môi giới F1), "global".
+   kind ∈ {fact, episodic, procedural} (plan §8.1):
+     - fact      : sở thích/ràng buộc ổn định (VD: khách luôn tìm căn hộ 2PN khu Thủ Đức, ngân sách <3 tỷ; môi giới F1 chỉ nhận dự án ở Long An). Có contradiction check (mục C).
+     - episodic  : tóm tắt tương tác cũ (buổi tư vấn, lần xem nhà). TTL 90 ngày (set expires_at).
+     - procedural: pattern xử lý ("khách này chỉ nên gửi tối đa 2 phương án mỗi lần", "môi giới này ưu tiên nhắn Zalo buổi tối").
+
+   API:
+     - remember(session, namespace, key, value, kind="fact", importance=0.5, ttl_days=None)
+     - recall(session, namespace, query=None, k=8) -> list[dict]
+         Không có query: lấy theo importance desc. Có query: xếp hạng bằng semantic_scores() sẵn có.
+         Bỏ qua bản ghi đã hết hạn. Tăng hits cho bản ghi được trả về.
+     - forget(session, namespace, key=None)  -> xoá 1 key hoặc cả namespace (phục vụ GDPR/quyền riêng tư dữ liệu khách).
+     - memory_block(session, namespace, query, token_budget=2000) -> str
+         Trả về đoạn text ngắn để nhét vào system prompt. PHẢI cắt theo budget ~2000 token
+         (ước lượng 4 ký tự/token), ưu tiên importance cao.
+
+B. AN TOÀN MEMORY (plan §8.4) — bắt buộc:
+   - Lọc PII trước khi ghi: bỏ email, số điện thoại, số CCCD/CMND, số tài khoản ngân hàng, địa chỉ nhà đầy đủ của khách.
+     Viết hàm scrub_pii(text) bằng regex + test riêng.
+   - Cap 200 items/namespace: vượt thì xoá bản ghi importance thấp nhất & cũ nhất.
+   - Memory chỉ là GỢI Ý NGỮ CẢNH. Cấm dùng memory để tự động chốt hành động (gửi báo giá, xác nhận lịch xem nhà, phân bổ lead) thay người duyệt.
+
+C. GHI MEMORY — 2 đường (plan §8.1):
+   - Hot-path: ngay trong phiên, khi agent thấy fact rõ ràng (ví dụ khách luôn hỏi dự án có sổ hồng riêng, hoặc môi giới F1 chỉ làm khu vực Đồng Nai).
+   - Background: hàm summarize_session(session, namespace, transcript) chạy sau phiên (chat với "Minh" qua Zalo OA hoặc phiên trên web),
+     tổng hợp + dedupe + update. Chưa cần cron ở phase này, expose thành hàm gọi được.
+   - Contradiction check: nếu fact mới mâu thuẫn fact cũ importance>=0.7 thì KHÔNG ghi đè,
+     mà log_decision(action="memory_conflict", detail={old, new}) để người xử lý.
+
+D. NỐI VÀO AGENT SẴN CÓ (plan §8.4):
+   - app/agents/__init__.py — run_enrichment(): nhận thêm tham số optional (session, namespace).
+     Có thì gọi memory_block() và nhét vào system prompt (văn phong mô tả dự án + ngôn ngữ/kênh liên hệ ưu tiên của khách hoặc môi giới).
+   - app/agents/support.py — AI Sales Agent "Minh" (Zalo OA, Phase 4): nhét memory vào prompt: tông giọng, ngôn ngữ, "dự án gần nhất bạn đã hỏi", khu vực quan tâm.
+   - app/agents/lead_matching.py (trước đây rfq.py) — run_lead_intake(): dùng memory của khách hàng để bớt câu hỏi làm rõ
+     (ví dụ khách luôn tìm căn hộ, ngân sách cố định, khu vực cố định thì không hỏi lại).
+   Tất cả đều phải hoạt động bình thường KHI KHÔNG có memory (tham số optional, mặc định None).
+
+E. Endpoint (append vào app/api/routers/ai.py):
+   - GET    /api/v1/ai/memory?namespace=...        (chủ namespace hoặc admin mới được xem)
+   - DELETE /api/v1/ai/memory                      (body: {namespace, key?}) — quyền xoá dữ liệu của chính khách hàng/môi giới
+   - POST   /api/v1/ai/memory                      (thêm/sửa tay, dùng cho admin sửa memory sai)
+
+PHẦN 2 — VÒNG LẶP TỰ HỌC (plan §8.2)
+
+F. app/agents/signals.py — bảng agent_signals (lazily):
+     agent_signals(id, signal_type, actor_id, subject_type, subject_id, payload TEXT,
+                   created_at)
+   Loại tín hiệu thu (chỉ thu khi có hành động thật, không bịa):
+     - match_feedback         : khách bấm "Không phù hợp" trên 1 gợi ý bất động sản/dự án
+     - match_chosen           : khách chọn dự án/môi giới nào để liên hệ hoặc đặt lịch xem nhà (từ luồng phân bổ lead/confirm)
+     - price_estimate_edit_distance : chênh lệch giữa định giá AI (AVM / Price Trust Score) và giá giao dịch/niêm yết thực tế
+     - support_csat            : đánh giá câu trả lời của "Minh" (CSKH qua Zalo)
+     - lead_clarification_answer : khách trả lời câu hỏi làm rõ nhu cầu (loại hình, ngân sách, khu vực)
+   Hàm: record_signal(...), list_signals(session, signal_type=None, since=None)
+   Nối record_signal vào: luồng phân bổ lead cho môi giới F1 (match_chosen) và endpoint tạo định giá/báo giá nếu khả thi.
+   Thêm nút "Không phù hợp" ở UI danh sách bất động sản/dự án gợi ý (/khach-hang/tim-kiem/ai) -> POST /api/v1/ai/signals.
+
+G. app/agents/reflection.py — job chạy tay được (chưa cần cron):
+   - run_reflection(session): đọc signal mới -> sinh/cập nhật memory (qua memory.py) ->
+     phát hiện mâu thuẫn thì flag cho human, KHÔNG tự ghi đè fact quan trọng.
+   - Expose POST /api/v1/ai/reflection/run (admin only) để chạy thủ công.
+
+H. TINH CHỈNH TRỌNG SỐ MATCHER (plan §8.2 mục 3) — QUAN TRỌNG, LÀM ĐÚNG:
+   - Hiện W_LOCATION/W_PRICE/W_LEGAL/W_RATING (vị trí, giá, tình trạng pháp lý sổ hồng/sổ đỏ, uy tín dự án/chủ đầu tư)
+     đang hardcode trong app/agents/lead_matching.py.
+     Đổi thành đọc từ hàm get_weights(session) có cache, mặc định trả bộ hiện tại (0.40/0.25/0.20/0.15).
+   - Bảng agent_weight_versions (lazily): id, weights TEXT(json), status(draft|shadow|live),
+     metrics TEXT, created_at, created_by, note.
+   - fit_weights(session): hồi quy đơn giản (logistic hoặc grid search thô, KHÔNG cần sklearn)
+     trên tín hiệu match_chosen -> đề xuất bộ weight mới, lưu status="draft".
+   - GATE BẮT BUỘC: bộ weight mới chỉ được promote sang "live" khi chạy qua golden set
+     (tests/agents/test_lead_matching_agents.py) đạt >= bộ đang live. Dưới ngưỡng -> tự giữ bộ cũ.
+   - Promote/rollback phải là endpoint riêng do admin bấm, ghi log_decision.
+
+I. Test — tests/agents/test_memory.py + test_signals.py:
+   - scrub_pii che đúng email/số điện thoại/CCCD/số tài khoản.
+   - cap 200 items hoạt động (chèn 205 -> còn 200, giữ importance cao).
+   - TTL: bản ghi episodic hết hạn không xuất hiện trong recall.
+   - contradiction check không ghi đè fact importance cao.
+   - memory_block cắt đúng theo token budget.
+   - fit_weights trả về bộ weight hợp lệ (tổng ~1.0, không âm) trên dữ liệu tín hiệu giả.
+   - GATE: weight tệ hơn golden set thì KHÔNG được promote.
+
+CẤM:
+- Cấm ghi PII thô (CCCD, SĐT, tài khoản ngân hàng, địa chỉ đầy đủ) vào agent_store.
+- Cấm để memory hoặc weight mới tự động lên "live" mà không qua golden-set gate + người bấm.
+- Cấm sửa bảng có sẵn.
+
+VERIFY TRƯỚC KHI BÁO XONG: 4 lệnh verify ở KHỐI NỀN + pytest xanh + demo được rằng
+lưu 1 fact cho khách hàng (hoặc môi giới F1) rồi gọi lại run_enrichment ở phiên khác thì fact đó có trong prompt.
+
+---
+GHI CHÚ (giả định cần Thien xác nhận):
+- Đã đổi rfq.py -> lead_matching.py, run_rfq_intake -> run_lead_intake, W_SPEC/W_CERTS -> W_LOCATION/W_LEGAL cho khớp use case bất động sản. Nếu repo thật đã có tên file/hàm khác (ví dụ đã có sẵn module matching riêng), báo tên thật để mình chỉnh lại đúng.
+- signal price_estimate_edit_distance giả định gắn với AVM/Price Trust Score đang làm — nếu chưa có bảng lưu định giá AI để so sánh thì bước này cần dữ liệu đầu vào trước.
+- Chưa rõ luồng "phân bổ lead cho môi giới F1" tên hàm thật trong code (đoán tương đương execute_distribution ở AdeptLink) — cần bạn xác nhận tên hàm/route thật trong SGSLand để nối record_signal đúng chỗ.
