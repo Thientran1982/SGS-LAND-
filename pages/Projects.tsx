@@ -2476,7 +2476,12 @@ function ProjectListingsPanel({ project, canCreate, isAdmin, userRole, onClose, 
                                         )}
                                         <div className="w-14 shrink-0">
                                             <div className="w-11 h-11 rounded-lg overflow-hidden border bg-slate-100" style={{ borderColor: 'var(--sgs-border)' }}>
-                                                <LazyImage src={l.images?.[0]} wrapperClassName="w-full h-full" />
+                                            <LazyImage
+                                                src={Array.isArray(l.images) ? l.images[0] : (l as any).image}
+                                                alt={l.title || l.code || ''}
+                                                width={96}
+                                                wrapperClassName="w-full h-full"
+                                            />
                                             </div>
                                         </div>
                                         <div className="w-24 shrink-0">
@@ -2496,12 +2501,12 @@ function ProjectListingsPanel({ project, canCreate, isAdmin, userRole, onClose, 
                                             )}
                                         </div>
                                         <div className="w-32 shrink-0 pr-3">
-                                            <span className="text-xs font-semibold border px-2 py-0.5 rounded whitespace-nowrap" style={{ background: 'var(--sgs-bg)', color: 'var(--sgs-text-muted)', borderColor: 'var(--sgs-border)' }}>
+                                            <span className="text-xs2 font-semibold border px-1.5 py-0.5 rounded whitespace-nowrap" style={{ background: 'var(--sgs-bg)', color: 'var(--sgs-text-muted)', borderColor: 'var(--sgs-border)' }}>
                                                 {t(`property.${l.type?.toUpperCase()}`) || l.type}
                                             </span>
                                         </div>
                                         <div className="w-36 shrink-0 pr-3 overflow-hidden">
-                                            <span className={`inline-block max-w-full truncate align-middle text-xs font-bold px-2 py-0.5 rounded-full whitespace-nowrap ${STATUS_LISTING_COLOR[l.status] || 'bg-slate-100 text-slate-600'}`}>
+                                            <span className={`inline-block max-w-full truncate align-middle text-xs2 font-bold px-1.5 py-0.5 rounded-full whitespace-nowrap ${STATUS_LISTING_COLOR[l.status] || 'bg-slate-100 text-slate-600'}`}>
                                                 {t(`status.${l.status}`) || l.status}
                                             </span>
                                         </div>
