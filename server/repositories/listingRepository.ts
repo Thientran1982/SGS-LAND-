@@ -733,10 +733,20 @@ export class ListingRepository extends BaseRepository {
     return this.withTenant(tenantId, async (client) => {
       let resolvedProjectId: string | null = data.projectId || data.project_id || null;
       const projectCode = data.projectCode || null;
-      if (projectCode && !resolvedProjectId) {
+      if (resolvedProjectId) {
+        const projectResult = await client.query(
+          `SELECT 1 FROM projects WHERE id = $1 AND tenant_id = $2`,
+          [resolvedProjectId, tenantId],
+        );
+        if (projectResult.rowCount === 0) {
+          const error: any = new Error('Project does not belong to tenant');
+          error.code = 'PROJECT_TENANT_MISMATCH';
+          throw error;
+        }
+      } else if (projectCode) {
         const pRes = await client.query(
-          `SELECT id FROM projects WHERE code = $1 LIMIT 1`,
-          [projectCode],
+          `SELECT id FROM projects WHERE code = $1 AND tenant_id = $2 LIMIT 1`,
+          [projectCode, tenantId],
         );
         if (pRes.rows.length > 0) resolvedProjectId = pRes.rows[0].id;
       }
@@ -818,7 +828,7 @@ export class ListingRepository extends BaseRepository {
         'code', 'title', 'location', 'price', 'currency', 'area', 'builtArea', 'bedrooms', 'bathrooms',
         'type', 'status', 'transaction', 'projectCode', 'contactPhone', 'isVerified',
         'ownerName', 'ownerPhone', 'commission', 'commissionUnit', 'totalUnits', 'availableUnits',
-        'viewCount', 'bookingCount',
+        'viewCount', 'bookingCount', 'projectId',
       ];
       const jsonFields = ['attributes', 'images', 'coordinates', 'authorizedAgents'];
 
@@ -841,9 +851,20 @@ export class ListingRepository extends BaseRepository {
 
       if (updates.length <= 1) return this.findById(tenantId, id);
 
+      if (data.projectId !== undefined && data.projectId !== null) {
+        const projectResult = await client.query(
+          `SELECT 1 FROM projects WHERE id = $1 AND tenant_id = $2`,
+          [data.projectId, tenantId],
+        );
+        if (projectResult.rowCount === 0) {
+          const error: any = new Error('Project does not belong to tenant');
+          error.code = 'PROJECT_TENANT_MISMATCH';
+          throw error;
+        }
+      }
       const result = await client.query(
-        `UPDATE listings SET ${updates.join(', ')} WHERE id = $1 RETURNING *`,
-        [id, ...values]
+        `UPDATE listings SET ${updates.join(', ')} WHERE id = $1 AND tenant_id = $${values.length + 2} RETURNING *`,
+        [id, ...values, tenantId]
       );
       return result.rows[0] ? this.rowToEntity(result.rows[0]) : null;
     });

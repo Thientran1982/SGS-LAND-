@@ -23,6 +23,18 @@ const migration: Migration = {
         updated_at     TIMESTAMP WITH TIME ZONE DEFAULT NOW()
       );
     `);
+    // Required for composite tenant-bound foreign keys added below and by
+    // later schema audits. An id-only FK permits cross-tenant references.
+    await client.query(`
+      DO $$ BEGIN
+        IF NOT EXISTS (
+          SELECT 1 FROM pg_constraint
+          WHERE conname = 'projects_id_tenant_id_key'
+        ) THEN
+          ALTER TABLE projects ADD CONSTRAINT projects_id_tenant_id_key UNIQUE (id, tenant_id);
+        END IF;
+      END $$;
+    `);
 
     await client.query(`
       CREATE UNIQUE INDEX IF NOT EXISTS idx_projects_tenant_code ON projects(tenant_id, code) WHERE code IS NOT NULL;
@@ -67,7 +79,7 @@ const migration: Migration = {
     // --- Add project_id FK to listings ---
     await client.query(`
       ALTER TABLE listings
-        ADD COLUMN IF NOT EXISTS project_id UUID REFERENCES projects(id) ON DELETE SET NULL;
+        ADD COLUMN IF NOT EXISTS project_id UUID;
     `);
 
     await client.query(`

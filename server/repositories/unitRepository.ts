@@ -48,9 +48,20 @@ class UnitRepository extends BaseRepository {
     d: { code: string; tower: string; floor: number; bedroom: string; areaSqm: number; priceSqm: number; status?: string; projectId?: string | null },
   ): Promise<UnitRow> {
     return this.withTenant(tenantId, async (client) => {
+      if (d.projectId !== null && d.projectId !== undefined) {
+        const project = await client.query(
+          `SELECT 1 FROM projects WHERE id = $1 AND tenant_id = $2`,
+          [d.projectId, tenantId],
+        );
+        if (project.rowCount === 0) {
+          const error: any = new Error('Project does not belong to tenant');
+          error.code = 'PROJECT_TENANT_MISMATCH';
+          throw error;
+        }
+      }
       const result = await client.query(
         `INSERT INTO units (tenant_id, code, tower, floor, bedroom, area_sqm, price_sqm, status, project_id)
-         VALUES ($1, $2, $3, $4, $5, $6, $7, COALESCE($8, 'available'), $9)
+         VALUES ($1, $2, $3, $4, $5, $6, COALESCE($8, 'available'), $9)
          RETURNING *`,
         [tenantId, d.code, d.tower, d.floor, d.bedroom, d.areaSqm, d.priceSqm, d.status ?? null, d.projectId ?? null],
       );
@@ -76,6 +87,19 @@ class UnitRepository extends BaseRepository {
       sets.push(`updated_at = NOW()`);
       params.push(id);
       params.push(tenantId);
+      // Validate project ownership in the same tenant transaction before
+      // changing the unit. This complements the composite database FK.
+      if (d.projectId !== undefined && d.projectId !== null) {
+        const project = await client.query(
+          `SELECT 1 FROM projects WHERE id = $1 AND tenant_id = $2`,
+          [d.projectId, tenantId],
+        );
+        if (project.rowCount === 0) {
+          const error: any = new Error('Project does not belong to tenant');
+          error.code = 'PROJECT_TENANT_MISMATCH';
+          throw error;
+        }
+      }
       const result = await client.query(
         `UPDATE units SET ${sets.join(', ')} WHERE id = $${params.length - 1} AND tenant_id = $${params.length} RETURNING *`,
         params,

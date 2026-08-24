@@ -87,6 +87,8 @@ export default {
       CREATE INDEX IF NOT EXISTS idx_units_tenant_status
         ON units (tenant_id, tower, status)
     `);
+    // project_id is tenant-scoped; the integrity migration adds the
+    // composite FK after auditing existing rows.
     await client.query(`GRANT SELECT, INSERT, UPDATE, DELETE ON units TO sgs_app`).catch((err: any) => {
       console.log(`[117] Bo qua GRANT sgs_app units: ${err?.message || err}`);
     });

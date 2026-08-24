@@ -337,6 +337,17 @@ export function createListingRoutes(authenticateToken: any) {
 
       const isPartner = user.role === 'PARTNER_ADMIN' || user.role === 'PARTNER_AGENT';
 
+      // Partners are cross-tenant readers. Never run the owner-tenant query for
+      // them: it would either hide granted listings or expose rows through a
+      // caller-controlled project filter without checking project_access.
+      if (isPartner) {
+        const page = Math.max(1, parseInt(req.query.page as string) || 1);
+        const result = await listingRepository.findListingsForPartner(
+          user.tenantId, { page, pageSize }, filters,
+        );
+        return res.json({ ...result, data: result.data.map(redactSensitiveFields) });
+      }
+
       // ── Cursor-based mode ──────────────────────────────────────────────────
       if (req.query.cursor !== undefined || req.query.cursorMode === 'true') {
         const cursor = (req.query.cursor as string) || undefined;
@@ -347,9 +358,6 @@ export function createListingRoutes(authenticateToken: any) {
           userId:   user.id,
           userRole: user.role,
         });
-        if (isPartner) {
-          return res.json({ ...result, data: result.data.map(redactSensitiveFields) });
-        }
         return res.json(result);
       }
 
@@ -358,9 +366,6 @@ export function createListingRoutes(authenticateToken: any) {
       const result = await listingRepository.findListings(
         user.tenantId, { page, pageSize }, filters, user.id, user.role
       );
-      if (isPartner) {
-        return res.json({ ...result, data: result.data.map(redactSensitiveFields) });
-      }
       res.json(result);
     } catch (error) {
       console.error('Error fetching listings:', error);
@@ -406,11 +411,12 @@ export function createListingRoutes(authenticateToken: any) {
     try {
       const user = (req as any).user;
 
-      // PARTNER roles: read-only access (sensitive fields redacted)
-      if (user.role === 'PARTNER_ADMIN' || user.role === 'PARTNER_AGENT') {
-        const listing = await listingRepository.findById(user.tenantId, String(req.params.id));
+      // Partner detail must use the grant-aware cross-tenant query. The normal
+      // findById only checks ownership and is never sufficient for partners.
+      if (PARTNER_ROLES.includes(user.role)) {
+        const listing = await listingRepository.findByIdForPartner(user.tenantId, String(req.params.id));
         if (!listing) return res.status(404).json({ error: 'Listing not found' });
-        res.json(redactSensitiveFields(listing));
+        res.json(listing);
         const pl = listing as any;
         const pcMissing = !hasValidCoords(pl.coordinates);
         if (pcMissing && pl.location) scheduleGeocode(user.tenantId, String(req.params.id), pl.location);
@@ -516,7 +522,10 @@ export function createListingRoutes(authenticateToken: any) {
       }
 
       res.status(201).json(listing);
-    } catch (error) {
+    } catch (error: any) {
+      if (error?.code === 'PROJECT_TENANT_MISMATCH' || error?.code === '23503') {
+        return res.status(400).json({ error: 'Dự án không thuộc tenant hiện tại' });
+      }
       console.error('Error creating listing:', error);
       res.status(500).json({ error: 'Failed to create listing' });
     }
@@ -903,7 +912,10 @@ export function createListingRoutes(authenticateToken: any) {
       }
 
       res.json(listing);
-    } catch (error) {
+    } catch (error: any) {
+      if (error?.code === 'PROJECT_TENANT_MISMATCH' || error?.code === '23503') {
+        return res.status(400).json({ error: 'Dự án không thuộc tenant hiện tại' });
+      }
       console.error('Error updating listing:', error);
       res.status(500).json({ error: 'Failed to update listing' });
     }
