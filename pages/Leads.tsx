@@ -1020,7 +1020,7 @@ export const Leads: React.FC = () => {
           <SeoHead title="Quản Lý Khách Hàng Tiềm Năng | SGS LAND" description="Theo dõi và quản lý khách hàng tiềm năng, phân tích pipeline bán hàng bất động sản SGS LAND." canonicalPath="/leads" />
         <div className="h-full flex flex-col relative">
             {/* Header & Controls */}
-            <div className="sticky top-0 z-30 bg-[var(--bg-surface)]/95 backdrop-blur-xl border-b border-[var(--glass-border)] shadow-sm px-3 py-2 md:px-5 md:py-2.5 transition-all flex-none">
+             <div className="sticky top-0 z-30 bg-[var(--bg-surface)]/95 backdrop-blur-xl border-b border-[var(--glass-border)] shadow-sm px-3 py-2 md:px-5 md:py-2.5 transition-all flex-none">
                 <div className="flex flex-col md:flex-row justify-between gap-2 md:gap-4">
                     <div className="flex items-center gap-2 w-full md:w-auto">
                         <div className="relative flex-1 md:w-64 group">
@@ -1055,17 +1055,17 @@ export const Leads: React.FC = () => {
                         <div className="w-fit min-w-0 shrink-0"><Dropdown value={sourceFilter} onChange={(val) => setSourceFilter(val as string)} options={sourceOptions} variant="compact" /></div>
                         
                         {/* View Switcher */}
-                        <div className="flex bg-[var(--glass-surface-hover)] p-1 rounded-xl shrink-0">
+                         <div className="flex h-10 items-center bg-[var(--glass-surface-hover)] p-1 rounded-xl shrink-0">
                             <button 
                                 onClick={() => setViewMode('LIST')} 
-                                className={`p-1.5 rounded-lg transition-all ${viewMode === 'LIST' ? 'bg-[var(--bg-surface)] text-sgs-primary shadow-sm' : 'text-[var(--text-secondary)] hover:text-[var(--text-secondary)]'}`}
+                                 className={`w-8 h-8 p-0 flex items-center justify-center rounded-lg transition-all ${viewMode === 'LIST' ? 'bg-[var(--bg-surface)] text-sgs-primary shadow-sm' : 'text-[var(--text-secondary)] hover:text-[var(--text-secondary)]'}`}
                                 title={t('leads.view_list')}
                             >
                                 {ICONS.VIEW_LIST}
                             </button>
                             <button 
                                 onClick={() => setViewMode('BOARD')} 
-                                className={`p-1.5 rounded-lg transition-all ${viewMode === 'BOARD' ? 'bg-[var(--bg-surface)] text-sgs-primary shadow-sm' : 'text-[var(--text-secondary)] hover:text-[var(--text-secondary)]'}`}
+                                 className={`w-8 h-8 p-0 flex items-center justify-center rounded-lg transition-all ${viewMode === 'BOARD' ? 'bg-[var(--bg-surface)] text-sgs-primary shadow-sm' : 'text-[var(--text-secondary)] hover:text-[var(--text-secondary)]'}`}
                                 title={t('leads.view_board')}
                             >
                                 {ICONS.VIEW_BOARD}
@@ -1075,7 +1075,7 @@ export const Leads: React.FC = () => {
                         {(stageFilter !== 'ALL' || sourceFilter !== 'ALL') && (
                             <button
                                 onClick={() => { setStageFilter('ALL'); setSourceFilter('ALL'); }}
-                                className="shrink-0 flex items-center gap-1.5 px-3 py-2 bg-orange-50 border border-orange-200 text-orange-700 font-bold rounded-xl text-xs transition-all whitespace-nowrap hover:bg-orange-100 active:scale-95"
+                                 className="shrink-0 h-10 flex items-center gap-1.5 px-3 bg-orange-50 border border-orange-200 text-orange-700 font-bold rounded-xl text-xs transition-all whitespace-nowrap hover:bg-orange-100 active:scale-95"
                                 title={t('leads.reset_filters')}
                             >
                                 <span className="w-2 h-2 rounded-full bg-orange-400 animate-pulse shrink-0" />
@@ -1089,7 +1089,7 @@ export const Leads: React.FC = () => {
                                 <button
                                     ref={colSettingsBtnRef}
                                     onClick={() => setShowColumnSettings(v => !v)}
-                                    className={`flex items-center gap-1.5 p-2 rounded-xl border text-xs font-bold transition-all ${showColumnSettings ? 'bg-[var(--sgs-primary)]/10 border-[var(--sgs-primary)] text-[var(--sgs-primary)]' : 'bg-[var(--bg-surface)] border-[var(--glass-border)] text-[var(--text-secondary)] hover:bg-[var(--glass-surface)]'}`}
+                                     className={`h-10 flex items-center gap-1.5 px-2 rounded-xl border text-xs font-bold transition-all ${showColumnSettings ? 'bg-[var(--sgs-primary)]/10 border-[var(--sgs-primary)] text-[var(--sgs-primary)]' : 'bg-[var(--bg-surface)] border-[var(--glass-border)] text-[var(--text-secondary)] hover:bg-[var(--glass-surface)]'}`}
                                     title={t('leads.col_settings_title')}
                                 >
                                     <svg className="w-4 h-4 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4" /></svg>

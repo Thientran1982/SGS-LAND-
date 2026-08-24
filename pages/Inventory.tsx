@@ -755,7 +755,7 @@ export const Inventory: React.FC = () => {
           <SeoHead title="Quản Lý Kho Hàng | SGS LAND" description="Quản lý danh sách bất động sản, theo dõi tình trạng và cập nhật thông tin tài sản." canonicalPath="/inventory" />
         <div className="h-full flex flex-col relative">
             {/* Header & Controls */}
-            <div className="sticky top-0 z-30 bg-[var(--bg-surface)]/95 backdrop-blur-xl border-b border-[var(--glass-border)] shadow-sm px-3 py-2 sm:px-5 sm:py-3 transition-all flex-none">
+             <div className="sticky top-0 z-30 bg-[var(--bg-surface)]/95 backdrop-blur-xl border-b border-[var(--glass-border)] shadow-sm px-3 py-2 md:px-5 md:py-2.5 transition-all flex-none">
                 <div className="flex flex-col md:flex-row justify-between gap-2 md:gap-4">
                     <div className="flex items-center gap-2 w-full md:w-auto">
                         <div className="relative flex-1 md:w-64 group">
@@ -789,17 +789,17 @@ export const Inventory: React.FC = () => {
                          <div className="w-fit min-w-0 shrink-0"><Dropdown value={typeFilter} onChange={(v) => setTypeFilter(v as string)} options={typeOptions} variant="compact" /></div>
                          <div className="w-fit min-w-0 shrink-0"><Dropdown value={statusFilter} onChange={(v) => setStatusFilter(v as string)} options={statusOptions} variant="compact" /></div>
                         {/* View Switcher */}
-                        <div className="flex bg-[var(--glass-surface-hover)] p-1 rounded-xl shrink-0">
-                            <button onClick={() => setViewMode('GRID')} className={`p-1.5 rounded-lg transition-all ${viewMode === 'GRID' ? 'bg-[var(--bg-surface)] text-sgs-primary shadow-sm' : 'text-[var(--text-secondary)] hover:text-[var(--text-secondary)]'}`} title={t('inventory.view_grid')}>{ICONS.VIEW_GRID}</button>
-                            <button onClick={() => setViewMode('LIST')} className={`p-1.5 rounded-lg transition-all ${viewMode === 'LIST' ? 'bg-[var(--bg-surface)] text-sgs-primary shadow-sm' : 'text-[var(--text-secondary)] hover:text-[var(--text-secondary)]'}`} title={t('inventory.view_list')}>{ICONS.VIEW_LIST}</button>
-                            <button onClick={() => setViewMode('BOARD')} className={`p-1.5 rounded-lg transition-all ${viewMode === 'BOARD' ? 'bg-[var(--bg-surface)] text-sgs-primary shadow-sm' : 'text-[var(--text-secondary)] hover:text-[var(--text-secondary)]'}`} title={t('inventory.view_board')}>{ICONS.VIEW_BOARD}</button>
-                            <button onClick={() => setViewMode('MAP')} className={`p-1.5 rounded-lg transition-all ${viewMode === 'MAP' ? 'bg-[var(--bg-surface)] text-sgs-primary shadow-sm' : 'text-[var(--text-secondary)] hover:text-[var(--text-secondary)]'}`} title={t('inventory.view_map')}>{ICONS.VIEW_MAP}</button>
+                         <div className="flex h-10 items-center bg-[var(--glass-surface-hover)] p-1 rounded-xl shrink-0">
+                             <button onClick={() => setViewMode('GRID')} className={`w-8 h-8 p-0 flex items-center justify-center rounded-lg transition-all ${viewMode === 'GRID' ? 'bg-[var(--bg-surface)] text-sgs-primary shadow-sm' : 'text-[var(--text-secondary)] hover:text-[var(--text-secondary)]'}`} title={t('inventory.view_grid')}>{ICONS.VIEW_GRID}</button>
+                             <button onClick={() => setViewMode('LIST')} className={`w-8 h-8 p-0 flex items-center justify-center rounded-lg transition-all ${viewMode === 'LIST' ? 'bg-[var(--bg-surface)] text-sgs-primary shadow-sm' : 'text-[var(--text-secondary)] hover:text-[var(--text-secondary)]'}`} title={t('inventory.view_list')}>{ICONS.VIEW_LIST}</button>
+                             <button onClick={() => setViewMode('BOARD')} className={`w-8 h-8 p-0 flex items-center justify-center rounded-lg transition-all ${viewMode === 'BOARD' ? 'bg-[var(--bg-surface)] text-sgs-primary shadow-sm' : 'text-[var(--text-secondary)] hover:text-[var(--text-secondary)]'}`} title={t('inventory.view_board')}>{ICONS.VIEW_BOARD}</button>
+                             <button onClick={() => setViewMode('MAP')} className={`w-8 h-8 p-0 flex items-center justify-center rounded-lg transition-all ${viewMode === 'MAP' ? 'bg-[var(--bg-surface)] text-sgs-primary shadow-sm' : 'text-[var(--text-secondary)] hover:text-[var(--text-secondary)]'}`} title={t('inventory.view_map')}>{ICONS.VIEW_MAP}</button>
                         </div>
                         {/* Active filter chip */}
                         {(typeFilter !== 'ALL' || statusFilter !== 'ALL' || transactionFilter !== 'ALL') && (
-                            <button
+                             <button
                                 onClick={() => { setTypeFilter('ALL'); setStatusFilter('ALL'); setTransactionFilter('ALL'); }}
-                                className="shrink-0 flex items-center gap-1.5 px-3 py-2 bg-orange-50 border border-orange-200 text-orange-700 font-bold rounded-xl text-xs transition-all whitespace-nowrap hover:bg-orange-100 active:scale-95"
+                                 className="shrink-0 h-10 flex items-center gap-1.5 px-3 bg-orange-50 border border-orange-200 text-orange-700 font-bold rounded-xl text-xs transition-all whitespace-nowrap hover:bg-orange-100 active:scale-95"
                                 title={t('inventory.reset_filters')}
                             >
                                 <span className="w-2 h-2 rounded-full bg-orange-400 animate-pulse shrink-0" />
@@ -809,7 +809,7 @@ export const Inventory: React.FC = () => {
                         )}
                         <div className="w-px h-6 bg-slate-200 mx-1 hidden md:block"></div>
                         {canViewInternalInfo && (
-                            <button onClick={() => { setEditingListing(undefined); setIsCreateModalOpen(true); }} className="hidden md:flex items-center gap-2 px-4 py-2 bg-sgs-primary-deep text-white font-bold rounded-xl text-xs shadow-lg hover:shadow-xl hover:-translate-y-0.5 transition-all whitespace-nowrap active:scale-95 shrink-0">
+                             <button onClick={() => { setEditingListing(undefined); setIsCreateModalOpen(true); }} className="hidden md:flex h-10 items-center gap-2 px-4 bg-sgs-primary-deep text-white font-bold rounded-xl text-xs shadow-lg hover:shadow-xl hover:-translate-y-0.5 transition-all whitespace-nowrap active:scale-95 shrink-0">
                                 {ICONS.ADD} {t('inventory.create_title')}
                             </button>
                         )}
