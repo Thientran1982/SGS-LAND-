@@ -1,4 +1,5 @@
 import { Pool, PoolClient, types } from 'pg';
+import { Redis } from '@upstash/redis';
 import path from 'path';
 import dotenv from 'dotenv';
 dotenv.config();
@@ -37,6 +38,60 @@ export const pool = new Pool({
   keepAliveInitialDelayMillis: 10000,
   application_name: 'sgs-land-api',
 });
+
+type DistributedLockRedis = Pick<Redis, 'set' | 'eval'>;
+let distributedLockRedis: DistributedLockRedis | null | undefined;
+
+function getDistributedLockRedis(): DistributedLockRedis | null {
+  if (distributedLockRedis !== undefined) return distributedLockRedis;
+  const url = process.env.UPSTASH_REDIS_REST_URL;
+  const token = process.env.UPSTASH_REDIS_REST_TOKEN;
+  distributedLockRedis = url && token ? new Redis({ url, token }) : null;
+  return distributedLockRedis;
+}
+
+/**
+ * Execute a critical section under a cross-process Redis lock.
+ *
+ * A missing Redis configuration or Redis outage is fail-closed: callers get
+ * null and can leave durable work untouched for the next scheduler tick.
+ * Release is compare-and-delete so an expired lock cannot be deleted by an
+ * old worker after another worker has acquired the same key.
+ */
+export async function withDistributedLock<T>(
+  name: string,
+  fn: () => Promise<T>,
+  options: { ttlMs?: number } = {},
+): Promise<T | null> {
+  const redis = getDistributedLockRedis();
+  if (!redis) return null;
+
+  const ttlMs = options.ttlMs ?? 10 * 60_000;
+  const key = `sgs:lock:${name}`;
+  const token = `${process.pid}:${Date.now()}:${Math.random().toString(36).slice(2)}`;
+  try {
+    const acquired = await redis.set(key, token, { nx: true, px: ttlMs });
+    if (acquired !== 'OK') return null;
+  } catch (error: any) {
+    console.error(`[DB] distributed lock unavailable: ${error?.message || error}`);
+    return null;
+  }
+
+  try {
+    return await fn();
+  } finally {
+    try {
+      await redis.eval(
+        'if redis.call("get", KEYS[1]) == ARGV[1] then return redis.call("del", KEYS[1]) else return 0 end',
+        [key],
+        [token],
+      );
+    } catch (error: any) {
+      // TTL remains the safety net if release cannot reach Redis.
+      console.error(`[DB] distributed lock release failed: ${error?.message || error}`);
+    }
+  }
+}
 // Log pool errors so they appear in production logs rather than crashing silently
 pool.on('error', (err) => {
   console.error('[DB Pool] Unexpected client error:', err.message);

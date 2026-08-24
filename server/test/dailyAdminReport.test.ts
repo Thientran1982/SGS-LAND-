@@ -5,6 +5,7 @@ const state = vi.hoisted(() => ({
   sendEmail: vi.fn(),
   verifyDelivery: vi.fn(),
   sendDailyReportDeliveryAlertEmail: vi.fn(),
+  lockCalls: 0,
 }));
 
 const query = vi.hoisted(() => vi.fn(async (sql: string, params: any[] = []) => {
@@ -33,6 +34,10 @@ const query = vi.hoisted(() => vi.fn(async (sql: string, params: any[] = []) => 
 vi.mock('../db', () => ({
   withRlsBypass: vi.fn(async (fn: (client: any) => Promise<unknown>) => fn({ query })),
   withTenantContext: vi.fn(async (_tenantId: string, fn: (client: any) => Promise<unknown>) => fn({ query })),
+  withDistributedLock: vi.fn(async (_name: string, fn: () => Promise<unknown>) => {
+    state.lockCalls++;
+    return fn();
+  }),
 }));
 
 vi.mock('../services/emailService', () => ({
@@ -50,7 +55,12 @@ vi.mock('../repositories/notificationRepository', () => ({
   },
 }));
 
-import { buildReportSummary, renderReportEmail, runDailyReport } from '../services/dailyAdminReportService';
+import {
+  buildReportSummary,
+  renderReportEmail,
+  replayInterruptedDailyReports,
+  runDailyReport,
+} from '../services/dailyAdminReportService';
 
 const metrics = {
   reportDate: '2026-08-24',
@@ -69,6 +79,7 @@ describe('daily admin report', () => {
     state.sendEmail.mockReset();
     state.verifyDelivery.mockReset().mockResolvedValue({ status: 'unknown', provider: 'brevo' });
     state.sendDailyReportDeliveryAlertEmail.mockReset().mockResolvedValue({ success: true, status: 'sent' });
+    state.lockCalls = 0;
   });
 
   it('keeps unavailable sources explicit instead of inventing zeroes', () => {
@@ -178,5 +189,30 @@ describe('daily admin report', () => {
     await runDailyReport('2026-08-24');
     expect(state.sendEmail).toHaveBeenCalledTimes(1);
     expect(state.report.status).toBe('sent');
+  });
+
+  it('allows only the lock holder to run a competing replay worker', async () => {
+    const db = await import('../db');
+    const lock = db.withDistributedLock as unknown as ReturnType<typeof vi.fn>;
+    let occupied = false;
+    lock.mockImplementation(async (_name: string, fn: () => Promise<unknown>) => {
+      if (occupied) return null;
+      occupied = true;
+      await new Promise(resolve => setTimeout(resolve, 5));
+      try {
+        return await fn();
+      } finally {
+        occupied = false;
+      }
+    });
+
+    const [first, second] = await Promise.all([
+      replayInterruptedDailyReports(),
+      replayInterruptedDailyReports(),
+    ]);
+
+    expect([first, second]).toContainEqual({ inspected: 0, replayed: 0, failed: 0 });
+    expect([first, second]).toContainEqual({ inspected: 1, replayed: 0, failed: 1 });
+    expect(lock).toHaveBeenCalledTimes(2);
   });
 });

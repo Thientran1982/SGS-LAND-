@@ -1,5 +1,5 @@
 import { PoolClient } from 'pg';
-import { withTenantContext, withRlsBypass } from '../db';
+import { withTenantContext, withRlsBypass, withDistributedLock } from '../db';
 import { emailService } from './emailService';
 import { logger } from '../middleware/logger';
 import { notificationRepository } from '../repositories/notificationRepository';
@@ -223,7 +223,7 @@ const REPLAY_STALE_MINUTES = 10;
  * lookup is always performed before sending, so a timeout cannot turn into a
  * duplicate. The report snapshot is reused; metrics are never recollected.
  */
-export async function replayInterruptedDailyReports(tenantId?: string): Promise<{ inspected: number; replayed: number; failed: number }> {
+async function replayInterruptedDailyReportsUnlocked(tenantId?: string): Promise<{ inspected: number; replayed: number; failed: number }> {
   const tenantClause = tenantId ? ' AND c.tenant_id=$1::uuid' : '';
   const candidates = await withRlsBypass(async client => (await client.query(`
     SELECT c.tenant_id AS "tenantId", c.delivery_key AS "deliveryKey",
@@ -311,6 +311,18 @@ export async function replayInterruptedDailyReports(tenantId?: string): Promise<
     }
   }
   return { inspected: candidates.length, replayed, failed };
+}
+
+/**
+ * Replay is scheduled independently by every application process. The lock
+ * covers discovery and processing, not just one delivery claim, so a second
+ * instance cannot race the first instance's candidate list.
+ */
+export async function replayInterruptedDailyReports(tenantId?: string): Promise<{ inspected: number; replayed: number; failed: number }> {
+  // Keep manual tenant replays mutually exclusive with the all-tenant
+  // scheduler as well; otherwise the two scopes could race on one delivery.
+  const result = await withDistributedLock('daily-report-replay', () => replayInterruptedDailyReportsUnlocked(tenantId));
+  return result ?? { inspected: 0, replayed: 0, failed: 0 };
 }
 
 const DAILY_REPORT_DELIVERY_KEY = /^daily-report:([0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}):(\d{4}-\d{2}-\d{2}):([^:]+@[^:]+)$/i;
