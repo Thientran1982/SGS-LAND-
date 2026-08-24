@@ -3241,21 +3241,20 @@ function ProjectCardBase({ project, isAdmin, isPartner, onEdit, onDelete, onAcce
                     ref={menuRef}
                     onClick={e => e.stopPropagation()}
                     style={{ position: 'fixed', top: menuPos.top, right: menuPos.right, zIndex: 9999 }}
-                    className="bg-[var(--bg-surface)] border border-[var(--glass-border)] rounded-xl shadow-xl py-1 min-w-[180px]"
+                    className="bg-[var(--bg-surface)] border border-[var(--glass-border)] rounded-xl shadow-xl overflow-hidden min-w-[180px]"
                 >
                     <button onClick={() => { setMenuOpen(false); onEdit(); }}
-                        className="w-full text-left px-3 py-2 text-xs text-[var(--text-secondary)] hover:bg-[var(--glass-surface)] flex items-center gap-2">
+                        className="w-full text-left px-3 py-2.5 text-xs text-[var(--text-secondary)] hover:bg-[var(--glass-surface-hover)] flex items-center gap-2 first:rounded-t-xl">
                         <svg className="w-3.5 h-3.5 text-sgs-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"/></svg>
                         {t('common.edit')}
                     </button>
                     <button onClick={() => { setMenuOpen(false); onAccess(); }}
-                        className="w-full text-left px-3 py-2 text-xs text-[var(--text-secondary)] hover:bg-[var(--glass-surface)] flex items-center gap-2">
+                        className="w-full text-left px-3 py-2.5 text-xs text-[var(--text-secondary)] hover:bg-[var(--glass-surface-hover)] flex items-center gap-2">
                         <svg className="w-3.5 h-3.5 text-sgs-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>
                         {t('project.tab_access')}
                     </button>
-                    <div className="border-t border-[var(--glass-border)] my-1" />
                     <button onClick={() => { setMenuOpen(false); onDelete(); }}
-                        className="w-full text-left px-3 py-2 text-xs text-rose-600 hover:bg-rose-50 flex items-center gap-2">
+                        className="w-full text-left px-3 py-2.5 text-xs text-rose-600 hover:bg-rose-50 flex items-center gap-2 last:rounded-b-xl">
                         <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
                         {t('common.delete')}
                     </button>
