@@ -29,7 +29,7 @@ export function getAdapter(provider: AiProvider): ProviderAdapter {
  * Neu provider cua model chua co key -> fallback ve Gemini (SAFE_MODEL_FALLBACK).
  */
 export async function generateWithPolicy(params: GenerateParams): Promise<GenerateResult> {
-  let model = params.model;
+  let model = ensureSafeModel(params.model);
   let provider = getProviderForModel(model);
 
   if (!isProviderConfigured(provider)) {

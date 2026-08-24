@@ -28,6 +28,7 @@ export interface ModelSpec {
   /** Ho tro che do 'thinking' (Gemini 2.5+/3.x) */
   supportsThinking?: boolean;
 }
+const OPENROUTER_GLM_MODEL = process.env.OPENROUTER_GLM_MODEL || 'z-ai/glm-5.3';
 
 /**
  * REGISTRY: khai bao 1 lan, dung o moi noi.
@@ -156,6 +157,8 @@ export const MODEL_COSTS: Record<string, number> = Object.fromEntries(
 /** Neu model null/deprecated -> tra ve fallback an toan; nguoc lai giu nguyen. */
 export function ensureSafeModel(model: string | undefined | null): string {
   if (!model) return SAFE_MODEL_FALLBACK;
+  // OpenRouter removed the old GLM 5.2 slug; keep existing tenant configs working.
+  if (model === 'z-ai/glm-5.2') return OPENROUTER_GLM_MODEL;
   const spec = MODEL_REGISTRY[model];
   if (spec && spec.deprecated) return SAFE_MODEL_FALLBACK;
   // Model la khong biet nhung khop tien to deprecated -> nang cap
@@ -167,6 +170,7 @@ export function ensureSafeModel(model: string | undefined | null): string {
 
 /** Xac dinh provider cua 1 model (de sau nay route sang SDK dung nha cung cap). */
 export function getProviderForModel(model: string): AiProvider {
+  if (model === 'z-ai/glm-5.2') return 'openrouter';
   return MODEL_REGISTRY[model]?.provider || DEFAULT_PROVIDER;
 }
 
@@ -220,8 +224,8 @@ Object.assign(MODEL_REGISTRY, {
   'grok-3-mini': { id: 'grok-3-mini', provider: 'xai' as AiProvider, costPer1k: 0.000500 },
   // ---- OpenRouter ----
   // Có thể đổi slug bằng OPENROUTER_GLM_MODEL nếu OpenRouter cập nhật catalog.
-  [process.env.OPENROUTER_GLM_MODEL || 'z-ai/glm-5.2']: {
-    id: process.env.OPENROUTER_GLM_MODEL || 'z-ai/glm-5.2',
+  [OPENROUTER_GLM_MODEL]: {
+    id: OPENROUTER_GLM_MODEL,
     provider: 'openrouter' as AiProvider,
     costPer1k: 0.001000,
   },
