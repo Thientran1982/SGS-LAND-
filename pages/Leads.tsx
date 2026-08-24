@@ -36,6 +36,17 @@ const stageKey = (stage: unknown): LeadStage => {
     return STAGE_CONFIG[normalized] ? normalized : LeadStage.NEW;
 };
 const stageLabel = (stage: unknown, t: (key: string) => string) => t(`stage.${stageKey(stage)}`);
+const tagLabel = (tag: string, t: (key: string) => string) => {
+    const normalized = tag.trim();
+    if (normalized.toLowerCase() === 'listing-lead') return t('leads.tag_listing_lead');
+    if (normalized.toLowerCase().startsWith('listing:')) {
+        return `${t('leads.tag_listing')}: ${normalized.slice('listing:'.length)}`;
+    }
+    if (normalized.toLowerCase().startsWith('code-')) {
+        return `${t('leads.tag_listing_code')}: ${normalized.slice('code-'.length)}`;
+    }
+    return normalized;
+};
 // Added pointer-events-none to icons to prevent them from becoming the event target
 const ICONS = {
     SEARCH: <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>,
@@ -250,7 +261,7 @@ const LeadRow = memo(({ lead, isSelected, onSelect, onClick, onProposal, onDupli
                             <div className="flex flex-wrap gap-1 mt-1">
                                 {lead.tags.slice(0, 3).map((tag: string) => (
                                     <span key={tag} className="px-1.5 py-0.5 text-2xs font-bold rounded-full bg-sgs-champagne text-sgs-primary border border-sgs-border dark:bg-sgs-primary/30 dark:text-sgs-text-muted dark:border-[var(--sgs-primary)] whitespace-nowrap">
-                                        {tag}
+                                        {tagLabel(tag, t)}
                                     </span>
                                 ))}
                                 {lead.tags.length > 3 && (
@@ -462,7 +473,7 @@ const KanbanCard = memo(({ lead, onClick, onDelete, onProposal, canDelete, t, fo
                 <div className="flex flex-wrap gap-1 mb-2.5">
                     {lead.tags.slice(0, 4).map((tag: string) => (
                         <span key={tag} className="px-1.5 py-0.5 text-2xs font-bold rounded-full bg-sgs-champagne text-sgs-primary border border-sgs-border whitespace-nowrap">
-                            {tag}
+                        {tagLabel(tag, t)}
                         </span>
                     ))}
                     {lead.tags.length > 4 && (
@@ -1389,7 +1400,7 @@ export const Leads: React.FC = () => {
                                                     <div className="flex flex-wrap gap-1 mt-1">
                                                         {lead.tags.slice(0, 3).map((tag: string) => (
                                                             <span key={tag} className="px-1.5 py-0.5 text-2xs font-bold rounded-full bg-sgs-champagne text-sgs-primary border border-sgs-border">
-                                                                {tag}
+                            {tagLabel(tag, t)}
                                                             </span>
                                                         ))}
                                                         {lead.tags.length > 3 && (
