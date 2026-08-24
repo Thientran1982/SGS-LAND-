@@ -17,6 +17,7 @@ import {
   sanitizeListingInput,
   describeDropped,
 } from '../services/listingFieldPolicy';
+import { ListingValidationError } from '../services/listingValidation';
 import { notificationRepository } from '../repositories/notificationRepository';
 import { storeFile } from '../services/storageService';
 
@@ -523,6 +524,12 @@ export function createListingRoutes(authenticateToken: any) {
 
       res.status(201).json(listing);
     } catch (error: any) {
+      if (error instanceof ListingValidationError) {
+        return res.status(400).json({ error: error.message });
+      }
+      if (error?.code === '23505') {
+        return res.status(409).json({ error: 'Mã BĐS đã tồn tại trong tenant hiện tại' });
+      }
       if (error?.code === 'PROJECT_TENANT_MISMATCH' || error?.code === '23503') {
         return res.status(400).json({ error: 'Dự án không thuộc tenant hiện tại' });
       }
@@ -913,6 +920,12 @@ export function createListingRoutes(authenticateToken: any) {
 
       res.json(listing);
     } catch (error: any) {
+      if (error instanceof ListingValidationError) {
+        return res.status(400).json({ error: error.message });
+      }
+      if (error?.code === '23505') {
+        return res.status(409).json({ error: 'Mã BĐS đã tồn tại trong tenant hiện tại' });
+      }
       if (error?.code === 'PROJECT_TENANT_MISMATCH' || error?.code === '23503') {
         return res.status(400).json({ error: 'Dự án không thuộc tenant hiện tại' });
       }
@@ -1017,7 +1030,10 @@ export function createListingRoutes(authenticateToken: any) {
       }).catch(() => {}));
 
       res.json(listing);
-    } catch (error) {
+    } catch (error: any) {
+      if (error instanceof ListingValidationError) {
+        return res.status(400).json({ error: error.message });
+      }
       console.error('Error changing listing status:', error);
       res.status(500).json({ error: 'Failed to change listing status' });
     }

@@ -4,6 +4,7 @@
  */
 import { withRlsBypass } from '../../db';
 import type { NormalizedListing } from '../ingest/types';
+import { validateMarketListing } from '../../services/listingValidation';
 
 export interface UpsertOutcome {
   action: 'inserted' | 'updated' | 'unchanged';
@@ -18,22 +19,15 @@ export interface UpsertOutcome {
  * geom is set from lat/lng via PostGIS ST_MakePoint when both are present.
  */
 export async function upsertListing(n: NormalizedListing): Promise<UpsertOutcome> {
+  validateMarketListing(n);
   return withRlsBypass(async (client) => {
-    const existing = await client.query<{ id: number; raw_html_hash: string | null }>(
-      `SELECT id, raw_html_hash
-         FROM market_listings
-        WHERE source = $1 AND external_listing_id = $2`,
-      [n.source, n.externalListingId],
-    );
-
     // Build geom expression only when coordinates exist.
     const hasCoords = n.lat != null && n.lng != null;
     const geomExpr = hasCoords
       ? 'ST_SetSRID(ST_MakePoint($10, $9), 4326)::geography'
       : 'NULL';
 
-    if (existing.rowCount === 0) {
-      const res = await client.query<{ id: number }>(
+    const res = await client.query<{ id: number; raw_html_hash: string | null; inserted: boolean }>(
         `INSERT INTO market_listings
            (source, region, external_listing_id, title, price, price_unit,
             area_m2, address_raw, lat, lng, geom, images, raw_html_hash,
@@ -41,44 +35,39 @@ export async function upsertListing(n: NormalizedListing): Promise<UpsertOutcome
          VALUES
            ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, ${geomExpr},
             $11::jsonb, $12, 0, TRUE, now(), now())
-         RETURNING id`,
+         ON CONFLICT (source, external_listing_id) DO UPDATE SET
+           title = EXCLUDED.title, price = EXCLUDED.price, price_unit = EXCLUDED.price_unit,
+           area_m2 = EXCLUDED.area_m2, address_raw = EXCLUDED.address_raw,
+           lat = EXCLUDED.lat, lng = EXCLUDED.lng, geom = EXCLUDED.geom,
+           images = EXCLUDED.images, raw_html_hash = EXCLUDED.raw_html_hash,
+           last_seen_at = now(), missed_crawls = 0, is_active = TRUE, updated_at = now()
+         WHERE market_listings.raw_html_hash IS DISTINCT FROM EXCLUDED.raw_html_hash
+         RETURNING id, raw_html_hash, (xmax = 0) AS inserted`,
         [
           n.source, n.region, n.externalListingId, n.title, n.price, n.priceUnit,
           n.areaM2, n.addressRaw, n.lat, n.lng, JSON.stringify(n.images), n.rawHash,
         ],
       );
-      return { action: 'inserted', id: res.rows[0].id };
-    }
-
-    const row = existing.rows[0];
-    if (row.raw_html_hash === n.rawHash) {
-      // Unchanged content: just mark it as seen again and reactivate if needed.
+      if (res.rows[0]) {
+        return { action: res.rows[0].inserted ? 'inserted' : 'updated', id: res.rows[0].id };
+      }
+      const unchanged = await client.query<{ id: number }>(
+        `SELECT id FROM market_listings WHERE source = $1 AND external_listing_id = $2`,
+        [n.source, n.externalListingId],
+      );
+      if (!unchanged.rows[0]) {
+        // A concurrent delete may remove the conflict row between the
+        // no-op upsert and this lookup. Surface it so the caller can retry
+        // without opening a second connection while this transaction is held.
+        throw new Error('Market listing disappeared during upsert; retry required');
+      }
       await client.query(
         `UPDATE market_listings
-            SET last_seen_at = now(), missed_crawls = 0, is_active = TRUE,
-                updated_at = now()
+            SET last_seen_at = now(), missed_crawls = 0, is_active = TRUE, updated_at = now()
           WHERE id = $1`,
-        [row.id],
+        [unchanged.rows[0].id],
       );
-      return { action: 'unchanged', id: row.id };
-    }
-
-    // Content changed: update fields + geom + timestamps.
-    await client.query(
-      `UPDATE market_listings
-          SET title = $2, price = $3, price_unit = $4, area_m2 = $5,
-              address_raw = $6, lat = $7, lng = $8,
-              geom = ${hasCoords ? 'ST_SetSRID(ST_MakePoint($8, $7), 4326)::geography' : 'NULL'},
-              images = $9::jsonb, raw_html_hash = $10,
-              last_seen_at = now(), missed_crawls = 0, is_active = TRUE,
-              updated_at = now()
-        WHERE id = $1`,
-      [
-        row.id, n.title, n.price, n.priceUnit, n.areaM2, n.addressRaw,
-        n.lat, n.lng, JSON.stringify(n.images), n.rawHash,
-      ],
-    );
-    return { action: 'updated', id: row.id };
+    return { action: 'unchanged', id: unchanged.rows[0].id };
   });
 }
 

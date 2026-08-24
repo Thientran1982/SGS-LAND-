@@ -17,6 +17,7 @@ import type {
   NormalizedListing,
   IngestResult,
 } from './types';
+import { validateMarketListing, ListingValidationError } from '../../services/listingValidation';
 
 /** Collapse whitespace and trim; return null for empty. */
 function clean(s?: string): string | null {
@@ -100,6 +101,14 @@ export async function ingestListing(raw: RawListingInput): Promise<IngestResult>
   };
   const rawHash = raw.contentHash || computeHash(base);
   const normalized: NormalizedListing = { ...base, rawHash };
+  try {
+    validateMarketListing(normalized);
+  } catch (error) {
+    if (error instanceof ListingValidationError) {
+      return { externalListingId: raw.externalListingId, action: 'skipped', reason: error.message, imagesStored: 0 };
+    }
+    throw error;
+  }
 
   // 4) Upsert (dedup by source+external_listing_id, change-detect by hash).
   const outcome = await upsertListing(normalized);

@@ -41,6 +41,12 @@ CREATE TABLE IF NOT EXISTS market_listings (
   created_at          TIMESTAMPTZ NOT NULL DEFAULT now(),
   updated_at          TIMESTAMPTZ NOT NULL DEFAULT now(),
   CONSTRAINT uq_market_listings_source_ext UNIQUE (source, external_listing_id)
+  ,CONSTRAINT market_price_ck CHECK (price IS NULL OR price > 0)
+  ,CONSTRAINT market_area_ck CHECK (area_m2 IS NULL OR area_m2 > 0)
+  ,CONSTRAINT market_coords_pair_ck CHECK ((lat IS NULL) = (lng IS NULL))
+  ,CONSTRAINT market_lat_ck CHECK (lat IS NULL OR lat BETWEEN 8 AND 24)
+  ,CONSTRAINT market_lng_ck CHECK (lng IS NULL OR lng BETWEEN 102 AND 110)
+  ,CONSTRAINT market_price_unit_ck CHECK (price_unit IS NULL OR upper(price_unit) IN ('VND','TY','TRIEU','VND/M2','VND_PER_M2'))
 );
 
 CREATE INDEX IF NOT EXISTS idx_market_listings_region      ON market_listings (region);

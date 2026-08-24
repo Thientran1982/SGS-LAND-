@@ -1,4 +1,5 @@
 import { BaseRepository, PaginatedResult, PaginationParams } from './baseRepository';
+import { validateListingFields } from '../services/listingValidation';
 
 /** Shared normalization used by valuation comparable provenance checks. */
 export function normalizeComparableLocation(value: unknown): string {
@@ -731,6 +732,7 @@ export class ListingRepository extends BaseRepository {
 
   async create(tenantId: string, data: Record<string, any>): Promise<any> {
     return this.withTenant(tenantId, async (client) => {
+      validateListingFields(data);
       let resolvedProjectId: string | null = data.projectId || data.project_id || null;
       const projectCode = data.projectCode || null;
       if (resolvedProjectId) {
@@ -820,6 +822,9 @@ export class ListingRepository extends BaseRepository {
 
   async update(tenantId: string, id: string, data: Record<string, any>): Promise<any | null> {
     return this.withTenant(tenantId, async (client) => {
+      const currentResult = await client.query('SELECT * FROM listings WHERE id = $1 AND tenant_id = $2', [id, tenantId]);
+      if (!currentResult.rows[0]) return null;
+      validateListingFields(data, currentResult.rows[0]);
       const updates: string[] = ['updated_at = CURRENT_TIMESTAMP'];
       const values: any[] = [];
       let paramIndex = 2;
