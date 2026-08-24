@@ -765,7 +765,7 @@ export const Inventory: React.FC = () => {
                             <input 
                                 value={search} 
                                 onChange={e => setSearch(e.target.value)} 
-                                className="w-full pl-10 pr-10 py-2 min-h-[40px] sm:py-2.5 sm:min-h-[44px] bg-[var(--glass-surface)] border border-[var(--glass-border)] rounded-xl text-sm focus:ring-2 focus:ring-[var(--sgs-primary)]/20 focus:border-sgs-primary focus:bg-[var(--bg-surface)] transition-all outline-none placeholder:text-[var(--text-muted)]" 
+                                 className="w-full pl-10 pr-10 h-10 bg-[var(--glass-surface)] border border-[var(--glass-border)] rounded-xl text-sm focus:ring-2 focus:ring-[var(--sgs-primary)]/20 focus:border-sgs-primary focus:bg-[var(--bg-surface)] transition-all outline-none placeholder:text-[var(--text-muted)]" 
                                 placeholder={t('inventory.search_hint')} 
                             />
                             {search && (
@@ -785,9 +785,9 @@ export const Inventory: React.FC = () => {
                         )}
                     </div>
                     <div ref={filtersRef} className="flex gap-2 overflow-x-auto pb-1 px-1 -mx-1 no-scrollbar items-center scroll-smooth cursor-grab active:cursor-grabbing">
-                        <div className="min-w-[116px] shrink-0"><Dropdown value={transactionFilter} onChange={(v) => setTransactionFilter(v as string)} options={transactionOptions} className="text-xs" /></div>
-                        <div className="min-w-[116px] shrink-0"><Dropdown value={typeFilter} onChange={(v) => setTypeFilter(v as string)} options={typeOptions} className="text-xs" /></div>
-                        <div className="min-w-[116px] shrink-0"><Dropdown value={statusFilter} onChange={(v) => setStatusFilter(v as string)} options={statusOptions} className="text-xs" /></div>
+                         <div className="w-fit min-w-0 shrink-0"><Dropdown value={transactionFilter} onChange={(v) => setTransactionFilter(v as string)} options={transactionOptions} variant="compact" /></div>
+                         <div className="w-fit min-w-0 shrink-0"><Dropdown value={typeFilter} onChange={(v) => setTypeFilter(v as string)} options={typeOptions} variant="compact" /></div>
+                         <div className="w-fit min-w-0 shrink-0"><Dropdown value={statusFilter} onChange={(v) => setStatusFilter(v as string)} options={statusOptions} variant="compact" /></div>
                         {/* View Switcher */}
                         <div className="flex bg-[var(--glass-surface-hover)] p-1 rounded-xl shrink-0">
                             <button onClick={() => setViewMode('GRID')} className={`p-1.5 rounded-lg transition-all ${viewMode === 'GRID' ? 'bg-[var(--bg-surface)] text-sgs-primary shadow-sm' : 'text-[var(--text-secondary)] hover:text-[var(--text-secondary)]'}`} title={t('inventory.view_grid')}>{ICONS.VIEW_GRID}</button>

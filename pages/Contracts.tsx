@@ -276,7 +276,7 @@ const Contracts: React.FC = () => {
                             placeholder={t('contracts.search_placeholder')}
                             value={search}
                             onChange={e => { setSearch(e.target.value); setPage(1); }}
-                            className="w-full pl-9 sm:pl-10 pr-10 py-2.5 min-h-[44px] bg-[var(--glass-surface)] border border-[var(--glass-border)] rounded-xl text-sm focus:ring-2 focus:ring-[var(--sgs-primary)]/20 focus:border-sgs-primary focus:bg-[var(--bg-surface)] transition-all outline-none placeholder:text-[var(--text-muted)]"
+                            className="w-full pl-10 pr-10 h-10 bg-[var(--glass-surface)] border border-[var(--glass-border)] rounded-xl text-sm focus:ring-2 focus:ring-[var(--sgs-primary)]/20 focus:border-sgs-primary focus:bg-[var(--bg-surface)] transition-all outline-none placeholder:text-[var(--text-muted)]"
                         />
                         {search && (
                             <div className="absolute right-2 inset-y-0 flex items-center">
@@ -301,7 +301,8 @@ const Contracts: React.FC = () => {
                                 { value: ContractType.DEPOSIT, label: t('contracts.type_DEPOSIT') },
                                 { value: ContractType.SALES, label: t('contracts.type_SALES') }
                             ]}
-                            className="flex-1 sm:flex-none sm:w-36"
+                             className="flex-1 sm:flex-none sm:w-36"
+                             variant="compact"
                         />
                         <Dropdown
                             value={statusFilter}
@@ -313,7 +314,8 @@ const Contracts: React.FC = () => {
                                 { value: ContractStatus.SIGNED, label: t('contracts.status_SIGNED') },
                                 { value: ContractStatus.CANCELLED, label: t('contracts.status_CANCELLED') }
                             ]}
-                            className="flex-1 sm:flex-none sm:w-36"
+                             className="flex-1 sm:flex-none sm:w-36"
+                             variant="compact"
                         />
                     </div>
                 </div>

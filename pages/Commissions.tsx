@@ -166,14 +166,16 @@ export const Commissions: React.FC = () => {
           value={fProjectId}
           onChange={v => { setPage(1); setFProjectId(v as string); }}
           placeholder="Tất cả dự án"
-          className="h-[36px] min-w-[180px]"
+           className="h-[36px] min-w-[180px]"
+           variant="compact"
           options={[{ value: '', label: 'Tất cả dự án' }, ...projects.map(p => ({ value: p.id, label: p.name }))]}
         />
         <Dropdown
           value={fStatus}
           onChange={v => { setPage(1); setFStatus(v as string); }}
           placeholder="Mọi trạng thái"
-          className="h-[36px] min-w-[160px]"
+           className="h-[36px] min-w-[160px]"
+           variant="compact"
           options={[
             { value: '',          label: 'Mọi trạng thái' },
             { value: 'PENDING',   label: STATUS_LABEL.PENDING },

@@ -739,7 +739,7 @@ export const AdminUsers: React.FC = () => {
                             {ICONS.SEARCH}
                         </div>
                         <input
-                            className="w-full pl-10 pr-10 py-2 min-h-[40px] bg-[var(--bg-surface)] border border-[var(--glass-border)] rounded-xl text-sm focus:ring-2 focus:ring-[var(--sgs-primary)]/20 focus:border-sgs-primary transition-all outline-none placeholder:text-[var(--text-muted)] shadow-sm"
+                            className="w-full pl-10 pr-10 h-10 bg-[var(--glass-surface)] border border-[var(--glass-border)] rounded-xl text-sm focus:ring-2 focus:ring-[var(--sgs-primary)]/20 focus:border-sgs-primary focus:bg-[var(--bg-surface)] transition-all outline-none placeholder:text-[var(--text-muted)]"
                             placeholder={t('admin.users.search_placeholder')}
                             value={search}
                             onChange={e => setSearch(e.target.value)}
@@ -758,11 +758,11 @@ export const AdminUsers: React.FC = () => {
                     </div>
                     {/* Dropdown lọc vai trò */}
                     <div className="w-32 sm:w-44 shrink-0">
-                        <Dropdown value={roleFilter} onChange={(v) => setRoleFilter(v as string)} options={roleOptions} className="text-xs" />
+                         <Dropdown value={roleFilter} onChange={(v) => setRoleFilter(v as string)} options={roleOptions} variant="compact" />
                     </div>
                     {/* Dropdown lọc trạng thái */}
                     <div className="w-28 sm:w-36 shrink-0">
-                        <Dropdown value={statusFilter} onChange={(v) => setStatusFilter(v as string)} options={statusOptions} className="text-xs" />
+                         <Dropdown value={statusFilter} onChange={(v) => setStatusFilter(v as string)} options={statusOptions} variant="compact" />
                     </div>
                 </div>
             </div>
