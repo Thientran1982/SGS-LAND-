@@ -1629,13 +1629,6 @@ export const ListingDetail: React.FC = () => {
                             ))}
                         </div>
                     )}
-                    {/* "View All" Button (Floating, visible on Mobile & Desktop) - Updated without ICON */}
-                    <button 
-                        onClick={() => { setLightboxIndex(0); setLightboxOpen(true); }}
-                        className="absolute bottom-4 right-4 z-20 bg-[var(--bg-surface)]/90 backdrop-blur-md hover:bg-[var(--bg-surface)] text-[var(--text-primary)] px-4 py-2 rounded-xl text-xs font-bold shadow-lg transition-all hover:scale-105 active:scale-95 border border-white/20"
-                    >
-                        {t('common.view_all')} ({images.length})
-                    </button>
                 </div>
                 {images.length > 1 && (
                     <div className="flex gap-2 p-3 overflow-x-auto no-scrollbar rounded-b-2xl bg-[var(--bg-elevated)]">
@@ -1992,12 +1985,6 @@ export const ListingDetail: React.FC = () => {
                                 {formatCompactNumber(listing.price)}
                                 <span className="text-lg font-bold text-[var(--text-tertiary)] ml-1">₫</span>
                             </div>
-                            <div className="text-xs text-[var(--text-secondary)] mt-0.5 tabular-nums">{formatCurrency(listing.price)}</div>
-                            {listing.area > 0 && listing.type !== PropertyType.PROJECT && (
-                                <div className="text-sm font-medium text-[var(--text-tertiary)] mt-1 italic">
-                                    ~ {formatUnitPrice(listing.price, listing.area, t)}
-                                </div>
-                            )}
                         </div>
                         {/* Hidden on mobile — replaced by the fixed bottom CTA bar (lg:hidden) */}
                         <div className="hidden lg:grid grid-cols-2 gap-2">

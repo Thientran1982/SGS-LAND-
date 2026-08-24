@@ -350,10 +350,25 @@ const MapView: React.FC<MapViewProps> = memo(({
             });
             L.control.zoom({ position: detailStyle ? 'topleft' : 'bottomright' }).addTo(map);
             // Use the same neutral OSM treatment as the public Next.js marketplace map.
-            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+             const osmLayer = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
                 subdomains: 'abcd', maxZoom: 20,
                 attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OSM</a>',
-            }).addTo(map);
+             });
+             // Some embedded/proxied browsers intermittently block OSM tiles.
+             // Keep a neutral Carto base layer ready so the detail map never
+             // degrades to a blank beige panel when the primary tile host fails.
+             const fallbackLayer = L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
+                 subdomains: 'abcd', maxZoom: 20,
+                 attribution: '&copy; OpenStreetMap contributors &copy; CARTO',
+             });
+             let fallbackAdded = false;
+             osmLayer.on('tileerror', () => {
+                 if (!fallbackAdded && mapInst.current === map) {
+                     fallbackAdded = true;
+                     fallbackLayer.addTo(map);
+                 }
+             });
+             osmLayer.addTo(map);
             const lg = L.layerGroup().addTo(map);
             layerGroup.current = lg;
             mapInst.current    = map;
