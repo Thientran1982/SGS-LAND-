@@ -31,6 +31,11 @@ const STAGE_CONFIG: Record<LeadStage, { color: string, bg: string, border: strin
     [LeadStage.LOST]: { color: 'text-[var(--text-tertiary)]', bg: 'bg-[var(--glass-surface-hover)]', border: 'border-[var(--glass-border)]' },
     [LeadStage.MANUAL]: { color: 'text-slate-700', bg: 'bg-slate-50', border: 'border-slate-200' },
 };
+const stageKey = (stage: unknown): LeadStage => {
+    const normalized = String(stage || '').toUpperCase() as LeadStage;
+    return STAGE_CONFIG[normalized] ? normalized : LeadStage.NEW;
+};
+const stageLabel = (stage: unknown, t: (key: string) => string) => t(`stage.${stageKey(stage)}`);
 // Added pointer-events-none to icons to prevent them from becoming the event target
 const ICONS = {
     SEARCH: <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>,
@@ -215,7 +220,7 @@ const LeadRow = memo(({ lead, isSelected, onSelect, onClick, onProposal, onDupli
     const paddingY = DENSITY_STYLES[density as RowDensity] || DENSITY_STYLES.normal;
     const scoreValue = lead.score?.score || 0;
     const scoreGrade = lead.score?.grade || 'C';
-    const stageStyle = STAGE_CONFIG[lead.stage as LeadStage] || STAGE_CONFIG[LeadStage.NEW];
+    const stageStyle = STAGE_CONFIG[stageKey(lead.stage)];
     return (
         <tr 
             onClick={() => onClick(lead)}
@@ -277,7 +282,7 @@ const LeadRow = memo(({ lead, isSelected, onSelect, onClick, onProposal, onDupli
             {visibleColumns.has('stage') && (
                 <td className={`px-4 ${paddingY}`}>
                     <span className={`inline-flex items-center px-2 py-0.5 rounded text-2xs font-bold border uppercase tracking-wider whitespace-nowrap ${stageStyle.bg} ${stageStyle.color} ${stageStyle.border}`}>
-                        {t(`stage.${lead.stage}`)}
+                        {stageLabel(lead.stage, t)}
                     </span>
                 </td>
             )}            
@@ -805,7 +810,7 @@ export const Leads: React.FC = () => {
             notify(e.message || t('common.error'), 'error');
         }
     };
-    const stageOptions = useMemo(() => [{ value: 'ALL', label: t('leads.stage') }, ...Object.values(LeadStage).map(s => ({ value: s, label: t(`stage.${s}`) }))], [t]);
+    const stageOptions = useMemo(() => [{ value: 'ALL', label: t('leads.stage') }, ...Object.values(LeadStage).map(s => ({ value: s, label: stageLabel(s, t) }))], [t]);
     const sourceOptions = useMemo(() => [{ value: 'ALL', label: t('leads.source') }, ...LEAD_SOURCES.map(s => ({ value: s, label: formatSource(s, t) }))], [t]);
     const fileInputRef = useRef<HTMLInputElement>(null);
     const handleExportExcel = async () => {
@@ -849,7 +854,7 @@ export const Leads: React.FC = () => {
                     email: lead.email || '',
                     address: lead.address || '',
                     source: lead.source,
-                    stage: t(`stage.${lead.stage}`),
+                    stage: stageLabel(lead.stage, t),
                     tags: Array.isArray(lead.tags) ? lead.tags.join(', ') : (lead.tags || ''),
                     notes: lead.notes || '',
                     score: lead.score?.score || 0,
@@ -1343,7 +1348,7 @@ export const Leads: React.FC = () => {
                                 return (
                                     <div key={stage} className="min-w-[85vw] md:min-w-[320px] w-[85vw] md:w-[320px] flex-shrink-0 flex flex-col h-full bg-[var(--glass-surface)] rounded-2xl border border-[var(--glass-border)] snap-center">
                                         <div className={`p-3 border-b border-[var(--glass-border)] flex justify-between items-center rounded-t-2xl ${style.bg}`}>
-                                            <h3 className={`text-xs font-bold uppercase tracking-wider ${style.color}`}>{t(`stage.${stage}`)}</h3>
+                                        <h3 className={`text-xs font-bold uppercase tracking-wider ${style.color}`}>{stageLabel(stage, t)}</h3>
                                             <span className="text-xs2 font-bold bg-[var(--bg-surface)] px-2 py-0.5 rounded-full text-[var(--text-tertiary)] shadow-sm border border-[var(--glass-border)]">{groupedLeads[stage]?.length || 0}</span>
                                         </div>
                                         <div className="flex-1 overflow-y-auto p-2 no-scrollbar min-h-0">
@@ -1394,8 +1399,8 @@ export const Leads: React.FC = () => {
                                                 )}
                                             </div>
                                         </div>
-                                        <span className={`text-[10px] px-2 py-0.5 rounded-full font-bold uppercase border ${STAGE_CONFIG[lead.stage].bg} ${STAGE_CONFIG[lead.stage].color} ${STAGE_CONFIG[lead.stage].border}`}>
-                                            {t(`stage.${lead.stage}`)}
+                                        <span className={`text-[10px] px-2 py-0.5 rounded-full font-bold uppercase border ${STAGE_CONFIG[stageKey(lead.stage)].bg} ${STAGE_CONFIG[stageKey(lead.stage)].color} ${STAGE_CONFIG[stageKey(lead.stage)].border}`}>
+                                            {stageLabel(lead.stage, t)}
                                         </span>
                                     </div>
 
