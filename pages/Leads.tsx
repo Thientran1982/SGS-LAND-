@@ -239,9 +239,6 @@ const LeadRow = memo(({ lead, isSelected, onSelect, onClick, onProposal, onDupli
             {/* Sticky Name (Left 50px) */}
             <td className={`px-4 ${paddingY} sticky left-[50px] z-10 transition-colors shadow-[2px_0_5px_-2px_rgba(0,0,0,0.05)] ${stickyClass} min-w-[220px]`}>
                 <div className="flex items-center gap-3">
-                    <div className="w-8 h-8 rounded-full bg-[var(--glass-surface-hover)] dark:bg-slate-800 flex items-center justify-center text-xs font-bold text-[var(--text-tertiary)] dark:text-slate-400 border border-[var(--glass-border)] dark:border-slate-700 shrink-0">
-                        {lead.name.charAt(0).toUpperCase()}
-                    </div>
                     <div>
                         <div className="font-bold text-[var(--text-primary)] dark:text-slate-200 text-sm whitespace-nowrap">{lead.name}</div>
                         {lead.tags && lead.tags.length > 0 && (
@@ -287,9 +284,6 @@ const LeadRow = memo(({ lead, isSelected, onSelect, onClick, onProposal, onDupli
             {visibleColumns.has('source') && (
                 <td className={`px-4 ${paddingY}`}>
                     <div className="flex items-center gap-1.5 text-xs font-medium text-[var(--text-secondary)] dark:text-slate-300">
-                        <span className="text-[var(--text-secondary)]">
-                            {getSourceIcon(lead.source)}
-                        </span>
                         {formatSource(lead.source, t)}
                     </div>
                 </td>
@@ -309,10 +303,7 @@ const LeadRow = memo(({ lead, isSelected, onSelect, onClick, onProposal, onDupli
             )}
             {visibleColumns.has('owner') && (
                 <td className={`px-4 ${paddingY} text-xs text-[var(--text-tertiary)] dark:text-slate-400 whitespace-nowrap`}>
-                    <div className="flex items-center gap-1.5">
-                        {ICONS.USER}
-                        {lead.assignedToName || users.find((u: any) => u.value === lead.assignedTo)?.label || t('inbox.unassigned')}
-                    </div>
+                    {lead.assignedToName || users.find((u: any) => u.value === lead.assignedTo)?.label || t('inbox.unassigned')}
                 </td>
             )}
             {visibleColumns.has('createdAt') && (
@@ -458,7 +449,6 @@ const KanbanCard = memo(({ lead, onClick, onDelete, onProposal, canDelete, t, fo
             <div className="flex items-center justify-between mb-2.5">
                 <span className="text-xs text-[var(--text-tertiary)] font-mono truncate flex-1 mr-2">{lead.phone}</span>
                 <span className="inline-flex items-center gap-1 text-xs2 font-bold px-1.5 py-0.5 rounded bg-[var(--glass-surface-hover)] text-[var(--text-tertiary)] shrink-0">
-                    {getSourceIcon(lead.source)}
                     {formatSource(lead.source, t)}
                 </span>
             </div>
@@ -480,8 +470,7 @@ const KanbanCard = memo(({ lead, onClick, onDelete, onProposal, canDelete, t, fo
             {/* Footer: date + assignee */}
             <div className="flex justify-between items-center text-xs2 text-[var(--text-secondary)] mt-2.5 pt-2.5 border-t border-[var(--glass-border)]">
                 <span>{formatDate(lead.createdAt)}</span>
-                <span className="font-medium text-[var(--text-tertiary)] flex items-center gap-1">
-                    {ICONS.USER}
+                <span className="font-medium text-[var(--text-tertiary)]">
                     {lead.assignedToName || users.find(u => u.value === lead.assignedTo)?.label || t('inbox.unassigned')}
                 </span>
             </div>
@@ -1169,19 +1158,17 @@ export const Leads: React.FC = () => {
                         />
                         <button 
                             onClick={() => fileInputRef.current?.click()} 
-                            className="flex items-center gap-1.5 px-3 py-2 bg-[var(--bg-surface)] border border-[var(--glass-border)] text-[var(--text-secondary)] font-bold rounded-xl text-xs shadow-sm hover:bg-[var(--glass-surface)] transition-all whitespace-nowrap active:scale-95 shrink-0"
+                            className="flex items-center gap-1 px-2 py-2 bg-[var(--bg-surface)] border border-[var(--glass-border)] text-[var(--text-secondary)] font-bold rounded-xl text-xs shadow-sm hover:bg-[var(--glass-surface)] transition-all whitespace-nowrap active:scale-95 shrink-0"
                             title={t('leads.import_excel')}
                         >
                             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" /></svg>
-                            <span className="hidden sm:inline">{t('leads.import_excel')}</span>
                         </button>
                         <button 
                             onClick={handleExportExcel} 
-                            className="flex items-center gap-1.5 px-3 py-2 bg-[var(--bg-surface)] border border-[var(--glass-border)] text-[var(--text-secondary)] font-bold rounded-xl text-xs shadow-sm hover:bg-[var(--glass-surface)] transition-all whitespace-nowrap active:scale-95 shrink-0"
+                            className="flex items-center gap-1 px-2 py-2 bg-[var(--bg-surface)] border border-[var(--glass-border)] text-[var(--text-secondary)] font-bold rounded-xl text-xs shadow-sm hover:bg-[var(--glass-surface)] transition-all whitespace-nowrap active:scale-95 shrink-0"
                             title={t('leads.export_excel')}
                         >
                             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" /></svg>
-                            <span className="hidden sm:inline">{t('leads.export_excel')}</span>
                         </button>
                         <button onClick={() => setIsCreateModalOpen(true)} className="hidden md:flex items-center gap-2 px-4 py-2 bg-sgs-primary-deep text-white font-bold rounded-xl text-xs shadow-lg hover:shadow-xl hover:-translate-y-0.5 transition-all whitespace-nowrap active:scale-95 shrink-0">
                             {ICONS.ADD} {t('common.add_new')}
@@ -1201,28 +1188,28 @@ export const Leads: React.FC = () => {
                     </div>
                 )}
                 <div className="flex items-center gap-2 px-2.5 md:px-3 shrink-0 first:pl-0">
-                    <div className="p-1 bg-blue-50 text-blue-500 rounded-md shrink-0">
+                    <div className="hidden p-1 bg-blue-50 text-blue-500 rounded-md shrink-0">
                         <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" /></svg>
                     </div>
                     <span className="text-xs3 text-[var(--text-tertiary)] whitespace-nowrap">{t('leads.total_leads')}</span>
                     <span className="text-sm font-black text-[var(--text-primary)]">{metrics.total}</span>
                 </div>
                 <div className="flex items-center gap-2 px-2.5 md:px-3 shrink-0">
-                    <div className="p-1 bg-sgs-champagne text-sgs-primary rounded-md shrink-0">
+                    <div className="hidden p-1 bg-sgs-champagne text-sgs-primary rounded-md shrink-0">
                         <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" /></svg>
                     </div>
                     <span className="text-xs3 text-[var(--text-tertiary)] whitespace-nowrap" title={t('leads.new_leads_tooltip')}>{t('leads.new_leads')}</span>
                     <span className="text-sm font-black text-sgs-primary" title={t('leads.new_leads_tooltip')}>{metrics.newCount}</span>
                 </div>
                 <div className="flex items-center gap-2 px-2.5 md:px-3 shrink-0">
-                    <div className="p-1 bg-sgs-champagne text-sgs-verified rounded-md shrink-0">
+                    <div className="hidden p-1 bg-sgs-champagne text-sgs-verified rounded-md shrink-0">
                         <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
                     </div>
                     <span className="text-xs3 text-[var(--text-tertiary)] whitespace-nowrap" title={t('leads.win_rate_tooltip')}>{t('leads.win_rate')}</span>
                     <span className="text-sm font-black text-sgs-verified" title={`${metrics.wonCount} / ${metrics.wonCount + metrics.lostCount}`}>{metrics.winRate}%</span>
                 </div>
                 <div className="flex items-center gap-2 px-2.5 md:px-3 shrink-0">
-                    <div className="p-1 bg-amber-50 text-sgs-accent-text rounded-md shrink-0">
+                    <div className="hidden p-1 bg-amber-50 text-sgs-accent-text rounded-md shrink-0">
                         <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z" /></svg>
                     </div>
                     <span className="text-xs3 text-[var(--text-tertiary)] whitespace-nowrap">{t('leads.avg_score')}</span>
@@ -1388,13 +1375,9 @@ export const Leads: React.FC = () => {
                                 >
                                     <div className="flex justify-between items-start mb-3">
                                         <div className="flex items-center gap-3">
-                                            <div className="w-10 h-10 rounded-full bg-[var(--glass-surface)] flex items-center justify-center text-sm font-bold text-[var(--text-tertiary)] border border-[var(--glass-border)]">
-                                                {lead.name.charAt(0).toUpperCase()}
-                                            </div>
                                             <div>
                                                 <div className="font-bold text-[var(--text-primary)] text-sm">{lead.name}</div>
                                                 <div className="text-xs2 text-[var(--text-secondary)] font-medium flex items-center gap-1">
-                                                    {getSourceIcon(lead.source)}
                                                     {formatSource(lead.source, t)} • {formatDate(lead.createdAt)}
                                                 </div>
                                                 {lead.tags && lead.tags.length > 0 && (
