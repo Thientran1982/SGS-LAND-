@@ -137,6 +137,7 @@ export const ListingActionMenu = memo(({ listing, onEdit, onDelete, onCopy, onDu
     const buttonRef = useRef<HTMLButtonElement>(null);
     const toggleMenu = (e: React.MouseEvent) => {
         e.stopPropagation();
+        e.preventDefault();
         if (isOpen) {
             setIsOpen(false);
         } else if (buttonRef.current) {
@@ -178,11 +179,11 @@ export const ListingActionMenu = memo(({ listing, onEdit, onDelete, onCopy, onDu
                     style={{ top: coords.top ?? 'auto', bottom: coords.bottom ?? 'auto', left: coords.left }}
                     onClick={(e) => e.stopPropagation()}
                 >
-                    <button onClick={(e) => { e.stopPropagation(); setIsOpen(false); onEdit(); }} className="w-full text-left px-4 py-2.5 text-xs font-bold text-[var(--text-secondary)] dark:text-slate-300 hover:bg-[var(--glass-surface)] dark:hover:bg-slate-800 flex items-center gap-2">{LISTING_ICONS.EDIT} {t('inventory.action_edit')}</button>
-                    {onCopy && <button onClick={(e) => { e.stopPropagation(); handleCopyCode(); }} className="w-full text-left px-4 py-2.5 text-xs font-bold text-[var(--text-secondary)] dark:text-slate-300 hover:bg-[var(--glass-surface)] dark:hover:bg-slate-800 flex items-center gap-2">{LISTING_ICONS.COPY} {t('inventory.action_copy_code')}</button>}
-                    <button onClick={(e) => { e.stopPropagation(); setIsOpen(false); onDuplicate(); }} className="w-full text-left px-4 py-2.5 text-xs font-bold text-[var(--text-secondary)] dark:text-slate-300 hover:bg-[var(--glass-surface)] dark:hover:bg-slate-800 flex items-center gap-2">{LISTING_ICONS.DUPLICATE} {t('common.duplicate')}</button>
+                    <button onClick={(e) => { e.stopPropagation(); e.preventDefault(); setIsOpen(false); onEdit(); }} className="w-full text-left px-4 py-2.5 text-xs font-bold text-[var(--text-secondary)] dark:text-slate-300 hover:bg-[var(--glass-surface)] dark:hover:bg-slate-800 flex items-center gap-2">{LISTING_ICONS.EDIT} {t('inventory.action_edit')}</button>
+                    {onCopy && <button onClick={(e) => { e.stopPropagation(); e.preventDefault(); handleCopyCode(); }} className="w-full text-left px-4 py-2.5 text-xs font-bold text-[var(--text-secondary)] dark:text-slate-300 hover:bg-[var(--glass-surface)] dark:hover:bg-slate-800 flex items-center gap-2">{LISTING_ICONS.COPY} {t('inventory.action_copy_code')}</button>}
+                    <button onClick={(e) => { e.stopPropagation(); e.preventDefault(); setIsOpen(false); onDuplicate(); }} className="w-full text-left px-4 py-2.5 text-xs font-bold text-[var(--text-secondary)] dark:text-slate-300 hover:bg-[var(--glass-surface)] dark:hover:bg-slate-800 flex items-center gap-2">{LISTING_ICONS.DUPLICATE} {t('common.duplicate')}</button>
                     <div className="h-px bg-[var(--glass-surface)] dark:bg-slate-800 my-1"></div>
-                    <button onClick={(e) => { e.stopPropagation(); setIsOpen(false); onDelete(); }} className="w-full text-left px-4 py-2.5 text-xs font-bold text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-900/20 flex items-center gap-2">{LISTING_ICONS.TRASH} {t('inventory.action_delete')}</button>
+                    <button onClick={(e) => { e.stopPropagation(); e.preventDefault(); setIsOpen(false); onDelete(); }} className="w-full text-left px-4 py-2.5 text-xs font-bold text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-900/20 flex items-center gap-2">{LISTING_ICONS.TRASH} {t('inventory.action_delete')}</button>
                 </div>,
                 document.body
             )}
