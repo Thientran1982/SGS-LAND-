@@ -1,0 +1,173 @@
+import { PoolClient } from 'pg';
+import { withTenantContext, withRlsBypass } from '../db';
+import { emailService } from './emailService';
+import { logger } from '../middleware/logger';
+
+export const REPORT_TIME_ZONE = 'Asia/Ho_Chi_Minh';
+const MISSING = 'chưa có dữ liệu';
+
+export interface DailyReportMetrics {
+  reportDate: string;
+  leads: { new: number | null; byStage: Record<string, number>; bySource: Record<string, number> };
+  brokers: { active: number | null; assignedLeads: number | null; top: Array<{ name: string; leads: number }> };
+  listings: { new: number | null; priceUpdated: number | null; topViewed: Array<{ title: string; views: number }> };
+  tasks: { created: number | null; overdue: number | null; completed: number | null };
+  minh: { conversations: number | null; averageCsat: number | null; unanswered: number | null };
+  geoSeo: { available: false; note: string };
+  warnings: { count: number | null; notable: string[] };
+}
+
+export interface DailyReportSummary extends DailyReportMetrics {
+  overview: Array<{ label: string; value: number | string }>;
+  comparisons: Record<string, { yesterday: number | null; sevenDayAverage: number | null }>;
+  dataNotes: string[];
+}
+
+function vnDate(date = new Date()): string {
+  return new Intl.DateTimeFormat('en-CA', { timeZone: REPORT_TIME_ZONE }).format(date);
+}
+function dateParts(date: string) {
+  return { start: `${date} 00:00:00+07`, end: `${date} 00:00:00+07` };
+}
+function safeNumber(value: any): number { return Number(value || 0); }
+function queryDateRange(column: string) {
+  return `${column} >= $2::timestamptz AND ${column} < ($2::date + INTERVAL '1 day')`;
+}
+
+async function optional<T>(client: PoolClient, sql: string, params: any[], fallback: T): Promise<T> {
+  try { const result = await client.query(sql, params); return (result.rows[0] as T) ?? fallback; }
+  catch (err: any) {
+    if (!/does not exist|undefined column/i.test(err?.message || '')) logger.warn(`[DailyReport] optional source unavailable: ${err.message}`);
+    return fallback;
+  }
+}
+
+export async function collectDailyMetrics(tenantId: string, reportDate: string): Promise<DailyReportMetrics> {
+  const { start } = dateParts(reportDate);
+  return withTenantContext(tenantId, async (client) => {
+    const lead = await optional(client, `SELECT COUNT(*)::int AS new FROM leads
+      WHERE tenant_id=$1 AND ${queryDateRange('created_at')}`, [tenantId, start], { new: null });
+    const leadStages = await optional(client, `SELECT COALESCE(jsonb_object_agg(COALESCE(stage,'UNKNOWN'), count),'{}') AS stages
+      FROM (SELECT stage, COUNT(*)::int AS count FROM leads WHERE tenant_id=$1 GROUP BY stage) s`,
+      [tenantId], { stages: {} });
+    const leadSources = await optional(client, `SELECT COALESCE(jsonb_object_agg(COALESCE(source,'UNKNOWN'), count),'{}') AS sources
+      FROM (SELECT source, COUNT(*)::int AS count FROM leads WHERE tenant_id=$1 AND ${queryDateRange('created_at')} GROUP BY source) s`,
+      [tenantId, start], { sources: {} });
+    const broker = await optional(client, `SELECT COUNT(DISTINCT assigned_to) FILTER (WHERE assigned_to IS NOT NULL)::int AS active,
+      COUNT(*) FILTER (WHERE assigned_to IS NOT NULL)::int AS assigned FROM leads WHERE tenant_id=$1 AND ${queryDateRange('created_at')}`,
+      [tenantId, start], { active: null, assigned: null });
+    const topBrokers = await client.query(`SELECT COALESCE(u.name,u.email,'Không rõ') AS name, COUNT(l.id)::int AS leads
+      FROM leads l LEFT JOIN users u ON u.id=l.assigned_to AND u.tenant_id=$1
+      WHERE l.tenant_id=$1 AND ${queryDateRange('l.created_at')} GROUP BY u.name,u.email ORDER BY leads DESC LIMIT 5`, [tenantId, start]);
+    const listings = await optional(client, `SELECT
+      COUNT(*) FILTER (WHERE ${queryDateRange('created_at')})::int AS new,
+      COUNT(*) FILTER (WHERE updated_at >= $2::timestamptz AND updated_at < ($2::date + INTERVAL '1 day') AND updated_at > created_at)::int AS price_updated
+      FROM listings WHERE tenant_id=$1`, [tenantId, start], { new: null, price_updated: null });
+    const tasks = await optional(client, `SELECT
+      COUNT(*) FILTER (WHERE ${queryDateRange('created_at')})::int AS created,
+      COUNT(*) FILTER (WHERE due_date < NOW() AND status NOT IN ('DONE','COMPLETED','CANCELLED'))::int AS overdue,
+      COUNT(*) FILTER (WHERE status IN ('DONE','COMPLETED') AND updated_at >= $2::timestamptz AND updated_at < ($2::date + INTERVAL '1 day'))::int AS completed
+      FROM tasks WHERE tenant_id=$1`, [tenantId, start], { created: null, overdue: null, completed: null });
+    const interactions = await optional(client, `SELECT COUNT(*) FILTER (WHERE ${queryDateRange('timestamp')} AND COALESCE(channel,'') IN ('WEB_CHAT','WEB','ZALO','FACEBOOK'))::int AS conversations,
+      AVG(NULLIF((metadata->>'support_csat')::numeric,0)) FILTER (WHERE ${queryDateRange('timestamp')} AND metadata ? 'support_csat') AS csat
+      FROM interactions WHERE tenant_id=$1`, [tenantId, start], { conversations: null, csat: null });
+    const unanswered = await optional(client, `SELECT COUNT(*)::int AS count FROM agent_human_questions WHERE tenant_id=$1 AND status='OPEN' AND ${queryDateRange('created_at')}`, [tenantId, start], { count: null });
+    const warnings = await optional(client, `SELECT COUNT(*)::int AS count FROM error_logs WHERE tenant_id=$1 AND ${queryDateRange('created_at')}`, [tenantId, start], { count: null });
+    return {
+      reportDate, leads: { new: lead.new == null ? null : safeNumber(lead.new), byStage: leadStages.stages || {}, bySource: leadSources.sources || {} },
+      brokers: { active: broker.active == null ? null : safeNumber(broker.active), assignedLeads: broker.assigned == null ? null : safeNumber(broker.assigned), top: topBrokers.rows },
+      listings: { new: listings.new == null ? null : safeNumber(listings.new), priceUpdated: listings.price_updated == null ? null : safeNumber(listings.price_updated), topViewed: [] },
+      tasks: { created: tasks.created == null ? null : safeNumber(tasks.created), overdue: tasks.overdue == null ? null : safeNumber(tasks.overdue), completed: tasks.completed == null ? null : safeNumber(tasks.completed) },
+      minh: { conversations: interactions.conversations == null ? null : safeNumber(interactions.conversations), averageCsat: interactions.csat == null ? null : Number(interactions.csat), unanswered: unanswered.count == null ? null : safeNumber(unanswered.count) },
+      geoSeo: { available: false, note: MISSING },
+      warnings: { count: warnings.count == null ? null : safeNumber(warnings.count), notable: [] },
+    };
+  });
+}
+
+export function buildReportSummary(metrics: DailyReportMetrics): DailyReportSummary {
+  const dataNotes = [`GEO/SEO: ${MISSING}`, 'Lượt xem/tìm kiếm dự án: chưa có nguồn dữ liệu thống nhất'];
+  return {
+    ...metrics,
+    overview: [
+      { label: 'Lead mới', value: metrics.leads.new ?? MISSING },
+      { label: 'Tin đăng mới', value: metrics.listings.new ?? MISSING },
+      { label: 'Công việc hoàn thành', value: metrics.tasks.completed ?? MISSING },
+      { label: 'Câu hỏi Minh chờ xử lý', value: metrics.minh.unanswered ?? MISSING },
+    ],
+    comparisons: {},
+    dataNotes,
+  };
+}
+
+function esc(value: unknown): string {
+  return String(value ?? '').replace(/[&<>"']/g, c => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c]!));
+}
+export function renderReportEmail(summary: DailyReportSummary): { subject: string; html: string; text: string } {
+  const [y,m,d] = summary.reportDate.split('-');
+  const subject = `[SGSLand] Báo cáo ngày ${d}/${m}/${y}`;
+  const row = (label: string, value: unknown) => `<tr><td style="padding:7px;border-bottom:1px solid #e2e8f0">${esc(label)}</td><td style="padding:7px;border-bottom:1px solid #e2e8f0;text-align:right;font-weight:bold">${esc(value)}</td></tr>`;
+  const html = `<div style="font-family:Arial,sans-serif;max-width:620px;color:#1e293b"><h2>SGSLand — Báo cáo vận hành ngày ${esc(d+'/'+m+'/'+y)}</h2>
+    <table style="width:100%;border-collapse:collapse">${summary.overview.map(x => row(x.label,x.value)).join('')}</table>
+    <h3>Leads & môi giới F1</h3>${row('Lead theo trạng thái', JSON.stringify(summary.leads.byStage))}${row('Lead theo nguồn', JSON.stringify(summary.leads.bySource))}${row('Môi giới hoạt động', summary.brokers.active)}${row('Lead được phân bổ', summary.brokers.assignedLeads)}
+    <h3>Listing & công việc</h3>${row('Tin đăng mới', summary.listings.new)}${row('Tin cập nhật giá', summary.listings.priceUpdated)}${row('Task tạo mới', summary.tasks.created)}${row('Task quá hạn', summary.tasks.overdue)}
+    <h3>Minh & cảnh báo</h3>${row('Hội thoại', summary.minh.conversations)}${row('CSAT trung bình', summary.minh.averageCsat ?? MISSING)}${row('Cảnh báo hệ thống', summary.warnings.count)}<p style="color:#64748b">${summary.dataNotes.map(esc).join('<br>')}</p></div>`;
+  const text = [subject, ...summary.overview.map(x => `${x.label}: ${x.value}`), `GEO/SEO: ${MISSING}`, `Cảnh báo: ${summary.warnings.count ?? MISSING}`].join('\n');
+  return { subject, html, text };
+}
+
+async function adminsByTenant(): Promise<Array<{ tenantId: string; email: string }>> {
+  return withRlsBypass(async client => {
+    const result = await client.query(`SELECT tenant_id AS "tenantId", email FROM users WHERE role IN ('ADMIN','SUPER_ADMIN') AND status='ACTIVE' AND email IS NOT NULL ORDER BY tenant_id,email`);
+    return result.rows;
+  });
+}
+
+export async function runDailyReport(reportDate = vnDate(), force = false) {
+  const recipients = await adminsByTenant();
+  const byTenant = new Map<string, string[]>();
+  for (const r of recipients) byTenant.set(r.tenantId, [...(byTenant.get(r.tenantId) || []), r.email]);
+  const results: any[] = [];
+  for (const [tenantId, emails] of byTenant) {
+    const result = await withTenantContext(tenantId, async client => {
+      const existing = await client.query('SELECT * FROM agent_report_log WHERE tenant_id=$1 AND report_date=$2::date', [tenantId, reportDate]);
+      if (existing.rows[0]?.status === 'sent' && !force) return { tenantId, status: 'skipped', reason: 'already_sent' };
+      const summary = buildReportSummary(await collectDailyMetrics(tenantId, reportDate));
+      await client.query(`INSERT INTO agent_report_log(tenant_id,report_date,status,recipients,summary_snapshot)
+        VALUES($1,$2,'pending',$3::jsonb,$4::jsonb) ON CONFLICT(tenant_id,report_date) DO UPDATE SET status='pending',recipients=$3::jsonb,summary_snapshot=$4::jsonb,error_detail=NULL,updated_at=NOW()`,
+        [tenantId, reportDate, JSON.stringify(emails), JSON.stringify(summary)]);
+      const mail = renderReportEmail(summary);
+      let last: any;
+      for (let attempt=1; attempt<=3; attempt++) {
+        last = await Promise.all(emails.map(email => emailService.sendEmail(tenantId, { to: email, subject: mail.subject, html: mail.html, text: mail.text, template: 'daily_admin_report', dedupeKey: `daily-report:${reportDate}:${email}`, deliveryKey: `daily-report:${tenantId}:${reportDate}:${email}`, dedupeWindowMinutes: 0, skipQuota: true })));
+        if (last.every((x: any) => x.success)) break;
+        await new Promise(resolve => setTimeout(resolve, attempt * 100));
+      }
+      const ok = last?.every((x: any) => x.success);
+      await client.query(`UPDATE agent_report_log SET status=$3,error_detail=$4,sent_at=CASE WHEN $3='sent' THEN NOW() ELSE NULL END,updated_at=NOW() WHERE tenant_id=$1 AND report_date=$2::date`,
+        [tenantId, reportDate, ok ? 'sent' : 'failed', ok ? null : JSON.stringify(last)]);
+      return { tenantId, status: ok ? 'sent' : 'failed', recipients: emails.length };
+    });
+    results.push(result);
+  }
+  return { reportDate, results };
+}
+
+export async function getDailyReport(tenantId: string, reportDate: string) {
+  return withTenantContext(tenantId, async client => (await client.query('SELECT * FROM agent_report_log WHERE tenant_id=$1 AND report_date=$2::date', [tenantId,reportDate])).rows[0] || null);
+}
+export async function listDailyReports(tenantId: string, limit = 30) {
+  return withTenantContext(tenantId, async client => (await client.query('SELECT * FROM agent_report_log WHERE tenant_id=$1 ORDER BY report_date DESC LIMIT $2', [tenantId, Math.min(Math.max(limit,1),100)])).rows);
+}
+
+let schedulerStarted = false;
+export function startDailyReportScheduler() {
+  if (schedulerStarted) return;
+  schedulerStarted = true;
+  setInterval(() => {
+    const now = new Date();
+    const parts = new Intl.DateTimeFormat('en-GB', { timeZone: REPORT_TIME_ZONE, hour:'2-digit', minute:'2-digit' }).formatToParts(now);
+    if (parts.find(x=>x.type==='hour')?.value === '18' && parts.find(x=>x.type==='minute')?.value === '00') runDailyReport().catch(err => logger.error('[DailyReport] scheduled run failed', err));
+  }, 60_000);
+  logger.info('[DailyReport] in-process scheduler started at 18:00 Asia/Ho_Chi_Minh');
+}

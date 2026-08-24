@@ -65,6 +65,8 @@ import { createLandingLeadRoutes } from "./server/routes/landingLeadRoutes";
 import { createLandingAiRoutes } from "./server/routes/landingAiRoutes";
 import { createAgentAuditRoutes } from "./server/routes/agentAuditRoutes";
 import { createAgentOperatingRoutes } from "./server/routes/agentOperatingRoutes";
+import { createDailyAdminReportRoutes } from "./server/routes/dailyAdminReportRoutes";
+import { startDailyReportScheduler } from "./server/services/dailyAdminReportService";
 import { createLiveChatAgentRoutes } from "./server/routes/liveChatAgentRoutes";
 import { liveChatEngine } from "./server/ai/liveChatEngine";
 import { createPublicProjectRoutes } from "./server/routes/publicProjectRoutes";
@@ -4369,6 +4371,8 @@ app.use('/api/approval-requests', apiRateLimit, createApprovalRequestRoutes(auth
   app.use('/api/live-chat', createLiveChatAgentRoutes(authenticateToken, aiRateLimit, apiRateLimit));
   app.use('/api/agent-audit', apiRateLimit, createAgentAuditRoutes(authenticateToken));
   app.use('/api/agent-operating', apiRateLimit, createAgentOperatingRoutes(authenticateToken));
+  app.use('/api/reports', apiRateLimit, createDailyAdminReportRoutes(authenticateToken));
+  startDailyReportScheduler();
 
   // Bounds a promise so a stalled dependency (DB/Redis) never blocks the
   // /api/health SLA of <1s — rejects with a labeled timeout error instead.
