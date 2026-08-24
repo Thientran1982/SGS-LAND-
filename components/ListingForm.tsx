@@ -669,7 +669,18 @@ export const ListingForm: React.FC<ListingFormProps> = memo(({ isOpen, onClose, 
                                  <Dropdown
                                      label={t('inventory.label_transaction')}
                                      value={formData.transaction as string}
-                                     onChange={v => setFormData({...formData, transaction: v as TransactionType})}
+                                      onChange={v => setFormData({
+                                          ...formData,
+                                          transaction: v as TransactionType,
+                                          // SOLD only applies to sales and RENTED
+                                          // only applies to rentals. Reset an
+                                          // incompatible terminal status so
+                                          // the saved listing stays consistent.
+                                          status: (
+                                              (v === TransactionType.RENT && formData.status === ListingStatus.SOLD)
+                                              || (v === TransactionType.SALE && formData.status === ListingStatus.RENTED)
+                                          ) ? ListingStatus.AVAILABLE : formData.status,
+                                      })}
                                      options={transactionOptions}
                                  />
                                  <div className="grid grid-cols-2 gap-4">

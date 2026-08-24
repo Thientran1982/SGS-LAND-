@@ -655,6 +655,14 @@ function ListingDetailPanel({ listing, canEdit, onEdit, onClose, onStatusChange,
     const [changingTo, setChangingTo] = useState<string | null>(null);
     const images = listing.images || [];
     const attrs = listing.attributes || {};
+    // Sale and rental listings have different terminal states. Keep the
+    // status controls aligned with the transaction type while retaining a
+    // legacy mismatched current value long enough for the user to correct it.
+    const transaction = String(listing.transaction || 'SALE').toUpperCase();
+    const statusOptions = LISTING_STATUS_OPTIONS.filter(option =>
+        option.value !== (transaction === 'RENT' ? 'SOLD' : 'RENTED')
+        || option.value === listing.status
+    );
 
     const handleStatusChange = async (newStatus: string) => {
         if (!onStatusChange || changingTo || newStatus === listing.status) return;
@@ -775,7 +783,7 @@ function ListingDetailPanel({ listing, canEdit, onEdit, onClose, onStatusChange,
                         <div className="bg-[var(--bg-surface)] rounded-xl border border-[var(--glass-border)] p-4">
                             <p className="text-xs font-bold text-[var(--text-tertiary)] uppercase tracking-wide mb-2.5">{t('project.detail_change_status')}</p>
                             <div className="flex flex-wrap gap-2">
-                                {LISTING_STATUS_OPTIONS.map(s => {
+                                {statusOptions.map(s => {
                                     const isActive = s.value === listing.status;
                                     const isChanging = changingTo === s.value;
                                     return (
