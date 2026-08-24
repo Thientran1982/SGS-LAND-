@@ -594,6 +594,9 @@ export const Leads: React.FC = () => {
     const [showColumnSettings, setShowColumnSettings] = useState(false);
     const colSettingsBtnRef = useRef<HTMLButtonElement>(null);
     const colSettingsPanelRef = useRef<HTMLDivElement>(null);
+    const [showDensitySettings, setShowDensitySettings] = useState(false);
+    const densityBtnRef = useRef<HTMLButtonElement>(null);
+    const densityPanelRef = useRef<HTMLDivElement>(null);
     // Deep-link: open lead from notification (e.g. /#/leads?leadId=xxx)
     const openLeadFromHash = useCallback((hash: string) => {
         // Support both legacy hash URL (#/leads?leadId=xxx) and clean URL (/leads?leadId=xxx).
@@ -675,6 +678,18 @@ export const Leads: React.FC = () => {
         document.addEventListener('mousedown', close);
         return () => document.removeEventListener('mousedown', close);
     }, [showColumnSettings]);
+    // Close density menu on outside click
+    useEffect(() => {
+        if (!showDensitySettings) return;
+        const close = (e: MouseEvent) => {
+            const target = e.target as Node;
+            if (!densityBtnRef.current?.contains(target) && !densityPanelRef.current?.contains(target)) {
+                setShowDensitySettings(false);
+            }
+        };
+        document.addEventListener('mousedown', close);
+        return () => document.removeEventListener('mousedown', close);
+    }, [showDensitySettings]);
 
     const notify = useCallback((msg: string, type: 'success' | 'error' = 'success') => {
         setToast({ msg, type });
@@ -1136,26 +1151,11 @@ export const Leads: React.FC = () => {
                                                 </label>
                                             ))}
                                         </div>
-                                        <div className="border-t border-[var(--glass-border)] pt-3">
-                                            <p className="text-xs font-black text-[var(--text-primary)] uppercase tracking-wider mb-2">{t('leads.density_title')}</p>
-                                            <div className="flex gap-2">
-                                                {(['compact', 'normal', 'relaxed'] as RowDensity[]).map(d => (
-                                                    <button
-                                                        key={d}
-                                                        onClick={() => setDensity(d)}
-                                                         className={`flex-1 py-1.5 rounded-lg text-xs font-bold transition-all bg-transparent ${density === d ? 'text-[var(--sgs-primary)]' : 'text-[var(--text-secondary)]'}`}
-                                                    >
-                                                        {d === 'compact' ? t('leads.density_compact') : d === 'normal' ? t('leads.density_normal') : t('leads.density_relaxed')}
-                                                    </button>
-                                                ))}
-                                            </div>
-                                        </div>
                                     </div>,
                                     document.body
                                 )}
                             </div>
                         )}
-                        <div className="w-px h-6 bg-slate-200 mx-1 hidden md:block"></div>
 
                         {selectedLeads.size > 0 && canDelete && (
                             <button 
@@ -1165,6 +1165,43 @@ export const Leads: React.FC = () => {
                                 {ICONS.TRASH} {t('common.delete')} ({selectedLeads.size})
                             </button>
                         )}                        
+                        <div className="relative shrink-0">
+                            <button
+                                ref={densityBtnRef}
+                                onClick={() => setShowDensitySettings(v => !v)}
+                                className={`h-10 w-10 flex items-center justify-center rounded-xl bg-transparent transition-all ${showDensitySettings ? 'text-[var(--sgs-primary)]' : 'text-[var(--text-secondary)]'}`}
+                                title={t('leads.density_title')}
+                            >
+                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 7h16M4 12h16M4 17h16" />
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 5v4m8-4v4m-4 1v4m4 1v4m-8-4v4" />
+                                </svg>
+                            </button>
+                            {showDensitySettings && createPortal(
+                                <div
+                                    ref={densityPanelRef}
+                                    style={{
+                                        position: 'fixed',
+                                        top: (densityBtnRef.current?.getBoundingClientRect().bottom ?? 0) + 6,
+                                        right: window.innerWidth - (densityBtnRef.current?.getBoundingClientRect().right ?? 0),
+                                        zIndex: 9999,
+                                    }}
+                                    className="bg-[var(--bg-surface)] border border-[var(--glass-border)] rounded-2xl shadow-2xl p-2 w-36"
+                                >
+                                    <p className="px-2 py-1 text-xs font-black text-[var(--text-primary)] uppercase tracking-wider">{t('leads.density_title')}</p>
+                                    {(['compact', 'normal', 'relaxed'] as RowDensity[]).map(d => (
+                                        <button
+                                            key={d}
+                                            onClick={() => { setDensity(d); setShowDensitySettings(false); }}
+                                            className={`w-full text-left px-2 py-2 rounded-lg text-xs font-bold transition-all bg-transparent ${density === d ? 'text-[var(--sgs-primary)]' : 'text-[var(--text-secondary)]'}`}
+                                        >
+                                            {d === 'compact' ? t('leads.density_compact') : d === 'normal' ? t('leads.density_normal') : t('leads.density_relaxed')}
+                                        </button>
+                                    ))}
+                                </div>,
+                                document.body
+                            )}
+                        </div>
                         <input 
                             type="file" 
                             accept=".xlsx, .xls" 
@@ -1252,17 +1289,17 @@ export const Leads: React.FC = () => {
                                                     <input type="checkbox" checked={selectedLeads.size === leads.length && leads.length > 0} onChange={handleSelectAll} className="w-4 h-4 rounded border-slate-300 text-sgs-primary focus:ring-sgs-primary cursor-pointer" />
                                                 </div>
                                             </th>
-                                            <th className={`px-4 py-3 text-xs font-bold text-[var(--text-tertiary)] uppercase tracking-wider bg-[var(--glass-surface)] sticky left-[50px] z-30`}>{t('leads.name')}</th>
-                                            {visibleColumns.has('phone') && <th className="px-4 py-3 text-xs font-bold text-[var(--text-tertiary)] uppercase tracking-wider bg-[var(--glass-surface)]">{t('leads.col_phone')}</th>}
-                                            {visibleColumns.has('email') && <th className="px-4 py-3 text-xs font-bold text-[var(--text-tertiary)] uppercase tracking-wider bg-[var(--glass-surface)]">{t('leads.col_email')}</th>}
-                                            {visibleColumns.has('address') && <th className="px-4 py-3 text-xs font-bold text-[var(--text-tertiary)] uppercase tracking-wider bg-[var(--glass-surface)]">{t('leads.col_address')}</th>}
-                                            {visibleColumns.has('stage') && <th className="px-4 py-3 text-xs font-bold text-[var(--text-tertiary)] uppercase tracking-wider bg-[var(--glass-surface)]">{t('leads.stage')}</th>}
-                                            {visibleColumns.has('source') && <th className="px-4 py-3 text-xs font-bold text-[var(--text-tertiary)] uppercase tracking-wider bg-[var(--glass-surface)]">{t('leads.source')}</th>}
-                                            {visibleColumns.has('score') && <th className="px-4 py-3 text-xs font-bold text-[var(--text-tertiary)] uppercase tracking-wider bg-[var(--glass-surface)]">{t('leads.score')}</th>}
-                                            {visibleColumns.has('owner') && <th className="px-4 py-3 text-xs font-bold text-[var(--text-tertiary)] uppercase tracking-wider bg-[var(--glass-surface)]">{t('common.owner')}</th>}
-                                            {visibleColumns.has('createdAt') && <th className="px-4 py-3 text-xs font-bold text-[var(--text-tertiary)] uppercase tracking-wider bg-[var(--glass-surface)]">{t('leads.col_created')}</th>}
-                                            {visibleColumns.has('paymentProgress') && <th className="px-4 py-3 text-xs font-bold text-[var(--text-tertiary)] uppercase tracking-wider bg-[var(--glass-surface)]">{t('leads.col_payment_progress')}</th>}
-                                            <th className="px-4 py-3 text-xs font-bold text-[var(--text-tertiary)] uppercase tracking-wider text-right sticky right-0 bg-[var(--glass-surface)] z-30">{t('common.actions')}</th>
+                                             <th className={`px-4 py-3 text-[10px] font-bold text-[var(--text-tertiary)] uppercase tracking-wider bg-[var(--glass-surface)] sticky left-[50px] z-30`}>{t('leads.name')}</th>
+                                             {visibleColumns.has('phone') && <th className="px-4 py-3 text-[10px] font-bold text-[var(--text-tertiary)] uppercase tracking-wider bg-[var(--glass-surface)]">{t('leads.col_phone')}</th>}
+                                             {visibleColumns.has('email') && <th className="px-4 py-3 text-[10px] font-bold text-[var(--text-tertiary)] uppercase tracking-wider bg-[var(--glass-surface)]">{t('leads.col_email')}</th>}
+                                             {visibleColumns.has('address') && <th className="px-4 py-3 text-[10px] font-bold text-[var(--text-tertiary)] uppercase tracking-wider bg-[var(--glass-surface)]">{t('leads.col_address')}</th>}
+                                             {visibleColumns.has('stage') && <th className="px-4 py-3 text-[10px] font-bold text-[var(--text-tertiary)] uppercase tracking-wider bg-[var(--glass-surface)]">{t('leads.stage')}</th>}
+                                             {visibleColumns.has('source') && <th className="px-4 py-3 text-[10px] font-bold text-[var(--text-tertiary)] uppercase tracking-wider bg-[var(--glass-surface)]">{t('leads.source')}</th>}
+                                             {visibleColumns.has('score') && <th className="px-4 py-3 text-[10px] font-bold text-[var(--text-tertiary)] uppercase tracking-wider bg-[var(--glass-surface)]">{t('leads.score')}</th>}
+                                             {visibleColumns.has('owner') && <th className="px-4 py-3 text-[10px] font-bold text-[var(--text-tertiary)] uppercase tracking-wider bg-[var(--glass-surface)]">{t('common.owner')}</th>}
+                                             {visibleColumns.has('createdAt') && <th className="px-4 py-3 text-[10px] font-bold text-[var(--text-tertiary)] uppercase tracking-wider bg-[var(--glass-surface)]">{t('leads.col_created')}</th>}
+                                             {visibleColumns.has('paymentProgress') && <th className="px-4 py-3 text-[10px] font-bold text-[var(--text-tertiary)] uppercase tracking-wider bg-[var(--glass-surface)]">{t('leads.col_payment_progress')}</th>}
+                                             <th className="px-4 py-3 text-[10px] font-bold text-[var(--text-tertiary)] uppercase tracking-wider text-right sticky right-0 bg-[var(--glass-surface)] z-30">{t('common.actions')}</th>
                                         </tr>
                                     </thead>
                                     <tbody className="divide-y divide-slate-50">
