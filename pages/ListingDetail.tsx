@@ -142,35 +142,35 @@ const FinancialSuite = memo(({ price, formatCurrency, t }: { price: number, form
             <div className="flex border-b border-[var(--glass-border)]">
                 <button
                     onClick={() => setMode('LOAN')}
-                    className={`flex-1 py-4 text-sm font-bold flex items-center justify-center gap-2 transition-colors ${mode === 'LOAN' ? 'text-sgs-primary bg-sgs-champagne/30' : 'text-[var(--text-tertiary)] hover:bg-[var(--glass-surface)]'}`}
+                    className={`flex-1 py-3 text-xs font-bold flex items-center justify-center gap-2 transition-colors ${mode === 'LOAN' ? 'text-sgs-primary bg-[var(--glass-surface)]' : 'text-[var(--text-tertiary)] hover:bg-[var(--glass-surface)]'}`}
                 >
                     {ICONS.CALC} {t('calc.loan')}
                 </button>
                 <div className="w-px bg-[var(--glass-surface-hover)]"></div>
                 <button
                     onClick={() => setMode('RENT')}
-                    className={`flex-1 py-4 text-sm font-bold flex items-center justify-center gap-2 transition-colors ${mode === 'RENT' ? 'text-sgs-verified bg-emerald-50/50' : 'text-[var(--text-tertiary)] hover:bg-[var(--glass-surface)]'}`}
+                    className={`flex-1 py-3 text-xs font-bold flex items-center justify-center gap-2 transition-colors ${mode === 'RENT' ? 'text-sgs-verified bg-[var(--glass-surface)]' : 'text-[var(--text-tertiary)] hover:bg-[var(--glass-surface)]'}`}
                 >
                     {ICONS.CHART} {t('calc.rent')}
                 </button>
             </div>
 
-            <div className="p-4 min-w-0">
+            <div className="p-3 min-w-0 text-xs">
                 {mode === 'LOAN' ? (
-                    <div className="grid grid-cols-1 gap-4 animate-enter min-w-0">
-                        <div className="space-y-4 min-w-0">
+                    <div className="grid grid-cols-1 gap-3 animate-enter min-w-0">
+                        <div className="space-y-3 min-w-0">
                             <div>
-                                <div className="flex justify-between mb-2">
+                                <div className="flex justify-between mb-1.5">
                                     <label className="text-xs font-bold text-[var(--text-tertiary)] uppercase">{t('calc.loan_ratio')}</label>
-                                    <span className="text-sm font-bold text-sgs-primary">{ratio}%</span>
+                                    <span className="text-xs font-bold text-sgs-primary">{ratio}%</span>
                                 </div>
                                 <input type="range" min="0" max="90" step="5" value={ratio} onChange={e => setRatio(Number(e.target.value))} className="w-full accent-sgs-primary h-2 bg-[var(--glass-surface-hover)] rounded-lg appearance-none cursor-pointer" />
-                                <div className="flex justify-between text-xs2 text-[var(--text-secondary)] mt-1">
+                                <div className="flex justify-between text-[10px] text-[var(--text-secondary)] mt-1">
                                     <span>0%</span>
                                     <span>{t('calc.own_capital')}: {formatCurrency(downPayment)}</span>
                                 </div>
                             </div>
-                            <div className="grid grid-cols-2 gap-4">
+                            <div className="grid grid-cols-2 gap-3">
                                 <div>
                                     <label className="text-xs font-bold text-[var(--text-tertiary)] uppercase block mb-1">{t('calc.term_years')}</label>
                                     <input
@@ -178,7 +178,7 @@ const FinancialSuite = memo(({ price, formatCurrency, t }: { price: number, form
                                         value={termStr}
                                         placeholder="20"
                                         onChange={e => setTermStr(e.target.value.replace(/[^0-9]/g, ''))}
-                                        className="w-full border border-[var(--glass-border)] rounded-xl px-3 py-2 text-sm font-bold text-[var(--text-secondary)] outline-none focus:border-sgs-primary"
+                                        className="w-full border border-[var(--glass-border)] rounded-xl px-3 py-1.5 text-xs font-bold text-[var(--text-secondary)] bg-[var(--glass-surface)] outline-none focus:border-sgs-primary"
                                     />
                                 </div>
                                 <div>
@@ -193,15 +193,15 @@ const FinancialSuite = memo(({ price, formatCurrency, t }: { price: number, form
                                             const parts = v.split('.');
                                             setRateStr(parts.length > 2 ? parts[0] + '.' + parts.slice(1).join('') : v);
                                         }}
-                                        className="w-full border border-[var(--glass-border)] rounded-xl px-3 py-2 text-sm font-bold text-[var(--text-secondary)] outline-none focus:border-sgs-primary"
+                                        className="w-full border border-[var(--glass-border)] rounded-xl px-3 py-1.5 text-xs font-bold text-[var(--text-secondary)] bg-[var(--glass-surface)] outline-none focus:border-sgs-primary"
                                     />
                                 </div>
                             </div>
                         </div>
-                        <div className="bg-sgs-champagne rounded-2xl p-4 border border-sgs-border flex flex-col justify-center min-w-0 overflow-hidden">
+                        <div className="bg-[var(--bg-surface)] rounded-2xl p-3 border border-[var(--glass-border)] flex flex-col justify-center min-w-0 overflow-hidden">
                             <div className="text-xs text-sgs-primary font-bold uppercase tracking-wider mb-1 truncate">{t('calc.monthly_payment')}</div>
-                            <div className="text-xl font-black text-sgs-primary mb-3 break-all">{formatCurrency(monthlyPayment)}</div>
-                            <div className="space-y-2 text-sm">
+                            <div className="text-lg font-black text-sgs-primary mb-2 break-all">{formatCurrency(monthlyPayment)}</div>
+                            <div className="space-y-1.5 text-xs">
                                 <div className="flex justify-between items-center gap-2 flex-wrap">
                                     <span className="text-sgs-text-muted truncate">{t('calc.total_principal')}</span>
                                     <span className="font-bold text-sgs-primary break-all">{formatCurrency(loanAmount)}</span>
@@ -214,9 +214,9 @@ const FinancialSuite = memo(({ price, formatCurrency, t }: { price: number, form
                         </div>
                     </div>
                 ) : (
-                    <div className="grid grid-cols-1 gap-4 animate-enter min-w-0">
+                    <div className="grid grid-cols-1 gap-3 animate-enter min-w-0">
                         {/* ── LEFT: Inputs ── */}
-                        <div className="space-y-4">
+                        <div className="space-y-3">
                             <div>
                                 <label className="text-xs font-bold text-[var(--text-tertiary)] uppercase block mb-1">{t('calc.expected_rent')}</label>
                                 <input
@@ -229,22 +229,22 @@ const FinancialSuite = memo(({ price, formatCurrency, t }: { price: number, form
                                         const v = e.target.value.replace(/[^0-9]/g, '');
                                         setMonthlyRentStr(v);
                                     }}
-                                    className="w-full border border-[var(--glass-border)] rounded-xl px-3 py-2 text-sm font-bold text-[var(--text-secondary)] outline-none focus:border-sgs-verified"
+                                    className="w-full border border-[var(--glass-border)] rounded-xl px-3 py-1.5 text-xs font-bold text-[var(--text-secondary)] bg-[var(--glass-surface)] outline-none focus:border-sgs-verified"
                                 />
-                                <div className="text-xs2 text-[var(--text-secondary)] mt-1 text-right">{formatCurrency(monthlyRent)}{t('calc.per_month')}</div>
+                                <div className="text-[10px] text-[var(--text-secondary)] mt-1 text-right">{formatCurrency(monthlyRent)}{t('calc.per_month')}</div>
                             </div>
                             <div>
-                                <div className="flex justify-between mb-2">
+                                <div className="flex justify-between mb-1.5">
                                     <label className="text-xs font-bold text-[var(--text-tertiary)] uppercase">{t('calc.occupancy_rate')}</label>
-                                    <span className="text-sm font-bold text-sgs-verified">{occupancy}%</span>
+                                    <span className="text-xs font-bold text-sgs-verified">{occupancy}%</span>
                                 </div>
                                 <input type="range" min="50" max="100" step="5" value={occupancy} onChange={e => setOccupancy(Number(e.target.value))} className="w-full accent-sgs-verified h-2 bg-[var(--glass-surface-hover)] rounded-lg appearance-none cursor-pointer" />
                             </div>
-                            <div className="border-t border-[var(--glass-border)] pt-4">
+                            <div className="border-t border-[var(--glass-border)] pt-3">
                                 <div>
-                                    <div className="flex justify-between mb-2">
+                                    <div className="flex justify-between mb-1.5">
                                         <label className="text-xs font-bold text-[var(--text-tertiary)] uppercase">{t('calc.appreciation_rate')}</label>
-                                        <span className="text-sm font-bold text-sgs-primary">{appreciation}%{t('calc.per_year')}</span>
+                                        <span className="text-xs font-bold text-sgs-primary">{appreciation}%{t('calc.per_year')}</span>
                                     </div>
                                     <input type="range" min="0" max="20" step="0.5" value={appreciation} onChange={e => setAppreciation(Number(e.target.value))} className="w-full accent-sgs-primary h-2 bg-[var(--glass-surface-hover)] rounded-lg appearance-none cursor-pointer" />
                                     <div className="flex justify-between text-xs2 text-[var(--text-secondary)] mt-1">
@@ -259,16 +259,16 @@ const FinancialSuite = memo(({ price, formatCurrency, t }: { price: number, form
                                     value={holdingYearsStr}
                                     placeholder="10"
                                     onChange={e => setHoldingYearsStr(e.target.value.replace(/[^0-9]/g, ''))}
-                                    className="w-full border border-[var(--glass-border)] rounded-xl px-3 py-2 text-sm font-bold text-[var(--text-secondary)] outline-none focus:border-sgs-primary"
+                                        className="w-full border border-[var(--glass-border)] rounded-xl px-3 py-1.5 text-xs font-bold text-[var(--text-secondary)] bg-[var(--glass-surface)] outline-none focus:border-sgs-primary"
                                 />
                             </div>
                         </div>
                         {/* ── RIGHT: Results ── */}
                         <div className="space-y-3">
                             {/* Card 1: Dòng tiền cho thuê */}
-                            <div className="bg-sgs-champagne rounded-2xl p-4 border border-sgs-verified/20">
+                            <div className="bg-[var(--bg-surface)] rounded-2xl p-3 border border-[var(--glass-border)]">
                                 <div className="text-xs text-sgs-verified font-bold uppercase tracking-wider mb-1">{t('calc.gross_yield')}</div>
-                                <div className="text-xl font-black text-sgs-verified break-words">{grossYield.toFixed(2)}%<span className="text-xs font-medium text-sgs-verified ml-1">{t('calc.per_year')}</span></div>
+                                <div className="text-lg font-black text-sgs-verified break-words">{grossYield.toFixed(2)}%<span className="text-[10px] font-medium text-sgs-verified ml-1">{t('calc.per_year')}</span></div>
                                 <div className="mt-2 space-y-1.5 text-xs">
                                     <div className="flex justify-between items-center gap-2">
                                         <span className="text-sgs-verified min-w-0 truncate">{t('calc.annual_cashflow')}</span>
@@ -281,9 +281,9 @@ const FinancialSuite = memo(({ price, formatCurrency, t }: { price: number, form
                                 </div>
                             </div>
                             {/* Card 2: Tăng giá vốn */}
-                            <div className="bg-sgs-champagne rounded-2xl p-4 border border-sgs-border">
+                            <div className="bg-[var(--bg-surface)] rounded-2xl p-3 border border-[var(--glass-border)]">
                                 <div className="text-xs text-sgs-primary font-bold uppercase tracking-wider mb-1">{t('calc.projected_price_label')}</div>
-                                <div className="text-xl font-black text-sgs-primary break-all">{price > 0 ? formatCurrency(projectedPrice) : '---'}</div>
+                                <div className="text-lg font-black text-sgs-primary break-all">{price > 0 ? formatCurrency(projectedPrice) : '---'}</div>
                                 <div className="mt-2 space-y-1.5 text-xs">
                                     <div className="flex justify-between items-center gap-2">
                                         <span className="text-sgs-primary min-w-0 truncate">{t('calc.capital_gain')}</span>
@@ -296,9 +296,9 @@ const FinancialSuite = memo(({ price, formatCurrency, t }: { price: number, form
                                 </div>
                             </div>
                             {/* Card 3: Tổng lợi nhuận */}
-                            <div className="bg-sgs-champagne/60 rounded-2xl p-4 border border-sgs-border">
+                            <div className="bg-[var(--bg-surface)] rounded-2xl p-3 border border-[var(--glass-border)]">
                                 <div className="text-xs text-sgs-accent-text font-bold uppercase tracking-wider mb-1">{t('calc.total_profit')}</div>
-                                <div className="text-xl font-black text-sgs-primary break-all">{formatCurrency(totalProfit)}</div>
+                                <div className="text-lg font-black text-sgs-primary break-all">{formatCurrency(totalProfit)}</div>
                                 <div className="mt-2 space-y-1.5 text-xs">
                                     <div className="flex justify-between items-center gap-2">
                                         <span className="text-sgs-text-muted">{t('calc.total_roi')}</span>
@@ -1985,6 +1985,11 @@ export const ListingDetail: React.FC = () => {
                                 {formatCompactNumber(listing.price)}
                                 <span className="text-lg font-bold text-[var(--text-tertiary)] ml-1">₫</span>
                             </div>
+                            {listing.area > 0 && listing.type !== PropertyType.PROJECT && (
+                                <div className="text-xs font-medium text-[var(--text-secondary)] mt-1">
+                                    {formatUnitPrice(listing.price, listing.area, t)}
+                                </div>
+                            )}
                         </div>
                         {/* Hidden on mobile — replaced by the fixed bottom CTA bar (lg:hidden) */}
                         <div className="hidden lg:grid grid-cols-2 gap-2">
