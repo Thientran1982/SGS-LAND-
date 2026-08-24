@@ -2443,9 +2443,9 @@ function ProjectListingsPanel({ project, canCreate, isAdmin, userRole, onClose, 
                                     <div className="w-24 shrink-0">{t('project.listing_col_code')}</div>
                                     <div className="w-56 shrink-0">{t('project.listing_col_title')}</div>
                                     <div className="w-28 shrink-0">{t('project.listing_col_type')}</div>
-                                    <div className="w-28 shrink-0">{t('project.listing_col_status')}</div>
-                                    <div className="w-20 shrink-0">{t('project.listing_col_area')}</div>
-                                    <div className="w-20 shrink-0">{isApartmentProject ? t('project.listing_col_clear_area') : t('project.listing_col_built_area')}</div>
+                                    <div className="w-32 shrink-0 pr-3">{t('project.listing_col_status')}</div>
+                                    <div className="w-24 shrink-0">{t('project.listing_col_area')}</div>
+                                    <div className="w-24 shrink-0">{isApartmentProject ? t('project.listing_col_clear_area') : t('project.listing_col_built_area')}</div>
                                     {isApartmentProject && (
                                         <>
                                             <div className="w-20 shrink-0">{t('project.listing_col_tower')}</div>
@@ -2456,8 +2456,8 @@ function ProjectListingsPanel({ project, canCreate, isAdmin, userRole, onClose, 
                                     <div className="w-24 shrink-0">{t('project.listing_col_direction')}</div>
                                     <div className="w-28 shrink-0">{t('project.listing_col_unit_price')}</div>
                                     <div className="w-32 shrink-0">{t('project.listing_col_price')}</div>
-                                    {canEditOwn && <div className="w-16 shrink-0 text-center">{t('project.listing_col_actions')}</div>}
-                                    {isAdmin && <div className="w-32 shrink-0">{t('project.listing_access_col_header')}</div>}
+                                    {canEditOwn && <div className="w-20 shrink-0 text-center">{t('project.listing_col_actions')}</div>}
+                                    {isAdmin && <div className="w-36 shrink-0 text-center">{t('project.listing_access_col_header')}</div>}
                                 </div>
                                 {/* Data rows */}
                                 {filtered.map((l, idx) => (
@@ -2504,7 +2504,7 @@ function ProjectListingsPanel({ project, canCreate, isAdmin, userRole, onClose, 
                                                 </div>
                                             )}
                                         </div>
-                                        <div className="w-28 shrink-0">
+                                        <div className="w-32 shrink-0 pr-3">
                                             <span className="text-xs font-semibold border px-2 py-0.5 rounded whitespace-nowrap" style={{ background: 'var(--sgs-bg)', color: 'var(--sgs-text-muted)', borderColor: 'var(--sgs-border)' }}>
                                                 {t(`property.${l.type?.toUpperCase()}`) || l.type}
                                             </span>
@@ -2514,10 +2514,10 @@ function ProjectListingsPanel({ project, canCreate, isAdmin, userRole, onClose, 
                                                 {t(`status.${l.status}`) || l.status}
                                             </span>
                                         </div>
-                                        <div className="w-20 shrink-0 text-xs whitespace-nowrap" style={{ color: 'var(--sgs-text-muted)' }}>
+                                        <div className="w-24 shrink-0 text-xs whitespace-nowrap" style={{ color: 'var(--sgs-text-muted)' }}>
                                             {l.area ? <>{l.area} <span style={{ color: 'var(--sgs-on-dark-muted)' }}>m²</span></> : <span style={{ color: 'var(--sgs-border)' }}>—</span>}
                                         </div>
-                                        <div className="w-20 shrink-0 text-xs whitespace-nowrap" style={{ color: 'var(--sgs-text-muted)' }}>
+                                        <div className="w-24 shrink-0 text-xs whitespace-nowrap" style={{ color: 'var(--sgs-text-muted)' }}>
                                             {isApartmentProject
                                                 ? (l.attributes?.clearArea ? <>{l.attributes.clearArea} <span style={{ color: 'var(--sgs-on-dark-muted)' }}>m²</span></> : <span style={{ color: 'var(--sgs-border)' }}>—</span>)
                                                 : (l.builtArea ? <>{l.builtArea} <span style={{ color: 'var(--sgs-on-dark-muted)' }}>m²</span></> : <span style={{ color: 'var(--sgs-border)' }}>—</span>)
@@ -2546,7 +2546,7 @@ function ProjectListingsPanel({ project, canCreate, isAdmin, userRole, onClose, 
                                         </div>
                                         <div className="w-32 shrink-0 font-bold whitespace-nowrap" style={{ color: 'var(--sgs-verified)' }}>{fmtPrice(l.price)}</div>
                                         {canEditOwn && (
-                                            <div className="w-16 shrink-0 text-center" onClick={e => e.stopPropagation()}>
+                                            <div className="w-20 shrink-0 text-center" onClick={e => e.stopPropagation()}>
                                                 <button
                                                     type="button"
                                                     onClick={e => openRowMenu(e, l.id)}
@@ -2561,7 +2561,7 @@ function ProjectListingsPanel({ project, canCreate, isAdmin, userRole, onClose, 
                                             </div>
                                         )}
                                         {isAdmin && (
-                                            <div className="w-32 shrink-0" onClick={e => e.stopPropagation()}>
+                                            <div className="w-36 shrink-0 text-center" onClick={e => e.stopPropagation()}>
                                                 <button
                                                     type="button"
                                                     onClick={() => setAccessListings([l])}
