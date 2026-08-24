@@ -1,4 +1,5 @@
 import { BaseRepository } from './baseRepository';
+import { sharedCacheRead, sharedCacheSet } from '../services/sharedCache';
 
 export interface AnalyticsSummary {
   totalLeads: number;
@@ -77,6 +78,9 @@ function calcDelta(current: number, previous: number): number {
 const TENANT_FILTER = `tenant_id = current_setting('app.current_tenant_id', true)::uuid`;
 
 export class AnalyticsRepository extends BaseRepository {
+  private static readonly SUMMARY_CACHE_TTL_MS = 15_000;
+  private static readonly SUMMARY_CACHE_VERSION = 'v2';
+  private static readonly summaryInFlight = new Map<string, Promise<AnalyticsSummary>>();
   constructor() {
     super('leads');
   }
@@ -167,7 +171,22 @@ export class AnalyticsRepository extends BaseRepository {
     userId?: string,
     role?: string,
   ): Promise<AnalyticsSummary> {
-    return this.withTenant(tenantId, async (client) => {
+    const normalizedRange = timeRange || 'all';
+    const cacheKey = [
+      'analytics-summary',
+      AnalyticsRepository.SUMMARY_CACHE_VERSION,
+      tenantId,
+      normalizedRange,
+      userId || 'none',
+      role || 'none',
+    ].map(value => encodeURIComponent(String(value))).join(':');
+    const cached = await sharedCacheRead<AnalyticsSummary>(cacheKey);
+    if (cached.value) return cached.value;
+
+    const existingRequest = AnalyticsRepository.summaryInFlight.get(cacheKey);
+    if (existingRequest) return existingRequest;
+
+    const request = this.withTenant(tenantId, async (client) => {
       const days = getDaysInterval(timeRange);
       const useTimeFilter = timeRange && timeRange !== 'all';
       const timeFilter = useTimeFilter ? `AND l.created_at >= NOW() - INTERVAL '${days} days'` : '';
@@ -186,7 +205,7 @@ export class AnalyticsRepository extends BaseRepository {
       const userLeadFilterNoAlias = isSalesScope && safeUserId
         ? `AND assigned_to = '${safeUserId}'::uuid`
         : '';
-      const scopeLabel = isSalesScope ? 'personal' : 'company';
+      const scopeLabel: 'personal' | 'company' = isSalesScope ? 'personal' : 'company';
 
       const leadsResult = await client.query(`
         SELECT
@@ -945,6 +964,14 @@ export class AnalyticsRepository extends BaseRepository {
         commissionRate,
       };
     });
+    AnalyticsRepository.summaryInFlight.set(cacheKey, request);
+    try {
+      const summary = await request;
+      await sharedCacheSet(cacheKey, summary, AnalyticsRepository.SUMMARY_CACHE_TTL_MS);
+      return summary;
+    } finally {
+      AnalyticsRepository.summaryInFlight.delete(cacheKey);
+    }
   }
 
   async generateBiMarts(
