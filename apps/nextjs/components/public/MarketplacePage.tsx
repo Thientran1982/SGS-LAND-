@@ -47,7 +47,7 @@ const TRANSACTION_OPTIONS = (g: L) => [
   { label: tt(g, "Cho thuê", "For rent"), value: "RENT" },
 ];
 const TYPE_OPTIONS = (g: L) => [
-  { label: tt(g, "Tất cả loại hình", "All property types"), value: "" },
+  { label: tt(g, "Loại hình", "Type"), value: "" },
   { label: tt(g, "Căn hộ", "Apartment"), value: "Apartment" },
   { label: tt(g, "Biệt thự", "Villa"), value: "Villa" },
   { label: tt(g, "Nhà phố", "Townhouse"), value: "Townhouse" },
@@ -56,11 +56,11 @@ const TYPE_OPTIONS = (g: L) => [
   { label: tt(g, "Văn phòng", "Office"), value: "Office" },
 ];
 const LOCATION_OPTIONS = (g: L, locs?: string[]) => [
-  { label: tt(g, "Tất cả vị trí", "All locations"), value: "" },
+  { label: tt(g, "Vị trí", "Location"), value: "" },
   ...(((locs || []).length > 0) ? (locs as string[]).map((loc) => ({ label: loc, value: loc })) : []),
 ];
 const PRICE_OPTIONS = (g: L) => [
-  { label: tt(g, "Tất cả mức giá", "Any price"), min: "", max: "" },
+  { label: tt(g, "Mức giá", "Price"), min: "", max: "" },
   { label: tt(g, "Dưới 3 tỷ", "Under 3B VND"), min: "", max: "3" },
   { label: tt(g, "3 – 5 tỷ", "3 – 5B VND"), min: "3", max: "5" },
   { label: tt(g, "5 – 10 tỷ", "5 – 10B VND"), min: "5", max: "10" },
@@ -571,9 +571,9 @@ export function MarketplacePage({ initialListings, totalCount, totalPages, searc
           </div>
         </div>
       </div>
-      {/* Primary row: transaction segmented control + view switcher */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 pb-1 mb-3">
-        <div className="flex items-center gap-1 p-0.5 rounded-lg w-full sm:w-auto" style={{ background: "var(--bg-app)" }}>
+      {/* One desktop control row: transaction tabs + every filter + view switcher. */}
+      <div className="flex flex-col sm:flex-row sm:items-center gap-2 pb-1 mb-3">
+        <div className="flex items-center gap-1 p-0.5 rounded-lg shrink-0 w-full sm:w-auto" style={{ background: "var(--bg-app)" }}>
           <button type="button" onClick={() => setTransactionTab("SALE")}
             className="px-3 sm:px-4 h-9 rounded-md text-sm font-semibold transition-colors whitespace-nowrap"
             style={activeTab === "SALE" ? { background: "var(--primary-600)", color: "var(--text-inverse)" } : { color: "var(--text-secondary)" }}>
@@ -591,7 +591,34 @@ export function MarketplacePage({ initialListings, totalCount, totalPages, searc
           </Link>
         </div>
 
-        <div className="flex items-center justify-between sm:justify-end gap-2 w-full sm:w-auto">
+        <div className="hidden sm:flex items-center gap-2 min-w-0 flex-1 overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+          <div className="flex items-center gap-2 shrink-0">
+            <div className="min-w-0"><Dropdown value={sp.type ?? ""} options={TYPE_OPTIONS(lang)} onChange={(v) => setParam("type", v)} minWidth={0} /></div>
+            <div className="min-w-0"><Dropdown value={sp.area ?? ""} options={LOCATION_OPTIONS(lang, locations)} onChange={(v) => setParam("area", v)} minWidth={0} /></div>
+            <div className="min-w-0"><Dropdown value={activePriceLabel} options={PRICE_OPTIONS(lang).map((o) => ({ label: o.label, value: o.label }))}
+              onChange={(label) => { const pr = PRICE_OPTIONS(lang).find((x) => x.label === label) || PRICE_OPTIONS(lang)[0]; pushParams((p) => { p.delete("minPrice"); p.delete("maxPrice"); if (pr.min) p.set("minPrice", pr.min); if (pr.max) p.set("maxPrice", pr.max); }); }}
+              minWidth={0} /></div>
+            <div className="min-w-0"><Dropdown value={sp.sort ?? ""} options={[
+              { label: tt(lang, "Mới nhất", "Newest"), value: "" },
+              { label: tt(lang, "Giá: Thấp đến cao", "Price: Low to high"), value: "price_asc" },
+              { label: tt(lang, "Giá: Cao đến thấp", "Price: High to low"), value: "price_desc" },
+            ]} onChange={(v) => setParam("sort", v)} minWidth={0} /></div>
+            {!!facets && facets.legalStatus.length > 0 && (
+              <div className="min-w-0"><Dropdown value={sp.legalStatus ?? ""} options={[
+                { label: tt(lang, "Pháp lý", "Legal"), value: "" },
+                ...facets.legalStatus.map((f) => ({ label: bi(LEGAL_LABELS, f.value, lang) || f.value, value: f.value })),
+              ]} onChange={(v) => setParam("legalStatus", v)} minWidth={0} /></div>
+            )}
+            {!!facets && facets.direction.length > 0 && (
+              <div className="min-w-0"><Dropdown value={sp.direction ?? ""} options={[
+                { label: tt(lang, "Hướng", "Direction"), value: "" },
+                ...facets.direction.map((f) => ({ label: bi(DIRECTION_LABELS, f.value, lang) || f.value, value: f.value })),
+              ]} onChange={(v) => setParam("direction", v)} minWidth={0} /></div>
+            )}
+          </div>
+        </div>
+
+        <div className="flex items-center justify-between sm:justify-end gap-2 w-full sm:w-auto shrink-0">
           <button type="button" onClick={() => setFiltersOpen((open) => !open)}
             className="sm:hidden h-9 px-3 rounded-lg flex items-center gap-2 text-sm font-semibold transition-colors"
             style={filtersOpen || activeFilterCount > 0
@@ -614,42 +641,6 @@ export function MarketplacePage({ initialListings, totalCount, totalPages, searc
           })}
           </div>
         </div>
-      </div>
-      {/* Secondary row: refine filters */}
-      <div className="hidden sm:flex sm:flex-wrap items-center gap-2 pb-1 mb-3">
-        <div className="min-w-0"><Dropdown value={sp.type ?? ""} options={TYPE_OPTIONS(lang)} onChange={(v) => setParam("type", v)} minWidth={0} /></div>
-        <div className="min-w-0"><Dropdown value={sp.area ?? ""} options={LOCATION_OPTIONS(lang, locations)} onChange={(v) => setParam("area", v)} minWidth={0} /></div>
-        <div className="min-w-0"><Dropdown value={activePriceLabel} options={PRICE_OPTIONS(lang).map((o) => ({ label: o.label, value: o.label }))}
-          onChange={(label) => { const pr = PRICE_OPTIONS(lang).find((x) => x.label === label) || PRICE_OPTIONS(lang)[0]; pushParams((p) => { p.delete("minPrice"); p.delete("maxPrice"); if (pr.min) p.set("minPrice", pr.min); if (pr.max) p.set("maxPrice", pr.max); }); }}
-          minWidth={0} /></div>
-        <div className="min-w-0"><Dropdown
-          value={sp.sort ?? ""}
-          options={[
-            { label: tt(lang, "M\u1edbi nh\u1ea5t", "Newest"), value: "" },
-            { label: tt(lang, "Gi\u00e1: Th\u1ea5p \u0111\u1ebfn cao", "Price: Low to high"), value: "price_asc" },
-            { label: tt(lang, "Gi\u00e1: Cao \u0111\u1ebfn th\u1ea5p", "Price: High to low"), value: "price_desc" },
-          ]}
-          onChange={(v) => setParam("sort", v)}
-          minWidth={0}
-        /></div>
-        {!!facets && facets.legalStatus.length > 0 && (
-          <div className="min-w-0"><Dropdown
-            value={sp.legalStatus ?? ""}
-            options={[{ label: tt(lang, "T\u1ea5t c\u1ea3 ph\u00e1p l\u00fd", "All legal status"), value: "" },
-              ...facets.legalStatus.map((f) => ({ label: bi(LEGAL_LABELS, f.value, lang) || f.value, value: f.value }))]}
-            onChange={(v) => setParam("legalStatus", v)}
-            minWidth={0}
-          /></div>
-        )}
-        {!!facets && facets.direction.length > 0 && (
-          <div className="min-w-0"><Dropdown
-            value={sp.direction ?? ""}
-            options={[{ label: tt(lang, "T\u1ea5t c\u1ea3 h\u01b0\u1edbng", "All directions"), value: "" },
-              ...facets.direction.map((f) => ({ label: bi(DIRECTION_LABELS, f.value, lang) || f.value, value: f.value }))]}
-            onChange={(v) => setParam("direction", v)}
-            minWidth={0}
-          /></div>
-        )}
       </div>
       <div className="sm:hidden mb-3">
         {filtersOpen && (
