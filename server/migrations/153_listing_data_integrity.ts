@@ -26,11 +26,117 @@ const migration: Migration = {
         ADD CONSTRAINT listings_coordinates_ck CHECK (
           coordinates IS NULL OR (
             jsonb_typeof(coordinates) = 'object' AND
-            (coordinates->>'lat')::numeric BETWEEN 8 AND 24 AND
-            (coordinates->>'lng')::numeric BETWEEN 102 AND 110
+            (CASE WHEN coordinates->>'lat' ~ '^[+-]?[0-9]+(\\.[0-9]+)?$'
+              THEN (coordinates->>'lat')::numeric BETWEEN 8 AND 24 ELSE FALSE END) AND
+            (CASE WHEN coordinates->>'lng' ~ '^[+-]?[0-9]+(\\.[0-9]+)?$'
+              THEN (coordinates->>'lng')::numeric BETWEEN 102 AND 110 ELSE FALSE END)
           )
         ) NOT VALID
     `);
+
+    // Clean legacy rows before validation.  Every rewrite below is
+    // deterministic and conservative: an unknown classification is not
+    // guessed, invalid measurements are cleared, and a contradictory
+    // lifecycle state is made inactive rather than made saleable/rentable.
+    const invalidBefore = await client.query(`
+      SELECT
+        COUNT(*) FILTER (WHERE status IS NOT NULL AND upper(btrim(status)) NOT IN
+          ('BOOKING','OPENING','AVAILABLE','HOLD','SOLD','RENTED','INACTIVE','BEST_MARKET')) AS bad_status,
+        COUNT(*) FILTER (WHERE transaction IS NOT NULL AND upper(btrim(transaction)) NOT IN ('SALE','RENT')) AS bad_transaction,
+        COUNT(*) FILTER (WHERE type IS NOT NULL AND upper(btrim(type)) NOT IN
+          ('APARTMENT','HOUSE','LAND','OFFICE','PENTHOUSE','TOWNHOUSE','VILLA')) AS bad_type,
+        COUNT(*) FILTER (WHERE price IS NOT NULL AND price <= 0) AS bad_price,
+        COUNT(*) FILTER (WHERE area IS NOT NULL AND area <= 0) AS bad_area,
+        COUNT(*) FILTER (WHERE currency IS NOT NULL AND upper(btrim(currency)) NOT IN ('VND','USD')) AS bad_currency,
+        COUNT(*) FILTER (WHERE
+          transaction IS NOT NULL AND status IS NOT NULL AND
+          ((upper(btrim(transaction)) = 'SALE' AND upper(btrim(status)) = 'RENTED') OR
+           (upper(btrim(transaction)) = 'RENT' AND upper(btrim(status)) = 'SOLD'))) AS bad_pair,
+        COUNT(*) FILTER (WHERE coordinates IS NOT NULL AND NOT (
+          jsonb_typeof(coordinates) = 'object' AND
+          coordinates->>'lat' ~ '^[+-]?[0-9]+(\\.[0-9]+)?$' AND
+          coordinates->>'lng' ~ '^[+-]?[0-9]+(\\.[0-9]+)?$' AND
+          (CASE WHEN coordinates->>'lat' ~ '^[+-]?[0-9]+(\\.[0-9]+)?$'
+            THEN (coordinates->>'lat')::numeric BETWEEN 8 AND 24 ELSE FALSE END) AND
+          (CASE WHEN coordinates->>'lng' ~ '^[+-]?[0-9]+(\\.[0-9]+)?$'
+            THEN (coordinates->>'lng')::numeric BETWEEN 102 AND 110 ELSE FALSE END)
+        )) AS bad_coordinates
+      FROM listings
+    `);
+    const before = invalidBefore.rows[0] ?? {};
+    const result = await client.query(`
+      UPDATE listings
+      SET
+        status = CASE
+          WHEN (upper(btrim(transaction)) = 'SALE' AND upper(btrim(status)) = 'RENTED')
+            OR (upper(btrim(transaction)) = 'RENT' AND upper(btrim(status)) = 'SOLD')
+            THEN 'INACTIVE'
+          WHEN status IS NULL OR upper(btrim(status)) IN
+            ('BOOKING','OPENING','AVAILABLE','HOLD','SOLD','RENTED','INACTIVE','BEST_MARKET')
+            THEN upper(btrim(status))
+          ELSE 'INACTIVE'
+        END,
+        transaction = CASE
+          WHEN transaction IS NULL OR upper(btrim(transaction)) IN ('SALE','RENT')
+            THEN upper(btrim(transaction))
+          ELSE 'SALE'
+        END,
+        type = CASE
+          WHEN type IS NULL OR upper(btrim(type)) IN
+            ('APARTMENT','HOUSE','LAND','OFFICE','PENTHOUSE','TOWNHOUSE','VILLA')
+            THEN upper(btrim(type))
+          ELSE NULL
+        END,
+        price = CASE WHEN price IS NULL OR price > 0 THEN price ELSE NULL END,
+        area = CASE WHEN area IS NULL OR area > 0 THEN area ELSE NULL END,
+        currency = CASE
+          WHEN currency IS NULL OR upper(btrim(currency)) IN ('VND','USD')
+            THEN upper(btrim(currency))
+          ELSE 'VND'
+        END,
+        coordinates = CASE
+          WHEN coordinates IS NULL THEN NULL
+          WHEN jsonb_typeof(coordinates) = 'object'
+            AND coordinates->>'lat' ~ '^[+-]?[0-9]+(\\.[0-9]+)?$'
+            AND coordinates->>'lng' ~ '^[+-]?[0-9]+(\\.[0-9]+)?$'
+            AND (CASE WHEN coordinates->>'lat' ~ '^[+-]?[0-9]+(\\.[0-9]+)?$'
+              THEN (coordinates->>'lat')::numeric BETWEEN 8 AND 24 ELSE FALSE END)
+            AND (CASE WHEN coordinates->>'lng' ~ '^[+-]?[0-9]+(\\.[0-9]+)?$'
+              THEN (coordinates->>'lng')::numeric BETWEEN 102 AND 110 ELSE FALSE END)
+            THEN coordinates
+          ELSE NULL
+        END
+      WHERE (status IS NOT NULL AND upper(btrim(status)) NOT IN
+          ('BOOKING','OPENING','AVAILABLE','HOLD','SOLD','RENTED','INACTIVE','BEST_MARKET'))
+        OR (transaction IS NOT NULL AND upper(btrim(transaction)) NOT IN ('SALE','RENT'))
+        OR (type IS NOT NULL AND upper(btrim(type)) NOT IN
+          ('APARTMENT','HOUSE','LAND','OFFICE','PENTHOUSE','TOWNHOUSE','VILLA'))
+        OR (price IS NOT NULL AND price <= 0) OR (area IS NOT NULL AND area <= 0)
+        OR (currency IS NOT NULL AND upper(btrim(currency)) NOT IN ('VND','USD'))
+        OR (coordinates IS NOT NULL AND NOT (
+          jsonb_typeof(coordinates) = 'object'
+          AND coordinates->>'lat' ~ '^[+-]?[0-9]+(\\.[0-9]+)?$'
+          AND coordinates->>'lng' ~ '^[+-]?[0-9]+(\\.[0-9]+)?$'
+          AND (CASE WHEN coordinates->>'lat' ~ '^[+-]?[0-9]+(\\.[0-9]+)?$'
+            THEN (coordinates->>'lat')::numeric BETWEEN 8 AND 24 ELSE FALSE END)
+          AND (CASE WHEN coordinates->>'lng' ~ '^[+-]?[0-9]+(\\.[0-9]+)?$'
+            THEN (coordinates->>'lng')::numeric BETWEEN 102 AND 110 ELSE FALSE END)
+        ))
+        OR ((upper(btrim(transaction)) = 'SALE' AND upper(btrim(status)) = 'RENTED')
+          OR (upper(btrim(transaction)) = 'RENT' AND upper(btrim(status)) = 'SOLD'))
+    `);
+    if ((result.rowCount ?? 0) > 0) {
+      console.log(`[Migration 153] Cleaned ${result.rowCount} legacy listing(s)`, before);
+    }
+
+    for (const name of [
+      'listings_status_ck', 'listings_transaction_ck', 'listings_type_ck',
+      'listings_price_ck', 'listings_area_ck', 'listings_currency_ck',
+      'listings_transaction_status_ck', 'listings_coordinates_ck',
+    ]) {
+      await client.query(`ALTER TABLE listings VALIDATE CONSTRAINT ${name}`);
+    }
+
     // A database unique index, not an application pre-check, closes the
     // check-then-insert race for case/whitespace variants of a code.
     await client.query(`
