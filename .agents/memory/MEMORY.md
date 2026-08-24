@@ -28,3 +28,4 @@
 - [Valuation location matching](valuation-location-matching.md) — historical rows must match full location keys; token matching causes cross-province price contamination
 - [Next.js Turbopack watcher exhaustion](nextjs-turbopack-watchers.md) — ENOSPC can surface as misleading missing React modules after repeated preview restarts; clear .next and restart
 - [SPA loading ownership](spa-loading-ownership.md) — keep one React-controlled loading fallback; a static Vite index loader duplicates Next/SPA route loading
+- [Preview map tile policy](preview-map-tiles.md) — map tiles in the Preview iframe must use a same-origin proxy, not third-party client fallbacks

@@ -27,7 +27,10 @@ export function MarketplaceMap({ listings, height = "620px" }: { listings: any[]
         wheelPxPerZoomLevel: 60,
       }).setView([10.85, 106.75], 10);
       mapRef.current = map;
-      L.tileLayer("/api/map-tiles/{z}/{x}/{y}.png?v=2", {
+      // Keep tiles same-origin. A direct OSM/CARTO fallback is intentionally
+      // avoided because the Replit Preview iframe can receive policy-block
+      // placeholder images from third-party tile hosts.
+      L.tileLayer("/api/map-tiles/{z}/{x}/{y}.png?v=3", {
         attribution: "&copy; OpenStreetMap",
         maxZoom: 19,
       }).addTo(map);

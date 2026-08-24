@@ -350,24 +350,12 @@ const MapView: React.FC<MapViewProps> = memo(({
             });
             L.control.zoom({ position: detailStyle ? 'topleft' : 'bottomright' }).addTo(map);
             // Use the same neutral OSM treatment as the public Next.js marketplace map.
-              const osmLayer = L.tileLayer('/api/map-tiles/{z}/{x}/{y}.png?v=2', {
+              const osmLayer = L.tileLayer('/api/map-tiles/{z}/{x}/{y}.png?v=3', {
                  maxZoom: 20,
                 attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OSM</a>',
              });
-             // Some embedded/proxied browsers intermittently block OSM tiles.
-             // Keep a neutral Carto base layer ready so the detail map never
-             // degrades to a blank beige panel when the primary tile host fails.
-             const fallbackLayer = L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
-                 subdomains: 'abcd', maxZoom: 20,
-                 attribution: '&copy; OpenStreetMap contributors &copy; CARTO',
-             });
-             let fallbackAdded = false;
-             osmLayer.on('tileerror', () => {
-                 if (!fallbackAdded && mapInst.current === map) {
-                     fallbackAdded = true;
-                     fallbackLayer.addTo(map);
-                 }
-             });
+             // Keep the tile source same-origin. Third-party fallback hosts can
+             // return an HTML "Access blocked" placeholder inside Preview.
              osmLayer.addTo(map);
             const lg = L.layerGroup().addTo(map);
             layerGroup.current = lg;
