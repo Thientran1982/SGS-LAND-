@@ -1,5 +1,5 @@
 import { Router, Request, Response } from 'express';
-import { getDailyReport, listDailyReports, runDailyReport } from '../services/dailyAdminReportService';
+import { getDailyReport, listDailyReports, replayInterruptedDailyReports, runDailyReport } from '../services/dailyAdminReportService';
 import { emailService } from '../services/emailService';
 
 const ROLES = new Set(['ADMIN', 'SUPER_ADMIN']);
@@ -32,6 +32,16 @@ export function createDailyAdminReportRoutes(authenticateToken: any): Router {
       res.json({ reportDate: date, canRetry, verification });
     } catch {
       res.status(500).json({ error: 'Không thể xác minh trạng thái provider.' });
+    }
+  });
+  router.post('/daily/replay-delivery', authenticateToken, async (req, res) => {
+    const user = admin(req, res); if (!user) return;
+    try {
+      // The service deliberately scopes every candidate by its durable tenant
+      // key; this endpoint only triggers the same bounded worker as the scheduler.
+      res.json(await replayInterruptedDailyReports(user.tenantId));
+    } catch {
+      res.status(500).json({ error: 'Không thể replay delivery báo cáo.' });
     }
   });
   router.get('/daily', authenticateToken, async (req,res) => {

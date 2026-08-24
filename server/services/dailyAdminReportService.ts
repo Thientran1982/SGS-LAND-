@@ -215,6 +215,104 @@ export async function listDailyReports(tenantId: string, limit = 30) {
   return withTenantContext(tenantId, async client => (await client.query('SELECT * FROM agent_report_log WHERE tenant_id=$1 ORDER BY report_date DESC LIMIT $2', [tenantId, Math.min(Math.max(limit,1),100)])).rows);
 }
 
+const REPLAY_MAX_ATTEMPTS = 5;
+const REPLAY_STALE_MINUTES = 10;
+
+/**
+ * Reconcile interrupted Brevo deliveries one recipient at a time. A provider
+ * lookup is always performed before sending, so a timeout cannot turn into a
+ * duplicate. The report snapshot is reused; metrics are never recollected.
+ */
+export async function replayInterruptedDailyReports(tenantId?: string): Promise<{ inspected: number; replayed: number; failed: number }> {
+  const tenantClause = tenantId ? ' AND c.tenant_id=$1::uuid' : '';
+  const candidates = await withRlsBypass(async client => (await client.query(`
+    SELECT c.tenant_id AS "tenantId", c.delivery_key AS "deliveryKey",
+           c.provider_message_id AS "messageId", r.report_date AS "reportDate",
+           r.recipients, r.summary_snapshot AS "summarySnapshot"
+      FROM email_delivery_claims c
+      JOIN agent_report_log r ON r.tenant_id=c.tenant_id
+        AND c.delivery_key LIKE 'daily-report:' || c.tenant_id::text || ':' || r.report_date::text || ':%'
+     WHERE c.status='UNKNOWN' AND r.status <> 'sent'
+       AND c.updated_at < NOW() - INTERVAL '10 minutes'
+       ${tenantClause}
+     ORDER BY c.updated_at ASC
+     LIMIT 100`, tenantId ? [tenantId] : [])).rows);
+  let replayed = 0;
+  let failed = 0;
+  for (const candidate of candidates) {
+    const claimed = await withRlsBypass(async client => (await client.query(`
+      INSERT INTO daily_report_delivery_replays
+        (tenant_id, report_date, delivery_key, message_id, status, attempt_count)
+      VALUES ($1::uuid,$2::date,$3,$4,'PROCESSING',1)
+      ON CONFLICT (tenant_id, delivery_key) DO UPDATE SET
+        status='PROCESSING', attempt_count=daily_report_delivery_replays.attempt_count+1,
+        message_id=COALESCE(EXCLUDED.message_id,daily_report_delivery_replays.message_id),
+        requested_at=NOW()
+      WHERE daily_report_delivery_replays.attempt_count < $5
+        AND daily_report_delivery_replays.status IN ('PENDING','FAILED')
+      RETURNING attempt_count`, [
+        candidate.tenantId, candidate.reportDate, candidate.deliveryKey,
+        candidate.messageId || null, REPLAY_MAX_ATTEMPTS,
+      ])).rows[0]);
+    if (!claimed) continue;
+    const attempt = Number(claimed.attempt_count);
+    try {
+      const verification = await emailService.verifyDelivery(candidate.tenantId, candidate.deliveryKey);
+      if (verification.status === 'delivered') {
+        await processBrevoReportDeliveryEvent({
+          deliveryKey: candidate.deliveryKey, event: 'delivered',
+          messageId: verification.messageId || candidate.messageId,
+        });
+        await withRlsBypass(client => client.query(
+          `UPDATE daily_report_delivery_replays SET status='SENT', completed_at=NOW(), next_retry_at=NOW(), error=NULL
+           WHERE tenant_id=$1::uuid AND delivery_key=$2`, [candidate.tenantId, candidate.deliveryKey]));
+        replayed++;
+        continue;
+      }
+      if (verification.status !== 'not_received') {
+        throw new Error(verification.error || 'Brevo delivery status remains unknown');
+      }
+      const snapshot = candidate.summarySnapshot as DailyReportSummary;
+      const mail = renderReportEmail(snapshot);
+      const recipient = String(candidate.deliveryKey).split(':').slice(3).join(':');
+      const result = await emailService.sendEmail(candidate.tenantId, {
+        to: recipient, subject: mail.subject, html: mail.html, text: mail.text,
+        template: 'daily_admin_report', dedupeKey: `daily-report:${candidate.reportDate}:${recipient}`,
+        deliveryKey: candidate.deliveryKey, dedupeWindowMinutes: 0, skipQuota: true,
+      });
+      if (!result.success) throw new Error(result.error || 'Replay send failed');
+      await processBrevoReportDeliveryEvent({
+        deliveryKey: candidate.deliveryKey, event: 'delivered', messageId: result.messageId,
+      });
+      await withRlsBypass(client => client.query(
+        `UPDATE daily_report_delivery_replays SET status='SENT', completed_at=NOW(), next_retry_at=NOW(), error=NULL
+         WHERE tenant_id=$1::uuid AND delivery_key=$2`, [candidate.tenantId, candidate.deliveryKey]));
+      replayed++;
+    } catch (error: any) {
+      const terminal = attempt >= REPLAY_MAX_ATTEMPTS;
+      const message = error?.message || String(error);
+      await withRlsBypass(client => client.query(
+        `UPDATE daily_report_delivery_replays
+            SET status=$3, error=$4, completed_at=CASE WHEN $3='DEAD_LETTER' THEN NOW() ELSE NULL END,
+                next_retry_at=NOW() + ($5 || ' minutes')::interval
+          WHERE tenant_id=$1::uuid AND delivery_key=$2`,
+        [candidate.tenantId, candidate.deliveryKey, terminal ? 'DEAD_LETTER' : 'FAILED', message, String(Math.min(60, attempt * 10))]));
+      await notificationRepository.recordOperationalEvent(candidate.tenantId,
+        terminal ? 'daily_report_delivery_replay_dead_letter' : 'daily_report_delivery_replay_failed',
+        { reportDate: candidate.reportDate, deliveryKey: candidate.deliveryKey, messageId: candidate.messageId || null, attempt, maxAttempts: REPLAY_MAX_ATTEMPTS, error: message })
+        .catch(err => logger.error('[DailyReport] replay audit failed', err));
+      if (terminal) await notificationRepository.createForTenantAdmins(candidate.tenantId, {
+        type: 'daily_report_delivery_replay_dead_letter',
+        title: `Replay báo cáo ngày ${candidate.reportDate} thất bại liên tục`,
+        body: `Không thể khôi phục delivery sau ${REPLAY_MAX_ATTEMPTS} lần; cần kiểm tra Brevo thủ công.`,
+        metadata: { deliveryKey: candidate.deliveryKey, attempt, error: message },
+      }).catch(err => logger.error('[DailyReport] replay alert failed', err));
+      failed++;
+    }
+  }
+  return { inspected: candidates.length, replayed, failed };
+}
+
 const DAILY_REPORT_DELIVERY_KEY = /^daily-report:([0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}):(\d{4}-\d{2}-\d{2}):([^:]+@[^:]+)$/i;
 const BOUNCE_EVENTS = new Set(['bounced', 'bounce', 'hardbounce', 'softbounce', 'blocked', 'invalid', 'error']);
 
@@ -335,5 +433,7 @@ export function startDailyReportScheduler() {
     const parts = new Intl.DateTimeFormat('en-GB', { timeZone: REPORT_TIME_ZONE, hour:'2-digit', minute:'2-digit' }).formatToParts(now);
     if (parts.find(x=>x.type==='hour')?.value === '18' && parts.find(x=>x.type==='minute')?.value === '00') runDailyReport().catch(err => logger.error('[DailyReport] scheduled run failed', err));
   }, 60_000);
+  setInterval(() => replayInterruptedDailyReports().catch(err =>
+    logger.error('[DailyReport] automatic delivery replay failed', err)), 5 * 60_000);
   logger.info('[DailyReport] in-process scheduler started at 18:00 Asia/Ho_Chi_Minh');
 }

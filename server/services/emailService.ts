@@ -161,6 +161,15 @@ async function claimDelivery(tenantId: string, deliveryKey: string, recipient: s
     )).rows[0];
     if (row?.status === 'SENT') return { state: 'SENT', providerMessageId: row.provider_message_id || undefined };
     if (row?.status === 'UNKNOWN' || row?.status === 'SENDING') return { state: 'UNKNOWN' };
+    // FAILED is a definitive provider rejection. Reclaim the same durable key
+    // rather than creating a new message/key (which would defeat idempotency).
+    const reclaimed = await client.query(
+      `UPDATE email_delivery_claims SET status='SENDING', error=NULL, updated_at=NOW()
+       WHERE tenant_id=$1::uuid AND delivery_key=$2 AND status='FAILED'
+       RETURNING status`,
+      [tenantId, deliveryKey],
+    );
+    if (reclaimed.rowCount) return { state: 'CLAIMED' };
     return { state: 'FAILED' };
   });
 }
