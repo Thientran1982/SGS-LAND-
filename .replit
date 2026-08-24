@@ -26,7 +26,7 @@ outputType = "webview"
 
 [[workflows.workflow.tasks]]
 task = "shell.exec"
-args = "fuser -k 5000/tcp 5001/tcp 2>/dev/null; sleep 1; PORT=5001 npm run dev & sleep 8 && cd apps/nextjs && BACKEND_URL=http://localhost:5001 npm run dev -- --hostname 0.0.0.0 --port 5000"
+args = "fuser -k 5000/tcp 5001/tcp 2>/dev/null; sleep 1; PORT=5001 npm run dev & sleep 8 && cd apps/nextjs && BACKEND_URL=http://localhost:5001 ./node_modules/.bin/next dev --hostname 0.0.0.0 --port 5000"
 waitForPort = 5000
 [[workflows.workflow]]
 name = "typecheck"

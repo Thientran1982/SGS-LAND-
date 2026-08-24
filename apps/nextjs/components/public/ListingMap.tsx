@@ -91,9 +91,8 @@ export default function ListingMap({ lat, lng, title, location, projectCode }: L
       zoomControl: true,
     }).setView([resolved.lat, resolved.lng], exact ? 16 : 14);
     mapRef.current = map;
-    L.tileLayer("https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png", {
+    L.tileLayer("/api/map-tiles/{z}/{x}/{y}.png", {
       attribution: "© OpenStreetMap © CARTO",
-      subdomains: "abcd",
       maxZoom: 20,
     }).addTo(map);
 
