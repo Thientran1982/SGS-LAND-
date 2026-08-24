@@ -64,6 +64,7 @@ export const agentMemoryService = {
   async remember(tenantId: string, namespace: string, key: string, value: unknown, kind: MemoryKind = 'fact', importance = 0.5, ttlDays?: number | null) {
     const ns = safeNamespace(namespace);
     if (!VALID_KINDS.has(kind)) throw new Error('Invalid memory kind');
+    const rawValue = String(value ?? '');
     const cleanValue = scrubPii(value);
     if (!cleanValue.trim()) throw new Error('Memory value cannot be empty');
     const score = Math.max(0, Math.min(1, Number(importance) || 0.5));
@@ -81,7 +82,7 @@ export const agentMemoryService = {
            VALUES ($1,'MEMORY_CONFLICT','MEMORY',$2,'high_importance_fact_not_overwritten',$3::jsonb)`,
           [tenantId, existing.id, JSON.stringify({ old: existing.value, new: cleanValue, namespace: ns, key })],
         );
-        return { ...existing, conflict: true };
+        return { ...existing, conflict: true, piiScrubbed: cleanValue !== rawValue };
       }
       const row = (await client.query(
         `INSERT INTO agent_store (id,tenant_id,namespace,key,kind,value,importance,expires_at)
@@ -91,8 +92,48 @@ export const agentMemoryService = {
         [randomUUID(), tenantId, ns, String(key).slice(0, 200), kind, cleanValue, score, expiresAt],
       )).rows[0];
       await trimNamespace(client, tenantId, ns);
-      return row;
+      return { ...row, piiScrubbed: cleanValue !== rawValue, conflict: false };
     });
+  },
+
+  async listAdminMemory(tenantId: string, filters: { namespace?: string; kind?: string; importance?: string }) {
+    const params: any[] = [tenantId];
+    const where = ['tenant_id=$1'];
+    if (filters.namespace) { params.push(safeNamespace(filters.namespace)); where.push(`namespace=$${params.length}`); }
+    if (filters.kind && VALID_KINDS.has(filters.kind as MemoryKind)) { params.push(filters.kind); where.push(`kind=$${params.length}`); }
+    if (filters.importance === 'HIGH') where.push('importance >= 0.7');
+    if (filters.importance === 'MEDIUM') where.push('importance >= 0.4 AND importance < 0.7');
+    if (filters.importance === 'LOW') where.push('importance < 0.4');
+    return withTenantContext(tenantId, async client => {
+      const rows = (await client.query(
+        `SELECT *, (expires_at IS NOT NULL AND expires_at <= NOW()) AS expired
+         FROM agent_store WHERE ${where.join(' AND ')}
+         ORDER BY expired DESC, importance DESC, updated_at DESC LIMIT 500`, params,
+      )).rows as Array<MemoryRow & { expired: boolean }>;
+      const conflicts = (await client.query(
+        `SELECT entity_id, metrics_json FROM ai_learning_audit_events
+         WHERE tenant_id=$1 AND event_type='MEMORY_CONFLICT' ORDER BY created_at DESC LIMIT 500`, [tenantId],
+      )).rows;
+      const conflictIds = new Set(conflicts.map((row: any) => row.entity_id));
+      return rows.map(row => ({ ...row, conflict: conflictIds.has(row.id), piiScrubbed: false }));
+    });
+  },
+
+  async updateMemory(tenantId: string, id: string, input: { namespace: string; key: string; value: unknown; kind?: MemoryKind; importance?: number; ttlDays?: number | null }) {
+    const ns = safeNamespace(input.namespace);
+    const current = await withTenantContext(tenantId, async client =>
+      (await client.query('SELECT * FROM agent_store WHERE tenant_id=$1 AND id=$2', [tenantId, id])).rows[0]);
+    if (!current) return null;
+    const row = await this.remember(tenantId, ns, input.key, input.value, input.kind || current.kind, input.importance ?? Number(current.importance), input.ttlDays);
+    if (row && row.id !== id) await withTenantContext(tenantId, async client => {
+      await client.query('DELETE FROM agent_store WHERE tenant_id=$1 AND id=$2', [tenantId, id]);
+    });
+    return row;
+  },
+
+  async forgetById(tenantId: string, id: string) {
+    return withTenantContext(tenantId, async client =>
+      (await client.query('DELETE FROM agent_store WHERE tenant_id=$1 AND id=$2', [tenantId, id])).rowCount || 0);
   },
 
   async recall(tenantId: string, namespace: string, query?: string, k = 8): Promise<MemoryRow[]> {
@@ -170,6 +211,19 @@ export const agentMemoryService = {
       if (!row) return DEFAULT_MATCHER_WEIGHTS;
       try { return validateWeights(JSON.parse(row.weights)); } catch { return DEFAULT_MATCHER_WEIGHTS; }
     });
+  },
+
+  async listWeights(tenantId: string) {
+    return withTenantContext(tenantId, async client => (await client.query(
+      `SELECT * FROM agent_weight_versions WHERE tenant_id=$1 ORDER BY
+       CASE status WHEN 'draft' THEN 0 WHEN 'live' THEN 1 ELSE 2 END, created_at DESC LIMIT 50`, [tenantId],
+    )).rows.map((row: any) => {
+      let weights = row.weights;
+      let metrics = row.metrics;
+      try { weights = typeof weights === 'string' ? JSON.parse(weights) : weights; } catch { /* expose raw for diagnosis */ }
+      try { metrics = typeof metrics === 'string' ? JSON.parse(metrics) : metrics; } catch { /* expose raw for diagnosis */ }
+      return { ...row, weights, metrics, goldenSetPassed: metrics?.goldenSetPassed === true };
+    }));
   },
 
   async fitWeights(tenantId: string, createdBy?: string) {

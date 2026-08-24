@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useState } from 'react';
-import { AlertTriangle, Bot, CheckCircle2, Clock3, RefreshCw, Send, ShieldCheck, XCircle, BarChart3, ClipboardCheck, RotateCcw, Filter, PlayCircle } from 'lucide-react';
+import { AlertTriangle, Bot, CheckCircle2, Clock3, RefreshCw, Send, ShieldCheck, XCircle, BarChart3, ClipboardCheck, RotateCcw, Filter, PlayCircle, Save, Trash2, Edit3, BrainCircuit } from 'lucide-react';
 import { api } from '../services/api/apiClient';
 
 type CockpitSummary = {
@@ -17,6 +17,8 @@ type CockpitSummary = {
 type ReplayHistory = { id: string; operator_id: string; reason: string; replay_number: number; result_status: string; result_error?: string; requested_at: string; completed_at?: string };
 type OperatingEvent = { id: string; event_id: string; event_type: string; idempotency_key: string; urgency: number; status: string; attempts: number; last_error?: string; lease_expires_at?: string; lease_expired?: boolean; created_at: string; updated_at: string; replay_history: ReplayHistory[] };
 type HumanQuestion = { id: string; agent_key: string; question: string; priority: number; created_at: string; context_json: Record<string, unknown> };
+type AdminMemory = { id: string; namespace: string; key: string; kind: 'fact' | 'episodic' | 'procedural'; value: string; importance: number; hits: number; expires_at: string | null; expired?: boolean; conflict?: boolean; piiScrubbed?: boolean; updated_at: string };
+type WeightVersion = { id: string; status: 'draft' | 'shadow' | 'live'; weights: Record<string, number>; metrics: Record<string, unknown>; goldenSetPassed: boolean; created_at: string };
 
 const count = (rows: Array<{ status: string; count: number }> = [], status: string) => rows.find(row => row.status === status)?.count || 0;
 
@@ -32,6 +34,13 @@ export default function AgentCockpit() {
   const [events, setEvents] = useState<OperatingEvent[]>([]);
   const [eventFilters, setEventFilters] = useState({ urgency: 'ALL', lease: 'ALL', deadLetter: 'ALL' });
   const [replaying, setReplaying] = useState<string | null>(null);
+  const [memories, setMemories] = useState<AdminMemory[]>([]);
+  const [memoryFilters, setMemoryFilters] = useState({ namespace: '', kind: '', importance: '' });
+  const [editingMemory, setEditingMemory] = useState<AdminMemory | null>(null);
+  const [memoryForm, setMemoryForm] = useState({ namespace: '', key: '', value: '', kind: 'fact', importance: '0.5', ttlDays: '' });
+  const [weights, setWeights] = useState<{ live: Record<string, number>; versions: WeightVersion[] } | null>(null);
+  const [reflecting, setReflecting] = useState(false);
+  const [fitting, setFitting] = useState(false);
 
   const load = useCallback(async () => {
     setLoading(true); setError('');
@@ -43,10 +52,15 @@ export default function AgentCockpit() {
         api.get<OperatingEvent[]>(`/api/agent-operating/events?${query}`),
       ]);
       setSummary(nextSummary); setQuestions(nextQuestions); setEvents(nextEvents);
+      const [nextMemories, nextWeights] = await Promise.all([
+        api.get<AdminMemory[]>('/api/ai/memory/admin', memoryFilters),
+        api.get<{ live: Record<string, number>; versions: WeightVersion[] }>('/api/ai/weights'),
+      ]);
+      setMemories(nextMemories); setWeights(nextWeights);
     } catch (e: any) {
       setError(e?.message || 'Không thể tải Admin Cockpit.');
     } finally { setLoading(false); }
-  }, [eventFilters]);
+  }, [eventFilters, memoryFilters]);
   useEffect(() => { void load(); }, [load]);
 
   const submitAnswer = async (id: string) => {
@@ -77,6 +91,44 @@ export default function AgentCockpit() {
     finally { setReplaying(null); }
   };
   const eventFilter = (key: keyof typeof eventFilters, value: string) => setEventFilters(current => ({ ...current, [key]: value }));
+  const beginEdit = (memory: AdminMemory) => {
+    setEditingMemory(memory);
+    setMemoryForm({ namespace: memory.namespace, key: memory.key, value: memory.value, kind: memory.kind, importance: String(memory.importance), ttlDays: '' });
+  };
+  const saveMemory = async () => {
+    if (!editingMemory || !memoryForm.namespace || !memoryForm.key || !memoryForm.value.trim()) return;
+    try {
+      const result = await api.put<AdminMemory & { piiScrubbed?: boolean; conflict?: boolean }>(`/api/ai/memory/${editingMemory.id}`, {
+        ...memoryForm, importance: Number(memoryForm.importance), ttlDays: memoryForm.ttlDays ? Number(memoryForm.ttlDays) : null,
+      });
+      setEditingMemory(null); setError(result.conflict ? 'Memory chưa được ghi: xung đột với fact có độ quan trọng cao.' : result.piiScrubbed ? 'Đã lưu memory; dữ liệu nhạy cảm đã được scrub.' : '');
+      await load();
+    } catch (e: any) { setError(e?.message || 'Không thể sửa memory.'); }
+  };
+  const deleteMemory = async (memory: AdminMemory) => {
+    if (!window.confirm(`Xóa memory “${memory.key}” khỏi ${memory.namespace}?`)) return;
+    try { await api.delete(`/api/ai/memory/${memory.id}`); await load(); }
+    catch (e: any) { setError(e?.message || 'Không thể xóa memory.'); }
+  };
+  const runReflection = async () => {
+    setReflecting(true);
+    try { const result = await api.post<{ signalsRead: number; memoriesWritten: number }>('/api/ai/reflection/run', {}); setError(`Reflection hoàn tất: đọc ${result.signalsRead}, ghi ${result.memoriesWritten} memory.`); await load(); }
+    catch (e: any) { setError(e?.message || 'Không thể chạy reflection.'); } finally { setReflecting(false); }
+  };
+  const fitWeights = async () => {
+    setFitting(true);
+    try { await api.post('/api/ai/weights/fit', {}); setError('Đã tạo draft weights. Draft chỉ được live sau khi đạt golden-set gate.'); await load(); }
+    catch (e: any) { setError(e?.message || 'Không thể fit weights.'); } finally { setFitting(false); }
+  };
+  const promoteWeights = async (version: WeightVersion) => {
+    if (!version.goldenSetPassed) {
+      setError('Chưa thể promote: draft này chưa đạt golden-set gate.');
+      return;
+    }
+    if (!window.confirm('Chỉ promote khi golden-set đã đạt. Tiếp tục?')) return;
+    try { await api.post(`/api/ai/weights/${version.id}/promote`, { goldenSetPassed: true, metrics: version.metrics }); await load(); }
+    catch (e: any) { setError(e?.message || 'Không thể promote weights.'); }
+  };
 
   return (
     <div className="mx-auto max-w-7xl space-y-6 p-6">
@@ -118,6 +170,16 @@ export default function AgentCockpit() {
             </div>;
           })}</div>}
         </section>
+         <section className="rounded-xl border border-indigo-200 bg-indigo-50/30 p-5 shadow-sm">
+           <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+             <div className="flex items-center gap-2"><BrainCircuit size={19} className="text-indigo-600" /><div><h2 className="font-semibold text-slate-900">Memory của Agent</h2><p className="text-xs text-slate-500">Tenant-scoped · bản ghi hết hạn vẫn hiển thị để admin quyết định xóa.</p></div></div>
+             <div className="flex gap-2"><button onClick={() => void runReflection()} disabled={reflecting} className="inline-flex items-center gap-1 rounded-lg bg-indigo-600 px-3 py-2 text-xs font-semibold text-white disabled:opacity-50"><BrainCircuit size={14} /> {reflecting ? 'Đang reflection…' : 'Chạy reflection'}</button><button onClick={() => void fitWeights()} disabled={fitting} className="rounded-lg border border-indigo-200 bg-white px-3 py-2 text-xs font-semibold text-indigo-700">{fitting ? 'Đang fit…' : 'Tạo draft weights'}</button></div>
+           </div>
+           <div className="mb-4 grid gap-2 md:grid-cols-3"><input aria-label="Lọc namespace memory" value={memoryFilters.namespace} onChange={e => setMemoryFilters({ ...memoryFilters, namespace: e.target.value })} placeholder="Namespace (customer:...)" className="rounded-lg border border-slate-200 px-3 py-2 text-sm" /><select aria-label="Lọc kind memory" value={memoryFilters.kind} onChange={e => setMemoryFilters({ ...memoryFilters, kind: e.target.value })} className="rounded-lg border border-slate-200 px-3 py-2 text-sm"><option value="">Mọi kind</option><option value="fact">Fact</option><option value="episodic">Episodic</option><option value="procedural">Procedural</option></select><select aria-label="Lọc importance memory" value={memoryFilters.importance} onChange={e => setMemoryFilters({ ...memoryFilters, importance: e.target.value })} className="rounded-lg border border-slate-200 px-3 py-2 text-sm"><option value="">Mọi importance</option><option value="HIGH">Cao (≥ 0.7)</option><option value="MEDIUM">Vừa</option><option value="LOW">Thấp</option></select></div>
+           {memories.length === 0 ? <p className="rounded-lg bg-white p-6 text-center text-sm text-slate-500">Không có memory phù hợp.</p> : <div className="space-y-2">{memories.map(memory => <div key={memory.id} className={`rounded-lg border bg-white p-3 ${memory.expired ? 'border-amber-300' : memory.conflict ? 'border-rose-300' : 'border-slate-100'}`}><div className="flex flex-wrap items-start justify-between gap-3"><div className="min-w-0 flex-1"><div className="flex flex-wrap items-center gap-2"><b className="text-sm text-slate-900">{memory.key}</b><span className="rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-bold">{memory.kind}</span>{memory.expired && <span className="rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-bold text-amber-800">Hết hạn</span>}{memory.conflict && <span className="rounded-full bg-rose-100 px-2 py-0.5 text-[10px] font-bold text-rose-800">Conflict</span>}</div><p className="mt-1 text-xs text-slate-500">{memory.namespace} · importance {Number(memory.importance).toFixed(2)} · {memory.hits} hits</p><p className="mt-2 whitespace-pre-wrap break-words text-sm text-slate-700">{memory.value}</p></div><div className="flex shrink-0 gap-1"><button aria-label={`Sửa ${memory.key}`} onClick={() => beginEdit(memory)} className="rounded-md border border-slate-200 p-2 text-indigo-700 hover:bg-indigo-50"><Edit3 size={14} /></button><button aria-label={`Xóa ${memory.key}`} onClick={() => void deleteMemory(memory)} className="rounded-md border border-rose-200 p-2 text-rose-700 hover:bg-rose-50"><Trash2 size={14} /></button></div></div></div>)}</div>}
+           {weights && <div className="mt-5 border-t border-indigo-100 pt-4"><div className="mb-2 flex items-center justify-between"><h3 className="text-sm font-semibold text-slate-900">Matcher weights</h3><span className="text-xs text-slate-500">Live: {Object.entries(weights.live || {}).map(([k, v]) => `${k} ${v}`).join(' · ')}</span></div><div className="space-y-1">{weights.versions.map(version => <div key={version.id} className="flex flex-wrap items-center justify-between gap-2 rounded-lg bg-white px-3 py-2 text-xs"><span><b className={version.status === 'live' ? 'text-emerald-700' : version.status === 'draft' ? 'text-amber-700' : 'text-slate-500'}>{version.status.toUpperCase()}</b> · {new Date(version.created_at).toLocaleString('vi-VN')}</span><span>{version.goldenSetPassed ? 'Golden-set đạt' : 'Chưa đạt'}</span>{version.status === 'draft' && <button disabled={!version.goldenSetPassed} onClick={() => void promoteWeights(version)} className="rounded-md border border-indigo-200 px-2 py-1 font-semibold text-indigo-700 disabled:cursor-not-allowed disabled:opacity-40">Promote sau gate</button>}</div>)}</div></div>}
+         </section>
+         {editingMemory && <div className="rounded-xl border border-indigo-300 bg-white p-5 shadow-sm"><div className="mb-3 flex items-center justify-between"><h3 className="font-semibold text-slate-900">Sửa memory: {editingMemory.key}</h3><button onClick={() => setEditingMemory(null)} className="text-sm text-slate-500">Hủy</button></div><div className="grid gap-3 md:grid-cols-2"><input value={memoryForm.namespace} onChange={e => setMemoryForm({ ...memoryForm, namespace: e.target.value })} placeholder="Namespace" className="rounded-lg border px-3 py-2 text-sm" /><input value={memoryForm.key} onChange={e => setMemoryForm({ ...memoryForm, key: e.target.value })} placeholder="Key" className="rounded-lg border px-3 py-2 text-sm" /><select value={memoryForm.kind} onChange={e => setMemoryForm({ ...memoryForm, kind: e.target.value })} className="rounded-lg border px-3 py-2 text-sm"><option value="fact">Fact</option><option value="episodic">Episodic</option><option value="procedural">Procedural</option></select><input type="number" min="0" max="1" step="0.05" value={memoryForm.importance} onChange={e => setMemoryForm({ ...memoryForm, importance: e.target.value })} placeholder="Importance" className="rounded-lg border px-3 py-2 text-sm" /><textarea value={memoryForm.value} onChange={e => setMemoryForm({ ...memoryForm, value: e.target.value })} placeholder="Nội dung memory" className="min-h-24 rounded-lg border px-3 py-2 text-sm md:col-span-2" /></div><button onClick={() => void saveMemory()} className="mt-3 inline-flex items-center gap-1 rounded-lg bg-indigo-600 px-3 py-2 text-sm font-semibold text-white"><Save size={15} /> Lưu an toàn</button></div>}
         <section className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
           <div className="mb-4 flex items-center gap-2"><ShieldCheck size={19} className="text-indigo-600" /><h2 className="font-semibold text-slate-900">Role cards & rollout</h2></div>
           <div className="grid gap-3 md:grid-cols-3">{summary.roleCards.map(card => {

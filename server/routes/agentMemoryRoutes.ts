@@ -21,9 +21,23 @@ function requireNamespace(req: Request, res: Response): string | null {
   }
   return namespace;
 }
+function requireAdmin(req: Request, res: Response): any | null {
+  const user = (req as any).user;
+  if (!ADMIN_ROLES.has(user?.role)) { res.status(403).json({ error: 'Chỉ quản trị viên mới được thao tác memory' }); return null; }
+  return user;
+}
 
 export function createAgentMemoryRoutes(authenticateToken: RequestHandler): Router {
   const router = Router();
+
+  router.get('/memory/admin', authenticateToken, async (req, res) => {
+    const user = requireAdmin(req, res); if (!user) return;
+    try {
+      res.json(await agentMemoryService.listAdminMemory(user.tenantId, {
+        namespace: req.query.namespace as string, kind: req.query.kind as string, importance: req.query.importance as string,
+      }));
+    } catch (error: any) { res.status(400).json({ error: error?.message || 'Không thể tải memory quản trị' }); }
+  });
 
   router.get('/memory', authenticateToken, async (req, res) => {
     try {
@@ -45,6 +59,21 @@ export function createAgentMemoryRoutes(authenticateToken: RequestHandler): Rout
     } catch (error: any) {
       res.status(400).json({ error: error?.message || 'Không thể ghi memory' });
     }
+  });
+
+  router.put('/memory/:id', authenticateToken, async (req, res) => {
+    const user = requireAdmin(req, res); if (!user) return;
+    try {
+      const row = await agentMemoryService.updateMemory(user.tenantId, String(req.params.id), req.body || {});
+      if (!row) return res.status(404).json({ error: 'Memory không tồn tại' });
+      res.json(row);
+    } catch (error: any) { res.status(400).json({ error: error?.message || 'Không thể cập nhật memory' }); }
+  });
+
+  router.delete('/memory/:id', authenticateToken, async (req, res) => {
+    const user = requireAdmin(req, res); if (!user) return;
+    try { res.json({ deleted: await agentMemoryService.forgetById(user.tenantId, String(req.params.id)) }); }
+    catch (error: any) { res.status(400).json({ error: error?.message || 'Không thể xóa memory' }); }
   });
 
   router.delete('/memory', authenticateToken, async (req, res) => {
@@ -100,7 +129,8 @@ export function createAgentMemoryRoutes(authenticateToken: RequestHandler): Rout
   });
 
   router.get('/weights', authenticateToken, async (req, res) => {
-    res.json(await agentMemoryService.getWeights((req as any).user.tenantId));
+    const user = requireAdmin(req, res); if (!user) return;
+    res.json({ live: await agentMemoryService.getWeights(user.tenantId), versions: await agentMemoryService.listWeights(user.tenantId) });
   });
 
   router.post('/weights/fit', authenticateToken, async (req, res) => {
