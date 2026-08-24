@@ -7,6 +7,7 @@ import { VN_PHONE_REGEX } from '../types'; // Reuse regex from types/constants i
 import { useTranslation } from '../services/i18n';
 import { buildVNGeoQueries } from '../utils/vnAddress';
 import { compressImages } from '../utils/imageCompressor';
+import { compatibleStatusAfterTransactionChange } from '../utils/projectPolicies';
 interface ListingFormProps {
     isOpen: boolean;
     onClose: () => void;
@@ -676,10 +677,7 @@ export const ListingForm: React.FC<ListingFormProps> = memo(({ isOpen, onClose, 
                                           // only applies to rentals. Reset an
                                           // incompatible terminal status so
                                           // the saved listing stays consistent.
-                                          status: (
-                                              (v === TransactionType.RENT && formData.status === ListingStatus.SOLD)
-                                              || (v === TransactionType.SALE && formData.status === ListingStatus.RENTED)
-                                          ) ? ListingStatus.AVAILABLE : formData.status,
+                                           status: compatibleStatusAfterTransactionChange(v as string, formData.status) as ListingStatus,
                                       })}
                                      options={transactionOptions}
                                  />

@@ -9,6 +9,10 @@ import { formatLeadTagsInput, normalizeLeadEmail, normalizeLeadTags, normalizeVN
 const ICONS = {
     DUPLICATE: <svg className="w-5 h-5 text-sgs-accent-text" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7v8a2 2 0 002 2h6M8 7V5a2 2 0 012-2h4.586a1 1 0 01.707.293l4.414 4.414a1 1 0 01.293.707V15a2 2 0 01-2 2h-2M8 7H6a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 00-2-2v-2" /></svg>
 };
+const GENERIC_ADDRESS_SUGGESTIONS = [
+    'TP. Hồ Chí Minh', 'Hà Nội', 'Đà Nẵng', 'Bình Dương', 'Đồng Nai',
+    'Quận 1, TP. Hồ Chí Minh', 'Quận 7, TP. Hồ Chí Minh', 'Thủ Đức, TP. Hồ Chí Minh',
+];
 const FormInput = ({ label, value, onChange, onBlur, placeholder, required, type = 'text', autoFocus, error, className = "" }: any) => (
     <div className={`space-y-1 ${className}`}>
         <label className="text-xs font-bold text-[var(--text-tertiary)] uppercase ml-1 block">
@@ -73,6 +77,7 @@ export const CreateLeadModal: React.FC<CreateLeadModalProps> = ({ onClose, onSuc
         if (errors[key]) setErrors(prev => ({ ...prev, [key]: '' }));
     };
     const [users, setUsers] = useState<{value: string, label: string}[]>([]);
+    const [addressSuggestions, setAddressSuggestions] = useState<string[]>([]);
 
     React.useEffect(() => {
         const fetchUsers = async () => {
@@ -82,6 +87,7 @@ export const CreateLeadModal: React.FC<CreateLeadModalProps> = ({ onClose, onSuc
                     { value: '', label: t('inbox.unassigned') },
                     ...res.data.map((u: any) => ({ value: u.id, label: u.name }))
                 ]);
+                setAddressSuggestions(GENERIC_ADDRESS_SUGGESTIONS);
             } catch (e) {
                 console.error(e);
             }
@@ -322,12 +328,20 @@ export const CreateLeadModal: React.FC<CreateLeadModalProps> = ({ onClose, onSuc
                                     </div>
                                 )}
                             </div>
-                            <FormInput 
-                                label={t('leads.address')} 
-                                value={formData.address} 
-                                onChange={(v: string) => updateField('address', v)} 
-                                placeholder={t('leads.placeholder_address')}
-                            />
+                            <div className="space-y-1">
+                                <label className="text-xs font-bold text-[var(--text-tertiary)] uppercase ml-1 block">{t('leads.address')}</label>
+                                <input
+                                    list="lead-address-suggestions"
+                                    value={formData.address}
+                                    onChange={e => updateField('address', e.target.value)}
+                                    placeholder={t('leads.placeholder_address')}
+                                    className="w-full border border-[var(--glass-border)] rounded-xl px-4 py-2.5 text-[16px] outline-none focus:ring-2 focus:ring-[var(--sgs-primary)]/20 focus:border-[var(--sgs-primary)] transition-all"
+                                />
+                                <datalist id="lead-address-suggestions">
+                                    {addressSuggestions.map(address => <option key={address} value={address} />)}
+                                </datalist>
+                                {addressSuggestions.length > 0 && <p className="text-xs text-[var(--text-tertiary)] ml-1">Gợi ý từ địa chỉ khách hàng đã có</p>}
+                            </div>
                         </div>
                         {/* Row 3: Status & Classification */}
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
@@ -350,10 +364,10 @@ export const CreateLeadModal: React.FC<CreateLeadModalProps> = ({ onClose, onSuc
                         </div>
                         {/* Row 4: Tags & AssignedTo */}
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-                            <FormInput 
-                                label={t('leads.tags')} 
-                                value={formData.tags} 
-                                onChange={(v: string) => updateField('tags', v)} 
+                            <FormInput
+                                label={t('leads.tags')}
+                                value={formData.tags}
+                                onChange={(v: string) => updateField('tags', v)}
                                 onBlur={() => updateField('tags', formatLeadTagsInput(formData.tags))}
                                 placeholder={t('leads.placeholder_tags') + ' (VD: VIP, căn hộ, Q2)'}
                             />
