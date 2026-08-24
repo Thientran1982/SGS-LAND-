@@ -259,7 +259,7 @@ async function logEmail(args: {
 // ── Shared email base layout ──────────────────────────────────────────────────
 // Table-based layout + @media queries for full mobile responsiveness.
 // Tested compatible with: Gmail (web/app), Apple Mail, Outlook 2016+, iOS Mail, Samsung Mail.
-function emailBase(content: string, footerNote?: string): string {
+export function emailBase(content: string, footerNote?: string): string {
   const year = new Date().getFullYear();
   return `<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml" lang="vi">
@@ -1805,29 +1805,29 @@ async function sendNudgeLogin3(tenantId: string, to: string, userName: string): 
     <table width="100%" cellpadding="0" cellspacing="0" border="0">
       <tr><td align="center">
         <h1 class="email-title" style="color:#0F172A;font-size:22px;font-weight:bold;margin:0;font-family:Arial,sans-serif;">
-          Lau roi khong gap ban!
+          Lâu rồi không gặp bạn!
         </h1>
       </td></tr>
       <tr><td align="center" style="padding-top:8px;">
         <span style="color:#64748B;font-size:14px;font-family:Arial,sans-serif;">
-          Xin chao <strong>${safeName}</strong>, da ${3} ngay chung toi chua thay ban tren SGS LAND.
+          Xin chào <strong>${safeName}</strong>, đã ${3} ngày chúng tôi chưa thấy bạn trên SGS LAND.
         </span>
       </td></tr>
     </table>
     ${spacer(24)}
     ${divider()}
     <p style="color:#475569;font-size:14px;line-height:1.8;margin:0 0 16px;font-family:Arial,sans-serif;">
-      Da 3 ngay ban chua ghe tham SGS LAND. Nhieu tin BDS moi va co hoi dau tu vua duoc cap nhat - dang nhap de khong bo lo nhe.
+      Đã 3 ngày bạn chưa ghé thăm SGS LAND. Nhiều tin BĐS mới và cơ hội đầu tư vừa được cập nhật — đăng nhập để không bỏ lỡ nhé.
     </p>
     ${spacer(4)}
-    ${primaryButton(loginUrl, 'Dang Nhap Ngay')}
+    ${primaryButton(loginUrl, 'Đăng nhập ngay')}
     ${spacer(20)}
   `;
   return sendEmail(tenantId, {
     to,
-    subject: "SGS LAND - Thi truong BDS dang chuyen dong, dung bo lo nhe!",
-    html: emailBase(content, 'Email nay duoc gui tu dong vi ban la thanh vien SGS LAND.'),
-    text: `Xin chao ${userName},\n\nDa 3 ngay ban chua ghe tham SGS LAND. Nhieu tin BDS moi va co hoi dau tu vua duoc cap nhat - dang nhap de khong bo lo nhe.\n\nDang nhap lai:\n${loginUrl}\n\n- SGS LAND`,
+    subject: "SGS LAND – Thị trường BĐS đang chuyển động, đừng bỏ lỡ nhé!",
+    html: emailBase(content, 'Email này được gửi tự động vì bạn là thành viên SGS LAND.'),
+    text: `Xin chào ${userName},\n\nĐã 3 ngày bạn chưa ghé thăm SGS LAND. Nhiều tin BĐS mới và cơ hội đầu tư vừa được cập nhật — đăng nhập để không bỏ lỡ nhé.\n\nĐăng nhập lại:\n${loginUrl}\n\n— SGS LAND`,
   });
 }
 
@@ -1845,19 +1845,19 @@ async function sendNudgeLogin5(tenantId: string, to: string, userName: string): 
     <table width="100%" cellpadding="0" cellspacing="0" border="0">
       <tr><td align="center">
         <h1 class="email-title" style="color:#0F172A;font-size:22px;font-weight:bold;margin:0;font-family:Arial,sans-serif;">
-          Ban van khoe chu?
+          Bạn vẫn khỏe chứ?
         </h1>
       </td></tr>
       <tr><td align="center" style="padding-top:8px;">
         <span style="color:#64748B;font-size:14px;font-family:Arial,sans-serif;">
-          Xin chao <strong>${safeName}</strong>, da ${5} ngay chung toi chua thay ban tren SGS LAND.
+          Xin chào <strong>${safeName}</strong>, đã ${5} ngày chúng tôi chưa thấy bạn trên SGS LAND.
         </span>
       </td></tr>
     </table>
     ${spacer(24)}
     ${divider()}
     <p style="color:#475569;font-size:14px;line-height:1.8;margin:0 0 16px;font-family:Arial,sans-serif;">
-      Da 5 ngay ban chua quay lai SGS LAND. Thi truong dang co nhieu bien dong dang chu y - hay dang nhap de cap nhat thong tin moi nhat.
+      Đã 5 ngày bạn chưa quay lại SGS LAND. Thị trường đang có nhiều biến động đáng chú ý — hãy đăng nhập để cập nhật thông tin mới nhất.
     </p>
     ${spacer(4)}
     ${primaryButton(loginUrl, 'Dang Nhap Ngay')}
@@ -1865,9 +1865,9 @@ async function sendNudgeLogin5(tenantId: string, to: string, userName: string): 
   `;
   return sendEmail(tenantId, {
     to,
-    subject: "SGS LAND - Co nhieu tin moi danh cho ban",
+    subject: "SGS LAND – Có nhiều tin mới dành cho bạn",
     html: emailBase(content, 'Email nay duoc gui tu dong vi ban la thanh vien SGS LAND.'),
-    text: `Xin chao ${userName},\n\nDa 5 ngay ban chua quay lai SGS LAND. Thi truong dang co nhieu bien dong dang chu y - hay dang nhap de cap nhat thong tin moi nhat.\n\nDang nhap lai:\n${loginUrl}\n\n- SGS LAND`,
+    text: `Xin chào ${userName},\n\nĐã 5 ngày bạn chưa quay lại SGS LAND. Thị trường đang có nhiều biến động đáng chú ý — hãy đăng nhập để cập nhật thông tin mới nhất.\n\nĐăng nhập lại:\n${loginUrl}\n\n— SGS LAND`,
   });
 }
 
@@ -1885,29 +1885,29 @@ async function sendNudgeLogin7(tenantId: string, to: string, userName: string): 
     <table width="100%" cellpadding="0" cellspacing="0" border="0">
       <tr><td align="center">
         <h1 class="email-title" style="color:#0F172A;font-size:22px;font-weight:bold;margin:0;font-family:Arial,sans-serif;">
-          Chung toi nho ban!
+          Chúng tôi nhớ bạn!
         </h1>
       </td></tr>
       <tr><td align="center" style="padding-top:8px;">
         <span style="color:#64748B;font-size:14px;font-family:Arial,sans-serif;">
-          Xin chao <strong>${safeName}</strong>, da ${7} ngay chung toi chua thay ban tren SGS LAND.
+          Xin chào <strong>${safeName}</strong>, đã ${7} ngày chúng tôi chưa thấy bạn trên SGS LAND.
         </span>
       </td></tr>
     </table>
     ${spacer(24)}
     ${divider()}
     <p style="color:#475569;font-size:14px;line-height:1.8;margin:0 0 16px;font-family:Arial,sans-serif;">
-      Da 7 ngay ban chua dang nhap SGS LAND. Rat nhieu tin BDS va co hoi tot dang cho ban - dang nhap ngay de khong bo lo.
+      Đã 7 ngày bạn chưa đăng nhập SGS LAND. Rất nhiều tin BĐS và cơ hội tốt đang chờ bạn — đăng nhập ngay để không bỏ lỡ.
     </p>
     ${spacer(4)}
-    ${primaryButton(loginUrl, 'Dang Nhap Ngay')}
+    ${primaryButton(loginUrl, 'Đăng nhập ngay')}
     ${spacer(20)}
   `;
   return sendEmail(tenantId, {
     to,
-    subject: "SGS LAND - Quay lai de khong bo lo co hoi",
-    html: emailBase(content, 'Email nay duoc gui tu dong vi ban la thanh vien SGS LAND.'),
-    text: `Xin chao ${userName},\n\nDa 7 ngay ban chua dang nhap SGS LAND. Rat nhieu tin BDS va co hoi tot dang cho ban - dang nhap ngay de khong bo lo.\n\nDang nhap lai:\n${loginUrl}\n\n- SGS LAND`,
+    subject: "SGS LAND – Quay lại để không bỏ lỡ cơ hội",
+    html: emailBase(content, 'Email này được gửi tự động vì bạn là thành viên SGS LAND.'),
+    text: `Xin chào ${userName},\n\nĐã 7 ngày bạn chưa đăng nhập SGS LAND. Rất nhiều tin BĐS và cơ hội tốt đang chờ bạn — đăng nhập ngay để không bỏ lỡ.\n\nĐăng nhập lại:\n${loginUrl}\n\n— SGS LAND`,
   });
 }
 
