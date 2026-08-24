@@ -689,9 +689,6 @@ function ListingDetailPanel({ listing, canEdit, onEdit, onClose, onStatusChange,
                 {/* Header */}
                 <div className="flex items-center justify-between px-5 py-3.5 border-b border-[var(--glass-border)] shrink-0">
                     <div className="flex items-center gap-2.5 min-w-0">
-                        <div className="w-8 h-8 rounded-xl bg-sgs-champagne dark:bg-emerald-900/30 flex items-center justify-center text-sgs-verified shrink-0">
-                            {IC.HOME}
-                        </div>
                         <div className="min-w-0">
                             <div className="flex items-center gap-2 flex-wrap">
                                 <span className="font-mono text-xs bg-[var(--glass-surface-hover)] text-[var(--text-tertiary)] px-1.5 py-0.5 rounded">{listing.code}</span>
@@ -732,7 +729,7 @@ function ListingDetailPanel({ listing, canEdit, onEdit, onClose, onStatusChange,
                     {/* Image gallery */}
                     {images.length > 0 ? (
                         <div className="space-y-2">
-                            <div className="aspect-video w-full rounded-xl overflow-hidden bg-[var(--glass-surface)] border border-[var(--glass-border)]">
+                            <div className="aspect-video w-full rounded-xl overflow-hidden bg-[var(--bg-surface)] border border-[var(--glass-border)]">
                                 <img
                                     src={images[activeImg]}
                                     alt={listing.title}
@@ -755,7 +752,7 @@ function ListingDetailPanel({ listing, canEdit, onEdit, onClose, onStatusChange,
                             )}
                         </div>
                     ) : (
-                        <div className="aspect-video w-full rounded-xl bg-[var(--glass-surface)] border border-[var(--glass-border)] flex flex-col items-center justify-center gap-2 text-[var(--text-muted)]">
+                        <div className="aspect-video w-full rounded-xl bg-[var(--bg-surface)] border border-[var(--glass-border)] flex flex-col items-center justify-center gap-2 text-[var(--text-muted)]">
                             <svg className="w-12 h-12 opacity-25" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/>
                             </svg>
@@ -764,18 +761,18 @@ function ListingDetailPanel({ listing, canEdit, onEdit, onClose, onStatusChange,
                     )}
                     {/* Price cards */}
                     <div className="grid grid-cols-2 gap-3">
-                        <div className="bg-sgs-champagne dark:bg-emerald-900/20 rounded-xl p-3.5 border border-emerald-100 dark:border-emerald-800">
-                            <p className="text-xs text-sgs-verified font-semibold uppercase tracking-wide mb-1">{t('inventory.label_price')}</p>
-                            <p className="text-xl font-bold text-sgs-verified">{fmtPrice(listing.price)}</p>
+                        <div className="bg-[var(--bg-surface)] rounded-xl p-3.5 border border-[var(--glass-border)]">
+                            <p className="text-xs text-[var(--text-tertiary)] font-semibold uppercase tracking-wide mb-1">{t('inventory.label_price')}</p>
+                            <p className="text-xl font-bold text-[var(--text-primary)]">{fmtPrice(listing.price)}</p>
                         </div>
-                        <div className="bg-[var(--glass-surface)] rounded-xl p-3.5 border border-[var(--glass-border)]">
+                        <div className="bg-[var(--bg-surface)] rounded-xl p-3.5 border border-[var(--glass-border)]">
                             <p className="text-xs text-[var(--text-tertiary)] font-semibold uppercase tracking-wide mb-1">{t('inventory.label_unit_price')}</p>
                             <p className="text-base font-bold text-[var(--text-primary)]">{fmtUnitPrice(listing.price, listing.area)}</p>
                         </div>
                     </div>
                     {/* Quick status change */}
                     {canEdit && onStatusChange && (
-                        <div className="bg-[var(--glass-surface)] rounded-xl border border-[var(--glass-border)] p-4">
+                        <div className="bg-[var(--bg-surface)] rounded-xl border border-[var(--glass-border)] p-4">
                             <p className="text-xs font-bold text-[var(--text-tertiary)] uppercase tracking-wide mb-2.5">{t('project.detail_change_status')}</p>
                             <div className="flex flex-wrap gap-2">
                                 {LISTING_STATUS_OPTIONS.map(s => {
@@ -809,7 +806,7 @@ function ListingDetailPanel({ listing, canEdit, onEdit, onClose, onStatusChange,
                         </div>
                     )}
                     {/* Key specs grid */}
-                    <div className="bg-[var(--glass-surface)] rounded-xl border border-[var(--glass-border)] p-4 grid grid-cols-2 sm:grid-cols-3 gap-x-6 gap-y-3">
+                    <div className="bg-[var(--bg-surface)] rounded-xl border border-[var(--glass-border)] p-4 grid grid-cols-2 sm:grid-cols-3 gap-x-6 gap-y-3">
                         <DetailRow label={t('inventory.label_type')} value={t(`property.${listing.type?.toUpperCase()}`) || listing.type} />
                         <DetailRow label={t('inventory.label_area')} value={listing.area ? `${listing.area} m²` : undefined} />
                         {!!listing.builtArea && <DetailRow label={t('inventory.label_built_area')} value={`${listing.builtArea} m²`} />}
@@ -829,7 +826,7 @@ function ListingDetailPanel({ listing, canEdit, onEdit, onClose, onStatusChange,
                     </div>
                     {/* Description / notes */}
                     {attrs.notes && (
-                        <div className="bg-[var(--glass-surface)] rounded-xl border border-[var(--glass-border)] p-4">
+                        <div className="bg-[var(--bg-surface)] rounded-xl border border-[var(--glass-border)] p-4">
                             <p className="text-xs font-bold text-[var(--text-tertiary)] uppercase tracking-wide mb-2">{t('inventory.label_notes')}</p>
                             <p className="text-sm text-[var(--text-secondary)] whitespace-pre-wrap leading-relaxed">{attrs.notes}</p>
                         </div>
