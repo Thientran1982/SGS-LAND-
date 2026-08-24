@@ -959,8 +959,9 @@ function handle_analyze_investment(args: Record<string, any>): any {
 
 async function handle_get_project_info(args: Record<string, any>): Promise<any> {
     const { tenantId, projectName, projectCode } = args;
-    const filters: any = {};
+    const filters: any = { status: 'ACTIVE' };
     if (projectCode) filters.code = projectCode;
+    else if (projectName) filters.search = projectName;
     const result = await projectRepository.findProjects(tenantId, { page: 1, pageSize: 10 }, filters);
     if (result.total === 0) return { found: false, message: `Không tìm thấy dự án "${projectName || projectCode}".` };
     const projects = result.data;
@@ -991,7 +992,7 @@ async function handle_search_projects(args: Record<string, any>): Promise<any> {
     const { tenantId, query, status } = args;
     const filters: any = {};
     if (query)  filters.search = query;
-    if (status) filters.status = status;
+    filters.status = status || 'ACTIVE';
     const result = await projectRepository.findProjects(tenantId, { page: 1, pageSize: 20 }, filters);
     return {
         total: result.total,

@@ -3,6 +3,7 @@ import { BaseRepository, PaginatedResult, PaginationParams } from './baseReposit
 export interface ProjectFilters {
     status?: string;
     search?: string;
+    code?: string;
 }
 
 export class ProjectRepository extends BaseRepository {
@@ -27,6 +28,10 @@ export class ProjectRepository extends BaseRepository {
             if (filters?.status) {
                 conditions.push(`status = $${paramIndex++}`);
                 values.push(filters.status);
+            }
+            if (filters?.code) {
+                conditions.push(`UPPER(code) = UPPER($${paramIndex++})`);
+                values.push(filters.code);
             }
             if (filters?.search) {
                 conditions.push(`(name ILIKE $${paramIndex} OR code ILIKE $${paramIndex} OR location ILIKE $${paramIndex})`);
