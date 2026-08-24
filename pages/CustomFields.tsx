@@ -119,11 +119,11 @@ export default function CustomFields() {
           </label>
           <label style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
             <span>Đối tượng</span>
-            <Dropdown value={entity} onChange={(v) => setEntity(v as string)} options={ENTITIES} />
+             <Dropdown value={entity} onChange={(v) => setEntity(v as string)} options={ENTITIES} variant="compact" />
           </label>
           <label style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
             <span>Kiểu dữ liệu</span>
-            <Dropdown value={type} onChange={(v) => setType(v as string)} options={FIELD_TYPES} />
+             <Dropdown value={type} onChange={(v) => setType(v as string)} options={FIELD_TYPES} variant="compact" />
           </label>
           <label style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
             <input type="checkbox" checked={required} onChange={(e) => setRequired(e.target.checked)} />

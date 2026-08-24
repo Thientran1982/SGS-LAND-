@@ -112,7 +112,8 @@ export const Favorites: React.FC = () => {
                             value={sortBy}
                             onChange={(val) => setSortBy(val as string)}
                             options={sortOptions}
-                            className="min-w-[160px]"
+                             className="min-w-[160px]"
+                             variant="compact"
                         />
                     )}
                 </div>

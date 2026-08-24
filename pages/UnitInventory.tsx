@@ -158,11 +158,11 @@ export default function UnitInventory() {
       <div style={{ display: 'flex', gap: 12, marginBottom: 16, maxWidth: 460, alignItems: 'flex-end' }}>
         <label style={{ display: 'flex', flexDirection: 'column', gap: 6, flex: 1 }}>
           <span>Tower</span>
-          <Dropdown value={tower} onChange={(v) => setTower(v as string)} options={towerOptions} />
+           <Dropdown value={tower} onChange={(v) => setTower(v as string)} options={towerOptions} variant="compact" />
         </label>
         <label style={{ display: 'flex', flexDirection: 'column', gap: 6, flex: 1 }}>
           <span>Trạng thái</span>
-          <Dropdown value={status} onChange={(v) => setStatus(v as string)} options={statusOptions} />
+           <Dropdown value={status} onChange={(v) => setStatus(v as string)} options={statusOptions} variant="compact" />
         </label>
       </div>
 

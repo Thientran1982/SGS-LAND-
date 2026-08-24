@@ -2267,6 +2267,7 @@ function ProjectListingsPanel({ project, canCreate, isAdmin, userRole, onClose, 
                                     onChange={v => setSelectedPlanId(v as string)}
                                     placeholder={t('floorplan.select_plan') || 'Chọn sa bàn'}
                                     className="h-[36px] min-w-[180px]"
+                                     variant="compact"
                                     options={floorPlans.map(p => ({
                                         value: p.id,
                                         label: `${(t('inventory.label_tower') || 'Tháp')} ${p.tower} · ${(t('inventory.label_floor') || 'Tầng')} ${p.floor}`,
@@ -2280,7 +2281,7 @@ function ProjectListingsPanel({ project, canCreate, isAdmin, userRole, onClose, 
                                     placeholder={t('common.search') + '...'}
                                     value={search}
                                     onChange={e => { setSearch(e.target.value); setSelected(new Set()); }}
-                                    className="w-full pl-9 pr-3 py-2 h-[36px] border border-[var(--glass-border)] rounded-xl bg-[var(--bg-app)] text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                                     className="w-full pl-10 pr-10 h-10 border border-[var(--glass-border)] rounded-xl bg-[var(--glass-surface)] text-sm focus:outline-none focus:ring-2 focus:ring-[var(--sgs-primary)]/20 focus:border-sgs-primary focus:bg-[var(--bg-surface)] placeholder:text-[var(--text-muted)]"
                                 />
                             </div>
                             {/* Bulk actions — visible when rows selected */}
@@ -2294,6 +2295,7 @@ function ProjectListingsPanel({ project, canCreate, isAdmin, userRole, onClose, 
                                         onChange={v => setBulkStatus(v as string)}
                                         placeholder={t('project.bulk_status_placeholder')}
                                         className="h-[36px] min-w-[160px]"
+                                         variant="compact"
                                         options={['AVAILABLE','HOLD','INACTIVE','OPENING','BOOKING'].map(s => ({
                                             value: s,
                                             label: t(`status.${s}`) || s,

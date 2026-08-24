@@ -396,7 +396,8 @@ export const ApprovalInbox: React.FC = () => {
                             { value: 'MEDIUM', label: t('approvals.filter_medium') },
                             { value: 'LOW', label: t('approvals.filter_low') }
                         ]}
-                        className="text-xs min-w-[150px]"
+                         className="min-w-[150px]"
+                         variant="compact"
                         icon={ICONS.FILTER}
                     />
                     <Dropdown 
@@ -406,7 +407,8 @@ export const ApprovalInbox: React.FC = () => {
                             { value: 'RISK', label: t('approvals.sort_risk') },
                             { value: 'DATE', label: t('approvals.sort_date') }
                         ]}
-                        className="text-xs min-w-[160px]"
+                         className="min-w-[160px]"
+                         variant="compact"
                         icon={ICONS.SORT}
                     />
                 </div>

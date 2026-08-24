@@ -67,7 +67,7 @@ export default function Auction() {
       <div style={{ display: 'flex', alignItems: 'end', gap: 12, marginBottom: 16, maxWidth: 260 }}>
         <label style={{ display: 'flex', flexDirection: 'column', gap: 6, flex: 1 }}>
           <span>Trạng thái</span>
-          <Dropdown value={filter} onChange={(v) => setFilter(v as string)} options={STATUS_OPTIONS} />
+          <Dropdown value={filter} onChange={(v) => setFilter(v as string)} options={STATUS_OPTIONS} variant="compact" />
         </label>
       </div>
 
