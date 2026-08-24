@@ -122,11 +122,11 @@ const CursorPaginationControl = memo(({
         { value: 48, label: '48' },
         { value: 100, label: '100' }
     ];
-    const btnCls = "w-9 h-9 flex items-center justify-center rounded-lg border border-[var(--glass-border)] bg-[var(--bg-surface)] text-[var(--text-secondary)] hover:bg-[var(--glass-surface)] disabled:opacity-40 disabled:cursor-not-allowed transition-all";
+    const btnCls = "w-9 h-9 flex items-center justify-center rounded-lg bg-transparent text-[var(--text-secondary)] hover:bg-[var(--glass-surface-hover)] disabled:opacity-40 disabled:cursor-not-allowed transition-all";
     return (
         <>
             {/* Mobile */}
-            <div className="flex sm:hidden items-center w-fit mx-auto gap-3 px-4 py-1.5 bg-[var(--bg-surface)] rounded-xl border border-[var(--glass-border)] shadow-sm">
+            <div className="flex sm:hidden items-center w-fit mx-auto gap-3 px-4 py-1.5 bg-transparent rounded-xl">
                 <button onClick={onPrev} disabled={isLoading || !hasPrev} className={btnCls}>
                     <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" /></svg>
                 </button>
@@ -138,7 +138,7 @@ const CursorPaginationControl = memo(({
                 </button>
             </div>
             {/* Desktop */}
-            <div className="hidden sm:flex flex-row justify-between items-center px-4 py-1.5 bg-[var(--bg-surface)] rounded-xl border border-[var(--glass-border)] shadow-sm gap-2">
+            <div className="hidden sm:flex flex-row justify-between items-center px-4 py-1.5 bg-transparent gap-2">
                 <div className="flex text-xs text-[var(--text-tertiary)] font-medium items-center gap-1">
                     <span className="font-bold text-[var(--text-primary)]">{totalItems.toLocaleString('vi-VN')}</span>
                     <span>{t('pagination.results')}</span>
@@ -156,7 +156,7 @@ const CursorPaginationControl = memo(({
                     <button
                         onClick={onPrev}
                         disabled={isLoading || !hasPrev}
-                        className="px-3 py-1 rounded-lg border border-[var(--glass-border)] bg-[var(--bg-surface)] text-[var(--text-secondary)] text-xs font-semibold hover:bg-[var(--glass-surface)] disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-sm flex items-center gap-1"
+                        className="px-3 py-1 rounded-lg bg-transparent text-[var(--text-secondary)] text-xs font-semibold hover:bg-[var(--glass-surface-hover)] disabled:opacity-50 disabled:cursor-not-allowed transition-all flex items-center gap-1"
                     >
                         <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" /></svg>
                         {t('pagination.prev')}
@@ -164,7 +164,7 @@ const CursorPaginationControl = memo(({
                     <button
                         onClick={onNext}
                         disabled={isLoading || !hasNext}
-                        className="px-3 py-1 rounded-lg border border-[var(--glass-border)] bg-[var(--bg-surface)] text-[var(--text-secondary)] text-xs font-semibold hover:bg-[var(--glass-surface)] disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-sm flex items-center gap-1"
+                        className="px-3 py-1 rounded-lg bg-transparent text-[var(--text-secondary)] text-xs font-semibold hover:bg-[var(--glass-surface-hover)] disabled:opacity-50 disabled:cursor-not-allowed transition-all flex items-center gap-1"
                     >
                         {t('pagination.next')}
                         <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" /></svg>
@@ -585,7 +585,9 @@ export const Inventory: React.FC = () => {
     const metricsRef = useRef<HTMLDivElement>(null);
     const listingScrollRef = useRef<HTMLDivElement>(null);
     const listingsRequestIdRef = useRef(0);
+    const boardRequestIdRef = useRef(0);
     const [metricsCollapsed, setMetricsCollapsed] = useState(false);
+    const [paginationCollapsed, setPaginationCollapsed] = useState(false);
     const lastScrollTopRef = useRef(0);
     // Apply Draggable Scroll Physics to containers
     useDraggableScroll(boardRef, viewMode);
@@ -603,8 +605,10 @@ export const Inventory: React.FC = () => {
 
         if (scrollTop <= 8 || scrollTop < previousScrollTop) {
             setMetricsCollapsed(false);
+            setPaginationCollapsed(false);
         } else if (scrollTop > previousScrollTop + 2) {
             setMetricsCollapsed(true);
+            setPaginationCollapsed(true);
         }
     }, []);
     useEffect(() => {
@@ -644,16 +648,19 @@ export const Inventory: React.FC = () => {
     }, [debouncedSearch, typeFilter, statusFilter, transactionFilter, currentCursor, pageSize, notify, t]);
 
     const fetchBoardData = useCallback(async () => {
+        const requestId = ++boardRequestIdRef.current;
         if (viewMode !== 'BOARD' && viewMode !== 'MAP') { setAllFilteredListings([]); return; }
         setBoardLoading(true);
         try {
             const filters = { search: debouncedSearch, type: typeFilter, status: statusFilter, transaction: transactionFilter, noProjectCode: true };
             const allRes = await db.getListings(1, 500, filters);
+            if (requestId !== boardRequestIdRef.current) return;
             setAllFilteredListings(allRes.data || []);
         } catch (e) {
+            if (requestId !== boardRequestIdRef.current) return;
             console.error(e);
         } finally {
-            setBoardLoading(false);
+            if (requestId === boardRequestIdRef.current) setBoardLoading(false);
         }
     }, [viewMode, debouncedSearch, typeFilter, statusFilter, transactionFilter]);
 
@@ -672,6 +679,7 @@ export const Inventory: React.FC = () => {
         listingScrollRef.current?.scrollTo({ top: 0, behavior: 'auto' });
         lastScrollTopRef.current = 0;
         setMetricsCollapsed(false);
+        setPaginationCollapsed(false);
         setCursorStack(prev => [...prev, currentCursor ?? '']);
         setCurrentCursor(nextCursor);
     }, [loading, nextCursor, currentCursor]);
@@ -680,6 +688,7 @@ export const Inventory: React.FC = () => {
         listingScrollRef.current?.scrollTo({ top: 0, behavior: 'auto' });
         lastScrollTopRef.current = 0;
         setMetricsCollapsed(false);
+        setPaginationCollapsed(false);
         setCursorStack(prev => {
             const newStack = [...prev];
             const prevCursor = newStack.pop();
@@ -1190,17 +1199,26 @@ export const Inventory: React.FC = () => {
                 )}
                 {/* Sticky Pagination Footer — only for GRID / LIST */}
                 {viewMode !== 'BOARD' && viewMode !== 'MAP' && (
-                    <CursorPaginationControl
-                        totalItems={totalItems}
-                        pageSize={pageSize}
-                        hasPrev={cursorStack.length > 0}
-                        hasNext={hasNext}
-                        onPrev={handleCursorPrev}
-                        onNext={handleCursorNext}
-                        onPageSizeChange={(s: number) => setPageSize(s)}
-                        t={t}
-                        isLoading={loading}
-                    />
+                    <div
+                        aria-hidden={paginationCollapsed}
+                        className={`shrink-0 overflow-hidden transition-[max-height,opacity,transform] duration-200 ease-out ${
+                            paginationCollapsed
+                                ? 'max-h-0 opacity-0 -translate-y-2 pointer-events-none'
+                                : 'max-h-20 opacity-100 translate-y-0'
+                        }`}
+                    >
+                        <CursorPaginationControl
+                            totalItems={totalItems}
+                            pageSize={pageSize}
+                            hasPrev={cursorStack.length > 0}
+                            hasNext={hasNext}
+                            onPrev={handleCursorPrev}
+                            onNext={handleCursorNext}
+                            onPageSizeChange={(s: number) => setPageSize(s)}
+                            t={t}
+                            isLoading={loading}
+                        />
+                    </div>
                 )}
             </div>
             <ListingForm 
