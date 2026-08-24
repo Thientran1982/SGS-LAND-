@@ -180,20 +180,34 @@ async function startServer() {
       return res.status(400).end();
     }
     try {
-      // Fetch CARTO server-side. OSM currently returns a 200 PNG policy
-      // placeholder ("Access blocked") from this environment, which is
-      // indistinguishable from a real tile by status/content-type alone.
-      const upstream = await fetch(`https://basemaps.cartocdn.com/light_all/${z}/${x}/${y}.png`, {
-        headers: {
-          'User-Agent': 'Mozilla/5.0',
-          'Accept': 'image/avif,image/webp,image/apng,image/svg+xml,image/*,*/*;q=0.8',
-        },
-        signal: AbortSignal.timeout(8000),
-      });
-      if (!upstream.ok) return res.status(upstream.status).end();
-      res.setHeader('Content-Type', upstream.headers.get('content-type') || 'image/png');
+      // Fetch server-side. Some tile hosts return a 200 PNG policy placeholder
+      // ("Access blocked"), so status/content-type alone are not sufficient.
+      const tileSources = [
+        `https://basemaps.cartocdn.com/light_all/${z}/${x}/${y}.png`,
+        `https://basemaps.cartocdn.com/rastertiles/voyager/${z}/${x}/${y}.png`,
+      ];
+      let tile: Buffer | null = null;
+      for (const tileUrl of tileSources) {
+        const upstream = await fetch(tileUrl, {
+          headers: {
+            'User-Agent': 'Mozilla/5.0',
+            'Accept': 'image/avif,image/webp,image/apng,image/svg+xml,image/*,*/*;q=0.8',
+          },
+          signal: AbortSignal.timeout(8000),
+        });
+        if (!upstream.ok) continue;
+        const candidate = Buffer.from(await upstream.arrayBuffer());
+        // The blocked OSM response in this environment is a fixed ~6.9 KB
+        // PNG placeholder. Reject suspiciously small tiles before they reach
+        // Leaflet, so the warning can never be rendered as map content.
+        if (candidate.length < 8000 || candidate.subarray(0, 8).toString('hex') !== '89504e470d0a1a0a') continue;
+        tile = candidate;
+        break;
+      }
+      if (!tile) return res.status(502).end();
+      res.setHeader('Content-Type', 'image/png');
       res.setHeader('Cache-Control', 'public, max-age=86400, stale-while-revalidate=604800');
-      res.send(Buffer.from(await upstream.arrayBuffer()));
+      res.send(tile);
     } catch (error) {
       logger.warn(`[MapTiles] upstream tile unavailable: ${error instanceof Error ? error.message : String(error)}`);
       res.status(502).end();
