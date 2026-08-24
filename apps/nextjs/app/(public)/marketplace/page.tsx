@@ -123,6 +123,7 @@ export default async function MarketplaceRoute({
           totalPages={totalPages}
           searchParams={sp}
           facets={facets}
+          locations={facets?.topAreas?.map((area) => area.name) ?? []}
         />
       </>
     </Suspense>

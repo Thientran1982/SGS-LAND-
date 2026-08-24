@@ -591,7 +591,7 @@ export function MarketplacePage({ initialListings, totalCount, totalPages, searc
           </Link>
         </div>
 
-        <div className="hidden sm:flex items-center gap-2 min-w-0 flex-1 overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+        <div className="hidden sm:flex items-center gap-2 min-w-0 flex-1 overflow-visible">
           <div className="flex items-center gap-2 shrink-0">
             <div className="min-w-0"><Dropdown value={sp.type ?? ""} options={TYPE_OPTIONS(lang)} onChange={(v) => setParam("type", v)} minWidth={0} /></div>
             <div className="min-w-0"><Dropdown value={sp.area ?? ""} options={LOCATION_OPTIONS(lang, locations)} onChange={(v) => setParam("area", v)} minWidth={0} /></div>
