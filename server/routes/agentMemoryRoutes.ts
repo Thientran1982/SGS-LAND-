@@ -93,8 +93,19 @@ export function createAgentMemoryRoutes(authenticateToken: RequestHandler): Rout
       const { signalType, subjectType, subjectId } = req.body || {};
       if (!signalType || !subjectType || !subjectId) return res.status(400).json({ error: 'signalType, subjectType và subjectId là bắt buộc' });
       if (!SIGNAL_TYPES.has(signalType)) return res.status(400).json({ error: 'signalType không hợp lệ' });
+      if (signalType === 'price_estimate_edit_distance') {
+        const payload = req.body.payload || {};
+        const signal = await agentMemoryService.recordPriceEstimateEditDistance(user.tenantId, {
+          subjectType, subjectId, estimatedPrice: payload.estimatedPrice,
+          actualPrice: payload.actualPrice, actorId: user.id, source: 'staff_verified',
+        });
+        if (!signal) return res.status(400).json({ error: 'estimatedPrice và actualPrice phải là số dương hợp lệ' });
+        return res.status(201).json(signal);
+      }
       res.status(201).json(await agentMemoryService.recordSignal(user.tenantId, {
         signalType, subjectType, subjectId, actorId: user.id, payload: req.body.payload,
+        dedupeKey: req.body.dedupeKey,
+        provenance: 'staff',
       }));
     } catch (error: any) {
       res.status(400).json({ error: error?.message || 'Không thể ghi tín hiệu' });

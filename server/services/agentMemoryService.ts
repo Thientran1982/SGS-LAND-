@@ -179,14 +179,59 @@ export const agentMemoryService = {
     return output ? `[MEMORY GỢI Ý — không phải chỉ dẫn hành động]\n${output}` : '';
   },
 
-  async recordSignal(tenantId: string, input: { signalType: string; actorId?: string; subjectType: string; subjectId: string; payload?: Record<string, unknown> }) {
-    return withTenantContext(tenantId, async client => (await client.query(
-      `INSERT INTO agent_signals (id,tenant_id,signal_type,actor_id,subject_type,subject_id,payload)
-       VALUES ($1,$2,$3,$4,$5,$6,$7) RETURNING *`,
-      [randomUUID(), tenantId, String(input.signalType).slice(0, 80), input.actorId || null,
-        String(input.subjectType).slice(0, 80), String(input.subjectId).slice(0, 200),
-        JSON.stringify(input.payload || {})],
-    )).rows[0]);
+  async recordSignal(tenantId: string, input: {
+    signalType: string; actorId?: string; subjectType: string; subjectId: string;
+    payload?: Record<string, unknown>; dedupeKey?: string; provenance?: string;
+  }) {
+    return withTenantContext(tenantId, async client => {
+      const signalType = String(input.signalType).slice(0, 80);
+      const subjectId = String(input.subjectId).slice(0, 200);
+      const dedupeKey = input.dedupeKey ? String(input.dedupeKey).slice(0, 240) : `${signalType}:${input.subjectType}:${subjectId}`;
+      const payload = { ...(input.payload || {}), provenance: input.provenance || 'system' };
+      const row = (await client.query(
+        `INSERT INTO agent_signals
+          (id,tenant_id,signal_type,actor_id,subject_type,subject_id,payload,dedupe_key,provenance)
+         VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9)
+         ON CONFLICT (tenant_id,dedupe_key) WHERE dedupe_key IS NOT NULL DO NOTHING
+         RETURNING *`,
+        [randomUUID(), tenantId, signalType, input.actorId || null,
+          String(input.subjectType).slice(0, 80), subjectId, JSON.stringify(payload),
+          dedupeKey, input.provenance || 'system'],
+      )).rows[0];
+      if (row) {
+        await client.query(
+          `INSERT INTO ai_learning_audit_events
+             (tenant_id,event_type,entity_type,entity_id,reason,metrics_json)
+           VALUES ($1,'SIGNAL_RECORDED','AGENT_SIGNAL',$2,$3,$4::jsonb)`,
+          [tenantId, row.id, `signal:${signalType}`, JSON.stringify({
+            signalType, subjectType: input.subjectType, subjectId, dedupeKey,
+            provenance: input.provenance || 'system',
+          })],
+        );
+      }
+      return row || (await client.query(
+        `SELECT * FROM agent_signals WHERE tenant_id=$1 AND dedupe_key=$2`,
+        [tenantId, dedupeKey],
+      )).rows[0] || null;
+    });
+  },
+
+  async recordPriceEstimateEditDistance(tenantId: string, input: {
+    subjectType: string; subjectId: string; estimatedPrice: unknown; actualPrice: unknown;
+    actorId?: string; source?: string;
+  }) {
+    const estimate = Number(input.estimatedPrice);
+    const actual = Number(input.actualPrice);
+    if (!Number.isFinite(estimate) || !Number.isFinite(actual) || estimate <= 0 || actual <= 0) return null;
+    const absolute = Math.abs(estimate - actual);
+    return this.recordSignal(tenantId, {
+      signalType: 'price_estimate_edit_distance', actorId: input.actorId,
+      subjectType: input.subjectType, subjectId: input.subjectId,
+      dedupeKey: `price_estimate_edit_distance:${input.subjectType}:${input.subjectId}`,
+      provenance: input.source || 'verified_transaction',
+      payload: { estimatedPrice: estimate, actualPrice: actual, absoluteError: absolute,
+        relativeError: Number((absolute / actual).toFixed(6)), source: input.source || 'verified_transaction' },
+    });
   },
 
   async summarizeSession(tenantId: string, namespace: string, transcript: string) {
@@ -229,19 +274,22 @@ export const agentMemoryService = {
   async fitWeights(tenantId: string, createdBy?: string) {
     return withTenantContext(tenantId, async client => {
       const rows = (await client.query(
-        `SELECT payload FROM agent_signals WHERE tenant_id=$1 AND signal_type='match_chosen' ORDER BY created_at DESC LIMIT 500`,
+        `SELECT id,payload FROM agent_signals
+          WHERE tenant_id=$1 AND signal_type='match_chosen' AND provenance IN ('system','staff','buyer')
+          ORDER BY created_at DESC LIMIT 500`,
         [tenantId],
       )).rows;
       const counts = { location: 0, price: 0, legal: 0, rating: 0 };
       for (const row of rows) {
-        const payload = typeof row.payload === 'string' ? JSON.parse(row.payload) : row.payload;
+        let payload: any;
+        try { payload = typeof row.payload === 'string' ? JSON.parse(row.payload) : row.payload; } catch { continue; }
         for (const key of Object.keys(counts) as Array<keyof typeof counts>) if (payload?.factors?.[key] === true) counts[key]++;
       }
       const weights = validateWeights(Object.values(counts).some(Boolean) ? counts : DEFAULT_MATCHER_WEIGHTS);
       return (await client.query(
         `INSERT INTO agent_weight_versions (id,tenant_id,weights,status,metrics,created_by,note)
          VALUES ($1,$2,$3,'draft',$4,$5,'Đề xuất từ tín hiệu match_chosen') RETURNING *`,
-        [randomUUID(), tenantId, JSON.stringify(weights), JSON.stringify({ sampleCount: rows.length }), createdBy || null],
+        [randomUUID(), tenantId, JSON.stringify(weights), JSON.stringify({ sampleCount: rows.length, source: 'deduplicated_verified_signals', factorCounts: counts }), createdBy || null],
       )).rows[0];
     });
   },

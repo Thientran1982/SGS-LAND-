@@ -27,6 +27,7 @@ import { buildPaymentUrl, verifyCallback } from '../services/vnpayService';
 import { brevoSendEmail, isBrevoConfigured } from '../services/brevoService';
 import { emailBase } from '../services/emailService';
 import { withRlsBypass } from '../db';
+import { agentMemoryService } from '../services/agentMemoryService';
 
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 const MIN_DEPOSIT_VND = 100_000;        // 100k VND lower bound (sandbox-friendly)
@@ -812,6 +813,13 @@ export function createBookingRoutes(
             logger.warn('[vnpay/ipn] hold listing failed: ' + (e?.message || e));
           }
         }
+
+          await agentMemoryService.recordSignal(booking.tenant_id, {
+            signalType: 'match_chosen', actorId: booking.buyer_user_id || undefined,
+            subjectType: 'booking', subjectId: booking.id,
+            dedupeKey: `match_chosen:booking_paid:${booking.id}`, provenance: 'buyer',
+            payload: { action: 'book', listingId: booking.listing_id, factors: { price: true, location: true } },
+          }).catch((e) => logger.warn('[vnpay/ipn] learning signal failed: ' + (e?.message || e)));
 
           // Realtime nudge to the assigned agent (web CRM picks this up).
           if (io && booking.agent_user_id) {

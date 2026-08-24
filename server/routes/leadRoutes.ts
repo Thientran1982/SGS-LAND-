@@ -7,6 +7,7 @@ import { routingRuleRepository } from '../repositories/routingRuleRepository';
 import { notificationRepository } from '../repositories/notificationRepository';
 import { enrollLeadToMatchingSequences } from '../services/sequenceService';
 import { normalizeLeadEmail, normalizeLeadTags, normalizeVNPhone } from '../../utils/leadNormalization';
+import { agentMemoryService } from '../services/agentMemoryService';
 
 
 const STAGE_LABEL_VN: Record<string, string> = {
@@ -202,6 +203,11 @@ export function createLeadRoutes(authenticateToken: any, getBroadcast?: () => an
         assignedTo: finalAssignedTo || user.id,
         tags: normalizedTags, notes, preferences,
       });
+      await agentMemoryService.recordSignal(user.tenantId, {
+        signalType: 'match_chosen', actorId: user.id, subjectType: 'lead', subjectId: lead.id,
+        dedupeKey: `match_chosen:lead_created:${lead.id}`, provenance: 'staff',
+        payload: { action: 'contact', source: 'lead_create', factors: { rating: true } },
+      }).catch(() => {});
 
       await auditRepository.log(user.tenantId, {
         actorId: user.id,
@@ -317,6 +323,12 @@ export function createLeadRoutes(authenticateToken: any, getBroadcast?: () => an
         req.body.assignedTo !== before.assignedTo &&
         req.body.assignedTo !== user.id
       ) {
+        await agentMemoryService.recordSignal(user.tenantId, {
+          signalType: 'match_chosen', actorId: user.id, subjectType: 'lead', subjectId: lead.id,
+          dedupeKey: `match_chosen:lead_assigned:${lead.id}:${req.body.assignedTo}`,
+          provenance: 'staff',
+          payload: { action: 'assign_lead', assignedTo: req.body.assignedTo, factors: { rating: true } },
+        }).catch(() => {});
         notificationRepository.create({
           tenantId: user.tenantId,
           userId: req.body.assignedTo,
@@ -446,12 +458,11 @@ export function createLeadRoutes(authenticateToken: any, getBroadcast?: () => an
         user.tenantId, String(req.params.id), user.id, user.role
       );
       if (!lead) return res.status(404).json({ error: 'Lead not found or access denied' });
+      const resolvedChannel = (channel || 'INTERNAL').toUpperCase();
 
       // ── Attempt outbound delivery for social channels ──────────────────────
       let deliveryStatus = 'SENT';
       let deliveryError: string | undefined;
-
-      const resolvedChannel = (channel || 'INTERNAL').toUpperCase();
 
       if (resolvedChannel === 'ZALO' && !lead.socialIds?.zalo) {
         deliveryStatus = 'PENDING';
@@ -526,6 +537,14 @@ export function createLeadRoutes(authenticateToken: any, getBroadcast?: () => an
         senderId: user.id,
         status: deliveryStatus,
       });
+      if (deliveryStatus === 'SENT') {
+        await agentMemoryService.recordSignal(user.tenantId, {
+          signalType: 'match_chosen', actorId: user.id, subjectType: 'lead', subjectId: lead.id,
+          dedupeKey: `match_chosen:interaction:${lead.id}:${req.body?.idempotencyKey || `${resolvedChannel}:${content.slice(0, 80)}`}`,
+          provenance: 'staff',
+          payload: { action: 'contact', channel: resolvedChannel, factors: { rating: true } },
+        }).catch(() => {});
+      }
 
       // Push real-time reply to customer's live chat widget (and other agents watching)
       const io = getBroadcast?.();

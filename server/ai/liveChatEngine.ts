@@ -211,6 +211,7 @@ const TOOL_MANIFEST: ToolDefinition[] = [
             floor:       { type: 'number', required: false, description: 'Tầng (cho căn hộ)' },
             buildingAge: { type: 'number', required: false, description: 'Tuổi công trình (năm)' },
             developer:   { type: 'string', required: false, description: 'Tên chủ đầu tư (để áp brand premium)' },
+            actualPrice: { type: 'number', required: false, description: 'Giá thực tế đã xác minh (VNĐ), dùng để đo sai lệch' },
         },
     },
     {
@@ -756,7 +757,7 @@ function handle_get_valuation(args: Record<string, any>): any {
             }
         }
 
-        return {
+        const result = {
             ...output,
             priceMedian:    Math.round(output.totalPrice * brandMult),
             priceMin:       Math.round(output.rangeMin   * brandMult),
@@ -767,6 +768,16 @@ function handle_get_valuation(args: Record<string, any>): any {
             source: 'SGS-AVM calculation from regional benchmark',
             needsVerification: true,
         };
+        if (Number.isFinite(Number(args.actualPrice)) && Number(args.actualPrice) > 0 && args.tenantId) {
+            agentMemoryService.recordPriceEstimateEditDistance(String(args.tenantId), {
+                subjectType: 'valuation',
+                subjectId: String(args.valuationId || args.address || randomUUID()),
+                estimatedPrice: result.priceMedian,
+                actualPrice: args.actualPrice,
+                source: 'live_chat_verified',
+            }).catch(() => {});
+        }
+        return result;
     } catch (e: any) {
         return { error: e.message, address, area };
     }
