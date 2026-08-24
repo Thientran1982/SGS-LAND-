@@ -593,23 +593,29 @@ app.use(globalMutationAudit);
         return res.status(429).json({ error: 'OTP_RATE_LIMITED', retryAfterSeconds: otp.retryAfterSeconds });
       }
 
-      // Respond immediately — don't block on email delivery under high registration load
-      res.json({
+      // Do not claim delivery before the provider confirms it. An undelivered
+      // challenge is consumed so it cannot later be accepted accidentally.
+      const delivery = await emailService.sendEmailOtp(
+        tenantId, email, dbUser.name, otp.code, req.body?.locale === 'en' ? 'en' : 'vn',
+      );
+      const delivered = delivery.success && delivery.status === 'sent';
+      writeAuditLog(tenantId, dbUser.id, 'REGISTER', 'auth', dbUser.id, { email, emailSent: delivered }, req.ip);
+      if (!delivered) {
+        await withRlsBypass(async (client) => {
+          await client.query('UPDATE email_otp_challenges SET consumed_at = NOW() WHERE user_id = $1 AND consumed_at IS NULL', [dbUser.id]);
+        });
+        logger.error(`Failed to send OTP email to ${email}: ${delivery.error || delivery.status}`);
+        return res.status(503).json({
+          error: 'OTP_DELIVERY_FAILED',
+          needsVerification: true,
+          email: dbUser.email,
+        });
+      }
+      return res.json({
         message: 'Registration successful. Please verify your email to continue.',
         needsVerification: true,
         email: dbUser.email,
-        emailStatus: 'sending',
-      });
-
-      // Fire-and-forget email after response is sent
-      emailService.sendEmailOtp(tenantId, email, dbUser.name, otp.code, req.body?.locale === 'en' ? 'en' : 'vn').then((verifyResult) => {
-        writeAuditLog(tenantId, dbUser.id, 'REGISTER', 'auth', dbUser.id, { email, emailSent: verifyResult.success }, req.ip);
-        if (!verifyResult.success) {
-          logger.error(`Failed to send OTP email to ${email}: ${verifyResult.error}`);
-        }
-      }).catch(err => {
-        logger.error(`Failed to send OTP email to ${email}: ${err.message}`);
-        writeAuditLog(tenantId, dbUser.id, 'REGISTER', 'auth', dbUser.id, { email, emailSent: false }, req.ip);
+        emailStatus: 'sent',
       });
     } catch (error) {
       console.error('Register error:', error);
@@ -801,48 +807,45 @@ app.use(globalMutationAudit);
           return res.status(429).json({ error: 'OTP_RATE_LIMITED', retryAfterSeconds: otp.retryAfterSeconds });
         }
 
-        // 4) Respond immediately — don't block on email delivery under high registration load
-        res.status(201).json({
-          message:
-            'Đăng ký thành công. Vui lòng kiểm tra email để kích hoạt workspace của bạn.',
+        // 4) Confirm provider delivery before telling the user to check email.
+        const delivery = await emailService.sendEmailOtp(
+          created.tenantId, trimmedEmail, adminUser.name, otp.code, req.body?.locale === 'en' ? 'en' : 'vn',
+        );
+        const delivered = delivery.success && delivery.status === 'sent';
+        writeAuditLog(
+          created.tenantId,
+          adminUser.id,
+          'ONBOARD_VENDOR',
+          'tenant',
+          created.tenantId,
+          { company: trimmedCompany, domain: created.domainSlug, email: trimmedEmail, emailSent: delivered },
+          req.ip
+        );
+        if (!delivered) {
+          await withRlsBypass(async (client) => {
+            await client.query('UPDATE email_otp_challenges SET consumed_at = NOW() WHERE user_id = $1 AND consumed_at IS NULL', [adminUser.id]);
+          });
+          logger.error(`[onboard-vendor] Failed to send OTP email to ${trimmedEmail}: ${delivery.error || delivery.status}`);
+          return res.status(503).json({
+            error: 'OTP_DELIVERY_FAILED',
+            needsVerification: true,
+            email: adminUser.email,
+            tenantId: created.tenantId,
+            tenantDomain: created.domainSlug,
+            plan: 'INDIVIDUAL',
+            trialDays: 14,
+          });
+        }
+        return res.status(201).json({
+          message: 'Đăng ký thành công. Vui lòng kiểm tra email để kích hoạt workspace của bạn.',
           needsVerification: true,
           email: adminUser.email,
           tenantId: created.tenantId,
           tenantDomain: created.domainSlug,
           plan: 'INDIVIDUAL',
           trialDays: 14,
-          emailStatus: 'sending',
+          emailStatus: 'sent',
         });
-
-        // Fire-and-forget email + audit after response is sent
-        emailService
-          .sendEmailOtp(created.tenantId, trimmedEmail, adminUser.name, otp.code, req.body?.locale === 'en' ? 'en' : 'vn')
-          .then((verifyResult) => {
-            writeAuditLog(
-              created.tenantId,
-              adminUser.id,
-              'ONBOARD_VENDOR',
-              'tenant',
-              created.tenantId,
-              { company: trimmedCompany, domain: created.domainSlug, email: trimmedEmail, emailSent: verifyResult.success },
-              req.ip
-            );
-            if (!verifyResult.success) {
-               logger.error(`[onboard-vendor] Failed to send OTP email to ${trimmedEmail}: ${verifyResult.error}`);
-            }
-          })
-          .catch((err) => {
-             logger.error(`[onboard-vendor] Failed to send OTP email to ${trimmedEmail}: ${err.message}`);
-            writeAuditLog(
-              created.tenantId,
-              adminUser.id,
-              'ONBOARD_VENDOR',
-              'tenant',
-              created.tenantId,
-              { company: trimmedCompany, domain: created.domainSlug, email: trimmedEmail, emailSent: false },
-              req.ip
-            );
-          });
       } catch (error: any) {
         if (error?.statusCode === 409) {
           return res.status(409).json({ error: error.userMsg || 'Workspace already exists' });
@@ -895,10 +898,15 @@ app.use(globalMutationAudit);
       otp.code,
       locale === 'en' ? 'en' : 'vn',
     );
+    const delivered = result.success && result.status === 'sent';
     writeAuditLog(found.tenantId, found.user.id, 'EMAIL_OTP_REQUESTED', 'auth', found.user.id, {
       email: found.user.email,
-      emailSent: result.success,
+      emailSent: delivered,
     });
+    if (!delivered) {
+      logger.error('[email-otp] Failed to deliver OTP for ' + found.user.email + ': ' + (result.error || result.status));
+      return { kind: 'delivery_failed' as const };
+    }
     return { kind: 'sent' as const };
   }
 
@@ -907,6 +915,9 @@ app.use(globalMutationAudit);
       const result = await sendOtpForPendingUser(req.body.email, req.body.locale);
       if (result.kind === 'rate_limited') {
         return res.status(429).json({ error: 'OTP_RATE_LIMITED', retryAfterSeconds: result.retryAfterSeconds });
+      }
+      if (result.kind === 'delivery_failed') {
+        return res.status(503).json({ error: 'OTP_DELIVERY_FAILED' });
       }
       return res.json({ message: 'If a pending account exists, a verification code has been sent.' });
     } catch (error) {
@@ -980,6 +991,9 @@ app.use(globalMutationAudit);
       await uniformDelay();
       if (result.kind === 'rate_limited') {
         return res.status(429).json({ error: 'OTP_RATE_LIMITED', retryAfterSeconds: result.retryAfterSeconds });
+      }
+      if (result.kind === 'delivery_failed') {
+        return res.status(503).json({ error: 'OTP_DELIVERY_FAILED' });
       }
       res.json({
         message: 'If a pending account exists, a verification code has been sent.',

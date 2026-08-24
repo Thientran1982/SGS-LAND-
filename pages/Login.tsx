@@ -389,6 +389,19 @@ export const Login: React.FC<LoginProps> = ({ onLoginSuccess }) => {
         setLoading(false);
         return;
       }
+      // Registration created a pending account, but the mail provider did not
+      // confirm delivery. Never claim the user received an OTP; let them resend.
+      if (err?.code === 'OTP_DELIVERY_FAILED' && err?.needsVerification) {
+        setRegisteredEmail(err.email || email.trim());
+        setEmailOtp('');
+        setOtpSecondsLeft(0);
+        setView('VERIFY_EMAIL');
+        setGlobalError(language === 'en'
+          ? 'We could not confirm delivery of the verification email. Please try sending the code again.'
+          : 'Chưa thể xác nhận email đã được gửi. Vui lòng thử gửi lại mã.');
+        setLoading(false);
+        return;
+      }
       // Gated B2B: vendor workspace chờ SGSLand duyệt
       if (err?.code === 'TENANT_PENDING_APPROVAL') {
         setRegisteredEmail(err.email || email.trim());

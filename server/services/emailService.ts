@@ -410,7 +410,7 @@ async function deliverEmail(
       `[EmailService] No email provider configured for tenant ${tenantId}. Email queued (not sent). To: ${options.to}, Subject: ${options.subject}`,
     );
     return {
-      result: { success: true, status: 'queued_no_smtp', messageId: `queued-${Date.now()}` },
+      result: { success: false, status: 'failed', error: 'No email provider is configured' },
       provider: 'none',
     };
   }
