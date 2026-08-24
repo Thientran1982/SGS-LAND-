@@ -141,6 +141,22 @@ export async function runDailyReport(reportDate = vnDate(), force = false) {
           manualAction: 'Kiểm tra provider bằng delivery key trước khi gửi thủ công; hệ thống không tự động gửi lại.',
         };
       }
+      if (force && existing.rows[0]?.status === 'delivery_unknown') {
+        const priorRecipients = existing.rows[0].recipients || emails;
+        const verification = await Promise.all(priorRecipients.map((email: string) =>
+          emailService.verifyDelivery(tenantId, `daily-report:${tenantId}:${reportDate}:${email}`),
+        ));
+        const canRetry = verification.every((result: any) => result.status === 'not_received');
+        if (!canRetry) {
+          return {
+            tenantId,
+            status: 'delivery_unknown',
+            recipients: priorRecipients.length,
+            deliveryVerification: verification,
+            manualAction: 'Provider chưa xác nhận tất cả thư chưa nhận. Không được tự động gửi lại; cần xử lý thủ công.',
+          };
+        }
+      }
       // A force-run retries delivery without rewriting the evidence captured
       // for a failed report.
       const summary = existing.rows[0]?.status === 'failed' && existing.rows[0]?.summary_snapshot

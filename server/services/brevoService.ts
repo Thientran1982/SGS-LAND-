@@ -27,6 +27,50 @@ export interface BrevoSendResult {
   error?: string;
   provider: 'brevo';
 }
+export type BrevoDeliveryStatus = 'delivered' | 'not_received' | 'unknown';
+
+/**
+ * Look up transactional events using the tag attached to an outbound message.
+ * An empty event list is intentionally different from an API error: Brevo
+ * answered successfully and has no record for this delivery key.
+ */
+export async function brevoLookupDeliveryStatus(deliveryKey: string): Promise<{
+  status: BrevoDeliveryStatus;
+  messageId?: string;
+  event?: string;
+  error?: string;
+}> {
+  try {
+    const client = getClient();
+    const tag = `delivery-key:${deliveryKey}`;
+    const result = await client.transactionalEmails.getEmailEventReport({
+      tags: encodeURIComponent(JSON.stringify([tag])),
+      days: 90,
+      limit: 50,
+    });
+    const events = ((result as any)?.events || []) as Array<Record<string, any>>;
+    if (!events.length) return { status: 'not_received' };
+    const delivered = events.find(event =>
+      ['delivered', 'opened', 'clicks', 'loadedByProxy'].includes(String(event.event)),
+    );
+    if (delivered) {
+      return { status: 'delivered', messageId: delivered.messageId, event: delivered.event };
+    }
+    // A bounce/block/error is evidence that Brevo did not deliver the message,
+    // but it is still a definitive provider outcome and may be retried.
+    const rejected = events.find(event =>
+      ['bounces', 'hardBounces', 'softBounces', 'blocked', 'invalid', 'error'].includes(String(event.event)),
+    );
+    if (rejected) {
+      return { status: 'not_received', messageId: rejected.messageId, event: rejected.event };
+    }
+    return { status: 'unknown', messageId: events[0]?.messageId, event: events[0]?.event };
+  } catch (error: any) {
+    const msg = error?.response?.body?.message || error?.message || String(error);
+    logger.error(`[Brevo] Delivery lookup error: ${msg}`);
+    return { status: 'unknown', error: msg };
+  }
+}
 export interface BrevoInboundEmail {
   from: string;
   fromName?: string;

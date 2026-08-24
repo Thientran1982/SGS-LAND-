@@ -1,5 +1,6 @@
 import { Router, Request, Response } from 'express';
 import { getDailyReport, listDailyReports, runDailyReport } from '../services/dailyAdminReportService';
+import { emailService } from '../services/emailService';
 
 const ROLES = new Set(['ADMIN', 'SUPER_ADMIN']);
 export function createDailyAdminReportRoutes(authenticateToken: any): Router {
@@ -14,13 +15,24 @@ export function createDailyAdminReportRoutes(authenticateToken: any): Router {
     const date = req.body?.report_date || req.body?.reportDate;
     if (date && !/^\d{4}-\d{2}-\d{2}$/.test(date)) return res.status(400).json({ error:'report_date không hợp lệ.' });
     const force = req.body?.force === true;
-    if (force && req.body?.provider_verified !== true) {
-      return res.status(400).json({
-        error: 'Cần xác nhận đã kiểm tra trạng thái provider trước khi gửi thủ công.',
-        instruction: 'Dùng delivery key trong báo cáo để kiểm tra provider; chỉ đặt provider_verified=true khi provider xác nhận chưa nhận thư.',
-      });
-    }
     try { res.json(await runDailyReport(date, force)); } catch { res.status(500).json({ error:'Không thể chạy báo cáo.' }); }
+  });
+  router.post('/daily/verify-delivery', authenticateToken, async (req, res) => {
+    const user = admin(req, res); if (!user) return;
+    const date = req.body?.report_date || req.body?.reportDate;
+    if (!date || !/^\d{4}-\d{2}-\d{2}$/.test(date)) return res.status(400).json({ error: 'report_date không hợp lệ.' });
+    try {
+      const report = await getDailyReport(user.tenantId, date);
+      if (!report) return res.status(404).json({ error: 'Không tìm thấy báo cáo.' });
+      const recipients = report.recipients || [];
+      const verification = await Promise.all(recipients.map((email: string) =>
+        emailService.verifyDelivery(user.tenantId, `daily-report:${user.tenantId}:${date}:${email}`),
+      ));
+      const canRetry = verification.length > 0 && verification.every((item: any) => item.status === 'not_received');
+      res.json({ reportDate: date, canRetry, verification });
+    } catch {
+      res.status(500).json({ error: 'Không thể xác minh trạng thái provider.' });
+    }
   });
   router.get('/daily', authenticateToken, async (req,res) => {
     const user=admin(req,res); if(!user) return;

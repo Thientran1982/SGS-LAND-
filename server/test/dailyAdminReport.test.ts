@@ -3,6 +3,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 const state = vi.hoisted(() => ({
   report: null as any,
   sendEmail: vi.fn(),
+  verifyDelivery: vi.fn(),
   sendDailyReportDeliveryAlertEmail: vi.fn(),
 }));
 
@@ -37,6 +38,7 @@ vi.mock('../db', () => ({
 vi.mock('../services/emailService', () => ({
   emailService: {
     sendEmail: state.sendEmail,
+    verifyDelivery: state.verifyDelivery,
     sendDailyReportDeliveryAlertEmail: state.sendDailyReportDeliveryAlertEmail,
   },
 }));
@@ -65,6 +67,7 @@ describe('daily admin report', () => {
   beforeEach(() => {
     state.report = null;
     state.sendEmail.mockReset();
+    state.verifyDelivery.mockReset().mockResolvedValue({ status: 'unknown', provider: 'brevo' });
     state.sendDailyReportDeliveryAlertEmail.mockReset().mockResolvedValue({ success: true, status: 'sent' });
   });
 
@@ -115,6 +118,43 @@ describe('daily admin report', () => {
       '2026-08-24',
       ['admin@example.com'],
     );
+  });
+
+  it('automatically verifies an unknown delivery before allowing a retry', async () => {
+    state.report = {
+      tenant_id: '11111111-1111-1111-1111-111111111111',
+      report_date: '2026-08-24',
+      status: 'delivery_unknown',
+      recipients: ['admin@example.com'],
+      summary_snapshot: buildReportSummary(metrics),
+    };
+    state.verifyDelivery.mockResolvedValue({ status: 'not_received', provider: 'brevo' });
+    state.sendEmail.mockResolvedValue({ success: true, status: 'sent', messageId: 'provider-2' });
+
+    await runDailyReport('2026-08-24', true);
+
+    expect(state.verifyDelivery).toHaveBeenCalledWith(
+      '11111111-1111-1111-1111-111111111111',
+      'daily-report:11111111-1111-1111-1111-111111111111:2026-08-24:admin@example.com',
+    );
+    expect(state.sendEmail).toHaveBeenCalledTimes(1);
+    expect(state.report.status).toBe('sent');
+  });
+
+  it('keeps an unknown delivery blocked when verification is inconclusive', async () => {
+    state.report = {
+      tenant_id: '11111111-1111-1111-1111-111111111111',
+      report_date: '2026-08-24',
+      status: 'delivery_unknown',
+      recipients: ['admin@example.com'],
+      summary_snapshot: buildReportSummary(metrics),
+    };
+    state.verifyDelivery.mockResolvedValue({ status: 'unknown', provider: 'brevo' });
+
+    const result = await runDailyReport('2026-08-24', true);
+
+    expect(result.results[0].status).toBe('delivery_unknown');
+    expect(state.sendEmail).not.toHaveBeenCalled();
   });
 
   it('keeps the failed report snapshot when force-running delivery again', async () => {

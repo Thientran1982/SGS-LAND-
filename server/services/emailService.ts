@@ -2,7 +2,7 @@ import crypto from 'crypto';
 import nodemailer from 'nodemailer';
 import { enterpriseConfigRepository } from '../repositories/enterpriseConfigRepository';
 import { DEFAULT_TENANT_ID } from '../constants';
-import { isBrevoConfigured, brevoSendEmail } from './brevoService';
+import { isBrevoConfigured, brevoSendEmail, brevoLookupDeliveryStatus, type BrevoDeliveryStatus } from './brevoService';
 import { logger } from '../middleware/logger';
 import { withRlsBypass } from '../db';
 function escapeHtml(str: string): string {
@@ -62,6 +62,9 @@ interface EmailResult {
   error?: string;
   ambiguous?: boolean;
 }
+export type DeliveryVerification =
+  | { status: BrevoDeliveryStatus; provider: 'brevo'; messageId?: string; event?: string; error?: string }
+  | { status: 'unsupported'; provider: 'smtp' | 'none'; error: string };
 // ── Quota & dedupe helpers ────────────────────────────────────────────────────
 // Hạn mức email/30 ngày theo gói cước (per tenant). Có thể override qua env.
 const PLAN_EMAIL_QUOTA: Record<string, number> = {
@@ -168,6 +171,31 @@ async function finishDelivery(tenantId: string, deliveryKey: string, result: Ema
     [tenantId, deliveryKey, result.success ? 'SENT' : (result.ambiguous ? 'UNKNOWN' : 'FAILED'),
       provider || null, result.messageId || null, result.error || null],
   ));
+}
+async function verifyDelivery(tenantId: string, deliveryKey: string): Promise<DeliveryVerification> {
+  const claim = await withRlsBypass(async client => (await client.query(
+    `SELECT provider FROM email_delivery_claims
+     WHERE tenant_id=$1::uuid AND delivery_key=$2`,
+    [tenantId, deliveryKey],
+  )).rows[0]);
+  if (claim?.provider !== 'brevo' || !isBrevoConfigured()) {
+    return { status: 'unsupported', provider: claim?.provider === 'smtp' ? 'smtp' : 'none', error: 'Provider không hỗ trợ tra cứu trạng thái delivery.' };
+  }
+  const result = await brevoLookupDeliveryStatus(deliveryKey);
+  if (result.status === 'delivered') {
+    await withRlsBypass(client => client.query(
+      `UPDATE email_delivery_claims SET status='SENT', provider_message_id=COALESCE($3, provider_message_id), updated_at=NOW()
+       WHERE tenant_id=$1::uuid AND delivery_key=$2`,
+      [tenantId, deliveryKey, result.messageId || null],
+    ));
+  } else if (result.status === 'not_received') {
+    await withRlsBypass(client => client.query(
+      `UPDATE email_delivery_claims SET status='FAILED', provider_message_id=COALESCE($3, provider_message_id), error=NULL, updated_at=NOW()
+       WHERE tenant_id=$1::uuid AND delivery_key=$2`,
+      [tenantId, deliveryKey, result.messageId || null],
+    ));
+  }
+  return { ...result, provider: 'brevo' };
 }
 async function countSentLast30Days(tenantId: string): Promise<number> {
   try {
@@ -390,7 +418,8 @@ async function deliverEmail(
       subject: options.subject,
       html: options.html,
       text: options.text,
-      tags: options.tags,
+      ...(options.deliveryKey ? { tags: [...(options.tags || []), `delivery-key:${options.deliveryKey}`] } : {}),
+      ...(!options.deliveryKey && options.tags ? { tags: options.tags } : {}),
       headers: options.deliveryKey ? {
         'X-SGS-Land-Delivery-Key': options.deliveryKey,
         'Message-ID': `<${crypto.createHash('sha256').update(options.deliveryKey).digest('hex')}@sgsland.vn>`,
@@ -1960,4 +1989,5 @@ export const emailService = {
   sendVendorRejectedEmail,
   testSmtpConnection,
   getSmtpConfig,
+  verifyDelivery,
 };
