@@ -1860,7 +1860,7 @@ async function sendNudgeLogin5(tenantId: string, to: string, userName: string): 
       Đã 5 ngày bạn chưa quay lại SGS LAND. Thị trường đang có nhiều biến động đáng chú ý — hãy đăng nhập để cập nhật thông tin mới nhất.
     </p>
     ${spacer(4)}
-    ${primaryButton(loginUrl, 'Dang Nhap Ngay')}
+    ${primaryButton(loginUrl, 'Đăng nhập ngay')}
     ${spacer(20)}
   `;
   return sendEmail(tenantId, {
@@ -1923,8 +1923,8 @@ async function sendListingBoost(
   viewCount: number,
   suggestions: string[],
 ): Promise<EmailResult> {
-  const safeName = escapeHtml(ownerName || 'ban');
-  const safeTitle = escapeHtml(listingTitle || 'tin dang cua ban');
+  const safeName = escapeHtml(ownerName || 'bạn');
+  const safeTitle = escapeHtml(listingTitle || 'tin đăng của bạn');
   const dashUrl = 'https://sgsland.vn/#/dashboard';
   const items = (suggestions || [])
     .map(
@@ -1940,25 +1940,25 @@ async function sendListingBoost(
     <table width="100%" cellpadding="0" cellspacing="0" border="0">
       <tr><td align="center">
         <h1 class="email-title" style="color:#0F172A;font-size:22px;font-weight:bold;margin:0;font-family:Arial,sans-serif;">
-          Tin dang cua ban dang HOT!
+          Tin đăng của bạn đang được quan tâm!
         </h1>
       </td></tr>
       <tr><td align="center" style="padding-top:8px;">
         <span style="color:#64748B;font-size:14px;font-family:Arial,sans-serif;">
-          Xin chao <strong>${safeName}</strong>, tin "<strong>${safeTitle}</strong>" da dat <strong>${viewCount} luot xem</strong>.
+          Xin chào <strong>${safeName}</strong>, tin "<strong>${safeTitle}</strong>" đã đạt <strong>${viewCount} lượt xem</strong>.
         </span>
       </td></tr>
     </table>
     ${spacer(24)}
     ${divider()}
     <p style="color:#475569;font-size:14px;line-height:1.8;margin:0 0 12px;font-family:Arial,sans-serif;">
-      Goi y de thu hut them nguoi xem va tang co hoi giao dich:
+      Gợi ý để thu hút thêm người xem và tăng cơ hội giao dịch:
     </p>
     <ul style="margin:0 0 12px;padding-left:20px;font-family:Arial,sans-serif;">
       ${items}
     </ul>
     ${spacer(4)}
-    ${primaryButton(dashUrl, 'Quan Ly Tin Dang')}
+    ${primaryButton(dashUrl, 'Quản lý tin đăng')}
     ${spacer(20)}
   `;
   return sendEmail(tenantId, {
@@ -1966,13 +1966,14 @@ async function sendListingBoost(
     subject: `SGS LAND - Tin "${listingTitle}" dat ${viewCount} luot xem, day manh ngay!`,
     html: emailBase(content, 'Email nay duoc gui tu dong vi tin dang cua ban dang duoc quan tam.'),
     text:
-      `Xin chao ${ownerName},\n\nTin "${listingTitle}" cua ban da dat ${viewCount} luot xem.\n\nGoi y:\n` +
+      `Xin chào ${ownerName},\n\nTin "${listingTitle}" của bạn đã đạt ${viewCount} lượt xem.\n\nGợi ý:\n` +
       (suggestions || []).map((x) => '- ' + x).join('\n') +
       `\n\nQuan ly tin dang:\n${dashUrl}\n\n- SGS LAND`,
   });
 }
 
 export const emailService = {
+  emailBase,
   sendListingBoost,
   sendEmail,
   sendDailyReportDeliveryAlertEmail,

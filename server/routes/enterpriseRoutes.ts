@@ -250,14 +250,14 @@ export function createEnterpriseRoutes(authenticateToken: any, io?: any) {
       const recipient = to || user.email;
       const result = await emailService.sendEmail(user.tenantId, {
         to: recipient,
-        subject: 'SGS LAND - Test Email',
-        html: '<div style="font-family: Arial, sans-serif; padding: 20px;"><h2 style="color: var(--sgs-primary);">SMTP Test Successful!</h2><p>Your email configuration is working correctly.</p><p style="color: #94A3B8; font-size: 12px;">Sent from SGS LAND Enterprise Platform</p></div>',
-        text: 'SMTP Test Successful! Your email configuration is working correctly.',
+        subject: 'SGS LAND – Kiểm tra cấu hình email',
+        html: emailService.emailBase('<h2 style="color:#0F172A;margin:0 0 12px;">Cấu hình email đã hoạt động</h2><p style="color:#475569;line-height:1.7;margin:0;">Email kiểm tra đã được gửi thành công.</p>', 'Email kiểm tra từ nền tảng SGS LAND.'),
+        text: 'Cấu hình email đã hoạt động. Email kiểm tra đã được gửi thành công.',
       });
       if (result.success) {
-        res.json({ message: `Test email sent to ${recipient}` });
+        res.json({ message: `Đã gửi email kiểm tra tới ${recipient}` });
       } else {
-        res.status(400).json({ error: result.error || 'Failed to send test email' });
+        res.status(400).json({ error: result.error || 'Không thể gửi email kiểm tra' });
       }
     } catch (error: any) {
       console.error('Send test email error:', error);

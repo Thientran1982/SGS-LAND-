@@ -5,6 +5,7 @@ import { logger } from '../middleware/logger';
 import type { TenantHostBinding } from '../services/tenantBrandingService';
 import { notificationRepository } from '../repositories/notificationRepository';
 import { brevoSendEmail, isBrevoConfigured } from '../services/brevoService';
+import { emailBase } from '../services/emailService';
 import { userRepository } from '../repositories/userRepository';
 
 /**
@@ -128,14 +129,14 @@ async function maybeNotifyHotLead(
       if (isBrevoConfigured()) {
         const assignee = await userRepository.findByIdDirect(lead.assigned_to, lead.tenant_id);
         if (assignee?.email) {
-          const leadName = lead.name || 'Khach hang';
-          const phoneLine = lead.phone ? ` (SDT: ${lead.phone})` : '';
-          const html = `<p>Chao ${assignee.name || 'ban'},</p><p>Khach hang <b>${leadName}</b>${phoneLine} vua xem lai bat dong san <b>${listingCode}</b> ${revisitCount} lan trong ${HOT_LEAD_WINDOW_HOURS} gio qua. Day la lead nong, nen lien he ngay.</p>`;
-          const text = `Khach hang ${leadName}${phoneLine} vua xem lai BDS ${listingCode} ${revisitCount} lan trong ${HOT_LEAD_WINDOW_HOURS} gio qua. Nen lien he ngay.`;
+          const leadName = lead.name || 'Khách hàng';
+          const phoneLine = lead.phone ? ` (SĐT: ${lead.phone})` : '';
+          const html = `<p>Chào ${assignee.name || 'bạn'},</p><p>Khách hàng <b>${leadName}</b>${phoneLine} vừa xem lại bất động sản <b>${listingCode}</b> ${revisitCount} lần trong ${HOT_LEAD_WINDOW_HOURS} giờ qua. Đây là lead nóng, nên liên hệ ngay.</p>`;
+          const text = `Khách hàng ${leadName}${phoneLine} vừa xem lại BĐS ${listingCode} ${revisitCount} lần trong ${HOT_LEAD_WINDOW_HOURS} giờ qua. Nên liên hệ ngay.`;
           const emailResult = await brevoSendEmail({
             to: [{ email: assignee.email, name: assignee.name || undefined }],
-            subject: `Lead nong: ${leadName} da xem lai BDS ${listingCode}`,
-            html,
+            subject: `Lead nóng: ${leadName} đã xem lại BĐS ${listingCode}`,
+            html: emailBase(html, 'Cảnh báo tự động từ SGS LAND.'),
             text,
             tags: ['hot-lead-revisit'],
           });

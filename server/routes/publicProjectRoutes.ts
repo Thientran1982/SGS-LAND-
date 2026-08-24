@@ -23,6 +23,7 @@ import { Router, Request, Response } from 'express';
 import { pool, withRlsBypass } from '../db';
 import { logger } from '../middleware/logger';
 import { brevoSendEmail } from '../services/brevoService';
+import { emailBase } from '../services/emailService';
 import { recordEmailSend } from '../services/emailMetricsService';
 import {
   getPublicProjectCache,
@@ -827,7 +828,7 @@ export function createPublicProjectRoutes(): Router {
         const htmlBody = `
           <div style="font-family:system-ui,sans-serif;max-width:560px;margin:auto;padding:24px;background:#f8fafc;border-radius:12px;">
             <h2 style="margin:0 0 16px;color:#1e293b;">Lead mới từ Mini-site dự án</h2>
-            <table style="width:100%;border-collapse:collapse;font-size:14px;">
+            <table style="width:100%;border-collapse:collapse;font-size:14px;background:#FFFFFF;border:1px solid #E2E8F0;border-radius:8px;">
               <tr><td style="padding:6px 0;color:#64748b;">Dự án</td><td style="padding:6px 0;font-weight:600;">${escapeHtml(found.project.name)} (${escapeHtml(code)})</td></tr>
               <tr><td style="padding:6px 0;color:#64748b;">Họ tên</td><td style="padding:6px 0;font-weight:600;">${escapeHtml(name)}</td></tr>
               <tr><td style="padding:6px 0;color:#64748b;">Điện thoại</td><td style="padding:6px 0;"><a href="tel:${escapeHtml(phone)}">${escapeHtml(phone)}</a></td></tr>
@@ -842,7 +843,7 @@ export function createPublicProjectRoutes(): Router {
           to: [{ email: INTERNAL_INBOX, name: `${fromName} Hotline` }],
           from: { email: fromEmail, name: fromName },
           subject,
-          html: htmlBody,
+          html: emailBase(htmlBody, 'Thông báo nội bộ từ form dự án SGS LAND.'),
           text: `Lead mới: ${name} / ${phone}${email ? ' / ' + email : ''} — ${found.project.name} (${code})`,
           replyTo: email ? { email, name } : undefined,
           tags: ['microsite-lead', `code-${code.toLowerCase()}`],
@@ -883,7 +884,7 @@ export function createPublicProjectRoutes(): Router {
                 (mã <span style="font-family:monospace">${escapeHtml(code)}</span>).
                 Chuyên viên sẽ liên hệ trong vòng 30 phút (giờ hành chính) để gửi bảng giá, chính sách bán hàng và tư vấn chi tiết.
               </p>
-              <table style="width:100%;border-collapse:collapse;font-size:14px;margin:12px 0;">
+              <table style="width:100%;border-collapse:collapse;font-size:14px;margin:12px 0;background:#F8FAFC;border:1px solid #E2E8F0;border-radius:8px;">
                 <tr><td style="padding:6px 0;color:#64748b;">Hotline</td><td style="padding:6px 0;font-weight:600;"><a href="tel:${escapeHtml(contact.hotline)}" style="color:#1e293b;text-decoration:none;">${escapeHtml(contact.hotlineDisplay)}</a></td></tr>
                 <tr><td style="padding:6px 0;color:#64748b;">Zalo</td><td style="padding:6px 0;"><a href="${escapeHtml(contact.zalo)}" style="color:#1e293b;">${escapeHtml(contact.hotlineDisplay)}</a></td></tr>
                 ${interest ? `<tr><td style="padding:6px 0;color:#64748b;">Quan tâm</td><td style="padding:6px 0;">${escapeHtml(interest)}</td></tr>` : ''}
@@ -902,7 +903,7 @@ export function createPublicProjectRoutes(): Router {
             to: [{ email, name }],
             from: { email: fromEmail, name: fromName },
             subject: replySubject,
-            html: replyHtml,
+            html: emailBase(replyHtml, 'Email này được gửi tự động sau khi bạn đăng ký tư vấn.'),
             text: replyText,
             tags: ['microsite-lead-autoreply', `code-${code.toLowerCase()}`],
           });

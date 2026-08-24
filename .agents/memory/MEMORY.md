@@ -31,5 +31,6 @@
 - [Preview map tile policy](preview-map-tiles.md) — map tiles in the Preview iframe must use a same-origin proxy, not third-party client fallbacks
 - [Agent event worker payloads](agent-event-worker-payloads.md) — durable event payloads stay JSON-serializable; process-bound Socket.IO belongs in the worker, not QStash jobs
 - [Agent event lease heartbeats](agent-event-lease-heartbeats.md) — long-running inbound handlers renew their database lease to prevent concurrent reclaim
+- [Email template consistency](email-template-consistency.md) — direct transactional senders must share the common layout, palette, table backgrounds, and reviewed Vietnamese copy
 - [Email report retry semantics](email-report-retry-semantics.md) — retry definitive failures, but never blindly retry ambiguous provider outcomes
 - [Provider delivery lookup](provider-delivery-lookup.md) — Brevo delivery verification uses a stable delivery-key tag; unsupported providers stay manual

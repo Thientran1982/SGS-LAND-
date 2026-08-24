@@ -25,6 +25,7 @@ import { authenticateBuyer } from '../middleware/buyerAuth';
 import { loadVnpayConfig, isVnpayConfigured } from '../config/env';
 import { buildPaymentUrl, verifyCallback } from '../services/vnpayService';
 import { brevoSendEmail, isBrevoConfigured } from '../services/brevoService';
+import { emailBase } from '../services/emailService';
 import { withRlsBypass } from '../db';
 
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
@@ -143,7 +144,7 @@ function depositReceiptHtml(b: {
   <div style="max-width:560px;margin:0 auto;padding:24px;background:#FFFFFF">
     <h2 style="color:#0F766E;margin:0 0 8px">Đã nhận đặt cọc giữ chỗ</h2>
     <p>Cảm ơn quý khách đã đặt cọc qua <strong>SGS Land</strong>. Dưới đây là biên nhận giao dịch:</p>
-    <table cellspacing="0" cellpadding="6" style="border-collapse:collapse;width:100%;font-size:14px;margin:16px 0">
+    <table cellspacing="0" cellpadding="6" style="border-collapse:collapse;width:100%;font-size:14px;margin:16px 0;background:#F8FAFC;border:1px solid #E2E8F0">
       <tr><td style="color:#64748B">Sản phẩm</td><td><strong>${title}</strong>${code}</td></tr>
       <tr><td style="color:#64748B">Số tiền cọc</td><td><strong>${fmtVnd(b.amountVnd)}</strong></td></tr>
       <tr><td style="color:#64748B">Mã đặt cọc</td><td><code>${idEsc}</code></td></tr>
@@ -834,7 +835,7 @@ export function createBookingRoutes(
               await brevoSendEmail({
                 to: booking.buyer_email,
                 subject: 'Biên nhận đặt cọc — SGS Land',
-                html: depositReceiptHtml({
+                html: emailBase(depositReceiptHtml({
                   id: booking.id,
                   listingTitle: meta.rows[0]?.title || 'Sản phẩm',
                   listingCode: meta.rows[0]?.code || null,
@@ -842,7 +843,7 @@ export function createBookingRoutes(
                   bankCode: result.bankCode,
                   payDate: result.payDate,
                   txnRef: result.txnRef!,
-                }),
+                }), 'Biên nhận tự động từ SGS LAND.'),
                 tags: ['booking-receipt'],
               });
             } catch (e: any) {

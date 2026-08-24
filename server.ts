@@ -2595,7 +2595,7 @@ app.get('/api/public/listings/:slugId', apiRateLimit, async (req: express.Reques
           const html = `
             <div style="font-family:system-ui,sans-serif;max-width:560px;margin:auto;padding:24px;background:#f8fafc;border-radius:12px;">
               <h2 style="margin:0 0 16px;color:#1e293b;">Lead mới từ trang sản phẩm</h2>
-              <table style="width:100%;border-collapse:collapse;font-size:14px;">
+              <table style="width:100%;border-collapse:collapse;font-size:14px;background:#FFFFFF;border:1px solid #E2E8F0;border-radius:8px;">
                 <tr><td style="padding:6px 0;color:#64748b;">Sản phẩm</td><td style="padding:6px 0;font-weight:600;">${escape(listingTitle)} (${escape(listingCode)})</td></tr>
                 <tr><td style="padding:6px 0;color:#64748b;">Họ tên</td><td style="padding:6px 0;font-weight:600;">${escape(name)}</td></tr>
                 <tr><td style="padding:6px 0;color:#64748b;">Điện thoại</td><td style="padding:6px 0;"><a href="tel:${escape(trimmedPhone)}">${escape(trimmedPhone)}</a></td></tr>
@@ -2608,7 +2608,7 @@ app.get('/api/public/listings/:slugId', apiRateLimit, async (req: express.Reques
             to: [{ email: inboxEmail, name: inboxName }],
             from: { email: fromEmail, name: fromName },
             subject,
-            html,
+            html: emailService.emailBase(html, 'Thông báo nội bộ từ form đăng ký sản phẩm SGS LAND.'),
             text: `Lead mới: ${name} / ${trimmedPhone} — ${listingTitle} (${listingCode})`,
             replyTo: email ? { email, name } : undefined,
             tags: ['listing-lead', `code-${listingCode.toLowerCase()}`],
@@ -3144,9 +3144,9 @@ app.get('/api/public/listings/:slugId', apiRateLimit, async (req: express.Reques
 
       // Notify info@sgsland.vn regardless of whether email is new or duplicate
       const html = `
-        <div style="font-family:sans-serif;max-width:600px;margin:0 auto">
-          <h2 style="color:#4f46e5">📧 ${isNew ? 'Đăng ký nhận tin mới' : 'Đăng ký nhận tin (đã tồn tại)'}</h2>
-          <table style="width:100%;border-collapse:collapse;margin-top:16px">
+        <div style="font-family:Arial,Helvetica,sans-serif;max-width:600px;margin:0 auto;background:#FFFFFF;padding:24px;border:1px solid #E2E8F0;border-radius:12px">
+          <h2 style="color:#1B3A5C">📧 ${isNew ? 'Đăng ký nhận tin mới' : 'Đăng ký nhận tin (đã tồn tại)'}</h2>
+          <table style="width:100%;border-collapse:collapse;margin-top:16px;background:#F8FAFC;border:1px solid #E2E8F0">
             <tr><td style="padding:8px;font-weight:bold;color:#555;width:140px">Email:</td><td style="padding:8px"><a href="mailto:${email}">${email}</a></td></tr>
             <tr><td style="padding:8px;font-weight:bold;color:#555">Thời gian:</td><td style="padding:8px">${now}</td></tr>
             <tr><td style="padding:8px;font-weight:bold;color:#555">Nguồn:</td><td style="padding:8px">Trang Tin Tức SGS LAND</td></tr>
@@ -3191,31 +3191,31 @@ app.get('/api/public/listings/:slugId', apiRateLimit, async (req: express.Reques
       });
 
       const html = `
-        <div style="font-family:sans-serif;max-width:640px;margin:0 auto">
-          <div style="background:#4f46e5;color:white;padding:24px 32px;border-radius:12px 12px 0 0">
+          <div style="font-family:Arial,Helvetica,sans-serif;max-width:640px;margin:0 auto">
+          <div style="background:#1E293B;color:white;padding:24px 32px;border-radius:12px 12px 0 0">
             <h2 style="margin:0;font-size:20px">📋 Hồ Sơ Ứng Tuyển Mới — SGS LAND</h2>
             <p style="margin:6px 0 0;opacity:0.85;font-size:14px">Nhận lúc ${now}</p>
           </div>
-          <div style="border:1px solid #e5e7eb;border-top:none;padding:24px 32px;border-radius:0 0 12px 12px">
-            <table style="width:100%;border-collapse:collapse">
-              <tr style="border-bottom:1px solid #f3f4f6">
+          <div style="background:#FFFFFF;border:1px solid #E2E8F0;border-top:none;padding:24px 32px;border-radius:0 0 12px 12px">
+            <table style="width:100%;border-collapse:collapse;background:#F8FAFC;border:1px solid #E2E8F0">
+              <tr style="border-bottom:1px solid #E2E8F0">
                 <td style="padding:12px 8px;font-weight:700;color:#374151;width:160px">Vị trí ứng tuyển:</td>
-                <td style="padding:12px 8px;color:#4f46e5;font-weight:700">${jobTitle}</td>
+                <td style="padding:12px 8px;color:#1B3A5C;font-weight:700">${jobTitle}</td>
               </tr>
-              <tr style="border-bottom:1px solid #f3f4f6">
+              <tr style="border-bottom:1px solid #E2E8F0">
                 <td style="padding:12px 8px;font-weight:700;color:#374151">Họ và tên:</td>
                 <td style="padding:12px 8px">${name}</td>
               </tr>
-              <tr style="border-bottom:1px solid #f3f4f6">
+              <tr style="border-bottom:1px solid #E2E8F0">
                 <td style="padding:12px 8px;font-weight:700;color:#374151">Email:</td>
-                <td style="padding:12px 8px"><a href="mailto:${email}" style="color:#4f46e5">${email}</a></td>
+                <td style="padding:12px 8px"><a href="mailto:${email}" style="color:#1B3A5C">${email}</a></td>
               </tr>
-              <tr style="border-bottom:1px solid #f3f4f6">
+              <tr style="border-bottom:1px solid #E2E8F0">
                 <td style="padding:12px 8px;font-weight:700;color:#374151">Số điện thoại:</td>
                 <td style="padding:12px 8px">${phone?.trim() || '—'}</td>
               </tr>
             </table>
-            <div style="margin-top:20px;padding:20px;background:#f9fafb;border-radius:10px;border-left:4px solid #4f46e5">
+            <div style="margin-top:20px;padding:20px;background:#F8FAFC;border-radius:10px;border-left:4px solid #1B3A5C">
               <p style="margin:0 0 8px;font-weight:700;color:#374151">Thư xin việc / Giới thiệu:</p>
               <p style="margin:0;white-space:pre-wrap;color:#4b5563;line-height:1.7">${message}</p>
             </div>
@@ -3258,52 +3258,52 @@ app.get('/api/public/listings/:slugId', apiRateLimit, async (req: express.Reques
       const now = new Date().toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' });
 
       const html = `
-        <div style="font-family:sans-serif;max-width:640px;margin:0 auto">
-          <div style="background:#4f46e5;color:#fff;padding:24px 32px;border-radius:12px 12px 0 0">
+          <div style="font-family:Arial,Helvetica,sans-serif;max-width:640px;margin:0 auto">
+          <div style="background:#1E293B;color:#fff;padding:24px 32px;border-radius:12px 12px 0 0">
             <h2 style="margin:0;font-size:20px">📋 Yêu cầu ký gửi bất động sản mới</h2>
             <p style="margin:6px 0 0;opacity:0.85;font-size:14px">Nhận lúc ${now}</p>
           </div>
-          <div style="border:1px solid #e5e7eb;border-top:none;padding:24px 32px;border-radius:0 0 12px 12px">
+          <div style="background:#FFFFFF;border:1px solid #E2E8F0;border-top:none;padding:24px 32px;border-radius:0 0 12px 12px">
             <p style="margin:0 0 16px;font-weight:700;color:#374151;font-size:16px">Thông tin chủ sở hữu</p>
-            <table style="width:100%;border-collapse:collapse;margin-bottom:20px">
-              <tr style="border-bottom:1px solid #f3f4f6">
+            <table style="width:100%;border-collapse:collapse;margin-bottom:20px;background:#F8FAFC;border:1px solid #E2E8F0">
+              <tr style="border-bottom:1px solid #E2E8F0">
                 <td style="padding:10px 8px;font-weight:700;color:#374151;width:180px">Họ và tên:</td>
                 <td style="padding:10px 8px">${name}</td>
               </tr>
-              <tr style="border-bottom:1px solid #f3f4f6">
+              <tr style="border-bottom:1px solid #E2E8F0">
                 <td style="padding:10px 8px;font-weight:700;color:#374151">Số điện thoại:</td>
-                <td style="padding:10px 8px"><a href="tel:${phone}" style="color:#4f46e5">${phone}</a></td>
+                <td style="padding:10px 8px"><a href="tel:${phone}" style="color:#1B3A5C">${phone}</a></td>
               </tr>
-              <tr style="border-bottom:1px solid #f3f4f6">
+              <tr style="border-bottom:1px solid #E2E8F0">
                 <td style="padding:10px 8px;font-weight:700;color:#374151">Email:</td>
-                <td style="padding:10px 8px">${email?.trim() ? `<a href="mailto:${email}" style="color:#4f46e5">${email}</a>` : '—'}</td>
+                <td style="padding:10px 8px">${email?.trim() ? `<a href="mailto:${email}" style="color:#1B3A5C">${email}</a>` : '—'}</td>
               </tr>
             </table>
             <p style="margin:0 0 16px;font-weight:700;color:#374151;font-size:16px">Thông tin bất động sản</p>
-            <table style="width:100%;border-collapse:collapse;margin-bottom:20px">
-              <tr style="border-bottom:1px solid #f3f4f6">
+            <table style="width:100%;border-collapse:collapse;margin-bottom:20px;background:#F8FAFC;border:1px solid #E2E8F0">
+              <tr style="border-bottom:1px solid #E2E8F0">
                 <td style="padding:10px 8px;font-weight:700;color:#374151;width:180px">Loại BĐS:</td>
                 <td style="padding:10px 8px">${propertyType || '—'}</td>
               </tr>
-              <tr style="border-bottom:1px solid #f3f4f6">
+              <tr style="border-bottom:1px solid #E2E8F0">
                 <td style="padding:10px 8px;font-weight:700;color:#374151">Giao dịch:</td>
-                <td style="padding:10px 8px;color:#4f46e5;font-weight:700">${transactionLabel}</td>
+                <td style="padding:10px 8px;color:#1B3A5C;font-weight:700">${transactionLabel}</td>
               </tr>
-              <tr style="border-bottom:1px solid #f3f4f6">
+              <tr style="border-bottom:1px solid #E2E8F0">
                 <td style="padding:10px 8px;font-weight:700;color:#374151">Địa chỉ:</td>
                 <td style="padding:10px 8px">${address}</td>
               </tr>
-              <tr style="border-bottom:1px solid #f3f4f6">
+              <tr style="border-bottom:1px solid #E2E8F0">
                 <td style="padding:10px 8px;font-weight:700;color:#374151">Diện tích:</td>
                 <td style="padding:10px 8px">${area ? `${area} m²` : '—'}</td>
               </tr>
-              <tr style="border-bottom:1px solid #f3f4f6">
+              <tr style="border-bottom:1px solid #E2E8F0">
                 <td style="padding:10px 8px;font-weight:700;color:#374151">Giá kỳ vọng:</td>
                 <td style="padding:10px 8px">${price || '—'}</td>
               </tr>
             </table>
             ${notes?.trim() ? `
-            <div style="margin-top:8px;padding:16px;background:#f9fafb;border-radius:10px;border-left:4px solid #4f46e5">
+            <div style="margin-top:8px;padding:16px;background:#F8FAFC;border-radius:10px;border-left:4px solid #1B3A5C">
               <p style="margin:0 0 6px;font-weight:700;color:#374151">Thông tin thêm:</p>
               <p style="margin:0;white-space:pre-wrap;color:#4b5563;line-height:1.7">${notes}</p>
             </div>` : ''}

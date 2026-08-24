@@ -10,6 +10,7 @@
 
 import { Router, Request, Response } from 'express';
 import { brevoSendEmail, isBrevoConfigured } from '../services/brevoService';
+import { emailBase } from '../services/emailService';
 import { recordEmailSend } from '../services/emailMetricsService';
 import { logger } from '../middleware/logger';
 import { pool, withRlsBypass } from '../db';
@@ -253,7 +254,7 @@ export function createLandingLeadRoutes(): Router {
             <p style="margin:6px 0 0;font-size:13px;opacity:.85">Tiếp nhận lúc ${escapeHtml(receivedAt)} (GMT+7) — Kênh: <b>${channel === 'ai_chat' ? 'AI Chat' : 'Form đăng ký'}</b></p>
           </div>
           <div style="background:#fff;border:1px solid #E5E7EB;border-top:none;padding:24px 28px;border-radius:0 0 12px 12px">
-            <table style="width:100%;border-collapse:collapse;font-size:14px">
+            <table style="width:100%;border-collapse:collapse;font-size:14px;background:#F8FAFC;border:1px solid #E2E8F0">
               <tr><td style="padding:8px 0;color:#6B7280;width:140px">Họ và tên</td><td style="padding:8px 0;font-weight:600">${escapeHtml(name)}</td></tr>
               <tr><td style="padding:8px 0;color:#6B7280">Số điện thoại</td><td style="padding:8px 0;font-weight:600"><a href="tel:${escapeHtml(phone)}" style="color:#004D2C">${escapeHtml(phone)}</a></td></tr>
               <tr><td style="padding:8px 0;color:#6B7280">Email</td><td style="padding:8px 0">${email ? `<a href="mailto:${escapeHtml(email)}" style="color:#004D2C">${escapeHtml(email)}</a>` : '<i style="color:#9CA3AF">— không cung cấp —</i>'}</td></tr>
@@ -347,7 +348,7 @@ export function createLandingLeadRoutes(): Router {
       const internalResult = await brevoSendEmail({
         to: INTERNAL_INBOX,
         subject: `[Lead ${channel === 'ai_chat' ? 'AI' : 'Form'}] ${project} — ${name} (${phone})`,
-        html: internalHtml,
+        html: emailBase(internalHtml, 'Thông báo nội bộ từ form tư vấn SGS LAND.'),
         text: internalText,
         replyTo: email ? { email, name } : undefined,
         tags: ['landing-lead', projectSlug],
@@ -369,7 +370,7 @@ export function createLandingLeadRoutes(): Router {
         const userResult = await brevoSendEmail({
           to: [{ email, name }],
           subject: `Cảm ơn ${name} — SGS Land sẽ liên hệ về ${project} trong 30 phút`,
-          html: userHtml,
+          html: emailBase(userHtml, 'Email này được gửi tự động sau khi bạn đăng ký tư vấn.'),
           text: userText,
           tags: ['landing-lead-autoreply'],
         });
