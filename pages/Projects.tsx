@@ -717,9 +717,11 @@ function ListingDetailPanel({ listing, canEdit, onEdit, onClose, onStatusChange,
                             <button
                                 type="button"
                                 onClick={onEdit}
-                                className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-sgs-primary text-white text-xs font-bold hover:bg-sgs-primary transition-colors"
+                                aria-label={t('common.edit')}
+                                title={t('common.edit')}
+                                className="p-1.5 rounded-lg text-[var(--text-secondary)] hover:bg-[var(--glass-surface-hover)] hover:text-[var(--text-primary)] transition-colors"
                             >
-                                {IC.EDIT} {t('common.edit')}
+                                {IC.EDIT}
                             </button>
                         )}
                         <button
