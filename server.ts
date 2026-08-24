@@ -4290,7 +4290,7 @@ app.get('/api/public/listings/:slugId', apiRateLimit, async (req: express.Reques
   app.use('/api/upload', apiRateLimit, createUploadRoutes(authenticateToken));
   app.use('/api/custom-fields', apiRateLimit, createCustomFieldRoutes(authenticateToken));
   app.use('/api/units', apiRateLimit, createUnitRoutes(authenticateToken));
-  app.use('/api/auctions', apiRateLimit, createAuctionRoutes(authenticateToken));
+  app.use('/api/auctions', apiRateLimit, createAuctionRoutes(authenticateToken, io));
   app.use('/uploads', createUploadServeRoute(authenticateToken));
   // SCIM 2.0 provisioning — uses its own Bearer token auth (no JWT required)
   app.use('/scim/v2', express.json({ type: ['application/json', 'application/scim+json'] }), createScimRoutes());

@@ -2,6 +2,7 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { Dropdown } from '../components/Dropdown';
 import { auctionApi } from '../services/api/auctionApi';
 import { listingApi } from '../services/api/listingApi';
+import { socket, useSocket } from '../services/websocket';
 
 type AuctionStatus = 'UPCOMING' | 'LIVE' | 'PAUSED' | 'ENDED' | 'CANCELLED';
 interface AuctionItem {
@@ -23,6 +24,7 @@ const dateInput = (d: Date) => { const x = new Date(d.getTime() - d.getTimezoneO
 const displayDate = (s: string) => new Date(s).toLocaleString('vi-VN', { dateStyle: 'short', timeStyle: 'short' });
 
 export default function Auction() {
+  const { isConnected } = useSocket();
   const [filter, setFilter] = useState('ALL');
   const [items, setItems] = useState<AuctionItem[]>([]);
   const [listings, setListings] = useState<any[]>([]);
@@ -51,6 +53,44 @@ export default function Auction() {
   };
   useEffect(() => { load(); /* selected is intentionally preserved across refresh */ }, [filter]);
   useEffect(() => { if (selected) auctionApi.bids(selected.id).then(setBids).catch(() => setBids([])); }, [selected?.id]);
+  useEffect(() => {
+    const applyUpdate = (event: any) => {
+      if (!event?.auctionId) return;
+      setItems(prev => prev.map(item => item.id === event.auctionId ? {
+        ...item,
+        ...(event.status ? { status: event.status } : {}),
+        ...(event.currentBid !== undefined ? { currentBid: event.currentBid } : {}),
+        ...(event.bidCount !== undefined ? { bidCount: event.bidCount } : {}),
+        ...(event.winnerName !== undefined ? { winnerName: event.winnerName } : {}),
+        ...(event.updatedAt !== undefined ? { updatedAt: event.updatedAt } : {}),
+      } : item));
+      setSelected(prev => prev && prev.id === event.auctionId ? {
+        ...prev,
+        ...(event.status ? { status: event.status } : {}),
+        ...(event.currentBid !== undefined ? { currentBid: event.currentBid } : {}),
+        ...(event.bidCount !== undefined ? { bidCount: event.bidCount } : {}),
+        ...(event.winnerName !== undefined ? { winnerName: event.winnerName } : {}),
+      } : prev);
+      if (selected?.id === event.auctionId) {
+        auctionApi.bids(event.auctionId).then(setBids).catch(() => undefined);
+      }
+    };
+    const reconcile = async () => {
+      try {
+        const fresh = await auctionApi.list({ status: filter });
+        setItems(fresh);
+        setSelected(prev => prev ? fresh.find((item: AuctionItem) => item.id === prev.id) || null : null);
+      } catch { /* the next reconnect or normal action will retry */ }
+    };
+    socket.on('auction:bid', applyUpdate);
+    socket.on('auction:status', applyUpdate);
+    socket.on('connect', reconcile);
+    return () => {
+      socket.off('auction:bid', applyUpdate);
+      socket.off('auction:status', applyUpdate);
+      socket.off('connect', reconcile);
+    };
+  }, [filter, selected?.id]);
 
   const liveCount = useMemo(() => items.filter(i => i.status === 'LIVE').length, [items]);
   const submitCreate = async (e: React.FormEvent) => {
@@ -86,7 +126,7 @@ export default function Auction() {
   return (
     <div style={{ maxWidth: 1100, margin: '0 auto', padding: '24px 16px' }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'start', gap: 16, marginBottom: 20 }}>
-        <div><h1 style={{ fontSize: 26, fontWeight: 700, marginBottom: 4 }}>Đấu Giá Bất Động Sản</h1><p style={{ color: '#64748b' }}>Dữ liệu phiên và lượt đặt giá được lưu trên hệ thống — {liveCount} phiên đang diễn ra.</p></div>
+        <div><h1 style={{ fontSize: 26, fontWeight: 700, marginBottom: 4 }}>Đấu Giá Bất Động Sản</h1><p style={{ color: '#64748b' }}>Dữ liệu phiên và lượt đặt giá được lưu trên hệ thống — {liveCount} phiên đang diễn ra. <span style={{ color: isConnected ? '#047857' : '#b45309' }}>{isConnected ? 'Đang cập nhật trực tiếp' : 'Đang chờ kết nối lại'}</span></p></div>
         <button type="button" onClick={() => setShowCreate(true)} style={{ background: '#047857', color: '#fff', border: 0, borderRadius: 10, padding: '10px 14px', fontWeight: 700 }}>+ Tạo phiên</button>
       </div>
       {error && <div role="alert" style={{ ...card, marginBottom: 16, padding: '10px 14px', borderColor: '#fca5a5', background: '#fef2f2', color: '#b91c1c' }}>{error}</div>}

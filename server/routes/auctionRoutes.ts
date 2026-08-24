@@ -4,7 +4,7 @@ import { auctionRepository } from '../repositories/auctionRepository';
 const ADMIN_ROLES = new Set(['SUPER_ADMIN', 'ADMIN', 'TEAM_LEAD']);
 const BID_ROLES = new Set(['SUPER_ADMIN', 'ADMIN', 'TEAM_LEAD', 'SALES', 'MARKETING']);
 
-export function createAuctionRoutes(authenticateToken: any) {
+export function createAuctionRoutes(authenticateToken: any, io?: any) {
   const router = Router();
   router.get('/', authenticateToken, async (req: Request, res: Response) => {
     try {
@@ -53,7 +53,17 @@ export function createAuctionRoutes(authenticateToken: any) {
     try {
       const user = (req as any).user;
       if (!ADMIN_ROLES.has(user.role)) return res.status(403).json({ error: 'Không có quyền điều hành phiên đấu giá' });
-      res.json(await auctionRepository.updateStatus(user.tenantId, String(req.params.id), String(req.body?.status || '').toUpperCase()));
+      const updated = await auctionRepository.updateStatus(user.tenantId, String(req.params.id), String(req.body?.status || '').toUpperCase());
+      io?.to(`tenant:${user.tenantId}`).emit('auction:status', {
+        auctionId: updated.id,
+        status: updated.status,
+        currentBid: updated.currentBid,
+        bidCount: updated.bidCount,
+        winnerUserId: updated.winnerUserId,
+        winnerName: updated.winnerName,
+        updatedAt: updated.updatedAt,
+      });
+      res.json(updated);
     } catch (error: any) {
       if (error.message === 'INVALID_STATUS') return res.status(400).json({ error: 'Trạng thái không hợp lệ' });
       res.status(404).json({ error: 'Phiên không tồn tại hoặc đã kết thúc' });
@@ -68,7 +78,16 @@ export function createAuctionRoutes(authenticateToken: any) {
       if (!Number.isFinite(amount) || amount <= 0 || !key || key.length > 160) {
         return res.status(400).json({ error: 'Giá đặt hoặc mã yêu cầu không hợp lệ' });
       }
-      res.status(201).json(await auctionRepository.placeBid(user.tenantId, String(req.params.id), user.id, amount, key));
+      const result = await auctionRepository.placeBid(user.tenantId, String(req.params.id), user.id, amount, key);
+      if (!result.replayed && result.auction) {
+        io?.to(`tenant:${user.tenantId}`).emit('auction:bid', {
+          auctionId: result.auction.id,
+          currentBid: result.auction.currentBid,
+          bidCount: result.auction.bidCount,
+          updatedAt: result.auction.updatedAt,
+        });
+      }
+      res.status(201).json(result);
     } catch (error: any) {
       const messages: Record<string, [number, string]> = {
         AUCTION_NOT_FOUND: [404, 'Không tìm thấy phiên đấu giá'],
