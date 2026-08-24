@@ -12,6 +12,7 @@
 import { GoogleGenAI } from '@google/genai';
 import { Pool } from 'pg';
 import { logger } from '../middleware/logger';
+import { agentMemoryService } from './agentMemoryService';
 
 let _client: GoogleGenAI | null = null;
 function getClient(): GoogleGenAI {
@@ -166,6 +167,9 @@ export async function generateAdvice(
 
   const catalog = buildCatalog(projects);
   const validIds = projects.map((p) => p.id);
+  const matcherWeights = await agentMemoryService.getWeights(tenantId).catch(() => ({
+    location: 0.4, price: 0.25, legal: 0.2, rating: 0.15,
+  }));
 
   const systemInstruction = [
     'Ban la chuyen gia tu van dau tu bat dong san tai Viet Nam, khach quan va than trong.',
@@ -175,6 +179,7 @@ export async function generateAdvice(
     'Uoc luong ty suat loi nhuan du kien theo khoang (vd "8-12%/nam") va ghi ro day la uoc tinh tham khao.',
     'Phan tich uu/nhuoc diem cu the, trung thuc; khong thoi phong, khong cam ket loi nhuan.',
     'Tra ket qua bang tieng Viet co dau.',
+    `Trong cham diem, uu tien trong so live hien tai: location=${matcherWeights.location}, price=${matcherWeights.price}, legal=${matcherWeights.legal}, rating=${matcherWeights.rating}.`,
     'CHI tra ve JSON hop le theo dung schema, khong them van ban ngoai JSON.',
   ].join(' ');
 

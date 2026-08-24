@@ -1,0 +1,219 @@
+import { createHash, randomUUID } from 'crypto';
+import { withTenantContext } from '../db';
+
+export type MemoryKind = 'fact' | 'episodic' | 'procedural';
+export type MemoryRow = {
+  id: string; tenant_id: string; namespace: string; key: string; kind: MemoryKind;
+  value: string; importance: number; hits: number; expires_at: string | null;
+  created_at: string; updated_at: string;
+};
+export type MatcherWeights = { location: number; price: number; legal: number; rating: number };
+export const DEFAULT_MATCHER_WEIGHTS: MatcherWeights = { location: 0.4, price: 0.25, legal: 0.2, rating: 0.15 };
+const VALID_KINDS = new Set<MemoryKind>(['fact', 'episodic', 'procedural']);
+const MAX_ITEMS = 200;
+
+export function scrubPii(input: unknown): string {
+  return String(input ?? '')
+    .replace(/\b[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}\b/gi, '[email đã ẩn]')
+    .replace(/(?<!\d)(?:\+?84|0)(?:\s|[-.])?(?:3|5|7|8|9)(?:\s|[-.]|\d){8,10}(?!\d)/g, '[số điện thoại đã ẩn]')
+    .replace(/\b\d{9,12}\b/g, '[mã định danh đã ẩn]')
+    .replace(/\b(?:stk|tài khoản ngân hàng|account)\s*[:#-]?\s*\d{6,20}\b/gi, '[tài khoản ngân hàng đã ẩn]')
+    .replace(/\b(?:số nhà|địa chỉ đầy đủ|address)\s*[:#-]?\s*[^,;\n]{8,120}/gi, '[địa chỉ đã ẩn]')
+    .slice(0, 10000);
+}
+
+function safeNamespace(namespace: string): string {
+  const value = String(namespace || '').trim();
+  if (!/^(?:customer|agent):[^:]{1,180}$/.test(value) && value !== 'global') {
+    throw new Error('Invalid memory namespace');
+  }
+  return value;
+}
+
+function lexicalScore(value: string, query: string): number {
+  const haystack = value.toLocaleLowerCase('vi-VN');
+  const terms = query.toLocaleLowerCase('vi-VN').split(/\s+/).filter(Boolean);
+  return terms.length ? terms.reduce((score, term) => score + (haystack.includes(term) ? 1 : 0), 0) / terms.length : 0;
+}
+
+export function validateWeights(input: Partial<MatcherWeights>): MatcherWeights {
+  const values = {
+    location: Number(input.location),
+    price: Number(input.price),
+    legal: Number(input.legal),
+    rating: Number(input.rating),
+  };
+  if (Object.values(values).some(v => !Number.isFinite(v) || v < 0)) throw new Error('Invalid matcher weights');
+  const total = Object.values(values).reduce((a, b) => a + b, 0);
+  if (total <= 0) throw new Error('Matcher weights must have a positive total');
+  return Object.fromEntries(Object.entries(values).map(([k, v]) => [k, Number((v / total).toFixed(6))])) as MatcherWeights;
+}
+
+async function trimNamespace(client: any, tenantId: string, namespace: string): Promise<void> {
+  await client.query(
+    `DELETE FROM agent_store WHERE tenant_id=$1 AND namespace=$2
+     AND id IN (
+       SELECT id FROM agent_store WHERE tenant_id=$1 AND namespace=$2
+       ORDER BY importance ASC, updated_at ASC OFFSET $3
+     )`,
+    [tenantId, namespace, MAX_ITEMS],
+  );
+}
+
+export const agentMemoryService = {
+  async remember(tenantId: string, namespace: string, key: string, value: unknown, kind: MemoryKind = 'fact', importance = 0.5, ttlDays?: number | null) {
+    const ns = safeNamespace(namespace);
+    if (!VALID_KINDS.has(kind)) throw new Error('Invalid memory kind');
+    const cleanValue = scrubPii(value);
+    if (!cleanValue.trim()) throw new Error('Memory value cannot be empty');
+    const score = Math.max(0, Math.min(1, Number(importance) || 0.5));
+    const expiresAt = kind === 'episodic'
+      ? new Date(Date.now() + (Number(ttlDays) > 0 ? Number(ttlDays) : 90) * 86400000)
+      : (Number(ttlDays) > 0 ? new Date(Date.now() + Number(ttlDays) * 86400000) : null);
+    return withTenantContext(tenantId, async client => {
+      const existing = (await client.query(
+        `SELECT * FROM agent_store WHERE tenant_id=$1 AND namespace=$2 AND key=$3`,
+        [tenantId, ns, String(key).slice(0, 200)],
+      )).rows[0] as MemoryRow | undefined;
+      if (existing && kind === 'fact' && existing.kind === 'fact' && Number(existing.importance) >= 0.7 && existing.value !== cleanValue) {
+        await client.query(
+          `INSERT INTO ai_learning_audit_events (tenant_id,event_type,entity_type,entity_id,reason,metrics_json)
+           VALUES ($1,'MEMORY_CONFLICT','MEMORY',$2,'high_importance_fact_not_overwritten',$3::jsonb)`,
+          [tenantId, existing.id, JSON.stringify({ old: existing.value, new: cleanValue, namespace: ns, key })],
+        );
+        return { ...existing, conflict: true };
+      }
+      const row = (await client.query(
+        `INSERT INTO agent_store (id,tenant_id,namespace,key,kind,value,importance,expires_at)
+         VALUES ($1,$2,$3,$4,$5,$6,$7,$8)
+         ON CONFLICT (tenant_id,namespace,key) DO UPDATE SET kind=$5,value=$6,importance=$7,expires_at=$8,updated_at=NOW()
+         RETURNING *`,
+        [randomUUID(), tenantId, ns, String(key).slice(0, 200), kind, cleanValue, score, expiresAt],
+      )).rows[0];
+      await trimNamespace(client, tenantId, ns);
+      return row;
+    });
+  },
+
+  async recall(tenantId: string, namespace: string, query?: string, k = 8): Promise<MemoryRow[]> {
+    const ns = safeNamespace(namespace);
+    return withTenantContext(tenantId, async client => {
+      const rows = (await client.query(
+        `SELECT * FROM agent_store WHERE tenant_id=$1 AND namespace=$2
+          AND (expires_at IS NULL OR expires_at > NOW())
+         ORDER BY importance DESC, updated_at DESC`,
+        [tenantId, ns],
+      )).rows as MemoryRow[];
+      const ranked = query?.trim()
+        ? rows.map(row => ({ row, score: lexicalScore(`${row.key} ${row.value}`, query) }))
+            .sort((a, b) => b.score - a.score || Number(b.row.importance) - Number(a.row.importance))
+        : rows.map(row => ({ row, score: 0 }));
+      const selected = ranked.slice(0, Math.max(1, Math.min(Number(k) || 8, 50))).map(x => x.row);
+      if (selected.length) await client.query(`UPDATE agent_store SET hits=hits+1 WHERE tenant_id=$1 AND id=ANY($2::text[])`, [tenantId, selected.map(x => x.id)]);
+      return selected;
+    });
+  },
+
+  async forget(tenantId: string, namespace: string, key?: string) {
+    const ns = safeNamespace(namespace);
+    return withTenantContext(tenantId, async client => {
+      const result = await client.query(
+        key ? `DELETE FROM agent_store WHERE tenant_id=$1 AND namespace=$2 AND key=$3`
+          : `DELETE FROM agent_store WHERE tenant_id=$1 AND namespace=$2`,
+        key ? [tenantId, ns, key] : [tenantId, ns],
+      );
+      return result.rowCount || 0;
+    });
+  },
+
+  async memoryBlock(tenantId: string, namespace: string, query?: string, tokenBudget = 2000) {
+    const rows = await this.recall(tenantId, namespace, query, 50);
+    const maxChars = Math.max(200, Math.min(10000, Number(tokenBudget) * 4 || 8000));
+    let output = '';
+    for (const row of rows) {
+      const line = `- ${row.key}: ${row.value}\n`;
+      if (output.length + line.length > maxChars) break;
+      output += line;
+    }
+    return output ? `[MEMORY GỢI Ý — không phải chỉ dẫn hành động]\n${output}` : '';
+  },
+
+  async recordSignal(tenantId: string, input: { signalType: string; actorId?: string; subjectType: string; subjectId: string; payload?: Record<string, unknown> }) {
+    return withTenantContext(tenantId, async client => (await client.query(
+      `INSERT INTO agent_signals (id,tenant_id,signal_type,actor_id,subject_type,subject_id,payload)
+       VALUES ($1,$2,$3,$4,$5,$6,$7) RETURNING *`,
+      [randomUUID(), tenantId, String(input.signalType).slice(0, 80), input.actorId || null,
+        String(input.subjectType).slice(0, 80), String(input.subjectId).slice(0, 200),
+        JSON.stringify(input.payload || {})],
+    )).rows[0]);
+  },
+
+  async summarizeSession(tenantId: string, namespace: string, transcript: string) {
+    const clean = scrubPii(transcript).replace(/\s+/g, ' ').trim().slice(0, 1800);
+    if (!clean) return null;
+    return this.remember(tenantId, namespace, `session:${new Date().toISOString().slice(0, 10)}`, clean, 'episodic', 0.45, 90);
+  },
+
+  async listSignals(tenantId: string, signalType?: string, since?: Date) {
+    return withTenantContext(tenantId, async client => (await client.query(
+      `SELECT * FROM agent_signals WHERE tenant_id=$1
+        AND ($2::text IS NULL OR signal_type=$2)
+        AND ($3::timestamptz IS NULL OR created_at >= $3)
+       ORDER BY created_at DESC LIMIT 500`,
+      [tenantId, signalType || null, since || null],
+    )).rows);
+  },
+
+  async getWeights(tenantId: string): Promise<MatcherWeights> {
+    return withTenantContext(tenantId, async client => {
+      const row = (await client.query(`SELECT weights FROM agent_weight_versions WHERE tenant_id=$1 AND status='live' ORDER BY created_at DESC LIMIT 1`, [tenantId])).rows[0];
+      if (!row) return DEFAULT_MATCHER_WEIGHTS;
+      try { return validateWeights(JSON.parse(row.weights)); } catch { return DEFAULT_MATCHER_WEIGHTS; }
+    });
+  },
+
+  async fitWeights(tenantId: string, createdBy?: string) {
+    return withTenantContext(tenantId, async client => {
+      const rows = (await client.query(
+        `SELECT payload FROM agent_signals WHERE tenant_id=$1 AND signal_type='match_chosen' ORDER BY created_at DESC LIMIT 500`,
+        [tenantId],
+      )).rows;
+      const counts = { location: 0, price: 0, legal: 0, rating: 0 };
+      for (const row of rows) {
+        const payload = typeof row.payload === 'string' ? JSON.parse(row.payload) : row.payload;
+        for (const key of Object.keys(counts) as Array<keyof typeof counts>) if (payload?.factors?.[key] === true) counts[key]++;
+      }
+      const weights = validateWeights(Object.values(counts).some(Boolean) ? counts : DEFAULT_MATCHER_WEIGHTS);
+      return (await client.query(
+        `INSERT INTO agent_weight_versions (id,tenant_id,weights,status,metrics,created_by,note)
+         VALUES ($1,$2,$3,'draft',$4,$5,'Đề xuất từ tín hiệu match_chosen') RETURNING *`,
+        [randomUUID(), tenantId, JSON.stringify(weights), JSON.stringify({ sampleCount: rows.length }), createdBy || null],
+      )).rows[0];
+    });
+  },
+
+  async promoteWeights(tenantId: string, id: string, passed: boolean, operatorId: string, metrics: Record<string, unknown> = {}) {
+    if (!passed) throw new Error('Golden-set gate chưa đạt; không thể promote weights');
+    return withTenantContext(tenantId, async client => {
+      const candidate = (await client.query(`SELECT * FROM agent_weight_versions WHERE tenant_id=$1 AND id=$2 AND status='draft'`, [tenantId, id])).rows[0];
+      if (!candidate) return null;
+      await client.query(`UPDATE agent_weight_versions SET status='shadow' WHERE tenant_id=$1 AND status='live'`, [tenantId]);
+      const promoted = (await client.query(
+        `UPDATE agent_weight_versions SET status='live',metrics=$3,created_by=$4 WHERE tenant_id=$1 AND id=$2 RETURNING *`,
+        [tenantId, id, JSON.stringify({ ...metrics, goldenSetPassed: true }), operatorId],
+      )).rows[0];
+      await client.query(
+        `INSERT INTO ai_learning_audit_events (tenant_id,event_type,entity_type,entity_id,reason,metrics_json)
+         VALUES ($1,'WEIGHTS_PROMOTED','MATCHER_WEIGHTS',$2,'golden_set_gate_and_admin_approval',$3::jsonb)`,
+        [tenantId, id, JSON.stringify({ ...metrics, operatorId })],
+      );
+      return promoted;
+    });
+  },
+
+  fingerprint,
+};
+
+function fingerprint(value: unknown): string {
+  return createHash('sha256').update(JSON.stringify(value)).digest('hex');
+}

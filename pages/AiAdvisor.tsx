@@ -61,6 +61,7 @@ export default function AiAdvisor() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [result, setResult] = useState<AdviceResponse | null>(null);
+  const [feedbackSent, setFeedbackSent] = useState<Record<string, boolean>>({});
 
   const toVnd = (s: string): number | undefined => {
     const n = Number(String(s).replace(/[^0-9.]/g, ''));
@@ -97,6 +98,23 @@ export default function AiAdvisor() {
     } finally {
       setLoading(false);
     }
+  }
+
+  async function sendMismatchFeedback(projectId: string) {
+    try {
+      const res = await fetch('/api/ai/signals', {
+        method: 'POST',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          signalType: 'match_feedback',
+          subjectType: 'project',
+          subjectId: projectId,
+          payload: { reason: 'Không phù hợp với nhu cầu' },
+        }),
+      });
+      if (res.ok) setFeedbackSent((current) => ({ ...current, [projectId]: true }));
+    } catch { /* feedback is best-effort and must not interrupt browsing */ }
   }
 
   return (
@@ -230,6 +248,14 @@ export default function AiAdvisor() {
                 <strong>Tỷ suất lợi nhuận dự kiến:</strong> {p.expectedRoiPct}
               </div>
               <p style={{ marginTop: 8, fontSize: 14, color: '#334155' }}>{p.reasoning}</p>
+              <button
+                type="button"
+                onClick={() => sendMismatchFeedback(p.projectId)}
+                disabled={feedbackSent[p.projectId]}
+                style={{ marginTop: 8, border: '1px solid #cbd5e1', background: '#fff', color: '#475569', borderRadius: 6, padding: '6px 10px', fontSize: 12, cursor: feedbackSent[p.projectId] ? 'default' : 'pointer' }}
+              >
+                {feedbackSent[p.projectId] ? 'Đã ghi nhận phản hồi' : 'Không phù hợp'}
+              </button>
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginTop: 10 }}>
                 <div>
                   <div style={{ fontWeight: 600, color: '#16a34a', fontSize: 14 }}>Ưu điểm</div>

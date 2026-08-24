@@ -12,6 +12,7 @@ import { recordAiUsage } from '../services/aiUsageService';
 import { aiRolloutService, decideRollout } from '../services/aiRolloutService';
 import { assessFeedback, autonomousLearningService } from '../services/autonomousLearningService';
 import { agentOutboundRepository } from '../repositories/agentOutboundRepository';
+import { agentMemoryService } from '../services/agentMemoryService';
 
 export function createAiGovernanceRoutes(authenticateToken: any, optionalAuth?: any) {
   const router = Router();
@@ -326,6 +327,15 @@ export function createAiGovernanceRoutes(authenticateToken: any, optionalAuth?: 
           console.error('[RLHF] Error computing reward signal for', safeIntent, err?.message);
         });
       }
+       if (tenantId && rating === -1) {
+         await agentMemoryService.recordSignal(tenantId, {
+           signalType: 'match_feedback',
+           actorId: userId,
+           subjectType: interactionId ? 'interaction' : 'feedback',
+           subjectId: interactionId || feedback.id,
+           payload: { reason: safeCorrection || 'Không phù hợp', intent: safeIntent },
+         }).catch(() => {});
+       }
 
       res.status(201).json(feedback);
     } catch (error: any) {

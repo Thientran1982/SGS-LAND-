@@ -176,6 +176,7 @@ import m153 from './153_listing_data_integrity';
 import m154 from './154_agent_daily_report';
 import m155 from './155_daily_report_unknown_delivery';
 import m156 from './156_daily_report_delivery_replay';
+import m157 from './157_agent_memory_and_signals';
 
 dotenv.config();
 
@@ -349,6 +350,7 @@ export const MIGRATION_REGISTRY: Record<string, Migration> = {
   '154_agent_daily_report.ts': m154,
   '155_daily_report_unknown_delivery.ts': m155,
   '156_daily_report_delivery_replay.ts': m156,
+  '157_agent_memory_and_signals.ts': m157,
 };
 
 async function ensureSchemaVersionsTable(client: PoolClient): Promise<void> {
