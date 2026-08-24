@@ -696,7 +696,7 @@ function ListingDetailPanel({ listing, canEdit, onEdit, onClose, onStatusChange,
                                     {t(`status.${listing.status}`) || listing.status}
                                 </span>
                                 {listing.transaction && (
-                                    <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-sgs-champagne text-sgs-primary border border-sgs-border whitespace-nowrap">
+                                    <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-sgs-champagne text-sgs-primary whitespace-nowrap">
                                         {t(`transaction.${listing.transaction}`) || listing.transaction}
                                     </span>
                                 )}
@@ -1797,6 +1797,10 @@ function ProjectListingsPanel({ project, canCreate, isAdmin, userRole, onClose, 
     const handleListingSubmit = async (data: Record<string, unknown>) => {
         const listing = await db.createListing({
             ...data,
+            // Keep project-catalog units explicitly linked to their parent.
+            // This prevents the new item from being treated as a standalone
+            // Inventory listing if the project code is ever changed or missing.
+            projectId: project.id,
             projectCode: project.code || data.projectCode,
         });
         setListings(prev => {
