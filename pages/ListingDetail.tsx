@@ -1659,7 +1659,7 @@ export const ListingDetail: React.FC = () => {
                     <div>
                         <div className="flex flex-wrap gap-2 mb-4">
                             <span className="bg-sgs-champagne text-sgs-primary px-3 py-1 rounded-lg text-xs font-bold uppercase tracking-wide border border-sgs-border">{t(`property.${listing.type.toUpperCase()}`)}</span>
-                            <span className="bg-sgs-champagne text-sgs-verified px-3 py-1 rounded-lg text-xs font-bold uppercase tracking-wide border border-sgs-verified/20">{t(`status.${listing.status}`)}</span>
+                            <span className="bg-sgs-champagne text-sgs-verified px-3 py-1 rounded-lg text-[11px] font-bold uppercase tracking-wide border border-sgs-verified/20">{t(`status.${listing.status}`)}</span>
                         </div>
                         <h1 className="text-3xl md:text-4xl font-black text-[var(--text-primary)] mb-2 leading-tight">{listing.title}</h1>
                         <div className="flex items-center gap-2 text-[var(--text-tertiary)] font-medium flex-wrap">
