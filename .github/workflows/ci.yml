@@ -37,17 +37,24 @@ jobs:
         run: npm run build
 
   integrity-preview:
-    name: PostgreSQL Integrity & Migration Checks
+    name: PostgreSQL ${{ matrix.postgres-version }} Integrity & Migration Checks
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        # Keep the isolation regression aligned with the PostgreSQL majors
+        # supported by the application environments.
+        postgres-version: ['14', '15', '16']
     env:
       # This database exists only inside the ephemeral GitHub Actions job.
       # The test creates and drops its own schema inside it; no production
       # connection or data is used.
       INTEGRITY_PG_URL: postgresql://postgres:postgres@localhost:5432/integrity_preview
       INTEGRITY_PG_SSL: 'false'
+      POSTGRES_VERSION: ${{ matrix.postgres-version }}
     services:
       postgres:
-        image: postgres:16
+        image: postgres:${{ matrix.postgres-version }}
         env:
           POSTGRES_USER: postgres
           POSTGRES_PASSWORD: postgres
@@ -73,8 +80,19 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Run PostgreSQL tenant-isolation regression
-        run: npm run test:tenant-isolation
+      - name: Run PostgreSQL ${{ matrix.postgres-version }} tenant-isolation regression
+        run: |
+          set -o pipefail
+          echo "Running tenant-isolation regression against PostgreSQL ${POSTGRES_VERSION}"
+          npm run test:tenant-isolation 2>&1 | tee "tenant-isolation-postgres-${POSTGRES_VERSION}.log"
+
+      - name: Upload PostgreSQL ${{ matrix.postgres-version }} tenant-isolation log
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: tenant-isolation-postgres-${{ matrix.postgres-version }}
+          path: tenant-isolation-postgres-${{ matrix.postgres-version }}.log
+          if-no-files-found: error
 
       - name: Run PostgreSQL integrity and migration checks
         run: >-
