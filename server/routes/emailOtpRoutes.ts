@@ -23,8 +23,8 @@ const EMAIL_RE = /^[^@\s]+@[^@\s]+\.[^@\s]+$/;
 const ipLimit = rateLimit({
   name: 'email_otp_ip',
   windowMs: 15 * 60 * 1000,
-  max: 20,
-  message: { error: 'Qua nhieu yeu cau tu thiet bi nay. Vui long thu lai sau.' },
+  maxRequests: 20,
+  message: 'Qua nhieu yeu cau tu thiet bi nay. Vui long thu lai sau.',
 });
 
 export function createEmailOtpRoutes(): Router {
@@ -51,9 +51,9 @@ export function createEmailOtpRoutes(): Router {
         }
         return res.status(500).json({ error: 'Khong tao duoc ma xac minh.' });
       }
-      const userName = String((user as Record<string, unknown>).name ?? '');
+      const userName = String(user.name ?? '');
       const result = await emailService.sendEmailOtp(DEFAULT_TENANT_ID, email, userName, issue.code, locale);
-      const status = String((result as Record<string, unknown>)?.status ?? '');
+      const status = String(result.status ?? '');
       const delivered = status === 'sent';
       if (!delivered) {
         logger.warn(`[email-otp] Mail chua gui duoc cho ${email} (status=${status}) - kiem tra cau hinh SMTP.`);

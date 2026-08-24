@@ -1085,7 +1085,11 @@ class DatabaseApiClient {
     });
     if (!res.ok) {
       const err = await res.json().catch(() => ({ error: 'Registration failed' }));
-      throw new Error(err.error || 'Registration failed');
+      const error: any = new Error(err.error || 'Registration failed');
+      error.code = err.error;
+      error.email = err.email || email;
+      error.needsVerification = err.needsVerification;
+      throw error;
     }
     return res.json();
   }
@@ -1108,7 +1112,11 @@ class DatabaseApiClient {
     });
     if (!res.ok) {
       const err = await res.json().catch(() => ({ error: 'Onboarding failed' }));
-      throw new Error(err.error || 'Onboarding failed');
+      const error: any = new Error(err.error || 'Onboarding failed');
+      error.code = err.error;
+      error.email = err.email || email;
+      error.needsVerification = err.needsVerification;
+      throw error;
     }
     return res.json();
   }
