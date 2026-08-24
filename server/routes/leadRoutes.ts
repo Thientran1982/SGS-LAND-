@@ -537,14 +537,13 @@ export function createLeadRoutes(authenticateToken: any, getBroadcast?: () => an
         senderId: user.id,
         status: deliveryStatus,
       });
-      if (deliveryStatus === 'SENT') {
-        await agentMemoryService.recordSignal(user.tenantId, {
-          signalType: 'match_chosen', actorId: user.id, subjectType: 'lead', subjectId: lead.id,
-          dedupeKey: `match_chosen:interaction:${lead.id}:${req.body?.idempotencyKey || `${resolvedChannel}:${content.slice(0, 80)}`}`,
-          provenance: 'staff',
-          payload: { action: 'contact', channel: resolvedChannel, factors: { rating: true } },
-        }).catch(() => {});
-      }
+      await agentMemoryService.recordSuccessfulContactSignal(user.tenantId, {
+        deliveryStatus,
+        actorId: user.id,
+        subjectId: lead.id,
+        channel: resolvedChannel,
+        dedupeKey: `match_chosen:interaction:${lead.id}:${req.body?.idempotencyKey || `${resolvedChannel}:${content.slice(0, 80)}`}`,
+      }).catch(() => {});
 
       // Push real-time reply to customer's live chat widget (and other agents watching)
       const io = getBroadcast?.();

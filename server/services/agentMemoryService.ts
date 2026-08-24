@@ -216,6 +216,31 @@ export const agentMemoryService = {
     });
   },
 
+  async recordSuccessfulContactSignal(tenantId: string, input: {
+    deliveryStatus: string;
+    actorId?: string;
+    subjectId: string;
+    channel: string;
+    dedupeKey: string;
+  }) {
+    // Customer-facing delivery is intentionally best-effort. A queued or
+    // failed message is not evidence that contact succeeded.
+    if (input.deliveryStatus !== 'SENT') return null;
+    return this.recordSignal(tenantId, {
+      signalType: 'match_chosen',
+      actorId: input.actorId,
+      subjectType: 'lead',
+      subjectId: input.subjectId,
+      dedupeKey: input.dedupeKey,
+      provenance: 'staff',
+      payload: {
+        action: 'contact',
+        channel: input.channel,
+        factors: { rating: true },
+      },
+    });
+  },
+
   async recordPriceEstimateEditDistance(tenantId: string, input: {
     subjectType: string; subjectId: string; estimatedPrice: unknown; actualPrice: unknown;
     actorId?: string; source?: string;
