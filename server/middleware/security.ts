@@ -29,7 +29,7 @@ export function securityHeaders(req: Request, res: Response, next: NextFunction)
       "img-src 'self' data: https:; " +
       "connect-src 'self' wss: https://www.google-analytics.com https://analytics.google.com https://generativelanguage.googleapis.com https://nominatim.openstreetmap.org https://*.clarity.ms; " +
       "frame-src https://maps.google.com https://www.google.com; " +
-      "frame-ancestors 'none';"
+      "frame-ancestors 'self' https://*.replit.dev https://*.worf.replit.dev https://replit.com https://*.replit.com;"
     );
     res.setHeader('Strict-Transport-Security', 'max-age=31536000; includeSubDomains');
   } else {
@@ -43,7 +43,7 @@ export function securityHeaders(req: Request, res: Response, next: NextFunction)
       "img-src 'self' data: https:; " +
       "connect-src 'self' ws: wss: https://www.google-analytics.com https://analytics.google.com https://generativelanguage.googleapis.com https://nominatim.openstreetmap.org https://*.clarity.ms; " +
       "frame-src https://maps.google.com https://www.google.com; " +
-      "frame-ancestors 'none';"
+      "frame-ancestors 'self' https://*.replit.dev https://*.worf.replit.dev https://replit.com https://*.replit.com;"
     );
   }
 

@@ -121,7 +121,6 @@ export function middleware(request: NextRequest) {
   } else {
     response = NextResponse.next({ request: { headers: requestHeaders } });
   }
-  response.headers.set("X-Frame-Options", "SAMEORIGIN");
   response.headers.set("X-Content-Type-Options", "nosniff");
 
   return response;
