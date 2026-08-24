@@ -1127,7 +1127,7 @@ async function handle_live_chat_core(args: Record<string, any>): Promise<any> {
         LEGAL: { tool: 'legal_qa', args: { tenantId, question: msg } },
         PLANNING: { tool: 'check_planning', args: { tenantId, address: msg } },
         FINANCE: { tool: 'get_platform_knowledge', args: { tenantId, domain: 'bank', query: msg } },
-        PROJECT: { tool: 'get_platform_knowledge', args: { tenantId, domain: 'project', query: msg } },
+        PROJECT: { tool: 'get_project_info', args: { tenantId, projectName: msg } },
         LONGTHANH: { tool: 'get_longthanh_market', args: { tenantId, subArea: msg } },
         GENERAL: { tool: 'get_platform_knowledge', args: { tenantId, domain: 'platform', query: msg } },
     };

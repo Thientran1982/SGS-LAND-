@@ -28,6 +28,7 @@ import {
 } from './ai/defaultPrompts';
 import { GENAI_CONFIG, SAFE_MODEL_FALLBACK, DEPRECATED_MODEL_PREFIXES, ensureSafeModel, getProviderForModel, getModelCost, isProviderConfigured, MODEL_REGISTRY, TASK_MODELS, taskProfile, CROSS_PROVIDER_FALLBACK } from './ai/modelPolicy';
 import { generateWithPolicy } from './ai/providers';
+import { getAgentRoleForIntent, selectSecondaryIntents } from './ai/agentOrchestrationRegistry';
 // -----------------------------------------------------------------------------
 // 1. CONFIGURATION & SCHEMA DEFINITIONS
 // -----------------------------------------------------------------------------
@@ -2117,16 +2118,6 @@ PHÂN TÍCH LEAD (bullet point, sắc bén):
             // Chỉ gọi RAG khi intent phù hợp (không gọi khi định giá vì đã có AVM engine).
             // Mỗi intent map tới role agent → fetch knowledge_filter.domains để giới hạn nguồn.
             const RAG_INTENTS = new Set(['DIRECT_ANSWER', 'SEARCH_INVENTORY', 'EXPLAIN_LEGAL', 'EXPLAIN_MARKETING', 'DRAFT_CONTRACT', 'CALCULATE_LOAN', 'ANALYZE_LEAD', 'CLARIFY']);
-            const INTENT_TO_ROLE: Record<string, string> = {
-                EXPLAIN_LEGAL:     'legal_specialist',
-                DRAFT_CONTRACT:    'contract_specialist',
-                CALCULATE_LOAN:    'finance_specialist',
-                SEARCH_INVENTORY:  'inventory_specialist',
-                EXPLAIN_MARKETING: 'marketing_specialist',
-                ANALYZE_LEAD:      'lead_analyst',
-                DIRECT_ANSWER:     'writer',
-                CLARIFY:           'writer',
-            };
             let ragKnowledgeSection = '';
             const { buildRagContextWithSources: _ragWithSrc, formatSourcesFooter: _formatSources } = await import('./services/ragService');
             type RagSearchResult = Awaited<ReturnType<typeof _ragWithSrc>>['sources'][number];
@@ -2135,7 +2126,7 @@ PHÂN TÍCH LEAD (bullet point, sắc bén):
                 try {
                     const { agentRepository: _agentRepo } = await import('./repositories/agentRepository');
                     let domains: string[] | undefined;
-                    const role = INTENT_TO_ROLE[currentIntent];
+                    const role = getAgentRoleForIntent(currentIntent);
                     if (role) {
                         const agent = await _agentRepo.getAgentByRole(state.tenantId, role);
                         const kfDomains = agent?.knowledgeFilter?.domains;
@@ -2162,16 +2153,18 @@ PHÂN TÍCH LEAD (bullet point, sắc bén):
             let secondaryIntentsSection = '';
             let secondaryArtifact: AgentArtifact | undefined;
             const SECONDARY_ELIGIBLE = new Set(['SEARCH_INVENTORY', 'CALCULATE_LOAN', 'EXPLAIN_LEGAL', 'EXPLAIN_MARKETING', 'DRAFT_CONTRACT', 'ANALYZE_LEAD', 'ESTIMATE_VALUATION']);
-            const additionalIntents = (state.plan?.additional_intents || [])
-                .filter(i => i && i !== currentIntent && SECONDARY_ELIGIBLE.has(i))
-                .slice(0, 2);
+            const additionalIntents = selectSecondaryIntents(
+                currentIntent,
+                (state.plan?.additional_intents || []).filter(i => SECONDARY_ELIGIBLE.has(i)),
+                2,
+            );
             if (additionalIntents.length > 0) {
                 try {
                     const ext = state.plan?.extraction || {};
                     const { agentRepository: _agentRepoSec } = await import('./repositories/agentRepository');
                     const secResults = await Promise.all(additionalIntents.map(async (secIntent) => {
                         try {
-                            const secRole = INTENT_TO_ROLE[secIntent];
+                            const secRole = getAgentRoleForIntent(secIntent);
                             let payload = '';
 
                             if (secIntent === 'SEARCH_INVENTORY') {
