@@ -14,6 +14,7 @@ The Next.js public site runs as a SEPARATE process from the main Express/Vite CR
 ## How to apply
 - When making changes to `apps/nextjs/` components, restart the "Next.js Public Site" workflow (not "Start application")
 - The Next.js app proxies `/api/*` → Express port 5000 (via next.config.ts rewrites)
+- Every new private CRM route must also be added to `apps/nextjs/config/routes.ts` and `PRIVATE_PREFIXES`; otherwise a direct preview URL can be handled by Next.js and return 404 before the CRM router runs.
 - Port 3001 is configured in configureWorkflow; accessible at `https://3001-<REPLIT_DEV_DOMAIN>`
 - `apps/nextjs/node_modules` must be installed separately: `cd apps/nextjs && npm install`
 

@@ -124,6 +124,7 @@ export const ROUTES = {
     AI_EVALUATION: 'ai-evaluation',
     VALUATION_ACCURACY: 'valuation-accuracy',
     AGENT_AUDIT: 'agent-audit',
+     AGENT_COCKPIT: 'agent-cockpit',
     SEO_MANAGER: 'seo-manager',
     ERROR_MONITOR: 'error-monitor',
     PROFILE: 'profile',

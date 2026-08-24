@@ -1,0 +1,94 @@
+import React, { useCallback, useEffect, useState } from 'react';
+import { AlertTriangle, Bot, CheckCircle2, Clock3, RefreshCw, Send, ShieldCheck, XCircle } from 'lucide-react';
+import { api } from '../services/api/apiClient';
+
+type CockpitSummary = {
+  roleCards: Array<{ agentKey: string; title: string; mission: string; permissions: string[]; kpis: string[]; rollout: string }>;
+  events: Array<{ status: string; count: number }>;
+  humanQuestions: Array<{ status: string; count: number }>;
+  executions: Array<{ status: string; count: number }>;
+  recentAudit: Array<{ event_type: string; status: string; created_at: string }>;
+  rollouts: Array<{ agent_key: string; status: string; canary_percent: number; shadow_enabled: boolean }>;
+  generatedAt: string;
+};
+type HumanQuestion = { id: string; agent_key: string; question: string; priority: number; created_at: string; context_json: Record<string, unknown> };
+
+const count = (rows: Array<{ status: string; count: number }> = [], status: string) => rows.find(row => row.status === status)?.count || 0;
+
+export default function AgentCockpit() {
+  const [summary, setSummary] = useState<CockpitSummary | null>(null);
+  const [questions, setQuestions] = useState<HumanQuestion[]>([]);
+  const [answering, setAnswering] = useState<string | null>(null);
+  const [answer, setAnswer] = useState('');
+  const [error, setError] = useState('');
+  const [loading, setLoading] = useState(true);
+
+  const load = useCallback(async () => {
+    setLoading(true); setError('');
+    try {
+      const [nextSummary, nextQuestions] = await Promise.all([
+        api.get<CockpitSummary>('/api/agent-operating/cockpit'),
+        api.get<HumanQuestion[]>('/api/agent-operating/questions'),
+      ]);
+      setSummary(nextSummary); setQuestions(nextQuestions);
+    } catch (e: any) {
+      setError(e?.message || 'Không thể tải Admin Cockpit.');
+    } finally { setLoading(false); }
+  }, []);
+  useEffect(() => { void load(); }, [load]);
+
+  const submitAnswer = async (id: string) => {
+    if (!answer.trim()) return;
+    setAnswering(id);
+    try {
+      await api.post(`/api/agent-operating/questions/${id}/answer`, { answer: answer.trim(), approveMemory: true });
+      setAnswer(''); await load();
+    } catch (e: any) { setError(e?.message || 'Không thể ghi câu trả lời.'); }
+    finally { setAnswering(null); }
+  };
+
+  return (
+    <div className="mx-auto max-w-7xl space-y-6 p-6">
+      <div className="flex flex-wrap items-start justify-between gap-4">
+        <div>
+          <div className="mb-2 flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.18em] text-indigo-600"><Bot size={16} /> Agent operations</div>
+          <h1 className="text-2xl font-bold text-slate-900">Admin Cockpit</h1>
+          <p className="mt-1 text-sm text-slate-500">Theo dõi Agent Minh và các agent theo nguyên tắc có người kiểm soát.</p>
+        </div>
+        <button onClick={() => void load()} disabled={loading} className="inline-flex items-center gap-2 rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-medium shadow-sm hover:bg-slate-50 disabled:opacity-50"><RefreshCw size={16} className={loading ? 'animate-spin' : ''} /> Làm mới</button>
+      </div>
+      {error && <div role="alert" className="flex items-center gap-2 rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700"><AlertTriangle size={17} /> {error}</div>}
+      {loading && !summary ? <div className="rounded-xl border border-slate-200 bg-white p-10 text-center text-sm text-slate-500">Đang tải trạng thái agent…</div> : summary && <>
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+          {[
+            ['Runs đang chạy', count(summary.executions, 'RUNNING'), 'text-indigo-600'],
+            ['Chờ nhân viên', count(summary.humanQuestions, 'OPEN'), 'text-amber-600'],
+            ['Event lỗi', count(summary.events, 'FAILED') + count(summary.events, 'DEAD_LETTER'), 'text-rose-600'],
+            ['Đã hoàn tất', count(summary.executions, 'SUCCESS'), 'text-emerald-600'],
+          ].map(([label, value, color]) => <div key={String(label)} className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm"><div className="text-xs font-medium text-slate-500">{label}</div><div className={`mt-2 text-2xl font-bold ${color}`}>{value}</div></div>)}
+        </div>
+        <section className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
+          <div className="mb-4 flex items-center gap-2"><ShieldCheck size={19} className="text-indigo-600" /><h2 className="font-semibold text-slate-900">Role cards & rollout</h2></div>
+          <div className="grid gap-3 md:grid-cols-3">{summary.roleCards.map(card => {
+            const rollout = summary.rollouts.find(item => item.agent_key === card.agentKey);
+            return <div key={card.agentKey} className="rounded-lg border border-slate-100 bg-slate-50 p-4">
+              <div className="flex items-center justify-between gap-2"><h3 className="font-semibold text-slate-900">{card.title}</h3><span className="rounded-full bg-indigo-50 px-2 py-1 text-[10px] font-bold text-indigo-700">{rollout?.status || card.rollout}</span></div>
+              <p className="mt-2 text-xs leading-5 text-slate-600">{card.mission}</p>
+              <div className="mt-3 text-[11px] text-slate-500">KPI: {card.kpis.join(' · ')}</div>
+              {rollout?.shadow_enabled && <div className="mt-2 text-[11px] font-medium text-amber-700">Shadow mode · không tác động production</div>}
+            </div>;
+          })}</div>
+        </section>
+        <section className="rounded-xl border border-amber-200 bg-amber-50/50 p-5 shadow-sm">
+          <div className="mb-4 flex items-center gap-2"><Clock3 size={19} className="text-amber-700" /><h2 className="font-semibold text-slate-900">Ask-human queue</h2><span className="rounded-full bg-amber-100 px-2 py-0.5 text-xs font-semibold text-amber-800">{questions.length}</span></div>
+          {questions.length === 0 ? <div className="flex items-center gap-2 text-sm text-slate-600"><CheckCircle2 size={16} className="text-emerald-600" /> Không có câu hỏi đang chờ.</div> : <div className="space-y-3">{questions.map(question => <div key={question.id} className="rounded-lg border border-amber-200 bg-white p-4">
+            <div className="flex flex-wrap items-center justify-between gap-2"><span className="text-xs font-bold uppercase text-indigo-700">{question.agent_key}</span><span className="text-xs text-slate-500">Ưu tiên {question.priority}</span></div>
+            <p className="mt-2 text-sm text-slate-800">{question.question}</p>
+            <div className="mt-3 flex gap-2"><input value={answering === question.id ? answer : ''} onChange={event => { setAnswering(question.id); setAnswer(event.target.value); }} placeholder="Trả lời để agent tiếp tục…" className="min-w-0 flex-1 rounded-lg border border-slate-200 px-3 py-2 text-sm outline-none focus:border-indigo-400" /><button onClick={() => void submitAnswer(question.id)} disabled={answering === question.id && !answer.trim()} className="inline-flex items-center gap-1 rounded-lg bg-indigo-600 px-3 py-2 text-sm font-semibold text-white disabled:opacity-50"><Send size={15} /> Ghi nhớ</button></div>
+          </div>)}</div>}
+        </section>
+        <section className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm"><div className="mb-3 flex items-center gap-2"><XCircle size={18} className="text-slate-500" /><h2 className="font-semibold text-slate-900">Audit gần đây</h2></div><div className="divide-y divide-slate-100">{summary.recentAudit.slice(0, 8).map((event, index) => <div key={`${event.created_at}-${index}`} className="flex items-center justify-between gap-3 py-2 text-sm"><span className="text-slate-700">{event.event_type}</span><span className="text-xs text-slate-500">{event.status} · {new Date(event.created_at).toLocaleString('vi-VN')}</span></div>)}</div></section>
+      </>}
+    </div>
+  );
+}

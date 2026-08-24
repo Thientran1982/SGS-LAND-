@@ -90,6 +90,7 @@ const AiGovernance = lazyLoad(() => import('./pages/AiGovernance'), 'AiGovernanc
 const AiEvaluation = lazyLoad(() => import('./pages/AiEvaluation'), 'AiEvaluation');
 const ValuationAccuracyReport = lazyLoad(() => import('./pages/ValuationAccuracyReport'), 'ValuationAccuracyReport');
 const AgentAudit = lazyLoad(() => import('./pages/AgentAudit'), 'AgentAudit');
+const AgentCockpit = lazyLoad(() => import('./pages/AgentCockpit'), 'AgentCockpit');
 const SeoManager = lazyLoad(() => import('./pages/SeoManager'), 'SeoManager');
 const ErrorMonitor = lazyLoad(() => import('./pages/ErrorMonitor'), 'ErrorMonitor');
 const ScraperDashboard = lazyLoad(() => import('./pages/ScraperDashboard'), 'ScraperDashboard');
@@ -119,6 +120,7 @@ registerPrefetch(ROUTES.ADMIN_AI_COST,       () => import('./pages/AdminAiCost')
 registerPrefetch(ROUTES.AI_EVALUATION,       () => import('./pages/AiEvaluation'));
 registerPrefetch(ROUTES.VALUATION_ACCURACY,  () => import('./pages/ValuationAccuracyReport'));
 registerPrefetch(ROUTES.AGENT_AUDIT,         () => import('./pages/AgentAudit'));
+registerPrefetch(ROUTES.AGENT_COCKPIT,       () => import('./pages/AgentCockpit'));
 registerPrefetch(ROUTES.BILLING,            () => import('./pages/Billing'));
 registerPrefetch(ROUTES.CHECKOUT,           () => import('./pages/Checkout'));
 registerPrefetch(ROUTES.MARKETPLACE,         () => import('./pages/Marketplace'));
@@ -245,6 +247,7 @@ const PAGE_REGISTRY: Record<string, React.ComponentType<any>> = {
     [ROUTES.AI_EVALUATION]: AiEvaluation,
     [ROUTES.VALUATION_ACCURACY]: ValuationAccuracyReport,
     [ROUTES.AGENT_AUDIT]: AgentAudit,
+    [ROUTES.AGENT_COCKPIT]: AgentCockpit,
     [ROUTES.BILLING]: Billing,
     [ROUTES.CHECKOUT]: Checkout,
     [ROUTES.MARKETPLACE]: Marketplace,
@@ -455,6 +458,7 @@ const ADMIN_ONLY_ROUTES: Set<string> = new Set([
     ROUTES.ADMIN_USERS,
     ROUTES.ENTERPRISE_SETTINGS,
     ROUTES.AGENT_AUDIT,
+    ROUTES.AGENT_COCKPIT,
     ROUTES.VALUATION_ACCURACY,
 ]);
 // Routes chỉ dành riêng cho SUPER_ADMIN (quản trị viên cấp cao nhất)

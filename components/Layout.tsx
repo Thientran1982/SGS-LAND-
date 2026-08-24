@@ -18,7 +18,7 @@ import { socket } from '../services/websocket';
 import {
     LayoutDashboard, Users, FileText, Package, Inbox, Star, CheckSquare,
     GitMerge, Target, Share2, BookOpen, BarChart2, Store, Shield,
-    Database, Activity, Settings, CreditCard, Lock, Smartphone,
+    Database, Activity, Settings, CreditCard, Lock, Smartphone, Bot,
     User as UserIcon, Moon, Sun, LogOut, PanelLeft, ChevronDown, Languages, Home, Globe,
     ClipboardList, Kanban, ListTodo, UserCheck, PieChart, Bug, Rss, Building2, Mail, Briefcase, ScrollText
 } from 'lucide-react';
@@ -48,6 +48,7 @@ const NAV_ICONS: Record<string, React.ReactNode> = {
     [ROUTES.MARKETPLACE]: <Store size={20} strokeWidth={2} />,
     [ROUTES.AI_GOVERNANCE]: <Shield size={20} strokeWidth={2} />,
     [ROUTES.AGENT_AUDIT]: <ScrollText size={20} strokeWidth={2} />,
+    [ROUTES.AGENT_COCKPIT]: <Bot size={20} strokeWidth={2} />,
     [ROUTES.DATA_PLATFORM]: <Database size={20} strokeWidth={2} />,
     [ROUTES.SYSTEM]: <Activity size={20} strokeWidth={2} />,
     [ROUTES.ADMIN_USERS]: <Users size={20} strokeWidth={2} />,
