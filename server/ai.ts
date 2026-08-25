@@ -378,6 +378,10 @@ const PLATFORM_FEATURES_GUIDE = `
 • Dashboard tổng quan        → /dashboard          — thống kê lead, doanh số, KPI
 • Khách hàng (Lead/CRM)      → /leads              — quản lý, phân loại, follow-up khách
 • Kho hàng / Đăng tin mới    → /inventory          — đăng tin BDS, sửa/xoá tin, quản lý trạng thái
+  - Đăng tin mới: nhấn "+ Đăng tin BĐS" → điền Thông tin chính → Ký gửi, hoa hồng & ảnh → Xem lại & đăng.
+  - Bắt buộc: tiêu đề, loại giao dịch, loại BĐS, giá, diện tích, địa chỉ và số điện thoại liên hệ.
+  - Có thể chọn dự án, nhập tọa độ hoặc để hệ thống tự lấy tọa độ từ địa chỉ; mô tả có thể nhờ "AI viết mô tả".
+  - Tối đa 10 ảnh; ảnh đầu tiên là ảnh đại diện. Các trường chủ nhà, hoa hồng, pháp lý, hướng, nội thất, phòng ngủ/phòng tắm tùy loại BĐS.
 • Hợp đồng                   → /contracts          — tạo/theo dõi hợp đồng mua bán & đặt cọc
 • Dự án                      → /projects           — quản lý dự án, phân khu, tiến độ
 • Hòm thư (Inbox)            → /inbox              — tin nhắn nội bộ & từ khách
@@ -439,6 +443,15 @@ const GUIDE_ASSISTANT_RULES = `
 - Không nhắc đến specialist, writer, router hoặc các nhãn kỹ thuật trong câu trả lời cho khách.
 - Chỉ đề cập 2–3 tính năng liên quan nhất; không liệt kê lan man. Kết thúc bằng tối đa một câu hỏi hỗ trợ.
 `.trim();
+
+// "Đăng tin BĐS ntn?" is a platform-how-to question, not a request to search
+// inventory. Keep this deterministic because short Vietnamese chat text often
+// makes the router confuse "đăng tin" with "tìm tin".
+function isListingFormGuideRequest(message: string): boolean {
+    const text = message.toLowerCase().replace(/\s+/g, ' ').trim();
+    return /(?:đăng|tao|tạo|thêm)\s+(?:tin\s+)?(?:bđs|bds|bất động sản|bất động sản mới|tin mới)/i.test(text)
+        && /(?:ntn|như thế nào|cách|làm sao|làm thế nào|ở đâu|chỗ nào|truy cập|đăng ở đâu)/i.test(text);
+}
 // Default system instructions — overridable via admin prompt templates
 // ── Helper functions — load từ DB (admin override) hoặc dùng default ──────
 async function getInventoryInstruction(tenantId: string): Promise<string> {
@@ -651,6 +664,7 @@ function buildSystemContext(lead: Lead | null, userFavorites?: CompactFavorite[]
 // Typed Router plan output
 type RouterPlan = {
     next_step: string;
+    platform_guide?: 'LISTING_FORM' | string;
     /**
      * Multi-intent: secondary intents the message also touches (max 2).
      * Pipeline dispatches these in parallel as auxiliary RAG context for the
@@ -1251,6 +1265,12 @@ LOẠI HÌNH BĐS → property_type (chuẩn hoá):
               logger.warn('[ROUTER] Failed to parse router JSON, falling back to DIRECT_ANSWER: ' + String((parseErr as any)?.message || parseErr));
               plan = { next_step: 'DIRECT_ANSWER', extraction: {} };
             }
+              if (isListingFormGuideRequest(state.userMessage)) {
+                plan.next_step = 'DIRECT_ANSWER';
+                plan.confidence = Math.max(Number(plan.confidence) || 0, 0.9);
+                plan.platform_guide = 'LISTING_FORM';
+                logger.info('[ROUTER] Listing form guide request → DIRECT_ANSWER');
+              }
               // =====================================================
               // C3 HARD GUARD: ANALYZE_LEAD is internal-only.
               // If the Router AI incorrectly classifies a customer
@@ -2504,7 +2524,8 @@ YÊU CẦU VIẾT PHẢN HỒI (40-80 từ):
                         const isGreeting   = /^(xin chào|chào|hello|hi|hey|alo|helo|chào buổi|chào mừng|good morning|good afternoon|good evening|hôm nay|chào anh|chào chị|chào em|thế nào|bạn ơi|xin hỏi|cho hỏi|ơi)\b/.test(_rawMsg) && _rawMsg.length < 60;
                         const isProjectInfo = /tiến độ|tiến trình|dự án|chủ đầu tư|bàn giao|pháp lý dự án|giờ mở cửa|địa chỉ showroom|văn phòng|liên hệ|hotline|số điện thoại|email/.test(_rawMsg);
                         const isThankYou   = /^(cảm ơn|thanks|thank you|ok|oke|oki|okk|được rồi|vâng|dạ|nhận rồi|hiểu rồi|tuyệt|hay quá|tốt|giỏi|tuyệt vời)/.test(_rawMsg) && _rawMsg.length < 50;
-                        const isPlatformNav = /đăng lãi suất|đăng lãi|lãi suất.*đăng|đăng.*lãi|chỗ nào đăng|ở đâu đăng|đăng tin.*đâu|kho hàng|inventory|tính năng|hướng dẫn|cách dùng|làm sao|làm thế nào|tìm thấy|truy cập|menu.*đâu|đâu.*menu|trang nào|page nào|mục nào|feature|chức năng|đăng thông tin|bank.?rate|lai.?suat|lai_suat/.test(_rawMsg)
+                        const isListingGuide = state.plan?.platform_guide === 'LISTING_FORM' || isListingFormGuideRequest(state.userMessage);
+                        const isPlatformNav = isListingGuide || /đăng lãi suất|đăng lãi|lãi suất.*đăng|đăng.*lãi|chỗ nào đăng|ở đâu đăng|đăng tin.*đâu|kho hàng|inventory|tính năng|hướng dẫn|cách dùng|làm sao|làm thế nào|tìm thấy|truy cập|menu.*đâu|đâu.*menu|trang nào|page nào|mục nào|feature|chức năng|đăng thông tin|bank.?rate|lai.?suat|lai_suat/.test(_rawMsg)
                             && !/vay bao nhiêu|trả góp|tính vay|lãi suất.*tính|tính.*lãi suất/.test(_rawMsg); // Phân biệt: hỏi cách ĐĂNG lãi suất vs hỏi LÃI SUẤT để vay
 
                         if (isPlatformNav) {
@@ -2521,6 +2542,11 @@ YÊU CẦU VIẾT PHẢN HỒI (50-120 từ):
 - ${langInstruction}
 - Trả lời THẲNG VÀO VẤN ĐỀ: tên tính năng + đường dẫn cụ thể (ví dụ: /lai-suat-ngan-hang)
 - Nếu hỏi cách đăng lãi suất: hướng dẫn 3 bước: vào trang → nhấn nút → điền form → lưu
+- Nếu hỏi cách đăng tin BĐS (kể cả viết tắt "đăng tin BDS ntn"): hướng dẫn đúng 3 bước của form:
+  1) Vào /inventory và nhấn "+ Đăng tin BĐS"
+  2) Điền "Thông tin chính" (tiêu đề, giao dịch, loại BĐS, giá, diện tích, địa chỉ, số điện thoại liên hệ)
+  3) Sang "Ký gửi, hoa hồng & ảnh", thêm tối đa 10 ảnh → "Xem lại & đăng"
+  Nêu rõ các trường bắt buộc; không gọi kho tìm kiếm, không yêu cầu khách nhập lại dữ liệu nếu chỉ hỏi cách dùng.
 - Nếu hỏi chung về tính năng: liệt kê 2-3 tính năng liên quan kèm URL
 - KHÔNG đề cập các tính năng không liên quan câu hỏi
 - Giọng điệu: đồng nghiệp hướng dẫn nghiệp vụ — ngắn gọn, thực tế, không vòng vo
