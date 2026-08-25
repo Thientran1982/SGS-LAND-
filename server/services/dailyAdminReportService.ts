@@ -114,14 +114,29 @@ export function renderReportEmail(summary: DailyReportSummary): { subject: strin
   const [y,m,d] = summary.reportDate.split('-');
   const subject = `[SGSLand] Báo cáo ngày ${d}/${m}/${y}`;
   const row = (label: string, value: unknown) => `<tr><td style="padding:7px;border-bottom:1px solid #e2e8f0">${esc(label)}</td><td style="padding:7px;border-bottom:1px solid #e2e8f0;text-align:right;font-weight:bold">${esc(value)}</td></tr>`;
+  const table = (rows: string) => `<table role="presentation" style="width:100%;border-collapse:collapse;margin:0 0 18px;background:#fff">${rows}</table>`;
+  const agentMetricRows = summary.agentOperations
+    ? Object.entries(summary.agentOperations.metrics).flatMap(([section, values]) => {
+        if (!values || typeof values !== 'object' || Array.isArray(values)) return [row(section, values)];
+        const data = values as Record<string, unknown>;
+        const labels: Record<string, string> = {
+          total: 'Tổng số',
+          success: 'Thành công',
+          failed: 'Thất bại',
+          done: 'Hoàn tất',
+          answered: 'Đã trả lời',
+        };
+        return Object.entries(data).map(([key, value]) => row(`${section} · ${labels[key] || key}`, value));
+      }).join('')
+    : '';
   const agentSection = summary.agentOperations
-    ? `<h3>Vận hành Agent</h3>${row('Tổng hợp ca', summary.agentOperations.summary)}${row('Chỉ số', JSON.stringify(summary.agentOperations.metrics))}`
-    : `<h3>Vận hành Agent</h3><p style="color:#64748b">Chưa có báo cáo ca của Agent.</p>`;
-  const html = `<div style="font-family:Arial,sans-serif;max-width:620px;color:#1e293b"><h2>SGSLand — Báo cáo vận hành ngày ${esc(d+'/'+m+'/'+y)}</h2>
-    <table style="width:100%;border-collapse:collapse">${summary.overview.map(x => row(x.label,x.value)).join('')}</table>
-    <h3>Leads & môi giới F1</h3>${row('Lead theo trạng thái', JSON.stringify(summary.leads.byStage))}${row('Lead theo nguồn', JSON.stringify(summary.leads.bySource))}${row('Môi giới hoạt động', summary.brokers.active)}${row('Lead được phân bổ', summary.brokers.assignedLeads)}
-    <h3>Listing & công việc</h3>${row('Tin đăng mới', summary.listings.new)}${row('Tin cập nhật giá', summary.listings.priceUpdated)}${row('Task tạo mới', summary.tasks.created)}${row('Task quá hạn', summary.tasks.overdue)}
-    <h3>Minh & cảnh báo</h3>${row('Hội thoại', summary.minh.conversations)}${row('CSAT trung bình', summary.minh.averageCsat ?? MISSING)}${row('Cảnh báo hệ thống', summary.warnings.count)}${agentSection}<p style="color:#64748b">${summary.dataNotes.map(esc).join('<br>')}</p></div>`;
+    ? `<h3 style="margin:22px 0 8px">Vận hành Agent</h3><p style="margin:0 0 8px">${esc(summary.agentOperations.summary)}</p>${table(agentMetricRows)}`
+    : `<h3 style="margin:22px 0 8px">Vận hành Agent</h3><p style="color:#64748b">Chưa có báo cáo ca của Agent.</p>`;
+  const html = `<div style="font-family:Arial,sans-serif;max-width:620px;color:#1e293b;line-height:1.45"><h2>SGSLand — Báo cáo vận hành ngày ${esc(d+'/'+m+'/'+y)}</h2>
+    ${table(summary.overview.map(x => row(x.label,x.value)).join(''))}
+    <h3 style="margin:22px 0 8px">Leads & môi giới F1</h3>${table(row('Lead theo trạng thái', JSON.stringify(summary.leads.byStage)) + row('Lead theo nguồn', JSON.stringify(summary.leads.bySource)) + row('Môi giới hoạt động', summary.brokers.active) + row('Lead được phân bổ', summary.brokers.assignedLeads))}
+    <h3 style="margin:22px 0 8px">Listing & công việc</h3>${table(row('Tin đăng mới', summary.listings.new) + row('Tin cập nhật giá', summary.listings.priceUpdated) + row('Task tạo mới', summary.tasks.created) + row('Task quá hạn', summary.tasks.overdue))}
+    <h3 style="margin:22px 0 8px">Minh & cảnh báo</h3>${table(row('Hội thoại', summary.minh.conversations) + row('CSAT trung bình', summary.minh.averageCsat ?? MISSING) + row('Cảnh báo hệ thống', summary.warnings.count))}${agentSection}<p style="color:#64748b">${summary.dataNotes.map(esc).join('<br>')}</p></div>`;
   const text = [subject, ...summary.overview.map(x => `${x.label}: ${x.value}`), `GEO/SEO: ${MISSING}`, `Cảnh báo: ${summary.warnings.count ?? MISSING}`, summary.agentOperations ? `Vận hành Agent: ${summary.agentOperations.summary}` : 'Vận hành Agent: chưa có báo cáo ca'].join('\n');
   return { subject, html, text };
 }
