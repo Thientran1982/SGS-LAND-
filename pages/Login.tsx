@@ -496,7 +496,7 @@ export const Login: React.FC<LoginProps> = ({ onLoginSuccess }) => {
           : 'border-white/10 focus:border-[var(--sgs-primary)]/50 focus:ring-[var(--sgs-primary)]/50 focus:bg-white/8'}`;
   }, []);
   return (
-    <div className="min-h-[100dvh] w-full flex bg-[#09090b] text-white font-sans selection:bg-[var(--sgs-primary)]/100/30 selection:text-[var(--sgs-primary)] overflow-hidden relative" data-login-root><style>{`[data-login-root] input:not([type=checkbox]){padding-left:1rem !important;padding-right:2.5rem}[data-login-root] .auth-decorative-icon,[data-login-root] .relative>span:first-child{display:none}[data-login-root] .auth-mode-button>svg{display:none}`}</style>
+    <div className="min-h-[100dvh] w-full flex bg-[#09090b] text-white font-sans selection:bg-[var(--sgs-primary)]/100/30 selection:text-[var(--sgs-primary)] overflow-hidden relative" data-login-root><style>{`[data-login-root] input:not([type=checkbox]){padding-left:1rem !important;padding-right:2.5rem}[data-login-root] .auth-decorative-icon,[data-login-root] .relative>span:first-child,[data-login-root] .flex.items-start.gap-2>svg{display:none}[data-login-root] .auth-mode-button>svg{display:none}`}</style>
       <SeoHead
         title="Đăng Nhập | SGS LAND"
         description="Đăng nhập vào nền tảng bất động sản SGS LAND. Truy cập tài khoản, quản lý BĐS và theo dõi giao dịch của bạn."

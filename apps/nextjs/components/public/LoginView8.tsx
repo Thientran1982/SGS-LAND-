@@ -922,7 +922,7 @@ export function LoginPage() {
           : 'border-white/10 focus:border-[var(--sgs-primary)]/50 focus:ring-[var(--sgs-primary)]/50 focus:bg-white/8'}`;
   }, []);
   return (
-    <div className="min-h-[100dvh] w-full flex bg-black text-white font-sans selection:bg-[var(--sgs-primary)]/30 selection:text-[var(--sgs-primary)] overflow-hidden relative" data-login-root style={{ backgroundColor: "var(--sgs-primary-deep)", color: "#ffffff" }}><style>{`[data-login-root] input:not([type=checkbox]){padding-left:1rem !important;padding-right:2.5rem}[data-login-root] .auth-decorative-icon,[data-login-root] .relative>span:first-child{display:none}[data-login-root] .auth-mode-button>svg{display:none}`}</style>
+    <div className="min-h-[100dvh] w-full flex bg-black text-white font-sans selection:bg-[var(--sgs-primary)]/30 selection:text-[var(--sgs-primary)] overflow-hidden relative" data-login-root style={{ backgroundColor: "var(--sgs-primary-deep)", color: "#ffffff" }}><style>{`[data-login-root] input:not([type=checkbox]){padding-left:1rem !important;padding-right:2.5rem}[data-login-root] .auth-decorative-icon,[data-login-root] .relative>span:first-child,[data-login-root] .flex.items-start.gap-2>svg{display:none}[data-login-root] .auth-mode-button>svg{display:none}`}</style>
       
       
       {/* FORM COLUMN */}
