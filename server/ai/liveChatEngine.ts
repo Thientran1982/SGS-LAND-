@@ -1576,20 +1576,9 @@ async function handle_get_platform_knowledge(args: Record<string, any>): Promise
                             ? 'Hướng dẫn Hợp đồng:\nMở Hợp đồng để tạo và theo dõi hồ sơ, xem trạng thái và thực hiện quy trình phê duyệt. Các thao tác phụ thuộc vào vai trò và quyền phê duyệt.'
                             : normalizedQuery.includes('inbox') || normalizedQuery.includes('tin nhắn') || normalizedQuery.includes('hội thoại')
                                 ? 'Hướng dẫn Inbox:\nMở Inbox để xem hội thoại từ các kênh đã kết nối, phân công hoặc trả lời và xem lịch sử trao đổi. Kênh hiển thị phụ thuộc vào quyền tài khoản.'
-                                : await generateLiveChatText({
-                                    tenantId,
-                                    feature: 'LIVE_CHAT_PLATFORM_GUIDE',
-                                    maxOutputTokens: 450,
-                                    timeoutMs: 30000,
-                                    system: isEnglish
-                                        ? 'You are the SGS Land in-product guide. Answer the user’s specific platform question directly and helpfully in English. Use only the verified navigation and capability list below. Do not invent buttons, permissions, data, URLs, or features. If the question is not covered, say that clearly and ask one focused clarification question. Do not repeat a generic feature summary when the user asks about a specific workflow.'
-                                        : 'Bạn là trợ lý hướng dẫn bên trong nền tảng SGS LAND. Hãy trả lời đúng câu hỏi thao tác cụ thể bằng tiếng Việt, dùng câu trả lời có bước rõ ràng. Chỉ sử dụng danh sách tính năng và đường dẫn đã xác minh dưới đây; không bịa nút bấm, quyền, dữ liệu, URL hay tính năng. Nếu chưa có thông tin, nói rõ và hỏi lại một câu làm rõ. Không lặp lại bản tóm tắt tính năng chung khi người dùng hỏi một quy trình cụ thể.',
-                                    prompt: `${isEnglish ? 'Verified platform navigation:' : 'Điều hướng nền tảng đã xác minh:'}
-Dashboard (/dashboard), Leads (/leads), Inventory (/inventory), Contracts (/contracts), Projects (/projects), Inbox (/inbox), Campaigns (/campaigns), Sequences (/sequences), Reports (/reports), Approvals (/approvals), Task Dashboard (/task-dashboard), Bank Rates (/lai-suat-ngan-hang), AI Valuation (/ai-valuation), Marketplace (/marketplace), User Management (/admin-users), Enterprise Settings (/enterprise-settings), Routing Rules (/routing-rules), Scoring Rules (/scoring-rules), AI Governance (/ai-governance), Security (/security), Billing (/billing).
-
-${isEnglish ? 'User question' : 'Câu hỏi của người dùng'}: "${sanitizeChatInput(q, 600)}"
-${isEnglish ? 'Give the most relevant answer, with numbered steps when this is a how-to question.' : 'Hãy trả lời đúng trọng tâm, dùng các bước đánh số nếu đây là câu hỏi cách làm.'}`,
-                                })
+                                : isEnglish
+                                    ? 'I do not have a verified step-by-step guide for that feature yet. Please open User Guide from the main menu, or tell me the exact screen and button you are looking for.'
+                                    : 'Mình chưa có hướng dẫn từng bước đã xác minh cho tính năng này. Bạn hãy mở mục Hướng dẫn sử dụng trong menu chính, hoặc cho mình biết tên màn hình và nút bạn đang tìm.';
         return {
             domain, query,
             knowledge: guide,
