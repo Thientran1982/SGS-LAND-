@@ -111,7 +111,7 @@ const STATUS_LABELS: Record<string, Bi> = {
   READY: ["S\u1eb5n s\u00e0ng", "Ready"],
   BOOKING: ["Nh\u1eadn Booking", "Booking"],
   OPENING: ["\u0110ang m\u1edf b\u00e1n", "Opening"],
-  BEST_MARKET: ["T\u1ed1t nh\u1ea5t th\u1ecb tr\u01b0\u1eddng", "Best in market"],
+  BEST_MARKET: ["T\u1ed1t nh\u1ea5t", "Best"],
 };
 const LEGAL_LABELS: Record<string, Bi> = {
   PinkBook: ["S\u1ed5 H\u1ed3ng", "Pink Book"],
