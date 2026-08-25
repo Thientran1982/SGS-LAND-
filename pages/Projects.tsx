@@ -196,6 +196,17 @@ function ProjectFormModal({ project, onSave, onClose, t }: ProjectFormProps) {
             nextMeta.driveUrl = null; // legacy camelCase alias — always strip
             nextMeta.coverImage = coverImage ? coverImage : null;
             nextMeta.cover_image = null; // legacy snake_case alias — always strip
+            nextMeta.developer = form.developer.trim() || null;
+            nextMeta.scale = form.scale.trim() || null;
+            nextMeta.priceRange = form.priceRange.trim() || null;
+            nextMeta.price_range = null;
+            nextMeta.projectType = form.projectType.trim() || null;
+            nextMeta.project_type = null;
+            nextMeta.typeGroup = form.typeGroup.trim() || null;
+            nextMeta.type_group = null;
+            nextMeta.highlights = form.highlights.split('\n').map((v: string) => v.trim()).filter(Boolean);
+            nextMeta.amenities = form.amenities.split('\n').map((v: string) => v.trim()).filter(Boolean);
+            nextMeta.gallery = form.gallery.split('\n').map((v: string) => v.trim()).filter(Boolean);
             // Mini-site công khai (Task #25) — gửi true/false để bật/tắt /p/<code>
             nextMeta.public_microsite = publicMicrosite ? true : null;
             // Featured rank (Task #61) — số nguyên ≥1 để xếp hạng trên carousel
@@ -260,9 +271,45 @@ function ProjectFormModal({ project, onSave, onClose, t }: ProjectFormProps) {
                             <label htmlFor="pj-location" className={labelCls}>{t('project.location')}</label>
                             <input id="pj-location" className={inputCls} value={form.location} onChange={e => set('location', e.target.value)} />
                         </div>
+                        <div className="col-span-2 border-t border-[var(--glass-border)] pt-4">
+                            <p className="text-sm font-bold text-[var(--text-primary)] mb-1">Mẫu card & trang dự án</p>
+                            <p className="text-xs text-[var(--text-secondary)] mb-3">Các trường dưới đây dùng cùng bố cục với Aqua City và sẽ hiển thị trên card/trang chi tiết.</p>
+                        </div>
+                        <div>
+                            <label htmlFor="pj-developer" className={labelCls}>Chủ đầu tư</label>
+                            <input id="pj-developer" className={inputCls} value={form.developer} onChange={e => set('developer', e.target.value)} placeholder="Novaland Group" />
+                        </div>
+                        <div>
+                            <label htmlFor="pj-scale" className={labelCls}>Quy mô</label>
+                            <input id="pj-scale" className={inputCls} value={form.scale} onChange={e => set('scale', e.target.value)} placeholder="1.000 ha" />
+                        </div>
+                        <div>
+                            <label htmlFor="pj-price" className={labelCls}>Khoảng giá</label>
+                            <input id="pj-price" className={inputCls} value={form.priceRange} onChange={e => set('priceRange', e.target.value)} placeholder="Từ 6 tỷ đồng" />
+                        </div>
+                        <div>
+                            <label htmlFor="pj-project-type" className={labelCls}>Loại hình dự án</label>
+                            <input id="pj-project-type" className={inputCls} value={form.projectType} onChange={e => set('projectType', e.target.value)} placeholder="Đại đô thị sinh thái" />
+                        </div>
+                        <div className="col-span-2">
+                            <label htmlFor="pj-type-group" className={labelCls}>Phân khúc</label>
+                            <input id="pj-type-group" className={inputCls} value={form.typeGroup} onChange={e => set('typeGroup', e.target.value)} placeholder="Đô thị tổng hợp" />
+                        </div>
                         <div className="col-span-2">
                             <label htmlFor="pj-desc" className={labelCls}>{t('project.description')}</label>
                             <textarea id="pj-desc" className={inputCls} rows={3} value={form.description} onChange={e => set('description', e.target.value)} />
+                        </div>
+                        <div>
+                            <label htmlFor="pj-highlights" className={labelCls}>Điểm nổi bật</label>
+                            <textarea id="pj-highlights" className={inputCls} rows={4} value={form.highlights} onChange={e => set('highlights', e.target.value)} placeholder="Mỗi dòng một điểm nổi bật" />
+                        </div>
+                        <div>
+                            <label htmlFor="pj-amenities" className={labelCls}>Tiện ích</label>
+                            <textarea id="pj-amenities" className={inputCls} rows={4} value={form.amenities} onChange={e => set('amenities', e.target.value)} placeholder="Mỗi dòng một tiện ích" />
+                        </div>
+                        <div className="col-span-2">
+                            <label htmlFor="pj-gallery" className={labelCls}>Ảnh thư viện</label>
+                            <textarea id="pj-gallery" className={inputCls} rows={2} value={form.gallery} onChange={e => set('gallery', e.target.value)} placeholder="Mỗi dòng một URL ảnh (không bắt buộc)" />
                         </div>
                         <div className="col-span-2">
                             <label htmlFor="pj-drive" className={labelCls}>{t('project.drive_url')}</label>
@@ -3192,13 +3239,15 @@ function ProjectCardBase({ project, isAdmin, isPartner, onEdit, onDelete, onAcce
                                 </span>
                             )}
                         </div>
-                        {isPartner && (project as any).developer_name && (
-                            <p className="text-xs text-sgs-primary font-semibold mt-0.5 truncate">{t('project.developer')}: {(project as any).developer_name}</p>
-                        )}
                         {project.location && (
                             <p className="text-xs text-[var(--text-secondary)] mt-0.5 truncate flex items-center gap-1">
                                 <svg className="w-3 h-3 shrink-0 text-[var(--text-tertiary)]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
                                 {project.location}
+                            </p>
+                        )}
+                        {(meta.developer || (project as any).developer_name) && (
+                            <p className="text-xs text-sgs-primary font-semibold mt-1 truncate">
+                                {t('project.developer')}: {meta.developer || (project as any).developer_name}
                             </p>
                         )}
                     </div>
@@ -3222,6 +3271,20 @@ function ProjectCardBase({ project, isAdmin, isPartner, onEdit, onDelete, onAcce
                         )}
                     </div>
                 </div>
+                    {(meta.projectType || meta.typeGroup || meta.scale || meta.priceRange || meta.price_range) && (
+                        <div className="mt-4 pt-3 border-t border-[var(--glass-border)] space-y-1.5">
+                            {(meta.projectType || meta.typeGroup) && (
+                                <div className="flex items-center gap-2 flex-wrap">
+                                    {meta.projectType && <span className="text-[10px] uppercase tracking-wide font-bold text-sgs-primary">{meta.projectType}</span>}
+                                    {meta.typeGroup && <span className="text-[10px] text-[var(--text-tertiary)]">· {meta.typeGroup}</span>}
+                                </div>
+                            )}
+                            <div className="grid grid-cols-2 gap-2 text-xs">
+                                {meta.scale && <span className="text-[var(--text-secondary)]"><b>Quy mô:</b> {meta.scale}</span>}
+                                {(meta.priceRange || meta.price_range) && <span className="text-[var(--text-secondary)] truncate"><b>Giá:</b> {meta.priceRange || meta.price_range}</span>}
+                            </div>
+                        </div>
+                    )}
                 {project.description && (
                     <p className="text-xs text-[var(--text-secondary)] mb-3 line-clamp-2 leading-relaxed">{project.description}</p>
                 )}
@@ -3268,6 +3331,24 @@ function ProjectCardBase({ project, isAdmin, isPartner, onEdit, onDelete, onAcce
             </div>
             {/* Card footer — CTAs */}
             <div className="px-5 pb-4 pt-0 flex flex-col gap-2">
+                {isAdmin && (
+                    <div className="grid grid-cols-2 gap-2">
+                        <button
+                            type="button"
+                            onClick={onEdit}
+                            className="flex items-center justify-center gap-2 py-2 px-3 rounded-xl border border-[var(--glass-border)] text-[var(--text-secondary)] hover:text-sgs-primary hover:border-[var(--sgs-primary)] hover:bg-[var(--glass-surface-hover)] text-sm font-semibold transition-all"
+                        >
+                            {IC.EDIT} Chỉnh sửa
+                        </button>
+                        <button
+                            type="button"
+                            onClick={onDelete}
+                            className="flex items-center justify-center gap-2 py-2 px-3 rounded-xl border border-rose-200 text-rose-600 hover:bg-rose-50 text-sm font-semibold transition-all"
+                        >
+                            {IC.TRASH} Xóa
+                        </button>
+                    </div>
+                )}
                 <button
                     type="button"
                     onClick={onListings}
