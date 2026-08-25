@@ -72,6 +72,12 @@ const FOOTER_YEAR = 2026;
 
 export function PublicFooter() {
   const lang: Lang = useLang();
+  const [clientReady, setClientReady] = useState(false);
+
+  useEffect(() => {
+    setClientReady(true);
+  }, []);
+
   return (
       <footer className="ui-public-footer" style={{ background: "var(--sgs-primary-deep)", borderTop: "1px solid rgba(200,150,62,0.2)" }}>
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-14 pb-4">
@@ -97,7 +103,15 @@ export function PublicFooter() {
                 : "AI-powered real estate management & distribution platform · Trusted F1 · Trusted by 15.000+ brokers."}
             </p>
             <div className="flex flex-col gap-1.5">
-              <a href="tel:+84379281445" className="text-[13px] flex items-center gap-2" style={{ color: "#B9C6D4" }} onMouseEnter={e => linkHover(e, true)} onMouseLeave={e => linkHover(e, false)}>
+              <a
+                href="tel:+84379281445"
+                data-client-ready={clientReady ? "true" : undefined}
+                suppressHydrationWarning
+                className="text-[13px] flex items-center gap-2"
+                style={{ color: "#B9C6D4" }}
+                onMouseEnter={e => linkHover(e, true)}
+                onMouseLeave={e => linkHover(e, false)}
+              >
                 0379 281 445
               </a>
               <p className="text-[13px] flex items-start gap-2 mb-1" style={{ color: "#B9C6D4" }}>
