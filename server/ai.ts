@@ -387,6 +387,20 @@ const PLATFORM_FEATURES_GUIDE = `
 • Phê duyệt tin đăng         → /approvals          — duyệt/từ chối tin của sales (quản lý)
 • Task & Công việc           → /task-dashboard     — giao/nhận task, kanban, deadline
 
+## QUẢN LÝ CÔNG VIỆC
+• Tổng quan công việc        → /task-dashboard     — KPI khối lượng và tiến độ
+• Danh sách công việc        → /tasks              — tạo, lọc, cập nhật và theo dõi công việc
+• Bảng Kanban                → /task-kanban        — quản lý công việc theo trạng thái
+• Nhân viên & phân công      → /employees          — xem nhân viên và người phụ trách
+• Báo cáo công việc          → /task-reports       — theo dõi hiệu suất và tiến độ
+
+## VẬN HÀNH AGENT VÀ KIỂM SOÁT
+• Bảng điều khiển Agent      → /agent-cockpit      — role card, phê duyệt, event, câu hỏi cần người xử lý, memory và báo cáo ca
+• Nhật ký Agent Minh         → /agent-audit        — xem lịch sử điều phối và quyết định
+• Luật phân bổ lead          → /routing-rules      — cấu hình điều kiện định tuyến
+• Chuỗi tự động              → /sequences          — cấu hình follow-up theo lịch
+• Hộp thư                    → /inbox              — xử lý hội thoại và phân công
+
 ## CÔNG CỤ THÔNG TIN (có thể xem không cần đăng nhập)
 • Lãi suất ngân hàng         → /lai-suat-ngan-hang — XEM và ĐĂNG lãi suất vay mua BDS;
   - Cách đăng lãi suất: vào /lai-suat-ngan-hang → nhấn "Đăng Thông Tin Lãi Suất" (yêu cầu đăng nhập) → điền tên NH, loại vay, lãi suất min/max, kỳ hạn, thông tin liên hệ → nhấn Lưu
@@ -404,6 +418,13 @@ const PLATFORM_FEATURES_GUIDE = `
 • AI Governance             → /ai-governance        — quản lý prompt AI, giới hạn chi phí
 • Bảo mật & Tuân thủ        → /security            — log đăng nhập, cài đặt 2FA, quyền truy cập
 • Thanh toán & Gói dịch vụ  → /billing             — nâng cấp gói, lịch sử hoá đơn
+• Quản trị người dùng        → /admin-users         — tài khoản, vai trò và quyền truy cập
+• Chi phí AI                 → /admin-ai-cost       — theo dõi chi phí sử dụng AI
+• Dữ liệu nguồn              → /data-platform       — dữ liệu và nguồn tích hợp
+• Giám sát lỗi               → /error-monitor        — theo dõi lỗi hệ thống và frontend
+• Quản lý SEO                → /seo-manager          — quản lý SEO và nội dung tìm kiếm
+• Thu thập dữ liệu thị trường→ /scraper              — quản lý dữ liệu thu thập
+• Kho ứng dụng               → /marketplace-apps     — tích hợp ứng dụng
 `.trim();
 const GUIDE_ASSISTANT_RULES = `
 [QUY TẮC TRỢ LÝ HƯỚNG DẪN SGS LAND]
