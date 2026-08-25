@@ -1277,15 +1277,15 @@ export const AiGovernance: React.FC = () => {
                             <tbody className="divide-y divide-[var(--glass-border)]">
                                 {safetyLogs?.map(log => (
                                     <tr key={log.id} className="hover:bg-[var(--glass-surface)] transition-colors">
-                                        <td className="p-3 text-[var(--text-secondary)] font-mono">{formatTime(log.timestamp)}</td>
+                                        <td className="p-3 text-[var(--text-secondary)] font-mono">{formatTime(log.timestamp || log.createdAt || '')}</td>
                                         <td className="p-3 font-bold text-[var(--text-secondary)]">{log.taskType}</td>
                                         <td className="p-3 font-mono text-[var(--text-secondary)]">{formatModelName(log.model)}</td>
                                         <td className="p-3 text-[var(--text-secondary)]">{log.latencyMs}ms</td>
                                         <td className="p-3 text-sgs-verified font-mono">${(log.costUsd || 0).toFixed(4)}</td>
                                         <td className="p-3">
-                                            {log.safetyFlags.length > 0 ? (
+                                            {(log.safetyFlags || []).length > 0 ? (
                                                 <div className="flex gap-1">
-                                                    {log.safetyFlags.map(f => (
+                                                    {(log.safetyFlags || []).map(f => (
                                                         <span key={f} className="px-1.5 py-0.5 bg-rose-50 text-rose-600 border border-rose-100 rounded text-2xs font-bold uppercase tracking-wide">{f}</span>
                                                     ))}
                                                 </div>
