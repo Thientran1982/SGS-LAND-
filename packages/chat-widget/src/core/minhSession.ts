@@ -137,7 +137,35 @@ export function createMinhSession(options: MinhSessionOptions = {}): MinhSession
     } catch {
       saved = null;
     }
-    const data: any = await client.ask(leadId, text, lang, saved?.id);
+    let data: any;
+    try {
+      data = await client.ask(leadId, text, lang, saved?.id);
+    } catch (error) {
+      // The AI request can finish on the server after a proxy/browser
+      // connection is reset. Reconcile once with the durable conversation
+      // before showing an error, otherwise the user sees a failure while a
+      // reload immediately reveals the already-persisted reply.
+      try {
+        const recovered: any = await client.getMessages(leadId);
+        const rows: any[] = Array.isArray(recovered?.messages) ? recovered.messages : [];
+        const inboundIndex = saved?.id
+          ? rows.findIndex((row) => String(row?.id) === String(saved.id))
+          : rows.map((row) => String(row?.content || "").trim()).lastIndexOf(text);
+        const candidateRows = inboundIndex >= 0 ? rows.slice(inboundIndex + 1) : rows;
+        const assistantRow = [...candidateRows].reverse().find((row) =>
+          String(row?.direction || "").toUpperCase() === "OUTBOUND" &&
+          row?.metadata?.isAgent === true &&
+          !row?.metadata?.isSysMsg
+        );
+        if (assistantRow) {
+          data = { reply: assistantRow };
+        } else {
+          throw error;
+        }
+      } catch {
+        throw error;
+      }
+    }
     const userMsg =
       interactionToMessage(saved) ||
       ({ id: "local-" + Date.now(), role: "user", content: text, ts: Date.now() } as ChatMessage);

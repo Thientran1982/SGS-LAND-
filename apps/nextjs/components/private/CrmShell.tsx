@@ -32,6 +32,18 @@ const NAV_ITEMS = [
 ];
 
 export function CrmShell({ children }: { children: React.ReactNode }) {
+  async function handleLogout() {
+    try {
+      await fetch("/api/auth/logout", { method: "POST", credentials: "include" });
+    } finally {
+      try {
+        localStorage.removeItem("sgs_auth_cached");
+        localStorage.removeItem("sgs_auth_user");
+      } catch {}
+      window.location.assign("/login");
+    }
+  }
+
   const pathname = usePathname();
   const [mobileOpen, setMobileOpen] = useState(false);
 
@@ -80,12 +92,12 @@ export function CrmShell({ children }: { children: React.ReactNode }) {
       </nav>
 
       <div className="px-3 pt-4 mt-4 border-t space-y-0.5" style={{ borderColor: "var(--border-default)" }}>
-        <Link href="/api/auth/logout"
+        <button type="button" onClick={handleLogout}
           className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm transition-colors"
           style={{ color: "var(--color-error)" }}>
           <LogOut className="w-4 h-4" />
           Đăng xuất
-        </Link>
+        </button>
       </div>
     </aside>
   );

@@ -3,15 +3,23 @@ import { ChatTransport, ChatTransportError } from "./types";
 import { getCsrfToken } from "./csrf";
 
 async function postJson<T>(path: string, body: any, apiBase?: string, errCode = "request_failed"): Promise<T> {
-  const res = await fetch(apiUrl(path, apiBase), {
-    method: "POST",
-    credentials: "include",
-    headers: {
-        "Content-Type": "application/json",
-        "X-CSRF-Token": await getCsrfToken(apiBase),
-      },
-    body: JSON.stringify(body),
-  });
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), path === CHAT_ENDPOINTS.minhReply ? 90000 : 30000);
+  let res: Response;
+  try {
+    res = await fetch(apiUrl(path, apiBase), {
+      method: "POST",
+      credentials: "include",
+      signal: controller.signal,
+      headers: {
+          "Content-Type": "application/json",
+          "X-CSRF-Token": await getCsrfToken(apiBase),
+        },
+      body: JSON.stringify(body),
+    });
+  } finally {
+    clearTimeout(timeoutId);
+  }
   if (!res.ok) {
     throw new ChatTransportError(errCode, { status: res.status });
   }

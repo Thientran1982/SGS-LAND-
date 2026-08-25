@@ -53,6 +53,18 @@ function StatCard({ label, value, icon: Icon, trend }: {
 
 // ─── Main Dashboard Shell ─────────────────────────────────
 export function DashboardShell() {
+  async function handleLogout() {
+    try {
+      await fetch("/api/auth/logout", { method: "POST", credentials: "include" });
+    } finally {
+      try {
+        localStorage.removeItem("sgs_auth_cached");
+        localStorage.removeItem("sgs_auth_user");
+      } catch {}
+      window.location.assign("/login");
+    }
+  }
+
   const [stats, setStats] = useState<DashboardStats | null>(null);
   const [loading, setLoading] = useState(true);
 
@@ -111,12 +123,12 @@ export function DashboardShell() {
             <Bell className="w-4 h-4" />
             Thông báo
           </button>
-          <Link href="/api/auth/logout"
+          <button type="button" onClick={handleLogout}
             className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm transition-colors"
             style={{ color: "var(--color-error)" }}>
             <LogOut className="w-4 h-4" />
             Đăng xuất
-          </Link>
+          </button>
         </div>
       </aside>
 

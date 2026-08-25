@@ -33,7 +33,12 @@ async function request<T>(path: string, options: RequestOptions = {}): Promise<T
     if (queryString) url += `?${queryString}`;
   }
   const controller = new AbortController();
-  const timeoutId = setTimeout(() => controller.abort(), 30000);
+  // Agent orchestration can legitimately take longer than normal CRUD calls
+  // when a provider is rate-limited and the fallback model is selected.
+  const timeoutMs = path.includes('/api/live-chat/') || path.includes('/api/ai/')
+    ? 90000
+    : 30000;
+  const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
   const config: RequestInit = {
     method,
     credentials: 'include',
