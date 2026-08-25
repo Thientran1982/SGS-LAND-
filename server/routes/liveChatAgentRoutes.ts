@@ -179,6 +179,22 @@ export function createLiveChatAgentRoutes(
             });
         } catch (e: any) {
             logger.error('[liveChatAgentRoutes] /chat error:', e);
+            // A guide request must remain usable during a transient provider
+            // timeout. Return a safe, honest fallback instead of turning a
+            // temporary AI problem into a misleading "cannot connect" error.
+            if (context?.mode === 'platform_guide' && language) {
+                return res.status(200).json({
+                    sessionId,
+                    intent: 'PLATFORM_GUIDE',
+                    response: language === 'en'
+                        ? 'I cannot verify that guide detail right now. Please open the User Guide from the main menu, or tell me which screen you are currently viewing so I can guide you from there.'
+                        : 'Mình chưa thể xác minh chi tiết hướng dẫn này lúc này. Bạn hãy mở mục Hướng dẫn sử dụng ở menu chính, hoặc cho mình biết bạn đang ở màn hình nào để mình hướng dẫn tiếp.',
+                    sources: [{ tool: 'platform_guide_fallback', source: 'Verified platform guide' }],
+                    groundingStatus: 'INSUFFICIENT_DATA',
+                    status: 'empty',
+                    degraded: true,
+                });
+            }
             return sendAiError(res, e, 'liveChatAgentRoutes');
         }
     });

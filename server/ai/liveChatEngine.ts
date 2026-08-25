@@ -1580,6 +1580,7 @@ async function handle_get_platform_knowledge(args: Record<string, any>): Promise
                                     tenantId,
                                     feature: 'LIVE_CHAT_PLATFORM_GUIDE',
                                     maxOutputTokens: 450,
+                                    timeoutMs: 30000,
                                     system: isEnglish
                                         ? 'You are the SGS Land in-product guide. Answer the user’s specific platform question directly and helpfully in English. Use only the verified navigation and capability list below. Do not invent buttons, permissions, data, URLs, or features. If the question is not covered, say that clearly and ask one focused clarification question. Do not repeat a generic feature summary when the user asks about a specific workflow.'
                                         : 'Bạn là trợ lý hướng dẫn bên trong nền tảng SGS LAND. Hãy trả lời đúng câu hỏi thao tác cụ thể bằng tiếng Việt, dùng câu trả lời có bước rõ ràng. Chỉ sử dụng danh sách tính năng và đường dẫn đã xác minh dưới đây; không bịa nút bấm, quyền, dữ liệu, URL hay tính năng. Nếu chưa có thông tin, nói rõ và hỏi lại một câu làm rõ. Không lặp lại bản tóm tắt tính năng chung khi người dùng hỏi một quy trình cụ thể.',
