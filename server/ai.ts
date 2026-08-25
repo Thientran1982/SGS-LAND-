@@ -9,7 +9,7 @@ import { enterpriseConfigRepository } from './repositories/enterpriseConfigRepos
 import { leadRepository } from './repositories/leadRepository';
 import { feedbackRepository } from './repositories/feedbackRepository';
 import { agentRepository } from './repositories/agentRepository';
-import { recordAiUsage, estimateAiCostUsd } from './services/aiUsageService';
+import { recordAiUsage, estimateAiCostUsd, recordAiSpendFlushAlert, resolveAiSpendFlushAlert } from './services/aiUsageService';
 import { AiSpendBuffer } from './services/aiSpendBuffer';
 import { pool } from './db';
 import {
@@ -266,8 +266,12 @@ let spendFlushTimer: ReturnType<typeof setTimeout> | null = null;
 
 async function flushSpendBuffer() {
     try {
-        await spendBuffer.flush((tenantId, addedCost) =>
-            aiGovernanceRepository.incrementAiSpend(tenantId, addedCost),
+        await spendBuffer.flush(
+            (tenantId, addedCost) => aiGovernanceRepository.incrementAiSpend(tenantId, addedCost),
+            {
+                onRetryThresholdExceeded: recordAiSpendFlushAlert,
+                onFlushed: resolveAiSpendFlushAlert,
+            },
         );
     } catch (e) {
         logger.error('[AI Cost] Failed to flush spend buffer:', e);

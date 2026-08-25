@@ -264,6 +264,39 @@ class AiGovernanceRepository extends BaseRepository {
       return result.rows[0]?.config_value;
     });
   }
+
+  async recordAiSpendFlushAlert(
+    tenantId: string,
+    pendingAmountUsd: number,
+    retryCount: number,
+    failedAt: Date,
+  ): Promise<void> {
+    await this.withTenant(tenantId, async (client) => {
+      await client.query(
+        `INSERT INTO ai_spend_flush_alerts
+           (tenant_id, pending_amount_usd, retry_count, first_failed_at, last_failed_at, resolved_at, updated_at)
+         VALUES ($1, $2, $3, $4, $4, NULL, NOW())
+         ON CONFLICT (tenant_id) DO UPDATE SET
+           pending_amount_usd = EXCLUDED.pending_amount_usd,
+           retry_count = EXCLUDED.retry_count,
+           last_failed_at = EXCLUDED.last_failed_at,
+           resolved_at = NULL,
+           updated_at = NOW()`,
+        [tenantId, pendingAmountUsd, retryCount, failedAt],
+      );
+    });
+  }
+
+  async resolveAiSpendFlushAlert(tenantId: string): Promise<void> {
+    await this.withTenant(tenantId, async (client) => {
+      await client.query(
+        `UPDATE ai_spend_flush_alerts
+            SET resolved_at = COALESCE(resolved_at, NOW()), updated_at = NOW()
+          WHERE tenant_id = $1 AND resolved_at IS NULL`,
+        [tenantId],
+      );
+    });
+  }
 }
 
 export const aiGovernanceRepository = new AiGovernanceRepository();

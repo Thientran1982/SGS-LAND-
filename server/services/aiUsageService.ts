@@ -7,6 +7,8 @@
  */
 import { pool } from '../db';
 import { logger } from '../middleware/logger';
+import type { SpendFailureAlert } from './aiSpendBuffer';
+import { aiGovernanceRepository } from '../repositories/aiGovernanceRepository';
 // Approximate $/1K-tokens by model — kept in sync with GENAI_CONFIG.MODEL_COSTS
 // in server/ai.ts so cost numbers match the safety log.
 const MODEL_COSTS: Record<string, number> = {
@@ -45,6 +47,38 @@ export interface RecordAiUsageParams {
   latencyMs?: number;
   source?: string | null;   // free-form ('cache', 'AI_LIVE', 'fallback'…)
 }
+
+/**
+ * Persist only operational spend data. Prompts, responses, user IDs, and model
+ * details are deliberately excluded from this alert.
+ */
+export async function recordAiSpendFlushAlert(alert: SpendFailureAlert): Promise<void> {
+  try {
+    await aiGovernanceRepository.recordAiSpendFlushAlert(
+      alert.tenantId,
+      alert.pendingAmountUsd,
+      alert.retryCount,
+      alert.failedAt,
+    );
+    logger.warn('[AI Cost] Spend remains unrecorded after retry threshold', {
+      tenantId: alert.tenantId,
+      pendingAmountUsd: alert.pendingAmountUsd,
+      retryCount: alert.retryCount,
+      failedAt: alert.failedAt.toISOString(),
+    });
+  } catch (err: any) {
+    logger.warn('[aiUsage] recordAiSpendFlushAlert failed:', err?.message || err);
+  }
+}
+
+export async function resolveAiSpendFlushAlert(tenantId: string): Promise<void> {
+  try {
+    await aiGovernanceRepository.resolveAiSpendFlushAlert(tenantId);
+  } catch (err: any) {
+    logger.warn('[aiUsage] resolveAiSpendFlushAlert failed:', err?.message || err);
+  }
+}
+
 export async function recordAiUsage(params: RecordAiUsageParams): Promise<void> {
   const aiCalls = Math.max(1, params.aiCalls ?? 1);
   const cost = params.costUsd != null

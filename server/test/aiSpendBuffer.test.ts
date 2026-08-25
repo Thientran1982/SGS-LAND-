@@ -48,4 +48,39 @@ describe('AI spend buffer', () => {
     expect(write).toHaveBeenCalledOnce();
     expect(buffer.size).toBe(0);
   });
+
+  it('raises an alert only after the retry threshold', async () => {
+    const buffer = new AiSpendBuffer();
+    const write = vi.fn().mockRejectedValue(new Error('database unavailable'));
+    const onRetryThresholdExceeded = vi.fn();
+    buffer.add('tenant-1', 0.03);
+
+    for (let attempt = 0; attempt < AiSpendBuffer.RETRY_ALERT_THRESHOLD; attempt++) {
+      await expect(buffer.flush(write, { onRetryThresholdExceeded })).rejects.toThrow();
+    }
+
+    expect(onRetryThresholdExceeded).toHaveBeenCalledOnce();
+    expect(onRetryThresholdExceeded).toHaveBeenCalledWith(expect.objectContaining({
+      tenantId: 'tenant-1',
+      pendingAmountUsd: 0.03,
+      retryCount: AiSpendBuffer.RETRY_ALERT_THRESHOLD,
+      failedAt: expect.any(Date),
+    }));
+  });
+
+  it('notifies when a previously failed batch is flushed successfully', async () => {
+    const buffer = new AiSpendBuffer();
+    const write = vi.fn()
+      .mockRejectedValueOnce(new Error('database unavailable'))
+      .mockResolvedValueOnce(undefined);
+    const onFlushed = vi.fn();
+    buffer.add('tenant-1', 0.04);
+
+    await expect(buffer.flush(write, { onFlushed })).rejects.toThrow();
+    buffer.add('tenant-1', 0.04);
+    await buffer.flush(write, { onFlushed });
+
+    expect(onFlushed).toHaveBeenCalledWith('tenant-1');
+    expect(buffer.size).toBe(0);
+  });
 });
