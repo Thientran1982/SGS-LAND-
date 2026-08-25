@@ -23,14 +23,6 @@ type AssistantResponse = {
 
 const MAX_HISTORY = 12;
 
-function removeVietnameseDiacritics(value: string): string {
-    return value
-        .normalize('NFD')
-        .replace(/[\u0300-\u036f]/g, '')
-        .replace(/đ/g, 'd')
-        .replace(/Đ/g, 'D');
-}
-
 export const GuideAssistant: React.FC = () => {
     const { language } = useTranslation();
     const isVietnamese = language === 'vn';
@@ -164,11 +156,10 @@ export const GuideAssistant: React.FC = () => {
             const rawResponse = typeof result?.response === 'string' && result.response.trim()
                 ? result.response.trim()
                 : (isVietnamese ? 'Tôi chưa có đủ dữ liệu để trả lời câu hỏi này.' : 'I do not have enough verified data to answer that.');
-            const response = isVietnamese ? removeVietnameseDiacritics(rawResponse) : rawResponse;
             setMessages(prev => [...prev, {
                 id: `a-${Date.now()}`,
                 role: 'assistant',
-                content: response,
+                content: rawResponse,
                 sources: Array.isArray(result?.sources) ? result.sources : [],
                 dataScope: result?.dataScope,
                 freshness: result?.freshness,
