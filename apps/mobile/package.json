@@ -9,7 +9,9 @@
     "ios": "expo start --ios",
     "web": "expo start --web",
     "lint": "tsc --noEmit",
-    "prebuild": "expo prebuild"
+    "prebuild": "expo prebuild",
+    "postinstall": "patch-package && node scripts/verify-image-size-patch.mjs",
+    "verify:task-263": "node scripts/verify-task-263-remediation.mjs"
   },
   "dependencies": {
     "@react-native-async-storage/async-storage": "1.23.1",
@@ -36,11 +38,21 @@
     "react-native-safe-area-context": "4.12.0",
     "react-native-screens": "~4.4.0",
     "react-native-svg": "15.8.0",
-    "socket.io-client": "^4.8.3"
+    "socket.io-client": "^4.8.3",
+    "patch-package": "^8.0.1"
   },
   "devDependencies": {
     "@babel/core": "^7.25.2",
     "@types/react": "~18.3.12",
     "typescript": "~5.3.3"
+  },
+  "overrides": {
+    "@babel/plugin-transform-modules-systemjs": "^7.29.8",
+    "minimatch@3.1.5": {
+      "brace-expansion": "1.1.18"
+    },
+    "minimatch@9.0.9": {
+      "brace-expansion": "2.1.4"
+    }
   }
 }

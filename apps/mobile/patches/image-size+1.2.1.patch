@@ -1,0 +1,41 @@
+diff --git a/node_modules/image-size/dist/types/icns.js b/node_modules/image-size/dist/types/icns.js
+index 5616640..49cd193 100644
+--- a/node_modules/image-size/dist/types/icns.js
++++ b/node_modules/image-size/dist/types/icns.js
+@@ -81,6 +81,8 @@ exports.ICNS = {
+         let imageOffset = SIZE_HEADER;
+         let imageHeader = readImageHeader(input, imageOffset);
+         let imageSize = getImageSize(imageHeader[0]);
++        if (imageHeader[1] < SIZE_HEADER)
++            throw new TypeError('Invalid ICNS image entry length');
+         imageOffset += imageHeader[1];
+         if (imageOffset === fileLength)
+             return imageSize;
+@@ -93,6 +95,8 @@ exports.ICNS = {
+         while (imageOffset < fileLength && imageOffset < inputLength) {
+             imageHeader = readImageHeader(input, imageOffset);
+             imageSize = getImageSize(imageHeader[0]);
++            if (imageHeader[1] < SIZE_HEADER)
++                throw new TypeError('Invalid ICNS image entry length');
+             imageOffset += imageHeader[1];
+             result.images.push(imageSize);
+         }
+diff --git a/node_modules/image-size/dist/types/utils.js b/node_modules/image-size/dist/types/utils.js
+index 6e398c5..7b7f6d4 100644
+--- a/node_modules/image-size/dist/types/utils.js
++++ b/node_modules/image-size/dist/types/utils.js
+@@ -65,11 +65,11 @@ function findBox(input, boxName, offset) {
+         const box = readBox(input, offset);
+         if (!box)
+             break;
++        if (box.size < 8)
++            break;
+         if (box.name === boxName)
+             return box;
+-        // Fix the infinite loop by ensuring offset always increases
+-        // If box.size is 0, advance by at least 8 bytes (the size of the box header)
+-        offset += box.size > 0 ? box.size : 8;
++        offset += box.size;
+     }
+ }
+ exports.findBox = findBox;

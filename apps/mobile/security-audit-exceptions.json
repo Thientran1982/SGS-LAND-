@@ -1,0 +1,14 @@
+{
+  "exceptions": [
+    {
+      "advisory": "CVE-2025-71329",
+      "package": "image-size",
+      "version": "1.2.1",
+      "scope": "Metro build tooling",
+      "status": "mitigated-by-local-patch",
+      "patch": "patches/image-size+1.2.1.patch",
+      "validation": "postinstall applies the patch and runs scripts/verify-image-size-patch.mjs",
+      "reviewCondition": "Remove this exception when image-size publishes a fixed release or Metro removes the dependency."
+    }
+  ]
+}
