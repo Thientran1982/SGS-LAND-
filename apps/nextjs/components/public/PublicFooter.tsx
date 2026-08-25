@@ -29,7 +29,6 @@ const FOOTER_SUPPORT_CUSTOMER = [
   { vi: "Định giá AI", en: "AI Valuation", href: "/ai-valuation" },
   { vi: "Lãi suất ngân hàng", en: "Bank Rates", href: "/lai-suat-ngan-hang" },
   { vi: "Trò chuyện với Minh", en: "Chat with Minh", href: "/livechat" },
-  { vi: "Hướng dẫn đăng ký", en: "Registration Guide", href: "/huong-dan-su-dung" },
   { vi: "Hướng dẫn sử dụng", en: "User Guide", href: "/huong-dan-su-dung" },
 ];
 const FOOTER_SUPPORT_AGENT = [
@@ -55,6 +54,12 @@ const LEGAL_LINKS = [
   { vi: "Chính sách bảo mật", en: "Privacy Policy", href: "/privacy-policy" },
   { vi: "Điều khoản",         en: "Terms",          href: "/terms-of-service" },
   { vi: "Cookie",             en: "Cookie",         href: "/cookie-settings" },
+];
+const SOCIAL_LINKS = [
+  { label: "Facebook", href: "https://www.facebook.com/share/1JqSi4hRgV/?mibextid=wwXIfr", mark: "f" },
+  { label: "LinkedIn", href: "https://www.linkedin.com/company/sgs-land/", mark: "in" },
+  { label: "TikTok", href: "https://www.tiktok.com/@sgsland?_r=1&_t=ZS-99Be1XaRlBc", mark: "♪" },
+  { label: "YouTube", href: "https://www.youtube.com/@sgslandvn?si=FJh_eg1zv_t1-Wyb", mark: "▶" },
 ];
 const linkHover = (e: React.MouseEvent<HTMLAnchorElement | HTMLElement>, hover: boolean) => {
   (e.currentTarget as HTMLElement).style.color = hover ? "#D4A855" : "#B9C6D4";
@@ -104,6 +109,24 @@ export function PublicFooter() {
               <p className="text-[13px] mt-1" style={{ color: "#7A91A8" }}>
                 {lang === "vi" ? "Hỗ trợ 7/7 · 8:00 - 18:00" : "Support 7/7 · 8:00 - 18:00"}
               </p>
+              <div className="flex items-center gap-2 mt-3" aria-label={lang === "vi" ? "Kết nối với SGS LAND" : "Connect with SGS LAND"}>
+                {SOCIAL_LINKS.map((social) => (
+                  <a
+                    key={social.label}
+                    href={social.href}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    aria-label={social.label}
+                    title={social.label}
+                    className="flex items-center justify-center w-8 h-8 rounded-full text-xs font-bold transition-colors"
+                    style={{ color: "#B9C6D4", border: "1px solid rgba(185,198,212,0.35)" }}
+                    onMouseEnter={e => linkHover(e, true)}
+                    onMouseLeave={e => linkHover(e, false)}
+                  >
+                    {social.mark}
+                  </a>
+                ))}
+              </div>
             </div>
           </div>
 
