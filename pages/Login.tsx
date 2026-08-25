@@ -49,7 +49,7 @@ const MarketingColumn = memo(({ view, t }: { view: string, t: any }) => {
         };
     }, [view, t]);
     return (
-        <div className="flex-1 hidden lg:flex relative items-center justify-center overflow-hidden bg-[#050505]" aria-hidden="true">
+        <div className="flex-1 hidden 2xl:flex min-w-0 relative items-center justify-center overflow-hidden bg-[#050505]" aria-hidden="true">
             {/* Background with Overlay */}
             <div className="absolute inset-0 z-0">
                 <img 
@@ -61,7 +61,7 @@ const MarketingColumn = memo(({ view, t }: { view: string, t: any }) => {
                 <div className="absolute inset-0 bg-gradient-to-r from-[#09090b] via-transparent to-transparent"></div>
             </div>
 
-            <div className="relative z-10 w-[550px] flex flex-col gap-8">                
+            <div className="relative z-10 w-[min(550px,calc(100%-3rem))] flex flex-col gap-8">                
                 {/* 1. GLASS BENTO CARD - LIVE ANALYTICS */}
                 <div className="bg-[var(--bg-surface)]/5 backdrop-blur-xl border border-white/10 rounded-3xl shadow-2xl overflow-hidden relative group">
                     {/* Primary orb — top-right */}
@@ -504,7 +504,7 @@ export const Login: React.FC<LoginProps> = ({ onLoginSuccess }) => {
       />
       
       {/* FORM COLUMN */}
-      <div className="w-full lg:w-[520px] xl:w-[600px] flex flex-col relative z-20 overflow-y-auto no-scrollbar scroll-smooth h-[100dvh] bg-black/40 backdrop-blur-md border-r border-white/5 shadow-2xl">        
+      <div className="w-full 2xl:w-[600px] 2xl:flex-none flex flex-col relative z-20 overflow-y-auto no-scrollbar scroll-smooth h-[100dvh] bg-black/40 backdrop-blur-md border-r border-white/5 shadow-2xl">        
         {/* Top Bar */}
         <div className="p-8 flex justify-between items-center">
              <div className="flex items-center gap-3">
@@ -528,7 +528,8 @@ export const Login: React.FC<LoginProps> = ({ onLoginSuccess }) => {
                 </button>
              </div>
         </div>
-        <div className="flex-1 flex flex-col px-8 md:px-14 justify-center min-h-[600px]">            
+        <div className="flex-1 flex flex-col px-5 sm:px-8 md:px-14 justify-center min-h-[600px]">            
+            <div className="w-full max-w-xl mx-auto">
             <div className="space-y-2 mb-8">
                 <h1 className="text-3xl font-bold tracking-tight text-white animate-enter">
                     {view === 'REGISTER' ? t('auth.register_title') : view.startsWith('FORGOT') ? t('auth.reset_title') : view === 'VERIFY_EMAIL' ? t('auth.verify_email_title') : view === 'PENDING_APPROVAL' ? t('auth.pending_approval_title') : view === 'TENANT_REJECTED' ? t('auth.rejected_title') : view === 'TWO_FACTOR' ? 'Xác thực 2 bước' : t('auth.welcome')}
@@ -1012,6 +1013,7 @@ export const Login: React.FC<LoginProps> = ({ onLoginSuccess }) => {
                         ← {t('auth.verify_email_back_login')}
                     </button>
                 )}
+            </div>
             </div>
         </div>
       </div>
