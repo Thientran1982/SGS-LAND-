@@ -42,3 +42,4 @@
 - [Local dependency patch controls](local-dependency-patch-controls.md) — archived package security patches must apply in production installs, be verified, and have an explicit scanner exception.
 - [Sequence enrollment schema drift](sequence-schema-drift.md) — migration history may not guarantee the live unique constraint exists; repair before ON CONFLICT backfills.
 - [Sequence worker advisory locks](sequence-worker-locks.md) — keep lock, claims, updates, and unlock on one PostgreSQL session across the worker run.
+- [Migration history aliases](migration-history-aliases.md) — canonicalize reviewed renamed migration records without deleting history or replaying migrations.

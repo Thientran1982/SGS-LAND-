@@ -383,6 +383,22 @@ export const MIGRATION_REGISTRY: Record<string, Migration> = {
   '171_marketing_growth_company_brain.ts': m171,
 };
 
+/**
+ * Migration filenames were corrected after they had already been recorded in
+ * the long-lived Aiven database. Keep those historical names as aliases
+ * rather than deleting schema_versions rows or replaying migrations.
+ */
+export const LEGACY_MIGRATION_ALIASES: Readonly<Record<string, string>> = {
+  '106_followup_sequences.ts': '106_sequence_enrollment_unique.ts',
+  '107_chat_sessions.ts': '107_agent_prompt_versions.ts',
+  '108_gepa_tables.ts': '108_lead_journey_memory.ts',
+  '161_customer_care_email_engagement.ts': '161_care_email_tracking.ts',
+};
+
+export function canonicalizeMigrationVersions(versions: Iterable<string>): Set<string> {
+  return new Set([...versions].map(version => LEGACY_MIGRATION_ALIASES[version] || version));
+}
+
 async function ensureSchemaVersionsTable(client: PoolClient): Promise<void> {
   await client.query(`
     CREATE TABLE IF NOT EXISTS schema_versions (
@@ -396,7 +412,7 @@ async function ensureSchemaVersionsTable(client: PoolClient): Promise<void> {
 
 async function getAppliedVersions(client: PoolClient): Promise<Set<string>> {
   const result = await client.query('SELECT version FROM schema_versions ORDER BY id');
-  return new Set(result.rows.map((r: any) => r.version));
+  return canonicalizeMigrationVersions(result.rows.map((r: any) => r.version));
 }
 
 function getMigrationFiles(): string[] {
@@ -423,7 +439,7 @@ export async function getMigrationStatus(pool: Pool): Promise<MigrationStatus> {
   try {
     const result = await client.query('SELECT version FROM schema_versions ORDER BY version');
     const expected = getMigrationFiles();
-    const applied = [...new Set(result.rows.map((row: { version: string }) => row.version))].sort();
+    const applied = [...canonicalizeMigrationVersions(result.rows.map((row: { version: string }) => row.version))].sort();
     const appliedSet = new Set(applied);
     const expectedSet = new Set(expected);
     const missing = expected.filter((version) => !appliedSet.has(version));

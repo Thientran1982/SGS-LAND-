@@ -7,7 +7,7 @@ const STAFF_ROLES = ['SUPER_ADMIN', 'ADMIN', 'TEAM_LEAD'];
 const BRAIN_DOCUMENT_TYPES = ['brand_voice', 'developer', 'project', 'legal_disclaimer', 'broker', 'faq', 'competitor_note'];
 const BRAIN_VERIFICATION_STATUSES = ['verified', 'unverified', 'needs_review', 'stale'];
 
-function validateBrainDocument(body: any) {
+export function validateBrainDocument(body: any) {
   const documentType = String(body?.documentType || '');
   const documentKey = String(body?.documentKey || '').trim();
   const source = String(body?.source || '').trim();

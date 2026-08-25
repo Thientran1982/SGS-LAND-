@@ -22,7 +22,7 @@ type SupportRequest = { id: string; trackingCode: string; category: string; titl
 type AdminMemory = { id: string; namespace: string; key: string; kind: 'fact' | 'episodic' | 'procedural'; value: string; importance: number; hits: number; expires_at: string | null; expired?: boolean; conflict?: boolean; piiScrubbed?: boolean; updated_at: string };
 type WeightVersion = { id: string; status: 'draft' | 'shadow' | 'live'; weights: Record<string, number>; metrics: Record<string, unknown>; goldenSetPassed: boolean; created_at: string };
 type MarketingGrowthStatus = {
-  brain: Array<{ id: string; documentType: string; documentKey: string; source: string; sourceUrl?: string | null; verificationStatus: string; verifiedAt?: string | null; updatedAt: string }>;
+  brain: Array<{ id: string; documentType: string; documentKey: string; content?: Record<string, unknown>; source: string; sourceUrl?: string | null; verificationStatus: string; verifiedAt?: string | null; updatedAt: string }>;
   capabilities: Array<{ capabilityKey: string; displayName: string; role: string; cadence: string; requiresHumanApproval: boolean; rollout: string; active: boolean; promptVersion: string; updatedAt?: string | null }>;
 };
 
@@ -59,6 +59,9 @@ export default function AgentCockpit() {
   const [updatingSupport, setUpdatingSupport] = useState<string | null>(null);
   const [marketingGrowth, setMarketingGrowth] = useState<MarketingGrowthStatus | null>(null);
   const [updatingGrowth, setUpdatingGrowth] = useState<string | null>(null);
+  const [editingBrain, setEditingBrain] = useState<MarketingGrowthStatus['brain'][number] | null>(null);
+  const [brainForm, setBrainForm] = useState({ documentType: 'brand_voice', documentKey: '', content: '{}', source: 'internal', sourceUrl: '', verificationStatus: 'unverified' });
+  const [savingBrain, setSavingBrain] = useState(false);
 
   const load = useCallback(async () => {
     setLoading(true); setError('');
@@ -189,6 +192,46 @@ export default function AgentCockpit() {
       await load();
     } catch (e: any) { setError(e?.message || 'Không thể cập nhật trạng thái Company Brain.'); }
   };
+  const resetBrainForm = () => {
+    setEditingBrain(null);
+    setBrainForm({ documentType: 'brand_voice', documentKey: '', content: '{}', source: 'internal', sourceUrl: '', verificationStatus: 'unverified' });
+  };
+  const beginBrainEdit = (document: MarketingGrowthStatus['brain'][number]) => {
+    setEditingBrain(document);
+    setBrainForm({
+      documentType: document.documentType,
+      documentKey: document.documentKey,
+      content: JSON.stringify(document.content || {}, null, 2),
+      source: document.source,
+      sourceUrl: document.sourceUrl || '',
+      verificationStatus: document.verificationStatus,
+    });
+  };
+  const saveBrain = async () => {
+    if (!brainForm.documentKey.trim() || !brainForm.source.trim()) {
+      setError('Tên tài liệu và nguồn là bắt buộc.');
+      return;
+    }
+    let content: Record<string, unknown>;
+    try {
+      const parsed = JSON.parse(brainForm.content);
+      if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) throw new Error();
+      content = parsed;
+    } catch {
+      setError('Nội dung Company Brain phải là JSON hợp lệ dạng object.');
+      return;
+    }
+    setSavingBrain(true);
+    try {
+      const payload = { ...brainForm, documentKey: brainForm.documentKey.trim(), source: brainForm.source.trim(), sourceUrl: brainForm.sourceUrl.trim() || null, content };
+      if (editingBrain) await api.put(`/api/agent-operating/marketing-growth/brain/${encodeURIComponent(editingBrain.id)}`, payload);
+      else await api.post('/api/agent-operating/marketing-growth/brain', payload);
+      resetBrainForm();
+      await load();
+    } catch (e: any) {
+      setError(e?.message || 'Không thể lưu tài liệu Company Brain.');
+    } finally { setSavingBrain(false); }
+  };
 
   return (
     <div className="mx-auto max-w-7xl space-y-6 p-6">
@@ -247,7 +290,19 @@ export default function AgentCockpit() {
            <div className="grid gap-4 xl:grid-cols-2">
              <div>
                <h3 className="mb-2 text-sm font-semibold text-slate-800">Nguồn sự thật</h3>
-               {marketingGrowth.brain.length === 0 ? <div className="rounded-lg bg-white p-4 text-sm text-slate-500">Chưa có tài liệu Company Brain trong tenant này.</div> : <div className="space-y-2">{marketingGrowth.brain.map(doc => <div key={doc.id} className="rounded-lg border border-violet-100 bg-white p-3"><div className="flex flex-wrap items-center justify-between gap-2"><div><b className="text-sm text-slate-900">{doc.documentKey}</b><span className="ml-2 rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-bold">{brainTypeLabel[doc.documentType] || doc.documentType}</span></div><Dropdown label="Trạng thái xác minh" value={doc.verificationStatus} onChange={value => void updateBrainVerification(doc.id, String(value))} options={[{ value: 'verified', label: 'Đã xác minh' }, { value: 'needs_review', label: 'Cần xem lại' }, { value: 'unverified', label: 'Chưa xác minh' }, { value: 'stale', label: 'Đã cũ' }]} variant="compact" /></div><div className="mt-2 text-[11px] text-slate-500">Nguồn: {doc.source}{doc.sourceUrl ? ` · ${doc.sourceUrl}` : ''} · cập nhật {new Date(doc.updatedAt).toLocaleString('vi-VN')}</div></div>)}</div>}
+                <div className="mb-3 rounded-lg border border-violet-100 bg-white p-3">
+                  <div className="mb-2 flex items-center justify-between"><b className="text-xs text-slate-700">{editingBrain ? 'Sửa tài liệu Company Brain' : 'Thêm tài liệu Company Brain'}</b>{editingBrain && <button onClick={resetBrainForm} className="text-xs text-slate-500">Hủy</button>}</div>
+                  <div className="grid gap-2 sm:grid-cols-2">
+                    <Dropdown label="Loại tài liệu" value={brainForm.documentType} onChange={value => setBrainForm(current => ({ ...current, documentType: String(value) }))} options={Object.entries(brainTypeLabel).map(([value, label]) => ({ value, label }))} variant="compact" />
+                    <input aria-label="Tên tài liệu Company Brain" value={brainForm.documentKey} onChange={event => setBrainForm(current => ({ ...current, documentKey: event.target.value }))} placeholder="Tên tài liệu" maxLength={160} className="rounded-lg border border-slate-200 px-3 py-2 text-sm" />
+                    <input aria-label="Nguồn tài liệu" value={brainForm.source} onChange={event => setBrainForm(current => ({ ...current, source: event.target.value }))} placeholder="Nguồn tài liệu" maxLength={240} className="rounded-lg border border-slate-200 px-3 py-2 text-sm" />
+                    <input aria-label="Đường dẫn nguồn tài liệu" value={brainForm.sourceUrl} onChange={event => setBrainForm(current => ({ ...current, sourceUrl: event.target.value }))} placeholder="Đường dẫn nguồn (không bắt buộc)" maxLength={2000} className="rounded-lg border border-slate-200 px-3 py-2 text-sm" />
+                    <Dropdown label="Trạng thái xác minh" value={brainForm.verificationStatus} onChange={value => setBrainForm(current => ({ ...current, verificationStatus: String(value) }))} options={[{ value: 'unverified', label: 'Chưa xác minh' }, { value: 'needs_review', label: 'Cần xem lại' }, { value: 'verified', label: 'Đã xác minh' }, { value: 'stale', label: 'Đã cũ' }]} variant="compact" />
+                    <textarea aria-label="Nội dung Company Brain dạng JSON" value={brainForm.content} onChange={event => setBrainForm(current => ({ ...current, content: event.target.value }))} placeholder={'Nội dung JSON, ví dụ: {"tone":"thân thiện"}'} className="min-h-24 rounded-lg border border-slate-200 px-3 py-2 font-mono text-xs sm:col-span-2" />
+                  </div>
+                  <button onClick={() => void saveBrain()} disabled={savingBrain} className="mt-2 rounded-lg bg-violet-700 px-3 py-2 text-xs font-semibold text-white disabled:opacity-50">{savingBrain ? 'Đang lưu…' : editingBrain ? 'Lưu thay đổi' : 'Thêm tài liệu'}</button>
+                </div>
+                {marketingGrowth.brain.length === 0 ? <div className="rounded-lg bg-white p-4 text-sm text-slate-500">Chưa có tài liệu Company Brain trong tenant này.</div> : <div className="space-y-2">{marketingGrowth.brain.map(doc => <div key={doc.id} className="rounded-lg border border-violet-100 bg-white p-3"><div className="flex flex-wrap items-center justify-between gap-2"><div><b className="text-sm text-slate-900">{doc.documentKey}</b><span className="ml-2 rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-bold">{brainTypeLabel[doc.documentType] || doc.documentType}</span></div><div className="flex items-center gap-2"><Dropdown label="Trạng thái xác minh" value={doc.verificationStatus} onChange={value => void updateBrainVerification(doc.id, String(value))} options={[{ value: 'verified', label: 'Đã xác minh' }, { value: 'needs_review', label: 'Cần xem lại' }, { value: 'unverified', label: 'Chưa xác minh' }, { value: 'stale', label: 'Đã cũ' }]} variant="compact" /><button onClick={() => beginBrainEdit(doc)} className="rounded-md border border-slate-200 p-2 text-violet-700" aria-label={`Sửa ${doc.documentKey}`}><Edit3 size={14} /></button></div></div><div className="mt-2 text-[11px] text-slate-500">Nguồn: {doc.source}{doc.sourceUrl ? ` · ${doc.sourceUrl}` : ''} · cập nhật {new Date(doc.updatedAt).toLocaleString('vi-VN')}</div></div>)}</div>}
              </div>
              <div>
                <h3 className="mb-2 text-sm font-semibold text-slate-800">Rollout & phê duyệt</h3>
