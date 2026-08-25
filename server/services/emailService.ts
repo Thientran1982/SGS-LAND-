@@ -652,7 +652,13 @@ async function sendEmailOtp(tenantId: string, to: string, userName: string, code
     deliveryKey: `email-otp:${to.toLowerCase()}:${crypto.createHash('sha256').update(code).digest('hex')}`,
   });
 }
-async function sendPasswordResetEmail(tenantId: string, to: string, resetUrl: string, userName?: string): Promise<EmailResult> {
+async function sendPasswordResetEmail(
+  tenantId: string,
+  to: string,
+  resetUrl: string,
+  userName?: string,
+  deliveryKey?: string,
+): Promise<EmailResult> {
   const name    = escapeHtml(userName || to.split('@')[0]);
   const safeUrl = escapeHtml(resetUrl);
   const content = `
@@ -687,6 +693,7 @@ async function sendPasswordResetEmail(tenantId: string, to: string, resetUrl: st
     template: 'password_reset',
     skipQuota: true,
     dedupeKey: `password_reset:${to.toLowerCase()}:${resetUrl}`,
+    deliveryKey,
   });
 }
 async function sendWelcomeEmail(tenantId: string, to: string, userName: string): Promise<EmailResult> {

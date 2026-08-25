@@ -40,10 +40,11 @@ export class UserRepository extends BaseRepository {
   }
 
   async findByEmail(tenantId: string, email: string): Promise<UserRow | null> {
+    const normalizedEmail = email.trim().toLowerCase();
     return this.withTenant(tenantId, async (client) => {
       const result = await client.query(
-        `SELECT * FROM users WHERE email = $1`,
-        [email]
+        `SELECT * FROM users WHERE LOWER(email) = $1`,
+        [normalizedEmail]
       );
       return result.rows[0] ? this.rowToEntity<UserRow>(result.rows[0]) : null;
     });

@@ -312,6 +312,8 @@ app.use(globalMutationAudit);
   });
 
   const isProduction = process.env.NODE_ENV === 'production';
+  const normalizeAuthEmail = (value: unknown): string =>
+    typeof value === 'string' ? value.trim().toLowerCase() : '';
   // H1 FIX: Fail-fast on missing JWT_SECRET in ALL environments (not just production).
   // A random per-session secret would invalidate all tokens on every restart.
   if (!process.env.JWT_SECRET) {
@@ -423,7 +425,7 @@ app.use(globalMutationAudit);
   app.post("/api/auth/login", loginRateLimit, validateBody(schemas.login), async (req, res) => {
     try {
       let { email, password } = req.body;
-      email = email?.trim();
+      email = normalizeAuthEmail(email);
       const explicitTenantId = (req as any).tenantId as string | undefined;
       const lookupTenantId = explicitTenantId || DEFAULT_TENANT_ID;
 
@@ -607,7 +609,8 @@ app.use(globalMutationAudit);
 
   app.post("/api/auth/register", authRateLimit, validateBody(schemas.register), async (req, res) => {
     try {
-      const { name, email, password, company } = req.body;
+      const { name, password, company } = req.body;
+      const email = normalizeAuthEmail(req.body.email);
 
       const tenantId = DEFAULT_TENANT_ID;
       const existing = await userRepository.findByEmail(tenantId, email);
@@ -1034,7 +1037,7 @@ app.use(globalMutationAudit);
   app.post("/api/auth/resend-verification", authRateLimit, async (req, res) => {
     const uniformDelay = () => new Promise(r => setTimeout(r, 200 + Math.random() * 300));
     try {
-      const email = req.body.email?.trim();
+      const email = normalizeAuthEmail(req.body.email);
       if (!email) return res.status(400).json({ error: 'Email is required' });
 
       const result = await sendOtpForPendingUser(email, req.body?.locale);
@@ -1057,7 +1060,7 @@ app.use(globalMutationAudit);
   app.post("/api/auth/forgot-password", passwordResetRateLimit, async (req, res) => {
     const uniformDelay = () => new Promise(r => setTimeout(r, 200 + Math.random() * 300));
     try {
-      const email = req.body.email?.trim();
+      const email = normalizeAuthEmail(req.body.email);
       if (!email) return res.status(400).json({ error: 'Email is required' });
 
       // Cross-tenant lookup: vendor accounts live in their own tenant, not DEFAULT_TENANT_ID.
@@ -1089,11 +1092,6 @@ app.use(globalMutationAudit);
       const expiresAt = new Date(Date.now() + 60 * 60 * 1000);
 
       await pool.query(
-        `UPDATE password_reset_tokens SET used = TRUE WHERE user_id = $1 AND used = FALSE`,
-        [user.id]
-      );
-
-      await pool.query(
         `INSERT INTO password_reset_tokens (user_id, token, expires_at)
          VALUES ($1, $2, $3)`,
         [user.id, tokenHash, expiresAt]
@@ -1102,7 +1100,9 @@ app.use(globalMutationAudit);
       const baseUrl = resolveBaseUrl(req);
       const resetUrl = `${baseUrl}/reset-password/${rawToken}`;
 
-      const emailResult = await emailService.sendPasswordResetEmail(tenantId, email, resetUrl, user.name);
+      const deliveryKey = `password-reset:${user.id}:${tokenHash}`;
+      const emailResult = await emailService.sendPasswordResetEmail(tenantId, email, resetUrl, user.name, deliveryKey);
+      const delivered = emailResult.success && emailResult.status === 'sent';
       if (emailResult.status === 'failed') {
         logger.error(`Failed to send password reset email to ${email}: ${emailResult.error}`);
       } else if (emailResult.status === 'queued_no_smtp') {
@@ -1112,7 +1112,16 @@ app.use(globalMutationAudit);
       writeAuditLog(tenantId, user.id, 'PASSWORD_RESET_REQUEST', 'auth', user.id, { email }, req.ip);
       await uniformDelay();
       if (emailResult.status === 'queued_no_smtp' || emailResult.status === 'failed') {
+        await pool.query(`DELETE FROM password_reset_tokens WHERE token = $1 AND used = FALSE`, [tokenHash]);
         logger.warn(`[ForgotPassword] Email not delivered for ${email} — status: ${emailResult.status}. Check BREVO_FROM_EMAIL / SMTP config.`);
+        return res.status(503).json({ error: 'PASSWORD_RESET_DELIVERY_FAILED' });
+      }
+      if (delivered) {
+        await pool.query(
+          `UPDATE password_reset_tokens SET used = TRUE
+           WHERE user_id = $1 AND token <> $2 AND used = FALSE`,
+          [user.id, tokenHash],
+        );
       }
       // Trong môi trường dev (non-production), trả về devResetUrl + devResetToken
       // để developer có thể test flow mà không cần email thực sự vào hộp thư
@@ -1143,9 +1152,9 @@ app.use(globalMutationAudit);
       const tokenHash = crypto.createHash('sha256').update(token).digest('hex');
 
       const result = await pool.query(
-        `UPDATE password_reset_tokens SET used = TRUE
+        `SELECT user_id FROM password_reset_tokens
          WHERE token = $1 AND used = FALSE AND expires_at > NOW()
-         RETURNING user_id`,
+         FOR UPDATE`,
         [tokenHash]
       );
 
@@ -1170,20 +1179,25 @@ app.use(globalMutationAudit);
       }
 
       const tenantId = userTenantRow.tenant_id;
-      const pwUpdated = await userRepository.updatePassword(tenantId, userId, newPassword);
-      if (!pwUpdated) {
-        return res.status(500).json({ error: 'Failed to update password' });
-      }
-
-      // Activate invited/pending users — they've now set their password via the link
-      if (userTenantRow.status === 'PENDING') {
-        await withTenantContext(tenantId, async (client) => {
-          await client.query(
-            `UPDATE users SET status = 'ACTIVE' WHERE id = $1 AND status = 'PENDING'`,
-            [userId]
-          );
-        });
-      }
+      const passwordHash = await bcrypt.hash(newPassword, 12);
+      const resetResult = await withRlsBypass(async (client) => {
+        const updated = await client.query(
+          `UPDATE users
+             SET password_hash = $1,
+                 updated_at = NOW(),
+                 status = CASE WHEN status = 'PENDING' THEN 'ACTIVE' ELSE status END
+           WHERE id = $2 AND tenant_id = $3
+           RETURNING id`,
+          [passwordHash, userId, tenantId],
+        );
+        if (updated.rowCount === 0) return false;
+        await client.query(
+          `UPDATE password_reset_tokens SET used = TRUE WHERE token = $1 AND used = FALSE`,
+          [tokenHash],
+        );
+        return true;
+      });
+      if (!resetResult) return res.status(500).json({ error: 'Failed to update password' });
 
       const userEmail = userTenantRow.email;
       writeAuditLog(tenantId, userId, 'PASSWORD_RESET_COMPLETE', 'auth', userId, undefined, req.ip);
