@@ -496,7 +496,7 @@ export const Login: React.FC<LoginProps> = ({ onLoginSuccess }) => {
           : 'border-white/10 focus:border-[var(--sgs-primary)]/50 focus:ring-[var(--sgs-primary)]/50 focus:bg-white/8'}`;
   }, []);
   return (
-    <div className="min-h-[100dvh] w-full flex bg-[#09090b] text-white font-sans selection:bg-[var(--sgs-primary)]/100/30 selection:text-[var(--sgs-primary)] overflow-hidden relative">
+    <div className="min-h-[100dvh] w-full flex bg-[#09090b] text-white font-sans selection:bg-[var(--sgs-primary)]/100/30 selection:text-[var(--sgs-primary)] overflow-hidden relative" data-login-root><style>{`[data-login-root] input:not([type=checkbox]){padding-left:1rem !important;padding-right:2.5rem}[data-login-root] .auth-decorative-icon,[data-login-root] .relative>span:first-child{display:none}[data-login-root] .auth-mode-button>svg{display:none}`}</style>
       <SeoHead
         title="Đăng Nhập | SGS LAND"
         description="Đăng nhập vào nền tảng bất động sản SGS LAND. Truy cập tài khoản, quản lý BĐS và theo dõi giao dịch của bạn."
@@ -718,19 +718,19 @@ export const Login: React.FC<LoginProps> = ({ onLoginSuccess }) => {
                             <button
                                 type="button"
                                 onClick={() => { setRegisterMode('SALES'); setCompany(''); setFieldErrors({}); }}
-                                className={`flex items-center justify-center gap-1.5 py-2 px-3 rounded-lg text-xs font-semibold transition-all duration-200 ${
+                                className={`auth-mode-button flex items-center justify-center gap-1.5 py-2 px-3 rounded-lg text-xs font-semibold transition-all duration-200 ${
                                     registerMode === 'SALES'
                                         ? 'bg-amber-500/20 text-amber-300 border border-amber-500/40 shadow-sm'
                                         : 'text-gray-500 hover:text-gray-300'
                                 }`}
                             >
                                 <svg className="w-3.5 h-3.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" /></svg>
-                                {t('auth.register_tab_sales') || 'Nhân viên'}
+                                {t('auth.register_tab_sales') || 'Cá nhân'}
                             </button>
                             <button
                                 type="button"
                                 onClick={() => { setRegisterMode('VENDOR'); setFieldErrors({}); }}
-                                className={`flex items-center justify-center gap-1.5 py-2 px-3 rounded-lg text-xs font-semibold transition-all duration-200 ${
+                                className={`auth-mode-button flex items-center justify-center gap-1.5 py-2 px-3 rounded-lg text-xs font-semibold transition-all duration-200 ${
                                     registerMode === 'VENDOR'
                                         ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 shadow-sm'
                                         : 'text-gray-500 hover:text-gray-300'

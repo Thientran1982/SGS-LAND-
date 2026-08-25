@@ -77,7 +77,7 @@ const DICT: Record<string, string> = {
         "auth.sales_onboard_hint": "Bạn sẽ tham gia với vai trò Nhân viên trong hệ thống SGS Land — truy cập CRM, lead, kho hàng và công cụ tư vấn. Không cần xét duyệt, đăng nhập ngay sau khi xác thực email.",
         "auth.role_vendor_badge": "→ Vendor / Doanh nghiệp",
         "auth.role_sales_badge": "→ Nhân viên kinh doanh",
-        "auth.register_tab_sales": "Nhân viên",
+        "auth.register_tab_sales": "Cá nhân",
         "auth.register_tab_vendor": "Công ty",
         "auth.label_company_team": "Doanh nghiệp / Đội nhóm",
         "auth.placeholder_company_team": "Tên doanh nghiệp hoặc đội nhóm",
@@ -250,7 +250,7 @@ const EN_DICT: Record<string, string> = {
         "auth.sales_onboard_hint": "You'll join as an Employee in the SGS Land system — with access to CRM, leads, inventory, and advisory tools. No approval required — log in right after verifying your email.",
         "auth.role_vendor_badge": "→ Vendor / Business",
         "auth.role_sales_badge": "→ Sales Agent",
-        "auth.register_tab_sales": "Employee",
+        "auth.register_tab_sales": "Individual",
         "auth.register_tab_vendor": "Company",
         "auth.label_company_team": "Business / Team",
         "auth.placeholder_company_team": "Business or team name",
@@ -922,7 +922,7 @@ export function LoginPage() {
           : 'border-white/10 focus:border-[var(--sgs-primary)]/50 focus:ring-[var(--sgs-primary)]/50 focus:bg-white/8'}`;
   }, []);
   return (
-    <div className="min-h-[100dvh] w-full flex bg-black text-white font-sans selection:bg-[var(--sgs-primary)]/30 selection:text-[var(--sgs-primary)] overflow-hidden relative" data-login-root style={{ backgroundColor: "var(--sgs-primary-deep)", color: "#ffffff" }}><style>{`[data-login-root] input:not([type=checkbox]){padding-left:2.5rem !important;padding-right:2.5rem}`}</style>
+    <div className="min-h-[100dvh] w-full flex bg-black text-white font-sans selection:bg-[var(--sgs-primary)]/30 selection:text-[var(--sgs-primary)] overflow-hidden relative" data-login-root style={{ backgroundColor: "var(--sgs-primary-deep)", color: "#ffffff" }}><style>{`[data-login-root] input:not([type=checkbox]){padding-left:1rem !important;padding-right:2.5rem}[data-login-root] .auth-decorative-icon,[data-login-root] .relative>span:first-child{display:none}[data-login-root] .auth-mode-button>svg{display:none}`}</style>
       
       
       {/* FORM COLUMN */}
@@ -1121,19 +1121,19 @@ export function LoginPage() {
                             <button
                                 type="button"
                                 onClick={() => { setRegisterMode('SALES'); setCompany(''); setFieldErrors({}); }}
-                                className={`flex items-center justify-center gap-1.5 py-2 px-3 rounded-lg text-xs font-semibold transition-all duration-200 ${
+                                className={`auth-mode-button flex items-center justify-center gap-1.5 py-2 px-3 rounded-lg text-xs font-semibold transition-all duration-200 ${
                                     registerMode === 'SALES'
                                         ? 'bg-amber-500/20 text-amber-300 border border-amber-500/40 shadow-sm'
                                         : 'text-gray-500 hover:text-gray-300'
                                 }`}
                             >
                                 <svg className="w-3.5 h-3.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" /></svg>
-                                {t('auth.register_tab_sales') || 'Nhân viên'}
+                                {t('auth.register_tab_sales') || 'Cá nhân'}
                             </button>
                             <button
                                 type="button"
                                 onClick={() => { setRegisterMode('VENDOR'); setFieldErrors({}); }}
-                                className={`flex items-center justify-center gap-1.5 py-2 px-3 rounded-lg text-xs font-semibold transition-all duration-200 ${
+                                className={`auth-mode-button flex items-center justify-center gap-1.5 py-2 px-3 rounded-lg text-xs font-semibold transition-all duration-200 ${
                                     registerMode === 'VENDOR'
                                         ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 shadow-sm'
                                         : 'text-gray-500 hover:text-gray-300'
@@ -1147,7 +1147,7 @@ export function LoginPage() {
                         <div className="space-y-1.5 group">
                             <label htmlFor="auth-name" className="text-xs3 font-bold uppercase tracking-wider ml-1 text-gray-400">{t('auth.label_name')}</label>
                             <div className="relative">
-                                <span className="absolute left-3 top-3.5 text-white/35"><svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" /></svg></span>
+                                <span className="auth-decorative-icon absolute left-3 top-3.5 text-white/35"><svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" /></svg></span>
                                 <input id="auth-name" value={name} onChange={e => setName(e.target.value)} className={getInputClass(!!fieldErrors.name)} placeholder={t('auth.placeholder_name')} aria-describedby={fieldErrors.name ? 'err-name' : undefined} />
                             </div>
                             {fieldErrors.name && <p id="err-name" className="text-xs2 text-rose-400 ml-1">{fieldErrors.name}</p>}
@@ -1182,7 +1182,7 @@ export function LoginPage() {
                     <div className="space-y-1.5 group">
                         <label htmlFor="auth-email" className="text-xs3 font-bold uppercase tracking-wider ml-1 text-gray-400">{t('auth.label_email')}</label>
                         <div className="relative">
-                            <span className="absolute left-3 top-3.5 text-white/35"><svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 00-2-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" /></svg></span>
+                            <span className="auth-decorative-icon absolute left-3 top-3.5 text-white/35"><svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 00-7.89 5.26 2 2 0 002.22 0L21 8M5 19h14a2 2 0 00-2-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 00-2 2z" /></svg></span>
                             <input id="auth-email" type="email" inputMode="email" value={email} onChange={e => setEmail(e.target.value)} className={getInputClass(!!fieldErrors.email)} placeholder={t('auth.placeholder_email')} autoComplete="email" autoCapitalize="none" autoCorrect="off" spellCheck={false} aria-describedby={fieldErrors.email ? 'err-email' : undefined} />
                         </div>
                         {fieldErrors.email && <p id="err-email" className="text-xs2 text-rose-400 ml-1">{fieldErrors.email}</p>}                        
@@ -1306,7 +1306,7 @@ export function LoginPage() {
                             )}
                         </div>
                         <div className="relative">
-                            <span className="absolute left-3 top-3.5 text-white/35"><svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" /></svg></span>
+                            <span className="auth-decorative-icon absolute left-3 top-3.5 text-white/35"><svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" /></svg></span>
                             <input
                                 id="auth-password"
                                 type={showPassword ? "text" : "password"}
