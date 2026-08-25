@@ -137,6 +137,7 @@ export const schemas = {
     email: { required: true, type: 'email' as const },
     password: { required: true, type: 'string' as const, minLength: 8 },
     name: { required: false, type: 'string' as const, maxLength: 200 },
+    company: { required: false, type: 'string' as const, minLength: 2, maxLength: 200 },
   },
   requestOtp: {
     email: { required: true, type: 'email' as const },
@@ -147,7 +148,7 @@ export const schemas = {
     code: { required: true, type: 'string' as const, minLength: 6, maxLength: 6 },
   },
   onboardVendor: {
-    company: { required: false, type: 'string' as const, minLength: 2, maxLength: 200 },
+    company: { required: true, type: 'string' as const, minLength: 2, maxLength: 200 },
     name: { required: true, type: 'string' as const, minLength: 1, maxLength: 200 },
     email: { required: true, type: 'email' as const },
     password: { required: true, type: 'string' as const, minLength: 8 },
