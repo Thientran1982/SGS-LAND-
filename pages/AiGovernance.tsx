@@ -1072,7 +1072,9 @@ export const AiGovernance: React.FC = () => {
                     .catch(() => [])
             ]);
             const safeConfig: AiTenantConfig = {
-                allowedModels: Array.isArray(c?.allowedModels) ? c.allowedModels : [],
+                allowedModels: Array.isArray(c?.allowedModels)
+                    ? c.allowedModels.filter((model: unknown): model is AiModelType => typeof model === 'string' && model.length > 0)
+                    : [],
                 defaultModel: c?.defaultModel || 'gemini-2.5-flash',
                 budgetCapUsd: Number.isFinite(Number(c?.budgetCapUsd)) ? Number(c.budgetCapUsd) : 100,
                 currentSpendUsd: Number.isFinite(Number(c?.currentSpendUsd)) ? Number(c.currentSpendUsd) : 0,
@@ -1099,11 +1101,13 @@ export const AiGovernance: React.FC = () => {
         .then(d => {
           if (!d || !Array.isArray(d.groups) || d.groups.length === 0) return;
           const meta: any = { google: { badge: 'Google', badgeColor: 'bg-[var(--sgs-primary)]/10 text-[var(--sgs-primary)] border-[var(--sgs-primary)]' }, openai: { badge: 'OpenAI', badgeColor: 'bg-emerald-100 text-emerald-700 border-emerald-200' }, anthropic: { badge: 'Claude', badgeColor: 'bg-amber-100 text-amber-700 border-amber-200' }, xai: { badge: 'xAI', badgeColor: 'bg-slate-100 text-slate-700 border-slate-200' }, openrouter: { badge: 'OpenRouter', badgeColor: 'bg-violet-100 text-violet-700 border-violet-200' } };
-          const groups = d.groups.map((g: any) => ({
+          const groups = d.groups.filter((g: any) => g && typeof g === 'object').map((g: any) => ({
             label: g.label + (g.configured ? '' : ' (chưa cấu hình API key)'),
             badge: meta[g.provider]?.badge || g.provider,
             badgeColor: meta[g.provider]?.badgeColor || 'bg-slate-100 text-slate-700 border-slate-200',
-            models: g.models.map((m: any) => m.id),
+            models: Array.isArray(g.models)
+              ? g.models.map((m: any) => typeof m === 'string' ? m : m?.id).filter((id: unknown): id is string => typeof id === 'string' && id.length > 0)
+              : [],
           }));
           setModelGroups(groups);
         })
