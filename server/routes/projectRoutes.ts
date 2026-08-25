@@ -7,6 +7,7 @@ import { registerCommissionPolicyRoutes } from './commissionRoutes';
 
 const PARTNER_ROLES = ['PARTNER_ADMIN', 'PARTNER_AGENT'];
 const ADMIN_ROLES = ['SUPER_ADMIN', 'ADMIN'];
+const PROJECT_CREATE_ROLES = ['SUPER_ADMIN', 'ADMIN', 'MANAGER', 'TEAM_LEAD'];
 
 export function createProjectRoutes(authenticateToken: any) {
   const router = Router();
@@ -72,11 +73,11 @@ export function createProjectRoutes(authenticateToken: any) {
     }
   });
 
-  // POST /api/projects — create project (ADMIN only)
+  // POST /api/projects — create project (management roles)
   router.post('/', authenticateToken, async (req: Request, res: Response) => {
     try {
       const user = (req as any).user;
-      if (!ADMIN_ROLES.includes(user.role)) return res.status(403).json({ error: 'Không có quyền thực hiện' });
+      if (!PROJECT_CREATE_ROLES.includes(user.role)) return res.status(403).json({ error: 'Không có quyền thực hiện' });
 
       const { name, code, description, location, totalUnits, status, openDate, handoverDate, metadata } = req.body;
       if (!name || typeof name !== 'string' || !name.trim()) {
