@@ -59,6 +59,14 @@ function hasRelevantMemory(message: string, memory: string): boolean {
     return terms.some(term => normalizedMemory.includes(term));
 }
 
+function normalizeGuideQuery(value: string): string {
+    return value
+        .toLowerCase()
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '')
+        .replace(/đ/g, 'd');
+}
+
 async function generateLiveChatText(params: {
     tenantId?: string;
     feature: string;
@@ -1535,10 +1543,10 @@ async function handle_get_platform_knowledge(args: Record<string, any>): Promise
         return { domain, query, knowledge: LONGTHANH_KB, source: 'SGS Land Market Intelligence', cached: true };
     }
     if (d === 'platform' || d === 'tính năng' || d === 'hướng dẫn') {
-        const normalizedQuery = q.toLowerCase();
-        const asksOperations = /(vận hành|operations|phê duyệt|approval|dự án|project|đấu giá|auction|trường tùy chỉnh|custom field|kho đơn vị|unit inventory|quy tắc phân|routing|chuỗi tự động|sequence|chiến dịch|campaign|chấm điểm|scoring|cơ sở kiến thức|knowledge base|báo cáo|report)/i.test(normalizedQuery);
-        const asksTaskManagement = /(quản lý công việc|công việc|nhiệm vụ|task|kanban|phân công|nhân viên|employee|task report|báo cáo công việc)/i.test(normalizedQuery);
-        const asksEcosystem = /(hệ sinh thái|ecosystem|quản trị người dùng|user management|người dùng|admin user|cài đặt doanh nghiệp|enterprise settings|chi phí ai|ai cost|billing|gói dịch vụ|bảo mật|security|compliance|quản trị ai|ai governance|audit log|nhật ký audit|độ chính xác định giá|valuation accuracy|seo|scraper|thu thập dữ liệu|data platform|dữ liệu nguồn|hạ tầng hệ thống|system infrastructure|giám sát lỗi|error monitor|vendor|nhà cung cấp|app store|mobile app)/i.test(normalizedQuery);
+        const normalizedQuery = normalizeGuideQuery(q);
+        const asksOperations = /(van hanh|operations|phe duyet|approval|du an|project|dau gia|auction|truong tuy chinh|custom field|kho don vi|unit inventory|quy tac phan|routing|chuoi tu dong|sequence|chien dich|campaign|cham diem|scoring|co so kien thuc|knowledge base|bao cao|report)/i.test(normalizedQuery);
+        const asksTaskManagement = /(quan ly cong viec|cong viec|nhiem vu|task|kanban|phan cong|nhan vien|employee|task report|bao cao cong viec)/i.test(normalizedQuery);
+        const asksEcosystem = /(he sinh thai|ecosystem|quan tri nguoi dung|user management|nguoi dung|admin user|cai dat doanh nghiep|enterprise settings|chi phi ai|ai cost|billing|goi dich vu|bao mat|security|compliance|quan tri ai|ai governance|audit log|nhat ky audit|do chinh xac dinh gia|valuation accuracy|seo|scraper|thu thap du lieu|data platform|du lieu nguon|ha tang he thong|system infrastructure|giam sat loi|error monitor|vendor|nha cung cap|app store|mobile app)/i.test(normalizedQuery);
         if (asksOperations || asksTaskManagement || asksEcosystem) {
             const operationsGuide = isEnglish
                 ? 'Operations and task management:\nOperations — Projects (/projects) manages projects and their listings; Approvals (/approvals) reviews pending requests; Custom Fields (/custom-fields) configures extra fields; Auction (/auction) manages auctions; Unit Inventory (/unit-inventory) tracks project units; Routing Rules (/routing-rules) assigns leads; Auto Sequences (/sequences) automates follow-ups; Email Campaigns (/campaigns) manages campaigns; Scoring Rules (/scoring-rules) configures lead scoring; Knowledge Base (/knowledge) manages reference content; Reports (/reports) reviews analytics.\nTask Management — Task Overview (/task-dashboard) shows workload KPIs; Kanban (/task-kanban) manages status columns; Task List (/tasks) creates, filters and updates work; Employees & Assignments (/employees) manages assignees; Task Reports (/task-reports) reviews performance. Actions and visibility depend on role permissions.'
@@ -1559,7 +1567,7 @@ async function handle_get_platform_knowledge(args: Record<string, any>): Promise
                 ? 'Leads workflow:\n1. Open Leads from the main navigation.\n2. Select New lead.\n3. Enter the required contact and qualification details.\n4. Save, then review the lead stage and owner.\nYou need the appropriate CRM permission to create or edit leads.'
                 : normalizedQuery.includes('dashboard')
                     ? 'Dashboard workflow:\nOpen Dashboard from the main navigation to review KPIs, lead funnel, revenue and pipeline. Use the time-range and filter controls to change the reporting period. Dashboard figures are read-only summaries.'
-                    : normalizedQuery.includes('inventory') || normalizedQuery.includes('listing') || normalizedQuery.includes('bất động sản')
+                        : normalizedQuery.includes('inventory') || normalizedQuery.includes('listing') || normalizedQuery.includes('bat dong san')
                         ? 'Inventory workflow:\nOpen Inventory to search and filter listings. Use Grid, List, Board or Map view. Select New listing to add a property, or use the three-dot menu on a card to edit, duplicate or delete it when your role allows.'
                         : normalizedQuery.includes('contract')
                             ? 'Contracts workflow:\nOpen Contracts to create and track contract records, review their status and follow the approval process. Contract actions depend on your role and approval permissions.'
@@ -1570,11 +1578,11 @@ async function handle_get_platform_knowledge(args: Record<string, any>): Promise
                 ? 'Hướng dẫn Leads:\n1. Mở mục Leads trên thanh điều hướng.\n2. Chọn Tạo lead mới.\n3. Nhập thông tin liên hệ và nhu cầu bắt buộc.\n4. Lưu lại, sau đó kiểm tra giai đoạn và người phụ trách.\nBạn cần quyền CRM phù hợp để tạo hoặc chỉnh sửa lead.'
                 : normalizedQuery.includes('dashboard')
                     ? 'Hướng dẫn Dashboard:\nMở Dashboard trên thanh điều hướng để xem KPI, phễu lead, doanh thu và pipeline. Dùng bộ lọc thời gian để đổi kỳ báo cáo. Các số liệu trên Dashboard là bản tóm tắt chỉ đọc.'
-                    : normalizedQuery.includes('inventory') || normalizedQuery.includes('listing') || normalizedQuery.includes('bất động sản') || normalizedQuery.includes('kho')
+                     : normalizedQuery.includes('inventory') || normalizedQuery.includes('listing') || normalizedQuery.includes('bat dong san') || normalizedQuery.includes('kho') || normalizedQuery.includes('dang tin')
                         ? 'Hướng dẫn Kho bất động sản:\nMở Kho để tìm kiếm và lọc sản phẩm. Có thể chuyển Grid, List, Board hoặc Map. Chọn Tạo sản phẩm để thêm BĐS; dùng menu ba chấm trên card để sửa, nhân bản hoặc xóa nếu tài khoản có quyền.'
-                        : normalizedQuery.includes('contract') || normalizedQuery.includes('hợp đồng')
+                         : normalizedQuery.includes('contract') || normalizedQuery.includes('hop dong')
                             ? 'Hướng dẫn Hợp đồng:\nMở Hợp đồng để tạo và theo dõi hồ sơ, xem trạng thái và thực hiện quy trình phê duyệt. Các thao tác phụ thuộc vào vai trò và quyền phê duyệt.'
-                            : normalizedQuery.includes('inbox') || normalizedQuery.includes('tin nhắn') || normalizedQuery.includes('hội thoại')
+                             : normalizedQuery.includes('inbox') || normalizedQuery.includes('tin nhan') || normalizedQuery.includes('hoi thoai')
                                 ? 'Hướng dẫn Inbox:\nMở Inbox để xem hội thoại từ các kênh đã kết nối, phân công hoặc trả lời và xem lịch sử trao đổi. Kênh hiển thị phụ thuộc vào quyền tài khoản.'
                                 : isEnglish
                                     ? 'I do not have a verified step-by-step guide for that feature yet. Please open User Guide from the main menu, or tell me the exact screen and button you are looking for.'
