@@ -5,6 +5,53 @@ export const PROFILE_CATEGORIES = new Set([
 ]);
 export const PROFILE_CONSENTS = new Set(['PENDING', 'OPTED_IN', 'OPTED_OUT']);
 
+export type ObservedProfileFact = ReturnType<typeof normalizeProfileFact>;
+
+export function observeCustomerMessage(message: string): ObservedProfileFact[] {
+  const text = String(message || '').trim();
+  if (!text) return [];
+  const facts: ObservedProfileFact[] = [];
+  const source = 'customer_message';
+  const budget = text.match(/(?:ngân sách|tầm giá|khoảng|budget)[^.!?\n]{0,50}?(\d+(?:[.,]\d+)?)\s*(tỷ|tỉ|ty|triệu)/i);
+  if (budget) {
+    facts.push(normalizeProfileFact({
+      fact: `Ngân sách khoảng ${budget[1]} ${budget[2]}`,
+      category: 'budget', source, confidence: 0.8,
+    }));
+  }
+  const location = text.match(/(?:quan tâm|muốn tìm|tìm|ở|tại|khu vực)\s+([^.!?\n]{2,70}?)(?=\s+(?:vì|do|để|và|nhưng)\b|[.!?\n]|$)/i);
+  if (location && /\b(quận|huyện|thủ đức|thành phố|tp\.?|q\.?|khu vực|long thành|đồng nai|bình dương|hồ chí minh)\b/i.test(location[1])) {
+    facts.push(normalizeProfileFact({
+      fact: `Quan tâm khu vực ${location[1].trim()}`,
+      category: 'preference_location', source, confidence: 0.75,
+    }));
+  }
+  if (/(đầu tư|sinh lời|roi|lợi nhuận)/i.test(text)) {
+    facts.push(normalizeProfileFact({ fact: 'Mục đích đầu tư', category: 'purpose', source, confidence: 0.75 }));
+  } else if (/(ở thực|để ở|an cư|gia đình ở)/i.test(text)) {
+    facts.push(normalizeProfileFact({ fact: 'Mục đích mua để ở', category: 'purpose', source, confidence: 0.75 }));
+  }
+  if (/(tháng này|tuần này|sớm|ngay|gấp)/i.test(text)) {
+    facts.push(normalizeProfileFact({ fact: 'Dự kiến mua trong thời gian ngắn', category: 'purchase_timeline', source, confidence: 0.65 }));
+  } else if (/(năm sau|vài tháng nữa|chưa vội|tham khảo)/i.test(text)) {
+    facts.push(normalizeProfileFact({ fact: 'Chưa có kế hoạch mua ngay', category: 'purchase_timeline', source, confidence: 0.65 }));
+  }
+  if (/\b(khó khăn tài chính|nợ nần|ly hôn|bệnh|mất việc|khủng hoảng)\b/i.test(text)) {
+    facts.push(normalizeProfileFact({
+      fact: 'Khách đã chia sẻ một chủ đề nhạy cảm; không nhắc lại',
+      category: 'other', source, sensitive: true, confidence: 0.6,
+    }));
+  }
+  return facts;
+}
+
+export function classifyInteractionOutcome(message: string): 'positive' | 'negative' | 'neutral' {
+  const text = String(message || '');
+  if (/\b(không phù hợp|không thích|không quan tâm|bỏ qua|đừng gửi|sai nhu cầu|quá cao|quá thấp)\b/i.test(text)) return 'negative';
+  if (/\b(quan tâm|phù hợp|gửi thêm|xem thêm|đặt lịch|muốn xem|được|cảm ơn)\b/i.test(text)) return 'positive';
+  return 'neutral';
+}
+
 export function normalizeProfileFact(input: any): {
   fact: string; category: string; source: string; sensitive: boolean; confidence: number;
 } {
@@ -65,6 +112,45 @@ export const customerProfileService = {
         [tenantId, profile.id],
       );
       return { ...profile, facts: facts.rows, interaction_outcomes: outcomes.rows };
+    });
+  },
+
+  async getPersonalizationContext(tenantId: string, customerId: string, message: string) {
+    return withTenantContext(tenantId, async client => {
+      const profileResult = await client.query(
+        'SELECT id, remember_consent FROM customer_profiles WHERE tenant_id=$1 AND customer_id=$2',
+        [tenantId, customerId],
+      );
+      const profile = profileResult.rows[0];
+      if (!profile || profile.remember_consent !== 'OPTED_IN') return { enabled: false, block: '', stale: false, negativeStreak: 0 };
+      const facts = await client.query(
+        `SELECT fact, category, source, created_at
+         FROM customer_profile_facts
+         WHERE tenant_id=$1 AND profile_id=$2 AND sensitive=false
+           AND (valid_until IS NULL OR valid_until >= CURRENT_DATE)
+         ORDER BY created_at DESC LIMIT 100`,
+        [tenantId, profile.id],
+      );
+      const normalized = String(message || '').toLocaleLowerCase('vi-VN');
+      const relevant = facts.rows.filter((row: any) => {
+        const ageDays = (Date.now() - new Date(row.created_at).getTime()) / 86400000;
+        if (ageDays > 30) return false;
+        return row.category === 'budget' && /\b(giá|ngân sách|tỷ|triệu|phù hợp|tìm)\b/i.test(normalized)
+          || row.category === 'preference_location' && /\b(ở đâu|khu vực|quận|huyện|dự án|tìm)\b/i.test(normalized)
+          || row.category === 'purpose' && /\b(đầu tư|ở thực|mục đích|phù hợp)\b/i.test(normalized)
+          || row.category === 'purchase_timeline' && /\b(khi nào|bao giờ|thời gian|mua)\b/i.test(normalized)
+          || row.category === 'property_need' && /\b(phòng ngủ|diện tích|căn)\b/i.test(normalized);
+      }).slice(0, 5);
+      const outcomes = await client.query(
+        `SELECT result FROM customer_profile_outcomes
+         WHERE tenant_id=$1 AND profile_id=$2 ORDER BY created_at DESC LIMIT 2`,
+        [tenantId, profile.id],
+      );
+      const negativeStreak = outcomes.rows.length === 2 && outcomes.rows.every((row: any) => /negative|rejected|từ chối|không phù hợp/i.test(row.result)) ? 2 : 0;
+      const block = relevant.length
+        ? `[HỒ SƠ CÁ NHÂN — chỉ dùng khi liên quan trực tiếp]\n${relevant.map((row: any) => `- ${row.category}: ${row.fact} (nguồn: ${row.source})`).join('\n')}`
+        : '';
+      return { enabled: true, block, stale: facts.rows.some((row: any) => (Date.now() - new Date(row.created_at).getTime()) / 86400000 > 30), negativeStreak };
     });
   },
 
