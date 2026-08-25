@@ -81,6 +81,35 @@ class CompanyBrainRepository {
     });
   }
 
+  async update(
+    tenantId: string,
+    id: string,
+    document: Omit<CompanyBrainDocument, 'id'>,
+    updatedBy?: string,
+  ) {
+    return withTenantContext(tenantId, async client => {
+      const result = await client.query(
+        `UPDATE company_brain_documents
+            SET document_type=$3, document_key=$4, content_json=$5::jsonb,
+                source=$6, source_url=$7, verification_status=$8,
+                verified_at=CASE WHEN $8='verified' THEN COALESCE(verified_at, NOW()) ELSE NULL END,
+                updated_by=$9, updated_at=NOW()
+          WHERE tenant_id=$1 AND id=$2
+          RETURNING id, document_type AS "documentType", document_key AS "documentKey",
+                    content_json AS content, source, source_url AS "sourceUrl",
+                    verification_status AS "verificationStatus", verified_at AS "verifiedAt",
+                    updated_at AS "updatedAt"`,
+        [
+          tenantId, id, document.documentType, document.documentKey,
+          JSON.stringify(document.content || {}), document.source,
+          document.sourceUrl || null, document.verificationStatus,
+          updatedBy || null,
+        ],
+      );
+      return result.rows[0] || null;
+    });
+  }
+
   async listCapabilityStatus(tenantId: string) {
     return withTenantContext(tenantId, async client => {
       const result = await client.query(

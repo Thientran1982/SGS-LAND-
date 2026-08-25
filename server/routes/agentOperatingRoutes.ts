@@ -4,6 +4,26 @@ import { processAgentEvents } from '../services/agentOperatorDaemon';
 import { companyBrainRepository } from '../repositories/companyBrainRepository';
 
 const STAFF_ROLES = ['SUPER_ADMIN', 'ADMIN', 'TEAM_LEAD'];
+const BRAIN_DOCUMENT_TYPES = ['brand_voice', 'developer', 'project', 'legal_disclaimer', 'broker', 'faq', 'competitor_note'];
+const BRAIN_VERIFICATION_STATUSES = ['verified', 'unverified', 'needs_review', 'stale'];
+
+function validateBrainDocument(body: any) {
+  const documentType = String(body?.documentType || '');
+  const documentKey = String(body?.documentKey || '').trim();
+  const source = String(body?.source || '').trim();
+  const content = body?.content;
+  const verificationStatus = String(body?.verificationStatus || 'unverified');
+  if (!BRAIN_DOCUMENT_TYPES.includes(documentType)) return 'documentType không hợp lệ.';
+  if (!documentKey || documentKey.length > 160) return 'documentKey là bắt buộc và tối đa 160 ký tự.';
+  if (!source || source.length > 240) return 'source là bắt buộc và tối đa 240 ký tự.';
+  if (body?.sourceUrl !== undefined && body.sourceUrl !== null && String(body.sourceUrl).length > 2000) return 'sourceUrl tối đa 2000 ký tự.';
+  if (!content || typeof content !== 'object' || Array.isArray(content)) return 'content phải là một object JSON.';
+  if (!BRAIN_VERIFICATION_STATUSES.includes(verificationStatus)) return 'verificationStatus không hợp lệ.';
+  if (verificationStatus === 'verified' && (!source || Object.keys(content).length === 0)) {
+    return 'Tài liệu đã xác minh phải có nguồn và nội dung.';
+  }
+  return null;
+}
 
 export function createAgentOperatingRoutes(authenticateToken: any): Router {
   const router = Router();
@@ -36,6 +56,49 @@ export function createAgentOperatingRoutes(authenticateToken: any): Router {
     } catch (error: any) {
       console.error('[AgentOperating] marketing growth status failed:', error?.message || error);
       res.status(500).json({ error: 'Không thể tải Company Brain và Marketing/Growth.' });
+    }
+  });
+
+  router.post('/marketing-growth/brain', authenticateToken, async (req, res) => {
+    const user = requireStaff(req, res); if (!user) return;
+    const validationError = validateBrainDocument(req.body);
+    if (validationError) return res.status(400).json({ error: validationError });
+    try {
+      const body = req.body;
+      const row = await companyBrainRepository.upsert(user.tenantId, {
+        documentType: body.documentType,
+        documentKey: String(body.documentKey).trim(),
+        content: body.content,
+        source: String(body.source).trim(),
+        sourceUrl: body.sourceUrl ? String(body.sourceUrl).trim() : null,
+        verificationStatus: body.verificationStatus || 'unverified',
+      }, user.id);
+      res.status(201).json(row);
+    } catch (error: any) {
+      console.error('[AgentOperating] brain create failed:', error?.message || error);
+      res.status(500).json({ error: 'Không thể tạo tài liệu Company Brain.' });
+    }
+  });
+
+  router.put('/marketing-growth/brain/:id', authenticateToken, async (req, res) => {
+    const user = requireStaff(req, res); if (!user) return;
+    const validationError = validateBrainDocument(req.body);
+    if (validationError) return res.status(400).json({ error: validationError });
+    try {
+      const body = req.body;
+      const row = await companyBrainRepository.update(user.tenantId, String(req.params.id), {
+        documentType: body.documentType,
+        documentKey: String(body.documentKey).trim(),
+        content: body.content,
+        source: String(body.source).trim(),
+        sourceUrl: body.sourceUrl ? String(body.sourceUrl).trim() : null,
+        verificationStatus: body.verificationStatus || 'unverified',
+      }, user.id);
+      if (!row) return res.status(404).json({ error: 'Tài liệu Company Brain không tồn tại.' });
+      res.json(row);
+    } catch (error: any) {
+      console.error('[AgentOperating] brain update failed:', error?.message || error);
+      res.status(500).json({ error: 'Không thể cập nhật tài liệu Company Brain.' });
     }
   });
 
