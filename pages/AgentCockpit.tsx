@@ -47,17 +47,22 @@ export default function AgentCockpit() {
     setLoading(true); setError('');
     try {
       const query = new URLSearchParams(eventFilters).toString();
-      const [nextSummary, nextQuestions, nextEvents] = await Promise.all([
-        api.get<CockpitSummary>('/api/agent-operating/cockpit'),
+      const nextSummary = await api.get<CockpitSummary>('/api/agent-operating/cockpit');
+      setSummary(nextSummary);
+      const [questionsResult, eventsResult] = await Promise.allSettled([
         api.get<HumanQuestion[]>('/api/agent-operating/questions'),
         api.get<OperatingEvent[]>(`/api/agent-operating/events?${query}`),
       ]);
-      setSummary(nextSummary); setQuestions(nextQuestions); setEvents(nextEvents);
-      const [nextMemories, nextWeights] = await Promise.all([
+      if (questionsResult.status === 'fulfilled') setQuestions(questionsResult.value);
+      if (eventsResult.status === 'fulfilled') setEvents(eventsResult.value);
+      // Secondary panels must not hide a successfully loaded cockpit or a
+      // successful role-card approval.
+      const [memoryResult, weightsResult] = await Promise.allSettled([
         api.get<AdminMemory[]>('/api/ai/memory/admin', memoryFilters),
         api.get<{ live: Record<string, number>; versions: WeightVersion[] }>('/api/ai/weights'),
       ]);
-      setMemories(nextMemories); setWeights(nextWeights);
+      if (memoryResult.status === 'fulfilled') setMemories(memoryResult.value);
+      if (weightsResult.status === 'fulfilled') setWeights(weightsResult.value);
     } catch (e: any) {
       setError(e?.message || 'Không thể tải Admin Cockpit.');
     } finally { setLoading(false); }
@@ -75,7 +80,16 @@ export default function AgentCockpit() {
   };
   const approveCard = async (agentKey: string, approved: boolean) => {
     setApproving(agentKey);
-    try { await api.post(`/api/agent-operating/role-cards/${agentKey}/approval`, { approved }); await load(); }
+    try {
+      await api.post(`/api/agent-operating/role-cards/${encodeURIComponent(agentKey)}/approval`, { approved });
+      setSummary(current => current ? {
+        ...current,
+        roleCards: current.roleCards.map(card => card.agentKey === agentKey
+          ? { ...card, approval_status: approved ? 'APPROVED' : 'REJECTED' }
+          : card),
+      } : current);
+      await load();
+    }
     catch (e: any) { setError(e?.message || 'Không thể cập nhật duyệt role card.'); }
     finally { setApproving(null); }
   };
@@ -135,8 +149,8 @@ export default function AgentCockpit() {
     <div className="mx-auto max-w-7xl space-y-6 p-6">
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div>
-          <div className="mb-2 flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.18em] text-indigo-600"><Bot size={16} /> Agent operations</div>
-          <h1 className="text-2xl font-bold text-slate-900">Admin Cockpit</h1>
+          <div className="mb-2 flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.18em] text-indigo-600"><Bot size={16} /> Vận hành tác tử AI</div>
+          <h1 className="text-2xl font-bold text-slate-900">Bảng điều khiển quản trị Agent</h1>
           <p className="mt-1 text-sm text-slate-500">Theo dõi Agent Minh và các agent theo nguyên tắc có người kiểm soát.</p>
         </div>
         <button onClick={() => void load()} disabled={loading} className="inline-flex items-center gap-2 rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-medium shadow-sm hover:bg-slate-50 disabled:opacity-50"><RefreshCw size={16} className={loading ? 'animate-spin' : ''} /> Làm mới</button>
@@ -182,17 +196,17 @@ export default function AgentCockpit() {
          </section>
          {editingMemory && <div className="rounded-xl border border-indigo-300 bg-white p-5 shadow-sm"><div className="mb-3 flex items-center justify-between"><h3 className="font-semibold text-slate-900">Sửa memory: {editingMemory.key}</h3><button onClick={() => setEditingMemory(null)} className="text-sm text-slate-500">Hủy</button></div><div className="grid gap-3 md:grid-cols-2"><input value={memoryForm.namespace} onChange={e => setMemoryForm({ ...memoryForm, namespace: e.target.value })} placeholder="Namespace" className="rounded-lg border px-3 py-2 text-sm" /><input value={memoryForm.key} onChange={e => setMemoryForm({ ...memoryForm, key: e.target.value })} placeholder="Key" className="rounded-lg border px-3 py-2 text-sm" /><Dropdown value={memoryForm.kind} onChange={value => setMemoryForm({ ...memoryForm, kind: String(value) })} options={[{ value: 'fact', label: 'Fact' }, { value: 'episodic', label: 'Episodic' }, { value: 'procedural', label: 'Procedural' }]} variant="compact" /><input type="number" min="0" max="1" step="0.05" value={memoryForm.importance} onChange={e => setMemoryForm({ ...memoryForm, importance: e.target.value })} placeholder="Importance" className="rounded-lg border px-3 py-2 text-sm" /><textarea value={memoryForm.value} onChange={e => setMemoryForm({ ...memoryForm, value: e.target.value })} placeholder="Nội dung memory" className="min-h-24 rounded-lg border px-3 py-2 text-sm md:col-span-2" /></div><button onClick={() => void saveMemory()} className="mt-3 inline-flex items-center gap-1 rounded-lg bg-indigo-600 px-3 py-2 text-sm font-semibold text-white"><Save size={15} /> Lưu an toàn</button></div>}
         <section className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
-          <div className="mb-4 flex items-center gap-2"><ShieldCheck size={19} className="text-indigo-600" /><h2 className="font-semibold text-slate-900">Role cards & rollout</h2></div>
+          <div className="mb-4 flex items-center gap-2"><ShieldCheck size={19} className="text-indigo-600" /><h2 className="font-semibold text-slate-900">Thẻ vai trò và triển khai</h2></div>
           <div className="grid gap-3 md:grid-cols-3">{summary.roleCards.map(card => {
             const rollout = summary.rollouts.find(item => item.agent_key === card.agentKey);
             return <div key={card.agentKey} className="rounded-lg border border-slate-100 bg-slate-50 p-4">
               <div className="flex items-center justify-between gap-2"><h3 className="font-semibold text-slate-900">{card.title}</h3><span className="rounded-full bg-indigo-50 px-2 py-1 text-[10px] font-bold text-indigo-700">{rollout?.status || card.rollout}</span></div>
               <p className="mt-2 text-xs leading-5 text-slate-600">{card.mission}</p>
               <div className="mt-3 text-[11px] text-slate-500">KPI: {card.kpis.join(' · ')}</div>
-              {rollout?.shadow_enabled && <div className="mt-2 text-[11px] font-medium text-amber-700">Shadow mode · không tác động production</div>}
+              {rollout?.shadow_enabled && <div className="mt-2 text-[11px] font-medium text-amber-700">Chế độ quan sát · không tác động hệ thống thật</div>}
               <div className="mt-3 flex items-center justify-between gap-2 border-t border-slate-200 pt-3">
                 <span className={`text-[11px] font-semibold ${card.approval_status === 'APPROVED' ? 'text-emerald-700' : 'text-amber-700'}`}>{card.approval_status === 'APPROVED' ? 'Đã duyệt' : 'Chờ duyệt'}</span>
-                <button onClick={() => void approveCard(card.agentKey, card.approval_status !== 'APPROVED')} disabled={approving === card.agentKey} className="rounded-md border border-indigo-200 bg-white px-2 py-1 text-[11px] font-semibold text-indigo-700 disabled:opacity-50">{card.approval_status === 'APPROVED' ? 'Thu hồi duyệt' : 'Duyệt role card'}</button>
+                <button onClick={() => void approveCard(card.agentKey, card.approval_status !== 'APPROVED')} disabled={approving === card.agentKey} className="rounded-md border border-indigo-200 bg-white px-2 py-1 text-[11px] font-semibold text-indigo-700 disabled:opacity-50">{approving === card.agentKey ? 'Đang cập nhật…' : card.approval_status === 'APPROVED' ? 'Thu hồi phê duyệt' : 'Thực hiện phê duyệt thẻ vai trò'}</button>
               </div>
             </div>;
           })}</div>
