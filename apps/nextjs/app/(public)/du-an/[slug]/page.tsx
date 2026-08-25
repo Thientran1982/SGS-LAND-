@@ -931,6 +931,7 @@ export default async function ProjectPage({
   // Fetch live project data from Express backend (server-side, ISR cached)
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   let project: any = null;
+  let cmsContent: any = null;
   try {
     const res = await fetch(
       `${process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000"}/api/public/projects/${slug}`,
@@ -940,6 +941,11 @@ export default async function ProjectPage({
       const data = await res.json();
       project = data.project ?? null;
     }
+    const cmsRes = await fetch(
+      `${process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000"}/api/public-project-content/published/${slug}`,
+      { cache: "no-store" }
+    );
+    if (cmsRes.ok) cmsContent = await cmsRes.json();
   } catch {
     // Fallback to static meta below
   }
@@ -948,7 +954,17 @@ export default async function ProjectPage({
     notFound();
   }
   const meta = PROJECT_META[slug];
-  const projectData = project ?? {
+  const cms = cmsContent?.content || {};
+  const projectData = cmsContent ? {
+    ...(project || {}),
+    name: cmsContent.name,
+    slug,
+    developer: cms.developer || project?.developer || "",
+    location: cms.location || project?.location || "",
+    description: cms.description || project?.description || "",
+    images: String(cms.images || "").split(/\r?\n/).filter(Boolean),
+    amenities: String(cms.amenities || "").split(/\r?\n/).filter(Boolean),
+  } : project ?? {
     name: meta?.name ?? listItem?.name ?? slug,
     developer: meta?.dev ?? listItem?.developer ?? "",
     location: meta?.loc ?? listItem?.location ?? "",
@@ -965,9 +981,9 @@ export default async function ProjectPage({
       .replace(/TP\.?HCM/gi, "Ho Chi Minh City")
       .replace(/Quận\s+/gi, "District ")
     : (projectData.location || meta?.loc || "");
-  const schemaProjectDescription = en && AREA_DETAIL_SLUGS.has(slug)
+  const schemaProjectDescription = cmsContent?.content?.seoDescription || (en && AREA_DETAIL_SLUGS.has(slug)
     ? `${schemaProjectName} is an area-level real estate reference page, not a single development. Verify the specific property, legal documents, pricing and operating status before a transaction.`
-    : projectData.description;
+    : projectData.description);
   const schemaProjectDeveloper = en && AREA_DETAIL_SLUGS.has(slug)
     ? (slug === "nha-pho-trung-tam" ? "Multiple individual and organizational owners" : "Multiple developers")
     : projectData.developer;

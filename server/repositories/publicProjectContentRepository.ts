@@ -1,15 +1,16 @@
 import { BaseRepository } from './baseRepository';
+import { withRlsBypass } from '../db';
 
 class PublicProjectContentRepository extends BaseRepository {
   constructor() { super('public_project_contents'); }
 
   async findPublished(limit = 100) {
-    return this.withTenant(null as any, async (client) => {
+    return withRlsBypass(async (client) => {
       const result = await client.query(
         `SELECT * FROM public_project_contents WHERE status = 'PUBLISHED'
          ORDER BY updated_at DESC LIMIT $1`, [limit],
       );
-      return result.rows;
+      return result.rows.map((row) => this.rowToEntity(row));
     });
   }
 
@@ -62,7 +63,7 @@ class PublicProjectContentRepository extends BaseRepository {
         'DELETE FROM public_project_contents WHERE tenant_id = $1 AND id = $2 RETURNING id',
         [tenantId, id],
       );
-      return result.rowCount > 0;
+      return (result.rowCount ?? 0) > 0;
     });
   }
 }

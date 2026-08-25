@@ -5,6 +5,8 @@ import { ArrowRight, Check, ChevronDown, MapPin, Search, SlidersHorizontal, X } 
 import { useMemo, useState } from "react";
 import { useLang } from "@/components/shared/useLang";
 import { tt } from "@/lib/i18n";
+import PublicProjectAdminBar from "@/components/content/PublicProjectAdminBar";
+import { useEffect } from "react";
 
 export interface DirectoryProject {
   slug: string;
@@ -165,6 +167,7 @@ function FilterDropdown({ label, value, onChange, options, open, onToggle, onClo
 
 export default function ProjectDirectoryClient({ projects }: { projects: DirectoryProject[] }) {
   const lang = useLang();
+  const [allProjects, setAllProjects] = useState(projects);
   const [query, setQuery] = useState("");
   const [province, setProvince] = useState("");
   const [type, setType] = useState("");
@@ -172,9 +175,29 @@ export default function ProjectDirectoryClient({ projects }: { projects: Directo
   const [visibleCount, setVisibleCount] = useState(INITIAL_VISIBLE);
   const [filtersOpen, setFiltersOpen] = useState(false);
   const [openDropdown, setOpenDropdown] = useState<"province" | "price" | "type" | null>(null);
+  useEffect(() => {
+    fetch("/api/public-project-content/published", { cache: "no-store" })
+      .then((r) => r.ok ? r.json() : null)
+      .then((payload) => {
+        const published = Array.isArray(payload?.data) ? payload.data : [];
+        if (!published.length) return;
+        const cms = published.map((row: any): DirectoryProject => {
+          const c = row.content || {};
+          const lines = (value: any) => String(value || "").split(/\r?\n/).map((x) => x.trim()).filter(Boolean);
+          return {
+            slug: row.slug, name: row.name, dev: c.developer || "Đang cập nhật", loc: c.location || "Đang cập nhật",
+            province: c.province || c.location || "Khác", scale: c.scale || "Đang cập nhật", price: c.price || "Liên hệ",
+            type: c.type || "Dự án", typeGroup: c.type || "Dự án", badge: "Đang cập nhật", hot: false,
+            img: lines(c.images)[0] || `/images/projects/${row.slug}.jpg`, description: c.description || "",
+          };
+        });
+        const bySlug = new Map([...projects, ...cms].map((p) => [p.slug, p]));
+        setAllProjects([...bySlug.values()]);
+      }).catch(() => {});
+  }, [projects]);
 
-  const provinces = useMemo(() => [...new Set(projects.map((project) => project.province))].sort((a, b) => a.localeCompare(b, "vi")), [projects]);
-  const filtered = useMemo(() => projects.filter((project) => matchesProject(project, query, province, type, price)), [projects, query, province, type, price]);
+  const provinces = useMemo(() => [...new Set(allProjects.map((project) => project.province))].sort((a, b) => a.localeCompare(b, "vi")), [allProjects]);
+  const filtered = useMemo(() => allProjects.filter((project) => matchesProject(project, query, province, type, price)), [allProjects, query, province, type, price]);
   const featured = filtered.find((project) => project.slug === FEATURED_SLUG);
   const regular = filtered.filter((project) => project.slug !== FEATURED_SLUG);
   const hasFilters = Boolean(query.trim() || province || type || price);
@@ -191,7 +214,8 @@ export default function ProjectDirectoryClient({ projects }: { projects: Directo
 
   return (
     <div className="mx-auto max-w-6xl px-4 py-8 sm:px-6 sm:py-12 lg:px-8">
-      <header className="mb-7 max-w-3xl">
+       <PublicProjectAdminBar />
+       <header className="mb-7 max-w-3xl">
         <p className="mb-3 text-xs font-bold uppercase tracking-[.18em]" style={{ color: "var(--sgs-accent-text)" }}>{tt(lang, "Danh mục dự án", "Project directory")}</p>
         <h1 className="text-3xl font-bold tracking-[-0.04em] sm:text-4xl" style={{ color: "var(--text-primary)" }}>{tt(lang, "Dự Án Bất Động Sản", "Real Estate Projects")}</h1>
         <p className="mt-3 max-w-2xl text-sm leading-6 sm:text-base" style={{ color: "var(--text-secondary)" }}>{tt(lang, "Khám phá các khu đô thị, căn hộ và sản phẩm nổi bật tại TP.HCM, Đồng Nai và các khu vực lân cận.", "Explore featured townships, apartments and property products in Ho Chi Minh City, Dong Nai and nearby areas.")}</p>
@@ -213,7 +237,7 @@ export default function ProjectDirectoryClient({ projects }: { projects: Directo
         {filtersOpen && <div id="project-filters" className="mt-3 flex flex-col gap-3 border-t pt-3 sm:flex-row sm:items-end" style={{ borderColor: "var(--border-default)" }}>
            <FilterDropdown label={tt(lang, "Khu vực", "Area")} value={province} onChange={(value) => { setProvince(value); setVisibleCount(INITIAL_VISIBLE); }} open={openDropdown === "province"} onToggle={() => setOpenDropdown(openDropdown === "province" ? null : "province")} onClose={() => setOpenDropdown(null)} options={[{ value: "", label: tt(lang, "Tất cả khu vực", "All areas") }, ...provinces.map((item) => ({ value: item, label: item }))]} />
            <FilterDropdown label={tt(lang, "Mức giá", "Price range")} value={price} onChange={(value) => { setPrice(value); setVisibleCount(INITIAL_VISIBLE); }} open={openDropdown === "price"} onToggle={() => setOpenDropdown(openDropdown === "price" ? null : "price")} onClose={() => setOpenDropdown(null)} options={[{ value: "", label: tt(lang, "Tất cả mức giá", "All prices") }, { value: "under-10", label: tt(lang, "Dưới 10 tỷ", "Under VND 10B") }, { value: "10-20", label: tt(lang, "10 – 20 tỷ", "VND 10–20B") }, { value: "over-20", label: tt(lang, "Trên 20 tỷ", "Over VND 20B") }, { value: "sqm", label: tt(lang, "Theo triệu/m²", "By million/m²") }, { value: "contact", label: tt(lang, "Liên hệ", "Contact") }]} />
-           <FilterDropdown label={tt(lang, "Loại hình", "Property type")} value={type} onChange={(value) => { setType(value); setVisibleCount(INITIAL_VISIBLE); }} open={openDropdown === "type"} onToggle={() => setOpenDropdown(openDropdown === "type" ? null : "type")} onClose={() => setOpenDropdown(null)} options={[{ value: "", label: tt(lang, "Tất cả loại hình", "All property types") }, ...[...new Set(projects.map((project) => project.typeGroup))].sort((a, b) => a.localeCompare(b, "vi")).map((item) => ({ value: item, label: item }))]} />
+              <FilterDropdown label={tt(lang, "Loại hình", "Property type")} value={type} onChange={(value) => { setType(value); setVisibleCount(INITIAL_VISIBLE); }} open={openDropdown === "type"} onToggle={() => setOpenDropdown(openDropdown === "type" ? null : "type")} onClose={() => setOpenDropdown(null)} options={[{ value: "", label: tt(lang, "Tất cả loại hình", "All property types") }, ...[...new Set(allProjects.map((project) => project.typeGroup))].sort((a, b) => a.localeCompare(b, "vi")).map((item) => ({ value: item, label: item }))]} />
         </div>}
         <div className="mt-3 flex items-center justify-between gap-3 text-sm">
            <p style={{ color: "var(--text-secondary)" }}><strong style={{ color: "var(--text-primary)" }}>{filtered.length}</strong> {tt(lang, "kết quả phù hợp", "matching results")}</p>

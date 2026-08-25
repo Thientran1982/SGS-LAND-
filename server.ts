@@ -76,6 +76,7 @@ import { createLiveChatAgentRoutes } from "./server/routes/liveChatAgentRoutes";
 import { liveChatEngine } from "./server/ai/liveChatEngine";
 import { createPublicProjectRoutes } from "./server/routes/publicProjectRoutes";
 import { createPublicDeveloperRoutes } from "./server/routes/publicDeveloperRoutes";
+import { createPublicProjectContentRoutes } from "./server/routes/publicProjectContentRoutes";
 import { createVisitorTrackingRoutes } from "./server/routes/visitorTrackingRoutes";
 import { createConnectorRoutes } from "./server/routes/connectorRoutes";
 import { createScraperRoutes } from "./server/routes/scraperRoutes";
@@ -4307,6 +4308,7 @@ app.get('/api/public/listings/:slugId', apiRateLimit, async (req: express.Reques
   app.use('/api/routing-rules', apiRateLimit, createRoutingRuleRoutes(authenticateToken));
   app.use('/api/sequences', apiRateLimit, createSequenceRoutes(pool, authenticateToken));
   app.use('/api/knowledge', apiRateLimit, createKnowledgeRoutes(authenticateToken));
+  app.use('/api/public-project-content', apiRateLimit, createPublicProjectContentRoutes(authenticateToken));
   app.use('/api/billing', apiRateLimit, createBillingRoutes(authenticateToken));
   app.use('/api/admin/email-metrics', apiRateLimit, createEmailMetricsRoutes(authenticateToken));
   app.use('/api/sessions', apiRateLimit, createSessionRoutes(authenticateToken));
