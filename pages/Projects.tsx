@@ -3422,10 +3422,8 @@ export function Projects() {
     const [toast, setToast] = useState<{ msg: string; type: 'success' | 'error' } | null>(null);
     const [dragIdx, setDragIdx] = useState<number | null>(null);
     const [dragOverIdx, setDragOverIdx] = useState<number | null>(null);
-    const userRole = String(user?.role ?? '').toUpperCase();
-    const isAdmin = ['SUPER_ADMIN', 'ADMIN'].includes(userRole);
-    const canCreateProject = ['SUPER_ADMIN', 'ADMIN', 'MANAGER', 'TEAM_LEAD'].includes(userRole);
-    const isPartner = userRole === 'PARTNER_ADMIN' || userRole === 'PARTNER_AGENT';
+    const isAdmin = ['SUPER_ADMIN', 'ADMIN'].includes(user?.role ?? '');
+    const isPartner = user?.role === 'PARTNER_ADMIN' || user?.role === 'PARTNER_AGENT';
     const showToast = useCallback((msg: string, type: 'success' | 'error' = 'success') => {
         setToast({ msg, type });
         setTimeout(() => setToast(null), 3000);
@@ -3653,7 +3651,7 @@ export function Projects() {
                     )}
                     <div className="flex-1" />
                     {/* Create button */}
-                    {canCreateProject && (
+                    {isAdmin && (
                         <button type="button" onClick={() => setFormTarget('new')}
                             className="shrink-0 flex items-center gap-1.5 px-4 h-10 rounded-xl bg-sgs-primary text-white text-sm font-bold hover:bg-sgs-primary shadow-sm transition-colors">
                             <span className="hidden xs:inline">{t('project.new')}</span>
