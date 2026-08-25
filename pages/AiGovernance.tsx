@@ -7,7 +7,6 @@ import { useTranslation } from '../services/i18n';
 import { Dropdown } from '../components/Dropdown';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell } from 'recharts';
 import { SeoHead } from '../components/SeoHead';
-import { AGENT_ORCHESTRATION_REGISTRY, getAgentRuntimeStatus } from '../server/ai/agentOrchestrationRegistry';
 interface ConfigTabProps {
     config: AiTenantConfig;
     modelGroups: any[];
@@ -474,13 +473,28 @@ const ConfigTab = memo(({ config, modelGroups, onSave, onUpdateConfig, t }: Conf
         </div>
     </div>
 ));
-const AGENT_SKILL_CATALOG = AGENT_ORCHESTRATION_REGISTRY.map(({ promptKey, displayName, descriptionKey, role, ownerIntent }) => ({
-    key: promptKey,
-    agent: displayName,
-    descKey: descriptionKey,
-    runtimeRole: role,
-    ownerIntent: ownerIntent || '',
+// Keep this presentation catalog client-safe. Do not import the server routing
+// registry into the browser bundle: that makes the lazy-loaded admin page
+// dependent on server-only module resolution.
+const AGENT_SKILL_CATALOG = [
+    ['ROUTER_SYSTEM', 'Router', 'ai.agent_router_desc', 'router', 'Phân loại và định tuyến'],
+    ['WRITER_PERSONA', 'Writer', 'ai.agent_writer_desc', 'writer', 'DIRECT_ANSWER · CLARIFY'],
+    ['INVENTORY_SYSTEM', 'Inventory', 'ai.agent_inventory_desc', 'inventory_specialist', 'SEARCH_INVENTORY'],
+    ['FINANCE_SYSTEM', 'Finance', 'ai.agent_finance_desc', 'finance_specialist', 'CALCULATE_LOAN'],
+    ['LEGAL_SYSTEM', 'Legal', 'ai.agent_legal_desc', 'legal_specialist', 'EXPLAIN_LEGAL'],
+    ['SALES_SYSTEM', 'Sales', 'ai.agent_sales_desc', 'sales_specialist', 'DRAFT_BOOKING'],
+    ['MARKETING_SYSTEM', 'Marketing', 'ai.agent_marketing_desc', 'marketing_specialist', 'EXPLAIN_MARKETING'],
+    ['CONTRACT_SYSTEM', 'Contract', 'ai.agent_contract_desc', 'contract_specialist', 'DRAFT_CONTRACT'],
+    ['LEAD_ANALYST_SYSTEM', 'Lead Analyst', 'ai.agent_lead_analyst_desc', 'lead_analyst', 'ANALYZE_LEAD'],
+    ['VALUATION_SYSTEM', 'Valuation Extract', 'ai.agent_valuation_desc', 'valuation_specialist', 'ESTIMATE_VALUATION'],
+    ['VALUATION_SEARCH_SYSTEM', 'Valuation Sale', 'ai.agent_valuation_search_desc', 'valuation_search', 'ESTIMATE_VALUATION · giá bán'],
+    ['VALUATION_RENTAL_SYSTEM', 'Valuation Rental', 'ai.agent_valuation_rental_desc', 'valuation_rental', 'ESTIMATE_VALUATION · giá thuê'],
+    ['FOLLOWUP_SYSTEM', 'Follow Up', 'ai.agent_followup_desc', 'followup_agent', 'FOLLOWUP (nội bộ)'],
+].map(([key, agent, descKey, runtimeRole, ownerIntent]) => ({
+    key, agent, descKey, runtimeRole, ownerIntent,
 }));
+const isRuntimeAgentActive = (role: string, runtimeAgents: GovernanceAgent[]) =>
+    runtimeAgents.some(agent => agent.role === role && agent.active);
 const PromptsTab = memo(({ 
     prompts, promptDefaults, selectedPrompt, editContent, isEvalRunning, testInput, lastEvalRun,
     onSelect, onEditContent, onInsertVar, onRunSim, onSaveVersion, onPromoteVersion, onCreateOpen, onSetTestInput,
@@ -500,7 +514,7 @@ const PromptsTab = memo(({
                 {AGENT_SKILL_CATALOG.map(({ key, agent, descKey, runtimeRole, ownerIntent }) => {
                     const configured = configuredKeys.has(key);
                     const runtime = agents.find(a => a.role === runtimeRole);
-                    const runtimeReady = getAgentRuntimeStatus(runtimeRole, agents) === 'runtime';
+                    const runtimeReady = isRuntimeAgentActive(runtimeRole, agents);
                     const defInfo = promptDefaults[key];
                     const isHovered = hoveredKey === key;
                     return (
