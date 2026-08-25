@@ -3331,24 +3331,6 @@ function ProjectCardBase({ project, isAdmin, isPartner, onEdit, onDelete, onAcce
             </div>
             {/* Card footer — CTAs */}
             <div className="px-5 pb-4 pt-0 flex flex-col gap-2">
-                {isAdmin && (
-                    <div className="grid grid-cols-2 gap-2">
-                        <button
-                            type="button"
-                            onClick={onEdit}
-                            className="flex items-center justify-center gap-2 py-2 px-3 rounded-xl border border-[var(--glass-border)] text-[var(--text-secondary)] hover:text-sgs-primary hover:border-[var(--sgs-primary)] hover:bg-[var(--glass-surface-hover)] text-sm font-semibold transition-all"
-                        >
-                            {IC.EDIT} Chỉnh sửa
-                        </button>
-                        <button
-                            type="button"
-                            onClick={onDelete}
-                            className="flex items-center justify-center gap-2 py-2 px-3 rounded-xl border border-rose-200 text-rose-600 hover:bg-rose-50 text-sm font-semibold transition-all"
-                        >
-                            {IC.TRASH} Xóa
-                        </button>
-                    </div>
-                )}
                 <button
                     type="button"
                     onClick={onListings}
