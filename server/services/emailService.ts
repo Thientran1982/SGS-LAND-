@@ -259,8 +259,48 @@ async function logEmail(args: {
 // ── Shared email base layout ──────────────────────────────────────────────────
 // Table-based layout + @media queries for full mobile responsiveness.
 // Tested compatible with: Gmail (web/app), Apple Mail, Outlook 2016+, iOS Mail, Samsung Mail.
+const EMAIL_COLORS: Record<string, string> = {
+  '#F1F5F9': '#F4F7FA',
+  '#F8FAFC': '#F7F9FC',
+  '#FFFFFF': '#FFFFFF',
+  '#1E293B': '#1B3A5C',
+  '#A5B4FC': '#D9E6F2',
+  '#0F172A': '#17324D',
+  '#94A3B8': '#7A8B9A',
+  '#E2E8F0': '#DCE5EE',
+  '#FFF7ED': '#F7F9FC',
+  '#FEF3C7': '#F7F9FC',
+  '#FEF2F2': '#F7F9FC',
+  '#FEE2E2': '#F7F9FC',
+  '#FED7AA': '#DCE5EE',
+  '#FECACA': '#DCE5EE',
+  '#92400E': '#334155',
+  '#78350F': '#475569',
+  '#991B1B': '#334155',
+  '#7F1D1D': '#475569',
+};
+
+function normalizeEmailMarkup(markup: string): string {
+  let normalized = markup;
+  for (const [from, to] of Object.entries(EMAIL_COLORS)) {
+    normalized = normalized.replace(new RegExp(from, 'gi'), to);
+  }
+  return normalized
+    .replace(/font-family:\s*Arial(?:,\s*Helvetica)?(?:,\s*sans-serif)?/gi, 'font-family:Arial,Helvetica,sans-serif')
+    .replace(/font:\s*([0-9]+px(?:\/[0-9.]+)?\s+)(?:Arial)(?:,\s*Helvetica)?(?:,\s*sans-serif)?/gi, 'font:$1Arial,Helvetica,sans-serif');
+}
+
+function normalizeEmailCopy(value?: string): string | undefined {
+  return value
+    ?.replace(/Email nay duoc gui tu dong vi ban la thanh vien SGS LAND\./g, 'Email này được gửi tự động vì bạn là thành viên SGS LAND.')
+    .replace(/Email nay duoc gui tu dong vi tin dang cua ban dang duoc quan tam\./g, 'Email này được gửi tự động vì tin đăng của bạn đang được quan tâm.')
+    .replace(/Email nay duoc gui tu dong vi ban la thanh vien SGS LAND\./g, 'Email này được gửi tự động vì bạn là thành viên SGS LAND.');
+}
+
 export function emailBase(content: string, footerNote?: string): string {
   const year = new Date().getFullYear();
+  const normalizedContent = normalizeEmailMarkup(content);
+  const normalizedFooter = normalizeEmailCopy(footerNote);
   return `<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml" lang="vi">
 <head>
@@ -288,14 +328,14 @@ export function emailBase(content: string, footerNote?: string): string {
     }
   </style>
 </head>
-<body style="margin:0;padding:0;background-color:#F1F5F9;font-family:Arial,Helvetica,sans-serif;-webkit-text-size-adjust:100%;-ms-text-size-adjust:100%;">
-<table width="100%" cellpadding="0" cellspacing="0" border="0" bgcolor="#F1F5F9">
+<body style="margin:0;padding:0;background-color:#F4F7FA;font-family:Arial,Helvetica,sans-serif;-webkit-text-size-adjust:100%;-ms-text-size-adjust:100%;">
+<table width="100%" cellpadding="0" cellspacing="0" border="0" bgcolor="#F4F7FA">
   <tr>
     <td align="center" valign="top" class="email-wrapper" style="padding:40px 16px;">
       <table class="email-container" width="600" cellpadding="0" cellspacing="0" border="0" style="max-width:600px;width:100%;">
         <!-- HEADER -->
         <tr>
-          <td class="email-header" bgcolor="#1E293B" style="padding:24px 40px;text-align:center;border-radius:12px 12px 0 0;">
+          <td class="email-header" bgcolor="#1B3A5C" style="padding:24px 40px;text-align:center;border-radius:12px 12px 0 0;">
             <table width="100%" cellpadding="0" cellspacing="0" border="0">
               <tr>
                 <td align="center" style="padding-bottom:8px;">
@@ -303,7 +343,7 @@ export function emailBase(content: string, footerNote?: string): string {
                     <tr>
                       <td bgcolor="#1B3A5C" style="padding:7px 16px;border-radius:8px;">
                         <span style="color:#FFFFFF;font-size:16px;font-weight:bold;letter-spacing:3px;font-family:Arial,sans-serif;">SGS</span>
-                        <span style="color:#A5B4FC;font-size:16px;font-weight:bold;letter-spacing:3px;font-family:Arial,sans-serif;">&nbsp;LAND</span>
+                        <span style="color:#D9E6F2;font-size:16px;font-weight:bold;letter-spacing:3px;font-family:Arial,sans-serif;">&nbsp;LAND</span>
                       </td>
                     </tr>
                   </table>
@@ -311,7 +351,7 @@ export function emailBase(content: string, footerNote?: string): string {
               </tr>
               <tr>
                 <td align="center">
-                  <span style="color:#94A3B8;font-size:11px;letter-spacing:1.5px;text-transform:uppercase;font-family:Arial,sans-serif;">Nền tảng Bất Động Sản Chuyên Nghiệp</span>
+                  <span style="color:#D9E6F2;font-size:11px;letter-spacing:1.5px;text-transform:uppercase;font-family:Arial,sans-serif;">Nền tảng bất động sản chuyên nghiệp</span>
                 </td>
               </tr>
             </table>
@@ -321,13 +361,13 @@ export function emailBase(content: string, footerNote?: string): string {
         <!-- BODY -->
         <tr>
           <td class="email-body" bgcolor="#FFFFFF" style="padding:32px 40px 24px;border-left:1px solid #E2E8F0;border-right:1px solid #E2E8F0;">
-            ${content}
+            ${normalizedContent}
           </td>
         </tr>
         <!-- FOOTER -->
         <tr>
           <td class="email-footer" bgcolor="#F8FAFC" style="padding:18px 40px;border:1px solid #E2E8F0;border-top:none;border-radius:0 0 12px 12px;text-align:center;">
-            ${footerNote ? `<p style="color:#64748B;font-size:12px;line-height:1.6;margin:0 0 10px;font-family:Arial,sans-serif;">${footerNote}</p>` : ''}
+            ${normalizedFooter ? `<p style="color:#64748B;font-size:12px;line-height:1.6;margin:0 0 10px;font-family:Arial,sans-serif;">${normalizedFooter}</p>` : ''}
             <p style="color:#94A3B8;font-size:11px;margin:0;line-height:1.8;font-family:Arial,sans-serif;">
               &copy; ${year} SGS LAND &mdash; 122-124 B2, Sala, Thủ Đức, TP.HCM<br />
               <a href="https://sgsland.vn" style="color:#1B3A5C;text-decoration:none;font-family:Arial,sans-serif;">sgsland.vn</a>
