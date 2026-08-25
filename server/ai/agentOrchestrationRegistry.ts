@@ -4,6 +4,8 @@
  * Specialists produce evidence only. WRITER is the only role allowed to
  * synthesize a customer-facing response.
  */
+import { MARKETING_GROWTH_CAPABILITIES } from './marketingGrowthAgents';
+
 export type AgentCapability = {
   skillKey: string;
   promptKey: string;
@@ -36,6 +38,17 @@ export const AGENT_ORCHESTRATION_REGISTRY: readonly AgentCapability[] = [
   { skillKey: 'VALUATION_SEARCH_SYSTEM', promptKey: 'VALUATION_SEARCH_SYSTEM', displayName: 'Valuation Sale', descriptionKey: 'ai.agent_valuation_search_desc', role: 'valuation_search', intents: [], mode: 'specialist', ragDomains: ['market'], ownerIntent: 'ESTIMATE_VALUATION · giá bán' },
   { skillKey: 'VALUATION_RENTAL_SYSTEM', promptKey: 'VALUATION_RENTAL_SYSTEM', displayName: 'Valuation Rental', descriptionKey: 'ai.agent_valuation_rental_desc', role: 'valuation_rental', intents: [], mode: 'specialist', ragDomains: ['market'], ownerIntent: 'ESTIMATE_VALUATION · giá thuê' },
   { skillKey: 'FOLLOWUP_SYSTEM', promptKey: 'FOLLOWUP_SYSTEM', displayName: 'Follow Up', descriptionKey: 'ai.agent_followup_desc', role: 'followup_agent', intents: [], mode: 'background', ownerIntent: 'FOLLOWUP (nội bộ)' },
+  ...MARKETING_GROWTH_CAPABILITIES.map(capability => ({
+    skillKey: capability.promptKey,
+    promptKey: capability.promptKey,
+    displayName: capability.displayName,
+    descriptionKey: `ai.agent_${capability.role}_desc`,
+    role: capability.role,
+    intents: [],
+    mode: capability.mode === 'realtime' ? 'specialist' as const : 'background' as const,
+    ragDomains: capability.ragDomains,
+    ownerIntent: capability.ownerIntent,
+  })),
 ];
 
 const byIntent = new Map(

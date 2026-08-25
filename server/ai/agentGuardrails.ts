@@ -19,6 +19,61 @@ export interface GuardrailReport {
   reason?: string;
 }
 
+export type MarketingApprovalDecision =
+  | 'draft'
+  | 'needs_human_review'
+  | 'approved'
+  | 'rejected';
+
+export type MarketingApprovalInput = {
+  capability: string;
+  complianceDecision?: 'approved' | 'rejected' | 'needs_human_review';
+  seoDecision?: 'approved_for_publish' | 'needs_revision';
+  humanPublishApproved?: boolean;
+  brokerApproved?: boolean;
+  consentValid?: boolean;
+};
+
+/**
+ * Central gate for the two irreversible marketing actions. Callers may create
+ * drafts freely, but public content needs both automated reviews and a human
+ * click; outreach additionally needs broker approval and valid consent.
+ */
+export function evaluateMarketingApproval(input: MarketingApprovalInput): {
+  decision: MarketingApprovalDecision;
+  reasons: string[];
+} {
+  const reasons: string[] = [];
+  const isOutreach = input.capability === 'OUTREACH' || input.capability === 'outreach';
+  if (isOutreach) {
+    if (input.consentValid !== true) reasons.push('missing_or_expired_consent');
+    if (input.brokerApproved !== true) reasons.push('broker_approval_required');
+    return {
+      decision: reasons.length > 0 ? 'needs_human_review' : 'approved',
+      reasons,
+    };
+  }
+
+  const gatedPublish = ['PROJECT_PAGE', 'PRICING_INVENTORY_SYNC', 'COMPLIANCE_GUARDIAN', 'SEO_AEO_AUDITOR']
+    .includes(String(input.capability).toUpperCase());
+  if (!gatedPublish) return { decision: 'approved', reasons: [] };
+  if (input.complianceDecision !== 'approved') reasons.push('compliance_guardian_not_approved');
+  if (input.seoDecision !== 'approved_for_publish') reasons.push('seo_aeo_auditor_not_approved');
+  if (input.humanPublishApproved !== true) reasons.push('human_publish_approval_required');
+  return {
+    decision: reasons.length > 0 ? 'needs_human_review' : 'approved',
+    reasons,
+  };
+}
+
+export function canPublishMarketingContent(input: MarketingApprovalInput): boolean {
+  return evaluateMarketingApproval(input).decision === 'approved';
+}
+
+export function canSendOutreach(input: Omit<MarketingApprovalInput, 'capability'>): boolean {
+  return evaluateMarketingApproval({ ...input, capability: 'OUTREACH' }).decision === 'approved';
+}
+
 const HIGH_IMPACT_ACTIONS = new Set([
   'CONFIRM_DEPOSIT',
   'CHANGE_LEAD_STAGE',

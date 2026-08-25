@@ -6,3 +6,4 @@ export * from './routerPrompts';
 export * from './systemPrompts';
 export * from './specialistPrompts';
 export * from './valuationPrompts';
+export * from './marketingGrowthPrompts';

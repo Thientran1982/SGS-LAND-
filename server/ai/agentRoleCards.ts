@@ -9,6 +9,8 @@ export type AgentRoleCard = {
   rollout: 'SHADOW' | 'CANARY_25' | 'CANARY_50' | 'LIVE';
 };
 
+import { MARKETING_GROWTH_ROLE_CARDS } from './marketingGrowthAgents';
+
 export const DEFAULT_AGENT_ROLE_CARDS: AgentRoleCard[] = [
   {
     agentKey: 'MINH',
@@ -40,4 +42,5 @@ export const DEFAULT_AGENT_ROLE_CARDS: AgentRoleCard[] = [
     escalationRules: ['critic_score < 60', 'missing_price_source', 'confidence < 0.7'],
     rollout: 'SHADOW',
   },
+  ...MARKETING_GROWTH_ROLE_CARDS,
 ];
