@@ -1378,7 +1378,7 @@ export function LoginPage() {
                 )}
             </form>
             {/* ACTION FOOTER */}
-            {view === 'LOGIN' && (
+            {false && view === 'LOGIN' && (
                 <div className="animate-enter mt-6" style={{animationDelay: '0.3s'}}>
                     <div className="relative py-4">
                         <div className="absolute inset-0 flex items-center"><span className="w-full border-t border-white/10"></span></div>
