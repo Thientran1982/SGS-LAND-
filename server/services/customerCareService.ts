@@ -69,7 +69,7 @@ function escapeHtml(value: unknown): string {
 export async function runCustomerCare(pool: Pool, dryRun = false) {
   const result = { queried: 0, sent: 0, skipped: 0, failed: 0, stopped: 0 };
   const leads = (await pool.query(`
-    SELECT DISTINCT ON (l.id) l.id,l.tenant_id,l.email,l.name,l.status,l.created_at,
+    SELECT DISTINCT ON (l.id) l.id,l.tenant_id,l.email,l.name,l.created_at,
       COALESCE(l.metadata->>'product_interest', l.metadata->>'project', 'dự án bạn quan tâm') AS product_interest,
       u.name AS sales_owner_name
     FROM leads l LEFT JOIN users u ON u.id=l.assigned_to AND u.tenant_id=l.tenant_id

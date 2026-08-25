@@ -195,6 +195,9 @@ const CSRF_EXEMPT_PREFIXES = [
   '/api/buyer/auth/request-otp',
   '/api/buyer/auth/verify-otp',
   '/api/buyer/auth/logout',
+  // Server-to-server scheduled jobs authenticate with x-internal-secret.
+  '/api/internal/engagement-email-cron',
+  '/api/internal/chat-followup-cron',
 ];
 
 export function generateCsrfToken(): string {
