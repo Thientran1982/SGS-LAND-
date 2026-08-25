@@ -394,14 +394,14 @@ const ConfigTab = memo(({ config, modelGroups, onSave, onUpdateConfig, t }: Conf
                 <div>
                     <label className="text-xs font-bold text-[var(--text-tertiary)] uppercase">{t('ai.allowed')}</label>
                     <div className="mt-2 space-y-3">
-                        {modelGroups.map((group: any) => (
+                        {(Array.isArray(modelGroups) ? modelGroups : []).map((group: any) => (
                             <div key={group.label}>
                                 <div className="flex items-center gap-2 mb-1.5">
                                     <span className="text-[10px] font-bold text-[var(--text-tertiary)] uppercase tracking-wide">{group.label}</span>
                                     <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded border ${group.badgeColor}`}>{group.badge}</span>
                                 </div>
                                 <div className="flex flex-wrap gap-1.5">
-                                    {group.models.map((m: any) => {
+                                    {(Array.isArray(group.models) ? group.models : []).map((m: any) => {
                                         const isChecked = config.allowedModels?.includes(m) || false;
                                         const isDeprecated = DEPRECATED_MODELS.has(m as string);
                                         return (
@@ -1071,9 +1071,15 @@ export const AiGovernance: React.FC = () => {
                     .then(r => r.ok ? r.json() : [])
                     .catch(() => [])
             ]);
-            setConfig(c);
-            setPrompts(p);
-            setSafetyLogs(l);
+            const safeConfig: AiTenantConfig = {
+                allowedModels: Array.isArray(c?.allowedModels) ? c.allowedModels : [],
+                defaultModel: c?.defaultModel || 'gemini-2.5-flash',
+                budgetCapUsd: Number.isFinite(Number(c?.budgetCapUsd)) ? Number(c.budgetCapUsd) : 100,
+                currentSpendUsd: Number.isFinite(Number(c?.currentSpendUsd)) ? Number(c.currentSpendUsd) : 0,
+            };
+            setConfig(safeConfig);
+            setPrompts(Array.isArray(p) ? p : []);
+            setSafetyLogs(Array.isArray(l) ? l : []);
             setAgents(Array.isArray(a) ? a : []);
         } catch {
             // silent — UI stays with empty state
