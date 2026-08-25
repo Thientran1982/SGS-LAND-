@@ -49,7 +49,7 @@ export default async function LiveChatPage({
       <LiveChatPanel source={source} title={title} description={description} />
 
       <p className="text-xs" style={{ color: "var(--text-tertiary)" }}>
-        Hotline hỗ trợ: <a href="tel:0971132378" className="font-semibold" style={{ color: "var(--primary-600)" }}>0971 132 378</a>
+        Hotline hỗ trợ: <a href="tel:0379281445" className="font-semibold" style={{ color: "var(--primary-600)" }}>0379 281 445</a>
       </p>
     </div>
   );

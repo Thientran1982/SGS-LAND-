@@ -46,8 +46,8 @@ export default function CareersPage() {
               </span>
             </div>
             <div className="flex items-center gap-3 mb-3 text-xs" style={{ color: "var(--text-tertiary)" }}>
-              <span>🏢 {job.dept}</span>
-              <span>📍 {job.location}</span>
+              <span>{job.dept}</span>
+              <span>{job.location}</span>
             </div>
             <p className="text-sm mb-4 leading-relaxed" style={{ color: "var(--text-secondary)" }}>
               {job.desc}
@@ -72,7 +72,7 @@ export default function CareersPage() {
         <a href="mailto:careers@sgsland.vn"
           className="inline-flex items-center gap-2 px-6 py-3 rounded-xl text-sm font-semibold text-white"
           style={{ background: "var(--primary-600)" }}>
-          ✉️ careers@sgsland.vn
+          careers@sgsland.vn
         </a>
       </div>
     </div>

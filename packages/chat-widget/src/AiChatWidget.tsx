@@ -91,7 +91,7 @@ export function AiChatWidget({ transport, apiBase }: AiChatWidgetProps = {}) {
           role: "assistant",
           content:
                 (err as any)?.message ||
-                "Xin lỗi, có lỗi kết nối. Vui lòng thử lại hoặc gọi hotline 0971 132 378.",
+                "Xin lỗi, có lỗi kết nối. Vui lòng thử lại hoặc gọi hotline 0379 281 445.",
           ts: Date.now(),
         },
       ]);

@@ -185,7 +185,7 @@ export function MinhChatPanel({
         setMessages([r.welcome]);
         setHasLead(true);
       } catch {
-        setFormError("Không tạo được phiên chat. Vui lòng thử lại hoặc gọi 0971 132 378.");
+        setFormError("Không tạo được phiên chat. Vui lòng thử lại hoặc gọi 0379 281 445.");
       } finally {
         setStarting(false);
       }
@@ -227,7 +227,7 @@ export function MinhChatPanel({
         setError(
           err && err.code === "NO_LEAD"
             ? "Phiên chat đã hết hạn. Vui lòng bắt đầu lại."
-            : "Không gửi được tin nhắn. Vui lòng thử lại hoặc gọi 0971 132 378.",
+            : "Không gửi được tin nhắn. Vui lòng thử lại hoặc gọi 0379 281 445.",
         );
       } finally {
         setLoading(false);

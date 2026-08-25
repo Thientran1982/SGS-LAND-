@@ -63,7 +63,7 @@ export function ContactForm() {
       <div className="grid grid-cols-2 gap-4">
         {[
           { name: "name", label: "Họ tên *", type: "text", placeholder: "Nguyễn Văn A", required: true },
-          { name: "phone", label: "Số điện thoại *", type: "tel", placeholder: "0971 132 378", required: true },
+          { name: "phone", label: "Số điện thoại *", type: "tel", placeholder: "0379 281 445", required: true },
         ].map((f) => (
           <div key={f.name}>
             <label className="block text-xs font-medium mb-1.5" style={{ color: "var(--text-secondary)" }}>{f.label}</label>
