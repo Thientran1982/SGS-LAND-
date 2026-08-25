@@ -672,12 +672,18 @@ const AppShell: React.FC = () => {
             }
         }).catch(() => { navigate(ROUTES.DEFAULT_PRIVATE); });
     }, [navigate]);
-    const handleLogout = useCallback(() => {
-        db.logout();
-        localStorage.removeItem(AUTH_CACHE_KEY);
-        setCurrentUser(null);
-        setAuthState('GUEST');
-        navigate(ROUTES.LOGIN);
+    const handleLogout = useCallback(async () => {
+        // Wait for the server session cookie to be cleared before navigating.
+        // Navigating immediately lets the login middleware still see the old
+        // session and redirect the user back to Dashboard.
+        try {
+            await db.logout();
+        } finally {
+            localStorage.removeItem(AUTH_CACHE_KEY);
+            setCurrentUser(null);
+            setAuthState('GUEST');
+            navigate(ROUTES.LOGIN);
+        }
     }, [navigate]);
     // --- RENDERER ---
     // One loading owner for auth checks, public lazy pages and private route chunks.
