@@ -3,6 +3,7 @@ import { withTenantContext, withRlsBypass, withDistributedLock } from '../db';
 import { emailService } from './emailService';
 import { logger } from '../middleware/logger';
 import { notificationRepository } from '../repositories/notificationRepository';
+import { agentOperatingRepository } from '../repositories/agentOperatingRepository';
 
 export const REPORT_TIME_ZONE = 'Asia/Ho_Chi_Minh';
 const MISSING = 'chưa có dữ liệu';
@@ -22,6 +23,11 @@ export interface DailyReportSummary extends DailyReportMetrics {
   overview: Array<{ label: string; value: number | string }>;
   comparisons: Record<string, { yesterday: number | null; sevenDayAverage: number | null }>;
   dataNotes: string[];
+  agentOperations?: {
+    shift: string;
+    summary: string;
+    metrics: Record<string, unknown>;
+  };
 }
 
 function vnDate(date = new Date()): string {
@@ -108,12 +114,15 @@ export function renderReportEmail(summary: DailyReportSummary): { subject: strin
   const [y,m,d] = summary.reportDate.split('-');
   const subject = `[SGSLand] Báo cáo ngày ${d}/${m}/${y}`;
   const row = (label: string, value: unknown) => `<tr><td style="padding:7px;border-bottom:1px solid #e2e8f0">${esc(label)}</td><td style="padding:7px;border-bottom:1px solid #e2e8f0;text-align:right;font-weight:bold">${esc(value)}</td></tr>`;
+  const agentSection = summary.agentOperations
+    ? `<h3>Vận hành Agent</h3>${row('Tổng hợp ca', summary.agentOperations.summary)}${row('Chỉ số', JSON.stringify(summary.agentOperations.metrics))}`
+    : `<h3>Vận hành Agent</h3><p style="color:#64748b">Chưa có báo cáo ca của Agent.</p>`;
   const html = `<div style="font-family:Arial,sans-serif;max-width:620px;color:#1e293b"><h2>SGSLand — Báo cáo vận hành ngày ${esc(d+'/'+m+'/'+y)}</h2>
     <table style="width:100%;border-collapse:collapse">${summary.overview.map(x => row(x.label,x.value)).join('')}</table>
     <h3>Leads & môi giới F1</h3>${row('Lead theo trạng thái', JSON.stringify(summary.leads.byStage))}${row('Lead theo nguồn', JSON.stringify(summary.leads.bySource))}${row('Môi giới hoạt động', summary.brokers.active)}${row('Lead được phân bổ', summary.brokers.assignedLeads)}
     <h3>Listing & công việc</h3>${row('Tin đăng mới', summary.listings.new)}${row('Tin cập nhật giá', summary.listings.priceUpdated)}${row('Task tạo mới', summary.tasks.created)}${row('Task quá hạn', summary.tasks.overdue)}
-    <h3>Minh & cảnh báo</h3>${row('Hội thoại', summary.minh.conversations)}${row('CSAT trung bình', summary.minh.averageCsat ?? MISSING)}${row('Cảnh báo hệ thống', summary.warnings.count)}<p style="color:#64748b">${summary.dataNotes.map(esc).join('<br>')}</p></div>`;
-  const text = [subject, ...summary.overview.map(x => `${x.label}: ${x.value}`), `GEO/SEO: ${MISSING}`, `Cảnh báo: ${summary.warnings.count ?? MISSING}`].join('\n');
+    <h3>Minh & cảnh báo</h3>${row('Hội thoại', summary.minh.conversations)}${row('CSAT trung bình', summary.minh.averageCsat ?? MISSING)}${row('Cảnh báo hệ thống', summary.warnings.count)}${agentSection}<p style="color:#64748b">${summary.dataNotes.map(esc).join('<br>')}</p></div>`;
+  const text = [subject, ...summary.overview.map(x => `${x.label}: ${x.value}`), `GEO/SEO: ${MISSING}`, `Cảnh báo: ${summary.warnings.count ?? MISSING}`, summary.agentOperations ? `Vận hành Agent: ${summary.agentOperations.summary}` : 'Vận hành Agent: chưa có báo cáo ca'].join('\n');
   return { subject, html, text };
 }
 
@@ -130,6 +139,11 @@ export async function runDailyReport(reportDate = vnDate(), force = false) {
   for (const r of recipients) byTenant.set(r.tenantId, [...(byTenant.get(r.tenantId) || []), r.email]);
   const results: any[] = [];
   for (const [tenantId, emails] of byTenant) {
+    const agentShiftReport = await agentOperatingRepository.generateDailyShiftReport(tenantId, reportDate, 'ALL_DAY')
+      .catch((error: any) => {
+        logger.warn(`[DailyReport] agent shift report unavailable for tenant ${tenantId}: ${error?.message || error}`);
+        return null;
+      });
     const result = await withTenantContext(tenantId, async client => {
       const existing = await client.query('SELECT * FROM agent_report_log WHERE tenant_id=$1 AND report_date=$2::date', [tenantId, reportDate]);
       if (existing.rows[0]?.status === 'sent' && !force) return { tenantId, status: 'skipped', reason: 'already_sent' };
@@ -159,9 +173,19 @@ export async function runDailyReport(reportDate = vnDate(), force = false) {
       }
       // A force-run retries delivery without rewriting the evidence captured
       // for a failed report.
-      const summary = existing.rows[0]?.status === 'failed' && existing.rows[0]?.summary_snapshot
+      const baseSummary = existing.rows[0]?.status === 'failed' && existing.rows[0]?.summary_snapshot
         ? existing.rows[0].summary_snapshot as DailyReportSummary
         : buildReportSummary(await collectDailyMetrics(tenantId, reportDate));
+      const summary: DailyReportSummary = agentShiftReport
+        ? {
+            ...baseSummary,
+            agentOperations: {
+              shift: agentShiftReport.shift,
+              summary: agentShiftReport.summary,
+              metrics: agentShiftReport.metrics_json || {},
+            },
+          }
+        : baseSummary;
       await client.query(`INSERT INTO agent_report_log(tenant_id,report_date,status,recipients,summary_snapshot)
         VALUES($1,$2,'pending',$3::jsonb,$4::jsonb) ON CONFLICT(tenant_id,report_date) DO UPDATE SET status='pending',recipients=$3::jsonb,summary_snapshot=$4::jsonb,error_detail=NULL,updated_at=NOW()`,
         [tenantId, reportDate, JSON.stringify(emails), JSON.stringify(summary)]);
@@ -177,6 +201,16 @@ export async function runDailyReport(reportDate = vnDate(), force = false) {
       const status = ok ? 'sent' : ambiguous ? 'delivery_unknown' : 'failed';
       await client.query(`UPDATE agent_report_log SET status=$3,error_detail=$4,sent_at=CASE WHEN $3='sent' THEN NOW() ELSE NULL END,updated_at=NOW() WHERE tenant_id=$1 AND report_date=$2::date`,
         [tenantId, reportDate, status, ok ? null : JSON.stringify(last)]);
+      if (ok) {
+        await notificationRepository.createForTenantAdmins(tenantId, {
+          type: 'daily_admin_report',
+          title: `Đã nhận báo cáo vận hành ngày ${reportDate}`,
+          body: agentShiftReport
+            ? `Báo cáo ngày đã gửi qua email và có kèm báo cáo ca Agent: ${agentShiftReport.summary}`
+            : 'Báo cáo ngày đã gửi qua email. Chưa có báo cáo ca Agent.',
+          metadata: { reportDate, hasAgentShiftReport: Boolean(agentShiftReport) },
+        }).catch(err => logger.error(`[DailyReport] could not create sent notification for tenant ${tenantId}`, err));
+      }
       if (ambiguous) {
         const payload = {
           reportDate,
