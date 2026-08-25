@@ -26,7 +26,7 @@ outputType = "webview"
 
 [[workflows.workflow.tasks]]
 task = "shell.exec"
-args = "fuser -k 5000/tcp 5001/tcp 2>/dev/null; sleep 1; PORT=5001 npm run dev & sleep 8 && cd apps/nextjs && BACKEND_URL=http://localhost:5001 npm run build && BACKEND_URL=http://localhost:5001 ./node_modules/.bin/next start --hostname 0.0.0.0 --port 5000"
+args = "fuser -k 5000/tcp 5001/tcp 2>/dev/null; sleep 1; PORT=5001 npm run dev >/tmp/sgs-backend.log 2>&1 & BACKEND_PID=$!; trap 'kill $BACKEND_PID 2>/dev/null || true' EXIT INT TERM; cd apps/nextjs && BACKEND_URL=http://localhost:5001 npm run dev -- --hostname 0.0.0.0 --port 5000"
 waitForPort = 5000
 [[workflows.workflow]]
 name = "typecheck"
@@ -47,16 +47,8 @@ waitForPort = 3001
 outputType = "console"
 
 [[ports]]
-localPort = 3001
-externalPort = 3003
-
-[[ports]]
 localPort = 5000
 externalPort = 80
-
-[[ports]]
-localPort = 5001
-externalPort = 3001
 
 [[ports]]
 localPort = 23636
