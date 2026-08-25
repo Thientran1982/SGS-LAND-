@@ -183,7 +183,7 @@ export function getApartmentComplexSchema(input: ApartmentComplexInput) {
     "provider": {
       "@type": "RealEstateAgent",
       "name": "SGS LAND",
-      "telephone": "+84-971-132-378",
+      "telephone": "+84-379-281-445",
       "url": "https://sgsland.vn"
     }
   };

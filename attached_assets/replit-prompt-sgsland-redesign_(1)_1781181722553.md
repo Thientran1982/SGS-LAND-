@@ -124,9 +124,9 @@ Ngay sau bento: dải logo đối tác F1 (Novaland, Masterise, Nam Long, Vinhom
 ### 3.9. FAQ (giữ nội dung cũ, redesign accordion — mục 1.4)
 
 ### 3.10. CTA cuối + Footer
-Banner CTA nền navy gradient: "Nhận tư vấn miễn phí trong 15 phút" + nút gọi Hotline +84 971 132 378 + nút mở AI chat.
+Banner CTA nền navy gradient: "Nhận tư vấn miễn phí trong 15 phút" + nút gọi Hotline +84 379 281 445 + nút mở AI chat.
 
-**Footer — GIỮ NGUYÊN TOÀN BỘ THÔNG TIN HIỆN CÓ trên sgsland.vn, chỉ redesign giao diện.** Trước khi code, đọc footer hiện tại của site và migrate đủ 100% nội dung: mô tả công ty, danh sách 7 dự án phân phối, các link điều hướng/hỗ trợ/chính sách, hotline +84 971 132 378, email info@sgsland.vn, địa chỉ, mã số thuế/GPKD, social links, dòng bản quyền — KHÔNG được bỏ sót hay tự bịa thêm thông tin pháp nhân. Layout mới: nền `--primary-deep #0F2740`, 4 cột (Về SGS LAND + mô tả, Dự án, Hỗ trợ & Chính sách, Liên hệ), chữ `#B9C6D4`, link hover sáng vàng `#D4A855`, đường kẻ trên cùng 1px vàng đồng 20% opacity, hàng cuối là bản quyền + badge đối tác F1. Footer đồng nhất cả 2 theme (vì nền đã tối sẵn).
+**Footer — GIỮ NGUYÊN TOÀN BỘ THÔNG TIN HIỆN CÓ trên sgsland.vn, chỉ redesign giao diện.** Trước khi code, đọc footer hiện tại của site và migrate đủ 100% nội dung: mô tả công ty, danh sách 7 dự án phân phối, các link điều hướng/hỗ trợ/chính sách, hotline +84 379 281 445, email info@sgsland.vn, địa chỉ, mã số thuế/GPKD, social links, dòng bản quyền — KHÔNG được bỏ sót hay tự bịa thêm thông tin pháp nhân. Layout mới: nền `--primary-deep #0F2740`, 4 cột (Về SGS LAND + mô tả, Dự án, Hỗ trợ & Chính sách, Liên hệ), chữ `#B9C6D4`, link hover sáng vàng `#D4A855`, đường kẻ trên cùng 1px vàng đồng 20% opacity, hàng cuối là bản quyền + badge đối tác F1. Footer đồng nhất cả 2 theme (vì nền đã tối sẵn).
 
 ## 4. YÊU CẦU KỸ THUẬT
 

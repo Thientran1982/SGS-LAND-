@@ -21,7 +21,7 @@ SGS Land là sàn bất động sản chính chủ kết nối người mua tr�
 **Cam kết của SGS Land:**
 - Không lộ thông tin cá nhân — chuyên viên chỉ thấy phone khi bạn chủ động liên hệ.
 - Không bán dữ liệu cho bên thứ ba.
-- Hotline 0971 132 378 trực 24/7.
+- Hotline 0379 281 445 trực 24/7.
 
 Tải SGS Land hôm nay để tìm tổ ấm hoặc khoản đầu tư phù hợp một cách minh bạch và nhanh chóng.
 

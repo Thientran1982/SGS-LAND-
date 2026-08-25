@@ -127,7 +127,7 @@ export function ContactForm() {
       </button>
       {status === "error" && (
         <p className="text-sm text-center" style={{ color: "var(--color-danger)" }}>
-          Có lỗi xảy ra. Vui lòng gọi trực tiếp 0971 132 378.
+          Có lỗi xảy ra. Vui lòng gọi trực tiếp 0379 281 445.
         </p>
       )}
     </form>

@@ -54,7 +54,7 @@ npx eas-cli submit -p android --track internal --latest
   cáo, không cờ bạc.
 
 ## 5. QA checklist trên thiết bị thật trước khi submit
-- [ ] Đăng nhập OTP buyer (gọi hotline test 0971 132 378 nếu OTP không
+- [ ] Đăng nhập OTP buyer (gọi hotline test 0379 281 445 nếu OTP không
       tới).
 - [ ] Discover hiển thị featured projects + listings.
 - [ ] Lưu tìm kiếm → push tới đúng deep-link `/bds/<slug>`.

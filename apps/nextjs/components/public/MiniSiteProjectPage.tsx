@@ -172,7 +172,7 @@ export function MiniSiteProjectPage({ project }: { project: Project }) {
                       {(l.price / 1e9).toFixed(2)} tỷ
                     </td>
                     <td className="px-4 py-3">
-                      <a href="tel:+84971132378"
+                      <a href="tel:+84379281445"
                         className="px-3 py-1.5 rounded-lg text-xs font-semibold text-white whitespace-nowrap"
                         style={{ background: "var(--primary-600)" }}>
                         Liên hệ
@@ -199,11 +199,11 @@ export function MiniSiteProjectPage({ project }: { project: Project }) {
           Đại lý phân phối uỷ quyền chính thức — SGS LAND
         </p>
         <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
-          <a href="tel:+84971132378"
+          <a href="tel:+84379281445"
             className="flex items-center gap-2 px-6 py-3 rounded-xl text-sm font-semibold text-white"
             style={{ background: "var(--primary-600)" }}>
             <Phone className="w-4 h-4" />
-            Gọi ngay: 0971 132 378
+            Gọi ngay: 0379 281 445
           </a>
           <Link href="/contact"
             className="px-6 py-3 rounded-xl text-sm font-semibold transition-colors"

@@ -49,9 +49,9 @@ function resolveImageUrl(url: string | null | undefined): string | null {
 }
 
 // Fallback platform-wide contact (chỉ dùng khi tenant chưa cấu hình public_brand)
-const FALLBACK_HOTLINE         = '0971132378';
-const FALLBACK_HOTLINE_DISPLAY = '0971 132 378';
-const FALLBACK_ZALO_URL        = 'https://zalo.me/0971132378';
+const FALLBACK_HOTLINE         = '0379281445';
+const FALLBACK_HOTLINE_DISPLAY = '0379 281 445';
+const FALLBACK_ZALO_URL        = 'https://zalo.me/0379281445';
 const INTERNAL_INBOX = process.env.LANDING_LEAD_INBOX || 'info@sgsland.vn';
 
 // Cloudflare Turnstile — chỉ enforce khi env `TURNSTILE_SECRET_KEY` được cấu hình
@@ -538,7 +538,7 @@ export function createPublicProjectRoutes(): Router {
             'url': baseUrl,
             'logo': `${baseUrl}/logo.svg`,
             'email': 'info@sgsland.vn',
-            'telephone': '+84-971-132-378',
+            'telephone': '+84-379-281-445',
             'foundingDate': '2019',
             'knowsAbout': ['Bất động sản TP.HCM', 'Định giá AI', 'CRM BĐS', 'PropTech Việt Nam'],
             'sameAs': ['https://www.facebook.com/sgslandvn', 'https://www.linkedin.com/company/sgsland', 'https://g.page/sgsland'],

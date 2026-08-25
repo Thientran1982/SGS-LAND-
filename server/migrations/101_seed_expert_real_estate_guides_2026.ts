@@ -35,7 +35,7 @@ const WRAP_SOURCES = (items: string[]) => `
 <ul>
 ${items.map(s => `  <li>${s}</li>`).join('\n')}
 </ul>
-<p><small><em>Bài viết được biên tập bởi đội ngũ chuyên gia SGS LAND. Cập nhật lần cuối: tháng 5/2026. Liên hệ <a href="mailto:info@sgsland.vn">info@sgsland.vn</a> hoặc hotline <strong>+84 971 132 378</strong>.</em></small></p>`;
+<p><small><em>Bài viết được biên tập bởi đội ngũ chuyên gia SGS LAND. Cập nhật lần cuối: tháng 5/2026. Liên hệ <a href="mailto:info@sgsland.vn">info@sgsland.vn</a> hoặc hotline <strong>+84 379 281 445</strong>.</em></small></p>`;
 
 // =============================================================================
 // 1. Định giá AI BĐS

@@ -70,8 +70,8 @@ const LAST_UPDATED_ISO = '2026-04-18';
 const LAST_UPDATED_DISPLAY = new Date(LAST_UPDATED_ISO).toLocaleDateString('vi-VN', {
     day: '2-digit', month: '2-digit', year: 'numeric',
 });
-const HOTLINE_DISPLAY = '+84 971 132 378';
-const HOTLINE_TEL = '+84971132378';
+const HOTLINE_DISPLAY = '+84 379 281 445';
+const HOTLINE_TEL = '+84379281445';
 const SUPPORT_EMAIL = 'info@sgsland.vn';
 // Per-project price data for AggregateOffer JSON-LD (Google requires lowPrice/highPrice/offerCount)
 const PROJECT_OFFERS: Record<string, { lowPrice: number; highPrice: number; offerCount: number }> = {
@@ -882,7 +882,7 @@ const PROJECT_CONFIG: Record<string, ProjectConfig> = {
       developer: 'Masterise Homes',
       location: 'The Global City, An Phú, TP. Thủ Đức, TP.HCM',
       locationSlug: 'the-global-city',
-      heroDescription: 'Masteri Park Place là phân khu căn hộ cao cấp thuộc siêu đô thị The Global City (An Phú, Thủ Đức) do Masterise Homes phát triển. Gồm 4 toà A1, A2, B1, B2 với căn hộ 1PN, 1PN+, 2PN, 3PN, view sông Giồng Ông Tố và công viên nội khu. Giá từ 6,7 tỷ (~120 triệu/m²). Liên hệ SGS LAND: 0971 132 378 để nhận bảng giá chi tiết toà A1-A2 và B1-B2.',
+      heroDescription: 'Masteri Park Place là phân khu căn hộ cao cấp thuộc siêu đô thị The Global City (An Phú, Thủ Đức) do Masterise Homes phát triển. Gồm 4 toà A1, A2, B1, B2 với căn hộ 1PN, 1PN+, 2PN, 3PN, view sông Giồng Ông Tố và công viên nội khu. Giá từ 6,7 tỷ (~120 triệu/m²). Liên hệ SGS LAND: 0379 281 445 để nhận bảng giá chi tiết toà A1-A2 và B1-B2.',
       details: [
         { label: 'Chủ đầu tư', value: 'Masterise Homes' },
         { label: 'Vị trí', value: 'The Global City, An Phú, TP. Thủ Đức, TP.HCM' },
@@ -901,7 +901,7 @@ const PROJECT_CONFIG: Record<string, ProjectConfig> = {
       ],
       faqs: [
         { q: 'Masteri Park Place ở đâu?', a: 'Masteri Park Place toạ lạc trong The Global City tại An Phú, TP. Thủ Đức, TP.HCM - siêu đô thị 117ha do Masterise Homes phát triển, kề Metro số 1 và cao tốc TP.HCM - Long Thành.' },
-        { q: 'Giá căn hộ Masteri Park Place bao nhiêu?', a: 'Giá khảo sát (chưa VAT) từ khoảng 6,7 tỷ cho căn 1PN, 8,9-10,1 tỷ cho 2PN và 11,8-14,5 tỷ cho 3PN. Bảng hàng gồm 4 toà A1, A2, B1, B2. Liên hệ SGS LAND 0971 132 378 để nhận bảng giá chi tiết từng căn.' },
+        { q: 'Giá căn hộ Masteri Park Place bao nhiêu?', a: 'Giá khảo sát (chưa VAT) từ khoảng 6,7 tỷ cho căn 1PN, 8,9-10,1 tỷ cho 2PN và 11,8-14,5 tỷ cho 3PN. Bảng hàng gồm 4 toà A1, A2, B1, B2. Liên hệ SGS LAND 0379 281 445 để nhận bảng giá chi tiết từng căn.' },
         { q: 'Masteri Park Place có mấy loại căn hộ?', a: 'Dự án có các loại 1PN (~53-57m²), 1PN+ (~54-59m²), 2PN (~74-83m²) và 3PN (~95-109m²), diện tích tính theo tim tường. Diện tích thông thuỷ nhỏ hơn khoảng 5-8m².' },
         { q: 'Pháp lý Masteri Park Place thế nào?', a: 'Dự án do Masterise Homes phát triển trong The Global City, sổ hồng lâu dài. SGS LAND kiểm tra pháp lý độc lập 2 lớp trước khi tư vấn khách hàng.' },
       ],
@@ -1015,11 +1015,11 @@ const PROJECT_CONFIG: Record<string, ProjectConfig> = {
             },
             {
                 q: 'Masteri Cosmo Central là gì? Có phải thuộc The Global City không?',
-                a: 'Masteri Cosmo Central chính là phân khu căn hộ cao cấp nằm tại lõi trung tâm đại đô thị The Global City. Đây là sản phẩm căn hộ duy nhất trong hệ sinh thái The Global City, thuộc bộ sưu tập Masteri Collection. Dự án gồm 6 tòa tháp 19–29 tầng do Foster + Partners (Anh Quốc) thiết kế, mô hình All-in-One với kênh đào nhạc nước lớn nhất Đông Nam Á. Giá từ 6,429 tỷ, đang mở bán. Liên hệ SGS LAND: 0971 132 378 để nhận bảng giá.',
+                a: 'Masteri Cosmo Central chính là phân khu căn hộ cao cấp nằm tại lõi trung tâm đại đô thị The Global City. Đây là sản phẩm căn hộ duy nhất trong hệ sinh thái The Global City, thuộc bộ sưu tập Masteri Collection. Dự án gồm 6 tòa tháp 19–29 tầng do Foster + Partners (Anh Quốc) thiết kế, mô hình All-in-One với kênh đào nhạc nước lớn nhất Đông Nam Á. Giá từ 6,429 tỷ, đang mở bán. Liên hệ SGS LAND: 0379 281 445 để nhận bảng giá.',
             },
             {
                 q: 'Masteri Cosmo Central giá bao nhiêu? Loại căn hộ nào đang bán?',
-                a: 'Masteri Cosmo Central mở bán từ tháng 01/2026 với giá khởi điểm từ 6,429 tỷ đồng. Cơ cấu căn: 1PN, 2PN, 3PN, Penthouse và Duplex — diện tích đa dạng phù hợp nhiều nhu cầu từ ở thực đến đầu tư. Pháp lý sổ hồng riêng lâu dài. Masterise Homes hỗ trợ lãi suất 0% giai đoạn đầu. Liên hệ SGS LAND để nhận bảng giá và chính sách ưu đãi chi tiết: 0971 132 378.',
+                a: 'Masteri Cosmo Central mở bán từ tháng 01/2026 với giá khởi điểm từ 6,429 tỷ đồng. Cơ cấu căn: 1PN, 2PN, 3PN, Penthouse và Duplex — diện tích đa dạng phù hợp nhiều nhu cầu từ ở thực đến đầu tư. Pháp lý sổ hồng riêng lâu dài. Masterise Homes hỗ trợ lãi suất 0% giai đoạn đầu. Liên hệ SGS LAND để nhận bảng giá và chính sách ưu đãi chi tiết: 0379 281 445.',
             },
         ],
         relatedProjects: [
@@ -1211,7 +1211,7 @@ const PROJECT_CONFIG: Record<string, ProjectConfig> = {
             },
             {
                 q: 'SGS LAND hỗ trợ khách hàng mua Vinhomes Cần Giờ như thế nào?',
-                a: 'SGS LAND là đại lý phân phối chính thức Vinhomes Cần Giờ — hỗ trợ toàn diện: (1) Đặt chỗ ưu tiên phân kỳ đầu trước khi mở bán rộng rãi; (2) Tư vấn chiến lược đầu tư theo ngân sách và mục tiêu; (3) Kiểm tra pháp lý từng phân khu miễn phí; (4) Kết nối vay ngân hàng lãi suất tốt (VCB, BIDV, TCB, VPBank) tối đa 70%; (5) Không thu phí từ người mua — hoa hồng do Vinhomes trả. Hotline 0971 132 378.',
+                a: 'SGS LAND là đại lý phân phối chính thức Vinhomes Cần Giờ — hỗ trợ toàn diện: (1) Đặt chỗ ưu tiên phân kỳ đầu trước khi mở bán rộng rãi; (2) Tư vấn chiến lược đầu tư theo ngân sách và mục tiêu; (3) Kiểm tra pháp lý từng phân khu miễn phí; (4) Kết nối vay ngân hàng lãi suất tốt (VCB, BIDV, TCB, VPBank) tối đa 70%; (5) Không thu phí từ người mua — hoa hồng do Vinhomes trả. Hotline 0379 281 445.',
             },
             {
                 q: 'So sánh Vinhomes Cần Giờ và Vinhomes Grand Park — đâu nên mua năm 2026?',
@@ -1430,7 +1430,7 @@ export default function ProjectLandingPage() {
                                 legalName: 'Công ty TNHH SGS Land',
                                 taxID: '0312960439',
                                 url: 'https://sgsland.vn',
-                                telephone: '+84-971-132-378',
+                                telephone: '+84-379-281-445',
                             },
                         },
                     },

@@ -937,7 +937,7 @@ const LOCATION_CONFIG: Record<string, LocationConfig> = {
             },
             {
                 q: 'SGS LAND hỗ trợ tìm đất nền Long An như thế nào?',
-                a: 'SGS LAND có kho hàng đất nền Long An đã xác minh sổ đỏ, hỗ trợ định giá AI so sánh với giao dịch thực trong bán kính 2km, kiểm tra quy hoạch và tình trạng pháp lý độc lập. Hotline: +84 971 132 378 — tư vấn miễn phí, không ép mua.',
+                a: 'SGS LAND có kho hàng đất nền Long An đã xác minh sổ đỏ, hỗ trợ định giá AI so sánh với giao dịch thực trong bán kính 2km, kiểm tra quy hoạch và tình trạng pháp lý độc lập. Hotline: +84 379 281 445 — tư vấn miễn phí, không ép mua.',
             },
         ],
         relatedLocations: [
@@ -4149,7 +4149,7 @@ export default function LocalLandingPage() {
                         name: `SGS LAND — BĐS ${cfg.name}`,
                         description: seoMeta.description,
                         url: `https://sgsland.vn/${cfg.slug}`,
-                        telephone: '+84-971-132-378',
+                        telephone: '+84-379-281-445',
                         email: 'info@sgsland.vn',
                         priceRange: '$$',
                         image: 'https://sgsland.vn/og-image.jpg',

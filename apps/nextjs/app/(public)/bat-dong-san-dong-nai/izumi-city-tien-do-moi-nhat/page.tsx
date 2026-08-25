@@ -88,7 +88,7 @@ export default function Page() {
         <h2 className="text-2xl font-semibold mb-3">Tư Vấn Izumi City – Mua Đúng Phân Khu, Đúng Giá</h2>
         <p className="mb-4 text-blue-100">SGS Land có chuyên gia am hiểu Izumi City và toàn bộ thị trường Đồng Nai. Gọi ngay để được tư vấn miễn phí.</p>
         <div className="flex flex-col sm:flex-row gap-4">
-          <a href="tel:0971132378" className="bg-[var(--bg-surface)] text-blue-900 px-6 py-3 rounded-lg font-semibold text-center">📞 0971 132 378</a>
+          <a href="tel:0379281445" className="bg-[var(--bg-surface)] text-blue-900 px-6 py-3 rounded-lg font-semibold text-center">0379 281 445</a>
           <Link href="/bat-dong-san-dong-nai" className="border border-white text-white px-6 py-3 rounded-lg font-semibold text-center">BĐS Đồng Nai</Link>
         </div>
       </section>

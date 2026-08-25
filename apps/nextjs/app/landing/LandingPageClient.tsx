@@ -87,7 +87,7 @@ export default function LandingPageClient({ slug }: Props) {
             btn.disabled = false;
             btn.textContent = "Gửi yêu cầu tư vấn";
           }
-          alert("Có lỗi xảy ra. Vui lòng gọi trực tiếp 0971 132 378 để được hỗ trợ.");
+          alert("Có lỗi xảy ra. Vui lòng gọi trực tiếp 0379 281 445 để được hỗ trợ.");
         }
       });
     }

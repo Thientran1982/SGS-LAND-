@@ -698,7 +698,7 @@ const PublicProjectMicrosite: React.FC<Props> = ({ projectCode }) => {
                   {q:'Pháp lý Aqua City an toàn không?',a:'The Aqua 1 và The Aqua 2 đã có sổ hồng riêng (bàn giao 2022-2023). Phoenix South và Eagle đang hoàn thiện thủ tục. SGS LAND kiểm tra pháp lý từng căn trước khi tư vấn — miễn phí.'},
                   {q:'Cho thuê nhà phố Aqua City được bao nhiêu?',a:'Nhà phố cho thuê: 15-30 triệu/tháng. Biệt thự: 35-80 triệu/tháng. Rental yield 4-6%/năm. SGS LAND cung cấp dịch vụ quản lý cho thuê tài sản để tối ưu lợi nhuận.'},
                   {q:'So sánh Aqua City vs Izumi City — nên chọn dự án nào?',a:'Aqua City (1.000ha) có quy mô và tiện ích vượt trội hơn Izumi City (170ha). An Gia (chủ đầu tư Izumi) được đánh giá tài chính ổn định hơn Novaland. Tùy mục tiêu: ở thực không gian lớn → Aqua City; an toàn tài chính chủ đầu tư → Izumi.'},
-                  {q:'Hỗ trợ vay ngân hàng mua Aqua City như thế nào?',a:'SGS LAND hỗ trợ thủ tục vay ngân hàng miễn phí. VPBank, Sacombank, Techcombank cho vay tối đa 70% giá trị BĐS, lãi suất ưu đãi 12 tháng từ 8.5%/năm. Hotline: +84 971 132 378.'},
+                  {q:'Hỗ trợ vay ngân hàng mua Aqua City như thế nào?',a:'SGS LAND hỗ trợ thủ tục vay ngân hàng miễn phí. VPBank, Sacombank, Techcombank cho vay tối đa 70% giá trị BĐS, lãi suất ưu đãi 12 tháng từ 8.5%/năm. Hotline: +84 379 281 445.'},
                 ].map((item,idx)=>(
                   <details key={idx} className="border border-slate-200 rounded-xl overflow-hidden">
                     <summary className="px-4 py-3 cursor-pointer font-medium text-slate-700 hover:bg-slate-50 flex items-center justify-between list-none">

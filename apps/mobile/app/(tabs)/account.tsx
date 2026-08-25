@@ -31,9 +31,9 @@ import { buyerAuthApi } from '../../src/api/buyerAuth';
 import { buyerApi } from '../../src/api/buyer';
 import { ApiError } from '../../src/api/client';
 
-const HOTLINE = '+84971132378';
-const HOTLINE_DISPLAY = '0971 132 378';
-const ZALO_URL = 'https://zalo.me/0971132378';
+const HOTLINE = '+84379281445';
+const HOTLINE_DISPLAY = '0379 281 445';
+const ZALO_URL = 'https://zalo.me/0379281445';
 const WEBSITE = 'https://sgsland.vn';
 
 function formatPhoneDisplay(p: string): string {
@@ -500,7 +500,7 @@ const LoginSheet: React.FC<{ visible: boolean; onClose: () => void }> = ({ visib
                     setPhone(t);
                     setError(null);
                   }}
-                  placeholder="0971 132 378"
+                  placeholder="0379 281 445"
                   placeholderTextColor={colors.textMuted}
                   keyboardType="phone-pad"
                   autoComplete="tel"

@@ -308,7 +308,7 @@ function buildGlossaryBodyHtml(entry: GlossaryEntry): string {
     `về sổ đỏ, SHR, thế chấp và định giá tài sản theo Luật Đất Đai 2024.</p>`
   );
   lines.push('<ul style="margin:0;padding-left:20px;color:#475569;line-height:1.8;">');
-  lines.push(`  <li>Hotline: <a href="tel:+84971132378" style="color:#22c55e;">+84 971 132 378</a></li>`);
+  lines.push(`  <li>Hotline: <a href="tel:+84379281445" style="color:#22c55e;">+84 379 281 445</a></li>`);
   lines.push(`  <li>Email: <a href="mailto:info@sgsland.vn" style="color:#22c55e;">info@sgsland.vn</a></li>`);
   lines.push(`  <li><a href="${esc(APP)}/ai-valuation" style="color:#22c55e;">Định giá AI miễn phí</a> — kết quả ±5% trong 30 giây</li>`);
   lines.push(`  <li><a href="${esc(APP + HUB)}" style="color:#22c55e;">${esc(HUB_TITLE)}</a> — ${Object.keys(GLOSSARY).length} khái niệm được giải thích</li>`);
@@ -396,7 +396,7 @@ function buildGlossaryIndexBodyHtml(): string {
     `<p style="color:#475569;line-height:1.7;">` +
     `<strong>SGS LAND</strong> (sgsland.vn) là nền tảng bất động sản hàng đầu Việt Nam. ` +
     `Tính đến T5/2026: 45.000+ giao dịch, 15.000+ môi giới được xác thực, định giá AI ±5%. ` +
-    `Hotline: <a href="tel:+84971132378" style="color:#22c55e;">+84 971 132 378</a></p>`
+    `Hotline: <a href="tel:+84379281445" style="color:#22c55e;">+84 379 281 445</a></p>`
   );
 
   return lines.join('\n');

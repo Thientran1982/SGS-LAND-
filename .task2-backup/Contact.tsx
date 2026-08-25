@@ -97,7 +97,7 @@ export const Contact: React.FC = () => {
                             contactPoint: [
                                 {
                                     '@type': 'ContactPoint',
-                                    telephone: '+84-971-132-378',
+                                    telephone: '+84-379-281-445',
                                     email: 'info@sgsland.vn',
                                     contactType: 'customer service',
                                     areaServed: 'VN',
@@ -122,7 +122,7 @@ export const Contact: React.FC = () => {
                     {
                         '@type': 'FAQPage',
                         mainEntity: [
-                            { '@type': 'Question', name: 'Hotline SGS LAND mở mấy giờ?', acceptedAnswer: { '@type': 'Answer', text: 'Hotline +84 971 132 378 hoạt động 8h–22h hàng ngày, kể cả cuối tuần và lễ. Phản hồi trung bình dưới 15 phút trong giờ hành chính. Ngoài giờ có thể gửi email info@sgsland.vn để được phản hồi trong 2 giờ làm việc tiếp theo.' } },
+                            { '@type': 'Question', name: 'Hotline SGS LAND mở mấy giờ?', acceptedAnswer: { '@type': 'Answer', text: 'Hotline +84 379 281 445 hoạt động 8h–22h hàng ngày, kể cả cuối tuần và lễ. Phản hồi trung bình dưới 15 phút trong giờ hành chính. Ngoài giờ có thể gửi email info@sgsland.vn để được phản hồi trong 2 giờ làm việc tiếp theo.' } },
                             { '@type': 'Question', name: 'SGS LAND có văn phòng ở đâu?', acceptedAnswer: { '@type': 'Answer', text: 'Trụ sở chính: TP. Hồ Chí Minh, Việt Nam. Pháp nhân: Công ty TNHH SGS Land, MST 0312960439. Khách hàng có thể đặt lịch hẹn tư vấn trực tiếp tại văn phòng qua hotline 0971.132.378 hoặc form liên hệ tại sgsland.vn/contact.' } },
                             { '@type': 'Question', name: 'SGS LAND phục vụ khu vực nào?', acceptedAnswer: { '@type': 'Answer', text: 'Phục vụ toàn quốc với chuyên sâu Đông Nam Bộ: TP.HCM (toàn bộ 24 quận/huyện và TP Thủ Đức), Đồng Nai (Biên Hòa, Long Thành, Nhơn Trạch), Bình Dương (Thuận An, Dĩ An, Thành Phố Mới), Long An. Hỗ trợ tư vấn online 100% qua Zalo/Messenger cho các tỉnh khác.' } },
                             { '@type': 'Question', name: 'Có những kênh liên hệ nào với SGS LAND?', acceptedAnswer: { '@type': 'Answer', text: '5 kênh chính: (1) Hotline 0971.132.378; (2) Email info@sgsland.vn (tư vấn) hoặc sales@sgsland.vn (bán hàng); (3) Form liên hệ tại sgsland.vn/contact; (4) Zalo OA và Facebook Messenger từ trang chủ; (5) Live Chat 24/7 tại sgsland.vn/livechat.' } },
@@ -183,7 +183,7 @@ export const Contact: React.FC = () => {
                                     </div>
                                     <div>
                                         <h4 className="font-bold text-[var(--text-primary)]">{t('contact.hotline_title')}</h4>
-                                        <p className="text-[var(--text-tertiary)] text-sm mt-1">0971 132 378 (24/7)</p>
+                                        <p className="text-[var(--text-tertiary)] text-sm mt-1">0379 281 445 (24/7)</p>
                                     </div>
                                 </div>
                                 <div className="flex items-start gap-4">

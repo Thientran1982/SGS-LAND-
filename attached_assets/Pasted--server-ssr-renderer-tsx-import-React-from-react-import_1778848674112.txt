@@ -14,7 +14,7 @@ const PAGE_META: Record<string, {
 }> = {
   "/": {
     title: "SGS LAND | Mua Bán Bất Động Sản TP.HCM — Căn Hộ, Nhà Phố, Đất Nền 2026",
-    description: "SGS LAND — Nền tảng bất động sản AI hàng đầu Việt Nam. 45.000+ listings, định giá AVM ±4.8%, 15.000+ môi giới xác thực. Tư vấn miễn phí: 0971 132 378.",
+    description: "SGS LAND — Nền tảng bất động sản AI hàng đầu Việt Nam. 45.000+ listings, định giá AVM ±4.8%, 15.000+ môi giới xác thực. Tư vấn miễn phí: 0379 281 445.",
     canonical: "https://sgsland.vn/",
     keywords: "bất động sản TP.HCM, mua nhà TP.HCM, căn hộ TP.HCM, nhà phố TP.HCM",
     ogImage: "https://sgsland.vn/og-home.jpg",
@@ -25,7 +25,7 @@ const PAGE_META: Record<string, {
         "@id": "https://sgsland.vn/#organization",
         name: "SGS LAND",
         url: "https://sgsland.vn",
-        telephone: "+84971132378",
+        telephone: "+84379281445",
         email: "info@sgsland.vn",
         address: {
           "@type": "PostalAddress",
@@ -390,7 +390,7 @@ function generateHomepageBody(): string {
         <p class="hero-summary">
           Mua bán bất động sản TP.HCM uy tín: 45.000+ listings, định giá AI độ chính xác ±4.8%,
           15.000+ môi giới xác thực. Đại lý ủy quyền Vinhomes, Novaland, Masterise Homes.
-          Hotline: <a href="tel:+84971132378">0971 132 378</a>
+          Hotline: <a href="tel:+84379281445">0379 281 445</a>
         </p>
       </section>
 
@@ -443,7 +443,7 @@ function generateHomepageBody(): string {
     <footer>
       <address>
         <strong>SGS LAND</strong><br>
-        Hotline: <a href="tel:+84971132378">0971 132 378</a><br>
+        Hotline: <a href="tel:+84379281445">0379 281 445</a><br>
         Email: <a href="mailto:info@sgsland.vn">info@sgsland.vn</a><br>
         TP. Hồ Chí Minh, Việt Nam
       </address>
@@ -477,7 +477,7 @@ function generateProjectBody(path: string): string {
     <main>
       <h1>${escapeHtml(name)}</h1>
       <p>Xem bảng giá, tiến độ xây dựng và pháp lý mới nhất của ${escapeHtml(name)} tháng 5/2026.</p>
-      <p>Liên hệ tư vấn miễn phí: <a href="tel:+84971132378">0971 132 378</a></p>
+      <p>Liên hệ tư vấn miễn phí: <a href="tel:+84379281445">0379 281 445</a></p>
       <p><a href="/du-an">← Xem tất cả dự án</a></p>
     </main>
   </noscript>`;
@@ -495,7 +495,7 @@ function generateGeoBody(path: string, meta: typeof PAGE_META[string]): string {
     <main>
       <h1>${escapeHtml(meta.title.split("|")[0].trim())}</h1>
       <p>${escapeHtml(meta.description)}</p>
-      <p>Liên hệ tư vấn: <a href="tel:+84971132378">0971 132 378</a></p>
+      <p>Liên hệ tư vấn: <a href="tel:+84379281445">0379 281 445</a></p>
     </main>
   </noscript>`;
 }

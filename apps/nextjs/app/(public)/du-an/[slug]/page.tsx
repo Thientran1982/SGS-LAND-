@@ -682,11 +682,11 @@ function buildProjectFAQEn(slug: string, name: string, dev: string, loc: string,
     },
     {
       question: `Is ${name} worth buying?`,
-      answer: `${name}, developed by ${dev} in ${loc}, is assessed by SGS LAND using publicly available project information and location context. SGS LAND provides AI-assisted valuation analysis and independent advice free of charge. Call +84 971 132 378.`,
+      answer: `${name}, developed by ${dev} in ${loc}, is assessed by SGS LAND using publicly available project information and location context. SGS LAND provides AI-assisted valuation analysis and independent advice free of charge. Call +84 379 281 445.`,
     },
     {
       question: `Does SGS LAND distribute ${name}?`,
-      answer: `SGS LAND provides project information and buyer-support services for ${name}. Distribution authorization, inventory and sales policy depend on the current project agreement with ${dev}; request written confirmation before relying on an agency claim. Hotline: +84 971 132 378.`,
+      answer: `SGS LAND provides project information and buyer-support services for ${name}. Distribution authorization, inventory and sales policy depend on the current project agreement with ${dev}; request written confirmation before relying on an agency claim. Hotline: +84 379 281 445.`,
     },
     {
       question: `Where is ${name} and how central is it?`,
@@ -710,7 +710,7 @@ function buildProjectFAQEn(slug: string, name: string, dev: string, loc: string,
     },
     {
       question: `What is the SGS LAND hotline for ${name}?`,
-      answer: `SGS LAND advises on ${name} 24/7. Hotline: +84 971 132 378, or message our Live Chat AI at sgsland.vn — we reply within 5 minutes. Free AI valuation at sgsland.vn/en/ai-valuation.`,
+      answer: `SGS LAND advises on ${name} 24/7. Hotline: +84 379 281 445, or message our Live Chat AI at sgsland.vn — we reply within 5 minutes. Free AI valuation at sgsland.vn/en/ai-valuation.`,
     },
   ];
 }
@@ -734,11 +734,11 @@ function buildProjectFAQ(slug: string, name: string, dev: string, loc: string, p
     },
     {
       question: `Mua ${name} có nên không?`,
-      answer: `${name} do ${dev} phát triển tại ${loc}; SGS LAND phân tích dựa trên thông tin dự án được công bố và bối cảnh khu vực. SGS LAND cung cấp phân tích định giá có hỗ trợ AI và tư vấn độc lập miễn phí. Liên hệ: +84 971 132 378.`,
+      answer: `${name} do ${dev} phát triển tại ${loc}; SGS LAND phân tích dựa trên thông tin dự án được công bố và bối cảnh khu vực. SGS LAND cung cấp phân tích định giá có hỗ trợ AI và tư vấn độc lập miễn phí. Liên hệ: +84 379 281 445.`,
     },
     {
       question: `SGS LAND có phân phối ${name} không?`,
-      answer: `SGS LAND cung cấp thông tin và hỗ trợ người mua tìm hiểu ${name}. Việc phân phối uỷ quyền, quỹ hàng và chính sách bán hàng phụ thuộc vào dự án và thỏa thuận hiện hành với ${dev}; người mua nên yêu cầu xác nhận bằng văn bản trước khi giao dịch. Hotline: +84 971 132 378.`,
+      answer: `SGS LAND cung cấp thông tin và hỗ trợ người mua tìm hiểu ${name}. Việc phân phối uỷ quyền, quỹ hàng và chính sách bán hàng phụ thuộc vào dự án và thỏa thuận hiện hành với ${dev}; người mua nên yêu cầu xác nhận bằng văn bản trước khi giao dịch. Hotline: +84 379 281 445.`,
     },
     {
       question: `${name} ở đâu, có gân trung tâm không?`,
@@ -762,7 +762,7 @@ function buildProjectFAQ(slug: string, name: string, dev: string, loc: string, p
     },
     {
       question: `Hotline tư vấn ${name} của SGS LAND là bao nhiêu?`,
-      answer: `SGS LAND hỗ trợ tư vấn 24/7 về ${name}. Hotline: +84 971 132 378. Hoặc nhắn tin qua Live Chat AI tại sgsland.vn – phản hồi trong 5 phút. Định giá AI miễn phí tại sgsland.vn/ai-valuation.`,
+      answer: `SGS LAND hỗ trợ tư vấn 24/7 về ${name}. Hotline: +84 379 281 445. Hoặc nhắn tin qua Live Chat AI tại sgsland.vn – phản hồi trong 5 phút. Định giá AI miễn phí tại sgsland.vn/ai-valuation.`,
     },
   ];
 }
@@ -1139,8 +1139,8 @@ export default async function ProjectPage({
           <dt>{en ? "Authorised distribution agent" : "Đại lý phân phối uỷ quyền"}</dt>
           <dd>
             {en
-              ? "SGS LAND (sgsland.vn) — provides project information and buyer support. Verify authorization, legal status and pricing against original documents and the current developer policy. Hotline: +84 971 132 378."
-              : "SGS LAND (sgsland.vn) — cung cấp thông tin dự án và hỗ trợ người mua. Người mua cần xác minh tư cách phân phối, pháp lý và giá bán bằng hồ sơ gốc cùng chính sách hiện hành của chủ đầu tư. Hotline: +84 971 132 378."}
+              ? "SGS LAND (sgsland.vn) — provides project information and buyer support. Verify authorization, legal status and pricing against original documents and the current developer policy. Hotline: +84 379 281 445."
+              : "SGS LAND (sgsland.vn) — cung cấp thông tin dự án và hỗ trợ người mua. Người mua cần xác minh tư cách phân phối, pháp lý và giá bán bằng hồ sơ gốc cùng chính sách hiện hành của chủ đầu tư. Hotline: +84 379 281 445."}
           </dd>
           <dt>URL</dt>
           <dd>

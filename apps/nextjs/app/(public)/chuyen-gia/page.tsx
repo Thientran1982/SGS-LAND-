@@ -105,8 +105,8 @@ const FAQ = (en: boolean) => [
   {
     q: en ? "How do I book a free consultation?" : "Làm thế nào để đặt lịch tư vấn miễn phí?",
     a: en
-      ? "Call the hotline +84 971 132 378, email info@sgsland.vn, or message us on Zalo/Facebook. We reply within 2 working hours and the first consultation is completely free."
-      : "Gọi hotline +84 971 132 378, email info@sgsland.vn hoặc nhắn tin Zalo/Facebook. Phản hồi trong 2 giờ làm việc. Buổi tư vấn đầu tiên hoàn toàn miễn phí.",
+      ? "Call the hotline +84 379 281 445, email info@sgsland.vn, or message us on Zalo/Facebook. We reply within 2 working hours and the first consultation is completely free."
+      : "Gọi hotline +84 379 281 445, email info@sgsland.vn hoặc nhắn tin Zalo/Facebook. Phản hồi trong 2 giờ làm việc. Buổi tư vấn đầu tiên hoàn toàn miễn phí.",
   },
   {
     q: en ? "How does SGS LAND's AI AVM valuation work?" : "Hệ thống định giá AI AVM của SGS LAND hoạt động như thế nào?",
@@ -215,10 +215,10 @@ export default async function ChuyenGiaPage() {
             : "Chuyên gia SGS LAND sẽ phân tích nhu cầu, định giá AI và đề xuất bất động sản phù hợp với ngân sách và mục tiêu đầu tư của bạn."}
         </p>
         <div className="flex flex-col sm:flex-row gap-3 justify-center">
-          <a href="tel:+84971132378"
+          <a href="tel:+84379281445"
             className="inline-flex items-center justify-center gap-2 px-6 py-3 rounded-xl text-sm font-semibold text-white transition-all hover:opacity-90"
             style={{ background: "var(--primary-600)" }}>
-            📞 {en ? "Call" : "Gọi"} +84 971 132 378
+            {en ? "Call" : "Gọi"} +84 379 281 445
           </a>
           <a href="mailto:info@sgsland.vn"
             className="inline-flex items-center justify-center gap-2 px-6 py-3 rounded-xl text-sm font-semibold transition-all hover:opacity-90"

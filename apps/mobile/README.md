@@ -126,6 +126,6 @@ After `npm install && npx expo start`:
 
 1. App boots to Home tab with featured + recent listings.
 2. Tap a listing → detail screen opens with gallery + specs.
-3. Submit lead form with valid VN phone (e.g. `0971132378`) → success toast.
+3. Submit lead form with valid VN phone (e.g. `0379281445`) → success toast.
 4. Tap heart on a card → appears in Favorites tab.
 5. Search tab: type a keyword, change city filter → list updates.

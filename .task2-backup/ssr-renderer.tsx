@@ -66,7 +66,7 @@ const HOME_PAGE: SsrPage = {
       numberOfEmployees: { '@type': 'QuantitativeValue', value: 15000 },
       contactPoint: {
         '@type': 'ContactPoint',
-        telephone: '+84-971-132-378',
+        telephone: '+84-379-281-445',
         contactType: 'customer service',
         availableLanguage: 'Vietnamese',
       },
@@ -545,7 +545,7 @@ function buildProjectBodyHtml(page: SsrPage, path: string): string {
     '5+ năm kinh nghiệm, 15.000+ môi giới, 45.000+ sản phẩm, 1 tỷ USD+ giao dịch. Định giá AVM ±5%, kiểm tra pháp lý 2 lớp miễn phí.</p>'
   );
   lines.push('<ul style="margin:0;padding-left:20px;color:#475569;">');
-  lines.push(`  <li>Hotline: <a href="tel:+84971132378">+84 971 132 378</a></li>`);
+  lines.push(`  <li>Hotline: <a href="tel:+84379281445">+84 379 281 445</a></li>`);
   lines.push(`  <li>Email: <a href="mailto:info@sgsland.vn">info@sgsland.vn</a></li>`);
   lines.push(`  <li><a href="${esc(APP)}/ai-valuation">Định giá AI bất động sản miễn phí</a> — kết quả ±5% trong 30 giây</li>`);
   lines.push(`  <li><a href="${esc(APP)}/marketplace">Tìm kiếm 45.000+ bất động sản toàn quốc</a></li>`);
@@ -605,7 +605,7 @@ function buildGeoBodyHtml(page: SsrPage, path: string): string {
     `Tuân thủ Luật Đất Đai 2024, Luật Kinh Doanh BĐS 2023 và Nghị định 13/2023/NĐ-CP.</p>`
   );
   lines.push('<ul style="margin:0;padding-left:20px;color:#475569;line-height:1.7;">');
-  lines.push(`  <li>Hotline: <a href="tel:+84971132378">+84 971 132 378</a></li>`);
+  lines.push(`  <li>Hotline: <a href="tel:+84379281445">+84 379 281 445</a></li>`);
   lines.push(`  <li><a href="${esc(APP)}/ai-valuation">Định giá AI miễn phí</a> — kết quả ±5% trong 30 giây</li>`);
   lines.push(`  <li><a href="${esc(APP)}/marketplace">Tìm kiếm 45.000+ bất động sản toàn quốc</a></li>`);
   lines.push(`  <li><a href="${esc(APP)}/kien-thuc-bds">Kho kiến thức bất động sản</a> — pháp lý, tài chính, thuật ngữ</li>`);
@@ -683,7 +683,7 @@ export function generateBotHTML(pathname: string, opts?: { aiBot?: boolean }): s
       '<meta name="description" content="SGS LAND — hệ thống CRM và marketplace bất động sản hàng đầu Việt Nam. 45.000+ sản phẩm, 15.000+ môi giới, định giá AI ±5%."/>' +
       '</head><body><main role="main"><h1>SGS LAND</h1>' +
       '<p>Nền tảng bất động sản thông minh số 1 Việt Nam.</p>' +
-      '<p>Hotline: <a href="tel:+84971132378">+84 971 132 378</a></p>' +
+      '<p>Hotline: <a href="tel:+84379281445">+84 379 281 445</a></p>' +
       '<p><a href="https://sgsland.vn/marketplace">Tìm kiếm BĐS</a> | ' +
       '<a href="https://sgsland.vn/ai-valuation">Định giá AI</a> | ' +
       '<a href="https://sgsland.vn/kien-thuc-bds">Kiến thức BĐS</a></p>' +

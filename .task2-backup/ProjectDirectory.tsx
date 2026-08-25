@@ -5,8 +5,8 @@ import { motion } from 'motion/react';
 import { MapPin, Building2, ArrowRight, Phone, Search, SlidersHorizontal, ChevronDown, Check, MapPinned, LayoutGrid, Activity, Download } from 'lucide-react';
 import { useTranslation } from '../services/i18n';
 // ─── Constants ───────────────────────────────────────────────────────────────
-const HOTLINE_DISPLAY = '+84 971 132 378';
-const HOTLINE_TEL = '+84971132378';
+const HOTLINE_DISPLAY = '+84 379 281 445';
+const HOTLINE_TEL = '+84379281445';
 
 function navigate(path: string) {
     window.history.pushState(null, '', path);
@@ -482,7 +482,7 @@ export default function ProjectDirectory() {
                             { '@type': 'Question', name: 'Mua dự án qua SGS LAND có mất phí không?', acceptedAnswer: { '@type': 'Answer', text: 'Hoàn toàn miễn phí cho người mua. SGS LAND nhận hoa hồng phân phối từ chủ đầu tư theo hợp đồng uỷ quyền chính thức. Người mua được tư vấn pháp lý, thẩm định dự án, hỗ trợ vay ngân hàng và làm sổ hồng miễn phí trọn gói.' } },
                             { '@type': 'Question', name: 'Pháp lý các dự án trên SGS LAND có an toàn không?', acceptedAnswer: { '@type': 'Answer', text: 'Tất cả dự án phân phối qua SGS LAND đều được kiểm tra pháp lý 2 lớp (AI + chuyên viên) trước khi đưa lên hệ thống: kiểm tra giấy phép xây dựng, sổ đỏ tổng, đánh giá rủi ro tài chính chủ đầu tư. Khách hàng được cung cấp hồ sơ pháp lý đầy đủ trước khi đặt cọc.' } },
                             { '@type': 'Question', name: 'Dự án nào của SGS LAND đang bán chạy nhất 2026?', acceptedAnswer: { '@type': 'Answer', text: 'Top 3 dự án bán chạy nhất qua SGS LAND năm 2026: (1) Aqua City Novaland (Biên Hòa, Đồng Nai) — biệt thự đảo từ 6,5 tỷ; (2) Vinhomes Cần Giờ Green Paradise (Cần Giờ, TP.HCM) — siêu đô thị lấn biển 2.870ha mở bán Q3/2026; (3) Vinhomes Grand Park (TP Thủ Đức) — căn hộ từ 3 tỷ đã bàn giao.' } },
-                            { '@type': 'Question', name: 'Làm sao để xem bảng giá chính thức của một dự án?', acceptedAnswer: { '@type': 'Answer', text: 'Bấm vào tên dự án trong danh sách để vào trang chi tiết, hoặc liên hệ hotline SGS LAND +84 971 132 378 (8h-22h) để nhận bảng giá PDF chính chủ + chính sách thanh toán + lịch mở bán mới nhất qua Zalo trong 5 phút.' } },
+                            { '@type': 'Question', name: 'Làm sao để xem bảng giá chính thức của một dự án?', acceptedAnswer: { '@type': 'Answer', text: 'Bấm vào tên dự án trong danh sách để vào trang chi tiết, hoặc liên hệ hotline SGS LAND +84 379 281 445 (8h-22h) để nhận bảng giá PDF chính chủ + chính sách thanh toán + lịch mở bán mới nhất qua Zalo trong 5 phút.' } },
                         ],
                     },
                 ]}

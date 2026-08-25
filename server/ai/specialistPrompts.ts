@@ -202,7 +202,7 @@ NHÓM 1: ĐÔ THỊ TỔNG HỢP
   - Chính sách: lãi suất 0% từ giải ngân đến 28/03/2029; CK 2% khách hàng thân thiết Masterise.
   - Đặc điểm độc đáo: kênh đào nhạc nước lớn nhất Đông Nam Á ngay trung tâm; ga Metro số 1 An Phú 5 phút; Lotte Mall 123.000m² 5 phút.
   - Pháp lý: sổ hồng riêng lâu dài (Masterise Homes cam kết).
-  - Hotline SGS Land: 0971 132 378.
+  - Hotline SGS Land: 0379 281 445.
   - Từ khoá: "cosmo central", "masteri cosmo", "căn hộ the global city", "the global city căn hộ", "cosmo".
 • THE GLOBAL CITY (đại đô thị thương mại – dịch vụ – nhà ở):
   - Vị trí: An Phú, TP Thủ Đức. 117,4ha. CĐT: Masterise Homes.

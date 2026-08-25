@@ -8,8 +8,8 @@
 Name:    SGS Land
 Legal:   Công ty Cổ phần SGS Land
 Address: <số nhà + tên đường>, <phường>, <quận>, TP. Hồ Chí Minh, Việt Nam
-Phone:   +84 971 132 378
-Display: 0971 132 378  (chỉ dùng trong UI tiếng Việt)
+Phone:   +84 379 281 445
+Display: 0379 281 445  (chỉ dùng trong UI tiếng Việt)
 Email:   info@sgsland.vn
 Website: https://sgsland.vn
 ```
@@ -33,7 +33,7 @@ Website: https://sgsland.vn
 ## Quy tắc đồng bộ
 
 1. **Tên thương hiệu**: dùng đúng "SGS Land" (1 dấu cách, S/G/S viết hoa), không dùng "SGSLand", "SGS-Land", "Sgs Land".
-2. **Số điện thoại**: lưu dạng E.164 `+84971132378` trong DB, hiển thị `0971 132 378` trong UI tiếng Việt.
+2. **Số điện thoại**: lưu dạng E.164 `+84379281445` trong DB, hiển thị `0379 281 445` trong UI tiếng Việt.
 3. **Địa chỉ**: viết đầy đủ "TP. Hồ Chí Minh" thay vì "TPHCM"/"HCM"/"Sai Gon".
 4. **Logo**: dùng đúng `logo.svg` (đường dẫn `https://sgsland.vn/logo.svg`), không dùng logo cũ.
 5. **Mô tả VI**: bắt đầu bằng "SGS Land là nền tảng công nghệ bất động sản AI tại Việt Nam…" để AI engine trích Definition Block.

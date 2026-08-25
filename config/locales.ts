@@ -2011,7 +2011,7 @@ export const DICTIONARY = {
         "landing.cta_title": "Tìm BĐS Phù Hợp Với Bạn",
         "landing.cta_desc": "Đội ngũ chuyên gia SGS LAND tư vấn miễn phí: pháp lý, vay vốn, tiến độ và bảng giá 11+ dự án lớn tại TP.HCM, Đồng Nai, Bình Dương.",
         "landing.cta_btn_register": "Đăng Ký Miễn Phí",
-        "landing.cta_btn_sales": "Gọi 0971 132 378",
+        "landing.cta_btn_sales": "Gọi 0379 281 445",
 
         "footer.brand_desc": "Hệ điều hành Bất động sản tích hợp AI Agent, CRM đa kênh và Tự động hóa quy trình dành cho doanh nghiệp.",
         "footer.col_product": "Sản Phẩm",
@@ -4464,7 +4464,7 @@ export const DICTIONARY = {
         "landing.cta_title": "Find Real Estate That Fits You",
         "landing.cta_desc": "SGS LAND experts provide free consultation: legal checks, loan support, construction timeline and price lists for 11+ major projects in Ho Chi Minh City, Dong Nai, Binh Duong.",
         "landing.cta_btn_register": "Get Free Price List",
-        "landing.cta_btn_sales": "Call 0971 132 378",
+        "landing.cta_btn_sales": "Call 0379 281 445",
 
         "footer.brand_desc": "Real Estate OS with AI Agent, Omnichannel CRM and Process Automation for Enterprise.",
         "footer.col_product": "Product",

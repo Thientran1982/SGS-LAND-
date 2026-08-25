@@ -225,7 +225,7 @@ export const PROJECT_DETAIL_EN: Record<string, ProjectDetailEnglishCopy> = {
       },
       {
         "k": "Consulting channel",
-        "v": "0971 132 378 (SGS LAND – provides reference information)"
+        "v": "0379 281 445 (SGS LAND – provides reference information)"
       }
     ],
     "eyebrow": "New central mega-urban area",
@@ -255,7 +255,7 @@ export const PROJECT_DETAIL_EN: Record<string, ProjectDetailEnglishCopy> = {
         "q": "How far is The Global City from the HCMC center (District 1)?"
       },
       {
-        "a": "SGS Land is a real estate consulting unit with experience in updating selling prices, sales policies, and actual legal status at The Global City periodically, helping customers compare information from the developer and the secondary market before deciding to transact. Contact hotline 0971 132 378 for detailed advice and the latest updated price list.",
+        "a": "SGS Land is a real estate consulting unit with experience in updating selling prices, sales policies, and actual legal status at The Global City periodically, helping customers compare information from the developer and the secondary market before deciding to transact. Contact hotline 0379 281 445 for detailed advice and the latest updated price list.",
         "q": "Why should you learn about The Global City through SGS Land?"
       }
     ],
@@ -362,7 +362,7 @@ export const PROJECT_DETAIL_EN: Record<string, ProjectDetailEnglishCopy> = {
       },
       {
         "k": "Consulting Channel",
-        "v": "0971 132 378 (SGS LAND – provides reference information)"
+        "v": "0379 281 445 (SGS LAND – provides reference information)"
       }
     ],
     "eyebrow": "Japanese-standard riverside urban area – Nam Long Group",
@@ -499,7 +499,7 @@ export const PROJECT_DETAIL_EN: Record<string, ProjectDetailEnglishCopy> = {
       },
       {
         "k": "Consultation Channel",
-        "v": "0971 132 378 (SGS LAND – providing reference information)"
+        "v": "0379 281 445 (SGS LAND – providing reference information)"
       }
     ],
     "eyebrow": "The largest park-themed mega-city in Ho Chi Minh City",
@@ -632,7 +632,7 @@ export const PROJECT_DETAIL_EN: Record<string, ProjectDetailEnglishCopy> = {
       },
       {
         "k": "Consultation channel",
-        "v": "0971 132 378 (SGS LAND – providing reference information)"
+        "v": "0379 281 445 (SGS LAND – providing reference information)"
       }
     ],
     "eyebrow": "Riverside urban area next to Landmark 81",
@@ -761,7 +761,7 @@ export const PROJECT_DETAIL_EN: Record<string, ProjectDetailEnglishCopy> = {
       },
       {
         "k": "Consulting channel",
-        "v": "0971 132 378 (SGS LAND – provides reference information)"
+        "v": "0379 281 445 (SGS LAND – provides reference information)"
       }
     ],
     "eyebrow": "Luxury high-rise apartments by the Saigon River",
@@ -779,7 +779,7 @@ export const PROJECT_DETAIL_EN: Record<string, ProjectDetailEnglishCopy> = {
         "q": "What is the current legal status of Diamond Sky?"
       },
       {
-        "a": "According to market records, the reference secondary price for Diamond Sky apartments is from 9.6 billion VND upwards, depending on area, floor, and view; this is a reference price compiled from the market and is not an official price list. Please contact SGS Land (0971 132 378) for updated quotes for specific units.",
+        "a": "According to market records, the reference secondary price for Diamond Sky apartments is from 9.6 billion VND upwards, depending on area, floor, and view; this is a reference price compiled from the market and is not an official price list. Please contact SGS Land (0379 281 445) for updated quotes for specific units.",
         "q": "What is the current price of Diamond Sky apartments?"
       },
       {

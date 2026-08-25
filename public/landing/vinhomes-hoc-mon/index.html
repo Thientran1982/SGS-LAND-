@@ -926,7 +926,7 @@ footer{background:var(--green-deep);color:rgba(255,255,255,.82);padding:56px 0 0
         <ul>
           <li>Huyện Hóc Môn, TP. Hồ Chí Minh</li>
           <li>Vinhomes JSC — Tập đoàn Vingroup</li>
-          <li>Hotline: <a href="tel:0971132378">0971 132 378</a></li>
+          <li>Hotline: <a href="tel:0379281445">0379 281 445</a></li>
           <li><a href="mailto:sgsland.vn@gmail.com">sgsland.vn@gmail.com</a></li>
         </ul>
       </div>
@@ -947,8 +947,8 @@ footer{background:var(--green-deep);color:rgba(255,255,255,.82);padding:56px 0 0
 <!-- ━━━━━━━━━━ FLOATING CTA ━━━━━━━━━━ -->
 <div class="float" aria-label="Liên hệ nhanh">
   <button type="button" class="ai-btn" id="aiOpenBtn" aria-label="Mở AI tư vấn">AI<br/>Tư vấn</button>
-  <a href="tel:0971132378" aria-label="Gọi hotline 0971 132 378">Gọi</a>
-  <a class="zalo" href="https://zalo.me/0971132378" target="_blank" rel="noopener noreferrer" aria-label="Chat Zalo">Z</a>
+  <a href="tel:0379281445" aria-label="Gọi hotline 0379 281 445">Gọi</a>
+  <a class="zalo" href="https://zalo.me/0379281445" target="_blank" rel="noopener noreferrer" aria-label="Chat Zalo">Z</a>
 </div>
 
 <!-- ━━━━━━━━━━ AI CHAT WIDGET ━━━━━━━━━━ -->
@@ -975,7 +975,7 @@ footer{background:var(--green-deep);color:rgba(255,255,255,.82);padding:56px 0 0
     <textarea id="aiInput" rows="1" placeholder="Hỏi về Vinhomes Hóc Môn..." maxlength="1000" aria-label="Nội dung câu hỏi"></textarea>
     <button type="submit" class="ai-send" id="aiSendBtn" aria-label="Gửi">▶</button>
   </form>
-  <div class="ai-disclaimer">Thông tin mang tính tham khảo. Để nhận bảng giá &amp; chính sách chính thức, vui lòng để lại số điện thoại hoặc gọi 0971 132 378.</div>
+  <div class="ai-disclaimer">Thông tin mang tính tham khảo. Để nhận bảng giá &amp; chính sách chính thức, vui lòng để lại số điện thoại hoặc gọi 0379 281 445.</div>
 </aside>
 
 <script>
@@ -1122,14 +1122,14 @@ footer{background:var(--green-deep);color:rgba(255,255,255,.82);padding:56px 0 0
           ok.style.display = 'block';
           ok.scrollIntoView({behavior:'smooth', block:'center'});
         } else {
-          var msg = (res.body && res.body.error) ? res.body.error : 'Có lỗi xảy ra. Vui lòng thử lại hoặc gọi hotline 0971 132 378.';
+          var msg = (res.body && res.body.error) ? res.body.error : 'Có lỗi xảy ra. Vui lòng thử lại hoặc gọi hotline 0379 281 445.';
           alert(msg);
           btn.disabled = false;
           btn.textContent = originalLabel;
         }
       })
       .catch(function(){
-        alert('Không kết nối được máy chủ. Vui lòng gọi hotline 0971 132 378 để được hỗ trợ ngay.');
+        alert('Không kết nối được máy chủ. Vui lòng gọi hotline 0379 281 445 để được hỗ trợ ngay.');
         btn.disabled = false;
         btn.textContent = originalLabel;
       });
@@ -1243,13 +1243,13 @@ footer{background:var(--green-deep);color:rgba(255,255,255,.82);padding:56px 0 0
         aiAppend('bot', reply);
         aiHistory.push({ role:'assistant', content:reply });
       } else {
-        var msg = (res.body && res.body.error) ? res.body.error : 'Có lỗi xảy ra. Vui lòng gọi hotline 0971 132 378.';
+        var msg = (res.body && res.body.error) ? res.body.error : 'Có lỗi xảy ra. Vui lòng gọi hotline 0379 281 445.';
         aiAppend('bot', msg, { error:true });
       }
     })
     .catch(function(){
       aiTypingHide();
-      aiAppend('bot', 'Không kết nối được máy chủ. Vui lòng gọi hotline 0971 132 378.', { error:true });
+      aiAppend('bot', 'Không kết nối được máy chủ. Vui lòng gọi hotline 0379 281 445.', { error:true });
     })
     .then(function(){
       aiBusy = false;

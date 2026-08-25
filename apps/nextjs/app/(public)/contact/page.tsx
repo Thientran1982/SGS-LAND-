@@ -6,7 +6,7 @@ import { ContactForm } from "@/components/public/ContactForm";
 export const metadata: Metadata = {
   title: "Liên Hệ",
   description:
-    "Liên hệ SGS LAND — Hotline: 0971 132 378 | Email: info@sgsland.vn | TP. Hồ Chí Minh. Tư vấn BĐS, CRM, định giá AI miễn phí.",
+    "Liên hệ SGS LAND — Hotline: 0379 281 445 | Email: info@sgsland.vn | TP. Hồ Chí Minh. Tư vấn BĐS, CRM, định giá AI miễn phí.",
   alternates: { canonical: "https://sgsland.vn/contact", languages: { "vi-VN": "https://sgsland.vn/contact", "en-US": "https://sgsland.vn/en/contact", "x-default": "https://sgsland.vn/contact" } },
 };
 
@@ -28,7 +28,7 @@ export default function ContactPage() {
         {/* Contact Info */}
         <div className="space-y-6">
           {[
-            { icon: Phone, label: "Hotline", value: "0971 132 378", href: "tel:+84971132378" },
+            { icon: Phone, label: "Hotline", value: "0379 281 445", href: "tel:+84379281445" },
             { icon: Mail, label: "Email", value: "info@sgsland.vn", href: "mailto:info@sgsland.vn" },
             { icon: MapPin, label: "Địa chỉ", value: "TP. Hồ Chí Minh, Việt Nam" },
             { icon: Linkedin, label: "LinkedIn", value: "linkedin.com/company/sgsland", href: "https://www.linkedin.com/company/sgsland" },

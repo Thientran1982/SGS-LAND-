@@ -35,7 +35,7 @@ import {
 } from '../../src/api/bookings';
 import { useAuth } from '../../src/auth/AuthContext';
 
-const HOTLINE = '+84971132378';
+const HOTLINE = '+84379281445';
 
 function formatDateTime(iso: string | null | undefined): string {
   if (!iso) return '—';
@@ -203,7 +203,7 @@ export default function BookingDetailScreen() {
               onPress={() => Linking.openURL(`tel:${HOTLINE}`)}
               style={({ pressed }) => [styles.callBtn, pressed && { opacity: 0.85 }]}
             >
-              <Text style={styles.callBtnTxt}>Gọi chuyên viên · 0971 132 378</Text>
+              <Text style={styles.callBtnTxt}>Gọi chuyên viên · 0379 281 445</Text>
             </Pressable>
           </>
         )}

@@ -154,7 +154,7 @@ function depositReceiptHtml(b: {
       ${payDate ? `<tr><td style="color:#64748B">Thời điểm</td><td>${payDate}</td></tr>` : ''}
     </table>
     <p>Chuyên viên SGS Land sẽ liên hệ trong vòng <strong>24 giờ</strong> để hướng dẫn bước tiếp theo.</p>
-    <p style="color:#64748B;font-size:12px;margin-top:24px">Hotline: 0971 132 378 · sgsland.vn</p>
+    <p style="color:#64748B;font-size:12px;margin-top:24px">Hotline: 0379 281 445 · sgsland.vn</p>
   </div></body></html>`;
 }
 

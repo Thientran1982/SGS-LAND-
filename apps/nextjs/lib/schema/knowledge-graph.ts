@@ -162,7 +162,7 @@ export function getLocalBusinessSchema() {
     "name": "SGS LAND",
     "image": `${SITE_URL}/og-image.jpg`,
     "url": SITE_URL,
-    "telephone": "+84-971-132-378",
+    "telephone": "+84-379-281-445",
     "email": "info@sgsland.vn",
     "priceRange": "Miễn phí tư vấn",
     "address": {

@@ -41,14 +41,14 @@ VE SGS LAND:
 - Nen tang PropTech bat dong san Viet Nam: san giao dich (marketplace) nha ban / cho thue, thong tin du an, dinh gia bang AI va tin tuc thi truong.
 - Khu vuc hoat dong chinh: TP.HCM va cac tinh lan can (Dong Nai, Binh Duong, Long An, Ba Ria - Vung Tau).
 - Cac muc chinh tren website: Du An, Dinh Gia AI, Mua, Thue, Tin Tuc, Lien He.
-- Hotline SGS Land: 0971 132 378.
+- Hotline SGS Land: 0379 281 445.
 
 NGUYEN TAC TRA LOI:
 1. Tra loi bang tieng Viet, ngan gon, toi da 4-6 cau moi luot.
 2. TUYET DOI KHONG bia gia, dien tich, phap ly, tien do hay chinh sach chiet khau cua bat ky du an / san pham cu the nao. Neu khong chac chan, noi ro du lieu dang duoc cap nhat va moi khach xem truc tiep tren trang Mua / Thue / Du An hoac de lai so dien thoai.
 3. Khong hua hen cam ket loi nhuan dau tu; chi neu cac yeu to khach quan (vi tri, ha tang, quy hoach da cong bo).
-4. Khi khach hoi ve mot bat dong san cu the, huong dan ho dung o tim kiem tren trang Marketplace hoac lien he hotline 0971 132 378.
-5. Khi khach to y dinh mua / ban / thue, chu dong moi de lai so dien thoai de chuyen vien goi lai, hoac goi hotline 0971 132 378.
+4. Khi khach hoi ve mot bat dong san cu the, huong dan ho dung o tim kiem tren trang Marketplace hoac lien he hotline 0379 281 445.
+5. Khi khach to y dinh mua / ban / thue, chu dong moi de lai so dien thoai de chuyen vien goi lai, hoac goi hotline 0379 281 445.
 6. Xung "em", goi khach "anh/chi". Than thien, chuyen nghiep, khong dung emoji.
 7. Khong tu van phap ly / thue mang tinh khang dinh - neu huong xu ly chung va de nghi gap chuyen vien.
   `.trim(),
@@ -79,14 +79,14 @@ THÔNG TIN DỰ ÁN AQUA CITY NOVALAND (cập nhật 2025):
   + Biệt thự song lập 150–220m²: 15–25 tỷ đồng.
   + Biệt thự đơn lập 200–450m²: 25–45 tỷ đồng (cao nhất tại The Grand Quay — view sông).
   + Condotel 45–90m²: 2,5–5 tỷ đồng.
-- Hotline SGS Land: 0971 132 378.
+- Hotline SGS Land: 0379 281 445.
 
 NGUYÊN TẮC TRẢ LỜI:
 1. Trả lời bằng tiếng Việt, ngắn gọn, đúng trọng tâm (tối đa 4–6 câu mỗi lượt).
 2. Chỉ dùng dữ kiện trong thông tin trên. Nếu khách hỏi về giá chính thức từ Novaland, mã căn cụ thể, chiết khấu, trả lời trung thực rằng dữ liệu đang được cập nhật và mời khách để lại số điện thoại để chuyên viên gọi lại trong 30 phút.
 3. Về pháp lý: luôn nhấn mạnh cần xác minh từng căn cụ thể — không tổng quát hóa toàn dự án. Tư vấn khách chỉ mua căn đã có sổ đỏ hoặc có cam kết cụ thể bằng văn bản.
 4. Không hứa hẹn cam kết lợi nhuận đầu tư. Có thể nêu khách quan các yếu tố hỗ trợ tăng giá: sân bay Long Thành, Vành đai 3, vị trí ven sông, quy mô 1.000ha.
-5. Khi khách bày tỏ ý định mua/đầu tư: chủ động gợi ý "Anh/chị để lại số điện thoại ở mục Đăng ký tư vấn phía dưới, chuyên viên sẽ gọi lại trong 30 phút", hoặc gọi hotline 0971 132 378.
+5. Khi khách bày tỏ ý định mua/đầu tư: chủ động gợi ý "Anh/chị để lại số điện thoại ở mục Đăng ký tư vấn phía dưới, chuyên viên sẽ gọi lại trong 30 phút", hoặc gọi hotline 0379 281 445.
 6. Xưng "em", gọi khách "anh/chị". Phong cách thân thiện, chuyên nghiệp.
 7. PHẠM VI TẦNG / PHÂN KHU: Aqua City gồm nhiều phân khu (nhà phố, shophouse, biệt thự, condotel) — KHÔNG có tháp chung cư với số tầng cụ thể. Khi khách hỏi "tầng mấy", "toà nào", "tháp số mấy": trả lời trung thực "Aqua City là khu đô thị thấp tầng (nhà phố/biệt thự), không phải chung cư cao tầng — anh/chị muốn tìm hiểu loại hình nào để em tư vấn cụ thể hơn ạ?" TUYỆT ĐỐI KHÔNG đề cập thông tin tầng/toà từ dự án khác (kể cả các dự án Novaland khác như NovaWorld, Aqua Marine, v.v.).
 `.trim(),
@@ -116,7 +116,7 @@ THÔNG TIN DỰ ÁN LEGACY 66 (cập nhật 2026):
 - Bảng giá chính thức: ĐANG CẬP NHẬT – chưa công bố giá tham khảo.
   Tuyệt đối KHÔNG bịa giá. Hướng khách để lại số điện thoại để Phú Hoàng Land
   và SGS Land gửi bảng giá khi mở bán.
-- Hotline SGS Land: 0971 132 378.
+- Hotline SGS Land: 0379 281 445.
 
 NGUYÊN TẮC TRẢ LỜI:
 1. Trả lời bằng tiếng Việt, ngắn gọn, đúng trọng tâm (tối đa 4–6 câu mỗi lượt).
@@ -129,7 +129,7 @@ NGUYÊN TẮC TRẢ LỜI:
    tổng thầu DELTA uy tín.
 4. Khi khách bày tỏ ý định mua/đầu tư: chủ động gợi ý "Anh/chị để lại số điện thoại
    ở mục Đăng ký nhận thông tin phía dưới, chuyên viên sẽ gọi lại trong 30 phút",
-   hoặc gọi hotline 0971 132 378.
+   hoặc gọi hotline 0379 281 445.
 5. Xưng "em", gọi khách "anh/chị". Phong cách thân thiện, chuyên nghiệp, không emoji.
 6. PHẠM VI TẦNG / TOÀ: Legacy 66 có 19 tầng căn hộ (tầng 4–22 sau khi trừ 2 tầng hầm
    + 2 tầng TM + 1 tầng để xe), đây là TÒA DUY NHẤT. Khi khách hỏi "tầng 9 toà nào",
@@ -181,7 +181,7 @@ THÔNG TIN DỰ ÁN MASTERI COSMO CENTRAL (cập nhật tháng 4/2026):
 - Giá tham khảo: Từ 6,429 tỷ đồng (căn 1 phòng ngủ 47–57m²). Bảng giá chi tiết
   theo từng tòa/tầng/hướng/loại căn — mời khách để lại số điện thoại để nhận bảng giá
   đầy đủ và cập nhật nhất.
-- Hotline SGS Land: 0971 132 378.
+- Hotline SGS Land: 0379 281 445.
 
 NGUYÊN TẮC TRẢ LỜI:
 1. Trả lời bằng tiếng Việt, ngắn gọn, đúng trọng tâm (tối đa 4–6 câu mỗi lượt).
@@ -193,7 +193,7 @@ NGUYÊN TẮC TRẢ LỜI:
    thương hiệu Masterise Homes, chính sách lãi suất 0%, đang mở bán.
 4. Khi khách bày tỏ ý định mua/đầu tư: chủ động gợi ý "Anh/chị để lại số điện thoại
    ở mục Đăng ký nhận thông tin phía dưới, chuyên viên sẽ gọi lại trong 30 phút",
-   hoặc gọi hotline 0971 132 378.
+   hoặc gọi hotline 0379 281 445.
 5. Xưng "em", gọi khách "anh/chị". Phong cách thân thiện, chuyên nghiệp, không emoji.
 6. PHẠM VI TẦNG / TOÀ: Masteri Cosmo Central có 6 tòa tháp, cao 19–29 tầng mỗi tòa.
    Bảng phân căn chi tiết theo từng tòa/tầng/hướng CHƯA được công bố đầy đủ trong
@@ -226,7 +226,7 @@ THÔNG TIN DỰ ÁN VINHOMES HÓC MÔN (cập nhật 2026):
   ven hồ, gym, an ninh AI 24/7, smart home, 30% diện tích cây xanh, trạm sạc VinFast.
 - Bảng giá 2026: ĐANG CẬP NHẬT – Vinhomes JSC chưa công bố mức giá tham khảo cụ thể.
   Tuyệt đối KHÔNG bịa giá. Hướng dẫn khách đăng ký nhận bảng giá khi mở bán.
-- Hotline SGS Land: 0971 132 378.
+- Hotline SGS Land: 0379 281 445.
 
 NGUYÊN TẮC TRẢ LỜI:
 1. Trả lời bằng tiếng Việt, ngắn gọn, đúng trọng tâm (tối đa 4–6 câu cho mỗi lượt).
@@ -237,7 +237,7 @@ NGUYÊN TẮC TRẢ LỜI:
    (hạ tầng, quy hoạch lên quận, hệ sinh thái Vingroup) một cách khách quan.
 4. Khi khách bày tỏ ý định mua/đầu tư, chủ động gợi ý: "Anh/chị để lại số điện thoại
    ở mục Đăng ký nhận thông tin phía dưới, chuyên viên sẽ gọi lại trong 30 phút",
-   hoặc gọi hotline 0971 132 378.
+   hoặc gọi hotline 0379 281 445.
 5. Xưng "em", gọi khách "anh/chị". Phong cách thân thiện, chuyên nghiệp, không dùng emoji.
 6. PHẠM VI TẦNG / PHÂN KHU: Vinhomes Hóc Môn là đô thị 1.080ha gồm nhà phố, biệt thự,
    shophouse và chung cư cao tầng (smart apartment). Tên phân khu / toà tháp cụ thể và
@@ -414,7 +414,7 @@ export function createLandingAiRoutes(): Router {
       if (!process.env.GEMINI_API_KEY) {
         return res.status(503).json({
           ok: false,
-          error: 'AI tư vấn tạm thời chưa sẵn sàng. Vui lòng gọi hotline 0971 132 378 để được hỗ trợ ngay.',
+          error: 'AI tư vấn tạm thời chưa sẵn sàng. Vui lòng gọi hotline 0379 281 445 để được hỗ trợ ngay.',
         });
       }
 
@@ -450,7 +450,7 @@ export function createLandingAiRoutes(): Router {
       if (!reply) {
         return res.status(502).json({
           ok: false,
-          error: 'Không nhận được phản hồi từ AI. Vui lòng thử lại hoặc gọi hotline 0971 132 378.',
+          error: 'Không nhận được phản hồi từ AI. Vui lòng thử lại hoặc gọi hotline 0379 281 445.',
         });
       }
 
@@ -466,7 +466,7 @@ export function createLandingAiRoutes(): Router {
           ok: false,
           code: 'AI_QUOTA_EXCEEDED',
           retryAfter: Math.max(5, Math.ceil(landingAiQuotaCooldownMs() / 1000)) || 20,
-          error: 'Trợ lý AI đang quá tải. Vui lòng thử lại sau vài giây hoặc gọi hotline 0971 132 378.',
+          error: 'Trợ lý AI đang quá tải. Vui lòng thử lại sau vài giây hoặc gọi hotline 0379 281 445.',
         });
       }
       if (st === 503 || st === 504) {
@@ -481,7 +481,7 @@ export function createLandingAiRoutes(): Router {
       return res.status(500).json({
         ok: false,
         code: 'AI_ERROR',
-        error: 'AI tư vấn gặp sự cố. Vui lòng thử lại hoặc gọi hotline 0971 132 378.',
+        error: 'AI tư vấn gặp sự cố. Vui lòng thử lại hoặc gọi hotline 0379 281 445.',
       });
     }
   });

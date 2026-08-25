@@ -357,10 +357,10 @@ export default function VinhomesHocMonPage() {
                 Liên hệ tư vấn ngay
               </a>
               <a
-                href="tel:+84971132378"
+                href="tel:+84379281445"
                 className="px-8 py-4 bg-white/10 border border-white/30 text-white rounded-xl font-bold text-lg hover:bg-white/20 transition-colors"
               >
-                +84 971 132 378
+                +84 379 281 445
               </a>
             </div>
             <p className="text-xs text-sgs-text-muted mt-6">

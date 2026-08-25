@@ -43,7 +43,7 @@ import {
   transactionLabel,
 } from '../../src/utils/format';
 const SCREEN_W = Dimensions.get('window').width;
-const HOTLINE_FALLBACK = '+84971132378';
+const HOTLINE_FALLBACK = '+84379281445';
 // `slugId` looks like "vinhomes-grand-park-<uuid>" or just "<uuid>". Server
 // extracts the trailing UUID itself, so the mobile client just forwards the
 // raw segment.
@@ -444,7 +444,7 @@ const LeadFormModal: React.FC<LeadFormModalProps> = ({ visible, onClose, listing
                   style={styles.input}
                   value={phone}
                   onChangeText={setPhone}
-                  placeholder="0971 132 378"
+                  placeholder="0379 281 445"
                   placeholderTextColor={colors.textMuted}
                   keyboardType="phone-pad"
                   returnKeyType="next"

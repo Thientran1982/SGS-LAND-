@@ -1787,7 +1787,7 @@ async function handle_suggest_properties(args: Record<string, any>): Promise<any
             total: 0,
             listings: [],
             fallback: true,
-            suggestion: `Hiện tại chưa có BĐS phù hợp trong kho${area ? ` tại ${area}` : ''}. Liên hệ hotline 0971 132 378 để được tư vấn dự án phù hợp.`,
+            suggestion: `Hiện tại chưa có BĐS phù hợp trong kho${area ? ` tại ${area}` : ''}. Liên hệ hotline 0379 281 445 để được tư vấn dự án phù hợp.`,
         };
     }
     return {
@@ -2070,7 +2070,7 @@ async function handle_search_listings_dynamic(args: Record<string, any>): Promis
         fromCache: false,
         searchedAt: new Date().toISOString(),
         tip: result.total === 0
-            ? 'Không tìm thấy BĐS phù hợp. Thử bỏ bớt filter hoặc tìm khu vực rộng hơn. Hotline: 0971 132 378.'
+            ? 'Không tìm thấy BĐS phù hợp. Thử bỏ bớt filter hoặc tìm khu vực rộng hơn. Hotline: 0379 281 445.'
             : `Tìm thấy ${result.total} BĐS, hiển thị ${enriched.length} kết quả.`,
     };
     await kbSet(cacheKey, response, KB_TTL_SHORT);

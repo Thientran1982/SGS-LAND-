@@ -338,7 +338,7 @@ const MASTERI_COSMO: LandingProject = {
   ],
   heroH1: "Masteri Cosmo Central",
   heroSub: "Downtown Đẳng Cấp Quốc Tế — Tại Trái Tim The Global City",
-  heroMeta: "Đỗ Xuân Hợp, Phường Bình Trưng, TP. Thủ Đức, TP.HCM | Hotline: 0971 132 378",
+  heroMeta: "Đỗ Xuân Hợp, Phường Bình Trưng, TP. Thủ Đức, TP.HCM | Hotline: 0379 281 445",
   overviewParas: [
     "Masteri Cosmo Central là phân khu căn hộ cao cấp thuộc bộ sưu tập Masteri Collection do Masterise Homes — chủ đầu tư hàng đầu Đông Nam Á — phát triển. Dự án tọa lạc tại đường Đỗ Xuân Hợp, phường Bình Trưng, TP. Thủ Đức, ngay lõi trung tâm của đại đô thị The Global City rộng 117,4 ha.",
     "Điểm đặc biệt nhất của Masteri Cosmo Central là Foster + Partners — hãng kiến trúc huyền thoại người Anh, tác giả của Apple Park (Mỹ) và The Gherkin (London) — chịu trách nhiệm thiết kế toàn bộ quy hoạch tổng thể. Đây là bảo chứng về chất lượng quốc tế hiếm có tại thị trường bất động sản Việt Nam. Masterise Homes đạt giải Asia Pacific Enterprise Awards 2025: Corporate Excellence Award và Inspirational Brand Award.",
@@ -467,7 +467,7 @@ const VINHOMES_GRAND_PARK: LandingProject = {
     { k: "Tổng sản phẩm", v: "~44.000 căn hộ và sản phẩm thấp tầng, 71 toà cao 25-30 tầng" },
     { k: "Tình trạng pháp lý", v: "Sổ hồng sở hữu lâu dài (các phân khu đã bàn giao); người nước ngoài sở hữu tối đa 50 năm" },
     { k: "Hạ tầng kết nối", v: "Gần Vành đai 3, tuyến Metro số 1 (Bến Thành - Suối Tiên); cách trung tâm Thủ Thiêm ~25 phút, sân bay Tân Sơn Nhất ~55 phút" },
-    { k: "Kênh tư vấn", v: "0971 132 378 (SGS LAND – cung cấp thông tin tham khảo)" },
+    { k: "Kênh tư vấn", v: "0379 281 445 (SGS LAND – cung cấp thông tin tham khảo)" },
   ],
   locationIntro: "Vinhomes Grand Park nằm trên đường Nguyễn Xiển, hiện thuộc hai phường Tăng Nhơn Phú và Long Bình, TP.HCM (địa bàn Quận 9 cũ, TP Thủ Đức trước sáp nhập hành chính 1/7/2025). Vị trí này kết nối thuận tiện với Vành đai 3, cao tốc TP.HCM - Long Thành - Dầu Giây và tuyến Metro số 1 (Bến Thành - Suối Tiên), cách trung tâm tài chính Thủ Thiêm khoảng 25 phút và trung tâm TP.HCM khoảng 30 phút di chuyển.",
   googleMapsEmbedSrc: "https://www.google.com/maps?q=Vinhomes+Grand+Park+Nguyen+Xien+TP+Thu+Duc&output=embed",
@@ -561,7 +561,7 @@ const THE_GLOBAL_CITY: LandingProject = {
     { k: "Tổng sản phẩm", v: "Theo một số nguồn tổng hợp: khoảng 10.000 căn hộ và hơn 1.000 sản phẩm thấp tầng (biệt thự, nhà phố, shophouse) – số liệu tham khảo, chưa có công bố chính thức thống nhất" },
     { k: "Hạ tầng kết nối", v: "Nút giao An Phú (cách ~1km), cao tốc TP.HCM – Long Thành – Dầu Giây, Xa Lộ Hà Nội, hầm Thủ Thiêm, gần ga Rạch Chiếc – tuyến Metro số 1 Bến Thành – Suối Tiên (đã vận hành từ cuối 2024)" },
     { k: "Tổng vốn đầu tư", v: "Chưa công bố chính thức bởi chủ đầu tư" },
-    { k: "Kênh tư vấn", v: "0971 132 378 (SGS LAND – cung cấp thông tin tham khảo)" },
+    { k: "Kênh tư vấn", v: "0379 281 445 (SGS LAND – cung cấp thông tin tham khảo)" },
   ],
   locationIntro: "The Global City nằm trên trục Đỗ Xuân Hợp – Song Hành – Liên Phường, hiện thuộc phường Bình Trưng, TP Thủ Đức (địa bàn An Phú, Quận 2 cũ trước sáp nhập hành chính 1/7/2025), tiếp giáp sông Rạch Chiếc, gần khu đô thị Sala, Saigon Sports City và Thảo Điền. Từ dự án di chuyển tới trung tâm Quận 1 khoảng 7-9km qua Mai Chí Thọ và hầm Thủ Thiêm, đồng thời tiếp cận thuận tiện cao tốc TP.HCM – Long Thành – Dầu Giây, Xa Lộ Hà Nội và ga Rạch Chiếc thuộc tuyến Metro số 1 (Bến Thành – Suối Tiên).",
   googleMapsEmbedSrc: "https://www.google.com/maps?q=The+Global+City+%C4%90%E1%BB%97+Xu%C3%A2n+H%E1%BB%A3p+Ph%C6%B0%E1%BB%9Dng+B%C3%ACnh+Tr%C6%B0ng+TP+Th%E1%BB%A7+%C4%90%E1%BB%A9c&output=embed",
@@ -592,7 +592,7 @@ const THE_GLOBAL_CITY: LandingProject = {
     },
     {
       q: "Vì sao nên tìm hiểu The Global City qua SGS Land?",
-      a: "SGS Land là đơn vị tư vấn bất động sản có kinh nghiệm cập nhật giá bán, chính sách bán hàng và pháp lý thực tế tại The Global City theo từng thời điểm, giúp khách hàng đối chiếu thông tin từ chủ đầu tư và thị trường thứ cấp trước khi quyết định giao dịch. Liên hệ hotline 0971 132 378 để được tư vấn chi tiết và cập nhật bảng giá mới nhất.",
+      a: "SGS Land là đơn vị tư vấn bất động sản có kinh nghiệm cập nhật giá bán, chính sách bán hàng và pháp lý thực tế tại The Global City theo từng thời điểm, giúp khách hàng đối chiếu thông tin từ chủ đầu tư và thị trường thứ cấp trước khi quyết định giao dịch. Liên hệ hotline 0379 281 445 để được tư vấn chi tiết và cập nhật bảng giá mới nhất.",
     },
   ],
   navLinks: [
@@ -659,7 +659,7 @@ const IZUMI_CITY: LandingProject = {
     { k: "Tổng sản phẩm", v: "~13.500 căn, quy hoạch dân số khoảng 25.000 người" },
     { k: "Hạ tầng kết nối", v: "Cao tốc TP.HCM – Long Thành – Dầu Giây, Quốc lộ 51, Vành đai 3, cách sân bay Long Thành và trung tâm TP.HCM ~20 phút di chuyển (công bố CĐT)" },
     { k: "Tổng vốn đầu tư", v: "Khoảng 18.600 tỷ đồng (công bố hợp tác Nam Long – Hankyu Hanshin 2021)" },
-    { k: "Kênh tư vấn", v: "0971 132 378 (SGS LAND – cung cấp thông tin tham khảo)" },
+    { k: "Kênh tư vấn", v: "0379 281 445 (SGS LAND – cung cấp thông tin tham khảo)" },
   ],
   locationIntro: "Izumi City nằm tại phường Long Hưng, TP. Biên Hòa, tỉnh Đồng Nai – khu vực ven sông Đồng Nai tiếp giáp nhiều tuyến giao thông huyết mạch như cao tốc TP.HCM – Long Thành – Dầu Giây, Quốc lộ 51 và Vành đai 3, tạo lợi thế kết nối nhanh về trung tâm TP.HCM, khu vực Nhơn Trạch và sân bay quốc tế Long Thành đang được xây dựng. Vị trí ven sông cũng cho phép cư dân di chuyển đường thủy bằng tàu cao tốc về khu vực Bạch Đằng, Quận 1.",
   googleMapsEmbedSrc: "https://www.google.com/maps?q=Izumi+City+Nam+Long+Long+Hung+Bien+Hoa+Dong+Nai&output=embed",
@@ -757,7 +757,7 @@ const VINHOMES_CENTRAL_PARK: LandingProject = {
     { k: "Tổng sản phẩm", v: "Theo các nguồn tổng hợp: khoảng 10.000-12.000 căn hộ (số liệu tham khảo, dự án đã bàn giao toàn bộ)" },
     { k: "Tình trạng pháp lý", v: "Đã cấp sổ hồng toàn bộ các phân khu đã bàn giao" },
     { k: "Hạ tầng kết nối", v: "Cầu Sài Gòn, đường Nguyễn Hữu Cảnh - Điện Biên Phủ, cách trung tâm Quận 1 khoảng 3km" },
-    { k: "Kênh tư vấn", v: "0971 132 378 (SGS LAND – cung cấp thông tin tham khảo)" },
+    { k: "Kênh tư vấn", v: "0379 281 445 (SGS LAND – cung cấp thông tin tham khảo)" },
   ],
   locationIntro: "Vinhomes Central Park nằm ven sông Sài Gòn trên đường Nguyễn Hữu Cảnh, Bình Thạnh, ngay cạnh tòa Landmark 81 – công trình cao nhất Việt Nam. Vị trí này chỉ cách trung tâm Quận 1 khoảng 3km, kết nối trực tiếp qua cầu Sài Gòn và trục Điện Biên Phủ - Nguyễn Hữu Cảnh, thuận tiện di chuyển tới khu trung tâm tài chính - thương mại và Thảo Điền, Quận 2 cũ.",
   googleMapsEmbedSrc: "https://www.google.com/maps?q=Vinhomes+Central+Park+Nguyen+Huu+Canh+Binh+Thanh+TP+HCM&output=embed",
@@ -847,7 +847,7 @@ const MASTERI_PARK_PLACE: LandingProject = {
     { k: "Các phân khu liên quan", v: "Masteri Grand View, Lumiere Midtown, Masteri Cosmo Central (cùng hệ Masterise trong The Global City)" },
     { k: "Hạ tầng kết nối", v: "Nút giao An Phú, cao tốc TP.HCM - Long Thành - Dầu Giây, Xa Lộ Hà Nội, ga Rạch Chiếc (Metro số 1)" },
     { k: "Tình trạng pháp lý", v: "Theo tiến độ triển khai từng giai đoạn của The Global City – cần xác minh cụ thể theo đợt bàn giao" },
-    { k: "Kênh tư vấn", v: "0971 132 378 (SGS LAND – cung cấp thông tin tham khảo)" },
+    { k: "Kênh tư vấn", v: "0379 281 445 (SGS LAND – cung cấp thông tin tham khảo)" },
   ],
   locationIntro: "Masteri Park Place nằm trong khu đô thị The Global City trên trục Đỗ Xuân Hợp - Song Hành - Liên Phường, phường Bình Trưng, TP Thủ Đức, cách trung tâm Quận 1 khoảng 7-9km qua trục Mai Chí Thọ và hầm Thủ Thiêm. Vị trí này gần nút giao An Phú, cao tốc TP.HCM - Long Thành - Dầu Giây và ga Rạch Chiếc thuộc tuyến Metro số 1.",
   googleMapsEmbedSrc: "https://www.google.com/maps?q=Masteri+Park+Place+The+Global+City+Phuong+Binh+Trung+TP+Thu+Duc&output=embed",
@@ -866,7 +866,7 @@ const MASTERI_PARK_PLACE: LandingProject = {
     },
     {
       q: "Giá căn hộ Masteri Park Place hiện nay khoảng bao nhiêu?",
-      a: "Giá bán Masteri Park Place biến động theo giai đoạn mở bán, vị trí tầng và view căn hộ, tương tự mặt bằng giá chung của các phân khu căn hộ cao tầng khác trong The Global City. Đây là thông tin cần cập nhật trực tiếp theo từng thời điểm – vui lòng liên hệ SGS Land (0971 132 378) để nhận báo giá và chính sách bán hàng mới nhất.",
+      a: "Giá bán Masteri Park Place biến động theo giai đoạn mở bán, vị trí tầng và view căn hộ, tương tự mặt bằng giá chung của các phân khu căn hộ cao tầng khác trong The Global City. Đây là thông tin cần cập nhật trực tiếp theo từng thời điểm – vui lòng liên hệ SGS Land (0379 281 445) để nhận báo giá và chính sách bán hàng mới nhất.",
     },
     {
       q: "Masteri Park Place cách trung tâm TP.HCM bao xa?",
@@ -930,7 +930,7 @@ const DIAMOND_SKY_VAN_PHUC_CITY: LandingProject = {
     { k: "Loại hình", v: "Căn hộ cao tầng (Diamond Sky), ngoài ra KĐT có biệt thự, nhà phố, shophouse đã bàn giao" },
     { k: "Hạ tầng kết nối", v: "Quốc lộ 13, cầu Bình Lợi, trục Phạm Văn Đồng, cách trung tâm Quận 1 khoảng 12km" },
     { k: "Tình trạng pháp lý", v: "Cần xác minh cụ thể theo từng toà/giai đoạn tại thời điểm giao dịch" },
-    { k: "Kênh tư vấn", v: "0971 132 378 (SGS LAND – cung cấp thông tin tham khảo)" },
+    { k: "Kênh tư vấn", v: "0379 281 445 (SGS LAND – cung cấp thông tin tham khảo)" },
   ],
   locationIntro: "Diamond Sky nằm trong khu đô thị Vạn Phúc City tại phường Hiệp Bình Phước, TP Thủ Đức – khu vực bán đảo được bao quanh bởi 3 mặt sông Sài Gòn. Từ đây di chuyển ra trung tâm Quận 1 khoảng 12km qua Quốc lộ 13, cầu Bình Lợi và trục đường Phạm Văn Đồng.",
   googleMapsEmbedSrc: "https://www.google.com/maps?q=Van+Phuc+City+Diamond+Sky+Hiep+Binh+Phuoc+TP+Thu+Duc&output=embed",
@@ -949,7 +949,7 @@ const DIAMOND_SKY_VAN_PHUC_CITY: LandingProject = {
     },
     {
       q: "Giá căn hộ Diamond Sky hiện nay khoảng bao nhiêu?",
-      a: "Theo ghi nhận thị trường, giá thứ cấp căn hộ Diamond Sky tham khảo khoảng từ 9,6 tỷ đồng trở lên tùy diện tích, tầng và view, đây là mức giá tham khảo tổng hợp từ thị trường, không phải bảng giá chính thức. Vui lòng liên hệ SGS Land (0971 132 378) để được báo giá cập nhật theo từng căn cụ thể.",
+      a: "Theo ghi nhận thị trường, giá thứ cấp căn hộ Diamond Sky tham khảo khoảng từ 9,6 tỷ đồng trở lên tùy diện tích, tầng và view, đây là mức giá tham khảo tổng hợp từ thị trường, không phải bảng giá chính thức. Vui lòng liên hệ SGS Land (0379 281 445) để được báo giá cập nhật theo từng căn cụ thể.",
     },
     {
       q: "Vạn Phúc City / Diamond Sky cách trung tâm TP.HCM bao xa?",
@@ -1015,7 +1015,7 @@ const THU_THIEM: LandingProject = {
     { k: "Các dự án tiêu biểu", v: "Empire City, Sarimi, The River Thủ Thiêm, Metropole Thủ Thiêm, Eco Smart City, Grand Marina Saigon" },
     { k: "Hạ tầng kết nối", v: "Hầm Thủ Thiêm, cầu Thủ Thiêm 1, cầu Thủ Thiêm 2 (Ba Son), cầu đi bộ Thủ Thiêm (đang triển khai)" },
     { k: "Năm quy hoạch", v: "Phê duyệt lần đầu 1996, nhiều lần điều chỉnh quy hoạch sau đó" },
-    { k: "Hotline tư vấn", v: "0971 132 378 (SGS Land – đại lý ủy quyền chính thức)" },
+    { k: "Hotline tư vấn", v: "0379 281 445 (SGS Land – đại lý ủy quyền chính thức)" },
   ],
   locationIntro: "Khu đô thị mới Thủ Thiêm nằm bên bờ Đông sông Sài Gòn, đối diện trực tiếp Quận 1 – trung tâm hiện hữu của TP.HCM. Khu vực kết nối với Quận 1 qua hầm Thủ Thiêm, cầu Thủ Thiêm 1, cầu Thủ Thiêm 2 (Ba Son) và cầu đi bộ Thủ Thiêm, đồng thời giáp ranh các khu dân cư hiện hữu An Phú, An Khánh, Bình Trưng thuộc TP Thủ Đức cũ.",
   googleMapsEmbedSrc: "https://www.google.com/maps?q=Khu+do+thi+moi+Thu+Thiem+TP+HCM&output=embed",
@@ -1042,7 +1042,7 @@ const THU_THIEM: LandingProject = {
     },
     {
       q: "Vì sao nên tìm hiểu bất động sản Thủ Thiêm qua SGS Land?",
-      a: "SGS Land cập nhật thông tin quy hoạch, hạ tầng và các dự án thành phần tại Thủ Thiêm theo thời gian thực, giúp khách hàng có cái nhìn tổng quan và đối chiếu giữa các lựa chọn trước khi quyết định. Liên hệ hotline 0971 132 378 để được tư vấn chi tiết theo từng dự án cụ thể.",
+      a: "SGS Land cập nhật thông tin quy hoạch, hạ tầng và các dự án thành phần tại Thủ Thiêm theo thời gian thực, giúp khách hàng có cái nhìn tổng quan và đối chiếu giữa các lựa chọn trước khi quyết định. Liên hệ hotline 0379 281 445 để được tư vấn chi tiết theo từng dự án cụ thể.",
     },
   ],
   navLinks: [

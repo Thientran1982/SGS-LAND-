@@ -70,7 +70,7 @@ const STATIC_PAGE_META: Record<string, {
             'https://sgsland.vn',
           ],
           description: 'Đại lý phân phối bất động sản hàng đầu TP.HCM, chuyên Aqua City Novaland, The Global City Masterise Homes, Izumi City Nam Long, Vinhomes Cần Giờ. Định giá AI ±5%, tư vấn miễn phí.',
-          contactPoint: { '@type': 'ContactPoint', telephone: '+84-971-132-378', contactType: 'customer service', availableLanguage: ['Vietnamese', 'English'], url: `${APP_URL}/contact` },
+          contactPoint: { '@type': 'ContactPoint', telephone: '+84-379-281-445', contactType: 'customer service', availableLanguage: ['Vietnamese', 'English'], url: `${APP_URL}/contact` },
           areaServed: [
             { '@type': 'State', name: 'TP.HCM', containedInPlace: { '@type': 'Country', name: 'Việt Nam' } },
             { '@type': 'State', name: 'Đồng Nai', containedInPlace: { '@type': 'Country', name: 'Việt Nam' } },
@@ -91,7 +91,7 @@ const STATIC_PAGE_META: Record<string, {
           '@id': `${APP_URL}/#agent`,
           name: 'SGS LAND - Đại Lý BĐS TP.HCM',
           url: APP_URL,
-          telephone: '+84-971-132-378',
+          telephone: '+84-379-281-445',
           email: 'info@sgsland.vn',
           description: 'Đại lý phân phối bất động sản TP.HCM, Đồng Nai, Bình Dương. Định giá AI ±5%, không thu phí người mua.',
           areaServed: [
@@ -329,7 +329,7 @@ const STATIC_PAGE_META: Record<string, {
               '@type': 'HowToStep',
               position: 4,
               name: 'Nhận báo cáo chi tiết & tư vấn',
-              text: 'Tải báo cáo PDF có biểu đồ so sánh, lịch sử giao dịch khu vực, dự báo 12 tháng. Đặt lịch chuyên viên SGS LAND tư vấn 1-1 miễn phí qua hotline +84 971 132 378 hoặc form trên trang.',
+              text: 'Tải báo cáo PDF có biểu đồ so sánh, lịch sử giao dịch khu vực, dự báo 12 tháng. Đặt lịch chuyên viên SGS LAND tư vấn 1-1 miễn phí qua hotline +84 379 281 445 hoặc form trên trang.',
               url: `${APP_URL}/contact`,
             },
           ],
@@ -345,7 +345,7 @@ const STATIC_PAGE_META: Record<string, {
             { '@type': 'Question', name: 'Định giá BĐS bằng AI của SGS LAND có chính xác không?', acceptedAnswer: { '@type': 'Answer', text: 'Sai số ±5–10% so với giá thẩm định viên chuyên nghiệp — ngang chuẩn quốc tế (Zillow Zestimate ±7%, Redfin Estimate ±6%). Mô hình AVM huấn luyện trên 45.000+ giao dịch BĐS thực tại Việt Nam 2020-2026, cập nhật hàng tuần dữ liệu CBRE/Savills.' } },
             { '@type': 'Question', name: 'Định giá AI có mất phí không?', acceptedAnswer: { '@type': 'Answer', text: 'Hoàn toàn miễn phí, không giới hạn lượt sử dụng, không cần đăng ký tài khoản. Đây là dịch vụ công cộng của SGS LAND nhằm minh bạch hóa thị trường BĐS Việt Nam.' } },
             { '@type': 'Question', name: 'AI định giá được loại BĐS nào?', acceptedAnswer: { '@type': 'Answer', text: 'Căn hộ chung cư (cao cấp, trung cấp, bình dân), nhà phố, biệt thự, shophouse, đất nền thổ cư. Khu vực: TP.HCM, Hà Nội, Đồng Nai, Bình Dương, Long An, Bà Rịa-Vũng Tàu, Cần Thơ, Đà Nẵng. Mở rộng dần các tỉnh/thành khác.' } },
-            { '@type': 'Question', name: 'Kết quả định giá AI có thể dùng làm hồ sơ vay ngân hàng không?', acceptedAnswer: { '@type': 'Answer', text: 'Báo cáo AI là tham khảo. Để vay ngân hàng cần thẩm định giá chính thức từ công ty thẩm định có giấy phép Bộ Tài Chính. SGS LAND có liên kết với 5+ công ty thẩm định uy tín — đặt lịch qua hotline +84 971 132 378 để được hỗ trợ miễn phí.' } },
+            { '@type': 'Question', name: 'Kết quả định giá AI có thể dùng làm hồ sơ vay ngân hàng không?', acceptedAnswer: { '@type': 'Answer', text: 'Báo cáo AI là tham khảo. Để vay ngân hàng cần thẩm định giá chính thức từ công ty thẩm định có giấy phép Bộ Tài Chính. SGS LAND có liên kết với 5+ công ty thẩm định uy tín — đặt lịch qua hotline +84 379 281 445 để được hỗ trợ miễn phí.' } },
             { '@type': 'Question', name: 'Sai số định giá AI từ đâu mà có?', acceptedAnswer: { '@type': 'Answer', text: 'Phụ thuộc vào: (1) chất lượng dữ liệu giao dịch trong khu vực, (2) đặc điểm riêng của BĐS (view, hướng, tầng, nội thất) chưa input đầy đủ, (3) biến động thị trường ngắn hạn. SGS LAND khuyến nghị kết hợp AI + tư vấn chuyên gia 1-1 để có định giá chính xác nhất.' } },
             { '@type': 'Question', name: 'Dinh gia AI cua SGS LAND sai so bao nhieu?', acceptedAnswer: { '@type': 'Answer', text: 'He thong AVM dat MAPE +-4.8%, kiem chung tren 2400+ giao dich cong chung 2024-2025. Sai so thuong duoi +-5% voi du lieu day du.' } },
             { '@type': 'Question', name: 'Dinh gia AI cua SGS LAND co tinh phi khong?', acceptedAnswer: { '@type': 'Answer', text: 'Hoan toan mien phi cho tat ca nguoi dung, khong gioi han so lan. Truy cap tai https://sgsland.vn/ai-valuation.' } },
@@ -637,7 +637,7 @@ const STATIC_PAGE_META: Record<string, {
           },
           contactPoint: {
             '@type': 'ContactPoint',
-            telephone: '+84-971-132-378',
+            telephone: '+84-379-281-445',
             email: 'info@sgsland.vn',
             contactType: 'customer service',
             availableLanguage: 'Vietnamese',
@@ -755,7 +755,7 @@ const STATIC_PAGE_META: Record<string, {
   },
   contact: {
     title: 'Liên Hệ Tư Vấn | SGS LAND',
-    description: 'Liên hệ đội ngũ tư vấn SGS LAND qua hotline +84 971 132 378, email info@sgsland.vn hoặc LiveChat. Phản hồi trong 4 giờ làm việc. Demo miễn phí theo yêu cầu.',
+    description: 'Liên hệ đội ngũ tư vấn SGS LAND qua hotline +84 379 281 445, email info@sgsland.vn hoặc LiveChat. Phản hồi trong 4 giờ làm việc. Demo miễn phí theo yêu cầu.',
     h1: 'Liên Hệ SGS LAND',
     structuredData: {
       '@context': 'https://schema.org',
@@ -781,7 +781,7 @@ const STATIC_PAGE_META: Record<string, {
           '@id': `${APP_URL}/#localbusiness`,
           name: 'SGS LAND',
           url: APP_URL,
-          telephone: '+84-971-132-378',
+          telephone: '+84-379-281-445',
           email: 'info@sgsland.vn',
           image: `${APP_URL}/og-image.jpg`,
           address: {
@@ -799,7 +799,7 @@ const STATIC_PAGE_META: Record<string, {
             { '@type': 'OpeningHoursSpecification', dayOfWeek: ['Saturday'], opens: '08:00', closes: '12:00' },
           ],
           contactPoint: [
-            { '@type': 'ContactPoint', telephone: '+84-971-132-378', contactType: 'sales', availableLanguage: 'Vietnamese' },
+            { '@type': 'ContactPoint', telephone: '+84-379-281-445', contactType: 'sales', availableLanguage: 'Vietnamese' },
             { '@type': 'ContactPoint', email: 'info@sgsland.vn', contactType: 'customer service', availableLanguage: 'Vietnamese' },
           ],
           aggregateRating: SGS_RATING,
@@ -966,7 +966,7 @@ const STATIC_PAGE_META: Record<string, {
             { '@type': 'ApartmentComplex', '@id': `${APP_URL}/du-an/aqua-city#project`, name: 'Aqua City Novaland', url: `${APP_URL}/du-an/aqua-city` },
             { '@type': 'ApartmentComplex', '@id': `${APP_URL}/du-an/izumi-city#project`, name: 'Izumi City Nam Long', url: `${APP_URL}/du-an/izumi-city` },
           ],
-          telephone: '+84-971-132-378',
+          telephone: '+84-379-281-445',
           aggregateRating: SGS_RATING,
           parentOrganization: SGS_PARENT_ORG,
         },
@@ -1025,7 +1025,7 @@ const STATIC_PAGE_META: Record<string, {
           url: `${APP_URL}/bat-dong-san-long-thanh`,
           areaServed: { '@type': 'City', name: 'Long Thành', containedInPlace: { '@type': 'State', name: 'Đồng Nai', containedInPlace: { '@type': 'Country', name: 'Việt Nam' } } },
           knowsAbout: ['Bất động sản Long Thành', 'Đất nền sân bay Long Thành', 'Đầu tư BĐS Đồng Nai'],
-          telephone: '+84-971-132-378',
+          telephone: '+84-379-281-445',
           aggregateRating: SGS_RATING,
           parentOrganization: SGS_PARENT_ORG,
         },
@@ -1072,7 +1072,7 @@ const STATIC_PAGE_META: Record<string, {
           '@id': `${APP_URL}/du-an#agent`,
           name: 'SGS LAND - Đại Lý BĐS TP.HCM',
           url: `${APP_URL}/du-an`,
-          telephone: '+84-971-132-378',
+          telephone: '+84-379-281-445',
           description: 'Đại lý phân phối chính thức các dự án bất động sản lớn tại TP.HCM, Đồng Nai, Bình Dương.',
           areaServed: [
             { '@type': 'State', name: 'TP.HCM', containedInPlace: { '@type': 'Country', name: 'Việt Nam' } },
@@ -1569,14 +1569,14 @@ const STATIC_PAGE_META: Record<string, {
             { '@type': 'PropertyValue', name: 'Pháp lý', value: 'Thủ tướng phê duyệt chủ trương' },
             { '@type': 'PropertyValue', name: 'Tiến độ', value: 'Khởi công 2025 — mở bán 2026 — bàn giao từ 2028' },
             { '@type': 'PropertyValue', name: 'Cầu Cần Giờ', value: '11.000 tỷ VND, hoàn thành 2028' },
-            { '@type': 'PropertyValue', name: 'Đại lý phân phối', value: 'SGS LAND — sgsland.vn — 0971 132 378' },
+            { '@type': 'PropertyValue', name: 'Đại lý phân phối', value: 'SGS LAND — sgsland.vn — 0379 281 445' },
           ],
         },
         {
           '@type': 'RealEstateAgent',
           name: 'SGS LAND',
           url: `${APP_URL}`,
-          telephone: '+84-971-132-378',
+          telephone: '+84-379-281-445',
           email: 'info@sgsland.vn',
           description: 'Đại lý phân phối chính thức Vinhomes Cần Giờ. Tư vấn miễn phí, không thu phí người mua.',
           areaServed: { '@type': 'City', name: 'TP.HCM' },
@@ -1818,7 +1818,7 @@ const STATIC_PAGE_META: Record<string, {
           '@id': `${APP_URL}/bat-dong-san-thu-duc#agent`,
           name: 'SGS LAND - BĐS TP Thủ Đức',
           url: `${APP_URL}/bat-dong-san-thu-duc`,
-          telephone: '+84-971-132-378',
+          telephone: '+84-379-281-445',
           areaServed: { '@type': 'City', name: 'TP Thủ Đức', containedInPlace: { '@type': 'State', name: 'TP.HCM', containedInPlace: { '@type': 'Country', name: 'Việt Nam' } } },
           knowsAbout: ['Bất động sản Thủ Đức', 'Căn hộ Thủ Đức', 'Vinhomes Grand Park', 'The Global City Masterise', 'Vạn Phúc City', 'Thủ Thiêm', 'Metro số 1', 'SHTP', 'Đại Học Quốc Gia TP.HCM'],
           mentions: [
@@ -1914,7 +1914,7 @@ const STATIC_PAGE_META: Record<string, {
           '@id': `${APP_URL}/bat-dong-san-binh-duong#agent`,
           name: 'SGS LAND - BĐS Bình Dương',
           url: `${APP_URL}/bat-dong-san-binh-duong`,
-          telephone: '+84-971-132-378',
+          telephone: '+84-379-281-445',
           areaServed: { '@type': 'State', name: 'Bình Dương', containedInPlace: { '@type': 'Country', name: 'Việt Nam' } },
           knowsAbout: ['Bất động sản Bình Dương', 'Khu công nghiệp Bình Dương', 'Thuận An', 'Dĩ An', 'Thủ Dầu Một', 'Thành Phố Mới Bình Dương', 'Cho thuê chuyên gia FDI'],
           aggregateRating: SGS_RATING,
@@ -1987,7 +1987,7 @@ const STATIC_PAGE_META: Record<string, {
           '@id': `${APP_URL}/bat-dong-san-quan-7#agent`,
           name: 'SGS LAND - BĐS Quận 7',
           url: `${APP_URL}/bat-dong-san-quan-7`,
-          telephone: '+84-971-132-378',
+          telephone: '+84-379-281-445',
           areaServed: { '@type': 'City', name: 'Quận 7', containedInPlace: { '@type': 'State', name: 'TP.HCM', containedInPlace: { '@type': 'Country', name: 'Việt Nam' } } },
           knowsAbout: ['Bất động sản Quận 7', 'Phú Mỹ Hưng', 'Sunrise City Novaland', 'Cộng đồng Hàn Quốc TP.HCM', 'Cộng đồng Nhật TP.HCM', 'Trường quốc tế Quận 7', 'Cho thuê chuyên gia'],
           aggregateRating: SGS_RATING,
@@ -2075,7 +2075,7 @@ const STATIC_PAGE_META: Record<string, {
           '@id': `${APP_URL}/bat-dong-san-phu-nhuan#agent`,
           name: 'SGS LAND - BĐS Phú Nhuận',
           url: `${APP_URL}/bat-dong-san-phu-nhuan`,
-          telephone: '+84-971-132-378',
+          telephone: '+84-379-281-445',
           areaServed: { '@type': 'City', name: 'Phú Nhuận', containedInPlace: { '@type': 'State', name: 'TP.HCM', containedInPlace: { '@type': 'Country', name: 'Việt Nam' } } },
           knowsAbout: ['Bất động sản Phú Nhuận', 'Nhà phố Phú Nhuận', 'Phan Đình Phùng', 'Hoàng Văn Thụ', 'Phan Xích Long', 'Gần sân bay Tân Sơn Nhất', 'Cho thuê mặt bằng kinh doanh'],
           aggregateRating: SGS_RATING,
@@ -2162,7 +2162,7 @@ const STATIC_PAGE_META: Record<string, {
           '@id': `${APP_URL}/bat-dong-san-binh-chanh#agent`,
           name: 'SGS LAND - BĐS Bình Chánh',
           url: `${APP_URL}/bat-dong-san-binh-chanh`,
-          telephone: '+84-971-132-378',
+          telephone: '+84-379-281-445',
           areaServed: { '@type': 'City', name: 'Bình Chánh', containedInPlace: { '@type': 'State', name: 'TP.HCM', containedInPlace: { '@type': 'Country', name: 'Việt Nam' } } },
           knowsAbout: ['Bất động sản Bình Chánh', 'Đất nền Bình Chánh', 'Vành đai 3', 'Bình Hưng', 'Tân Kiên', 'Vĩnh Lộc', 'Khu công nghiệp Lê Minh Xuân', 'Cửa ngõ Tây Nam TP.HCM'],
           aggregateRating: SGS_RATING,
@@ -2215,7 +2215,7 @@ const STATIC_PAGE_META: Record<string, {
             { '@type': 'Question', name: 'Cầu Cần Giờ khi nào hoàn thành và ảnh hưởng giá BĐS thế nào?', acceptedAnswer: { '@type': 'Answer', text: 'Cầu Cần Giờ vượt sông Soài Rạp dài 3,3km dự kiến thông xe 2026, rút ngắn khoảng cách từ Q1 xuống còn 30–35 phút (thay vì 90 phút qua phà). BĐS bán kính 5km từ cầu đã tăng 30–50% từ 2022. Khi thông xe, dự báo thêm 20–40% tăng trưởng.' } },
             { '@type': 'Question', name: 'Nên mua biệt thự nghỉ dưỡng hay đất nền Cần Giờ?', acceptedAnswer: { '@type': 'Answer', text: 'Đất nền thổ cư trong khu dân cư: vốn thấp (3–10 tỷ), thanh khoản tốt hơn, phù hợp đầu tư dài hạn. Biệt thự nghỉ dưỡng Vinhomes: vốn lớn (20–80 tỷ), khai thác cho thuê ngắn hạn Airbnb 8–15%/năm khi Cầu Cần Giờ thông xe. SGS LAND định giá AI và tư vấn chiến lược miễn phí.' } },
             { '@type': 'Question', name: 'Từ trung tâm TP.HCM đến Cần Giờ mất bao lâu?', acceptedAnswer: { '@type': 'Answer', text: 'Hiện tại: Q1 → Cần Giờ qua phà Bình Khánh mất 60–90 phút. Sau 2026: khi Cầu Cần Giờ và đường ven biển hoàn thành, rút ngắn còn 30–40 phút qua đường bộ liên tục.' } },
-            { '@type': 'Question', name: 'SGS LAND phân phối dự án nào ở Cần Giờ?', acceptedAnswer: { '@type': 'Answer', text: 'SGS LAND là đại lý phân phối chính thức Vinhomes Cần Giờ — siêu đô thị biển 2.870ha lớn nhất Việt Nam. Ngoài ra SGS LAND kết nối quỹ đất thổ cư và biệt thự hiện hữu tại thị trấn Cần Thạnh và Bình Khánh. Hotline tư vấn: +84 971 132 378.' } },
+            { '@type': 'Question', name: 'SGS LAND phân phối dự án nào ở Cần Giờ?', acceptedAnswer: { '@type': 'Answer', text: 'SGS LAND là đại lý phân phối chính thức Vinhomes Cần Giờ — siêu đô thị biển 2.870ha lớn nhất Việt Nam. Ngoài ra SGS LAND kết nối quỹ đất thổ cư và biệt thự hiện hữu tại thị trấn Cần Thạnh và Bình Khánh. Hotline tư vấn: +84 379 281 445.' } },
           ],
         },
         {
@@ -2238,7 +2238,7 @@ const STATIC_PAGE_META: Record<string, {
           '@id': `${APP_URL}/bat-dong-san-can-gio#agent`,
           name: 'SGS LAND - Bất Động Sản Cần Giờ',
           url: `${APP_URL}/bat-dong-san-can-gio`,
-          telephone: '+84-971-132-378',
+          telephone: '+84-379-281-445',
           areaServed: { '@type': 'City', name: 'Cần Giờ', containedInPlace: { '@type': 'State', name: 'TP.HCM', containedInPlace: { '@type': 'Country', name: 'Việt Nam' } } },
           knowsAbout: ['Bất động sản Cần Giờ', 'Vinhomes Cần Giờ', 'Đất nền Cần Giờ', 'Cầu Cần Giờ', 'Đô thị biển TP.HCM', 'Dự trữ Sinh quyển UNESCO Cần Giờ', 'Biệt thự nghỉ dưỡng Cần Giờ'],
           mentions: [
@@ -2328,7 +2328,7 @@ const STATIC_PAGE_META: Record<string, {
           '@id': `${APP_URL}/bat-dong-san-binh-thanh#agent`,
           name: 'SGS LAND - BĐS Bình Thạnh',
           url: `${APP_URL}/bat-dong-san-binh-thanh`,
-          telephone: '+84-971-132-378',
+          telephone: '+84-379-281-445',
           areaServed: { '@type': 'City', name: 'Bình Thạnh', containedInPlace: { '@type': 'State', name: 'TP.HCM', containedInPlace: { '@type': 'Country', name: 'Việt Nam' } } },
           knowsAbout: ['Bất động sản Bình Thạnh', 'Vinhomes Central Park', 'Landmark 81', 'Masterise Grand Marina Saigon', 'Lumière Riverside', 'Căn hộ ven sông Bình Thạnh', 'Metro số 1 Bình Thạnh'],
           mentions: [
@@ -2383,7 +2383,7 @@ const STATIC_PAGE_META: Record<string, {
             { '@type': 'Question', name: 'Pháp lý đất Long An cần kiểm tra gì?', acceptedAnswer: { '@type': 'Answer', text: 'Đất Long An hay gặp vấn đề: (1) Đất nông nghiệp chưa chuyển mục đích dùng, phân lô bán nền trái phép; (2) Đất nằm trong quy hoạch KCN hoặc hành lang bảo vệ kênh thủy lợi; (3) Đất thuộc vùng thấp trũng, ngập úng theo mùa.' } },
             { '@type': 'Question', name: 'Vành đai 3 và Vành đai 4 ảnh hưởng BĐS Long An thế nào?', acceptedAnswer: { '@type': 'Answer', text: 'Vành đai 3 qua Long An (đoạn Bến Lức–Nhơn Trạch) thông xe 2026, mở kết nối trực tiếp với sân bay Long Thành mà không qua TP.HCM. Vành đai 4 (đang quy hoạch) sẽ đi qua trung tâm Long An, tạo thêm nút giao và đô thị mới.' } },
             { '@type': 'Question', name: 'Long An có KCN nào lớn nhất và thu hút FDI nhất?', acceptedAnswer: { '@type': 'Answer', text: 'Top KCN Long An thu hút FDI lớn nhất: (1) KCN Tân Đô (Đức Hòa, 405ha); (2) KCN Long Hậu (Cần Đước, 164ha) — chuyên logistics và kho lạnh giáp sông Soài Rạp; (3) KCN Hải Sơn (Đức Hòa, 179ha); (4) KCN Xuyên Á (Đức Huệ, 800ha). Tổng vốn FDI đăng ký 8,5 tỷ USD tính đến 2025.' } },
-            { '@type': 'Question', name: 'SGS LAND hỗ trợ tìm đất nền Long An như thế nào?', acceptedAnswer: { '@type': 'Answer', text: 'SGS LAND có kho hàng đất nền Long An đã xác minh sổ đỏ, hỗ trợ định giá AI so sánh với giao dịch thực trong bán kính 2km, kiểm tra quy hoạch và tình trạng pháp lý độc lập. Hotline: +84 971 132 378 — tư vấn miễn phí, không ép mua.' } },
+            { '@type': 'Question', name: 'SGS LAND hỗ trợ tìm đất nền Long An như thế nào?', acceptedAnswer: { '@type': 'Answer', text: 'SGS LAND có kho hàng đất nền Long An đã xác minh sổ đỏ, hỗ trợ định giá AI so sánh với giao dịch thực trong bán kính 2km, kiểm tra quy hoạch và tình trạng pháp lý độc lập. Hotline: +84 379 281 445 — tư vấn miễn phí, không ép mua.' } },
           ],
         },
         {
@@ -2406,7 +2406,7 @@ const STATIC_PAGE_META: Record<string, {
           '@id': `${APP_URL}/bat-dong-san-long-an#agent`,
           name: 'SGS LAND - Bất Động Sản Long An',
           url: `${APP_URL}/bat-dong-san-long-an`,
-          telephone: '+84-971-132-378',
+          telephone: '+84-379-281-445',
           areaServed: { '@type': 'State', name: 'Long An', containedInPlace: { '@type': 'Country', name: 'Việt Nam' } },
           knowsAbout: ['Bất động sản Long An', 'Đất nền Đức Hòa', 'Đất nền Bến Lức', 'Đất nền Cần Đước', 'KCN Long An', 'Vành đai 3 Long An', 'Cần Giuộc', 'Tân An'],
           aggregateRating: SGS_RATING,
@@ -3481,7 +3481,7 @@ export function buildListingMeta(listing: any): MetaData {
     '@type': 'FAQPage',
     mainEntity: [
       { '@type': 'Question', name: 'Sản phẩm này có đang nhận đặt cọc/giao dịch không?',
-        acceptedAnswer: { '@type': 'Answer', text: 'Sản phẩm hiển thị trên SGSLand đều thuộc trạng thái mở bán/booking/giao dịch và đã được chủ đầu tư hoặc đại lý phân phối uỷ quyền. Vui lòng liên hệ hotline 0971 132 378 để nhận tư vấn ngay.' } },
+        acceptedAnswer: { '@type': 'Answer', text: 'Sản phẩm hiển thị trên SGSLand đều thuộc trạng thái mở bán/booking/giao dịch và đã được chủ đầu tư hoặc đại lý phân phối uỷ quyền. Vui lòng liên hệ hotline 0379 281 445 để nhận tư vấn ngay.' } },
       { '@type': 'Question', name: 'Tôi có mất phí khi mua qua SGSLand không?',
         acceptedAnswer: { '@type': 'Answer', text: 'Không. Khách hàng mua bất động sản qua SGSLand không phát sinh phí môi giới — chi phí do chủ đầu tư/đại lý phân phối chi trả theo hợp đồng phân phối chính thức.' } },
       { '@type': 'Question', name: 'SGSLand có hỗ trợ vay ngân hàng không?',
@@ -3697,7 +3697,7 @@ export function buildProjectMeta(project: any): MetaData {
       ...(developer ? { author: { '@type': 'Organization', name: developer } } : {})
     },
     { '@context': 'https://schema.org', '@type': 'FAQPage', mainEntity: [faq,
-      { '@type': 'Question', name: 'Làm sao để đăng ký tư vấn dự án này?', acceptedAnswer: { '@type': 'Answer', text: 'Liên hệ hotline 0971 132 378 hoặc để lại thông tin trên SGS LAND để được tư vấn miễn phí.' } }
+      { '@type': 'Question', name: 'Làm sao để đăng ký tư vấn dự án này?', acceptedAnswer: { '@type': 'Answer', text: 'Liên hệ hotline 0379 281 445 hoặc để lại thông tin trên SGS LAND để được tư vấn miễn phí.' } }
     ] }
   ];
   return { title: name + ' | SGS LAND', description: desc, h1: name, image: cover, url, type: 'website', structuredData, bodyHtml, keywords: name };
@@ -3865,7 +3865,7 @@ function buildAreaNoscriptHtml(structuredData: any, h1: string | undefined, url:
   lines.push('<h2>Về SGS LAND</h2>');
   lines.push('<p style="text-align:left; color:#475569;"><strong>SGS LAND</strong> (sgsland.vn) — đại lý bất động sản uỷ quyền khu vực ' + esc(areaName || 'miền Nam') + '. 5+ năm kinh nghiệm, 15.000+ môi giới, 45.000+ sản phẩm, 1 tỷ USD+ giao dịch. Định giá AI miễn phí (AVM ±5% sai số), kiểm tra pháp lý 2 lớp, kết nối 12+ ngân hàng.</p>');
   lines.push('<ul style="text-align:left; color:#475569;">');
-  lines.push('  <li>📞 Hotline: <a href="tel:+84971132378">+84 971 132 378</a></li>');
+  lines.push('  <li>📞 Hotline: <a href="tel:+84379281445">+84 379 281 445</a></li>');
   lines.push('  <li>✉️ Email: <a href="mailto:info@sgsland.vn">info@sgsland.vn</a></li>');
   lines.push('  <li>🔍 <a href="' + esc(APP_URL) + '/ai-valuation">Định giá AI bất động sản miễn phí</a> — sai số ±5%, không cần đăng ký</li>');
   lines.push('  <li>🏘️ <a href="' + esc(APP_URL) + '/marketplace">Tìm kiếm bất động sản toàn quốc</a> — 45.000+ sản phẩm cập nhật realtime</li>');
@@ -3977,7 +3977,7 @@ function buildProjectNoscriptHtml(structuredData: any, h1: string | undefined, u
   lines.push('<h2>Về SGS LAND</h2>');
   lines.push('<p style="text-align:left; color:#475569;"><strong>SGS LAND</strong> (sgsland.vn) — đại lý phân phối uỷ quyền của Novaland, Masterise Homes, Nam Long, Vinhomes, Sơn Kim Land. 5+ năm kinh nghiệm, 15.000+ môi giới, 45.000+ sản phẩm, 1 tỷ USD+ giao dịch xử lý qua nền tảng. Định giá theo chuẩn TĐGVN/IVS, tuân thủ Luật Đất Đai 2024 và Nghị định 13/2023.</p>');
   lines.push('<ul style="text-align:left; color:#475569;">');
-  lines.push('  <li>📞 Hotline: <a href="tel:+84971132378">+84 971 132 378</a></li>');
+  lines.push('  <li>📞 Hotline: <a href="tel:+84379281445">+84 379 281 445</a></li>');
   lines.push('  <li>✉️ Email: <a href="mailto:info@sgsland.vn">info@sgsland.vn</a></li>');
   lines.push('  <li>🔍 <a href="' + esc(APP_URL) + '/ai-valuation">Định giá AI bất động sản miễn phí</a> — nhập địa chỉ, nhận kết quả ±5% trong 30 giây</li>');
   lines.push('  <li>🏘️ <a href="' + esc(APP_URL) + '/marketplace">Tìm kiếm bất động sản toàn quốc</a> — căn hộ, nhà phố, biệt thự, đất nền</li>');

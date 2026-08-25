@@ -29,7 +29,7 @@ const BRAND = {
   legal: 'Công ty TNHH SGS Land',
   url: APP_URL,
   logo: `${APP_URL}/apple-touch-icon.png`,
-  hotline: '+84 971 132 378',
+  hotline: '+84 379 281 445',
   email: 'info@sgsland.vn',
   founded: '2024',
   address: { addressLocality: 'TP. Hồ Chí Minh', addressCountry: 'VN' },

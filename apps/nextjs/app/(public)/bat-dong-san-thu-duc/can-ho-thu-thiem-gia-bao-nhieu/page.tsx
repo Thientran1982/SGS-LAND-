@@ -188,7 +188,7 @@ export default function CanHoThuThiemPage() {
         <h2 className="text-2xl font-semibold mb-3">Tư Vấn Căn Hộ Thủ Thiêm Miễn Phí</h2>
         <p className="mb-4 text-blue-100">SGS Land có chuyên gia am hiểu thị trường Thủ Thiêm. Gọi ngay để được tư vấn và tìm sản phẩm phù hợp ngân sách.</p>
         <div className="flex flex-col sm:flex-row gap-4">
-          <a href="tel:0971132378" className="bg-[var(--bg-surface)] text-blue-900 px-6 py-3 rounded-lg font-semibold text-center">📞 0971 132 378</a>
+          <a href="tel:0379281445" className="bg-[var(--bg-surface)] text-blue-900 px-6 py-3 rounded-lg font-semibold text-center">📞 0379 281 445</a>
           <Link href="/bat-dong-san-thu-duc" className="border border-white text-white px-6 py-3 rounded-lg font-semibold text-center">Xem BĐS Thủ Đức</Link>
         </div>
       </section>

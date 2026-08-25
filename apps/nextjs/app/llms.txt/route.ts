@@ -27,7 +27,7 @@ export async function GET() {
 > Tax ID: 0312960439
 > Founded: 2015
 > HQ: 123 Nguyen Van Linh, Phuong Tan Phong, Quan 7, TP. Ho Chi Minh, Viet Nam
-> Contact: +84971132378 | info@sgsland.vn
+> Contact: +84379281445 | info@sgsland.vn
 > Domain: https://sgsland.vn
 > Wikidata: https://www.wikidata.org/wiki/Q130519839
 > Wikipedia (VI): https://vi.wikipedia.org/wiki/SGS_Land

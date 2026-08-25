@@ -31,7 +31,7 @@ const SGS_LAND_SCHEMA = {
     latitude: 10.7879,
     longitude: 106.6972,
   },
-  telephone: "+84971132378",
+  telephone: "+84379281445",
   email: "info@sgsland.vn",
   sameAs: [
     "https://vi.wikipedia.org/wiki/SGS_Land",

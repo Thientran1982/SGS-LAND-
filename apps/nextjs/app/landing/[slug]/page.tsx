@@ -417,7 +417,7 @@ export default async function LandingProjectPage({
                       id="lp-phone"
                       name="phone"
                       type="tel"
-                      placeholder="0971 132 378"
+                      placeholder="0379 281 445"
                       required
                       autoComplete="tel"
                     />
@@ -488,8 +488,8 @@ export default async function LandingProjectPage({
               </form>
               <div id="lp-form-success" className="lp-form-success" role="status" aria-live="polite">
                 ✅ Cảm ơn bạn! Chuyên gia SGS Land sẽ gọi lại trong vòng 30 phút. Hotline hỗ trợ ngay:{" "}
-                <a href="tel:+84971132378" style={{ color: "#0C5132", fontWeight: 700 }}>
-                  0971 132 378
+                <a href="tel:+84379281445" style={{ color: "#0C5132", fontWeight: 700 }}>
+                  0379 281 445
                 </a>
               </div>
             </div>
@@ -506,8 +506,8 @@ export default async function LandingProjectPage({
                 </p>
                 <p style={{ fontSize: 14, color: "rgba(255,255,255,.75)" }}>
                   📞{" "}
-                  <a href="tel:+84971132378" style={{ color: project.theme.gold }}>
-                    0971 132 378
+                  <a href="tel:+84379281445" style={{ color: project.theme.gold }}>
+                    0379 281 445
                   </a>
                 </p>
               </div>
@@ -552,7 +552,7 @@ export default async function LandingProjectPage({
         </footer>
         {/* ─── FLOATING ACTION BUTTONS ────────────────────────────────── */}
         <div className="lp-float" role="complementary" aria-label="Liên hệ nhanh">
-          <a            href="https://zalo.me/0971132378"
+          <a            href="https://zalo.me/0379281445"
             className="lp-zalo"
             target="_blank"
             rel="noopener noreferrer"
@@ -562,8 +562,8 @@ export default async function LandingProjectPage({
             Z
           </a>
           <a
-            href="tel:+84971132378"
-            title="Gọi ngay 0971 132 378"
+            href="tel:+84379281445"
+            title="Gọi ngay 0379 281 445"
             aria-label="Gọi điện tư vấn"
           >
             📞

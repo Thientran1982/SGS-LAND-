@@ -303,7 +303,7 @@ export const GEO_PAGES: Record<string, GeoPage> = {
       },
       {
         "question": "SGS LAND hỗ trợ tìm đất nền Long An như thế nào?",
-        "answer": "SGS LAND có kho hàng đất nền Long An đã xác minh sổ đỏ, hỗ trợ định giá AI so sánh với giao dịch thực trong bán kính 2km, kiểm tra quy hoạch và tình trạng pháp lý độc lập. Hotline: +84 971 132 378 — tư vấn miễn phí, không ép mua."
+        "answer": "SGS LAND có kho hàng đất nền Long An đã xác minh sổ đỏ, hỗ trợ định giá AI so sánh với giao dịch thực trong bán kính 2km, kiểm tra quy hoạch và tình trạng pháp lý độc lập. Hotline: +84 379 281 445 — tư vấn miễn phí, không ép mua."
       }
     ]
   },

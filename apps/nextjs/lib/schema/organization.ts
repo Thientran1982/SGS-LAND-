@@ -125,7 +125,7 @@ export function getOrganizationSchema(): OrganizationSchema {
       {
         "@type": "ContactPoint",
         contactType: "customer support",
-        telephone: "+84971132378",
+        telephone: "+84379281445",
         email: "info@sgsland.vn",
         availableLanguage: ["Vietnamese", "English"],
         areaServed: "VN",
@@ -134,7 +134,7 @@ export function getOrganizationSchema(): OrganizationSchema {
       {
         "@type": "ContactPoint",
         contactType: "sales",
-        telephone: "+84971132378",
+        telephone: "+84379281445",
         availableLanguage: ["Vietnamese"],
         areaServed: "VN",
       },

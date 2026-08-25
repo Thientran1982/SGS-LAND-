@@ -16,13 +16,13 @@ Mỗi block gồm 4 phần: opening citable, quick facts table, FAQ 10 câu, aut
 | Pháp lý | Sổ hồng từng căn (đã cấp một số phân khu) |
 | Bàn giao | 2024-2026 |
 | Đơn vị phân phối | SGS LAND (https://sgsland.vn/du-an/aqua-city) |
-| Hotline | +84 971 132 378 |
+| Hotline | +84 379 281 445 |
 **FAQ (hiển thị trong page + JSON-LD FAQPage):**
 1. **Aqua City Novaland có vị trí ở đâu?**
    Aqua City Novaland tọa lạc tại Long Hưng, Biên Hoà, Đồng Nai, do Novaland phát triển. Quy mô tổng thể 1.000ha. Xem chi tiết vị trí tại https://sgsland.vn/du-an/aqua-city.
 
 2. **Giá Aqua City Novaland hiện nay bao nhiêu?**
-   Giá khởi điểm Aqua City Novaland từ 5.5 tỷ. Bảng giá chi tiết theo phân khu và loại sản phẩm cập nhật tại https://sgsland.vn/du-an/aqua-city. Liên hệ SGS LAND +84 971 132 378 để nhận bảng giá mới nhất.
+   Giá khởi điểm Aqua City Novaland từ 5.5 tỷ. Bảng giá chi tiết theo phân khu và loại sản phẩm cập nhật tại https://sgsland.vn/du-an/aqua-city. Liên hệ SGS LAND +84 379 281 445 để nhận bảng giá mới nhất.
 
 3. **Aqua City Novaland bao giờ bàn giao nhà?**
    Tiến độ bàn giao Aqua City Novaland: 2024-2026. SGS LAND cập nhật tiến độ từng phân khu theo tuần.
@@ -46,7 +46,7 @@ Mỗi block gồm 4 phần: opening citable, quick facts table, FAQ 10 câu, aut
    Aqua City Novaland phù hợp đầu tư trung-dài hạn nhờ uy tín Novaland, vị trí Long Hưng, Biên Hoà, Đồng Nai và tiềm năng tăng giá khu vực. SGS LAND có báo cáo phân tích đầu tư riêng cho từng phân khu.
 
 10. **Liên hệ tư vấn Aqua City Novaland ở đâu?**
-   Liên hệ SGS LAND — đại lý phân phối uỷ quyền Novaland: hotline +84 971 132 378, email info@sgsland.vn, hoặc xem chi tiết tại https://sgsland.vn/du-an/aqua-city.
+   Liên hệ SGS LAND — đại lý phân phối uỷ quyền Novaland: hotline +84 379 281 445, email info@sgsland.vn, hoặc xem chi tiết tại https://sgsland.vn/du-an/aqua-city.
 **Author block (E-E-A-T):**
 > Bài viết được tổng hợp và xác minh bởi đội ngũ tư vấn SGS LAND — đại lý phân phối uỷ quyền Novaland. Thông tin pháp lý kiểm tra chéo với hồ sơ chủ đầu tư. Cập nhật lần cuối: 2026-05-18.
 ---
@@ -65,13 +65,13 @@ Mỗi block gồm 4 phần: opening citable, quick facts table, FAQ 10 câu, aut
 | Pháp lý | Sổ hồng riêng |
 | Bàn giao | 2025-2027 |
 | Đơn vị phân phối | SGS LAND (https://sgsland.vn/du-an/the-global-city) |
-| Hotline | +84 971 132 378 |
+| Hotline | +84 379 281 445 |
 **FAQ (hiển thị trong page + JSON-LD FAQPage):**
 1. **The Global City có vị trí ở đâu?**
    The Global City tọa lạc tại An Phú, TP Thủ Đức, do Masterise Homes phát triển. Quy mô tổng thể 117ha. Xem chi tiết vị trí tại https://sgsland.vn/du-an/the-global-city.
 
 2. **Giá The Global City hiện nay bao nhiêu?**
-   Giá khởi điểm The Global City từ 15 tỷ. Bảng giá chi tiết theo phân khu và loại sản phẩm cập nhật tại https://sgsland.vn/du-an/the-global-city. Liên hệ SGS LAND +84 971 132 378 để nhận bảng giá mới nhất.
+   Giá khởi điểm The Global City từ 15 tỷ. Bảng giá chi tiết theo phân khu và loại sản phẩm cập nhật tại https://sgsland.vn/du-an/the-global-city. Liên hệ SGS LAND +84 379 281 445 để nhận bảng giá mới nhất.
 
 3. **The Global City bao giờ bàn giao nhà?**
    Tiến độ bàn giao The Global City: 2025-2027. SGS LAND cập nhật tiến độ từng phân khu theo tuần.
@@ -95,7 +95,7 @@ Mỗi block gồm 4 phần: opening citable, quick facts table, FAQ 10 câu, aut
    The Global City phù hợp đầu tư trung-dài hạn nhờ uy tín Masterise Homes, vị trí An Phú, TP Thủ Đức và tiềm năng tăng giá khu vực. SGS LAND có báo cáo phân tích đầu tư riêng cho từng phân khu.
 
 10. **Liên hệ tư vấn The Global City ở đâu?**
-   Liên hệ SGS LAND — đại lý phân phối uỷ quyền Masterise Homes: hotline +84 971 132 378, email info@sgsland.vn, hoặc xem chi tiết tại https://sgsland.vn/du-an/the-global-city.
+   Liên hệ SGS LAND — đại lý phân phối uỷ quyền Masterise Homes: hotline +84 379 281 445, email info@sgsland.vn, hoặc xem chi tiết tại https://sgsland.vn/du-an/the-global-city.
 **Author block (E-E-A-T):**
 > Bài viết được tổng hợp và xác minh bởi đội ngũ tư vấn SGS LAND — đại lý phân phối uỷ quyền Masterise Homes. Thông tin pháp lý kiểm tra chéo với hồ sơ chủ đầu tư. Cập nhật lần cuối: 2026-05-18.
 ---
@@ -114,13 +114,13 @@ Mỗi block gồm 4 phần: opening citable, quick facts table, FAQ 10 câu, aut
 | Pháp lý | Sổ hồng riêng |
 | Bàn giao | 2024-2027 |
 | Đơn vị phân phối | SGS LAND (https://sgsland.vn/du-an/izumi-city) |
-| Hotline | +84 971 132 378 |
+| Hotline | +84 379 281 445 |
 **FAQ (hiển thị trong page + JSON-LD FAQPage):**
 1. **Izumi City Nam Long có vị trí ở đâu?**
    Izumi City Nam Long tọa lạc tại Biên Hòa, Đồng Nai, do Nam Long phát triển. Quy mô tổng thể 170ha. Xem chi tiết vị trí tại https://sgsland.vn/du-an/izumi-city.
 
 2. **Giá Izumi City Nam Long hiện nay bao nhiêu?**
-   Giá khởi điểm Izumi City Nam Long từ 8 tỷ. Bảng giá chi tiết theo phân khu và loại sản phẩm cập nhật tại https://sgsland.vn/du-an/izumi-city. Liên hệ SGS LAND +84 971 132 378 để nhận bảng giá mới nhất.
+   Giá khởi điểm Izumi City Nam Long từ 8 tỷ. Bảng giá chi tiết theo phân khu và loại sản phẩm cập nhật tại https://sgsland.vn/du-an/izumi-city. Liên hệ SGS LAND +84 379 281 445 để nhận bảng giá mới nhất.
 
 3. **Izumi City Nam Long bao giờ bàn giao nhà?**
    Tiến độ bàn giao Izumi City Nam Long: 2024-2027. SGS LAND cập nhật tiến độ từng phân khu theo tuần.
@@ -144,7 +144,7 @@ Mỗi block gồm 4 phần: opening citable, quick facts table, FAQ 10 câu, aut
    Izumi City Nam Long phù hợp đầu tư trung-dài hạn nhờ uy tín Nam Long, vị trí Biên Hòa, Đồng Nai và tiềm năng tăng giá khu vực. SGS LAND có báo cáo phân tích đầu tư riêng cho từng phân khu.
 
 10. **Liên hệ tư vấn Izumi City Nam Long ở đâu?**
-   Liên hệ SGS LAND — đại lý phân phối uỷ quyền Nam Long: hotline +84 971 132 378, email info@sgsland.vn, hoặc xem chi tiết tại https://sgsland.vn/du-an/izumi-city.
+   Liên hệ SGS LAND — đại lý phân phối uỷ quyền Nam Long: hotline +84 379 281 445, email info@sgsland.vn, hoặc xem chi tiết tại https://sgsland.vn/du-an/izumi-city.
 **Author block (E-E-A-T):**
 > Bài viết được tổng hợp và xác minh bởi đội ngũ tư vấn SGS LAND — đại lý phân phối uỷ quyền Nam Long. Thông tin pháp lý kiểm tra chéo với hồ sơ chủ đầu tư. Cập nhật lần cuối: 2026-05-18.
 ---
@@ -163,13 +163,13 @@ Mỗi block gồm 4 phần: opening citable, quick facts table, FAQ 10 câu, aut
 | Pháp lý | Đang hoàn thiện pháp lý |
 | Bàn giao | 2027-2030 |
 | Đơn vị phân phối | SGS LAND (https://sgsland.vn/du-an/vinhomes-can-gio) |
-| Hotline | +84 971 132 378 |
+| Hotline | +84 379 281 445 |
 **FAQ (hiển thị trong page + JSON-LD FAQPage):**
 1. **Vinhomes Cần Giờ — Green Paradise có vị trí ở đâu?**
    Vinhomes Cần Giờ — Green Paradise tọa lạc tại Cần Giờ, TP.HCM, do Vinhomes phát triển. Quy mô tổng thể 2.870ha. Xem chi tiết vị trí tại https://sgsland.vn/du-an/vinhomes-can-gio.
 
 2. **Giá Vinhomes Cần Giờ — Green Paradise hiện nay bao nhiêu?**
-   Giá khởi điểm Vinhomes Cần Giờ — Green Paradise từ Mở bán 2026. Bảng giá chi tiết theo phân khu và loại sản phẩm cập nhật tại https://sgsland.vn/du-an/vinhomes-can-gio. Liên hệ SGS LAND +84 971 132 378 để nhận bảng giá mới nhất.
+   Giá khởi điểm Vinhomes Cần Giờ — Green Paradise từ Mở bán 2026. Bảng giá chi tiết theo phân khu và loại sản phẩm cập nhật tại https://sgsland.vn/du-an/vinhomes-can-gio. Liên hệ SGS LAND +84 379 281 445 để nhận bảng giá mới nhất.
 
 3. **Vinhomes Cần Giờ — Green Paradise bao giờ bàn giao nhà?**
    Tiến độ bàn giao Vinhomes Cần Giờ — Green Paradise: 2027-2030. SGS LAND cập nhật tiến độ từng phân khu theo tuần.
@@ -193,7 +193,7 @@ Mỗi block gồm 4 phần: opening citable, quick facts table, FAQ 10 câu, aut
    Vinhomes Cần Giờ — Green Paradise phù hợp đầu tư trung-dài hạn nhờ uy tín Vinhomes, vị trí Cần Giờ, TP.HCM và tiềm năng tăng giá khu vực. SGS LAND có báo cáo phân tích đầu tư riêng cho từng phân khu.
 
 10. **Liên hệ tư vấn Vinhomes Cần Giờ — Green Paradise ở đâu?**
-   Liên hệ SGS LAND — đại lý phân phối uỷ quyền Vinhomes: hotline +84 971 132 378, email info@sgsland.vn, hoặc xem chi tiết tại https://sgsland.vn/du-an/vinhomes-can-gio.
+   Liên hệ SGS LAND — đại lý phân phối uỷ quyền Vinhomes: hotline +84 379 281 445, email info@sgsland.vn, hoặc xem chi tiết tại https://sgsland.vn/du-an/vinhomes-can-gio.
 **Author block (E-E-A-T):**
 > Bài viết được tổng hợp và xác minh bởi đội ngũ tư vấn SGS LAND — đại lý phân phối uỷ quyền Vinhomes. Thông tin pháp lý kiểm tra chéo với hồ sơ chủ đầu tư. Cập nhật lần cuối: 2026-05-18.
 ---
@@ -212,13 +212,13 @@ Mỗi block gồm 4 phần: opening citable, quick facts table, FAQ 10 câu, aut
 | Pháp lý | Sổ hồng riêng |
 | Bàn giao | Đã/đang bàn giao |
 | Đơn vị phân phối | SGS LAND (https://sgsland.vn/du-an/masterise-homes) |
-| Hotline | +84 971 132 378 |
+| Hotline | +84 379 281 445 |
 **FAQ (hiển thị trong page + JSON-LD FAQPage):**
 1. **Masterise Homes có vị trí ở đâu?**
    Masterise Homes tọa lạc tại TP.HCM, do Masterise Homes phát triển. Quy mô tổng thể Hệ sinh thái. Xem chi tiết vị trí tại https://sgsland.vn/du-an/masterise-homes.
 
 2. **Giá Masterise Homes hiện nay bao nhiêu?**
-   Giá khởi điểm Masterise Homes từ 80 triệu/m². Bảng giá chi tiết theo phân khu và loại sản phẩm cập nhật tại https://sgsland.vn/du-an/masterise-homes. Liên hệ SGS LAND +84 971 132 378 để nhận bảng giá mới nhất.
+   Giá khởi điểm Masterise Homes từ 80 triệu/m². Bảng giá chi tiết theo phân khu và loại sản phẩm cập nhật tại https://sgsland.vn/du-an/masterise-homes. Liên hệ SGS LAND +84 379 281 445 để nhận bảng giá mới nhất.
 
 3. **Masterise Homes bao giờ bàn giao nhà?**
    Tiến độ bàn giao Masterise Homes: Đã/đang bàn giao. SGS LAND cập nhật tiến độ từng phân khu theo tuần.
@@ -242,7 +242,7 @@ Mỗi block gồm 4 phần: opening citable, quick facts table, FAQ 10 câu, aut
    Masterise Homes phù hợp đầu tư trung-dài hạn nhờ uy tín Masterise Homes, vị trí TP.HCM và tiềm năng tăng giá khu vực. SGS LAND có báo cáo phân tích đầu tư riêng cho từng phân khu.
 
 10. **Liên hệ tư vấn Masterise Homes ở đâu?**
-   Liên hệ SGS LAND — đại lý phân phối uỷ quyền Masterise Homes: hotline +84 971 132 378, email info@sgsland.vn, hoặc xem chi tiết tại https://sgsland.vn/du-an/masterise-homes.
+   Liên hệ SGS LAND — đại lý phân phối uỷ quyền Masterise Homes: hotline +84 379 281 445, email info@sgsland.vn, hoặc xem chi tiết tại https://sgsland.vn/du-an/masterise-homes.
 **Author block (E-E-A-T):**
 > Bài viết được tổng hợp và xác minh bởi đội ngũ tư vấn SGS LAND — đại lý phân phối uỷ quyền Masterise Homes. Thông tin pháp lý kiểm tra chéo với hồ sơ chủ đầu tư. Cập nhật lần cuối: 2026-05-18.
 ---

@@ -54,7 +54,7 @@ export const ROUTE_SEO: Record<string, SEOConfig> = {
   // ROUTES.CONTACT = 'contact'
   contact: {
     title: 'Liên Hệ Tư Vấn BĐS 2026 | SGSLand TP.HCM',
-    description: 'Liên hệ SGSLand để tư vấn mua bán bất động sản TP.HCM, Aqua City, Vinhomes miễn phí. Hotline: +84-971-132-378. Phản hồi trong 15 phút!',
+    description: 'Liên hệ SGSLand để tư vấn mua bán bất động sản TP.HCM, Aqua City, Vinhomes miễn phí. Hotline: +84-379-281-445. Phản hồi trong 15 phút!',
     path: '/contact',
   },
   // ROUTES.CAREERS = 'careers'

@@ -222,11 +222,11 @@ export const PROJECT_CONFIG_EN: Record<string, ProjectConfigEnglish> = {
         "q": "Is it favorable to get a bank loan to buy a The Global City townhouse?"
       },
       {
-        "a": "Masteri Cosmo Central is a luxury apartment subdivision located at the center core of The Global City urban area. This is the only apartment product in The Global City ecosystem, belonging to the Masteri Collection. The project consists of 6 towers of 19–29 stories designed by Foster + Partners (UK), an All-in-One model with the largest water music canal in Southeast Asia. Prices from 6.429 billion VND, currently launching. Contact SGS LAND: 0971 132 378 for the price list.",
+        "a": "Masteri Cosmo Central is a luxury apartment subdivision located at the center core of The Global City urban area. This is the only apartment product in The Global City ecosystem, belonging to the Masteri Collection. The project consists of 6 towers of 19–29 stories designed by Foster + Partners (UK), an All-in-One model with the largest water music canal in Southeast Asia. Prices from 6.429 billion VND, currently launching. Contact SGS LAND: 0379 281 445 for the price list.",
         "q": "What is Masteri Cosmo Central? Does it belong to The Global City?"
       },
       {
-        "a": "Masteri Cosmo Central launches in January 2026 with a starting price from 6.429 billion VND. Unit structure: 1BR, 2BR, 3BR, Penthouse, and Duplex — diverse sizes suitable for many needs from actual residence to investment. Long-term individual ownership certificate legal status. Masterise Homes supports 0% interest rates in the initial phase. Contact SGS LAND to receive the detailed price list and promotional policies: 0971 132 378.",
+        "a": "Masteri Cosmo Central launches in January 2026 with a starting price from 6.429 billion VND. Unit structure: 1BR, 2BR, 3BR, Penthouse, and Duplex — diverse sizes suitable for many needs from actual residence to investment. Long-term individual ownership certificate legal status. Masterise Homes supports 0% interest rates in the initial phase. Contact SGS LAND to receive the detailed price list and promotional policies: 0379 281 445.",
         "q": "How much does Masteri Cosmo Central cost? Which apartment types are being sold?"
       }
     ],

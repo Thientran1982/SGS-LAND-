@@ -92,4 +92,4 @@ Kết nối với [sgsland-mcp](../sgsland-mcp) — 8 AI Agents, 27 tools:
 
 ---
 
-**SGS LAND** — [sgsland.vn](https://sgsland.vn) | Hotline: 0971 132 378
+**SGS LAND** — [sgsland.vn](https://sgsland.vn) | Hotline: 0379 281 445

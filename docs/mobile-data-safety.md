@@ -10,7 +10,7 @@
 | App có thu thập dữ liệu người dùng? | **Có** |
 | Dữ liệu có chia sẻ với bên thứ ba? | **Có** (chỉ chuyên viên đại lý mà người dùng chủ động liên hệ + nhà cung cấp hạ tầng) |
 | Dữ liệu có mã hoá khi truyền? | **Có** — toàn bộ traffic qua HTTPS / WSS |
-| Người dùng có thể yêu cầu xoá dữ liệu? | **Có** — qua hotline 0971 132 378 hoặc email privacy@sgsland.vn |
+| Người dùng có thể yêu cầu xoá dữ liệu? | **Có** — qua hotline 0379 281 445 hoặc email privacy@sgsland.vn |
 | App tuân thủ Play Families Policy? | Không áp dụng (target 18+) |
 
 ## Loại dữ liệu thu thập

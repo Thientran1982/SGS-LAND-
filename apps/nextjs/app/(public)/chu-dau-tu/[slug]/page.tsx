@@ -144,11 +144,11 @@ export default async function DeveloperPage({ params }: { params: Promise<{ slug
         </p>
         <div className="flex flex-col sm:flex-row gap-3 justify-center">
           <a
-            href="tel:+84971132378"
+            href="tel:+84379281445"
             className="inline-flex items-center justify-center gap-2 px-6 py-3 rounded-xl text-sm font-semibold text-white"
             style={{ background: "var(--primary-600)" }}
           >
-            📞 {en ? "Call" : "Gọi"} +84 971 132 378
+            {en ? "Call" : "Gọi"} +84 379 281 445
           </a>
           <Link
             href={lp("/marketplace")}

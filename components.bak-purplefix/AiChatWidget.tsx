@@ -19,7 +19,7 @@ import { Interaction, Channel, Direction } from '../types';
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 const HOTLINE = '0379281445';
-const HOTLINE_DISPLAY = '0971 132 378';
+const HOTLINE_DISPLAY = '0379 281 445';
 const LEAD_KEY = 'widget_lead_id';
 const SESSION_MSGS_KEY = 'widget_msgs_v2';
 const MAX_SESSION_MSGS = 30;

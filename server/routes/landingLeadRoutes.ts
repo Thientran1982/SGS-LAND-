@@ -5,7 +5,7 @@
  * - Sends two transactional emails via Brevo:
  *   1) Internal notification → SGS Land hotline inbox
  *   2) Auto-reply confirmation → end-user (if email provided)
- * - Hotline & contact phone: 0971132378
+ * - Hotline & contact phone: 0379281445
  */
 
 import { Router, Request, Response } from 'express';
@@ -16,8 +16,8 @@ import { logger } from '../middleware/logger';
 import { pool, withRlsBypass } from '../db';
 import { logLeadCampaignEmail } from '../repositories/campaignRepository';
 
-const HOTLINE = '0971132378';
-const HOTLINE_DISPLAY = '0971 132 378';
+const HOTLINE = '0379281445';
+const HOTLINE_DISPLAY = '0379 281 445';
 const INTERNAL_INBOX = process.env.LANDING_LEAD_INBOX || 'info@sgsland.vn';
 const DEFAULT_TENANT_ID = '00000000-0000-0000-0000-000000000001';
 
@@ -406,7 +406,7 @@ export function createLandingLeadRoutes(): Router {
       logger.error(`[LandingLead] Unexpected error: ${err?.message || err}`);
       return res.status(500).json({
         ok: false,
-        error: 'Có lỗi xảy ra khi gửi thông tin. Vui lòng gọi hotline 0971 132 378.',
+        error: 'Có lỗi xảy ra khi gửi thông tin. Vui lòng gọi hotline 0379 281 445.',
       });
     }
   });

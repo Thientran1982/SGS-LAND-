@@ -990,7 +990,7 @@ const SUBJECT_GUIDANCE: Record<string, { label: string; icon: string; iconBg: st
     guidance: `
       <p style="color:#475569;font-size:14px;line-height:1.7;margin:0;font-family:Arial,sans-serif;">
         Đội ngũ SGS Land sẽ xem xét yêu cầu của bạn và phản hồi trong vòng <strong>24 giờ làm việc</strong>.
-        Nếu cần hỗ trợ gấp, bạn có thể gọi hotline <strong>0971 132 378</strong> (24/7).
+        Nếu cần hỗ trợ gấp, bạn có thể gọi hotline <strong>0379 281 445</strong> (24/7).
       </p>`,
     cta: { url: 'https://sgsland.vn/#/contact', label: 'Xem Thêm Thông Tin Liên Hệ' },
   },
@@ -1046,7 +1046,7 @@ async function sendContactAutoReply(
     ${spacer(20)}
     ` : ''}
     <p style="color:#94A3B8;font-size:12px;line-height:1.6;margin:0;text-align:center;font-family:Arial,sans-serif;">
-      Cần hỗ trợ ngay? Gọi hotline <strong style="color:#0F172A;">0971 132 378</strong> (24/7)<br />
+      Cần hỗ trợ ngay? Gọi hotline <strong style="color:#0F172A;">0379 281 445</strong> (24/7)<br />
       hoặc email <a href="mailto:info@sgsland.vn" style="color:#1B3A5C;text-decoration:none;">info@sgsland.vn</a>
     </p>
   `;
@@ -1054,7 +1054,7 @@ async function sendContactAutoReply(
     to,
     subject: `SGS Land – Xác nhận nhận yêu cầu: ${info.label}`,
     html: emailBase(content, 'Email này được gửi tự động sau khi bạn điền form liên hệ tại sgsland.vn'),
-    text: `Xin chào ${name},\n\nCảm ơn bạn đã liên hệ với SGS Land về: ${info.label}.\n\nChúng tôi đã nhận được yêu cầu và sẽ phản hồi sớm nhất.\n\nHotline: 0971 132 378 (24/7)\nEmail: info@sgsland.vn\nWebsite: https://sgsland.vn\n\n— SGS LAND`,
+    text: `Xin chào ${name},\n\nCảm ơn bạn đã liên hệ với SGS Land về: ${info.label}.\n\nChúng tôi đã nhận được yêu cầu và sẽ phản hồi sớm nhất.\n\nHotline: 0379 281 445 (24/7)\nEmail: info@sgsland.vn\nWebsite: https://sgsland.vn\n\n— SGS LAND`,
   });
 }
 // ── Email tự động theo hành vi người dùng ──────────────────────────────────────
@@ -1438,8 +1438,8 @@ async function sendLeadNurture(
 ): Promise<EmailResult> {
   const safeName    = escapeHtml(leadName || 'Quý khách');
   const safeProject = escapeHtml(projectName || 'dự án');
-  const hotline     = '0971132378';
-  const hotlineDisp = '0971 132 378';
+  const hotline     = '0379281445';
+  const hotlineDisp = '0379 281 445';
   const contactUrl  = `https://sgsland.vn/#/lien-he`;
   const content = `
     <table width="100%" cellpadding="0" cellspacing="0" border="0">

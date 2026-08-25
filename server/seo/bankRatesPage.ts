@@ -564,7 +564,7 @@ export function getBankRatesHtml(ugcRates: BankRateRow[] = []): string {
       <a href="/#/privacy-policy">Chính sách</a> &nbsp;·&nbsp;
       <a href="/lai-suat-vay-ngan-hang">Lãi suất ngân hàng</a>
     </p>
-    <p class="ftr-copy">&copy; ${new Date().getFullYear()} SGS Land &mdash; 122-124 B2, Sala, Thủ Đức, TP.HCM &mdash; 0971 132 378</p>
+    <p class="ftr-copy">&copy; ${new Date().getFullYear()} SGS Land &mdash; 122-124 B2, Sala, Thủ Đức, TP.HCM &mdash; 0379 281 445</p>
     <p class="ftr-note">Thông tin lãi suất mang tính tham khảo. Liên hệ ngân hàng để biết lãi suất chính xác.</p>
   </div>
 </footer>

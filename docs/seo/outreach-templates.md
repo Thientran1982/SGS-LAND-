@@ -42,7 +42,7 @@ Em gửi data trong 24h sau khi anh/chị xác nhận quan tâm. Hoặc anh/ch�
 
 Cảm ơn anh/chị,
 {Họ tên} | SGS Land
-+84 971 132 378 | info@sgsland.vn
++84 379 281 445 | info@sgsland.vn
 ```
 
 ## Template 2 — VI partnership pitch (hiệp hội/CĐT)
@@ -84,7 +84,7 @@ For your upcoming Vietnam/APAC market report, we can share:
 
 In exchange, we'd appreciate a citation back to sgsland.vn/news/{slug}. Open to a co-branded white-paper if it fits your editorial calendar.
 
-Happy to send a one-pager or jump on a 20-min call. Reach me at info@sgsland.vn or +84 971 132 378.
+Happy to send a one-pager or jump on a 20-min call. Reach me at info@sgsland.vn or +84 379 281 445.
 
 Best,
 {Full name} | SGS Land
