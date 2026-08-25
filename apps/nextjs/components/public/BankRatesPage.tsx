@@ -2,14 +2,14 @@
 "use client";
 import { useState } from "react";
 const STATIC_BANKS = [
-  { bank: "Vietcombank", rate6m: "5.2%", rate12m: "6.8%", rate24m: "7.2%", rate36m: "7.5%", note: "Ưu đãi 12 tháng đầu" },
-  { bank: "BIDV", rate6m: "5.0%", rate12m: "6.5%", rate24m: "7.0%", rate36m: "7.3%", note: "Ưu đãi lãi suất mua nhà" },
-  { bank: "VietinBank", rate6m: "5.1%", rate12m: "6.6%", rate24m: "7.1%", rate36m: "7.4%", note: "Cố định 24 tháng đầu" },
-  { bank: "Techcombank", rate6m: "5.5%", rate12m: "7.0%", rate24m: "7.5%", rate36m: "7.8%", note: "Không phí trả trước hạn" },
-  { bank: "VPBank", rate6m: "5.8%", rate12m: "7.2%", rate24m: "7.8%", rate36m: "8.1%", note: "Giải ngân nhanh 3 ngày" },
-  { bank: "MB Bank", rate6m: "5.3%", rate12m: "6.9%", rate24m: "7.3%", rate36m: "7.6%", note: "Ưu đãi khách hàng mới" },
-  { bank: "ACB", rate6m: "5.6%", rate12m: "7.1%", rate24m: "7.6%", rate36m: "7.9%", note: "Hỗ trợ mua BĐS cao cấp" },
-  { bank: "Sacombank", rate6m: "5.4%", rate12m: "6.8%", rate24m: "7.3%", rate36m: "7.7%", note: "Ưu đãi theo gói sản phẩm" },
+  { bank: "Vietcombank", rate6m: "6.5%", rate12m: "6.5–8.0%", rate24m: "6.5–8.0%", rate36m: "6.5–8.0%", note: "Ưu đãi 12 tháng đầu" },
+  { bank: "BIDV", rate6m: "7.0%", rate12m: "7.0–8.5%", rate24m: "7.0–8.5%", rate36m: "7.0–8.5%", note: "Hỗ trợ vay tối đa 85% giá trị BĐS" },
+  { bank: "VietinBank", rate6m: "6.5%", rate12m: "6.5–8.3%", rate24m: "6.5–8.3%", rate36m: "6.5–8.3%", note: "Ân hạn gốc tối đa 12 tháng" },
+  { bank: "Techcombank", rate6m: "7.5%", rate12m: "7.5–9.8%", rate24m: "7.5–9.8%", rate36m: "7.5–9.8%", note: "Liên kết Vinhomes, Masterise, Gamuda" },
+  { bank: "VPBank", rate6m: "8.2%", rate12m: "8.2–11.0%", rate24m: "8.2–11.0%", rate36m: "8.2–11.0%", note: "Phê duyệt trong 24 giờ" },
+  { bank: "MB Bank", rate6m: "7.2%", rate12m: "7.2–9.0%", rate24m: "7.2–9.0%", rate36m: "7.2–9.0%", note: "Phê duyệt online qua ứng dụng MBBank" },
+  { bank: "ACB", rate6m: "7.3%", rate12m: "7.3–9.5%", rate24m: "7.3–9.5%", rate36m: "7.3–9.5%", note: "Phê duyệt trong 48 giờ" },
+  { bank: "Sacombank", rate6m: "7.0%", rate12m: "7.0–8.9%", rate24m: "7.0–8.9%", rate36m: "7.0–8.9%", note: "Giải ngân trong 5 ngày" },
 ];
 interface StaticBankRate {
   bank: string;
@@ -36,10 +36,10 @@ export function BankRatesPage({ bankRates }: { bankRates: StaticBankRate[] | unk
     <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
       <div className="text-center mb-12">
         <h1 className="text-4xl font-bold mb-4" style={{ color: "var(--text-primary)" }}>
-          Lãi Suất Vay Mua BĐS 2025
+          Lãi Suất Vay Mua BĐS 2026
         </h1>
         <p style={{ color: "var(--text-secondary)" }}>
-          Tổng hợp lãi suất tốt nhất từ các ngân hàng lớn — cập nhật hàng tuần
+          Tổng hợp lãi suất tham khảo năm 2026 từ các ngân hàng lớn — cập nhật hàng tuần
         </p>
       </div>
       {/* Rate table */}

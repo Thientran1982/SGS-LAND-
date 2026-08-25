@@ -29,6 +29,7 @@ const FOOTER_SUPPORT_CUSTOMER = [
   { vi: "Định giá AI", en: "AI Valuation", href: "/ai-valuation" },
   { vi: "Lãi suất ngân hàng", en: "Bank Rates", href: "/lai-suat-ngan-hang" },
   { vi: "Trò chuyện với Minh", en: "Chat with Minh", href: "/livechat" },
+  { vi: "Hướng dẫn đăng ký", en: "Registration Guide", href: "/huong-dan-su-dung" },
   { vi: "Hướng dẫn sử dụng", en: "User Guide", href: "/huong-dan-su-dung" },
 ];
 const FOOTER_SUPPORT_AGENT = [
@@ -61,7 +62,8 @@ const linkHover = (e: React.MouseEvent<HTMLAnchorElement | HTMLElement>, hover: 
 type Lang = "vi" | "en";
 
 // Evaluated once at module load — same on server and client, avoids hydration mismatch
-const FOOTER_YEAR = new Date().getFullYear();
+// Keep the rendered value deterministic across SSR and the browser.
+const FOOTER_YEAR = 2026;
 
 export function PublicFooter() {
   const lang: Lang = useLang();
@@ -115,7 +117,7 @@ export function PublicFooter() {
             </h3>
             <ul className="space-y-2.5">
               {[...FOOTER_PROJECTS.slice(0, 6), { label: lang === "en" ? "View all projects →" : "Xem tất cả dự án →", href: "/du-an" }].map((link) => (
-                <li key={link.href}>
+                <li key={`${link.href}-${link.vi}`}>
                   <Link
                     href={lang === "en" ? "/en" + link.href : link.href}
                     className="text-[13px] transition-colors block"
@@ -145,7 +147,7 @@ export function PublicFooter() {
             </p>
             <ul className="space-y-2.5 mb-5">
               {FOOTER_SUPPORT_CUSTOMER.map((link) => (
-                <li key={link.href}>
+                <li key={`${link.href}-${link.vi}`}>
                   <Link
                     href={lang === "en" ? "/en" + link.href : link.href}
                     className="text-[13px] transition-colors block"

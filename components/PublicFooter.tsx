@@ -27,6 +27,7 @@ const FOOTER_SUPPORT = [
   { vi: "Tìm kiếm BĐS",      en: "Property Search",  href: "/marketplace"         },
   { vi: "Định giá AI",        en: "AI Valuation",     href: "/ai-valuation"        },
   { vi: "Lãi suất ngân hàng", en: "Bank Rates",       href: "/lai-suat-ngan-hang"  },
+  { vi: "Hướng dẫn đăng ký",  en: "Registration Guide", href: "/huong-dan-su-dung" },
   { vi: "CRM Bất Động Sản",   en: "Real Estate CRM",  href: "/crm-platform"        },
   { vi: "Live Chat AI",       en: "Live Chat AI",     href: "/livechat"            },
   { vi: "Trung tâm hỗ trợ",  en: "Help Center",      href: "/help-center"         },
@@ -122,7 +123,7 @@ export function PublicFooter({ lang }: { lang: Lang }) {
             </h4>
             <ul className="flex flex-col gap-1.5">
               {FOOTER_SUPPORT.map(s => (
-                <li key={s.href}>
+                <li key={`${s.href}-${s.vi}`}>
                   <a href={s.href} className="text-xs" style={{ color:"#B9C6D4" }}
                     onMouseEnter={e => linkHover(e, true)} onMouseLeave={e => linkHover(e, false)}>
                     {lang === "vi" ? s.vi : s.en}
