@@ -11,6 +11,13 @@ const migration: Migration = {
       ALTER TABLE customer_profile_erasure_audit
         ADD CONSTRAINT customer_profile_erasure_audit_action_check CHECK
         (action IN ('CONSENT_CHANGED','FACT_CREATED','FACT_DELETED','TOPIC_ADDED','TOPIC_DELETED','PROFILE_ERASED','RETENTION_PURGED'));
+      ALTER TABLE customer_profile_facts
+        DROP CONSTRAINT IF EXISTS customer_profile_facts_check;
+      ALTER TABLE customer_profile_facts
+        DROP CONSTRAINT IF EXISTS customer_profile_facts_validity_check;
+      ALTER TABLE customer_profile_facts
+        ADD CONSTRAINT customer_profile_facts_validity_check CHECK
+        (valid_until IS NULL OR valid_until >= valid_from OR superseded_by IS NOT NULL);
       CREATE TABLE IF NOT EXISTS customer_profile_topics_to_avoid (
         id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
         tenant_id UUID NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,

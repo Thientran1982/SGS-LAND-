@@ -30,7 +30,10 @@ const migration: Migration = {
         sensitive BOOLEAN NOT NULL DEFAULT FALSE,
         confidence NUMERIC(4,3) NOT NULL DEFAULT 0.5 CHECK (confidence >= 0 AND confidence <= 1),
         created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-        CHECK (valid_until IS NULL OR valid_until >= valid_from)
+        -- Superseded facts are closed before the replacement is created.
+        -- Their valid_from remains the observation date, so historical rows
+        -- may have valid_until < valid_from when superseded_by is set.
+        CHECK (valid_until IS NULL OR valid_until >= valid_from OR superseded_by IS NOT NULL)
       );
       CREATE INDEX IF NOT EXISTS idx_customer_profile_facts_active
         ON customer_profile_facts (tenant_id, profile_id, category, valid_until);
