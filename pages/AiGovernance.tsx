@@ -1277,7 +1277,7 @@ export const AiGovernance: React.FC = () => {
                             <tbody className="divide-y divide-[var(--glass-border)]">
                                 {safetyLogs?.map(log => (
                                     <tr key={log.id} className="hover:bg-[var(--glass-surface)] transition-colors">
-                                        <td className="p-3 text-[var(--text-secondary)] font-mono">{formatTime(log.timestamp || log.createdAt || '')}</td>
+                                        <td className="p-3 text-[var(--text-secondary)] font-mono">{formatTime(log.timestamp || '')}</td>
                                         <td className="p-3 font-bold text-[var(--text-secondary)]">{log.taskType}</td>
                                         <td className="p-3 font-mono text-[var(--text-secondary)]">{formatModelName(log.model)}</td>
                                         <td className="p-3 text-[var(--text-secondary)]">{log.latencyMs}ms</td>
