@@ -1,4 +1,4 @@
-import { describe, expect, it, vi } from 'vitest';
+import { describe, expect, it } from 'vitest';
 
 describe('Agent Cockpit failure isolation', () => {
   it('keeps optional panel failures from becoming an endpoint-wide failure', () => {
