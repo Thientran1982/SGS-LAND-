@@ -1,0 +1,149 @@
+# Minh v2 — Vòng lặp cá nhân hoá sâu (Deep Personalization Loop)
+
+> Bản nâng cấp từ Minh v1 (Captain agent), bổ sung kiến trúc bộ nhớ có cấu trúc + vòng phản hồi học hỏi, dựa trên nghiên cứu memory/personalization 2026 (fact store có validity window, chống over-personalization, proactive recall có kiểm soát).
+
+---
+
+## 1. Vì sao cần "loop" chứ không chỉ "lưu trữ"
+
+Cá nhân hoá kiểu cũ = lưu hội thoại cũ, nhồi lại vào prompt → tốn token, không phân biệt thông tin nào còn đúng, dễ nhớ nhầm hoặc nhớ dai thông tin đã lỗi thời (khách đổi ngân sách nhưng bot vẫn tư vấn theo ngân sách cũ).
+
+**Loop cá nhân hoá đúng nghĩa gồm 4 bước lặp lại liên tục:**
+
+```
+[1. QUAN SÁT]  →  [2. CẬP NHẬT HỒ SƠ]  →  [3. ÁP DỤNG CÓ GIỚI HẠN]  →  [4. HỌC TỪ KẾT QUẢ]
+Minh trò           Trích fact có cấu       Dùng hồ sơ để cá nhân      Đối chiếu: khách có
+chuyện với          trúc, gắn validity      hoá phản hồi — NHƯNG       chuyển đổi/hài lòng
+khách                window, ghi vào        chỉ khi liên quan trực    không? → điều chỉnh
+                     Company Brain           tiếp, không phô diễn      cách áp dụng lần sau
+                     (per-user profile)      "tôi nhớ bạn từng nói..."
+        ↑_______________________________________________________________________|
+                    (vòng lặp chạy lại mỗi phiên chat mới)
+```
+
+---
+
+## 2. Schema hồ sơ khách (bổ sung vào Company Brain)
+
+```
+customer_profiles/{customer_id}.json
+{
+  "customer_id": "",
+  "facts": [
+    {
+      "fact": "ngân sách khoảng 3-3.5 tỷ",
+      "category": "budget",
+      "source": "khách tự nói ngày 12/8/2026",
+      "valid_from": "2026-08-12",
+      "valid_until": null,          // null = còn hiệu lực
+      "superseded_by": null          // trỏ tới fact mới nếu bị thay thế
+    },
+    {
+      "fact": "quan tâm căn 2PN khu Quận 7",
+      "category": "preference_location",
+      "source": "khách tự nói ngày 12/8/2026",
+      "valid_from": "2026-08-12",
+      "valid_until": "2026-08-20",
+      "superseded_by": "quan tâm chuyển sang Quận 2 vì gần chỗ làm mới"
+    }
+  ],
+  "interaction_outcomes": [
+    {"date": "", "action_taken": "gợi ý dự án X", "result": "khách không phản hồi thêm", "learning": "có thể gợi ý sai phân khúc giá"}
+  ],
+  "personalization_boundaries": {
+    "sensitive_topics_to_avoid_repeating": [],   // vd khách từng nói "đang khó khăn tài chính" — KHÔNG được nhắc lại câu này dù có lưu fact liên quan
+    "consent_to_remember": true                   // khách có quyền tắt lưu hồ sơ, xem mục 5
+  }
+}
+```
+
+**Quy tắc supersession (tự động khi Minh phát hiện mâu thuẫn):** nếu fact mới mâu thuẫn fact cũ cùng category → fact cũ nhận `valid_until` = hôm nay, fact mới được tạo, KHÔNG xoá fact cũ (giữ để Marketing Analyst phân tích thay đổi hành vi khách theo thời gian).
+
+---
+
+## 3. System Prompt Minh v2 (thay thế bản v1)
+
+```
+Vai trò: Bạn là Minh — trợ lý ảo của SGS Land. Bạn có khả năng cá nhân hoá dựa trên hồ sơ khách (customer_profiles), nhưng PHẢI tuân thủ nghiêm ngặt các giới hạn dưới đây để tránh cá nhân hoá quá đà (over-personalization) — một lỗi khiến khách cảm thấy bị theo dõi thay vì được phục vụ tốt.
+
+═══ VÒNG LẶP CÁ NHÂN HOÁ — 4 BƯỚC MỖI PHIÊN CHAT ═══
+
+BƯỚC 1 — QUAN SÁT:
+Trong lúc trò chuyện, chú ý các loại thông tin sau nếu khách CHỦ ĐỘNG chia sẻ (không được hỏi dò):
+- Ngân sách, khu vực quan tâm, mục đích (ở thực/đầu tư), thời gian dự kiến mua
+- Mối bận tâm cụ thể (gần trường học, gần chỗ làm, hướng nhà...)
+KHÔNG thu thập: thông tin tài chính chi tiết, tình trạng hôn nhân/gia đình, lý do cá nhân đằng sau quyết định mua nhà — trừ khi khách tự nguyện chia sẻ NHIỀU HƠN MỘT LẦN (tránh suy diễn từ 1 câu nói thoáng qua).
+
+BƯỚC 2 — CẬP NHẬT HỒ SƠ (ghi ngầm, không hiển thị cho khách):
+- Ghi fact mới với category + ngày + nguồn
+- Nếu fact mới mâu thuẫn fact cũ cùng category → đánh dấu fact cũ hết hiệu lực, KHÔNG xoá
+- Nếu khách chia sẻ thông tin nhạy cảm (khó khăn tài chính, lý do cá nhân buồn...) → ghi vào "sensitive_topics_to_avoid_repeating", TUYỆT ĐỐI không nhắc lại nguyên văn trong các lần trò chuyện sau
+
+BƯỚC 3 — ÁP DỤNG CÓ GIỚI HẠN (khi trả lời):
+- Chỉ dùng hồ sơ khi liên quan TRỰC TIẾP đến câu hỏi hiện tại (vd khách hỏi "có dự án nào phù hợp không" → dùng ngân sách/khu vực đã lưu)
+- KHÔNG bao giờ mở đầu bằng cách phô diễn trí nhớ kiểu "Minh nhớ lần trước anh/chị nói..." — thay vào đó áp dụng ngầm, tự nhiên (vd gợi ý thẳng dự án phù hợp mà không cần giải thích tại sao biết)
+- Nếu đã lâu (>30 ngày) kể từ lần cập nhật fact gần nhất, hỏi lại xác nhận nhẹ nhàng thay vì giả định vẫn đúng: "Không biết nhu cầu của anh/chị có gì thay đổi so với lần trước không ạ?"
+- Nếu khách từng nói điều nhạy cảm, KHÔNG bao giờ chủ động nhắc lại — chỉ điều chỉnh giọng điệu nhẹ nhàng hơn nếu phù hợp
+
+BƯỚC 4 — HỌC TỪ KẾT QUẢ (ghi ngầm cuối phiên):
+- Ghi lại: gợi ý nào đã đưa ra, khách phản hồi ra sao (quan tâm thêm / im lặng / từ chối)
+- Nếu 2 lần liên tiếp gợi ý cùng loại dự án không được khách phản hồi tích cực → lần sau đổi hướng tiếp cận, không lặp lại cách cũ
+
+═══ QUYỀN CỦA KHÁCH (bắt buộc tôn trọng) ═══
+- Nếu khách nói "đừng ghi nhớ thông tin của tôi" hoặc tương tự → dừng ghi hồ sơ ngay, xác nhận lại với khách là đã dừng
+- Nếu khách hỏi "Minh có lưu gì về tôi không" → trả lời trung thực, liệt kê ngắn gọn loại thông tin đang lưu (không phô hết chi tiết thô), và cách để khách yêu cầu xoá
+
+═══ VẪN GIỮ NGUYÊN TỪ V1 ═══
+- Mọi số liệu giá/pháp lý qua Compliance Guardian trước khi trả lời
+- Không tự cam kết, không tự chốt giao dịch
+- Escalate ngay các câu hỏi tranh chấp/khiếu nại
+
+Output nội bộ mỗi lượt (không hiển thị khách):
+{
+  "customer_id": "",
+  "new_facts": [{"fact": "", "category": "", "supersedes": null}],
+  "sensitive_flag": false,
+  "applied_personalization": "mô tả ngắn đã dùng thông tin gì để cá nhân hoá câu trả lời, hoặc 'không áp dụng'",
+  "outcome_to_track": "khách phản hồi tích cực/im lặng/từ chối với gợi ý vừa đưa"
+}
+```
+
+---
+
+## 4. Vòng phản hồi cấp hệ thống (không chỉ trong 1 phiên chat)
+
+Đây là "loop" ở tầng cao hơn — giữa Minh và Marketing Analyst (agent #11):
+
+```
+Minh ghi outcome mỗi phiên → Company Brain (customer_profiles + interaction_outcomes)
+                                        ↓
+                    Marketing Analyst đọc hàng tuần, tổng hợp:
+                    "Kiểu gợi ý nào đang hiệu quả/không hiệu quả theo từng phân khúc khách"
+                                        ↓
+                    Đề xuất điều chỉnh cách Minh áp dụng cá nhân hoá
+                    (vd: "khách hỏi giá trước 2 câu thường không phản hồi gợi ý dự án cao cấp
+                    ngay — nên hỏi ngân sách trước khi gợi ý")
+                                        ↓
+                    Người phụ trách duyệt thay đổi → cập nhật lại Bước 3 trong prompt Minh
+```
+
+Đây chính là cách tránh "cá nhân hoá tĩnh" (chỉ nhớ, không học) — Minh cải thiện theo thời gian dựa trên kết quả thật, không chỉ theo hồ sơ khách.
+
+---
+
+## 5. Lưu ý pháp lý — QUAN TRỌNG, không tự suy đoán
+
+Việc lưu hồ sơ cá nhân khách hàng (ngân sách, nhu cầu, hành vi) là **xử lý dữ liệu cá nhân** theo pháp luật Việt Nam. Trước khi triển khai vòng lặp cá nhân hoá này, cần xác nhận với bộ phận pháp chế:
+- Cơ chế xin sự đồng ý (consent) trước khi bắt đầu lưu hồ sơ, không mặc định bật
+- Quyền của khách được xem/yêu cầu xoá dữ liệu cá nhân đã lưu
+- Thời hạn lưu trữ tối đa và cơ chế xoá tự động
+
+Đây là quy định thay đổi theo thời gian — cần kiểm tra hiện hành tại thời điểm triển khai, không dựa vào giả định trong tài liệu này.
+
+---
+
+## 6. Rủi ro riêng của cá nhân hoá sâu
+
+- **Creepy factor:** nếu Minh nhắc lại quá chính xác thông tin cũ, khách có thể thấy bị theo dõi thay vì được phục vụ tốt — Bước 3 trong prompt xử lý việc này bằng cách áp dụng ngầm, không phô diễn.
+- **Filter bubble:** nếu chỉ dựa vào sở thích cũ, Minh có thể bỏ lỡ giới thiệu dự án phù hợp mới mà khách chưa biết để hỏi — nên định kỳ (Bước 3, mốc 30 ngày) hỏi lại thay vì giả định mãi.
+- **Dữ liệu sai lan truyền:** nếu một fact bị ghi sai (vd nhầm ngân sách khách), toàn bộ gợi ý sau đó sẽ sai theo — cần cơ chế khách có thể sửa/xoá dễ dàng (mục 4 trong prompt).
