@@ -38,3 +38,4 @@
 - [Minh answer focus](minh-answer-focus.md) — current user message and tenant-scoped evidence outrank old memory; unrelated history must not become prompt instructions
 - [AI spend upsert reliability](ai-spend-upsert.md) — use atomic tenant-scoped increments and explicitly repair the unique key before ON CONFLICT upserts
 - [Admin AI defensive rendering](admin-ai-defensive-rendering.md) — admin AI data APIs can return legacy/null shapes; normalize before rendering to prevent Error Boundary crashes
+- [Email delivery claim RLS](email-delivery-rls.md) — internal idempotency claims need an explicit transaction-scoped bypass path in both RLS expressions

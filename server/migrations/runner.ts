@@ -189,6 +189,7 @@ import m165 from './165_ai_usage_spend_upsert_key';
 import m166 from './166_ai_spend_flush_alerts';
 import m167 from './167_restore_role_card_approval';
 import m168 from './168_support_requests';
+import m169 from './169_fix_email_delivery_claims_rls';
 
 dotenv.config();
 
@@ -375,6 +376,7 @@ export const MIGRATION_REGISTRY: Record<string, Migration> = {
   '166_ai_spend_flush_alerts.ts': m166,
   '167_restore_role_card_approval.ts': m167,
   '168_support_requests.ts': m168,
+  '169_fix_email_delivery_claims_rls.ts': m169,
 };
 
 async function ensureSchemaVersionsTable(client: PoolClient): Promise<void> {
