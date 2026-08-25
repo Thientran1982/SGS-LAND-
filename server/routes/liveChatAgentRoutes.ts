@@ -17,6 +17,7 @@ import { liveChatEngine } from '../ai/liveChatEngine';
 import { logger } from '../middleware/logger';
 import { sendAiError } from '../utils/aiErrorHandler';
 import { detectGuideDataGroup, renderGuideDataSummary } from '../ai/guideDataSources';
+import { supportRequestRepository, SUPPORT_STATUSES } from '../repositories/supportRequestRepository';
 
 const AI_TOOLS = new Set([
     'handle_live_chat',
@@ -198,6 +199,77 @@ export function createLiveChatAgentRoutes(
                 });
             }
             return sendAiError(res, e, 'liveChatAgentRoutes');
+        }
+    });
+
+    // Support requests are deliberately separate from the AI tool dispatcher.
+    // The authenticated user and tenant are always taken from the token.
+    router.get('/support-requests', authenticateToken, apiRateLimit, async (req: Request, res: Response) => {
+        const user = (req as any).user;
+        try {
+            const staff = ['SUPER_ADMIN', 'ADMIN', 'MANAGER', 'TEAM_LEAD'].includes(user.role);
+            const data = staff
+                ? await supportRequestRepository.listForStaff(user.tenantId, typeof req.query.status === 'string' ? req.query.status : undefined)
+                : await supportRequestRepository.findForUser(user.tenantId, user.id);
+            return res.json({ data });
+        } catch (e) {
+            logger.error('[liveChatAgentRoutes] support request list error:', e);
+            return res.status(500).json({ error: 'Không thể tải yêu cầu hỗ trợ.' });
+        }
+    });
+
+    router.post('/support-requests', authenticateToken, apiRateLimit, async (req: Request, res: Response) => {
+        const user = (req as any).user;
+        const body = req.body || {};
+        if (body.consent !== true) return res.status(400).json({ error: 'Bạn cần xác nhận đồng ý để gửi yêu cầu.', code: 'SUPPORT_CONSENT_REQUIRED' });
+        const text = `${body.title || ''} ${body.description || ''}`;
+        if (/(password|mật khẩu|mat khau|otp|token|api key|api_key|secret|thẻ ngân hàng|the ngan hang|private key)/i.test(text)) {
+            return res.status(400).json({ error: 'Không gửi mật khẩu, OTP, token, khóa bí mật hoặc thông tin thẻ trong yêu cầu.', code: 'SUPPORT_SENSITIVE_DATA' });
+        }
+        try {
+            const request = await supportRequestRepository.create(user.tenantId, user.id, body);
+            return res.status(201).json(request);
+        } catch (e: any) {
+            if (e?.message === 'TITLE_AND_DESCRIPTION_REQUIRED') return res.status(400).json({ error: 'Tiêu đề và mô tả là bắt buộc.' });
+            logger.error('[liveChatAgentRoutes] support request create error:', e);
+            return res.status(500).json({ error: 'Không thể tạo yêu cầu hỗ trợ.' });
+        }
+    });
+
+    router.get('/support-requests/:id', authenticateToken, apiRateLimit, async (req: Request, res: Response) => {
+        const user = (req as any).user;
+        const requestId = String(req.params.id);
+        try {
+            const staff = ['SUPER_ADMIN', 'ADMIN', 'MANAGER', 'TEAM_LEAD'].includes(user.role);
+            const request = staff
+                ? (await supportRequestRepository.listForStaff(user.tenantId)).find((row: any) => row.id === requestId)
+                : await supportRequestRepository.findForUser(user.tenantId, user.id, requestId);
+            if (!request) return res.status(404).json({ error: 'Yêu cầu hỗ trợ không tồn tại.' });
+            return res.json(request);
+        } catch (e) {
+            logger.error('[liveChatAgentRoutes] support request detail error:', e);
+            return res.status(500).json({ error: 'Không thể tải yêu cầu hỗ trợ.' });
+        }
+    });
+
+    router.patch('/support-requests/:id', authenticateToken, apiRateLimit, async (req: Request, res: Response) => {
+        const user = (req as any).user;
+        const requestId = String(req.params.id);
+        if (!['SUPER_ADMIN', 'ADMIN', 'MANAGER', 'TEAM_LEAD'].includes(user.role)) {
+            return res.status(403).json({ error: 'Chỉ nhân viên phụ trách mới có thể cập nhật yêu cầu.' });
+        }
+        const status = String(req.body?.status || '');
+        if (!(SUPPORT_STATUSES as readonly string[]).includes(status)) return res.status(400).json({ error: 'Trạng thái không hợp lệ.' });
+        if (req.body?.reply && /(password|mật khẩu|otp|token|api key|secret|thẻ ngân hàng)/i.test(String(req.body.reply))) {
+            return res.status(400).json({ error: 'Phản hồi không được chứa dữ liệu nhạy cảm.' });
+        }
+        try {
+            const updated = await supportRequestRepository.updateByStaff(user.tenantId, requestId, user.id, status as any, req.body?.reply);
+            if (!updated) return res.status(404).json({ error: 'Yêu cầu hỗ trợ không tồn tại.' });
+            return res.json(updated);
+        } catch (e) {
+            logger.error('[liveChatAgentRoutes] support request update error:', e);
+            return res.status(500).json({ error: 'Không thể cập nhật yêu cầu hỗ trợ.' });
         }
     });
 

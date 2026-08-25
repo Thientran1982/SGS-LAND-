@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { Bot, ChevronDown, MessageCircle, RefreshCw, Send, X } from 'lucide-react';
+import { Bot, ChevronDown, MessageCircle, RefreshCw, Send, X, LifeBuoy, Clock3 } from 'lucide-react';
 import { api } from '../services/api/apiClient';
 import { useTranslation } from '../services/i18n';
 
@@ -24,6 +24,11 @@ type AssistantResponse = {
     escalationReason?: string;
 };
 
+type SupportRequest = {
+    id: string; trackingCode: string; title: string; status: string; updatedAt: string;
+    latestReply?: string | null;
+};
+
 const MAX_HISTORY = 12;
 
 export const GuideAssistant: React.FC = () => {
@@ -34,6 +39,10 @@ export const GuideAssistant: React.FC = () => {
     const [sending, setSending] = useState(false);
     const [error, setError] = useState('');
     const [messages, setMessages] = useState<ChatMessage[]>([]);
+    const [support, setSupport] = useState<SupportRequest[]>([]);
+    const [supportDraft, setSupportDraft] = useState<{ title: string; description: string } | null>(null);
+    const [supportConsent, setSupportConsent] = useState(false);
+    const [supportSending, setSupportSending] = useState(false);
     const [togglePosition, setTogglePosition] = useState<{ left: number; top: number } | null>(null);
     const endRef = useRef<HTMLDivElement>(null);
     const sessionIdRef = useRef(`guide-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`);
@@ -109,6 +118,15 @@ export const GuideAssistant: React.FC = () => {
         source: 'Nguồn',
         scope: 'Dữ liệu theo quyền truy cập của bạn',
         escalation: 'Cần nhân viên xác minh',
+        support: 'Tạo yêu cầu hỗ trợ',
+        supportTitle: 'Gửi yêu cầu cho nhân viên',
+        supportDescription: 'Mô tả ngắn gọn vấn đề (không gửi mật khẩu, OTP, token hoặc thông tin thẻ).',
+        supportConsent: 'Tôi đồng ý gửi thông tin này cho nhân viên SGS LAND để xử lý.',
+        submitSupport: 'Gửi yêu cầu',
+        tracking: 'Mã yêu cầu',
+        updated: 'Cập nhật',
+        received: 'Đã tiếp nhận',
+        supportError: 'Không thể tạo yêu cầu. Vui lòng thử lại.',
     } : {
         title: 'Guide assistant',
         subtitle: 'Ask about workflows and data you can access',
@@ -126,17 +144,49 @@ export const GuideAssistant: React.FC = () => {
         source: 'Source',
         scope: 'Data is limited to your access scope',
         escalation: 'Employee verification required',
+        support: 'Create support request',
+        supportTitle: 'Send to an employee',
+        supportDescription: 'Briefly describe the issue (do not send passwords, OTPs, tokens or card details).',
+        supportConsent: 'I agree to send this information to an SGS LAND employee for handling.',
+        submitSupport: 'Submit request',
+        tracking: 'Request code',
+        updated: 'Updated',
+        received: 'Received',
+        supportError: 'Could not create the request. Please try again.',
     };
 
     useEffect(() => {
         if (open) endRef.current?.scrollIntoView({ behavior: 'smooth' });
     }, [messages, open, sending]);
 
+    useEffect(() => {
+        if (!open) return;
+        api.get<{ data: SupportRequest[] }>('/api/live-chat/support-requests')
+            .then(result => setSupport(Array.isArray(result?.data) ? result.data : []))
+            .catch(() => { /* Support history is optional; chat remains usable. */ });
+    }, [open]);
+
     const reset = () => {
         sessionIdRef.current = `guide-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
         setMessages([]);
         setError('');
         setInput('');
+        setSupportDraft(null);
+    };
+
+    const createSupportRequest = async () => {
+        if (!supportDraft || !supportConsent || supportSending) return;
+        setSupportSending(true);
+        try {
+            const created = await api.post<SupportRequest>('/api/live-chat/support-requests', {
+                ...supportDraft, category: 'GUIDE_ESCALATION', sourceSessionId: sessionIdRef.current, consent: true,
+            });
+            setSupport(prev => [created, ...prev.filter(item => item.id !== created.id)]);
+            setSupportDraft(null);
+            setSupportConsent(false);
+        } catch {
+            setError(copy.supportError);
+        } finally { setSupportSending(false); }
     };
 
     const send = async (value = input) => {
@@ -202,6 +252,15 @@ export const GuideAssistant: React.FC = () => {
                     </header>
 
                     <div className="flex-1 space-y-3 overflow-y-auto p-3">
+                        {support.length > 0 && (
+                            <div className="rounded-xl border border-[var(--sgs-primary)]/20 bg-[var(--sgs-primary)]/5 p-2.5">
+                                <div className="mb-1.5 flex items-center gap-1.5 text-xs font-bold text-[var(--text-primary)]"><Clock3 size={14} /> {copy.support}</div>
+                                {support.slice(0, 3).map(item => <div key={item.id} className="border-t border-[var(--glass-border)] py-1.5 text-[11px] text-[var(--text-secondary)]">
+                                    <b>{item.trackingCode}</b> · {item.status} · {copy.updated}: {new Date(item.updatedAt).toLocaleString(isVietnamese ? 'vi-VN' : 'en-US')}
+                                    {item.latestReply && <div className="mt-1">{item.latestReply}</div>}
+                                </div>)}
+                            </div>
+                        )}
                         {messages.length === 0 && (
                             <div className="space-y-3">
                                 <div className="rounded-2xl rounded-tl-sm bg-[var(--glass-surface)] px-3 py-2.5 text-sm leading-6 text-[var(--text-secondary)]">
@@ -229,6 +288,11 @@ export const GuideAssistant: React.FC = () => {
                                               : copy.scope}
                                         </div>
                                     )}
+                                    {message.role === 'assistant' && message.escalationReason && (
+                                        <button type="button" onClick={() => setSupportDraft({ title: message.content.slice(0, 120), description: message.content })} className="mt-2 flex items-center gap-1 rounded-lg border border-[var(--sgs-primary)]/30 px-2 py-1 text-[11px] font-semibold text-[var(--sgs-primary)]">
+                                            <LifeBuoy size={13} /> {copy.support}
+                                        </button>
+                                    )}
                                 </div>
                             </div>
                         ))}
@@ -241,6 +305,12 @@ export const GuideAssistant: React.FC = () => {
                             </div>
                         )}
                         {error && <div className="rounded-xl border border-[var(--ui-danger)]/25 bg-[var(--ui-danger)]/5 px-3 py-2 text-xs text-[var(--ui-danger)]">{error}</div>}
+                        {supportDraft && <div className="rounded-xl border border-[var(--sgs-primary)]/30 bg-[var(--bg-surface)] p-3">
+                            <div className="mb-1 text-xs font-bold text-[var(--text-primary)]">{copy.supportTitle}</div>
+                            <textarea value={supportDraft.description} onChange={e => setSupportDraft({ ...supportDraft, description: e.target.value })} maxLength={2000} rows={3} className="w-full rounded-lg border border-[var(--glass-border)] bg-transparent p-2 text-xs text-[var(--text-primary)] outline-none" aria-label={copy.supportDescription} />
+                            <label className="mt-2 flex gap-2 text-[11px] text-[var(--text-secondary)]"><input type="checkbox" checked={supportConsent} onChange={e => setSupportConsent(e.target.checked)} /> {copy.supportConsent}</label>
+                            <button type="button" disabled={!supportConsent || supportSending} onClick={() => void createSupportRequest()} className="mt-2 rounded-lg bg-[var(--sgs-primary)] px-3 py-1.5 text-xs font-bold text-white disabled:opacity-40">{copy.submitSupport}</button>
+                        </div>}
                         <div ref={endRef} />
                     </div>
 

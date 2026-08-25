@@ -18,6 +18,7 @@ type CockpitSummary = {
 type ReplayHistory = { id: string; operator_id: string; reason: string; replay_number: number; result_status: string; result_error?: string; requested_at: string; completed_at?: string };
 type OperatingEvent = { id: string; event_id: string; event_type: string; idempotency_key: string; urgency: number; status: string; attempts: number; last_error?: string; lease_expires_at?: string; lease_expired?: boolean; created_at: string; updated_at: string; replay_history: ReplayHistory[] };
 type HumanQuestion = { id: string; agent_key: string; question: string; priority: number; created_at: string; context_json: Record<string, unknown> };
+type SupportRequest = { id: string; trackingCode: string; category: string; title: string; description: string; status: string; latestReply?: string | null; requesterName?: string; requesterEmail?: string; updatedAt: string };
 type AdminMemory = { id: string; namespace: string; key: string; kind: 'fact' | 'episodic' | 'procedural'; value: string; importance: number; hits: number; expires_at: string | null; expired?: boolean; conflict?: boolean; piiScrubbed?: boolean; updated_at: string };
 type WeightVersion = { id: string; status: 'draft' | 'shadow' | 'live'; weights: Record<string, number>; metrics: Record<string, unknown>; goldenSetPassed: boolean; created_at: string };
 
@@ -42,6 +43,10 @@ export default function AgentCockpit() {
   const [weights, setWeights] = useState<{ live: Record<string, number>; versions: WeightVersion[] } | null>(null);
   const [reflecting, setReflecting] = useState(false);
   const [fitting, setFitting] = useState(false);
+  const [supportRequests, setSupportRequests] = useState<SupportRequest[]>([]);
+  const [supportReply, setSupportReply] = useState<Record<string, string>>({});
+  const [supportStatus, setSupportStatus] = useState<Record<string, string>>({});
+  const [updatingSupport, setUpdatingSupport] = useState<string | null>(null);
 
   const load = useCallback(async () => {
     setLoading(true); setError('');
@@ -49,12 +54,14 @@ export default function AgentCockpit() {
       const query = new URLSearchParams(eventFilters).toString();
       const nextSummary = await api.get<CockpitSummary>('/api/agent-operating/cockpit');
       setSummary(nextSummary);
-      const [questionsResult, eventsResult] = await Promise.allSettled([
+      const [questionsResult, eventsResult, supportResult] = await Promise.allSettled([
         api.get<HumanQuestion[]>('/api/agent-operating/questions'),
         api.get<OperatingEvent[]>(`/api/agent-operating/events?${query}`),
+        api.get<{ data: SupportRequest[] }>('/api/live-chat/support-requests'),
       ]);
       if (questionsResult.status === 'fulfilled') setQuestions(questionsResult.value);
       if (eventsResult.status === 'fulfilled') setEvents(eventsResult.value);
+      if (supportResult.status === 'fulfilled') setSupportRequests(supportResult.value.data || []);
       // Secondary panels must not hide a successfully loaded cockpit or a
       // successful role-card approval.
       const [memoryResult, weightsResult] = await Promise.allSettled([
@@ -134,6 +141,16 @@ export default function AgentCockpit() {
     setFitting(true);
     try { await api.post('/api/ai/weights/fit', {}); setError('Đã tạo draft weights. Draft chỉ được live sau khi đạt golden-set gate.'); await load(); }
     catch (e: any) { setError(e?.message || 'Không thể fit weights.'); } finally { setFitting(false); }
+  };
+  const updateSupport = async (request: SupportRequest) => {
+    const status = supportStatus[request.id] || 'IN_PROGRESS';
+    setUpdatingSupport(request.id);
+    try {
+      await api.patch(`/api/live-chat/support-requests/${request.id}`, { status, reply: supportReply[request.id] || undefined });
+      setSupportReply(current => ({ ...current, [request.id]: '' }));
+      await load();
+    } catch (e: any) { setError(e?.message || 'Không thể cập nhật yêu cầu hỗ trợ.'); }
+    finally { setUpdatingSupport(null); }
   };
   const promoteWeights = async (version: WeightVersion) => {
     if (!version.goldenSetPassed) {
@@ -231,6 +248,15 @@ export default function AgentCockpit() {
             <label className="mt-2 flex items-center gap-2 text-xs text-slate-600"><input type="checkbox" checked={approveMemory} onChange={event => setApproveMemory(event.target.checked)} /> Cho phép đưa câu trả lời vào memory</label>
           </div>)}</div>}
         </section>
+         <section className="rounded-xl border border-sky-200 bg-sky-50/40 p-5 shadow-sm">
+           <div className="mb-4 flex items-center gap-2"><Send size={19} className="text-sky-700" /><h2 className="font-semibold text-slate-900">Yêu cầu hỗ trợ từ người dùng</h2><span className="rounded-full bg-sky-100 px-2 py-0.5 text-xs font-semibold text-sky-800">{supportRequests.length}</span></div>
+           {supportRequests.length === 0 ? <div className="flex items-center gap-2 text-sm text-slate-600"><CheckCircle2 size={16} className="text-emerald-600" /> Không có yêu cầu mới.</div> : <div className="space-y-3">{supportRequests.map(request => <div key={request.id} className="rounded-lg border border-sky-200 bg-white p-4">
+             <div className="flex flex-wrap items-center justify-between gap-2"><div><b className="text-sm text-slate-900">{request.trackingCode}</b><span className="ml-2 rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-bold text-amber-800">{request.status}</span></div><span className="text-xs text-slate-500">{request.requesterName || request.requesterEmail || 'Người dùng'} · {new Date(request.updatedAt).toLocaleString('vi-VN')}</span></div>
+             <h3 className="mt-2 text-sm font-semibold text-slate-800">{request.title}</h3><p className="mt-1 whitespace-pre-wrap text-sm text-slate-600">{request.description}</p>
+             {request.latestReply && <p className="mt-2 rounded-md bg-slate-50 p-2 text-xs text-slate-600">Phản hồi gần nhất: {request.latestReply}</p>}
+             <div className="mt-3 grid gap-2 sm:grid-cols-[180px_1fr_auto]"><Dropdown value={supportStatus[request.id] || (request.status === 'RECEIVED' ? 'IN_PROGRESS' : request.status)} onChange={value => setSupportStatus(current => ({ ...current, [request.id]: String(value) }))} options={[{ value: 'IN_PROGRESS', label: 'Đang xử lý' }, { value: 'WAITING_FOR_USER', label: 'Chờ người dùng' }, { value: 'RESOLVED', label: 'Đã xử lý' }, { value: 'CLOSED', label: 'Đóng yêu cầu' }]} variant="compact" /><input value={supportReply[request.id] || ''} onChange={event => setSupportReply(current => ({ ...current, [request.id]: event.target.value }))} placeholder="Phản hồi cho người dùng (không gửi dữ liệu nhạy cảm)" maxLength={2000} className="rounded-lg border border-slate-200 px-3 py-2 text-sm" /><button onClick={() => void updateSupport(request)} disabled={updatingSupport === request.id} className="rounded-lg bg-sky-700 px-3 py-2 text-xs font-semibold text-white disabled:opacity-50">{updatingSupport === request.id ? 'Đang lưu…' : 'Cập nhật'}</button></div>
+           </div>)}</div>}
+         </section>
         <section className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm"><div className="mb-3 flex items-center gap-2"><XCircle size={18} className="text-slate-500" /><h2 className="font-semibold text-slate-900">Audit gần đây</h2></div><div className="divide-y divide-slate-100">{summary.recentAudit.slice(0, 8).map((event, index) => <div key={`${event.created_at}-${index}`} className="flex items-center justify-between gap-3 py-2 text-sm"><span className="text-slate-700">{event.event_type}</span><span className="text-xs text-slate-500">{event.status} · {new Date(event.created_at).toLocaleString('vi-VN')}</span></div>)}</div></section>
       </>}
     </div>
