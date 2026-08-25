@@ -18,7 +18,10 @@ export function createAgentOperatingRoutes(authenticateToken: any): Router {
   router.get('/cockpit', authenticateToken, async (req, res) => {
     const user = requireStaff(req, res); if (!user) return;
     try { res.json(await agentOperatingRepository.cockpitSummary(user.tenantId)); }
-    catch { res.status(500).json({ error: 'Không thể tải Admin Cockpit.' }); }
+    catch (error: any) {
+      console.error('[AgentOperating] cockpit summary failed:', error?.message || error);
+      res.status(500).json({ error: 'Không thể tải Admin Cockpit.' });
+    }
   });
 
   router.get('/questions', authenticateToken, async (req, res) => {

@@ -270,16 +270,28 @@ class AgentOperatingRepository {
 
   async cockpitSummary(tenantId: string) {
     return withTenantContext(tenantId, async client => {
+      // Cockpit is an operational overview, so one optional/older subsystem
+      // must not take down the whole page during schema rollout. Required
+      // tenant scoping is retained for every query; failed panels are empty
+      // and logged for migration/ops follow-up.
+      const safeQuery = async (name: string, text: string, values: unknown[]) => {
+        try {
+          return await client.query(text, values);
+        } catch (error: any) {
+          console.error(`[AgentCockpit] ${name} panel unavailable:`, error?.message || error);
+          return { rows: [] as any[] };
+        }
+      };
       const [events, questions, executions, audits, rollouts, kpis, shifts, roleCards, rollbackAudits] = await Promise.all([
-        client.query(`SELECT status, COUNT(*)::int AS count FROM agent_operating_events WHERE tenant_id=$1 GROUP BY status`, [tenantId]),
-        client.query(`SELECT status, COUNT(*)::int AS count FROM agent_human_questions WHERE tenant_id=$1 GROUP BY status`, [tenantId]),
-        client.query(`SELECT status, COUNT(*)::int AS count FROM agent_executions WHERE tenant_id=$1 GROUP BY status`, [tenantId]),
-        client.query(`SELECT event_type, status, created_at FROM agent_audit_events WHERE tenant_id=$1 ORDER BY created_at DESC LIMIT 20`, [tenantId]),
-        client.query(`SELECT agent_key, status, canary_percent, shadow_enabled, gate_summary, updated_at FROM ai_rollouts WHERE tenant_id=$1 ORDER BY updated_at DESC LIMIT 20`, [tenantId]),
-        client.query(`SELECT * FROM agent_kpi_snapshots WHERE tenant_id=$1 AND period_end >= CURRENT_DATE - 7 ORDER BY period_start DESC, agent_key`, [tenantId]),
-        client.query(`SELECT * FROM agent_shift_reports WHERE tenant_id=$1 ORDER BY report_date DESC, shift LIMIT 14`, [tenantId]),
-        client.query(`SELECT agent_key, card_json, approval_status, approved_by, approved_at, approval_reason, updated_at FROM agent_role_cards WHERE tenant_id=$1`, [tenantId]),
-        client.query(`SELECT id, entity_id, from_status, to_status, decision, reason, metrics_json, trace_id, created_at FROM ai_promotion_decisions WHERE tenant_id=$1 AND decision='ROLLBACK' ORDER BY created_at DESC LIMIT 30`, [tenantId]),
+        safeQuery('events', `SELECT status, COUNT(*)::int AS count FROM agent_operating_events WHERE tenant_id=$1 GROUP BY status`, [tenantId]),
+        safeQuery('questions', `SELECT status, COUNT(*)::int AS count FROM agent_human_questions WHERE tenant_id=$1 GROUP BY status`, [tenantId]),
+        safeQuery('executions', `SELECT status, COUNT(*)::int AS count FROM agent_executions WHERE tenant_id=$1 GROUP BY status`, [tenantId]),
+        safeQuery('audit', `SELECT event_type, status, created_at FROM agent_audit_events WHERE tenant_id=$1 ORDER BY created_at DESC LIMIT 20`, [tenantId]),
+        safeQuery('rollouts', `SELECT agent_key, status, canary_percent, shadow_enabled, gate_summary, updated_at FROM ai_rollouts WHERE tenant_id=$1 ORDER BY updated_at DESC LIMIT 20`, [tenantId]),
+        safeQuery('weekly-kpi', `SELECT * FROM agent_kpi_snapshots WHERE tenant_id=$1 AND period_end >= CURRENT_DATE - 7 ORDER BY period_start DESC, agent_key`, [tenantId]),
+        safeQuery('shift-reports', `SELECT * FROM agent_shift_reports WHERE tenant_id=$1 ORDER BY report_date DESC, shift LIMIT 14`, [tenantId]),
+        safeQuery('role-cards', `SELECT agent_key, card_json, approval_status, approved_by, approved_at, approval_reason, updated_at FROM agent_role_cards WHERE tenant_id=$1`, [tenantId]),
+        safeQuery('rollback-audits', `SELECT id, entity_id, from_status, to_status, decision, reason, metrics_json, trace_id, created_at FROM ai_promotion_decisions WHERE tenant_id=$1 AND decision='ROLLBACK' ORDER BY created_at DESC LIMIT 30`, [tenantId]),
       ]);
       const savedCards = new Map(roleCards.rows.map(card => [card.agent_key, card]));
       return {
