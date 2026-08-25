@@ -36,3 +36,4 @@
 - [Provider delivery lookup](provider-delivery-lookup.md) — Brevo delivery verification uses a stable delivery-key tag; unsupported providers stay manual
 - [Durable signal health](durable-signal-health.md) — aggregate sanitized signal-write failures durably by tenant/type so restart does not erase operational alerts
 - [Minh answer focus](minh-answer-focus.md) — current user message and tenant-scoped evidence outrank old memory; unrelated history must not become prompt instructions
+- [AI spend upsert reliability](ai-spend-upsert.md) — use atomic tenant-scoped increments and explicitly repair the unique key before ON CONFLICT upserts

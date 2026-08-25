@@ -10,6 +10,7 @@ import { leadRepository } from './repositories/leadRepository';
 import { feedbackRepository } from './repositories/feedbackRepository';
 import { agentRepository } from './repositories/agentRepository';
 import { recordAiUsage, estimateAiCostUsd } from './services/aiUsageService';
+import { AiSpendBuffer } from './services/aiSpendBuffer';
 import { pool } from './db';
 import {
     DEFAULT_ROUTER_INSTRUCTION,
@@ -260,21 +261,16 @@ function sanitizePromptInput(str: string, maxLen = 300): string {
 }
 
 // Spend accumulator: flush to DB every 10 calls or 30s (avoid per-request DB write)
-const spendBuffer: Map<string, number> = new Map();
+const spendBuffer = new AiSpendBuffer();
 let spendFlushTimer: ReturnType<typeof setTimeout> | null = null;
 
 async function flushSpendBuffer() {
-    if (spendBuffer.size === 0) return;
-    const toFlush = new Map(spendBuffer);
-    spendBuffer.clear();
-    for (const [tenantId, addedCost] of toFlush) {
-        try {
-            const config = await aiGovernanceRepository.getAiConfig(tenantId);
-            const newSpend = parseFloat(((config?.currentSpendUsd || 0) + addedCost).toFixed(6));
-            await aiGovernanceRepository.upsertAiConfig(tenantId, { ...config, currentSpendUsd: newSpend });
-        } catch (e) {
-            logger.error('[AI Cost] Failed to flush spend buffer:', e);
-        }
+    try {
+        await spendBuffer.flush((tenantId, addedCost) =>
+            aiGovernanceRepository.incrementAiSpend(tenantId, addedCost),
+        );
+    } catch (e) {
+        logger.error('[AI Cost] Failed to flush spend buffer:', e);
     }
 }
 function scheduleSpendFlush() {
@@ -365,7 +361,7 @@ async function writeSafetyLog(
             safetyFlags: [],
         });
         // Accumulate cost — flush to DB in batch (no modelCache invalidation)
-        spendBuffer.set(tenantId, (spendBuffer.get(tenantId) || 0) + costUsd);
+        spendBuffer.add(tenantId, costUsd);
         scheduleSpendFlush();
     } catch (e) {
         logger.error('[AI Governance] Failed to write safety log:', e);

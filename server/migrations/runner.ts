@@ -185,6 +185,7 @@ import m161 from './161_care_email_tracking';
 import m162 from './162_seed_missing_runtime_agents';
 import m163 from './163_reconcile_runtime_agent_set';
 import m164 from './164_restore_agent_shift_reports';
+import m165 from './165_ai_usage_spend_upsert_key';
 
 dotenv.config();
 
@@ -367,6 +368,7 @@ export const MIGRATION_REGISTRY: Record<string, Migration> = {
   '162_seed_missing_runtime_agents.ts': m162,
   '163_reconcile_runtime_agent_set.ts': m163,
   '164_restore_agent_shift_reports.ts': m164,
+  '165_ai_usage_spend_upsert_key.ts': m165,
 };
 
 async function ensureSchemaVersionsTable(client: PoolClient): Promise<void> {

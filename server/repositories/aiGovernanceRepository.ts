@@ -232,6 +232,38 @@ class AiGovernanceRepository extends BaseRepository {
       return result.rows[0]?.config_value || config;
     });
   }
+
+  /**
+   * Add spend atomically inside PostgreSQL. Reading config and writing it back
+   * in application code loses increments when workers flush concurrently.
+   */
+  async incrementAiSpend(tenantId: string, amountUsd: number): Promise<any> {
+    return this.withTenant(tenantId, async (client) => {
+      const result = await client.query(
+        `INSERT INTO enterprise_config
+           (tenant_id, config_key, config_value, updated_at)
+         VALUES (
+           $1, 'ai_config',
+           jsonb_build_object('enabled', true, 'currentSpendUsd', $2::numeric),
+           CURRENT_TIMESTAMP
+         )
+         ON CONFLICT (tenant_id, config_key) DO UPDATE
+           SET config_value = jsonb_set(
+                 enterprise_config.config_value,
+                 '{currentSpendUsd}',
+                 to_jsonb(
+                   COALESCE((enterprise_config.config_value->>'currentSpendUsd')::numeric, 0)
+                   + $2::numeric
+                 ),
+                 true
+               ),
+               updated_at = CURRENT_TIMESTAMP
+         RETURNING config_value`,
+        [tenantId, amountUsd],
+      );
+      return result.rows[0]?.config_value;
+    });
+  }
 }
 
 export const aiGovernanceRepository = new AiGovernanceRepository();
