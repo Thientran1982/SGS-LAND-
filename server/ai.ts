@@ -6,6 +6,7 @@ import type { PropertyType } from './valuationEngine';
 import { logger } from './middleware/logger';
 import { aiGovernanceRepository } from './repositories/aiGovernanceRepository';
 import { enterpriseConfigRepository } from './repositories/enterpriseConfigRepository';
+import { customerProfileService, formatCustomerProfileContext } from './services/customerProfileService';
 import { leadRepository } from './repositories/leadRepository';
 import { feedbackRepository } from './repositories/feedbackRepository';
 import { agentRepository } from './repositories/agentRepository';
@@ -3094,6 +3095,19 @@ ${dataFreshnessNote}`;
             }
         }
 
+        // Minh may use only an explicitly opted-in, tenant/customer-scoped profile.
+        // Sensitive facts are excluded by the service; failure must not block chat.
+        let customerProfileContext = '';
+        if (tenantId && lead?.id) {
+            try {
+                customerProfileContext = formatCustomerProfileContext(
+                    await customerProfileService.getPersonalizationContext(tenantId, String(lead.id)),
+                );
+            } catch (error: any) {
+                logger.warn('[CustomerProfile] context unavailable:', error?.message || error);
+            }
+        }
+
         const compactFavorites: CompactFavorite[] | undefined = userFavorites?.map(f => ({
             id: f.id,
             title: f.title,
@@ -3110,7 +3124,7 @@ ${dataFreshnessNote}`;
             userMessage,
             history: fullHistory,
             trace: [],
-            systemContext: buildSystemContext(lead, compactFavorites) + memoryDigest,
+            systemContext: buildSystemContext(lead, compactFavorites) + memoryDigest + customerProfileContext,
             finalResponse: "",
             suggestedAction: 'NONE',
             t,

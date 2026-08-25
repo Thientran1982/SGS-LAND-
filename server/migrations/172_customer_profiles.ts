@@ -47,15 +47,30 @@ const migration: Migration = {
         id BIGSERIAL PRIMARY KEY,
         tenant_id UUID NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
         customer_id TEXT NOT NULL,
-        action TEXT NOT NULL CHECK (action IN ('CONSENT_CHANGED','FACT_DELETED','PROFILE_ERASED','RETENTION_PURGED')),
+        action TEXT NOT NULL CHECK (action IN ('CONSENT_CHANGED','FACT_CREATED','FACT_DELETED','TOPIC_ADDED','TOPIC_DELETED','PROFILE_ERASED','RETENTION_PURGED')),
         actor_id TEXT,
         details_json JSONB NOT NULL DEFAULT '{}'::jsonb,
         created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
       );
       CREATE INDEX IF NOT EXISTS idx_customer_profile_erasure_audit_lookup
         ON customer_profile_erasure_audit (tenant_id, customer_id, created_at DESC);
+      CREATE TABLE IF NOT EXISTS customer_profile_topics_to_avoid (
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        tenant_id UUID NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
+        profile_id UUID NOT NULL REFERENCES customer_profiles(id) ON DELETE CASCADE,
+        topic TEXT NOT NULL CHECK (char_length(topic) BETWEEN 1 AND 500),
+        source TEXT NOT NULL CHECK (char_length(source) BETWEEN 1 AND 500),
+        created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+        UNIQUE (tenant_id, profile_id, topic)
+      );
+      CREATE INDEX IF NOT EXISTS idx_customer_profile_topics_lookup
+        ON customer_profile_topics_to_avoid (tenant_id, profile_id);
     `);
-    for (const table of ['customer_profiles', 'customer_profile_facts', 'customer_profile_outcomes', 'customer_profile_erasure_audit']) {
+    // The table predates the explicit fact-created audit event in some installs.
+    await client.query(`ALTER TABLE customer_profile_erasure_audit DROP CONSTRAINT IF EXISTS customer_profile_erasure_audit_action_check`);
+    await client.query(`ALTER TABLE customer_profile_erasure_audit ADD CONSTRAINT customer_profile_erasure_audit_action_check
+      CHECK (action IN ('CONSENT_CHANGED','FACT_CREATED','FACT_DELETED','TOPIC_ADDED','TOPIC_DELETED','PROFILE_ERASED','RETENTION_PURGED'))`);
+    for (const table of ['customer_profiles', 'customer_profile_facts', 'customer_profile_outcomes', 'customer_profile_erasure_audit', 'customer_profile_topics_to_avoid']) {
       await client.query(`
         ALTER TABLE ${table} ENABLE ROW LEVEL SECURITY;
         ALTER TABLE ${table} FORCE ROW LEVEL SECURITY;
@@ -69,7 +84,7 @@ const migration: Migration = {
     }
   },
   async down(client: PoolClient): Promise<void> {
-    await client.query('DROP TABLE IF EXISTS customer_profile_erasure_audit, customer_profile_outcomes, customer_profile_facts, customer_profiles CASCADE');
+    await client.query('DROP TABLE IF EXISTS customer_profile_topics_to_avoid, customer_profile_erasure_audit, customer_profile_outcomes, customer_profile_facts, customer_profiles CASCADE');
   },
 };
 

@@ -8,10 +8,18 @@ export function createCustomerProfileRoutes(authenticateToken: RequestHandler): 
   router.get('/', async (req: any, res) => {
     try {
       const customerId = String(req.user.id);
-      res.json((await customerProfileService.getProfile(req.user.tenantId, customerId)) || {
+      const includeSensitive = req.query.includeSensitive === 'true';
+      res.json((await customerProfileService.getProfile(req.user.tenantId, customerId, includeSensitive)) || {
         customerId, rememberConsent: 'PENDING', facts: [], interaction_outcomes: [],
       });
     } catch (error: any) { res.status(400).json({ error: error?.message || 'Không thể đọc hồ sơ cá nhân' }); }
+  });
+
+  router.get('/context', async (req: any, res) => {
+    try {
+      const customerId = String(req.user.id);
+      res.json(await customerProfileService.getPersonalizationContext(req.user.tenantId, customerId));
+    } catch (error: any) { res.status(400).json({ error: error?.message || 'Không thể đọc ngữ cảnh cá nhân' }); }
   });
 
   router.put('/consent', async (req: any, res) => {
@@ -40,6 +48,18 @@ export function createCustomerProfileRoutes(authenticateToken: RequestHandler): 
       const outcome = await customerProfileService.recordOutcome(req.user.tenantId, String(req.user.id), req.body);
       res.status(201).json(outcome);
     } catch (error: any) { res.status(400).json({ error: error?.message || 'Không thể ghi nhận kết quả tương tác' }); }
+  });
+
+  router.post('/topics-to-avoid', async (req: any, res) => {
+    try {
+      res.status(201).json(await customerProfileService.addTopicToAvoid(req.user.tenantId, String(req.user.id), req.body, String(req.user.id)));
+    } catch (error: any) { res.status(400).json({ error: error?.message || 'Không thể lưu chủ đề cần tránh' }); }
+  });
+
+  router.delete('/topics-to-avoid/:id', async (req: any, res) => {
+    try {
+      res.json({ deleted: await customerProfileService.deleteTopicToAvoid(req.user.tenantId, String(req.user.id), String(req.params.id), String(req.user.id)) });
+    } catch (error: any) { res.status(400).json({ error: error?.message || 'Không thể xóa chủ đề cần tránh' }); }
   });
 
   router.delete('/', async (req: any, res) => {

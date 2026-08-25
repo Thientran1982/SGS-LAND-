@@ -53,7 +53,7 @@ export function classifyInteractionOutcome(message: string): 'positive' | 'negat
 }
 
 export function normalizeProfileFact(input: any): {
-  fact: string; category: string; source: string; sensitive: boolean; confidence: number;
+  fact: string; category: string; source: string; sensitive: boolean; confidence: number; validUntil: string | null;
 } {
   const fact = String(input?.fact || '').trim();
   const category = String(input?.category || '').trim();
@@ -63,9 +63,23 @@ export function normalizeProfileFact(input: any): {
   if (!PROFILE_CATEGORIES.has(category)) throw new Error('Invalid customer profile fact category');
   if (!source || source.length > 500) throw new Error('source is required and must be at most 500 characters');
   if (!Number.isFinite(confidence) || confidence < 0 || confidence > 1) throw new Error('confidence must be between 0 and 1');
-  return { fact, category, source, sensitive: input?.sensitive === true, confidence };
+  const validUntil = input?.validUntil == null || input.validUntil === '' ? null : String(input.validUntil);
+  if (validUntil && !/^\d{4}-\d{2}-\d{2}$/.test(validUntil)) throw new Error('validUntil must be an ISO date');
+  return { fact, category, source, sensitive: input?.sensitive === true, confidence, validUntil };
 }
 
+export function formatCustomerProfileContext(context: {
+  consent: boolean;
+  facts: Array<{ category: string; fact: string }>;
+  topicsToAvoid?: string[];
+}): string {
+  if (!context.consent) return '';
+  const facts = context.facts.map(f => `${f.category}: ${f.fact}`).join(' | ');
+  const avoid = context.topicsToAvoid?.length
+    ? `\nKHÔNG NHẮC LẠI các chủ đề khách yêu cầu tránh: ${context.topicsToAvoid.join(', ')}`
+    : '';
+  return `${facts ? `\n[HỒ SƠ CÁ NHÂN ĐÃ ĐƯỢC KHÁCH CHO PHÉP GHI NHỚ]: ${facts}` : ''}${avoid}`;
+}
 async function audit(client: any, tenantId: string, customerId: string, action: string, actorId: string | undefined, details: any = {}) {
   await client.query(
     `INSERT INTO customer_profile_erasure_audit (tenant_id, customer_id, action, actor_id, details_json)
@@ -111,18 +125,25 @@ export const customerProfileService = {
          ORDER BY created_at DESC LIMIT 100`,
         [tenantId, profile.id],
       );
-      return { ...profile, facts: facts.rows, interaction_outcomes: outcomes.rows };
+      const topics = await client.query(
+        `SELECT id, topic, source, created_at FROM customer_profile_topics_to_avoid
+         WHERE tenant_id=$1 AND profile_id=$2 ORDER BY created_at DESC`,
+        [tenantId, profile.id],
+      );
+      return { ...profile, facts: facts.rows, interaction_outcomes: outcomes.rows, topics_to_avoid: topics.rows };
     });
   },
 
-  async getPersonalizationContext(tenantId: string, customerId: string, message: string) {
+  async getPersonalizationContext(tenantId: string, customerId: string, message = '') {
     return withTenantContext(tenantId, async client => {
       const profileResult = await client.query(
         'SELECT id, remember_consent FROM customer_profiles WHERE tenant_id=$1 AND customer_id=$2',
         [tenantId, customerId],
       );
       const profile = profileResult.rows[0];
-      if (!profile || profile.remember_consent !== 'OPTED_IN') return { enabled: false, block: '', stale: false, negativeStreak: 0 };
+      if (!profile || profile.remember_consent !== 'OPTED_IN') {
+        return { consent: false, enabled: false, block: '', stale: false, negativeStreak: 0, facts: [], interaction_outcomes: [], topicsToAvoid: [] };
+      }
       const facts = await client.query(
         `SELECT fact, category, source, created_at
          FROM customer_profile_facts
@@ -146,11 +167,23 @@ export const customerProfileService = {
          WHERE tenant_id=$1 AND profile_id=$2 ORDER BY created_at DESC LIMIT 2`,
         [tenantId, profile.id],
       );
+      const topics = await client.query(
+        `SELECT topic FROM customer_profile_topics_to_avoid
+         WHERE tenant_id=$1 AND profile_id=$2 ORDER BY created_at DESC`,
+        [tenantId, profile.id],
+      );
       const negativeStreak = outcomes.rows.length === 2 && outcomes.rows.every((row: any) => /negative|rejected|từ chối|không phù hợp/i.test(row.result)) ? 2 : 0;
       const block = relevant.length
         ? `[HỒ SƠ CÁ NHÂN — chỉ dùng khi liên quan trực tiếp]\n${relevant.map((row: any) => `- ${row.category}: ${row.fact} (nguồn: ${row.source})`).join('\n')}`
         : '';
-      return { enabled: true, block, stale: facts.rows.some((row: any) => (Date.now() - new Date(row.created_at).getTime()) / 86400000 > 30), negativeStreak };
+      return {
+        consent: true, enabled: true, block,
+        facts: relevant.map((row: any) => ({ ...row, sensitive: false })),
+        interaction_outcomes: outcomes.rows,
+        topicsToAvoid: topics.rows.map((row: any) => row.topic),
+        stale: facts.rows.some((row: any) => (Date.now() - new Date(row.created_at).getTime()) / 86400000 > 30),
+        negativeStreak,
+      };
     });
   },
 
@@ -190,16 +223,27 @@ export const customerProfileService = {
       const created = await client.query(
         `INSERT INTO customer_profile_facts
          (tenant_id, profile_id, fact, category, source, sensitive, confidence)
-         VALUES ($1,$2,$3,$4,$5,$6,$7) RETURNING *`,
+         VALUES ($1,$2,$3,$4,$5,$6,$7)
+         RETURNING *`,
         [tenantId, profile.rows[0].id, fact.fact, fact.category, fact.source, fact.sensitive, fact.confidence],
       );
       if (previous.rows[0]) {
         await client.query(
-          `UPDATE customer_profile_facts SET valid_until=CURRENT_DATE, superseded_by=$3
+          `UPDATE customer_profile_facts SET valid_until=CURRENT_DATE - 1, superseded_by=$3
            WHERE tenant_id=$1 AND id=$2`,
           [tenantId, previous.rows[0].id, created.rows[0].id],
         );
       }
+      if (fact.validUntil) {
+        await client.query(
+          `UPDATE customer_profile_facts SET valid_until=$3::date
+           WHERE tenant_id=$1 AND id=$2`,
+          [tenantId, created.rows[0].id, fact.validUntil],
+        );
+      }
+      await audit(client, tenantId, customerId, 'FACT_CREATED', actorId, {
+        factId: created.rows[0].id, category: fact.category, supersededFactId: previous.rows[0]?.id || null,
+      });
       await client.query('UPDATE customer_profiles SET updated_at=NOW() WHERE tenant_id=$1 AND id=$2', [tenantId, profile.rows[0].id]);
       return created.rows[0];
     });
@@ -217,6 +261,41 @@ export const customerProfileService = {
          VALUES ($1,$2,$3,$4,$5) RETURNING *`,
         [tenantId, profile.rows[0].id, action, result, typeof input.learning === 'string' ? input.learning.slice(0, 1000) : null],
       )).rows[0];
+    });
+  },
+
+  async addTopicToAvoid(tenantId: string, customerId: string, input: any, actorId?: string) {
+    const topic = String(input?.topic || '').trim();
+    const source = String(input?.source || '').trim();
+    if (!topic || topic.length > 500 || !source || source.length > 500) {
+      throw new Error('topic and source are required and must be at most 500 characters');
+    }
+    return withTenantContext(tenantId, async client => {
+      const profile = await client.query(
+        'SELECT id, remember_consent FROM customer_profiles WHERE tenant_id=$1 AND customer_id=$2 FOR UPDATE',
+        [tenantId, customerId],
+      );
+      if (!profile.rows[0] || profile.rows[0].remember_consent !== 'OPTED_IN') throw new Error('Customer profile consent is required');
+      const result = await client.query(
+        `INSERT INTO customer_profile_topics_to_avoid (tenant_id, profile_id, topic, source)
+         VALUES ($1,$2,$3,$4) ON CONFLICT (tenant_id, profile_id, topic) DO UPDATE SET source=EXCLUDED.source
+         RETURNING *`,
+        [tenantId, profile.rows[0].id, topic, source],
+      );
+      await audit(client, tenantId, customerId, 'TOPIC_ADDED', actorId, { topic });
+      return result.rows[0];
+    });
+  },
+
+  async deleteTopicToAvoid(tenantId: string, customerId: string, topicId: string, actorId?: string) {
+    return withTenantContext(tenantId, async client => {
+      const result = await client.query(
+        `DELETE FROM customer_profile_topics_to_avoid t USING customer_profiles p
+         WHERE t.tenant_id=$1 AND t.id=$2 AND t.profile_id=p.id AND p.customer_id=$3 RETURNING t.topic`,
+        [tenantId, topicId, customerId],
+      );
+      if (result.rows[0]) await audit(client, tenantId, customerId, 'TOPIC_DELETED', actorId, { topic: result.rows[0].topic });
+      return Boolean(result.rows[0]);
     });
   },
 

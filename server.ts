@@ -44,6 +44,7 @@ import { issueEmailOtp, verifyEmailOtp } from "./server/services/emailOtpService
 import { createAiGovernanceRoutes } from "./server/routes/aiGovernanceRoutes";
 import { createAgentMemoryRoutes } from "./server/routes/agentMemoryRoutes";
 import { createCustomerProfileRoutes } from "./server/routes/customerProfileRoutes";
+import { customerProfileService } from "./server/services/customerProfileService";
 import { createMonitoringRoutes } from "./server/routes/monitoringRoutes";
 import { createAgentRoutes } from "./server/routes/agentRoutes";
 import { createSessionRoutes, createTemplateRoutes } from "./server/routes/sessionRoutes";
@@ -5018,6 +5019,31 @@ app.use('/api/approval-requests', apiRateLimit, createApprovalRequestRoutes(auth
     } catch (err: any) {
       logger.error('[RLHF Cron] Lỗi recompute reward signals:', err);
       return res.status(500).json({ error: err.message });
+    }
+  });
+
+  // Customer profile retention: called daily by the scheduler. Expired facts
+  // are purged per tenant and each purge is recorded in the audit ledger.
+  app.post("/api/internal/customer-profile-retention", async (req, res) => {
+    const secret = req.headers['x-internal-secret'] || req.body?.secret;
+    const configuredSecret = process.env.CUSTOMER_PROFILE_RETENTION_SECRET || process.env.JWT_SECRET?.slice(0, 32);
+    if (!secret || secret !== configuredSecret) return res.status(401).json({ error: 'Không có quyền truy cập' });
+    try {
+      const tenantId = req.body?.tenantId;
+      const tenants = tenantId && tenantId !== 'all'
+        ? [{ id: String(tenantId) }]
+        : (await pool.query('SELECT id FROM tenants WHERE is_active = true ORDER BY id')).rows;
+      const results: Record<string, number | string> = {};
+      for (const tenant of tenants) {
+        try {
+          results[tenant.id] = await customerProfileService.purgeExpired(tenant.id, 'retention-job');
+        } catch (error: any) {
+          results[tenant.id] = error?.message || String(error);
+        }
+      }
+      return res.json({ ok: true, tenantCount: tenants.length, results, purgedAt: new Date().toISOString() });
+    } catch (error: any) {
+      return res.status(500).json({ error: error?.message || 'Không thể chạy retention hồ sơ' });
     }
   });
 

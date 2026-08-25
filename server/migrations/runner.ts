@@ -193,6 +193,7 @@ import m169 from './169_fix_email_delivery_claims_rls';
 import m170 from './170_activate_sequences_and_backfill';
 import m171 from './171_marketing_growth_company_brain';
 import m172 from './172_customer_profiles';
+import m173 from './173_customer_profile_topics';
 
 dotenv.config();
 
@@ -383,6 +384,7 @@ export const MIGRATION_REGISTRY: Record<string, Migration> = {
   '170_activate_sequences_and_backfill.ts': m170,
   '171_marketing_growth_company_brain.ts': m171,
   '172_customer_profiles.ts': m172,
+  '173_customer_profile_topics.ts': m173,
 };
 
 /**
