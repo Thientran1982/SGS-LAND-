@@ -80,14 +80,21 @@ export async function processDueSequenceEnrollments(
   opts: { dryRun?: boolean; batchSize?: number } = {},
 ): Promise<{ claimed: number; sent: number; failed: number; completed: number }> {
   const stats = { claimed: 0, sent: 0, failed: 0, completed: 0 };
-  const lock = await pool.query<{ locked: boolean }>(
-    'SELECT pg_try_advisory_lock(hashtext($1)) AS locked',
-    ['sequence-enrollment-worker'],
-  );
-  if (!lock.rows[0]?.locked) return stats;
+  // Advisory locks are session-scoped. Keep every query, including unlock,
+  // on the same checked-out client; using pool.query can move work to another
+  // connection and would make the lock ineffective across app processes.
+  const client = await pool.connect();
+  let locked = false;
 
   try {
-    const rows = await pool.query(
+    const lock = await client.query<{ locked: boolean }>(
+      'SELECT pg_try_advisory_lock(hashtext($1)) AS locked',
+      ['sequence-enrollment-worker'],
+    );
+    locked = Boolean(lock.rows[0]?.locked);
+    if (!locked) return stats;
+
+    const rows = await client.query(
       `SELECT e.id, e.tenant_id, e.sequence_id, e.lead_email, e.lead_name,
               e.step_index, e.created_at, s.steps, l.marketing_email_consent,
               COALESCE(l.opt_out_channels, '[]'::jsonb) AS opt_out_channels
@@ -107,7 +114,7 @@ export async function processDueSequenceEnrollments(
       const steps = (Array.isArray(row.steps) ? row.steps : []) as SequenceStep[];
       let index = Number(row.step_index || 0);
       if (!row.marketing_email_consent || (row.opt_out_channels || []).includes('email')) {
-        await pool.query(
+        await client.query(
           `UPDATE sequence_enrollments SET status = 'STOPPED', error = $2 WHERE id = $1`,
           [row.id, 'Consent revoked or email opted out'],
         );
@@ -116,7 +123,7 @@ export async function processDueSequenceEnrollments(
 
       while (index < steps.length && !isDue(new Date(row.created_at), steps, index)) break;
       if (index >= steps.length) {
-        await pool.query(`UPDATE sequence_enrollments SET status = 'COMPLETED' WHERE id = $1`, [row.id]);
+        await client.query(`UPDATE sequence_enrollments SET status = 'COMPLETED' WHERE id = $1`, [row.id]);
         stats.completed++;
         continue;
       }
@@ -124,7 +131,7 @@ export async function processDueSequenceEnrollments(
       const step = steps[index];
       if (!step || step.type !== 'EMAIL') {
         index++;
-        await pool.query(
+        await client.query(
           `UPDATE sequence_enrollments
               SET step_index = $2, status = CASE WHEN $2 >= $3 THEN 'COMPLETED' ELSE 'PENDING' END
             WHERE id = $1`,
@@ -134,7 +141,7 @@ export async function processDueSequenceEnrollments(
         continue;
       }
 
-      const claimed = await pool.query(
+      const claimed = await client.query(
         `UPDATE sequence_enrollments SET status = 'PROCESSING', error = NULL
           WHERE id = $1 AND status = 'PENDING' RETURNING id`,
         [row.id],
@@ -144,7 +151,7 @@ export async function processDueSequenceEnrollments(
       const subject = interpolate(step.subject || 'SGS LAND – Thông tin dành cho bạn', row.lead_name || '', row.lead_email);
       const content = interpolate(step.content || step.body || step.template || '', row.lead_name || '', row.lead_email);
       if (opts.dryRun) {
-        await pool.query(`UPDATE sequence_enrollments SET status = 'PENDING' WHERE id = $1`, [row.id]);
+        await client.query(`UPDATE sequence_enrollments SET status = 'PENDING' WHERE id = $1`, [row.id]);
         stats.sent++;
         continue;
       }
@@ -159,7 +166,7 @@ export async function processDueSequenceEnrollments(
         );
         if (!result.success) throw new Error(result.error || 'Sequence email failed');
         const nextIndex = index + 1;
-        await pool.query(
+        await client.query(
           `UPDATE sequence_enrollments
               SET step_index = $2, status = CASE WHEN $2 >= $3 THEN 'COMPLETED' ELSE 'PENDING' END,
                   sent_at = NOW(), error = NULL
@@ -169,7 +176,7 @@ export async function processDueSequenceEnrollments(
         stats.sent++;
         if (nextIndex >= steps.length) stats.completed++;
       } catch (error: any) {
-        await pool.query(
+        await client.query(
           `UPDATE sequence_enrollments SET status = 'PENDING', error = $2 WHERE id = $1`,
           [row.id, String(error?.message || error).slice(0, 1000)],
         );
@@ -178,6 +185,9 @@ export async function processDueSequenceEnrollments(
     }
     return stats;
   } finally {
-    await pool.query('SELECT pg_advisory_unlock(hashtext($1))', ['sequence-enrollment-worker']);
+    if (locked) {
+      await client.query('SELECT pg_advisory_unlock(hashtext($1))', ['sequence-enrollment-worker']);
+    }
+    client.release();
   }
 }
