@@ -14,7 +14,7 @@ export const FAQ_HOMEPAGE: FAQItem[] = [
   },
   {
     question: "SGS LAND có trụ sở ở đâu?",
-    answer: "SGS LAND đặt trụ sở tại 60 Nguyễn Đình Chiểu, Phường Đa Kao, Quận 1, TP.HCM. Hotline: 0971.132.378. Email: info@sgsland.vn.",
+    answer: "SGS LAND đặt trụ sở tại 60 Nguyễn Đình Chiểu, Phường Đa Kao, Quận 1, TP.HCM. Hotline: 0379.281.445. Email: info@sgsland.vn.",
   },
   {
     question: "SGS LAND thành lập năm nào?",
@@ -82,7 +82,7 @@ export const FAQ_HOMEPAGE: FAQItem[] = [
   },
   {
     question: "Giá bán căn hộ tại Aqua City hiện tại là bao nhiêu?",
-    answer: "Tại tháng 6/2026, giá căn hộ Aqua City dao động từ 1,5–4,5 tỷ đồng/căn tùy loại và vị trí, giá biệt thự từ 8–25 tỷ đồng. Liên hệ SGS LAND: 0971.132.378 để nhận bảng giá mới nhất.",
+    answer: "Tại tháng 6/2026, giá căn hộ Aqua City dao động từ 1,5–4,5 tỷ đồng/căn tùy loại và vị trí, giá biệt thự từ 8–25 tỷ đồng. Liên hệ SGS LAND: 0379.281.445 để nhận bảng giá mới nhất.",
   },
   {
     question: "Aqua City có tiện ích gì nổi bật?",
@@ -100,7 +100,7 @@ export const FAQ_HOMEPAGE: FAQItem[] = [
   },
   {
     question: "Giá căn hộ The Global City hiện tại là bao nhiêu?",
-    answer: "Giá căn hộ The Global City từ 4,5–15 tỷ đồng/căn (T6/2026) tùy tầng và hướng. Phân khu thương mại và penthouse có giá đặc biệt. Liên hệ SGS LAND: 0971.132.378.",
+    answer: "Giá căn hộ The Global City từ 4,5–15 tỷ đồng/căn (T6/2026) tùy tầng và hướng. Phân khu thương mại và penthouse có giá đặc biệt. Liên hệ SGS LAND: 0379.281.445.",
   },
   {
     question: "The Global City có gì khác biệt so với các dự án cao cấp khác tại TP.HCM?",
@@ -128,7 +128,7 @@ export const FAQ_HOMEPAGE: FAQItem[] = [
   },
   {
     question: "Giá căn hộ Vinhomes Grand Park hiện tại?",
-    answer: "Giá căn hộ Vinhomes Grand Park (T6/2026): từ 1,8 tỷ (Studio) đến 5,5 tỷ (3PN). Các phân khu The Rainbow, The Origami, The Beverly có giá khác nhau. Liên hệ 0971.132.378.",
+    answer: "Giá căn hộ Vinhomes Grand Park (T6/2026): từ 1,8 tỷ (Studio) đến 5,5 tỷ (3PN). Các phân khu The Rainbow, The Origami, The Beverly có giá khác nhau. Liên hệ 0379.281.445.",
   },
   {
     question: "Vinhomes Grand Park có tiện ích giáo dục không?",
@@ -142,7 +142,7 @@ export const FAQ_HOMEPAGE: FAQItem[] = [
   },
   {
     question: "Giá đất nền và nhà phố tại Izumi City?",
-    answer: "Giá đất nền Izumi City (T6/2026) từ 25–45 triệu đồng/m² tùy vị trí. Nhà phố từ 4–12 tỷ đồng. Liên hệ SGS LAND: 0971.132.378 để nhận thông tin chi tiết.",
+    answer: "Giá đất nền Izumi City (T6/2026) từ 25–45 triệu đồng/m² tùy vị trí. Nhà phố từ 4–12 tỷ đồng. Liên hệ SGS LAND: 0379.281.445 để nhận thông tin chi tiết.",
   },
 
   // --- PROJECT: DIAMOND SKY ---
@@ -222,7 +222,7 @@ export const FAQ_HOMEPAGE: FAQItem[] = [
   },
   {
     question: "Làm thế nào để liên hệ SGS LAND?",
-    answer: "Hotline: 0971.132.378 | Email: info@sgsland.vn | Địa chỉ: 60 Nguyễn Đình Chiểu, Phường Đa Kao, Quận 1, TP.HCM | Fanpage: facebook.com/sgsland.vn | Zalo OA: SGS LAND.",
+    answer: "Hotline: 0379.281.445 | Email: info@sgsland.vn | Địa chỉ: 60 Nguyễn Đình Chiểu, Phường Đa Kao, Quận 1, TP.HCM | Fanpage: facebook.com/sgsland.vn | Zalo OA: SGS LAND.",
   },
 ];
 

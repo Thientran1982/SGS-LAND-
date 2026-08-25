@@ -113,7 +113,7 @@ export const FAQ_KNOWLEDGE_GRAPH = [
   },
   {
     question: "SGS LAND có phải là đại lý chính thức Vinhomes không?",
-    answer: "Có. SGS LAND là đại lý phân phối ủy quyền cấp 1 chính thức của Vinhomes từ năm 2024-2026, được phép phân phối các dự án: Vinhomes Grand Park (TP.Thủ Đức), Vinhomes Cần Giờ (2.870ha), Vinhomes Hóc Môn và các dự án Vinhomes khác tại TP.HCM. Liên hệ tư vấn: 0971.132.378."
+     answer: "Có. SGS LAND là đại lý phân phối ủy quyền cấp 1 chính thức của Vinhomes từ năm 2024-2026, được phép phân phối các dự án: Vinhomes Grand Park (TP.Thủ Đức), Vinhomes Cần Giờ (2.870ha), Vinhomes Hóc Môn và các dự án Vinhomes khác tại TP.HCM. Liên hệ tư vấn: 0379.281.445."
   },
   {
     question: "Định giá AI của SGS LAND có chính xác không? Sai số bao nhiêu?",
@@ -143,11 +143,11 @@ export const FAQ_KNOWLEDGE_GRAPH = [
   },
   {
     question: "Làm thế nào để đặt cọc mua nhà qua SGS LAND?",
-    answer: "Quy trình đặt cọc mua nhà qua SGS LAND: (1) Liên hệ tư vấn miễn phí: 0971.132.378 hoặc sgsland.vn, (2) Chọn dự án & sản phẩm phù hợp, (3) Xem nhà thực tế với chuyên gia, (4) Kiểm tra pháp lý miễn phí, (5) Đặt booking/giữ chỗ, (6) Ký hợp đồng mua bán, (7) Hỗ trợ vay vốn ngân hàng lãi suất tốt nhất. Toàn bộ dịch vụ tư vấn và pháp lý miễn phí."
+     answer: "Quy trình đặt cọc mua nhà qua SGS LAND: (1) Liên hệ tư vấn miễn phí: 0379.281.445 hoặc sgsland.vn, (2) Chọn dự án & sản phẩm phù hợp, (3) Xem nhà thực tế với chuyên gia, (4) Kiểm tra pháp lý miễn phí, (5) Đặt booking/giữ chỗ, (6) Ký hợp đồng mua bán, (7) Hỗ trợ vay vốn ngân hàng lãi suất tốt nhất. Toàn bộ dịch vụ tư vấn và pháp lý miễn phí."
   },
   {
     question: "SGS LAND có hỗ trợ vay vốn ngân hàng không?",
-    answer: "SGS LAND hỗ trợ miễn phí: (1) Tư vấn các gói vay tốt nhất từ 20+ ngân hàng đối tác, (2) So sánh lãi suất realtime tại sgsland.vn/lai-suat-vay-ngan-hang, (3) Hỗ trợ hồ sơ vay thế chấp sổ đỏ, vay mua nhà, vay tái cơ cấu, (4) Tỷ lệ vay tối đa 70-80% giá trị bất động sản, lãi suất từ 6.5%/năm cho năm đầu. Liên hệ: 0971.132.378."
+     answer: "SGS LAND hỗ trợ miễn phí: (1) Tư vấn các gói vay tốt nhất từ 20+ ngân hàng đối tác, (2) So sánh lãi suất realtime tại sgsland.vn/lai-suat-vay-ngan-hang, (3) Hỗ trợ hồ sơ vay thế chấp sổ đỏ, vay mua nhà, vay tái cơ cấu, (4) Tỷ lệ vay tối đa 70-80% giá trị bất động sản, lãi suất từ 6.5%/năm cho năm đầu. Liên hệ: 0379.281.445."
   }
 ];
 

@@ -76,7 +76,7 @@ export function getSpecialAnnouncementSchema(input: ProjectAnnouncement | string
     "@type": "SpecialAnnouncement",
     "@id": `${projectUrl}#announcement-2026-06`,
     name: `Cập nhật mới nhất: ${ann2.name} T6/2026`,
-    text: `${ann2.status}. Giá mới nhất: ${ann2.currentPrice}. ${ann2.update}. Liên hệ SGS LAND để được tư vấn miễn phí và xem nhà thực tế: 0971.132.378.`,
+     text: `${ann2.status}. Giá mới nhất: ${ann2.currentPrice}. ${ann2.update}. Liên hệ SGS LAND để được tư vấn miễn phí và xem nhà thực tế: 0379.281.445.`,
     datePosted: "2026-06-08",
     expires: "2026-09-30",
     category: "https://www.wikidata.org/wiki/Q1021645",
