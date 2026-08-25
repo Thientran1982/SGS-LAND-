@@ -3331,25 +3331,27 @@ function ProjectCardBase({ project, isAdmin, isPartner, onEdit, onDelete, onAcce
             </div>
             {/* Card footer — CTAs */}
             <div className="px-5 pb-4 pt-0 flex flex-col gap-2">
-                <button
-                    type="button"
-                    onClick={onListings}
-                    className="w-full flex items-center justify-center gap-2 py-2 px-4 bg-[var(--glass-surface)] hover:bg-sgs-champagne dark:hover:bg-emerald-900/20 border border-[var(--glass-border)] hover:border-emerald-300 text-[var(--text-secondary)] hover:text-sgs-verified text-sm font-semibold rounded-xl transition-all"
-                >
-                    {t('project.view_listings')}
-                    {((project as any).listingCount || 0) > 0 && (
-                        <span className="ml-auto px-2 py-0.5 bg-sgs-champagne text-sgs-verified text-xs font-bold rounded-full">
-                            {(project as any).listingCount}
-                        </span>
-                    )}
-                </button>
-                <button
-                    type="button"
-                    onClick={onPriceMatrix}
-                    className="w-full flex items-center justify-center gap-2 py-2 px-4 bg-[var(--glass-surface)] hover:bg-sgs-champagne border border-[var(--glass-border)] hover:border-[var(--sgs-primary)] text-[var(--text-secondary)] hover:text-sgs-primary text-sm font-semibold rounded-xl transition-all"
-                >
-                    Bảng Giá
-                </button>
+                <div className="grid grid-cols-2 gap-2">
+                    <button
+                        type="button"
+                        onClick={onListings}
+                        className="w-full flex items-center justify-center gap-2 py-2 px-3 bg-[var(--glass-surface)] hover:bg-sgs-champagne dark:hover:bg-emerald-900/20 border border-[var(--glass-border)] hover:border-emerald-300 text-[var(--text-secondary)] hover:text-sgs-verified text-sm font-semibold rounded-xl transition-all"
+                    >
+                        <span className="truncate">{t('project.view_listings')}</span>
+                        {((project as any).listingCount || 0) > 0 && (
+                            <span className="shrink-0 px-2 py-0.5 bg-sgs-champagne text-sgs-verified text-xs font-bold rounded-full">
+                                {(project as any).listingCount}
+                            </span>
+                        )}
+                    </button>
+                    <button
+                        type="button"
+                        onClick={onPriceMatrix}
+                        className="w-full flex items-center justify-center gap-2 py-2 px-3 bg-[var(--glass-surface)] hover:bg-sgs-champagne border border-[var(--glass-border)] hover:border-[var(--sgs-primary)] text-[var(--text-secondary)] hover:text-sgs-primary text-sm font-semibold rounded-xl transition-all"
+                    >
+                        <span className="truncate">Bảng Giá</span>
+                    </button>
+                </div>
             </div>
             {/* Admin dropdown menu */}
             {menuOpen && createPortal(
