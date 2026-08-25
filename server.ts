@@ -43,6 +43,7 @@ import { emailService } from "./server/services/emailService";
 import { issueEmailOtp, verifyEmailOtp } from "./server/services/emailOtpService";
 import { createAiGovernanceRoutes } from "./server/routes/aiGovernanceRoutes";
 import { createAgentMemoryRoutes } from "./server/routes/agentMemoryRoutes";
+import { createCustomerProfileRoutes } from "./server/routes/customerProfileRoutes";
 import { createMonitoringRoutes } from "./server/routes/monitoringRoutes";
 import { createAgentRoutes } from "./server/routes/agentRoutes";
 import { createSessionRoutes, createTemplateRoutes } from "./server/routes/sessionRoutes";
@@ -4314,6 +4315,7 @@ app.get('/api/public/listings/:slugId', apiRateLimit, async (req: express.Reques
   app.use('/api/notifications', apiRateLimit, createNotificationRoutes(authenticateToken));
   app.use('/api/ai/governance', apiRateLimit, createAiGovernanceRoutes(authenticateToken, optionalAuth));
   app.use('/api/ai', apiRateLimit, createAgentMemoryRoutes(authenticateToken));
+  app.use('/api/customer-profile', apiRateLimit, createCustomerProfileRoutes(authenticateToken));
   app.use('/api/monitoring', apiRateLimit, createMonitoringRoutes(authenticateToken));
   app.use('/api/v1/ai', apiRateLimit, createAgentMemoryRoutes(authenticateToken));
   app.use('/api/agents', apiRateLimit, createAgentRoutes(authenticateToken));

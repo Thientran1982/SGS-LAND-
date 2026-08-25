@@ -21,6 +21,27 @@ export function createCustomerProfileRoutes(authenticateToken: RequestHandler): 
     } catch (error: any) { res.status(400).json({ error: error?.message || 'Không thể cập nhật consent' }); }
   });
 
+  router.post('/facts', async (req: any, res) => {
+    try {
+      const fact = await customerProfileService.addFact(req.user.tenantId, String(req.user.id), req.body, String(req.user.id));
+      res.status(201).json(fact);
+    } catch (error: any) { res.status(400).json({ error: error?.message || 'Không thể lưu thông tin hồ sơ' }); }
+  });
+
+  router.delete('/facts/:id', async (req: any, res) => {
+    try {
+      const deleted = await customerProfileService.deleteFact(req.user.tenantId, String(req.user.id), String(req.params.id), String(req.user.id));
+      res.json({ deleted });
+    } catch (error: any) { res.status(400).json({ error: error?.message || 'Không thể xóa thông tin hồ sơ' }); }
+  });
+
+  router.post('/outcomes', async (req: any, res) => {
+    try {
+      const outcome = await customerProfileService.recordOutcome(req.user.tenantId, String(req.user.id), req.body);
+      res.status(201).json(outcome);
+    } catch (error: any) { res.status(400).json({ error: error?.message || 'Không thể ghi nhận kết quả tương tác' }); }
+  });
+
   router.delete('/', async (req: any, res) => {
     try {
       const deleted = await customerProfileService.erase(req.user.tenantId, String(req.user.id), String(req.user.id));

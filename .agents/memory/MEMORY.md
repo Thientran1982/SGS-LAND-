@@ -43,3 +43,4 @@
 - [Sequence enrollment schema drift](sequence-schema-drift.md) — migration history may not guarantee the live unique constraint exists; repair before ON CONFLICT backfills.
 - [Sequence worker advisory locks](sequence-worker-locks.md) — keep lock, claims, updates, and unlock on one PostgreSQL session across the worker run.
 - [Migration history aliases](migration-history-aliases.md) — canonicalize reviewed renamed migration records without deleting history or replaying migrations.
+- [Customer profile boundaries](customer-profile-boundaries.md) — keep Minh personalization separate from Company Brain and fail closed without explicit profile consent.

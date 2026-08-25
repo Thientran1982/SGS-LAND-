@@ -134,6 +134,19 @@ export const customerProfileService = {
     });
   },
 
+  async deleteFact(tenantId: string, customerId: string, factId: string, actorId?: string) {
+    return withTenantContext(tenantId, async client => {
+      const result = await client.query(
+        `DELETE FROM customer_profile_facts f USING customer_profiles p
+         WHERE f.tenant_id=$1 AND f.id=$2 AND f.profile_id=p.id AND p.customer_id=$3
+         RETURNING f.id`,
+        [tenantId, factId, customerId],
+      );
+      if (result.rows[0]) await audit(client, tenantId, customerId, 'FACT_DELETED', actorId, { factId });
+      return Boolean(result.rows[0]);
+    });
+  },
+
   async erase(tenantId: string, customerId: string, actorId?: string) {
     return withTenantContext(tenantId, async client => {
       const result = await client.query('DELETE FROM customer_profiles WHERE tenant_id=$1 AND customer_id=$2 RETURNING id', [tenantId, customerId]);
