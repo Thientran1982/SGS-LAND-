@@ -963,6 +963,7 @@ export default async function ProjectPage({
     location: cms.location || project?.location || "",
     description: cms.description || project?.description || "",
     images: String(cms.images || "").split(/\r?\n/).filter(Boolean),
+    videos: String(cms.videos || "").split(/\r?\n/).filter(Boolean),
     amenities: String(cms.amenities || "").split(/\r?\n/).filter(Boolean),
   } : project ?? {
     name: meta?.name ?? listItem?.name ?? slug,
@@ -971,6 +972,7 @@ export default async function ProjectPage({
     description: meta?.desc ?? listItem?.description ?? "",
     slug,
     images: [],
+    videos: [],
     amenities: [],
   };
   const schemaProjectName = en && AREA_DETAIL_SLUGS.has(slug)

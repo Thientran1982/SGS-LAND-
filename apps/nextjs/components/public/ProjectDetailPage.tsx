@@ -32,6 +32,7 @@ interface ProjectDetail {
   property_types?: string[];
   investment_score?: number;
   images?: string[];
+  videos?: string[];
 }
 
 interface ProjectConfig {
@@ -62,6 +63,17 @@ function SectionHeading({ eyebrow, title, intro }: { eyebrow: string; title: str
       {intro && <p className="mt-3 text-sm leading-6" style={{ color: "var(--text-secondary)" }}>{intro}</p>}
     </div>
   );
+}
+
+function MediaGallery({ project, title }: { project: ProjectDetail; title: string }) {
+  const images = project.images?.filter(Boolean) || [];
+  const videos = project.videos?.filter(Boolean) || [];
+  if (!images.length && !videos.length) return null;
+  return <section className="mt-8 rounded-3xl border p-5 sm:p-7" style={surface} aria-label={title}>
+    <SectionHeading eyebrow="Media" title={title} />
+    {images.length > 0 && <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">{images.map((src) => <img key={src} src={src} alt={title} loading="lazy" className="h-52 w-full rounded-2xl object-cover" />)}</div>}
+    {videos.length > 0 && <div className={`${images.length ? "mt-6" : ""} grid gap-4 sm:grid-cols-2`}>{videos.map((src) => <video key={src} src={src} controls preload="metadata" className="max-h-[420px] w-full rounded-2xl bg-black" />)}</div>}
+  </section>;
 }
 
 function Tag({ children, tone = "neutral" }: { children: React.ReactNode; tone?: "accent" | "neutral" | "warning" }) {
@@ -288,6 +300,7 @@ function RichProjectDetail({ project, config, landing }: { project: ProjectDetai
             </div>
           </div>
         </section>
+         <MediaGallery project={project} title={tt(lang, "Hình ảnh & video dự án", "Project photos & videos")} />
 
         <section aria-label={tt(lang, "Thông tin nhanh", "Quick facts")} className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
           {displayStats.map((stat) => (
@@ -385,6 +398,7 @@ export function ProjectDetailPage({ project, slug, config, landingProject }: Pro
     <main className="mx-auto max-w-5xl px-4 py-10 sm:px-6 lg:px-8">
       <nav className="mb-6 flex items-center gap-2 text-xs" style={{ color: "var(--text-tertiary)" }}><Link href="/">Trang chủ</Link><span>/</span><Link href="/du-an">Dự án</Link><span>/</span><span style={{ color: "var(--text-primary)" }}>{project.name}</span></nav>
       <header className="mb-10"><div className="mb-3 flex flex-wrap gap-2">{project.status && <Tag tone="accent">{project.status}</Tag>}{project.legal_status && <Tag>{project.legal_status}</Tag>}</div><h1 className="text-4xl font-bold" style={{ color: "var(--text-primary)" }}>{project.name}</h1>{project.location && <p className="mt-3 flex items-center gap-2 text-sm" style={{ color: "var(--text-secondary)" }}><MapPin className="h-4 w-4" />{project.location}{project.developer && ` · ${project.developer}`}</p>}<p className="answer-box mt-5 max-w-3xl text-base leading-7" role="note" style={{ color: "var(--text-secondary)" }}>{project.description || config?.heroDescription}</p></header>
+       <MediaGallery project={project} title="Hình ảnh & video dự án" />
       {config?.details && <section className="mb-12"><SectionHeading eyebrow="Thông tin dự án" title="Thông tin chi tiết" /><div className="grid gap-px overflow-hidden rounded-2xl border sm:grid-cols-2" style={{ ...surface, background: "var(--border-default)" }}>{config.details.map((detail) => <div key={detail.label} className="flex justify-between gap-4 p-4" style={{ background: "var(--bg-elevated)" }}><span className="text-sm" style={{ color: "var(--text-tertiary)" }}>{detail.label}</span><strong className="text-right text-sm" style={{ color: "var(--text-primary)" }}>{detail.value}</strong></div>)}</div></section>}
       {config?.faqs && <section id="faq" className="mb-12"><SectionHeading eyebrow="FAQ" title="Câu hỏi thường gặp" /><div className="space-y-3">{config.faqs.map((faq) => <details key={faq.q} className="rounded-2xl border px-5 py-4" style={surface}><summary className="cursor-pointer text-sm font-bold" style={{ color: "var(--text-primary)" }}>{faq.q}</summary><p className="mt-3 text-sm leading-6" style={{ color: "var(--text-secondary)" }}>{faq.a}</p></details>)}</div></section>}
       <div className="rounded-2xl p-6" style={{ background: "var(--ui-surface-subtle)" }}><h2 className="text-xl font-bold" style={{ color: "var(--text-primary)" }}>Tìm hiểu thêm về {project.name}</h2><a href="tel:+84971132378" className="mt-4 inline-flex items-center gap-2 rounded-xl px-4 py-3 text-sm font-bold text-white" style={{ background: "var(--ui-brand)" }}><Phone className="h-4 w-4" /> Liên hệ SGS LAND</a></div>
