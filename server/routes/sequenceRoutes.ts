@@ -17,6 +17,7 @@ import { sequenceRepository } from '../repositories/sequenceRepository';
 import { emailService } from '../services/emailService';
 import { SEQUENCE_TEMPLATES } from '../sequenceTemplates';
 import { createHmac } from 'crypto';
+import { processDueSequenceEnrollments } from '../services/sequenceService';
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
@@ -175,6 +176,24 @@ export function createSequenceRoutes(pool: Pool, authenticateToken: any) {
     } catch (error) {
       console.error('Error updating sequence:', error);
       res.status(500).json({ error: 'Failed to update sequence' });
+    }
+  });
+
+  // ── Worker dry-run/status (admin only) ──────────────────────────────────────
+  router.post('/worker/run', authenticateToken, async (req: Request, res: Response) => {
+    try {
+      const user = (req as any).user;
+      if (!['SUPER_ADMIN', 'ADMIN', 'TEAM_LEAD'].includes(user.role)) {
+        return res.status(403).json({ error: 'Only admins and team leads can run the sequence worker' });
+      }
+      const stats = await processDueSequenceEnrollments(pool, {
+        dryRun: req.body?.dry_run !== false,
+        batchSize: Math.min(Math.max(Number(req.body?.batch_size) || 100, 1), 500),
+      });
+      return res.json({ ok: true, dry_run: req.body?.dry_run !== false, stats });
+    } catch (error: any) {
+      console.error('[SequenceWorker] Error:', error);
+      return res.status(500).json({ error: 'Failed to run sequence worker' });
     }
   });
 

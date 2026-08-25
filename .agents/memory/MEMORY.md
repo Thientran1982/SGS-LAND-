@@ -40,3 +40,4 @@
 - [Admin AI defensive rendering](admin-ai-defensive-rendering.md) — admin AI data APIs can return legacy/null shapes; normalize before rendering to prevent Error Boundary crashes
 - [Email delivery claim RLS](email-delivery-rls.md) — internal idempotency claims need an explicit transaction-scoped bypass path in both RLS expressions
 - [Local dependency patch controls](local-dependency-patch-controls.md) — archived package security patches must apply in production installs, be verified, and have an explicit scanner exception.
+- [Sequence enrollment schema drift](sequence-schema-drift.md) — migration history may not guarantee the live unique constraint exists; repair before ON CONFLICT backfills.

@@ -190,6 +190,7 @@ import m166 from './166_ai_spend_flush_alerts';
 import m167 from './167_restore_role_card_approval';
 import m168 from './168_support_requests';
 import m169 from './169_fix_email_delivery_claims_rls';
+import m170 from './170_activate_sequences_and_backfill';
 
 dotenv.config();
 
@@ -377,6 +378,7 @@ export const MIGRATION_REGISTRY: Record<string, Migration> = {
   '167_restore_role_card_approval.ts': m167,
   '168_support_requests.ts': m168,
   '169_fix_email_delivery_claims_rls.ts': m169,
+  '170_activate_sequences_and_backfill.ts': m170,
 };
 
 async function ensureSchemaVersionsTable(client: PoolClient): Promise<void> {

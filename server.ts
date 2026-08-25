@@ -92,6 +92,7 @@ import { createBuyerRoutes } from "./server/routes/buyerRoutes";
 import { createConversationRoutes, createAgentConversationRoutes } from "./server/routes/conversationRoutes";
 import { createBookingRoutes } from "./server/routes/bookingRoutes";
 import { startBuyerPushCron, stopBuyerPushCron } from "./server/services/pushNotificationService";
+import { startFreeFollowupScheduler, stopFreeFollowupScheduler } from "./server/services/freeFollowupScheduler";
 import { createCampaignRouter } from "./server/routes/campaignRoutes";
 import { createErrorLogRoutes, initErrorLogRepo } from "./server/routes/errorLogRoutes";
 import { marketDataService } from "./server/services/marketDataService";
@@ -5034,11 +5035,20 @@ app.use('/api/approval-requests', apiRateLimit, createApprovalRequestRoutes(auth
   // Tự động nhắn Zalo/Facebook sau 1 ngày, 3 ngày, 7 ngày không phản hồi
   // ---------------------------------------------------------------------------
   {
+    const engagementSecret =
+      process.env.ENGAGEMENT_CRON_SECRET ||
+      process.env.JWT_SECRET?.slice(0, 32) ||
+      '';
     const chatFollowUpSecret =
       process.env.CHAT_FOLLOWUP_CRON_SECRET ||
       process.env.JWT_SECRET?.slice(0, 32) ||
       '';
     app.use(createChatFollowUpCronRouter(pool, chatFollowUpSecret, io));
+    startFreeFollowupScheduler(pool, {
+      engagementSecret,
+      chatSecret: chatFollowUpSecret,
+      intervalMs: 15 * 60 * 1000,
+    });
   }
 
   // ---------------------------------------------------------------------------
