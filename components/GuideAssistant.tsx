@@ -11,14 +11,17 @@ type ChatMessage = {
     dataScope?: 'personal' | 'company';
     freshness?: string;
     status?: 'ok' | 'empty' | 'forbidden';
+    escalationReason?: string;
 };
 
 type AssistantResponse = {
     response?: string;
+    intent?: string;
     sources?: Array<{ tool?: string; source?: string }>;
     dataScope?: 'personal' | 'company';
     freshness?: string;
     status?: 'ok' | 'empty' | 'forbidden';
+    escalationReason?: string;
 };
 
 const MAX_HISTORY = 12;
@@ -105,6 +108,7 @@ export const GuideAssistant: React.FC = () => {
         error: 'Không thể kết nối trợ lý. Vui lòng thử lại.',
         source: 'Nguồn',
         scope: 'Dữ liệu theo quyền truy cập của bạn',
+        escalation: 'Cần nhân viên xác minh',
     } : {
         title: 'Guide assistant',
         subtitle: 'Ask about workflows and data you can access',
@@ -121,6 +125,7 @@ export const GuideAssistant: React.FC = () => {
         error: 'The assistant could not connect. Please try again.',
         source: 'Source',
         scope: 'Data is limited to your access scope',
+        escalation: 'Employee verification required',
     };
 
     useEffect(() => {
@@ -164,6 +169,7 @@ export const GuideAssistant: React.FC = () => {
                 dataScope: result?.dataScope,
                 freshness: result?.freshness,
                 status: result?.status,
+                escalationReason: result?.escalationReason,
             }]);
         } catch {
             setError(copy.error);
@@ -216,9 +222,11 @@ export const GuideAssistant: React.FC = () => {
                                     <div className="whitespace-pre-wrap">{message.content}</div>
                                     {message.role === 'assistant' && (
                                         <div className="mt-2 border-t border-[var(--glass-border)]/70 pt-1.5 text-[10px] text-[var(--text-tertiary)]">
-                                     {message.sources?.length
-                                         ? `${copy.source}: ${message.sources.map(source => source.source || source.tool).filter(Boolean).join(', ')}${message.dataScope ? ` · ${message.dataScope === 'personal' ? (isVietnamese ? 'cá nhân' : 'personal') : (isVietnamese ? 'công ty' : 'company')}` : ''}${message.freshness ? ` · ${new Date(message.freshness).toLocaleString(isVietnamese ? 'vi-VN' : 'en-US')}` : ''}`
-                                         : copy.scope}
+                                         {message.escalationReason
+                                          ? copy.escalation
+                                          : message.sources?.length
+                                              ? `${copy.source}: ${message.sources.map(source => source.source || source.tool).filter(Boolean).join(', ')}${message.dataScope ? ` · ${message.dataScope === 'personal' ? (isVietnamese ? 'cá nhân' : 'personal') : (isVietnamese ? 'công ty' : 'company')}` : ''}${message.freshness ? ` · ${new Date(message.freshness).toLocaleString(isVietnamese ? 'vi-VN' : 'en-US')}` : ''}`
+                                              : copy.scope}
                                         </div>
                                     )}
                                 </div>

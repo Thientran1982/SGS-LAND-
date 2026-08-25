@@ -162,13 +162,15 @@ export function createLiveChatAgentRoutes(
                 });
                 return res.json({
                     sessionId,
-                    intent: 'PLATFORM_GUIDE',
+                    intent: knowledge?.intent || 'PLATFORM_GUIDE',
                     response: typeof knowledge?.knowledge === 'string'
                         ? knowledge.knowledge
                         : 'Tôi chưa có thông tin hướng dẫn đã xác minh cho câu hỏi này.',
                     sources: knowledge?.source ? [{ tool: 'get_platform_knowledge', source: knowledge.source }] : [],
-                    groundingStatus: knowledge?.knowledge ? 'GROUNDED' : 'INSUFFICIENT_DATA',
+                    groundingStatus: knowledge?.groundingStatus || (knowledge?.knowledge ? 'GROUNDED' : 'INSUFFICIENT_DATA'),
                     language,
+                    status: knowledge?.status,
+                    escalationReason: knowledge?.escalationReason,
                     executedTools: ['get_platform_knowledge'],
                 });
             }

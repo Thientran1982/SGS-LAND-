@@ -36,6 +36,7 @@ import {
 } from '../services/sharedCache';
 import { getGuideDataSummary } from './guideDataSources';
 import { agentMemoryService } from '../services/agentMemoryService';
+import { getGuidePolicyResponse, normalizeGuideInput } from './guideAssistantPolicy';
 
 // Prompt-injection sanitizer for live-chat user content (message, leadName, history).
 // User text is interpolated into the LLM prompt, so neutralize escape vectors and
@@ -60,11 +61,7 @@ function hasRelevantMemory(message: string, memory: string): boolean {
 }
 
 function normalizeGuideQuery(value: string): string {
-    return value
-        .toLowerCase()
-        .normalize('NFD')
-        .replace(/[\u0300-\u036f]/g, '')
-        .replace(/đ/g, 'd');
+    return normalizeGuideInput(value);
 }
 
 async function generateLiveChatText(params: {
@@ -1543,19 +1540,11 @@ async function handle_get_platform_knowledge(args: Record<string, any>): Promise
         return { domain, query, knowledge: LONGTHANH_KB, source: 'SGS Land Market Intelligence', cached: true };
     }
     if (d === 'platform' || d === 'tính năng' || d === 'hướng dẫn') {
-        const normalizedQuery = normalizeGuideQuery(q);
-        const asksAssistantIdentity = /(la ai|ban la ai|tro ly la ai|vai tro cua ban|chuyen gia huan luyen ai|huan luyen ai|ai coach|ai trainer|gioi thieu ban|ban co the lam gi)/i.test(normalizedQuery);
-        if (asksAssistantIdentity) {
-            const identityGuide = isEnglish
-                ? 'I am the SGS LAND Guide Assistant. I explain verified platform workflows and provide limited, permission-scoped summaries when available. I am not an AI training consultant and I do not replace an employee for sensitive, financial, legal or account matters.'
-                : 'Mình là Trợ lý hướng dẫn SGS LAND. Mình hỗ trợ giải thích các quy trình đã được xác minh trên nền tảng và cung cấp tóm tắt dữ liệu trong phạm vi quyền của tài khoản khi có. Mình không phải chuyên gia huấn luyện AI và không thay thế nhân viên trong các vấn đề nhạy cảm, tài chính, pháp lý hoặc tài khoản.';
-            return {
-                domain, query,
-                knowledge: identityGuide,
-                source: 'SGS Land Platform Guide',
-                cached: true,
-            };
+        const policyResponse = getGuidePolicyResponse(q, isEnglish ? 'en' : 'vn');
+        if (policyResponse) {
+            return { domain, query, ...policyResponse, cached: true };
         }
+        const normalizedQuery = normalizeGuideQuery(q);
         const asksOperations = /(van hanh|operations|phe duyet|approval|du an|project|dau gia|auction|truong tuy chinh|custom field|kho don vi|unit inventory|quy tac phan|routing|chuoi tu dong|sequence|chien dich|campaign|cham diem|scoring|co so kien thuc|knowledge base|bao cao|report)/i.test(normalizedQuery);
         const asksTaskManagement = /(quan ly cong viec|cong viec|nhiem vu|task|kanban|phan cong|nhan vien|employee|task report|bao cao cong viec)/i.test(normalizedQuery);
         const asksEcosystem = /(he sinh thai|ecosystem|quan tri nguoi dung|user management|nguoi dung|admin user|cai dat doanh nghiep|enterprise settings|chi phi ai|ai cost|billing|goi dich vu|bao mat|security|compliance|quan tri ai|ai governance|audit log|nhat ky audit|do chinh xac dinh gia|valuation accuracy|seo|scraper|thu thap du lieu|data platform|du lieu nguon|ha tang he thong|system infrastructure|giam sat loi|error monitor|vendor|nha cung cap|app store|mobile app)/i.test(normalizedQuery);
