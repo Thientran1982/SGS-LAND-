@@ -274,6 +274,16 @@ const EMAIL_COLORS: Record<string, string> = {
   '#FEE2E2': '#F7F9FC',
   '#FED7AA': '#DCE5EE',
   '#FECACA': '#DCE5EE',
+  '#E8EEF5': '#F7F9FC',
+  '#ECFDF5': '#F7F9FC',
+  '#EFF6FF': '#F7F9FC',
+  '#F0F4FF': '#F7F9FC',
+  '#F0F9FF': '#F7F9FC',
+  '#F0FDF4': '#F7F9FC',
+  '#FFF1F2': '#F7F9FC',
+  '#BBF7D0': '#DCE5EE',
+  '#BFDBFE': '#DCE5EE',
+  '#C7D2FE': '#DCE5EE',
   '#92400E': '#334155',
   '#78350F': '#475569',
   '#991B1B': '#334155',
@@ -286,6 +296,8 @@ function normalizeEmailMarkup(markup: string): string {
     normalized = normalized.replace(new RegExp(from, 'gi'), to);
   }
   return normalized
+    .replace(/SGS Land/g, 'SGS LAND')
+    .replace(/font-family:\s*'Courier New',\s*monospace/gi, 'font-family:Arial,Helvetica,sans-serif')
     .replace(/font-family:\s*Arial(?:,\s*Helvetica)?(?:,\s*sans-serif)?/gi, 'font-family:Arial,Helvetica,sans-serif')
     .replace(/font:\s*([0-9]+px(?:\/[0-9.]+)?\s+)(?:Arial)(?:,\s*Helvetica)?(?:,\s*sans-serif)?/gi, 'font:$1Arial,Helvetica,sans-serif');
 }
@@ -294,7 +306,7 @@ function normalizeEmailCopy(value?: string): string | undefined {
   return value
     ?.replace(/Email nay duoc gui tu dong vi ban la thanh vien SGS LAND\./g, 'Email này được gửi tự động vì bạn là thành viên SGS LAND.')
     .replace(/Email nay duoc gui tu dong vi tin dang cua ban dang duoc quan tam\./g, 'Email này được gửi tự động vì tin đăng của bạn đang được quan tâm.')
-    .replace(/Email nay duoc gui tu dong vi ban la thanh vien SGS LAND\./g, 'Email này được gửi tự động vì bạn là thành viên SGS LAND.');
+    .replace(/SGS Land/g, 'SGS LAND');
 }
 
 export function emailBase(content: string, footerNote?: string): string {
@@ -630,7 +642,7 @@ async function sendDailyReportDeliveryAlertEmail(
     to,
     subject,
     template: 'daily_admin_report_delivery_alert',
-    html: `<div style="font-family:Arial,sans-serif;max-width:620px;color:#1e293b"><h2>Cần kiểm tra trạng thái gửi báo cáo</h2><p>Provider đã timeout nên chưa thể xác định báo cáo ngày <strong>${escapeHtml(reportDate)}</strong> có được nhận hay chưa.</p><p><strong>Người nhận bị ảnh hưởng:</strong> ${recipientList}</p><p style="color:#92400e"><strong>Hướng dẫn an toàn:</strong> ${escapeHtml(guidance)}</p></div>`,
+    html: emailBase(`<h1 class="email-title" style="color:#0F172A;font-size:22px;font-weight:bold;margin:0 0 20px;font-family:Arial,sans-serif;">Cần kiểm tra trạng thái gửi báo cáo</h1><p style="color:#475569;font-size:14px;line-height:1.8;margin:0 0 16px;font-family:Arial,sans-serif;">Provider đã timeout nên chưa thể xác định báo cáo ngày <strong>${escapeHtml(reportDate)}</strong> có được nhận hay chưa.</p><p style="color:#475569;font-size:14px;line-height:1.8;margin:0 0 16px;font-family:Arial,sans-serif;"><strong>Người nhận bị ảnh hưởng:</strong> ${recipientList}</p><table width="100%" cellpadding="0" cellspacing="0" border="0" bgcolor="#F7F9FC" style="border:1px solid #DCE5EE;border-radius:8px;"><tr><td style="padding:14px 18px;color:#334155;font-size:13px;line-height:1.7;font-family:Arial,Helvetica,sans-serif;"><strong>Hướng dẫn an toàn:</strong> ${escapeHtml(guidance)}</td></tr></table>`, 'Cần hỗ trợ? Liên hệ support@sgsland.vn'),
     text: `Cần kiểm tra trạng thái gửi báo cáo ngày ${reportDate}.\nProvider đã timeout, chưa thể xác định provider có nhận thư hay chưa.\nNgười nhận bị ảnh hưởng: ${recipients.join(', ')}\n\n${guidance}`,
     dedupeKey: `daily-report-delivery-alert:${reportDate}:${to.toLowerCase()}`,
     deliveryKey: `daily-report-delivery-alert:${tenantId}:${reportDate}:${to.toLowerCase()}`,
@@ -2010,12 +2022,12 @@ async function sendListingBoost(
   `;
   return sendEmail(tenantId, {
     to,
-    subject: `SGS LAND - Tin "${listingTitle}" dat ${viewCount} luot xem, day manh ngay!`,
+    subject: `SGS LAND – Tin "${listingTitle}" đạt ${viewCount} lượt xem, đẩy mạnh ngay!`,
     html: emailBase(content, 'Email nay duoc gui tu dong vi tin dang cua ban dang duoc quan tam.'),
     text:
       `Xin chào ${ownerName},\n\nTin "${listingTitle}" của bạn đã đạt ${viewCount} lượt xem.\n\nGợi ý:\n` +
       (suggestions || []).map((x) => '- ' + x).join('\n') +
-      `\n\nQuan ly tin dang:\n${dashUrl}\n\n- SGS LAND`,
+      `\n\nQuản lý tin đăng:\n${dashUrl}\n\n— SGS LAND`,
   });
 }
 
