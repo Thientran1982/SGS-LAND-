@@ -1,5 +1,6 @@
 import { BaseRepository } from './baseRepository';
 import { withRlsBypass } from '../db';
+import { DEFAULT_TENANT_ID } from '../constants';
 
 class PublicProjectContentRepository extends BaseRepository {
   constructor() { super('public_project_contents'); }
@@ -8,7 +9,7 @@ class PublicProjectContentRepository extends BaseRepository {
     return withRlsBypass(async (client) => {
       const result = await client.query(
         `SELECT * FROM public_project_contents WHERE status = 'PUBLISHED'
-         ORDER BY updated_at DESC LIMIT $1`, [limit],
+         AND tenant_id = $2 ORDER BY updated_at DESC LIMIT $1`, [limit, DEFAULT_TENANT_ID],
       );
       return result.rows.map((row) => this.rowToEntity(row));
     });
