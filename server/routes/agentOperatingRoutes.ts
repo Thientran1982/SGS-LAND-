@@ -1,6 +1,7 @@
 import { Router, Request, Response } from 'express';
 import { agentOperatingRepository } from '../repositories/agentOperatingRepository';
 import { processAgentEvents } from '../services/agentOperatorDaemon';
+import { companyBrainRepository } from '../repositories/companyBrainRepository';
 
 const STAFF_ROLES = ['SUPER_ADMIN', 'ADMIN', 'TEAM_LEAD'];
 
@@ -21,6 +22,58 @@ export function createAgentOperatingRoutes(authenticateToken: any): Router {
     catch (error: any) {
       console.error('[AgentOperating] cockpit summary failed:', error?.message || error);
       res.status(500).json({ error: 'Không thể tải Admin Cockpit.' });
+    }
+  });
+
+  router.get('/marketing-growth', authenticateToken, async (req, res) => {
+    const user = requireStaff(req, res); if (!user) return;
+    try {
+      const [brain, capabilities] = await Promise.all([
+        companyBrainRepository.list(user.tenantId),
+        companyBrainRepository.listCapabilityStatus(user.tenantId),
+      ]);
+      res.json({ brain, capabilities });
+    } catch (error: any) {
+      console.error('[AgentOperating] marketing growth status failed:', error?.message || error);
+      res.status(500).json({ error: 'Không thể tải Company Brain và Marketing/Growth.' });
+    }
+  });
+
+  router.patch('/marketing-growth/capabilities/:key', authenticateToken, async (req, res) => {
+    const user = requireStaff(req, res); if (!user) return;
+    const rollout = req.body?.rollout;
+    const active = req.body?.active;
+    if (rollout !== undefined && !['SHADOW', 'CANARY_25', 'CANARY_50', 'LIVE'].includes(rollout)) {
+      return res.status(400).json({ error: 'rollout không hợp lệ.' });
+    }
+    if (active !== undefined && typeof active !== 'boolean') {
+      return res.status(400).json({ error: 'active phải là boolean.' });
+    }
+    try {
+      const row = await companyBrainRepository.updateCapabilityStatus(
+        user.tenantId, String(req.params.key), { rollout, active },
+      );
+      if (!row) return res.status(404).json({ error: 'Capability không tồn tại trong tenant.' });
+      res.json(row);
+    } catch (error: any) {
+      console.error('[AgentOperating] capability update failed:', error?.message || error);
+      res.status(500).json({ error: 'Không thể cập nhật rollout capability.' });
+    }
+  });
+
+  router.patch('/marketing-growth/brain/:id/verification', authenticateToken, async (req, res) => {
+    const user = requireStaff(req, res); if (!user) return;
+    const status = req.body?.verificationStatus;
+    if (!['verified', 'unverified', 'needs_review', 'stale'].includes(status)) {
+      return res.status(400).json({ error: 'verificationStatus không hợp lệ.' });
+    }
+    try {
+      const row = await companyBrainRepository.updateVerificationStatus(user.tenantId, String(req.params.id), status, user.id);
+      if (!row) return res.status(404).json({ error: 'Tài liệu Company Brain không tồn tại.' });
+      res.json(row);
+    } catch (error: any) {
+      console.error('[AgentOperating] brain verification update failed:', error?.message || error);
+      res.status(500).json({ error: 'Không thể cập nhật trạng thái xác minh.' });
     }
   });
 

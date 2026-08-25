@@ -21,6 +21,10 @@ type HumanQuestion = { id: string; agent_key: string; question: string; priority
 type SupportRequest = { id: string; trackingCode: string; category: string; title: string; description: string; status: string; latestReply?: string | null; requesterName?: string; requesterEmail?: string; updatedAt: string };
 type AdminMemory = { id: string; namespace: string; key: string; kind: 'fact' | 'episodic' | 'procedural'; value: string; importance: number; hits: number; expires_at: string | null; expired?: boolean; conflict?: boolean; piiScrubbed?: boolean; updated_at: string };
 type WeightVersion = { id: string; status: 'draft' | 'shadow' | 'live'; weights: Record<string, number>; metrics: Record<string, unknown>; goldenSetPassed: boolean; created_at: string };
+type MarketingGrowthStatus = {
+  brain: Array<{ id: string; documentType: string; documentKey: string; source: string; sourceUrl?: string | null; verificationStatus: string; verifiedAt?: string | null; updatedAt: string }>;
+  capabilities: Array<{ capabilityKey: string; displayName: string; role: string; cadence: string; requiresHumanApproval: boolean; rollout: string; active: boolean; promptVersion: string; updatedAt?: string | null }>;
+};
 
 const count = (rows: Array<{ status: string; count: number }> = [], status: string) => rows.find(row => row.status === status)?.count || 0;
 
@@ -47,6 +51,8 @@ export default function AgentCockpit() {
   const [supportReply, setSupportReply] = useState<Record<string, string>>({});
   const [supportStatus, setSupportStatus] = useState<Record<string, string>>({});
   const [updatingSupport, setUpdatingSupport] = useState<string | null>(null);
+  const [marketingGrowth, setMarketingGrowth] = useState<MarketingGrowthStatus | null>(null);
+  const [updatingGrowth, setUpdatingGrowth] = useState<string | null>(null);
 
   const load = useCallback(async () => {
     setLoading(true); setError('');
@@ -54,14 +60,16 @@ export default function AgentCockpit() {
       const query = new URLSearchParams(eventFilters).toString();
       const nextSummary = await api.get<CockpitSummary>('/api/agent-operating/cockpit');
       setSummary(nextSummary);
-      const [questionsResult, eventsResult, supportResult] = await Promise.allSettled([
+      const [questionsResult, eventsResult, supportResult, marketingGrowthResult] = await Promise.allSettled([
         api.get<HumanQuestion[]>('/api/agent-operating/questions'),
         api.get<OperatingEvent[]>(`/api/agent-operating/events?${query}`),
         api.get<{ data: SupportRequest[] }>('/api/live-chat/support-requests'),
+        api.get<MarketingGrowthStatus>('/api/agent-operating/marketing-growth'),
       ]);
       if (questionsResult.status === 'fulfilled') setQuestions(questionsResult.value);
       if (eventsResult.status === 'fulfilled') setEvents(eventsResult.value);
       if (supportResult.status === 'fulfilled') setSupportRequests(supportResult.value.data || []);
+      if (marketingGrowthResult.status === 'fulfilled') setMarketingGrowth(marketingGrowthResult.value);
       // Secondary panels must not hide a successfully loaded cockpit or a
       // successful role-card approval.
       const [memoryResult, weightsResult] = await Promise.allSettled([
@@ -161,6 +169,20 @@ export default function AgentCockpit() {
     try { await api.post(`/api/ai/weights/${version.id}/promote`, { goldenSetPassed: true, metrics: version.metrics }); await load(); }
     catch (e: any) { setError(e?.message || 'Không thể promote weights.'); }
   };
+  const updateGrowthCapability = async (capabilityKey: string, patch: { rollout?: string; active?: boolean }) => {
+    setUpdatingGrowth(capabilityKey);
+    try {
+      await api.patch(`/api/agent-operating/marketing-growth/capabilities/${encodeURIComponent(capabilityKey)}`, patch);
+      await load();
+    } catch (e: any) { setError(e?.message || 'Không thể cập nhật rollout capability.'); }
+    finally { setUpdatingGrowth(null); }
+  };
+  const updateBrainVerification = async (id: string, verificationStatus: string) => {
+    try {
+      await api.patch(`/api/agent-operating/marketing-growth/brain/${encodeURIComponent(id)}/verification`, { verificationStatus });
+      await load();
+    } catch (e: any) { setError(e?.message || 'Không thể cập nhật trạng thái Company Brain.'); }
+  };
 
   return (
     <div className="mx-auto max-w-7xl space-y-6 p-6">
@@ -211,6 +233,22 @@ export default function AgentCockpit() {
            {memories.length === 0 ? <p className="rounded-lg bg-white p-6 text-center text-sm text-slate-500">Không có memory phù hợp.</p> : <div className="space-y-2">{memories.map(memory => <div key={memory.id} className={`rounded-lg border bg-white p-3 ${memory.expired ? 'border-amber-300' : memory.conflict ? 'border-rose-300' : 'border-slate-100'}`}><div className="flex flex-wrap items-start justify-between gap-3"><div className="min-w-0 flex-1"><div className="flex flex-wrap items-center gap-2"><b className="text-sm text-slate-900">{memory.key}</b><span className="rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-bold">{memory.kind}</span>{memory.expired && <span className="rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-bold text-amber-800">Hết hạn</span>}{memory.conflict && <span className="rounded-full bg-rose-100 px-2 py-0.5 text-[10px] font-bold text-rose-800">Conflict</span>}</div><p className="mt-1 text-xs text-slate-500">{memory.namespace} · importance {Number(memory.importance).toFixed(2)} · {memory.hits} hits</p><p className="mt-2 whitespace-pre-wrap break-words text-sm text-slate-700">{memory.value}</p></div><div className="flex shrink-0 gap-1"><button aria-label={`Sửa ${memory.key}`} onClick={() => beginEdit(memory)} className="rounded-md border border-slate-200 p-2 text-indigo-700 hover:bg-indigo-50"><Edit3 size={14} /></button><button aria-label={`Xóa ${memory.key}`} onClick={() => void deleteMemory(memory)} className="rounded-md border border-rose-200 p-2 text-rose-700 hover:bg-rose-50"><Trash2 size={14} /></button></div></div></div>)}</div>}
            {weights && <div className="mt-5 border-t border-indigo-100 pt-4"><div className="mb-2 flex items-center justify-between"><h3 className="text-sm font-semibold text-slate-900">Trọng số ghép nhu cầu</h3><span className="text-xs text-slate-500">Đang dùng: {Object.entries(weights.live || {}).map(([k, v]) => `${k} ${v}`).join(' · ')}</span></div><div className="space-y-1">{weights.versions.map(version => <div key={version.id} className="flex flex-wrap items-center justify-between gap-2 rounded-lg bg-white px-3 py-2 text-xs"><span><b className={version.status === 'live' ? 'text-emerald-700' : version.status === 'draft' ? 'text-amber-700' : 'text-slate-500'}>{version.status === 'live' ? 'ĐANG DÙNG' : version.status === 'draft' ? 'BẢN NHÁP' : 'QUAN SÁT'}</b> · {new Date(version.created_at).toLocaleString('vi-VN')}</span><span>{version.goldenSetPassed ? 'Bộ kiểm thử đạt' : 'Chưa đạt'}</span>{version.status === 'draft' && <button disabled={!version.goldenSetPassed} onClick={() => void promoteWeights(version)} className="rounded-md border border-indigo-200 px-2 py-1 font-semibold text-indigo-700 disabled:cursor-not-allowed disabled:opacity-40">Triển khai sau khi đạt kiểm thử</button>}</div>)}</div></div>}
          </section>
+         {marketingGrowth && <section className="rounded-xl border border-violet-200 bg-violet-50/30 p-5 shadow-sm">
+           <div className="mb-4 flex flex-wrap items-start justify-between gap-3">
+             <div><div className="flex items-center gap-2"><BrainCircuit size={19} className="text-violet-700" /><h2 className="font-semibold text-slate-900">Company Brain & Marketing/Growth</h2></div><p className="mt-1 text-xs text-slate-500">Tenant-scoped · mọi thay đổi rollout đều bắt đầu ở chế độ quan sát.</p></div>
+             <span className="rounded-full bg-violet-100 px-2 py-1 text-[10px] font-bold text-violet-800">{marketingGrowth.capabilities.length} capability</span>
+           </div>
+           <div className="grid gap-4 xl:grid-cols-2">
+             <div>
+               <h3 className="mb-2 text-sm font-semibold text-slate-800">Nguồn sự thật</h3>
+               {marketingGrowth.brain.length === 0 ? <div className="rounded-lg bg-white p-4 text-sm text-slate-500">Chưa có tài liệu Company Brain trong tenant này.</div> : <div className="space-y-2">{marketingGrowth.brain.map(doc => <div key={doc.id} className="rounded-lg border border-violet-100 bg-white p-3"><div className="flex flex-wrap items-center justify-between gap-2"><div><b className="text-sm text-slate-900">{doc.documentKey}</b><span className="ml-2 rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-bold">{doc.documentType}</span></div><select aria-label={`Trạng thái xác minh ${doc.documentKey}`} value={doc.verificationStatus} onChange={event => void updateBrainVerification(doc.id, event.target.value)} className="rounded-md border border-slate-200 px-2 py-1 text-xs"><option value="verified">Đã xác minh</option><option value="needs_review">Cần xem lại</option><option value="unverified">Chưa xác minh</option><option value="stale">Đã cũ</option></select></div><div className="mt-2 text-[11px] text-slate-500">Nguồn: {doc.source}{doc.sourceUrl ? ` · ${doc.sourceUrl}` : ''} · cập nhật {new Date(doc.updatedAt).toLocaleString('vi-VN')}</div></div>)}</div>}
+             </div>
+             <div>
+               <h3 className="mb-2 text-sm font-semibold text-slate-800">Rollout & phê duyệt</h3>
+               <div className="space-y-2">{marketingGrowth.capabilities.map(capability => <div key={capability.capabilityKey} className="rounded-lg border border-violet-100 bg-white p-3"><div className="flex flex-wrap items-center justify-between gap-2"><div><b className="text-sm text-slate-900">{capability.displayName}</b><div className="text-[11px] text-slate-500">{capability.cadence} · {capability.promptVersion}</div></div><span className={`rounded-full px-2 py-1 text-[10px] font-bold ${capability.rollout === 'LIVE' ? 'bg-emerald-100 text-emerald-800' : 'bg-amber-100 text-amber-800'}`}>{capability.rollout}</span></div><div className="mt-2 flex flex-wrap items-center justify-between gap-2"><span className={`text-[11px] font-semibold ${capability.requiresHumanApproval ? 'text-amber-700' : 'text-emerald-700'}`}>{capability.requiresHumanApproval ? 'Bắt buộc người duyệt' : 'Không publish/send tự động'}</span><div className="flex items-center gap-2"><label className="flex items-center gap-1 text-[11px] text-slate-600"><input type="checkbox" checked={capability.active} onChange={event => void updateGrowthCapability(capability.capabilityKey, { active: event.target.checked })} disabled={updatingGrowth === capability.capabilityKey} /> Hoạt động</label><select aria-label={`Rollout ${capability.displayName}`} value={capability.rollout} onChange={event => void updateGrowthCapability(capability.capabilityKey, { rollout: event.target.value })} disabled={updatingGrowth === capability.capabilityKey} className="rounded-md border border-slate-200 px-2 py-1 text-xs"><option value="SHADOW">SHADOW</option><option value="CANARY_25">CANARY 25%</option><option value="CANARY_50">CANARY 50%</option><option value="LIVE">LIVE</option></select></div></div></div>)}</div>
+             </div>
+           </div>
+         </section>}
          {editingMemory && <div className="rounded-xl border border-indigo-300 bg-white p-5 shadow-sm"><div className="mb-3 flex items-center justify-between"><h3 className="font-semibold text-slate-900">Sửa memory: {editingMemory.key}</h3><button onClick={() => setEditingMemory(null)} className="text-sm text-slate-500">Hủy</button></div><div className="grid gap-3 md:grid-cols-2"><input value={memoryForm.namespace} onChange={e => setMemoryForm({ ...memoryForm, namespace: e.target.value })} placeholder="Namespace" className="rounded-lg border px-3 py-2 text-sm" /><input value={memoryForm.key} onChange={e => setMemoryForm({ ...memoryForm, key: e.target.value })} placeholder="Key" className="rounded-lg border px-3 py-2 text-sm" /><Dropdown value={memoryForm.kind} onChange={value => setMemoryForm({ ...memoryForm, kind: String(value) })} options={[{ value: 'fact', label: 'Fact' }, { value: 'episodic', label: 'Episodic' }, { value: 'procedural', label: 'Procedural' }]} variant="compact" /><input type="number" min="0" max="1" step="0.05" value={memoryForm.importance} onChange={e => setMemoryForm({ ...memoryForm, importance: e.target.value })} placeholder="Importance" className="rounded-lg border px-3 py-2 text-sm" /><textarea value={memoryForm.value} onChange={e => setMemoryForm({ ...memoryForm, value: e.target.value })} placeholder="Nội dung memory" className="min-h-24 rounded-lg border px-3 py-2 text-sm md:col-span-2" /></div><button onClick={() => void saveMemory()} className="mt-3 inline-flex items-center gap-1 rounded-lg bg-indigo-600 px-3 py-2 text-sm font-semibold text-white"><Save size={15} /> Lưu an toàn</button></div>}
         <section className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
           <div className="mb-4 flex items-center gap-2"><ShieldCheck size={19} className="text-indigo-600" /><h2 className="font-semibold text-slate-900">Thẻ vai trò và triển khai</h2></div>
