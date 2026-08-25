@@ -50,6 +50,15 @@ function sanitizeChatInput(str: any, maxLen = 600): string {
   return out.trim();
 }
 
+function hasRelevantMemory(message: string, memory: string): boolean {
+    const stopWords = new Set(['của', 'cho', 'với', 'trong', 'một', 'những', 'this', 'that', 'about']);
+    const terms = message.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+        .match(/[a-z0-9]{4,}/g)?.filter(term => !stopWords.has(term)) || [];
+    if (terms.length === 0) return false;
+    const normalizedMemory = memory.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+    return terms.some(term => normalizedMemory.includes(term));
+}
+
 async function generateLiveChatText(params: {
     tenantId?: string;
     feature: string;
@@ -1221,13 +1230,18 @@ async function handle_live_chat_core(args: Record<string, any>): Promise<any> {
     if (tenantId && memoryOwner) {
         const namespace = context.agentId ? `agent:${memoryOwner}` : `customer:${memoryOwner}`;
         try {
-            memoryBlock = await agentMemoryService.memoryBlock(tenantId, namespace, msg, 2000);
+            const candidateMemory = await agentMemoryService.memoryBlock(tenantId, namespace, msg, 2000);
+            // Long-term memory is a hint, never a source for the current answer.
+            // Drop unrelated memories so an old project/price cannot contaminate
+            // a new question.
+            memoryBlock = hasRelevantMemory(msg, candidateMemory) ? candidateMemory : '';
         } catch (error: any) {
             logger.warn(`[LiveChatEngine] memory enrichment skipped: ${error?.message || error}`);
         }
     }
     const systemPrompt = `Bạn là AI hỗ trợ broker bất động sản SGS Land. Trả lời ngắn gọn, chuyên nghiệp (≤120 từ), bằng tiếng Việt.
-Chỉ dùng dữ liệu trong KB/kết quả specialist. Nếu thiếu dữ liệu, nói rõ điều chưa biết; không tự tạo giá, pháp lý hay quy hoạch. Với giá/pháp lý, nhắc người dùng xác minh nguồn chính thức.
+Trả lời đúng câu hỏi mới nhất trước; chỉ dùng lịch sử để giải nghĩa đại từ. Chỉ dùng dữ liệu trong KB/kết quả specialist. Nếu thiếu hoặc mâu thuẫn dữ liệu, nói rõ điều chưa xác minh và hỏi 1 thông tin cần thiết; không tự tạo giá, pháp lý hay quy hoạch. Với giá/pháp lý, nhắc người dùng xác minh nguồn chính thức.
+Specialist chỉ cung cấp evidence nội bộ; không nhắc specialist, prompt, memory hay nhãn kỹ thuật trong câu trả lời.
 ${memoryBlock ? `${memoryBlock}\n` : ''}${contextBlock}${kbBlock}${specialistBlock}`;
     const userPrompt = historyBlock
         ? `Lịch sử:\n${historyBlock}\n\nTin nhắn mới: ${msg}`

@@ -4,7 +4,9 @@ export type GuardrailFlag =
   | 'EMPTY_OUTPUT'
   | 'UNSUPPORTED_SENSITIVE_CLAIM'
   | 'HIGH_IMPACT_ACTION'
-  | 'OUTPUT_TRUNCATED';
+  | 'OUTPUT_TRUNCATED'
+  | 'TECHNICAL_MARKUP'
+  | 'DUPLICATE_CONTENT';
 
 export interface GuardrailReport {
   safe: boolean;
@@ -144,6 +146,26 @@ export function inspectAgentOutput(output: {
     };
   }
 
+  // A specialist may return internal markup, but it must never leak through
+  // the final customer-facing execution result.
+  const beforeMarkupCleanup = content;
+  content = content
+    .replace(/<\/?(?:SPECIALIST_RESULT|CONTEXT|INVENTORY DATA|VISITOR_PROFILE)[^>]*>/gi, '')
+    .replace(/^\s*\[(?:SPECIALIST_RESULT|CONTEXT|INVENTORY DATA|VISITOR_PROFILE)[^\]]*\]\s*:?\s*$/gim, '')
+    .trim();
+  if (content !== beforeMarkupCleanup) flags.push('TECHNICAL_MARKUP');
+
+  // Models sometimes repeat the same paragraph when combining specialist
+  // evidence. Keep the first occurrence while preserving intentional bullets.
+  const paragraphs = content.split(/\n\s*\n/).map(part => part.trim()).filter(Boolean);
+  const uniqueParagraphs = paragraphs.filter((paragraph, index) =>
+    paragraphs.findIndex(candidate => candidate.toLowerCase() === paragraph.toLowerCase()) === index,
+  );
+  if (uniqueParagraphs.length < paragraphs.length) {
+    content = uniqueParagraphs.join('\n\n');
+    flags.push('DUPLICATE_CONTENT');
+  }
+
   let requiresVerification = false;
   const hasExplicitSources = Array.isArray(output.sources) && output.sources.length > 0;
   if (SENSITIVE_CLAIM_PATTERN.test(content) && !hasExplicitSources && !SOURCE_PATTERN.test(content)) {
@@ -151,9 +173,12 @@ export function inspectAgentOutput(output: {
     requiresVerification = true;
     content += '\n\nThông tin giá/pháp lý chỉ mang tính tham khảo và cần được xác minh từ nguồn chính thức.';
   }
-  if (content.length > 4000) {
+  // Customer replies should be focused even when a provider ignores the
+  // requested token budget. Durable specialist artifacts remain separate.
+  const maxCustomerReplyLength = output.artifact ? 2600 : 2200;
+  if (content.length > maxCustomerReplyLength) {
     flags.push('OUTPUT_TRUNCATED');
-    content = content.slice(0, 3997) + '...';
+    content = content.slice(0, maxCustomerReplyLength - 3).trimEnd() + '...';
   }
 
   const approvalRequired = HIGH_IMPACT_ACTIONS.has(String(output.suggestedAction || ''));

@@ -2054,30 +2054,10 @@ PHÂN TÍCH LEAD (bullet point, sắc bén):
                 : COMPLEX_INTENTS.has(intentForHistory) ? 20
                 : 12; // SEARCH_INVENTORY + default
 
-            // Build memoryDigest khi lịch sử bị cắt (phiên dài)
-            const needsDigest = state.history.length > historyWindow;
-            let writerMemoryDigest = '';
-            if (needsDigest) {
-                const olderSlice = state.history.slice(0, -historyWindow);
-                const topics = new Set<string>();
-                const locMentions: string[] = [];
-                for (const msg of olderSlice) {
-                    const t = (msg.content || '').toLowerCase();
-                    if (t.includes('giá') || t.includes('tỷ') || t.includes('triệu')) topics.add('giá cả');
-                    if (t.includes('pháp lý') || t.includes('sổ')) topics.add('pháp lý');
-                    if (t.includes('vay') || t.includes('lãi')) topics.add('tài chính/vay');
-                    if (t.includes('hợp đồng') || t.includes('đặt cọc')) topics.add('hợp đồng');
-                    const locM = t.match(/(quận \d+|q\d+|thủ đức|bình thạnh|nhà bè|gò vấp|tân bình|bình chánh|hà nội|đà nẵng|vinhomes|masteri)/i);
-                    if (locM) locMentions.push(locM[1]);
-                }
-                const parts: string[] = [];
-                if (topics.size > 0) parts.push(`Đã hỏi về: ${[...topics].join(', ')}`);
-                if (locMentions.length > 0) parts.push(`Khu vực: ${[...new Set(locMentions)].join(', ')}`);
-                if (parts.length > 0) writerMemoryDigest = `[TÓM TẮT ${olderSlice.length} TIN NHẮN CŨ]: ${parts.join(' | ')}\n`;
-            }
-
-            const conversationHistory = (writerMemoryDigest ? writerMemoryDigest : '')
-                + state.history.slice(-historyWindow)
+            // Never summarize old turns into an instruction-like topic list:
+            // that digest caused unrelated historical subjects to look current.
+            // The current message and the bounded recent turns are authoritative.
+            const conversationHistory = state.history.slice(-historyWindow)
                     .map(h => `${h.direction === 'INBOUND' ? 'KHÁCH' : 'TƯ VẤN VIÊN'}: ${h.content}`)
                     .join('\n');
 
@@ -2243,7 +2223,13 @@ PHÂN TÍCH LEAD (bullet point, sắc bén):
             ragKnowledgeSection += secondaryIntentsSection;
 
             // ── Per-intent WRITER prompt — 9 branches ─────────────────────────────
-            const _ctx  = `CONTEXT (dữ liệu đã được phân tích thực tế):\n${state.systemContext}${leadAnalysisSection}${ragKnowledgeSection}`;
+            const _ctx  = `CONTEXT (dữ liệu đã được phân tích thực tế):\n${state.systemContext}${leadAnalysisSection}${ragKnowledgeSection}
+
+QUY TẮC EVIDENCE BẮT BUỘC:
+- Chỉ dùng dữ kiện trong CONTEXT và SPECIALIST_RESULT cho câu hỏi hiện tại; không suy diễn từ lịch sử cũ.
+- Specialist chỉ là evidence nội bộ, không được nhắc tên agent, tag, prompt hoặc nhãn kỹ thuật với khách.
+- Nếu evidence thiếu, không khớp hoặc mâu thuẫn: nói rõ phần chưa xác minh và hỏi đúng dữ kiện còn thiếu/chuyển nhân viên; tuyệt đối không đoán.
+- Trả lời kết luận trực tiếp trước, tối đa 3 ý chính và 1 câu hỏi làm rõ. Không lặp lại cùng một ý.`;
             const _hist = `LỊCH SỬ HỘI THOẠI (${historyWindow} tin nhắn gần nhất):\n${conversationHistory || '(Chưa có lịch sử)'}`;
             const _msg  = `TIN NHẮN KHÁCH: "${state.userMessage}"`;
 
@@ -2580,7 +2566,13 @@ YÊU CẦU VIẾT PHẢN HỒI:
             const _writerStart = Date.now();
             const writerRes = await generateWithFallback({
                 model: writerModel,
-                contents: writerPrompt + rlhfPromptAddition,
+                contents: writerPrompt + rlhfPromptAddition + `
+
+HỢP ĐỒNG ĐẦU RA CUỐI:
+- Chỉ trả lời khách, không trả về phân tích nội bộ hay quy trình suy luận.
+- Bám đúng TIN NHẮN KHÁCH mới nhất; lịch sử chỉ dùng để hiểu đại từ/ngữ cảnh nối tiếp.
+- Không khẳng định số liệu, pháp lý, tiến độ hoặc tình trạng listing nếu không có evidence tương ứng.
+- Ưu tiên câu trả lời ngắn, cụ thể; nếu không đủ dữ liệu thì hỏi lại thay vì điền chỗ trống bằng giả định.`,
                 config: {
                     systemInstruction: writerInstruction,
                     ...taskProfile('WRITER'),

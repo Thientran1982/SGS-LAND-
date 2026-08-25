@@ -35,3 +35,4 @@
 - [Email report retry semantics](email-report-retry-semantics.md) — retry definitive failures, but never blindly retry ambiguous provider outcomes
 - [Provider delivery lookup](provider-delivery-lookup.md) — Brevo delivery verification uses a stable delivery-key tag; unsupported providers stay manual
 - [Durable signal health](durable-signal-health.md) — aggregate sanitized signal-write failures durably by tenant/type so restart does not erase operational alerts
+- [Minh answer focus](minh-answer-focus.md) — current user message and tenant-scoped evidence outrank old memory; unrelated history must not become prompt instructions
