@@ -49,6 +49,7 @@ const NAV_ICONS: Record<string, React.ReactNode> = {
     [ROUTES.AI_GOVERNANCE]: <Shield size={20} strokeWidth={2} />,
     [ROUTES.AGENT_AUDIT]: <ScrollText size={20} strokeWidth={2} />,
     [ROUTES.AGENT_COCKPIT]: <Bot size={20} strokeWidth={2} />,
+[ROUTES.AGENT_TASKS]: <ListTodo size={20} strokeWidth={2} />,
     [ROUTES.DATA_PLATFORM]: <Database size={20} strokeWidth={2} />,
     [ROUTES.SYSTEM]: <Activity size={20} strokeWidth={2} />,
     [ROUTES.ADMIN_USERS]: <Users size={20} strokeWidth={2} />,

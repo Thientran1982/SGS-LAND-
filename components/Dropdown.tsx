@@ -15,6 +15,8 @@ interface DropdownProps<T extends string | number> {
     onChange: (value: T) => void;
     options: DropdownOption[];
     placeholder?: string;
+  emptyValue?: string | number;
+  emptyLabel?: string;
     disabled?: boolean;
     className?: string;
     icon?: React.ReactNode; // Leading icon
@@ -51,6 +53,8 @@ export const Dropdown = memo(<T extends string | number>({
     value,
     onChange,
     options,
+    emptyValue,
+    emptyLabel,
     placeholder,
     disabled = false,
     className = "",
@@ -188,7 +192,7 @@ export const Dropdown = memo(<T extends string | number>({
                     {selectedOption ? (
                         <span className="font-medium truncate flex items-center gap-2">
                             {selectedOption.icon}
-                            {selectedOption.label}
+                            {selectedOption.value === emptyValue ? (emptyLabel ?? null) : selectedOption.label}
                         </span>
                     ) : (
                         <span className={error ? "text-rose-400" : "text-[var(--text-secondary)] dark:text-[var(--text-tertiary)]"}>{displayPlaceholder}</span>

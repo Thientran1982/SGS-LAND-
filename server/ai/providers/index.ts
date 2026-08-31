@@ -11,6 +11,7 @@ import type { AiProvider } from '../modelPolicy';
 
 const XAI_BASE_URL = process.env.XAI_BASE_URL || 'https://api.x.ai/v1';
 const OPENROUTER_BASE_URL = process.env.OPENROUTER_BASE_URL || 'https://openrouter.ai/api/v1';
+const BAI_BASE_URL = process.env.BAI_BASE_URL || 'https://api.b.ai/v1';
 
 const ADAPTERS: Record<AiProvider, ProviderAdapter> = {
   google:    new GoogleAdapter(),
@@ -18,6 +19,7 @@ const ADAPTERS: Record<AiProvider, ProviderAdapter> = {
   openai:    new OpenAiCompatibleAdapter('openai'),
   xai:       new OpenAiCompatibleAdapter('xai', XAI_BASE_URL),
   openrouter: new OpenAiCompatibleAdapter('openrouter', OPENROUTER_BASE_URL),
+  bai: new OpenAiCompatibleAdapter('bai', BAI_BASE_URL),
 };
 
 export function getAdapter(provider: AiProvider): ProviderAdapter {

@@ -32,4 +32,5 @@ export const PAGE_LABELS: Record<string, string> = {
   [ROUTES.ERROR_MONITOR]: 'Giám Sát Lỗi',
   [ROUTES.PROFILE]: 'Hồ Sơ Cá Nhân',
   [ROUTES.MOBILE_APP]: 'Ứng Dụng Di Động',
+[ROUTES.AGENT_TASKS]: 'Tác Vụ Agent',
 };

@@ -66,7 +66,7 @@ export function createMinhClient(apiBase?: string) {
       return data.message;
     },
     async getMessages(leadId: string) {
-      const res = await fetch(apiUrl(CHAT_ENDPOINTS.livechatMessages(leadId), apiBase), { credentials: "include" });
+      const res = await fetch(apiUrl(CHAT_ENDPOINTS.livechatMessages(leadId), apiBase), { credentials: "include", cache: "no-store" });
       if (!res.ok) return null;
       return res.json();
     },

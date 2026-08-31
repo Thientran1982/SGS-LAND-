@@ -1169,7 +1169,7 @@ export const Dashboard: React.FC = () => {
                                 <div className="h-[270px] w-full min-w-0">
                                     {analytics.marketPulse && analytics.marketPulse.length > 0 ? (
                                         <ResponsiveContainer width="100%" height="100%" minHeight={200} minWidth={200}>
-                                            <ScatterChart margin={{ top: 15, right: 15, bottom: 15, left: 5 }}>
+                                            <ScatterChart margin={{ top: 15, right: 15, bottom: 15, left: 12 }}>
                                                 <CartesianGrid strokeDasharray="3 3" stroke={chartTheme.colors.grid} opacity={0.5} />
                                                 <XAxis type="number" dataKey="area" name={t('dash.scatter_area')} unit="m²" stroke={chartTheme.colors.text} fontSize={11} tickLine={false} axisLine={false} />
                                                 <YAxis type="number" dataKey="price" name={t('dash.scatter_price')} unit={` ${t('dash.scatter_price_unit')}`} stroke={chartTheme.colors.text} fontSize={11} tickLine={false} axisLine={false} tickFormatter={(v: number) => v.toLocaleString('vi-VN', { maximumFractionDigits: 1 })} />
@@ -1196,10 +1196,10 @@ export const Dashboard: React.FC = () => {
                                      <div className="h-[170px] w-full min-w-0">
                                          {Array.isArray(overview.projectBreakdown) && overview.projectBreakdown.length > 0 ? (
                                              <ResponsiveContainer width="100%" height="100%" minHeight={140} minWidth={160}>
-                                                 <BarChart data={overview.projectBreakdown.slice(0, 8)} layout="vertical" margin={{ top: 2, right: 8, bottom: 2, left: 8 }}>
+                                                 <BarChart data={overview.projectBreakdown.slice(0, 8)} layout="vertical" margin={{ top: 2, right: 8, bottom: 2, left: 12 }}>
                                                      <CartesianGrid horizontal={false} strokeDasharray="3 3" stroke={chartTheme.colors.grid} opacity={0.5} />
                                                      <XAxis type="number" allowDecimals={false} stroke={chartTheme.colors.text} fontSize={10} tickLine={false} axisLine={false} />
-                                                     <YAxis type="category" dataKey="name" width={72} tick={{ fill: chartTheme.colors.text, fontSize: 10 }} tickLine={false} axisLine={false} />
+                                                     <YAxis type="category" dataKey="name" width={84} tick={{ fill: chartTheme.colors.text, fontSize: 10 }} tickLine={false} axisLine={false} tickFormatter={(v: string) => String(v || '').length > 12 ? String(v).slice(0, 11) + '…' : v} />
                                                      <Tooltip cursor={{ fill: 'var(--glass-surface)' }} formatter={(value: number) => [value, language === 'vn' ? 'Sản phẩm' : 'Listings']} />
                                                      <Bar dataKey="count" name={language === 'vn' ? 'Sản phẩm' : 'Listings'} fill="var(--sgs-primary)" radius={[0, 3, 3, 0]} barSize={14} />
                                                  </BarChart>

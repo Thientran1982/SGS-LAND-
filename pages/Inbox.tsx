@@ -43,8 +43,8 @@ const ICONS = {
 const DD_COLORS: Record<string, { open: string; item: string; check: string }> = {
     indigo:  { open: 'bg-[var(--sgs-primary)]/10 border-[var(--sgs-primary)] text-[var(--sgs-primary)]',   item: 'bg-[var(--sgs-primary)]/10 text-[var(--sgs-primary)]',   check: 'text-sgs-primary'  },
     blue:    { open: 'bg-blue-50 border-blue-400 text-blue-700',         item: 'bg-blue-50 text-blue-700',       check: 'text-blue-600'    },
-    emerald: { open: 'bg-emerald-50 border-emerald-400 text-emerald-700',item: 'bg-emerald-50 text-emerald-700', check: 'text-emerald-600' },
-    amber:   { open: 'bg-amber-50 border-amber-400 text-amber-700',      item: 'bg-amber-50 text-amber-700',     check: 'text-amber-600'   },
+    emerald: { open: 'bg-emerald-50 border-emerald-400 text-[var(--sgs-primary)]',item: 'bg-[var(--sgs-primary)]/10 text-[var(--sgs-primary)]', check: 'text-[var(--sgs-primary)]' },
+    amber:   { open: 'bg-amber-50 border-amber-400 text-amber-700',      item: 'bg-[var(--glass-surface)] text-[var(--text-secondary)]',     check: 'text-[var(--text-secondary)]'   },
 };
 /* ── Reusable animated dropdown for inbox filters ────────────────────────── */
 type DropdownOption<T extends string> = { value: T; label: string; icon?: React.ReactNode; color?: string };
@@ -128,6 +128,7 @@ export const Inbox: React.FC = () => {
     const [search, setSearch] = useState('');
     const [debouncedSearch, setDebouncedSearch] = useState('');
     const [channelFilter, setChannelFilter] = useState<'ALL' | Channel>('ALL');
+  const [showFilterMenu, setShowFilterMenu] = useState(false);
     const [statusFilter, setStatusFilter] = useState<'ALL' | 'UNREAD'>('ALL');
     const [threadToDelete, setThreadToDelete] = useState<LeadId | null>(null);
     // Debounce search
@@ -648,7 +649,7 @@ export const Inbox: React.FC = () => {
                         <h2 className="font-bold text-[var(--text-primary)]">{t('menu.inbox')}</h2>
                         <button 
                             onClick={() => setIsWidgetModalOpen(true)}
-                            className="text-xs font-bold text-sgs-primary bg-sgs-champagne hover:bg-sgs-champagne px-2.5 py-1.5 rounded-lg transition-colors flex items-center gap-1.5"
+                            className="text-xs font-bold text-[var(--text-secondary)] bg-[var(--glass-surface)] hover:bg-[var(--glass-surface-hover)] px-2.5 py-1.5 rounded-lg transition-colors flex items-center gap-1.5"
                         >
                             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4" /></svg>
                             <span className="hidden sm:inline">{t('inbox.live_chat_widget')}</span>
@@ -661,7 +662,7 @@ export const Inbox: React.FC = () => {
                         <input 
                             value={search}
                             onChange={e => setSearch(e.target.value)}
-                            className="w-full bg-[var(--glass-surface)] border border-[var(--glass-border)] rounded-xl pl-9 pr-9 py-2.5 min-h-[44px] text-sm outline-none focus:border-sgs-primary transition-all"
+                            className="w-full bg-[var(--glass-surface)] border border-[var(--glass-border)] rounded-xl pl-9 pr-24 py-2.5 min-h-[44px] text-sm outline-none focus:border-sgs-primary transition-all"
                             placeholder={t('common.search')}
                         />
                         {search && (
@@ -675,33 +676,48 @@ export const Inbox: React.FC = () => {
                                 </button>
                             </div>
                         )}
+                {/* Bo loc gop (khong vien) - trong thanh tim kiem */}
+                <div className="absolute right-1.5 top-1.5 bottom-1.5 flex items-center">
+                  <button
+                    type="button"
+                    onClick={() => setShowFilterMenu(v => !v)}
+                    className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--glass-surface-hover)] transition-colors"
+                    title="Bộ lọc"
+                  >
+                    {ICONS.FILTER}
+                    {(statusFilter !== 'ALL' || channelFilter !== 'ALL') && (
+                      <span className="w-1.5 h-1.5 rounded-full bg-[var(--sgs-primary)]" />
+                    )}
+                  </button>
+                  {showFilterMenu && (
+                    <div className="absolute right-0 top-[calc(100%+8px)] z-50 w-60 rounded-xl border border-[var(--glass-border)] bg-[var(--bg-surface)] shadow-lg p-3 space-y-3">
+                      <div>
+                        <div className="text-[10px] font-bold uppercase tracking-wider text-[var(--text-secondary)] mb-1.5">Trạng thái</div>
+                        <div className="flex gap-1.5">
+                          {(['ALL', 'UNREAD'] as const).map(v => (
+                            <button key={v} type="button" onClick={() => setStatusFilter(v)}
+                              className={("flex-1 px-2 py-1.5 rounded-lg text-xs font-medium transition-colors " +
+                                (statusFilter === v ? "bg-[var(--sgs-primary)] text-white" : "bg-[var(--glass-surface)] text-[var(--text-secondary)] hover:text-[var(--text-primary)]"))}>
+                              {v === 'ALL' ? 'Tất cả' : 'Chưa đọc'}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                      <div>
+                        <div className="text-[10px] font-bold uppercase tracking-wider text-[var(--text-secondary)] mb-1.5">Kênh</div>
+                        <div className="grid grid-cols-2 gap-1.5">
+                          {(['ALL', Channel.WEB, Channel.ZALO, Channel.FACEBOOK, Channel.EMAIL, Channel.SMS] as const).map(v => (
+                            <button key={v} type="button" onClick={() => setChannelFilter(v as 'ALL' | Channel)}
+                              className={("px-2 py-1.5 rounded-lg text-xs font-medium transition-colors " +
+                                (channelFilter === v ? "bg-[var(--sgs-primary)] text-white" : "bg-[var(--glass-surface)] text-[var(--text-secondary)] hover:text-[var(--text-primary)]"))}>
+                              {v === 'ALL' ? 'Tất cả' : v === Channel.WEB ? 'Web' : v === Channel.ZALO ? 'Zalo' : v === Channel.FACEBOOK ? 'Facebook' : v === Channel.EMAIL ? 'Email' : 'SMS'}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
                     </div>
-                    {/* Filter row — dropdowns on all screen sizes */}
-                    <div className="flex gap-2">
-                        <InboxDropdown<'ALL' | 'UNREAD'>
-                            value={statusFilter}
-                            onChange={setStatusFilter}
-                            defaultColor="indigo"
-                            options={[
-                                { value: 'ALL',    label: t('inbox.filter_all'),    icon: ICONS.FILTER,  color: 'indigo' },
-                                { value: 'UNREAD', label: t('inbox.filter_unread'), icon: ICONS.UNREAD,  color: 'amber'  },
-                            ]}
-                        />
-                        <InboxDropdown<'ALL' | Channel>
-                            value={channelFilter}
-                            onChange={setChannelFilter}
-                            defaultColor="indigo"
-                            options={[
-                                { value: 'ALL',              label: t('inbox.filter_all'),    icon: ICONS.FILTER,   color: 'indigo'  },
-                                { value: Channel.WEB,        label: t('inbox.channel_web'),   icon: ICONS.WEB,      color: 'indigo'  },
-                                { value: Channel.ZALO,       label: 'Zalo',                   icon: ICONS.ZALO,     color: 'blue'    },
-                                { value: Channel.FACEBOOK,   label: 'Facebook',               icon: ICONS.FACEBOOK, color: 'blue'    },
-                                { value: Channel.EMAIL,      label: 'Email',                  icon: ICONS.EMAIL,    color: 'indigo'  },
-                                { value: Channel.SMS,        label: 'SMS',                    icon: ICONS.SMS,      color: 'emerald' },
-                                { value: Channel.WEBHOOK,    label: 'Webhook',                icon: ICONS.WEBHOOK,  color: 'indigo'  },
-                                { value: Channel.VOICE,      label: channelLabel(Channel.VOICE), icon: ICONS.VOICE, color: 'amber'   },
-                            ]}
-                        />
+                  )}
+                </div>
                     </div>
 
                 </div>
@@ -741,7 +757,7 @@ export const Inbox: React.FC = () => {
                                             {/* Follow-up badge — shown when last outbound was an AI follow-up */}
                                             {thread.lastMessage?.direction === 'OUTBOUND' && thread.lastMessage?.metadata?.isFollowUp && (
                                                 <span
-                                                    className="text-2xs font-bold px-1.5 py-0.5 rounded shrink-0 bg-amber-50 text-sgs-accent-text border border-amber-200"
+                                                    className="text-2xs font-bold px-1.5 py-0.5 rounded shrink-0 bg-amber-50 text-sgs-accent-text border border-[var(--glass-border)]"
                                                     title={`Follow-up tự động ngày ${thread.lastMessage.metadata.followUpDay ?? ''}`}
                                                 >
                                                     ⏰ {thread.lastMessage.metadata.followUpDay ? `D${thread.lastMessage.metadata.followUpDay}` : 'FU'}
@@ -751,13 +767,13 @@ export const Inbox: React.FC = () => {
                                             {thread.lastChannel && thread.lastChannel !== 'INTERNAL' && (() => {
                                                 const ch = thread.lastChannel;
                                                 const styles: Record<string, string> = {
-                                                    ZALO:    'bg-blue-100 text-blue-700',
-                                                    FACEBOOK:'bg-[#1877F2]/10 text-[#1877F2]',
+                                                    ZALO: "bg-[var(--sgs-primary)]/10 text-[var(--sgs-primary)]",
+                                                    FACEBOOK: 'bg-[var(--sgs-primary)]/10 text-[var(--sgs-primary)]',
                                                     EMAIL:   'bg-[var(--sgs-primary)]/10 text-[var(--sgs-primary)]',
-                                                    SMS:     'bg-emerald-50 text-emerald-600',
+                                                    SMS: "bg-[var(--sgs-primary)]/10 text-[var(--sgs-primary)]",
                                                     WEB:     'bg-[var(--sgs-primary)]/10 text-[var(--sgs-primary)]',
-                                                    WEBHOOK: 'bg-slate-100 text-slate-600',
-                                                    VOICE:   'bg-amber-50 text-amber-600',
+                                                    WEBHOOK: 'bg-[var(--sgs-primary)]/10 text-[var(--sgs-primary)]',
+                                                    VOICE: "bg-[var(--sgs-primary)]/10 text-[var(--sgs-primary)]",
                                                 };
                                                 const badgeLabels: Record<string, string> = {
                                                     ZALO:    t('inbox.channel_badge_zalo'),
@@ -769,7 +785,7 @@ export const Inbox: React.FC = () => {
                                                     VOICE:   'Tel',
                                                 };
                                                 return (
-                                                    <span className={`text-2xs font-bold px-1.5 py-0.5 rounded shrink-0 ${styles[ch] || 'bg-slate-100 text-slate-500'}`}
+                                                    <span className={`text-2xs font-bold px-1.5 py-0.5 rounded shrink-0 ${styles[ch] || 'bg-[var(--sgs-primary)]/10 text-[var(--sgs-primary)]'}`}
                                                           title={channelLabel(ch)}>
                                                         {badgeLabels[ch] ?? channelLabel(ch).charAt(0).toUpperCase()}
                                                     </span>
@@ -788,7 +804,7 @@ export const Inbox: React.FC = () => {
                                         </div>
                                         <div className="flex items-center gap-1.5 shrink-0">
                                             {thread.lead.assignedTo && (
-                                                <div className="text-2xs font-bold text-sgs-primary bg-sgs-champagne px-1.5 py-0.5 rounded truncate max-w-[60px]" title={thread.lead.assignedToName || users.find((u: any) => u.id === thread.lead.assignedTo)?.name || t('inbox.unassigned')}>
+                                                <div className="text-2xs font-bold text-[var(--text-secondary)] bg-[var(--glass-surface)] px-1.5 py-0.5 rounded truncate max-w-[60px]" title={thread.lead.assignedToName || users.find((u: any) => u.id === thread.lead.assignedTo)?.name || t('inbox.unassigned')}>
                                                     {(thread.lead.assignedToName || users.find((u: any) => u.id === thread.lead.assignedTo)?.name || '')?.split(' ').pop() || ''}
                                                 </div>
                                             )}
@@ -817,7 +833,7 @@ export const Inbox: React.FC = () => {
             {selectedThread ? (
                 <div className={`flex-1 flex flex-col bg-[var(--bg-surface)] h-full relative min-w-0 ${selectedLeadId ? 'flex' : 'hidden md:flex'}`}>
                     {/* Header */}
-                    <div className="px-4 py-2.5 md:px-5 md:py-3 border-b border-[var(--glass-border)] flex justify-between items-center bg-[var(--bg-surface)]/95 backdrop-blur-md z-20 shadow-sm gap-2">
+                    <div className="px-4 py-2.5 md:px-5 md:py-3 border-b border-[var(--glass-border)] flex justify-between items-center bg-transparent z-20 gap-2">
                         <div className="flex items-center gap-2 min-w-0 flex-1">
                             {/* Back button — mobile only */}
                             <button onClick={() => setSelectedLeadId(null)} aria-label={t('common.back')} className="md:hidden text-[var(--text-tertiary)] hover:bg-[var(--glass-surface-hover)] p-1.5 min-h-[44px] min-w-[44px] rounded-full transition-colors shrink-0 -ml-1 flex items-center justify-center focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sgs-primary">
@@ -831,12 +847,12 @@ export const Inbox: React.FC = () => {
                             <div className="min-w-0 flex-1">
                                 <div className="font-bold text-[var(--text-primary)] text-sm flex items-center gap-1.5 min-w-0">
                                     <span className="truncate">{selectedThread.lead.name}</span>
-                                    <span className="text-2xs px-1.5 py-0.5 rounded-md uppercase font-bold border text-sgs-verified bg-sgs-champagne border-emerald-100 shrink-0 hidden sm:inline">
+                                    <span className="text-2xs px-1.5 py-0.5 rounded-md uppercase font-bold border text-[var(--sgs-primary)] bg-[var(--sgs-primary)]/10 border-transparent shrink-0 hidden sm:inline">
                                         {selectedThread.lead.score?.score || 0}đ
                                     </span>
                                 </div>
                                 <div className="text-xs text-[var(--text-tertiary)] flex items-center gap-1.5">
-                                    <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${isAiActiveForSelected ? 'bg-emerald-500 animate-pulse' : 'bg-amber-400'}`}></span>
+                                    <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${isAiActiveForSelected ? 'bg-[var(--sgs-primary)] animate-pulse' : 'bg-[var(--text-tertiary)]'}`}></span>
                                     <span className="truncate">{isAiActiveForSelected ? t('inbox.ai_agent_active') : t('inbox.human_control')}</span>
                                 </div>
                             </div>
@@ -890,8 +906,8 @@ export const Inbox: React.FC = () => {
                                 onClick={(e) => toggleAiMode(e, selectedThread.lead.id)}
                                 className={`flex items-center gap-1.5 px-2 py-1.5 min-h-[36px] rounded-lg text-xs font-bold border transition-all ${
                                     isAiActiveForSelected
-                                    ? 'bg-emerald-50 text-emerald-700 border-emerald-200 hover:bg-emerald-100'
-                                    : 'bg-amber-50 text-amber-700 border-amber-200 hover:bg-amber-100'
+                                    ? 'bg-[var(--sgs-primary)]/10 text-[var(--sgs-primary)] border-[var(--glass-border)] hover:bg-[var(--sgs-primary)]/20'
+                                    : 'bg-[var(--glass-surface)] text-[var(--text-secondary)] border-[var(--glass-border)] hover:bg-[var(--glass-surface-hover)]'
                                 }`}
                                 title={t('inbox.toggle_ai')}
                             >
@@ -966,35 +982,12 @@ export const Inbox: React.FC = () => {
                         <div ref={messagesEndRef} />
                     </div>
                     {/* Input Bar */}
-                    <div className="px-4 pt-2.5 sm:px-5 sm:pt-3 pb-safe bg-[var(--bg-surface)]/95 backdrop-blur-md border-t border-[var(--glass-border)] z-30">
-                        {/* Channel selector row + supervisor badge */}
-                        <div className="flex items-center justify-between gap-2 mb-2.5 min-w-0">
-                            {/* ── Channel tabs ── */}
-                            <div className="flex flex-nowrap bg-[var(--glass-surface)] p-0.5 rounded-xl overflow-x-auto no-scrollbar">
-                                {([
-                                    { ch: Channel.ZALO,     label: 'Zalo',                    icon: ICONS.ZALO     },
-                                    { ch: Channel.FACEBOOK, label: 'Facebook',                 icon: ICONS.FACEBOOK },
-                                    { ch: Channel.EMAIL,    label: 'Email',                    icon: ICONS.EMAIL    },
-                                    { ch: Channel.SMS,      label: 'SMS',                      icon: ICONS.SMS      },
-                                    { ch: Channel.WEB,      label: t('inbox.channel_web'),     icon: ICONS.WEB      },
-                                ] as const).map(({ ch, label }) => (
-                                    <button
-                                        key={ch}
-                                        type="button"
-                                        onClick={() => setChannel(ch)}
-                                        className={`flex-none flex items-center gap-1 px-2.5 py-1 min-h-[28px] rounded-[10px] text-[11px] font-bold transition-all whitespace-nowrap ${
-                                            channel === ch
-                                                ? 'bg-[var(--bg-surface)] text-[var(--text-primary)] shadow-sm'
-                                                : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)]'
-                                        }`}
-                                    >
-                                        {label}
-                                    </button>
-                                ))}
-                            </div>
+                    <div className="px-4 pt-2.5 sm:px-5 sm:pt-3 pb-safe bg-transparent border-t border-[var(--glass-border)] z-30">
+          {/* The tag an kenh da an: mac dinh gui qua kenh Web */}
+          <div className="flex items-center justify-end gap-2 mb-2.5 min-w-0">
                             {/* Supervisor mode badge */}
                             {!isAiActiveForSelected && (
-                                <div className="text-xs font-bold text-sgs-accent-text bg-amber-50 border border-amber-200 px-2.5 py-1.5 rounded-lg whitespace-nowrap flex items-center gap-1.5 shrink-0">
+                                <div className="text-xs font-bold text-sgs-accent-text bg-amber-50 border border-[var(--glass-border)] px-2.5 py-1.5 rounded-lg whitespace-nowrap flex items-center gap-1.5 shrink-0">
                                     {ICONS.ALERT}
                                     <span className="hidden sm:inline">{t('inbox.supervisor_takeover_active')}</span>
                                     <span className="sm:hidden">Manual</span>
@@ -1002,7 +995,7 @@ export const Inbox: React.FC = () => {
                             )}
                         </div>
                         {/* Text input row */}
-                        <div className="flex items-end gap-1.5 bg-[var(--bg-surface)] p-1 pl-2.5 rounded-xl border border-[var(--glass-border)] focus-within:border-[var(--sgs-primary)] focus-within:ring-4 focus-within:ring-[var(--sgs-primary)]/50 transition-all shadow-sm">
+                        <div className="flex items-center gap-1.5 bg-[var(--bg-surface)] p-1 pl-2.5 rounded-xl border border-[var(--glass-border)] focus-within:border-[var(--sgs-primary)] focus-within:ring-4 focus-within:ring-[var(--sgs-primary)]/50 transition-all shadow-sm">
                             <input 
                                 type="file" 
                                 ref={fileInputRef} 
@@ -1013,7 +1006,7 @@ export const Inbox: React.FC = () => {
                             <button
                                 onClick={() => fileInputRef.current?.click()}
                                 aria-label={t('inbox.attach')}
-                                className="p-1.5 min-h-[36px] min-w-[36px] text-[var(--text-tertiary)] hover:text-sgs-primary transition-colors rounded-lg hover:bg-sgs-champagne shrink-0 self-end mb-0.5 flex items-center justify-center focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sgs-primary"
+                                className="p-1.5 min-h-[36px] min-w-[36px] text-[var(--text-tertiary)] hover:text-[var(--sgs-primary)] transition-colors rounded-lg hover:bg-[var(--glass-surface-hover)] shrink-0 flex items-center justify-center focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sgs-primary"
                             >
                                 {ICONS.ATTACH}
                             </button>                            
@@ -1026,7 +1019,7 @@ export const Inbox: React.FC = () => {
                                         handleSend();
                                     }
                                 }}
-                                className="flex-1 min-w-0 bg-transparent border-none text-[16px] md:text-sm outline-none max-h-32 min-h-[36px] py-2 resize-none placeholder:text-[var(--text-muted)] leading-relaxed focus:ring-0 no-scrollbar"
+                                className="flex-1 min-w-0 bg-transparent border-none text-[16px] md:text-sm outline-none max-h-32 min-h-[36px] py-1.5 resize-none placeholder:text-[var(--text-muted)] leading-relaxed focus:ring-0 no-scrollbar flex items-center"
                                 placeholder={isAiActiveForSelected ? t('inbox.type_simulate') : t('inbox.reply_supervisor')}
                                 rows={1}
                             />                            
@@ -1114,7 +1107,7 @@ export const Inbox: React.FC = () => {
                                         <div className="flex items-center justify-between mb-2">
                                             <label className="text-sm font-bold text-[var(--text-secondary)]">{t('inbox.widget_link_label')}</label>
                                             {shortLink && !isGeneratingShortLink && (
-                                                <span className="text-xs px-2 py-0.5 bg-sgs-champagne text-sgs-verified rounded-full font-medium border border-emerald-200">{t('inbox.widget_short_valid')}</span>
+                                                <span className="text-xs px-2 py-0.5 bg-sgs-champagne text-sgs-verified rounded-full font-medium border border-[var(--glass-border)]">{t('inbox.widget_short_valid')}</span>
                                             )}
                                         </div>
                                         {/* Channel selector — choose platform to share link */}
@@ -1159,7 +1152,7 @@ export const Inbox: React.FC = () => {
                                                     notify(t('inbox.widget_link_copied'), 'success');
                                                 }}
                                                 disabled={isGeneratingShortLink}
-                                                className="px-4 py-2 bg-sgs-champagne text-sgs-primary font-bold rounded-xl hover:bg-sgs-champagne transition-colors text-sm whitespace-nowrap shrink-0 disabled:opacity-40"
+                                                className="px-4 py-2 bg-[var(--sgs-primary)] text-white font-bold rounded-xl hover:opacity-90 transition-colors text-sm whitespace-nowrap shrink-0 disabled:opacity-40"
                                             >
                                                 {t('inbox.widget_copy')}
                                             </button>
@@ -1167,7 +1160,7 @@ export const Inbox: React.FC = () => {
                                                 onClick={() => generateShortLink(widgetTitle, widgetDesc, currentUser?.id, linkChannel)}
                                                 disabled={isGeneratingShortLink}
                                                 title={t('inbox.widget_refresh_link')}
-                                                className="p-2 text-[var(--text-tertiary)] hover:text-sgs-primary hover:bg-sgs-champagne rounded-xl transition-colors disabled:opacity-40"
+                                                className="p-2 text-[var(--text-tertiary)] hover:text-sgs-primary hover:bg-[var(--glass-surface-hover)] rounded-xl transition-colors disabled:opacity-40"
                                             >
                                                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" /></svg>
                                             </button>
@@ -1176,7 +1169,7 @@ export const Inbox: React.FC = () => {
                                                 target="_blank"
                                                 rel="noreferrer"
                                                 title={t('inbox.widget_open_link')}
-                                                className="p-2 text-[var(--text-tertiary)] hover:text-sgs-verified hover:bg-sgs-champagne rounded-xl transition-colors"
+                                                className="p-2 text-[var(--text-tertiary)] hover:text-sgs-verified hover:bg-[var(--glass-surface-hover)] rounded-xl transition-colors"
                                             >
                                                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" /></svg>
                                             </a>

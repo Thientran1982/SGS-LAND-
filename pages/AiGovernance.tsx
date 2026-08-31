@@ -1036,7 +1036,143 @@ export const AiGovernance: React.FC = () => {
     const [agents, setAgents] = useState<GovernanceAgent[]>([]);
     const [safetyLogs, setSafetyLogs] = useState<AiSafetyLog[]>([]);
     const [loading, setLoading] = useState(true);
-    const [activeTab, setActiveTab] = useState<'CONFIG' | 'PROMPTS' | 'SAFETY' | 'RLHF'>('CONFIG');
+// ===== USAGE TAB — bieu do token/chi phi AI =====
+const UsageTab = memo(({ t }: { t: (k: string) => string }) => {
+  const [stats, setStats] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
+  const [days, setDays] = useState(30);
+
+  const load = useCallback(async (d: number) => {
+    setLoading(true);
+    try {
+      const res = await fetch('/api/ai/governance/usage-stats?days=' + d, { headers: { Authorization: 'Bearer ' + localStorage.getItem('token') } });
+      if (res.ok) setStats(await res.json());
+    } catch { /* ignore */ } finally { setLoading(false); }
+  }, []);
+
+  useEffect(() => { void load(days); }, [load, days]);
+
+  const exportCsv = () => {
+    if (!stats?.byModel) return;
+    const rows = [['model', 'calls', 'cost_usd', 'avg_latency_ms']];
+    for (const m of stats.byModel) rows.push([m.model, String(m.calls), String(m.cost_usd), String(m.avg_latency_ms)]);
+    const csv = rows.map(r => r.join(',')).join('\n');
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8' });
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = 'ai-usage-' + days + 'd.csv';
+    a.click();
+  };
+
+  const MODEL_COLORS = ['#1B3A5C', '#2563EB', '#0EA5E9', '#6366F1', '#10B981', '#F59E0B'];
+
+  return (
+    <div className="space-y-4">
+      {/* Summary cards */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+        <div className="rounded-xl border border-slate-200 bg-white p-4">
+          <div className="text-xs font-semibold uppercase text-slate-400">Tổng lượt gọi</div>
+          <div className="mt-1 text-2xl font-bold text-slate-900">{stats?.summary?.total_calls ?? '—'}</div>
+        </div>
+        <div className="rounded-xl border border-slate-200 bg-white p-4">
+          <div className="text-xs font-semibold uppercase text-slate-400">Chi phí (USD)</div>
+          <div className="mt-1 text-2xl font-bold text-slate-900">{stats?.summary?.total_cost_usd ?? '—'}</div>
+        </div>
+        <div className="rounded-xl border border-slate-200 bg-white p-4">
+          <div className="text-xs font-semibold uppercase text-slate-400">Latency trung bình</div>
+          <div className="mt-1 text-2xl font-bold text-slate-900">{stats?.summary?.avg_latency_ms ? stats.summary.avg_latency_ms + 'ms' : '—'}</div>
+        </div>
+        <div className="rounded-xl border border-slate-200 bg-white p-4">
+          <div className="text-xs font-semibold uppercase text-slate-400">Số model dùng</div>
+          <div className="mt-1 text-2xl font-bold text-slate-900">{stats?.summary?.models_used ?? '—'}</div>
+        </div>
+      </div>
+
+      {/* Range selector + export */}
+      <div className="flex items-center justify-between gap-2">
+        <div className="flex gap-1.5">
+          {[7, 30, 90].map(d => (
+            <button key={d} onClick={() => setDays(d)}
+              className={'rounded-lg px-3 py-1.5 text-xs font-medium ' + (days === d ? 'bg-slate-900 text-white' : 'border border-slate-200 bg-white text-slate-600 hover:bg-slate-50')}>
+              {d} ngày
+            </button>
+          ))}
+        </div>
+        <button onClick={exportCsv} className="rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs font-medium text-slate-600 hover:bg-slate-50">
+          Xuất CSV
+        </button>
+      </div>
+
+      {/* Chart 1: theo mo hinh */}
+      <div className="rounded-xl border border-slate-200 bg-white p-4">
+        <div className="mb-3 text-sm font-bold text-slate-900">Lượt gọi theo mô hình</div>
+        {loading ? <div className="h-64 flex items-center justify-center text-slate-400 text-sm">Đang tải...</div> : (
+          <div className="h-64">
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart data={stats?.byModel || []} barSize={22}>
+                <XAxis dataKey="model" tick={{ fontSize: 11 }} interval={0} angle={-15} textAnchor="end" height={50} />
+                <YAxis tick={{ fontSize: 11 }} />
+                <Tooltip />
+                <Bar dataKey="calls" name="Lượt gọi" radius={[4, 4, 0, 0]}>
+                  {(stats?.byModel || []).map((_: any, i: number) => <Cell key={i} fill={MODEL_COLORS[i % MODEL_COLORS.length]} />)}
+                </Bar>
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
+        )}
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+        {/* Chart 2: theo ngay */}
+        <div className="rounded-xl border border-slate-200 bg-white p-4">
+          <div className="mb-3 text-sm font-bold text-slate-900">Lượt gọi theo ngày</div>
+          {loading ? <div className="h-56 flex items-center justify-center text-slate-400 text-sm">Đang tải...</div> : (
+            <div className="h-56">
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={stats?.byDay || []} barSize={14}>
+                  <XAxis dataKey="day" tick={{ fontSize: 10 }} />
+                  <YAxis tick={{ fontSize: 11 }} />
+                  <Tooltip />
+                  <Bar dataKey="calls" name="Lượt gọi" fill="#1B3A5C" radius={[3, 3, 0, 0]} />
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
+          )}
+        </div>
+
+        {/* Table: theo tinh nang */}
+        <div className="rounded-xl border border-slate-200 bg-white p-4">
+          <div className="mb-3 text-sm font-bold text-slate-900">Chi phí theo tính năng</div>
+          <div className="max-h-56 overflow-y-auto">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="border-b border-slate-100 text-left text-xs uppercase text-slate-400">
+                  <th className="py-2 pr-2">Tính năng</th>
+                  <th className="py-2 pr-2 text-right">Lượt</th>
+                  <th className="py-2 text-right">USD</th>
+                </tr>
+              </thead>
+              <tbody>
+                {(stats?.byFeature || []).map((f: any) => (
+                  <tr key={f.feature} className="border-b border-slate-50">
+                    <td className="py-2 pr-2 font-medium text-slate-700">{f.feature}</td>
+                    <td className="py-2 pr-2 text-right text-slate-500">{f.calls}</td>
+                    <td className="py-2 text-right text-slate-500">{f.cost_usd}</td>
+                  </tr>
+                ))}
+                {(!loading && (stats?.byFeature || []).length === 0) && (
+                  <tr><td colSpan={3} className="py-6 text-center text-slate-400">Chưa có dữ liệu</td></tr>
+                )}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+});
+
+    const [activeTab, setActiveTab] = useState<'CONFIG' | 'PROMPTS' | 'SAFETY' | 'RLHF' | 'USAGE'>('CONFIG');
     const [toast, setToast] = useState<{ msg: string, type: 'success' | 'error' } | null>(null);    
     // Prompts State
     const [selectedPrompt, setSelectedPrompt] = useState<PromptTemplate | null>(null);
@@ -1246,6 +1382,7 @@ export const AiGovernance: React.FC = () => {
                     <button onClick={() => setActiveTab('PROMPTS')} className={`px-4 py-2 rounded-lg text-xs font-bold transition-all ${activeTab === 'PROMPTS' ? 'bg-[var(--bg-surface)] shadow text-[var(--sgs-primary)]' : 'text-[var(--text-tertiary)] hover:text-[var(--text-secondary)]'}`}>{t('ai.tab_prompts')}</button>
                     <button onClick={() => setActiveTab('SAFETY')} className={`px-4 py-2 rounded-lg text-xs font-bold transition-all ${activeTab === 'SAFETY' ? 'bg-[var(--bg-surface)] shadow text-[var(--sgs-primary)]' : 'text-[var(--text-tertiary)] hover:text-[var(--text-secondary)]'}`}>{t('ai.tab_safety')}</button>
                     <button onClick={() => setActiveTab('RLHF')} className={`px-4 py-2 rounded-lg text-xs font-bold transition-all ${activeTab === 'RLHF' ? 'bg-[var(--bg-surface)] shadow text-[var(--sgs-primary)]' : 'text-[var(--text-tertiary)] hover:text-[var(--text-secondary)]'}`}>{t('ai.tab_rlhf')}</button>
+                    <button onClick={() => setActiveTab('USAGE')} className={`px-4 py-2 rounded-lg text-xs font-bold transition-all ${activeTab === 'USAGE' ? 'bg-[var(--bg-surface)] shadow text-[var(--sgs-primary)]' : 'text-[var(--text-tertiary)] hover:text-[var(--text-secondary)]'}`}>{'Sử Dụng'}</button>
                 </div>
             </div>
             {activeTab === 'CONFIG' && <ConfigTab config={config} modelGroups={modelGroups} onSave={handleSaveConfig} onUpdateConfig={handleUpdateConfig} t={t} />}           
@@ -1325,7 +1462,8 @@ export const AiGovernance: React.FC = () => {
                     </div>
                 </div>
             )}
-            {activeTab === 'RLHF' && (
+            {activeTab === 'USAGE' && (<UsageTab t={t} />)}
+{activeTab === 'RLHF' && (
                 <RlhfTab
                     stats={rlhfStats}
                     signals={rewardSignals}

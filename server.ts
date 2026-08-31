@@ -28,7 +28,13 @@ import { createListingRoutes, scheduleGeocode } from "./server/routes/listingRou
 import { createProposalRoutes } from "./server/routes/proposalRoutes";
 import { createContractRoutes } from "./server/routes/contractRoutes";
 import { createInteractionRoutes } from "./server/routes/interactionRoutes";
+import { automationRouter, automationWebhookRouter } from './server/routes/agentAutomations';
+import { agentP1Router } from './server/routes/agentP1Routes';
 import { createUserRoutes } from "./server/routes/userRoutes";
+import { agentMcpRouter } from './server/routes/agentMcpRoutes';
+import { agentSkillsRouter } from './server/routes/agentSkillsRoutes';
+import { chatRoomsRouter } from './server/routes/chatRoomsRoutes';
+import { agentVoiceRouter, agentTeachRouter } from './server/routes/agentVoiceTeachRoutes';
 import { createAnalyticsRoutes } from "./server/routes/analyticsRoutes";
 import { createScoringRoutes } from "./server/routes/scoringRoutes";
 import { createRoutingRuleRoutes } from "./server/routes/routingRuleRoutes";
@@ -4311,6 +4317,14 @@ app.get('/api/public/listings/:slugId', apiRateLimit, async (req: express.Reques
   app.use('/api/public-project-content', apiRateLimit, createPublicProjectContentRoutes(authenticateToken));
   app.use('/api/billing', apiRateLimit, createBillingRoutes(authenticateToken));
   app.use('/api/admin/email-metrics', apiRateLimit, createEmailMetricsRoutes(authenticateToken));
+app.use('/api/admin/automations', apiRateLimit, authenticateToken, automationRouter);
+app.use('/api/admin/mcp-servers', apiRateLimit, authenticateToken, agentMcpRouter);
+app.use('/api/admin/chat-rooms', apiRateLimit, authenticateToken, chatRoomsRouter);
+app.use('/api/admin/agent-voice', apiRateLimit, authenticateToken, agentVoiceRouter);
+app.use('/api/admin/agent-teach', apiRateLimit, authenticateToken, agentTeachRouter);
+app.use('/api/admin/agent-skills', apiRateLimit, authenticateToken, agentSkillsRouter);
+app.use('/api/public/automations', automationWebhookRouter);
+app.use('/api/public/livechat', agentP1Router);
   app.use('/api/sessions', apiRateLimit, createSessionRoutes(authenticateToken));
   app.use('/api/auth/2fa', authRateLimit, createTwoFactorRoutes(authenticateToken));
   app.use('/api/templates', apiRateLimit, createTemplateRoutes(authenticateToken));
@@ -5192,6 +5206,65 @@ app.use('/api/approval-requests', apiRateLimit, createApprovalRequestRoutes(auth
   });
 
   // ---------------------------------------------------------------------------
+// ---------------------------------------------------------------------------
+// P0.1: Agent Async Tasks — tong hop cac task dang chay/gan day tu
+// agent_runs + agent_automation_runs cho Admin UI (kieu getAsyncTasks cua Grok Bot).
+// ---------------------------------------------------------------------------
+app.get('/api/admin/agent-tasks', apiRateLimit, authenticateToken, async (req: express.Request, res: express.Response) => {
+  const user = (req as any).user;
+  if (!user || user.role !== 'SUPER_ADMIN' || user.tenantId !== DEFAULT_TENANT_ID) {
+    return res.status(403).json({ error: 'Chỉ SUPER_ADMIN của host tenant mới truy cập được Agent Tasks' }) as any;
+  }
+  const status = typeof req.query.status === 'string' ? req.query.status : null;
+  const source = typeof req.query.source === 'string' ? req.query.source : null; // 'runs' | 'automations'
+  const limit = Math.max(1, Math.min(200, Number(req.query.limit) || 50));
+  try {
+    const whereParts: string[] = ['1=1'];
+    const params: any[] = [];
+    if (status) { params.push(status); whereParts.push(`status = $${params.length}`); }
+    if (source === 'runs' || source === 'automations') {
+      params.push(source === 'runs' ? 'agent_run' : 'automation');
+      whereParts.push(`source = $${params.length}`);
+    }
+    const where = whereParts.join(' AND ');
+    const r = await pool.query(
+      `SELECT * FROM (
+         SELECT id, 'agent_run' AS source, agent_name AS title, trigger_source, status,
+                started_at, finished_at, duration_ms, error_text, summary_json AS detail
+           FROM agent_runs
+          WHERE started_at >= NOW() - INTERVAL '7 days'
+         UNION ALL
+         SELECT ar.id, 'automation' AS source,
+                a.name || ' (' || a.slug || ')' AS title,
+                'webhook' AS trigger_source, ar.status, ar.started_at, ar.finished_at,
+                ar.duration_ms, ar.error_text, ar.payload AS detail
+           FROM agent_automation_runs ar
+           JOIN agent_automations a ON a.id = ar.automation_id
+          WHERE ar.started_at >= NOW() - INTERVAL '7 days'
+       ) tasks
+       WHERE ${where}
+       ORDER BY started_at DESC
+       LIMIT ${limit}`,
+      params,
+    );
+    const counts = await pool.query(
+      `SELECT status, COUNT(*) AS count FROM (
+         SELECT status FROM agent_runs WHERE started_at >= NOW() - INTERVAL '7 days'
+         UNION ALL
+         SELECT ar.status FROM agent_automation_runs ar
+          JOIN agent_automations a2 ON a2.id = ar.automation_id
+          WHERE ar.started_at >= NOW() - INTERVAL '7 days'
+       ) t GROUP BY status`,
+    );
+    const statusCounts: Record<string, number> = {};
+    for (const row of counts.rows) statusCounts[row.status] = Number(row.count);
+    return res.json({ tasks: r.rows, statusCounts, window: '7d' });
+  } catch (err: any) {
+    console.error('[AgentTasks] read error:', err?.message || err);
+    return res.status(500).json({ error: 'Internal error', detail: err?.message || String(err) });
+  }
+});
+
   // Module Chiến dịch tự động — Campaigns
   // ---------------------------------------------------------------------------
   app.use(createCampaignRouter(pool, authenticateToken));

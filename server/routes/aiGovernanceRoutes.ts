@@ -1,4 +1,5 @@
 import { Router, Request, Response } from 'express';
+import { pool } from '../db';
 import { aiGovernanceRepository } from '../repositories/aiGovernanceRepository';
 import { feedbackRepository } from '../repositories/feedbackRepository';
 import { GoogleGenAI } from '@google/genai';
@@ -112,7 +113,34 @@ export function createAiGovernanceRoutes(authenticateToken: any, optionalAuth?: 
     }
   });
 
-  router.get('/prompt-templates', authenticateToken, async (req: Request, res: Response) => {
+// ===== USAGE STATS: bieu do token/chi phi AI (theo mo hinh + ngay + tinh nang) =====
+router.get('/usage-stats', authenticateToken, async (req: Request, res: Response) => {
+  try {
+    const days = Math.max(1, Math.min(90, Number((req as any).query?.days) || 30));
+    const byModel = await pool.query(
+      `SELECT model, COUNT(*)::int AS calls, SUM(ai_calls)::int AS ai_calls, ROUND(SUM(cost_usd)::numeric, 4) AS cost_usd, ROUND(AVG(latency_ms))::int AS avg_latency_ms FROM ai_usage_log WHERE created_at >= NOW() - ($1::int * INTERVAL '1 day') AND model IS NOT NULL GROUP BY model ORDER BY calls DESC LIMIT 12`,
+      [days],
+    );
+    const byDay = await pool.query(
+      `SELECT TO_CHAR(created_at::date, 'DD/MM') AS day, COUNT(*)::int AS calls, ROUND(SUM(cost_usd)::numeric, 4) AS cost_usd FROM ai_usage_log WHERE created_at >= NOW() - ($1::int * INTERVAL '1 day') GROUP BY created_at::date ORDER BY created_at::date ASC`,
+      [Math.min(days, 14)],
+    );
+    const byFeature = await pool.query(
+      `SELECT feature, COUNT(*)::int AS calls, ROUND(SUM(cost_usd)::numeric, 4) AS cost_usd FROM ai_usage_log WHERE created_at >= NOW() - ($1::int * INTERVAL '1 day') GROUP BY feature ORDER BY calls DESC LIMIT 10`,
+      [days],
+    );
+    const summary = await pool.query(
+      `SELECT COUNT(*)::int AS total_calls, ROUND(SUM(cost_usd)::numeric, 4) AS total_cost_usd, ROUND(AVG(latency_ms))::int AS avg_latency_ms, COUNT(DISTINCT model)::int AS models_used FROM ai_usage_log WHERE created_at >= NOW() - ($1::int * INTERVAL '1 day')`,
+      [days],
+    );
+    res.json({ byModel: byModel.rows, byDay: byDay.rows, byFeature: byFeature.rows, summary: summary.rows[0] });
+  } catch (err: any) {
+    console.error('[Governance] usage-stats failed:', err?.message || err);
+    res.status(500).json({ error: 'Khong tai duoc thong ke su dung AI' });
+  }
+});
+
+router.get('/prompt-templates', authenticateToken, async (req: Request, res: Response) => {
     try {
       const tenantId = (req as any).user?.tenantId;
       const templates = await aiGovernanceRepository.getPromptTemplates(tenantId);

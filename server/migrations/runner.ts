@@ -195,7 +195,10 @@ import m171 from './171_marketing_growth_company_brain';
 import m172 from './172_customer_profiles';
 import m173 from './173_customer_profile_topics';
 import m174 from './174_public_project_contents';
+import m175 from './175_agent_automations';
 
+import m176 from './176_agent_mcp_servers';
+import m177 from './177_p2_skills_rooms';
 dotenv.config();
 
 export interface Migration {
@@ -387,6 +390,9 @@ export const MIGRATION_REGISTRY: Record<string, Migration> = {
   '172_customer_profiles.ts': m172,
   '173_customer_profile_topics.ts': m173,
   '174_public_project_contents.ts': m174,
+'175_agent_automations.ts': m175,
+'176_agent_mcp_servers.ts': m176,
+'177_p2_skills_rooms.ts': m177,
 };
 
 /**

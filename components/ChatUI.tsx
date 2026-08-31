@@ -377,7 +377,9 @@ export const MessageBubble = memo(({ msg, t, formatTime, formatCurrency, formatD
                             <span className="text-[var(--cw-ink-dim,#8A8474)] font-mono cw-mono">{formatTime(msg.timestamp)}</span>
                             {isOutbound && (
                                 <span className={`font-bold ${msg.status === 'READ' ? 'text-sgs-primary' : 'text-[var(--text-secondary)]'}`}>
-                                    {msg.status === 'PENDING' ? t('inbox.status_sending') : msg.status === 'READ' ? t('inbox.status_read') : t('inbox.status_received')}
+                                    {(msg.status === 'PENDING' && msg.metadata?.deliveryError)
+                  ? <span title={String(msg.metadata.deliveryError)}>{'Đã lưu · Chưa gửi ra kênh'}</span>
+                  : msg.status === 'PENDING' ? t('inbox.status_sending') : msg.status === 'READ' ? t('inbox.status_read') : t('inbox.status_received')}
                                 </span>
                             )}
                         </div>                        

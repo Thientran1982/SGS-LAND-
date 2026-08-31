@@ -142,40 +142,27 @@ export function createMinhSession(options: MinhSessionOptions = {}): MinhSession
       data = await client.ask(leadId, text, lang, saved?.id);
     } catch (error) {
       // The AI request can finish on the server after a proxy/browser
-      // connection is reset. Reconcile with the durable conversation (with
-      // retries) before showing an error, otherwise the user sees a failure
-      // while a reload immediately reveals the already-persisted reply.
-      // Poll the durable conversation for a short window. The server keeps
-      // processing the AI run after the HTTP connection is reset, so an
-      // immediate single fetch can race the persisted reply and show an
-      // error even though the reply lands moments later.
-      const findAssistantRow = (rows: any[]) => {
+      // connection is reset. Reconcile once with the durable conversation
+      // before showing an error, otherwise the user sees a failure while a
+      // reload immediately reveals the already-persisted reply.
+      try {
+        const recovered: any = await client.getMessages(leadId);
+        const rows: any[] = Array.isArray(recovered?.messages) ? recovered.messages : [];
         const inboundIndex = saved?.id
           ? rows.findIndex((row) => String(row?.id) === String(saved.id))
           : rows.map((row) => String(row?.content || "").trim()).lastIndexOf(text);
         const candidateRows = inboundIndex >= 0 ? rows.slice(inboundIndex + 1) : rows;
-        return [...candidateRows].reverse().find((row) =>
+        const assistantRow = [...candidateRows].reverse().find((row) =>
           String(row?.direction || "").toUpperCase() === "OUTBOUND" &&
           row?.metadata?.isAgent === true &&
           !row?.metadata?.isSysMsg
         );
-      };
-      const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
-      let assistantRow: any = null;
-      for (let attempt = 0; attempt < 40; attempt++) {
-        try {
-          const recovered: any = await client.getMessages(leadId);
-          const rows: any[] = Array.isArray(recovered?.messages) ? recovered.messages : [];
-          assistantRow = findAssistantRow(rows);
-          if (assistantRow) break;
-        } catch {
-          // transient fetch failure inside the poll window - retry next tick
+        if (assistantRow) {
+          data = { reply: assistantRow };
+        } else {
+          throw error;
         }
-        await sleep(2000);
-      }
-      if (assistantRow) {
-        data = { reply: assistantRow };
-      } else {
+      } catch {
         throw error;
       }
     }

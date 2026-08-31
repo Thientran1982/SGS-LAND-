@@ -13,7 +13,7 @@
  *   AI_SAFE_FALLBACK     (ten model fallback an toan)
  */
 
-export type AiProvider = 'google' | 'openai' | 'anthropic' | 'xai' | 'openrouter';
+export type AiProvider = 'google' | 'openai' | 'anthropic' | 'xai' | 'openrouter' | 'bai';
 
 export interface ModelSpec {
   /** ID model dung khi goi API */
@@ -49,6 +49,8 @@ export const MODEL_REGISTRY: Record<string, ModelSpec> = {
   'gemini-2.0-flash-lite': { id: 'gemini-2.0-flash-lite', provider: 'google', costPer1k: 0.000075, deprecated: true },
   'gemini-1.5-flash':      { id: 'gemini-1.5-flash',      provider: 'google', costPer1k: 0.000200, deprecated: true },
   'gemini-1.5-pro':        { id: 'gemini-1.5-pro',        provider: 'google', costPer1k: 0.003500, deprecated: true },
+  // ---- chat.b.ai (GLM truc tiep, re hon openrouter) ----
+  'glm-5.3-flash': { id: 'glm-5.3-flash', provider: 'bai', costPer1k: 0.000100, supportsThinking: true },
   // ---- Embedding ----
   'gemini-embedding-001':  { id: 'gemini-embedding-001',  provider: 'google', costPer1k: 0.000010 },
 };
@@ -248,6 +250,7 @@ export const PROVIDER_ENV_KEYS: Record<AiProvider, string[]> = {
   anthropic: ['ANTHROPIC_API_KEY'],
   xai:       ['XAI_API_KEY', 'GROK_API_KEY'],
   openrouter:['OPENROUTER_API_KEY'],
+  bai: ['BAI_API_KEY', 'CHAT_BAI_API_KEY'],
 };
 
 /** Lay API key cua provider tu process.env (KHONG bao gio hardcode). */
@@ -290,6 +293,7 @@ const PROVIDER_LABELS: Record<AiProvider, string> = {
   anthropic: 'Anthropic (Claude)',
   xai: 'xAI (Grok)',
   openrouter: 'OpenRouter',
+  bai: 'chat.b.ai',
 };
 const PROVIDER_ORDER: AiProvider[] = ['google', 'openai', 'anthropic', 'xai', 'openrouter'];
 export function listAvailableModels(): ProviderModelGroup[] {

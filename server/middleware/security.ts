@@ -180,6 +180,10 @@ const CSRF_SAFE_METHODS = new Set(['GET', 'HEAD', 'OPTIONS']);
 // verified) and pre-session auth bootstrap endpoints (no session cookie yet).
 const CSRF_EXEMPT_PREFIXES = [
   '/api/webhooks',
+  // P0.2: agent webhook automations - da xac thuc bang x-automation-secret.
+  '/api/public/automations',
+  // P1.2: voice transcribe - public, chi nhan audio base64.
+  '/api/public/livechat/transcribe',
   '/api/billing/webhook',
   '/api/_client_error',
   '/api/csrf-token',

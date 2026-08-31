@@ -108,6 +108,15 @@ export function MinhChatPanel({
   const [waveformPoints, setWaveformPoints] = useState("0,12 12,12 24,12 36,12 48,12 60,12 72,12 84,12 96,12 108,12");
   const [voiceSupported] = useState<boolean>(() => typeof window !== "undefined" && !!((window as any).SpeechRecognition || (window as any).webkitSpeechRecognition));
   const recognitionRef = useRef<any>(null);
+  // ===== P1: MediaRecorder fallback + booking form =====
+  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
+  const audioChunksRef = useRef<Blob[]>([]);
+  const [voiceSupported2, setVoiceSupported2] = useState(false);
+  const [showBooking, setShowBooking] = useState(false);
+  const [bookingDate, setBookingDate] = useState("");
+  const [bookingNote, setBookingNote] = useState("");
+  const [bookingBusy, setBookingBusy] = useState(false);
+  const [bookingDone, setBookingDone] = useState<string | null>(null);
   const recordTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const voiceTranscriptRef = useRef("");
 
@@ -260,7 +269,10 @@ export function MinhChatPanel({
 
   const startRecording = useCallback(() => {
     const SR: any = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
-    if (!SR) return;
+    if (!SR) {
+      void startMediaRecording();
+      return;
+    }
     voiceTranscriptRef.current = "";
     const recognition = new SR();
     recognition.lang = "vi-VN";
@@ -295,6 +307,101 @@ export function MinhChatPanel({
       setWaveformPoints(Array.from({ length: 10 }, (_, i) => `${i * 12},${4 + Math.round(Math.random() * 16)}`).join(" "));
     }, 1000);
   }, [stopRecordingInternal]);
+
+  // ===== P1.2: MediaRecorder + Gemini transcribe fallback =====
+  const transcribeAudio = useCallback(async (blob: Blob): Promise<string | null> => {
+    try {
+      const b64 = await new Promise<string>((resolve, reject) => {
+        const fr = new FileReader();
+        fr.onload = () => resolve(String(fr.result || "").split(",")[1] || "");
+        fr.onerror = () => reject(new Error("read_failed"));
+        fr.readAsDataURL(blob);
+      });
+      const res = await fetch(
+        String(apiBase || "").replace(/\/+$/, "") + "/api/public/livechat/transcribe",
+        {
+          method: "POST",
+          credentials: "include",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ audioBase64: b64, mimeType: blob.type || "audio/webm" }),
+        },
+      );
+      if (!res.ok) return null;
+      const data: any = await res.json();
+      return typeof data?.text === "string" ? data.text : null;
+    } catch {
+      return null;
+    }
+  }, [apiBase]);
+
+  const startMediaRecording = useCallback(async () => {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      audioChunksRef.current = [];
+      const mime = MediaRecorder.isTypeSupported("audio/webm;codecs=opus")
+        ? "audio/webm;codecs=opus"
+        : "audio/webm";
+      const mr = new MediaRecorder(stream, { mimeType: mime });
+      mr.ondataavailable = (e) => { if (e.data.size > 0) audioChunksRef.current.push(e.data); };
+      mr.onstop = async () => {
+        stream.getTracks().forEach((t) => t.stop());
+        const blob = new Blob(audioChunksRef.current, { type: mime });
+        if (blob.size < 1200) { stopRecordingInternal(); return; }
+        voiceTranscriptRef.current = "Đang xử lý giọng nói...";
+        const text = await transcribeAudio(blob);
+        if (text) {
+          voiceTranscriptRef.current = text;
+          setInput(text);
+        } else {
+          setError("Không nhận diện được giọng nói. Bạn vui lòng nhập câu hỏi bằng văn bản nhé.");
+        }
+        stopRecordingInternal();
+      };
+      mediaRecorderRef.current = mr;
+      mr.start();
+      setIsRecording(true);
+      setRecordSeconds(0);
+      recordTimerRef.current = setInterval(() => {
+        setRecordSeconds((sec) => sec + 1);
+        setWaveformPoints(Array.from({ length: 10 }, (_, i) => `${i * 12},${4 + Math.round(Math.random() * 16)}`).join(" "));
+      }, 1000);
+    } catch {
+      setError("Trình duyệt không cho phép ghi âm. Bạn vui lòng nhập câu hỏi bằng văn bản nhé.");
+    }
+  }, [stopRecordingInternal, transcribeAudio]);
+
+  const stopMediaRecording = useCallback(() => {
+    const mr = mediaRecorderRef.current;
+    if (mr && mr.state !== "inactive") mr.stop();
+    mediaRecorderRef.current = null;
+  }, []);
+
+  // ===== P1.1: Submit booking form =====
+  const submitBooking = useCallback(async () => {
+    if (!bookingDate.trim()) return;
+    setBookingBusy(true);
+    try {
+      const leadId = session.getLeadId();
+      if (!leadId) throw new Error("no_lead");
+      const res = await fetch(
+        String(apiBase || "").replace(/\/+$/, "") + "/api/public/livechat/book-viewing",
+        {
+          method: "POST",
+          credentials: "include",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ leadId, dateText: bookingDate, notes: bookingNote || undefined }),
+        },
+      );
+      const data: any = await res.json().catch(() => ({}));
+      if (!res.ok || !data?.success) throw new Error(data?.error || "book_failed");
+      setBookingDone(data.scheduledAtFormatted || bookingDate);
+      setShowBooking(false);
+    } catch {
+      setError("Đặt lịch chưa thành công. Vui lòng thử lại hoặc gọi 0379 281 445.");
+    } finally {
+      setBookingBusy(false);
+    }
+  }, [bookingDate, bookingNote, session, apiBase]);
 
   const cancelRecording = useCallback(() => {
     voiceTranscriptRef.current = "";
@@ -468,7 +575,52 @@ export function MinhChatPanel({
             </div>
           ) : null}
 
-          <div
+          {showBooking && (
+            <div className="mx-2 mb-1 rounded-xl border p-3 space-y-2" style={S.paper}>
+              <div className="text-sm font-semibold" style={{ color: "var(--cw-ink, #2C2822)" }}>Đặt lịch xem nhà</div>
+              <input
+                value={bookingDate}
+                onChange={(e) => setBookingDate(e.target.value)}
+                placeholder="Thời gian bạn muốn xem (VD: Chủ nhật 9h sáng)"
+                aria-label="Thời gian xem nhà"
+                className="w-full rounded-lg border px-2 py-2 text-sm outline-none"
+                style={S.field}
+              />
+              <input
+                value={bookingNote}
+                onChange={(e) => setBookingNote(e.target.value)}
+                placeholder="Ghi chú (dự án/quỹ căn quan tâm)"
+                aria-label="Ghi chú đặt lịch"
+                className="w-full rounded-lg border px-2 py-2 text-sm outline-none"
+                style={S.field}
+              />
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => void submitBooking()}
+                  disabled={bookingBusy || !bookingDate.trim()}
+                  className="rounded-lg px-3 py-2 text-sm font-semibold text-white disabled:opacity-50"
+                  style={{ background: "var(--cw-gold, #C6923D)" }}
+                >
+                  {bookingBusy ? "Đang đặt..." : "Xác nhận đặt lịch"}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setShowBooking(false)}
+                  className="rounded-lg px-3 py-2 text-sm"
+                  style={{ color: "var(--cw-ink-dim, #8A8474)" }}
+                >
+                  Đóng
+                </button>
+              </div>
+            </div>
+          )}
+          {bookingDone && (
+            <div className="mx-2 mb-1 rounded-xl border p-2 text-sm" style={S.paper}>
+              Đã đặt lịch thành công: <strong>{bookingDone}</strong>. Chuyên viên sẽ xác nhận qua điện thoại.
+            </div>
+          )}
+                    <div
             className="flex items-end gap-2 rounded-b-[20px] border-t p-3"
             style={{ ...S.bar, borderBottomLeftRadius: "20px", borderBottomRightRadius: "20px" }}
           >
@@ -487,7 +639,7 @@ export function MinhChatPanel({
                 </button>
               </div>
             ) : (
-              <div className="flex-1 flex items-end gap-1 rounded-xl border px-2 py-1" style={S.field}>
+    <div className="flex-1 flex items-end gap-1 rounded-xl border px-2 py-1" style={S.field}>
                 <textarea
                   value={input}
                   onChange={(e) => setInput(e.target.value)}
@@ -498,7 +650,18 @@ export function MinhChatPanel({
                   className="min-w-0 flex-1 resize-none border-0 bg-transparent px-1 py-2 text-sm outline-none max-h-28"
                   style={{ fontSize: "16px" }}
                 />
-                {voiceSupported && (
+                {hasLead && !isRecording && (
+                <button
+                  type="button"
+                  onClick={() => { setShowBooking((v) => !v); setBookingDone(null); }}
+                  aria-label="Đặt lịch xem nhà"
+                  className="inline-flex h-9 w-9 items-center justify-center rounded-lg shrink-0 transition-colors hover:bg-black/5"
+                  style={{ color: "var(--cw-ink-dim, #8A8474)" }}
+                >
+                  <span className="text-[10px] font-semibold leading-none">Xem nhà</span>
+                </button>
+              )}
+              {(voiceSupported || (typeof navigator !== "undefined" && !!navigator.mediaDevices)) && (
                   <button
                     type="button"
                     onClick={startRecording}

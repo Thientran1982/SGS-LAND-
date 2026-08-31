@@ -27,8 +27,8 @@ function getRoleBadgeClass(role: string): string {
         case 'ADMIN':          return 'bg-rose-50 text-rose-700 border border-rose-200';
         case 'MANAGER':        return 'bg-[var(--sgs-primary)]/10 text-[var(--sgs-primary)] border border-[var(--sgs-primary)]';
         case 'TEAM_LEAD':      return 'bg-[var(--sgs-primary)]/10 text-sgs-primary border border-[var(--sgs-primary)]';
-        case 'SALES':          return 'bg-emerald-50 text-emerald-700 border border-emerald-200';
-        case 'MARKETING':      return 'bg-amber-50 text-amber-700 border border-amber-200';
+        case 'SALES':          return 'bg-[var(--sgs-primary)]/10 text-[var(--sgs-primary)] border border-[var(--glass-border)]';
+        case 'MARKETING':      return 'bg-[var(--glass-surface)] text-[var(--text-secondary)] border border-[var(--glass-border)]';
         case 'SUPPORTER':      return 'bg-sky-50 text-sky-700 border border-sky-200';
         case 'VIEWER':         return 'bg-slate-100 text-slate-600 border border-slate-200';
         case 'PARTNER_ADMIN':  return 'bg-[var(--sgs-primary)]/10 text-[var(--sgs-primary)] border border-[var(--sgs-primary)]';
@@ -129,10 +129,10 @@ const PerformanceModal: React.FC<{ user: User; onClose: () => void; t: any }> = 
             .catch(() => { setError(true); setLoading(false); });
     }, [user.id]);
     const slaColor = data
-        ? data.slaScore >= 90 ? 'text-emerald-500' : data.slaScore >= 70 ? 'text-sgs-primary' : 'text-amber-500'
+        ? data.slaScore >= 90 ? 'text-[var(--sgs-primary)]' : data.slaScore >= 70 ? 'text-sgs-primary' : 'text-[var(--text-secondary)]'
         : 'text-[var(--text-secondary)]';
     const slaLabelColor = data
-        ? data.slaScore >= 90 ? 'text-emerald-600 dark:text-emerald-400' : data.slaScore >= 70 ? 'text-[var(--sgs-primary)] dark:text-[var(--sgs-primary)]' : 'text-amber-600 dark:text-amber-400'
+        ? data.slaScore >= 90 ? 'text-[var(--sgs-primary)] dark:text-[var(--sgs-primary)]' : data.slaScore >= 70 ? 'text-[var(--sgs-primary)] dark:text-[var(--sgs-primary)]' : 'text-[var(--text-secondary)] dark:text-[var(--text-secondary)]'
         : '';
     const circumference = 2 * Math.PI * 50;
     return createPortal(
@@ -217,7 +217,7 @@ const PerformanceModal: React.FC<{ user: User; onClose: () => void; t: any }> = 
                                     {/* Deals */}
                                     <div className="rounded-2xl bg-[var(--glass-surface)] border border-[var(--glass-border)] p-4">
                                         <p className="text-xs font-bold uppercase tracking-wider text-[var(--text-tertiary)] mb-2">{t('profile.perf_deals')}</p>
-                                        <p className="text-2xl font-extrabold text-sgs-verified dark:text-emerald-400">{data.deals}</p>
+                                        <p className="text-2xl font-extrabold text-[var(--sgs-primary)] dark:text-[var(--sgs-primary)]">{data.deals}</p>
                                     </div>
                                     {/* Close Rate */}
                                     <div className="rounded-2xl bg-[var(--glass-surface)] border border-[var(--glass-border)] p-4">
@@ -258,7 +258,7 @@ const PerformanceModal: React.FC<{ user: User; onClose: () => void; t: any }> = 
                             <div>
                                 <p className="text-xs font-bold uppercase tracking-wider text-[var(--text-tertiary)] mb-3">{t('profile.perf_task_section')}</p>
                                 <div className="grid grid-cols-2 gap-3">
-                                    <div className={`rounded-2xl p-4 border ${data.activeTasks > 5 ? 'bg-amber-50 dark:bg-amber-900/20 border-amber-200 dark:border-amber-800/40' : 'bg-[var(--glass-surface)] border-[var(--glass-border)]'}`}>
+                                    <div className={`rounded-2xl p-4 border ${data.activeTasks > 5 ? 'bg-[var(--glass-surface)] border-[var(--glass-border)]' : 'bg-[var(--glass-surface)] border-[var(--glass-border)]'}`}>
                                         <p className="text-xs font-bold uppercase tracking-wider text-[var(--text-tertiary)] mb-2">{t('profile.perf_tasks_active')}</p>
                                         <p className="text-2xl font-extrabold text-[var(--text-primary)]">{data.activeTasks}</p>
                                     </div>
@@ -268,7 +268,7 @@ const PerformanceModal: React.FC<{ user: User; onClose: () => void; t: any }> = 
                                     </div>
                                     <div className="rounded-2xl bg-[var(--glass-surface)] border border-[var(--glass-border)] p-4">
                                         <p className="text-xs font-bold uppercase tracking-wider text-[var(--text-tertiary)] mb-2">{t('profile.perf_tasks_week')}</p>
-                                        <p className="text-2xl font-extrabold text-sgs-verified dark:text-emerald-400">{data.completedThisWeek}</p>
+                                        <p className="text-2xl font-extrabold text-[var(--sgs-primary)] dark:text-[var(--sgs-primary)]">{data.completedThisWeek}</p>
                                     </div>
                                     <div className="rounded-2xl bg-[var(--glass-surface)] border border-[var(--glass-border)] p-4">
                                         <p className="text-xs font-bold uppercase tracking-wider text-[var(--text-tertiary)] mb-2">{t('profile.perf_tasks_month')}</p>
@@ -707,15 +707,15 @@ export const AdminUsers: React.FC = () => {
                             <span className="text-xs sm:text-sm font-black text-[var(--text-primary)]">{totalUsers}</span>
                         </div>
                         {/* Hoạt động */}
-                        <div className="flex items-center gap-1 sm:gap-1.5 bg-sgs-champagne border border-emerald-100 rounded-lg px-2 sm:px-3 py-1.5 shrink-0">
-                            <span className="w-1.5 h-1.5 rounded-full bg-sgs-verified shrink-0"></span>
-                            <span className="hidden sm:inline text-xs2 font-bold text-sgs-verified uppercase tracking-wide">{t('admin.users.active_users')}</span>
-                            <span className="sm:hidden text-2xs font-bold text-sgs-verified uppercase">{t('admin.users.mobile_active')}</span>
-                            <span className="text-xs sm:text-sm font-black text-sgs-verified">{stats.activeCount}</span>
+                        <div className="flex items-center gap-1 sm:gap-1.5 bg-[var(--glass-surface)] border border-[var(--glass-border)] rounded-lg px-2 sm:px-3 py-1.5 shrink-0">
+
+                            <span className="hidden sm:inline text-xs2 font-bold text-[var(--sgs-primary)] uppercase tracking-wide">{t('admin.users.active_users')}</span>
+                            <span className="sm:hidden text-2xs font-bold text-[var(--sgs-primary)] uppercase">{t('admin.users.mobile_active')}</span>
+                            <span className="text-xs sm:text-sm font-black text-[var(--sgs-primary)]">{stats.activeCount}</span>
                         </div>
                         {/* Chờ duyệt */}
-                        <div className="flex items-center gap-1 sm:gap-1.5 bg-amber-50 border border-amber-100 rounded-lg px-2 sm:px-3 py-1.5 shrink-0">
-                            <span className="w-1.5 h-1.5 rounded-full bg-sgs-accent shrink-0"></span>
+                        <div className="flex items-center gap-1 sm:gap-1.5 bg-[var(--glass-surface)] border border-[var(--glass-border)] rounded-lg px-2 sm:px-3 py-1.5 shrink-0">
+
                             <span className="hidden sm:inline text-xs2 font-bold text-sgs-accent-text uppercase tracking-wide">{t('admin.users.pending_invites')}</span>
                             <span className="sm:hidden text-2xs font-bold text-sgs-accent-text uppercase">{t('admin.users.mobile_pending')}</span>
                             <span className="text-xs sm:text-sm font-black text-sgs-accent-text">{stats.pendingCount}</span>
@@ -728,7 +728,7 @@ export const AdminUsers: React.FC = () => {
                     >
                         {ICONS.ADD}
                         <span className="hidden sm:inline">{t('admin.users.invite')}</span>
-                        <span className="sm:hidden">{t('admin.users.invite_short')}</span>
+                        <span className="hidden">{t('admin.users.invite_short')}</span>
                     </button>
                 </div>
                 {/* Row 2: Thanh tìm kiếm + bộ lọc vai trò */}
@@ -758,11 +758,11 @@ export const AdminUsers: React.FC = () => {
                     </div>
                     {/* Dropdown lọc vai trò */}
                     <div className="w-32 sm:w-44 shrink-0">
-                         <Dropdown value={roleFilter} onChange={(v) => setRoleFilter(v as string)} options={roleOptions} variant="compact" />
+                         <Dropdown value={roleFilter} onChange={(v) => setRoleFilter(v as string)} options={roleOptions} variant="compact" emptyValue="ALL" />
                     </div>
                     {/* Dropdown lọc trạng thái */}
                     <div className="w-28 sm:w-36 shrink-0">
-                         <Dropdown value={statusFilter} onChange={(v) => setStatusFilter(v as string)} options={statusOptions} variant="compact" />
+                         <Dropdown value={statusFilter} onChange={(v) => setStatusFilter(v as string)} options={statusOptions} variant="compact" emptyValue="ALL" />
                     </div>
                 </div>
             </div>
@@ -798,7 +798,7 @@ export const AdminUsers: React.FC = () => {
                                                 <div className="min-w-0">
                                                     <div className="font-bold text-[var(--text-primary)] flex items-center gap-1.5 flex-wrap">
                                                         <span className="truncate max-w-[140px] sm:max-w-[200px] text-xs sm:text-sm">{user.name}</span>
-                                                        {user.id === currentUser?.id && <span className="text-3xs sm:text-2xs bg-sgs-champagne text-sgs-primary px-1 sm:px-1.5 py-0.5 rounded shrink-0">{t('admin.users.you')}</span>}
+                                                        {user.id === currentUser?.id && <span className="text-3xs sm:text-2xs bg-[var(--glass-surface)] text-sgs-primary px-1 sm:px-1.5 py-0.5 rounded shrink-0">{t('admin.users.you')}</span>}
                                                     </div>
                                                     <div className="text-xs2 sm:text-xs text-[var(--text-tertiary)] truncate max-w-[140px] sm:max-w-[200px]">{user.email}</div>
                                                     {/* Role selector on mobile — interactive dropdown */}
@@ -848,16 +848,16 @@ export const AdminUsers: React.FC = () => {
                                                 onClick={() => user.id !== currentUser?.id && setUserToStatusChange(user)}
                                                 disabled={user.id === currentUser?.id}
                                                 className={`px-2 sm:px-3 py-1 rounded-full text-2xs sm:text-xs2 font-bold uppercase border whitespace-nowrap text-center transition-all active:scale-95 flex items-center justify-center gap-1 sm:gap-1.5
-                                                    ${user.status === CommonStatus.ACTIVE ? 'bg-emerald-50 text-emerald-600 border-emerald-100 hover:bg-emerald-100' : 
-                                                      user.status === CommonStatus.PENDING ? 'bg-amber-50 text-amber-600 border-amber-100 hover:bg-amber-100' :
-                                                      user.status === CommonStatus.DEACTIVATED ? 'bg-orange-50 text-orange-600 border-orange-100 hover:bg-orange-100' :
-                                                      user.status === CommonStatus.ARCHIVED ? 'bg-slate-100 text-slate-500 border-slate-200 hover:bg-slate-200' :
+                                                    ${user.status === CommonStatus.ACTIVE ? 'bg-[var(--sgs-primary)]/10 text-[var(--sgs-primary)] border-[var(--glass-border)] hover:bg-[var(--sgs-primary)]/20' : 
+                                                      user.status === CommonStatus.PENDING ? 'bg-[var(--glass-surface)] text-[var(--text-secondary)] border-[var(--glass-border)] hover:bg-[var(--glass-surface-hover)]' :
+                                                      user.status === CommonStatus.DEACTIVATED ? 'bg-[var(--glass-surface)] text-[var(--text-secondary)] border-[var(--glass-border)] hover:bg-[var(--glass-surface-hover)]' :
+                                                      user.status === CommonStatus.ARCHIVED ? 'bg-[var(--glass-surface)] text-[var(--text-tertiary)] border-[var(--glass-border)]' :
                                                       'bg-[var(--glass-surface-hover)] text-[var(--text-tertiary)] border-[var(--glass-border)] hover:bg-slate-200'}
                                                     ${user.id !== currentUser?.id ? 'cursor-pointer hover:shadow-sm' : 'cursor-default opacity-70'}
                                                 `}
                                                 title={t(`admin.users.status_${user.status.toLowerCase()}`)}
                                             >
-                                                <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${user.status === CommonStatus.ACTIVE ? 'bg-emerald-500' : user.status === CommonStatus.PENDING ? 'bg-amber-500' : user.status === CommonStatus.DEACTIVATED ? 'bg-orange-400' : user.status === CommonStatus.ARCHIVED ? 'bg-slate-400' : 'bg-slate-400'}`}></span>
+                                                
                                                 {/* Mobile: short label | Desktop: full label */}
                                                 <span className="sm:hidden">
                                                     {user.status === CommonStatus.ACTIVE ? t('admin.users.mobile_active') : user.status === CommonStatus.PENDING ? t('admin.users.mobile_pending') : user.status === CommonStatus.DEACTIVATED ? t('admin.users.mobile_deactivated') : user.status === CommonStatus.ARCHIVED ? t('admin.users.mobile_archived') : t('admin.users.mobile_inactive')}
@@ -874,7 +874,7 @@ export const AdminUsers: React.FC = () => {
                                                 {!isPending && [UserRole.SALES, UserRole.TEAM_LEAD, UserRole.ADMIN, UserRole.SUPER_ADMIN].includes(user.role) && (
                                                     <button
                                                         onClick={() => setPerfUser(user)}
-                                                        className="p-1.5 sm:p-2 text-[var(--text-secondary)] hover:text-sgs-primary hover:bg-sgs-champagne rounded-lg transition-colors"
+                                                        className="p-1.5 sm:p-2 text-[var(--text-secondary)] hover:text-sgs-primary hover:bg-[var(--glass-surface)] rounded-lg transition-colors"
                                                         title={t('admin.users.view_perf')}
                                                     >
                                                         {ICONS.CHART}
@@ -885,7 +885,7 @@ export const AdminUsers: React.FC = () => {
                                                     <button 
                                                         onClick={() => handleResendInvite(user)}
                                                         disabled={resendingId === user.id}
-                                                        className="p-1.5 sm:p-2 text-[var(--text-secondary)] hover:text-sgs-primary hover:bg-sgs-champagne rounded-lg transition-colors relative group/btn" 
+                                                        className="p-1.5 sm:p-2 text-[var(--text-secondary)] hover:text-sgs-primary hover:bg-[var(--glass-surface)] rounded-lg transition-colors relative group/btn" 
                                                         title={t('admin.users.resend')}
                                                     >
                                                         {resendingId === user.id ? (
@@ -1011,7 +1011,7 @@ export const AdminUsers: React.FC = () => {
         </div>
         {createPortal(
             toast ? (
-                <div className={`fixed bottom-6 right-6 z-[100] px-6 py-3 rounded-xl shadow-2xl flex items-center gap-3 animate-enter border ${toast.type === 'success' ? 'bg-emerald-900/90 border-emerald-500 text-white' : 'bg-rose-900/90 border-rose-500 text-white'}`}>
+                <div className={`fixed bottom-6 right-6 z-[100] px-6 py-3 rounded-xl shadow-2xl flex items-center gap-3 animate-enter border ${toast.type === 'success' ? 'bg-[var(--sgs-primary-deep)] border-[var(--sgs-primary)] text-white' : 'bg-[#8B2E2E] border-[#C0392B] text-white'}`}>
                     <span className="font-bold text-sm">{toast.msg}</span>
                 </div>
             ) : null,

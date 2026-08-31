@@ -91,6 +91,7 @@ const AiEvaluation = lazyLoad(() => import('./pages/AiEvaluation'), 'AiEvaluatio
 const ValuationAccuracyReport = lazyLoad(() => import('./pages/ValuationAccuracyReport'), 'ValuationAccuracyReport');
 const AgentAudit = lazyLoad(() => import('./pages/AgentAudit'), 'AgentAudit');
 const AgentCockpit = lazyLoad(() => import('./pages/AgentCockpit'), 'AgentCockpit');
+const AgentTasks = lazyLoad(() => import('./pages/AgentTasks'), 'AgentTasks');
 const SeoManager = lazyLoad(() => import('./pages/SeoManager'), 'SeoManager');
 const ErrorMonitor = lazyLoad(() => import('./pages/ErrorMonitor'), 'ErrorMonitor');
 const ScraperDashboard = lazyLoad(() => import('./pages/ScraperDashboard'), 'ScraperDashboard');
@@ -121,6 +122,7 @@ registerPrefetch(ROUTES.AI_EVALUATION,       () => import('./pages/AiEvaluation'
 registerPrefetch(ROUTES.VALUATION_ACCURACY,  () => import('./pages/ValuationAccuracyReport'));
 registerPrefetch(ROUTES.AGENT_AUDIT,         () => import('./pages/AgentAudit'));
 registerPrefetch(ROUTES.AGENT_COCKPIT,       () => import('./pages/AgentCockpit'));
+registerPrefetch(ROUTES.AGENT_TASKS, () => import('./pages/AgentTasks'));
 registerPrefetch(ROUTES.BILLING,            () => import('./pages/Billing'));
 registerPrefetch(ROUTES.CHECKOUT,           () => import('./pages/Checkout'));
 registerPrefetch(ROUTES.MARKETPLACE,         () => import('./pages/Marketplace'));
@@ -248,6 +250,7 @@ const PAGE_REGISTRY: Record<string, React.ComponentType<any>> = {
     [ROUTES.VALUATION_ACCURACY]: ValuationAccuracyReport,
     [ROUTES.AGENT_AUDIT]: AgentAudit,
     [ROUTES.AGENT_COCKPIT]: AgentCockpit,
+[ROUTES.AGENT_TASKS]: AgentTasks,
     [ROUTES.BILLING]: Billing,
     [ROUTES.CHECKOUT]: Checkout,
     [ROUTES.MARKETPLACE]: Marketplace,
@@ -459,6 +462,7 @@ const ADMIN_ONLY_ROUTES: Set<string> = new Set([
     ROUTES.ENTERPRISE_SETTINGS,
     ROUTES.AGENT_AUDIT,
     ROUTES.AGENT_COCKPIT,
+ROUTES.AGENT_TASKS,
     ROUTES.VALUATION_ACCURACY,
 ]);
 // Routes chỉ dành riêng cho SUPER_ADMIN (quản trị viên cấp cao nhất)

@@ -57,6 +57,34 @@ const FALLBACK_CHAIN = [
  * Attempts generation with the configured model; on timeout/overload,
  * retries with progressively cheaper/faster models in FALLBACK_CHAIN.
  */
+// ===== P0.3: PROVIDER CIRCUIT BREAKER (402/401 => skip provider 10 phut) =====
+const CIRCUIT_OPEN_MS = 10 * 60 * 1000;
+const providerCircuit: Map<string, { openedAt: number; reason: string }> = new Map();
+function isProviderCircuitOpen(provider: string): boolean {
+  const cb = providerCircuit.get(provider);
+  if (!cb) return false;
+  if (Date.now() - cb.openedAt > CIRCUIT_OPEN_MS) {
+    providerCircuit.delete(provider);
+    console.log(`[CircuitBreaker] ${provider} circuit CLOSED - thu lai`);
+    return false;
+  }
+  return true;
+}
+function openProviderCircuit(provider: string, reason: string): void {
+  const prev = providerCircuit.get(provider);
+  if (prev && Date.now() - prev.openedAt < 5000) return;
+  providerCircuit.set(provider, { openedAt: Date.now(), reason });
+  console.warn(`[CircuitBreaker] ${provider} circuit OPEN (10 phut): ${reason}`);
+}
+function extractProviderErrorStatus(err: any): number | null {
+  const status = err?.status ?? err?.statusCode ?? err?.code;
+  if (typeof status === 'number' && status >= 400 && status < 500) return status;
+  const msg = String(err?.message ?? err ?? '');
+  if (/402/.test(msg) || /insufficient credits/i.test(msg)) return 402;
+  if (/401/.test(msg) || /unauthorized|invalid api key/i.test(msg)) return 401;
+  return null;
+}
+
 async function generateWithFallback(
   requestConfig: Parameters<ReturnType<typeof getAiClient>['models']['generateContent']>[0]
 ): Promise<Awaited<ReturnType<ReturnType<typeof getAiClient>['models']['generateContent']>>> {
@@ -80,6 +108,9 @@ async function generateWithFallback(
   // ===== MULTI-PROVIDER DISPATCH (primary model thuoc provider khac Google) =====
   const _provider = getProviderForModel(primaryModel);
   if (_provider !== 'google' && isProviderConfigured(_provider)) {
+    if (isProviderCircuitOpen(_provider)) {
+      console.log(`[MULTI-PROVIDER] ${_provider} bi circuit breaker skip, dung Gemini ngay`);
+    } else {
     try {
       const _res = await generateWithPolicy({
         model: primaryModel,
@@ -91,7 +122,12 @@ async function generateWithFallback(
       });
       return { text: _res.text } as any;
     } catch (err) {
-      console.warn(`[MULTI-PROVIDER] ${_provider} failed for ${primaryModel}, falling back to Gemini native:`, (err as any)?.message || err);
+      const _errStatus = extractProviderErrorStatus(err);
+      if (_errStatus === 402 || _errStatus === 401 || _errStatus === 403) {
+        openProviderCircuit(_provider, `HTTP ${_errStatus} tu ${primaryModel}`);
+      }
+      console.warn(`[MULTI-PROVIDER] ${_provider} failed for ${primaryModel} (status=${_errStatus ?? 'n/a'}), falling back to Gemini native:`, (err as any)?.message || err);
+    }
     }
   }
 
@@ -124,6 +160,10 @@ async function generateWithFallback(
   // Toan bo chain Gemini da het (quota/loi) -> tu dong chuyen sang Claude/Grok
   for (const fb of CROSS_PROVIDER_FALLBACK) {
     if (!isProviderConfigured(fb.provider)) continue;
+    if (isProviderCircuitOpen(fb.provider)) {
+      console.log(`[CROSS-PROVIDER-FALLBACK] ${fb.provider} bi circuit breaker skip`);
+      continue;
+    }
     try {
       console.warn(`[CROSS-PROVIDER-FALLBACK] Gemini chain het/loi, dang thu ${fb.provider}:${fb.model}...`);
       const _res = await generateWithPolicy({
@@ -137,7 +177,11 @@ async function generateWithFallback(
       console.log(`[CROSS-PROVIDER-FALLBACK] Thanh cong voi ${fb.provider}:${fb.model}`);
       return { text: _res.text } as any;
     } catch (err: any) {
-      console.warn(`[CROSS-PROVIDER-FALLBACK] ${fb.provider}:${fb.model} that bai:`, err?.message || err);
+      const _fbStatus = extractProviderErrorStatus(err);
+      if (_fbStatus === 402 || _fbStatus === 401 || _fbStatus === 403) {
+        openProviderCircuit(fb.provider, `HTTP ${_fbStatus} tu ${fb.model}`);
+      }
+      console.warn(`[CROSS-PROVIDER-FALLBACK] ${fb.provider}:${fb.model} that bai (status=${_fbStatus ?? 'n/a'}):`, err?.message || err);
       lastErr = err;
     }
   }

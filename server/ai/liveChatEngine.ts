@@ -38,6 +38,7 @@ import { getGuideDataSummary } from './guideDataSources';
 import { agentMemoryService } from '../services/agentMemoryService';
 import { getGuidePolicyResponse, normalizeGuideInput } from './guideAssistantPolicy';
 import { customerProfileService, observeCustomerMessage, classifyInteractionOutcome } from '../services/customerProfileService';
+import { listEnabledMcpServers, callMcpTool, resolveMcpToolName } from '../services/mcpClientService';
 
 // Prompt-injection sanitizer for live-chat user content (message, leadName, history).
 // User text is interpolated into the LLM prompt, so neutralize escape vectors and
@@ -1662,7 +1663,49 @@ async function handle_get_platform_knowledge(args: Record<string, any>): Promise
 // ---------------------------------------------------------------------------
 type ToolHandler = (args: Record<string, any>) => any | Promise<any>;
 
+/**
+ * P2 #8-lite: agent_web_research — competitive_intelligence lay gia/tin tuc
+ * tu trang web ngoai (server-side fetch + strip HTML, khong can browser sandbox).
+ */
+async function handle_agent_web_research(args: Record<string, any>): Promise<any> {
+  const urls = Array.isArray(args.urls) ? args.urls.filter((u: unknown) => typeof u === 'string') : [];
+  const query = typeof args.query === 'string' ? args.query : '';
+  if (urls.length === 0 && !query) return { error: 'urls hoac query la bat buoc' };
+  const targets = urls.length > 0 ? urls.slice(0, 5) : ['https://duckduckgo.com/html/?q=' + encodeURIComponent(query)];
+  const results: Array<{ url: string; status: string; text?: string }> = [];
+  for (const rawUrl of targets) {
+    let url: string;
+    try { url = new URL(String(rawUrl)).toString(); } catch { results.push({ url: String(rawUrl), status: 'invalid_url' }); continue; }
+    if (!/^https?:\/\//.test(url)) { results.push({ url, status: 'skipped_http_only' }); continue; }
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), 10_000);
+    try {
+      const res = await fetch(url, {
+        signal: controller.signal,
+        headers: { 'User-Agent': 'Mozilla/5.0 (compatible; SGSResearchBot/1.0)', Accept: 'text/html,text/plain' },
+      });
+      const html = (await res.text()).slice(0, 400_000);
+      const text = html
+        .replace(/<script[\s\S]*?<\/script>/gi, ' ')
+        .replace(/<style[\s\S]*?<\/style>/gi, ' ')
+        .replace(/<[^>]+>/g, ' ')
+        .replace(/&nbsp;/g, ' ')
+        .replace(/&amp;/g, '&')
+        .replace(/\s+/g, ' ')
+        .trim()
+        .slice(0, 4_000);
+      results.push({ url, status: String(res.status), text });
+    } catch (err: any) {
+      results.push({ url, status: 'error', text: String(err?.message || err).slice(0, 200) });
+    } finally {
+      clearTimeout(timer);
+    }
+  }
+  return { results, note: 'Du lieu tho tu web, agent tu phan tich gia/tin tuc.' };
+}
+
 const HANDLERS: Record<string, ToolHandler> = {
+  agent_web_research: handle_agent_web_research,
     search_listings:            handle_search_listings,
     get_listing_detail:         handle_get_listing_detail,
     check_duplicate:            handle_check_duplicate,
@@ -2197,7 +2240,28 @@ export const liveChatEngine = {
     /** Call a tool by name with args. Throws on unknown tool name. */
     async callTool(toolName: string, args: Record<string, any>): Promise<any> {
         const handler = HANDLERS[toolName];
-        if (!handler) throw new Error(`Tool "${toolName}" không tồn tại. Có ${Object.keys(HANDLERS).length} tools.`);
+        if (!handler) {
+      if (toolName.startsWith('mcp_')) {
+        const tenantId = String(args?.tenantId || process.env.DEFAULT_TENANT_ID || '00000000-0000-0000-0000-000000000001');
+        const mcpArgs = { ...args };
+        delete mcpArgs.tenantId;
+        try {
+          const servers = await listEnabledMcpServers(tenantId);
+          const resolved = resolveMcpToolName(toolName, servers);
+          if (!resolved) {
+            throw new Error(`Tool MCP khong khop server nao dang bat: ${toolName}`);
+          }
+          const mcpResult = await callMcpTool(tenantId, resolved.serverName, resolved.toolName, mcpArgs);
+          if (!mcpResult.ok) {
+            throw new Error(`MCP ${resolved.serverName}.${resolved.toolName} loi: ${mcpResult.error}`);
+          }
+          return mcpResult.content;
+        } catch (mcpErr: any) {
+          throw new Error(`MCP bridge: ${mcpErr?.message || mcpErr}`);
+        }
+      }
+      throw new Error(`Tool "${toolName}" không tồn tại. Có ${Object.keys(HANDLERS).length} tools.`);
+    }
         const definition = TOOL_MANIFEST.find(tool => tool.name === toolName);
         if (definition) {
             const errors: string[] = [];
