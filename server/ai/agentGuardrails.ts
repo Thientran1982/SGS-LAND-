@@ -147,6 +147,11 @@ export function inspectToolRequest(toolName: string): GuardrailReport {
     'search_listings_dynamic',
     'get_project_dynamic',
     'get_platform_knowledge',
+    // Task tools doc/ghi chu - an toan cho agent tu chay
+    'task_list',
+    'task_comment',
+    'landing_quota',
+    'landing_builder',
   ]);
   if (!readOnlyTools.has(toolName)) {
     return {

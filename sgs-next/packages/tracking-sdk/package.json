@@ -1,8 +1,0 @@
-{
-  "name": "@sgs/tracking-sdk",
-  "version": "0.1.0",
-  "private": true,
-  "description": "Framework-agnostic visitor tracking + consent beacon for SGS LAND (loads as a plain <script type=module>, no build step required).",
-  "type": "module",
-  "main": "src/sgs-tracker.js"
-}

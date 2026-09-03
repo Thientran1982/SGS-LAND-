@@ -74,6 +74,7 @@ import { createDepartmentRoutes } from "./server/routes/departmentRoutes";
 import { createTaskReportRoutes } from "./server/routes/taskReportRoutes";
 import { createLandingLeadRoutes } from "./server/routes/landingLeadRoutes";
 import { createLandingAiRoutes } from "./server/routes/landingAiRoutes";
+import { createLandingPagesRoutes } from "./server/routes/landingPagesRoutes";
 import { createAgentAuditRoutes } from "./server/routes/agentAuditRoutes";
 import { createAgentOperatingRoutes } from "./server/routes/agentOperatingRoutes";
 import { createDailyAdminReportRoutes } from "./server/routes/dailyAdminReportRoutes";
@@ -4408,6 +4409,7 @@ app.use('/api/approval-requests', apiRateLimit, createApprovalRequestRoutes(auth
   // Public lead capture for static landing pages (no auth)
   app.use('/api/landing-leads', apiRateLimit, createLandingLeadRoutes());
   app.use('/api/landing-ai', aiRateLimit, createLandingAiRoutes());
+  app.use('/api/landing-pages', apiRateLimit, createLandingPagesRoutes());
   app.use('/api/live-chat', createLiveChatAgentRoutes(authenticateToken, aiRateLimit, apiRateLimit));
   app.use('/api/agent-audit', apiRateLimit, createAgentAuditRoutes(authenticateToken));
   app.use('/api/agent-operating', apiRateLimit, createAgentOperatingRoutes(authenticateToken));

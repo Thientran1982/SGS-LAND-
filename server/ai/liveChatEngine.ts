@@ -161,8 +161,14 @@ export interface ToolDefinition {
     name: string;
     description: string;
     params: Record<string, { type: string; required: boolean; description: string }>;
-    category: 'listing' | 'market' | 'legal' | 'project' | 'crm' | 'chat';
+    category: 'listing' | 'market' | 'legal' | 'project' | 'crm' | 'chat' | 'task' | 'landing';
 }
+
+import {
+    handle_task_create, handle_task_list, handle_task_update_status,
+    handle_task_assign, handle_task_comment,
+} from '../services/taskTools';
+import { handle_landing_builder, handle_landing_quota } from '../services/landingTools';
 
 const TOOL_MANIFEST: ToolDefinition[] = [
     // ── LISTING TOOLS ───────────────────────────────────────────────────────
@@ -543,6 +549,89 @@ const TOOL_MANIFEST: ToolDefinition[] = [
             language: { type: 'string', required: true, description: 'vn|en' },
         },
     },
+
+    // TASK TOOLS - P0 agentic tasks (Lead -> Hop dong)
+    {
+        name: 'task_create',
+        description: 'Tao cong viec moi trong Quan Ly Cong Viec (VD: goi lai lead, chuan bi ho so phap ly).',
+        category: 'task',
+        params: {
+            tenantId:     { type: 'string', required: false, description: 'Tenant ID (mac dinh tenant chinh)' },
+            title:        { type: 'string', required: true,  description: 'Tieu de cong viec' },
+            description:  { type: 'string', required: false, description: 'Mo ta chi tiet' },
+            category:     { type: 'string', required: false, description: 'Nhom: sales|legal|contract|inventory|finance|crm|ops' },
+            priority:     { type: 'string', required: false, description: 'low|medium|high|urgent (mac dinh medium)' },
+            dueInDays:    { type: 'number', required: false, description: 'Han bao nhieu ngay ke tu hom nay (mac dinh 3)' },
+        },
+    },
+    {
+        name: 'task_list',
+        description: 'Liet ke cong viec theo bo loc (trang thai, nhom). Sap xep theo uu tien + deadline.',
+        category: 'task',
+        params: {
+            tenantId:  { type: 'string', required: false, description: 'Tenant ID' },
+            status:    { type: 'string', required: false, description: 'todo|in_progress|done|cancelled' },
+            category:  { type: 'string', required: false, description: 'Nhom cong viec' },
+            limit:     { type: 'number', required: false, description: 'Gioi han (mac dinh 20, toi da 100)' },
+        },
+    },
+    {
+        name: 'task_update_status',
+        description: 'Cap nhat trang thai cong viec (todo|in_progress|done|cancelled), kem ghi chu.',
+        category: 'task',
+        params: {
+            tenantId: { type: 'string', required: false, description: 'Tenant ID' },
+            id:       { type: 'string', required: true,  description: 'UUID cong viec' },
+            status:   { type: 'string', required: true,  description: 'todo|in_progress|done|cancelled' },
+            note:     { type: 'string', required: false, description: 'Ghi chu ly do chuyen trang thai' },
+        },
+    },
+    {
+        name: 'task_assign',
+        description: 'Gan nguoi phu trach cong viec (hanh dong anh huong - can nguoi theo doi).',
+        category: 'task',
+        params: {
+            tenantId: { type: 'string', required: false, description: 'Tenant ID' },
+            taskId:   { type: 'string', required: true,  description: 'UUID cong viec' },
+            userId:   { type: 'string', required: true,  description: 'UUID nguoi dung' },
+        },
+    },
+    {
+        name: 'task_comment',
+        description: 'Ghi chu nghiep vu vao cong viec (ket qua goi, phan hoi khach...).',
+        category: 'task',
+        params: {
+            tenantId: { type: 'string', required: false, description: 'Tenant ID' },
+            taskId:   { type: 'string', required: true,  description: 'UUID cong viec' },
+            content:  { type: 'string', required: true,  description: 'Noi dung ghi chu' },
+        },
+    },
+    // LANDING BUILDER TOOLS - dung trang landing tu chat (P0)
+    {
+        name: 'landing_builder',
+        description: 'Dung trang landing cho du an bat dong san tu yeu cau + brochure. Sinh 6 phan (hero, gallery, legal, price, amenities, contact). Quota 2 trang mien phi - tra PAYWALL khi vuot.',
+        category: 'landing',
+        params: {
+            tenantId:      { type: 'string', required: false, description: 'Tenant ID' },
+            visitorKey:    { type: 'string', required: false, description: 'Dinh danh user (vi du userId ho gia session key)' },
+            projectName:   { type: 'string', required: false, description: 'Ten du an' },
+            brief:         { type: 'string', required: false, description: 'Mo ta yeu cau cua user' },
+            brochureText:  { type: 'string', required: false, description: 'Noi dung trich xuat tu file dinh kem' },
+            brochureName:  { type: 'string', required: false, description: 'Ten file dinh kem' },
+            language:      { type: 'string', required: false, description: 'vi|en (mac dinh vi)' },
+        },
+    },
+    {
+        name: 'landing_quota',
+        description: 'Tra trang thai quota trang landing cua user (da dung bao nhieu, con lai, co can nang cap khong).',
+        category: 'landing',
+        params: {
+            tenantId:   { type: 'string', required: false, description: 'Tenant ID' },
+            visitorKey: { type: 'string', required: false, description: 'Dinh danh user' },
+            language:   { type: 'string', required: false, description: 'vi|en' },
+        },
+    },
+
 ];
 
 // ---------------------------------------------------------------------------
@@ -1139,6 +1228,7 @@ async function handle_live_chat_core(args: Record<string, any>): Promise<any> {
         { keywords: ['dự án', 'project', 'aqua city', 'vinhomes', 'izumi'],         intent: 'PROJECT',         suggestedTool: 'get_project_info' },
         { keywords: ['long thành', 'sân bay', 'airport'],                            intent: 'LONGTHANH',       suggestedTool: 'get_longthanh_market' },
         { keywords: ['đầu tư', 'cho thuê', 'yield', 'roi', 'lợi nhuận'],            intent: 'INVESTMENT',      suggestedTool: 'analyze_investment' },
+        { keywords: ['landing', 'trang landing', 'landing page'], intent: 'LANDING', suggestedTool: 'landing_builder' },
         { keywords: ['khách', 'lead', 'chấm điểm', 'tiềm năng'],                    intent: 'LEAD_SCORING',    suggestedTool: 'score_lead' },
     ];
 
@@ -1161,6 +1251,7 @@ async function handle_live_chat_core(args: Record<string, any>): Promise<any> {
         FINANCE: { tool: 'get_platform_knowledge', args: { tenantId, domain: 'bank', query: msg } },
         PROJECT: { tool: 'get_project_info', args: { tenantId, projectName: msg } },
         LONGTHANH: { tool: 'get_longthanh_market', args: { tenantId, subArea: msg } },
+        LANDING:    { tool: 'landing_builder', args: { tenantId, visitorKey: context.leadId || 'anonymous-widget', brief: msg, language: 'vi' } },
         GENERAL: { tool: 'get_platform_knowledge', args: { tenantId, domain: 'platform', query: msg } },
     };
     const plan = executionPlans[detectedIntent];
@@ -1744,6 +1835,14 @@ const HANDLERS: Record<string, ToolHandler> = {
     escalate_to_human:          handle_escalate_to_human,
     suggest_properties:         handle_suggest_properties,
     book_viewing_appointment:   handle_book_viewing_appointment,
+    // Task tools - P0 agentic tasks
+    task_create:               handle_task_create,
+    task_list:                 handle_task_list,
+    task_update_status:        handle_task_update_status,
+    task_assign:               handle_task_assign,
+    task_comment:              handle_task_comment,
+    landing_builder:           handle_landing_builder,
+    landing_quota:             handle_landing_quota,
 };
 
 // ---------------------------------------------------------------------------

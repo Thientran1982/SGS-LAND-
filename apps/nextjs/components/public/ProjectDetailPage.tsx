@@ -48,6 +48,9 @@ interface Props {
   slug: string;
   config?: ProjectConfig | null;
   landingProject?: LandingProject | null;
+  forceRich?: boolean;
+  lastUpdated?: string;
+  contactPhone?: string;
 }
 
 const surface = {
@@ -100,7 +103,7 @@ const AREA_DETAIL_SLUGS = new Set([
   "bat-dong-san-phu-nhuan",
 ]);
 
-function RichProjectDetail({ project, config, landing }: { project: ProjectDetail; config?: ProjectConfig | null; landing: LandingProject }) {
+function RichProjectDetail({ project, config, landing, lastUpdated: lastUpdatedProp, contactPhone: contactPhoneProp }: { project: ProjectDetail; config?: ProjectConfig | null; landing: LandingProject; lastUpdated?: string; contactPhone?: string }) {
   const lang = useLang();
   const isArea = AREA_DETAIL_SLUGS.has(landing.slug);
   const areaEnglishNames: Record<string, string> = {
@@ -221,7 +224,7 @@ function RichProjectDetail({ project, config, landing }: { project: ProjectDetai
     "vinhomes-grand-park": "/images/projects/vinhomes-grand-park.webp",
     "vinhomes-central-park": "/images/projects/vinhomes-grand-park.webp",
     "diamond-sky-van-phuc-city": "/images/projects/diamond-sky-van-phuc-city.jpg",
-  }[landing.slug] || `/images/projects/${landing.slug}.jpg`);
+}[landing.slug] || null);
   const priceRows = (englishConfig?.details || config?.details || [])
     .filter((row) => /giá|mức giá|price/i.test(row.label))
     .map((row) => ({
@@ -235,7 +238,7 @@ function RichProjectDetail({ project, config, landing }: { project: ProjectDetai
       v: lang === "en" && isArea ? translateAreaValue(fallbackPrice.v) : fallbackPrice.v,
     });
   }
-  const lastUpdated = "21/08/2026";
+const lastUpdated = lastUpdatedProp || "21/08/2026";
   const dueDiligenceCards: [string, string, string, LucideIcon][] = [
     [
       "01",
@@ -268,8 +271,8 @@ function RichProjectDetail({ project, config, landing }: { project: ProjectDetai
 
         <section className="overflow-hidden rounded-3xl border shadow-[var(--ui-shadow-sm)]" style={surface}>
           <div className="grid lg:grid-cols-[1.02fr_.98fr]">
-            <div className="relative min-h-[310px] overflow-hidden sm:min-h-[390px]">
-              <img src={image} alt={landing.heroImageAlt} className="absolute inset-0 h-full w-full object-cover" />
+<div className="relative min-h-[310px] overflow-hidden bg-[var(--ui-surface-subtle)] sm:min-h-[390px]">
+{image ? <img src={image} alt={landing.heroImageAlt} className="absolute inset-0 h-full w-full object-cover" /> : <div className="absolute inset-0" style={{ background: "linear-gradient(135deg, var(--ui-surface-subtle), var(--bg-elevated))" }} aria-hidden="true" />}
               <div className="absolute inset-0 bg-gradient-to-t from-[#062f25]/90 via-[#062f25]/15 to-transparent" />
               <div className="absolute bottom-6 left-5 right-5 text-white sm:bottom-8 sm:left-8">
                 <div className="mb-3 flex flex-wrap gap-2"><Tag tone="accent">{tt(lang, "Thông tin tham khảo", "Reference information")}</Tag><Tag>{tt(lang, "Cập nhật", "Updated")} {lastUpdated}</Tag></div>
@@ -294,7 +297,7 @@ function RichProjectDetail({ project, config, landing }: { project: ProjectDetai
                  </div>
                )}
               <div className="mt-6 flex flex-wrap gap-3">
-                <a href="tel:+84379281445" className="inline-flex items-center gap-2 rounded-xl px-4 py-3 text-sm font-bold text-white" style={{ background: "var(--ui-brand)" }}><Phone className="h-4 w-4" /> {tt(lang, "Liên hệ hỏi thông tin", "Contact for information")}</a>
+                <a href={contactPhoneProp ? "tel:" + contactPhoneProp : "tel:+84379281445"} className="inline-flex items-center gap-2 rounded-xl px-4 py-3 text-sm font-bold text-white" style={{ background: "var(--ui-brand)" }}><Phone className="h-4 w-4" /> {tt(lang, "Liên hệ hỏi thông tin", "Contact for information")}</a>
                 <Link href="#bang-gia" className="inline-flex items-center gap-2 rounded-xl border px-4 py-3 text-sm font-bold" style={{ borderColor: "var(--ui-border-strong)", color: "var(--ui-brand)" }}>{tt(lang, "Xem giá tham khảo", "View reference prices")} <ArrowRight className="h-4 w-4" /></Link>
               </div>
             </div>
@@ -380,7 +383,7 @@ function RichProjectDetail({ project, config, landing }: { project: ProjectDetai
         </section>
 
         <section id="lien-he" className="scroll-mt-20 rounded-3xl p-6 sm:p-9" style={{ background: "var(--ui-brand)", color: "var(--ui-on-brand)" }}>
-          <div className="flex flex-col gap-6 sm:flex-row sm:items-center sm:justify-between"><div><p className="text-xs font-bold uppercase tracking-[.16em] opacity-75">{tt(lang, "Bước tiếp theo", "Next step")}</p><h2 className="mt-2 text-2xl font-bold tracking-[-.03em]">{tt(lang, "Cần kiểm tra", "Need to verify")} {displayTitle} {tt(lang, "theo sản phẩm cụ thể?", "for a specific property?")}</h2><p className="mt-2 max-w-2xl text-sm leading-6 opacity-85">{tt(lang, "Gửi nhu cầu để nhận thông tin tham khảo. Giá, pháp lý, tiến độ và tư cách phân phối vẫn cần được xác nhận bằng tài liệu hiện hành.", "Send your request for reference information. Pricing, legal status, progress and distribution status must be confirmed with current documents.")}</p></div><a href="tel:+84379281445" className="inline-flex shrink-0 items-center justify-center gap-2 rounded-xl bg-white px-5 py-3 text-sm font-bold" style={{ color: "var(--ui-brand)" }}><Phone className="h-4 w-4" /> 0379 281 445</a></div>
+          <div className="flex flex-col gap-6 sm:flex-row sm:items-center sm:justify-between"><div><p className="text-xs font-bold uppercase tracking-[.16em] opacity-75">{tt(lang, "Bước tiếp theo", "Next step")}</p><h2 className="mt-2 text-2xl font-bold tracking-[-.03em]">{tt(lang, "Cần kiểm tra", "Need to verify")} {displayTitle} {tt(lang, "theo sản phẩm cụ thể?", "for a specific property?")}</h2><p className="mt-2 max-w-2xl text-sm leading-6 opacity-85">{tt(lang, "Gửi nhu cầu để nhận thông tin tham khảo. Giá, pháp lý, tiến độ và tư cách phân phối vẫn cần được xác nhận bằng tài liệu hiện hành.", "Send your request for reference information. Pricing, legal status, progress and distribution status must be confirmed with current documents.")}</p></div><a href={contactPhoneProp ? "tel:" + contactPhoneProp : "tel:+84379281445"} className="inline-flex shrink-0 items-center justify-center gap-2 rounded-xl bg-white px-5 py-3 text-sm font-bold" style={{ color: "var(--ui-brand)" }}><Phone className="h-4 w-4" /> {contactPhoneProp || "0379 281 445"}</a></div>
         </section>
 
           {config?.relatedProjects && config.relatedProjects.length > 0 && <section className="py-12"><SectionHeading eyebrow={tt(lang, "Đọc thêm", "Read more")} title={tt(lang, "Dự án và khu vực liên quan", "Related projects and areas")} /><div className="flex flex-wrap gap-3">{config.relatedProjects.map((related) => <Link key={related.slug} href={`${lang === "en" ? "/en" : ""}/du-an/${related.slug}`} className="inline-flex items-center gap-2 rounded-xl border px-4 py-3 text-sm font-semibold transition hover:-translate-y-0.5" style={surface}><Building2 className="h-4 w-4" style={{ color: "var(--sgs-accent-text)" }} />{lang === "en" && isArea ? translateAreaValue(related.name) : related.name}<ArrowRight className="h-4 w-4" /></Link>)}</div></section>}
@@ -389,9 +392,11 @@ function RichProjectDetail({ project, config, landing }: { project: ProjectDetai
   );
 }
 
-export function ProjectDetailPage({ project, slug, config, landingProject }: Props) {
-  if (["aqua-city", "the-global-city", "izumi-city", "vinhomes-grand-park", "vinhomes-central-park", "diamond-sky-van-phuc-city", "manhattan", "thu-thiem", "son-kim-land", "vinhomes-can-gio", "sala", "vinhomes-hoc-mon", "masteri-park-place", "masteri-cosmo-central", "eco-retreat-long-an", "legacy-66", "nha-pho-trung-tam", "bat-dong-san-thu-duc", "bat-dong-san-long-thanh", "bat-dong-san-binh-thanh", "bat-dong-san-quan-7", "bat-dong-san-long-an", "bat-dong-san-dong-nai", "bat-dong-san-binh-chanh", "bat-dong-san-can-gio", "bat-dong-san-hoc-mon", "bat-dong-san-binh-duong", "bat-dong-san-phu-nhuan"].includes(slug) && landingProject) {
-    return <RichProjectDetail project={project} config={config} landing={landingProject} />;
+const RICH_SLUGS: string[] = ["aqua-city", "the-global-city", "izumi-city", "vinhomes-grand-park", "vinhomes-central-park", "diamond-sky-van-phuc-city", "manhattan", "thu-thiem", "son-kim-land", "vinhomes-can-gio", "sala", "vinhomes-hoc-mon", "masteri-park-place", "masteri-cosmo-central", "eco-retreat-long-an", "legacy-66", "nha-pho-trung-tam", "bat-dong-san-thu-duc", "bat-dong-san-long-thanh", "bat-dong-san-binh-thanh", "bat-dong-san-quan-7", "bat-dong-san-long-an", "bat-dong-san-dong-nai", "bat-dong-san-binh-chanh", "bat-dong-san-can-gio", "bat-dong-san-hoc-mon", "bat-dong-san-binh-duong", "bat-dong-san-phu-nhuan"];
+
+export function ProjectDetailPage({ project, slug, config, landingProject, forceRich, lastUpdated, contactPhone }: Props) {
+if (landingProject && (forceRich || RICH_SLUGS.includes(slug))) {
+return <RichProjectDetail project={project} config={config} landing={landingProject} lastUpdated={lastUpdated} contactPhone={contactPhone} />;
   }
 
   return (
@@ -401,7 +406,7 @@ export function ProjectDetailPage({ project, slug, config, landingProject }: Pro
        <MediaGallery project={project} title="Hình ảnh & video dự án" />
       {config?.details && <section className="mb-12"><SectionHeading eyebrow="Thông tin dự án" title="Thông tin chi tiết" /><div className="grid gap-px overflow-hidden rounded-2xl border sm:grid-cols-2" style={{ ...surface, background: "var(--border-default)" }}>{config.details.map((detail) => <div key={detail.label} className="flex justify-between gap-4 p-4" style={{ background: "var(--bg-elevated)" }}><span className="text-sm" style={{ color: "var(--text-tertiary)" }}>{detail.label}</span><strong className="text-right text-sm" style={{ color: "var(--text-primary)" }}>{detail.value}</strong></div>)}</div></section>}
       {config?.faqs && <section id="faq" className="mb-12"><SectionHeading eyebrow="FAQ" title="Câu hỏi thường gặp" /><div className="space-y-3">{config.faqs.map((faq) => <details key={faq.q} className="rounded-2xl border px-5 py-4" style={surface}><summary className="cursor-pointer text-sm font-bold" style={{ color: "var(--text-primary)" }}>{faq.q}</summary><p className="mt-3 text-sm leading-6" style={{ color: "var(--text-secondary)" }}>{faq.a}</p></details>)}</div></section>}
-      <div className="rounded-2xl p-6" style={{ background: "var(--ui-surface-subtle)" }}><h2 className="text-xl font-bold" style={{ color: "var(--text-primary)" }}>Tìm hiểu thêm về {project.name}</h2><a href="tel:+84379281445" className="mt-4 inline-flex items-center gap-2 rounded-xl px-4 py-3 text-sm font-bold text-white" style={{ background: "var(--ui-brand)" }}><Phone className="h-4 w-4" /> Liên hệ SGS LAND</a></div>
+      <div className="rounded-2xl p-6" style={{ background: "var(--ui-surface-subtle)" }}><h2 className="text-xl font-bold" style={{ color: "var(--text-primary)" }}>Tìm hiểu thêm về {project.name}</h2><a href={contactPhone ? "tel:" + contactPhone : "tel:+84379281445"} className="mt-4 inline-flex items-center gap-2 rounded-xl px-4 py-3 text-sm font-bold text-white" style={{ background: "var(--ui-brand)" }}><Phone className="h-4 w-4" /> Liên hệ SGS LAND</a></div>
     </main>
   );
 }

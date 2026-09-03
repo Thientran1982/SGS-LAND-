@@ -192,7 +192,7 @@ export const Dropdown = memo(<T extends string | number>({
                     {selectedOption ? (
                         <span className="font-medium truncate flex items-center gap-2">
                             {selectedOption.icon}
-                            {selectedOption.value === emptyValue ? (emptyLabel ?? null) : selectedOption.label}
+                            {selectedOption.label}
                         </span>
                     ) : (
                         <span className={error ? "text-rose-400" : "text-[var(--text-secondary)] dark:text-[var(--text-tertiary)]"}>{displayPlaceholder}</span>
