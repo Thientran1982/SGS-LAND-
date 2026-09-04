@@ -274,8 +274,8 @@ async function main() {
         actualIntent = e.intent;
         textToCheck = e.finalText;
       } else {
-        const delayMs = parseInt(process.env.EVAL_CASE_DELAY_MS); if (delayMs > 0) { await new Promise(function(r){ setTimeout(r, delayMs); }); }
-      let r;
+        const delayMs = parseInt(process.env.EVAL_CASE_DELAY_MS || '0'); if (delayMs > 0) { await new Promise(function(r){ setTimeout(r, delayMs); }); }
+      let r: Awaited<ReturnType<typeof callRouter>> | undefined;
 for (let att = 1; att <= 3; att++) {
 try {
 r = await callRouter(client, c.input);
@@ -290,6 +290,7 @@ if (att < 3 && /HTTP (5|429)/.test(msg)) {
 throw e;
 }
 }
+if (!r) { throw new Error("callRouter did not return a result after retries"); }
         actualIntent = r.intent;
         actualAdditional = r.additional;
         textToCheck = r.raw;
