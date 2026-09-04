@@ -1,4 +1,5 @@
 import { Pool, PoolClient, types } from 'pg';
+import fs from 'fs';
 import { Redis } from '@upstash/redis';
 import path from 'path';
 import dotenv from 'dotenv';
@@ -12,16 +13,25 @@ function sanitiseConnectionString(raw: string | undefined): string | undefined {
   if (!raw) return raw;
   return raw.replace(/[?&]channel_binding=[^&]*/g, (m) => (m.startsWith('?') ? '?' : '')).replace(/\?&/, '?').replace(/\?$/, '');
 }
- function withAivenCaCert(url: string | undefined): string | undefined {
+ /** FIX SSL: node-pg ignores sslrootcert in the URL and sslmode=verify-full overrides the ssl object.
+ * Strip sslmode here and verify via ssl = { ca, rejectUnauthorized } on the pool instead. */
+function stripSslMode(url: string | undefined): string | undefined {
   if (!url) return url;
-  if (!url.includes('aivencloud.com')) return url;
-  if (url.includes('sslrootcert=')) return url;
-  const caPath = path.join(process.cwd(), 'certs', 'aiven-ca.pem');
-  const sep = url.includes('?') ? '&' : '?';
-  return `${url}${sep}sslrootcert=${caPath}`;
+  return url.replace(/[?&]sslmode=[^&]*/g, (m) => (m.startsWith('?') ? '?' : '')).replace(/\?&/, '?').replace(/\?$/, '');
 }
 
-const DB_CONNECTION_STRING = withAivenCaCert(sanitiseConnectionString(
+function buildSslConfig() {
+  const caPath = path.join(process.cwd(), 'certs', 'aiven-ca.pem');
+  try {
+    const ca = fs.readFileSync(caPath, 'utf8');
+    return { ssl: { ca, rejectUnauthorized: true } };
+  } catch {
+    console.warn('[DB] aiven-ca.pem not found — ssl without CA verification');
+    return { ssl: { rejectUnauthorized: false } };
+  }
+}
+
+const DB_CONNECTION_STRING = stripSslMode(sanitiseConnectionString(
   process.env.AIVEN_DATABASE_URL
 ));
 if (!DB_CONNECTION_STRING) {
@@ -30,6 +40,7 @@ if (!DB_CONNECTION_STRING) {
 console.log('[DB] Using AIVEN_DATABASE_URL');
 export const pool = new Pool({
   connectionString: DB_CONNECTION_STRING,
+  ...buildSslConfig(),
   max: 20,                       // Keep the pool bounded for the Aiven service plan.
   idleTimeoutMillis: 240000,     // 4 min — evict idle connections while keeping the API pool healthy
   connectionTimeoutMillis: 15000,

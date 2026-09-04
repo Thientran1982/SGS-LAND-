@@ -206,6 +206,61 @@ async function main() {
   console.log(`🚀 Running ${cases.length} eval case(s) — mode=${isE2E ? 'E2E' : 'router-only'}${useJudge ? '+judge' : ''}, tag=${tag || '*'}, threshold=${threshold}, per-agent=${perAgentThreshold}\n`);
 
   const client = new GoogleGenAI({ apiKey });
+// ── MULTI-PROVIDER SHIM (EVAL_PROVIDER) ──
+  const EVAL_PROVIDER = (process.env.EVAL_PROVIDER || 'gemini').toLowerCase();
+  if (EVAL_PROVIDER !== 'gemini') {
+    const EVAL_PROV_CFG: Record<string, { model: string; base: string; keyEnv: string; style: 'openai' | 'anthropic' }> = {
+      openai: { model: 'gpt-4o-mini', base: 'https://api.openai.com/v1', keyEnv: 'OPENAI_API_KEY', style: 'openai' },
+      anthropic: { model: 'claude-sonnet-4-5', base: 'https://api.anthropic.com', keyEnv: 'ANTHROPIC_API_KEY', style: 'anthropic' },
+      xai: { model: 'grok-4', base: 'https://api.x.ai/v1', keyEnv: 'XAI_API_KEY', style: 'openai' },
+      openrouter: { model: 'z-ai/glm-5.3', base: 'https://openrouter.ai/api/v1', keyEnv: 'OPENROUTER_API_KEY', style: 'openai' },
+      tokenrouter: { model: 'z-ai/glm-5.3-free', base: 'https://api.tokenrouter.com/v1', keyEnv: 'TOKENROUTER_API_KEY', style: 'openai' },
+    };
+    const shimProv = EVAL_PROV_CFG[EVAL_PROVIDER];
+    if (!shimProv) throw new Error('Unknown EVAL_PROVIDER: ' + EVAL_PROVIDER);
+    const shimModel = process.env.EVAL_MODEL || shimProv.model;
+    const shimKey = process.env[shimProv.keyEnv];
+    if (!shimKey) throw new Error(shimProv.keyEnv + ' missing for EVAL_PROVIDER=' + EVAL_PROVIDER);
+    console.log('Eval multi-provider: ' + EVAL_PROVIDER + ' model=' + shimModel);
+    const anyClient = client as any;
+    anyClient.models.generateContent = async (req: any) => {
+      const toText = (v: any): string => {
+        if (v == null) return '';
+        if (typeof v === 'string') return v;
+        if (Array.isArray(v)) return v.map(toText).join('\n');
+        if (v.parts) return toText(v.parts);
+        if (v.text != null) return String(v.text);
+        return '';
+      };
+      const sys = toText(req.config && req.config.systemInstruction);
+      const user = toText(req.contents);
+      let text = '';
+      if (shimProv.style === 'openai') {
+        const r = await fetch(shimProv.base + '/chat/completions', {
+          method: 'POST',
+          headers: { 'content-type': 'application/json', authorization: 'Bearer ' + shimKey },
+          body: JSON.stringify({ model: shimModel, temperature: 0, messages: [{ role: 'system', content: sys }, { role: 'user', content: user }] }),
+        });
+        if (!r.ok) throw new Error(EVAL_PROVIDER + ' HTTP ' + r.status + ': ' + (await r.text()).slice(0, 200));
+        const d: any = await r.json();
+        text = (d.choices && d.choices[0] && d.choices[0].message && d.choices[0].message.content) || '';
+      } else {
+        const r = await fetch(shimProv.base + '/v1/messages', {
+          method: 'POST',
+          headers: { 'content-type': 'application/json', 'x-api-key': shimKey, 'anthropic-version': '2023-06-01' },
+          body: JSON.stringify({ model: shimModel, max_tokens: 2048, temperature: 0, system: sys, messages: [{ role: 'user', content: user }] }),
+        });
+        if (!r.ok) throw new Error(EVAL_PROVIDER + ' HTTP ' + r.status + ': ' + (await r.text()).slice(0, 200));
+        const d: any = await r.json();
+        text = ((d.content || []) as any[]).map((b: any) => b.text || '').join('');
+      }
+      const jm = text.match(/\{[\s\S]*\}/);
+      if (jm) text = jm[0];
+      return { text };
+    };
+  }
+  // ── END MULTI-PROVIDER SHIM ──
+
   const results: RunResult[] = [];
 
   for (const c of cases) {
@@ -219,7 +274,22 @@ async function main() {
         actualIntent = e.intent;
         textToCheck = e.finalText;
       } else {
-        const r = await callRouter(client, c.input);
+        const delayMs = parseInt(process.env.EVAL_CASE_DELAY_MS); if (delayMs > 0) { await new Promise(function(r){ setTimeout(r, delayMs); }); }
+      let r;
+for (let att = 1; att <= 3; att++) {
+try {
+r = await callRouter(client, c.input);
+break;
+} catch (e) {
+const msg = String((e as any)?.message || e);
+if (att < 3 && /HTTP (5|429)/.test(msg)) {
+  console.log("[retry] case " + c.id + " attempt " + att + " transient, waiting...");
+  await new Promise((res) => setTimeout(res, att * 12000));
+  continue;
+}
+throw e;
+}
+}
         actualIntent = r.intent;
         actualAdditional = r.additional;
         textToCheck = r.raw;

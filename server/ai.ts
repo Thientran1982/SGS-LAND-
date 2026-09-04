@@ -1,4 +1,5 @@
 import { GoogleGenAI, GenerateContentResponse, Type, Schema } from "@google/genai";
+import { approvalRequestRepository } from './repositories/approvalRequestRepository';
 import { Lead, Interaction, AgentTraceStep, AgentArtifact, AgentTraceResponse } from '../types';
 import { listingRepository, ListingFilters } from './repositories/listingRepository';
 import { applyAVM, getRegionalBasePrice, estimateFallbackRent, PROPERTY_TYPE_PRICE_MULT, LegalStatus } from './valuationEngine';
@@ -1122,70 +1123,12 @@ export type AgentState = {
     userFavorites?: CompactFavorite[];
   isInternalRequest?: boolean; // C3 guard: if true, ANALYZE_LEAD is allowed
 };
-type NodeFunction = (state: AgentState) => Promise<Partial<AgentState>>;
-type EdgeCondition = (state: AgentState) => string;
-export class StateGraph {
-    private nodes: Map<string, NodeFunction> = new Map();
-    private edges: Map<string, Record<string, string> | EdgeCondition> = new Map();
-    private entryPoint: string = '';
-    addNode(name: string, func: NodeFunction) {
-        this.nodes.set(name, func);
-        return this;
-    }
-    setEntryPoint(name: string) {
-        this.entryPoint = name;
-        return this;
-    }
-    addConditionalEdges(source: string, condition: EdgeCondition, mapping: Record<string, string>) {
-        this.edges.set(source, (state: AgentState) => mapping[condition(state)] || mapping['default']);
-        return this;
-    }
-    addEdge(source: string, target: string) {
-        this.edges.set(source, { default: target });
-        return this;
-    }
-    async compileAndRun(initialState: AgentState): Promise<AgentState> {
-        let currentState = { ...initialState };
-        let currentNode = this.entryPoint;
-        const MAX_ITERATIONS = 20; // Safety: prevent infinite loops in misconfigured graphs
-        let iterations = 0;
-        while (currentNode && currentNode !== 'END') {
-            if (++iterations > MAX_ITERATIONS) {                logger.error(`[StateGraph] Max iterations (${MAX_ITERATIONS}) exceeded. Forcing END.`);
-                currentState.finalResponse = currentState.t('ai.msg_system_busy');
-                currentState.isSysMsg = true;
-                break;
-            }
-            const nodeFunc = this.nodes.get(currentNode);
-            if (!nodeFunc) throw new Error(`Node ${currentNode} not found`);
-            
-            try {
-                const updates = await nodeFunc(currentState);
-                currentState = { ...currentState, ...updates };
-                
-                const edge = this.edges.get(currentNode);
-                if (typeof edge === 'function') {
-                    currentNode = edge(currentState);
-                } else if (edge && edge.default) {
-                    currentNode = edge.default;
-                } else {
-                    currentNode = 'END';
-                }
-            } catch (error: any) {
-                logger.error(`Error in node ${currentNode}:`, error);                currentState.trace.push({ id: `err_${Date.now()}`, node: 'ERROR', status: 'ERROR', output: error.message, timestamp: Date.now() });
-                currentState.finalResponse = currentState.t('ai.msg_system_busy');
-                currentState.isSysMsg = true;
-                currentState.error = error;
-                break;
-            }
-        }
-        return currentState;
-    }
-}
-// -----------------------------------------------------------------------------
+import { StateGraph } from './ai/stateGraph';
+export { StateGraph };
 // 4. AI ENGINE CORE
 // -----------------------------------------------------------------------------
 class AiEngine {
-    private workflow: StateGraph;
+    private workflow: StateGraph<AgentState>;
     constructor() {
         this.workflow = this.buildWorkflow();
     }
@@ -1206,8 +1149,8 @@ class AiEngine {
             }
         }
     }
-    private buildWorkflow(): StateGraph {
-        const graph = new StateGraph();
+    private buildWorkflow(): StateGraph<AgentState> {
+        const graph = new StateGraph<AgentState>();
         // Node 1: Router
         graph.addNode('ROUTER', async (state) => {
             state.trace.push({ id: 'ROUTER', node: 'ROUTER', status: 'RUNNING', timestamp: Date.now() });            
@@ -2000,6 +1943,15 @@ PHÂN TÍCH HỢP ĐỒNG ${contractType} — KỊCH BẢN ${contractScenario} (
             this.updateTrace(state.trace, `Hợp đồng [${contractType}] | ${contractScenario}: ${contractSnippet}`, GENAI_CONFIG.MODELS.EXTRACTOR);
 
             // ── Observation logging ───────────────────────────────────────────
+                // P1: GRAPH_INTERRUPT — draft contract (proposal) là high-impact action, cần duyệt (id trong state.approvalPending)
+        const _approvalLeadId = (state as any).leadId || (state as any).currentLeadId || '';
+        if (_approvalLeadId) {
+          const _approval = await approvalRequestRepository.create({ tenantId: state.tenantId, leadId: _approvalLeadId, actionType: 'CREATE_PROPOSAL', payload: { source: 'CONTRACT_AGENT', excerpt: String(contractAnalysisText || '').slice(0, 500) }, stepKey: '05_APPROVAL_INTERRUPT', reasoning: 'Draft contract from chat requires human approval' }).catch((e) => { logger.warn('[CONTRACT_AGENT] approval create failed', e); return null; });
+          if (_approval) {
+            (state as any).approvalPending = { id: _approval.id, actionType: 'CREATE_PROPOSAL' };
+            this.updateTrace(state.trace, 'Hợp đồng nháp đã tạo — chờ duyệt', 'CONTRACT_AGENT');
+          }
+        }
             feedbackRepository.logObservation(state.tenantId, 'CONTRACT_AGENT', 'DRAFT_CONTRACT', 'CONTRACT_QUERY', {
                 contractType,
                 contractScenario,
