@@ -24,6 +24,18 @@ EXPLAIN_LEGAL
   Ranh giới: KHÁC DRAFT_CONTRACT (hỏi để hiểu, chưa yêu cầu soạn)
   legal_concern enum: PINK_BOOK | RED_BOOK | FOREIGN_OWNERSHIP | MORTGAGE |
                       TRANSFER_TAX | DISPUTE | CONDO_LAW | OTHER_LEGAL
+ RULE GD1 - PHAN DINH VOI DIRECT_ANSWER (tuyet doi):
+ - Cau hoi ve BAT KY thue/phi/chi phi GIAO DICH BDS (thue truoc ba, phi cong chung, phi sang ten, thue VAT, hoa hong moi gioi) -> EXPLAIN_LEGAL, CHO DU co chu "bao nhieu"/"la gi"
+ - Cau hoi so sanh/giai thich THUAT NGU BDS ("so hong vs so do khac gi", "pink book la gi") -> EXPLAIN_LEGAL
+ - MEO: cau chua tu: thue / phi / truoc ba / cong chung / sang ten / so hong / so do / pink book / red book / vs / khac gi / la gi -> uu tien EXPLAIN_LEGAL
+ FEW-SHOT GD1:
+ "Thue truoc ba chuyen nhuong nha dat la bao nhieu?" -> EXPLAIN_LEGAL (TRANSFER_TAX)
+ "Phi cong chung hop dong mua ban nha bao nhieu?" -> EXPLAIN_LEGAL (TRANSFER_TAX)
+ "tax truoc ba la gi" -> EXPLAIN_LEGAL (TRANSFER_TAX)
+ "Cho hoi pink book vs red book khac gi" -> EXPLAIN_LEGAL (PINK_BOOK)
+ "Can Aquacity 2PN gia bao nhieu?" -> SEARCH_INVENTORY
+ "So hong co thoi han 50 nam la sao a?" -> EXPLAIN_LEGAL (PINK_BOOK)
+ - Khi routing EXPLAIN_LEGAL chu de thue/phi: extraction PHAI kem tax_rate="0,5%"
 DRAFT_BOOKING
   Kích hoạt: đặt cọc, giữ chỗ, đặt lịch xem nhà, booking căn
   Ranh giới: KHÁC DRAFT_CONTRACT (chưa đến bước ký hợp đồng chính thức)
@@ -41,8 +53,8 @@ ESTIMATE_VALUATION
   Ranh giới: KHÁC SEARCH_INVENTORY (khách đã có tài sản, cần biết giá trị)
   VD: "nhà em ở Q7 80m² giá bao nhiêu", "em muốn bán, định giá giúp"
 DIRECT_ANSWER
-  Kích hoạt: câu hỏi thực tế không cần tra CRM
-  VD: "sổ hồng màu gì", "diện tích tối thiểu để tách thửa", "thuế VAT BĐS bao nhiêu %"
+  Kích hoạt: câu hỏi thực tế không cần tra CRM [TRÁNH: câu về thuế/phí giao dịch BĐS hay thuật ngữ BĐS → EXPLAIN_LEGAL]
+  VD: "sổ hồng màu gì", "ngành xây dựng gồm những lĩnh vực nào"
   [KHÔNG dùng cho câu hỏi cần dữ liệu dự án cụ thể → dùng SEARCH_INVENTORY]
 CLARIFY
   Kích hoạt: CHỈ khi confidence < 0.5 VÀ không thể đoán intent dù đọc lịch sử
