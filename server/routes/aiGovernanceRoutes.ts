@@ -357,6 +357,31 @@ router.get('/prompt-templates', authenticateToken, async (req: Request, res: Res
           aiResponse: safeAiResponse, metadata: safeMetadata,
         });
         await autonomousLearningService.adjudicateFeedback(tenantId, feedback.id, assessment);
+
+// === PHA 1: Minh hoc tu feedback — moi correction ghi procedural memory de phien sau khong lap loi ===
+try {
+  if (rating === -1) {
+    const { agentMemoryService } = await import('../services/agentMemoryService');
+    const lessonText = [
+        safeIntent ? 'Intent: ' + safeIntent : '',
+        safeCorrection ? 'Khac phuc: ' + safeCorrection.slice(0, 400) : '',
+        safeUserMessage ? 'Cau hoi: ' + safeUserMessage : '',
+        safeAiResponse ? 'Tra loi sai: ' + safeAiResponse.slice(0, 250) : '',
+      ].filter(Boolean).join(' | ');
+    await agentMemoryService.remember(
+      tenantId, 'agent:lessons', 'lesson:' + feedback.id,
+      lessonText,
+      'procedural', safeCorrection ? 0.85 : 0.6, 180,
+    );
+  } else if (rating === 1 && safeUserMessage) {
+    const { agentMemoryService } = await import('../services/agentMemoryService');
+    await agentMemoryService.remember(
+      tenantId, 'agent:lessons', 'good:' + safeIntent,
+      { note: 'Pattern duoc khen cho intent ' + safeIntent, userMessage: safeUserMessage.slice(0, 200), at: new Date().toISOString() },
+      'procedural', 0.5, 90,
+    );
+  }
+} catch { /* ghi memory khong duoc lam hong flow feedback */ }
         const consent = req.body?.consent === true ? 'OPTED_IN'
           : req.body?.consent === false ? 'OPTED_OUT' : 'NOT_REQUIRED';
         await autonomousLearningService.setConsent(tenantId, feedback.id, consent);

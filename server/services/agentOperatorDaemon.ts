@@ -58,6 +58,10 @@ export async function processAgentEvents(tenantId: string, limit = 25) {
 }
 
 /** Default bridge: real inbox/live-chat events use the existing durable chat runner. */
+// === PHA 0 UPGRADE: task event handlers + self-repair loop ===
+import { registerTaskEventHandlers } from './taskEventHandlers';
+registerTaskEventHandlers(registerAgentEventHandler);
+
 registerAgentEventHandler('INBOUND_MESSAGE', async event => {
   const { triggerAutoReply } = await import('../queue');
   const payload = event.payload_json || {};
@@ -94,6 +98,8 @@ export function startAgentOperatorWorker(getTenantIds: () => Promise<string[]>, 
   workerTimer = setInterval(() => void tick(), intervalMs);
   workerTimer.unref?.();
   void tick();
+  // === PHA 0: vòng tự sửa chữa chạy song song cùng event worker ===
+  void import('./selfRepairService').then(m => m.startSelfRepairLoop(getTenantIds, 15 * 60 * 1000));
   return { stop: stopAgentOperatorWorker };
 }
 

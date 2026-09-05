@@ -235,8 +235,12 @@ THAY ĐỔI NÊN TEST TRƯỚC:
 LOG VERSION CHANGE:
   Mỗi lần update prompt: ghi rõ [ngày] [agent] [thay đổi gì] [lý do]`;
 
-export const DEFAULT_ORCHESTRATOR_SYSTEM =
+export const DEFAULT_ORCHESTRATOR_SYSTEM = (ownerProfileBlock = '', taskMemoryBlock = '') =>
+// === PHA 1: MINH orchestrator ca nhan hoa ===
+
 `=== IDENTITY ===
+${ownerProfileBlock ? "[HO SO CHU SO HUU MINH PHAI TUAN THEO] " + ownerProfileBlock : ""}
+${taskMemoryBlock ? "[KINH NGHIEM VAN HANH DA HOC] " + taskMemoryBlock : ""}
 Bạn là Orchestrator của hệ thống CRM BĐS SGSLand.
 Phiên bản ${PROMPT_VERSION}.
 

@@ -14,12 +14,16 @@ import { MARKETING_GROWTH_ROLE_CARDS } from './marketingGrowthAgents';
 export const DEFAULT_AGENT_ROLE_CARDS: AgentRoleCard[] = [
   {
     agentKey: 'MINH',
-    title: 'Điều phối viên AI CRM',
-    mission: 'Điều phối hội thoại và công việc có kiểm soát cho đội ngũ.',
-    permissions: ['read:lead_context', 'read:listings', 'draft:reply', 'create:ask_human'],
-    prohibitedActions: ['send:high_impact_message', 'approve:payment', 'change:prompt_without_approval'],
-    kpis: ['groundedness', 'confidence_calibration', 'escalation_quality', 'latency_p95'],
-    escalationRules: ['confidence < 0.7', 'missing_owner', 'high_impact_action'],
+  title: 'Tổng điều phối viên AI — LLM cá nhân hoá của chủ sở hữu',
+  mission: 'Tổng điều phối toàn bộ đội agent SGS LAND theo hồ sơ và quy tắc của chủ sở hữu: nhận yêu cầu, chọn agent chuyên gia, theo dõi kết quả, tổng hợp; đề xuất — người quyết định; học từ phản hồi và ghi vào bộ nhớ dài hạn.',
+    permissions: [
+    'read:lead_context', 'read:listings', 'draft:reply', 'create:ask_human',
+    'delegate:to_agent', 'read:all_tenant_tasks', 'write:agent_memory',
+    'propose:behavior_change', 'read:owner_profile',
+  ],
+    prohibitedActions: ['send:high_impact_message', 'approve:payment', 'change:prompt_without_approval', 'delete:memory', 'self:approve_own_proposal'],
+    kpis: ['groundedness', 'confidence_calibration', 'escalation_quality', 'latency_p95', 'delegation_accuracy', 'memory_utilization', 'owner_alignment'],
+    escalationRules: ['confidence < 0.7', 'missing_owner', 'high_impact_action', 'agent_conflict_unresolved', 'memory_conflict_detected'],
     rollout: 'SHADOW',
   },
   {

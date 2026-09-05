@@ -136,11 +136,16 @@ export class ListingRepository extends BaseRepository {
       conditions.push(`(
         (project_id IS NULL
          AND (project_code IS NULL
-              OR project_code NOT IN (SELECT code FROM projects WHERE code IS NOT NULL AND code != '')
+              OR project_code NOT IN (
+                SELECT code FROM projects
+                WHERE code IS NOT NULL AND code != ''
+                  AND COALESCE(metadata->>'source', '') <> 'migration_071_featured_partners'
+              )
              )
          AND NOT EXISTS (
            SELECT 1 FROM projects p
            WHERE p.name IS NOT NULL
+             AND COALESCE(p.metadata->>'source', '') <> 'migration_071_featured_partners'
              AND UPPER(REPLACE(REPLACE(p.name, ' ', '-'), '''', '')) = UPPER(project_code)
          )
         )
@@ -403,11 +408,16 @@ export class ListingRepository extends BaseRepository {
       conditions.push(`(
         (l.project_id IS NULL
          AND (l.project_code IS NULL
-              OR l.project_code NOT IN (SELECT code FROM projects WHERE code IS NOT NULL AND code != '')
+              OR l.project_code NOT IN (
+                SELECT code FROM projects
+                WHERE code IS NOT NULL AND code != ''
+                  AND COALESCE(metadata->>'source', '') <> 'migration_071_featured_partners'
+              )
              )
          AND NOT EXISTS (
            SELECT 1 FROM projects p
            WHERE p.name IS NOT NULL
+             AND COALESCE(p.metadata->>'source', '') <> 'migration_071_featured_partners'
              AND UPPER(REPLACE(REPLACE(p.name, ' ', '-'), '''', '')) = UPPER(l.project_code)
          )
         )

@@ -1362,10 +1362,20 @@ async function handle_live_chat_core(args: Record<string, any>): Promise<any> {
             logger.warn(`[LiveChatEngine] memory enrichment skipped: ${error?.message || error}`);
         }
     }
-    const systemPrompt = `Bạn là AI hỗ trợ broker bất động sản SGS Land. Trả lời ngắn gọn, chuyên nghiệp (≤120 từ), bằng tiếng Việt.
+let ownerProfileBlock = '';
+let taskMemoryBlock = '';
+let lessonsBlock = '';
+try {
+  // === PHA 0: cá nhân hoá theo owner_profile — mục tiêu & quy tắc riêng của chủ sở hữu ===
+  ownerProfileBlock = await agentMemoryService.memoryBlock(tenantId, 'agent:owner-profile', undefined, 600);
+  taskMemoryBlock = await agentMemoryService.memoryBlock(tenantId, 'agent:task-events', msg, 400);
+  lessonsBlock = await agentMemoryService.memoryBlock(tenantId, 'agent:lessons', msg, 500);
+} catch { /* profile là tuỳ chọn, không chặn chat */ }
+const systemPrompt = `Bạn là AI hỗ trợ broker bất động sản SGS Land. Trả lời ngắn gọn, chuyên nghiệp (≤120 từ), bằng tiếng Việt.
 Trả lời đúng câu hỏi mới nhất trước; chỉ dùng lịch sử để giải nghĩa đại từ. Chỉ dùng dữ liệu trong KB/kết quả specialist. Nếu thiếu hoặc mâu thuẫn dữ liệu, nói rõ điều chưa xác minh và hỏi 1 thông tin cần thiết; không tự tạo giá, pháp lý hay quy hoạch. Với giá/pháp lý, nhắc người dùng xác minh nguồn chính thức.
 Specialist chỉ cung cấp evidence nội bộ; không nhắc specialist, prompt, memory hay nhãn kỹ thuật trong câu trả lời.
-${memoryBlock ? `${memoryBlock}\n` : ''}${personalizationBlock}${staleProfileInstruction}${outcomeInstruction}${contextBlock}${kbBlock}${specialistBlock}`;
+${ownerProfileBlock ? `[HỒ SƠ CHỦ SỞ HỮU — định hình cách trả lời]
+${ownerProfileBlock}\n` : ''}${taskMemoryBlock ? `[KINH NGHIEM VAN HANH DA HOC]\n${taskMemoryBlock}\n` : ''}${lessonsBlock ? `[BAI HOC DA HOC TU PHAN HOI]\n${lessonsBlock}\n` : ''}${memoryBlock ? `${memoryBlock}\n` : ''}${personalizationBlock}${staleProfileInstruction}${outcomeInstruction}${contextBlock}${kbBlock}${specialistBlock}`;
     const userPrompt = historyBlock
         ? `Lịch sử:\n${historyBlock}\n\nTin nhắn mới: ${msg}`
         : msg;

@@ -245,7 +245,7 @@ class AgentOperatingRepository {
     return withTenantContext(tenantId, async client => {
       const history = await client.query(
         `INSERT INTO agent_event_replay_history (tenant_id, event_id, operator_id, reason, replay_number)
-         SELECT $1, id, $4, $3,
+         SELECT $1::uuid, id, $4::uuid, $3::text,
                 COALESCE((SELECT MAX(replay_number) FROM agent_event_replay_history WHERE tenant_id=$1 AND event_id=$2), 0) + 1
            FROM agent_operating_events
           WHERE tenant_id=$1 AND id=$2 AND status IN ('FAILED','DEAD_LETTER')
@@ -257,8 +257,8 @@ class AgentOperatingRepository {
         `UPDATE agent_operating_events
             SET status='PENDING', attempts=0, available_at=NOW(),
                 lease_token=NULL, lease_expires_at=NULL, dead_lettered_at=NULL,
-                active_replay_id=$3,
-                last_error=LEFT(CONCAT('[REPLAY] ', $4, ' | lỗi trước: ', COALESCE(last_error, 'không có')), 1000), updated_at=NOW()
+                active_replay_id=$3::uuid,
+                last_error=LEFT(CONCAT('[REPLAY] ', $4::text, ' | lỗi trước: ', COALESCE(last_error, 'không có')), 1000), updated_at=NOW()
           WHERE tenant_id=$1 AND id=$2 AND status IN ('FAILED','DEAD_LETTER')
           RETURNING *`,
         [tenantId, id, history.rows[0].id, reason.slice(0, 500)],

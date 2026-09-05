@@ -1,6 +1,22 @@
 import { Router, Request, Response } from 'express';
+import { agentOperatingRepository } from '../repositories/agentOperatingRepository';
 import { z } from 'zod';
 import { withTenantContext } from '../db';
+// === PHA 0: moi thay doi task (ke ca tu staff qua UI) deu vao event bus cua agent ===
+async function emitTaskEventRoute(
+  tenantId: string, eventType: 'task.created' | 'task.status_changed' | 'task.assigned' | 'task.commented',
+  payload: Record<string, unknown>, idempotencyKey: string,
+): Promise<void> {
+  try {
+    const { randomUUID } = await import('crypto');
+    await agentOperatingRepository.enqueueEvent(tenantId, {
+      eventId: randomUUID(), eventType, actor: 'STAFF', idempotencyKey, payload,
+    });
+  } catch (err: any) {
+    console.warn('[taskRoutes] emit event failed:', err?.message || err);
+  }
+}
+
 
 // ─── Zod Schemas ──────────────────────────────────────────────────────────────
 const TaskStatuses = ['todo', 'in_progress', 'review', 'done', 'cancelled'] as const;
@@ -263,7 +279,9 @@ export function createTaskRoutes(authenticateToken: any) {
         return newTask;
       });
 
-      res.status(201).json(enrichTask(task));
+      // PHA0: sinh event task.created cho agent daemon (staff tao qua UI cung vao event bus)
+  await emitTaskEventRoute(tenantId, 'task.created', { taskId: task.id, title: req.body.title, category: req.body.category, priority: req.body.priority }, 'task-created:' + task.id + ':' + Date.now());
+  res.status(201).json(enrichTask(task));
     } catch (error) {
       console.error('Error creating task:', error);
       res.status(500).json({ error: true, code: 'CREATE_FAILED', message: 'Failed to create task' });
