@@ -43,7 +43,9 @@ console.log('[DB] Using AIVEN_DATABASE_URL');
 export const pool = new Pool({
   connectionString: DB_CONNECTION_STRING,
   ...buildSslConfig(),
-  max: 20,                       // Keep the pool bounded for the Aiven service plan.
+  // Keep enough headroom for the managed Postgres superuser and for the
+  // preview + production processes sharing the same Aiven service.
+  max: Math.max(4, Math.min(20, Number(process.env.DB_POOL_MAX || 10))),
   idleTimeoutMillis: 240000,     // 4 min — evict idle connections while keeping the API pool healthy
   connectionTimeoutMillis: 5000,
   statement_timeout: 30000,
