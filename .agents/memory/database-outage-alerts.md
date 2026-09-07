@@ -5,6 +5,8 @@ description: Database health remains local while shared Redis coordination dedup
 
 Database outage alerting must use a bounded in-process health transition and a non-database operational sink. Cross-instance deduplication may use a bounded Redis incident state, but Redis failures must fail open without changing local health or recovery behavior.
 
+Process-level handlers for transient database errors must be installed before migrations or background workers start. A pg DNS/socket error can be emitted outside the originating promise during startup, before request-level error handling exists.
+
 **Why:** The outage is precisely when database-backed notifications can fail, and connection errors may contain credentials or deployment details.
 
 **How to apply:** Atomically claim one active incident, atomically resolve it once, retain resolved state briefly, and let the bounded active lease expire. Configure the threshold through environment and keep alert payloads limited to fixed service/component, timestamps, duration, threshold, and failure count fields.

@@ -136,6 +136,37 @@ let memoryLoggerStarted = false;
 
 let broadcastIo: any = null;
 
+// Install process-level recovery handlers before any startup task can open a
+// database connection. Startup launches background workers before migrations,
+// so registering these handlers at the end of startup leaves a real window
+// where a transient pg/DNS error can terminate the process.
+let processErrorHandlersInstalled = false;
+function installProcessErrorHandlers(): void {
+  if (processErrorHandlersInstalled) return;
+  processErrorHandlersInstalled = true;
+
+  process.on('unhandledRejection', (reason: unknown) => {
+    logger.error('[Server] Unhandled promise rejection:', reason instanceof Error ? reason.message : String(reason));
+  });
+
+  const SAFE_TO_IGNORE_CODES = new Set(['ERR_USE_AFTER_CLOSE']);
+  process.on('uncaughtException', (err: Error) => {
+    logger.error(`[Server] Uncaught exception: ${err.message}\n${err.stack}`);
+    // pg can emit a socket/DNS error outside the request promise while a
+    // managed database restarts. It is recoverable and must not take down
+    // unrelated HTTP requests.
+    if (SAFE_TO_IGNORE_CODES.has((err as any).code) || isTransientDatabaseError(err)) {
+      logger.warn('[Server] Recoverable database connection error; keeping process alive.');
+      return;
+    }
+    logger.error('[Server] Exiting after uncaught exception so the process can restart cleanly.');
+    setTimeout(() => process.exit(1), 250);
+  });
+}
+
+// Must run before startServer() launches workers or attempts migrations.
+installProcessErrorHandlers();
+
 /** Server-side translation helper — looks up actual strings from the shared DICTIONARY */
 const serverT = (lang: string = 'vn') => (key: string): string => {
   const dict = (DICTIONARY as any)[lang] || (DICTIONARY as any)['vn'] || {};
@@ -6996,30 +7027,6 @@ app.use('/api/v1', (req, _res, next) => {
   process.on('SIGTERM', () => shutdown('SIGTERM'));
   process.on('SIGINT', () => shutdown('SIGINT'));
 
-  // Prevent unhandled promise rejections from crashing the server
-  process.on('unhandledRejection', (reason: unknown) => {
-    logger.error('[Server] Unhandled promise rejection:', reason instanceof Error ? reason.message : String(reason));
-  });
-
-  // Log uncaught exceptions. Most async errors are safe to swallow and keep serving,
-  // but errors outside a known-safe allowlist may have left Node's internal state
-  // corrupted (e.g. Node's native stream/webstream internals) — continuing to run in
-  // that state risks a "zombie" process that stays alive but stops responding to any
-  // request, with no further logs and no automatic restart. Exiting lets the platform's
-  // process supervisor restart the server cleanly instead of hanging indefinitely.
-  const SAFE_TO_IGNORE_CODES = new Set(['ERR_USE_AFTER_CLOSE']);
-  process.on('uncaughtException', (err: Error) => {
-    logger.error(`[Server] Uncaught exception: ${err.message}\n${err.stack}`);
-    // pg can emit a socket error outside the request promise when a server
-    // restarts. It is recoverable and must not take down unrelated requests.
-    if (SAFE_TO_IGNORE_CODES.has((err as any).code) || isTransientDatabaseError(err)) {
-      logger.warn('[Server] Recoverable database connection error; keeping process alive.');
-      return;
-    }
-    logger.error('[Server] Exiting after uncaught exception so the process can restart cleanly.');
-    // Give the log line a moment to flush before terminating.
-    setTimeout(() => process.exit(1), 250);
-  });
 }
 
 startServer();

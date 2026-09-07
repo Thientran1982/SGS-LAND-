@@ -145,10 +145,12 @@ export function createMinhSession(options: MinhSessionOptions = {}): MinhSession
       // connection is reset. Reconcile with the durable conversation (with
       // retries) before showing an error, otherwise the user sees a failure
       // while a reload immediately reveals the already-persisted reply.
-      // Poll the durable conversation for a short window. The server keeps
+      // Poll the durable conversation for a bounded window. The server keeps
       // processing the AI run after the HTTP connection is reset, so an
       // immediate single fetch can race the persisted reply and show an
-      // error even though the reply lands moments later.
+      // error even though the reply lands moments later. This must still be
+      // bounded: a database outage or dead proxy must never leave the widget
+      // in its loading state for the full request timeout plus this poll.
       const findAssistantRow = (rows: any[]) => {
         const inboundIndex = saved?.id
           ? rows.findIndex((row) => String(row?.id) === String(saved.id))
@@ -161,8 +163,9 @@ export function createMinhSession(options: MinhSessionOptions = {}): MinhSession
         );
       };
       const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
+      const reconcileDeadline = Date.now() + 30_000;
       let assistantRow: any = null;
-      for (let attempt = 0; attempt < 40; attempt++) {
+      while (Date.now() < reconcileDeadline) {
         try {
           const recovered: any = await client.getMessages(leadId);
           const rows: any[] = Array.isArray(recovered?.messages) ? recovered.messages : [];
@@ -171,7 +174,8 @@ export function createMinhSession(options: MinhSessionOptions = {}): MinhSession
         } catch {
           // transient fetch failure inside the poll window - retry next tick
         }
-        await sleep(2000);
+        if (Date.now() >= reconcileDeadline) break;
+        await sleep(1500);
       }
       if (assistantRow) {
         data = { reply: assistantRow };
