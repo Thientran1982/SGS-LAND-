@@ -69,14 +69,20 @@ npm run start
 | `/marketplace` `/bds/[slug]` | SSR | dynamic |
 | `/dashboard` `/leads`... | CSR | - |
 
-## 🔗 Backend
+## 🔗 Backend và preview
 
-Express backend chạy trên port 5000 — được proxy qua `next.config.ts`:
+Next.js là cửa vào public trên port `5000`. Express backend chạy nội bộ trên
+port `5001`; không mở trực tiếp backend ra preview. Next proxy các request qua
+`BACKEND_URL` trong `next.config.ts`:
 
 ```
-/api/* → http://localhost:5000/api/*
-/socket.io/* → http://localhost:5000/socket.io/*
+/api/* → http://localhost:5001/api/*
+/socket.io/* → http://localhost:5001/socket.io/*
 ```
+
+Khi chạy workflow `Start application`, chỉ truy cập URL preview chính
+(mapping public của port `5000`). Không truy cập trực tiếp port `5001` bằng
+trình duyệt; đó là cổng service nội bộ.
 
 ## 🤖 AI Agents (MCP)
 

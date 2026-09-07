@@ -2,7 +2,9 @@ import type { NextConfig } from "next";
 import path from "path";
 import { PRIVATE_PREFIXES } from "./config/routes";
 
-const BACKEND_URL = process.env.BACKEND_URL || "http://localhost:5000";
+// Next.js owns the public preview port 5000. Express stays internal on 5001
+// and is reached through rewrites; never fall back to the public listener.
+const BACKEND_URL = process.env.BACKEND_URL || "http://localhost:5001";
 
 // Absolute paths to THIS workspace's node_modules
 // — prevents dual-React-instance errors when root workspace has React 18
