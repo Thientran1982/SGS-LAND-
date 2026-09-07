@@ -98,7 +98,7 @@ export function getDatabaseOutageAlertThresholdMs(
 
 export interface DatabaseHealthTrackerOptions {
   outageAlertThresholdMs?: number;
-  onOperationalAlert?: (alert: DatabaseOperationalAlert) => void;
+  onOperationalAlert?: (alert: DatabaseOperationalAlert) => unknown;
 }
 
 export class DatabaseHealthTracker {
@@ -108,7 +108,7 @@ export class DatabaseHealthTracker {
     consecutiveFailures: 0,
   };
   private readonly outageAlertThresholdMs: number;
-  private readonly onOperationalAlert?: (alert: DatabaseOperationalAlert) => void;
+  private readonly onOperationalAlert?: (alert: DatabaseOperationalAlert) => unknown;
   private outageAlertTimer: NodeJS.Timeout | null = null;
   private outageStartedAtMs: number | null = null;
   private outageAlertEmitted = false;
@@ -205,7 +205,12 @@ export class DatabaseHealthTracker {
 
   private dispatchOperationalAlert(alert: DatabaseOperationalAlert): void {
     try {
-      this.onOperationalAlert?.(alert);
+      const result = this.onOperationalAlert?.(alert);
+      if (result && typeof (result as Promise<void>).catch === 'function') {
+        void (result as Promise<void>).catch(() => {
+          // Alerting must never change database recovery or request behavior.
+        });
+      }
     } catch {
       // Alerting must never change database recovery or request behavior.
     }

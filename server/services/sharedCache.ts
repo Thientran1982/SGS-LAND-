@@ -2,9 +2,12 @@ import { Redis } from '@upstash/redis';
 import { logger } from '../middleware/logger';
 
 const PREFIX = 'sgs:cache:v2:';
+const COORDINATION_PREFIX = 'sgs:coordination:v1:';
 const MAX_LOCAL_ENTRIES = 1000;
 const local = new Map<string, { value: unknown; expiresAt: number }>();
-type RedisClient = Pick<Redis, 'get' | 'set' | 'del' | 'scan'>;
+type RedisClient = Pick<Redis, 'get' | 'set' | 'del' | 'scan'> & {
+  eval?: (script: string, keys: string[], args: string[]) => Promise<unknown>;
+};
 let redis: RedisClient | null | undefined;
 let redisFailures = 0;
 let hits = 0;
@@ -32,6 +35,127 @@ export function setSharedCacheRedisForTesting(client: RedisClient | null | undef
 
 function fullKey(key: string): string {
   return `${PREFIX}${key}`;
+}
+
+function coordinationKey(key: string): string {
+  return `${COORDINATION_PREFIX}${key}`;
+}
+
+export type SharedCoordinationResult<T> =
+  | { status: 'acquired'; value: T }
+  | { status: 'held'; value: T | null }
+  | { status: 'missing'; value: null }
+  | { status: 'unavailable'; value: null };
+
+const CLAIM_OPERATIONAL_INCIDENT_SCRIPT = `
+local current = redis.call("get", KEYS[1])
+if not current then
+  redis.call("set", KEYS[1], ARGV[1], "PX", ARGV[2])
+  return {1, ARGV[1]}
+end
+
+local state = cjson.decode(current)
+if state["phase"] == "resolved" then
+  redis.call("set", KEYS[1], ARGV[1], "PX", ARGV[2])
+  return {1, ARGV[1]}
+end
+
+return {0, current}
+`;
+
+const RESOLVE_OPERATIONAL_INCIDENT_SCRIPT = `
+local current = redis.call("get", KEYS[1])
+if not current then
+  return {-1, ""}
+end
+
+local state = cjson.decode(current)
+if state["phase"] ~= "active" then
+  return {0, current}
+end
+
+state["phase"] = "resolved"
+state["resolvedAt"] = ARGV[1]
+local resolved = cjson.encode(state)
+redis.call("set", KEYS[1], resolved, "PX", ARGV[2])
+return {1, resolved}
+`;
+
+function coordinationResult<T>(
+  result: unknown,
+): SharedCoordinationResult<T> {
+  if (!Array.isArray(result) || result.length < 2) {
+    return { status: 'unavailable', value: null };
+  }
+  const [flag, rawValue] = result;
+  let value: T | null = null;
+  if (typeof rawValue === 'string' && rawValue.length > 0) {
+    try {
+      value = JSON.parse(rawValue) as T;
+    } catch {
+      return { status: 'unavailable', value: null };
+    }
+  }
+  if (flag === -1 || flag === '-1') return { status: 'missing', value: null };
+  return flag === 1 || flag === '1'
+    ? { status: 'acquired', value: value as T }
+    : { status: 'held', value };
+}
+
+/**
+ * Atomically claim an operational incident in Redis.
+ *
+ * Coordination intentionally has no local fallback. A local cache value cannot
+ * coordinate independent backend processes, so callers must fail open when
+ * Redis is unavailable and continue their local transition.
+ */
+export async function claimSharedOperationalIncident<T>(
+  key: string,
+  value: T,
+  ttlMs: number,
+): Promise<SharedCoordinationResult<T>> {
+  const client = getRedis();
+  if (!client?.eval) return { status: 'unavailable', value: null };
+  try {
+    const result = await client.eval(
+      CLAIM_OPERATIONAL_INCIDENT_SCRIPT,
+      [coordinationKey(key)],
+      [JSON.stringify(value), String(Math.max(1, Math.floor(ttlMs)))],
+    );
+    return coordinationResult<T>(result);
+  } catch (error: any) {
+    redisFailures++;
+    logger.warn(`[SharedCache] Operational coordination unavailable: ${error?.message || error}`);
+    return { status: 'unavailable', value: null };
+  }
+}
+
+/**
+ * Atomically transition the active operational incident to resolved.
+ *
+ * The resolved value remains for a short bounded retention window. A new
+ * outage can replace it atomically, preventing a stale recovery marker from
+ * suppressing the next incident.
+ */
+export async function resolveSharedOperationalIncident<T>(
+  key: string,
+  resolvedAt: string,
+  ttlMs: number,
+): Promise<SharedCoordinationResult<T>> {
+  const client = getRedis();
+  if (!client?.eval) return { status: 'unavailable', value: null };
+  try {
+    const result = await client.eval(
+      RESOLVE_OPERATIONAL_INCIDENT_SCRIPT,
+      [coordinationKey(key)],
+      [resolvedAt, String(Math.max(1, Math.floor(ttlMs)))],
+    );
+    return coordinationResult<T>(result);
+  } catch (error: any) {
+    redisFailures++;
+    logger.warn(`[SharedCache] Operational recovery coordination unavailable: ${error?.message || error}`);
+    return { status: 'unavailable', value: null };
+  }
 }
 
 function localGet<T>(key: string): T | null {
