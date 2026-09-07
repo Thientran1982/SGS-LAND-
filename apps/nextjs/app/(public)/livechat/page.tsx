@@ -15,6 +15,7 @@ type LiveChatSearchParams = {
   desc?: string | string[];
   source?: string | string[];
   prompt?: string | string[];
+  prefill?: string | string[];
 };
 
 function firstParam(value: string | string[] | undefined, fallback: string) {
@@ -33,7 +34,7 @@ export default async function LiveChatPage({
     "Hỏi bất kỳ điều gì về thị trường BĐS — giá, pháp lý, dự án, lãi suất ngân hàng",
   );
   const source = firstParam(params.source, "WEB");
-  const prompt = firstParam(params.prompt, "");
+  const prompt = firstParam(params.prompt, firstParam(params.prefill, ""));
 
   return (
     <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-12 text-center">

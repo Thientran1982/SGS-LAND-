@@ -173,6 +173,21 @@ const serverT = (lang: string = 'vn') => (key: string): string => {
   return dict[key] ?? key;
 };
 
+function isPublicLandingBuilderRequest(message: string): boolean {
+  const normalized = String(message || '')
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '');
+  // Keep this boundary intentionally explicit. A normal question about a
+  // property that happens to mention "landing" should still be handled by
+  // the existing AI service, while the builder phrases must reach Minh's
+  // landing_builder tool.
+  return (
+    /\blanding(?:\s+page|\s+builder)?\b/.test(normalized) &&
+    /\b(dung|tao|xay|lam|thiet ke|build|create|generate|page|builder)\b/.test(normalized)
+  ) || /\btrang\s+(dich|gioi thieu)\b/.test(normalized);
+}
+
 
 async function startServer() {
   const app = express();
@@ -2824,14 +2839,31 @@ app.get('/api/public/listings/:slugId', apiRateLimit, async (req: express.Reques
         leadId,
         triggerSource: 'public-livechat',
         message: msgContent,
-        execute: () => aiService.processMessage(
-          lead,
-          msgContent,
-          historyWithLatest,
-          t,
-          PUBLIC_TENANT,
-          replyLang,
-        ),
+        execute: () => isPublicLandingBuilderRequest(msgContent)
+          ? liveChatEngine.callTool('handle_live_chat', {
+              tenantId: PUBLIC_TENANT,
+              message: msgContent,
+              language: replyLang === 'en' ? 'en' : 'vi',
+              sessionId: leadId,
+              leadId,
+              context: {
+                leadId,
+                leadName: (lead as any).name || '',
+                language: replyLang === 'en' ? 'en' : 'vi',
+                history: historyWithLatest.slice(-8).map((item: any) => ({
+                  role: item.direction === 'INBOUND' ? 'user' : 'assistant',
+                  content: item.content,
+                })),
+              },
+            })
+          : aiService.processMessage(
+              lead,
+              msgContent,
+              historyWithLatest,
+              t,
+              PUBLIC_TENANT,
+              replyLang,
+            ),
       });
       const result = execution.result;
 

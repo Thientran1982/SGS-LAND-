@@ -1294,6 +1294,7 @@ async function handle_live_chat_core(args: Record<string, any>): Promise<any> {
 
     // Supervisor may execute one read-only specialist tool. High-impact tools
     // remain suggestions and must go through the existing approval broker.
+    const responseLanguage = String(context.language || args.language || 'vi').toLowerCase() === 'en' ? 'en' : 'vi';
     const executionPlans: Record<string, { tool: string; args: Record<string, any> }> = {
         SEARCH: { tool: 'search_listings', args: { tenantId, query: msg, limit: 5 } },
         LEGAL: { tool: 'legal_qa', args: { tenantId, question: msg } },
@@ -1301,7 +1302,7 @@ async function handle_live_chat_core(args: Record<string, any>): Promise<any> {
         FINANCE: { tool: 'get_platform_knowledge', args: { tenantId, domain: 'bank', query: msg } },
         PROJECT: { tool: 'get_project_info', args: { tenantId, projectName: msg } },
         LONGTHANH: { tool: 'get_longthanh_market', args: { tenantId, subArea: msg } },
-        LANDING:    { tool: 'landing_builder', args: { tenantId, visitorKey: context.leadId || 'anonymous-widget', brief: msg, language: 'vi' } },
+        LANDING:    { tool: 'landing_builder', args: { tenantId, visitorKey: context.leadId || 'anonymous-widget', brief: msg, language: responseLanguage } },
         GENERAL: { tool: 'get_platform_knowledge', args: { tenantId, domain: 'platform', query: msg } },
     };
     // === PHA 2: MINH ORCHESTRATOR — khi keyword map ve GENERAL, Minh (LLM) tu chon specialist theo ngu canh ===
