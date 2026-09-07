@@ -106,4 +106,43 @@ test.describe('Landing builder public route', () => {
     expect(html).toContain('Bản nháp');
     expect(html).toContain('Phát hành trang');
   });
+
+  test('publishes the owner draft and makes all content public', async ({ page }) => {
+    await page.goto(
+      `${BASE_URL}/landing/${DRAFT_SLUG}?visitorKey=${encodeURIComponent(DRAFT_VISITOR_KEY)}`,
+    );
+
+    const publishButton = page.getByRole('button', { name: 'Phát hành trang' });
+    await expect(publishButton).toBeVisible();
+
+    const publishRequestPromise = page.waitForRequest((request) => (
+      request.method() === 'POST'
+      && new URL(request.url()).pathname === `/api/landing-pages/${DRAFT_SLUG}/publish`
+    ));
+    const publishResponsePromise = page.waitForResponse((response) => (
+      response.request().method() === 'POST'
+      && new URL(response.url()).pathname === `/api/landing-pages/${DRAFT_SLUG}/publish`
+    ));
+
+    await publishButton.click();
+
+    const publishRequest = await publishRequestPromise;
+    const publishResponse = await publishResponsePromise;
+    expect(publishRequest.postDataJSON()).toEqual({ visitorKey: DRAFT_VISITOR_KEY });
+    expect(publishResponse.status()).toBe(200);
+    await expect(page.getByRole('button', { name: 'Phát hành trang' })).toHaveCount(0);
+    await expect(page.getByText('Bản nháp')).toHaveCount(0);
+
+    const publicResponse = await page.goto(`${BASE_URL}/landing/${DRAFT_SLUG}`);
+    expect(publicResponse?.status()).toBe(200);
+    await expect(page.locator('main.landing-builder-page')).toBeVisible();
+    await expect(page.getByText('Không tìm thấy trang landing')).toHaveCount(0);
+    await expect(page.getByText('Bản nháp')).toHaveCount(0);
+    await expect(page.getByRole('button', { name: 'Phát hành trang' })).toHaveCount(0);
+
+    for (const section of DRAFT_SECTIONS) {
+      await expect(page.locator(`#${section.stage}`)).toContainText(section.title);
+      await expect(page.locator(`#${section.stage}`)).toContainText(section.body);
+    }
+  });
 });
