@@ -11,7 +11,8 @@ import jwt from "jsonwebtoken";
 import { WebSocketServer } from "ws";
 // @ts-ignore
 import { setupWSConnection } from "y-websocket/bin/utils";
-import { pool, withTenantContext, withRlsBypass } from "./server/db";
+import { pool, probeDatabase, stopDatabaseRecovery, withTenantContext, withRlsBypass } from "./server/db";
+import { isTransientDatabaseError } from "./server/dbHealth";
 import bcrypt from "bcrypt";
 import { runPendingMigrations } from "./server/migrations/runner";
 import { systemService } from "./server/services/systemService";
@@ -1661,7 +1662,7 @@ app.use(globalMutationAudit);
         migrationOk = true;
         break;
       } catch (err: any) {
-        const isTransient = err?.message?.includes('timeout') || err?.message?.includes('ECONNREFUSED') || err?.message?.includes('terminated unexpectedly');
+        const isTransient = isTransientDatabaseError(err);
         if (attempt < MAX_MIGRATION_ATTEMPTS && isTransient) {
           logger.warn(`[migrations] Connection attempt ${attempt}/${MAX_MIGRATION_ATTEMPTS} failed — retrying in 5s… (${err.message})`);
           await new Promise(r => setTimeout(r, 5000));
@@ -4472,11 +4473,16 @@ app.use('/api/approval-requests', apiRateLimit, createApprovalRequestRoutes(auth
     if (typeof (timer as any).unref === 'function') (timer as any).unref();
   }
 
-  // Lightweight health probe for deployment infrastructure (no DB call)
-  app.get("/health", (_req, res) => {
+  // Readiness probe: the process can stay alive while Postgres is restarting,
+  // but infrastructure must stop routing DB-dependent traffic until recovery.
+  app.get("/health", async (_req, res) => {
     res.setHeader('Cache-Control', 'no-store');
-    res.json({
-      status: "ok",
+    const database = await probeDatabase(800);
+    const available = database.available;
+    return res.status(available ? 200 : 503).json({
+      status: available ? "ok" : "degraded",
+      database: database.status,
+      ...(database.lastError ? { databaseError: database.lastError } : {}),
       version: process.env.npm_package_version || "0.0.0",
       uptime: Math.floor(process.uptime()),
     });
@@ -4487,7 +4493,7 @@ app.use('/api/approval-requests', apiRateLimit, createApprovalRequestRoutes(auth
     try {
       // RELIABILITY FIX (audit): systemService.checkHealth() pings the database
       // with pool.query('SELECT 1') and needs a timeout when the service is unavailable.
-      // health probe co the treo ti connectionTimeoutMillis (15s, server/db.ts:26).
+      // health probe co the treo ti connectionTimeoutMillis (5s, server/db.ts:47).
       // Boc withTimeout + fallback de probe luon tra ve trong ~1.2s.
       let health: any;
       try {
@@ -4517,13 +4523,14 @@ app.use('/api/approval-requests', apiRateLimit, createApprovalRequestRoutes(auth
       // Real Postgres ping (with latency), capped so a slow DB never blocks
       // the health probe past the 1s SLA.
       const dbStartMs = Date.now();
-      try {
-        await withTimeout(pool.query('SELECT 1'), 800, 'db-ping');
+      const dbProbe = await probeDatabase(800);
+      if (dbProbe.available) {
         components.database.status = 'healthy';
         components.database.latencyMs = Date.now() - dbStartMs;
-      } catch (err: any) {
+      } else {
         components.database.status = 'down';
-        components.database.error = err?.message || String(err);
+        components.database.error = dbProbe.lastError;
+        components.database.consecutiveFailures = dbProbe.consecutiveFailures;
       }
 
       // Real Upstash Redis ping (REST PING command) — previously this only
@@ -6954,6 +6961,7 @@ app.use('/api/v1', (req, _res, next) => {
       try { priceCalibrationService.stop(); } catch (e) { /* ignore */ }
       logger.info('In-process cron timers stopped.');
       try {
+        stopDatabaseRecovery();
         await pool.end();
         logger.info('Database pool closed.');
       } catch (e) { /* ignore */ }
@@ -6982,7 +6990,12 @@ app.use('/api/v1', (req, _res, next) => {
   const SAFE_TO_IGNORE_CODES = new Set(['ERR_USE_AFTER_CLOSE']);
   process.on('uncaughtException', (err: Error) => {
     logger.error(`[Server] Uncaught exception: ${err.message}\n${err.stack}`);
-    if (SAFE_TO_IGNORE_CODES.has((err as any).code)) return;
+    // pg can emit a socket error outside the request promise when a server
+    // restarts. It is recoverable and must not take down unrelated requests.
+    if (SAFE_TO_IGNORE_CODES.has((err as any).code) || isTransientDatabaseError(err)) {
+      logger.warn('[Server] Recoverable database connection error; keeping process alive.');
+      return;
+    }
     logger.error('[Server] Exiting after uncaught exception so the process can restart cleanly.');
     // Give the log line a moment to flush before terminating.
     setTimeout(() => process.exit(1), 250);

@@ -3,6 +3,7 @@ import fs from 'fs';
 import { Redis } from '@upstash/redis';
 import path from 'path';
 import dotenv from 'dotenv';
+import { DatabaseHealthTracker, isTransientDatabaseError, type DatabaseHealthSnapshot } from './dbHealth';
 dotenv.config();
 // Parse numeric (OID 1700) and int8 (OID 20) columns as JS numbers instead of strings
 types.setTypeParser(1700, (val: string) => parseFloat(val));
@@ -43,12 +44,89 @@ export const pool = new Pool({
   ...buildSslConfig(),
   max: 20,                       // Keep the pool bounded for the Aiven service plan.
   idleTimeoutMillis: 240000,     // 4 min — evict idle connections while keeping the API pool healthy
-  connectionTimeoutMillis: 15000,
+  connectionTimeoutMillis: 5000,
   statement_timeout: 30000,
+  query_timeout: 30000,
   keepAlive: true,               // Send TCP keepalive packets to detect dead connections
   keepAliveInitialDelayMillis: 10000,
   application_name: 'sgs-land-api',
 });
+
+const DB_RECONNECT_BASE_MS = 500;
+const DB_RECONNECT_MAX_MS = 30_000;
+const databaseHealth = new DatabaseHealthTracker();
+let reconnectDelayMs = DB_RECONNECT_BASE_MS;
+let reconnectTimer: NodeJS.Timeout | null = null;
+let reconnectInFlight = false;
+let databaseRecoveryStopped = false;
+const handledPoolErrors = new WeakSet<object>();
+
+function scheduleDatabaseRecovery(error: unknown): void {
+  if (databaseRecoveryStopped) return;
+
+  const nextRetryAt = new Date(Date.now() + reconnectDelayMs);
+  databaseHealth.markUnavailable(error, nextRetryAt);
+  if (reconnectTimer || reconnectInFlight) return;
+
+  const delay = reconnectDelayMs;
+  reconnectDelayMs = Math.min(reconnectDelayMs * 2, DB_RECONNECT_MAX_MS);
+  reconnectTimer = setTimeout(async () => {
+    reconnectTimer = null;
+    reconnectInFlight = true;
+    try {
+      await pool.query('SELECT 1');
+      reconnectDelayMs = DB_RECONNECT_BASE_MS;
+      databaseHealth.markHealthy();
+      console.info('[DB] Database connection recovered.');
+    } catch (recoveryError) {
+      reconnectInFlight = false;
+      scheduleDatabaseRecovery(recoveryError);
+    } finally {
+      reconnectInFlight = false;
+    }
+  }, delay);
+  reconnectTimer.unref?.();
+}
+
+function handlePoolConnectionError(err: Error): void {
+  if (err && typeof err === 'object') {
+    if (handledPoolErrors.has(err)) return;
+    handledPoolErrors.add(err);
+  }
+  console.error('[DB Pool] Unexpected client error:', err.message);
+  if (isTransientDatabaseError(err)) {
+    scheduleDatabaseRecovery(err);
+  }
+}
+
+export function getDatabaseHealth(): DatabaseHealthSnapshot {
+  return databaseHealth.getSnapshot();
+}
+
+/**
+ * Probe Postgres without allowing a stalled socket to hold a health request.
+ * The rejected query is observed explicitly because the underlying pg query
+ * may finish after the timeout race has already returned to the caller.
+ */
+export async function probeDatabase(timeoutMs = 800): Promise<DatabaseHealthSnapshot> {
+  let timeout: NodeJS.Timeout | undefined;
+  const query = pool.query('SELECT 1');
+  query.catch(() => undefined);
+  try {
+    await Promise.race([
+      query,
+      new Promise<never>((_, reject) => {
+        timeout = setTimeout(() => reject(new Error(`Database probe timed out after ${timeoutMs}ms`)), timeoutMs);
+      }),
+    ]);
+    databaseHealth.markHealthy();
+  } catch (error) {
+    scheduleDatabaseRecovery(error);
+  } finally {
+    if (timeout) clearTimeout(timeout);
+  }
+  return getDatabaseHealth();
+}
 
 type DistributedLockRedis = Pick<Redis, 'set' | 'eval'>;
 let distributedLockRedis: DistributedLockRedis | null | undefined;
@@ -105,8 +183,23 @@ export async function withDistributedLock<T>(
 }
 // Log pool errors so they appear in production logs rather than crashing silently
 pool.on('error', (err) => {
-  console.error('[DB Pool] Unexpected client error:', err.message);
+  handlePoolConnectionError(err);
 });
+pool.on('connect', (client: PoolClient) => {
+  databaseHealth.markHealthy();
+  // pg-pool removes its idle error listener while a client is checked out.
+  // Keep a second listener so an active query's socket failure also starts
+  // recovery and cannot become an uncaught exception.
+  client.on('error', handlePoolConnectionError);
+});
+
+export function stopDatabaseRecovery(): void {
+  databaseRecoveryStopped = true;
+  if (reconnectTimer) {
+    clearTimeout(reconnectTimer);
+    reconnectTimer = null;
+  }
+}
 /**
  * @deprecated Schema initialization is handled exclusively by the migration runner.
  * Call runPendingMigrations(pool) from server/migrations/runner.ts instead.
@@ -146,7 +239,7 @@ export async function withTenantContext<T>(
     await client.query('COMMIT');
     return result;
   } catch (error) {
-    await client.query('ROLLBACK');
+    await client.query('ROLLBACK').catch(() => undefined);
     throw error;
   } finally {
     client.release();
@@ -162,7 +255,7 @@ export async function withTransaction<T>(
     await client.query('COMMIT');
     return result;
   } catch (error) {
-    await client.query('ROLLBACK');
+    await client.query('ROLLBACK').catch(() => undefined);
     throw error;
   } finally {
     client.release();
@@ -196,7 +289,7 @@ export async function withRlsBypass<T>(
     await client.query('COMMIT');
     return result;
   } catch (error) {
-    await client.query('ROLLBACK');
+    await client.query('ROLLBACK').catch(() => undefined);
     throw error;
   } finally {
     client.release();

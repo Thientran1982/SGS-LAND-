@@ -44,3 +44,4 @@
 - [Sequence worker advisory locks](sequence-worker-locks.md) — keep lock, claims, updates, and unlock on one PostgreSQL session across the worker run.
 - [Migration history aliases](migration-history-aliases.md) — canonicalize reviewed renamed migration records without deleting history or replaying migrations.
 - [Customer profile boundaries](customer-profile-boundaries.md) — keep Minh personalization separate from Company Brain and fail closed without explicit profile consent.
+- [Generated production backend](generated-production-backend.md) — production may run ignored server.js; rebuild the bundle after server source changes before runtime verification
