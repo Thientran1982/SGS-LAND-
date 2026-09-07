@@ -27,6 +27,7 @@ const NAV_ICONS: Record<string, React.ReactNode> = {
     // Core
     [ROUTES.LANDING]: <Home size={20} strokeWidth={2} />,
   [ROUTES.AI_ADVISOR]: <Target size={20} strokeWidth={2} />,
+  [ROUTES.MY_LANDING]: <Globe size={20} strokeWidth={2} />,
     [ROUTES.DASHBOARD]: <LayoutDashboard size={20} strokeWidth={2} />,
     [ROUTES.LEADS]: <Users size={20} strokeWidth={2} />,
     [ROUTES.CONTRACTS]: <FileText size={20} strokeWidth={2} />,

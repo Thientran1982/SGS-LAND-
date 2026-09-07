@@ -34,6 +34,9 @@ const Login = lazyLoad(() => import('./pages/Login'), 'Login');
 const PublicProposal = lazyLoad(() => import('./pages/PublicProposal'), 'PublicProposal');
 const PublicContract = lazyLoad(() => import('./pages/PublicContract'), 'PublicContract');
 const PublicProjectMicrosite = lazyLoad(() => import('./pages/PublicProjectMicrosite'), 'PublicProjectMicrosite');
+// AI-built landing pages (slug-based) — render trang landing do tool landing_builder dựng
+const LandingPageView = lazyLoad(() => import('./pages/LandingPageView'), 'default');
+const MyLandingPages = lazyLoad(() => import('./pages/MyLandingPages'), 'default');
 // Project codes (mã dự án) — alphanumeric + dashes/underscores, không phải UUID.
 // Hỗ trợ cả lowercase (vd `/p/mcc`) lẫn uppercase. Proposal tokens là UUID v4
 // (loại trừ riêng), contract tokens có prefix `contract_` (đã bắt trước đó).
@@ -165,7 +168,8 @@ const MobileApp = () => {
 // Comprehensive mapping of ALL routes to their components
 const PAGE_REGISTRY: Record<string, React.ComponentType<any>> = {
     // Public
-    [ROUTES.AI_ADVISOR]: AiAdvisor, 
+    [ROUTES.AI_ADVISOR]: AiAdvisor,
+  [ROUTES.MY_LANDING]: MyLandingPages, 
   [ROUTES.METHODOLOGY]: Methodology,
   [ROUTES.PRESS_MEDIA]: PressMedia,
             [ROUTES.GLOSSARY]: Glossary,
@@ -280,6 +284,7 @@ const PUBLIC_ROUTES = new Set([
     ROUTES.VERIFY_EMAIL,
     ROUTES.PUBLIC_PREFIX,
     ROUTES.LISTING,
+  ROUTES.LANDING_AI,
     ROUTES.LISTING_BDS
 ]);
 // -----------------------------------------------------------------------------
@@ -736,7 +741,20 @@ const AppShell: React.FC = () => {
                     </div>
                 );
             }
-            const PublicPage = PAGE_REGISTRY[route.base];
+            // AI-built landing page by slug - /landing-ai/:slug (tool landing_builder)
+      if (route.base === ROUTES.LANDING_AI) {
+        const landingSlug = route.params[0] || '';
+        return (
+          <div className="h-[100dvh] w-full overflow-y-auto show-scrollbar bg-[var(--bg-app)]">
+            <ErrorBoundary>
+              <Suspense fallback={RouteLoading}>
+                {landingSlug ? <LandingPageView slug={landingSlug} /> : <ErrorState message={t('pub.not_found')} />}
+              </Suspense>
+            </ErrorBoundary>
+          </div>
+        );
+      }
+      const PublicPage = PAGE_REGISTRY[route.base];
             if (PublicPage) {
                 return (
                     <div className="h-[100dvh] w-full overflow-y-auto show-scrollbar bg-[var(--bg-app)]">

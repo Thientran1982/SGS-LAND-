@@ -1369,6 +1369,7 @@ class DatabaseApiClient {
       { id: 'inbox', labelKey: 'menu.inbox', route: ROUTES.INBOX, iconKey: ROUTES.INBOX },
       { id: 'contracts', labelKey: 'menu.contracts', route: ROUTES.CONTRACTS, iconKey: ROUTES.CONTRACTS },
       { id: 'ai-advisor', labelKey: 'menu.ai-advisor', route: ROUTES.AI_ADVISOR, iconKey: ROUTES.AI_ADVISOR },
+    { id: 'my-landing', labelKey: 'menu.my-landing', route: ROUTES.MY_LANDING, iconKey: ROUTES.MY_LANDING },
     ];
     if (isHostTenant) {
       coreItems.push({ id: 'search', labelKey: 'menu.marketplace', route: ROUTES.SEARCH, iconKey: ROUTES.SEARCH });
