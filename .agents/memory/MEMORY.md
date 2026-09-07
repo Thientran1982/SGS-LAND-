@@ -55,3 +55,4 @@
 - [Live-chat engine content contract](livechat-engine-content-contract.md) — durable guardrails validate `content`; keep it alongside the `response` alias
 - [Live-chat legacy cache repair](livechat-legacy-cache-repair.md) — versioned replay repairs old EMPTY_OUTPUT landing runs without changing normal idempotency
 - [Landing classification telemetry](landing-classification-telemetry.md) — monitor language and classifier outcomes with categorical signals, never raw briefs or price details
+- [Replit publish custom roles](replit-publish-custom-roles.md) — managed Publish restores can fail on RLS policies targeting custom roles absent from Replit production; keep external DB roles out of that path
