@@ -20,7 +20,8 @@ import { DEFAULT_TENANT_ID } from '../constants';
 import { applyAVM, getRegionalBasePrice } from '../valuationEngine';
 import { logger } from '../middleware/logger';
 import { agentRepository } from '../repositories/agentRepository';
-import { generateWithPolicy } from './providers';
+import { generateWithPolicy, ProviderExhaustedError } from './providers';
+import type { ProviderAttempt } from './providers';
 import { minhChooseSpecialist, MINH_INTENT_TOOLS } from './minhOrchestrator';
 import { TASK_MODELS } from './modelPolicy';
 import { recordAiUsage } from '../services/aiUsageService';
@@ -40,6 +41,21 @@ import { agentMemoryService, scrubPii } from '../services/agentMemoryService';
 import { getGuidePolicyResponse, normalizeGuideInput } from './guideAssistantPolicy';
 import { customerProfileService, observeCustomerMessage, extractFactsWithLLM, classifyInteractionOutcome } from '../services/customerProfileService';
 import { listEnabledMcpServers, callMcpTool, resolveMcpToolName } from '../services/mcpClientService';
+
+type LiveChatProviderTelemetry = {
+    provider?: string;
+    model?: string;
+    status?: number;
+    fallbackUsed: boolean;
+    degraded: boolean;
+    attempts: ProviderAttempt[];
+};
+
+function providerAttemptSummary(attempts: ProviderAttempt[]): string {
+    return attempts
+        .map(attempt => `${attempt.provider}:${attempt.status || 'ok'}:${attempt.latencyMs}ms`)
+        .join(',');
+}
 
 // Prompt-injection sanitizer for live-chat user content (message, leadName, history).
 // User text is interpolated into the LLM prompt, so neutralize escape vectors and
@@ -76,40 +92,58 @@ async function generateLiveChatText(params: {
     maxOutputTokens?: number;
     jsonMode?: boolean;
     timeoutMs?: number;
+    onProviderTelemetry?: (telemetry: LiveChatProviderTelemetry) => void;
 }): Promise<string> {
     const traceId = randomUUID();
     const startedAt = Date.now();
     const model = params.model || (params.jsonMode ? TASK_MODELS.EXTRACTOR : TASK_MODELS.WRITER);
-    const request = generateWithPolicy({
-        model,
-        system: params.system,
-        prompt: params.prompt,
-        maxOutputTokens: params.maxOutputTokens,
-        jsonMode: params.jsonMode,
-    });
-    let result: Awaited<typeof request>;
     try {
-        result = await Promise.race([
-            request,
-            new Promise<never>((_, reject) =>
-                setTimeout(() => reject(new Error(`AI timeout after ${params.timeoutMs || 15000}ms`)), params.timeoutMs || 15000),
-            ),
-        ]);
+        const result = await generateWithPolicy({
+            model,
+            system: params.system,
+            prompt: params.prompt,
+            maxOutputTokens: params.maxOutputTokens,
+            jsonMode: params.jsonMode,
+            timeoutMs: params.timeoutMs || 15000,
+        });
+        const telemetry: LiveChatProviderTelemetry = {
+            provider: result.provider,
+            model: result.model,
+            fallbackUsed: result.fallbackUsed === true,
+            degraded: result.fallbackUsed === true,
+            attempts: result.attempts || [],
+        };
+        params.onProviderTelemetry?.(telemetry);
+        logger.info(
+            `[LiveChatProvider] trace=${traceId} feature=${params.feature} provider=${result.provider} ` +
+            `model=${result.model} fallback=${telemetry.fallbackUsed} attempts=${providerAttemptSummary(telemetry.attempts)} ` +
+            `latencyMs=${Date.now() - startedAt}`,
+        );
+        recordAiUsage({
+            tenantId: params.tenantId,
+            feature: params.feature,
+            model: result.model,
+            promptLen: params.prompt.length + (params.system?.length || 0),
+            responseLen: result.text.length,
+            latencyMs: Date.now() - startedAt,
+            source: `live_chat:${result.provider}:trace=${traceId}`,
+        }).catch(() => {});
+        return result.text;
     } catch (error: any) {
-        logger.error(`[LiveChatEngine] AI call failed trace=${traceId} feature=${params.feature} model=${model}: ${error?.message || error}`);
+        const attempts = error instanceof ProviderExhaustedError ? error.attempts : [];
+        const telemetry: LiveChatProviderTelemetry = {
+            status: error instanceof ProviderExhaustedError ? error.status : undefined,
+            fallbackUsed: false,
+            degraded: true,
+            attempts,
+        };
+        params.onProviderTelemetry?.(telemetry);
+        logger.warn(
+            `[LiveChatProvider] trace=${traceId} feature=${params.feature} failed ` +
+            `status=${telemetry.status || 'n/a'} attempts=${providerAttemptSummary(attempts)} latencyMs=${Date.now() - startedAt}`,
+        );
         throw error;
     }
-    recordAiUsage({
-        tenantId: params.tenantId,
-        feature: params.feature,
-        model: result.model,
-        promptLen: params.prompt.length + (params.system?.length || 0),
-        responseLen: result.text.length,
-        latencyMs: Date.now() - startedAt,
-        source: `live_chat:${result.provider}:trace=${traceId}`,
-    }).catch(() => {});
-    logger.info(`[LiveChatEngine] AI trace=${traceId} feature=${params.feature} provider=${result.provider} model=${result.model} latencyMs=${Date.now() - startedAt}`);
-    return result.text;
 }
 
 // ---------------------------------------------------------------------------
@@ -1436,13 +1470,18 @@ ${ownerProfileBlock}\n` : ''}${taskMemoryBlock ? `[KINH NGHIEM VAN HANH DA HOC]\
         ? `Lịch sử:\n${historyBlock}\n\nTin nhắn mới: ${msg}`
         : msg;
 
+    let providerTelemetry: LiveChatProviderTelemetry | undefined;
+    let response: string;
     try {
-        const response = await generateLiveChatText({
+        response = await generateLiveChatText({
             tenantId,
             feature: 'LIVE_CHAT_RESPONSE',
             maxOutputTokens: 400,
             system: systemPrompt,
             prompt: userPrompt,
+            onProviderTelemetry: telemetry => {
+                providerTelemetry = telemetry;
+            },
         });
         if (customerId && personalization.enabled) {
             const outcome = classifyInteractionOutcome(msg);
@@ -1454,35 +1493,58 @@ ${ownerProfileBlock}\n` : ''}${taskMemoryBlock ? `[KINH NGHIEM VAN HANH DA HOC]\
                     : undefined,
             }).catch(error => logger.warn(`[LiveChatEngine] outcome tracking skipped: ${error?.message || error}`));
         }
-
-        return {
-            sessionId: sessionId || `sess_${Date.now()}`,
-            intent: detectedIntent,
-            response: response.trim() || 'Không có phản hồi từ AI.',
-            executedTools,
-            suggestedNextTool: executedTools.length > 0 ? null : suggestedTool,
-            suggestedAction: detectedIntent === 'VALUATION'  ? 'Gọi get_valuation với địa chỉ và diện tích cụ thể' :
-                             detectedIntent === 'SEARCH'     ? 'Gọi search_listings với bộ lọc giá/khu vực' :
-                             detectedIntent === 'LEGAL'      ? 'Gọi legal_qa hoặc check_legal_status' :
-                             detectedIntent === 'LEAD_SCORING' ? 'Gọi score_lead với thông tin khách' : null,
-            sources: specialistOutput
-                ? [{ tool: plan?.tool, source: specialistOutput.source || 'SGS Land tenant-scoped data' }]
-                : [],
-            specialistOutput,
-            uncertainty: specialistOutput ? 'LOW' : 'HIGH',
-            missingData: specialistOutput ? [] : [specialistError || 'specialist_data'],
-            groundingStatus: specialistOutput ? 'GROUNDED' : 'INSUFFICIENT_DATA',
-            personalization: {
-                enabled: personalization.enabled,
-                applied: Boolean(personalization.block),
-                staleConfirmationNeeded: personalization.stale && !personalization.block,
-                outcomeGuidance: personalization.negativeStreak >= 2 ? 'CHANGE_APPROACH' : 'NONE',
-            },
-        };
     } catch (e: any) {
-        logger.error('[LiveChatEngine] handle_live_chat error:', e);
-        throw e;
+        if (!(e instanceof ProviderExhaustedError)) {
+            logger.error('[LiveChatEngine] handle_live_chat error:', e);
+            throw e;
+        }
+        // Provider failure must remain visible and actionable, not become a
+        // generic 500. The durable execution still completes, so consent,
+        // memory and journey idempotency follow their normal success boundary.
+        response = 'Hiện trợ lý AI chưa thể xử lý câu hỏi này vì các nhà cung cấp đang tạm thời không khả dụng. Bạn hãy thử lại sau ít phút hoặc để lại yêu cầu để đội ngũ hỗ trợ tiếp tục.';
+        providerTelemetry = providerTelemetry || {
+            status: e.status,
+            fallbackUsed: false,
+            degraded: true,
+            attempts: e.attempts,
+        };
+        logger.warn(
+            `[LiveChatEngine] degraded response status=${providerTelemetry.status || 'n/a'} ` +
+            `attempts=${providerAttemptSummary(providerTelemetry.attempts)}`,
+        );
     }
+
+    return {
+        sessionId: sessionId || `sess_${Date.now()}`,
+        intent: detectedIntent,
+        response: response.trim() || 'Không có phản hồi từ AI.',
+        executedTools,
+        suggestedNextTool: executedTools.length > 0 ? null : suggestedTool,
+        suggestedAction: detectedIntent === 'VALUATION'  ? 'Gọi get_valuation với địa chỉ và diện tích cụ thể' :
+                         detectedIntent === 'SEARCH'     ? 'Gọi search_listings với bộ lọc giá/khu vực' :
+                         detectedIntent === 'LEGAL'      ? 'Gọi legal_qa hoặc check_legal_status' :
+                         detectedIntent === 'LEAD_SCORING' ? 'Gọi score_lead với thông tin khách' : null,
+        sources: specialistOutput
+            ? [{ tool: plan?.tool, source: specialistOutput.source || 'SGS Land tenant-scoped data' }]
+            : [],
+        specialistOutput,
+        uncertainty: specialistOutput ? 'LOW' : 'HIGH',
+        missingData: specialistOutput ? [] : [specialistError || 'specialist_data'],
+        groundingStatus: specialistOutput ? 'GROUNDED' : 'INSUFFICIENT_DATA',
+        degraded: providerTelemetry?.degraded === true,
+        degradedReason: providerTelemetry?.fallbackUsed
+            ? 'PRIMARY_PROVIDER_UNAVAILABLE'
+            : providerTelemetry?.degraded
+                ? 'ALL_CONFIGURED_PROVIDERS_UNAVAILABLE'
+                : undefined,
+        providerTelemetry,
+        personalization: {
+            enabled: personalization.enabled,
+            applied: Boolean(personalization.block),
+            staleConfirmationNeeded: personalization.stale && !personalization.block,
+            outcomeGuidance: personalization.negativeStreak >= 2 ? 'CHANGE_APPROACH' : 'NONE',
+        },
+    };
 }
 
 async function handle_live_chat(args: Record<string, any>): Promise<any> {
@@ -1535,7 +1597,7 @@ async function handle_live_chat(args: Record<string, any>): Promise<any> {
             };
         },
     });
-    const { content, steps, ...result } = execution.result as any;
+    const { content, steps, providerTelemetry, ...result } = execution.result as any;
     // Long-term customer memory is deliberately attached to the durable
     // success boundary, not handle_live_chat_core: retries/resumes must not
     // create an extra memory write. Consent-gated personalization remains the
@@ -1606,9 +1668,25 @@ async function handle_live_chat(args: Record<string, any>): Promise<any> {
         eventKey: `chat:${execution.runId}:out`,
         eventType: 'CHAT_MESSAGE',
         direction: 'OUTBOUND',
-        status: 'SUCCESS',
-        output: { content, intent: result.intent, sources: result.sources, groundingStatus: result.groundingStatus },
-        metadata: { source: 'live-chat-engine', cached: execution.cached, resumed: execution.resumed },
+        status: result.degraded ? 'DEGRADED' : 'SUCCESS',
+        output: {
+            content,
+            intent: result.intent,
+            sources: result.sources,
+            groundingStatus: result.groundingStatus,
+            degraded: result.degraded === true,
+            degradedReason: result.degradedReason,
+        },
+        metadata: {
+            source: 'live-chat-engine',
+            cached: execution.cached,
+            resumed: execution.resumed,
+            aiProvider: providerTelemetry?.provider || null,
+            aiModel: providerTelemetry?.model || null,
+            aiStatus: providerTelemetry?.status || null,
+            aiFallbackUsed: providerTelemetry?.fallbackUsed === true,
+            aiProviderAttempts: providerTelemetry?.attempts || [],
+        },
     }).catch(error => logger.warn(`[LiveChatAudit] outbound record failed: ${error?.message || error}`));
     for (const step of (steps || []) as Array<Record<string, any>>) {
         await agentAuditRepository.record(tenantId, {
@@ -1625,6 +1703,7 @@ async function handle_live_chat(args: Record<string, any>): Promise<any> {
     return {
         ...result,
         response: content,
+        degraded: result.degraded === true,
         runId: execution.runId,
         traceId: execution.traceId,
         resumed: execution.resumed,
