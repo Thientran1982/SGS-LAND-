@@ -1,0 +1,18 @@
+TASK C — SỬA TOOL LANDING BUILDER 'KHÔNG MỞ ĐƯỢC' + THÊM UI CHO USER
+
+Bối cảnh đã audit xong (đừng audit lại): backend tool landing_builder + API /api/landing-pages/* + DB landing_pages đều OK (test 200, có 1 trang published slug=du-an-demo-zcode 'Can ho 12 ha (demo)'). Lỗi: frontend KHÔNG có route render trang landing theo slug — /landing/du-an-demo-zcode hiện trả về SPA shell trang chủ (catch-all SSR), người dùng thấy trang chủ thay vì trang landing.
+
+VIỆC 1 — Frontend route render trang landing: Thêm route /landing/:slug vào App.tsx + component LandingPageView mới: fetch GET /api/landing-pages/:slug, render đủ 6 sections theo schema DB (hero, gallery, legal, price, amenities, contact) đúng thứ tự, style đồng bộ thiết kế SGS LAND (tông vàng/kem hiện có, responsive). Slug không tồn tại hoặc status != published → trang 404 riêng có nút 'Dựng trang landing mới' về /livechat. Draft page (owner đúng visitorKey) có banner 'Bản nháp' + nút publish.
+
+VIỆC 2 — Chat widget chèn link mở trang: Khi tool landing_builder trả kết quả trong liveChatEngine, câu trả lời của agent phải chứa link mở được tới trang vừa dựng (/landing/). Kiểm tra chỗ tool result được format thành text trả về user — thêm dòng 'Xem trang: /landing/' (hoặc markdown link nếu widget hỗ trợ). Slug lấy từ result của handle_landing_builder.
+
+VIỆC 3 — Nút tạo trang + link sidebar cho user đăng nhập: (a) Sidebar admin/dashboard hiện có (menu trái sau đăng nhập): thêm mục 'Trang Landing' — danh sách các trang của user (GET /api/landing-pages?visitorKey=), mỗi trang có nút Xem (/landing/slug) + Trạng thái (draft/published). (b) Trong trang đó hoặc đầu trang: nút '+ Tạo trang landing' — mở /livechat với tin nhắn gợi ý sẵn ('Em muốn dựng trang landing cho dự án ...') để agent Minh dùng tool landing_builder dựng giúp. KHÔNG tự gọi tool trực tiếp từ UI (giữ nguyên luồng qua chat như thiết kế P0). (c) visitorKey dùng userId của user đăng nhập (backend đã hỗ trợ visitorKey param).
+
+VIỆC 4 — Kiểm thử & nghiệm thu (dán kết quả):
+
+GET /landing/du-an-demo-zcode trong preview → thấy trang 'Can ho 12 ha (demo)' với 6 sections (KHÔNG còn là trang chủ).
+Slug không tồn tại /landing/xyz → 404 landing riêng.
+Sidebar sau đăng nhập có mục 'Trang Landing' + nút '+ Tạo trang landing'; click Xem mở đúng trang.
+Tool landing_builder qua chat trả về có link /landing/slug (kiểm tra bằng cách gọi tool trực tiếp nếu chat upstream timeout).
+npx tsc --noEmit EXIT=0 + npm run build + restart workflow + /api/health 200.
+NGUYÊN TẮC: KHÔNG đổi backend API đã hoạt động; KHÔNG đổi luật quota/paywall; UI tiếng Việt đồng bộ thiết kế hiện có; mọi tính năng mới fail-safe.
