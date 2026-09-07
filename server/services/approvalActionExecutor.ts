@@ -35,7 +35,15 @@ export async function executeApprovedAction(tenantId: string, approvalId: string
     if (request.resumed_at) return { approvalId, actionType: request.action_type, executed: false, reason: 'ALREADY_EXECUTED' };
     const payload = request.payload || {};
     let actionResult: Record<string, any>;
-    if (request.action_type === 'CHANGE_LEAD_STAGE') {
+    if (request.action_type === 'REVIEW_REPAIR_SPIKE') {
+      if (!String(payload.pattern || '').trim()) throw new Error('APPROVAL_REPAIR_SPIKE_PATTERN_REQUIRED');
+      actionResult = {
+        leadId: request.lead_id,
+        reviewed: true,
+        mutation: 'NONE',
+        pattern: String(payload.pattern).slice(0, 300),
+      };
+    } else if (request.action_type === 'CHANGE_LEAD_STAGE') {
       const targetStage = String(payload.targetStage || '');
       if (!LEAD_STAGES.has(targetStage)) throw new Error('APPROVAL_INVALID_TARGET_STAGE');
       const leadResult = await client.query(

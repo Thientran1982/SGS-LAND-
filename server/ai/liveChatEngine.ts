@@ -36,7 +36,7 @@ import {
     sharedCacheStats,
 } from '../services/sharedCache';
 import { getGuideDataSummary } from './guideDataSources';
-import { agentMemoryService } from '../services/agentMemoryService';
+import { agentMemoryService, scrubPii } from '../services/agentMemoryService';
 import { getGuidePolicyResponse, normalizeGuideInput } from './guideAssistantPolicy';
 import { customerProfileService, observeCustomerMessage, classifyInteractionOutcome } from '../services/customerProfileService';
 import { listEnabledMcpServers, callMcpTool, resolveMcpToolName } from '../services/mcpClientService';
@@ -1493,6 +1493,38 @@ async function handle_live_chat(args: Record<string, any>): Promise<any> {
         },
     });
     const { content, steps, ...result } = execution.result as any;
+    // Long-term customer memory is deliberately attached to the durable
+    // success boundary, not handle_live_chat_core: retries/resumes must not
+    // create an extra memory write. Consent-gated personalization remains the
+    // source of truth for customer namespace writes.
+    const customerId = String(args.customerId || args.context?.customerId || '').trim();
+    if (customerId && result.personalization?.enabled === true) {
+        const history = Array.isArray(args.context?.history) ? args.context.history.slice(-4) : [];
+        const transcript = [
+            ...history.map((entry: any) => `[${entry?.role === 'user' ? 'KHÁCH' : 'AGENT'}] ${sanitizeChatInput(entry?.content, 500)}`),
+            `[KHÁCH] ${sanitizeChatInput(message, 600)}`,
+            `[AGENT] ${sanitizeChatInput(content, 900)}`,
+        ].filter(Boolean).join('\n');
+        void agentMemoryService.summarizeSession(tenantId, `customer:${customerId}`, transcript)
+            .catch(error => logger.warn(`[LiveChatMemory] summarizeSession skipped: ${error?.message || error}`));
+    }
+    const leadId = String(args.context?.leadId || args.leadId || '').trim();
+    if (leadId) {
+        const journeySummary = scrubPii(
+            `Khách: ${sanitizeChatInput(message, 500)} | Agent: ${sanitizeChatInput(content, 700)}`,
+        ).replace(/\s+/g, ' ').trim().slice(0, 1600);
+        void agentRepository.saveLeadJourneyEvent(
+            tenantId,
+            leadId,
+            'LIVE_CHAT',
+            'CHAT_INTERACTION',
+            journeySummary,
+            { intent: result.intent || null, groundingStatus: result.groundingStatus || null },
+            { source: 'live_chat_engine', runId: execution.runId, resumed: execution.resumed },
+            effectiveSessionId,
+            'live_chat',
+        ).catch(error => logger.warn(`[LiveChatJourney] save skipped: ${error?.message || error}`));
+    }
     const auditBase = {
         tenantId,
         sessionId: effectiveSessionId,

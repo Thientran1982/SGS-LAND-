@@ -47,3 +47,4 @@
 - [Generated production backend](generated-production-backend.md) — production may run ignored server.js; rebuild the bundle after server source changes before runtime verification
 - [Database outage alerts](database-outage-alerts.md) — keep prolonged outage signals process-local, deduplicated, tenant-independent, and free of raw connection context
 - [Rate-limit fallback timeouts](rate-limit-fallback-timeouts.md) — bound Redis client initialization as well as commands before using in-memory fallback
+- [Internal scheduler endpoint protection](internal-scheduled-endpoints.md) — secret-authenticated server jobs still need a narrow CSRF exemption

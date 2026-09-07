@@ -200,6 +200,8 @@ import m175 from './175_agent_automations';
 import m176 from './176_agent_mcp_servers';
 import m177 from './177_p2_skills_rooms';
 import m178 from './178_task_agent_tools_seed';import m179 from './179_landing_builder';
+import m180 from './180_learning_golden_set';
+import m181 from './181_repair_spike_approval';
 dotenv.config();
 
 export interface Migration {
@@ -395,6 +397,8 @@ export const MIGRATION_REGISTRY: Record<string, Migration> = {
 '176_agent_mcp_servers.ts': m176,
 '177_p2_skills_rooms.ts': m177,
   '178_task_agent_tools_seed.ts': m178,  '179_landing_builder.ts': m179,
+  '180_learning_golden_set.ts': m180,
+  '181_repair_spike_approval.ts': m181,
 };
 
 /**

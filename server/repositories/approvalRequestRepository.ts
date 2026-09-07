@@ -13,6 +13,7 @@ export const HIGH_IMPACT_ACTIONS = [
   'CREATE_PROPOSAL',
   'BOOK_VIEWING',
   'SEND_DOCS',
+  'REVIEW_REPAIR_SPIKE',
 ] as const;
 
 export type HighImpactAction = typeof HIGH_IMPACT_ACTIONS[number];

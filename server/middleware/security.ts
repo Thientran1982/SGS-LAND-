@@ -202,6 +202,8 @@ const CSRF_EXEMPT_PREFIXES = [
   // Server-to-server scheduled jobs authenticate with x-internal-secret.
   '/api/internal/engagement-email-cron',
   '/api/internal/chat-followup-cron',
+  '/api/internal/learning-cycle',
+  '/api/internal/memory-consolidation',
 ];
 
 export function generateCsrfToken(): string {

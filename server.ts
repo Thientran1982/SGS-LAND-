@@ -18,6 +18,7 @@ import { runPendingMigrations } from "./server/migrations/runner";
 import { systemService } from "./server/services/systemService";
 import { webhookQueue, setupWebhookWorker, processWebhookJob, isQStashEnabled, isQstashVerified, getQstashToken, verifyQstashTokenAtStartup } from "./server/queue";
 import { startAgentOperatorWorker, setAgentOperatorIo } from "./server/services/agentOperatorDaemon";
+import { startLearningCycleScheduler } from "./server/services/learningCycleRunner";
 import { userRepository } from "./server/repositories/userRepository";
 import { listingRepository } from "./server/repositories/listingRepository";
 import { leadRepository } from "./server/repositories/leadRepository";
@@ -78,6 +79,7 @@ import { createLandingAiRoutes } from "./server/routes/landingAiRoutes";
 import { createLandingPagesRoutes } from "./server/routes/landingPagesRoutes";
 import { createAgentAuditRoutes } from "./server/routes/agentAuditRoutes";
 import { createAgentOperatingRoutes } from "./server/routes/agentOperatingRoutes";
+import { createLearningCycleRoutes } from "./server/routes/learningCycleRoutes";
 import { createDailyAdminReportRoutes } from "./server/routes/dailyAdminReportRoutes";
 import { startDailyReportScheduler } from "./server/services/dailyAdminReportService";
 import { createLiveChatAgentRoutes } from "./server/routes/liveChatAgentRoutes";
@@ -1637,11 +1639,13 @@ app.use(globalMutationAudit);
   // Setup BullMQ Worker — capture instance so we can close it on shutdown
   const webhookWorker = setupWebhookWorker(io);
   setAgentOperatorIo(io);
-  const agentOperatorWorker = startAgentOperatorWorker(async () => {
+  const getAgentTenantIds = async () => {
     const result = await withRlsBypass(client => client.query(`SELECT id FROM tenants`));
     return result.rows.map((row: any) => String(row.id));
-  });
+  };
+  const agentOperatorWorker = startAgentOperatorWorker(getAgentTenantIds);
   void agentOperatorWorker;
+  startLearningCycleScheduler(getAgentTenantIds);
 
   // Start market data service — Redis persistence + background seed for all provinces
   marketDataService.start(io).catch((err: any) =>
@@ -4360,6 +4364,7 @@ app.use('/api/public/livechat', agentP1Router);
   app.use('/api/commissions', apiRateLimit, createCommissionRoutes(authenticateToken));
   app.use('/api/tenant', apiRateLimit, createTenantRoutes(authenticateToken));
 app.use('/api/approval-requests', apiRateLimit, createApprovalRequestRoutes(authenticateToken));
+  app.use('/api/internal', createLearningCycleRoutes());
 
   // ─── PUBLIC mini-site cho từng dự án (no auth, server-side cache 5min) ────
   // Không bọc apiRateLimit chung — endpoint này có rate limit riêng
