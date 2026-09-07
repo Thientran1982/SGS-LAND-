@@ -6,6 +6,7 @@ import fs from "fs";
 import { createHash } from "crypto";
 import { Server } from "socket.io";
 import http from "http";
+import dns from "node:dns/promises";
 import cookieParser from "cookie-parser";
 import jwt from "jsonwebtoken";
 import { WebSocketServer } from "ws";
@@ -178,6 +179,41 @@ function isPublicLandingBuilderRequest(message: string): boolean {
   // property that happens to mention "landing" should still be handled by
   // the existing AI service, while builder phrases reach landing_builder.
   return isLandingBuilderRequest(message);
+}
+
+/**
+ * A managed Postgres DNS outage must not block the HTTP listener forever.
+ * The VM supervisor can restart an unhealthy backend, but it cannot recover a
+ * process that is still waiting inside pool.connect() before server.listen().
+ * Keep this probe bounded and skip only startup migrations; normal database
+ * recovery remains active in server/db.ts.
+ */
+async function isDatabaseHostResolvable(connectionString: string): Promise<boolean> {
+  let hostname: string;
+  try {
+    hostname = new URL(connectionString).hostname;
+  } catch {
+    // Let the normal migration error path handle malformed connection strings.
+    return true;
+  }
+
+  let timeout: NodeJS.Timeout | undefined;
+  const lookup = dns.lookup(hostname).catch(() => null);
+  lookup.catch(() => {});
+  try {
+    const result = await Promise.race([
+      lookup,
+      new Promise<null>((_, reject) => {
+        timeout = setTimeout(() => reject(new Error('DATABASE_DNS_PROBE_TIMEOUT')), 3000);
+        timeout.unref?.();
+      }),
+    ]);
+    return Boolean(result);
+  } catch {
+    return false;
+  } finally {
+    if (timeout) clearTimeout(timeout);
+  }
 }
 
 
@@ -1698,20 +1734,25 @@ app.use(globalMutationAudit);
   if (process.env.AIVEN_DATABASE_URL) {
     const MAX_MIGRATION_ATTEMPTS = 3;
     let migrationOk = false;
-    for (let attempt = 1; attempt <= MAX_MIGRATION_ATTEMPTS; attempt++) {
-      try {
-        await runPendingMigrations(pool);
-        migrationOk = true;
-        break;
-      } catch (err: any) {
-        const isTransient = isTransientDatabaseError(err);
-        if (attempt < MAX_MIGRATION_ATTEMPTS && isTransient) {
-          logger.warn(`[migrations] Connection attempt ${attempt}/${MAX_MIGRATION_ATTEMPTS} failed — retrying in 5s… (${err.message})`);
-          await new Promise(r => setTimeout(r, 5000));
-        } else if (isTransient) {
-          logger.warn(`[migrations] DB unreachable after ${MAX_MIGRATION_ATTEMPTS} attempts — server starting without migrations. Will retry on first API request. (${err.message})`);
-        } else {
-          throw err;
+    const databaseResolvable = await isDatabaseHostResolvable(process.env.AIVEN_DATABASE_URL);
+    if (!databaseResolvable) {
+      logger.warn('[migrations] Database hostname is currently not resolvable — starting without migrations; database recovery will retry in background.');
+    } else {
+      for (let attempt = 1; attempt <= MAX_MIGRATION_ATTEMPTS; attempt++) {
+        try {
+          await runPendingMigrations(pool);
+          migrationOk = true;
+          break;
+        } catch (err: any) {
+          const isTransient = isTransientDatabaseError(err);
+          if (attempt < MAX_MIGRATION_ATTEMPTS && isTransient) {
+            logger.warn(`[migrations] Connection attempt ${attempt}/${MAX_MIGRATION_ATTEMPTS} failed — retrying in 5s… (${err.message})`);
+            await new Promise(r => setTimeout(r, 5000));
+          } else if (isTransient) {
+            logger.warn(`[migrations] DB unreachable after ${MAX_MIGRATION_ATTEMPTS} attempts — server starting without migrations. Will retry on first API request. (${err.message})`);
+          } else {
+            throw err;
+          }
         }
       }
     }
