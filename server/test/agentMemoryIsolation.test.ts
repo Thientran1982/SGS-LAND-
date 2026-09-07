@@ -121,4 +121,20 @@ describe('admin agent memory tenant and privacy boundaries', () => {
     expect(query.mock.calls[0][1]).toEqual([tenantA, 'draft-b']);
     expect(query).toHaveBeenCalledTimes(1);
   });
+
+  it('expands Vietnamese real-estate synonyms and keeps importance as the score tie-breaker', async () => {
+    query
+      .mockResolvedValueOnce({
+        rows: [
+          { id: 'low', key: 'purpose', value: 'Mục đích an cư', importance: 0.2 },
+          { id: 'high', key: 'purpose', value: 'Mục đích an cư', importance: 0.9 },
+        ],
+      })
+      .mockResolvedValueOnce({ rows: [] });
+
+    const result = await agentMemoryService.recall(tenantA, 'customer:buyer-a', 'nhà ở gia đình', 2);
+
+    expect(result).toHaveLength(2);
+    expect(result[0].id).toBe('high');
+  });
 });

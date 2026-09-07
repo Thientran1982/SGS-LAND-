@@ -38,7 +38,7 @@ import {
 import { getGuideDataSummary } from './guideDataSources';
 import { agentMemoryService, scrubPii } from '../services/agentMemoryService';
 import { getGuidePolicyResponse, normalizeGuideInput } from './guideAssistantPolicy';
-import { customerProfileService, observeCustomerMessage, classifyInteractionOutcome } from '../services/customerProfileService';
+import { customerProfileService, observeCustomerMessage, extractFactsWithLLM, classifyInteractionOutcome } from '../services/customerProfileService';
 import { listEnabledMcpServers, callMcpTool, resolveMcpToolName } from '../services/mcpClientService';
 
 // Prompt-injection sanitizer for live-chat user content (message, leadName, history).
@@ -1207,7 +1207,21 @@ async function handle_live_chat_core(args: Record<string, any>): Promise<any> {
         try {
             const initial = await customerProfileService.getPersonalizationContext(tenantId, customerId, msg);
             if (initial.enabled) {
-                for (const fact of observeCustomerMessage(msg)) {
+                const [regexFacts, llmFacts] = await Promise.all([
+                    Promise.resolve(observeCustomerMessage(msg)),
+                    extractFactsWithLLM(msg, params => generateLiveChatText({
+                        tenantId,
+                        feature: params.feature || 'CUSTOMER_PROFILE_FACT_EXTRACTION',
+                        system: params.system,
+                        prompt: params.prompt,
+                        jsonMode: params.jsonMode,
+                        timeoutMs: params.timeoutMs,
+                        maxOutputTokens: 300,
+                    }).catch(() => '')),
+                ]);
+                const factsByCategory = new Map(regexFacts.map(fact => [fact.category, fact]));
+                for (const fact of llmFacts) factsByCategory.set(fact.category, fact);
+                for (const fact of factsByCategory.values()) {
                     await customerProfileService.addFact(tenantId, customerId, fact, customerId);
                 }
                 personalization = await customerProfileService.getPersonalizationContext(tenantId, customerId, msg);
@@ -1256,9 +1270,11 @@ async function handle_live_chat_core(args: Record<string, any>): Promise<any> {
         GENERAL: { tool: 'get_platform_knowledge', args: { tenantId, domain: 'platform', query: msg } },
     };
     // === PHA 2: MINH ORCHESTRATOR — khi keyword map ve GENERAL, Minh (LLM) tu chon specialist theo ngu canh ===
+  let minhPlan: Awaited<ReturnType<typeof minhChooseSpecialist>> = null;
+  const minhStartedAt = Date.now();
   if (detectedIntent === 'GENERAL') {
-    const minhPlan = await minhChooseSpecialist({
-      tenantId, message: msg, generateFn: generateLiveChatText,
+    minhPlan = await minhChooseSpecialist({
+      tenantId, message: msg, sessionId: String(sessionId || ''), generateFn: generateLiveChatText,
       fallbackIntent: detectedIntent, fallbackTool: suggestedTool,
     });
     if (minhPlan && minhPlan.confidence >= 0.5 && MINH_INTENT_TOOLS[minhPlan.intent]) {
@@ -1338,6 +1354,33 @@ const plan = executionPlans[detectedIntent];
         } else {
             specialistError = toolGuardrail.reason || 'Tool bị guardrail chặn';
         }
+    }
+
+    if (minhPlan) {
+        const toolResultUsed = Boolean(plan?.tool && specialistOutput && executedTools.includes(plan.tool));
+        const feedbackPositive = classifyInteractionOutcome(msg) === 'positive';
+        void agentMemoryService.recordSignal(tenantId, {
+            signalType: 'minh_delegation_result',
+            actorId: 'MINH',
+            subjectType: 'chat_message',
+            subjectId: String(sessionId || msg).slice(0, 200),
+            dedupeKey: `minh-delegation-result:${String(sessionId || msg).slice(0, 180)}`,
+            payload: {
+                sessionId: String(sessionId || msg).slice(0, 180),
+                intent: minhPlan.intent,
+                confidence: minhPlan.confidence,
+                selectedIntent: detectedIntent,
+                plannedTool: MINH_INTENT_TOOLS[minhPlan.intent] || null,
+                usedTool: toolResultUsed,
+                feedbackPositive,
+                correct: toolResultUsed || feedbackPositive,
+                correctReason: toolResultUsed ? 'tool_result_used' : (feedbackPositive ? 'positive_feedback' : 'unresolved'),
+                grounded: Boolean(specialistOutput),
+                escalated: executedTools.includes('escalate_to_human'),
+                latencyMs: Date.now() - minhStartedAt,
+            },
+            provenance: 'minh_orchestrator',
+        }).catch(() => {});
     }
 
     // Build a grounded synthesis prompt with KB and specialist evidence.

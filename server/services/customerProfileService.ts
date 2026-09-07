@@ -1,4 +1,7 @@
 import { withTenantContext } from '../db';
+import { generateWithPolicy } from '../ai/providers';
+import { TASK_MODELS } from '../ai/modelPolicy';
+import { scrubPii } from './agentMemoryService';
 
 export const PROFILE_CATEGORIES = new Set([
   'budget', 'preference_location', 'purpose', 'purchase_timeline', 'property_need', 'constraint', 'other',
@@ -6,6 +9,13 @@ export const PROFILE_CATEGORIES = new Set([
 export const PROFILE_CONSENTS = new Set(['PENDING', 'OPTED_IN', 'OPTED_OUT']);
 
 export type ObservedProfileFact = ReturnType<typeof normalizeProfileFact>;
+type ProfileFactGenerator = (params: {
+  system?: string;
+  prompt: string;
+  jsonMode?: boolean;
+  timeoutMs?: number;
+  feature?: string;
+}) => Promise<string>;
 
 export function observeCustomerMessage(message: string): ObservedProfileFact[] {
   const text = String(message || '').trim();
@@ -43,6 +53,71 @@ export function observeCustomerMessage(message: string): ObservedProfileFact[] {
     }));
   }
   return facts;
+}
+
+/**
+ * Extract richer profile facts in parallel with the deterministic extractor.
+ * A provider/parser failure returns [] so the regex path remains authoritative
+ * whenever the optional LLM path is unavailable.
+ */
+export async function extractFactsWithLLM(
+  message: string,
+  generateFn?: ProfileFactGenerator,
+): Promise<ObservedProfileFact[]> {
+  const safeMessage = scrubPii(String(message || '').trim()).slice(0, 1200);
+  if (!safeMessage) return [];
+  const generate = generateFn || (async (params: Parameters<ProfileFactGenerator>[0]) => {
+    const result = await generateWithPolicy({
+      model: TASK_MODELS.EXTRACTOR,
+      system: params.system,
+      prompt: params.prompt,
+      jsonMode: true,
+      maxOutputTokens: 300,
+    });
+    return result.text;
+  });
+  try {
+    const raw = await generate({
+      feature: 'CUSTOMER_PROFILE_FACT_EXTRACTION',
+      jsonMode: true,
+      timeoutMs: 6000,
+      system: [
+        'Bạn trích xuất facts hồ sơ khách hàng bất động sản từ một tin nhắn tiếng Việt.',
+        'Chỉ trả JSON, không markdown. Không suy đoán thông tin không có trong câu.',
+        'Categories hợp lệ: budget, preference_location, purpose, purchase_timeline, property_need, constraint, other.',
+        'Mỗi fact gồm fact, category, confidence (0..1), sensitive (boolean).',
+      ].join(' '),
+      prompt: JSON.stringify({
+        message: safeMessage,
+        schema: {
+          facts: [{ fact: 'string', category: 'string', confidence: 'number', sensitive: 'boolean' }],
+        },
+      }),
+    });
+    const cleaned = String(raw || '').replace(/```json|```/gi, '').trim();
+    const start = cleaned.indexOf('{');
+    const end = cleaned.lastIndexOf('}');
+    const parsed = JSON.parse(start >= 0 && end > start ? cleaned.slice(start, end + 1) : cleaned);
+    const candidates = Array.isArray(parsed) ? parsed : parsed?.facts;
+    if (!Array.isArray(candidates)) return [];
+    const byCategory = new Map<string, ObservedProfileFact>();
+    for (const candidate of candidates.slice(0, 12)) {
+      try {
+        const fact = normalizeProfileFact({
+          ...candidate,
+          fact: scrubPii(candidate?.fact),
+          source: 'llm_extraction',
+        });
+        const previous = byCategory.get(fact.category);
+        if (!previous || fact.confidence > previous.confidence) byCategory.set(fact.category, fact);
+      } catch {
+        // One malformed model item must not discard valid items or regex facts.
+      }
+    }
+    return [...byCategory.values()];
+  } catch {
+    return [];
+  }
 }
 
 export function classifyInteractionOutcome(message: string): 'positive' | 'negative' | 'neutral' {

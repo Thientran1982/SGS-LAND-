@@ -3,14 +3,21 @@ import { pool, withTenantContext } from '../db';
 import { logger } from '../middleware/logger';
 import { agentMemoryService, scrubPii } from './agentMemoryService';
 import { autonomousLearningService, assessFeedback } from './autonomousLearningService';
+import {
+  computeMinhWeeklyKpiForAllTenants,
+  runMinhConfidenceCalibrationForAllTenants,
+} from './minhCalibrationService';
 
 const INITIAL_RUN_DELAY_MS = 60_000;
 const CONSOLIDATION_INTERVAL_MS = 24 * 60 * 60 * 1000;
 // Asia/Saigon is UTC+7 year-round: Sunday 03:00 ICT = Saturday 20:00 UTC.
 const WEEKLY_RUN_HOUR_UTC = 20;
+// KPI follows the learning cycle at Sunday 04:00 ICT = Saturday 21:00 UTC.
+const KPI_RUN_HOUR_UTC = 21;
 let initialTimer: NodeJS.Timeout | null = null;
 let weeklyTimer: NodeJS.Timeout | null = null;
 let consolidationTimer: NodeJS.Timeout | null = null;
+let kpiTimer: NodeJS.Timeout | null = null;
 let learningRunInFlight = false;
 let consolidationInFlight = false;
 
@@ -26,6 +33,15 @@ function isoWeekKey(date = new Date()): string {
 function nextSundayAt3Utc(from = new Date()): number {
   const next = new Date(from);
   next.setUTCHours(WEEKLY_RUN_HOUR_UTC, 0, 0, 0);
+  const daysUntilSaturday = (6 - next.getUTCDay() + 7) % 7;
+  next.setUTCDate(next.getUTCDate() + daysUntilSaturday);
+  if (next.getTime() <= from.getTime()) next.setUTCDate(next.getUTCDate() + 7);
+  return Math.max(60_000, next.getTime() - from.getTime());
+}
+
+function nextSundayAt4Utc(from = new Date()): number {
+  const next = new Date(from);
+  next.setUTCHours(KPI_RUN_HOUR_UTC, 0, 0, 0);
   const daysUntilSaturday = (6 - next.getUTCDay() + 7) % 7;
   next.setUTCDate(next.getUTCDate() + daysUntilSaturday);
   if (next.getTime() <= from.getTime()) next.setUTCDate(next.getUTCDate() + 7);
@@ -265,12 +281,31 @@ export function startLearningCycleScheduler(getTenantIds: () => Promise<string[]
   };
   const runConsolidation = async () => {
     try {
-      await consolidateMemoryForAllTenants();
+      const [consolidation, calibration] = await Promise.allSettled([
+        consolidateMemoryForAllTenants(),
+        runMinhConfidenceCalibrationForAllTenants(),
+      ]);
+      if (consolidation.status === 'rejected') {
+        logger.warn(`[MemoryConsolidation] run failed: ${consolidation.reason?.message || consolidation.reason}`);
+      }
+      if (calibration.status === 'rejected') {
+        logger.warn(`[MinhCalibration] run failed: ${calibration.reason?.message || calibration.reason}`);
+      }
     } catch (error: any) {
-      logger.warn(`[MemoryConsolidation] scheduler failed: ${error?.message || error}`);
+      logger.warn(`[DailyAgentMaintenance] scheduler failed: ${error?.message || error}`);
     } finally {
       consolidationTimer = setTimeout(runConsolidation, CONSOLIDATION_INTERVAL_MS);
       consolidationTimer.unref?.();
+    }
+  };
+  const runKpi = async () => {
+    try {
+      await computeMinhWeeklyKpiForAllTenants();
+    } catch (error: any) {
+      logger.warn(`[MinhKpi] scheduler failed: ${error?.message || error}`);
+    } finally {
+      kpiTimer = setTimeout(runKpi, nextSundayAt4Utc());
+      kpiTimer.unref?.();
     }
   };
   initialTimer = setTimeout(() => {
@@ -282,6 +317,8 @@ export function startLearningCycleScheduler(getTenantIds: () => Promise<string[]
   weeklyTimer.unref?.();
   consolidationTimer = setTimeout(runConsolidation, INITIAL_RUN_DELAY_MS + 30_000);
   consolidationTimer.unref?.();
+  kpiTimer = setTimeout(runKpi, INITIAL_RUN_DELAY_MS + 45_000);
+  kpiTimer.unref?.();
   return { stop: stopLearningCycleScheduler };
 }
 
@@ -289,7 +326,9 @@ export function stopLearningCycleScheduler() {
   if (initialTimer) clearTimeout(initialTimer);
   if (weeklyTimer) clearTimeout(weeklyTimer);
   if (consolidationTimer) clearTimeout(consolidationTimer);
+  if (kpiTimer) clearTimeout(kpiTimer);
   initialTimer = null;
   weeklyTimer = null;
   consolidationTimer = null;
+  kpiTimer = null;
 }

@@ -7,6 +7,7 @@
 import { logger } from '../middleware/logger';
 import { agentMemoryService } from '../services/agentMemoryService';
 import { TASK_MODELS } from './modelPolicy';
+import { getMinhCalibrationPromptLine } from '../services/minhCalibrationService';
 
 export type MinhPlan = {
   intent: string;
@@ -47,6 +48,7 @@ function buildMinhOrchestratorPrompt(
   message: string,
   ownerProfileBlock: string,
   lessonsBlock: string,
+  calibrationLine = '',
 ): string {
   const parts = [
     'Ban la MINH - tong dieu phoi vien AI cua SGS LAND. Nhiem vu: doc tin nhan khach va chon DUNG MOT specialist phuc vu tot nhat.',
@@ -61,6 +63,7 @@ function buildMinhOrchestratorPrompt(
   ];
   if (ownerProfileBlock) parts.push('', '[HO SO CHU SO HUU]', ownerProfileBlock.slice(0, 400));
   if (lessonsBlock) parts.push('', '[BAI HOC TRUOC DO]', lessonsBlock.slice(0, 400));
+  if (calibrationLine) parts.push('', calibrationLine);
   parts.push(
     '',
     'TIN NHAN KHACH: ' + JSON.stringify(message).slice(0, 600),
@@ -78,6 +81,7 @@ function buildMinhOrchestratorPrompt(
 export async function minhChooseSpecialist(args: {
   tenantId: string;
   message: string;
+  sessionId?: string;
   generateFn: (params: { system?: string; prompt: string; jsonMode?: boolean; timeoutMs?: number; feature?: string }) => Promise<string>;
   fallbackIntent?: string;
   fallbackTool?: string;
@@ -92,7 +96,8 @@ export async function minhChooseSpecialist(args: {
       lessonsBlock = await agentMemoryService.memoryBlock(args.tenantId, 'agent:lessons', args.message, 300);
     } catch { /* memory optional */ }
 
-    const system = buildMinhOrchestratorPrompt(args.message, ownerBlock, lessonsBlock);
+    const calibrationLine = await getMinhCalibrationPromptLine(args.tenantId);
+    const system = buildMinhOrchestratorPrompt(args.message, ownerBlock, lessonsBlock, calibrationLine);
     const raw = await args.generateFn({
       system,
       prompt: 'Chon specialist phu hop nhat roi tra ve JSON.',
@@ -123,7 +128,10 @@ export async function minhChooseSpecialist(args: {
         actorId: 'MINH',
         subjectType: 'chat_message',
         subjectId: String(args.message).slice(0, 120),
-        payload: { intent, tool: MINH_INTENT_TOOLS[intent], reason: plan.reason, confidence, ms: Date.now() - started },
+        payload: {
+          intent, tool: MINH_INTENT_TOOLS[intent], reason: plan.reason,
+          confidence, ms: Date.now() - started, sessionId: args.sessionId || null,
+        },
         provenance: 'minh_orchestrator',
       });
     } catch { /* signal optional */ }

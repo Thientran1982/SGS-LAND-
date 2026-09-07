@@ -32,10 +32,31 @@ function safeNamespace(namespace: string): string {
   return value;
 }
 
+function normalizeVietnamese(value: string): string {
+  return value.toLocaleLowerCase('vi-VN').normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+}
+
+const REAL_ESTATE_SYNONYMS: Array<{ triggers: string[]; equivalents: string[] }> = [
+  { triggers: ['nha o gia dinh', 'gia dinh o'], equivalents: ['an cu', 'de o', 'o thuc'] },
+  { triggers: ['an cu', 'de o', 'o thuc'], equivalents: ['nha o', 'gia dinh'] },
+  { triggers: ['mua nha'], equivalents: ['tim nha', 'nha o'] },
+  { triggers: ['dau tu'], equivalents: ['sinh loi', 'cho thue', 'roi'] },
+  { triggers: ['can ho'], equivalents: ['chung cu', 'apartment'] },
+];
+
 function lexicalScore(value: string, query: string): number {
-  const haystack = value.toLocaleLowerCase('vi-VN');
-  const terms = query.toLocaleLowerCase('vi-VN').split(/\s+/).filter(Boolean);
-  return terms.length ? terms.reduce((score, term) => score + (haystack.includes(term) ? 1 : 0), 0) / terms.length : 0;
+  const haystack = normalizeVietnamese(value);
+  const normalizedQuery = normalizeVietnamese(query);
+  const terms = new Set(normalizedQuery.split(/\s+/).filter(Boolean));
+  for (const group of REAL_ESTATE_SYNONYMS) {
+    if (group.triggers.some(trigger => normalizedQuery.includes(trigger))) {
+      group.equivalents.forEach(equivalent => terms.add(equivalent));
+    }
+  }
+  const searchableTerms = [...terms];
+  return searchableTerms.length
+    ? searchableTerms.reduce((score, term) => score + (haystack.includes(term) ? 1 : 0), 0) / searchableTerms.length
+    : 0;
 }
 
 async function persistSignalWriteFailure(

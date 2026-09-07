@@ -4,6 +4,7 @@ import {
   formatCustomerProfileContext,
   normalizeProfileFact,
   observeCustomerMessage,
+  extractFactsWithLLM,
 } from '../services/customerProfileService';
 
 describe('customer profile guardrails', () => {
@@ -33,6 +34,29 @@ describe('customer profile guardrails', () => {
     expect(facts.map(fact => fact.category)).toEqual(['budget', 'preference_location', 'purpose']);
     expect(facts.every(fact => fact.source === 'customer_message')).toBe(true);
     expect(observeCustomerMessage('Tôi đang khó khăn tài chính, xin đừng nhắc lại.').some(fact => fact.sensitive)).toBe(true);
+  });
+
+  it('extracts timeline, budget and location through the optional JSON LLM path', async () => {
+    const facts = await extractFactsWithLLM(
+      'tháng sau em cưới, cần nhà gấp quanh 5 tỷ ở Thủ Đức',
+      async () => JSON.stringify({
+        facts: [
+          { fact: 'Dự kiến mua trong tháng sau vì sắp cưới', category: 'purchase_timeline', confidence: 0.92 },
+          { fact: 'Ngân sách quanh 5 tỷ', category: 'budget', confidence: 0.9 },
+          { fact: 'Quan tâm khu vực Thủ Đức', category: 'preference_location', confidence: 0.95 },
+        ],
+      }),
+    );
+    expect(facts.map(fact => fact.category)).toEqual(
+      expect.arrayContaining(['purchase_timeline', 'budget', 'preference_location']),
+    );
+    expect(facts.every(fact => fact.source === 'llm_extraction')).toBe(true);
+  });
+
+  it('fails closed to an empty optional LLM result so regex facts can remain intact', async () => {
+    await expect(extractFactsWithLLM('cần nhà gấp', async () => {
+      throw new Error('provider timeout');
+    })).resolves.toEqual([]);
   });
 
   it('classifies explicit recommendation outcomes without guessing from neutral text', () => {
