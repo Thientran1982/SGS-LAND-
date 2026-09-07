@@ -70,6 +70,24 @@ describe('admin agent memory tenant and privacy boundaries', () => {
     expect(insert?.[1][5]).not.toMatch(/a@example\.com|0912 345 678|012345678901|12 Nguyễn Trãi/);
   });
 
+  it('scrubs Vietnamese full-address markers that begin with Unicode text', async () => {
+    query
+      .mockResolvedValueOnce({ rows: [] })
+      .mockResolvedValueOnce({ rows: [{ id: 'memory-vn-address', tenant_id: tenantA, value: '[scrubbed]' }] })
+      .mockResolvedValueOnce({ rows: [] });
+
+    await agentMemoryService.remember(
+      tenantA,
+      'customer:buyer-a',
+      'address',
+      'địa chỉ đầy đủ: 123 Đường Kiểm Thử Phường 1',
+    );
+
+    const insert = callsForTable('agent_store').find(([sql]) => String(sql).startsWith('INSERT'));
+    expect(insert?.[1][5]).toContain('[địa chỉ đã ẩn]');
+    expect(insert?.[1][5]).not.toContain('địa chỉ đầy đủ: 123 Đường Kiểm Thử Phường 1');
+  });
+
   it('uses the session id for replay-safe customer memory and rejects empty transcripts', async () => {
     query
       .mockResolvedValueOnce({ rows: [] })

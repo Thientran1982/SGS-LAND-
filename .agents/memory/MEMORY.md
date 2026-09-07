@@ -50,3 +50,4 @@
 - [Internal scheduler endpoint protection](internal-scheduled-endpoints.md) — secret-authenticated server jobs still need a narrow CSRF exemption
 - [Minh calibration telemetry](minh-calibration-telemetry.md) — calibrate only resolved delegations; persist tool outcomes before final synthesis so timeouts do not erase evidence
 - [Profile extraction fallback](profile-extraction-fallback.md) — optional LLM facts merge by category over regex facts, while provider failures leave deterministic extraction untouched
+- [Live-chat provider smoke evidence](livechat-provider-smoke.md) — separate uncached provider status from cached persistence/idempotency replay

@@ -20,7 +20,10 @@ export function scrubPii(input: unknown): string {
     .replace(/(?<!\d)(?:\+?84|0)(?:\s|[-.])?(?:3|5|7|8|9)(?:\s|[-.]|\d){8,10}(?!\d)/g, '[số điện thoại đã ẩn]')
     .replace(/\b\d{9,12}\b/g, '[mã định danh đã ẩn]')
     .replace(/\b(?:stk|tài khoản ngân hàng|account)\s*[:#-]?\s*\d{6,20}\b/gi, '[tài khoản ngân hàng đã ẩn]')
-    .replace(/\b(?:số nhà|địa chỉ đầy đủ|address)\s*[:#-]?\s*[^,;\n]{8,120}/gi, '[địa chỉ đã ẩn]')
+    // Do not use an ASCII `\b` before this alternation: Vietnamese `đ` is
+    // Unicode text but JavaScript word boundaries are ASCII-oriented, so
+    // `địa chỉ đầy đủ` would otherwise remain in persisted memory.
+    .replace(/(?:số nhà|địa chỉ đầy đủ|address)\s*[:#-]?\s*[^,;\n]{8,120}/giu, '[địa chỉ đã ẩn]')
     .slice(0, 10000);
 }
 
