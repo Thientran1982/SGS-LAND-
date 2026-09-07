@@ -1713,6 +1713,10 @@ async function handle_live_chat(args: Record<string, any>): Promise<any> {
     await recordObservedEntities(tenantId, auditBase, result.specialistOutput, result.sources);
     return {
         ...result,
+        // DurableAgentExecution validates the customer-facing text through
+        // the `content` field. Keep it alongside `response` for callers that
+        // consume the live-chat engine directly.
+        content,
         response: content,
         degraded: result.degraded === true,
         runId: execution.runId,

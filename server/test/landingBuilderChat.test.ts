@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { ensureLandingResponseLink } from '../ai/landingResponse';
+import { inspectAgentOutput } from '../ai/agentGuardrails';
 
 describe('landing_builder chat response contract', () => {
   it('includes the generated landing URL when synthesis omits it', () => {
@@ -36,5 +37,16 @@ describe('landing_builder chat response contract', () => {
         slug: 'du-an-demo-zcode',
       }),
     ).toBe('Chưa tạo được.');
+  });
+
+  it('keeps a successful live-chat engine result valid for the durable output guardrail', () => {
+    const guardrail = inspectAgentOutput({
+      content: 'Đã dựng xong trang landing.\n\nXem trang landing: /landing/du-an-demo-zcode',
+      suggestedAction: null,
+      sources: [{ tool: 'landing_builder' }],
+    });
+
+    expect(guardrail.blocked).toBe(false);
+    expect(guardrail.sanitizedContent).toContain('/landing/du-an-demo-zcode');
   });
 });
