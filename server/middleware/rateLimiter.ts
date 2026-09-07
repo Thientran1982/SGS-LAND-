@@ -41,6 +41,7 @@ setInterval(() => {
 let redisFallbackCount = 0;
 let lastRedisFallbackLogMs = 0;
 const REDIS_FALLBACK_LOG_COOLDOWN_MS = 60_000;
+const REDIS_OPERATION_TIMEOUT_MS = 2_500;
 
 function countInMemory(name: string, key: string, windowMs: number): { count: number; resetAt: number } {
   const store = getStore(name);
@@ -82,6 +83,48 @@ async function upstashIncr(client: any, key: string, windowSecs: number): Promis
     await client.expire(key, windowSecs);
   }
   return count as number;
+}
+
+function withRedisTimeout<T>(operation: Promise<T>, timeoutMs: number): Promise<T> {
+  return new Promise<T>((resolve, reject) => {
+    const timer = setTimeout(
+      () => reject(new Error(`Upstash Redis operation timed out after ${timeoutMs}ms`)),
+      timeoutMs
+    );
+    operation.then(
+      (value) => {
+        clearTimeout(timer);
+        resolve(value);
+      },
+      (error) => {
+        clearTimeout(timer);
+        reject(error);
+      }
+    );
+  });
+}
+
+function logRedisFallback(
+  name: string,
+  message: string,
+  options: { isQuotaError?: boolean; isTimeoutError?: boolean } = {}
+): void {
+  redisFallbackCount++;
+  const nowMs = Date.now();
+  if (nowMs - lastRedisFallbackLogMs < REDIS_FALLBACK_LOG_COOLDOWN_MS) return;
+
+  lastRedisFallbackLogMs = nowMs;
+  const label = options.isQuotaError
+    ? 'UPSTASH QUOTA EXHAUSTED'
+    : options.isTimeoutError
+      ? 'REDIS TIMEOUT'
+      : 'REDIS UNAVAILABLE';
+  console.error(
+    `[RateLimit] ${label}  ` +
+    `degrade sang in-memory store (${redisFallbackCount} request ke tu lan log truoc). ` +
+    `name=${name} err=${message}`
+  );
+  redisFallbackCount = 0;
 }
 
 // ---------------------------------------------------------------------------
@@ -133,7 +176,17 @@ export function rateLimit(options: {
     let count: number;
     let resetAt: number;
 
-    const redis = await getUpstashClient();
+    let redis: any | null = null;
+    let redisInitError: unknown = null;
+    try {
+      redis = await withRedisTimeout(
+        getUpstashClient(),
+        REDIS_OPERATION_TIMEOUT_MS
+      );
+    } catch (initError) {
+      redisInitError = initError;
+    }
+
     if (redis) {
       // COST FIX (audit Medium): truoc day moi request ton 2 lenh Upstash (INCR + TTL).
       // Gan so hieu cua so vao key (fixed window) => resetAt tinh duoc tai cho,
@@ -141,15 +194,19 @@ export function rateLimit(options: {
       const windowIndex = Math.floor(Date.now() / windowMs);
       const redisKey = `rl:${name}:${key}:${windowIndex}`;
       try {
-        count = await upstashIncr(redis, redisKey, windowSecs);
+        count = await withRedisTimeout(
+          upstashIncr(redis, redisKey, windowSecs),
+          REDIS_OPERATION_TIMEOUT_MS
+        );
         resetAt = (windowIndex + 1) * windowMs;
-        } catch (redisErr: any) {
+      } catch (redisErr: any) {
         // H2 FIX: Distinguish quota errors (Upstash free tier) from network errors.
         const msg = String(redisErr?.message || redisErr || '');
         const isQuotaError =
           msg.includes('max requests limit exceeded') ||
           msg.includes('QUOTA') ||
           msg.includes('ERR max');
+        const isTimeoutError = msg.includes('timed out');
         // RELIABILITY FIX (audit):
         //  - Truoc day quota exhausted => return next() IM LANG: rate limiting
         //    tu tat hoan toan, khong log/metric nen khong the phat hien.
@@ -158,24 +215,22 @@ export function rateLimit(options: {
         //    single-instance (server.ts:1487 socket.io in-memory adapter).
         // Gio ca 2 truong hop degrade sang in-memory store + log ro rang
         // (level error, cooldown 60s, kem so request bi anh huong).
-        redisFallbackCount++;
-        const nowMs = Date.now();
-        if (nowMs - lastRedisFallbackLogMs >= REDIS_FALLBACK_LOG_COOLDOWN_MS) {
-          lastRedisFallbackLogMs = nowMs;
-          console.error(
-            `[RateLimit] ${isQuotaError ? 'UPSTASH QUOTA EXHAUSTED' : 'REDIS UNAVAILABLE'}  ` +
-            `degrade sang in-memory store (${redisFallbackCount} request ke tu lan log truoc). ` +
-            `name=${name} err=${msg}`
-          );
-          redisFallbackCount = 0;
-        }
+        logRedisFallback(name, msg, { isQuotaError, isTimeoutError });
         const fb = countInMemory(name, key, windowMs);
         count = fb.count;
         resetAt = fb.resetAt;
       }
     } else {
-      // No Redis configured: use in-memory store (dev/single-process only).
-        // WARNING: unsafe in multi-instance deployments.
+      const initMessage = redisInitError
+        ? String((redisInitError as any)?.message || redisInitError)
+        : (!process.env.UPSTASH_REDIS_REST_URL || !process.env.UPSTASH_REDIS_REST_TOKEN)
+          ? 'UPSTASH_REDIS_REST_URL/TOKEN not configured'
+          : 'Upstash client unavailable';
+      logRedisFallback(name, initMessage, {
+        isTimeoutError: initMessage.includes('timed out'),
+      });
+      // No Redis configured or unavailable: use in-memory store.
+      // WARNING: unsafe in multi-instance deployments.
       const fb = countInMemory(name, key, windowMs);
       count = fb.count;
       resetAt = fb.resetAt;
