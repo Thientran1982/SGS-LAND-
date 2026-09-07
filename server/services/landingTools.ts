@@ -184,7 +184,7 @@ export async function handle_landing_builder(args: Record<string, any>): Promise
             sections: page.sections,
             tokensUsed: page.tokens_used,
             tokenBudgetPer: 4000,
-            viewUrl: "/landing-ai/" + page.slug + "?preview=1",
+            viewUrl: "/landing/" + page.slug + "?visitorKey=" + encodeURIComponent(visitorKey),
             editUrl: "/landing-ai/chinh-sua/" + page.slug + "?k=" + visitorKey,
             quotaUsed: used + 1,
             quotaLimit: FREE_LANDING_PAGES,

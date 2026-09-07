@@ -9,6 +9,7 @@ import {
   Bell, LogOut, ChevronRight, Activity,
 } from "lucide-react";
 import type { DashboardStats } from "@/types";
+import LandingNavSection from "./LandingNavSection";
 
 // ─── Sidebar nav items ────────────────────────────────────
 const NAV_ITEMS = [
@@ -115,6 +116,7 @@ export function DashboardShell() {
               <ChevronRight className="w-3 h-3 ml-auto opacity-0 group-hover:opacity-40 transition-opacity" />
             </Link>
           ))}
+          <LandingNavSection />
         </nav>
 
         <div className="px-3 pt-4 mt-4 border-t space-y-0.5" style={{ borderColor: "var(--border-default)" }}>

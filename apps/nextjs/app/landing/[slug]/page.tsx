@@ -21,7 +21,31 @@ import {
   type LandingProject,
 } from "@/data/landing-projects";
 import LandingPageClient from "../LandingPageClient";
+import GeneratedLandingPage, {
+  LandingNotFound,
+  type GeneratedLandingData,
+} from "../GeneratedLandingPage";
 import "../landing.css";
+
+const BACKEND_URL = process.env.BACKEND_URL || "http://localhost:5001";
+
+async function fetchGeneratedLanding(slug: string): Promise<GeneratedLandingData | null> {
+  try {
+    const response = await fetch(`${BACKEND_URL}/api/landing-pages/${encodeURIComponent(slug)}`, {
+      cache: "no-store",
+    });
+    if (!response.ok) return null;
+    const data = await response.json();
+    return data?.page ?? null;
+  } catch {
+    return null;
+  }
+}
+
+function getVisitorKey(searchParams: { visitorKey?: string | string[]; k?: string | string[] }) {
+  const value = searchParams.visitorKey ?? searchParams.k;
+  return typeof value === "string" ? value : undefined;
+}
 // ─── Static params ─────────────────────────────────────────────────────────
 export function generateStaticParams() {
   return LANDING_SLUGS.map((slug) => ({ slug }));
@@ -29,10 +53,28 @@ export function generateStaticParams() {
 // ─── Metadata ──────────────────────────────────────────────────────────────
 export async function generateMetadata({
   params,
+  searchParams,
 }: {
   params: Promise<{ slug: string }>;
+  searchParams: Promise<{ visitorKey?: string | string[]; k?: string | string[] }>;
 }): Promise<Metadata> {
   const { slug } = await params;
+  const generated = await fetchGeneratedLanding(slug);
+  if (generated) {
+    const query = await searchParams;
+    const visitorKey = getVisitorKey(query);
+    const visible = generated.status === "published" || visitorKey === generated.visitor_key;
+    if (visible) {
+      const hero = generated.sections?.find((section) => section.stage === "hero");
+      return {
+        title: generated.project_name,
+        description: hero?.body || "Landing page bất động sản từ SGS LAND.",
+        robots: generated.status === "published" ? { index: true, follow: true } : { index: false, follow: false },
+        alternates: { canonical: `/landing/${generated.slug}` },
+      };
+    }
+    return {};
+  }
   const project = LANDING_PROJECTS[slug];
   if (!project) return {};
   const canonicalUrl = `${SITE_URL}/landing/${slug}`;
@@ -97,12 +139,22 @@ function buildNoscriptHtml(p: LandingProject): string {
 // ─── Page ──────────────────────────────────────────────────────────────────
 export default async function LandingProjectPage({
   params,
+  searchParams,
 }: {
   params: Promise<{ slug: string }>;
+  searchParams: Promise<{ visitorKey?: string | string[]; k?: string | string[] }>;
 }) {
   const { slug } = await params;
+  const query = await searchParams;
+  const generated = await fetchGeneratedLanding(slug);
+  if (generated) {
+    const visitorKey = getVisitorKey(query);
+    const visible = generated.status === "published" || visitorKey === generated.visitor_key;
+    if (!visible) return <LandingNotFound />;
+    return <GeneratedLandingPage page={generated} visitorKey={visitorKey} />;
+  }
   const project = LANDING_PROJECTS[slug];
-  if (!project) notFound();
+  if (!project) return <LandingNotFound />;
   const canonicalUrl = `${SITE_URL}/landing/${slug}`;
   // ── JSON-LD schemas ────────────────────────────────────────────────────
   const webPageSchema = {

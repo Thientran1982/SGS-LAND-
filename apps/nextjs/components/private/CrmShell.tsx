@@ -11,6 +11,7 @@ import {
   ClipboardList, ShieldCheck, Zap, Globe,
   Menu, X, DollarSign, Server, BookOpen,
 } from "lucide-react";
+import LandingNavSection from "./LandingNavSection";
 
 const NAV_ITEMS = [
   { href: "/dashboard",       label: "Dashboard",         icon: BarChart3 },
@@ -89,6 +90,7 @@ export function CrmShell({ children }: { children: React.ReactNode }) {
             </Link>
           );
         })}
+        <LandingNavSection />
       </nav>
 
       <div className="px-3 pt-4 mt-4 border-t space-y-0.5" style={{ borderColor: "var(--border-default)" }}>

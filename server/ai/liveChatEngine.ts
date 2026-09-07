@@ -1514,6 +1514,19 @@ ${ownerProfileBlock}\n` : ''}${taskMemoryBlock ? `[KINH NGHIEM VAN HANH DA HOC]\
         );
     }
 
+    // The landing builder result is the source of truth for the public URL.
+    // Keep the link in the user-facing answer even when the synthesis model
+    // summarizes the tool output without copying its URL.
+    if (
+        detectedIntent === 'LANDING' &&
+        specialistOutput?.status === 'CREATED' &&
+        specialistOutput?.slug &&
+        !response.includes(`/landing/${String(specialistOutput.slug)}`)
+    ) {
+        const landingPath = `/landing/${encodeURIComponent(String(specialistOutput.slug))}`;
+        response = `${response.trim()}\n\nXem trang landing: ${landingPath}`;
+    }
+
     return {
         sessionId: sessionId || `sess_${Date.now()}`,
         intent: detectedIntent,

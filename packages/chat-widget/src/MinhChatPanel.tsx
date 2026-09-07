@@ -73,6 +73,8 @@ export interface MinhChatPanelProps {
   showHeader?: boolean;
   title?: string;
   description?: string;
+  /** Nội dung gợi ý được điền sẵn từ các CTA contextual. */
+  initialMessage?: string;
 }
 
 export function MinhChatPanel({
@@ -83,6 +85,7 @@ export function MinhChatPanel({
   showHeader = true,
   title = "SGS Land Live Chat",
   description = "Chúng tôi sẵn sàng hỗ trợ bạn 24/7",
+  initialMessage = "",
 }: MinhChatPanelProps) {
   const sessionRef = useRef<MinhSession | null>(null);
   if (!sessionRef.current) sessionRef.current = createMinhSession({ apiBase, source });
@@ -96,7 +99,7 @@ export function MinhChatPanel({
   const [formError, setFormError] = useState("");
 
   const [messages, setMessages] = useState<ChatMessage[]>([]);
-  const [input, setInput] = useState("");
+  const [input, setInput] = useState(initialMessage);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [lastFailed, setLastFailed] = useState("");

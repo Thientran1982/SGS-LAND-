@@ -14,6 +14,7 @@ type LiveChatSearchParams = {
   title?: string | string[];
   desc?: string | string[];
   source?: string | string[];
+  prompt?: string | string[];
 };
 
 function firstParam(value: string | string[] | undefined, fallback: string) {
@@ -32,6 +33,7 @@ export default async function LiveChatPage({
     "Hỏi bất kỳ điều gì về thị trường BĐS — giá, pháp lý, dự án, lãi suất ngân hàng",
   );
   const source = firstParam(params.source, "WEB");
+  const prompt = firstParam(params.prompt, "");
 
   return (
     <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-12 text-center">
@@ -46,7 +48,7 @@ export default async function LiveChatPage({
         </p>
       </div>
 
-      <LiveChatPanel source={source} title={title} description={description} />
+      <LiveChatPanel source={source} title={title} description={description} initialMessage={prompt} />
 
       <p className="text-xs" style={{ color: "var(--text-tertiary)" }}>
         Hotline hỗ trợ: <a href="tel:0379281445" className="font-semibold" style={{ color: "var(--primary-600)" }}>0379 281 445</a>

@@ -10,16 +10,19 @@ export default function LiveChatPanel({
   source = "WEB",
   title,
   description,
+  initialMessage,
 }: {
   source?: string;
   title?: string;
   description?: string;
+  initialMessage?: string;
 }) {
   return (
     <MinhChatPanel
       source={source}
       title={title}
       description={description}
+      initialMessage={initialMessage}
       heightClass="h-[520px]"
       className="bg-slate-900/60 shadow-2xl"
     />
