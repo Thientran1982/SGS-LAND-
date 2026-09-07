@@ -96,6 +96,7 @@ ALLOWED_ORIGINS = "https://sgsland.vn,https://www.sgsland.vn"
 AI_ORCHESTRATION_MODE = "langgraph"
 LANGGRAPH_ORCHESTRATION_ADAPTER_READY = "true"
 LANGGRAPH_ORCHESTRATION_APPROVED = "true"
+REDACTED
 [userenv.development]
 NODE_ENV = "development"
 PORT = "5000"
