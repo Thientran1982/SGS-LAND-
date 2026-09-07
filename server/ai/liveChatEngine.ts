@@ -1541,6 +1541,7 @@ async function handle_live_chat(args: Record<string, any>): Promise<any> {
     // create an extra memory write. Consent-gated personalization remains the
     // source of truth for customer namespace writes.
     const customerId = String(args.customerId || args.context?.customerId || '').trim();
+    const persistenceTasks: Promise<void>[] = [];
     if (customerId && result.personalization?.enabled === true) {
         const history = Array.isArray(args.context?.history) ? args.context.history.slice(-4) : [];
         const transcript = [
@@ -1548,26 +1549,42 @@ async function handle_live_chat(args: Record<string, any>): Promise<any> {
             `[KHÁCH] ${sanitizeChatInput(message, 600)}`,
             `[AGENT] ${sanitizeChatInput(content, 900)}`,
         ].filter(Boolean).join('\n');
-        void agentMemoryService.summarizeSession(tenantId, `customer:${customerId}`, transcript)
-            .catch(error => logger.warn(`[LiveChatMemory] summarizeSession skipped: ${error?.message || error}`));
+        persistenceTasks.push(
+            agentMemoryService.summarizeSession(
+                tenantId,
+                `customer:${customerId}`,
+                transcript,
+                effectiveSessionId,
+            ).then(() => undefined).catch(error => {
+                logger.warn(`[LiveChatMemory] summarizeSession skipped: ${error?.message || error}`);
+            }),
+        );
     }
     const leadId = String(args.context?.leadId || args.leadId || '').trim();
     if (leadId) {
         const journeySummary = scrubPii(
             `Khách: ${sanitizeChatInput(message, 500)} | Agent: ${sanitizeChatInput(content, 700)}`,
         ).replace(/\s+/g, ' ').trim().slice(0, 1600);
-        void agentRepository.saveLeadJourneyEvent(
-            tenantId,
-            leadId,
-            'LIVE_CHAT',
-            'CHAT_INTERACTION',
-            journeySummary,
-            { intent: result.intent || null, groundingStatus: result.groundingStatus || null },
-            { source: 'live_chat_engine', runId: execution.runId, resumed: execution.resumed },
-            effectiveSessionId,
-            'live_chat',
-        ).catch(error => logger.warn(`[LiveChatJourney] save skipped: ${error?.message || error}`));
+        persistenceTasks.push(
+            agentRepository.saveLeadJourneyEvent(
+                tenantId,
+                leadId,
+                'LIVE_CHAT',
+                'CHAT_INTERACTION',
+                journeySummary,
+                { intent: result.intent || null, groundingStatus: result.groundingStatus || null },
+                { source: 'live_chat_engine', runId: execution.runId, resumed: execution.resumed },
+                effectiveSessionId,
+                'live_chat',
+            ).then(() => undefined).catch(error => {
+                logger.warn(`[LiveChatJourney] save skipped: ${error?.message || error}`);
+            }),
+        );
     }
+    // Persistence is best-effort: wait until each write has been attempted so
+    // a successful response has observable memory/journey state, but never
+    // turn a database outage into an upstream chat failure.
+    await Promise.all(persistenceTasks);
     const auditBase = {
         tenantId,
         sessionId: effectiveSessionId,

@@ -70,6 +70,29 @@ describe('admin agent memory tenant and privacy boundaries', () => {
     expect(insert?.[1][5]).not.toMatch(/a@example\.com|0912 345 678|012345678901|12 Nguyễn Trãi/);
   });
 
+  it('uses the session id for replay-safe customer memory and rejects empty transcripts', async () => {
+    query
+      .mockResolvedValueOnce({ rows: [] })
+      .mockResolvedValueOnce({ rows: [{ id: 'session-memory', namespace: 'customer:buyer-a', key: 'session:session-a' }] })
+      .mockResolvedValueOnce({ rows: [] });
+
+    const result = await agentMemoryService.summarizeSession(
+      tenantA,
+      'customer:buyer-a',
+      'Khách: email a@example.com, số nhà: 12 Nguyễn Trãi, Hà Nội',
+      'session-a',
+    );
+
+    expect(result).toMatchObject({ key: 'session:session-a' });
+    const insert = callsForTable('agent_store').find(([sql]) => String(sql).startsWith('INSERT'));
+    expect(insert?.[1][2]).toBe('customer:buyer-a');
+    expect(insert?.[1][3]).toBe('session:session-a');
+    expect(insert?.[1][5]).not.toContain('a@example.com');
+    expect(insert?.[1][5]).not.toContain('12 Nguyễn Trãi');
+    await expect(agentMemoryService.summarizeSession(tenantA, 'customer:buyer-a', '   ', 'session-empty'))
+      .resolves.toBeNull();
+  });
+
   it('scrubs PII on update and keeps the update tenant-scoped', async () => {
     query
       .mockResolvedValueOnce({ rows: [{ id: 'memory-a', tenant_id: tenantA, kind: 'fact', importance: 0.3 }] })

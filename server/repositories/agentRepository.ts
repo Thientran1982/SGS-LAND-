@@ -545,6 +545,8 @@ class AgentRepository extends BaseRepository {
         `INSERT INTO lead_journey_memory
            (tenant_id, lead_id, agent_id, session_id, event_type, summary, signals, metadata, source)
          VALUES ($1, $2, $3, $4, $5, $6, $7::jsonb, $8::jsonb, $9)
+         ON CONFLICT (tenant_id, session_id, event_type, source)
+           WHERE session_id IS NOT NULL DO NOTHING
          RETURNING *`,
         [
           tenantId, leadId, agentId, sessionId || null,
@@ -552,7 +554,15 @@ class AgentRepository extends BaseRepository {
           JSON.stringify(signals), JSON.stringify(metadata), source
         ]
       );
-      const r = res.rows[0];
+      // Replays/resumes intentionally return the original event rather than
+      // creating a second journey row for the same live-chat session.
+      const r = res.rows[0] || (await client.query(
+        `SELECT * FROM lead_journey_memory
+         WHERE tenant_id=$1 AND session_id=$2 AND event_type=$3 AND source=$4
+         ORDER BY created_at ASC, id ASC LIMIT 1`,
+        [tenantId, sessionId || null, eventType, source],
+      )).rows[0];
+      if (!r) throw new Error('Lead journey event was not persisted');
       return {
         id: r.id, tenantId: r.tenant_id, leadId: r.lead_id,
         agentId: r.agent_id, sessionId: r.session_id,

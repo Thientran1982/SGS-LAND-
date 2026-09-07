@@ -431,10 +431,16 @@ export const agentMemoryService = {
     });
   },
 
-  async summarizeSession(tenantId: string, namespace: string, transcript: string) {
+  async summarizeSession(tenantId: string, namespace: string, transcript: string, sessionId?: string) {
     const clean = scrubPii(transcript).replace(/\s+/g, ' ').trim().slice(0, 1800);
     if (!clean) return null;
-    return this.remember(tenantId, namespace, `session:${new Date().toISOString().slice(0, 10)}`, clean, 'episodic', 0.45, 90);
+    // A session must be replay-safe without collapsing separate sessions from
+    // the same customer into one daily record. The date fallback preserves the
+    // legacy behavior for callers that do not yet have a session identifier.
+    const key = sessionId
+      ? `session:${String(sessionId).slice(0, 180)}`
+      : `session:${new Date().toISOString().slice(0, 10)}`;
+    return this.remember(tenantId, namespace, key, clean, 'episodic', 0.45, 90);
   },
 
   async listSignals(tenantId: string, signalType?: string, since?: Date) {
