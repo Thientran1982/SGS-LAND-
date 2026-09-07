@@ -173,6 +173,27 @@ class AiGovernanceRepository extends BaseRepository {
     });
   }
 
+  async getProviderFallbackConfig(tenantId: string): Promise<any> {
+    const config = await this.getAiConfig(tenantId);
+    return config?.providerFallback || null;
+  }
+
+  async upsertProviderFallbackConfig(tenantId: string, providerFallback: any): Promise<any> {
+    return this.withTenant(tenantId, async (client) => {
+      const result = await client.query(
+        `INSERT INTO enterprise_config (tenant_id, config_key, config_value, updated_at)
+         VALUES ($1, 'ai_config', jsonb_build_object('providerFallback', $2::jsonb), CURRENT_TIMESTAMP)
+         ON CONFLICT (tenant_id, config_key) DO UPDATE
+           SET config_value = COALESCE(enterprise_config.config_value, '{}'::jsonb)
+             || jsonb_build_object('providerFallback', $2::jsonb),
+               updated_at = CURRENT_TIMESTAMP
+         RETURNING config_value`,
+        [tenantId, JSON.stringify(providerFallback)],
+      );
+      return result.rows[0]?.config_value || {};
+    });
+  }
+
   async logPromotion(
     tenantId: string,
     data: {

@@ -1196,6 +1196,14 @@ type ProviderHealthData = {
   alerts: { allFallbackProvidersFailed: boolean; exhaustedRequests: number };
 };
 
+type ProviderFallbackStatus = {
+  provider: string;
+  model: string;
+  enabled: boolean;
+  configured: boolean;
+  position: number;
+};
+
 const emptyProviderHealth: ProviderHealthData = {
   summary: { totalRequests: 0, fallbackRequests: 0, degradedRequests: 0, exhaustedRequests: 0, fallbackRate: 0, p95LatencyMs: null },
   providers: [],
@@ -1204,6 +1212,9 @@ const emptyProviderHealth: ProviderHealthData = {
 
 const ProviderHealthTab = () => {
   const [data, setData] = useState<ProviderHealthData>(emptyProviderHealth);
+  const [fallbackProviders, setFallbackProviders] = useState<ProviderFallbackStatus[]>([]);
+  const [fallbackDirty, setFallbackDirty] = useState(false);
+  const [savingFallback, setSavingFallback] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [days, setDays] = useState(7);
@@ -1212,12 +1223,15 @@ const ProviderHealthTab = () => {
     setLoading(true);
     setError('');
     try {
-      const response = await fetch(`/api/ai/governance/provider-health?days=${rangeDays}`, {
-        headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
-        credentials: 'include',
-      });
+      const headers = { Authorization: `Bearer ${localStorage.getItem('token')}` };
+      const [response, fallbackResponse] = await Promise.all([
+        fetch(`/api/ai/governance/provider-health?days=${rangeDays}`, { headers, credentials: 'include' }),
+        fetch('/api/ai/governance/provider-fallback', { headers, credentials: 'include' }),
+      ]);
       const payload = await response.json().catch(() => ({}));
+      const fallbackPayload = await fallbackResponse.json().catch(() => ({}));
       if (!response.ok) throw new Error(payload?.error || 'Không thể tải sức khỏe provider AI.');
+      if (!fallbackResponse.ok) throw new Error(fallbackPayload?.error || 'Không thể tải cấu hình fallback provider AI.');
       const summary = payload?.summary && typeof payload.summary === 'object' ? payload.summary : {};
       const providers = Array.isArray(payload?.providers) ? payload.providers : [];
       setData({
@@ -1248,6 +1262,17 @@ const ProviderHealthTab = () => {
           exhaustedRequests: Number(payload?.alerts?.exhaustedRequests || 0),
         },
       });
+      setFallbackProviders((Array.isArray(fallbackPayload?.providers) ? fallbackPayload.providers : [])
+        .filter((provider: any) => provider && typeof provider.provider === 'string')
+        .map((provider: any, index: number) => ({
+          provider: provider.provider,
+          model: typeof provider.model === 'string' ? provider.model : '—',
+          enabled: provider.enabled === true,
+          configured: provider.configured === true,
+          position: Number.isFinite(Number(provider.position)) ? Number(provider.position) : index,
+        }))
+        .sort((a: ProviderFallbackStatus, b: ProviderFallbackStatus) => a.position - b.position));
+      setFallbackDirty(false);
     } catch (loadError) {
       setError(loadError instanceof Error ? loadError.message : 'Không thể tải sức khỏe provider AI.');
     } finally {
@@ -1256,6 +1281,64 @@ const ProviderHealthTab = () => {
   }, []);
 
   useEffect(() => { void load(days); }, [days, load]);
+
+  const moveFallback = (index: number, direction: -1 | 1) => {
+    const target = index + direction;
+    if (target < 0 || target >= fallbackProviders.length) return;
+    const next = [...fallbackProviders];
+    [next[index], next[target]] = [next[target], next[index]];
+    setFallbackProviders(next.map((provider, position) => ({ ...provider, position })));
+    setFallbackDirty(true);
+  };
+
+  const toggleFallback = (provider: string) => {
+    const enabledCount = fallbackProviders.filter(item => item.enabled).length;
+    const current = fallbackProviders.find(item => item.provider === provider);
+    if (current?.enabled && enabledCount <= 1) {
+      setError('Phải giữ ít nhất một provider trong đường fallback.');
+      return;
+    }
+    setFallbackProviders(items => items.map(item => item.provider === provider
+      ? { ...item, enabled: !item.enabled }
+      : item));
+    setFallbackDirty(true);
+    setError('');
+  };
+
+  const saveFallback = async () => {
+    setSavingFallback(true);
+    setError('');
+    try {
+      const response = await fetch('/api/ai/governance/provider-fallback', {
+        method: 'PUT',
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem('token')}`,
+          'Content-Type': 'application/json',
+        },
+        credentials: 'include',
+        body: JSON.stringify({
+          order: fallbackProviders.map(provider => provider.provider),
+          enabled: Object.fromEntries(fallbackProviders.map(provider => [provider.provider, provider.enabled])),
+        }),
+      });
+      const payload = await response.json().catch(() => ({}));
+      if (!response.ok) throw new Error(payload?.error || 'Không thể lưu cấu hình fallback provider AI.');
+      setFallbackProviders(Array.isArray(payload?.providers) ? payload.providers : fallbackProviders);
+      setFallbackDirty(false);
+    } catch (saveError) {
+      setError(saveError instanceof Error ? saveError.message : 'Không thể lưu cấu hình fallback provider AI.');
+    } finally {
+      setSavingFallback(false);
+    }
+  };
+
+  const providerLabels: Record<string, string> = {
+    anthropic: 'Anthropic (Claude)',
+    xai: 'xAI (Grok)',
+    openai: 'OpenAI',
+    openrouter: 'OpenRouter',
+    bai: 'chat.b.ai',
+  };
 
   return (
     <div className="space-y-4">
@@ -1280,6 +1363,57 @@ const ProviderHealthTab = () => {
         </div>
       )}
       {error && <div className="rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-800">{error}</div>}
+
+      <div className="rounded-xl border border-slate-200 bg-white p-4">
+        <div className="flex flex-wrap items-start justify-between gap-3">
+          <div>
+            <h3 className="text-sm font-bold text-slate-900">Cấu hình đường fallback</h3>
+            <p className="mt-1 max-w-2xl text-xs text-slate-500">
+              Provider được thử theo thứ tự dưới đây sau khi model chính gặp quota, timeout hoặc lỗi dịch vụ.
+              Chỉ trạng thái cấu hình được hiển thị; secret không bao giờ được gửi về trình duyệt.
+            </p>
+          </div>
+          <button
+            onClick={() => void saveFallback()}
+            disabled={!fallbackDirty || savingFallback || fallbackProviders.length === 0}
+            className="rounded-lg bg-slate-900 px-3 py-2 text-xs font-bold text-white disabled:cursor-not-allowed disabled:opacity-40"
+          >
+            {savingFallback ? 'Đang lưu...' : 'Lưu fallback'}
+          </button>
+        </div>
+        <div className="mt-4 space-y-2">
+          {fallbackProviders.map((provider, index) => (
+            <div key={provider.provider} className="flex flex-wrap items-center gap-3 rounded-lg border border-slate-100 bg-slate-50 px-3 py-2">
+              <div className="flex w-8 shrink-0 items-center justify-center rounded-full bg-white text-xs font-bold text-slate-500">
+                {index + 1}
+              </div>
+              <div className="min-w-[150px] flex-1">
+                <div className="text-sm font-semibold text-slate-800">{providerLabels[provider.provider] || provider.provider}</div>
+                <div className="text-xs text-slate-500">{provider.model}</div>
+              </div>
+              <span className={`rounded-full border px-2 py-1 text-xs ${provider.configured
+                ? 'border-emerald-200 bg-emerald-50 text-emerald-700'
+                : 'border-amber-200 bg-amber-50 text-amber-700'}`}>
+                {provider.configured ? 'Đã cấu hình' : 'Thiếu API key'}
+              </span>
+              <button
+                onClick={() => toggleFallback(provider.provider)}
+                className={`rounded-full px-3 py-1 text-xs font-bold ${provider.enabled
+                  ? 'bg-emerald-600 text-white'
+                  : 'bg-slate-200 text-slate-600'}`}
+                aria-pressed={provider.enabled}
+              >
+                {provider.enabled ? 'Đang bật' : 'Đang tắt'}
+              </button>
+              <div className="flex gap-1">
+                <button onClick={() => moveFallback(index, -1)} disabled={index === 0} className="rounded border border-slate-200 bg-white px-2 py-1 text-xs disabled:opacity-30" aria-label="Đưa provider lên">↑</button>
+                <button onClick={() => moveFallback(index, 1)} disabled={index === fallbackProviders.length - 1} className="rounded border border-slate-200 bg-white px-2 py-1 text-xs disabled:opacity-30" aria-label="Đưa provider xuống">↓</button>
+              </div>
+            </div>
+          ))}
+          {fallbackProviders.length === 0 && <div className="py-4 text-center text-xs text-slate-400">Chưa tải được cấu hình fallback.</div>}
+        </div>
+      </div>
 
       <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
         {[

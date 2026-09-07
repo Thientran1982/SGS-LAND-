@@ -15,6 +15,13 @@ import { assessFeedback, autonomousLearningService } from '../services/autonomou
 import { agentOutboundRepository } from '../repositories/agentOutboundRepository';
 import { agentMemoryService } from '../services/agentMemoryService';
 import { agentAuditRepository } from '../repositories/agentAuditRepository';
+import {
+  FALLBACK_PROVIDERS,
+  clearProviderFallbackConfigCache,
+  getProviderFallbackSettings,
+  getProviderFallbackStatus,
+  normalizeProviderFallbackSettings,
+} from '../ai/providers';
 
 export function createAiGovernanceRoutes(authenticateToken: any, optionalAuth?: any) {
   const router = Router();
@@ -157,6 +164,67 @@ router.get('/provider-health', authenticateToken, async (req: Request, res: Resp
   } catch (error: any) {
     console.error('[Governance] provider-health failed:', error?.message || error);
     res.status(500).json({ error: 'Không thể tải sức khỏe provider AI.' });
+  }
+});
+
+// Provider fallback configuration is tenant-scoped and exposes only safe
+// capability status (never API keys or provider error payloads).
+router.get('/provider-fallback', authenticateToken, async (req: Request, res: Response) => {
+  try {
+    const user = (req as any).user;
+    if (!['SUPER_ADMIN', 'ADMIN'].includes(user?.role)) return res.status(403).json({ error: 'Admin only' });
+    res.json({
+      providers: await getProviderFallbackStatus(user.tenantId),
+    });
+  } catch (error: any) {
+    console.error('[Governance] provider-fallback read failed:', error?.message || error);
+    res.status(500).json({ error: 'Không thể tải cấu hình fallback provider AI.' });
+  }
+});
+
+router.put('/provider-fallback', authenticateToken, async (req: Request, res: Response) => {
+  try {
+    const user = (req as any).user;
+    if (!['SUPER_ADMIN', 'ADMIN'].includes(user?.role)) return res.status(403).json({ error: 'Admin only' });
+
+    const body = req.body || {};
+    if (!Array.isArray(body.order) || body.order.length === 0) {
+      return res.status(400).json({ error: 'order phải là danh sách provider fallback.' });
+    }
+    const unknownProvider = body.order.find((provider: unknown) => !FALLBACK_PROVIDERS.includes(provider as any));
+    if (unknownProvider) {
+      return res.status(400).json({ error: `Provider fallback không được hỗ trợ: ${String(unknownProvider)}` });
+    }
+    const current = await getProviderFallbackSettings(user.tenantId);
+    const next = normalizeProviderFallbackSettings({
+      order: body.order,
+      enabled: body.enabled,
+    });
+    if (!Object.values(next.enabled).some(Boolean)) {
+      return res.status(400).json({ error: 'Phải giữ ít nhất một provider trong đường fallback.' });
+    }
+
+    await aiGovernanceRepository.upsertProviderFallbackConfig(user.tenantId, next);
+    clearProviderFallbackConfigCache(user.tenantId);
+    try {
+      await agentAuditRepository.recordProviderFallbackChange(user.tenantId, {
+        actorId: user.id || user.userId,
+        actorRole: user.role,
+        previous: current,
+        next,
+      });
+    } catch (auditError) {
+      // Do not leave a live change that cannot be traced. Restore the prior
+      // fallback settings before reporting the failed update.
+      await aiGovernanceRepository.upsertProviderFallbackConfig(user.tenantId, current);
+      clearProviderFallbackConfigCache(user.tenantId);
+      throw auditError;
+    }
+
+    res.json({ providers: await getProviderFallbackStatus(user.tenantId) });
+  } catch (error: any) {
+    console.error('[Governance] provider-fallback update failed:', error?.message || error);
+    res.status(500).json({ error: 'Không thể cập nhật cấu hình fallback provider AI.' });
   }
 });
 

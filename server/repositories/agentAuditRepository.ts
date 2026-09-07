@@ -1,4 +1,5 @@
 import { withTenantContext } from '../db';
+import { randomUUID } from 'crypto';
 
 type AuditEvent = {
   eventKey: string;
@@ -85,6 +86,31 @@ class AgentAuditRepository {
           JSON.stringify(scrub(event.metadata || {})), event.latencyMs || null,
         ],
       );
+    });
+  }
+
+  async recordProviderFallbackChange(
+    tenantId: string,
+    data: {
+      actorId?: string;
+      actorRole?: string;
+      previous: Record<string, any>;
+      next: Record<string, any>;
+    },
+  ): Promise<void> {
+    await this.record(tenantId, {
+      eventKey: `provider-fallback-config:${randomUUID()}`,
+      eventType: 'ENTITY_OBSERVED',
+      status: 'UPDATED',
+      entityType: 'AI_PROVIDER_FALLBACK_CONFIG',
+      entityId: tenantId,
+      input: { previous: data.previous },
+      output: { next: data.next },
+      metadata: {
+        source: 'ai-governance',
+        actorId: data.actorId || null,
+        actorRole: data.actorRole || null,
+      },
     });
   }
 

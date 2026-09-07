@@ -15,6 +15,7 @@ import {
 import type { AiProvider } from '../modelPolicy';
 import { ProviderExhaustedError } from './types';
 import type { ProviderAttempt } from './types';
+import { aiGovernanceRepository } from '../../repositories/aiGovernanceRepository';
 
 const XAI_BASE_URL = process.env.XAI_BASE_URL || 'https://api.x.ai/v1';
 const OPENROUTER_BASE_URL = process.env.OPENROUTER_BASE_URL || 'https://openrouter.ai/api/v1';
@@ -31,6 +32,115 @@ const ADAPTERS: Record<AiProvider, ProviderAdapter> = {
 
 export function getAdapter(provider: AiProvider): ProviderAdapter {
   return ADAPTERS[provider] || ADAPTERS.google;
+}
+
+/**
+ * Cross-provider fallbacks are tenant-scoped. Keep the provider list explicit
+ * so an admin cannot make the dispatcher load an arbitrary adapter/model.
+ * Google remains the primary/model fallback and is intentionally not included
+ * here.
+ */
+export const FALLBACK_PROVIDERS: AiProvider[] = [
+  'anthropic',
+  'xai',
+  'openai',
+  'openrouter',
+  'bai',
+];
+
+const FALLBACK_PROVIDER_MODELS: Record<AiProvider, string> = {
+  google: SAFE_MODEL_FALLBACK,
+  anthropic: CROSS_PROVIDER_FALLBACK.find(item => item.provider === 'anthropic')?.model || 'claude-sonnet-4-5',
+  xai: CROSS_PROVIDER_FALLBACK.find(item => item.provider === 'xai')?.model || 'grok-4',
+  openai: 'gpt-4o-mini',
+  openrouter: 'z-ai/glm-5.3',
+  bai: 'glm-5.3-flash',
+};
+
+export type ProviderFallbackSettings = {
+  order: AiProvider[];
+  enabled: Record<AiProvider, boolean>;
+};
+
+export type ProviderFallbackStatus = {
+  provider: AiProvider;
+  model: string;
+  enabled: boolean;
+  configured: boolean;
+  position: number;
+};
+
+const fallbackConfigCache = new Map<string, { value: ProviderFallbackSettings; expiresAt: number }>();
+const FALLBACK_CONFIG_TTL_MS = 30_000;
+const DEFAULT_FALLBACK_SETTINGS: ProviderFallbackSettings = {
+  order: [...FALLBACK_PROVIDERS],
+  enabled: {
+    google: false,
+    anthropic: true,
+    xai: true,
+    openai: false,
+    openrouter: false,
+    bai: false,
+  },
+};
+
+function isFallbackProvider(value: unknown): value is AiProvider {
+  return typeof value === 'string' && FALLBACK_PROVIDERS.includes(value as AiProvider);
+}
+
+export function normalizeProviderFallbackSettings(input: any): ProviderFallbackSettings {
+  const rawOrder = Array.isArray(input?.order) ? input.order : [];
+  const order = [
+    ...rawOrder.filter(isFallbackProvider),
+    ...FALLBACK_PROVIDERS,
+  ].filter((provider, index, list) => list.indexOf(provider) === index);
+  const rawEnabled = input?.enabled && typeof input.enabled === 'object' ? input.enabled : {};
+  const enabled = { ...DEFAULT_FALLBACK_SETTINGS.enabled };
+  for (const provider of FALLBACK_PROVIDERS) {
+    if (typeof rawEnabled[provider] === 'boolean') enabled[provider] = rawEnabled[provider];
+  }
+  return { order, enabled };
+}
+
+export function clearProviderFallbackConfigCache(tenantId?: string): void {
+  if (tenantId) {
+    fallbackConfigCache.delete(tenantId);
+  } else {
+    fallbackConfigCache.clear();
+  }
+}
+
+export async function getProviderFallbackSettings(tenantId?: string): Promise<ProviderFallbackSettings> {
+  if (!tenantId) return normalizeProviderFallbackSettings(DEFAULT_FALLBACK_SETTINGS);
+  const cached = fallbackConfigCache.get(tenantId);
+  if (cached && cached.expiresAt > Date.now()) return cached.value;
+
+  let settings = normalizeProviderFallbackSettings(DEFAULT_FALLBACK_SETTINGS);
+  try {
+    const config = await aiGovernanceRepository.getAiConfig(tenantId);
+    settings = normalizeProviderFallbackSettings(config?.providerFallback);
+  } catch (error: any) {
+    // A config read outage must not block live chat; default behavior is safe
+    // and the degraded provider response remains visible to the caller.
+    console.warn('[AI fallback] Could not load tenant fallback settings:', error?.message || error);
+  }
+  fallbackConfigCache.set(tenantId, { value: settings, expiresAt: Date.now() + FALLBACK_CONFIG_TTL_MS });
+  return settings;
+}
+
+export async function getProviderFallbackStatus(tenantId?: string): Promise<ProviderFallbackStatus[]> {
+  const settings = await getProviderFallbackSettings(tenantId);
+  return settings.order.map((provider, position) => ({
+    provider,
+    model: FALLBACK_PROVIDER_MODELS[provider],
+    enabled: settings.enabled[provider],
+    configured: getAdapter(provider).isConfigured(),
+    position,
+  }));
+}
+
+export function getFallbackModel(provider: AiProvider): string {
+  return FALLBACK_PROVIDER_MODELS[provider] || SAFE_MODEL_FALLBACK;
 }
 
 function providerStatus(error: any): number | undefined {
@@ -107,6 +217,7 @@ function addAttempt(
 export async function generateWithPolicy(
   params: GenerateParams,
   adapters: Partial<Record<AiProvider, ProviderAdapter>> = {},
+  options: { tenantId?: string } = {},
 ): Promise<GenerateResult> {
   let model = ensureSafeModel(params.model);
   let provider = getProviderForModel(model);
@@ -118,9 +229,16 @@ export async function generateWithPolicy(
     model = ensureSafeModel(SAFE_MODEL_FALLBACK);
   }
 
+  const fallbackSettings = await getProviderFallbackSettings(options.tenantId);
   const candidates: Array<{ provider: AiProvider; model: string }> = [
     { provider, model },
-    ...CROSS_PROVIDER_FALLBACK,
+    ...fallbackSettings.order
+      .filter(fallbackProvider => fallbackProvider !== provider)
+      .filter(fallbackProvider => fallbackSettings.enabled[fallbackProvider])
+      .map(fallbackProvider => ({
+        provider: fallbackProvider,
+        model: getFallbackModel(fallbackProvider),
+      })),
   ].filter((candidate, index, list) =>
     list.findIndex(item => item.provider === candidate.provider && item.model === candidate.model) === index,
   );

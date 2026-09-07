@@ -105,7 +105,7 @@ async function generateLiveChatText(params: {
             maxOutputTokens: params.maxOutputTokens,
             jsonMode: params.jsonMode,
             timeoutMs: params.timeoutMs || 15000,
-        });
+        }, {}, { tenantId: params.tenantId });
         const telemetry: LiveChatProviderTelemetry = {
             provider: result.provider,
             model: result.model,

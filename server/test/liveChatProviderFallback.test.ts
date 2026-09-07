@@ -1,5 +1,9 @@
 import { describe, expect, it, vi } from 'vitest';
-import { generateWithPolicy, ProviderExhaustedError } from '../ai/providers';
+import {
+  generateWithPolicy,
+  normalizeProviderFallbackSettings,
+  ProviderExhaustedError,
+} from '../ai/providers';
 import type { ProviderAdapter } from '../ai/providers';
 
 function adapter(
@@ -22,6 +26,23 @@ function unavailableAdapter(provider: string): ProviderAdapter {
 }
 
 describe('live-chat provider fallback policy', () => {
+  it('normalizes fallback order and keeps provider toggles bounded to supported providers', () => {
+    const settings = normalizeProviderFallbackSettings({
+      order: ['xai', 'xai', 'not-a-provider', 'anthropic'],
+      enabled: { xai: false, anthropic: true, 'not-a-provider': true },
+    });
+
+    expect(settings.order.slice(0, 2)).toEqual(['xai', 'anthropic']);
+    expect(settings.order).not.toContain('not-a-provider');
+    expect(settings.enabled).toMatchObject({
+      anthropic: true,
+      xai: false,
+      openai: false,
+      openrouter: false,
+      bai: false,
+    });
+  });
+
   it('tries a configured cross-provider fallback after a quota response', async () => {
     const primary = adapter('google', vi.fn().mockRejectedValue(Object.assign(new Error('quota exceeded'), { status: 429 })));
     const fallback = adapter('anthropic', vi.fn().mockResolvedValue({
