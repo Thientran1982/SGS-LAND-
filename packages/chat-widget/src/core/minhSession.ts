@@ -15,6 +15,8 @@ import { createClientRequestId, createMinhClient } from "./minhTransport";
 
 export const MINH_LEAD_STORAGE_KEY = "livechat_lead_id";
 export const MINH_NAME_STORAGE_KEY = "livechat_lead_name";
+const MINH_RECONCILE_TIMEOUT_MS = 60_000;
+const MINH_RECONCILE_POLL_MS = 1_500;
 
 export type MinhThreadStatus = "AI_ACTIVE" | "HUMAN_TAKEOVER";
 
@@ -150,7 +152,7 @@ export function createMinhSession(options: MinhSessionOptions = {}): MinhSession
       // immediate single fetch can race the persisted reply and show an
       // error even though the reply lands moments later. This must still be
       // bounded: a database outage or dead proxy must never leave the widget
-      // in its loading state for the full request timeout plus this poll.
+      // in its loading state indefinitely.
       const findAssistantRow = (rows: any[]) => {
         const inboundIndex = saved?.id
           ? rows.findIndex((row) => String(row?.id) === String(saved.id))
@@ -163,7 +165,7 @@ export function createMinhSession(options: MinhSessionOptions = {}): MinhSession
         );
       };
       const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
-      const reconcileDeadline = Date.now() + 30_000;
+      const reconcileDeadline = Date.now() + MINH_RECONCILE_TIMEOUT_MS;
       let assistantRow: any = null;
       while (Date.now() < reconcileDeadline) {
         try {
@@ -175,7 +177,7 @@ export function createMinhSession(options: MinhSessionOptions = {}): MinhSession
           // transient fetch failure inside the poll window - retry next tick
         }
         if (Date.now() >= reconcileDeadline) break;
-        await sleep(1500);
+        await sleep(MINH_RECONCILE_POLL_MS);
       }
       if (assistantRow) {
         data = { reply: assistantRow };

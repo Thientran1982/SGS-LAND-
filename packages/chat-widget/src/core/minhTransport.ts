@@ -2,9 +2,19 @@ import { CHAT_ENDPOINTS, apiUrl } from "./endpoints";
 import { ChatTransport, ChatTransportError } from "./types";
 import { getCsrfToken } from "./csrf";
 
+// Landing-builder requests can legitimately take longer than a normal chat
+// reply because Minh may inspect project data and persist several sections.
+// Keep this above the observed long-running execution time so the browser does
+// not abort a request that the backend is still completing.
+const MINH_REPLY_TIMEOUT_MS = 180_000;
+const DEFAULT_REQUEST_TIMEOUT_MS = 30_000;
+
 async function postJson<T>(path: string, body: any, apiBase?: string, errCode = "request_failed"): Promise<T> {
   const controller = new AbortController();
-  const timeoutId = setTimeout(() => controller.abort(), path === CHAT_ENDPOINTS.minhReply ? 90000 : 30000);
+  const timeoutId = setTimeout(
+    () => controller.abort(),
+    path === CHAT_ENDPOINTS.minhReply ? MINH_REPLY_TIMEOUT_MS : DEFAULT_REQUEST_TIMEOUT_MS,
+  );
   let res: Response;
   try {
     res = await fetch(apiUrl(path, apiBase), {

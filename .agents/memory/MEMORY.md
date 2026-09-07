@@ -51,3 +51,4 @@
 - [Minh calibration telemetry](minh-calibration-telemetry.md) — calibrate only resolved delegations; persist tool outcomes before final synthesis so timeouts do not erase evidence
 - [Profile extraction fallback](profile-extraction-fallback.md) — optional LLM facts merge by category over regex facts, while provider failures leave deterministic extraction untouched
 - [Live-chat provider smoke evidence](livechat-provider-smoke.md) — separate uncached provider status from cached persistence/idempotency replay
+- [Live-chat agent timeouts](livechat-agent-timeouts.md) — landing-builder replies can outlive normal chat timeouts; reconcile durable history before showing failure
