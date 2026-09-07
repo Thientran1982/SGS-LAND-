@@ -2832,39 +2832,63 @@ app.get('/api/public/listings/:slugId', apiRateLimit, async (req: express.Reques
       // not just the UI language the widget sent.
       const replyLang = detectMessageLang(msgContent, lang || 'vn');
       const t = serverT(replyLang);
-      const execution = await runDurableAgentExecution({
+      const isLandingRequest = isPublicLandingBuilderRequest(msgContent);
+      const executePublicChat = () => isLandingRequest
+        ? liveChatEngine.callTool('handle_live_chat', {
+            tenantId: PUBLIC_TENANT,
+            message: msgContent,
+            language: replyLang === 'en' ? 'en' : 'vi',
+            sessionId: leadId,
+            leadId,
+            context: {
+              leadId,
+              leadName: (lead as any).name || '',
+              language: replyLang === 'en' ? 'en' : 'vi',
+              history: historyWithLatest.slice(-8).map((item: any) => ({
+                role: item.direction === 'INBOUND' ? 'user' : 'assistant',
+                content: item.content,
+              })),
+            },
+          })
+        : aiService.processMessage(
+            lead,
+            msgContent,
+            historyWithLatest,
+            t,
+            PUBLIC_TENANT,
+            replyLang,
+          );
+      let execution = await runDurableAgentExecution({
         tenantId: PUBLIC_TENANT,
         idempotencyKey: `web:${inboundInteraction.id}`,
         sessionId: leadId,
         leadId,
         triggerSource: 'public-livechat',
         message: msgContent,
-        execute: () => isPublicLandingBuilderRequest(msgContent)
-          ? liveChatEngine.callTool('handle_live_chat', {
-              tenantId: PUBLIC_TENANT,
-              message: msgContent,
-              language: replyLang === 'en' ? 'en' : 'vi',
-              sessionId: leadId,
-              leadId,
-              context: {
-                leadId,
-                leadName: (lead as any).name || '',
-                language: replyLang === 'en' ? 'en' : 'vi',
-                history: historyWithLatest.slice(-8).map((item: any) => ({
-                  role: item.direction === 'INBOUND' ? 'user' : 'assistant',
-                  content: item.content,
-                })),
-              },
-            })
-          : aiService.processMessage(
-              lead,
-              msgContent,
-              historyWithLatest,
-              t,
-              PUBLIC_TENANT,
-              replyLang,
-            ),
+        execute: executePublicChat,
       });
+      // Older landing requests were cached as EMPTY_OUTPUT because the
+      // live-chat wrapper exposed `response` but not `content`. Repair only
+      // that narrow legacy cache entry; ordinary idempotency replays must
+      // continue returning their original execution unchanged.
+      if (
+        isLandingRequest &&
+        execution.cached &&
+        execution.guardrail?.flags?.includes('EMPTY_OUTPUT')
+      ) {
+        logger.warn(
+          `[PublicLiveChat] repairing legacy EMPTY_OUTPUT execution for inbound=${inboundInteraction.id}`,
+        );
+        execution = await runDurableAgentExecution({
+          tenantId: PUBLIC_TENANT,
+          idempotencyKey: `web:repair-v1:${inboundInteraction.id}`,
+          sessionId: leadId,
+          leadId,
+          triggerSource: 'public-livechat-repair',
+          message: msgContent,
+          execute: executePublicChat,
+        });
+      }
       const result = execution.result;
 
       const aiReply = await interactionRepository.create(PUBLIC_TENANT, {
