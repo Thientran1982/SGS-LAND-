@@ -1,5 +1,20 @@
 export type DatabaseHealthStatus = 'healthy' | 'unavailable';
 
+export type DatabaseOperationalAlertType = 'database_outage' | 'database_recovered';
+
+export interface DatabaseOperationalAlert {
+  type: DatabaseOperationalAlertType;
+  alertKey: 'database-availability';
+  service: 'sgs-land-api';
+  component: 'database';
+  severity: 'critical' | 'info';
+  occurredAt: string;
+  outageStartedAt: string;
+  outageDurationMs: number;
+  thresholdMs: number;
+  consecutiveFailures: number;
+}
+
 export interface DatabaseHealthSnapshot {
   available: boolean;
   status: DatabaseHealthStatus;
@@ -8,6 +23,7 @@ export interface DatabaseHealthSnapshot {
   lastErrorAt?: string;
   lastHealthyAt?: string;
   nextRetryAt?: string;
+  outageStartedAt?: string;
 }
 
 const TRANSIENT_ERROR_CODES = new Set([
@@ -67,14 +83,59 @@ export function isTransientDatabaseError(error: unknown): boolean {
   return TRANSIENT_ERROR_MESSAGES.some((fragment) => message.includes(fragment));
 }
 
+export const DEFAULT_DATABASE_OUTAGE_ALERT_THRESHOLD_MS = 5 * 60_000;
+export const DATABASE_OUTAGE_ALERT_THRESHOLD_ENV = 'DB_OUTAGE_ALERT_THRESHOLD_MS';
+
+export function getDatabaseOutageAlertThresholdMs(
+  env: Record<string, string | undefined> = process.env,
+): number {
+  const raw = env[DATABASE_OUTAGE_ALERT_THRESHOLD_ENV]?.trim();
+  const configured = raw ? Number(raw) : Number.NaN;
+  return Number.isFinite(configured) && configured >= 0
+    ? Math.floor(configured)
+    : DEFAULT_DATABASE_OUTAGE_ALERT_THRESHOLD_MS;
+}
+
+export interface DatabaseHealthTrackerOptions {
+  outageAlertThresholdMs?: number;
+  onOperationalAlert?: (alert: DatabaseOperationalAlert) => void;
+}
+
 export class DatabaseHealthTracker {
   private snapshot: DatabaseHealthSnapshot = {
     available: true,
     status: 'healthy',
     consecutiveFailures: 0,
   };
+  private readonly outageAlertThresholdMs: number;
+  private readonly onOperationalAlert?: (alert: DatabaseOperationalAlert) => void;
+  private outageAlertTimer: NodeJS.Timeout | null = null;
+  private outageStartedAtMs: number | null = null;
+  private outageAlertEmitted = false;
+
+  constructor(options: DatabaseHealthTrackerOptions = {}) {
+    this.outageAlertThresholdMs = options.outageAlertThresholdMs ??
+      getDatabaseOutageAlertThresholdMs();
+    this.onOperationalAlert = options.onOperationalAlert;
+  }
 
   markHealthy(now = new Date()): DatabaseHealthSnapshot {
+    const wasUnavailable = this.snapshot.status === 'unavailable';
+    if (wasUnavailable && this.outageAlertEmitted && this.outageStartedAtMs !== null) {
+      this.dispatchOperationalAlert({
+        type: 'database_recovered',
+        alertKey: 'database-availability',
+        service: 'sgs-land-api',
+        component: 'database',
+        severity: 'info',
+        occurredAt: now.toISOString(),
+        outageStartedAt: new Date(this.outageStartedAtMs).toISOString(),
+        outageDurationMs: Math.max(0, now.getTime() - this.outageStartedAtMs),
+        thresholdMs: this.outageAlertThresholdMs,
+        consecutiveFailures: this.snapshot.consecutiveFailures,
+      });
+    }
+    this.clearOutageState();
     this.snapshot = {
       available: true,
       status: 'healthy',
@@ -86,6 +147,16 @@ export class DatabaseHealthTracker {
 
   markUnavailable(error: unknown, nextRetryAt?: Date, now = new Date()): DatabaseHealthSnapshot {
     const message = errorMessage(error);
+    const wasUnavailable = this.snapshot.status === 'unavailable';
+    if (!wasUnavailable) {
+      this.outageStartedAtMs = now.getTime();
+      this.outageAlertEmitted = false;
+      this.snapshot = {
+        ...this.snapshot,
+        outageStartedAt: now.toISOString(),
+      };
+      this.scheduleOutageAlert();
+    }
     this.snapshot = {
       ...this.snapshot,
       available: false,
@@ -100,5 +171,56 @@ export class DatabaseHealthTracker {
 
   getSnapshot(): DatabaseHealthSnapshot {
     return { ...this.snapshot };
+  }
+
+  private scheduleOutageAlert(): void {
+    this.clearOutageAlertTimer();
+    this.outageAlertTimer = setTimeout(() => {
+      this.outageAlertTimer = null;
+      if (
+        this.snapshot.status !== 'unavailable' ||
+        this.outageAlertEmitted ||
+        this.outageStartedAtMs === null
+      ) {
+        return;
+      }
+
+      this.outageAlertEmitted = true;
+      const now = new Date();
+      this.dispatchOperationalAlert({
+        type: 'database_outage',
+        alertKey: 'database-availability',
+        service: 'sgs-land-api',
+        component: 'database',
+        severity: 'critical',
+        occurredAt: now.toISOString(),
+        outageStartedAt: new Date(this.outageStartedAtMs).toISOString(),
+        outageDurationMs: Math.max(0, now.getTime() - this.outageStartedAtMs),
+        thresholdMs: this.outageAlertThresholdMs,
+        consecutiveFailures: this.snapshot.consecutiveFailures,
+      });
+    }, this.outageAlertThresholdMs);
+    this.outageAlertTimer.unref?.();
+  }
+
+  private dispatchOperationalAlert(alert: DatabaseOperationalAlert): void {
+    try {
+      this.onOperationalAlert?.(alert);
+    } catch {
+      // Alerting must never change database recovery or request behavior.
+    }
+  }
+
+  private clearOutageState(): void {
+    this.clearOutageAlertTimer();
+    this.outageStartedAtMs = null;
+    this.outageAlertEmitted = false;
+  }
+
+  private clearOutageAlertTimer(): void {
+    if (this.outageAlertTimer) {
+      clearTimeout(this.outageAlertTimer);
+      this.outageAlertTimer = null;
+    }
   }
 }

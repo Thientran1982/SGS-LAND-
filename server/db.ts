@@ -4,6 +4,7 @@ import { Redis } from '@upstash/redis';
 import path from 'path';
 import dotenv from 'dotenv';
 import { DatabaseHealthTracker, isTransientDatabaseError, type DatabaseHealthSnapshot } from './dbHealth';
+import { monitoringService } from './services/monitoringService';
 dotenv.config();
 // Parse numeric (OID 1700) and int8 (OID 20) columns as JS numbers instead of strings
 types.setTypeParser(1700, (val: string) => parseFloat(val));
@@ -54,7 +55,9 @@ export const pool = new Pool({
 
 const DB_RECONNECT_BASE_MS = 500;
 const DB_RECONNECT_MAX_MS = 30_000;
-const databaseHealth = new DatabaseHealthTracker();
+const databaseHealth = new DatabaseHealthTracker({
+  onOperationalAlert: monitoringService.emitOperationalAlert,
+});
 let reconnectDelayMs = DB_RECONNECT_BASE_MS;
 let reconnectTimer: NodeJS.Timeout | null = null;
 let reconnectInFlight = false;
