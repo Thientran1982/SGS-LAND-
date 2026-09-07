@@ -1,0 +1,23 @@
+
+
+VIỆC 2 — TỰ HỌC CHẠY CHU KỲ ĐẦU TIÊN:
+(a) Tạo bảng ai_golden_set_cases (migration mới): id, tenant_id, category (match/valuation/draft), input_json, expected_json, notes, active. Seed 20 case: 10 cho matcher (match_chosen signals thật trong DB — trích payload), 10 cho valuation (dùng sai số định giá từ price_estimate_edit_distance nếu có, hoặc tạo case chuẩn từ dữ liệu market).
+(b) Vipt learning cycle runner: chạy shadow so sánh current weights (DEFAULT_MATCHER_WEIGHTS) trên golden set → ghi 1 row ai_learning_cycles (status PASSED/FAILED kèm summary_json các chỉ số) — dùng runLockedEvaluationCycle đã có trong autonomousLearningService. Chạy 1 lần ngay khi deploy xong (cron hàng tuần Chủ nhật 3h sáng + chạy tay qua 1 endpoint internal có secret).
+(c) RLHF: wire ai_feedback (3 bản ghi hiện có) vào assessFeedback → adjudicateFeedback → nếu đủ tín hiệu match_chosen >= 10 → fitWeights tạo DRAFT (KHÔNG tự promote — promote vẫn qua golden gate + admin, giữ nguyên luật an toàn).
+
+VIỆC 3 — TỰ SỬA CHỮA ĐẦY VÒNG:
+(a) Trong selfRepairService.selfRepairTick: nhánh else (lỗi không phải NO_AGENT_EVENT_HANDLER) hiện chỉ đếm triaged++ — sửa thành GHI THẬT memory triage: agentMemoryService.remember(tenantId, 'agent:lessons', 'repair-triage:'+eventId, mô tả lỗi rút gọn + scrubPii, 'procedural', 0.5) — đúng như comment đã hứa.
+(b) Thêm error-spike detector vào tick: cùng last_error pattern xuất hiện >= 3 lần trong dead-letter list → recordSignal('repair_spike_detected') + tạo 1 approval_request (nếu bảng có) hoặc task comment để người duyệt xem.
+(c) Replay dead-letter đang kẹt (1 event) — chạy tay 1 lần selfRepairTick qua node script để chứng minh vòng chạy thật.
+
+NGUYÊN TẮC: KHÔNG đổi luật an toàn đã có (golden gate, promote qua admin, MEMORY_CONFLICT, scrub PII, consent). Mọi việc mới đều best-effort — lỗi không được chặn feature chính. npx tsc --noEmit → EXIT=0.
+
+NGHIỆM THU (dán kết quả từng mục):
+1. Gọi 1 phiên chat thử → sau đó psql: SELECT count(*) FROM agent_store WHERE namespace LIKE 'customer:%' tăng ít nhất 1 (session ghi được).
+2. Chạy consolidation tay 1 lần → có fact mới được tổng hợp hoặc log nói rõ chưa đủ điều kiện lặp 3 lần.
+3. lead_journey_memory >= 1 row sau tương tác.
+4. ai_learning_cycles >= 1 row PASSED hoặc FAILED kèm summary (không còn 0 rows).
+5. ai_golden_set_cases = 20 rows.
+6. psql: SELECT count(*) FROM agent_store WHERE namespace='agent:lessons' tăng (triage được ghi).
+7. Dead-letter hiện tại được replay hoặc có lý do rõ ràng vì sao chưa.
+8. tsc EXIT=0 + restart workflow + /api/health 200.
