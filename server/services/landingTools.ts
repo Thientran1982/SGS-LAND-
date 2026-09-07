@@ -38,6 +38,20 @@ function slugify(name: string): string {
 
 async function auditLanding(tenantId: string, action: string, input: Record<string, any>, output: Record<string, any>): Promise<void> {
     try {
+        const safeInput = {
+            hasBrief: typeof input?.brief === 'string' && input.brief.length > 0,
+            briefLength: typeof input?.brief === 'string' ? input.brief.length : 0,
+            hasBrochure: typeof input?.brochureText === 'string' && input.brochureText.length > 0,
+            language: input?.language === 'en' ? 'en' : 'vi',
+        };
+        const safeOutput = {
+            status: output?.status === 'CREATED' || output?.status === 'PAYWALL' ? output.status : 'UNKNOWN',
+            draftCreated: output?.status === 'CREATED',
+            hasPageId: Boolean(output?.pageId),
+            hasSlug: Boolean(output?.slug),
+            quotaUsed: Number.isFinite(Number(output?.quotaUsed)) ? Number(output.quotaUsed) : null,
+            quotaLimit: Number.isFinite(Number(output?.quotaLimit)) ? Number(output.quotaLimit) : null,
+        };
         await agentAuditRepository.record(tenantId, {
             eventKey: 'landing-tool:' + action + ':' + uuidv4(),
             eventType: 'TOOL_EXECUTION',
@@ -46,9 +60,9 @@ async function auditLanding(tenantId: string, action: string, input: Record<stri
             entityType: 'landing_page',
            entityId: String(output?.id || ''),
             status: 'SUCCESS',
-            input,
-            output,
-            metadata: { surface: 'landing_builder_tool' },
+            input: safeInput,
+            output: safeOutput,
+            metadata: { surface: 'landing_builder_tool', privacy: 'content-free', schemaVersion: 'v1' },
     });
     } catch (err) {
         console.warn('[landingTools] audit failed:', (err as Error).message);

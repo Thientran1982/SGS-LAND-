@@ -83,7 +83,7 @@ import { createLearningCycleRoutes } from "./server/routes/learningCycleRoutes";
 import { createDailyAdminReportRoutes } from "./server/routes/dailyAdminReportRoutes";
 import { startDailyReportScheduler } from "./server/services/dailyAdminReportService";
 import { createLiveChatAgentRoutes } from "./server/routes/liveChatAgentRoutes";
-import { isLandingBuilderRequest, liveChatEngine } from "./server/ai/liveChatEngine";
+import { isLandingBuilderRequest, liveChatEngine, recordLandingClassificationTelemetry } from "./server/ai/liveChatEngine";
 import { createPublicProjectRoutes } from "./server/routes/publicProjectRoutes";
 import { createPublicDeveloperRoutes } from "./server/routes/publicDeveloperRoutes";
 import { createPublicProjectContentRoutes } from "./server/routes/publicProjectContentRoutes";
@@ -2882,6 +2882,23 @@ app.get('/api/public/listings/:slugId', apiRateLimit, async (req: express.Reques
         });
       }
       const result = execution.result;
+      // The public widget intentionally keeps non-builder chats on the legacy
+      // pipeline. Still record the classifier decision so candidate misses
+      // are visible without persisting the visitor's brief.
+      await recordLandingClassificationTelemetry({
+        tenantId: PUBLIC_TENANT,
+        sessionId: leadId,
+        leadId,
+        runId: execution.runId,
+        traceId: execution.traceId,
+        message: msgContent,
+        languageHint: replyLang,
+        finalIntent: result.intent || (isLandingRequest ? 'LANDING' : 'LEGACY_AI_PIPELINE'),
+        specialistOutput: isLandingRequest ? result.specialistOutput : undefined,
+        specialistError: isLandingRequest && !result.specialistOutput
+          ? String(result.missingData?.[0] || '')
+          : undefined,
+      }).catch(error => logger.warn(`[LandingTelemetry] public record failed: ${error?.message || error}`));
 
       const aiReply = await interactionRepository.create(PUBLIC_TENANT, {
         leadId,

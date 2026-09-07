@@ -1251,6 +1251,129 @@ export function isLandingBuilderRequest(message: string): boolean {
     return hasLandingTarget && hasCreateAction;
 }
 
+type LandingTelemetryLanguage = 'vi' | 'en' | 'mixed' | 'unknown';
+
+type LandingTelemetrySnapshot = {
+    language: LandingTelemetryLanguage;
+    detected: boolean;
+    candidate: boolean;
+    hasLandingTarget: boolean;
+    hasCreateAction: boolean;
+    hasProjectOrPriceContext: boolean;
+    initialIntent: string;
+    finalIntent: string;
+    draftStatus: 'CREATED' | 'PAYWALL' | 'ERROR' | 'NOT_ATTEMPTED' | 'RETURNED';
+    draftCreated: boolean;
+    falseNegative: boolean;
+    falsePositive: boolean;
+};
+
+function detectLandingTelemetryLanguage(message: string, hint?: string): LandingTelemetryLanguage {
+    const normalizedHint = String(hint || '').toLowerCase();
+    if (normalizedHint === 'en') return 'en';
+    if (normalizedHint === 'vi' || normalizedHint === 'vn') return 'vi';
+
+    const normalized = normalizeIntentText(message);
+    const hasVietnameseShape = /[ăâđêôơư]/.test(String(message || '').toLowerCase())
+        || /\b(?:tao|dung|xay|thiet ke|trang|du an|gia|cho|va|voi)\b/.test(normalized);
+    const hasEnglishShape = /\b(?:the|create|build|design|page|website|project|price|for|and|with)\b/.test(normalized);
+    if (hasVietnameseShape && hasEnglishShape) return 'mixed';
+    if (hasVietnameseShape) return 'vi';
+    if (hasEnglishShape) return 'en';
+    return 'unknown';
+}
+
+function landingDraftStatus(
+    specialistOutput: any,
+    specialistError?: string | null,
+): LandingTelemetrySnapshot['draftStatus'] {
+    const candidate = specialistOutput?.primary && typeof specialistOutput.primary === 'object'
+        ? specialistOutput.primary
+        : specialistOutput;
+    const status = String(candidate?.status || '').toUpperCase();
+    if (status === 'CREATED') return 'CREATED';
+    if (status === 'PAYWALL') return 'PAYWALL';
+    if (specialistError) return 'ERROR';
+    if (specialistOutput) return 'RETURNED';
+    return 'NOT_ATTEMPTED';
+}
+
+/**
+ * Build a privacy-safe landing classifier record. This deliberately contains
+ * only bounded categories and booleans: never add the brief, a project name,
+ * a URL slug, a price, or model output here.
+ */
+export function buildLandingClassificationTelemetry(
+    message: string,
+    languageHint: string | undefined,
+    finalIntent: string,
+    specialistOutput?: any,
+    specialistError?: string | null,
+): LandingTelemetrySnapshot {
+    const normalized = normalizeIntentText(message);
+    const hasLandingTarget = /\b(?:landing(?:\s+(?:page|builder))?|page|trang\s+(?:landing|dich|gioi thieu)|website|web\s+site|microsite|mini\s*site|one[-\s]?pager|sales\s+page|campaign\s+page|product\s+page|fanpage|trang\s+(?:ban hang|san pham|web))\b/.test(normalized);
+    const hasCreateAction = /\b(?:dung|tao|xay|lam|thiet ke|build|create|generate|make|design|craft|launch|can you|i need|i want|muon)\b/.test(normalized);
+    const hasProjectOrPriceContext = /\b(?:du an|project|gia|price|bao nhieu|trieu|ty|valuation|budget|million|billion)\b/.test(normalized);
+    const initialIntent = classifyLiveChatIntent(message).intent;
+    const detected = isLandingBuilderRequest(message);
+    const candidate = hasLandingTarget && hasCreateAction;
+    const draftStatus = landingDraftStatus(specialistOutput, specialistError);
+    const final = String(finalIntent || 'UNKNOWN').slice(0, 64);
+
+    return {
+        language: detectLandingTelemetryLanguage(message, languageHint),
+        detected,
+        candidate,
+        hasLandingTarget,
+        hasCreateAction,
+        hasProjectOrPriceContext,
+        initialIntent,
+        finalIntent: final,
+        draftStatus,
+        draftCreated: draftStatus === 'CREATED',
+        falseNegative: candidate && final !== 'LANDING',
+        falsePositive: detected && final !== 'LANDING',
+    };
+}
+
+export async function recordLandingClassificationTelemetry(data: {
+    tenantId: string;
+    sessionId?: string;
+    leadId?: string;
+    runId: string;
+    traceId: string;
+    message: string;
+    languageHint?: string;
+    finalIntent?: string;
+    specialistOutput?: any;
+    specialistError?: string | null;
+}): Promise<void> {
+    const snapshot = buildLandingClassificationTelemetry(
+        data.message,
+        data.languageHint,
+        data.finalIntent || 'UNKNOWN',
+        data.specialistOutput,
+        data.specialistError,
+    );
+    await agentAuditRepository.record(data.tenantId, {
+        eventKey: `landing-classification:${data.runId}`,
+        eventType: 'ENTITY_OBSERVED',
+        sessionId: data.sessionId,
+        leadId: data.leadId,
+        runId: data.runId,
+        traceId: data.traceId,
+        entityType: 'LANDING_CLASSIFICATION',
+        entityId: data.runId,
+        status: 'OBSERVED',
+        output: snapshot,
+        metadata: {
+            source: 'live-chat-landing-telemetry',
+            schemaVersion: 'v1',
+            language: snapshot.language,
+        },
+    });
+}
+
 export function classifyLiveChatIntent(message: string): { intent: string; suggestedTool: string } {
     const msg = String(message || '').trim();
     if (isLandingBuilderRequest(msg)) {
@@ -1687,14 +1810,31 @@ async function handle_live_chat(args: Record<string, any>): Promise<any> {
         runId: execution.runId,
         traceId: execution.traceId,
     };
+    await recordLandingClassificationTelemetry({
+        tenantId,
+        sessionId: effectiveSessionId,
+        leadId: args.context?.leadId,
+        runId: execution.runId,
+        traceId: execution.traceId,
+        message,
+        languageHint: args.context?.language || args.language,
+        finalIntent: result.intent,
+        specialistOutput: result.specialistOutput,
+        specialistError: result.intent === 'LANDING' && !result.specialistOutput
+            ? String(result.missingData?.[0] || '')
+            : undefined,
+    }).catch(error => logger.warn(`[LandingTelemetry] record failed: ${error?.message || error}`));
     await agentAuditRepository.record(tenantId, {
         ...auditBase,
         eventKey: `chat:${execution.runId}:in`,
         eventType: 'CHAT_MESSAGE',
         direction: 'INBOUND',
         status: 'SUCCESS',
-        input: { message },
-        metadata: { source: 'live-chat-engine' },
+        input: {
+            messageHash: createHash('sha256').update(message).digest('hex').slice(0, 24),
+            messageLength: message.length,
+        },
+        metadata: { source: 'live-chat-engine', privacy: 'content-free' },
     }).catch(error => logger.warn(`[LiveChatAudit] inbound record failed: ${error?.message || error}`));
     await agentAuditRepository.record(tenantId, {
         ...auditBase,
@@ -1703,12 +1843,11 @@ async function handle_live_chat(args: Record<string, any>): Promise<any> {
         direction: 'OUTBOUND',
         status: result.degraded ? 'DEGRADED' : 'SUCCESS',
         output: {
-            content,
             intent: result.intent,
-            sources: result.sources,
             groundingStatus: result.groundingStatus,
             degraded: result.degraded === true,
             degradedReason: result.degradedReason,
+            contentLength: typeof content === 'string' ? content.length : 0,
         },
         latencyMs: providerTelemetry?.attempts?.reduce(
             (total: number, attempt: ProviderAttempt) => total + (Number(attempt.latencyMs) || 0),
@@ -1726,14 +1865,25 @@ async function handle_live_chat(args: Record<string, any>): Promise<any> {
         },
     }).catch(error => logger.warn(`[LiveChatAudit] outbound record failed: ${error?.message || error}`));
     for (const step of (steps || []) as Array<Record<string, any>>) {
+        const isLandingTool = String(step.agent) === 'landing_builder';
         await agentAuditRepository.record(tenantId, {
             ...auditBase,
             eventKey: `tool:${execution.runId}:${String(step.agent)}`,
             eventType: 'TOOL_EXECUTION',
             toolName: String(step.agent),
             status: String(step.status || 'SUCCESS'),
-            output: { specialistOutput: result.specialistOutput, sources: result.sources },
-            metadata: { source: 'durable-live-chat', cached: execution.cached, resumed: execution.resumed },
+            output: isLandingTool
+                ? {
+                    draftStatus: landingDraftStatus(result.specialistOutput),
+                    draftCreated: landingDraftStatus(result.specialistOutput) === 'CREATED',
+                  }
+                : { sourcesCount: Array.isArray(result.sources) ? result.sources.length : 0 },
+            metadata: {
+                source: 'durable-live-chat',
+                cached: execution.cached,
+                resumed: execution.resumed,
+                ...(isLandingTool ? { privacy: 'content-free' } : {}),
+            },
         }).catch(error => logger.warn(`[LiveChatAudit] tool record failed: ${error?.message || error}`));
     }
     await recordObservedEntities(tenantId, auditBase, result.specialistOutput, result.sources);

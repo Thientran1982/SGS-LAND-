@@ -1,7 +1,11 @@
 import { describe, expect, it } from 'vitest';
 import { ensureLandingResponseLink } from '../ai/landingResponse';
 import { inspectAgentOutput } from '../ai/agentGuardrails';
-import { classifyLiveChatIntent, isLandingBuilderRequest } from '../ai/liveChatEngine';
+import {
+  buildLandingClassificationTelemetry,
+  classifyLiveChatIntent,
+  isLandingBuilderRequest,
+} from '../ai/liveChatEngine';
 
 describe('landing_builder chat response contract', () => {
   it('prioritizes landing creation over price and project details in the brief', () => {
@@ -72,5 +76,51 @@ describe('landing_builder chat response contract', () => {
 
     expect(guardrail.blocked).toBe(false);
     expect(guardrail.sanitizedContent).toContain('/landing/du-an-demo-zcode');
+  });
+
+  it('records only privacy-safe landing classification signals', () => {
+    const brief = 'Tạo landing page cho dự án Aqua City, giá 5 tỷ';
+    const telemetry = buildLandingClassificationTelemetry(
+      brief,
+      'vi',
+      'LANDING',
+      { status: 'CREATED', slug: 'aqua-city-unsafe-detail' },
+    );
+
+    expect(telemetry).toMatchObject({
+      language: 'vi',
+      detected: true,
+      candidate: true,
+      hasProjectOrPriceContext: true,
+      draftStatus: 'CREATED',
+      draftCreated: true,
+      falseNegative: false,
+      falsePositive: false,
+    });
+    expect(JSON.stringify(telemetry)).not.toContain(brief);
+    expect(JSON.stringify(telemetry)).not.toContain('5 tỷ');
+    expect(JSON.stringify(telemetry)).not.toContain('Aqua City');
+    expect(JSON.stringify(telemetry)).not.toContain('unsafe-detail');
+  });
+
+  it('surfaces candidate misses and classifier false positives by language', () => {
+    const missed = buildLandingClassificationTelemetry(
+      'Please craft a campaign page for the project',
+      'en',
+      'VALUATION',
+    );
+    expect(missed).toMatchObject({
+      language: 'en',
+      candidate: true,
+      detected: false,
+      falseNegative: true,
+    });
+
+    const falsePositive = buildLandingClassificationTelemetry(
+      'Tạo landing page cho dự án',
+      'vi',
+      'PROJECT',
+    );
+    expect(falsePositive.falsePositive).toBe(true);
   });
 });

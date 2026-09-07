@@ -55,6 +55,30 @@ export type ProviderHealthSummary = {
   };
 };
 
+export type LandingClassificationHealth = {
+  range: { from: string; to: string };
+  summary: {
+    totalRequests: number;
+    detectedRequests: number;
+    candidateRequests: number;
+    candidateDetectedRequests: number;
+    draftCreated: number;
+    draftFailures: number;
+    falseNegatives: number;
+    falsePositives: number;
+    detectionRate: number;
+  };
+  byLanguage: Array<{
+    language: string;
+    totalRequests: number;
+    detectedRequests: number;
+    candidateRequests: number;
+    draftCreated: number;
+    falseNegatives: number;
+    falsePositives: number;
+  }>;
+};
+
 function scrub(value: any, depth = 0): any {
   if (depth > 5) return '[truncated]';
   if (value === null || value === undefined) return value;
@@ -267,6 +291,87 @@ class AgentAuditRepository {
           allFallbackProvidersFailed: exhaustedRequests > 0,
           exhaustedRequests,
         },
+      };
+    });
+  }
+
+  /**
+   * Aggregate the privacy-safe LANDING_CLASSIFICATION events. The query only
+   * reads booleans/categories written by the live-chat telemetry writer.
+   */
+  async landingClassificationHealth(
+    tenantId: string,
+    filters: ProviderHealthFilters = {},
+  ): Promise<LandingClassificationHealth> {
+    const to = filters.to || new Date().toISOString();
+    const from = filters.from || new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();
+
+    return withTenantContext(tenantId, async client => {
+      const where = `
+        FROM agent_audit_events
+        WHERE tenant_id = $1
+          AND entity_type = 'LANDING_CLASSIFICATION'
+          AND created_at >= $2
+          AND created_at <= $3`;
+      const values = [tenantId, from, to];
+      const [summaryResult, languageResult] = await Promise.all([
+        client.query(
+          `SELECT
+             COUNT(*)::int AS total_requests,
+             COUNT(*) FILTER (WHERE output_json->>'detected' = 'true')::int AS detected_requests,
+             COUNT(*) FILTER (WHERE output_json->>'candidate' = 'true')::int AS candidate_requests,
+             COUNT(*) FILTER (WHERE output_json->>'candidate' = 'true'
+                               AND output_json->>'detected' = 'true')::int AS candidate_detected_requests,
+             COUNT(*) FILTER (WHERE output_json->>'draftCreated' = 'true')::int AS draft_created,
+             COUNT(*) FILTER (WHERE output_json->>'candidate' = 'true'
+                               AND output_json->>'draftStatus' IN ('ERROR', 'RETURNED'))::int AS draft_failures,
+             COUNT(*) FILTER (WHERE output_json->>'falseNegative' = 'true')::int AS false_negatives,
+             COUNT(*) FILTER (WHERE output_json->>'falsePositive' = 'true')::int AS false_positives
+           ${where}`,
+          values,
+        ),
+        client.query(
+          `SELECT
+             COALESCE(NULLIF(output_json->>'language', ''), 'unknown') AS language,
+             COUNT(*)::int AS total_requests,
+             COUNT(*) FILTER (WHERE output_json->>'detected' = 'true')::int AS detected_requests,
+             COUNT(*) FILTER (WHERE output_json->>'candidate' = 'true')::int AS candidate_requests,
+             COUNT(*) FILTER (WHERE output_json->>'draftCreated' = 'true')::int AS draft_created,
+             COUNT(*) FILTER (WHERE output_json->>'falseNegative' = 'true')::int AS false_negatives,
+             COUNT(*) FILTER (WHERE output_json->>'falsePositive' = 'true')::int AS false_positives
+           ${where}
+           GROUP BY 1
+           ORDER BY total_requests DESC, language ASC`,
+          values,
+        ),
+      ]);
+
+      const row = summaryResult.rows[0] || {};
+      const totalRequests = Number(row.total_requests || 0);
+      return {
+        range: { from, to },
+        summary: {
+          totalRequests,
+          detectedRequests: Number(row.detected_requests || 0),
+          candidateRequests: Number(row.candidate_requests || 0),
+          candidateDetectedRequests: Number(row.candidate_detected_requests || 0),
+          draftCreated: Number(row.draft_created || 0),
+          draftFailures: Number(row.draft_failures || 0),
+          falseNegatives: Number(row.false_negatives || 0),
+          falsePositives: Number(row.false_positives || 0),
+          detectionRate: Number(row.candidate_requests || 0)
+            ? Math.round((Number(row.candidate_detected_requests || 0) / Number(row.candidate_requests || 0)) * 10000) / 100
+            : 0,
+        },
+        byLanguage: languageResult.rows.map(language => ({
+          language: String(language.language),
+          totalRequests: Number(language.total_requests || 0),
+          detectedRequests: Number(language.detected_requests || 0),
+          candidateRequests: Number(language.candidate_requests || 0),
+          draftCreated: Number(language.draft_created || 0),
+          falseNegatives: Number(language.false_negatives || 0),
+          falsePositives: Number(language.false_positives || 0),
+        })),
       };
     });
   }

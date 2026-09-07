@@ -3,6 +3,24 @@ import { agentAuditRepository } from '../repositories/agentAuditRepository';
 
 export function createAgentAuditRoutes(authenticateToken: any): Router {
   const router = Router();
+  router.get('/classification-health', authenticateToken, async (req: Request, res: Response) => {
+    try {
+      const user = (req as any).user;
+      if (!['SUPER_ADMIN', 'ADMIN', 'TEAM_LEAD'].includes(user?.role)) {
+        return res.status(403).json({ error: 'Bạn không có quyền xem telemetry landing.' });
+      }
+      const days = Math.max(1, Math.min(90, Number(req.query.days) || 7));
+      const to = new Date();
+      const from = new Date(to.getTime() - days * 24 * 60 * 60 * 1000);
+      res.json(await agentAuditRepository.landingClassificationHealth(user.tenantId, {
+        from: from.toISOString(),
+        to: to.toISOString(),
+      }));
+    } catch (error) {
+      res.status(500).json({ error: 'Không thể đọc telemetry phân loại landing.' });
+    }
+  });
+
   router.get('/', authenticateToken, async (req: Request, res: Response) => {
     try {
       const user = (req as any).user;
