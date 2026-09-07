@@ -8,3 +8,11 @@ Replit-managed production database provisioning does not automatically replicate
 **Why:** SGS-LAND's canonical database is external Aiven, while Replit's Publish flow may still inspect a separate managed development database. Creating the role or weakening policies in the app's external database does not repair the managed restore path.
 
 **How to apply:** For an external-database app, skip or unlink Replit-managed database schema synchronization when the Publish UI permits it. Do not change RLS policies from the dedicated role to PUBLIC and do not add deploy-time DDL. If the UI has no external-database path, treat the failure as a Replit provisioning limitation and escalate rather than mutating the canonical database.
+
+## Extensions in Publish validation
+
+Publish validation may restore a schema snapshot into a fork without running the application's migration runner or carrying cluster-level extensions. A live Aiven database can have `pg_trgm` installed and still fail validation when a restored GIN index references `gin_trgm_ops`.
+
+**Why:** PostgreSQL extensions are database/cluster state, while the application's `schema_versions` migration path is separate from Replit's dump/restore validation path.
+
+**How to apply:** Verify `pg_available_extensions` and `pg_extension` on the canonical Aiven service, then treat a fork-only `gin_trgm_ops` failure as a Publish restore limitation. Do not alter the index or add production startup DDL; use an external-database Publish path or escalate the restore behavior.
