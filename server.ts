@@ -6513,6 +6513,10 @@ app.get('/api/admin/agent-tasks', apiRateLimit, authenticateToken, async (req: e
       const ua = String(req.headers['user-agent'] || '');
       const pathname = req.path;
 
+      if (pathname.startsWith('/api/')) {
+        return res.status(404).json({ error: 'Không tìm thấy endpoint.', code: 'API_NOT_FOUND' });
+      }
+
       if (isBot(ua)) {
         const aiBot = isAIBot(ua);
         // BOT_DB_SSR — for project/listing detail pages, render rich crawlable body
@@ -6561,10 +6565,21 @@ app.get('/api/admin/agent-tasks', apiRateLimit, authenticateToken, async (req: e
       // Regular users → SPA shell with DB-backed meta overrides
       try {
         const routeKey = pathname.replace(/^\//, '').split('/')[0] || '';
-        const result = await pool.query(
-          'SELECT title, description, og_image FROM seo_overrides WHERE route_key = $1',
-          [routeKey]
-        );
+        let timeoutHandle: NodeJS.Timeout | undefined;
+        const result = await Promise.race([
+          pool.query(
+            'SELECT title, description, og_image FROM seo_overrides WHERE route_key = $1',
+            [routeKey]
+          ),
+          new Promise<never>((_, reject) => {
+            timeoutHandle = setTimeout(
+              () => reject(new Error('seo_overrides lookup timed out')),
+              3000
+            );
+          }),
+        ]).finally(() => {
+          if (timeoutHandle) clearTimeout(timeoutHandle);
+        });
         const row = result.rows[0];
         const meta = buildStaticPageMeta(
           row?.title,

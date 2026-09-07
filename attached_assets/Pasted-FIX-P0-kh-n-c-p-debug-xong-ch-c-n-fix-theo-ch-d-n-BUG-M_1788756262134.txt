@@ -1,0 +1,36 @@
+FIX P0 (khẩn cấp, đã debug xong — chỉ cần fix theo chỉ dẫn):
+
+BUG: Mọi API request đi tới path chưa định nghĩa (404) đang bị treo vĩnh viễn thay vì trả 404 JSON.
+
+BẰNG CHỨNG đã tái hiện trên máy này (curl trực tiếp localhost:5000, CSRF hợp lệ):
+- POST /api/live-chat/agent/chat → 000, treo hết timeout (path này KHÔNG tồn tại trong code)
+- POST /api/foo-bar → 000, treo
+- POST /api/tools → 000, treo (GET có thật, POST không khớp)
+- POST /api/live-chat/chat (route có thật) → 401 sau 0.014s — bình thường
+- POST /api/live-chat/knowledge → 401 sau 0.010s — bình thường
+
+NGUYÊN NHÂN (đã khoanh chính xác):
+1. Universal catch-all ở cuối server.ts (app.use(async (req, res) => ...) — dòng ~6507, comment "Universal catch-all — must be last route") khớp MỌI method + path chưa khớp route trước đó, kể cả /api/*.
+2. Trong nhánh user thường, nó gọi pool.query('SELECT title, description, og_image FROM seo_overrides WHERE route_key = $1') trực tiếp bằng pool toàn cục (server/db.ts).
+3. Khi DB Aiven chập chờn/mất kết nối (như đã từng ENOTFOUND), query này treo — không throw nên nhánh catch (res.sendFile dist/index.html) không cứu được → client treo vĩnh viễn.
+
+FIX YÊU CẦU (2 việc):
+
+VIEC 1 — catch-all phải từ chối API path (fix gốc, ưu tiên):
+Ở ĐẦU handler catch-all trong server.ts, thêm:
+  if (req.path.startsWith('/api/')) {
+    return res.status(404).json({ error: 'Không tìm thấy endpoint.', code: 'API_NOT_FOUND' });
+  }
+Giữ nguyên toàn bộ phần bot/SSR/SPA phía sau.
+
+VIEC 2 — thêm timeout chủ động cho query seo_overrides trong catch-all (phòng vệ):
+Bọc pool.query bằng Promise.race với timeout 3000ms (nếu quá → throw để nhánh catch hiện có serveFile dist/index.html như thiết kế). Đồng thời xem xét thêm keepAlive: true, keepAliveInitialDelayMillis: 10000 vào new Pool trong server/db.ts.
+
+TIÊU CHÍ NGHIỆM THU (phải chạy và dán kết quả):
+1. curl -s -m 6 -o /dev/null -w '%{http_code} %{time_total}s' -X POST http://localhost:5000/api/foo-bar → phải 404, dưới 200ms
+2. curl -s -m 6 -o /dev/null -w '%{http_code} %{time_total}s' -X POST http://localhost:5000/api/live-chat/agent/chat → phải 404, dưới 200ms
+3. curl GET http://localhost:5000/health → vẫn 200 bình thường
+4. GET trang chủ https://sgsland.dev-domain (webview preview) → SPA vẫn render bình thường (catch-all chỉ chặn /api/*, không phá SSR bot/SEO)
+5. npx tsc --noEmit → EXIT=0
+
+LƯU Ý: KHÔNG sửa middleware CSRF/auth/rate-limit — chúng đã đúng (đã test: POST không token → 403 tức thì 0.008s). KHÔNG thêm route /api/live-chat/agent — đó là path test sai, không phải feature.
