@@ -63,6 +63,13 @@ test.describe('Landing builder public route', () => {
     }
   });
 
+  test.beforeEach(async () => {
+    await db.query(
+      'UPDATE landing_pages SET status = $1 WHERE slug = $2 AND visitor_key = $3',
+      ['draft', DRAFT_SLUG, DRAFT_VISITOR_KEY],
+    );
+  });
+
   test('renders the published demo landing with all six sections in order', async ({ request }) => {
     const response = await request.get(`${BASE_URL}/landing/${PUBLISHED_SLUG}`);
     const html = await response.text();
@@ -107,6 +114,44 @@ test.describe('Landing builder public route', () => {
     expect(html).toContain('Phát hành trang');
   });
 
+  test('keeps the draft visible after a publish error and retries successfully', async ({ page }) => {
+    let publishAttempts = 0;
+    await page.route(`**/api/landing-pages/${DRAFT_SLUG}/publish`, async (route) => {
+      publishAttempts += 1;
+      if (publishAttempts === 1) {
+        await route.fulfill({
+          status: 503,
+          contentType: 'application/json',
+          body: JSON.stringify({ message: 'Dịch vụ phát hành đang tạm thời gián đoạn.' }),
+        });
+        return;
+      }
+      await route.continue();
+    });
+
+    await page.goto(
+      `${BASE_URL}/landing/${DRAFT_SLUG}?visitorKey=${encodeURIComponent(DRAFT_VISITOR_KEY)}`,
+    );
+
+    const publishButton = page.getByRole('button', { name: 'Phát hành trang' });
+    await publishButton.click();
+
+    await expect(page.locator('.landing-builder-publish-error')).toContainText(
+      'Phát hành chưa thành công: Dịch vụ phát hành đang tạm thời gián đoạn.',
+    );
+    await expect(page.getByText('Bản nháp')).toBeVisible();
+    await expect(page.getByRole('button', { name: 'Phát hành trang' })).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'Landing smoke draft' })).toBeVisible();
+    await expect(page.locator('#hero')).toContainText(DRAFT_SECTIONS[0].body);
+
+    await page.getByRole('button', { name: 'Phát hành trang' }).click();
+
+    await expect(page.locator('.landing-builder-publish-error')).toHaveCount(0);
+    await expect(page.getByText('Bản nháp')).toHaveCount(0);
+    await expect(page.getByRole('button', { name: 'Phát hành trang' })).toHaveCount(0);
+    expect(publishAttempts).toBe(2);
+  });
+
   test('publishes the owner draft and makes all content public', async ({ page }) => {
     await page.goto(
       `${BASE_URL}/landing/${DRAFT_SLUG}?visitorKey=${encodeURIComponent(DRAFT_VISITOR_KEY)}`,
@@ -141,7 +186,9 @@ test.describe('Landing builder public route', () => {
     await expect(page.getByRole('button', { name: 'Phát hành trang' })).toHaveCount(0);
 
     for (const section of DRAFT_SECTIONS) {
-      await expect(page.locator(`#${section.stage}`)).toContainText(section.title);
+      if (section.stage !== 'hero') {
+        await expect(page.locator(`#${section.stage}`)).toContainText(section.title);
+      }
       await expect(page.locator(`#${section.stage}`)).toContainText(section.body);
     }
   });

@@ -33,6 +33,7 @@ const SECTION_LABELS: Record<string, string> = {
   amenities: "Tiện ích",
   contact: "Liên hệ",
 };
+const DEFAULT_PUBLISH_ERROR = "Không thể phát hành trang lúc này. Vui lòng thử lại.";
 
 function sectionOf(page: GeneratedLandingData, stage: string) {
   return page.sections.find((section) => section.stage === stage);
@@ -41,6 +42,15 @@ function sectionOf(page: GeneratedLandingData, stage: string) {
 function phoneHref(phone?: string) {
   const digits = String(phone || "").replace(/\D/g, "");
   return digits ? `tel:${digits}` : null;
+}
+
+async function getCsrfToken() {
+  const response = await fetch("/api/csrf-token", {
+    credentials: "include",
+    cache: "no-store",
+  });
+  const data = await response.json().catch(() => null);
+  return typeof data?.csrfToken === "string" ? data.csrfToken : "";
 }
 
 export function LandingNotFound() {
@@ -79,19 +89,28 @@ export default function GeneratedLandingPage({
     setPublishing(true);
     setPublishError("");
     try {
+      const csrfToken = await getCsrfToken();
       const response = await fetch(`/api/landing-pages/${encodeURIComponent(page.slug)}/publish`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          ...(csrfToken ? { "X-CSRF-Token": csrfToken } : {}),
+        },
         credentials: "include",
         body: JSON.stringify({ visitorKey }),
       });
       const data = await response.json().catch(() => null);
       if (!response.ok) {
-        throw new Error(data?.message || "Không thể phát hành trang lúc này.");
+        const message = typeof data?.message === "string"
+          ? data.message
+          : typeof data?.error === "string" && !/^[A-Z0-9_]+$/.test(data.error)
+            ? data.error
+            : DEFAULT_PUBLISH_ERROR;
+        throw new Error(message);
       }
-      setStatus(data?.page?.status || "published");
+      setStatus("published");
     } catch (error) {
-      setPublishError(error instanceof Error ? error.message : "Không thể phát hành trang lúc này.");
+      setPublishError(error instanceof Error ? error.message : DEFAULT_PUBLISH_ERROR);
     } finally {
       setPublishing(false);
     }
@@ -101,7 +120,14 @@ export default function GeneratedLandingPage({
     <main className="landing-builder-page">
       {isDraft && (
         <div className="landing-builder-draft-banner" role="status">
-          <span><strong>Bản nháp</strong> · Chỉ người có liên kết quản trị mới xem được trang này.</span>
+          <div className="landing-builder-draft-content">
+            <span><strong>Bản nháp</strong> · Chỉ người có liên kết quản trị mới xem được trang này.</span>
+            {publishError && (
+              <p className="landing-builder-publish-error" role="alert">
+                Phát hành chưa thành công: {publishError} Bạn có thể thử lại.
+              </p>
+            )}
+          </div>
           {canPublish && (
             <button type="button" onClick={publish} disabled={publishing} className="landing-builder-publish-button">
               {publishing ? "Đang phát hành..." : "Phát hành trang"}
@@ -170,7 +196,6 @@ export default function GeneratedLandingPage({
           </div>
         </section>
       </div>
-      {publishError && <p className="landing-builder-publish-error" role="alert">{publishError}</p>}
     </main>
   );
 }
