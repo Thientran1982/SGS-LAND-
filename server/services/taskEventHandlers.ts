@@ -16,7 +16,7 @@ const OWNER_NS = 'owner_profile';
 
 async function taskRow(tenantId: string, taskId: string): Promise<any> {
   return withTenantContext(tenantId, async (client: any) =>
-    (await client.query('SELECT id,title,status,priority,due_date FROM tasks WHERE tenant_id=$1 AND id=$2', [tenantId, taskId])).rows[0] || null);
+    (await client.query('SELECT id,title,status,priority,deadline FROM wf_tasks WHERE tenant_id=$1 AND id=$2', [tenantId, taskId])).rows[0] || null);
 }
 
 /** Ghi memory procedural: mỗi event task là 1 kinh nghiệm vận hành của đội agent. */

@@ -21,6 +21,7 @@ import { applyAVM, getRegionalBasePrice } from '../valuationEngine';
 import { logger } from '../middleware/logger';
 import { agentRepository } from '../repositories/agentRepository';
 import { generateWithPolicy } from './providers';
+import { minhChooseSpecialist, MINH_INTENT_TOOLS } from './minhOrchestrator';
 import { TASK_MODELS } from './modelPolicy';
 import { recordAiUsage } from '../services/aiUsageService';
 import { agentAuditRepository } from '../repositories/agentAuditRepository';
@@ -1254,7 +1255,19 @@ async function handle_live_chat_core(args: Record<string, any>): Promise<any> {
         LANDING:    { tool: 'landing_builder', args: { tenantId, visitorKey: context.leadId || 'anonymous-widget', brief: msg, language: 'vi' } },
         GENERAL: { tool: 'get_platform_knowledge', args: { tenantId, domain: 'platform', query: msg } },
     };
-    const plan = executionPlans[detectedIntent];
+    // === PHA 2: MINH ORCHESTRATOR — khi keyword map ve GENERAL, Minh (LLM) tu chon specialist theo ngu canh ===
+  if (detectedIntent === 'GENERAL') {
+    const minhPlan = await minhChooseSpecialist({
+      tenantId, message: msg, generateFn: generateLiveChatText,
+      fallbackIntent: detectedIntent, fallbackTool: suggestedTool,
+    });
+    if (minhPlan && minhPlan.confidence >= 0.5 && MINH_INTENT_TOOLS[minhPlan.intent]) {
+      detectedIntent = minhPlan.intent;
+      suggestedTool = MINH_INTENT_TOOLS[minhPlan.intent];
+      logger.info('[MinhOrch] overrode GENERAL -> ' + detectedIntent + ' (conf ' + minhPlan.confidence + ')');
+    }
+  }
+const plan = executionPlans[detectedIntent];
     const executedTools: string[] = [];
     let specialistOutput: any = args.resumeContext?.specialistOutput || null;
     let specialistError: string | null = null;

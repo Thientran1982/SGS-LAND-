@@ -1,6 +1,6 @@
 import OpenAI from 'openai';
 import type { ProviderAdapter, GenerateParams, GenerateResult } from './types';
-import { getProviderApiKey } from '../modelPolicy';
+import { getProviderApiKey, REMOTE_MODEL_MAP } from '../modelPolicy';
 import type { AiProvider } from '../modelPolicy';
 
 /**
@@ -50,7 +50,7 @@ export class OpenAiCompatibleAdapter implements ProviderAdapter {
     if (sys) messages.push({ role: 'system', content: sys });
     messages.push({ role: 'user', content: params.prompt });
     const resp = await client.chat.completions.create({
-      model: params.model,
+      model: REMOTE_MODEL_MAP[params.model] || params.model,
       messages,
       temperature: params.temperature,
       max_tokens: params.maxOutputTokens,

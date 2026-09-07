@@ -254,6 +254,15 @@ export const PROVIDER_ENV_KEYS: Record<AiProvider, string[]> = {
 };
 
 /** Lay API key cua provider tu process.env (KHONG bao gio hardcode). */
+/**
+ * REMOTE_MODEL_MAP — anh xa model id noi bo -> slug tren router (TokenRouter/OpenRouter).
+ * TokenRouter chi cap quyen z-ai/glm-5.3-free; cac ten khac bi 403 (da kiem chung 2026-09-06).
+ */
+export const REMOTE_MODEL_MAP: Record<string, string> = {
+  'glm-5.3-flash': 'z-ai/glm-5.3-free',
+  'glm-5.3': 'z-ai/glm-5.3-free',
+};
+
 export function getProviderApiKey(provider: AiProvider): string | undefined {
   for (const name of PROVIDER_ENV_KEYS[provider] || []) {
     const v = process.env[name];
