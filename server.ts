@@ -83,7 +83,7 @@ import { createLearningCycleRoutes } from "./server/routes/learningCycleRoutes";
 import { createDailyAdminReportRoutes } from "./server/routes/dailyAdminReportRoutes";
 import { startDailyReportScheduler } from "./server/services/dailyAdminReportService";
 import { createLiveChatAgentRoutes } from "./server/routes/liveChatAgentRoutes";
-import { liveChatEngine } from "./server/ai/liveChatEngine";
+import { isLandingBuilderRequest, liveChatEngine } from "./server/ai/liveChatEngine";
 import { createPublicProjectRoutes } from "./server/routes/publicProjectRoutes";
 import { createPublicDeveloperRoutes } from "./server/routes/publicDeveloperRoutes";
 import { createPublicProjectContentRoutes } from "./server/routes/publicProjectContentRoutes";
@@ -174,18 +174,10 @@ const serverT = (lang: string = 'vn') => (key: string): string => {
 };
 
 function isPublicLandingBuilderRequest(message: string): boolean {
-  const normalized = String(message || '')
-    .toLowerCase()
-    .normalize('NFD')
-    .replace(/[\u0300-\u036f]/g, '');
   // Keep this boundary intentionally explicit. A normal question about a
   // property that happens to mention "landing" should still be handled by
-  // the existing AI service, while the builder phrases must reach Minh's
-  // landing_builder tool.
-  return (
-    /\blanding(?:\s+page|\s+builder)?\b/.test(normalized) &&
-    /\b(dung|tao|xay|lam|thiet ke|build|create|generate|page|builder)\b/.test(normalized)
-  ) || /\btrang\s+(dich|gioi thieu)\b/.test(normalized);
+  // the existing AI service, while builder phrases reach landing_builder.
+  return isLandingBuilderRequest(message);
 }
 
 

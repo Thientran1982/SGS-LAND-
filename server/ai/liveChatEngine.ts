@@ -1232,6 +1232,53 @@ async function handle_get_broker_stats(args: Record<string, any>): Promise<any> 
 // ────────────────────────────────────────────────────────────────────────────
 // TOOL 20: handle_live_chat (NEW)
 // ────────────────────────────────────────────────────────────────────────────
+function normalizeIntentText(message: string): string {
+    return String(message || '')
+        .toLowerCase()
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '');
+}
+
+/**
+ * A landing brief commonly contains project and price vocabulary. Those
+ * details describe the page and must not win intent classification over an
+ * explicit request to create the page.
+ */
+export function isLandingBuilderRequest(message: string): boolean {
+    const normalized = normalizeIntentText(message);
+    const hasLandingTarget = /\b(?:landing(?:\s+(?:page|builder))?|page|trang\s+(?:landing|dich|gioi thieu))\b/.test(normalized);
+    const hasCreateAction = /\b(?:dung|tao|xay|lam|thiet ke|build|create|generate|make|design)\b/.test(normalized);
+    return hasLandingTarget && hasCreateAction;
+}
+
+export function classifyLiveChatIntent(message: string): { intent: string; suggestedTool: string } {
+    const msg = String(message || '').trim();
+    if (isLandingBuilderRequest(msg)) {
+        return { intent: 'LANDING', suggestedTool: 'landing_builder' };
+    }
+
+    const lower = msg.toLowerCase();
+    const intentMap: Array<{ keywords: string[]; intent: string; suggestedTool: string }> = [
+        { keywords: ['giá', 'bao nhiêu', 'triệu', 'tỷ', 'định giá', 'valuation'], intent: 'VALUATION',       suggestedTool: 'get_valuation' },
+        { keywords: ['tìm', 'search', 'căn hộ', 'nhà', 'đất', 'còn hàng'],         intent: 'SEARCH',          suggestedTool: 'search_listings' },
+        { keywords: ['pháp lý', 'sổ', 'hồng', 'đỏ', 'vi bằng', 'hđmb'],           intent: 'LEGAL',           suggestedTool: 'legal_qa' },
+        { keywords: ['quy hoạch', 'planning', 'xây dựng'],                          intent: 'PLANNING',        suggestedTool: 'check_planning' },
+        { keywords: ['vay', 'lãi suất', 'tín dụng', 'ngân hàng'],                   intent: 'FINANCE',         suggestedTool: 'get_platform_knowledge' },
+        { keywords: ['dự án', 'project', 'aqua city', 'vinhomes', 'izumi'],         intent: 'PROJECT',         suggestedTool: 'get_project_info' },
+        { keywords: ['long thành', 'sân bay', 'airport'],                            intent: 'LONGTHANH',       suggestedTool: 'get_longthanh_market' },
+        { keywords: ['đầu tư', 'cho thuê', 'yield', 'roi', 'lợi nhuận'],            intent: 'INVESTMENT',      suggestedTool: 'analyze_investment' },
+        { keywords: ['landing', 'trang landing', 'landing page'], intent: 'LANDING', suggestedTool: 'landing_builder' },
+        { keywords: ['khách', 'lead', 'chấm điểm', 'tiềm năng'],                    intent: 'LEAD_SCORING',    suggestedTool: 'score_lead' },
+    ];
+
+    for (const { keywords, intent, suggestedTool } of intentMap) {
+        if (keywords.some(keyword => lower.includes(keyword))) {
+            return { intent, suggestedTool };
+        }
+    }
+    return { intent: 'GENERAL', suggestedTool: 'get_platform_knowledge' };
+}
+
 async function handle_live_chat_core(args: Record<string, any>): Promise<any> {
     const { tenantId, message, sessionId, context = {} } = args;
     const msg = (message || '').trim();
@@ -1267,30 +1314,9 @@ async function handle_live_chat_core(args: Record<string, any>): Promise<any> {
         }
     }
 
-    // Fast intent detection via keyword matching
-    const lower = msg.toLowerCase();
-    const intentMap: Array<{ keywords: string[]; intent: string; suggestedTool: string }> = [
-        { keywords: ['giá', 'bao nhiêu', 'triệu', 'tỷ', 'định giá', 'valuation'], intent: 'VALUATION',       suggestedTool: 'get_valuation' },
-        { keywords: ['tìm', 'search', 'căn hộ', 'nhà', 'đất', 'còn hàng'],         intent: 'SEARCH',          suggestedTool: 'search_listings' },
-        { keywords: ['pháp lý', 'sổ', 'hồng', 'đỏ', 'vi bằng', 'hđmb'],           intent: 'LEGAL',           suggestedTool: 'legal_qa' },
-        { keywords: ['quy hoạch', 'planning', 'xây dựng'],                          intent: 'PLANNING',        suggestedTool: 'check_planning' },
-        { keywords: ['vay', 'lãi suất', 'tín dụng', 'ngân hàng'],                   intent: 'FINANCE',         suggestedTool: 'get_platform_knowledge' },
-        { keywords: ['dự án', 'project', 'aqua city', 'vinhomes', 'izumi'],         intent: 'PROJECT',         suggestedTool: 'get_project_info' },
-        { keywords: ['long thành', 'sân bay', 'airport'],                            intent: 'LONGTHANH',       suggestedTool: 'get_longthanh_market' },
-        { keywords: ['đầu tư', 'cho thuê', 'yield', 'roi', 'lợi nhuận'],            intent: 'INVESTMENT',      suggestedTool: 'analyze_investment' },
-        { keywords: ['landing', 'trang landing', 'landing page'], intent: 'LANDING', suggestedTool: 'landing_builder' },
-        { keywords: ['khách', 'lead', 'chấm điểm', 'tiềm năng'],                    intent: 'LEAD_SCORING',    suggestedTool: 'score_lead' },
-    ];
-
-    let detectedIntent = 'GENERAL';
-    let suggestedTool = 'get_platform_knowledge';
-    for (const { keywords, intent, suggestedTool: tool } of intentMap) {
-        if (keywords.some(kw => lower.includes(kw))) {
-            detectedIntent = intent;
-            suggestedTool = tool;
-            break;
-        }
-    }
+    // Fast intent detection via keyword matching. Landing creation is checked
+    // first because its brief may also contain price/project vocabulary.
+    let { intent: detectedIntent, suggestedTool } = classifyLiveChatIntent(msg);
 
     // Supervisor may execute one read-only specialist tool. High-impact tools
     // remain suggestions and must go through the existing approval broker.
