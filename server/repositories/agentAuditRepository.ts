@@ -79,6 +79,40 @@ export type LandingClassificationHealth = {
   }>;
 };
 
+export const LANDING_CLASSIFICATION_REVIEW_LABELS = [
+  'CONFIRMED_FALSE_NEGATIVE',
+  'CONFIRMED_FALSE_POSITIVE',
+  'NOT_AN_ERROR',
+] as const;
+
+export type LandingClassificationReviewLabel = typeof LANDING_CLASSIFICATION_REVIEW_LABELS[number];
+
+export type LandingClassificationReview = {
+  auditEventId: string;
+  createdAt: string;
+  runId: string | null;
+  language: string;
+  suspectedType: 'FALSE_NEGATIVE' | 'FALSE_POSITIVE';
+  detected: boolean;
+  candidate: boolean;
+  initialIntent: string;
+  finalIntent: string;
+  draftStatus: string;
+  reviewLabel: LandingClassificationReviewLabel | null;
+  reviewerId: string | null;
+  reviewedAt: string | null;
+};
+
+export type LandingClassificationReviewFilters = {
+  from?: string;
+  to?: string;
+  language?: string;
+  status?: 'pending' | 'reviewed' | 'all';
+  label?: LandingClassificationReviewLabel;
+  limit?: number;
+  offset?: number;
+};
+
 function scrub(value: any, depth = 0): any {
   if (depth > 5) return '[truncated]';
   if (value === null || value === undefined) return value;
@@ -372,6 +406,161 @@ class AgentAuditRepository {
           falseNegatives: Number(language.false_negatives || 0),
           falsePositives: Number(language.false_positives || 0),
         })),
+      };
+    });
+  }
+
+  /**
+   * Return only bounded classifier features for human review. Do not select
+   * input_json, output_json, metadata_json, lead/session identifiers, or the
+   * event key: older audit rows must not accidentally expose a brief or answer.
+   */
+  async listLandingClassificationReviews(
+    tenantId: string,
+    filters: LandingClassificationReviewFilters = {},
+  ): Promise<{ reviews: LandingClassificationReview[]; total: number }> {
+    const to = filters.to || new Date().toISOString();
+    const from = filters.from || new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString();
+    const status = filters.status || 'pending';
+    const where = [
+      'e.tenant_id = $1',
+      `e.entity_type = 'LANDING_CLASSIFICATION'`,
+      `e.created_at >= $2`,
+      `e.created_at <= $3`,
+      `(e.output_json->>'falseNegative' = 'true' OR e.output_json->>'falsePositive' = 'true')`,
+    ];
+    const values: any[] = [tenantId, from, to];
+    const add = (sql: string, value: any) => {
+      values.push(value);
+      where.push(sql.replace('?', `$${values.length}`));
+    };
+    if (filters.language) add(`COALESCE(NULLIF(e.output_json->>'language', ''), 'unknown') = ?`, filters.language);
+    if (status === 'pending') where.push('r.id IS NULL');
+    if (status === 'reviewed') where.push('r.id IS NOT NULL');
+    if (filters.label) add('r.label = ?', filters.label);
+
+    const limit = Math.min(Math.max(Number(filters.limit) || 50, 1), 200);
+    const offset = Math.max(Number(filters.offset) || 0, 0);
+    const base = `
+      FROM agent_audit_events e
+      LEFT JOIN landing_classification_reviews r
+        ON r.tenant_id = e.tenant_id AND r.audit_event_id = e.id
+      WHERE ${where.join(' AND ')}`;
+    const projection = `
+      e.id AS audit_event_id,
+      e.created_at,
+      e.run_id,
+      COALESCE(NULLIF(e.output_json->>'language', ''), 'unknown') AS language,
+      CASE WHEN e.output_json->>'falseNegative' = 'true'
+        THEN 'FALSE_NEGATIVE' ELSE 'FALSE_POSITIVE' END AS suspected_type,
+      e.output_json->>'detected' = 'true' AS detected,
+      e.output_json->>'candidate' = 'true' AS candidate,
+      COALESCE(e.output_json->>'initialIntent', 'UNKNOWN') AS initial_intent,
+      COALESCE(e.output_json->>'finalIntent', 'UNKNOWN') AS final_intent,
+      COALESCE(e.output_json->>'draftStatus', 'NOT_ATTEMPTED') AS draft_status,
+      r.label AS review_label,
+      r.reviewer_id,
+      r.reviewed_at`;
+
+    return withTenantContext(tenantId, async client => {
+      const [rows, count] = await Promise.all([
+        client.query(
+          `SELECT ${projection} ${base} ORDER BY e.created_at DESC LIMIT ${limit} OFFSET ${offset}`,
+          values,
+        ),
+        client.query(`SELECT COUNT(*)::int AS total ${base}`, values),
+      ]);
+      return {
+        reviews: rows.rows.map(row => ({
+          auditEventId: String(row.audit_event_id),
+          createdAt: new Date(row.created_at).toISOString(),
+          runId: row.run_id ? String(row.run_id) : null,
+          language: String(row.language || 'unknown'),
+          suspectedType: row.suspected_type === 'FALSE_NEGATIVE' ? 'FALSE_NEGATIVE' : 'FALSE_POSITIVE',
+          detected: row.detected === true,
+          candidate: row.candidate === true,
+          initialIntent: String(row.initial_intent || 'UNKNOWN'),
+          finalIntent: String(row.final_intent || 'UNKNOWN'),
+          draftStatus: String(row.draft_status || 'NOT_ATTEMPTED'),
+          reviewLabel: row.review_label
+            ? String(row.review_label) as LandingClassificationReviewLabel
+            : null,
+          reviewerId: row.reviewer_id ? String(row.reviewer_id) : null,
+          reviewedAt: row.reviewed_at ? new Date(row.reviewed_at).toISOString() : null,
+        })),
+        total: Number(count.rows[0]?.total || 0),
+      };
+    });
+  }
+
+  async reviewLandingClassification(
+    tenantId: string,
+    auditEventId: string,
+    label: LandingClassificationReviewLabel,
+    reviewerId: string,
+  ): Promise<LandingClassificationReview | null> {
+    if (!LANDING_CLASSIFICATION_REVIEW_LABELS.includes(label)) {
+      throw new Error('Invalid landing classification review label');
+    }
+    return withTenantContext(tenantId, async client => {
+      const result = await client.query(
+        `INSERT INTO landing_classification_reviews
+           (tenant_id, audit_event_id, label, reviewer_id, reviewed_at, updated_at)
+         SELECT $1, e.id, $3, $4, NOW(), NOW()
+           FROM agent_audit_events e
+          WHERE e.tenant_id = $1
+            AND e.id = $2
+            AND e.entity_type = 'LANDING_CLASSIFICATION'
+            AND (e.output_json->>'falseNegative' = 'true'
+              OR e.output_json->>'falsePositive' = 'true')
+         ON CONFLICT (tenant_id, audit_event_id) DO UPDATE
+           SET label = EXCLUDED.label,
+               reviewer_id = EXCLUDED.reviewer_id,
+               reviewed_at = NOW(),
+               updated_at = NOW()
+         RETURNING audit_event_id, label, reviewer_id, reviewed_at`,
+        [tenantId, auditEventId, label, reviewerId],
+      );
+      const row = result.rows[0];
+      if (!row) return null;
+      const detail = await client.query(
+        `SELECT
+           e.id AS audit_event_id,
+           e.created_at,
+           e.run_id,
+           COALESCE(NULLIF(e.output_json->>'language', ''), 'unknown') AS language,
+           CASE WHEN e.output_json->>'falseNegative' = 'true'
+             THEN 'FALSE_NEGATIVE' ELSE 'FALSE_POSITIVE' END AS suspected_type,
+           e.output_json->>'detected' = 'true' AS detected,
+           e.output_json->>'candidate' = 'true' AS candidate,
+           COALESCE(e.output_json->>'initialIntent', 'UNKNOWN') AS initial_intent,
+           COALESCE(e.output_json->>'finalIntent', 'UNKNOWN') AS final_intent,
+           COALESCE(e.output_json->>'draftStatus', 'NOT_ATTEMPTED') AS draft_status,
+           r.label AS review_label,
+           r.reviewer_id,
+           r.reviewed_at
+          FROM agent_audit_events e
+          JOIN landing_classification_reviews r
+            ON r.tenant_id = e.tenant_id AND r.audit_event_id = e.id
+         WHERE e.tenant_id = $1 AND e.id = $2`,
+        [tenantId, auditEventId],
+      );
+      const reviewed = detail.rows[0];
+      if (!reviewed) return null;
+      return {
+        auditEventId: String(reviewed.audit_event_id),
+        createdAt: new Date(reviewed.created_at).toISOString(),
+        runId: reviewed.run_id ? String(reviewed.run_id) : null,
+        language: String(reviewed.language || 'unknown'),
+        suspectedType: reviewed.suspected_type === 'FALSE_NEGATIVE' ? 'FALSE_NEGATIVE' : 'FALSE_POSITIVE',
+        detected: reviewed.detected === true,
+        candidate: reviewed.candidate === true,
+        initialIntent: String(reviewed.initial_intent || 'UNKNOWN'),
+        finalIntent: String(reviewed.final_intent || 'UNKNOWN'),
+        draftStatus: String(reviewed.draft_status || 'NOT_ATTEMPTED'),
+        reviewLabel: String(reviewed.review_label) as LandingClassificationReviewLabel,
+        reviewerId: reviewed.reviewer_id ? String(reviewed.reviewer_id) : null,
+        reviewedAt: reviewed.reviewed_at ? new Date(reviewed.reviewed_at).toISOString() : null,
       };
     });
   }

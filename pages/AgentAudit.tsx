@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import { AlertCircle, Bot, Calendar, ChevronLeft, ChevronRight, Clock3, ExternalLink, Filter, MessageSquare, RefreshCw, Search, ShieldCheck, Wrench, X } from 'lucide-react';
+import { AlertCircle, Bot, Calendar, CheckCircle2, ChevronLeft, ChevronRight, Clock3, ExternalLink, Filter, Languages, MessageSquare, RefreshCw, Search, ShieldCheck, Tag, Wrench, X } from 'lucide-react';
 import { SeoHead } from '../components/SeoHead';
 
 type AuditEvent = {
@@ -25,7 +25,28 @@ type AuditEvent = {
   created_at: string;
 };
 
+type ClassificationReview = {
+  auditEventId: string;
+  createdAt: string;
+  runId: string | null;
+  language: string;
+  suspectedType: 'FALSE_NEGATIVE' | 'FALSE_POSITIVE';
+  detected: boolean;
+  candidate: boolean;
+  initialIntent: string;
+  finalIntent: string;
+  draftStatus: string;
+  reviewLabel: 'CONFIRMED_FALSE_NEGATIVE' | 'CONFIRMED_FALSE_POSITIVE' | 'NOT_AN_ERROR' | null;
+  reviewerId: string | null;
+  reviewedAt: string | null;
+};
+
 const PAGE_SIZE = 30;
+const reviewLabels: Array<{ value: NonNullable<ClassificationReview['reviewLabel']>; label: string }> = [
+  { value: 'CONFIRMED_FALSE_NEGATIVE', label: 'Xác nhận bỏ sót' },
+  { value: 'CONFIRMED_FALSE_POSITIVE', label: 'Xác nhận nhận nhầm' },
+  { value: 'NOT_AN_ERROR', label: 'Không phải lỗi' },
+];
 const eventLabels: Record<AuditEvent['event_type'], string> = {
   CHAT_MESSAGE: 'Hội thoại',
   TOOL_EXECUTION: 'Tool execution',
@@ -88,6 +109,12 @@ export const AgentAudit: React.FC = () => {
   const [selected, setSelected] = useState<AuditEvent | null>(null);
   const [page, setPage] = useState(0);
   const [filters, setFilters] = useState({ sessionId: '', runId: '', entityType: '', entityId: '', from: '', to: '' });
+  const [classificationReviews, setClassificationReviews] = useState<ClassificationReview[]>([]);
+  const [classificationTotal, setClassificationTotal] = useState(0);
+  const [classificationLoading, setClassificationLoading] = useState(true);
+  const [classificationError, setClassificationError] = useState('');
+  const [classificationLanguage, setClassificationLanguage] = useState('');
+  const [reviewingEvent, setReviewingEvent] = useState('');
   const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
   const headers = useMemo(() => ({ Authorization: `Bearer ${token || ''}` }), [token]);
 
@@ -106,6 +133,41 @@ export const AgentAudit: React.FC = () => {
   }, [filters, headers, page]);
 
   useEffect(() => { loadEvents(); }, [loadEvents]);
+  const loadClassificationReviews = useCallback(async () => {
+    setClassificationLoading(true); setClassificationError('');
+    const params = new URLSearchParams({ days: '30', status: 'pending', limit: '100' });
+    if (classificationLanguage) params.set('language', classificationLanguage);
+    try {
+      const response = await fetch(`/api/agent-audit/classification-reviews?${params}`, { headers });
+      const data = await response.json();
+      if (!response.ok) throw new Error(data?.error || 'Không thể tải hàng đợi review.');
+      setClassificationReviews(Array.isArray(data.reviews) ? data.reviews : []);
+      setClassificationTotal(Number(data.total || 0));
+    } catch (err) {
+      setClassificationError(err instanceof Error ? err.message : 'Không thể tải hàng đợi review.');
+    } finally { setClassificationLoading(false); }
+  }, [classificationLanguage, headers]);
+
+  useEffect(() => { loadClassificationReviews(); }, [loadClassificationReviews]);
+  const submitClassificationReview = async (
+    event: ClassificationReview,
+    label: NonNullable<ClassificationReview['reviewLabel']>,
+  ) => {
+    setReviewingEvent(event.auditEventId); setClassificationError('');
+    try {
+      const response = await fetch(`/api/agent-audit/classification-reviews/${event.auditEventId}`, {
+        method: 'POST',
+        headers: { ...headers, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ label }),
+      });
+      const data = await response.json();
+      if (!response.ok) throw new Error(data?.error || 'Không thể lưu nhãn review.');
+      setClassificationReviews(current => current.filter(item => item.auditEventId !== event.auditEventId));
+      setClassificationTotal(current => Math.max(0, current - 1));
+    } catch (err) {
+      setClassificationError(err instanceof Error ? err.message : 'Không thể lưu nhãn review.');
+    } finally { setReviewingEvent(''); }
+  };
   const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
   const counts = useMemo(() => ({
     messages: events.filter(e => e.event_type === 'CHAT_MESSAGE').length,
@@ -122,7 +184,7 @@ export const AgentAudit: React.FC = () => {
       <div className="mx-auto max-w-7xl space-y-6">
         <header className="flex flex-wrap items-start justify-between gap-4">
           <div><div className="flex items-center gap-2 text-sm font-semibold uppercase tracking-widest text-sgs-primary"><Bot size={17} /> Agent Minh</div><h1 className="mt-2 text-3xl font-bold text-[var(--text-primary)]">Nhật ký hoạt động</h1><p className="mt-2 max-w-2xl text-sm text-[var(--text-secondary)]">Đối soát hội thoại, công cụ đã chạy và listing/dự án mà Minh đã sử dụng. Dữ liệu nhạy cảm được che trước khi lưu.</p></div>
-          <button onClick={loadEvents} disabled={loading} className="inline-flex items-center gap-2 rounded-xl border border-[var(--glass-border)] bg-[var(--bg-surface)] px-4 py-2.5 text-sm font-semibold text-[var(--text-primary)] shadow-sm hover:bg-[var(--glass-surface-hover)] disabled:opacity-50"><RefreshCw size={16} className={loading ? 'animate-spin' : ''} /> Làm mới</button>
+          <button onClick={() => { void loadEvents(); void loadClassificationReviews(); }} disabled={loading || classificationLoading} className="inline-flex items-center gap-2 rounded-xl border border-[var(--glass-border)] bg-[var(--bg-surface)] px-4 py-2.5 text-sm font-semibold text-[var(--text-primary)] shadow-sm hover:bg-[var(--glass-surface-hover)] disabled:opacity-50"><RefreshCw size={16} className={loading || classificationLoading ? 'animate-spin' : ''} /> Làm mới</button>
         </header>
         <div className="grid gap-3 sm:grid-cols-3">
           {([
@@ -138,6 +200,36 @@ export const AgentAudit: React.FC = () => {
             <label className="text-xs font-semibold text-[var(--text-secondary)]">Entity type<select value={filters.entityType} onChange={e => updateFilter('entityType', e.target.value)} className="mt-1.5 w-full rounded-xl border border-[var(--glass-border)] bg-[var(--bg-surface)] px-3 py-2.5 text-sm text-[var(--text-primary)] outline-none focus:border-sgs-primary"><option value="">Tất cả loại</option><option value="LISTING">Listing</option><option value="PROJECT">Project</option><option value="PROJECT_ITEM">Project item</option></select></label>
             {([['from', 'Từ ngày'], ['to', 'Đến ngày']] as const).map(([key, label]) => <label key={key} className="text-xs font-semibold text-[var(--text-secondary)]">{label}<div className="relative mt-1.5"><Calendar size={14} className="absolute left-3 top-3 text-[var(--text-tertiary)]" /><input type="date" value={filters[key]} onChange={e => updateFilter(key, e.target.value)} className="w-full rounded-xl border border-[var(--glass-border)] bg-transparent py-2.5 pl-9 pr-3 text-sm text-[var(--text-primary)] outline-none focus:border-sgs-primary" /></div></label>)}
           </div>
+        </section>
+        <section className="overflow-hidden rounded-2xl bg-[var(--bg-surface)] shadow-sm">
+          <div className="flex flex-wrap items-start justify-between gap-3 border-b border-[var(--glass-border)] px-5 py-4">
+            <div>
+              <div className="flex items-center gap-2"><Tag size={17} className="text-sgs-primary" /><h2 className="font-bold text-[var(--text-primary)]">Review ca nghi ngờ phân loại landing</h2></div>
+              <p className="mt-1 max-w-2xl text-xs text-[var(--text-tertiary)]">Chỉ hiển thị tín hiệu phân loại đã khử nội dung: ngôn ngữ, loại nghi ngờ và trạng thái classifier. Không hiển thị brief, giá, tên dự án hay câu trả lời.</p>
+            </div>
+            <label className="flex items-center gap-2 text-xs font-semibold text-[var(--text-secondary)]"><Languages size={15} /> Ngôn ngữ
+              <select value={classificationLanguage} onChange={event => setClassificationLanguage(event.target.value)} className="rounded-lg border border-[var(--glass-border)] bg-[var(--bg-surface)] px-2 py-1.5 text-xs text-[var(--text-primary)]">
+                <option value="">Tất cả</option><option value="vi">Tiếng Việt</option><option value="en">English</option><option value="mixed">Mixed</option><option value="unknown">Không xác định</option>
+              </select>
+            </label>
+          </div>
+          {classificationError && <div className="m-5 flex items-center gap-2 rounded-xl bg-rose-50 p-4 text-sm text-rose-700"><AlertCircle size={17} />{classificationError}</div>}
+          {classificationLoading ? <div className="space-y-3 p-5">{[1, 2].map(i => <div key={i} className="h-24 animate-pulse rounded-xl bg-slate-100" />)}</div>
+            : classificationReviews.length === 0 ? <div className="p-10 text-center text-sm text-[var(--text-secondary)]"><CheckCircle2 size={28} className="mx-auto mb-2 text-emerald-500" />Không còn ca nghi ngờ chưa review trong 30 ngày gần nhất.</div>
+            : <div className="divide-y divide-[var(--glass-border)]">{classificationReviews.map(review => <div key={review.auditEventId} className="space-y-3 px-5 py-4">
+              <div className="flex flex-wrap items-start justify-between gap-3">
+                <div className="flex flex-wrap items-center gap-2 text-xs">
+                  <span className="rounded-full bg-slate-100 px-2.5 py-1 font-bold text-slate-700">{review.language}</span>
+                  <span className={`rounded-full px-2.5 py-1 font-bold ${review.suspectedType === 'FALSE_NEGATIVE' ? 'bg-amber-50 text-amber-700' : 'bg-rose-50 text-rose-700'}`}>{review.suspectedType === 'FALSE_NEGATIVE' ? 'Nghi bỏ sót' : 'Nghi nhận nhầm'}</span>
+                  <span className="text-[var(--text-tertiary)]">{formatDate(review.createdAt)}</span>
+                </div>
+                <span className="text-[11px] text-[var(--text-tertiary)]">Chỉ báo: {review.initialIntent} → {review.finalIntent} · Draft: {review.draftStatus}</span>
+              </div>
+              <div className="flex flex-wrap gap-2">
+                {reviewLabels.map(option => <button key={option.value} disabled={reviewingEvent === review.auditEventId} onClick={() => submitClassificationReview(review, option.value)} className="rounded-lg border border-[var(--glass-border)] px-3 py-2 text-xs font-semibold text-[var(--text-primary)] hover:border-sgs-primary hover:bg-[var(--glass-surface-hover)] disabled:opacity-50">{reviewingEvent === review.auditEventId ? 'Đang lưu…' : option.label}</button>)}
+              </div>
+            </div>)}</div>}
+          <div className="border-t border-[var(--glass-border)] px-5 py-3 text-xs text-[var(--text-tertiary)]">{classificationTotal.toLocaleString('vi-VN')} ca đang chờ review · Nhãn đã xác nhận được lưu riêng theo tenant để dùng làm tập regression.</div>
         </section>
         <section className="overflow-hidden rounded-2xl bg-[var(--bg-surface)] shadow-sm">
           <div className="flex flex-wrap items-center justify-between gap-2 border-b border-[var(--glass-border)] px-5 py-4"><div><h2 className="font-bold text-[var(--text-primary)]">Timeline sự kiện</h2><p className="mt-1 text-xs text-[var(--text-tertiary)]">{total.toLocaleString('vi-VN')} bản ghi trong tenant hiện tại</p></div><span className="rounded-full bg-emerald-50 px-3 py-1 text-xs font-semibold text-emerald-700"><ShieldCheck size={13} className="mr-1 inline" />Tenant-scoped</span></div>

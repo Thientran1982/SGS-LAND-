@@ -203,6 +203,7 @@ import m178 from './178_task_agent_tools_seed';import m179 from './179_landing_b
 import m180 from './180_learning_golden_set';
 import m181 from './181_repair_spike_approval';
 import m182 from './182_live_chat_memory_idempotency';
+import m183 from './183_landing_classification_reviews';
 dotenv.config();
 
 export interface Migration {
@@ -401,6 +402,7 @@ export const MIGRATION_REGISTRY: Record<string, Migration> = {
   '180_learning_golden_set.ts': m180,
   '181_repair_spike_approval.ts': m181,
   '182_live_chat_memory_idempotency.ts': m182,
+  '183_landing_classification_reviews.ts': m183,
 };
 
 /**
