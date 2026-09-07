@@ -2841,6 +2841,7 @@ app.get('/api/public/listings/:slugId', apiRateLimit, async (req: express.Reques
                 content: item.content,
               })),
             },
+            __skipAgentEventEnqueue: true,
           })
         : aiService.processMessage(
             lead,

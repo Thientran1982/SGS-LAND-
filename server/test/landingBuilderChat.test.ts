@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { ensureLandingResponseLink } from '../ai/landingResponse';
+import { buildLandingBuilderResponse, ensureLandingResponseLink } from '../ai/landingResponse';
 import { inspectAgentOutput } from '../ai/agentGuardrails';
 import {
   buildLandingClassificationTelemetry,
@@ -25,6 +25,16 @@ describe('landing_builder chat response contract', () => {
     expect(response).toContain('/landing/aqua-city-80m2');
   });
 
+  it('recognizes the common "ladning" typo in a landing request', () => {
+    const message = 'dựng trang ladning dự án manhattan';
+
+    expect(isLandingBuilderRequest(message)).toBe(true);
+    expect(classifyLiveChatIntent(message)).toEqual({
+      intent: 'LANDING',
+      suggestedTool: 'landing_builder',
+    });
+  });
+
   it('keeps price-only and project-only questions on their original intents', () => {
     expect(classifyLiveChatIntent('Giá căn hộ này bao nhiêu?').intent).toBe('VALUATION');
     expect(classifyLiveChatIntent('Cho tôi thông tin dự án Aqua City').intent).toBe('PROJECT');
@@ -39,6 +49,20 @@ describe('landing_builder chat response contract', () => {
     );
 
     expect(response).toContain('/landing/du-an-demo-zcode');
+  });
+
+  it('builds a deterministic response from a created landing result without synthesis', () => {
+    const response = buildLandingBuilderResponse({
+      status: 'CREATED',
+      projectName: 'Aqua City',
+      slug: 'aqua-city',
+      viewUrl: '/landing/aqua-city?visitorKey=lead-123',
+      editUrl: '/landing-ai/chinh-sua/aqua-city?k=lead-123',
+    });
+
+    expect(response).toContain('Đã tạo xong trang landing cho Aqua City.');
+    expect(response).toContain('/landing/aqua-city?visitorKey=lead-123');
+    expect(response).toContain('/landing-ai/chinh-sua/aqua-city?k=lead-123');
   });
 
   it('does not duplicate a URL already present in the response', () => {

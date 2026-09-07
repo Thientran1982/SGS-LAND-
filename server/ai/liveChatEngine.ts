@@ -41,7 +41,7 @@ import { agentMemoryService, scrubPii } from '../services/agentMemoryService';
 import { getGuidePolicyResponse, normalizeGuideInput } from './guideAssistantPolicy';
 import { customerProfileService, observeCustomerMessage, extractFactsWithLLM, classifyInteractionOutcome } from '../services/customerProfileService';
 import { listEnabledMcpServers, callMcpTool, resolveMcpToolName } from '../services/mcpClientService';
-import { ensureLandingResponseLink } from './landingResponse';
+import { buildLandingBuilderResponse, ensureLandingResponseLink } from './landingResponse';
 
 type LiveChatProviderTelemetry = {
     provider?: string;
@@ -1239,6 +1239,11 @@ function normalizeIntentText(message: string): string {
         .replace(/[\u0300-\u036f]/g, '');
 }
 
+function hasLandingTargetText(normalized: string): boolean {
+    return /\b(?:landing|ladning|lading|landng)(?:\s+(?:page|builder))?\b/.test(normalized)
+        || /\b(?:page|trang\s+(?:landing|ladning|lading|landng|dich|gioi thieu))\b/.test(normalized);
+}
+
 /**
  * A landing brief commonly contains project and price vocabulary. Those
  * details describe the page and must not win intent classification over an
@@ -1246,7 +1251,7 @@ function normalizeIntentText(message: string): string {
  */
 export function isLandingBuilderRequest(message: string): boolean {
     const normalized = normalizeIntentText(message);
-    const hasLandingTarget = /\b(?:landing(?:\s+(?:page|builder))?|page|trang\s+(?:landing|dich|gioi thieu))\b/.test(normalized);
+    const hasLandingTarget = hasLandingTargetText(normalized);
     const hasCreateAction = /\b(?:dung|tao|xay|lam|thiet ke|build|create|generate|make|design)\b/.test(normalized);
     return hasLandingTarget && hasCreateAction;
 }
@@ -1311,7 +1316,8 @@ export function buildLandingClassificationTelemetry(
     specialistError?: string | null,
 ): LandingTelemetrySnapshot {
     const normalized = normalizeIntentText(message);
-    const hasLandingTarget = /\b(?:landing(?:\s+(?:page|builder))?|page|trang\s+(?:landing|dich|gioi thieu)|website|web\s+site|microsite|mini\s*site|one[-\s]?pager|sales\s+page|campaign\s+page|product\s+page|fanpage|trang\s+(?:ban hang|san pham|web))\b/.test(normalized);
+    const hasLandingTarget = hasLandingTargetText(normalized)
+        || /\b(?:website|web\s+site|microsite|mini\s*site|one[-\s]?pager|sales\s+page|campaign\s+page|product\s+page|fanpage|trang\s+(?:ban hang|san pham|web))\b/.test(normalized);
     const hasCreateAction = /\b(?:dung|tao|xay|lam|thiet ke|build|create|generate|make|design|craft|launch|can you|i need|i want|muon)\b/.test(normalized);
     const hasProjectOrPriceContext = /\b(?:du an|project|gia|price|bao nhieu|trieu|ty|valuation|budget|million|billion)\b/.test(normalized);
     const initialIntent = classifyLiveChatIntent(message).intent;
@@ -1568,6 +1574,37 @@ const plan = executionPlans[detectedIntent];
         }).catch(() => {});
     }
 
+    // Landing creation is already a structured, deterministic operation. Do
+    // not spend another provider round synthesizing a response: provider
+    // fallback latency used to keep the public request open for ~90 seconds,
+    // after which the Next proxy could reset the connection even though the
+    // draft had been created successfully.
+    if (detectedIntent === 'LANDING') {
+        const landingResponse = buildLandingBuilderResponse(specialistOutput, responseLanguage);
+        return {
+            sessionId: sessionId || `sess_${Date.now()}`,
+            intent: detectedIntent,
+            response: landingResponse,
+            executedTools,
+            suggestedNextTool: null,
+            suggestedAction: null,
+            sources: specialistOutput
+                ? [{ tool: plan?.tool, source: specialistOutput.source || 'SGS Land tenant-scoped data' }]
+                : [],
+            specialistOutput,
+            uncertainty: specialistOutput ? 'LOW' : 'HIGH',
+            missingData: specialistOutput ? [] : [specialistError || 'specialist_data'],
+            groundingStatus: specialistOutput ? 'GROUNDED' : 'INSUFFICIENT_DATA',
+            degraded: false,
+            personalization: {
+                enabled: personalization.enabled,
+                applied: Boolean(personalization.block),
+                staleConfirmationNeeded: personalization.stale && !personalization.block,
+                outcomeGuidance: personalization.negativeStreak >= 2 ? 'CHANGE_APPROACH' : 'NONE',
+            },
+        };
+    }
+
     // Build a grounded synthesis prompt with KB and specialist evidence.
     const contextBlock = context.leadName ? `Khách hàng: ${sanitizeChatInput(context.leadName, 80)}` : '';
     const historyBlock = Array.isArray(context.history)
@@ -1718,7 +1755,7 @@ async function handle_live_chat(args: Record<string, any>): Promise<any> {
     // Persist the real chat event before/alongside processing. The execution
     // idempotency key is shared with the durable runner, so a duplicate queue
     // delivery can never create a second run.
-    if (!args.__fromOperator) {
+    if (!args.__fromOperator && !args.__skipAgentEventEnqueue) {
         const { enqueueAgentOperatingEvent } = await import('../queue');
         await enqueueAgentOperatingEvent(tenantId, {
             eventId: `live-chat:${messageHash}`,
