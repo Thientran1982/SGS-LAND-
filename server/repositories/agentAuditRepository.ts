@@ -21,6 +21,39 @@ type AuditEvent = {
   latencyMs?: number;
 };
 
+export type ProviderHealthFilters = {
+  from?: string;
+  to?: string;
+};
+
+export type ProviderHealthSummary = {
+  range: { from: string; to: string };
+  summary: {
+    totalRequests: number;
+    fallbackRequests: number;
+    degradedRequests: number;
+    exhaustedRequests: number;
+    fallbackRate: number;
+    p95LatencyMs: number | null;
+  };
+  providers: Array<{
+    provider: string;
+    attempts: number;
+    successes: number;
+    failures: number;
+    skipped: number;
+    fallbackSuccesses: number;
+    avgLatencyMs: number | null;
+    p50LatencyMs: number | null;
+    p95LatencyMs: number | null;
+    errorsByStatus: Record<string, number>;
+  }>;
+  alerts: {
+    allFallbackProvidersFailed: boolean;
+    exhaustedRequests: number;
+  };
+};
+
 function scrub(value: any, depth = 0): any {
   if (depth > 5) return '[truncated]';
   if (value === null || value === undefined) return value;
@@ -77,6 +110,138 @@ class AgentAuditRepository {
         client.query(`SELECT COUNT(*)::int AS total ${base}`, values),
       ]);
       return { events: rows.rows, total: count.rows[0]?.total || 0 };
+    });
+  }
+
+  /**
+   * Aggregate provider telemetry from sanitized outbound audit metadata.
+   * This intentionally returns counts and latency only; prompt/response JSON
+   * never leaves the database query.
+   */
+  async providerHealth(tenantId: string, filters: ProviderHealthFilters = {}): Promise<ProviderHealthSummary> {
+    const to = filters.to || new Date().toISOString();
+    const from = filters.from || new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();
+
+    return withTenantContext(tenantId, async client => {
+      const baseCte = `
+        WITH outbound AS (
+          SELECT id, status, metadata_json, created_at
+          FROM agent_audit_events
+          WHERE tenant_id = $1
+            AND event_type = 'CHAT_MESSAGE'
+            AND direction = 'OUTBOUND'
+            AND created_at >= $2::timestamptz
+            AND created_at <= $3::timestamptz
+        ),
+        attempts AS (
+          SELECT
+            o.id,
+            o.status AS request_status,
+            a.value,
+            a.ordinality,
+            NULLIF(a.value->>'provider', '') AS provider,
+            a.value->>'outcome' AS outcome,
+            NULLIF(a.value->>'status', '') AS attempt_status,
+            CASE
+              WHEN (a.value->>'latencyMs') ~ '^[0-9]+(\\.[0-9]+)?$'
+              THEN (a.value->>'latencyMs')::numeric
+              ELSE NULL
+            END AS latency_ms
+          FROM outbound o
+          CROSS JOIN LATERAL jsonb_array_elements(
+            CASE
+              WHEN jsonb_typeof(o.metadata_json->'aiProviderAttempts') = 'array'
+              THEN o.metadata_json->'aiProviderAttempts'
+              ELSE '[]'::jsonb
+            END
+          ) WITH ORDINALITY AS a(value, ordinality)
+        )
+      `;
+
+      const [summaryResult, providerResult] = await Promise.all([
+        client.query(
+          `${baseCte}
+           SELECT
+             (SELECT COUNT(*)::int FROM outbound) AS total_requests,
+             (SELECT COUNT(*)::int FROM outbound
+                WHERE metadata_json->>'aiFallbackUsed' = 'true') AS fallback_requests,
+             (SELECT COUNT(*)::int FROM outbound WHERE status = 'DEGRADED') AS degraded_requests,
+             (SELECT COUNT(*)::int FROM outbound o
+                WHERE o.status = 'DEGRADED'
+                  AND NOT EXISTS (
+                    SELECT 1 FROM attempts a
+                    WHERE a.id = o.id AND a.outcome = 'success'
+                  )) AS exhausted_requests,
+             (SELECT percentile_cont(0.95) WITHIN GROUP (ORDER BY latency_ms)
+                FROM attempts WHERE latency_ms IS NOT NULL) AS p95_latency_ms`,
+          [tenantId, from, to],
+        ),
+        client.query(
+          `${baseCte}
+           SELECT
+             provider,
+             COUNT(*)::int AS attempts,
+             COUNT(*) FILTER (WHERE outcome = 'success')::int AS successes,
+             COUNT(*) FILTER (WHERE outcome = 'failed')::int AS failures,
+             COUNT(*) FILTER (WHERE outcome = 'skipped')::int AS skipped,
+             COUNT(*) FILTER (WHERE outcome = 'success' AND ordinality > 1)::int AS fallback_successes,
+             ROUND(AVG(latency_ms))::int AS avg_latency_ms,
+             percentile_cont(0.50) WITHIN GROUP (ORDER BY latency_ms) AS p50_latency_ms,
+             percentile_cont(0.95) WITHIN GROUP (ORDER BY latency_ms) AS p95_latency_ms,
+             COALESCE(
+               (SELECT jsonb_object_agg(status_counts.status_key, status_counts.total)
+                FROM (
+                  SELECT COALESCE(attempt_status, 'unknown') AS status_key, COUNT(*)::int AS total
+                  FROM attempts failed_attempts
+                  WHERE failed_attempts.provider = attempts.provider
+                    AND failed_attempts.outcome = 'failed'
+                  GROUP BY COALESCE(attempt_status, 'unknown')
+                ) status_counts),
+               '{}'::jsonb
+             ) AS errors_by_status
+           FROM attempts
+           WHERE provider IS NOT NULL
+           GROUP BY provider
+           ORDER BY failures DESC, attempts DESC, provider ASC`,
+          [tenantId, from, to],
+        ),
+      ]);
+
+      const rawSummary = summaryResult.rows[0] || {};
+      const totalRequests = Number(rawSummary.total_requests || 0);
+      const fallbackRequests = Number(rawSummary.fallback_requests || 0);
+      const exhaustedRequests = Number(rawSummary.exhausted_requests || 0);
+      const providers = providerResult.rows.map(row => ({
+        provider: String(row.provider),
+        attempts: Number(row.attempts || 0),
+        successes: Number(row.successes || 0),
+        failures: Number(row.failures || 0),
+        skipped: Number(row.skipped || 0),
+        fallbackSuccesses: Number(row.fallback_successes || 0),
+        avgLatencyMs: row.avg_latency_ms == null ? null : Number(row.avg_latency_ms),
+        p50LatencyMs: row.p50_latency_ms == null ? null : Math.round(Number(row.p50_latency_ms)),
+        p95LatencyMs: row.p95_latency_ms == null ? null : Math.round(Number(row.p95_latency_ms)),
+        errorsByStatus: row.errors_by_status && typeof row.errors_by_status === 'object'
+          ? Object.fromEntries(Object.entries(row.errors_by_status).map(([key, value]) => [key, Number(value || 0)]))
+          : {},
+      }));
+
+      return {
+        range: { from, to },
+        summary: {
+          totalRequests,
+          fallbackRequests,
+          degradedRequests: Number(rawSummary.degraded_requests || 0),
+          exhaustedRequests,
+          fallbackRate: totalRequests ? Math.round((fallbackRequests / totalRequests) * 10000) / 100 : 0,
+          p95LatencyMs: rawSummary.p95_latency_ms == null ? null : Math.round(Number(rawSummary.p95_latency_ms)),
+        },
+        providers,
+        alerts: {
+          allFallbackProvidersFailed: exhaustedRequests > 0,
+          exhaustedRequests,
+        },
+      };
     });
   }
 }

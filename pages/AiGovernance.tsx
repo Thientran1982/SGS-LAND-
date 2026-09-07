@@ -1172,7 +1172,169 @@ const UsageTab = memo(({ t }: { t: (k: string) => string }) => {
   );
 });
 
-    const [activeTab, setActiveTab] = useState<'CONFIG' | 'PROMPTS' | 'SAFETY' | 'RLHF' | 'USAGE'>('CONFIG');
+type ProviderHealthData = {
+  summary: {
+    totalRequests: number;
+    fallbackRequests: number;
+    degradedRequests: number;
+    exhaustedRequests: number;
+    fallbackRate: number;
+    p95LatencyMs: number | null;
+  };
+  providers: Array<{
+    provider: string;
+    attempts: number;
+    successes: number;
+    failures: number;
+    skipped: number;
+    fallbackSuccesses: number;
+    avgLatencyMs: number | null;
+    p50LatencyMs: number | null;
+    p95LatencyMs: number | null;
+    errorsByStatus: Record<string, number>;
+  }>;
+  alerts: { allFallbackProvidersFailed: boolean; exhaustedRequests: number };
+};
+
+const emptyProviderHealth: ProviderHealthData = {
+  summary: { totalRequests: 0, fallbackRequests: 0, degradedRequests: 0, exhaustedRequests: 0, fallbackRate: 0, p95LatencyMs: null },
+  providers: [],
+  alerts: { allFallbackProvidersFailed: false, exhaustedRequests: 0 },
+};
+
+const ProviderHealthTab = () => {
+  const [data, setData] = useState<ProviderHealthData>(emptyProviderHealth);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
+  const [days, setDays] = useState(7);
+
+  const load = useCallback(async (rangeDays: number) => {
+    setLoading(true);
+    setError('');
+    try {
+      const response = await fetch(`/api/ai/governance/provider-health?days=${rangeDays}`, {
+        headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
+        credentials: 'include',
+      });
+      const payload = await response.json().catch(() => ({}));
+      if (!response.ok) throw new Error(payload?.error || 'Không thể tải sức khỏe provider AI.');
+      const summary = payload?.summary && typeof payload.summary === 'object' ? payload.summary : {};
+      const providers = Array.isArray(payload?.providers) ? payload.providers : [];
+      setData({
+        summary: {
+          totalRequests: Number(summary.totalRequests || 0),
+          fallbackRequests: Number(summary.fallbackRequests || 0),
+          degradedRequests: Number(summary.degradedRequests || 0),
+          exhaustedRequests: Number(summary.exhaustedRequests || 0),
+          fallbackRate: Number(summary.fallbackRate || 0),
+          p95LatencyMs: summary.p95LatencyMs == null ? null : Number(summary.p95LatencyMs),
+        },
+        providers: providers.map((provider: any) => ({
+          provider: String(provider?.provider || 'unknown'),
+          attempts: Number(provider?.attempts || 0),
+          successes: Number(provider?.successes || 0),
+          failures: Number(provider?.failures || 0),
+          skipped: Number(provider?.skipped || 0),
+          fallbackSuccesses: Number(provider?.fallbackSuccesses || 0),
+          avgLatencyMs: provider?.avgLatencyMs == null ? null : Number(provider.avgLatencyMs),
+          p50LatencyMs: provider?.p50LatencyMs == null ? null : Number(provider.p50LatencyMs),
+          p95LatencyMs: provider?.p95LatencyMs == null ? null : Number(provider.p95LatencyMs),
+          errorsByStatus: provider?.errorsByStatus && typeof provider.errorsByStatus === 'object'
+            ? Object.fromEntries(Object.entries(provider.errorsByStatus).map(([key, value]) => [key, Number(value || 0)]))
+            : {},
+        })),
+        alerts: {
+          allFallbackProvidersFailed: payload?.alerts?.allFallbackProvidersFailed === true,
+          exhaustedRequests: Number(payload?.alerts?.exhaustedRequests || 0),
+        },
+      });
+    } catch (loadError) {
+      setError(loadError instanceof Error ? loadError.message : 'Không thể tải sức khỏe provider AI.');
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => { void load(days); }, [days, load]);
+
+  return (
+    <div className="space-y-4">
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <div>
+          <h3 className="text-sm font-bold text-slate-900">Sức khỏe provider AI</h3>
+          <p className="mt-1 text-xs text-slate-500">Tổng hợp từ Agent audit, chỉ hiển thị số liệu vận hành đã loại dữ liệu nhạy cảm.</p>
+        </div>
+        <div className="flex gap-1.5">
+          {[1, 7, 30].map(range => (
+            <button key={range} onClick={() => setDays(range)}
+              className={`rounded-lg px-3 py-1.5 text-xs font-medium ${days === range ? 'bg-slate-900 text-white' : 'border border-slate-200 bg-white text-slate-600 hover:bg-slate-50'}`}>
+              {range === 1 ? '24 giờ' : `${range} ngày`}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {data.alerts.allFallbackProvidersFailed && (
+        <div className="rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-800">
+          <strong>Cảnh báo:</strong> mọi provider dự phòng đều thất bại trong {data.alerts.exhaustedRequests} lượt. Cần kiểm tra quota, credential và cấu hình fallback.
+        </div>
+      )}
+      {error && <div className="rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-800">{error}</div>}
+
+      <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
+        {[
+          ['Lượt chat', data.summary.totalRequests.toLocaleString('vi-VN')],
+          ['Dùng fallback', `${data.summary.fallbackRequests.toLocaleString('vi-VN')} (${data.summary.fallbackRate}%)`],
+          ['Lượt degraded', data.summary.degradedRequests.toLocaleString('vi-VN')],
+          ['P95 latency', data.summary.p95LatencyMs == null ? '—' : `${data.summary.p95LatencyMs}ms`],
+        ].map(([label, value]) => (
+          <div key={label} className="rounded-xl border border-slate-200 bg-white p-4">
+            <div className="text-xs font-semibold uppercase text-slate-400">{label}</div>
+            <div className="mt-1 text-xl font-bold text-slate-900">{loading ? '…' : value}</div>
+          </div>
+        ))}
+      </div>
+
+      <div className="overflow-x-auto rounded-xl border border-slate-200 bg-white">
+        <table className="min-w-full text-sm">
+          <thead className="bg-slate-50 text-left text-xs uppercase text-slate-400">
+            <tr>
+              <th className="p-3">Provider</th><th className="p-3 text-right">Lượt thử</th>
+              <th className="p-3 text-right">Thành công</th><th className="p-3 text-right">Fallback</th>
+              <th className="p-3 text-right">Lỗi</th><th className="p-3 text-right">P50 / P95</th><th className="p-3">Lỗi theo status</th>
+            </tr>
+          </thead>
+          <tbody>
+            {!loading && data.providers.map(provider => (
+              <tr key={provider.provider} className="border-t border-slate-100">
+                <td className="p-3 font-semibold text-slate-800">{provider.provider}</td>
+                <td className="p-3 text-right text-slate-600">{provider.attempts}</td>
+                <td className="p-3 text-right text-emerald-700">{provider.successes}</td>
+                <td className="p-3 text-right text-indigo-700">{provider.fallbackSuccesses}</td>
+                <td className="p-3 text-right text-rose-700">{provider.failures}</td>
+                <td className="p-3 text-right text-slate-600">{provider.p50LatencyMs == null ? '—' : `${provider.p50LatencyMs} / ${provider.p95LatencyMs ?? '—'}ms`}</td>
+                <td className="p-3">
+                  <div className="flex flex-wrap gap-1">
+                    {Object.entries(provider.errorsByStatus).map(([status, count]) => (
+                      <span key={status} className="rounded bg-rose-50 px-2 py-0.5 text-xs text-rose-700">{status}: {count}</span>
+                    ))}
+                    {provider.failures === 0 && <span className="text-xs text-slate-400">Không có lỗi</span>}
+                  </div>
+                </td>
+              </tr>
+            ))}
+            {!loading && data.providers.length === 0 && (
+              <tr><td colSpan={7} className="p-8 text-center text-slate-400">Chưa có telemetry provider trong khoảng thời gian này.</td></tr>
+            )}
+            {loading && <tr><td colSpan={7} className="p-8 text-center text-slate-400">Đang tải...</td></tr>}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  );
+};
+
+    const [activeTab, setActiveTab] = useState<'CONFIG' | 'PROMPTS' | 'SAFETY' | 'RLHF' | 'USAGE' | 'PROVIDERS'>('CONFIG');
     const [toast, setToast] = useState<{ msg: string, type: 'success' | 'error' } | null>(null);    
     // Prompts State
     const [selectedPrompt, setSelectedPrompt] = useState<PromptTemplate | null>(null);
@@ -1383,6 +1545,7 @@ const UsageTab = memo(({ t }: { t: (k: string) => string }) => {
                     <button onClick={() => setActiveTab('SAFETY')} className={`px-4 py-2 rounded-lg text-xs font-bold transition-all ${activeTab === 'SAFETY' ? 'bg-[var(--bg-surface)] shadow text-[var(--sgs-primary)]' : 'text-[var(--text-tertiary)] hover:text-[var(--text-secondary)]'}`}>{t('ai.tab_safety')}</button>
                     <button onClick={() => setActiveTab('RLHF')} className={`px-4 py-2 rounded-lg text-xs font-bold transition-all ${activeTab === 'RLHF' ? 'bg-[var(--bg-surface)] shadow text-[var(--sgs-primary)]' : 'text-[var(--text-tertiary)] hover:text-[var(--text-secondary)]'}`}>{t('ai.tab_rlhf')}</button>
                     <button onClick={() => setActiveTab('USAGE')} className={`px-4 py-2 rounded-lg text-xs font-bold transition-all ${activeTab === 'USAGE' ? 'bg-[var(--bg-surface)] shadow text-[var(--sgs-primary)]' : 'text-[var(--text-tertiary)] hover:text-[var(--text-secondary)]'}`}>{'Sử Dụng'}</button>
+                    <button onClick={() => setActiveTab('PROVIDERS')} className={`px-4 py-2 rounded-lg text-xs font-bold transition-all ${activeTab === 'PROVIDERS' ? 'bg-[var(--bg-surface)] shadow text-[var(--sgs-primary)]' : 'text-[var(--text-tertiary)] hover:text-[var(--text-secondary)]'}`}>{'Provider health'}</button>
                 </div>
             </div>
             {activeTab === 'CONFIG' && <ConfigTab config={config} modelGroups={modelGroups} onSave={handleSaveConfig} onUpdateConfig={handleUpdateConfig} t={t} />}           
@@ -1463,6 +1626,7 @@ const UsageTab = memo(({ t }: { t: (k: string) => string }) => {
                 </div>
             )}
             {activeTab === 'USAGE' && (<UsageTab t={t} />)}
+            {activeTab === 'PROVIDERS' && (<ProviderHealthTab />)}
 {activeTab === 'RLHF' && (
                 <RlhfTab
                     stats={rlhfStats}

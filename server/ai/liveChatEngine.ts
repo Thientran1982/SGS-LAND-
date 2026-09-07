@@ -1677,6 +1677,10 @@ async function handle_live_chat(args: Record<string, any>): Promise<any> {
             degraded: result.degraded === true,
             degradedReason: result.degradedReason,
         },
+        latencyMs: providerTelemetry?.attempts?.reduce(
+            (total: number, attempt: ProviderAttempt) => total + (Number(attempt.latencyMs) || 0),
+            0,
+        ) || undefined,
         metadata: {
             source: 'live-chat-engine',
             cached: execution.cached,

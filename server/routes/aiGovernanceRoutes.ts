@@ -14,6 +14,7 @@ import { aiRolloutService, decideRollout } from '../services/aiRolloutService';
 import { assessFeedback, autonomousLearningService } from '../services/autonomousLearningService';
 import { agentOutboundRepository } from '../repositories/agentOutboundRepository';
 import { agentMemoryService } from '../services/agentMemoryService';
+import { agentAuditRepository } from '../repositories/agentAuditRepository';
 
 export function createAiGovernanceRoutes(authenticateToken: any, optionalAuth?: any) {
   const router = Router();
@@ -137,6 +138,25 @@ router.get('/usage-stats', authenticateToken, async (req: Request, res: Response
   } catch (err: any) {
     console.error('[Governance] usage-stats failed:', err?.message || err);
     res.status(500).json({ error: 'Khong tai duoc thong ke su dung AI' });
+  }
+});
+
+// Provider health is derived from tenant-scoped, scrubbed Agent audit events.
+// It deliberately exposes aggregates only, never prompt/response or lead data.
+router.get('/provider-health', authenticateToken, async (req: Request, res: Response) => {
+  try {
+    const user = (req as any).user;
+    if (!['SUPER_ADMIN', 'ADMIN'].includes(user?.role)) return res.status(403).json({ error: 'Admin only' });
+    const days = Math.max(1, Math.min(90, Number(req.query.days) || 7));
+    const to = new Date();
+    const from = new Date(to.getTime() - days * 24 * 60 * 60 * 1000);
+    res.json(await agentAuditRepository.providerHealth(user.tenantId, {
+      from: from.toISOString(),
+      to: to.toISOString(),
+    }));
+  } catch (error: any) {
+    console.error('[Governance] provider-health failed:', error?.message || error);
+    res.status(500).json({ error: 'Không thể tải sức khỏe provider AI.' });
   }
 });
 
