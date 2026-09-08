@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useState, type ChangeEvent } from "react";
 import { useRouter } from "next/navigation";
 
 interface LandingSection {
@@ -8,6 +8,7 @@ interface LandingSection {
   title?: string;
   body?: string;
   items?: string[];
+  images?: string[];
   phone?: string;
   contactName?: string;
   tokens: number;
@@ -79,6 +80,9 @@ export default function EditorForm({
   const [busy, setBusy] = useState<"" | "save" | "publish" | "unpublish">("");
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
+  const [galleryBusy, setGalleryBusy] = useState<"" | "upload" | "remove">("");
+  const [galleryMessage, setGalleryMessage] = useState("");
+  const [galleryError, setGalleryError] = useState("");
 
   const publicUrl = "/landing-ai/" + currentSlug;
   const previewUrl = publicUrl + "?preview=1";
@@ -139,6 +143,74 @@ export default function EditorForm({
     } finally { setBusy(""); }
   }
 
+  async function uploadGalleryImages(event: ChangeEvent<HTMLInputElement>) {
+    const files = Array.from(event.target.files || []);
+    event.target.value = "";
+    if (!files.length) return;
+
+    setGalleryBusy("upload");
+    setGalleryMessage("");
+    setGalleryError("");
+    let rejectionMessage = "";
+    try {
+      const csrfRes = await fetch("/api/csrf-token", { credentials: "include" });
+      const csrfData = await csrfRes.json().catch(() => ({}));
+      const formData = new FormData();
+      formData.append("visitorKey", k);
+      files.forEach((file) => formData.append("files", file));
+
+      const res = await fetch("/api/landing-pages/" + encodeURIComponent(currentSlug) + "/images", {
+        method: "POST",
+        credentials: "include",
+        headers: {
+          ...(csrfData?.csrfToken ? { "X-CSRF-Token": csrfData.csrfToken } : {}),
+        },
+        body: formData,
+      });
+      const data = await res.json().catch(() => ({}));
+      if (Array.isArray(data?.rejected) && data.rejected.length) {
+        rejectionMessage = `Một số file bị từ chối: ${data.rejected.join(", ")}`;
+      }
+      if (!res.ok) throw new Error(data?.message || data?.error || "Lỗi " + res.status);
+
+      if (data?.page?.sections) setSections(data.page.sections);
+      setGalleryMessage(`Đã tải lên ${data?.uploaded ?? files.length} ảnh.`);
+      if (rejectionMessage) setGalleryError(rejectionMessage);
+    } catch (e) {
+      setGalleryError(rejectionMessage || (e as Error).message);
+    } finally {
+      setGalleryBusy("");
+    }
+  }
+
+  async function removeGalleryImage(url: string) {
+    setGalleryBusy("remove");
+    setGalleryMessage("");
+    setGalleryError("");
+    try {
+      const csrfRes = await fetch("/api/csrf-token", { credentials: "include" });
+      const csrfData = await csrfRes.json().catch(() => ({}));
+      const res = await fetch("/api/landing-pages/" + encodeURIComponent(currentSlug) + "/images", {
+        method: "DELETE",
+        credentials: "include",
+        headers: {
+          "Content-Type": "application/json",
+          ...(csrfData?.csrfToken ? { "X-CSRF-Token": csrfData.csrfToken } : {}),
+        },
+        body: JSON.stringify({ visitorKey: k, url }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data?.message || data?.error || "Lỗi " + res.status);
+
+      if (data?.page?.sections) setSections(data.page.sections);
+      setGalleryMessage("Đã xóa ảnh.");
+    } catch (e) {
+      setGalleryError((e as Error).message);
+    } finally {
+      setGalleryBusy("");
+    }
+  }
+
   const hero = secOf(sections, "hero");
   const gallery = secOf(sections, "gallery");
   const legal = secOf(sections, "legal");
@@ -181,7 +253,70 @@ export default function EditorForm({
 
       {gallery && (
         <div style={card}>
-          <label style={label}>Hình ảnh dự án (mỗi dòng một mục)</label>
+          {!!gallery.images?.length && (
+            <div style={{ display: "flex", flexWrap: "wrap", gap: 10, marginBottom: 14 }}>
+              {gallery.images.map((url, index) => (
+                <div key={url + "-" + index} style={{ position: "relative", width: 96, height: 96 }}>
+                  <img
+                    src={url}
+                    alt={"Ảnh dự án " + (index + 1)}
+                    style={{ width: 96, height: 96, borderRadius: 10, objectFit: "cover", display: "block" }}
+                  />
+                  <button
+                    type="button"
+                    aria-label="Xóa ảnh"
+                    onClick={() => removeGalleryImage(url)}
+                    disabled={galleryBusy !== ""}
+                    style={{
+                      position: "absolute",
+                      top: -6,
+                      right: -6,
+                      width: 24,
+                      height: 24,
+                      borderRadius: "50%",
+                      border: "2px solid var(--bg-elevated)",
+                      background: "#111827",
+                      color: "#fff",
+                      fontSize: 16,
+                      lineHeight: 1,
+                      padding: 0,
+                      cursor: galleryBusy === "" ? "pointer" : "not-allowed",
+                      opacity: galleryBusy === "" ? 1 : 0.6,
+                    }}
+                  >
+                    ×
+                  </button>
+                </div>
+              ))}
+            </div>
+          )}
+          <label
+            htmlFor="project-gallery-images"
+            style={{
+              ...btnGhost,
+              display: "inline-flex",
+              alignItems: "center",
+              opacity: galleryBusy === "upload" ? 0.6 : 1,
+              cursor: galleryBusy === "upload" ? "not-allowed" : "pointer",
+            }}
+          >
+            {galleryBusy === "upload" ? "Đang tải ảnh lên..." : "+ Đính kèm ảnh dự án"}
+          </label>
+          <input
+            id="project-gallery-images"
+            type="file"
+            accept="image/jpeg,image/png,image/webp,image/gif"
+            multiple
+            hidden
+            disabled={galleryBusy !== ""}
+            onChange={uploadGalleryImages}
+          />
+          <p style={{ fontSize: 12, color: "var(--text-tertiary)", margin: "8px 0 14px" }}>
+            JPEG/PNG/WebP/GIF, tối đa 10MB mỗi file, tối đa 20 ảnh. Ảnh sẽ được sử dụng trên landing page đã publish.
+          </p>
+          {galleryMessage && <p style={{ margin: "0 0 8px", color: "#22c55e", fontSize: 13 }}>{galleryMessage}</p>}
+          {galleryError && <p style={{ margin: "0 0 8px", color: "#ef4444", fontSize: 13 }}>{galleryError}</p>}
+          <label style={label}>Chú thích không gian (mỗi dòng một mục)</label>
           <textarea style={{ ...input, minHeight: 70 }} value={(gallery.items || []).join("\n")} onChange={(e) => setItems("gallery", e.target.value)} />
         </div>
       )}

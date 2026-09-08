@@ -7,13 +7,78 @@
  * - POST /api/landing-pages/:slug/unpublish -> published -> draft (can visitorKey)
  * Khong co auth token: visitor_key duoc cap khi tao trang chinh la khoa quan tri.
  */
-import { Router, Request, Response } from 'express';
+import { Router, Request, Response, NextFunction } from 'express';
+import multer from 'multer';
+import crypto from 'crypto';
+import { fileTypeFromBuffer } from 'file-type';
 import { withTenantContext } from '../db';
 import { logger } from '../middleware/logger';
 import { agentAuditRepository } from '../repositories/agentAuditRepository';
 import { v4 as uuidv4 } from 'uuid';
+import { storeFile, deleteFile } from '../services/storageService';
+
+let sharp: typeof import('sharp') | null = null;
+(async () => {
+    try {
+        sharp = (await import('sharp')).default as unknown as typeof import('sharp');
+    } catch {
+        console.warn('[landingPages] sharp not available - images will be stored as-is');
+    }
+})();
 
 const DEFAULT_TENANT_ID = '00000000-0000-0000-0000-000000000001';
+
+const MAX_GALLERY_IMAGES = 20;
+const MAX_IMAGE_UPLOAD_SIZE = 10 * 1024 * 1024; // 10MB moi anh
+const MAX_IMAGE_FILES_PER_REQUEST = 10;
+const IMAGE_MAX_DIM = 1920;
+const WEBP_QUALITY = 82;
+const ALLOWED_IMAGE_MIMES = new Set(['image/jpeg', 'image/png', 'image/webp', 'image/gif']);
+const IMAGE_MIME_TO_EXT: Record<string, string> = {
+    'image/jpeg': '.jpg',
+    'image/png': '.png',
+    'image/webp': '.webp',
+    'image/gif': '.gif',
+};
+
+const imageUpload = multer({
+    storage: multer.memoryStorage(),
+    limits: { fileSize: MAX_IMAGE_UPLOAD_SIZE, files: MAX_IMAGE_FILES_PER_REQUEST },
+    fileFilter(_req, file, cb) {
+        if (ALLOWED_IMAGE_MIMES.has(file.mimetype)) cb(null, true);
+        else cb(new Error('IMAGE_INVALID_MIME'));
+    },
+});
+
+function handleImageMulterError(err: any, _req: Request, res: Response, next: NextFunction) {
+    if (err instanceof multer.MulterError) {
+        if (err.code === 'LIMIT_FILE_SIZE') return res.status(413).json({ error: 'Anh qua lon (toi da 10MB moi anh)' });
+        if (err.code === 'LIMIT_FILE_COUNT') return res.status(400).json({ error: 'Chi duoc tai toi da 10 anh moi lan' });
+        return res.status(400).json({ error: 'Loi tai anh len. Vui long thu lai.' });
+    }
+    if (err?.message === 'IMAGE_INVALID_MIME') return res.status(415).json({ error: 'Chi chap nhan anh JPEG, PNG, WebP hoac GIF' });
+    if (err) return res.status(400).json({ error: err?.message || 'Loi tai anh len' });
+    next();
+}
+
+async function compressGalleryImage(buf: Buffer, mime: string): Promise<{ buffer: Buffer; contentType: string; ext: string }> {
+    if (!sharp || mime === 'image/gif') {
+        return { buffer: buf, contentType: mime, ext: IMAGE_MIME_TO_EXT[mime] || '.jpg' };
+    }
+    try {
+        const s = (sharp as any)(buf);
+        const meta = await s.metadata();
+        let pipeline = s;
+        if ((meta.width || 0) > IMAGE_MAX_DIM || (meta.height || 0) > IMAGE_MAX_DIM) {
+            pipeline = pipeline.resize(IMAGE_MAX_DIM, IMAGE_MAX_DIM, { fit: 'inside', withoutEnlargement: true });
+        }
+        const compressed: Buffer = await pipeline.webp({ quality: WEBP_QUALITY }).toBuffer();
+        return { buffer: compressed, contentType: 'image/webp', ext: '.webp' };
+    } catch (err) {
+        console.warn('[landingPages] sharp compression failed, storing original:', err);
+        return { buffer: buf, contentType: mime, ext: IMAGE_MIME_TO_EXT[mime] || '.jpg' };
+    }
+}
 
 export function slugifyCustom(input: string): string {
     const base = (input || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '')
@@ -130,6 +195,7 @@ export function createLandingPagesRoutes(): Router {
                         title: x.title !== undefined && x.title !== null ? String(x.title).slice(0, 200) : undefined,
                         body: x.body !== undefined && x.body !== null ? String(x.body).slice(0, 4000) : undefined,
                         items: Array.isArray(x.items) ? x.items.map((i: any) => String(i).slice(0, 200)).slice(0, 24) : undefined,
+                        images: Array.isArray(x.images) ? x.images.map((i: any) => String(i).slice(0, 500)).filter((u: string) => u.startsWith('/uploads/') || /^https?:\/\//.test(u)).slice(0, MAX_GALLERY_IMAGES) : undefined,
                         phone: x.phone !== undefined && x.phone !== null ? String(x.phone).slice(0, 40) : undefined,
                         contactName: x.contactName !== undefined && x.contactName !== null ? String(x.contactName).slice(0, 120) : undefined,
                         tokens: Number(x.tokens) || 0,
@@ -148,6 +214,110 @@ export function createLandingPagesRoutes(): Router {
             return res.json({ page: updated });
         } catch (err) {
             logger.error('[landingPages] update failed: ' + (err as Error).message);
+            return res.status(500).json({ error: 'INTERNAL' });
+        }
+    });
+
+    /** Upload anh du an cho phan gallery. Xac thuc quyen so huu qua visitorKey (khong dung authenticateToken - trang nay khong co dang nhap). */
+    router.post('/:slug/images', imageUpload.array('files', MAX_IMAGE_FILES_PER_REQUEST), handleImageMulterError, async (req: Request, res: Response) => {
+        try {
+            const slug = String(req.params.slug || '').trim().slice(0, 220);
+            const visitorKey = String(req.body?.visitorKey || '').trim().slice(0, 120);
+            if (!slug || !visitorKey) return res.status(400).json({ error: 'MISSING_SLUG_OR_KEY' });
+
+            const page = await loadOwnedPage(slug, visitorKey);
+            if (!page) return res.status(404).json({ error: 'NOT_FOUND_OR_FORBIDDEN' });
+
+            const files = req.files as Express.Multer.File[] | undefined;
+            if (!files || files.length === 0) {
+                return res.status(400).json({ error: 'NO_FILES', message: 'Chua chon anh nao de tai len' });
+            }
+
+            const sections: any[] = Array.isArray(page.sections) ? page.sections : [];
+            let gallery = sections.find((x: any) => x && x.stage === 'gallery');
+            if (!gallery) {
+                gallery = { stage: 'gallery', title: 'Hinh anh du an', items: [], images: [], tokens: 0 };
+                sections.push(gallery);
+            }
+            const existingImages: string[] = Array.isArray(gallery.images) ? gallery.images : [];
+            const uploadedUrls: string[] = [];
+            const rejected: string[] = [];
+
+            for (const f of files) {
+                if (existingImages.length + uploadedUrls.length >= MAX_GALLERY_IMAGES) {
+                    rejected.push(f.originalname + ' (da dat toi da ' + MAX_GALLERY_IMAGES + ' anh)');
+                    continue;
+                }
+                const detected = await fileTypeFromBuffer(f.buffer);
+                if (!detected || !ALLOWED_IMAGE_MIMES.has(detected.mime)) {
+                    rejected.push(f.originalname);
+                    continue;
+                }
+                const compressedResult = await compressGalleryImage(f.buffer, detected.mime);
+                const uniqueId = crypto.randomBytes(16).toString('hex');
+                const filename = Date.now() + '-' + uniqueId + compressedResult.ext;
+                const url = await storeFile(DEFAULT_TENANT_ID, filename, compressedResult.buffer, compressedResult.contentType);
+                uploadedUrls.push(url);
+            }
+
+            if (uploadedUrls.length === 0) {
+                return res.status(415).json({ error: 'Khong co anh hop le nao duoc tai len', rejected });
+            }
+
+            gallery.images = [...existingImages, ...uploadedUrls];
+
+            const updated = await withTenantContext(DEFAULT_TENANT_ID, async (client: any) => {
+                const r = await client.query(
+                    'UPDATE landing_pages SET sections = $1::jsonb, updated_at = now() WHERE id = $2 RETURNING ' + PAGE_COLUMNS,
+                    [JSON.stringify(sections), page.id],
+                );
+                return r.rows[0];
+            });
+
+            await audit(DEFAULT_TENANT_ID, 'landing_image_upload', { slug, visitorKey }, { id: updated.id, slug: updated.slug, uploaded: uploadedUrls.length });
+            return res.json({ page: updated, uploaded: uploadedUrls.length, rejected: rejected.length ? rejected : undefined });
+        } catch (err) {
+            logger.error('[landingPages] image upload failed: ' + (err as Error).message);
+            return res.status(500).json({ error: 'INTERNAL' });
+        }
+    });
+
+    /** Xoa 1 anh khoi gallery (va don dep file luu tru neu la file cua chinh he thong). */
+    router.delete('/:slug/images', async (req: Request, res: Response) => {
+        try {
+            const slug = String(req.params.slug || '').trim().slice(0, 220);
+            const visitorKey = String(req.body?.visitorKey || '').trim().slice(0, 120);
+            const url = String(req.body?.url || '').trim();
+            if (!slug || !visitorKey || !url) return res.status(400).json({ error: 'MISSING_FIELDS' });
+
+            const page = await loadOwnedPage(slug, visitorKey);
+            if (!page) return res.status(404).json({ error: 'NOT_FOUND_OR_FORBIDDEN' });
+
+            const sections: any[] = Array.isArray(page.sections) ? page.sections : [];
+            const gallery = sections.find((x: any) => x && x.stage === 'gallery');
+            if (!gallery || !Array.isArray(gallery.images) || !gallery.images.includes(url)) {
+                return res.status(404).json({ error: 'IMAGE_NOT_FOUND' });
+            }
+            gallery.images = gallery.images.filter((u: string) => u !== url);
+
+            const updated = await withTenantContext(DEFAULT_TENANT_ID, async (client: any) => {
+                const r = await client.query(
+                    'UPDATE landing_pages SET sections = $1::jsonb, updated_at = now() WHERE id = $2 RETURNING ' + PAGE_COLUMNS,
+                    [JSON.stringify(sections), page.id],
+                );
+                return r.rows[0];
+            });
+
+            const ownPrefix = '/uploads/' + DEFAULT_TENANT_ID + '/';
+            if (url.startsWith(ownPrefix)) {
+                const filename = url.slice(ownPrefix.length);
+                deleteFile(DEFAULT_TENANT_ID, filename).catch((e) => logger.warn('[landingPages] failed to delete stored image: ' + (e as Error).message));
+            }
+
+            await audit(DEFAULT_TENANT_ID, 'landing_image_remove', { slug, visitorKey }, { id: updated.id, slug: updated.slug });
+            return res.json({ page: updated });
+        } catch (err) {
+            logger.error('[landingPages] image remove failed: ' + (err as Error).message);
             return res.status(500).json({ error: 'INTERNAL' });
         }
     });

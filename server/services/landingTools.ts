@@ -26,6 +26,7 @@ export type LandingSection = {
     title?: string;
     body?: string;
     items?: string[];
+    images?: string[];
     tokens: number;
 };
 
@@ -112,6 +113,7 @@ function buildSections(brief: Record<string, any>, lang: string): LandingSection
     add('gallery', {
         title: vi ? 'Hinh anh du an' : 'Project gallery',
         items: [vi ? 'Chinh canh du an' : 'Main view', vi ? 'Tien ich' : 'Amenities', vi ? 'Mat bang' : 'Master plan'],
+        images: [],
     });
     add('legal', {
         title: vi ? 'Phap ly' : 'Legal',

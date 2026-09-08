@@ -195,7 +195,10 @@ function buildPageProps(page: GeneratedLandingPage): {
     schemaAmenities: amenityItems,
   };
 
-  const project = { name, location: heroBody, description: heroBody, images: [], videos: [] };
+  const galleryImages = (gallery?.images || []).filter(
+    (u): u is string => typeof u === "string" && u.length > 0,
+  );
+  const project = { name, location: heroBody, description: heroBody, images: galleryImages, videos: [] };
   const config: PageConfig = {
     heroDescription: heroBody,
     details: priceBody ? [{ label: "Giá tham khảo", value: priceBody }] : [],
