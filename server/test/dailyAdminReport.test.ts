@@ -6,9 +6,28 @@ const state = vi.hoisted(() => ({
   verifyDelivery: vi.fn(),
   sendDailyReportDeliveryAlertEmail: vi.fn(),
   lockCalls: 0,
+  collectionRows: null as Record<string, any> | null,
 }));
 
 const query = vi.hoisted(() => vi.fn(async (sql: string, params: any[] = []) => {
+  if (state.collectionRows && sql.includes('FROM visitor_events') && sql.includes('COUNT(*) FILTER')) {
+    return { rows: [state.collectionRows.traffic] };
+  }
+  if (state.collectionRows && sql.includes('FROM visitor_events') && sql.includes("event_type='property_view'")) {
+    return { rows: state.collectionRows.topViewed };
+  }
+  if (state.collectionRows && sql.includes('FROM visitor_events') && sql.includes("event_type='listing_search'")) {
+    return { rows: state.collectionRows.topSearches };
+  }
+  if (state.collectionRows && sql.includes('FROM agent_signals')) {
+    return { rows: state.collectionRows.csatSignals };
+  }
+  if (state.collectionRows && sql.includes('FROM seo_geo_snapshots')) {
+    return { rows: [state.collectionRows.geoSnapshot] };
+  }
+  if (state.collectionRows && sql.includes('FROM interactions')) {
+    return { rows: [state.collectionRows.interactions] };
+  }
   if (sql.includes('FROM users WHERE role IN')) {
     return { rows: [{ tenantId: '11111111-1111-1111-1111-111111111111', email: 'admin@example.com' }] };
   }
@@ -57,6 +76,8 @@ vi.mock('../repositories/notificationRepository', () => ({
 
 import {
   buildReportSummary,
+  collectDailyMetrics,
+  extractSupportCsatScore,
   renderReportEmail,
   replayInterruptedDailyReports,
   runDailyReport,
@@ -67,6 +88,7 @@ const metrics = {
   leads: { new: null, byStage: { NEW: 4 }, bySource: {} },
   brokers: { active: null, assignedLeads: null, top: [] },
   listings: { new: 2, priceUpdated: 1, topViewed: [] },
+  traffic: { propertyViews: null, listingSearches: null, topSearches: [] },
   tasks: { created: null, overdue: null, completed: 3 },
   minh: { conversations: 5, averageCsat: null, unanswered: null },
   geoSeo: { available: false as const, note: 'chưa có dữ liệu' },
@@ -80,6 +102,7 @@ describe('daily admin report', () => {
     state.verifyDelivery.mockReset().mockResolvedValue({ status: 'unknown', provider: 'brevo' });
     state.sendDailyReportDeliveryAlertEmail.mockReset().mockResolvedValue({ success: true, status: 'sent' });
     state.lockCalls = 0;
+    state.collectionRows = null;
   });
 
   it('keeps unavailable sources explicit instead of inventing zeroes', () => {
@@ -88,6 +111,57 @@ describe('daily admin report', () => {
     expect(summary.tasks.created).toBeNull();
     expect(summary.geoSeo.note).toBe('chưa có dữ liệu');
     expect(summary.dataNotes.join(' ')).toContain('chưa có dữ liệu');
+  });
+
+  it('extracts only valid 1-5 CSAT signal scores', () => {
+    expect(extractSupportCsatScore({ score: 5 })).toBe(5);
+    expect(extractSupportCsatScore(JSON.stringify({ rating: 4 }))).toBe(4);
+    expect(extractSupportCsatScore({ score: 0 })).toBeNull();
+    expect(extractSupportCsatScore({ score: 9 })).toBeNull();
+  });
+
+  it('collects views/searches, GEO/SEO and CSAT from their unified sources', async () => {
+    state.collectionRows = {
+      traffic: { property_views: 12, listing_searches: 7 },
+      topViewed: [{ title: 'The Global City', views: 8 }],
+      topSearches: [{ query: 'Aqua City', searches: 4 }],
+      interactions: { conversations: 6 },
+      csatSignals: [{ payload: JSON.stringify({ score: 5 }) }, { payload: JSON.stringify({ rating: 4 }) }],
+      geoSnapshot: {
+        snapshot_date: '2026-08-24',
+        created_at: '2026-08-24T11:00:00.000Z',
+        ai_mentions_json: {
+          engines: { gemini: { status: 'measured', queries: 5, mentions: 2 } },
+        },
+        gsc_top20_json: { keywords: [{ keyword: 'sgs land', position: 3 }] },
+        lighthouse_json: {
+          pages: [{ status: 'measured', scores: { seo: 91 } }],
+        },
+      },
+    };
+
+    const collected = await collectDailyMetrics('00000000-0000-0000-0000-000000000001', '2026-08-24');
+    expect(collected.traffic).toEqual({
+      propertyViews: 12,
+      listingSearches: 7,
+      topSearches: [{ query: 'Aqua City', searches: 4 }],
+    });
+    expect(collected.listings.topViewed).toEqual([{ title: 'The Global City', views: 8 }]);
+    expect(collected.minh.averageCsat).toBe(4.5);
+    expect(collected.geoSeo).toMatchObject({
+      available: true,
+      snapshotDate: '2026-08-24',
+      aiMentionRate: 0.4,
+      aiMentions: 2,
+      aiQueries: 5,
+      seoScore: 91,
+    });
+
+    const email = renderReportEmail(buildReportSummary(collected));
+    expect(email.html).toContain('12 lượt xem');
+    expect(email.html).toContain('7 lượt tìm kiếm');
+    expect(email.html).toContain('CSAT trung bình');
+    expect(email.html).toContain('Snapshot 2026-08-24');
   });
 
   it('renders a Vietnamese subject and does not expose customer PII', () => {

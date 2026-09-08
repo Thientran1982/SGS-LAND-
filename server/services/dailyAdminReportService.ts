@@ -1,5 +1,6 @@
 import { PoolClient } from 'pg';
 import { withTenantContext, withRlsBypass, withDistributedLock } from '../db';
+import { DEFAULT_TENANT_ID } from '../constants';
 import { emailService } from './emailService';
 import { logger } from '../middleware/logger';
 import { notificationRepository } from '../repositories/notificationRepository';
@@ -13,9 +14,24 @@ export interface DailyReportMetrics {
   leads: { new: number | null; byStage: Record<string, number>; bySource: Record<string, number> };
   brokers: { active: number | null; assignedLeads: number | null; top: Array<{ name: string; leads: number }> };
   listings: { new: number | null; priceUpdated: number | null; topViewed: Array<{ title: string; views: number }> };
+  traffic: {
+    propertyViews: number | null;
+    listingSearches: number | null;
+    topSearches: Array<{ query: string; searches: number }>;
+  };
   tasks: { created: number | null; overdue: number | null; completed: number | null };
   minh: { conversations: number | null; averageCsat: number | null; unanswered: number | null };
-  geoSeo: { available: false; note: string };
+  geoSeo: {
+    available: boolean;
+    note: string;
+    snapshotDate?: string | null;
+    capturedAt?: string | null;
+    aiMentionRate?: number | null;
+    aiMentions?: number | null;
+    aiQueries?: number | null;
+    seoScore?: number | null;
+    measuredSources?: string[];
+  };
   warnings: { count: number | null; notable: string[] };
 }
 
@@ -49,6 +65,89 @@ async function optional<T>(client: PoolClient, sql: string, params: any[], fallb
   }
 }
 
+async function optionalRows<T>(client: PoolClient, sql: string, params: any[], fallback: T[]): Promise<T[]> {
+  try { return (await client.query(sql, params)).rows as T[]; }
+  catch (err: any) {
+    if (!/does not exist|undefined column/i.test(err?.message || '')) logger.warn(`[DailyReport] optional source unavailable: ${err.message}`);
+    return fallback;
+  }
+}
+
+function parseJsonObject(value: unknown): Record<string, any> | null {
+  if (value && typeof value === 'object' && !Array.isArray(value)) return value as Record<string, any>;
+  if (typeof value !== 'string') return null;
+  try {
+    const parsed = JSON.parse(value);
+    return parsed && typeof parsed === 'object' && !Array.isArray(parsed) ? parsed : null;
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * CSAT signals are stored as JSON text for backwards compatibility. The
+ * accepted contract is a 1–5 score under score, rating, csat, or value.
+ * Invalid values are ignored rather than changing the report to a false zero.
+ */
+export function extractSupportCsatScore(payload: unknown): number | null {
+  const data = parseJsonObject(payload);
+  if (!data) return null;
+  const candidate = [data.score, data.rating, data.csat, data.value]
+    .find(value => value !== null && value !== undefined && value !== '');
+  const score = Number(candidate);
+  return Number.isFinite(score) && score >= 1 && score <= 5 ? score : null;
+}
+
+function buildGeoSeoMetrics(snapshot: any): DailyReportMetrics['geoSeo'] {
+  if (!snapshot) return { available: false, note: MISSING };
+
+  const ai = parseJsonObject(snapshot.ai_mentions_json) || {};
+  const engines = ai.engines && typeof ai.engines === 'object' ? Object.values(ai.engines) as any[] : [];
+  const measuredEngines = engines.filter(engine => engine?.status === 'measured');
+  const aiQueries = measuredEngines.reduce((sum, engine) => sum + safeNumber(engine?.queries), 0);
+  const aiMentions = measuredEngines.reduce((sum, engine) => sum + safeNumber(engine?.mentions), 0);
+  const aiMentionRate = aiQueries > 0 ? Number((aiMentions / aiQueries).toFixed(3)) : null;
+
+  const gsc = parseJsonObject(snapshot.gsc_top20_json) || {};
+  const gscMeasured = Array.isArray(gsc.keywords)
+    ? gsc.keywords.filter((keyword: any) => Number.isFinite(Number(keyword?.position))).length
+    : 0;
+  const lighthouse = parseJsonObject(snapshot.lighthouse_json) || {};
+  const lighthousePages = Array.isArray(lighthouse.pages) ? lighthouse.pages : [];
+  const seoScores = lighthousePages
+    .filter((page: any) => page?.status === 'measured' && Number.isFinite(Number(page?.scores?.seo)))
+    .map((page: any) => Number(page.scores.seo));
+  const seoScore = seoScores.length
+    ? Math.round(seoScores.reduce((sum, score) => sum + score, 0) / seoScores.length)
+    : null;
+
+  const measuredSources: string[] = [];
+  if (aiQueries > 0) measuredSources.push('AI mention probes');
+  if (gscMeasured > 0) measuredSources.push('Google Search Console');
+  if (seoScores.length > 0) measuredSources.push('PageSpeed Insights');
+  const available = measuredSources.length > 0;
+  const snapshotDate = snapshot.snapshot_date ? String(snapshot.snapshot_date).slice(0, 10) : null;
+  const details = [
+    aiQueries > 0 ? `AI ${Math.round((aiMentionRate || 0) * 100)}%` : null,
+    gscMeasured > 0 ? `GSC ${gscMeasured} từ khóa` : null,
+    seoScores.length > 0 ? `SEO ${seoScore}/100` : null,
+  ].filter(Boolean);
+
+  return {
+    available,
+    note: available
+      ? `Snapshot ${snapshotDate || MISSING}${details.length ? ` · ${details.join(' · ')}` : ''}`
+      : `Snapshot ${snapshotDate || MISSING} chưa có phép đo thành công`,
+    snapshotDate,
+    capturedAt: snapshot.captured_at ? new Date(snapshot.captured_at).toISOString() : null,
+    aiMentionRate,
+    aiMentions: aiQueries > 0 ? aiMentions : null,
+    aiQueries: aiQueries > 0 ? aiQueries : null,
+    seoScore,
+    measuredSources,
+  };
+}
+
 export async function collectDailyMetrics(tenantId: string, reportDate: string): Promise<DailyReportMetrics> {
   const { start } = dateParts(reportDate);
   return withTenantContext(tenantId, async (client) => {
@@ -70,30 +169,87 @@ export async function collectDailyMetrics(tenantId: string, reportDate: string):
       COUNT(*) FILTER (WHERE ${queryDateRange('created_at')})::int AS new,
       COUNT(*) FILTER (WHERE updated_at >= $2::timestamptz AND updated_at < ($2::date + INTERVAL '1 day') AND updated_at > created_at)::int AS price_updated
       FROM listings WHERE tenant_id=$1`, [tenantId, start], { new: null, price_updated: null });
+    const traffic = await optional(client, `SELECT
+      COUNT(*) FILTER (WHERE event_type = 'property_view')::int AS property_views,
+      COUNT(*) FILTER (WHERE event_type = 'listing_search')::int AS listing_searches
+      FROM visitor_events
+      WHERE tenant_id=$1 AND ${queryDateRange('created_at')}`,
+      [tenantId, start], { property_views: null, listing_searches: null });
+    const topViewed = await optionalRows<{ title: string; views: number }>(client, `SELECT
+      COALESCE(NULLIF(l.title, ''), ev.metadata->>'listingCode', 'BĐS không xác định') AS title,
+      COUNT(*)::int AS views
+      FROM visitor_events ev
+      LEFT JOIN listings l
+        ON l.tenant_id=$1
+       AND (l.code = ev.metadata->>'listingCode' OR l.id::text = ev.metadata->>'listingCode')
+      WHERE ev.tenant_id=$1
+        AND ev.event_type='property_view'
+        AND ${queryDateRange('ev.created_at')}
+        AND NULLIF(trim(ev.metadata->>'listingCode'), '') IS NOT NULL
+      GROUP BY l.title, ev.metadata->>'listingCode'
+      ORDER BY views DESC LIMIT 5`,
+      [tenantId, start], []);
+    const topSearches = await optionalRows<{ query: string; searches: number }>(client, `SELECT
+      lower(trim(metadata->>'query')) AS query,
+      COUNT(*)::int AS searches
+      FROM visitor_events
+      WHERE tenant_id=$1
+        AND event_type='listing_search'
+        AND ${queryDateRange('created_at')}
+        AND NULLIF(trim(metadata->>'query'), '') IS NOT NULL
+      GROUP BY lower(trim(metadata->>'query'))
+      ORDER BY searches DESC LIMIT 5`,
+      [tenantId, start], []);
     const tasks = await optional(client, `SELECT
       COUNT(*) FILTER (WHERE ${queryDateRange('created_at')})::int AS created,
       COUNT(*) FILTER (WHERE due_date < NOW() AND status NOT IN ('DONE','COMPLETED','CANCELLED'))::int AS overdue,
       COUNT(*) FILTER (WHERE status IN ('DONE','COMPLETED') AND updated_at >= $2::timestamptz AND updated_at < ($2::date + INTERVAL '1 day'))::int AS completed
       FROM tasks WHERE tenant_id=$1`, [tenantId, start], { created: null, overdue: null, completed: null });
-    const interactions = await optional(client, `SELECT COUNT(*) FILTER (WHERE ${queryDateRange('timestamp')} AND COALESCE(channel,'') IN ('WEB_CHAT','WEB','ZALO','FACEBOOK'))::int AS conversations,
-      AVG(NULLIF((metadata->>'support_csat')::numeric,0)) FILTER (WHERE ${queryDateRange('timestamp')} AND metadata ? 'support_csat') AS csat
+    const interactions = await optional(client, `SELECT COUNT(*) FILTER (WHERE ${queryDateRange('timestamp')} AND COALESCE(channel,'') IN ('WEB_CHAT','WEB','ZALO','FACEBOOK'))::int AS conversations
       FROM interactions WHERE tenant_id=$1`, [tenantId, start], { conversations: null, csat: null });
+    const csatSignals = await optionalRows<{ payload: unknown }>(client, `SELECT payload
+      FROM agent_signals
+      WHERE tenant_id=$1 AND signal_type='support_csat' AND ${queryDateRange('created_at')}
+      ORDER BY created_at ASC`,
+      [tenantId, start], []);
+    const csatScores = csatSignals.map(row => extractSupportCsatScore(row.payload)).filter((score): score is number => score !== null);
+    const averageCsat = csatScores.length
+      ? Number((csatScores.reduce((sum, score) => sum + score, 0) / csatScores.length).toFixed(2))
+      : null;
     const unanswered = await optional(client, `SELECT COUNT(*)::int AS count FROM agent_human_questions WHERE tenant_id=$1 AND status='OPEN' AND ${queryDateRange('created_at')}`, [tenantId, start], { count: null });
     const warnings = await optional(client, `SELECT COUNT(*)::int AS count FROM error_logs WHERE tenant_id=$1 AND ${queryDateRange('created_at')}`, [tenantId, start], { count: null });
+    const geoSnapshot = tenantId === DEFAULT_TENANT_ID
+      ? await optional(client, `SELECT date::text AS snapshot_date, ai_mentions_json, gsc_top20_json, lighthouse_json, created_at AS captured_at
+          FROM seo_geo_snapshots
+          WHERE date <= $1::date
+          ORDER BY date DESC LIMIT 1`, [reportDate], null)
+      : null;
+    const topViewedListings = topViewed.map(row => ({ title: row.title, views: safeNumber(row.views) }));
     return {
       reportDate, leads: { new: lead.new == null ? null : safeNumber(lead.new), byStage: leadStages.stages || {}, bySource: leadSources.sources || {} },
       brokers: { active: broker.active == null ? null : safeNumber(broker.active), assignedLeads: broker.assigned == null ? null : safeNumber(broker.assigned), top: topBrokers.rows },
-      listings: { new: listings.new == null ? null : safeNumber(listings.new), priceUpdated: listings.price_updated == null ? null : safeNumber(listings.price_updated), topViewed: [] },
+      listings: { new: listings.new == null ? null : safeNumber(listings.new), priceUpdated: listings.price_updated == null ? null : safeNumber(listings.price_updated), topViewed: topViewedListings },
+      traffic: {
+        propertyViews: traffic.property_views == null ? null : safeNumber(traffic.property_views),
+        listingSearches: traffic.listing_searches == null ? null : safeNumber(traffic.listing_searches),
+        topSearches: topSearches.map(row => ({ query: row.query, searches: safeNumber(row.searches) })),
+      },
       tasks: { created: tasks.created == null ? null : safeNumber(tasks.created), overdue: tasks.overdue == null ? null : safeNumber(tasks.overdue), completed: tasks.completed == null ? null : safeNumber(tasks.completed) },
-      minh: { conversations: interactions.conversations == null ? null : safeNumber(interactions.conversations), averageCsat: interactions.csat == null ? null : Number(interactions.csat), unanswered: unanswered.count == null ? null : safeNumber(unanswered.count) },
-      geoSeo: { available: false, note: MISSING },
+      minh: { conversations: interactions.conversations == null ? null : safeNumber(interactions.conversations), averageCsat, unanswered: unanswered.count == null ? null : safeNumber(unanswered.count) },
+      geoSeo: buildGeoSeoMetrics(geoSnapshot),
       warnings: { count: warnings.count == null ? null : safeNumber(warnings.count), notable: [] },
     };
   });
 }
 
 export function buildReportSummary(metrics: DailyReportMetrics): DailyReportSummary {
-  const dataNotes = [`GEO/SEO: ${MISSING}`, 'Lượt xem/tìm kiếm dự án: chưa có nguồn dữ liệu thống nhất'];
+  const trafficAvailable = metrics.traffic?.propertyViews != null || metrics.traffic?.listingSearches != null;
+  const dataNotes = [
+    `GEO/SEO: ${metrics.geoSeo.available ? metrics.geoSeo.note : metrics.geoSeo.note || MISSING}`,
+    trafficAvailable
+      ? 'Lượt xem/tìm kiếm: nguồn thống nhất visitor_events'
+      : 'Lượt xem/tìm kiếm: visitor_events chưa khả dụng',
+  ];
   return {
     ...metrics,
     overview: [
@@ -148,19 +304,30 @@ export function renderReportEmail(summary: DailyReportSummary): { subject: strin
   const agentSection = summary.agentOperations
     ? `<h3 style="margin:22px 0 8px">Vận hành Agent</h3><p style="margin:0 0 8px">${esc(summary.agentOperations.summary)}</p>${table(agentMetricRows)}`
     : `<h3 style="margin:22px 0 8px">Vận hành Agent</h3><p style="color:#64748b">Chưa có báo cáo ca của Agent.</p>`;
+  const traffic = summary.traffic || { propertyViews: null, listingSearches: null, topSearches: [] };
+  const topViewedText = (summary.listings.topViewed || []).length
+    ? summary.listings.topViewed.map(item => `${item.title}: ${item.views}`).join(' · ')
+    : MISSING;
+  const topSearchesText = (traffic.topSearches || []).length
+    ? traffic.topSearches.map(item => `${item.query}: ${item.searches}`).join(' · ')
+    : MISSING;
+  const trafficValue = traffic.propertyViews == null && traffic.listingSearches == null
+    ? MISSING
+    : `${traffic.propertyViews ?? MISSING} lượt xem · ${traffic.listingSearches ?? MISSING} lượt tìm kiếm`;
   const dataNotesSection = table(
     row('GEO/SEO', summary.geoSeo.available ? 'Đã có dữ liệu' : summary.geoSeo.note || MISSING) +
-    row('Lượt xem / tìm kiếm dự án', 'Chưa có nguồn dữ liệu thống nhất'),
+    row('Lượt xem / tìm kiếm dự án', `${trafficValue} · nguồn visitor_events`) +
+    row('Nguồn GEO/SEO', summary.geoSeo.note || MISSING),
   );
   const html = `<div style="font-family:Arial,sans-serif;max-width:620px;color:#1e293b;line-height:1.45"><h2>SGSLand — Báo cáo vận hành ngày ${esc(d+'/'+m+'/'+y)}</h2>
     ${table(summary.overview.map(x => row(x.label,x.value)).join(''))}
     <h3 style="margin:22px 0 8px">Leads & môi giới F1</h3>${table(row('Lead mới', summary.leads.new ?? MISSING) + row('Lead theo trạng thái', breakdown(summary.leads.byStage, leadStageLabels)) + row('Lead theo nguồn', breakdown(summary.leads.bySource, leadSourceLabels)) + row('Môi giới hoạt động', summary.brokers.active ?? MISSING) + row('Lead được phân bổ', summary.brokers.assignedLeads ?? MISSING))}
-    <h3 style="margin:22px 0 8px">Listing & công việc</h3>${table(row('Tin đăng mới', summary.listings.new) + row('Tin cập nhật giá', summary.listings.priceUpdated) + row('Task tạo mới', summary.tasks.created) + row('Task quá hạn', summary.tasks.overdue))}
+    <h3 style="margin:22px 0 8px">Listing, lượt xem & công việc</h3>${table(row('Tin đăng mới', summary.listings.new) + row('Tin cập nhật giá', summary.listings.priceUpdated) + row('Lượt xem sản phẩm', traffic.propertyViews ?? MISSING) + row('Lượt tìm kiếm', traffic.listingSearches ?? MISSING) + row('Top sản phẩm được xem', topViewedText) + row('Top từ khóa tìm kiếm', topSearchesText) + row('Task tạo mới', summary.tasks.created) + row('Task quá hạn', summary.tasks.overdue))}
     <h3 style="margin:22px 0 8px">Minh & cảnh báo</h3>${table(row('Hội thoại', summary.minh.conversations ?? MISSING) + row('CSAT trung bình', summary.minh.averageCsat ?? MISSING) + row('Câu hỏi chưa trả lời', summary.minh.unanswered ?? MISSING) + row('Cảnh báo hệ thống', summary.warnings.count ?? MISSING))}
     ${agentSection}
     <h3 style="margin:22px 0 8px">Nguồn dữ liệu bổ sung</h3>${dataNotesSection}
     </div>`;
-  const text = [subject, ...summary.overview.map(x => `${x.label}: ${x.value}`), `GEO/SEO: ${summary.geoSeo.available ? 'Đã có dữ liệu' : summary.geoSeo.note || MISSING}`, 'Lượt xem / tìm kiếm dự án: chưa có nguồn dữ liệu thống nhất', `Cảnh báo: ${summary.warnings.count ?? MISSING}`, summary.agentOperations ? `Vận hành Agent: ${summary.agentOperations.summary}` : 'Vận hành Agent: chưa có báo cáo ca'].join('\n');
+  const text = [subject, ...summary.overview.map(x => `${x.label}: ${x.value}`), `GEO/SEO: ${summary.geoSeo.available ? summary.geoSeo.note : summary.geoSeo.note || MISSING}`, `Lượt xem / tìm kiếm dự án: ${trafficValue} · nguồn visitor_events`, `CSAT trung bình: ${summary.minh.averageCsat ?? MISSING}`, `Cảnh báo: ${summary.warnings.count ?? MISSING}`, summary.agentOperations ? `Vận hành Agent: ${summary.agentOperations.summary}` : 'Vận hành Agent: chưa có báo cáo ca'].join('\n');
   return { subject, html, text };
 }
 
@@ -214,7 +381,7 @@ export async function runDailyReport(reportDate = vnDate(), force = false) {
       const baseSummary = existing.rows[0]?.status === 'failed' && existing.rows[0]?.summary_snapshot
         ? existing.rows[0].summary_snapshot as DailyReportSummary
         : buildReportSummary(await collectDailyMetrics(tenantId, reportDate));
-      const summary: DailyReportSummary = agentShiftReport
+      const summary: DailyReportSummary = agentShiftReport?.shift
         ? {
             ...baseSummary,
             agentOperations: {
