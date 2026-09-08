@@ -15,7 +15,12 @@ import { withTenantContext } from '../db';
 import { logger } from '../middleware/logger';
 import { agentAuditRepository } from '../repositories/agentAuditRepository';
 import { v4 as uuidv4 } from 'uuid';
-import { storeFile, deleteFile } from '../services/storageService';
+import { storeFile } from '../services/storageService';
+import {
+    enqueueGalleryCleanup,
+    listGalleryCleanupJobs,
+    retryGalleryCleanup,
+} from '../services/galleryCleanupService';
 
 let sharp: typeof import('sharp') | null = null;
 (async () => {
@@ -117,8 +122,58 @@ async function audit(tenantId: string, action: string, input: Record<string, any
     }
 }
 
-export function createLandingPagesRoutes(): Router {
+const OPERATOR_ROLES = new Set(['ADMIN', 'SUPER_ADMIN', 'TEAM_LEAD']);
+const STORAGE_URL_PREFIX = '/uploads/' + DEFAULT_TENANT_ID + '/';
+
+function storageFilenameFromUrl(url: string): string | null {
+    if (!url.startsWith(STORAGE_URL_PREFIX)) return null;
+    const filename = url.slice(STORAGE_URL_PREFIX.length);
+    if (!/^[A-Za-z0-9][A-Za-z0-9._-]{0,254}$/.test(filename) || filename === '.' || filename === '..') {
+        return null;
+    }
+    return filename;
+}
+
+export function createLandingPagesRoutes(authenticateToken?: any): Router {
     const router = Router();
+
+    if (authenticateToken) {
+        const operator = (req: Request, res: Response) => {
+            const user = (req as any).user;
+            if (!OPERATOR_ROLES.has(user?.role)) {
+                res.status(403).json({ error: 'Không có quyền truy cập' });
+                return null;
+            }
+            return user;
+        };
+
+        router.get('/cleanup-failures', authenticateToken, async (req: Request, res: Response) => {
+            const user = operator(req, res);
+            if (!user) return;
+            try {
+                const jobs = await listGalleryCleanupJobs(user.tenantId, Number(req.query.limit) || 50);
+                return res.json({ jobs });
+            } catch {
+                return res.status(500).json({ error: 'Không thể tải danh sách dọn dẹp ảnh.' });
+            }
+        });
+
+        router.post('/cleanup-failures/:id/retry', authenticateToken, async (req: Request, res: Response) => {
+            const user = operator(req, res);
+            if (!user) return;
+            const jobId = String(req.params.id || '').trim();
+            if (!/^[0-9a-f-]{36}$/i.test(jobId)) {
+                return res.status(400).json({ error: 'ID không hợp lệ' });
+            }
+            try {
+                const job = await retryGalleryCleanup(user.tenantId, jobId);
+                if (!job) return res.status(404).json({ error: 'Không tìm thấy tác vụ dọn dẹp.' });
+                return res.json({ job });
+            } catch {
+                return res.status(503).json({ error: 'Không thể hoàn tất dọn dẹp; tác vụ vẫn có thể thử lại.' });
+            }
+        });
+    }
 
     router.get('/:slug', async (req: Request, res: Response) => {
         try {
@@ -317,14 +372,27 @@ export function createLandingPagesRoutes(): Router {
                 return r.rows[0];
             });
 
-            const ownPrefix = '/uploads/' + DEFAULT_TENANT_ID + '/';
-            if (url.startsWith(ownPrefix)) {
-                const filename = url.slice(ownPrefix.length);
-                deleteFile(DEFAULT_TENANT_ID, filename).catch((e) => logger.warn('[landingPages] failed to delete stored image: ' + (e as Error).message));
+            const filename = storageFilenameFromUrl(url);
+            let cleanup: { id: string; status: string } | undefined;
+            if (filename) {
+                try {
+                    const job = await enqueueGalleryCleanup(DEFAULT_TENANT_ID, String(page.id), filename);
+                    cleanup = { id: job.id, status: job.status };
+                    void retryGalleryCleanup(DEFAULT_TENANT_ID, job.id).catch(() => {
+                        logger.warn('[landingPages] gallery cleanup remains retryable', {
+                            event: 'gallery_cleanup_retryable',
+                            jobId: job.id,
+                        });
+                    });
+                } catch {
+                    logger.error('[landingPages] failed to enqueue gallery cleanup', {
+                        event: 'gallery_cleanup_enqueue_failed',
+                    });
+                }
             }
 
             await audit(DEFAULT_TENANT_ID, 'landing_image_remove', { slug, visitorKey }, { id: updated.id, slug: updated.slug });
-            return res.json({ page: updated });
+            return res.json({ page: updated, cleanup });
         } catch (err) {
             logger.error('[landingPages] image remove failed: ' + (err as Error).message);
             return res.status(500).json({ error: 'INTERNAL' });

@@ -4578,7 +4578,7 @@ app.use('/api/approval-requests', apiRateLimit, createApprovalRequestRoutes(auth
   // Public lead capture for static landing pages (no auth)
   app.use('/api/landing-leads', apiRateLimit, createLandingLeadRoutes());
   app.use('/api/landing-ai', aiRateLimit, createLandingAiRoutes());
-  app.use('/api/landing-pages', apiRateLimit, createLandingPagesRoutes());
+  app.use('/api/landing-pages', apiRateLimit, createLandingPagesRoutes(authenticateToken));
   app.use('/api/live-chat', createLiveChatAgentRoutes(authenticateToken, aiRateLimit, apiRateLimit));
   app.use('/api/agent-audit', apiRateLimit, createAgentAuditRoutes(authenticateToken));
   app.use('/api/agent-operating', apiRateLimit, createAgentOperatingRoutes(authenticateToken));

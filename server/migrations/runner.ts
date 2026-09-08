@@ -204,6 +204,7 @@ import m180 from './180_learning_golden_set';
 import m181 from './181_repair_spike_approval';
 import m182 from './182_live_chat_memory_idempotency';
 import m183 from './183_landing_classification_reviews';
+import m184 from './184_gallery_cleanup_jobs';
 dotenv.config();
 
 export interface Migration {
@@ -403,6 +404,7 @@ export const MIGRATION_REGISTRY: Record<string, Migration> = {
   '181_repair_spike_approval.ts': m181,
   '182_live_chat_memory_idempotency.ts': m182,
   '183_landing_classification_reviews.ts': m183,
+  '184_gallery_cleanup_jobs.ts': m184,
 };
 
 /**

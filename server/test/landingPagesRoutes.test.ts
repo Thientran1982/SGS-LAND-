@@ -13,18 +13,27 @@ const {
   query,
   withTenantContext,
   storeFile,
-  deleteFile,
+  enqueueGalleryCleanup,
+  listGalleryCleanupJobs,
+  retryGalleryCleanup,
   recordAudit,
 } = vi.hoisted(() => ({
   query: vi.fn(),
   withTenantContext: vi.fn(),
   storeFile: vi.fn(),
-  deleteFile: vi.fn(),
+  enqueueGalleryCleanup: vi.fn(),
+  listGalleryCleanupJobs: vi.fn(),
+  retryGalleryCleanup: vi.fn(),
   recordAudit: vi.fn(),
 }));
 
 vi.mock('../db', () => ({ withTenantContext }));
-vi.mock('../services/storageService', () => ({ storeFile, deleteFile }));
+vi.mock('../services/storageService', () => ({ storeFile }));
+vi.mock('../services/galleryCleanupService', () => ({
+  enqueueGalleryCleanup,
+  listGalleryCleanupJobs,
+  retryGalleryCleanup,
+}));
 vi.mock('../repositories/agentAuditRepository', () => ({
   agentAuditRepository: { record: recordAudit },
 }));
@@ -59,10 +68,10 @@ function appendFile(form: FormData, name: string, type = 'image/png', contents =
   form.append('files', new Blob([new Uint8Array(contents)], { type }), name);
 }
 
-async function startTestServer() {
+async function startTestServer(authenticateToken?: (req: express.Request, res: express.Response, next: express.NextFunction) => void) {
   const app = express();
   app.use(express.json());
-  app.use('/api/landing-pages', createLandingPagesRoutes());
+  app.use('/api/landing-pages', createLandingPagesRoutes(authenticateToken));
 
   const server = app.listen(0);
   await new Promise<void>((resolve) => server.once('listening', () => resolve()));
@@ -103,9 +112,15 @@ describe('landing gallery image API validation and cleanup', () => {
     });
     storeFile.mockImplementation(async (_tenantId: string, filename: string) =>
       `/uploads/${DEFAULT_TENANT_ID}/${filename}`);
-    deleteFile.mockResolvedValue(undefined);
+    enqueueGalleryCleanup.mockResolvedValue({ id: 'cleanup-job-1', status: 'PENDING' });
+    listGalleryCleanupJobs.mockResolvedValue([]);
+    retryGalleryCleanup.mockResolvedValue({ id: 'cleanup-job-1', status: 'SUCCEEDED' });
     recordAudit.mockResolvedValue(undefined);
-    testServer = await startTestServer();
+    const authenticateToken = (req: express.Request, _res: express.Response, next: express.NextFunction) => {
+      (req as any).user = { role: 'ADMIN', tenantId: DEFAULT_TENANT_ID };
+      next();
+    };
+    testServer = await startTestServer(authenticateToken);
   });
 
   afterEach(async () => {
@@ -235,12 +250,70 @@ describe('landing gallery image API validation and cleanup', () => {
 
     expect(response.status).toBe(200);
     expect(body.page.sections[0].images).toEqual([otherOwnedUrl, externalUrl]);
-    expect(deleteFile).toHaveBeenCalledTimes(1);
-    expect(deleteFile).toHaveBeenCalledWith(DEFAULT_TENANT_ID, 'owned.webp');
-    expect(deleteFile).not.toHaveBeenCalledWith(DEFAULT_TENANT_ID, 'keep.webp');
-    expect(deleteFile).not.toHaveBeenCalledWith(
+    expect(enqueueGalleryCleanup).toHaveBeenCalledTimes(1);
+    expect(enqueueGalleryCleanup).toHaveBeenCalledWith(DEFAULT_TENANT_ID, page.id, 'owned.webp');
+    expect(retryGalleryCleanup).toHaveBeenCalledWith(DEFAULT_TENANT_ID, 'cleanup-job-1');
+    expect(body.cleanup).toEqual({ id: 'cleanup-job-1', status: 'PENDING' });
+    expect(enqueueGalleryCleanup).not.toHaveBeenCalledWith(DEFAULT_TENANT_ID, page.id, 'keep.webp');
+    expect(enqueueGalleryCleanup).not.toHaveBeenCalledWith(
       DEFAULT_TENANT_ID,
+      page.id,
       'https://cdn.example.test/unrelated.webp',
+    );
+  });
+
+  it('removes an unsafe upload-shaped URL without enqueueing a traversal target', async () => {
+    const unsafeUrl = `/uploads/${DEFAULT_TENANT_ID}/../keep.webp`;
+    page = makePage([unsafeUrl]);
+
+    const response = await testServer.request('/api/landing-pages/gallery-test/images', {
+      method: 'DELETE',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ visitorKey: VISITOR_KEY, url: unsafeUrl }),
+    });
+
+    expect(response.status).toBe(200);
+    expect(enqueueGalleryCleanup).not.toHaveBeenCalled();
+    expect((await responseJson(response)).cleanup).toBeUndefined();
+  });
+
+  it('does not enqueue a second cleanup job when the same image is deleted again', async () => {
+    const ownedUrl = `/uploads/${DEFAULT_TENANT_ID}/owned.webp`;
+    page = makePage([ownedUrl]);
+    const request = () => testServer.request('/api/landing-pages/gallery-test/images', {
+      method: 'DELETE',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ visitorKey: VISITOR_KEY, url: ownedUrl }),
+    });
+
+    const firstResponse = await request();
+    const secondResponse = await request();
+
+    expect(firstResponse.status).toBe(200);
+    expect(secondResponse.status).toBe(404);
+    expect(enqueueGalleryCleanup).toHaveBeenCalledTimes(1);
+  });
+
+  it('shows cleanup failures to an authenticated operator and scopes the retry to that tenant', async () => {
+    listGalleryCleanupJobs.mockResolvedValue([{
+      id: 'cleanup-job-1',
+      tenantId: DEFAULT_TENANT_ID,
+      status: 'FAILED',
+      attempts: 1,
+    }]);
+
+    const listResponse = await testServer.request('/api/landing-pages/cleanup-failures');
+    const retryResponse = await testServer.request('/api/landing-pages/cleanup-failures/00000000-0000-0000-0000-000000000010/retry', {
+      method: 'POST',
+    });
+
+    expect(listResponse.status).toBe(200);
+    expect((await responseJson(listResponse)).jobs).toHaveLength(1);
+    expect(listGalleryCleanupJobs).toHaveBeenCalledWith(DEFAULT_TENANT_ID, 50);
+    expect(retryResponse.status).toBe(200);
+    expect(retryGalleryCleanup).toHaveBeenCalledWith(
+      DEFAULT_TENANT_ID,
+      '00000000-0000-0000-0000-000000000010',
     );
   });
 });
