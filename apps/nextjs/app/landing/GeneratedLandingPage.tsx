@@ -80,6 +80,10 @@ export default function GeneratedLandingPage({
   const [publishError, setPublishError] = useState("");
   const isDraft = status === "draft";
   const canPublish = isDraft && Boolean(visitorKey && visitorKey === page.visitor_key);
+  const canEdit = Boolean(visitorKey && visitorKey === page.visitor_key);
+  const editHref = canEdit
+    ? `/landing-ai/chinh-sua/${encodeURIComponent(page.slug)}?k=${encodeURIComponent(visitorKey!)}`
+    : "";
   const hero = sectionOf(page, "hero");
   const contact = sectionOf(page, "contact");
   const contactPhone = phoneHref(contact?.phone);
@@ -128,11 +132,26 @@ export default function GeneratedLandingPage({
               </p>
             )}
           </div>
-          {canPublish && (
-            <button type="button" onClick={publish} disabled={publishing} className="landing-builder-publish-button">
-              {publishing ? "Đang phát hành..." : "Phát hành trang"}
-            </button>
+          {canEdit && (
+            <div className="landing-builder-banner-actions">
+              <Link href={editHref} className="landing-builder-edit-button">
+                Chỉnh sửa
+              </Link>
+              {canPublish && (
+                <button type="button" onClick={publish} disabled={publishing} className="landing-builder-publish-button">
+                  {publishing ? "Đang phát hành..." : "Phát hành trang"}
+                </button>
+              )}
+            </div>
           )}
+        </div>
+      )}
+      {canEdit && !isDraft && (
+        <div className="landing-builder-owner-bar">
+          <span>Trang đã xuất bản · Bạn đang xem với quyền quản trị</span>
+          <Link href={editHref} className="landing-builder-edit-button">
+            Chỉnh sửa
+          </Link>
         </div>
       )}
 
