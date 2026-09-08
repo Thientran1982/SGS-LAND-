@@ -82,6 +82,40 @@ export function getSocialPlatformCapability(platform: SocialPlatform): SocialPla
   };
 }
 
+export async function getTenantSocialPlatformCapability(
+  platform: SocialPlatform,
+  tenantId: string,
+  accountId = 'default',
+): Promise<SocialPlatformCapability> {
+  const capability = getSocialPlatformCapability(platform);
+  const publisher = publishers.get(platform);
+  if (!publisher) return capability;
+  if (!publisher.isAvailable) {
+    return capability;
+  }
+
+  try {
+    const availability = await publisher.isAvailable({ tenantId, accountId });
+    return {
+      ...capability,
+      status: availability.ready ? 'READY' : 'NOT_READY',
+      canPublish: availability.ready,
+      retryable: availability.retryable,
+      reason: availability.ready
+        ? 'Publisher đã xác minh kết nối và quyền đăng với provider.'
+        : availability.reason || 'Kết nối hoặc quyền đăng chưa được provider xác minh.',
+    };
+  } catch {
+    return {
+      ...capability,
+      status: 'NOT_READY',
+      canPublish: false,
+      retryable: true,
+      reason: 'Không thể xác minh kết nối với provider lúc này.',
+    };
+  }
+}
+
 export function registerSocialPublisher(publisher: SocialPublisher): void {
   publishers.set(publisher.platform, publisher);
 }

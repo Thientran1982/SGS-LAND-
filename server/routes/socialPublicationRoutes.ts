@@ -12,10 +12,10 @@ import {
 import {
   buildPlatformContent,
   buildSocialProductSnapshot,
-  getPublicationCatalog,
+  getTenantPublicationCatalog,
   normalizeSocialPlatforms,
 } from '../services/socialPublicationService';
-import { getSocialPlatformCapability } from '../social-publishing/registry';
+import { getTenantSocialPlatformCapability } from '../social-publishing/registry';
 
 const MANAGER_ROLES = new Set(['SUPER_ADMIN', 'ADMIN', 'TEAM_LEAD', 'MARKETING']);
 
@@ -49,9 +49,9 @@ export function createSocialPublicationRouter(
 ): Router {
   const router = Router();
 
-  router.get('/api/social-publications/catalog', authenticateToken, (req, res) => {
+  router.get('/api/social-publications/catalog', authenticateToken, async (req, res) => {
     if (!requireManager(req, res)) return;
-    res.json({ data: getPublicationCatalog() });
+    res.json({ data: await getTenantPublicationCatalog(tenantId(req)) });
   });
 
   router.post('/api/social-publications/preview', authenticateToken, async (req, res) => {
@@ -66,7 +66,7 @@ export function createSocialPublicationRouter(
       return res.json({
         snapshot,
         previews: platforms.map(platform => buildPlatformContent(snapshot, platform, images)),
-        catalog: getPublicationCatalog(),
+        catalog: await getTenantPublicationCatalog(tenantId(req)),
       });
     } catch (error: any) {
       return res.status(400).json({ error: error?.message || 'Không thể tạo preview' });
@@ -130,10 +130,18 @@ export function createSocialPublicationRouter(
     if (!requireManager(req, res)) return;
     const row = await findSocialPublication(pool, tenantId(req), String(req.params.id));
     if (!row) return res.status(404).json({ error: 'Không tìm thấy publication' });
-    const notReady = row.targets.filter((target: any) => {
-      if (target.status !== 'NOT_READY') return false;
-      return !getSocialPlatformCapability(target.platform).canPublish;
-    });
+    const readiness = await Promise.all(row.targets.map(async (target: any) => ({
+      target,
+      capability: await getTenantSocialPlatformCapability(
+        target.platform,
+        tenantId(req),
+        target.accountId,
+      ),
+    })));
+    const notReady = readiness.filter(({ target, capability }) => (
+      ['NOT_READY', 'PENDING', 'FAILED_RETRYABLE'].includes(target.status)
+      && !capability.canPublish
+    ));
     if (notReady.length) {
       return res.status(409).json({
         error: 'Chưa thể đăng: một hoặc nhiều nền tảng chưa có publisher/quyền đăng công khai.',
@@ -141,9 +149,9 @@ export function createSocialPublicationRouter(
         targets: notReady.map((target: any) => target.platform),
       });
     }
-    await markSocialTargetsPending(pool, tenantId(req), String(req.params.id));
     const activated = await activateSocialPublication(pool, tenantId(req), String(req.params.id));
     if (!activated) return res.status(409).json({ error: 'Publication không còn ở trạng thái DRAFT' });
+    await markSocialTargetsPending(pool, tenantId(req), String(req.params.id));
     return res.json(await findSocialPublication(pool, tenantId(req), String(req.params.id)));
   });
 

@@ -522,6 +522,17 @@ const FacebookPanel = memo(({ config, onRefresh, notify }: { config: EnterpriseC
                                 {page.accessToken && (
                                     <span className="inline-block mt-0.5 text-2xs bg-green-100 text-sgs-verified px-1.5 py-0.5 rounded-full font-medium">{t('ent.token_configured')}</span>
                                 )}
+                                {page.accessToken && (
+                                    <span className={`inline-block mt-0.5 ml-1 text-2xs px-1.5 py-0.5 rounded-full font-medium ${
+                                        page.verificationStatus === 'VERIFIED'
+                                            ? 'bg-emerald-100 text-emerald-700'
+                                            : 'bg-amber-100 text-amber-700'
+                                    }`}>
+                                        {page.verificationStatus === 'VERIFIED'
+                                            ? t('ent.facebook_publish_verified')
+                                            : t('ent.facebook_publish_not_verified')}
+                                    </span>
+                                )}
                             </div>
                         </div>
                         <button

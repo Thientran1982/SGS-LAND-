@@ -8,12 +8,77 @@
  */
 import { logger } from '../middleware/logger';
 import { enterpriseConfigRepository } from '../repositories/enterpriseConfigRepository';
-const FB_GRAPH_API = 'https://graph.facebook.com/v19.0/me/messages';
+import type { SocialPlatformContent, SocialPublishResult } from '../social-publishing/types';
+
+const FB_GRAPH_VERSION = process.env.FB_GRAPH_VERSION || 'v19.0';
+const FB_GRAPH_API = `https://graph.facebook.com/${FB_GRAPH_VERSION}`;
 export interface FacebookSendResult {
   success: boolean;
   messageId?: string;
   recipientId?: string;
   error?: string;
+}
+
+type FacebookGraphResult = {
+  id?: string;
+  post_id?: string;
+  name?: string;
+  link?: string;
+  message_id?: string;
+  recipient_id?: string;
+  error?: { code?: number; message?: string; type?: string };
+  [key: string]: unknown;
+};
+
+async function graphRequest(
+  path: string,
+  accessToken: string,
+  init: RequestInit = {},
+): Promise<{ response: Response; body: FacebookGraphResult }> {
+  const separator = path.includes('?') ? '&' : '?';
+  const response = await fetch(
+    `${FB_GRAPH_API}/${path}${separator}access_token=${encodeURIComponent(accessToken)}`,
+    {
+      ...init,
+      signal: init.signal || AbortSignal.timeout(12_000),
+    },
+  );
+  const body = await response.json().catch(() => ({})) as FacebookGraphResult;
+  return { response, body };
+}
+
+export async function verifyFacebookPageAccess(
+  pageId: string,
+  pageAccessToken: string,
+): Promise<{ valid: boolean; pageId?: string; pageName?: string; pageUrl?: string; reason?: string; retryable?: boolean }> {
+  if (!pageId || !pageAccessToken) {
+    return { valid: false, reason: 'Thiếu Page ID hoặc Page Access Token.' };
+  }
+
+  try {
+    const { response, body } = await graphRequest(
+      `${encodeURIComponent(pageId)}?fields=id,name,link`,
+      pageAccessToken,
+    );
+    if (!response.ok || body.error) {
+      return {
+        valid: false,
+        retryable: response.status === 429 || response.status >= 500,
+        reason: `Facebook từ chối xác minh Page (${body.error?.message || `HTTP ${response.status}`}).`,
+      };
+    }
+    if (String(body.id || '') !== String(pageId)) {
+      return { valid: false, reason: 'Facebook trả về Page ID khác với Page ID đã nhập.' };
+    }
+    return {
+      valid: true,
+      pageId: String(body.id),
+      pageName: body.name ? String(body.name) : undefined,
+      pageUrl: body.link ? String(body.link) : undefined,
+    };
+  } catch {
+    return { valid: false, retryable: true, reason: 'Không thể kết nối Facebook để xác minh Page.' };
+  }
 }
 /**
  * Send a text message to a Facebook user via Page Messenger.
@@ -33,7 +98,7 @@ export async function sendFacebookTextMessage(
       message: { text: text.slice(0, 2000) },
       messaging_type: 'RESPONSE',
     };
-    const url = `${FB_GRAPH_API}?access_token=${encodeURIComponent(pageAccessToken)}`;
+    const url = `${FB_GRAPH_API}/me/messages?access_token=${encodeURIComponent(pageAccessToken)}`;
 
     const response = await fetch(url, {
           method: 'POST',
@@ -62,6 +127,98 @@ export async function sendFacebookTextMessage(
   } catch (err: any) {
     logger.error('[Facebook] Network error sending message:', err);
     return { success: false, error: err.message };
+  }
+}
+
+function providerPostUrl(postId: string): string {
+  return `https://www.facebook.com/${encodeURIComponent(postId)}`;
+}
+
+export async function publishFacebookPageContent(input: {
+  pageId: string;
+  pageAccessToken: string;
+  content: SocialPlatformContent;
+  idempotencyKey: string;
+}): Promise<SocialPublishResult> {
+  const hasSingleImage = input.content.imageUrls.length === 1;
+  const path = hasSingleImage
+    ? `${encodeURIComponent(input.pageId)}/photos`
+    : `${encodeURIComponent(input.pageId)}/feed`;
+  const body = hasSingleImage
+    ? {
+        url: input.content.imageUrls[0],
+        caption: input.content.text,
+        published: true,
+      }
+    : {
+        message: input.content.text,
+        ...(input.content.link ? { link: input.content.link } : {}),
+        published: true,
+      };
+
+  try {
+    const { response, body: result } = await graphRequest(
+      path,
+      input.pageAccessToken,
+      {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-SGS-Delivery-Key': input.idempotencyKey,
+        },
+        body: JSON.stringify(body),
+      },
+    );
+    const providerRequestId = response.headers.get('x-fb-trace-id') || undefined;
+    if (response.ok && !result.error) {
+      const postId = String(result.post_id || result.id || '').trim();
+      if (!postId) {
+        return {
+          status: 'AMBIGUOUS',
+          providerRequestId,
+          errorCode: 'FACEBOOK_MISSING_POST_ID',
+          safeMessage: 'Facebook phản hồi thành công nhưng không trả về post ID.',
+        };
+      }
+      return {
+        status: 'PUBLISHED',
+        providerPostId: postId,
+        providerPostUrl: providerPostUrl(postId),
+        providerRequestId,
+      };
+    }
+
+    const status = response.status;
+    if (status === 429) {
+      return {
+        status: 'FAILED',
+        retryable: true,
+        providerRequestId,
+        errorCode: 'FACEBOOK_RATE_LIMITED',
+        safeMessage: 'Facebook giới hạn tần suất; publication sẽ được retry có backoff.',
+      };
+    }
+    if (status >= 500 || !response.ok && !result.error) {
+      return {
+        status: 'AMBIGUOUS',
+        providerRequestId,
+        errorCode: 'FACEBOOK_OUTCOME_UNKNOWN',
+        safeMessage: 'Facebook không xác nhận kết quả đăng; không tự retry để tránh đăng trùng.',
+      };
+    }
+    return {
+      status: 'FAILED',
+      retryable: false,
+      providerRequestId,
+      errorCode: `FACEBOOK_${result.error?.code || status}`,
+      safeMessage: `Facebook từ chối đăng bài: ${result.error?.message || `HTTP ${status}`}.`,
+    };
+  } catch {
+    return {
+      status: 'AMBIGUOUS',
+      errorCode: 'FACEBOOK_NETWORK_OUTCOME_UNKNOWN',
+      safeMessage: 'Mất kết nối sau khi gửi yêu cầu Facebook; cần kiểm tra thủ công, không tự retry.',
+    };
   }
 }
 /**

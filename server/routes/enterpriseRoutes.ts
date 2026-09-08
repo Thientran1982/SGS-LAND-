@@ -5,6 +5,7 @@ import { emailService } from '../services/emailService';
 import { randomBytes } from 'crypto';
 import { logger } from '../middleware/logger';
 import { promises as dns } from 'dns';
+import { verifyFacebookPageAccess } from '../services/facebookService';
 
 export function createEnterpriseRoutes(authenticateToken: any, io?: any) {
   const router = Router();
@@ -469,11 +470,24 @@ export function createEnterpriseRoutes(authenticateToken: any, io?: any) {
         return res.status(409).json({ error: `Page ID ${pageId} đã được kết nối` });
       }
 
+      let verifiedPage: Awaited<ReturnType<typeof verifyFacebookPageAccess>> | null = null;
+      if (accessToken) {
+        verifiedPage = await verifyFacebookPageAccess(String(pageId), String(accessToken));
+        if (!verifiedPage.valid) {
+          return res.status(400).json({
+            error: verifiedPage.reason || 'Không thể xác minh Facebook Page Access Token',
+            code: 'FACEBOOK_PAGE_NOT_VERIFIED',
+          });
+        }
+      }
+
       const newPage = {
         id: pageId,
-        name,
-        pageUrl: pageUrl || `https://facebook.com/${pageId}`,
+        name: verifiedPage?.pageName || name,
+        pageUrl: verifiedPage?.pageUrl || pageUrl || `https://facebook.com/${pageId}`,
         accessToken: accessToken || '',
+        verificationStatus: verifiedPage?.valid ? 'VERIFIED' : 'NOT_VERIFIED',
+        verifiedAt: verifiedPage?.valid ? new Date().toISOString() : null,
         connectedAt: new Date().toISOString(),
         connectedBy: user.email || user.id,
       };

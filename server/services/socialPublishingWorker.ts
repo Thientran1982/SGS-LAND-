@@ -1,6 +1,9 @@
 import { Pool } from 'pg';
 import { logger } from '../middleware/logger';
-import { getSocialPublisher } from '../social-publishing/registry';
+import {
+  getSocialPublisher,
+  getTenantSocialPlatformCapability,
+} from '../social-publishing/registry';
 import {
   claimDueSocialTargets,
   getPublicationForTarget,
@@ -36,17 +39,24 @@ export async function processSocialPublicationTick(pool: Pool, limit = 50) {
         row.platform as SocialPlatform,
         Array.isArray(row.asset_snapshot) ? row.asset_snapshot : [],
       );
-      if (!publisher) {
-        const message = 'Nền tảng chưa có publisher hoặc chưa xác minh quyền đăng; không tự retry.';
+      const capability = await getTenantSocialPlatformCapability(
+        row.platform as SocialPlatform,
+        row.tenant_id,
+        row.account_id,
+      );
+      if (!publisher || !capability.canPublish) {
+        const message = capability.reason || 'Nền tảng chưa có publisher hoặc chưa xác minh quyền đăng; không tự retry.';
+        const retryable = Boolean(capability.retryable);
         await recordSocialAttempt(pool, target.id, {
           attemptNumber: target.attempt_count,
           requestId,
-          resultStatus: 'FAILED_FINAL',
+          resultStatus: retryable ? 'FAILED_RETRYABLE' : 'FAILED_FINAL',
           errorCode: 'PUBLISHER_NOT_READY',
           errorMessage: message,
         });
         await updateSocialTarget(pool, target.id, {
-          status: 'FAILED_FINAL',
+          status: retryable ? 'FAILED_RETRYABLE' : 'FAILED_FINAL',
+          nextRetryAt: retryable ? retryAt(target.attempt_count) : null,
           errorCode: 'PUBLISHER_NOT_READY',
           errorMessage: message,
         });

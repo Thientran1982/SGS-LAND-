@@ -111,6 +111,8 @@ import { createCampaignRouter } from "./server/routes/campaignRoutes";
 import { createSocialPublicationRouter } from "./server/routes/socialPublicationRoutes";
 import { createSocialPublishingCronRouter } from "./server/routes/socialPublishingCronRoutes";
 import { startSocialPublishingWorker } from "./server/services/socialPublishingWorker";
+import { registerSocialPublisher } from "./server/social-publishing/registry";
+import { facebookPagePublisher } from "./server/social-publishing/facebookPagePublisher";
 import { createErrorLogRoutes, initErrorLogRepo } from "./server/routes/errorLogRoutes";
 import { marketDataService } from "./server/services/marketDataService";
 import { priceCalibrationService } from "./server/services/priceCalibrationService";
@@ -170,6 +172,7 @@ function installProcessErrorHandlers(): void {
 
 // Must run before startServer() launches workers or attempts migrations.
 installProcessErrorHandlers();
+registerSocialPublisher(facebookPagePublisher);
 
 /** Server-side translation helper — looks up actual strings from the shared DICTIONARY */
 const serverT = (lang: string = 'vn') => (key: string): string => {

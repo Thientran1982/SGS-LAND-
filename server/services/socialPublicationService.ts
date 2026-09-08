@@ -8,6 +8,7 @@ import {
   getSocialPlatformCapability,
   getSocialPlatformCatalog,
   getSocialPublisher,
+  getTenantSocialPlatformCapability,
 } from '../social-publishing/registry';
 import type {
   SocialPlatform,
@@ -128,12 +129,13 @@ export function buildSocialPlatformContent(
   const description = snapshot.description ? `\n\n${snapshot.description}` : '';
   const link = snapshot.publicUrl;
   const linkLine = link ? `\n\nXem chi tiết: ${link}` : '';
+  const hashtags = ['#SGSLAND', '#batdongsan'];
   const text = [snapshot.title, ...facts, description, linkLine]
     .filter(Boolean)
     .join('\n')
     .replace(/\n{3,}/g, '\n\n')
+    .concat(`\n\n${hashtags.join(' ')}`)
     .trim();
-  const hashtags = ['#SGSLAND', '#batdongsan'];
 
   return {
     platform,
@@ -173,4 +175,16 @@ export function getPublicationCatalog() {
       capability,
     };
   });
+}
+
+export async function getTenantPublicationCatalog(tenantId: string) {
+  return Promise.all(getSocialPlatformCatalog().map(async item => {
+    const capability = await getTenantSocialPlatformCapability(item.platform, tenantId);
+    return {
+      ...item,
+      ...capability,
+      hasPublisher: Boolean(getSocialPublisher(item.platform)),
+      capability,
+    };
+  }));
 }

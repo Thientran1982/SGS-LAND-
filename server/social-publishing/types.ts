@@ -16,6 +16,7 @@ export interface SocialPlatformCapability {
   messagingSupported: boolean;
   reason: string;
   requiresConnection: boolean;
+  retryable?: boolean;
 }
 
 export interface SocialProductSnapshot {
@@ -61,6 +62,14 @@ export interface SocialPublishResult {
 
 export interface SocialPublisher {
   platform: SocialPlatform;
+  isAvailable?(input: {
+    tenantId: string;
+    accountId: string;
+  }): Promise<{
+    ready: boolean;
+    reason?: string;
+    retryable?: boolean;
+  }>;
   publish(input: {
     tenantId: string;
     accountId: string;

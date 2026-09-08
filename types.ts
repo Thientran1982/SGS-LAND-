@@ -550,6 +550,8 @@ export interface FacebookPage {
     connectedAt: ISOString;
     connectedBy?: string;
     picture?: string;
+  verificationStatus?: 'VERIFIED' | 'NOT_VERIFIED';
+  verifiedAt?: ISOString | null;
 }
 export interface ZaloOaConfig {
     enabled: boolean;
