@@ -55,5 +55,6 @@
 - [Live-chat engine content contract](livechat-engine-content-contract.md) — durable guardrails validate `content`; keep it alongside the `response` alias
 - [Live-chat legacy cache repair](livechat-legacy-cache-repair.md) — versioned replay repairs old EMPTY_OUTPUT landing runs without changing normal idempotency
 - [Authenticated live-chat identity](authenticated-livechat-identity.md) — logged-in chat sessions need user-scoped storage and server-side identity deduplication
+- [Live-chat browser smoke prerequisites](livechat-browser-smoke.md) — Aiven hostname, Chromium system libraries, and one direct DB connection are required before authenticated smoke assertions can run
 - [Landing classification telemetry](landing-classification-telemetry.md) — monitor language and classifier outcomes with categorical signals, never raw briefs or price details
 - [Replit publish with external DB](replit-publish-external-db.md) — managed DB cloning can fail on missing sgs_app even when runtime uses Aiven; disable data copy for external production

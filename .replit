@@ -3,7 +3,7 @@ modules = ["nodejs-20", "web", "python-3.11", "postgresql-16"]
 expertMode = true
 [nix]
 channel = "stable-25_05"
-packages = ["psmisc"]
+packages = ["psmisc", "glib"]
 [workflows]
 runButton = "Project"
 [[workflows.workflow]]
