@@ -203,35 +203,20 @@ const nextConfig: NextConfig = {
 
   // ─── Webpack customisations ────────────────────────────
   webpack(config, { isServer }) {
-    // 1. Force ALL bundles (client + server + edge) to resolve React from
-    //    this package's node_modules — critical in monorepos with React 18 root
     config.resolve.alias = {
       ...config.resolve.alias,
-      // DO NOT alias react / react-dom / react-jsx-runtime here.
-      // Next.js already maps them to its own vendored copies, separately for the
-      // react-server layer and the client/SSR layer. Overriding that mixes two
-      // React copies: during SSR the dispatcher becomes null and Next's internal
-      // layout-router throws "Cannot read properties of null (reading
-      // 'useContext')", which made EVERY production route answer HTTP 500
-      // (page still rendered, but status 500 - very bad for SEO).
-      // resolve.modules below is enough to prefer this package's node_modules.
-      // react:               REACT_PATH,
-      // "react-dom":         RDOM_PATH,
-      // "react/jsx-runtime": RJSX_PATH,
-      // Leaflet SSR fix — window is not defined in Node.js
-      // Client MUST bundle Leaflet, otherwise L.map is not a function.
-      // Only the server bundle needs it stubbed (window is not defined).
       ...(isServer ? { leaflet: false } : {}),
-      // Replace crashing Next.js 15.5 dev segment explorer (uses useContext in SSR
-      // before React dispatcher is ready — monorepo React 18 root / React 19 app
-      // version mismatch triggers null dispatcher).  No-op prevents the 500 crash.
-      [path.resolve(LOCAL_NM, "next/dist/next-devtools/userspace/app/segment-explorer-node")]:
-        path.resolve(__dirname, "segment-explorer-noop.js"),
+      // NOTE: The alias that used to stub out
+      // next/dist/next-devtools/userspace/app/segment-explorer-node was
+      // REMOVED (2026-09-08) - it was causing every SSR route to fail with
+      // "Missing <html> and <body> tags in the root layout" because Next
+      // 15.5.23's dev pipeline actually depends on that internal module to
+      // finish rendering the document shell; stubbing it broke the render
+      // instead of just silencing the devtools panel it was meant to patch.
+      // If the segment-explorer dev-mode crash reappears, disable the
+      // Next.js dev indicators/devtools instead of aliasing this file.
     };
-
-    // 2. Prefer local node_modules over root workspace node_modules
     config.resolve.modules = [LOCAL_NM, "node_modules"];
-
     return config;
   },
 };
