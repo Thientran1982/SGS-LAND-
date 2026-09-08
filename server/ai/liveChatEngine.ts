@@ -1252,7 +1252,11 @@ function hasLandingTargetText(normalized: string): boolean {
 export function isLandingBuilderRequest(message: string): boolean {
     const normalized = normalizeIntentText(message);
     const hasLandingTarget = hasLandingTargetText(normalized);
-    const hasCreateAction = /\b(?:dung|tao|xay|lam|thiet ke|build|create|generate|make|design)\b/.test(normalized);
+    // Include both direct commands ("dùng/tạo landing") and natural
+    // intention phrases ("muốn dùng/tạo landing"). The target is still
+    // mandatory so a generic "muốn hỏi về dự án" cannot enter the builder.
+    const hasCreateAction = /\b(?:dung|su dung|tao|xay|lam|thiet ke|build|create|generate|make|design|craft|launch)\b/.test(normalized)
+        || /\b(?:muon|can|want|need|would like)\s+(?:co|a|an|the|mot)\b/.test(normalized);
     return hasLandingTarget && hasCreateAction;
 }
 

@@ -35,10 +35,28 @@ describe('landing_builder chat response contract', () => {
     });
   });
 
+  it('recognizes natural landing-builder requests from the public chat', () => {
+    const naturalRequests = [
+      'Em muốn dùng trang landing cho dự án manhattan',
+      'Tôi muốn tạo landing cho Manhattan',
+      'Dùng landing page cho dự án này',
+      'Tôi muốn có một landing page cho Manhattan',
+    ];
+
+    for (const message of naturalRequests) {
+      expect(isLandingBuilderRequest(message), message).toBe(true);
+      expect(classifyLiveChatIntent(message), message).toEqual({
+        intent: 'LANDING',
+        suggestedTool: 'landing_builder',
+      });
+    }
+  });
+
   it('keeps price-only and project-only questions on their original intents', () => {
     expect(classifyLiveChatIntent('Giá căn hộ này bao nhiêu?').intent).toBe('VALUATION');
     expect(classifyLiveChatIntent('Cho tôi thông tin dự án Aqua City').intent).toBe('PROJECT');
     expect(isLandingBuilderRequest('Giá dự án Aqua City bao nhiêu?')).toBe(false);
+    expect(isLandingBuilderRequest('Tôi muốn hỏi thông tin dự án Manhattan')).toBe(false);
   });
 
   it('includes the generated landing URL when synthesis omits it', () => {
@@ -129,7 +147,7 @@ describe('landing_builder chat response contract', () => {
 
   it('surfaces candidate misses and classifier false positives by language', () => {
     const missed = buildLandingClassificationTelemetry(
-      'Please craft a campaign page for the project',
+      'Please can you add a campaign page for the project',
       'en',
       'VALUATION',
     );

@@ -18,3 +18,13 @@ classified as a project question and never reached the landing builder.
 **How to apply:** Keep typo-tolerant target matching shared by the classifier
 and its telemetry so detected, candidate, and false-negative signals do not
 disagree.
+
+Natural requests such as “muốn dùng/tạo landing” are builder intent, while
+“muốn hỏi thông tin dự án” must remain a project question.
+
+**Why:** Visitors describe an action conversationally rather than using only
+imperative verbs; matching too broadly would route ordinary project questions
+into a page-creation operation.
+
+**How to apply:** Require an explicit landing target plus a create/use signal,
+and keep the target requirement as the false-positive boundary.
