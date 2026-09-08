@@ -8,6 +8,13 @@ import { notificationRepository } from '../repositories/notificationRepository';
 import { enrollLeadToMatchingSequences } from '../services/sequenceService';
 import { normalizeLeadEmail, normalizeLeadTags, normalizeVNPhone } from '../../utils/leadNormalization';
 import { agentMemoryService } from '../services/agentMemoryService';
+import { resolveBaseUrl } from '../utils/resolveBaseUrl';
+import {
+  buildProductShareText,
+  normalizeProductImages,
+  sendProductViaZalo,
+} from '../services/productShareService';
+import { listingRepository } from '../repositories/listingRepository';
 
 
 const STAGE_LABEL_VN: Record<string, string> = {
@@ -449,8 +456,9 @@ export function createLeadRoutes(authenticateToken: any, getBroadcast?: () => an
     try {
       const user = (req as any).user;
       const { channel, content, type, metadata } = req.body;
+      const productShare = metadata?.productShare;
 
-      if (!content) {
+      if (!content && !productShare) {
         return res.status(400).json({ error: 'Content is required' });
       }
 
@@ -463,23 +471,94 @@ export function createLeadRoutes(authenticateToken: any, getBroadcast?: () => an
       // ── Attempt outbound delivery for social channels ──────────────────────
       let deliveryStatus = 'SENT';
       let deliveryError: string | undefined;
+      let interactionContent = String(content || '');
+      let interactionMetadata: Record<string, any> = { ...(metadata || {}) };
+      let externalEventId: string | undefined;
 
       if (resolvedChannel === 'ZALO' && !lead.socialIds?.zalo) {
         deliveryStatus = 'PENDING';
         deliveryError = 'Khách hàng chưa liên kết tài khoản Zalo';
       } else if (resolvedChannel === 'ZALO' && lead.socialIds?.zalo) {
         try {
-          const { sendZaloTextMessage, getZaloAccessToken } = await import('../services/zaloService');
-          const accessToken = await getZaloAccessToken(user.tenantId);
-          if (accessToken) {
-            const result = await sendZaloTextMessage(accessToken, lead.socialIds.zalo, content);
-            if (!result.success) {
+          const accessToken = await (await import('../services/zaloService')).getZaloAccessToken(user.tenantId);
+          if (productShare) {
+            const productId = typeof productShare.productId === 'string' ? productShare.productId : '';
+            const productCode = typeof productShare.productCode === 'string' ? productShare.productCode.trim() : '';
+            if (!productId && !productCode) {
               deliveryStatus = 'FAILED';
-              deliveryError = result.error;
+              deliveryError = 'Thiếu productId hoặc productCode để gửi sản phẩm';
+            } else {
+              const listing = productId
+                ? await listingRepository.findById(user.tenantId, productId)
+                : (await listingRepository.findListings(
+                    user.tenantId,
+                    { page: 1, pageSize: 5 },
+                    { search: productCode, status_in: ['AVAILABLE', 'OPENING', 'BOOKING', 'HOLD'] },
+                  )).data.find((item: any) => String(item.code || '').toUpperCase() === productCode.toUpperCase());
+              if (!listing) {
+                deliveryStatus = 'FAILED';
+                deliveryError = 'Không tìm thấy sản phẩm trong kho của tenant';
+              } else {
+                const deliveryKey = String(productShare.deliveryKey || req.body.idempotencyKey || `product:${lead.id}:${listing.id}`).slice(0, 240);
+                externalEventId = `zalo-product:${deliveryKey}`;
+                const { interactionRepository } = await import('../repositories/interactionRepository');
+                const previous = await interactionRepository.findByExternalEventId(user.tenantId, resolvedChannel, externalEventId);
+                if (previous) {
+                  return res.status(201).json({
+                    ...previous,
+                    deliveryWarning: previous.status === 'UNKNOWN'
+                      ? 'Kết quả gửi trước đó chưa xác định; không tự gửi lại.'
+                      : undefined,
+                    idempotentReplay: true,
+                  });
+                }
+                interactionContent = buildProductShareText(listing, productShare.language === 'en' ? 'en' : 'vi');
+                const imageUrls = normalizeProductImages(listing.images, resolveBaseUrl(req));
+                interactionMetadata = {
+                  ...interactionMetadata,
+                  productShare: {
+                    productId: listing.id,
+                    productCode: listing.code || null,
+                    snapshot: interactionContent,
+                    imageUrls,
+                    deliveryKey,
+                  },
+                };
+                if (!accessToken) {
+                  deliveryStatus = 'PENDING';
+                  deliveryError = 'Zalo OA Access Token chưa được cấu hình';
+                } else {
+                  const result = await sendProductViaZalo({
+                    accessToken,
+                    userId: lead.socialIds.zalo,
+                    product: listing,
+                    imageUrls,
+                    deliveryKey,
+                    language: productShare.language === 'en' ? 'en' : 'vi',
+                  });
+                  deliveryStatus = result.success ? 'SENT' : (result.ambiguous ? 'UNKNOWN' : 'FAILED');
+                  deliveryError = result.success ? undefined : result.error;
+                  interactionMetadata.productShare = {
+                    ...interactionMetadata.productShare,
+                    textMessageCount: result.textMessageCount,
+                    imageMessageCount: result.imageMessageCount,
+                    providerMessageIds: result.messageIds,
+                  };
+                }
+              }
             }
           } else {
-            deliveryStatus = 'PENDING'; // No token configured yet
-            deliveryError = 'Zalo OA Access Token chưa được cấu hình';
+            const { sendZaloTextMessage } = await import('../services/zaloService');
+            if (accessToken) {
+              const result = await sendZaloTextMessage(accessToken, lead.socialIds.zalo, interactionContent, req.body.idempotencyKey);
+              if (!result.success) {
+                deliveryStatus = result.ambiguous ? 'UNKNOWN' : 'FAILED';
+                deliveryError = result.error;
+              }
+            } else {
+              deliveryStatus = 'PENDING';
+              deliveryError = 'Zalo OA Access Token chưa được cấu hình';
+            }
           }
         } catch (err: any) {
           deliveryStatus = 'FAILED';
@@ -529,13 +608,11 @@ export function createLeadRoutes(authenticateToken: any, getBroadcast?: () => an
         channel: resolvedChannel,
         direction: 'OUTBOUND',
         type: type || 'TEXT',
-        content,
-        metadata: {
-          ...metadata,
-          ...(deliveryError ? { deliveryError } : {}),
-        },
+        content: interactionContent,
+        metadata: { ...interactionMetadata, ...(deliveryError ? { deliveryError } : {}) },
         senderId: user.id,
         status: deliveryStatus,
+        externalEventId,
       });
       await agentMemoryService.recordSuccessfulContactSignal(user.tenantId, {
         deliveryStatus,

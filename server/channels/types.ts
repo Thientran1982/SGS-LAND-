@@ -23,6 +23,12 @@ export interface SendResult {
 export interface OutboundDeliveryContext {
   deliveryId: string;
   deliveryKey: string;
+  /** Structured product snapshot sent through providers that support media. */
+  productShare?: {
+    product: Record<string, any>;
+    imageUrls: string[];
+    language?: 'vi' | 'en';
+  };
 }
 
 export interface ChannelAdapter {

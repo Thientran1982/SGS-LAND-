@@ -56,6 +56,56 @@ function formatUnitPrice(price: number, area?: number, g: L = "vi"): string {
   return g === "en" ? `${unitPrice.toFixed(1)}M/m²` : `${unitPrice.toFixed(1)} triệu/m²`;
 }
 
+function buildListingShareText(listing: Listing, lang: L): string {
+  const attrs = listing.attributes ?? {};
+  const label = (vi: string, en: string) => lang === "en" ? en : vi;
+  const lines = [
+    listing.title,
+    listing.code ? `${label("Mã", "Code")}: ${listing.code}` : "",
+    listing.type ? `${label("Loại", "Type")}: ${listing.type}` : "",
+    `${label("Giá", "Price")}: ${formatPrice(listing.price, lang)}`,
+    listing.area ? `${label("Diện tích", "Area")}: ${listing.area} m²` : "",
+    listing.bedrooms ? `${label("Phòng ngủ", "Bedrooms")}: ${listing.bedrooms}` : "",
+    listing.bathrooms ? `${label("Phòng tắm", "Bathrooms")}: ${listing.bathrooms}` : "",
+    listing.location ? `${label("Vị trí", "Location")}: ${listing.location}` : "",
+    attrs.floor ? `${label("Tầng", "Floor")}: ${attrs.floor}` : "",
+    attrs.tower ? `${label("Tòa", "Tower")}: ${attrs.tower}` : "",
+    attrs.direction ? `${label("Hướng", "Direction")}: ${attrs.direction}` : "",
+    attrs.amenities ? `${label("Tiện ích", "Amenities")}: ${Array.isArray(attrs.amenities) ? attrs.amenities.join(", ") : attrs.amenities}` : "",
+    attrs.parking ? `${label("Chỗ đậu xe", "Parking")}: ${attrs.parking}` : "",
+    attrs.balcony ? `${label("Ban công", "Balcony")}: ${attrs.balcony}` : "",
+    attrs.view ? `${label("Tầm nhìn", "View")}: ${attrs.view}` : "",
+    formatLegalInfo(listing.legalStatus || attrs.legalStatus, lang)
+      ? `${label("Pháp lý", "Legal status")}: ${formatLegalInfo(listing.legalStatus || attrs.legalStatus, lang)}`
+      : "",
+    listing.description || attrs.description
+      ? `\n${label("Thông tin chi tiết", "Details")}:\n${listing.description || attrs.description}`
+      : "",
+    listing.contactPhone ? `\n${label("Liên hệ", "Contact")}: ${listing.contactPhone}` : "",
+  ];
+  return lines.filter(Boolean).join("\n").replace(/\n{3,}/g, "\n\n").trim();
+}
+
+async function downloadShareImages(urls: string[]): Promise<File[]> {
+  const files: File[] = [];
+  for (let index = 0; index < Math.min(urls.length, 10); index += 1) {
+    try {
+      const response = await fetch(new URL(urls[index], window.location.href).toString(), {
+        credentials: "include",
+        mode: "cors",
+      });
+      if (!response.ok) continue;
+      const blob = await response.blob();
+      if (!blob.type.startsWith("image/")) continue;
+      const extension = (blob.type.split("/")[1] || "jpg").replace(/[^a-z0-9]/gi, "");
+      files.push(new File([blob], `sgs-land-${index + 1}.${extension}`, { type: blob.type }));
+    } catch {
+      // A remote image may disallow browser fetch. Text sharing still works.
+    }
+  }
+  return files;
+}
+
 const LEGAL_INFO_LABELS: Record<string, [string, string]> = {
   Contract: ["HĐMB", "Sale contract"],
   PinkBook: ["Sổ Hồng", "Pink book"],
@@ -208,6 +258,7 @@ export function ListingDetailPage({ listing, similarListings }: Props) {
   const lang = useLang();
   const [currentImg, setCurrentImg] = useState(0);
   const [copied, setCopied] = useState(false);
+  const [sharing, setSharing] = useState(false);
   const [isFav, setIsFav] = useState(false);
   const [bookOpen, setBookOpen] = useState(false);
   const [exitPromptOpen, setExitPromptOpen] = useState(false);
@@ -354,13 +405,36 @@ export function ListingDetailPage({ listing, similarListings }: Props) {
     };
   }, [listingCode]);
   const handleShare = async (location = "gallery") => {
-    const url = window.location.href;
+    const text = buildListingShareText(listing, lang);
+    const imageUrls = Array.isArray(listing.images) ? listing.images.filter(Boolean) : [];
+    setSharing(true);
     if (navigator.share) {
-      try { await navigator.share({ title: listing.title, text: listing.title, url }); trackListingEvent("share_click", listingCode, { method: "native", location }); return; } catch {}
+      try {
+        const files = await downloadShareImages(imageUrls);
+        const canShareFiles = files.length > 0 && typeof navigator.canShare === "function" && navigator.canShare({ files });
+        await navigator.share({
+          title: listing.title,
+          text,
+          ...(canShareFiles ? { files } : {}),
+        });
+        trackListingEvent("share_click", listingCode, {
+          method: canShareFiles ? "native_files" : "native_text",
+          imageCount: canShareFiles ? files.length : 0,
+          location,
+        });
+        setSharing(false);
+        return;
+      } catch (error: any) {
+        if (error?.name === "AbortError") {
+          setSharing(false);
+          return;
+        }
+      }
     }
-    try { await navigator.clipboard.writeText(url); } catch {}
-    trackListingEvent("share_click", listingCode, { method: "clipboard", location });
+    try { await navigator.clipboard.writeText(text); } catch {}
+    trackListingEvent("share_click", listingCode, { method: "clipboard_text", imageCount: 0, location });
     setCopied(true);
+    setSharing(false);
     setTimeout(() => setCopied(false), 2000);
   };
   const images = listing.images?.length ? listing.images : ["/images/placeholder.jpg"];
@@ -387,10 +461,11 @@ export function ListingDetailPage({ listing, similarListings }: Props) {
                 className="w-full h-full object-cover"
                 onError={(e) => { (e.target as HTMLImageElement).src = "/images/placeholder.jpg"; }}
               />
-                <button onClick={() => void handleShare("gallery")}
+                <button onClick={() => void handleShare("gallery")} disabled={sharing}
+                 aria-label={tt(lang, "Gửi đầy đủ nội dung và ảnh qua Zalo", "Send full details and images via Zalo")}
                 className="absolute top-4 right-4 p-2 rounded-xl glass-card transition-all hover:scale-105"
-                title={copied ? tt(lang, "Đã copy!", "Copied!") : tt(lang, "Chia sẻ", "Share")}>
-                {copied ? <CheckCircle className="w-5 h-5 text-sgs-verified" /> : <Share2 className="w-5 h-5" style={{ color: "var(--text-primary)" }} />}
+                 title={sharing ? tt(lang, "Đang chuẩn bị nội dung và ảnh...", "Preparing details and images...") : copied ? tt(lang, "Đã copy đầy đủ nội dung!", "Full details copied!") : tt(lang, "Gửi đầy đủ nội dung và ảnh qua Zalo", "Send full details and images via Zalo")}>
+                 {copied ? <CheckCircle className="w-5 h-5 text-sgs-verified" /> : <Share2 className="w-5 h-5" style={{ color: "var(--text-primary)" }} />}
               </button>
             </div>
             {images.length > 1 && (

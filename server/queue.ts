@@ -1,6 +1,11 @@
 import { Server } from 'socket.io';
 import { logger } from './middleware/logger';
 import { getAdapter } from './channels/registry';
+import {
+  buildProductShareText,
+  normalizeProductImages,
+  resolveConfiguredPublicBaseUrl,
+} from './services/productShareService';
 import { isHighImpactAction } from './repositories/approvalRequestRepository';
 import { buildChangeLeadStageApproval } from './services/approvalActionExecutor';
 import { createHash } from 'crypto';
@@ -360,6 +365,39 @@ export async function triggerAutoReply(
       return;
     }
 
+    // A customer explicitly asking for a product via Zalo is treated as
+    // channel consent only when this is already a Zalo conversation. Resolve
+    // the product server-side; never trust a client-supplied snapshot.
+    let productShare: { product: any; imageUrls: string[]; language: 'vi' | 'en'; snapshot: string } | undefined;
+    if (channel === 'ZALO' && /(?:g(?:ử|u)i|send|chia sẻ|gui).{0,40}(?:zalo|sản phẩm|san pham)/i.test(inboundText)) {
+      const { listingRepository } = await import('./repositories/listingRepository');
+      const previousProduct = history.slice().reverse().find((item: any) => item.metadata?.productShare?.productId);
+      const codeMatch = inboundText.match(/(?:m[aã]\s*|code\s*|m[aã]\s*sp\s*)([A-Za-z0-9][A-Za-z0-9_-]{1,})/i)
+        || inboundText.match(/\b([A-Z]{2,}[-_][A-Z0-9_-]{1,})\b/i);
+      const productId = previousProduct?.metadata?.productShare?.productId;
+      const productCode = codeMatch?.[1];
+      const listing = productId
+        ? await listingRepository.findById(tenantId, productId)
+        : productCode
+          ? (await listingRepository.findListings(
+              tenantId,
+              { page: 1, pageSize: 5 },
+              { search: productCode, status_in: ['AVAILABLE', 'OPENING', 'BOOKING', 'HOLD'] },
+            )).data.find((item: any) => String(item.code || '').toUpperCase() === productCode.toUpperCase())
+          : null;
+      if (listing) {
+        const imageUrls = normalizeProductImages(listing.images, resolveConfiguredPublicBaseUrl());
+        const language = 'vi' as const;
+        productShare = {
+          product: listing,
+          imageUrls,
+          language,
+          snapshot: buildProductShareText(listing, language),
+        };
+      }
+    }
+    const outboundContent = productShare?.snapshot || aiResult.content;
+
     // Permission Broker: neu AI de xuat hanh dong high-impact, tao approval_request
     // PENDING de nhan vien duyet (tab moi trong Inbox) thay vi de suggestedAction
     // nam im khong ai xu ly. AI van tra loi tin nhan binh thuong o duoi.
@@ -379,7 +417,7 @@ export async function triggerAutoReply(
       channel,
       direction: 'OUTBOUND',
       type: 'TEXT',
-      content: aiResult.content,
+      content: outboundContent,
       metadata: {
         isAi: true,
         isAgent: true,
@@ -391,6 +429,14 @@ export async function triggerAutoReply(
         agentRunId: execution.runId,
         traceId: execution.traceId,
         needsVerification: execution.guardrail.requiresVerification,
+        ...(productShare ? {
+          productShare: {
+            productId: productShare.product.id,
+            imageUrls: productShare.imageUrls,
+            snapshot: productShare.snapshot,
+            triggeredBy: 'explicit_zalo_request',
+          },
+        } : {}),
       },
       externalEventId: `agent:${execution.runId}`,
     });
@@ -405,7 +451,7 @@ export async function triggerAutoReply(
       interactionId: aiInteraction.id,
       leadId: lead.id,
       channel,
-      content: aiResult.content,
+      content: outboundContent,
     });
     const adapter = getAdapter(channel);
     if (delivery.state === 'BUSY') {
@@ -434,9 +480,16 @@ export async function triggerAutoReply(
         throw new Error(error);
       }
       try {
-        const sendResult = await adapter.sendOutbound(tenantId, lead, aiResult.content, {
+        const sendResult = await adapter.sendOutbound(tenantId, lead, outboundContent, {
           deliveryId: delivery.id,
           deliveryKey: delivery.deliveryKey || `agent-outbound:${delivery.id}`,
+          ...(productShare ? {
+            productShare: {
+              product: productShare.product,
+              imageUrls: productShare.imageUrls,
+              language: productShare.language,
+            },
+          } : {}),
         });
         if (!sendResult.success) {
           const mark = sendResult.ambiguous

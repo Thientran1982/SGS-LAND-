@@ -124,6 +124,7 @@ export const Inbox: React.FC = () => {
     const { socket } = useSocket();   
     const [selectedLeadId, setSelectedLeadId] = useState<LeadId | null>(null);
     const [input, setInput] = useState('');
+    const [sharingProduct, setSharingProduct] = useState(false);
     const [channel, setChannel] = useState<Channel>(Channel.ZALO);
     const [search, setSearch] = useState('');
     const [debouncedSearch, setDebouncedSearch] = useState('');
@@ -526,6 +527,50 @@ export const Inbox: React.FC = () => {
             setIsThinking(false);
         } finally {
             isSendingRef.current = false;
+        }
+    };
+    const handleShareProduct = async () => {
+        if (!selectedLeadId || sharingProduct) return;
+        if (!threads.find(t => t.lead.id === selectedLeadId)?.lead?.socialIds?.zalo) {
+            notify('Khách hàng chưa liên kết tài khoản Zalo.', 'error');
+            return;
+        }
+        const code = window.prompt('Nhập mã sản phẩm cần gửi qua Zalo:');
+        if (!code?.trim()) return;
+        setSharingProduct(true);
+        try {
+            const result = await db.getListings(1, 5, { search: code.trim() });
+            const listing = (result.data || []).find((item: any) =>
+                String(item.code || '').toUpperCase() === code.trim().toUpperCase(),
+            );
+            if (!listing) {
+                notify('Không tìm thấy sản phẩm theo mã này.', 'error');
+                return;
+            }
+            const deliveryKey = `inbox-product:${selectedLeadId}:${listing.id}:${Date.now()}`;
+            const message = await db.sendInteraction(selectedLeadId, '', Channel.ZALO, {
+                metadata: {
+                    productShare: {
+                        productId: listing.id,
+                        productCode: listing.code,
+                        deliveryKey,
+                        language: language === 'en' ? 'en' : 'vi',
+                    },
+                },
+            });
+            appendInteraction(selectedLeadId, message);
+            socket.emit("send_message", { room: selectedLeadId, message });
+            notify(
+                message.status === 'SENT'
+                    ? 'Đã gửi đầy đủ thông tin và hình ảnh sản phẩm qua Zalo.'
+                    : (message.metadata?.deliveryError || 'Gửi sản phẩm cần được kiểm tra lại.'),
+                message.status === 'SENT' ? 'success' : 'error',
+            );
+            queryClient.invalidateQueries({ queryKey: ['inboxThreads'] });
+        } catch {
+            notify('Không thể gửi sản phẩm qua Zalo.', 'error');
+        } finally {
+            setSharingProduct(false);
         }
     };
     // --- TOGGLE AI MODE ---
@@ -1010,6 +1055,18 @@ export const Inbox: React.FC = () => {
                             >
                                 {ICONS.ATTACH}
                             </button>                            
+                            {channel === Channel.ZALO && !isAiActiveForSelected && (
+                                <button
+                                    type="button"
+                                    onClick={() => void handleShareProduct()}
+                                    disabled={sharingProduct}
+                                    aria-label="Gửi đầy đủ sản phẩm qua Zalo"
+                                    title="Gửi đầy đủ thông tin và hình ảnh sản phẩm qua Zalo"
+                                    className="p-1.5 min-h-[36px] min-w-[36px] text-[var(--text-tertiary)] hover:text-[var(--sgs-primary)] transition-colors rounded-lg hover:bg-[var(--glass-surface-hover)] shrink-0 flex items-center justify-center focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sgs-primary disabled:opacity-50"
+                                >
+                                    {sharingProduct ? <span className="text-xs">…</span> : ICONS.ZALO}
+                                </button>
+                            )}
                             <textarea 
                                 value={input}
                                 onChange={e => setInput(e.target.value)}

@@ -58,6 +58,24 @@ export class InteractionRepository extends BaseRepository {
     });
   }
 
+  async findByExternalEventId(
+    tenantId: string,
+    channel: string,
+    externalEventId: string,
+  ): Promise<any | null> {
+    return this.withTenant(tenantId, async client => {
+      const result = await client.query(
+        `SELECT * FROM interactions
+          WHERE tenant_id = current_setting('app.current_tenant_id', true)::uuid
+            AND channel = $1
+            AND external_event_id = $2
+          LIMIT 1`,
+        [channel, externalEventId],
+      );
+      return result.rows[0] ? this.rowToEntity(result.rows[0]) : null;
+    });
+  }
+
   async create(tenantId: string, data: {
     leadId: string;
     channel: string;
