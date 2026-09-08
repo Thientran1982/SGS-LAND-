@@ -20,6 +20,7 @@ interface LandingSection {
   title?: string;
   body?: string;
   items?: string[];
+  images?: string[];
   phone?: string;
   contactName?: string;
   tokens: number;

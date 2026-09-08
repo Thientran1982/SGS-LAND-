@@ -37,7 +37,7 @@ const SECTION_LABELS: Record<string, string> = {
 const DEFAULT_PUBLISH_ERROR = "Không thể phát hành trang lúc này. Vui lòng thử lại.";
 
 function sectionOf(page: GeneratedLandingData, stage: string) {
-  return page.sections.find((section) => section.stage === stage);
+  return (Array.isArray(page.sections) ? page.sections : []).find((section) => section.stage === stage);
 }
 
 function phoneHref(phone?: string) {
@@ -168,21 +168,21 @@ export default function GeneratedLandingPage({
       <div className="landing-builder-wrap landing-builder-content">
         {SECTION_ORDER.slice(1, -1).map((stage) => {
           const section = sectionOf(page, stage);
-          if (!section) return null;
-          const items = Array.isArray(section.items) ? section.items.filter(Boolean) : [];
-          const images = Array.isArray(section.images)
+          const items = Array.isArray(section?.items) ? section.items.filter(Boolean) : [];
+          const images = Array.isArray(section?.images)
             ? section.images.filter((url): url is string => typeof url === "string" && url.length > 0)
             : [];
+          const body = typeof section?.body === "string" ? section.body.trim() : "";
           return (
             <section className={`landing-builder-section landing-builder-section-${stage}`} id={stage} key={stage}>
               <div className="landing-builder-section-heading">
                 <span className="landing-builder-section-index">0{SECTION_ORDER.indexOf(stage) + 1}</span>
                 <div>
                   <span className="landing-builder-eyebrow">{SECTION_LABELS[stage]}</span>
-                  <h2>{section.title || SECTION_LABELS[stage]}</h2>
+                  <h2>{section?.title || SECTION_LABELS[stage]}</h2>
                 </div>
               </div>
-              {section.body && <p className="landing-builder-body">{section.body}</p>}
+              {body && <p className="landing-builder-body">{body}</p>}
               {images.length > 0 && (
                 <div className="landing-builder-gallery-grid" aria-label="Hình ảnh dự án">
                   {images.map((url, index) => (
@@ -206,8 +206,10 @@ export default function GeneratedLandingPage({
                   ))}
                 </div>
               )}
-              {!section.body && items.length === 0 && (
-                <p className="landing-builder-muted">Nội dung đang được cập nhật.</p>
+              {!body && items.length === 0 && images.length === 0 && (
+                <p className="landing-builder-muted" role="status">
+                  Nội dung {SECTION_LABELS[stage].toLowerCase()} đang được cập nhật.
+                </p>
               )}
             </section>
           );

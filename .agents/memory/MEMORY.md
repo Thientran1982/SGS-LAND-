@@ -58,3 +58,4 @@
 - [Live-chat browser smoke prerequisites](livechat-browser-smoke.md) — Aiven hostname, Chromium system libraries, and one direct DB connection are required before authenticated smoke assertions can run
 - [Landing classification telemetry](landing-classification-telemetry.md) — monitor language and classifier outcomes with categorical signals, never raw briefs or price details
 - [Replit publish with external DB](replit-publish-external-db.md) — managed DB cloning can fail on missing sgs_app even when runtime uses Aiven; disable data copy for external production
+- [Next renderer test isolation](next-renderer-tests.md) — root Vitest must pair isolated Next components with the app-matched React server renderer to avoid false hook failures
