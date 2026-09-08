@@ -84,8 +84,8 @@ export default function EditorForm({
   const [galleryMessage, setGalleryMessage] = useState("");
   const [galleryError, setGalleryError] = useState("");
 
-  const publicUrl = "/landing-ai/" + currentSlug;
-  const previewUrl = publicUrl + "?preview=1";
+  const publicUrl = "/landing/" + encodeURIComponent(currentSlug);
+  const previewUrl = k ? publicUrl + "?visitorKey=" + encodeURIComponent(k) : publicUrl;
 
   function setSec(stage: string, patch: Partial<LandingSection>) {
     setSections((prev) => prev.map((s) => (s.stage === stage ? { ...s, ...patch } : s)));
@@ -237,7 +237,7 @@ export default function EditorForm({
       <div style={card}>
         <label style={label}>Tên dự án</label>
         <input style={input} value={projectName} onChange={(e) => setProjectName(e.target.value)} />
-        <label style={{ ...label, marginTop: 14 }}>Slug (đường dẫn /landing-ai/&lt;slug&gt;)</label>
+        <label style={{ ...label, marginTop: 14 }}>Slug (đường dẫn /landing/&lt;slug&gt;)</label>
         <input style={input} value={slugInput} onChange={(e) => setSlugInput(e.target.value)} />
         <p style={{ fontSize: 12, color: "var(--text-tertiary)", margin: "6px 0 0" }}>
           Chỉ chữ thường, số và dấu gạch ngang. Đổi slug sẽ đổi luôn link công khai.
