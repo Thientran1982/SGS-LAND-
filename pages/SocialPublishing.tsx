@@ -224,7 +224,15 @@ export const SocialPublishing: React.FC = () => {
       setMessage({ kind: 'ok', text: 'Đã ghi nhận thao tác và cập nhật trạng thái publication.' });
       await load();
     } catch (error: any) {
-      setMessage({ kind: 'error', text: error?.message || 'Không thể cập nhật target' });
+      const code = typeof error?.code === 'string'
+        ? error.code
+        : typeof error?.data?.code === 'string' ? error.data.code : '';
+      setMessage({
+        kind: 'error',
+        text: code === 'TARGET_STATE_CONFLICT'
+          ? `${error?.message || 'Target đã được operator khác xử lý.'} [${code}]`
+          : error?.message || 'Không thể cập nhật target',
+      });
     } finally {
       setBusy(false);
     }

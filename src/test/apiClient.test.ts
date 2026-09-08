@@ -150,6 +150,29 @@ describe("apiClient - request", () => {
     await expect(api.get("/api/broken")).rejects.toThrow("Internal Server Error");
   });
 
+  it("preserves structured reconcile conflict codes across the client boundary", async () => {
+    const { api } = await import("../../services/api/apiClient");
+    const payload = {
+      error: "Target đã được operator khác xử lý.",
+      code: "TARGET_STATE_CONFLICT",
+    };
+    mockFetch.mockResolvedValueOnce(makeResponse(409, payload));
+
+    let thrown: any;
+    try {
+      await api.post("/api/social-publications/publication-1/targets/target-1/reconcile", {
+        action: "MARK_FAILED",
+        reason: "Đã kiểm tra provider timeout.",
+      });
+    } catch (error) {
+      thrown = error;
+    }
+
+    expect(thrown.status).toBe(409);
+    expect(thrown.code).toBe("TARGET_STATE_CONFLICT");
+    expect(thrown.data).toMatchObject(payload);
+  });
+
   it("non-ok with error field in body throws error string", async () => {
     const { api } = await import("../../services/api/apiClient");
     mockFetch.mockResolvedValueOnce(makeResponse(422, { error: "Validation failed", message: "" }));
