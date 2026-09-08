@@ -482,13 +482,13 @@ export async function applySocialTargetOperatorAction(
         : 'PENDING';
     const update = await client.query(
       `UPDATE social_publication_targets
-          SET status = $2,
+          SET status = $2::varchar,
               provider_post_id = COALESCE($3, provider_post_id),
               provider_post_url = COALESCE($4, provider_post_url),
               next_retry_at = NULL,
-              last_error_code = CASE WHEN $2 = 'PUBLISHED' OR $2 = 'PENDING' THEN NULL ELSE 'OPERATOR_MARKED_FAILED' END,
-              last_error_message = CASE WHEN $2 = 'PUBLISHED' OR $2 = 'PENDING' THEN NULL ELSE $5 END,
-              published_at = CASE WHEN $2 = 'PUBLISHED' THEN COALESCE(published_at, NOW()) ELSE published_at END,
+              last_error_code = CASE WHEN $2::varchar = 'PUBLISHED' OR $2::varchar = 'PENDING' THEN NULL ELSE 'OPERATOR_MARKED_FAILED' END,
+              last_error_message = CASE WHEN $2::varchar = 'PUBLISHED' OR $2::varchar = 'PENDING' THEN NULL ELSE $5 END,
+              published_at = CASE WHEN $2::varchar = 'PUBLISHED' THEN COALESCE(published_at, NOW()) ELSE published_at END,
               updated_at = NOW()
         WHERE id = $1
         RETURNING *`,

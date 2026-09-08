@@ -1,0 +1,281 @@
+import { afterAll, beforeAll, describe, expect, it } from 'vitest';
+import { Pool, PoolClient } from 'pg';
+import { randomUUID } from 'node:crypto';
+import migration186 from '../migrations/186_social_publications';
+import migration187 from '../migrations/187_social_publication_audit';
+import {
+  applySocialTargetOperatorAction,
+  createSocialPublication,
+  findSocialPublication,
+  listSocialPublications,
+} from '../repositories/socialPublicationRepository';
+
+const integrationUrl = process.env.INTEGRITY_PG_URL;
+const describePostgres = integrationUrl ? describe : describe.skip;
+const baseConnectionString = integrationUrl?.replace(
+  /([?&])(?:sslmode|channel_binding)=[^&]*/g,
+  '$1',
+).replace(/[?&]$/, '');
+const useSsl = process.env.INTEGRITY_PG_SSL !== 'false';
+
+const tenantA = '11111111-1111-4111-8111-111111111111';
+const tenantB = '22222222-2222-4222-8222-222222222222';
+const actorA = 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa';
+const actorB = 'bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb';
+
+describePostgres('social publication reconciliation against PostgreSQL', () => {
+  let setupPool: Pool;
+  let setupClient: PoolClient | undefined;
+  let workerA: Pool;
+  let workerB: Pool;
+  let schema: string;
+
+  function connectionWithSchema(): string {
+    const separator = baseConnectionString!.includes('?') ? '&' : '?';
+    const options = encodeURIComponent(`-c search_path="${schema}",public`);
+    return `${baseConnectionString}${separator}options=${options}`;
+  }
+
+  async function query(text: string, values?: unknown[]) {
+    return setupPool.query(text, values);
+  }
+
+  async function createFixture(tenantId = tenantA) {
+    const listingId = randomUUID();
+    await query('INSERT INTO listings (id) VALUES ($1)', [listingId]);
+
+    const publication = await createSocialPublication(setupPool, {
+      tenantId,
+      listingId,
+      createdBy: null,
+      publishMode: 'NOW',
+      scheduledAt: null,
+      contentSnapshot: { title: 'fixture' },
+      assetSnapshot: [],
+      platforms: ['FACEBOOK_PAGE'],
+    });
+    const targetId = publication.targets[0].id as string;
+
+    await query(
+      `UPDATE social_publications
+          SET status = 'PROCESSING'
+        WHERE id = $1`,
+      [publication.id],
+    );
+    await query(
+      `UPDATE social_publication_targets
+          SET status = 'AMBIGUOUS', last_error_code = 'PROVIDER_TIMEOUT'
+        WHERE id = $1`,
+      [targetId],
+    );
+
+    return { publicationId: publication.id as string, targetId };
+  }
+
+  function operatorInput(
+    fixture: { publicationId: string; targetId: string },
+    overrides: Partial<Parameters<typeof applySocialTargetOperatorAction>[1]> = {},
+  ) {
+    return {
+      tenantId: tenantA,
+      publicationId: fixture.publicationId,
+      targetId: fixture.targetId,
+      actorId: actorA,
+      action: 'MARK_FAILED' as const,
+      reason: 'Xác nhận thủ công sau khi provider timeout.',
+      ...overrides,
+    };
+  }
+
+  beforeAll(async () => {
+    schema = `social_publication_reconcile_${process.pid}_${Date.now()}`;
+    const adminPool = new Pool({
+      connectionString: baseConnectionString,
+      max: 1,
+      connectionTimeoutMillis: 10_000,
+      ssl: useSsl ? { rejectUnauthorized: false } : false,
+    });
+    try {
+      await adminPool.query(`CREATE SCHEMA "${schema}"`);
+    } finally {
+      await adminPool.end();
+    }
+
+    setupPool = new Pool({
+      connectionString: connectionWithSchema(),
+      max: 1,
+      connectionTimeoutMillis: 10_000,
+      ssl: useSsl ? { rejectUnauthorized: false } : false,
+    });
+    setupClient = await setupPool.connect();
+    await setupClient.query(`SET search_path TO "${schema}", public`);
+    await setupClient.query('CREATE EXTENSION IF NOT EXISTS "pgcrypto"');
+    await setupClient.query('CREATE TABLE listings (id UUID PRIMARY KEY)');
+    await migration186.up(setupClient);
+    await migration187.up(setupClient);
+    setupClient.release();
+    setupClient = undefined;
+
+    workerA = new Pool({
+      connectionString: connectionWithSchema(),
+      max: 1,
+      connectionTimeoutMillis: 10_000,
+      ssl: useSsl ? { rejectUnauthorized: false } : false,
+    });
+    workerB = new Pool({
+      connectionString: connectionWithSchema(),
+      max: 1,
+      connectionTimeoutMillis: 10_000,
+      ssl: useSsl ? { rejectUnauthorized: false } : false,
+    });
+  });
+
+  afterAll(async () => {
+    await workerA?.end();
+    await workerB?.end();
+    setupClient?.release();
+    setupClient = undefined;
+    if (setupPool) {
+      await setupPool.query(`DROP SCHEMA IF EXISTS "${schema}" CASCADE`);
+      await setupPool.end();
+    }
+  });
+
+  it('lets only one concurrent operator reconcile the same target', async () => {
+    const fixture = await createFixture();
+
+    const results = await Promise.all([
+      applySocialTargetOperatorAction(workerA, operatorInput(fixture)),
+      applySocialTargetOperatorAction(workerB, operatorInput(fixture, {
+        actorId: actorB,
+      })),
+    ]);
+
+    expect(results.map(result => result.kind).sort()).toEqual(['INVALID_STATE', 'OK']);
+
+    const state = await query(
+      `SELECT p.status AS publication_status, t.status AS target_status
+         FROM social_publications p
+         JOIN social_publication_targets t ON t.publication_id = p.id
+        WHERE p.id = $1 AND t.id = $2`,
+      [fixture.publicationId, fixture.targetId],
+    );
+    expect(state.rows).toEqual([{
+      publication_status: 'FAILED',
+      target_status: 'FAILED_FINAL',
+    }]);
+
+    const audit = await query(
+      `SELECT actor_id, event_type, from_status, to_status
+         FROM social_publication_events
+        WHERE publication_id = $1 AND target_id = $2
+        ORDER BY created_at`,
+      [fixture.publicationId, fixture.targetId],
+    );
+    expect(audit.rows).toHaveLength(1);
+    expect([actorA, actorB]).toContain(audit.rows[0].actor_id);
+    expect(audit.rows[0]).toMatchObject({
+      event_type: 'OPERATOR_MARK_FAILED',
+      from_status: 'AMBIGUOUS',
+      to_status: 'FAILED_FINAL',
+    });
+  });
+
+  it('does not expose or mutate a publication through another tenant', async () => {
+    const fixture = await createFixture(tenantA);
+
+    expect(await findSocialPublication(workerB, tenantB, fixture.publicationId)).toBeNull();
+    expect(await listSocialPublications(workerB, tenantB)).toEqual([]);
+
+    const result = await applySocialTargetOperatorAction(workerB, operatorInput(fixture, {
+      tenantId: tenantB,
+      actorId: actorB,
+    }));
+    expect(result).toEqual({ kind: 'NOT_FOUND' });
+
+    const state = await query(
+      `SELECT p.status AS publication_status, t.status AS target_status,
+              (SELECT count(*) FROM social_publication_events e
+                WHERE e.publication_id = p.id AND e.target_id = t.id) AS event_count
+         FROM social_publications p
+         JOIN social_publication_targets t ON t.publication_id = p.id
+        WHERE p.id = $1 AND t.id = $2`,
+      [fixture.publicationId, fixture.targetId],
+    );
+    expect(state.rows[0]).toMatchObject({
+      publication_status: 'PROCESSING',
+      target_status: 'AMBIGUOUS',
+      event_count: '0',
+    });
+  });
+
+  it('requires confirmation or failure before requeueing an ambiguous target', async () => {
+    const confirmationFixture = await createFixture();
+
+    expect(await applySocialTargetOperatorAction(workerA, operatorInput(confirmationFixture, {
+      action: 'REQUEUE',
+      reason: 'Chưa đủ bằng chứng để requeue.',
+    }))).toMatchObject({
+      kind: 'INVALID_STATE',
+      status: 'AMBIGUOUS',
+    });
+    expect(await applySocialTargetOperatorAction(workerA, operatorInput(confirmationFixture, {
+      action: 'CONFIRM_PUBLISHED',
+      reason: 'Provider xác nhận bài đã tồn tại.',
+    })).then(result => result.kind)).toBe('INVALID_INPUT');
+
+    const confirmed = await applySocialTargetOperatorAction(workerA, operatorInput(confirmationFixture, {
+      action: 'CONFIRM_PUBLISHED',
+      reason: 'Provider xác nhận bài đã tồn tại.',
+      providerPostId: 'provider-post-123',
+      providerPostUrl: 'https://provider.test/posts/123',
+    }));
+    expect(confirmed.kind).toBe('OK');
+
+    const confirmedState = await query(
+      `SELECT p.status AS publication_status, t.status AS target_status,
+              t.provider_post_id, count(e.id)::text AS event_count
+         FROM social_publications p
+         JOIN social_publication_targets t ON t.publication_id = p.id
+         LEFT JOIN social_publication_events e ON e.target_id = t.id
+        WHERE p.id = $1 AND t.id = $2
+        GROUP BY p.status, t.status, t.provider_post_id`,
+      [confirmationFixture.publicationId, confirmationFixture.targetId],
+    );
+    expect(confirmedState.rows[0]).toMatchObject({
+      publication_status: 'PUBLISHED',
+      target_status: 'PUBLISHED',
+      provider_post_id: 'provider-post-123',
+      event_count: '1',
+    });
+
+    const failureFixture = await createFixture();
+    const markedFailed = await applySocialTargetOperatorAction(workerA, operatorInput(failureFixture, {
+      action: 'MARK_FAILED',
+      reason: 'Đánh dấu thất bại để retry có kiểm soát.',
+    }));
+    expect(markedFailed.kind).toBe('OK');
+
+    const requeued = await applySocialTargetOperatorAction(workerA, operatorInput(failureFixture, {
+      action: 'REQUEUE',
+      reason: 'Đã đánh dấu thất bại trước khi đưa lại vào hàng đợi.',
+    }));
+    expect(requeued.kind).toBe('OK');
+
+    const requeuedState = await query(
+      `SELECT p.status AS publication_status, t.status AS target_status,
+              count(e.id)::text AS event_count
+         FROM social_publications p
+         JOIN social_publication_targets t ON t.publication_id = p.id
+         LEFT JOIN social_publication_events e ON e.target_id = t.id
+        WHERE p.id = $1 AND t.id = $2
+        GROUP BY p.status, t.status`,
+      [failureFixture.publicationId, failureFixture.targetId],
+    );
+    expect(requeuedState.rows[0]).toMatchObject({
+      publication_status: 'PARTIALLY_PUBLISHED',
+      target_status: 'PENDING',
+      event_count: '2',
+    });
+  });
+});
