@@ -65,3 +65,4 @@
 - [Playwright DB-backed visual fixtures](playwright-db-fixtures.md) — keep external-DB browser fixtures single-connection and single-worker in constrained environments
 - [Private CRM route dual registry](private-route-dual-registry.md) — new authenticated routes must be registered in both Vite SPA and Next proxy layers to avoid direct-link 404s
 - [Social publishing provider safety](social-publishing-provider-safety.md) — verify tenant-scoped public permissions and never retry uncertain provider POSTs blindly
+- [Preview reconcile smoke coverage](preview-reconcile-smoke.md) — test mutation error contracts through the public preview proxy, not only an isolated router
