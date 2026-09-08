@@ -61,3 +61,4 @@
 - [Next renderer test isolation](next-renderer-tests.md) — root Vitest must pair isolated Next components with the app-matched React server renderer to avoid false hook failures
 - [Landing Design Agent boundary](landing-design-agent-boundary.md) — keep design generation deterministic and grounded; Minh remains responsible for customer-facing and publish boundaries
 - [PostgreSQL JSONB parameter casts](postgres-jsonb-parameter-casts.md) — cast untyped placeholders used inside variadic JSONB builders such as jsonb_build_object
+- [Playwright DB-backed visual fixtures](playwright-db-fixtures.md) — keep external-DB browser fixtures single-connection and single-worker in constrained environments
