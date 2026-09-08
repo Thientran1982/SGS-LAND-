@@ -10,7 +10,7 @@
  */
 import { CHAT_SOCKET_EVENTS } from "./endpoints";
 import { ChatTransportError } from "./types";
-import type { ChatMessage, ChatTransport } from "./types";
+import type { ChatAttachment, ChatMessage, ChatTransport } from "./types";
 import { createClientRequestId, createMinhClient } from "./minhTransport";
 
 export const MINH_LEAD_STORAGE_KEY = "livechat_lead_id";
@@ -67,7 +67,8 @@ export interface MinhSession {
     welcome: ChatMessage;
   }>;
   /** Luu tin nhan khach + hoi agent Minh. */
-  sendUserMessage(text: string, lang?: string): Promise<MinhSendResult>;
+  sendUserMessage(text: string, lang?: string, attachments?: ChatAttachment[]): Promise<MinhSendResult>;
+  uploadAttachments(files: File[]): Promise<ChatAttachment[]>;
   /** Ket noi socket cho realtime + human takeover. Tra ve ham cleanup. */
   connect(handlers: MinhSocketHandlers): Promise<() => void>;
   /** Ban ChatTransport de dung chung voi AiChatWidget. */
@@ -93,6 +94,7 @@ export function interactionToMessage(raw: any): ChatMessage | null {
     role: raw.direction === "INBOUND" ? "user" : "assistant",
     content,
     ts: Number.isFinite(ts) ? ts : Date.now(),
+    attachments: Array.isArray(raw.metadata?.attachments) ? raw.metadata.attachments : undefined,
   };
 }
 
@@ -148,18 +150,18 @@ export function createMinhSession(options: MinhSessionOptions = {}): MinhSession
     s.removeItem(storageKey(MINH_NAME_STORAGE_KEY));
   }
 
-  async function ask(text: string, lang?: string) {
+  async function ask(text: string, lang?: string, attachments: ChatAttachment[] = []) {
     if (!leadId) throw new ChatTransportError("missing_lead_id", { code: "NO_LEAD" });
     let saved: any = null;
     const requestId = createClientRequestId();
     try {
-      saved = await client.sendMessage(leadId, text, "INBOUND", {}, requestId);
+      saved = await client.sendMessage(leadId, text, "INBOUND", { attachments }, requestId);
     } catch {
       saved = null;
     }
     let data: any;
     try {
-      data = await client.ask(leadId, text, lang, saved?.id);
+      data = await client.ask(leadId, text, lang, saved?.id, attachments);
     } catch (error) {
       // The AI request can finish on the server after a proxy/browser
       // connection is reset. Reconcile with the durable conversation (with
@@ -205,7 +207,13 @@ export function createMinhSession(options: MinhSessionOptions = {}): MinhSession
     }
     const userMsg =
       interactionToMessage(saved) ||
-      ({ id: "local-" + Date.now(), role: "user", content: text, ts: Date.now() } as ChatMessage);
+      ({
+        id: "local-" + Date.now(),
+        role: "user",
+        content: text,
+        ts: Date.now(),
+        attachments,
+      } as ChatMessage);
     if (data && data.noReply) {
       return { user: userMsg, assistant: null, noReply: true, raw: data } as MinhSendResult;
     }
@@ -303,12 +311,16 @@ export function createMinhSession(options: MinhSessionOptions = {}): MinhSession
       return { leadId: id, name, welcome };
     },
 
-    sendUserMessage: (text, lang) => ask(text, lang),
+    sendUserMessage: (text, lang, attachments) => ask(text, lang, attachments),
+    uploadAttachments: async (files) => {
+      if (!leadId) throw new ChatTransportError("missing_lead_id", { code: "NO_LEAD" });
+      return client.uploadAttachments(leadId, files);
+    },
 
     transport: {
       name: "minh",
       async send(input) {
-        const res = await ask(input.text, input.lang);
+        const res = await ask(input.text, input.lang, input.attachments);
         return { reply: res.assistant ? res.assistant.content : "", raw: res.raw };
       },
     },

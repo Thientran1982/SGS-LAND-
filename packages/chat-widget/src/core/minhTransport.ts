@@ -1,5 +1,5 @@
 import { CHAT_ENDPOINTS, apiUrl } from "./endpoints";
-import { ChatTransport, ChatTransportError } from "./types";
+import { ChatAttachment, ChatTransport, ChatTransportError } from "./types";
 import { getCsrfToken } from "./csrf";
 
 // Landing-builder requests can legitimately take longer than a normal chat
@@ -80,6 +80,35 @@ export function createMinhClient(apiBase?: string) {
       if (!res.ok) return null;
       return res.json();
     },
+    async uploadAttachments(leadId: string, files: File[]): Promise<ChatAttachment[]> {
+      const form = new FormData();
+      form.append("leadId", leadId);
+      for (const file of files) form.append("files", file, file.name);
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), DEFAULT_REQUEST_TIMEOUT_MS);
+      let res: Response;
+      try {
+        res = await fetch(apiUrl(CHAT_ENDPOINTS.livechatAttachments, apiBase), {
+          method: "POST",
+          credentials: "include",
+          signal: controller.signal,
+          headers: { "X-CSRF-Token": await getCsrfToken(apiBase) },
+          body: form,
+        });
+      } finally {
+        clearTimeout(timeoutId);
+      }
+      if (!res.ok) {
+        let message = "Không thể tải file lên";
+        try {
+          const data = await res.json();
+          if (typeof data?.error === "string") message = data.error;
+        } catch {}
+        throw new ChatTransportError(message, { status: res.status, code: "UPLOAD_FAILED" });
+      }
+      const data = await res.json();
+      return Array.isArray(data?.attachments) ? data.attachments as ChatAttachment[] : [];
+    },
     captureLead(leadId: string | null, data: { name: string; phone: string; notes?: string }) {
       return postJson<{ id: string; score: number; success: boolean }>(
         CHAT_ENDPOINTS.livechatCaptureLead,
@@ -109,10 +138,16 @@ export function createMinhClient(apiBase?: string) {
       );
     },
     /** POST /api/public/ai/livechat -> { reply, artifact?, suggestedAction?, noReply? } */
-    ask(leadId: string, message: string, lang?: string, inboundInteractionId?: string) {
+    ask(
+      leadId: string,
+      message: string,
+      lang?: string,
+      inboundInteractionId?: string,
+      attachments?: ChatAttachment[],
+    ) {
       return postJson<any>(
         CHAT_ENDPOINTS.minhReply,
-        { leadId, message, lang, inboundInteractionId },
+        { leadId, message, lang, inboundInteractionId, attachments: attachments || [] },
         apiBase,
         "ai_failed",
       );
@@ -132,7 +167,7 @@ export function createMinhTransport(getLeadId: () => string | null, apiBase?: st
       if (!leadId) throw new ChatTransportError("missing_lead_id", { code: "NO_LEAD" });
       const requestId = createClientRequestId();
       const inbound = await client.sendMessage(leadId, input.text, "INBOUND", {}, requestId);
-      const data = await client.ask(leadId, input.text, input.lang, inbound?.id);
+      const data = await client.ask(leadId, input.text, input.lang, inbound?.id, input.attachments);
       const reply = typeof data?.reply === "string" ? data.reply : data?.reply?.content || "";
       return { reply, raw: data };
     },

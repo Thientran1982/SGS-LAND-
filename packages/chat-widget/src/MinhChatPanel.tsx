@@ -4,10 +4,10 @@
  * Dung chung cho trang /livechat va cho bubble noi (MinhChatWidget).
  */
 import React, { useCallback, useEffect, useRef, useState } from "react";
-import { Bot, Headset, Loader2, RefreshCw, Send, Mic, Check, X } from "lucide-react";
+import { Bot, Headset, Loader2, RefreshCw, Send, Mic, Check, X, Paperclip, FileText, Image as ImageIcon, Trash2 } from "lucide-react";
 import { createMinhSession } from "./core/minhSession";
 import type { MinhSession, MinhThreadStatus } from "./core/minhSession";
-import type { ChatMessage } from "./core/types";
+import type { ChatAttachment, ChatMessage } from "./core/types";
 import { renderChatContent } from "./renderChatContent";
 
 const SUGGESTIONS = [
@@ -18,6 +18,12 @@ const SUGGESTIONS = [
 ];
 
 const CSS = (v: string, f: string) => "var(" + v + ", " + f + ")";
+const EMPTY_ATTACHMENT_PROMPT = "Mình gửi tài liệu dự án, hãy dùng thông tin này để tạo trang landing.";
+
+type FailedChatRequest = {
+  text: string;
+  attachments: ChatAttachment[];
+};
 
 /** Dung design token cua site (globals.css) de hop ca light va dark mode. */
 const S: Record<string, React.CSSProperties> = {
@@ -104,7 +110,7 @@ export function MinhChatPanel({
   const [input, setInput] = useState(initialMessage);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
-  const [lastFailed, setLastFailed] = useState("");
+  const [lastFailed, setLastFailed] = useState<FailedChatRequest | null>(null);
   const [mode, setMode] = useState<MinhThreadStatus>("AI_ACTIVE");
 
   // Voice input (client-side only via Web Speech API, no new backend endpoint)
@@ -122,6 +128,10 @@ export function MinhChatPanel({
   const [bookingNote, setBookingNote] = useState("");
   const [bookingBusy, setBookingBusy] = useState(false);
   const [bookingDone, setBookingDone] = useState<string | null>(null);
+  const [attachments, setAttachments] = useState<ChatAttachment[]>([]);
+  const [uploadingAttachments, setUploadingAttachments] = useState(false);
+  const [attachmentError, setAttachmentError] = useState("");
+  const attachmentInputRef = useRef<HTMLInputElement | null>(null);
   const recordTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const voiceTranscriptRef = useRef("");
 
@@ -215,21 +225,47 @@ export function MinhChatPanel({
     [name, phone, session],
   );
 
+  const handleAttachmentChange = useCallback(
+    async (event: React.ChangeEvent<HTMLInputElement>) => {
+      const files = Array.from(event.target.files || []);
+      event.currentTarget.value = "";
+      if (!files.length) return;
+      if (attachments.length + files.length > 5) {
+        setAttachmentError("Mỗi tin nhắn chỉ được đính kèm tối đa 5 file.");
+        return;
+      }
+      setAttachmentError("");
+      setUploadingAttachments(true);
+      try {
+        const uploaded = await session.uploadAttachments(files);
+        setAttachments((previous) => [...previous, ...uploaded].slice(0, 5));
+      } catch (err: any) {
+        setAttachmentError(err?.message || "Không thể tải file lên. Vui lòng thử lại.");
+      } finally {
+        setUploadingAttachments(false);
+      }
+    },
+    [attachments.length, session],
+  );
+
   const send = useCallback(
-    async (raw?: string) => {
-      const text = (raw ?? input).trim();
-      if (!text || loading) return;
+    async (raw?: string, requestAttachments?: ChatAttachment[]) => {
+      const outgoingAttachments = requestAttachments ?? (raw === undefined ? attachments : []);
+      const typedText = (raw ?? input).trim();
+      const text = typedText || (outgoingAttachments.length ? EMPTY_ATTACHMENT_PROMPT : "");
+      if (!text || loading || uploadingAttachments) return;
       setInput("");
+      if (requestAttachments === undefined) setAttachments([]);
       setError("");
-      setLastFailed("");
+      setLastFailed(null);
       const tempId = "temp-" + Date.now();
       setMessages((prev) => [
         ...prev,
-        { id: tempId, role: "user", content: text, ts: Date.now() } as ChatMessage,
+        { id: tempId, role: "user", content: text, ts: Date.now(), attachments: outgoingAttachments } as ChatMessage,
       ]);
       setLoading(true);
       try {
-        const res = await session.sendUserMessage(text);
+        const res = await session.sendUserMessage(text, undefined, outgoingAttachments);
         setMessages((prev) => {
           const replaced = prev.map((m) => (m.id === tempId ? res.user : m));
           const seen = new Set<string>();
@@ -245,7 +281,7 @@ export function MinhChatPanel({
         if (res.noReply) setMode("HUMAN_TAKEOVER");
       } catch (err: any) {
         setMessages((prev) => prev.filter((m) => m.id !== tempId));
-        setLastFailed(text);
+        setLastFailed({ text, attachments: outgoingAttachments });
         setError(
           err && err.code === "NO_LEAD"
             ? "Phiên chat đã hết hạn. Vui lòng bắt đầu lại."
@@ -255,7 +291,7 @@ export function MinhChatPanel({
         setLoading(false);
       }
     },
-    [input, loading, session],
+    [attachments, input, loading, session, uploadingAttachments],
   );
 
   const handleKey = (e: React.KeyboardEvent) => {
@@ -547,8 +583,27 @@ export function MinhChatPanel({
                 <div
                   className="max-w-[85%] rounded-2xl border px-3.5 py-2.5 text-sm leading-relaxed"
                   style={m.role === "user" ? S.bubbleUser : S.bubbleAi}
-                  dangerouslySetInnerHTML={{ __html: renderChatContent(m.content) }}
-                />
+                >
+                  {m.attachments?.length ? (
+                    <div className="mb-2 flex flex-wrap gap-1.5">
+                      {m.attachments.map((attachment) => (
+                        <div
+                          key={attachment.id}
+                          className="flex items-center gap-1.5 rounded-lg border px-2 py-1 text-[11px]"
+                          style={{ borderColor: m.role === "user" ? "rgba(255,255,255,0.25)" : "var(--cw-line, #EAE4D4)" }}
+                        >
+                          {attachment.kind === "image" && attachment.url ? (
+                            <img src={attachment.url} alt={attachment.name} className="h-8 w-8 rounded object-cover" />
+                          ) : (
+                            <FileText className="h-3.5 w-3.5 shrink-0" aria-hidden />
+                          )}
+                          <span className="max-w-[150px] truncate">{attachment.name}</span>
+                        </div>
+                      ))}
+                    </div>
+                  ) : null}
+                  <div dangerouslySetInnerHTML={{ __html: renderChatContent(m.content) }} />
+                </div>
               </div>
             ))}
 
@@ -576,7 +631,7 @@ export function MinhChatPanel({
                 {lastFailed ? (
                   <button
                     type="button"
-                    onClick={() => void send(lastFailed)}
+                    onClick={() => void send(lastFailed.text, lastFailed.attachments)}
                     className="inline-flex items-center gap-1 rounded-lg bg-rose-100 px-2 py-1 font-medium"
                   >
                     <RefreshCw className="w-3 h-3" />
@@ -650,6 +705,33 @@ export function MinhChatPanel({
               Đã đặt lịch thành công: <strong>{bookingDone}</strong>. Chuyên viên sẽ xác nhận qua điện thoại.
             </div>
           )}
+          {attachmentError ? (
+            <div role="alert" className="mx-3 mb-2 rounded-lg border border-rose-200 bg-rose-50 px-2.5 py-2 text-xs text-rose-700">
+              {attachmentError}
+            </div>
+          ) : null}
+          {attachments.length ? (
+            <div className="mx-3 mb-2 flex flex-wrap gap-2">
+              {attachments.map((attachment) => (
+                <div key={attachment.id} className="flex max-w-full items-center gap-1.5 rounded-lg border px-2 py-1.5 text-xs" style={S.field}>
+                  {attachment.kind === "image" ? (
+                    <ImageIcon className="h-3.5 w-3.5 shrink-0" aria-hidden />
+                  ) : (
+                    <FileText className="h-3.5 w-3.5 shrink-0" aria-hidden />
+                  )}
+                  <span className="max-w-[180px] truncate">{attachment.name}</span>
+                  <button
+                    type="button"
+                    onClick={() => setAttachments((previous) => previous.filter((item) => item.id !== attachment.id))}
+                    aria-label={`Xóa ${attachment.name}`}
+                    className="rounded p-0.5 hover:bg-black/10"
+                  >
+                    <Trash2 className="h-3.5 w-3.5" />
+                  </button>
+                </div>
+              ))}
+            </div>
+          ) : null}
                     <div
             className="flex items-end gap-2 rounded-b-[20px] border-t p-3"
             style={{ ...S.bar, borderBottomLeftRadius: "20px", borderBottomRightRadius: "20px" }}
@@ -670,6 +752,26 @@ export function MinhChatPanel({
               </div>
             ) : (
     <div className="flex-1 flex items-end gap-1 rounded-xl border px-2 py-1" style={S.field}>
+                <input
+                  ref={attachmentInputRef}
+                  type="file"
+                  accept="image/jpeg,image/png,image/webp,image/gif,.pdf,.doc,.docx,.txt"
+                  multiple
+                  onChange={handleAttachmentChange}
+                  className="hidden"
+                  aria-label="Chọn file đính kèm"
+                />
+                <button
+                  type="button"
+                  onClick={() => attachmentInputRef.current?.click()}
+                  disabled={uploadingAttachments || loading}
+                  aria-label="Đính kèm ảnh hoặc tài liệu dự án"
+                  title="Đính kèm ảnh hoặc tài liệu dự án"
+                  className="inline-flex h-9 w-9 items-center justify-center rounded-lg shrink-0 transition-colors hover:bg-black/5 disabled:opacity-40"
+                  style={{ color: "var(--cw-ink-dim, #8A8474)" }}
+                >
+                  {uploadingAttachments ? <Loader2 className="h-4 w-4 animate-spin" /> : <Paperclip className="h-4 w-4" />}
+                </button>
                 <textarea
                   value={input}
                   onChange={(e) => setInput(e.target.value)}
@@ -705,7 +807,7 @@ export function MinhChatPanel({
                 <button
                   type="button"
                   onClick={() => void send()}
-                  disabled={loading || !input.trim()}
+                  disabled={loading || uploadingAttachments || (!input.trim() && !attachments.length)}
                   aria-label="Gửi tin nhắn"
                   className="inline-flex h-9 w-9 items-center justify-center rounded-lg disabled:opacity-40"
                   style={S.primaryBtn}

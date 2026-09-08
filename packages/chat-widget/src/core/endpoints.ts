@@ -10,6 +10,7 @@ export const CHAT_ENDPOINTS = {
   landingAiConsult: "/api/landing-ai/consult",
   publicCreateLead: "/api/public/leads",
   livechatMessage: "/api/public/livechat/message",
+  livechatAttachments: "/api/public/livechat/attachments",
   livechatMessages: (leadId: string) => `/api/public/livechat/messages/${leadId}`,
   livechatCaptureLead: "/api/public/livechat/capture-lead",
   livechatEscalate: "/api/public/livechat/escalate",

@@ -654,6 +654,7 @@ const TOOL_MANIFEST: ToolDefinition[] = [
             brief:         { type: 'string', required: false, description: 'Mo ta yeu cau cua user' },
             brochureText:  { type: 'string', required: false, description: 'Noi dung trich xuat tu file dinh kem' },
             brochureName:  { type: 'string', required: false, description: 'Ten file dinh kem' },
+             galleryImages: { type: 'array', required: false, description: 'Danh sach URL anh gallery da upload' },
             language:      { type: 'string', required: false, description: 'vi|en (mac dinh vi)' },
         },
     },
@@ -1454,6 +1455,22 @@ async function handle_live_chat_core(args: Record<string, any>): Promise<any> {
     // Supervisor may execute one read-only specialist tool. High-impact tools
     // remain suggestions and must go through the existing approval broker.
     const responseLanguage = String(context.language || args.language || 'vi').toLowerCase() === 'en' ? 'en' : 'vi';
+    const attachments = Array.isArray(context.attachments) ? context.attachments : [];
+    const documentAttachments = attachments.filter((item: any) => item?.kind === 'document' && typeof item?.text === 'string');
+    const imageAttachments = attachments
+        .filter((item: any) => item?.kind === 'image' && typeof item?.url === 'string')
+        .map((item: any) => String(item.url).trim())
+        .filter((url: string) => /^\/uploads\/[0-9a-f-]{36}\/[A-Za-z0-9][A-Za-z0-9._-]{0,254}$/.test(url))
+        .slice(0, 20);
+    const brochureText = documentAttachments
+        .map((item: any) => `[${String(item.name || 'Tài liệu').slice(0, 160)}]\n${String(item.text).slice(0, 50_000)}`)
+        .join('\n\n')
+        .slice(0, 100_000);
+    const brochureName = documentAttachments
+        .map((item: any) => String(item.name || '').slice(0, 160))
+        .filter(Boolean)
+        .join(', ')
+        .slice(0, 200);
     const executionPlans: Record<string, { tool: string; args: Record<string, any> }> = {
         SEARCH: { tool: 'search_listings', args: { tenantId, query: msg, limit: 5 } },
         LEGAL: { tool: 'legal_qa', args: { tenantId, question: msg } },
@@ -1461,7 +1478,18 @@ async function handle_live_chat_core(args: Record<string, any>): Promise<any> {
         FINANCE: { tool: 'get_platform_knowledge', args: { tenantId, domain: 'bank', query: msg } },
         PROJECT: { tool: 'get_project_info', args: { tenantId, projectName: msg } },
         LONGTHANH: { tool: 'get_longthanh_market', args: { tenantId, subArea: msg } },
-        LANDING:    { tool: 'landing_builder', args: { tenantId, visitorKey: context.leadId || 'anonymous-widget', brief: msg, language: responseLanguage } },
+        LANDING: {
+            tool: 'landing_builder',
+            args: {
+                tenantId,
+                visitorKey: context.leadId || 'anonymous-widget',
+                brief: msg,
+                language: responseLanguage,
+                ...(brochureText ? { brochureText } : {}),
+                ...(brochureName ? { brochureName } : {}),
+                ...(imageAttachments.length ? { galleryImages: imageAttachments } : {}),
+            },
+        },
         GENERAL: { tool: 'get_platform_knowledge', args: { tenantId, domain: 'platform', query: msg } },
     };
     // === PHA 2: MINH ORCHESTRATOR — khi keyword map ve GENERAL, Minh (LLM) tu chon specialist theo ngu canh ===
@@ -1752,8 +1780,20 @@ async function handle_live_chat(args: Record<string, any>): Promise<any> {
     const historyTail = Array.isArray(args.context?.history)
         ? args.context.history.slice(-2).map((entry: any) => String(entry?.content || '')).join('|')
         : '';
+    const attachmentFingerprint = Array.isArray(args.context?.attachments)
+        ? createHash('sha256')
+            .update(JSON.stringify(args.context.attachments.map((item: any) => ({
+                id: item?.id,
+                name: item?.name,
+                kind: item?.kind,
+                url: item?.url,
+                text: typeof item?.text === 'string' ? item.text.slice(0, 100_000) : undefined,
+            }))))
+            .digest('hex')
+            .slice(0, 40)
+        : '';
     const messageHash = createHash('sha256')
-        .update(`${effectiveSessionId}|${message}|${historyTail}`)
+        .update(`${effectiveSessionId}|${message}|${historyTail}|${attachmentFingerprint}`)
         .digest('hex')
         .slice(0, 40);
     // Persist the real chat event before/alongside processing. The execution

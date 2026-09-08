@@ -83,6 +83,7 @@ import { createLearningCycleRoutes } from "./server/routes/learningCycleRoutes";
 import { createDailyAdminReportRoutes } from "./server/routes/dailyAdminReportRoutes";
 import { startDailyReportScheduler } from "./server/services/dailyAdminReportService";
 import { createLiveChatAgentRoutes } from "./server/routes/liveChatAgentRoutes";
+import { createPublicLiveChatAttachmentRoutes } from "./server/routes/publicLiveChatAttachmentRoutes";
 import { isLandingBuilderRequest, liveChatEngine, recordLandingClassificationTelemetry } from "./server/ai/liveChatEngine";
 import { createPublicProjectRoutes } from "./server/routes/publicProjectRoutes";
 import { createPublicDeveloperRoutes } from "./server/routes/publicDeveloperRoutes";
@@ -178,6 +179,34 @@ function isPublicLandingBuilderRequest(message: string): boolean {
   // property that happens to mention "landing" should still be handled by
   // the existing AI service, while builder phrases reach landing_builder.
   return isLandingBuilderRequest(message);
+}
+
+function normalizePublicChatAttachments(value: unknown): Array<Record<string, unknown>> {
+  if (!Array.isArray(value)) return [];
+  const uploadPrefix = `/uploads/${DEFAULT_TENANT_ID}/`;
+  return value
+    .slice(0, 5)
+    .map((item: any) => {
+      const kind = item?.kind === 'image' ? 'image' : item?.kind === 'document' ? 'document' : '';
+      const id = String(item?.id || '').trim().slice(0, 260);
+      const name = String(item?.name || 'Tài liệu đính kèm').trim().slice(0, 160);
+      if (!kind || !id || !name) return null;
+      const normalized: Record<string, unknown> = {
+        id,
+        name,
+        kind,
+        mimeType: String(item?.mimeType || '').slice(0, 120),
+        size: Math.min(Math.max(Number(item?.size) || 0, 0), 10 * 1024 * 1024),
+      };
+      if (kind === 'image' && typeof item?.url === 'string' && item.url.startsWith(uploadPrefix)) {
+        normalized.url = item.url.slice(0, 520);
+      }
+      if (kind === 'document' && typeof item?.text === 'string') {
+        normalized.text = item.text.slice(0, 50_000);
+      }
+      return normalized;
+    })
+    .filter(Boolean) as Array<Record<string, unknown>>;
 }
 
 
@@ -2830,7 +2859,10 @@ app.get('/api/public/listings/:slugId', apiRateLimit, async (req: express.Reques
         direction: resolvedDirection,
         type: 'TEXT',
         content: String(content).trim().slice(0, 2000),
-        metadata: metadata || {},
+         metadata: {
+           ...(metadata && typeof metadata === 'object' ? metadata : {}),
+           attachments: normalizePublicChatAttachments((metadata as any)?.attachments),
+         },
         externalEventId: idempotencyKey
           ? `web-inbound:${String(idempotencyKey).slice(0, 160)}`
           : undefined,
@@ -2851,6 +2883,7 @@ app.get('/api/public/listings/:slugId', apiRateLimit, async (req: express.Reques
   app.post('/api/public/ai/livechat', livechatRateLimit, aiRateLimit, async (req: express.Request, res: express.Response) => {
     try {
       const { leadId, message, lang, inboundInteractionId } = req.body;
+      const attachments = normalizePublicChatAttachments(req.body?.attachments);
       if (!leadId || !String(message || '').trim()) {
         return res.status(400).json({ error: 'leadId và message là bắt buộc' }) as any;
       }
@@ -2902,6 +2935,7 @@ app.get('/api/public/listings/:slugId', apiRateLimit, async (req: express.Reques
               leadId,
               leadName: (lead as any).name || '',
               language: replyLang === 'en' ? 'en' : 'vi',
+               attachments,
               history: historyWithLatest.slice(-8).map((item: any) => ({
                 role: item.direction === 'INBOUND' ? 'user' : 'assistant',
                 content: item.content,
@@ -4494,6 +4528,7 @@ app.use('/api/admin/agent-teach', apiRateLimit, authenticateToken, agentTeachRou
 app.use('/api/admin/agent-skills', apiRateLimit, authenticateToken, agentSkillsRouter);
 app.use('/api/public/automations', automationWebhookRouter);
 app.use('/api/public/livechat', agentP1Router);
+  app.use('/api/public/livechat', createPublicLiveChatAttachmentRoutes());
   app.use('/api/sessions', apiRateLimit, createSessionRoutes(authenticateToken));
   app.use('/api/auth/2fa', authRateLimit, createTwoFactorRoutes(authenticateToken));
   app.use('/api/templates', apiRateLimit, createTemplateRoutes(authenticateToken));

@@ -100,7 +100,7 @@ function extractFromBrief(brief: string, brochureText?: string): Record<string, 
     };
 }
 
-function buildSections(brief: Record<string, any>, lang: string): LandingSection[] {
+function buildSections(brief: Record<string, any>, lang: string, galleryImages: string[] = []): LandingSection[] {
     const vi = lang !== 'en';
     const sections: LandingSection[] = [];
     const add = (stage: string, data: Partial<LandingSection>) => {
@@ -113,7 +113,7 @@ function buildSections(brief: Record<string, any>, lang: string): LandingSection
     add('gallery', {
         title: vi ? 'Hinh anh du an' : 'Project gallery',
         items: [vi ? 'Chinh canh du an' : 'Main view', vi ? 'Tien ich' : 'Amenities', vi ? 'Mat bang' : 'Master plan'],
-        images: [],
+        images: galleryImages.slice(0, 20),
     });
     add('legal', {
         title: vi ? 'Phap ly' : 'Legal',
@@ -156,6 +156,12 @@ export async function handle_landing_builder(args: Record<string, any>): Promise
     const brief = String(args.brief || '');
     const brochureText = args.brochureText ? String(args.brochureText) : undefined;
     const brochureName = args.brochureName ? String(args.brochureName) : undefined;
+    const galleryImages = Array.isArray(args.galleryImages)
+        ? args.galleryImages
+            .map((url: any) => String(url || '').trim())
+            .filter((url: string) => /^\/uploads\/[0-9a-f-]{36}\/[A-Za-z0-9][A-Za-z0-9._-]{0,254}$/.test(url) || /^https:\/\//i.test(url))
+            .slice(0, 20)
+        : [];
     const lang = String(args.language || 'vi');
 
     const row = await withTenantContext(tenantId, async (client: any) => {
@@ -181,7 +187,7 @@ export async function handle_landing_builder(args: Record<string, any>): Promise
         }
 
         const extracted = extractFromBrief(brief, brochureText);
-        const sections = buildSections(extracted, lang);
+        const sections = buildSections(extracted, lang, galleryImages);
         const tokensUsed = sections.reduce((sum, s) => sum + s.tokens, 0);
         const slug = slugify(extracted.projectName || projectName);
 
