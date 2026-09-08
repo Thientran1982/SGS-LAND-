@@ -14,3 +14,9 @@ Operator reconciliation must be a separate, audited state transition: only an ex
 **Why:** Treating manual confirmation and retry as the same action can either falsely report a post or duplicate an uncertain provider request.
 
 **How to apply:** Keep reconciliation tenant-scoped and transactional, show provider request/attempt history to operators, and require an operator to mark an ambiguous result failed before any later retry.
+
+Structured reconcile conflicts must preserve the machine-readable code on both the thrown client error and its attached response payload, while the UI should surface that code for operator conflicts.
+
+**Why:** A localized message is useful to people but insufficient for deterministic UI behavior, telemetry, and regression tests across the HTTP boundary.
+
+**How to apply:** Keep `TARGET_STATE_CONFLICT` stable from the route JSON through `apiClient` and the reconciliation error state; test the backend and frontend boundaries separately.
