@@ -146,6 +146,14 @@ shutdown() {
 
 trap shutdown SIGTERM SIGINT
 
+# Fail with an actionable deployment log instead of an opaque restart loop when
+# the publish runtime does not expose the Node toolchain.
+log "runtime toolchain: node=$(command -v node || echo missing) npx=$(command -v npx || echo missing)"
+if ! command -v node >/dev/null 2>&1 || ! command -v npx >/dev/null 2>&1; then
+  log "runtime toolchain unavailable; refusing to start child processes"
+  exit 127
+fi
+
 backoff_secs() {
   local restarts="$1" secs
   secs=$((2 * restarts))

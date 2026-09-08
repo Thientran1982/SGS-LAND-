@@ -24,10 +24,7 @@ if [ "${PUBLISH_BUILD:-0}" = "1" ]; then
     .cache \
     .local \
     .agents \
-    .config \
     .pythonlibs \
-    .upm \
-    .up \
     archive \
     migration_dump \
     playwright-report \
