@@ -329,4 +329,34 @@ test.describe('Generated landing visual hierarchy', () => {
     await expect(page.getByText('Bản nháp')).toBeVisible();
     expect(publishAttempts).toBe(1);
   });
+
+  test('announces successful publish without moving focus unexpectedly', async ({ page }) => {
+    await page.route(`**/api/landing-pages/${DRAFT_SLUG}/publish`, async (route) => {
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({ ok: true, status: 'published' }),
+      });
+    });
+
+    await page.goto(
+      `${BASE_URL}/landing/${DRAFT_SLUG}?visitorKey=${encodeURIComponent(DRAFT_VISITOR_KEY)}`,
+      { waitUntil: 'networkidle' },
+    );
+
+    const publishButton = page.getByRole('button', { name: 'Phát hành trang' });
+    await publishButton.focus();
+    await expect(publishButton).toBeFocused();
+
+    await publishButton.click();
+
+    const publishSuccess = page.getByRole('status').filter({
+      hasText: 'Trang landing đã được phát hành thành công.',
+    });
+    await expect(publishSuccess).toContainText('Trang landing đã được phát hành thành công.');
+    await expect(page.locator('.landing-builder-draft-banner')).toHaveCount(0);
+    await expect(page.locator('.landing-builder-owner-bar')).toContainText('Trang đã xuất bản');
+    await expect(page.getByRole('button', { name: 'Phát hành trang' })).toHaveCount(0);
+    await expect(publishButton).not.toBeFocused();
+  });
 });

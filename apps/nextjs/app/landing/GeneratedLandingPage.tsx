@@ -63,6 +63,7 @@ const SECTION_LABELS: Record<string, string> = {
   contact: "Liên hệ",
 };
 const DEFAULT_PUBLISH_ERROR = "Không thể phát hành trang lúc này. Vui lòng thử lại.";
+const PUBLISH_SUCCESS_MESSAGE = "Trang landing đã được phát hành thành công.";
 
 function sectionOf(page: GeneratedLandingData, stage: string) {
   return (Array.isArray(page.sections) ? page.sections : []).find((section) => section.stage === stage);
@@ -117,6 +118,7 @@ export default function GeneratedLandingPage({
   const [status, setStatus] = useState(page.status);
   const [publishing, setPublishing] = useState(false);
   const [publishError, setPublishError] = useState("");
+  const [publishSuccess, setPublishSuccess] = useState("");
   const publishButtonRef = useRef<HTMLButtonElement>(null);
   const isDraft = status === "draft";
   const canPublish = isDraft && Boolean(visitorKey && visitorKey === page.visitor_key);
@@ -152,6 +154,7 @@ export default function GeneratedLandingPage({
     if (!visitorKey || publishing) return;
     setPublishing(true);
     setPublishError("");
+    setPublishSuccess("");
     try {
       const csrfToken = await getCsrfToken();
       const response = await fetch(`/api/landing-pages/${encodeURIComponent(page.slug)}/publish`, {
@@ -173,6 +176,7 @@ export default function GeneratedLandingPage({
         throw new Error(message);
       }
       setStatus("published");
+      setPublishSuccess(PUBLISH_SUCCESS_MESSAGE);
     } catch (error) {
       setPublishError(error instanceof Error ? error.message : DEFAULT_PUBLISH_ERROR);
     } finally {
@@ -187,6 +191,11 @@ export default function GeneratedLandingPage({
       data-design-confidence={design?.confidence ?? ""}
       aria-labelledby="hero-heading"
     >
+      {publishSuccess && (
+        <p className="sr-only" role="status" aria-live="polite" aria-atomic="true">
+          {publishSuccess}
+        </p>
+      )}
       {isDraft && (
         <div className="landing-builder-draft-banner" role="status" aria-label="Bản nháp">
           <div className="landing-builder-draft-content">
