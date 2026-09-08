@@ -325,6 +325,7 @@ test.describe('Generated landing visual hierarchy', () => {
     );
     await expect(publishButton).toBeEnabled();
     await expect(publishButton).toHaveAttribute('aria-busy', 'false');
+    await expect(publishButton).toBeFocused();
     await expect(page.getByText('Bản nháp')).toBeVisible();
     expect(publishAttempts).toBe(1);
   });

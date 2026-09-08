@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, type CSSProperties } from "react";
+import { useEffect, useRef, useState, type CSSProperties } from "react";
 import Link from "next/link";
 
 export interface GeneratedLandingSection {
@@ -117,6 +117,7 @@ export default function GeneratedLandingPage({
   const [status, setStatus] = useState(page.status);
   const [publishing, setPublishing] = useState(false);
   const [publishError, setPublishError] = useState("");
+  const publishButtonRef = useRef<HTMLButtonElement>(null);
   const isDraft = status === "draft";
   const canPublish = isDraft && Boolean(visitorKey && visitorKey === page.visitor_key);
   const canEdit = Boolean(visitorKey && visitorKey === page.visitor_key);
@@ -128,6 +129,12 @@ export default function GeneratedLandingPage({
   const contact = sectionOf(page, "contact");
   const contactPhone = phoneHref(contact?.phone);
   const palette = design?.palette;
+  useEffect(() => {
+    if (!publishing && publishError) {
+      publishButtonRef.current?.focus();
+    }
+  }, [publishing, publishError]);
+
   const themeStyle = {
     "--landing-brand": safeThemeValue(palette?.navy, "#1b3a5c"),
     "--landing-brand-strong": safeThemeValue(palette?.navyStrong, "#0f2740"),
@@ -208,6 +215,7 @@ export default function GeneratedLandingPage({
                   aria-busy={publishing}
                   aria-label="Phát hành trang"
                   className="landing-builder-publish-button"
+                  ref={publishButtonRef}
                 >
                   {publishing ? "Đang phát hành..." : "Phát hành trang"}
                 </button>
