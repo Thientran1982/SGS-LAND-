@@ -286,6 +286,11 @@
 .landing-builder-publish-button:hover, .landing-builder-primary-button:hover {
   background: var(--landing-accent-strong); transform: translateY(-1px);
 }
+.landing-builder-page a:focus-visible,
+.landing-builder-page button:focus-visible {
+  outline: 3px solid var(--landing-accent);
+  outline-offset: 4px;
+}
 .landing-builder-publish-button:disabled { opacity: .65; cursor: wait; transform: none; }
 .landing-builder-hero {
   color: var(--ui-text-inverse, #fff);

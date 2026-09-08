@@ -161,6 +161,27 @@ test.describe('Generated landing visual hierarchy', () => {
       expect(renderedStageIds).toEqual([...SECTION_STAGES]);
 
       const main = page.locator('main.landing-builder-page');
+      await expect(main).toHaveAttribute('aria-labelledby', 'hero-heading');
+      await expect(page.locator('#hero')).toHaveAttribute('aria-labelledby', 'hero-heading');
+      const headingOutline = await main.locator('h1, h2, h3, h4, h5, h6').evaluateAll((headings) =>
+        headings.map((heading) => ({
+          id: heading.id,
+          level: heading.tagName,
+          text: heading.textContent?.trim(),
+        })),
+      );
+      expect(headingOutline).toEqual([
+        { id: 'hero-heading', level: 'H1', text: `${fixture.pattern} hero` },
+        ...SECTION_STAGES.slice(1).map((stage) => ({
+          id: `${stage}-heading`,
+          level: 'H2',
+          text: `${fixture.pattern} ${stage}`,
+        })),
+      ]);
+      for (const stage of SECTION_STAGES.slice(1)) {
+        await expect(page.locator(`#${stage}`)).toHaveAttribute('aria-labelledby', `${stage}-heading`);
+      }
+
       expect(await main.getAttribute('class')).toContain(`landing-builder-pattern-${fixture.pattern}`);
       expect(await main.evaluate((element) => {
         const style = getComputedStyle(element);
@@ -172,6 +193,14 @@ test.describe('Generated landing visual hierarchy', () => {
 
       await expect(page.locator('#hero .landing-builder-primary-button')).toHaveAttribute('href', '#contact');
       await expect(page.locator('#contact .landing-builder-primary-button')).toHaveAttribute('href', 'tel:0379281445');
+      const heroCta = page.locator('#hero .landing-builder-primary-button');
+      const contactCta = page.locator('#contact .landing-builder-primary-button');
+      await page.keyboard.press('Tab');
+      await expect(heroCta).toBeFocused();
+      await expect(heroCta).toHaveCSS('outline-style', 'solid');
+      await page.keyboard.press('Tab');
+      await expect(contactCta).toBeFocused();
+      await expect(contactCta).toHaveCSS('outline-style', 'solid');
       const ctaColors = await page.locator('#hero .landing-builder-primary-button').evaluate((element) => {
         const style = getComputedStyle(element);
         return { color: style.color, background: style.backgroundColor };
@@ -185,6 +214,13 @@ test.describe('Generated landing visual hierarchy', () => {
       const gallery = page.locator('#gallery .landing-builder-gallery-grid');
       const galleryImages = page.locator('#gallery .landing-builder-gallery-image');
       await expect(galleryImages).toHaveCount(fixture.images.length);
+      const galleryAlts = await galleryImages.evaluateAll((images) =>
+        images.map((image) => image.getAttribute('alt')?.trim() || ''),
+      );
+      expect(galleryAlts).toEqual(
+        fixture.images.map((_, index) => `Visual ${fixture.pattern} fixture - ${fixture.pattern} gallery - hình ảnh ${index + 1}`),
+      );
+      expect(galleryAlts.every((alt) => alt.length > 0 && !/^hình ảnh \d+$/i.test(alt))).toBe(true);
       if (fixture.images.length === 0) {
         await expect(page.locator('#gallery h2')).toBeVisible();
         await expect(gallery).toHaveCount(0);

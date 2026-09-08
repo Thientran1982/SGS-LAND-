@@ -178,6 +178,7 @@ export default function GeneratedLandingPage({
       className={`landing-builder-page landing-builder-pattern-${design?.pattern || "sanctuary"}`}
       style={themeStyle}
       data-design-confidence={design?.confidence ?? ""}
+      aria-labelledby="hero-heading"
     >
       {isDraft && (
         <div className="landing-builder-draft-banner" role="status">
@@ -212,10 +213,14 @@ export default function GeneratedLandingPage({
         </div>
       )}
 
-      <header className={`landing-builder-hero landing-builder-hero-${design?.hero?.alignment === "center" ? "center" : "left"}`} id="hero">
+      <header
+        className={`landing-builder-hero landing-builder-hero-${design?.hero?.alignment === "center" ? "center" : "left"}`}
+        id="hero"
+        aria-labelledby="hero-heading"
+      >
         <div className="landing-builder-wrap landing-builder-hero-inner">
           <span className="landing-builder-eyebrow">SGS LAND · LANDING BUILDER</span>
-          <h1>{hero?.title || page.project_name}</h1>
+          <h1 id="hero-heading">{hero?.title || page.project_name}</h1>
           <p>{hero?.body || "Thông tin dự án đang được cập nhật."}</p>
           <a href="#contact" className="landing-builder-primary-button">Nhận tư vấn dự án</a>
         </div>
@@ -230,25 +235,30 @@ export default function GeneratedLandingPage({
             : [];
           const body = typeof section?.body === "string" ? section.body.trim() : "";
           return (
-            <section className={`landing-builder-section landing-builder-section-${stage}`} id={stage} key={stage}>
+            <section
+              className={`landing-builder-section landing-builder-section-${stage}`}
+              id={stage}
+              key={stage}
+              aria-labelledby={`${stage}-heading`}
+            >
               <div className="landing-builder-section-heading">
                 <span className="landing-builder-section-index">0{SECTION_ORDER.indexOf(stage) + 1}</span>
                 <div>
                   <span className="landing-builder-eyebrow">{SECTION_LABELS[stage]}</span>
-                  <h2>{section?.title || SECTION_LABELS[stage]}</h2>
+                  <h2 id={`${stage}-heading`}>{section?.title || SECTION_LABELS[stage]}</h2>
                 </div>
               </div>
               {body && <p className="landing-builder-body">{body}</p>}
               {images.length > 0 && (
                 <div
                   className={`landing-builder-gallery-grid landing-builder-gallery-${section?.layout || design?.gallery?.layout || "editorial-grid"}`}
-                  aria-label="Hình ảnh dự án"
+                  aria-label={`Hình ảnh ${section?.title || SECTION_LABELS[stage].toLowerCase()}`}
                 >
                   {images.map((url, index) => (
                     <img
                       key={`${url}-${index}`}
                       src={url}
-                      alt={`${page.project_name} - hình ảnh ${index + 1}`}
+                      alt={`${page.project_name} - ${section?.title || SECTION_LABELS[stage]} - hình ảnh ${index + 1}`}
                       className="landing-builder-gallery-image"
                       loading="lazy"
                     />
@@ -274,10 +284,14 @@ export default function GeneratedLandingPage({
           );
         })}
 
-        <section className="landing-builder-section landing-builder-contact" id="contact">
+        <section
+          className="landing-builder-section landing-builder-contact"
+          id="contact"
+          aria-labelledby="contact-heading"
+        >
           <div>
             <span className="landing-builder-eyebrow">{SECTION_LABELS.contact}</span>
-            <h2>{contact?.title || "Liên hệ môi giới"}</h2>
+            <h2 id="contact-heading">{contact?.title || "Liên hệ môi giới"}</h2>
             <p>{contact?.body || "Để lại thông tin để SGS LAND hỗ trợ bạn."}</p>
             {contact?.contactName && <strong className="landing-builder-contact-name">{contact.contactName}</strong>}
           </div>
