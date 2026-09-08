@@ -88,7 +88,7 @@ externalPort = 3002
 
 [deployment]
 deploymentTarget = "vm"
-run = ["sh", "-c", "PORT_BACKEND=5001 PORT=5000 bash scripts/supervisor.sh"]
+run = ["npm", "run", "start:production"]
 build = ["bash", "-c", "PUBLISH_BUILD=1 bash scripts/build-production.sh"]
 [userenv]
 [userenv.shared]
@@ -103,10 +103,13 @@ LANGGRAPH_ORCHESTRATION_APPROVED = "true"
 [userenv.development]
 NODE_ENV = "development"
 PORT = "5000"
+QSTASH_URL = "https://qstash-us-east-1.upstash.io"
 [userenv.production]
 NODE_ENV = "production"
 PORT = "5000"
 APP_URL = "https://sgsland.vn"
+QSTASH_URL = "https://qstash-us-east-1.upstash.io"
+PROD_DOMAIN = "sgsland.vn"
 [objectStorage]
 defaultBucketID = "replit-objstore-b2bda06e-8535-430b-b2ac-45839c6a59c1"
 [postMerge]

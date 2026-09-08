@@ -16,7 +16,7 @@ import { isTransientDatabaseError } from "./server/dbHealth";
 import bcrypt from "bcrypt";
 import { runPendingMigrations } from "./server/migrations/runner";
 import { systemService } from "./server/services/systemService";
-import { webhookQueue, setupWebhookWorker, processWebhookJob, isQStashEnabled, isQstashVerified, getQstashToken, verifyQstashTokenAtStartup } from "./server/queue";
+import { webhookQueue, setupWebhookWorker, processWebhookJob, isQStashEnabled, isQstashVerified, getQstashToken, getQstashBaseUrl, verifyQstashTokenAtStartup } from "./server/queue";
 import { startAgentOperatorWorker, setAgentOperatorIo } from "./server/services/agentOperatorDaemon";
 import { startLearningCycleScheduler } from "./server/services/learningCycleRunner";
 import { userRepository } from "./server/repositories/userRepository";
@@ -6875,7 +6875,7 @@ app.use('/api/v1', (req, _res, next) => {
         if (appDomain && rlhfSecret) {
           const scheduleUrl = `https://${appDomain}/api/internal/rlhf-recompute`;
           const scheduleId = 'rlhf-daily-recompute';
-          const qstashScheduleEndpoint = `https://qstash.upstash.io/v2/schedules/${scheduleId}`;
+          const qstashScheduleEndpoint = `${getQstashBaseUrl()}/v2/schedules/${scheduleId}`;
           const body = JSON.stringify({ tenantId: 'all', secret: rlhfSecret });
           const resp = await fetch(qstashScheduleEndpoint, {
             method: 'POST',
@@ -6912,7 +6912,7 @@ app.use('/api/v1', (req, _res, next) => {
         if (appDomain2 && engagementSecret) {
           const engScheduleId  = 'engagement-email-daily';
           const engScheduleUrl = `https://${appDomain2}/api/internal/engagement-email-cron`;
-          const engQstashEp    = `https://qstash.upstash.io/v2/schedules/${engScheduleId}`;
+          const engQstashEp    = `${getQstashBaseUrl()}/v2/schedules/${engScheduleId}`;
           const qstashToken    = getQstashToken();
           const engBody        = JSON.stringify({ secret: engagementSecret });
 
@@ -6952,7 +6952,7 @@ app.use('/api/v1', (req, _res, next) => {
         if (appDomain3 && backupSecret) {
           const bkScheduleId  = 'backup-db-daily';
           const bkScheduleUrl = `https://${appDomain3}/api/internal/backup-cron`;
-          const bkQstashEp    = `https://qstash.upstash.io/v2/schedules/${bkScheduleId}`;
+          const bkQstashEp    = `${getQstashBaseUrl()}/v2/schedules/${bkScheduleId}`;
           const qstashToken   = getQstashToken();
           const bkBody        = JSON.stringify({ secret: backupSecret });
 
@@ -6992,7 +6992,7 @@ app.use('/api/v1', (req, _res, next) => {
         if (appDomain4 && priceRefreshSecret) {
           const prScheduleId  = 'listing-price-refresh-daily';
           const prScheduleUrl = `https://${appDomain4}/api/internal/listing-price-refresh`;
-          const prQstashEp    = `https://qstash.upstash.io/v2/schedules/${prScheduleId}`;
+          const prQstashEp    = `${getQstashBaseUrl()}/v2/schedules/${prScheduleId}`;
           const prBody        = JSON.stringify({ secret: priceRefreshSecret, tenantId: 'all' });
 
           const prResp = await fetch(prQstashEp, {
@@ -7031,7 +7031,7 @@ app.use('/api/v1', (req, _res, next) => {
         if (appDomain5 && taskReminderSecret) {
           const trScheduleId  = 'task-reminder-hourly';
           const trScheduleUrl = `https://${appDomain5}/api/internal/task-reminder-cron`;
-          const trQstashEp    = `https://qstash.upstash.io/v2/schedules/${trScheduleId}`;
+          const trQstashEp    = `${getQstashBaseUrl()}/v2/schedules/${trScheduleId}`;
           const trBody        = JSON.stringify({ secret: taskReminderSecret });
 
           const trResp = await fetch(trQstashEp, {
@@ -7070,7 +7070,7 @@ app.use('/api/v1', (req, _res, next) => {
         if (appDomain7 && geoSecret) {
           const geoScheduleId  = 'geo-monitor-daily';
           const geoScheduleUrl = `https://${appDomain7}/api/internal/geo-monitor-cron`;
-          const geoQstashEp    = `https://qstash.upstash.io/v2/schedules/${geoScheduleId}`;
+          const geoQstashEp    = `${getQstashBaseUrl()}/v2/schedules/${geoScheduleId}`;
           const geoBody        = JSON.stringify({ secret: geoSecret });
 
           const geoResp = await fetch(geoQstashEp, {
@@ -7109,7 +7109,7 @@ app.use('/api/v1', (req, _res, next) => {
         if (appDomain6 && campaignSchedulerSecret) {
           const csScheduleId  = 'campaign-scheduler-5min';
           const csScheduleUrl = `https://${appDomain6}/api/internal/campaign-scheduler-cron`;
-          const csQstashEp    = `https://qstash.upstash.io/v2/schedules/${csScheduleId}`;
+          const csQstashEp    = `${getQstashBaseUrl()}/v2/schedules/${csScheduleId}`;
           const csBody        = JSON.stringify({ secret: campaignSchedulerSecret });
 
           const csResp = await fetch(csQstashEp, {
@@ -7148,7 +7148,7 @@ app.use('/api/v1', (req, _res, next) => {
         if (appDomain8 && chatFollowUpSecret8) {
           const cfScheduleId  = 'chat-followup-daily';
           const cfScheduleUrl = `https://${appDomain8}/api/internal/chat-followup-cron`;
-          const cfQstashEp    = `https://qstash.upstash.io/v2/schedules/${cfScheduleId}`;
+          const cfQstashEp    = `${getQstashBaseUrl()}/v2/schedules/${cfScheduleId}`;
           const cfBody        = JSON.stringify({ secret: chatFollowUpSecret8 });
 
           const cfResp = await fetch(cfQstashEp, {

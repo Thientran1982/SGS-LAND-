@@ -14,6 +14,7 @@ import { Receiver } from '@upstash/qstash';
 import { REGIONS, REGION_CODES, type RegionCode } from '../config/regions';
 
 const QSTASH_TOKEN = process.env.QSTASH_TOKEN || '';
+const QSTASH_URL = (process.env.QSTASH_URL || 'https://qstash.upstash.io').replace(/\/+$/, '');
 
 /** Public base URL of this deployment (where QStash sends webhooks). */
 function baseUrl(): string {
@@ -31,7 +32,7 @@ function webhookUrl(region: RegionCode): string {
 let _client: Client | null = null;
 function client(): Client {
   if (!QSTASH_TOKEN) throw new Error('[market:qstash] QSTASH_TOKEN not set');
-  if (!_client) _client = new Client({ token: QSTASH_TOKEN });
+  if (!_client) _client = new Client({ token: QSTASH_TOKEN, baseUrl: QSTASH_URL });
   return _client;
 }
 

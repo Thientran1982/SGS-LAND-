@@ -67,3 +67,4 @@
 - [Private CRM route dual registry](private-route-dual-registry.md) — new authenticated routes must be registered in both Vite SPA and Next proxy layers to avoid direct-link 404s
 - [Social publishing provider safety](social-publishing-provider-safety.md) — verify tenant-scoped public permissions and never retry uncertain provider POSTs blindly
 - [Preview reconcile smoke coverage](preview-reconcile-smoke.md) — test mutation error contracts through the public preview proxy, not only an isolated router
+- [Deployment artifact revision](deployment-artifact-revision.md) — prove production runs the current workspace artifact before diagnosing a repeated runtime failure

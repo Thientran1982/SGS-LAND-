@@ -139,6 +139,13 @@ export function getQstashToken(): string {
   return (process.env.QSTASH_TOKEN || '').trim().replace(/^["']|["']$/g, '');
 }
 
+export function getQstashBaseUrl(): string {
+  return (process.env.QSTASH_URL || 'https://qstash.upstash.io')
+    .trim()
+    .replace(/^["']|["']$/g, '')
+    .replace(/\/+$/, '');
+}
+
 // Configuration alone is not enough for production scheduling: an expired or
 // copied token can still be present in the environment. This state is set only
 // after the read-only QStash API check succeeds during boot.
@@ -166,7 +173,7 @@ export async function verifyQstashTokenAtStartup(): Promise<boolean> {
   }
   try {
     const { Client } = await import('@upstash/qstash');
-    const client = new Client({ token });
+    const client = new Client({ token, baseUrl: getQstashBaseUrl() });
     // schedules.list() is a cheap, read-only, no-side-effect call — perfect
     // for an auth check without touching any real schedule/job.
     await client.schedules.list();
@@ -207,7 +214,10 @@ export const webhookQueue = {
     if (isQstashVerified()) {
       try {
         const { Client } = await import('@upstash/qstash');
-        const client = new Client({ token: getQstashToken() });
+        const client = new Client({
+          token: getQstashToken(),
+          baseUrl: getQstashBaseUrl(),
+        });
         const receiverUrl = getReceiverUrl();
         await client.publishJSON({
           url: receiverUrl,

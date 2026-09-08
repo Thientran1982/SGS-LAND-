@@ -47,6 +47,17 @@ set -u
 BACKEND_PORT="${PORT_BACKEND:-5001}"
 FRONTEND_PORT="${PORT:-5000}"
 BACKEND_URL="http://localhost:${BACKEND_PORT}"
+NODE_BIN="${npm_node_execpath:-$(command -v node 2>/dev/null || true)}"
+NEXT_CLI="$PWD/apps/nextjs/node_modules/next/dist/bin/next"
+
+if [ -z "$NODE_BIN" ] || [ ! -x "$NODE_BIN" ]; then
+  echo "[supervisor] fatal: Node runtime not found (npm_node_execpath is unavailable)" >&2
+  exit 127
+fi
+if [ ! -f "$NEXT_CLI" ]; then
+  echo "[supervisor] fatal: Next.js CLI not found at $NEXT_CLI" >&2
+  exit 127
+fi
 
 # Tunables (env-overridable so ops can adjust without a code change).
 WATCHDOG_INTERVAL_SECS="${WATCHDOG_INTERVAL_SECS:-30}"
@@ -168,7 +179,7 @@ run_backend_loop() {
     log "starting backend (node server.js) on port ${BACKEND_PORT} (restart #${restarts})"
     PORT="${BACKEND_PORT}" NODE_ENV=production \
       NODE_OPTIONS="--max-old-space-size=${BACKEND_MAX_OLD_SPACE_MB} ${NODE_OPTIONS:-}" \
-      node server.js &
+      "$NODE_BIN" server.js &
     pid=$!
     echo "$pid" > "$BACKEND_PID_FILE"
     wait "$pid"
@@ -190,7 +201,7 @@ run_frontend_loop() {
     log "starting frontend (next start) on port ${FRONTEND_PORT} (restart #${restarts})"
     BACKEND_URL="${BACKEND_URL}" NODE_ENV=production \
       NODE_OPTIONS="--max-old-space-size=${FRONTEND_MAX_OLD_SPACE_MB} ${NODE_OPTIONS:-}" \
-      npx --prefix apps/nextjs next start apps/nextjs -p "${FRONTEND_PORT}" &
+      "$NODE_BIN" "$NEXT_CLI" start apps/nextjs -p "${FRONTEND_PORT}" &
     pid=$!
     echo "$pid" > "$FRONTEND_PID_FILE"
     wait "$pid"
