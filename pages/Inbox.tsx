@@ -170,6 +170,7 @@ export const Inbox: React.FC = () => {
     const fileInputRef = useRef<HTMLInputElement>(null);
     const isSendingRef = useRef(false);
     const [csatScore, setCsatScore] = useState<number | null>(null);
+    const [csatReason, setCsatReason] = useState('');
     const [csatConsent, setCsatConsent] = useState(false);
     const [csatSubmitting, setCsatSubmitting] = useState(false);
     const [csatRecordedScore, setCsatRecordedScore] = useState<number | null>(null);
@@ -488,9 +489,11 @@ export const Inbox: React.FC = () => {
                 score: csatScore,
                 channel: csatDeliveryChannel,
                 consent: true,
+                reason: csatScore <= 2 ? csatReason.trim() : undefined,
             });
             setCsatRecordedScore(csatScore);
             setCsatScore(null);
+            setCsatReason('');
             setCsatConsent(false);
             notify('Đã ghi nhận đánh giá CSAT', 'success');
         } catch (error: any) {
@@ -728,6 +731,7 @@ export const Inbox: React.FC = () => {
     );
     useEffect(() => {
         setCsatScore(null);
+        setCsatReason('');
         setCsatConsent(false);
         setCsatRecordedScore(null);
     }, [selectedLeadId]);
@@ -1063,13 +1067,31 @@ export const Inbox: React.FC = () => {
                                         <button
                                             key={score}
                                             type="button"
-                                            onClick={() => setCsatScore(score)}
+                                            onClick={() => {
+                                                 setCsatScore(score);
+                                                 if (score > 2) setCsatReason('');
+                                             }}
                                             aria-pressed={csatScore === score}
                                             className={`min-h-[32px] min-w-[32px] rounded-lg border px-2 text-xs font-bold transition-colors ${csatScore === score ? 'border-[var(--sgs-primary)] bg-[var(--sgs-primary)] text-white' : 'border-[var(--glass-border)] bg-[var(--glass-surface)] text-[var(--text-primary)] hover:border-[var(--sgs-primary)]'}`}
                                         >
                                             {score}
                                         </button>
                                     ))}
+                                    {csatScore !== null && csatScore <= 2 && (
+                                        <label className="basis-full text-[11px] text-[var(--text-secondary)]">
+                                            Lý do chưa hài lòng (không bắt buộc)
+                                            <textarea
+                                                value={csatReason}
+                                                onChange={event => setCsatReason(event.target.value.slice(0, 500))}
+                                                maxLength={500}
+                                                rows={2}
+                                                placeholder="Điều gì khiến trải nghiệm chưa tốt?"
+                                                aria-label="Lý do CSAT thấp"
+                                                className="mt-1 block w-full resize-y rounded-lg border border-[var(--glass-border)] bg-[var(--glass-surface)] px-2.5 py-2 text-xs text-[var(--text-primary)] outline-none focus:border-[var(--sgs-primary)]"
+                                            />
+                                            <span className="mt-1 block text-right text-[10px]">{csatReason.length}/500</span>
+                                        </label>
+                                    )}
                                     <label className="flex basis-full items-center gap-2 text-[11px] text-[var(--text-secondary)]">
                                         <input
                                             type="checkbox"

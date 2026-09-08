@@ -5,6 +5,11 @@ import { emailService } from './emailService';
 import { logger } from '../middleware/logger';
 import { notificationRepository } from '../repositories/notificationRepository';
 import { agentOperatingRepository } from '../repositories/agentOperatingRepository';
+import {
+  classifySupportCsatReason,
+  SUPPORT_CSAT_REASON_CATEGORIES,
+  SupportCsatReasonCategory,
+} from './agentMemoryService';
 
 export const REPORT_TIME_ZONE = 'Asia/Ho_Chi_Minh';
 const MISSING = 'chưa có dữ liệu';
@@ -20,7 +25,12 @@ export interface DailyReportMetrics {
     topSearches: Array<{ query: string; searches: number }>;
   };
   tasks: { created: number | null; overdue: number | null; completed: number | null };
-  minh: { conversations: number | null; averageCsat: number | null; unanswered: number | null };
+  minh: {
+    conversations: number | null;
+    averageCsat: number | null;
+    unanswered: number | null;
+    lowCsatReasons?: Array<{ category: SupportCsatReasonCategory; count: number }>;
+  };
   geoSeo: {
     available: boolean;
     note: string;
@@ -97,6 +107,36 @@ export function extractSupportCsatScore(payload: unknown): number | null {
     .find(value => value !== null && value !== undefined && value !== '');
   const score = Number(candidate);
   return Number.isFinite(score) && score >= 1 && score <= 5 ? score : null;
+}
+
+const SUPPORT_CSAT_REASON_CATEGORY_SET = new Set<string>(SUPPORT_CSAT_REASON_CATEGORIES);
+
+/**
+ * Only low scores can contribute a reason. Prefer the category captured at
+ * write time, but classify legacy payloads locally without returning their
+ * free text to a report.
+ */
+export function extractSupportCsatReasonCategory(payload: unknown): SupportCsatReasonCategory | null {
+  const data = parseJsonObject(payload);
+  const score = extractSupportCsatScore(data);
+  if (!data || score === null || score > 2) return null;
+  const stored = String(data.reasonCategory || '').trim();
+  if (SUPPORT_CSAT_REASON_CATEGORY_SET.has(stored)) return stored as SupportCsatReasonCategory;
+  const reason = String(data.reason || '').trim();
+  return reason ? classifySupportCsatReason(reason) : null;
+}
+
+export function groupSupportCsatReasons(
+  signals: Array<{ payload: unknown }>,
+): Array<{ category: SupportCsatReasonCategory; count: number }> {
+  const counts = new Map<SupportCsatReasonCategory, number>();
+  for (const signal of signals) {
+    const category = extractSupportCsatReasonCategory(signal.payload);
+    if (category) counts.set(category, (counts.get(category) || 0) + 1);
+  }
+  return [...counts.entries()]
+    .map(([category, count]) => ({ category, count }))
+    .sort((a, b) => b.count - a.count || a.category.localeCompare(b.category));
 }
 
 function buildGeoSeoMetrics(snapshot: any): DailyReportMetrics['geoSeo'] {
@@ -240,6 +280,7 @@ export async function collectDailyMetrics(tenantId: string, reportDate: string):
     const averageCsat = csatScores.length
       ? Number((csatScores.reduce((sum, score) => sum + score, 0) / csatScores.length).toFixed(2))
       : null;
+    const lowCsatReasons = groupSupportCsatReasons(csatSignals);
     const unanswered = await optional(client, `SELECT COUNT(*)::int AS count FROM agent_human_questions WHERE tenant_id=$1 AND status='OPEN' AND ${queryDateRange('created_at')}`, [tenantId, start], { count: null });
     const warnings = await optional(client, `SELECT COUNT(*)::int AS count FROM error_logs WHERE tenant_id=$1 AND ${queryDateRange('created_at')}`, [tenantId, start], { count: null });
     const geoSnapshot = tenantId === DEFAULT_TENANT_ID
@@ -259,7 +300,12 @@ export async function collectDailyMetrics(tenantId: string, reportDate: string):
         topSearches: topSearches.map(row => ({ query: row.query, searches: safeNumber(row.searches) })),
       },
       tasks: { created: tasks.created == null ? null : safeNumber(tasks.created), overdue: tasks.overdue == null ? null : safeNumber(tasks.overdue), completed: tasks.completed == null ? null : safeNumber(tasks.completed) },
-      minh: { conversations: interactions.conversations == null ? null : safeNumber(interactions.conversations), averageCsat, unanswered: unanswered.count == null ? null : safeNumber(unanswered.count) },
+      minh: {
+        conversations: interactions.conversations == null ? null : safeNumber(interactions.conversations),
+        averageCsat,
+        unanswered: unanswered.count == null ? null : safeNumber(unanswered.count),
+        lowCsatReasons,
+      },
       geoSeo: buildGeoSeoMetrics(geoSnapshot),
       warnings: { count: warnings.count == null ? null : safeNumber(warnings.count), notable: [] },
     };
@@ -338,6 +384,19 @@ export function renderReportEmail(summary: DailyReportSummary): { subject: strin
   const trafficValue = traffic.propertyViews == null && traffic.listingSearches == null
     ? MISSING
     : `${traffic.propertyViews ?? MISSING} lượt xem · ${traffic.listingSearches ?? MISSING} lượt tìm kiếm`;
+  const csatReasonLabels: Record<string, string> = {
+    response_time: 'Phản hồi chậm',
+    resolution: 'Chưa giải quyết được vấn đề',
+    answer_quality: 'Câu trả lời chưa phù hợp',
+    communication: 'Cách giao tiếp',
+    information: 'Thông tin/giá chưa phù hợp',
+    technical: 'Lỗi kỹ thuật/kênh liên hệ',
+    other: 'Lý do khác',
+  };
+  const lowCsatReasons = summary.minh.lowCsatReasons || [];
+  const lowCsatReasonsText = lowCsatReasons.length
+    ? lowCsatReasons.map(item => `${csatReasonLabels[item.category] || 'Lý do khác'}: ${item.count}`).join(' · ')
+    : MISSING;
   const dataNotesSection = table(
     row('GEO/SEO', summary.geoSeo.available ? 'Đã có dữ liệu' : summary.geoSeo.note || MISSING) +
     row('Lượt xem / tìm kiếm dự án', `${trafficValue} · nguồn visitor_events`) +
@@ -347,11 +406,11 @@ export function renderReportEmail(summary: DailyReportSummary): { subject: strin
     ${table(summary.overview.map(x => row(x.label,x.value)).join(''))}
     <h3 style="margin:22px 0 8px">Leads & môi giới F1</h3>${table(row('Lead mới', summary.leads.new ?? MISSING) + row('Lead theo trạng thái', breakdown(summary.leads.byStage, leadStageLabels)) + row('Lead theo nguồn', breakdown(summary.leads.bySource, leadSourceLabels)) + row('Môi giới hoạt động', summary.brokers.active ?? MISSING) + row('Lead được phân bổ', summary.brokers.assignedLeads ?? MISSING))}
     <h3 style="margin:22px 0 8px">Listing, lượt xem & công việc</h3>${table(row('Tin đăng mới', summary.listings.new) + row('Tin cập nhật giá', summary.listings.priceUpdated) + row('Lượt xem sản phẩm', traffic.propertyViews ?? MISSING) + row('Lượt tìm kiếm', traffic.listingSearches ?? MISSING) + row('Top sản phẩm được xem', topViewedText) + row('Top từ khóa tìm kiếm', topSearchesText) + row('Task tạo mới', summary.tasks.created) + row('Task quá hạn', summary.tasks.overdue))}
-    <h3 style="margin:22px 0 8px">Minh & cảnh báo</h3>${table(row('Hội thoại', summary.minh.conversations ?? MISSING) + row('CSAT trung bình', summary.minh.averageCsat ?? MISSING) + row('Câu hỏi chưa trả lời', summary.minh.unanswered ?? MISSING) + row('Cảnh báo hệ thống', summary.warnings.count ?? MISSING))}
+    <h3 style="margin:22px 0 8px">Minh & cảnh báo</h3>${table(row('Hội thoại', summary.minh.conversations ?? MISSING) + row('CSAT trung bình', summary.minh.averageCsat ?? MISSING) + row('Nhóm lý do CSAT thấp', lowCsatReasonsText) + row('Câu hỏi chưa trả lời', summary.minh.unanswered ?? MISSING) + row('Cảnh báo hệ thống', summary.warnings.count ?? MISSING))}
     ${agentSection}
     <h3 style="margin:22px 0 8px">Nguồn dữ liệu bổ sung</h3>${dataNotesSection}
     </div>`;
-  const text = [subject, ...summary.overview.map(x => `${x.label}: ${x.value}`), `GEO/SEO: ${summary.geoSeo.available ? summary.geoSeo.note : summary.geoSeo.note || MISSING}`, `Lượt xem / tìm kiếm dự án: ${trafficValue} · nguồn visitor_events`, `CSAT trung bình: ${summary.minh.averageCsat ?? MISSING}`, `Cảnh báo: ${summary.warnings.count ?? MISSING}`, summary.agentOperations ? `Vận hành Agent: ${summary.agentOperations.summary}` : 'Vận hành Agent: chưa có báo cáo ca'].join('\n');
+  const text = [subject, ...summary.overview.map(x => `${x.label}: ${x.value}`), `GEO/SEO: ${summary.geoSeo.available ? summary.geoSeo.note : summary.geoSeo.note || MISSING}`, `Lượt xem / tìm kiếm dự án: ${trafficValue} · nguồn visitor_events`, `CSAT trung bình: ${summary.minh.averageCsat ?? MISSING}`, `Nhóm lý do CSAT thấp: ${lowCsatReasonsText}`, `Cảnh báo: ${summary.warnings.count ?? MISSING}`, summary.agentOperations ? `Vận hành Agent: ${summary.agentOperations.summary}` : 'Vận hành Agent: chưa có báo cáo ca'].join('\n');
   return { subject, html, text };
 }
 

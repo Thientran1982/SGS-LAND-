@@ -115,7 +115,7 @@ export function createAgentMemoryRoutes(authenticateToken: RequestHandler): Rout
   router.post('/signals/csat', authenticateToken, async (req, res) => {
     try {
       const user = (req as any).user;
-      const { subjectId, score, channel, consent } = req.body || {};
+      const { subjectId, score, channel, consent, reason } = req.body || {};
       if (!subjectId || score === undefined) {
         return res.status(400).json({ error: 'subjectId và score là bắt buộc' });
       }
@@ -124,6 +124,7 @@ export function createAgentMemoryRoutes(authenticateToken: RequestHandler): Rout
         score: Number(score),
         channel: channel ? String(channel) : undefined,
         consent: consent === true,
+        reason: typeof reason === 'string' ? reason : undefined,
         actorId: user.id,
         provenance: 'staff',
       });

@@ -78,6 +78,8 @@ import {
   buildReportSummary,
   collectDailyMetrics,
   extractSupportCsatScore,
+  extractSupportCsatReasonCategory,
+  groupSupportCsatReasons,
   renderReportEmail,
   replayInterruptedDailyReports,
   runDailyReport,
@@ -118,6 +120,19 @@ describe('daily admin report', () => {
     expect(extractSupportCsatScore(JSON.stringify({ rating: 4 }))).toBe(4);
     expect(extractSupportCsatScore({ score: 0 })).toBeNull();
     expect(extractSupportCsatScore({ score: 9 })).toBeNull();
+  });
+
+  it('groups only low-score CSAT reasons into safe categories', () => {
+    expect(extractSupportCsatReasonCategory({ score: 2, reason: 'Chờ phản hồi quá lâu' })).toBe('response_time');
+    expect(extractSupportCsatReasonCategory({ score: 5, reason: 'Chờ phản hồi quá lâu' })).toBeNull();
+    expect(groupSupportCsatReasons([
+      { payload: { score: 1, reasonCategory: 'resolution', reason: 'Có số 0912345678' } },
+      { payload: JSON.stringify({ score: 2, reason: 'Câu trả lời không rõ' }) },
+      { payload: { score: 2, reason: 'Câu trả lời không rõ' } },
+    ])).toEqual([
+      { category: 'answer_quality', count: 2 },
+      { category: 'resolution', count: 1 },
+    ]);
   });
 
   it('collects views/searches, GEO/SEO and CSAT from their unified sources', async () => {

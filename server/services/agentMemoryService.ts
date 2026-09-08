@@ -14,6 +14,16 @@ const MAX_ITEMS = 200;
 const SIGNAL_FAILURE_RETENTION_DAYS = 30;
 const signalWriteFailures = new Map<string, { count: number; lastAt: string; lastError: string }>();
 const SUPPORT_CSAT_CHANNELS = new Set(['WEB', 'WEB_CHAT', 'ZALO', 'FACEBOOK', 'MESSENGER']);
+export const SUPPORT_CSAT_REASON_CATEGORIES = [
+  'response_time',
+  'resolution',
+  'answer_quality',
+  'communication',
+  'information',
+  'technical',
+  'other',
+] as const;
+export type SupportCsatReasonCategory = typeof SUPPORT_CSAT_REASON_CATEGORIES[number];
 
 export function scrubPii(input: unknown): string {
   return String(input ?? '')
@@ -38,6 +48,24 @@ function safeNamespace(namespace: string): string {
 
 function normalizeVietnamese(value: string): string {
   return value.toLocaleLowerCase('vi-VN').normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+}
+
+/**
+ * Map free-text low-score feedback to a small, report-safe vocabulary. The
+ * original (PII-scrubbed) text remains attached to the conversation signal,
+ * while daily reports only expose these categories and their counts.
+ */
+export function classifySupportCsatReason(input: unknown): SupportCsatReasonCategory {
+  const value = normalizeVietnamese(String(input ?? '').trim());
+  if (!value) return 'other';
+  const matches = (terms: string[]) => terms.some(term => value.includes(term));
+  if (matches(['cho lau', 'doi lau', 'phan hoi', 'tra loi cham', 'thoi gian'])) return 'response_time';
+  if (matches(['khong giai quyet', 'chua giai quyet', 'khong xu ly', 'chua xong', 'van de'])) return 'resolution';
+  if (matches(['cau tra loi', 'tra loi sai', 'khong dung', 'thieu thong tin', 'khong ro', 'khong hieu', 'tu van'])) return 'answer_quality';
+  if (matches(['thai do', 'bat lich su', 'khong than thien', 'khong lang nghe', 'giao tiep'])) return 'communication';
+  if (matches(['gia', 'thong tin', 'san pham', 'bat dong san', 'bao gia'])) return 'information';
+  if (matches(['loi', 'link', 'ket noi', 'website', 'web', 'chat', 'khong mo'])) return 'technical';
+  return 'other';
 }
 
 const REAL_ESTATE_SYNONYMS: Array<{ triggers: string[]; equivalents: string[] }> = [
@@ -305,6 +333,7 @@ export const agentMemoryService = {
     actorId?: string;
     channel?: string;
     consent: boolean;
+    reason?: string;
     provenance?: 'staff' | 'buyer';
   }) {
     const score = Number(input.score);
@@ -321,6 +350,10 @@ export const agentMemoryService = {
     if (requestedChannel && !SUPPORT_CSAT_CHANNELS.has(requestedChannel)) {
       throw new Error('CSAT chỉ hỗ trợ hội thoại WEB, Zalo hoặc Facebook');
     }
+    const reason = score <= 2
+      ? scrubPii(String(input.reason ?? '')).replace(/\s+/g, ' ').trim().slice(0, 500)
+      : '';
+    const reasonCategory = reason ? classifySupportCsatReason(reason) : null;
 
     const conversation = await withTenantContext(tenantId, async client => {
       const result = await client.query(
@@ -371,6 +404,7 @@ export const agentMemoryService = {
         channel: channel === 'WEB_CHAT' ? 'WEB' : channel === 'MESSENGER' ? 'FACEBOOK' : channel,
         consent: true,
         source: input.provenance || 'staff',
+         ...(reason ? { reason, reasonCategory } : {}),
       },
     });
   },

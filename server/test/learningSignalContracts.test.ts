@@ -119,6 +119,32 @@ describe('learning signal contracts', () => {
     });
   });
 
+  it('scrubs PII and stores a categorized reason for a low support CSAT', async () => {
+    const row = insertedSignal('signal-csat-low', 'support_csat', 'support_csat:conversation:lead-1');
+    query.mockResolvedValueOnce({ rows: [{ id: 'lead-1', channel: 'WEB' }] });
+    arrangeSignalInsert(row);
+
+    await agentMemoryService.recordSupportCsat(tenantId, {
+      subjectId: 'lead-1',
+      score: 2,
+      channel: 'WEB',
+      consent: true,
+      actorId,
+      reason: 'Chờ phản hồi quá lâu, gọi 0912345678 hoặc test@example.com',
+    });
+
+    const insert = query.mock.calls.find(([sql]) => String(sql).includes('INSERT INTO agent_signals'));
+    expect(JSON.parse(insert?.[1][6])).toMatchObject({
+      score: 2,
+      reasonCategory: 'response_time',
+    });
+    const payload = JSON.parse(insert?.[1][6]);
+    expect(payload.reason).not.toContain('0912345678');
+    expect(payload.reason).not.toContain('test@example.com');
+    expect(payload.reason).toContain('[số điện thoại đã ẩn]');
+    expect(payload.reason).toContain('[email đã ẩn]');
+  });
+
   it('does not write support CSAT without explicit consent', async () => {
     await expect(agentMemoryService.recordSupportCsat(tenantId, {
       subjectId: 'lead-1',
