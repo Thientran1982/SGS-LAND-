@@ -54,6 +54,7 @@ export const ROUTES = {
   ROUTING_RULES:  "/routing-rules",
   SEQUENCES:      "/sequences",
   CAMPAIGNS:      "/campaigns",
+  SOCIAL_PUBLISHING: "/social-publishing",
   KNOWLEDGE:      "/knowledge",
   SCORING_RULES:  "/scoring-rules",
   MARKETPLACE_APPS: "/marketplace-apps",
@@ -81,7 +82,7 @@ export const ROUTES = {
 export const PRIVATE_PREFIXES = [
   "/dashboard", "/leads", "/contracts", "/inventory", "/projects",
   "/favorites", "/inbox", "/reports", "/approvals", "/routing-rules",
-  "/sequences", "/campaigns", "/knowledge", "/scoring-rules",
+  "/sequences", "/campaigns", "/social-publishing", "/knowledge", "/scoring-rules",
   "/marketplace-apps", "/data-platform", "/security", "/ai-governance",
   "/seo-manager", "/error-monitor", "/profile", "/admin-users",
   "/enterprise-settings", "/admin-ai-cost", "/valuation-accuracy", "/billing", "/checkout",

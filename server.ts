@@ -108,6 +108,9 @@ import { createBookingRoutes } from "./server/routes/bookingRoutes";
 import { startBuyerPushCron, stopBuyerPushCron } from "./server/services/pushNotificationService";
 import { startFreeFollowupScheduler, stopFreeFollowupScheduler } from "./server/services/freeFollowupScheduler";
 import { createCampaignRouter } from "./server/routes/campaignRoutes";
+import { createSocialPublicationRouter } from "./server/routes/socialPublicationRoutes";
+import { createSocialPublishingCronRouter } from "./server/routes/socialPublishingCronRoutes";
+import { startSocialPublishingWorker } from "./server/services/socialPublishingWorker";
 import { createErrorLogRoutes, initErrorLogRepo } from "./server/routes/errorLogRoutes";
 import { marketDataService } from "./server/services/marketDataService";
 import { priceCalibrationService } from "./server/services/priceCalibrationService";
@@ -5480,6 +5483,23 @@ app.get('/api/admin/agent-tasks', apiRateLimit, authenticateToken, async (req: e
   // Module Chiến dịch tự động — Campaigns
   // ---------------------------------------------------------------------------
   app.use(createCampaignRouter(pool, authenticateToken));
+
+  // Public social publishing foundation. This is intentionally separate from
+  // email campaigns and direct-message adapters: only a verified provider
+  // publisher may move a target beyond the explicit approval boundary.
+  app.use(createSocialPublicationRouter(pool, authenticateToken));
+  {
+    const socialPublishingSecret =
+      process.env.SOCIAL_PUBLISHING_CRON_SECRET ||
+      process.env.JWT_SECRET?.slice(0, 32) ||
+      '';
+    app.use(createSocialPublishingCronRouter(pool, socialPublishingSecret));
+    try {
+      startSocialPublishingWorker(pool, 15 * 60 * 1000);
+    } catch (err: any) {
+      logger.warn(`[SocialPublishing] Không thể khởi động worker: ${err?.message || err}`);
+    }
+  }
 
   // ---------------------------------------------------------------------------
   // Campaign Scheduler — chạy mỗi 5 phút.

@@ -137,6 +137,7 @@ AGENT_TASKS: 'agent-tasks',
 
     SCRAPER: 'scraper',
     CAMPAIGNS: 'campaigns',
+    SOCIAL_PUBLISHING: 'social-publishing',
     VENDOR_MANAGEMENT: 'vendor-management',
 
     // Task Management Module

@@ -1385,6 +1385,7 @@ class DatabaseApiClient {
       { id: 'approvals', labelKey: 'menu.approvals', route: ROUTES.APPROVALS, iconKey: ROUTES.APPROVALS },
       { id: 'routing', labelKey: 'menu.routing-rules', route: ROUTES.ROUTING_RULES, iconKey: ROUTES.ROUTING_RULES },
       { id: 'campaigns', labelKey: 'menu.campaigns', route: ROUTES.CAMPAIGNS, iconKey: ROUTES.CAMPAIGNS },
+      { id: 'social-publishing', labelKey: 'menu.social-publishing', route: ROUTES.SOCIAL_PUBLISHING, iconKey: ROUTES.SOCIAL_PUBLISHING },
       { id: 'seq', labelKey: 'menu.sequences', route: ROUTES.SEQUENCES, iconKey: ROUTES.SEQUENCES },
       { id: 'auction', labelKey: 'menu.auction', route: ROUTES.AUCTION, iconKey: ROUTES.AUCTION },
       { id: 'custom-fields', labelKey: 'menu.custom-fields', route: ROUTES.CUSTOM_FIELDS, iconKey: ROUTES.CUSTOM_FIELDS },
@@ -1402,6 +1403,7 @@ class DatabaseApiClient {
     const opsMarketing = { id: 'ops', labelKey: 'menu.operations', items: [
       { id: 'projects', labelKey: 'menu.projects', route: ROUTES.PROJECTS, iconKey: ROUTES.PROJECTS },
       { id: 'campaigns', labelKey: 'menu.campaigns', route: ROUTES.CAMPAIGNS, iconKey: ROUTES.CAMPAIGNS },
+      { id: 'social-publishing', labelKey: 'menu.social-publishing', route: ROUTES.SOCIAL_PUBLISHING, iconKey: ROUTES.SOCIAL_PUBLISHING },
       { id: 'seq', labelKey: 'menu.sequences', route: ROUTES.SEQUENCES, iconKey: ROUTES.SEQUENCES },
       { id: 'knowledge', labelKey: 'menu.knowledge', route: ROUTES.KNOWLEDGE, iconKey: ROUTES.KNOWLEDGE },
       { id: 'rep', labelKey: 'menu.reports', route: ROUTES.REPORTS, iconKey: ROUTES.REPORTS }

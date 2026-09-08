@@ -39,6 +39,7 @@ const NAV_ICONS: Record<string, React.ReactNode> = {
     [ROUTES.APPROVALS]: <CheckSquare size={20} strokeWidth={2} />,
     [ROUTES.SEQUENCES]: <GitMerge size={20} strokeWidth={2} />,
     [ROUTES.CAMPAIGNS]: <Mail size={20} strokeWidth={2} />,
+    [ROUTES.SOCIAL_PUBLISHING]: <Share2 size={20} strokeWidth={2} />,
     [ROUTES.SCORING_RULES]: <Target size={20} strokeWidth={2} />,
     [ROUTES.ROUTING_RULES]: <Share2 size={20} strokeWidth={2} />,
     [ROUTES.KNOWLEDGE]: <BookOpen size={20} strokeWidth={2} />,
