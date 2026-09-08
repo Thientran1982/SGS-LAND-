@@ -16,3 +16,11 @@ Publish validation may restore a schema snapshot into a fork without running the
 **Why:** PostgreSQL extensions are database/cluster state, while the application's `schema_versions` migration path is separate from Replit's dump/restore validation path.
 
 **How to apply:** Verify `pg_available_extensions` and `pg_extension` on the canonical Aiven service, then treat a fork-only `gin_trgm_ops` failure as a Publish restore limitation. Do not alter the index or add production startup DDL; use an external-database Publish path or escalate the restore behavior.
+
+## Validation database drift
+
+The Replit-managed validation database can lag the external Aiven migration registry even when Aiven is fully current. Replay the application migrations against the validation database with its native connection settings before treating the fork as broken.
+
+**Why:** The application pool intentionally enforces Aiven TLS, while the internal validation PostgreSQL may reject SSL; using the production pool configuration against the fork can look like a migration failure when it is only a connection mismatch.
+
+**How to apply:** Confirm both databases independently, run a dry-run first, then apply the pending migration batch only to the validation database. Never use this to mutate Aiven production or weaken custom-role RLS policies.
