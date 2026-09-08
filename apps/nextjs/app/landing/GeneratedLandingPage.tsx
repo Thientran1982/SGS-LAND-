@@ -8,6 +8,7 @@ export interface GeneratedLandingSection {
   title?: string;
   body?: string;
   items?: string[];
+  images?: string[];
   phone?: string;
   contactName?: string;
   tokens?: number;
@@ -169,6 +170,9 @@ export default function GeneratedLandingPage({
           const section = sectionOf(page, stage);
           if (!section) return null;
           const items = Array.isArray(section.items) ? section.items.filter(Boolean) : [];
+          const images = Array.isArray(section.images)
+            ? section.images.filter((url): url is string => typeof url === "string" && url.length > 0)
+            : [];
           return (
             <section className={`landing-builder-section landing-builder-section-${stage}`} id={stage} key={stage}>
               <div className="landing-builder-section-heading">
@@ -179,6 +183,19 @@ export default function GeneratedLandingPage({
                 </div>
               </div>
               {section.body && <p className="landing-builder-body">{section.body}</p>}
+              {images.length > 0 && (
+                <div className="landing-builder-gallery-grid" aria-label="Hình ảnh dự án">
+                  {images.map((url, index) => (
+                    <img
+                      key={`${url}-${index}`}
+                      src={url}
+                      alt={`${page.project_name} - hình ảnh ${index + 1}`}
+                      className="landing-builder-gallery-image"
+                      loading="lazy"
+                    />
+                  ))}
+                </div>
+              )}
               {items.length > 0 && (
                 <div className="landing-builder-item-grid">
                   {items.map((item, index) => (
