@@ -53,7 +53,16 @@ const imageUpload = multer({
 function handleImageMulterError(err: any, _req: Request, res: Response, next: NextFunction) {
     if (err instanceof multer.MulterError) {
         if (err.code === 'LIMIT_FILE_SIZE') return res.status(413).json({ error: 'Anh qua lon (toi da 10MB moi anh)' });
-        if (err.code === 'LIMIT_FILE_COUNT') return res.status(400).json({ error: 'Chi duoc tai toi da 10 anh moi lan' });
+        // `array('files', maxCount)` reports an extra file as
+        // LIMIT_UNEXPECTED_FILE, while the global `limits.files` guard reports
+        // LIMIT_FILE_COUNT. Both represent the configured per-request limit
+        // for this route.
+        if (
+            err.code === 'LIMIT_FILE_COUNT'
+            || (err.code === 'LIMIT_UNEXPECTED_FILE' && (!err.field || err.field === 'files'))
+        ) {
+            return res.status(400).json({ error: 'Chi duoc tai toi da 10 anh moi lan' });
+        }
         return res.status(400).json({ error: 'Loi tai anh len. Vui long thu lai.' });
     }
     if (err?.message === 'IMAGE_INVALID_MIME') return res.status(415).json({ error: 'Chi chap nhan anh JPEG, PNG, WebP hoac GIF' });
