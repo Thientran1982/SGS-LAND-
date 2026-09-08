@@ -205,6 +205,7 @@ import {
     handle_task_assign, handle_task_comment,
 } from '../services/taskTools';
 import { handle_landing_builder, handle_landing_quota } from '../services/landingTools';
+import { handle_landing_design } from './landingDesignAgent';
 
 const TOOL_MANIFEST: ToolDefinition[] = [
     // ── LISTING TOOLS ───────────────────────────────────────────────────────
@@ -666,6 +667,18 @@ const TOOL_MANIFEST: ToolDefinition[] = [
             tenantId:   { type: 'string', required: false, description: 'Tenant ID' },
             visitorKey: { type: 'string', required: false, description: 'Dinh danh user' },
             language:   { type: 'string', required: false, description: 'vi|en' },
+        },
+    },
+    {
+        name: 'landing_design_agent',
+        description: 'Tạo structured design system cho landing từ brief, brochure và ảnh đã xác minh; không tự publish hoặc bịa dữ kiện.',
+        category: 'landing',
+        params: {
+            brief:         { type: 'string', required: false, description: 'Mo ta yeu cau cua user' },
+            brochureText:  { type: 'string', required: false, description: 'Noi dung tai lieu da trich xuat' },
+            projectName:   { type: 'string', required: false, description: 'Ten du an' },
+            galleryImages: { type: 'array', required: false, description: 'URL anh da xac thuc' },
+            language:      { type: 'string', required: false, description: 'vi|en' },
         },
     },
 
@@ -2309,6 +2322,7 @@ const HANDLERS: Record<string, ToolHandler> = {
     task_comment:              handle_task_comment,
     landing_builder:           handle_landing_builder,
     landing_quota:             handle_landing_quota,
+     landing_design_agent:      handle_landing_design,
 };
 
 // ---------------------------------------------------------------------------

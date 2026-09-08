@@ -299,6 +299,8 @@
 }
 .landing-builder-hero h1 { max-width: 820px; margin: 14px 0 18px; color: inherit; font-size: clamp(38px, 6vw, 72px); line-height: 1.03; letter-spacing: -.04em; }
 .landing-builder-hero p { max-width: 700px; margin: 0 0 30px; color: rgba(255,255,255,.82); font-size: 19px; line-height: 1.65; }
+.landing-builder-hero-center .landing-builder-hero-inner { text-align: center; margin-left: auto; margin-right: auto; }
+.landing-builder-hero-center p { margin-left: auto; margin-right: auto; }
 .landing-builder-content { padding: 28px 0 80px; }
 .landing-builder-section { padding: 54px 0; border-bottom: 1px solid var(--landing-border); }
 .landing-builder-section-heading { display: flex; gap: 20px; align-items: flex-start; margin-bottom: 22px; }
@@ -308,6 +310,11 @@
 .landing-builder-gallery-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 320px), 1fr)); gap: 16px; margin-top: 24px; }
 .landing-builder-gallery-image { width: 100%; aspect-ratio: 4 / 3; object-fit: cover; display: block; border: 1px solid var(--landing-border); border-radius: 18px; background: var(--landing-surface-subtle); box-shadow: var(--ui-shadow-sm, 0 8px 26px rgba(21,34,50,.08)); }
 .landing-builder-gallery-image:only-child { max-width: 760px; }
+.landing-builder-gallery-single-focus { grid-template-columns: minmax(0, 1fr); }
+.landing-builder-gallery-single-focus .landing-builder-gallery-image { width: 100%; max-width: none; aspect-ratio: 16 / 9; }
+.landing-builder-gallery-mosaic { grid-template-columns: minmax(0, 1.45fr) repeat(2, minmax(0, .78fr)); }
+.landing-builder-gallery-mosaic .landing-builder-gallery-image:first-child { grid-row: span 2; aspect-ratio: 16 / 10; }
+.landing-builder-gallery-editorial-grid .landing-builder-gallery-image { aspect-ratio: 4 / 3; }
 .landing-builder-item-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; margin-top: 24px; }
 .landing-builder-item-card { min-height: 120px; padding: 22px; display: flex; flex-direction: column; justify-content: space-between; gap: 12px; background: var(--landing-surface); border: 1px solid var(--landing-border); border-radius: 18px; box-shadow: var(--ui-shadow-sm, 0 8px 26px rgba(21,34,50,.08)); }
 .landing-builder-item-card span { color: var(--landing-accent); font-size: 13px; font-weight: 800; }

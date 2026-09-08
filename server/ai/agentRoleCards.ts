@@ -46,5 +46,15 @@ export const DEFAULT_AGENT_ROLE_CARDS: AgentRoleCard[] = [
     escalationRules: ['critic_score < 60', 'missing_price_source', 'confidence < 0.7'],
     rollout: 'SHADOW',
   },
+  {
+    agentKey: 'LANDING_DESIGN_AGENT',
+    title: 'Chuyên viên thiết kế landing',
+    mission: 'Chuyển brief, tài liệu và ảnh đã xác minh thành design system có cấu trúc để Minh dựng landing rõ ràng, responsive và tăng chuyển đổi.',
+    permissions: ['read:landing_brief', 'read:verified_brochure', 'read:gallery_assets', 'draft:landing_design'],
+    prohibitedActions: ['invent:price_or_legal', 'publish:landing', 'send:customer_message', 'change:source_content'],
+    kpis: ['design_groundedness', 'mobile_accessibility', 'cta_clarity', 'design_fallback_rate'],
+    escalationRules: ['confidence < 0.7', 'missing_verified_inputs', 'conflicting_project_facts'],
+    rollout: 'LIVE',
+  },
   ...MARKETING_GROWTH_ROLE_CARDS,
 ];

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, type CSSProperties } from "react";
 import Link from "next/link";
 
 export interface GeneratedLandingSection {
@@ -9,9 +9,37 @@ export interface GeneratedLandingSection {
   body?: string;
   items?: string[];
   images?: string[];
+  layout?: string;
+  design?: LandingDesign;
   phone?: string;
   contactName?: string;
   tokens?: number;
+}
+
+interface LandingDesign {
+  pattern?: string;
+  confidence?: number;
+  palette?: {
+    navy?: string;
+    navyStrong?: string;
+    gold?: string;
+    goldStrong?: string;
+    surface?: string;
+    surfaceSubtle?: string;
+    text?: string;
+    textSecondary?: string;
+    border?: string;
+    shadow?: string;
+  };
+  hero?: {
+    alignment?: string;
+    overlay?: string;
+    imageTreatment?: string;
+  };
+  gallery?: {
+    layout?: string;
+    aspectRatio?: string;
+  };
 }
 
 export interface GeneratedLandingData {
@@ -43,6 +71,16 @@ function sectionOf(page: GeneratedLandingData, stage: string) {
 function phoneHref(phone?: string) {
   const digits = String(phone || "").replace(/\D/g, "");
   return digits ? `tel:${digits}` : null;
+}
+
+function safeThemeValue(value: unknown, fallback: string): string {
+  const raw = String(value || "").trim();
+  return /^(#[0-9a-f]{3,8}|rgba?\([0-9.,%\s]+\))$/i.test(raw) ? raw : fallback;
+}
+
+function safeShadow(value: unknown, fallback: string): string {
+  const raw = String(value || "").trim();
+  return /^[0-9a-zA-Z .(),%#-]+$/.test(raw) ? raw : fallback;
 }
 
 async function getCsrfToken() {
@@ -86,8 +124,22 @@ export default function GeneratedLandingPage({
     ? `/landing-ai/chinh-sua/${encodeURIComponent(page.slug)}?k=${encodeURIComponent(visitorKey!)}`
     : "";
   const hero = sectionOf(page, "hero");
+  const design = hero?.design;
   const contact = sectionOf(page, "contact");
   const contactPhone = phoneHref(contact?.phone);
+  const palette = design?.palette;
+  const themeStyle = {
+    "--landing-brand": safeThemeValue(palette?.navy, "#1b3a5c"),
+    "--landing-brand-strong": safeThemeValue(palette?.navyStrong, "#0f2740"),
+    "--landing-accent": safeThemeValue(palette?.gold, "#c8963e"),
+    "--landing-accent-strong": safeThemeValue(palette?.goldStrong, "#8c6420"),
+    "--landing-bg": safeThemeValue(palette?.surface, "#f7f9fa"),
+    "--landing-surface-subtle": safeThemeValue(palette?.surfaceSubtle, "#f0f4f5"),
+    "--landing-text": safeThemeValue(palette?.text, "#16202b"),
+    "--landing-text-secondary": safeThemeValue(palette?.textSecondary, "#4c6471"),
+    "--landing-border": safeThemeValue(palette?.border, "rgba(21, 49, 70, .14)"),
+    "--ui-shadow-sm": safeShadow(palette?.shadow, "0 8px 26px rgba(21,34,50,.08)"),
+  } as CSSProperties;
 
   async function publish() {
     if (!visitorKey || publishing) return;
@@ -122,7 +174,11 @@ export default function GeneratedLandingPage({
   }
 
   return (
-    <main className="landing-builder-page">
+    <main
+      className={`landing-builder-page landing-builder-pattern-${design?.pattern || "sanctuary"}`}
+      style={themeStyle}
+      data-design-confidence={design?.confidence ?? ""}
+    >
       {isDraft && (
         <div className="landing-builder-draft-banner" role="status">
           <div className="landing-builder-draft-content">
@@ -156,7 +212,7 @@ export default function GeneratedLandingPage({
         </div>
       )}
 
-      <header className="landing-builder-hero" id="hero">
+      <header className={`landing-builder-hero landing-builder-hero-${design?.hero?.alignment === "center" ? "center" : "left"}`} id="hero">
         <div className="landing-builder-wrap landing-builder-hero-inner">
           <span className="landing-builder-eyebrow">SGS LAND · LANDING BUILDER</span>
           <h1>{hero?.title || page.project_name}</h1>
@@ -184,7 +240,10 @@ export default function GeneratedLandingPage({
               </div>
               {body && <p className="landing-builder-body">{body}</p>}
               {images.length > 0 && (
-                <div className="landing-builder-gallery-grid" aria-label="Hình ảnh dự án">
+                <div
+                  className={`landing-builder-gallery-grid landing-builder-gallery-${section?.layout || design?.gallery?.layout || "editorial-grid"}`}
+                  aria-label="Hình ảnh dự án"
+                >
                   {images.map((url, index) => (
                     <img
                       key={`${url}-${index}`}

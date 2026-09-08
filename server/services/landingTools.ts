@@ -1,6 +1,7 @@
 import { v4 as uuidv4 } from 'uuid';
 import { withTenantContext } from '../db';
 import { agentAuditRepository } from '../repositories/agentAuditRepository';
+import { designLandingPage, type LandingDesign } from '../ai/landingDesignAgent';
 
 /**
  * Landing-builder tool: dung trang landing cho du an (kem brochure dinh kem).
@@ -27,6 +28,8 @@ export type LandingSection = {
     body?: string;
     items?: string[];
     images?: string[];
+    layout?: string;
+    design?: LandingDesign;
     tokens: number;
 };
 
@@ -52,6 +55,10 @@ async function auditLanding(tenantId: string, action: string, input: Record<stri
             hasSlug: Boolean(output?.slug),
             quotaUsed: Number.isFinite(Number(output?.quotaUsed)) ? Number(output.quotaUsed) : null,
             quotaLimit: Number.isFinite(Number(output?.quotaLimit)) ? Number(output.quotaLimit) : null,
+            designPattern: typeof output?.design?.pattern === 'string' ? output.design.pattern : null,
+            designConfidence: Number.isFinite(Number(output?.design?.confidence))
+                ? Number(output.design.confidence)
+                : null,
         };
         await agentAuditRepository.record(tenantId, {
             eventKey: 'landing-tool:' + action + ':' + uuidv4(),
@@ -100,7 +107,12 @@ function extractFromBrief(brief: string, brochureText?: string): Record<string, 
     };
 }
 
-function buildSections(brief: Record<string, any>, lang: string, galleryImages: string[] = []): LandingSection[] {
+export function buildLandingSections(
+    brief: Record<string, any>,
+    lang: string,
+    galleryImages: string[] = [],
+    design?: LandingDesign,
+): LandingSection[] {
     const vi = lang !== 'en';
     const sections: LandingSection[] = [];
     const add = (stage: string, data: Partial<LandingSection>) => {
@@ -109,11 +121,13 @@ function buildSections(brief: Record<string, any>, lang: string, galleryImages: 
     add('hero', {
         title: brief.projectName || (vi ? 'Du an bat dong san' : 'Real estate project'),
         body: [brief.location || (vi ? 'Vi tri dang cap nhat' : 'Location updating'), brief.area].filter(Boolean).join(' \u00b7 '),
+        design,
     });
     add('gallery', {
         title: vi ? 'Hinh anh du an' : 'Project gallery',
         items: [vi ? 'Chinh canh du an' : 'Main view', vi ? 'Tien ich' : 'Amenities', vi ? 'Mat bang' : 'Master plan'],
         images: galleryImages.slice(0, 20),
+        layout: design?.gallery.layout,
     });
     add('legal', {
         title: vi ? 'Phap ly' : 'Legal',
@@ -144,6 +158,7 @@ export interface LandingBuilderResult {
     quotaLimit?: number;
     viewUrl?: string;
     editUrl?: string;
+    design?: LandingDesign;
     paywall?: { reason: string; message: string; upgradeUrl: string };
 }
 
@@ -187,7 +202,16 @@ export async function handle_landing_builder(args: Record<string, any>): Promise
         }
 
         const extracted = extractFromBrief(brief, brochureText);
-        const sections = buildSections(extracted, lang, galleryImages);
+        const design = designLandingPage({
+            brief,
+            brochureText,
+            projectName: extracted.projectName || projectName,
+            language: lang,
+            galleryImages,
+            hasLegalDoc: extracted.hasLegalDoc,
+            amenities: extracted.amenities,
+        });
+        const sections = buildLandingSections(extracted, lang, galleryImages, design);
         const tokensUsed = sections.reduce((sum, s) => sum + s.tokens, 0);
         const slug = slugify(extracted.projectName || projectName);
 
@@ -210,6 +234,7 @@ export async function handle_landing_builder(args: Record<string, any>): Promise
             editUrl: "/landing-ai/chinh-sua/" + page.slug + "?k=" + visitorKey,
             quotaUsed: used + 1,
             quotaLimit: FREE_LANDING_PAGES,
+            design,
         };
     });
 

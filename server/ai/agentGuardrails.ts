@@ -152,6 +152,7 @@ export function inspectToolRequest(toolName: string): GuardrailReport {
     'task_comment',
     'landing_quota',
     'landing_builder',
+     'landing_design_agent',
   ]);
   if (!readOnlyTools.has(toolName)) {
     return {
