@@ -7,7 +7,7 @@ Replit-managed production database provisioning does not automatically replicate
 
 **Why:** SGS-LAND's canonical database is external Aiven, while Replit's Publish flow may still inspect a separate managed development database. Creating the role or weakening policies in the app's external database does not repair the managed restore path.
 
-**How to apply:** For an external-database app, skip or unlink Replit-managed database schema synchronization when the Publish UI permits it. Do not change RLS policies from the dedicated role to PUBLIC and do not add deploy-time DDL. If the UI has no external-database path, treat the failure as a Replit provisioning limitation and escalate rather than mutating the canonical database.
+**How to apply:** For an external-database app, turn off `Create production database` in Publishing settings (or use the external-database path) so Replit does not restore its managed schema. Do not change RLS policies from the dedicated role to PUBLIC and do not add deploy-time DDL. If the UI has no such option, treat the failure as a Replit provisioning limitation and escalate rather than mutating the canonical database.
 
 ## Extensions in Publish validation
 
