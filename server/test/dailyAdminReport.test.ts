@@ -156,12 +156,61 @@ describe('daily admin report', () => {
       aiQueries: 5,
       seoScore: 91,
     });
+    expect(collected.geoSeo.note).toContain('Nguồn:');
+    expect(collected.geoSeo.sourceStatuses).toEqual([
+      'AI mention probes: đã đo',
+      'Google Search Console: đã đo',
+      'PageSpeed Insights: đã đo',
+    ]);
 
     const email = renderReportEmail(buildReportSummary(collected));
     expect(email.html).toContain('12 lượt xem');
     expect(email.html).toContain('7 lượt tìm kiếm');
     expect(email.html).toContain('CSAT trung bình');
     expect(email.html).toContain('Snapshot 2026-08-24');
+  });
+
+  it('keeps snapshot provenance visible when every measurement is unavailable', async () => {
+    state.collectionRows = {
+      traffic: { property_views: null, listing_searches: null },
+      topViewed: [],
+      topSearches: [],
+      interactions: { conversations: null },
+      csatSignals: [],
+      geoSnapshot: {
+        snapshot_date: '2026-09-08',
+        created_at: '2026-09-08T16:52:11.428Z',
+        ai_mentions_json: {
+          engines: {
+            gemini: { status: 'error', queries: 5, mentions: 0 },
+            perplexity: { status: 'skipped', queries: 0, mentions: 0 },
+          },
+        },
+        gsc_top20_json: { keywords: [] },
+        lighthouse_json: {
+          pages: [{ status: 'skipped', scores: { seo: null } }],
+        },
+      },
+    };
+
+    const collected = await collectDailyMetrics('00000000-0000-0000-0000-000000000001', '2026-09-08');
+    expect(collected.geoSeo).toMatchObject({
+      available: false,
+      snapshotDate: '2026-09-08',
+      aiMentionRate: null,
+      aiMentions: null,
+      aiQueries: null,
+      seoScore: null,
+      sourceStatuses: [
+        'AI mention probes: API lỗi',
+        'Google Search Console: chưa có dữ liệu',
+        'PageSpeed Insights: bỏ qua',
+      ],
+    });
+    expect(collected.geoSeo.note).toBe(
+      'Snapshot 2026-09-08 chưa có phép đo thành công · Nguồn: AI mention probes: API lỗi · Google Search Console: chưa có dữ liệu · PageSpeed Insights: bỏ qua',
+    );
+    expect(renderReportEmail(buildReportSummary(collected)).html).toContain('2026-09-08');
   });
 
   it('renders a Vietnamese subject and does not expose customer PII', () => {

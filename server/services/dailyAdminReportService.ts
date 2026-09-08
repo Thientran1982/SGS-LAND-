@@ -31,6 +31,7 @@ export interface DailyReportMetrics {
     aiQueries?: number | null;
     seoScore?: number | null;
     measuredSources?: string[];
+    sourceStatuses?: string[];
   };
   warnings: { count: number | null; notable: string[] };
 }
@@ -125,8 +126,30 @@ function buildGeoSeoMetrics(snapshot: any): DailyReportMetrics['geoSeo'] {
   if (aiQueries > 0) measuredSources.push('AI mention probes');
   if (gscMeasured > 0) measuredSources.push('Google Search Console');
   if (seoScores.length > 0) measuredSources.push('PageSpeed Insights');
+  const sourceStatuses = [
+    `AI mention probes: ${
+      measuredEngines.length > 0
+        ? 'đã đo'
+        : engines.some(engine => engine?.status === 'error')
+          ? 'API lỗi'
+          : engines.some(engine => engine?.status === 'skipped')
+            ? 'bỏ qua'
+            : 'chưa đo'
+    }`,
+    `Google Search Console: ${gscMeasured > 0 ? 'đã đo' : gsc.error ? 'lỗi' : 'chưa có dữ liệu'}`,
+    `PageSpeed Insights: ${
+      seoScores.length > 0
+        ? 'đã đo'
+        : lighthousePages.some((page: any) => page?.status === 'error')
+          ? 'lỗi'
+          : lighthousePages.some((page: any) => page?.status === 'skipped')
+            ? 'bỏ qua'
+            : 'chưa đo'
+    }`,
+  ];
   const available = measuredSources.length > 0;
   const snapshotDate = snapshot.snapshot_date ? String(snapshot.snapshot_date).slice(0, 10) : null;
+  const sourceSummary = sourceStatuses.join(' · ');
   const details = [
     aiQueries > 0 ? `AI ${Math.round((aiMentionRate || 0) * 100)}%` : null,
     gscMeasured > 0 ? `GSC ${gscMeasured} từ khóa` : null,
@@ -136,8 +159,8 @@ function buildGeoSeoMetrics(snapshot: any): DailyReportMetrics['geoSeo'] {
   return {
     available,
     note: available
-      ? `Snapshot ${snapshotDate || MISSING}${details.length ? ` · ${details.join(' · ')}` : ''}`
-      : `Snapshot ${snapshotDate || MISSING} chưa có phép đo thành công`,
+      ? `Snapshot ${snapshotDate || MISSING}${details.length ? ` · ${details.join(' · ')}` : ''} · Nguồn: ${sourceSummary}`
+      : `Snapshot ${snapshotDate || MISSING} chưa có phép đo thành công · Nguồn: ${sourceSummary}`,
     snapshotDate,
     capturedAt: snapshot.captured_at ? new Date(snapshot.captured_at).toISOString() : null,
     aiMentionRate,
@@ -145,6 +168,7 @@ function buildGeoSeoMetrics(snapshot: any): DailyReportMetrics['geoSeo'] {
     aiQueries: aiQueries > 0 ? aiQueries : null,
     seoScore,
     measuredSources,
+    sourceStatuses,
   };
 }
 
