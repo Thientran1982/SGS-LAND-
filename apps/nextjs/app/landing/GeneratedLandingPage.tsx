@@ -159,7 +159,7 @@ export default function GeneratedLandingPage({
       <header className="landing-builder-hero" id="hero">
         <div className="landing-builder-wrap landing-builder-hero-inner">
           <span className="landing-builder-eyebrow">SGS LAND · LANDING BUILDER</span>
-          <h1>{page.project_name}</h1>
+          <h1>{hero?.title || page.project_name}</h1>
           <p>{hero?.body || "Thông tin dự án đang được cập nhật."}</p>
           <a href="#contact" className="landing-builder-primary-button">Nhận tư vấn dự án</a>
         </div>
