@@ -388,16 +388,17 @@ export class LeadRepository extends BaseRepository {
     marketingEmailConsentSource?: string;
     attributes?: any;
     preferences?: any;
+    metadata?: any;
   }): Promise<any> {
     return this.withTenant(tenantId, async (client) => {
       const result = await client.query(
         `INSERT INTO leads (
           tenant_id, name, phone, email, address, source, stage, assigned_to,
           tags, notes, score, social_ids, opt_out_channels, attributes, preferences,
-          marketing_email_consent, marketing_email_consent_at, marketing_email_consent_source
+          marketing_email_consent, marketing_email_consent_at, marketing_email_consent_source, metadata
         ) VALUES (
           current_setting('app.current_tenant_id', true)::uuid,
-          $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17
+          $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18
         ) RETURNING *`,
         [
           data.name, data.phone, data.email || null, data.address || null,
@@ -411,6 +412,7 @@ export class LeadRepository extends BaseRepository {
           data.marketingEmailConsent === true,
           data.marketingEmailConsentAt || null,
           data.marketingEmailConsentSource || null,
+          data.metadata ? JSON.stringify(data.metadata) : null,
         ]
       );
       return this.rowToEntity(result.rows[0]);

@@ -24,6 +24,13 @@ export interface MinhSessionOptions {
   apiBase?: string;
   /** LINK | EMBED | QR | WEB | WIDGET - de CRM biet khach den tu dau. */
   source?: string;
+  /** Tài khoản đã đăng nhập trên public site, nếu có. */
+  authenticatedUser?: {
+    id: string;
+    name?: string | null;
+    email?: string | null;
+    phone?: string | null;
+  } | null;
 }
 
 export interface MinhRestored {
@@ -54,7 +61,7 @@ export interface MinhSession {
   /** Khoi phuc phien cu tu localStorage; null neu lead khong con hop le. */
   restore(): Promise<MinhRestored | null>;
   /** Tao lead moi trong CRM roi gui loi chao. */
-  start(input: { name: string; phone: string; source?: string }): Promise<{
+  start(input: { name: string; phone?: string; email?: string; source?: string }): Promise<{
     leadId: string;
     name: string;
     welcome: ChatMessage;
@@ -100,16 +107,27 @@ function welcomeText(name: string): string {
 export function createMinhSession(options: MinhSessionOptions = {}): MinhSession {
   const apiBase = options.apiBase;
   const defaultSource = options.source || "WEB";
+  const authenticatedUser = options.authenticatedUser?.id
+    ? {
+        id: String(options.authenticatedUser.id),
+        name: options.authenticatedUser.name || "",
+        email: options.authenticatedUser.email || "",
+        phone: options.authenticatedUser.phone || "",
+      }
+    : null;
   const client = createMinhClient(apiBase);
 
   let leadId: string | null = null;
   let leadName: string | null = null;
 
+  const storageKey = (base: string) =>
+    authenticatedUser ? `${base}:${authenticatedUser.id}` : base;
+
   function readStored() {
     const s = store();
     if (!s) return;
-    leadId = s.getItem(MINH_LEAD_STORAGE_KEY);
-    leadName = s.getItem(MINH_NAME_STORAGE_KEY);
+    leadId = s.getItem(storageKey(MINH_LEAD_STORAGE_KEY));
+    leadName = s.getItem(storageKey(MINH_NAME_STORAGE_KEY));
   }
 
   function persist(id: string, name: string) {
@@ -117,8 +135,8 @@ export function createMinhSession(options: MinhSessionOptions = {}): MinhSession
     leadName = name;
     const s = store();
     if (!s) return;
-    s.setItem(MINH_LEAD_STORAGE_KEY, id);
-    s.setItem(MINH_NAME_STORAGE_KEY, name);
+    s.setItem(storageKey(MINH_LEAD_STORAGE_KEY), id);
+    s.setItem(storageKey(MINH_NAME_STORAGE_KEY), name);
   }
 
   function clear() {
@@ -126,8 +144,8 @@ export function createMinhSession(options: MinhSessionOptions = {}): MinhSession
     leadName = null;
     const s = store();
     if (!s) return;
-    s.removeItem(MINH_LEAD_STORAGE_KEY);
-    s.removeItem(MINH_NAME_STORAGE_KEY);
+    s.removeItem(storageKey(MINH_LEAD_STORAGE_KEY));
+    s.removeItem(storageKey(MINH_NAME_STORAGE_KEY));
   }
 
   async function ask(text: string, lang?: string) {
@@ -199,6 +217,22 @@ export function createMinhSession(options: MinhSessionOptions = {}): MinhSession
     return { user: userMsg, assistant, noReply: false, raw: data } as MinhSendResult;
   }
 
+  async function restoreAuthenticated(): Promise<MinhRestored> {
+    const accountName = authenticatedUser?.name || authenticatedUser?.email || "Khách hàng";
+    const started = await session.start({
+      name: accountName,
+      phone: authenticatedUser?.phone || "",
+      email: authenticatedUser?.email || "",
+      source: defaultSource,
+    });
+    return {
+      leadId: started.leadId,
+      name: started.name,
+      threadStatus: "AI_ACTIVE",
+      messages: [started.welcome],
+    };
+  }
+
   const session: MinhSession = {
     getLeadId: () => leadId,
     getLeadName: () => leadName,
@@ -210,11 +244,13 @@ export function createMinhSession(options: MinhSessionOptions = {}): MinhSession
 
     async restore() {
       readStored();
+      if (!leadId && authenticatedUser) return restoreAuthenticated();
       if (!leadId) return null;
       try {
         const data: any = await client.getMessages(leadId);
         if (!data || !data.lead || !data.lead.id) {
           clear();
+          if (authenticatedUser) return restoreAuthenticated();
           return null;
         }
         persist(String(data.lead.id), data.lead.name || leadName || "");
@@ -232,6 +268,7 @@ export function createMinhSession(options: MinhSessionOptions = {}): MinhSession
         } as MinhRestored;
       } catch {
         clear();
+        if (authenticatedUser) return restoreAuthenticated();
         return null;
       }
     },
@@ -239,10 +276,10 @@ export function createMinhSession(options: MinhSessionOptions = {}): MinhSession
     async start(input) {
       const name = (input.name || "").trim();
       const phone = (input.phone || "").trim();
-      if (!name || !phone) {
+      if (!name || (!phone && !authenticatedUser)) {
         throw new ChatTransportError("missing_contact", { code: "MISSING_CONTACT" });
       }
-      const created: any = await client.createLead(name, phone, input.source || defaultSource);
+      const created: any = await client.createLead(name, phone, input.source || defaultSource, input.email);
       const id = String(created && created.id ? created.id : "");
       if (!id) throw new ChatTransportError("create_lead_failed", { code: "CREATE_LEAD_FAILED" });
       persist(id, name);

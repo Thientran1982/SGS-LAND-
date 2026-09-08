@@ -52,10 +52,10 @@ function createClientRequestId(): string {
  */
 export function createMinhClient(apiBase?: string) {
   return {
-    createLead(name: string, phone: string, source = "WIDGET") {
+    createLead(name: string, phone: string, source = "WIDGET", email?: string) {
       return postJson<{ id: string; success: boolean }>(
         CHAT_ENDPOINTS.publicCreateLead,
-        { name, phone, source, stage: "NEW" },
+        { name, phone, email, source, stage: "NEW" },
         apiBase,
         "create_lead_failed",
       );

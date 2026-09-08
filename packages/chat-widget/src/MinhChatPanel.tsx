@@ -68,6 +68,13 @@ export interface MinhChatPanelProps {
   description?: string;
   /** Nội dung gợi ý được điền sẵn từ các CTA contextual. */
   initialMessage?: string;
+  /** User đã đăng nhập trên public site; guest vẫn để undefined. */
+  authenticatedUser?: {
+    id: string;
+    name?: string | null;
+    email?: string | null;
+    phone?: string | null;
+  } | null;
 }
 
 export function MinhChatPanel({
@@ -79,9 +86,10 @@ export function MinhChatPanel({
   title = "SGS Land Live Chat",
   description = "Chúng tôi sẵn sàng hỗ trợ bạn 24/7",
   initialMessage = "",
+  authenticatedUser = null,
 }: MinhChatPanelProps) {
   const sessionRef = useRef<MinhSession | null>(null);
-  if (!sessionRef.current) sessionRef.current = createMinhSession({ apiBase, source });
+  if (!sessionRef.current) sessionRef.current = createMinhSession({ apiBase, source, authenticatedUser });
   const session = sessionRef.current;
 
   const [ready, setReady] = useState(false);
@@ -90,6 +98,7 @@ export function MinhChatPanel({
   const [phone, setPhone] = useState("");
   const [starting, setStarting] = useState(false);
   const [formError, setFormError] = useState("");
+  const [authStartError, setAuthStartError] = useState("");
 
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [input, setInput] = useState(initialMessage);
@@ -135,15 +144,23 @@ export function MinhChatPanel({
           setName(r.name);
           setHasLead(true);
         }
+        setAuthStartError("");
         setReady(true);
       })
       .catch(() => {
-        if (alive) setReady(true);
+        if (alive) {
+          setAuthStartError(
+            authenticatedUser
+              ? "Không thể khởi tạo phiên chat từ tài khoản của bạn. Vui lòng thử lại."
+              : "",
+          );
+          setReady(true);
+        }
       });
     return () => {
       alive = false;
     };
-  }, [session]);
+  }, [session, authenticatedUser]);
 
   // 2. Socket realtime: tin nhan cua chuyen vien + doi trang thai AI/nguoi that.
   useEffect(() => {
@@ -457,7 +474,24 @@ export function MinhChatPanel({
         </div>
       )}
 
-      {!hasLead ? (
+      {!hasLead && authenticatedUser ? (
+        <div
+          className={"flex flex-col gap-3 p-5 justify-center rounded-b-[20px] " + heightClass}
+          style={{ background: CSS("--cw-parchment", "#F5F1E6") }}
+        >
+          <p className="text-sm leading-relaxed" style={S.formText}>
+            {authStartError || "Đang khởi tạo phiên chat theo tài khoản của bạn..."}
+          </p>
+          <button
+            type="button"
+            onClick={() => window.location.reload()}
+            className="inline-flex items-center justify-center gap-2 rounded-xl px-4 py-2.5 text-sm font-semibold"
+            style={S.primaryBtn}
+          >
+            Thử lại
+          </button>
+        </div>
+      ) : !hasLead ? (
         <form
           onSubmit={handleStart}
           className={"flex flex-col gap-3 p-5 justify-center rounded-b-[20px] " + heightClass}

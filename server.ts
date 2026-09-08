@@ -1271,7 +1271,33 @@ app.use(globalMutationAudit);
   });
 
   app.get("/api/auth/me", authenticateToken, (req, res) => {
-    res.json({ user: (req as any).user });
+    const claims = (req as any).user;
+    // The JWT intentionally carries only stable identity claims. Resolve the
+    // current user's profile here so authenticated public experiences (such as
+    // Live Chat) can use the account's verified contact details without asking
+    // the browser to send them back as user-supplied identity.
+    userRepository
+      .findByIdDirect(String(claims?.id || ''), String(claims?.tenantId || ''))
+      .then((user) => res.json({ user: user ? userRepository.toPublicUser(user) : claims }))
+      .catch(() => res.json({ user: claims }));
+  });
+
+  // Public pages need to know whether a visitor is signed in, but a guest
+  // should not generate an expected 401 in the browser console. This endpoint
+  // deliberately returns a nullable user instead of changing the semantics of
+  // the protected /api/auth/me contract.
+  app.get("/api/public/auth/me", optionalAuth, async (req, res) => {
+    const claims = (req as any).user;
+    if (!claims?.id) return res.json({ user: null });
+    try {
+      const user = await userRepository.findByIdDirect(
+        String(claims.id),
+        String(claims.tenantId || ""),
+      );
+      return res.json({ user: user ? userRepository.toPublicUser(user) : claims });
+    } catch {
+      return res.json({ user: claims });
+    }
   });
 
   app.post("/api/ai/process-message", authenticateToken, aiRateLimit, validateBody(schemas.aiProcessMessage), async (req, res) => {
@@ -2696,10 +2722,48 @@ app.get('/api/public/listings/:slugId', apiRateLimit, async (req: express.Reques
     }
   });
 
-  app.post('/api/public/leads', publicLeadRateLimit, async (req: express.Request, res: express.Response) => {
+  app.post('/api/public/leads', optionalAuth, publicLeadRateLimit, async (req: express.Request, res: express.Response) => {
     try {
-      const { name, phone, notes, source, stage, agentId } = req.body;
-      if (!name || !phone) return res.status(400).json({ error: 'name và phone là bắt buộc' }) as any;
+      const authUser = (req as any).user;
+      let { name, phone, notes, source, stage, agentId } = req.body;
+      let email: string | undefined;
+      let authenticatedMetadata: Record<string, string> | undefined;
+
+      if (authUser?.id) {
+        // Ignore browser-supplied identity fields for authenticated visitors.
+        // The account itself is the source of truth and is resolved in the
+        // user's tenant before the lead is written to the public CRM tenant.
+        const account = await userRepository
+          .findByIdDirect(String(authUser.id), String(authUser.tenantId || ''))
+          .catch(() => null);
+        name = String(account?.name || authUser.name || authUser.email || 'Khách hàng').trim();
+        phone = String(account?.phone || '').trim();
+        email = String(account?.email || authUser.email || '').trim() || undefined;
+        authenticatedMetadata = {
+          authenticated_user_id: String(authUser.id),
+          authenticated_tenant_id: String(authUser.tenantId || ''),
+          authenticated_email: email || '',
+          auth_source: 'authenticated_livechat',
+        };
+
+        // Keep one durable conversation per account even if localStorage was
+        // cleared or the visitor changes browser/device.
+        const existing = await withTenantContext(PUBLIC_TENANT, async (client) => {
+          const result = await client.query(
+            `SELECT id FROM leads
+               WHERE metadata->>'authenticated_user_id' = $1
+               ORDER BY created_at DESC
+               LIMIT 1`,
+            [String(authUser.id)],
+          );
+          return result.rows[0] || null;
+        });
+        if (existing?.id) return res.status(201).json({ id: existing.id, success: true, deduped: true });
+      }
+
+      if (!name || (!phone && !authUser?.id)) {
+        return res.status(400).json({ error: 'name và phone là bắt buộc' }) as any;
+      }
 
       // Resolve assigned agent: validate agentId belongs to this tenant to prevent spoofing
       let assignedTo: string | undefined;
@@ -2717,6 +2781,8 @@ app.get('/api/public/listings/:slugId', apiRateLimit, async (req: express.Reques
         source: source || 'WEBSITE',
         stage: stage || 'NEW',
         assignedTo,
+        email,
+        metadata: authenticatedMetadata,
       });
       // Notify Inbox in real-time so the new thread appears without a page refresh
       broadcastIo?.to(`tenant:${PUBLIC_TENANT}`).emit('lead_created', {
