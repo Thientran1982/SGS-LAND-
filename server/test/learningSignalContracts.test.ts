@@ -93,6 +93,41 @@ describe('learning signal contracts', () => {
     expect(query.mock.calls[0][1][6]).toContain('"location":true');
   });
 
+  it('records a consented 1-5 support CSAT for an eligible tenant conversation', async () => {
+    const row = insertedSignal('signal-csat', 'support_csat', 'support_csat:conversation:lead-1');
+    query.mockResolvedValueOnce({ rows: [{ id: 'lead-1', channel: 'ZALO' }] });
+    arrangeSignalInsert(row);
+
+    const signal = await agentMemoryService.recordSupportCsat(tenantId, {
+      subjectId: 'lead-1',
+      score: 5,
+      channel: 'ZALO',
+      consent: true,
+      actorId,
+    });
+
+    expect(signal).toEqual(row);
+    const insert = query.mock.calls.find(([sql]) => String(sql).includes('INSERT INTO agent_signals'));
+    expect(insert?.[1][1]).toBe(tenantId);
+    expect(insert?.[1][2]).toBe('support_csat');
+    expect(insert?.[1][7]).toBe('support_csat:conversation:lead-1');
+    expect(JSON.parse(insert?.[1][6])).toMatchObject({
+      score: 5,
+      rating: 5,
+      channel: 'ZALO',
+      consent: true,
+    });
+  });
+
+  it('does not write support CSAT without explicit consent', async () => {
+    await expect(agentMemoryService.recordSupportCsat(tenantId, {
+      subjectId: 'lead-1',
+      score: 4,
+      consent: false,
+    })).rejects.toThrow(/consent/i);
+    expect(query).not.toHaveBeenCalled();
+  });
+
   it.each(['PENDING', 'FAILED'])(
     'does not record a positive contact signal when delivery is %s',
     async deliveryStatus => {

@@ -13,6 +13,7 @@ const VALID_KINDS = new Set<MemoryKind>(['fact', 'episodic', 'procedural']);
 const MAX_ITEMS = 200;
 const SIGNAL_FAILURE_RETENTION_DAYS = 30;
 const signalWriteFailures = new Map<string, { count: number; lastAt: string; lastError: string }>();
+const SUPPORT_CSAT_CHANNELS = new Set(['WEB', 'WEB_CHAT', 'ZALO', 'FACEBOOK', 'MESSENGER']);
 
 export function scrubPii(input: unknown): string {
   return String(input ?? '')
@@ -290,6 +291,88 @@ export const agentMemoryService = {
       await persistSignalWriteFailure(tenantId, signalType, error);
       throw error;
     }
+  },
+
+  /**
+   * Record the one customer-satisfaction answer associated with an Inbox
+   * conversation. The lead lookup is deliberately performed inside the
+   * tenant-scoped transaction before writing the signal so a caller cannot
+   * submit a score for a lead (or channel) outside its tenant.
+   */
+  async recordSupportCsat(tenantId: string, input: {
+    subjectId: string;
+    score: number;
+    actorId?: string;
+    channel?: string;
+    consent: boolean;
+    provenance?: 'staff' | 'buyer';
+  }) {
+    const score = Number(input.score);
+    if (!Number.isInteger(score) || score < 1 || score > 5) {
+      throw new Error('CSAT phải là số nguyên từ 1 đến 5');
+    }
+    if (input.consent !== true) {
+      throw new Error('Cần xác nhận consent trước khi ghi CSAT');
+    }
+
+    const subjectId = String(input.subjectId || '').trim();
+    if (!subjectId || subjectId.length > 200) throw new Error('subjectId không hợp lệ');
+    const requestedChannel = input.channel ? String(input.channel).trim().toUpperCase() : '';
+    if (requestedChannel && !SUPPORT_CSAT_CHANNELS.has(requestedChannel)) {
+      throw new Error('CSAT chỉ hỗ trợ hội thoại WEB, Zalo hoặc Facebook');
+    }
+
+    const conversation = await withTenantContext(tenantId, async client => {
+      const result = await client.query(
+        `SELECT l.id,
+                COALESCE((
+                  SELECT UPPER(i.channel)
+                  FROM interactions i
+                  WHERE i.tenant_id=l.tenant_id
+                    AND i.lead_id=l.id
+                    AND UPPER(i.channel) = ANY($3::text[])
+                  ORDER BY i.timestamp DESC
+                  LIMIT 1
+                ), '') AS channel
+         FROM leads l
+         WHERE l.tenant_id=$1 AND l.id=$2
+           AND EXISTS (
+             SELECT 1
+             FROM interactions i2
+             WHERE i2.tenant_id=l.tenant_id
+               AND i2.lead_id=l.id
+               AND UPPER(i2.channel) = ANY($3::text[])
+           )
+           AND EXISTS (
+             SELECT 1
+             FROM interactions i3
+             WHERE i3.tenant_id=l.tenant_id
+               AND i3.lead_id=l.id
+               AND COALESCE(i3.metadata->>'csatRequest', 'false') = 'true'
+           )
+         LIMIT 1`,
+        [tenantId, subjectId, requestedChannel ? [requestedChannel] : [...SUPPORT_CSAT_CHANNELS]],
+      );
+      return result.rows[0] || null;
+    });
+    if (!conversation) throw new Error('Không tìm thấy hội thoại hợp lệ trong tenant');
+
+    const channel = requestedChannel || String(conversation.channel || '').toUpperCase();
+    return this.recordSignal(tenantId, {
+      signalType: 'support_csat',
+      actorId: input.actorId,
+      subjectType: 'conversation',
+      subjectId,
+      dedupeKey: `support_csat:conversation:${subjectId}`,
+      provenance: input.provenance || 'staff',
+      payload: {
+        score,
+        rating: score,
+        channel: channel === 'WEB_CHAT' ? 'WEB' : channel === 'MESSENGER' ? 'FACEBOOK' : channel,
+        consent: true,
+        source: input.provenance || 'staff',
+      },
+    });
   },
 
   /**

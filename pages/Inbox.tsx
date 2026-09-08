@@ -2,6 +2,7 @@ import React, { useEffect, useState, useCallback, useMemo, useRef } from 'react'
 import { createPortal } from 'react-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { db } from '../services/dbApi';
+import { api } from '../services/api/apiClient';
 import { aiService } from '../services/aiService';
 import { InboxThread, Interaction, LeadId, User, Channel, Direction, ThreadStatus } from '../types';
 import { useTranslation } from '../services/i18n';
@@ -168,6 +169,10 @@ export const Inbox: React.FC = () => {
     const assignDropdownRef = useRef<HTMLDivElement>(null);
     const fileInputRef = useRef<HTMLInputElement>(null);
     const isSendingRef = useRef(false);
+    const [csatScore, setCsatScore] = useState<number | null>(null);
+    const [csatConsent, setCsatConsent] = useState(false);
+    const [csatSubmitting, setCsatSubmitting] = useState(false);
+    const [csatRecordedScore, setCsatRecordedScore] = useState<number | null>(null);
     const { t, formatTime, formatCurrency, formatDate, formatDateTime, language } = useTranslation();
     const channelLabel = useCallback((ch: string): string => {
         const map: Record<string, string> = {
@@ -453,6 +458,47 @@ export const Inbox: React.FC = () => {
             return error?.status === 409;
         }
     }, [selectedLeadId]);
+    const handleRequestCsat = async () => {
+        if (!selectedLeadId || !csatChannel || hasCsatRequest || csatSubmitting) return;
+        setCsatSubmitting(true);
+        try {
+            const prompt = 'Cảm ơn bạn đã trao đổi với SGS LAND. Bạn vui lòng đánh giá chất lượng hỗ trợ hôm nay từ 1 đến 5 (1 = chưa hài lòng, 5 = rất hài lòng).';
+            const message = await db.sendInteraction(selectedLeadId, prompt, csatDeliveryChannel || csatChannel || 'WEB', {
+                metadata: {
+                    isAgent: true,
+                    csatRequest: true,
+                    csatRequestKey: `support_csat:conversation:${selectedLeadId}`,
+                },
+            });
+            appendInteraction(selectedLeadId, message);
+            socket.emit('send_message', { room: selectedLeadId, message });
+            notify('Đã gửi lời mời đánh giá CSAT', 'success');
+        } catch {
+            notify('Không thể gửi lời mời đánh giá CSAT', 'error');
+        } finally {
+            setCsatSubmitting(false);
+        }
+    };
+    const handleRecordCsat = async () => {
+        if (!selectedLeadId || !csatChannel || !csatScore || !csatConsent || csatSubmitting) return;
+        setCsatSubmitting(true);
+        try {
+            await api.post<any>('/api/ai/signals/csat', {
+                subjectId: selectedLeadId,
+                score: csatScore,
+                channel: csatDeliveryChannel,
+                consent: true,
+            });
+            setCsatRecordedScore(csatScore);
+            setCsatScore(null);
+            setCsatConsent(false);
+            notify('Đã ghi nhận đánh giá CSAT', 'success');
+        } catch (error: any) {
+            notify(error?.message || 'Không thể ghi nhận CSAT', 'error');
+        } finally {
+            setCsatSubmitting(false);
+        }
+    };
     const handleSend = async () => {
         if (!input.trim() || !selectedLeadId || isSendingRef.current) return;        
         const currentLead = threads.find(t => t.lead.id === selectedLeadId)?.lead;
@@ -665,6 +711,26 @@ export const Inbox: React.FC = () => {
     [threads, debouncedSearch, channelFilter, statusFilter]);
 
     const selectedThread = threads.find(t => t.lead.id === selectedLeadId);
+    const csatChannel = useMemo(() => {
+        const eligible = new Set(['WEB', 'WEB_CHAT', 'ZALO', 'FACEBOOK', 'MESSENGER']);
+        const latest = [...messages].reverse().find(message => eligible.has(String(message.channel || '').toUpperCase()));
+        const channel = String(latest?.channel || selectedThread?.lastChannel || '').toUpperCase();
+        return eligible.has(channel) ? channel : null;
+    }, [messages, selectedThread?.lastChannel]);
+    const csatDeliveryChannel = csatChannel === 'WEB_CHAT'
+        ? 'WEB'
+        : csatChannel === 'MESSENGER'
+            ? 'FACEBOOK'
+            : csatChannel;
+    const hasCsatRequest = useMemo(
+        () => messages.some(message => message.metadata?.csatRequest === true),
+        [messages],
+    );
+    useEffect(() => {
+        setCsatScore(null);
+        setCsatConsent(false);
+        setCsatRecordedScore(null);
+    }, [selectedLeadId]);
     const isAiActiveForSelected = selectedLeadId ? autoResponseMap[selectedLeadId] : false;
     // When in manual mode, hide system-generated AI busy/error messages — they are
     // noise for the human agent and confuse the conversation history.
@@ -972,6 +1038,64 @@ export const Inbox: React.FC = () => {
                             )}
                         </div>
                     </div>
+                    {csatChannel && (
+                        <div className="border-b border-[var(--glass-border)] bg-[var(--bg-surface)] px-4 py-3 sm:px-5">
+                            <div className="flex flex-wrap items-center justify-between gap-2">
+                                <div className="min-w-0">
+                                    <div className="text-xs font-bold text-[var(--text-primary)]">Đánh giá CSAT</div>
+                                    <div className="text-[11px] text-[var(--text-secondary)]">
+                                        Chỉ gửi sau khi kết thúc trao đổi · kênh {csatChannel === 'WEB_CHAT' ? 'WEB' : csatChannel}
+                                    </div>
+                                </div>
+                                <button
+                                    type="button"
+                                    onClick={() => void handleRequestCsat()}
+                                    disabled={hasCsatRequest || csatSubmitting}
+                                    className="rounded-lg border border-[var(--glass-border)] bg-[var(--glass-surface)] px-2.5 py-1.5 text-xs font-bold text-[var(--sgs-primary)] transition-colors hover:bg-[var(--sgs-primary)]/10 disabled:cursor-not-allowed disabled:opacity-50"
+                                >
+                                    {hasCsatRequest ? 'Đã gửi lời mời' : csatSubmitting ? 'Đang gửi…' : 'Gửi lời mời đánh giá'}
+                                </button>
+                            </div>
+                            {hasCsatRequest && !csatRecordedScore && (
+                                <div className="mt-2.5 flex flex-wrap items-center gap-2">
+                                    <span className="text-[11px] text-[var(--text-secondary)]">Điểm khách cung cấp:</span>
+                                    {[1, 2, 3, 4, 5].map(score => (
+                                        <button
+                                            key={score}
+                                            type="button"
+                                            onClick={() => setCsatScore(score)}
+                                            aria-pressed={csatScore === score}
+                                            className={`min-h-[32px] min-w-[32px] rounded-lg border px-2 text-xs font-bold transition-colors ${csatScore === score ? 'border-[var(--sgs-primary)] bg-[var(--sgs-primary)] text-white' : 'border-[var(--glass-border)] bg-[var(--glass-surface)] text-[var(--text-primary)] hover:border-[var(--sgs-primary)]'}`}
+                                        >
+                                            {score}
+                                        </button>
+                                    ))}
+                                    <label className="flex basis-full items-center gap-2 text-[11px] text-[var(--text-secondary)]">
+                                        <input
+                                            type="checkbox"
+                                            checked={csatConsent}
+                                            onChange={event => setCsatConsent(event.target.checked)}
+                                            className="accent-[var(--sgs-primary)]"
+                                        />
+                                        Khách đã đồng ý ghi nhận đánh giá này
+                                    </label>
+                                    <button
+                                        type="button"
+                                        onClick={() => void handleRecordCsat()}
+                                        disabled={!csatScore || !csatConsent || csatSubmitting}
+                                        className="rounded-lg bg-[var(--sgs-primary)] px-3 py-1.5 text-xs font-bold text-white transition-opacity disabled:cursor-not-allowed disabled:opacity-40"
+                                    >
+                                        Ghi nhận CSAT
+                                    </button>
+                                </div>
+                            )}
+                            {csatRecordedScore && (
+                                <div className="mt-2 text-[11px] font-semibold text-emerald-700">
+                                    Đã ghi nhận CSAT {csatRecordedScore}/5 cho hội thoại này.
+                                </div>
+                            )}
+                        </div>
+                    )}
                     {/* Messages List */}
                     <div className="flex-1 overflow-y-auto px-4 py-3 sm:px-5 sm:py-4 bg-[var(--glass-surface)] space-y-3 sm:space-y-4 no-scrollbar scroll-smooth">
                         {visibleMessages.length === 0 && (

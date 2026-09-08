@@ -112,6 +112,29 @@ export function createAgentMemoryRoutes(authenticateToken: RequestHandler): Rout
     }
   });
 
+  router.post('/signals/csat', authenticateToken, async (req, res) => {
+    try {
+      const user = (req as any).user;
+      const { subjectId, score, channel, consent } = req.body || {};
+      if (!subjectId || score === undefined) {
+        return res.status(400).json({ error: 'subjectId và score là bắt buộc' });
+      }
+      const signal = await agentMemoryService.recordSupportCsat(user.tenantId, {
+        subjectId: String(subjectId),
+        score: Number(score),
+        channel: channel ? String(channel) : undefined,
+        consent: consent === true,
+        actorId: user.id,
+        provenance: 'staff',
+      });
+      return res.status(201).json(signal);
+    } catch (error: any) {
+      const message = error?.message || 'Không thể ghi CSAT';
+      const status = /consent/i.test(message) ? 400 : /không tìm thấy/i.test(message) ? 404 : 400;
+      return res.status(status).json({ error: message });
+    }
+  });
+
   router.get('/signals', authenticateToken, async (req, res) => {
     try {
       res.json(await agentMemoryService.listSignals((req as any).user.tenantId, req.query.signalType as string | undefined));
