@@ -262,11 +262,11 @@
 .landing-builder-publish-button, .landing-builder-primary-button {
   display: inline-flex; align-items: center; justify-content: center;
   border: 0; border-radius: 999px; padding: 12px 20px;
-  background: var(--landing-brand); color: var(--ui-on-brand, #fff); font-weight: 700; text-decoration: none;
+  background: var(--landing-accent); color: var(--ui-on-accent, #16202b); font-weight: 700; text-decoration: none;
   cursor: pointer; transition: transform .2s, background .2s;
 }
 .landing-builder-publish-button:hover, .landing-builder-primary-button:hover {
-  background: var(--landing-brand-strong); transform: translateY(-1px);
+  background: var(--landing-accent-strong); transform: translateY(-1px);
 }
 .landing-builder-publish-button:disabled { opacity: .65; cursor: wait; transform: none; }
 .landing-builder-hero {
