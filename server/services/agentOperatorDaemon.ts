@@ -82,15 +82,29 @@ registerAgentEventHandler('LIVE_CHAT_MESSAGE', async event => {
 
 export function startAgentOperatorWorker(getTenantIds: () => Promise<string[]>, intervalMs = 5000) {
   if (workerTimer) return { stop: stopAgentOperatorWorker };
+  let consecutiveFailures = 0;
+  let lastFailureAt = 0;
   const tick = async () => {
     if (workerRunning) return;
+    // A database outage must not turn this 5-second worker into a log storm.
+    // It also must not compete with request traffic while credentials or the
+    // database service are being repaired.
+    const retryDelay = Math.min(60_000, intervalMs * 2 ** Math.min(consecutiveFailures, 4));
+    if (consecutiveFailures > 0 && Date.now() - lastFailureAt < retryDelay) return;
     workerRunning = true;
     try {
       for (const tenantId of await getTenantIds()) {
         await processAgentEvents(tenantId, 25);
       }
+      consecutiveFailures = 0;
     } catch (error: any) {
-      logger.error(`[AgentDaemon] worker tick failed: ${error?.message || error}`);
+      consecutiveFailures++;
+      lastFailureAt = Date.now();
+      logger.warn(
+        `[AgentDaemon] worker paused after database/queue failure ` +
+        `(retry in ${Math.min(60_000, intervalMs * 2 ** Math.min(consecutiveFailures, 4))}ms): ` +
+        `${error?.message || error}`,
+      );
     } finally {
       workerRunning = false;
     }

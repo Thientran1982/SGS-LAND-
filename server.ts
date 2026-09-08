@@ -84,7 +84,12 @@ import { createDailyAdminReportRoutes } from "./server/routes/dailyAdminReportRo
 import { startDailyReportScheduler } from "./server/services/dailyAdminReportService";
 import { createLiveChatAgentRoutes } from "./server/routes/liveChatAgentRoutes";
 import { createPublicLiveChatAttachmentRoutes } from "./server/routes/publicLiveChatAttachmentRoutes";
-import { isLandingBuilderRequest, liveChatEngine, recordLandingClassificationTelemetry } from "./server/ai/liveChatEngine";
+import {
+  classifyLiveChatIntent,
+  isLandingBuilderRequest,
+  liveChatEngine,
+  recordLandingClassificationTelemetry,
+} from "./server/ai/liveChatEngine";
 import { createPublicProjectRoutes } from "./server/routes/publicProjectRoutes";
 import { createPublicDeveloperRoutes } from "./server/routes/publicDeveloperRoutes";
 import { createPublicProjectContentRoutes } from "./server/routes/publicProjectContentRoutes";
@@ -2889,6 +2894,7 @@ app.get('/api/public/listings/:slugId', apiRateLimit, async (req: express.Reques
   app.post('/api/public/ai/livechat', livechatRateLimit, aiRateLimit, async (req: express.Request, res: express.Response) => {
     try {
       const { leadId, message, lang, inboundInteractionId } = req.body;
+      const chatStartedAt = Date.now();
       const attachments = normalizePublicChatAttachments(req.body?.attachments);
       if (!leadId || !String(message || '').trim()) {
         return res.status(400).json({ error: 'leadId và message là bắt buộc' }) as any;
@@ -2896,6 +2902,7 @@ app.get('/api/public/listings/:slugId', apiRateLimit, async (req: express.Reques
       const msgContent = String(message).trim().slice(0, 2000);
 
       const lead = await leadRepository.findById(PUBLIC_TENANT, leadId);
+      logger.info(`[PublicLiveChat] lead lookup ${Date.now() - chatStartedAt}ms`);
       if (!lead) return res.status(404).json({ error: 'Lead not found' }) as any;
 
       // If a human agent has taken over this conversation, skip AI processing entirely.
@@ -2922,6 +2929,7 @@ app.get('/api/public/listings/:slugId', apiRateLimit, async (req: express.Reques
           error: 'Tin nhắn đến chưa được lưu. Vui lòng gửi lại tin nhắn.',
         }) as any;
       }
+      logger.info(`[PublicLiveChat] history lookup ${Date.now() - chatStartedAt}ms`);
 
       const { aiService, detectMessageLang } = await import('./server/ai');
       const { runDurableAgentExecution } = await import('./server/services/durableAgentExecutionService');
@@ -2930,7 +2938,13 @@ app.get('/api/public/listings/:slugId', apiRateLimit, async (req: express.Reques
       const replyLang = detectMessageLang(msgContent, lang || 'vn');
       const t = serverT(replyLang);
       const isLandingRequest = isPublicLandingBuilderRequest(msgContent);
-      const executePublicChat = () => isLandingRequest
+      // Known intents do not need the legacy router LLM call. Let Minh run the
+      // keyword-selected specialist directly, then synthesize once from its
+      // evidence. Keep GENERAL on the legacy pipeline because ambiguous
+      // questions benefit from its broader intent planner.
+      const detectedPublicIntent = classifyLiveChatIntent(msgContent).intent;
+      const useFastLiveChatPipeline = isLandingRequest || detectedPublicIntent !== 'GENERAL';
+      const executePublicChat = () => useFastLiveChatPipeline
         ? liveChatEngine.callTool('handle_live_chat', {
             tenantId: PUBLIC_TENANT,
             message: msgContent,
@@ -2966,6 +2980,7 @@ app.get('/api/public/listings/:slugId', apiRateLimit, async (req: express.Reques
         message: msgContent,
         execute: executePublicChat,
       });
+      logger.info(`[PublicLiveChat] AI execution ${Date.now() - chatStartedAt}ms cached=${execution.cached}`);
       // Older landing requests were cached as EMPTY_OUTPUT because the
       // live-chat wrapper exposed `response` but not `content`. Repair only
       // that narrow legacy cache entry; ordinary idempotency replays must
@@ -2989,10 +3004,9 @@ app.get('/api/public/listings/:slugId', apiRateLimit, async (req: express.Reques
         });
       }
       const result = execution.result;
-      // The public widget intentionally keeps non-builder chats on the legacy
-      // pipeline. Still record the classifier decision so candidate misses
-      // are visible without persisting the visitor's brief.
-      await recordLandingClassificationTelemetry({
+      // Record the classifier decision so candidate misses remain visible
+      // without persisting the visitor's brief.
+      void recordLandingClassificationTelemetry({
         tenantId: PUBLIC_TENANT,
         sessionId: leadId,
         leadId,
@@ -3027,6 +3041,7 @@ app.get('/api/public/listings/:slugId', apiRateLimit, async (req: express.Reques
         },
         externalEventId: `agent:${execution.runId}`,
       });
+      logger.info(`[PublicLiveChat] outbound persistence ${Date.now() - chatStartedAt}ms`);
       // A cached execution is a retry: return the same interaction without duplicate socket fan-out.
       if (!execution.cached) {
         broadcastIo?.to(leadId).emit('receive_message', { room: leadId, message: aiReply });
@@ -4682,16 +4697,14 @@ app.use('/api/approval-requests', apiRateLimit, createApprovalRequestRoutes(auth
     if (typeof (timer as any).unref === 'function') (timer as any).unref();
   }
 
-  // Readiness probe: the process can stay alive while Postgres is restarting,
-  // but infrastructure must stop routing DB-dependent traffic until recovery.
+  // Liveness probe: this endpoint must only answer whether the Node process is
+  // alive. The supervisor intentionally uses it to detect a wedged process;
+  // coupling it to Postgres turns a recoverable DB outage into a restart loop
+  // that drops every HTTP/WebSocket connection. Use /api/health for readiness.
   app.get("/health", async (_req, res) => {
     res.setHeader('Cache-Control', 'no-store');
-    const database = await probeDatabase(800);
-    const available = database.available;
-    return res.status(available ? 200 : 503).json({
-      status: available ? "ok" : "degraded",
-      database: database.status,
-      ...(database.lastError ? { databaseError: database.lastError } : {}),
+    return res.status(200).json({
+      status: "ok",
       version: process.env.npm_package_version || "0.0.0",
       uptime: Math.floor(process.uptime()),
     });

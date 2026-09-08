@@ -1893,10 +1893,13 @@ async function handle_live_chat(args: Record<string, any>): Promise<any> {
             }),
         );
     }
-    // Persistence is best-effort: wait until each write has been attempted so
-    // a successful response has observable memory/journey state, but never
-    // turn a database outage into an upstream chat failure.
-    await Promise.all(persistenceTasks);
+    // Persistence is best-effort and must not hold the customer-facing
+    // response open. The durable execution and the outbound interaction are
+    // already the response's source of truth; memory/journey can finish after
+    // the answer is visible and will log a retryable failure if the DB is down.
+    void Promise.all(persistenceTasks).catch(error =>
+        logger.warn(`[LiveChatPersistence] background writes failed: ${error?.message || error}`),
+    );
     const auditBase = {
         tenantId,
         sessionId: effectiveSessionId,
@@ -1904,83 +1907,88 @@ async function handle_live_chat(args: Record<string, any>): Promise<any> {
         runId: execution.runId,
         traceId: execution.traceId,
     };
-    await recordLandingClassificationTelemetry({
-        tenantId,
-        sessionId: effectiveSessionId,
-        leadId: args.context?.leadId,
-        runId: execution.runId,
-        traceId: execution.traceId,
-        message,
-        languageHint: args.context?.language || args.language,
-        finalIntent: result.intent,
-        specialistOutput: result.specialistOutput,
-        specialistError: result.intent === 'LANDING' && !result.specialistOutput
-            ? String(result.missingData?.[0] || '')
-            : undefined,
-    }).catch(error => logger.warn(`[LandingTelemetry] record failed: ${error?.message || error}`));
-    await agentAuditRepository.record(tenantId, {
-        ...auditBase,
-        eventKey: `chat:${execution.runId}:in`,
-        eventType: 'CHAT_MESSAGE',
-        direction: 'INBOUND',
-        status: 'SUCCESS',
-        input: {
-            messageHash: createHash('sha256').update(message).digest('hex').slice(0, 24),
-            messageLength: message.length,
-        },
-        metadata: { source: 'live-chat-engine', privacy: 'content-free' },
-    }).catch(error => logger.warn(`[LiveChatAudit] inbound record failed: ${error?.message || error}`));
-    await agentAuditRepository.record(tenantId, {
-        ...auditBase,
-        eventKey: `chat:${execution.runId}:out`,
-        eventType: 'CHAT_MESSAGE',
-        direction: 'OUTBOUND',
-        status: result.degraded ? 'DEGRADED' : 'SUCCESS',
-        output: {
-            intent: result.intent,
-            groundingStatus: result.groundingStatus,
-            degraded: result.degraded === true,
-            degradedReason: result.degradedReason,
-            contentLength: typeof content === 'string' ? content.length : 0,
-        },
-        latencyMs: providerTelemetry?.attempts?.reduce(
-            (total: number, attempt: ProviderAttempt) => total + (Number(attempt.latencyMs) || 0),
-            0,
-        ) || undefined,
-        metadata: {
-            source: 'live-chat-engine',
-            cached: execution.cached,
-            resumed: execution.resumed,
-            aiProvider: providerTelemetry?.provider || null,
-            aiModel: providerTelemetry?.model || null,
-            aiStatus: providerTelemetry?.status || null,
-            aiFallbackUsed: providerTelemetry?.fallbackUsed === true,
-            aiProviderAttempts: providerTelemetry?.attempts || [],
-        },
-    }).catch(error => logger.warn(`[LiveChatAudit] outbound record failed: ${error?.message || error}`));
-    for (const step of (steps || []) as Array<Record<string, any>>) {
-        const isLandingTool = String(step.agent) === 'landing_builder';
+    // Audit and classification telemetry are also best-effort. They are
+    // content-free operational records and should never turn a successful AI
+    // answer into a client-visible timeout during a database outage.
+    void (async () => {
+        await recordLandingClassificationTelemetry({
+            tenantId,
+            sessionId: effectiveSessionId,
+            leadId: args.context?.leadId,
+            runId: execution.runId,
+            traceId: execution.traceId,
+            message,
+            languageHint: args.context?.language || args.language,
+            finalIntent: result.intent,
+            specialistOutput: result.specialistOutput,
+            specialistError: result.intent === 'LANDING' && !result.specialistOutput
+                ? String(result.missingData?.[0] || '')
+                : undefined,
+        }).catch(error => logger.warn(`[LandingTelemetry] record failed: ${error?.message || error}`));
         await agentAuditRepository.record(tenantId, {
             ...auditBase,
-            eventKey: `tool:${execution.runId}:${String(step.agent)}`,
-            eventType: 'TOOL_EXECUTION',
-            toolName: String(step.agent),
-            status: String(step.status || 'SUCCESS'),
-            output: isLandingTool
-                ? {
-                    draftStatus: landingDraftStatus(result.specialistOutput),
-                    draftCreated: landingDraftStatus(result.specialistOutput) === 'CREATED',
-                  }
-                : { sourcesCount: Array.isArray(result.sources) ? result.sources.length : 0 },
+            eventKey: `chat:${execution.runId}:in`,
+            eventType: 'CHAT_MESSAGE',
+            direction: 'INBOUND',
+            status: 'SUCCESS',
+            input: {
+                messageHash: createHash('sha256').update(message).digest('hex').slice(0, 24),
+                messageLength: message.length,
+            },
+            metadata: { source: 'live-chat-engine', privacy: 'content-free' },
+        }).catch(error => logger.warn(`[LiveChatAudit] inbound record failed: ${error?.message || error}`));
+        await agentAuditRepository.record(tenantId, {
+            ...auditBase,
+            eventKey: `chat:${execution.runId}:out`,
+            eventType: 'CHAT_MESSAGE',
+            direction: 'OUTBOUND',
+            status: result.degraded ? 'DEGRADED' : 'SUCCESS',
+            output: {
+                intent: result.intent,
+                groundingStatus: result.groundingStatus,
+                degraded: result.degraded === true,
+                degradedReason: result.degradedReason,
+                contentLength: typeof content === 'string' ? content.length : 0,
+            },
+            latencyMs: providerTelemetry?.attempts?.reduce(
+                (total: number, attempt: ProviderAttempt) => total + (Number(attempt.latencyMs) || 0),
+                0,
+            ) || undefined,
             metadata: {
-                source: 'durable-live-chat',
+                source: 'live-chat-engine',
                 cached: execution.cached,
                 resumed: execution.resumed,
-                ...(isLandingTool ? { privacy: 'content-free' } : {}),
+                aiProvider: providerTelemetry?.provider || null,
+                aiModel: providerTelemetry?.model || null,
+                aiStatus: providerTelemetry?.status || null,
+                aiFallbackUsed: providerTelemetry?.fallbackUsed === true,
+                aiProviderAttempts: providerTelemetry?.attempts || [],
             },
-        }).catch(error => logger.warn(`[LiveChatAudit] tool record failed: ${error?.message || error}`));
-    }
-    await recordObservedEntities(tenantId, auditBase, result.specialistOutput, result.sources);
+        }).catch(error => logger.warn(`[LiveChatAudit] outbound record failed: ${error?.message || error}`));
+        for (const step of (steps || []) as Array<Record<string, any>>) {
+            const isLandingTool = String(step.agent) === 'landing_builder';
+            await agentAuditRepository.record(tenantId, {
+                ...auditBase,
+                eventKey: `tool:${execution.runId}:${String(step.agent)}`,
+                eventType: 'TOOL_EXECUTION',
+                toolName: String(step.agent),
+                status: String(step.status || 'SUCCESS'),
+                output: isLandingTool
+                    ? {
+                        draftStatus: landingDraftStatus(result.specialistOutput),
+                        draftCreated: landingDraftStatus(result.specialistOutput) === 'CREATED',
+                      }
+                    : { sourcesCount: Array.isArray(result.sources) ? result.sources.length : 0 },
+                metadata: {
+                    source: 'durable-live-chat',
+                    cached: execution.cached,
+                    resumed: execution.resumed,
+                    ...(isLandingTool ? { privacy: 'content-free' } : {}),
+                },
+            }).catch(error => logger.warn(`[LiveChatAudit] tool record failed: ${error?.message || error}`));
+        }
+        await recordObservedEntities(tenantId, auditBase, result.specialistOutput, result.sources);
+    })().catch(error => logger.warn(`[LiveChatAudit] background audit failed: ${error?.message || error}`));
     return {
         ...result,
         // DurableAgentExecution validates the customer-facing text through
