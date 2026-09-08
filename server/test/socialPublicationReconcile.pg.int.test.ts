@@ -1,4 +1,5 @@
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
+import express from 'express';
 import { Pool, PoolClient } from 'pg';
 import { randomUUID } from 'node:crypto';
 import migration186 from '../migrations/186_social_publications';
@@ -9,6 +10,7 @@ import {
   findSocialPublication,
   listSocialPublications,
 } from '../repositories/socialPublicationRepository';
+import { createSocialPublicationRouter } from '../routes/socialPublicationRoutes';
 
 const integrationUrl = process.env.INTEGRITY_PG_URL;
 const describePostgres = integrationUrl ? describe : describe.skip;
@@ -28,6 +30,9 @@ describePostgres('social publication reconciliation against PostgreSQL', () => {
   let setupClient: PoolClient | undefined;
   let workerA: Pool;
   let workerB: Pool;
+  let httpPool: Pool;
+  let httpServer: ReturnType<express.Application['listen']>;
+  let httpBaseUrl: string;
   let schema: string;
 
   function connectionWithSchema(): string {
@@ -87,6 +92,28 @@ describePostgres('social publication reconciliation against PostgreSQL', () => {
     };
   }
 
+  async function postReconcile(
+    fixture: { publicationId: string; targetId: string },
+    body: Record<string, unknown>,
+    headers: Record<string, string> = {},
+  ) {
+    const response = await fetch(
+      `${httpBaseUrl}/api/social-publications/${fixture.publicationId}/targets/${fixture.targetId}/reconcile`,
+      {
+        method: 'POST',
+        headers: {
+          'content-type': 'application/json',
+          ...headers,
+        },
+        body: JSON.stringify(body),
+      },
+    );
+    return {
+      response,
+      body: await response.json() as Record<string, unknown>,
+    };
+  }
+
   beforeAll(async () => {
     schema = `social_publication_reconcile_${process.pid}_${Date.now()}`;
     const adminPool = new Pool({
@@ -128,9 +155,39 @@ describePostgres('social publication reconciliation against PostgreSQL', () => {
       connectionTimeoutMillis: 10_000,
       ssl: useSsl ? { rejectUnauthorized: false } : false,
     });
+
+    httpPool = new Pool({
+      connectionString: connectionWithSchema(),
+      max: 4,
+      connectionTimeoutMillis: 10_000,
+      ssl: useSsl ? { rejectUnauthorized: false } : false,
+    });
+    const app = express();
+    app.use(express.json());
+    app.use(createSocialPublicationRouter(httpPool, (req, _res, next) => {
+      (req as any).user = {
+        tenantId: req.header('x-test-tenant') || tenantA,
+        id: req.header('x-test-actor') || actorA,
+        role: 'ADMIN',
+      };
+      next();
+    }));
+    httpServer = app.listen(0);
+    await new Promise<void>((resolve) => httpServer.once('listening', () => resolve()));
+    const address = httpServer.address();
+    if (!address || typeof address === 'string') {
+      throw new Error('HTTP test server did not expose a TCP address');
+    }
+    httpBaseUrl = `http://127.0.0.1:${address.port}`;
   });
 
   afterAll(async () => {
+    if (httpServer) {
+      await new Promise<void>((resolve, reject) => {
+        httpServer.close(error => error ? reject(error) : resolve());
+      });
+    }
+    await httpPool?.end();
     await workerA?.end();
     await workerB?.end();
     setupClient?.release();
@@ -181,6 +238,78 @@ describePostgres('social publication reconciliation against PostgreSQL', () => {
     });
   });
 
+  it('returns one HTTP success and one state conflict for concurrent reconciliation', async () => {
+    const fixture = await createFixture();
+    const body = {
+      action: 'MARK_FAILED',
+      reason: 'Xác nhận thủ công sau khi provider timeout.',
+    };
+
+    const results = await Promise.all([
+      postReconcile(fixture, body, { 'x-test-actor': actorA }),
+      postReconcile(fixture, body, { 'x-test-actor': actorB }),
+    ]);
+
+    expect(results.map(({ response }) => response.status).sort()).toEqual([200, 409]);
+    const conflict = results.find(({ response }) => response.status === 409);
+    expect(conflict?.body).toMatchObject({ code: 'TARGET_STATE_CONFLICT' });
+    const success = results.find(({ response }) => response.status === 200);
+    expect(success?.body).toHaveProperty('id', fixture.publicationId);
+  });
+
+  it('returns HTTP 404 for another tenant without changing state or audit events', async () => {
+    const fixture = await createFixture();
+
+    const result = await postReconcile(
+      fixture,
+      {
+        action: 'MARK_FAILED',
+        reason: 'Tenant khác thử xử lý target.',
+      },
+      { 'x-test-tenant': tenantB, 'x-test-actor': actorB },
+    );
+
+    expect(result.response.status).toBe(404);
+    expect(result.body).toEqual({
+      error: 'Không tìm thấy publication target trong tenant hiện tại',
+    });
+
+    const state = await query(
+      `SELECT p.status AS publication_status, t.status AS target_status,
+              (SELECT count(*) FROM social_publication_events e
+                WHERE e.publication_id = p.id AND e.target_id = t.id) AS event_count
+         FROM social_publications p
+         JOIN social_publication_targets t ON t.publication_id = p.id
+        WHERE p.id = $1 AND t.id = $2`,
+      [fixture.publicationId, fixture.targetId],
+    );
+    expect(state.rows[0]).toMatchObject({
+      publication_status: 'PROCESSING',
+      target_status: 'AMBIGUOUS',
+      event_count: 0,
+    });
+  });
+
+  it('returns HTTP conflicts for requeueing AMBIGUOUS and validates confirmation IDs', async () => {
+    const fixture = await createFixture();
+
+    const requeue = await postReconcile(fixture, {
+      action: 'REQUEUE',
+      reason: 'Chưa đủ bằng chứng để requeue.',
+    });
+    expect(requeue.response.status).toBe(409);
+    expect(requeue.body).toMatchObject({ code: 'TARGET_STATE_CONFLICT' });
+
+    const confirm = await postReconcile(fixture, {
+      action: 'CONFIRM_PUBLISHED',
+      reason: 'Provider xác nhận bài đã tồn tại.',
+    });
+    expect(confirm.response.status).toBe(400);
+    expect(confirm.body).toEqual({
+      error: 'Cần provider post ID để xác nhận đã đăng',
+    });
+  });
+
   it('does not expose or mutate a publication through another tenant', async () => {
     const fixture = await createFixture(tenantA);
 
@@ -205,7 +334,7 @@ describePostgres('social publication reconciliation against PostgreSQL', () => {
     expect(state.rows[0]).toMatchObject({
       publication_status: 'PROCESSING',
       target_status: 'AMBIGUOUS',
-      event_count: '0',
+      event_count: 0,
     });
   });
 
