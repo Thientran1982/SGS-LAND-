@@ -8,6 +8,7 @@ import { Bot, Headset, Loader2, RefreshCw, Send, Mic, Check, X } from "lucide-re
 import { createMinhSession } from "./core/minhSession";
 import type { MinhSession, MinhThreadStatus } from "./core/minhSession";
 import type { ChatMessage } from "./core/types";
+import { renderChatContent } from "./renderChatContent";
 
 const SUGGESTIONS = [
   "Aqua City pháp lý thế nào?",
@@ -15,14 +16,6 @@ const SUGGESTIONS = [
   "Còn quỹ căn nào đẹp không?",
   "Cho tôi xem chính sách thanh toán",
 ];
-
-function renderContent(text: string): string {
-  return text
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>")
-    .replace(/\n/g, "<br/>");
-}
 
 const CSS = (v: string, f: string) => "var(" + v + ", " + f + ")";
 
@@ -520,7 +513,7 @@ export function MinhChatPanel({
                 <div
                   className="max-w-[85%] rounded-2xl border px-3.5 py-2.5 text-sm leading-relaxed"
                   style={m.role === "user" ? S.bubbleUser : S.bubbleAi}
-                  dangerouslySetInnerHTML={{ __html: renderContent(m.content) }}
+                  dangerouslySetInnerHTML={{ __html: renderChatContent(m.content) }}
                 />
               </div>
             ))}
