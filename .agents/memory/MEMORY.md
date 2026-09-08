@@ -45,6 +45,7 @@
 - [Migration history aliases](migration-history-aliases.md) — canonicalize reviewed renamed migration records without deleting history or replaying migrations.
 - [Customer profile boundaries](customer-profile-boundaries.md) — keep Minh personalization separate from Company Brain and fail closed without explicit profile consent.
 - [Generated production backend](generated-production-backend.md) — production may run ignored server.js; rebuild the bundle after server source changes before runtime verification
+- [Deployment image budget](deployment-image-budget.md) — VM publishing packages the workspace under an 8 GiB limit; prune runtime artifacts after build
 - [Health liveness/readiness](health-liveness-readiness.md) — keep supervisor liveness dependency-free; report DB readiness separately to prevent restart loops
 - [Database outage alerts](database-outage-alerts.md) — keep prolonged outage signals process-local, deduplicated, tenant-independent, and free of raw connection context
 - [Rate-limit fallback timeouts](rate-limit-fallback-timeouts.md) — bound Redis client initialization as well as commands before using in-memory fallback
