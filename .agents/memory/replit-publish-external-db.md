@@ -7,4 +7,4 @@ When the app uses AIVEN_DATABASE_URL, Replit publishing can still enter database
 
 **Why:** The publish database-copy step is separate from the application's runtime connection. Updating AIVEN_DATABASE_URL does not prevent Replit from copying its managed development database.
 
-**How to apply:** Do not retry indefinitely. When production is external, remove the attached managed production database from Database → production → Settings, leave development-data copying disabled, update production AIVEN_DATABASE_URL, and publish again. If managed DB cloning is required, provision the target role before restoring policies.
+**How to apply:** Do not retry indefinitely. When production is external, remove any custom DATABASE_URL pointing at Aiven from Publishing secrets, keep AIVEN_DATABASE_URL as the app connection, remove any attached managed production database, leave development-data copying disabled, and publish again. If managed DB cloning is required, provision the target role before restoring policies.
