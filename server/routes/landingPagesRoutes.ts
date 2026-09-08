@@ -19,6 +19,7 @@ import { storeFile } from '../services/storageService';
 import {
     enqueueGalleryCleanup,
     listGalleryCleanupJobs,
+    countGalleryCleanupJobs,
     retryGalleryCleanup,
 } from '../services/galleryCleanupService';
 
@@ -151,8 +152,11 @@ export function createLandingPagesRoutes(authenticateToken?: any): Router {
             const user = operator(req, res);
             if (!user) return;
             try {
-                const jobs = await listGalleryCleanupJobs(user.tenantId, Number(req.query.limit) || 50);
-                return res.json({ jobs });
+                const [jobs, counts] = await Promise.all([
+                    listGalleryCleanupJobs(user.tenantId, Number(req.query.limit) || 50),
+                    countGalleryCleanupJobs(user.tenantId),
+                ]);
+                return res.json({ jobs, counts });
             } catch {
                 return res.status(500).json({ error: 'Không thể tải danh sách dọn dẹp ảnh.' });
             }

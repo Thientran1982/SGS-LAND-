@@ -15,6 +15,7 @@ const {
   storeFile,
   enqueueGalleryCleanup,
   listGalleryCleanupJobs,
+  countGalleryCleanupJobs,
   retryGalleryCleanup,
   recordAudit,
 } = vi.hoisted(() => ({
@@ -23,6 +24,7 @@ const {
   storeFile: vi.fn(),
   enqueueGalleryCleanup: vi.fn(),
   listGalleryCleanupJobs: vi.fn(),
+  countGalleryCleanupJobs: vi.fn(),
   retryGalleryCleanup: vi.fn(),
   recordAudit: vi.fn(),
 }));
@@ -32,6 +34,7 @@ vi.mock('../services/storageService', () => ({ storeFile }));
 vi.mock('../services/galleryCleanupService', () => ({
   enqueueGalleryCleanup,
   listGalleryCleanupJobs,
+  countGalleryCleanupJobs,
   retryGalleryCleanup,
 }));
 vi.mock('../repositories/agentAuditRepository', () => ({
@@ -114,6 +117,7 @@ describe('landing gallery image API validation and cleanup', () => {
       `/uploads/${DEFAULT_TENANT_ID}/${filename}`);
     enqueueGalleryCleanup.mockResolvedValue({ id: 'cleanup-job-1', status: 'PENDING' });
     listGalleryCleanupJobs.mockResolvedValue([]);
+    countGalleryCleanupJobs.mockResolvedValue({ pending: 0, retrying: 0, failed: 0 });
     retryGalleryCleanup.mockResolvedValue({ id: 'cleanup-job-1', status: 'SUCCEEDED' });
     recordAudit.mockResolvedValue(undefined);
     const authenticateToken = (req: express.Request, _res: express.Response, next: express.NextFunction) => {
@@ -301,6 +305,7 @@ describe('landing gallery image API validation and cleanup', () => {
       status: 'FAILED',
       attempts: 1,
     }]);
+    countGalleryCleanupJobs.mockResolvedValue({ pending: 0, retrying: 0, failed: 1 });
 
     const listResponse = await testServer.request('/api/landing-pages/cleanup-failures');
     const retryResponse = await testServer.request('/api/landing-pages/cleanup-failures/00000000-0000-0000-0000-000000000010/retry', {
@@ -308,8 +313,11 @@ describe('landing gallery image API validation and cleanup', () => {
     });
 
     expect(listResponse.status).toBe(200);
-    expect((await responseJson(listResponse)).jobs).toHaveLength(1);
+    const listBody = await responseJson(listResponse);
+    expect(listBody.jobs).toHaveLength(1);
+    expect(listBody.counts).toEqual({ pending: 0, retrying: 0, failed: 1 });
     expect(listGalleryCleanupJobs).toHaveBeenCalledWith(DEFAULT_TENANT_ID, 50);
+    expect(countGalleryCleanupJobs).toHaveBeenCalledWith(DEFAULT_TENANT_ID);
     expect(retryResponse.status).toBe(200);
     expect(retryGalleryCleanup).toHaveBeenCalledWith(
       DEFAULT_TENANT_ID,

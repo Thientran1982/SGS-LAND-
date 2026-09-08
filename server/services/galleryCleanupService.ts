@@ -16,6 +16,12 @@ export interface GalleryCleanupJob {
   updatedAt: string;
 }
 
+export interface GalleryCleanupCounts {
+  pending: number;
+  retrying: number;
+  failed: number;
+}
+
 interface StoredGalleryCleanupJob extends GalleryCleanupJob {
   filename: string;
   landingPageId: string | null;
@@ -114,6 +120,26 @@ export async function listGalleryCleanupJobs(
       [tenantId, boundedLimit],
     );
     return result.rows.map(toPublicJob);
+  });
+}
+
+export async function countGalleryCleanupJobs(tenantId: string): Promise<GalleryCleanupCounts> {
+  return withTenantContext(tenantId, async (client: any) => {
+    const result = await client.query(
+      `SELECT status, COUNT(*)::int AS count
+         FROM gallery_cleanup_jobs
+        WHERE tenant_id = $1 AND status IN ('PENDING', 'RUNNING', 'FAILED')
+        GROUP BY status`,
+      [tenantId],
+    );
+    const counts: GalleryCleanupCounts = { pending: 0, retrying: 0, failed: 0 };
+    for (const row of result.rows) {
+      const count = Number(row.count) || 0;
+      if (row.status === 'PENDING') counts.pending = count;
+      if (row.status === 'RUNNING') counts.retrying = count;
+      if (row.status === 'FAILED') counts.failed = count;
+    }
+    return counts;
   });
 }
 
