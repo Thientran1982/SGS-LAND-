@@ -192,4 +192,111 @@ test.describe('Landing builder public route', () => {
       await expect(page.locator(`#${section.stage}`)).toContainText(section.body);
     }
   });
+
+  test('uploads, reports rejected gallery files, and removes an image from the editor', async ({ page }) => {
+    const uploadedImageUrl = '/uploads/00000000-0000-0000-0000-000000000001/gallery-one.webp';
+    const gallerySections = (images: string[]) => DRAFT_SECTIONS.map((section) => (
+      section.stage === 'gallery' ? { ...section, images } : section
+    ));
+    let uploadAttempt = 0;
+
+    await page.route(`**/api/landing-pages/${DRAFT_SLUG}/images`, async (route) => {
+      const request = route.request();
+      if (request.method() === 'POST') {
+        uploadAttempt += 1;
+        if (uploadAttempt === 1) {
+          await route.fulfill({
+            status: 200,
+            contentType: 'application/json',
+            body: JSON.stringify({
+              page: { sections: gallerySections([uploadedImageUrl]) },
+              uploaded: 1,
+              rejected: ['rejected.png'],
+            }),
+          });
+          return;
+        }
+
+        await route.fulfill({
+          status: 415,
+          contentType: 'application/json',
+          body: JSON.stringify({
+            error: 'Khong co anh hop le nao duoc tai len',
+            rejected: ['all-rejected.txt'],
+          }),
+        });
+        return;
+      }
+
+      expect(request.method()).toBe('DELETE');
+      expect(request.postDataJSON()).toEqual({
+        visitorKey: DRAFT_VISITOR_KEY,
+        url: uploadedImageUrl,
+      });
+      expect(request.headers()['x-csrf-token']).toBeTruthy();
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({
+          page: { sections: gallerySections([]) },
+        }),
+      });
+    });
+
+    await page.goto(
+      `${BASE_URL}/landing-ai/chinh-sua/${DRAFT_SLUG}?k=${encodeURIComponent(DRAFT_VISITOR_KEY)}`,
+    );
+
+    const uploadRequestPromise = page.waitForRequest((request) => (
+      request.method() === 'POST'
+      && new URL(request.url()).pathname === `/api/landing-pages/${DRAFT_SLUG}/images`
+    ));
+    const uploadResponsePromise = page.waitForResponse((response) => (
+      response.request().method() === 'POST'
+      && new URL(response.url()).pathname === `/api/landing-pages/${DRAFT_SLUG}/images`
+    ));
+
+    await page.locator('#project-gallery-images').setInputFiles([
+      { name: 'accepted.jpg', mimeType: 'image/jpeg', buffer: Buffer.from('accepted-image') },
+      { name: 'rejected.png', mimeType: 'image/png', buffer: Buffer.from('rejected-image') },
+    ]);
+
+    const uploadRequest = await uploadRequestPromise;
+    const uploadResponse = await uploadResponsePromise;
+    const uploadBody = uploadRequest.postData() || '';
+    expect(uploadRequest.headers()['x-csrf-token']).toBeTruthy();
+    expect(uploadRequest.headers()['cookie']).toContain('csrf_token=');
+    expect(uploadBody).toContain(`name="visitorKey"`);
+    expect(uploadBody).toContain(DRAFT_VISITOR_KEY);
+    expect(uploadBody).toContain('accepted.jpg');
+    expect(uploadBody).toContain('rejected.png');
+    expect(uploadResponse.status()).toBe(200);
+    await expect(page.getByText('Đã tải lên 1 ảnh.')).toBeVisible();
+    await expect(page.getByText('Một số file bị từ chối: rejected.png')).toBeVisible();
+    await expect(page.locator(`img[src="${uploadedImageUrl}"]`)).toHaveCount(1);
+
+    const rejectedUploadResponsePromise = page.waitForResponse((response) => (
+      response.request().method() === 'POST'
+      && new URL(response.url()).pathname === `/api/landing-pages/${DRAFT_SLUG}/images`
+    ));
+    await page.locator('#project-gallery-images').setInputFiles({
+      name: 'all-rejected.txt',
+      mimeType: 'text/plain',
+      buffer: Buffer.from('not-an-image'),
+    });
+    const rejectedUploadResponse = await rejectedUploadResponsePromise;
+    expect(rejectedUploadResponse.status()).toBe(415);
+    await expect(page.getByText('all-rejected.txt')).toBeVisible();
+    await expect(page.locator(`img[src="${uploadedImageUrl}"]`)).toHaveCount(1);
+
+    const removeResponsePromise = page.waitForResponse((response) => (
+      response.request().method() === 'DELETE'
+      && new URL(response.url()).pathname === `/api/landing-pages/${DRAFT_SLUG}/images`
+    ));
+    await page.getByRole('button', { name: 'Xóa ảnh' }).click();
+    const removeResponse = await removeResponsePromise;
+    expect(removeResponse.status()).toBe(200);
+    await expect(page.locator(`img[src="${uploadedImageUrl}"]`)).toHaveCount(0);
+    await expect(page.getByText('Đã xóa ảnh.')).toBeVisible();
+  });
 });
