@@ -11,7 +11,7 @@ export interface PublicationCreateInput {
   platforms: string[];
 }
 
-function mapTarget(row: any) {
+function mapTarget(row: any, attempts?: any[]) {
   return {
     id: row.id,
     publicationId: row.publication_id,
@@ -29,10 +29,42 @@ function mapTarget(row: any) {
     publishedAt: row.published_at,
     createdAt: row.created_at,
     updatedAt: row.updated_at,
+    ...(attempts ? { attempts } : {}),
   };
 }
 
-function mapPublication(row: any, targets: any[] = []) {
+function mapAttempt(row: any) {
+  return {
+    id: row.id,
+    targetId: row.target_id,
+    attemptNumber: Number(row.attempt_number),
+    requestId: row.request_id,
+    providerRequestId: row.provider_request_id,
+    statusCode: row.status_code,
+    resultStatus: row.result_status,
+    errorCode: row.error_code,
+    errorMessage: row.error_message_safe,
+    startedAt: row.started_at,
+    finishedAt: row.finished_at,
+  };
+}
+
+function mapEvent(row: any) {
+  return {
+    id: row.id,
+    publicationId: row.publication_id,
+    targetId: row.target_id,
+    actorId: row.actor_id,
+    eventType: row.event_type,
+    fromStatus: row.from_status,
+    toStatus: row.to_status,
+    reason: row.reason,
+    metadata: row.metadata || {},
+    createdAt: row.created_at,
+  };
+}
+
+function mapPublication(row: any, targets: any[] = [], events: any[] = []) {
   return {
     id: row.id,
     tenantId: row.tenant_id,
@@ -49,6 +81,7 @@ function mapPublication(row: any, targets: any[] = []) {
     approvedAt: row.approved_at,
     publishedAt: row.published_at,
     targets,
+    events,
   };
 }
 
@@ -81,7 +114,7 @@ export async function createSocialPublication(pool: Pool, input: PublicationCrea
       [publication.rows[0].id, input.tenantId, input.platforms],
     );
     await client.query('COMMIT');
-    return mapPublication(publication.rows[0], targetResult.rows.map(mapTarget));
+    return mapPublication(publication.rows[0], targetResult.rows.map(row => mapTarget(row)));
   } catch (error) {
     await client.query('ROLLBACK').catch(() => undefined);
     throw error;
@@ -126,7 +159,31 @@ export async function findSocialPublication(pool: Pool, tenantId: string, id: st
       ORDER BY created_at ASC`,
     [id, tenantId],
   );
-  return mapPublication(publication.rows[0], targets.rows.map(mapTarget));
+  const attempts = targets.rows.length
+    ? await pool.query(
+      `SELECT * FROM social_publication_attempts
+        WHERE target_id = ANY($1::uuid[])
+        ORDER BY target_id, attempt_number DESC`,
+      [targets.rows.map(row => row.id)],
+    )
+    : { rows: [] };
+  const attemptsByTarget = new Map<string, any[]>();
+  for (const row of attempts.rows) {
+    const list = attemptsByTarget.get(row.target_id) || [];
+    list.push(mapAttempt(row));
+    attemptsByTarget.set(row.target_id, list);
+  }
+  const events = await pool.query(
+    `SELECT * FROM social_publication_events
+      WHERE publication_id = $1 AND tenant_id = $2
+      ORDER BY created_at DESC`,
+    [id, tenantId],
+  );
+  return mapPublication(
+    publication.rows[0],
+    targets.rows.map(row => mapTarget(row, attemptsByTarget.get(row.id) || [])),
+    events.rows.map(mapEvent),
+  );
 }
 
 export async function activateSocialPublication(pool: Pool, tenantId: string, id: string) {
@@ -302,8 +359,8 @@ export async function updateSocialTarget(
   return target.rows[0].publication_id as string;
 }
 
-export async function recomputePublicationStatus(pool: Pool, publicationId: string) {
-  await pool.query(
+async function recomputePublicationStatusQuery(queryable: Pick<Pool, 'query'>, publicationId: string) {
+  await queryable.query(
     `UPDATE social_publications p
         SET status = CASE
           WHEN NOT EXISTS (
@@ -329,4 +386,147 @@ export async function recomputePublicationStatus(pool: Pool, publicationId: stri
         AND p.status NOT IN ('DRAFT', 'CANCELLED')`,
     [publicationId],
   );
+}
+
+export async function recomputePublicationStatus(pool: Pool, publicationId: string) {
+  await recomputePublicationStatusQuery(pool, publicationId);
+}
+
+export interface SocialPublicationEventInput {
+  tenantId: string;
+  publicationId: string;
+  targetId?: string | null;
+  actorId?: string | null;
+  eventType: string;
+  fromStatus?: string | null;
+  toStatus?: string | null;
+  reason?: string | null;
+  metadata?: Record<string, unknown>;
+}
+
+export async function recordSocialPublicationEvent(
+  pool: Pool,
+  input: SocialPublicationEventInput,
+) {
+  await pool.query(
+    `INSERT INTO social_publication_events
+      (tenant_id, publication_id, target_id, actor_id, event_type,
+       from_status, to_status, reason, metadata)
+     VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9::jsonb)`,
+    [
+      input.tenantId,
+      input.publicationId,
+      input.targetId || null,
+      input.actorId || null,
+      input.eventType,
+      input.fromStatus || null,
+      input.toStatus || null,
+      input.reason || null,
+      JSON.stringify(input.metadata || {}),
+    ],
+  );
+}
+
+export type SocialTargetOperatorAction =
+  | 'CONFIRM_PUBLISHED'
+  | 'MARK_FAILED'
+  | 'REQUEUE';
+
+export async function applySocialTargetOperatorAction(
+  pool: Pool,
+  input: {
+    tenantId: string;
+    publicationId: string;
+    targetId: string;
+    actorId: string | null;
+    action: SocialTargetOperatorAction;
+    reason: string;
+    providerPostId?: string;
+    providerPostUrl?: string | null;
+  },
+) {
+  const client = await pool.connect();
+  try {
+    await client.query('BEGIN');
+    const current = await client.query(
+      `SELECT t.*, p.status AS publication_status
+         FROM social_publication_targets t
+         JOIN social_publications p ON p.id = t.publication_id
+        WHERE t.id = $1 AND t.publication_id = $2 AND t.tenant_id = $3
+        FOR UPDATE`,
+      [input.targetId, input.publicationId, input.tenantId],
+    );
+    if (!current.rowCount) {
+      await client.query('ROLLBACK');
+      return { kind: 'NOT_FOUND' as const };
+    }
+    const target = current.rows[0];
+    const allowed = input.action === 'CONFIRM_PUBLISHED'
+      ? target.status === 'AMBIGUOUS'
+      : input.action === 'MARK_FAILED'
+        ? target.status === 'AMBIGUOUS'
+        : ['FAILED_RETRYABLE', 'FAILED_FINAL'].includes(target.status);
+    if (!allowed) {
+      await client.query('ROLLBACK');
+      return { kind: 'INVALID_STATE' as const, status: target.status };
+    }
+    if (input.action === 'CONFIRM_PUBLISHED' && !input.providerPostId) {
+      await client.query('ROLLBACK');
+      return { kind: 'INVALID_INPUT' as const, message: 'Cần provider post ID để xác nhận đã đăng.' };
+    }
+
+    const nextStatus = input.action === 'CONFIRM_PUBLISHED'
+      ? 'PUBLISHED'
+      : input.action === 'MARK_FAILED'
+        ? 'FAILED_FINAL'
+        : 'PENDING';
+    const update = await client.query(
+      `UPDATE social_publication_targets
+          SET status = $2,
+              provider_post_id = COALESCE($3, provider_post_id),
+              provider_post_url = COALESCE($4, provider_post_url),
+              next_retry_at = NULL,
+              last_error_code = CASE WHEN $2 = 'PUBLISHED' OR $2 = 'PENDING' THEN NULL ELSE 'OPERATOR_MARKED_FAILED' END,
+              last_error_message = CASE WHEN $2 = 'PUBLISHED' OR $2 = 'PENDING' THEN NULL ELSE $5 END,
+              published_at = CASE WHEN $2 = 'PUBLISHED' THEN COALESCE(published_at, NOW()) ELSE published_at END,
+              updated_at = NOW()
+        WHERE id = $1
+        RETURNING *`,
+      [
+        input.targetId,
+        nextStatus,
+        input.providerPostId || null,
+        input.providerPostUrl || null,
+        input.reason,
+      ],
+    );
+    await recomputePublicationStatusQuery(client, input.publicationId);
+    await client.query(
+      `INSERT INTO social_publication_events
+        (tenant_id, publication_id, target_id, actor_id, event_type,
+         from_status, to_status, reason, metadata)
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9::jsonb)`,
+      [
+        input.tenantId,
+        input.publicationId,
+        input.targetId,
+        input.actorId,
+        `OPERATOR_${input.action}`,
+        target.status,
+        nextStatus,
+        input.reason,
+        JSON.stringify({
+          providerPostId: input.providerPostId || null,
+          providerPostUrl: input.providerPostUrl || null,
+        }),
+      ],
+    );
+    await client.query('COMMIT');
+    return { kind: 'OK' as const, target: mapTarget(update.rows[0]), status: nextStatus };
+  } catch (error) {
+    await client.query('ROLLBACK').catch(() => undefined);
+    throw error;
+  } finally {
+    client.release();
+  }
 }

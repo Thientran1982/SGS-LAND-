@@ -16,9 +16,40 @@ export interface SocialTarget {
   id: string;
   platform: string;
   status: string;
+  accountId?: string;
+  attemptCount?: number;
+  providerPostId?: string | null;
+  providerRequestId?: string | null;
   providerPostUrl?: string | null;
   lastErrorCode?: string | null;
   lastErrorMessage?: string | null;
+  publishedAt?: string | null;
+  attempts?: SocialAttempt[];
+}
+
+export interface SocialAttempt {
+  id: string;
+  attemptNumber: number;
+  requestId: string;
+  providerRequestId?: string | null;
+  statusCode?: number | null;
+  resultStatus: string;
+  errorCode?: string | null;
+  errorMessage?: string | null;
+  startedAt?: string | null;
+  finishedAt?: string | null;
+}
+
+export interface SocialPublicationEvent {
+  id: string;
+  targetId?: string | null;
+  actorId?: string | null;
+  eventType: string;
+  fromStatus?: string | null;
+  toStatus?: string | null;
+  reason?: string | null;
+  metadata?: Record<string, unknown>;
+  createdAt: string;
 }
 
 export interface SocialPublication {
@@ -31,6 +62,7 @@ export interface SocialPublication {
   assetSnapshot: string[];
   createdAt: string;
   targets: SocialTarget[];
+  events?: SocialPublicationEvent[];
 }
 
 export const socialPublicationApi = {
@@ -38,6 +70,8 @@ export const socialPublicationApi = {
     api.get('/api/social-publications/catalog'),
   getPublications: (): Promise<{ data: SocialPublication[]; total: number }> =>
     api.get('/api/social-publications'),
+  getPublication: (id: string): Promise<SocialPublication> =>
+    api.get(`/api/social-publications/${id}`),
   preview: (listingId: string, platforms: string[], imageUrls: string[] = []) =>
     api.post<{
       snapshot: Record<string, unknown>;
@@ -52,4 +86,17 @@ export const socialPublicationApi = {
   }) => api.post<SocialPublication>('/api/social-publications', input),
   activate: (id: string) => api.post<SocialPublication>(`/api/social-publications/${id}/activate`),
   cancel: (id: string) => api.post<{ ok: true }>(`/api/social-publications/${id}/cancel`),
+  reconcile: (
+    publicationId: string,
+    targetId: string,
+    input: {
+      action: 'CONFIRM_PUBLISHED' | 'MARK_FAILED' | 'REQUEUE';
+      reason: string;
+      providerPostId?: string;
+      providerPostUrl?: string;
+    },
+  ) => api.post<SocialPublication>(
+    `/api/social-publications/${publicationId}/targets/${targetId}/reconcile`,
+    input,
+  ),
 };

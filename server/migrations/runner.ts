@@ -207,6 +207,7 @@ import m183 from './183_landing_classification_reviews';
 import m184 from './184_gallery_cleanup_jobs';
 import m185 from './185_landing_design_agent';
 import m186 from './186_social_publications';
+import m187 from './187_social_publication_audit';
 dotenv.config();
 
 export interface Migration {
@@ -409,6 +410,7 @@ export const MIGRATION_REGISTRY: Record<string, Migration> = {
   '184_gallery_cleanup_jobs.ts': m184,
   '185_landing_design_agent.ts': m185,
   '186_social_publications.ts': m186,
+  '187_social_publication_audit.ts': m187,
 };
 
 /**
