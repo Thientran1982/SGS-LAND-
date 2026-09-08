@@ -38,6 +38,9 @@ const VISUAL_FIXTURES = [
   },
 ].map((fixture) => ({ ...fixture, slug: `landing-visual-${randomUUID()}` }));
 
+const DRAFT_SLUG = `landing-visual-draft-${randomUUID()}`;
+const DRAFT_VISITOR_KEY = `visual-draft-${randomUUID()}`;
+
 const PALETTES = {
   sanctuary: { brand: '#0B1D26', accent: '#C6923D' },
   coastal: { brand: '#0D3442', accent: '#CBA45A' },
@@ -136,6 +139,18 @@ test.describe('Generated landing visual hierarchy', () => {
         ],
       );
     }
+    await db.query(
+      `INSERT INTO landing_pages
+        (tenant_id, visitor_key, project_name, slug, sections, status, tokens_used, language)
+       VALUES ($1, $2, $3, $4, $5::jsonb, 'draft', 6, 'vi')`,
+      [
+        HOST_TENANT,
+        DRAFT_VISITOR_KEY,
+        'Visual draft fixture',
+        DRAFT_SLUG,
+        JSON.stringify(sectionsFor(VISUAL_FIXTURES[0])),
+      ],
+    );
   });
 
   test.afterAll(async () => {
@@ -143,6 +158,10 @@ test.describe('Generated landing visual hierarchy', () => {
       for (const fixture of VISUAL_FIXTURES) {
         await db?.query('DELETE FROM landing_pages WHERE slug = $1', [fixture.slug]);
       }
+      await db?.query('DELETE FROM landing_pages WHERE slug = $1 AND visitor_key = $2', [
+        DRAFT_SLUG,
+        DRAFT_VISITOR_KEY,
+      ]);
     } finally {
       await db?.end();
     }
@@ -255,4 +274,58 @@ test.describe('Generated landing visual hierarchy', () => {
       }
     });
   }
+
+  test('keeps draft controls named, keyboard ordered, and failure-safe', async ({ page }) => {
+    let publishAttempts = 0;
+    let releasePublish!: () => void;
+    const publishRequestHeld = new Promise<void>((resolve) => {
+      releasePublish = resolve;
+    });
+
+    await page.route(`**/api/landing-pages/${DRAFT_SLUG}/publish`, async (route) => {
+      publishAttempts += 1;
+      await publishRequestHeld;
+      await route.fulfill({
+        status: 503,
+        contentType: 'application/json',
+        body: JSON.stringify({ message: 'Dịch vụ phát hành đang tạm thời gián đoạn.' }),
+      });
+    });
+
+    await page.goto(
+      `${BASE_URL}/landing/${DRAFT_SLUG}?visitorKey=${encodeURIComponent(DRAFT_VISITOR_KEY)}`,
+      { waitUntil: 'networkidle' },
+    );
+
+    const draftBanner = page.locator('.landing-builder-draft-banner');
+    const editLink = page.getByRole('link', { name: 'Chỉnh sửa trang landing' });
+    const publishButton = page.getByRole('button', { name: 'Phát hành trang' });
+    await expect(draftBanner).toHaveRole('status');
+    await expect(draftBanner).toHaveAccessibleName('Bản nháp');
+    await expect(editLink).toBeVisible();
+    await expect(publishButton).toBeVisible();
+    await expect(editLink).toHaveJSProperty('tabIndex', 0);
+    await expect(publishButton).toHaveJSProperty('tabIndex', 0);
+
+    await page.keyboard.press('Tab');
+    await expect(editLink).toBeFocused();
+    await page.keyboard.press('Tab');
+    await expect(publishButton).toBeFocused();
+
+    await publishButton.click();
+    await expect(publishButton).toBeDisabled();
+    await expect(publishButton).toHaveAttribute('aria-disabled', 'true');
+    await expect(publishButton).toHaveAttribute('aria-busy', 'true');
+    await expect(publishButton).toHaveText('Đang phát hành...');
+
+    releasePublish();
+    await expect(page.locator('.landing-builder-publish-error')).toHaveRole('alert');
+    await expect(page.locator('.landing-builder-publish-error')).toContainText(
+      'Phát hành chưa thành công: Dịch vụ phát hành đang tạm thời gián đoạn.',
+    );
+    await expect(publishButton).toBeEnabled();
+    await expect(publishButton).toHaveAttribute('aria-busy', 'false');
+    await expect(page.getByText('Bản nháp')).toBeVisible();
+    expect(publishAttempts).toBe(1);
+  });
 });

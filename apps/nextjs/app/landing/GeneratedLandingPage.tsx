@@ -181,7 +181,7 @@ export default function GeneratedLandingPage({
       aria-labelledby="hero-heading"
     >
       {isDraft && (
-        <div className="landing-builder-draft-banner" role="status">
+        <div className="landing-builder-draft-banner" role="status" aria-label="Bản nháp">
           <div className="landing-builder-draft-content">
             <span><strong>Bản nháp</strong> · Chỉ người có liên kết quản trị mới xem được trang này.</span>
             {publishError && (
@@ -192,11 +192,23 @@ export default function GeneratedLandingPage({
           </div>
           {canEdit && (
             <div className="landing-builder-banner-actions">
-              <Link href={editHref} className="landing-builder-edit-button">
+              <Link
+                href={editHref}
+                className="landing-builder-edit-button"
+                aria-label="Chỉnh sửa trang landing"
+              >
                 Chỉnh sửa
               </Link>
               {canPublish && (
-                <button type="button" onClick={publish} disabled={publishing} className="landing-builder-publish-button">
+                <button
+                  type="button"
+                  onClick={publish}
+                  disabled={publishing}
+                  aria-disabled={publishing}
+                  aria-busy={publishing}
+                  aria-label="Phát hành trang"
+                  className="landing-builder-publish-button"
+                >
                   {publishing ? "Đang phát hành..." : "Phát hành trang"}
                 </button>
               )}
