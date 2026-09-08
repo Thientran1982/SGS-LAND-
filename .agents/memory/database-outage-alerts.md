@@ -16,14 +16,3 @@ PostgreSQL `53300` (`too_many_connections`) and its connection-slot messages sho
 **Why:** The outage is precisely when database-backed notifications can fail, and connection errors may contain credentials or deployment details.
 
 **How to apply:** Atomically claim one active incident, atomically resolve it once, retain resolved state briefly, and let the bounded active lease expire. Configure the threshold through environment and keep alert payloads limited to fixed service/component, timestamps, duration, threshold, and failure count fields.
-
-Startup migrations must not hold the HTTP listener hostage when the managed
-database hostname cannot resolve.
-
-**Why:** The VM supervisor only sees a dead/unhealthy backend while startup is
-blocked in `pool.connect()`, so publishing can remain in health-check limbo
-even though the web process itself could serve degraded health responses.
-
-**How to apply:** Bound database DNS reachability before migrations, start the
-listener without migrations when DNS is unavailable, and leave database
-recovery plus explicit migration retry behavior active in the background.
