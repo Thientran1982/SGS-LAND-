@@ -448,6 +448,17 @@ export const DataPlatform: React.FC = () => {
     };
     const activeCount = connectors.filter(c => c.status === 'ACTIVE').length;
     const lastJob = jobs[0];
+    const getSyncDisplay = (connector: ConnectorConfig) => {
+        const latestJob = jobs.find(job => job.connectorId === connector.id);
+        if (!latestJob) {
+            return { status: connector.lastSyncStatus, at: connector.lastSyncAt };
+        }
+        const isTerminal = latestJob.status === SyncStatus.COMPLETED || latestJob.status === SyncStatus.FAILED;
+        return {
+            status: latestJob.status,
+            at: (isTerminal && latestJob.finishedAt) || latestJob.startedAt || connector.lastSyncAt,
+        };
+    };
     if (loading) {
         return (
                         <div className="p-4 sm:p-6 space-y-6 animate-enter">
@@ -537,7 +548,9 @@ export const DataPlatform: React.FC = () => {
                         </div>
                     ) : (
                         <div className="overflow-y-auto no-scrollbar overscroll-contain p-4 space-y-3">
-                            {connectors.map(c => (
+                            {connectors.map(c => {
+                                const sync = getSyncDisplay(c);
+                                return (
                                 <div key={c.id} className="bg-[var(--glass-surface)] p-4 rounded-[18px] border border-[var(--glass-border)] flex justify-between items-center group hover:bg-[var(--glass-surface-hover)] transition-all">
                                     <div className="flex items-center gap-3 min-w-0">
                                         <div className="w-10 h-10 rounded-xl bg-[var(--bg-surface)] flex items-center justify-center text-lg shrink-0 shadow-sm">
@@ -550,12 +563,20 @@ export const DataPlatform: React.FC = () => {
                                             </div>
                                             <div className="text-xs text-[var(--text-tertiary)] mt-0.5 flex items-center gap-1.5 flex-wrap">
                                                 <span className="font-mono bg-[var(--bg-surface)] px-1.5 py-0.5 rounded text-[10px]">{t(`data.type_${c.type}`)}</span>
-                                                <span>•</span>
-                                                <span className="flex items-center gap-1">
-                                                    {ICONS.CLOCK}
-                                                    {c.lastSyncAt ? formatDateTime(c.lastSyncAt) : t('data.never')}
-                                                </span>
                                             </div>
+                                             <div className="mt-2 flex items-center gap-2 flex-wrap">
+                                                 {sync.status ? (
+                                                     <StatusBadge status={sync.status} t={t} />
+                                                 ) : (
+                                                     <span className="text-xs text-[var(--text-secondary)]">{t('data.never')}</span>
+                                                 )}
+                                                 {sync.at && (
+                                                     <span className="text-xs text-[var(--text-secondary)] flex items-center gap-1">
+                                                         {ICONS.CLOCK}
+                                                         {formatDateTime(sync.at)}
+                                                     </span>
+                                                 )}
+                                             </div>
                                              {checkResults[c.id] && (
                                                  <p className={`mt-1 text-[10px] font-semibold ${checkResults[c.id].ok ? 'text-emerald-700' : 'text-rose-700'}`}>
                                                      {checkResults[c.id].status === 'CONFIGURED' ? 'Đã kiểm tra cấu hình' : 'Cấu hình cần sửa'}
@@ -591,7 +612,8 @@ export const DataPlatform: React.FC = () => {
                                         </button>
                                     </div>
                                 </div>
-                            ))}
+                                );
+                            })}
                         </div>
                     )}
                 </div>
@@ -614,6 +636,19 @@ export const DataPlatform: React.FC = () => {
                                         <div className="min-w-0">
                                             <h4 className="font-bold text-amber-950 text-sm truncate">{connector.name}</h4>
                                             <span className="text-xs text-amber-800">{t(`data.type_${connector.type}`)}</span>
+                                             <div className="mt-2 flex items-center gap-2 flex-wrap">
+                                                 {connector.lastSyncStatus ? (
+                                                     <StatusBadge status={connector.lastSyncStatus} t={t} />
+                                                 ) : (
+                                                     <span className="text-xs text-amber-800">{t('data.never')}</span>
+                                                 )}
+                                                 {connector.lastSyncAt && (
+                                                     <span className="text-xs text-amber-800 flex items-center gap-1">
+                                                         {ICONS.CLOCK}
+                                                         {formatDateTime(connector.lastSyncAt)}
+                                                     </span>
+                                                 )}
+                                             </div>
                                         </div>
                                     </div>
                                     <div className="flex items-center gap-2">

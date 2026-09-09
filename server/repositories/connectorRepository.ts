@@ -176,6 +176,29 @@ class SyncJobRepository extends BaseRepository {
     });
   }
 
+  async listLatestByConnectorIds(
+    tenantId: string,
+    ownerUserId: string | null,
+    connectorIds: string[],
+  ): Promise<any[]> {
+    await ensureTables();
+    if (connectorIds.length === 0) return [];
+
+    return this.withTenant(tenantId, async (client) => {
+      const result = await client.query(
+        `SELECT DISTINCT ON (connector_id)
+                id, connector_id, started_at, finished_at, status
+           FROM sync_jobs
+          WHERE tenant_id = $1
+            AND owner_user_id IS NOT DISTINCT FROM $2
+            AND connector_id = ANY($3::uuid[])
+          ORDER BY connector_id, started_at DESC, created_at DESC`,
+        [tenantId, ownerUserId, connectorIds],
+      );
+      return this.rowsToEntities(result.rows);
+    });
+  }
+
   async create(tenantId: string, ownerUserId: string, data: { connectorId: string; status?: string }): Promise<any> {
     await ensureTables();
     return this.withTenant(tenantId, async (client) => {

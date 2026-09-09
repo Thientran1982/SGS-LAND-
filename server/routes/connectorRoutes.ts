@@ -51,6 +51,28 @@ function publicSyncJob(job: any): any {
   };
 }
 
+function publicSyncJobSummary(job: any): any {
+  if (!job || typeof job !== 'object') return undefined;
+  return {
+    id: job.id,
+    connectorId: job.connectorId,
+    startedAt: job.startedAt,
+    finishedAt: job.finishedAt,
+    status: job.status,
+  };
+}
+
+function withLatestSync(connector: any, job: any): any {
+  if (!job) return connector;
+  const isTerminal = job.status === 'COMPLETED' || job.status === 'FAILED';
+  return {
+    ...connector,
+    lastSyncStatus: job.status,
+    lastSyncAt: (isTerminal && job.finishedAt) || job.startedAt || connector.lastSyncAt,
+    lastSyncJob: publicSyncJobSummary(job),
+  };
+}
+
 function validateConnectorInput(type: unknown, config: unknown): string | null {
   if (typeof type !== 'string' || !CONNECTOR_TYPES.has(type)) return 'Loại connector không được hỗ trợ';
   if (!config || typeof config !== 'object' || Array.isArray(config)) return 'Cấu hình connector không hợp lệ';
@@ -91,7 +113,17 @@ export function createConnectorRoutes(authenticateToken: any) {
     try {
       const { tenantId, id: userId } = (req as any).user;
       const connectors = await connectorRepository.listByUser(tenantId, userId);
-      res.json(connectors.map(publicConnector));
+      const latestJobs = typeof syncJobRepository.listLatestByConnectorIds === 'function'
+        ? await syncJobRepository.listLatestByConnectorIds(
+          tenantId,
+          userId,
+          connectors.map(connector => connector.id),
+        )
+        : [];
+      const latestByConnectorId = new Map((latestJobs || []).map((job: any) => [job.connectorId, job]));
+      res.json(connectors.map(connector => publicConnector(
+        withLatestSync(connector, latestByConnectorId.get(connector.id)),
+      )));
     } catch (err) {
       console.error('GET connectors error:', err);
       res.status(500).json({ error: 'Failed to fetch connectors' });
@@ -108,7 +140,17 @@ export function createConnectorRoutes(authenticateToken: any) {
         return res.status(403).json({ error: 'Only tenant admins can view unassigned connectors' });
       }
       const connectors = await connectorRepository.listOrphaned(tenantId);
-      res.json(connectors.map(publicConnector));
+      const latestJobs = typeof syncJobRepository.listLatestByConnectorIds === 'function'
+        ? await syncJobRepository.listLatestByConnectorIds(
+          tenantId,
+          null,
+          connectors.map(connector => connector.id),
+        )
+        : [];
+      const latestByConnectorId = new Map((latestJobs || []).map((job: any) => [job.connectorId, job]));
+      res.json(connectors.map(connector => publicConnector(
+        withLatestSync(connector, latestByConnectorId.get(connector.id)),
+      )));
     } catch (err) {
       console.error('GET orphaned connectors error:', err);
       res.status(500).json({ error: 'Failed to fetch unassigned connectors' });
@@ -269,12 +311,20 @@ export function createConnectorRoutes(authenticateToken: any) {
         connectorId: connector.id,
         status: 'QUEUED',
       });
+      await connectorRepository.update(tenantId, userId, connector.id, {
+        lastSyncAt: job.startedAt,
+        lastSyncStatus: 'QUEUED',
+      }).catch(() => {});
       res.status(201).json(publicSyncJob(job));
 
       // Run sync asynchronously (fire-and-forget with DB status updates)
       setImmediate(async () => {
         try {
           await syncJobRepository.update(tenantId, userId, job.id, { status: 'RUNNING' });
+          await connectorRepository.update(tenantId, userId, connector.id, {
+            lastSyncAt: job.startedAt,
+            lastSyncStatus: 'RUNNING',
+          });
           // Simulate processing: 50-200 records
           const records = Math.floor(Math.random() * 150) + 50;
           await new Promise(r => setTimeout(r, 800 + Math.random() * 1200));

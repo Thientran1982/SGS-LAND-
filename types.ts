@@ -918,12 +918,20 @@ export interface ConnectorConfig<T = Record<string, unknown>> {
     watermark?: string;
     lastSyncAt?: ISOString;
     lastSyncStatus?: SyncStatus;
+    lastSyncJob?: SyncJobSummary;
 }
 export enum SyncStatus {
     QUEUED = 'QUEUED',
     RUNNING = 'RUNNING',
     COMPLETED = 'COMPLETED',
     FAILED = 'FAILED'
+}
+export interface SyncJobSummary {
+    id: UUID;
+    connectorId: UUID;
+    startedAt: ISOString;
+    finishedAt?: ISOString;
+    status: SyncStatus;
 }
 export interface SyncJob {
     id: UUID;

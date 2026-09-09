@@ -9,6 +9,7 @@ const state = vi.hoisted(() => ({
   updateConnector: vi.fn(),
   deleteConnector: vi.fn(),
   createJob: vi.fn(),
+  listLatestJobs: vi.fn(),
 }));
 
 vi.mock('../repositories/connectorRepository', () => ({
@@ -24,6 +25,7 @@ vi.mock('../repositories/connectorRepository', () => ({
     update: vi.fn(),
     listByUser: vi.fn(),
     findByUser: vi.fn(),
+    listLatestByConnectorIds: state.listLatestJobs,
   },
 }));
 
@@ -147,6 +149,7 @@ describe('connector actions for every supported private connection type', () => 
 
   beforeEach(async () => {
     vi.clearAllMocks();
+    state.listLatestJobs.mockResolvedValue([]);
     testServer = await startTestServer();
   });
 
@@ -211,11 +214,35 @@ describe('connector actions for every supported private connection type', () => 
   it('lists and checks all nine types using the authenticated owner scope', async () => {
     const connectors = CONNECTOR_CASES.map(({ type, config }) => connectorFor(type, config));
     state.listConnectors.mockResolvedValue(connectors);
+    state.listLatestJobs.mockResolvedValue([{
+      id: 'job-google',
+      connectorId: 'connector-google_sheets',
+      startedAt: '2026-09-09T00:00:00.000Z',
+      finishedAt: '2026-09-09T00:05:00.000Z',
+      status: 'FAILED',
+      errors: ['provider credential must not reach the UI'],
+      credential: 'must-not-leak',
+    }]);
 
     const list = await testServer.request('/api/connectors');
     expect(list.status).toBe(200);
     expect(state.listConnectors).toHaveBeenCalledWith(TENANT_ID, USER_A);
     expect(list.body).toHaveLength(CONNECTOR_CASES.length);
+    expect(list.body[5]).toMatchObject({
+      id: 'connector-google_sheets',
+      lastSyncStatus: 'FAILED',
+      lastSyncAt: '2026-09-09T00:05:00.000Z',
+      lastSyncJob: {
+        id: 'job-google',
+        connectorId: 'connector-google_sheets',
+        status: 'FAILED',
+        startedAt: '2026-09-09T00:00:00.000Z',
+        finishedAt: '2026-09-09T00:05:00.000Z',
+      },
+    });
+    expect(list.body[5].lastSyncJob).not.toHaveProperty('errors');
+    expect(list.body[5].lastSyncJob).not.toHaveProperty('credential');
+    expect(list.text).not.toContain('provider credential must not reach the UI');
     expect(list.text).not.toMatch(/facebook-token|zalo-token|instagram-token|tiktok-token|linkedin-token|hubspot-key|webhook-secret|salesforce-key/);
 
     for (const { type, config } of CONNECTOR_CASES) {
