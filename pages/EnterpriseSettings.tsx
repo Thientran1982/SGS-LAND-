@@ -49,9 +49,21 @@ const ZaloPanel = memo(({ config, onRefresh, notify }: { config: EnterpriseConfi
     const [tokenForm, setTokenForm] = useState('');
     const [updatingToken, setUpdatingToken] = useState(false);
     const [showTokenForm, setShowTokenForm] = useState(false);
+    const [probeUserId, setProbeUserId] = useState(config.zalo?.broadcastProbeUserId || '');
+    const [savingProbeUser, setSavingProbeUser] = useState(false);
+    const [verifyingBroadcast, setVerifyingBroadcast] = useState(false);
+    const [broadcastVerification, setBroadcastVerification] = useState<{
+        status: 'READY' | 'NOT_READY';
+        reason: string | null;
+        checks: { oaId: 'PASS' | 'FAIL' | 'NOT_RUN'; quota: 'PASS' | 'FAIL' | 'NOT_RUN' };
+        checkedAt: string;
+    } | null>(null);
     useEffect(() => {
         db.getZaloStatus().then(setZaloStatus);
     }, []);
+    useEffect(() => {
+        setProbeUserId(config.zalo?.broadcastProbeUserId || '');
+    }, [config.zalo?.broadcastProbeUserId]);
     const handleConnect = async () => {
         if (!form.appId.trim() || !form.oaId.trim() || !form.oaName.trim()) {
             notify(t('ent.zalo_form_required'), 'error');
@@ -103,7 +115,42 @@ const ZaloPanel = memo(({ config, onRefresh, notify }: { config: EnterpriseConfi
         } catch (e: any) { notify(e.message, 'error'); }
         finally { setUpdatingToken(false); }
     };
+    const handleSaveProbeUser = async () => {
+        const value = probeUserId.trim();
+        if (!value) {
+            notify(t('ent.zalo_broadcast_probe_required'), 'error');
+            return;
+        }
+        setSavingProbeUser(true);
+        try {
+            await db.updateZaloBroadcastProbeUser(value);
+            setBroadcastVerification(null);
+            notify(t('ent.zalo_broadcast_probe_saved'), 'success');
+            onRefresh();
+        } catch (e: any) {
+            notify(e.message, 'error');
+        } finally {
+            setSavingProbeUser(false);
+        }
+    };
+    const handleVerifyBroadcast = async () => {
+        setVerifyingBroadcast(true);
+        try {
+            const result = await db.verifyZaloBroadcastAccess();
+            setBroadcastVerification({
+                status: result.status,
+                reason: result.reason,
+                checks: result.checks,
+                checkedAt: result.checkedAt,
+            });
+        } catch (e: any) {
+            notify(e.message, 'error');
+        } finally {
+            setVerifyingBroadcast(false);
+        }
+    };
     const webhookUrl = config.zalo?.webhookUrl || zaloStatus?.webhookUrl || `${window.location.origin}/api/webhooks/zalo`;
+    const accessTokenConfigured = Boolean(config.zalo?.accessTokenConfigured);
     return (
                 <div className="animate-enter max-w-4xl">
             <SectionHeader
@@ -151,12 +198,71 @@ const ZaloPanel = memo(({ config, onRefresh, notify }: { config: EnterpriseConfi
                                     <div className="text-xs font-bold text-[var(--text-secondary)]">{config.zalo.connectedAt ? formatDate(config.zalo.connectedAt) : '-'}</div>
                                 </div>
                             </div>
+                            <div className="p-5 bg-[var(--glass-surface)] rounded-2xl border border-[var(--glass-border)] mb-6">
+                                <div className="flex items-start justify-between gap-4 mb-1">
+                                    <div>
+                                        <h4 className="text-sm font-bold text-[var(--text-primary)]">{t('ent.zalo_broadcast_title')}</h4>
+                                        <p className="text-xs text-[var(--text-tertiary)] mt-1 leading-relaxed">{t('ent.zalo_broadcast_description')}</p>
+                                    </div>
+                                    {broadcastVerification && (
+                                        <span className={`shrink-0 px-2.5 py-1 rounded-full text-xs font-bold border ${broadcastVerification.status === 'READY'
+                                            ? 'bg-emerald-50 text-emerald-700 border-emerald-100'
+                                            : 'bg-amber-50 text-amber-700 border-amber-200'}`}>
+                                            {broadcastVerification.status}
+                                        </span>
+                                    )}
+                                </div>
+                                <div className="flex flex-col sm:flex-row gap-2 mt-4">
+                                    <input
+                                        value={probeUserId}
+                                        onChange={e => setProbeUserId(e.target.value)}
+                                        placeholder={t('ent.zalo_broadcast_probe_placeholder')}
+                                        className="flex-1 min-w-0 border rounded-xl px-3 py-2.5 text-sm font-mono outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-400"
+                                        aria-label={t('ent.zalo_broadcast_probe_label')}
+                                    />
+                                    <button
+                                        type="button"
+                                        onClick={handleSaveProbeUser}
+                                        disabled={savingProbeUser || !probeUserId.trim()}
+                                        className="px-4 py-2.5 bg-[var(--bg-surface)] border border-[var(--glass-border)] rounded-xl text-sm font-bold text-sgs-primary hover:border-blue-400 transition-colors disabled:opacity-60"
+                                    >
+                                        {savingProbeUser ? t('common.processing') : t('common.save')}
+                                    </button>
+                                </div>
+                                <p className="text-xs2 text-[var(--text-tertiary)] mt-2">{t('ent.zalo_broadcast_probe_hint')}</p>
+                                <button
+                                    type="button"
+                                    onClick={handleVerifyBroadcast}
+                                    disabled={verifyingBroadcast}
+                                    className="mt-4 w-full sm:w-auto px-4 py-2.5 bg-sgs-primary text-white rounded-xl text-sm font-bold hover:bg-sgs-primary transition-colors disabled:opacity-70 flex items-center justify-center gap-2"
+                                >
+                                    {verifyingBroadcast && <div className="w-3.5 h-3.5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>}
+                                    {t('ent.zalo_broadcast_verify')}
+                                </button>
+                                {broadcastVerification && (
+                                    <div className={`mt-4 rounded-xl border p-3 text-xs ${broadcastVerification.status === 'READY'
+                                        ? 'bg-emerald-50 border-emerald-100 text-emerald-800'
+                                        : 'bg-amber-50 border-amber-200 text-amber-900'}`}>
+                                        <div className="font-bold mb-2">
+                                            {broadcastVerification.status === 'READY'
+                                                ? t('ent.zalo_broadcast_ready')
+                                                : t('ent.zalo_broadcast_not_ready')}
+                                        </div>
+                                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-1.5 mb-2">
+                                            <span>{t('ent.zalo_broadcast_oa_check')}: <strong>{broadcastVerification.checks.oaId}</strong></span>
+                                            <span>{t('ent.zalo_broadcast_quota_check')}: <strong>{broadcastVerification.checks.quota}</strong></span>
+                                        </div>
+                                        {broadcastVerification.reason && <p className="leading-relaxed">{broadcastVerification.reason}</p>}
+                                        <p className="mt-2 opacity-70">{formatDate(broadcastVerification.checkedAt)}</p>
+                                    </div>
+                                )}
+                            </div>
                             <div className="flex items-center gap-4 flex-wrap">
                                 <button
                                     onClick={() => setShowTokenForm(s => !s)}
                                     className="text-sgs-primary text-sm font-bold hover:underline decoration-2 underline-offset-4"
                                 >
-                                    {config.zalo?.accessToken ? t('ent.zalo_update_token') : t('ent.zalo_add_token')}
+                                    {accessTokenConfigured ? t('ent.zalo_update_token') : t('ent.zalo_add_token')}
                                 </button>
                                 <button
                                     onClick={() => setConfirmDisconnect(true)}
@@ -208,9 +314,9 @@ const ZaloPanel = memo(({ config, onRefresh, notify }: { config: EnterpriseConfi
                                 </span>
                             </div>
                             <div className="flex items-center gap-2">
-                                <div className={`w-2 h-2 rounded-full shrink-0 ${config.zalo?.accessToken ? 'bg-emerald-500' : 'bg-amber-400'}`}></div>
+                                <div className={`w-2 h-2 rounded-full shrink-0 ${accessTokenConfigured ? 'bg-emerald-500' : 'bg-amber-400'}`}></div>
                                 <span className="text-xs2 text-[var(--text-tertiary)] font-bold">
-                                    {t('ent.zalo_oa_access_token')}: {config.zalo?.accessToken ? <span className="text-sgs-verified">{t('ent.zalo_token_configured')}</span> : <span className="text-sgs-accent-text">{t('ent.zalo_token_missing')}</span>}
+                                    {t('ent.zalo_oa_access_token')}: {accessTokenConfigured ? <span className="text-sgs-verified">{t('ent.zalo_token_configured')}</span> : <span className="text-sgs-accent-text">{t('ent.zalo_token_missing')}</span>}
                                 </span>
                             </div>
                             <div className="text-xs2 text-[var(--text-tertiary)] leading-relaxed bg-blue-50/50 p-3 rounded-xl border border-blue-100">

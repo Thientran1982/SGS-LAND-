@@ -562,6 +562,10 @@ export interface ZaloOaConfig {
     accessToken?: string;
     refreshToken?: string;
     webhookUrl?: string;
+  broadcastProbeUserId?: string;
+  accessTokenConfigured?: boolean;
+  refreshTokenConfigured?: boolean;
+  appSecretConfigured?: boolean;
 }
 export interface EmailConfig {
     enabled: boolean;

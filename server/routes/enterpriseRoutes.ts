@@ -6,6 +6,24 @@ import { randomBytes } from 'crypto';
 import { logger } from '../middleware/logger';
 import { promises as dns } from 'dns';
 import { verifyFacebookPageAccess } from '../services/facebookService';
+import { verifyZaloBroadcastAccess } from '../social-publishing/zaloBroadcastPublisher';
+
+function sanitizeZaloConfig(zalo: any) {
+  if (!zalo) return zalo;
+  const { accessToken, refreshToken, appSecret, ...safeConfig } = zalo;
+  return {
+    ...safeConfig,
+    accessTokenConfigured: Boolean(accessToken),
+    refreshTokenConfigured: Boolean(refreshToken),
+    appSecretConfigured: Boolean(appSecret),
+  };
+}
+
+function sanitizeEnterpriseConfig(config: any) {
+  return config?.zalo
+    ? { ...config, zalo: sanitizeZaloConfig(config.zalo) }
+    : config;
+}
 
 export function createEnterpriseRoutes(authenticateToken: any, io?: any) {
   const router = Router();
@@ -21,7 +39,7 @@ export function createEnterpriseRoutes(authenticateToken: any, io?: any) {
         return res.status(403).json({ error: 'Only admins can view enterprise config' });
       }
       const config = await enterpriseConfigRepository.getConfig(user.tenantId);
-      res.json(config);
+      res.json(sanitizeEnterpriseConfig(config));
     } catch (error) {
       console.error('Error fetching enterprise config:', error);
       res.status(500).json({ error: 'Failed to fetch enterprise config' });
@@ -55,7 +73,7 @@ export function createEnterpriseRoutes(authenticateToken: any, io?: any) {
         });
       }
 
-      res.json(updated);
+      res.json(sanitizeEnterpriseConfig(updated));
     } catch (error) {
       console.error('Error updating enterprise config:', error);
       res.status(500).json({ error: 'Failed to update enterprise config' });
@@ -337,7 +355,7 @@ export function createEnterpriseRoutes(authenticateToken: any, io?: any) {
       });
 
       logger.info(`[Zalo] Tenant ${user.tenantId} connected OA: ${oaName} (${oaId})`);
-      res.json({ success: true, webhookUrl, zalo: zaloConfig });
+      res.json({ success: true, webhookUrl, zalo: sanitizeZaloConfig(zaloConfig) });
     } catch (error: any) {
       console.error('Zalo connect error:', error);
       res.status(500).json({ error: error.message || 'Failed to connect Zalo OA' });
@@ -388,6 +406,74 @@ export function createEnterpriseRoutes(authenticateToken: any, io?: any) {
     } catch (error: any) {
       console.error('Zalo token update error:', error);
       res.status(500).json({ error: error.message || 'Failed to update Zalo token' });
+    }
+  });
+
+  /**
+   * PATCH /api/enterprise/zalo/broadcast/probe-user
+   * Stores the tenant-scoped Zalo user used by the non-destructive permission probe.
+   */
+  router.patch('/zalo/broadcast/probe-user', authenticateToken, async (req: Request, res: Response) => {
+    try {
+      const user = (req as any).user;
+      if (!['SUPER_ADMIN', 'ADMIN'].includes(user.role)) {
+        return res.status(403).json({ error: 'Only admins can update the Zalo broadcast probe user' });
+      }
+
+      const probeUserId = typeof req.body?.probeUserId === 'string'
+        ? req.body.probeUserId.trim()
+        : '';
+      if (!probeUserId || probeUserId.length > 256) {
+        return res.status(400).json({ error: 'probeUserId là bắt buộc và không được dài quá 256 ký tự' });
+      }
+
+      const config = await enterpriseConfigRepository.getConfig(user.tenantId);
+      if (!config.zalo?.enabled) {
+        return res.status(400).json({ error: 'Zalo OA chưa được kết nối' });
+      }
+
+      await enterpriseConfigRepository.upsertConfig(user.tenantId, {
+        zalo: { ...config.zalo, broadcastProbeUserId: probeUserId },
+      });
+      await auditRepository.log(user.tenantId, {
+        actorId: user.id,
+        action: 'ZALO_BROADCAST_PROBE_USER_UPDATED',
+        entityType: 'enterprise_config',
+        entityId: user.tenantId,
+        details: 'Cập nhật probe user xác minh quyền broadcast Zalo OA',
+        ipAddress: req.ip,
+      });
+
+      res.json({ success: true, broadcastProbeUserId: probeUserId });
+    } catch (error: any) {
+      console.error('Zalo broadcast probe user update error:', error);
+      res.status(500).json({ error: error.message || 'Failed to update Zalo broadcast probe user' });
+    }
+  });
+
+  /**
+   * POST /api/enterprise/zalo/broadcast/verify
+   * Runs only the read-only OA identity and quota/permission probes.
+   */
+  router.post('/zalo/broadcast/verify', authenticateToken, async (req: Request, res: Response) => {
+    try {
+      const user = (req as any).user;
+      if (!['SUPER_ADMIN', 'ADMIN'].includes(user.role)) {
+        return res.status(403).json({ error: 'Only admins can verify Zalo broadcast access' });
+      }
+
+      const result = await verifyZaloBroadcastAccess(user.tenantId);
+      res.json({
+        status: result.ready ? 'READY' : 'NOT_READY',
+        ready: result.ready,
+        retryable: Boolean(result.retryable),
+        reason: result.reason || null,
+        checks: result.checks || { oaId: 'NOT_RUN', quota: 'NOT_RUN' },
+        checkedAt: new Date().toISOString(),
+      });
+    } catch (error: any) {
+      console.error('Zalo broadcast verification error:', error);
+      res.status(500).json({ error: 'Không thể xác minh quyền broadcast Zalo OA' });
     }
   });
 

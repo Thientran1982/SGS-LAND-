@@ -24,10 +24,16 @@ type ZaloResponse = {
   data?: Record<string, any>;
 };
 
+type VerificationCheck = 'PASS' | 'FAIL' | 'NOT_RUN';
+
 type Availability = {
   ready: boolean;
   reason?: string;
   retryable?: boolean;
+  checks?: {
+    oaId: VerificationCheck;
+    quota: VerificationCheck;
+  };
 };
 
 function apiError(body: ZaloResponse, fallback: string): string {
@@ -97,6 +103,7 @@ export async function verifyZaloBroadcastAccess(tenantId: string): Promise<Avail
       ready: false,
       retryable: false,
       reason: 'Tenant chưa kết nối Zalo OA hoặc thiếu OA Access Token.',
+      checks: { oaId: 'NOT_RUN', quota: 'NOT_RUN' },
     };
   }
   if (!config.broadcastProbeUserId) {
@@ -104,6 +111,7 @@ export async function verifyZaloBroadcastAccess(tenantId: string): Promise<Avail
       ready: false,
       retryable: false,
       reason: 'Chưa có probe user để xác minh live quyền gửi tin và thông báo Zalo broadcast.',
+      checks: { oaId: 'NOT_RUN', quota: 'NOT_RUN' },
     };
   }
 
@@ -115,6 +123,7 @@ export async function verifyZaloBroadcastAccess(tenantId: string): Promise<Avail
         ready: false,
         retryable: classification.retryable,
         reason: apiError(identity.body, `HTTP ${identity.response.status}`),
+        checks: { oaId: 'FAIL', quota: 'NOT_RUN' },
       };
     }
     const returnedOaId = String(identity.body.data?.oaid || identity.body.data?.oa_id || '');
@@ -123,6 +132,7 @@ export async function verifyZaloBroadcastAccess(tenantId: string): Promise<Avail
         ready: false,
         retryable: false,
         reason: 'Zalo trả về OA ID khác với OA ID đã cấu hình cho tenant.',
+        checks: { oaId: 'FAIL', quota: 'NOT_RUN' },
       };
     }
 
@@ -138,6 +148,7 @@ export async function verifyZaloBroadcastAccess(tenantId: string): Promise<Avail
         reason: isPermissionError(quota.body, quota.response.status)
           ? 'Zalo chưa cấp quyền gửi tin và thông báo cho OA account này.'
           : apiError(quota.body, `HTTP ${quota.response.status}`),
+        checks: { oaId: 'PASS', quota: 'FAIL' },
       };
     }
     const promotion = quota.body.data?.promotion;
@@ -146,14 +157,16 @@ export async function verifyZaloBroadcastAccess(tenantId: string): Promise<Avail
         ready: false,
         retryable: false,
         reason: 'Zalo không trả về hạn mức promotion; quyền broadcast chưa được xác minh.',
+        checks: { oaId: 'PASS', quota: 'FAIL' },
       };
     }
-    return { ready: true };
+    return { ready: true, checks: { oaId: 'PASS', quota: 'PASS' } };
   } catch {
     return {
       ready: false,
       retryable: true,
       reason: 'Không thể kết nối Zalo để xác minh quyền broadcast.',
+      checks: { oaId: 'NOT_RUN', quota: 'NOT_RUN' },
     };
   }
 }

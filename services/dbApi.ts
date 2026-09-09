@@ -1666,6 +1666,31 @@ class DatabaseApiClient {
     }
     return res.json();
   }
+  async updateZaloBroadcastProbeUser(probeUserId: string) {
+    const res = await fetch('/api/enterprise/zalo/broadcast/probe-user', {
+      method: 'PATCH',
+      credentials: 'include',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ probeUserId }),
+    });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw new Error(err.error || 'Không thể lưu probe user Zalo broadcast');
+    }
+    return res.json();
+  }
+  async verifyZaloBroadcastAccess() {
+    const res = await fetch('/api/enterprise/zalo/broadcast/verify', {
+      method: 'POST',
+      credentials: 'include',
+      headers: { 'Content-Type': 'application/json' },
+    });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw new Error(err.error || 'Không thể xác minh quyền broadcast Zalo OA');
+    }
+    return res.json();
+  }
   async disconnectZaloOA() {
     const res = await fetch('/api/enterprise/zalo/disconnect', {
       method: 'POST',

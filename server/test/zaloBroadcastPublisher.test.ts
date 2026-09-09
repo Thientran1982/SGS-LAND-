@@ -43,7 +43,10 @@ describe('Zalo OA broadcast publisher', () => {
         data: { promotion: { daily_total: 1, daily_remain: 1 } },
       }));
 
-    await expect(verifyZaloBroadcastAccess('tenant-1')).resolves.toMatchObject({ ready: true });
+    await expect(verifyZaloBroadcastAccess('tenant-1')).resolves.toMatchObject({
+      ready: true,
+      checks: { oaId: 'PASS', quota: 'PASS' },
+    });
     expect(fetch).toHaveBeenNthCalledWith(
       2,
       'https://openapi.zalo.me/v3.0/oa/quota/message',
@@ -63,6 +66,7 @@ describe('Zalo OA broadcast publisher', () => {
     await expect(verifyZaloBroadcastAccess('tenant-1')).resolves.toMatchObject({
       ready: false,
       retryable: false,
+      checks: { oaId: 'PASS', quota: 'FAIL' },
     });
   });
 
