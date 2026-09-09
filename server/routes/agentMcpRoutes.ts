@@ -11,15 +11,28 @@ import { apiRateLimit } from '../middleware/rateLimiter';
 
 export const agentMcpRouter = Router();
 
-const DEFAULT_TENANT = process.env.DEFAULT_TENANT_ID || '00000000-0000-0000-0000-000000000001';
+const MCP_MANAGER_ROLES = new Set(['SUPER_ADMIN', 'ADMIN', 'TEAM_LEAD']);
 
-agentMcpRouter.get('/', apiRateLimit, async (_req: Request, res: Response) => {
+function currentTenant(req: Request, res: Response): string | null {
+  const user = (req as any).user;
+  const role = String(user?.role || '').toUpperCase();
+  const tenantId = String(user?.tenantId || '').trim();
+  if (!MCP_MANAGER_ROLES.has(role) || !tenantId) {
+    res.status(403).json({ error: 'Chỉ quản trị viên mới được quản lý MCP server' });
+    return null;
+  }
+  return tenantId;
+}
+
+agentMcpRouter.get('/', apiRateLimit, async (req: Request, res: Response) => {
+  const tenantId = currentTenant(req, res);
+  if (!tenantId) return;
   try {
     const r = await pool.query(
       `SELECT id, name, url, transport, custom_instructions, enabled,
               tools_enabled, tools_disabled, last_status, last_checked_at, created_at
          FROM agent_mcp_servers WHERE tenant_id = $1 ORDER BY created_at DESC`,
-      [DEFAULT_TENANT],
+      [tenantId],
     );
     res.json({ servers: r.rows });
   } catch (err: any) {
@@ -29,6 +42,8 @@ agentMcpRouter.get('/', apiRateLimit, async (_req: Request, res: Response) => {
 });
 
 agentMcpRouter.post('/', apiRateLimit, async (req: Request, res: Response) => {
+  const tenantId = currentTenant(req, res);
+  if (!tenantId) return;
   try {
     const { name, url, transport, custom_instructions, enabled } = req.body || {};
     if (!name || !url) return res.status(400).json({ error: 'name va url la bat buoc' });
@@ -40,7 +55,7 @@ agentMcpRouter.post('/', apiRateLimit, async (req: Request, res: Response) => {
          (tenant_id, name, url, transport, custom_instructions, enabled)
        VALUES ($1,$2,$3,$4,$5,$6)
        RETURNING id, name, url, transport, enabled, created_at`,
-      [DEFAULT_TENANT, name, url, transport === 'sse' ? 'sse' : 'http',
+      [tenantId, name, url, transport === 'sse' ? 'sse' : 'http',
        custom_instructions || null, enabled !== false],
     );
     return res.status(201).json({ server: r.rows[0] });
@@ -54,6 +69,8 @@ agentMcpRouter.post('/', apiRateLimit, async (req: Request, res: Response) => {
 });
 
 agentMcpRouter.patch('/:id', apiRateLimit, async (req: Request, res: Response) => {
+  const tenantId = currentTenant(req, res);
+  if (!tenantId) return;
   try {
     const { enabled, custom_instructions, tools_disabled } = req.body || {};
     const r = await pool.query(
@@ -64,11 +81,11 @@ agentMcpRouter.patch('/:id', apiRateLimit, async (req: Request, res: Response) =
          updated_at = NOW()
        WHERE id = $1 AND tenant_id = $5
        RETURNING id, name, url, enabled`,
-      [req.params.id,
+        [req.params.id,
        typeof enabled === 'boolean' ? enabled : null,
        custom_instructions ?? null,
        Array.isArray(tools_disabled) ? tools_disabled : null,
-       DEFAULT_TENANT],
+        tenantId],
     );
     if (r.rowCount === 0) return res.status(404).json({ error: 'MCP server khong ton tai' });
     return res.json({ server: r.rows[0] });
@@ -79,10 +96,12 @@ agentMcpRouter.patch('/:id', apiRateLimit, async (req: Request, res: Response) =
 });
 
 agentMcpRouter.delete('/:id', apiRateLimit, async (req: Request, res: Response) => {
+  const tenantId = currentTenant(req, res);
+  if (!tenantId) return;
   try {
     const r = await pool.query(
       'DELETE FROM agent_mcp_servers WHERE id = $1 AND tenant_id = $2',
-      [req.params.id, DEFAULT_TENANT],
+      [req.params.id, tenantId],
     );
     if (r.rowCount === 0) return res.status(404).json({ error: 'MCP server khong ton tai' });
     return res.json({ success: true });
@@ -94,11 +113,13 @@ agentMcpRouter.delete('/:id', apiRateLimit, async (req: Request, res: Response) 
 
 // POST /:id/test — gui JSON-RPC initialize + tools/list de kiem tra ket noi
 agentMcpRouter.post('/:id/test', apiRateLimit, async (req: Request, res: Response) => {
+  const tenantId = currentTenant(req, res);
+  if (!tenantId) return;
   const startedMs = Date.now();
   try {
     const r = await pool.query(
       'SELECT id, url, transport FROM agent_mcp_servers WHERE id = $1 AND tenant_id = $2',
-      [req.params.id, DEFAULT_TENANT],
+      [req.params.id, tenantId],
     );
     const server = r.rows[0];
     if (!server) return res.status(404).json({ error: 'MCP server khong ton tai' });
@@ -133,8 +154,8 @@ agentMcpRouter.post('/:id/test', apiRateLimit, async (req: Request, res: Respons
       `UPDATE agent_mcp_servers
          SET last_status = $2, last_checked_at = NOW(),
              tools_enabled = CASE WHEN $3::text[] = '{}'::text[] THEN tools_enabled ELSE $3 END
-       WHERE id = $1`,
-      [server.id, `${fetchRes.status}`, tools],
+        WHERE id = $1 AND tenant_id = $4`,
+      [server.id, `${fetchRes.status}`, tools, tenantId],
     );
     return res.json({
       reachable: ok,
@@ -145,8 +166,8 @@ agentMcpRouter.post('/:id/test', apiRateLimit, async (req: Request, res: Respons
   } catch (err: any) {
     const reason = err?.name === 'AbortError' ? 'timeout sau 8s' : String(err?.message || err);
     await pool.query(
-      'UPDATE agent_mcp_servers SET last_status = $2, last_checked_at = NOW() WHERE id = $1',
-      [req.params.id, `error: ${reason.slice(0, 100)}`],
+      'UPDATE agent_mcp_servers SET last_status = $2, last_checked_at = NOW() WHERE id = $1 AND tenant_id = $3',
+      [req.params.id, `error: ${reason.slice(0, 100)}`, tenantId],
     ).catch(() => undefined);
     logger.warn(`[MCP] test failed: ${reason}`);
     return res.status(502).json({ reachable: false, error: reason.slice(0, 300) });
@@ -154,10 +175,12 @@ agentMcpRouter.post('/:id/test', apiRateLimit, async (req: Request, res: Respons
 });
 
 // GET /agent-tools — danh sach MCP tools agent Minh co the goi (mcp_<server>_<tool>)
-agentMcpRouter.get('/agent-tools', apiRateLimit, async (_req: Request, res: Response) => {
+agentMcpRouter.get('/agent-tools', apiRateLimit, async (req: Request, res: Response) => {
+  const tenantId = currentTenant(req, res);
+  if (!tenantId) return;
   try {
     const { listEnabledMcpServers, listServerTools } = await import('../services/mcpClientService');
-    const servers = await listEnabledMcpServers(DEFAULT_TENANT);
+    const servers = await listEnabledMcpServers(tenantId);
     const out: Array<{ server: string; tool: string; fullName: string; disabled: boolean }> = [];
     for (const s of servers) {
       const tools = await listServerTools(s as any);

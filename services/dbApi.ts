@@ -1600,6 +1600,9 @@ class DatabaseApiClient {
     const connectorId = typeof data === 'string' ? data : data.connectorId;
     return api.post<any>(`/api/connectors/${connectorId}/sync`, {});
   }
+  async checkConnectorConfig(id: string) {
+    return api.post<any>(`/api/connectors/${id}/check`, {});
+  }
   async updateSyncJob(id: string, data: any) {
     return { id, ...data };
   }

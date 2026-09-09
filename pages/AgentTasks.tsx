@@ -102,6 +102,8 @@ export default function AgentTasks() {
   const [mcpSaving, setMcpSaving] = useState(false);
   const [mcpMessage, setMcpMessage] = useState<string | null>(null);
   const [mcpForm, setMcpForm] = useState({ name: '', url: '', transport: 'http' as 'http' | 'sse' });
+  const [mcpTestingId, setMcpTestingId] = useState<string | null>(null);
+  const [mcpTests, setMcpTests] = useState<Record<string, { reachable: boolean; httpStatus?: number; tools: string[]; error?: string }>>({});
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -146,6 +148,32 @@ export default function AgentTasks() {
       setMcpMessage(error?.message || 'Không thể thêm MCP server.');
     } finally {
       setMcpSaving(false);
+    }
+  };
+
+  const testMcpServer = async (server: McpServer) => {
+    setMcpTestingId(server.id);
+    setMcpMessage(null);
+    try {
+      const result = await api.post<{ reachable: boolean; httpStatus?: number; tools?: string[]; error?: string }>(`/api/admin/mcp-servers/${server.id}/test`);
+      setMcpTests(current => ({
+        ...current,
+        [server.id]: {
+          reachable: result.reachable,
+          httpStatus: result.httpStatus,
+          tools: result.tools || [],
+          error: result.error,
+        },
+      }));
+      await load();
+    } catch (error: any) {
+      setMcpTests(current => ({
+        ...current,
+        [server.id]: { reachable: false, tools: [], error: error?.message || 'Không thể kiểm tra MCP server.' },
+      }));
+      setMcpMessage(error?.message || 'Không thể kiểm tra MCP server.');
+    } finally {
+      setMcpTestingId(null);
     }
   };
 
@@ -336,6 +364,7 @@ export default function AgentTasks() {
                   <th className="px-4 py-2">URL</th>
                   <th className="px-4 py-2">Trạng thái cuối</th>
                   <th className="px-4 py-2">Bật</th>
+                  <th className="px-4 py-2 text-right">Kiểm tra</th>
                 </tr>
               </thead>
               <tbody>
@@ -349,10 +378,28 @@ export default function AgentTasks() {
                         {s.enabled ? 'Đang bật' : 'Đã tắt'}
                       </span>
                     </td>
+                    <td className="px-4 py-2.5 text-right">
+                      <div className="inline-flex items-center gap-2">
+                        {mcpTests[s.id] && (
+                          <span className={'text-xs ' + (mcpTests[s.id].reachable ? 'text-emerald-700' : 'text-rose-700')}>
+                            {mcpTests[s.id].reachable ? `${mcpTests[s.id].tools.length} tools` : 'Không kết nối'}
+                          </span>
+                        )}
+                        <button
+                          type="button"
+                          onClick={() => void testMcpServer(s)}
+                          disabled={mcpTestingId === s.id}
+                          className="inline-flex items-center gap-1 rounded-lg border border-slate-200 px-2 py-1 text-xs font-medium text-slate-600 hover:bg-slate-50 disabled:opacity-50"
+                        >
+                          <PlayCircle size={14} className={mcpTestingId === s.id ? 'animate-pulse' : ''} />
+                          {mcpTestingId === s.id ? 'Đang kiểm tra…' : 'Test sâu'}
+                        </button>
+                      </div>
+                    </td>
                   </tr>
                 ))}
                 {servers.length === 0 && (
-                  <tr><td colSpan={4} className="px-4 py-8 text-center text-slate-400">Chưa đăng ký MCP server nào. Agent Minh gọi tool ngoài qua tiền tố mcp_&lt;server&gt;_&lt;tool&gt;.</td></tr>
+                  <tr><td colSpan={5} className="px-4 py-8 text-center text-slate-400">Chưa đăng ký MCP server nào. Agent Minh gọi tool ngoài qua tiền tố mcp_&lt;server&gt;_&lt;tool&gt;.</td></tr>
                 )}
               </tbody>
             </table>

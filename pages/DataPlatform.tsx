@@ -142,6 +142,8 @@ export const DataPlatform: React.FC = () => {
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
     const [syncingId, setSyncingId] = useState<string | null>(null);
+    const [checkingId, setCheckingId] = useState<string | null>(null);
+    const [checkResults, setCheckResults] = useState<Record<string, { ok: boolean; status: string; message: string }>>({});
     const [toast, setToast] = useState<{ msg: string; type: 'success' | 'error' } | null>(null);
     const { t, formatDateTime } = useTranslation();
     const notify = useCallback((msg: string, type: 'success' | 'error' = 'success') => {
@@ -196,6 +198,18 @@ export const DataPlatform: React.FC = () => {
             notify(e.message, 'error');
         } finally {
             setSyncingId(null);
+        }
+    };
+    const handleCheck = async (id: string) => {
+        setCheckingId(id);
+        try {
+            const result = await db.checkConnectorConfig(id);
+            setCheckResults(prev => ({ ...prev, [id]: result }));
+            notify(result.message, result.ok ? 'success' : 'error');
+        } catch (e: any) {
+            notify(e.message || 'Không thể kiểm tra connector', 'error');
+        } finally {
+            setCheckingId(null);
         }
     };
     const activeCount = connectors.filter(c => c.status === 'ACTIVE').length;
@@ -308,9 +322,22 @@ export const DataPlatform: React.FC = () => {
                                                     {c.lastSyncAt ? formatDateTime(c.lastSyncAt) : t('data.never')}
                                                 </span>
                                             </div>
+                                             {checkResults[c.id] && (
+                                                 <p className={`mt-1 text-[10px] font-semibold ${checkResults[c.id].ok ? 'text-emerald-700' : 'text-rose-700'}`}>
+                                                     {checkResults[c.id].status === 'CONFIGURED' ? 'Đã kiểm tra cấu hình' : 'Cấu hình cần sửa'}
+                                                 </p>
+                                             )}
                                         </div>
                                     </div>
                                     <div className="flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity shrink-0 ml-3">
+                                         <button
+                                             onClick={() => void handleCheck(c.id)}
+                                             disabled={checkingId === c.id}
+                                             className="p-2 text-indigo-700 bg-indigo-50 rounded-lg hover:bg-indigo-100 transition-colors disabled:opacity-50"
+                                             title="Kiểm tra sâu cấu hình"
+                                         >
+                                             <span className={checkingId === c.id ? 'animate-spin inline-block' : ''}>{ICONS.CHECK}</span>
+                                         </button>
                                         <button
                                             onClick={() => handleSync(c.id)}
                                             disabled={syncingId === c.id}
