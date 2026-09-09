@@ -163,6 +163,14 @@ function invalidImageResult(): SocialPublishResult {
   };
 }
 
+function safeImageUrlLabel(imageUrl: string): string {
+  try {
+    const parsedImageUrl = new URL(imageUrl);
+    return `${parsedImageUrl.origin}${parsedImageUrl.pathname}`;
+  } catch {
+    return 'URL ảnh đã cung cấp';
+  }
+}
 function ambiguousAlbumResult(
   errorCode: string,
   safeMessage: string,
@@ -204,6 +212,13 @@ export async function publishFacebookPageContent(input: {
 
   if (validateImageUrls(imageUrls)) {
     return invalidImageResult();
+  }
+
+  for (const imageUrl of imageUrls) {
+    const validation = await validatePublicImage(imageUrl);
+    if (!validation.valid) {
+      return unavailableImageResult(imageUrl, validation.reason);
+    }
   }
 
   const pagePath = encodeURIComponent(input.pageId);
@@ -420,5 +435,49 @@ export async function getFacebookDefaultPage(
     return { pageId: page.id, accessToken: page.accessToken };
   } catch {
     return null;
+  }
+}
+
+function unavailableImageResult(imageUrl: string, reason: string): SocialPublishResult {
+  return {
+    status: 'FAILED',
+    retryable: false,
+    errorCode: 'FACEBOOK_IMAGE_NOT_PUBLIC',
+    safeMessage: `Facebook không thể tải ảnh công khai (${safeImageUrlLabel(imageUrl)}): ${reason}. Không gửi yêu cầu đăng tới Facebook.`,
+  };
+}
+
+async function validatePublicImage(imageUrl: string): Promise<{ valid: true } | { valid: false; reason: string }> {
+  try {
+    // This probe intentionally has no provider token, cookies, or authorization
+    // headers. Facebook must be able to retrieve the image as an anonymous client.
+    const response = await fetch(imageUrl, {
+      method: 'GET',
+      redirect: 'follow',
+      credentials: 'omit',
+      headers: { Accept: 'image/*' },
+      signal: AbortSignal.timeout(10_000),
+    });
+
+    if (!response.ok) {
+      return { valid: false, reason: `origin trả về HTTP ${response.status}` };
+    }
+
+    const contentType = response.headers.get('content-type')?.split(';', 1)[0].trim().toLowerCase();
+    if (!contentType?.startsWith('image/')) {
+      return {
+        valid: false,
+        reason: `origin không trả về nội dung ảnh (Content-Type: ${contentType || 'không có'})`,
+      };
+    }
+
+    const body = await response.arrayBuffer();
+    if (body.byteLength === 0) {
+      return { valid: false, reason: 'origin trả về nội dung ảnh rỗng' };
+    }
+
+    return { valid: true };
+  } catch {
+    return { valid: false, reason: 'không thể kết nối tới origin ảnh' };
   }
 }

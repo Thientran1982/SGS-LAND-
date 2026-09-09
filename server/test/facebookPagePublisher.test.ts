@@ -34,7 +34,10 @@ describe('Facebook Page publisher contract', () => {
   });
 
   it('publishes a single-image post and requires a provider post ID', async () => {
-    fetchMock.mockResolvedValueOnce(new Response(JSON.stringify({
+    fetchMock.mockResolvedValueOnce(new Response('image bytes', {
+      status: 200,
+      headers: { 'content-type': 'image/jpeg' },
+    })).mockResolvedValueOnce(new Response(JSON.stringify({
       post_id: 'page-1_42',
     }), {
       status: 200,
@@ -60,8 +63,8 @@ describe('Facebook Page publisher contract', () => {
       providerPostId: 'page-1_42',
       providerRequestId: 'trace-1',
     });
-    expect(fetchMock.mock.calls[0][0]).toContain('/page-1/photos');
-    expect(JSON.parse(fetchMock.mock.calls[0][1].body)).toMatchObject({
+    expect(fetchMock.mock.calls[1][0]).toContain('/page-1/photos');
+    expect(JSON.parse(fetchMock.mock.calls[1][1].body)).toMatchObject({
       url: 'https://cdn.test/house.jpg',
       caption: 'Nhà phố ven sông\nGiá: 3 tỷ VNĐ',
       published: true,
@@ -70,6 +73,14 @@ describe('Facebook Page publisher contract', () => {
 
   it('publishes all approved images as one album post', async () => {
     fetchMock
+      .mockResolvedValueOnce(new Response('image bytes', {
+        status: 200,
+        headers: { 'content-type': 'image/jpeg' },
+      }))
+      .mockResolvedValueOnce(new Response('image bytes', {
+        status: 200,
+        headers: { 'content-type': 'image/jpeg' },
+      }))
       .mockResolvedValueOnce(new Response(JSON.stringify({ id: 'photo-1' }), {
         status: 200,
         headers: { 'x-fb-trace-id': 'trace-photo-1' },
@@ -103,19 +114,19 @@ describe('Facebook Page publisher contract', () => {
       providerRequestId: 'trace-photo-1,trace-photo-2,trace-feed-1',
     });
 
-    expect(fetchMock).toHaveBeenCalledTimes(3);
-    expect(fetchMock.mock.calls[0][0]).toContain('/page-1/photos');
-    expect(fetchMock.mock.calls[1][0]).toContain('/page-1/photos');
-    expect(fetchMock.mock.calls[2][0]).toContain('/page-1/feed');
-    expect(JSON.parse(fetchMock.mock.calls[0][1].body)).toMatchObject({
+    expect(fetchMock).toHaveBeenCalledTimes(5);
+    expect(fetchMock.mock.calls[2][0]).toContain('/page-1/photos');
+    expect(fetchMock.mock.calls[3][0]).toContain('/page-1/photos');
+    expect(fetchMock.mock.calls[4][0]).toContain('/page-1/feed');
+    expect(JSON.parse(fetchMock.mock.calls[2][1].body)).toMatchObject({
       url: 'https://cdn.test/first.jpg',
       published: false,
     });
-    expect(JSON.parse(fetchMock.mock.calls[1][1].body)).toMatchObject({
+    expect(JSON.parse(fetchMock.mock.calls[3][1].body)).toMatchObject({
       url: 'https://cdn.test/second.jpg',
       published: false,
     });
-    expect(JSON.parse(fetchMock.mock.calls[2][1].body)).toMatchObject({
+    expect(JSON.parse(fetchMock.mock.calls[4][1].body)).toMatchObject({
       message: 'B',
       link: 'https://sgsland.vn/p/SGS-002',
       attached_media: [
@@ -127,6 +138,14 @@ describe('Facebook Page publisher contract', () => {
 
   it('keeps a partial album upload ambiguous and does not continue publishing', async () => {
     fetchMock
+      .mockResolvedValueOnce(new Response('image bytes', {
+        status: 200,
+        headers: { 'content-type': 'image/jpeg' },
+      }))
+      .mockResolvedValueOnce(new Response('image bytes', {
+        status: 200,
+        headers: { 'content-type': 'image/jpeg' },
+      }))
       .mockResolvedValueOnce(new Response(JSON.stringify({ id: 'photo-1' }), {
         status: 200,
         headers: { 'x-fb-trace-id': 'trace-photo-1' },
@@ -156,7 +175,7 @@ describe('Facebook Page publisher contract', () => {
       providerRequestId: 'trace-photo-1,trace-photo-2',
     });
 
-    expect(fetchMock).toHaveBeenCalledTimes(2);
+    expect(fetchMock).toHaveBeenCalledTimes(4);
   });
 
   it('rejects an album larger than the provider limit before contacting Facebook', async () => {
@@ -226,6 +245,14 @@ describe('Facebook Page publisher contract', () => {
     fetchMock
       .mockResolvedValueOnce(new Response(JSON.stringify({ id: 'photo-1' }), {
         status: 200,
+        headers: { 'content-type': 'image/jpeg' },
+      }))
+      .mockResolvedValueOnce(new Response(JSON.stringify({ id: 'photo-2' }), {
+        status: 200,
+        headers: { 'content-type': 'image/jpeg' },
+      }))
+      .mockResolvedValueOnce(new Response(JSON.stringify({ id: 'photo-1' }), {
+        status: 200,
         headers: { 'x-fb-trace-id': 'trace-photo-1' },
       }))
       .mockResolvedValueOnce(new Response(JSON.stringify({ id: 'photo-2' }), {
@@ -257,9 +284,14 @@ describe('Facebook Page publisher contract', () => {
   });
 
   it('keeps the single-image photo contract unchanged', async () => {
-    fetchMock.mockResolvedValueOnce(new Response(JSON.stringify({
+    fetchMock
+      .mockResolvedValueOnce(new Response('image bytes', {
+        status: 200,
+        headers: { 'content-type': 'image/jpeg' },
+      }))
+      .mockResolvedValueOnce(new Response(JSON.stringify({
       post_id: 'page-1_44',
-    }), { status: 200 }));
+      }), { status: 200 }));
 
     await expect(publishFacebookPageContent({
       pageId: 'page-1',
@@ -275,8 +307,8 @@ describe('Facebook Page publisher contract', () => {
       idempotencyKey: 'social:target-2-single:1',
     })).resolves.toMatchObject({ status: 'PUBLISHED' });
 
-    expect(fetchMock.mock.calls[0][0]).toContain('/page-1/photos');
-    expect(JSON.parse(fetchMock.mock.calls[0][1].body)).toMatchObject({
+    expect(fetchMock.mock.calls[1][0]).toContain('/page-1/photos');
+    expect(JSON.parse(fetchMock.mock.calls[1][1].body)).toMatchObject({
       url: 'https://cdn.test/first.jpg',
       caption: 'B',
       published: true,
@@ -304,7 +336,10 @@ describe('Facebook Page publisher contract', () => {
   });
 
   it('keeps network and missing-ID outcomes ambiguous instead of retrying blindly', async () => {
-    fetchMock.mockRejectedValueOnce(new Error('socket closed'));
+    fetchMock.mockResolvedValueOnce(new Response('image bytes', {
+      status: 200,
+      headers: { 'content-type': 'image/jpeg' },
+    })).mockRejectedValueOnce(new Error('socket closed'));
     await expect(publishFacebookPageContent({
       pageId: 'page-1',
       pageAccessToken: 'page-token',
@@ -322,7 +357,12 @@ describe('Facebook Page publisher contract', () => {
       errorCode: 'FACEBOOK_NETWORK_OUTCOME_UNKNOWN',
     });
 
-    fetchMock.mockResolvedValueOnce(new Response('{}', { status: 200 }));
+    fetchMock
+      .mockResolvedValueOnce(new Response('image bytes', {
+        status: 200,
+        headers: { 'content-type': 'image/jpeg' },
+      }))
+      .mockResolvedValueOnce(new Response('{}', { status: 200 }));
     await expect(publishFacebookPageContent({
       pageId: 'page-1',
       pageAccessToken: 'page-token',
@@ -398,6 +438,14 @@ describe('Facebook album contract smoke', () => {
   it('uploads unpublished photos in order, then creates one feed post', async () => {
     const idempotencyKey = 'smoke:facebook-album:order';
     fetchMock
+      .mockResolvedValueOnce(new Response('image bytes', {
+        status: 200,
+        headers: { 'content-type': 'image/jpeg' },
+      }))
+      .mockResolvedValueOnce(new Response('image bytes', {
+        status: 200,
+        headers: { 'content-type': 'image/jpeg' },
+      }))
       .mockResolvedValueOnce(new Response(JSON.stringify({ id: 'media-1' }), {
         status: 200,
         headers: { 'x-fb-trace-id': 'trace-media-1' },
@@ -417,18 +465,18 @@ describe('Facebook album contract smoke', () => {
       providerRequestId: 'trace-media-1,trace-media-2,trace-feed-1',
     });
 
-    expect(fetchMock).toHaveBeenCalledTimes(3);
-    expectPhotoRequest(fetchMock.mock.calls[0], 'https://cdn.test/album-first.jpg', 0, idempotencyKey);
-    expectPhotoRequest(fetchMock.mock.calls[1], 'https://cdn.test/album-second.jpg', 1, idempotencyKey);
-    expect(fetchMock.mock.calls[2][0]).toContain('/page-1/feed?access_token=fake-page-token');
-    expect(fetchMock.mock.calls[2][1]).toMatchObject({
+    expect(fetchMock).toHaveBeenCalledTimes(5);
+    expectPhotoRequest(fetchMock.mock.calls[2], 'https://cdn.test/album-first.jpg', 0, idempotencyKey);
+    expectPhotoRequest(fetchMock.mock.calls[3], 'https://cdn.test/album-second.jpg', 1, idempotencyKey);
+    expect(fetchMock.mock.calls[4][0]).toContain('/page-1/feed?access_token=fake-page-token');
+    expect(fetchMock.mock.calls[4][1]).toMatchObject({
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
         'X-SGS-Delivery-Key': idempotencyKey,
       },
     });
-    expect(JSON.parse(String((fetchMock.mock.calls[2][1] as RequestInit).body))).toEqual({
+    expect(JSON.parse(String((fetchMock.mock.calls[4][1] as RequestInit).body))).toEqual({
       message: 'Album smoke caption',
       link: 'https://sgsland.vn/p/SMOKE-001',
       attached_media: [
@@ -440,6 +488,14 @@ describe('Facebook album contract smoke', () => {
 
   it('keeps a timeout after a partial upload ambiguous', async () => {
     fetchMock
+      .mockResolvedValueOnce(new Response('image bytes', {
+        status: 200,
+        headers: { 'content-type': 'image/jpeg' },
+      }))
+      .mockResolvedValueOnce(new Response('image bytes', {
+        status: 200,
+        headers: { 'content-type': 'image/jpeg' },
+      }))
       .mockResolvedValueOnce(new Response(JSON.stringify({ id: 'media-1' }), {
         status: 200,
         headers: { 'x-fb-trace-id': 'trace-media-1' },
@@ -451,12 +507,20 @@ describe('Facebook album contract smoke', () => {
       errorCode: 'FACEBOOK_ALBUM_NETWORK_OUTCOME_UNKNOWN',
       providerRequestId: 'trace-media-1',
     });
-    expect(fetchMock).toHaveBeenCalledTimes(2);
-    expect(fetchMock.mock.calls[2]).toBeUndefined();
+    expect(fetchMock).toHaveBeenCalledTimes(4);
+    expect(fetchMock.mock.calls[4]).toBeUndefined();
   });
 
   it('keeps a provider rejection after one accepted photo partial and ambiguous', async () => {
     fetchMock
+      .mockResolvedValueOnce(new Response('image bytes', {
+        status: 200,
+        headers: { 'content-type': 'image/jpeg' },
+      }))
+      .mockResolvedValueOnce(new Response('image bytes', {
+        status: 200,
+        headers: { 'content-type': 'image/jpeg' },
+      }))
       .mockResolvedValueOnce(new Response(JSON.stringify({ id: 'media-1' }), {
         status: 200,
         headers: { 'x-fb-trace-id': 'trace-media-1' },
@@ -473,27 +537,44 @@ describe('Facebook album contract smoke', () => {
       errorCode: 'FACEBOOK_ALBUM_UPLOAD_OUTCOME_UNKNOWN',
       providerRequestId: 'trace-media-1,trace-media-2',
     });
-    expect(fetchMock).toHaveBeenCalledTimes(2);
-    expect(fetchMock.mock.calls[2]).toBeUndefined();
+    expect(fetchMock).toHaveBeenCalledTimes(4);
+    expect(fetchMock.mock.calls[4]).toBeUndefined();
   });
 
   it('keeps a successful photo response without a media ID ambiguous', async () => {
-    fetchMock.mockResolvedValueOnce(new Response(JSON.stringify({}), {
-      status: 200,
-      headers: { 'x-fb-trace-id': 'trace-media-missing' },
-    }));
+    fetchMock
+      .mockResolvedValueOnce(new Response('image bytes', {
+        status: 200,
+        headers: { 'content-type': 'image/jpeg' },
+      }))
+      .mockResolvedValueOnce(new Response('image bytes', {
+        status: 200,
+        headers: { 'content-type': 'image/jpeg' },
+      }))
+      .mockResolvedValueOnce(new Response(JSON.stringify({}), {
+        status: 200,
+        headers: { 'x-fb-trace-id': 'trace-media-missing' },
+      }));
 
     await expect(publishAlbum('smoke:facebook-album:missing-media')).resolves.toMatchObject({
       status: 'AMBIGUOUS',
       errorCode: 'FACEBOOK_ALBUM_MISSING_MEDIA_ID',
       providerRequestId: 'trace-media-missing',
     });
-    expect(fetchMock).toHaveBeenCalledTimes(1);
-    expect(fetchMock.mock.calls[1]).toBeUndefined();
+    expect(fetchMock).toHaveBeenCalledTimes(3);
+    expect(fetchMock.mock.calls[3]).toBeUndefined();
   });
 
   it('keeps a feed response without a post ID ambiguous', async () => {
     fetchMock
+      .mockResolvedValueOnce(new Response('image bytes', {
+        status: 200,
+        headers: { 'content-type': 'image/jpeg' },
+      }))
+      .mockResolvedValueOnce(new Response('image bytes', {
+        status: 200,
+        headers: { 'content-type': 'image/jpeg' },
+      }))
       .mockResolvedValueOnce(new Response(JSON.stringify({ id: 'media-1' }), {
         status: 200,
         headers: { 'x-fb-trace-id': 'trace-media-1' },
@@ -512,7 +593,38 @@ describe('Facebook album contract smoke', () => {
       errorCode: 'FACEBOOK_ALBUM_MISSING_POST_ID',
       providerRequestId: 'trace-media-1,trace-media-2,trace-feed-missing',
     });
-    expect(fetchMock).toHaveBeenCalledTimes(3);
-    expect(fetchMock.mock.calls[3]).toBeUndefined();
+    expect(fetchMock).toHaveBeenCalledTimes(5);
+    expect(fetchMock.mock.calls[5]).toBeUndefined();
+  });
+
+  it('rejects an image that is not publicly fetchable before contacting Facebook', async () => {
+    fetchMock.mockResolvedValueOnce(new Response('private', {
+      status: 403,
+      headers: { 'content-type': 'text/html' },
+    }));
+
+    const result = await publishFacebookPageContent({
+      pageId: 'page-1',
+      pageAccessToken: 'fake-page-token',
+      content: albumContent(['https://cdn.test/private.jpg?signature=secret']),
+      idempotencyKey: 'smoke:facebook-image-not-public',
+    });
+
+    expect(result).toMatchObject({
+      status: 'FAILED',
+      retryable: false,
+      errorCode: 'FACEBOOK_IMAGE_NOT_PUBLIC',
+    });
+    expect(result.safeMessage).toContain('https://cdn.test/private.jpg');
+    expect(result.safeMessage).not.toContain('signature=secret');
+    expect(fetchMock).toHaveBeenCalledOnce();
+    expect(fetchMock.mock.calls[0][0]).toBe('https://cdn.test/private.jpg?signature=secret');
+    expect(fetchMock.mock.calls[0][1]).toMatchObject({
+      method: 'GET',
+      redirect: 'follow',
+      credentials: 'omit',
+      headers: { Accept: 'image/*' },
+    });
+    expect(JSON.stringify(fetchMock.mock.calls[0][1])).not.toContain('fake-page-token');
   });
 });
