@@ -68,3 +68,4 @@
 - [Social publishing provider safety](social-publishing-provider-safety.md) — verify tenant-scoped public permissions and never retry uncertain provider POSTs blindly
 - [Preview reconcile smoke coverage](preview-reconcile-smoke.md) — test mutation error contracts through the public preview proxy, not only an isolated router
 - [Deployment artifact revision](deployment-artifact-revision.md) — prove production runs the current workspace artifact before diagnosing a repeated runtime failure
+- [Production dependency import checks](production-dependency-import-checks.md) — bundled backend imports may keep timers alive; exit explicitly after a successful dependency-only import

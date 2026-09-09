@@ -10,6 +10,11 @@ npm run build
   BACKEND_URL="${BACKEND_URL:-http://localhost:5001}" npm run build
 )
 
+# Verify the exact generated backend entrypoint against a clean production-only
+# install before pruning the publish image. The check uses a temporary copy, so
+# local development dependencies and node_modules remain available to the build.
+npm run check:production-dependencies
+
 if [ "${PUBLISH_BUILD:-0}" = "1" ]; then
   # The VM only runs server.js and `next start`; development/test packages are
   # not needed after the build and duplicate a large amount of tooling.

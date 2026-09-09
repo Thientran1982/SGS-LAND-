@@ -7232,4 +7232,6 @@ app.use('/api/v1', (req, _res, next) => {
 
 }
 
-startServer();
+if (process.env.PRODUCTION_DEPENDENCY_CHECK !== '1') {
+  startServer();
+}
