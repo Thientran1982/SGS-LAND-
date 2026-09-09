@@ -3,7 +3,7 @@
  * Gop 3 endpoint: /api/admin/agent-tasks, /api/admin/automations, /api/admin/mcp-servers.
  */
 import React, { useCallback, useEffect, useState } from 'react';
-import { Bot, RefreshCw, ListTodo, Webhook, Plug, PlayCircle, Trash2 } from 'lucide-react';
+import { Bot, RefreshCw, ListTodo, Webhook, Plug, PlayCircle, Trash2, Plus, X } from 'lucide-react';
 import { api } from '../services/api/apiClient';
 import { SeoHead } from '../components/SeoHead';
 
@@ -85,7 +85,10 @@ const STATUS_COLOR: Record<string, string> = {
 };
 
 export default function AgentTasks() {
-  const [tab, setTab] = useState<'tasks' | 'automations' | 'mcp' | 'skills' | 'rooms' | 'voice' | 'teach'>('tasks');
+  const [tab, setTab] = useState<'tasks' | 'automations' | 'mcp' | 'skills' | 'rooms' | 'voice' | 'teach'>(() => {
+    const requestedTab = new URLSearchParams(window.location.search).get('tab');
+    return requestedTab === 'mcp' ? 'mcp' : 'tasks';
+  });
   const [tasks, setTasks] = useState<Task[]>([]);
   const [counts, setCounts] = useState<Record<string, number>>({});
   const [automations, setAutomations] = useState<Automation[]>([]);
@@ -95,6 +98,10 @@ export default function AgentTasks() {
   const [voiceCalls, setVoiceCalls] = useState<VoiceCall[]>([]);
   const [teachRecs, setTeachRecs] = useState<TeachRecording[]>([]);
   const [loading, setLoading] = useState(false);
+  const [mcpFormOpen, setMcpFormOpen] = useState(false);
+  const [mcpSaving, setMcpSaving] = useState(false);
+  const [mcpMessage, setMcpMessage] = useState<string | null>(null);
+  const [mcpForm, setMcpForm] = useState({ name: '', url: '', transport: 'http' as 'http' | 'sse' });
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -124,6 +131,23 @@ export default function AgentTasks() {
   }, []);
 
   useEffect(() => { void load(); }, [load]);
+
+  const createMcpServer = async (event: React.FormEvent) => {
+    event.preventDefault();
+    setMcpSaving(true);
+    setMcpMessage(null);
+    try {
+      await api.post('/api/admin/mcp-servers', mcpForm);
+      setMcpForm({ name: '', url: '', transport: 'http' });
+      setMcpFormOpen(false);
+      setMcpMessage('MCP server đã được thêm.');
+      await load();
+    } catch (error: any) {
+      setMcpMessage(error?.message || 'Không thể thêm MCP server.');
+    } finally {
+      setMcpSaving(false);
+    }
+  };
 
   const tabsDef = [
     { key: 'tasks' as const, label: 'Tác vụ đang chạy', icon: <ListTodo size={16} /> },
@@ -250,6 +274,60 @@ export default function AgentTasks() {
 
       {tab === 'mcp' && (
         <div className="rounded-xl border border-slate-200 bg-white shadow-sm">
+          <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-100 px-4 py-3">
+            <div>
+              <h2 className="font-semibold text-slate-800">Kết nối MCP</h2>
+              <p className="mt-0.5 text-xs text-slate-500">Chỉ lưu địa chỉ server; không dán secret vào publication.</p>
+            </div>
+            <button
+              type="button"
+              onClick={() => { setMcpFormOpen(value => !value); setMcpMessage(null); }}
+              className="inline-flex items-center gap-1.5 rounded-lg bg-slate-900 px-3 py-2 text-sm font-medium text-white hover:bg-slate-700"
+            >
+              {mcpFormOpen ? <X size={15} /> : <Plus size={15} />}
+              {mcpFormOpen ? 'Đóng' : 'Thêm MCP server'}
+            </button>
+          </div>
+          {mcpFormOpen && (
+            <form onSubmit={createMcpServer} className="grid gap-3 border-b border-slate-100 bg-slate-50 px-4 py-4 md:grid-cols-[1fr_1.5fr_150px_auto] md:items-end">
+              <label className="text-xs font-semibold text-slate-600">
+                Tên server
+                <input
+                  required
+                  value={mcpForm.name}
+                  onChange={event => setMcpForm(form => ({ ...form, name: event.target.value }))}
+                  placeholder="ví dụ: property-tools"
+                  className="mt-1 w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-normal text-slate-800 outline-none focus:border-indigo-500"
+                />
+              </label>
+              <label className="text-xs font-semibold text-slate-600">
+                MCP endpoint
+                <input
+                  required
+                  type="url"
+                  value={mcpForm.url}
+                  onChange={event => setMcpForm(form => ({ ...form, url: event.target.value }))}
+                  placeholder="https://example.com/mcp"
+                  className="mt-1 w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-normal text-slate-800 outline-none focus:border-indigo-500"
+                />
+              </label>
+              <label className="text-xs font-semibold text-slate-600">
+                Transport
+                <select
+                  value={mcpForm.transport}
+                  onChange={event => setMcpForm(form => ({ ...form, transport: event.target.value as 'http' | 'sse' }))}
+                  className="mt-1 w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-normal text-slate-800 outline-none focus:border-indigo-500"
+                >
+                  <option value="http">HTTP</option>
+                  <option value="sse">SSE</option>
+                </select>
+              </label>
+              <button type="submit" disabled={mcpSaving} className="rounded-lg bg-indigo-600 px-3 py-2 text-sm font-semibold text-white hover:bg-indigo-500 disabled:opacity-50">
+                {mcpSaving ? 'Đang lưu…' : 'Lưu server'}
+              </button>
+            </form>
+          )}
+          {mcpMessage && <p className="border-b border-slate-100 px-4 py-2 text-sm text-indigo-700">{mcpMessage}</p>}
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead>

@@ -1,6 +1,8 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import { AlertTriangle, CalendarClock, Check, Eye, ExternalLink, RefreshCw, Send, X } from 'lucide-react';
+import { AlertTriangle, ArrowUpRight, Bot, CalendarClock, Check, Eye, ExternalLink, PlugZap, RefreshCw, Send, X } from 'lucide-react';
+import { ROUTES } from '../config/routes';
 import { listingApi } from '../services/api/listingApi';
+import ListingDropdown, { SocialListingOption } from '../components/social-publishing/ListingDropdown';
 import {
   socialPublicationApi,
   SocialCapability,
@@ -8,14 +10,6 @@ import {
   SocialTarget,
   isSocialCapabilityReady,
 } from '../services/api/socialPublicationApi';
-
-type ListingOption = {
-  id: string;
-  code?: string;
-  title?: string;
-  status?: string;
-  images?: string[];
-};
 
 const statusLabel: Record<string, string> = {
   DRAFT: 'Bản nháp',
@@ -36,7 +30,7 @@ const formatDate = (value?: string | null) =>
 
 export const SocialPublishing: React.FC = () => {
   const [catalog, setCatalog] = useState<SocialCapability[]>([]);
-  const [listings, setListings] = useState<ListingOption[]>([]);
+  const [listings, setListings] = useState<SocialListingOption[]>([]);
   const [publications, setPublications] = useState<SocialPublication[]>([]);
   const [listingId, setListingId] = useState('');
   const [platforms, setPlatforms] = useState<string[]>([]);
@@ -75,7 +69,7 @@ export const SocialPublishing: React.FC = () => {
       setListings(listingResult.data || []);
       setPublications(publicationResult.data || []);
       const queryListingId = new URLSearchParams(window.location.search).get('listingId');
-      if (queryListingId && (listingResult.data || []).some((item: ListingOption) => String(item.id) === queryListingId)) {
+      if (queryListingId && (listingResult.data || []).some((item: SocialListingOption) => String(item.id) === queryListingId)) {
         setListingId(queryListingId);
       }
     } catch (error: any) {
@@ -389,6 +383,49 @@ export const SocialPublishing: React.FC = () => {
         )}
 
         <section className="rounded-3xl border border-[var(--glass-border)] bg-[var(--bg-surface)] p-5 shadow-sm">
+          <div className="flex flex-col justify-between gap-4 md:flex-row md:items-start">
+            <div>
+              <div className="flex items-center gap-3">
+                <div className="rounded-xl bg-indigo-500/10 p-2 text-indigo-600"><PlugZap size={20} /></div>
+                <div>
+                  <h2 className="font-bold text-[var(--text-primary)]">Cổng kết nối nền tảng</h2>
+                  <p className="text-xs text-[var(--text-tertiary)]">Thêm API connector hoặc MCP server ở khu vực quản trị tương ứng.</p>
+                </div>
+              </div>
+              <p className="mt-3 max-w-3xl text-sm leading-6 text-[var(--text-secondary)]">
+                Kết nối được quản lý riêng khỏi nội dung xuất bản. Không nhập API key hoặc token trực tiếp vào publication draft.
+              </p>
+            </div>
+          </div>
+          <div className="mt-4 grid gap-3 md:grid-cols-2">
+            <a
+              href={`/${ROUTES.DATA_PLATFORM}`}
+              className="group flex items-start gap-3 rounded-2xl border border-[var(--glass-border)] p-4 transition-colors hover:border-sgs-primary hover:bg-sgs-primary/5"
+            >
+              <div className="rounded-xl bg-emerald-500/10 p-2 text-emerald-700"><PlugZap size={18} /></div>
+              <span className="min-w-0 flex-1">
+                <span className="flex items-center gap-2 font-semibold text-[var(--text-primary)]">
+                  Thêm API / connector <ArrowUpRight size={15} className="text-[var(--text-tertiary)] transition-transform group-hover:-translate-y-0.5 group-hover:translate-x-0.5" />
+                </span>
+                <span className="mt-1 block text-xs leading-5 text-[var(--text-tertiary)]">Quản lý Google Sheets, CRM và webhook export theo tenant.</span>
+              </span>
+            </a>
+            <a
+              href={`/${ROUTES.AGENT_TASKS}?tab=mcp`}
+              className="group flex items-start gap-3 rounded-2xl border border-[var(--glass-border)] p-4 transition-colors hover:border-indigo-500 hover:bg-indigo-500/5"
+            >
+              <div className="rounded-xl bg-indigo-500/10 p-2 text-indigo-600"><Bot size={18} /></div>
+              <span className="min-w-0 flex-1">
+                <span className="flex items-center gap-2 font-semibold text-[var(--text-primary)]">
+                  Thêm MCP server <ArrowUpRight size={15} className="text-[var(--text-tertiary)] transition-transform group-hover:-translate-y-0.5 group-hover:translate-x-0.5" />
+                </span>
+                <span className="mt-1 block text-xs leading-5 text-[var(--text-tertiary)]">Đăng ký server và kiểm tra tool để Agent dùng trong workflow.</span>
+              </span>
+            </a>
+          </div>
+        </section>
+
+        <section className="rounded-3xl border border-[var(--glass-border)] bg-[var(--bg-surface)] p-5 shadow-sm">
           <div className="mb-5 flex items-center gap-3">
             <div className="rounded-xl bg-sgs-primary/10 p-2 text-sgs-primary"><Send size={20} /></div>
             <div>
@@ -400,10 +437,25 @@ export const SocialPublishing: React.FC = () => {
             <div className="space-y-4">
               <label className="block">
                 <span className="mb-2 block text-sm font-semibold text-[var(--text-primary)]">Sản phẩm</span>
-                <select value={listingId} onChange={event => { setListingId(event.target.value); setPreview([]); }} className="w-full rounded-xl border border-[var(--glass-border)] bg-[var(--bg-app)] px-3 py-3 text-sm text-[var(--text-primary)]">
-                  <option value="">Chọn listing đủ điều kiện public</option>
-                  {listings.map(item => <option key={item.id} value={item.id}>{item.code ? `${item.code} — ` : ''}{item.title || item.id}</option>)}
-                </select>
+                <ListingDropdown
+                  listings={listings}
+                  value={listingId}
+                  disabled={loading}
+                  onChange={value => { setListingId(value); setPreview([]); }}
+                />
+                {selectedListing && (
+                  <div className="mt-3 flex items-center gap-3 rounded-xl border border-[var(--glass-border)] bg-[var(--bg-app)] p-3">
+                    {selectedListing.images?.[0] ? (
+                      <img src={selectedListing.images[0]} alt="" className="h-12 w-16 rounded-lg object-cover" />
+                    ) : (
+                      <div className="flex h-12 w-16 items-center justify-center rounded-lg bg-[var(--glass-surface)] text-xs text-[var(--text-tertiary)]">Ảnh</div>
+                    )}
+                    <div className="min-w-0">
+                      <p className="truncate text-sm font-semibold text-[var(--text-primary)]">{selectedListing.title || selectedListing.id}</p>
+                      <p className="mt-0.5 text-xs text-[var(--text-tertiary)]">{selectedListing.code || 'Không có mã'} · {selectedListing.status || 'Sẵn sàng'} · Đủ điều kiện public</p>
+                    </div>
+                  </div>
+                )}
               </label>
               <div>
                 <span className="mb-2 block text-sm font-semibold text-[var(--text-primary)]">Nền tảng đích</span>

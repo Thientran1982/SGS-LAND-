@@ -19,6 +19,9 @@ interface Props {
   disabled?: boolean;
   ariaLabel?: string;
   surface?: 'primary' | 'secondary';
+  searchable?: boolean;
+  searchPlaceholder?: string;
+  emptyMessage?: string;
 }
 
 export function SelectDropdown({
@@ -32,13 +35,20 @@ export function SelectDropdown({
   disabled = false,
   ariaLabel,
   surface = 'secondary',
+  searchable = false,
+  searchPlaceholder = 'Tìm kiếm...',
+  emptyMessage = 'Không có lựa chọn phù hợp',
 }: Props) {
   const [open, setOpen] = useState(false);
+  const [search, setSearch] = useState('');
   const [coords, setCoords] = useState<{ top?: number; bottom?: number; left: number; width: number }>({ left: 0, width: 0 });
   const btnRef = useRef<HTMLButtonElement>(null);
   const menuRef = useRef<HTMLDivElement>(null);
 
   const selected = options.find(o => o.value === value);
+  const filteredOptions = searchable
+    ? options.filter(option => option.label.toLocaleLowerCase().includes(search.toLocaleLowerCase()))
+    : options;
 
   const openMenu = () => {
     if (!btnRef.current) return;
@@ -78,6 +88,7 @@ export function SelectDropdown({
   const handleSelect = (val: string) => {
     onChange(val);
     setOpen(false);
+    setSearch('');
   };
   const enabledSurfaceClass = surface === 'primary'
     ? 'bg-[var(--bg-surface)] text-[var(--text-primary)]'
@@ -111,11 +122,28 @@ export function SelectDropdown({
       {open && createPortal(
          <div
           ref={menuRef}
-          style={{ position: 'fixed', zIndex: 9999, ...coords, maxHeight: 280 }}
+           style={{ position: 'fixed', zIndex: 9999, ...coords, maxHeight: searchable ? 360 : 280 }}
           className="bg-[var(--bg-surface)] border border-[var(--glass-border)] rounded-xl shadow-2xl overflow-hidden flex flex-col animate-scale-up"
         >
+           {searchable && (
+             <div className="border-b border-[var(--glass-border)] p-2">
+               <input
+                 autoFocus
+                 type="search"
+                 value={search}
+                 onChange={event => setSearch(event.target.value)}
+                 onKeyDown={event => { if (event.key === 'Escape') setOpen(false); }}
+                 placeholder={searchPlaceholder}
+                 aria-label={searchPlaceholder}
+                 className="w-full rounded-lg border border-[var(--glass-border)] bg-[var(--glass-surface)] px-3 py-2 text-sm text-[var(--text-primary)] outline-none placeholder:text-[var(--text-tertiary)] focus:border-[var(--sgs-primary)]"
+               />
+             </div>
+           )}
           <div className="overflow-y-auto no-scrollbar py-1">
-            {options.map(opt => (
+             {filteredOptions.length === 0 && (
+               <p className="px-3 py-4 text-center text-xs text-[var(--text-tertiary)]">{emptyMessage}</p>
+             )}
+             {filteredOptions.map(opt => (
               <button
                 key={opt.value}
                 type="button"
