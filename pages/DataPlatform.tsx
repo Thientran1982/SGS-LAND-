@@ -7,6 +7,7 @@ import { Dropdown } from '../components/Dropdown';
 import { connectorService } from '../services/connectorService';
 import { ConfirmModal } from '../components/ConfirmModal';
 import { SeoHead } from '../components/SeoHead';
+import { ROUTES } from '../config/routes';
 const ICONS = {
     ADD: <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" /></svg>,
     SYNC: <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" /></svg>,
@@ -26,8 +27,55 @@ const CONNECTOR_ICONS: Record<string, React.ReactNode> = {
     SALESFORCE: <svg className="h-4 w-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.7} d="M7 17a4 4 0 01-.5-7.97A5.5 5.5 0 0117 7.5a3.5 3.5 0 01.5 6.96A4 4 0 017 17z" /></svg>,
     WEBHOOK_EXPORT: <svg className="h-4 w-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.7} d="M10 13a5 5 0 007.07.07l1.42-1.42a5 5 0 00-7.07-7.07L10.6 5.4M14 11a5 5 0 00-7.07-.07L5.5 12.35a5 5 0 007.07 7.07l.82-.82" /></svg>,
 };
-const ConnectorModal = ({ isOpen, onClose, onSave, t }: any) => {
-    const [form, setForm] = useState<Partial<ConnectorConfig>>({ type: ConnectorType.GOOGLE_SHEETS, name: '', config: {} });
+type SocialConnectionType = 'FACEBOOK_PAGE' | 'ZALO_OA' | 'INSTAGRAM' | 'TIKTOK' | 'LINKEDIN_PAGE';
+type ConnectionChoice = ConnectorType | SocialConnectionType;
+type AddConnectionForm = { type: ConnectionChoice; name: string; config: Record<string, unknown> };
+const SOCIAL_CONNECTIONS: Record<SocialConnectionType, { label: string; description: string; route: string }> = {
+    FACEBOOK_PAGE: {
+        label: 'Facebook Page',
+        description: 'Kết nối Page và xác minh quyền đăng bài công khai.',
+        route: `/${ROUTES.ENTERPRISE_SETTINGS}?tab=FACEBOOK`,
+    },
+    ZALO_OA: {
+        label: 'Zalo OA',
+        description: 'Kết nối Official Account và kiểm tra quyền broadcast.',
+        route: `/${ROUTES.ENTERPRISE_SETTINGS}?tab=ZALO`,
+    },
+    INSTAGRAM: {
+        label: 'Instagram Business',
+        description: 'Kiểm tra trạng thái publisher Instagram Business.',
+        route: `/${ROUTES.SOCIAL_PUBLISHING}?platform=INSTAGRAM`,
+    },
+    TIKTOK: {
+        label: 'TikTok Business',
+        description: 'Kiểm tra trạng thái Content Posting API của TikTok.',
+        route: `/${ROUTES.SOCIAL_PUBLISHING}?platform=TIKTOK`,
+    },
+    LINKEDIN_PAGE: {
+        label: 'LinkedIn Page',
+        description: 'Kiểm tra trạng thái publisher cho LinkedIn Organization.',
+        route: `/${ROUTES.SOCIAL_PUBLISHING}?platform=LINKEDIN_PAGE`,
+    },
+};
+const SOCIAL_CONNECTION_ICON = <svg className="h-4 w-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><circle cx="8" cy="12" r="3" strokeWidth={1.7} /><circle cx="16" cy="7" r="3" strokeWidth={1.7} /><circle cx="16" cy="17" r="3" strokeWidth={1.7} /><path strokeLinecap="round" strokeWidth={1.7} d="M10.5 10.5l3-2M10.5 13.5l3 2" /></svg>;
+const CONNECTION_OPTIONS = [
+    ...Object.values(ConnectorType).map(value => ({
+        value: value as ConnectionChoice,
+        label: value === ConnectorType.GOOGLE_SHEETS ? 'Google Sheets'
+            : value === ConnectorType.HUBSPOT ? 'HubSpot CRM'
+                : value === ConnectorType.ZOHO_CRM ? 'Zoho CRM'
+                    : value === ConnectorType.SALESFORCE ? 'Salesforce'
+                        : 'Webhook Export',
+        icon: CONNECTOR_ICONS[value] || ICONS.INFO,
+    })),
+    ...Object.entries(SOCIAL_CONNECTIONS).map(([value, connection]) => ({
+        value: value as ConnectionChoice,
+        label: connection.label,
+        icon: SOCIAL_CONNECTION_ICON,
+    })),
+];
+const ConnectorModal = ({ isOpen, onClose, onSave, onOpenSocial, t }: any) => {
+    const [form, setForm] = useState<AddConnectionForm>({ type: ConnectorType.GOOGLE_SHEETS, name: '', config: {} });
     useEffect(() => {
         if (isOpen) setForm({ type: ConnectorType.GOOGLE_SHEETS, name: '', config: {} });
     }, [isOpen]);
@@ -36,6 +84,8 @@ const ConnectorModal = ({ isOpen, onClose, onSave, t }: any) => {
     const handleConfigChange = (key: string, value: string) => {
         setForm(prev => ({ ...prev, config: { ...prev.config, [key]: value } }));
     };
+    const socialConnection = SOCIAL_CONNECTIONS[form.type as SocialConnectionType];
+    const isSocialConnection = Boolean(socialConnection);
     return createPortal(
         <div className="fixed inset-0 z-[100] bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 animate-enter">
             <div className="bg-[var(--bg-surface)] w-full max-w-lg rounded-[24px] shadow-2xl">
@@ -51,12 +101,8 @@ const ConnectorModal = ({ isOpen, onClose, onSave, t }: any) => {
                         <label className="text-xs font-bold text-[var(--text-tertiary)] uppercase tracking-wider block mb-1.5">{t('data.type')}</label>
                         <Dropdown
                             value={form.type || ConnectorType.GOOGLE_SHEETS}
-                            onChange={(v) => setForm({ ...form, type: v as ConnectorType, config: {} })}
-                            options={Object.values(ConnectorType).map(v => ({
-                                value: v,
-                                label: t(`data.type_${v}`),
-                                icon: CONNECTOR_ICONS[v] || ICONS.INFO,
-                            }))}
+                            onChange={(v) => setForm({ ...form, type: v as ConnectionChoice, config: {} })}
+                            options={CONNECTION_OPTIONS}
                         />
                     </div>
                     <div>
@@ -68,7 +114,18 @@ const ConnectorModal = ({ isOpen, onClose, onSave, t }: any) => {
                             onChange={e => setForm({ ...form, name: e.target.value })}
                         />
                     </div>
-                    {form.type === ConnectorType.GOOGLE_SHEETS && (
+                    {isSocialConnection ? (
+                        <div className="rounded-2xl border border-indigo-200 bg-indigo-50/70 p-4">
+                            <div className="flex items-start gap-3">
+                                <div className="rounded-xl bg-white p-2 text-indigo-700 shadow-sm">{SOCIAL_CONNECTION_ICON}</div>
+                                <div>
+                                    <p className="text-sm font-bold text-indigo-950">Kết nối nền tảng social</p>
+                                    <p className="mt-1 text-xs leading-5 text-indigo-900/75">{socialConnection.description}</p>
+                                    <p className="mt-2 text-[11px] font-semibold text-indigo-800">Cấu hình và kiểm tra sâu sẽ chạy ở màn hình quản trị nền tảng, không lưu token vào connector đồng bộ dữ liệu.</p>
+                                </div>
+                            </div>
+                        </div>
+                    ) : form.type === ConnectorType.GOOGLE_SHEETS && (
                         <div>
                             <label className="text-xs font-bold text-[var(--text-tertiary)] uppercase tracking-wider block mb-1.5">{t('data.spreadsheet_id')}</label>
                             <input
@@ -107,18 +164,27 @@ const ConnectorModal = ({ isOpen, onClose, onSave, t }: any) => {
                     )}
                 </div>
                 <div className="px-6 pb-6">
-                    <button
-                        onClick={() => onSave(form)}
-                        disabled={
-                            !form.name?.trim() ||
-                            (form.type === ConnectorType.GOOGLE_SHEETS && !String(form.config?.spreadsheetId || '').trim()) ||
-                            ((form.type === ConnectorType.HUBSPOT || form.type === ConnectorType.SALESFORCE || form.type === ConnectorType.ZOHO_CRM) && !String(form.config?.apiKey || '').trim()) ||
-                            (form.type === ConnectorType.WEBHOOK_EXPORT && !String(form.config?.targetUrl || '').trim())
-                        }
-                        className="w-full py-3 bg-sgs-primary-deep text-white font-bold rounded-xl hover:bg-slate-800 shadow-lg transition-all active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed"
-                    >
-                        {t('common.save')}
-                    </button>
+                    {isSocialConnection ? (
+                        <button
+                            onClick={() => onOpenSocial(socialConnection.route)}
+                            className="w-full py-3 bg-indigo-700 text-white font-bold rounded-xl hover:bg-indigo-800 shadow-lg transition-all active:scale-95"
+                        >
+                            Mở cài đặt và kiểm tra
+                        </button>
+                    ) : (
+                        <button
+                            onClick={() => onSave(form)}
+                            disabled={
+                                !form.name?.trim() ||
+                                (form.type === ConnectorType.GOOGLE_SHEETS && !String(form.config?.spreadsheetId || '').trim()) ||
+                                ((form.type === ConnectorType.HUBSPOT || form.type === ConnectorType.SALESFORCE || form.type === ConnectorType.ZOHO_CRM) && !String(form.config?.apiKey || '').trim()) ||
+                                (form.type === ConnectorType.WEBHOOK_EXPORT && !String(form.config?.targetUrl || '').trim())
+                            }
+                            className="w-full py-3 bg-sgs-primary-deep text-white font-bold rounded-xl hover:bg-slate-800 shadow-lg transition-all active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed"
+                        >
+                            {t('common.save')}
+                        </button>
+                    )}
                 </div>
             </div>
         </div>,
@@ -408,7 +474,16 @@ export const DataPlatform: React.FC = () => {
                     )}
                 </div>
             </div>
-            <ConnectorModal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} onSave={handleCreate} t={t} />
+            <ConnectorModal
+                isOpen={isModalOpen}
+                onClose={() => setIsModalOpen(false)}
+                onSave={handleCreate}
+                onOpenSocial={(route: string) => {
+                    setIsModalOpen(false);
+                    window.location.href = route;
+                }}
+                t={t}
+            />
             <ConfirmModal
                 isOpen={!!deleteConfirmId}
                 title={t('common.delete')}

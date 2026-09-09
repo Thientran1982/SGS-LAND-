@@ -1219,7 +1219,10 @@ const AuditPanel = memo(() => {
 // MAIN COMPONENT
 // -----------------------------------------------------------------------------
 export const EnterpriseSettings: React.FC = () => {
-    const [activeTab, setActiveTab] = useState('ZALO');
+    const [activeTab, setActiveTab] = useState(() => {
+        const requestedTab = new URLSearchParams(window.location.search).get('tab');
+        return requestedTab === 'FACEBOOK' ? 'FACEBOOK' : 'ZALO';
+    });
     const [config, setConfig] = useState<EnterpriseConfig | null>(null);
     const [loading, setLoading] = useState(true);
     const [currentUser, setCurrentUser] = useState<User | null>(null);
