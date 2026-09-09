@@ -208,6 +208,7 @@ import m184 from './184_gallery_cleanup_jobs';
 import m185 from './185_landing_design_agent';
 import m186 from './186_social_publications';
 import m187 from './187_social_publication_audit';
+import m188 from './188_zalo_readiness_notification_retries';
 dotenv.config();
 
 export interface Migration {
@@ -411,6 +412,7 @@ export const MIGRATION_REGISTRY: Record<string, Migration> = {
   '185_landing_design_agent.ts': m185,
   '186_social_publications.ts': m186,
   '187_social_publication_audit.ts': m187,
+  '188_zalo_readiness_notification_retries.ts': m188,
 };
 
 /**

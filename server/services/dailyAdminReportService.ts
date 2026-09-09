@@ -5,6 +5,7 @@ import { emailService } from './emailService';
 import { logger } from '../middleware/logger';
 import { notificationRepository } from '../repositories/notificationRepository';
 import { agentOperatingRepository } from '../repositories/agentOperatingRepository';
+import { notificationService } from './notificationService';
 import {
   classifySupportCsatReason,
   SUPPORT_CSAT_REASON_CATEGORIES,
@@ -647,6 +648,55 @@ export async function replayInterruptedDailyReports(tenantId?: string): Promise<
   return result ?? { inspected: 0, replayed: 0, failed: 0 };
 }
 
+/**
+ * Replay only the in-app delivery of a persisted Zalo readiness transition.
+ * The provider verification is intentionally never called from this worker.
+ */
+export async function retryZaloReadinessNotificationAlerts(limit = 25): Promise<{
+  claimed: number;
+  delivered: number;
+  failed: number;
+  exhausted: number;
+}> {
+  const retries = await notificationRepository.claimDueZaloReadinessNotificationRetries(limit);
+  const result = { claimed: retries.length, delivered: 0, failed: 0, exhausted: 0 };
+
+  for (const retry of retries) {
+    try {
+      await notificationService.notifyZaloBroadcastNotReady(retry.tenantId, {
+        reasonCode: retry.reasonCode as any,
+        checkedAt: retry.checkedAt,
+        transitionEventId: retry.transitionEventId,
+      });
+      await notificationRepository.markZaloReadinessNotificationRetryDelivered(retry.id);
+      result.delivered++;
+    } catch (error) {
+      result.failed++;
+      const status = await notificationRepository.markZaloReadinessNotificationRetryFailed(
+        retry.id,
+        retry.attemptCount,
+      );
+      if (status === 'EXHAUSTED') {
+        result.exhausted++;
+        await notificationRepository.recordZaloReadinessNotificationExhausted(
+          retry.tenantId,
+          {
+            transitionEventId: retry.transitionEventId,
+            reasonCode: retry.reasonCode,
+            checkedAt: retry.checkedAt,
+            attempts: retry.attemptCount,
+          },
+        ).catch((signalError) => {
+          logger.warn(`[Zalo] Failed to record exhausted readiness notification retry for tenant ${retry.tenantId}: ${signalError instanceof Error ? signalError.message : 'unknown error'}`);
+        });
+      }
+      logger.warn(`[Zalo] Readiness notification retry failed for tenant ${retry.tenantId} (attempt ${retry.attemptCount}): ${error instanceof Error ? error.message : 'unknown error'}`);
+    }
+  }
+
+  return result;
+}
+
 const DAILY_REPORT_DELIVERY_KEY = /^daily-report:([0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}):(\d{4}-\d{2}-\d{2}):([^:]+@[^:]+)$/i;
 const BOUNCE_EVENTS = new Set(['bounced', 'bounce', 'hardbounce', 'softbounce', 'blocked', 'invalid', 'error']);
 
@@ -769,5 +819,7 @@ export function startDailyReportScheduler() {
   }, 60_000);
   setInterval(() => replayInterruptedDailyReports().catch(err =>
     logger.error('[DailyReport] automatic delivery replay failed', err)), 5 * 60_000);
+  setInterval(() => retryZaloReadinessNotificationAlerts().catch(err =>
+    logger.error('[Zalo] readiness notification retry worker failed', err)), 5 * 60_000);
   logger.info('[DailyReport] in-process scheduler started at 18:00 Asia/Ho_Chi_Minh');
 }

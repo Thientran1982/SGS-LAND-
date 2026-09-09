@@ -7,7 +7,10 @@ import { logger } from '../middleware/logger';
 import { promises as dns } from 'dns';
 import { verifyFacebookPageAccess } from '../services/facebookService';
 import { verifyZaloBroadcastAccess } from '../social-publishing/zaloBroadcastPublisher';
-import { notifyZaloBroadcastNotReady } from '../services/notificationService';
+import {
+  notifyZaloBroadcastNotReady,
+  recordZaloBroadcastNotReadyNotificationFailure,
+} from '../services/notificationService';
 
 function sanitizeZaloConfig(zalo: any) {
   if (!zalo) return zalo;
@@ -479,9 +482,23 @@ export function createEnterpriseRoutes(authenticateToken: any, io?: any) {
         },
       );
       if (transition.transitionedToNotReady) {
-        await notifyZaloBroadcastNotReady(user.tenantId, { reasonCode, checkedAt }).catch((error) => {
-          logger.warn(`[Zalo] Failed to notify admins about broadcast readiness loss for tenant ${user.tenantId}: ${error instanceof Error ? error.message : 'unknown error'}`);
-        });
+        const transitionEventId = transition.transitionEventId;
+        if (transitionEventId) {
+          await notifyZaloBroadcastNotReady(user.tenantId, {
+            reasonCode,
+            checkedAt,
+            transitionEventId,
+          }).catch(async (error) => {
+            await recordZaloBroadcastNotReadyNotificationFailure(user.tenantId, {
+              reasonCode,
+              checkedAt,
+              transitionEventId,
+            }).catch((queueError) => {
+              logger.warn(`[Zalo] Failed to persist readiness notification retry for tenant ${user.tenantId}: ${queueError instanceof Error ? queueError.message : 'unknown error'}`);
+            });
+            logger.warn(`[Zalo] Failed to notify admins about broadcast readiness loss for tenant ${user.tenantId}: ${error instanceof Error ? error.message : 'unknown error'}`);
+          });
+        }
       }
       res.json({
         status,

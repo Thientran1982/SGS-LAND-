@@ -14,6 +14,8 @@ export interface CreateAdminNotificationData {
   title: string;
   body?: string;
   metadata?: Record<string, any>;
+  /** When set, an existing notification with this transition key is reused. */
+  dedupeKey?: string;
 }
 
 export interface NotificationOperationalEvent {
@@ -43,6 +45,34 @@ class NotificationRepository {
    * performed after the primary operation has already committed.
    */
   async createForTenantAdmins(tenantId: string, data: CreateAdminNotificationData): Promise<void> {
+    if (data.dedupeKey) {
+      await pool.query(
+        `INSERT INTO notifications (tenant_id, user_id, type, title, body, metadata)
+         SELECT $1, u.id, $2, $3, $4, $5::jsonb
+         FROM users u
+         WHERE u.tenant_id = $1
+           AND u.status = 'ACTIVE'
+           AND u.role IN ('SUPER_ADMIN', 'ADMIN', 'TEAM_LEAD')
+           AND NOT EXISTS (
+             SELECT 1
+             FROM notifications existing
+             WHERE existing.tenant_id = $1
+               AND existing.user_id = u.id
+               AND existing.type = $2
+               AND existing.metadata->>'transitionEventId' = $6
+           )`,
+        [
+          tenantId,
+          data.type,
+          data.title,
+          data.body || null,
+          JSON.stringify(data.metadata || {}),
+          data.dedupeKey,
+        ],
+      );
+      return;
+    }
+
     const result = await pool.query<{ id: string }>(
       `SELECT id
        FROM users
@@ -197,6 +227,119 @@ class NotificationRepository {
     );
   }
 
+  async recordZaloReadinessNotificationRetry(
+    tenantId: string,
+    transitionEventId: string,
+    data: { reasonCode: string; checkedAt: string },
+  ): Promise<boolean> {
+    const result = await pool.query(
+      `INSERT INTO zalo_readiness_notification_retries
+         (tenant_id, transition_event_id, reason_code, checked_at)
+       VALUES ($1, $2, $3, $4)
+       ON CONFLICT (tenant_id, transition_event_id) DO NOTHING
+       RETURNING id`,
+      [tenantId, transitionEventId, data.reasonCode, data.checkedAt],
+    );
+    return (result.rowCount ?? 0) > 0;
+  }
+
+  async claimDueZaloReadinessNotificationRetries(limit = 25): Promise<Array<{
+    id: string;
+    tenantId: string;
+    transitionEventId: string;
+    reasonCode: string;
+    checkedAt: string;
+    attemptCount: number;
+  }>> {
+    const safeLimit = Math.max(1, Math.min(Math.trunc(limit), 100));
+    const result = await pool.query(
+      `WITH due AS (
+         SELECT id
+         FROM zalo_readiness_notification_retries
+         WHERE status = 'PENDING'
+           AND next_attempt_at <= NOW()
+           AND (claimed_until IS NULL OR claimed_until <= NOW())
+         ORDER BY next_attempt_at ASC, created_at ASC
+         LIMIT $1
+         FOR UPDATE SKIP LOCKED
+       )
+       UPDATE zalo_readiness_notification_retries retry
+       SET attempt_count = retry.attempt_count + 1,
+           claimed_until = NOW() + INTERVAL '5 minutes',
+           updated_at = NOW()
+       FROM due
+       WHERE retry.id = due.id
+       RETURNING retry.id, retry.tenant_id, retry.transition_event_id,
+                 retry.reason_code, retry.checked_at, retry.attempt_count`,
+      [safeLimit],
+    );
+    return result.rows.map(row => ({
+      id: row.id,
+      tenantId: row.tenant_id,
+      transitionEventId: row.transition_event_id,
+      reasonCode: row.reason_code,
+      checkedAt: new Date(row.checked_at).toISOString(),
+      attemptCount: Number(row.attempt_count),
+    }));
+  }
+
+  async markZaloReadinessNotificationRetryDelivered(id: string): Promise<void> {
+    await pool.query(
+      `UPDATE zalo_readiness_notification_retries
+       SET status = 'DELIVERED', claimed_until = NULL, delivered_at = NOW(), updated_at = NOW()
+       WHERE id = $1 AND status = 'PENDING'`,
+      [id],
+    );
+  }
+
+  async markZaloReadinessNotificationRetryFailed(
+    id: string,
+    attemptCount: number,
+  ): Promise<'PENDING' | 'EXHAUSTED' | null> {
+    const result = await pool.query(
+      `UPDATE zalo_readiness_notification_retries
+       SET status = CASE WHEN $2 >= $3 THEN 'EXHAUSTED' ELSE 'PENDING' END,
+           next_attempt_at = CASE
+             WHEN $2 >= $3 THEN next_attempt_at
+             ELSE NOW() + (INTERVAL '1 minute' * POWER(2, LEAST($2 - 1, 2)))
+           END,
+           claimed_until = NULL,
+           exhausted_at = CASE WHEN $2 >= $3 THEN NOW() ELSE exhausted_at END,
+           updated_at = NOW()
+       WHERE id = $1 AND status = 'PENDING'
+       RETURNING status`,
+      [id, attemptCount, ZALO_READINESS_NOTIFICATION_MAX_ATTEMPTS],
+    );
+    return result.rows[0]?.status || null;
+  }
+
+  async recordZaloReadinessNotificationExhausted(
+    tenantId: string,
+    data: { transitionEventId: string; reasonCode: string; checkedAt: string; attempts: number },
+  ): Promise<void> {
+    await pool.query(
+      `INSERT INTO notification_operational_events (tenant_id, event_type, payload)
+       SELECT $1, 'zalo_readiness_notification_retry_exhausted', $2::jsonb
+       WHERE NOT EXISTS (
+         SELECT 1
+         FROM notification_operational_events
+         WHERE tenant_id = $1
+           AND event_type = 'zalo_readiness_notification_retry_exhausted'
+           AND payload->>'transitionEventId' = $3
+       )`,
+      [
+        tenantId,
+        JSON.stringify({
+          transitionEventId: data.transitionEventId,
+          reasonCode: data.reasonCode,
+          checkedAt: data.checkedAt,
+          attempts: data.attempts,
+        }),
+        data.transitionEventId,
+      ],
+    );
+  }
+
   /** ADMIN: mark all notifications in the tenant as read */
   async markAllReadByTenant(tenantId: string): Promise<void> {
     await pool.query(
@@ -266,3 +409,5 @@ class NotificationRepository {
 }
 
 export const notificationRepository = new NotificationRepository();
+
+export const ZALO_READINESS_NOTIFICATION_MAX_ATTEMPTS = 3;

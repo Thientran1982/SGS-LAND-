@@ -18,6 +18,7 @@ export interface ZaloBroadcastVerificationAudit {
 export interface ZaloBroadcastVerificationTransition {
   transitionedToNotReady: boolean;
   previousStatus: ZaloBroadcastVerificationStatus | null;
+  transitionEventId?: string;
 }
 
 export interface ZaloBroadcastVerificationHistoryEntry {
@@ -137,11 +138,14 @@ export class AuditRepository extends BaseRepository {
         ? parseVerificationDetails(previousResult.rows[0].details)
         : null;
 
-      await this.insertZaloBroadcastVerification(client, tenantId, data);
+      const inserted = await this.insertZaloBroadcastVerification(client, tenantId, data);
 
       return {
         transitionedToNotReady: previous?.status === 'READY' && data.status === 'NOT_READY',
         previousStatus: previous?.status || null,
+        ...(previous?.status === 'READY' && data.status === 'NOT_READY' && inserted?.id
+          ? { transitionEventId: inserted.id }
+          : {}),
       };
     });
   }
@@ -189,10 +193,11 @@ export class AuditRepository extends BaseRepository {
     client: Parameters<Parameters<typeof this.withTenant>[1]>[0],
     tenantId: string,
     data: ZaloBroadcastVerificationAudit,
-  ): Promise<void> {
-    await client.query(
+  ): Promise<{ id: string; timestamp: string } | null> {
+    const result = await client.query<{ id: string; timestamp: string }>(
       `INSERT INTO audit_logs (tenant_id, actor_id, action, entity_type, entity_id, details, ip_address)
-       VALUES (current_setting('app.current_tenant_id', true)::uuid, $1, $2, $3, $4, $5, $6)`,
+       VALUES (current_setting('app.current_tenant_id', true)::uuid, $1, $2, $3, $4, $5, $6)
+       RETURNING id, timestamp`,
       [
         data.actorId,
         ZALO_BROADCAST_VERIFICATION_ACTION,
@@ -207,6 +212,7 @@ export class AuditRepository extends BaseRepository {
         data.ipAddress || null,
       ],
     );
+    return result.rows[0] || null;
   }
 
   async findLogs(
