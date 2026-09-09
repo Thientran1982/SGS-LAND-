@@ -16,13 +16,15 @@ const ICONS = {
     CHECK: <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>,
     CLOCK: <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>,
     PLUG: <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M7 7h10M7 12h4m1 8l-4-4H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-3l-4 4z" /></svg>,
+    INFO: <svg className="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8h.01M11 12h1v4h1m7-4a8 8 0 11-16 0 8 8 0 0116 0z" /></svg>,
+    CLIPBOARD: <svg className="h-7 w-7" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.7} d="M9 5h6m-5-2h4a1 1 0 011 1v2H9V4a1 1 0 011-1zM7 5H5a1 1 0 00-1 1v13a1 1 0 001 1h14a1 1 0 001-1V6a1 1 0 00-1-1h-2M8 11h8M8 15h5" /></svg>,
 };
-const CONNECTOR_ICONS: Record<string, string> = {
-    GOOGLE_SHEETS: '📊',
-    HUBSPOT: '🟠',
-    ZOHO_CRM: '🟢',
-    SALESFORCE: '☁️',
-    WEBHOOK_EXPORT: '🔗',
+const CONNECTOR_ICONS: Record<string, React.ReactNode> = {
+    GOOGLE_SHEETS: <svg className="h-4 w-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="3" width="16" height="18" rx="2" strokeWidth={1.7} /><path strokeLinecap="round" strokeWidth={1.7} d="M8 8h8M8 12h8M8 16h8M12 8v8" /></svg>,
+    HUBSPOT: <svg className="h-4 w-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><circle cx="8" cy="14" r="3" strokeWidth={1.7} /><path strokeLinecap="round" strokeWidth={1.7} d="M10.5 12l5-5M16 4v3h3M11 14h8M19 12v4a3 3 0 11-3-3" /></svg>,
+    ZOHO_CRM: <svg className="h-4 w-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.7} d="M4 6h16M4 12h10M4 18h16M17 9l3 3-3 3" /></svg>,
+    SALESFORCE: <svg className="h-4 w-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.7} d="M7 17a4 4 0 01-.5-7.97A5.5 5.5 0 0117 7.5a3.5 3.5 0 01.5 6.96A4 4 0 017 17z" /></svg>,
+    WEBHOOK_EXPORT: <svg className="h-4 w-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.7} d="M10 13a5 5 0 007.07.07l1.42-1.42a5 5 0 00-7.07-7.07L10.6 5.4M14 11a5 5 0 00-7.07-.07L5.5 12.35a5 5 0 007.07 7.07l.82-.82" /></svg>,
 };
 const ConnectorModal = ({ isOpen, onClose, onSave, t }: any) => {
     const [form, setForm] = useState<Partial<ConnectorConfig>>({ type: ConnectorType.GOOGLE_SHEETS, name: '', config: {} });
@@ -52,7 +54,8 @@ const ConnectorModal = ({ isOpen, onClose, onSave, t }: any) => {
                             onChange={(v) => setForm({ ...form, type: v as ConnectorType, config: {} })}
                             options={Object.values(ConnectorType).map(v => ({
                                 value: v,
-                                label: `${CONNECTOR_ICONS[v] || '🔌'} ${t(`data.type_${v}`)}`
+                                label: t(`data.type_${v}`),
+                                icon: CONNECTOR_ICONS[v] || ICONS.INFO,
                             }))}
                         />
                     </div>
@@ -75,7 +78,7 @@ const ConnectorModal = ({ isOpen, onClose, onSave, t }: any) => {
                                 onChange={e => handleConfigChange('spreadsheetId', e.target.value)}
                             />
                             <p className="text-xs text-[var(--text-secondary)] mt-1.5 flex items-center gap-1">
-                                <span>💡</span> {t('data.hint_gsheet')}
+                                <span className="text-sgs-primary">{ICONS.INFO}</span> {t('data.hint_gsheet')}
                             </p>
                         </div>
                     )}
@@ -307,7 +310,7 @@ export const DataPlatform: React.FC = () => {
                                 <div key={c.id} className="bg-[var(--glass-surface)] p-4 rounded-[18px] border border-[var(--glass-border)] flex justify-between items-center group hover:bg-[var(--glass-surface-hover)] transition-all">
                                     <div className="flex items-center gap-3 min-w-0">
                                         <div className="w-10 h-10 rounded-xl bg-[var(--bg-surface)] flex items-center justify-center text-lg shrink-0 shadow-sm">
-                                            {CONNECTOR_ICONS[c.type] || '🔌'}
+                                            {CONNECTOR_ICONS[c.type] || ICONS.INFO}
                                         </div>
                                         <div className="min-w-0">
                                             <div className="flex items-center gap-2">
@@ -367,7 +370,7 @@ export const DataPlatform: React.FC = () => {
                     </div>
                     {jobs.length === 0 ? (
                         <div className="p-8 text-center text-[var(--text-secondary)] flex flex-col items-center justify-center flex-1">
-                            <p className="text-2xl mb-2">📋</p>
+                            <div className="mb-2 text-[var(--text-tertiary)]">{ICONS.CLIPBOARD}</div>
                             <p className="text-sm font-medium">{t('data.empty_jobs')}</p>
                             <p className="text-xs mt-1 text-[var(--text-tertiary)]">{t('data.empty_jobs_hint')}</p>
                         </div>
@@ -378,8 +381,8 @@ export const DataPlatform: React.FC = () => {
                                 return (
                                     <div key={job.id} className="px-6 py-3.5 flex justify-between items-center hover:bg-[var(--glass-surface)] transition-colors">
                                         <div className="flex items-center gap-3 min-w-0">
-                                            <span className="text-base shrink-0">
-                                                {connector ? CONNECTOR_ICONS[connector.type] || '🔌' : '❓'}
+                                            <span className="text-base shrink-0 text-[var(--text-secondary)]">
+                                                {connector ? CONNECTOR_ICONS[connector.type] || ICONS.INFO : ICONS.INFO}
                                             </span>
                                             <div className="min-w-0">
                                                 <div className="text-sm font-semibold text-[var(--text-primary)] truncate">
