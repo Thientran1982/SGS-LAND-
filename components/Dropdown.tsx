@@ -65,7 +65,7 @@ export const Dropdown = memo(<T extends string | number>({
 }: DropdownProps<T>) => {
     const [isOpen, setIsOpen] = useState(false);
     // Flexible coords state to handle top or bottom positioning
-    const [coords, setCoords] = useState<{ top?: number, bottom?: number, left: number, width: number }>({ left: 0, width: 0 });    
+    const [coords, setCoords] = useState<{ top?: number, bottom?: number, left: number, width: number, maxHeight: number }>({ left: 0, width: 0, maxHeight: 320 });
     const containerRef = useRef<HTMLDivElement>(null);
     const buttonRef = useRef<HTMLButtonElement>(null);
     const listboxRef = useRef<HTMLDivElement>(null);
@@ -86,17 +86,21 @@ export const Dropdown = memo(<T extends string | number>({
             const shouldOpenUp =
                 placement === 'top' ||
                 (placement === 'bottom' && spaceBelow < MAX_MENU_HEIGHT && spaceAbove > spaceBelow);
+            const availableSpace = shouldOpenUp ? spaceAbove : spaceBelow;
+            const maxHeight = Math.max(48, Math.min(MAX_MENU_HEIGHT, availableSpace - GAP * 2));
             if (shouldOpenUp) {
                 setCoords({
                     bottom: window.innerHeight - rect.top + GAP,
                     left: safeLeft,
-                    width: menuWidth
+                    width: menuWidth,
+                    maxHeight,
                 });
             } else {
                 setCoords({
                     top: rect.bottom + GAP,
                     left: safeLeft,
-                    width: menuWidth
+                    width: menuWidth,
+                    maxHeight,
                 });
             }
         }
@@ -217,7 +221,10 @@ export const Dropdown = memo(<T extends string | number>({
                         transformOrigin: coords.bottom !== undefined ? 'bottom center' : 'top center'
                     }}
                 >
-                    <div className={STYLES.MENU_INNER} style={{ height: 'min(fit-content, 320px)' }}>
+                    <div
+                        className={STYLES.MENU_INNER}
+                        style={{ maxHeight: coords.maxHeight, overflowY: 'auto' }}
+                    >
                         {options?.length === 0 ? (
                             <div className="px-4 py-3 text-xs text-[var(--text-secondary)] dark:text-[var(--text-tertiary)] text-center italic select-none">{t('common.no_options')}</div>
                         ) : (
