@@ -47,7 +47,47 @@ set -u
 BACKEND_PORT="${PORT_BACKEND:-5001}"
 FRONTEND_PORT="${PORT:-5000}"
 BACKEND_URL="http://localhost:${BACKEND_PORT}"
-NODE_BIN="${npm_node_execpath:-$(command -v node 2>/dev/null || true)}"
+
+# The publish runtime can omit the workspace's Nix profile from PATH even
+# though the Node toolchain is present in /nix/store. Resolve the binaries
+# before starting either child so the VM does not depend on npm as its
+# entrypoint or on a mutable store hash.
+resolve_node_bin() {
+  if [ -n "${npm_node_execpath:-}" ] && [ -x "$npm_node_execpath" ]; then
+    printf '%s\n' "$npm_node_execpath"
+    return 0
+  fi
+  if command -v node >/dev/null 2>&1; then
+    command -v node
+    return 0
+  fi
+  local candidate
+  for candidate in /nix/store/*-nodejs-*-wrapped/bin/node /nix/store/*-nodejs-*/bin/node; do
+    if [ -x "$candidate" ]; then
+      printf '%s\n' "$candidate"
+      return 0
+    fi
+  done
+  return 1
+}
+
+resolve_npx_bin() {
+  if command -v npx >/dev/null 2>&1; then
+    command -v npx
+    return 0
+  fi
+  local candidate
+  for candidate in /nix/store/*-npx/bin/npx /nix/store/*-npx/bin/npxv*; do
+    if [ -x "$candidate" ]; then
+      printf '%s\n' "$candidate"
+      return 0
+    fi
+  done
+  return 1
+}
+
+NODE_BIN="$(resolve_node_bin || true)"
+NPX_BIN="$(resolve_npx_bin || true)"
 NEXT_CLI="$PWD/apps/nextjs/node_modules/next/dist/bin/next"
 
 if [ -z "$NODE_BIN" ] || [ ! -x "$NODE_BIN" ]; then
@@ -160,10 +200,11 @@ trap shutdown SIGTERM SIGINT
 # Fail with an actionable deployment log instead of an opaque restart loop when
 # the publish runtime does not expose the Node toolchain.
 log "runtime toolchain: node=$(command -v node || echo missing) npx=$(command -v npx || echo missing)"
-if ! command -v node >/dev/null 2>&1 || ! command -v npx >/dev/null 2>&1; then
+if [ -z "$NODE_BIN" ] || [ -z "$NPX_BIN" ]; then
   log "runtime toolchain unavailable; refusing to start child processes"
   exit 127
 fi
+log "resolved runtime toolchain: node=${NODE_BIN} npx=${NPX_BIN}"
 
 backoff_secs() {
   local restarts="$1" secs
