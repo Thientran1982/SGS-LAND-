@@ -56,6 +56,8 @@ export const SocialPublishing: React.FC = () => {
     () => listings.find(item => String(item.id) === listingId),
     [listings, listingId],
   );
+  const publisherCount = catalog.filter(item => item.hasPublisher).length;
+  const readyCount = catalog.filter(item => isSocialCapabilityReady(item)).length;
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -371,7 +373,7 @@ export const SocialPublishing: React.FC = () => {
             </p>
           </div>
           <button onClick={() => void load()} className="inline-flex items-center justify-center gap-2 rounded-xl border border-[var(--glass-border)] px-4 py-2 text-sm font-semibold text-[var(--text-secondary)] hover:bg-[var(--glass-surface-hover)]">
-            <RefreshCw size={16} /> Làm mới
+            <RefreshCw size={16} /> Kiểm tra lại kết nối
           </button>
         </div>
 
@@ -395,6 +397,14 @@ export const SocialPublishing: React.FC = () => {
               <p className="mt-3 max-w-3xl text-sm leading-6 text-[var(--text-secondary)]">
                 Kết nối được quản lý riêng khỏi nội dung xuất bản. Không nhập API key hoặc token trực tiếp vào publication draft.
               </p>
+              <div className="mt-3 flex flex-wrap gap-2 text-xs">
+                <span className="rounded-full bg-[var(--glass-surface)] px-2.5 py-1 text-[var(--text-secondary)]">
+                  Publisher đã tích hợp: {publisherCount}/{catalog.length}
+                </span>
+                <span className="rounded-full bg-emerald-50 px-2.5 py-1 text-emerald-700">
+                  Đã xác minh sẵn sàng: {readyCount}/{catalog.length}
+                </span>
+              </div>
             </div>
           </div>
           <div className="mt-4 grid gap-3 md:grid-cols-2">
@@ -468,6 +478,9 @@ export const SocialPublishing: React.FC = () => {
                           {item.label}
                           <span className={`rounded-full px-2 py-0.5 text-[10px] ${isSocialCapabilityReady(item) ? 'bg-emerald-100 text-emerald-700' : 'bg-amber-100 text-amber-700'}`}>{isSocialCapabilityReady(item) ? 'Sẵn sàng' : 'Chưa sẵn sàng'}</span>
                         </span>
+                         <span className={`mt-1 block text-[10px] font-semibold ${item.hasPublisher ? 'text-indigo-700' : 'text-[var(--text-tertiary)]'}`}>
+                           {item.hasPublisher ? 'Đã có publisher provider' : 'Chưa có publisher provider'}
+                         </span>
                         <span className="mt-1 block text-xs leading-5 text-[var(--text-tertiary)]">{item.reason}</span>
                         {!item.canPublish && <span className="mt-1 block text-xs font-semibold text-amber-700">Tạm khóa: cần xác minh publisher và quyền provider trước khi xuất bản.</span>}
                       </span>
