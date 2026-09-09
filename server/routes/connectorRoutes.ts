@@ -218,12 +218,6 @@ export function createConnectorRoutes(authenticateToken: any) {
       }
       const connector = await connectorRepository.findByUser(tenantId, userId, req.params.id as string);
       if (!connector) return res.status(404).json({ error: 'Connector not found' });
-      if (NON_SYNCABLE_CONNECTOR_TYPES.has(connector.type)) {
-        return res.status(409).json({
-          error: 'Loại kết nối này dùng để xác thực tài khoản API, chưa có sync adapter hoạt động.',
-          code: 'CONNECTOR_SYNC_NOT_SUPPORTED',
-        });
-      }
       const validationError = validateConnectorInput(connector.type, connector.config);
       const checks = [
         { key: 'owner_scope', status: 'PASS', detail: 'Connector thuộc user đang đăng nhập trong tenant hiện tại.' },
@@ -250,6 +244,12 @@ export function createConnectorRoutes(authenticateToken: any) {
       const { tenantId, id: userId } = (req as any).user;
       const connector = await connectorRepository.findByUser(tenantId, userId, req.params.id as string);
       if (!connector) return res.status(404).json({ error: 'Connector not found' });
+      if (NON_SYNCABLE_CONNECTOR_TYPES.has(connector.type)) {
+        return res.status(409).json({
+          error: 'Loại kết nối này dùng để xác thực tài khoản API, chưa có sync adapter hoạt động.',
+          code: 'CONNECTOR_SYNC_NOT_SUPPORTED',
+        });
+      }
 
       const job = await syncJobRepository.create(tenantId, userId, {
         connectorId: connector.id,

@@ -7,7 +7,6 @@ import { Dropdown } from '../components/Dropdown';
 import { connectorService } from '../services/connectorService';
 import { ConfirmModal } from '../components/ConfirmModal';
 import { SeoHead } from '../components/SeoHead';
-import { ROUTES } from '../config/routes';
 import { userApi } from '../services/api/userApi';
 const ICONS = {
     ADD: <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" /></svg>,
@@ -73,108 +72,79 @@ const CONNECTION_LABELS: Record<ConnectorType, string> = {
     [ConnectorType.LINKEDIN_PAGE]: 'LinkedIn',
 };
 const SOCIAL_CONNECTION_ICON = <svg className="h-4 w-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><circle cx="8" cy="12" r="3" strokeWidth={1.7} /><circle cx="16" cy="7" r="3" strokeWidth={1.7} /><circle cx="16" cy="17" r="3" strokeWidth={1.7} /><path strokeLinecap="round" strokeWidth={1.7} d="M10.5 10.5l3-2M10.5 13.5l3 2" /></svg>;
+const FIELD_LABEL_CLASS = 'text-xs font-bold text-[var(--text-tertiary)] uppercase tracking-wider block mb-1.5';
+const FIELD_INPUT_CLASS = 'w-full border border-[var(--glass-border)] bg-[var(--glass-surface)] rounded-xl px-4 py-2.5 text-sm text-[var(--text-primary)] focus:outline-none focus:ring-2 focus:ring-[var(--sgs-primary)]/40 transition-all';
 const CONNECTION_OPTIONS = [
     ...Object.values(ConnectorType).map(value => ({
         value: value as ConnectionChoice,
         label: CONNECTION_LABELS[value],
-        icon: CONNECTOR_ICONS[value] || ICONS.INFO,
+        icon: CONNECTOR_ICONS[value] || (SOCIAL_CONNECTIONS[value as SocialConnectionType] ? SOCIAL_CONNECTION_ICON : ICONS.INFO),
     })),
 ];
-const ConnectorModal = ({ isOpen, onClose, onSave, onOpenSocial, t }: any) => {
+const ConnectorModal = ({ isOpen, onClose, onSave, connectors = [], currentUser, t }: any) => {
     const [form, setForm] = useState<AddConnectionForm>({ type: ConnectorType.GOOGLE_SHEETS, name: '', config: {} });
-    const [zaloConnecting, setZaloConnecting] = useState(false);
-    const [zaloResult, setZaloResult] = useState<ZaloConnectionResult | null>(null);
+    const [connecting, setConnecting] = useState(false);
+    const [connectionResult, setConnectionResult] = useState<ConnectionResult | null>(null);
     useEffect(() => {
         if (isOpen) {
             setForm({ type: ConnectorType.GOOGLE_SHEETS, name: '', config: {} });
-            setZaloResult(null);
+            setConnectionResult(null);
         }
     }, [isOpen]);
     if (!isOpen) return null;
 
     const handleConfigChange = (key: string, value: string) => {
         setForm(prev => ({ ...prev, config: { ...prev.config, [key]: value } }));
-        if (form.type === 'ZALO_OA') setZaloResult(null);
+        setConnectionResult(null);
     };
     const socialConnection = SOCIAL_CONNECTIONS[form.type as SocialConnectionType];
     const isSocialConnection = Boolean(socialConnection);
-    const isZaloConnection = form.type === 'ZALO_OA';
-    const zaloConfig = form.config;
     const handleTypeChange = (value: ConnectionChoice) => {
         setForm(prev => ({ ...prev, type: value, name: '', config: {} }));
-        setZaloResult(null);
+        setConnectionResult(null);
     };
-    const handleZaloConnect = async () => {
-        const appId = String(zaloConfig.appId || '').trim();
-        const oaId = String(zaloConfig.oaId || '').trim();
-        const oaName = String(zaloConfig.oaName || '').trim();
-        const appSecret = String(zaloConfig.appSecret || '').trim();
-        const accessToken = String(zaloConfig.accessToken || '').trim();
-        if (!appId || !oaId || !oaName) {
-            setZaloResult({
-                kind: 'error',
-                title: 'Thiếu thông tin kết nối',
-                message: 'App ID, OA ID và Tên OA là bắt buộc.',
-            });
+    const existingConnector = connectors.find((connector: ConnectorConfig) => connector.type === form.type);
+    const ownerLabel = currentUser?.name || currentUser?.email || 'user hiện tại';
+    const handleApiConnect = async () => {
+        if (!form.name.trim()) {
+            setConnectionResult({ kind: 'error', title: 'Thiếu tên kết nối', message: 'Hãy đặt tên để nhận diện kết nối của user hiện tại.' });
             return;
         }
-
-        setZaloConnecting(true);
-        setZaloResult(null);
+        setConnecting(true);
+        setConnectionResult(null);
         try {
-            await db.connectZaloOA({
-                appId,
-                oaId,
-                oaName,
-                appSecret: appSecret || undefined,
-                accessToken: accessToken || undefined,
-            });
-
-            // Do not leave either credential in the form after it has been saved.
+            const saved = await onSave({ ...form, id: existingConnector?.id }, { keepOpen: true });
             setForm(prev => ({
                 ...prev,
-                config: { ...prev.config, appSecret: '', accessToken: '' },
+                config: Object.fromEntries(Object.entries(prev.config).map(([key, value]) =>
+                    /token|secret|key|password/i.test(key) ? [key, ''] : [key, value],
+                )),
             }));
-
-            let verification: any;
-            try {
-                verification = await db.verifyZaloBroadcastAccess();
-            } catch (error: any) {
-                setZaloResult({
-                    kind: 'error',
-                    title: 'Lỗi/ambiguous — chưa báo READY',
-                    message: error?.message || 'Không thể hoàn tất kiểm tra broadcast. Trạng thái READY chưa được cấp.',
-                });
-                return;
-            }
-
-            if (verification.status === 'READY' && verification.ready === true) {
-                setZaloResult({
-                    kind: 'ready',
-                    title: 'Đã xác minh broadcast và quota',
-                    message: verification.reason || 'Zalo OA đã vượt qua kiểm tra định danh OA và hạn mức broadcast.',
-                    reasonCode: verification.reasonCode,
-                    checks: verification.checks,
-                });
-            } else {
-                setZaloResult({
-                    kind: 'not_ready',
-                    title: 'Kết nối thành công nhưng chưa đủ quyền',
-                    message: verification.reason || 'Quyền broadcast hoặc hạn mức chưa được xác minh đầy đủ.',
-                    reasonCode: verification.reasonCode,
-                    checks: verification.checks,
-                });
-            }
-        } catch (error: any) {
-            setZaloResult({
-                kind: 'error',
-                title: 'Lỗi kết nối — chưa báo READY',
-                message: error?.message || 'Không thể kết nối Zalo OA.',
+            const check = saved?.id ? await db.checkConnectorConfig(saved.id) : null;
+            setConnectionResult({
+                kind: check?.providerVerified === true ? 'connected' : 'not_ready',
+                title: check?.providerVerified === true ? 'Đã xác minh kết nối cho user hiện tại' : 'Đã lưu cấu hình, chưa live verify',
+                message: check?.message || 'Credential đã được lưu riêng cho user hiện tại. Provider live verification chưa được bật cho loại kết nối này.',
             });
+        } catch (error: any) {
+            setConnectionResult({ kind: 'error', title: 'Không thể lưu kết nối', message: error?.message || 'Vui lòng kiểm tra lại cấu hình API.' });
         } finally {
-            setZaloConnecting(false);
+            setConnecting(false);
         }
     };
+    const requiredConfigKeys: Record<string, string[]> = {
+        [ConnectorType.GOOGLE_SHEETS]: ['spreadsheetId'],
+        [ConnectorType.HUBSPOT]: ['apiKey'],
+        [ConnectorType.ZOHO_CRM]: ['apiKey'],
+        [ConnectorType.SALESFORCE]: ['apiKey'],
+        [ConnectorType.WEBHOOK_EXPORT]: ['targetUrl'],
+        [ConnectorType.FACEBOOK_PAGE]: ['pageId', 'accessToken'],
+        [ConnectorType.ZALO_OA]: ['appId', 'oaId', 'accessToken'],
+        [ConnectorType.INSTAGRAM]: ['businessAccountId', 'accessToken'],
+        [ConnectorType.TIKTOK]: ['accountId', 'accessToken'],
+        [ConnectorType.LINKEDIN_PAGE]: ['organizationId', 'accessToken'],
+    };
+    const canSubmit = Boolean(form.name.trim()) && (requiredConfigKeys[form.type] || []).every(key => String(form.config[key] || '').trim());
     return createPortal(
         <div className="fixed inset-0 z-[100] bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 animate-enter">
             <div className="bg-[var(--bg-surface)] w-full max-w-lg max-h-[calc(100vh-2rem)] overflow-y-auto rounded-[24px] shadow-2xl">
@@ -194,7 +164,7 @@ const ConnectorModal = ({ isOpen, onClose, onSave, onOpenSocial, t }: any) => {
                             options={CONNECTION_OPTIONS}
                         />
                     </div>
-                    {!isSocialConnection && <div>
+                    <div>
                         <label className="text-xs font-bold text-[var(--text-tertiary)] uppercase tracking-wider block mb-1.5">{t('data.name')}</label>
                         <input
                             className="w-full border border-[var(--glass-border)] bg-[var(--glass-surface)] rounded-xl px-4 py-2.5 text-sm text-[var(--text-primary)] focus:outline-none focus:ring-2 focus:ring-[var(--sgs-primary)]/40 transition-all"
@@ -202,108 +172,76 @@ const ConnectorModal = ({ isOpen, onClose, onSave, onOpenSocial, t }: any) => {
                             value={form.name}
                             onChange={e => setForm({ ...form, name: e.target.value })}
                         />
-                    </div>}
-                    {isZaloConnection ? (
+                    </div>
+                    {existingConnector && (
+                        <div className="rounded-xl border border-emerald-200 bg-emerald-50/70 px-4 py-3 text-xs text-emerald-900">
+                            <p className="font-bold">Đã lưu cấu hình của {ownerLabel}</p>
+                            <p className="mt-1">Tên: {existingConnector.name}. Chưa coi là live connected khi provider chưa xác minh; credential không được hiển thị lại.</p>
+                        </div>
+                    )}
+                    {isSocialConnection ? (
                         <div className="space-y-3">
-                            <div className="rounded-2xl border border-blue-200 bg-blue-50/70 p-4">
-                                <p className="text-sm font-bold text-blue-950">Kết nối Zalo OA</p>
-                                <p className="mt-1 text-xs leading-5 text-blue-900/75">
-                                    Thông tin sẽ được lưu theo tenant và kiểm tra live ngay sau khi kết nối. Secret và token không được hiển thị lại.
+                            <div className="rounded-2xl border border-indigo-200 bg-indigo-50/70 p-4">
+                                <p className="text-sm font-bold text-indigo-950">{socialConnection.label}</p>
+                                <p className="mt-1 text-xs leading-5 text-indigo-900/75">{socialConnection.description}</p>
+                                <p className="mt-2 text-[11px] font-semibold text-indigo-800">
+                                    Đây là form credential theo user, không phải OAuth giả lập. Hệ thống chỉ báo đã lưu cấu hình nếu provider chưa có live adapter.
                                 </p>
                             </div>
-                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                                <div>
-                                    <label className="text-xs font-bold text-[var(--text-tertiary)] uppercase tracking-wider block mb-1.5">
-                                        {t('ent.zalo_app_id')} <span className="text-rose-500">*</span>
-                                    </label>
-                                    <input
-                                        className="w-full border border-[var(--glass-border)] bg-[var(--glass-surface)] rounded-xl px-4 py-2.5 text-sm font-mono text-[var(--text-primary)] focus:outline-none focus:ring-2 focus:ring-[var(--sgs-primary)]/40 transition-all"
-                                        value={String(zaloConfig.appId || '')}
-                                        onChange={e => handleConfigChange('appId', e.target.value)}
-                                        autoComplete="off"
-                                    />
-                                </div>
-                                <div>
-                                    <label className="text-xs font-bold text-[var(--text-tertiary)] uppercase tracking-wider block mb-1.5">
-                                        {t('ent.zalo_oa_id')} <span className="text-rose-500">*</span>
-                                    </label>
-                                    <input
-                                        className="w-full border border-[var(--glass-border)] bg-[var(--glass-surface)] rounded-xl px-4 py-2.5 text-sm font-mono text-[var(--text-primary)] focus:outline-none focus:ring-2 focus:ring-[var(--sgs-primary)]/40 transition-all"
-                                        value={String(zaloConfig.oaId || '')}
-                                        onChange={e => handleConfigChange('oaId', e.target.value)}
-                                        autoComplete="off"
-                                    />
-                                </div>
-                            </div>
-                            <div>
-                                <label className="text-xs font-bold text-[var(--text-tertiary)] uppercase tracking-wider block mb-1.5">
-                                    {t('ent.zalo_oa_name')} <span className="text-rose-500">*</span>
-                                </label>
-                                <input
-                                    className="w-full border border-[var(--glass-border)] bg-[var(--glass-surface)] rounded-xl px-4 py-2.5 text-sm text-[var(--text-primary)] focus:outline-none focus:ring-2 focus:ring-[var(--sgs-primary)]/40 transition-all"
-                                    value={String(zaloConfig.oaName || '')}
-                                    onChange={e => handleConfigChange('oaName', e.target.value)}
-                                    autoComplete="organization"
-                                />
-                            </div>
-                            <div>
-                                <label className="text-xs font-bold text-[var(--text-tertiary)] uppercase tracking-wider block mb-1.5">
-                                    {t('ent.zalo_app_secret')} <span className="font-normal normal-case text-[var(--text-secondary)]">{t('ent.zalo_secret_optional')}</span>
-                                </label>
-                                <input
-                                    type="password"
-                                    className="w-full border border-[var(--glass-border)] bg-[var(--glass-surface)] rounded-xl px-4 py-2.5 text-sm font-mono text-[var(--text-primary)] focus:outline-none focus:ring-2 focus:ring-[var(--sgs-primary)]/40 transition-all"
-                                    value={String(zaloConfig.appSecret || '')}
-                                    onChange={e => handleConfigChange('appSecret', e.target.value)}
-                                    autoComplete="new-password"
-                                />
-                            </div>
-                            <div>
-                                <label className="text-xs font-bold text-[var(--text-tertiary)] uppercase tracking-wider block mb-1.5">
-                                    {t('ent.zalo_oa_access_token')} <span className="font-normal normal-case text-[var(--text-secondary)]">{t('ent.zalo_token_optional')}</span>
-                                </label>
-                                <input
-                                    type="password"
-                                    className="w-full border border-[var(--glass-border)] bg-[var(--glass-surface)] rounded-xl px-4 py-2.5 text-sm font-mono text-[var(--text-primary)] focus:outline-none focus:ring-2 focus:ring-[var(--sgs-primary)]/40 transition-all"
-                                    value={String(zaloConfig.accessToken || '')}
-                                    onChange={e => handleConfigChange('accessToken', e.target.value)}
-                                    autoComplete="new-password"
-                                />
-                                <p className="mt-1.5 text-xs text-[var(--text-secondary)]">
-                                    Không có Access Token thì cấu hình vẫn được lưu, nhưng kiểm tra broadcast sẽ không thể báo READY.
-                                </p>
-                            </div>
-                            {zaloResult && (
-                                <div className={`rounded-xl border p-3 text-xs ${
-                                    zaloResult.kind === 'ready'
-                                        ? 'bg-emerald-50 border-emerald-200 text-emerald-900'
-                                        : zaloResult.kind === 'not_ready'
-                                            ? 'bg-amber-50 border-amber-200 text-amber-900'
-                                            : zaloResult.kind === 'error'
-                                                ? 'bg-rose-50 border-rose-200 text-rose-900'
-                                                : 'bg-blue-50 border-blue-200 text-blue-900'
-                                }`}>
-                                    <p className="font-bold">{zaloResult.title}</p>
-                                    <p className="mt-1 leading-relaxed">{zaloResult.message}</p>
-                                    {(zaloResult.reasonCode || zaloResult.checks) && (
-                                        <div className="mt-2 flex flex-wrap gap-x-3 gap-y-1 font-mono text-[11px] opacity-80">
-                                            {zaloResult.reasonCode && <span>Mã: {zaloResult.reasonCode}</span>}
-                                            {zaloResult.checks && <span>OA: {zaloResult.checks.oaId} · Quota: {zaloResult.checks.quota}</span>}
-                                        </div>
-                                    )}
+                            {form.type === ConnectorType.FACEBOOK_PAGE && (
+                                <>
+                                    <div>
+                                        <label className={FIELD_LABEL_CLASS}>Page ID <span className="text-rose-500">*</span></label>
+                                        <input className={FIELD_INPUT_CLASS} value={String(form.config.pageId || '')} onChange={e => handleConfigChange('pageId', e.target.value)} autoComplete="off" />
+                                    </div>
+                                    <div>
+                                        <label className={FIELD_LABEL_CLASS}>Page URL</label>
+                                        <input className={FIELD_INPUT_CLASS} type="url" value={String(form.config.pageUrl || '')} onChange={e => handleConfigChange('pageUrl', e.target.value)} autoComplete="url" />
+                                    </div>
+                                </>
+                            )}
+                            {form.type === ConnectorType.ZALO_OA && (
+                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                    <div>
+                                        <label className={FIELD_LABEL_CLASS}>App ID <span className="text-rose-500">*</span></label>
+                                        <input className={FIELD_INPUT_CLASS} value={String(form.config.appId || '')} onChange={e => handleConfigChange('appId', e.target.value)} autoComplete="off" />
+                                    </div>
+                                    <div>
+                                        <label className={FIELD_LABEL_CLASS}>OA ID <span className="text-rose-500">*</span></label>
+                                        <input className={FIELD_INPUT_CLASS} value={String(form.config.oaId || '')} onChange={e => handleConfigChange('oaId', e.target.value)} autoComplete="off" />
+                                    </div>
                                 </div>
                             )}
-                        </div>
-                    ) : isSocialConnection ? (
-                        <div className="rounded-2xl border border-indigo-200 bg-indigo-50/70 p-4">
-                            <div className="flex items-start gap-3">
-                                <div className="rounded-xl bg-white p-2 text-indigo-700 shadow-sm">{SOCIAL_CONNECTION_ICON}</div>
+                            {form.type === ConnectorType.INSTAGRAM && (
                                 <div>
-                                    <p className="text-sm font-bold text-indigo-950">Kết nối nền tảng social</p>
-                                    <p className="mt-1 text-xs leading-5 text-indigo-900/75">{socialConnection.description}</p>
-                                    <p className="mt-2 text-[11px] font-semibold text-indigo-800">Cấu hình và kiểm tra sâu sẽ chạy ở màn hình quản trị nền tảng, không lưu token vào connector đồng bộ dữ liệu.</p>
+                                    <label className={FIELD_LABEL_CLASS}>Business Account ID <span className="text-rose-500">*</span></label>
+                                    <input className={FIELD_INPUT_CLASS} value={String(form.config.businessAccountId || '')} onChange={e => handleConfigChange('businessAccountId', e.target.value)} autoComplete="off" />
                                 </div>
+                            )}
+                            {form.type === ConnectorType.TIKTOK && (
+                                <div>
+                                    <label className={FIELD_LABEL_CLASS}>Business/Account ID <span className="text-rose-500">*</span></label>
+                                    <input className={FIELD_INPUT_CLASS} value={String(form.config.accountId || '')} onChange={e => handleConfigChange('accountId', e.target.value)} autoComplete="off" />
+                                </div>
+                            )}
+                            {form.type === ConnectorType.LINKEDIN_PAGE && (
+                                <div>
+                                    <label className={FIELD_LABEL_CLASS}>Organization ID <span className="text-rose-500">*</span></label>
+                                    <input className={FIELD_INPUT_CLASS} value={String(form.config.organizationId || '')} onChange={e => handleConfigChange('organizationId', e.target.value)} autoComplete="off" />
+                                </div>
+                            )}
+                            {form.type === ConnectorType.ZALO_OA && (
+                                <div>
+                                    <label className={FIELD_LABEL_CLASS}>OA name</label>
+                                    <input className={FIELD_INPUT_CLASS} value={String(form.config.oaName || '')} onChange={e => handleConfigChange('oaName', e.target.value)} autoComplete="organization" />
+                                </div>
+                            )}
+                            <div>
+                                <label className={FIELD_LABEL_CLASS}>Access Token <span className="text-rose-500">*</span></label>
+                                <input type="password" className={FIELD_INPUT_CLASS} value={String(form.config.accessToken || '')} onChange={e => handleConfigChange('accessToken', e.target.value)} autoComplete="new-password" />
+                                <p className="mt-1.5 text-xs text-[var(--text-secondary)]">Token chỉ gửi tới backend và không được trả lại trên trình duyệt.</p>
                             </div>
+                            {connectionResult && <div className={`rounded-xl border p-3 text-xs ${connectionResult.kind === 'connected' ? 'bg-emerald-50 border-emerald-200 text-emerald-900' : connectionResult.kind === 'error' ? 'bg-rose-50 border-rose-200 text-rose-900' : 'bg-amber-50 border-amber-200 text-amber-900'}`}><p className="font-bold">{connectionResult.title}</p><p className="mt-1 leading-relaxed">{connectionResult.message}</p></div>}
                         </div>
                     ) : form.type === ConnectorType.GOOGLE_SHEETS && (
                         <div>
@@ -328,6 +266,15 @@ const ConnectorModal = ({ isOpen, onClose, onSave, onOpenSocial, t }: any) => {
                                 value={String(form.config?.targetUrl || '')}
                                 onChange={e => handleConfigChange('targetUrl', e.target.value)}
                             />
+                            <label className="text-xs font-bold text-[var(--text-tertiary)] uppercase tracking-wider block mt-3 mb-1.5">Webhook secret <span className="font-normal normal-case text-[var(--text-secondary)]">(tuỳ chọn)</span></label>
+                            <input
+                                type="password"
+                                className={FIELD_INPUT_CLASS}
+                                placeholder="Secret ký request"
+                                value={String(form.config?.secret || '')}
+                                onChange={e => handleConfigChange('secret', e.target.value)}
+                                autoComplete="new-password"
+                            />
                         </div>
                     )}
                     {(form.type === ConnectorType.HUBSPOT || form.type === ConnectorType.SALESFORCE || form.type === ConnectorType.ZOHO_CRM) && (
@@ -344,31 +291,19 @@ const ConnectorModal = ({ isOpen, onClose, onSave, onOpenSocial, t }: any) => {
                     )}
                 </div>
                 <div className="px-6 pb-6">
-                    {isZaloConnection ? (
+                    {isSocialConnection ? (
                         <button
-                            onClick={() => void handleZaloConnect()}
-                            disabled={zaloConnecting || !String(zaloConfig.appId || '').trim() || !String(zaloConfig.oaId || '').trim() || !String(zaloConfig.oaName || '').trim()}
-                            className="w-full py-3 bg-sgs-primary-deep text-white font-bold rounded-xl hover:bg-slate-800 shadow-lg transition-all active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                            onClick={() => void handleApiConnect()}
+                            disabled={connecting || !canSubmit}
+                            className="w-full py-3 bg-indigo-700 text-white font-bold rounded-xl hover:bg-indigo-800 shadow-lg transition-all active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                         >
-                            {zaloConnecting && <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />}
-                            {zaloConnecting ? 'Đang kết nối và kiểm tra…' : 'Kết nối và kiểm tra'}
-                        </button>
-                    ) : isSocialConnection ? (
-                        <button
-                            onClick={() => onOpenSocial(socialConnection.route)}
-                            className="w-full py-3 bg-indigo-700 text-white font-bold rounded-xl hover:bg-indigo-800 shadow-lg transition-all active:scale-95"
-                        >
-                            Mở cài đặt và kiểm tra
+                            {connecting && <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />}
+                            {connecting ? 'Đang lưu và kiểm tra…' : 'Mở cài đặt và kiểm tra'}
                         </button>
                     ) : (
                         <button
                             onClick={() => onSave(form)}
-                            disabled={
-                                !form.name?.trim() ||
-                                (form.type === ConnectorType.GOOGLE_SHEETS && !String(form.config?.spreadsheetId || '').trim()) ||
-                                ((form.type === ConnectorType.HUBSPOT || form.type === ConnectorType.SALESFORCE || form.type === ConnectorType.ZOHO_CRM) && !String(form.config?.apiKey || '').trim()) ||
-                                (form.type === ConnectorType.WEBHOOK_EXPORT && !String(form.config?.targetUrl || '').trim())
-                            }
+                            disabled={!canSubmit}
                             className="w-full py-3 bg-sgs-primary-deep text-white font-bold rounded-xl hover:bg-slate-800 shadow-lg transition-all active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed"
                         >
                             {t('common.save')}
@@ -436,15 +371,19 @@ export const DataPlatform: React.FC = () => {
         }
     }, []);
     useEffect(() => { fetchData(); }, [fetchData]);
-    const handleCreate = async (data: Partial<ConnectorConfig>) => {
+    const handleCreate = async (data: Partial<ConnectorConfig>, options?: { keepOpen?: boolean }) => {
         try {
             await connectorService.validateConnection(data.type!, data.config, t);
-            await db.createConnectorConfig(data);
+            const saved = data.id
+                ? await db.saveConnectorConfig(data.id, data)
+                : await db.createConnectorConfig(data);
             notify(t('data.create_success'), 'success');
-            setIsModalOpen(false);
-            fetchData();
+            if (!options?.keepOpen) setIsModalOpen(false);
+            await fetchData();
+            return saved;
         } catch (e: any) {
             notify(e.message, 'error');
+            throw e;
         }
     };
     const handleDeleteConnector = async () => {
@@ -633,14 +572,16 @@ export const DataPlatform: React.FC = () => {
                                          >
                                              <span className={checkingId === c.id ? 'animate-spin inline-block' : ''}>{ICONS.CHECK}</span>
                                          </button>
-                                        <button
-                                            onClick={() => handleSync(c.id)}
-                                            disabled={syncingId === c.id}
-                                            className="p-2 text-sgs-primary bg-sgs-champagne rounded-lg hover:bg-sgs-champagne transition-colors disabled:opacity-50"
-                                            title={t('data.sync_now')}
-                                        >
-                                            <span className={syncingId === c.id ? 'animate-spin inline-block' : ''}>{ICONS.SYNC}</span>
-                                        </button>
+                                         {![ConnectorType.FACEBOOK_PAGE, ConnectorType.ZALO_OA, ConnectorType.INSTAGRAM, ConnectorType.TIKTOK, ConnectorType.LINKEDIN_PAGE].includes(c.type) && (
+                                             <button
+                                                 onClick={() => handleSync(c.id)}
+                                                 disabled={syncingId === c.id}
+                                                 className="p-2 text-sgs-primary bg-sgs-champagne rounded-lg hover:bg-sgs-champagne transition-colors disabled:opacity-50"
+                                                 title={t('data.sync_now')}
+                                             >
+                                                 <span className={syncingId === c.id ? 'animate-spin inline-block' : ''}>{ICONS.SYNC}</span>
+                                             </button>
+                                         )}
                                         <button
                                             onClick={() => setDeleteConfirmId(c.id)}
                                             className="p-2 text-rose-600 bg-rose-50 rounded-lg hover:bg-rose-100 transition-colors"
@@ -752,10 +693,8 @@ export const DataPlatform: React.FC = () => {
                 isOpen={isModalOpen}
                 onClose={() => setIsModalOpen(false)}
                 onSave={handleCreate}
-                onOpenSocial={(route: string) => {
-                    setIsModalOpen(false);
-                    window.location.href = route;
-                }}
+                connectors={connectors}
+                currentUser={currentUser}
                 t={t}
             />
             <ConfirmModal
