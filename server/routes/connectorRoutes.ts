@@ -37,6 +37,20 @@ function publicConnector(connector: any): any {
   return { ...connector, config };
 }
 
+function publicSyncJob(job: any): any {
+  if (!job || typeof job !== 'object') return job;
+  return {
+    id: job.id,
+    connectorId: job.connectorId,
+    startedAt: job.startedAt,
+    finishedAt: job.finishedAt,
+    status: job.status,
+    recordsProcessed: job.recordsProcessed,
+    errors: Array.isArray(job.errors) ? job.errors : [],
+    retryCount: job.retryCount,
+  };
+}
+
 function validateConnectorInput(type: unknown, config: unknown): string | null {
   if (typeof type !== 'string' || !CONNECTOR_TYPES.has(type)) return 'Loại connector không được hỗ trợ';
   if (!config || typeof config !== 'object' || Array.isArray(config)) return 'Cấu hình connector không hợp lệ';
@@ -255,7 +269,7 @@ export function createConnectorRoutes(authenticateToken: any) {
         connectorId: connector.id,
         status: 'QUEUED',
       });
-      res.status(201).json(job);
+      res.status(201).json(publicSyncJob(job));
 
       // Run sync asynchronously (fire-and-forget with DB status updates)
       setImmediate(async () => {
@@ -297,7 +311,7 @@ export function createConnectorRoutes(authenticateToken: any) {
       const { tenantId, id: userId } = (req as any).user;
       const limit = Number(req.query.limit) || 50;
       const jobs = await syncJobRepository.listByUser(tenantId, userId, limit);
-      res.json(jobs);
+      res.json(jobs.map(publicSyncJob));
     } catch (err) {
       console.error('GET sync jobs error:', err);
       res.status(500).json({ error: 'Failed to fetch sync jobs' });
@@ -310,7 +324,7 @@ export function createConnectorRoutes(authenticateToken: any) {
       const { tenantId, id: userId } = (req as any).user;
       const job = await syncJobRepository.findByUser(tenantId, userId, req.params.jobId as string);
       if (!job) return res.status(404).json({ error: 'Job not found' });
-      res.json(job);
+      res.json(publicSyncJob(job));
     } catch (err) {
       console.error('GET sync job error:', err);
       res.status(500).json({ error: 'Failed to fetch sync job' });

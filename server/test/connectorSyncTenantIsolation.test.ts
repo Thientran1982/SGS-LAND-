@@ -34,18 +34,29 @@ const CONNECTOR_A = 'connector-a';
 const JOB_A = 'job-a';
 const JOB_B = 'job-b';
 
+const SYNCABLE_CONNECTORS = [
+  { type: 'GOOGLE_SHEETS', config: { spreadsheetId: 'sheet-a' } },
+  { type: 'HUBSPOT', config: { apiKey: 'hubspot-secret' } },
+  { type: 'WEBHOOK_EXPORT', config: { targetUrl: 'https://hooks.example.test/leads' } },
+  { type: 'SALESFORCE', config: { apiKey: 'salesforce-secret' } },
+] as const;
+
 type TestResponse = {
   status: number;
   body: any;
 };
 
-function connector(id: string, tenantId: string) {
+function connector(id: string, tenantId: string, type = 'HUBSPOT') {
   return {
     id,
     tenantId,
-    type: 'HUBSPOT',
+    type,
     name: `${tenantId} connector`,
-    config: { apiKey: 'test-key' },
+    config: type === 'GOOGLE_SHEETS'
+      ? { spreadsheetId: 'sheet-a' }
+      : type === 'WEBHOOK_EXPORT'
+        ? { targetUrl: 'https://hooks.example.test/leads' }
+        : { apiKey: 'test-key' },
   };
 }
 
@@ -54,8 +65,11 @@ function job(id: string, tenantId: string, connectorId: string) {
     id,
     tenantId,
     connectorId,
+    startedAt: '2026-09-09T00:00:00.000Z',
     status: 'QUEUED',
+    recordsProcessed: 0,
     errors: [],
+    retryCount: 0,
   };
 }
 
@@ -188,6 +202,46 @@ describe('connector sync tenant isolation', () => {
     );
   });
 
+  it.each(SYNCABLE_CONNECTORS)('queues a %s sync for the authenticated tenant and user', async ({ type }) => {
+    state.findConnector.mockResolvedValue(connector(CONNECTOR_A, TENANT_A, type));
+    state.createJob.mockResolvedValue({
+      ...job(JOB_A, TENANT_A, CONNECTOR_A),
+      credential: 'must-not-leak',
+    });
+
+    const response = await testServer.request(`/api/connectors/${CONNECTOR_A}/sync`, {
+      method: 'POST',
+      tenantId: TENANT_A,
+      userId: USER_A,
+    });
+
+    expect(response.status).toBe(201);
+    expect(response.body).toMatchObject({
+      id: JOB_A,
+      connectorId: CONNECTOR_A,
+      status: 'QUEUED',
+    });
+    expect(response.body).not.toHaveProperty('credential');
+    expect(response.body).not.toHaveProperty('tenantId');
+    expect(response.body).not.toHaveProperty('ownerUserId');
+    expect(state.createJob).toHaveBeenCalledWith(TENANT_A, USER_A, {
+      connectorId: CONNECTOR_A,
+      status: 'QUEUED',
+    });
+
+    await vi.runAllTimersAsync();
+
+    expect(state.updateJob.mock.calls.every(([tenantId, userId]) =>
+      tenantId === TENANT_A && userId === USER_A,
+    )).toBe(true);
+    expect(state.updateConnector).toHaveBeenCalledWith(
+      TENANT_A,
+      USER_A,
+      CONNECTOR_A,
+      expect.objectContaining({ lastSyncStatus: 'COMPLETED' }),
+    );
+  });
+
   it('scopes job listing and rejects a job id from another tenant', async () => {
     state.listJobs.mockResolvedValue([job(JOB_A, TENANT_A, CONNECTOR_A)]);
 
@@ -206,6 +260,23 @@ describe('connector sync tenant isolation', () => {
     });
     expect(foreignJob.status).toBe(404);
     expect(state.findJob).toHaveBeenCalledWith(TENANT_B, USER_A, JOB_B);
+  });
+
+  it('does not let another user read or update the owner-scoped job', async () => {
+    state.findJob.mockImplementation(async (tenantId: string, userId: string, id: string) =>
+      tenantId === TENANT_A && userId === USER_A && id === JOB_A ? job(JOB_A, TENANT_A, CONNECTOR_A) : null,
+    );
+
+    const foreignRead = await testServer.request(`/api/connectors/jobs/${JOB_A}`, {
+      tenantId: TENANT_A,
+      userId: USER_B,
+    });
+
+    expect(foreignRead.status).toBe(404);
+    expect(state.findJob).toHaveBeenCalledWith(TENANT_A, USER_B, JOB_A);
+
+    await vi.runAllTimersAsync();
+    expect(state.updateJob).not.toHaveBeenCalled();
   });
 
   it('returns 404 and does not sync a connector owned by another user in the same tenant', async () => {

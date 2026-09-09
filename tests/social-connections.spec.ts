@@ -151,9 +151,106 @@ test.describe('social connection destinations', () => {
     });
 
     await page.goto(`${BASE_URL}/data-platform`);
-    const card = page.getByRole('heading', { name: 'TikTok owned by user A' }).locator('xpath=../../..');
+    const card = page.getByRole('heading', { name: 'TikTok owned by user A' }).locator('xpath=../../../../');
     await expect(card).toBeVisible();
     await expect(card.getByTitle(/Đồng bộ ngay|Sync Now/i)).toHaveCount(0);
     await expect(card.getByTitle(/Kiểm tra sâu cấu hình|Check/i)).toHaveCount(1);
+  });
+
+  test('starts and displays completed syncs for every supported data connector', async ({ page }) => {
+    const connectors = [
+      {
+        id: 'connector-google',
+        type: 'GOOGLE_SHEETS',
+        name: 'Google Sheets fixture',
+        status: 'ACTIVE',
+        config: { spreadsheetId: 'sheet-a', accessToken: '[REDACTED]' },
+      },
+      {
+        id: 'connector-hubspot',
+        type: 'HUBSPOT',
+        name: 'HubSpot fixture',
+        status: 'ACTIVE',
+        config: { apiKey: '[REDACTED]' },
+      },
+      {
+        id: 'connector-webhook',
+        type: 'WEBHOOK_EXPORT',
+        name: 'Webhook fixture',
+        status: 'ACTIVE',
+        config: { targetUrl: 'https://hooks.example.test/leads', secret: '[REDACTED]' },
+      },
+      {
+        id: 'connector-salesforce',
+        type: 'SALESFORCE',
+        name: 'Salesforce fixture',
+        status: 'ACTIVE',
+        config: { apiKey: '[REDACTED]' },
+      },
+    ];
+    const completedJobs = new Map<string, any>();
+    const queuedJobs: any[] = [];
+
+    await page.route('**/api/connectors', async route => {
+      const url = new URL(route.request().url());
+      if (route.request().method() === 'GET' && url.pathname === '/api/connectors') {
+        await route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify(connectors) });
+        return;
+      }
+      await route.continue();
+    });
+    await page.route('**/api/connectors/**', async route => {
+      const request = route.request();
+      const url = new URL(request.url());
+      if (url.pathname === '/api/connectors/jobs' && request.method() === 'GET') {
+        await route.fulfill({
+          status: 200,
+          contentType: 'application/json',
+          body: JSON.stringify([...queuedJobs, ...completedJobs.values()]),
+        });
+        return;
+      }
+      const syncMatch = url.pathname.match(/^\/api\/connectors\/([^/]+)\/sync$/);
+      if (syncMatch && request.method() === 'POST') {
+        const connectorId = syncMatch[1];
+        const job = {
+          id: `job-${connectorId}`,
+          connectorId,
+          startedAt: '2026-09-09T00:00:00.000Z',
+          status: 'QUEUED',
+          recordsProcessed: 42,
+          errors: [],
+          retryCount: 0,
+        };
+        queuedJobs.push(job);
+        completedJobs.set(connectorId, { ...job, status: 'COMPLETED' });
+        await route.fulfill({ status: 201, contentType: 'application/json', body: JSON.stringify(job) });
+        return;
+      }
+      await route.continue();
+    });
+
+    await page.goto(`${BASE_URL}/data-platform`);
+    for (const connector of connectors) {
+      const card = page.getByRole('heading', { name: connector.name }).locator('xpath=../../../../');
+      await expect(card).toBeVisible();
+      await expect(card.getByTitle(/Đồng bộ ngay|Sync Now/i)).toHaveCount(1);
+      const syncResponsePromise = page.waitForResponse(response =>
+        response.request().method() === 'POST'
+        && new URL(response.url()).pathname === `/api/connectors/${connector.id}/sync`,
+      );
+      await card.getByTitle(/Đồng bộ ngay|Sync Now/i).click();
+      const syncResponse = await syncResponsePromise;
+      expect(syncResponse.status()).toBe(201);
+      await expect(syncResponse.json()).resolves.toMatchObject({
+        connectorId: connector.id,
+        status: 'QUEUED',
+      });
+      await expect(page.getByRole('status')).toContainText(/Bắt đầu đồng bộ|Sync started/i);
+    }
+
+    expect([...completedJobs.keys()]).toEqual(connectors.map(connector => connector.id));
+    await expect(page.getByText(/Hoàn thành|Completed/i)).toHaveCount(4);
+    await expect(page.locator('body')).not.toContainText(/sheet-a|hooks\.example\.test|api-key|hubspot-secret|salesforce-secret/i);
   });
 });
