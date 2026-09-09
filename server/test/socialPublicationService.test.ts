@@ -16,14 +16,14 @@ describe('social publication foundation', () => {
     ])).toEqual(['FACEBOOK_PAGE', 'INSTAGRAM']);
   });
 
-  it('does not report messaging adapters as public publishers', () => {
+   it('reports the Facebook public publisher separately from messaging readiness', () => {
     const catalog = getPublicationCatalog();
     const facebook = catalog.find(item => item.platform === 'FACEBOOK_PAGE');
     const zalo = catalog.find(item => item.platform === 'ZALO_BROADCAST');
 
     expect(facebook).toMatchObject({
       canPublish: false,
-      hasPublisher: false,
+      hasPublisher: true,
       messagingSupported: true,
       status: 'NOT_READY',
     });

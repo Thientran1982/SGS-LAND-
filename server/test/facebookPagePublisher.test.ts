@@ -63,8 +63,56 @@ describe('Facebook Page publisher contract', () => {
     expect(fetchMock.mock.calls[0][0]).toContain('/page-1/photos');
     expect(JSON.parse(fetchMock.mock.calls[0][1].body)).toMatchObject({
       url: 'https://cdn.test/house.jpg',
+      caption: 'Nhà phố ven sông\nGiá: 3 tỷ VNĐ',
       published: true,
     });
+  });
+
+  it('uses the first image through /photos even when multiple images are supplied', async () => {
+    fetchMock.mockResolvedValueOnce(new Response(JSON.stringify({
+      post_id: 'page-1_43',
+    }), { status: 200 }));
+
+    await expect(publishFacebookPageContent({
+      pageId: 'page-1',
+      pageAccessToken: 'page-token',
+      content: {
+        platform: 'FACEBOOK_PAGE',
+        title: 'B',
+        text: 'B',
+        link: 'https://sgsland.vn/p/SGS-002',
+        imageUrls: ['https://cdn.test/first.jpg', 'https://cdn.test/second.jpg'],
+        hashtags: [],
+      },
+      idempotencyKey: 'social:target-2:1',
+    })).resolves.toMatchObject({ status: 'PUBLISHED' });
+
+    expect(fetchMock.mock.calls[0][0]).toContain('/page-1/photos');
+    expect(fetchMock.mock.calls[0][0]).not.toContain('/page-1/feed');
+    expect(JSON.parse(fetchMock.mock.calls[0][1].body)).toMatchObject({
+      url: 'https://cdn.test/first.jpg',
+      caption: 'B',
+    });
+  });
+
+  it('rejects a publication without an image before contacting Facebook', async () => {
+    await expect(publishFacebookPageContent({
+      pageId: 'page-1',
+      pageAccessToken: 'page-token',
+      content: {
+        platform: 'FACEBOOK_PAGE',
+        title: 'A',
+        text: 'A',
+        link: null,
+        imageUrls: [],
+        hashtags: [],
+      },
+      idempotencyKey: 'social:target-3:1',
+    })).resolves.toMatchObject({
+      status: 'FAILED',
+      errorCode: 'FACEBOOK_IMAGE_REQUIRED',
+    });
+    expect(fetchMock).not.toHaveBeenCalled();
   });
 
   it('keeps network and missing-ID outcomes ambiguous instead of retrying blindly', async () => {
@@ -80,7 +128,7 @@ describe('Facebook Page publisher contract', () => {
         imageUrls: [],
         hashtags: [],
       },
-      idempotencyKey: 'social:target-2:1',
+      idempotencyKey: 'social:target-4:1',
     })).resolves.toMatchObject({
       status: 'AMBIGUOUS',
       errorCode: 'FACEBOOK_NETWORK_OUTCOME_UNKNOWN',
@@ -98,7 +146,7 @@ describe('Facebook Page publisher contract', () => {
         imageUrls: [],
         hashtags: [],
       },
-      idempotencyKey: 'social:target-3:1',
+      idempotencyKey: 'social:target-5:1',
     })).resolves.toMatchObject({
       status: 'AMBIGUOUS',
       errorCode: 'FACEBOOK_MISSING_POST_ID',

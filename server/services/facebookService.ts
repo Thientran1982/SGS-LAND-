@@ -140,21 +140,34 @@ export async function publishFacebookPageContent(input: {
   content: SocialPlatformContent;
   idempotencyKey: string;
 }): Promise<SocialPublishResult> {
-  const hasSingleImage = input.content.imageUrls.length === 1;
-  const path = hasSingleImage
-    ? `${encodeURIComponent(input.pageId)}/photos`
-    : `${encodeURIComponent(input.pageId)}/feed`;
-  const body = hasSingleImage
-    ? {
-        url: input.content.imageUrls[0],
-        caption: input.content.text,
-        published: true,
-      }
-    : {
-        message: input.content.text,
-        ...(input.content.link ? { link: input.content.link } : {}),
-        published: true,
-      };
+  const imageUrl = input.content.imageUrls[0];
+  if (!imageUrl) {
+    return {
+      status: 'FAILED',
+      retryable: false,
+      errorCode: 'FACEBOOK_IMAGE_REQUIRED',
+      safeMessage: 'Facebook publication cần ít nhất một ảnh đại diện.',
+    };
+  }
+
+  try {
+    const parsedImageUrl = new URL(imageUrl);
+    if (!['http:', 'https:'].includes(parsedImageUrl.protocol)) throw new Error('unsupported protocol');
+  } catch {
+    return {
+      status: 'FAILED',
+      retryable: false,
+      errorCode: 'FACEBOOK_IMAGE_URL_INVALID',
+      safeMessage: 'URL ảnh Facebook phải là địa chỉ HTTP(S) tuyệt đối và công khai.',
+    };
+  }
+
+  const path = `${encodeURIComponent(input.pageId)}/photos`;
+  const body = {
+    url: imageUrl,
+    caption: input.content.text,
+    published: true,
+  };
 
   try {
     const { response, body: result } = await graphRequest(

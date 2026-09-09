@@ -15,6 +15,7 @@ import {
   buildPlatformContent,
   buildSocialProductSnapshot,
   getTenantPublicationCatalog,
+  normalizePublicationImages,
   normalizeSocialPlatforms,
 } from '../services/socialPublicationService';
 import { getTenantSocialPlatformCapability } from '../social-publishing/registry';
@@ -74,9 +75,7 @@ export function createSocialPublicationRouter(
       const snapshot = await buildSocialProductSnapshot(tenantId(req), String(req.body?.listingId || ''));
       const platforms = normalizeSocialPlatforms(req.body?.platforms);
       if (!platforms.length) return res.status(400).json({ error: 'Chọn ít nhất một nền tảng để xem trước' });
-      const images = Array.isArray(req.body?.imageUrls)
-        ? req.body.imageUrls.filter((value: unknown): value is string => typeof value === 'string')
-        : [];
+      const images = normalizePublicationImages(req.body?.imageUrls);
       return res.json({
         snapshot,
         previews: platforms.map(platform => buildPlatformContent(snapshot, platform, images)),
@@ -118,9 +117,7 @@ export function createSocialPublicationRouter(
       if (publishMode === 'SCHEDULED' && !scheduledAt) {
         return res.status(400).json({ error: 'Chiến dịch hẹn giờ cần có thời điểm đăng' });
       }
-      const imageUrls = Array.isArray(listing.images)
-        ? listing.images.filter((value: unknown): value is string => typeof value === 'string')
-        : [];
+       const imageUrls = normalizePublicationImages(listing.images);
       const publication = await createSocialPublication(pool, {
         tenantId: currentTenant,
         listingId,

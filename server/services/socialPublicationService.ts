@@ -158,7 +158,18 @@ export function buildPlatformContent(
   imageUrls: string[],
 ): SocialPlatformContent {
   const content = buildSocialPlatformContent(snapshot, platform);
-  return { ...content, imageUrls: imageUrls.slice(0, 10) };
+  return {
+    ...content,
+    imageUrls: normalizeProductImages(imageUrls, resolveConfiguredPublicBaseUrl()).slice(0, 10),
+  };
+}
+
+/**
+ * Publication assets are sent directly to providers. Keep only absolute,
+ * publicly fetchable HTTP(S) URLs in the immutable asset snapshot.
+ */
+export function normalizePublicationImages(images: unknown): string[] {
+  return normalizeProductImages(images, resolveConfiguredPublicBaseUrl()).slice(0, 10);
 }
 
 export function createPublicationRequestId(): string {

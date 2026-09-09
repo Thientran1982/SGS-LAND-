@@ -3,15 +3,14 @@ import type {
   SocialPlatformCapability,
   SocialPublisher,
 } from './types';
+import { facebookPagePublisher } from './facebookPagePublisher';
 import { zaloBroadcastPublisher } from './zaloBroadcastPublisher';
 
 /**
  * Phase 0 capability registry.
  *
- * Existing Facebook/Zalo adapters send direct messages to leads. They are not
- * public Page/feed publishers, so they deliberately do not make these
- * platforms READY. A provider publisher is only registered when it can prove
- * the account, permission, and provider response contract.
+ * A provider publisher is only considered READY after it proves the account,
+ * permission, and provider response contract for the tenant.
  */
 const CATALOG: SocialPlatformCapability[] = [
   {
@@ -21,7 +20,7 @@ const CATALOG: SocialPlatformCapability[] = [
     status: 'NOT_READY',
     canPublish: true,
     messagingSupported: true,
-    reason: 'Chưa có publisher cho Facebook Page và chưa xác minh quyền đăng công khai.',
+    reason: 'Facebook Page publisher đã có, nhưng chưa xác minh Page và quyền đăng công khai.',
     requiresConnection: true,
   },
   {
@@ -67,6 +66,7 @@ const CATALOG: SocialPlatformCapability[] = [
 ];
 
 const publishers = new Map<SocialPlatform, SocialPublisher>();
+publishers.set(facebookPagePublisher.platform, facebookPagePublisher);
 publishers.set(zaloBroadcastPublisher.platform, zaloBroadcastPublisher);
 
 export function getSocialPlatformCatalog(): SocialPlatformCapability[] {

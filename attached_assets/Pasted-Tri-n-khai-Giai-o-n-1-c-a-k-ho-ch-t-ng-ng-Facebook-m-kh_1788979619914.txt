@@ -1,0 +1,13 @@
+Triển khai Giai đoạn 1 của kế hoạch tự động đăng Facebook: mở khoá đăng bài thật lên Facebook Page (Page ID 100689481898089) từ tính năng Social Publishing đã có sẵn. Chỉ làm đúng 5 việc sau, không đổi luồng nghiệp vụ khác:
+
+1. Đăng ký Facebook publisher trong server/social-publishing/registry.ts: hiện Facebook đang bị đánh dấu NOT_READY nên nút "Kích hoạt" không thực sự gọi Facebook. Đăng ký server/social-publishing/facebookPagePublisher.ts làm handler chính thức cho platform FACEBOOK, theo đúng cách các platform khác đã đăng ký trong file này.
+
+2. Sửa server/services/facebookService.ts, hàm publishFacebookPageContent(): hiện tại nếu tin có đúng 1 ảnh thì gọi đúng POST /{pageId}/photos kèm ảnh + caption; nhưng nếu tin có từ 2 ảnh trở lên thì lại gọi POST /{pageId}/feed mà KHÔNG kèm ảnh nào (chỉ có message + link) — bài đăng ra sẽ mất hết ảnh. Sửa lại: LUÔN đăng qua POST /{pageId}/photos với đúng 1 ảnh đại diện (ảnh đầu tiên trong input.content.imageUrls), kèm caption. Chưa cần làm album nhiều ảnh ở bước này.
+
+3. Đảm bảo URL ảnh gửi cho Facebook (trường url trong request tới /{pageId}/photos) là URL tuyệt đối, công khai, có domain đầy đủ (https://...) — không phải path tương đối kiểu /uploads/.... Facebook server sẽ tự tải ảnh qua URL này nên nó phải truy cập công khai được, không cần đăng nhập/cookie. Rà lại chỗ build content_snapshot/asset_snapshot trong server/services/socialPublicationService.ts để chắc chắn ảnh được ghép domain đầy đủ trước khi lưu.
+
+4. Kiểm tra Enterprise Settings > Facebook Pages (cấu hình lưu ở enterprise_config, key facebookPages): xác nhận access token hiện tại của Page 100689481898089 còn hợp lệ và là Page Access Token thật (không phải User token). Nếu nghi ngờ token cũ/sai, KHÔNG tự sửa — báo lại để tôi tự cập nhật token qua giao diện.
+
+5. Sau khi hoàn tất 4 bước trên, KHÔNG tự tạo bài đăng thử nghiệm lên Facebook thật. Chỉ báo cáo đã sửa xong ở đâu (tên file, hàm), để tôi tự tạo 1 publication thử qua giao diện /social-publishing và tự bấm "Kích hoạt" để kiểm tra trên Page thật.
+
+Lưu ý: đây là thay đổi trên hệ thống production đang chạy thật. Không phá vỡ luồng đăng lên các platform khác nếu có (vd. Zalo). Giữ nguyên cơ chế retry/rate-limit/error-handling đã có trong facebookService.ts, chỉ sửa đúng phần chọn ảnh ở bước 2.
