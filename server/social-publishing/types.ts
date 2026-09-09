@@ -7,6 +7,9 @@ export type SocialPlatform =
 
 export type SocialCapabilityStatus = 'NOT_READY' | 'READY' | 'UNSUPPORTED';
 
+/** Facebook Page album posts support up to ten approved photos. */
+export const FACEBOOK_PAGE_MAX_IMAGES = 10;
+
 export interface SocialPlatformCapability {
   platform: SocialPlatform;
   label: string;
@@ -17,6 +20,7 @@ export interface SocialPlatformCapability {
   reason: string;
   requiresConnection: boolean;
   retryable?: boolean;
+  maxImages?: number;
 }
 
 export interface SocialProductSnapshot {

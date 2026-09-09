@@ -1,3 +1,6 @@
+import {
+  FACEBOOK_PAGE_MAX_IMAGES,
+} from './types';
 import type {
   SocialPlatform,
   SocialPlatformCapability,
@@ -22,6 +25,7 @@ const CATALOG: SocialPlatformCapability[] = [
     messagingSupported: true,
     reason: 'Facebook Page publisher đã có, nhưng chưa xác minh Page và quyền đăng công khai.',
     requiresConnection: true,
+    maxImages: FACEBOOK_PAGE_MAX_IMAGES,
   },
   {
     platform: 'INSTAGRAM',

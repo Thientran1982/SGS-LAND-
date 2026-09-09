@@ -29,12 +29,12 @@ vi.mock('../social-publishing/registry', () => ({
 }));
 
 vi.mock('../services/socialPublicationService', () => ({
-  buildPlatformContent: vi.fn(() => ({
+  buildPlatformContent: vi.fn((_snapshot: unknown, _platform: unknown, assetSnapshot: string[]) => ({
     platform: 'FACEBOOK_PAGE',
     title: 'A',
     text: 'A',
     link: null,
-    imageUrls: [],
+    imageUrls: assetSnapshot,
     hashtags: [],
   })),
 }));
@@ -133,7 +133,10 @@ describe('social publishing worker safety', () => {
       reason: 'ready',
     });
     publicationRow.content_snapshot = { caption: 'Caption đã duyệt.' };
-    publicationRow.asset_snapshot = ['https://cdn.test/approved.jpg'];
+    publicationRow.asset_snapshot = [
+      'https://cdn.test/approved-1.jpg',
+      'https://cdn.test/approved-2.jpg',
+    ];
 
     await processSocialPublicationTick({} as any);
 
@@ -145,7 +148,7 @@ describe('social publishing worker safety', () => {
     expect(publish).toHaveBeenCalledWith(expect.objectContaining({
       content: expect.objectContaining({
         text: 'A',
-        imageUrls: [],
+        imageUrls: publicationRow.asset_snapshot,
       }),
     }));
   });

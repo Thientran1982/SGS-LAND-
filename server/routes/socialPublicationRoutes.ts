@@ -15,7 +15,7 @@ import {
   buildPlatformContent,
   buildSocialProductSnapshot,
   getTenantPublicationCatalog,
-  MAX_FACEBOOK_REPRESENTATIVE_IMAGES,
+  MAX_FACEBOOK_IMAGES,
   normalizePublicationCaption,
   normalizePublicationImages,
   normalizeSocialPlatforms,
@@ -138,8 +138,8 @@ export function createSocialPublicationRouter(
       if (platforms.includes('FACEBOOK_PAGE') && !imageUrls.length) {
         return res.status(400).json({ error: 'Facebook publication cần ít nhất một ảnh đại diện' });
       }
-      if (platforms.includes('FACEBOOK_PAGE') && imageUrls.length > MAX_FACEBOOK_REPRESENTATIVE_IMAGES) {
-        return res.status(400).json({ error: 'Facebook hiện chỉ hỗ trợ một ảnh đại diện cho publication' });
+      if (platforms.includes('FACEBOOK_PAGE') && imageUrls.length > MAX_FACEBOOK_IMAGES) {
+        return res.status(400).json({ error: `Facebook hiện chỉ hỗ trợ tối đa ${MAX_FACEBOOK_IMAGES} ảnh trong một album` });
       }
       const requestedCaption = normalizePublicationCaption(req.body?.caption);
       const caption = requestedCaption || buildPlatformContent(snapshot, platforms[0], imageUrls).text;

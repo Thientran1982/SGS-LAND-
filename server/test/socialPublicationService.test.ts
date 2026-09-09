@@ -28,6 +28,7 @@ describe('social publication foundation', () => {
       hasPublisher: true,
       messagingSupported: true,
       status: 'NOT_READY',
+      maxImages: 10,
     });
     expect(zalo).toMatchObject({
       canPublish: false,
@@ -96,6 +97,38 @@ describe('social publication foundation', () => {
 
     expect(content.text).toBe('Caption đã được operator duyệt.');
     expect(content.imageUrls).toEqual(['https://cdn.test/approved.jpg']);
+  });
+
+  it('keeps every approved Facebook album image in the provider content snapshot', () => {
+    const content = buildPlatformContent({
+      version: 1,
+      listingId: 'listing-1',
+      code: 'SGS-001',
+      title: 'Nhà phố ven sông',
+      description: null,
+      price: null,
+      currency: 'VND',
+      area: null,
+      builtArea: null,
+      bedrooms: null,
+      bathrooms: null,
+      location: null,
+      type: null,
+      transaction: null,
+      status: 'AVAILABLE',
+      attributes: {},
+      contactPhone: null,
+      publicUrl: null,
+      capturedAt: '2026-09-09T00:00:00.000Z',
+    }, 'FACEBOOK_PAGE', [
+      'https://cdn.test/first.jpg',
+      'https://cdn.test/second.jpg',
+    ]);
+
+    expect(content.imageUrls).toEqual([
+      'https://cdn.test/first.jpg',
+      'https://cdn.test/second.jpg',
+    ]);
   });
 
   it('normalizes captions and publication images before they are persisted', () => {

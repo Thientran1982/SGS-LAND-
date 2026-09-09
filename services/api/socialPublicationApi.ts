@@ -10,6 +10,7 @@ export interface SocialCapability {
   reason: string;
   requiresConnection: boolean;
   hasPublisher: boolean;
+  maxImages?: number;
 }
 
 export function isSocialCapabilityReady(capability: Pick<SocialCapability, 'status' | 'canPublish'>): boolean {

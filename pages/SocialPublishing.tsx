@@ -11,7 +11,6 @@ import {
   isSocialCapabilityReady,
 } from '../services/api/socialPublicationApi';
 
-const MAX_FACEBOOK_IMAGES = 1;
 const MAX_LISTING_IMAGES = 10;
 
 const statusLabel: Record<string, string> = {
@@ -70,14 +69,19 @@ export const SocialPublishing: React.FC = () => {
   );
   const publisherCount = catalog.filter(item => item.hasPublisher).length;
   const readyCount = catalog.filter(item => isSocialCapabilityReady(item)).length;
+  const facebookCapability = catalog.find(item => item.platform === 'FACEBOOK_PAGE');
+  const maxFacebookImages = Math.min(
+    facebookCapability?.maxImages ?? MAX_LISTING_IMAGES,
+    MAX_LISTING_IMAGES,
+  );
   const focusedCapability = focusedPlatform
     ? catalog.find(item => item.platform === focusedPlatform)
     : undefined;
 
   useEffect(() => {
     const images = selectedListing?.images || [];
-    setSelectedImageUrls(images.slice(0, MAX_LISTING_IMAGES).slice(0, MAX_FACEBOOK_IMAGES));
-  }, [listingId]);
+    setSelectedImageUrls(images.slice(0, MAX_LISTING_IMAGES).slice(0, maxFacebookImages));
+  }, [selectedListing, maxFacebookImages]);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -118,8 +122,9 @@ export const SocialPublishing: React.FC = () => {
 
   const toggleImage = (imageUrl: string) => {
     setSelectedImageUrls(current => {
-      if (current.includes(imageUrl)) return [];
-      return [imageUrl];
+      if (current.includes(imageUrl)) return current.filter(item => item !== imageUrl);
+      if (current.length >= maxFacebookImages) return current;
+      return [...current, imageUrl];
     });
     setPreview([]);
   };
@@ -548,6 +553,7 @@ export const SocialPublishing: React.FC = () => {
                          <span className={`mt-1 block text-[10px] font-semibold ${item.hasPublisher ? 'text-indigo-700' : 'text-[var(--text-tertiary)]'}`}>
                            {item.hasPublisher ? 'Đã có publisher provider' : 'Chưa có publisher provider'}
                          </span>
+                        {!!item.maxImages && <span className="mt-1 block text-[10px] font-semibold text-[var(--text-secondary)]">Tối đa {item.maxImages} ảnh mỗi bài</span>}
                         <span className="mt-1 block text-xs leading-5 text-[var(--text-tertiary)]">{item.reason}</span>
                         {!item.canPublish && <span className="mt-1 block text-xs font-semibold text-amber-700">Tạm khóa: cần xác minh publisher và quyền provider trước khi xuất bản.</span>}
                       </span>
@@ -579,13 +585,13 @@ export const SocialPublishing: React.FC = () => {
             <div className="rounded-2xl bg-[var(--bg-app)] p-4">
               <div className="mb-3 flex items-center justify-between gap-3">
                 <p className="text-xs font-bold uppercase tracking-wider text-[var(--text-tertiary)]">Preview content</p>
-                {!!selectedImageUrls.length && <span className="text-xs text-[var(--text-tertiary)]">{selectedImageUrls.length}/{MAX_FACEBOOK_IMAGES} ảnh đã chọn</span>}
+                {!!selectedImageUrls.length && <span className="text-xs text-[var(--text-tertiary)]">{selectedImageUrls.length}/{maxFacebookImages} ảnh đã chọn</span>}
               </div>
               {selectedListing && (
                 <div className="mb-4 rounded-xl border border-[var(--glass-border)] bg-[var(--bg-surface)] p-3">
                   <div className="mb-2 flex items-center justify-between gap-3">
                     <p className="text-sm font-semibold text-[var(--text-primary)]">Ảnh bài đăng</p>
-                    <p className="text-xs text-[var(--text-tertiary)]">Chọn tối đa 1 ảnh đại diện Facebook</p>
+                    <p className="text-xs text-[var(--text-tertiary)]">Chọn tối đa {maxFacebookImages} ảnh cho album Facebook</p>
                   </div>
                   {!selectedListing.images?.length ? (
                     <p className="text-xs text-amber-700">Listing chưa có ảnh. Facebook sẽ không thể đăng bài.</p>
@@ -593,11 +599,12 @@ export const SocialPublishing: React.FC = () => {
                     <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 md:grid-cols-5">
                       {selectedListing.images.slice(0, MAX_LISTING_IMAGES).map((imageUrl, index) => {
                         const selected = selectedImageUrls.includes(imageUrl);
+                        const selectionLimitReached = !selected && selectedImageUrls.length >= maxFacebookImages;
                         return (
                           <label key={`${imageUrl}-${index}`} className={`relative cursor-pointer overflow-hidden rounded-lg border-2 ${selected ? 'border-sgs-primary' : 'border-transparent'}`}>
                             <img src={imageUrl} alt={`Ảnh ${index + 1} của ${selectedListing.title || 'listing'}`} className="aspect-square w-full object-cover" />
                             <span className="absolute left-1 top-1 rounded bg-white/90 px-1.5 py-1 text-[10px] font-semibold text-[var(--text-primary)]">
-                              <input type="checkbox" checked={selected} onChange={() => toggleImage(imageUrl)} className="mr-1 accent-[var(--sgs-primary)]" />
+                              <input type="checkbox" checked={selected} disabled={selectionLimitReached} onChange={() => toggleImage(imageUrl)} className="mr-1 accent-[var(--sgs-primary)] disabled:opacity-50" />
                               {selected ? 'Đã chọn' : 'Chọn'}
                             </span>
                             {selected && selectedImageUrls[0] === imageUrl && <span className="absolute bottom-1 left-1 rounded bg-sgs-primary px-1.5 py-0.5 text-[10px] font-bold text-white">Đại diện</span>}

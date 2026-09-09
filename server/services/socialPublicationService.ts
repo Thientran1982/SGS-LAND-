@@ -11,6 +11,7 @@ import {
   getSocialPublisher,
   getTenantSocialPlatformCapability,
 } from '../social-publishing/registry';
+import { FACEBOOK_PAGE_MAX_IMAGES } from '../social-publishing/types';
 import type {
   SocialPlatform,
   SocialPlatformContent,
@@ -33,7 +34,9 @@ const PLATFORM_SET = new Set<SocialPlatform>([
 ]);
 
 export const MAX_SOCIAL_PUBLICATION_IMAGES = MAX_PRODUCT_SHARE_IMAGES;
-export const MAX_FACEBOOK_REPRESENTATIVE_IMAGES = 1;
+export const MAX_FACEBOOK_IMAGES = FACEBOOK_PAGE_MAX_IMAGES;
+/** @deprecated Use MAX_FACEBOOK_IMAGES; Facebook now publishes approved albums. */
+export const MAX_FACEBOOK_REPRESENTATIVE_IMAGES = MAX_FACEBOOK_IMAGES;
 export const MAX_SOCIAL_PUBLICATION_CAPTION_LENGTH = 63206;
 
 function textValue(value: unknown): string | null {
