@@ -2,7 +2,19 @@ import { Router, Request, Response } from 'express';
 import { connectorRepository, syncJobRepository } from '../repositories/connectorRepository';
 import { auditRepository } from '../repositories/auditRepository';
 
-const CONNECTOR_TYPES = new Set(['GOOGLE_SHEETS', 'HUBSPOT', 'ZOHO_CRM', 'WEBHOOK_EXPORT', 'SALESFORCE']);
+const CONNECTOR_TYPES = new Set([
+  'GOOGLE_SHEETS',
+  'HUBSPOT',
+  'ZOHO_CRM',
+  'WEBHOOK_EXPORT',
+  'SALESFORCE',
+  'FACEBOOK_PAGE',
+  'ZALO_OA',
+  'INSTAGRAM',
+  'TIKTOK',
+  'LINKEDIN_PAGE',
+]);
+const NON_SYNCABLE_CONNECTOR_TYPES = new Set(['FACEBOOK_PAGE', 'ZALO_OA', 'INSTAGRAM', 'TIKTOK', 'LINKEDIN_PAGE']);
 const CONNECTOR_ROLES = new Set(['SUPER_ADMIN', 'ADMIN', 'TEAM_LEAD', 'MANAGER', 'SALES', 'MARKETING']);
 const SENSITIVE_CONFIG_KEY = /(api.?key|access.?token|refresh.?token|client.?secret|private.?key|authorization|password|secret|credential)/i;
 
@@ -29,13 +41,22 @@ function validateConnectorInput(type: unknown, config: unknown): string | null {
   if (typeof type !== 'string' || !CONNECTOR_TYPES.has(type)) return 'Loại connector không được hỗ trợ';
   if (!config || typeof config !== 'object' || Array.isArray(config)) return 'Cấu hình connector không hợp lệ';
   const values = config as Record<string, unknown>;
-  const requiredKey = type === 'GOOGLE_SHEETS'
-    ? 'spreadsheetId'
-    : type === 'WEBHOOK_EXPORT'
-      ? 'targetUrl'
-      : 'apiKey';
-  if (typeof values[requiredKey] !== 'string' || !values[requiredKey].trim()) {
-    return `Thiếu cấu hình bắt buộc: ${requiredKey}`;
+  const requiredKeys: Record<string, string[]> = {
+    GOOGLE_SHEETS: ['spreadsheetId'],
+    WEBHOOK_EXPORT: ['targetUrl'],
+    HUBSPOT: ['apiKey'],
+    ZOHO_CRM: ['apiKey'],
+    SALESFORCE: ['apiKey'],
+    FACEBOOK_PAGE: ['pageId', 'accessToken'],
+    ZALO_OA: ['appId', 'oaId', 'accessToken'],
+    INSTAGRAM: ['businessAccountId', 'accessToken'],
+    TIKTOK: ['accountId', 'accessToken'],
+    LINKEDIN_PAGE: ['organizationId', 'accessToken'],
+  };
+  for (const requiredKey of requiredKeys[type] || []) {
+    if (typeof values[requiredKey] !== 'string' || !values[requiredKey].trim()) {
+      return `Thiếu cấu hình bắt buộc: ${requiredKey}`;
+    }
   }
   if (type === 'WEBHOOK_EXPORT') {
     try {
@@ -197,9 +218,15 @@ export function createConnectorRoutes(authenticateToken: any) {
       }
       const connector = await connectorRepository.findByUser(tenantId, userId, req.params.id as string);
       if (!connector) return res.status(404).json({ error: 'Connector not found' });
+      if (NON_SYNCABLE_CONNECTOR_TYPES.has(connector.type)) {
+        return res.status(409).json({
+          error: 'Loại kết nối này dùng để xác thực tài khoản API, chưa có sync adapter hoạt động.',
+          code: 'CONNECTOR_SYNC_NOT_SUPPORTED',
+        });
+      }
       const validationError = validateConnectorInput(connector.type, connector.config);
       const checks = [
-        { key: 'tenant_scope', status: 'PASS', detail: 'Connector thuộc tenant hiện tại.' },
+        { key: 'owner_scope', status: 'PASS', detail: 'Connector thuộc user đang đăng nhập trong tenant hiện tại.' },
         { key: 'required_config', status: validationError ? 'FAIL' : 'PASS', detail: validationError || 'Đủ trường cấu hình bắt buộc.' },
       ];
       return res.json({

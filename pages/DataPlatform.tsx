@@ -28,58 +28,56 @@ const CONNECTOR_ICONS: Record<string, React.ReactNode> = {
     SALESFORCE: <svg className="h-4 w-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.7} d="M7 17a4 4 0 01-.5-7.97A5.5 5.5 0 0117 7.5a3.5 3.5 0 01.5 6.96A4 4 0 017 17z" /></svg>,
     WEBHOOK_EXPORT: <svg className="h-4 w-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.7} d="M10 13a5 5 0 007.07.07l1.42-1.42a5 5 0 00-7.07-7.07L10.6 5.4M14 11a5 5 0 00-7.07-.07L5.5 12.35a5 5 0 007.07 7.07l.82-.82" /></svg>,
 };
-type SocialConnectionType = 'FACEBOOK_PAGE' | 'ZALO_OA' | 'INSTAGRAM' | 'TIKTOK' | 'LINKEDIN_PAGE';
-type ConnectionChoice = ConnectorType | SocialConnectionType;
+type SocialConnectionType = Extract<ConnectorType, ConnectorType.FACEBOOK_PAGE | ConnectorType.ZALO_OA | ConnectorType.INSTAGRAM | ConnectorType.TIKTOK | ConnectorType.LINKEDIN_PAGE>;
+type ConnectionChoice = ConnectorType;
 type AddConnectionForm = { type: ConnectionChoice; name: string; config: Record<string, unknown> };
-type ZaloConnectionResult = {
+type ConnectionResult = {
     kind: 'connected' | 'ready' | 'not_ready' | 'error';
     title: string;
     message: string;
     reasonCode?: string;
     checks?: { oaId: string; quota: string };
 };
-const SOCIAL_CONNECTIONS: Record<SocialConnectionType, { label: string; description: string; route: string }> = {
+const SOCIAL_CONNECTIONS: Record<SocialConnectionType, { label: string; description: string }> = {
     FACEBOOK_PAGE: {
         label: 'Facebook Page',
-        description: 'Kết nối Page và xác minh quyền đăng bài công khai.',
-        route: `/${ROUTES.ENTERPRISE_SETTINGS}?tab=FACEBOOK`,
+        description: 'Lưu Page ID và Page Access Token riêng cho user đang đăng nhập.',
     },
     ZALO_OA: {
         label: 'Zalo OA',
-        description: 'Kết nối Official Account và kiểm tra quyền broadcast.',
-        route: `/${ROUTES.ENTERPRISE_SETTINGS}?tab=ZALO`,
+        description: 'Lưu App/OA định danh và Access Token riêng cho user đang đăng nhập.',
     },
     INSTAGRAM: {
         label: 'Instagram Business',
-        description: 'Kiểm tra trạng thái publisher Instagram Business.',
-        route: `/${ROUTES.SOCIAL_PUBLISHING}?platform=INSTAGRAM`,
+        description: 'Lưu Business Account ID và Access Token riêng cho user đang đăng nhập.',
     },
     TIKTOK: {
         label: 'TikTok Business',
-        description: 'Kiểm tra trạng thái Content Posting API của TikTok.',
-        route: `/${ROUTES.SOCIAL_PUBLISHING}?platform=TIKTOK`,
+        description: 'Lưu Account ID và Access Token riêng cho user đang đăng nhập.',
     },
     LINKEDIN_PAGE: {
         label: 'LinkedIn Page',
-        description: 'Kiểm tra trạng thái publisher cho LinkedIn Organization.',
-        route: `/${ROUTES.SOCIAL_PUBLISHING}?platform=LINKEDIN_PAGE`,
+        description: 'Lưu Organization ID và Access Token riêng cho user đang đăng nhập.',
     },
+};
+const CONNECTION_LABELS: Record<ConnectorType, string> = {
+    [ConnectorType.GOOGLE_SHEETS]: 'Google Sheets',
+    [ConnectorType.HUBSPOT]: 'HubSpot CRM',
+    [ConnectorType.ZOHO_CRM]: 'Zoho CRM',
+    [ConnectorType.WEBHOOK_EXPORT]: 'Webhook',
+    [ConnectorType.SALESFORCE]: 'Salesforce',
+    [ConnectorType.FACEBOOK_PAGE]: 'Facebook',
+    [ConnectorType.ZALO_OA]: 'Zalo',
+    [ConnectorType.INSTAGRAM]: 'Instagram',
+    [ConnectorType.TIKTOK]: 'TikTok',
+    [ConnectorType.LINKEDIN_PAGE]: 'LinkedIn',
 };
 const SOCIAL_CONNECTION_ICON = <svg className="h-4 w-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><circle cx="8" cy="12" r="3" strokeWidth={1.7} /><circle cx="16" cy="7" r="3" strokeWidth={1.7} /><circle cx="16" cy="17" r="3" strokeWidth={1.7} /><path strokeLinecap="round" strokeWidth={1.7} d="M10.5 10.5l3-2M10.5 13.5l3 2" /></svg>;
 const CONNECTION_OPTIONS = [
     ...Object.values(ConnectorType).map(value => ({
         value: value as ConnectionChoice,
-        label: value === ConnectorType.GOOGLE_SHEETS ? 'Google Sheets'
-            : value === ConnectorType.HUBSPOT ? 'HubSpot CRM'
-                : value === ConnectorType.ZOHO_CRM ? 'Zoho CRM'
-                    : value === ConnectorType.SALESFORCE ? 'Salesforce'
-                        : 'Webhook Export',
+        label: CONNECTION_LABELS[value],
         icon: CONNECTOR_ICONS[value] || ICONS.INFO,
-    })),
-    ...Object.entries(SOCIAL_CONNECTIONS).map(([value, connection]) => ({
-        value: value as ConnectionChoice,
-        label: connection.label,
-        icon: SOCIAL_CONNECTION_ICON,
     })),
 ];
 const ConnectorModal = ({ isOpen, onClose, onSave, onOpenSocial, t }: any) => {

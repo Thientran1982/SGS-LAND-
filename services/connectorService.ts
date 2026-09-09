@@ -79,12 +79,26 @@ const webhookAdapter: ConnectorAdapter = {
         return { success: batch.length, errors: [] };
     }
 };
-const ADAPTER_REGISTRY: Record<ConnectorType, ConnectorAdapter> = {
+const socialApiAdapter: ConnectorAdapter = {
+    async validateConfig(config, t) {
+        if (!config?.accessToken) throw new Error(t('data.error_missing_api_key'));
+        return true;
+    },
+    async sendBatch() {
+        throw new Error('Social API connector chưa có sync adapter; hãy dùng luồng đăng social tương ứng.');
+    },
+};
+const ADAPTER_REGISTRY: Partial<Record<ConnectorType, ConnectorAdapter>> = {
     [ConnectorType.GOOGLE_SHEETS]: googleSheetsAdapter,
     [ConnectorType.HUBSPOT]: crmAdapter,
     [ConnectorType.ZOHO_CRM]: crmAdapter,
     [ConnectorType.SALESFORCE]: crmAdapter,
     [ConnectorType.WEBHOOK_EXPORT]: webhookAdapter,
+    [ConnectorType.FACEBOOK_PAGE]: socialApiAdapter,
+    [ConnectorType.ZALO_OA]: socialApiAdapter,
+    [ConnectorType.INSTAGRAM]: socialApiAdapter,
+    [ConnectorType.TIKTOK]: socialApiAdapter,
+    [ConnectorType.LINKEDIN_PAGE]: socialApiAdapter,
 };
 // -----------------------------------------------------------------------------
 // 3. SERVICE ORCHESTRATOR

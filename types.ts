@@ -901,7 +901,12 @@ export enum ConnectorType {
     HUBSPOT = 'HUBSPOT',
     ZOHO_CRM = 'ZOHO_CRM',
     WEBHOOK_EXPORT = 'WEBHOOK_EXPORT',
-    SALESFORCE = 'SALESFORCE'
+    SALESFORCE = 'SALESFORCE',
+    FACEBOOK_PAGE = 'FACEBOOK_PAGE',
+    ZALO_OA = 'ZALO_OA',
+    INSTAGRAM = 'INSTAGRAM',
+    TIKTOK = 'TIKTOK',
+    LINKEDIN_PAGE = 'LINKEDIN_PAGE',
 }
 export interface ConnectorConfig<T = Record<string, unknown>> {
     id: UUID;
