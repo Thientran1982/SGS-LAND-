@@ -110,6 +110,8 @@ export class ProjectRepository extends BaseRepository {
         status?: string;
         openDate?: string;
         handoverDate?: string;
+        isFeatured?: boolean;
+        priority?: number;
         metadata?: Record<string, unknown>;
     }): Promise<any> {
         return this.withTenant(tenantId, async (client) => {
@@ -118,8 +120,8 @@ export class ProjectRepository extends BaseRepository {
             // of stored as JSON nulls (avoids metadata noise from form aliases
             // such as `cover_image: null`, `driveUrl: null`).
             const result = await client.query(
-                `INSERT INTO projects (tenant_id, name, code, description, location, total_units, status, open_date, handover_date, metadata)
-                 VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, jsonb_strip_nulls($10::jsonb))
+                `INSERT INTO projects (tenant_id, name, code, description, location, total_units, status, open_date, handover_date, is_featured, priority, metadata)
+                 VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, jsonb_strip_nulls($12::jsonb))
                  RETURNING *`,
                 [
                     tenantId,
@@ -131,6 +133,8 @@ export class ProjectRepository extends BaseRepository {
                     data.status || 'ACTIVE',
                     data.openDate || null,
                     data.handoverDate || null,
+                    data.isFeatured ?? false,
+                    data.priority ?? 0,
                     JSON.stringify(data.metadata || {}),
                 ]
             );
@@ -147,6 +151,8 @@ export class ProjectRepository extends BaseRepository {
         status: string;
         openDate: string;
         handoverDate: string;
+        isFeatured: boolean;
+        priority: number;
         metadata: Record<string, unknown>;
     }>): Promise<any | null> {
         return this.withTenant(tenantId, async (client) => {
@@ -162,6 +168,8 @@ export class ProjectRepository extends BaseRepository {
             if (data.status !== undefined)      { sets.push(`status = $${i++}`);        values.push(data.status); }
             if (data.openDate !== undefined)    { sets.push(`open_date = $${i++}`);     values.push(data.openDate); }
             if (data.handoverDate !== undefined){ sets.push(`handover_date = $${i++}`); values.push(data.handoverDate); }
+            if (data.isFeatured !== undefined)  { sets.push(`is_featured = $${i++}`); values.push(data.isFeatured); }
+            if (data.priority !== undefined)    { sets.push(`priority = $${i++}`); values.push(data.priority); }
             // Metadata is JSONB-merged (concurrent-safe) + null-stripped:
             // sending `{ key: null }` removes that key, omitted keys stay intact,
             // and present keys overwrite. Avoids clobbering fields written by

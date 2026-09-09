@@ -60,6 +60,8 @@ export interface SocialPublicationEvent {
 export interface SocialPublication {
   id: string;
   listingId: string;
+  source?: 'MANUAL' | 'AUTO';
+  autoPostingKey?: string | null;
   status: string;
   publishMode: 'NOW' | 'SCHEDULED';
   scheduledAt: string | null;
@@ -73,8 +75,8 @@ export interface SocialPublication {
 export const socialPublicationApi = {
   getCatalog: (): Promise<{ data: SocialCapability[] }> =>
     api.get('/api/social-publications/catalog'),
-  getPublications: (): Promise<{ data: SocialPublication[]; total: number }> =>
-    api.get('/api/social-publications'),
+  getPublications: (source?: 'AUTO' | 'MANUAL'): Promise<{ data: SocialPublication[]; total: number }> =>
+    api.get(`/api/social-publications${source ? `?source=${source}` : ''}`),
   getPublication: (id: string): Promise<SocialPublication> =>
     api.get(`/api/social-publications/${id}`),
   preview: (listingId: string, platforms: string[], imageUrls: string[] = [], caption?: string) =>

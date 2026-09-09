@@ -77,6 +77,8 @@ export const SocialPublishing: React.FC = () => {
   const focusedCapability = focusedPlatform
     ? catalog.find(item => item.platform === focusedPlatform)
     : undefined;
+  const autoDrafts = publications.filter(item => item.source === 'AUTO' && item.status === 'DRAFT');
+  const manualPublications = publications.filter(item => item.source !== 'AUTO');
 
   useEffect(() => {
     const images = selectedListing?.images || [];
@@ -659,11 +661,61 @@ export const SocialPublishing: React.FC = () => {
           </div>
         </section>
 
+        <section className="rounded-3xl border border-amber-200 bg-amber-50/50 p-5 shadow-sm">
+          <div className="mb-4 flex flex-col justify-between gap-3 sm:flex-row sm:items-start">
+            <div>
+              <div className="flex items-center gap-3">
+                <div className="rounded-xl bg-amber-100 p-2 text-amber-700"><Bot size={20} /></div>
+                <div>
+                  <h2 className="font-bold text-[var(--text-primary)]">Bài chờ duyệt</h2>
+                  <p className="text-xs text-[var(--text-tertiary)]">Bản nháp AUTO được selector tạo. Chưa bài nào được đăng cho tới khi admin bấm “Đăng ngay”.</p>
+                </div>
+              </div>
+            </div>
+            <span className="rounded-full bg-amber-100 px-3 py-1 text-xs font-bold text-amber-800">{autoDrafts.length} bản nháp</span>
+          </div>
+          {!autoDrafts.length ? (
+            <p className="rounded-2xl border border-dashed border-amber-200 bg-[var(--bg-surface)] p-4 text-sm text-[var(--text-tertiary)]">Chưa có bản nháp tự động nào chờ duyệt.</p>
+          ) : (
+            <div className="space-y-3">
+              {autoDrafts.map(item => (
+                <article key={item.id} className="rounded-2xl border border-amber-200 bg-[var(--bg-surface)] p-4">
+                  <div className="flex flex-col justify-between gap-3 md:flex-row md:items-start">
+                    <div className="min-w-0">
+                      <div className="flex flex-wrap items-center gap-2">
+                        <p className="font-semibold text-[var(--text-primary)]">{String(item.contentSnapshot?.title || item.listingId)}</p>
+                        <span className="rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-bold text-amber-800">AUTO / DRAFT</span>
+                      </div>
+                      <p className="mt-1 text-xs text-[var(--text-tertiary)]">Tạo {formatDate(item.createdAt)} · Chờ admin kiểm tra</p>
+                      <p className="mt-2 line-clamp-3 whitespace-pre-wrap text-xs leading-5 text-[var(--text-secondary)]">{String(item.contentSnapshot?.caption || 'Caption tự động từ snapshot listing.')}</p>
+                      <div className="mt-2 flex flex-wrap gap-2">
+                        {item.targets.map(target => (
+                          <span key={target.id} className="rounded-full bg-[var(--glass-surface)] px-2.5 py-1 text-xs text-[var(--text-secondary)]">
+                            {target.platform} · {statusLabel[target.status] || target.status}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                    <div className="flex shrink-0 gap-2">
+                      <button disabled={busy} onClick={() => void activate(item.id)} className="rounded-lg bg-sgs-primary px-3 py-2 text-xs font-bold text-white disabled:opacity-50">Đăng ngay</button>
+                      <button disabled={busy} onClick={() => void cancel(item.id)} className="rounded-lg border border-[var(--glass-border)] px-3 py-2 text-xs font-semibold text-[var(--text-secondary)] disabled:opacity-50"><X size={14} /></button>
+                      <button type="button" disabled={detailLoading === item.id} onClick={() => void toggleDetails(item.id)} className="rounded-lg border border-[var(--glass-border)] px-3 py-2 text-xs font-semibold text-[var(--text-secondary)] disabled:opacity-50">
+                        {detailLoading === item.id ? 'Đang tải…' : expandedPublicationId === item.id ? 'Ẩn' : 'Chi tiết'}
+                      </button>
+                    </div>
+                  </div>
+                  {expandedPublicationId === item.id && publicationDetails[item.id] && renderTargetDetails(publicationDetails[item.id])}
+                </article>
+              ))}
+            </div>
+          )}
+        </section>
+
         <section className="rounded-3xl border border-[var(--glass-border)] bg-[var(--bg-surface)] p-5 shadow-sm">
           <h2 className="mb-4 font-bold text-[var(--text-primary)]">Publication đã lưu</h2>
-          {loading ? <p className="text-sm text-[var(--text-tertiary)]">Đang tải…</p> : !publications.length ? <p className="text-sm text-[var(--text-tertiary)]">Chưa có draft nào.</p> : (
+          {loading ? <p className="text-sm text-[var(--text-tertiary)]">Đang tải…</p> : !manualPublications.length ? <p className="text-sm text-[var(--text-tertiary)]">Chưa có publication thủ công nào.</p> : (
             <div className="space-y-3">
-              {publications.map(item => (
+              {manualPublications.map(item => (
                 <article key={item.id} className="rounded-2xl border border-[var(--glass-border)] p-4">
                   <div className="flex flex-col justify-between gap-3 md:flex-row md:items-start">
                     <div>

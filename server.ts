@@ -116,6 +116,8 @@ import { createCampaignRouter } from "./server/routes/campaignRoutes";
 import { createSocialPublicationRouter } from "./server/routes/socialPublicationRoutes";
 import { createSocialPublishingCronRouter } from "./server/routes/socialPublishingCronRoutes";
 import { startSocialPublishingWorker } from "./server/services/socialPublishingWorker";
+import { createAutoPostingRouter } from "./server/routes/autoPostingRoutes";
+import { startAutoPostingScheduler } from "./server/services/autoPostingSelector";
 import { registerSocialPublisher } from "./server/social-publishing/registry";
 import { facebookPagePublisher } from "./server/social-publishing/facebookPagePublisher";
 import { createErrorLogRoutes, initErrorLogRepo } from "./server/routes/errorLogRoutes";
@@ -5514,6 +5516,19 @@ app.get('/api/admin/agent-tasks', apiRateLimit, authenticateToken, async (req: e
       startSocialPublishingWorker(pool, 15 * 60 * 1000);
     } catch (err: any) {
       logger.warn(`[SocialPublishing] Không thể khởi động worker: ${err?.message || err}`);
+    }
+  }
+  {
+    const autoPostingSecret =
+      process.env.AUTO_POSTING_CRON_SECRET ||
+      process.env.SOCIAL_PUBLISHING_CRON_SECRET ||
+      process.env.JWT_SECRET?.slice(0, 32) ||
+      '';
+    app.use(createAutoPostingRouter(pool, authenticateToken, autoPostingSecret));
+    try {
+      startAutoPostingScheduler(pool, 15 * 60 * 1000);
+    } catch (err: any) {
+      logger.warn(`[AutoPosting] Không thể khởi động worker: ${err?.message || err}`);
     }
   }
 

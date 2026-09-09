@@ -78,7 +78,7 @@ export function createProjectRoutes(authenticateToken: any) {
       const user = (req as any).user;
       if (!ADMIN_ROLES.includes(user.role)) return res.status(403).json({ error: 'Không có quyền thực hiện' });
 
-      const { name, code, description, location, totalUnits, status, openDate, handoverDate, metadata } = req.body;
+      const { name, code, description, location, totalUnits, status, openDate, handoverDate, isFeatured, priority, metadata } = req.body;
       if (!name || typeof name !== 'string' || !name.trim()) {
         return res.status(400).json({ error: 'Tên dự án là bắt buộc' });
       }
@@ -95,6 +95,8 @@ export function createProjectRoutes(authenticateToken: any) {
         status,
         openDate,
         handoverDate,
+        isFeatured: Boolean(isFeatured),
+        priority: Number.isFinite(Number(priority)) ? Number(priority) : 0,
         metadata,
       });
       res.status(201).json(project);
@@ -140,7 +142,7 @@ export function createProjectRoutes(authenticateToken: any) {
       }
 
       const id = req.params.id as string;
-      const { name, code, description, location, totalUnits, status, openDate, handoverDate, metadata } = req.body;
+       const { name, code, description, location, totalUnits, status, openDate, handoverDate, isFeatured, priority, metadata } = req.body;
 
       if (totalUnits != null && (isNaN(Number(totalUnits)) || Number(totalUnits) < 0)) {
         return res.status(400).json({ error: 'Số căn phải là số không âm' });
@@ -162,6 +164,8 @@ export function createProjectRoutes(authenticateToken: any) {
         status,
         openDate: openDate === '' ? null : openDate,
         handoverDate: handoverDate === '' ? null : handoverDate,
+        isFeatured: isFeatured === undefined ? undefined : Boolean(isFeatured),
+        priority: priority === undefined ? undefined : Number(priority),
         metadata,
       });
       if (!updated) return res.status(404).json({ error: 'Không tìm thấy dự án' });

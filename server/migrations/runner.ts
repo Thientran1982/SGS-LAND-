@@ -210,6 +210,7 @@ import m186 from './186_social_publications';
 import m187 from './187_social_publication_audit';
 import m188 from './188_zalo_readiness_notification_retries';
 import m189 from './189_user_scoped_connectors';
+import m190 from './190_auto_posting_phase3';
 dotenv.config();
 
 export interface Migration {
@@ -415,6 +416,7 @@ export const MIGRATION_REGISTRY: Record<string, Migration> = {
   '187_social_publication_audit.ts': m187,
   '188_zalo_readiness_notification_retries.ts': m188,
   '189_user_scoped_connectors.ts': m189,
+  '190_auto_posting_phase3.ts': m190,
 };
 
 /**

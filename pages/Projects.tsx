@@ -98,6 +98,8 @@ function ProjectFormModal({ project, onSave, onClose, t }: ProjectFormProps) {
         gallery: Array.isArray(existingMeta.gallery) ? existingMeta.gallery.join('\n') : (existingMeta.gallery || ''),
         totalUnits: (p?.total_units ?? p?.totalUnits) != null ? String(p?.total_units ?? p?.totalUnits) : '',
         status: p?.status || 'ACTIVE',
+        isFeatured: Boolean(p?.is_featured ?? p?.isFeatured),
+        priority: String(p?.priority ?? 0),
         openDate: p?.open_date || p?.openDate || '',
         handoverDate: p?.handover_date || p?.handoverDate || '',
         driveUrl: existingMeta.drive_url || existingMeta.driveUrl || '',
@@ -227,6 +229,8 @@ function ProjectFormModal({ project, onSave, onClose, t }: ProjectFormProps) {
                 status: form.status,
                 openDate: form.openDate || null,
                 handoverDate: form.handoverDate || null,
+                isFeatured: form.isFeatured,
+                priority: Number(form.priority) || 0,
                 metadata: nextMeta,
             });
         } catch (e: any) {
@@ -377,6 +381,16 @@ function ProjectFormModal({ project, onSave, onClose, t }: ProjectFormProps) {
                                 <label htmlFor="pj-handover" className={labelCls}>{t('project.handover_date')}</label>
                                 <input id="pj-handover" type="date" className={inputCls} value={form.handoverDate} onChange={e => set('handoverDate', e.target.value)} />
                             </div>
+                        </div>
+                        <div className="col-span-2 grid grid-cols-1 sm:grid-cols-[1fr_140px] gap-4 rounded-xl border border-amber-200 bg-amber-50/50 p-3">
+                            <label className="flex items-center gap-3 text-sm font-semibold text-[var(--text-primary)]">
+                                <input type="checkbox" checked={form.isFeatured} onChange={e => setForm(current => ({ ...current, isFeatured: e.target.checked }))} className="h-4 w-4 accent-[var(--sgs-primary)]" />
+                                Dự án nổi bật cho selector tự động
+                            </label>
+                            <label>
+                                <span className={labelCls}>Ưu tiên</span>
+                                <input type="number" min="0" className={inputCls} value={form.priority} onChange={e => set('priority', e.target.value)} />
+                            </label>
                         </div>
                         {/* Cover image — single 16:9 hero photo for the project card */}
                         <div className="col-span-2">

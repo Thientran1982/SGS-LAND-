@@ -98,7 +98,11 @@ export function createSocialPublicationRouter(
 
   router.get('/api/social-publications', authenticateToken, async (req, res) => {
     if (!requireManager(req, res)) return;
-    const rows = await listSocialPublications(pool, tenantId(req), Number(req.query.limit) || 100);
+    const requestedSource = String(req.query.source || '').toUpperCase();
+    const source = requestedSource === 'AUTO' || requestedSource === 'MANUAL'
+      ? requestedSource as 'AUTO' | 'MANUAL'
+      : undefined;
+    const rows = await listSocialPublications(pool, tenantId(req), Number(req.query.limit) || 100, source);
     res.json({ data: rows, total: rows.length });
   });
 

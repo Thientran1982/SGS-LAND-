@@ -8,6 +8,7 @@ import { copyToClipboard } from '../utils/clipboard';
 import { ThemeCustomizer } from '../components/ThemeCustomizer';
 import { UserActivityPanel } from '../components/UserActivityPanel';
 import BrandingPanel from '../components/enterprise/BrandingPanel';
+import { autoPostingApi, AutoPostingSettings } from '../services/api/autoPostingApi';
 import { SeoHead } from '../components/SeoHead';
 // -----------------------------------------------------------------------------
 // CONSTANTS
@@ -730,6 +731,126 @@ const FacebookPanel = memo(({ config, onRefresh, notify }: { config: EnterpriseC
         </div>
     );
 });
+
+const AutoPostingPanel = memo(({ notify }: { notify: (m: string, t: 'success'|'error') => void }) => {
+    const [settings, setSettings] = useState<AutoPostingSettings | null>(null);
+    const [loading, setLoading] = useState(true);
+    const [saving, setSaving] = useState(false);
+    const [error, setError] = useState('');
+    const [start, setStart] = useState('08:00');
+    const [end, setEnd] = useState('11:00');
+
+    const load = useCallback(async () => {
+        setLoading(true);
+        try {
+            const value = await autoPostingApi.getSettings();
+            setSettings(value);
+            setStart(value.timeWindows?.[0]?.start || '08:00');
+            setEnd(value.timeWindows?.[0]?.end || '11:00');
+            setError('');
+        } catch (e: any) {
+            setError(e?.message || 'Không tải được cấu hình tự động');
+        } finally {
+            setLoading(false);
+        }
+    }, []);
+
+    useEffect(() => { void load(); }, [load]);
+
+    const togglePlatform = (platform: string) => {
+        setSettings(current => {
+            if (!current) return current;
+            const platforms = current.platforms.includes(platform)
+                ? current.platforms.filter(item => item !== platform)
+                : [...current.platforms, platform];
+            return { ...current, platforms: platforms.length ? platforms : ['FACEBOOK_PAGE'] };
+        });
+    };
+
+    const save = async () => {
+        if (!settings) return;
+        setSaving(true);
+        try {
+            const saved = await autoPostingApi.updateSettings({
+                enabled: settings.enabled,
+                postsPerDay: settings.postsPerDay,
+                recycleAfterDays: settings.recycleAfterDays,
+                timeWindows: [{ start, end }],
+                platforms: settings.platforms,
+            });
+            setSettings(saved);
+            notify('Đã lưu cấu hình tạo nháp tự động.', 'success');
+        } catch (e: any) {
+            notify(e?.message || 'Không thể lưu cấu hình tự động.', 'error');
+        } finally {
+            setSaving(false);
+        }
+    };
+
+    if (loading) return <div className="p-6 text-sm text-[var(--text-secondary)]">Đang tải cấu hình…</div>;
+    if (!settings) return <div className="rounded-2xl border border-rose-200 bg-rose-50 p-5 text-sm text-rose-700">{error || 'Không có cấu hình.'}</div>;
+
+    return (
+        <div className="max-w-3xl animate-enter">
+            <SectionHeader
+                title="Tạo nháp social tự động"
+                subtitle="Selector chỉ tạo bản nháp AUTO/DRAFT. Không nền tảng nào được gọi để đăng bài ở bước này."
+            />
+            <div className="space-y-5 rounded-3xl border border-[var(--glass-border)] bg-[var(--bg-surface)] p-6 shadow-sm">
+                <label className="flex items-center justify-between gap-4 rounded-2xl border border-[var(--glass-border)] bg-[var(--glass-surface)] p-4">
+                    <span>
+                        <span className="block text-sm font-bold text-[var(--text-primary)]">Bật tạo nháp tự động</span>
+                        <span className="mt-1 block text-xs text-[var(--text-tertiary)]">Mỗi chu kỳ sẽ tạo tối đa số lượng bài đã cấu hình để admin duyệt.</span>
+                    </span>
+                    <input
+                        type="checkbox"
+                        checked={settings.enabled}
+                        onChange={event => setSettings({ ...settings, enabled: event.target.checked })}
+                        className="h-5 w-5 accent-[var(--sgs-primary)]"
+                    />
+                </label>
+                <div className="grid gap-4 sm:grid-cols-2">
+                    <label className="block">
+                        <span className="mb-2 block text-xs font-bold uppercase text-[var(--text-tertiary)]">Số bài tối đa mỗi ngày</span>
+                        <input type="number" min={1} max={50} value={settings.postsPerDay} onChange={event => setSettings({ ...settings, postsPerDay: Number(event.target.value) })} className="w-full rounded-xl border border-[var(--glass-border)] bg-[var(--bg-app)] px-3 py-2.5 text-sm" />
+                    </label>
+                    <label className="block">
+                        <span className="mb-2 block text-xs font-bold uppercase text-[var(--text-tertiary)]">Recycle sau (ngày)</span>
+                        <input type="number" min={0} value={settings.recycleAfterDays} onChange={event => setSettings({ ...settings, recycleAfterDays: Number(event.target.value) })} className="w-full rounded-xl border border-[var(--glass-border)] bg-[var(--bg-app)] px-3 py-2.5 text-sm" />
+                    </label>
+                </div>
+                <div>
+                    <span className="mb-2 block text-xs font-bold uppercase text-[var(--text-tertiary)]">Khung giờ chạy</span>
+                    <div className="flex flex-wrap items-center gap-3">
+                        <input type="time" value={start} onChange={event => setStart(event.target.value)} className="rounded-xl border border-[var(--glass-border)] bg-[var(--bg-app)] px-3 py-2.5 text-sm" />
+                        <span className="text-sm text-[var(--text-tertiary)]">đến</span>
+                        <input type="time" value={end} onChange={event => setEnd(event.target.value)} className="rounded-xl border border-[var(--glass-border)] bg-[var(--bg-app)] px-3 py-2.5 text-sm" />
+                    </div>
+                    <p className="mt-2 text-xs text-[var(--text-tertiary)]">Scheduler dùng múi giờ máy chủ hiện tại. Ngoài khung giờ này sẽ không tạo draft.</p>
+                </div>
+                <div>
+                    <span className="mb-2 block text-xs font-bold uppercase text-[var(--text-tertiary)]">Nền tảng áp dụng</span>
+                    <div className="grid gap-3 sm:grid-cols-2">
+                        {[
+                            ['FACEBOOK_PAGE', 'Facebook Page'],
+                            ['ZALO_BROADCAST', 'Zalo OA broadcast'],
+                        ].map(([platform, label]) => (
+                            <label key={platform} className={`flex items-center gap-3 rounded-xl border p-3 ${settings.platforms.includes(platform) ? 'border-sgs-primary bg-sgs-primary/5' : 'border-[var(--glass-border)]'}`}>
+                                <input type="checkbox" checked={settings.platforms.includes(platform)} onChange={() => togglePlatform(platform)} className="h-4 w-4 accent-[var(--sgs-primary)]" />
+                                <span className="text-sm font-semibold text-[var(--text-primary)]">{label}</span>
+                            </label>
+                        ))}
+                    </div>
+                    <p className="mt-2 text-xs text-[var(--text-tertiary)]">Nền tảng chưa READY sẽ bị bỏ qua cho lần tạo đó và được ghi vào audit event.</p>
+                </div>
+                {error && <p className="rounded-xl border border-rose-200 bg-rose-50 p-3 text-xs text-rose-700">{error}</p>}
+                <button type="button" onClick={() => void save()} disabled={saving} className="rounded-xl bg-sgs-primary px-5 py-3 text-sm font-bold text-white disabled:opacity-50">
+                    {saving ? 'Đang lưu…' : 'Lưu cấu hình'}
+                </button>
+            </div>
+        </div>
+    );
+});
 const EmailPanel = memo(({ config, onRefresh, notify }: { config: EnterpriseConfig, onRefresh: () => void, notify: (m: string, t: 'success'|'error') => void }) => {
     const { t } = useTranslation();
     const [form, setForm] = useState(config.email);
@@ -1221,7 +1342,7 @@ const AuditPanel = memo(() => {
 export const EnterpriseSettings: React.FC = () => {
     const [activeTab, setActiveTab] = useState(() => {
         const requestedTab = new URLSearchParams(window.location.search).get('tab');
-        return requestedTab === 'FACEBOOK' ? 'FACEBOOK' : 'ZALO';
+        return requestedTab === 'FACEBOOK' || requestedTab === 'AUTO_POSTING' ? requestedTab : 'ZALO';
     });
     const [config, setConfig] = useState<EnterpriseConfig | null>(null);
     const [loading, setLoading] = useState(true);
@@ -1273,6 +1394,7 @@ export const EnterpriseSettings: React.FC = () => {
         { id: 'ACTIVITY', label: 'Nhật Ký Truy Cập' },
         { id: 'ZALO', label: t('ent.tab_zalo') },
         { id: 'FACEBOOK', label: t('ent.tab_social') },
+        { id: 'AUTO_POSTING', label: 'Tự động tạo nháp' },
         { id: 'EMAIL', label: t('ent.tab_email') },
         { id: 'SSO', label: t('ent.tab_sso') },
         { id: 'DOMAINS', label: t('ent.tab_domain') },
@@ -1334,6 +1456,7 @@ export const EnterpriseSettings: React.FC = () => {
                 {activeTab === 'ACTIVITY' && <UserActivityPanel />}
                 {activeTab === 'ZALO' && <ZaloPanel config={config} onRefresh={loadConfig} notify={notify} />}
                 {activeTab === 'FACEBOOK' && <FacebookPanel config={config} onRefresh={loadConfig} notify={notify} />}
+                {activeTab === 'AUTO_POSTING' && <AutoPostingPanel notify={notify} />}
                 {activeTab === 'EMAIL' && <EmailPanel config={config} onRefresh={loadConfig} notify={notify} />}
                 {activeTab === 'SSO' && <SSOPanel config={config} onRefresh={loadConfig} notify={notify} />}
                 {activeTab === 'DOMAINS' && <DomainPanel config={config} onRefresh={loadConfig} notify={notify} />}

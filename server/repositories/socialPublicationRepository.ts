@@ -9,6 +9,8 @@ export interface PublicationCreateInput {
   contentSnapshot: Record<string, unknown>;
   assetSnapshot: string[];
   platforms: string[];
+  source?: 'MANUAL' | 'AUTO';
+  autoPostingKey?: string | null;
 }
 
 function mapTarget(row: any, attempts?: any[]) {
@@ -71,6 +73,8 @@ function mapPublication(row: any, targets: any[] = [], events: any[] = []) {
     listingId: row.listing_id,
     createdBy: row.created_by,
     status: row.status,
+    source: row.source || 'MANUAL',
+    autoPostingKey: row.auto_posting_key || null,
     publishMode: row.publish_mode,
     scheduledAt: row.scheduled_at,
     contentSnapshot: row.content_snapshot,
@@ -91,8 +95,9 @@ export async function createSocialPublication(pool: Pool, input: PublicationCrea
     await client.query('BEGIN');
     const publication = await client.query(
       `INSERT INTO social_publications
-        (tenant_id, listing_id, created_by, status, publish_mode, scheduled_at, content_snapshot, asset_snapshot)
-       VALUES ($1, $2, $3, 'DRAFT', $4, $5, $6::jsonb, $7::jsonb)
+        (tenant_id, listing_id, created_by, status, publish_mode, scheduled_at,
+         content_snapshot, asset_snapshot, source, auto_posting_key)
+       VALUES ($1, $2, $3, 'DRAFT', $4, $5, $6::jsonb, $7::jsonb, $8, $9)
        RETURNING *`,
       [
         input.tenantId,
@@ -102,6 +107,8 @@ export async function createSocialPublication(pool: Pool, input: PublicationCrea
         input.scheduledAt,
         JSON.stringify(input.contentSnapshot),
         JSON.stringify(input.assetSnapshot),
+        input.source || 'MANUAL',
+        input.autoPostingKey || null,
       ],
     );
     const targetResult = await client.query(
@@ -123,13 +130,19 @@ export async function createSocialPublication(pool: Pool, input: PublicationCrea
   }
 }
 
-export async function listSocialPublications(pool: Pool, tenantId: string, limit = 100) {
+export async function listSocialPublications(
+  pool: Pool,
+  tenantId: string,
+  limit = 100,
+  source?: 'MANUAL' | 'AUTO',
+) {
   const result = await pool.query(
     `SELECT * FROM social_publications
       WHERE tenant_id = $1
+        AND ($3::text IS NULL OR source = $3)
       ORDER BY created_at DESC
       LIMIT $2`,
-    [tenantId, Math.min(Math.max(limit, 1), 200)],
+    [tenantId, Math.min(Math.max(limit, 1), 200), source || null],
   );
   if (!result.rows.length) return [];
   const targets = await pool.query(
