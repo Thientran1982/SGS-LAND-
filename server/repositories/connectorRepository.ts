@@ -5,6 +5,7 @@ const ENSURE_TABLES_SQL = `
   CREATE TABLE IF NOT EXISTS connector_configs (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     tenant_id UUID NOT NULL DEFAULT '00000000-0000-0000-0000-000000000001',
+    owner_user_id UUID REFERENCES users(id) ON DELETE SET NULL,
     type VARCHAR(50) NOT NULL,
     name VARCHAR(255) NOT NULL,
     status VARCHAR(20) NOT NULL DEFAULT 'ACTIVE',
@@ -18,6 +19,7 @@ const ENSURE_TABLES_SQL = `
   CREATE TABLE IF NOT EXISTS sync_jobs (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     tenant_id UUID NOT NULL DEFAULT '00000000-0000-0000-0000-000000000001',
+    owner_user_id UUID REFERENCES users(id) ON DELETE SET NULL,
     connector_id UUID NOT NULL,
     started_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
     finished_at TIMESTAMPTZ,
@@ -42,30 +44,33 @@ class ConnectorRepository extends BaseRepository {
     super('connector_configs');
   }
 
-  async listByTenant(tenantId: string): Promise<any[]> {
+  async listByUser(tenantId: string, ownerUserId: string): Promise<any[]> {
     await ensureTables();
     return this.withTenant(tenantId, async (client) => {
       const result = await client.query(
-        `SELECT * FROM connector_configs ORDER BY created_at DESC`
+        `SELECT * FROM connector_configs
+         WHERE tenant_id = $1 AND owner_user_id = $2
+         ORDER BY created_at DESC`,
+        [tenantId, ownerUserId],
       );
       return this.rowsToEntities(result.rows);
     });
   }
 
-  async create(tenantId: string, data: { type: string; name: string; config: Record<string, unknown> }): Promise<any> {
+  async create(tenantId: string, ownerUserId: string, data: { type: string; name: string; config: Record<string, unknown> }): Promise<any> {
     await ensureTables();
     return this.withTenant(tenantId, async (client) => {
       const result = await client.query(
-        `INSERT INTO connector_configs (tenant_id, type, name, config, status)
-         VALUES ($1, $2, $3, $4, 'ACTIVE')
+        `INSERT INTO connector_configs (tenant_id, owner_user_id, type, name, config, status)
+         VALUES ($1, $2, $3, $4, $5, 'ACTIVE')
          RETURNING *`,
-        [tenantId, data.type, data.name, JSON.stringify(data.config)]
+        [tenantId, ownerUserId, data.type, data.name, JSON.stringify(data.config)]
       );
       return this.rowToEntity(result.rows[0]);
     });
   }
 
-  async update(tenantId: string, id: string, data: Record<string, any>): Promise<any> {
+  async update(tenantId: string, ownerUserId: string, id: string, data: Record<string, any>): Promise<any> {
     await ensureTables();
     return this.withTenant(tenantId, async (client) => {
       const result = await client.query(
@@ -76,7 +81,7 @@ class ConnectorRepository extends BaseRepository {
              last_sync_at = COALESCE($4, last_sync_at),
              last_sync_status = COALESCE($5, last_sync_status),
              updated_at = CURRENT_TIMESTAMP
-         WHERE id = $6 AND tenant_id = $7
+          WHERE id = $6 AND tenant_id = $7 AND owner_user_id = $8
          RETURNING *`,
         [
           data.name ?? null,
@@ -86,29 +91,30 @@ class ConnectorRepository extends BaseRepository {
           data.lastSyncStatus ?? null,
           id,
           tenantId,
+          ownerUserId,
         ]
       );
       return result.rows[0] ? this.rowToEntity(result.rows[0]) : null;
     });
   }
 
-  async delete(tenantId: string, id: string): Promise<boolean> {
+  async delete(tenantId: string, ownerUserId: string, id: string): Promise<boolean> {
     await ensureTables();
     return this.withTenant(tenantId, async (client) => {
       const result = await client.query(
-        `DELETE FROM connector_configs WHERE id = $1 AND tenant_id = $2`,
-        [id, tenantId]
+        `DELETE FROM connector_configs WHERE id = $1 AND tenant_id = $2 AND owner_user_id = $3`,
+        [id, tenantId, ownerUserId]
       );
       return (result.rowCount ?? 0) > 0;
     });
   }
 
-  async findById(tenantId: string, id: string): Promise<any | null> {
+  async findByUser(tenantId: string, ownerUserId: string, id: string): Promise<any | null> {
     await ensureTables();
     return this.withTenant(tenantId, async (client) => {
       const result = await client.query(
-        `SELECT * FROM connector_configs WHERE id = $1 AND tenant_id = $2`,
-        [id, tenantId]
+        `SELECT * FROM connector_configs WHERE id = $1 AND tenant_id = $2 AND owner_user_id = $3`,
+        [id, tenantId, ownerUserId]
       );
       return result.rows[0] ? this.rowToEntity(result.rows[0]) : null;
     });
@@ -120,12 +126,14 @@ class SyncJobRepository extends BaseRepository {
     super('sync_jobs');
   }
 
-  async listByTenant(tenantId: string, limit = 50): Promise<any[]> {
+  async listByUser(tenantId: string, ownerUserId: string, limit = 50): Promise<any[]> {
     await ensureTables();
     return this.withTenant(tenantId, async (client) => {
       const result = await client.query(
-        `SELECT * FROM sync_jobs ORDER BY started_at DESC LIMIT $1`,
-        [limit]
+        `SELECT * FROM sync_jobs
+         WHERE tenant_id = $1 AND owner_user_id = $2
+         ORDER BY started_at DESC LIMIT $3`,
+        [tenantId, ownerUserId, limit]
       );
       return this.rowsToEntities<any>(result.rows).map(j => ({
         ...j,
@@ -134,21 +142,21 @@ class SyncJobRepository extends BaseRepository {
     });
   }
 
-  async create(tenantId: string, data: { connectorId: string; status?: string }): Promise<any> {
+  async create(tenantId: string, ownerUserId: string, data: { connectorId: string; status?: string }): Promise<any> {
     await ensureTables();
     return this.withTenant(tenantId, async (client) => {
       const result = await client.query(
-        `INSERT INTO sync_jobs (tenant_id, connector_id, status, started_at)
-         VALUES ($1, $2, $3, CURRENT_TIMESTAMP)
+        `INSERT INTO sync_jobs (tenant_id, owner_user_id, connector_id, status, started_at)
+         VALUES ($1, $2, $3, $4, CURRENT_TIMESTAMP)
          RETURNING *`,
-        [tenantId, data.connectorId, data.status ?? 'QUEUED']
+        [tenantId, ownerUserId, data.connectorId, data.status ?? 'QUEUED']
       );
       const row = this.rowToEntity<any>(result.rows[0]);
       return { ...row, errors: [] };
     });
   }
 
-  async update(tenantId: string, id: string, data: Record<string, any>): Promise<any> {
+  async update(tenantId: string, ownerUserId: string, id: string, data: Record<string, any>): Promise<any> {
     await ensureTables();
     return this.withTenant(tenantId, async (client) => {
       const result = await client.query(
@@ -159,7 +167,7 @@ class SyncJobRepository extends BaseRepository {
              errors = COALESCE($4, errors),
              retry_count = COALESCE($5, retry_count),
              updated_at = CURRENT_TIMESTAMP
-         WHERE id = $6 AND tenant_id = $7
+              WHERE id = $6 AND tenant_id = $7 AND owner_user_id = $8
          RETURNING *`,
         [
           data.status ?? null,
@@ -169,6 +177,7 @@ class SyncJobRepository extends BaseRepository {
           data.retryCount ?? null,
           id,
           tenantId,
+          ownerUserId,
         ]
       );
       const row = result.rows[0] ? this.rowToEntity<any>(result.rows[0]) : null;
@@ -176,12 +185,12 @@ class SyncJobRepository extends BaseRepository {
     });
   }
 
-  async findById(tenantId: string, id: string): Promise<any | null> {
+  async findByUser(tenantId: string, ownerUserId: string, id: string): Promise<any | null> {
     await ensureTables();
     return this.withTenant(tenantId, async (client) => {
       const result = await client.query(
-        `SELECT * FROM sync_jobs WHERE id = $1 AND tenant_id = $2`,
-        [id, tenantId]
+        `SELECT * FROM sync_jobs WHERE id = $1 AND tenant_id = $2 AND owner_user_id = $3`,
+        [id, tenantId, ownerUserId]
       );
       if (!result.rows[0]) return null;
       const row = this.rowToEntity<any>(result.rows[0]);

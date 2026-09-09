@@ -2,7 +2,7 @@ import { Router, Request, Response } from 'express';
 import { connectorRepository, syncJobRepository } from '../repositories/connectorRepository';
 
 const CONNECTOR_TYPES = new Set(['GOOGLE_SHEETS', 'HUBSPOT', 'ZOHO_CRM', 'WEBHOOK_EXPORT', 'SALESFORCE']);
-const CONNECTOR_ROLES = new Set(['SUPER_ADMIN', 'ADMIN', 'TEAM_LEAD']);
+const CONNECTOR_ROLES = new Set(['SUPER_ADMIN', 'ADMIN', 'TEAM_LEAD', 'MANAGER', 'SALES', 'MARKETING']);
 const SENSITIVE_CONFIG_KEY = /(api.?key|access.?token|refresh.?token|client.?secret|password|secret|credential)/i;
 
 function publicConnector(connector: any): any {
@@ -45,8 +45,8 @@ export function createConnectorRoutes(authenticateToken: any) {
   // ── GET /api/connectors ──────────────────────────────────────────────────
   router.get('/', authenticateToken, async (req: Request, res: Response) => {
     try {
-      const { tenantId } = (req as any).user;
-      const connectors = await connectorRepository.listByTenant(tenantId);
+      const { tenantId, id: userId } = (req as any).user;
+      const connectors = await connectorRepository.listByUser(tenantId, userId);
       res.json(connectors.map(publicConnector));
     } catch (err) {
       console.error('GET connectors error:', err);
@@ -57,9 +57,9 @@ export function createConnectorRoutes(authenticateToken: any) {
   // ── POST /api/connectors ─────────────────────────────────────────────────
   router.post('/', authenticateToken, async (req: Request, res: Response) => {
     try {
-      const { tenantId, role } = (req as any).user;
+      const { tenantId, id: userId, role } = (req as any).user;
       if (!CONNECTOR_ROLES.has(role)) {
-        return res.status(403).json({ error: 'Only admins can create connectors' });
+        return res.status(403).json({ error: 'User is not allowed to create connectors' });
       }
       const { type, name, config } = req.body;
       if (!type || !name) {
@@ -67,7 +67,7 @@ export function createConnectorRoutes(authenticateToken: any) {
       }
       const validationError = validateConnectorInput(type, config ?? {});
       if (validationError) return res.status(400).json({ error: validationError });
-      const connector = await connectorRepository.create(tenantId, { type, name, config: config ?? {} });
+      const connector = await connectorRepository.create(tenantId, userId, { type, name, config: config ?? {} });
       res.status(201).json(publicConnector(connector));
     } catch (err) {
       console.error('POST connector error:', err);
@@ -78,11 +78,11 @@ export function createConnectorRoutes(authenticateToken: any) {
   // ── PUT /api/connectors/:id ──────────────────────────────────────────────
   router.put('/:id', authenticateToken, async (req: Request, res: Response) => {
     try {
-      const { tenantId, role } = (req as any).user;
+      const { tenantId, id: userId, role } = (req as any).user;
       if (!CONNECTOR_ROLES.has(role)) {
-        return res.status(403).json({ error: 'Only admins can update connectors' });
+        return res.status(403).json({ error: 'User is not allowed to update connectors' });
       }
-      const existing = await connectorRepository.findById(tenantId, req.params.id as string);
+      const existing = await connectorRepository.findByUser(tenantId, userId, req.params.id as string);
       if (!existing) return res.status(404).json({ error: 'Connector not found' });
       if (req.body?.type && !CONNECTOR_TYPES.has(String(req.body.type))) {
         return res.status(400).json({ error: 'Loại connector không được hỗ trợ' });
@@ -94,7 +94,7 @@ export function createConnectorRoutes(authenticateToken: any) {
       if (req.body?.status && !['ACTIVE', 'PAUSED', 'ERROR'].includes(String(req.body.status))) {
         return res.status(400).json({ error: 'Trạng thái connector không hợp lệ' });
       }
-      const updated = await connectorRepository.update(tenantId, req.params.id as string, req.body);
+      const updated = await connectorRepository.update(tenantId, userId, req.params.id as string, req.body);
       res.json(publicConnector(updated));
     } catch (err) {
       console.error('PUT connector error:', err);
@@ -105,11 +105,11 @@ export function createConnectorRoutes(authenticateToken: any) {
   // ── DELETE /api/connectors/:id ───────────────────────────────────────────
   router.delete('/:id', authenticateToken, async (req: Request, res: Response) => {
     try {
-      const { tenantId, role } = (req as any).user;
+      const { tenantId, id: userId, role } = (req as any).user;
       if (!CONNECTOR_ROLES.has(role)) {
-        return res.status(403).json({ error: 'Only admins can delete connectors' });
+        return res.status(403).json({ error: 'User is not allowed to delete connectors' });
       }
-      const deleted = await connectorRepository.delete(tenantId, req.params.id as string);
+      const deleted = await connectorRepository.delete(tenantId, userId, req.params.id as string);
       if (!deleted) return res.status(404).json({ error: 'Connector not found' });
       res.json({ message: 'Connector deleted' });
     } catch (err) {
@@ -121,11 +121,11 @@ export function createConnectorRoutes(authenticateToken: any) {
   // ── POST /api/connectors/:id/check ───────────────────────────────────────
   router.post('/:id/check', authenticateToken, async (req: Request, res: Response) => {
     try {
-      const { tenantId, role } = (req as any).user;
+      const { tenantId, id: userId, role } = (req as any).user;
       if (!CONNECTOR_ROLES.has(role)) {
-        return res.status(403).json({ error: 'Only admins can check connectors' });
+        return res.status(403).json({ error: 'User is not allowed to check connectors' });
       }
-      const connector = await connectorRepository.findById(tenantId, req.params.id as string);
+      const connector = await connectorRepository.findByUser(tenantId, userId, req.params.id as string);
       if (!connector) return res.status(404).json({ error: 'Connector not found' });
       const validationError = validateConnectorInput(connector.type, connector.config);
       const checks = [
@@ -150,11 +150,11 @@ export function createConnectorRoutes(authenticateToken: any) {
   // ── POST /api/connectors/:id/sync ────────────────────────────────────────
   router.post('/:id/sync', authenticateToken, async (req: Request, res: Response) => {
     try {
-      const { tenantId } = (req as any).user;
-      const connector = await connectorRepository.findById(tenantId, req.params.id as string);
+      const { tenantId, id: userId } = (req as any).user;
+      const connector = await connectorRepository.findByUser(tenantId, userId, req.params.id as string);
       if (!connector) return res.status(404).json({ error: 'Connector not found' });
 
-      const job = await syncJobRepository.create(tenantId, {
+      const job = await syncJobRepository.create(tenantId, userId, {
         connectorId: connector.id,
         status: 'QUEUED',
       });
@@ -163,26 +163,26 @@ export function createConnectorRoutes(authenticateToken: any) {
       // Run sync asynchronously (fire-and-forget with DB status updates)
       setImmediate(async () => {
         try {
-          await syncJobRepository.update(tenantId, job.id, { status: 'RUNNING' });
+          await syncJobRepository.update(tenantId, userId, job.id, { status: 'RUNNING' });
           // Simulate processing: 50-200 records
           const records = Math.floor(Math.random() * 150) + 50;
           await new Promise(r => setTimeout(r, 800 + Math.random() * 1200));
-          await syncJobRepository.update(tenantId, job.id, {
+          await syncJobRepository.update(tenantId, userId, job.id, {
             status: 'COMPLETED',
             recordsProcessed: records,
             finishedAt: new Date().toISOString(),
           });
-          await connectorRepository.update(tenantId, connector.id, {
+          await connectorRepository.update(tenantId, userId, connector.id, {
             lastSyncAt: new Date().toISOString(),
             lastSyncStatus: 'COMPLETED',
           });
         } catch (e: any) {
-          await syncJobRepository.update(tenantId, job.id, {
+          await syncJobRepository.update(tenantId, userId, job.id, {
             status: 'FAILED',
             finishedAt: new Date().toISOString(),
             errors: [e.message || 'Sync failed'],
           }).catch(() => {});
-          await connectorRepository.update(tenantId, connector.id, {
+          await connectorRepository.update(tenantId, userId, connector.id, {
             lastSyncAt: new Date().toISOString(),
             lastSyncStatus: 'FAILED',
           }).catch(() => {});
@@ -197,9 +197,9 @@ export function createConnectorRoutes(authenticateToken: any) {
   // ── GET /api/connectors/jobs ─────────────────────────────────────────────
   router.get('/jobs', authenticateToken, async (req: Request, res: Response) => {
     try {
-      const { tenantId } = (req as any).user;
+      const { tenantId, id: userId } = (req as any).user;
       const limit = Number(req.query.limit) || 50;
-      const jobs = await syncJobRepository.listByTenant(tenantId, limit);
+      const jobs = await syncJobRepository.listByUser(tenantId, userId, limit);
       res.json(jobs);
     } catch (err) {
       console.error('GET sync jobs error:', err);
@@ -210,8 +210,8 @@ export function createConnectorRoutes(authenticateToken: any) {
   // ── GET /api/connectors/jobs/:jobId ─────────────────────────────────────
   router.get('/jobs/:jobId', authenticateToken, async (req: Request, res: Response) => {
     try {
-      const { tenantId } = (req as any).user;
-      const job = await syncJobRepository.findById(tenantId, req.params.jobId as string);
+      const { tenantId, id: userId } = (req as any).user;
+      const job = await syncJobRepository.findByUser(tenantId, userId, req.params.jobId as string);
       if (!job) return res.status(404).json({ error: 'Job not found' });
       res.json(job);
     } catch (err) {

@@ -35,6 +35,7 @@
 - [Email report retry semantics](email-report-retry-semantics.md) — retry definitive failures, but never blindly retry ambiguous provider outcomes
 - [Provider delivery lookup](provider-delivery-lookup.md) — Brevo delivery verification uses a stable delivery-key tag; unsupported providers stay manual
 - [Connection gateway safety](connection-gateway-safety.md) — API/MCP connections are tenant-scoped, credential-redacted, and explicit about config-only versus live checks
+- [User-scoped connector ownership](user-scoped-connectors.md) — connector credentials and sync history require tenant plus authenticated owner user; orphaned rows are not shared
 - [Zalo readiness transition alerts](zalo-readiness-alerts.md) — serialize READY → NOT_READY detection per tenant and notify with allowlisted code/time only
 - [Durable signal health](durable-signal-health.md) — aggregate sanitized signal-write failures durably by tenant/type so restart does not erase operational alerts
 - [Minh answer focus](minh-answer-focus.md) — current user message and tenant-scoped evidence outrank old memory; unrelated history must not become prompt instructions

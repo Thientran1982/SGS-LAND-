@@ -21,17 +21,17 @@ vi.mock('../middleware/rateLimiter', () => ({
 
 vi.mock('../repositories/connectorRepository', () => ({
   connectorRepository: {
-    listByTenant: state.listConnectors,
+    listByUser: state.listConnectors,
     create: state.createConnector,
-    findById: state.findConnector,
+    findByUser: state.findConnector,
     update: state.updateConnector,
     delete: state.deleteConnector,
   },
   syncJobRepository: {
     create: vi.fn(),
     update: vi.fn(),
-    listByTenant: vi.fn(),
-    findById: vi.fn(),
+    listByUser: vi.fn(),
+    findByUser: vi.fn(),
   },
 }));
 
@@ -92,7 +92,7 @@ async function startTestServer() {
   app.use(express.json());
   app.use((req, _res, next) => {
     (req as any).user = {
-      id: 'user-a',
+      id: req.header('x-user-id') || 'user-a',
       tenantId: req.header('x-tenant-id') || TENANT_A,
       role: req.header('x-role') || 'ADMIN',
     };
@@ -108,7 +108,7 @@ async function startTestServer() {
 
   return {
     server,
-    request: (path: string, options: { method?: string; body?: unknown; role?: string; tenantId?: string } = {}) =>
+    request: (path: string, options: { method?: string; body?: unknown; role?: string; tenantId?: string; userId?: string } = {}) =>
       new Promise<TestResponse>((resolve, reject) => {
         const body = options.body === undefined ? undefined : JSON.stringify(options.body);
         const req = httpRequest({
@@ -120,6 +120,7 @@ async function startTestServer() {
             ...(body ? { 'content-type': 'application/json', 'content-length': Buffer.byteLength(body) } : {}),
             'x-role': options.role || 'ADMIN',
             'x-tenant-id': options.tenantId || TENANT_A,
+            'x-user-id': options.userId || 'user-a',
           },
         }, response => {
           const chunks: Buffer[] = [];
@@ -256,14 +257,14 @@ describe('API and MCP connection tenant isolation', () => {
     expect(create.body.config.apiKey).toBe('[REDACTED]');
     expect(update.body.config.apiKey).toBe('[REDACTED]');
 
-    expect(state.listConnectors).toHaveBeenCalledWith(TENANT_A);
-    expect(state.createConnector).toHaveBeenCalledWith(TENANT_A, {
+    expect(state.listConnectors).toHaveBeenCalledWith(TENANT_A, 'user-a');
+    expect(state.createConnector).toHaveBeenCalledWith(TENANT_A, 'user-a', {
       type: 'HUBSPOT',
       name: 'Created connector',
       config: { apiKey: 'new-api-key' },
     });
-    expect(state.findConnector).toHaveBeenCalledWith(TENANT_A, CONNECTOR_ID);
-    expect(state.updateConnector).toHaveBeenCalledWith(TENANT_A, CONNECTOR_ID, {
+    expect(state.findConnector).toHaveBeenCalledWith(TENANT_A, 'user-a', CONNECTOR_ID);
+    expect(state.updateConnector).toHaveBeenCalledWith(TENANT_A, 'user-a', CONNECTOR_ID, {
       name: 'Updated connector',
       config: { apiKey: 'updated-api-key' },
     });
@@ -278,9 +279,39 @@ describe('API and MCP connection tenant isolation', () => {
 
     expect(update.status).toBe(200);
     expect(deleted.status).toBe(200);
-    expect(state.findConnector).toHaveBeenCalledWith(TENANT_A, CONNECTOR_ID);
-    expect(state.updateConnector).toHaveBeenCalledWith(TENANT_A, CONNECTOR_ID, { name: 'Tenant A update' });
-    expect(state.deleteConnector).toHaveBeenCalledWith(TENANT_A, CONNECTOR_ID);
+    expect(state.findConnector).toHaveBeenCalledWith(TENANT_A, 'user-a', CONNECTOR_ID);
+    expect(state.updateConnector).toHaveBeenCalledWith(TENANT_A, 'user-a', CONNECTOR_ID, { name: 'Tenant A update' });
+    expect(state.deleteConnector).toHaveBeenCalledWith(TENANT_A, 'user-a', CONNECTOR_ID);
+  });
+
+  it('does not let a user inspect or mutate another user connector in the same tenant', async () => {
+    state.findConnector.mockImplementation(async (_tenantId: string, userId: string) =>
+      userId === 'user-a' ? connectorWithSecrets() : null,
+    );
+    state.deleteConnector.mockImplementation(async (_tenantId: string, userId: string) =>
+      userId === 'user-a',
+    );
+
+    const foreignUpdate = await testServer.request(`/api/connectors/${CONNECTOR_ID}`, {
+      method: 'PUT',
+      userId: 'user-b',
+      body: { name: 'Should not update' },
+    });
+    const foreignDelete = await testServer.request(`/api/connectors/${CONNECTOR_ID}`, {
+      method: 'DELETE',
+      userId: 'user-b',
+    });
+    const foreignCheck = await testServer.request(`/api/connectors/${CONNECTOR_ID}/check`, {
+      method: 'POST',
+      userId: 'user-b',
+    });
+
+    expect(foreignUpdate.status).toBe(404);
+    expect(foreignDelete.status).toBe(404);
+    expect(foreignCheck.status).toBe(404);
+    expect(state.findConnector).toHaveBeenCalledWith(TENANT_A, 'user-b', CONNECTOR_ID);
+    expect(state.updateConnector).not.toHaveBeenCalled();
+    expect(state.deleteConnector).toHaveBeenCalledWith(TENANT_A, 'user-b', CONNECTOR_ID);
   });
 
   it('returns 403 and does not create an MCP server or connector for non-admin users', async () => {

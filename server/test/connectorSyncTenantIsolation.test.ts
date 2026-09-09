@@ -13,14 +13,14 @@ const state = vi.hoisted(() => ({
 
 vi.mock('../repositories/connectorRepository', () => ({
   connectorRepository: {
-    findById: state.findConnector,
+    findByUser: state.findConnector,
     update: state.updateConnector,
   },
   syncJobRepository: {
     create: state.createJob,
     update: state.updateJob,
-    listByTenant: state.listJobs,
-    findById: state.findJob,
+    listByUser: state.listJobs,
+    findByUser: state.findJob,
   },
 }));
 
@@ -28,6 +28,8 @@ import { createConnectorRoutes } from '../routes/connectorRoutes';
 
 const TENANT_A = 'tenant-a';
 const TENANT_B = 'tenant-b';
+const USER_A = 'user-a';
+const USER_B = 'user-b';
 const CONNECTOR_A = 'connector-a';
 const JOB_A = 'job-a';
 const JOB_B = 'job-b';
@@ -62,6 +64,7 @@ async function startTestServer() {
   app.use(express.json());
   app.use((req, _res, next) => {
     (req as any).user = {
+      id: req.header('x-user-id') || USER_A,
       tenantId: req.header('x-tenant-id') || TENANT_A,
       role: 'ADMIN',
     };
@@ -79,7 +82,7 @@ async function startTestServer() {
 
   return {
     server,
-    request: (path: string, options: { method?: string; tenantId?: string } = {}) =>
+    request: (path: string, options: { method?: string; tenantId?: string; userId?: string } = {}) =>
       new Promise<TestResponse>((resolve, reject) => {
         const req = httpRequest(
           {
@@ -89,6 +92,7 @@ async function startTestServer() {
             method: options.method ?? 'GET',
             headers: {
               'x-tenant-id': options.tenantId ?? TENANT_A,
+              'x-user-id': options.userId ?? USER_A,
             },
           },
           response => {
@@ -118,8 +122,8 @@ describe('connector sync tenant isolation', () => {
   beforeEach(async () => {
     vi.clearAllMocks();
     vi.useFakeTimers();
-    state.findConnector.mockImplementation(async (tenantId: string, id: string) =>
-      tenantId === TENANT_A && id === CONNECTOR_A ? connector(CONNECTOR_A, TENANT_A) : null,
+    state.findConnector.mockImplementation(async (tenantId: string, userId: string, id: string) =>
+      tenantId === TENANT_A && userId === USER_A && id === CONNECTOR_A ? connector(CONNECTOR_A, TENANT_A) : null,
     );
     state.createJob.mockResolvedValue(job(JOB_A, TENANT_A, CONNECTOR_A));
     state.updateJob.mockResolvedValue(job(JOB_A, TENANT_A, CONNECTOR_A));
@@ -145,7 +149,7 @@ describe('connector sync tenant isolation', () => {
     });
 
     expect(response.status).toBe(404);
-    expect(state.findConnector).toHaveBeenCalledWith(TENANT_B, CONNECTOR_A);
+    expect(state.findConnector).toHaveBeenCalledWith(TENANT_B, USER_A, CONNECTOR_A);
     expect(state.createJob).not.toHaveBeenCalled();
   });
 
@@ -156,8 +160,8 @@ describe('connector sync tenant isolation', () => {
     });
 
     expect(response.status).toBe(201);
-    expect(state.findConnector).toHaveBeenCalledWith(TENANT_A, CONNECTOR_A);
-    expect(state.createJob).toHaveBeenCalledWith(TENANT_A, {
+    expect(state.findConnector).toHaveBeenCalledWith(TENANT_A, USER_A, CONNECTOR_A);
+    expect(state.createJob).toHaveBeenCalledWith(TENANT_A, USER_A, {
       connectorId: CONNECTOR_A,
       status: 'QUEUED',
     });
@@ -165,9 +169,10 @@ describe('connector sync tenant isolation', () => {
     await vi.runAllTimersAsync();
 
     expect(state.updateJob.mock.calls).toEqual([
-      [TENANT_A, JOB_A, { status: 'RUNNING' }],
+      [TENANT_A, USER_A, JOB_A, { status: 'RUNNING' }],
       [
         TENANT_A,
+        USER_A,
         JOB_A,
         expect.objectContaining({
           status: 'COMPLETED',
@@ -177,6 +182,7 @@ describe('connector sync tenant isolation', () => {
     ]);
     expect(state.updateConnector).toHaveBeenCalledWith(
       TENANT_A,
+      USER_A,
       CONNECTOR_A,
       expect.objectContaining({ lastSyncStatus: 'COMPLETED' }),
     );
@@ -189,16 +195,28 @@ describe('connector sync tenant isolation', () => {
       tenantId: TENANT_A,
     });
     expect(list.status).toBe(200);
-    expect(state.listJobs).toHaveBeenCalledWith(TENANT_A, 50);
+    expect(state.listJobs).toHaveBeenCalledWith(TENANT_A, USER_A, 50);
 
-    state.findJob.mockImplementation(async (tenantId: string, id: string) =>
-      tenantId === TENANT_A && id === JOB_A ? job(JOB_A, TENANT_A, CONNECTOR_A) : null,
+    state.findJob.mockImplementation(async (tenantId: string, userId: string, id: string) =>
+      tenantId === TENANT_A && userId === USER_A && id === JOB_A ? job(JOB_A, TENANT_A, CONNECTOR_A) : null,
     );
 
     const foreignJob = await testServer.request(`/api/connectors/jobs/${JOB_B}`, {
       tenantId: TENANT_B,
     });
     expect(foreignJob.status).toBe(404);
-    expect(state.findJob).toHaveBeenCalledWith(TENANT_B, JOB_B);
+    expect(state.findJob).toHaveBeenCalledWith(TENANT_B, USER_A, JOB_B);
+  });
+
+  it('returns 404 and does not sync a connector owned by another user in the same tenant', async () => {
+    const response = await testServer.request(`/api/connectors/${CONNECTOR_A}/sync`, {
+      method: 'POST',
+      tenantId: TENANT_A,
+      userId: USER_B,
+    });
+
+    expect(response.status).toBe(404);
+    expect(state.findConnector).toHaveBeenCalledWith(TENANT_A, USER_B, CONNECTOR_A);
+    expect(state.createJob).not.toHaveBeenCalled();
   });
 });
