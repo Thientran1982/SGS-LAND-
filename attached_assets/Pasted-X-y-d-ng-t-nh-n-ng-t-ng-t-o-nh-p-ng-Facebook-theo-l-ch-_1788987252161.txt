@@ -1,0 +1,29 @@
+Xây dựng tính năng tự động tạo nháp đăng Facebook theo lịch, dựa trên hạ tầng social_publications đã có sẵn (KHÔNG thay đổi các phần đã hoạt động: registry.ts, facebookPagePublisher.ts, publishFacebookPageContent, giao diện xem trước/chỉnh sửa/kích hoạt trong SocialPublishing.tsx). Trước khi code, hãy khảo sát và cho tôi biết: (a) tên/vị trí file đang xử lý các tác vụ chạy theo lịch (cron/worker) hiện có trong app, để tái sử dụng đúng cơ chế đó; (b) số thứ tự migration tiếp theo đúng theo quy ước đang dùng trong server/migrations/.
+
+YÊU CẦU BẮT BUỘC, không được vi phạm: hệ thống tự động CHỈ ĐƯỢC tạo bản NHÁP (status DRAFT), TUYỆT ĐỐI KHÔNG được tự kích hoạt/tự đăng bài lên Facebook. Mọi bài đăng thật đều phải do người dùng bấm "Đăng ngay" xác nhận thủ công như hiện tại.
+
+1. Thay đổi schema (tạo migration mới, đúng số thứ tự kế tiếp):
+   - Thêm khả năng đánh dấu "dự án nổi bật": nếu bảng projects chưa có, thêm cột is_featured (boolean, default false) và priority (integer, default 0, số nhỏ hơn ưu tiên hơn hoặc theo quy ước bạn thấy hợp lý — nêu rõ quy ước đã chọn).
+   - Tạo bảng auto_posting_settings (tenant_id scoped, unique theo tenant_id): các cột enabled (boolean), posts_per_day (integer), time_windows (jsonb — danh sách khung giờ trong ngày được phép đăng, ví dụ [{"start":"08:00","end":"11:00"}]), recycle_after_days (integer — số ngày tối thiểu trước khi 1 tin/dự án đã đăng được chọn lại), created_at/updated_at.
+   - Thêm cột source (enum hoặc text: 'MANUAL' | 'AUTO', default 'MANUAL') vào social_publications nếu chưa có, để phân biệt nháp tự động và nháp người dùng tự tạo.
+
+2. Module chọn nội dung — server/social-publishing/autoPostingSelector.ts (file mới):
+   - Hàm nhận tenantId, đọc auto_posting_settings của tenant đó.
+   - Ưu tiên chọn dự án có is_featured = true, sắp theo priority.
+   - Nếu hết dự án nổi bật đủ điều kiện, chọn tiếp trong tin sản phẩm đã đăng / dự án đang bán còn hoạt động (active/còn hiệu lực), sắp theo mới nhất trước.
+   - Loại trừ mọi tin/dự án đã có social_publications (bất kỳ platform nào, status khác CANCELLED/FAILED) được tạo trong vòng recycle_after_days ngày gần nhất — đây là cơ chế "xoay vòng" tránh đăng trùng lặp quá dày.
+   - Trả về danh sách ứng viên theo đúng số lượng posts_per_day đã cấu hình.
+
+3. Lịch chạy tự động (tái sử dụng cơ chế cron/worker đã khảo sát ở bước đầu):
+   - Với mỗi tenant có auto_posting_settings.enabled = true, vào đúng các time_windows đã cấu hình, gọi autoPostingSelector rồi tạo social_publications mới với source='AUTO', status='DRAFT', platforms=['FACEBOOK_PAGE'], dùng buildPlatformContent() có sẵn để sinh caption mặc định — không tự kích hoạt.
+   - Dùng idempotency key hợp lý (ví dụ theo tenantId + listingId/projectId + ngày) để tránh tạo trùng nếu cron chạy lại.
+
+4. API mới:
+   - GET/PUT auto_posting_settings theo tenant (đọc và cập nhật cấu hình).
+   - Bổ sung filter theo source vào API danh sách social_publications hiện có (hoặc endpoint riêng) để lấy được danh sách nháp AUTO đang chờ duyệt.
+
+5. Giao diện:
+   - Thêm 1 khu vực cấu hình (trong Enterprise Settings hoặc mục phù hợp bạn thấy hợp lý — nêu rõ đã đặt ở đâu): bật/tắt tự động đăng, số bài/ngày, khung giờ, số ngày xoay vòng.
+   - Thêm mục "Bài chờ duyệt" trong trang đăng bài Facebook, liệt kê các nháp có source='AUTO', TÁI SỬ DỤNG nguyên UI xem trước/chỉnh sửa caption/chọn ảnh/nút "Đăng ngay"/"Hủy" đã có sẵn — không viết UI mới cho phần chỉnh sửa.
+
+Sau khi hoàn tất, báo cáo lại: các file đã tạo/sửa, số migration đã dùng, tên cơ chế cron đã tái sử dụng, và xác nhận rõ ràng rằng không có đường nào trong code mới có thể tự động published=true lên Facebook mà không qua bước người dùng bấm "Đăng ngay". KHÔNG tạo bài đăng test thật.
