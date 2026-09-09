@@ -28,6 +28,12 @@ const statusLabel: Record<string, string> = {
 const formatDate = (value?: string | null) =>
   value ? new Date(value).toLocaleString('vi-VN', { dateStyle: 'short', timeStyle: 'short' }) : '—';
 
+const normalizeRequestedPlatform = (value: string | null): string | null => {
+  if (!value) return null;
+  const normalized = value.trim().toUpperCase();
+  return ['INSTAGRAM', 'TIKTOK', 'LINKEDIN_PAGE'].includes(normalized) ? normalized : null;
+};
+
 export const SocialPublishing: React.FC = () => {
   const [catalog, setCatalog] = useState<SocialCapability[]>([]);
   const [listings, setListings] = useState<SocialListingOption[]>([]);
@@ -43,6 +49,7 @@ export const SocialPublishing: React.FC = () => {
   const [expandedPublicationId, setExpandedPublicationId] = useState<string | null>(null);
   const [publicationDetails, setPublicationDetails] = useState<Record<string, SocialPublication>>({});
   const [detailLoading, setDetailLoading] = useState<string | null>(null);
+  const [focusedPlatform] = useState(() => normalizeRequestedPlatform(new URLSearchParams(window.location.search).get('platform')));
   const [reconcileForm, setReconcileForm] = useState<{
     publicationId: string;
     targetId: string;
@@ -58,6 +65,9 @@ export const SocialPublishing: React.FC = () => {
   );
   const publisherCount = catalog.filter(item => item.hasPublisher).length;
   const readyCount = catalog.filter(item => isSocialCapabilityReady(item)).length;
+  const focusedCapability = focusedPlatform
+    ? catalog.find(item => item.platform === focusedPlatform)
+    : undefined;
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -384,13 +394,16 @@ export const SocialPublishing: React.FC = () => {
           </div>
         )}
 
-        <section className="rounded-3xl border border-[var(--glass-border)] bg-[var(--bg-surface)] p-5 shadow-sm">
+        <section
+          aria-labelledby="social-connection-catalog-title"
+          className="rounded-3xl border border-[var(--glass-border)] bg-[var(--bg-surface)] p-5 shadow-sm"
+        >
           <div className="flex flex-col justify-between gap-4 md:flex-row md:items-start">
             <div>
               <div className="flex items-center gap-3">
                 <div className="rounded-xl bg-indigo-500/10 p-2 text-indigo-600"><PlugZap size={20} /></div>
                 <div>
-                  <h2 className="font-bold text-[var(--text-primary)]">Cổng kết nối nền tảng</h2>
+                  <h2 id="social-connection-catalog-title" className="font-bold text-[var(--text-primary)]">Cổng kết nối nền tảng</h2>
                   <p className="text-xs text-[var(--text-tertiary)]">Thêm API connector hoặc MCP server ở khu vực quản trị tương ứng.</p>
                 </div>
               </div>
@@ -405,6 +418,11 @@ export const SocialPublishing: React.FC = () => {
                   Đã xác minh sẵn sàng: {readyCount}/{catalog.length}
                 </span>
               </div>
+              {focusedCapability && (
+                <p role="status" className="mt-3 rounded-xl border border-indigo-200 bg-indigo-50 px-3 py-2 text-xs font-semibold text-indigo-800">
+                  Đang kiểm tra readiness của {focusedCapability.label}: {focusedCapability.status === 'UNSUPPORTED' ? 'provider chưa được hỗ trợ và đang bị khóa.' : focusedCapability.reason}
+                </p>
+              )}
             </div>
           </div>
           <div className="mt-4 grid gap-3 md:grid-cols-2">
@@ -470,13 +488,25 @@ export const SocialPublishing: React.FC = () => {
               <div>
                 <span className="mb-2 block text-sm font-semibold text-[var(--text-primary)]">Nền tảng đích</span>
                 <div className="space-y-2">
-                  {catalog.map(item => (
-                    <label key={item.platform} className={`flex items-start gap-3 rounded-xl border p-3 ${isSocialCapabilityReady(item) ? 'cursor-pointer' : 'cursor-not-allowed opacity-75'} ${platforms.includes(item.platform) ? 'border-sgs-primary bg-sgs-primary/5' : 'border-[var(--glass-border)]'}`}>
+                  {catalog.map(item => {
+                    const isReady = isSocialCapabilityReady(item);
+                    const isFocused = item.platform === focusedPlatform;
+                    const statusText = item.status === 'UNSUPPORTED'
+                      ? 'Không hỗ trợ'
+                      : isReady
+                        ? 'Sẵn sàng'
+                        : 'Chưa sẵn sàng';
+                    return (
+                    <label
+                      key={item.platform}
+                      data-social-platform={item.platform}
+                      className={`flex items-start gap-3 rounded-xl border p-3 ${isReady ? 'cursor-pointer' : 'cursor-not-allowed opacity-75'} ${platforms.includes(item.platform) ? 'border-sgs-primary bg-sgs-primary/5' : 'border-[var(--glass-border)]'} ${isFocused ? 'ring-2 ring-indigo-400 ring-offset-1' : ''}`}
+                    >
                       <input type="checkbox" checked={platforms.includes(item.platform)} disabled={!isSocialCapabilityReady(item)} onChange={() => togglePlatform(item.platform)} className="mt-1 accent-[var(--sgs-primary)] disabled:cursor-not-allowed" />
                       <span className="min-w-0 flex-1">
                         <span className="flex items-center justify-between gap-2 text-sm font-semibold text-[var(--text-primary)]">
                           {item.label}
-                          <span className={`rounded-full px-2 py-0.5 text-[10px] ${isSocialCapabilityReady(item) ? 'bg-emerald-100 text-emerald-700' : 'bg-amber-100 text-amber-700'}`}>{isSocialCapabilityReady(item) ? 'Sẵn sàng' : 'Chưa sẵn sàng'}</span>
+                           <span className={`rounded-full px-2 py-0.5 text-[10px] ${isReady ? 'bg-emerald-100 text-emerald-700' : item.status === 'UNSUPPORTED' ? 'bg-slate-100 text-slate-700' : 'bg-amber-100 text-amber-700'}`}>{statusText}</span>
                         </span>
                          <span className={`mt-1 block text-[10px] font-semibold ${item.hasPublisher ? 'text-indigo-700' : 'text-[var(--text-tertiary)]'}`}>
                            {item.hasPublisher ? 'Đã có publisher provider' : 'Chưa có publisher provider'}
@@ -485,7 +515,8 @@ export const SocialPublishing: React.FC = () => {
                         {!item.canPublish && <span className="mt-1 block text-xs font-semibold text-amber-700">Tạm khóa: cần xác minh publisher và quyền provider trước khi xuất bản.</span>}
                       </span>
                     </label>
-                  ))}
+                    );
+                  })}
                 </div>
               </div>
               <div className="grid grid-cols-2 gap-3">
