@@ -5,8 +5,16 @@ import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const projectRoot = resolve(dirname(fileURLToPath(import.meta.url)), '..');
-const productionCheckRoot = await mkdtemp(join(tmpdir(), 'sgs-production-dependencies-'));
-const bundlePath = join(projectRoot, 'server.js');
+const sourceRoot = resolve(
+  process.env.PRODUCTION_DEPENDENCY_SOURCE_ROOT ?? projectRoot,
+);
+const productionCheckParent = resolve(
+  process.env.PRODUCTION_DEPENDENCY_TEMP_PARENT ?? tmpdir(),
+);
+const productionCheckRoot = await mkdtemp(
+  join(productionCheckParent, 'sgs-production-dependencies-'),
+);
+const bundlePath = join(sourceRoot, 'server.js');
 
 function run(command, args, options = {}) {
   return new Promise((resolveRun, rejectRun) => {
