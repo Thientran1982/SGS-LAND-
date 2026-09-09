@@ -7,4 +7,4 @@ Facebook multi-photo publishing is a multi-request provider operation: upload ea
 
 **Why:** Facebook does not provide a portable idempotency or status lookup contract for this flow, and retrying after partial acceptance can create duplicate or orphaned public content.
 
-**How to apply:** Keep album size aligned with the capability/catalog and immutable asset snapshot. Treat the final feed response as unconfirmed unless it includes a provider post ID, and record partial progress in the existing publication attempt audit.
+**How to apply:** Keep album size aligned with the capability/catalog and immutable asset snapshot. Treat the final feed response as unconfirmed unless it includes a provider post ID, and record partial progress in the existing publication attempt audit. Relative upload paths may be expanded only with an explicit HTTPS public origin; never use a preview-domain fallback for Facebook assets.

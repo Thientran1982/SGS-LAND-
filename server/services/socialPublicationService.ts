@@ -67,6 +67,24 @@ function publicListingUrl(code: string | null): string | null {
   return `${base.replace(/\/+$/, '')}/p/${encodeURIComponent(code)}`;
 }
 
+/**
+ * Facebook must be able to fetch an image without the Replit preview proxy or
+ * an application session. Only an explicitly configured HTTPS public origin
+ * is safe for turning a relative upload path into a provider URL.
+ */
+function resolveSocialPublicImageBaseUrl(): string | undefined {
+  const configured = process.env.PUBLIC_URL || process.env.APP_URL;
+  if (!configured) return undefined;
+
+  try {
+    const parsed = new URL(configured);
+    if (parsed.protocol !== 'https:' || !parsed.hostname) return undefined;
+    return parsed.toString().replace(/\/+$/, '');
+  } catch {
+    return undefined;
+  }
+}
+
 export function normalizeSocialPlatforms(input: unknown): SocialPlatform[] {
   if (!Array.isArray(input)) return [];
   const result: SocialPlatform[] = [];
@@ -161,7 +179,7 @@ export function buildSocialPlatformContent(
     title: snapshot.title,
     text,
     link,
-    imageUrls: normalizeProductImages((snapshot as any).images, resolveConfiguredPublicBaseUrl()),
+    imageUrls: normalizePublicationImages((snapshot as any).images),
     hashtags,
   };
 }
@@ -180,16 +198,18 @@ export function buildPlatformContent(
   return {
     ...content,
     text: snapshot.caption?.trim() || content.text,
-    imageUrls: normalizeProductImages(imageUrls, resolveConfiguredPublicBaseUrl()).slice(0, MAX_SOCIAL_PUBLICATION_IMAGES),
+    imageUrls: normalizePublicationImages(imageUrls).slice(0, MAX_SOCIAL_PUBLICATION_IMAGES),
   };
 }
 
 /**
  * Publication assets are sent directly to providers. Keep only absolute,
- * publicly fetchable HTTP(S) URLs in the immutable asset snapshot.
+ * publicly fetchable HTTPS URLs in the immutable asset snapshot.
  */
 export function normalizePublicationImages(images: unknown): string[] {
-  return normalizeProductImages(images, resolveConfiguredPublicBaseUrl()).slice(0, MAX_SOCIAL_PUBLICATION_IMAGES);
+  return normalizeProductImages(images, resolveSocialPublicImageBaseUrl())
+    .filter(imageUrl => imageUrl.toLowerCase().startsWith('https://'))
+    .slice(0, MAX_SOCIAL_PUBLICATION_IMAGES);
 }
 
 export function createPublicationRequestId(): string {

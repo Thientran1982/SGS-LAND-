@@ -201,6 +201,27 @@ describe('Facebook Page publisher contract', () => {
     expect(fetchMock).not.toHaveBeenCalled();
   });
 
+  it('rejects an HTTP image URL before contacting Facebook', async () => {
+    await expect(publishFacebookPageContent({
+      pageId: 'page-1',
+      pageAccessToken: 'page-token',
+      content: {
+        platform: 'FACEBOOK_PAGE',
+        title: 'D',
+        text: 'D',
+        link: null,
+        imageUrls: ['http://cdn.test/first.jpg'],
+        hashtags: [],
+      },
+      idempotencyKey: 'social:target-http-image:1',
+    })).resolves.toMatchObject({
+      status: 'FAILED',
+      errorCode: 'FACEBOOK_IMAGE_URL_INVALID',
+    });
+
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+
   it('includes the provider trace when an album feed result is ambiguous', async () => {
     fetchMock
       .mockResolvedValueOnce(new Response(JSON.stringify({ id: 'photo-1' }), {

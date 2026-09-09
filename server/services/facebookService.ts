@@ -146,7 +146,7 @@ function validateImageUrls(imageUrls: string[]): string | null {
   for (const imageUrl of imageUrls) {
     try {
       const parsedImageUrl = new URL(imageUrl);
-      if (!['http:', 'https:'].includes(parsedImageUrl.protocol)) throw new Error('unsupported protocol');
+      if (parsedImageUrl.protocol !== 'https:') throw new Error('unsupported protocol');
     } catch {
       return imageUrl;
     }
@@ -159,7 +159,7 @@ function invalidImageResult(): SocialPublishResult {
     status: 'FAILED',
     retryable: false,
     errorCode: 'FACEBOOK_IMAGE_URL_INVALID',
-    safeMessage: 'URL ảnh Facebook phải là địa chỉ HTTP(S) tuyệt đối và công khai.',
+    safeMessage: 'URL ảnh Facebook phải là địa chỉ HTTPS tuyệt đối và công khai.',
   };
 }
 

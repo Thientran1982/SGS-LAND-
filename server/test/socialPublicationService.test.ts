@@ -143,4 +143,29 @@ describe('social publication foundation', () => {
       'https://cdn.test/second.jpg',
     ]);
   });
+  it('keeps only HTTPS image URLs in the Facebook publication snapshot', () => {
+    expect(normalizePublicationImages([
+      'https://cdn.test/first.jpg',
+      'http://cdn.test/not-public-for-facebook.jpg',
+      '/uploads/tenant/photo.jpg',
+    ])).toEqual(['https://cdn.test/first.jpg']);
+  });
+
+  it('resolves relative uploads only with an explicit HTTPS public origin', () => {
+    const previousAppUrl = process.env.APP_URL;
+    const previousPublicUrl = process.env.PUBLIC_URL;
+    process.env.APP_URL = 'https://sgsland.vn';
+    delete process.env.PUBLIC_URL;
+
+    try {
+      expect(normalizePublicationImages(['/uploads/tenant/photo.jpg'])).toEqual([
+        'https://sgsland.vn/uploads/tenant/photo.jpg',
+      ]);
+    } finally {
+      if (previousAppUrl === undefined) delete process.env.APP_URL;
+      else process.env.APP_URL = previousAppUrl;
+      if (previousPublicUrl === undefined) delete process.env.PUBLIC_URL;
+      else process.env.PUBLIC_URL = previousPublicUrl;
+    }
+  });
 });
