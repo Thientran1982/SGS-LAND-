@@ -29,7 +29,7 @@ describe('social publication foundation', () => {
     });
     expect(zalo).toMatchObject({
       canPublish: false,
-      hasPublisher: false,
+      hasPublisher: true,
       messagingSupported: true,
       status: 'NOT_READY',
       kind: 'BROADCAST',

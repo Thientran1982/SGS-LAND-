@@ -9,6 +9,12 @@ Public publishing capability is tenant-scoped and must be live-verified against 
 
 **How to apply:** Keep messaging and public-publishing registries separate, verify the connected Page/token at connection and delivery time, require provider confirmation IDs for `PUBLISHED`, and expose `NOT_READY`/`AMBIGUOUS` with safe operator-facing reasons.
 
+For Zalo OA broadcast, the provider contract is `POST /v2.0/oa/message` with an article attachment. A tenant must first pass the read-only OA identity check and the documented quota/permission probe (`POST /v3.0/oa/quota/message`) before the capability can become READY.
+
+**Why:** Zalo's broadcast endpoint has no dry-run, while the quota endpoint verifies the send-and-notify permission without broadcasting to followers.
+
+**How to apply:** Require a tenant-scoped probe user and matching OA ID, create/verify the article before broadcasting, treat missing `message_id` or uncertain network outcomes as AMBIGUOUS, and never claim success without the provider ID.
+
 Operator reconciliation must be a separate, audited state transition: only an explicit provider post ID may turn `AMBIGUOUS` into `PUBLISHED`, while retrying a failed target requires a recorded reason and never requeues `AMBIGUOUS` directly.
 
 **Why:** Treating manual confirmation and retry as the same action can either falsely report a post or duplicate an uncertain provider request.

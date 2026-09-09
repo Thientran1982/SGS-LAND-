@@ -3,6 +3,7 @@ import type {
   SocialPlatformCapability,
   SocialPublisher,
 } from './types';
+import { zaloBroadcastPublisher } from './zaloBroadcastPublisher';
 
 /**
  * Phase 0 capability registry.
@@ -66,6 +67,7 @@ const CATALOG: SocialPlatformCapability[] = [
 ];
 
 const publishers = new Map<SocialPlatform, SocialPublisher>();
+publishers.set(zaloBroadcastPublisher.platform, zaloBroadcastPublisher);
 
 export function getSocialPlatformCatalog(): SocialPlatformCapability[] {
   return CATALOG.map(item => ({ ...item }));
