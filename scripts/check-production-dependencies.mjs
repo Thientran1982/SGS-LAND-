@@ -80,7 +80,10 @@ export async function withProductionDependencyCheckRoot(
   }
 }
 
-export async function runBundledBackendImport(productionCheckRoot) {
+export async function runBundledBackendImport(
+  productionCheckRoot,
+  { timeoutMs = 120_000 } = {},
+) {
   console.log('Importing the bundled backend with only production dependencies...');
   return run(
     process.execPath,
@@ -94,6 +97,7 @@ export async function runBundledBackendImport(productionCheckRoot) {
         NODE_ENV: 'production',
         PRODUCTION_DEPENDENCY_CHECK: '1',
       },
+      timeoutMs,
     },
   );
 }

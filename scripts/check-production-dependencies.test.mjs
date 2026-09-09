@@ -16,17 +16,36 @@ async function assertNoValidationArtifacts(tempParent) {
   assert.deepEqual(await readdir(tempParent), []);
 }
 
-test('validates production dependencies without mutating the workspace', async () => {
+async function snapshotWorkspace() {
+  return Promise.all(
+    fixtureFiles.map(async file => [file, await readFile(join(projectRoot, file))]),
+  );
+}
+
+async function assertWorkspaceUnchanged(originalWorkspaceFiles) {
+  for (const [file, original] of originalWorkspaceFiles) {
+    assert.deepEqual(
+      await readFile(join(projectRoot, file)),
+      original,
+      `${file} in the developer workspace was modified`,
+    );
+  }
+}
+
+async function createFixtureRoot() {
   const fixtureRoot = await mkdtemp(join(tmpdir(), 'sgs-production-dependency-fixture-'));
+  await Promise.all(
+    fixtureFiles.map(file => cp(join(projectRoot, file), join(fixtureRoot, file))),
+  );
+  return fixtureRoot;
+}
+
+test('validates production dependencies without mutating the workspace', async () => {
+  const fixtureRoot = await createFixtureRoot();
   const tempParent = await mkdtemp(join(tmpdir(), 'sgs-production-dependency-parent-'));
 
   try {
-    await Promise.all(
-      fixtureFiles.map(file => cp(join(projectRoot, file), join(fixtureRoot, file))),
-    );
-    const originalWorkspaceFiles = await Promise.all(
-      fixtureFiles.map(async file => [file, await readFile(join(projectRoot, file))]),
-    );
+    const originalWorkspaceFiles = await snapshotWorkspace();
     const generatedBundle = await readFile(join(fixtureRoot, 'server.js'), 'utf8');
 
     await withProductionDependencyCheckRoot(
@@ -51,14 +70,93 @@ test('validates production dependencies without mutating the workspace', async (
 
     await assertNoValidationArtifacts(tempParent);
     assert.deepEqual((await readdir(fixtureRoot)).sort(), fixtureFiles.sort());
+    await assertWorkspaceUnchanged(originalWorkspaceFiles);
+  } finally {
+    await Promise.all([
+      rm(fixtureRoot, { recursive: true, force: true }),
+      rm(tempParent, { recursive: true, force: true }),
+    ]);
+  }
+});
 
-    for (const [file, original] of originalWorkspaceFiles) {
-      assert.deepEqual(
-        await readFile(join(projectRoot, file)),
-        original,
-        `${file} in the developer workspace was modified`,
-      );
-    }
+test('cleans up the temporary install when npm ci fails', async () => {
+  const fixtureRoot = await mkdtemp(join(tmpdir(), 'sgs-production-dependency-install-failure-'));
+  const tempParent = await mkdtemp(join(tmpdir(), 'sgs-production-dependency-parent-'));
+
+  try {
+    const originalWorkspaceFiles = await snapshotWorkspace();
+    await Promise.all([
+      writeFile(
+        join(fixtureRoot, 'package.json'),
+        JSON.stringify({
+          name: 'dependency-check-install-failure',
+          version: '1.0.0',
+          private: true,
+          dependencies: { 'left-pad': '1.3.0' },
+        }),
+      ),
+      writeFile(
+        join(fixtureRoot, 'package-lock.json'),
+        JSON.stringify({
+          name: 'dependency-check-install-failure',
+          version: '1.0.0',
+          lockfileVersion: 3,
+          requires: true,
+          packages: {
+            '': {
+              name: 'dependency-check-install-failure',
+              version: '1.0.0',
+              dependencies: {},
+            },
+          },
+        }),
+      ),
+      writeFile(join(fixtureRoot, 'server.js'), 'export {};'),
+    ]);
+
+    await assert.rejects(
+      withProductionDependencyCheckRoot(
+        { sourceRoot: fixtureRoot, tempParent },
+        async () => {
+          throw new Error('npm ci unexpectedly succeeded');
+        },
+      ),
+      /npm ci --omit=dev failed with exit code/,
+    );
+
+    await assertNoValidationArtifacts(tempParent);
+    await assertWorkspaceUnchanged(originalWorkspaceFiles);
+  } finally {
+    await Promise.all([
+      rm(fixtureRoot, { recursive: true, force: true }),
+      rm(tempParent, { recursive: true, force: true }),
+    ]);
+  }
+});
+
+test('cleans up the temporary install when backend import times out', async () => {
+  const fixtureRoot = await createFixtureRoot();
+  const tempParent = await mkdtemp(join(tmpdir(), 'sgs-production-dependency-parent-'));
+
+  try {
+    const originalWorkspaceFiles = await snapshotWorkspace();
+    await writeFile(
+      join(fixtureRoot, 'server.js'),
+      'setInterval(() => {}, 1000);\nawait new Promise(() => {});',
+    );
+
+    await assert.rejects(
+      withProductionDependencyCheckRoot(
+        { sourceRoot: fixtureRoot, tempParent },
+        async productionCheckRoot => {
+          await runBundledBackendImport(productionCheckRoot, { timeoutMs: 100 });
+        },
+      ),
+      /timed out after 100ms/,
+    );
+
+    await assertNoValidationArtifacts(tempParent);
+    await assertWorkspaceUnchanged(originalWorkspaceFiles);
   } finally {
     await Promise.all([
       rm(fixtureRoot, { recursive: true, force: true }),
