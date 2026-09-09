@@ -30,6 +30,13 @@ const CONNECTOR_ICONS: Record<string, React.ReactNode> = {
 type SocialConnectionType = 'FACEBOOK_PAGE' | 'ZALO_OA' | 'INSTAGRAM' | 'TIKTOK' | 'LINKEDIN_PAGE';
 type ConnectionChoice = ConnectorType | SocialConnectionType;
 type AddConnectionForm = { type: ConnectionChoice; name: string; config: Record<string, unknown> };
+type ZaloConnectionResult = {
+    kind: 'connected' | 'ready' | 'not_ready' | 'error';
+    title: string;
+    message: string;
+    reasonCode?: string;
+    checks?: { oaId: string; quota: string };
+};
 const SOCIAL_CONNECTIONS: Record<SocialConnectionType, { label: string; description: string; route: string }> = {
     FACEBOOK_PAGE: {
         label: 'Facebook Page',
@@ -76,19 +83,102 @@ const CONNECTION_OPTIONS = [
 ];
 const ConnectorModal = ({ isOpen, onClose, onSave, onOpenSocial, t }: any) => {
     const [form, setForm] = useState<AddConnectionForm>({ type: ConnectorType.GOOGLE_SHEETS, name: '', config: {} });
+    const [zaloConnecting, setZaloConnecting] = useState(false);
+    const [zaloResult, setZaloResult] = useState<ZaloConnectionResult | null>(null);
     useEffect(() => {
-        if (isOpen) setForm({ type: ConnectorType.GOOGLE_SHEETS, name: '', config: {} });
+        if (isOpen) {
+            setForm({ type: ConnectorType.GOOGLE_SHEETS, name: '', config: {} });
+            setZaloResult(null);
+        }
     }, [isOpen]);
     if (!isOpen) return null;
 
     const handleConfigChange = (key: string, value: string) => {
         setForm(prev => ({ ...prev, config: { ...prev.config, [key]: value } }));
+        if (form.type === 'ZALO_OA') setZaloResult(null);
     };
     const socialConnection = SOCIAL_CONNECTIONS[form.type as SocialConnectionType];
     const isSocialConnection = Boolean(socialConnection);
+    const isZaloConnection = form.type === 'ZALO_OA';
+    const zaloConfig = form.config;
+    const handleTypeChange = (value: ConnectionChoice) => {
+        setForm(prev => ({ ...prev, type: value, name: '', config: {} }));
+        setZaloResult(null);
+    };
+    const handleZaloConnect = async () => {
+        const appId = String(zaloConfig.appId || '').trim();
+        const oaId = String(zaloConfig.oaId || '').trim();
+        const oaName = String(zaloConfig.oaName || '').trim();
+        const appSecret = String(zaloConfig.appSecret || '').trim();
+        const accessToken = String(zaloConfig.accessToken || '').trim();
+        if (!appId || !oaId || !oaName) {
+            setZaloResult({
+                kind: 'error',
+                title: 'Thiếu thông tin kết nối',
+                message: 'App ID, OA ID và Tên OA là bắt buộc.',
+            });
+            return;
+        }
+
+        setZaloConnecting(true);
+        setZaloResult(null);
+        try {
+            await db.connectZaloOA({
+                appId,
+                oaId,
+                oaName,
+                appSecret: appSecret || undefined,
+                accessToken: accessToken || undefined,
+            });
+
+            // Do not leave either credential in the form after it has been saved.
+            setForm(prev => ({
+                ...prev,
+                config: { ...prev.config, appSecret: '', accessToken: '' },
+            }));
+
+            let verification: any;
+            try {
+                verification = await db.verifyZaloBroadcastAccess();
+            } catch (error: any) {
+                setZaloResult({
+                    kind: 'error',
+                    title: 'Lỗi/ambiguous — chưa báo READY',
+                    message: error?.message || 'Không thể hoàn tất kiểm tra broadcast. Trạng thái READY chưa được cấp.',
+                });
+                return;
+            }
+
+            if (verification.status === 'READY' && verification.ready === true) {
+                setZaloResult({
+                    kind: 'ready',
+                    title: 'Đã xác minh broadcast và quota',
+                    message: verification.reason || 'Zalo OA đã vượt qua kiểm tra định danh OA và hạn mức broadcast.',
+                    reasonCode: verification.reasonCode,
+                    checks: verification.checks,
+                });
+            } else {
+                setZaloResult({
+                    kind: 'not_ready',
+                    title: 'Kết nối thành công nhưng chưa đủ quyền',
+                    message: verification.reason || 'Quyền broadcast hoặc hạn mức chưa được xác minh đầy đủ.',
+                    reasonCode: verification.reasonCode,
+                    checks: verification.checks,
+                });
+            }
+        } catch (error: any) {
+            setZaloResult({
+                kind: 'error',
+                title: 'Lỗi kết nối — chưa báo READY',
+                message: error?.message || 'Không thể kết nối Zalo OA.',
+            });
+        } finally {
+            setZaloConnecting(false);
+        }
+    };
     return createPortal(
         <div className="fixed inset-0 z-[100] bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 animate-enter">
-            <div className="bg-[var(--bg-surface)] w-full max-w-lg rounded-[24px] shadow-2xl">
+            <div className="bg-[var(--bg-surface)] w-full max-w-lg max-h-[calc(100vh-2rem)] overflow-y-auto rounded-[24px] shadow-2xl">
                 <div className="flex justify-between items-center p-6 border-b border-[var(--glass-border)]">
                     <div>
                         <h3 className="text-lg font-bold text-[var(--text-primary)]">{t('data.modal_title')}</h3>
@@ -101,11 +191,11 @@ const ConnectorModal = ({ isOpen, onClose, onSave, onOpenSocial, t }: any) => {
                         <label className="text-xs font-bold text-[var(--text-tertiary)] uppercase tracking-wider block mb-1.5">{t('data.type')}</label>
                         <Dropdown
                             value={form.type || ConnectorType.GOOGLE_SHEETS}
-                            onChange={(v) => setForm({ ...form, type: v as ConnectionChoice, config: {} })}
+                            onChange={(v) => handleTypeChange(v as ConnectionChoice)}
                             options={CONNECTION_OPTIONS}
                         />
                     </div>
-                    <div>
+                    {!isSocialConnection && <div>
                         <label className="text-xs font-bold text-[var(--text-tertiary)] uppercase tracking-wider block mb-1.5">{t('data.name')}</label>
                         <input
                             className="w-full border border-[var(--glass-border)] bg-[var(--glass-surface)] rounded-xl px-4 py-2.5 text-sm text-[var(--text-primary)] focus:outline-none focus:ring-2 focus:ring-[var(--sgs-primary)]/40 transition-all"
@@ -113,8 +203,99 @@ const ConnectorModal = ({ isOpen, onClose, onSave, onOpenSocial, t }: any) => {
                             value={form.name}
                             onChange={e => setForm({ ...form, name: e.target.value })}
                         />
-                    </div>
-                    {isSocialConnection ? (
+                    </div>}
+                    {isZaloConnection ? (
+                        <div className="space-y-3">
+                            <div className="rounded-2xl border border-blue-200 bg-blue-50/70 p-4">
+                                <p className="text-sm font-bold text-blue-950">Kết nối Zalo OA</p>
+                                <p className="mt-1 text-xs leading-5 text-blue-900/75">
+                                    Thông tin sẽ được lưu theo tenant và kiểm tra live ngay sau khi kết nối. Secret và token không được hiển thị lại.
+                                </p>
+                            </div>
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                <div>
+                                    <label className="text-xs font-bold text-[var(--text-tertiary)] uppercase tracking-wider block mb-1.5">
+                                        {t('ent.zalo_app_id')} <span className="text-rose-500">*</span>
+                                    </label>
+                                    <input
+                                        className="w-full border border-[var(--glass-border)] bg-[var(--glass-surface)] rounded-xl px-4 py-2.5 text-sm font-mono text-[var(--text-primary)] focus:outline-none focus:ring-2 focus:ring-[var(--sgs-primary)]/40 transition-all"
+                                        value={String(zaloConfig.appId || '')}
+                                        onChange={e => handleConfigChange('appId', e.target.value)}
+                                        autoComplete="off"
+                                    />
+                                </div>
+                                <div>
+                                    <label className="text-xs font-bold text-[var(--text-tertiary)] uppercase tracking-wider block mb-1.5">
+                                        {t('ent.zalo_oa_id')} <span className="text-rose-500">*</span>
+                                    </label>
+                                    <input
+                                        className="w-full border border-[var(--glass-border)] bg-[var(--glass-surface)] rounded-xl px-4 py-2.5 text-sm font-mono text-[var(--text-primary)] focus:outline-none focus:ring-2 focus:ring-[var(--sgs-primary)]/40 transition-all"
+                                        value={String(zaloConfig.oaId || '')}
+                                        onChange={e => handleConfigChange('oaId', e.target.value)}
+                                        autoComplete="off"
+                                    />
+                                </div>
+                            </div>
+                            <div>
+                                <label className="text-xs font-bold text-[var(--text-tertiary)] uppercase tracking-wider block mb-1.5">
+                                    {t('ent.zalo_oa_name')} <span className="text-rose-500">*</span>
+                                </label>
+                                <input
+                                    className="w-full border border-[var(--glass-border)] bg-[var(--glass-surface)] rounded-xl px-4 py-2.5 text-sm text-[var(--text-primary)] focus:outline-none focus:ring-2 focus:ring-[var(--sgs-primary)]/40 transition-all"
+                                    value={String(zaloConfig.oaName || '')}
+                                    onChange={e => handleConfigChange('oaName', e.target.value)}
+                                    autoComplete="organization"
+                                />
+                            </div>
+                            <div>
+                                <label className="text-xs font-bold text-[var(--text-tertiary)] uppercase tracking-wider block mb-1.5">
+                                    {t('ent.zalo_app_secret')} <span className="font-normal normal-case text-[var(--text-secondary)]">{t('ent.zalo_secret_optional')}</span>
+                                </label>
+                                <input
+                                    type="password"
+                                    className="w-full border border-[var(--glass-border)] bg-[var(--glass-surface)] rounded-xl px-4 py-2.5 text-sm font-mono text-[var(--text-primary)] focus:outline-none focus:ring-2 focus:ring-[var(--sgs-primary)]/40 transition-all"
+                                    value={String(zaloConfig.appSecret || '')}
+                                    onChange={e => handleConfigChange('appSecret', e.target.value)}
+                                    autoComplete="new-password"
+                                />
+                            </div>
+                            <div>
+                                <label className="text-xs font-bold text-[var(--text-tertiary)] uppercase tracking-wider block mb-1.5">
+                                    {t('ent.zalo_oa_access_token')} <span className="font-normal normal-case text-[var(--text-secondary)]">{t('ent.zalo_token_optional')}</span>
+                                </label>
+                                <input
+                                    type="password"
+                                    className="w-full border border-[var(--glass-border)] bg-[var(--glass-surface)] rounded-xl px-4 py-2.5 text-sm font-mono text-[var(--text-primary)] focus:outline-none focus:ring-2 focus:ring-[var(--sgs-primary)]/40 transition-all"
+                                    value={String(zaloConfig.accessToken || '')}
+                                    onChange={e => handleConfigChange('accessToken', e.target.value)}
+                                    autoComplete="new-password"
+                                />
+                                <p className="mt-1.5 text-xs text-[var(--text-secondary)]">
+                                    Không có Access Token thì cấu hình vẫn được lưu, nhưng kiểm tra broadcast sẽ không thể báo READY.
+                                </p>
+                            </div>
+                            {zaloResult && (
+                                <div className={`rounded-xl border p-3 text-xs ${
+                                    zaloResult.kind === 'ready'
+                                        ? 'bg-emerald-50 border-emerald-200 text-emerald-900'
+                                        : zaloResult.kind === 'not_ready'
+                                            ? 'bg-amber-50 border-amber-200 text-amber-900'
+                                            : zaloResult.kind === 'error'
+                                                ? 'bg-rose-50 border-rose-200 text-rose-900'
+                                                : 'bg-blue-50 border-blue-200 text-blue-900'
+                                }`}>
+                                    <p className="font-bold">{zaloResult.title}</p>
+                                    <p className="mt-1 leading-relaxed">{zaloResult.message}</p>
+                                    {(zaloResult.reasonCode || zaloResult.checks) && (
+                                        <div className="mt-2 flex flex-wrap gap-x-3 gap-y-1 font-mono text-[11px] opacity-80">
+                                            {zaloResult.reasonCode && <span>Mã: {zaloResult.reasonCode}</span>}
+                                            {zaloResult.checks && <span>OA: {zaloResult.checks.oaId} · Quota: {zaloResult.checks.quota}</span>}
+                                        </div>
+                                    )}
+                                </div>
+                            )}
+                        </div>
+                    ) : isSocialConnection ? (
                         <div className="rounded-2xl border border-indigo-200 bg-indigo-50/70 p-4">
                             <div className="flex items-start gap-3">
                                 <div className="rounded-xl bg-white p-2 text-indigo-700 shadow-sm">{SOCIAL_CONNECTION_ICON}</div>
@@ -164,7 +345,16 @@ const ConnectorModal = ({ isOpen, onClose, onSave, onOpenSocial, t }: any) => {
                     )}
                 </div>
                 <div className="px-6 pb-6">
-                    {isSocialConnection ? (
+                    {isZaloConnection ? (
+                        <button
+                            onClick={() => void handleZaloConnect()}
+                            disabled={zaloConnecting || !String(zaloConfig.appId || '').trim() || !String(zaloConfig.oaId || '').trim() || !String(zaloConfig.oaName || '').trim()}
+                            className="w-full py-3 bg-sgs-primary-deep text-white font-bold rounded-xl hover:bg-slate-800 shadow-lg transition-all active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                        >
+                            {zaloConnecting && <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />}
+                            {zaloConnecting ? 'Đang kết nối và kiểm tra…' : 'Kết nối và kiểm tra'}
+                        </button>
+                    ) : isSocialConnection ? (
                         <button
                             onClick={() => onOpenSocial(socialConnection.route)}
                             className="w-full py-3 bg-indigo-700 text-white font-bold rounded-xl hover:bg-indigo-800 shadow-lg transition-all active:scale-95"
