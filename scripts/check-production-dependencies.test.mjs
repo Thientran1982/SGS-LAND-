@@ -5,6 +5,7 @@ import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import test from 'node:test';
 import {
+  assertBundledBackendImportSucceeded,
   runBundledBackendImport,
   withProductionDependencyCheckRoot,
 } from './check-production-dependencies.mjs';
@@ -59,6 +60,14 @@ test('validates production dependencies without mutating the workspace', async (
 
         assert.notEqual(failed.code, 0, 'a dev-only runtime import must fail validation');
         assert.match(failed.stderr, /Cannot find package ['"]vitest['"]/);
+        assert.throws(
+          () => assertBundledBackendImportSucceeded(failed),
+          error => {
+            assert.match(error.message, /Bundled backend import failed \(exit code 1\)/);
+            assert.match(error.message, /\[stderr\][\s\S]*Cannot find package ['"]vitest['"]/);
+            return true;
+          },
+        );
 
         await writeFile(join(productionCheckRoot, 'server.js'), generatedBundle);
         const passed = await runBundledBackendImport(productionCheckRoot);
@@ -121,7 +130,15 @@ test('cleans up the temporary install when npm ci fails', async () => {
           throw new Error('npm ci unexpectedly succeeded');
         },
       ),
-      /npm ci --omit=dev failed with exit code/,
+      error => {
+        assert.match(
+          error.message,
+          /Production dependency installation failed during npm ci --omit=dev/,
+        );
+        assert.match(error.message, /exit code 1/);
+        assert.match(error.message, /\[stderr\][\s\S]*npm (ERR!|error)/i);
+        return true;
+      },
     );
 
     await assertNoValidationArtifacts(tempParent);
@@ -142,17 +159,24 @@ test('cleans up the temporary install when backend import times out', async () =
     const originalWorkspaceFiles = await snapshotWorkspace();
     await writeFile(
       join(fixtureRoot, 'server.js'),
-      'setInterval(() => {}, 1000);\nawait new Promise(() => {});',
+      'console.error("backend import timed out");\nsetInterval(() => {}, 1000);\nawait new Promise(() => {});',
     );
 
-    await assert.rejects(
-      withProductionDependencyCheckRoot(
-        { sourceRoot: fixtureRoot, tempParent },
-        async productionCheckRoot => {
-          await runBundledBackendImport(productionCheckRoot, { timeoutMs: 100 });
-        },
-      ),
-      /timed out after 100ms/,
+    await withProductionDependencyCheckRoot(
+      { sourceRoot: fixtureRoot, tempParent },
+      async productionCheckRoot => {
+        const timedOut = await runBundledBackendImport(productionCheckRoot, { timeoutMs: 100 });
+        assert.equal(timedOut.timedOut, true);
+        assert.throws(
+          () => assertBundledBackendImportSucceeded(timedOut),
+          error => {
+            assert.match(error.message, /Bundled backend import timed out after 100ms/);
+            assert.match(error.message, /signal SIGTERM/);
+            assert.match(error.message, /\[stderr\][\s\S]*backend import timed out/);
+            return true;
+          },
+        );
+      },
     );
 
     await assertNoValidationArtifacts(tempParent);

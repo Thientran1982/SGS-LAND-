@@ -20,6 +20,7 @@ function run(command, args, options = {}) {
     });
     let stdout = '';
     let stderr = '';
+    let timedOut = false;
 
     if (options.capture) {
       child.stdout.on('data', chunk => { stdout += chunk; });
@@ -28,8 +29,8 @@ function run(command, args, options = {}) {
 
     const timeout = options.timeoutMs
       ? setTimeout(() => {
+          timedOut = true;
           child.kill('SIGTERM');
-          rejectRun(new Error(`${command} ${args.join(' ')} timed out after ${options.timeoutMs}ms`));
         }, options.timeoutMs)
       : null;
 
@@ -39,9 +40,61 @@ function run(command, args, options = {}) {
     });
     child.once('exit', (code, signal) => {
       if (timeout) clearTimeout(timeout);
-      resolveRun({ code, signal, stdout, stderr });
+      resolveRun({
+        code,
+        signal,
+        stdout,
+        stderr,
+        timedOut,
+        timeoutMs: options.timeoutMs,
+      });
     });
   });
+}
+
+function processTerminationDetails(result) {
+  const details = [];
+  if (result.code !== null && result.code !== undefined) {
+    details.push(`exit code ${result.code}`);
+  }
+  if (result.signal) {
+    details.push(`signal ${result.signal}`);
+  }
+  return details.length > 0 ? details.join(', ') : 'unknown termination';
+}
+
+function processOutput(result) {
+  const output = [];
+  if (result.stdout?.trim()) output.push(`[stdout]\n${result.stdout.trim()}`);
+  if (result.stderr?.trim()) output.push(`[stderr]\n${result.stderr.trim()}`);
+  return output.length > 0 ? `\n${output.join('\n')}` : '';
+}
+
+function installationError(result) {
+  return new Error(
+    `Production dependency installation failed during npm ci --omit=dev ` +
+    `(${processTerminationDetails(result)}).${processOutput(result)}`,
+  );
+}
+
+function importError(result) {
+  if (result.timedOut) {
+    return new Error(
+      `Bundled backend import timed out after ${result.timeoutMs}ms ` +
+      `(${processTerminationDetails(result)}).${processOutput(result)}`,
+    );
+  }
+
+  return new Error(
+    `Bundled backend import failed (${processTerminationDetails(result)}).` +
+    processOutput(result),
+  );
+}
+
+export function assertBundledBackendImportSucceeded(importResult) {
+  if (importResult.timedOut || importResult.code !== 0) {
+    throw importError(importResult);
+  }
 }
 
 export async function withProductionDependencyCheckRoot(
@@ -67,11 +120,20 @@ export async function withProductionDependencyCheckRoot(
 
     console.log('Installing the production-only dependency set in a temporary directory...');
     const npm = process.platform === 'win32' ? 'npm.cmd' : 'npm';
-    const install = await run(npm, ['ci', '--omit=dev', '--no-audit', '--no-fund'], {
-      cwd: productionCheckRoot,
-    });
+    let install;
+    try {
+      install = await run(npm, ['ci', '--omit=dev', '--no-audit', '--no-fund'], {
+        cwd: productionCheckRoot,
+        capture: true,
+      });
+    } catch (error) {
+      throw new Error(
+        `Production dependency installation could not start during npm ci --omit=dev: ${error.message}`,
+        { cause: error },
+      );
+    }
     if (install.code !== 0) {
-      throw new Error(`npm ci --omit=dev failed with exit code ${install.code ?? 'unknown'}`);
+      throw installationError(install);
     }
 
     return await callback(productionCheckRoot);
@@ -91,7 +153,6 @@ export async function runBundledBackendImport(
     {
       cwd: productionCheckRoot,
       capture: true,
-      timeoutMs: 120_000,
       env: {
         ...process.env,
         NODE_ENV: 'production',
@@ -110,13 +171,7 @@ export async function checkProductionDependencies() {
     },
     async productionCheckRoot => {
       const importResult = await runBundledBackendImport(productionCheckRoot);
-      if (importResult.code !== 0) {
-        const output = [importResult.stdout, importResult.stderr].filter(Boolean).join('\n').trim();
-        throw new Error(
-          `Bundled backend import failed with exit code ${importResult.code ?? `signal ${importResult.signal}`}.` +
-          (output ? `\n${output}` : ''),
-        );
-      }
+      assertBundledBackendImportSucceeded(importResult);
 
       console.log('Production dependency check passed.');
     },
