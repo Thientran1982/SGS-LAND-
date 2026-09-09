@@ -41,6 +41,20 @@ export function createNotificationRoutes(authenticateToken: any) {
     }
   });
 
+  router.get('/zalo-readiness', authenticateToken, async (req: Request, res: Response) => {
+    try {
+      const user = (req as any).user;
+      if (!ADMIN_ROLES.includes(user.role)) {
+        return res.status(403).json({ error: 'Chỉ quản trị viên mới có quyền xem cảnh báo Zalo.' });
+      }
+      const warnings = await notificationRepository.listZaloReadinessNotificationRetries(user.tenantId);
+      res.json({ warnings });
+    } catch (error) {
+      console.error('Error fetching Zalo readiness warnings:', error);
+      res.status(500).json({ error: 'Failed to fetch Zalo readiness warnings' });
+    }
+  });
+
   router.patch('/:id/read', authenticateToken, validateUUIDParam(), async (req: Request, res: Response) => {
     try {
       const user = (req as any).user;

@@ -92,4 +92,31 @@ describe('Zalo readiness notification retry worker', () => {
     });
     expect(JSON.stringify(state.recordExhausted.mock.calls[0])).not.toContain('provider details');
   });
+
+  it('keeps a failed warning pending and marks it delivered on the next retry', async () => {
+    state.claim
+      .mockResolvedValueOnce([retry])
+      .mockResolvedValueOnce([{ ...retry, attemptCount: 2 }]);
+    state.notify
+      .mockRejectedValueOnce(new Error('temporary notification failure'))
+      .mockResolvedValueOnce(undefined);
+    state.markFailed.mockResolvedValueOnce('PENDING');
+
+    await expect(retryZaloReadinessNotificationAlerts()).resolves.toEqual({
+      claimed: 1,
+      delivered: 0,
+      failed: 1,
+      exhausted: 0,
+    });
+    expect(state.markFailed).toHaveBeenCalledWith(retry.id, retry.attemptCount);
+
+    await expect(retryZaloReadinessNotificationAlerts()).resolves.toEqual({
+      claimed: 1,
+      delivered: 1,
+      failed: 0,
+      exhausted: 0,
+    });
+    expect(state.markDelivered).toHaveBeenCalledWith(retry.id);
+    expect(state.recordExhausted).not.toHaveBeenCalled();
+  });
 });

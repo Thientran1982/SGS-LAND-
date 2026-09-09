@@ -10,6 +10,17 @@ export interface AppNotification {
   readAt: string | null;
   createdAt: string;
 }
+export interface ZaloReadinessWarning {
+  reasonCode: string;
+  checkedAt: string;
+  retryState: {
+    status: 'PENDING' | 'DELIVERED' | 'EXHAUSTED';
+    attemptCount: number;
+    nextAttemptAt: string | null;
+    deliveredAt: string | null;
+    exhaustedAt: string | null;
+  };
+}
 export const notificationApi = {
   getAll: (): Promise<{ notifications: AppNotification[]; unreadCount: number }> =>
     api.get('/api/notifications'),
@@ -23,4 +34,6 @@ export const notificationApi = {
     api.delete(`/api/notifications/${id}`),
   deleteAllRead: (): Promise<{ success: boolean }> =>
     api.delete('/api/notifications/read-all'),
+  getZaloReadinessWarnings: (): Promise<{ warnings: ZaloReadinessWarning[] }> =>
+    api.get('/api/notifications/zalo-readiness'),
 };

@@ -28,6 +28,20 @@ export interface NotificationOperationalEvent {
   createdAt: string;
 }
 
+export type ZaloReadinessNotificationRetryStatus = 'PENDING' | 'DELIVERED' | 'EXHAUSTED';
+
+export interface ZaloReadinessNotificationRetryView {
+  reasonCode: string;
+  checkedAt: string;
+  retryState: {
+    status: ZaloReadinessNotificationRetryStatus;
+    attemptCount: number;
+    nextAttemptAt: string | null;
+    deliveredAt: string | null;
+    exhaustedAt: string | null;
+  };
+}
+
 class NotificationRepository {
   async create(data: CreateNotificationData): Promise<any> {
     const result = await pool.query(
@@ -193,6 +207,38 @@ class NotificationRepository {
       [tenantId]
     );
     return result.rows[0]?.count ?? 0;
+  }
+
+  /**
+   * Return only reviewed facts needed by the Admin Cockpit to explain a
+   * readiness-warning delivery gap. Keep transition IDs, tenant IDs, and any
+   * provider context out of this projection.
+   */
+  async listZaloReadinessNotificationRetries(
+    tenantId: string,
+    limit = 25,
+  ): Promise<ZaloReadinessNotificationRetryView[]> {
+    const safeLimit = Math.max(1, Math.min(Math.trunc(limit), 100));
+    const result = await pool.query(
+      `SELECT reason_code, checked_at, status, attempt_count,
+              next_attempt_at, delivered_at, exhausted_at
+       FROM zalo_readiness_notification_retries
+       WHERE tenant_id = $1
+       ORDER BY created_at DESC
+       LIMIT $2`,
+      [tenantId, safeLimit],
+    );
+    return result.rows.map(row => ({
+      reasonCode: row.reason_code,
+      checkedAt: new Date(row.checked_at).toISOString(),
+      retryState: {
+        status: row.status as ZaloReadinessNotificationRetryStatus,
+        attemptCount: Number(row.attempt_count),
+        nextAttemptAt: row.next_attempt_at ? new Date(row.next_attempt_at).toISOString() : null,
+        deliveredAt: row.delivered_at ? new Date(row.delivered_at).toISOString() : null,
+        exhaustedAt: row.exhausted_at ? new Date(row.exhausted_at).toISOString() : null,
+      },
+    }));
   }
 
   async markRead(tenantId: string, userId: string, id: string): Promise<any | null> {

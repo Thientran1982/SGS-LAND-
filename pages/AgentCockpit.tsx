@@ -3,6 +3,7 @@ import { AlertTriangle, Bot, CheckCircle2, Clock3, RefreshCw, Send, ShieldCheck,
 import { api } from '../services/api/apiClient';
 import { Dropdown } from '../components/Dropdown';
 import { GalleryCleanupPanel } from '../components/GalleryCleanupPanel';
+import { notificationApi, ZaloReadinessWarning } from '../services/api/notificationApi';
 
 type CockpitSummary = {
   roleCards: Array<{ agentKey: string; title: string; mission: string; permissions: string[]; kpis: string[]; rollout: string; approval_status?: string }>;
@@ -63,6 +64,7 @@ export default function AgentCockpit() {
   const [editingBrain, setEditingBrain] = useState<MarketingGrowthStatus['brain'][number] | null>(null);
   const [brainForm, setBrainForm] = useState({ documentType: 'brand_voice', documentKey: '', content: '{}', source: 'internal', sourceUrl: '', verificationStatus: 'unverified' });
   const [savingBrain, setSavingBrain] = useState(false);
+  const [zaloReadinessWarnings, setZaloReadinessWarnings] = useState<ZaloReadinessWarning[]>([]);
 
   const load = useCallback(async () => {
     setLoading(true); setError('');
@@ -70,16 +72,18 @@ export default function AgentCockpit() {
       const query = new URLSearchParams(eventFilters).toString();
       const nextSummary = await api.get<CockpitSummary>('/api/agent-operating/cockpit');
       setSummary(nextSummary);
-      const [questionsResult, eventsResult, supportResult, marketingGrowthResult] = await Promise.allSettled([
+      const [questionsResult, eventsResult, supportResult, marketingGrowthResult, zaloReadinessResult] = await Promise.allSettled([
         api.get<HumanQuestion[]>('/api/agent-operating/questions'),
         api.get<OperatingEvent[]>(`/api/agent-operating/events?${query}`),
         api.get<{ data: SupportRequest[] }>('/api/live-chat/support-requests'),
         api.get<MarketingGrowthStatus>('/api/agent-operating/marketing-growth'),
+        notificationApi.getZaloReadinessWarnings(),
       ]);
       if (questionsResult.status === 'fulfilled') setQuestions(questionsResult.value);
       if (eventsResult.status === 'fulfilled') setEvents(eventsResult.value);
       if (supportResult.status === 'fulfilled') setSupportRequests(supportResult.value.data || []);
       if (marketingGrowthResult.status === 'fulfilled') setMarketingGrowth(marketingGrowthResult.value);
+      if (zaloReadinessResult.status === 'fulfilled') setZaloReadinessWarnings(zaloReadinessResult.value.warnings || []);
       // Secondary panels must not hide a successfully loaded cockpit or a
       // successful role-card approval.
       const [memoryResult, weightsResult] = await Promise.allSettled([
@@ -255,6 +259,35 @@ export default function AgentCockpit() {
             ['Đã hoàn tất', count(summary.executions, 'SUCCESS'), 'text-emerald-600'],
           ].map(([label, value, color]) => <div key={String(label)} className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm"><div className="text-xs font-medium text-slate-500">{label}</div><div className={`mt-2 text-2xl font-bold ${color}`}>{value}</div></div>)}
         </div>
+        {zaloReadinessWarnings.length > 0 && <section className="rounded-xl border border-amber-200 bg-amber-50/50 p-5 shadow-sm" aria-labelledby="zalo-readiness-warning-title">
+          <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+            <div className="flex items-center gap-2">
+              <AlertTriangle size={19} className="text-amber-700" />
+              <div>
+                <h2 id="zalo-readiness-warning-title" className="font-semibold text-slate-900">Cảnh báo quyền broadcast Zalo</h2>
+                <p className="text-xs text-slate-600">Theo dõi việc gửi cảnh báo readiness tới quản trị viên.</p>
+              </div>
+            </div>
+            {zaloReadinessWarnings.some(warning => warning.retryState.status === 'PENDING') && <span className="rounded-full bg-amber-100 px-2.5 py-1 text-xs font-bold text-amber-800">Cần chú ý</span>}
+          </div>
+          <div className="space-y-2">
+            {zaloReadinessWarnings.slice(0, 8).map((warning, index) => {
+              const state = warning.retryState.status;
+              const stateLabel = state === 'PENDING' ? 'Đang chờ gửi lại' : state === 'DELIVERED' ? 'Đã gửi' : 'Đã hết lần thử';
+              const stateClass = state === 'PENDING' ? 'bg-amber-100 text-amber-800' : state === 'DELIVERED' ? 'bg-emerald-100 text-emerald-800' : 'bg-rose-100 text-rose-800';
+              return <div key={`${warning.checkedAt}-${warning.reasonCode}-${index}`} className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-amber-100 bg-white p-3 text-sm">
+                <div>
+                  <div className="font-semibold text-slate-800">{warning.reasonCode}</div>
+                  <div className="mt-1 text-xs text-slate-500">Kiểm tra lúc {new Date(warning.checkedAt).toLocaleString('vi-VN')}</div>
+                </div>
+                <div className="flex items-center gap-2 text-xs">
+                  <span className={`rounded-full px-2 py-1 font-semibold ${stateClass}`}>{stateLabel}</span>
+                  <span className="text-slate-500">Lần thử: {warning.retryState.attemptCount}</span>
+                </div>
+              </div>;
+            })}
+          </div>
+        </section>}
         <section className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
           <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
              <div className="flex items-center gap-2"><Filter size={19} className="text-rose-600" /><div><h2 className="font-semibold text-slate-900">Sự kiện cần vận hành</h2><p className="text-xs text-slate-500">Sự kiện treo phiên xử lý hoặc lỗi nhiều lần được đưa lên đầu.</p></div></div>
