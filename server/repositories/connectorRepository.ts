@@ -119,6 +119,40 @@ class ConnectorRepository extends BaseRepository {
       return result.rows[0] ? this.rowToEntity(result.rows[0]) : null;
     });
   }
+
+  async listOrphaned(tenantId: string): Promise<any[]> {
+    await ensureTables();
+    return this.withTenant(tenantId, async (client) => {
+      const result = await client.query(
+        `SELECT * FROM connector_configs
+         WHERE tenant_id = $1 AND owner_user_id IS NULL
+         ORDER BY created_at DESC`,
+        [tenantId],
+      );
+      return this.rowsToEntities(result.rows);
+    });
+  }
+
+  async reassignOwner(tenantId: string, connectorId: string, ownerUserId: string): Promise<any | null> {
+    await ensureTables();
+    return this.withTenant(tenantId, async (client) => {
+      const result = await client.query(
+        `UPDATE connector_configs AS c
+            SET owner_user_id = u.id,
+                updated_at = CURRENT_TIMESTAMP
+           FROM users AS u
+          WHERE c.id = $1
+            AND c.tenant_id = $2
+            AND c.owner_user_id IS NULL
+            AND u.id = $3
+            AND u.tenant_id = $2
+            AND u.status = 'ACTIVE'
+         RETURNING c.*`,
+        [connectorId, tenantId, ownerUserId],
+      );
+      return result.rows[0] ? this.rowToEntity(result.rows[0]) : null;
+    });
+  }
 }
 
 class SyncJobRepository extends BaseRepository {

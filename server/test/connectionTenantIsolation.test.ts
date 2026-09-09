@@ -5,10 +5,14 @@ import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from 'vites
 const state = vi.hoisted(() => ({
   poolQuery: vi.fn(),
   listConnectors: vi.fn(),
+  listOrphanedConnectors: vi.fn(),
   createConnector: vi.fn(),
   findConnector: vi.fn(),
+  findConnectorById: vi.fn(),
+  reassignOwner: vi.fn(),
   updateConnector: vi.fn(),
   deleteConnector: vi.fn(),
+  auditLog: vi.fn(),
 }));
 
 vi.mock('../db', () => ({
@@ -22,8 +26,11 @@ vi.mock('../middleware/rateLimiter', () => ({
 vi.mock('../repositories/connectorRepository', () => ({
   connectorRepository: {
     listByUser: state.listConnectors,
+    listOrphaned: state.listOrphanedConnectors,
     create: state.createConnector,
     findByUser: state.findConnector,
+    findById: state.findConnectorById,
+    reassignOwner: state.reassignOwner,
     update: state.updateConnector,
     delete: state.deleteConnector,
   },
@@ -32,6 +39,12 @@ vi.mock('../repositories/connectorRepository', () => ({
     update: vi.fn(),
     listByUser: vi.fn(),
     findByUser: vi.fn(),
+  },
+}));
+
+vi.mock('../repositories/auditRepository', () => ({
+  auditRepository: {
+    log: state.auditLog,
   },
 }));
 
@@ -60,6 +73,12 @@ function connectorWithSecrets(overrides: Record<string, unknown> = {}) {
       accessToken: 'access-token-should-never-leave-server',
       clientSecret: 'client-secret-should-never-leave-server',
       secret: 'secret-should-never-leave-server',
+      credentials: {
+        privateKey: 'nested-private-key-should-never-leave-server',
+      },
+      metadata: {
+        privateKey: 'deep-private-key-should-never-leave-server',
+      },
       spreadsheetId: 'safe-public-identifier',
     },
     ...overrides,
@@ -154,10 +173,14 @@ describe('API and MCP connection tenant isolation', () => {
     vi.clearAllMocks();
     state.poolQuery.mockImplementation((text: string, values: unknown[]) => mcpQueryResult(text, values));
     state.listConnectors.mockResolvedValue([connectorWithSecrets()]);
+    state.listOrphanedConnectors.mockResolvedValue([connectorWithSecrets({ ownerUserId: null })]);
     state.createConnector.mockResolvedValue(connectorWithSecrets({ name: 'Created connector' }));
     state.findConnector.mockResolvedValue(connectorWithSecrets());
+    state.findConnectorById.mockResolvedValue(connectorWithSecrets({ ownerUserId: null }));
+    state.reassignOwner.mockResolvedValue(connectorWithSecrets({ ownerUserId: 'user-b' }));
     state.updateConnector.mockResolvedValue(connectorWithSecrets({ name: 'Updated connector' }));
     state.deleteConnector.mockResolvedValue(true);
+    state.auditLog.mockResolvedValue(undefined);
   });
 
   afterAll(async () => {
@@ -252,6 +275,8 @@ describe('API and MCP connection tenant isolation', () => {
       accessToken: '[REDACTED]',
       clientSecret: '[REDACTED]',
       secret: '[REDACTED]',
+      credentials: '[REDACTED]',
+      metadata: { privateKey: '[REDACTED]' },
       spreadsheetId: 'safe-public-identifier',
     });
     expect(create.body.config.apiKey).toBe('[REDACTED]');
@@ -282,6 +307,75 @@ describe('API and MCP connection tenant isolation', () => {
     expect(state.findConnector).toHaveBeenCalledWith(TENANT_A, 'user-a', CONNECTOR_ID);
     expect(state.updateConnector).toHaveBeenCalledWith(TENANT_A, 'user-a', CONNECTOR_ID, { name: 'Tenant A update' });
     expect(state.deleteConnector).toHaveBeenCalledWith(TENANT_A, 'user-a', CONNECTOR_ID);
+  });
+
+  it('only lets tenant admins view orphaned connectors', async () => {
+    const denied = await testServer.request('/api/connectors/orphaned', { role: 'TEAM_LEAD' });
+    expect(denied.status).toBe(403);
+    expect(state.listOrphanedConnectors).not.toHaveBeenCalled();
+
+    const listed = await testServer.request('/api/connectors/orphaned', { role: 'ADMIN', tenantId: TENANT_A });
+    expect(listed.status).toBe(200);
+    expect(state.listOrphanedConnectors).toHaveBeenCalledWith(TENANT_A);
+    expect(listed.text).not.toContain('api-key-should-never-leave-server');
+    expect(listed.body[0].config.apiKey).toBe('[REDACTED]');
+  });
+
+  it('reassigns an orphaned connector only within the tenant and records an audit event', async () => {
+    const response = await testServer.request(`/api/connectors/${CONNECTOR_ID}/reassign-owner`, {
+      method: 'POST',
+      role: 'ADMIN',
+      tenantId: TENANT_A,
+      userId: 'admin-a',
+      body: { ownerUserId: 'user-b' },
+    });
+
+    expect(response.status).toBe(200);
+    expect(state.reassignOwner).toHaveBeenCalledWith(TENANT_A, CONNECTOR_ID, 'user-b');
+    expect(state.auditLog).toHaveBeenCalledWith(TENANT_A, expect.objectContaining({
+      actorId: 'admin-a',
+      action: 'CONNECTOR_OWNER_REASSIGNED',
+      entityType: 'CONNECTOR',
+      entityId: CONNECTOR_ID,
+    }));
+    expect(response.text).not.toContain('api-key-should-never-leave-server');
+    expect(response.body.config.apiKey).toBe('[REDACTED]');
+  });
+
+  it('does not allow a tenant admin to reassign a connector from another tenant', async () => {
+    state.reassignOwner.mockResolvedValue(null);
+    state.findConnectorById.mockResolvedValue(null);
+    const response = await testServer.request(`/api/connectors/${CONNECTOR_ID}/reassign-owner`, {
+      method: 'POST',
+      role: 'ADMIN',
+      tenantId: 'tenant-b',
+      body: { ownerUserId: 'user-b' },
+    });
+
+    expect(response.status).toBe(404);
+    expect(state.reassignOwner).toHaveBeenCalledWith('tenant-b', CONNECTOR_ID, 'user-b');
+    expect(state.findConnectorById).toHaveBeenCalledWith('tenant-b', CONNECTOR_ID);
+    expect(state.auditLog).not.toHaveBeenCalled();
+  });
+
+  it('rejects reassignment when the connector is already owned or the target is not active', async () => {
+    state.reassignOwner.mockResolvedValue(null);
+    state.findConnectorById.mockResolvedValue(connectorWithSecrets({ ownerUserId: 'user-a' }));
+    const alreadyOwned = await testServer.request(`/api/connectors/${CONNECTOR_ID}/reassign-owner`, {
+      method: 'POST',
+      role: 'ADMIN',
+      body: { ownerUserId: 'user-b' },
+    });
+    expect(alreadyOwned.status).toBe(409);
+
+    state.findConnectorById.mockResolvedValue(connectorWithSecrets({ ownerUserId: null }));
+    const inactiveTarget = await testServer.request(`/api/connectors/${CONNECTOR_ID}/reassign-owner`, {
+      method: 'POST',
+      role: 'ADMIN',
+      body: { ownerUserId: 'inactive-user' },
+    });
+    expect(inactiveTarget.status).toBe(400);
+    expect(state.auditLog).not.toHaveBeenCalled();
   });
 
   it('does not let a user inspect or mutate another user connector in the same tenant', async () => {

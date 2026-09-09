@@ -1,18 +1,27 @@
 import { Router, Request, Response } from 'express';
 import { connectorRepository, syncJobRepository } from '../repositories/connectorRepository';
+import { auditRepository } from '../repositories/auditRepository';
 
 const CONNECTOR_TYPES = new Set(['GOOGLE_SHEETS', 'HUBSPOT', 'ZOHO_CRM', 'WEBHOOK_EXPORT', 'SALESFORCE']);
 const CONNECTOR_ROLES = new Set(['SUPER_ADMIN', 'ADMIN', 'TEAM_LEAD', 'MANAGER', 'SALES', 'MARKETING']);
-const SENSITIVE_CONFIG_KEY = /(api.?key|access.?token|refresh.?token|client.?secret|password|secret|credential)/i;
+const SENSITIVE_CONFIG_KEY = /(api.?key|access.?token|refresh.?token|client.?secret|private.?key|authorization|password|secret|credential)/i;
 
 function publicConnector(connector: any): any {
   if (!connector || typeof connector !== 'object') return connector;
-  const config = connector.config && typeof connector.config === 'object'
-    ? Object.fromEntries(Object.entries(connector.config).map(([key, value]) => [
-      key,
-      SENSITIVE_CONFIG_KEY.test(key) && value ? '[REDACTED]' : value,
-    ]))
-    : connector.config;
+  const redactConfig = (value: unknown, key?: string): unknown => {
+    if (key && SENSITIVE_CONFIG_KEY.test(key) && value) return '[REDACTED]';
+    if (Array.isArray(value)) return value.map(item => redactConfig(item));
+    if (value && typeof value === 'object') {
+      return Object.fromEntries(
+        Object.entries(value).map(([childKey, childValue]) => [
+          childKey,
+          redactConfig(childValue, childKey),
+        ]),
+      );
+    }
+    return value;
+  };
+  const config = redactConfig(connector.config);
   return { ...connector, config };
 }
 
@@ -54,6 +63,23 @@ export function createConnectorRoutes(authenticateToken: any) {
     }
   });
 
+  // ── GET /api/connectors/orphaned ─────────────────────────────────────────
+  // Orphaned credentials are visible only to tenant administrators. They are
+  // never included in the regular user-scoped connector list.
+  router.get('/orphaned', authenticateToken, async (req: Request, res: Response) => {
+    try {
+      const { tenantId, role } = (req as any).user;
+      if (!['SUPER_ADMIN', 'ADMIN'].includes(role)) {
+        return res.status(403).json({ error: 'Only tenant admins can view unassigned connectors' });
+      }
+      const connectors = await connectorRepository.listOrphaned(tenantId);
+      res.json(connectors.map(publicConnector));
+    } catch (err) {
+      console.error('GET orphaned connectors error:', err);
+      res.status(500).json({ error: 'Failed to fetch unassigned connectors' });
+    }
+  });
+
   // ── POST /api/connectors ─────────────────────────────────────────────────
   router.post('/', authenticateToken, async (req: Request, res: Response) => {
     try {
@@ -72,6 +98,50 @@ export function createConnectorRoutes(authenticateToken: any) {
     } catch (err) {
       console.error('POST connector error:', err);
       res.status(500).json({ error: 'Failed to create connector' });
+    }
+  });
+
+  // ── POST /api/connectors/:id/reassign-owner ──────────────────────────────
+  router.post('/:id/reassign-owner', authenticateToken, async (req: Request, res: Response) => {
+    try {
+      const { tenantId, id: actorId, role } = (req as any).user;
+      if (!['SUPER_ADMIN', 'ADMIN'].includes(role)) {
+        return res.status(403).json({ error: 'Only tenant admins can reassign connector owners' });
+      }
+
+      const ownerUserId = typeof req.body?.ownerUserId === 'string'
+        ? req.body.ownerUserId.trim()
+        : '';
+      if (!ownerUserId) {
+        return res.status(400).json({ error: 'ownerUserId is required' });
+      }
+
+      const reassigned = await connectorRepository.reassignOwner(
+        tenantId,
+        req.params.id as string,
+        ownerUserId,
+      );
+      if (reassigned) {
+        await auditRepository.log(tenantId, {
+          actorId,
+          action: 'CONNECTOR_OWNER_REASSIGNED',
+          entityType: 'CONNECTOR',
+          entityId: req.params.id as string,
+          details: `Reassigned orphaned connector owner to active user ${ownerUserId}`,
+          ipAddress: req.ip,
+        });
+        return res.json(publicConnector(reassigned));
+      }
+
+      const connector = await connectorRepository.findById(tenantId, req.params.id as string);
+      if (!connector) return res.status(404).json({ error: 'Connector not found' });
+      if (connector.ownerUserId) {
+        return res.status(409).json({ error: 'Connector already has an owner' });
+      }
+      return res.status(400).json({ error: 'Target user must be active and belong to this tenant' });
+    } catch (err) {
+      console.error('POST connector owner reassignment error:', err);
+      res.status(500).json({ error: 'Failed to reassign connector owner' });
     }
   });
 

@@ -8,6 +8,7 @@ import { connectorService } from '../services/connectorService';
 import { ConfirmModal } from '../components/ConfirmModal';
 import { SeoHead } from '../components/SeoHead';
 import { ROUTES } from '../config/routes';
+import { userApi } from '../services/api/userApi';
 const ICONS = {
     ADD: <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" /></svg>,
     SYNC: <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" /></svg>,
@@ -396,6 +397,11 @@ const StatusBadge = ({ status, t }: { status: SyncStatus; t: any }) => {
 };
 export const DataPlatform: React.FC = () => {
     const [connectors, setConnectors] = useState<ConnectorConfig[]>([]);
+    const [orphanedConnectors, setOrphanedConnectors] = useState<ConnectorConfig[]>([]);
+    const [activeMembers, setActiveMembers] = useState<Array<{ id: string; name: string; email?: string }>>([]);
+    const [currentUser, setCurrentUser] = useState<any>(null);
+    const [assignmentTarget, setAssignmentTarget] = useState<Record<string, string>>({});
+    const [assigningId, setAssigningId] = useState<string | null>(null);
     const [jobs, setJobs] = useState<SyncJob[]>([]);
     const [loading, setLoading] = useState(true);
     const [isModalOpen, setIsModalOpen] = useState(false);
@@ -412,9 +418,19 @@ export const DataPlatform: React.FC = () => {
     const fetchData = useCallback(async () => {
         setLoading(true);
         try {
-            const [c, j] = await Promise.all([db.getConnectorConfigs(), db.getSyncJobs()]);
+            const user = await db.getCurrentUser();
+            const canReassign = ['SUPER_ADMIN', 'ADMIN'].includes(user?.role);
+            const [c, j, orphaned, members] = await Promise.all([
+                db.getConnectorConfigs(),
+                db.getSyncJobs(),
+                canReassign ? db.getOrphanedConnectorConfigs() : Promise.resolve([]),
+                canReassign ? userApi.getMembers(200) : Promise.resolve({ data: [] }),
+            ]);
+            setCurrentUser(user);
             setConnectors(c || []);
             setJobs(j || []);
+            setOrphanedConnectors(orphaned || []);
+            setActiveMembers(members?.data || []);
         } catch {
             // silent — UI stays with empty state
         } finally {
@@ -469,6 +485,28 @@ export const DataPlatform: React.FC = () => {
             notify(e.message || 'Không thể kiểm tra connector', 'error');
         } finally {
             setCheckingId(null);
+        }
+    };
+    const handleReassign = async (connectorId: string) => {
+        const ownerUserId = assignmentTarget[connectorId];
+        if (!ownerUserId) {
+            notify(t('data.reassign_select_user'), 'error');
+            return;
+        }
+        setAssigningId(connectorId);
+        try {
+            await db.reassignConnectorOwner(connectorId, ownerUserId);
+            setOrphanedConnectors(prev => prev.filter(connector => connector.id !== connectorId));
+            setAssignmentTarget(prev => {
+                const next = { ...prev };
+                delete next[connectorId];
+                return next;
+            });
+            notify(t('data.reassign_success'), 'success');
+        } catch (e: any) {
+            notify(e.message || t('data.reassign_error'), 'error');
+        } finally {
+            setAssigningId(null);
         }
     };
     const activeCount = connectors.filter(c => c.status === 'ACTIVE').length;
@@ -618,6 +656,54 @@ export const DataPlatform: React.FC = () => {
                         </div>
                     )}
                 </div>
+                {['SUPER_ADMIN', 'ADMIN'].includes(currentUser?.role) && orphanedConnectors.length > 0 && (
+                    <div className="lg:col-span-2 bg-amber-50/70 rounded-[24px] border border-amber-200 shadow-sm overflow-hidden">
+                        <div className="px-6 py-4 border-b border-amber-200 flex items-center justify-between">
+                            <div>
+                                <h3 className="font-bold text-amber-950">{t('data.orphaned_connectors')}</h3>
+                                <p className="text-xs text-amber-800 mt-1">{t('data.orphaned_connectors_hint')}</p>
+                            </div>
+                            <span className="text-xs text-amber-900 bg-amber-100 px-2 py-0.5 rounded-full font-mono">{orphanedConnectors.length}</span>
+                        </div>
+                        <div className="p-4 grid gap-3 md:grid-cols-2">
+                            {orphanedConnectors.map(connector => (
+                                <div key={connector.id} className="bg-white/80 p-4 rounded-[18px] border border-amber-200 flex flex-col gap-3">
+                                    <div className="flex items-center gap-3 min-w-0">
+                                        <div className="w-10 h-10 rounded-xl bg-amber-100 flex items-center justify-center text-amber-800 shrink-0">
+                                            {CONNECTOR_ICONS[connector.type] || ICONS.INFO}
+                                        </div>
+                                        <div className="min-w-0">
+                                            <h4 className="font-bold text-amber-950 text-sm truncate">{connector.name}</h4>
+                                            <span className="text-xs text-amber-800">{t(`data.type_${connector.type}`)}</span>
+                                        </div>
+                                    </div>
+                                    <div className="flex items-center gap-2">
+                                        <select
+                                            value={assignmentTarget[connector.id] || ''}
+                                            onChange={event => setAssignmentTarget(prev => ({ ...prev, [connector.id]: event.target.value }))}
+                                            className="min-w-0 flex-1 rounded-lg border border-amber-300 bg-white px-3 py-2 text-xs text-amber-950"
+                                            aria-label={t('data.reassign_user')}
+                                        >
+                                            <option value="">{t('data.reassign_select_user')}</option>
+                                            {activeMembers.map(member => (
+                                                <option key={member.id} value={member.id}>
+                                                    {member.name}{member.email ? ` (${member.email})` : ''}
+                                                </option>
+                                            ))}
+                                        </select>
+                                        <button
+                                            onClick={() => void handleReassign(connector.id)}
+                                            disabled={!assignmentTarget[connector.id] || assigningId === connector.id}
+                                            className="shrink-0 px-3 py-2 rounded-lg bg-amber-700 text-white text-xs font-bold hover:bg-amber-800 disabled:opacity-50"
+                                        >
+                                            {assigningId === connector.id ? t('common.loading') : t('data.reassign_owner')}
+                                        </button>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                )}
                 {/* Job History Panel */}
                 <div className="bg-[var(--bg-surface)] rounded-[24px] border border-[var(--glass-border)] shadow-sm overflow-hidden flex flex-col max-h-[520px]">
                     <div className="px-6 py-4 border-b border-[var(--glass-border)] flex items-center justify-between shrink-0">

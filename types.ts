@@ -905,6 +905,7 @@ export enum ConnectorType {
 }
 export interface ConnectorConfig<T = Record<string, unknown>> {
     id: UUID;
+    ownerUserId?: UUID | null;
     type: ConnectorType;
     name: string;
     status: 'ACTIVE' | 'PAUSED' | 'ERROR';

@@ -1583,6 +1583,9 @@ class DatabaseApiClient {
   async getConnectorConfigs() {
     return api.get<any[]>('/api/connectors');
   }
+  async getOrphanedConnectorConfigs() {
+    return api.get<any[]>('/api/connectors/orphaned');
+  }
   async createConnectorConfig(data: any) {
     return api.post<any>('/api/connectors', data);
   }
@@ -1592,6 +1595,9 @@ class DatabaseApiClient {
   async deleteConnectorConfig(id: string) {
     await api.delete<any>(`/api/connectors/${id}`);
     return true;
+  }
+  async reassignConnectorOwner(id: string, ownerUserId: string) {
+    return api.post<any>(`/api/connectors/${id}/reassign-owner`, { ownerUserId });
   }
   async getSyncJobs() {
     return api.get<any[]>('/api/connectors/jobs');
