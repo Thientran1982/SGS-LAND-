@@ -223,7 +223,12 @@ function MapHero({ lang, onChatOpen }: { lang: Lang; onChatOpen: () => void }) {
             <div style={{ position:"absolute", inset:"14px", border:"1px solid var(--lp-line)", borderRadius:"14px", pointerEvents:"none", zIndex:1 }} />
 
             {/* SVG map */}
-            <svg viewBox="0 0 1200 640" xmlns="http://www.w3.org/2000/svg" style={{ display:"block", width:"100%", height:"auto" }}
+            <svg
+              viewBox="0 0 1200 640"
+              preserveAspectRatio="xMidYMid meet"
+              fill="none"
+              xmlns="http://www.w3.org/2000/svg"
+              style={{ display:"block", width:"100%", height:"auto", overflow:"hidden" }}
               role="img" aria-label={lang==="vi" ? "Bản đồ 5 dự án tại 6 tỉnh miền Nam" : "Map of 5 projects across 6 southern provinces"}>
               <g stroke="var(--lp-hair)" strokeWidth="1" fill="none">
                 <path d="M200 0V640M400 0V640M600 0V640M800 0V640M1000 0V640"/>
