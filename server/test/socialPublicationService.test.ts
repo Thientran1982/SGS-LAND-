@@ -32,7 +32,10 @@ describe('social publication foundation', () => {
       hasPublisher: false,
       messagingSupported: true,
       status: 'NOT_READY',
+      kind: 'BROADCAST',
     });
+    expect(zalo?.reason).toContain('customer-service message/product share');
+    expect(zalo?.reason).not.toContain('Zalo post');
   });
 
   it('builds provider-independent content from an immutable product snapshot', () => {

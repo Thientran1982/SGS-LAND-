@@ -12,9 +12,11 @@ vi.mock('../services/zaloService', () => ({
 
 import {
   buildProductShareText,
+  getZaloDeliveryMode,
   normalizeProductImages,
   sendProductViaZalo,
   splitZaloText,
+  ZALO_CUSTOMER_SERVICE_PRODUCT_SHARE,
 } from '../services/productShareService';
 
 describe('product sharing', () => {
@@ -23,6 +25,12 @@ describe('product sharing', () => {
     sendImage.mockReset();
     sendText.mockResolvedValue({ success: true, messageId: 'text-1' });
     sendImage.mockResolvedValue({ success: true, messageId: 'image-1' });
+  });
+
+  it('identifies the direct lead flow as a customer-service product share', () => {
+    expect(ZALO_CUSTOMER_SERVICE_PRODUCT_SHARE).toBe('CUSTOMER_SERVICE_PRODUCT_SHARE');
+    expect(getZaloDeliveryMode(true)).toBe('CUSTOMER_SERVICE_PRODUCT_SHARE');
+    expect(getZaloDeliveryMode(false)).toBe('CUSTOMER_SERVICE_MESSAGE');
   });
 
   it('builds the complete snapshot without replacing details with a URL', () => {

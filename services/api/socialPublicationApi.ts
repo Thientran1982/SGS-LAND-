@@ -12,6 +12,10 @@ export interface SocialCapability {
   hasPublisher: boolean;
 }
 
+export function isSocialCapabilityReady(capability: Pick<SocialCapability, 'status' | 'canPublish'>): boolean {
+  return capability.status === 'READY' && capability.canPublish;
+}
+
 export interface SocialTarget {
   id: string;
   platform: string;

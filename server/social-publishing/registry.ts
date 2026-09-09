@@ -55,12 +55,12 @@ const CATALOG: SocialPlatformCapability[] = [
   },
   {
     platform: 'ZALO_BROADCAST',
-    label: 'Zalo OA broadcast',
+    label: 'Zalo OA broadcast/public',
     kind: 'BROADCAST',
     status: 'NOT_READY',
-    canPublish: true,
+    canPublish: false,
     messagingSupported: true,
-    reason: 'Zalo hiện chỉ được xác minh cho customer-service message/product share, chưa xác minh broadcast/public post.',
+    reason: 'Chỉ hỗ trợ gửi customer-service message/product share cho lead. Chưa xác minh API và quyền broadcast/public của Zalo OA.',
     requiresConnection: true,
   },
 ];
@@ -74,11 +74,12 @@ export function getSocialPlatformCatalog(): SocialPlatformCapability[] {
 export function getSocialPlatformCapability(platform: SocialPlatform): SocialPlatformCapability {
   const item = CATALOG.find(candidate => candidate.platform === platform);
   if (!item) throw new Error(`Nền tảng không được hỗ trợ: ${platform}`);
-  const publisher = publishers.get(platform);
   return {
     ...item,
-    status: publisher ? 'READY' : item.status,
-    canPublish: Boolean(publisher) && item.canPublish,
+    // A registered adapter is not proof of a tenant connection or provider
+    // permission. Tenant-scoped readiness is established below by isAvailable.
+    status: item.status,
+    canPublish: false,
   };
 }
 
@@ -91,7 +92,13 @@ export async function getTenantSocialPlatformCapability(
   const publisher = publishers.get(platform);
   if (!publisher) return capability;
   if (!publisher.isAvailable) {
-    return capability;
+    return {
+      ...capability,
+      status: 'NOT_READY',
+      canPublish: false,
+      retryable: false,
+      reason: 'Publisher chưa có kiểm tra kết nối và quyền provider theo tenant.',
+    };
   }
 
   try {

@@ -6,6 +6,7 @@ import {
   SocialCapability,
   SocialPublication,
   SocialTarget,
+  isSocialCapabilityReady,
 } from '../services/api/socialPublicationApi';
 
 type ListingOption = {
@@ -370,9 +371,9 @@ export const SocialPublishing: React.FC = () => {
         <div className="flex flex-col justify-between gap-4 md:flex-row md:items-end">
           <div>
             <p className="text-xs font-bold uppercase tracking-[0.18em] text-sgs-primary">Marketing operations</p>
-            <h1 className="mt-2 text-3xl font-bold text-[var(--text-primary)]">Đăng sản phẩm đa nền tảng</h1>
+            <h1 className="mt-2 text-3xl font-bold text-[var(--text-primary)]">Xuất bản sản phẩm công khai</h1>
             <p className="mt-2 max-w-3xl text-sm leading-6 text-[var(--text-secondary)]">
-              Preview và lưu kế hoạch đăng từ snapshot của listing. Kênh nhắn tin lead không được xem là public publisher.
+              Preview và lưu kế hoạch xuất bản từ snapshot của listing. Tin nhắn customer-service và gửi sản phẩm trực tiếp cho lead qua Zalo nằm riêng trong Inbox, không phải bài đăng công khai.
             </p>
           </div>
           <button onClick={() => void load()} className="inline-flex items-center justify-center gap-2 rounded-xl border border-[var(--glass-border)] px-4 py-2 text-sm font-semibold text-[var(--text-secondary)] hover:bg-[var(--glass-surface-hover)]">
@@ -408,14 +409,15 @@ export const SocialPublishing: React.FC = () => {
                 <span className="mb-2 block text-sm font-semibold text-[var(--text-primary)]">Nền tảng đích</span>
                 <div className="space-y-2">
                   {catalog.map(item => (
-                    <label key={item.platform} className={`flex cursor-pointer items-start gap-3 rounded-xl border p-3 ${platforms.includes(item.platform) ? 'border-sgs-primary bg-sgs-primary/5' : 'border-[var(--glass-border)]'}`}>
-                      <input type="checkbox" checked={platforms.includes(item.platform)} onChange={() => togglePlatform(item.platform)} className="mt-1 accent-[var(--sgs-primary)]" />
+                    <label key={item.platform} className={`flex items-start gap-3 rounded-xl border p-3 ${isSocialCapabilityReady(item) ? 'cursor-pointer' : 'cursor-not-allowed opacity-75'} ${platforms.includes(item.platform) ? 'border-sgs-primary bg-sgs-primary/5' : 'border-[var(--glass-border)]'}`}>
+                      <input type="checkbox" checked={platforms.includes(item.platform)} disabled={!isSocialCapabilityReady(item)} onChange={() => togglePlatform(item.platform)} className="mt-1 accent-[var(--sgs-primary)] disabled:cursor-not-allowed" />
                       <span className="min-w-0 flex-1">
                         <span className="flex items-center justify-between gap-2 text-sm font-semibold text-[var(--text-primary)]">
                           {item.label}
-                          <span className={`rounded-full px-2 py-0.5 text-[10px] ${item.status === 'READY' ? 'bg-emerald-100 text-emerald-700' : 'bg-amber-100 text-amber-700'}`}>{item.status === 'READY' ? 'Sẵn sàng' : 'Chưa sẵn sàng'}</span>
+                          <span className={`rounded-full px-2 py-0.5 text-[10px] ${isSocialCapabilityReady(item) ? 'bg-emerald-100 text-emerald-700' : 'bg-amber-100 text-amber-700'}`}>{isSocialCapabilityReady(item) ? 'Sẵn sàng' : 'Chưa sẵn sàng'}</span>
                         </span>
                         <span className="mt-1 block text-xs leading-5 text-[var(--text-tertiary)]">{item.reason}</span>
+                        {!item.canPublish && <span className="mt-1 block text-xs font-semibold text-amber-700">Tạm khóa: cần xác minh publisher và quyền provider trước khi xuất bản.</span>}
                       </span>
                     </label>
                   ))}

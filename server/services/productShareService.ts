@@ -3,6 +3,13 @@ import { sendZaloImageMessage, sendZaloTextMessage, ZaloSendResult } from './zal
 
 export const ZALO_TEXT_LIMIT = 2000;
 export const MAX_PRODUCT_SHARE_IMAGES = 10;
+/** Zalo direct-send modes. These are customer-service messages, not public posts. */
+export const ZALO_CUSTOMER_SERVICE_MESSAGE = 'CUSTOMER_SERVICE_MESSAGE' as const;
+export const ZALO_CUSTOMER_SERVICE_PRODUCT_SHARE = 'CUSTOMER_SERVICE_PRODUCT_SHARE' as const;
+
+export function getZaloDeliveryMode(hasProductShare: boolean): typeof ZALO_CUSTOMER_SERVICE_MESSAGE | typeof ZALO_CUSTOMER_SERVICE_PRODUCT_SHARE {
+  return hasProductShare ? ZALO_CUSTOMER_SERVICE_PRODUCT_SHARE : ZALO_CUSTOMER_SERVICE_MESSAGE;
+}
 
 export interface ShareableProduct {
   id?: string;

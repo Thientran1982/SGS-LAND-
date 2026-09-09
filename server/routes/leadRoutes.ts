@@ -13,6 +13,7 @@ import {
   buildProductShareText,
   normalizeProductImages,
   sendProductViaZalo,
+  getZaloDeliveryMode,
 } from '../services/productShareService';
 import { listingRepository } from '../repositories/listingRepository';
 
@@ -472,7 +473,16 @@ export function createLeadRoutes(authenticateToken: any, getBroadcast?: () => an
       let deliveryStatus = 'SENT';
       let deliveryError: string | undefined;
       let interactionContent = String(content || '');
-      let interactionMetadata: Record<string, any> = { ...(metadata || {}) };
+      let interactionMetadata: Record<string, any> = {
+        ...(metadata || {}),
+        ...(resolvedChannel === 'ZALO'
+          ? {
+              deliveryMode: productShare
+                ? getZaloDeliveryMode(true)
+                : getZaloDeliveryMode(false),
+            }
+          : {}),
+      };
       let externalEventId: string | undefined;
 
       if (resolvedChannel === 'ZALO' && !lead.socialIds?.zalo) {
