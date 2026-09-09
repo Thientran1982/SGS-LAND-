@@ -40,13 +40,21 @@ vi.mock('../services/socialPublicationService', () => ({
 }));
 
 import { processSocialPublicationTick } from '../services/socialPublishingWorker';
+import { buildPlatformContent } from '../services/socialPublicationService';
 
 const target = {
   id: 'target-1',
   attempt_count: 1,
 };
 
-const publicationRow = {
+const publicationRow: {
+  id: string;
+  platform: string;
+  tenant_id: string;
+  account_id: string;
+  content_snapshot: Record<string, unknown>;
+  asset_snapshot: string[];
+} = {
   id: 'target-1',
   platform: 'FACEBOOK_PAGE',
   tenant_id: 'tenant-1',
@@ -112,5 +120,33 @@ describe('social publishing worker safety', () => {
         status: 'AMBIGUOUS',
       }),
     );
+  });
+
+  it('passes the publication snapshots to the worker content builder', async () => {
+    const publish = vi.fn().mockResolvedValue({
+      status: 'PUBLISHED',
+      providerPostId: 'post-1',
+    });
+    getSocialPublisher.mockReturnValue({ platform: 'FACEBOOK_PAGE', publish });
+    getTenantSocialPlatformCapability.mockResolvedValue({
+      canPublish: true,
+      reason: 'ready',
+    });
+    publicationRow.content_snapshot = { caption: 'Caption đã duyệt.' };
+    publicationRow.asset_snapshot = ['https://cdn.test/approved.jpg'];
+
+    await processSocialPublicationTick({} as any);
+
+    expect(buildPlatformContent).toHaveBeenCalledWith(
+      publicationRow.content_snapshot,
+      'FACEBOOK_PAGE',
+      publicationRow.asset_snapshot,
+    );
+    expect(publish).toHaveBeenCalledWith(expect.objectContaining({
+      content: expect.objectContaining({
+        text: 'A',
+        imageUrls: [],
+      }),
+    }));
   });
 });

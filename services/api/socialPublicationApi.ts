@@ -76,17 +76,19 @@ export const socialPublicationApi = {
     api.get('/api/social-publications'),
   getPublication: (id: string): Promise<SocialPublication> =>
     api.get(`/api/social-publications/${id}`),
-  preview: (listingId: string, platforms: string[], imageUrls: string[] = []) =>
+  preview: (listingId: string, platforms: string[], imageUrls: string[] = [], caption?: string) =>
     api.post<{
       snapshot: Record<string, unknown>;
       previews: Array<{ platform: string; title: string; text: string; imageUrls: string[]; link: string | null }>;
       catalog: SocialCapability[];
-    }>('/api/social-publications/preview', { listingId, platforms, imageUrls }),
+    }>('/api/social-publications/preview', { listingId, platforms, imageUrls, caption }),
   createDraft: (input: {
     listingId: string;
     platforms: string[];
     publishMode: 'NOW' | 'SCHEDULED';
     scheduledAt?: string | null;
+    caption?: string;
+    imageUrls?: string[];
   }) => api.post<SocialPublication>('/api/social-publications', input),
   activate: (id: string) => api.post<SocialPublication>(`/api/social-publications/${id}/activate`),
   cancel: (id: string) => api.post<{ ok: true }>(`/api/social-publications/${id}/cancel`),

@@ -1,6 +1,7 @@
 import { randomUUID } from 'crypto';
 import { listingRepository } from '../repositories/listingRepository';
 import {
+  MAX_PRODUCT_SHARE_IMAGES,
   normalizeProductImages,
   resolveConfiguredPublicBaseUrl,
 } from './productShareService';
@@ -31,9 +32,24 @@ const PLATFORM_SET = new Set<SocialPlatform>([
   'ZALO_BROADCAST',
 ]);
 
+export const MAX_SOCIAL_PUBLICATION_IMAGES = MAX_PRODUCT_SHARE_IMAGES;
+export const MAX_FACEBOOK_REPRESENTATIVE_IMAGES = 1;
+export const MAX_SOCIAL_PUBLICATION_CAPTION_LENGTH = 63206;
+
 function textValue(value: unknown): string | null {
   if (value === null || value === undefined || String(value).trim() === '') return null;
   return String(value).trim();
+}
+
+export function normalizePublicationCaption(value: unknown): string | null {
+  if (value === null || value === undefined) return null;
+  if (typeof value !== 'string') throw new Error('Caption phải là chuỗi văn bản');
+  const caption = value.trim();
+  if (!caption) return null;
+  if (caption.length > MAX_SOCIAL_PUBLICATION_CAPTION_LENGTH) {
+    throw new Error(`Caption không được dài quá ${MAX_SOCIAL_PUBLICATION_CAPTION_LENGTH.toLocaleString('vi-VN')} ký tự`);
+  }
+  return caption;
 }
 
 function numberOrValue(value: unknown): number | string | null {
@@ -160,7 +176,8 @@ export function buildPlatformContent(
   const content = buildSocialPlatformContent(snapshot, platform);
   return {
     ...content,
-    imageUrls: normalizeProductImages(imageUrls, resolveConfiguredPublicBaseUrl()).slice(0, 10),
+    text: snapshot.caption?.trim() || content.text,
+    imageUrls: normalizeProductImages(imageUrls, resolveConfiguredPublicBaseUrl()).slice(0, MAX_SOCIAL_PUBLICATION_IMAGES),
   };
 }
 
@@ -169,7 +186,7 @@ export function buildPlatformContent(
  * publicly fetchable HTTP(S) URLs in the immutable asset snapshot.
  */
 export function normalizePublicationImages(images: unknown): string[] {
-  return normalizeProductImages(images, resolveConfiguredPublicBaseUrl()).slice(0, 10);
+  return normalizeProductImages(images, resolveConfiguredPublicBaseUrl()).slice(0, MAX_SOCIAL_PUBLICATION_IMAGES);
 }
 
 export function createPublicationRequestId(): string {

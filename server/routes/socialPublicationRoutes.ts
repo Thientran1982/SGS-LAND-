@@ -15,6 +15,8 @@ import {
   buildPlatformContent,
   buildSocialProductSnapshot,
   getTenantPublicationCatalog,
+  MAX_FACEBOOK_REPRESENTATIVE_IMAGES,
+  normalizePublicationCaption,
   normalizePublicationImages,
   normalizeSocialPlatforms,
 } from '../services/socialPublicationService';
@@ -75,10 +77,18 @@ export function createSocialPublicationRouter(
       const snapshot = await buildSocialProductSnapshot(tenantId(req), String(req.body?.listingId || ''));
       const platforms = normalizeSocialPlatforms(req.body?.platforms);
       if (!platforms.length) return res.status(400).json({ error: 'Chọn ít nhất một nền tảng để xem trước' });
-      const images = normalizePublicationImages(req.body?.imageUrls);
+      const listingImages = normalizePublicationImages((await listingRepository.findById(
+        tenantId(req),
+        String(req.body?.listingId || ''),
+      ))?.images);
+      const images = Array.isArray(req.body?.imageUrls)
+        ? normalizePublicationImages(req.body.imageUrls)
+        : listingImages;
+      const caption = normalizePublicationCaption(req.body?.caption);
+      const previewSnapshot = caption ? { ...snapshot, caption } : snapshot;
       return res.json({
         snapshot,
-        previews: platforms.map(platform => buildPlatformContent(snapshot, platform, images)),
+        previews: platforms.map(platform => buildPlatformContent(previewSnapshot, platform, images)),
         catalog: await getTenantPublicationCatalog(tenantId(req)),
       });
     } catch (error: any) {
@@ -117,15 +127,34 @@ export function createSocialPublicationRouter(
       if (publishMode === 'SCHEDULED' && !scheduledAt) {
         return res.status(400).json({ error: 'Chiến dịch hẹn giờ cần có thời điểm đăng' });
       }
-       const imageUrls = normalizePublicationImages(listing.images);
+      const listingImages = normalizePublicationImages(listing.images);
+      const imageUrls = Array.isArray(req.body?.imageUrls)
+        ? normalizePublicationImages(req.body.imageUrls)
+        : listingImages;
+      const unavailableImages = imageUrls.filter(image => !listingImages.includes(image));
+      if (unavailableImages.length) {
+        return res.status(400).json({ error: 'Ảnh được chọn phải thuộc listing hiện tại' });
+      }
+      if (platforms.includes('FACEBOOK_PAGE') && !imageUrls.length) {
+        return res.status(400).json({ error: 'Facebook publication cần ít nhất một ảnh đại diện' });
+      }
+      if (platforms.includes('FACEBOOK_PAGE') && imageUrls.length > MAX_FACEBOOK_REPRESENTATIVE_IMAGES) {
+        return res.status(400).json({ error: 'Facebook hiện chỉ hỗ trợ một ảnh đại diện cho publication' });
+      }
+      const requestedCaption = normalizePublicationCaption(req.body?.caption);
+      const caption = requestedCaption || buildPlatformContent(snapshot, platforms[0], imageUrls).text;
+      const contentSnapshot = {
+        ...snapshot,
+        caption,
+      };
       const publication = await createSocialPublication(pool, {
         tenantId: currentTenant,
         listingId,
         createdBy: (req as any).user?.id || null,
         publishMode,
         scheduledAt,
-        contentSnapshot: snapshot as unknown as Record<string, unknown>,
-        assetSnapshot: imageUrls.slice(0, 10),
+        contentSnapshot: contentSnapshot as unknown as Record<string, unknown>,
+        assetSnapshot: imageUrls,
         platforms,
       });
       await recordSocialPublicationEvent(pool, {

@@ -2,6 +2,8 @@ import { describe, expect, it } from 'vitest';
 import {
   buildPlatformContent,
   getPublicationCatalog,
+  normalizePublicationCaption,
+  normalizePublicationImages,
   normalizeSocialPlatforms,
 } from '../services/socialPublicationService';
 
@@ -66,5 +68,46 @@ describe('social publication foundation', () => {
     expect(content.text).toContain('Pháp lý: Sổ hồng riêng');
     expect(content.text).toContain('https://sgsland.vn/p/SGS-001');
     expect(content.imageUrls).toEqual(['https://cdn.test/a.jpg']);
+  });
+
+  it('uses the operator-approved caption while keeping the approved image snapshot', () => {
+    const content = buildPlatformContent({
+      version: 1,
+      listingId: 'listing-1',
+      code: 'SGS-001',
+      title: 'Nhà phố ven sông',
+      description: 'Nội dung listing cũ.',
+      price: 3500000000,
+      currency: 'VND',
+      area: 120,
+      builtArea: null,
+      bedrooms: 4,
+      bathrooms: 3,
+      location: 'Thủ Đức, TP.HCM',
+      type: 'Nhà phố',
+      transaction: 'Bán',
+      status: 'AVAILABLE',
+      attributes: {},
+      contactPhone: null,
+      publicUrl: 'https://sgsland.vn/p/SGS-001',
+      capturedAt: '2026-09-09T00:00:00.000Z',
+      caption: 'Caption đã được operator duyệt.',
+    }, 'FACEBOOK_PAGE', ['https://cdn.test/approved.jpg']);
+
+    expect(content.text).toBe('Caption đã được operator duyệt.');
+    expect(content.imageUrls).toEqual(['https://cdn.test/approved.jpg']);
+  });
+
+  it('normalizes captions and publication images before they are persisted', () => {
+    expect(normalizePublicationCaption('  Caption tùy chỉnh  ')).toBe('Caption tùy chỉnh');
+    expect(normalizePublicationCaption('   ')).toBeNull();
+    expect(normalizePublicationImages([
+      'https://cdn.test/first.jpg',
+      'https://cdn.test/first.jpg',
+      'https://cdn.test/second.jpg',
+    ])).toEqual([
+      'https://cdn.test/first.jpg',
+      'https://cdn.test/second.jpg',
+    ]);
   });
 });

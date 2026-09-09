@@ -217,6 +217,16 @@ const nextConfig: NextConfig = {
       // Next.js dev indicators/devtools instead of aliasing this file.
     };
     config.resolve.modules = [LOCAL_NM, "node_modules"];
+    // Replit workspaces can contain enough monorepo files to exhaust the
+    // shared inotify watcher budget, especially when externalDir includes
+    // packages/chat-widget. Polling keeps hot reload reliable without
+    // registering one native watcher per workspace directory.
+    config.watchOptions = {
+      ...config.watchOptions,
+      poll: 1000,
+      aggregateTimeout: 300,
+      ignored: ["**/node_modules/**", "**/.git/**", "**/.next/**"],
+    };
     return config;
   },
 };

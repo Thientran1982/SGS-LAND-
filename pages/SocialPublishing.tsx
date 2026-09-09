@@ -11,6 +11,9 @@ import {
   isSocialCapabilityReady,
 } from '../services/api/socialPublicationApi';
 
+const MAX_FACEBOOK_IMAGES = 1;
+const MAX_LISTING_IMAGES = 10;
+
 const statusLabel: Record<string, string> = {
   DRAFT: 'Bản nháp',
   SCHEDULED: 'Đã hẹn',
@@ -41,6 +44,8 @@ export const SocialPublishing: React.FC = () => {
   const [listingId, setListingId] = useState('');
   const [platforms, setPlatforms] = useState<string[]>([]);
   const [preview, setPreview] = useState<{ platform: string; title: string; text: string; imageUrls: string[]; link: string | null }[]>([]);
+  const [caption, setCaption] = useState('');
+  const [selectedImageUrls, setSelectedImageUrls] = useState<string[]>([]);
   const [schedule, setSchedule] = useState<'NOW' | 'SCHEDULED'>('NOW');
   const [scheduledAt, setScheduledAt] = useState('');
   const [loading, setLoading] = useState(true);
@@ -68,6 +73,11 @@ export const SocialPublishing: React.FC = () => {
   const focusedCapability = focusedPlatform
     ? catalog.find(item => item.platform === focusedPlatform)
     : undefined;
+
+  useEffect(() => {
+    const images = selectedListing?.images || [];
+    setSelectedImageUrls(images.slice(0, MAX_LISTING_IMAGES).slice(0, MAX_FACEBOOK_IMAGES));
+  }, [listingId]);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -100,6 +110,20 @@ export const SocialPublishing: React.FC = () => {
     setPreview([]);
   };
 
+  const handleListingChange = (value: string) => {
+    setListingId(value);
+    setCaption('');
+    setPreview([]);
+  };
+
+  const toggleImage = (imageUrl: string) => {
+    setSelectedImageUrls(current => {
+      if (current.includes(imageUrl)) return [];
+      return [imageUrl];
+    });
+    setPreview([]);
+  };
+
   const runPreview = async () => {
     if (!listingId || !platforms.length) {
       setMessage({ kind: 'error', text: 'Chọn một sản phẩm và ít nhất một nền tảng.' });
@@ -108,8 +132,11 @@ export const SocialPublishing: React.FC = () => {
     setBusy(true);
     setMessage(null);
     try {
-      const result = await socialPublicationApi.preview(listingId, platforms, selectedListing?.images || []);
+      const result = await socialPublicationApi.preview(listingId, platforms, selectedImageUrls, caption);
       setPreview(result.previews || []);
+      if (!caption.trim() && result.previews?.[0]?.text) {
+        setCaption(result.previews[0].text);
+      }
     } catch (error: any) {
       setMessage({ kind: 'error', text: error?.message || 'Không tạo được preview' });
     } finally {
@@ -126,6 +153,14 @@ export const SocialPublishing: React.FC = () => {
       setMessage({ kind: 'error', text: 'Chọn thời điểm hẹn đăng.' });
       return;
     }
+    if (!caption.trim()) {
+      setMessage({ kind: 'error', text: 'Nhập caption trước khi lưu bản nháp.' });
+      return;
+    }
+    if (platforms.includes('FACEBOOK_PAGE') && !selectedImageUrls.length) {
+      setMessage({ kind: 'error', text: 'Facebook cần ít nhất một ảnh đại diện đã chọn.' });
+      return;
+    }
     setBusy(true);
     setMessage(null);
     try {
@@ -134,6 +169,8 @@ export const SocialPublishing: React.FC = () => {
         platforms,
         publishMode: schedule,
         scheduledAt: schedule === 'SCHEDULED' ? new Date(scheduledAt).toISOString() : null,
+        caption,
+        imageUrls: selectedImageUrls,
       });
       setMessage({ kind: 'ok', text: 'Đã lưu snapshot bất biến vào bản nháp. Chưa có nền tảng nào được báo là đã đăng.' });
       await load();
@@ -469,7 +506,7 @@ export const SocialPublishing: React.FC = () => {
                   listings={listings}
                   value={listingId}
                   disabled={loading}
-                  onChange={value => { setListingId(value); setPreview([]); }}
+                  onChange={handleListingChange}
                 />
                 {selectedListing && (
                   <div className="mt-3 flex items-center gap-3 rounded-xl border border-[var(--glass-border)] bg-[var(--bg-app)] p-3">
@@ -540,7 +577,52 @@ export const SocialPublishing: React.FC = () => {
               </div>
             </div>
             <div className="rounded-2xl bg-[var(--bg-app)] p-4">
-              <p className="mb-3 text-xs font-bold uppercase tracking-wider text-[var(--text-tertiary)]">Preview content</p>
+              <div className="mb-3 flex items-center justify-between gap-3">
+                <p className="text-xs font-bold uppercase tracking-wider text-[var(--text-tertiary)]">Preview content</p>
+                {!!selectedImageUrls.length && <span className="text-xs text-[var(--text-tertiary)]">{selectedImageUrls.length}/{MAX_FACEBOOK_IMAGES} ảnh đã chọn</span>}
+              </div>
+              {selectedListing && (
+                <div className="mb-4 rounded-xl border border-[var(--glass-border)] bg-[var(--bg-surface)] p-3">
+                  <div className="mb-2 flex items-center justify-between gap-3">
+                    <p className="text-sm font-semibold text-[var(--text-primary)]">Ảnh bài đăng</p>
+                    <p className="text-xs text-[var(--text-tertiary)]">Chọn tối đa 1 ảnh đại diện Facebook</p>
+                  </div>
+                  {!selectedListing.images?.length ? (
+                    <p className="text-xs text-amber-700">Listing chưa có ảnh. Facebook sẽ không thể đăng bài.</p>
+                  ) : (
+                    <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 md:grid-cols-5">
+                      {selectedListing.images.slice(0, MAX_LISTING_IMAGES).map((imageUrl, index) => {
+                        const selected = selectedImageUrls.includes(imageUrl);
+                        return (
+                          <label key={`${imageUrl}-${index}`} className={`relative cursor-pointer overflow-hidden rounded-lg border-2 ${selected ? 'border-sgs-primary' : 'border-transparent'}`}>
+                            <img src={imageUrl} alt={`Ảnh ${index + 1} của ${selectedListing.title || 'listing'}`} className="aspect-square w-full object-cover" />
+                            <span className="absolute left-1 top-1 rounded bg-white/90 px-1.5 py-1 text-[10px] font-semibold text-[var(--text-primary)]">
+                              <input type="checkbox" checked={selected} onChange={() => toggleImage(imageUrl)} className="mr-1 accent-[var(--sgs-primary)]" />
+                              {selected ? 'Đã chọn' : 'Chọn'}
+                            </span>
+                            {selected && selectedImageUrls[0] === imageUrl && <span className="absolute bottom-1 left-1 rounded bg-sgs-primary px-1.5 py-0.5 text-[10px] font-bold text-white">Đại diện</span>}
+                          </label>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
+              )}
+              <label className="mb-4 block">
+                <span className="mb-2 block text-sm font-semibold text-[var(--text-primary)]">Caption đã duyệt</span>
+                <textarea
+                  value={caption}
+                  onChange={event => {
+                    setCaption(event.target.value);
+                    setPreview(current => current.map(item => ({ ...item, text: event.target.value })));
+                  }}
+                  rows={8}
+                  maxLength={63206}
+                  placeholder="Bấm “Xem preview” để tạo caption, sau đó chỉnh sửa nội dung trước khi lưu."
+                  className="w-full rounded-xl border border-[var(--glass-border)] bg-[var(--bg-surface)] px-3 py-3 text-sm leading-6 text-[var(--text-primary)] outline-none focus:border-sgs-primary"
+                />
+                <span className="mt-1 block text-right text-xs text-[var(--text-tertiary)]">{caption.length.toLocaleString('vi-VN')}/63.206 ký tự</span>
+              </label>
               {!preview.length ? (
                 <div className="flex min-h-56 items-center justify-center text-center text-sm text-[var(--text-tertiary)]">Chọn listing, kênh rồi bấm “Xem preview”.</div>
               ) : (
@@ -551,7 +633,7 @@ export const SocialPublishing: React.FC = () => {
                         <h3 className="font-bold text-[var(--text-primary)]">{catalog.find(c => c.platform === item.platform)?.label || item.platform}</h3>
                         {item.link && <a href={item.link} target="_blank" rel="noreferrer" className="text-sgs-primary"><ExternalLink size={15} /></a>}
                       </div>
-                      <pre className="whitespace-pre-wrap break-words font-sans text-sm leading-6 text-[var(--text-secondary)]">{item.text}</pre>
+                      <pre className="whitespace-pre-wrap break-words font-sans text-sm leading-6 text-[var(--text-secondary)]">{caption || item.text}</pre>
                     </article>
                   ))}
                 </div>
@@ -570,6 +652,12 @@ export const SocialPublishing: React.FC = () => {
                     <div>
                       <p className="font-semibold text-[var(--text-primary)]">{String(item.contentSnapshot?.title || item.listingId)}</p>
                       <p className="mt-1 text-xs text-[var(--text-tertiary)]">Tạo {formatDate(item.createdAt)} · {item.publishMode === 'SCHEDULED' ? `Hẹn ${formatDate(item.scheduledAt)}` : 'Khi được duyệt'}</p>
+                        <p className="mt-2 line-clamp-2 whitespace-pre-wrap text-xs leading-5 text-[var(--text-secondary)]">
+                          {String(item.contentSnapshot?.caption || 'Caption tự động từ snapshot listing.')}
+                        </p>
+                        <p className="mt-1 text-xs text-[var(--text-tertiary)]">
+                          Ảnh đã duyệt: {Array.isArray(item.assetSnapshot) ? item.assetSnapshot.length : 0}
+                        </p>
                         <div className="mt-2 flex flex-wrap gap-2">
                           {item.targets.map(target => (
                             <span key={target.id} className="rounded-full bg-[var(--glass-surface)] px-2.5 py-1 text-xs text-[var(--text-secondary)]">

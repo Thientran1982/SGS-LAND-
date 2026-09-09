@@ -39,6 +39,8 @@ export interface SocialProductSnapshot {
   contactPhone: string | null;
   publicUrl: string | null;
   capturedAt: string;
+  /** Operator-approved caption saved with the publication draft. */
+  caption?: string;
 }
 
 export interface SocialPlatformContent {
