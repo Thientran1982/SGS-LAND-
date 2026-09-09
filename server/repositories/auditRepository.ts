@@ -15,6 +15,11 @@ export interface ZaloBroadcastVerificationAudit {
   ipAddress?: string;
 }
 
+export interface ZaloBroadcastVerificationTransition {
+  transitionedToNotReady: boolean;
+  previousStatus: ZaloBroadcastVerificationStatus | null;
+}
+
 export interface ZaloBroadcastVerificationHistoryEntry {
   checkedAt: string;
   status: ZaloBroadcastVerificationStatus;
@@ -96,26 +101,48 @@ export class AuditRepository extends BaseRepository {
     tenantId: string,
     data: ZaloBroadcastVerificationAudit,
   ): Promise<void> {
-    if (!SAFE_VERIFICATION_CODES.has(data.reasonCode)
-      || !SAFE_VERIFICATION_CHECKS.has(data.checks.oaId)
-      || !SAFE_VERIFICATION_CHECKS.has(data.checks.quota)
-      || !['READY', 'NOT_READY'].includes(data.status)
-      || (data.status === 'READY') !== (data.reasonCode === 'READY')) {
-      throw new Error('Invalid Zalo broadcast verification audit data');
-    }
+    this.validateZaloBroadcastVerification(data);
 
-    await this.log(tenantId, {
-      actorId: data.actorId,
-      action: ZALO_BROADCAST_VERIFICATION_ACTION,
-      entityType: 'enterprise_config',
-      entityId: tenantId,
-      details: [
-        `status=${data.status}`,
-        `reason_code=${data.reasonCode}`,
-        `oa_check=${data.checks.oaId}`,
-        `quota_check=${data.checks.quota}`,
-      ].join(';'),
-      ipAddress: data.ipAddress,
+    await this.withTenant(tenantId, (client) =>
+      this.insertZaloBroadcastVerification(client, tenantId, data));
+  }
+
+  /**
+   * Record a verification and atomically determine whether it is the first
+   * NOT_READY result after a READY result for this tenant. The transaction
+   * advisory lock prevents concurrent admin checks from both sending the
+   * same transition alert.
+   */
+  async logZaloBroadcastVerificationAndDetectTransition(
+    tenantId: string,
+    data: ZaloBroadcastVerificationAudit,
+  ): Promise<ZaloBroadcastVerificationTransition> {
+    this.validateZaloBroadcastVerification(data);
+
+    return this.withTenant(tenantId, async (client) => {
+      await client.query(
+        `SELECT pg_advisory_xact_lock(hashtextextended($1, 0))`,
+        [`zalo_broadcast_verification:${tenantId}`],
+      );
+
+      const previousResult = await client.query<{ details: string | null }>(
+        `SELECT details
+         FROM audit_logs
+         WHERE tenant_id = $1 AND action = $2
+         ORDER BY timestamp DESC, id DESC
+         LIMIT 1`,
+        [tenantId, ZALO_BROADCAST_VERIFICATION_ACTION],
+      );
+      const previous = previousResult.rows[0]
+        ? parseVerificationDetails(previousResult.rows[0].details)
+        : null;
+
+      await this.insertZaloBroadcastVerification(client, tenantId, data);
+
+      return {
+        transitionedToNotReady: previous?.status === 'READY' && data.status === 'NOT_READY',
+        previousStatus: previous?.status || null,
+      };
     });
   }
 
@@ -146,6 +173,40 @@ export class AuditRepository extends BaseRepository {
         }];
       });
     });
+  }
+
+  private validateZaloBroadcastVerification(data: ZaloBroadcastVerificationAudit): void {
+    if (!SAFE_VERIFICATION_CODES.has(data.reasonCode)
+      || !SAFE_VERIFICATION_CHECKS.has(data.checks.oaId)
+      || !SAFE_VERIFICATION_CHECKS.has(data.checks.quota)
+      || !['READY', 'NOT_READY'].includes(data.status)
+      || (data.status === 'READY') !== (data.reasonCode === 'READY')) {
+      throw new Error('Invalid Zalo broadcast verification audit data');
+    }
+  }
+
+  private async insertZaloBroadcastVerification(
+    client: Parameters<Parameters<typeof this.withTenant>[1]>[0],
+    tenantId: string,
+    data: ZaloBroadcastVerificationAudit,
+  ): Promise<void> {
+    await client.query(
+      `INSERT INTO audit_logs (tenant_id, actor_id, action, entity_type, entity_id, details, ip_address)
+       VALUES (current_setting('app.current_tenant_id', true)::uuid, $1, $2, $3, $4, $5, $6)`,
+      [
+        data.actorId,
+        ZALO_BROADCAST_VERIFICATION_ACTION,
+        'enterprise_config',
+        tenantId,
+        [
+          `status=${data.status}`,
+          `reason_code=${data.reasonCode}`,
+          `oa_check=${data.checks.oaId}`,
+          `quota_check=${data.checks.quota}`,
+        ].join(';'),
+        data.ipAddress || null,
+      ],
+    );
   }
 
   async findLogs(

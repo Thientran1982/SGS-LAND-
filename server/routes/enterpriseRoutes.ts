@@ -7,6 +7,7 @@ import { logger } from '../middleware/logger';
 import { promises as dns } from 'dns';
 import { verifyFacebookPageAccess } from '../services/facebookService';
 import { verifyZaloBroadcastAccess } from '../social-publishing/zaloBroadcastPublisher';
+import { notifyZaloBroadcastNotReady } from '../services/notificationService';
 
 function sanitizeZaloConfig(zalo: any) {
   if (!zalo) return zalo;
@@ -465,20 +466,30 @@ export function createEnterpriseRoutes(authenticateToken: any, io?: any) {
       const result = await verifyZaloBroadcastAccess(user.tenantId);
       const checkedAt = new Date().toISOString();
       const status = result.ready ? 'READY' : 'NOT_READY';
-      await auditRepository.logZaloBroadcastVerification(user.tenantId, {
-        actorId: user.id,
-        status,
-        reasonCode: result.reasonCode || (result.ready ? 'READY' : 'PROVIDER_UNAVAILABLE'),
-        checks: result.checks || { oaId: 'NOT_RUN', quota: 'NOT_RUN' },
-        ipAddress: req.ip,
-      });
+      const reasonCode = result.reasonCode || (result.ready ? 'READY' : 'PROVIDER_UNAVAILABLE');
+      const checks = result.checks || { oaId: 'NOT_RUN', quota: 'NOT_RUN' };
+      const transition = await auditRepository.logZaloBroadcastVerificationAndDetectTransition(
+        user.tenantId,
+        {
+          actorId: user.id,
+          status,
+          reasonCode,
+          checks,
+          ipAddress: req.ip,
+        },
+      );
+      if (transition.transitionedToNotReady) {
+        await notifyZaloBroadcastNotReady(user.tenantId, { reasonCode, checkedAt }).catch((error) => {
+          logger.warn(`[Zalo] Failed to notify admins about broadcast readiness loss for tenant ${user.tenantId}: ${error instanceof Error ? error.message : 'unknown error'}`);
+        });
+      }
       res.json({
         status,
         ready: result.ready,
         retryable: Boolean(result.retryable),
-        reasonCode: result.reasonCode || (result.ready ? 'READY' : 'PROVIDER_UNAVAILABLE'),
+        reasonCode,
         reason: result.reason || null,
-        checks: result.checks || { oaId: 'NOT_RUN', quota: 'NOT_RUN' },
+        checks,
         checkedAt,
       });
     } catch (error: any) {
