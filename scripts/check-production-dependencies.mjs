@@ -11,10 +11,6 @@ const sourceRoot = resolve(
 const productionCheckParent = resolve(
   process.env.PRODUCTION_DEPENDENCY_TEMP_PARENT ?? tmpdir(),
 );
-const productionCheckRoot = await mkdtemp(
-  join(productionCheckParent, 'sgs-production-dependencies-'),
-);
-const bundlePath = join(sourceRoot, 'server.js');
 
 function run(command, args, options = {}) {
   return new Promise((resolveRun, rejectRun) => {
@@ -48,24 +44,45 @@ function run(command, args, options = {}) {
   });
 }
 
-try {
-  await Promise.all([
-    cp(join(projectRoot, 'package.json'), join(productionCheckRoot, 'package.json')),
-    cp(join(projectRoot, 'package-lock.json'), join(productionCheckRoot, 'package-lock.json')),
-    cp(bundlePath, join(productionCheckRoot, 'server.js')),
-  ]);
+export async function withProductionDependencyCheckRoot(
+  {
+    sourceRoot: requestedSourceRoot = projectRoot,
+    tempParent: requestedTempParent = tmpdir(),
+  } = {},
+  callback,
+) {
+  const resolvedSourceRoot = resolve(requestedSourceRoot);
+  const resolvedTempParent = resolve(requestedTempParent);
+  const productionCheckRoot = await mkdtemp(
+    join(resolvedTempParent, 'sgs-production-dependencies-'),
+  );
 
-  console.log('Installing the production-only dependency set in a temporary directory...');
-  const npm = process.platform === 'win32' ? 'npm.cmd' : 'npm';
-  const install = await run(npm, ['ci', '--omit=dev', '--no-audit', '--no-fund'], {
-    cwd: productionCheckRoot,
-  });
-  if (install.code !== 0) {
-    throw new Error(`npm ci --omit=dev failed with exit code ${install.code ?? 'unknown'}`);
+  try {
+    const bundlePath = join(resolvedSourceRoot, 'server.js');
+    await Promise.all([
+      cp(join(resolvedSourceRoot, 'package.json'), join(productionCheckRoot, 'package.json')),
+      cp(join(resolvedSourceRoot, 'package-lock.json'), join(productionCheckRoot, 'package-lock.json')),
+      cp(bundlePath, join(productionCheckRoot, 'server.js')),
+    ]);
+
+    console.log('Installing the production-only dependency set in a temporary directory...');
+    const npm = process.platform === 'win32' ? 'npm.cmd' : 'npm';
+    const install = await run(npm, ['ci', '--omit=dev', '--no-audit', '--no-fund'], {
+      cwd: productionCheckRoot,
+    });
+    if (install.code !== 0) {
+      throw new Error(`npm ci --omit=dev failed with exit code ${install.code ?? 'unknown'}`);
+    }
+
+    return await callback(productionCheckRoot);
+  } finally {
+    await rm(productionCheckRoot, { recursive: true, force: true });
   }
+}
 
+export async function runBundledBackendImport(productionCheckRoot) {
   console.log('Importing the bundled backend with only production dependencies...');
-  const importResult = await run(
+  return run(
     process.execPath,
     ['--input-type=module', '-e', "await import('./server.js'); process.exit(0)"],
     {
@@ -79,16 +96,30 @@ try {
       },
     },
   );
+}
 
-  if (importResult.code !== 0) {
-    const output = [importResult.stdout, importResult.stderr].filter(Boolean).join('\n').trim();
-    throw new Error(
-      `Bundled backend import failed with exit code ${importResult.code ?? `signal ${importResult.signal}`}.` +
-      (output ? `\n${output}` : ''),
-    );
-  }
+export async function checkProductionDependencies() {
+  await withProductionDependencyCheckRoot(
+    {
+      sourceRoot,
+      tempParent: productionCheckParent,
+    },
+    async productionCheckRoot => {
+      const importResult = await runBundledBackendImport(productionCheckRoot);
+      if (importResult.code !== 0) {
+        const output = [importResult.stdout, importResult.stderr].filter(Boolean).join('\n').trim();
+        throw new Error(
+          `Bundled backend import failed with exit code ${importResult.code ?? `signal ${importResult.signal}`}.` +
+          (output ? `\n${output}` : ''),
+        );
+      }
 
-  console.log('Production dependency check passed.');
-} finally {
-  await rm(productionCheckRoot, { recursive: true, force: true });
+      console.log('Production dependency check passed.');
+    },
+  );
+}
+
+const invokedScript = process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.url);
+if (invokedScript) {
+  await checkProductionDependencies();
 }
