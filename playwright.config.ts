@@ -13,6 +13,16 @@ export default defineConfig({
     trace: 'on-first-retry',
     screenshot: 'only-on-failure',
   },
+  ...(process.env.PLAYWRIGHT_START_SERVER
+    ? {
+        webServer: {
+          command: 'npm run dev',
+          url: 'http://127.0.0.1:5000/api/health',
+          reuseExistingServer: !process.env.CI,
+          timeout: 120_000,
+        },
+      }
+    : {}),
   projects: [
     {
       name: 'chromium',

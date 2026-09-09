@@ -1,22 +1,112 @@
+import { randomUUID } from 'node:crypto';
+import bcrypt from 'bcrypt';
+import { Pool } from 'pg';
 import { expect, test, type Page } from '@playwright/test';
 
 const BASE_URL = process.env.BASE_URL || 'http://localhost:5000';
 const ADMIN_EMAIL = process.env.ADMIN_EMAIL || 'admin@sgs.vn';
 const ADMIN_PASS = process.env.ADMIN_PASS || '';
+const DATABASE_URL = process.env.AIVEN_DATABASE_URL;
+const FIXTURE_TENANT_ID = '00000000-0000-0000-0000-000000000001';
 
-test.skip(!ADMIN_PASS, 'requires ADMIN_PASS for authenticated social connection regression');
+function hasUsableDatabaseUrl(value: string | undefined): boolean {
+  if (!value) return false;
+  try {
+    const { hostname } = new URL(value);
+    return Boolean(hostname && !['undefined', 'null', 'localhost'].includes(hostname));
+  } catch {
+    return false;
+  }
+}
+
+const useDatabaseFixture =
+  hasUsableDatabaseUrl(DATABASE_URL) &&
+  (process.env.SOCIAL_CONNECTION_AUTH === 'fixture' ||
+    process.env.CI === 'true' ||
+    process.env.CI === '1');
+test.skip(
+  !ADMIN_PASS && !useDatabaseFixture,
+  'requires AIVEN_DATABASE_URL for the isolated auth fixture or ADMIN_PASS for local fallback',
+);
+
+function databaseConnectionString() {
+  return DATABASE_URL!
+    .replace(/[?&](?:sslmode|channel_binding)=[^&]*/gi, '')
+    .replace(/\?&/, '?')
+    .replace(/[?&]$/, '');
+}
+
+let fixtureDb: Pool | undefined;
+let fixtureUserId = '';
+let authEmail = ADMIN_EMAIL;
+let authPassword = ADMIN_PASS;
+
+test.beforeAll(async () => {
+  if (!useDatabaseFixture) return;
+
+  fixtureDb = new Pool({
+    connectionString: databaseConnectionString(),
+    max: 1,
+    connectionTimeoutMillis: 15_000,
+    ssl: { rejectUnauthorized: false },
+  });
+
+  authEmail = `social-connector-e2e-${randomUUID()}@example.test`;
+  authPassword = `SocialConnector-${randomUUID()}`;
+  const passwordHash = await bcrypt.hash(authPassword, 12);
+  const result = await fixtureDb.query(
+    `INSERT INTO users
+      (tenant_id, name, email, password_hash, role, status, email_verified, source, metadata)
+     VALUES ($1, $2, $3, $4, 'SUPER_ADMIN', 'ACTIVE', TRUE, 'E2E_FIXTURE', $5)
+     RETURNING id`,
+    [
+      FIXTURE_TENANT_ID,
+      'Social connector E2E fixture',
+      authEmail,
+      passwordHash,
+      JSON.stringify({ test: 'social-connections' }),
+    ],
+  );
+  fixtureUserId = String(result.rows[0].id);
+});
+
+test.afterAll(async () => {
+  try {
+    if (fixtureDb && fixtureUserId) {
+      await fixtureDb.query(
+        'DELETE FROM users WHERE id = $1 AND tenant_id = $2',
+        [fixtureUserId, FIXTURE_TENANT_ID],
+      );
+    }
+  } finally {
+    await fixtureDb?.end();
+  }
+});
 
 async function login(page: Page) {
-  await page.goto(BASE_URL);
-  await page.evaluate(() => {
-    localStorage.clear();
-    sessionStorage.clear();
+  const response = await page.request.post(`${BASE_URL}/api/auth/login`, {
+    data: { email: authEmail, password: authPassword },
   });
-  await page.reload();
-  await page.fill('input[type="email"]', ADMIN_EMAIL);
-  await page.fill('input[type="password"]', ADMIN_PASS);
-  await page.click('button[type="submit"]');
-  await expect(page).toHaveURL(/dashboard/, { timeout: 10_000 });
+  expect(response.status(), 'fixture login should succeed').toBe(200);
+  const body = await response.json();
+  expect(body.token, 'login should return a session token').toBeTruthy();
+  await page.context().addCookies([
+    {
+      name: 'token',
+      value: body.token,
+      url: BASE_URL,
+      httpOnly: true,
+      sameSite: 'Lax',
+    },
+  ]);
+  await page.goto(BASE_URL);
+  await page.evaluate((token) => {
+    localStorage.setItem('auth_token', token);
+  }, body.token);
+  await page.goto(`${BASE_URL}/data-platform`);
+  await expect(
+    page.getByRole('button', { name: /Thêm Kết Nối|Add Connection/i }),
+  ).toBeVisible();
 }
 
 async function openConnectionModal(page: Page) {
