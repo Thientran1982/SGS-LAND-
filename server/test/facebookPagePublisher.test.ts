@@ -320,3 +320,178 @@ describe('Facebook Page publisher contract', () => {
     });
   });
 });
+
+describe('Facebook album contract smoke', () => {
+  const fetchMock = vi.fn();
+
+  beforeEach(() => {
+    vi.stubGlobal('fetch', fetchMock);
+    fetchMock.mockReset();
+  });
+
+  afterEach(() => {
+    vi.unstubAllGlobals();
+  });
+
+  const albumContent = (imageUrls = [
+    'https://cdn.test/album-first.jpg',
+    'https://cdn.test/album-second.jpg',
+  ]) => ({
+    platform: 'FACEBOOK_PAGE' as const,
+    title: 'Album smoke',
+    text: 'Album smoke caption',
+    link: 'https://sgsland.vn/p/SMOKE-001',
+    imageUrls,
+    hashtags: ['#SMOKE'],
+  });
+
+  const publishAlbum = (idempotencyKey = 'smoke:facebook-album:1') =>
+    publishFacebookPageContent({
+      pageId: 'page-1',
+      pageAccessToken: 'fake-page-token',
+      content: albumContent(),
+      idempotencyKey,
+    });
+
+  const expectPhotoRequest = (
+    call: unknown[],
+    imageUrl: string,
+    index: number,
+    idempotencyKey: string,
+  ) => {
+    expect(call[0]).toContain('/page-1/photos?access_token=fake-page-token');
+    expect(call[1]).toMatchObject({
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-SGS-Delivery-Key': idempotencyKey,
+        'X-SGS-Album-Photo-Index': String(index),
+      },
+    });
+    expect(JSON.parse(String((call[1] as RequestInit).body))).toEqual({
+      url: imageUrl,
+      published: false,
+    });
+  };
+
+  it('uploads unpublished photos in order, then creates one feed post', async () => {
+    const idempotencyKey = 'smoke:facebook-album:order';
+    fetchMock
+      .mockResolvedValueOnce(new Response(JSON.stringify({ id: 'media-1' }), {
+        status: 200,
+        headers: { 'x-fb-trace-id': 'trace-media-1' },
+      }))
+      .mockResolvedValueOnce(new Response(JSON.stringify({ id: 'media-2' }), {
+        status: 200,
+        headers: { 'x-fb-trace-id': 'trace-media-2' },
+      }))
+      .mockResolvedValueOnce(new Response(JSON.stringify({ post_id: 'page-1_album-1' }), {
+        status: 200,
+        headers: { 'x-fb-trace-id': 'trace-feed-1' },
+      }));
+
+    await expect(publishAlbum(idempotencyKey)).resolves.toMatchObject({
+      status: 'PUBLISHED',
+      providerPostId: 'page-1_album-1',
+      providerRequestId: 'trace-media-1,trace-media-2,trace-feed-1',
+    });
+
+    expect(fetchMock).toHaveBeenCalledTimes(3);
+    expectPhotoRequest(fetchMock.mock.calls[0], 'https://cdn.test/album-first.jpg', 0, idempotencyKey);
+    expectPhotoRequest(fetchMock.mock.calls[1], 'https://cdn.test/album-second.jpg', 1, idempotencyKey);
+    expect(fetchMock.mock.calls[2][0]).toContain('/page-1/feed?access_token=fake-page-token');
+    expect(fetchMock.mock.calls[2][1]).toMatchObject({
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-SGS-Delivery-Key': idempotencyKey,
+      },
+    });
+    expect(JSON.parse(String((fetchMock.mock.calls[2][1] as RequestInit).body))).toEqual({
+      message: 'Album smoke caption',
+      link: 'https://sgsland.vn/p/SMOKE-001',
+      attached_media: [
+        { media_fbid: 'media-1' },
+        { media_fbid: 'media-2' },
+      ],
+    });
+  });
+
+  it('keeps a timeout after a partial upload ambiguous', async () => {
+    fetchMock
+      .mockResolvedValueOnce(new Response(JSON.stringify({ id: 'media-1' }), {
+        status: 200,
+        headers: { 'x-fb-trace-id': 'trace-media-1' },
+      }))
+      .mockRejectedValueOnce(new DOMException('The operation timed out', 'TimeoutError'));
+
+    await expect(publishAlbum('smoke:facebook-album:timeout')).resolves.toMatchObject({
+      status: 'AMBIGUOUS',
+      errorCode: 'FACEBOOK_ALBUM_NETWORK_OUTCOME_UNKNOWN',
+      providerRequestId: 'trace-media-1',
+    });
+    expect(fetchMock).toHaveBeenCalledTimes(2);
+    expect(fetchMock.mock.calls[2]).toBeUndefined();
+  });
+
+  it('keeps a provider rejection after one accepted photo partial and ambiguous', async () => {
+    fetchMock
+      .mockResolvedValueOnce(new Response(JSON.stringify({ id: 'media-1' }), {
+        status: 200,
+        headers: { 'x-fb-trace-id': 'trace-media-1' },
+      }))
+      .mockResolvedValueOnce(new Response(JSON.stringify({
+        error: { code: 100, message: 'contract changed' },
+      }), {
+        status: 400,
+        headers: { 'x-fb-trace-id': 'trace-media-2' },
+      }));
+
+    await expect(publishAlbum('smoke:facebook-album:partial')).resolves.toMatchObject({
+      status: 'AMBIGUOUS',
+      errorCode: 'FACEBOOK_ALBUM_UPLOAD_OUTCOME_UNKNOWN',
+      providerRequestId: 'trace-media-1,trace-media-2',
+    });
+    expect(fetchMock).toHaveBeenCalledTimes(2);
+    expect(fetchMock.mock.calls[2]).toBeUndefined();
+  });
+
+  it('keeps a successful photo response without a media ID ambiguous', async () => {
+    fetchMock.mockResolvedValueOnce(new Response(JSON.stringify({}), {
+      status: 200,
+      headers: { 'x-fb-trace-id': 'trace-media-missing' },
+    }));
+
+    await expect(publishAlbum('smoke:facebook-album:missing-media')).resolves.toMatchObject({
+      status: 'AMBIGUOUS',
+      errorCode: 'FACEBOOK_ALBUM_MISSING_MEDIA_ID',
+      providerRequestId: 'trace-media-missing',
+    });
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+    expect(fetchMock.mock.calls[1]).toBeUndefined();
+  });
+
+  it('keeps a feed response without a post ID ambiguous', async () => {
+    fetchMock
+      .mockResolvedValueOnce(new Response(JSON.stringify({ id: 'media-1' }), {
+        status: 200,
+        headers: { 'x-fb-trace-id': 'trace-media-1' },
+      }))
+      .mockResolvedValueOnce(new Response(JSON.stringify({ id: 'media-2' }), {
+        status: 200,
+        headers: { 'x-fb-trace-id': 'trace-media-2' },
+      }))
+      .mockResolvedValueOnce(new Response(JSON.stringify({}), {
+        status: 200,
+        headers: { 'x-fb-trace-id': 'trace-feed-missing' },
+      }));
+
+    await expect(publishAlbum('smoke:facebook-album:missing-post')).resolves.toMatchObject({
+      status: 'AMBIGUOUS',
+      errorCode: 'FACEBOOK_ALBUM_MISSING_POST_ID',
+      providerRequestId: 'trace-media-1,trace-media-2,trace-feed-missing',
+    });
+    expect(fetchMock).toHaveBeenCalledTimes(3);
+    expect(fetchMock.mock.calls[3]).toBeUndefined();
+  });
+});

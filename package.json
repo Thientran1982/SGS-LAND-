@@ -25,6 +25,7 @@
     "migrate:rollback": "tsx server/migrations/cli.ts --rollback",
     "check:migration-registry": "tsx scripts/check-migration-registry.ts",
     "test:e2e": "playwright test",
+    "test:facebook-album-contract": "node scripts/facebook-album-contract-smoke.mjs",
     "audit:security": "npm audit --audit-level=high",
     "audit": "node seo-geo-audit.mjs",
     "audit:seo-regression": "node scripts/seo-regression.mjs",
