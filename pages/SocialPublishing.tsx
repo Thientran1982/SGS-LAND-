@@ -194,7 +194,17 @@ export const SocialPublishing: React.FC = () => {
       setMessage({ kind: 'ok', text: 'Publication đã được kích hoạt.' });
       await load();
     } catch (error: any) {
-      setMessage({ kind: 'error', text: error?.message || 'Chưa thể kích hoạt publication' });
+      const isPublisherNotReady = error?.status === 409 && error?.code === 'PUBLISHERS_NOT_READY';
+      const apiReason = typeof error?.data?.reason === 'string' ? error.data.reason.trim() : '';
+      const targetReasons = isPublisherNotReady && Array.isArray(error?.data?.targets)
+        ? error.data.targets
+          .map((platform: unknown) => catalog.find(item => item.platform === platform)?.reason)
+          .filter((reason: unknown): reason is string => Boolean(reason))
+        : [];
+      const text = isPublisherNotReady
+        ? apiReason || targetReasons.join(' ') || error?.message || 'Publisher chưa sẵn sàng'
+        : error?.message || 'Chưa thể kích hoạt publication';
+      setMessage({ kind: 'error', text });
     } finally {
       setBusy(false);
     }
@@ -680,7 +690,7 @@ export const SocialPublishing: React.FC = () => {
                         )}
                     </div>
                     <div className="flex gap-2">
-                      {item.status === 'DRAFT' && <button disabled={busy} onClick={() => void activate(item.id)} className="rounded-lg bg-sgs-primary px-3 py-2 text-xs font-bold text-white disabled:opacity-50">Kích hoạt</button>}
+                      {item.status === 'DRAFT' && <button disabled={busy} onClick={() => void activate(item.id)} className="rounded-lg bg-sgs-primary px-3 py-2 text-xs font-bold text-white disabled:opacity-50">Đăng ngay</button>}
                       {['DRAFT', 'SCHEDULED', 'FAILED'].includes(item.status) && <button disabled={busy} onClick={() => void cancel(item.id)} className="rounded-lg border border-[var(--glass-border)] px-3 py-2 text-xs font-semibold text-[var(--text-secondary)] disabled:opacity-50"><X size={14} /></button>}
                         <button
                           type="button"
