@@ -463,17 +463,47 @@ export function createEnterpriseRoutes(authenticateToken: any, io?: any) {
       }
 
       const result = await verifyZaloBroadcastAccess(user.tenantId);
+      const checkedAt = new Date().toISOString();
+      const status = result.ready ? 'READY' : 'NOT_READY';
+      await auditRepository.logZaloBroadcastVerification(user.tenantId, {
+        actorId: user.id,
+        status,
+        reasonCode: result.reasonCode || (result.ready ? 'READY' : 'PROVIDER_UNAVAILABLE'),
+        checks: result.checks || { oaId: 'NOT_RUN', quota: 'NOT_RUN' },
+        ipAddress: req.ip,
+      });
       res.json({
-        status: result.ready ? 'READY' : 'NOT_READY',
+        status,
         ready: result.ready,
         retryable: Boolean(result.retryable),
+        reasonCode: result.reasonCode || (result.ready ? 'READY' : 'PROVIDER_UNAVAILABLE'),
         reason: result.reason || null,
         checks: result.checks || { oaId: 'NOT_RUN', quota: 'NOT_RUN' },
-        checkedAt: new Date().toISOString(),
+        checkedAt,
       });
     } catch (error: any) {
       console.error('Zalo broadcast verification error:', error);
       res.status(500).json({ error: 'Không thể xác minh quyền broadcast Zalo OA' });
+    }
+  });
+
+  /**
+   * GET /api/enterprise/zalo/broadcast/verification-history
+   * Returns safe, tenant-scoped verification results for admins.
+   */
+  router.get('/zalo/broadcast/verification-history', authenticateToken, async (req: Request, res: Response) => {
+    try {
+      const user = (req as any).user;
+      if (!['SUPER_ADMIN', 'ADMIN'].includes(user.role)) {
+        return res.status(403).json({ error: 'Only admins can view Zalo broadcast verification history' });
+      }
+
+      const limit = Math.max(1, Math.min(parseInt(req.query.limit as string) || 10, 50));
+      const history = await auditRepository.findZaloBroadcastVerificationHistory(user.tenantId, limit);
+      res.json({ data: history });
+    } catch (error) {
+      console.error('Error fetching Zalo broadcast verification history:', error);
+      res.status(500).json({ error: 'Không thể tải lịch sử xác minh quyền broadcast Zalo OA' });
     }
   });
 

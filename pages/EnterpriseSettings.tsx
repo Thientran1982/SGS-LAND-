@@ -34,6 +34,16 @@ const StatusBadge: React.FC<{ active: boolean; label: string }> = memo(({ active
         {label}
     </span>
 ));
+
+type ZaloVerificationCheck = 'PASS' | 'FAIL' | 'NOT_RUN';
+type ZaloVerificationStatus = 'READY' | 'NOT_READY';
+type ZaloVerificationHistoryEntry = {
+    checkedAt: string;
+    status: ZaloVerificationStatus;
+    reasonCode: string;
+    checks: { oaId: ZaloVerificationCheck; quota: ZaloVerificationCheck };
+    actorName?: string | null;
+};
 // -----------------------------------------------------------------------------
 // PANELS (Optimized & Localized)
 // -----------------------------------------------------------------------------
@@ -53,14 +63,24 @@ const ZaloPanel = memo(({ config, onRefresh, notify }: { config: EnterpriseConfi
     const [savingProbeUser, setSavingProbeUser] = useState(false);
     const [verifyingBroadcast, setVerifyingBroadcast] = useState(false);
     const [broadcastVerification, setBroadcastVerification] = useState<{
-        status: 'READY' | 'NOT_READY';
+        status: ZaloVerificationStatus;
         reason: string | null;
-        checks: { oaId: 'PASS' | 'FAIL' | 'NOT_RUN'; quota: 'PASS' | 'FAIL' | 'NOT_RUN' };
+        checks: { oaId: ZaloVerificationCheck; quota: ZaloVerificationCheck };
         checkedAt: string;
+        reasonCode?: string;
     } | null>(null);
+    const [broadcastVerificationHistory, setBroadcastVerificationHistory] = useState<ZaloVerificationHistoryEntry[]>([]);
+    const loadBroadcastVerificationHistory = useCallback(async () => {
+        try {
+            setBroadcastVerificationHistory(await db.getZaloBroadcastVerificationHistory(10));
+        } catch {
+            setBroadcastVerificationHistory([]);
+        }
+    }, []);
     useEffect(() => {
         db.getZaloStatus().then(setZaloStatus);
-    }, []);
+        loadBroadcastVerificationHistory();
+    }, [loadBroadcastVerificationHistory]);
     useEffect(() => {
         setProbeUserId(config.zalo?.broadcastProbeUserId || '');
     }, [config.zalo?.broadcastProbeUserId]);
@@ -142,7 +162,9 @@ const ZaloPanel = memo(({ config, onRefresh, notify }: { config: EnterpriseConfi
                 reason: result.reason,
                 checks: result.checks,
                 checkedAt: result.checkedAt,
+                reasonCode: result.reasonCode,
             });
+            await loadBroadcastVerificationHistory();
         } catch (e: any) {
             notify(e.message, 'error');
         } finally {
@@ -151,6 +173,7 @@ const ZaloPanel = memo(({ config, onRefresh, notify }: { config: EnterpriseConfi
     };
     const webhookUrl = config.zalo?.webhookUrl || zaloStatus?.webhookUrl || `${window.location.origin}/api/webhooks/zalo`;
     const accessTokenConfigured = Boolean(config.zalo?.accessTokenConfigured);
+    const latestBroadcastVerification = broadcastVerification || broadcastVerificationHistory[0] || null;
     return (
                 <div className="animate-enter max-w-4xl">
             <SectionHeader
@@ -204,11 +227,11 @@ const ZaloPanel = memo(({ config, onRefresh, notify }: { config: EnterpriseConfi
                                         <h4 className="text-sm font-bold text-[var(--text-primary)]">{t('ent.zalo_broadcast_title')}</h4>
                                         <p className="text-xs text-[var(--text-tertiary)] mt-1 leading-relaxed">{t('ent.zalo_broadcast_description')}</p>
                                     </div>
-                                    {broadcastVerification && (
-                                        <span className={`shrink-0 px-2.5 py-1 rounded-full text-xs font-bold border ${broadcastVerification.status === 'READY'
+                                    {latestBroadcastVerification && (
+                                        <span className={`shrink-0 px-2.5 py-1 rounded-full text-xs font-bold border ${latestBroadcastVerification.status === 'READY'
                                             ? 'bg-emerald-50 text-emerald-700 border-emerald-100'
                                             : 'bg-amber-50 text-amber-700 border-amber-200'}`}>
-                                            {broadcastVerification.status}
+                                            {latestBroadcastVerification.status}
                                         </span>
                                     )}
                                 </div>
@@ -254,6 +277,25 @@ const ZaloPanel = memo(({ config, onRefresh, notify }: { config: EnterpriseConfi
                                         </div>
                                         {broadcastVerification.reason && <p className="leading-relaxed">{broadcastVerification.reason}</p>}
                                         <p className="mt-2 opacity-70">{formatDate(broadcastVerification.checkedAt)}</p>
+                                    </div>
+                                )}
+                                {broadcastVerificationHistory.length > 0 && (
+                                    <div className="mt-4 border-t border-[var(--glass-border)] pt-4">
+                                        <div className="flex items-center justify-between gap-3 mb-2">
+                                            <h5 className="text-xs font-bold text-[var(--text-secondary)] uppercase">{t('ent.zalo_broadcast_history_title')}</h5>
+                                            <span className="text-xs2 text-[var(--text-tertiary)]">{t('ent.zalo_broadcast_history_safe')}</span>
+                                        </div>
+                                        <div className="space-y-2">
+                                            {broadcastVerificationHistory.map((entry, index) => (
+                                                <div key={`${entry.checkedAt}-${index}`} className="flex flex-wrap items-center gap-x-3 gap-y-1 rounded-lg bg-[var(--bg-surface)] border border-[var(--glass-border)] px-3 py-2 text-xs">
+                                                    <span className={`font-bold ${entry.status === 'READY' ? 'text-emerald-700' : 'text-amber-700'}`}>{entry.status}</span>
+                                                    <span className="font-mono text-[var(--text-secondary)]">{entry.reasonCode}</span>
+                                                    <span className="text-[var(--text-tertiary)]">{t('ent.zalo_broadcast_oa_check')}: {entry.checks.oaId}</span>
+                                                    <span className="text-[var(--text-tertiary)]">{t('ent.zalo_broadcast_quota_check')}: {entry.checks.quota}</span>
+                                                    <span className="ml-auto text-[var(--text-tertiary)]">{formatDate(entry.checkedAt)}</span>
+                                                </div>
+                                            ))}
+                                        </div>
                                     </div>
                                 )}
                             </div>

@@ -45,6 +45,7 @@ describe('Zalo OA broadcast publisher', () => {
 
     await expect(verifyZaloBroadcastAccess('tenant-1')).resolves.toMatchObject({
       ready: true,
+      reasonCode: 'READY',
       checks: { oaId: 'PASS', quota: 'PASS' },
     });
     expect(fetch).toHaveBeenNthCalledWith(
@@ -65,6 +66,7 @@ describe('Zalo OA broadcast publisher', () => {
 
     await expect(verifyZaloBroadcastAccess('tenant-1')).resolves.toMatchObject({
       ready: false,
+      reasonCode: 'QUOTA_PERMISSION_DENIED',
       retryable: false,
       checks: { oaId: 'PASS', quota: 'FAIL' },
     });

@@ -1691,6 +1691,18 @@ class DatabaseApiClient {
     }
     return res.json();
   }
+  async getZaloBroadcastVerificationHistory(limit = 10) {
+    const params = new URLSearchParams({ limit: String(limit) });
+    const res = await fetch(`/api/enterprise/zalo/broadcast/verification-history?${params.toString()}`, {
+      credentials: 'include',
+    });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw new Error(err.error || 'Không thể tải lịch sử xác minh quyền broadcast Zalo OA');
+    }
+    const result = await res.json();
+    return Array.isArray(result?.data) ? result.data : [];
+  }
   async disconnectZaloOA() {
     const res = await fetch('/api/enterprise/zalo/disconnect', {
       method: 'POST',
