@@ -155,6 +155,19 @@ export interface MarketingFacebookStatus {
   warning: string | null;
 }
 
+export interface MarketingFacebookBackfillResponse {
+  logicalDay: string;
+  requestedReason: string;
+  requestedBy: string;
+  created: number;
+  published: number;
+  skipped: number;
+  reason: string;
+  backfillRequestId: string;
+  backfillStatus?: MarketingFacebookBackfillRequest['status'];
+  warning?: string;
+}
+
 export interface SocialUploadedImage {
   filename: string;
   originalName: string;
@@ -175,6 +188,11 @@ export const socialPublicationApi = {
     timeWindows: Array<{ start: string; end: string }>;
     platforms: string[];
   }) => api.put<MarketingFacebookStatus['settings']>('/api/auto-posting/settings', input),
+  requestMarketingFacebookBackfill: (input: {
+    logicalDay: string;
+    reason: string;
+  }): Promise<MarketingFacebookBackfillResponse> =>
+    api.post('/api/auto-posting/backfill', input),
   getPublications: (
     options: SocialPublicationQuery | 'AUTO' | 'MANUAL' = {},
   ): Promise<SocialPublicationListResponse> => {

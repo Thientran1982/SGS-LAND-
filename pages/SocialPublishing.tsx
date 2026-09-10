@@ -55,6 +55,15 @@ const backfillStatusClass: Record<string, string> = {
 const formatDate = (value?: string | null) =>
   value ? new Date(value).toLocaleString('vi-VN', { dateStyle: 'short', timeStyle: 'short' }) : '—';
 
+const getPreviousLocalDay = () => {
+  const date = new Date();
+  date.setDate(date.getDate() - 1);
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+};
+
 const normalizeRequestedPlatform = (value: string | null): string | null => {
   if (!value) return null;
   const normalized = value.trim().toUpperCase();
@@ -87,6 +96,10 @@ export const SocialPublishing: React.FC = () => {
   const [publications, setPublications] = useState<SocialPublication[]>([]);
   const [marketingFacebookStatus, setMarketingFacebookStatus] = useState<MarketingFacebookStatus | null>(null);
   const [marketingFacebookBusy, setMarketingFacebookBusy] = useState(false);
+  const [backfillDate, setBackfillDate] = useState('');
+  const [backfillReason, setBackfillReason] = useState('');
+  const [backfillBusy, setBackfillBusy] = useState(false);
+  const [backfillFeedback, setBackfillFeedback] = useState<{ kind: 'success' | 'error'; text: string } | null>(null);
   const [stalePublications, setStalePublications] = useState<SocialPublication[]>([]);
   const [staleTotal, setStaleTotal] = useState(0);
   const [stalePage, setStalePage] = useState(1);
@@ -353,6 +366,50 @@ export const SocialPublishing: React.FC = () => {
       }));
     } finally {
       setMarketingFacebookBusy(false);
+    }
+  };
+
+  const requestMarketingFacebookBackfill = async (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    const reason = backfillReason.trim();
+    if (!backfillDate) {
+      setBackfillFeedback({ kind: 'error', text: 'Chọn ngày quá khứ cần chạy bù.' });
+      return;
+    }
+    if (reason.length < 3) {
+      setBackfillFeedback({ kind: 'error', text: 'Cần ghi lý do chạy bù tối thiểu 3 ký tự.' });
+      return;
+    }
+
+    setBackfillBusy(true);
+    setBackfillFeedback(null);
+    try {
+      const result = await socialPublicationApi.requestMarketingFacebookBackfill({
+        logicalDay: backfillDate,
+        reason,
+      });
+      setBackfillDate('');
+      setBackfillReason('');
+      let refreshWarning = '';
+      try {
+        setMarketingFacebookStatus(await socialPublicationApi.getMarketingFacebookStatus());
+      } catch (refreshError: any) {
+        refreshWarning = ` Không tải lại được lịch sử: ${localizedSocialError(refreshError, t, 'common.error_loading')}`;
+      }
+      setBackfillFeedback({
+        kind: 'success',
+        text: `Đã tạo yêu cầu chạy bù cho ngày ${result.logicalDay}. Kết quả: ${result.published} bài đã đăng, ${result.skipped} bài bỏ qua.${result.backfillStatus ? ` Trạng thái: ${backfillStatusLabel[result.backfillStatus] || result.backfillStatus}.` : ''}${result.warning ? ` ${result.warning}` : ''}${refreshWarning}`,
+      });
+    } catch (error: any) {
+      const isConflict = error?.status === 409 || error?.code === 'BACKFILL_ALREADY_REQUESTED';
+      setBackfillFeedback({
+        kind: 'error',
+        text: isConflict
+          ? 'Ngày này đã có yêu cầu chạy bù; không tạo thêm yêu cầu gửi.'
+          : localizedSocialError(error, t, 'common.error_save'),
+      });
+    } finally {
+      setBackfillBusy(false);
     }
   };
 
@@ -1526,6 +1583,57 @@ export const SocialPublishing: React.FC = () => {
                 {marketingFacebookStatus?.backfillRequests?.length || 0} yêu cầu
               </span>
             </div>
+             <form
+               onSubmit={requestMarketingFacebookBackfill}
+               className="mb-4 grid gap-3 rounded-xl border border-indigo-100 bg-indigo-50/50 p-3 md:grid-cols-[180px_minmax(0,1fr)_auto] md:items-end"
+             >
+               <label htmlFor="marketing-backfill-date" className="text-xs font-semibold text-[var(--text-secondary)]">
+                 Ngày cần chạy bù
+                 <input
+                   id="marketing-backfill-date"
+                   type="date"
+                   value={backfillDate}
+                   max={getPreviousLocalDay()}
+                   required
+                   onChange={event => setBackfillDate(event.target.value)}
+                   className="mt-1.5 w-full rounded-lg border border-indigo-200 bg-[var(--bg-surface)] px-3 py-2 text-sm font-normal text-[var(--text-primary)] outline-none focus:border-indigo-500"
+                 />
+               </label>
+               <label htmlFor="marketing-backfill-reason" className="text-xs font-semibold text-[var(--text-secondary)]">
+                 Lý do chạy bù
+                 <textarea
+                   id="marketing-backfill-reason"
+                   value={backfillReason}
+                   minLength={3}
+                   maxLength={1000}
+                   required
+                   rows={2}
+                   onChange={event => setBackfillReason(event.target.value)}
+                   placeholder="Ví dụ: QStash bị gián đoạn lúc agent chạy"
+                   className="mt-1.5 w-full resize-y rounded-lg border border-indigo-200 bg-[var(--bg-surface)] px-3 py-2 text-sm font-normal text-[var(--text-primary)] outline-none placeholder:text-[var(--text-tertiary)] focus:border-indigo-500"
+                 />
+               </label>
+               <button
+                 type="submit"
+                 disabled={backfillBusy}
+                 className="rounded-lg bg-indigo-700 px-4 py-2 text-sm font-semibold text-white disabled:cursor-not-allowed disabled:opacity-50"
+               >
+                 {backfillBusy ? 'Đang tạo yêu cầu…' : 'Yêu cầu chạy bù'}
+               </button>
+             </form>
+             {backfillFeedback && (
+               <div
+                 role={backfillFeedback.kind === 'error' ? 'alert' : 'status'}
+                 aria-live="polite"
+                 className={`mb-4 rounded-lg px-3 py-2 text-sm ${
+                   backfillFeedback.kind === 'error'
+                     ? 'border border-red-200 bg-red-50 text-red-800'
+                     : 'border border-emerald-200 bg-emerald-50 text-emerald-800'
+                 }`}
+               >
+                 {backfillFeedback.text}
+               </div>
+             )}
             {!marketingFacebookStatus?.backfillRequests?.length ? (
               <p className="rounded-xl border border-dashed border-indigo-200 px-3 py-4 text-sm text-[var(--text-tertiary)]">
                 Chưa có yêu cầu chạy bù nào.

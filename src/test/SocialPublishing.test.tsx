@@ -279,6 +279,99 @@ describe('SocialPublishing listing selector', () => {
     expect(screen.getByText('manager-1')).toBeVisible();
   });
 
+  it('creates a backfill request and refreshes the history', async () => {
+    mockInitialRequests(eligibleListings);
+    const getStatus = vi.mocked(socialPublicationApi.getMarketingFacebookStatus);
+    const requestBackfill = vi.spyOn(socialPublicationApi, 'requestMarketingFacebookBackfill')
+      .mockResolvedValue({
+        logicalDay: '2026-09-08',
+        requestedReason: 'Agent bị gián đoạn',
+        requestedBy: 'manager-1',
+        created: 1,
+        published: 0,
+        skipped: 0,
+        reason: 'OK',
+        backfillRequestId: 'backfill-new',
+        backfillStatus: 'RUNNING',
+      });
+    getStatus.mockResolvedValueOnce({
+      settings: {
+        enabled: true,
+        postsPerDay: 1,
+        timeWindows: [{ start: '18:30', end: '23:59' }],
+        platforms: ['FACEBOOK_PAGE'],
+      },
+      todayRun: null,
+      lastRun: null,
+      backfillRequests: [],
+      warning: null,
+    }).mockResolvedValueOnce({
+      settings: {
+        enabled: true,
+        postsPerDay: 1,
+        timeWindows: [{ start: '18:30', end: '23:59' }],
+        platforms: ['FACEBOOK_PAGE'],
+      },
+      todayRun: null,
+      lastRun: null,
+      backfillRequests: [{
+        id: 'backfill-new',
+        logicalDay: '2026-09-08',
+        reason: 'Agent bị gián đoạn',
+        requestedBy: 'manager-1',
+        status: 'RUNNING',
+        result: {},
+        publicationId: null,
+        errorCode: null,
+        errorMessage: null,
+        requestedAt: '2026-09-10T01:00:00.000Z',
+        startedAt: '2026-09-10T01:01:00.000Z',
+        finishedAt: null,
+      }],
+      warning: null,
+    });
+
+    const user = userEvent.setup();
+    render(<SocialPublishing />);
+
+    const dateInput = await screen.findByLabelText('Ngày cần chạy bù');
+    await user.type(dateInput, '2026-09-08');
+    await user.type(screen.getByLabelText('Lý do chạy bù'), 'Agent bị gián đoạn');
+    await user.click(screen.getByRole('button', { name: 'Yêu cầu chạy bù' }));
+
+    await waitFor(() => {
+      expect(requestBackfill).toHaveBeenCalledWith({
+        logicalDay: '2026-09-08',
+        reason: 'Agent bị gián đoạn',
+      });
+      expect(getStatus).toHaveBeenCalledTimes(2);
+    });
+    expect(await screen.findByRole('status')).toHaveTextContent('Đã tạo yêu cầu chạy bù cho ngày 2026-09-08');
+    expect(screen.getByText('Đang chạy')).toBeVisible();
+    expect(screen.getByText('Agent bị gián đoạn')).toBeVisible();
+  });
+
+  it('shows the conflict when a backfill day already has a request', async () => {
+    mockInitialRequests(eligibleListings);
+    vi.spyOn(socialPublicationApi, 'requestMarketingFacebookBackfill').mockRejectedValue(
+      Object.assign(new Error('Ngày này đã có yêu cầu chạy bù; không tạo thêm yêu cầu gửi.'), {
+        status: 409,
+        code: 'BACKFILL_ALREADY_REQUESTED',
+      }),
+    );
+
+    const user = userEvent.setup();
+    render(<SocialPublishing />);
+
+    await user.type(await screen.findByLabelText('Ngày cần chạy bù'), '2026-09-08');
+    await user.type(screen.getByLabelText('Lý do chạy bù'), 'Yêu cầu kiểm tra lại');
+    await user.click(screen.getByRole('button', { name: 'Yêu cầu chạy bù' }));
+
+    expect(await screen.findByRole('alert')).toHaveTextContent(
+      'Ngày này đã có yêu cầu chạy bù; không tạo thêm yêu cầu gửi.',
+    );
+  });
+
   it('shows tenant-scoped stale publication links and opens the related publication', async () => {
     const staleUrl = 'https://sgsland.example/p/SGS-OLD';
     const stalePublication = {
