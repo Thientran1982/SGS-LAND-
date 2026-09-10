@@ -1,15 +1,16 @@
 import { Router, Request, Response, RequestHandler } from 'express';
 import type { Pool } from 'pg';
 import {
+  getMarketingFacebookDailyStatus,
   getAutoPostingSettings,
   upsertAutoPostingSettings,
   type AutoPostingTimeWindow,
 } from '../repositories/autoPostingRepository';
 import { normalizeSocialPlatforms } from '../services/socialPublicationService';
-import { runAutoPostingTick } from '../services/autoPostingSelector';
+import { localDayKey, runAutoPostingTick } from '../services/autoPostingSelector';
 
 const MANAGER_ROLES = new Set(['SUPER_ADMIN', 'ADMIN', 'TEAM_LEAD', 'MARKETING']);
-const AUTO_PLATFORMS = new Set(['FACEBOOK_PAGE', 'ZALO_BROADCAST']);
+const AUTO_PLATFORMS = new Set(['FACEBOOK_PAGE']);
 
 function tenantId(req: Request): string {
   return String((req as any).user?.tenantId || (req as any).tenantId || '');
@@ -63,6 +64,11 @@ export function createAutoPostingRouter(
     res.json(await getAutoPostingSettings(pool, tenantId(req)));
   });
 
+  router.get('/api/auto-posting/status', authenticateToken, async (req, res) => {
+    if (!requireManager(req, res)) return;
+    res.json(await getMarketingFacebookDailyStatus(pool, tenantId(req), localDayKey()));
+  });
+
   router.put('/api/auto-posting/settings', authenticateToken, async (req, res) => {
     if (!requireManager(req, res)) return;
     try {
@@ -71,7 +77,7 @@ export function createAutoPostingRouter(
         enabled: Boolean(body.enabled),
         postsPerDay: Number(body.postsPerDay),
         recycleAfterDays: Number(body.recycleAfterDays),
-        timeWindows: normalizeWindows(body.timeWindows),
+        timeWindows: normalizeWindows(body.timeWindows || [{ start: '18:30', end: '23:59' }]),
         platforms: normalizePlatforms(body.platforms),
       });
       return res.json(settings);

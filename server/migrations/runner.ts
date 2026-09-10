@@ -213,6 +213,7 @@ import m189 from './189_user_scoped_connectors';
 import m190 from './190_auto_posting_phase3';
 import m191 from './191_repair_enterprise_config_rls';
 import m192 from './192_social_publication_project_source';
+import m193 from './193_marketing_facebook_daily_runs';
 dotenv.config();
 
 export interface Migration {
@@ -421,6 +422,7 @@ export const MIGRATION_REGISTRY: Record<string, Migration> = {
   '190_auto_posting_phase3.ts': m190,
   '191_repair_enterprise_config_rls.ts': m191,
   '192_social_publication_project_source.ts': m192,
+  '193_marketing_facebook_daily_runs.ts': m193,
 };
 
 /**

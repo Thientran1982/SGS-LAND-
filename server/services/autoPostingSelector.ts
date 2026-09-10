@@ -1,44 +1,65 @@
 import type { Pool } from 'pg';
 import {
-  buildPlatformContent,
-  buildSocialProductSnapshot,
-  normalizePublicationImages,
-  PUBLISHABLE_LISTING_STATUSES,
-} from './socialPublicationService';
-import {
+  activateSocialPublication,
   createSocialPublication,
+  markSocialTargetsPending,
   recordSocialPublicationEvent,
 } from '../repositories/socialPublicationRepository';
 import {
+  claimMarketingFacebookDailyRun,
+  finishMarketingFacebookDailyRun,
   getAutoPostingSettings,
   listEnabledAutoPostingTenants,
   type AutoPostingSettings,
 } from '../repositories/autoPostingRepository';
+import {
+  buildPlatformContent,
+  buildSocialProductSnapshot,
+  buildSocialProjectSnapshot,
+  normalizePublicationImages,
+  normalizeSocialPlatforms,
+  PUBLISHABLE_LISTING_STATUSES,
+  PUBLISHABLE_PROJECT_STATUSES,
+} from './socialPublicationService';
+import { processSocialPublicationTick } from './socialPublishingWorker';
 import { getTenantSocialPlatformCapability } from '../social-publishing/registry';
-import { normalizeSocialPlatforms } from './socialPublicationService';
 import type { SocialPlatform } from '../social-publishing/types';
 import { logger } from '../middleware/logger';
 
-const AUTO_PLATFORMS = new Set<SocialPlatform>(['FACEBOOK_PAGE', 'ZALO_BROADCAST']);
+const FACEBOOK_PLATFORM: SocialPlatform = 'FACEBOOK_PAGE';
+const DEFAULT_TIME_ZONE = 'Asia/Ho_Chi_Minh';
 
-function localDayKey(date = new Date()): string {
+type AutoPostingCandidate = {
+  sourceType: 'LISTING' | 'PROJECT';
+  sourceId: string;
+  images: unknown;
+  lastFacebookPublishedAt: string | null;
+  updatedAt: string | null;
+  createdAt: string | null;
+};
+
+export function localDayKey(date = new Date()): string {
   return new Intl.DateTimeFormat('en-CA', {
-    timeZone: 'Asia/Ho_Chi_Minh',
+    timeZone: DEFAULT_TIME_ZONE,
     year: 'numeric',
     month: '2-digit',
     day: '2-digit',
   }).format(date);
 }
 
-function inTimeWindow(settings: AutoPostingSettings, now = new Date()): boolean {
+function localMinutes(date = new Date()): number {
   const parts = new Intl.DateTimeFormat('en-GB', {
-    timeZone: 'Asia/Ho_Chi_Minh',
+    timeZone: DEFAULT_TIME_ZONE,
     hour: '2-digit',
     minute: '2-digit',
     hourCycle: 'h23',
-  }).formatToParts(now);
-  const minutes = Number(parts.find(part => part.type === 'hour')?.value || 0) * 60
+  }).formatToParts(date);
+  return Number(parts.find(part => part.type === 'hour')?.value || 0) * 60
     + Number(parts.find(part => part.type === 'minute')?.value || 0);
+}
+
+function inTimeWindow(settings: AutoPostingSettings, now = new Date()): boolean {
+  const minutes = localMinutes(now);
   return settings.timeWindows.some(window => {
     const [startHour, startMinute] = String(window.start || '').split(':').map(Number);
     const [endHour, endMinute] = String(window.end || '').split(':').map(Number);
@@ -51,67 +72,106 @@ function inTimeWindow(settings: AutoPostingSettings, now = new Date()): boolean 
 
 function normalizeSettings(settings: AutoPostingSettings): AutoPostingSettings {
   const platforms = normalizeSocialPlatforms(settings.platforms)
-    .filter(platform => AUTO_PLATFORMS.has(platform));
+    .filter(platform => platform === FACEBOOK_PLATFORM);
   return {
     ...settings,
-    platforms: platforms.length ? platforms : ['FACEBOOK_PAGE'],
+    postsPerDay: 1,
+    timeWindows: [{ start: '18:30', end: '23:59' }],
+    platforms: platforms.length ? platforms : [FACEBOOK_PLATFORM],
   };
 }
 
-async function eligibleCandidates(pool: Pool, tenantId: string, limit: number) {
+function jsonValue(value: unknown): unknown {
+  if (typeof value !== 'string') return value;
+  try {
+    return JSON.parse(value);
+  } catch {
+    return value;
+  }
+}
+
+async function eligibleCandidates(pool: Pool, tenantId: string): Promise<AutoPostingCandidate[]> {
   const result = await pool.query(
     `WITH candidate_rows AS (
-       SELECT l.*,
-              p.name AS project_name,
-              p.is_featured AS project_is_featured,
-              p.priority AS project_priority,
-              COALESCE(p.updated_at, l.updated_at, l.created_at) AS priority_updated_at
+       SELECT 'LISTING'::text AS source_type,
+              l.id AS source_id,
+              l.images AS images,
+              l.updated_at AS updated_at,
+              l.created_at AS created_at,
+              (
+                SELECT MAX(t.published_at)
+                  FROM social_publications sp
+                  JOIN social_publication_targets t ON t.publication_id = sp.id
+                 WHERE sp.tenant_id::uuid = l.tenant_id
+                   AND sp.listing_id = l.id
+                   AND t.platform = 'FACEBOOK_PAGE'
+                   AND t.status = 'PUBLISHED'
+              ) AS last_facebook_published_at
          FROM listings l
          LEFT JOIN projects p
            ON p.tenant_id = l.tenant_id
-          AND (p.id = l.project_id OR (l.project_id IS NULL AND l.project_code IS NOT NULL AND UPPER(p.code) = UPPER(l.project_code)))
+          AND (p.id = l.project_id
+               OR (l.project_id IS NULL AND l.project_code IS NOT NULL AND UPPER(p.code) = UPPER(l.project_code)))
         WHERE l.tenant_id = $1
           AND UPPER(l.status) = ANY($2::text[])
-          AND (p.id IS NULL OR UPPER(p.status) = 'ACTIVE')
+          AND (p.id IS NULL OR UPPER(p.status) = ANY($3::text[]))
+
+       UNION ALL
+
+       SELECT 'PROJECT'::text AS source_type,
+              p.id AS source_id,
+              p.metadata AS images,
+              p.updated_at AS updated_at,
+              p.created_at AS created_at,
+              (
+                SELECT MAX(t.published_at)
+                  FROM social_publications sp
+                  JOIN social_publication_targets t ON t.publication_id = sp.id
+                 WHERE sp.tenant_id::uuid = p.tenant_id
+                   AND sp.project_id = p.id
+                   AND t.platform = 'FACEBOOK_PAGE'
+                   AND t.status = 'PUBLISHED'
+              ) AS last_facebook_published_at
+         FROM projects p
+        WHERE p.tenant_id = $1
+          AND UPPER(p.status) = ANY($3::text[])
      )
-     SELECT c.*
-       FROM candidate_rows c
-      ORDER BY c.project_is_featured DESC NULLS LAST,
-               c.project_priority DESC NULLS LAST,
-               c.priority_updated_at ASC NULLS FIRST,
-               c.created_at ASC
-      LIMIT $3`,
-    [tenantId, Array.from(PUBLISHABLE_LISTING_STATUSES), limit],
+     SELECT *
+       FROM candidate_rows
+      ORDER BY last_facebook_published_at ASC NULLS FIRST,
+               updated_at ASC NULLS FIRST,
+               created_at ASC NULLS FIRST,
+               source_type ASC,
+               source_id ASC`,
+    [
+      tenantId,
+      Array.from(PUBLISHABLE_LISTING_STATUSES),
+      Array.from(PUBLISHABLE_PROJECT_STATUSES),
+    ],
   );
-  return result.rows;
+  return result.rows.map(row => ({
+    sourceType: row.source_type,
+    sourceId: String(row.source_id),
+    images: jsonValue(row.images),
+    lastFacebookPublishedAt: row.last_facebook_published_at || null,
+    updatedAt: row.updated_at || null,
+    createdAt: row.created_at || null,
+  }));
 }
 
-async function recentlyUsedPlatforms(
-  pool: Pool,
-  tenantId: string,
-  listingId: string,
-  platforms: string[],
-  recycleAfterDays: number,
-): Promise<Set<string>> {
-  if (!platforms.length) return new Set();
-  const result = await pool.query(
-    `SELECT DISTINCT st.platform
-       FROM social_publications sp
-       JOIN social_publication_targets st ON st.publication_id = sp.id
-      WHERE sp.tenant_id = $1
-        AND sp.listing_id = $2
-        AND sp.source = 'AUTO'
-        AND st.platform = ANY($3::text[])
-        AND sp.created_at >= NOW() - ($4::text || ' days')::interval
-        AND sp.status <> 'CANCELLED'`,
-    [tenantId, listingId, platforms, recycleAfterDays],
-  );
-  return new Set(result.rows.map(row => String(row.platform)));
+function listingImages(value: unknown): string[] {
+  return normalizePublicationImages(jsonValue(value));
 }
 
-function listingImages(row: any): string[] {
-  const value = typeof row.images === 'string' ? (() => { try { return JSON.parse(row.images); } catch { return []; } })() : row.images;
-  return normalizePublicationImages(value);
+function projectImages(value: unknown): string[] {
+  const metadata = jsonValue(value);
+  if (!metadata || typeof metadata !== 'object') return [];
+  const record = metadata as Record<string, unknown>;
+  return normalizePublicationImages([
+    record.coverImage,
+    record.cover_image,
+    ...(Array.isArray(record.gallery) ? record.gallery : []),
+  ]);
 }
 
 export async function runAutoPostingForTenant(
@@ -121,128 +181,185 @@ export async function runAutoPostingForTenant(
 ) {
   const settings = normalizeSettings(await getAutoPostingSettings(pool, tenantId));
   if (!settings.enabled || !inTimeWindow(settings, now)) {
-    return { created: 0, skipped: 0, reason: 'DISABLED_OR_OUTSIDE_WINDOW' };
+    return { created: 0, published: 0, skipped: 0, reason: 'DISABLED_OR_OUTSIDE_WINDOW' };
   }
 
   const logicalDayKey = localDayKey(now);
-  const dailyCount = await pool.query(
-    `SELECT COUNT(*)::int AS count
-       FROM social_publications
-      WHERE tenant_id = $1
-        AND source = 'AUTO'
-        AND created_at >= ($2::date::timestamp AT TIME ZONE 'Asia/Ho_Chi_Minh')
-        AND created_at < (($2::date + INTERVAL '1 day')::timestamp AT TIME ZONE 'Asia/Ho_Chi_Minh')
-        AND status <> 'CANCELLED'`,
-    [tenantId, logicalDayKey],
-  );
-  const remaining = Math.max(0, settings.postsPerDay - Number(dailyCount.rows[0]?.count || 0));
-  if (!remaining) return { created: 0, skipped: 0, reason: 'DAILY_LIMIT_REACHED' };
-
-  const candidates = await eligibleCandidates(pool, tenantId, remaining * 5);
-  const readiness = await Promise.all(settings.platforms.map(async platform => ({
-    platform: platform as SocialPlatform,
-    capability: await getTenantSocialPlatformCapability(platform as SocialPlatform, tenantId),
-  })));
-  let created = 0;
-  let skipped = 0;
-  for (const candidate of candidates) {
-    if (created >= remaining) break;
-    const recentlyUsed = await recentlyUsedPlatforms(
-      pool,
-      tenantId,
-      String(candidate.id),
-      settings.platforms,
-      settings.recycleAfterDays,
-    );
-    const readyPlatforms = readiness
-      .filter(item => item.capability.status === 'READY' && !recentlyUsed.has(item.platform))
-      .map(item => item.platform);
-    if (!readyPlatforms.length) {
-      skipped++;
-      continue;
-    }
-
-    const snapshot = await buildSocialProductSnapshot(tenantId, String(candidate.id));
-    const images = listingImages(candidate);
-    const primaryContent = buildPlatformContent(snapshot, readyPlatforms[0] as SocialPlatform, images);
-    const autoPostingKey = `${logicalDayKey}:${candidate.id}`;
-    try {
-      const publication = await createSocialPublication(pool, {
-        tenantId,
-        listingId: String(candidate.id),
-        createdBy: null,
-        publishMode: 'NOW',
-        scheduledAt: null,
-        contentSnapshot: { ...snapshot, caption: primaryContent.text },
-        assetSnapshot: images,
-        platforms: readyPlatforms,
-        source: 'AUTO',
-        autoPostingKey,
-      });
-      await recordSocialPublicationEvent(pool, {
-        tenantId,
-        publicationId: publication.id,
-        eventType: 'AUTO_DRAFT_CREATED',
-        toStatus: 'DRAFT',
-        reason: 'Selector tự động tạo bản nháp để admin kiểm tra trước khi đăng.',
-        metadata: { source: 'AUTO', platforms: readyPlatforms, autoPostingKey },
-      });
-      for (const item of readiness.filter(item => item.capability.status !== 'READY')) {
-        await recordSocialPublicationEvent(pool, {
-          tenantId,
-          publicationId: publication.id,
-          eventType: 'AUTO_PLATFORM_SKIPPED',
-          reason: `Bỏ qua ${item.platform}: ${item.capability.reason || 'nền tảng chưa sẵn sàng'}`,
-          metadata: {
-            source: 'AUTO',
-            platform: item.platform,
-            reasonCode: item.capability.reason || null,
-            retryable: item.capability.retryable ?? false,
-          },
-        });
-      }
-      for (const item of readiness.filter(item => item.capability.status === 'READY' && recentlyUsed.has(item.platform))) {
-        await recordSocialPublicationEvent(pool, {
-          tenantId,
-          publicationId: publication.id,
-          eventType: 'AUTO_PLATFORM_SKIPPED',
-          reason: `Bỏ qua ${item.platform}: tin đã được auto-post trên nền tảng này trong thời gian recycle.`,
-          metadata: {
-            source: 'AUTO',
-            platform: item.platform,
-            recycleAfterDays: settings.recycleAfterDays,
-          },
-        });
-      }
-      created++;
-    } catch (error: any) {
-      if (String(error?.code) === '23505') continue;
-      throw error;
-    }
+  const run = await claimMarketingFacebookDailyRun(pool, tenantId, logicalDayKey);
+  if (!run) {
+    return { created: 0, published: 0, skipped: 0, reason: 'DAILY_RUN_ALREADY_CLAIMED' };
   }
-  return { created, skipped, reason: 'OK' };
+
+  try {
+    const capability = await getTenantSocialPlatformCapability(FACEBOOK_PLATFORM, tenantId);
+    if (capability.status !== 'READY' || !capability.canPublish) {
+      const reason = capability.reason || 'Facebook Page chưa sẵn sàng để đăng tự động.';
+      await finishMarketingFacebookDailyRun(pool, run.id, {
+        status: 'SKIPPED',
+        result: { reason: 'FACEBOOK_NOT_READY', checkedAt: new Date().toISOString() },
+        errorCode: 'FACEBOOK_NOT_READY',
+        errorMessage: reason,
+      });
+      logger.warn(`[MarketingAgent] ${tenantId}: ${reason}`);
+      return { created: 0, published: 0, skipped: 1, reason: 'FACEBOOK_NOT_READY', warning: reason };
+    }
+
+    const candidates = await eligibleCandidates(pool, tenantId);
+    const candidate = candidates.find(item => (
+      item.sourceType === 'LISTING'
+        ? listingImages(item.images).length > 0
+        : projectImages(item.images).length > 0
+    ));
+    if (!candidate) {
+      const reason = 'Hôm nay không có listing hoặc dự án ACTIVE đủ điều kiện và có ít nhất một ảnh HTTPS để đăng Facebook.';
+      await finishMarketingFacebookDailyRun(pool, run.id, {
+        status: 'SKIPPED',
+        result: {
+          reason: 'NO_ELIGIBLE_SOURCE',
+          candidatesChecked: candidates.length,
+          checkedAt: new Date().toISOString(),
+        },
+        errorCode: 'NO_ELIGIBLE_SOURCE',
+        errorMessage: reason,
+      });
+      logger.warn(`[MarketingAgent] ${tenantId}: ${reason}`);
+      return { created: 0, published: 0, skipped: 1, reason: 'NO_ELIGIBLE_SOURCE', warning: reason };
+    }
+
+    const snapshot = candidate.sourceType === 'LISTING'
+      ? await buildSocialProductSnapshot(tenantId, candidate.sourceId)
+      : await buildSocialProjectSnapshot(tenantId, candidate.sourceId);
+    const images = candidate.sourceType === 'LISTING'
+      ? listingImages(candidate.images)
+      : normalizePublicationImages('images' in snapshot ? snapshot.images : []);
+    if (!images.length) {
+      const reason = 'Nguồn được chọn không còn ảnh HTTPS hợp lệ khi tạo snapshot.';
+      await finishMarketingFacebookDailyRun(pool, run.id, {
+        status: 'SKIPPED',
+        sourceType: candidate.sourceType,
+        sourceId: candidate.sourceId,
+        result: { reason: 'SOURCE_IMAGES_CHANGED', checkedAt: new Date().toISOString() },
+        errorCode: 'SOURCE_IMAGES_CHANGED',
+        errorMessage: reason,
+      });
+      logger.warn(`[MarketingAgent] ${tenantId}: ${reason}`);
+      return { created: 0, published: 0, skipped: 1, reason: 'SOURCE_IMAGES_CHANGED', warning: reason };
+    }
+
+    const content = buildPlatformContent(snapshot, FACEBOOK_PLATFORM, images);
+    const publication = await createSocialPublication(pool, {
+      tenantId,
+      listingId: candidate.sourceType === 'LISTING' ? candidate.sourceId : null,
+      projectId: candidate.sourceType === 'PROJECT' ? candidate.sourceId : null,
+      createdBy: null,
+      publishMode: 'NOW',
+      scheduledAt: null,
+      contentSnapshot: { ...snapshot, caption: content.text },
+      assetSnapshot: images,
+      platforms: [FACEBOOK_PLATFORM],
+      source: 'AUTO',
+      autoPostingKey: `${logicalDayKey}:${candidate.sourceType}:${candidate.sourceId}`,
+    });
+    await recordSocialPublicationEvent(pool, {
+      tenantId,
+      publicationId: publication.id,
+      eventType: 'AUTO_PUBLICATION_CREATED',
+      toStatus: 'DRAFT',
+      reason: 'Agent Marketing chọn nguồn theo vòng quay Facebook và tạo snapshot tự động.',
+      metadata: {
+        source: 'AUTO',
+        sourceType: candidate.sourceType,
+        sourceId: candidate.sourceId,
+        logicalDay: logicalDayKey,
+        imageCount: images.length,
+        lastFacebookPublishedAt: candidate.lastFacebookPublishedAt,
+      },
+    });
+
+    const activated = await activateSocialPublication(pool, tenantId, publication.id);
+    if (!activated) throw new Error('Không thể chuyển publication tự động sang trạng thái xử lý');
+    await markSocialTargetsPending(pool, tenantId, publication.id);
+    await recordSocialPublicationEvent(pool, {
+      tenantId,
+      publicationId: publication.id,
+      eventType: 'AUTO_PUBLICATION_ACTIVATED',
+      fromStatus: 'DRAFT',
+      toStatus: 'PROCESSING',
+      reason: 'Agent Marketing đăng thẳng qua pipeline Facebook đã xác minh, không chờ duyệt thủ công.',
+      metadata: { source: 'AUTO', logicalDay: logicalDayKey },
+    });
+
+    const delivery = await processSocialPublicationTick(pool, 1);
+    const deliveryFailed = Number(delivery.failed || 0) > 0;
+    await finishMarketingFacebookDailyRun(pool, run.id, {
+      status: deliveryFailed ? 'FAILED' : 'SUCCESS',
+      sourceType: candidate.sourceType,
+      sourceId: candidate.sourceId,
+      publicationId: publication.id,
+      result: {
+        reason: deliveryFailed ? 'FACEBOOK_DELIVERY_FAILED' : 'PUBLICATION_QUEUED',
+        delivery,
+        imageCount: images.length,
+        selectedAt: new Date().toISOString(),
+      },
+      ...(deliveryFailed
+        ? {
+            errorCode: 'FACEBOOK_DELIVERY_FAILED',
+            errorMessage: `Worker Facebook báo ${delivery.failed} target thất bại.`,
+          }
+        : {}),
+    });
+    return {
+      created: 1,
+      published: delivery.published,
+      skipped: delivery.skipped ? 1 : 0,
+      reason: deliveryFailed ? 'PUBLISH_FAILED' : 'OK',
+      publicationId: publication.id,
+      sourceType: candidate.sourceType,
+      sourceId: candidate.sourceId,
+      delivery,
+    };
+  } catch (error: any) {
+    const message = String(error?.message || 'Agent Marketing đăng Facebook thất bại').slice(0, 1000);
+    await finishMarketingFacebookDailyRun(pool, run.id, {
+      status: 'FAILED',
+      result: { reason: 'ERROR', failedAt: new Date().toISOString() },
+      errorCode: String(error?.code || 'MARKETING_AGENT_ERROR'),
+      errorMessage: message,
+    }).catch(finishError => logger.error('[MarketingAgent] Failed to persist daily run failure', finishError));
+    logger.error(`[MarketingAgent] tenant ${tenantId} failed`, error);
+    return { created: 0, published: 0, skipped: 0, reason: 'ERROR', warning: message };
+  }
 }
 
 export async function runAutoPostingTick(pool: Pool) {
   const tenants = await listEnabledAutoPostingTenants(pool);
   const results = [];
   for (const tenantId of tenants) {
-    try {
-      results.push({ tenantId, ...(await runAutoPostingForTenant(pool, tenantId)) });
-    } catch (error: any) {
-      logger.error(`[AutoPosting] tenant ${tenantId} failed`, error);
-      results.push({ tenantId, created: 0, skipped: 0, reason: 'ERROR' });
-    }
+    results.push({ tenantId, ...(await runAutoPostingForTenant(pool, tenantId)) });
   }
   return results;
 }
 
 let schedulerStarted = false;
-export function startAutoPostingScheduler(pool: Pool, intervalMs = 15 * 60 * 1000) {
+export function startAutoPostingScheduler(pool: Pool) {
   if (schedulerStarted) return;
   schedulerStarted = true;
-  const tick = () => runAutoPostingTick(pool).catch(error => logger.error('[AutoPosting] tick failed', error));
-  setTimeout(tick, 30_000);
-  setInterval(tick, intervalMs);
-  logger.info(`[AutoPosting] in-process scheduler started (interval=${intervalMs}ms)`);
+  const tick = () => runAutoPostingTick(pool).catch(error => logger.error('[MarketingAgent] tick failed', error));
+  const scheduleNextRun = () => {
+    const now = new Date();
+    const today = localDayKey(now);
+    let nextRun = new Date(`${today}T18:30:00+07:00`);
+    if (nextRun.getTime() <= now.getTime()) {
+      const tomorrow = new Date(nextRun.getTime() + 24 * 60 * 60 * 1000);
+      nextRun = new Date(`${localDayKey(tomorrow)}T18:30:00+07:00`);
+    }
+    const timer = setTimeout(() => {
+      tick();
+      scheduleNextRun();
+    }, Math.max(1_000, nextRun.getTime() - now.getTime()));
+    timer.unref?.();
+  };
+  scheduleNextRun();
+  logger.info(`[MarketingAgent] Facebook daily scheduler started (18:30, timezone=${DEFAULT_TIME_ZONE})`);
 }

@@ -5526,7 +5526,7 @@ app.get('/api/admin/agent-tasks', apiRateLimit, authenticateToken, async (req: e
       '';
     app.use(createAutoPostingRouter(pool, authenticateToken, autoPostingSecret));
     try {
-      startAutoPostingScheduler(pool, 15 * 60 * 1000);
+      startAutoPostingScheduler(pool);
     } catch (err: any) {
       logger.warn(`[AutoPosting] Không thể khởi động worker: ${err?.message || err}`);
     }

@@ -113,6 +113,32 @@ export interface SocialPublicationListResponse {
   nextCursor?: string | null;
 }
 
+export interface MarketingFacebookDailyRun {
+  id: string;
+  logicalDay: string;
+  status: 'RUNNING' | 'SUCCESS' | 'FAILED' | 'SKIPPED';
+  sourceType: 'LISTING' | 'PROJECT' | null;
+  sourceId: string | null;
+  publicationId: string | null;
+  result: Record<string, unknown>;
+  errorCode: string | null;
+  errorMessage: string | null;
+  startedAt: string;
+  finishedAt: string | null;
+}
+
+export interface MarketingFacebookStatus {
+  settings: {
+    enabled: boolean;
+    postsPerDay: number;
+    timeWindows: Array<{ start: string; end: string }>;
+    platforms: string[];
+  };
+  todayRun: MarketingFacebookDailyRun | null;
+  lastRun: MarketingFacebookDailyRun | null;
+  warning: string | null;
+}
+
 export interface SocialUploadedImage {
   filename: string;
   originalName: string;
@@ -124,6 +150,15 @@ export interface SocialUploadedImage {
 export const socialPublicationApi = {
   getCatalog: (): Promise<{ data: SocialCapability[] }> =>
     api.get('/api/social-publications/catalog'),
+  getMarketingFacebookStatus: (): Promise<MarketingFacebookStatus> =>
+    api.get('/api/auto-posting/status'),
+  updateMarketingFacebookSettings: (input: {
+    enabled: boolean;
+    postsPerDay: number;
+    recycleAfterDays: number;
+    timeWindows: Array<{ start: string; end: string }>;
+    platforms: string[];
+  }) => api.put<MarketingFacebookStatus['settings']>('/api/auto-posting/settings', input),
   getPublications: (
     options: SocialPublicationQuery | 'AUTO' | 'MANUAL' = {},
   ): Promise<SocialPublicationListResponse> => {

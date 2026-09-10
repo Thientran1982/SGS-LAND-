@@ -24,6 +24,17 @@ function mockInitialRequests(listings: typeof eligibleListings = []) {
   });
   vi.spyOn(socialPublicationApi, 'getCatalog').mockResolvedValue({ data: [] });
   vi.spyOn(socialPublicationApi, 'getPublications').mockResolvedValue({ data: [], total: 0 });
+  vi.spyOn(socialPublicationApi, 'getMarketingFacebookStatus').mockResolvedValue({
+    settings: {
+      enabled: false,
+      postsPerDay: 1,
+      timeWindows: [{ start: '18:30', end: '23:59' }],
+      platforms: ['FACEBOOK_PAGE'],
+    },
+    todayRun: null,
+    lastRun: null,
+    warning: null,
+  });
   return getListings;
 }
 
@@ -189,6 +200,40 @@ describe('SocialPublishing listing selector', () => {
     });
 
     expect(screen.queryByRole('alert')).not.toBeInTheDocument();
+  });
+
+  it('shows the daily agent warning when no eligible Facebook source was found', async () => {
+    mockInitialRequests(eligibleListings);
+    vi.mocked(socialPublicationApi.getMarketingFacebookStatus).mockResolvedValue({
+      settings: {
+        enabled: true,
+        postsPerDay: 1,
+        timeWindows: [{ start: '18:30', end: '23:59' }],
+        platforms: ['FACEBOOK_PAGE'],
+      },
+      todayRun: {
+        id: 'run-1',
+        logicalDay: '2026-09-10',
+        status: 'SKIPPED',
+        sourceType: null,
+        sourceId: null,
+        publicationId: null,
+        result: { reason: 'NO_ELIGIBLE_SOURCE' },
+        errorCode: 'NO_ELIGIBLE_SOURCE',
+        errorMessage: 'Hôm nay không có nguồn đủ điều kiện để đăng Facebook.',
+        startedAt: '2026-09-10T11:30:00.000Z',
+        finishedAt: '2026-09-10T11:30:01.000Z',
+      },
+      lastRun: null,
+      warning: 'Hôm nay không có nguồn đủ điều kiện để đăng Facebook.',
+    });
+
+    render(<SocialPublishing />);
+
+    expect(await screen.findByRole('alert')).toHaveTextContent(
+      'Hôm nay không có nguồn đủ điều kiện để đăng Facebook.',
+    );
+    expect(screen.getByText('18:30 mỗi ngày')).toBeVisible();
   });
 
   it('shows tenant-scoped stale publication links and opens the related publication', async () => {

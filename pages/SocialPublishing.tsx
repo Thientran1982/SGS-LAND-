@@ -12,6 +12,7 @@ import {
   SocialCapability,
   SocialPublication,
   SocialTarget,
+  MarketingFacebookStatus,
   isSocialCapabilityReady,
 } from '../services/api/socialPublicationApi';
 import { useTranslation } from '../services/i18n';
@@ -58,7 +59,7 @@ function localizedSocialError(
   return isInfrastructureError ? t(fallbackKey) : raw;
 }
 
-type SocialLoadWarnings = Partial<Record<'projects' | 'publications' | 'staleReport', string>>;
+type SocialLoadWarnings = Partial<Record<'projects' | 'publications' | 'staleReport' | 'autoPosting', string>>;
 
 export const SocialPublishing: React.FC = () => {
   const { t } = useTranslation();
@@ -66,6 +67,8 @@ export const SocialPublishing: React.FC = () => {
   const [listings, setListings] = useState<SocialListingOption[]>([]);
   const [projects, setProjects] = useState<SocialProjectOption[]>([]);
   const [publications, setPublications] = useState<SocialPublication[]>([]);
+  const [marketingFacebookStatus, setMarketingFacebookStatus] = useState<MarketingFacebookStatus | null>(null);
+  const [marketingFacebookBusy, setMarketingFacebookBusy] = useState(false);
   const [stalePublications, setStalePublications] = useState<SocialPublication[]>([]);
   const [staleTotal, setStaleTotal] = useState(0);
   const [stalePage, setStalePage] = useState(1);
@@ -260,6 +263,17 @@ export const SocialPublishing: React.FC = () => {
       }
     })();
 
+    const marketingStatusTask = (async () => {
+      try {
+        setMarketingFacebookStatus(await socialPublicationApi.getMarketingFacebookStatus());
+      } catch (error: any) {
+        setLoadWarnings(current => ({
+          ...current,
+          autoPosting: `Không tải được trạng thái Agent Marketing: ${localizedSocialError(error, t, 'common.error_loading')}`,
+        }));
+      }
+    })();
+
     const staleReportTask = (async () => {
       try {
         const stalePublicationResult = await socialPublicationApi.getPublications({
@@ -296,10 +310,32 @@ export const SocialPublishing: React.FC = () => {
       }
     })();
 
-    await Promise.all([catalogTask, listingTask, projectsTask, publicationsTask, staleReportTask]);
+    await Promise.all([catalogTask, listingTask, projectsTask, publicationsTask, staleReportTask, marketingStatusTask]);
   }, [requestedListingId, requestedProjectId, t]);
 
   useEffect(() => { void load(); }, [load]);
+
+  const toggleMarketingFacebook = async () => {
+    if (!marketingFacebookStatus || marketingFacebookBusy) return;
+    setMarketingFacebookBusy(true);
+    try {
+      const settings = await socialPublicationApi.updateMarketingFacebookSettings({
+        enabled: !marketingFacebookStatus.settings.enabled,
+        postsPerDay: 1,
+        recycleAfterDays: 0,
+        timeWindows: [{ start: '18:30', end: '23:59' }],
+        platforms: ['FACEBOOK_PAGE'],
+      });
+      setMarketingFacebookStatus(current => current ? { ...current, settings: { ...current.settings, ...settings } } : current);
+    } catch (error: any) {
+      setLoadWarnings(current => ({
+        ...current,
+        autoPosting: `Không thể cập nhật Agent Marketing: ${localizedSocialError(error, t, 'common.error_save')}`,
+      }));
+    } finally {
+      setMarketingFacebookBusy(false);
+    }
+  };
 
   const loadMoreStalePublications = async () => {
     if (staleLoading || !staleHasNext) return;
@@ -1397,58 +1433,72 @@ export const SocialPublishing: React.FC = () => {
           )}
         </section>
 
-        <section className="rounded-3xl border border-amber-200 bg-amber-50/50 p-5 shadow-sm">
+        <section className="rounded-3xl border border-indigo-200 bg-indigo-50/50 p-5 shadow-sm">
           <div className="mb-4 flex flex-col justify-between gap-3 sm:flex-row sm:items-start">
             <div>
               <div className="flex items-center gap-3">
-                <div className="rounded-xl bg-amber-100 p-2 text-amber-700"><Bot size={20} /></div>
+                <div className="rounded-xl bg-indigo-100 p-2 text-indigo-700"><Bot size={20} /></div>
                 <div>
-                  <h2 className="font-bold text-[var(--text-primary)]">Bài chờ duyệt</h2>
-                  <p className="text-xs text-[var(--text-tertiary)]">Bản nháp AUTO được selector tạo. Chưa bài nào được đăng cho tới khi admin bấm “Đăng ngay”.</p>
+                  <h2 className="font-bold text-[var(--text-primary)]">Agent Marketing Facebook</h2>
+                  <p className="text-xs text-[var(--text-tertiary)]">Mỗi ngày lúc 18:30, agent chọn một listing hoặc dự án ACTIVE và đăng thẳng qua pipeline Facebook.</p>
                 </div>
               </div>
             </div>
-            <span className="rounded-full bg-amber-100 px-3 py-1 text-xs font-bold text-amber-800">{autoDrafts.length} bản nháp</span>
+            <button
+              type="button"
+              onClick={() => void toggleMarketingFacebook()}
+              disabled={!marketingFacebookStatus || marketingFacebookBusy}
+              className={`rounded-full px-3 py-1 text-xs font-bold disabled:opacity-50 ${
+                marketingFacebookStatus?.settings.enabled
+                  ? 'bg-emerald-100 text-emerald-800'
+                  : 'bg-slate-200 text-slate-700'
+              }`}
+            >
+              {marketingFacebookBusy ? 'Đang lưu…' : marketingFacebookStatus?.settings.enabled ? 'Đang bật' : 'Đang tắt'}
+            </button>
           </div>
-          {!autoDrafts.length ? (
-            <p className="rounded-2xl border border-dashed border-amber-200 bg-[var(--bg-surface)] p-4 text-sm text-[var(--text-tertiary)]">Chưa có bản nháp tự động nào chờ duyệt.</p>
-          ) : (
-            <div className="space-y-3">
-              {autoDrafts.map(item => (
-                <article key={item.id} className="rounded-2xl border border-amber-200 bg-[var(--bg-surface)] p-4">
-                  <div className="flex flex-col justify-between gap-3 md:flex-row md:items-start">
-                    <div className="min-w-0">
-                      <div className="flex flex-wrap items-center gap-2">
-                        <p className="font-semibold text-[var(--text-primary)]">{String(item.contentSnapshot?.title || item.projectId || item.listingId)}</p>
-                        <span className="rounded-full bg-amber-100 px-2.5 py-0.5 text-[10px] font-bold text-amber-800">
-                          Nguồn: {getPublicationSourceLabel(item)}
-                        </span>
-                        <span className="rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-bold text-amber-800">AUTO / DRAFT</span>
-                      </div>
-                      <p className="mt-1 text-xs text-[var(--text-tertiary)]">
-                        {getPublicationSourceLabel(item)} ID: <span className="font-mono">{getPublicationSourceId(item)}</span> · Tạo {formatDate(item.createdAt)} · Chờ admin kiểm tra
-                      </p>
-                      <p className="mt-2 line-clamp-3 whitespace-pre-wrap text-xs leading-5 text-[var(--text-secondary)]">{String(item.contentSnapshot?.caption || `Caption tự động từ snapshot ${getPublicationSourceLabel(item).toLowerCase()}.`)}</p>
-                      <div className="mt-2 flex flex-wrap gap-2">
-                        {item.targets.map(target => (
-                          <span key={target.id} className="rounded-full bg-[var(--glass-surface)] px-2.5 py-1 text-xs text-[var(--text-secondary)]">
-                            {target.platform} · {statusLabel[target.status] || target.status}
-                          </span>
-                        ))}
-                      </div>
-                    </div>
-                    <div className="flex shrink-0 gap-2">
-                      <button disabled={busy} onClick={() => void activate(item.id)} className="rounded-lg bg-sgs-primary px-3 py-2 text-xs font-bold text-white disabled:opacity-50">Đăng ngay</button>
-                      <button disabled={busy} onClick={() => void cancel(item.id)} className="rounded-lg border border-[var(--glass-border)] px-3 py-2 text-xs font-semibold text-[var(--text-secondary)] disabled:opacity-50"><X size={14} /></button>
-                      <button type="button" disabled={detailLoading === item.id} onClick={() => void toggleDetails(item.id)} className="rounded-lg border border-[var(--glass-border)] px-3 py-2 text-xs font-semibold text-[var(--text-secondary)] disabled:opacity-50">
-                        {detailLoading === item.id ? 'Đang tải…' : expandedPublicationId === item.id ? 'Ẩn' : 'Chi tiết'}
-                      </button>
-                    </div>
-                  </div>
-                  {expandedPublicationId === item.id && publicationDetails[item.id] && renderTargetDetails(publicationDetails[item.id])}
-                </article>
-              ))}
+          <div className="grid gap-3 md:grid-cols-3">
+            <div className="rounded-2xl border border-indigo-100 bg-[var(--bg-surface)] p-4">
+              <p className="text-xs font-semibold text-[var(--text-tertiary)]">Lịch chạy</p>
+              <p className="mt-1 text-sm font-bold text-[var(--text-primary)]">18:30 mỗi ngày</p>
+              <p className="mt-1 text-xs text-[var(--text-tertiary)]">Asia/Ho_Chi_Minh · tối đa 1 bài/ngày</p>
             </div>
+            <div className="rounded-2xl border border-indigo-100 bg-[var(--bg-surface)] p-4">
+              <p className="text-xs font-semibold text-[var(--text-tertiary)]">Lần chạy gần nhất</p>
+              <p className="mt-1 text-sm font-bold text-[var(--text-primary)]">
+                {marketingFacebookStatus?.lastRun
+                  ? ({
+                      SUCCESS: 'Thành công',
+                      FAILED: 'Thất bại',
+                      SKIPPED: 'Không đăng',
+                      RUNNING: 'Đang chạy',
+                    }[marketingFacebookStatus.lastRun.status] || marketingFacebookStatus.lastRun.status)
+                  : 'Chưa chạy'}
+              </p>
+              {marketingFacebookStatus?.lastRun && (
+                <p className="mt-1 text-xs text-[var(--text-tertiary)]">{formatDate(marketingFacebookStatus.lastRun.finishedAt || marketingFacebookStatus.lastRun.startedAt)}</p>
+              )}
+            </div>
+            <div className="rounded-2xl border border-indigo-100 bg-[var(--bg-surface)] p-4">
+              <p className="text-xs font-semibold text-[var(--text-tertiary)]">Nguồn đã chọn</p>
+              <p className="mt-1 text-sm font-bold text-[var(--text-primary)]">
+                {marketingFacebookStatus?.lastRun?.sourceType
+                  ? `${marketingFacebookStatus.lastRun.sourceType === 'PROJECT' ? 'Dự án' : 'Listing'} · ${marketingFacebookStatus.lastRun.sourceId}`
+                  : '—'}
+              </p>
+              <p className="mt-1 text-xs text-[var(--text-tertiary)]">Ưu tiên nguồn lâu nhất chưa đăng Facebook</p>
+            </div>
+          </div>
+          {(marketingFacebookStatus?.warning || loadWarnings.autoPosting) && (
+            <div role="alert" className="mt-3 flex gap-2 rounded-2xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900">
+              <AlertTriangle size={18} className="mt-0.5 shrink-0" />
+              <span>{marketingFacebookStatus?.warning || loadWarnings.autoPosting}</span>
+            </div>
+          )}
+          {marketingFacebookStatus?.todayRun?.publicationId && (
+            <p className="mt-3 text-xs text-[var(--text-tertiary)]">
+              Publication hôm nay: <span className="font-mono">{marketingFacebookStatus.todayRun.publicationId}</span>. Kết quả provider được cập nhật trong lịch sử đăng bên dưới.
+            </p>
           )}
         </section>
 

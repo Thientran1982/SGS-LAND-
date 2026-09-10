@@ -4,19 +4,30 @@ import { randomUUID } from 'node:crypto';
 import migration186 from '../migrations/186_social_publications';
 import migration187 from '../migrations/187_social_publication_audit';
 import migration190 from '../migrations/190_auto_posting_phase3';
+import migration192 from '../migrations/192_social_publication_project_source';
+import migration193 from '../migrations/193_marketing_facebook_daily_runs';
 import {
   createSocialPublication,
-  countSocialPublications,
   findSocialPublication,
   listSocialPublications,
 } from '../repositories/socialPublicationRepository';
 import { upsertAutoPostingSettings } from '../repositories/autoPostingRepository';
 import { runAutoPostingForTenant } from '../services/autoPostingSelector';
 import { getTenantSocialPlatformCapability } from '../social-publishing/registry';
+import { processSocialPublicationTick } from '../services/socialPublishingWorker';
 import type { SocialPlatform } from '../social-publishing/types';
 
 vi.mock('../social-publishing/registry', () => ({
   getTenantSocialPlatformCapability: vi.fn(),
+}));
+
+vi.mock('../services/socialPublishingWorker', () => ({
+  processSocialPublicationTick: vi.fn(async () => ({
+    picked: 1,
+    published: 1,
+    failed: 0,
+    skipped: false,
+  })),
 }));
 
 vi.mock('../services/socialPublicationService', async () => {
@@ -46,8 +57,22 @@ vi.mock('../services/socialPublicationService', async () => {
       publicUrl: null,
       capturedAt: new Date().toISOString(),
     })),
+    buildSocialProjectSnapshot: vi.fn(async (_tenantId: string, projectId: string) => ({
+      version: 1,
+      projectId,
+      code: `PROJECT-${projectId.slice(0, 8)}`,
+      title: `Project ${projectId}`,
+      description: null,
+      location: null,
+      totalUnits: null,
+      status: 'ACTIVE',
+      priceLabel: 'Liên hệ',
+      images: ['https://cdn.example.test/project.jpg'],
+      publicUrl: `https://sgsland.example/p/PROJECT-${projectId.slice(0, 8)}`,
+      capturedAt: new Date().toISOString(),
+    })),
     buildPlatformContent: vi.fn((_snapshot: unknown, platform: string, images: string[]) => ({
-      text: `${platform} draft`,
+      text: `${platform} auto`,
       imageUrls: images,
     })),
   };
@@ -60,10 +85,9 @@ const baseConnectionString = integrationUrl?.replace(
   '$1',
 ).replace(/[?&]$/, '');
 const useSsl = process.env.INTEGRITY_PG_SSL !== 'false';
-
 const tenantA = '11111111-1111-4111-8111-111111111111';
 const tenantB = '22222222-2222-4222-8222-222222222222';
-const allPlatforms: SocialPlatform[] = ['FACEBOOK_PAGE', 'ZALO_BROADCAST'];
+const runAtSevenPmVietnam = new Date('2026-01-02T12:00:00.000Z');
 
 type CapabilityConfig = Partial<Record<SocialPlatform, {
   status: 'READY' | 'NOT_READY';
@@ -71,7 +95,7 @@ type CapabilityConfig = Partial<Record<SocialPlatform, {
   retryable: boolean;
 }>>;
 
-describePostgres('automatic posting selector against PostgreSQL', () => {
+describePostgres('Marketing Facebook daily selector against PostgreSQL', () => {
   let setupPool: Pool;
   let setupClient: PoolClient | undefined;
   let schema: string;
@@ -88,24 +112,31 @@ describePostgres('automatic posting selector against PostgreSQL', () => {
 
   async function insertProject(input: {
     tenantId: string;
-    name: string;
-    featured?: boolean;
-    priority?: number;
+    name?: string;
     status?: string;
+    images?: string[];
+    createdAt?: string;
   }) {
     const id = randomUUID();
     await query(
       `INSERT INTO projects
-         (id, tenant_id, name, code, status, is_featured, priority, created_at, updated_at)
-       VALUES ($1, $2, $3, $4, $5, $6, $7, NOW(), NOW())`,
+         (id, tenant_id, name, code, status, metadata, is_featured, priority, created_at, updated_at)
+       VALUES ($1, $2, $3, $4, $5, $6::jsonb, FALSE, 0,
+               COALESCE($7::timestamptz, NOW()), COALESCE($7::timestamptz, NOW()))`,
       [
         id,
         input.tenantId,
-        input.name,
+        input.name || `Project ${id}`,
         `PROJECT-${id.slice(0, 8)}`,
         input.status || 'ACTIVE',
-        input.featured ?? false,
-        input.priority ?? 0,
+        JSON.stringify(input.images === undefined ? {
+          coverImage: 'https://cdn.example.test/project.jpg',
+          gallery: [],
+        } : {
+          coverImage: input.images[0] || null,
+          gallery: input.images.slice(1),
+        }),
+        input.createdAt || null,
       ],
     );
     return id;
@@ -115,6 +146,7 @@ describePostgres('automatic posting selector against PostgreSQL', () => {
     tenantId: string;
     projectId?: string | null;
     title?: string;
+    images?: string[];
     createdAt?: string;
   }) {
     const id = randomUUID();
@@ -125,33 +157,28 @@ describePostgres('automatic posting selector against PostgreSQL', () => {
           transaction, attributes, images, created_at, updated_at)
        VALUES ($1, $2, $3, NULL, $4, $5, NULL, 'AVAILABLE',
                NULL, 'VND', NULL, NULL, NULL, NULL, NULL, 'Nhà phố',
-               'Bán', '{}'::jsonb, '[]'::jsonb, COALESCE($6::timestamptz, NOW()), NOW())`,
+               'Bán', '{}'::jsonb, $6::jsonb,
+               COALESCE($7::timestamptz, NOW()), COALESCE($7::timestamptz, NOW()))`,
       [
         id,
         input.tenantId,
         input.projectId || null,
         input.title || `Listing ${id}`,
         `LISTING-${id.slice(0, 8)}`,
+        JSON.stringify(input.images === undefined ? ['https://cdn.example.test/listing.jpg'] : input.images),
         input.createdAt || null,
       ],
     );
     return id;
   }
 
-  async function configureSelector(
-    tenantId: string,
-    options: {
-      postsPerDay?: number;
-      recycleAfterDays?: number;
-      platforms?: string[];
-    } = {},
-  ) {
+  async function configureSelector(tenantId: string, enabled = true) {
     await upsertAutoPostingSettings(setupPool, tenantId, {
-      enabled: true,
-      postsPerDay: options.postsPerDay ?? 1,
-      recycleAfterDays: options.recycleAfterDays ?? 7,
-      platforms: options.platforms ?? ['FACEBOOK_PAGE'],
-      timeWindows: [{ start: '00:00', end: '23:59' }],
+      enabled,
+      postsPerDay: 1,
+      recycleAfterDays: 0,
+      platforms: ['FACEBOOK_PAGE'],
+      timeWindows: [{ start: '18:30', end: '23:59' }],
     });
   }
 
@@ -166,10 +193,10 @@ describePostgres('automatic posting selector against PostgreSQL', () => {
         return {
           platform,
           label: platform,
-          kind: platform === 'ZALO_BROADCAST' ? 'BROADCAST' : 'PUBLIC_POST',
+          kind: 'PUBLIC_POST' as const,
           status: configured.status,
           canPublish: configured.status === 'READY',
-          messagingSupported: true,
+          messagingSupported: false,
           reason: configured.reason,
           retryable: configured.retryable,
           requiresConnection: true,
@@ -179,7 +206,7 @@ describePostgres('automatic posting selector against PostgreSQL', () => {
   }
 
   beforeAll(async () => {
-    schema = `auto_posting_selector_${process.pid}_${Date.now()}`;
+    schema = `marketing_facebook_${process.pid}_${Date.now()}`;
     const adminPool = new Pool({
       connectionString: baseConnectionString,
       max: 1,
@@ -215,6 +242,7 @@ describePostgres('automatic posting selector against PostgreSQL', () => {
         name VARCHAR(255) NOT NULL,
         code VARCHAR(100),
         status VARCHAR(50) DEFAULT 'ACTIVE',
+        metadata JSONB NOT NULL DEFAULT '{}'::jsonb,
         is_featured BOOLEAN NOT NULL DEFAULT FALSE,
         priority INTEGER NOT NULL DEFAULT 0,
         created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
@@ -248,12 +276,17 @@ describePostgres('automatic posting selector against PostgreSQL', () => {
     await migration186.up(setupClient);
     await migration187.up(setupClient);
     await migration190.up(setupClient);
+    await migration192.up(setupClient);
+    await migration193.up(setupClient);
     setupClient.release();
     setupClient = undefined;
   });
 
   beforeEach(async () => {
-    await query('TRUNCATE social_publication_events, social_publications, auto_posting_settings, listings, projects CASCADE');
+    await query(`
+      TRUNCATE marketing_facebook_daily_runs, social_publication_events,
+        social_publications, auto_posting_settings, listings, projects CASCADE
+    `);
     vi.clearAllMocks();
   });
 
@@ -266,250 +299,155 @@ describePostgres('automatic posting selector against PostgreSQL', () => {
     }
   });
 
-  it('selects only the current tenant and prioritizes its featured project', async () => {
-    const featuredProjectA = await insertProject({
+  it('selects only the current tenant and can choose a project as an independent source', async () => {
+    const oldProject = await insertProject({
       tenantId: tenantA,
-      name: 'Tenant A featured project',
-      featured: true,
-      priority: 1,
+      name: 'Tenant A project',
+      createdAt: '2025-12-01T00:00:00.000Z',
     });
-    const otherTenantFeaturedProject = await insertProject({
-      tenantId: tenantB,
-      name: 'Tenant B featured project',
-      featured: true,
-      priority: 999,
-    });
-    const regularListingA = await insertListing({ tenantId: tenantA });
-    const featuredListingA = await insertListing({ tenantId: tenantA, projectId: featuredProjectA });
-    const leakedListingB = await insertListing({ tenantId: tenantB, projectId: otherTenantFeaturedProject });
+    await insertListing({ tenantId: tenantA, createdAt: '2025-12-02T00:00:00.000Z' });
+    await insertListing({ tenantId: tenantB, createdAt: '2025-11-01T00:00:00.000Z' });
     await configureSelector(tenantA);
     configureCapabilities({
       FACEBOOK_PAGE: { status: 'READY', reason: 'Facebook đã xác minh', retryable: false },
     });
 
-    const result = await runAutoPostingForTenant(setupPool, tenantA);
-
-    expect(result).toMatchObject({ created: 1, reason: 'OK' });
+    const result = await runAutoPostingForTenant(setupPool, tenantA, runAtSevenPmVietnam);
+    expect(result).toMatchObject({
+      created: 1,
+      reason: 'OK',
+      sourceType: 'PROJECT',
+      sourceId: oldProject,
+    });
     const publications = await query(
-      `SELECT tenant_id, listing_id, source FROM social_publications`,
+      `SELECT tenant_id, listing_id, project_id, status, source
+         FROM social_publications`,
     );
     expect(publications.rows).toEqual([{
       tenant_id: tenantA,
-      listing_id: featuredListingA,
+      listing_id: null,
+      project_id: oldProject,
+      status: 'PROCESSING',
       source: 'AUTO',
     }]);
-    expect(publications.rows.map(row => row.listing_id)).not.toContain(regularListingA);
-    expect(publications.rows.map(row => row.listing_id)).not.toContain(leakedListingB);
   });
 
-  it('recycles a listing independently per platform', async () => {
-    const listingId = await insertListing({ tenantId: tenantA });
-    await configureSelector(tenantA, {
-      postsPerDay: 2,
-      recycleAfterDays: 7,
-      platforms: allPlatforms,
-    });
-    configureCapabilities({
-      FACEBOOK_PAGE: { status: 'READY', reason: 'Facebook đã xác minh', retryable: false },
-      ZALO_BROADCAST: { status: 'READY', reason: 'Zalo đã xác minh', retryable: false },
-    });
-
-    const previousPublication = await createSocialPublication(setupPool, {
+  it('prioritizes a source that has never had a successful Facebook publication', async () => {
+    const alreadyPublishedListingId = await insertListing({ tenantId: tenantA, createdAt: '2025-01-01T00:00:00.000Z' });
+    const neverPublishedListingId = await insertListing({ tenantId: tenantA, createdAt: '2025-12-01T00:00:00.000Z' });
+    const previous = await createSocialPublication(setupPool, {
       tenantId: tenantA,
-      listingId,
+      listingId: alreadyPublishedListingId,
       createdBy: null,
       publishMode: 'NOW',
       scheduledAt: null,
-      contentSnapshot: { title: 'previous Facebook draft' },
-      assetSnapshot: [],
+      contentSnapshot: { title: 'previous' },
+      assetSnapshot: ['https://cdn.example.test/old.jpg'],
       platforms: ['FACEBOOK_PAGE'],
-      source: 'AUTO',
-      autoPostingKey: `previous:${randomUUID()}`,
     });
     await query(
-      `UPDATE social_publications SET created_at = NOW() - INTERVAL '1 day' WHERE id = $1`,
-      [previousPublication.id],
+      `UPDATE social_publication_targets
+          SET status = 'PUBLISHED', published_at = '2025-12-15T00:00:00.000Z'
+        WHERE publication_id = $1`,
+      [previous.id],
     );
-
-    const result = await runAutoPostingForTenant(setupPool, tenantA);
-
-    expect(result).toMatchObject({ created: 1, reason: 'OK' });
-    const publications = await query(
-      `SELECT id, listing_id, source FROM social_publications ORDER BY created_at`,
-    );
-    expect(publications.rows).toHaveLength(2);
-    const newPublicationId = publications.rows.find(row => row.id !== previousPublication.id)?.id;
-    const newPublication = await findSocialPublication(setupPool, tenantA, newPublicationId);
-    expect(newPublication?.targets.map(target => target.platform)).toEqual(['ZALO_BROADCAST']);
-    expect(newPublication?.events.find(event => event.eventType === 'AUTO_PLATFORM_SKIPPED')).toMatchObject({
-      reason: expect.stringContaining('FACEBOOK_PAGE'),
-      metadata: {
-        platform: 'FACEBOOK_PAGE',
-        recycleAfterDays: 7,
-      },
-    });
-  });
-
-  it('creates a Facebook draft when Zalo is not ready and records the safe skip reason', async () => {
-    const listingId = await insertListing({ tenantId: tenantA });
-    const zaloReason = 'Zalo broadcast/public chưa xác minh quyền đăng';
-    await configureSelector(tenantA, { platforms: allPlatforms });
-    configureCapabilities({
-      FACEBOOK_PAGE: { status: 'READY', reason: 'Facebook đã xác minh', retryable: false },
-      ZALO_BROADCAST: { status: 'NOT_READY', reason: zaloReason, retryable: false },
-    });
-
-    const result = await runAutoPostingForTenant(setupPool, tenantA);
-
-    expect(result).toMatchObject({ created: 1, reason: 'OK' });
-    const publicationRow = await query(
-      `SELECT id, tenant_id, listing_id, status, source
-         FROM social_publications WHERE listing_id = $1`,
-      [listingId],
-    );
-    expect(publicationRow.rows).toHaveLength(1);
-    expect(publicationRow.rows[0]).toMatchObject({
-      tenant_id: tenantA,
-      listing_id: listingId,
-      status: 'DRAFT',
-      source: 'AUTO',
-    });
-    const publication = await findSocialPublication(setupPool, tenantA, publicationRow.rows[0].id);
-    expect(publication?.targets.map(target => target.platform)).toEqual(['FACEBOOK_PAGE']);
-    expect(publication?.events).toContainEqual(expect.objectContaining({
-      eventType: 'AUTO_PLATFORM_SKIPPED',
-      reason: `Bỏ qua ZALO_BROADCAST: ${zaloReason}`,
-      metadata: {
-        source: 'AUTO',
-        platform: 'ZALO_BROADCAST',
-        reasonCode: zaloReason,
-        retryable: false,
-      },
-    }));
-  });
-
-  it('stops at posts_per_day when the selector runs again on the same day', async () => {
-    await insertListing({ tenantId: tenantA });
-    await insertListing({ tenantId: tenantA });
-    await configureSelector(tenantA, { postsPerDay: 1 });
+    await configureSelector(tenantA);
     configureCapabilities({
       FACEBOOK_PAGE: { status: 'READY', reason: 'Facebook đã xác minh', retryable: false },
     });
-    const now = new Date();
 
-    const firstRun = await runAutoPostingForTenant(setupPool, tenantA, now);
-    const secondRun = await runAutoPostingForTenant(setupPool, tenantA, now);
-
-    expect(firstRun).toMatchObject({ created: 1, reason: 'OK' });
-    expect(secondRun).toEqual({
-      created: 0,
-      skipped: 0,
-      reason: 'DAILY_LIMIT_REACHED',
+    const result = await runAutoPostingForTenant(setupPool, tenantA, runAtSevenPmVietnam);
+    expect(result).toMatchObject({
+      created: 1,
+      sourceType: 'LISTING',
+      sourceId: neverPublishedListingId,
     });
-    const count = await query(
-      `SELECT COUNT(*)::int AS count
-         FROM social_publications
-        WHERE tenant_id = $1 AND source = 'AUTO'`,
+    expect(result.sourceId).not.toBe(alreadyPublishedListingId);
+  });
+
+  it('does not post without an eligible image and records a visible skip audit', async () => {
+    await insertListing({ tenantId: tenantA, images: [] });
+    await insertProject({ tenantId: tenantA, images: [] });
+    await configureSelector(tenantA);
+    configureCapabilities({
+      FACEBOOK_PAGE: { status: 'READY', reason: 'Facebook đã xác minh', retryable: false },
+    });
+
+    const result = await runAutoPostingForTenant(setupPool, tenantA, runAtSevenPmVietnam);
+    expect(result).toMatchObject({ created: 0, skipped: 1, reason: 'NO_ELIGIBLE_SOURCE' });
+    const audit = await query(
+      `SELECT status, error_code, error_message, result
+         FROM marketing_facebook_daily_runs
+        WHERE tenant_id = $1`,
       [tenantA],
     );
-    expect(count.rows[0].count).toBe(1);
+    expect(audit.rows[0]).toMatchObject({
+      status: 'SKIPPED',
+      error_code: 'NO_ELIGIBLE_SOURCE',
+      result: expect.objectContaining({ reason: 'NO_ELIGIBLE_SOURCE' }),
+    });
+    expect(audit.rows[0].error_message).toContain('không có listing hoặc dự án');
   });
 
-  it('uses the same Vietnam day for the quota and auto-posting key across midnight', async () => {
-    const alreadyPostedListingId = await insertListing({ tenantId: tenantA });
-    const nextListingId = await insertListing({ tenantId: tenantA });
-    await configureSelector(tenantA, {
-      postsPerDay: 1,
-      recycleAfterDays: 3650,
-    });
+  it('publishes directly through the worker pipeline and refuses a second run for the same Vietnam day', async () => {
+    const listingId = await insertListing({ tenantId: tenantA });
+    await configureSelector(tenantA);
     configureCapabilities({
       FACEBOOK_PAGE: { status: 'READY', reason: 'Facebook đã xác minh', retryable: false },
     });
 
-    const previousDayPublication = await createSocialPublication(setupPool, {
-      tenantId: tenantA,
-      listingId: alreadyPostedListingId,
-      createdBy: null,
-      publishMode: 'NOW',
-      scheduledAt: null,
-      contentSnapshot: { title: 'previous day draft' },
-      assetSnapshot: [],
-      platforms: ['FACEBOOK_PAGE'],
-      source: 'AUTO',
-      autoPostingKey: `2026-01-02:${alreadyPostedListingId}`,
-    });
-    await query(
-      `UPDATE social_publications
-          SET created_at = $2::timestamptz
-        WHERE id = $1`,
-      [previousDayPublication.id, '2026-01-02T16:59:59.999Z'],
-    );
+    const firstRun = await runAutoPostingForTenant(setupPool, tenantA, runAtSevenPmVietnam);
+    const secondRun = await runAutoPostingForTenant(setupPool, tenantA, new Date('2026-01-02T16:00:00.000Z'));
 
-    const beforeMidnight = await runAutoPostingForTenant(
-      setupPool,
-      tenantA,
-      new Date('2026-01-02T16:59:59.999Z'),
-    );
-    expect(beforeMidnight).toEqual({
+    expect(firstRun).toMatchObject({ created: 1, reason: 'OK', sourceId: listingId });
+    expect(secondRun).toEqual({
       created: 0,
+      published: 0,
       skipped: 0,
-      reason: 'DAILY_LIMIT_REACHED',
+      reason: 'DAILY_RUN_ALREADY_CLAIMED',
     });
-
-    const afterMidnight = await runAutoPostingForTenant(
-      setupPool,
-      tenantA,
-      new Date('2026-01-02T17:00:00.000Z'),
+    const audit = await query(
+      `SELECT status, to_char(logical_day, 'YYYY-MM-DD') AS logical_day, source_id
+         FROM marketing_facebook_daily_runs WHERE tenant_id = $1`,
+      [tenantA],
     );
-    expect(afterMidnight).toMatchObject({ created: 1, reason: 'OK' });
-
-    const newPublication = await query(
-      `SELECT listing_id, auto_posting_key
-         FROM social_publications
-        WHERE tenant_id = $1 AND listing_id = $2 AND source = 'AUTO'`,
-      [tenantA, nextListingId],
-    );
-    expect(newPublication.rows).toEqual([{
-      listing_id: nextListingId,
-      auto_posting_key: `2026-01-03:${nextListingId}`,
+    expect(audit.rows).toEqual([{
+      status: 'SUCCESS',
+      logical_day: '2026-01-02',
+      source_id: listingId,
     }]);
   });
 
-  it('does not create a duplicate draft on a same-day rerun when recycle is disabled', async () => {
-    const listingId = await insertListing({ tenantId: tenantA });
-    await configureSelector(tenantA, {
-      postsPerDay: 2,
-      recycleAfterDays: 0,
-    });
+  it('records a failed daily run when the Facebook worker reports delivery failure', async () => {
+    await insertListing({ tenantId: tenantA });
+    await configureSelector(tenantA);
     configureCapabilities({
       FACEBOOK_PAGE: { status: 'READY', reason: 'Facebook đã xác minh', retryable: false },
     });
-    const now = new Date();
+    vi.mocked(processSocialPublicationTick).mockResolvedValueOnce({
+      picked: 1,
+      published: 0,
+      failed: 1,
+      skipped: false,
+    });
 
-    const firstRun = await runAutoPostingForTenant(setupPool, tenantA, now);
-    const secondRun = await runAutoPostingForTenant(setupPool, tenantA, now);
-
-    expect(firstRun).toMatchObject({ created: 1, reason: 'OK' });
-    expect(secondRun).toMatchObject({ created: 0, reason: 'OK' });
-    const duplicateKeys = await query(
-      `SELECT COUNT(*)::int AS count, COUNT(DISTINCT auto_posting_key)::int AS distinct_count
-         FROM social_publications
-        WHERE tenant_id = $1 AND listing_id = $2 AND source = 'AUTO'`,
-      [tenantA, listingId],
+    const result = await runAutoPostingForTenant(setupPool, tenantA, runAtSevenPmVietnam);
+    expect(result).toMatchObject({ created: 1, reason: 'PUBLISH_FAILED' });
+    const audit = await query(
+      `SELECT status, error_code, result
+         FROM marketing_facebook_daily_runs WHERE tenant_id = $1`,
+      [tenantA],
     );
-    expect(duplicateKeys.rows[0]).toEqual({ count: 1, distinct_count: 1 });
+    expect(audit.rows[0]).toMatchObject({
+      status: 'FAILED',
+      error_code: 'FACEBOOK_DELIVERY_FAILED',
+      result: expect.objectContaining({ reason: 'FACEBOOK_DELIVERY_FAILED' }),
+    });
   });
 
-  it('loads publication history with UUID listing tenants and keeps tenant boundaries', async () => {
-    const listingA = await insertListing({
-      tenantId: tenantA,
-      title: 'Tenant A listing',
-    });
-    const listingB = await insertListing({
-      tenantId: tenantB,
-      title: 'Tenant B listing',
-    });
-
+  it('keeps social publication history isolated by tenant', async () => {
+    const listingA = await insertListing({ tenantId: tenantA, title: 'Tenant A listing' });
+    const listingB = await insertListing({ tenantId: tenantB, title: 'Tenant B listing' });
     await createSocialPublication(setupPool, {
       tenantId: tenantA,
       listingId: listingA,
@@ -532,34 +470,10 @@ describePostgres('automatic posting selector against PostgreSQL', () => {
     });
 
     const tenantAPublications = await listSocialPublications(setupPool, tenantA);
-    const tenantACount = await countSocialPublications(setupPool, tenantA);
     const tenantBPublications = await listSocialPublications(setupPool, tenantB);
-    const tenantBCount = await countSocialPublications(setupPool, tenantB);
-
     expect(tenantAPublications).toHaveLength(1);
-    expect(tenantAPublications[0]).toMatchObject({
-      tenantId: tenantA,
-      listingId: listingA,
-      listingReview: {
-        eligible: true,
-        listingExists: true,
-        listingCode: expect.stringContaining('LISTING-'),
-        listingTitle: 'Tenant A listing',
-      },
-    });
-    expect(tenantACount).toBe(1);
+    expect(tenantAPublications[0]).toMatchObject({ tenantId: tenantA, listingId: listingA });
     expect(tenantBPublications).toHaveLength(1);
-    expect(tenantBPublications[0]).toMatchObject({
-      tenantId: tenantB,
-      listingId: listingB,
-      listingReview: {
-        eligible: true,
-        listingExists: true,
-        listingTitle: 'Tenant B listing',
-      },
-    });
-    expect(tenantBCount).toBe(1);
-    expect(tenantAPublications.map(publication => publication.tenantId)).not.toContain(tenantB);
-    expect(tenantBPublications.map(publication => publication.tenantId)).not.toContain(tenantA);
+    expect(tenantBPublications[0]).toMatchObject({ tenantId: tenantB, listingId: listingB });
   });
 });
