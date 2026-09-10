@@ -139,8 +139,13 @@ export function createSocialPublicationRouter(
       if (unavailableImages.length) {
         return res.status(400).json({ error: 'Ảnh được chọn phải thuộc listing hiện tại' });
       }
-      if (platforms.includes('FACEBOOK_PAGE') && !imageUrls.length) {
-        return res.status(400).json({ error: 'Facebook publication cần ít nhất một ảnh đại diện' });
+      const imageRequiredPlatforms = platforms.filter(platform => (
+        platform === 'FACEBOOK_PAGE' || platform === 'ZALO_BROADCAST'
+      ));
+      if (imageRequiredPlatforms.length && !imageUrls.length) {
+        return res.status(400).json({
+          error: `${imageRequiredPlatforms.join(', ')} cần ít nhất một ảnh HTTPS công khai để tạo publication`,
+        });
       }
       if (platforms.includes('FACEBOOK_PAGE') && imageUrls.length > MAX_FACEBOOK_IMAGES) {
         return res.status(400).json({ error: `Facebook hiện chỉ hỗ trợ tối đa ${MAX_FACEBOOK_IMAGES} ảnh trong một album` });

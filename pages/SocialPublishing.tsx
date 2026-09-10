@@ -164,8 +164,11 @@ export const SocialPublishing: React.FC = () => {
       setMessage({ kind: 'error', text: 'Nhập caption trước khi lưu bản nháp.' });
       return;
     }
-    if (platforms.includes('FACEBOOK_PAGE') && !selectedImageUrls.length) {
-      setMessage({ kind: 'error', text: 'Facebook cần ít nhất một ảnh đại diện đã chọn.' });
+    const imageRequiredPlatforms = platforms.filter(platform => (
+      platform === 'FACEBOOK_PAGE' || platform === 'ZALO_BROADCAST'
+    ));
+    if (imageRequiredPlatforms.length && !selectedImageUrls.length) {
+      setMessage({ kind: 'error', text: `${imageRequiredPlatforms.join(', ')} cần ít nhất một ảnh HTTPS công khai đã chọn.` });
       return;
     }
     setBusy(true);
