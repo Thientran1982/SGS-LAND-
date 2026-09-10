@@ -1,10 +1,11 @@
 import React from 'react';
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { SocialPublishing } from '../../pages/SocialPublishing';
 import { listingApi } from '../../services/api/listingApi';
 import { socialPublicationApi } from '../../services/api/socialPublicationApi';
+import { db } from '../../services/dbApi';
 
 const eligibleListings = [
   { id: 'listing-available', code: 'SGS-001', title: 'Căn hộ sẵn sàng', status: 'AVAILABLE' },
@@ -27,6 +28,10 @@ function mockInitialRequests(listings: typeof eligibleListings = []) {
 }
 
 describe('SocialPublishing listing selector', () => {
+  beforeEach(() => {
+    vi.spyOn(db, 'getProjects').mockResolvedValue({ data: [] });
+  });
+
   afterEach(() => {
     window.history.replaceState({}, '', '/');
     vi.restoreAllMocks();
@@ -41,6 +46,7 @@ describe('SocialPublishing listing selector', () => {
     await waitFor(() => {
       expect(getListings).toHaveBeenCalledWith(1, 100, {
         statuses: 'AVAILABLE,OPENING,BOOKING,BEST_MARKET',
+        publicationEligible: 'true',
       });
     });
 
@@ -62,6 +68,7 @@ describe('SocialPublishing listing selector', () => {
     expect(await screen.findByText(/Chưa có listing đủ điều kiện xuất bản\./)).toBeVisible();
     expect(getListings).toHaveBeenCalledWith(1, 100, {
       statuses: 'AVAILABLE,OPENING,BOOKING,BEST_MARKET',
+      publicationEligible: 'true',
     });
 
     await user.click(screen.getByRole('combobox', { name: 'Chọn sản phẩm đủ điều kiện xuất bản' }));
@@ -83,6 +90,7 @@ describe('SocialPublishing listing selector', () => {
     await waitFor(() => {
       expect(getListings).toHaveBeenCalledWith(1, 100, {
         statuses: 'AVAILABLE,OPENING,BOOKING,BEST_MARKET',
+        publicationEligible: 'true',
       });
       expect(selector).toHaveTextContent(requestedListing.code);
       expect(selector).toHaveTextContent(requestedListing.title);

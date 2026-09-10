@@ -178,7 +178,7 @@ export const SocialPublishing: React.FC = () => {
     }
 
     try {
-       const [listingResult, publicationResult, stalePublicationResult, projectResult] = await publicationDataRequest;
+       const [listingResult, projectResult, publicationResult, stalePublicationResult] = await publicationDataRequest;
       setListings(listingResult.data || []);
        setProjects(projectResult?.data || []);
       setPublications(publicationResult.data || []);
