@@ -44,3 +44,9 @@ Structured reconcile conflicts must preserve the machine-readable code on both t
 **Why:** A localized message is useful to people but insufficient for deterministic UI behavior, telemetry, and regression tests across the HTTP boundary.
 
 **How to apply:** Keep `TARGET_STATE_CONFLICT` stable from the route JSON through `apiClient` and the reconciliation error state; test the backend and frontend boundaries separately.
+
+Provider delivery and local target persistence are separate failure points. A Facebook post can be visible or provider-confirmed while the subsequent target update fails, leaving a retryable worker attempt and a later manual confirmation. The publication schema also permits multiple publications for the same listing and platform because uniqueness is scoped to a publication, not the listing.
+
+**Why:** A production audit found a Facebook target with a worker `WORKER_ERROR` caused by an untyped SQL parameter, followed by an operator-confirmed `PUBLISHED` state, while a later publication for the same listing had its own provider post ID.
+
+**How to apply:** Audit all publications and provider IDs per listing/platform, not only the latest target. Treat provider-confirmed posts and local state updates as separate evidence, and do not infer “one post” from a single current target row.
