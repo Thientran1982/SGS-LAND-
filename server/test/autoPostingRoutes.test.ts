@@ -64,6 +64,20 @@ async function getStatus(origin: string) {
   return { status: response.status, body: await response.json() };
 }
 
+async function getSettings(origin: string) {
+  const response = await fetch(`${origin}/api/auto-posting/settings`);
+  return { status: response.status, body: await response.json() };
+}
+
+async function putSettings(origin: string, body: unknown) {
+  const response = await fetch(`${origin}/api/auto-posting/settings`, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(body),
+  });
+  return { status: response.status, body: await response.json() };
+}
+
 describe('Marketing Facebook backfill route', () => {
   let server: Server;
   let origin: string;
@@ -145,6 +159,122 @@ describe('Marketing Facebook backfill route', () => {
       '2026-01-03',
     );
     expect(result.body.settings.tenantId).toBe('tenant-1');
+  });
+
+  it('keeps settings reads isolated between authenticated tenants', async () => {
+    const tenantOneSettings = {
+      tenantId: 'tenant-1',
+      enabled: true,
+      postsPerDay: 1,
+      timeWindows: [{ start: '18:30', end: '19:30' }],
+      recycleAfterDays: 7,
+      platforms: ['FACEBOOK_PAGE'],
+    };
+    const tenantTwoSettings = {
+      tenantId: 'tenant-2',
+      enabled: false,
+      postsPerDay: 1,
+      timeWindows: [{ start: '20:00', end: '21:00' }],
+      recycleAfterDays: 14,
+      platforms: ['FACEBOOK_PAGE'],
+    };
+    mocks.getAutoPostingSettings.mockImplementation(async (_pool, requestedTenant) => (
+      requestedTenant === 'tenant-1' ? tenantOneSettings : tenantTwoSettings
+    ));
+    const tenantTwoServer = await startServer({
+      id: 'manager-2',
+      tenantId: 'tenant-2',
+      role: 'MARKETING',
+    });
+
+    try {
+      const tenantOneResult = await getSettings(origin);
+      const tenantTwoResult = await getSettings(tenantTwoServer.origin);
+
+      expect(tenantOneResult.status).toBe(200);
+      expect(tenantOneResult.body).toEqual(tenantOneSettings);
+      expect(tenantOneResult.body).not.toEqual(tenantTwoSettings);
+      expect(tenantTwoResult.status).toBe(200);
+      expect(tenantTwoResult.body).toEqual(tenantTwoSettings);
+      expect(tenantTwoResult.body).not.toEqual(tenantOneSettings);
+      expect(mocks.getAutoPostingSettings).toHaveBeenNthCalledWith(
+        1,
+        expect.anything(),
+        'tenant-1',
+      );
+      expect(mocks.getAutoPostingSettings).toHaveBeenNthCalledWith(
+        2,
+        expect.anything(),
+        'tenant-2',
+      );
+    } finally {
+      await new Promise<void>(resolve => tenantTwoServer.server.close(() => resolve()));
+    }
+  });
+
+  it('keeps settings writes isolated between authenticated tenants', async () => {
+    const tenantOneSettings = {
+      tenantId: 'tenant-1',
+      enabled: true,
+      postsPerDay: 1,
+      timeWindows: [{ start: '18:30', end: '19:30' }],
+      recycleAfterDays: 7,
+      platforms: ['FACEBOOK_PAGE'],
+    };
+    const tenantTwoSettings = {
+      tenantId: 'tenant-2',
+      enabled: false,
+      postsPerDay: 1,
+      timeWindows: [{ start: '20:00', end: '21:00' }],
+      recycleAfterDays: 14,
+      platforms: ['FACEBOOK_PAGE'],
+    };
+    mocks.upsertAutoPostingSettings.mockImplementation(async (_pool, requestedTenant) => (
+      requestedTenant === 'tenant-1' ? tenantOneSettings : tenantTwoSettings
+    ));
+    const settingsBody = {
+      enabled: true,
+      postsPerDay: 1,
+      recycleAfterDays: 7,
+      timeWindows: [{ start: '18:30', end: '19:30' }],
+      platforms: ['FACEBOOK_PAGE'],
+    };
+    const tenantTwoServer = await startServer({
+      id: 'manager-2',
+      tenantId: 'tenant-2',
+      role: 'MARKETING',
+    });
+
+    try {
+      const tenantOneResult = await putSettings(origin, settingsBody);
+      const tenantTwoResult = await putSettings(tenantTwoServer.origin, {
+        ...settingsBody,
+        enabled: false,
+        recycleAfterDays: 14,
+        timeWindows: [{ start: '20:00', end: '21:00' }],
+      });
+
+      expect(tenantOneResult.status).toBe(200);
+      expect(tenantOneResult.body).toEqual(tenantOneSettings);
+      expect(tenantOneResult.body).not.toEqual(tenantTwoSettings);
+      expect(tenantTwoResult.status).toBe(200);
+      expect(tenantTwoResult.body).toEqual(tenantTwoSettings);
+      expect(tenantTwoResult.body).not.toEqual(tenantOneSettings);
+      expect(mocks.upsertAutoPostingSettings).toHaveBeenNthCalledWith(
+        1,
+        expect.anything(),
+        'tenant-1',
+        expect.objectContaining({ enabled: true, recycleAfterDays: 7 }),
+      );
+      expect(mocks.upsertAutoPostingSettings).toHaveBeenNthCalledWith(
+        2,
+        expect.anything(),
+        'tenant-2',
+        expect.objectContaining({ enabled: false, recycleAfterDays: 14 }),
+      );
+    } finally {
+      await new Promise<void>(resolve => tenantTwoServer.server.close(() => resolve()));
+    }
   });
 
   it('keeps daily runs and backfill history isolated between authenticated tenants', async () => {
