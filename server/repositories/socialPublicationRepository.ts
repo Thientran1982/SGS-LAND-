@@ -165,7 +165,10 @@ export async function listSocialPublications(
   limit = 100,
   source?: 'MANUAL' | 'AUTO',
   staleOnly = false,
+  offset = 0,
 ) {
+  const pageLimit = Math.min(Math.max(Math.floor(Number(limit) || 100), 1), 200);
+  const pageOffset = Math.max(Math.floor(Number(offset) || 0), 0);
   const result = await pool.query(
     `SELECT p.*,
             l.id AS listing_review_id,
@@ -184,9 +187,10 @@ export async function listSocialPublications(
           OR l.status IS NULL
           OR l.status NOT IN ('AVAILABLE', 'OPENING', 'BOOKING', 'BEST_MARKET')
         )
-      ORDER BY p.created_at DESC
-      LIMIT $2`,
-    [tenantId, Math.min(Math.max(limit, 1), 200), source || null, staleOnly],
+      ORDER BY p.created_at DESC, p.id DESC
+      LIMIT $2
+      OFFSET $5`,
+    [tenantId, pageLimit, source || null, staleOnly, pageOffset],
   );
   if (!result.rows.length) return [];
   const targets = await pool.query(
@@ -202,6 +206,31 @@ export async function listSocialPublications(
     byPublication.set(row.publication_id, list);
   }
   return result.rows.map(row => mapPublication(row, byPublication.get(row.id) || []));
+}
+
+export async function countSocialPublications(
+  pool: Pool,
+  tenantId: string,
+  source?: 'MANUAL' | 'AUTO',
+  staleOnly = false,
+) {
+  const result = await pool.query(
+    `SELECT COUNT(*)::int AS total
+       FROM social_publications p
+       LEFT JOIN listings l
+         ON l.id = p.listing_id
+        AND l.tenant_id = p.tenant_id
+      WHERE p.tenant_id = $1
+        AND ($2::text IS NULL OR p.source = $2)
+        AND (
+          $3::boolean = false
+          OR l.id IS NULL
+          OR l.status IS NULL
+          OR l.status NOT IN ('AVAILABLE', 'OPENING', 'BOOKING', 'BEST_MARKET')
+        )`,
+    [tenantId, source || null, staleOnly],
+  );
+  return Number(result.rows[0]?.total || 0);
 }
 
 export async function findSocialPublication(pool: Pool, tenantId: string, id: string) {

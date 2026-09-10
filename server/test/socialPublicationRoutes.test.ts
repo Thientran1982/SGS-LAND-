@@ -8,6 +8,7 @@ const mocks = vi.hoisted(() => ({
   createSocialPublication: vi.fn(),
   recordSocialPublicationEvent: vi.fn(),
   listSocialPublications: vi.fn(),
+  countSocialPublications: vi.fn(),
   getTenantPublicationCatalog: vi.fn(),
 }));
 
@@ -19,6 +20,7 @@ vi.mock('../repositories/socialPublicationRepository', () => ({
   createSocialPublication: mocks.createSocialPublication,
   recordSocialPublicationEvent: mocks.recordSocialPublicationEvent,
   listSocialPublications: mocks.listSocialPublications,
+  countSocialPublications: mocks.countSocialPublications,
   findSocialPublication: vi.fn(),
   activateSocialPublication: vi.fn(),
   cancelSocialPublication: vi.fn(),
@@ -122,6 +124,7 @@ describe('social publication preview and draft routes', () => {
     mocks.buildSocialProductSnapshot.mockResolvedValue(baseSnapshot());
     mocks.getTenantPublicationCatalog.mockResolvedValue([]);
     mocks.listSocialPublications.mockResolvedValue([]);
+    mocks.countSocialPublications.mockResolvedValue(0);
     mocks.createSocialPublication.mockImplementation(async (_pool, input) => ({
       id: 'publication-1',
       listingId: input.listingId,
@@ -228,6 +231,7 @@ describe('social publication preview and draft routes', () => {
         reason: 'LISTING_STATUS_NOT_ELIGIBLE',
       },
     }]);
+    mocks.countSocialPublications.mockResolvedValue(1);
 
     const result = await request(
       origin,
@@ -236,11 +240,60 @@ describe('social publication preview and draft routes', () => {
 
     expect(result.status).toBe(200);
     expect(result.body.data).toHaveLength(1);
+    expect(result.body).toMatchObject({
+      total: 1,
+      page: 1,
+      pageSize: 200,
+      totalPages: 1,
+      hasNext: false,
+    });
     expect(mocks.listSocialPublications).toHaveBeenCalledWith(
       expect.anything(),
       tenantId,
       200,
       'MANUAL',
+      true,
+    );
+  });
+
+  it('returns the requested stale-only page and total count', async () => {
+    mocks.listSocialPublications.mockResolvedValue([{
+      id: 'publication-stale-page-2',
+      listingId,
+      listingReview: {
+        eligible: false,
+        listingExists: false,
+        listingStatus: null,
+        reason: 'LISTING_NOT_FOUND',
+      },
+    }]);
+    mocks.countSocialPublications.mockResolvedValue(51);
+
+    const result = await request(
+      origin,
+      '/api/social-publications?staleOnly=true&page=2&pageSize=25',
+    );
+
+    expect(result.status).toBe(200);
+    expect(result.body).toMatchObject({
+      total: 51,
+      page: 2,
+      pageSize: 25,
+      totalPages: 3,
+      hasNext: true,
+    });
+    expect(mocks.listSocialPublications).toHaveBeenCalledWith(
+      expect.anything(),
+      tenantId,
+      25,
+      undefined,
+      true,
+      25,
+    );
+    expect(mocks.countSocialPublications).toHaveBeenCalledWith(
+      expect.anything(),
+      tenantId,
+      undefined,
       true,
     );
   });

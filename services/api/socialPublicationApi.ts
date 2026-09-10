@@ -86,6 +86,17 @@ export interface SocialPublicationQuery {
   source?: 'AUTO' | 'MANUAL';
   staleOnly?: boolean;
   limit?: number;
+  page?: number;
+  pageSize?: number;
+}
+
+export interface SocialPublicationListResponse {
+  data: SocialPublication[];
+  total: number;
+  page?: number;
+  pageSize?: number;
+  totalPages?: number;
+  hasNext?: boolean;
 }
 
 export const socialPublicationApi = {
@@ -93,7 +104,7 @@ export const socialPublicationApi = {
     api.get('/api/social-publications/catalog'),
   getPublications: (
     options: SocialPublicationQuery | 'AUTO' | 'MANUAL' = {},
-  ): Promise<{ data: SocialPublication[]; total: number }> => {
+  ): Promise<SocialPublicationListResponse> => {
     const query = typeof options === 'string' ? { source: options } : options;
     return api.get('/api/social-publications', query);
   },

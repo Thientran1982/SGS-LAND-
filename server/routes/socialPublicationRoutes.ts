@@ -5,6 +5,7 @@ import {
   applySocialTargetOperatorAction,
   activateSocialPublication,
   cancelSocialPublication,
+  countSocialPublications,
   createSocialPublication,
   findSocialPublication,
   listSocialPublications,
@@ -103,14 +104,38 @@ export function createSocialPublicationRouter(
       ? requestedSource as 'AUTO' | 'MANUAL'
       : undefined;
     const staleOnly = String(req.query.staleOnly || '').toLowerCase() === 'true';
-    const rows = await listSocialPublications(
+    const requestedPage = Number(req.query.page);
+    const page = Number.isFinite(requestedPage)
+      ? Math.min(Math.max(Math.floor(requestedPage), 1), 1_000_000)
+      : 1;
+    const requestedPageSize = Number(req.query.pageSize ?? req.query.limit);
+    const pageSize = Number.isFinite(requestedPageSize)
+      ? Math.min(Math.max(Math.floor(requestedPageSize), 1), 200)
+      : 100;
+    const offset = (page - 1) * pageSize;
+    const listArguments: Parameters<typeof listSocialPublications> = [
       pool,
       tenantId(req),
-      Number(req.query.limit) || 100,
+      pageSize,
       source,
       staleOnly,
-    );
-    res.json({ data: rows, total: rows.length });
+    ];
+    if (offset > 0) listArguments.push(offset);
+    const [rows, countedTotal] = await Promise.all([
+      listSocialPublications(...listArguments),
+      countSocialPublications(pool, tenantId(req), source, staleOnly),
+    ]);
+    // Keep a safe fallback for older test doubles and callers while the
+    // repository count remains authoritative in production.
+    const total = Number.isFinite(countedTotal) ? countedTotal : rows.length;
+    res.json({
+      data: rows,
+      total,
+      page,
+      pageSize,
+      totalPages: Math.ceil(total / pageSize),
+      hasNext: page * pageSize < total,
+    });
   });
 
   router.get('/api/social-publications/:id', authenticateToken, async (req, res) => {

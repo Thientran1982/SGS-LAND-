@@ -12,6 +12,7 @@ import {
 } from '../services/api/socialPublicationApi';
 
 const MAX_LISTING_IMAGES = 10;
+const STALE_PUBLICATION_PAGE_SIZE = 25;
 
 const statusLabel: Record<string, string> = {
   DRAFT: 'Bản nháp',
@@ -41,6 +42,10 @@ export const SocialPublishing: React.FC = () => {
   const [listings, setListings] = useState<SocialListingOption[]>([]);
   const [publications, setPublications] = useState<SocialPublication[]>([]);
   const [stalePublications, setStalePublications] = useState<SocialPublication[]>([]);
+  const [staleTotal, setStaleTotal] = useState(0);
+  const [stalePage, setStalePage] = useState(1);
+  const [staleHasNext, setStaleHasNext] = useState(false);
+  const [staleLoading, setStaleLoading] = useState(false);
   const [listingId, setListingId] = useState('');
   const [platforms, setPlatforms] = useState<string[]>([]);
   const [preview, setPreview] = useState<{ platform: string; title: string; text: string; imageUrls: string[]; link: string | null }[]>([]);
@@ -94,12 +99,27 @@ export const SocialPublishing: React.FC = () => {
         socialPublicationApi.getCatalog(),
         listingApi.getListings(1, 100, { statuses: 'AVAILABLE,OPENING,BOOKING,BEST_MARKET' }),
         socialPublicationApi.getPublications({ limit: 200 }),
-        socialPublicationApi.getPublications({ staleOnly: true, limit: 200 }),
+        socialPublicationApi.getPublications({
+          staleOnly: true,
+          page: 1,
+          pageSize: STALE_PUBLICATION_PAGE_SIZE,
+        }),
       ]);
       setCatalog(catalogResult.data || []);
       setListings(listingResult.data || []);
       setPublications(publicationResult.data || []);
-      setStalePublications(stalePublicationResult.data || []);
+      const staleData = stalePublicationResult.data || [];
+      const staleCount = Number.isFinite(stalePublicationResult.total)
+        ? stalePublicationResult.total
+        : staleData.length;
+      const currentStalePage = stalePublicationResult.page || 1;
+      const currentStalePageSize = stalePublicationResult.pageSize || STALE_PUBLICATION_PAGE_SIZE;
+      setStalePublications(staleData);
+      setStaleTotal(staleCount);
+      setStalePage(currentStalePage);
+      setStaleHasNext(stalePublicationResult.hasNext ?? (
+        currentStalePage * currentStalePageSize < staleCount
+      ));
        if (requestedListingId && (listingResult.data || []).some((item: SocialListingOption) => String(item.id) === requestedListingId)) {
          setListingId(requestedListingId);
       }
@@ -111,6 +131,31 @@ export const SocialPublishing: React.FC = () => {
   }, []);
 
   useEffect(() => { void load(); }, [load]);
+
+  const loadMoreStalePublications = async () => {
+    if (staleLoading || !staleHasNext) return;
+    setStaleLoading(true);
+    try {
+      const nextPage = stalePage + 1;
+      const result = await socialPublicationApi.getPublications({
+        staleOnly: true,
+        page: nextPage,
+        pageSize: STALE_PUBLICATION_PAGE_SIZE,
+      });
+      const nextRows = result.data || [];
+      const nextTotal = Number.isFinite(result.total) ? result.total : staleTotal;
+      const currentPage = result.page || nextPage;
+      const currentPageSize = result.pageSize || STALE_PUBLICATION_PAGE_SIZE;
+      setStalePublications(current => [...current, ...nextRows]);
+      setStaleTotal(nextTotal);
+      setStalePage(currentPage);
+      setStaleHasNext(result.hasNext ?? (currentPage * currentPageSize < nextTotal));
+    } catch (error: any) {
+      setMessage({ kind: 'error', text: error?.message || 'Không tải thêm được báo cáo liên kết cũ' });
+    } finally {
+      setStaleLoading(false);
+    }
+  };
 
   const togglePlatform = (platform: string) => {
     setPlatforms(current => current.includes(platform)
@@ -738,9 +783,14 @@ export const SocialPublishing: React.FC = () => {
               </div>
             </div>
             <span className="shrink-0 rounded-full bg-red-100 px-3 py-1 text-xs font-bold text-red-800">
-              {stalePublications.length} cần rà soát
+              {staleTotal} cần rà soát
             </span>
           </div>
+          {!loading && staleTotal > 0 && (
+            <p className="mt-3 text-xs font-medium text-red-800" aria-live="polite">
+              Đang xem {stalePublications.length} / {staleTotal} liên kết cần rà soát
+            </p>
+          )}
           {loading ? (
             <p className="mt-4 text-sm text-[var(--text-tertiary)]">Đang tải báo cáo…</p>
           ) : !stalePublications.length ? (
@@ -802,6 +852,23 @@ export const SocialPublishing: React.FC = () => {
                   </article>
                 );
               })}
+              <div className="flex flex-col items-start justify-between gap-3 border-t border-red-200 pt-4 sm:flex-row sm:items-center">
+                <p className="text-xs text-[var(--text-secondary)]" aria-live="polite">
+                  {staleHasNext
+                    ? `Đã tải ${stalePublications.length} / ${staleTotal}. Còn kết quả chưa hiển thị.`
+                    : `Đã tải toàn bộ ${staleTotal} kết quả stale-only.`}
+                </p>
+                {staleHasNext && (
+                  <button
+                    type="button"
+                    onClick={() => void loadMoreStalePublications()}
+                    disabled={staleLoading}
+                    className="rounded-lg border border-red-200 bg-[var(--bg-surface)] px-3 py-2 text-xs font-semibold text-red-700 disabled:opacity-50"
+                  >
+                    {staleLoading ? 'Đang tải thêm…' : 'Tải thêm liên kết cũ'}
+                  </button>
+                )}
+              </div>
             </div>
           )}
         </section>
