@@ -215,6 +215,7 @@ import m191 from './191_repair_enterprise_config_rls';
 import m192 from './192_social_publication_project_source';
 import m193 from './193_marketing_facebook_daily_runs';
 import m194 from './194_marketing_facebook_backfills';
+import m195 from './195_agent_skill_runtime_bindings';
 dotenv.config();
 
 export interface Migration {
@@ -425,6 +426,7 @@ export const MIGRATION_REGISTRY: Record<string, Migration> = {
   '192_social_publication_project_source.ts': m192,
   '193_marketing_facebook_daily_runs.ts': m193,
   '194_marketing_facebook_backfills.ts': m194,
+  '195_agent_skill_runtime_bindings.ts': m195,
 };
 
 /**

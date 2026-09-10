@@ -49,6 +49,22 @@ type Skill = {
   install_count: number;
   rating: number;
 };
+type RuntimeSkillBinding = {
+  binding_id: string;
+  skill_id: string;
+  skill_key: string;
+  title: string;
+  version: number;
+  visibility: string;
+  source_tenant_id: string;
+  activated_at: string;
+};
+type RuntimeAgent = {
+  id: string;
+  name: string;
+  display_name: string;
+  active_skills: RuntimeSkillBinding[];
+};
 type Room = {
   id: string;
   name: string;
@@ -94,6 +110,9 @@ export default function AgentTasks() {
   const [automations, setAutomations] = useState<Automation[]>([]);
   const [servers, setServers] = useState<McpServer[]>([]);
   const [skills, setSkills] = useState<Skill[]>([]);
+  const [runtimeAgents, setRuntimeAgents] = useState<RuntimeAgent[]>([]);
+  const [skillActionId, setSkillActionId] = useState<string | null>(null);
+  const [skillMessage, setSkillMessage] = useState<string | null>(null);
   const [rooms, setRooms] = useState<Room[]>([]);
   const [voiceCalls, setVoiceCalls] = useState<VoiceCall[]>([]);
   const [teachRecs, setTeachRecs] = useState<TeachRecording[]>([]);
@@ -108,11 +127,12 @@ export default function AgentTasks() {
   const load = useCallback(async () => {
     setLoading(true);
     try {
-      const [t, a, m, sk, rm, vc, tr] = await Promise.all([
+      const [t, a, m, sk, skRuntime, rm, vc, tr] = await Promise.all([
         api.get<{ tasks: Task[]; statusCounts: Record<string, number> }>('/api/admin/agent-tasks?limit=50'),
         api.get<{ automations: Automation[] }>('/api/admin/automations'),
         api.get<{ servers: McpServer[] }>('/api/admin/mcp-servers'),
         api.get<{ skills: Skill[] }>('/api/admin/agent-skills').catch(() => ({ skills: [] })),
+        api.get<{ agents: RuntimeAgent[] }>('/api/admin/agent-skills/runtime').catch(() => ({ agents: [] })),
         api.get<{ rooms: Room[] }>('/api/admin/chat-rooms').catch(() => ({ rooms: [] })),
         api.get<{ calls: VoiceCall[] }>('/api/admin/agent-voice').catch(() => ({ calls: [] })),
         api.get<{ recordings: TeachRecording[] }>('/api/admin/agent-teach').catch(() => ({ recordings: [] })),
@@ -122,6 +142,7 @@ export default function AgentTasks() {
       setAutomations(a.automations || []);
       setServers(m.servers || []);
       setSkills(sk.skills || []);
+      setRuntimeAgents(skRuntime.agents || []);
       setRooms(rm.rooms || []);
       setVoiceCalls(vc.calls || []);
       setTeachRecs(tr.recordings || []);
@@ -131,6 +152,21 @@ export default function AgentTasks() {
       setLoading(false);
     }
   }, []);
+
+  const changeSkillRuntime = async (skill: Skill, agentId: string, active: boolean) => {
+    if (!agentId) return;
+    setSkillActionId(skill.id);
+    setSkillMessage(null);
+    try {
+      await api.post(`/api/admin/agent-skills/${skill.id}/${active ? 'activate' : 'deactivate'}`, { agent_id: agentId });
+      setSkillMessage(`${skill.title} đã ${active ? 'được activate' : 'được pause'} cho agent.`);
+      await load();
+    } catch (error: any) {
+      setSkillMessage(error?.message || 'Không thể thay đổi trạng thái runtime của skill.');
+    } finally {
+      setSkillActionId(null);
+    }
+  };
 
   useEffect(() => { void load(); }, [load]);
 
@@ -408,6 +444,13 @@ export default function AgentTasks() {
       )}
       {tab === 'skills' && (
         <div className="rounded-xl border border-slate-200 bg-white shadow-sm">
+          <div className="border-b border-slate-100 bg-slate-50 px-4 py-3 text-sm text-slate-600">
+            <div className="font-semibold text-slate-800">Catalog và runtime là hai bước riêng</div>
+            <div className="mt-1">
+              Install chỉ ghi nhận skill trong catalog. Manager phải activate skill cho một agent cụ thể thì prompt mới được dùng trong runtime.
+            </div>
+            {skillMessage && <div className="mt-2 font-medium text-indigo-700">{skillMessage}</div>}
+          </div>
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
@@ -417,6 +460,7 @@ export default function AgentTasks() {
                   <th className="px-4 py-2">Phiên bản</th>
                   <th className="px-4 py-2">Cài đặt</th>
                   <th className="px-4 py-2">Trạng thái</th>
+                  <th className="px-4 py-2">Runtime agent</th>
                 </tr>
               </thead>
               <tbody>
@@ -434,10 +478,48 @@ export default function AgentTasks() {
                         {s.published ? 'Đã xuất bản' : 'Nháp'}
                       </span>
                     </td>
+                    <td className="px-4 py-2.5">
+                      {runtimeAgents.length === 0 ? (
+                        <span className="text-xs text-slate-400">Chưa có agent active</span>
+                      ) : (
+                        <div className="flex min-w-[260px] items-center gap-2">
+                          <select
+                            className="rounded-lg border border-slate-200 bg-white px-2 py-1.5 text-xs text-slate-700"
+                            defaultValue={runtimeAgents[0].id}
+                            aria-label={`Chọn agent cho ${s.title}`}
+                            onChange={(event) => {
+                              const selected = runtimeAgents.find((agent) => agent.id === event.target.value);
+                              const active = selected?.active_skills.some((binding) => binding.skill_id === s.id) || false;
+                              const button = event.currentTarget.parentElement?.querySelector('button');
+                              if (button) button.textContent = active ? 'Pause' : 'Activate';
+                              button?.setAttribute('data-active', String(active));
+                            }}
+                          >
+                            {runtimeAgents.map((agent) => (
+                              <option key={agent.id} value={agent.id}>{agent.display_name || agent.name}</option>
+                            ))}
+                          </select>
+                          <button
+                            type="button"
+                            className="rounded-lg border border-indigo-200 px-2 py-1.5 text-xs font-medium text-indigo-700 hover:bg-indigo-50 disabled:opacity-50"
+                            disabled={skillActionId === s.id}
+                            onClick={(event) => {
+                              const select = event.currentTarget.parentElement?.querySelector('select') as HTMLSelectElement | null;
+                              const agentId = select?.value || '';
+                              const agent = runtimeAgents.find((item) => item.id === agentId);
+                              const active = agent?.active_skills.some((binding) => binding.skill_id === s.id) || false;
+                              void changeSkillRuntime(s, agentId, !active);
+                            }}
+                          >
+                            {runtimeAgents[0].active_skills.some((binding) => binding.skill_id === s.id) ? 'Pause' : 'Activate'}
+                          </button>
+                        </div>
+                      )}
+                    </td>
                   </tr>
                 ))}
                 {skills.length === 0 && (
-                  <tr><td colSpan={5} className="px-4 py-8 text-center text-slate-400">Chưa có skill nào. 13 role mặc định sẽ tự sinh khi lần đầu mở API.</td></tr>
+                  <tr><td colSpan={6} className="px-4 py-8 text-center text-slate-400">Chưa có skill nào. 13 role mặc định sẽ tự sinh khi lần đầu mở API.</td></tr>
                 )}
               </tbody>
             </table>

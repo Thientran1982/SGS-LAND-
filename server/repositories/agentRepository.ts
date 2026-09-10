@@ -53,6 +53,18 @@ export interface AgentSkill {
   prompt_fragment: string;
 }
 
+export interface ActiveAgentCatalogSkill {
+  id: string;
+  skillId: string;
+  skillKey: string;
+  title: string;
+  version: number;
+  promptTemplate: string;
+  visibility: string;
+  sourceTenantId: string;
+  activatedAt: string;
+}
+
 export interface AgentKnowledgeFilter {
   domains?: string[];
   [k: string]: any;
@@ -268,6 +280,52 @@ class AgentRepository extends BaseRepository {
       // Invalidate cache by name
       agentCache.delete(`${tenantId}:${agent.name}`);
       return agent;
+    });
+  }
+
+  /**
+   * Load only explicitly activated catalog skills for an agent.
+   * Installation/counting in the catalog never changes runtime behavior by itself.
+   */
+  async getActiveCatalogSkills(tenantId: string, agentId: string): Promise<ActiveAgentCatalogSkill[]> {
+    return this.withTenant(tenantId, async (client) => {
+      const result = await client.query(
+        `SELECT b.id,
+                s.id AS skill_id,
+                s.skill_key,
+                s.title,
+                s.version,
+                s.prompt_template,
+                s.visibility,
+                s.tenant_id AS source_tenant_id,
+                b.activated_at
+           FROM agent_skill_bindings b
+           JOIN ai_agents a
+             ON a.id = b.agent_id
+            AND a.tenant_id = b.tenant_id
+           JOIN agent_skills s
+             ON s.id = b.skill_id
+          WHERE b.tenant_id = $1
+            AND b.agent_id = $2
+            AND b.status = 'ACTIVE'
+            AND (
+              s.tenant_id = $1
+              OR (s.visibility = 'PUBLIC' AND s.published = TRUE)
+            )
+          ORDER BY b.activated_at ASC, s.skill_key ASC`,
+        [tenantId, agentId],
+      );
+      return result.rows.map((row: any) => ({
+        id: row.id,
+        skillId: row.skill_id,
+        skillKey: row.skill_key,
+        title: row.title,
+        version: Number(row.version),
+        promptTemplate: row.prompt_template,
+        visibility: row.visibility,
+        sourceTenantId: row.source_tenant_id,
+        activatedAt: row.activated_at,
+      }));
     });
   }
 

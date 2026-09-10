@@ -32,6 +32,7 @@ import {
 import { GENAI_CONFIG, SAFE_MODEL_FALLBACK, DEPRECATED_MODEL_PREFIXES, ensureSafeModel, getProviderForModel, getModelCost, isProviderConfigured, MODEL_REGISTRY, TASK_MODELS, taskProfile, CROSS_PROVIDER_FALLBACK } from './ai/modelPolicy';
 import { generateWithPolicy } from './ai/providers';
 import { getAgentRoleForIntent, selectSecondaryIntents } from './ai/agentOrchestrationRegistry';
+import { appendActivatedCatalogSkills } from './ai/agentSkillRuntime';
 // -----------------------------------------------------------------------------
 // 1. CONFIGURATION & SCHEMA DEFINITIONS
 // -----------------------------------------------------------------------------
@@ -533,6 +534,26 @@ async function getValuationRentalInstruction(tenantId: string): Promise<string> 
 async function getFollowupInstruction(tenantId: string): Promise<string> {
     return getPromptTemplate(tenantId, 'FOLLOWUP_SYSTEM', DEFAULT_FOLLOWUP_SYSTEM);
 }
+
+async function loadActivatedCatalogSkills(
+  tenantId: string,
+  agentName: string | undefined,
+  basePrompt: string,
+): Promise<string> {
+  if (!agentName) return basePrompt;
+  try {
+    const agent = await agentRepository.getAgentByName(tenantId, agentName);
+    if (!agent) return basePrompt;
+    const skills = await agentRepository.getActiveCatalogSkills(tenantId, agent.id);
+    if (skills.length === 0) return basePrompt;
+
+    return appendActivatedCatalogSkills(basePrompt, skills);
+  } catch (error) {
+    logger.warn(`[AI] Could not load activated catalog skills for ${agentName}:`, error);
+    return basePrompt;
+  }
+}
+
 async function getPromptTemplate(tenantId: string, templateKey: string, fallback: string): Promise<string> {
     const cacheKey = `prompt:${tenantId}:${templateKey}`;
     const cached = getCachedToolData<string>(cacheKey);
@@ -558,16 +579,22 @@ async function getPromptTemplate(tenantId: string, templateKey: string, fallback
         if (dbAgentId) {
           const dbPrompt = await agentRepository.getActivePrompt(tenantId, dbAgentId);
           if (dbPrompt?.systemInstruction) {
-            setCachedToolData(cacheKey, dbPrompt.systemInstruction);
-            return dbPrompt.systemInstruction;
+             const runtimeContent = await loadActivatedCatalogSkills(
+               tenantId,
+               dbAgentId,
+               dbPrompt.systemInstruction,
+             );
+             setCachedToolData(cacheKey, runtimeContent);
+             return runtimeContent;
           }
         }
         // Fallback: aiGovernance prompt templates
         const templates = await aiGovernanceRepository.getPromptTemplates(tenantId);
         const match = templates?.find((t: any) => t.name === templateKey && t.isActive !== false);
-        const content = match?.content || fallback;
-        setCachedToolData(cacheKey, content);
-        return content;
+         const content = match?.content || fallback;
+         const runtimeContent = await loadActivatedCatalogSkills(tenantId, dbAgentId, content);
+         setCachedToolData(cacheKey, runtimeContent);
+         return runtimeContent;
     } catch {
         setCachedToolData(cacheKey, fallback);
         return fallback;

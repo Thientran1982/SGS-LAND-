@@ -4,11 +4,13 @@
  * GET /api/admin/agent-skills          — danh sach skills cua tenant
  * POST /api/admin/agent-skills         — tao skill moi tu prompt
  * PATCH /api/admin/agent-skills/:id    — publish/unpublish + visibility
- * POST /api/admin/agent-skills/:id/install — cai skill cho chinh minh (tang counter)
+ * POST /api/admin/agent-skills/:id/install — ghi nhận cài skill vào catalog
+ * POST /api/admin/agent-skills/:id/activate — manager activate skill cho một agent
+ * POST /api/admin/agent-skills/:id/deactivate — manager pause skill runtime
  */
 import { Router, type Request, type Response } from 'express';
 import { randomUUID } from 'node:crypto';
-import { pool } from '../db';
+import { pool, withTenantContext } from '../db';
 import { logger } from '../middleware/logger';
 import { apiRateLimit } from '../middleware/rateLimiter';
 
@@ -134,6 +136,147 @@ agentSkillsRouter.post('/:id/install', apiRateLimit, async (req: Request, res: R
   } catch (err: any) {
     logger.warn('[Skills] install failed: ' + (err?.message || err));
     res.status(500).json({ error: 'Cai skill that bai' });
+  }
+});
+
+agentSkillsRouter.get('/runtime', apiRateLimit, async (req: Request, res: Response) => {
+  try {
+    const tenantId = authenticatedTenant(req, res);
+    if (!tenantId) return;
+    const result = await withTenantContext(tenantId, (client) => client.query(
+      `SELECT a.id,
+              a.name,
+              a.display_name,
+              COALESCE(
+                jsonb_agg(
+                  jsonb_build_object(
+                    'binding_id', b.id,
+                    'skill_id', s.id,
+                    'skill_key', s.skill_key,
+                    'title', s.title,
+                    'version', s.version,
+                    'visibility', s.visibility,
+                    'source_tenant_id', s.tenant_id,
+                    'activated_at', b.activated_at
+                  )
+                  ORDER BY b.activated_at ASC, s.skill_key ASC
+                ) FILTER (WHERE b.id IS NOT NULL AND s.id IS NOT NULL),
+                '[]'::jsonb
+              ) AS active_skills
+         FROM ai_agents a
+         LEFT JOIN agent_skill_bindings b
+           ON b.agent_id = a.id
+          AND b.tenant_id = $1
+          AND b.status = 'ACTIVE'
+         LEFT JOIN agent_skills s
+           ON s.id = b.skill_id
+          AND (
+            s.tenant_id = $1
+            OR (s.visibility = 'PUBLIC' AND s.published = TRUE)
+          )
+        WHERE a.tenant_id = $1
+          AND a.active = TRUE
+        GROUP BY a.id, a.name, a.display_name
+        ORDER BY a.name ASC`,
+      [tenantId],
+    ));
+    res.json({ agents: result.rows });
+  } catch (err: any) {
+    logger.warn('[Skills] runtime list failed: ' + (err?.message || err));
+    res.status(500).json({ error: 'Khong tai duoc skill dang kich hoat' });
+  }
+});
+
+async function clearRuntimePromptCache(tenantId: string): Promise<void> {
+  try {
+    const ai = await import('../ai');
+    ai.clearPromptCache(tenantId);
+  } catch (err) {
+    logger.warn('[Skills] prompt cache clear failed: ' + (err as any)?.message);
+  }
+}
+
+agentSkillsRouter.post('/:id/activate', apiRateLimit, async (req: Request, res: Response) => {
+  try {
+    const user = (req as any).user;
+    const tenantId = requireManager(req, res);
+    if (!tenantId) return;
+
+    const agentId = String(req.body?.agent_id || '').trim();
+    if (!agentId) {
+      return res.status(400).json({ error: 'agent_id la bat buoc de activate skill' });
+    }
+
+    const skill = await pool.query(
+      `SELECT id, skill_key, title, version, visibility, published, tenant_id
+         FROM agent_skills
+        WHERE id = $1
+          AND (
+            tenant_id = $2
+            OR (visibility = 'PUBLIC' AND published = TRUE)
+          )
+        LIMIT 1`,
+      [req.params.id, tenantId],
+    );
+    if (!skill.rows[0]) return res.status(404).json({ error: 'Skill khong ton tai hoac chua duoc publish' });
+
+    const agent = await pool.query(
+      `SELECT id, name, display_name
+         FROM ai_agents
+        WHERE id = $1
+          AND tenant_id = $2
+          AND active = TRUE
+        LIMIT 1`,
+      [agentId, tenantId],
+    );
+    if (!agent.rows[0]) return res.status(404).json({ error: 'Agent khong ton tai trong tenant hien tai' });
+
+    const binding = await withTenantContext(tenantId, (client) => client.query(
+      `INSERT INTO agent_skill_bindings
+         (tenant_id, agent_id, skill_id, status, activated_by, activated_at, updated_at)
+       VALUES ($1, $2, $3, 'ACTIVE', $4, NOW(), NOW())
+       ON CONFLICT (tenant_id, agent_id, skill_id)
+       DO UPDATE SET
+         status = 'ACTIVE',
+         activated_by = EXCLUDED.activated_by,
+         activated_at = NOW(),
+         updated_at = NOW()
+       RETURNING id, tenant_id, agent_id, skill_id, status, activated_at`,
+      [tenantId, agent.rows[0].id, skill.rows[0].id, user?.id || null],
+    ));
+    await clearRuntimePromptCache(tenantId);
+    res.json({ binding: binding.rows[0], agent: agent.rows[0], skill: skill.rows[0] });
+  } catch (err: any) {
+    logger.warn('[Skills] activate failed: ' + (err?.message || err));
+    res.status(500).json({ error: 'Khong the activate skill' });
+  }
+});
+
+agentSkillsRouter.post('/:id/deactivate', apiRateLimit, async (req: Request, res: Response) => {
+  try {
+    const tenantId = requireManager(req, res);
+    if (!tenantId) return;
+    const agentId = String(req.body?.agent_id || '').trim();
+    if (!agentId) {
+      return res.status(400).json({ error: 'agent_id la bat buoc de deactivate skill' });
+    }
+
+    const result = await withTenantContext(tenantId, (client) => client.query(
+      `UPDATE agent_skill_bindings
+          SET status = 'PAUSED', updated_at = NOW()
+        WHERE tenant_id = $1
+          AND agent_id = $2
+          AND skill_id = $3
+          AND status = 'ACTIVE'
+      RETURNING id, tenant_id, agent_id, skill_id, status, updated_at`,
+      [tenantId, agentId, req.params.id],
+    ));
+    if (result.rowCount === 0) return res.status(404).json({ error: 'Skill chua duoc activate cho agent nay' });
+    await clearRuntimePromptCache(tenantId);
+    res.json({ binding: result.rows[0] });
+  } catch (err: any) {
+    logger.warn('[Skills] deactivate failed: ' + (err?.message || err));
+    res.status(500).json({ error: 'Khong the deactivate skill' });
   }
 });
 

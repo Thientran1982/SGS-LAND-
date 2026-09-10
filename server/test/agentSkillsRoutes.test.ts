@@ -4,10 +4,15 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 const query = vi.hoisted(() => vi.fn());
 
-vi.mock('../db', () => ({ pool: { query } }));
+vi.mock('../db', () => ({
+  pool: { query },
+  withTenantContext: async (_tenantId: string, callback: (client: { query: typeof query }) => unknown) =>
+    callback({ query }),
+}));
 vi.mock('../middleware/rateLimiter', () => ({
   apiRateLimit: (_req: unknown, _res: unknown, next: () => void) => next(),
 }));
+vi.mock('../ai', () => ({ clearPromptCache: vi.fn() }));
 
 import { agentSkillsRouter } from '../routes/agentSkillsRoutes';
 
@@ -105,5 +110,70 @@ describe('agent skills route authorization and visibility', () => {
     expect(await response.json()).toEqual({
       installed: { id: 'public-id', skill_key: 'shared-skill', install_count: 2 },
     });
+  });
+
+  it('requires a manager to explicitly activate a catalog skill for an agent', async () => {
+    query
+      .mockResolvedValueOnce({
+        rows: [{
+          id: 'public-id',
+          skill_key: 'shared-skill',
+          title: 'Shared',
+          version: 2,
+          visibility: 'PUBLIC',
+          published: true,
+          tenant_id: 'tenant-public',
+        }],
+        rowCount: 1,
+      })
+      .mockResolvedValueOnce({
+        rows: [{ id: 'agent-id', name: 'MARKETING_AGENT', display_name: 'Marketing' }],
+        rowCount: 1,
+      })
+      .mockResolvedValueOnce({
+        rows: [{
+          id: 'binding-id',
+          tenant_id: 'tenant-1',
+          agent_id: 'agent-id',
+          skill_id: 'public-id',
+          status: 'ACTIVE',
+        }],
+        rowCount: 1,
+      });
+
+    const response = await fetch(`${origin}/api/admin/agent-skills/public-id/activate`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ agent_id: 'agent-id' }),
+    });
+
+    expect(response.status).toBe(200);
+    expect((await response.json()).binding.status).toBe('ACTIVE');
+    expect(query).toHaveBeenCalledTimes(3);
+  });
+
+  it('lists only runtime bindings for agents in the current tenant', async () => {
+    query.mockResolvedValueOnce({
+      rows: [{
+        id: 'agent-id',
+        name: 'MARKETING_AGENT',
+        display_name: 'Marketing',
+        active_skills: [{ skill_id: 'skill-id', skill_key: 'shared-skill' }],
+      }],
+      rowCount: 1,
+    });
+
+    const response = await fetch(`${origin}/api/admin/agent-skills/runtime`);
+
+    expect(response.status).toBe(200);
+    expect(await response.json()).toEqual({
+      agents: [{
+        id: 'agent-id',
+        name: 'MARKETING_AGENT',
+        display_name: 'Marketing',
+        active_skills: [{ skill_id: 'skill-id', skill_key: 'shared-skill' }],
+      }],
+    });
+    expect(query).toHaveBeenCalledWith(expect.stringContaining('FROM ai_agents a'), ['tenant-1']);
   });
 });
