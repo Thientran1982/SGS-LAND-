@@ -14,6 +14,10 @@ const mocks = vi.hoisted(() => ({
   listSocialPublications: vi.fn(),
   countSocialPublications: vi.fn(),
   getTenantPublicationCatalog: vi.fn(),
+  findSocialPublication: vi.fn(),
+  activateSocialPublication: vi.fn(),
+  markSocialTargetsPending: vi.fn(),
+  getTenantSocialPlatformCapability: vi.fn(),
 }));
 
 vi.mock('../repositories/listingRepository', () => ({
@@ -26,10 +30,10 @@ vi.mock('../repositories/socialPublicationRepository', () => ({
   recordSocialPublicationEvent: mocks.recordSocialPublicationEvent,
   listSocialPublications: mocks.listSocialPublications,
   countSocialPublications: mocks.countSocialPublications,
-  findSocialPublication: vi.fn(),
-  activateSocialPublication: vi.fn(),
+  findSocialPublication: mocks.findSocialPublication,
+  activateSocialPublication: mocks.activateSocialPublication,
   cancelSocialPublication: vi.fn(),
-  markSocialTargetsPending: vi.fn(),
+  markSocialTargetsPending: mocks.markSocialTargetsPending,
   applySocialTargetOperatorAction: vi.fn(),
 }));
 
@@ -63,7 +67,7 @@ vi.mock('../services/socialPublicationService', () => ({
 }));
 
 vi.mock('../social-publishing/registry', () => ({
-  getTenantSocialPlatformCapability: vi.fn(),
+  getTenantSocialPlatformCapability: mocks.getTenantSocialPlatformCapability,
 }));
 
 import { createSocialPublicationRouter } from '../routes/socialPublicationRoutes';
@@ -150,6 +154,15 @@ describe('social publication preview and draft routes', () => {
     mocks.getTenantPublicationCatalog.mockResolvedValue([]);
     mocks.listSocialPublications.mockResolvedValue([]);
     mocks.countSocialPublications.mockResolvedValue(0);
+    mocks.findSocialPublication.mockResolvedValue(null);
+    mocks.activateSocialPublication.mockResolvedValue(null);
+    mocks.markSocialTargetsPending.mockResolvedValue(undefined);
+    mocks.getTenantSocialPlatformCapability.mockResolvedValue({
+      platform: 'FACEBOOK_PAGE',
+      status: 'READY',
+      canPublish: true,
+      reason: 'ready',
+    });
     mocks.createSocialPublication.mockImplementation(async (_pool, input) => ({
       id: 'publication-1',
       listingId: input.listingId,
@@ -192,6 +205,52 @@ describe('social publication preview and draft routes', () => {
         imageUrls: [imageUrl],
       }),
     ]);
+  });
+
+  it('rejects malformed publication IDs before querying the database', async () => {
+    const result = await request(origin, '/api/social-publications/not-a-uuid/activate', {});
+
+    expect(result.status).toBe(400);
+    expect(result.body).toMatchObject({
+      code: 'INVALID_PUBLICATION_ID',
+      error: 'Publication ID không hợp lệ',
+    });
+    expect(mocks.findSocialPublication).not.toHaveBeenCalled();
+  });
+
+  it('returns per-platform readiness reasons instead of a generic activation error', async () => {
+    mocks.findSocialPublication.mockResolvedValue({
+      id: '33333333-3333-4333-8333-333333333333',
+      targets: [
+        { id: 'target-facebook', platform: 'FACEBOOK_PAGE', status: 'NOT_READY', accountId: 'default' },
+      ],
+    });
+    mocks.getTenantSocialPlatformCapability.mockResolvedValue({
+      platform: 'FACEBOOK_PAGE',
+      status: 'NOT_READY',
+      canPublish: false,
+      retryable: true,
+      reason: 'Facebook Page chưa xác minh quyền đăng.',
+    });
+
+    const result = await request(
+      origin,
+      '/api/social-publications/33333333-3333-4333-8333-333333333333/activate',
+      {},
+    );
+
+    expect(result.status).toBe(409);
+    expect(result.body).toMatchObject({
+      code: 'PUBLISHERS_NOT_READY',
+      targets: [{
+        platform: 'FACEBOOK_PAGE',
+        status: 'NOT_READY',
+        canPublish: false,
+        retryable: true,
+        reason: 'Facebook Page chưa xác minh quyền đăng.',
+      }],
+    });
+    expect(mocks.activateSocialPublication).not.toHaveBeenCalled();
   });
 
   it('saves one DRAFT with one target per selected platform and records the event', async () => {
