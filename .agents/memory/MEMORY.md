@@ -82,3 +82,4 @@
 - [Social publication tenant types](social-publication-tenant-types.md) — publication tenant IDs are varchar while core listing tenants are UUIDs; cast at joins
 - [CRM React runtime isolation](crm-react-runtime-isolation.md) — separate workspace app installs can trigger hook failures in Vite lazy routes; pin CRM React resolution to the root runtime
 - [Marketing Facebook scheduler](marketing-facebook-scheduler.md) — tenant/day ledger prevents duplicates; external 18:30 trigger is required when the app may sleep
+- [Auto-posting repository fixtures](auto-posting-repository-fixtures.md) — migration-backed isolated tests need the project/publication columns used by phase-three indexes
