@@ -216,4 +216,32 @@ describe('social publication preview and draft routes', () => {
     expect(result.body.error).toContain('ZALO_BROADCAST');
     expect(mocks.createSocialPublication).not.toHaveBeenCalled();
   });
+
+  it('lists stale publication links with the tenant-scoped filter', async () => {
+    mocks.listSocialPublications.mockResolvedValue([{
+      id: 'publication-stale',
+      listingId,
+      listingReview: {
+        eligible: false,
+        listingExists: true,
+        listingStatus: 'SOLD',
+        reason: 'LISTING_STATUS_NOT_ELIGIBLE',
+      },
+    }]);
+
+    const result = await request(
+      origin,
+      '/api/social-publications?source=MANUAL&staleOnly=true&limit=200',
+    );
+
+    expect(result.status).toBe(200);
+    expect(result.body.data).toHaveLength(1);
+    expect(mocks.listSocialPublications).toHaveBeenCalledWith(
+      expect.anything(),
+      tenantId,
+      200,
+      'MANUAL',
+      true,
+    );
+  });
 });

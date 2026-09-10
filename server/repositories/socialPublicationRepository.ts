@@ -1,5 +1,12 @@
 import { Pool, PoolClient } from 'pg';
 
+export const SOCIAL_PUBLICATION_ELIGIBLE_LISTING_STATUSES = [
+  'AVAILABLE',
+  'OPENING',
+  'BOOKING',
+  'BEST_MARKET',
+] as const;
+
 export interface PublicationCreateInput {
   tenantId: string;
   listingId: string;
@@ -66,6 +73,25 @@ function mapEvent(row: any) {
   };
 }
 
+function mapListingReview(row: any) {
+  const listingExists = row.listing_review_id !== null && row.listing_review_id !== undefined;
+  const listingStatus = row.listing_review_status ? String(row.listing_review_status).toUpperCase() : null;
+  const eligible = listingExists
+    && Boolean(listingStatus)
+    && SOCIAL_PUBLICATION_ELIGIBLE_LISTING_STATUSES.includes(
+      listingStatus as typeof SOCIAL_PUBLICATION_ELIGIBLE_LISTING_STATUSES[number],
+    );
+
+  return {
+    eligible,
+    listingExists,
+    listingStatus,
+    listingCode: row.listing_review_code ?? null,
+    listingTitle: row.listing_review_title ?? null,
+    reason: eligible ? null : listingExists ? 'LISTING_STATUS_NOT_ELIGIBLE' : 'LISTING_NOT_FOUND',
+  };
+}
+
 function mapPublication(row: any, targets: any[] = [], events: any[] = []) {
   return {
     id: row.id,
@@ -86,6 +112,9 @@ function mapPublication(row: any, targets: any[] = [], events: any[] = []) {
     publishedAt: row.published_at,
     targets,
     events,
+    ...(Object.prototype.hasOwnProperty.call(row, 'listing_review_id')
+      ? { listingReview: mapListingReview(row) }
+      : {}),
   };
 }
 
@@ -135,14 +164,29 @@ export async function listSocialPublications(
   tenantId: string,
   limit = 100,
   source?: 'MANUAL' | 'AUTO',
+  staleOnly = false,
 ) {
   const result = await pool.query(
-    `SELECT * FROM social_publications
-      WHERE tenant_id = $1
-        AND ($3::text IS NULL OR source = $3)
-      ORDER BY created_at DESC
+    `SELECT p.*,
+            l.id AS listing_review_id,
+            l.status AS listing_review_status,
+            l.code AS listing_review_code,
+            l.title AS listing_review_title
+       FROM social_publications p
+       LEFT JOIN listings l
+         ON l.id = p.listing_id
+        AND l.tenant_id = p.tenant_id
+      WHERE p.tenant_id = $1
+        AND ($3::text IS NULL OR p.source = $3)
+        AND (
+          $4::boolean = false
+          OR l.id IS NULL
+          OR l.status IS NULL
+          OR l.status NOT IN ('AVAILABLE', 'OPENING', 'BOOKING', 'BEST_MARKET')
+        )
+      ORDER BY p.created_at DESC
       LIMIT $2`,
-    [tenantId, Math.min(Math.max(limit, 1), 200), source || null],
+    [tenantId, Math.min(Math.max(limit, 1), 200), source || null, staleOnly],
   );
   if (!result.rows.length) return [];
   const targets = await pool.query(
@@ -162,7 +206,16 @@ export async function listSocialPublications(
 
 export async function findSocialPublication(pool: Pool, tenantId: string, id: string) {
   const publication = await pool.query(
-    `SELECT * FROM social_publications WHERE id = $1 AND tenant_id = $2`,
+    `SELECT p.*,
+            l.id AS listing_review_id,
+            l.status AS listing_review_status,
+            l.code AS listing_review_code,
+            l.title AS listing_review_title
+       FROM social_publications p
+       LEFT JOIN listings l
+         ON l.id = p.listing_id
+        AND l.tenant_id = p.tenant_id
+      WHERE p.id = $1 AND p.tenant_id = $2`,
     [id, tenantId],
   );
   if (!publication.rowCount) return null;

@@ -122,4 +122,60 @@ describe('SocialPublishing listing selector', () => {
 
     expect(screen.queryByRole('alert')).not.toBeInTheDocument();
   });
+
+  it('shows tenant-scoped stale publication links and opens the related publication', async () => {
+    const staleUrl = 'https://sgsland.example/p/SGS-OLD';
+    const stalePublication = {
+      id: 'publication-stale',
+      listingId: 'listing-sold',
+      status: 'PUBLISHED',
+      publishMode: 'NOW' as const,
+      scheduledAt: null,
+      contentSnapshot: { title: 'Căn hộ đã bán', publicUrl: staleUrl },
+      assetSnapshot: [],
+      createdAt: '2026-09-10T00:00:00.000Z',
+      targets: [{
+        id: 'target-stale',
+        platform: 'FACEBOOK_PAGE',
+        status: 'PUBLISHED',
+        providerPostUrl: 'https://facebook.example/old-post',
+      }],
+      listingReview: {
+        eligible: false,
+        listingExists: true,
+        listingStatus: 'SOLD',
+        listingCode: 'SGS-OLD',
+        listingTitle: 'Căn hộ đã bán',
+        reason: 'LISTING_STATUS_NOT_ELIGIBLE' as const,
+      },
+    };
+    vi.spyOn(listingApi, 'getListings').mockResolvedValue({
+      data: [],
+      total: 0,
+      page: 1,
+      pageSize: 100,
+      totalPages: 0,
+    });
+    vi.spyOn(socialPublicationApi, 'getCatalog').mockResolvedValue({ data: [] });
+    const getPublications = vi.spyOn(socialPublicationApi, 'getPublications')
+      .mockImplementation(async options => typeof options !== 'string' && options?.staleOnly
+        ? { data: [stalePublication], total: 1 }
+        : { data: [], total: 0 });
+    vi.spyOn(socialPublicationApi, 'getPublication').mockResolvedValue(stalePublication);
+
+    const user = userEvent.setup();
+    render(<SocialPublishing />);
+
+    expect(await screen.findByText('Căn hộ đã bán')).toBeVisible();
+    expect(screen.getByText('Listing hiện ở trạng thái SOLD, không còn đủ điều kiện xuất bản công khai.')).toBeVisible();
+    expect(screen.getByRole('link', { name: staleUrl })).toHaveAttribute('href', staleUrl);
+    expect(screen.getByText(/Link provider đang lưu:/)).toBeVisible();
+    expect(getPublications).toHaveBeenCalledWith({ staleOnly: true, limit: 200 });
+
+    await user.click(screen.getByRole('button', { name: 'Mở publication' }));
+    await waitFor(() => {
+      expect(socialPublicationApi.getPublication).toHaveBeenCalledWith('publication-stale');
+      expect(screen.getByRole('button', { name: 'Ẩn publication' })).toBeVisible();
+    });
+  });
 });

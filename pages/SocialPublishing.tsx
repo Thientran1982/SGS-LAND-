@@ -40,6 +40,7 @@ export const SocialPublishing: React.FC = () => {
   const [catalog, setCatalog] = useState<SocialCapability[]>([]);
   const [listings, setListings] = useState<SocialListingOption[]>([]);
   const [publications, setPublications] = useState<SocialPublication[]>([]);
+  const [stalePublications, setStalePublications] = useState<SocialPublication[]>([]);
   const [listingId, setListingId] = useState('');
   const [platforms, setPlatforms] = useState<string[]>([]);
   const [preview, setPreview] = useState<{ platform: string; title: string; text: string; imageUrls: string[]; link: string | null }[]>([]);
@@ -89,14 +90,16 @@ export const SocialPublishing: React.FC = () => {
   const load = useCallback(async () => {
     setLoading(true);
     try {
-      const [catalogResult, listingResult, publicationResult] = await Promise.all([
+      const [catalogResult, listingResult, publicationResult, stalePublicationResult] = await Promise.all([
         socialPublicationApi.getCatalog(),
         listingApi.getListings(1, 100, { statuses: 'AVAILABLE,OPENING,BOOKING,BEST_MARKET' }),
-        socialPublicationApi.getPublications(),
+        socialPublicationApi.getPublications({ limit: 200 }),
+        socialPublicationApi.getPublications({ staleOnly: true, limit: 200 }),
       ]);
       setCatalog(catalogResult.data || []);
       setListings(listingResult.data || []);
       setPublications(publicationResult.data || []);
+      setStalePublications(stalePublicationResult.data || []);
        if (requestedListingId && (listingResult.data || []).some((item: SocialListingOption) => String(item.id) === requestedListingId)) {
          setListingId(requestedListingId);
       }
@@ -428,6 +431,20 @@ export const SocialPublishing: React.FC = () => {
     </div>
   );
 
+  const getPublicationLink = (publication: SocialPublication): string | null => (
+    typeof publication.contentSnapshot?.publicUrl === 'string'
+      ? publication.contentSnapshot.publicUrl
+      : null
+  );
+
+  const getListingReviewMessage = (publication: SocialPublication): string => {
+    if (publication.listingReview?.reason === 'LISTING_NOT_FOUND') {
+      return 'Listing không còn tồn tại trong tenant hiện tại.';
+    }
+    const status = publication.listingReview?.listingStatus || 'không xác định';
+    return `Listing hiện ở trạng thái ${status}, không còn đủ điều kiện xuất bản công khai.`;
+  };
+
   return (
     <div className="min-h-full bg-[var(--bg-app)] p-4 md:p-8">
       <div className="mx-auto max-w-7xl space-y-6">
@@ -702,6 +719,91 @@ export const SocialPublishing: React.FC = () => {
               )}
             </div>
           </div>
+        </section>
+
+        <section
+          aria-labelledby="stale-publication-links-title"
+          className="rounded-3xl border border-red-200 bg-red-50/60 p-5 shadow-sm"
+        >
+          <div className="flex flex-col justify-between gap-3 sm:flex-row sm:items-start">
+            <div>
+              <div className="flex items-center gap-3">
+                <div className="rounded-xl bg-red-100 p-2 text-red-700"><AlertTriangle size={20} /></div>
+                <div>
+                  <h2 id="stale-publication-links-title" className="font-bold text-[var(--text-primary)]">Rà soát liên kết publication cũ</h2>
+                  <p className="mt-1 text-xs leading-5 text-[var(--text-secondary)]">
+                    Các publication dưới đây đang chứa listingId không còn đủ điều kiện xuất bản. Báo cáo chỉ đọc: không tự xóa, sửa hoặc đăng lại nội dung.
+                  </p>
+                </div>
+              </div>
+            </div>
+            <span className="shrink-0 rounded-full bg-red-100 px-3 py-1 text-xs font-bold text-red-800">
+              {stalePublications.length} cần rà soát
+            </span>
+          </div>
+          {loading ? (
+            <p className="mt-4 text-sm text-[var(--text-tertiary)]">Đang tải báo cáo…</p>
+          ) : !stalePublications.length ? (
+            <p className="mt-4 rounded-2xl border border-dashed border-emerald-200 bg-emerald-50 p-4 text-sm text-emerald-800">
+              Không phát hiện liên kết publication nào cần rà soát trong tenant này.
+            </p>
+          ) : (
+            <div className="mt-4 space-y-3">
+              {stalePublications.map(item => {
+                const publicationLink = getPublicationLink(item);
+                const providerLinks = item.targets
+                  .map(target => target.providerPostUrl)
+                  .filter((url): url is string => Boolean(url));
+                return (
+                  <article key={item.id} className="rounded-2xl border border-red-200 bg-[var(--bg-surface)] p-4">
+                    <div className="flex flex-col justify-between gap-3 md:flex-row md:items-start">
+                      <div className="min-w-0">
+                        <div className="flex flex-wrap items-center gap-2">
+                          <p className="font-semibold text-[var(--text-primary)]">
+                            {String(item.contentSnapshot?.title || item.listingId)}
+                          </p>
+                          <span className="rounded-full bg-red-100 px-2 py-0.5 text-[10px] font-bold text-red-800">CẦN RÀ SOÁT</span>
+                        </div>
+                        <p className="mt-1 text-xs text-[var(--text-tertiary)]">
+                          Listing ID: <span className="font-mono">{item.listingId}</span> · Tạo {formatDate(item.createdAt)}
+                        </p>
+                        <p className="mt-2 text-xs font-semibold text-red-700">{getListingReviewMessage(item)}</p>
+                        <div className="mt-2 space-y-1 text-xs text-[var(--text-secondary)]">
+                          <p className="font-semibold">Liên kết cần rà soát:</p>
+                          {publicationLink ? (
+                            <a
+                              href={publicationLink}
+                              target="_blank"
+                              rel="noreferrer"
+                              className="block break-all text-sgs-primary underline"
+                            >
+                              {publicationLink}
+                            </a>
+                          ) : (
+                            <p className="text-[var(--text-tertiary)]">Snapshot không lưu public URL; dùng listingId để tìm và cập nhật liên kết.</p>
+                          )}
+                          {!!providerLinks.length && (
+                            <p className="break-all text-[var(--text-tertiary)]">
+                              Link provider đang lưu: {providerLinks.join(' · ')}
+                            </p>
+                          )}
+                        </div>
+                      </div>
+                      <button
+                        type="button"
+                        disabled={detailLoading === item.id}
+                        onClick={() => void toggleDetails(item.id)}
+                        className="shrink-0 rounded-lg border border-red-200 px-3 py-2 text-xs font-semibold text-red-700 disabled:opacity-50"
+                      >
+                        {detailLoading === item.id ? 'Đang tải…' : expandedPublicationId === item.id ? 'Ẩn publication' : 'Mở publication'}
+                      </button>
+                    </div>
+                    {expandedPublicationId === item.id && publicationDetails[item.id] && renderTargetDetails(publicationDetails[item.id])}
+                  </article>
+                );
+              })}
+            </div>
+          )}
         </section>
 
         <section className="rounded-3xl border border-amber-200 bg-amber-50/50 p-5 shadow-sm">

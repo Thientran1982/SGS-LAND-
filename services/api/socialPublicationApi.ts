@@ -57,6 +57,15 @@ export interface SocialPublicationEvent {
   createdAt: string;
 }
 
+export interface SocialPublicationListingReview {
+  eligible: boolean;
+  listingExists: boolean;
+  listingStatus: string | null;
+  listingCode?: string | null;
+  listingTitle?: string | null;
+  reason: 'LISTING_NOT_FOUND' | 'LISTING_STATUS_NOT_ELIGIBLE' | null;
+}
+
 export interface SocialPublication {
   id: string;
   listingId: string;
@@ -70,13 +79,24 @@ export interface SocialPublication {
   createdAt: string;
   targets: SocialTarget[];
   events?: SocialPublicationEvent[];
+  listingReview?: SocialPublicationListingReview;
+}
+
+export interface SocialPublicationQuery {
+  source?: 'AUTO' | 'MANUAL';
+  staleOnly?: boolean;
+  limit?: number;
 }
 
 export const socialPublicationApi = {
   getCatalog: (): Promise<{ data: SocialCapability[] }> =>
     api.get('/api/social-publications/catalog'),
-  getPublications: (source?: 'AUTO' | 'MANUAL'): Promise<{ data: SocialPublication[]; total: number }> =>
-    api.get(`/api/social-publications${source ? `?source=${source}` : ''}`),
+  getPublications: (
+    options: SocialPublicationQuery | 'AUTO' | 'MANUAL' = {},
+  ): Promise<{ data: SocialPublication[]; total: number }> => {
+    const query = typeof options === 'string' ? { source: options } : options;
+    return api.get('/api/social-publications', query);
+  },
   getPublication: (id: string): Promise<SocialPublication> =>
     api.get(`/api/social-publications/${id}`),
   preview: (listingId: string, platforms: string[], imageUrls: string[] = [], caption?: string) =>

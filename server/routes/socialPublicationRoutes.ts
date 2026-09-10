@@ -102,7 +102,14 @@ export function createSocialPublicationRouter(
     const source = requestedSource === 'AUTO' || requestedSource === 'MANUAL'
       ? requestedSource as 'AUTO' | 'MANUAL'
       : undefined;
-    const rows = await listSocialPublications(pool, tenantId(req), Number(req.query.limit) || 100, source);
+    const staleOnly = String(req.query.staleOnly || '').toLowerCase() === 'true';
+    const rows = await listSocialPublications(
+      pool,
+      tenantId(req),
+      Number(req.query.limit) || 100,
+      source,
+      staleOnly,
+    );
     res.json({ data: rows, total: rows.length });
   });
 
