@@ -289,6 +289,60 @@ describe('SocialPublishing listing selector', () => {
     expect(screen.getByText('manager-1')).toBeVisible();
   });
 
+  it('does not render backfill history returned for another tenant', async () => {
+    mockInitialRequests(eligibleListings);
+    vi.mocked(socialPublicationApi.getMarketingFacebookStatus).mockResolvedValue({
+      settings: {
+        tenantId: 'tenant-1',
+        enabled: true,
+        postsPerDay: 1,
+        timeWindows: [{ start: '18:30', end: '23:59' }],
+        platforms: ['FACEBOOK_PAGE'],
+      },
+      todayRun: null,
+      lastRun: null,
+      backfillRequests: [
+        {
+          id: 'backfill-own',
+          tenantId: 'tenant-1',
+          logicalDay: '2026-09-08',
+          reason: 'Yêu cầu của tenant hiện tại',
+          requestedBy: 'manager-1',
+          status: 'SUCCESS',
+          result: {},
+          publicationId: null,
+          errorCode: null,
+          errorMessage: null,
+          requestedAt: '2026-09-09T01:00:00.000Z',
+          startedAt: null,
+          finishedAt: null,
+        },
+        {
+          id: 'backfill-foreign',
+          tenantId: 'tenant-2',
+          logicalDay: '2026-09-07',
+          reason: 'Dữ liệu không được phép hiển thị',
+          requestedBy: 'manager-2',
+          status: 'FAILED',
+          result: {},
+          publicationId: null,
+          errorCode: null,
+          errorMessage: null,
+          requestedAt: '2026-09-08T01:00:00.000Z',
+          startedAt: null,
+          finishedAt: null,
+        },
+      ],
+      warning: null,
+    });
+
+    render(<SocialPublishing />);
+
+    expect(await screen.findByText('Yêu cầu của tenant hiện tại')).toBeVisible();
+    expect(screen.queryByText('Dữ liệu không được phép hiển thị')).not.toBeInTheDocument();
+    expect(screen.getByText('1 yêu cầu')).toBeVisible();
+  });
+
   it('creates a backfill request and refreshes the history', async () => {
     mockInitialRequests(eligibleListings);
     const getStatus = vi.mocked(socialPublicationApi.getMarketingFacebookStatus);

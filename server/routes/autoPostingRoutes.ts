@@ -18,13 +18,19 @@ const MANAGER_ROLES = new Set(['SUPER_ADMIN', 'ADMIN', 'TEAM_LEAD', 'MARKETING']
 const AUTO_PLATFORMS = new Set(['FACEBOOK_PAGE']);
 
 function tenantId(req: Request): string {
-  return String((req as any).user?.tenantId || (req as any).tenantId || '');
+  return typeof (req as any).user?.tenantId === 'string'
+    ? (req as any).user.tenantId.trim()
+    : '';
 }
 
 function requireManager(req: Request, res: Response): boolean {
   const user = (req as any).user;
   if (!user || !MANAGER_ROLES.has(user.role)) {
     res.status(403).json({ error: 'Cần quyền quản lý marketing hoặc quản trị viên' });
+    return false;
+  }
+  if (!tenantId(req)) {
+    res.status(403).json({ error: 'Không xác định được tenant của người dùng' });
     return false;
   }
   return true;

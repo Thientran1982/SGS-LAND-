@@ -30,13 +30,14 @@ vi.mock('../services/socialPublicationService', () => ({
 
 import { createAutoPostingRouter } from '../routes/autoPostingRoutes';
 
-async function startServer() {
+async function startServer(user = { id: 'manager-1', tenantId: 'tenant-1', role: 'MARKETING' }) {
   const app = express();
   app.use(express.json());
   app.use(createAutoPostingRouter(
     {} as any,
     ((req: any, _res: any, next: any) => {
-      req.user = { id: 'manager-1', tenantId: 'tenant-1', role: 'MARKETING' };
+      req.user = user;
+      req.tenantId = 'forged-tenant';
       next();
     }) as any,
     'cron-secret',
@@ -55,6 +56,11 @@ async function request(origin: string, body: unknown) {
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(body),
   });
+  return { status: response.status, body: await response.json() };
+}
+
+async function getStatus(origin: string) {
+  const response = await fetch(`${origin}/api/auto-posting/status`);
   return { status: response.status, body: await response.json() };
 }
 
@@ -98,6 +104,47 @@ describe('Marketing Facebook backfill route', () => {
       'QStash outage during deployment',
       'manager-1',
     );
+  });
+
+  it('rejects users outside the manager roles before creating a backfill request', async () => {
+    const deniedServer = await startServer({
+      id: 'agent-1',
+      tenantId: 'tenant-1',
+      role: 'AGENT',
+    });
+
+    try {
+      const result = await request(deniedServer.origin, {
+        logicalDay: '2026-01-02',
+        reason: 'Agent cần kiểm tra',
+      });
+
+      expect(result.status).toBe(403);
+      expect(result.body.error).toContain('quyền quản lý');
+      expect(mocks.runAutoPostingBackfill).not.toHaveBeenCalled();
+    } finally {
+      await new Promise<void>(resolve => deniedServer.server.close(() => resolve()));
+    }
+  });
+
+  it('uses the authenticated user tenant for status reads instead of request tenant metadata', async () => {
+    mocks.getMarketingFacebookDailyStatus.mockResolvedValue({
+      settings: { tenantId: 'tenant-1' },
+      todayRun: null,
+      lastRun: null,
+      backfillRequests: [],
+      warning: null,
+    });
+
+    const result = await getStatus(origin);
+
+    expect(result.status).toBe(200);
+    expect(mocks.getMarketingFacebookDailyStatus).toHaveBeenCalledWith(
+      expect.anything(),
+      'tenant-1',
+      '2026-01-03',
+    );
+    expect(result.body.settings.tenantId).toBe('tenant-1');
   });
 
   it('rejects future dates and short reasons before creating a backfill request', async () => {

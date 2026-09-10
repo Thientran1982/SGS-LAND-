@@ -129,6 +129,7 @@ export interface MarketingFacebookDailyRun {
 
 export interface MarketingFacebookBackfillRequest {
   id: string;
+  tenantId?: string;
   logicalDay: string;
   reason: string;
   requestedBy: string;
@@ -144,6 +145,7 @@ export interface MarketingFacebookBackfillRequest {
 
 export interface MarketingFacebookStatus {
   settings: {
+    tenantId?: string;
     enabled: boolean;
     postsPerDay: number;
     timeWindows: Array<{ start: string; end: string }>;

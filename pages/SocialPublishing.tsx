@@ -144,6 +144,13 @@ export const SocialPublishing: React.FC = () => {
     providerPostId: string;
     providerPostUrl: string;
   } | null>(null);
+  const visibleBackfillRequests = useMemo(() => {
+    const requests = marketingFacebookStatus?.backfillRequests || [];
+    const currentTenantId = marketingFacebookStatus?.settings.tenantId;
+    return currentTenantId
+      ? requests.filter(request => request.tenantId === currentTenantId)
+      : requests;
+  }, [marketingFacebookStatus]);
 
   const selectedListing = useMemo(
     () => listings.find(item => String(item.id) === listingId),
@@ -1583,7 +1590,7 @@ export const SocialPublishing: React.FC = () => {
                 </p>
               </div>
               <span className="rounded-full bg-indigo-100 px-2.5 py-1 text-xs font-semibold text-indigo-800">
-                {marketingFacebookStatus?.backfillRequests?.length || 0} yêu cầu
+                {visibleBackfillRequests.length} yêu cầu
               </span>
             </div>
              <form
@@ -1633,7 +1640,7 @@ export const SocialPublishing: React.FC = () => {
                  {backfillFeedback.text}
                </div>
              )}
-            {!marketingFacebookStatus?.backfillRequests?.length ? (
+            {!visibleBackfillRequests.length ? (
               <p className="rounded-xl border border-dashed border-indigo-200 px-3 py-4 text-sm text-[var(--text-tertiary)]">
                 Chưa có yêu cầu chạy bù nào.
               </p>
@@ -1650,7 +1657,7 @@ export const SocialPublishing: React.FC = () => {
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-indigo-50">
-                    {marketingFacebookStatus.backfillRequests.map(request => {
+                    {visibleBackfillRequests.map(request => {
                       const publicationId = request.publicationId
                         || (typeof request.result?.publicationId === 'string' ? request.result.publicationId : null);
                       const resultReason = typeof request.result?.reason === 'string' ? request.result.reason : null;
