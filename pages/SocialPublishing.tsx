@@ -54,6 +54,7 @@ export const SocialPublishing: React.FC = () => {
   const [publicationDetails, setPublicationDetails] = useState<Record<string, SocialPublication>>({});
   const [detailLoading, setDetailLoading] = useState<string | null>(null);
   const [focusedPlatform] = useState(() => normalizeRequestedPlatform(new URLSearchParams(window.location.search).get('platform')));
+  const [requestedListingId] = useState(() => new URLSearchParams(window.location.search).get('listingId'));
   const [reconcileForm, setReconcileForm] = useState<{
     publicationId: string;
     targetId: string;
@@ -96,9 +97,8 @@ export const SocialPublishing: React.FC = () => {
       setCatalog(catalogResult.data || []);
       setListings(listingResult.data || []);
       setPublications(publicationResult.data || []);
-      const queryListingId = new URLSearchParams(window.location.search).get('listingId');
-      if (queryListingId && (listingResult.data || []).some((item: SocialListingOption) => String(item.id) === queryListingId)) {
-        setListingId(queryListingId);
+       if (requestedListingId && (listingResult.data || []).some((item: SocialListingOption) => String(item.id) === requestedListingId)) {
+         setListingId(requestedListingId);
       }
     } catch (error: any) {
       setMessage({ kind: 'error', text: error?.message || 'Không tải được dữ liệu đăng đa nền tảng' });
@@ -533,6 +533,11 @@ export const SocialPublishing: React.FC = () => {
                     Chưa có listing đủ điều kiện xuất bản. Kiểm tra listing có trạng thái Sẵn sàng/Đang mở bán/Đang giữ chỗ và thử “Kiểm tra lại kết nối”.
                   </p>
                 )}
+                 {!loading && requestedListingId && !listings.some(item => String(item.id) === requestedListingId) && (
+                   <p role="alert" className="mt-2 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-xs leading-5 text-red-800">
+                     Liên kết đang trỏ tới listingId “{requestedListingId}”, nhưng listing này không còn trong danh sách đủ điều kiện xuất bản. Kiểm tra lại trạng thái listing hoặc chọn một listing hợp lệ thủ công.
+                   </p>
+                 )}
                 {selectedListing && (
                   <div className="mt-3 flex items-center gap-3 rounded-xl border border-[var(--glass-border)] bg-[var(--bg-app)] p-3">
                     {selectedListing.images?.[0] ? (

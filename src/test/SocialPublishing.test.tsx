@@ -99,6 +99,9 @@ describe('SocialPublishing listing selector', () => {
     const selector = await screen.findByRole('combobox', {
       name: 'Chọn sản phẩm đủ điều kiện xuất bản',
     });
+    expect(await screen.findByRole('alert')).toHaveTextContent(
+      'listingId “listing-missing”, nhưng listing này không còn trong danh sách đủ điều kiện xuất bản',
+    );
     await waitFor(() => {
       expect(selector).toHaveTextContent('Chọn listing đủ điều kiện xuất bản');
     });
@@ -106,5 +109,17 @@ describe('SocialPublishing listing selector', () => {
     expect(screen.queryByText('Căn hộ đang mở bán')).not.toBeInTheDocument();
     expect(screen.queryByText('Căn hộ đang giữ chỗ')).not.toBeInTheDocument();
     expect(screen.queryByText('Căn hộ nổi bật')).not.toBeInTheDocument();
+  });
+
+  it('does not show a stale-link warning when the URL has no listingId', async () => {
+    mockInitialRequests(eligibleListings);
+
+    render(<SocialPublishing />);
+
+    await screen.findByRole('combobox', {
+      name: 'Chọn sản phẩm đủ điều kiện xuất bản',
+    });
+
+    expect(screen.queryByRole('alert')).not.toBeInTheDocument();
   });
 });
