@@ -10,6 +10,7 @@ import {
   SocialTarget,
   isSocialCapabilityReady,
 } from '../services/api/socialPublicationApi';
+import { useTranslation } from '../services/i18n';
 
 const MAX_LISTING_IMAGES = 10;
 const STALE_PUBLICATION_PAGE_SIZE = 25;
@@ -37,7 +38,24 @@ const normalizeRequestedPlatform = (value: string | null): string | null => {
   return ['INSTAGRAM', 'TIKTOK', 'LINKEDIN_PAGE'].includes(normalized) ? normalized : null;
 };
 
+function localizedSocialError(
+  error: any,
+  t: (key: string, params?: Record<string, string | number>) => string,
+  fallbackKey: string,
+): string {
+  const raw = typeof error?.message === 'string' ? error.message.trim() : '';
+  const normalized = raw.toLowerCase();
+  const isInfrastructureError =
+    !raw ||
+    normalized.includes('operator does not exist') ||
+    normalized.includes('uuid = character varying') ||
+    normalized.includes('internal server error') ||
+    normalized.includes('request failed: 500');
+  return isInfrastructureError ? t(fallbackKey) : raw;
+}
+
 export const SocialPublishing: React.FC = () => {
+  const { t } = useTranslation();
   const [catalog, setCatalog] = useState<SocialCapability[]>([]);
   const [listings, setListings] = useState<SocialListingOption[]>([]);
   const [publications, setPublications] = useState<SocialPublication[]>([]);
@@ -146,7 +164,7 @@ export const SocialPublishing: React.FC = () => {
          setListingId(requestedListingId);
       }
     } catch (error: any) {
-      setMessage({ kind: 'error', text: error?.message || 'Không tải được dữ liệu đăng đa nền tảng' });
+      setMessage({ kind: 'error', text: localizedSocialError(error, t, 'social.error_load') });
     } finally {
       setLoading(false);
     }
@@ -184,7 +202,7 @@ export const SocialPublishing: React.FC = () => {
         ? Boolean(result.nextCursor) && currentPage * currentPageSize < reportTotal
         : result.hasNext ?? (currentPage * currentPageSize < reportTotal));
     } catch (error: any) {
-      setMessage({ kind: 'error', text: error?.message || 'Không tải thêm được báo cáo liên kết cũ' });
+      setMessage({ kind: 'error', text: localizedSocialError(error, t, 'common.error_loading') });
     } finally {
       setStaleLoading(false);
     }
@@ -214,7 +232,7 @@ export const SocialPublishing: React.FC = () => {
         text: 'Đã tải lại báo cáo stale. Các publication đã hiển thị vẫn được giữ nguyên để tiếp tục rà soát.',
       });
     } catch (error: any) {
-      setMessage({ kind: 'error', text: error?.message || 'Không tải lại được báo cáo liên kết cũ' });
+      setMessage({ kind: 'error', text: localizedSocialError(error, t, 'common.error_loading') });
     } finally {
       setStaleLoading(false);
     }
@@ -295,7 +313,7 @@ export const SocialPublishing: React.FC = () => {
         setCaption(result.previews[0].text);
       }
     } catch (error: any) {
-      setMessage({ kind: 'error', text: error?.message || 'Không tạo được preview' });
+      setMessage({ kind: 'error', text: localizedSocialError(error, t, 'social.error_preview') });
     } finally {
       setBusy(false);
     }
@@ -335,7 +353,7 @@ export const SocialPublishing: React.FC = () => {
       setMessage({ kind: 'ok', text: 'Đã lưu snapshot bất biến vào bản nháp. Chưa có nền tảng nào được báo là đã đăng.' });
       await load();
     } catch (error: any) {
-      setMessage({ kind: 'error', text: error?.message || 'Không lưu được publication' });
+      setMessage({ kind: 'error', text: localizedSocialError(error, t, 'social.error_save') });
     } finally {
       setBusy(false);
     }

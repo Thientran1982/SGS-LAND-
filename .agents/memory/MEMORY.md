@@ -75,3 +75,4 @@
 - [Production dependency import checks](production-dependency-import-checks.md) — bundled backend imports may keep timers alive; exit explicitly after a successful dependency-only import
 - [Listing multi-status filters](listing-multi-status-filters.md) — comma-separated listing statuses must use the status_in repository filter, not the singular status query
 - [Stale report pagination](stale-report-pagination.md) — use a keyset cursor for operator load-more so concurrent publication changes cannot shift the reviewed window
+- [Enterprise config RLS typing](enterprise-config-rls.md) — compare UUID tenant columns to the text session setting explicitly when repairing stale live policies

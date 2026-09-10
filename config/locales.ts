@@ -105,6 +105,10 @@ export const DICTIONARY = {
         "mobile.features": "Tất cả tính năng • Thông báo tức thì • Hoạt động ngoại tuyến",
 
         "error.unexpected": "Đã xảy ra lỗi không mong muốn.",
+        "social.error_load": "Không thể tải dữ liệu đăng đa nền tảng. Vui lòng thử lại.",
+        "social.error_preview": "Không thể tạo bản xem trước. Vui lòng thử lại.",
+        "social.error_save": "Không thể lưu publication draft. Vui lòng thử lại.",
+        "social.error_provider": "Không thể kiểm tra kết nối nền tảng lúc này. Vui lòng thử lại.",
 
         "role.SUPER_ADMIN": "Quản Trị Viên Cấp Cao",
         "role.ADMIN": "Quản Trị Viên",
@@ -2518,6 +2522,10 @@ export const DICTIONARY = {
         "common.retry": "Retry",
         "common.no_value": "—",
         "common.password_placeholder": "••••••••",
+         "social.error_load": "Unable to load cross-platform publishing data. Please try again.",
+         "social.error_preview": "Unable to create the preview. Please try again.",
+         "social.error_save": "Unable to save the publication draft. Please try again.",
+         "social.error_provider": "Unable to check the platform connection right now. Please try again.",
         "listing.bedrooms_short": "BR",
         "news.confirm_delete_title": "Delete article",
         "news.confirm_delete_message": "Are you sure you want to delete this article? This cannot be undone.",
