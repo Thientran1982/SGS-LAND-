@@ -750,7 +750,7 @@ export const SocialPublishing: React.FC = () => {
                 <div className="space-y-2">
                   {catalog.length === 0 && !loading && (
                     <p className="rounded-xl border border-amber-200 bg-amber-50 px-3 py-3 text-xs leading-5 text-amber-800">
-                      Chưa tải được danh sách nền tảng. Bấm “Kiểm tra lại kết nối” để tải lại.
+                      {t('social.platforms_empty')}
                     </p>
                   )}
                   {catalog.map(item => {

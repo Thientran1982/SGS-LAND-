@@ -109,6 +109,7 @@ export const DICTIONARY = {
         "social.error_preview": "Không thể tạo bản xem trước. Vui lòng thử lại.",
         "social.error_save": "Không thể lưu publication draft. Vui lòng thử lại.",
         "social.error_provider": "Không thể kiểm tra kết nối nền tảng lúc này. Vui lòng thử lại.",
+        "social.platforms_empty": "Chưa tải được danh sách nền tảng. Bấm “Kiểm tra lại kết nối” để tải lại.",
 
         "role.SUPER_ADMIN": "Quản Trị Viên Cấp Cao",
         "role.ADMIN": "Quản Trị Viên",
@@ -2526,6 +2527,7 @@ export const DICTIONARY = {
          "social.error_preview": "Unable to create the preview. Please try again.",
          "social.error_save": "Unable to save the publication draft. Please try again.",
          "social.error_provider": "Unable to check the platform connection right now. Please try again.",
+         "social.platforms_empty": "The platform list could not be loaded. Click “Check connections” to try again.",
         "listing.bedrooms_short": "BR",
         "news.confirm_delete_title": "Delete article",
         "news.confirm_delete_message": "Are you sure you want to delete this article? This cannot be undone.",
