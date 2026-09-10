@@ -5,9 +5,10 @@ import {
   getAgentRoleForIntent,
   selectSecondaryIntents,
 } from '../../server/ai/agentOrchestrationRegistry';
+import { MARKETING_GROWTH_CAPABILITIES } from '../../server/ai/marketingGrowthAgents';
 
 describe('Minh agent orchestration registry', () => {
-  it('keeps all 13 governance capabilities mapped to their prompt keys and runtime roles', () => {
+  it('keeps the core and Marketing Growth capabilities mapped to their prompt keys and runtime roles', () => {
     expect(AGENT_ORCHESTRATION_REGISTRY.map(({ skillKey, promptKey, role }) => ({
       skillKey,
       promptKey,
@@ -20,14 +21,21 @@ describe('Minh agent orchestration registry', () => {
       { skillKey: 'LEGAL_SYSTEM', promptKey: 'LEGAL_SYSTEM', role: 'legal_specialist' },
       { skillKey: 'SALES_SYSTEM', promptKey: 'SALES_SYSTEM', role: 'sales_specialist' },
       { skillKey: 'MARKETING_SYSTEM', promptKey: 'MARKETING_SYSTEM', role: 'marketing_specialist' },
+      { skillKey: 'LANDING_DESIGN', promptKey: 'LANDING_DESIGN_SYSTEM', role: 'landing_design_agent' },
       { skillKey: 'CONTRACT_SYSTEM', promptKey: 'CONTRACT_SYSTEM', role: 'contract_specialist' },
       { skillKey: 'LEAD_ANALYST_SYSTEM', promptKey: 'LEAD_ANALYST_SYSTEM', role: 'lead_analyst' },
       { skillKey: 'VALUATION_SYSTEM', promptKey: 'VALUATION_SYSTEM', role: 'valuation_specialist' },
       { skillKey: 'VALUATION_SEARCH_SYSTEM', promptKey: 'VALUATION_SEARCH_SYSTEM', role: 'valuation_search' },
       { skillKey: 'VALUATION_RENTAL_SYSTEM', promptKey: 'VALUATION_RENTAL_SYSTEM', role: 'valuation_rental' },
       { skillKey: 'FOLLOWUP_SYSTEM', promptKey: 'FOLLOWUP_SYSTEM', role: 'followup_agent' },
+      ...MARKETING_GROWTH_CAPABILITIES.map(capability => ({
+        skillKey: capability.promptKey,
+        promptKey: capability.promptKey,
+        role: capability.role,
+      })),
     ]);
-    expect(new Set(AGENT_ORCHESTRATION_REGISTRY.map(item => item.skillKey)).size).toBe(13);
+    expect(new Set(AGENT_ORCHESTRATION_REGISTRY.map(item => item.skillKey)).size)
+      .toBe(AGENT_ORCHESTRATION_REGISTRY.length);
   });
 
   it('marks every capability as not connected when its runtime role is absent or inactive', () => {
@@ -40,18 +48,7 @@ describe('Minh agent orchestration registry', () => {
       getAgentRuntimeStatus(capability.role, runtimeAgents),
     )).toEqual([
       'runtime',
-      'chưa nối',
-      'chưa nối',
-      'chưa nối',
-      'chưa nối',
-      'chưa nối',
-      'chưa nối',
-      'chưa nối',
-      'chưa nối',
-      'chưa nối',
-      'chưa nối',
-      'chưa nối',
-      'chưa nối',
+      ...Array.from({ length: AGENT_ORCHESTRATION_REGISTRY.length - 1 }, () => 'chưa nối'),
     ]);
   });
 

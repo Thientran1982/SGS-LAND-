@@ -14,7 +14,26 @@ import { apiRateLimit } from '../middleware/rateLimiter';
 
 export const agentSkillsRouter = Router();
 
-const DEFAULT_TENANT = process.env.DEFAULT_TENANT_ID || '00000000-0000-0000-0000-000000000001';
+const MANAGER_ROLES = new Set(['SUPER_ADMIN', 'ADMIN', 'TEAM_LEAD', 'MARKETING']);
+
+function authenticatedTenant(req: Request, res: Response): string | null {
+  const tenantId = String((req as any).user?.tenantId || '').trim();
+  if (!tenantId) {
+    res.status(403).json({ error: 'Không xác định được tenant của người dùng' });
+    return null;
+  }
+  return tenantId;
+}
+
+function requireManager(req: Request, res: Response): string | null {
+  const tenantId = authenticatedTenant(req, res);
+  if (!tenantId) return null;
+  if (!MANAGER_ROLES.has(String((req as any).user?.role || ''))) {
+    res.status(403).json({ error: 'Chỉ quản lý mới có thể tạo hoặc quản lý skill' });
+    return null;
+  }
+  return tenantId;
+}
 
 const SEED_ROLES: Array<{ key: string; title: string; category: string; desc: string }> = [
   { key: 'content-radar', title: 'Content Radar', category: 'marketing', desc: 'Theo doi noi dung thi truong BĐS va de xuat chu de.' },
@@ -48,7 +67,8 @@ async function ensureSeedSkills(tenantId: string): Promise<void> {
 
 agentSkillsRouter.get('/', apiRateLimit, async (req: Request, res: Response) => {
   try {
-    const tenantId = String((req as any).user?.tenantId || DEFAULT_TENANT);
+    const tenantId = authenticatedTenant(req, res);
+    if (!tenantId) return;
     await ensureSeedSkills(tenantId);
     const r = await pool.query(
       "SELECT id, skill_key, title, description, category, author_name, version, visibility, published, install_count, CASE WHEN rating_count = 0 THEN 0 ELSE ROUND(rating_sum::numeric / rating_count, 1) END AS rating, created_at FROM agent_skills WHERE tenant_id = $1 OR (visibility = 'PUBLIC' AND published = TRUE) ORDER BY published DESC, install_count DESC, created_at DESC",
@@ -64,7 +84,8 @@ agentSkillsRouter.get('/', apiRateLimit, async (req: Request, res: Response) => 
 agentSkillsRouter.post('/', apiRateLimit, async (req: Request, res: Response) => {
   try {
     const user = (req as any).user;
-    const tenantId = String(user?.tenantId || DEFAULT_TENANT);
+    const tenantId = requireManager(req, res);
+    if (!tenantId) return;
     const { skill_key, title, description, category, prompt_template, visibility } = req.body || {};
     if (!skill_key || !title || !prompt_template) {
       return res.status(400).json({ error: 'skill_key, title, prompt_template la bat buoc' });
@@ -85,10 +106,11 @@ agentSkillsRouter.post('/', apiRateLimit, async (req: Request, res: Response) =>
 
 agentSkillsRouter.patch('/:id', apiRateLimit, async (req: Request, res: Response) => {
   try {
-    const tenantId = String((req as any).user?.tenantId || DEFAULT_TENANT);
+    const tenantId = requireManager(req, res);
+    if (!tenantId) return;
     const { published, visibility } = req.body || {};
     const r = await pool.query(
-      "UPDATE agent_skills SET published = COALESCE($2, published), visibility = COALESCE($3, visibility), published_at = CASE WHEN $2::boolean THEN NOW() ELSE published_at END, updated_at = NOW() WHERE id = $1 AND (tenant_id = $4 OR visibility = 'PUBLIC') RETURNING id, skill_key, title, published, visibility",
+      "UPDATE agent_skills SET published = COALESCE($2, published), visibility = COALESCE($3, visibility), published_at = CASE WHEN $2::boolean THEN NOW() ELSE published_at END, updated_at = NOW() WHERE id = $1 AND tenant_id = $4 RETURNING id, skill_key, title, published, visibility",
       [req.params.id, typeof published === 'boolean' ? published : null, visibility ?? null, tenantId],
     );
     if (r.rowCount === 0) return res.status(404).json({ error: 'Skill khong ton tai' });
@@ -101,9 +123,11 @@ agentSkillsRouter.patch('/:id', apiRateLimit, async (req: Request, res: Response
 
 agentSkillsRouter.post('/:id/install', apiRateLimit, async (req: Request, res: Response) => {
   try {
+    const tenantId = authenticatedTenant(req, res);
+    if (!tenantId) return;
     const r = await pool.query(
-      "UPDATE agent_skills SET install_count = install_count + 1, updated_at = NOW() WHERE id = $1 RETURNING id, skill_key, install_count",
-      [req.params.id],
+      "UPDATE agent_skills SET install_count = install_count + 1, updated_at = NOW() WHERE id = $1 AND (tenant_id = $2 OR (visibility = 'PUBLIC' AND published = TRUE)) RETURNING id, skill_key, install_count",
+      [req.params.id, tenantId],
     );
     if (r.rowCount === 0) return res.status(404).json({ error: 'Skill khong ton tai' });
     res.json({ installed: r.rows[0] });
