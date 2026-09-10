@@ -57,6 +57,8 @@ function localizedSocialError(
   return isInfrastructureError ? t(fallbackKey) : raw;
 }
 
+type SocialLoadWarnings = Partial<Record<'projects' | 'publications' | 'staleReport', string>>;
+
 export const SocialPublishing: React.FC = () => {
   const { t } = useTranslation();
   const [catalog, setCatalog] = useState<SocialCapability[]>([]);
@@ -81,7 +83,14 @@ export const SocialPublishing: React.FC = () => {
   const [uploadingImages, setUploadingImages] = useState(false);
   const [schedule, setSchedule] = useState<'NOW' | 'SCHEDULED'>('NOW');
   const [scheduledAt, setScheduledAt] = useState('');
+  // Listing data is required for the default draft flow. Optional history
+  // and project requests must not keep these controls disabled.
   const [loading, setLoading] = useState(true);
+  const [catalogLoading, setCatalogLoading] = useState(true);
+  const [projectsLoading, setProjectsLoading] = useState(true);
+  const [publicationsLoading, setPublicationsLoading] = useState(true);
+  const [staleReportLoading, setStaleReportLoading] = useState(true);
+  const [loadWarnings, setLoadWarnings] = useState<SocialLoadWarnings>({});
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState<{ kind: 'ok' | 'error'; text: string } | null>(null);
   const [expandedPublicationId, setExpandedPublicationId] = useState<string | null>(null);
@@ -132,6 +141,7 @@ export const SocialPublishing: React.FC = () => {
     : undefined;
   const autoDrafts = publications.filter(item => item.source === 'AUTO' && item.status === 'DRAFT');
   const manualPublications = publications.filter(item => item.source !== 'AUTO');
+  const draftLoading = loading || catalogLoading || (sourceType === 'PROJECT' && projectsLoading);
 
   const mergeStalePublications = (
     current: SocialPublication[],
@@ -154,62 +164,119 @@ export const SocialPublishing: React.FC = () => {
 
   const load = useCallback(async () => {
     setLoading(true);
-    const catalogRequest = socialPublicationApi.getCatalog();
-    const publicationDataRequest = Promise.all([
-      listingApi.getListings(1, 100, {
-        statuses: 'AVAILABLE,OPENING,BOOKING,BEST_MARKET',
-        publicationEligible: 'true',
-      }),
-      db.getProjects(1, 100, { status: 'ACTIVE' }),
-      socialPublicationApi.getPublications({ limit: 200 }),
-      socialPublicationApi.getPublications({
-        staleOnly: true,
-        page: 1,
-        pageSize: STALE_PUBLICATION_PAGE_SIZE,
-      }),
-    ]);
+    setCatalogLoading(true);
+    setProjectsLoading(true);
+    setPublicationsLoading(true);
+    setStaleReportLoading(true);
+    setLoadWarnings({});
 
-    try {
-      const catalogResult = await catalogRequest;
-      setCatalog(catalogResult.data || []);
-    } catch (error: any) {
-      setCatalog([]);
-      setMessage({ kind: 'error', text: localizedSocialError(error, t, 'social.error_provider') });
-    }
-
-    try {
-       const [listingResult, projectResult, publicationResult, stalePublicationResult] = await publicationDataRequest;
-      setListings(listingResult.data || []);
-       setProjects(projectResult?.data || []);
-      setPublications(publicationResult.data || []);
-      const staleData = stalePublicationResult.data || [];
-      const staleCount = Number.isFinite(stalePublicationResult.total)
-        ? stalePublicationResult.total
-        : staleData.length;
-      const currentStalePage = stalePublicationResult.page || 1;
-      const currentStalePageSize = stalePublicationResult.pageSize || STALE_PUBLICATION_PAGE_SIZE;
-      setStalePublications(staleData);
-      setStaleTotal(staleCount);
-      setStalePage(currentStalePage);
-      setStaleCursor(stalePublicationResult.nextCursor ?? null);
-      setStaleHasNext(stalePublicationResult.hasNext ?? (
-        currentStalePage * currentStalePageSize < staleCount
-      ));
-       setStaleReportNeedsRefresh(false);
-       if (requestedListingId && (listingResult.data || []).some((item: SocialListingOption) => String(item.id) === requestedListingId)) {
-         setListingId(requestedListingId);
+    const catalogTask = (async () => {
+      try {
+        const catalogResult = await socialPublicationApi.getCatalog();
+        setCatalog(catalogResult.data || []);
+      } catch (error: any) {
+        setCatalog([]);
+        setMessage(current => current?.kind === 'error'
+          ? current
+          : { kind: 'error', text: localizedSocialError(error, t, 'social.error_provider') });
+      } finally {
+        setCatalogLoading(false);
       }
-       if (requestedProjectId && (projectResult?.data || []).some((item: SocialProjectOption) => String(item.id) === requestedProjectId)) {
-         setSourceType('PROJECT');
-         setProjectId(requestedProjectId);
-       }
-    } catch (error: any) {
-      setMessage(current => current?.kind === 'error'
-        ? current
-        : { kind: 'error', text: localizedSocialError(error, t, 'social.error_load') });
-    } finally {
-      setLoading(false);
-    }
+    })();
+
+    const listingTask = (async () => {
+      try {
+        const listingResult = await listingApi.getListings(1, 100, {
+          statuses: 'AVAILABLE,OPENING,BOOKING,BEST_MARKET',
+          publicationEligible: 'true',
+        });
+        const listingData = listingResult.data || [];
+        setListings(listingData);
+        if (requestedListingId && listingData.some((item: SocialListingOption) => String(item.id) === requestedListingId)) {
+          setListingId(requestedListingId);
+        }
+      } catch (error: any) {
+        setListings([]);
+        setMessage(current => current?.kind === 'error'
+          ? current
+          : { kind: 'error', text: localizedSocialError(error, t, 'social.error_load') });
+      } finally {
+        setLoading(false);
+      }
+    })();
+
+    const projectsTask = (async () => {
+      try {
+        const projectResult = await db.getProjects(1, 100, { status: 'ACTIVE' });
+        const projectData = projectResult?.data || [];
+        setProjects(projectData);
+        if (requestedProjectId && projectData.some((item: SocialProjectOption) => String(item.id) === requestedProjectId)) {
+          setSourceType('PROJECT');
+          setProjectId(requestedProjectId);
+        }
+      } catch (error: any) {
+        setProjects([]);
+        setLoadWarnings(current => ({
+          ...current,
+          projects: `Không tải được dữ liệu dự án: ${localizedSocialError(error, t, 'social.error_load')}`,
+        }));
+      } finally {
+        setProjectsLoading(false);
+      }
+    })();
+
+    const publicationsTask = (async () => {
+      try {
+        const publicationResult = await socialPublicationApi.getPublications({ limit: 200 });
+        setPublications(publicationResult.data || []);
+      } catch (error: any) {
+        setPublications([]);
+        setLoadWarnings(current => ({
+          ...current,
+          publications: `Không tải được lịch sử publication: ${localizedSocialError(error, t, 'common.error_loading')}`,
+        }));
+      } finally {
+        setPublicationsLoading(false);
+      }
+    })();
+
+    const staleReportTask = (async () => {
+      try {
+        const stalePublicationResult = await socialPublicationApi.getPublications({
+          staleOnly: true,
+          page: 1,
+          pageSize: STALE_PUBLICATION_PAGE_SIZE,
+        });
+        const staleData = stalePublicationResult.data || [];
+        const staleCount = Number.isFinite(stalePublicationResult.total)
+          ? stalePublicationResult.total
+          : staleData.length;
+        const currentStalePage = stalePublicationResult.page || 1;
+        const currentStalePageSize = stalePublicationResult.pageSize || STALE_PUBLICATION_PAGE_SIZE;
+        setStalePublications(staleData);
+        setStaleTotal(staleCount);
+        setStalePage(currentStalePage);
+        setStaleCursor(stalePublicationResult.nextCursor ?? null);
+        setStaleHasNext(stalePublicationResult.hasNext ?? (
+          currentStalePage * currentStalePageSize < staleCount
+        ));
+        setStaleReportNeedsRefresh(false);
+      } catch (error: any) {
+        setStalePublications([]);
+        setStaleTotal(0);
+        setStalePage(1);
+        setStaleCursor(null);
+        setStaleHasNext(false);
+        setLoadWarnings(current => ({
+          ...current,
+          staleReport: `Không tải được báo cáo publication stale: ${localizedSocialError(error, t, 'common.error_loading')}`,
+        }));
+      } finally {
+        setStaleReportLoading(false);
+      }
+    })();
+
+    await Promise.all([catalogTask, listingTask, projectsTask, publicationsTask, staleReportTask]);
   }, [requestedListingId, requestedProjectId, t]);
 
   useEffect(() => { void load(); }, [load]);
@@ -807,6 +874,11 @@ export const SocialPublishing: React.FC = () => {
                   surface="primary"
                 />
               </label>
+              {loadWarnings.projects && (
+                <p role="status" className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs leading-5 text-amber-800">
+                  {loadWarnings.projects} Bạn vẫn có thể sử dụng nguồn sản phẩm trong lúc dữ liệu dự án được khôi phục.
+                </p>
+              )}
               {sourceType === 'LISTING' ? (
                 <label className="block">
                   <span className="mb-2 block text-sm font-semibold text-[var(--text-primary)]">Sản phẩm</span>
@@ -852,18 +924,18 @@ export const SocialPublishing: React.FC = () => {
                   <ProjectDropdown
                     projects={projects}
                     value={projectId}
-                    disabled={loading}
+                    disabled={projectsLoading}
                     onChange={handleProjectChange}
                   />
                   <p className="mt-1.5 text-[11px] leading-5 text-[var(--text-tertiary)]">
                     Tái sử dụng API quản lý dự án; chỉ hiển thị dự án có trạng thái ACTIVE (đang mở bán).
                   </p>
-                  {!loading && !projects.length && (
+                  {!projectsLoading && !loadWarnings.projects && !projects.length ? (
                     <p className="mt-2 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs leading-5 text-amber-800">
                       Chưa có dự án đang mở bán đủ điều kiện xuất bản.
                     </p>
-                  )}
-                  {!loading && requestedProjectId && !projects.some(item => String(item.id) === requestedProjectId) && (
+                  ) : null}
+                  {!projectsLoading && !loadWarnings.projects && requestedProjectId && !projects.some(item => String(item.id) === requestedProjectId) && (
                     <p role="alert" className="mt-2 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-xs leading-5 text-red-800">
                       Dự án được yêu cầu không còn ở trạng thái đủ điều kiện xuất bản.
                     </p>
@@ -889,11 +961,15 @@ export const SocialPublishing: React.FC = () => {
               <div>
                 <span className="mb-2 block text-sm font-semibold text-[var(--text-primary)]">Nền tảng đích</span>
                 <div className="space-y-2">
-                  {catalog.length === 0 && !loading && (
+                  {catalogLoading ? (
+                    <p role="status" className="rounded-xl border border-[var(--glass-border)] bg-[var(--glass-surface)] px-3 py-3 text-xs leading-5 text-[var(--text-tertiary)]">
+                      Đang tải danh sách nền tảng…
+                    </p>
+                  ) : catalog.length === 0 ? (
                     <p className="rounded-xl border border-amber-200 bg-amber-50 px-3 py-3 text-xs leading-5 text-amber-800">
                       {t('social.platforms_empty')}
                     </p>
-                  )}
+                  ) : null}
                   {catalog.map(item => {
                     const isReady = isSocialCapabilityReady(item);
                     // Draft composition is intentionally available for every
@@ -943,10 +1019,10 @@ export const SocialPublishing: React.FC = () => {
               </div>
               {schedule === 'SCHEDULED' && <input type="datetime-local" value={scheduledAt} onChange={event => setScheduledAt(event.target.value)} className="w-full rounded-xl border border-[var(--glass-border)] bg-[var(--bg-app)] px-3 py-3 text-sm text-[var(--text-primary)]" />}
               <div className="flex flex-wrap gap-2">
-                <button disabled={busy || loading} onClick={() => void runPreview()} className="inline-flex items-center gap-2 rounded-xl border border-[var(--glass-border)] px-4 py-2.5 text-sm font-semibold text-[var(--text-primary)] disabled:opacity-50">
+                <button disabled={busy || draftLoading} onClick={() => void runPreview()} className="inline-flex items-center gap-2 rounded-xl border border-[var(--glass-border)] px-4 py-2.5 text-sm font-semibold text-[var(--text-primary)] disabled:opacity-50">
                   <Eye size={16} /> Xem preview
                 </button>
-                <button disabled={busy || loading} onClick={() => void saveDraft()} className="inline-flex items-center gap-2 rounded-xl bg-sgs-primary px-4 py-2.5 text-sm font-semibold text-white shadow-sm disabled:opacity-50">
+                <button disabled={busy || draftLoading} onClick={() => void saveDraft()} className="inline-flex items-center gap-2 rounded-xl bg-sgs-primary px-4 py-2.5 text-sm font-semibold text-white shadow-sm disabled:opacity-50">
                   <CalendarClock size={16} /> Lưu draft
                 </button>
               </div>
@@ -1093,6 +1169,11 @@ export const SocialPublishing: React.FC = () => {
               Đang xem {stalePublications.length} / {staleTotal} liên kết cần rà soát
             </p>
           )}
+          {loadWarnings.staleReport && (
+            <p role="status" className="mt-3 rounded-xl border border-amber-200 bg-amber-50 px-3 py-3 text-xs leading-5 text-amber-800">
+              {loadWarnings.staleReport} Báo cáo này không làm gián đoạn việc soạn hoặc lưu draft.
+            </p>
+          )}
           {staleReportNeedsRefresh && (
             <div
               role="status"
@@ -1112,9 +1193,9 @@ export const SocialPublishing: React.FC = () => {
               </button>
             </div>
           )}
-          {loading ? (
+          {staleReportLoading ? (
             <p className="mt-4 text-sm text-[var(--text-tertiary)]">Đang tải báo cáo…</p>
-          ) : !stalePublications.length ? (
+          ) : loadWarnings.staleReport ? null : !stalePublications.length ? (
             <p className="mt-4 rounded-2xl border border-dashed border-emerald-200 bg-emerald-50 p-4 text-sm text-emerald-800">
               Không phát hiện liên kết publication nào cần rà soát trong tenant này.
             </p>
@@ -1251,7 +1332,12 @@ export const SocialPublishing: React.FC = () => {
 
         <section className="rounded-3xl border border-[var(--glass-border)] bg-[var(--bg-surface)] p-5 shadow-sm">
           <h2 className="mb-4 font-bold text-[var(--text-primary)]">Publication đã lưu</h2>
-          {loading ? <p className="text-sm text-[var(--text-tertiary)]">Đang tải…</p> : !manualPublications.length ? <p className="text-sm text-[var(--text-tertiary)]">Chưa có publication thủ công nào.</p> : (
+          {loadWarnings.publications && (
+            <p role="status" className="mb-3 rounded-xl border border-amber-200 bg-amber-50 px-3 py-3 text-xs leading-5 text-amber-800">
+              {loadWarnings.publications} Các thao tác soạn và lưu draft mới vẫn khả dụng.
+            </p>
+          )}
+          {publicationsLoading ? <p className="text-sm text-[var(--text-tertiary)]">Đang tải…</p> : loadWarnings.publications ? null : !manualPublications.length ? <p className="text-sm text-[var(--text-tertiary)]">Chưa có publication thủ công nào.</p> : (
             <div className="space-y-3">
               {manualPublications.map(item => (
                 <article key={item.id} className="rounded-2xl border border-[var(--glass-border)] p-4">

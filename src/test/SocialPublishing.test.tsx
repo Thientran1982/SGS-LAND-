@@ -27,6 +27,14 @@ function mockInitialRequests(listings: typeof eligibleListings = []) {
   return getListings;
 }
 
+function deferred<T>() {
+  let resolve!: (value: T) => void;
+  const promise = new Promise<T>(resolver => {
+    resolve = resolver;
+  });
+  return { promise, resolve };
+}
+
 describe('SocialPublishing listing selector', () => {
   beforeEach(() => {
     vi.spyOn(db, 'getProjects').mockResolvedValue({ data: [] });
@@ -96,6 +104,58 @@ describe('SocialPublishing listing selector', () => {
       expect(selector).toHaveTextContent(requestedListing.title);
     });
     expect(screen.getByText(requestedListing.title)).toBeVisible();
+  });
+
+  it('enables listing draft controls while optional project and report requests are slow', async () => {
+    mockInitialRequests(eligibleListings);
+    const projects = deferred<{ data: [] }>();
+    const publications = deferred<{ data: []; total: number }>();
+    const staleReport = deferred<{ data: []; total: number }>();
+    vi.mocked(db.getProjects).mockReturnValue(projects.promise);
+    vi.mocked(socialPublicationApi.getPublications).mockImplementation(async options => {
+      if (typeof options !== 'string' && options?.staleOnly) return staleReport.promise;
+      return publications.promise;
+    });
+
+    render(<SocialPublishing />);
+
+    expect(await screen.findByRole('combobox', {
+      name: 'Chọn sản phẩm đủ điều kiện xuất bản',
+    })).toBeEnabled();
+    expect(screen.getByRole('button', { name: 'Xem preview' })).toBeEnabled();
+    expect(screen.getByRole('button', { name: 'Lưu draft' })).toBeEnabled();
+    expect(screen.getByText('Đang tải báo cáo…')).toBeVisible();
+
+    projects.resolve({ data: [] });
+    publications.resolve({ data: [], total: 0 });
+    staleReport.resolve({ data: [], total: 0 });
+    await waitFor(() => {
+      expect(screen.queryByText('Đang tải báo cáo…')).not.toBeInTheDocument();
+    });
+  });
+
+  it('shows scoped warnings when optional project and report requests fail', async () => {
+    mockInitialRequests(eligibleListings);
+    vi.mocked(db.getProjects).mockRejectedValue(new Error('project service unavailable'));
+    vi.mocked(socialPublicationApi.getPublications).mockImplementation(async options => {
+      if (typeof options !== 'string' && options?.staleOnly) {
+        throw new Error('stale report unavailable');
+      }
+      throw new Error('publication history unavailable');
+    });
+
+    render(<SocialPublishing />);
+
+    expect(await screen.findByRole('combobox', {
+      name: 'Chọn sản phẩm đủ điều kiện xuất bản',
+    })).toBeEnabled();
+    expect(await screen.findByText(/Không tải được dữ liệu dự án/)).toBeVisible();
+    expect(screen.getByText(/Không tải được báo cáo publication stale/)).toBeVisible();
+    expect(screen.getByText(/Không tải được lịch sử publication/)).toBeVisible();
+    expect(screen.getByRole('button', { name: 'Xem preview' })).toBeEnabled();
+    expect(screen.getByRole('button', { name: 'Lưu draft' })).toBeEnabled();
+    expect(screen.queryByText('Không phát hiện liên kết publication nào cần rà soát trong tenant này.')).not.toBeInTheDocument();
+    expect(screen.queryByText('Chưa có publication thủ công nào.')).not.toBeInTheDocument();
   });
 
   it('does not select a different listing when the URL listing is not in the results', async () => {
