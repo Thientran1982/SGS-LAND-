@@ -27,8 +27,8 @@ export function ListingDropdown({ listings, value, onChange, disabled = false }:
     value: String(listing.id),
     imageUrl: listing.images?.[0],
     label: listing.code
-      ? `${listing.code} — ${listing.title || 'Sản phẩm chưa có tên'} · ${statusLabel[listing.status || ''] || listing.status || 'Sẵn sàng'}`
-      : `${listing.title || String(listing.id)} · ${statusLabel[listing.status || ''] || listing.status || 'Sẵn sàng'}`,
+      ? `${listing.code} — ${listing.title || 'Sản phẩm chưa có tên'} · ${statusLabel[listing.status || ''] || listing.status || 'Sẵn sàng'} · ${listing.images?.length ? `${listing.images.length} ảnh` : 'Chưa có ảnh'}`
+      : `${listing.title || String(listing.id)} · ${statusLabel[listing.status || ''] || listing.status || 'Sẵn sàng'} · ${listing.images?.length ? `${listing.images.length} ảnh` : 'Chưa có ảnh'}`,
   }));
 
   return (

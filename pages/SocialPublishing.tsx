@@ -742,11 +742,14 @@ export const SocialPublishing: React.FC = () => {
                     {selectedListing.images?.[0] ? (
                       <img src={selectedListing.images[0]} alt="" className="h-12 w-16 rounded-lg object-cover" />
                     ) : (
-                      <div className="flex h-12 w-16 items-center justify-center rounded-lg bg-[var(--glass-surface)] text-xs text-[var(--text-tertiary)]">Ảnh</div>
+                      <div className="flex h-12 w-16 items-center justify-center rounded-lg bg-[var(--glass-surface)] px-1 text-center text-[10px] text-[var(--text-tertiary)]">Chưa có ảnh</div>
                     )}
                     <div className="min-w-0">
                       <p className="truncate text-sm font-semibold text-[var(--text-primary)]">{selectedListing.title || selectedListing.id}</p>
-                      <p className="mt-0.5 text-xs text-[var(--text-tertiary)]">{selectedListing.code || 'Không có mã'} · {selectedListing.status || 'Sẵn sàng'} · Đủ điều kiện public</p>
+                      <p className="mt-0.5 text-xs text-[var(--text-tertiary)]">{selectedListing.code || 'Không có mã'} · {selectedListing.status || 'Sẵn sàng'} · {selectedListing.images?.length || 0} ảnh · Đủ điều kiện public</p>
+                      {!selectedListing.images?.length && (
+                        <p className="mt-1 text-[11px] leading-4 text-amber-700">Listing chưa có ảnh trong gallery. Có thể dùng “Tải thêm ảnh” ở phần preview.</p>
+                      )}
                     </div>
                   </div>
                 )}
