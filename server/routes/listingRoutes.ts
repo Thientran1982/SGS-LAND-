@@ -306,6 +306,34 @@ function redactSensitiveFields(item: any) {
   return copy;
 }
 
+function parseCommaSeparatedQuery(value: unknown): string[] {
+  const values = Array.isArray(value) ? value : [value];
+  return values
+    .flatMap(entry => String(entry ?? '').split(','))
+    .map(entry => entry.trim())
+    .filter(Boolean);
+}
+
+/**
+ * Keep the singular status filter backwards compatible while ensuring that a
+ * comma-separated list always becomes a repository `status_in` filter.
+ */
+function parseListingStatusFilter(query: { status?: unknown; statuses?: unknown }): {
+  status?: string;
+  status_in?: string[];
+} {
+  const pluralStatuses = parseCommaSeparatedQuery(query.statuses);
+  if (pluralStatuses.length > 0) {
+    const statuses = pluralStatuses.filter(status => status !== 'ALL');
+    return statuses.length > 0 ? { status_in: statuses } : {};
+  }
+
+  const singularStatuses = parseCommaSeparatedQuery(query.status);
+  if (singularStatuses.length === 0 || singularStatuses[0] === 'ALL') return {};
+  if (singularStatuses.length > 1) return { status_in: singularStatuses };
+  return { status: singularStatuses[0] };
+}
+
 export function createListingRoutes(authenticateToken: any) {
   const router = Router();
 
@@ -321,15 +349,7 @@ export function createListingRoutes(authenticateToken: any) {
       const filters: any = {};
       if (req.query.type && req.query.type !== 'ALL') filters.type = req.query.type;
       if (req.query.types) filters.type_in = (req.query.types as string).split(',');
-      if (req.query.statuses) {
-        const statuses = String(req.query.statuses)
-          .split(',')
-          .map(status => status.trim())
-          .filter(Boolean);
-        if (statuses.length) filters.status_in = statuses;
-      } else if (req.query.status && req.query.status !== 'ALL') {
-        filters.status = req.query.status;
-      }
+      Object.assign(filters, parseListingStatusFilter(req.query));
       if (req.query.transaction && req.query.transaction !== 'ALL') filters.transaction = req.query.transaction;
       const priceMin = parseFloat(req.query.priceMin as string);
       const priceMax = parseFloat(req.query.priceMax as string);
