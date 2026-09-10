@@ -33,6 +33,8 @@ interface SocialImageProps {
   alt: string;
   className: string;
   fallbackText?: string;
+  onLoad?: (url: string) => void;
+  onError?: (url: string) => void;
 }
 
 export function SocialImage({
@@ -40,6 +42,8 @@ export function SocialImage({
   alt,
   className,
   fallbackText = 'Ảnh không khả dụng',
+  onLoad,
+  onError,
 }: SocialImageProps) {
   const imageUrl = normalizeSocialImageUrl(src);
   const [failedUrl, setFailedUrl] = useState<string | null>(null);
@@ -56,7 +60,22 @@ export function SocialImage({
         aria-label={alt || fallbackText}
         className={`${className} flex items-center justify-center bg-[var(--glass-surface)] px-2 text-center text-[10px] leading-4 text-[var(--text-tertiary)]`}
       >
-        {fallbackText}
+        <span>
+          <span className="block">{fallbackText}</span>
+          {imageUrl && (
+            <button
+              type="button"
+              className="mt-1 font-semibold text-sgs-primary underline underline-offset-2"
+              onClick={event => {
+                event.preventDefault();
+                event.stopPropagation();
+                setFailedUrl(null);
+              }}
+            >
+              Thử tải lại
+            </button>
+          )}
+        </span>
       </div>
     );
   }
@@ -68,7 +87,11 @@ export function SocialImage({
       className={`block max-w-full ${className}`}
       loading="lazy"
       decoding="async"
-      onError={() => setFailedUrl(imageUrl)}
+      onLoad={() => onLoad?.(imageUrl)}
+      onError={() => {
+        setFailedUrl(imageUrl);
+        onError?.(imageUrl);
+      }}
     />
   );
 }

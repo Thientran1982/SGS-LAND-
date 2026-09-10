@@ -5,7 +5,7 @@ import { db } from '../services/dbApi';
 import { listingApi } from '../services/api/listingApi';
 import ListingDropdown, { SocialListingOption } from '../components/social-publishing/ListingDropdown';
 import ProjectDropdown, { SocialProjectOption } from '../components/social-publishing/ProjectDropdown';
-import { SocialImage } from '../components/social-publishing/SocialImage';
+import { normalizeSocialImageUrl, SocialImage } from '../components/social-publishing/SocialImage';
 import { SelectDropdown } from '../components/task/SelectDropdown';
 import {
   socialPublicationApi,
@@ -81,6 +81,8 @@ export const SocialPublishing: React.FC = () => {
   const [caption, setCaption] = useState('');
   const [selectedImageUrls, setSelectedImageUrls] = useState<string[]>([]);
   const [uploadedImageUrls, setUploadedImageUrls] = useState<string[]>([]);
+  const [failedMainImageUrls, setFailedMainImageUrls] = useState<string[]>([]);
+  const [failedThumbnailImageUrls, setFailedThumbnailImageUrls] = useState<string[]>([]);
   const [uploadingImages, setUploadingImages] = useState(false);
   const [schedule, setSchedule] = useState<'NOW' | 'SCHEDULED'>('NOW');
   const [scheduledAt, setScheduledAt] = useState('');
@@ -143,6 +145,23 @@ export const SocialPublishing: React.FC = () => {
   const autoDrafts = publications.filter(item => item.source === 'AUTO' && item.status === 'DRAFT');
   const manualPublications = publications.filter(item => item.source !== 'AUTO');
   const draftLoading = loading || catalogLoading || (sourceType === 'PROJECT' && projectsLoading);
+  const unavailableSelectedImageUrls = useMemo(() => {
+    const failedUrls = new Set([...failedMainImageUrls, ...failedThumbnailImageUrls]);
+    return selectedImageUrls.filter(imageUrl => {
+      const normalizedUrl = normalizeSocialImageUrl(imageUrl);
+      return !normalizedUrl || failedUrls.has(normalizedUrl);
+    });
+  }, [failedMainImageUrls, failedThumbnailImageUrls, selectedImageUrls]);
+
+  const markImageFailed = useCallback((kind: 'main' | 'thumbnail', imageUrl: string) => {
+    const update = kind === 'main' ? setFailedMainImageUrls : setFailedThumbnailImageUrls;
+    update(current => current.includes(imageUrl) ? current : [...current, imageUrl]);
+  }, []);
+
+  const markImageLoaded = useCallback((kind: 'main' | 'thumbnail', imageUrl: string) => {
+    const update = kind === 'main' ? setFailedMainImageUrls : setFailedThumbnailImageUrls;
+    update(current => current.filter(url => url !== imageUrl));
+  }, []);
 
   const mergeStalePublications = (
     current: SocialPublication[],
@@ -397,12 +416,14 @@ export const SocialPublishing: React.FC = () => {
       setMessage({ kind: 'error', text: `Chọn ${sourceType === 'PROJECT' ? 'dự án' : 'listing'} trước khi tải ảnh cho publication.` });
       return;
     }
+    const failedSelectedCount = unavailableSelectedImageUrls.length;
     const remaining = maxFacebookImages - selectedImageUrls.length;
-    if (remaining <= 0) {
+    const uploadCapacity = remaining + failedSelectedCount;
+    if (uploadCapacity <= 0) {
       setMessage({ kind: 'error', text: `Đã chọn đủ ${maxFacebookImages} ảnh cho publication này.` });
       return;
     }
-    const accepted = files.slice(0, remaining);
+    const accepted = files.slice(0, uploadCapacity);
     setUploadingImages(true);
     setMessage(null);
     try {
@@ -412,13 +433,20 @@ export const SocialPublishing: React.FC = () => {
         throw new Error(result.warnings?.join(' ') || 'Không có ảnh hợp lệ được tải lên.');
       }
       setUploadedImageUrls(current => [...current, ...uploadedUrls]);
-      setSelectedImageUrls(current => [...current, ...uploadedUrls].slice(0, maxFacebookImages));
+      setSelectedImageUrls(current => {
+        const failedSelected = new Set(unavailableSelectedImageUrls.map(imageUrl => normalizeSocialImageUrl(imageUrl) || imageUrl));
+        let replacementIndex = 0;
+        const replaced = current.map(imageUrl => {
+          const normalizedUrl = normalizeSocialImageUrl(imageUrl) || imageUrl;
+          if (!failedSelected.has(normalizedUrl) || replacementIndex >= uploadedUrls.length) return imageUrl;
+          return uploadedUrls[replacementIndex++];
+        });
+        return [...replaced, ...uploadedUrls.slice(replacementIndex)].slice(0, maxFacebookImages);
+      });
       setPreview([]);
       setMessage({
         kind: 'ok',
-        text: result.warnings?.length
-          ? `Đã thêm ${uploadedUrls.length} ảnh. ${result.warnings.join(' ')}`
-          : `Đã thêm ${uploadedUrls.length} ảnh vào publication draft.`,
+        text: `${failedSelectedCount ? `Đã thay ${Math.min(failedSelectedCount, uploadedUrls.length)} ảnh lỗi và ` : ''}thêm ${uploadedUrls.length} ảnh vào publication draft.${result.warnings?.length ? ` ${result.warnings.join(' ')}` : ''}`,
       });
     } catch (error: any) {
       setMessage({ kind: 'error', text: error?.message || 'Tải ảnh thất bại. Vui lòng thử lại.' });
@@ -458,6 +486,13 @@ export const SocialPublishing: React.FC = () => {
     }
     if (!caption.trim()) {
       setMessage({ kind: 'error', text: 'Nhập caption trước khi lưu bản nháp.' });
+      return;
+    }
+    if (unavailableSelectedImageUrls.length) {
+      setMessage({
+        kind: 'error',
+        text: `Không thể lưu draft: ${unavailableSelectedImageUrls.length} ảnh đã chọn không tải được. Hãy thử tải lại ảnh lỗi hoặc bỏ chọn và tải ảnh thay thế; caption và thứ tự ảnh sẽ được giữ nguyên.`,
+      });
       return;
     }
     const imageRequiredPlatforms = platforms.filter(platform => (
@@ -1023,10 +1058,20 @@ export const SocialPublishing: React.FC = () => {
                 <button disabled={busy || draftLoading} onClick={() => void runPreview()} className="inline-flex items-center gap-2 rounded-xl border border-[var(--glass-border)] px-4 py-2.5 text-sm font-semibold text-[var(--text-primary)] disabled:opacity-50">
                   <Eye size={16} /> Xem preview
                 </button>
-                <button disabled={busy || draftLoading} onClick={() => void saveDraft()} className="inline-flex items-center gap-2 rounded-xl bg-sgs-primary px-4 py-2.5 text-sm font-semibold text-white shadow-sm disabled:opacity-50">
+                <button
+                  disabled={busy || draftLoading || unavailableSelectedImageUrls.length > 0}
+                  onClick={() => void saveDraft()}
+                  title={unavailableSelectedImageUrls.length ? 'Có ảnh đã chọn không tải được' : undefined}
+                  className="inline-flex items-center gap-2 rounded-xl bg-sgs-primary px-4 py-2.5 text-sm font-semibold text-white shadow-sm disabled:opacity-50"
+                >
                   <CalendarClock size={16} /> Lưu draft
                 </button>
               </div>
+              {unavailableSelectedImageUrls.length > 0 && (
+                <div role="alert" className="rounded-xl border border-red-200 bg-red-50 px-3 py-2.5 text-xs leading-5 text-red-800">
+                  Không thể lưu draft khi {unavailableSelectedImageUrls.length} ảnh đã chọn không khả dụng. Hãy bấm “Thử tải lại” trên ảnh lỗi, bỏ chọn ảnh đó hoặc tải ảnh thay thế; caption và thứ tự các ảnh còn lại không bị mất.
+                </div>
+              )}
             </div>
              <div className="min-w-0 overflow-hidden rounded-2xl bg-[var(--bg-app)] p-4">
               <div className="mb-3 flex items-center justify-between gap-3">
@@ -1050,7 +1095,13 @@ export const SocialPublishing: React.FC = () => {
                         const selectionLimitReached = !selected && selectedImageUrls.length >= maxFacebookImages;
                         return (
                            <label key={`${imageUrl}-${index}`} className={`relative min-w-0 cursor-pointer overflow-hidden rounded-lg border-2 ${selected ? 'border-sgs-primary' : 'border-transparent'}`}>
-                               <SocialImage src={imageUrl} alt={`Ảnh ${index + 1} của ${sourceType === 'PROJECT' ? selectedProject?.name || 'dự án' : selectedListing?.title || 'listing'}`} className="aspect-square w-full object-cover" />
+                               <SocialImage
+                                 src={imageUrl}
+                                 alt={`Ảnh ${index + 1} của ${sourceType === 'PROJECT' ? selectedProject?.name || 'dự án' : selectedListing?.title || 'listing'}`}
+                                 className="aspect-square w-full object-cover"
+                                 onLoad={url => markImageLoaded('thumbnail', url)}
+                                 onError={url => markImageFailed('thumbnail', url)}
+                               />
                             <span className="absolute left-1 top-1 rounded bg-white/90 px-1.5 py-1 text-[10px] font-semibold text-[var(--text-primary)]">
                               <input type="checkbox" checked={selected} disabled={selectionLimitReached} onChange={() => toggleImage(imageUrl)} className="mr-1 accent-[var(--sgs-primary)] disabled:opacity-50" />
                               {selected ? 'Đã chọn' : 'Chọn'}
@@ -1061,14 +1112,14 @@ export const SocialPublishing: React.FC = () => {
                       })}
                     </div>
                   )}
-                   <label className={`mt-3 flex cursor-pointer items-center justify-center gap-2 rounded-lg border border-dashed px-3 py-2.5 text-xs font-semibold transition-colors ${uploadingImages || selectedImageUrls.length >= maxFacebookImages ? 'cursor-not-allowed border-[var(--glass-border)] text-[var(--text-tertiary)] opacity-60' : 'border-sgs-primary/50 text-sgs-primary hover:bg-sgs-primary/5'}`}>
+                    <label className={`mt-3 flex cursor-pointer items-center justify-center gap-2 rounded-lg border border-dashed px-3 py-2.5 text-xs font-semibold transition-colors ${uploadingImages || (selectedImageUrls.length >= maxFacebookImages && unavailableSelectedImageUrls.length === 0) ? 'cursor-not-allowed border-[var(--glass-border)] text-[var(--text-tertiary)] opacity-60' : 'border-sgs-primary/50 text-sgs-primary hover:bg-sgs-primary/5'}`}>
                      <Upload size={15} />
                      {uploadingImages ? 'Đang tải ảnh…' : 'Tải thêm ảnh'}
-                     <input
+                        <input
                        type="file"
                        accept="image/jpeg,image/png,image/webp,image/gif"
                        multiple
-                       disabled={uploadingImages || selectedImageUrls.length >= maxFacebookImages}
+                        disabled={uploadingImages || selectedImageUrls.length >= maxFacebookImages && unavailableSelectedImageUrls.length === 0}
                        onChange={event => void uploadAdditionalImages(event)}
                        className="sr-only"
                      />
@@ -1117,6 +1168,8 @@ export const SocialPublishing: React.FC = () => {
                               src={(item.imageUrls?.length ? item.imageUrls : selectedImageUrls)[0]}
                              alt={`Ảnh preview ${catalog.find(c => c.platform === item.platform)?.label || item.platform}`}
                              className="aspect-[16/9] w-full object-cover"
+                              onLoad={url => markImageLoaded('main', url)}
+                              onError={url => markImageFailed('main', url)}
                            />
                             {(item.imageUrls?.length ? item.imageUrls : selectedImageUrls).length > 1 && (
                               <div className="grid min-w-0 grid-cols-4 gap-1 p-1">
@@ -1126,6 +1179,8 @@ export const SocialPublishing: React.FC = () => {
                                     src={imageUrl}
                                    alt={`Ảnh ${index + 2}`}
                                    className="aspect-square w-full rounded-md object-cover"
+                                   onLoad={url => markImageLoaded('thumbnail', url)}
+                                   onError={url => markImageFailed('thumbnail', url)}
                                  />
                                ))}
                              </div>
