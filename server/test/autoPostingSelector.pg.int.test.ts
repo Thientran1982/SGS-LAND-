@@ -12,7 +12,14 @@ import {
   findSocialPublication,
   listSocialPublications,
 } from '../repositories/socialPublicationRepository';
-import { upsertAutoPostingSettings } from '../repositories/autoPostingRepository';
+import {
+  claimMarketingFacebookDailyRun,
+  createMarketingFacebookBackfillRequest,
+  finishMarketingFacebookBackfillRequest,
+  finishMarketingFacebookDailyRun,
+  getMarketingFacebookDailyStatus,
+  upsertAutoPostingSettings,
+} from '../repositories/autoPostingRepository';
 import {
   runAutoPostingBackfill,
   runAutoPostingForTenant,
@@ -555,6 +562,117 @@ describePostgres('Marketing Facebook daily selector against PostgreSQL', () => {
       reason: 'Deployment outage, cần kiểm tra lại kết quả',
       requested_by: 'manager-2',
     });
+  });
+
+  it('returns only the requested tenant daily run and backfill history', async () => {
+    await configureSelector(tenantA);
+    await configureSelector(tenantB);
+
+    const tenantADailyRun = await claimMarketingFacebookDailyRun(setupPool, tenantA, '2026-01-01');
+    const tenantBDailyRun = await claimMarketingFacebookDailyRun(setupPool, tenantB, '2026-01-02');
+    expect(tenantADailyRun).not.toBeNull();
+    expect(tenantBDailyRun).not.toBeNull();
+
+    await query(
+      `UPDATE marketing_facebook_daily_runs
+          SET started_at = CASE tenant_id
+            WHEN $1 THEN '2026-01-01T08:00:00.000Z'::timestamptz
+            WHEN $2 THEN '2026-01-02T08:00:00.000Z'::timestamptz
+          END
+        WHERE tenant_id IN ($1, $2)`,
+      [tenantA, tenantB],
+    );
+    const finishedTenantARun = await finishMarketingFacebookDailyRun(setupPool, tenantADailyRun!.id, {
+      status: 'SUCCESS',
+      result: { tenant: 'A' },
+    });
+    const finishedTenantBRun = await finishMarketingFacebookDailyRun(setupPool, tenantBDailyRun!.id, {
+      status: 'FAILED',
+      errorCode: 'TENANT_B_FAILURE',
+      errorMessage: 'Tenant B failure',
+      result: { tenant: 'B' },
+    });
+    expect(finishedTenantARun).toMatchObject({
+      id: tenantADailyRun!.id,
+      tenantId: tenantA,
+      status: 'SUCCESS',
+    });
+    expect(finishedTenantBRun).toMatchObject({
+      id: tenantBDailyRun!.id,
+      tenantId: tenantB,
+      status: 'FAILED',
+    });
+
+    const tenantABackfill = await createMarketingFacebookBackfillRequest(setupPool, {
+      tenantId: tenantA,
+      logicalDay: '2025-12-30',
+      reason: 'Tenant A backfill',
+      requestedBy: 'manager-a',
+    });
+    const tenantBBackfill = await createMarketingFacebookBackfillRequest(setupPool, {
+      tenantId: tenantB,
+      logicalDay: '2025-12-31',
+      reason: 'Tenant B backfill',
+      requestedBy: 'manager-b',
+    });
+    expect(tenantABackfill.created).toBe(true);
+    expect(tenantBBackfill.created).toBe(true);
+    await finishMarketingFacebookBackfillRequest(setupPool, tenantABackfill.request.id, {
+      status: 'SUCCESS',
+      result: { tenant: 'A' },
+    });
+    await finishMarketingFacebookBackfillRequest(setupPool, tenantBBackfill.request.id, {
+      status: 'FAILED',
+      errorCode: 'TENANT_B_BACKFILL_FAILURE',
+      result: { tenant: 'B' },
+    });
+
+    const tenantAStatus = await getMarketingFacebookDailyStatus(setupPool, tenantA, '2026-01-01');
+    const tenantBStatus = await getMarketingFacebookDailyStatus(setupPool, tenantB, '2026-01-02');
+
+    expect(tenantAStatus.settings.tenantId).toBe(tenantA);
+    expect(tenantAStatus.todayRun).toMatchObject({
+      id: tenantADailyRun!.id,
+      tenantId: tenantA,
+      logicalDay: '2026-01-01',
+      status: 'SUCCESS',
+    });
+    expect(tenantAStatus.lastRun).toMatchObject({
+      id: tenantADailyRun!.id,
+      tenantId: tenantA,
+      status: 'SUCCESS',
+    });
+    expect(tenantAStatus.backfillRequests).toEqual([
+      expect.objectContaining({
+        id: tenantABackfill.request.id,
+        tenantId: tenantA,
+        logicalDay: '2025-12-30',
+        status: 'SUCCESS',
+        reason: 'Tenant A backfill',
+      }),
+    ]);
+
+    expect(tenantBStatus.settings.tenantId).toBe(tenantB);
+    expect(tenantBStatus.todayRun).toMatchObject({
+      id: tenantBDailyRun!.id,
+      tenantId: tenantB,
+      logicalDay: '2026-01-02',
+      status: 'FAILED',
+    });
+    expect(tenantBStatus.lastRun).toMatchObject({
+      id: tenantBDailyRun!.id,
+      tenantId: tenantB,
+      status: 'FAILED',
+    });
+    expect(tenantBStatus.backfillRequests).toEqual([
+      expect.objectContaining({
+        id: tenantBBackfill.request.id,
+        tenantId: tenantB,
+        logicalDay: '2025-12-31',
+        status: 'FAILED',
+        reason: 'Tenant B backfill',
+      }),
+    ]);
   });
 
   it('keeps social publication history isolated by tenant', async () => {
