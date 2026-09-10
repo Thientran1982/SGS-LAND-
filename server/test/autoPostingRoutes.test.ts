@@ -147,6 +147,102 @@ describe('Marketing Facebook backfill route', () => {
     expect(result.body.settings.tenantId).toBe('tenant-1');
   });
 
+  it('keeps daily runs and backfill history isolated between authenticated tenants', async () => {
+    const tenantOneStatus = {
+      settings: { tenantId: 'tenant-1', enabled: true },
+      todayRun: {
+        id: 'run-tenant-1-today',
+        tenantId: 'tenant-1',
+        logicalDay: '2026-01-03',
+        status: 'SUCCESS',
+      },
+      lastRun: {
+        id: 'run-tenant-1-last',
+        tenantId: 'tenant-1',
+        logicalDay: '2026-01-02',
+        status: 'FAILED',
+      },
+      backfillRequests: [{
+        id: 'backfill-tenant-1',
+        tenantId: 'tenant-1',
+        logicalDay: '2025-12-31',
+        status: 'SUCCESS',
+      }],
+      warning: null,
+    };
+    const tenantTwoStatus = {
+      settings: { tenantId: 'tenant-2', enabled: false },
+      todayRun: {
+        id: 'run-tenant-2-today',
+        tenantId: 'tenant-2',
+        logicalDay: '2026-01-03',
+        status: 'SKIPPED',
+      },
+      lastRun: {
+        id: 'run-tenant-2-last',
+        tenantId: 'tenant-2',
+        logicalDay: '2026-01-01',
+        status: 'SUCCESS',
+      },
+      backfillRequests: [{
+        id: 'backfill-tenant-2',
+        tenantId: 'tenant-2',
+        logicalDay: '2025-12-30',
+        status: 'FAILED',
+      }],
+      warning: 'tenant-2 warning',
+    };
+    mocks.getMarketingFacebookDailyStatus.mockImplementation(async (_pool, requestedTenant) => (
+      requestedTenant === 'tenant-1' ? tenantOneStatus : tenantTwoStatus
+    ));
+
+    const tenantTwoServer = await startServer({
+      id: 'manager-2',
+      tenantId: 'tenant-2',
+      role: 'MARKETING',
+    });
+
+    try {
+      const tenantOneResult = await getStatus(origin);
+      const tenantTwoResult = await getStatus(tenantTwoServer.origin);
+
+      expect(tenantOneResult.status).toBe(200);
+      expect(tenantOneResult.body).toEqual(tenantOneStatus);
+      expect(tenantOneResult.body).not.toEqual(expect.objectContaining({
+        settings: tenantTwoStatus.settings,
+        todayRun: tenantTwoStatus.todayRun,
+        lastRun: tenantTwoStatus.lastRun,
+        backfillRequests: tenantTwoStatus.backfillRequests,
+        warning: tenantTwoStatus.warning,
+      }));
+
+      expect(tenantTwoResult.status).toBe(200);
+      expect(tenantTwoResult.body).toEqual(tenantTwoStatus);
+      expect(tenantTwoResult.body).not.toEqual(expect.objectContaining({
+        settings: tenantOneStatus.settings,
+        todayRun: tenantOneStatus.todayRun,
+        lastRun: tenantOneStatus.lastRun,
+        backfillRequests: tenantOneStatus.backfillRequests,
+        warning: tenantOneStatus.warning,
+      }));
+
+      expect(mocks.getMarketingFacebookDailyStatus).toHaveBeenNthCalledWith(
+        1,
+        expect.anything(),
+        'tenant-1',
+        '2026-01-03',
+      );
+      expect(mocks.getMarketingFacebookDailyStatus).toHaveBeenNthCalledWith(
+        2,
+        expect.anything(),
+        'tenant-2',
+        '2026-01-03',
+      );
+    } finally {
+      await new Promise<void>(resolve => tenantTwoServer.server.close(() => resolve()));
+    }
+  });
+
   it('rejects future dates and short reasons before creating a backfill request', async () => {
     const future = await request(origin, {
       logicalDay: '2026-01-04',
