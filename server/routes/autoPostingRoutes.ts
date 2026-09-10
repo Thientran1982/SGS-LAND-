@@ -8,7 +8,11 @@ import {
   type AutoPostingTimeWindow,
 } from '../repositories/autoPostingRepository';
 import { normalizeSocialPlatforms } from '../services/socialPublicationService';
-import { localDayKey, runAutoPostingTick } from '../services/autoPostingSelector';
+import {
+  localDayKey,
+  runAutoPostingBackfill,
+  runAutoPostingTick,
+} from '../services/autoPostingSelector';
 
 const MANAGER_ROLES = new Set(['SUPER_ADMIN', 'ADMIN', 'TEAM_LEAD', 'MARKETING']);
 const AUTO_PLATFORMS = new Set(['FACEBOOK_PAGE']);
@@ -61,6 +65,23 @@ function matchesCronSecret(expected: string, provided: unknown): boolean {
     && crypto.timingSafeEqual(expectedBytes, providedBytes);
 }
 
+function normalizeLogicalDay(value: unknown): string {
+  if (typeof value !== 'string' || !/^\d{4}-\d{2}-\d{2}$/.test(value)) {
+    throw new Error('Ngày chạy bù phải có định dạng YYYY-MM-DD');
+  }
+  const [year, month, day] = value.split('-').map(Number);
+  const date = new Date(Date.UTC(year, month - 1, day));
+  if (
+    date.getUTCFullYear() !== year
+    || date.getUTCMonth() !== month - 1
+    || date.getUTCDate() !== day
+  ) {
+    throw new Error('Ngày chạy bù không hợp lệ');
+  }
+  if (value > localDayKey()) throw new Error('Không thể chạy bù cho ngày trong tương lai');
+  return value;
+}
+
 export function createAutoPostingRouter(
   pool: Pool,
   authenticateToken: RequestHandler,
@@ -92,6 +113,37 @@ export function createAutoPostingRouter(
       return res.json(settings);
     } catch (error: any) {
       return res.status(400).json({ error: error?.message || 'Không thể lưu cấu hình tự động' });
+    }
+  });
+
+  router.post('/api/auto-posting/backfill', authenticateToken, async (req, res) => {
+    if (!requireManager(req, res)) return;
+    try {
+      const logicalDay = normalizeLogicalDay(req.body?.logicalDay ?? req.body?.date);
+      const reason = typeof req.body?.reason === 'string' ? req.body.reason.trim().slice(0, 1000) : '';
+      if (reason.length < 3) {
+        return res.status(400).json({ error: 'Cần ghi lý do chạy bù tối thiểu 3 ký tự' });
+      }
+      const requestedBy = String((req as any).user?.id || '');
+      if (!requestedBy) return res.status(400).json({ error: 'Không xác định được người yêu cầu chạy bù' });
+
+      const result = await runAutoPostingBackfill(
+        pool,
+        tenantId(req),
+        logicalDay,
+        reason,
+        requestedBy,
+      );
+      if (result.reason === 'BACKFILL_ALREADY_REQUESTED') {
+        return res.status(409).json({
+          error: 'Ngày này đã có yêu cầu chạy bù; không tạo thêm yêu cầu gửi.',
+          code: result.reason,
+          ...result,
+        });
+      }
+      return res.json({ logicalDay, requestedReason: reason, requestedBy, ...result });
+    } catch (error: any) {
+      return res.status(400).json({ error: error?.message || 'Không thể yêu cầu chạy bù bài Marketing' });
     }
   });
 

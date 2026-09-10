@@ -6,13 +6,18 @@ import migration187 from '../migrations/187_social_publication_audit';
 import migration190 from '../migrations/190_auto_posting_phase3';
 import migration192 from '../migrations/192_social_publication_project_source';
 import migration193 from '../migrations/193_marketing_facebook_daily_runs';
+import migration194 from '../migrations/194_marketing_facebook_backfills';
 import {
   createSocialPublication,
   findSocialPublication,
   listSocialPublications,
 } from '../repositories/socialPublicationRepository';
 import { upsertAutoPostingSettings } from '../repositories/autoPostingRepository';
-import { runAutoPostingForTenant, runAutoPostingTick } from '../services/autoPostingSelector';
+import {
+  runAutoPostingBackfill,
+  runAutoPostingForTenant,
+  runAutoPostingTick,
+} from '../services/autoPostingSelector';
 import { getTenantSocialPlatformCapability } from '../social-publishing/registry';
 import { processSocialPublicationTick } from '../services/socialPublishingWorker';
 import type { SocialPlatform } from '../social-publishing/types';
@@ -278,13 +283,14 @@ describePostgres('Marketing Facebook daily selector against PostgreSQL', () => {
     await migration190.up(setupClient);
     await migration192.up(setupClient);
     await migration193.up(setupClient);
+    await migration194.up(setupClient);
     setupClient.release();
     setupClient = undefined;
   });
 
   beforeEach(async () => {
     await query(`
-      TRUNCATE marketing_facebook_daily_runs, social_publication_events,
+      TRUNCATE marketing_facebook_backfill_requests, marketing_facebook_daily_runs, social_publication_events,
         social_publications, auto_posting_settings, listings, projects CASCADE
     `);
     vi.clearAllMocks();
@@ -444,6 +450,110 @@ describePostgres('Marketing Facebook daily selector against PostgreSQL', () => {
       status: 'FAILED',
       error_code: 'FACEBOOK_DELIVERY_FAILED',
       result: expect.objectContaining({ reason: 'FACEBOOK_DELIVERY_FAILED' }),
+    });
+  });
+
+  it('runs a requested missed day outside the normal window and audits the requester, reason, and result', async () => {
+    const listingId = await insertListing({ tenantId: tenantA });
+    await configureSelector(tenantA);
+    configureCapabilities({
+      FACEBOOK_PAGE: { status: 'READY', reason: 'Facebook đã xác minh', retryable: false },
+    });
+
+    const result = await runAutoPostingBackfill(
+      setupPool,
+      tenantA,
+      '2025-12-31',
+      'QStash bị gián đoạn trong lúc triển khai',
+      'manager-1',
+      new Date('2026-01-03T03:00:00.000Z'),
+    );
+
+    expect(result).toMatchObject({
+      created: 1,
+      reason: 'OK',
+      sourceId: listingId,
+      backfillRequestId: expect.any(String),
+    });
+    const audit = await query(
+      `SELECT logical_day, status, reason, requested_by, result
+         FROM marketing_facebook_backfill_requests
+        WHERE tenant_id = $1`,
+      [tenantA],
+    );
+    expect(audit.rows[0]).toMatchObject({
+      logical_day: new Date('2025-12-31T00:00:00.000Z'),
+      status: 'SUCCESS',
+      reason: 'QStash bị gián đoạn trong lúc triển khai',
+      requested_by: 'manager-1',
+      result: expect.objectContaining({
+        mode: 'BACKFILL',
+        logicalDay: '2025-12-31',
+        backfillReason: 'QStash bị gián đoạn trong lúc triển khai',
+        requestedBy: 'manager-1',
+      }),
+    });
+    const publication = await query(
+      `SELECT auto_posting_key
+         FROM social_publications
+        WHERE tenant_id = $1`,
+      [tenantA],
+    );
+    expect(publication.rows[0].auto_posting_key).toBe(`2025-12-31:LISTING:${listingId}`);
+  });
+
+  it('blocks backfill after an ambiguous Facebook result and never creates another publication', async () => {
+    const listingId = await insertListing({ tenantId: tenantA });
+    await configureSelector(tenantA);
+    configureCapabilities({
+      FACEBOOK_PAGE: { status: 'READY', reason: 'Facebook đã xác minh', retryable: false },
+    });
+
+    const first = await runAutoPostingForTenant(setupPool, tenantA, runAtSevenPmVietnam);
+    expect(first).toMatchObject({ created: 1, sourceId: listingId });
+    await query(
+      `UPDATE social_publication_targets
+          SET status = 'AMBIGUOUS',
+              last_error_code = 'FACEBOOK_ALBUM_UPLOAD_OUTCOME_UNKNOWN'
+        WHERE publication_id = $1`,
+      [first.publicationId],
+    );
+    await query(
+      `UPDATE marketing_facebook_daily_runs
+          SET status = 'FAILED', publication_id = NULL
+        WHERE tenant_id = $1 AND logical_day = $2::date`,
+      [tenantA, '2026-01-02'],
+    );
+
+    const backfill = await runAutoPostingBackfill(
+      setupPool,
+      tenantA,
+      '2026-01-02',
+      'Deployment outage, cần kiểm tra lại kết quả',
+      'manager-2',
+      new Date('2026-01-03T03:00:00.000Z'),
+    );
+
+    expect(backfill).toMatchObject({
+      created: 0,
+      reason: 'PROVIDER_OUTCOME_UNKNOWN',
+    });
+    const publications = await query(
+      `SELECT COUNT(*)::int AS count FROM social_publications WHERE tenant_id = $1`,
+      [tenantA],
+    );
+    expect(publications.rows[0].count).toBe(1);
+    const audit = await query(
+      `SELECT status, error_code, reason, requested_by
+         FROM marketing_facebook_backfill_requests
+        WHERE tenant_id = $1`,
+      [tenantA],
+    );
+    expect(audit.rows[0]).toMatchObject({
+      status: 'BLOCKED',
+      error_code: 'PROVIDER_OUTCOME_UNKNOWN',
+      reason: 'Deployment outage, cần kiểm tra lại kết quả',
+      requested_by: 'manager-2',
     });
   });
 

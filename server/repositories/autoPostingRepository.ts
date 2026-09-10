@@ -36,6 +36,21 @@ export type MarketingFacebookDailyRun = {
   finishedAt: string | null;
 };
 
+export type MarketingFacebookBackfillRequest = {
+  id: string;
+  tenantId: string;
+  logicalDay: string;
+  reason: string;
+  requestedBy: string;
+  status: 'REQUESTED' | 'RUNNING' | 'SUCCESS' | 'FAILED' | 'SKIPPED' | 'BLOCKED';
+  result: Record<string, unknown>;
+  errorCode: string | null;
+  errorMessage: string | null;
+  requestedAt: string;
+  startedAt: string | null;
+  finishedAt: string | null;
+};
+
 function asJson<T>(value: unknown, fallback: T): T {
   if (typeof value === 'string') {
     try { return JSON.parse(value) as T; } catch { return fallback; }
@@ -128,6 +143,26 @@ function mapDailyRun(row: any): MarketingFacebookDailyRun {
   };
 }
 
+function mapBackfillRequest(row: any): MarketingFacebookBackfillRequest {
+  const logicalDay = row.logical_day instanceof Date
+    ? row.logical_day.toISOString().slice(0, 10)
+    : String(row.logical_day || '').slice(0, 10);
+  return {
+    id: String(row.id),
+    tenantId: String(row.tenant_id),
+    logicalDay,
+    reason: String(row.reason || ''),
+    requestedBy: String(row.requested_by || ''),
+    status: row.status,
+    result: row.result && typeof row.result === 'object' ? row.result : {},
+    errorCode: row.error_code || null,
+    errorMessage: row.error_message || null,
+    requestedAt: row.requested_at,
+    startedAt: row.started_at || null,
+    finishedAt: row.finished_at || null,
+  };
+}
+
 export async function claimMarketingFacebookDailyRun(
   pool: Pool,
   tenantId: string,
@@ -141,6 +176,228 @@ export async function claimMarketingFacebookDailyRun(
     [tenantId, logicalDay],
   );
   return result.rows[0] ? mapDailyRun(result.rows[0]) : null;
+}
+
+export type BackfillRunClaim =
+  | { kind: 'CLAIMED'; run: MarketingFacebookDailyRun }
+  | { kind: 'BLOCKED'; reason: string; errorCode: string };
+
+/**
+ * Reuses the tenant/day ledger row only for a controlled backfill. The unique
+ * day claim remains the idempotency boundary; an ambiguous provider result or
+ * an in-flight target always blocks a second provider submission.
+ */
+export async function claimMarketingFacebookBackfillRun(
+  pool: Pool,
+  tenantId: string,
+  logicalDay: string,
+): Promise<BackfillRunClaim> {
+  const client = await pool.connect();
+  try {
+    await client.query('BEGIN');
+    const existing = await client.query(
+      `SELECT r.*,
+              EXISTS (
+                SELECT 1
+                  FROM social_publication_targets t
+                  JOIN social_publications p ON p.id = t.publication_id
+                 WHERE p.tenant_id = $1
+                   AND p.source = 'AUTO'
+                   AND p.auto_posting_key LIKE ($2::text || ':%')
+                   AND t.status = 'AMBIGUOUS'
+              ) AS has_ambiguous_target,
+              EXISTS (
+                SELECT 1
+                  FROM social_publication_targets t
+                  JOIN social_publications p ON p.id = t.publication_id
+                 WHERE p.tenant_id = $1
+                   AND p.source = 'AUTO'
+                   AND p.auto_posting_key LIKE ($2::text || ':%')
+                   AND t.status IN ('PENDING', 'PROCESSING', 'FAILED_RETRYABLE')
+              ) AS has_unresolved_target,
+              EXISTS (
+                SELECT 1
+                  FROM social_publication_targets t
+                  JOIN social_publications p ON p.id = t.publication_id
+                 WHERE p.tenant_id = $1
+                   AND p.source = 'AUTO'
+                   AND p.auto_posting_key LIKE ($2::text || ':%')
+                   AND t.status = 'PUBLISHED'
+              ) AS has_successful_target
+         FROM marketing_facebook_daily_runs r
+        WHERE r.tenant_id = $1 AND r.logical_day = $2::date
+        FOR UPDATE`,
+      [tenantId, logicalDay],
+    );
+    const row = existing.rows[0];
+
+    if (row?.has_ambiguous_target) {
+      await client.query('ROLLBACK');
+      return {
+        kind: 'BLOCKED',
+        reason: 'Facebook không xác nhận kết quả lần đăng trước; cần reconcile thủ công trước khi chạy bù.',
+        errorCode: 'PROVIDER_OUTCOME_UNKNOWN',
+      };
+    }
+    if (row?.has_unresolved_target) {
+      await client.query('ROLLBACK');
+      return {
+        kind: 'BLOCKED',
+        reason: 'Lần đăng trước vẫn đang chờ xử lý hoặc retry; không tạo thêm một lần gửi.',
+        errorCode: 'DAILY_RUN_DELIVERY_IN_PROGRESS',
+      };
+    }
+    if (row?.status === 'SUCCESS' || row?.has_successful_target) {
+      await client.query('ROLLBACK');
+      return {
+        kind: 'BLOCKED',
+        reason: 'Ngày này đã đăng thành công; khóa chống đăng trùng vẫn được giữ nguyên.',
+        errorCode: 'DAILY_RUN_ALREADY_SUCCESS',
+      };
+    }
+
+    // A crashed process can leave a row RUNNING without a provider target.
+    // A recent RUNNING row is still protected from concurrent manual takeover.
+    if (
+      row?.status === 'RUNNING'
+      && row.started_at
+      && Date.now() - new Date(row.started_at).getTime() < 15 * 60 * 1000
+    ) {
+      await client.query('ROLLBACK');
+      return {
+        kind: 'BLOCKED',
+        reason: 'Lần chạy trong ngày vẫn đang hoạt động; hãy chờ kết quả trước khi chạy bù.',
+        errorCode: 'DAILY_RUN_IN_PROGRESS',
+      };
+    }
+
+    let runRow = row;
+    if (!runRow) {
+      const inserted = await client.query(
+        `INSERT INTO marketing_facebook_daily_runs (tenant_id, logical_day, status)
+         VALUES ($1, $2::date, 'RUNNING')
+         ON CONFLICT (tenant_id, logical_day) DO NOTHING
+         RETURNING *`,
+        [tenantId, logicalDay],
+      );
+      runRow = inserted.rows[0];
+      if (!runRow) {
+        const raced = await client.query(
+          `SELECT * FROM marketing_facebook_daily_runs
+            WHERE tenant_id = $1 AND logical_day = $2::date
+            FOR UPDATE`,
+          [tenantId, logicalDay],
+        );
+        runRow = raced.rows[0];
+      }
+    }
+
+    const updated = await client.query(
+      `UPDATE marketing_facebook_daily_runs
+          SET status = 'RUNNING',
+              result = jsonb_build_object('mode', 'BACKFILL', 'logicalDay', $2::text),
+              error_code = NULL,
+              error_message = NULL,
+              finished_at = NULL,
+              started_at = NOW()
+        WHERE id = $1
+        RETURNING *`,
+      [runRow.id, logicalDay],
+    );
+    await client.query('COMMIT');
+    return { kind: 'CLAIMED', run: mapDailyRun(updated.rows[0]) };
+  } catch (error) {
+    await client.query('ROLLBACK').catch(() => undefined);
+    throw error;
+  } finally {
+    client.release();
+  }
+}
+
+export async function createMarketingFacebookBackfillRequest(
+  pool: Pool,
+  input: {
+    tenantId: string;
+    logicalDay: string;
+    reason: string;
+    requestedBy: string;
+  },
+): Promise<{ created: boolean; request: MarketingFacebookBackfillRequest }> {
+  const result = await pool.query(
+    `INSERT INTO marketing_facebook_backfill_requests
+       (tenant_id, logical_day, reason, requested_by)
+     VALUES ($1, $2::date, $3, $4)
+     ON CONFLICT (tenant_id, logical_day) DO NOTHING
+     RETURNING *`,
+    [input.tenantId, input.logicalDay, input.reason.trim(), input.requestedBy],
+  );
+  if (result.rows[0]) return { created: true, request: mapBackfillRequest(result.rows[0]) };
+  const existing = await pool.query(
+    `SELECT * FROM marketing_facebook_backfill_requests
+      WHERE tenant_id = $1 AND logical_day = $2::date`,
+    [input.tenantId, input.logicalDay],
+  );
+  return { created: false, request: mapBackfillRequest(existing.rows[0]) };
+}
+
+export async function markMarketingFacebookBackfillRunning(
+  pool: Pool,
+  requestId: string,
+): Promise<MarketingFacebookBackfillRequest | null> {
+  const result = await pool.query(
+    `UPDATE marketing_facebook_backfill_requests
+        SET status = 'RUNNING', started_at = NOW()
+      WHERE id = $1 AND status = 'REQUESTED'
+      RETURNING *`,
+    [requestId],
+  );
+  return result.rows[0] ? mapBackfillRequest(result.rows[0]) : null;
+}
+
+export async function finishMarketingFacebookBackfillRequest(
+  pool: Pool,
+  requestId: string,
+  update: {
+    status: MarketingFacebookBackfillRequest['status'];
+    result?: Record<string, unknown>;
+    errorCode?: string | null;
+    errorMessage?: string | null;
+  },
+): Promise<MarketingFacebookBackfillRequest | null> {
+  const result = await pool.query(
+    `UPDATE marketing_facebook_backfill_requests
+        SET status = $2,
+            result = $3::jsonb,
+            error_code = $4,
+            error_message = $5,
+            finished_at = NOW()
+      WHERE id = $1
+      RETURNING *`,
+    [
+      requestId,
+      update.status,
+      JSON.stringify(update.result || {}),
+      update.errorCode || null,
+      update.errorMessage || null,
+    ],
+  );
+  return result.rows[0] ? mapBackfillRequest(result.rows[0]) : null;
+}
+
+export async function listMarketingFacebookBackfillRequests(
+  pool: Pool,
+  tenantId: string,
+  limit = 20,
+): Promise<MarketingFacebookBackfillRequest[]> {
+  const result = await pool.query(
+    `SELECT *
+       FROM marketing_facebook_backfill_requests
+      WHERE tenant_id = $1
+      ORDER BY requested_at DESC
+      LIMIT $2`,
+    [tenantId, Math.min(Math.max(Math.floor(limit), 1), 50)],
+  );
+  return result.rows.map(mapBackfillRequest);
 }
 
 export async function finishMarketingFacebookDailyRun(
@@ -190,9 +447,10 @@ export async function getMarketingFacebookDailyStatus(
   settings: AutoPostingSettings;
   todayRun: MarketingFacebookDailyRun | null;
   lastRun: MarketingFacebookDailyRun | null;
+  backfillRequests: MarketingFacebookBackfillRequest[];
   warning: string | null;
 }> {
-  const [settings, result] = await Promise.all([
+  const [settings, result, backfillRequests] = await Promise.all([
     getAutoPostingSettings(pool, tenantId),
     pool.query(
       `SELECT *
@@ -202,6 +460,7 @@ export async function getMarketingFacebookDailyStatus(
         LIMIT 10`,
       [tenantId],
     ),
+    listMarketingFacebookBackfillRequests(pool, tenantId),
   ]);
   const runs = result.rows.map(mapDailyRun);
   const todayRun = runs.find(run => run.logicalDay === logicalDay) || null;
@@ -211,5 +470,5 @@ export async function getMarketingFacebookDailyStatus(
     : todayRun?.status === 'FAILED'
       ? todayRun.errorMessage || 'Agent Marketing đăng Facebook hôm nay bị lỗi.'
       : null;
-  return { settings, todayRun, lastRun, warning };
+  return { settings, todayRun, lastRun, backfillRequests, warning };
 }

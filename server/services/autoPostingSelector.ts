@@ -6,10 +6,14 @@ import {
   recordSocialPublicationEvent,
 } from '../repositories/socialPublicationRepository';
 import {
+  claimMarketingFacebookBackfillRun,
   claimMarketingFacebookDailyRun,
+  createMarketingFacebookBackfillRequest,
+  finishMarketingFacebookBackfillRequest,
   finishMarketingFacebookDailyRun,
   getAutoPostingSettings,
   listEnabledAutoPostingTenants,
+  markMarketingFacebookBackfillRunning,
   type AutoPostingSettings,
 } from '../repositories/autoPostingRepository';
 import {
@@ -90,7 +94,12 @@ function jsonValue(value: unknown): unknown {
   }
 }
 
-async function eligibleCandidates(pool: Pool, tenantId: string): Promise<AutoPostingCandidate[]> {
+async function eligibleCandidates(
+  pool: Pool,
+  tenantId: string,
+  logicalDay?: string,
+): Promise<AutoPostingCandidate[]> {
+  const autoPostingPrefix = logicalDay ? `${logicalDay}:%` : null;
   const result = await pool.query(
     `WITH candidate_rows AS (
        SELECT 'LISTING'::text AS source_type,
@@ -115,6 +124,16 @@ async function eligibleCandidates(pool: Pool, tenantId: string): Promise<AutoPos
         WHERE l.tenant_id = $1
           AND UPPER(l.status) = ANY($2::text[])
           AND (p.id IS NULL OR UPPER(p.status) = ANY($3::text[]))
+           AND (
+             $4::text IS NULL
+             OR NOT EXISTS (
+               SELECT 1 FROM social_publications prior
+                WHERE prior.tenant_id = l.tenant_id::text
+                  AND prior.source = 'AUTO'
+                  AND prior.auto_posting_key LIKE $4
+                  AND prior.listing_id = l.id
+             )
+           )
 
        UNION ALL
 
@@ -135,6 +154,16 @@ async function eligibleCandidates(pool: Pool, tenantId: string): Promise<AutoPos
          FROM projects p
         WHERE p.tenant_id = $1
           AND UPPER(p.status) = ANY($3::text[])
+          AND (
+            $4::text IS NULL
+            OR NOT EXISTS (
+              SELECT 1 FROM social_publications prior
+               WHERE prior.tenant_id = p.tenant_id::text
+                 AND prior.source = 'AUTO'
+                 AND prior.auto_posting_key LIKE $4
+                 AND prior.project_id = p.id
+            )
+          )
      )
      SELECT *
        FROM candidate_rows
@@ -147,6 +176,7 @@ async function eligibleCandidates(pool: Pool, tenantId: string): Promise<AutoPos
       tenantId,
       Array.from(PUBLISHABLE_LISTING_STATUSES),
       Array.from(PUBLISHABLE_PROJECT_STATUSES),
+      autoPostingPrefix,
     ],
   );
   return result.rows.map(row => ({
@@ -174,27 +204,99 @@ function projectImages(value: unknown): string[] {
   ]);
 }
 
+type AutoPostingResult = {
+  created: number;
+  published: number;
+  skipped: number;
+  reason: string;
+  warning?: string;
+  publicationId?: string;
+  sourceType?: 'LISTING' | 'PROJECT';
+  sourceId?: string;
+  delivery?: Record<string, unknown>;
+  backfillRequestId?: string;
+  backfillStatus?: string;
+};
+
 export async function runAutoPostingForTenant(
   pool: Pool,
   tenantId: string,
   now = new Date(),
-) {
+  options?: {
+    logicalDay?: string;
+    mode?: 'DAILY' | 'BACKFILL';
+    backfillRequestId?: string;
+    backfillReason?: string;
+    requestedBy?: string;
+  },
+): Promise<AutoPostingResult> {
   const settings = normalizeSettings(await getAutoPostingSettings(pool, tenantId));
-  if (!settings.enabled || !inTimeWindow(settings, now)) {
-    return { created: 0, published: 0, skipped: 0, reason: 'DISABLED_OR_OUTSIDE_WINDOW' };
+  const isBackfill = options?.mode === 'BACKFILL';
+  if (!settings.enabled || (!isBackfill && !inTimeWindow(settings, now))) {
+    const result = { created: 0, published: 0, skipped: 0, reason: 'DISABLED_OR_OUTSIDE_WINDOW' };
+    if (options?.backfillRequestId) {
+      await finishMarketingFacebookBackfillRequest(pool, options.backfillRequestId, {
+        status: 'SKIPPED',
+        result,
+        errorCode: result.reason,
+        errorMessage: 'Cấu hình tự động đăng đang tắt.',
+      });
+    }
+    return result;
   }
 
-  const logicalDayKey = localDayKey(now);
-  const run = await claimMarketingFacebookDailyRun(pool, tenantId, logicalDayKey);
-  if (!run) {
-    return { created: 0, published: 0, skipped: 0, reason: 'DAILY_RUN_ALREADY_CLAIMED' };
+  const logicalDayKey = options?.logicalDay || localDayKey(now);
+  let run;
+  if (isBackfill) {
+    if (!options?.backfillRequestId) throw new Error('Backfill request ID là bắt buộc');
+    await markMarketingFacebookBackfillRunning(pool, options.backfillRequestId);
+    const claim = await claimMarketingFacebookBackfillRun(pool, tenantId, logicalDayKey);
+    if (claim.kind === 'BLOCKED') {
+      await finishMarketingFacebookBackfillRequest(pool, options.backfillRequestId, {
+        status: 'BLOCKED',
+        result: { reason: claim.errorCode, logicalDay: logicalDayKey },
+        errorCode: claim.errorCode,
+        errorMessage: claim.reason,
+      });
+      return { created: 0, published: 0, skipped: 0, reason: claim.errorCode, warning: claim.reason };
+    }
+    run = claim.run;
+  } else {
+    run = await claimMarketingFacebookDailyRun(pool, tenantId, logicalDayKey);
+    if (!run) {
+      return { created: 0, published: 0, skipped: 0, reason: 'DAILY_RUN_ALREADY_CLAIMED' };
+    }
   }
+
+  const finishRun = async (update: Parameters<typeof finishMarketingFacebookDailyRun>[2]) => {
+    const result = {
+      ...(update.result || {}),
+      ...(isBackfill
+        ? {
+            mode: 'BACKFILL',
+            logicalDay: logicalDayKey,
+            backfillReason: options?.backfillReason,
+            requestedBy: options?.requestedBy,
+          }
+        : {}),
+    };
+    const finished = await finishMarketingFacebookDailyRun(pool, run.id, { ...update, result });
+    if (options?.backfillRequestId) {
+      await finishMarketingFacebookBackfillRequest(pool, options.backfillRequestId, {
+        status: update.status,
+        result,
+        errorCode: update.errorCode,
+        errorMessage: update.errorMessage,
+      });
+    }
+    return finished;
+  };
 
   try {
     const capability = await getTenantSocialPlatformCapability(FACEBOOK_PLATFORM, tenantId);
     if (capability.status !== 'READY' || !capability.canPublish) {
       const reason = capability.reason || 'Facebook Page chưa sẵn sàng để đăng tự động.';
-      await finishMarketingFacebookDailyRun(pool, run.id, {
+      await finishRun({
         status: 'SKIPPED',
         result: { reason: 'FACEBOOK_NOT_READY', checkedAt: new Date().toISOString() },
         errorCode: 'FACEBOOK_NOT_READY',
@@ -204,7 +306,7 @@ export async function runAutoPostingForTenant(
       return { created: 0, published: 0, skipped: 1, reason: 'FACEBOOK_NOT_READY', warning: reason };
     }
 
-    const candidates = await eligibleCandidates(pool, tenantId);
+    const candidates = await eligibleCandidates(pool, tenantId, logicalDayKey);
     const candidate = candidates.find(item => (
       item.sourceType === 'LISTING'
         ? listingImages(item.images).length > 0
@@ -212,7 +314,7 @@ export async function runAutoPostingForTenant(
     ));
     if (!candidate) {
       const reason = 'Hôm nay không có listing hoặc dự án ACTIVE đủ điều kiện và có ít nhất một ảnh HTTPS để đăng Facebook.';
-      await finishMarketingFacebookDailyRun(pool, run.id, {
+      await finishRun({
         status: 'SKIPPED',
         result: {
           reason: 'NO_ELIGIBLE_SOURCE',
@@ -234,7 +336,7 @@ export async function runAutoPostingForTenant(
       : normalizePublicationImages('images' in snapshot ? snapshot.images : []);
     if (!images.length) {
       const reason = 'Nguồn được chọn không còn ảnh HTTPS hợp lệ khi tạo snapshot.';
-      await finishMarketingFacebookDailyRun(pool, run.id, {
+      await finishRun({
         status: 'SKIPPED',
         sourceType: candidate.sourceType,
         sourceId: candidate.sourceId,
@@ -291,7 +393,7 @@ export async function runAutoPostingForTenant(
 
     const delivery = await processSocialPublicationTick(pool, 1);
     const deliveryFailed = Number(delivery.failed || 0) > 0;
-    await finishMarketingFacebookDailyRun(pool, run.id, {
+    await finishRun({
       status: deliveryFailed ? 'FAILED' : 'SUCCESS',
       sourceType: candidate.sourceType,
       sourceId: candidate.sourceId,
@@ -321,7 +423,7 @@ export async function runAutoPostingForTenant(
     };
   } catch (error: any) {
     const message = String(error?.message || 'Agent Marketing đăng Facebook thất bại').slice(0, 1000);
-    await finishMarketingFacebookDailyRun(pool, run.id, {
+    await finishRun({
       status: 'FAILED',
       result: { reason: 'ERROR', failedAt: new Date().toISOString() },
       errorCode: String(error?.code || 'MARKETING_AGENT_ERROR'),
@@ -331,6 +433,60 @@ export async function runAutoPostingForTenant(
     return { created: 0, published: 0, skipped: 0, reason: 'ERROR', warning: message };
   }
 }
+
+export async function runAutoPostingBackfill(
+  pool: Pool,
+  tenantId: string,
+  logicalDay: string,
+  reason: string,
+  requestedBy: string,
+  now = new Date(),
+) {
+  const request = await createMarketingFacebookBackfillRequest(pool, {
+    tenantId,
+    logicalDay,
+    reason,
+    requestedBy,
+  });
+  if (!request.created) {
+    return {
+      created: 0,
+      published: 0,
+      skipped: 0,
+      reason: 'BACKFILL_ALREADY_REQUESTED',
+      backfillRequestId: request.request.id,
+      backfillStatus: request.request.status,
+    };
+  }
+  try {
+    const result = await runAutoPostingForTenant(pool, tenantId, now, {
+      mode: 'BACKFILL',
+      logicalDay,
+      backfillRequestId: request.request.id,
+      backfillReason: reason,
+      requestedBy,
+    });
+    return { ...result, backfillRequestId: request.request.id };
+  } catch (error: any) {
+    const message = String(error?.message || 'Không thể chạy bù bài Marketing').slice(0, 1000);
+    await finishMarketingFacebookBackfillRequest(pool, request.request.id, {
+      status: 'FAILED',
+      result: { reason: 'ERROR', logicalDay },
+      errorCode: String(error?.code || 'MARKETING_BACKFILL_ERROR'),
+      errorMessage: message,
+    }).catch(finishError => logger.error('[MarketingAgent] Failed to persist backfill failure', finishError));
+    logger.error(`[MarketingAgent] backfill tenant ${tenantId} failed`, error);
+    return {
+      created: 0,
+      published: 0,
+      skipped: 0,
+      reason: 'ERROR',
+      warning: message,
+      backfillRequestId: request.request.id,
+    };
+  }
+}
+
 export async function runAutoPostingTick(pool: Pool, now = new Date()) {
   const tenants = await listEnabledAutoPostingTenants(pool);
   const results = [];
