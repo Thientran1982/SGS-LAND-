@@ -15,6 +15,12 @@ The composition UI may resolve relative or local image paths through the current
 
 **How to apply:** Keep display URL normalization in the UI image component/dropdown layer and retain the server-side HTTPS/public-origin gate before draft activation or delivery.
 
+Legacy listing imports may still contain public `http://` image URLs, which browsers block as mixed content inside the HTTPS CRM preview; the display layer may upgrade those URLs to HTTPS without weakening the provider-side asset gate.
+
+**Why:** A valid remote image can appear broken only because the operator is viewing the CRM over HTTPS, not because the file is missing.
+
+**How to apply:** Treat this as a display compatibility repair only; do not persist the rewritten display URL as a provider asset unless the server can verify its tenant ownership and public HTTPS reachability.
+
 For Zalo OA broadcast, the provider contract is `POST /v2.0/oa/message` with an article attachment. A tenant must first pass the read-only OA identity check and the documented quota/permission probe (`POST /v3.0/oa/quota/message`) before the capability can become READY.
 
 **Why:** Zalo's broadcast endpoint has no dry-run, while the quota endpoint verifies the send-and-notify permission without broadcasting to followers.

@@ -522,6 +522,51 @@ export const SocialPublishing: React.FC = () => {
     }
   };
 
+  const publishNow = async () => {
+    if (!selectedSourceId || !platforms.length) {
+      setMessage({ kind: 'error', text: `Chọn ${sourceType === 'PROJECT' ? 'dự án' : 'sản phẩm'} và nền tảng trước khi đăng.` });
+      return;
+    }
+    if (!caption.trim()) {
+      setMessage({ kind: 'error', text: 'Nhập caption trước khi đăng.' });
+      return;
+    }
+    if (unavailableSelectedImageUrls.length) {
+      setMessage({
+        kind: 'error',
+        text: `Không thể đăng: ${unavailableSelectedImageUrls.length} ảnh đã chọn không tải được. Hãy thử tải lại ảnh lỗi hoặc tải ảnh thay thế.`,
+      });
+      return;
+    }
+    const imageRequiredPlatforms = platforms.filter(platform => (
+      platform === 'FACEBOOK_PAGE' || platform === 'ZALO_BROADCAST'
+    ));
+    if (imageRequiredPlatforms.length && !selectedImageUrls.length) {
+      setMessage({ kind: 'error', text: `${imageRequiredPlatforms.join(', ')} cần ít nhất một ảnh HTTPS công khai đã chọn.` });
+      return;
+    }
+
+    setBusy(true);
+    setMessage(null);
+    try {
+      const publication = await socialPublicationApi.createDraft({
+        ...(sourceType === 'PROJECT' ? { projectId } : { listingId }),
+        platforms,
+        publishMode: 'NOW',
+        scheduledAt: null,
+        caption,
+        imageUrls: selectedImageUrls,
+      });
+      // Activation is the single provider-readiness gate. If a provider is
+      // not ready, the draft remains available and the response explains why.
+      await activate(publication.id);
+    } catch (error: any) {
+      setMessage({ kind: 'error', text: localizedSocialError(error, t, 'social.error_save') });
+    } finally {
+      setBusy(false);
+    }
+  };
+
   const activate = async (id: string) => {
     setBusy(true);
     setMessage(null);
@@ -1066,6 +1111,14 @@ export const SocialPublishing: React.FC = () => {
                 >
                   <CalendarClock size={16} /> Lưu draft
                 </button>
+                <button
+                  disabled={busy || draftLoading || unavailableSelectedImageUrls.length > 0}
+                  onClick={() => void publishNow()}
+                  title={unavailableSelectedImageUrls.length ? 'Có ảnh đã chọn không tải được' : undefined}
+                  className="inline-flex items-center gap-2 rounded-xl bg-emerald-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-emerald-700 disabled:opacity-50"
+                >
+                  <Send size={16} /> Lưu và đăng ngay
+                </button>
               </div>
               {unavailableSelectedImageUrls.length > 0 && (
                 <div role="alert" className="rounded-xl border border-red-200 bg-red-50 px-3 py-2.5 text-xs leading-5 text-red-800">
@@ -1076,7 +1129,20 @@ export const SocialPublishing: React.FC = () => {
              <div className="min-w-0 overflow-hidden rounded-2xl bg-[var(--bg-app)] p-4">
               <div className="mb-3 flex items-center justify-between gap-3">
                 <p className="text-xs font-bold uppercase tracking-wider text-[var(--text-tertiary)]">Preview content</p>
-                {!!selectedImageUrls.length && <span className="text-xs text-[var(--text-tertiary)]">{selectedImageUrls.length}/{maxFacebookImages} ảnh đã chọn</span>}
+                 <div className="flex flex-wrap items-center justify-end gap-2">
+                   {!!selectedImageUrls.length && <span className="text-xs text-[var(--text-tertiary)]">{selectedImageUrls.length}/{maxFacebookImages} ảnh đã chọn</span>}
+                   {!!preview.length && (
+                     <button
+                       type="button"
+                       disabled={busy || draftLoading || unavailableSelectedImageUrls.length > 0}
+                       onClick={() => void publishNow()}
+                       title={unavailableSelectedImageUrls.length ? 'Có ảnh đã chọn không tải được' : undefined}
+                       className="inline-flex items-center gap-1.5 rounded-lg bg-emerald-600 px-3 py-1.5 text-xs font-semibold text-white shadow-sm hover:bg-emerald-700 disabled:opacity-50"
+                     >
+                       <Send size={14} /> Đăng ngay
+                     </button>
+                   )}
+                 </div>
               </div>
                 {selectedSource ? (
                   <div className="mb-4 min-w-0 overflow-hidden rounded-xl border border-[var(--glass-border)] bg-[var(--bg-surface)] p-3">

@@ -22,6 +22,12 @@ export function normalizeSocialImageUrl(value: unknown): string | null {
     if (localHosts.has(parsed.hostname) || parsed.pathname.startsWith('/uploads/')) {
       return `${parsed.pathname}${parsed.search}${parsed.hash}`;
     }
+    // Old listing imports may contain http:// image URLs. Browsers block those
+    // as mixed content inside the HTTPS Replit preview, while the same public
+    // asset is normally available over HTTPS.
+    if (parsed.protocol === 'http:' && typeof window !== 'undefined' && window.location.protocol === 'https:') {
+      parsed.protocol = 'https:';
+    }
     return parsed.toString();
   } catch {
     return raw.startsWith('/') ? raw : null;
