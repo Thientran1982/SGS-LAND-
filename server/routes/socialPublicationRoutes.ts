@@ -1,6 +1,7 @@
 import { Router, Request, Response, RequestHandler } from 'express';
 import { Pool } from 'pg';
 import { listingRepository } from '../repositories/listingRepository';
+import { projectRepository } from '../repositories/projectRepository';
 import {
   applySocialTargetOperatorAction,
   activateSocialPublication,
@@ -15,6 +16,7 @@ import {
 } from '../repositories/socialPublicationRepository';
 import {
   buildPlatformContent,
+  buildSocialProjectSnapshot,
   buildSocialProductSnapshot,
   getTenantPublicationCatalog,
   MAX_FACEBOOK_IMAGES,
@@ -62,6 +64,33 @@ function parseProviderPostUrl(value: unknown): string | null {
   }
 }
 
+const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+
+function requestedSource(body: any): { listingId: string | null; projectId: string | null } {
+  const listingId = typeof body?.listingId === 'string' && body.listingId.trim()
+    ? body.listingId.trim()
+    : null;
+  const projectId = typeof body?.projectId === 'string' && body.projectId.trim()
+    ? body.projectId.trim()
+    : null;
+  if ((listingId ? 1 : 0) + (projectId ? 1 : 0) !== 1) {
+    throw new Error('Cần chọn đúng một nguồn: sản phẩm hoặc dự án');
+  }
+  if (listingId && !UUID_PATTERN.test(listingId)) throw new Error('Listing ID không hợp lệ');
+  if (projectId && !UUID_PATTERN.test(projectId)) throw new Error('Project ID không hợp lệ');
+  return { listingId, projectId };
+}
+
+function isTenantUploadedImage(imageUrl: string, currentTenant: string): boolean {
+  try {
+    const parsed = new URL(imageUrl);
+    return parsed.protocol === 'https:'
+      && parsed.pathname.startsWith(`/uploads/${currentTenant}/`);
+  } catch {
+    return false;
+  }
+}
+
 export function createSocialPublicationRouter(
   pool: Pool,
   authenticateToken: RequestHandler,
@@ -76,16 +105,21 @@ export function createSocialPublicationRouter(
   router.post('/api/social-publications/preview', authenticateToken, async (req, res) => {
     if (!requireManager(req, res)) return;
     try {
-      const snapshot = await buildSocialProductSnapshot(tenantId(req), String(req.body?.listingId || ''));
+      const currentTenant = tenantId(req);
+      const { listingId, projectId } = requestedSource(req.body);
+      const listing = listingId ? await listingRepository.findById(currentTenant, listingId) : null;
+      const snapshot = projectId
+        ? await buildSocialProjectSnapshot(currentTenant, projectId)
+        : await buildSocialProductSnapshot(currentTenant, listingId!);
       const platforms = normalizeSocialPlatforms(req.body?.platforms);
       if (!platforms.length) return res.status(400).json({ error: 'Chọn ít nhất một nền tảng để xem trước' });
-      const listingImages = normalizePublicationImages((await listingRepository.findById(
-        tenantId(req),
-        String(req.body?.listingId || ''),
-      ))?.images);
+      if (listingId && !listing) return res.status(404).json({ error: 'Không tìm thấy sản phẩm trong tenant hiện tại' });
+      const sourceImages = projectId
+        ? normalizePublicationImages('images' in snapshot ? snapshot.images : [])
+        : normalizePublicationImages(listing?.images);
       const images = Array.isArray(req.body?.imageUrls)
         ? normalizePublicationImages(req.body.imageUrls)
-        : listingImages;
+        : sourceImages;
       const caption = normalizePublicationCaption(req.body?.caption);
       const previewSnapshot = caption ? { ...snapshot, caption } : snapshot;
       return res.json({
@@ -164,27 +198,32 @@ export function createSocialPublicationRouter(
     if (!requireManager(req, res)) return;
     try {
       const currentTenant = tenantId(req);
-      const listingId = String(req.body?.listingId || '');
+      const { listingId, projectId } = requestedSource(req.body);
       const platforms = normalizeSocialPlatforms(req.body?.platforms);
-      if (!listingId || !/^[0-9a-f-]{36}$/i.test(listingId)) {
-        return res.status(400).json({ error: 'Listing ID không hợp lệ' });
-      }
       if (!platforms.length) return res.status(400).json({ error: 'Chọn ít nhất một nền tảng' });
-      const listing = await listingRepository.findById(currentTenant, listingId);
-      if (!listing) return res.status(404).json({ error: 'Không tìm thấy sản phẩm trong tenant hiện tại' });
-      const snapshot = await buildSocialProductSnapshot(currentTenant, listingId);
+      const listing = listingId ? await listingRepository.findById(currentTenant, listingId) : null;
+      if (listingId && !listing) return res.status(404).json({ error: 'Không tìm thấy sản phẩm trong tenant hiện tại' });
+      const snapshot = projectId
+        ? await buildSocialProjectSnapshot(currentTenant, projectId)
+        : await buildSocialProductSnapshot(currentTenant, listingId!);
       const publishMode = req.body?.publishMode === 'SCHEDULED' ? 'SCHEDULED' : 'NOW';
       const scheduledAt = publishMode === 'SCHEDULED' ? parseDate(req.body?.scheduledAt) : null;
       if (publishMode === 'SCHEDULED' && !scheduledAt) {
         return res.status(400).json({ error: 'Chiến dịch hẹn giờ cần có thời điểm đăng' });
       }
-      const listingImages = normalizePublicationImages(listing.images);
+       const sourceImages = projectId
+         ? normalizePublicationImages('images' in snapshot ? snapshot.images : [])
+         : normalizePublicationImages(listing?.images);
       const imageUrls = Array.isArray(req.body?.imageUrls)
         ? normalizePublicationImages(req.body.imageUrls)
-        : listingImages;
-      const unavailableImages = imageUrls.filter(image => !listingImages.includes(image));
+         : sourceImages;
+       const unavailableImages = imageUrls.filter(image => (
+         !sourceImages.includes(image) && !isTenantUploadedImage(image, currentTenant)
+       ));
       if (unavailableImages.length) {
-        return res.status(400).json({ error: 'Ảnh được chọn phải thuộc listing hiện tại' });
+         return res.status(400).json({ error: projectId
+           ? 'Ảnh được chọn phải thuộc dự án hiện tại hoặc là ảnh vừa tải lên'
+           : 'Ảnh được chọn phải thuộc listing hiện tại hoặc là ảnh vừa tải lên' });
       }
       const imageRequiredPlatforms = platforms.filter(platform => (
         platform === 'FACEBOOK_PAGE' || platform === 'ZALO_BROADCAST'
@@ -205,7 +244,8 @@ export function createSocialPublicationRouter(
       };
       const publication = await createSocialPublication(pool, {
         tenantId: currentTenant,
-        listingId,
+         listingId,
+         projectId,
         createdBy: (req as any).user?.id || null,
         publishMode,
         scheduledAt,
@@ -219,7 +259,7 @@ export function createSocialPublicationRouter(
         actorId: (req as any).user?.id || null,
         eventType: 'DRAFT_CREATED',
         toStatus: 'DRAFT',
-        reason: 'Operator tạo publication draft từ snapshot listing.',
+         reason: `Operator tạo publication draft từ snapshot ${projectId ? 'dự án' : 'listing'}.`,
         metadata: { platforms },
       });
       return res.status(201).json({

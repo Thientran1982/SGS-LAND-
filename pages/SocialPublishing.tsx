@@ -1,8 +1,11 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { AlertTriangle, ArrowUpRight, Bot, CalendarClock, Check, Eye, ExternalLink, ImagePlus, PlugZap, RefreshCw, Send, Upload, X } from 'lucide-react';
 import { ROUTES } from '../config/routes';
+import { db } from '../services/dbApi';
 import { listingApi } from '../services/api/listingApi';
 import ListingDropdown, { SocialListingOption } from '../components/social-publishing/ListingDropdown';
+import ProjectDropdown, { SocialProjectOption } from '../components/social-publishing/ProjectDropdown';
+import { SelectDropdown } from '../components/task/SelectDropdown';
 import {
   socialPublicationApi,
   SocialCapability,
@@ -58,6 +61,7 @@ export const SocialPublishing: React.FC = () => {
   const { t } = useTranslation();
   const [catalog, setCatalog] = useState<SocialCapability[]>([]);
   const [listings, setListings] = useState<SocialListingOption[]>([]);
+  const [projects, setProjects] = useState<SocialProjectOption[]>([]);
   const [publications, setPublications] = useState<SocialPublication[]>([]);
   const [stalePublications, setStalePublications] = useState<SocialPublication[]>([]);
   const [staleTotal, setStaleTotal] = useState(0);
@@ -67,6 +71,8 @@ export const SocialPublishing: React.FC = () => {
   const [staleLoading, setStaleLoading] = useState(false);
   const [staleReportNeedsRefresh, setStaleReportNeedsRefresh] = useState(false);
   const [listingId, setListingId] = useState('');
+  const [projectId, setProjectId] = useState('');
+  const [sourceType, setSourceType] = useState<'LISTING' | 'PROJECT'>('LISTING');
   const [platforms, setPlatforms] = useState<string[]>([]);
   const [preview, setPreview] = useState<{ platform: string; title: string; text: string; imageUrls: string[]; link: string | null }[]>([]);
   const [caption, setCaption] = useState('');
@@ -83,6 +89,7 @@ export const SocialPublishing: React.FC = () => {
   const [detailLoading, setDetailLoading] = useState<string | null>(null);
   const [focusedPlatform] = useState(() => normalizeRequestedPlatform(new URLSearchParams(window.location.search).get('platform')));
   const [requestedListingId] = useState(() => new URLSearchParams(window.location.search).get('listingId'));
+  const [requestedProjectId] = useState(() => new URLSearchParams(window.location.search).get('projectId'));
   const [reconcileForm, setReconcileForm] = useState<{
     publicationId: string;
     targetId: string;
@@ -96,9 +103,22 @@ export const SocialPublishing: React.FC = () => {
     () => listings.find(item => String(item.id) === listingId),
     [listings, listingId],
   );
+  const selectedProject = useMemo(
+    () => projects.find(item => String(item.id) === projectId),
+    [projects, projectId],
+  );
+  const selectedSourceId = sourceType === 'PROJECT' ? projectId : listingId;
+  const selectedSource = sourceType === 'PROJECT' ? selectedProject : selectedListing;
   const imageCandidates = useMemo(
-    () => Array.from(new Set([...(selectedListing?.images || []), ...uploadedImageUrls])),
-    [selectedListing, uploadedImageUrls],
+    () => Array.from(new Set([
+      ...(selectedProject?.metadata?.coverImage ? [String(selectedProject.metadata.coverImage)] : []),
+      ...(selectedProject?.metadata?.gallery && Array.isArray(selectedProject.metadata.gallery)
+        ? selectedProject.metadata.gallery.map(String)
+        : []),
+      ...(selectedListing?.images || []),
+      ...uploadedImageUrls,
+    ])),
+    [selectedListing, selectedProject, uploadedImageUrls],
   );
   const publisherCount = catalog.filter(item => item.hasPublisher).length;
   const readyCount = catalog.filter(item => isSocialCapabilityReady(item)).length;
@@ -126,9 +146,11 @@ export const SocialPublishing: React.FC = () => {
   };
 
   useEffect(() => {
-    const images = selectedListing?.images || [];
+    const images = sourceType === 'PROJECT'
+      ? imageCandidates
+      : selectedListing?.images || [];
     setSelectedImageUrls(images.slice(0, MAX_LISTING_IMAGES).slice(0, maxFacebookImages));
-  }, [selectedListing, maxFacebookImages]);
+  }, [imageCandidates, selectedListing, sourceType, maxFacebookImages]);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -138,6 +160,7 @@ export const SocialPublishing: React.FC = () => {
         statuses: 'AVAILABLE,OPENING,BOOKING,BEST_MARKET',
         publicationEligible: 'true',
       }),
+      db.getProjects(1, 100, { status: 'ACTIVE' }),
       socialPublicationApi.getPublications({ limit: 200 }),
       socialPublicationApi.getPublications({
         staleOnly: true,
@@ -155,8 +178,9 @@ export const SocialPublishing: React.FC = () => {
     }
 
     try {
-      const [listingResult, publicationResult, stalePublicationResult] = await publicationDataRequest;
+       const [listingResult, publicationResult, stalePublicationResult, projectResult] = await publicationDataRequest;
       setListings(listingResult.data || []);
+       setProjects(projectResult?.data || []);
       setPublications(publicationResult.data || []);
       const staleData = stalePublicationResult.data || [];
       const staleCount = Number.isFinite(stalePublicationResult.total)
@@ -175,6 +199,10 @@ export const SocialPublishing: React.FC = () => {
        if (requestedListingId && (listingResult.data || []).some((item: SocialListingOption) => String(item.id) === requestedListingId)) {
          setListingId(requestedListingId);
       }
+       if (requestedProjectId && (projectResult?.data || []).some((item: SocialProjectOption) => String(item.id) === requestedProjectId)) {
+         setSourceType('PROJECT');
+         setProjectId(requestedProjectId);
+       }
     } catch (error: any) {
       setMessage(current => current?.kind === 'error'
         ? current
@@ -182,7 +210,7 @@ export const SocialPublishing: React.FC = () => {
     } finally {
       setLoading(false);
     }
-  }, [requestedListingId, t]);
+  }, [requestedListingId, requestedProjectId, t]);
 
   useEffect(() => { void load(); }, [load]);
 
@@ -260,10 +288,28 @@ export const SocialPublishing: React.FC = () => {
   };
 
   const handleListingChange = (value: string) => {
+    setSourceType('LISTING');
     setListingId(value);
     setCaption('');
     setPreview([]);
     setUploadedImageUrls([]);
+  };
+
+  const handleProjectChange = (value: string) => {
+    setSourceType('PROJECT');
+    setProjectId(value);
+    setCaption('');
+    setPreview([]);
+    setUploadedImageUrls([]);
+  };
+
+  const handleSourceTypeChange = (value: string) => {
+    const next = value === 'PROJECT' ? 'PROJECT' : 'LISTING';
+    setSourceType(next);
+    setCaption('');
+    setPreview([]);
+    setUploadedImageUrls([]);
+    setSelectedImageUrls([]);
   };
 
   const toggleImage = (imageUrl: string) => {
@@ -279,8 +325,8 @@ export const SocialPublishing: React.FC = () => {
     const files = Array.from(event.target.files || []);
     event.target.value = '';
     if (!files.length) return;
-    if (!selectedListing) {
-      setMessage({ kind: 'error', text: 'Chọn listing trước khi tải ảnh cho publication.' });
+    if (!selectedSource) {
+      setMessage({ kind: 'error', text: `Chọn ${sourceType === 'PROJECT' ? 'dự án' : 'listing'} trước khi tải ảnh cho publication.` });
       return;
     }
     const remaining = maxFacebookImages - selectedImageUrls.length;
@@ -314,14 +360,14 @@ export const SocialPublishing: React.FC = () => {
   };
 
   const runPreview = async () => {
-    if (!listingId || !platforms.length) {
-      setMessage({ kind: 'error', text: 'Chọn một sản phẩm và ít nhất một nền tảng.' });
+    if (!selectedSourceId || !platforms.length) {
+      setMessage({ kind: 'error', text: `Chọn một ${sourceType === 'PROJECT' ? 'dự án' : 'sản phẩm'} và ít nhất một nền tảng.` });
       return;
     }
     setBusy(true);
     setMessage(null);
     try {
-      const result = await socialPublicationApi.preview(listingId, platforms, selectedImageUrls, caption);
+      const result = await socialPublicationApi.preview(selectedSourceId, platforms, selectedImageUrls, caption, sourceType);
       setPreview(result.previews || []);
       if (!caption.trim() && result.previews?.[0]?.text) {
         setCaption(result.previews[0].text);
@@ -334,8 +380,8 @@ export const SocialPublishing: React.FC = () => {
   };
 
   const saveDraft = async () => {
-    if (!listingId || !platforms.length) {
-      setMessage({ kind: 'error', text: 'Chọn sản phẩm và nền tảng trước khi lưu.' });
+    if (!selectedSourceId || !platforms.length) {
+      setMessage({ kind: 'error', text: `Chọn ${sourceType === 'PROJECT' ? 'dự án' : 'sản phẩm'} và nền tảng trước khi lưu.` });
       return;
     }
     if (schedule === 'SCHEDULED' && !scheduledAt) {
@@ -357,7 +403,7 @@ export const SocialPublishing: React.FC = () => {
     setMessage(null);
     try {
       await socialPublicationApi.createDraft({
-        listingId,
+        ...(sourceType === 'PROJECT' ? { projectId } : { listingId }),
         platforms,
         publishMode: schedule,
         scheduledAt: schedule === 'SCHEDULED' ? new Date(scheduledAt).toISOString() : null,
@@ -616,7 +662,24 @@ export const SocialPublishing: React.FC = () => {
       : null
   );
 
+  const getPublicationSourceLabel = (publication: SocialPublication): string => (
+    publication.sourceType === 'PROJECT' || publication.projectId ? 'Dự án' : 'Sản phẩm'
+  );
+
+  const getPublicationSourceId = (publication: SocialPublication): string => (
+    (publication.sourceType === 'PROJECT' || publication.projectId)
+      ? String(publication.projectId || '—')
+      : String(publication.listingId || '—')
+  );
+
   const getListingReviewMessage = (publication: SocialPublication): string => {
+    if (publication.projectId || publication.sourceType === 'PROJECT') {
+      if (publication.projectReview?.reason === 'PROJECT_NOT_FOUND') {
+        return 'Dự án không còn tồn tại trong tenant hiện tại.';
+      }
+      const status = publication.projectReview?.projectStatus || 'không xác định';
+      return `Dự án hiện ở trạng thái ${status}, không còn đủ điều kiện xuất bản công khai.`;
+    }
     if (publication.listingReview?.reason === 'LISTING_NOT_FOUND') {
       return 'Listing không còn tồn tại trong tenant hiện tại.';
     }
@@ -632,7 +695,7 @@ export const SocialPublishing: React.FC = () => {
             <p className="text-xs font-bold uppercase tracking-[0.18em] text-sgs-primary">Marketing operations</p>
             <h1 className="mt-2 text-3xl font-bold text-[var(--text-primary)]">Xuất bản sản phẩm công khai</h1>
             <p className="mt-2 max-w-3xl text-sm leading-6 text-[var(--text-secondary)]">
-              Preview và lưu kế hoạch xuất bản từ snapshot của listing. Tin nhắn customer-service và gửi sản phẩm trực tiếp cho lead qua Zalo nằm riêng trong Inbox, không phải bài đăng công khai.
+              Preview và lưu kế hoạch xuất bản từ snapshot của sản phẩm hoặc dự án. Tin nhắn customer-service và gửi sản phẩm trực tiếp cho lead qua Zalo nằm riêng trong Inbox, không phải bài đăng công khai.
             </p>
           </div>
           <button onClick={() => void load()} className="inline-flex items-center justify-center gap-2 rounded-xl border border-[var(--glass-border)] px-4 py-2 text-sm font-semibold text-[var(--text-secondary)] hover:bg-[var(--glass-surface-hover)]">
@@ -717,43 +780,100 @@ export const SocialPublishing: React.FC = () => {
           <div className="grid gap-5 lg:grid-cols-[1fr_1.4fr]">
             <div className="space-y-4">
               <label className="block">
-                <span className="mb-2 block text-sm font-semibold text-[var(--text-primary)]">Sản phẩm</span>
-                <ListingDropdown
-                  listings={listings}
-                  value={listingId}
+                <span className="mb-2 block text-sm font-semibold text-[var(--text-primary)]">Nguồn nội dung</span>
+                <SelectDropdown
+                  value={sourceType}
+                  onChange={handleSourceTypeChange}
+                  options={[
+                    { value: 'LISTING', label: 'Sản phẩm' },
+                    { value: 'PROJECT', label: 'Dự án' },
+                  ]}
                   disabled={loading}
-                  onChange={handleListingChange}
+                  ariaLabel="Chọn nguồn nội dung"
+                  placeholder="Chọn nguồn nội dung"
+                  height={48}
+                  surface="primary"
                 />
-                <p className="mt-1.5 text-[11px] leading-5 text-[var(--text-tertiary)]">
-                  Lấy từ kho listing của tenant hiện tại; chỉ hiển thị sản phẩm đang đủ điều kiện xuất bản.
-                </p>
-                {!loading && !listings.length && (
-                  <p className="mt-2 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs leading-5 text-amber-800">
-                    Chưa có listing đủ điều kiện xuất bản. Kiểm tra listing có trạng thái Sẵn sàng/Đang mở bán/Đang giữ chỗ và thử “Kiểm tra lại kết nối”.
-                  </p>
-                )}
-                 {!loading && requestedListingId && !listings.some(item => String(item.id) === requestedListingId) && (
-                   <p role="alert" className="mt-2 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-xs leading-5 text-red-800">
-                     Liên kết đang trỏ tới listingId “{requestedListingId}”, nhưng listing này không còn trong danh sách đủ điều kiện xuất bản. Kiểm tra lại trạng thái listing hoặc chọn một listing hợp lệ thủ công.
-                   </p>
-                 )}
-                {selectedListing && (
-                  <div className="mt-3 flex items-center gap-3 rounded-xl border border-[var(--glass-border)] bg-[var(--bg-app)] p-3">
-                    {selectedListing.images?.[0] ? (
-                      <img src={selectedListing.images[0]} alt="" className="h-12 w-16 rounded-lg object-cover" />
-                    ) : (
-                      <div className="flex h-12 w-16 items-center justify-center rounded-lg bg-[var(--glass-surface)] px-1 text-center text-[10px] text-[var(--text-tertiary)]">Chưa có ảnh</div>
-                    )}
-                    <div className="min-w-0">
-                      <p className="truncate text-sm font-semibold text-[var(--text-primary)]">{selectedListing.title || selectedListing.id}</p>
-                      <p className="mt-0.5 text-xs text-[var(--text-tertiary)]">{selectedListing.code || 'Không có mã'} · {selectedListing.status || 'Sẵn sàng'} · {selectedListing.images?.length || 0} ảnh · Đủ điều kiện public</p>
-                      {!selectedListing.images?.length && (
-                        <p className="mt-1 text-[11px] leading-4 text-amber-700">Listing chưa có ảnh trong gallery. Có thể dùng “Tải thêm ảnh” ở phần preview.</p>
-                      )}
-                    </div>
-                  </div>
-                )}
               </label>
+              {sourceType === 'LISTING' ? (
+                <label className="block">
+                  <span className="mb-2 block text-sm font-semibold text-[var(--text-primary)]">Sản phẩm</span>
+                  <ListingDropdown
+                    listings={listings}
+                    value={listingId}
+                    disabled={loading}
+                    onChange={handleListingChange}
+                  />
+                  <p className="mt-1.5 text-[11px] leading-5 text-[var(--text-tertiary)]">
+                    Lấy từ kho listing của tenant hiện tại; chỉ hiển thị sản phẩm đang đủ điều kiện xuất bản.
+                  </p>
+                  {!loading && !listings.length && (
+                    <p className="mt-2 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs leading-5 text-amber-800">
+                      Chưa có listing đủ điều kiện xuất bản. Kiểm tra listing có trạng thái Sẵn sàng/Đang mở bán/Đang giữ chỗ và thử “Kiểm tra lại kết nối”.
+                    </p>
+                  )}
+                  {!loading && requestedListingId && !listings.some(item => String(item.id) === requestedListingId) && (
+                    <p role="alert" className="mt-2 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-xs leading-5 text-red-800">
+                      Liên kết đang trỏ tới listingId “{requestedListingId}”, nhưng listing này không còn trong danh sách đủ điều kiện xuất bản.
+                    </p>
+                  )}
+                  {selectedListing && (
+                    <div className="mt-3 flex items-center gap-3 rounded-xl border border-[var(--glass-border)] bg-[var(--bg-app)] p-3">
+                      {selectedListing.images?.[0] ? (
+                        <img src={selectedListing.images[0]} alt="" className="h-12 w-16 rounded-lg object-cover" />
+                      ) : (
+                        <div className="flex h-12 w-16 items-center justify-center rounded-lg bg-[var(--glass-surface)] px-1 text-center text-[10px] text-[var(--text-tertiary)]">Chưa có ảnh</div>
+                      )}
+                      <div className="min-w-0">
+                        <p className="truncate text-sm font-semibold text-[var(--text-primary)]">{selectedListing.title || selectedListing.id}</p>
+                        <p className="mt-0.5 text-xs text-[var(--text-tertiary)]">{selectedListing.code || 'Không có mã'} · {selectedListing.status || 'Sẵn sàng'} · {selectedListing.images?.length || 0} ảnh · Đủ điều kiện public</p>
+                        {!selectedListing.images?.length && (
+                          <p className="mt-1 text-[11px] leading-4 text-amber-700">Listing chưa có ảnh trong gallery. Có thể dùng “Tải thêm ảnh” ở phần preview.</p>
+                        )}
+                      </div>
+                    </div>
+                  )}
+                </label>
+              ) : (
+                <label className="block">
+                  <span className="mb-2 block text-sm font-semibold text-[var(--text-primary)]">Dự án</span>
+                  <ProjectDropdown
+                    projects={projects}
+                    value={projectId}
+                    disabled={loading}
+                    onChange={handleProjectChange}
+                  />
+                  <p className="mt-1.5 text-[11px] leading-5 text-[var(--text-tertiary)]">
+                    Tái sử dụng API quản lý dự án; chỉ hiển thị dự án có trạng thái ACTIVE (đang mở bán).
+                  </p>
+                  {!loading && !projects.length && (
+                    <p className="mt-2 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs leading-5 text-amber-800">
+                      Chưa có dự án đang mở bán đủ điều kiện xuất bản.
+                    </p>
+                  )}
+                  {!loading && requestedProjectId && !projects.some(item => String(item.id) === requestedProjectId) && (
+                    <p role="alert" className="mt-2 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-xs leading-5 text-red-800">
+                      Dự án được yêu cầu không còn ở trạng thái đủ điều kiện xuất bản.
+                    </p>
+                  )}
+                  {selectedProject && (
+                    <div className="mt-3 flex items-center gap-3 rounded-xl border border-[var(--glass-border)] bg-[var(--bg-app)] p-3">
+                      {imageCandidates[0] ? (
+                        <img src={imageCandidates[0]} alt="" className="h-12 w-16 rounded-lg object-cover" />
+                      ) : (
+                        <div className="flex h-12 w-16 items-center justify-center rounded-lg bg-[var(--glass-surface)] px-1 text-center text-[10px] text-[var(--text-tertiary)]">Chưa có ảnh</div>
+                      )}
+                      <div className="min-w-0">
+                        <p className="truncate text-sm font-semibold text-[var(--text-primary)]">{selectedProject.name || selectedProject.id}</p>
+                        <p className="mt-0.5 text-xs text-[var(--text-tertiary)]">{selectedProject.code || 'Không có mã'} · Đang mở bán · {imageCandidates.length} ảnh</p>
+                        {!imageCandidates.length && (
+                          <p className="mt-1 text-[11px] leading-4 text-amber-700">Dự án chưa có ảnh đại diện/gallery. Có thể dùng “Tải thêm ảnh” ở phần preview.</p>
+                        )}
+                      </div>
+                    </div>
+                  )}
+                </label>
+              )}
               <div>
                 <span className="mb-2 block text-sm font-semibold text-[var(--text-primary)]">Nền tảng đích</span>
                 <div className="space-y-2">
@@ -824,7 +944,7 @@ export const SocialPublishing: React.FC = () => {
                 <p className="text-xs font-bold uppercase tracking-wider text-[var(--text-tertiary)]">Preview content</p>
                 {!!selectedImageUrls.length && <span className="text-xs text-[var(--text-tertiary)]">{selectedImageUrls.length}/{maxFacebookImages} ảnh đã chọn</span>}
               </div>
-               {selectedListing ? (
+                {selectedSource ? (
                  <div className="mb-4 rounded-xl border border-[var(--glass-border)] bg-[var(--bg-surface)] p-3">
                   <div className="mb-2 flex items-center justify-between gap-3">
                      <p className="flex items-center gap-2 text-sm font-semibold text-[var(--text-primary)]"><ImagePlus size={16} /> Ảnh bài đăng</p>
@@ -832,7 +952,7 @@ export const SocialPublishing: React.FC = () => {
                   </div>
                    {!imageCandidates.length ? (
                      <p className="rounded-lg border border-dashed border-amber-300 bg-amber-50 p-3 text-xs leading-5 text-amber-800">
-                       Listing chưa có ảnh. Hãy tải ảnh lên bên dưới để tạo bài Facebook.
+                        {sourceType === 'PROJECT' ? 'Dự án chưa có ảnh. Hãy tải ảnh lên bên dưới để tạo bài Facebook.' : 'Listing chưa có ảnh. Hãy tải ảnh lên bên dưới để tạo bài Facebook.'}
                      </p>
                   ) : (
                     <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 md:grid-cols-5">
@@ -841,7 +961,7 @@ export const SocialPublishing: React.FC = () => {
                         const selectionLimitReached = !selected && selectedImageUrls.length >= maxFacebookImages;
                         return (
                           <label key={`${imageUrl}-${index}`} className={`relative cursor-pointer overflow-hidden rounded-lg border-2 ${selected ? 'border-sgs-primary' : 'border-transparent'}`}>
-                            <img src={imageUrl} alt={`Ảnh ${index + 1} của ${selectedListing.title || 'listing'}`} className="aspect-square w-full object-cover" />
+                              <img src={imageUrl} alt={`Ảnh ${index + 1} của ${sourceType === 'PROJECT' ? selectedProject?.name || 'dự án' : selectedListing?.title || 'listing'}`} className="aspect-square w-full object-cover" />
                             <span className="absolute left-1 top-1 rounded bg-white/90 px-1.5 py-1 text-[10px] font-semibold text-[var(--text-primary)]">
                               <input type="checkbox" checked={selected} disabled={selectionLimitReached} onChange={() => toggleImage(imageUrl)} className="mr-1 accent-[var(--sgs-primary)] disabled:opacity-50" />
                               {selected ? 'Đã chọn' : 'Chọn'}
@@ -865,12 +985,12 @@ export const SocialPublishing: React.FC = () => {
                      />
                    </label>
                    <p className="mt-2 text-[11px] leading-5 text-[var(--text-tertiary)]">
-                     Ảnh listing và ảnh tải thêm đều chỉ được lưu vào publication draft, không tự thay đổi gallery của listing. Tối đa {maxFacebookImages} ảnh, mỗi ảnh 10MB.
+                      Ảnh nguồn và ảnh tải thêm đều chỉ được lưu vào publication draft, không tự thay đổi gallery gốc. Tối đa {maxFacebookImages} ảnh, mỗi ảnh 10MB.
                    </p>
                 </div>
                ) : (
                  <div className="mb-4 rounded-xl border border-dashed border-[var(--glass-border)] bg-[var(--bg-surface)] p-4 text-center text-xs leading-5 text-[var(--text-tertiary)]">
-                   Chọn listing để hiển thị ảnh bài đăng và bật thao tác tải thêm ảnh.
+                    Chọn sản phẩm hoặc dự án để hiển thị ảnh bài đăng và bật thao tác tải thêm ảnh.
                  </div>
                )}
               <label className="mb-4 block">
@@ -891,7 +1011,7 @@ export const SocialPublishing: React.FC = () => {
                {!preview.length ? (
                 <div className="flex min-h-56 flex-col items-center justify-center gap-2 px-6 text-center text-sm text-[var(--text-tertiary)]">
                   <Eye size={22} className="text-[var(--text-tertiary)]" />
-                  <p>Chọn listing, kênh và ảnh, rồi bấm “Xem preview”.</p>
+                   <p>Chọn sản phẩm hoặc dự án, kênh và ảnh, rồi bấm “Xem preview”.</p>
                   <p className="text-xs">Nếu Facebook chưa READY, bạn vẫn có thể soạn và lưu draft; chỉ thao tác đăng thật mới bị khóa.</p>
                 </div>
               ) : (
@@ -946,8 +1066,8 @@ export const SocialPublishing: React.FC = () => {
                 <div className="rounded-xl bg-red-100 p-2 text-red-700"><AlertTriangle size={20} /></div>
                 <div>
                   <h2 id="stale-publication-links-title" className="font-bold text-[var(--text-primary)]">Rà soát liên kết publication cũ</h2>
-                  <p className="mt-1 text-xs leading-5 text-[var(--text-secondary)]">
-                    Các publication dưới đây đang chứa listingId không còn đủ điều kiện xuất bản. Báo cáo chỉ đọc: không tự xóa, sửa hoặc đăng lại nội dung.
+              <p className="mt-1 text-xs leading-5 text-[var(--text-secondary)]">
+                    Các publication dưới đây đang chứa sản phẩm hoặc dự án không còn đủ điều kiện xuất bản. Báo cáo chỉ đọc: không tự xóa, sửa hoặc đăng lại nội dung.
                   </p>
                 </div>
               </div>
@@ -999,12 +1119,12 @@ export const SocialPublishing: React.FC = () => {
                       <div className="min-w-0">
                         <div className="flex flex-wrap items-center gap-2">
                           <p className="font-semibold text-[var(--text-primary)]">
-                            {String(item.contentSnapshot?.title || item.listingId)}
+                            {String(item.contentSnapshot?.title || item.projectId || item.listingId)}
                           </p>
                           <span className="rounded-full bg-red-100 px-2 py-0.5 text-[10px] font-bold text-red-800">CẦN RÀ SOÁT</span>
                         </div>
                         <p className="mt-1 text-xs text-[var(--text-tertiary)]">
-                          Listing ID: <span className="font-mono">{item.listingId}</span> · Tạo {formatDate(item.createdAt)}
+                           <span className="font-semibold">{getPublicationSourceLabel(item)} ID:</span> <span className="font-mono">{getPublicationSourceId(item)}</span> · Tạo {formatDate(item.createdAt)}
                         </p>
                         <p className="mt-2 text-xs font-semibold text-red-700">{getListingReviewMessage(item)}</p>
                         <div className="mt-2 space-y-1 text-xs text-[var(--text-secondary)]">
@@ -1019,7 +1139,7 @@ export const SocialPublishing: React.FC = () => {
                               {publicationLink}
                             </a>
                           ) : (
-                            <p className="text-[var(--text-tertiary)]">Snapshot không lưu public URL; dùng listingId để tìm và cập nhật liên kết.</p>
+                             <p className="text-[var(--text-tertiary)]">Snapshot không lưu public URL; dùng ID nguồn để tìm và cập nhật liên kết.</p>
                           )}
                           {!!providerLinks.length && (
                             <p className="break-all text-[var(--text-tertiary)]">
@@ -1084,11 +1204,16 @@ export const SocialPublishing: React.FC = () => {
                   <div className="flex flex-col justify-between gap-3 md:flex-row md:items-start">
                     <div className="min-w-0">
                       <div className="flex flex-wrap items-center gap-2">
-                        <p className="font-semibold text-[var(--text-primary)]">{String(item.contentSnapshot?.title || item.listingId)}</p>
+                        <p className="font-semibold text-[var(--text-primary)]">{String(item.contentSnapshot?.title || item.projectId || item.listingId)}</p>
+                        <span className="rounded-full bg-amber-100 px-2.5 py-0.5 text-[10px] font-bold text-amber-800">
+                          Nguồn: {getPublicationSourceLabel(item)}
+                        </span>
                         <span className="rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-bold text-amber-800">AUTO / DRAFT</span>
                       </div>
-                      <p className="mt-1 text-xs text-[var(--text-tertiary)]">Tạo {formatDate(item.createdAt)} · Chờ admin kiểm tra</p>
-                      <p className="mt-2 line-clamp-3 whitespace-pre-wrap text-xs leading-5 text-[var(--text-secondary)]">{String(item.contentSnapshot?.caption || 'Caption tự động từ snapshot listing.')}</p>
+                      <p className="mt-1 text-xs text-[var(--text-tertiary)]">
+                        {getPublicationSourceLabel(item)} ID: <span className="font-mono">{getPublicationSourceId(item)}</span> · Tạo {formatDate(item.createdAt)} · Chờ admin kiểm tra
+                      </p>
+                      <p className="mt-2 line-clamp-3 whitespace-pre-wrap text-xs leading-5 text-[var(--text-secondary)]">{String(item.contentSnapshot?.caption || `Caption tự động từ snapshot ${getPublicationSourceLabel(item).toLowerCase()}.`)}</p>
                       <div className="mt-2 flex flex-wrap gap-2">
                         {item.targets.map(target => (
                           <span key={target.id} className="rounded-full bg-[var(--glass-surface)] px-2.5 py-1 text-xs text-[var(--text-secondary)]">
@@ -1120,10 +1245,18 @@ export const SocialPublishing: React.FC = () => {
                 <article key={item.id} className="rounded-2xl border border-[var(--glass-border)] p-4">
                   <div className="flex flex-col justify-between gap-3 md:flex-row md:items-start">
                     <div>
-                      <p className="font-semibold text-[var(--text-primary)]">{String(item.contentSnapshot?.title || item.listingId)}</p>
+                        <div className="flex flex-wrap items-center gap-2">
+                          <p className="font-semibold text-[var(--text-primary)]">{String(item.contentSnapshot?.title || item.projectId || item.listingId)}</p>
+                          <span className="rounded-full bg-[var(--glass-surface)] px-2.5 py-0.5 text-[10px] font-bold text-[var(--text-secondary)]">
+                            Nguồn: {getPublicationSourceLabel(item)}
+                          </span>
+                        </div>
+                        <p className="mt-1 text-xs text-[var(--text-tertiary)]">
+                          {getPublicationSourceLabel(item)} ID: <span className="font-mono">{getPublicationSourceId(item)}</span>
+                        </p>
                       <p className="mt-1 text-xs text-[var(--text-tertiary)]">Tạo {formatDate(item.createdAt)} · {item.publishMode === 'SCHEDULED' ? `Hẹn ${formatDate(item.scheduledAt)}` : 'Khi được duyệt'}</p>
                         <p className="mt-2 line-clamp-2 whitespace-pre-wrap text-xs leading-5 text-[var(--text-secondary)]">
-                          {String(item.contentSnapshot?.caption || 'Caption tự động từ snapshot listing.')}
+                          {String(item.contentSnapshot?.caption || `Caption tự động từ snapshot ${getPublicationSourceLabel(item).toLowerCase()}.`)}
                         </p>
                         <p className="mt-1 text-xs text-[var(--text-tertiary)]">
                           Ảnh đã duyệt: {Array.isArray(item.assetSnapshot) ? item.assetSnapshot.length : 0}

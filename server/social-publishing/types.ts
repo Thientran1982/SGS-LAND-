@@ -47,6 +47,25 @@ export interface SocialProductSnapshot {
   caption?: string;
 }
 
+export interface SocialProjectSnapshot {
+  version: 1;
+  projectId: string;
+  code: string | null;
+  title: string;
+  description: string | null;
+  location: string | null;
+  totalUnits: number | null;
+  status: string;
+  priceLabel: string;
+  images: string[];
+  publicUrl: string | null;
+  capturedAt: string;
+  /** Operator-approved caption saved with the publication draft. */
+  caption?: string;
+}
+
+export type SocialContentSnapshot = SocialProductSnapshot | SocialProjectSnapshot;
+
 export interface SocialPlatformContent {
   platform: SocialPlatform;
   text: string;

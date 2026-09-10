@@ -5,6 +5,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 const mocks = vi.hoisted(() => ({
   findById: vi.fn(),
   buildSocialProductSnapshot: vi.fn(),
+  buildSocialProjectSnapshot: vi.fn(),
   createSocialPublication: vi.fn(),
   encodeSocialPublicationCursor: vi.fn(({ createdAt, id }: { createdAt: string; id: string }) => (
     Buffer.from(JSON.stringify({ createdAt, id }), 'utf8').toString('base64url')
@@ -50,6 +51,7 @@ vi.mock('../services/socialPublicationService', () => ({
     typeof input === 'string' && input.trim() ? input.trim() : null
   ),
   buildSocialProductSnapshot: mocks.buildSocialProductSnapshot,
+  buildSocialProjectSnapshot: mocks.buildSocialProjectSnapshot,
   buildPlatformContent: (snapshot: any, platform: string, imageUrls: string[]) => ({
     platform,
     title: snapshot.title,
@@ -68,6 +70,7 @@ import { createSocialPublicationRouter } from '../routes/socialPublicationRoutes
 
 const tenantId = 'tenant-route-test';
 const listingId = '11111111-1111-4111-8111-111111111111';
+const projectId = '22222222-2222-4222-8222-222222222222';
 const imageUrl = 'https://cdn.example.test/listing-1.jpg';
 
 function baseListing() {
@@ -86,6 +89,23 @@ function baseSnapshot() {
     title: 'Nhà phố ven sông',
     publicUrl: 'https://sgsland.example/p/SGS-001',
     status: 'AVAILABLE',
+    capturedAt: '2026-09-10T00:00:00.000Z',
+  };
+}
+
+function baseProjectSnapshot() {
+  return {
+    version: 1,
+    projectId,
+    code: 'PRJ-001',
+    title: 'Khu đô thị ven sông',
+    description: 'Không gian sống xanh.',
+    location: 'Thủ Đức, TP.HCM',
+    totalUnits: 1200,
+    status: 'ACTIVE',
+    priceLabel: 'Liên hệ',
+    images: [imageUrl],
+    publicUrl: 'https://sgsland.example/du-an/PRJ-001',
     capturedAt: '2026-09-10T00:00:00.000Z',
   };
 }
@@ -126,6 +146,7 @@ describe('social publication preview and draft routes', () => {
     vi.clearAllMocks();
     mocks.findById.mockResolvedValue(baseListing());
     mocks.buildSocialProductSnapshot.mockResolvedValue(baseSnapshot());
+    mocks.buildSocialProjectSnapshot.mockResolvedValue(baseProjectSnapshot());
     mocks.getTenantPublicationCatalog.mockResolvedValue([]);
     mocks.listSocialPublications.mockResolvedValue([]);
     mocks.countSocialPublications.mockResolvedValue(0);
@@ -206,6 +227,54 @@ describe('social publication preview and draft routes', () => {
         metadata: { platforms: ['FACEBOOK_PAGE', 'ZALO_BROADCAST'] },
       }),
     );
+  });
+
+  it('previews a project without looking up a listing and preserves the project source', async () => {
+    const result = await request(origin, '/api/social-publications/preview', {
+      projectId,
+      platforms: ['FACEBOOK_PAGE'],
+      caption: 'Caption dự án đã duyệt',
+      imageUrls: [imageUrl],
+    });
+
+    expect(result.status).toBe(200);
+    expect(result.body.snapshot).toMatchObject({ projectId, title: 'Khu đô thị ven sông' });
+    expect(result.body.previews[0]).toMatchObject({
+      title: 'Khu đô thị ven sông',
+      text: 'Caption dự án đã duyệt',
+      imageUrls: [imageUrl],
+    });
+    expect(mocks.findById).not.toHaveBeenCalled();
+    expect(mocks.buildSocialProjectSnapshot).toHaveBeenCalledWith(tenantId, projectId);
+  });
+
+  it('creates a project draft with projectId and rejects a request with both sources', async () => {
+    const projectResult = await request(origin, '/api/social-publications', {
+      projectId,
+      platforms: ['FACEBOOK_PAGE'],
+      publishMode: 'NOW',
+      caption: 'Caption dự án',
+      imageUrls: [imageUrl],
+    });
+
+    expect(projectResult.status).toBe(201);
+    expect(mocks.createSocialPublication).toHaveBeenCalledWith(
+      expect.anything(),
+      expect.objectContaining({
+        tenantId,
+        listingId: null,
+        projectId,
+        contentSnapshot: expect.objectContaining({ projectId }),
+      }),
+    );
+
+    const invalidResult = await request(origin, '/api/social-publications/preview', {
+      listingId,
+      projectId,
+      platforms: ['FACEBOOK_PAGE'],
+    });
+    expect(invalidResult.status).toBe(400);
+    expect(invalidResult.body.error).toContain('đúng một nguồn');
   });
 
   it('does not create a Zalo draft without a public HTTPS image', async () => {

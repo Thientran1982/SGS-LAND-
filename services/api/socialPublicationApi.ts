@@ -66,9 +66,20 @@ export interface SocialPublicationListingReview {
   reason: 'LISTING_NOT_FOUND' | 'LISTING_STATUS_NOT_ELIGIBLE' | null;
 }
 
+export interface SocialPublicationProjectReview {
+  eligible: boolean;
+  projectExists: boolean;
+  projectStatus: string | null;
+  projectName?: string | null;
+  projectCode?: string | null;
+  reason: 'PROJECT_NOT_FOUND' | 'PROJECT_STATUS_NOT_ELIGIBLE' | null;
+}
+
 export interface SocialPublication {
   id: string;
-  listingId: string;
+  listingId?: string | null;
+  projectId?: string | null;
+  sourceType?: 'LISTING' | 'PROJECT';
   source?: 'MANUAL' | 'AUTO';
   autoPostingKey?: string | null;
   status: string;
@@ -80,6 +91,7 @@ export interface SocialPublication {
   targets: SocialTarget[];
   events?: SocialPublicationEvent[];
   listingReview?: SocialPublicationListingReview;
+  projectReview?: SocialPublicationProjectReview;
 }
 
 export interface SocialPublicationQuery {
@@ -120,14 +132,20 @@ export const socialPublicationApi = {
   },
   getPublication: (id: string): Promise<SocialPublication> =>
     api.get(`/api/social-publications/${id}`),
-  preview: (listingId: string, platforms: string[], imageUrls: string[] = [], caption?: string) =>
+  preview: (sourceId: string, platforms: string[], imageUrls: string[] = [], caption?: string, sourceType: 'LISTING' | 'PROJECT' = 'LISTING') =>
     api.post<{
       snapshot: Record<string, unknown>;
       previews: Array<{ platform: string; title: string; text: string; imageUrls: string[]; link: string | null }>;
       catalog: SocialCapability[];
-    }>('/api/social-publications/preview', { listingId, platforms, imageUrls, caption }),
+    }>('/api/social-publications/preview', {
+      ...(sourceType === 'PROJECT' ? { projectId: sourceId } : { listingId: sourceId }),
+      platforms,
+      imageUrls,
+      caption,
+    }),
   createDraft: (input: {
-    listingId: string;
+    listingId?: string;
+    projectId?: string;
     platforms: string[];
     publishMode: 'NOW' | 'SCHEDULED';
     scheduledAt?: string | null;

@@ -20,3 +20,9 @@ Map tile requests have a separate preview constraint: proxy OpenStreetMap tiles 
 **Why:** The embedded preview can block direct third-party tile requests, while OSM may silently serve an empty tile to the custom proxy identity.
 
 **How to apply:** Keep Leaflet's tile URL relative (`/api/map-tiles/{z}/{x}/{y}.png`) and cache the proxied PNG response.
+
+The Express development Vite middleware also needs to ignore `.local`, `.agents`, and `.cache` trees; otherwise restarting the combined app workflow can exhaust watchers even when Next.js itself is healthy.
+
+**Why:** The combined workflow starts a second Vite watcher rooted at the workspace, and agent/artifact assets are not application source.
+
+**How to apply:** Keep those directories in the Vite middleware `server.watch.ignored` list whenever the workspace contains large tool or artifact trees.

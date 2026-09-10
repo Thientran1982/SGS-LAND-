@@ -99,6 +99,29 @@ describe('social publication foundation', () => {
     expect(content.imageUrls).toEqual(['https://cdn.test/approved.jpg']);
   });
 
+  it('builds project content with project-specific scale and price information', () => {
+    const content = buildPlatformContent({
+      version: 1,
+      projectId: 'project-1',
+      code: 'PRJ-001',
+      title: 'Khu đô thị ven sông',
+      description: 'Không gian sống xanh.',
+      location: 'Thủ Đức, TP.HCM',
+      totalUnits: 1200,
+      status: 'ACTIVE',
+      priceLabel: '45.000.000 VNĐ/m² – 60.000.000 VNĐ/m²',
+      images: ['https://cdn.test/project-cover.jpg'],
+      publicUrl: 'https://sgsland.vn/du-an/PRJ-001',
+      capturedAt: '2026-09-10T00:00:00.000Z',
+    }, 'FACEBOOK_PAGE', ['https://cdn.test/project-cover.jpg']);
+
+    expect(content.text).toContain('Khu đô thị ven sông');
+    expect(content.text).toContain('Quy mô: 1.200 sản phẩm');
+    expect(content.text).toContain('45.000.000 VNĐ/m² – 60.000.000 VNĐ/m²');
+    expect(content.text).toContain('https://sgsland.vn/du-an/PRJ-001');
+    expect(content.imageUrls).toEqual(['https://cdn.test/project-cover.jpg']);
+  });
+
   it('keeps every approved Facebook album image in the provider content snapshot', () => {
     const content = buildPlatformContent({
       version: 1,

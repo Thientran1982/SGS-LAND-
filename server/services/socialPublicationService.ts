@@ -1,5 +1,7 @@
 import { randomUUID } from 'crypto';
 import { listingRepository } from '../repositories/listingRepository';
+import { projectRepository } from '../repositories/projectRepository';
+import { projectPriceMatrixRepository } from '../repositories/projectPriceMatrixRepository';
 import {
   MAX_PRODUCT_SHARE_IMAGES,
   normalizeProductImages,
@@ -15,6 +17,7 @@ import { FACEBOOK_PAGE_MAX_IMAGES } from '../social-publishing/types';
 import type {
   SocialPlatform,
   SocialPlatformContent,
+  SocialProjectSnapshot,
   SocialProductSnapshot,
 } from '../social-publishing/types';
 
@@ -24,6 +27,7 @@ export const PUBLISHABLE_LISTING_STATUSES = new Set([
   'BOOKING',
   'BEST_MARKET',
 ]);
+export const PUBLISHABLE_PROJECT_STATUSES = new Set(['ACTIVE']);
 
 const PLATFORM_SET = new Set<SocialPlatform>([
   'FACEBOOK_PAGE',
@@ -139,6 +143,63 @@ export async function buildSocialProductSnapshot(
   };
 }
 
+function projectPublicUrl(code: string | null): string | null {
+  return publicListingUrl(code);
+}
+
+function formatProjectPrice(rows: Array<{ base_price_sqm: unknown; adjustment_pct: unknown }>): string {
+  if (!rows.length) return 'Liên hệ';
+  const prices = rows
+    .map(row => Number(row.base_price_sqm) * (1 + Number(row.adjustment_pct || 0) / 100))
+    .filter(price => Number.isFinite(price) && price > 0);
+  if (!prices.length) return 'Liên hệ';
+  const min = Math.min(...prices);
+  const max = Math.max(...prices);
+  const format = (price: number) => `${Math.round(price).toLocaleString('vi-VN')} VNĐ/m²`;
+  return min === max ? format(min) : `${format(min)} – ${format(max)}`;
+}
+
+export async function buildSocialProjectSnapshot(
+  tenantId: string,
+  projectId: string,
+): Promise<SocialProjectSnapshot> {
+  const project = await projectRepository.findById(tenantId, projectId);
+  if (!project) throw new Error('Không tìm thấy dự án trong tenant hiện tại');
+
+  const status = String(project.status || '').toUpperCase();
+  if (!PUBLISHABLE_PROJECT_STATUSES.has(status)) {
+    throw new Error(`Dự án chưa ở trạng thái được phép xuất bản (${status || 'không xác định'})`);
+  }
+
+  const title = textValue(project.name);
+  if (!title) throw new Error('Dự án thiếu tên, không thể tạo snapshot');
+
+  const metadata = project.metadata && typeof project.metadata === 'object'
+    ? project.metadata as Record<string, unknown>
+    : {};
+  const coverImage = textValue(metadata.coverImage ?? metadata.cover_image);
+  const gallery = Array.isArray(metadata.gallery)
+    ? metadata.gallery.map(textValue).filter((value): value is string => Boolean(value))
+    : [];
+  const images = Array.from(new Set([coverImage, ...gallery].filter((value): value is string => Boolean(value))));
+  const priceRows = await projectPriceMatrixRepository.findByProject(tenantId, projectId);
+
+  return {
+    version: 1,
+    projectId: String(project.id),
+    code: textValue(project.code),
+    title,
+    description: textValue(project.description),
+    location: textValue(project.location),
+    totalUnits: project.total_units ?? project.totalUnits ?? null,
+    status,
+    priceLabel: formatProjectPrice(priceRows),
+    images,
+    publicUrl: projectPublicUrl(textValue(project.code)),
+    capturedAt: new Date().toISOString(),
+  };
+}
+
 function formatPrice(snapshot: SocialProductSnapshot): string {
   const price = Number(snapshot.price);
   if (!Number.isFinite(price) || price <= 0) return 'Liên hệ';
@@ -150,9 +211,35 @@ function formatPrice(snapshot: SocialProductSnapshot): string {
 }
 
 export function buildSocialPlatformContent(
-  snapshot: SocialProductSnapshot,
+  snapshot: SocialProductSnapshot | SocialProjectSnapshot,
   platform: SocialPlatform,
 ): SocialPlatformContent {
+  if ('projectId' in snapshot) {
+    const facts = [
+      'Đang mở bán',
+      snapshot.location ? `Vị trí: ${snapshot.location}` : null,
+      snapshot.totalUnits ? `Quy mô: ${snapshot.totalUnits.toLocaleString('vi-VN')} sản phẩm` : null,
+      `Giá tham khảo: ${snapshot.priceLabel}`,
+    ].filter((value): value is string => Boolean(value));
+    const description = snapshot.description ? `\n\n${snapshot.description}` : '';
+    const linkLine = snapshot.publicUrl ? `\n\nXem chi tiết: ${snapshot.publicUrl}` : '';
+    const hashtags = ['#SGSLAND', '#duanbatdongsan'];
+    const text = [`Dự án ${snapshot.title}`, ...facts, description, linkLine]
+      .filter(Boolean)
+      .join('\n')
+      .replace(/\n{3,}/g, '\n\n')
+      .concat(`\n\n${hashtags.join(' ')}`)
+      .trim();
+    return {
+      platform,
+      title: snapshot.title,
+      text,
+      link: snapshot.publicUrl,
+      imageUrls: normalizePublicationImages(snapshot.images),
+      hashtags,
+    };
+  }
+
   const attrs = snapshot.attributes || {};
   const facts = [
     snapshot.type ? `Loại: ${snapshot.type}` : null,
@@ -190,7 +277,7 @@ export function buildSocialPlatformContent(
  * invent an image URL. The route fills imageUrls from the listing snapshot.
  */
 export function buildPlatformContent(
-  snapshot: SocialProductSnapshot,
+  snapshot: SocialProductSnapshot | SocialProjectSnapshot,
   platform: SocialPlatform,
   imageUrls: string[],
 ): SocialPlatformContent {

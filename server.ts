@@ -6268,7 +6268,16 @@ app.get('/api/admin/agent-tasks', apiRateLimit, authenticateToken, async (req: e
   if (process.env.NODE_ENV !== "production") {
     const { createServer: createViteServer } = await import("vite");
     const vite = await createViteServer({
-      server: { middlewareMode: true, hmr: { server }, allowedHosts: true },
+      server: {
+        middlewareMode: true,
+        hmr: { server },
+        allowedHosts: true,
+        // The workspace also contains large agent/artifact trees that are not
+        // application source. Watching them exhausts the Linux watcher limit.
+        watch: {
+          ignored: ['**/.local/**', '**/.agents/**', '**/.cache/**'],
+        },
+      },
       appType: "spa",
     });
       app.use(vite.middlewares);

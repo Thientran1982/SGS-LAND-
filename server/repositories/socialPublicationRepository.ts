@@ -9,7 +9,8 @@ export const SOCIAL_PUBLICATION_ELIGIBLE_LISTING_STATUSES = [
 
 export interface PublicationCreateInput {
   tenantId: string;
-  listingId: string;
+  listingId?: string | null;
+  projectId?: string | null;
   createdBy: string | null;
   publishMode: 'NOW' | 'SCHEDULED';
   scheduledAt: string | null;
@@ -119,11 +120,29 @@ function mapListingReview(row: any) {
   };
 }
 
+function mapProjectReview(row: any) {
+  const projectExists = row.project_review_id !== null && row.project_review_id !== undefined;
+  const projectStatus = row.project_review_status
+    ? String(row.project_review_status).toUpperCase()
+    : null;
+  const eligible = projectExists && projectStatus === 'ACTIVE';
+  return {
+    eligible,
+    projectExists,
+    projectStatus,
+    projectName: row.project_review_name ?? null,
+    projectCode: row.project_review_code ?? null,
+    reason: eligible ? null : projectExists ? 'PROJECT_STATUS_NOT_ELIGIBLE' : 'PROJECT_NOT_FOUND',
+  };
+}
+
 function mapPublication(row: any, targets: any[] = [], events: any[] = []) {
   return {
     id: row.id,
     tenantId: row.tenant_id,
     listingId: row.listing_id,
+    projectId: row.project_id,
+    sourceType: row.project_id ? 'PROJECT' : 'LISTING',
     createdBy: row.created_by,
     status: row.status,
     source: row.source || 'MANUAL',
@@ -140,24 +159,33 @@ function mapPublication(row: any, targets: any[] = [], events: any[] = []) {
     targets,
     events,
     ...(Object.prototype.hasOwnProperty.call(row, 'listing_review_id')
-      ? { listingReview: mapListingReview(row) }
+      ? {
+          ...(row.listing_id ? { listingReview: mapListingReview(row) } : {}),
+          ...(row.project_id ? { projectReview: mapProjectReview(row) } : {}),
+        }
       : {}),
   };
 }
 
 export async function createSocialPublication(pool: Pool, input: PublicationCreateInput) {
+  const hasListing = Boolean(input.listingId);
+  const hasProject = Boolean(input.projectId);
+  if (hasListing === hasProject) {
+    throw new Error('Publication phải thuộc đúng một listing hoặc một dự án');
+  }
   const client = await pool.connect();
   try {
     await client.query('BEGIN');
     const publication = await client.query(
       `INSERT INTO social_publications
-        (tenant_id, listing_id, created_by, status, publish_mode, scheduled_at,
+        (tenant_id, listing_id, project_id, created_by, status, publish_mode, scheduled_at,
          content_snapshot, asset_snapshot, source, auto_posting_key)
-       VALUES ($1, $2, $3, 'DRAFT', $4, $5, $6::jsonb, $7::jsonb, $8, $9)
+       VALUES ($1, $2, $3, $4, 'DRAFT', $5, $6, $7::jsonb, $8::jsonb, $9, $10)
        RETURNING *`,
       [
         input.tenantId,
-        input.listingId,
+        input.listingId || null,
+        input.projectId || null,
         input.createdBy,
         input.publishMode,
         input.scheduledAt,
@@ -215,18 +243,38 @@ export async function listSocialPublications(
             l.id AS listing_review_id,
             l.status AS listing_review_status,
             l.code AS listing_review_code,
-            l.title AS listing_review_title
+            l.title AS listing_review_title,
+            pr.id AS project_review_id,
+            pr.status AS project_review_status,
+            pr.name AS project_review_name,
+            pr.code AS project_review_code
        FROM social_publications p
        LEFT JOIN listings l
          ON l.id = p.listing_id
         AND l.tenant_id::text = p.tenant_id
+       LEFT JOIN projects pr
+         ON pr.id = p.project_id
+        AND pr.tenant_id::text = p.tenant_id
       WHERE p.tenant_id = $1
         AND ($3::text IS NULL OR p.source = $3)
         AND (
-          $4::boolean = false
-          OR l.id IS NULL
-          OR l.status IS NULL
-          OR l.status NOT IN ('AVAILABLE', 'OPENING', 'BOOKING', 'BEST_MARKET')
+           $4::boolean = false
+           OR (
+             p.listing_id IS NOT NULL
+             AND (
+               l.id IS NULL
+               OR l.status IS NULL
+               OR l.status NOT IN ('AVAILABLE', 'OPENING', 'BOOKING', 'BEST_MARKET')
+             )
+           )
+           OR (
+             p.project_id IS NOT NULL
+             AND (
+               pr.id IS NULL
+               OR pr.status IS NULL
+               OR pr.status <> 'ACTIVE'
+             )
+           )
         )
        ${cursorCondition}
       ORDER BY p.created_at DESC, p.id DESC
@@ -262,13 +310,29 @@ export async function countSocialPublications(
        LEFT JOIN listings l
          ON l.id = p.listing_id
         AND l.tenant_id::text = p.tenant_id
+       LEFT JOIN projects pr
+         ON pr.id = p.project_id
+        AND pr.tenant_id::text = p.tenant_id
       WHERE p.tenant_id = $1
         AND ($2::text IS NULL OR p.source = $2)
         AND (
-          $3::boolean = false
-          OR l.id IS NULL
-          OR l.status IS NULL
-          OR l.status NOT IN ('AVAILABLE', 'OPENING', 'BOOKING', 'BEST_MARKET')
+           $3::boolean = false
+           OR (
+             p.listing_id IS NOT NULL
+             AND (
+               l.id IS NULL
+               OR l.status IS NULL
+               OR l.status NOT IN ('AVAILABLE', 'OPENING', 'BOOKING', 'BEST_MARKET')
+             )
+           )
+           OR (
+             p.project_id IS NOT NULL
+             AND (
+               pr.id IS NULL
+               OR pr.status IS NULL
+               OR pr.status <> 'ACTIVE'
+             )
+           )
         )`,
     [tenantId, source || null, staleOnly],
   );
@@ -281,11 +345,18 @@ export async function findSocialPublication(pool: Pool, tenantId: string, id: st
             l.id AS listing_review_id,
             l.status AS listing_review_status,
             l.code AS listing_review_code,
-            l.title AS listing_review_title
+            l.title AS listing_review_title,
+            pr.id AS project_review_id,
+            pr.status AS project_review_status,
+            pr.name AS project_review_name,
+            pr.code AS project_review_code
        FROM social_publications p
        LEFT JOIN listings l
          ON l.id = p.listing_id
         AND l.tenant_id::text = p.tenant_id
+       LEFT JOIN projects pr
+         ON pr.id = p.project_id
+        AND pr.tenant_id::text = p.tenant_id
       WHERE p.id = $1 AND p.tenant_id = $2`,
     [id, tenantId],
   );
@@ -407,7 +478,7 @@ export async function claimDueSocialTargets(pool: Pool, limit = 50) {
 export async function getPublicationForTarget(pool: Pool, targetId: string) {
   const result = await pool.query(
     `SELECT t.*, p.tenant_id AS publication_tenant_id, p.status AS publication_status,
-            p.content_snapshot, p.asset_snapshot, p.listing_id
+            p.content_snapshot, p.asset_snapshot, p.listing_id, p.project_id
        FROM social_publication_targets t
        JOIN social_publications p ON p.id = t.publication_id
       WHERE t.id = $1`,
