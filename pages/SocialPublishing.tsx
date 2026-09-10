@@ -134,7 +134,10 @@ export const SocialPublishing: React.FC = () => {
     setLoading(true);
     const catalogRequest = socialPublicationApi.getCatalog();
     const publicationDataRequest = Promise.all([
-      listingApi.getListings(1, 100, { statuses: 'AVAILABLE,OPENING,BOOKING,BEST_MARKET' }),
+      listingApi.getListings(1, 100, {
+        statuses: 'AVAILABLE,OPENING,BOOKING,BEST_MARKET',
+        publicationEligible: 'true',
+      }),
       socialPublicationApi.getPublications({ limit: 200 }),
       socialPublicationApi.getPublications({
         staleOnly: true,

@@ -362,6 +362,7 @@ export function createListingRoutes(authenticateToken: any) {
       if (req.query.search)      filters.search      = req.query.search;
       if (req.query.projectCode) filters.projectCode = req.query.projectCode;
       if (req.query.noProjectCode === 'true') filters.noProjectCode = true;
+      if (req.query.publicationEligible === 'true') filters.publicationEligible = true;
       if (req.query.isVerified)  filters.isVerified  = req.query.isVerified === 'true';
 
       const isPartner = user.role === 'PARTNER_ADMIN' || user.role === 'PARTNER_AGENT';

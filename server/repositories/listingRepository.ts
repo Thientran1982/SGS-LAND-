@@ -64,6 +64,8 @@ export interface ListingFilters {
   type_in?: string[];
   status?: string;
   status_in?: string[];
+  /** Explicit listing-picker context used by public publication drafting. */
+  publicationEligible?: boolean;
   transaction?: string;
   price_gte?: number;
   price_lte?: number;
@@ -488,14 +490,26 @@ export class ListingRepository extends BaseRepository {
       // noProjectCode flag distinguishes inventory page from proposal picker:
       //   inventory page always sets it; proposal picker never does.
       const isInventoryContext = !!filters?.noProjectCode;
+      const isPublicationPickerContext = filters?.publicationEligible === true;
       // AVAILABLE-only bypass is allowed only in non-inventory contexts (e.g. proposal picker).
       const isAvailableOnlyQuery = !isInventoryContext && filters?.status === 'AVAILABLE';
+      if (isPublicationPickerContext) {
+        // Keep this context bounded even if a caller forgets to send the
+        // status list. It is for composing public drafts, not inventory access.
+        conditions.push(`l.status IN ('AVAILABLE', 'OPENING', 'BOOKING', 'BEST_MARKET')`);
+      }
       if (PARTNER_RESTRICTED.includes(userRole || '') && userId && isProjectQuery) {
         // Partner roles in project context: only their assigned units.
         conditions.push(`l.assigned_to = $${paramIndex}`);
         values.push(userId);
         paramIndex++;
-      } else if (RESTRICTED.includes(userRole || '') && userId && !isAvailableOnlyQuery && !isProjectQuery) {
+      } else if (
+        RESTRICTED.includes(userRole || '') &&
+        userId &&
+        !isAvailableOnlyQuery &&
+        !isPublicationPickerContext &&
+        !isProjectQuery
+      ) {
         // Non-partner restricted roles outside project context: own + assigned.
         conditions.push(`(l.created_by = $${paramIndex} OR l.assigned_to = $${paramIndex})`);
         values.push(userId);
