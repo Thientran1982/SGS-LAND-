@@ -20,6 +20,33 @@ export interface PublicationCreateInput {
   autoPostingKey?: string | null;
 }
 
+type SocialPublicationCursor = {
+  createdAt: string;
+  id: string;
+};
+
+export function encodeSocialPublicationCursor(value: SocialPublicationCursor): string {
+  return Buffer.from(JSON.stringify(value), 'utf8').toString('base64url');
+}
+
+function decodeSocialPublicationCursor(value?: string): SocialPublicationCursor | null {
+  if (!value) return null;
+  try {
+    const decoded = JSON.parse(Buffer.from(value, 'base64url').toString('utf8')) as Partial<SocialPublicationCursor>;
+    if (
+      typeof decoded.createdAt !== 'string'
+      || !Number.isFinite(new Date(decoded.createdAt).getTime())
+      || typeof decoded.id !== 'string'
+      || !/^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(decoded.id)
+    ) {
+      return null;
+    }
+    return { createdAt: decoded.createdAt, id: decoded.id };
+  } catch {
+    return null;
+  }
+}
+
 function mapTarget(row: any, attempts?: any[]) {
   return {
     id: row.id,
@@ -166,9 +193,23 @@ export async function listSocialPublications(
   source?: 'MANUAL' | 'AUTO',
   staleOnly = false,
   offset = 0,
+  cursor?: string,
 ) {
   const pageLimit = Math.min(Math.max(Math.floor(Number(limit) || 100), 1), 200);
   const pageOffset = Math.max(Math.floor(Number(offset) || 0), 0);
+  const decodedCursor = decodeSocialPublicationCursor(cursor);
+  const values: unknown[] = [tenantId, pageLimit, source || null, staleOnly];
+  const cursorCondition = decodedCursor
+    ? `AND (
+          p.created_at < $5::timestamptz
+          OR (p.created_at = $5::timestamptz AND p.id < $6::uuid)
+        )`
+    : '';
+  if (decodedCursor) {
+    values.push(decodedCursor.createdAt, decodedCursor.id);
+  } else {
+    values.push(pageOffset);
+  }
   const result = await pool.query(
     `SELECT p.*,
             l.id AS listing_review_id,
@@ -187,10 +228,11 @@ export async function listSocialPublications(
           OR l.status IS NULL
           OR l.status NOT IN ('AVAILABLE', 'OPENING', 'BOOKING', 'BEST_MARKET')
         )
+       ${cursorCondition}
       ORDER BY p.created_at DESC, p.id DESC
       LIMIT $2
-      OFFSET $5`,
-    [tenantId, pageLimit, source || null, staleOnly, pageOffset],
+       ${decodedCursor ? '' : 'OFFSET $5'}`,
+    values,
   );
   if (!result.rows.length) return [];
   const targets = await pool.query(

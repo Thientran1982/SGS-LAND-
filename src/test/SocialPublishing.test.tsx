@@ -183,7 +183,7 @@ describe('SocialPublishing listing selector', () => {
     });
   });
 
-  it('loads the next stale-only page without losing the total count', async () => {
+  it('keeps stale review complete when publications change between page loads', async () => {
     const firstPublication = {
       id: 'publication-stale-first',
       listingId: 'listing-sold-first',
@@ -201,11 +201,23 @@ describe('SocialPublishing listing selector', () => {
         reason: 'LISTING_NOT_FOUND' as const,
       },
     };
-    const secondPublication = {
+    const boundaryPublication = {
       ...firstPublication,
-      id: 'publication-stale-second',
+      id: 'publication-stale-boundary',
       listingId: 'listing-sold-second',
-      contentSnapshot: { title: 'Căn hộ stale trang kế tiếp' },
+      contentSnapshot: { title: 'Căn hộ stale ở ranh giới' },
+    };
+    const olderPublication = {
+      ...firstPublication,
+      id: 'publication-stale-older',
+      listingId: 'listing-sold-older',
+      contentSnapshot: { title: 'Căn hộ stale cũ hơn' },
+    };
+    const oldestPublication = {
+      ...firstPublication,
+      id: 'publication-stale-oldest',
+      listingId: 'listing-sold-oldest',
+      contentSnapshot: { title: 'Căn hộ stale cũ nhất' },
     };
     vi.spyOn(listingApi, 'getListings').mockResolvedValue({
       data: [],
@@ -218,9 +230,25 @@ describe('SocialPublishing listing selector', () => {
     const getPublications = vi.spyOn(socialPublicationApi, 'getPublications')
       .mockImplementation(async options => {
         if (typeof options !== 'string' && options?.staleOnly) {
-          return options.page === 2
-            ? { data: [secondPublication], total: 26, page: 2, pageSize: 25, totalPages: 2, hasNext: false }
-            : { data: [firstPublication], total: 26, page: 1, pageSize: 25, totalPages: 2, hasNext: true };
+          return options.cursor
+            ? {
+              data: [olderPublication, oldestPublication],
+              total: 4,
+              page: 2,
+              pageSize: 2,
+              totalPages: 2,
+              hasNext: false,
+              nextCursor: null,
+            }
+            : {
+              data: [firstPublication, boundaryPublication],
+              total: 4,
+              page: 1,
+              pageSize: 2,
+              totalPages: 2,
+              hasNext: true,
+              nextCursor: 'cursor-after-boundary',
+            };
         }
         return { data: [], total: 0 };
       });
@@ -229,17 +257,20 @@ describe('SocialPublishing listing selector', () => {
     render(<SocialPublishing />);
 
     expect(await screen.findByText('Căn hộ stale đầu tiên')).toBeVisible();
-    expect(screen.getByText('Đang xem 1 / 26 liên kết cần rà soát')).toBeVisible();
+    expect(screen.getByText('Căn hộ stale ở ranh giới')).toBeVisible();
+    expect(screen.getByText('Đang xem 2 / 4 liên kết cần rà soát')).toBeVisible();
 
     await user.click(screen.getByRole('button', { name: 'Tải thêm liên kết cũ' }));
 
-    expect(await screen.findByText('Căn hộ stale trang kế tiếp')).toBeVisible();
-    expect(screen.getByText('Đang xem 2 / 26 liên kết cần rà soát')).toBeVisible();
+    expect(await screen.findByText('Căn hộ stale cũ hơn')).toBeVisible();
+    expect(screen.getByText('Căn hộ stale cũ nhất')).toBeVisible();
+    expect(screen.getByText('Đang xem 4 / 4 liên kết cần rà soát')).toBeVisible();
     expect(screen.queryByRole('button', { name: 'Tải thêm liên kết cũ' })).not.toBeInTheDocument();
     expect(getPublications).toHaveBeenCalledWith({
       staleOnly: true,
       page: 2,
       pageSize: 25,
+      cursor: 'cursor-after-boundary',
     });
   });
 });

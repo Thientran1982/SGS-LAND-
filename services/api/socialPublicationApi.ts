@@ -88,6 +88,7 @@ export interface SocialPublicationQuery {
   limit?: number;
   page?: number;
   pageSize?: number;
+  cursor?: string;
 }
 
 export interface SocialPublicationListResponse {
@@ -97,6 +98,7 @@ export interface SocialPublicationListResponse {
   pageSize?: number;
   totalPages?: number;
   hasNext?: boolean;
+  nextCursor?: string | null;
 }
 
 export const socialPublicationApi = {

@@ -6,6 +6,9 @@ const mocks = vi.hoisted(() => ({
   findById: vi.fn(),
   buildSocialProductSnapshot: vi.fn(),
   createSocialPublication: vi.fn(),
+  encodeSocialPublicationCursor: vi.fn(({ createdAt, id }: { createdAt: string; id: string }) => (
+    Buffer.from(JSON.stringify({ createdAt, id }), 'utf8').toString('base64url')
+  )),
   recordSocialPublicationEvent: vi.fn(),
   listSocialPublications: vi.fn(),
   countSocialPublications: vi.fn(),
@@ -18,6 +21,7 @@ vi.mock('../repositories/listingRepository', () => ({
 
 vi.mock('../repositories/socialPublicationRepository', () => ({
   createSocialPublication: mocks.createSocialPublication,
+  encodeSocialPublicationCursor: mocks.encodeSocialPublicationCursor,
   recordSocialPublicationEvent: mocks.recordSocialPublicationEvent,
   listSocialPublications: mocks.listSocialPublications,
   countSocialPublications: mocks.countSocialPublications,
@@ -295,6 +299,101 @@ describe('social publication preview and draft routes', () => {
       tenantId,
       undefined,
       true,
+    );
+  });
+
+  it('uses a tenant-scoped stale cursor when data changes between operator page loads', async () => {
+    const firstPage = [
+      {
+        id: 'publication-stale-newest',
+        listingId,
+        createdAt: '2026-09-10T03:00:00.000Z',
+        listingReview: { eligible: false, listingExists: true, listingStatus: 'SOLD' },
+      },
+      {
+        id: 'publication-stale-boundary',
+        listingId,
+        createdAt: '2026-09-10T02:00:00.000Z',
+        listingReview: { eligible: false, listingExists: true, listingStatus: 'SOLD' },
+      },
+    ];
+    const secondPage = [
+      {
+        id: 'publication-stale-older-1',
+        listingId,
+        createdAt: '2026-09-10T01:00:00.000Z',
+        listingReview: { eligible: false, listingExists: false, listingStatus: null },
+      },
+      {
+        id: 'publication-stale-older-2',
+        listingId,
+        createdAt: '2026-09-10T00:00:00.000Z',
+        listingReview: { eligible: false, listingExists: false, listingStatus: null },
+      },
+    ];
+    let cursor: string | undefined;
+    mocks.listSocialPublications.mockImplementation(async (
+      _pool,
+      requestedTenantId,
+      _limit,
+      _source,
+      staleOnly,
+      offset,
+      requestedCursor,
+    ) => {
+      expect(requestedTenantId).toBe(tenantId);
+      expect(staleOnly).toBe(true);
+      if (!requestedCursor) {
+        expect(offset).toBeUndefined();
+        cursor = mocks.encodeSocialPublicationCursor(firstPage[1]);
+        return firstPage;
+      }
+      expect(offset).toBe(0);
+      expect(requestedCursor).toBe(cursor);
+      // A newer stale publication was inserted and the boundary listing
+      // became eligible after page one. The cursor must still return the
+      // older original rows instead of repeating or skipping them.
+      return secondPage;
+    });
+    mocks.countSocialPublications.mockResolvedValue(4);
+
+    const firstResult = await request(
+      origin,
+      '/api/social-publications?staleOnly=true&page=1&pageSize=2',
+    );
+    const nextCursor = firstResult.body.nextCursor;
+    const secondResult = await request(
+      origin,
+      `/api/social-publications?staleOnly=true&page=2&pageSize=2&cursor=${encodeURIComponent(nextCursor)}`,
+    );
+
+    expect(firstResult.status).toBe(200);
+    expect(secondResult.status).toBe(200);
+    expect(firstResult.body.data.map((row: any) => row.id)).toEqual([
+      'publication-stale-newest',
+      'publication-stale-boundary',
+    ]);
+    expect(secondResult.body.data.map((row: any) => row.id)).toEqual([
+      'publication-stale-older-1',
+      'publication-stale-older-2',
+    ]);
+    expect([
+      ...firstResult.body.data,
+      ...secondResult.body.data,
+    ].map((row: any) => row.id)).toEqual([
+      'publication-stale-newest',
+      'publication-stale-boundary',
+      'publication-stale-older-1',
+      'publication-stale-older-2',
+    ]);
+    expect(mocks.listSocialPublications).toHaveBeenLastCalledWith(
+      expect.anything(),
+      tenantId,
+      2,
+      undefined,
+      true,
+      0,
+      nextCursor,
     );
   });
 });

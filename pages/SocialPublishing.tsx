@@ -44,6 +44,7 @@ export const SocialPublishing: React.FC = () => {
   const [stalePublications, setStalePublications] = useState<SocialPublication[]>([]);
   const [staleTotal, setStaleTotal] = useState(0);
   const [stalePage, setStalePage] = useState(1);
+  const [staleCursor, setStaleCursor] = useState<string | null>(null);
   const [staleHasNext, setStaleHasNext] = useState(false);
   const [staleLoading, setStaleLoading] = useState(false);
   const [listingId, setListingId] = useState('');
@@ -117,6 +118,7 @@ export const SocialPublishing: React.FC = () => {
       setStalePublications(staleData);
       setStaleTotal(staleCount);
       setStalePage(currentStalePage);
+      setStaleCursor(stalePublicationResult.nextCursor ?? null);
       setStaleHasNext(stalePublicationResult.hasNext ?? (
         currentStalePage * currentStalePageSize < staleCount
       ));
@@ -141,15 +143,26 @@ export const SocialPublishing: React.FC = () => {
         staleOnly: true,
         page: nextPage,
         pageSize: STALE_PUBLICATION_PAGE_SIZE,
+        ...(staleCursor ? { cursor: staleCursor } : {}),
       });
       const nextRows = result.data || [];
       const nextTotal = Number.isFinite(result.total) ? result.total : staleTotal;
+      // Keep the first page's count as the report snapshot. A publication
+      // created after page one must appear after refresh, not shift this
+      // operator's current review window.
+      const reportTotal = staleCursor ? staleTotal : nextTotal;
       const currentPage = result.page || nextPage;
       const currentPageSize = result.pageSize || STALE_PUBLICATION_PAGE_SIZE;
-      setStalePublications(current => [...current, ...nextRows]);
-      setStaleTotal(nextTotal);
+      setStalePublications(current => {
+        const existingIds = new Set(current.map(item => item.id));
+        return [...current, ...nextRows.filter(item => !existingIds.has(item.id))];
+      });
+      setStaleTotal(reportTotal);
       setStalePage(currentPage);
-      setStaleHasNext(result.hasNext ?? (currentPage * currentPageSize < nextTotal));
+      setStaleCursor(result.nextCursor ?? null);
+      setStaleHasNext(result.nextCursor !== undefined
+        ? Boolean(result.nextCursor) && currentPage * currentPageSize < reportTotal
+        : result.hasNext ?? (currentPage * currentPageSize < reportTotal));
     } catch (error: any) {
       setMessage({ kind: 'error', text: error?.message || 'Không tải thêm được báo cáo liên kết cũ' });
     } finally {

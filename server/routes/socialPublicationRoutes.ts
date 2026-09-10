@@ -7,6 +7,7 @@ import {
   cancelSocialPublication,
   countSocialPublications,
   createSocialPublication,
+  encodeSocialPublicationCursor,
   findSocialPublication,
   listSocialPublications,
   markSocialTargetsPending,
@@ -112,6 +113,9 @@ export function createSocialPublicationRouter(
     const pageSize = Number.isFinite(requestedPageSize)
       ? Math.min(Math.max(Math.floor(requestedPageSize), 1), 200)
       : 100;
+    const cursor = typeof req.query.cursor === 'string' && req.query.cursor.trim()
+      ? req.query.cursor.trim()
+      : undefined;
     const offset = (page - 1) * pageSize;
     const listArguments: Parameters<typeof listSocialPublications> = [
       pool,
@@ -120,7 +124,13 @@ export function createSocialPublicationRouter(
       source,
       staleOnly,
     ];
-    if (offset > 0) listArguments.push(offset);
+    if (cursor) {
+      // Cursor pagination keeps a stale-only report stable while new
+      // publications or listing status changes happen between requests.
+      listArguments.push(0, cursor);
+    } else if (offset > 0) {
+      listArguments.push(offset);
+    }
     const [rows, countedTotal] = await Promise.all([
       listSocialPublications(...listArguments),
       countSocialPublications(pool, tenantId(req), source, staleOnly),
@@ -128,13 +138,18 @@ export function createSocialPublicationRouter(
     // Keep a safe fallback for older test doubles and callers while the
     // repository count remains authoritative in production.
     const total = Number.isFinite(countedTotal) ? countedTotal : rows.length;
+    const lastRow = rows[rows.length - 1];
+    const nextCursor = rows.length === pageSize && lastRow?.createdAt && lastRow?.id
+      ? encodeSocialPublicationCursor({ createdAt: lastRow.createdAt, id: lastRow.id })
+      : null;
     res.json({
       data: rows,
       total,
       page,
       pageSize,
       totalPages: Math.ceil(total / pageSize),
-      hasNext: page * pageSize < total,
+      hasNext: cursor ? Boolean(nextCursor) : page * pageSize < total,
+      nextCursor,
     });
   });
 
