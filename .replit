@@ -108,6 +108,8 @@ LANGGRAPH_ORCHESTRATION_APPROVED = "true"
 NODE_ENV = "development"
 PORT = "5000"
 QSTASH_URL = "https://qstash-us-east-1.upstash.io"
+APP_URL = "https://sgsland.vn"
+PUBLIC_URL = "https://sgsland.vn"
 [userenv.production]
 NODE_ENV = "production"
 PORT = "5000"

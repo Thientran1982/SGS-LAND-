@@ -547,6 +547,7 @@ export const SocialPublishing: React.FC = () => {
                 <div className="space-y-2">
                   {catalog.map(item => {
                     const isReady = isSocialCapabilityReady(item);
+                    const canCompose = item.hasPublisher;
                     const isFocused = item.platform === focusedPlatform;
                     const statusText = item.status === 'UNSUPPORTED'
                       ? 'Không hỗ trợ'
@@ -557,9 +558,9 @@ export const SocialPublishing: React.FC = () => {
                     <label
                       key={item.platform}
                       data-social-platform={item.platform}
-                      className={`flex items-start gap-3 rounded-xl border p-3 ${isReady ? 'cursor-pointer' : 'cursor-not-allowed opacity-75'} ${platforms.includes(item.platform) ? 'border-sgs-primary bg-sgs-primary/5' : 'border-[var(--glass-border)]'} ${isFocused ? 'ring-2 ring-indigo-400 ring-offset-1' : ''}`}
+                      className={`flex items-start gap-3 rounded-xl border p-3 ${canCompose ? 'cursor-pointer' : 'cursor-not-allowed opacity-75'} ${platforms.includes(item.platform) ? 'border-sgs-primary bg-sgs-primary/5' : 'border-[var(--glass-border)]'} ${isFocused ? 'ring-2 ring-indigo-400 ring-offset-1' : ''}`}
                     >
-                      <input type="checkbox" checked={platforms.includes(item.platform)} disabled={!isSocialCapabilityReady(item)} onChange={() => togglePlatform(item.platform)} className="mt-1 accent-[var(--sgs-primary)] disabled:cursor-not-allowed" />
+                      <input type="checkbox" checked={platforms.includes(item.platform)} disabled={!canCompose} onChange={() => togglePlatform(item.platform)} className="mt-1 accent-[var(--sgs-primary)] disabled:cursor-not-allowed" />
                       <span className="min-w-0 flex-1">
                         <span className="flex items-center justify-between gap-2 text-sm font-semibold text-[var(--text-primary)]">
                           {item.label}
@@ -570,7 +571,7 @@ export const SocialPublishing: React.FC = () => {
                          </span>
                         {!!item.maxImages && <span className="mt-1 block text-[10px] font-semibold text-[var(--text-secondary)]">Tối đa {item.maxImages} ảnh mỗi bài</span>}
                         <span className="mt-1 block text-xs leading-5 text-[var(--text-tertiary)]">{item.reason}</span>
-                        {!item.canPublish && <span className="mt-1 block text-xs font-semibold text-amber-700">Tạm khóa: cần xác minh publisher và quyền provider trước khi xuất bản.</span>}
+                         {!item.canPublish && canCompose && <span className="mt-1 block text-xs font-semibold text-amber-700">Có thể soạn preview/lưu draft; đăng thật cần xác minh publisher và quyền provider.</span>}
                       </span>
                     </label>
                     );
@@ -645,8 +646,12 @@ export const SocialPublishing: React.FC = () => {
                 />
                 <span className="mt-1 block text-right text-xs text-[var(--text-tertiary)]">{caption.length.toLocaleString('vi-VN')}/63.206 ký tự</span>
               </label>
-              {!preview.length ? (
-                <div className="flex min-h-56 items-center justify-center text-center text-sm text-[var(--text-tertiary)]">Chọn listing, kênh rồi bấm “Xem preview”.</div>
+               {!preview.length ? (
+                <div className="flex min-h-56 flex-col items-center justify-center gap-2 px-6 text-center text-sm text-[var(--text-tertiary)]">
+                  <Eye size={22} className="text-[var(--text-tertiary)]" />
+                  <p>Chọn listing, kênh và ảnh, rồi bấm “Xem preview”.</p>
+                  <p className="text-xs">Nếu Facebook chưa READY, bạn vẫn có thể soạn và lưu draft; chỉ thao tác đăng thật mới bị khóa.</p>
+                </div>
               ) : (
                 <div className="space-y-4">
                   {preview.map(item => (
@@ -655,6 +660,31 @@ export const SocialPublishing: React.FC = () => {
                         <h3 className="font-bold text-[var(--text-primary)]">{catalog.find(c => c.platform === item.platform)?.label || item.platform}</h3>
                         {item.link && <a href={item.link} target="_blank" rel="noreferrer" className="text-sgs-primary"><ExternalLink size={15} /></a>}
                       </div>
+                       {item.imageUrls?.length ? (
+                         <div className="mb-3 overflow-hidden rounded-xl border border-[var(--glass-border)] bg-[var(--bg-app)]">
+                           <img
+                             src={item.imageUrls[0]}
+                             alt={`Ảnh preview ${catalog.find(c => c.platform === item.platform)?.label || item.platform}`}
+                             className="aspect-[16/9] w-full object-cover"
+                           />
+                           {item.imageUrls.length > 1 && (
+                             <div className="grid grid-cols-4 gap-1 p-1">
+                               {item.imageUrls.slice(1, 5).map((imageUrl, index) => (
+                                 <img
+                                   key={`${imageUrl}-${index}`}
+                                   src={imageUrl}
+                                   alt={`Ảnh ${index + 2}`}
+                                   className="aspect-square w-full rounded-md object-cover"
+                                 />
+                               ))}
+                             </div>
+                           )}
+                         </div>
+                       ) : item.platform === 'FACEBOOK_PAGE' ? (
+                         <div className="mb-3 rounded-xl border border-dashed border-amber-300 bg-amber-50 p-3 text-xs font-semibold text-amber-800">
+                           Chưa có ảnh HTTPS công khai trong preview Facebook.
+                         </div>
+                       ) : null}
                       <pre className="whitespace-pre-wrap break-words font-sans text-sm leading-6 text-[var(--text-secondary)]">{caption || item.text}</pre>
                     </article>
                   ))}
