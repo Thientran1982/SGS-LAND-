@@ -132,18 +132,27 @@ export const SocialPublishing: React.FC = () => {
 
   const load = useCallback(async () => {
     setLoading(true);
+    const catalogRequest = socialPublicationApi.getCatalog();
+    const publicationDataRequest = Promise.all([
+      listingApi.getListings(1, 100, { statuses: 'AVAILABLE,OPENING,BOOKING,BEST_MARKET' }),
+      socialPublicationApi.getPublications({ limit: 200 }),
+      socialPublicationApi.getPublications({
+        staleOnly: true,
+        page: 1,
+        pageSize: STALE_PUBLICATION_PAGE_SIZE,
+      }),
+    ]);
+
     try {
-      const [catalogResult, listingResult, publicationResult, stalePublicationResult] = await Promise.all([
-        socialPublicationApi.getCatalog(),
-        listingApi.getListings(1, 100, { statuses: 'AVAILABLE,OPENING,BOOKING,BEST_MARKET' }),
-        socialPublicationApi.getPublications({ limit: 200 }),
-        socialPublicationApi.getPublications({
-          staleOnly: true,
-          page: 1,
-          pageSize: STALE_PUBLICATION_PAGE_SIZE,
-        }),
-      ]);
+      const catalogResult = await catalogRequest;
       setCatalog(catalogResult.data || []);
+    } catch (error: any) {
+      setCatalog([]);
+      setMessage({ kind: 'error', text: localizedSocialError(error, t, 'social.error_provider') });
+    }
+
+    try {
+      const [listingResult, publicationResult, stalePublicationResult] = await publicationDataRequest;
       setListings(listingResult.data || []);
       setPublications(publicationResult.data || []);
       const staleData = stalePublicationResult.data || [];
@@ -164,11 +173,13 @@ export const SocialPublishing: React.FC = () => {
          setListingId(requestedListingId);
       }
     } catch (error: any) {
-      setMessage({ kind: 'error', text: localizedSocialError(error, t, 'social.error_load') });
+      setMessage(current => current?.kind === 'error'
+        ? current
+        : { kind: 'error', text: localizedSocialError(error, t, 'social.error_load') });
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [requestedListingId, t]);
 
   useEffect(() => { void load(); }, [load]);
 
@@ -737,6 +748,11 @@ export const SocialPublishing: React.FC = () => {
               <div>
                 <span className="mb-2 block text-sm font-semibold text-[var(--text-primary)]">Nền tảng đích</span>
                 <div className="space-y-2">
+                  {catalog.length === 0 && !loading && (
+                    <p className="rounded-xl border border-amber-200 bg-amber-50 px-3 py-3 text-xs leading-5 text-amber-800">
+                      Chưa tải được danh sách nền tảng. Bấm “Kiểm tra lại kết nối” để tải lại.
+                    </p>
+                  )}
                   {catalog.map(item => {
                     const isReady = isSocialCapabilityReady(item);
                     // Draft composition is intentionally available for every
