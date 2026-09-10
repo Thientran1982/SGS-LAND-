@@ -6,6 +6,7 @@ export interface SelectOption {
   value: string;
   label: string;
   dot?: string;
+  imageUrl?: string;
 }
 
 interface Props {
@@ -109,6 +110,14 @@ export function SelectDropdown({
         className={`w-full flex items-center justify-between gap-2 px-3 text-sm border rounded-xl focus:outline-none focus:ring-2 focus:ring-[var(--sgs-primary)]/30 transition-colors ${disabled ? 'bg-[var(--glass-surface)] opacity-60 cursor-not-allowed border-[var(--glass-border)]' : enabledSurfaceClass} ${!disabled && (error ? 'border-rose-400' : open ? 'border-[var(--sgs-primary)] ring-2 ring-[var(--sgs-primary)]/20' : 'border-[var(--glass-border)] hover:border-[var(--sgs-primary)]')} ${className}`}
       >
         <span className="flex items-center gap-2 min-w-0 flex-1 truncate">
+          {selected?.imageUrl && (
+            <img
+              src={selected.imageUrl}
+              alt=""
+              className="h-7 w-9 flex-shrink-0 rounded-md object-cover"
+              onError={event => { event.currentTarget.style.display = 'none'; }}
+            />
+          )}
           {selected?.dot && (
             <span className={`w-2 h-2 rounded-full flex-shrink-0 ${selected.dot}`} />
           )}
@@ -152,6 +161,14 @@ export function SelectDropdown({
                 onClick={() => handleSelect(opt.value)}
                 className={`w-full flex items-center gap-2.5 px-3 py-2 text-sm text-left transition-colors ${value === opt.value ? 'bg-[var(--sgs-primary)]/10 dark:bg-[var(--sgs-primary)]/25 text-sgs-primary dark:text-[var(--sgs-primary)]' : 'text-[var(--text-primary)] hover:bg-[var(--glass-surface-hover)]'}`}
               >
+                 {opt.imageUrl && (
+                   <img
+                     src={opt.imageUrl}
+                     alt=""
+                     className="h-9 w-12 flex-shrink-0 rounded-md object-cover"
+                     onError={event => { event.currentTarget.style.display = 'none'; }}
+                   />
+                 )}
                 {opt.dot && <span className={`w-2 h-2 rounded-full flex-shrink-0 ${opt.dot}`} />}
                 <span className="flex-1 truncate">{opt.label}</span>
                 {value === opt.value && <Check size={13} className="flex-shrink-0 text-sgs-primary" />}

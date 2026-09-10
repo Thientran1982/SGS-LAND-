@@ -25,6 +25,7 @@ export function ListingDropdown({ listings, value, onChange, disabled = false }:
   };
   const options: SelectOption[] = listings.map(listing => ({
     value: String(listing.id),
+    imageUrl: listing.images?.[0],
     label: listing.code
       ? `${listing.code} — ${listing.title || 'Sản phẩm chưa có tên'} · ${statusLabel[listing.status || ''] || listing.status || 'Sẵn sàng'}`
       : `${listing.title || String(listing.id)} · ${statusLabel[listing.status || ''] || listing.status || 'Sẵn sàng'}`,

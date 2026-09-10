@@ -724,6 +724,9 @@ export const SocialPublishing: React.FC = () => {
                   disabled={loading}
                   onChange={handleListingChange}
                 />
+                <p className="mt-1.5 text-[11px] leading-5 text-[var(--text-tertiary)]">
+                  Lấy từ kho listing của tenant hiện tại; chỉ hiển thị sản phẩm đang đủ điều kiện xuất bản.
+                </p>
                 {!loading && !listings.length && (
                   <p className="mt-2 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs leading-5 text-amber-800">
                     Chưa có listing đủ điều kiện xuất bản. Kiểm tra listing có trạng thái Sẵn sàng/Đang mở bán/Đang giữ chỗ và thử “Kiểm tra lại kết nối”.
