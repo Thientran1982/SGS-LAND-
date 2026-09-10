@@ -65,6 +65,9 @@ export default defineConfig(({ mode }) => {
           '@': path.resolve(__dirname, '.'),
           react: path.resolve(__dirname, 'node_modules/react'),
           'react-dom': path.resolve(__dirname, 'node_modules/react-dom'),
+          'react/jsx-runtime': path.resolve(__dirname, 'node_modules/react/jsx-runtime.js'),
+          'react/jsx-dev-runtime': path.resolve(__dirname, 'node_modules/react/jsx-dev-runtime.js'),
+          'react-dom/client': path.resolve(__dirname, 'node_modules/react-dom/client.js'),
       // Widget chat dung chung voi Next.js (Phuong an B) - 1 nguon su that duy nhat.
       '@sgs/chat-widget': path.resolve(__dirname, 'packages/chat-widget/src/index.ts'),
         }
