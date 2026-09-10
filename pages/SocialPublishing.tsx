@@ -739,7 +739,11 @@ export const SocialPublishing: React.FC = () => {
                 <div className="space-y-2">
                   {catalog.map(item => {
                     const isReady = isSocialCapabilityReady(item);
-                    const canCompose = item.hasPublisher;
+                    // Draft composition is intentionally available for every
+                    // catalogued platform. Provider readiness is enforced
+                    // when the operator activates a publication, not while
+                    // they are preparing a multi-platform draft.
+                    const canCompose = true;
                     const isFocused = item.platform === focusedPlatform;
                     const statusText = item.status === 'UNSUPPORTED'
                       ? 'Không hỗ trợ'
