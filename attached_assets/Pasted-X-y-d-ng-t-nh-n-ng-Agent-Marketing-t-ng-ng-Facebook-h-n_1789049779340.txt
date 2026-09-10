@@ -1,0 +1,24 @@
+Xây dựng tính năng "Agent Marketing tự động đăng Facebook hàng ngày" cho trang Đăng đa nền tảng, dựa trên hạ tầng đăng bài Facebook đã có sẵn (đã sửa lỗi thiếu ảnh và lỗi link 404 gần đây, hoạt động đúng).
+
+1. LỊCH CHẠY
+- Chạy tự động 1 lần/ngày lúc 18:30 giờ Việt Nam (Asia/Ho_Chi_Minh, UTC+7).
+- Ưu tiên mở rộng cơ chế lập lịch đã có trong server (worker định kỳ trong socialPublishingWorker.ts, hoặc route cron có secret trong socialPublishingCronRoutes.ts) thay vì phụ thuộc dịch vụ bên ngoài. Nếu bắt buộc cần một cron/trigger bên ngoài (ví dụ Replit Scheduled Deployments) để đảm bảo chạy đúng giờ kể cả khi app rảnh (sleep), hãy nêu rõ cần cấu hình thêm gì.
+- Phải có cơ chế chống chạy trùng: nếu vì lý do nào đó agent được gọi nhiều lần trong cùng một ngày (giờ VN), chỉ đăng bài 1 lần duy nhất cho ngày đó.
+
+2. CÁCH CHỌN SẢN PHẨM/DỰ ÁN ĐỂ ĐĂNG
+- Chọn theo kiểu xoay vòng (round-robin) trong toàn bộ sản phẩm/dự án đủ điều kiện đăng (đang active, chưa bị xóa/ẩn, có ít nhất 1 hình ảnh hợp lệ).
+- Ưu tiên chọn sản phẩm/dự án có thời điểm đăng Facebook gần nhất là xa nhất trong quá khứ — bao gồm cả những sản phẩm/dự án đã từng đăng rồi (không chỉ xét sản phẩm mới/chưa đăng bao giờ). Sản phẩm chưa từng đăng lần nào được coi là "đăng lâu nhất" nên được ưu tiên trước.
+- Chỉ chọn 1 sản phẩm hoặc 1 dự án cho mỗi lần chạy.
+
+3. QUY TRÌNH ĐĂNG
+- Tự động tạo nội dung bài đăng và đăng thẳng lên Facebook Page thật lúc 18:30, KHÔNG cần bước duyệt/xác nhận thủ công.
+- Tái sử dụng lại toàn bộ pipeline tạo nội dung + đăng bài đã có (và đã được sửa lỗi) — không viết lại logic tạo caption, upload ảnh, gọi Facebook Graph API từ đầu. Đảm bảo giữ nguyên các bản vá gần đây: không gửi kèm "link" cùng "attached_media" trong cùng 1 lần gọi feed (tránh mất ảnh), và dùng đúng URL chi tiết cho từng loại (listing dùng /bds/{slug}-{id}, project dùng /p/{code}).
+- Cập nhật đúng trạng thái và thời điểm "đăng Facebook gần nhất" của sản phẩm/dự án sau khi đăng thành công, để lần chạy tiếp theo xoay vòng chính xác.
+
+4. XỬ LÝ KHI KHÔNG CÓ SẢN PHẨM ĐỦ ĐIỀU KIỆN
+- Nếu một ngày không tìm được sản phẩm/dự án nào đủ điều kiện để đăng, KHÔNG được tự bỏ qua âm thầm và KHÔNG được đăng bài không phù hợp.
+- Ghi log rõ lý do (ví dụ: không có sản phẩm active, không có sản phẩm có ảnh...) và hiển thị cảnh báo rõ ràng trong khu vực cảnh báo/thông báo đã có sẵn trên trang Đăng đa nền tảng, để tôi biết mà bổ sung sản phẩm.
+
+5. GHI NHẬN / AUDIT
+- Mỗi lần agent chạy (thành công hay thất bại) cần được ghi log: thời gian chạy, sản phẩm/dự án được chọn (nếu có), kết quả đăng bài, lỗi nếu có — tương tự cách các audit event khác trong hệ thống đăng bài đang được ghi nhận.
+- Đảm bảo có test cho logic chọn xoay vòng và test không phá vỡ luồng đăng bài thủ công hiện tại.
