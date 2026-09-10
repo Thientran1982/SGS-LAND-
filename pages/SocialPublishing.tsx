@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import { AlertTriangle, ArrowUpRight, Bot, CalendarClock, Check, Eye, ExternalLink, PlugZap, RefreshCw, Send, X } from 'lucide-react';
+import { AlertTriangle, ArrowUpRight, Bot, CalendarClock, Check, Eye, ExternalLink, ImagePlus, PlugZap, RefreshCw, Send, Upload, X } from 'lucide-react';
 import { ROUTES } from '../config/routes';
 import { listingApi } from '../services/api/listingApi';
 import ListingDropdown, { SocialListingOption } from '../components/social-publishing/ListingDropdown';
@@ -53,6 +53,8 @@ export const SocialPublishing: React.FC = () => {
   const [preview, setPreview] = useState<{ platform: string; title: string; text: string; imageUrls: string[]; link: string | null }[]>([]);
   const [caption, setCaption] = useState('');
   const [selectedImageUrls, setSelectedImageUrls] = useState<string[]>([]);
+  const [uploadedImageUrls, setUploadedImageUrls] = useState<string[]>([]);
+  const [uploadingImages, setUploadingImages] = useState(false);
   const [schedule, setSchedule] = useState<'NOW' | 'SCHEDULED'>('NOW');
   const [scheduledAt, setScheduledAt] = useState('');
   const [loading, setLoading] = useState(true);
@@ -225,6 +227,7 @@ export const SocialPublishing: React.FC = () => {
     setListingId(value);
     setCaption('');
     setPreview([]);
+    setUploadedImageUrls([]);
   };
 
   const toggleImage = (imageUrl: string) => {
@@ -234,6 +237,44 @@ export const SocialPublishing: React.FC = () => {
       return [...current, imageUrl];
     });
     setPreview([]);
+  };
+
+  const uploadAdditionalImages = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(event.target.files || []);
+    event.target.value = '';
+    if (!files.length) return;
+    if (!selectedListing) {
+      setMessage({ kind: 'error', text: 'Chọn listing trước khi tải ảnh cho publication.' });
+      return;
+    }
+    const remaining = maxFacebookImages - selectedImageUrls.length;
+    if (remaining <= 0) {
+      setMessage({ kind: 'error', text: `Đã chọn đủ ${maxFacebookImages} ảnh cho publication này.` });
+      return;
+    }
+    const accepted = files.slice(0, remaining);
+    setUploadingImages(true);
+    setMessage(null);
+    try {
+      const result = await socialPublicationApi.uploadImages(accepted);
+      const uploadedUrls = (result.files || []).map(file => file.url).filter(Boolean);
+      if (!uploadedUrls.length) {
+        throw new Error(result.warnings?.join(' ') || 'Không có ảnh hợp lệ được tải lên.');
+      }
+      setUploadedImageUrls(current => [...current, ...uploadedUrls]);
+      setSelectedImageUrls(current => [...current, ...uploadedUrls].slice(0, maxFacebookImages));
+      setPreview([]);
+      setMessage({
+        kind: 'ok',
+        text: result.warnings?.length
+          ? `Đã thêm ${uploadedUrls.length} ảnh. ${result.warnings.join(' ')}`
+          : `Đã thêm ${uploadedUrls.length} ảnh vào publication draft.`,
+      });
+    } catch (error: any) {
+      setMessage({ kind: 'error', text: error?.message || 'Tải ảnh thất bại. Vui lòng thử lại.' });
+    } finally {
+      setUploadingImages(false);
+    }
   };
 
   const runPreview = async () => {

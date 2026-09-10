@@ -101,6 +101,14 @@ export interface SocialPublicationListResponse {
   nextCursor?: string | null;
 }
 
+export interface SocialUploadedImage {
+  filename: string;
+  originalName: string;
+  mimetype: string;
+  size: number;
+  url: string;
+}
+
 export const socialPublicationApi = {
   getCatalog: (): Promise<{ data: SocialCapability[] }> =>
     api.get('/api/social-publications/catalog'),
@@ -126,6 +134,20 @@ export const socialPublicationApi = {
     caption?: string;
     imageUrls?: string[];
   }) => api.post<SocialPublication>('/api/social-publications', input),
+  uploadImages: async (files: File[]): Promise<{ files: SocialUploadedImage[]; warnings?: string[] }> => {
+    const formData = new FormData();
+    files.forEach(file => formData.append('files', file, file.name));
+    const response = await fetch('/api/upload', {
+      method: 'POST',
+      body: formData,
+      credentials: 'include',
+    });
+    const payload = await response.json().catch(() => ({}));
+    if (!response.ok) {
+      throw new Error(payload?.error || 'Tải ảnh thất bại. Vui lòng thử lại.');
+    }
+    return payload;
+  },
   activate: (id: string) => api.post<SocialPublication>(`/api/social-publications/${id}/activate`),
   cancel: (id: string) => api.post<{ ok: true }>(`/api/social-publications/${id}/cancel`),
   reconcile: (
