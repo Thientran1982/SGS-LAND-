@@ -321,7 +321,15 @@ export function createListingRoutes(authenticateToken: any) {
       const filters: any = {};
       if (req.query.type && req.query.type !== 'ALL') filters.type = req.query.type;
       if (req.query.types) filters.type_in = (req.query.types as string).split(',');
-      if (req.query.status && req.query.status !== 'ALL') filters.status = req.query.status;
+      if (req.query.statuses) {
+        const statuses = String(req.query.statuses)
+          .split(',')
+          .map(status => status.trim())
+          .filter(Boolean);
+        if (statuses.length) filters.status_in = statuses;
+      } else if (req.query.status && req.query.status !== 'ALL') {
+        filters.status = req.query.status;
+      }
       if (req.query.transaction && req.query.transaction !== 'ALL') filters.transaction = req.query.transaction;
       const priceMin = parseFloat(req.query.priceMin as string);
       const priceMax = parseFloat(req.query.priceMax as string);

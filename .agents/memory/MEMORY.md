@@ -73,3 +73,4 @@
 - [Preview reconcile smoke coverage](preview-reconcile-smoke.md) — test mutation error contracts through the public preview proxy, not only an isolated router
 - [Deployment artifact revision](deployment-artifact-revision.md) — prove production runs the current workspace artifact before diagnosing a repeated runtime failure
 - [Production dependency import checks](production-dependency-import-checks.md) — bundled backend imports may keep timers alive; exit explicitly after a successful dependency-only import
+- [Listing multi-status filters](listing-multi-status-filters.md) — comma-separated listing statuses must use the status_in repository filter, not the singular status query
