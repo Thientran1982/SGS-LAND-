@@ -1,5 +1,6 @@
 import React from 'react';
 import { SelectDropdown, SelectOption } from '../task/SelectDropdown';
+import { normalizeSocialImageUrl } from './SocialImage';
 
 export interface SocialProjectOption {
   id: string;
@@ -35,7 +36,7 @@ export function ProjectDropdown({ projects, value, onChange, disabled = false }:
     ].filter(Boolean).join(' · ');
     return {
       value: String(project.id),
-      imageUrl: coverImage(project),
+      imageUrl: normalizeSocialImageUrl(coverImage(project)) || undefined,
       label: `${project.code ? `${project.code} — ` : ''}${project.name || String(project.id)}${details ? ` · ${details}` : ''}`,
     };
   });

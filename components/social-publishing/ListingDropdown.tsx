@@ -1,5 +1,6 @@
 import React from 'react';
 import { SelectDropdown, SelectOption } from '../task/SelectDropdown';
+import { normalizeSocialImageUrl } from './SocialImage';
 
 export interface SocialListingOption {
   id: string;
@@ -25,7 +26,7 @@ export function ListingDropdown({ listings, value, onChange, disabled = false }:
   };
   const options: SelectOption[] = listings.map(listing => ({
     value: String(listing.id),
-    imageUrl: listing.images?.[0],
+    imageUrl: normalizeSocialImageUrl(listing.images?.[0]) || undefined,
     label: listing.code
       ? `${listing.code} — ${listing.title || 'Sản phẩm chưa có tên'} · ${statusLabel[listing.status || ''] || listing.status || 'Sẵn sàng'} · ${listing.images?.length ? `${listing.images.length} ảnh` : 'Chưa có ảnh'}`
       : `${listing.title || String(listing.id)} · ${statusLabel[listing.status || ''] || listing.status || 'Sẵn sàng'} · ${listing.images?.length ? `${listing.images.length} ảnh` : 'Chưa có ảnh'}`,

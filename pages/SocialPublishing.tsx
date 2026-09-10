@@ -5,6 +5,7 @@ import { db } from '../services/dbApi';
 import { listingApi } from '../services/api/listingApi';
 import ListingDropdown, { SocialListingOption } from '../components/social-publishing/ListingDropdown';
 import ProjectDropdown, { SocialProjectOption } from '../components/social-publishing/ProjectDropdown';
+import { SocialImage } from '../components/social-publishing/SocialImage';
 import { SelectDropdown } from '../components/task/SelectDropdown';
 import {
   socialPublicationApi,
@@ -856,8 +857,8 @@ export const SocialPublishing: React.FC = () => {
               <p className="text-xs text-[var(--text-tertiary)]">Chưa gửi gì ra provider ở bước này.</p>
             </div>
           </div>
-          <div className="grid gap-5 lg:grid-cols-[1fr_1.4fr]">
-            <div className="space-y-4">
+           <div className="grid min-w-0 gap-5 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.4fr)]">
+             <div className="min-w-0 space-y-4">
               <label className="block">
                 <span className="mb-2 block text-sm font-semibold text-[var(--text-primary)]">Nguồn nội dung</span>
                 <SelectDropdown
@@ -902,9 +903,9 @@ export const SocialPublishing: React.FC = () => {
                     </p>
                   )}
                   {selectedListing && (
-                    <div className="mt-3 flex items-center gap-3 rounded-xl border border-[var(--glass-border)] bg-[var(--bg-app)] p-3">
+                     <div className="mt-3 flex min-w-0 items-center gap-3 rounded-xl border border-[var(--glass-border)] bg-[var(--bg-app)] p-3">
                       {selectedListing.images?.[0] ? (
-                        <img src={selectedListing.images[0]} alt="" className="h-12 w-16 rounded-lg object-cover" />
+                         <SocialImage src={selectedListing.images[0]} alt="" className="h-12 w-16 flex-shrink-0 rounded-lg object-cover" />
                       ) : (
                         <div className="flex h-12 w-16 items-center justify-center rounded-lg bg-[var(--glass-surface)] px-1 text-center text-[10px] text-[var(--text-tertiary)]">Chưa có ảnh</div>
                       )}
@@ -941,9 +942,9 @@ export const SocialPublishing: React.FC = () => {
                     </p>
                   )}
                   {selectedProject && (
-                    <div className="mt-3 flex items-center gap-3 rounded-xl border border-[var(--glass-border)] bg-[var(--bg-app)] p-3">
+                     <div className="mt-3 flex min-w-0 items-center gap-3 rounded-xl border border-[var(--glass-border)] bg-[var(--bg-app)] p-3">
                       {imageCandidates[0] ? (
-                        <img src={imageCandidates[0]} alt="" className="h-12 w-16 rounded-lg object-cover" />
+                         <SocialImage src={imageCandidates[0]} alt="" className="h-12 w-16 flex-shrink-0 rounded-lg object-cover" />
                       ) : (
                         <div className="flex h-12 w-16 items-center justify-center rounded-lg bg-[var(--glass-surface)] px-1 text-center text-[10px] text-[var(--text-tertiary)]">Chưa có ảnh</div>
                       )}
@@ -984,16 +985,16 @@ export const SocialPublishing: React.FC = () => {
                         ? 'Sẵn sàng'
                         : 'Chưa sẵn sàng';
                     return (
-                    <label
+                     <label
                       key={item.platform}
                       data-social-platform={item.platform}
-                      className={`flex items-start gap-3 rounded-xl border p-3 ${canCompose ? 'cursor-pointer' : 'cursor-not-allowed opacity-75'} ${platforms.includes(item.platform) ? 'border-sgs-primary bg-sgs-primary/5' : 'border-[var(--glass-border)]'} ${isFocused ? 'ring-2 ring-indigo-400 ring-offset-1' : ''}`}
+                       className={`flex min-w-0 items-start gap-3 rounded-xl border p-3 ${canCompose ? 'cursor-pointer' : 'cursor-not-allowed opacity-75'} ${platforms.includes(item.platform) ? 'border-sgs-primary bg-sgs-primary/5' : 'border-[var(--glass-border)]'} ${isFocused ? 'ring-2 ring-indigo-400 ring-offset-1' : ''}`}
                     >
                       <input type="checkbox" checked={platforms.includes(item.platform)} disabled={!canCompose} onChange={() => togglePlatform(item.platform)} className="mt-1 accent-[var(--sgs-primary)] disabled:cursor-not-allowed" />
                       <span className="min-w-0 flex-1">
-                        <span className="flex items-center justify-between gap-2 text-sm font-semibold text-[var(--text-primary)]">
-                          {item.label}
-                           <span className={`rounded-full px-2 py-0.5 text-[10px] ${isReady ? 'bg-emerald-100 text-emerald-700' : item.status === 'UNSUPPORTED' ? 'bg-slate-100 text-slate-700' : 'bg-amber-100 text-amber-700'}`}>{statusText}</span>
+                         <span className="flex min-w-0 flex-wrap items-start justify-between gap-2 text-sm font-semibold text-[var(--text-primary)]">
+                           <span className="min-w-0 break-words">{item.label}</span>
+                            <span className={`shrink-0 whitespace-nowrap rounded-full px-2 py-0.5 text-[10px] ${isReady ? 'bg-emerald-100 text-emerald-700' : item.status === 'UNSUPPORTED' ? 'bg-slate-100 text-slate-700' : 'bg-amber-100 text-amber-700'}`}>{statusText}</span>
                         </span>
                          <span className={`mt-1 block text-[10px] font-semibold ${item.hasPublisher ? 'text-indigo-700' : 'text-[var(--text-tertiary)]'}`}>
                            {item.hasPublisher ? 'Đã có publisher provider' : 'Chưa có publisher provider'}
@@ -1027,13 +1028,13 @@ export const SocialPublishing: React.FC = () => {
                 </button>
               </div>
             </div>
-            <div className="rounded-2xl bg-[var(--bg-app)] p-4">
+             <div className="min-w-0 overflow-hidden rounded-2xl bg-[var(--bg-app)] p-4">
               <div className="mb-3 flex items-center justify-between gap-3">
                 <p className="text-xs font-bold uppercase tracking-wider text-[var(--text-tertiary)]">Preview content</p>
                 {!!selectedImageUrls.length && <span className="text-xs text-[var(--text-tertiary)]">{selectedImageUrls.length}/{maxFacebookImages} ảnh đã chọn</span>}
               </div>
                 {selectedSource ? (
-                 <div className="mb-4 rounded-xl border border-[var(--glass-border)] bg-[var(--bg-surface)] p-3">
+                  <div className="mb-4 min-w-0 overflow-hidden rounded-xl border border-[var(--glass-border)] bg-[var(--bg-surface)] p-3">
                   <div className="mb-2 flex items-center justify-between gap-3">
                      <p className="flex items-center gap-2 text-sm font-semibold text-[var(--text-primary)]"><ImagePlus size={16} /> Ảnh bài đăng</p>
                      <p className="text-xs text-[var(--text-tertiary)]">{selectedImageUrls.length}/{maxFacebookImages} ảnh đã chọn</p>
@@ -1043,13 +1044,13 @@ export const SocialPublishing: React.FC = () => {
                         {sourceType === 'PROJECT' ? 'Dự án chưa có ảnh. Hãy tải ảnh lên bên dưới để tạo bài Facebook.' : 'Listing chưa có ảnh. Hãy tải ảnh lên bên dưới để tạo bài Facebook.'}
                      </p>
                   ) : (
-                    <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 md:grid-cols-5">
+                     <div className="grid min-w-0 grid-cols-2 gap-2 sm:grid-cols-3 md:grid-cols-5">
                        {imageCandidates.map((imageUrl, index) => {
                         const selected = selectedImageUrls.includes(imageUrl);
                         const selectionLimitReached = !selected && selectedImageUrls.length >= maxFacebookImages;
                         return (
-                          <label key={`${imageUrl}-${index}`} className={`relative cursor-pointer overflow-hidden rounded-lg border-2 ${selected ? 'border-sgs-primary' : 'border-transparent'}`}>
-                              <img src={imageUrl} alt={`Ảnh ${index + 1} của ${sourceType === 'PROJECT' ? selectedProject?.name || 'dự án' : selectedListing?.title || 'listing'}`} className="aspect-square w-full object-cover" />
+                           <label key={`${imageUrl}-${index}`} className={`relative min-w-0 cursor-pointer overflow-hidden rounded-lg border-2 ${selected ? 'border-sgs-primary' : 'border-transparent'}`}>
+                               <SocialImage src={imageUrl} alt={`Ảnh ${index + 1} của ${sourceType === 'PROJECT' ? selectedProject?.name || 'dự án' : selectedListing?.title || 'listing'}`} className="aspect-square w-full object-cover" />
                             <span className="absolute left-1 top-1 rounded bg-white/90 px-1.5 py-1 text-[10px] font-semibold text-[var(--text-primary)]">
                               <input type="checkbox" checked={selected} disabled={selectionLimitReached} onChange={() => toggleImage(imageUrl)} className="mr-1 accent-[var(--sgs-primary)] disabled:opacity-50" />
                               {selected ? 'Đã chọn' : 'Chọn'}
@@ -1081,7 +1082,7 @@ export const SocialPublishing: React.FC = () => {
                     Chọn sản phẩm hoặc dự án để hiển thị ảnh bài đăng và bật thao tác tải thêm ảnh.
                  </div>
                )}
-              <label className="mb-4 block">
+               <label className="mb-4 block min-w-0">
                 <span className="mb-2 block text-sm font-semibold text-[var(--text-primary)]">Caption đã duyệt</span>
                 <textarea
                   value={caption}
@@ -1105,24 +1106,24 @@ export const SocialPublishing: React.FC = () => {
               ) : (
                 <div className="space-y-4">
                   {preview.map(item => (
-                    <article key={item.platform} className="rounded-2xl border border-[var(--glass-border)] bg-[var(--bg-surface)] p-4">
-                      <div className="mb-2 flex items-center justify-between gap-2">
-                        <h3 className="font-bold text-[var(--text-primary)]">{catalog.find(c => c.platform === item.platform)?.label || item.platform}</h3>
+                     <article key={item.platform} className="min-w-0 overflow-hidden rounded-2xl border border-[var(--glass-border)] bg-[var(--bg-surface)] p-4">
+                       <div className="mb-2 flex min-w-0 items-start justify-between gap-2">
+                         <h3 className="min-w-0 break-words font-bold text-[var(--text-primary)]">{catalog.find(c => c.platform === item.platform)?.label || item.platform}</h3>
                         {item.link && <a href={item.link} target="_blank" rel="noreferrer" className="text-sgs-primary"><ExternalLink size={15} /></a>}
                       </div>
-                       {item.imageUrls?.length ? (
+                        {((item.imageUrls?.length ? item.imageUrls : selectedImageUrls).length > 0) ? (
                          <div className="mb-3 overflow-hidden rounded-xl border border-[var(--glass-border)] bg-[var(--bg-app)]">
-                           <img
-                             src={item.imageUrls[0]}
+                            <SocialImage
+                              src={(item.imageUrls?.length ? item.imageUrls : selectedImageUrls)[0]}
                              alt={`Ảnh preview ${catalog.find(c => c.platform === item.platform)?.label || item.platform}`}
                              className="aspect-[16/9] w-full object-cover"
                            />
-                           {item.imageUrls.length > 1 && (
+                            {(item.imageUrls?.length ? item.imageUrls : selectedImageUrls).length > 1 && (
                              <div className="grid grid-cols-4 gap-1 p-1">
-                               {item.imageUrls.slice(1, 5).map((imageUrl, index) => (
-                                 <img
+                                {(item.imageUrls?.length ? item.imageUrls : selectedImageUrls).slice(1, 5).map((imageUrl, index) => (
+                                  <SocialImage
                                    key={`${imageUrl}-${index}`}
-                                   src={imageUrl}
+                                    src={imageUrl}
                                    alt={`Ảnh ${index + 2}`}
                                    className="aspect-square w-full rounded-md object-cover"
                                  />
@@ -1135,7 +1136,7 @@ export const SocialPublishing: React.FC = () => {
                            Chưa có ảnh HTTPS công khai trong preview Facebook.
                          </div>
                        ) : null}
-                      <pre className="whitespace-pre-wrap break-words font-sans text-sm leading-6 text-[var(--text-secondary)]">{caption || item.text}</pre>
+                       <pre className="min-w-0 max-w-full whitespace-pre-wrap break-words font-sans text-sm leading-6 text-[var(--text-secondary)]">{caption || item.text}</pre>
                     </article>
                   ))}
                 </div>

@@ -9,6 +9,12 @@ Public publishing capability is tenant-scoped and must be live-verified against 
 
 **How to apply:** Keep messaging and public-publishing registries separate, verify the connected Page/token at connection and delivery time, require provider confirmation IDs for `PUBLISHED`, and expose `NOT_READY`/`AMBIGUOUS` with safe operator-facing reasons.
 
+The composition UI may resolve relative or local image paths through the current preview origin for operator viewing, but it must not rewrite the immutable provider asset snapshot. Provider-bound assets still require explicit public HTTPS normalization.
+
+**Why:** Browser preview and provider delivery have different URL requirements; making a local preview URL publishable would either break local development or leak an inaccessible host to a provider.
+
+**How to apply:** Keep display URL normalization in the UI image component/dropdown layer and retain the server-side HTTPS/public-origin gate before draft activation or delivery.
+
 For Zalo OA broadcast, the provider contract is `POST /v2.0/oa/message` with an article attachment. A tenant must first pass the read-only OA identity check and the documented quota/permission probe (`POST /v3.0/oa/quota/message`) before the capability can become READY.
 
 **Why:** Zalo's broadcast endpoint has no dry-run, while the quota endpoint verifies the send-and-notify permission without broadcasting to followers.
