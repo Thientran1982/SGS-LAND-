@@ -4,6 +4,7 @@ import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { Pool, type PoolClient } from 'pg';
 import migration177 from '../migrations/177_p2_skills_rooms';
 import migration195 from '../migrations/195_agent_skill_runtime_bindings';
+import migration196 from '../migrations/196_agent_skill_binding_rls_bypass';
 
 const integrationUrl = process.env.INTEGRITY_PG_URL;
 const describePostgres = describe.skipIf(!integrationUrl);
@@ -97,6 +98,7 @@ describePostgres(suiteTitle, () => {
     `);
     await migration177.up(setupClient);
     await migration195.up(setupClient);
+    await migration196.up(setupClient);
     await setupQuery(`
       ALTER TABLE ai_agents ENABLE ROW LEVEL SECURITY;
       ALTER TABLE ai_agents FORCE ROW LEVEL SECURITY;
@@ -121,9 +123,13 @@ describePostgres(suiteTitle, () => {
         (id, tenant_id, skill_key, title, category, prompt_template, version, visibility, published)
       VALUES
         ($5, $3, 'tenant-a-skill', 'Tenant A skill', 'marketing',
-         'Only use tenant A campaign evidence.', 4, 'TENANT', TRUE),
+         'Only use the shared campaign evidence.', 4, 'PUBLIC', TRUE),
         ($6, $4, 'tenant-b-skill', 'Tenant B skill', 'marketing',
          'Only use tenant B campaign evidence.', 7, 'TENANT', TRUE);
+
+      INSERT INTO agent_skill_bindings
+        (tenant_id, agent_id, skill_id, status, activated_by)
+      VALUES ($4, $2, $5, 'ACTIVE', $3);
 
       INSERT INTO agent_prompt_versions
         (tenant_id, agent_id, version, system_instruction, is_active)
@@ -203,9 +209,15 @@ describePostgres(suiteTitle, () => {
     expect(activeA[0]).toMatchObject({
       skillId: skillA,
       skillKey: 'tenant-a-skill',
-      promptTemplate: 'Only use tenant A campaign evidence.',
+      promptTemplate: 'Only use the shared campaign evidence.',
     });
-    expect(await agentRepository.getActiveCatalogSkills(tenantB, agentB)).toEqual([]);
+    const activeB = await agentRepository.getActiveCatalogSkills(tenantB, agentB);
+    expect(activeB).toHaveLength(1);
+    expect(activeB[0]).toMatchObject({
+      skillId: skillA,
+      sourceTenantId: tenantA,
+      promptTemplate: 'Only use the shared campaign evidence.',
+    });
 
     const promptA = await getPromptTemplate(
       tenantA,
@@ -214,15 +226,22 @@ describePostgres(suiteTitle, () => {
     );
     expect(promptA).toContain('Base prompt for tenant A.');
     expect(promptA).toContain('Tenant A skill (tenant-a-skill, v4)');
-    expect(promptA).toContain('Only use tenant A campaign evidence.');
+    expect(promptA).toContain('Only use the shared campaign evidence.');
     expect(promptA).not.toContain('Tenant B skill');
     expect(promptA).not.toContain('Only use tenant B campaign evidence.');
+    const promptBBeforeUpdate = await getPromptTemplate(
+      tenantB,
+      'MARKETING_SYSTEM',
+      'fallback B',
+    );
+    expect(promptBBeforeUpdate).toContain('Only use the shared campaign evidence.');
+    expect(promptBBeforeUpdate).not.toContain('Only use tenant B campaign evidence.');
 
     const updateResponse = await fetch(`${origin}/api/admin/agent-skills/${skillA}`, {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        prompt_template: 'Use the updated tenant A campaign evidence.',
+        prompt_template: 'Use the updated shared campaign evidence.',
         published: true,
       }),
     });
@@ -238,16 +257,47 @@ describePostgres(suiteTitle, () => {
       'fallback A',
     );
     expect(updatedPromptA).toContain('Tenant A skill (tenant-a-skill, v5)');
-    expect(updatedPromptA).toContain('Use the updated tenant A campaign evidence.');
-    expect(updatedPromptA).not.toContain('Only use tenant A campaign evidence.');
+    expect(updatedPromptA).toContain('Use the updated shared campaign evidence.');
+    expect(updatedPromptA).not.toContain('Only use the shared campaign evidence.');
 
-    const promptB = await getPromptTemplate(
+    const updatedPromptB = await getPromptTemplate(
       tenantB,
       'MARKETING_SYSTEM',
       'fallback B',
     );
-    expect(promptB).toContain('Base prompt for tenant B.');
-    expect(promptB).not.toContain('Tenant A skill');
-    expect(promptB).not.toContain('Only use tenant A campaign evidence.');
+    expect(updatedPromptB).toContain('Base prompt for tenant B.');
+    expect(updatedPromptB).toContain('Use the updated shared campaign evidence.');
+    expect(updatedPromptB).not.toContain('Only use the shared campaign evidence.');
+    expect(updatedPromptB).not.toContain('Only use tenant B campaign evidence.');
+
+    const unpublishResponse = await fetch(`${origin}/api/admin/agent-skills/${skillA}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        published: false,
+        visibility: 'PRIVATE',
+      }),
+    });
+    expect(unpublishResponse.status).toBe(200);
+    expect((await unpublishResponse.json()).skill).toMatchObject({
+      published: false,
+      visibility: 'PRIVATE',
+    });
+
+    const ownerPromptAfterUnpublish = await getPromptTemplate(
+      tenantA,
+      'MARKETING_SYSTEM',
+      'fallback A',
+    );
+    expect(ownerPromptAfterUnpublish).toContain('Use the updated shared campaign evidence.');
+
+    const tenantPromptAfterUnpublish = await getPromptTemplate(
+      tenantB,
+      'MARKETING_SYSTEM',
+      'fallback B',
+    );
+    expect(tenantPromptAfterUnpublish).toContain('Base prompt for tenant B.');
+    expect(tenantPromptAfterUnpublish).not.toContain('Use the updated shared campaign evidence.');
+    expect(tenantPromptAfterUnpublish).not.toContain('Only use tenant B campaign evidence.');
   });
 });

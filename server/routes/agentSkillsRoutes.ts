@@ -10,9 +10,10 @@
  */
 import { Router, type Request, type Response } from 'express';
 import { randomUUID } from 'node:crypto';
-import { pool, withTenantContext } from '../db';
+import { pool, withRlsBypass, withTenantContext } from '../db';
 import { logger } from '../middleware/logger';
 import { apiRateLimit } from '../middleware/rateLimiter';
+import { clearPromptCache } from '../ai';
 
 export const agentSkillsRouter = Router();
 
@@ -142,7 +143,7 @@ agentSkillsRouter.patch('/:id', apiRateLimit, async (req: Request, res: Response
       ],
     );
     if (r.rowCount === 0) return res.status(404).json({ error: 'Skill khong ton tai' });
-    await clearRuntimePromptCache(tenantId);
+    await clearRuntimePromptCachesForSkill(String(req.params.id), tenantId);
     res.json({ skill: r.rows[0] });
   } catch (err: any) {
     logger.warn('[Skills] patch failed: ' + (err?.message || err));
@@ -216,11 +217,30 @@ agentSkillsRouter.get('/runtime', apiRateLimit, async (req: Request, res: Respon
 
 async function clearRuntimePromptCache(tenantId: string): Promise<void> {
   try {
-    const ai = await import('../ai');
-    ai.clearPromptCache(tenantId);
+    clearPromptCache(tenantId);
   } catch (err) {
     logger.warn('[Skills] prompt cache clear failed: ' + (err as any)?.message);
   }
+}
+
+async function clearRuntimePromptCachesForSkill(skillId: string, ownerTenantId: string): Promise<void> {
+  const tenantIds = new Set([ownerTenantId]);
+  try {
+    const activeBindings = await withRlsBypass((client) => client.query(
+      `SELECT DISTINCT tenant_id::text AS tenant_id
+         FROM agent_skill_bindings
+        WHERE skill_id = $1
+          AND status = 'ACTIVE'`,
+      [skillId],
+    ));
+    for (const row of activeBindings.rows) {
+      if (row.tenant_id) tenantIds.add(String(row.tenant_id));
+    }
+  } catch (err) {
+    logger.warn('[Skills] public skill tenant cache lookup failed: ' + (err as any)?.message);
+  }
+
+  await Promise.all([...tenantIds].map((tenantId) => clearRuntimePromptCache(tenantId)));
 }
 
 agentSkillsRouter.post('/:id/activate', apiRateLimit, async (req: Request, res: Response) => {

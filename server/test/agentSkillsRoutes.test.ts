@@ -6,6 +6,10 @@ const query = vi.hoisted(() => vi.fn());
 
 vi.mock('../db', () => ({
   pool: { query },
+  withRlsBypass: async (_callback: (client: { query: typeof query }) => unknown) => {
+    const result = await _callback({ query });
+    return result;
+  },
   withTenantContext: async (_tenantId: string, callback: (client: { query: typeof query }) => unknown) =>
     callback({ query }),
 }));
@@ -96,6 +100,10 @@ describe('agent skills route authorization and visibility', () => {
       }],
       rowCount: 1,
     });
+    query.mockResolvedValueOnce({
+      rows: [{ tenant_id: 'tenant-1' }, { tenant_id: 'tenant-public-user' }],
+      rowCount: 2,
+    });
 
     const response = await fetch(`${origin}/api/admin/agent-skills/skill-id`, {
       method: 'PATCH',
@@ -117,7 +125,13 @@ describe('agent skills route authorization and visibility', () => {
       expect.stringContaining('version = CASE'),
       ['skill-id', 'Updated prompt', true, 'TENANT', 'tenant-1'],
     );
+    expect(query).toHaveBeenCalledWith(
+      expect.stringContaining('FROM agent_skill_bindings'),
+      ['skill-id'],
+    );
     expect(clearPromptCache).toHaveBeenCalledWith('tenant-1');
+    expect(clearPromptCache).toHaveBeenCalledWith('tenant-public-user');
+    expect(clearPromptCache).toHaveBeenCalledTimes(2);
   });
 
   it('does not allow installing a private skill from another tenant', async () => {
