@@ -37,9 +37,14 @@ test.describe('Authenticated social publishing', () => {
   let fixtureTenantId = '';
   let fixtureUserId = '';
   let fixtureListingId = '';
+  let fixtureImageFilename = '';
+  let fixtureImageUrl = '';
   let fixtureEmail = '';
   const fixturePassword = `SocialPublishing-${randomUUID()}`;
-  const fixtureImageUrl = 'https://example.com/social-publishing-smoke.jpg';
+  const fixtureImageData = Buffer.from(
+    'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII=',
+    'base64',
+  );
 
   test.beforeAll(async () => {
     db = new Pool({
@@ -56,6 +61,8 @@ test.describe('Authenticated social publishing', () => {
     fixtureTenantId = randomUUID();
     fixtureEmail = `social-publishing-smoke-${randomUUID()}@example.test`;
     fixtureListingId = randomUUID();
+    fixtureImageFilename = `social-publishing-${randomUUID()}.png`;
+    fixtureImageUrl = `/uploads/${fixtureTenantId}/${fixtureImageFilename}`;
     const passwordHash = await bcrypt.hash(fixturePassword, 12);
 
     await db.query(
@@ -71,6 +78,12 @@ test.describe('Authenticated social publishing', () => {
       [fixtureTenantId, 'Social publishing smoke manager', fixtureEmail, passwordHash],
     );
     fixtureUserId = String(userResult.rows[0].id);
+    await db.query(
+      `INSERT INTO uploaded_files
+        (tenant_id, filename, content_type, data, size)
+       VALUES ($1, $2, 'image/png', $3, $4)`,
+      [fixtureTenantId, fixtureImageFilename, fixtureImageData, fixtureImageData.length],
+    );
     await db.query(
       `INSERT INTO listings
         (id, tenant_id, code, title, location, price, currency, area, bedrooms,
@@ -97,6 +110,12 @@ test.describe('Authenticated social publishing', () => {
   test.afterAll(async () => {
     try {
       await db?.query('SET session_replication_role = replica');
+      if (db && fixtureTenantId && fixtureImageFilename) {
+        await db.query('DELETE FROM uploaded_files WHERE tenant_id = $1 AND filename = $2', [
+          fixtureTenantId,
+          fixtureImageFilename,
+        ]);
+      }
       if (db && fixtureListingId) {
         await db.query('DELETE FROM social_publications WHERE listing_id = $1', [fixtureListingId]);
         await db.query('DELETE FROM listings WHERE id = $1 AND tenant_id = $2', [
@@ -156,6 +175,13 @@ test.describe('Authenticated social publishing', () => {
       }
     });
 
+    const brokenImages: string[] = [];
+    page.on('response', response => {
+      if (response.request().resourceType() === 'image' && response.status() >= 400) {
+        brokenImages.push(`${response.status()} ${response.url()}`);
+      }
+    });
+
     await page.goto(`${BASE_URL}/#/social-publishing`, { waitUntil: 'domcontentloaded' });
     await expect(page.getByRole('heading', { name: 'Xuất bản sản phẩm công khai' })).toBeVisible();
     await expect(page.locator('body')).not.toContainText('Error Boundary');
@@ -171,11 +197,57 @@ test.describe('Authenticated social publishing', () => {
     await page.locator('[data-social-platform="ZALO_BROADCAST"] input').check();
     await page.getByRole('button', { name: 'Xem preview' }).click();
     await expect(page.getByText('Preview content')).toBeVisible();
-    await expect(page.locator('article')).toHaveCount(2);
+    await expect(page.locator('article')).toHaveCount(2, { timeout: 15_000 });
 
     const caption = page.getByLabel('Caption đã duyệt');
     await expect(caption).toHaveValue(/.+/);
-    await caption.fill('Authenticated multi-platform smoke caption');
+    const longCaption = [
+      'Authenticated multi-platform smoke caption with a deliberately long review paragraph.',
+      'Nội dung này phải tự xuống dòng trong card preview, không làm tràn chiều rộng của giao diện.',
+    ].join(' ').repeat(8);
+    await caption.fill(longCaption);
+
+    const previewImages = page.locator('article img');
+    await expect(previewImages).toHaveCount(2);
+    await expect.poll(async () => previewImages.evaluateAll(images => (
+      images.every(image => (image as HTMLImageElement).complete
+        && (image as HTMLImageElement).naturalWidth > 0)
+    ))).toBe(true);
+    expect(brokenImages).toEqual([]);
+
+    const assertResponsivePreview = async (width: number, height: number) => {
+      await page.setViewportSize({ width, height });
+      await expect(page.locator('article')).toHaveCount(2);
+      const layout = await page.evaluate(() => {
+        const viewportWidth = window.innerWidth;
+        const withinViewport = (element: Element) => {
+          const rect = element.getBoundingClientRect();
+          return rect.left >= -1
+            && rect.right <= viewportWidth + 1
+            && element.scrollWidth <= element.clientWidth + 1;
+        };
+        return {
+          documentWidth: document.documentElement.scrollWidth,
+          bodyWidth: document.body.scrollWidth,
+          articles: Array.from(document.querySelectorAll('article')).map(withinViewport),
+          platforms: Array.from(document.querySelectorAll('[data-social-platform]')).map(withinViewport),
+        };
+      });
+      expect(layout.documentWidth).toBeLessThanOrEqual(width);
+      expect(layout.bodyWidth).toBeLessThanOrEqual(width);
+      expect(layout.articles).toEqual([true, true]);
+      expect(layout.platforms.every(Boolean)).toBe(true);
+      await expect(page.locator('article').first()).toContainText('Facebook Page');
+      await expect(page.locator('article').first()).toContainText(longCaption);
+      await expect(page.locator('[data-social-platform="FACEBOOK_PAGE"]')).toContainText('Facebook Page');
+      await expect(page.locator('[data-social-platform="FACEBOOK_PAGE"]')).toContainText('Chưa sẵn sàng');
+      await expect(page.locator('[data-social-platform="ZALO_BROADCAST"]')).toContainText('Zalo OA broadcast/public');
+      await expect(page.locator('[data-social-platform="ZALO_BROADCAST"]')).toContainText('Chưa sẵn sàng');
+    };
+
+    await assertResponsivePreview(1280, 900);
+    await assertResponsivePreview(390, 844);
+
     await page.getByRole('button', { name: 'Lưu draft' }).click();
     await expect(page.getByText('Đã lưu snapshot bất biến vào bản nháp.')).toBeVisible();
     await expect(page.getByText('Social publishing browser smoke listing', { exact: true })).toBeVisible();
