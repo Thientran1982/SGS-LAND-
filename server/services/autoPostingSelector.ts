@@ -331,12 +331,11 @@ export async function runAutoPostingForTenant(
     return { created: 0, published: 0, skipped: 0, reason: 'ERROR', warning: message };
   }
 }
-
-export async function runAutoPostingTick(pool: Pool) {
+export async function runAutoPostingTick(pool: Pool, now = new Date()) {
   const tenants = await listEnabledAutoPostingTenants(pool);
   const results = [];
   for (const tenantId of tenants) {
-    results.push({ tenantId, ...(await runAutoPostingForTenant(pool, tenantId)) });
+    results.push({ tenantId, ...(await runAutoPostingForTenant(pool, tenantId, now)) });
   }
   return results;
 }

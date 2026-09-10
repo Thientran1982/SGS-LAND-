@@ -12,7 +12,7 @@ import {
   listSocialPublications,
 } from '../repositories/socialPublicationRepository';
 import { upsertAutoPostingSettings } from '../repositories/autoPostingRepository';
-import { runAutoPostingForTenant } from '../services/autoPostingSelector';
+import { runAutoPostingForTenant, runAutoPostingTick } from '../services/autoPostingSelector';
 import { getTenantSocialPlatformCapability } from '../social-publishing/registry';
 import { processSocialPublicationTick } from '../services/socialPublishingWorker';
 import type { SocialPlatform } from '../social-publishing/types';
@@ -396,11 +396,13 @@ describePostgres('Marketing Facebook daily selector against PostgreSQL', () => {
       FACEBOOK_PAGE: { status: 'READY', reason: 'Facebook đã xác minh', retryable: false },
     });
 
-    const firstRun = await runAutoPostingForTenant(setupPool, tenantA, runAtSevenPmVietnam);
-    const secondRun = await runAutoPostingForTenant(setupPool, tenantA, new Date('2026-01-02T16:00:00.000Z'));
+    const firstTrigger = await runAutoPostingTick(setupPool, runAtSevenPmVietnam);
+    const secondTrigger = await runAutoPostingTick(setupPool, runAtSevenPmVietnam);
+    const firstRun = firstTrigger.find(result => result.tenantId === tenantA);
+    const secondRun = secondTrigger.find(result => result.tenantId === tenantA);
 
     expect(firstRun).toMatchObject({ created: 1, reason: 'OK', sourceId: listingId });
-    expect(secondRun).toEqual({
+    expect(secondRun).toMatchObject({
       created: 0,
       published: 0,
       skipped: 0,

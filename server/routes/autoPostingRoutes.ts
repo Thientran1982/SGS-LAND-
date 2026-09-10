@@ -1,5 +1,6 @@
 import { Router, Request, Response, RequestHandler } from 'express';
 import type { Pool } from 'pg';
+import crypto from 'node:crypto';
 import {
   getMarketingFacebookDailyStatus,
   getAutoPostingSettings,
@@ -52,6 +53,14 @@ function normalizePlatforms(value: unknown): string[] {
   return platforms;
 }
 
+function matchesCronSecret(expected: string, provided: unknown): boolean {
+  if (!expected || typeof provided !== 'string') return false;
+  const expectedBytes = Buffer.from(expected);
+  const providedBytes = Buffer.from(provided);
+  return expectedBytes.length === providedBytes.length
+    && crypto.timingSafeEqual(expectedBytes, providedBytes);
+}
+
 export function createAutoPostingRouter(
   pool: Pool,
   authenticateToken: RequestHandler,
@@ -88,7 +97,7 @@ export function createAutoPostingRouter(
 
   router.post('/api/internal/auto-posting-cron', async (req, res) => {
     const provided = (req.headers['x-internal-secret'] as string | undefined) || req.body?.secret;
-    if (!cronSecret || !provided || provided !== cronSecret) {
+    if (!matchesCronSecret(cronSecret, provided)) {
       return res.status(403).json({ error: 'Forbidden' });
     }
     try {

@@ -6923,6 +6923,44 @@ app.use('/api/v1', (req, _res, next) => {
         logger.warn('[RLHF] Lỗi khi đăng ký QStash schedule:', e.message);
       }
 
+      // ── Marketing Agent Facebook Cron — 18:30 ICT = 11:30 UTC hàng ngày ──
+      // Use a forwarded destination header instead of putting the internal
+      // secret in the scheduled request body. QStash retries this external
+      // trigger after a sleeping/restarted app, while the daily-run ledger
+      // makes a second delivery for the same tenant/day harmless.
+      try {
+        const autoPostingSecret =
+          process.env.AUTO_POSTING_CRON_SECRET ||
+          process.env.SOCIAL_PUBLISHING_CRON_SECRET ||
+          process.env.JWT_SECRET?.slice(0, 32) ||
+          '';
+        const appDomain = QSTASH_SCHEDULE_DOMAIN;
+        if (appDomain && autoPostingSecret) {
+          const scheduleUrl = `https://${appDomain}/api/internal/auto-posting-cron`;
+          const scheduleId = 'marketing-auto-posting-daily-1830';
+          const qstashScheduleEndpoint = `${getQstashBaseUrl()}/v2/schedules/${scheduleId}`;
+          const resp = await fetch(qstashScheduleEndpoint, {
+            method: 'POST',
+            headers: {
+              'Authorization': `Bearer ${getQstashToken()}`,
+              'Content-Type': 'application/json',
+              'Upstash-Destination': scheduleUrl,
+              'Upstash-Cron': '30 11 * * *', // 18:30 Asia/Ho_Chi_Minh = 11:30 UTC
+              'Upstash-Method': 'POST',
+              'Upstash-Forward-x-internal-secret': autoPostingSecret,
+            },
+          });
+          if (resp.ok) {
+            logger.info('[MarketingAgent] Đã đăng ký QStash daily schedule — chạy lúc 18:30 ICT');
+          } else {
+            const errText = await resp.text();
+            logger.warn(`[MarketingAgent] Không thể đăng ký QStash schedule: ${resp.status} ${errText}`);
+          }
+        }
+      } catch (e: any) {
+        logger.warn('[MarketingAgent] Lỗi khi đăng ký QStash schedule:', e.message);
+      }
+
       // ── Engagement Email Cron (NUDGE_A / B / C) — 3:00 SA ICT = 20:00 UTC ──
       try {
         const engagementSecret =

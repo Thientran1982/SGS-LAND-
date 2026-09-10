@@ -203,6 +203,7 @@ const CSRF_EXEMPT_PREFIXES = [
   '/api/internal/engagement-email-cron',
   '/api/internal/chat-followup-cron',
   '/api/internal/geo-monitor-cron',
+  '/api/internal/auto-posting-cron',
   '/api/internal/learning-cycle',
   '/api/internal/memory-consolidation',
 ];
