@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import {
+  buildPublicListingUrl,
   buildPlatformContent,
   getPublicationCatalog,
   normalizePublicationCaption,
@@ -8,6 +9,15 @@ import {
 } from '../services/socialPublicationService';
 
 describe('social publication foundation', () => {
+  it('builds listing links from the public BDS route and UUID, not the listing code', () => {
+    expect(buildPublicListingUrl(
+      '19287ca5-0086-4f33-8ef3-7db3b551e1f9',
+      'Bán nhà phố NA.T12-09 diện tích 8x20m giá đầu tư trực tiếp chủ đầu tư',
+    )).toBe(
+      'https://sgsland.vn/bds/ban-nha-pho-na-t12-09-dien-tich-8x20m-gia-dau-tu-truc-tiep-c-19287ca5-0086-4f33-8ef3-7db3b551e1f9',
+    );
+  });
+
   it('normalizes supported platforms without accepting arbitrary provider names', () => {
     expect(normalizeSocialPlatforms([
       'facebook_page',

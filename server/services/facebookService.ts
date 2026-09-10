@@ -171,6 +171,26 @@ function safeImageUrlLabel(imageUrl: string): string {
     return 'URL ảnh đã cung cấp';
   }
 }
+
+function logFacebookProviderFailure(
+  phase: string,
+  pageId: string,
+  response: Response,
+  body: FacebookGraphResult,
+  details: Record<string, unknown> = {},
+): void {
+  logger.error('[Facebook] Public publication request failed', {
+    phase,
+    pageId,
+    httpStatus: response.status,
+    providerErrorCode: body.error?.code,
+    providerErrorType: body.error?.type,
+    providerErrorMessage: body.error?.message,
+    facebookTraceId: response.headers.get('x-fb-trace-id') || undefined,
+    ...details,
+  });
+}
+
 function ambiguousAlbumResult(
   errorCode: string,
   safeMessage: string,
@@ -194,6 +214,11 @@ export async function publishFacebookPageContent(input: {
     ? input.content.imageUrls
     : [];
   if (!imageUrls.length) {
+    logger.error('[Facebook] Refusing publication without approved images', {
+      pageId: input.pageId,
+      imageCount: 0,
+      idempotencyKey: input.idempotencyKey,
+    });
     return {
       status: 'FAILED',
       retryable: false,
@@ -202,6 +227,12 @@ export async function publishFacebookPageContent(input: {
     };
   }
   if (imageUrls.length > FACEBOOK_PAGE_MAX_IMAGES) {
+    logger.error('[Facebook] Refusing publication with too many images', {
+      pageId: input.pageId,
+      imageCount: imageUrls.length,
+      maxImages: FACEBOOK_PAGE_MAX_IMAGES,
+      idempotencyKey: input.idempotencyKey,
+    });
     return {
       status: 'FAILED',
       retryable: false,
@@ -210,13 +241,25 @@ export async function publishFacebookPageContent(input: {
     };
   }
 
-  if (validateImageUrls(imageUrls)) {
+  const invalidImageUrl = validateImageUrls(imageUrls);
+  if (invalidImageUrl) {
+    logger.error('[Facebook] Refusing publication with an invalid image URL', {
+      pageId: input.pageId,
+      imageUrl: safeImageUrlLabel(invalidImageUrl),
+      idempotencyKey: input.idempotencyKey,
+    });
     return invalidImageResult();
   }
 
   for (const imageUrl of imageUrls) {
     const validation = await validatePublicImage(imageUrl);
     if (!validation.valid) {
+      logger.error('[Facebook] Approved image is not publicly fetchable', {
+        pageId: input.pageId,
+        imageUrl: safeImageUrlLabel(imageUrl),
+        reason: validation.reason,
+        idempotencyKey: input.idempotencyKey,
+      });
       return unavailableImageResult(imageUrl, validation.reason);
     }
   }
@@ -252,6 +295,13 @@ export async function publishFacebookPageContent(input: {
       if (response.ok && !result.error) {
         const postId = String(result.post_id || result.id || '').trim();
         if (!postId) {
+          logger.error('[Facebook] Single-photo response did not include a post ID', {
+            pageId: input.pageId,
+            imageUrl: safeImageUrlLabel(imageUrls[0]),
+            httpStatus: response.status,
+            facebookTraceId: requestTraceId,
+            idempotencyKey: input.idempotencyKey,
+          });
           return ambiguousAlbumResult(
             'FACEBOOK_MISSING_POST_ID',
             'Facebook phản hồi thành công nhưng không trả về post ID.',
@@ -266,6 +316,10 @@ export async function publishFacebookPageContent(input: {
         };
       }
 
+      logFacebookProviderFailure('single-photo', input.pageId, response, result, {
+        imageUrl: safeImageUrlLabel(imageUrls[0]),
+        idempotencyKey: input.idempotencyKey,
+      });
       const status = response.status;
       if (status === 429) {
         return {
@@ -290,7 +344,13 @@ export async function publishFacebookPageContent(input: {
         errorCode: `FACEBOOK_${result.error?.code || status}`,
         safeMessage: `Facebook từ chối đăng bài: ${result.error?.message || `HTTP ${status}`}.`,
       };
-    } catch {
+    } catch (error) {
+      logger.error('[Facebook] Single-photo publication request threw an error', {
+        pageId: input.pageId,
+        imageUrl: safeImageUrlLabel(imageUrls[0]),
+        errorMessage: error instanceof Error ? error.message : String(error),
+        idempotencyKey: input.idempotencyKey,
+      });
       return ambiguousAlbumResult(
         'FACEBOOK_NETWORK_OUTCOME_UNKNOWN',
         'Mất kết nối sau khi gửi yêu cầu Facebook; cần kiểm tra thủ công, không tự retry.',
@@ -322,6 +382,14 @@ export async function publishFacebookPageContent(input: {
       if (response.ok && !result.error) {
         const mediaId = String(result.id || result.post_id || '').trim();
         if (!mediaId) {
+          logger.error('[Facebook] Album photo response did not include a media ID', {
+            pageId: input.pageId,
+            imageIndex: index,
+            imageUrl: safeImageUrlLabel(imageUrl),
+            httpStatus: response.status,
+            facebookTraceId: requestTraceId,
+            idempotencyKey: input.idempotencyKey,
+          });
           return ambiguousAlbumResult(
             'FACEBOOK_ALBUM_MISSING_MEDIA_ID',
             `Facebook đã xử lý ${mediaIds.length + 1}/${imageUrls.length} ảnh nhưng không trả về media ID; cần kiểm tra thủ công, không tự retry.`,
@@ -332,6 +400,11 @@ export async function publishFacebookPageContent(input: {
         continue;
       }
 
+      logFacebookProviderFailure('album-photo', input.pageId, response, result, {
+        imageIndex: index,
+        imageUrl: safeImageUrlLabel(imageUrl),
+        idempotencyKey: input.idempotencyKey,
+      });
       const status = response.status;
       if (mediaIds.length > 0 || status >= 500 || (!response.ok && !result.error)) {
         return ambiguousAlbumResult(
@@ -366,7 +439,8 @@ export async function publishFacebookPageContent(input: {
         headers: requestHeaders,
         body: JSON.stringify({
           message: input.content.text,
-          ...(input.content.link ? { link: input.content.link } : {}),
+          // Do not send a link field together with attached_media. Facebook
+          // may render the link preview and silently omit the album photos.
           attached_media: mediaIds.map(mediaFbid => ({ media_fbid: mediaFbid })),
         }),
       },
@@ -376,6 +450,13 @@ export async function publishFacebookPageContent(input: {
     if (response.ok && !result.error) {
       const postId = String(result.post_id || result.id || '').trim();
       if (!postId) {
+        logger.error('[Facebook] Album feed response did not include a post ID', {
+          pageId: input.pageId,
+          imageCount: mediaIds.length,
+          httpStatus: response.status,
+          facebookTraceId: requestTraceId,
+          idempotencyKey: input.idempotencyKey,
+        });
         return ambiguousAlbumResult(
           'FACEBOOK_ALBUM_MISSING_POST_ID',
           `Facebook đã nhận ${mediaIds.length} ảnh nhưng không trả về post ID; cần kiểm tra thủ công, không tự retry.`,
@@ -390,12 +471,23 @@ export async function publishFacebookPageContent(input: {
       };
     }
 
+    logFacebookProviderFailure('album-feed', input.pageId, response, result, {
+      imageCount: mediaIds.length,
+      idempotencyKey: input.idempotencyKey,
+    });
     return ambiguousAlbumResult(
       'FACEBOOK_ALBUM_OUTCOME_UNKNOWN',
       `Facebook không xác nhận kết quả album sau khi đã nhận ${mediaIds.length} ảnh; cần kiểm tra thủ công, không tự retry.`,
       traceIds,
     );
-  } catch {
+  } catch (error) {
+    logger.error('[Facebook] Album publication request threw an error', {
+      pageId: input.pageId,
+      uploadedImageCount: mediaIds.length,
+      imageCount: imageUrls.length,
+      errorMessage: error instanceof Error ? error.message : String(error),
+      idempotencyKey: input.idempotencyKey,
+    });
     return ambiguousAlbumResult(
       'FACEBOOK_ALBUM_NETWORK_OUTCOME_UNKNOWN',
       `Mất kết nối sau khi gửi album (${mediaIds.length}/${imageUrls.length} ảnh đã được nhận); cần kiểm tra thủ công, không tự retry.`,

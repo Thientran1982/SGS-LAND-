@@ -1,4 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { logger } from '../middleware/logger';
 import {
   publishFacebookPageContent,
   verifyFacebookPageAccess,
@@ -14,6 +15,7 @@ describe('Facebook Page publisher contract', () => {
 
   afterEach(() => {
     vi.unstubAllGlobals();
+    vi.restoreAllMocks();
   });
 
   it('accepts a Page token only when Facebook returns the same Page ID', async () => {
@@ -128,12 +130,12 @@ describe('Facebook Page publisher contract', () => {
     });
     expect(JSON.parse(fetchMock.mock.calls[4][1].body)).toMatchObject({
       message: 'B',
-      link: 'https://sgsland.vn/p/SGS-002',
       attached_media: [
         { media_fbid: 'photo-1' },
         { media_fbid: 'photo-2' },
       ],
     });
+    expect(JSON.parse(fetchMock.mock.calls[4][1].body)).not.toHaveProperty('link');
   });
 
   it('keeps a partial album upload ambiguous and does not continue publishing', async () => {
@@ -176,6 +178,55 @@ describe('Facebook Page publisher contract', () => {
     });
 
     expect(fetchMock).toHaveBeenCalledTimes(4);
+  });
+
+  it('logs the provider reason when Facebook rejects an album image upload', async () => {
+    const errorSpy = vi.spyOn(logger, 'error').mockImplementation(() => undefined);
+    fetchMock
+      .mockResolvedValueOnce(new Response('image bytes', {
+        status: 200,
+        headers: { 'content-type': 'image/jpeg' },
+      }))
+      .mockResolvedValueOnce(new Response('image bytes', {
+        status: 200,
+        headers: { 'content-type': 'image/jpeg' },
+      }))
+      .mockResolvedValueOnce(new Response(JSON.stringify({
+        error: { code: 190, type: 'OAuthException', message: 'Invalid token' },
+      }), {
+        status: 400,
+        headers: { 'x-fb-trace-id': 'trace-photo-rejected' },
+      }));
+
+    await expect(publishFacebookPageContent({
+      pageId: 'page-1',
+      pageAccessToken: 'page-token',
+      content: {
+        platform: 'FACEBOOK_PAGE',
+        title: 'B',
+        text: 'B',
+        link: 'https://sgsland.vn/bds/house-page-uuid',
+        imageUrls: ['https://cdn.test/first.jpg', 'https://cdn.test/second.jpg'],
+        hashtags: [],
+      },
+      idempotencyKey: 'social:target-upload-rejected:1',
+    })).resolves.toMatchObject({
+      status: 'FAILED',
+      errorCode: 'FACEBOOK_190',
+      safeMessage: expect.stringContaining('Invalid token'),
+    });
+
+    expect(errorSpy).toHaveBeenCalledWith(
+      '[Facebook] Public publication request failed',
+      expect.objectContaining({
+        phase: 'album-photo',
+        pageId: 'page-1',
+        httpStatus: 400,
+        providerErrorCode: 190,
+        providerErrorMessage: 'Invalid token',
+        facebookTraceId: 'trace-photo-rejected',
+      }),
+    );
   });
 
   it('rejects an album larger than the provider limit before contacting Facebook', async () => {
@@ -478,7 +529,6 @@ describe('Facebook album contract smoke', () => {
     });
     expect(JSON.parse(String((fetchMock.mock.calls[4][1] as RequestInit).body))).toEqual({
       message: 'Album smoke caption',
-      link: 'https://sgsland.vn/p/SMOKE-001',
       attached_media: [
         { media_fbid: 'media-1' },
         { media_fbid: 'media-2' },

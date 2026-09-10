@@ -65,10 +65,18 @@ function numberOrValue(value: unknown): number | string | null {
   return Number.isFinite(number) ? number : String(value);
 }
 
-function publicListingUrl(code: string | null): string | null {
+export function buildPublicListingUrl(listingId: string | null, title: string | null): string | null {
   const base = resolveConfiguredPublicBaseUrl();
-  if (!base || !code) return null;
-  return `${base.replace(/\/+$/, '')}/p/${encodeURIComponent(code)}`;
+  if (!base || !listingId) return null;
+  const slug = String(title || 'bat-dong-san')
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/[đĐ]/g, char => char === 'Đ' ? 'D' : 'd')
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '')
+    .slice(0, 60) || 'bat-dong-san';
+  return `${base.replace(/\/+$/, '')}/bds/${slug}-${encodeURIComponent(listingId)}`;
 }
 
 /**
@@ -118,8 +126,6 @@ export async function buildSocialProductSnapshot(
   const attributes = listing.attributes && typeof listing.attributes === 'object'
     ? { ...listing.attributes }
     : {};
-  const baseUrl = resolveConfiguredPublicBaseUrl();
-
   return {
     version: 1,
     listingId: String(listing.id),
@@ -138,13 +144,15 @@ export async function buildSocialProductSnapshot(
     status,
     attributes,
     contactPhone: textValue(listing.contactPhone),
-    publicUrl: publicListingUrl(code),
+    publicUrl: buildPublicListingUrl(String(listing.id), title),
     capturedAt: new Date().toISOString(),
   };
 }
 
 function projectPublicUrl(code: string | null): string | null {
-  return publicListingUrl(code);
+  const base = resolveConfiguredPublicBaseUrl();
+  if (!base || !code) return null;
+  return `${base.replace(/\/+$/, '')}/p/${encodeURIComponent(code)}`;
 }
 
 function formatProjectPrice(rows: Array<{ base_price_sqm: unknown; adjustment_pct: unknown }>): string {
