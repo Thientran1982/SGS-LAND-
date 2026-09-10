@@ -1119,7 +1119,7 @@ export const SocialPublishing: React.FC = () => {
                              className="aspect-[16/9] w-full object-cover"
                            />
                             {(item.imageUrls?.length ? item.imageUrls : selectedImageUrls).length > 1 && (
-                             <div className="grid grid-cols-4 gap-1 p-1">
+                              <div className="grid min-w-0 grid-cols-4 gap-1 p-1">
                                 {(item.imageUrls?.length ? item.imageUrls : selectedImageUrls).slice(1, 5).map((imageUrl, index) => (
                                   <SocialImage
                                    key={`${imageUrl}-${index}`}

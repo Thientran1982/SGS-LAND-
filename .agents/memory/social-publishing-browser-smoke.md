@@ -14,3 +14,9 @@ Disposable tenant fixtures also need cleanup that does not cascade through appen
 **Why:** User/listing audit triggers can create append-only audit rows; deleting the fixture tenant normally cascades into a protected audit table and makes teardown fail.
 
 **How to apply:** Scope the database-session setting to the single fixture connection, restore or close that connection after cleanup, and never disable triggers on the application's pool.
+
+Preview responses may normalize app-owned uploads into provider-safe absolute HTTPS URLs. The CRM preview must resolve `/uploads/` paths back through the current authenticated origin so local and proxied environments do not fetch the public host.
+
+**Why:** The public URL is correct for Facebook/Zalo delivery but may be unreachable from a local CRM preview; otherwise valid upload responses render as failed image fallbacks.
+
+**How to apply:** Keep external non-upload URLs unchanged, but normalize absolute URLs whose pathname starts with `/uploads/` to the current origin before rendering.

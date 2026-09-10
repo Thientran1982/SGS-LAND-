@@ -37,8 +37,8 @@ test.describe('Authenticated social publishing', () => {
   let fixtureTenantId = '';
   let fixtureUserId = '';
   let fixtureListingId = '';
-  let fixtureImageFilename = '';
-  let fixtureImageUrl = '';
+  let fixtureImageFilenames: string[] = [];
+  let fixtureImageUrls: string[] = [];
   let fixtureEmail = '';
   const fixturePassword = `SocialPublishing-${randomUUID()}`;
   const fixtureImageData = Buffer.from(
@@ -61,8 +61,13 @@ test.describe('Authenticated social publishing', () => {
     fixtureTenantId = randomUUID();
     fixtureEmail = `social-publishing-smoke-${randomUUID()}@example.test`;
     fixtureListingId = randomUUID();
-    fixtureImageFilename = `social-publishing-${randomUUID()}.png`;
-    fixtureImageUrl = `/uploads/${fixtureTenantId}/${fixtureImageFilename}`;
+    fixtureImageFilenames = Array.from(
+      { length: 4 },
+      (_, index) => `social-publishing-${index + 1}-${randomUUID()}.png`,
+    );
+    fixtureImageUrls = fixtureImageFilenames.map(
+      filename => `/uploads/${fixtureTenantId}/${filename}`,
+    );
     const passwordHash = await bcrypt.hash(fixturePassword, 12);
 
     await db.query(
@@ -78,12 +83,14 @@ test.describe('Authenticated social publishing', () => {
       [fixtureTenantId, 'Social publishing smoke manager', fixtureEmail, passwordHash],
     );
     fixtureUserId = String(userResult.rows[0].id);
-    await db.query(
-      `INSERT INTO uploaded_files
-        (tenant_id, filename, content_type, data, size)
-       VALUES ($1, $2, 'image/png', $3, $4)`,
-      [fixtureTenantId, fixtureImageFilename, fixtureImageData, fixtureImageData.length],
-    );
+    for (const filename of fixtureImageFilenames) {
+      await db.query(
+        `INSERT INTO uploaded_files
+          (tenant_id, filename, content_type, data, size)
+         VALUES ($1, $2, 'image/png', $3, $4)`,
+        [fixtureTenantId, filename, fixtureImageData, fixtureImageData.length],
+      );
+    }
     await db.query(
       `INSERT INTO listings
         (id, tenant_id, code, title, location, price, currency, area, bedrooms,
@@ -101,7 +108,7 @@ test.describe('Authenticated social publishing', () => {
         2,
         2,
         'APARTMENT',
-        JSON.stringify([fixtureImageUrl]),
+        JSON.stringify(fixtureImageUrls),
         fixtureUserId,
       ],
     );
@@ -110,10 +117,10 @@ test.describe('Authenticated social publishing', () => {
   test.afterAll(async () => {
     try {
       await db?.query('SET session_replication_role = replica');
-      if (db && fixtureTenantId && fixtureImageFilename) {
-        await db.query('DELETE FROM uploaded_files WHERE tenant_id = $1 AND filename = $2', [
+      if (db && fixtureTenantId && fixtureImageFilenames.length) {
+        await db.query('DELETE FROM uploaded_files WHERE tenant_id = $1 AND filename = ANY($2::text[])', [
           fixtureTenantId,
-          fixtureImageFilename,
+          fixtureImageFilenames,
         ]);
       }
       if (db && fixtureListingId) {
@@ -208,16 +215,18 @@ test.describe('Authenticated social publishing', () => {
     await caption.fill(longCaption);
 
     const previewImages = page.locator('article img');
-    await expect(previewImages).toHaveCount(2);
-    await expect.poll(async () => previewImages.evaluateAll(images => (
-      images.every(image => (image as HTMLImageElement).complete
-        && (image as HTMLImageElement).naturalWidth > 0)
-    ))).toBe(true);
-    expect(brokenImages).toEqual([]);
+    const thumbnailImages = page.locator('article .grid.grid-cols-4 img');
+    await expect(previewImages).toHaveCount(8);
+    await expect(thumbnailImages).toHaveCount(6);
 
     const assertResponsivePreview = async (width: number, height: number) => {
       await page.setViewportSize({ width, height });
       await expect(page.locator('article')).toHaveCount(2);
+      await thumbnailImages.last().scrollIntoViewIfNeeded();
+      await expect.poll(async () => previewImages.evaluateAll(images => (
+        images.every(image => (image as HTMLImageElement).complete
+          && (image as HTMLImageElement).naturalWidth > 0)
+      ))).toBe(true);
       const layout = await page.evaluate(() => {
         const viewportWidth = window.innerWidth;
         const withinViewport = (element: Element) => {
@@ -231,12 +240,18 @@ test.describe('Authenticated social publishing', () => {
           bodyWidth: document.body.scrollWidth,
           articles: Array.from(document.querySelectorAll('article')).map(withinViewport),
           platforms: Array.from(document.querySelectorAll('[data-social-platform]')).map(withinViewport),
+          galleries: Array.from(document.querySelectorAll('article .grid.grid-cols-4')).map(withinViewport),
+          galleryImages: Array.from(document.querySelectorAll('article .grid.grid-cols-4 img')).map(withinViewport),
         };
       });
       expect(layout.documentWidth).toBeLessThanOrEqual(width);
       expect(layout.bodyWidth).toBeLessThanOrEqual(width);
       expect(layout.articles).toEqual([true, true]);
       expect(layout.platforms.every(Boolean)).toBe(true);
+      expect(layout.galleries).toEqual([true, true]);
+      expect(layout.galleryImages).toHaveLength(6);
+      expect(layout.galleryImages.every(Boolean)).toBe(true);
+      expect(brokenImages).toEqual([]);
       await expect(page.locator('article').first()).toContainText('Facebook Page');
       await expect(page.locator('article').first()).toContainText(longCaption);
       await expect(page.locator('[data-social-platform="FACEBOOK_PAGE"]')).toContainText('Facebook Page');

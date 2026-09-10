@@ -15,7 +15,11 @@ export function normalizeSocialImageUrl(value: unknown): string | null {
     if (parsed.protocol !== 'http:' && parsed.protocol !== 'https:') return null;
 
     const localHosts = new Set(['localhost', '127.0.0.1', '0.0.0.0', '::1']);
-    if (localHosts.has(parsed.hostname)) {
+    // Publication previews may contain the provider-safe absolute URL that
+    // the API generated from an app-owned upload path. Keep those uploads on
+    // the current authenticated origin so local/preview CRMs do not request
+    // the production public host.
+    if (localHosts.has(parsed.hostname) || parsed.pathname.startsWith('/uploads/')) {
       return `${parsed.pathname}${parsed.search}${parsed.hash}`;
     }
     return parsed.toString();
@@ -61,7 +65,7 @@ export function SocialImage({
     <img
       src={imageUrl}
       alt={alt}
-      className={className}
+      className={`block max-w-full ${className}`}
       loading="lazy"
       decoding="async"
       onError={() => setFailedUrl(imageUrl)}
