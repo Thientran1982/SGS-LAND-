@@ -1,5 +1,6 @@
 import { Router, Request, Response, RequestHandler } from 'express';
 import { Pool } from 'pg';
+import { logger } from '../middleware/logger';
 import { listingRepository } from '../repositories/listingRepository';
 import { projectRepository } from '../repositories/projectRepository';
 import {
@@ -273,40 +274,67 @@ export function createSocialPublicationRouter(
 
   router.post('/api/social-publications/:id/activate', authenticateToken, async (req, res) => {
     if (!requireManager(req, res)) return;
-    const row = await findSocialPublication(pool, tenantId(req), String(req.params.id));
-    if (!row) return res.status(404).json({ error: 'Không tìm thấy publication' });
-    const readiness = await Promise.all(row.targets.map(async (target: any) => ({
-      target,
-      capability: await getTenantSocialPlatformCapability(
-        target.platform,
-        tenantId(req),
-        target.accountId,
-      ),
-    })));
-    const notReady = readiness.filter(({ target, capability }) => (
-      ['NOT_READY', 'PENDING', 'FAILED_RETRYABLE'].includes(target.status)
-      && !capability.canPublish
-    ));
-    if (notReady.length) {
-      return res.status(409).json({
-        error: 'Chưa thể đăng: một hoặc nhiều nền tảng chưa có publisher/quyền đăng công khai.',
-        code: 'PUBLISHERS_NOT_READY',
-        targets: notReady.map((target: any) => target.platform),
+    try {
+      const publicationId = String(req.params.id);
+      const requestId = (req as any).id as string | undefined;
+      if (!UUID_PATTERN.test(publicationId)) {
+        return res.status(400).json({
+          error: 'Publication ID không hợp lệ',
+          code: 'INVALID_PUBLICATION_ID',
+          ...(requestId ? { requestId } : {}),
+        });
+      }
+      const currentTenant = tenantId(req);
+      const row = await findSocialPublication(pool, currentTenant, publicationId);
+      if (!row) return res.status(404).json({ error: 'Không tìm thấy publication' });
+      const readiness = await Promise.all(row.targets.map(async (target: any) => ({
+        target,
+        capability: await getTenantSocialPlatformCapability(
+          target.platform,
+          currentTenant,
+          target.accountId,
+        ),
+      })));
+      const notReady = readiness.filter(({ target, capability }) => (
+        ['NOT_READY', 'PENDING', 'FAILED_RETRYABLE'].includes(target.status)
+        && !capability.canPublish
+      ));
+      if (notReady.length) {
+        return res.status(409).json({
+          error: 'Chưa thể đăng: một hoặc nhiều nền tảng chưa có publisher/quyền đăng công khai.',
+          code: 'PUBLISHERS_NOT_READY',
+          ...(requestId ? { requestId } : {}),
+          targets: notReady.map(({ target, capability }: { target: any; capability: any }) => ({
+            platform: target.platform,
+            status: capability.status,
+            canPublish: capability.canPublish,
+            retryable: capability.retryable ?? false,
+            reason: capability.reason,
+          })),
+        });
+      }
+      const activated = await activateSocialPublication(pool, currentTenant, publicationId);
+      if (!activated) return res.status(409).json({ error: 'Publication không còn ở trạng thái DRAFT' });
+      await markSocialTargetsPending(pool, currentTenant, publicationId);
+      await recordSocialPublicationEvent(pool, {
+        tenantId: currentTenant,
+        publicationId,
+        actorId: (req as any).user?.id || null,
+        eventType: 'ACTIVATED',
+        fromStatus: 'DRAFT',
+        toStatus: activated.status,
+        reason: 'Operator kích hoạt publication sau khi kiểm tra readiness.',
+      });
+      return res.json(await findSocialPublication(pool, currentTenant, publicationId));
+    } catch (error: any) {
+      const requestId = (req as any).id as string | undefined;
+      logger.error('[SocialPublishing] Activate failed:', error);
+      return res.status(503).json({
+        error: 'Không thể xác minh hoặc kích hoạt publication lúc này.',
+        code: 'PUBLICATION_ACTIVATION_UNAVAILABLE',
+        ...(requestId ? { requestId } : {}),
       });
     }
-    const activated = await activateSocialPublication(pool, tenantId(req), String(req.params.id));
-    if (!activated) return res.status(409).json({ error: 'Publication không còn ở trạng thái DRAFT' });
-    await markSocialTargetsPending(pool, tenantId(req), String(req.params.id));
-    await recordSocialPublicationEvent(pool, {
-      tenantId: tenantId(req),
-      publicationId: String(req.params.id),
-      actorId: (req as any).user?.id || null,
-      eventType: 'ACTIVATED',
-      fromStatus: 'DRAFT',
-      toStatus: activated.status,
-      reason: 'Operator kích hoạt publication sau khi kiểm tra readiness.',
-    });
-    return res.json(await findSocialPublication(pool, tenantId(req), String(req.params.id)));
   });
 
   router.post('/api/social-publications/:id/cancel', authenticateToken, async (req, res) => {

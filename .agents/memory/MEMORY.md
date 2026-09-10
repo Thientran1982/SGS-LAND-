@@ -78,3 +78,4 @@
 - [Enterprise config RLS typing](enterprise-config-rls.md) — compare UUID tenant columns to the text session setting explicitly when repairing stale live policies
 - [Social draft platform selection](social-draft-platform-selection.md) — provider readiness gates activation/delivery, not multi-platform draft composition
 - [Social publication tenant types](social-publication-tenant-types.md) — publication tenant IDs are varchar while core listing tenants are UUIDs; cast at joins
+- [CRM React runtime isolation](crm-react-runtime-isolation.md) — separate workspace app installs can trigger hook failures in Vite lazy routes; pin CRM React resolution to the root runtime

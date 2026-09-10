@@ -431,13 +431,25 @@ export const SocialPublishing: React.FC = () => {
       const apiReason = typeof error?.data?.reason === 'string' ? error.data.reason.trim() : '';
       const targetReasons = isPublisherNotReady && Array.isArray(error?.data?.targets)
         ? error.data.targets
-          .map((platform: unknown) => catalog.find(item => item.platform === platform)?.reason)
+          .map((target: unknown) => {
+            if (typeof target === 'string') return catalog.find(item => item.platform === target)?.reason;
+            if (target && typeof target === 'object') {
+              const platform = String((target as any).platform || '');
+              const reason = typeof (target as any).reason === 'string' ? (target as any).reason : '';
+              return reason || catalog.find(item => item.platform === platform)?.reason;
+            }
+            return '';
+          })
           .filter((reason: unknown): reason is string => Boolean(reason))
         : [];
       const text = isPublisherNotReady
         ? apiReason || targetReasons.join(' ') || error?.message || 'Publisher chưa sẵn sàng'
-        : error?.message || 'Chưa thể kích hoạt publication';
-      setMessage({ kind: 'error', text });
+        : localizedSocialError(error, t, 'social.error_provider');
+      const requestId = typeof error?.data?.requestId === 'string' ? error.data.requestId : '';
+      setMessage({
+        kind: 'error',
+        text: requestId ? `${text} Mã yêu cầu: ${requestId}` : text,
+      });
     } finally {
       setBusy(false);
     }

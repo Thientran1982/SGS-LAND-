@@ -58,8 +58,13 @@ export default defineConfig(({ mode }) => {
         'process.env.NODE_ENV': JSON.stringify(env.NODE_ENV || 'development')
       },
       resolve: {
+        // Keep the CRM SPA and dynamically loaded pages on the same React
+        // runtime even though the workspace contains separate app installs.
+        dedupe: ['react', 'react-dom'],
         alias: {
           '@': path.resolve(__dirname, '.'),
+          react: path.resolve(__dirname, 'node_modules/react'),
+          'react-dom': path.resolve(__dirname, 'node_modules/react-dom'),
       // Widget chat dung chung voi Next.js (Phuong an B) - 1 nguon su that duy nhat.
       '@sgs/chat-widget': path.resolve(__dirname, 'packages/chat-widget/src/index.ts'),
         }
