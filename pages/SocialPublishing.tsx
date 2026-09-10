@@ -78,6 +78,10 @@ export const SocialPublishing: React.FC = () => {
     () => listings.find(item => String(item.id) === listingId),
     [listings, listingId],
   );
+  const imageCandidates = useMemo(
+    () => Array.from(new Set([...(selectedListing?.images || []), ...uploadedImageUrls])),
+    [selectedListing, uploadedImageUrls],
+  );
   const publisherCount = catalog.filter(item => item.hasPublisher).length;
   const readyCount = catalog.filter(item => isSocialCapabilityReady(item)).length;
   const facebookCapability = catalog.find(item => item.platform === 'FACEBOOK_PAGE');
@@ -773,17 +777,19 @@ export const SocialPublishing: React.FC = () => {
                 <p className="text-xs font-bold uppercase tracking-wider text-[var(--text-tertiary)]">Preview content</p>
                 {!!selectedImageUrls.length && <span className="text-xs text-[var(--text-tertiary)]">{selectedImageUrls.length}/{maxFacebookImages} ảnh đã chọn</span>}
               </div>
-              {selectedListing && (
-                <div className="mb-4 rounded-xl border border-[var(--glass-border)] bg-[var(--bg-surface)] p-3">
+               {selectedListing ? (
+                 <div className="mb-4 rounded-xl border border-[var(--glass-border)] bg-[var(--bg-surface)] p-3">
                   <div className="mb-2 flex items-center justify-between gap-3">
-                    <p className="text-sm font-semibold text-[var(--text-primary)]">Ảnh bài đăng</p>
-                    <p className="text-xs text-[var(--text-tertiary)]">Chọn tối đa {maxFacebookImages} ảnh cho album Facebook</p>
+                     <p className="flex items-center gap-2 text-sm font-semibold text-[var(--text-primary)]"><ImagePlus size={16} /> Ảnh bài đăng</p>
+                     <p className="text-xs text-[var(--text-tertiary)]">{selectedImageUrls.length}/{maxFacebookImages} ảnh đã chọn</p>
                   </div>
-                  {!selectedListing.images?.length ? (
-                    <p className="text-xs text-amber-700">Listing chưa có ảnh. Facebook sẽ không thể đăng bài.</p>
+                   {!imageCandidates.length ? (
+                     <p className="rounded-lg border border-dashed border-amber-300 bg-amber-50 p-3 text-xs leading-5 text-amber-800">
+                       Listing chưa có ảnh. Hãy tải ảnh lên bên dưới để tạo bài Facebook.
+                     </p>
                   ) : (
                     <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 md:grid-cols-5">
-                      {selectedListing.images.slice(0, MAX_LISTING_IMAGES).map((imageUrl, index) => {
+                       {imageCandidates.map((imageUrl, index) => {
                         const selected = selectedImageUrls.includes(imageUrl);
                         const selectionLimitReached = !selected && selectedImageUrls.length >= maxFacebookImages;
                         return (
@@ -799,8 +805,27 @@ export const SocialPublishing: React.FC = () => {
                       })}
                     </div>
                   )}
+                   <label className={`mt-3 flex cursor-pointer items-center justify-center gap-2 rounded-lg border border-dashed px-3 py-2.5 text-xs font-semibold transition-colors ${uploadingImages || selectedImageUrls.length >= maxFacebookImages ? 'cursor-not-allowed border-[var(--glass-border)] text-[var(--text-tertiary)] opacity-60' : 'border-sgs-primary/50 text-sgs-primary hover:bg-sgs-primary/5'}`}>
+                     <Upload size={15} />
+                     {uploadingImages ? 'Đang tải ảnh…' : 'Tải thêm ảnh'}
+                     <input
+                       type="file"
+                       accept="image/jpeg,image/png,image/webp,image/gif"
+                       multiple
+                       disabled={uploadingImages || selectedImageUrls.length >= maxFacebookImages}
+                       onChange={event => void uploadAdditionalImages(event)}
+                       className="sr-only"
+                     />
+                   </label>
+                   <p className="mt-2 text-[11px] leading-5 text-[var(--text-tertiary)]">
+                     Ảnh listing và ảnh tải thêm đều chỉ được lưu vào publication draft, không tự thay đổi gallery của listing. Tối đa {maxFacebookImages} ảnh, mỗi ảnh 10MB.
+                   </p>
                 </div>
-              )}
+               ) : (
+                 <div className="mb-4 rounded-xl border border-dashed border-[var(--glass-border)] bg-[var(--bg-surface)] p-4 text-center text-xs leading-5 text-[var(--text-tertiary)]">
+                   Chọn listing để hiển thị ảnh bài đăng và bật thao tác tải thêm ảnh.
+                 </div>
+               )}
               <label className="mb-4 block">
                 <span className="mb-2 block text-sm font-semibold text-[var(--text-primary)]">Caption đã duyệt</span>
                 <textarea
