@@ -504,7 +504,7 @@ export async function recordSocialAttempt(
     `INSERT INTO social_publication_attempts
       (target_id, attempt_number, request_id, provider_request_id, status_code,
        result_status, error_code, error_message_safe, finished_at)
-     VALUES ($1,$2,$3,$4,$5,$6,$7,$8,NOW())
+     VALUES ($1::uuid,$2::integer,$3::varchar,$4::varchar,$5::integer,$6::varchar,$7::varchar,$8::text,NOW())
      ON CONFLICT (target_id, attempt_number) DO UPDATE SET
        provider_request_id = EXCLUDED.provider_request_id,
        status_code = EXCLUDED.status_code,
@@ -540,15 +540,15 @@ export async function updateSocialTarget(
 ) {
   const target = await pool.query(
     `UPDATE social_publication_targets
-        SET status = $2,
-            provider_post_id = COALESCE($3, provider_post_id),
-            provider_post_url = COALESCE($4, provider_post_url),
-            provider_request_id = COALESCE($5, provider_request_id),
-            next_retry_at = $6,
-            last_error_code = $7,
-            last_error_message = $8,
+        SET status = $2::varchar,
+            provider_post_id = COALESCE($3::varchar, provider_post_id),
+            provider_post_url = COALESCE($4::text, provider_post_url),
+            provider_request_id = COALESCE($5::varchar, provider_request_id),
+            next_retry_at = $6::timestamptz,
+            last_error_code = $7::varchar,
+            last_error_message = $8::text,
             updated_at = NOW(),
-            published_at = CASE WHEN $2 = 'PUBLISHED' THEN NOW() ELSE published_at END
+            published_at = CASE WHEN $2::varchar = 'PUBLISHED' THEN NOW() ELSE published_at END
       WHERE id = $1
       RETURNING publication_id`,
     [
