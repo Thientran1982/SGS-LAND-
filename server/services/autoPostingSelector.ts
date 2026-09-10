@@ -124,15 +124,16 @@ export async function runAutoPostingForTenant(
     return { created: 0, skipped: 0, reason: 'DISABLED_OR_OUTSIDE_WINDOW' };
   }
 
+  const logicalDayKey = localDayKey(now);
   const dailyCount = await pool.query(
     `SELECT COUNT(*)::int AS count
        FROM social_publications
       WHERE tenant_id = $1
         AND source = 'AUTO'
-        AND created_at >= date_trunc('day', NOW() AT TIME ZONE 'Asia/Ho_Chi_Minh') AT TIME ZONE 'Asia/Ho_Chi_Minh'
-        AND created_at < (date_trunc('day', NOW() AT TIME ZONE 'Asia/Ho_Chi_Minh') + INTERVAL '1 day') AT TIME ZONE 'Asia/Ho_Chi_Minh'
+        AND created_at >= ($2::date::timestamp AT TIME ZONE 'Asia/Ho_Chi_Minh')
+        AND created_at < (($2::date + INTERVAL '1 day')::timestamp AT TIME ZONE 'Asia/Ho_Chi_Minh')
         AND status <> 'CANCELLED'`,
-    [tenantId],
+    [tenantId, logicalDayKey],
   );
   const remaining = Math.max(0, settings.postsPerDay - Number(dailyCount.rows[0]?.count || 0));
   if (!remaining) return { created: 0, skipped: 0, reason: 'DAILY_LIMIT_REACHED' };
@@ -164,7 +165,7 @@ export async function runAutoPostingForTenant(
     const snapshot = await buildSocialProductSnapshot(tenantId, String(candidate.id));
     const images = listingImages(candidate);
     const primaryContent = buildPlatformContent(snapshot, readyPlatforms[0] as SocialPlatform, images);
-    const autoPostingKey = `${localDayKey(now)}:${candidate.id}`;
+    const autoPostingKey = `${logicalDayKey}:${candidate.id}`;
     try {
       const publication = await createSocialPublication(pool, {
         tenantId,

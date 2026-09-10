@@ -413,6 +413,66 @@ describePostgres('automatic posting selector against PostgreSQL', () => {
     expect(count.rows[0].count).toBe(1);
   });
 
+  it('uses the same Vietnam day for the quota and auto-posting key across midnight', async () => {
+    const alreadyPostedListingId = await insertListing({ tenantId: tenantA });
+    const nextListingId = await insertListing({ tenantId: tenantA });
+    await configureSelector(tenantA, {
+      postsPerDay: 1,
+      recycleAfterDays: 3650,
+    });
+    configureCapabilities({
+      FACEBOOK_PAGE: { status: 'READY', reason: 'Facebook đã xác minh', retryable: false },
+    });
+
+    const previousDayPublication = await createSocialPublication(setupPool, {
+      tenantId: tenantA,
+      listingId: alreadyPostedListingId,
+      createdBy: null,
+      publishMode: 'NOW',
+      scheduledAt: null,
+      contentSnapshot: { title: 'previous day draft' },
+      assetSnapshot: [],
+      platforms: ['FACEBOOK_PAGE'],
+      source: 'AUTO',
+      autoPostingKey: `2026-01-02:${alreadyPostedListingId}`,
+    });
+    await query(
+      `UPDATE social_publications
+          SET created_at = $2::timestamptz
+        WHERE id = $1`,
+      [previousDayPublication.id, '2026-01-02T16:59:59.999Z'],
+    );
+
+    const beforeMidnight = await runAutoPostingForTenant(
+      setupPool,
+      tenantA,
+      new Date('2026-01-02T16:59:59.999Z'),
+    );
+    expect(beforeMidnight).toEqual({
+      created: 0,
+      skipped: 0,
+      reason: 'DAILY_LIMIT_REACHED',
+    });
+
+    const afterMidnight = await runAutoPostingForTenant(
+      setupPool,
+      tenantA,
+      new Date('2026-01-02T17:00:00.000Z'),
+    );
+    expect(afterMidnight).toMatchObject({ created: 1, reason: 'OK' });
+
+    const newPublication = await query(
+      `SELECT listing_id, auto_posting_key
+         FROM social_publications
+        WHERE tenant_id = $1 AND listing_id = $2 AND source = 'AUTO'`,
+      [tenantA, nextListingId],
+    );
+    expect(newPublication.rows).toEqual([{
+      listing_id: nextListingId,
+      auto_posting_key: `2026-01-03:${nextListingId}`,
+    }]);
+  });
+
   it('does not create a duplicate draft on a same-day rerun when recycle is disabled', async () => {
     const listingId = await insertListing({ tenantId: tenantA });
     await configureSelector(tenantA, {
