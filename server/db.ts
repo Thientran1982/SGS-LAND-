@@ -40,19 +40,31 @@ if (!DB_CONNECTION_STRING) {
   throw new Error('[DB] AIVEN_DATABASE_URL is required');
 }
 console.log('[DB] Using AIVEN_DATABASE_URL');
+const configuredPoolMax = Number(process.env.DB_POOL_MAX);
+const poolMax = Number.isFinite(configuredPoolMax)
+  ? Math.max(2, Math.min(8, Math.floor(configuredPoolMax)))
+  : 4;
+const databaseApplicationName = (
+  process.env.DB_APPLICATION_NAME ||
+  `sgs-land-api-${process.env.NODE_ENV || 'development'}`
+).replace(/[^a-zA-Z0-9_.-]/g, '-').slice(0, 63);
 export const pool = new Pool({
   connectionString: DB_CONNECTION_STRING,
   ...buildSslConfig(),
-  // Keep enough headroom for the managed Postgres superuser and for the
-  // preview + production processes sharing the same Aiven service.
-  max: Math.max(4, Math.min(20, Number(process.env.DB_POOL_MAX || 10))),
+  // Aiven reserves several connections for its own services. The preview and
+  // production instances share this database, so the default must leave room
+  // for both instead of allowing each process to claim ten connections.
+  // DB_POOL_MAX remains an override, but is capped to protect the database.
+  max: poolMax,
   idleTimeoutMillis: 240000,     // 4 min — evict idle connections while keeping the API pool healthy
   connectionTimeoutMillis: 5000,
   statement_timeout: 30000,
   query_timeout: 30000,
+  // A forgotten transaction must not hold a scarce Aiven slot indefinitely.
+  options: '-c idle_in_transaction_session_timeout=60000',
   keepAlive: true,               // Send TCP keepalive packets to detect dead connections
   keepAliveInitialDelayMillis: 10000,
-  application_name: 'sgs-land-api',
+  application_name: databaseApplicationName,
 });
 
 const DB_RECONNECT_BASE_MS = 500;
