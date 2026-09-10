@@ -4,6 +4,7 @@ import { Pool, PoolClient } from 'pg';
 import { randomUUID } from 'node:crypto';
 import migration186 from '../migrations/186_social_publications';
 import migration187 from '../migrations/187_social_publication_audit';
+import migration190 from '../migrations/190_auto_posting_phase3';
 import {
   applySocialTargetOperatorAction,
   createSocialPublication,
@@ -45,9 +46,13 @@ describePostgres('social publication reconciliation against PostgreSQL', () => {
     return setupPool.query(text, values);
   }
 
-  async function createFixture(tenantId = tenantA) {
+  async function createFixture(tenantId = tenantA, listingTenantId = tenantId) {
     const listingId = randomUUID();
-    await query('INSERT INTO listings (id) VALUES ($1)', [listingId]);
+    await query(
+      `INSERT INTO listings (id, tenant_id, status, code, title)
+       VALUES ($1, $2, 'AVAILABLE', $3, $4)`,
+      [listingId, listingTenantId, `fixture-${listingId}`, `Listing ${listingId}`],
+    );
 
     const publication = await createSocialPublication(setupPool, {
       tenantId,
@@ -74,7 +79,7 @@ describePostgres('social publication reconciliation against PostgreSQL', () => {
       [targetId],
     );
 
-    return { publicationId: publication.id as string, targetId };
+    return { publicationId: publication.id as string, targetId, listingId };
   }
 
   function operatorInput(
@@ -137,9 +142,27 @@ describePostgres('social publication reconciliation against PostgreSQL', () => {
     setupClient = await setupPool.connect();
     await setupClient.query(`SET search_path TO "${schema}", public`);
     await setupClient.query('CREATE EXTENSION IF NOT EXISTS "pgcrypto"');
-    await setupClient.query('CREATE TABLE listings (id UUID PRIMARY KEY)');
+    await setupClient.query(`
+      CREATE TABLE projects (
+        id UUID PRIMARY KEY,
+        tenant_id UUID NOT NULL,
+        is_featured BOOLEAN NOT NULL DEFAULT FALSE,
+        priority INTEGER NOT NULL DEFAULT 0,
+        updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+      )
+    `);
+    await setupClient.query(`
+      CREATE TABLE listings (
+        id UUID PRIMARY KEY,
+        tenant_id UUID NOT NULL,
+        status VARCHAR(50) NOT NULL,
+        code TEXT,
+        title TEXT NOT NULL
+      )
+    `);
     await migration186.up(setupClient);
     await migration187.up(setupClient);
+    await migration190.up(setupClient);
     setupClient.release();
     setupClient = undefined;
 
@@ -336,6 +359,51 @@ describePostgres('social publication reconciliation against PostgreSQL', () => {
       target_status: 'AMBIGUOUS',
       event_count: 0,
     });
+  });
+
+  it('loads listing review across UUID and varchar tenant IDs without crossing tenants', async () => {
+    const matchingFixture = await createFixture(tenantA);
+    const foreignPublication = await createFixture(tenantB);
+    const mismatchedListingFixture = await createFixture(tenantA, tenantB);
+
+    const matchingPublication = await findSocialPublication(
+      workerA,
+      tenantA,
+      matchingFixture.publicationId,
+    );
+    expect(matchingPublication).toMatchObject({
+      id: matchingFixture.publicationId,
+      tenantId: tenantA,
+      listingId: matchingFixture.listingId,
+      listingReview: {
+        eligible: true,
+        listingExists: true,
+        listingStatus: 'AVAILABLE',
+        listingCode: `fixture-${matchingFixture.listingId}`,
+        listingTitle: `Listing ${matchingFixture.listingId}`,
+      },
+    });
+
+    const mismatchedListingPublication = await findSocialPublication(
+      workerA,
+      tenantA,
+      mismatchedListingFixture.publicationId,
+    );
+    expect(mismatchedListingPublication).toMatchObject({
+      id: mismatchedListingFixture.publicationId,
+      tenantId: tenantA,
+      listingId: mismatchedListingFixture.listingId,
+      listingReview: {
+        eligible: false,
+        listingExists: false,
+        listingStatus: null,
+        listingCode: null,
+        listingTitle: null,
+        reason: 'LISTING_NOT_FOUND',
+      },
+    });
+
+    expect(await findSocialPublication(workerA, tenantA, foreignPublication.publicationId)).toBeNull();
   });
 
   it('requires confirmation or failure before requeueing an ambiguous target', async () => {
