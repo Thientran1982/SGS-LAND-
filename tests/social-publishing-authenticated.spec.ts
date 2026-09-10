@@ -173,12 +173,20 @@ test.describe('Authenticated social publishing', () => {
     }]);
 
     const providerPosts: string[] = [];
+    const draftSaveRequests: Array<Record<string, unknown>> = [];
     page.on('request', browserRequest => {
       if (
         browserRequest.method() === 'POST'
         && /facebook\.com|zalo\.me|zaloapp\.com/i.test(browserRequest.url())
       ) {
         providerPosts.push(browserRequest.url());
+      }
+      if (
+        browserRequest.method() === 'POST'
+        && browserRequest.url().includes('/api/social-publications')
+        && !browserRequest.url().endsWith('/preview')
+      ) {
+        draftSaveRequests.push(browserRequest.postDataJSON() as Record<string, unknown>);
       }
     });
 
@@ -263,8 +271,48 @@ test.describe('Authenticated social publishing', () => {
     await assertResponsivePreview(1280, 900);
     await assertResponsivePreview(390, 844);
 
+    const captionBeforeImageFailure = await caption.inputValue();
+    const imageOrderBeforeFailure = await page.locator('article').first().locator('img').evaluateAll(
+      images => images.map(image => (image as HTMLImageElement).src),
+    );
+    const firstPreviewImage = page.locator('article').first().locator('img').first();
+    await firstPreviewImage.evaluate(image => {
+      image.dispatchEvent(new Event('error'));
+    });
+
+    await expect(page.getByRole('alert')).toContainText(
+      'Không thể lưu draft khi 1 ảnh đã chọn không khả dụng',
+    );
+    await expect(page.getByRole('button', { name: 'Lưu draft' })).toBeDisabled();
+    expect(draftSaveRequests).toEqual([]);
+
+    await page.getByRole('button', { name: 'Thử tải lại' }).first().click();
+    await expect(firstPreviewImage).toBeVisible();
+    await expect.poll(async () => firstPreviewImage.evaluate(
+      image => (image as HTMLImageElement).complete
+        && (image as HTMLImageElement).naturalWidth > 0,
+    )).toBe(true);
+    await expect(page.getByRole('alert')).toHaveCount(0);
+    await expect(caption).toHaveValue(captionBeforeImageFailure);
+    await expect(page.locator('article').first().locator('img').evaluateAll(
+      images => images.map(image => (image as HTMLImageElement).src),
+    )).resolves.toEqual(imageOrderBeforeFailure);
+
+    const saveResponsePromise = page.waitForResponse(response => (
+      response.request().method() === 'POST'
+      && response.url().includes('/api/social-publications')
+      && !response.url().endsWith('/preview')
+    ));
     await page.getByRole('button', { name: 'Lưu draft' }).click();
+    await saveResponsePromise;
     await expect(page.getByText('Đã lưu snapshot bất biến vào bản nháp.')).toBeVisible();
+    expect(draftSaveRequests).toHaveLength(1);
+    expect(draftSaveRequests[0]).toMatchObject({
+      listingId: fixtureListingId,
+      platforms: ['FACEBOOK_PAGE', 'ZALO_BROADCAST'],
+      caption: captionBeforeImageFailure,
+      imageUrls: fixtureImageUrls,
+    });
     await expect(page.getByText('Social publishing browser smoke listing', { exact: true })).toBeVisible();
     await expect(page.getByRole('heading', { name: 'Publication đã lưu' })).toBeVisible();
     await expect(page.getByText('Social publishing browser smoke listing', { exact: true })).toBeVisible();

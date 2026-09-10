@@ -20,3 +20,9 @@ Preview responses may normalize app-owned uploads into provider-safe absolute HT
 **Why:** The public URL is correct for Facebook/Zalo delivery but may be unreachable from a local CRM preview; otherwise valid upload responses render as failed image fallbacks.
 
 **How to apply:** Keep external non-upload URLs unchanged, but normalize absolute URLs whose pathname starts with `/uploads/` to the current origin before rendering.
+
+Authenticated draft-safety browser checks should trigger the rendered image's browser error handler, assert the save control is disabled without clicking it, and treat a cleared alert as zero matching alert elements after recovery.
+
+**Why:** A disabled Playwright button never dispatches a click, and the retry path removes the unavailable-image alert rather than replacing its text; negative text assertions still wait for a matching locator to exist.
+
+**How to apply:** Capture draft POSTs before forcing the failure, verify the request list remains empty while the control is disabled, then click the image retry control and validate the recovered draft payload.
