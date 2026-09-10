@@ -77,3 +77,4 @@
 - [Stale report pagination](stale-report-pagination.md) — use a keyset cursor for operator load-more so concurrent publication changes cannot shift the reviewed window
 - [Enterprise config RLS typing](enterprise-config-rls.md) — compare UUID tenant columns to the text session setting explicitly when repairing stale live policies
 - [Social draft platform selection](social-draft-platform-selection.md) — provider readiness gates activation/delivery, not multi-platform draft composition
+- [Social publication tenant types](social-publication-tenant-types.md) — publication tenant IDs are varchar while core listing tenants are UUIDs; cast at joins

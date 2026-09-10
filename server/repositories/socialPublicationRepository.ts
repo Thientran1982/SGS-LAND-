@@ -219,7 +219,7 @@ export async function listSocialPublications(
        FROM social_publications p
        LEFT JOIN listings l
          ON l.id = p.listing_id
-        AND l.tenant_id = p.tenant_id
+        AND l.tenant_id::text = p.tenant_id
       WHERE p.tenant_id = $1
         AND ($3::text IS NULL OR p.source = $3)
         AND (
@@ -261,7 +261,7 @@ export async function countSocialPublications(
        FROM social_publications p
        LEFT JOIN listings l
          ON l.id = p.listing_id
-        AND l.tenant_id = p.tenant_id
+        AND l.tenant_id::text = p.tenant_id
       WHERE p.tenant_id = $1
         AND ($2::text IS NULL OR p.source = $2)
         AND (
@@ -285,7 +285,7 @@ export async function findSocialPublication(pool: Pool, tenantId: string, id: st
        FROM social_publications p
        LEFT JOIN listings l
          ON l.id = p.listing_id
-        AND l.tenant_id = p.tenant_id
+        AND l.tenant_id::text = p.tenant_id
       WHERE p.id = $1 AND p.tenant_id = $2`,
     [id, tenantId],
   );
