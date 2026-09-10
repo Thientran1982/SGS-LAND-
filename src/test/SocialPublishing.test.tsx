@@ -27,7 +27,10 @@ function mockInitialRequests(listings: typeof eligibleListings = []) {
 }
 
 describe('SocialPublishing listing selector', () => {
-  afterEach(() => vi.restoreAllMocks());
+  afterEach(() => {
+    window.history.replaceState({}, '', '/');
+    vi.restoreAllMocks();
+  });
 
   it('requests all eligible listing statuses and shows returned listings in the dropdown', async () => {
     const getListings = mockInitialRequests(eligibleListings);
@@ -65,5 +68,43 @@ describe('SocialPublishing listing selector', () => {
 
     expect(screen.getByText('Không tìm thấy listing phù hợp')).toBeVisible();
     expect(screen.queryAllByRole('option')).toHaveLength(0);
+  });
+
+  it('selects the listing requested by the URL after eligible listings finish loading', async () => {
+    const requestedListing = eligibleListings[2];
+    const getListings = mockInitialRequests(eligibleListings);
+    window.history.pushState({}, '', `/?listingId=${requestedListing.id}`);
+
+    render(<SocialPublishing />);
+
+    const selector = await screen.findByRole('combobox', {
+      name: 'Chọn sản phẩm đủ điều kiện xuất bản',
+    });
+    await waitFor(() => {
+      expect(getListings).toHaveBeenCalledWith(1, 100, {
+        statuses: 'AVAILABLE,OPENING,BOOKING,BEST_MARKET',
+      });
+      expect(selector).toHaveTextContent(requestedListing.code);
+      expect(selector).toHaveTextContent(requestedListing.title);
+    });
+    expect(screen.getByText(requestedListing.title)).toBeVisible();
+  });
+
+  it('does not select a different listing when the URL listing is not in the results', async () => {
+    mockInitialRequests(eligibleListings);
+    window.history.pushState({}, '', '/?listingId=listing-missing');
+
+    render(<SocialPublishing />);
+
+    const selector = await screen.findByRole('combobox', {
+      name: 'Chọn sản phẩm đủ điều kiện xuất bản',
+    });
+    await waitFor(() => {
+      expect(selector).toHaveTextContent('Chọn listing đủ điều kiện xuất bản');
+    });
+    expect(screen.queryByText('Căn hộ sẵn sàng')).not.toBeInTheDocument();
+    expect(screen.queryByText('Căn hộ đang mở bán')).not.toBeInTheDocument();
+    expect(screen.queryByText('Căn hộ đang giữ chỗ')).not.toBeInTheDocument();
+    expect(screen.queryByText('Căn hộ nổi bật')).not.toBeInTheDocument();
   });
 });
