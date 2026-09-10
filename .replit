@@ -114,6 +114,7 @@ PORT = "5000"
 APP_URL = "https://sgsland.vn"
 QSTASH_URL = "https://qstash-us-east-1.upstash.io"
 PROD_DOMAIN = "sgsland.vn"
+PUBLIC_URL = "https://sgsland.vn"
 [objectStorage]
 defaultBucketID = "replit-objstore-b2bda06e-8535-430b-b2ac-45839c6a59c1"
 [postMerge]
