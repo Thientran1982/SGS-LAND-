@@ -47,6 +47,7 @@ export const SocialPublishing: React.FC = () => {
   const [staleCursor, setStaleCursor] = useState<string | null>(null);
   const [staleHasNext, setStaleHasNext] = useState(false);
   const [staleLoading, setStaleLoading] = useState(false);
+  const [staleReportNeedsRefresh, setStaleReportNeedsRefresh] = useState(false);
   const [listingId, setListingId] = useState('');
   const [platforms, setPlatforms] = useState<string[]>([]);
   const [preview, setPreview] = useState<{ platform: string; title: string; text: string; imageUrls: string[]; link: string | null }[]>([]);
@@ -88,6 +89,18 @@ export const SocialPublishing: React.FC = () => {
   const autoDrafts = publications.filter(item => item.source === 'AUTO' && item.status === 'DRAFT');
   const manualPublications = publications.filter(item => item.source !== 'AUTO');
 
+  const mergeStalePublications = (
+    current: SocialPublication[],
+    incoming: SocialPublication[],
+  ): SocialPublication[] => {
+    const byId = new Map(current.map(item => [item.id, item]));
+    incoming.forEach(item => byId.set(item.id, item));
+    return [...byId.values()].sort((left, right) => {
+      const createdAtDifference = new Date(right.createdAt).getTime() - new Date(left.createdAt).getTime();
+      return createdAtDifference || right.id.localeCompare(left.id);
+    });
+  };
+
   useEffect(() => {
     const images = selectedListing?.images || [];
     setSelectedImageUrls(images.slice(0, MAX_LISTING_IMAGES).slice(0, maxFacebookImages));
@@ -122,6 +135,7 @@ export const SocialPublishing: React.FC = () => {
       setStaleHasNext(stalePublicationResult.hasNext ?? (
         currentStalePage * currentStalePageSize < staleCount
       ));
+       setStaleReportNeedsRefresh(false);
        if (requestedListingId && (listingResult.data || []).some((item: SocialListingOption) => String(item.id) === requestedListingId)) {
          setListingId(requestedListingId);
       }
@@ -150,13 +164,13 @@ export const SocialPublishing: React.FC = () => {
       // Keep the first page's count as the report snapshot. A publication
       // created after page one must appear after refresh, not shift this
       // operator's current review window.
-      const reportTotal = staleCursor ? staleTotal : nextTotal;
+      const reportTotal = staleTotal;
+      if (nextTotal > staleTotal) {
+        setStaleReportNeedsRefresh(true);
+      }
       const currentPage = result.page || nextPage;
       const currentPageSize = result.pageSize || STALE_PUBLICATION_PAGE_SIZE;
-      setStalePublications(current => {
-        const existingIds = new Set(current.map(item => item.id));
-        return [...current, ...nextRows.filter(item => !existingIds.has(item.id))];
-      });
+      setStalePublications(current => mergeStalePublications(current, nextRows));
       setStaleTotal(reportTotal);
       setStalePage(currentPage);
       setStaleCursor(result.nextCursor ?? null);
@@ -165,6 +179,36 @@ export const SocialPublishing: React.FC = () => {
         : result.hasNext ?? (currentPage * currentPageSize < reportTotal));
     } catch (error: any) {
       setMessage({ kind: 'error', text: error?.message || 'Không tải thêm được báo cáo liên kết cũ' });
+    } finally {
+      setStaleLoading(false);
+    }
+  };
+
+  const refreshStaleReport = async () => {
+    if (staleLoading) return;
+    setStaleLoading(true);
+    try {
+      const result = await socialPublicationApi.getPublications({
+        staleOnly: true,
+        page: 1,
+        pageSize: STALE_PUBLICATION_PAGE_SIZE,
+      });
+      const refreshedRows = result.data || [];
+      const refreshedTotal = Number.isFinite(result.total) ? result.total : refreshedRows.length;
+      const refreshedPage = result.page || 1;
+      const refreshedPageSize = result.pageSize || STALE_PUBLICATION_PAGE_SIZE;
+      setStalePublications(current => mergeStalePublications(current, refreshedRows));
+      setStaleTotal(current => Math.max(current, refreshedTotal));
+      setStalePage(refreshedPage);
+      setStaleCursor(result.nextCursor ?? null);
+      setStaleHasNext(result.hasNext ?? (refreshedPage * refreshedPageSize < refreshedTotal));
+      setStaleReportNeedsRefresh(false);
+      setMessage({
+        kind: 'ok',
+        text: 'Đã tải lại báo cáo stale. Các publication đã hiển thị vẫn được giữ nguyên để tiếp tục rà soát.',
+      });
+    } catch (error: any) {
+      setMessage({ kind: 'error', text: error?.message || 'Không tải lại được báo cáo liên kết cũ' });
     } finally {
       setStaleLoading(false);
     }
@@ -803,6 +847,25 @@ export const SocialPublishing: React.FC = () => {
             <p className="mt-3 text-xs font-medium text-red-800" aria-live="polite">
               Đang xem {stalePublications.length} / {staleTotal} liên kết cần rà soát
             </p>
+          )}
+          {staleReportNeedsRefresh && (
+            <div
+              role="status"
+              aria-live="polite"
+              className="mt-3 flex flex-col items-start justify-between gap-3 rounded-2xl border border-amber-300 bg-amber-50 p-4 text-sm text-amber-900 sm:flex-row sm:items-center"
+            >
+              <p className="max-w-3xl leading-5">
+                Báo cáo đang giữ snapshot của phiên rà soát hiện tại. Có publication stale mới; dữ liệu mới sẽ xuất hiện sau khi tải lại. Các dòng đang hiển thị vẫn được giữ nguyên.
+              </p>
+              <button
+                type="button"
+                onClick={() => void refreshStaleReport()}
+                disabled={staleLoading}
+                className="shrink-0 rounded-lg border border-amber-400 bg-[var(--bg-surface)] px-3 py-2 text-xs font-bold text-amber-900 disabled:opacity-50"
+              >
+                {staleLoading ? 'Đang tải lại…' : 'Tải lại báo cáo stale'}
+              </button>
+            </div>
           )}
           {loading ? (
             <p className="mt-4 text-sm text-[var(--text-tertiary)]">Đang tải báo cáo…</p>
