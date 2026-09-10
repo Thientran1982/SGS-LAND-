@@ -130,4 +130,19 @@ describe('listing status filters', () => {
       'ADMIN',
     );
   });
+
+  it('passes publication picker context without weakening tenant filtering', async () => {
+    const response = await fetch(
+      `${origin}/api/listings?page=1&pageSize=100&statuses=${eligibleStatuses.join(',')}&publicationEligible=true`,
+    );
+
+    expect(response.status).toBe(200);
+    expect(mocks.findListings).toHaveBeenCalledWith(
+      tenantId,
+      { page: 1, pageSize: 100 },
+      { status_in: eligibleStatuses, publicationEligible: true },
+      userId,
+      'ADMIN',
+    );
+  });
 });

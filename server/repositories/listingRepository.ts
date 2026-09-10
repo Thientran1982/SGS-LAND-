@@ -490,7 +490,9 @@ export class ListingRepository extends BaseRepository {
       // noProjectCode flag distinguishes inventory page from proposal picker:
       //   inventory page always sets it; proposal picker never does.
       const isInventoryContext = !!filters?.noProjectCode;
-      const isPublicationPickerContext = filters?.publicationEligible === true;
+      const isPublicationPickerContext =
+        filters?.publicationEligible === true &&
+        ['SUPER_ADMIN', 'ADMIN', 'TEAM_LEAD', 'MARKETING'].includes(userRole || '');
       // AVAILABLE-only bypass is allowed only in non-inventory contexts (e.g. proposal picker).
       const isAvailableOnlyQuery = !isInventoryContext && filters?.status === 'AVAILABLE';
       if (isPublicationPickerContext) {
