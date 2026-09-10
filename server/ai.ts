@@ -554,7 +554,7 @@ async function loadActivatedCatalogSkills(
   }
 }
 
-async function getPromptTemplate(tenantId: string, templateKey: string, fallback: string): Promise<string> {
+export async function getPromptTemplate(tenantId: string, templateKey: string, fallback: string): Promise<string> {
     const cacheKey = `prompt:${tenantId}:${templateKey}`;
     const cached = getCachedToolData<string>(cacheKey);
     if (cached) return cached;
