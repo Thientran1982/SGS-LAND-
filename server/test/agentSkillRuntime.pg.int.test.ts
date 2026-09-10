@@ -218,6 +218,29 @@ describePostgres(suiteTitle, () => {
     expect(promptA).not.toContain('Tenant B skill');
     expect(promptA).not.toContain('Only use tenant B campaign evidence.');
 
+    const updateResponse = await fetch(`${origin}/api/admin/agent-skills/${skillA}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        prompt_template: 'Use the updated tenant A campaign evidence.',
+        published: true,
+      }),
+    });
+    expect(updateResponse.status).toBe(200);
+    expect((await updateResponse.json()).skill).toMatchObject({
+      version: 5,
+      published: true,
+    });
+
+    const updatedPromptA = await getPromptTemplate(
+      tenantA,
+      'MARKETING_SYSTEM',
+      'fallback A',
+    );
+    expect(updatedPromptA).toContain('Tenant A skill (tenant-a-skill, v5)');
+    expect(updatedPromptA).toContain('Use the updated tenant A campaign evidence.');
+    expect(updatedPromptA).not.toContain('Only use tenant A campaign evidence.');
+
     const promptB = await getPromptTemplate(
       tenantB,
       'MARKETING_SYSTEM',

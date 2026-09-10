@@ -15,6 +15,7 @@ vi.mock('../middleware/rateLimiter', () => ({
 vi.mock('../ai', () => ({ clearPromptCache: vi.fn() }));
 
 import { agentSkillsRouter } from '../routes/agentSkillsRoutes';
+import { clearPromptCache } from '../ai';
 
 async function startServer(user: { id: string; tenantId: string; role: string }) {
   const app = express();
@@ -77,9 +78,46 @@ describe('agent skills route authorization and visibility', () => {
 
     expect(response.status).toBe(404);
     expect(query).toHaveBeenCalledWith(
-      expect.stringContaining('WHERE id = $1 AND tenant_id = $4'),
-      ['public-id', false, 'PRIVATE', 'tenant-1'],
+      expect.stringContaining('WHERE id = $1'),
+      ['public-id', null, false, 'PRIVATE', 'tenant-1'],
     );
+  });
+
+  it('clears the tenant prompt cache when a skill prompt or publish state changes', async () => {
+    query.mockResolvedValueOnce({
+      rows: [{
+        id: 'skill-id',
+        skill_key: 'shared-skill',
+        title: 'Shared',
+        prompt_template: 'Updated prompt',
+        version: 3,
+        published: true,
+        visibility: 'TENANT',
+      }],
+      rowCount: 1,
+    });
+
+    const response = await fetch(`${origin}/api/admin/agent-skills/skill-id`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        prompt_template: 'Updated prompt',
+        published: true,
+        visibility: 'TENANT',
+      }),
+    });
+
+    expect(response.status).toBe(200);
+    expect((await response.json()).skill).toMatchObject({
+      prompt_template: 'Updated prompt',
+      version: 3,
+      published: true,
+    });
+    expect(query).toHaveBeenCalledWith(
+      expect.stringContaining('version = CASE'),
+      ['skill-id', 'Updated prompt', true, 'TENANT', 'tenant-1'],
+    );
+    expect(clearPromptCache).toHaveBeenCalledWith('tenant-1');
   });
 
   it('does not allow installing a private skill from another tenant', async () => {

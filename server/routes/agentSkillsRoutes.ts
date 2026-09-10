@@ -99,6 +99,7 @@ agentSkillsRouter.post('/', apiRateLimit, async (req: Request, res: Response) =>
       "INSERT INTO agent_skills (tenant_id, skill_key, title, description, category, prompt_template, author_id, author_name, visibility) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9) ON CONFLICT (tenant_id, skill_key) DO UPDATE SET title = EXCLUDED.title, prompt_template = EXCLUDED.prompt_template, description = EXCLUDED.description, version = agent_skills.version + 1, updated_at = NOW() RETURNING id, skill_key, title, version",
       [tenantId, skill_key, title, description || null, category || 'sales', String(prompt_template).slice(0, 20000), user?.id || null, user?.name || 'Admin', visibility || 'PRIVATE'],
     );
+    await clearRuntimePromptCache(tenantId);
     res.status(201).json({ skill: r.rows[0] });
   } catch (err: any) {
     logger.warn('[Skills] create failed: ' + (err?.message || err));
@@ -110,12 +111,38 @@ agentSkillsRouter.patch('/:id', apiRateLimit, async (req: Request, res: Response
   try {
     const tenantId = requireManager(req, res);
     if (!tenantId) return;
-    const { published, visibility } = req.body || {};
+    const { published, visibility, prompt_template } = req.body || {};
+    if (
+      prompt_template !== undefined
+      && (typeof prompt_template !== 'string' || !prompt_template.trim())
+    ) {
+      return res.status(400).json({ error: 'prompt_template phai la chuoi khong rong' });
+    }
     const r = await pool.query(
-      "UPDATE agent_skills SET published = COALESCE($2, published), visibility = COALESCE($3, visibility), published_at = CASE WHEN $2::boolean THEN NOW() ELSE published_at END, updated_at = NOW() WHERE id = $1 AND tenant_id = $4 RETURNING id, skill_key, title, published, visibility",
-      [req.params.id, typeof published === 'boolean' ? published : null, visibility ?? null, tenantId],
+      `UPDATE agent_skills
+          SET prompt_template = COALESCE($2, prompt_template),
+              published = COALESCE($3, published),
+              visibility = COALESCE($4, visibility),
+              version = CASE
+                WHEN $2::text IS NOT NULL AND $2::text IS DISTINCT FROM prompt_template
+                  THEN version + 1
+                ELSE version
+              END,
+              published_at = CASE WHEN $3::boolean THEN NOW() ELSE published_at END,
+              updated_at = NOW()
+        WHERE id = $1
+          AND tenant_id = $5
+      RETURNING id, skill_key, title, prompt_template, version, published, visibility`,
+      [
+        req.params.id,
+        prompt_template !== undefined ? String(prompt_template).slice(0, 20000) : null,
+        typeof published === 'boolean' ? published : null,
+        visibility ?? null,
+        tenantId,
+      ],
     );
     if (r.rowCount === 0) return res.status(404).json({ error: 'Skill khong ton tai' });
+    await clearRuntimePromptCache(tenantId);
     res.json({ skill: r.rows[0] });
   } catch (err: any) {
     logger.warn('[Skills] patch failed: ' + (err?.message || err));
