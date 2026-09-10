@@ -6,7 +6,9 @@ import migration187 from '../migrations/187_social_publication_audit';
 import migration190 from '../migrations/190_auto_posting_phase3';
 import {
   createSocialPublication,
+  countSocialPublications,
   findSocialPublication,
+  listSocialPublications,
 } from '../repositories/socialPublicationRepository';
 import { upsertAutoPostingSettings } from '../repositories/autoPostingRepository';
 import { runAutoPostingForTenant } from '../services/autoPostingSelector';
@@ -209,7 +211,7 @@ describePostgres('automatic posting selector against PostgreSQL', () => {
       );
       CREATE TABLE projects (
         id UUID PRIMARY KEY,
-        tenant_id VARCHAR(36) NOT NULL,
+        tenant_id UUID NOT NULL,
         name VARCHAR(255) NOT NULL,
         code VARCHAR(100),
         status VARCHAR(50) DEFAULT 'ACTIVE',
@@ -220,7 +222,7 @@ describePostgres('automatic posting selector against PostgreSQL', () => {
       );
       CREATE TABLE listings (
         id UUID PRIMARY KEY,
-        tenant_id VARCHAR(36) NOT NULL,
+        tenant_id UUID NOT NULL,
         project_id UUID,
         project_code VARCHAR(100),
         title TEXT NOT NULL,
@@ -496,5 +498,68 @@ describePostgres('automatic posting selector against PostgreSQL', () => {
       [tenantA, listingId],
     );
     expect(duplicateKeys.rows[0]).toEqual({ count: 1, distinct_count: 1 });
+  });
+
+  it('loads publication history with UUID listing tenants and keeps tenant boundaries', async () => {
+    const listingA = await insertListing({
+      tenantId: tenantA,
+      title: 'Tenant A listing',
+    });
+    const listingB = await insertListing({
+      tenantId: tenantB,
+      title: 'Tenant B listing',
+    });
+
+    await createSocialPublication(setupPool, {
+      tenantId: tenantA,
+      listingId: listingA,
+      createdBy: null,
+      publishMode: 'NOW',
+      scheduledAt: null,
+      contentSnapshot: { title: 'Tenant A publication' },
+      assetSnapshot: [],
+      platforms: ['FACEBOOK_PAGE'],
+    });
+    await createSocialPublication(setupPool, {
+      tenantId: tenantB,
+      listingId: listingB,
+      createdBy: null,
+      publishMode: 'NOW',
+      scheduledAt: null,
+      contentSnapshot: { title: 'Tenant B publication' },
+      assetSnapshot: [],
+      platforms: ['FACEBOOK_PAGE'],
+    });
+
+    const tenantAPublications = await listSocialPublications(setupPool, tenantA);
+    const tenantACount = await countSocialPublications(setupPool, tenantA);
+    const tenantBPublications = await listSocialPublications(setupPool, tenantB);
+    const tenantBCount = await countSocialPublications(setupPool, tenantB);
+
+    expect(tenantAPublications).toHaveLength(1);
+    expect(tenantAPublications[0]).toMatchObject({
+      tenantId: tenantA,
+      listingId: listingA,
+      listingReview: {
+        eligible: true,
+        listingExists: true,
+        listingCode: expect.stringContaining('LISTING-'),
+        listingTitle: 'Tenant A listing',
+      },
+    });
+    expect(tenantACount).toBe(1);
+    expect(tenantBPublications).toHaveLength(1);
+    expect(tenantBPublications[0]).toMatchObject({
+      tenantId: tenantB,
+      listingId: listingB,
+      listingReview: {
+        eligible: true,
+        listingExists: true,
+        listingTitle: 'Tenant B listing',
+      },
+    });
+    expect(tenantBCount).toBe(1);
+    expect(tenantAPublications.map(publication => publication.tenantId)).not.toContain(tenantB);
+    expect(tenantBPublications.map(publication => publication.tenantId)).not.toContain(tenantA);
   });
 });
