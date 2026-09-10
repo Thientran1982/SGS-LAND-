@@ -33,6 +33,7 @@ function mockInitialRequests(listings: typeof eligibleListings = []) {
     },
     todayRun: null,
     lastRun: null,
+    backfillRequests: [],
     warning: null,
   });
   return getListings;
@@ -225,6 +226,7 @@ describe('SocialPublishing listing selector', () => {
         finishedAt: '2026-09-10T11:30:01.000Z',
       },
       lastRun: null,
+      backfillRequests: [],
       warning: 'Hôm nay không có nguồn đủ điều kiện để đăng Facebook.',
     });
 
@@ -234,6 +236,47 @@ describe('SocialPublishing listing selector', () => {
       'Hôm nay không có nguồn đủ điều kiện để đăng Facebook.',
     );
     expect(screen.getByText('18:30 mỗi ngày')).toBeVisible();
+  });
+
+  it('shows backfill history, highlights blocked Facebook results, and links to publication audit', async () => {
+    mockInitialRequests(eligibleListings);
+    vi.mocked(socialPublicationApi.getMarketingFacebookStatus).mockResolvedValue({
+      settings: {
+        enabled: true,
+        postsPerDay: 1,
+        timeWindows: [{ start: '18:30', end: '23:59' }],
+        platforms: ['FACEBOOK_PAGE'],
+      },
+      todayRun: null,
+      lastRun: null,
+      backfillRequests: [{
+        id: 'backfill-blocked',
+        logicalDay: '2026-09-08',
+        reason: 'Facebook không xác định kết quả sau lần gửi trước',
+        requestedBy: 'manager-1',
+        status: 'BLOCKED',
+        result: { reason: 'AMBIGUOUS_PROVIDER_RESULT' },
+        publicationId: 'publication-backfill',
+        errorCode: 'AMBIGUOUS_PROVIDER_RESULT',
+        errorMessage: 'Facebook trả kết quả không xác định.',
+        requestedAt: '2026-09-09T01:00:00.000Z',
+        startedAt: '2026-09-09T01:01:00.000Z',
+        finishedAt: '2026-09-09T01:01:01.000Z',
+      }],
+      warning: null,
+    });
+
+    render(<SocialPublishing />);
+
+    expect(await screen.findByText('BLOCKED')).toBeVisible();
+    expect(screen.getByText('Facebook trả kết quả không xác định; không gửi lại tự động.')).toBeVisible();
+    const publicationAuditLink = screen.getByRole('link', { name: /Mở publication và audit/ });
+    expect(publicationAuditLink).toHaveAttribute(
+      'href',
+      '/social-publishing?publicationId=publication-backfill#marketing-facebook',
+    );
+    expect(screen.getByText('Facebook không xác định kết quả sau lần gửi trước')).toBeVisible();
+    expect(screen.getByText('manager-1')).toBeVisible();
   });
 
   it('shows tenant-scoped stale publication links and opens the related publication', async () => {

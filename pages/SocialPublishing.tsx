@@ -34,6 +34,24 @@ const statusLabel: Record<string, string> = {
   AMBIGUOUS: 'Chưa xác định',
 };
 
+const backfillStatusLabel: Record<string, string> = {
+  REQUESTED: 'Đã yêu cầu',
+  RUNNING: 'Đang chạy',
+  SUCCESS: 'Thành công',
+  FAILED: 'Thất bại',
+  SKIPPED: 'Bỏ qua',
+  BLOCKED: 'BLOCKED',
+};
+
+const backfillStatusClass: Record<string, string> = {
+  REQUESTED: 'bg-slate-100 text-slate-700',
+  RUNNING: 'bg-blue-100 text-blue-800',
+  SUCCESS: 'bg-emerald-100 text-emerald-800',
+  FAILED: 'bg-red-100 text-red-800',
+  SKIPPED: 'bg-amber-100 text-amber-800',
+  BLOCKED: 'bg-red-200 text-red-900 ring-1 ring-red-400',
+};
+
 const formatDate = (value?: string | null) =>
   value ? new Date(value).toLocaleString('vi-VN', { dateStyle: 'short', timeStyle: 'short' }) : '—';
 
@@ -105,6 +123,7 @@ export const SocialPublishing: React.FC = () => {
   const [focusedPlatform] = useState(() => normalizeRequestedPlatform(new URLSearchParams(window.location.search).get('platform')));
   const [requestedListingId] = useState(() => new URLSearchParams(window.location.search).get('listingId'));
   const [requestedProjectId] = useState(() => new URLSearchParams(window.location.search).get('projectId'));
+  const [requestedPublicationId] = useState(() => new URLSearchParams(window.location.search).get('publicationId'));
   const [reconcileForm, setReconcileForm] = useState<{
     publicationId: string;
     targetId: string;
@@ -668,6 +687,12 @@ export const SocialPublishing: React.FC = () => {
       setDetailLoading(null);
     }
   };
+
+  useEffect(() => {
+    if (!requestedPublicationId || !publications.some(item => item.id === requestedPublicationId)) return;
+    if (expandedPublicationId === requestedPublicationId) return;
+    void toggleDetails(requestedPublicationId);
+  }, [expandedPublicationId, publications, requestedPublicationId]);
 
   const beginReconcile = (
     publicationId: string,
@@ -1365,7 +1390,7 @@ export const SocialPublishing: React.FC = () => {
                   .map(target => target.providerPostUrl)
                   .filter((url): url is string => Boolean(url));
                 return (
-                  <article key={item.id} className="rounded-2xl border border-red-200 bg-[var(--bg-surface)] p-4">
+                  <article id={`publication-${item.id}`} key={item.id} className="rounded-2xl border border-red-200 bg-[var(--bg-surface)] p-4">
                     <div className="flex flex-col justify-between gap-3 md:flex-row md:items-start">
                       <div className="min-w-0">
                         <div className="flex flex-wrap items-center gap-2">
@@ -1433,7 +1458,7 @@ export const SocialPublishing: React.FC = () => {
           )}
         </section>
 
-        <section className="rounded-3xl border border-indigo-200 bg-indigo-50/50 p-5 shadow-sm">
+        <section id="marketing-facebook" className="rounded-3xl border border-indigo-200 bg-indigo-50/50 p-5 shadow-sm">
           <div className="mb-4 flex flex-col justify-between gap-3 sm:flex-row sm:items-start">
             <div>
               <div className="flex items-center gap-3">
@@ -1489,6 +1514,91 @@ export const SocialPublishing: React.FC = () => {
               <p className="mt-1 text-xs text-[var(--text-tertiary)]">Ưu tiên nguồn lâu nhất chưa đăng Facebook</p>
             </div>
           </div>
+          <div className="mt-4 rounded-2xl border border-indigo-100 bg-[var(--bg-surface)] p-4">
+            <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
+              <div>
+                <h3 className="font-semibold text-[var(--text-primary)]">Lịch sử chạy bù</h3>
+                <p className="mt-1 text-xs text-[var(--text-tertiary)]">
+                  Theo dõi ngày chạy bù, lý do, người yêu cầu và kết quả Facebook.
+                </p>
+              </div>
+              <span className="rounded-full bg-indigo-100 px-2.5 py-1 text-xs font-semibold text-indigo-800">
+                {marketingFacebookStatus?.backfillRequests?.length || 0} yêu cầu
+              </span>
+            </div>
+            {!marketingFacebookStatus?.backfillRequests?.length ? (
+              <p className="rounded-xl border border-dashed border-indigo-200 px-3 py-4 text-sm text-[var(--text-tertiary)]">
+                Chưa có yêu cầu chạy bù nào.
+              </p>
+            ) : (
+              <div className="overflow-x-auto">
+                <table className="w-full min-w-[760px] text-left text-xs">
+                  <thead className="border-b border-indigo-100 text-[var(--text-tertiary)]">
+                    <tr>
+                      <th className="px-3 py-2 font-semibold">Ngày chạy bù</th>
+                      <th className="px-3 py-2 font-semibold">Trạng thái</th>
+                      <th className="px-3 py-2 font-semibold">Người yêu cầu</th>
+                      <th className="px-3 py-2 font-semibold">Lý do</th>
+                      <th className="px-3 py-2 font-semibold">Publication / audit</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-indigo-50">
+                    {marketingFacebookStatus.backfillRequests.map(request => {
+                      const publicationId = request.publicationId
+                        || (typeof request.result?.publicationId === 'string' ? request.result.publicationId : null);
+                      const resultReason = typeof request.result?.reason === 'string' ? request.result.reason : null;
+                      const publicationHref = publicationId
+                        ? `/${ROUTES.SOCIAL_PUBLISHING}?publicationId=${encodeURIComponent(publicationId)}#marketing-facebook`
+                        : null;
+                      return (
+                        <tr key={request.id} className="align-top">
+                          <td className="whitespace-nowrap px-3 py-3">
+                            <p className="font-semibold text-[var(--text-primary)]">{request.logicalDay}</p>
+                            <p className="mt-1 text-[10px] text-[var(--text-tertiary)]">Yêu cầu {formatDate(request.requestedAt)}</p>
+                          </td>
+                          <td className="px-3 py-3">
+                            <span className={`inline-flex rounded-full px-2 py-1 font-bold ${backfillStatusClass[request.status] || 'bg-slate-100 text-slate-700'}`}>
+                              {backfillStatusLabel[request.status] || request.status}
+                            </span>
+                            {request.status === 'BLOCKED' && (
+                              <p className="mt-2 max-w-[220px] font-semibold leading-5 text-red-800">
+                                Facebook trả kết quả không xác định; không gửi lại tự động.
+                              </p>
+                            )}
+                            {(request.errorMessage || resultReason) && request.status !== 'BLOCKED' && (
+                              <p className="mt-2 max-w-[220px] leading-5 text-[var(--text-tertiary)]">
+                                {request.errorMessage || resultReason}
+                              </p>
+                            )}
+                          </td>
+                          <td className="whitespace-nowrap px-3 py-3 text-[var(--text-secondary)]">
+                            <p>{request.requestedBy || '—'}</p>
+                            {request.startedAt && <p className="mt-1 text-[10px] text-[var(--text-tertiary)]">Bắt đầu {formatDate(request.startedAt)}</p>}
+                          </td>
+                          <td className="max-w-[260px] whitespace-pre-wrap px-3 py-3 leading-5 text-[var(--text-secondary)]">
+                            {request.reason || '—'}
+                          </td>
+                          <td className="px-3 py-3">
+                            {publicationHref && publicationId ? (
+                              <a
+                                href={publicationHref}
+                                className="inline-flex items-center gap-1 font-semibold text-indigo-700 underline"
+                              >
+                                {publicationId.slice(0, 8)}… <ExternalLink size={13} />
+                                <span className="sr-only">Mở publication và audit</span>
+                              </a>
+                            ) : (
+                              <span className="text-[var(--text-tertiary)]">Chưa tạo publication</span>
+                            )}
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </div>
           {(marketingFacebookStatus?.warning || loadWarnings.autoPosting) && (
             <div role="alert" className="mt-3 flex gap-2 rounded-2xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900">
               <AlertTriangle size={18} className="mt-0.5 shrink-0" />
@@ -1512,7 +1622,7 @@ export const SocialPublishing: React.FC = () => {
           {publicationsLoading ? <p className="text-sm text-[var(--text-tertiary)]">Đang tải…</p> : loadWarnings.publications ? null : !manualPublications.length ? <p className="text-sm text-[var(--text-tertiary)]">Chưa có publication thủ công nào.</p> : (
             <div className="space-y-3">
               {manualPublications.map(item => (
-                <article key={item.id} className="rounded-2xl border border-[var(--glass-border)] p-4">
+                <article id={`publication-${item.id}`} key={item.id} className="rounded-2xl border border-[var(--glass-border)] p-4">
                   <div className="flex flex-col justify-between gap-3 md:flex-row md:items-start">
                     <div>
                         <div className="flex flex-wrap items-center gap-2">

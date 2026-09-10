@@ -127,6 +127,21 @@ export interface MarketingFacebookDailyRun {
   finishedAt: string | null;
 }
 
+export interface MarketingFacebookBackfillRequest {
+  id: string;
+  logicalDay: string;
+  reason: string;
+  requestedBy: string;
+  status: 'REQUESTED' | 'RUNNING' | 'SUCCESS' | 'FAILED' | 'SKIPPED' | 'BLOCKED';
+  result: Record<string, unknown>;
+  publicationId: string | null;
+  errorCode: string | null;
+  errorMessage: string | null;
+  requestedAt: string;
+  startedAt: string | null;
+  finishedAt: string | null;
+}
+
 export interface MarketingFacebookStatus {
   settings: {
     enabled: boolean;
@@ -136,6 +151,7 @@ export interface MarketingFacebookStatus {
   };
   todayRun: MarketingFacebookDailyRun | null;
   lastRun: MarketingFacebookDailyRun | null;
+  backfillRequests: MarketingFacebookBackfillRequest[];
   warning: string | null;
 }
 

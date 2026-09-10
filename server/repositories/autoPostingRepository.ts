@@ -44,6 +44,7 @@ export type MarketingFacebookBackfillRequest = {
   requestedBy: string;
   status: 'REQUESTED' | 'RUNNING' | 'SUCCESS' | 'FAILED' | 'SKIPPED' | 'BLOCKED';
   result: Record<string, unknown>;
+  publicationId: string | null;
   errorCode: string | null;
   errorMessage: string | null;
   requestedAt: string;
@@ -147,6 +148,7 @@ function mapBackfillRequest(row: any): MarketingFacebookBackfillRequest {
   const logicalDay = row.logical_day instanceof Date
     ? row.logical_day.toISOString().slice(0, 10)
     : String(row.logical_day || '').slice(0, 10);
+  const result = row.result && typeof row.result === 'object' ? row.result : {};
   return {
     id: String(row.id),
     tenantId: String(row.tenant_id),
@@ -154,7 +156,8 @@ function mapBackfillRequest(row: any): MarketingFacebookBackfillRequest {
     reason: String(row.reason || ''),
     requestedBy: String(row.requested_by || ''),
     status: row.status,
-    result: row.result && typeof row.result === 'object' ? row.result : {},
+    result,
+    publicationId: typeof result.publicationId === 'string' ? result.publicationId : null,
     errorCode: row.error_code || null,
     errorMessage: row.error_message || null,
     requestedAt: row.requested_at,
