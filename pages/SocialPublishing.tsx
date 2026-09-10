@@ -55,9 +55,8 @@ const backfillStatusClass: Record<string, string> = {
 const formatDate = (value?: string | null) =>
   value ? new Date(value).toLocaleString('vi-VN', { dateStyle: 'short', timeStyle: 'short' }) : '—';
 
-const getPreviousLocalDay = () => {
+const getCurrentLocalDay = () => {
   const date = new Date();
-  date.setDate(date.getDate() - 1);
   const year = date.getFullYear();
   const month = String(date.getMonth() + 1).padStart(2, '0');
   const day = String(date.getDate()).padStart(2, '0');
@@ -374,6 +373,10 @@ export const SocialPublishing: React.FC = () => {
     const reason = backfillReason.trim();
     if (!backfillDate) {
       setBackfillFeedback({ kind: 'error', text: 'Chọn ngày quá khứ cần chạy bù.' });
+      return;
+    }
+    if (backfillDate >= getCurrentLocalDay()) {
+      setBackfillFeedback({ kind: 'error', text: 'Chỉ có thể chạy bù cho ngày quá khứ.' });
       return;
     }
     if (reason.length < 3) {
@@ -1593,8 +1596,6 @@ export const SocialPublishing: React.FC = () => {
                    id="marketing-backfill-date"
                    type="date"
                    value={backfillDate}
-                   max={getPreviousLocalDay()}
-                   required
                    onChange={event => setBackfillDate(event.target.value)}
                    className="mt-1.5 w-full rounded-lg border border-indigo-200 bg-[var(--bg-surface)] px-3 py-2 text-sm font-normal text-[var(--text-primary)] outline-none focus:border-indigo-500"
                  />
@@ -1604,9 +1605,7 @@ export const SocialPublishing: React.FC = () => {
                  <textarea
                    id="marketing-backfill-reason"
                    value={backfillReason}
-                   minLength={3}
                    maxLength={1000}
-                   required
                    rows={2}
                    onChange={event => setBackfillReason(event.target.value)}
                    placeholder="Ví dụ: QStash bị gián đoạn lúc agent chạy"

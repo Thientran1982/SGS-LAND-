@@ -3,6 +3,7 @@ import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { SocialPublishing } from '../../pages/SocialPublishing';
+import { api } from '../../services/api/apiClient';
 import { listingApi } from '../../services/api/listingApi';
 import { socialPublicationApi } from '../../services/api/socialPublicationApi';
 import { db } from '../../services/dbApi';
@@ -45,6 +46,15 @@ function deferred<T>() {
     resolve = resolver;
   });
   return { promise, resolve };
+}
+
+function localDay(offset = 0) {
+  const date = new Date();
+  date.setDate(date.getDate() + offset);
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
 }
 
 describe('SocialPublishing listing selector', () => {
@@ -351,6 +361,63 @@ describe('SocialPublishing listing selector', () => {
     expect(screen.getByText('Agent bị gián đoạn')).toBeVisible();
   });
 
+  it.each([
+    ['today', localDay()],
+    ['a future day', localDay(1)],
+  ])('does not call the API for %s', async (_label, invalidDate) => {
+    mockInitialRequests(eligibleListings);
+    const requestBackfill = vi.spyOn(socialPublicationApi, 'requestMarketingFacebookBackfill');
+    const user = userEvent.setup();
+    render(<SocialPublishing />);
+
+    const dateInput = await screen.findByLabelText('Ngày cần chạy bù');
+    await user.type(dateInput, invalidDate);
+    await user.type(screen.getByLabelText('Lý do chạy bù'), 'Lý do hợp lệ');
+    await user.click(screen.getByRole('button', { name: 'Yêu cầu chạy bù' }));
+
+    expect(requestBackfill).not.toHaveBeenCalled();
+    expect(await screen.findByRole('alert')).toHaveTextContent('ngày quá khứ');
+    expect(dateInput).toHaveValue(invalidDate);
+    expect(screen.getByLabelText('Lý do chạy bù')).toHaveValue('Lý do hợp lệ');
+  });
+
+  it('does not call the API when the trimmed reason is shorter than three characters', async () => {
+    mockInitialRequests(eligibleListings);
+    const requestBackfill = vi.spyOn(socialPublicationApi, 'requestMarketingFacebookBackfill');
+    const user = userEvent.setup();
+    render(<SocialPublishing />);
+
+    const dateInput = await screen.findByLabelText('Ngày cần chạy bù');
+    await user.type(dateInput, localDay(-2));
+    const reasonInput = screen.getByLabelText('Lý do chạy bù');
+    await user.type(reasonInput, '  x  ');
+    await user.click(screen.getByRole('button', { name: 'Yêu cầu chạy bù' }));
+
+    expect(requestBackfill).not.toHaveBeenCalled();
+    expect(await screen.findByRole('alert')).toHaveTextContent('tối thiểu 3 ký tự');
+    expect(dateInput).toHaveValue(localDay(-2));
+    expect(reasonInput).toHaveValue('  x  ');
+  });
+
+  it('keeps entered values visible when the backfill request fails validation', async () => {
+    mockInitialRequests(eligibleListings);
+    vi.spyOn(socialPublicationApi, 'requestMarketingFacebookBackfill').mockRejectedValue(
+      new Error('Không thể lưu yêu cầu chạy bù'),
+    );
+    const user = userEvent.setup();
+    render(<SocialPublishing />);
+
+    const dateInput = await screen.findByLabelText('Ngày cần chạy bù');
+    const reasonInput = screen.getByLabelText('Lý do chạy bù');
+    await user.type(dateInput, localDay(-2));
+    await user.type(reasonInput, 'Lý do cần giữ lại');
+    await user.click(screen.getByRole('button', { name: 'Yêu cầu chạy bù' }));
+
+    expect(await screen.findByRole('alert')).toHaveTextContent('Không thể lưu yêu cầu chạy bù');
+    expect(dateInput).toHaveValue(localDay(-2));
+    expect(reasonInput).toHaveValue('Lý do cần giữ lại');
+  });
+
   it('shows the conflict when a backfill day already has a request', async () => {
     mockInitialRequests(eligibleListings);
     vi.spyOn(socialPublicationApi, 'requestMarketingFacebookBackfill').mockRejectedValue(
@@ -624,6 +691,32 @@ describe('SocialPublishing listing selector', () => {
       staleOnly: true,
       page: 1,
       pageSize: 25,
+    });
+  });
+});
+
+describe('socialPublicationApi backfill contract', () => {
+  it('posts the logical day and a trimmed reason', async () => {
+    const response = {
+      logicalDay: '2026-09-08',
+      requestedReason: 'Agent bị gián đoạn',
+      requestedBy: 'manager-1',
+      created: 1,
+      published: 0,
+      skipped: 0,
+      reason: 'OK',
+      backfillRequestId: 'backfill-new',
+    };
+    const post = vi.spyOn(api, 'post').mockResolvedValue(response);
+
+    await socialPublicationApi.requestMarketingFacebookBackfill({
+      logicalDay: '2026-09-08',
+      reason: '  Agent bị gián đoạn  ',
+    });
+
+    expect(post).toHaveBeenCalledWith('/api/auto-posting/backfill', {
+      logicalDay: '2026-09-08',
+      reason: 'Agent bị gián đoạn',
     });
   });
 });

@@ -192,7 +192,10 @@ export const socialPublicationApi = {
     logicalDay: string;
     reason: string;
   }): Promise<MarketingFacebookBackfillResponse> =>
-    api.post('/api/auto-posting/backfill', input),
+    api.post('/api/auto-posting/backfill', {
+      logicalDay: input.logicalDay,
+      reason: input.reason.trim(),
+    }),
   getPublications: (
     options: SocialPublicationQuery | 'AUTO' | 'MANUAL' = {},
   ): Promise<SocialPublicationListResponse> => {
