@@ -122,6 +122,65 @@ describe('social publication foundation', () => {
     expect(content.imageUrls).toEqual(['https://cdn.test/project-cover.jpg']);
   });
 
+  it('localizes listing enum values case-insensitively in the preview caption', () => {
+    const content = buildPlatformContent({
+      version: 1,
+      listingId: 'listing-1',
+      code: 'SGS-001',
+      title: 'Nhà phố ven sông',
+      description: null,
+      price: null,
+      currency: 'VND',
+      area: 120,
+      builtArea: null,
+      bedrooms: null,
+      bathrooms: null,
+      location: 'Thủ Đức, TP.HCM',
+      type: 'tOwNhOuSe',
+      transaction: 'sale',
+      status: 'AVAILABLE',
+      attributes: { legalStatus: 'cOnTrAcT' },
+      contactPhone: null,
+      publicUrl: null,
+      capturedAt: '2026-09-10T00:00:00.000Z',
+    }, 'FACEBOOK_PAGE', []);
+
+    expect(content.text).toContain('Loại: Nhà phố');
+    expect(content.text).toContain('Giao dịch: Bán');
+    expect(content.text).toContain('Pháp lý: Hợp đồng mua bán');
+    expect(content.text).not.toContain('tOwNhOuSe');
+    expect(content.text).not.toContain('sale');
+    expect(content.text).not.toContain('cOnTrAcT');
+  });
+
+  it('keeps unknown legacy listing values instead of dropping them from preview', () => {
+    const content = buildPlatformContent({
+      version: 1,
+      listingId: 'listing-legacy',
+      code: 'SGS-LEGACY',
+      title: 'Sản phẩm cũ',
+      description: null,
+      price: null,
+      currency: 'VND',
+      area: null,
+      builtArea: null,
+      bedrooms: null,
+      bathrooms: null,
+      location: null,
+      type: 'LEGACY_TYPE',
+      transaction: 'LEASE',
+      status: 'AVAILABLE',
+      attributes: { legalStatus: 'Legacy legal text' },
+      contactPhone: null,
+      publicUrl: null,
+      capturedAt: '2026-09-10T00:00:00.000Z',
+    }, 'FACEBOOK_PAGE', []);
+
+    expect(content.text).toContain('Loại: LEGACY_TYPE');
+    expect(content.text).toContain('Giao dịch: LEASE');
+    expect(content.text).toContain('Pháp lý: Legacy legal text');
+  });
+
   it('keeps every approved Facebook album image in the provider content snapshot', () => {
     const content = buildPlatformContent({
       version: 1,

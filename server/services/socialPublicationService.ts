@@ -210,6 +210,36 @@ function formatPrice(snapshot: SocialProductSnapshot): string {
   return `${Math.round(price).toLocaleString('vi-VN')}${suffix}`;
 }
 
+const LISTING_TYPE_LABELS: Record<string, string> = {
+  PROJECT: 'Dự án',
+  APARTMENT: 'Căn hộ',
+  PENTHOUSE: 'Penthouse',
+  TOWNHOUSE: 'Nhà phố',
+  HOUSE: 'Nhà riêng',
+  VILLA: 'Biệt thự',
+  LAND: 'Đất nền',
+  FACTORY: 'Nhà xưởng',
+  OFFICE: 'Văn phòng',
+  COMMERCIAL: 'Thương mại',
+};
+
+const LISTING_TRANSACTION_LABELS: Record<string, string> = {
+  SALE: 'Bán',
+  RENT: 'Cho thuê',
+};
+
+const LISTING_LEGAL_LABELS: Record<string, string> = {
+  PINKBOOK: 'Sổ hồng',
+  CONTRACT: 'Hợp đồng mua bán',
+  WAITING: 'Đang chờ sổ',
+};
+
+function localizedListingValue(value: unknown, labels: Record<string, string>): string | null {
+  const raw = textValue(value);
+  if (!raw) return null;
+  return labels[raw.toUpperCase()] || raw;
+}
+
 export function buildSocialPlatformContent(
   snapshot: SocialProductSnapshot | SocialProjectSnapshot,
   platform: SocialPlatform,
@@ -241,14 +271,17 @@ export function buildSocialPlatformContent(
   }
 
   const attrs = snapshot.attributes || {};
+  const typeLabel = localizedListingValue(snapshot.type, LISTING_TYPE_LABELS);
+  const transactionLabel = localizedListingValue(snapshot.transaction, LISTING_TRANSACTION_LABELS);
+  const legalLabel = localizedListingValue(attrs.legalStatus, LISTING_LEGAL_LABELS);
   const facts = [
-    snapshot.type ? `Loại: ${snapshot.type}` : null,
-    snapshot.transaction ? `Giao dịch: ${snapshot.transaction}` : null,
+    typeLabel ? `Loại: ${typeLabel}` : null,
+    transactionLabel ? `Giao dịch: ${transactionLabel}` : null,
     `Giá: ${formatPrice(snapshot)}`,
     snapshot.area ? `Diện tích: ${snapshot.area} m²` : null,
     snapshot.bedrooms ? `Phòng ngủ: ${snapshot.bedrooms}` : null,
     snapshot.location ? `Vị trí: ${snapshot.location}` : null,
-    attrs.legalStatus ? `Pháp lý: ${String(attrs.legalStatus)}` : null,
+    legalLabel ? `Pháp lý: ${legalLabel}` : null,
   ].filter((value): value is string => Boolean(value));
   const description = snapshot.description ? `\n\n${snapshot.description}` : '';
   const link = snapshot.publicUrl;

@@ -21,6 +21,12 @@ Legacy listing imports may still contain public `http://` image URLs, which brow
 
 **How to apply:** Treat this as a display compatibility repair only; do not persist the rewritten display URL as a provider asset unless the server can verify its tenant ownership and public HTTPS reachability.
 
+Listing preview captions should localize known type, transaction, and legal-status enum values case-insensitively while preserving unknown legacy values verbatim.
+
+**Why:** Database rows can contain mixed-case English enum values, but operators need stable Vietnamese labels without losing information from unrecognized legacy data.
+
+**How to apply:** Keep the mapping in the server caption builder so every platform preview receives the same labels; do not apply listing-only fields to project captions.
+
 For Zalo OA broadcast, the provider contract is `POST /v2.0/oa/message` with an article attachment. A tenant must first pass the read-only OA identity check and the documented quota/permission probe (`POST /v3.0/oa/quota/message`) before the capability can become READY.
 
 **Why:** Zalo's broadcast endpoint has no dry-run, while the quota endpoint verifies the send-and-notify permission without broadcasting to followers.
