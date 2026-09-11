@@ -44,12 +44,68 @@ function validLeadId(value: unknown): string | null {
  * Also reaps agent_executions rows stuck at RUNNING with an expired lease
  * (worker crashed without releasing the lease and nobody re-claimed it).
  */
+/** P4.6 + P4.7: resume chat FAILED (transient) — retry qua idempotency key, execute boc timeout 90s. */
+export async function resumeFailedChatExecutions(tenantId: string): Promise<number> {
+  let resumed = 0;
+  const rows = await withTenantContext(tenantId, async client => client.query(
+    "SELECT id, idempotency_key, session_id, lead_id, input_json, attempt, max_steps FROM agent_executions WHERE tenant_id=$1 AND trigger_source='public-livechat' AND status='ERROR' AND attempt < max_steps AND (error_text ILIKE '%timeout%' OR error_text ILIKE '%connect%') AND updated_at > NOW() - INTERVAL '2 hours' ORDER BY created_at DESC LIMIT 3",
+    [tenantId],
+  ));
+  const { runDurableAgentExecution } = await import('./durableAgentExecutionService');
+  const { liveChatEngine } = await import('../ai/liveChatEngine');
+  const { runWithSubagentPolicy } = await import('./subagentPolicy');
+  const { interactionRepository } = await import('../repositories/interactionRepository');
+  for (const row of rows.rows) {
+    try {
+      const input = (row.input_json || {}) as { message?: string };
+      const message = String(input.message || '').trim();
+      if (!message || !row.lead_id) continue;
+      const history = await interactionRepository.findByLead(tenantId, row.lead_id);
+      const result = await runDurableAgentExecution({
+        tenantId,
+        idempotencyKey: row.idempotency_key,
+        sessionId: row.session_id || undefined,
+        leadId: row.lead_id || undefined,
+        triggerSource: 'self_repair_retry',
+        message,
+        execute: () => runWithSubagentPolicy(
+          () => liveChatEngine.callTool('handle_live_chat', {
+            tenantId,
+            message,
+            language: 'vi',
+            sessionId: row.lead_id,
+            leadId: row.lead_id,
+            context: {
+              leadId: row.lead_id,
+              leadName: '',
+              language: 'vi',
+              history: (history || []).slice(-8).map((item: any) => ({ role: item.direction === 'INBOUND' ? 'user' : 'assistant', content: item.content })),
+            },
+            __skipAgentEventEnqueue: true,
+          }),
+          { timeoutMs: 90_000 },
+        ),
+      });
+      resumed++;
+      logger.info('[SelfRepair] chat resumed exec=' + row.id + ' run=' + (result.runId || '-') + ' cached=' + result.cached);
+    } catch (error: any) {
+      logger.warn('[SelfRepair] chat resume failed exec=' + row.id + ': ' + (error?.message || error));
+    }
+  }
+  return resumed;
+}
+
 export async function selfRepairTick(tenantId: string): Promise<{ replayed: number; triaged: number; reapedExecutions: number }> {
   let replayed = 0;
   let triaged = 0;
   let reapedExecutions = 0;
   try {
     reapedExecutions = await agentExecutionRepository.reapExpiredRunning(tenantId);
+  try {    const resumedChats = await resumeFailedChatExecutions(tenantId);
+    if (resumedChats > 0) logger.info("[SelfRepair] resumed " + resumedChats + " failed chat executions for tenant " + tenantId);
+  } catch (resumeError: any) {
+    logger.warn("[SelfRepair] chat resume loop failed: " + (resumeError?.message || resumeError));
+  }
     if (reapedExecutions > 0) {
       logger.warn(`[SelfRepair] reaped ${reapedExecutions} stuck RUNNING agent_executions tenant=${tenantId}`);
     }
