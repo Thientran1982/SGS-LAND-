@@ -16,6 +16,11 @@ import { createClientRequestId, createMinhClient } from "./minhTransport";
 export const MINH_LEAD_STORAGE_KEY = "livechat_lead_id";
 export const MINH_NAME_STORAGE_KEY = "livechat_lead_name";
 const MINH_RECONCILE_TIMEOUT_MS = 60_000;
+// Async (202 Accepted) replies: the server keeps the agent running past
+// any proxy deadline, so poll the durable conversation well inside the
+// transport-level MINH_REPLY_TIMEOUT_MS (180s).
+const MINH_ASYNC_REPLY_TIMEOUT_MS = 170_000;
+
 const MINH_RECONCILE_POLL_MS = 1_500;
 
 export type MinhThreadStatus = "AI_ACTIVE" | "HUMAN_TAKEOVER";
@@ -160,8 +165,13 @@ export function createMinhSession(options: MinhSessionOptions = {}): MinhSession
       saved = null;
     }
     let data: any;
+    let asyncAccepted = false;
     try {
       data = await client.ask(leadId, text, lang, saved?.id, attachments);
+      if (data && (data as any).async === true) {
+        asyncAccepted = true;
+        data = undefined;
+      }
     } catch (error) {
       // The AI request can finish on the server after a proxy/browser
       // connection is reset. Reconcile with the durable conversation (with
@@ -205,6 +215,42 @@ export function createMinhSession(options: MinhSessionOptions = {}): MinhSession
         throw error;
       }
     }
+        // 202 Accepted: the agent is still running server-side. Poll the durable
+// conversation until the reply lands (the socket may deliver it first).
+if (asyncAccepted) {
+  const asyncSleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
+  const findAssistantRowAsync = (rows: any[]) => {
+    const inboundIndex = saved?.id
+      ? rows.findIndex((row) => String(row?.id) === String(saved.id))
+      : rows.map((row) => String(row?.content || "").trim()).lastIndexOf(text);
+    const candidateRows = inboundIndex >= 0 ? rows.slice(inboundIndex + 1) : rows;
+    return [...candidateRows].reverse().find((row) =>
+      String(row?.direction || "").toUpperCase() === "OUTBOUND" &&
+      row?.metadata?.isAgent === true &&
+      !row?.metadata?.isSysMsg
+    );
+  };
+  const asyncDeadlineAt = Date.now() + MINH_ASYNC_REPLY_TIMEOUT_MS;
+  let asyncRow: any = null;
+  while (Date.now() < asyncDeadlineAt) {
+    try {
+      const recovered: any = await client.getMessages(leadId);
+      const rows: any[] = Array.isArray(recovered?.messages) ? recovered.messages : [];
+      asyncRow = findAssistantRowAsync(rows);
+      if (asyncRow) break;
+    } catch {
+      // transient fetch failure - retry next tick
+    }
+    if (Date.now() >= asyncDeadlineAt) break;
+    await asyncSleep(MINH_RECONCILE_POLL_MS);
+  }
+  if (asyncRow) {
+    data = { reply: asyncRow };
+  } else {
+    throw new ChatTransportError("ai_failed", { code: "AI_TIMEOUT" });
+  }
+}
+
     const userMsg =
       interactionToMessage(saved) ||
       ({

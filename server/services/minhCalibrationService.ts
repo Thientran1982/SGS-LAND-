@@ -47,7 +47,9 @@ export async function getMinhCalibrationPromptLine(tenantId: string): Promise<st
       .filter((bucket: any) => Number(bucket.total) > 0 && Number.isFinite(Number(bucket.accuracy)))
       .sort((a: any, b: any) => Number(b.total) - Number(a.total))[0];
     if (!candidate) return '';
-    return `[CALIBRATION] bucket ${candidate.label} thực tế đúng ${Math.round(Number(candidate.accuracy) * 100)}%`;
+    const drift = Math.abs(Number(candidate.accuracy) - Number(candidate.confidence));
+    const driftNote = drift > 0.15 ? " (LECH " + Math.round(drift * 100) + "% so voi tu tin)" : "";
+    return "[CALIBRATION] bucket " + candidate.label + " thuc te dung " + Math.round(Number(candidate.accuracy) * 100) + "% (" + candidate.total + " mau)" + driftNote;
   } catch {
     return '';
   }
@@ -69,7 +71,7 @@ export async function runMinhConfidenceCalibration(tenantId: string, now = new D
   const results = new Map<string, Record<string, any>>();
   for (const row of rows.filter(row => row.signal_type === 'minh_delegation_result')) {
     const payload = parsePayload(row.payload);
-    results.set(String(payload.sessionId || row.subject_id), payload);
+    results.set(String(payload.delegationToken || payload.sessionId || row.subject_id), payload);
   }
 
   const buckets = BUCKETS.map(bucket => ({
@@ -84,7 +86,7 @@ export async function runMinhConfidenceCalibration(tenantId: string, now = new D
   for (const row of delegations) {
     const payload = parsePayload(row.payload);
     const confidence = Math.max(0, Math.min(1, Number(payload.confidence) || 0));
-    const result = results.get(String(payload.sessionId || row.subject_id));
+    const result = results.get(String(payload.delegationToken || payload.sessionId || row.subject_id));
     if (!result || typeof result.correct !== 'boolean') continue;
     const bucket = buckets.find(item => item.label === bucketFor(confidence).label)!;
     bucket.total++;

@@ -18,6 +18,7 @@ import { runPendingMigrations } from "./server/migrations/runner";
 import { systemService } from "./server/services/systemService";
 import { webhookQueue, setupWebhookWorker, processWebhookJob, isQStashEnabled, isQstashVerified, getQstashToken, getQstashBaseUrl, verifyQstashTokenAtStartup } from "./server/queue";
 import { startAgentOperatorWorker, setAgentOperatorIo } from "./server/services/agentOperatorDaemon";
+import { startAgentOperationsLoop } from './server/services/agentLoopService';
 import { startLearningCycleScheduler } from "./server/services/learningCycleRunner";
 import { userRepository } from "./server/repositories/userRepository";
 import { listingRepository } from "./server/repositories/listingRepository";
@@ -1750,6 +1751,7 @@ app.use(globalMutationAudit);
     return result.rows.map((row: any) => String(row.id));
   };
   const agentOperatorWorker = startAgentOperatorWorker(getAgentTenantIds);
+  startAgentOperationsLoop(getAgentTenantIds);
   void agentOperatorWorker;
   startLearningCycleScheduler(getAgentTenantIds);
 
@@ -1817,7 +1819,8 @@ app.use(globalMutationAudit);
     console.warn("AIVEN_DATABASE_URL not set. Skipping database migrations.");
   }
 
-  const PUBLIC_TENANT = DEFAULT_TENANT_ID;
+  const PUBLIC_LIVECHAT_ASYNC_DEADLINE_MS = 26_000;
+const PUBLIC_TENANT = DEFAULT_TENANT_ID;
 
   /** Strip Vietnamese diacritics → lowercase, collapse spaces/dots for map lookups */
   function vnDeaccent(s: string): string {
@@ -2893,7 +2896,119 @@ app.get('/api/public/listings/:slugId', apiRateLimit, async (req: express.Reques
   });
 
   // Public AI endpoint: LiveChat widget AI reply (no auth required — uses rate limiting only)
-  app.post('/api/public/ai/livechat', livechatRateLimit, aiRateLimit, async (req: express.Request, res: express.Response) => {
+  async function runAgentAndPersist(opts: {
+  leadId: string;
+  msgContent: string;
+  isLandingRequest: boolean;
+  executePublicChat: () => Promise<any>;
+  inboundInteraction: { id: string };
+  chatStartedAt: number;
+  replyLang: string;
+}) {
+  const { leadId, msgContent, isLandingRequest, executePublicChat, inboundInteraction, chatStartedAt, replyLang } = opts;
+  const { runDurableAgentExecution } = await import('./server/services/durableAgentExecutionService');
+let execution = await runDurableAgentExecution({
+tenantId: PUBLIC_TENANT,
+idempotencyKey: `web:${inboundInteraction.id}`,
+sessionId: leadId,
+leadId,
+triggerSource: 'public-livechat',
+message: msgContent,
+execute: executePublicChat,
+      });
+      logger.info(`[PublicLiveChat] AI execution ${Date.now() - chatStartedAt}ms cached=${execution.cached}`);
+
+      // P4.1: ghi latency chat ben vung vao agent_runs (fire-and-forget).
+      void pool.query(
+        "INSERT INTO agent_runs (agent_name, trigger_source, status, started_at, finished_at, duration_ms, summary_json) VALUES ('handle_live_chat', 'public-livechat', 'success', $1, NOW(), $2, $3::jsonb)",
+        [new Date(chatStartedAt), Date.now() - chatStartedAt, JSON.stringify({ leadId, cached: execution.cached })],
+      ).catch((logError: any) => logger.warn('[PublicLiveChat] agent_runs write failed: ' + (logError?.message || logError)));
+      const chatLatencyMs = Date.now() - chatStartedAt;
+      const chatSloMs = Number(process.env.MINH_CHAT_SLO_MS || 60000);
+      if (chatLatencyMs > chatSloMs) {
+        void pool.query(
+          "INSERT INTO agent_signals (tenant_id, signal_type, actor_id, subject_type, subject_id, payload, dedupe_key, provenance) VALUES ($1, 'latency_slo_breach', 'MINH', 'chat', $2, $3::jsonb, $4, 'public_livechat')",
+          [PUBLIC_TENANT, String(leadId).slice(0, 100), JSON.stringify({ latencyMs: chatLatencyMs, sloMs: chatSloMs }), 'slo:' + leadId + ':' + chatStartedAt],
+        ).catch((sloError: any) => logger.warn('[PublicLiveChat] SLO signal failed: ' + (sloError?.message || sloError)));
+      }
+
+      // Older landing requests were cached as EMPTY_OUTPUT because the
+      // live-chat wrapper exposed `response` but not `content`. Repair only
+      // that narrow legacy cache entry; ordinary idempotency replays must
+      // continue returning their original execution unchanged.
+      if (
+isLandingRequest &&
+execution.cached &&
+execution.guardrail?.flags?.includes('EMPTY_OUTPUT')
+      ) {
+logger.warn(
+  `[PublicLiveChat] repairing legacy EMPTY_OUTPUT execution for inbound=${inboundInteraction.id}`,
+);
+execution = await runDurableAgentExecution({
+  tenantId: PUBLIC_TENANT,
+  idempotencyKey: `web:repair-v1:${inboundInteraction.id}`,
+  sessionId: leadId,
+  leadId,
+  triggerSource: 'public-livechat-repair',
+  message: msgContent,
+  execute: executePublicChat,
+});
+      }
+      const result = execution.result;
+      // Record the classifier decision so candidate misses remain visible
+      // without persisting the visitor's brief.
+      void recordLandingClassificationTelemetry({
+tenantId: PUBLIC_TENANT,
+sessionId: leadId,
+leadId,
+runId: execution.runId,
+traceId: execution.traceId,
+message: msgContent,
+languageHint: replyLang,
+finalIntent: result.intent || (isLandingRequest ? 'LANDING' : 'LEGACY_AI_PIPELINE'),
+specialistOutput: isLandingRequest ? result.specialistOutput : undefined,
+specialistError: isLandingRequest && !result.specialistOutput
+  ? String(result.missingData?.[0] || '')
+  : undefined,
+      }).catch(error => logger.warn(`[LandingTelemetry] public record failed: ${error?.message || error}`));
+
+      const aiReply = await interactionRepository.create(PUBLIC_TENANT, {
+leadId,
+channel: 'WEB',
+direction: 'OUTBOUND',
+type: 'TEXT',
+content: result.content,
+// Fix G: đánh dấu rõ tin nhắn AI để filter trong analytics + Inbox UI
+metadata: {
+  isAi: true,
+  isAgent: true,
+  intent: result.intent,
+  aiConfidence: result.confidence,
+  escalated: result.escalated ?? false,
+  ...(result.isSysMsg ? { isSysMsg: true } : {}),
+  agentRunId: execution.runId,
+  traceId: execution.traceId,
+  needsVerification: execution.guardrail.requiresVerification,
+},
+externalEventId: `agent:${execution.runId}`,
+      });
+      logger.info(`[PublicLiveChat] outbound persistence ${Date.now() - chatStartedAt}ms`);
+      // A cached execution is a retry: return the same interaction without duplicate socket fan-out.
+      if (!execution.cached) {
+broadcastIo?.to(leadId).emit('receive_message', { room: leadId, message: aiReply });
+broadcastIo?.to(`tenant:${PUBLIC_TENANT}`).emit('new_inbound_message', { leadId, message: aiReply });
+      }
+      if (result.escalated) {
+await interactionRepository.updateThreadAiMode(PUBLIC_TENANT, leadId, 'HUMAN_TAKEOVER');
+broadcastIo?.to(`tenant:${PUBLIC_TENANT}`).emit('escalate_to_human', {
+  leadId,
+  reason: 'Independent agent guardrail requested human review',
+});
+      }
+  return { aiReply, result };
+}
+
+app.post('/api/public/ai/livechat', livechatRateLimit, aiRateLimit, async (req: express.Request, res: express.Response) => {
     try {
       const { leadId, message, lang, inboundInteractionId } = req.body;
       const chatStartedAt = Date.now();
@@ -2973,91 +3088,34 @@ app.get('/api/public/listings/:slugId', apiRateLimit, async (req: express.Reques
             PUBLIC_TENANT,
             replyLang,
           );
-      let execution = await runDurableAgentExecution({
-        tenantId: PUBLIC_TENANT,
-        idempotencyKey: `web:${inboundInteraction.id}`,
-        sessionId: leadId,
-        leadId,
-        triggerSource: 'public-livechat',
-        message: msgContent,
-        execute: executePublicChat,
-      });
-      logger.info(`[PublicLiveChat] AI execution ${Date.now() - chatStartedAt}ms cached=${execution.cached}`);
-      // Older landing requests were cached as EMPTY_OUTPUT because the
-      // live-chat wrapper exposed `response` but not `content`. Repair only
-      // that narrow legacy cache entry; ordinary idempotency replays must
-      // continue returning their original execution unchanged.
-      if (
-        isLandingRequest &&
-        execution.cached &&
-        execution.guardrail?.flags?.includes('EMPTY_OUTPUT')
-      ) {
-        logger.warn(
-          `[PublicLiveChat] repairing legacy EMPTY_OUTPUT execution for inbound=${inboundInteraction.id}`,
-        );
-        execution = await runDurableAgentExecution({
-          tenantId: PUBLIC_TENANT,
-          idempotencyKey: `web:repair-v1:${inboundInteraction.id}`,
-          sessionId: leadId,
-          leadId,
-          triggerSource: 'public-livechat-repair',
-          message: msgContent,
-          execute: executePublicChat,
-        });
-      }
-      const result = execution.result;
-      // Record the classifier decision so candidate misses remain visible
-      // without persisting the visitor's brief.
-      void recordLandingClassificationTelemetry({
-        tenantId: PUBLIC_TENANT,
-        sessionId: leadId,
-        leadId,
-        runId: execution.runId,
-        traceId: execution.traceId,
-        message: msgContent,
-        languageHint: replyLang,
-        finalIntent: result.intent || (isLandingRequest ? 'LANDING' : 'LEGACY_AI_PIPELINE'),
-        specialistOutput: isLandingRequest ? result.specialistOutput : undefined,
-        specialistError: isLandingRequest && !result.specialistOutput
-          ? String(result.missingData?.[0] || '')
-          : undefined,
-      }).catch(error => logger.warn(`[LandingTelemetry] public record failed: ${error?.message || error}`));
-
-      const aiReply = await interactionRepository.create(PUBLIC_TENANT, {
-        leadId,
-        channel: 'WEB',
-        direction: 'OUTBOUND',
-        type: 'TEXT',
-        content: result.content,
-        // Fix G: đánh dấu rõ tin nhắn AI để filter trong analytics + Inbox UI
-        metadata: {
-          isAi: true,
-          isAgent: true,
-          intent: result.intent,
-          aiConfidence: result.confidence,
-          escalated: result.escalated ?? false,
-          ...(result.isSysMsg ? { isSysMsg: true } : {}),
-          agentRunId: execution.runId,
-          traceId: execution.traceId,
-          needsVerification: execution.guardrail.requiresVerification,
-        },
-        externalEventId: `agent:${execution.runId}`,
-      });
-      logger.info(`[PublicLiveChat] outbound persistence ${Date.now() - chatStartedAt}ms`);
-      // A cached execution is a retry: return the same interaction without duplicate socket fan-out.
-      if (!execution.cached) {
-        broadcastIo?.to(leadId).emit('receive_message', { room: leadId, message: aiReply });
-        broadcastIo?.to(`tenant:${PUBLIC_TENANT}`).emit('new_inbound_message', { leadId, message: aiReply });
-      }
-      if (result.escalated) {
-        await interactionRepository.updateThreadAiMode(PUBLIC_TENANT, leadId, 'HUMAN_TAKEOVER');
-        broadcastIo?.to(`tenant:${PUBLIC_TENANT}`).emit('escalate_to_human', {
-          leadId,
-          reason: 'Independent agent guardrail requested human review',
-        });
-      }
-
-      res.json({ reply: aiReply, artifact: result.artifact, suggestedAction: result.suggestedAction });
+      const asyncDeadline = setTimeout(
+  () => {
+    if (!(res as any).headersSent) {
+      res.status(202).json({ async: true, inboundInteractionId: inboundInteraction.id });
+    }
+  },
+  PUBLIC_LIVECHAT_ASYNC_DEADLINE_MS,
+);
+let asyncRun: { aiReply: any; result: any } | null = null;
+let asyncError: unknown = null;
+try {
+  asyncRun = await runAgentAndPersist({
+    leadId, msgContent, isLandingRequest, executePublicChat,
+    inboundInteraction, chatStartedAt, replyLang,
+  });
+} catch (e) {
+  asyncError = e;
+} finally {
+  clearTimeout(asyncDeadline);
+}
+if ((res as any).headersSent) return;
+if (asyncRun) {
+  const { aiReply, result } = asyncRun;
+  res.json({ reply: aiReply, artifact: result.artifact, suggestedAction: result.suggestedAction });
+} else {
+  logger.error('Public AI livechat error:', asyncError as Error);
+  res.status(500).json({ error: 'AI busy, please try again later' });
+}
     } catch (error) {
       logger.error('Public AI livechat error:', error as Error);
       res.status(500).json({ error: 'AI đang bận, vui lòng thử lại sau' });

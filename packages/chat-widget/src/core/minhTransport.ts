@@ -33,7 +33,12 @@ async function postJson<T>(path: string, body: any, apiBase?: string, errCode = 
   if (!res.ok) {
     throw new ChatTransportError(errCode, { status: res.status });
   }
-  return (await res.json()) as T;
+    // 202 Accepted = the agent is still running server-side; the widget
+  // receives the reply via socket / message polling instead of this response.
+  if (res.status === 202 && path === CHAT_ENDPOINTS.minhReply) {
+    return { async: true } as unknown as T;
+  }
+return (await res.json()) as T;
 }
 
 function createClientRequestId(): string {

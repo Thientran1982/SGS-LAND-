@@ -8,6 +8,13 @@ import {
   type AutoPostingTimeWindow,
 } from '../repositories/autoPostingRepository';
 import { normalizeSocialPlatforms } from '../services/socialPublicationService';
+import { buildAutoPostingOnboarding } from '../services/autoPostingOnboarding';
+import { runSeoAuditAllTenants } from '../services/seoAuditService';
+import { withTenantContext } from '../db';
+import { getBudgetStatus } from '../ai/minhBrain';
+import { listGraphThreads, resumeMinhGraph } from '../ai/minhGraphAdapter';
+import { getMinhBrainHealth } from '../ai/minhHealth';
+import { MINH_INTENT_TOOLS } from '../ai/minhOrchestrator';
 import {
   localDayKey,
   runAutoPostingBackfill,
@@ -15,7 +22,7 @@ import {
 } from '../services/autoPostingSelector';
 
 const MANAGER_ROLES = new Set(['SUPER_ADMIN', 'ADMIN', 'TEAM_LEAD', 'MARKETING']);
-const AUTO_PLATFORMS = new Set(['FACEBOOK_PAGE']);
+const AUTO_PLATFORMS = new Set(['FACEBOOK_PAGE', 'ZALO_BROADCAST', 'INSTAGRAM']);
 
 function tenantId(req: Request): string {
   return typeof (req as any).user?.tenantId === 'string'
@@ -165,5 +172,41 @@ export function createAutoPostingRouter(
     }
   });
 
+  router.get('/api/auto-posting/onboarding', authenticateToken, async (req, res) => {
+    if (!tenantId(req)) {
+      return res.status(403).json({ error: 'Khong xac dinh duoc tenant cua nguoi dung' });
+    }
+    const user = (req as any).user;
+    const autoEnable = Boolean(user && MANAGER_ROLES.has(user.role));
+    try {
+      return res.json(await buildAutoPostingOnboarding(pool, tenantId(req), { autoEnable }));
+    } catch (error: any) {
+      return res.status(400).json({ error: error?.message || 'Khong the doc trang thai onboarding' });
+    }
+  });
+  router.get('/api/agents/neuron-map', authenticateToken, async (req, res) => {    if (!requireManager(req, res)) return;    try {      const tenant = tenantId(req);      const rows = await withTenantContext(tenant, async client => client.query(        "SELECT agent_name, count(*)::int AS runs, sum((status = 'success')::int)::int AS success, COALESCE(avg(duration_ms), 0)::int AS avg_ms FROM agent_runs WHERE started_at > NOW() - INTERVAL '7 days' GROUP BY agent_name ORDER BY runs DESC"
+      ));      const budget = await getBudgetStatus(tenant);      const neurons = Object.entries(MINH_INTENT_TOOLS).map(item => {        const stat = rows.rows.find(row => row.agent_name === item[1]);        return { intent: item[0], tool: item[1], runs: stat ? Number(stat.runs) : 0, success: stat ? Number(stat.success) : 0, avgMs: stat ? Number(stat.avg_ms) : 0 };      });      return res.json({ brain: 'MINH', budget, neurons });    } catch (error: any) {      return res.status(400).json({ error: error?.message || 'neuron-map failed' });    }  });
+  // SEO AGENT (muc 1): audit tu dong theo seo_target_keywords — QStash hoac in-process loop goi.
+  router.post('/api/internal/seo-audit-cron', async (req: Request, res: Response) => {
+    const provided = (req.headers['x-internal-secret'] as string | undefined) || req.body?.secret;
+    if (!matchesCronSecret(cronSecret, provided)) {
+      return res.status(403).json({ error: 'Forbidden' });
+    }
+    try {
+      const results = await runSeoAuditAllTenants('qstash');
+      return res.json({ ok: true, results });
+    } catch (error: any) {
+      return res.status(500).json({ error: error?.message || 'seo audit cron failed' });
+    }
+  });
+  router.get('/api/agents/graph/threads', authenticateToken, async (req, res) => {    if (!requireManager(req, res)) return;    try {      return res.json(await listGraphThreads(Number(req.query.limit) || 10));    } catch (error: any) {      return res.status(400).json({ error: 'graph threads failed' });    }  });  router.post('/api/agents/graph/resume', authenticateToken, async (req, res) => {    if (!requireManager(req, res)) return;    try {      const threadId = String(req.body ? req.body.threadId : 'undefined');      if (!threadId || threadId === 'undefined') return res.status(400).json({ error: 'threadId la bat buoc' });      return res.json(await resumeMinhGraph(threadId));    } catch (error: any) {      return res.status(400).json({ error: error?.message || 'graph resume failed' });    }  });
+  router.get('/api/agents/minh/health', authenticateToken, async (req, res) => {
+    if (!requireManager(req, res)) return;
+    try {
+      return res.json(await getMinhBrainHealth(tenantId(req)));
+    } catch (error: any) {
+      return res.status(400).json({ error: error?.message || 'minh health failed' });
+    }
+  });
   return router;
 }

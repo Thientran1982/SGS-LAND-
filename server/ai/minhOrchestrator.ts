@@ -14,12 +14,13 @@ export type MinhPlan = {
   reason: string;
   confidence: number;
   source: 'MINH_LLM' | 'KEYWORD_FALLBACK';
+  delegationToken?: string;
 };
 
 export const MINH_INTENT_TOOLS: Record<string, string> = {
   VALUATION: 'get_valuation',
   SEARCH: 'search_listings',
-  LEGAL: 'check_legal',
+  LEGAL: 'check_legal_status',
   PLANNING: 'check_planning',
   FINANCE: 'get_platform_knowledge',
   PROJECT: 'get_project_info',
@@ -112,6 +113,15 @@ export async function minhChooseSpecialist(args: {
     const intent = String(parsed.intent || '').toUpperCase().trim();
     if (!MINH_INTENT_TOOLS[intent]) {
       logger.warn('[MinhOrch] LLM tra intent khong hop le: ' + intent);
+      void agentMemoryService.recordSignal(args.tenantId, {
+        signalType: 'minh_capability_gap',
+        actorId: 'MINH',
+        subjectType: 'chat_message',
+        subjectId: String(args.message).slice(0, 120),
+        dedupeKey: 'minh-gap:invalid:' + args.sessionId + ':' + intent + ':' + Date.now().toString(36),
+        payload: { reason: 'invalid_intent', invalidIntent: intent, message: String(args.message).slice(0, 300) },
+        provenance: 'minh_orchestrator',
+      }).catch(() => undefined);
       return null;
     }
     const confidence = Math.max(0, Math.min(1, Number(parsed.confidence) || 0));
@@ -128,6 +138,7 @@ export async function minhChooseSpecialist(args: {
       // repeated identical short messages never collide and silently drop
       // via the signals ON CONFLICT DO NOTHING.
       const uniqueToken = `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 10)}`;
+      plan.delegationToken = uniqueToken;
       await agentMemoryService.recordSignal(args.tenantId, {
         signalType: 'minh_delegation',
         actorId: 'MINH',
@@ -137,6 +148,7 @@ export async function minhChooseSpecialist(args: {
         payload: {
           intent, tool: MINH_INTENT_TOOLS[intent], reason: plan.reason,
           confidence, ms: Date.now() - started, sessionId: args.sessionId || null,
+          delegationToken: uniqueToken,
         },
         provenance: 'minh_orchestrator',
       });

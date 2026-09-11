@@ -17,6 +17,7 @@ import { Dropdown } from '../components/Dropdown';
 import { SelectDropdown } from '../components/task/SelectDropdown';
 import { useSocket, socket } from '../services/websocket';
 import { SeoHead } from '../components/SeoHead';
+import { AutoPostingOnboardingCard } from '../components/AutoPostingOnboardingCard';
 // --- ICONS ---
 const ICONS = {
     TREND_UP: <svg className="w-3 h-3 text-sgs-verified dark:text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" /></svg>,
@@ -975,6 +976,7 @@ export const Dashboard: React.FC = () => {
     return (
     <>
       <SeoHead title="Dashboard | SGS LAND" description="Bảng điều khiển tổng quan SGS LAND - quản lý bất động sản, phân tích thị trường và theo dõi hiệu suất kinh doanh." canonicalPath="/dashboard" />
+      <AutoPostingOnboardingCard />
         <div className="sgs-dashboard min-h-full overflow-y-auto px-4 py-5 sm:px-6 lg:px-8 pb-24 animate-enter">
             <div className="mx-auto max-w-[1480px] space-y-6">
                 <header className="dashboard-header flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">

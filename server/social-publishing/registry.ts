@@ -8,6 +8,7 @@ import type {
 } from './types';
 import { facebookPagePublisher } from './facebookPagePublisher';
 import { zaloBroadcastPublisher } from './zaloBroadcastPublisher';
+import { instagramPublisher } from './instagramPublisher';
 
 /**
  * Phase 0 capability registry.
@@ -31,10 +32,10 @@ const CATALOG: SocialPlatformCapability[] = [
     platform: 'INSTAGRAM',
     label: 'Instagram Business',
     kind: 'PUBLIC_POST',
-    status: 'UNSUPPORTED',
+    status: 'NOT_READY',
     canPublish: true,
     messagingSupported: false,
-    reason: 'Chưa triển khai Instagram Business media publishing.',
+    reason: 'Can lien ket Instagram Business/Creator account voi Facebook Page va cap quyen instagram_content_publish.',
     requiresConnection: true,
   },
   {
@@ -72,6 +73,7 @@ const CATALOG: SocialPlatformCapability[] = [
 const publishers = new Map<SocialPlatform, SocialPublisher>();
 publishers.set(facebookPagePublisher.platform, facebookPagePublisher);
 publishers.set(zaloBroadcastPublisher.platform, zaloBroadcastPublisher);
+publishers.set(instagramPublisher.platform, instagramPublisher);
 
 export function getSocialPlatformCatalog(): SocialPlatformCapability[] {
   return CATALOG.map(item => ({ ...item }));

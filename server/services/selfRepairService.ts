@@ -4,6 +4,7 @@ import { agentMemoryService, scrubPii } from './agentMemoryService';
 import { approvalRequestRepository } from '../repositories/approvalRequestRepository';
 import { agentExecutionRepository } from '../repositories/agentExecutionRepository';
 import { createHash } from 'crypto';
+import { withTenantContext } from '../db';
 
 function normalizeErrorPattern(value: unknown): string {
   return scrubPii(value)
@@ -83,6 +84,24 @@ export async function selfRepairTick(tenantId: string): Promise<{ replayed: numb
         }
       }
     }
+  try {
+    const openQuestions = await withTenantContext(tenantId, async client => client.query(
+      "SELECT question FROM agent_human_questions WHERE status = 'OPEN' AND created_at > NOW() - INTERVAL '7 days'"
+    ));
+    const openText = openQuestions.rows.map(row => String(row.question));
+    for (const ev of (rows as any[])) {
+      if (openText.some(text => text.includes(String(ev.id)))) continue;
+      const summary = scrubPii(String(ev.last_error || 'unknown')).replace(/\s+/g, ' ').trim().slice(0, 300);
+      await agentOperatingRepository.createHumanQuestion(tenantId, {
+        agentKey: 'MINH_OPERATIONS',
+        question: 'Dead-letter ' + ev.event_type + ' (id ' + ev.id + ', ' + ev.attempts + ' lan thu): ' + summary + '. De xuat: kiem tra handler, fix code hoac replay neu da fix.',
+        priority: 70,
+        context: { eventId: ev.id, eventType: ev.event_type, attempts: ev.attempts },
+      });
+    }
+  } catch (questionError: any) {
+    logger.warn('[SelfRepair] question sync skipped: ' + (questionError?.message || questionError));
+  }
     const byPattern = new Map<string, any[]>();
     for (const ev of (rows as any[])) {
       const pattern = normalizeErrorPattern(ev.last_error);

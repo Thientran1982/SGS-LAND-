@@ -18,6 +18,7 @@ import { logger } from '../middleware/logger';
 import { sendAiError } from '../utils/aiErrorHandler';
 import { detectGuideDataGroup, renderGuideDataSummary } from '../ai/guideDataSources';
 import { supportRequestRepository, SUPPORT_STATUSES } from '../repositories/supportRequestRepository';
+import { canUseTool, requiredTier } from '../ai/toolPermissions';
 
 const AI_TOOLS = new Set([
     'handle_live_chat',
@@ -72,10 +73,11 @@ export function createLiveChatAgentRoutes(
             const toolName = Array.isArray(req.params.toolName) ? req.params.toolName[0] : req.params.toolName;
             const user = (req as any).user;
 
-            if (!GUIDE_SAFE_TOOLS.has(toolName)) {
+            if (!canUseTool(user?.role, toolName)) {
                 return res.status(403).json({
-                    error: 'Tool này không được phép gọi từ trợ lý hướng dẫn.',
-                    code: 'GUIDE_TOOL_FORBIDDEN',
+                    error: 'Role ' + String(user?.role || '?') + ' khong duoc dung tool nay',
+                    code: 'TOOL_TIER_FORBIDDEN',
+                    requiredTier: requiredTier(toolName),
                 });
             }
 

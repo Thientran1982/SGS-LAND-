@@ -84,7 +84,7 @@ function normalizeGuideQuery(value: string): string {
     return normalizeGuideInput(value);
 }
 
-async function generateLiveChatText(params: {
+export async function generateLiveChatText(params: {
     tenantId?: string;
     feature: string;
     prompt: string;
@@ -1600,7 +1600,7 @@ const plan = executionPlans[detectedIntent];
             actorId: 'MINH',
             subjectType: 'chat_message',
             subjectId: String(sessionId || msg).slice(0, 200),
-            dedupeKey: `minh-delegation-result:${String(sessionId || msg).slice(0, 180)}`,
+            dedupeKey: `minh-delegation-result:${String(sessionId || 'no-session').slice(0, 180)}:${minhPlan.delegationToken || Date.now().toString(36)}`,
             payload: {
                 sessionId: String(sessionId || msg).slice(0, 180),
                 intent: minhPlan.intent,
@@ -1616,7 +1616,18 @@ const plan = executionPlans[detectedIntent];
                 latencyMs: Date.now() - minhStartedAt,
             },
             provenance: 'minh_orchestrator',
-        }).catch(() => {});
+        }).catch((error: any) => logger.warn('[MinhOrch] result signal write failed: ' + (error?.message || error)));
+        if (!toolResultUsed) {
+          void agentMemoryService.recordSignal(tenantId, {
+            signalType: 'minh_capability_gap',
+            actorId: 'MINH',
+            subjectType: 'chat_message',
+            subjectId: String(sessionId || msg).slice(0, 200),
+            dedupeKey: 'minh-capability-gap:' + String(sessionId || msg).slice(0, 150) + ':' + Date.now().toString(36),
+            payload: { intent: minhPlan.intent, message: String(msg).slice(0, 300), specialistError: specialistError || null },
+            provenance: 'minh_orchestrator',
+          }).catch(() => undefined);
+        }
     }
 
     // Landing creation is already a structured, deterministic operation. Do

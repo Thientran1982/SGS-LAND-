@@ -31,6 +31,8 @@ import type { SocialPlatform } from '../social-publishing/types';
 import { logger } from '../middleware/logger';
 
 const FACEBOOK_PLATFORM: SocialPlatform = 'FACEBOOK_PAGE';
+const ZALO_PLATFORM: SocialPlatform = 'ZALO_BROADCAST';
+const INSTAGRAM_PLATFORM: SocialPlatform = 'INSTAGRAM';
 const DEFAULT_TIME_ZONE = 'Asia/Ho_Chi_Minh';
 
 type AutoPostingCandidate = {
@@ -76,7 +78,7 @@ function inTimeWindow(settings: AutoPostingSettings, now = new Date()): boolean 
 
 function normalizeSettings(settings: AutoPostingSettings): AutoPostingSettings {
   const platforms = normalizeSocialPlatforms(settings.platforms)
-    .filter(platform => platform === FACEBOOK_PLATFORM);
+    .filter(platform => platform === FACEBOOK_PLATFORM || platform === ZALO_PLATFORM || platform === INSTAGRAM_PLATFORM);
   return {
     ...settings,
     postsPerDay: 1,
@@ -293,17 +295,24 @@ export async function runAutoPostingForTenant(
   };
 
   try {
-    const capability = await getTenantSocialPlatformCapability(FACEBOOK_PLATFORM, tenantId);
+    const capabilityChecks: Array<{ platform: SocialPlatform; status: string; canPublish: boolean; reason: string }> = [];
+    const readyPlatforms: SocialPlatform[] = [];
+    for (const platform of settings.platforms as SocialPlatform[]) {
+      const capability = await getTenantSocialPlatformCapability(platform, tenantId);
+      capabilityChecks.push({ platform, status: capability.status, canPublish: capability.canPublish, reason: capability.reason });
+      if (capability.status === 'READY' && capability.canPublish) readyPlatforms.push(platform);
+    }
+    const capability = { status: readyPlatforms.length ? 'READY' : 'NOT_READY', canPublish: readyPlatforms.length > 0, reason: capabilityChecks.map(item => item.platform + '=' + item.status).join(', ') };
     if (capability.status !== 'READY' || !capability.canPublish) {
       const reason = capability.reason || 'Facebook Page chưa sẵn sàng để đăng tự động.';
       await finishRun({
         status: 'SKIPPED',
-        result: { reason: 'FACEBOOK_NOT_READY', checkedAt: new Date().toISOString() },
-        errorCode: 'FACEBOOK_NOT_READY',
+        result: { reason: 'NO_READY_PLATFORM', checks: capabilityChecks, checkedAt: new Date().toISOString() },
+        errorCode: 'NO_READY_PLATFORM',
         errorMessage: reason,
       });
       logger.warn(`[MarketingAgent] ${tenantId}: ${reason}`);
-      return { created: 0, published: 0, skipped: 1, reason: 'FACEBOOK_NOT_READY', warning: reason };
+      return { created: 0, published: 0, skipped: 1, reason: 'NO_READY_PLATFORM', warning: reason };
     }
 
     const candidates = await eligibleCandidates(pool, tenantId, logicalDayKey);
@@ -358,7 +367,7 @@ export async function runAutoPostingForTenant(
       scheduledAt: null,
       contentSnapshot: { ...snapshot, caption: content.text },
       assetSnapshot: images,
-      platforms: [FACEBOOK_PLATFORM],
+      platforms: readyPlatforms,
       source: 'AUTO',
       autoPostingKey: `${logicalDayKey}:${candidate.sourceType}:${candidate.sourceId}`,
     });
@@ -515,6 +524,32 @@ export function startAutoPostingScheduler(pool: Pool) {
     }, Math.max(1_000, nextRun.getTime() - now.getTime()));
     timer.unref?.();
   };
+  const catchUpMissedTodayRun = async () => {
+    try {
+      const now = new Date();
+      const today = localDayKey(now);
+      if (new Date(today + 'T18:30:00+07:00').getTime() > now.getTime()) return;
+      const tenants = await listEnabledAutoPostingTenants(pool);
+      for (const tenantId of tenants) {
+        const existing = await pool.query(
+          "SELECT status FROM marketing_facebook_daily_runs WHERE tenant_id = $1 AND logical_day = $2::date ORDER BY started_at DESC LIMIT 1",
+          [tenantId, today],
+        );
+        const currentStatus = existing.rows[0]?.status || 'NOT_RUN';
+        if (currentStatus === 'SUCCESS' || currentStatus === 'RUNNING') continue;
+        logger.info('[MarketingAgent] Boot catch-up: running missed Facebook job for tenant ' + tenantId + ', day ' + today + ' (current status: ' + currentStatus + ')');
+        const result = await runAutoPostingBackfill(pool, tenantId, today, 'BOOT_CATCHUP', 'system:auto-scheduler', now);
+        logger.info('[MarketingAgent] Boot catch-up result: ' + JSON.stringify(result));
+      }
+    } catch (error: any) {
+      logger.error('[MarketingAgent] Boot catch-up failed', error);
+    }
+  };
+  const catchUpGuard = setInterval(() => {
+    void catchUpMissedTodayRun();
+  }, 15 * 60 * 1000);
+  catchUpGuard.unref?.();
+  void catchUpMissedTodayRun();
   scheduleNextRun();
   logger.info(`[MarketingAgent] Facebook daily scheduler started (18:30, timezone=${DEFAULT_TIME_ZONE})`);
 }

@@ -57,7 +57,7 @@ function apiError(body: ZaloResponse, fallback: string): string {
 function isPermissionError(body: ZaloResponse, status: number): boolean {
   return status === 401
     || status === 403
-    || [112, 224, 2001, 2002, 2003].includes(Number(body.error));
+    || [112, 224, 2001, 2002, 2003].includes(Math.abs(Number(body.error)));
 }
 
 function classifyHttp(status: number): { retryable: boolean; ambiguous: boolean } {

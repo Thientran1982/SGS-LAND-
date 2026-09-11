@@ -98,7 +98,7 @@ export async function upsertAutoPostingSettings(
     postsPerDay: 1,
     timeWindows: DEFAULT_SETTINGS.timeWindows,
     recycleAfterDays: Math.max(0, Number(input.recycleAfterDays ?? current.recycleAfterDays)),
-    platforms: ['FACEBOOK_PAGE'],
+    platforms: input.platforms && input.platforms.length ? input.platforms : current.platforms,
   };
   const result = await pool.query(
     `INSERT INTO auto_posting_settings

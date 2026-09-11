@@ -280,12 +280,22 @@ export function MinhChatPanel({
         });
         if (res.noReply) setMode("HUMAN_TAKEOVER");
       } catch (err: any) {
-        setMessages((prev) => prev.filter((m) => m.id !== tempId));
-        setLastFailed({ text, attachments: outgoingAttachments });
+                // AI-phase failures happen AFTER the message was persisted on the server.
+        // Keep the user bubble in that case: the reply may still arrive via
+        // socket or a later reconcile. Only true send-phase failures remove it.
+        const aiPhaseFailure =
+          err?.code === "ai_failed" ||
+          err?.code === "AI_TIMEOUT";
+        if (!aiPhaseFailure) {
+          setMessages((prev) => prev.filter((m) => m.id !== tempId));
+          setLastFailed({ text, attachments: outgoingAttachments });
+        }
         setError(
           err && err.code === "NO_LEAD"
-            ? "Phiên chat đã hết hạn. Vui lòng bắt đầu lại."
-            : "Không gửi được tin nhắn. Vui lòng thử lại hoặc gọi 0379 281 445.",
+  ? "Phìn chat đã hến. Vui lòng bắt đầu lại."
+  : aiPhaseFailure
+  ? "Minh đang xử lý phản hồi - tin nhắn đã được và cảu trả lời sẽ hiện sau ít phút."
+  : "Không gửi được tin nhắn. Vui lòng thử lại hoặc gọi 0379 281 445.",
         );
       } finally {
         setLoading(false);
