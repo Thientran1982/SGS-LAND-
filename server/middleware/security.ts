@@ -116,7 +116,7 @@ export function verifyWebhookSignature(platform: 'zalo' | 'facebook') {
     }
 
     if (platform === 'zalo') {
-      const signature = req.headers['x-zalo-signature'] as string;
+      const signature = req.headers['x-zevent-signature'] as string;
       const oaSecret = process.env.ZALO_OA_SECRET;
 
       if (!oaSecret) {
@@ -132,10 +132,16 @@ export function verifyWebhookSignature(platform: 'zalo' | 'facebook') {
       }
 
       const body = rawBody || Buffer.from(JSON.stringify(req.body));
-      const mac = crypto.createHmac('sha256', oaSecret).update(body).digest('hex');
+      const appId = req.body?.app_id != null ? String(req.body.app_id) : '';
+      const timestamp = req.body?.timestamp != null ? String(req.body.timestamp) : '';
+      const expectedSignature = crypto
+        .createHash('sha256')
+        .update(appId + body.toString() + timestamp + oaSecret)
+        .digest('hex');
 
-      if (mac.length !== signature.length ||
-          !crypto.timingSafeEqual(Buffer.from(mac), Buffer.from(signature))) {
+      if (expectedSignature.length !== signature.length ||
+          !crypto.timingSafeEqual(Buffer.from(expectedSignature), Buffer.from(signature))) {
+        console.warn(`[Security] Zalo webhook signature mismatch — received length=${signature.length}, expected length=${expectedSignature.length}`);
         return res.status(403).json({ error: 'Invalid webhook signature' });
       }
     }
