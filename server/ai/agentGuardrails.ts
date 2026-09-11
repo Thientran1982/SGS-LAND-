@@ -247,7 +247,7 @@ export function inspectAgentOutput(output: {
   return {
     safe: true,
     blocked: false,
-    escalate: false,
+    escalate: flags.includes('UNSUPPORTED_SENSITIVE_CLAIM'),
     flags,
     requiresVerification,
     approvalRequired,

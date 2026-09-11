@@ -123,11 +123,17 @@ export async function minhChooseSpecialist(args: {
     };
     logger.info('[MinhOrch] chose ' + intent + ' conf=' + confidence + ' reason="' + plan.reason + '" ms=' + (Date.now() - started));
     try {
+      // Each delegation call is its own event, not a fact keyed by message
+      // content — derive dedupeKey from session + a per-call unique token so
+      // repeated identical short messages never collide and silently drop
+      // via the signals ON CONFLICT DO NOTHING.
+      const uniqueToken = `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 10)}`;
       await agentMemoryService.recordSignal(args.tenantId, {
         signalType: 'minh_delegation',
         actorId: 'MINH',
         subjectType: 'chat_message',
         subjectId: String(args.message).slice(0, 120),
+        dedupeKey: `minh_delegation:${args.sessionId || 'no-session'}:${uniqueToken}`,
         payload: {
           intent, tool: MINH_INTENT_TOOLS[intent], reason: plan.reason,
           confidence, ms: Date.now() - started, sessionId: args.sessionId || null,

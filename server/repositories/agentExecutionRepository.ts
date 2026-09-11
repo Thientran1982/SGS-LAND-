@@ -294,6 +294,32 @@ class AgentExecutionRepository {
     });
   }
 
+  /**
+   * Reap RUNNING executions whose lease expired more than `graceMs` ago and
+   * nobody re-claimed. This only happens when a worker died without
+   * releasing its lease (e.g. process crash) — canClaimExecution() already
+   * allows a fresh claim once the lease expires, so this is a safety net
+   * for executions that were never retried and would otherwise stay stuck
+   * as RUNNING forever.
+   */
+  async reapExpiredRunning(tenantId: string, graceMs = 5 * 60 * 1000): Promise<number> {
+    return withTenantContext(tenantId, async client => {
+      const result = await client.query(
+        `UPDATE agent_executions
+            SET status = 'ERROR',
+                current_step = 'END',
+                error_text = 'lease hết hạn và không ai nhận lại',
+                finished_at = NOW(),
+                updated_at = NOW()
+          WHERE tenant_id = $1
+            AND status = 'RUNNING'
+            AND lease_expires_at < NOW() - ($2 || ' milliseconds')::interval`,
+        [tenantId, Math.max(0, Math.floor(graceMs))],
+      );
+      return result.rowCount ?? 0;
+    });
+  }
+
   async get(tenantId: string, executionId: string): Promise<AgentExecution | null> {
     return withTenantContext(tenantId, async client => {
       const result = await client.query(

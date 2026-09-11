@@ -2,6 +2,7 @@ import { agentOperatingRepository } from '../repositories/agentOperatingReposito
 import { logger } from '../middleware/logger';
 import { agentMemoryService, scrubPii } from './agentMemoryService';
 import { approvalRequestRepository } from '../repositories/approvalRequestRepository';
+import { agentExecutionRepository } from '../repositories/agentExecutionRepository';
 import { createHash } from 'crypto';
 
 function normalizeErrorPattern(value: unknown): string {
@@ -38,9 +39,22 @@ function validLeadId(value: unknown): string | null {
  *    → tự replay (idempotent + có history) — KHÔNG tự áp patch code.
  *  - Nếu là lỗi khác → ghi memory triage để người/agent xem, KHÔNG tự ý retry vô hạn.
  */
-export async function selfRepairTick(tenantId: string): Promise<{ replayed: number; triaged: number }> {
+/**
+ * Also reaps agent_executions rows stuck at RUNNING with an expired lease
+ * (worker crashed without releasing the lease and nobody re-claimed it).
+ */
+export async function selfRepairTick(tenantId: string): Promise<{ replayed: number; triaged: number; reapedExecutions: number }> {
   let replayed = 0;
   let triaged = 0;
+  let reapedExecutions = 0;
+  try {
+    reapedExecutions = await agentExecutionRepository.reapExpiredRunning(tenantId);
+    if (reapedExecutions > 0) {
+      logger.warn(`[SelfRepair] reaped ${reapedExecutions} stuck RUNNING agent_executions tenant=${tenantId}`);
+    }
+  } catch (reapError: any) {
+    logger.warn('[SelfRepair] reap expired executions failed: ' + (reapError?.message || reapError));
+  }
   try {
     const rows = await agentOperatingRepository.listEvents(tenantId, {
       deadLetter: 'YES', limit: 50,
@@ -134,7 +148,7 @@ export async function selfRepairTick(tenantId: string): Promise<{ replayed: numb
   } catch (err: any) {
     logger.warn('[SelfRepair] tick failed: ' + (err?.message || err));
   }
-  return { replayed, triaged };
+  return { replayed, triaged, reapedExecutions };
 }
 
 let repairTimer: any = null;

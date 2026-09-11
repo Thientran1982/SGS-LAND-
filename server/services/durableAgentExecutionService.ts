@@ -11,6 +11,7 @@ import {
 import { getOrchestrationDecision } from './orchestrationMode';
 import { runWithSubagentPolicy } from './subagentPolicy';
 import { approvalRequestRepository, type HighImpactAction } from '../repositories/approvalRequestRepository';
+import { agentOperatingRepository } from '../repositories/agentOperatingRepository';
 
 export interface DurableAgentResult<T> {
   runId: string;
@@ -239,7 +240,15 @@ export async function runDurableAgentExecution<T extends {
     agentExecutionRepository
       .heartbeat(params.tenantId, execution.id, claimToken)
       .catch((error: any) => {
-        heartbeatError = error instanceof Error ? error : new Error(String(error));
+        const err = error instanceof Error ? error : new Error(String(error));
+        if (err.message.startsWith('AGENT_EXECUTION_LEASE_LOST:')) {
+          heartbeatError = err;
+        } else {
+          // Transient DB/network hiccups should not abort an otherwise
+          // healthy run; only a confirmed lease loss is fatal. The next
+          // heartbeat tick will retry.
+          logger.warn(`[DurableAgent] heartbeat error (non-fatal) execution=${execution.id} error=${err.message}`);
+        }
       });
   }, 30_000);
   heartbeat.unref?.();
@@ -368,6 +377,26 @@ export async function runDurableAgentExecution<T extends {
       status: outputGuardrail.blocked ? 'BLOCKED' : 'SUCCESS',
       output: outputGuardrail,
     });
+    if ((guardedResult as any).escalated) {
+      // Surface the escalation to a human reviewer without affecting the
+      // customer-facing response path; failures here are logged, not thrown.
+      try {
+        await agentOperatingRepository.createHumanQuestion(params.tenantId, {
+          agentKey: 'MINH',
+          question: `Minh đã escalate một phản hồi cần con người xác minh (session=${params.sessionId || 'n/a'}).`,
+          leadId: params.leadId,
+          priority: 70,
+          context: {
+            executionId: execution.id,
+            traceId: execution.traceId,
+            reason: outputGuardrail.reason || 'UNSUPPORTED_SENSITIVE_CLAIM',
+            flags: outputGuardrail.flags,
+          },
+        });
+      } catch (escalationError: any) {
+        logger.warn(`[DurableAgent] escalation human-question skipped execution=${execution.id}: ${escalationError?.message || escalationError}`);
+      }
+    }
     const approvalSpec = params.approval?.(guardedResult);
     if (approvalSpec && !outputGuardrail.blocked) {
       const approval = await approvalRequestRepository.create({

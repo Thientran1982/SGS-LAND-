@@ -19,11 +19,20 @@ describe('agent guardrails', () => {
     expect(inspectToolRequest('search_listings').safe).toBe(true);
   });
 
-  it('marks unsourced price and legal claims for verification', () => {
+  it('marks unsourced price and legal claims for verification and escalates', () => {
     const report = inspectAgentOutput({ content: 'Giá chắc chắn là 80 triệu/m² và pháp lý hoàn chỉnh.' });
     expect(report.safe).toBe(true);
     expect(report.requiresVerification).toBe(true);
+    expect(report.escalate).toBe(true);
     expect(report.sanitizedContent).toContain('cần được xác minh');
+  });
+
+  it('does not escalate sourced content even though it discusses price/legal topics', () => {
+    const report = inspectAgentOutput({
+      content: 'Giá tham khảo theo dữ liệu SGS-AVM là 80 triệu/m², pháp lý cần xác minh với chủ đầu tư.',
+    });
+    expect(report.flags).not.toContain('UNSUPPORTED_SENSITIVE_CLAIM');
+    expect(report.escalate).toBe(false);
   });
 
   it('blocks secret-like output', () => {

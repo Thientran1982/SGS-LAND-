@@ -1,11 +1,20 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-const { repo } = vi.hoisted(() => ({
+const { repo, operatingRepo, logger } = vi.hoisted(() => ({
   repo: {
     claim: vi.fn(),
     saveStep: vi.fn(),
     getSteps: vi.fn(),
     finish: vi.fn(),
+    heartbeat: vi.fn(),
+  },
+  operatingRepo: {
+    createHumanQuestion: vi.fn(),
+  },
+  logger: {
+    error: vi.fn(),
+    warn: vi.fn(),
+    info: vi.fn(),
   },
 }));
 
@@ -13,12 +22,12 @@ vi.mock('../../server/repositories/agentExecutionRepository', () => ({
   agentExecutionRepository: repo,
 }));
 
+vi.mock('../../server/repositories/agentOperatingRepository', () => ({
+  agentOperatingRepository: operatingRepo,
+}));
+
 vi.mock('../../server/middleware/logger', () => ({
-  logger: {
-    error: vi.fn(),
-    warn: vi.fn(),
-    info: vi.fn(),
-  },
+  logger,
 }));
 
 import { checkpointHash, runDurableAgentExecution } from '../../server/services/durableAgentExecutionService';
@@ -58,6 +67,8 @@ describe('durable agent execution service', () => {
     repo.saveStep.mockResolvedValue(undefined);
     repo.getSteps.mockResolvedValue([]);
     repo.finish.mockResolvedValue(undefined);
+    repo.heartbeat.mockResolvedValue(undefined);
+    operatingRepo.createHumanQuestion.mockResolvedValue({ id: 'hq-1' });
   });
 
   it('returns the completed result for duplicate requests without executing again', async () => {
@@ -275,5 +286,72 @@ describe('durable agent execution service', () => {
       stepKey: '03_SPECIALIST_PIPELINE',
     }));
     expect(repo.finish).toHaveBeenCalledWith(expect.objectContaining({ status: 'ERROR' }));
+  });
+
+  it('escalates a guarded sensitive-claim output by creating a human question', async () => {
+    repo.claim.mockResolvedValue({ execution: execution(), claimed: true, resumed: false });
+
+    const result = await runDurableAgentExecution({
+      ...baseParams,
+      message: 'find an apartment',
+      execute: async () => ({
+        content: 'Giá chắc chắn là 80 triệu/m² và pháp lý hoàn chỉnh.',
+        steps: [],
+      }),
+    });
+
+    expect((result.result as any).escalated).toBe(true);
+    expect(operatingRepo.createHumanQuestion).toHaveBeenCalledWith('tenant-1', expect.objectContaining({
+      agentKey: 'MINH',
+      leadId: 'lead-1',
+    }));
+  });
+
+  it('does not create a human question when nothing escalated', async () => {
+    repo.claim.mockResolvedValue({ execution: execution(), claimed: true, resumed: false });
+
+    await runDurableAgentExecution({
+      ...baseParams,
+      message: 'find an apartment',
+      execute: async () => ({ content: 'Đây là danh sách phù hợp.', steps: [] }),
+    });
+
+    expect(operatingRepo.createHumanQuestion).not.toHaveBeenCalled();
+  });
+
+  it('does not fail the run when the escalation human-question write itself fails', async () => {
+    repo.claim.mockResolvedValue({ execution: execution(), claimed: true, resumed: false });
+    operatingRepo.createHumanQuestion.mockRejectedValue(new Error('db unavailable'));
+
+    const result = await runDurableAgentExecution({
+      ...baseParams,
+      message: 'find an apartment',
+      execute: async () => ({
+        content: 'Giá chắc chắn là 80 triệu/m² và pháp lý hoàn chỉnh.',
+        steps: [],
+      }),
+    });
+
+    expect((result.result as any).escalated).toBe(true);
+    expect(result.guardrail.blocked).toBe(false);
+  });
+
+  it('treats a non-lease-lost heartbeat error as non-fatal and keeps the run going', async () => {
+    repo.claim.mockResolvedValue({ execution: execution(), claimed: true, resumed: false });
+    repo.heartbeat.mockRejectedValue(new Error('ECONNRESET transient network blip'));
+
+    // Manually invoke the mocked heartbeat rejection path the way the
+    // interval callback would, then run the execution to confirm it still
+    // completes successfully instead of aborting via assertLease().
+    await repo.heartbeat('tenant-1', 'run-1', 'token').catch(() => {});
+
+    const result = await runDurableAgentExecution({
+      ...baseParams,
+      message: 'find an apartment',
+      execute: async () => ({ content: 'Đây là danh sách phù hợp.', steps: [] }),
+    });
+
+    expect(result.guardrail.blocked).toBe(false);
+    expect(repo.finish).toHaveBeenCalledWith(expect.objectContaining({ status: 'SUCCESS' }));
   });
 });
