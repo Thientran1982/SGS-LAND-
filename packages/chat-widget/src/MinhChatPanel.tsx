@@ -30,7 +30,7 @@ const S: Record<string, React.CSSProperties> = {
   // The outer border used to remain visible as a pale-gold crescent at the
   // bottom corners. Match it to the panel surface so the radius is seamless.
   panel: { background: CSS("--cw-parchment", "#F5F1E6"), borderColor: CSS("--cw-parchment", "#F5F1E6"), fontFamily: "var(--font-be-vietnam), system-ui, sans-serif" },
-  header: { background: CSS("--cw-navy", "#0B1D26"), borderColor: CSS("--cw-navy", "#0B1D26") },
+  header: { background: "transparent", borderColor: "transparent" },
   brand: { background: CSS("--cw-gold", "#C6923D") },
   title: { color: CSS("--cw-paper", "#FFFFFF"), fontFamily: "var(--font-fraunces), Georgia, serif", fontWeight: 600 },
   sub: { color: "rgba(255,255,255,0.72)" },
@@ -59,7 +59,7 @@ const S: Record<string, React.CSSProperties> = {
   },
   // Composer belongs to the panel surface; using --cw-paper here created a
   // white horizontal strip against the parchment chat background.
-  bar: { background: CSS("--cw-parchment", "#F5F1E6"), borderColor: CSS("--cw-line", "#EAE4D4") },
+  bar: { background: "transparent", borderColor: "transparent" },
 };
 
 export interface MinhChatPanelProps {
@@ -510,8 +510,8 @@ export function MinhChatPanel({
             )}
           </div>
           <div className="min-w-0">
-            <p className="text-sm font-semibold leading-tight truncate" style={S.title}>{title}</p>
-            <p className="text-xs leading-tight" style={S.sub}>
+            <p className="hidden text-sm font-semibold leading-tight truncate" style={S.title}>{title}</p>
+            <p className="hidden text-xs leading-tight" style={S.sub}>
               {mode === "HUMAN_TAKEOVER"
                 ? "Chuyên viên đang trả lời trực tiếp"
                 : description}
@@ -789,7 +789,7 @@ export function MinhChatPanel({
                   rows={1}
                   placeholder="Nhập câu hỏi của bạn..."
                   aria-label="Nội dung tin nhắn"
-                  className="min-w-0 flex-1 resize-none border-0 bg-transparent px-1 py-2 text-sm outline-none max-h-28"
+                  className="min-w-0 flex-1 resize-none overflow-hidden whitespace-nowrap border-0 bg-transparent px-1 py-2 text-sm outline-none max-h-28"
                   style={{ fontSize: "16px" }}
                 />
                 {hasLead && !isRecording && (
