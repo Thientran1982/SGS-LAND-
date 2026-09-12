@@ -105,7 +105,10 @@ export async function minhChooseSpecialist(args: {
       jsonMode: true,
       timeoutMs: 20000,
     });
-    const cleaned = String(raw).split('`').join('').replace('json', '').trim();
+    const cleaned = String(raw)
+      .replace(/^\s*```(?:json)?\s*/i, '')
+      .replace(/```\s*$/, '')
+      .trim();
     const start = cleaned.indexOf('{');
     const end = cleaned.lastIndexOf('}');
     const jsonSlice = start >= 0 && end > start ? cleaned.slice(start, end + 1) : cleaned;
@@ -118,7 +121,7 @@ export async function minhChooseSpecialist(args: {
         actorId: 'MINH',
         subjectType: 'chat_message',
         subjectId: String(args.message).slice(0, 120),
-        dedupeKey: 'minh-gap:invalid:' + args.sessionId + ':' + intent + ':' + Date.now().toString(36),
+        dedupeKey: 'minh-gap:invalid:' + args.sessionId + ':' + intent + ':' + Math.floor(Date.now() / 3600000).toString(36),
         payload: { reason: 'invalid_intent', invalidIntent: intent, message: String(args.message).slice(0, 300) },
         provenance: 'minh_orchestrator',
       }).catch(() => undefined);

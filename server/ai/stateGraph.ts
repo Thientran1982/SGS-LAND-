@@ -66,6 +66,10 @@ export class StateGraph<T> {
     // P2.3: loop diagnostics
     const nodePath: string[] = [];
     const visitCount: Record<string, number> = {};
+    // P1-4: state may not carry an i18n translator — the error path must never
+    // throw its own TypeError while reporting a node failure.
+    const sysBusy = (state: any): string =>
+      typeof state?.t === 'function' ? state.t('ai.msg_system_busy') : 'Hệ thống đang bận, vui lòng thử lại sau.';
 
     while (currentNode && currentNode !== 'END') {
       if (++iterations > MAX_ITERATIONS) {
@@ -75,7 +79,7 @@ export class StateGraph<T> {
         if (loopNode) {
           logger.error('[StateGraph] Loop cause — most visited node: ' + loopNode[0] + ' (' + loopNode[1] + ' visits). Check its edge mapping / condition function.');
         }
-        (currentState as any).finalResponse = (currentState as any).t('ai.msg_system_busy');
+        (currentState as any).finalResponse = sysBusy(currentState);
         (currentState as any).isSysMsg = true;
         break;
       }
@@ -104,10 +108,11 @@ export class StateGraph<T> {
         }
       } catch (error: any) {
         logger.error('Error in node ' + currentNode + ':', error);
+        if (!Array.isArray((currentState as any).trace)) (currentState as any).trace = [];
         (currentState as any).trace.push({ id: 'err_' + Date.now(), node: 'ERROR', status: 'ERROR', output: error.message, timestamp: Date.now() });
         (currentState as any).nodeErrors = { ...((currentState as any).nodeErrors || {}), [currentNode]: error.message };
         if (currentNode === 'ROUTER') {
-          (currentState as any).finalResponse = (currentState as any).t('ai.msg_system_busy');
+          (currentState as any).finalResponse = sysBusy(currentState);
           (currentState as any).isSysMsg = true;
           break;
         }
@@ -122,7 +127,7 @@ export class StateGraph<T> {
       }
     }
     if (!(currentState as any).finalResponse) {
-      (currentState as any).finalResponse = (currentState as any).t('ai.msg_system_busy');
+      (currentState as any).finalResponse = sysBusy(currentState);
       (currentState as any).isSysMsg = true;
     }
     return currentState;

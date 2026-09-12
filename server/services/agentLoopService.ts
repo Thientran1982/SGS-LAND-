@@ -42,8 +42,26 @@ async function reportToBrain(
   }).catch(signalError => logger.warn('[AgentLoop] report signal failed: ' + (signalError?.message || signalError)));
 }
 
+const SIGNAL_RETENTION_DAYS = Math.max(7, Number(process.env.AGENT_SIGNAL_RETENTION_DAYS || 90));
+
+/** P1-9: agent_signals is append-only telemetry — cap retention per tenant so the table stays bounded. */
+async function pruneAgentSignals(tenantId: string): Promise<number> {
+  try {
+    const result = await withTenantContext(tenantId, async client => client.query(
+      'DELETE FROM agent_signals WHERE tenant_id=$1 AND created_at < NOW() - make_interval(days => $2::int)',
+      [tenantId, SIGNAL_RETENTION_DAYS],
+    ));
+    return Number(result?.rowCount || 0);
+  } catch (error: any) {
+    logger.warn('[AgentLoop] signal prune failed: ' + (error?.message || error));
+    return 0;
+  }
+}
+
 export async function runAgentOperationsLoop(tenantId: string): Promise<void> {
   try {
+    const prunedSignals = await pruneAgentSignals(tenantId);
+    if (prunedSignals > 0) logger.info('[AgentLoop] pruned ' + prunedSignals + ' agent_signals (' + tenantId + ')');
     const seo = await runSeoAuditForTenant(tenantId, 'agent_loop');
     const geo = await checkGeoFreshness();
     await reportToBrain(tenantId, { seo, geo });
@@ -55,12 +73,23 @@ export async function runAgentOperationsLoop(tenantId: string): Promise<void> {
 
 export function startAgentOperationsLoop(getTenantIds: () => Promise<string[]>, intervalMs = 24 * 60 * 60 * 1000) {
   const tick = async () => {
+    // P1-8: session-level advisory lock — multiple app instances must never
+    // run the operations loop concurrently (double SEO audits, double reports).
+    const client = await pool.connect();
     try {
-      for (const tenantId of await getTenantIds()) {
-        await runAgentOperationsLoop(tenantId);
+      const locked = await client.query("SELECT pg_try_advisory_lock(hashtext('sgs_agent_ops_loop')) AS ok");
+      if (!locked.rows[0]?.ok) return;
+      try {
+        for (const tenantId of await getTenantIds()) {
+          await runAgentOperationsLoop(tenantId);
+        }
+      } finally {
+        await client.query("SELECT pg_advisory_unlock(hashtext('sgs_agent_ops_loop'))");
       }
     } catch (error: any) {
       logger.warn('[AgentLoop] tick failed: ' + (error?.message || error));
+    } finally {
+      client.release();
     }
   };
   const timer = setInterval(() => void tick(), intervalMs);

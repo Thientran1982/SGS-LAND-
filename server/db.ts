@@ -48,6 +48,18 @@ const databaseApplicationName = (
   process.env.DB_APPLICATION_NAME ||
   `sgs-land-api-${process.env.NODE_ENV || 'development'}`
 ).replace(/[^a-zA-Z0-9_.-]/g, '-').slice(0, 63);
+/** Dedicated pool factory for the LangGraph checkpointer (same SSL/sanitisation rules). */
+export function buildCheckpointerPool(connectionString: string): Pool {
+  return new Pool({
+    connectionString: stripSslMode(sanitiseConnectionString(connectionString)),
+    ...buildSslConfig(),
+    max: 3,
+    idleTimeoutMillis: 240000,
+    connectionTimeoutMillis: 5000,
+    statement_timeout: 30000,
+  });
+}
+
 export const pool = new Pool({
   connectionString: DB_CONNECTION_STRING,
   ...buildSslConfig(),

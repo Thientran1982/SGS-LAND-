@@ -28,6 +28,8 @@ const TOOL_TIER: Record<string, ToolTier> = {
   get_cache_status: 'read',
   get_broker_stats: 'read',
   analyze_investment: 'staff',
+  search_listings_dynamic: 'read',
+  landing_design_agent: 'staff',
   score_lead: 'staff',
   suggest_properties: 'staff',
   check_duplicate: 'staff',

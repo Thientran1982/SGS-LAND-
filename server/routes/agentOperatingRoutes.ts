@@ -18,6 +18,7 @@ export function validateBrainDocument(body: any) {
   if (!source || source.length > 240) return 'source là bắt buộc và tối đa 240 ký tự.';
   if (body?.sourceUrl !== undefined && body.sourceUrl !== null && String(body.sourceUrl).length > 2000) return 'sourceUrl tối đa 2000 ký tự.';
   if (!content || typeof content !== 'object' || Array.isArray(content)) return 'content phải là một object JSON.';
+  if (JSON.stringify(content).length > 65_536) return 'content tối đa 64KB.';
   if (!BRAIN_VERIFICATION_STATUSES.includes(verificationStatus)) return 'verificationStatus không hợp lệ.';
   if (verificationStatus === 'verified' && (!source || Object.keys(content).length === 0)) {
     return 'Tài liệu đã xác minh phải có nguồn và nội dung.';
@@ -239,7 +240,7 @@ export function createAgentOperatingRoutes(authenticateToken: any): Router {
 
   router.post('/events/process', authenticateToken, async (req, res) => {
     const user = requireStaff(req, res); if (!user) return;
-    try { res.json(await processAgentEvents(user.tenantId, Number(req.body?.limit) || 25)); }
+    try { res.json(await processAgentEvents(user.tenantId, Math.min(Number(req.body?.limit) || 25, 100))); }
     catch { res.status(500).json({ error: 'Không thể xử lý event queue.' }); }
   });
   return router;

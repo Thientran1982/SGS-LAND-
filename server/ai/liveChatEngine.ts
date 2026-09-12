@@ -883,6 +883,13 @@ function handle_get_market_stats(args: Record<string, any>): any {
 }
 
 function handle_get_valuation(args: Record<string, any>): any {
+    if (!args?.address || !Number.isFinite(Number(args.area)) || Number(args.area) <= 0) {
+        return {
+            needsMoreInfo: true,
+            missing: [!args?.address ? 'address' : 'area'],
+            message: 'Cần địa chỉ cụ thể và diện tích (m²) để chạy định giá SGS-AVM.',
+        };
+    }
     const { address, area, propertyType = 'APARTMENT', legal = 'PINK_BOOK', roadWidth = 4, floor, buildingAge = 0, developer } = args;
     try {
         // Resolve market base price from address
@@ -1069,6 +1076,13 @@ function handle_get_longthanh_market(args: Record<string, any>): any {
 }
 
 function handle_analyze_investment(args: Record<string, any>): any {
+    if (!Number.isFinite(Number(args?.purchasePrice)) || Number(args.purchasePrice) <= 0) {
+        return {
+            needsMoreInfo: true,
+            missing: ['purchasePrice'],
+            message: 'Cần giá mua (purchasePrice) để phân tích đầu tư.',
+        };
+    }
     const {
         purchasePrice,
         monthlyRent = 0,
@@ -1405,8 +1419,8 @@ export function classifyLiveChatIntent(message: string): { intent: string; sugge
     }
 
     const lower = msg.toLowerCase();
-    const intentMap: Array<{ keywords: string[]; intent: string; suggestedTool: string }> = [
-        { keywords: ['giá', 'bao nhiêu', 'triệu', 'tỷ', 'định giá', 'valuation'], intent: 'VALUATION',       suggestedTool: 'get_valuation' },
+    const intentMap: Array<{ keywords: Array<string | RegExp>; intent: string; suggestedTool: string }> = [
+        { keywords: [/gi[aá][^.?!]{0,30}bao\s*nhi[êe]u/i, /bao\s*nhi[êe]u[^.?!]{0,30}gi[aá]/i, 'định giá', 'valuation', 'trị giá', 'bao nhiêu tiền'], intent: 'VALUATION',       suggestedTool: 'get_valuation' },
         { keywords: ['tìm', 'search', 'căn hộ', 'nhà', 'đất', 'còn hàng'],         intent: 'SEARCH',          suggestedTool: 'search_listings' },
         { keywords: ['pháp lý', 'sổ', 'hồng', 'đỏ', 'vi bằng', 'hđmb'],           intent: 'LEGAL',           suggestedTool: 'legal_qa' },
         { keywords: ['quy hoạch', 'planning', 'xây dựng'],                          intent: 'PLANNING',        suggestedTool: 'check_planning' },
@@ -1415,11 +1429,11 @@ export function classifyLiveChatIntent(message: string): { intent: string; sugge
         { keywords: ['long thành', 'sân bay', 'airport'],                            intent: 'LONGTHANH',       suggestedTool: 'get_longthanh_market' },
         { keywords: ['đầu tư', 'cho thuê', 'yield', 'roi', 'lợi nhuận'],            intent: 'INVESTMENT',      suggestedTool: 'analyze_investment' },
         { keywords: ['landing', 'trang landing', 'landing page'], intent: 'LANDING', suggestedTool: 'landing_builder' },
-        { keywords: ['khách', 'lead', 'chấm điểm', 'tiềm năng'],                    intent: 'LEAD_SCORING',    suggestedTool: 'score_lead' },
+        { keywords: ['chấm điểm', 'lead', 'tiềm năng', 'score lead'],                    intent: 'LEAD_SCORING',    suggestedTool: 'score_lead' },
     ];
 
     for (const { keywords, intent, suggestedTool } of intentMap) {
-        if (keywords.some(keyword => lower.includes(keyword))) {
+        if (keywords.some(keyword => typeof keyword === 'string' ? lower.includes(keyword) : keyword.test(msg))) {
             return { intent, suggestedTool };
         }
     }
@@ -1484,13 +1498,57 @@ async function handle_live_chat_core(args: Record<string, any>): Promise<any> {
         .filter(Boolean)
         .join(', ')
         .slice(0, 200);
-    const executionPlans: Record<string, { tool: string; args: Record<string, any> }> = {
+    // P0-4 fix: text parsers for the three specialist intents that were missing
+// from executionPlans (mirror of the minhBrain extraction logic).
+function parseVndText(text: string): number | null {
+  const ty = text.match(/(\d+(?:[.,]\d+)?)\s*(?:ty|t?ỷ)/i);
+  if (ty) return Math.round(Number(ty[1].replace(',', '.')) * 1_000_000_000);
+  const tr = text.match(/(\d+(?:[.,]\d+)?)\s*(?:trieu|triệu)\b/i);
+  if (tr) return Math.round(Number(tr[1].replace(',', '.')) * 1_000_000);
+  return null;
+}
+
+function parseAreaText(text: string): number | null {
+  const m = text.match(/(\d+(?:[.,]\d+)?)\s*(?:m2|m²|met vuong|m vuong)/i);
+  return m ? Number(m[1].replace(',', '.')) : null;
+}
+
+function parseRentText(text: string): number | null {
+  const rent = text.match(/(?:thue|cho thue)[^\d]{0,20}(\d+(?:[.,]\d+)?)\s*(?:trieu|triệu)/i);
+  return rent ? Math.round(Number(rent[1].replace(',', '.')) * 1_000_000) : null;
+}
+
+const executionPlans: Record<string, { tool: string; args: Record<string, any> }> = {
         SEARCH: { tool: 'search_listings', args: { tenantId, query: msg, limit: 5 } },
         LEGAL: { tool: 'legal_qa', args: { tenantId, question: msg } },
         PLANNING: { tool: 'check_planning', args: { tenantId, address: msg } },
         FINANCE: { tool: 'get_platform_knowledge', args: { tenantId, domain: 'bank', query: msg } },
         PROJECT: { tool: 'get_project_info', args: { tenantId, projectName: msg } },
         LONGTHANH: { tool: 'get_longthanh_market', args: { tenantId, subArea: msg } },
+        VALUATION: {
+            tool: 'get_valuation',
+            args: {
+                tenantId,
+                address: msg.slice(0, 200),
+                ...(parseAreaText(msg) !== null ? { area: parseAreaText(msg) } : {}),
+            },
+        },
+        INVESTMENT: {
+            tool: 'analyze_investment',
+            args: {
+                tenantId,
+                ...(parseVndText(msg) !== null ? { purchasePrice: parseVndText(msg) } : {}),
+                ...(parseRentText(msg) !== null ? { monthlyRent: parseRentText(msg) } : {}),
+            },
+        },
+        LEAD_SCORING: {
+            tool: 'score_lead',
+            args: {
+                tenantId,
+                source: 'AI_CHAT',
+                ...(parseVndText(msg) !== null ? { budget: parseVndText(msg) } : {}),
+            },
+        },
         LANDING: {
             tool: 'landing_builder',
             args: {
@@ -1623,7 +1681,7 @@ const plan = executionPlans[detectedIntent];
             actorId: 'MINH',
             subjectType: 'chat_message',
             subjectId: String(sessionId || msg).slice(0, 200),
-            dedupeKey: 'minh-capability-gap:' + String(sessionId || msg).slice(0, 150) + ':' + Date.now().toString(36),
+            dedupeKey: 'minh-capability-gap:' + String(sessionId || msg).slice(0, 150) + ':' + Math.floor(Date.now() / 3600000).toString(36),
             payload: { intent: minhPlan.intent, message: String(msg).slice(0, 300), specialistError: specialistError || null },
             provenance: 'minh_orchestrator',
           }).catch(() => undefined);

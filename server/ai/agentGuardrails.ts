@@ -89,6 +89,26 @@ const PROMPT_INJECTION_PATTERNS = [
   /act\s+as\s+system/i,
 ];
 
+// Vietnamese jailbreak attempts — the English-only set misses these. The
+// input is tone-folded first (NFD strip + đ→d + lowercase), so patterns are
+// written unaccented and catch both accented and typed-without-diacritics
+// variants. High-precision on purpose: each pattern needs an adversarial verb
+// plus a protected target, so ordinary price/legal questions never match.
+function foldVietnamese(text: string): string {
+  return text
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/đ/g, 'd')
+    .replace(/Đ/g, 'D')
+    .toLowerCase();
+}
+
+const VN_PROMPT_INJECTION_PATTERNS: RegExp[] = [
+  /bo\s*qua\s+(tat\s*ca\s+)?(cac\s+)?(chi\s*dan|luat\s*lenh|quy\s*tac)/,
+  /(tiet\s*loi|in\s*ra|cho\s*xem|hen\s*ra)[^.?!\n]{0,40}(system\s*prompt|prompt\s*he\s*thong|lenh\s*noi\s*bo|chi\s*dan\s*an)/,
+  /vo\s*hieu\s*hoa[^.?!\n]{0,30}(chi\s*dan|guardrail|kiem\s*soat)/,
+];
+
 const SECRET_PATTERNS = [
   /\bsk-[a-z0-9_-]{20,}\b/i,
   /\bAIza[0-9A-Za-z_-]{25,}\b/,
@@ -103,7 +123,10 @@ const SOURCE_PATTERN =
 
 export function inspectAgentInput(message: string): GuardrailReport {
   const normalized = String(message || '').slice(0, 4000);
-  const promptInjection = PROMPT_INJECTION_PATTERNS.some(pattern => pattern.test(normalized));
+  const folded = foldVietnamese(normalized);
+  const promptInjection =
+    PROMPT_INJECTION_PATTERNS.some(pattern => pattern.test(normalized)) ||
+    VN_PROMPT_INJECTION_PATTERNS.some(pattern => pattern.test(folded));
   if (promptInjection) {
     return {
       safe: false,
@@ -126,7 +149,11 @@ export function inspectAgentInput(message: string): GuardrailReport {
 }
 
 export function inspectToolRequest(toolName: string): GuardrailReport {
-  const readOnlyTools = new Set([
+  // Tools the supervisor may execute autonomously. NOTE: this set is wider
+  // than toolPermissions 'read' tier by design — task_* / landing_* create
+  // drafts only; irreversible actions (publish, outreach, deposit) still go
+  // through evaluateMarketingApproval / HIGH_IMPACT approval.
+  const autonomousSafeTools = new Set([
     'search_listings',
     'get_listing_detail',
     'get_market_stats',
@@ -154,7 +181,7 @@ export function inspectToolRequest(toolName: string): GuardrailReport {
     'landing_builder',
      'landing_design_agent',
   ]);
-  if (!readOnlyTools.has(toolName)) {
+  if (!autonomousSafeTools.has(toolName)) {
     return {
       safe: false,
       blocked: true,

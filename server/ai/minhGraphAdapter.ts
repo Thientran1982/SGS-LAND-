@@ -6,7 +6,8 @@
 import { StateGraph, Annotation, START, END, MemorySaver } from '@langchain/langgraph';
 import { MINH_INTENT_TOOLS } from './minhOrchestrator';
 import { runSpecialistTool, minhPlanTask } from './minhBrain';
-import { pool } from '../db';
+import { buildCheckpointerPool, pool } from '../db';
+import { Pool } from 'pg';
 import { logger } from '../middleware/logger';
 
 const GraphState = Annotation.Root({
@@ -22,21 +23,39 @@ const GraphState = Annotation.Root({
   status: Annotation<string>,
   output: Annotation<any>,
   error: Annotation<string>,
+  args: Annotation<any>,
+  runId: Annotation<string | null>,
+  correct: Annotation<boolean>,
 });
 
 let compiled: any = null;
 let compiling: Promise<any> | null = null;
 
+let aivenCheckpointerPool: Pool | null = null;
+function getAivenCheckpointerPool(connectionString: string): Pool {
+  if (!aivenCheckpointerPool) {
+    aivenCheckpointerPool = buildCheckpointerPool(connectionString);
+  }
+  return aivenCheckpointerPool;
+}
+
+function getCheckpointerStorePool(): Pool {
+  return aivenCheckpointerPool ?? pool;
+}
+
 async function buildMinhGraph() {
   let checkpointer: any = new MemorySaver();
   try {
-    const conn = String(process.env.AIVEN_DATABASE_URL || '');
-    const withSsl = conn.includes('sslmode=') ? conn : conn + (conn.includes('?') ? '&' : '?') + 'sslmode=require';
+    const aivenUrl = String(process.env.AIVEN_DATABASE_URL || '');
     const { PostgresSaver } = await import('@langchain/langgraph-checkpoint-postgres');
-    const pgSaver = new PostgresSaver(pool);
+    // AIVEN_DATABASE_URL may point at a different database than the app pool,
+    // so the checkpointer must use its own dedicated pool when configured.
+    // pg resolves sslmode from the connection string itself.
+    const saverPool = aivenUrl ? getAivenCheckpointerPool(aivenUrl) : pool;
+    const pgSaver = new PostgresSaver(saverPool);
     await pgSaver.setup();
     checkpointer = pgSaver;
-    logger.info('[MinhGraph] PostgresSaver checkpointer READY (bang checkpoint da tao neu thieu)');
+    logger.info('[MinhGraph] PostgresSaver checkpointer READY (pool=' + (aivenUrl ? 'aiven' : 'main') + ')');
   } catch (error: any) {
     logger.warn('[MinhGraph] PostgresSaver khong kha dung — fallback MemorySaver: ' + (error?.message || error));
   }
@@ -66,7 +85,7 @@ async function buildMinhGraph() {
         plan,
         triggerSource: state.triggerSource + '_langgraph',
       });
-      return { status: run.status, output: run.output, error: run.error, tool: run.tool };
+      return { status: run.status, output: run.output, error: run.error, tool: run.tool, args: run.args, runId: run.runId, correct: run.correct };
     })
     .addEdge(START, 'minh_plan')
     .addConditionalEdges('minh_plan', (state: typeof GraphState.State) => (state.intent ? 'specialist' : END), { specialist: 'specialist', [END]: END })
@@ -90,7 +109,7 @@ export async function getMinhGraph() {
 }
 
 export async function listGraphThreads(limit = 10): Promise<Array<{ threadId: string; checkpoints: number }>> {
-  const rows = await pool.query(
+  const rows = await getCheckpointerStorePool().query(
     'SELECT thread_id, count(*)::int AS checkpoints FROM checkpoints GROUP BY thread_id ORDER BY max(checkpoint_id) DESC LIMIT $1',
     [limit],
   );

@@ -20,7 +20,7 @@ const BRAIN_DAILY_BUDGET = Number(process.env.MINH_DAILY_DELEGATION_BUDGET || 20
 
 export async function getBudgetStatus(tenantId: string): Promise<{ used: number; budget: number; exceeded: boolean }> {
   const rows = await withTenantContext(tenantId, async client => client.query(
-    "SELECT count(*)::int AS used FROM agent_runs WHERE (trigger_source ILIKE $1 OR trigger_source ILIKE $2) AND started_at > NOW() - INTERVAL '7 days'",
+    "SELECT count(*)::int AS used FROM agent_runs WHERE (trigger_source ILIKE $1 OR trigger_source ILIKE $2) AND started_at > NOW() - INTERVAL '1 day'",
     ['minh%', 'cli%'],
   ));
   const used = Number(rows.rows[0]?.used || 0);
@@ -209,7 +209,7 @@ export async function minhDelegateTask(
   options: { triggerSource?: string } = {},
 ): Promise<MinhBrainOutcome> {
   const started = Date.now();
-  const sessionId = 'brain-' + started.toString(36);
+  const sessionId = 'brain-' + crypto.randomUUID();
   const budget = await getBudgetStatus(tenantId);
   if (budget.exceeded) {
     logger.warn('[MinhBrain] daily delegation budget exceeded (' + budget.used + '/' + budget.budget + ')');
@@ -227,22 +227,28 @@ export async function minhDelegateTask(
     };
   }
   if (isLangGraphActive()) {
-    const { runMinhGraph } = await import('./minhGraphAdapter');
-    const state = await runMinhGraph(tenantId, task, { triggerSource: options.triggerSource || 'minh_brain' });
-    const plan = await minhPlanTask(tenantId, task, sessionId);
-    return {
-      plan,
-      tool: String(state.tool || 'get_platform_knowledge'),
-      args: {},
-      status: state.status === 'SUCCESS' ? 'SUCCESS' : 'FAILED',
-      output: state.output ?? null,
-      error: state.error ?? null,
-      durationMs: Date.now() - started,
-      runId: null,
-      correct: state.status === 'SUCCESS',
-      via: 'langgraph',
-    };
-  }
+      const { runMinhGraph } = await import('./minhGraphAdapter');
+      const state = await runMinhGraph(tenantId, task, { triggerSource: options.triggerSource || 'minh_brain' });
+      const plan: MinhPlan = {
+        intent: String(state.intent || 'GENERAL'),
+        reason: 'langgraph specialist run',
+        confidence: Math.max(0, Math.min(1, Number(state.confidence) || 0)),
+        source: state.planSource === 'MINH_LLM' ? 'MINH_LLM' : 'KEYWORD_FALLBACK',
+        delegationToken: state.delegationToken || undefined,
+      };
+      return {
+        plan,
+        tool: String(state.tool || 'get_platform_knowledge'),
+        args: state.args && typeof state.args === 'object' ? state.args : {},
+        status: state.status === 'SUCCESS' ? 'SUCCESS' : 'FAILED',
+        output: state.output ?? null,
+        error: state.error ?? null,
+        durationMs: Date.now() - started,
+        runId: state.runId ?? null,
+        correct: state.correct === true || state.status === 'SUCCESS',
+        via: 'langgraph',
+      };
+    }
   const plan = await minhPlanTask(tenantId, task, sessionId);
   const token = plan.delegationToken || 'brain-' + crypto.randomUUID();
   const planWithToken: MinhPlan = { ...plan, delegationToken: token };
