@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { inspectAgentInput, inspectToolRequest } from '../ai/agentGuardrails';
+import { inspectAgentInput, inspectAgentOutput, inspectToolRequest } from '../ai/agentGuardrails';
 import { canUseTool } from '../ai/toolPermissions';
 
 describe('Agent guardrails — Vietnamese prompt injection (P0-7)', () => {
@@ -29,5 +29,14 @@ describe('Guardrail/toolPermissions alignment (P0-6)', () => {
     expect(canUseTool('SALES', 'search_listings_dynamic')).toBe(true);
     expect(canUseTool('SALES', 'landing_design_agent')).toBe(true);
     expect(canUseTool('SALES', 'task_create')).toBe(false);
+  });
+});
+
+
+describe('Agent guardrails — secret patterns (P2-4)', () => {
+  it('flags GitHub/Slack/AWS credentials in output', () => {
+    expect(inspectAgentOutput({ content: 'key = ghp_ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnop' }).flags).toContain('SECRET_EXPOSURE');
+    expect(inspectAgentOutput({ content: 'slack slack-token-placeholder' }).blocked).toBe(true);
+    expect(inspectAgentOutput({ content: 'AWS AKIAIOSFODNN7EXAMPLE' }).blocked).toBe(true);
   });
 });

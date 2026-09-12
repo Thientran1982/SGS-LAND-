@@ -1412,6 +1412,32 @@ export async function recordLandingClassificationTelemetry(data: {
     });
 }
 
+// P2-3: module-level text parsers shared by executionPlans (mirror of the
+// minhBrain extraction logic). Kept at module scope so tests can import them.
+export function parseVnGroupText(raw: string): number {
+  const s = raw.trim();
+  if (/^\d{1,3}([.,]\d{3})+$/.test(s)) return Number(s.replace(/[.,]/g, ''));
+  return Number(s.replace(',', '.'));
+}
+
+export function parseVndText(text: string): number | null {
+  const ty = text.match(/(\d+(?:[.,]\d+)?)\s*(?:ty|t?ỷ)/i);
+  if (ty) return Math.round(Number(ty[1].replace(',', '.')) * 1_000_000_000);
+  const tr = text.match(/(\d+(?:[.,]\d+)?)\s*(?:trieu|triệu)\b/i);
+  if (tr) return Math.round(parseVnGroupText(tr[1]) * 1_000_000);
+  return null;
+}
+
+export function parseAreaText(text: string): number | null {
+  const m = text.match(/(\d+(?:[.,]\d+)?)\s*(?:m2|m²|met vuong|m vuong)/i);
+  return m ? parseVnGroupText(m[1]) : null;
+}
+
+export function parseRentText(text: string): number | null {
+  const rent = text.match(/(?:thue|cho thue)[^\d]{0,20}(\d+(?:[.,]\d+)?)\s*(?:trieu|triệu)/i);
+  return rent ? Math.round(parseVnGroupText(rent[1]) * 1_000_000) : null;
+}
+
 export function classifyLiveChatIntent(message: string): { intent: string; suggestedTool: string } {
     const msg = String(message || '').trim();
     if (isLandingBuilderRequest(msg)) {
@@ -1498,27 +1524,7 @@ async function handle_live_chat_core(args: Record<string, any>): Promise<any> {
         .filter(Boolean)
         .join(', ')
         .slice(0, 200);
-    // P0-4 fix: text parsers for the three specialist intents that were missing
-// from executionPlans (mirror of the minhBrain extraction logic).
-function parseVndText(text: string): number | null {
-  const ty = text.match(/(\d+(?:[.,]\d+)?)\s*(?:ty|t?ỷ)/i);
-  if (ty) return Math.round(Number(ty[1].replace(',', '.')) * 1_000_000_000);
-  const tr = text.match(/(\d+(?:[.,]\d+)?)\s*(?:trieu|triệu)\b/i);
-  if (tr) return Math.round(Number(tr[1].replace(',', '.')) * 1_000_000);
-  return null;
-}
-
-function parseAreaText(text: string): number | null {
-  const m = text.match(/(\d+(?:[.,]\d+)?)\s*(?:m2|m²|met vuong|m vuong)/i);
-  return m ? Number(m[1].replace(',', '.')) : null;
-}
-
-function parseRentText(text: string): number | null {
-  const rent = text.match(/(?:thue|cho thue)[^\d]{0,20}(\d+(?:[.,]\d+)?)\s*(?:trieu|triệu)/i);
-  return rent ? Math.round(Number(rent[1].replace(',', '.')) * 1_000_000) : null;
-}
-
-const executionPlans: Record<string, { tool: string; args: Record<string, any> }> = {
+    const executionPlans: Record<string, { tool: string; args: Record<string, any> }> = {
         SEARCH: { tool: 'search_listings', args: { tenantId, query: msg, limit: 5 } },
         LEGAL: { tool: 'legal_qa', args: { tenantId, question: msg } },
         PLANNING: { tool: 'check_planning', args: { tenantId, address: msg } },
@@ -1652,6 +1658,10 @@ const plan = executionPlans[detectedIntent];
 
     if (minhPlan) {
         const toolResultUsed = Boolean(plan?.tool && specialistOutput && executedTools.includes(plan.tool));
+        // P2-5 metric note: "correct" is an operational proxy only. It is OR-ed
+        // with feedbackPositive, which is inferred from the NEXT inbound message
+        // and therefore biased toward conversational politeness. Do not treat it
+        // as ground truth when tuning Minh calibration thresholds.
         const feedbackPositive = classifyInteractionOutcome(msg) === 'positive';
         void agentMemoryService.recordSignal(tenantId, {
             signalType: 'minh_delegation_result',

@@ -72,17 +72,24 @@ const TOOL_REQUIRED_ARGS: Record<string, string[]> = {
   analyze_investment: ['purchasePrice'],
 };
 
-function parseVnd(text: string): number | null {
+export function parseVnd(text: string): number | null {
   const ty = text.match(/(\d+(?:[.,]\d+)?)\s*(?:ty|t?ỷ)/i);
   if (ty) return Math.round(Number(ty[1].replace(',', '.')) * 1_000_000_000);
   const tr = text.match(/(\d+(?:[.,]\d+)?)\s*(?:trieu|triệu)\b/i);
-  if (tr) return Math.round(Number(tr[1].replace(',', '.')) * 1_000_000);
+  if (tr) return Math.round(parseVnGroupNumber(tr[1]) * 1_000_000);
   return null;
 }
 
-function parseArea(text: string): number | null {
+/** "1.500"/"1,500" before triệu/m² is a thousands group, not a decimal. */
+function parseVnGroupNumber(raw: string): number {
+  const s = raw.trim();
+  if (/^\d{1,3}([.,]\d{3})+$/.test(s)) return Number(s.replace(/[.,]/g, ''));
+  return Number(s.replace(',', '.'));
+}
+
+export function parseArea(text: string): number | null {
   const m = text.match(/(\d+(?:[.,]\d+)?)\s*(?:m2|m²|met vuong|m vuong)/i);
-  return m ? Number(m[1].replace(',', '.')) : null;
+  return m ? parseVnGroupNumber(m[1]) : null;
 }
 
 function propertyTypeFrom(text: string): string | null {

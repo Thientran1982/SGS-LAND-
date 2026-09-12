@@ -17,15 +17,26 @@ type NeuronMapData = {
 
 export const AgentNeuronMap: React.FC = () => {
   const [data, setData] = useState<NeuronMapData | null>(null);
+  const [mode, setMode] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     let alive = true;
-    fetch('/api/agents/neuron-map', { credentials: 'include' })
-      .then(res => { if (!res.ok) throw new Error('HTTP ' + res.status); return res.json(); })
-      .then(json => { if (alive) setData(json as NeuronMapData); })
-      .catch(err => { if (alive) setError(String(err?.message || err)); });
-    return () => { alive = false; };
+    const load = () => {
+      fetch('/api/agents/neuron-map', { credentials: 'include' })
+        .then(res => { if (!res.ok) throw new Error('HTTP ' + res.status); return res.json(); })
+        .then(json => { if (alive) setData(json as NeuronMapData); })
+        .catch(err => { if (alive) setError(String(err?.message || err)); });
+      fetch('/api/agents/minh/health', { credentials: 'include' })
+        .then(res => (res.ok ? res.json() : null))
+        .then(json => { if (alive && json && typeof json.mode === 'string') setMode(json.mode); })
+        .catch(() => undefined);
+    };
+    load();
+    // P2-6: ops dashboard phải phản ánh trạng thái sống, không phải snapshot
+    // lúc mount. Làm mới mỗi 60s cùng health mode (typescript | langgraph).
+    const timer = setInterval(load, 60_000);
+    return () => { alive = false; clearInterval(timer); };
   }, []);
 
   return (
@@ -34,14 +45,21 @@ export const AgentNeuronMap: React.FC = () => {
         <h3 className="flex items-center gap-2 text-sm font-semibold text-slate-800">
           <BrainCircuit size={16} className="text-indigo-600" /> Neuron Map — Bộ não MINH điều phối
         </h3>
-        {data && (
-          <span className={
-            'rounded-full px-2 py-0.5 text-[10px] font-semibold ' +
-            (data.budget.exceeded ? 'bg-rose-100 text-rose-600' : 'bg-emerald-100 text-emerald-600')
-          }>
-            Budget 24h: {data.budget.used}/{data.budget.budget}
-          </span>
-        )}
+        <div className="flex items-center gap-1.5">
+          {mode && (
+            <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-semibold text-slate-600">
+              mode: {mode}
+            </span>
+          )}
+          {data && (
+            <span className={
+              'rounded-full px-2 py-0.5 text-[10px] font-semibold ' +
+              (data.budget.exceeded ? 'bg-rose-100 text-rose-600' : 'bg-emerald-100 text-emerald-600')
+            }>
+              Budget 24h: {data.budget.used}/{data.budget.budget}
+            </span>
+          )}
+        </div>
       </div>
       {error && <p className="mt-2 text-xs text-rose-600">Lỗi tải neuron map: {error}</p>}
       {data && (
@@ -60,7 +78,7 @@ export const AgentNeuronMap: React.FC = () => {
                     {item.runs} lần chạy 7 ngày{rate !== null ? ' · ' + rate + '% thành công' : ''} · ~{item.avgMs}ms
                   </div>
                 </div>
-              );
+                          );
             })}
           </div>
         </div>

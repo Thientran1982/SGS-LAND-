@@ -114,6 +114,10 @@ const SECRET_PATTERNS = [
   /\bAIza[0-9A-Za-z_-]{25,}\b/,
   /-----BEGIN (?:RSA |EC |OPENSSH )?PRIVATE KEY-----/,
   /\b(?:api[_ -]?key|secret|token)\s*[:=]\s*[A-Za-z0-9+/_-]{20,}\b/i,
+  /\bgh[pou]_[A-Za-z0-9]{30,}\b/,
+  /\bgithub_pat_[A-Za-z0-9_]{20,}\b/,
+  /\bxox[baprs]-[A-Za-z0-9-]{10,}\b/,
+  /\bAKIA[0-9A-Z]{16}\b/,
 ];
 
 const SENSITIVE_CLAIM_PATTERN =
