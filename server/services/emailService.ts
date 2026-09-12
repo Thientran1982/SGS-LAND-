@@ -446,7 +446,7 @@ async function getSmtpConfig(tenantId: string): Promise<SmtpConfig> {
     return { enabled: false, host: '', port: 587, user: '', password: '' };
   }
 }
-function createTransporter(smtp: SmtpConfig): nodemailer.Transporter {
+function createTransporter(smtp: SmtpConfig): ReturnType<typeof nodemailer.createTransport> {
   return nodemailer.createTransport({
     host: smtp.host,
     port: smtp.port,

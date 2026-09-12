@@ -1,5 +1,10 @@
-import { afterAll, beforeAll, describe, expect, it } from 'vitest';
+import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
 import { Pool } from 'pg';
+
+// Spawning the real backend + Next.js dev server routinely exceeds the global
+// 30s hook budget under load — this integration file carries its own budget.
+vi.setConfig({ testTimeout: 180_000, hookTimeout: 240_000 });
+
 import { randomUUID } from 'node:crypto';
 import { spawn, type ChildProcess } from 'node:child_process';
 import net from 'node:net';

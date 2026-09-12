@@ -94,9 +94,9 @@
     "lucide-react": "^0.575.0",
     "mammoth": "^1.12.0",
     "motion": "^12.38.0",
-    "multer": "^2.1.1",
+    "multer": "^2.3.0",
     "node-fetch": "^3.3.2",
-    "nodemailer": "^9.0.5",
+    "nodemailer": "^10.0.8",
     "openai": "^6.46.0",
     "pdf-parse": "^2.4.5",
     "pdfjs-dist": "^4.10.38",
@@ -111,7 +111,7 @@
     "react-markdown": "^10.1.0",
     "recharts": "^3.8.1",
     "redis": "^5.11.0",
-    "sharp": "^0.35.3",
+    "sharp": "^0.35.4",
     "socket.io": "^4.8.3",
     "socket.io-client": "^4.8.3",
     "stripe": "^22.0.2",
@@ -124,14 +124,15 @@
   },
   "overrides": {
     "lodash": "^4.18.0",
-    "@xmldom/xmldom": ">=0.9.0",
+    "@xmldom/xmldom": ">=0.9.12",
     "protobufjs": ">=7.5.5",
     "picomatch": "^2.3.2",
     "brace-expansion": "^5.0.5",
     "tinyglobby": {
       "picomatch": "^4.0.4"
     },
-    "uuid": "^11.1.1"
+    "uuid": "^11.1.1",
+    "qs": ">=6.16.0"
   },
   "devDependencies": {
     "@playwright/test": "^1.59.1",
