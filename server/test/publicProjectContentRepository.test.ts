@@ -11,6 +11,7 @@ const { query, withTenantContext, withRlsBypass } = vi.hoisted(() => ({
 vi.mock('../db', () => ({ withTenantContext, withRlsBypass }));
 
 import { publicProjectContentRepository } from '../repositories/publicProjectContentRepository';
+import { DEFAULT_TENANT_ID } from '../constants';
 
 describe('public project content repository tenant and publication boundaries', () => {
   beforeEach(() => {
@@ -40,8 +41,11 @@ describe('public project content repository tenant and publication boundaries', 
     expect(withRlsBypass).toHaveBeenCalledOnce();
     expect(query).toHaveBeenCalledWith(
       expect.stringContaining("WHERE status = 'PUBLISHED'"),
-      [100],
+      [100, DEFAULT_TENANT_ID],
     );
+    // Tenant scoping of the RLS-bypassed public query is a security property
+    // introduced in ac3ff172 — keep it pinned alongside the publication filter.
+    expect(String(query.mock.calls[0]?.[0])).toContain('AND tenant_id = $2');
   });
 
   it('scopes list and detail reads to the requested tenant and id', async () => {

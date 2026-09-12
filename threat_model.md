@@ -55,3 +55,27 @@ The platform exposes public lead capture, live chat, valuation, upload, webhook,
 ### Elevation of Privilege
 
 This project has multiple privilege tiers (`VIEWER`, standard users, tenant admins, super-admins, partner roles) and explicit cross-tenant sharing features. The system must enforce authorization on every privileged route and every repository path, preserve tenant context for database access, restrict RLS bypass helpers to tightly scoped use cases, and prevent IDOR, missing role checks, or raw query paths from expanding access beyond the caller’s role or tenant.
+## Agent orchestration trust boundaries (P1 audit, 2026-09-12)
+
+### Brain/CLI delegations run with system trust
+MINH brain delegations (trigger_source `minh*`, `cli*`) execute with system
+trust inside a tenant scope (withTenantContext + RLS). This is intentional:
+the brain is an internal operator, not a user proxy. The RBAC tier table in
+`server/ai/toolPermissions.ts` is enforced at the HTTP boundary:
+
+- `POST /api/live-chat/tools/:toolName` checks `canUseTool(user.role, tool)`
+  and returns the required tier on denial (liveChatAgentRoutes.ts).
+- `runSpecialistTool({ onBehalfOf })` remains the hook for user-attributed
+  delegations. No caller passes it today; any future feature that lets a
+  user command the brain MUST pass `onBehalfOf: { userId, role }` so tier
+  checks apply inside the brain as well.
+
+### Autonomous tool whitelist
+`inspectToolRequest` allows read-only tools plus draft-only write tools
+(task_*, landing_*). Anything irreversible (publish, outreach, deposit,
+knowledge-base refresh) requires approval via `evaluateMarketingApproval`
+or the HIGH_IMPACT approval flag and cannot run autonomously.
+
+### Event queue abuse limits
+Staff-only event endpoints cap synchronous processing (`limit <= 100`) and
+Company Brain document payloads at 64KB to bound request cost.
