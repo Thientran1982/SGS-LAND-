@@ -3,7 +3,7 @@ modules = ["nodejs-20", "web", "python-3.11", "postgresql-16"]
 expertMode = true
 [nix]
 channel = "stable-25_05"
-packages = ["psmisc", "glib", "nspr", "nss", "atk", "at-spi2-atk", "gtk3", "cairo", "pango", "cups", "libdrm", "mesa", "xorg.libXcomposite", "xorg.libXdamage", "xorg.libXfixes", "xorg.libXrandr", "libgbm", "libxkbcommon", "alsa-lib", "nodejs_20"]
+packages = ["psmisc"]
 [workflows]
 runButton = "Project"
 [[workflows.workflow]]
@@ -26,7 +26,7 @@ outputType = "webview"
 
 [[workflows.workflow.tasks]]
 task = "shell.exec"
-args = "fuser -k 5000/tcp 5001/tcp 2>/dev/null; sleep 1; ( while true; do PORT=5001 npm run dev >>/tmp/sgs-backend.log 2>&1; echo "[backend-supervisor] exited $? — restart in 2s" >>/tmp/sgs-backend.log; sleep 2; done ) & BACKEND_PID=$!; trap 'kill $BACKEND_PID 2>/dev/null || true' EXIT INT TERM; cd apps/nextjs && BACKEND_URL=http://localhost:5001 npm run dev -- --hostname 0.0.0.0 --port 5000"
+args = "fuser -k 5000/tcp 5001/tcp 2>/dev/null; sleep 1; PORT=5001 npm run dev & sleep 8 && cd apps/nextjs && BACKEND_URL=http://localhost:5001 npm run build && BACKEND_URL=http://localhost:5001 ./node_modules/.bin/next start --hostname 0.0.0.0 --port 5000"
 waitForPort = 5000
 [[workflows.workflow]]
 name = "typecheck"
@@ -47,53 +47,13 @@ waitForPort = 3001
 outputType = "console"
 
 [[ports]]
-localPort = 3001
-externalPort = 3003
-
-[[ports]]
 localPort = 5000
 externalPort = 80
 
-[[ports]]
-localPort = 5001
-externalPort = 3001
-
-[[ports]]
-localPort = 5011
-externalPort = 5000
-
-[[ports]]
-localPort = 5017
-externalPort = 8000
-
-[[ports]]
-localPort = 5099
-externalPort = 4200
-
-[[ports]]
-localPort = 5100
-externalPort = 6800
-
-[[ports]]
-localPort = 5101
-externalPort = 6000
-
-[[ports]]
-localPort = 5102
-externalPort = 5173
-
-[[ports]]
-localPort = 23636
-externalPort = 3000
-
-[[ports]]
-localPort = 23637
-externalPort = 3002
-
 [deployment]
 deploymentTarget = "vm"
-run = ["npm", "run", "start:production"]
-build = ["bash", "-c", "PUBLISH_BUILD=1 bash scripts/build-production.sh"]
+run = ["sh", "-c", "PORT_BACKEND=5001 PORT=5000 bash scripts/supervisor.sh"]
+build = ["sh", "-c", "npm run build && cd apps/nextjs && npm install && BACKEND_URL=http://localhost:5001 npm run build"]
 [userenv]
 [userenv.shared]
 COMMISSION_RATE = "0.02"
@@ -107,16 +67,10 @@ LANGGRAPH_ORCHESTRATION_APPROVED = "true"
 [userenv.development]
 NODE_ENV = "development"
 PORT = "5000"
-QSTASH_URL = "https://qstash-us-east-1.upstash.io"
-APP_URL = "https://sgsland.vn"
-PUBLIC_URL = "https://sgsland.vn"
 [userenv.production]
 NODE_ENV = "production"
 PORT = "5000"
 APP_URL = "https://sgsland.vn"
-QSTASH_URL = "https://qstash-us-east-1.upstash.io"
-PROD_DOMAIN = "sgsland.vn"
-PUBLIC_URL = "https://sgsland.vn"
 [objectStorage]
 defaultBucketID = "replit-objstore-b2bda06e-8535-430b-b2ac-45839c6a59c1"
 [postMerge]
