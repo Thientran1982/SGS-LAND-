@@ -1,3 +1,13 @@
+/**
+ * LEGACY ORCHESTRATION ENGINE — feature frozen, do not extend (P2-1).
+ * The only sanctioned consumer is server/ai.ts (legacy ai.ts path, which backs
+ * /api/admin/agent-skills, /api/agents tool routes and the chat-follow-up
+ * cron). All new orchestration belongs to the LangGraph adapter
+ * (server/ai/minhGraphAdapter.ts) behind the orchestrationMode gate
+ * (server/services/orchestrationMode.ts, default: typescript).
+ * Retirement plan: docs/graph-engine-consolidation.md
+ * Boundary guard: server/test/architectureBoundaries.test.ts
+ */
 import { logger } from '../middleware/logger';
 
 export type NodeFunction<T> = (state: T) => Promise<Partial<T>>;

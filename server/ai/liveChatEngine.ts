@@ -28,6 +28,12 @@ import { recordAiUsage } from '../services/aiUsageService';
 import { agentAuditRepository } from '../repositories/agentAuditRepository';
 import { createHash, randomUUID } from 'crypto';
 import { inspectToolRequest } from './agentGuardrails';
+import { classifyLiveChatIntent, hasLandingTargetText, isLandingBuilderRequest, normalizeIntentText } from './liveChatIntent';
+
+// P2-2 slice 1: intent classification implementation moved to
+// ./liveChatIntent — re-exported so routes and tests keep importing from
+// liveChatEngine without behaviour change.
+export { classifyLiveChatIntent, isLandingBuilderRequest };
 import { runDurableAgentExecution } from '../services/durableAgentExecutionService';
 import {
     sharedCacheDeleteByPrefix,
@@ -1260,34 +1266,6 @@ async function handle_get_broker_stats(args: Record<string, any>): Promise<any> 
 // ────────────────────────────────────────────────────────────────────────────
 // TOOL 20: handle_live_chat (NEW)
 // ────────────────────────────────────────────────────────────────────────────
-function normalizeIntentText(message: string): string {
-    return String(message || '')
-        .toLowerCase()
-        .normalize('NFD')
-        .replace(/[\u0300-\u036f]/g, '');
-}
-
-function hasLandingTargetText(normalized: string): boolean {
-    return /\b(?:landing|ladning|lading|landng)(?:\s+(?:page|builder))?\b/.test(normalized)
-        || /\b(?:page|trang\s+(?:landing|ladning|lading|landng|dich|gioi thieu))\b/.test(normalized);
-}
-
-/**
- * A landing brief commonly contains project and price vocabulary. Those
- * details describe the page and must not win intent classification over an
- * explicit request to create the page.
- */
-export function isLandingBuilderRequest(message: string): boolean {
-    const normalized = normalizeIntentText(message);
-    const hasLandingTarget = hasLandingTargetText(normalized);
-    // Include both direct commands ("dùng/tạo landing") and natural
-    // intention phrases ("muốn dùng/tạo landing"). The target is still
-    // mandatory so a generic "muốn hỏi về dự án" cannot enter the builder.
-    const hasCreateAction = /\b(?:dung|su dung|tao|xay|lam|thiet ke|build|create|generate|make|design|craft|launch)\b/.test(normalized)
-        || /\b(?:muon|can|want|need|would like)\s+(?:co|a|an|the|mot)\b/.test(normalized);
-    return hasLandingTarget && hasCreateAction;
-}
-
 type LandingTelemetryLanguage = 'vi' | 'en' | 'mixed' | 'unknown';
 
 type LandingTelemetrySnapshot = {
@@ -1438,33 +1416,6 @@ export function parseRentText(text: string): number | null {
   return rent ? Math.round(parseVnGroupText(rent[1]) * 1_000_000) : null;
 }
 
-export function classifyLiveChatIntent(message: string): { intent: string; suggestedTool: string } {
-    const msg = String(message || '').trim();
-    if (isLandingBuilderRequest(msg)) {
-        return { intent: 'LANDING', suggestedTool: 'landing_builder' };
-    }
-
-    const lower = msg.toLowerCase();
-    const intentMap: Array<{ keywords: Array<string | RegExp>; intent: string; suggestedTool: string }> = [
-        { keywords: [/gi[aá][^.?!]{0,30}bao\s*nhi[êe]u/i, /bao\s*nhi[êe]u[^.?!]{0,30}gi[aá]/i, 'định giá', 'valuation', 'trị giá', 'bao nhiêu tiền'], intent: 'VALUATION',       suggestedTool: 'get_valuation' },
-        { keywords: ['tìm', 'search', 'căn hộ', 'nhà', 'đất', 'còn hàng'],         intent: 'SEARCH',          suggestedTool: 'search_listings' },
-        { keywords: ['pháp lý', 'sổ', 'hồng', 'đỏ', 'vi bằng', 'hđmb'],           intent: 'LEGAL',           suggestedTool: 'legal_qa' },
-        { keywords: ['quy hoạch', 'planning', 'xây dựng'],                          intent: 'PLANNING',        suggestedTool: 'check_planning' },
-        { keywords: ['vay', 'lãi suất', 'tín dụng', 'ngân hàng'],                   intent: 'FINANCE',         suggestedTool: 'get_platform_knowledge' },
-        { keywords: ['dự án', 'project', 'aqua city', 'vinhomes', 'izumi'],         intent: 'PROJECT',         suggestedTool: 'get_project_info' },
-        { keywords: ['long thành', 'sân bay', 'airport'],                            intent: 'LONGTHANH',       suggestedTool: 'get_longthanh_market' },
-        { keywords: ['đầu tư', 'cho thuê', 'yield', 'roi', 'lợi nhuận'],            intent: 'INVESTMENT',      suggestedTool: 'analyze_investment' },
-        { keywords: ['landing', 'trang landing', 'landing page'], intent: 'LANDING', suggestedTool: 'landing_builder' },
-        { keywords: ['chấm điểm', 'lead', 'tiềm năng', 'score lead'],                    intent: 'LEAD_SCORING',    suggestedTool: 'score_lead' },
-    ];
-
-    for (const { keywords, intent, suggestedTool } of intentMap) {
-        if (keywords.some(keyword => typeof keyword === 'string' ? lower.includes(keyword) : keyword.test(msg))) {
-            return { intent, suggestedTool };
-        }
-    }
-    return { intent: 'GENERAL', suggestedTool: 'get_platform_knowledge' };
-}
 
 async function handle_live_chat_core(args: Record<string, any>): Promise<any> {
     const { tenantId, message, sessionId, context = {} } = args;
