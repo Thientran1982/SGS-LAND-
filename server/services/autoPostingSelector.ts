@@ -109,11 +109,12 @@ async function eligibleCandidates(
               l.images AS images,
               l.updated_at AS updated_at,
               l.created_at AS created_at,
+                CASE WHEN p.id IS NOT NULL THEN 0 ELSE 1 END AS priority,
               (
                 SELECT MAX(t.published_at)
                   FROM social_publications sp
                   JOIN social_publication_targets t ON t.publication_id = sp.id
-                 WHERE sp.tenant_id::uuid = l.tenant_id
+                 WHERE sp.tenant_id = l.tenant_id::text
                    AND sp.listing_id = l.id
                    AND t.platform = 'FACEBOOK_PAGE'
                    AND t.status = 'PUBLISHED'
@@ -144,11 +145,12 @@ async function eligibleCandidates(
               p.metadata AS images,
               p.updated_at AS updated_at,
               p.created_at AS created_at,
+                0 AS priority,
               (
                 SELECT MAX(t.published_at)
                   FROM social_publications sp
                   JOIN social_publication_targets t ON t.publication_id = sp.id
-                 WHERE sp.tenant_id::uuid = p.tenant_id
+                 WHERE sp.tenant_id = p.tenant_id::text
                    AND sp.project_id = p.id
                    AND t.platform = 'FACEBOOK_PAGE'
                    AND t.status = 'PUBLISHED'
@@ -169,7 +171,8 @@ async function eligibleCandidates(
      )
      SELECT *
        FROM candidate_rows
-      ORDER BY last_facebook_published_at ASC NULLS FIRST,
+      ORDER BY priority ASC,
+                 last_facebook_published_at ASC NULLS FIRST,
                updated_at ASC NULLS FIRST,
                created_at ASC NULLS FIRST,
                source_type ASC,

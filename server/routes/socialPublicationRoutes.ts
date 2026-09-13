@@ -238,7 +238,7 @@ export function createSocialPublicationRouter(
         return res.status(400).json({ error: `Facebook hiện chỉ hỗ trợ tối đa ${MAX_FACEBOOK_IMAGES} ảnh trong một album` });
       }
       const requestedCaption = normalizePublicationCaption(req.body?.caption);
-      const caption = requestedCaption || buildPlatformContent(snapshot, platforms[0], imageUrls).text;
+      const caption = requestedCaption || buildPlatformContent(snapshot, 'FACEBOOK_PAGE', imageUrls).text;
       const contentSnapshot = {
         ...snapshot,
         caption,

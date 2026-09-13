@@ -261,7 +261,7 @@ export class AuditRepository extends BaseRepository {
       const result = await client.query(
         `SELECT al.*, u.name as actor_name
          FROM audit_logs al
-         LEFT JOIN users u ON al.actor_id = u.id::text
+         LEFT JOIN users u ON al.actor_id = u.id
          ${whereClause}
          ORDER BY al.timestamp DESC
          LIMIT $${paramIndex} OFFSET $${paramIndex + 1}`,

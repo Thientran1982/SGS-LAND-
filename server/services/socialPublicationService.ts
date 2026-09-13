@@ -262,7 +262,40 @@ export function buildSocialPlatformContent(
     const description = snapshot.description ? `\n\n${snapshot.description}` : '';
     const linkLine = snapshot.publicUrl ? `\n\nXem chi tiết: ${snapshot.publicUrl}` : '';
     const hashtags = ['#SGSLAND', '#duanbatdongsan'];
-    const text = [`Dự án ${snapshot.title}`, ...facts, description, linkLine]
+    const heading = `Dự án ${snapshot.title}`;
+    const igHashtags = ['#SGSLAND', '#duanbatdongsan', '#batdongsan', '#realestate'];
+    if (platform === 'INSTAGRAM') {
+      const igText = [heading, ...facts, description]
+        .filter(Boolean)
+        .join('\n')
+        .replace(/\n{3,}/g, '\n\n')
+        .concat(`\n\n${igHashtags.join(' ')}`)
+        .trim();
+      return {
+        platform,
+        title: snapshot.title,
+        text: igText,
+        link: null,
+        imageUrls: normalizePublicationImages(snapshot.images),
+        hashtags: igHashtags,
+      };
+    }
+    if (platform === 'ZALO_BROADCAST') {
+      const zaloText = [heading, ...facts.slice(0, 2), linkLine]
+        .filter(Boolean)
+        .join('\n')
+        .replace(/\n{3,}/g, '\n\n')
+        .trim();
+      return {
+        platform,
+        title: snapshot.title,
+        text: zaloText,
+        link: snapshot.publicUrl,
+        imageUrls: normalizePublicationImages(snapshot.images),
+        hashtags: [],
+      };
+    }
+    const text = [heading, ...facts, description, linkLine]
       .filter(Boolean)
       .join('\n')
       .replace(/\n{3,}/g, '\n\n')
@@ -295,12 +328,44 @@ export function buildSocialPlatformContent(
   const link = snapshot.publicUrl;
   const linkLine = link ? `\n\nXem chi tiết: ${link}` : '';
   const hashtags = ['#SGSLAND', '#batdongsan'];
-  const text = [snapshot.title, ...facts, description, linkLine]
-    .filter(Boolean)
-    .join('\n')
-    .replace(/\n{3,}/g, '\n\n')
-    .concat(`\n\n${hashtags.join(' ')}`)
-    .trim();
+  const igHashtagsListing = ['#SGSLAND', '#batdongsan', '#realestate', '#nhadat'];
+    if (platform === 'INSTAGRAM') {
+      const igText = [snapshot.title, ...facts, description]
+        .filter(Boolean)
+        .join('\n')
+        .replace(/\n{3,}/g, '\n\n')
+        .concat(`\n\n${igHashtagsListing.join(' ')}`)
+        .trim();
+      return {
+        platform,
+        title: snapshot.title,
+        text: igText,
+        link: null,
+        imageUrls: normalizePublicationImages((snapshot as any).images),
+        hashtags: igHashtagsListing,
+      };
+    }
+    if (platform === 'ZALO_BROADCAST') {
+      const zaloText = [snapshot.title, ...facts.slice(0, 2), linkLine]
+        .filter(Boolean)
+        .join('\n')
+        .replace(/\n{3,}/g, '\n\n')
+        .trim();
+      return {
+        platform,
+        title: snapshot.title,
+        text: zaloText,
+        link,
+        imageUrls: normalizePublicationImages((snapshot as any).images),
+        hashtags: [],
+      };
+    }
+    const text = [snapshot.title, ...facts, description, linkLine]
+      .filter(Boolean)
+      .join('\n')
+      .replace(/\n{3,}/g, '\n\n')
+      .concat(`\n\n${hashtags.join(' ')}`)
+      .trim();
 
   return {
     platform,
@@ -323,9 +388,13 @@ export function buildPlatformContent(
   imageUrls: string[],
 ): SocialPlatformContent {
   const content = buildSocialPlatformContent(snapshot, platform);
+  // The operator-approved caption is captured from the Facebook preview only
+  // (see socialPublicationRoutes.ts draft creation). It must not overwrite the
+  // platform-specific text generated above for Instagram/Zalo/others.
+  const text = platform === 'FACEBOOK_PAGE' ? (snapshot.caption?.trim() || content.text) : content.text;
   return {
     ...content,
-    text: snapshot.caption?.trim() || content.text,
+    text,
     imageUrls: normalizePublicationImages(imageUrls).slice(0, MAX_SOCIAL_PUBLICATION_IMAGES),
   };
 }

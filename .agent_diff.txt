@@ -1,0 +1,180 @@
+diff --git a/server/repositories/auditRepository.ts b/server/repositories/auditRepository.ts
+index d338819f..b5f9327a 100644
+--- a/server/repositories/auditRepository.ts
++++ b/server/repositories/auditRepository.ts
+@@ -261,7 +261,7 @@ export class AuditRepository extends BaseRepository {
+       const result = await client.query(
+         `SELECT al.*, u.name as actor_name
+          FROM audit_logs al
+-         LEFT JOIN users u ON al.actor_id = u.id::text
++         LEFT JOIN users u ON al.actor_id = u.id
+          ${whereClause}
+          ORDER BY al.timestamp DESC
+          LIMIT $${paramIndex} OFFSET $${paramIndex + 1}`,
+diff --git a/server/routes/socialPublicationRoutes.ts b/server/routes/socialPublicationRoutes.ts
+index 16dcf8e7..eee76ad4 100644
+--- a/server/routes/socialPublicationRoutes.ts
++++ b/server/routes/socialPublicationRoutes.ts
+@@ -238,7 +238,7 @@ export function createSocialPublicationRouter(
+         return res.status(400).json({ error: `Facebook hiện chỉ hỗ trợ tối đa ${MAX_FACEBOOK_IMAGES} ảnh trong một album` });
+       }
+       const requestedCaption = normalizePublicationCaption(req.body?.caption);
+-      const caption = requestedCaption || buildPlatformContent(snapshot, platforms[0], imageUrls).text;
++      const caption = requestedCaption || buildPlatformContent(snapshot, 'FACEBOOK_PAGE', imageUrls).text;
+       const contentSnapshot = {
+         ...snapshot,
+         caption,
+diff --git a/server/services/autoPostingSelector.ts b/server/services/autoPostingSelector.ts
+index 409781bb..a4a042dd 100644
+--- a/server/services/autoPostingSelector.ts
++++ b/server/services/autoPostingSelector.ts
+@@ -109,11 +109,12 @@ async function eligibleCandidates(
+               l.images AS images,
+               l.updated_at AS updated_at,
+               l.created_at AS created_at,
++                CASE WHEN p.id IS NOT NULL THEN 0 ELSE 1 END AS priority,
+               (
+                 SELECT MAX(t.published_at)
+                   FROM social_publications sp
+                   JOIN social_publication_targets t ON t.publication_id = sp.id
+-                 WHERE sp.tenant_id::uuid = l.tenant_id
++                 WHERE sp.tenant_id = l.tenant_id::text
+                    AND sp.listing_id = l.id
+                    AND t.platform = 'FACEBOOK_PAGE'
+                    AND t.status = 'PUBLISHED'
+@@ -144,11 +145,12 @@ async function eligibleCandidates(
+               p.metadata AS images,
+               p.updated_at AS updated_at,
+               p.created_at AS created_at,
++                0 AS priority,
+               (
+                 SELECT MAX(t.published_at)
+                   FROM social_publications sp
+                   JOIN social_publication_targets t ON t.publication_id = sp.id
+-                 WHERE sp.tenant_id::uuid = p.tenant_id
++                 WHERE sp.tenant_id = p.tenant_id::text
+                    AND sp.project_id = p.id
+                    AND t.platform = 'FACEBOOK_PAGE'
+                    AND t.status = 'PUBLISHED'
+@@ -169,7 +171,8 @@ async function eligibleCandidates(
+      )
+      SELECT *
+        FROM candidate_rows
+-      ORDER BY last_facebook_published_at ASC NULLS FIRST,
++      ORDER BY priority ASC,
++                 last_facebook_published_at ASC NULLS FIRST,
+                updated_at ASC NULLS FIRST,
+                created_at ASC NULLS FIRST,
+                source_type ASC,
+diff --git a/server/services/socialPublicationService.ts b/server/services/socialPublicationService.ts
+index a16d02b9..d038c89c 100644
+--- a/server/services/socialPublicationService.ts
++++ b/server/services/socialPublicationService.ts
+@@ -262,7 +262,40 @@ export function buildSocialPlatformContent(
+     const description = snapshot.description ? `\n\n${snapshot.description}` : '';
+     const linkLine = snapshot.publicUrl ? `\n\nXem chi tiết: ${snapshot.publicUrl}` : '';
+     const hashtags = ['#SGSLAND', '#duanbatdongsan'];
+-    const text = [`Dự án ${snapshot.title}`, ...facts, description, linkLine]
++    const heading = `Dự án ${snapshot.title}`;
++    const igHashtags = ['#SGSLAND', '#duanbatdongsan', '#batdongsan', '#realestate'];
++    if (platform === 'INSTAGRAM') {
++      const igText = [heading, ...facts, description]
++        .filter(Boolean)
++        .join('\n')
++        .replace(/\n{3,}/g, '\n\n')
++        .concat(`\n\n${igHashtags.join(' ')}`)
++        .trim();
++      return {
++        platform,
++        title: snapshot.title,
++        text: igText,
++        link: null,
++        imageUrls: normalizePublicationImages(snapshot.images),
++        hashtags: igHashtags,
++      };
++    }
++    if (platform === 'ZALO_BROADCAST') {
++      const zaloText = [heading, ...facts.slice(0, 2), linkLine]
++        .filter(Boolean)
++        .join('\n')
++        .replace(/\n{3,}/g, '\n\n')
++        .trim();
++      return {
++        platform,
++        title: snapshot.title,
++        text: zaloText,
++        link: snapshot.publicUrl,
++        imageUrls: normalizePublicationImages(snapshot.images),
++        hashtags: [],
++      };
++    }
++    const text = [heading, ...facts, description, linkLine]
+       .filter(Boolean)
+       .join('\n')
+       .replace(/\n{3,}/g, '\n\n')
+@@ -295,12 +328,44 @@ export function buildSocialPlatformContent(
+   const link = snapshot.publicUrl;
+   const linkLine = link ? `\n\nXem chi tiết: ${link}` : '';
+   const hashtags = ['#SGSLAND', '#batdongsan'];
+-  const text = [snapshot.title, ...facts, description, linkLine]
+-    .filter(Boolean)
+-    .join('\n')
+-    .replace(/\n{3,}/g, '\n\n')
+-    .concat(`\n\n${hashtags.join(' ')}`)
+-    .trim();
++  const igHashtagsListing = ['#SGSLAND', '#batdongsan', '#realestate', '#nhadat'];
++    if (platform === 'INSTAGRAM') {
++      const igText = [snapshot.title, ...facts, description]
++        .filter(Boolean)
++        .join('\n')
++        .replace(/\n{3,}/g, '\n\n')
++        .concat(`\n\n${igHashtagsListing.join(' ')}`)
++        .trim();
++      return {
++        platform,
++        title: snapshot.title,
++        text: igText,
++        link: null,
++        imageUrls: normalizePublicationImages((snapshot as any).images),
++        hashtags: igHashtagsListing,
++      };
++    }
++    if (platform === 'ZALO_BROADCAST') {
++      const zaloText = [snapshot.title, ...facts.slice(0, 2), linkLine]
++        .filter(Boolean)
++        .join('\n')
++        .replace(/\n{3,}/g, '\n\n')
++        .trim();
++      return {
++        platform,
++        title: snapshot.title,
++        text: zaloText,
++        link,
++        imageUrls: normalizePublicationImages((snapshot as any).images),
++        hashtags: [],
++      };
++    }
++    const text = [snapshot.title, ...facts, description, linkLine]
++      .filter(Boolean)
++      .join('\n')
++      .replace(/\n{3,}/g, '\n\n')
++      .concat(`\n\n${hashtags.join(' ')}`)
++      .trim();
+ 
+   return {
+     platform,
+@@ -323,9 +388,13 @@ export function buildPlatformContent(
+   imageUrls: string[],
+ ): SocialPlatformContent {
+   const content = buildSocialPlatformContent(snapshot, platform);
++  // The operator-approved caption is captured from the Facebook preview only
++  // (see socialPublicationRoutes.ts draft creation). It must not overwrite the
++  // platform-specific text generated above for Instagram/Zalo/others.
++  const text = platform === 'FACEBOOK_PAGE' ? (snapshot.caption?.trim() || content.text) : content.text;
+   return {
+     ...content,
+-    text: snapshot.caption?.trim() || content.text,
++    text,
+     imageUrls: normalizePublicationImages(imageUrls).slice(0, MAX_SOCIAL_PUBLICATION_IMAGES),
+   };
+ }
