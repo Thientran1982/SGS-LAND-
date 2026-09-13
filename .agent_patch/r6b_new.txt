@@ -1,0 +1,1 @@
+  return { settings, todayRun, todayRuns, postsCompletedToday, lastRun, backfillRequests, warning };

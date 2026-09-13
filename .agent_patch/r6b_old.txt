@@ -1,0 +1,1 @@
+  return { settings, todayRun, lastRun, backfillRequests, warning };

@@ -1,0 +1,2 @@
+        title: 'Mt knh ng bi ang kt  trng thi cha sn sng',
+        body: `Nn tng ${row.platform} ca publication ${row.publication_id} vn NOT_READY t ${createdAtIso}, qu ${STALE_NOT_READY_HOURS} gi. Vui lng kim tra kt ni/quyn ng bi.`,

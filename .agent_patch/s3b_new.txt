@@ -1,0 +1,6 @@
+  } else {
+    run = await claimMarketingFacebookDailyRun(pool, tenantId, logicalDayKey, slotIndex);
+    if (!run) {
+      return { created: 0, published: 0, skipped: 0, reason: 'DAILY_RUN_ALREADY_CLAIMED' };
+    }
+  }

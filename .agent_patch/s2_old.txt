@@ -1,0 +1,10 @@
+function normalizeSettings(settings: AutoPostingSettings): AutoPostingSettings {
+  const platforms = normalizeSocialPlatforms(settings.platforms)
+    .filter(platform => platform === FACEBOOK_PLATFORM || platform === ZALO_PLATFORM || platform === INSTAGRAM_PLATFORM);
+  return {
+    ...settings,
+    postsPerDay: 1,
+    timeWindows: [{ start: '18:30', end: '23:59' }],
+    platforms: platforms.length ? platforms : [FACEBOOK_PLATFORM],
+  };
+}

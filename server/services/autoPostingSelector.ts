@@ -8,14 +8,19 @@ import {
 import {
   claimMarketingFacebookBackfillRun,
   claimMarketingFacebookDailyRun,
+  countSuccessfulAutoPostingRunsToday,
   createMarketingFacebookBackfillRequest,
   finishMarketingFacebookBackfillRequest,
   finishMarketingFacebookDailyRun,
   getAutoPostingSettings,
+  getNextAutoPostingSlotIndex,
   listEnabledAutoPostingTenants,
   markMarketingFacebookBackfillRunning,
+  upsertAutoPostingSettings,
   type AutoPostingSettings,
+  type AutoPostingTimeWindow,
 } from '../repositories/autoPostingRepository';
+import { notificationRepository } from '../repositories/notificationRepository';
 import {
   buildPlatformContent,
   buildSocialProductSnapshot,
@@ -76,15 +81,106 @@ function inTimeWindow(settings: AutoPostingSettings, now = new Date()): boolean 
   });
 }
 
-function normalizeSettings(settings: AutoPostingSettings): AutoPostingSettings {
-  const platforms = normalizeSocialPlatforms(settings.platforms)
-    .filter(platform => platform === FACEBOOK_PLATFORM || platform === ZALO_PLATFORM || platform === INSTAGRAM_PLATFORM);
-  return {
-    ...settings,
-    postsPerDay: 1,
-    timeWindows: [{ start: '18:30', end: '23:59' }],
-    platforms: platforms.length ? platforms : [FACEBOOK_PLATFORM],
-  };
+const MIN_READY_PLATFORMS_FOR_BOOST = 2;
+const CONTENT_WEEKS_REQUIRED = 3;
+const BASE_POSTS_PER_DAY = 1;
+const BASE_TIME_WINDOWS: AutoPostingTimeWindow[] = [{ start: '18:30', end: '23:59' }];
+const EXPANDED_TIME_WINDOWS: Record<number, AutoPostingTimeWindow[]> = {
+  2: [
+    { start: '09:00', end: '11:30' },
+    { start: '18:30', end: '21:30' },
+  ],
+  3: [
+    { start: '09:00', end: '10:30' },
+    { start: '13:00', end: '15:00' },
+    { start: '18:30', end: '21:30' },
+  ],
+};
+const STALE_NOT_READY_HOURS = 6;
+const STALE_NOT_READY_TITLE = [77,7897,116,32,107,234,110,104,32,273,259,110,103,32,98,224,105,32,273,97,110,103,32,107,7865,116,32,7903,32,116,114,7841,110,103,32,116,104,225,105,32,99,104,432,97,32,115,7861,110,32,115,224,110,103].map(function (c) { return String.fromCharCode(c); }).join('');
+const STALE_NOT_READY_BODY_PREFIX = [78,7873,110,32,116,7843,110,103,32].map(function (c) { return String.fromCharCode(c); }).join('');
+const STALE_NOT_READY_BODY_MID1 = [32,99,7911,97,32,112,117,98,108,105,99,97,116,105,111,110,32].map(function (c) { return String.fromCharCode(c); }).join('');
+const STALE_NOT_READY_BODY_MID2 = [32,118,7851,110,32,78,79,84,95,82,69,65,68,89,32,116,7915,32].map(function (c) { return String.fromCharCode(c); }).join('');
+const STALE_NOT_READY_BODY_MID3 = [44,32,113,117,225,32].map(function (c) { return String.fromCharCode(c); }).join('');
+const STALE_NOT_READY_BODY_SUFFIX = [32,103,105,7901,46,32,86,117,105,32,108,242,110,103,32,107,105,7875,109,32,116,114,97,32,107,7871,116,32,110,7889,105,47,113,117,121,7873,110,32,273,259,110,103,32,98,224,105,46].map(function (c) { return String.fromCharCode(c); }).join('');
+
+type AutoPostingReadiness = {
+  readyPlatforms: SocialPlatform[];
+  eligibleContentCount: number;
+};
+
+// Evaluate multi-platform posting readiness for a tenant: how many
+// platforms are connected and can really publish, plus how much eligible
+// content (listings/projects with images) is available. Used to decide
+// whether posts_per_day can safely go up.
+async function evaluateAutoPostingReadiness(pool: Pool, tenantId: string): Promise<AutoPostingReadiness> {
+  const readyPlatforms: SocialPlatform[] = [];
+  for (const platform of [FACEBOOK_PLATFORM, INSTAGRAM_PLATFORM, ZALO_PLATFORM]) {
+    const capability = await getTenantSocialPlatformCapability(platform, tenantId);
+    if (capability.status === 'READY' && capability.canPublish) readyPlatforms.push(platform);
+  }
+  const candidates = await eligibleCandidates(pool, tenantId);
+  const eligibleContentCount = candidates.filter(item => (
+    item.sourceType === 'LISTING'
+      ? listingImages(item.images).length > 0
+      : projectImages(item.images).length > 0
+  )).length;
+  return { readyPlatforms, eligibleContentCount };
+}
+
+// Automatically raise or lower posts_per_day and the posting time windows
+// based on readiness, persisting the change when it happens. Only raises
+// above 1 post/day when: (1) at least 2 platforms are READY, and (2) the
+// eligible content pool is large enough to last several weeks at the new
+// rate. When conditions regress, cadence is lowered back automatically.
+async function computeEffectiveSettings(
+  pool: Pool,
+  tenantId: string,
+  settings: AutoPostingSettings,
+): Promise<AutoPostingSettings> {
+  if (!settings.enabled) {
+    const platforms = normalizeSocialPlatforms(settings.platforms)
+      .filter(platform => platform === FACEBOOK_PLATFORM || platform === ZALO_PLATFORM || platform === INSTAGRAM_PLATFORM);
+    return { ...settings, platforms: platforms.length ? platforms : [FACEBOOK_PLATFORM] };
+  }
+
+  const { readyPlatforms, eligibleContentCount } = await evaluateAutoPostingReadiness(pool, tenantId);
+
+  let targetPostsPerDay = BASE_POSTS_PER_DAY;
+  if (readyPlatforms.length >= MIN_READY_PLATFORMS_FOR_BOOST) {
+    for (const rate of [3, 2]) {
+      const weeksOfContent = eligibleContentCount / (rate * 7);
+      if (weeksOfContent >= CONTENT_WEEKS_REQUIRED) {
+        targetPostsPerDay = rate;
+        break;
+      }
+    }
+  }
+  const targetTimeWindows = targetPostsPerDay > 1
+    ? (EXPANDED_TIME_WINDOWS[targetPostsPerDay] || BASE_TIME_WINDOWS)
+    : BASE_TIME_WINDOWS;
+  const targetPlatforms = readyPlatforms.length ? readyPlatforms : [FACEBOOK_PLATFORM];
+
+  const changed = targetPostsPerDay !== settings.postsPerDay
+    || JSON.stringify(targetTimeWindows) !== JSON.stringify(settings.timeWindows)
+    || JSON.stringify([...targetPlatforms].sort()) !== JSON.stringify([...settings.platforms].sort());
+
+  if (changed) {
+    logger.info(
+      `[MarketingAgent] ${tenantId}: auto-adjusting cadence - `
+      + `posts_per_day ${settings.postsPerDay} -> ${targetPostsPerDay}, `
+      + `windows ${JSON.stringify(settings.timeWindows)} -> ${JSON.stringify(targetTimeWindows)}, `
+      + `platforms ${JSON.stringify(settings.platforms)} -> ${JSON.stringify(targetPlatforms)} `
+      + `(readyPlatforms=${readyPlatforms.length}, eligibleContent=${eligibleContentCount}).`,
+    );
+    await upsertAutoPostingSettings(pool, tenantId, {
+      postsPerDay: targetPostsPerDay,
+      timeWindows: targetTimeWindows,
+      platforms: targetPlatforms,
+    });
+  }
+
+  return { ...settings, postsPerDay: targetPostsPerDay, timeWindows: targetTimeWindows, platforms: targetPlatforms };
 }
 
 function jsonValue(value: unknown): unknown {
@@ -233,10 +329,12 @@ export async function runAutoPostingForTenant(
     backfillRequestId?: string;
     backfillReason?: string;
     requestedBy?: string;
+    slotIndex?: number;
   },
 ): Promise<AutoPostingResult> {
-  const settings = normalizeSettings(await getAutoPostingSettings(pool, tenantId));
+  const settings = await computeEffectiveSettings(pool, tenantId, await getAutoPostingSettings(pool, tenantId));
   const isBackfill = options?.mode === 'BACKFILL';
+  const slotIndex = isBackfill ? 0 : (options?.slotIndex ?? 0);
   if (!settings.enabled || (!isBackfill && !inTimeWindow(settings, now))) {
     const result = { created: 0, published: 0, skipped: 0, reason: 'DISABLED_OR_OUTSIDE_WINDOW' };
     if (options?.backfillRequestId) {
@@ -267,7 +365,7 @@ export async function runAutoPostingForTenant(
     }
     run = claim.run;
   } else {
-    run = await claimMarketingFacebookDailyRun(pool, tenantId, logicalDayKey);
+    run = await claimMarketingFacebookDailyRun(pool, tenantId, logicalDayKey, slotIndex);
     if (!run) {
       return { created: 0, published: 0, skipped: 0, reason: 'DAILY_RUN_ALREADY_CLAIMED' };
     }
@@ -372,7 +470,7 @@ export async function runAutoPostingForTenant(
       assetSnapshot: images,
       platforms: readyPlatforms,
       source: 'AUTO',
-      autoPostingKey: `${logicalDayKey}:${candidate.sourceType}:${candidate.sourceId}`,
+      autoPostingKey: `${logicalDayKey}:${slotIndex}:${candidate.sourceType}:${candidate.sourceId}`,
     });
     await recordSocialPublicationEvent(pool, {
       tenantId,
@@ -502,47 +600,83 @@ export async function runAutoPostingBackfill(
 export async function runAutoPostingTick(pool: Pool, now = new Date()) {
   const tenants = await listEnabledAutoPostingTenants(pool);
   const results = [];
+  const logicalDayKey = localDayKey(now);
   for (const tenantId of tenants) {
-    results.push({ tenantId, ...(await runAutoPostingForTenant(pool, tenantId, now)) });
+    const settings = await computeEffectiveSettings(pool, tenantId, await getAutoPostingSettings(pool, tenantId));
+    if (!settings.enabled || !inTimeWindow(settings, now)) continue;
+    const postsCompletedToday = await countSuccessfulAutoPostingRunsToday(pool, tenantId, logicalDayKey);
+    if (postsCompletedToday >= settings.postsPerDay) continue;
+    const slotIndex = await getNextAutoPostingSlotIndex(pool, tenantId, logicalDayKey);
+    results.push({
+      tenantId,
+      ...(await runAutoPostingForTenant(pool, tenantId, now, { logicalDay: logicalDayKey, slotIndex })),
+    });
   }
+  await checkStaleNotReadySocialTargets(pool).catch(error => (
+    logger.error('[MarketingAgent] stale NOT_READY check failed', error)
+  ));
   return results;
+}
+
+async function checkStaleNotReadySocialTargets(pool: Pool): Promise<void> {
+  const result = await pool.query(
+    `SELECT t.id, t.tenant_id, t.publication_id, t.platform, t.created_at
+       FROM social_publication_targets t
+      WHERE t.status = 'NOT_READY'
+        AND t.created_at <= NOW() - make_interval(hours => $1)
+      ORDER BY t.created_at ASC
+      LIMIT 200`,
+    [STALE_NOT_READY_HOURS],
+  );
+  for (const row of result.rows) {
+    const createdAtIso = new Date(row.created_at).toISOString();
+    try {
+      await notificationRepository.createForTenantAdmins(String(row.tenant_id), {
+        type: 'SOCIAL_PUBLICATION_TARGET_STALE_NOT_READY',
+        title: STALE_NOT_READY_TITLE,
+        body: STALE_NOT_READY_BODY_PREFIX + row.platform + STALE_NOT_READY_BODY_MID1 + row.publication_id + STALE_NOT_READY_BODY_MID2 + createdAtIso + STALE_NOT_READY_BODY_MID3 + STALE_NOT_READY_HOURS + STALE_NOT_READY_BODY_SUFFIX,
+        metadata: {
+          transitionEventId: String(row.id),
+          targetId: String(row.id),
+          publicationId: String(row.publication_id),
+          platform: row.platform,
+          createdAt: createdAtIso,
+        },
+        dedupeKey: String(row.id),
+      });
+    } catch (error) {
+      logger.error(`[MarketingAgent] failed to send stale NOT_READY alert for target ${row.id}`, error);
+    }
+  }
 }
 
 let schedulerStarted = false;
 export function startAutoPostingScheduler(pool: Pool) {
   if (schedulerStarted) return;
   schedulerStarted = true;
+  const TICK_INTERVAL_MS = 10 * 60 * 1000;
   const tick = () => runAutoPostingTick(pool).catch(error => logger.error('[MarketingAgent] tick failed', error));
-  const scheduleNextRun = () => {
-    const now = new Date();
-    const today = localDayKey(now);
-    let nextRun = new Date(`${today}T18:30:00+07:00`);
-    if (nextRun.getTime() <= now.getTime()) {
-      const tomorrow = new Date(nextRun.getTime() + 24 * 60 * 60 * 1000);
-      nextRun = new Date(`${localDayKey(tomorrow)}T18:30:00+07:00`);
-    }
-    const timer = setTimeout(() => {
-      tick();
-      scheduleNextRun();
-    }, Math.max(1_000, nextRun.getTime() - now.getTime()));
-    timer.unref?.();
-  };
+  const tickTimer = setInterval(() => { void tick(); }, TICK_INTERVAL_MS);
+  tickTimer.unref?.();
   const catchUpMissedTodayRun = async () => {
     try {
       const now = new Date();
       const today = localDayKey(now);
-      if (new Date(today + 'T18:30:00+07:00').getTime() > now.getTime()) return;
       const tenants = await listEnabledAutoPostingTenants(pool);
       for (const tenantId of tenants) {
-        const existing = await pool.query(
-          "SELECT status FROM marketing_facebook_daily_runs WHERE tenant_id = $1 AND logical_day = $2::date ORDER BY started_at DESC LIMIT 1",
-          [tenantId, today],
-        );
-        const currentStatus = existing.rows[0]?.status || 'NOT_RUN';
-        if (currentStatus === 'SUCCESS' || currentStatus === 'RUNNING') continue;
-        logger.info('[MarketingAgent] Boot catch-up: running missed Facebook job for tenant ' + tenantId + ', day ' + today + ' (current status: ' + currentStatus + ')');
+        const settings = await computeEffectiveSettings(pool, tenantId, await getAutoPostingSettings(pool, tenantId));
+        if (!settings.enabled) continue;
+        const lastWindowEndMinutes = settings.timeWindows.reduce((max, window) => {
+          const [endHour, endMinute] = String(window.end || '').split(':').map(Number);
+          if (![endHour, endMinute].every(Number.isFinite)) return max;
+          return Math.max(max, endHour * 60 + endMinute);
+        }, -1);
+        if (lastWindowEndMinutes < 0 || localMinutes(now) < lastWindowEndMinutes) continue;
+        const postsCompletedToday = await countSuccessfulAutoPostingRunsToday(pool, tenantId, today);
+        if (postsCompletedToday > 0) continue;
+        logger.info(`[MarketingAgent] Catch-up: tenant ${tenantId} has no successful post today (${today}), running backfill slot 0.`);
         const result = await runAutoPostingBackfill(pool, tenantId, today, 'BOOT_CATCHUP', 'system:auto-scheduler', now);
-        logger.info('[MarketingAgent] Boot catch-up result: ' + JSON.stringify(result));
+        logger.info('[MarketingAgent] Catch-up result: ' + JSON.stringify(result));
       }
     } catch (error: any) {
       logger.error('[MarketingAgent] Boot catch-up failed', error);
@@ -553,6 +687,6 @@ export function startAutoPostingScheduler(pool: Pool) {
   }, 15 * 60 * 1000);
   catchUpGuard.unref?.();
   void catchUpMissedTodayRun();
-  scheduleNextRun();
-  logger.info(`[MarketingAgent] Facebook daily scheduler started (18:30, timezone=${DEFAULT_TIME_ZONE})`);
+  void tick();
+  logger.info(`[MarketingAgent] Scheduler started (tick every ${TICK_INTERVAL_MS / 60000} min, timezone=${DEFAULT_TIME_ZONE})`);
 }

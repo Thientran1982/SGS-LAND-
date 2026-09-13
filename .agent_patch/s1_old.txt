@@ -1,0 +1,18 @@
+import type { Pool } from 'pg';
+import {
+  activateSocialPublication,
+  createSocialPublication,
+  markSocialTargetsPending,
+  recordSocialPublicationEvent,
+} from '../repositories/socialPublicationRepository';
+import {
+  claimMarketingFacebookBackfillRun,
+  claimMarketingFacebookDailyRun,
+  createMarketingFacebookBackfillRequest,
+  finishMarketingFacebookBackfillRequest,
+  finishMarketingFacebookDailyRun,
+  getAutoPostingSettings,
+  listEnabledAutoPostingTenants,
+  markMarketingFacebookBackfillRunning,
+  type AutoPostingSettings,
+} from '../repositories/autoPostingRepository';

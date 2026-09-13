@@ -1,0 +1,2 @@
+import m196 from './196_agent_skill_binding_rls_bypass';
+dotenv.config();

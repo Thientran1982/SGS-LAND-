@@ -1,0 +1,14 @@
+export async function claimMarketingFacebookDailyRun(
+  pool: Pool,
+  tenantId: string,
+  logicalDay: string,
+): Promise<MarketingFacebookDailyRun | null> {
+  const result = await pool.query(
+    `INSERT INTO marketing_facebook_daily_runs (tenant_id, logical_day, status)
+     VALUES ($1, $2::date, 'RUNNING')
+     ON CONFLICT (tenant_id, logical_day) DO NOTHING
+     RETURNING *`,
+    [tenantId, logicalDay],
+  );
+  return result.rows[0] ? mapDailyRun(result.rows[0]) : null;
+}

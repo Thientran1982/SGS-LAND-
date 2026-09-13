@@ -1,0 +1,5 @@
+export async function upsertAutoPostingSettings(
+  pool: Pool,
+  tenantId: string,
+  input: Partial<Omit<AutoPostingSettings, 'tenantId'>>,
+): Promise<AutoPostingSettings> {

@@ -1,0 +1,72 @@
+async function checkStaleNotReadySocialTargets(pool: Pool): Promise<void> {
+  const result = await pool.query(
+    `SELECT t.id, t.tenant_id, t.publication_id, t.platform, t.created_at
+       FROM social_publication_targets t
+      WHERE t.status = 'NOT_READY'
+        AND t.created_at <= NOW() - make_interval(hours => $1)
+      ORDER BY t.created_at ASC
+      LIMIT 200`,
+    [STALE_NOT_READY_HOURS],
+  );
+  for (const row of result.rows) {
+    const createdAtIso = new Date(row.created_at).toISOString();
+    try {
+      await notificationRepository.createForTenantAdmins(String(row.tenant_id), {
+        type: 'SOCIAL_PUBLICATION_TARGET_STALE_NOT_READY',
+        title: 'Mt knh ng bi ang kt  trng thi cha sn sng',
+        body: `Nn tng ${row.platform} ca publication ${row.publication_id} vn NOT_READY t ${createdAtIso}, qu ${STALE_NOT_READY_HOURS} gi. Vui lng kim tra kt ni/quyn ng bi.`,
+        metadata: {
+          transitionEventId: String(row.id),
+          targetId: String(row.id),
+          publicationId: String(row.publication_id),
+          platform: row.platform,
+          createdAt: createdAtIso,
+        },
+        dedupeKey: String(row.id),
+      });
+    } catch (error) {
+      logger.error(`[MarketingAgent] failed to send stale NOT_READY alert for target ${row.id}`, error);
+    }
+  }
+}
+
+let schedulerStarted = false;
+export function startAutoPostingScheduler(pool: Pool) {
+  if (schedulerStarted) return;
+  schedulerStarted = true;
+  const TICK_INTERVAL_MS = 10 * 60 * 1000;
+  const tick = () => runAutoPostingTick(pool).catch(error => logger.error('[MarketingAgent] tick failed', error));
+  const tickTimer = setInterval(() => { void tick(); }, TICK_INTERVAL_MS);
+  tickTimer.unref?.();
+  const catchUpMissedTodayRun = async () => {
+    try {
+      const now = new Date();
+      const today = localDayKey(now);
+      const tenants = await listEnabledAutoPostingTenants(pool);
+      for (const tenantId of tenants) {
+        const settings = await computeEffectiveSettings(pool, tenantId, await getAutoPostingSettings(pool, tenantId));
+        if (!settings.enabled) continue;
+        const lastWindowEndMinutes = settings.timeWindows.reduce((max, window) => {
+          const [endHour, endMinute] = String(window.end || '').split(':').map(Number);
+          if (![endHour, endMinute].every(Number.isFinite)) return max;
+          return Math.max(max, endHour * 60 + endMinute);
+        }, -1);
+        if (lastWindowEndMinutes < 0 || localMinutes(now) < lastWindowEndMinutes) continue;
+        const postsCompletedToday = await countSuccessfulAutoPostingRunsToday(pool, tenantId, today);
+        if (postsCompletedToday > 0) continue;
+        logger.info(`[MarketingAgent] Catch-up: tenant ${tenantId} has no successful post today (${today}), running backfill slot 0.`);
+        const result = await runAutoPostingBackfill(pool, tenantId, today, 'BOOT_CATCHUP', 'system:auto-scheduler', now);
+        logger.info('[MarketingAgent] Catch-up result: ' + JSON.stringify(result));
+      }
+    } catch (error: any) {
+      logger.error('[MarketingAgent] Boot catch-up failed', error);
+    }
+  };
+  const catchUpGuard = setInterval(() => {
+    void catchUpMissedTodayRun();
+  }, 15 * 60 * 1000);
+  catchUpGuard.unref?.();
+  void catchUpMissedTodayRun();
+  void tick();
+  logger.info(`[MarketingAgent] Scheduler started (tick every ${TICK_INTERVAL_MS / 60000} min, timezone=${DEFAULT_TIME_ZONE})`);
+}

@@ -25,6 +25,7 @@ export type MarketingFacebookDailyRun = {
   id: string;
   tenantId: string;
   logicalDay: string;
+  slotIndex: number;
   status: 'RUNNING' | 'SUCCESS' | 'FAILED' | 'SKIPPED';
   sourceType: 'LISTING' | 'PROJECT' | null;
   sourceId: string | null;
@@ -87,6 +88,26 @@ export async function getAutoPostingSettings(pool: Pool, tenantId: string): Prom
   return result.rows[0] ? mapSettings(result.rows[0], tenantId) : defaultAutoPostingSettings(tenantId);
 }
 
+function clampAutoPostingPostsPerDay(value: unknown, fallback: number): number {
+  const num = Math.floor(Number(value));
+  if (!Number.isFinite(num)) return fallback;
+  return Math.min(50, Math.max(1, num));
+}
+
+function sanitizeAutoPostingTimeWindows(
+  value: unknown,
+  fallback: AutoPostingTimeWindow[],
+): AutoPostingTimeWindow[] {
+  if (!Array.isArray(value) || !value.length) return fallback;
+  const cleaned = value
+    .map(item => ({
+      start: String((item as any)?.start || ''),
+      end: String((item as any)?.end || ''),
+    }))
+    .filter(window => /^\d{2}:\d{2}$/.test(window.start) && /^\d{2}:\d{2}$/.test(window.end));
+  return cleaned.length ? cleaned : fallback;
+}
+
 export async function upsertAutoPostingSettings(
   pool: Pool,
   tenantId: string,
@@ -95,8 +116,12 @@ export async function upsertAutoPostingSettings(
   const current = await getAutoPostingSettings(pool, tenantId);
   const next = {
     enabled: input.enabled ?? current.enabled,
-    postsPerDay: 1,
-    timeWindows: DEFAULT_SETTINGS.timeWindows,
+    postsPerDay: input.postsPerDay !== undefined
+      ? clampAutoPostingPostsPerDay(input.postsPerDay, current.postsPerDay)
+      : current.postsPerDay,
+    timeWindows: input.timeWindows !== undefined
+      ? sanitizeAutoPostingTimeWindows(input.timeWindows, current.timeWindows)
+      : current.timeWindows,
     recycleAfterDays: Math.max(0, Number(input.recycleAfterDays ?? current.recycleAfterDays)),
     platforms: input.platforms && input.platforms.length ? input.platforms : current.platforms,
   };
@@ -132,6 +157,7 @@ function mapDailyRun(row: any): MarketingFacebookDailyRun {
     id: String(row.id),
     tenantId: String(row.tenant_id),
     logicalDay,
+    slotIndex: Number(row.slot_index || 0),
     status: row.status,
     sourceType: row.source_type || null,
     sourceId: row.source_id || null,
@@ -170,15 +196,44 @@ export async function claimMarketingFacebookDailyRun(
   pool: Pool,
   tenantId: string,
   logicalDay: string,
+  slotIndex = 0,
 ): Promise<MarketingFacebookDailyRun | null> {
   const result = await pool.query(
-    `INSERT INTO marketing_facebook_daily_runs (tenant_id, logical_day, status)
-     VALUES ($1, $2::date, 'RUNNING')
-     ON CONFLICT (tenant_id, logical_day) DO NOTHING
+    `INSERT INTO marketing_facebook_daily_runs (tenant_id, logical_day, slot_index, status)
+     VALUES ($1, $2::date, $3, 'RUNNING')
+     ON CONFLICT (tenant_id, logical_day, slot_index) DO NOTHING
      RETURNING *`,
-    [tenantId, logicalDay],
+    [tenantId, logicalDay, slotIndex],
   );
   return result.rows[0] ? mapDailyRun(result.rows[0]) : null;
+}
+
+export async function countSuccessfulAutoPostingRunsToday(
+  pool: Pool,
+  tenantId: string,
+  logicalDay: string,
+): Promise<number> {
+  const result = await pool.query(
+    `SELECT COUNT(*)::int AS total
+       FROM marketing_facebook_daily_runs
+      WHERE tenant_id = $1 AND logical_day = $2::date AND status = 'SUCCESS'`,
+    [tenantId, logicalDay],
+  );
+  return Number(result.rows[0]?.total || 0);
+}
+
+export async function getNextAutoPostingSlotIndex(
+  pool: Pool,
+  tenantId: string,
+  logicalDay: string,
+): Promise<number> {
+  const result = await pool.query(
+    `SELECT COUNT(*)::int AS total
+       FROM marketing_facebook_daily_runs
+      WHERE tenant_id = $1 AND logical_day = $2::date`,
+    [tenantId, logicalDay],
+  );
+  return Number(result.rows[0]?.total || 0);
 }
 
 export type BackfillRunClaim =
@@ -228,7 +283,7 @@ export async function claimMarketingFacebookBackfillRun(
                    AND t.status = 'PUBLISHED'
               ) AS has_successful_target
          FROM marketing_facebook_daily_runs r
-        WHERE r.tenant_id = $1 AND r.logical_day = $2::date
+        WHERE r.tenant_id = $1 AND r.logical_day = $2::date AND r.slot_index = 0
         FOR UPDATE`,
       [tenantId, logicalDay],
     );
@@ -277,9 +332,9 @@ export async function claimMarketingFacebookBackfillRun(
     let runRow = row;
     if (!runRow) {
       const inserted = await client.query(
-        `INSERT INTO marketing_facebook_daily_runs (tenant_id, logical_day, status)
-         VALUES ($1, $2::date, 'RUNNING')
-         ON CONFLICT (tenant_id, logical_day) DO NOTHING
+        `INSERT INTO marketing_facebook_daily_runs (tenant_id, logical_day, slot_index, status)
+         VALUES ($1, $2::date, 0, 'RUNNING')
+         ON CONFLICT (tenant_id, logical_day, slot_index) DO NOTHING
          RETURNING *`,
         [tenantId, logicalDay],
       );
@@ -287,7 +342,7 @@ export async function claimMarketingFacebookBackfillRun(
       if (!runRow) {
         const raced = await client.query(
           `SELECT * FROM marketing_facebook_daily_runs
-            WHERE tenant_id = $1 AND logical_day = $2::date
+            WHERE tenant_id = $1 AND logical_day = $2::date AND slot_index = 0
             FOR UPDATE`,
           [tenantId, logicalDay],
         );
@@ -449,6 +504,8 @@ export async function getMarketingFacebookDailyStatus(
 ): Promise<{
   settings: AutoPostingSettings;
   todayRun: MarketingFacebookDailyRun | null;
+  todayRuns: MarketingFacebookDailyRun[];
+  postsCompletedToday: number;
   lastRun: MarketingFacebookDailyRun | null;
   backfillRequests: MarketingFacebookBackfillRequest[];
   warning: string | null;
@@ -460,18 +517,22 @@ export async function getMarketingFacebookDailyStatus(
          FROM marketing_facebook_daily_runs
         WHERE tenant_id = $1
         ORDER BY logical_day DESC, started_at DESC
-        LIMIT 10`,
+        LIMIT 20`,
       [tenantId],
     ),
     listMarketingFacebookBackfillRequests(pool, tenantId),
   ]);
   const runs = result.rows.map(mapDailyRun);
-  const todayRun = runs.find(run => run.logicalDay === logicalDay) || null;
+  const todayRuns = runs
+    .filter(run => run.logicalDay === logicalDay)
+    .sort((a, b) => a.slotIndex - b.slotIndex);
+  const todayRun = todayRuns.length ? todayRuns[todayRuns.length - 1] : null;
+  const postsCompletedToday = todayRuns.filter(run => run.status === 'SUCCESS').length;
   const lastRun = runs[0] || null;
   const warning = todayRun?.status === 'SKIPPED'
     ? todayRun.errorMessage || 'Agent Marketing hôm nay chưa tìm thấy nguồn đủ điều kiện để đăng Facebook.'
     : todayRun?.status === 'FAILED'
       ? todayRun.errorMessage || 'Agent Marketing đăng Facebook hôm nay bị lỗi.'
       : null;
-  return { settings, todayRun, lastRun, backfillRequests, warning };
+  return { settings, todayRun, todayRuns, postsCompletedToday, lastRun, backfillRequests, warning };
 }

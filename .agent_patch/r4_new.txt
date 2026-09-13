@@ -1,0 +1,43 @@
+export async function claimMarketingFacebookDailyRun(
+  pool: Pool,
+  tenantId: string,
+  logicalDay: string,
+  slotIndex = 0,
+): Promise<MarketingFacebookDailyRun | null> {
+  const result = await pool.query(
+    `INSERT INTO marketing_facebook_daily_runs (tenant_id, logical_day, slot_index, status)
+     VALUES ($1, $2::date, $3, 'RUNNING')
+     ON CONFLICT (tenant_id, logical_day, slot_index) DO NOTHING
+     RETURNING *`,
+    [tenantId, logicalDay, slotIndex],
+  );
+  return result.rows[0] ? mapDailyRun(result.rows[0]) : null;
+}
+
+export async function countSuccessfulAutoPostingRunsToday(
+  pool: Pool,
+  tenantId: string,
+  logicalDay: string,
+): Promise<number> {
+  const result = await pool.query(
+    `SELECT COUNT(*)::int AS total
+       FROM marketing_facebook_daily_runs
+      WHERE tenant_id = $1 AND logical_day = $2::date AND status = 'SUCCESS'`,
+    [tenantId, logicalDay],
+  );
+  return Number(result.rows[0]?.total || 0);
+}
+
+export async function getNextAutoPostingSlotIndex(
+  pool: Pool,
+  tenantId: string,
+  logicalDay: string,
+): Promise<number> {
+  const result = await pool.query(
+    `SELECT COUNT(*)::int AS total
+       FROM marketing_facebook_daily_runs
+      WHERE tenant_id = $1 AND logical_day = $2::date`,
+    [tenantId, logicalDay],
+  );
+  return Number(result.rows[0]?.total || 0);
+}

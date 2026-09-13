@@ -1,0 +1,48 @@
+let schedulerStarted = false;
+export function startAutoPostingScheduler(pool: Pool) {
+  if (schedulerStarted) return;
+  schedulerStarted = true;
+  const tick = () => runAutoPostingTick(pool).catch(error => logger.error('[MarketingAgent] tick failed', error));
+  const scheduleNextRun = () => {
+    const now = new Date();
+    const today = localDayKey(now);
+    let nextRun = new Date(`${today}T18:30:00+07:00`);
+    if (nextRun.getTime() <= now.getTime()) {
+      const tomorrow = new Date(nextRun.getTime() + 24 * 60 * 60 * 1000);
+      nextRun = new Date(`${localDayKey(tomorrow)}T18:30:00+07:00`);
+    }
+    const timer = setTimeout(() => {
+      tick();
+      scheduleNextRun();
+    }, Math.max(1_000, nextRun.getTime() - now.getTime()));
+    timer.unref?.();
+  };
+  const catchUpMissedTodayRun = async () => {
+    try {
+      const now = new Date();
+      const today = localDayKey(now);
+      if (new Date(today + 'T18:30:00+07:00').getTime() > now.getTime()) return;
+      const tenants = await listEnabledAutoPostingTenants(pool);
+      for (const tenantId of tenants) {
+        const existing = await pool.query(
+          "SELECT status FROM marketing_facebook_daily_runs WHERE tenant_id = $1 AND logical_day = $2::date ORDER BY started_at DESC LIMIT 1",
+          [tenantId, today],
+        );
+        const currentStatus = existing.rows[0]?.status || 'NOT_RUN';
+        if (currentStatus === 'SUCCESS' || currentStatus === 'RUNNING') continue;
+        logger.info('[MarketingAgent] Boot catch-up: running missed Facebook job for tenant ' + tenantId + ', day ' + today + ' (current status: ' + currentStatus + ')');
+        const result = await runAutoPostingBackfill(pool, tenantId, today, 'BOOT_CATCHUP', 'system:auto-scheduler', now);
+        logger.info('[MarketingAgent] Boot catch-up result: ' + JSON.stringify(result));
+      }
+    } catch (error: any) {
+      logger.error('[MarketingAgent] Boot catch-up failed', error);
+    }
+  };
+  const catchUpGuard = setInterval(() => {
+    void catchUpMissedTodayRun();
+  }, 15 * 60 * 1000);
+  catchUpGuard.unref?.();
+  void catchUpMissedTodayRun();
+  scheduleNextRun();
+  logger.info(`[MarketingAgent] Facebook daily scheduler started (18:30, timezone=${DEFAULT_TIME_ZONE})`);
+}

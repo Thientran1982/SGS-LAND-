@@ -1,0 +1,3 @@
+  '196_agent_skill_binding_rls_bypass.ts': m196,
+  '197_auto_posting_multi_slot.ts': m197,
+};

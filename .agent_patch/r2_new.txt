@@ -1,0 +1,4 @@
+    logicalDay,
+    slotIndex: Number(row.slot_index || 0),
+    status: row.status,
+    sourceType: row.source_type || null,

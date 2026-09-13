@@ -1,0 +1,25 @@
+function clampAutoPostingPostsPerDay(value: unknown, fallback: number): number {
+  const num = Math.floor(Number(value));
+  if (!Number.isFinite(num)) return fallback;
+  return Math.min(50, Math.max(1, num));
+}
+
+function sanitizeAutoPostingTimeWindows(
+  value: unknown,
+  fallback: AutoPostingTimeWindow[],
+): AutoPostingTimeWindow[] {
+  if (!Array.isArray(value) || !value.length) return fallback;
+  const cleaned = value
+    .map(item => ({
+      start: String((item as any)?.start || ''),
+      end: String((item as any)?.end || ''),
+    }))
+    .filter(window => /^\d{2}:\d{2}$/.test(window.start) && /^\d{2}:\d{2}$/.test(window.end));
+  return cleaned.length ? cleaned : fallback;
+}
+
+export async function upsertAutoPostingSettings(
+  pool: Pool,
+  tenantId: string,
+  input: Partial<Omit<AutoPostingSettings, 'tenantId'>>,
+): Promise<AutoPostingSettings> {

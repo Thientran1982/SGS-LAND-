@@ -1,0 +1,3 @@
+    logicalDay,
+    status: row.status,
+    sourceType: row.source_type || null,

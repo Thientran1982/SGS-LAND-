@@ -1,0 +1,20 @@
+export async function runAutoPostingTick(pool: Pool, now = new Date()) {
+  const tenants = await listEnabledAutoPostingTenants(pool);
+  const results = [];
+  const logicalDayKey = localDayKey(now);
+  for (const tenantId of tenants) {
+    const settings = await computeEffectiveSettings(pool, tenantId, await getAutoPostingSettings(pool, tenantId));
+    if (!settings.enabled || !inTimeWindow(settings, now)) continue;
+    const postsCompletedToday = await countSuccessfulAutoPostingRunsToday(pool, tenantId, logicalDayKey);
+    if (postsCompletedToday >= settings.postsPerDay) continue;
+    const slotIndex = await getNextAutoPostingSlotIndex(pool, tenantId, logicalDayKey);
+    results.push({
+      tenantId,
+      ...(await runAutoPostingForTenant(pool, tenantId, now, { logicalDay: logicalDayKey, slotIndex })),
+    });
+  }
+  await checkStaleNotReadySocialTargets(pool).catch(error => (
+    logger.error('[MarketingAgent] stale NOT_READY check failed', error)
+  ));
+  return results;
+}

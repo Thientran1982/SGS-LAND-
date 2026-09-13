@@ -1,0 +1,26 @@
+export async function getMarketingFacebookDailyStatus(
+  pool: Pool,
+  tenantId: string,
+  logicalDay: string,
+): Promise<{
+  settings: AutoPostingSettings;
+  todayRun: MarketingFacebookDailyRun | null;
+  lastRun: MarketingFacebookDailyRun | null;
+  backfillRequests: MarketingFacebookBackfillRequest[];
+  warning: string | null;
+}> {
+  const [settings, result, backfillRequests] = await Promise.all([
+    getAutoPostingSettings(pool, tenantId),
+    pool.query(
+      `SELECT *
+         FROM marketing_facebook_daily_runs
+        WHERE tenant_id = $1
+        ORDER BY logical_day DESC, started_at DESC
+        LIMIT 10`,
+      [tenantId],
+    ),
+    listMarketingFacebookBackfillRequests(pool, tenantId),
+  ]);
+  const runs = result.rows.map(mapDailyRun);
+  const todayRun = runs.find(run => run.logicalDay === logicalDay) || null;
+  const lastRun = runs[0] || null;

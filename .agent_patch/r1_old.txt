@@ -1,0 +1,5 @@
+export type MarketingFacebookDailyRun = {
+  id: string;
+  tenantId: string;
+  logicalDay: string;
+  status: 'RUNNING' | 'SUCCESS' | 'FAILED' | 'SKIPPED';

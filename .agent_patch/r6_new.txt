@@ -1,0 +1,39 @@
+export async function getMarketingFacebookDailyStatus(
+  pool: Pool,
+  tenantId: string,
+  logicalDay: string,
+): Promise<{
+  settings: AutoPostingSettings;
+  todayRun: MarketingFacebookDailyRun | null;
+  todayRuns: MarketingFacebookDailyRun[];
+  postsCompletedToday: number;
+  lastRun: MarketingFacebookDailyRun | null;
+  backfillRequests: MarketingFacebookBackfillRequest[];
+  warning: string | null;
+}> {
+  const [settings, result, backfillRequests] = await Promise.all([
+    getAutoPostingSettings(pool, tenantId),
+    pool.query(
+      `SELECT *
+         FROM marketing_facebook_daily_runs
+        WHERE tenant_id = $1
+        ORDER BY logical_day DESC, started_at DESC
+        LIMIT 20`,
+      [tenantId],
+    ),
+    listMarketingFacebookBackfillRequests(pool, tenantId),
+  ]);
+  const runs = result.rows.map(mapDailyRun);
+  const todayRuns = runs
+    .filter(run => run.logicalDay === logicalDay)
+    .sort((a, b) => a.slotIndex - b.slotIndex);
+  const todayRun = todayRuns.length ? todayRuns[todayRuns.length - 1] : null;
+  const postsCompletedToday = todayRuns.filter(run => run.status === 'SUCCESS').length;
+  const lastRun = runs[0] || null;
+  const warning = todayRun?.status === 'SKIPPED'
+    ? todayRun.errorMessage || 'Agent Marketing hm nay cha tm thy ngun  iu kin  ng Facebook.'
+    : todayRun?.status === 'FAILED'
+      ? todayRun.errorMessage || 'Agent Marketing ng Facebook hm nay b li.'
+      : null;
+  return { settings, todayRun, todayRuns, postsCompletedToday, lastRun, backfillRequests, warning };
+}

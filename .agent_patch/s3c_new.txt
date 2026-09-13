@@ -1,0 +1,3 @@
+      source: 'AUTO',
+      autoPostingKey: `${logicalDayKey}:${slotIndex}:${candidate.sourceType}:${candidate.sourceId}`,
+    });

@@ -1,0 +1,12 @@
+  const current = await getAutoPostingSettings(pool, tenantId);
+  const next = {
+    enabled: input.enabled ?? current.enabled,
+    postsPerDay: input.postsPerDay !== undefined
+      ? clampAutoPostingPostsPerDay(input.postsPerDay, current.postsPerDay)
+      : current.postsPerDay,
+    timeWindows: input.timeWindows !== undefined
+      ? sanitizeAutoPostingTimeWindows(input.timeWindows, current.timeWindows)
+      : current.timeWindows,
+    recycleAfterDays: Math.max(0, Number(input.recycleAfterDays ?? current.recycleAfterDays)),
+    platforms: input.platforms && input.platforms.length ? input.platforms : current.platforms,
+  };

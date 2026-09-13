@@ -1,0 +1,16 @@
+export async function runAutoPostingForTenant(
+  pool: Pool,
+  tenantId: string,
+  now = new Date(),
+  options?: {
+    logicalDay?: string;
+    mode?: 'DAILY' | 'BACKFILL';
+    backfillRequestId?: string;
+    backfillReason?: string;
+    requestedBy?: string;
+    slotIndex?: number;
+  },
+): Promise<AutoPostingResult> {
+  const settings = await computeEffectiveSettings(pool, tenantId, await getAutoPostingSettings(pool, tenantId));
+  const isBackfill = options?.mode === 'BACKFILL';
+  const slotIndex = isBackfill ? 0 : (options?.slotIndex ?? 0);

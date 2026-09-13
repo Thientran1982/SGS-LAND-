@@ -1,0 +1,20 @@
+    let runRow = row;
+    if (!runRow) {
+      const inserted = await client.query(
+        `INSERT INTO marketing_facebook_daily_runs (tenant_id, logical_day, slot_index, status)
+         VALUES ($1, $2::date, 0, 'RUNNING')
+         ON CONFLICT (tenant_id, logical_day, slot_index) DO NOTHING
+         RETURNING *`,
+        [tenantId, logicalDay],
+      );
+      runRow = inserted.rows[0];
+      if (!runRow) {
+        const raced = await client.query(
+          `SELECT * FROM marketing_facebook_daily_runs
+            WHERE tenant_id = $1 AND logical_day = $2::date AND slot_index = 0
+            FOR UPDATE`,
+          [tenantId, logicalDay],
+        );
+        runRow = raced.rows[0];
+      }
+    }
