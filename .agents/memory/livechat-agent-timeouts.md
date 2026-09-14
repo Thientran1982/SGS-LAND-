@@ -29,6 +29,12 @@ Async reconciliation must validate its generation after every awaited status/his
 
 **How to apply:** Increment the generation when a realtime reply or terminal state stops reconciliation, guard every post-await mutation, and keep a stale poll from clearing a newer poll's busy ownership.
 
+An accepted async run is a normal user-visible status, not an error; unavailable non-Gemini primary models must be removed from the current fallback chain after provider failure or circuit-open.
+
+**Why:** The public chat completed successfully, but a paid/unavailable GLM route followed by native retries stretched one answer to roughly 84 seconds and rendered the pending notice as a red alert, making healthy async work look broken.
+
+**How to apply:** Render pending copy as a neutral live status, reserve alert styling for terminal failures, and skip the failed primary model before entering the known-good fallback models.
+
 Status reconciliation must treat throttled, unavailable, and network-failed status reads as transient `PROCESSING` signals, not as permission to reload full message history. Honor a bounded server `retryAfter` and combine it with capped exponential backoff; stop after terminal status or the reconciliation deadline.
 
 **Why:** A long-running browser run can otherwise turn one status `429` or slow database read into a repeated history fan-out, consuming the same public rate-limit budget that visitors need for sending messages.

@@ -134,9 +134,11 @@ async function generateWithFallback(
 
   // ===== MULTI-PROVIDER DISPATCH (primary model thuoc provider khac Google) =====
   const _provider = getProviderForModel(primaryModel);
+  let skipPrimaryModel = false;
   if (_provider !== 'google' && isProviderConfigured(_provider)) {
     if (isProviderCircuitOpen(_provider)) {
       console.log(`[MULTI-PROVIDER] ${_provider} bi circuit breaker skip, dung Gemini ngay`);
+      skipPrimaryModel = true;
     } else {
     try {
        const _res = await generateWithPolicy({
@@ -154,12 +156,21 @@ async function generateWithFallback(
       if (_errStatus === 402 || _errStatus === 401 || _errStatus === 403) {
         openProviderCircuit(_provider, `HTTP ${_errStatus} tu ${primaryModel}`);
       }
+      // Do not immediately retry the same unavailable non-Gemini model through
+      // the native Gemini adapter. That turns one provider failure into an
+      // avoidable extra timeout before the known-good fallback chain starts.
+      skipPrimaryModel = true;
       console.warn(`[MULTI-PROVIDER] ${_provider} failed for ${primaryModel} (status=${_errStatus ?? 'n/a'}), falling back to Gemini native:`, (err as any)?.message || err);
     }
     }
+  } else if (_provider !== 'google') {
+    skipPrimaryModel = true;
   }
 
-  const chain = [primaryModel, ...FALLBACK_CHAIN.filter(m => m !== primaryModel)];
+  const chain = [
+    ...(skipPrimaryModel ? [] : [primaryModel]),
+    ...FALLBACK_CHAIN.filter(m => m !== primaryModel),
+  ];
   let lastErr: unknown;
   for (const model of chain) {
     try {
