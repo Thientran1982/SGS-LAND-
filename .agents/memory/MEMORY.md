@@ -85,3 +85,4 @@
 - [Agent skill catalog boundaries](agent-skill-catalog-boundaries.md) — skill records are tenant-scoped catalog data; runtime activation needs an explicit governed bridge
 - [Auto-posting repository fixtures](auto-posting-repository-fixtures.md) — migration-backed isolated tests need the project/publication columns used by phase-three indexes
 - [Google Search Console property API](gsc-property-api.md) — SGS LAND uses the sc-domain property identifier with the Search Console v3 endpoint
+- [LangChain direct dependency](langchain-direct-dependency.md) — transitive lockfile entries do not guarantee clean installs contain modules imported by the app
