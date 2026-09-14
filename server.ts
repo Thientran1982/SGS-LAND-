@@ -3042,6 +3042,7 @@ specialistError: isLandingRequest && !result.specialistOutput
             `agent:${repairedLegacyRunId}`,
           )
         : null;
+      const dbStartedAt = Date.now();
       const aiReply = legacyInteraction?.id
         ? (await interactionRepository.updateById(PUBLIC_TENANT, legacyInteraction.id, {
             content: result.content,
@@ -3064,6 +3065,20 @@ content: result.content,
 // Fix G: đánh dấu rõ tin nhắn AI để filter trong analytics + Inbox UI
 metadata: replyMetadata,
 externalEventId: `agent:${execution.runId}`,
+      });
+      const dbMs = Date.now() - dbStartedAt;
+      const runTimings = (result as any)._liveChatTimings || {};
+      liveChatTelemetry.recordRunTimings({
+        tenantId: PUBLIC_TENANT,
+        runId: execution.runId,
+        leadId,
+        triggerSource: 'public-livechat',
+        timings: {
+          ...runTimings,
+          dbMs,
+          totalMs: Date.now() - chatStartedAt,
+          ttfbMs: Date.now() - chatStartedAt,
+        },
       });
       telemetry.mark('outbound_persisted');
       logger.info(`[PublicLiveChat] outbound persistence ${Date.now() - chatStartedAt}ms`);

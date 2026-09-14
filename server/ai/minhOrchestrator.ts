@@ -86,26 +86,37 @@ export async function minhChooseSpecialist(args: {
   generateFn: (params: { system?: string; prompt: string; jsonMode?: boolean; timeoutMs?: number; feature?: string }) => Promise<string>;
   fallbackIntent?: string;
   fallbackTool?: string;
+  onTiming?: (stage: 'memory' | 'llm', durationMs: number) => void;
 }): Promise<MinhPlan | null> {
   const started = Date.now();
   try {
     // Memory la gợi ý — không bắt buộc; lỗi không chặn delegation.
     let ownerBlock = '';
     let lessonsBlock = '';
+    const memoryStartedAt = Date.now();
     try {
       ownerBlock = await agentMemoryService.memoryBlock(args.tenantId, 'agent:owner-profile', undefined, 300);
       lessonsBlock = await agentMemoryService.memoryBlock(args.tenantId, 'agent:lessons', args.message, 300);
     } catch { /* memory optional */ }
+    finally {
+      args.onTiming?.('memory', Date.now() - memoryStartedAt);
+    }
 
     const calibrationLine = await getMinhCalibrationPromptLine(args.tenantId);
     const system = buildMinhOrchestratorPrompt(args.message, ownerBlock, lessonsBlock, calibrationLine);
-    const raw = await args.generateFn({
-      system,
-      prompt: 'Chon specialist phu hop nhat roi tra ve JSON.',
-      jsonMode: true,
-        feature: 'MINH_ORCHESTRATOR',
-        timeoutMs: 6000,
-    });
+    const llmStartedAt = Date.now();
+    let raw: string;
+    try {
+      raw = await args.generateFn({
+        system,
+        prompt: 'Chon specialist phu hop nhat roi tra ve JSON.',
+        jsonMode: true,
+          feature: 'MINH_ORCHESTRATOR',
+          timeoutMs: 6000,
+      });
+    } finally {
+      args.onTiming?.('llm', Date.now() - llmStartedAt);
+    }
     const cleaned = String(raw)
       .replace(/^\s*```(?:json)?\s*/i, '')
       .replace(/```\s*$/, '')

@@ -48,6 +48,7 @@ import { getGuidePolicyResponse, normalizeGuideInput } from './guideAssistantPol
 import { customerProfileService, observeCustomerMessage, extractFactsWithLLM, classifyInteractionOutcome } from '../services/customerProfileService';
 import { listEnabledMcpServers, callMcpTool, resolveMcpToolName } from '../services/mcpClientService';
 import { buildLandingBuilderResponse, ensureLandingResponseLink } from './landingResponse';
+import { liveChatTelemetry, type LiveChatRunTimings } from '../services/liveChatTelemetry';
 
 type LiveChatProviderTelemetry = {
     provider?: string;
@@ -1474,6 +1475,12 @@ async function handle_live_chat_core(args: Record<string, any>): Promise<any> {
     const responseDeliveryIdempotencyKey = String(args.responseDeliveryIdempotencyKey || '').slice(0, 240);
     const msg = (message || '').trim();
     if (!msg) return { error: 'message không được trống.' };
+    const liveChatStartedAt = Date.now();
+    const liveChatTimings: LiveChatRunTimings = {};
+    const addTiming = (stage: 'memory' | 'llm', durationMs: number) => {
+        const key = stage === 'memory' ? 'memoryMs' : 'llmMs';
+        liveChatTimings[key] = (liveChatTimings[key] || 0) + Math.max(0, durationMs);
+    };
     const customerId = String(args.customerId || context.customerId || '').trim();
     let personalization = { enabled: false, block: '', stale: false, negativeStreak: 0 };
     if (customerId) {
@@ -1581,6 +1588,7 @@ async function handle_live_chat_core(args: Record<string, any>): Promise<any> {
     minhPlan = await minhChooseSpecialist({
       tenantId, message: msg, sessionId: String(sessionId || ''), generateFn: generateLiveChatText,
       fallbackIntent: detectedIntent, fallbackTool: suggestedTool,
+      onTiming: addTiming,
     });
     if (minhPlan && minhPlan.confidence >= 0.5 && MINH_INTENT_TOOLS[minhPlan.intent]) {
       detectedIntent = minhPlan.intent;
@@ -1588,7 +1596,8 @@ async function handle_live_chat_core(args: Record<string, any>): Promise<any> {
       logger.info('[MinhOrch] overrode GENERAL -> ' + detectedIntent + ' (conf ' + minhPlan.confidence + ')');
     }
   }
-const plan = executionPlans[detectedIntent];
+ liveChatTimings.classifyMs = Date.now() - minhStartedAt;
+ const plan = executionPlans[detectedIntent];
     const classifierCandidates = classifyLiveChatIntents(msg);
     const primaryCandidate = { intent: detectedIntent, suggestedTool, query: msg };
     const workstreamMap = new Map<string, typeof primaryCandidate>();
@@ -1617,7 +1626,8 @@ const plan = executionPlans[detectedIntent];
         );
         specialistOutput = args.resumeContext.specialistOutput || null;
     }
-    if (workstreams.length > 0 && !specialistOutput) {
+     if (workstreams.length > 0 && !specialistOutput) {
+         const retrieveStartedAt = Date.now();
         const runSubagent = args.resumeContext?.runSubagent || (async ({ execute }: any) => execute());
         const evidenceDomains: Record<string, string> = {
             LEGAL: 'legal',
@@ -1723,6 +1733,7 @@ const plan = executionPlans[detectedIntent];
         if (args.resumeContext?.checkpointSpecialistOutput) {
             await args.resumeContext.checkpointSpecialistOutput(specialistOutput);
         }
+         liveChatTimings.retrieveMs = Date.now() - retrieveStartedAt;
     }
 
     if (minhPlan) {
@@ -1836,15 +1847,17 @@ const plan = executionPlans[detectedIntent];
             logger.warn(`[LiveChatEngine] memory enrichment skipped: ${error?.message || error}`);
         }
     }
-let ownerProfileBlock = '';
+ let ownerProfileBlock = '';
 let taskMemoryBlock = '';
 let lessonsBlock = '';
+const responseMemoryStartedAt = Date.now();
 try {
   // === PHA 0: cá nhân hoá theo owner_profile — mục tiêu & quy tắc riêng của chủ sở hữu ===
   ownerProfileBlock = relevantMemoryBlock(msg, await agentMemoryService.memoryBlock(tenantId, 'agent:owner-profile', msg, 600));
   taskMemoryBlock = relevantMemoryBlock(msg, await agentMemoryService.memoryBlock(tenantId, 'agent:task-events', msg, 400));
   lessonsBlock = relevantMemoryBlock(msg, await agentMemoryService.memoryBlock(tenantId, 'agent:lessons', msg, 500));
 } catch { /* profile là tuỳ chọn, không chặn chat */ }
+liveChatTimings.memoryMs = (liveChatTimings.memoryMs || 0) + (Date.now() - responseMemoryStartedAt);
 const responseLengthInstruction = longFormResponse
     ? 'Với yêu cầu phân tích dài, trả lời có cấu trúc, tối đa khoảng 900 từ; dùng tiêu đề và bullet khi phù hợp, trả lời đủ từng ý trong câu hỏi thay vì chỉ chọn một ý.'
     : 'Trả lời ngắn gọn, tối đa khoảng 120 từ.';
@@ -1865,8 +1878,9 @@ ${ownerProfileBlock}\n` : ''}${taskMemoryBlock ? `[KINH NGHIEM VAN HANH DA HOC]\
         ? `Lịch sử:\n${historyBlock}\n\nTin nhắn mới: ${msg}`
         : msg;
 
-    let providerTelemetry: LiveChatProviderTelemetry | undefined;
+     let providerTelemetry: LiveChatProviderTelemetry | undefined;
     let response: string;
+    const llmStartedAt = Date.now();
     try {
         response = await generateLiveChatText({
             tenantId,
@@ -1907,6 +1921,8 @@ ${ownerProfileBlock}\n` : ''}${taskMemoryBlock ? `[KINH NGHIEM VAN HANH DA HOC]\
             `[LiveChatEngine] degraded response status=${providerTelemetry.status || 'n/a'} ` +
             `attempts=${providerAttemptSummary(providerTelemetry.attempts)}`,
         );
+    } finally {
+        liveChatTimings.llmMs = (liveChatTimings.llmMs || 0) + (Date.now() - llmStartedAt);
     }
 
     // The landing builder result is the source of truth for the public URL.
@@ -1914,6 +1930,14 @@ ${ownerProfileBlock}\n` : ''}${taskMemoryBlock ? `[KINH NGHIEM VAN HANH DA HOC]\
     // summarizes the tool output without copying its URL.
     response = ensureLandingResponseLink(response, detectedIntent, specialistOutput);
 
+    liveChatTimings.totalMs = Date.now() - liveChatStartedAt;
+    liveChatTelemetry.recordRunTimings({
+        tenantId,
+        runId: args.__parentRunId,
+        leadId: args.context?.leadId || args.leadId,
+        triggerSource: 'live-chat-engine',
+        timings: liveChatTimings,
+    });
     return {
         sessionId: sessionId || `sess_${Date.now()}`,
         intent: detectedIntent,
@@ -1937,6 +1961,7 @@ ${ownerProfileBlock}\n` : ''}${taskMemoryBlock ? `[KINH NGHIEM VAN HANH DA HOC]\
                 ? 'ALL_CONFIGURED_PROVIDERS_UNAVAILABLE'
                 : undefined,
         providerTelemetry,
+        _liveChatTimings: liveChatTimings,
         personalization: {
             enabled: personalization.enabled,
             applied: Boolean(personalization.block),

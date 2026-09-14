@@ -1,0 +1,45 @@
+NHIỆM VỤ: Giảm thời gian phản hồi của agent Minh trong live chat. Mục tiêu: thời gian đến ký tự đầu tiên (TTFB) < 2 giây ở 90% câu hỏi; câu hỏi thường trả xong < 6 giây; câu hỏi cần tra cứu sâu < 15 giây.
+
+== ĐIỂM NGHẼN ĐÃ XÁC ĐỊNH ==
+1. 2–3 lần gọi LLM TUẦN TỰ: minhChooseSpecialist (server/ai/minhOrchestrator.ts, timeoutMs 6000) → specialist → writer.
+2. server/ai/modelPolicy.ts: SPECIALIST_EXTENDED.thinkingBudget = 8192 và SPECIALIST_STANDARD = 2048 — cực đắt về thời gian trên gemini-2.5-flash.
+3. server/services/durableAgentExecutionService.ts: khoảng 10 lệnh `await agentExecutionRepository.saveStep(...)` ghi DB TUẦN TỰ nằm ngay trên critical path.
+4. waitForTerminalExecution() poll tới 30.000ms.
+5. minhChooseSpecialist gọi agentMemoryService.memoryBlock 2 lần + getMinhCalibrationPromptLine TRƯỚC khi gọi LLM, tất cả tuần tự.
+6. Không có streaming: user chờ trọn vẹn token cuối cùng mới thấy chữ đầu tiên.
+
+== YÊU CẦU SỬA, theo thứ tự ưu tiên ==
+
+[1] ĐO TRƯỚC KHI SỬA. Thêm timing log từng pha vào mỗi run: classify_ms, memory_ms, retrieve_ms, llm_ms, guardrail_ms, db_ms, total_ms. Ghi vào server/services/liveChatTelemetry.ts. In ra log 5 run mẫu TRƯỚC khi tối ưu và BÁO CÁO LẠI cho tôi con số. Không sửa gì cho đến khi có số liệu này.
+
+[2] STREAMING (thắng lớn nhất về cảm nhận). Thêm event socket 'agent_token' { leadId, runId, delta }. Stream chunk từ provider về client, render dần vào bong bóng assistant. Khi 'agent_run_finished' thì chốt nội dung cuối (đã qua guardrail) đè lên nội dung stream. Nếu guardrail chặn thì xóa nội dung đã stream và thay bằng câu chặn.
+
+[3] FAST-PATH ROUTER. Trong liveChatEngine/minhOrchestrator: chạy keyword/regex intent TRƯỚC. Chỉ gọi LLM classifier khi keyword không cho ra intent rõ ràng. Hạ timeoutMs của classifier từ 6000 xuống 1500 và đổi model classifier sang model rẻ/nhanh nhất qua ENV AI_MODEL_ROUTER (không hardcode).
+
+[4] CHẠY SONG SONG. Gộp memoryBlock('agent:owner-profile') + memoryBlock('agent:lessons') + getMinhCalibrationPromptLine + RAG retrieval vào MỘT Promise.all thay vì await tuần tự. Đặt timeout riêng cho từng cái, quá hạn thì bỏ qua (chúng đều là optional).
+
+[5] GIẢM THINKING BUDGET. Đặt qua biến môi trường, KHÔNG sửa code:
+    AI_PROFILE_SPECIALIST_STANDARD_THINK=0
+    AI_PROFILE_SPECIALIST_EXTENDED_THINK=1024
+    Sau đó chạy lại bộ test chất lượng câu trả lời; nếu chất lượng tụt ở nhóm LEGAL thì nâng EXTENDED lên 2048, không nâng quá.
+
+[6] ĐƯA GHI DB RA KHỎI CRITICAL PATH. Trong durableAgentExecutionService.ts, chỉ `await` những saveStep thực sự cần cho khả năng resume (03_SPECIALIST_PIPELINE checkpoint và finish()). Các step ghi nhận/quan sát (02_SUPERVISOR, 03.xx_* của từng specialist, 04_OUTPUT_GUARDRAIL) chuyển sang ghi bất đồng bộ qua hàng đợi, lỗi ghi chỉ log warning. Gom nhiều step thành 1 lần ghi batch nếu repository hỗ trợ.
+
+[7] HẠ waitForTerminalExecution timeout từ 30_000 xuống 8_000 và pollMs từ 250 lên 400. Quá hạn thì trả 202 để client theo dõi qua socket (đã làm ở Prompt 1).
+
+[8] CACHE. Cache kết quả RAG/knowledge theo hash(intent + entity chuẩn hóa) trong 10 phút bằng server/services/sharedCache.ts. Cache câu trả lời cho các câu hỏi phổ biến giống hệt nhau trong 5 phút. KHÔNG cache câu trả lời có chứa giá hoặc thông tin pháp lý cụ thể.
+
+[9] Rút ngắn prompt: kiểm tra tổng độ dài system prompt gửi lên provider mỗi lượt. Nếu vượt 4000 token thì cắt bớt lịch sử hội thoại xuống 6 lượt gần nhất + tóm tắt các lượt cũ hơn.
+
+== KHÔNG ĐƯỢC LÀM ==
+- Không bỏ guardrail đầu vào/đầu ra để lấy tốc độ.
+- Không bỏ durable run hoặc checkpoint resume.
+- Không hardcode tên model ở ngoài server/ai/modelPolicy.ts.
+- Không giảm chất lượng câu trả lời để đổi lấy tốc độ mà không báo cáo.
+
+== TIÊU CHÍ NGHIỆM THU ==
+1. Báo cáo bảng so sánh TRƯỚC/SAU cho 10 câu hỏi mẫu (3 câu đơn giản, 4 câu trung bình, 3 câu tra cứu sâu): classify_ms, llm_ms, db_ms, total_ms, TTFB.
+2. TTFB < 2s ở ít nhất 9/10 câu.
+3. Chất lượng câu trả lời không giảm: chạy bộ eval hiện có (server/ai/evaluationScorer.ts, evaluationFixture.ts), điểm không thấp hơn mốc trước đó.
+4. `npx tsc --noEmit` pass, production build pass.
+5. Indicator "đang suy luận" từ Prompt 1 vẫn hoạt động đúng sau khi bật streaming.

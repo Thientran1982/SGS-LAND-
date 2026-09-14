@@ -20,6 +20,17 @@ export interface LiveChatClientTimings {
   finalReplyMs?: number;
 }
 
+export interface LiveChatRunTimings {
+  classifyMs?: number;
+  memoryMs?: number;
+  retrieveMs?: number;
+  llmMs?: number;
+  guardrailMs?: number;
+  dbMs?: number;
+  totalMs?: number;
+  ttfbMs?: number;
+}
+
 export interface LiveChatLatencySummary {
   count: number;
   p50Ms: number;
@@ -479,6 +490,37 @@ export class LiveChatTelemetry {
       endpoint: params.endpoint || 'ai',
     });
     span.setClientTimings(parsed);
+  }
+
+  recordRunTimings(params: {
+    tenantId: string;
+    runId?: string;
+    leadId?: string;
+    triggerSource?: string;
+    timings: LiveChatRunTimings;
+  }): void {
+    const safeTimings: LiveChatRunTimings = {};
+    for (const key of [
+      'classifyMs',
+      'memoryMs',
+      'retrieveMs',
+      'llmMs',
+      'guardrailMs',
+      'dbMs',
+      'totalMs',
+      'ttfbMs',
+    ] as const) {
+      const duration = safeDuration(params.timings[key]);
+      if (duration !== undefined) safeTimings[key] = duration;
+    }
+    this.log.info('[LiveChatTelemetry] run timings', {
+      event: 'live_chat_run_timings',
+      tenantKey: safeTenantKey(params.tenantId),
+      runId: params.runId ? safeRequestKey(params.runId) : undefined,
+      leadKey: params.leadId ? safeRequestKey(params.leadId) : undefined,
+      triggerSource: params.triggerSource,
+      ...safeTimings,
+    });
   }
 
   recordStatusRateLimit(params: {
