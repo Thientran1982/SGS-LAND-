@@ -109,6 +109,71 @@ describe('live-chat telemetry', () => {
     });
   });
 
+  it('tracks status polling 429s by window and tenant without retaining visitor data', () => {
+    let now = 1_000;
+    const log = testLogger();
+    const telemetry = new LiveChatTelemetry({
+      now: () => now,
+      log,
+      statusRateLimitWindowMs: 1_000,
+      statusRateLimitAlertThreshold: 2,
+    });
+
+    telemetry.recordStatusRateLimit({
+      tenantId: 'tenant-a',
+      limited: false,
+      backend: 'redis',
+    });
+    now += 10;
+    telemetry.recordStatusRateLimit({
+      tenantId: 'tenant-a',
+      limited: true,
+      retryAfterSeconds: 7,
+      backend: 'in-memory',
+    });
+    now += 10;
+    telemetry.recordStatusRateLimit({
+      tenantId: 'tenant-a',
+      limited: true,
+      retryAfterSeconds: 4,
+      backend: 'in-memory',
+    });
+
+    const snapshot = telemetry.getSnapshot();
+    expect(snapshot.statusRateLimits).toMatchObject({
+      endpoint: 'status_polling',
+      requestCount: 3,
+      limitedCount: 2,
+      limitedRatePercent: 66.67,
+      threshold: 2,
+      alertActive: true,
+      lastRetryAfterSeconds: 4,
+      backend: 'mixed',
+      backendCounts: { redis: 1, 'in-memory': 2 },
+    });
+    expect(snapshot.statusRateLimits.byTenant).toEqual([
+      expect.objectContaining({
+        tenantKey: expect.stringMatching(/^[a-f0-9]{16}$/),
+        requestCount: 3,
+        limitedCount: 2,
+        lastRetryAfterSeconds: 4,
+        backend: 'mixed',
+      }),
+    ]);
+    expect(JSON.stringify(log.warn.mock.calls)).not.toContain('tenant-a');
+    expect(JSON.stringify(snapshot)).not.toContain('visitor-ip');
+
+    now += 1_001;
+    expect(telemetry.getSnapshot().statusRateLimits).toMatchObject({
+      requestCount: 0,
+      limitedCount: 0,
+      limitedRatePercent: 0,
+      alertActive: false,
+      lastRetryAfterSeconds: null,
+      backend: 'unknown',
+    });
+  });
+
   it.each([
     Object.assign(new Error('timeout exceeded when trying to connect'), { code: 'ETIMEDOUT' }),
     new Error('database probe timed out after 800ms'),
@@ -150,6 +215,12 @@ describe('live-chat telemetry', () => {
           lastAlertAt: 9_700,
           eventTimes: [9_700],
         }],
+         statusRateLimitEvents: [
+           { tenantKey: 'fedcba9876543210', at: 9_700, limited: true, retryAfterSeconds: 6, backend: 'redis' },
+           { tenantKey: 'fedcba9876543210', at: 9_800, limited: true, retryAfterSeconds: 4, backend: 'in-memory' },
+         ],
+         statusRateLimitAlertAt: 9_800,
+         statusRateLimitTenantAlerts: { 'fedcba9876543210': 9_800 },
       }),
       save: async () => undefined,
     });
@@ -164,6 +235,14 @@ describe('live-chat telemetry', () => {
     ]);
     expect(snapshot.databaseConnectionTimeouts).toMatchObject({
       count: 2,
+      alertActive: true,
+    });
+    expect(snapshot.statusRateLimits).toMatchObject({
+      requestCount: 2,
+      limitedCount: 2,
+      limitedRatePercent: 100,
+      lastRetryAfterSeconds: 4,
+      backend: 'mixed',
       alertActive: true,
     });
   });

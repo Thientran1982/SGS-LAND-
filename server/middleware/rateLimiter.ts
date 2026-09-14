@@ -1,5 +1,7 @@
 import { Request, Response, NextFunction } from 'express';
 import { createHash } from 'node:crypto';
+import { DEFAULT_TENANT_ID } from '../constants';
+import { liveChatTelemetry } from '../services/liveChatTelemetry';
 
 interface RateLimitEntry {
   count: number;
@@ -163,8 +165,13 @@ export function rateLimit(options: {
   maxRequests: number;
   keyFn?: (req: Request) => string;
   message?: string;
+  onRequest?: (observation: {
+    limited: boolean;
+    retryAfterSeconds?: number;
+    backend: 'redis' | 'in-memory';
+  }) => void;
 }) {
-  const { name, windowMs, maxRequests, message } = options;
+  const { name, windowMs, maxRequests, message, onRequest } = options;
   const windowSecs = Math.ceil(windowMs / 1000);
   const keyFn = options.keyFn || ((req: Request) => {
     const user = (req as any).user;
@@ -175,6 +182,7 @@ export function rateLimit(options: {
     const key = keyFn(req);
     let count: number;
     let resetAt: number;
+    let backend: 'redis' | 'in-memory' = 'in-memory';
 
     let redis: any | null = null;
     let redisInitError: unknown = null;
@@ -199,6 +207,7 @@ export function rateLimit(options: {
           REDIS_OPERATION_TIMEOUT_MS
         );
         resetAt = (windowIndex + 1) * windowMs;
+        backend = 'redis';
       } catch (redisErr: any) {
         // H2 FIX: Distinguish quota errors (Upstash free tier) from network errors.
         const msg = String(redisErr?.message || redisErr || '');
@@ -243,19 +252,29 @@ export function rateLimit(options: {
     if (count > maxRequests) {
       const retryAfter = Math.ceil((resetAt - Date.now()) / 1000);
       res.setHeader('Retry-After', retryAfter);
-    // Log every block so a mis-resolved client IP (all traffic collapsing into
-    // one bucket) is visible in the server logs instead of silently 429-ing.
-    console.warn(
-      `[rateLimit] BLOCKED name=${name} key=${key} count=${count}/${maxRequests} ` +
-      `reqIp=${req.ip} xff=${req.headers['x-forwarded-for'] || '-'} ` +
-      `cfip=${req.headers['cf-connecting-ip'] || '-'} path=${req.originalUrl}`
-    );
+      // Keep the block log useful without persisting raw visitor IPs or
+      // forwarding headers. The normalized telemetry callback below carries
+      // the operational detail needed for status-polling alerts.
+      console.warn(
+        `[rateLimit] BLOCKED name=${name} count=${count}/${maxRequests} ` +
+        `retryAfter=${retryAfter}s path=${req.path}`
+      );
+      try {
+        onRequest?.({ limited: true, retryAfterSeconds: retryAfter, backend });
+      } catch {
+        // Telemetry must never change the rate-limit response.
+      }
       return res.status(429).json({
         error: message || 'Too many requests. Please try again later.',
         retryAfter,
       });
     }
 
+    try {
+      onRequest?.({ limited: false, backend });
+    } catch {
+      // Telemetry must never change the rate-limit response.
+    }
     next();
   };
 }
@@ -359,6 +378,13 @@ export const livechatStatusRateLimit = rateLimit({
   maxRequests: 30,
   keyFn: (req) => getClientIp(req),
   message: 'Bạn đang kiểm tra trạng thái quá nhanh. Vui lòng đợi một chút.',
+  onRequest: (observation) => {
+    liveChatTelemetry.recordStatusRateLimit({
+      tenantId: DEFAULT_TENANT_ID,
+      rateLimitName: 'livechat_status',
+      ...observation,
+    });
+  },
 });
 
 // Guest valuation requests: 2/day per IP (free tier).

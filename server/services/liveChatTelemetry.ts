@@ -50,6 +50,36 @@ export interface LiveChatTelemetrySnapshot {
     threshold: number;
     alertActive: boolean;
   };
+  statusRateLimits: LiveChatStatusRateLimitSnapshot;
+}
+
+export type LiveChatRateLimitBackend = 'redis' | 'in-memory';
+export type LiveChatRateLimitBackendSummary = LiveChatRateLimitBackend | 'mixed' | 'unknown';
+
+export interface LiveChatStatusRateLimitSnapshot {
+  endpoint: 'status_polling';
+  environment: string;
+  rateLimitName: string;
+  windowMs: number;
+  requestCount: number;
+  limitedCount: number;
+  limitedRatePercent: number;
+  threshold: number;
+  alertActive: boolean;
+  lastRetryAfterSeconds: number | null;
+  backend: LiveChatRateLimitBackendSummary;
+  backendCounts: Record<LiveChatRateLimitBackend, number>;
+  byTenant: Array<{
+    tenantKey: string;
+    requestCount: number;
+    limitedCount: number;
+    limitedRatePercent: number;
+    threshold: number;
+    alertActive: boolean;
+    lastRetryAfterSeconds: number | null;
+    backend: LiveChatRateLimitBackendSummary;
+    backendCounts: Record<LiveChatRateLimitBackend, number>;
+  }>;
 }
 
 export interface LiveChatTelemetryPersistenceState {
@@ -71,6 +101,15 @@ export interface LiveChatTelemetryPersistenceState {
     lastAlertAt: number;
     eventTimes: number[];
   }>;
+  statusRateLimitEvents?: Array<{
+    tenantKey: string;
+    at: number;
+    limited: boolean;
+    retryAfterSeconds?: number;
+    backend: LiveChatRateLimitBackend;
+  }>;
+  statusRateLimitAlertAt?: number;
+  statusRateLimitTenantAlerts?: Record<string, number>;
 }
 
 export interface LiveChatTelemetryPersistence {
@@ -85,6 +124,8 @@ export interface LiveChatTelemetryOptions {
   messageThresholdMs?: number;
   databaseTimeoutWindowMs?: number;
   databaseTimeoutAlertThreshold?: number;
+  statusRateLimitWindowMs?: number;
+  statusRateLimitAlertThreshold?: number;
   log?: typeof logger;
 }
 
@@ -113,11 +154,21 @@ interface SlowEndpointState {
   eventTimes: number[];
 }
 
+interface StatusRateLimitEvent {
+  tenantKey: string;
+  at: number;
+  limited: boolean;
+  retryAfterSeconds?: number;
+  backend: LiveChatRateLimitBackend;
+}
+
 const DEFAULT_WINDOW_MS = 15 * 60_000;
 const DEFAULT_HISTORY_THRESHOLD_MS = 1_500;
 const DEFAULT_MESSAGE_THRESHOLD_MS = 1_500;
 const DEFAULT_DATABASE_TIMEOUT_WINDOW_MS = 5 * 60_000;
 const DEFAULT_DATABASE_TIMEOUT_ALERT_THRESHOLD = 3;
+const DEFAULT_STATUS_RATE_LIMIT_WINDOW_MS = 5 * 60_000;
+const DEFAULT_STATUS_RATE_LIMIT_ALERT_THRESHOLD = 10;
 const ALERT_DEDUPE_MS = 60_000;
 const PERSISTENCE_DEBOUNCE_MS = 1_000;
 const PERSISTENCE_FAILURE_BACKOFF_MS = 30_000;
@@ -201,12 +252,19 @@ export class LiveChatTelemetry {
   private readonly messageThresholdMs: number;
   private readonly databaseTimeoutWindowMs: number;
   private readonly databaseTimeoutAlertThreshold: number;
+  private readonly statusRateLimitWindowMs: number;
+  private readonly statusRateLimitAlertThreshold: number;
+  private readonly statusRateLimitEnvironment: string;
+  private readonly statusRateLimitName = 'livechat_status';
   private readonly log: typeof logger;
   private readonly requests = new Map<string, RequestState>();
   private readonly samples: LatencySample[] = [];
   private readonly databaseTimeouts: number[] = [];
   private readonly slowEndpoints = new Map<LiveChatTelemetryEndpoint, SlowEndpointState>();
+  private readonly statusRateLimitEvents: StatusRateLimitEvent[] = [];
   private databaseTimeoutAlertAt = Number.NEGATIVE_INFINITY;
+  private statusRateLimitAlertAt = Number.NEGATIVE_INFINITY;
+  private readonly statusRateLimitTenantAlerts = new Map<string, number>();
   private persistence: LiveChatTelemetryPersistence | null = null;
   private persistenceTimer: ReturnType<typeof setTimeout> | null = null;
   private persistenceInFlight = false;
@@ -238,6 +296,19 @@ export class LiveChatTelemetry {
       envNumber('MINH_DB_TIMEOUT_ALERT_THRESHOLD', DEFAULT_DATABASE_TIMEOUT_ALERT_THRESHOLD),
       1,
     );
+    this.statusRateLimitWindowMs = positiveNumber(
+      options.statusRateLimitWindowMs,
+      envNumber('MINH_STATUS_RATE_LIMIT_WINDOW_MS', DEFAULT_STATUS_RATE_LIMIT_WINDOW_MS),
+      1,
+    );
+    this.statusRateLimitAlertThreshold = positiveNumber(
+      options.statusRateLimitAlertThreshold,
+      envNumber('MINH_STATUS_RATE_LIMIT_ALERT_THRESHOLD', DEFAULT_STATUS_RATE_LIMIT_ALERT_THRESHOLD),
+      1,
+    );
+    this.statusRateLimitEnvironment = ['production', 'development', 'test'].includes(process.env.NODE_ENV || '')
+      ? process.env.NODE_ENV!
+      : 'unknown';
     this.log = options.log || logger;
   }
 
@@ -359,6 +430,31 @@ export class LiveChatTelemetry {
       this.databaseTimeoutAlertAt = Number.isFinite(state.databaseTimeoutAlertAt)
         ? Number(state.databaseTimeoutAlertAt)
         : Number.NEGATIVE_INFINITY;
+      this.statusRateLimitEvents.splice(0, this.statusRateLimitEvents.length, ...(state.statusRateLimitEvents || [])
+        .filter(event => (
+          typeof event?.tenantKey === 'string'
+          && Number.isFinite(event?.at)
+          && typeof event?.limited === 'boolean'
+          && (event?.backend === 'redis' || event?.backend === 'in-memory')
+        ))
+        .map(event => ({
+          tenantKey: event.tenantKey,
+          at: Number(event.at),
+          limited: event.limited,
+          retryAfterSeconds: Number.isFinite(event.retryAfterSeconds)
+            ? Math.max(0, Math.floor(Number(event.retryAfterSeconds)))
+            : undefined,
+          backend: event.backend,
+        })));
+      this.statusRateLimitAlertAt = Number.isFinite(state.statusRateLimitAlertAt)
+        ? Number(state.statusRateLimitAlertAt)
+        : Number.NEGATIVE_INFINITY;
+      this.statusRateLimitTenantAlerts.clear();
+      for (const [tenantKey, alertAt] of Object.entries(state.statusRateLimitTenantAlerts || {})) {
+        if (typeof tenantKey === 'string' && Number.isFinite(alertAt)) {
+          this.statusRateLimitTenantAlerts.set(tenantKey, Number(alertAt));
+        }
+      }
       this.prune(now);
       return true;
     } catch (error: any) {
@@ -383,6 +479,66 @@ export class LiveChatTelemetry {
       endpoint: params.endpoint || 'ai',
     });
     span.setClientTimings(parsed);
+  }
+
+  recordStatusRateLimit(params: {
+    tenantId: string;
+    limited: boolean;
+    retryAfterSeconds?: number;
+    backend: LiveChatRateLimitBackend;
+    rateLimitName?: string;
+  }): void {
+    const at = this.now();
+    this.prune(at);
+    const tenantKey = safeTenantKey(params.tenantId);
+    const retryAfterSeconds = params.limited && Number.isFinite(params.retryAfterSeconds)
+      ? Math.max(0, Math.floor(Number(params.retryAfterSeconds)))
+      : undefined;
+    this.statusRateLimitEvents.push({
+      tenantKey,
+      at,
+      limited: params.limited,
+      retryAfterSeconds,
+      backend: params.backend,
+    });
+    this.statusRateLimitEvents.splice(0, Math.max(0, this.statusRateLimitEvents.length - MAX_PERSISTED_EVENTS));
+
+    if (params.limited) {
+      const tenantEvents = this.statusRateLimitEvents.filter(event => event.tenantKey === tenantKey);
+      const limitedCount = tenantEvents.filter(event => event.limited).length;
+      const globalLimitedCount = this.statusRateLimitEvents.filter(event => event.limited).length;
+      const tenantAlertAt = this.statusRateLimitTenantAlerts.get(tenantKey) ?? Number.NEGATIVE_INFINITY;
+      const alertScope = globalLimitedCount >= this.statusRateLimitAlertThreshold
+        ? 'environment'
+        : limitedCount >= this.statusRateLimitAlertThreshold
+          ? 'tenant'
+          : null;
+      if (
+        alertScope
+        && at - (alertScope === 'environment' ? this.statusRateLimitAlertAt : tenantAlertAt) >= ALERT_DEDUPE_MS
+      ) {
+        if (alertScope === 'environment') this.statusRateLimitAlertAt = at;
+        else this.statusRateLimitTenantAlerts.set(tenantKey, at);
+        const snapshot = this.buildStatusRateLimitScope(
+          alertScope === 'environment' ? this.statusRateLimitEvents : tenantEvents,
+        );
+        this.log.warn('[LiveChatTelemetry] status polling rate-limit threshold exceeded', {
+          alert: 'live_chat_status_rate_limit_spike',
+          scope: alertScope,
+          environment: this.statusRateLimitEnvironment,
+          tenantKey: alertScope === 'tenant' ? tenantKey : undefined,
+          rateLimitName: params.rateLimitName || this.statusRateLimitName,
+          windowMs: this.statusRateLimitWindowMs,
+          count: snapshot.limitedCount,
+          requestCount: snapshot.requestCount,
+          limitedRatePercent: snapshot.limitedRatePercent,
+          threshold: this.statusRateLimitAlertThreshold,
+          retryAfterSeconds: snapshot.lastRetryAfterSeconds,
+          backend: snapshot.backend,
+        });
+      }
+    }
+    this.schedulePersistence();
   }
 
   getSnapshot(at = this.now()): LiveChatTelemetrySnapshot {
@@ -425,6 +581,7 @@ export class LiveChatTelemetry {
         threshold: this.databaseTimeoutAlertThreshold,
         alertActive: this.databaseTimeouts.length >= this.databaseTimeoutAlertThreshold,
       },
+      statusRateLimits: this.getStatusRateLimitSnapshot(),
     };
   }
 
@@ -525,6 +682,9 @@ export class LiveChatTelemetry {
       })),
       databaseTimeouts: this.databaseTimeouts.slice(-MAX_PERSISTED_EVENTS),
       slowEndpoints,
+      statusRateLimitEvents: this.statusRateLimitEvents.slice(-MAX_PERSISTED_EVENTS),
+      statusRateLimitAlertAt: this.statusRateLimitAlertAt,
+      statusRateLimitTenantAlerts: Object.fromEntries(this.statusRateLimitTenantAlerts),
     };
   }
 
@@ -600,6 +760,51 @@ export class LiveChatTelemetry {
     return true;
   }
 
+  private getStatusRateLimitSnapshot(): LiveChatStatusRateLimitSnapshot {
+    const events = this.statusRateLimitEvents;
+    const scope = this.buildStatusRateLimitScope(events);
+    const tenantKeys = [...new Set(events.map(event => event.tenantKey))];
+    return {
+      endpoint: 'status_polling',
+      environment: this.statusRateLimitEnvironment,
+      rateLimitName: this.statusRateLimitName,
+      ...scope,
+      byTenant: tenantKeys
+        .map(tenantKey => ({
+          tenantKey,
+          ...this.buildStatusRateLimitScope(events.filter(event => event.tenantKey === tenantKey)),
+        }))
+        .sort((a, b) => b.limitedCount - a.limitedCount || b.requestCount - a.requestCount),
+    };
+  }
+
+  private buildStatusRateLimitScope(
+    events: StatusRateLimitEvent[],
+  ): Omit<LiveChatStatusRateLimitSnapshot, 'endpoint' | 'environment' | 'rateLimitName' | 'byTenant'> {
+    const limitedCount = events.filter(event => event.limited).length;
+    const backendCounts: Record<LiveChatRateLimitBackend, number> = {
+      redis: events.filter(event => event.backend === 'redis').length,
+      'in-memory': events.filter(event => event.backend === 'in-memory').length,
+    };
+    const lastLimitedEvent = [...events].reverse().find(event => event.limited);
+    const backendValues = (Object.keys(backendCounts) as LiveChatRateLimitBackend[])
+      .filter(backend => backendCounts[backend] > 0);
+    const backend: LiveChatRateLimitBackendSummary = backendValues.length === 0
+      ? 'unknown'
+      : backendValues.length === 1 ? backendValues[0] : 'mixed';
+    return {
+      windowMs: this.statusRateLimitWindowMs,
+      requestCount: events.length,
+      limitedCount,
+      limitedRatePercent: events.length ? Math.round((limitedCount / events.length) * 10_000) / 100 : 0,
+      threshold: this.statusRateLimitAlertThreshold,
+      alertActive: limitedCount >= this.statusRateLimitAlertThreshold,
+      lastRetryAfterSeconds: lastLimitedEvent?.retryAfterSeconds ?? null,
+      backend,
+      backendCounts,
+    };
+  }
+
   private prune(at: number): void {
     const cutoff = at - this.windowMs;
     while (this.samples.length && this.samples[0].at < cutoff) this.samples.shift();
@@ -609,6 +814,12 @@ export class LiveChatTelemetry {
     for (const state of this.slowEndpoints.values()) {
       while (state.eventTimes.length && state.eventTimes[0] < at - this.windowMs) state.eventTimes.shift();
       state.count = state.eventTimes.length;
+    }
+    while (
+      this.statusRateLimitEvents.length
+      && this.statusRateLimitEvents[0].at < at - this.statusRateLimitWindowMs
+    ) {
+      this.statusRateLimitEvents.shift();
     }
     for (const [key, state] of this.requests) {
       if (state.expiresAt < at) this.requests.delete(key);

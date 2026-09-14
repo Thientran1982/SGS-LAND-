@@ -356,6 +356,31 @@ interface LiveChatMetricsSnapshot {
         threshold: number;
         alertActive: boolean;
     };
+    statusRateLimits?: {
+        endpoint: 'status_polling';
+        environment: string;
+        rateLimitName: string;
+        windowMs: number;
+        requestCount: number;
+        limitedCount: number;
+        limitedRatePercent: number;
+        threshold: number;
+        alertActive: boolean;
+        lastRetryAfterSeconds: number | null;
+        backend: 'redis' | 'in-memory' | 'mixed' | 'unknown';
+        backendCounts: { redis: number; 'in-memory': number };
+        byTenant: Array<{
+            tenantKey: string;
+            requestCount: number;
+            limitedCount: number;
+            limitedRatePercent: number;
+            threshold: number;
+            alertActive: boolean;
+            lastRetryAfterSeconds: number | null;
+            backend: 'redis' | 'in-memory' | 'mixed' | 'unknown';
+            backendCounts: { redis: number; 'in-memory': number };
+        }>;
+    };
 }
 interface SystemMetricsResponse {
     liveChat?: LiveChatMetricsSnapshot;
@@ -424,6 +449,7 @@ export const LiveChatTelemetryPanel: React.FC<{
         || snapshot.finalReplyLatency.count > 0
         || snapshot.slowEndpointAlerts.some(alert => alert.count > 0)
         || snapshot.databaseConnectionTimeouts.count > 0
+        || (snapshot.statusRateLimits?.limitedCount ?? 0) > 0
     );
     const endpointAlertCount = snapshot?.slowEndpointAlerts.length ?? 0;
     const endpointEventCount = snapshot?.slowEndpointAlerts.reduce((total, alert) => total + (Number.isFinite(alert.count) ? alert.count : 0), 0) ?? 0;
@@ -453,6 +479,7 @@ export const LiveChatTelemetryPanel: React.FC<{
     });
     const acknowledge = formatSummary(snapshot?.acknowledgeLatency ?? EMPTY_LATENCY);
     const finalReply = formatSummary(snapshot?.finalReplyLatency ?? EMPTY_LATENCY);
+    const statusRateLimits = snapshot?.statusRateLimits;
     const endpointLabel = (endpoint: 'history' | 'message' | 'ai') =>
         t(`system.live_chat_metrics.endpoint.${endpoint}`);
     const dataStateLabel = {
@@ -541,6 +568,91 @@ export const LiveChatTelemetryPanel: React.FC<{
                     </div>
                 </div>
             </div>
+
+            {statusRateLimits && (
+                <div className={`mt-5 rounded-2xl border p-4 ${statusRateLimits.alertActive ? 'border-rose-200 bg-rose-50' : 'border-emerald-100 bg-emerald-50'}`}>
+                    <div className="flex items-start justify-between gap-3 flex-wrap">
+                        <div>
+                            <h4 className="text-xs font-bold uppercase tracking-wide text-slate-500">{t('system.live_chat_metrics.status_rate_limit')}</h4>
+                            <p className="mt-1 text-2xs text-slate-500">
+                                {t('system.live_chat_metrics.status_rate_limit_scope', {
+                                    environment: statusRateLimits.environment,
+                                    rateLimitName: statusRateLimits.rateLimitName,
+                                })}
+                            </p>
+                        </div>
+                        <span className={`rounded-full px-2 py-1 text-2xs font-bold uppercase ${statusRateLimits.alertActive ? 'bg-rose-100 text-rose-700' : 'bg-emerald-100 text-emerald-700'}`}>
+                            {statusRateLimits.alertActive
+                                ? t('system.live_chat_metrics.active')
+                                : t('system.live_chat_metrics.normal')}
+                        </span>
+                    </div>
+                    <div className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-4">
+                        <div>
+                            <div className="text-2xs uppercase text-slate-500">{t('system.live_chat_metrics.status_rate')}</div>
+                            <div className="font-mono text-xl font-bold text-slate-900">{statusRateLimits.limitedRatePercent}%</div>
+                            <div className="text-2xs text-slate-500">
+                                {t('system.live_chat_metrics.status_count', {
+                                    count: statusRateLimits.limitedCount,
+                                    requests: statusRateLimits.requestCount,
+                                })}
+                            </div>
+                        </div>
+                        <div>
+                            <div className="text-2xs uppercase text-slate-500">{t('system.live_chat_metrics.status_threshold')}</div>
+                            <div className="font-mono text-xl font-bold text-slate-900">{statusRateLimits.threshold}</div>
+                            <div className="text-2xs text-slate-500">{t('system.live_chat_metrics.status_window', { minutes: Math.round(statusRateLimits.windowMs / 60_000) })}</div>
+                        </div>
+                        <div>
+                            <div className="text-2xs uppercase text-slate-500">{t('system.live_chat_metrics.retry_after')}</div>
+                            <div className="font-mono text-xl font-bold text-slate-900">
+                                {statusRateLimits.lastRetryAfterSeconds === null ? '—' : `${statusRateLimits.lastRetryAfterSeconds}s`}
+                            </div>
+                            <div className="text-2xs text-slate-500">{t('system.live_chat_metrics.last_429')}</div>
+                        </div>
+                        <div>
+                            <div className="text-2xs uppercase text-slate-500">{t('system.live_chat_metrics.rate_limit_backend')}</div>
+                            <div className="font-mono text-lg font-bold text-slate-900">{statusRateLimits.backend}</div>
+                            <div className="text-2xs text-slate-500">
+                                {t('system.live_chat_metrics.backend_counts', {
+                                    redis: statusRateLimits.backendCounts.redis,
+                                    memory: statusRateLimits.backendCounts['in-memory'],
+                                })}
+                            </div>
+                        </div>
+                    </div>
+                    {statusRateLimits.byTenant.length > 0 && (
+                        <div className="mt-4 overflow-x-auto">
+                            <table className="w-full text-xs">
+                                <thead className="text-2xs uppercase tracking-wide text-slate-500">
+                                    <tr className="border-b border-slate-200">
+                                        <th className="pb-2 text-left">{t('system.live_chat_metrics.tenant_key')}</th>
+                                        <th className="pb-2 text-right">{t('system.live_chat_metrics.status_rate')}</th>
+                                        <th className="pb-2 text-right">{t('system.live_chat_metrics.retry_after')}</th>
+                                        <th className="pb-2 text-right">{t('system.live_chat_metrics.rate_limit_backend')}</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {statusRateLimits.byTenant
+                                        .filter(item => HASHED_TENANT_KEY.test(item.tenantKey))
+                                        .map(item => (
+                                            <tr key={item.tenantKey} className="border-b border-slate-200 last:border-0">
+                                                <td className="py-2 font-mono text-slate-700">{item.tenantKey}</td>
+                                                <td className={`py-2 text-right font-mono ${item.alertActive ? 'font-bold text-rose-700' : 'text-slate-700'}`}>
+                                                    {item.limitedRatePercent}% ({item.limitedCount}/{item.requestCount})
+                                                </td>
+                                                <td className="py-2 text-right font-mono text-slate-700">
+                                                    {item.lastRetryAfterSeconds === null ? '—' : `${item.lastRetryAfterSeconds}s`}
+                                                </td>
+                                                <td className="py-2 text-right font-mono text-slate-700">{item.backend}</td>
+                                            </tr>
+                                        ))}
+                                </tbody>
+                            </table>
+                        </div>
+                    )}
+                </div>
+            )}
 
             <div className="mt-5 grid grid-cols-1 gap-5 lg:grid-cols-2">
                 <div className="rounded-2xl border border-[var(--glass-border)] p-4">

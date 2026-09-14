@@ -41,6 +41,16 @@ const translate = (key: string, params?: Record<string, string | number>) => {
     'system.live_chat_metrics.endpoint.history': 'Đọc lịch sử',
     'system.live_chat_metrics.endpoint.message': 'Gửi tin nhắn',
     'system.live_chat_metrics.endpoint.ai': 'Xử lý AI',
+    'system.live_chat_metrics.status_rate_limit': 'Status polling bị giới hạn',
+    'system.live_chat_metrics.status_rate_limit_scope': '{rateLimitName} · môi trường {environment}',
+    'system.live_chat_metrics.status_rate': 'Tỷ lệ 429',
+    'system.live_chat_metrics.status_count': '{count} lượt / {requests} request',
+    'system.live_chat_metrics.status_threshold': 'Ngưỡng cảnh báo',
+    'system.live_chat_metrics.status_window': 'Cửa sổ {minutes} phút',
+    'system.live_chat_metrics.retry_after': 'Retry-After',
+    'system.live_chat_metrics.last_429': '429 gần nhất',
+    'system.live_chat_metrics.rate_limit_backend': 'Backend rate-limit',
+    'system.live_chat_metrics.backend_counts': 'Redis {redis} · memory {memory}',
     'common.retry': 'Thử lại',
   };
   return (labels[key] || key).replace(/{(\w+)}/g, (_match, name) =>
@@ -75,6 +85,31 @@ const snapshot = (generatedAt = new Date().toISOString()) => ({
     threshold: 3,
     alertActive: true,
   },
+  statusRateLimits: {
+    endpoint: 'status_polling' as const,
+    environment: 'test',
+    rateLimitName: 'livechat_status',
+    windowMs: 300_000,
+    requestCount: 10,
+    limitedCount: 2,
+    limitedRatePercent: 20,
+    threshold: 3,
+    alertActive: false,
+    lastRetryAfterSeconds: 4,
+    backend: 'mixed' as const,
+    backendCounts: { redis: 8, 'in-memory': 2 },
+    byTenant: [{
+      tenantKey: '0123456789abcdef',
+      requestCount: 10,
+      limitedCount: 2,
+      limitedRatePercent: 20,
+      threshold: 3,
+      alertActive: false,
+      lastRetryAfterSeconds: 4,
+      backend: 'mixed' as const,
+      backendCounts: { redis: 8, 'in-memory': 2 },
+    }],
+  },
 });
 
 const renderPanel = () => render(
@@ -100,7 +135,11 @@ describe('LiveChatTelemetryPanel', () => {
     expect(screen.getByText('900ms')).toBeVisible();
     expect(screen.getByText('2')).toBeVisible();
     expect(screen.getByText('Đang cảnh báo')).toBeVisible();
-    expect(screen.getByText('0123456789abcdef')).toBeVisible();
+    expect(screen.getByText('Status polling bị giới hạn')).toBeVisible();
+    expect(screen.getByText('20%')).toBeVisible();
+    expect(screen.getAllByText('4s')[0]).toBeVisible();
+    expect(screen.getAllByText('mixed')[0]).toBeVisible();
+    expect(screen.getAllByText('0123456789abcdef')[0]).toBeVisible();
     expect(screen.queryByText('tenant-raw-value')).not.toBeInTheDocument();
     expect(screen.queryByText(/payload chat/i)).toBeVisible();
   });
@@ -113,6 +152,17 @@ describe('LiveChatTelemetryPanel', () => {
       byTenant: [],
       slowEndpointAlerts: [],
       databaseConnectionTimeouts: { windowMs: 300_000, count: 0, threshold: 3, alertActive: false },
+      statusRateLimits: {
+        ...snapshot().statusRateLimits,
+        requestCount: 0,
+        limitedCount: 0,
+        limitedRatePercent: 0,
+        alertActive: false,
+        lastRetryAfterSeconds: null,
+        backend: 'unknown' as const,
+        backendCounts: { redis: 0, 'in-memory': 0 },
+        byTenant: [],
+      },
     };
     vi.spyOn(analyticsApi, 'getSystemMetrics').mockResolvedValue({ liveChat: emptySnapshot });
 
