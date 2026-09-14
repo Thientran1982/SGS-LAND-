@@ -1,5 +1,8 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { createMinhClient } from "../../packages/chat-widget/src/core/minhTransport";
+import {
+  createMinhClient,
+  normalizeRetryAfterSeconds,
+} from "../../packages/chat-widget/src/core/minhTransport";
 import { ChatTransportError } from "../../packages/chat-widget/src/core/types";
 
 describe("Minh transport reliability contract", () => {
@@ -70,5 +73,35 @@ describe("Minh transport reliability contract", () => {
       inboundInteractionId: "inbound-1",
       requestId: "request-2",
     });
+  });
+
+  it("preserves retryAfter from a rate-limited status response", async () => {
+    const fetchMock = vi.fn().mockResolvedValue({
+      ok: false,
+      status: 429,
+      headers: { get: (name: string) => name === "Retry-After" ? "11" : null },
+      json: async () => ({
+        error: "Bạn đang kiểm tra trạng thái quá nhanh.",
+        code: "LIVECHAT_STATUS_RATE_LIMITED",
+      }),
+    });
+    vi.stubGlobal("fetch", fetchMock);
+
+    await expect(
+      createMinhClient().getRunStatus("lead-1", "inbound-1"),
+    ).rejects.toMatchObject({
+      name: "ChatTransportError",
+      code: "LIVECHAT_STATUS_RATE_LIMITED",
+      status: 429,
+      retryAfter: 11,
+    } satisfies Partial<ChatTransportError>);
+  });
+
+  it("ignores malformed or excessive retryAfter values", async () => {
+    expect(normalizeRetryAfterSeconds("invalid")).toBeUndefined();
+    expect(normalizeRetryAfterSeconds("")).toBeUndefined();
+    expect(normalizeRetryAfterSeconds(null)).toBeUndefined();
+    expect(normalizeRetryAfterSeconds(-1)).toBeUndefined();
+    expect(normalizeRetryAfterSeconds(120)).toBe(60);
   });
 });

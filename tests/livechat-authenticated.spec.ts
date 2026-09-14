@@ -223,6 +223,7 @@ test.describe('Authenticated public live chat', () => {
     let pendingAiCalls = 0;
     let messageHistoryReadsAfterPending = 0;
     let statusCalls = 0;
+    const statusCallTimes: number[] = [];
     let historyReadAfterSuccess = false;
 
     await page.route('**/api/public/ai/livechat', async (route) => {
@@ -262,12 +263,25 @@ test.describe('Authenticated public live chat', () => {
 
     await page.route('**/api/public/ai/livechat/status/*/*', async (route) => {
       statusCalls += 1;
+      statusCallTimes.push(Date.now());
+      if (statusCalls === 1) {
+        return route.fulfill({
+          status: 429,
+          contentType: 'application/json',
+          headers: { 'Retry-After': '2' },
+          body: JSON.stringify({
+            error: 'Bạn đang kiểm tra trạng thái quá nhanh.',
+            code: 'LIVECHAT_STATUS_RATE_LIMITED',
+            retryAfter: 2,
+          }),
+        });
+      }
       return route.fulfill({
         status: 200,
         contentType: 'application/json',
         body: JSON.stringify(
-          statusCalls === 1
-            ? { status: 'PROCESSING', code: 'AI_ASYNC_PROCESSING', retryAfter: 3 }
+          statusCalls === 2
+            ? { status: 'PROCESSING', code: 'AI_ASYNC_PROCESSING', retryAfter: 1 }
             : { status: 'SUCCESS', code: 'SUCCESS' },
         ),
       });
@@ -308,8 +322,12 @@ test.describe('Authenticated public live chat', () => {
     await expect(page.getByText('Không gửi được tin nhắn. Vui lòng thử lại hoặc gọi 0379 281 445.')).toHaveCount(0);
 
     expect(pendingAiCalls).toBe(1);
-    expect(statusCalls).toBeGreaterThanOrEqual(2);
-    expect(messageHistoryReadsAfterPending).toBeGreaterThan(0);
+    expect(statusCalls).toBeGreaterThanOrEqual(3);
+    expect(statusCallTimes[1] - statusCallTimes[0]).toBeGreaterThanOrEqual(1_800);
+    expect(statusCallTimes[2] - statusCallTimes[1]).toBeGreaterThanOrEqual(1_400);
+    // A 429 and a subsequent PROCESSING response must not fall through to
+    // full history reconciliation. There is only one read after SUCCESS.
+    expect(messageHistoryReadsAfterPending).toBe(1);
     expect(historyReadAfterSuccess).toBe(true);
     expect(pendingRequestBody).not.toBeNull();
 

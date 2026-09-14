@@ -8,6 +8,26 @@ import { getCsrfToken } from "./csrf";
 // not abort a request that the backend is still completing.
 const MINH_REPLY_TIMEOUT_MS = 180_000;
 const DEFAULT_REQUEST_TIMEOUT_MS = 30_000;
+const MAX_RETRY_AFTER_SECONDS = 60;
+
+/**
+ * retryAfter is expressed in seconds by the public API. Ignore malformed
+ * values and cap the value so a broken response cannot leave a poll asleep
+ * forever. The reconciliation deadline remains the final upper bound.
+ */
+export function normalizeRetryAfterSeconds(value: unknown): number | undefined {
+  if (value === null || value === undefined) return undefined;
+  if (typeof value === "string" && value.trim() === "") return undefined;
+  const seconds = Number(value);
+  if (!Number.isFinite(seconds) || seconds < 0) return undefined;
+  return Math.min(seconds, MAX_RETRY_AFTER_SECONDS);
+}
+
+function retryAfterFromResponse(payload: any, res: Response): number | undefined {
+  const bodyValue = normalizeRetryAfterSeconds(payload?.retryAfter);
+  if (bodyValue !== undefined) return bodyValue;
+  return normalizeRetryAfterSeconds(res.headers?.get("Retry-After"));
+}
 
 async function postJson<T>(
   path: string,
@@ -49,9 +69,7 @@ async function postJson<T>(
       {
         status: res.status,
         code: typeof payload?.code === "string" ? payload.code : errCode,
-        retryAfter: Number.isFinite(Number(payload?.retryAfter))
-          ? Number(payload.retryAfter)
-          : undefined,
+        retryAfter: retryAfterFromResponse(payload, res),
         inboundInteractionId: typeof payload?.inboundInteractionId === "string"
           ? payload.inboundInteractionId
           : undefined,
@@ -134,8 +152,30 @@ export function createMinhClient(apiBase?: string) {
       } finally {
         clearTimeout(timeoutId);
       }
-      if (!res.ok) return null;
-      return res.json();
+      let payload: any = null;
+      try {
+        payload = await res.json();
+      } catch {
+        // Keep the status error useful even when a proxy returns an empty body.
+      }
+      if (!res.ok) {
+        throw new ChatTransportError(
+          typeof payload?.error === "string" ? payload.error : "livechat_status_failed",
+          {
+            status: res.status,
+            code: typeof payload?.code === "string"
+              ? payload.code
+              : res.status === 429
+                ? "LIVECHAT_RATE_LIMITED"
+                : "LIVECHAT_STATUS_UNAVAILABLE",
+            retryAfter: retryAfterFromResponse(payload, res),
+          },
+        );
+      }
+      if (payload && typeof payload === "object" && "retryAfter" in payload) {
+        return { ...payload, retryAfter: retryAfterFromResponse(payload, res) };
+      }
+      return payload;
     },
     async uploadAttachments(leadId: string, files: File[]): Promise<ChatAttachment[]> {
       const form = new FormData();

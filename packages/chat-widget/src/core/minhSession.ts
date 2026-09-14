@@ -79,6 +79,9 @@ export interface MinhSession {
   getPendingStatus(inboundInteractionId: string): Promise<{
     status: "PROCESSING" | "SUCCESS" | "FAILED" | "NOT_FOUND";
     code?: string;
+    retryAfter?: number;
+    /** True when the status read was throttled or temporarily unavailable. */
+    transient?: boolean;
   } | null>;
   /** Ban ChatTransport de dung chung voi AiChatWidget. */
   transport: ChatTransport;
@@ -372,9 +375,24 @@ export function createMinhSession(options: MinhSessionOptions = {}): MinhSession
         return {
           status: status as "PROCESSING" | "SUCCESS" | "FAILED" | "NOT_FOUND",
           code: typeof data.code === "string" ? data.code : undefined,
+          retryAfter: Number.isFinite(Number(data.retryAfter))
+            ? Math.max(0, Number(data.retryAfter))
+            : undefined,
         };
-      } catch {
-        return null;
+      } catch (error: any) {
+        // A throttled status read is not a failed AI run. Preserve the
+        // server hint so the panel backs off instead of falling through to
+        // an expensive history read on every 429/503 or network timeout.
+        return {
+          status: "PROCESSING",
+          code: error instanceof ChatTransportError || error?.name === "ChatTransportError"
+            ? (typeof error.code === "string" ? error.code : "LIVECHAT_STATUS_UNAVAILABLE")
+            : "LIVECHAT_STATUS_UNAVAILABLE",
+          retryAfter: Number.isFinite(Number(error?.retryAfter))
+            ? Math.max(0, Number(error.retryAfter))
+            : undefined,
+          transient: true,
+        };
       }
     },
 

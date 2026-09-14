@@ -348,6 +348,19 @@ export const livechatRateLimit = rateLimit({
   message: 'Bạn đang gửi tin nhắn quá nhanh. Vui lòng đợi một chút.',
 });
 
+// Status reconciliation is intentionally isolated from message writes. A
+// long-running AI run may need several status reads, but those reads must not
+// consume the visitor's message budget. The widget backs off to <= 30s, so a
+// single run stays well below this ceiling while abusive clients still get a
+// Retry-After response.
+export const livechatStatusRateLimit = rateLimit({
+  name: 'livechat_status',
+  windowMs: 60_000,
+  maxRequests: 30,
+  keyFn: (req) => getClientIp(req),
+  message: 'Bạn đang kiểm tra trạng thái quá nhanh. Vui lòng đợi một chút.',
+});
+
 // Guest valuation requests: 2/day per IP (free tier).
 // Authenticated users use monthlyValuationQuota (plan-based) instead.
 export const guestValuationRateLimit = rateLimit({

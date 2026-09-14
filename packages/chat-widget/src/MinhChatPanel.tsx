@@ -138,8 +138,10 @@ export function MinhChatPanel({
   const bottomRef = useRef<HTMLDivElement | null>(null);
   const pendingReconcileTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const pendingReconcileBusyRef = useRef(false);
+  const pendingReconcileGenerationRef = useRef(0);
 
   const stopPendingReconcile = useCallback(() => {
+    pendingReconcileGenerationRef.current += 1;
     if (pendingReconcileTimerRef.current) {
       clearTimeout(pendingReconcileTimerRef.current);
       pendingReconcileTimerRef.current = null;
@@ -150,17 +152,24 @@ export function MinhChatPanel({
   const startPendingReconcile = useCallback(
     (userMessageId: string, userMessageText: string, inboundInteractionId?: string) => {
       stopPendingReconcile();
+      const generation = pendingReconcileGenerationRef.current;
       const startedAt = Date.now();
       const deadline = startedAt + 5 * 60_000;
       const delayedNoticeAt = startedAt + 20_000;
+      const minPollDelay = 1_500;
+      const maxPollDelay = 30_000;
+      let pollAttempt = 0;
 
       const poll = async () => {
+        if (generation !== pendingReconcileGenerationRef.current) return;
         if (pendingReconcileBusyRef.current) return;
         pendingReconcileBusyRef.current = true;
+        let nextRetryAfter: number | undefined;
         try {
           const status = inboundInteractionId
             ? await session.getPendingStatus(inboundInteractionId)
             : null;
+          nextRetryAfter = status?.retryAfter;
           if (status?.status === "FAILED") {
             setLoading(false);
             setError("Minh chưa thể hoàn tất phản hồi lúc này. Tin nhắn đã được lưu, bạn có thể thử lại.");
@@ -191,6 +200,14 @@ export function MinhChatPanel({
               return;
             }
           }
+          // SUCCESS and FAILED are terminal. Do not keep polling just because
+          // a final history read was briefly stale; Socket.IO can still add
+          // the already-completed reply without another status request.
+          if (status?.status === "SUCCESS") {
+            setLoading(false);
+            stopPendingReconcile();
+            return;
+          }
           if (Date.now() >= delayedNoticeAt) {
             setError("Minh đang xử lý lâu hơn dự kiến. Tin nhắn đã được lưu; câu trả lời sẽ tự xuất hiện khi hoàn tất.");
           }
@@ -198,8 +215,18 @@ export function MinhChatPanel({
           pendingReconcileBusyRef.current = false;
         }
 
+        if (generation !== pendingReconcileGenerationRef.current) return;
         if (Date.now() < deadline) {
-          pendingReconcileTimerRef.current = setTimeout(poll, 3_000);
+          pollAttempt += 1;
+          const exponentialDelay = Math.min(
+            maxPollDelay,
+            minPollDelay * 2 ** Math.min(pollAttempt - 1, 5),
+          );
+          const serverDelay = Number.isFinite(Number(nextRetryAfter))
+            ? Math.max(minPollDelay, Number(nextRetryAfter) * 1_000)
+            : 0;
+          const delay = Math.min(maxPollDelay, Math.max(exponentialDelay, serverDelay));
+          pendingReconcileTimerRef.current = setTimeout(poll, delay);
         } else {
           pendingReconcileTimerRef.current = null;
           setError("Minh chưa thể hoàn tất phản hồi trong thời gian dự kiến. Tin nhắn đã được lưu; bạn có thể thử lại sau.");

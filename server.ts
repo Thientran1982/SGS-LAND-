@@ -129,7 +129,7 @@ import { priceCalibrationService } from "./server/services/priceCalibrationServi
 import { securityHeaders, corsMiddleware, verifyWebhookSignature, preventParamPollution, csrfTokenIssuer, csrfProtection, csrfTokenHandler } from "./server/middleware/security";
 import { errorHandler } from "./server/middleware/errorHandler";
 import { sanitizeInput, validateBody, schemas } from "./server/middleware/validation";
-import { aiRateLimit, authRateLimit, loginRateLimit, passwordResetRateLimit, webhookRateLimit, apiRateLimit, publicLeadRateLimit, livechatRateLimit, guestValuationRateLimit, userValuationRateLimit, monthlyValuationQuota, monthlyAriaQuota, getMonthlyQuotaStatus, getMonthlyAriaQuotaStatus, rateLimit } from "./server/middleware/rateLimiter";
+import { aiRateLimit, authRateLimit, loginRateLimit, passwordResetRateLimit, webhookRateLimit, apiRateLimit, publicLeadRateLimit, livechatRateLimit, livechatStatusRateLimit, guestValuationRateLimit, userValuationRateLimit, monthlyValuationQuota, monthlyAriaQuota, getMonthlyQuotaStatus, getMonthlyAriaQuotaStatus, rateLimit } from "./server/middleware/rateLimiter";
 import { getPublicListingsCache, setPublicListingsCache } from "./server/services/publicListingsCache";
 import { getPublicListingDetailCache, setPublicListingDetailCache } from "./server/services/publicListingDetailCache";
 import { getTenantBinding } from "./server/services/tenantBrandingService";
@@ -3208,7 +3208,7 @@ if (asyncRun) {
 
   // Public durable-run status: lets the widget reconcile a 202 without
   // repeatedly loading the whole conversation from a contended database.
-  app.get('/api/public/ai/livechat/status/:leadId/:inboundInteractionId', livechatRateLimit, async (req: express.Request, res: express.Response) => {
+  app.get('/api/public/ai/livechat/status/:leadId/:inboundInteractionId', livechatStatusRateLimit, async (req: express.Request, res: express.Response) => {
     try {
       const leadId = String(req.params.leadId || '');
       const inboundInteractionId = String(req.params.inboundInteractionId || '');
