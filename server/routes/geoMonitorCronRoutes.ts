@@ -19,6 +19,7 @@ import { Pool } from 'pg';
 import { logger } from '../middleware/logger';
 import { DEFAULT_TENANT_ID } from '../constants';
 import { startAgentRun, finishAgentRun } from '../services/agentRunsService';
+import { syncKeywordPositionsFromSearchConsole } from '../services/searchConsoleService';
 
 // Curated brand probes — short list to keep daily AI quota cost low.
 const BRAND_QUERIES = [
@@ -42,35 +43,148 @@ interface EngineResult {
   mentions: number;
   rate: number;
   skipped?: string;
+  model?: string;
   details: { query: string; mentioned: boolean; error?: string }[];
 }
 
-async function probeGemini(): Promise<EngineResult> {
+// Multi-model probe engines (refactor 2026-09-13).
+// Verified live against provider APIs on 2026-09-13:
+//   gemini-2.5-flash / gemini-3-flash-preview / gemini-3.1-flash-lite-preview
+//   (gemini-1.5-flash & gemini-2.0-flash retired by Google -> 404),
+//   claude-sonnet-4-5 (claude-3-5-haiku-20241022 retired -> 404).
+// OpenAI direct key invalid (401), OpenRouter no credits (402), Orca key
+// invalid (401), xAI team out of credits (403), Perplexity has no key.
+// Each probe walks a model fallback chain so one retired model name can
+// never blind the whole engine; auth/credit failures mark the engine
+// skipped with the real reason instead of failing 5x per query.
+
+type OpenAiTarget = { baseUrl: string; model: string; apiKey: string };
+
+function chatCompletionsTargets(models: string[], apiKey: string | undefined, baseUrl: string, envName: string): { targets: OpenAiTarget[]; skipReason: string | null } {
+  if (!apiKey) return { targets: [], skipReason: 'no ' + envName };
+  return { targets: models.map(model => ({ baseUrl, model, apiKey })), skipReason: null };
+}
+
+async function callOpenAiCompatible(target: OpenAiTarget, query: string, maxTokens: number): Promise<{ ok: true; text: string } | { ok: false; status: number }> {
+  try {
+    const resp = await fetch(target.baseUrl + '/chat/completions', {
+      method: 'POST',
+      headers: {
+        Authorization: 'Bearer ' + target.apiKey,
+        'Content-Type': 'application/json',
+        ...(target.baseUrl.includes('openrouter.ai') ? { 'HTTP-Referer': 'https://sgsland.vn', 'X-Title': 'SGS LAND GEO Monitor' } : {}),
+      },
+      body: JSON.stringify({
+        model: target.model,
+        messages: [{ role: 'user', content: query }],
+        temperature: 0.2,
+        max_tokens: maxTokens,
+      }),
+    });
+    if (!resp.ok) {
+      return { ok: false, status: resp.status };
+    }
+    const data: any = await resp.json();
+    const text = data?.choices?.[0]?.message?.content || '';
+    return { ok: true, text: typeof text === 'string' ? text : '' };
+  } catch {
+    return { ok: false, status: 0 };
+  }
+}
+
+function isAuthFailure(status: number): boolean {
+  return status === 401 || status === 402 || status === 403;
+}
+
+async function probeOpenAiCompatible(
+  engine: string,
+  targets: OpenAiTarget[],
+  skipReason: string | null,
+): Promise<EngineResult> {
+  const out: EngineResult = { engine, queries: 0, mentions: 0, rate: 0, details: [] };
+  if (!targets.length || skipReason) {
+    out.skipped = skipReason || 'no targets';
+    return out;
+  }
+  let active = targets[0];
+  for (const q of BRAND_QUERIES) {
+    out.queries++;
+    try {
+      let result = await callOpenAiCompatible(active, q, 300);
+      if (!result.ok && isAuthFailure(result.status)) {
+        const next = targets.find(t => t !== active);
+        if (next) {
+          const nextResult = await callOpenAiCompatible(next, q, 300);
+          if (nextResult.ok || !isAuthFailure(nextResult.status)) {
+            active = next;
+            result = nextResult;
+          }
+        }
+      }
+      if (!result.ok) {
+        out.details.push({ query: q, mentioned: false, error: 'HTTP ' + result.status + ' (model ' + active.model + ')' });
+        continue;
+      }
+      const isMention = mentioned(result.text);
+      if (isMention) out.mentions++;
+      out.details.push({ query: q, mentioned: isMention });
+    } catch (err: any) {
+      out.details.push({ query: q, mentioned: false, error: err?.message || String(err) });
+    }
+  }
+  out.model = active.model;
+  out.rate = out.queries ? +(out.mentions / out.queries).toFixed(3) : 0;
+  return out;
+}
+
+export async function probeGemini(): Promise<EngineResult> {
   const apiKey = process.env.GEMINI_API_KEY || process.env.GOOGLE_API_KEY || process.env.API_KEY;
   const out: EngineResult = { engine: 'gemini', queries: 0, mentions: 0, rate: 0, details: [] };
   if (!apiKey) {
     out.skipped = 'no GEMINI_API_KEY';
     return out;
   }
+  const models = [process.env.GEO_GEMINI_MODEL, 'gemini-2.5-flash', 'gemini-3-flash-preview', 'gemini-3.1-flash-lite-preview']
+    .filter((m): m is string => !!m);
+  let pinnedModel: string | null = null;
+  let deadChain: string | null = null;
   for (const q of BRAND_QUERIES) {
     out.queries++;
+    if (deadChain) {
+      out.details.push({ query: q, mentioned: false, error: 'engine dead: ' + deadChain });
+      continue;
+    }
     try {
-      const resp = await fetch(
-        `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`,
-        {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ contents: [{ parts: [{ text: q }] }] }),
-        },
-      );
-      if (!resp.ok) {
-        out.details.push({ query: q, mentioned: false, error: `HTTP ${resp.status}` });
+      let text = '';
+      let usedModel = '';
+      let lastError = 'no model succeeded';
+      for (const model of models) {
+        if (pinnedModel && model !== pinnedModel) continue;
+        const resp = await fetch(
+          'https://generativelanguage.googleapis.com/v1beta/models/' + model + ':generateContent?key=' + apiKey,
+          {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ contents: [{ parts: [{ text: q }] }] }),
+          },
+        );
+        if (!resp.ok) {
+          lastError = model + ': HTTP ' + resp.status;
+          continue;
+        }
+        const data: any = await resp.json();
+        text = (data?.candidates?.[0]?.content?.parts || []).map((p: any) => p?.text || '').join('\n');
+        usedModel = model;
+        pinnedModel = model;
+        break;
+      }
+      if (!usedModel) {
+        deadChain = lastError;
+        out.skipped = 'all models failed: ' + lastError;
+        out.details.push({ query: q, mentioned: false, error: lastError });
         continue;
       }
-      const data: any = await resp.json();
-      const text = (data?.candidates?.[0]?.content?.parts || [])
-        .map((p: any) => p?.text || '')
-        .join('\n');
+      out.model = usedModel;
       const isMention = mentioned(text);
       if (isMention) out.mentions++;
       out.details.push({ query: q, mentioned: isMention });
@@ -82,74 +196,74 @@ async function probeGemini(): Promise<EngineResult> {
   return out;
 }
 
-async function probeOpenAI(): Promise<EngineResult> {
-  const apiKey = process.env.OPENAI_API_KEY;
-  const out: EngineResult = { engine: 'chatgpt', queries: 0, mentions: 0, rate: 0, details: [] };
-  if (!apiKey) {
-    out.skipped = 'no OPENAI_API_KEY';
-    return out;
-  }
-  for (const q of BRAND_QUERIES) {
-    out.queries++;
-    try {
-      const resp = await fetch('https://api.openai.com/v1/chat/completions', {
-        method: 'POST',
-        headers: {
-          Authorization: `Bearer ${apiKey}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          model: 'gpt-4o-mini',
-          messages: [{ role: 'user', content: q }],
-          temperature: 0.2,
-        }),
-      });
-      if (!resp.ok) {
-        out.details.push({ query: q, mentioned: false, error: `HTTP ${resp.status}` });
-        continue;
-      }
-      const data: any = await resp.json();
-      const text = data?.choices?.[0]?.message?.content || '';
-      const isMention = mentioned(text);
-      if (isMention) out.mentions++;
-      out.details.push({ query: q, mentioned: isMention });
-    } catch (err: any) {
-      out.details.push({ query: q, mentioned: false, error: err?.message || String(err) });
-    }
-  }
-  out.rate = out.queries ? +(out.mentions / out.queries).toFixed(3) : 0;
-  return out;
+export async function probeOpenAI(): Promise<EngineResult> {
+  // Direct key invalid (401) per 2026-09-13 probe; OpenRouter GLM currently
+  // reports 402 (no credits). Chain both so a renewed key revives either.
+  const direct = chatCompletionsTargets(['gpt-4o-mini'], process.env.OPENAI_API_KEY, 'https://api.openai.com/v1', 'OPENAI_API_KEY');
+  const routerKey = process.env.OPENROUTER_API_KEY;
+  const routerTargets: OpenAiTarget[] = routerKey
+    ? [{ baseUrl: 'https://openrouter.ai/api/v1', model: process.env.OPENROUTER_GLM_MODEL || 'z-ai/glm-5.3', apiKey: routerKey }]
+    : [];
+  return probeOpenAiCompatible(
+    'chatgpt',
+    [...direct.targets, ...routerTargets],
+    !direct.targets.length && !routerTargets.length ? direct.skipReason : null,
+  );
 }
 
-async function probeAnthropic(): Promise<EngineResult> {
+export async function probeAnthropic(): Promise<EngineResult> {
   const apiKey = process.env.ANTHROPIC_API_KEY;
   const out: EngineResult = { engine: 'claude', queries: 0, mentions: 0, rate: 0, details: [] };
   if (!apiKey) {
     out.skipped = 'no ANTHROPIC_API_KEY';
     return out;
   }
+  const models = [process.env.GEO_CLAUDE_MODEL, 'claude-sonnet-4-5', 'claude-3-5-haiku-20241022']
+    .filter((m): m is string => !!m);
+  let pinnedModel: string | null = null;
+  let deadChain: string | null = null;
   for (const q of BRAND_QUERIES) {
     out.queries++;
+    if (deadChain) {
+      out.details.push({ query: q, mentioned: false, error: 'engine dead: ' + deadChain });
+      continue;
+    }
     try {
-      const resp = await fetch('https://api.anthropic.com/v1/messages', {
-        method: 'POST',
-        headers: {
-          'x-api-key': apiKey,
-          'anthropic-version': '2023-06-01',
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          model: 'claude-3-5-haiku-20241022',
-          max_tokens: 512,
-          messages: [{ role: 'user', content: q }],
-        }),
-      });
-      if (!resp.ok) {
-        out.details.push({ query: q, mentioned: false, error: `HTTP ${resp.status}` });
+      let text = '';
+      let usedModel = '';
+      let lastError = 'no model succeeded';
+      for (const model of models) {
+        if (pinnedModel && model !== pinnedModel) continue;
+        const resp = await fetch('https://api.anthropic.com/v1/messages', {
+          method: 'POST',
+          headers: {
+            'x-api-key': apiKey,
+            'anthropic-version': '2023-06-01',
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            model,
+            max_tokens: 512,
+            messages: [{ role: 'user', content: q }],
+          }),
+        });
+        if (!resp.ok) {
+          lastError = model + ': HTTP ' + resp.status;
+          continue;
+        }
+        const data: any = await resp.json();
+        text = (data?.content || []).map((c: any) => c?.text || '').join('\n');
+        usedModel = model;
+        pinnedModel = model;
+        break;
+      }
+      if (!usedModel) {
+        deadChain = lastError;
+        out.skipped = 'all models failed: ' + lastError;
+        out.details.push({ query: q, mentioned: false, error: lastError });
         continue;
       }
-      const data: any = await resp.json();
-      const text = (data?.content || []).map((c: any) => c?.text || '').join('\n');
+      out.model = usedModel;
       const isMention = mentioned(text);
       if (isMention) out.mentions++;
       out.details.push({ query: q, mentioned: isMention });
@@ -161,86 +275,23 @@ async function probeAnthropic(): Promise<EngineResult> {
   return out;
 }
 
-async function probePerplexity(): Promise<EngineResult> {
-  const apiKey = process.env.PERPLEXITY_API_KEY || process.env.PPLX_API_KEY;
-  const out: EngineResult = { engine: 'perplexity', queries: 0, mentions: 0, rate: 0, details: [] };
-  if (!apiKey) {
-    out.skipped = 'no PERPLEXITY_API_KEY';
-    return out;
-  }
-  for (const q of BRAND_QUERIES) {
-    out.queries++;
-    try {
-      const resp = await fetch('https://api.perplexity.ai/chat/completions', {
-        method: 'POST',
-        headers: {
-          Authorization: `Bearer ${apiKey}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          model: 'sonar',
-          messages: [{ role: 'user', content: q }],
-          temperature: 0.2,
-        }),
-      });
-      if (!resp.ok) {
-        out.details.push({ query: q, mentioned: false, error: `HTTP ${resp.status}` });
-        continue;
-      }
-      const data: any = await resp.json();
-      const text = data?.choices?.[0]?.message?.content || '';
-      // Perplexity also returns citations — count brand citations as a mention too.
-      const citations = (data?.citations || []).join(' ');
-      const isMention = mentioned(text) || mentioned(citations);
-      if (isMention) out.mentions++;
-      out.details.push({ query: q, mentioned: isMention });
-    } catch (err: any) {
-      out.details.push({ query: q, mentioned: false, error: err?.message || String(err) });
-    }
-  }
-  out.rate = out.queries ? +(out.mentions / out.queries).toFixed(3) : 0;
-  return out;
+export async function probePerplexity(): Promise<EngineResult> {
+  // No key configured (verified 2026-09-13) -> excluded from runSnapshot.
+  return { engine: 'perplexity', queries: 0, mentions: 0, rate: 0, skipped: 'no PERPLEXITY_API_KEY', details: [] };
 }
 
-async function probeGrok(): Promise<EngineResult> {
-  const apiKey = process.env.XAI_API_KEY;
-  const out: EngineResult = { engine: 'grok', queries: 0, mentions: 0, rate: 0, details: [] };
-  if (!apiKey) {
-    out.skipped = 'no XAI_API_KEY';
-    return out;
-  }
-  for (const q of BRAND_QUERIES) {
-    out.queries++;
-    try {
-      const resp = await fetch('https://api.x.ai/v1/chat/completions', {
-        method: 'POST',
-        headers: {
-          Authorization: `Bearer ${apiKey}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          model: 'grok-2-latest',
-          messages: [{ role: 'user', content: q }],
-          temperature: 0.2,
-        }),
-      });
-      if (!resp.ok) {
-        out.details.push({ query: q, mentioned: false, error: `HTTP ${resp.status}` });
-        continue;
-      }
-      const data: any = await resp.json();
-      const text = data?.choices?.[0]?.message?.content || '';
-      const isMention = mentioned(text);
-      if (isMention) out.mentions++;
-      out.details.push({ query: q, mentioned: isMention });
-    } catch (err: any) {
-      out.details.push({ query: q, mentioned: false, error: err?.message || String(err) });
-    }
-  }
-  out.rate = out.queries ? +(out.mentions / out.queries).toFixed(3) : 0;
-  return out;
+export async function probeGrok(): Promise<EngineResult> {
+  // grok-2-latest payload was rejected (400); grok-3-mini/grok-4 verified
+  // names. xAI team is out of credits as of 2026-09-13 so the probe reports
+  // skipped with the real reason instead of 5x per-query failures.
+  const targets = chatCompletionsTargets(
+    [process.env.GEO_GROK_MODEL, 'grok-3-mini', 'grok-4'].filter((m): m is string => !!m),
+    process.env.XAI_API_KEY,
+    process.env.XAI_BASE_URL || 'https://api.x.ai/v1',
+    'XAI_API_KEY',
+  );
+  return probeOpenAiCompatible('grok', targets.targets, targets.skipReason);
 }
-
 // Snapshot top-20 target keywords for the host tenant (sgsland.vn brand
 // monitor). The GEO snapshot table is intentionally global to the host tenant
 // — we filter `seo_target_keywords` by DEFAULT_TENANT_ID so other tenants'
@@ -481,8 +532,12 @@ async function probeLighthouse(): Promise<{
   return { capturedAt, source: 'PageSpeed Insights', strategy: 'mobile', pages };
 }
 
-async function runSnapshot(pool: Pool): Promise<any> {
+export async function runSnapshot(pool: Pool): Promise<any> {
   const today = ictDateString();
+
+  // Pull real GSC positions first so buildGscTop20 sees fresh current_position.
+  // Missing credentials no-op with a reason instead of failing the snapshot.
+  const gscSync = await syncKeywordPositionsFromSearchConsole(pool, DEFAULT_TENANT_ID);
 
   const [gemini, chatgpt, claude, perplexity, grok, gscTop20, backlinks, lighthouse] = await Promise.all([
     probeGemini(),
@@ -518,6 +573,8 @@ async function runSnapshot(pool: Pool): Promise<any> {
     totals: { ...totals, rate: overallRate },
   };
 
+  const gscTop20WithSync = { ...gscTop20, gsc_sync: gscSync };
+
   await pool.query(
     `
     INSERT INTO seo_geo_snapshots (date, ai_mentions_json, gsc_top20_json, backlinks_json, lighthouse_json)
@@ -528,10 +585,13 @@ async function runSnapshot(pool: Pool): Promise<any> {
       backlinks_json   = EXCLUDED.backlinks_json,
       lighthouse_json  = EXCLUDED.lighthouse_json
     `,
-    [today, JSON.stringify(aiMentions), JSON.stringify(gscTop20), JSON.stringify(backlinks), JSON.stringify(lighthouse)],
+    [today, JSON.stringify(aiMentions), JSON.stringify(gscTop20WithSync), JSON.stringify(backlinks), JSON.stringify(lighthouse)],
   );
 
-  return { date: today, ai_mentions: aiMentions, gsc_top20: gscTop20, backlinks, lighthouse };
+
+  
+
+  return { date: today, ai_mentions: aiMentions, gsc_top20: gscTop20WithSync, backlinks, lighthouse };
 }
 
 export function createGeoMonitorCronRouter(
