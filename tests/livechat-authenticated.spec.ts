@@ -183,4 +183,116 @@ test.describe('Authenticated public live chat', () => {
     expect(landingPages.rows).toHaveLength(1);
     expect(landingPages.rows[0].slug).toMatch(/^[a-z0-9-]+$/);
   });
+
+  test('keeps a slow 202 reply recoverable without duplicate messages', async ({
+    page,
+    request,
+  }) => {
+    test.setTimeout(60_000);
+
+    const loginResponse = await request.post(`${BASE_URL}/api/auth/login`, {
+      data: { email: fixtureEmail, password: fixturePassword },
+    });
+    expect(loginResponse.status()).toBe(200);
+    const loginBody = await loginResponse.json();
+
+    await page.context().addCookies([
+      {
+        name: 'token',
+        value: loginBody.token,
+        url: BASE_URL,
+        httpOnly: true,
+        sameSite: 'Lax',
+      },
+    ]);
+
+    await page.goto(`${BASE_URL}/livechat`, { waitUntil: 'domcontentloaded' });
+    const messageBox = page.getByLabel('Nội dung tin nhắn');
+    await expect(messageBox).toBeVisible();
+
+    const pendingText = `smoke pending reconcile ${randomUUID()}`;
+    const assistantText = `SMOKE_PENDING_REPLY_${randomUUID()}`;
+    let pendingRequestBody: Record<string, any> | null = null;
+    let pendingAiCalls = 0;
+    let messageHistoryReadsAfterPending = 0;
+
+    await page.route('**/api/public/ai/livechat', async (route) => {
+      const body = route.request().postDataJSON() as Record<string, any>;
+      if (body.message !== pendingText) return route.continue();
+
+      pendingAiCalls += 1;
+      pendingRequestBody = body;
+      expect(typeof body.requestId).toBe('string');
+      expect(body.requestId.length).toBeGreaterThan(10);
+
+      // Simulate the durable worker completing after the public AI request has
+      // crossed its acknowledgement deadline. The widget receives 202 first,
+      // then recovers this committed assistant row from message history.
+      const outboundResponse = await request.post(`${BASE_URL}/api/public/livechat/message`, {
+        data: {
+          leadId: body.leadId,
+          content: assistantText,
+          direction: 'OUTBOUND',
+          metadata: { isAgent: true, isAi: true },
+          idempotencyKey: `pending-smoke-outbound:${body.requestId}`,
+        },
+      });
+      expect(outboundResponse.status()).toBe(201);
+
+      await route.fulfill({
+        status: 202,
+        contentType: 'application/json',
+        body: JSON.stringify({
+          async: true,
+          status: 'PROCESSING',
+          code: 'AI_ASYNC_PROCESSING',
+          inboundInteractionId: body.inboundInteractionId,
+        }),
+      });
+    });
+
+    await page.route('**/api/public/livechat/messages/*', async (route) => {
+      if (route.request().method() !== 'GET') return route.continue();
+      messageHistoryReadsAfterPending += 1;
+      return route.continue();
+    });
+
+    await messageBox.fill(pendingText);
+    await messageBox.press('Enter');
+
+    await expect(page.locator('[aria-live="polite"]')).toContainText(assistantText, {
+      timeout: 15_000,
+    });
+    await expect(page.getByText('Không gửi được tin nhắn. Vui lòng thử lại hoặc gọi 0379 281 445.')).toHaveCount(0);
+
+    expect(pendingAiCalls).toBe(1);
+    expect(messageHistoryReadsAfterPending).toBeGreaterThan(0);
+    expect(pendingRequestBody).not.toBeNull();
+
+    const inboundRows = await db.query(
+      `SELECT id, external_event_id
+       FROM interactions
+       WHERE tenant_id = $1 AND lead_id = (
+         SELECT id FROM leads
+         WHERE tenant_id = $1
+           AND metadata->>'authenticated_user_id' = $2
+         ORDER BY created_at DESC
+         LIMIT 1
+       )
+       AND direction = 'INBOUND' AND content = $3`,
+      [HOST_TENANT, fixtureUserId, pendingText],
+    );
+    expect(inboundRows.rows).toHaveLength(1);
+    expect(inboundRows.rows[0].external_event_id).toBe(
+      `web-inbound:${pendingRequestBody!.requestId}`,
+    );
+
+    const outboundRows = await db.query(
+      `SELECT id
+       FROM interactions
+       WHERE tenant_id = $1 AND content = $2 AND direction = 'OUTBOUND'`,
+      [HOST_TENANT, assistantText],
+    );
+    expect(outboundRows.rows).toHaveLength(1);
+  });
 });
