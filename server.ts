@@ -1822,7 +1822,7 @@ app.use(globalMutationAudit);
   // Keep the public request short enough that a slow provider cannot make the
   // browser/proxy look broken. The durable run continues and the widget
   // receives the persisted answer through Socket.IO or reconciliation.
-  const PUBLIC_LIVECHAT_ASYNC_DEADLINE_MS = 8_000;
+  const PUBLIC_LIVECHAT_ASYNC_DEADLINE_MS = 5_000;
 const PUBLIC_TENANT = DEFAULT_TENANT_ID;
 
   /** Strip Vietnamese diacritics → lowercase, collapse spaces/dots for map lookups */
@@ -3111,6 +3111,7 @@ app.post('/api/public/ai/livechat', livechatRateLimit, aiRateLimit, async (req: 
       const asyncDeadline = setTimeout(
   () => {
     if (!(res as any).headersSent) {
+      logger.info(`[PublicLiveChat] async acknowledgement ${Date.now() - chatStartedAt}ms`);
       res.status(202).json({ async: true, inboundInteractionId: inboundInteraction.id });
     }
   },

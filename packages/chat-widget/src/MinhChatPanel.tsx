@@ -136,6 +136,60 @@ export function MinhChatPanel({
   const voiceTranscriptRef = useRef("");
 
   const bottomRef = useRef<HTMLDivElement | null>(null);
+  const pendingReconcileTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const pendingReconcileBusyRef = useRef(false);
+
+  const stopPendingReconcile = useCallback(() => {
+    if (pendingReconcileTimerRef.current) {
+      clearTimeout(pendingReconcileTimerRef.current);
+      pendingReconcileTimerRef.current = null;
+    }
+    pendingReconcileBusyRef.current = false;
+  }, []);
+
+  const startPendingReconcile = useCallback(
+    (userMessageId: string, userMessageText: string) => {
+      stopPendingReconcile();
+      const deadline = Date.now() + 45_000;
+
+      const poll = async () => {
+        if (pendingReconcileBusyRef.current) return;
+        pendingReconcileBusyRef.current = true;
+        try {
+          const restored = await session.refreshMessages();
+          if (restored) {
+            const userIndexById = restored.messages.findIndex((message) => message.id === userMessageId);
+            const userIndex =
+              userIndexById >= 0
+                ? userIndexById
+                : restored.messages
+                    .map((message) => message.content.trim())
+                    .lastIndexOf(userMessageText.trim());
+            const hasReply =
+              userIndex >= 0 &&
+              restored.messages.slice(userIndex + 1).some((message) => message.role === "assistant");
+            setMessages(restored.messages);
+            if (hasReply) {
+              setError("");
+              stopPendingReconcile();
+              return;
+            }
+          }
+        } finally {
+          pendingReconcileBusyRef.current = false;
+        }
+
+        if (Date.now() < deadline) {
+          pendingReconcileTimerRef.current = setTimeout(poll, 1_500);
+        } else {
+          pendingReconcileTimerRef.current = null;
+        }
+      };
+
+      void poll();
+    },
+    [session, stopPendingReconcile],
+  );
 
   const appendUnique = useCallback((msg: ChatMessage) => {
     setMessages((prev) => (prev.some((m) => m.id === msg.id) ? prev : [...prev, msg]));
@@ -184,6 +238,7 @@ export function MinhChatPanel({
           if (m.role === "assistant") {
             setLoading(false);
             setError("");
+              stopPendingReconcile();
           }
         },
         onModeChange: (s) => {
@@ -200,7 +255,9 @@ export function MinhChatPanel({
       alive = false;
       if (cleanup) cleanup();
     };
-  }, [hasLead, session, appendUnique]);
+  }, [hasLead, session, appendUnique, stopPendingReconcile]);
+
+  useEffect(() => stopPendingReconcile, [stopPendingReconcile]);
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -284,6 +341,7 @@ export function MinhChatPanel({
         if (res.noReply) setMode("HUMAN_TAKEOVER");
         if (res.pending) {
           setError("Minh đang xử lý phản hồi. Câu trả lời sẽ tự xuất hiện khi hoàn tất.");
+          startPendingReconcile(res.user.id, text);
         }
       } catch (err: any) {
                 // AI-phase failures happen AFTER the message was persisted on the server.
@@ -317,7 +375,7 @@ export function MinhChatPanel({
         setLoading(false);
       }
     },
-    [attachments, input, loading, session, uploadingAttachments],
+    [attachments, input, loading, session, startPendingReconcile, uploadingAttachments],
   );
 
   const handleKey = (e: React.KeyboardEvent) => {

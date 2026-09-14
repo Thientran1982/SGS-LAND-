@@ -7,4 +7,6 @@ Landing-builder chat requests can run for several minutes while Minh inspects pr
 
 **Why:** A successful backend run that outlives the browser timeout creates a false “Không gửi được tin nhắn” error and encourages duplicate retries.
 
-**How to apply:** Keep the server acknowledgement deadline short, preserve `requestId` and inbound interaction identity through the run, poll lead history with a finite window, and never classify an accepted pending run as a send failure.
+Under Aiven connection contention, public lead/message-history requests can take several seconds even when the application is healthy, so a slow history poll must never block the initial acknowledgement or the composer.
+
+**How to apply:** Keep the server acknowledgement deadline short, preserve `requestId` and inbound interaction identity through the run, poll lead history in the background with a finite window, and never classify an accepted pending run as a send failure.

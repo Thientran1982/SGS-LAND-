@@ -16,12 +16,6 @@ import { createClientRequestId, createMinhClient } from "./minhTransport";
 export const MINH_LEAD_STORAGE_KEY = "livechat_lead_id";
 export const MINH_NAME_STORAGE_KEY = "livechat_lead_name";
 const MINH_RECONCILE_TIMEOUT_MS = 60_000;
-// Async (202 Accepted) replies: the server keeps the agent running past
-// any proxy deadline. Do not keep the composer blocked for minutes: after this
-// bounded window the socket remains the source of truth and the UI can accept
-// another message while the durable run finishes.
-const MINH_ASYNC_REPLY_TIMEOUT_MS = 45_000;
-
 const MINH_RECONCILE_POLL_MS = 1_500;
 
 export type MinhThreadStatus = "AI_ACTIVE" | "HUMAN_TAKEOVER";
@@ -79,6 +73,8 @@ export interface MinhSession {
   uploadAttachments(files: File[]): Promise<ChatAttachment[]>;
   /** Ket noi socket cho realtime + human takeover. Tra ve ham cleanup. */
   connect(handlers: MinhSocketHandlers): Promise<() => void>;
+  /** Lam moi message history ma khong xoa session khi mot lan fetch bi loi. */
+  refreshMessages(): Promise<MinhRestored | null>;
   /** Ban ChatTransport de dung chung voi AiChatWidget. */
   transport: ChatTransport;
 }
@@ -236,43 +232,11 @@ export function createMinhSession(options: MinhSessionOptions = {}): MinhSession
         throw error;
       }
     }
-        // 202 Accepted: the agent is still running server-side. Poll the durable
-// conversation until the reply lands (the socket may deliver it first).
-if (asyncAccepted) {
-  const asyncSleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
-  const findAssistantRowAsync = (rows: any[]) => {
-    const inboundIndex = saved?.id
-      ? rows.findIndex((row) => String(row?.id) === String(saved.id))
-      : rows.map((row) => String(row?.content || "").trim()).lastIndexOf(text);
-    const candidateRows = inboundIndex >= 0 ? rows.slice(inboundIndex + 1) : rows;
-    return [...candidateRows].reverse().find((row) =>
-      String(row?.direction || "").toUpperCase() === "OUTBOUND" &&
-      row?.metadata?.isAgent === true &&
-      !row?.metadata?.isSysMsg
-    );
-  };
-  const asyncDeadlineAt = Date.now() + MINH_ASYNC_REPLY_TIMEOUT_MS;
-  let asyncRow: any = null;
-  while (Date.now() < asyncDeadlineAt) {
-    try {
-      const recovered: any = await client.getMessages(leadId);
-      const rows: any[] = Array.isArray(recovered?.messages) ? recovered.messages : [];
-      asyncRow = findAssistantRowAsync(rows);
-      if (asyncRow) break;
-    } catch {
-      // transient fetch failure - retry next tick
-    }
-    if (Date.now() >= asyncDeadlineAt) break;
-    await asyncSleep(MINH_RECONCILE_POLL_MS);
-  }
-  if (asyncRow) {
-    data = { reply: asyncRow };
-  } else {
-    // The server accepted the durable run. Returning a pending result keeps
-    // the input usable and lets Socket.IO deliver the eventual assistant row
-    // instead of converting a slow but valid run into a generic failure.
-    data = { async: true, pending: true };
-  }
+    // 202 Accepted: return immediately. The UI starts a bounded background
+    // reconcile while Socket.IO remains the preferred delivery path. Waiting
+    // here made the user stare at the composer for the whole poll window.
+    if (asyncAccepted) {
+      data = { async: true, pending: true };
 }
 
     const userMsg =
@@ -353,6 +317,29 @@ if (asyncAccepted) {
       } catch {
         clear();
         if (authenticatedUser) return restoreAuthenticated();
+        return null;
+      }
+    },
+
+    async refreshMessages() {
+      readStored();
+      if (!leadId) return null;
+      try {
+        const data: any = await client.getMessages(leadId);
+        if (!data?.lead?.id) return null;
+        const list: any[] = Array.isArray(data.messages) ? data.messages : [];
+        const messages = list
+          .filter((m) => !(m && m.metadata && m.metadata.isSysMsg))
+          .map(interactionToMessage)
+          .filter(Boolean) as ChatMessage[];
+        return {
+          leadId: String(data.lead.id),
+          name: data.lead.name || leadName || "",
+          threadStatus:
+            data.lead.threadStatus === "HUMAN_TAKEOVER" ? "HUMAN_TAKEOVER" : "AI_ACTIVE",
+          messages,
+        };
+      } catch {
         return null;
       }
     },
