@@ -1819,7 +1819,10 @@ app.use(globalMutationAudit);
     console.warn("AIVEN_DATABASE_URL not set. Skipping database migrations.");
   }
 
-  const PUBLIC_LIVECHAT_ASYNC_DEADLINE_MS = 26_000;
+  // Keep the public request short enough that a slow provider cannot make the
+  // browser/proxy look broken. The durable run continues and the widget
+  // receives the persisted answer through Socket.IO or reconciliation.
+  const PUBLIC_LIVECHAT_ASYNC_DEADLINE_MS = 8_000;
 const PUBLIC_TENANT = DEFAULT_TENANT_ID;
 
   /** Strip Vietnamese diacritics → lowercase, collapse spaces/dots for map lookups */
@@ -2863,11 +2866,19 @@ app.get('/api/public/listings/:slugId', apiRateLimit, async (req: express.Reques
   app.post('/api/public/livechat/message', livechatRateLimit, async (req: express.Request, res: express.Response) => {
     try {
       const { leadId, content, direction, metadata, idempotencyKey } = req.body;
-      if (!leadId || !String(content || '').trim()) {
-        return res.status(400).json({ error: 'leadId và content bắt buộc' }) as any;
+       if (!leadId || !String(content || '').trim()) {
+         return res.status(400).json({
+           error: 'leadId và content bắt buộc',
+           code: 'LIVECHAT_MESSAGE_INVALID',
+         }) as any;
       }
       const lead = await leadRepository.findById(PUBLIC_TENANT, leadId);
-      if (!lead) return res.status(404).json({ error: 'Phiên chat không tồn tại' }) as any;
+       if (!lead) {
+         return res.status(404).json({
+           error: 'Phiên chat không tồn tại',
+           code: 'LIVECHAT_LEAD_NOT_FOUND',
+         }) as any;
+       }
       const resolvedDirection = direction === 'OUTBOUND' ? 'OUTBOUND' : 'INBOUND';
       const msg = await interactionRepository.create(PUBLIC_TENANT, {
         leadId,
@@ -2888,10 +2899,13 @@ app.get('/api/public/listings/:slugId', apiRateLimit, async (req: express.Reques
       broadcastIo?.to(leadId).emit('receive_message', { room: leadId, message: msg });
       // 2. Inbox sidebar (thread list + unread badge) for all agents in the tenant
       broadcastIo?.to(`tenant:${PUBLIC_TENANT}`).emit('new_inbound_message', { leadId, message: msg });
-      res.status(201).json({ message: msg });
+       res.status(201).json({ message: msg });
     } catch (error) {
       console.error('Public livechat send message error:', error);
-      res.status(500).json({ error: 'Không thể gửi tin nhắn' });
+       res.status(503).json({
+         error: 'Không thể lưu tin nhắn lúc này',
+         code: 'LIVECHAT_MESSAGE_SAVE_FAILED',
+       });
     }
   });
 
@@ -3010,13 +3024,18 @@ broadcastIo?.to(`tenant:${PUBLIC_TENANT}`).emit('escalate_to_human', {
 
 app.post('/api/public/ai/livechat', livechatRateLimit, aiRateLimit, async (req: express.Request, res: express.Response) => {
     try {
-      const { leadId, message, lang, inboundInteractionId } = req.body;
+       const { leadId, message, lang, inboundInteractionId, requestId } = req.body;
       const chatStartedAt = Date.now();
       const attachments = normalizePublicChatAttachments(req.body?.attachments);
       if (!leadId || !String(message || '').trim()) {
         return res.status(400).json({ error: 'leadId và message là bắt buộc' }) as any;
       }
       const msgContent = String(message).trim().slice(0, 2000);
+       logger.info(
+         `[PublicLiveChat] request accepted lead=${String(leadId).slice(0, 80)} ` +
+         `inbound=${String(inboundInteractionId || 'unknown').slice(0, 80)} ` +
+         `request=${String(requestId || 'unknown').slice(0, 80)}`,
+       );
 
       const lead = await leadRepository.findById(PUBLIC_TENANT, leadId);
       logger.info(`[PublicLiveChat] lead lookup ${Date.now() - chatStartedAt}ms`);
@@ -3078,7 +3097,8 @@ app.post('/api/public/ai/livechat', livechatRateLimit, aiRateLimit, async (req: 
                 content: item.content,
               })),
             },
-            __skipAgentEventEnqueue: true,
+             requestId: String(requestId || '').slice(0, 200),
+             __skipAgentEventEnqueue: true,
           })
         : aiService.processMessage(
             lead,
@@ -3114,7 +3134,24 @@ if (asyncRun) {
   res.json({ reply: aiReply, artifact: result.artifact, suggestedAction: result.suggestedAction });
 } else {
   logger.error('Public AI livechat error:', asyncError as Error);
-  res.status(500).json({ error: 'AI busy, please try again later' });
+  const errorMessage = String((asyncError as any)?.message || asyncError || '');
+  const stillRunning =
+    errorMessage.startsWith('AGENT_EXECUTION_IN_PROGRESS:') ||
+    /timeout|timed out|deadline|temporarily unavailable|provider/i.test(errorMessage);
+  if (stillRunning) {
+    return res.status(202).json({
+      async: true,
+      status: 'PROCESSING',
+      code: 'AI_ASYNC_PROCESSING',
+      inboundInteractionId: inboundInteraction.id,
+      retryAfter: 3,
+    }) as any;
+  }
+  res.status(503).json({
+    error: 'Minh chưa thể hoàn tất phản hồi lúc này. Tin nhắn của bạn đã được ghi nhận.',
+    code: 'AI_UNAVAILABLE',
+    inboundInteractionId: inboundInteraction.id,
+  });
 }
     } catch (error) {
       logger.error('Public AI livechat error:', error as Error);

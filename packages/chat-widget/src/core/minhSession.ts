@@ -17,9 +17,10 @@ export const MINH_LEAD_STORAGE_KEY = "livechat_lead_id";
 export const MINH_NAME_STORAGE_KEY = "livechat_lead_name";
 const MINH_RECONCILE_TIMEOUT_MS = 60_000;
 // Async (202 Accepted) replies: the server keeps the agent running past
-// any proxy deadline, so poll the durable conversation well inside the
-// transport-level MINH_REPLY_TIMEOUT_MS (180s).
-const MINH_ASYNC_REPLY_TIMEOUT_MS = 170_000;
+// any proxy deadline. Do not keep the composer blocked for minutes: after this
+// bounded window the socket remains the source of truth and the UI can accept
+// another message while the durable run finishes.
+const MINH_ASYNC_REPLY_TIMEOUT_MS = 45_000;
 
 const MINH_RECONCILE_POLL_MS = 1_500;
 
@@ -50,6 +51,8 @@ export interface MinhSendResult {
   assistant: ChatMessage | null;
   /** true = agent nguoi that da tiep quan, cau tra loi se den qua socket. */
   noReply: boolean;
+  /** true = server accepted the run but it is not complete yet. */
+  pending?: boolean;
   raw: any;
 }
 
@@ -161,13 +164,31 @@ export function createMinhSession(options: MinhSessionOptions = {}): MinhSession
     const requestId = createClientRequestId();
     try {
       saved = await client.sendMessage(leadId, text, "INBOUND", { attachments }, requestId);
-    } catch {
-      saved = null;
+    } catch (error: any) {
+      // A response can be lost after the database committed. Recover the
+      // durable inbound before deciding that the send failed. Never do this
+      // for a clear client/rate-limit error: those requests were rejected
+      // before they could have been persisted.
+      const canBeAmbiguous =
+        !error?.status || error.status >= 500 || error.status === 408;
+      if (canBeAmbiguous) {
+        try {
+          const recovered: any = await client.getMessages(leadId);
+          const rows: any[] = Array.isArray(recovered?.messages) ? recovered.messages : [];
+          saved = [...rows].reverse().find((row) =>
+            String(row?.direction || "").toUpperCase() === "INBOUND" &&
+            String(row?.content || "").trim() === text.trim(),
+          ) || null;
+        } catch {
+          saved = null;
+        }
+      }
+      if (!saved) throw error;
     }
     let data: any;
     let asyncAccepted = false;
     try {
-      data = await client.ask(leadId, text, lang, saved?.id, attachments);
+      data = await client.ask(leadId, text, lang, saved?.id, attachments, requestId);
       if (data && (data as any).async === true) {
         asyncAccepted = true;
         data = undefined;
@@ -247,7 +268,10 @@ if (asyncAccepted) {
   if (asyncRow) {
     data = { reply: asyncRow };
   } else {
-    throw new ChatTransportError("ai_failed", { code: "AI_TIMEOUT" });
+    // The server accepted the durable run. Returning a pending result keeps
+    // the input usable and lets Socket.IO deliver the eventual assistant row
+    // instead of converting a slow but valid run into a generic failure.
+    data = { async: true, pending: true };
   }
 }
 
@@ -268,7 +292,13 @@ if (asyncAccepted) {
       typeof r === "string"
         ? ({ id: "ai-" + Date.now(), role: "assistant", content: r, ts: Date.now() } as ChatMessage)
         : interactionToMessage(r);
-    return { user: userMsg, assistant, noReply: false, raw: data } as MinhSendResult;
+    return {
+      user: userMsg,
+      assistant,
+      noReply: false,
+      pending: Boolean(data?.pending),
+      raw: data,
+    } as MinhSendResult;
   }
 
   async function restoreAuthenticated(): Promise<MinhRestored> {

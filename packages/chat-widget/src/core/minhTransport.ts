@@ -31,7 +31,22 @@ async function postJson<T>(path: string, body: any, apiBase?: string, errCode = 
     clearTimeout(timeoutId);
   }
   if (!res.ok) {
-    throw new ChatTransportError(errCode, { status: res.status });
+    let payload: any = null;
+    try {
+      payload = await res.json();
+    } catch {
+      // Keep the transport error useful even when a proxy returns an empty body.
+    }
+    throw new ChatTransportError(
+      typeof payload?.error === "string" ? payload.error : errCode,
+      {
+        status: res.status,
+        code: typeof payload?.code === "string" ? payload.code : errCode,
+        retryAfter: Number.isFinite(Number(payload?.retryAfter))
+          ? Number(payload.retryAfter)
+          : undefined,
+      },
+    );
   }
     // 202 Accepted = the agent is still running server-side; the widget
   // receives the reply via socket / message polling instead of this response.
@@ -81,7 +96,18 @@ export function createMinhClient(apiBase?: string) {
       return data.message;
     },
     async getMessages(leadId: string) {
-      const res = await fetch(apiUrl(CHAT_ENDPOINTS.livechatMessages(leadId), apiBase), { credentials: "include", cache: "no-store" });
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 10_000);
+      let res: Response;
+      try {
+        res = await fetch(apiUrl(CHAT_ENDPOINTS.livechatMessages(leadId), apiBase), {
+          credentials: "include",
+          cache: "no-store",
+          signal: controller.signal,
+        });
+      } finally {
+        clearTimeout(timeoutId);
+      }
       if (!res.ok) return null;
       return res.json();
     },
@@ -149,10 +175,18 @@ export function createMinhClient(apiBase?: string) {
       lang?: string,
       inboundInteractionId?: string,
       attachments?: ChatAttachment[],
+      requestId?: string,
     ) {
       return postJson<any>(
         CHAT_ENDPOINTS.minhReply,
-        { leadId, message, lang, inboundInteractionId, attachments: attachments || [] },
+        {
+          leadId,
+          message,
+          lang,
+          inboundInteractionId,
+          requestId,
+          attachments: attachments || [],
+        },
         apiBase,
         "ai_failed",
       );

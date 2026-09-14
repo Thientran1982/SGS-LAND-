@@ -181,7 +181,10 @@ export function MinhChatPanel({
       .connect({
         onMessage: (m) => {
           appendUnique(m);
-          if (m.role === "assistant") setLoading(false);
+          if (m.role === "assistant") {
+            setLoading(false);
+            setError("");
+          }
         },
         onModeChange: (s) => {
           setMode(s);
@@ -279,23 +282,36 @@ export function MinhChatPanel({
           return out;
         });
         if (res.noReply) setMode("HUMAN_TAKEOVER");
+        if (res.pending) {
+          setError("Minh đang xử lý phản hồi. Câu trả lời sẽ tự xuất hiện khi hoàn tất.");
+        }
       } catch (err: any) {
                 // AI-phase failures happen AFTER the message was persisted on the server.
         // Keep the user bubble in that case: the reply may still arrive via
         // socket or a later reconcile. Only true send-phase failures remove it.
+        const status = Number(err?.status || 0);
         const aiPhaseFailure =
           err?.code === "ai_failed" ||
-          err?.code === "AI_TIMEOUT";
+          err?.code === "AI_TIMEOUT" ||
+          err?.code === "AGENT_EXECUTION_IN_PROGRESS" ||
+          err?.code === "AI_ASYNC_PROCESSING" ||
+          err?.code === "AI_UNAVAILABLE" ||
+          (err?.code === "ai_failed" && [408, 425, 502, 503, 504].includes(status));
         if (!aiPhaseFailure) {
           setMessages((prev) => prev.filter((m) => m.id !== tempId));
           setLastFailed({ text, attachments: outgoingAttachments });
         }
+        const retryAfter = Number(err?.retryAfter || 0);
         setError(
-          err && err.code === "NO_LEAD"
-  ? "Phìn chat đã hến. Vui lòng bắt đầu lại."
-  : aiPhaseFailure
-  ? "Minh đang xử lý phản hồi - tin nhắn đã được và cảu trả lời sẽ hiện sau ít phút."
-  : "Không gửi được tin nhắn. Vui lòng thử lại hoặc gọi 0379 281 445.",
+          err?.code === "NO_LEAD"
+            ? "Phiên chat đã hết. Vui lòng bắt đầu lại."
+            : status === 429
+              ? `Bạn gửi hơi nhanh. Vui lòng thử lại sau ${retryAfter > 0 ? `${retryAfter} giây` : "một lát"}.`
+              : aiPhaseFailure
+                ? "Minh đang xử lý phản hồi. Tin nhắn đã được lưu và câu trả lời sẽ hiện sau ít phút."
+                : err?.code === "send_failed"
+                  ? "Chưa lưu được tin nhắn. Vui lòng thử lại hoặc gọi 0379 281 445."
+                  : "Không gửi được tin nhắn. Vui lòng thử lại hoặc gọi 0379 281 445.",
         );
       } finally {
         setLoading(false);
