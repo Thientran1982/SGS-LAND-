@@ -1,0 +1,18 @@
+[LỖI 2] Composer bị khóa khi run thất bại.
+Hiện tại: const composerDisabled = runState.status !== "idle";
+SỬA: composerDisabled chỉ true khi status là "sending" hoặc "thinking" (tức dùng lại biến runActive). Ở trạng thái "failed" người dùng PHẢI gõ được tin mới. Ngoài ra khi người dùng bắt đầu gõ vào textarea lúc status === "failed" thì tự động chuyển runState về "idle" và xóa error.
+
+[LỖI 3] server/services/durableAgentExecutionService.ts — mất lease thì không phát agent_run_finished.
+Hiện tại trong khối catch: `if (!leaseLost) { ...finish...; emitFinished("FAILED"); }`
+SỬA: gọi emitFinished("FAILED") cho MỌI nhánh lỗi, kể cả leaseLost. Đưa emitFinished("FAILED") ra ngoài điều kiện (giữ nguyên việc KHÔNG ghi finish() khi leaseLost). Client không được phép quay vô tận chỉ vì worker mất lease.
+Kiểm tra thêm: mọi đường thoát của runDurableAgentExecution đều phải phát đúng một agent_run_finished, trừ nhánh trả về cached (vì HTTP đã trả kết quả ngay). Liệt kê lại từng đường thoát và trạng thái tương ứng trong báo cáo.
+
+[LỖI 4] onReconnectStatus nhánh PROCESSING không arm gì cả.
+Trong MinhChatPanel.tsx, nhánh `if (status.status === "PROCESSING") { ...; transitionRun(nextState); return; }` khiến sau reload/reconnect widget vào trạng thái thinking mà KHÔNG có poll và KHÔNG có deadline.
+SỬA: bỏ `return` sớm; luôn gọi startPendingReconcile(..., immediate: false) sau khi transitionRun, để có lưới an toàn và có deadline 5 phút.
+Thêm TTL cho pending run lưu trong localStorage: nếu Date.now() - startedAt > 5 phút thì clearPendingRun và KHÔNG khôi phục trạng thái thinking (coi như run đã chết).
+Sửa thêm getPendingStatus trong minhSession.ts: hiện tại catch trả về status "PROCESSING" cho MỌI lỗi, kể cả lỗi mạng. Giữ nguyên hành vi nhưng đếm số lần transient liên tiếp; quá 5 lần liên tiếp thì trả về { status: "FAILED", code: "STATUS_UNREACHABLE" } để widget thoát khỏi vòng quay.
+
+[LỖI 5] Nhánh lỗi ai-phase thiếu inboundInteractionId thì không chuyển trạng thái.
+Trong send(): `if (aiPhaseFailure && err?.inboundInteractionId) {...}` — khi aiPhaseFailure đúng nhưng err.inboundInteractionId undefined thì KHÔNG nhánh nào chạy, runState kẹt ở "sending" vĩnh viễn, không poll, không deadline.
+SỬA: khi aiPhaseFailure mà không có inboundInteractionId, chuyển sang "thinking" với inboundInteractionId lấy từ res/saved message của user nếu có; nếu vẫn không có thì chuyển thẳng sang "failed" kèm lastFailed để người dùng bấm Thử lại. Không được để rơi vào khoảng trống.
