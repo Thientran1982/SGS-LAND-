@@ -6,7 +6,14 @@
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import { Bot, Headset, Loader2, RefreshCw, Send, Mic, Check, X, Paperclip, FileText, Image as ImageIcon, Trash2 } from "lucide-react";
 import { createMinhSession } from "./core/minhSession";
-import type { MinhSession, MinhThreadStatus } from "./core/minhSession";
+import type {
+  MinhPendingStatus,
+  MinhRunFinishedEvent,
+  MinhRunProgressEvent,
+  MinhRunStartedEvent,
+  MinhSession,
+  MinhThreadStatus,
+} from "./core/minhSession";
 import type { ChatAttachment, ChatMessage } from "./core/types";
 import { renderChatContent } from "./renderChatContent";
 
@@ -23,6 +30,23 @@ const EMPTY_ATTACHMENT_PROMPT = "Mình gửi tài liệu dự án, hãy dùng th
 type FailedChatRequest = {
   text: string;
   attachments: ChatAttachment[];
+};
+
+type RunPhase = "classify" | "retrieve" | "specialist" | "compose" | "guardrail";
+type RunState = {
+  status: "idle" | "sending" | "thinking" | "failed";
+  runId?: string;
+  inboundInteractionId?: string;
+  startedAt?: number;
+  phase?: RunPhase;
+};
+
+const RUN_PHASE_LABELS: Record<RunPhase, string> = {
+  classify: "Minh đang xác định yêu cầu...",
+  retrieve: "Minh đang tra cứu dữ liệu...",
+  specialist: "Minh đang phân tích thông tin...",
+  compose: "Minh đang soạn câu trả lời...",
+  guardrail: "Minh đang kiểm tra câu trả lời...",
 };
 
 /** Dung design token cua site (globals.css) de hop ca light va dark mode. */
@@ -108,7 +132,7 @@ export function MinhChatPanel({
 
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [input, setInput] = useState(initialMessage);
-  const [loading, setLoading] = useState(false);
+  const [runState, setRunState] = useState<RunState>({ status: "idle" });
   const [error, setError] = useState("");
   const [lastFailed, setLastFailed] = useState<FailedChatRequest | null>(null);
   const [mode, setMode] = useState<MinhThreadStatus>("AI_ACTIVE");
@@ -139,6 +163,36 @@ export function MinhChatPanel({
   const pendingReconcileTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const pendingReconcileBusyRef = useRef(false);
   const pendingReconcileGenerationRef = useRef(0);
+  const runStateRef = useRef<RunState>({ status: "idle" });
+  const pendingRequestRef = useRef<{
+    userMessageId: string;
+    text: string;
+    attachments?: ChatAttachment[];
+  } | null>(null);
+  const messagesRef = useRef<ChatMessage[]>([]);
+  const lastProgressAtRef = useRef(0);
+  const [elapsedNow, setElapsedNow] = useState(Date.now());
+  const runActive = runState.status === "sending" || runState.status === "thinking";
+  const composerDisabled = runState.status !== "idle";
+  messagesRef.current = messages;
+
+  const transitionRun = useCallback((next: RunState) => {
+    runStateRef.current = next;
+    setRunState(next);
+  }, []);
+
+  const finishRun = useCallback(() => {
+    const current = runStateRef.current;
+    if (current.status !== "idle") {
+      transitionRun({ status: "idle" });
+    }
+  }, [transitionRun]);
+
+  useEffect(() => {
+    if (!runActive) return;
+    const timer = setInterval(() => setElapsedNow(Date.now()), 1_000);
+    return () => clearInterval(timer);
+  }, [runActive]);
 
   const stopPendingReconcile = useCallback(() => {
     pendingReconcileGenerationRef.current += 1;
@@ -150,10 +204,15 @@ export function MinhChatPanel({
   }, []);
 
   const startPendingReconcile = useCallback(
-    (userMessageId: string, userMessageText: string, inboundInteractionId?: string) => {
+    (
+      userMessageId: string,
+      userMessageText: string,
+      inboundInteractionId?: string,
+      immediate = false,
+    ) => {
       stopPendingReconcile();
       const generation = pendingReconcileGenerationRef.current;
-      const startedAt = Date.now();
+      const startedAt = runStateRef.current.startedAt || Date.now();
       const deadline = startedAt + 5 * 60_000;
       const minPollDelay = 1_500;
       const maxPollDelay = 30_000;
@@ -171,8 +230,13 @@ export function MinhChatPanel({
           if (generation !== pendingReconcileGenerationRef.current) return;
           nextRetryAfter = status?.retryAfter;
           if (status?.status === "FAILED") {
-            setLoading(false);
+            session.clearPendingRun(inboundInteractionId);
+            setLastFailed({
+              text: userMessageText,
+              attachments: pendingRequestRef.current?.attachments || [],
+            });
             setError("Minh chưa thể hoàn tất phản hồi lúc này. Tin nhắn đã được lưu, bạn có thể thử lại.");
+            transitionRun({ status: "failed" });
             stopPendingReconcile();
             return;
           }
@@ -193,11 +257,19 @@ export function MinhChatPanel({
                     .lastIndexOf(userMessageText.trim());
             const hasReply =
               userIndex >= 0 &&
-              restored.messages.slice(userIndex + 1).some((message) => message.role === "assistant");
+              restored.messages.slice(userIndex + 1).some(
+                (message) =>
+                  message.role === "assistant" &&
+                  (!inboundInteractionId ||
+                    !message.inboundInteractionId ||
+                    message.inboundInteractionId === inboundInteractionId),
+              );
             setMessages(restored.messages);
             if (hasReply) {
               setError("");
+              session.clearPendingRun(inboundInteractionId);
               stopPendingReconcile();
+              finishRun();
               return;
             }
           }
@@ -205,9 +277,9 @@ export function MinhChatPanel({
           // a final history read was briefly stale; Socket.IO can still add
           // the already-completed reply without another status request.
           if (status?.status === "SUCCESS") {
-            setLoading(false);
-            stopPendingReconcile();
-            return;
+            // Keep the indicator until the actual assistant interaction is
+            // visible. The finished lifecycle event can arrive before the
+            // outbound interaction is persisted.
           }
         } finally {
           if (generation === pendingReconcileGenerationRef.current) {
@@ -229,17 +301,43 @@ export function MinhChatPanel({
           pendingReconcileTimerRef.current = setTimeout(poll, delay);
         } else {
           pendingReconcileTimerRef.current = null;
+          session.clearPendingRun(inboundInteractionId);
+          setLastFailed({
+            text: userMessageText,
+            attachments: pendingRequestRef.current?.attachments || [],
+          });
           setError("Minh chưa thể hoàn tất phản hồi trong thời gian dự kiến. Tin nhắn đã được lưu; bạn có thể thử lại sau.");
+          transitionRun({ status: "failed" });
         }
       };
 
-      void poll();
+      const progressAge = lastProgressAtRef.current
+        ? Date.now() - lastProgressAtRef.current
+        : Number.POSITIVE_INFINITY;
+      const initialDelay = immediate
+        ? 0
+        : Math.max(0, Math.min(20_000, 20_000 - Math.max(0, progressAge)));
+      pendingReconcileTimerRef.current = setTimeout(poll, initialDelay);
     },
-    [session, stopPendingReconcile],
+    [finishRun, session, stopPendingReconcile, transitionRun],
   );
 
   const appendUnique = useCallback((msg: ChatMessage) => {
-    setMessages((prev) => (prev.some((m) => m.id === msg.id) ? prev : [...prev, msg]));
+    setMessages((prev) => {
+      const duplicate = prev.some(
+        (m) =>
+          m.id === msg.id ||
+          (m.role === "assistant" &&
+            msg.role === "assistant" &&
+            m.runId &&
+            msg.runId &&
+            m.inboundInteractionId &&
+            msg.inboundInteractionId &&
+            m.runId === msg.runId &&
+            m.inboundInteractionId === msg.inboundInteractionId),
+      );
+      return duplicate ? prev : [...prev, msg];
+    });
   }, []);
 
   // 1. Khoi phuc phien cu tu localStorage (neu lead con hop le).
@@ -278,19 +376,130 @@ export function MinhChatPanel({
     if (!hasLead) return;
     let alive = true;
     let cleanup: (() => void) | null = null;
+    const runMatches = (event: { runId?: string; inboundInteractionId?: string }) => {
+      const current = runStateRef.current;
+      if (current.status === "idle") return false;
+      if (
+        current.inboundInteractionId &&
+        event.inboundInteractionId &&
+        current.inboundInteractionId !== event.inboundInteractionId
+      ) {
+        return false;
+      }
+      if (current.runId && event.runId && current.runId !== event.runId) return false;
+      return true;
+    };
+    const failCurrentRun = (message: string) => {
+      const current = runStateRef.current;
+      session.clearPendingRun(current.inboundInteractionId);
+      if (pendingRequestRef.current) {
+        setLastFailed({
+          text: pendingRequestRef.current.text,
+          attachments: pendingRequestRef.current.attachments || [],
+        });
+      }
+      stopPendingReconcile();
+      setError(message);
+      transitionRun({ status: "failed" });
+    };
     session
       .connect({
         onMessage: (m) => {
           appendUnique(m);
-          if (m.role === "assistant") {
-            setLoading(false);
+          if (m.role === "assistant" && runMatches(m)) {
+            session.clearPendingRun(m.inboundInteractionId);
             setError("");
-              stopPendingReconcile();
+            stopPendingReconcile();
+            pendingRequestRef.current = null;
+            finishRun();
           }
         },
         onModeChange: (s) => {
           setMode(s);
-          setLoading(false);
+          if (
+            s === "HUMAN_TAKEOVER" &&
+            runStateRef.current.status !== "sending" &&
+            runStateRef.current.status !== "thinking"
+          ) {
+            finishRun();
+          }
+        },
+        onRunStarted: (event: MinhRunStartedEvent) => {
+          if (!runMatches(event) && runStateRef.current.status !== "sending") return;
+          lastProgressAtRef.current = Date.now();
+          session.savePendingRun({
+            runId: event.runId,
+            inboundInteractionId: event.inboundInteractionId,
+            startedAt: runStateRef.current.startedAt || Date.now(),
+          });
+          transitionRun({
+            status: "thinking",
+            runId: event.runId,
+            inboundInteractionId: event.inboundInteractionId,
+            startedAt: runStateRef.current.startedAt || Date.now(),
+            phase: "classify",
+          });
+        },
+        onRunProgress: (event: MinhRunProgressEvent) => {
+          if (!runMatches(event)) return;
+          lastProgressAtRef.current = Date.now();
+          transitionRun({
+            ...runStateRef.current,
+            status: "thinking",
+            runId: event.runId,
+            inboundInteractionId: event.inboundInteractionId,
+            phase: event.phase,
+          });
+        },
+        onRunFinished: (event: MinhRunFinishedEvent) => {
+          if (!runMatches(event)) return;
+          if (event.status === "FAILED" || event.status === "BLOCKED") {
+            failCurrentRun(
+              event.status === "BLOCKED"
+                ? "Minh không thể hiển thị phản hồi này. Tin nhắn đã được lưu."
+                : "Minh chưa thể hoàn tất phản hồi lúc này. Tin nhắn đã được lưu, bạn có thể thử lại.",
+            );
+            return;
+          }
+          const pending = pendingRequestRef.current;
+          const fallbackUser = [...messagesRef.current].reverse().find((message) => message.role === "user");
+          startPendingReconcile(
+            pending?.userMessageId || fallbackUser?.id || event.inboundInteractionId,
+            pending?.text || fallbackUser?.content || "",
+            event.inboundInteractionId,
+            true,
+          );
+        },
+        onReconnectStatus: (status: MinhPendingStatus | null) => {
+          const pending = session.getPendingRun();
+          if (!pending || !status) return;
+          const restoredUser = [...messagesRef.current].reverse().find(
+            (message) => message.role === "user" && message.id === pending.inboundInteractionId,
+          );
+          const request = pendingRequestRef.current;
+          const nextState: RunState = {
+            status: "thinking",
+            runId: pending.runId,
+            inboundInteractionId: pending.inboundInteractionId,
+            startedAt: pending.startedAt,
+            phase: runStateRef.current.phase || "classify",
+          };
+          if (status.status === "PROCESSING") {
+            lastProgressAtRef.current = Date.now();
+            transitionRun(nextState);
+            return;
+          }
+          if (status.status === "FAILED") {
+            failCurrentRun("Minh chưa thể hoàn tất phản hồi lúc này. Tin nhắn đã được lưu, bạn có thể thử lại.");
+            return;
+          }
+          transitionRun(nextState);
+          startPendingReconcile(
+            request?.userMessageId || restoredUser?.id || pending.inboundInteractionId,
+            request?.text || restoredUser?.content || "",
+            pending.inboundInteractionId,
+            true,
+          );
         },
       })
       .then((fn) => {
@@ -302,13 +511,21 @@ export function MinhChatPanel({
       alive = false;
       if (cleanup) cleanup();
     };
-  }, [hasLead, session, appendUnique, stopPendingReconcile]);
+  }, [
+    appendUnique,
+    finishRun,
+    hasLead,
+    session,
+    startPendingReconcile,
+    stopPendingReconcile,
+    transitionRun,
+  ]);
 
   useEffect(() => stopPendingReconcile, [stopPendingReconcile]);
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [messages, loading]);
+  }, [messages, runState.status]);
 
   const handleStart = useCallback(
     async (e: React.FormEvent) => {
@@ -360,19 +577,23 @@ export function MinhChatPanel({
       const outgoingAttachments = requestAttachments ?? (raw === undefined ? attachments : []);
       const typedText = (raw ?? input).trim();
       const text = typedText || (outgoingAttachments.length ? EMPTY_ATTACHMENT_PROMPT : "");
-      if (!text || loading || uploadingAttachments) return;
+      if (!text || runStateRef.current.status === "sending" || runStateRef.current.status === "thinking" || uploadingAttachments) return;
       setInput("");
       if (requestAttachments === undefined) setAttachments([]);
       setError("");
       setLastFailed(null);
       const tempId = "temp-" + Date.now();
+      const startedAt = Date.now();
+      pendingRequestRef.current = { userMessageId: tempId, text, attachments: outgoingAttachments };
+      transitionRun({ status: "sending", startedAt });
       setMessages((prev) => [
         ...prev,
         { id: tempId, role: "user", content: text, ts: Date.now(), attachments: outgoingAttachments } as ChatMessage,
       ]);
-      setLoading(true);
       try {
         const res = await session.sendUserMessage(text, undefined, outgoingAttachments);
+        const inboundInteractionId = res.raw?.inboundInteractionId || res.user.id;
+        const runId = typeof res.raw?.runId === "string" ? res.raw.runId : undefined;
         setMessages((prev) => {
           const replaced = prev.map((m) => (m.id === tempId ? res.user : m));
           const seen = new Set<string>();
@@ -385,12 +606,37 @@ export function MinhChatPanel({
           if (res.assistant && !seen.has(res.assistant.id)) out.push(res.assistant);
           return out;
         });
-        if (res.noReply) setMode("HUMAN_TAKEOVER");
+        if (res.noReply) {
+          setMode("HUMAN_TAKEOVER");
+          session.clearPendingRun(inboundInteractionId);
+          finishRun();
+        }
         if (res.pending) {
-          startPendingReconcile(res.user.id, text, res.raw?.inboundInteractionId);
+          lastProgressAtRef.current = Date.now();
+          session.savePendingRun({
+            runId,
+            inboundInteractionId,
+            startedAt,
+          });
+          transitionRun({
+            status: "thinking",
+            runId,
+            inboundInteractionId,
+            startedAt,
+            phase: "classify",
+          });
+          startPendingReconcile(res.user.id, text, inboundInteractionId);
+        } else if (res.assistant) {
+          session.clearPendingRun(inboundInteractionId);
+          stopPendingReconcile();
+          pendingRequestRef.current = null;
+          finishRun();
+        } else if (!res.noReply) {
+          transitionRun({ status: "thinking", inboundInteractionId, startedAt, phase: "classify" });
+          session.savePendingRun({ inboundInteractionId, startedAt });
         }
       } catch (err: any) {
-                // AI-phase failures happen AFTER the message was persisted on the server.
+        // AI-phase failures happen AFTER the message was persisted on the server.
         // Keep the user bubble in that case: the reply may still arrive via
         // socket or a later reconcile. Only true send-phase failures remove it.
         const status = Number(err?.status || 0);
@@ -402,11 +648,22 @@ export function MinhChatPanel({
           err?.code === "AI_UNAVAILABLE" ||
           (err?.code === "ai_failed" && [408, 425, 502, 503, 504].includes(status));
         if (aiPhaseFailure && err?.inboundInteractionId) {
+          const inboundInteractionId = err.inboundInteractionId;
+          setLastFailed({ text, attachments: outgoingAttachments });
+          lastProgressAtRef.current = Date.now();
+          session.savePendingRun({ inboundInteractionId, startedAt });
+          transitionRun({
+            status: "thinking",
+            inboundInteractionId,
+            startedAt,
+            phase: "classify",
+          });
           startPendingReconcile(tempId, text, err.inboundInteractionId);
         }
         if (!aiPhaseFailure) {
           setMessages((prev) => prev.filter((m) => m.id !== tempId));
           setLastFailed({ text, attachments: outgoingAttachments });
+          transitionRun({ status: "failed" });
         }
         const retryAfter = Number(err?.retryAfter || 0);
         setError(
@@ -420,13 +677,18 @@ export function MinhChatPanel({
                   ? "Chưa lưu được tin nhắn. Vui lòng thử lại hoặc gọi 0379 281 445."
                   : "Không gửi được tin nhắn. Vui lòng thử lại hoặc gọi 0379 281 445.",
         );
-        if (aiPhaseFailure) {
-        }
-      } finally {
-        setLoading(false);
       }
     },
-    [attachments, input, loading, session, startPendingReconcile, uploadingAttachments],
+    [
+      attachments,
+      finishRun,
+      input,
+      session,
+      startPendingReconcile,
+      stopPendingReconcile,
+      transitionRun,
+      uploadingAttachments,
+    ],
   );
 
   const handleKey = (e: React.KeyboardEvent) => {
@@ -742,11 +1004,43 @@ export function MinhChatPanel({
               </div>
             ))}
 
-            {loading ? (
+            {runActive ? (
               <div className="flex justify-start">
                 <div className="flex items-center gap-2 rounded-2xl border px-3.5 py-2.5 text-sm" style={S.bubbleAi}>
                   <Loader2 className="w-4 h-4 animate-spin" />
-                  <span>Minh đang soạn trả lời...</span>
+                  <span>
+                    {(() => {
+                      const elapsed = Math.max(
+                        0,
+                        Math.floor((elapsedNow - (runState.startedAt || elapsedNow)) / 1_000),
+                      );
+                      if (elapsed >= 15) return "Câu này cần tra cứu sâu, Minh đang xử lý...";
+                      return RUN_PHASE_LABELS[runState.phase || "classify"];
+                    })()}
+                    <span className="ml-1 tabular-nums text-xs opacity-60">
+                      {Math.floor(Math.max(0, elapsedNow - (runState.startedAt || elapsedNow)) / 1_000)}s
+                    </span>
+                  </span>
+                  {Math.floor(Math.max(0, elapsedNow - (runState.startedAt || elapsedNow)) / 1_000) >= 45 ? (
+                    <button
+                      type="button"
+                      className="rounded-lg border px-2 py-1 text-[11px]"
+                      onClick={() => {
+                        const current = runStateRef.current;
+                        const pending = pendingRequestRef.current;
+                        if (current.inboundInteractionId) {
+                          startPendingReconcile(
+                            pending?.userMessageId || current.inboundInteractionId,
+                            pending?.text || "",
+                            current.inboundInteractionId,
+                            true,
+                          );
+                        }
+                      }}
+                    >
+                      Vẫn đang chạy — xem trạng thái
+                    </button>
+                  ) : null}
                 </div>
               </div>
             ) : null}
@@ -899,7 +1193,7 @@ export function MinhChatPanel({
                 <button
                   type="button"
                   onClick={() => attachmentInputRef.current?.click()}
-                  disabled={uploadingAttachments || loading}
+                   disabled={uploadingAttachments || composerDisabled}
                   aria-label="Đính kèm ảnh hoặc tài liệu dự án"
                   title="Đính kèm ảnh hoặc tài liệu dự án"
                   className="inline-flex h-9 w-9 items-center justify-center rounded-lg shrink-0 transition-colors hover:bg-black/5 disabled:opacity-40"
@@ -911,6 +1205,7 @@ export function MinhChatPanel({
                   value={input}
                   onChange={(e) => setInput(e.target.value)}
                   onKeyDown={handleKey}
+                  disabled={composerDisabled}
                   rows={1}
                   placeholder="Nhập câu hỏi của bạn..."
                   aria-label="Nội dung tin nhắn"
@@ -932,6 +1227,7 @@ export function MinhChatPanel({
                   <button
                     type="button"
                     onClick={startRecording}
+                    disabled={composerDisabled}
                     aria-label="Ghi âm giọng nói"
                     className="inline-flex h-9 w-9 items-center justify-center rounded-lg shrink-0 transition-colors hover:bg-black/5"
                     style={{ color: "var(--cw-ink-dim, #8A8474)" }}
@@ -942,7 +1238,7 @@ export function MinhChatPanel({
                 <button
                   type="button"
                   onClick={() => void send()}
-                  disabled={loading || uploadingAttachments || (!input.trim() && !attachments.length)}
+                  disabled={composerDisabled || uploadingAttachments || (!input.trim() && !attachments.length)}
                   aria-label="Gửi tin nhắn"
                   className="inline-flex h-9 w-9 items-center justify-center rounded-lg disabled:opacity-40"
                   style={S.primaryBtn}

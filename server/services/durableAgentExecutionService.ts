@@ -23,6 +23,47 @@ export interface DurableAgentResult<T> {
   approvalRequestId?: string;
 }
 
+export type DurableAgentRunEvent =
+  | {
+      type: "agent_run_started";
+      leadId: string;
+      runId: string;
+      inboundInteractionId: string;
+    }
+  | {
+      type: "agent_run_progress";
+      leadId: string;
+      runId: string;
+      inboundInteractionId: string;
+      phase: "classify" | "retrieve" | "specialist" | "compose" | "guardrail";
+      elapsedMs: number;
+    }
+  | {
+      type: "agent_run_finished";
+      leadId: string;
+      runId: string;
+      inboundInteractionId: string;
+      status: "SUCCESS" | "FAILED" | "BLOCKED";
+    };
+
+let durableAgentRunEventSink: ((event: DurableAgentRunEvent) => void) | null = null;
+
+export function setDurableAgentRunEventSink(
+  sink: ((event: DurableAgentRunEvent) => void) | null,
+): void {
+  durableAgentRunEventSink = sink;
+}
+
+function emitRunEvent(
+  event: DurableAgentRunEvent,
+): void {
+  try {
+    durableAgentRunEventSink?.(event);
+  } catch (error: any) {
+    logger.warn(`[DurableAgent] lifecycle event skipped: ${error?.message || error}`);
+  }
+}
+
 export interface DurableResumeContext {
   executionId: string;
   attempt: number;
@@ -79,6 +120,7 @@ export async function runDurableAgentExecution<T extends {
   idempotencyKey: string;
   sessionId?: string;
   leadId?: string;
+  inboundInteractionId?: string;
   triggerSource: string;
   message: string;
   execute: (resume: DurableResumeContext) => Promise<T>;
@@ -135,6 +177,41 @@ export async function runDurableAgentExecution<T extends {
   }
 
   const claimToken = execution.claimToken;
+  const runStartedAt = Date.now();
+  const inboundInteractionId = String(params.inboundInteractionId || "");
+  const emitProgress = (
+    phase: "classify" | "retrieve" | "specialist" | "compose" | "guardrail",
+  ) => {
+    if (!params.leadId || !inboundInteractionId) return;
+    emitRunEvent({
+      type: "agent_run_progress",
+      leadId: params.leadId,
+      runId: execution.id,
+      inboundInteractionId,
+      phase,
+      elapsedMs: Date.now() - runStartedAt,
+    });
+  };
+  let finishedEventEmitted = false;
+  const emitFinished = (status: "SUCCESS" | "FAILED" | "BLOCKED") => {
+    if (finishedEventEmitted || !params.leadId || !inboundInteractionId) return;
+    finishedEventEmitted = true;
+    emitRunEvent({
+      type: "agent_run_finished",
+      leadId: params.leadId,
+      runId: execution.id,
+      inboundInteractionId,
+      status,
+    });
+  };
+  if (params.leadId && inboundInteractionId) {
+    emitRunEvent({
+      type: "agent_run_started",
+      leadId: params.leadId,
+      runId: execution.id,
+      inboundInteractionId,
+    });
+  }
   const checkpointRows = await agentExecutionRepository.getSteps(params.tenantId, execution.id);
   const resumeContext: DurableResumeContext = {
     executionId: execution.id,
@@ -313,6 +390,8 @@ export async function runDurableAgentExecution<T extends {
       output: { result: blocked },
       guardrail: inputGuardrail,
     });
+    emitProgress("guardrail");
+    emitFinished("BLOCKED");
     return {
       runId: execution.id,
       traceId: execution.traceId,
@@ -322,6 +401,7 @@ export async function runDurableAgentExecution<T extends {
       cached: false,
     };
   }
+  emitProgress("classify");
 
   assertLease();
   if (!checkpointRows.some(step => step.stepKey === '02_SUPERVISOR' && step.status === 'SUCCESS')) {
@@ -335,6 +415,7 @@ export async function runDurableAgentExecution<T extends {
       output: { decision: 'EXECUTE_EXISTING_PIPELINE', maxSteps: execution.maxSteps },
     });
   }
+  emitProgress("retrieve");
   if (!checkpointRows.some(step => step.stepKey === '03_SPECIALIST_PIPELINE' && step.status === 'SUCCESS')) {
     await agentExecutionRepository.saveStep({
       tenantId: params.tenantId,
@@ -345,11 +426,13 @@ export async function runDurableAgentExecution<T extends {
       status: 'RUNNING',
     });
   }
+  emitProgress("specialist");
 
     // The gate is intentionally observed, but no LangGraph runtime is linked
     // until the exit criteria in the decision record are met.
     const result = await params.execute(resumeContext);
     assertLease();
+    emitProgress("compose");
     const completedSteps = Array.isArray(result.steps) ? result.steps.slice(0, execution.maxSteps) : [];
     await agentExecutionRepository.saveStep({
       tenantId: params.tenantId,
@@ -406,6 +489,7 @@ export async function runDurableAgentExecution<T extends {
       status: outputGuardrail.blocked ? 'BLOCKED' : 'SUCCESS',
       output: outputGuardrail,
     });
+    emitProgress("guardrail");
     if ((guardedResult as any).escalated) {
       // Surface the escalation to a human reviewer without affecting the
       // customer-facing response path; failures here are logged, not thrown.
@@ -453,6 +537,7 @@ export async function runDurableAgentExecution<T extends {
         approvalRequestId: approval.id,
         stepKey: approvalSpec.stepKey || '05_APPROVAL_INTERRUPT',
       });
+      emitFinished("BLOCKED");
       return {
         runId: execution.id,
         traceId: execution.traceId,
@@ -471,6 +556,7 @@ export async function runDurableAgentExecution<T extends {
       output: { result: guardedResult },
       guardrail: outputGuardrail,
     });
+    emitFinished(outputGuardrail.blocked ? "BLOCKED" : "SUCCESS");
     return {
       runId: execution.id,
       traceId: execution.traceId,
@@ -500,6 +586,7 @@ export async function runDurableAgentExecution<T extends {
         status: 'ERROR',
         errorText: error?.message || String(error),
       }).catch(() => {});
+      emitFinished("FAILED");
     }
     logger.error(`[DurableAgent] execution ${execution.id} failed:`, error);
     throw error;

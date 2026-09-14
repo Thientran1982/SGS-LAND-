@@ -16,6 +16,8 @@ export interface ChatMessage {
   content: string;
   ts: number;
   attachments?: ChatAttachment[];
+  runId?: string;
+  inboundInteractionId?: string;
 }
 
 export interface ChatSendInput {

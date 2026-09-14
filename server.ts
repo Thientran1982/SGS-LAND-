@@ -144,6 +144,7 @@ import { sessionRepository } from "./server/repositories/sessionRepository";
 import { visitorRepository } from "./server/repositories/visitorRepository";
 import { lookupIp, getClientIp } from "./server/services/geoService";
 import { sendAiError, parseAiError } from "./server/utils/aiErrorHandler";
+import { setDurableAgentRunEventSink } from "./server/services/durableAgentExecutionService";
 
 // Module-level guard for the periodic memory-usage logger (see
 // startMemoryUsageLogger() further down) — prevents a double registration if
@@ -1637,6 +1638,13 @@ app.use(globalMutationAudit);
     }
   });
   broadcastIo = io;
+  setDurableAgentRunEventSink((event) => {
+    try {
+      broadcastIo?.to(event.leadId).emit(event.type, event);
+    } catch (error: any) {
+      logger.warn(`[Socket] agent lifecycle event skipped: ${error?.message || error}`);
+    }
+  });
 
   io.use((socket, next) => {
     try {
@@ -2950,6 +2958,7 @@ tenantId: PUBLIC_TENANT,
 idempotencyKey: `web:${inboundInteraction.id}`,
 sessionId: leadId,
 leadId,
+   inboundInteractionId: inboundInteraction.id,
 triggerSource: 'public-livechat',
 message: msgContent,
 execute: executePublicChat,
@@ -2988,6 +2997,7 @@ execution = await runDurableAgentExecution({
   idempotencyKey: `web:repair-v1:${inboundInteraction.id}`,
   sessionId: leadId,
   leadId,
+   inboundInteractionId: inboundInteraction.id,
   triggerSource: 'public-livechat-repair',
   message: msgContent,
   execute: executePublicChat,
@@ -3027,6 +3037,7 @@ metadata: {
   ...(result.isSysMsg ? { isSysMsg: true } : {}),
   agentRunId: execution.runId,
   traceId: execution.traceId,
+   inboundInteractionId: inboundInteraction.id,
   needsVerification: execution.guardrail.requiresVerification,
 },
 externalEventId: `agent:${execution.runId}`,
@@ -3196,6 +3207,22 @@ if (asyncRun) {
       retryAfter: 3,
     }) as any;
   }
+  broadcastIo?.to(leadId).emit('receive_message', {
+    room: leadId,
+    message: {
+      id: `agent-failure:${inboundInteraction.id}`,
+      leadId,
+      direction: 'OUTBOUND',
+      content: '',
+      metadata: {
+        isAgent: true,
+        isAi: true,
+        isSysMsg: true,
+        inboundInteractionId: inboundInteraction.id,
+        code: 'AI_UNAVAILABLE',
+      },
+    },
+  });
   res.status(503).json({
     error: 'Minh chưa thể hoàn tất phản hồi lúc này. Tin nhắn của bạn đã được ghi nhận.',
     code: 'AI_UNAVAILABLE',

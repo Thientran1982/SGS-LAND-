@@ -28,6 +28,9 @@ export const CHAT_SOCKET_EVENTS = {
   receiveMessage: "receive_message",
   aiModeChanged: "ai_mode_changed",
   newInboundMessage: "new_inbound_message",
+  agentRunStarted: "agent_run_started",
+  agentRunProgress: "agent_run_progress",
+  agentRunFinished: "agent_run_finished",
 } as const;
 
 function envBase(): string {

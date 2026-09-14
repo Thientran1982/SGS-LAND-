@@ -52,3 +52,9 @@ Status reconciliation must treat throttled, unavailable, and network-failed stat
 **Why:** A long-running browser run can otherwise turn one status `429` or slow database read into a repeated history fan-out, consuming the same public rate-limit budget that visitors need for sending messages.
 
 **How to apply:** Keep status reads on their own limiter, preserve `Retry-After` from both JSON and response headers, and let the widget poll status without history fallback until `SUCCESS`/`FAILED` or the explicit deadline.
+
+The public widget must model an accepted run as `sending → thinking → idle/failed`, persist its inbound correlation in browser storage, and treat Socket.IO lifecycle/reply events as primary over delayed history reads.
+
+**Why:** `202` acknowledgement, reconnects, and `agent_run_finished` can all arrive before the outbound interaction; clearing the indicator from HTTP cleanup or a finished event alone creates duplicate sends and false failures.
+
+**How to apply:** Keep the composer locked for every non-idle state, wait 20 seconds without progress before fallback polling, retain the indicator until a correlated assistant message or terminal failure/deadline, and make system-only socket events invisible to the customer bubble.

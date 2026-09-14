@@ -1,5 +1,5 @@
 import { act, fireEvent, render, screen, waitFor } from "@testing-library/react";
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { MinhChatPanel } from "../../packages/chat-widget/src/MinhChatPanel";
 import { createMinhSession } from "../../packages/chat-widget/src/core/minhSession";
 import type { MinhSession } from "../../packages/chat-widget/src/core/minhSession";
@@ -11,11 +11,13 @@ vi.mock("../../packages/chat-widget/src/core/minhSession", () => ({
 
 const mockedCreateMinhSession = vi.mocked(createMinhSession);
 let realtimeOnMessage: ((message: ChatMessage) => void) | undefined;
+let socketHandlers: any;
 
 describe("MinhChatPanel", () => {
   beforeEach(() => {
     (HTMLElement.prototype as any).scrollIntoView = vi.fn();
     realtimeOnMessage = undefined;
+    socketHandlers = undefined;
     mockedCreateMinhSession.mockReturnValue({
       restore: vi.fn().mockResolvedValue({
         leadId: "lead-1",
@@ -32,11 +34,19 @@ describe("MinhChatPanel", () => {
           },
         ],
       }),
-      connect: vi.fn().mockImplementation(async (handlers: { onMessage?: (message: ChatMessage) => void }) => {
+      connect: vi.fn().mockImplementation(async (handlers: any) => {
+        socketHandlers = handlers;
         realtimeOnMessage = handlers.onMessage;
         return () => undefined;
       }),
+      getPendingRun: vi.fn().mockReturnValue(null),
+      savePendingRun: vi.fn(),
+      clearPendingRun: vi.fn(),
     } as unknown as MinhSession);
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
   });
 
   it("keeps public and draft landing URLs clickable in the rendered chat", async () => {
@@ -103,7 +113,8 @@ describe("MinhChatPanel", () => {
     expect(composer?.parentElement).toHaveClass("w-full", "self-center");
   });
 
-  it("shows pending immediately while a slow history read continues in the background", async () => {
+  it("keeps the thinking indicator and delays fallback polling until socket silence", async () => {
+    vi.useFakeTimers();
     let releaseRefresh!: (value: any) => void;
     const refreshMessages = vi.fn().mockImplementation(
       () => new Promise((resolve) => {
@@ -117,8 +128,14 @@ describe("MinhChatPanel", () => {
         threadStatus: "AI_ACTIVE",
         messages: [],
       }),
-      connect: vi.fn().mockResolvedValue(() => undefined),
+      connect: vi.fn().mockImplementation(async (handlers: any) => {
+        socketHandlers = handlers;
+        return () => undefined;
+      }),
+      getPendingStatus: vi.fn().mockResolvedValue({ status: "SUCCESS" }),
       refreshMessages,
+      savePendingRun: vi.fn(),
+      clearPendingRun: vi.fn(),
       sendUserMessage: vi.fn().mockResolvedValue({
         user: {
           id: "user-1",
@@ -136,13 +153,21 @@ describe("MinhChatPanel", () => {
 
     render(<MinhChatPanel showHeader={false} heightClass="h-auto" />);
 
-    const input = await waitFor(() => screen.getByRole("textbox", { name: "Nội dung tin nhắn" }));
+    await act(async () => {
+      await Promise.resolve();
+      await Promise.resolve();
+    });
+    const input = screen.getByRole("textbox", { name: "Nội dung tin nhắn" });
     fireEvent.change(input, { target: { value: "Aiven contention smoke" } });
     fireEvent.keyDown(input, { key: "Enter", code: "Enter" });
 
-    expect(screen.queryByText(/Minh đang xử lý/)).not.toBeInTheDocument();
-    expect(input).not.toBeDisabled();
-    await waitFor(() => expect(refreshMessages).toHaveBeenCalled());
+    expect(screen.getByText(/Minh đang/)).toBeInTheDocument();
+    expect(input).toBeDisabled();
+    expect(refreshMessages).not.toHaveBeenCalled();
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(20_000);
+    });
+    expect(refreshMessages).toHaveBeenCalled();
 
     await act(async () => {
       releaseRefresh({
@@ -164,7 +189,8 @@ describe("MinhChatPanel", () => {
     });
   });
 
-  it("does not let stale history overwrite a realtime reply", async () => {
+  it("uses socket reply first and cancels fallback polling", async () => {
+    vi.useFakeTimers();
     let releaseRefresh!: (value: any) => void;
     const refreshMessages = vi.fn().mockImplementation(
       () => new Promise((resolve) => {
@@ -178,12 +204,15 @@ describe("MinhChatPanel", () => {
         threadStatus: "AI_ACTIVE",
         messages: [],
       }),
-      connect: vi.fn().mockImplementation(async (handlers: { onMessage?: (message: ChatMessage) => void }) => {
+      connect: vi.fn().mockImplementation(async (handlers: any) => {
+        socketHandlers = handlers;
         realtimeOnMessage = handlers.onMessage;
         return () => undefined;
       }),
       getPendingStatus: vi.fn().mockResolvedValue({ status: "NOT_FOUND" }),
       refreshMessages,
+      savePendingRun: vi.fn(),
+      clearPendingRun: vi.fn(),
       sendUserMessage: vi.fn().mockResolvedValue({
         user: {
           id: "user-1",
@@ -201,9 +230,177 @@ describe("MinhChatPanel", () => {
 
     render(<MinhChatPanel showHeader={false} heightClass="h-auto" />);
 
-    const input = await waitFor(() => screen.getByRole("textbox", { name: "Nội dung tin nhắn" }));
+    await act(async () => {
+      await Promise.resolve();
+      await Promise.resolve();
+    });
+    const input = screen.getByRole("textbox", { name: "Nội dung tin nhắn" });
     fireEvent.change(input, { target: { value: "Race condition smoke" } });
     fireEvent.keyDown(input, { key: "Enter", code: "Enter" });
+    await act(async () => {
+      await Promise.resolve();
+      await Promise.resolve();
+    });
+    expect(screen.getByText(/Minh đang/)).toBeInTheDocument();
+
+    act(() => {
+      realtimeOnMessage?.({
+        id: "assistant-realtime-1",
+        role: "assistant",
+        content: "Câu trả lời realtime",
+        ts: Date.now(),
+        runId: "run-1",
+        inboundInteractionId: "inbound-1",
+      });
+    });
+    expect(screen.getByText("Câu trả lời realtime")).toBeInTheDocument();
+    expect(input).not.toBeDisabled();
+
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(20_000);
+    });
+    expect(refreshMessages).not.toHaveBeenCalled();
+  });
+
+  it("turns the indicator off and offers retry after a failed run", async () => {
+    vi.useFakeTimers();
+    const getPendingStatus = vi.fn().mockResolvedValue({ status: "FAILED", code: "AI_UNAVAILABLE" });
+    const failedSession = {
+      restore: vi.fn().mockResolvedValue({
+        leadId: "lead-1",
+        name: "Nguyễn Minh",
+        threadStatus: "AI_ACTIVE",
+        messages: [],
+      }),
+      connect: vi.fn().mockResolvedValue(() => undefined),
+      getPendingStatus,
+      savePendingRun: vi.fn(),
+      clearPendingRun: vi.fn(),
+      sendUserMessage: vi.fn().mockResolvedValue({
+        user: { id: "user-1", role: "user", content: "Câu hỏi lỗi", ts: Date.now() },
+        assistant: null,
+        noReply: false,
+        pending: true,
+        raw: { async: true, inboundInteractionId: "inbound-1" },
+      }),
+    } as unknown as MinhSession;
+    mockedCreateMinhSession.mockReturnValue(failedSession);
+
+    render(<MinhChatPanel showHeader={false} heightClass="h-auto" />);
+    await act(async () => {
+      await Promise.resolve();
+      await Promise.resolve();
+    });
+    const input = screen.getByRole("textbox", { name: "Nội dung tin nhắn" });
+    fireEvent.change(input, { target: { value: "Câu hỏi lỗi" } });
+    fireEvent.keyDown(input, { key: "Enter", code: "Enter" });
+    await act(async () => {
+      await Promise.resolve();
+      await Promise.resolve();
+    });
+    expect(screen.getByText(/Minh đang/)).toBeInTheDocument();
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(20_000);
+      await Promise.resolve();
+      await Promise.resolve();
+    });
+
+    expect(screen.getByRole("alert")).toHaveTextContent(/chưa thể hoàn tất/);
+    expect(screen.queryByText(/Minh đang/)).not.toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /Thử lại/ })).toBeInTheDocument();
+  });
+
+  it("restores thinking after reconnect while a durable run is processing", async () => {
+    const reconnectSession = {
+      restore: vi.fn().mockResolvedValue({
+        leadId: "lead-1",
+        name: "Nguyễn Minh",
+        threadStatus: "AI_ACTIVE",
+        messages: [{ id: "inbound-1", role: "user", content: "Đang xử lý", ts: Date.now() }],
+      }),
+      connect: vi.fn().mockImplementation(async (handlers: any) => {
+        socketHandlers = handlers;
+        handlers.onReconnectStatus?.({ status: "PROCESSING", code: "RUNNING" });
+        return () => undefined;
+      }),
+      getPendingRun: vi.fn().mockReturnValue({
+        runId: "run-1",
+        inboundInteractionId: "inbound-1",
+        startedAt: Date.now() - 5_000,
+      }),
+      getPendingStatus: vi.fn().mockResolvedValue({ status: "PROCESSING" }),
+      savePendingRun: vi.fn(),
+      clearPendingRun: vi.fn(),
+    } as unknown as MinhSession;
+    mockedCreateMinhSession.mockReturnValue(reconnectSession);
+
+    render(<MinhChatPanel showHeader={false} heightClass="h-auto" />);
+
+    expect(await screen.findByText(/Minh đang/)).toBeInTheDocument();
+    expect(screen.getByRole("textbox", { name: "Nội dung tin nhắn" })).toBeDisabled();
+  });
+
+  it("does not let stale history overwrite a realtime reply", async () => {
+    let releaseRefresh!: (value: any) => void;
+    const refreshMessages = vi.fn().mockImplementation(
+      () => new Promise((resolve) => {
+        releaseRefresh = resolve;
+      }),
+    );
+    const raceSession = {
+      restore: vi.fn().mockResolvedValue({
+        leadId: "lead-1",
+        name: "Nguyễn Minh",
+        threadStatus: "AI_ACTIVE",
+        messages: [],
+      }),
+      connect: vi.fn().mockImplementation(async (handlers: any) => {
+        socketHandlers = handlers;
+        realtimeOnMessage = handlers.onMessage;
+        return () => undefined;
+      }),
+      getPendingStatus: vi.fn().mockResolvedValue({ status: "SUCCESS" }),
+      refreshMessages,
+      savePendingRun: vi.fn(),
+      clearPendingRun: vi.fn(),
+      sendUserMessage: vi.fn().mockResolvedValue({
+        user: {
+          id: "user-1",
+          role: "user",
+          content: "Race condition smoke",
+          ts: Date.now(),
+        },
+        assistant: null,
+        noReply: false,
+        pending: true,
+        raw: { async: true, inboundInteractionId: "inbound-1" },
+      }),
+    } as unknown as MinhSession;
+    mockedCreateMinhSession.mockReturnValue(raceSession);
+
+    render(<MinhChatPanel showHeader={false} heightClass="h-auto" />);
+
+    await act(async () => {
+      await Promise.resolve();
+      await Promise.resolve();
+    });
+    const input = screen.getByRole("textbox", { name: "Nội dung tin nhắn" });
+    fireEvent.change(input, { target: { value: "Race condition smoke" } });
+    fireEvent.keyDown(input, { key: "Enter", code: "Enter" });
+    await act(async () => {
+      await Promise.resolve();
+      await Promise.resolve();
+    });
+    expect(screen.getByText(/Minh đang/)).toBeInTheDocument();
+
+    act(() => {
+      socketHandlers?.onRunFinished?.({
+        leadId: "lead-1",
+        runId: "run-1",
+        inboundInteractionId: "inbound-1",
+        status: "SUCCESS",
+      });
+    });
     await waitFor(() => expect(refreshMessages).toHaveBeenCalled());
 
     act(() => {
@@ -212,6 +409,8 @@ describe("MinhChatPanel", () => {
         role: "assistant",
         content: "Câu trả lời realtime",
         ts: Date.now(),
+        runId: "run-1",
+        inboundInteractionId: "inbound-1",
       });
     });
     await screen.findByText("Câu trả lời realtime");

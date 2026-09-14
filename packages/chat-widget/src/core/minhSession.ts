@@ -40,6 +40,12 @@ export interface MinhRestored {
   messages: ChatMessage[];
 }
 
+export interface MinhPendingRun {
+  runId?: string;
+  inboundInteractionId: string;
+  startedAt: number;
+}
+
 export interface MinhSendResult {
   user: ChatMessage;
   assistant: ChatMessage | null;
@@ -53,13 +59,48 @@ export interface MinhSendResult {
 export interface MinhSocketHandlers {
   onMessage?: (msg: ChatMessage) => void;
   onModeChange?: (status: MinhThreadStatus) => void;
+  onRunStarted?: (event: MinhRunStartedEvent) => void;
+  onRunProgress?: (event: MinhRunProgressEvent) => void;
+  onRunFinished?: (event: MinhRunFinishedEvent) => void;
+  onReconnectStatus?: (status: MinhPendingStatus | null) => void;
 }
+
+export interface MinhRunStartedEvent {
+  leadId: string;
+  runId: string;
+  inboundInteractionId: string;
+}
+
+export interface MinhRunProgressEvent {
+  leadId: string;
+  runId: string;
+  inboundInteractionId: string;
+  phase: "classify" | "retrieve" | "specialist" | "compose" | "guardrail";
+  elapsedMs: number;
+}
+
+export interface MinhRunFinishedEvent {
+  leadId: string;
+  runId: string;
+  inboundInteractionId: string;
+  status: "SUCCESS" | "FAILED" | "BLOCKED";
+}
+
+export type MinhPendingStatus = {
+  status: "PROCESSING" | "SUCCESS" | "FAILED" | "NOT_FOUND";
+  code?: string;
+  retryAfter?: number;
+  transient?: boolean;
+};
 
 export interface MinhSession {
   getLeadId(): string | null;
   getLeadName(): string | null;
   hasLead(): boolean;
   reset(): void;
+  getPendingRun(): MinhPendingRun | null;
+  savePendingRun(run: MinhPendingRun): void;
+  clearPendingRun(inboundInteractionId?: string): void;
   /** Khoi phuc phien cu tu localStorage; null neu lead khong con hop le. */
   restore(): Promise<MinhRestored | null>;
   /** Tao lead moi trong CRM roi gui loi chao. */
@@ -76,13 +117,7 @@ export interface MinhSession {
   /** Lam moi message history ma khong xoa session khi mot lan fetch bi loi. */
   refreshMessages(): Promise<MinhRestored | null>;
   /** Doc trang thai durable run ma khong tai lai toan bo history. */
-  getPendingStatus(inboundInteractionId: string): Promise<{
-    status: "PROCESSING" | "SUCCESS" | "FAILED" | "NOT_FOUND";
-    code?: string;
-    retryAfter?: number;
-    /** True when the status read was throttled or temporarily unavailable. */
-    transient?: boolean;
-  } | null>;
+  getPendingStatus(inboundInteractionId: string): Promise<MinhPendingStatus | null>;
   /** Ban ChatTransport de dung chung voi AiChatWidget. */
   transport: ChatTransport;
 }
@@ -107,6 +142,11 @@ export function interactionToMessage(raw: any): ChatMessage | null {
     content,
     ts: Number.isFinite(ts) ? ts : Date.now(),
     attachments: Array.isArray(raw.metadata?.attachments) ? raw.metadata.attachments : undefined,
+    runId: typeof raw.metadata?.agentRunId === "string" ? raw.metadata.agentRunId : undefined,
+    inboundInteractionId:
+      typeof raw.metadata?.inboundInteractionId === "string"
+        ? raw.metadata.inboundInteractionId
+        : undefined,
   };
 }
 
@@ -136,6 +176,7 @@ export function createMinhSession(options: MinhSessionOptions = {}): MinhSession
 
   const storageKey = (base: string) =>
     authenticatedUser ? `${base}:${authenticatedUser.id}` : base;
+  const pendingRunStorageKey = storageKey("livechat_pending_run");
 
   function readStored() {
     const s = store();
@@ -160,6 +201,44 @@ export function createMinhSession(options: MinhSessionOptions = {}): MinhSession
     if (!s) return;
     s.removeItem(storageKey(MINH_LEAD_STORAGE_KEY));
     s.removeItem(storageKey(MINH_NAME_STORAGE_KEY));
+    s.removeItem(pendingRunStorageKey);
+  }
+
+  function readPendingRun(): MinhPendingRun | null {
+    const s = store();
+    if (!s) return null;
+    try {
+      const raw = s.getItem(pendingRunStorageKey);
+      if (!raw) return null;
+      const parsed = JSON.parse(raw);
+      if (!parsed || typeof parsed.inboundInteractionId !== "string" || !parsed.startedAt) return null;
+      return {
+        runId: typeof parsed.runId === "string" ? parsed.runId : undefined,
+        inboundInteractionId: parsed.inboundInteractionId,
+        startedAt: Number(parsed.startedAt),
+      };
+    } catch {
+      return null;
+    }
+  }
+
+  function savePendingRun(run: MinhPendingRun): void {
+    try {
+      store()?.setItem(pendingRunStorageKey, JSON.stringify(run));
+    } catch {
+      /* localStorage is optional */
+    }
+  }
+
+  function clearPendingRun(inboundInteractionId?: string): void {
+    const current = readPendingRun();
+    if (!inboundInteractionId || !current || current.inboundInteractionId === inboundInteractionId) {
+      try {
+        store()?.removeItem(pendingRunStorageKey);
+      } catch {
+        /* localStorage is optional */
+      }
+    }
   }
 
   async function ask(text: string, lang?: string, attachments: ChatAttachment[] = []) {
@@ -309,6 +388,9 @@ export function createMinhSession(options: MinhSessionOptions = {}): MinhSession
       return Boolean(leadId);
     },
     reset: clear,
+    getPendingRun: readPendingRun,
+    savePendingRun,
+    clearPendingRun,
 
     async restore() {
       readStored();
@@ -473,8 +555,15 @@ export function createMinhSession(options: MinhSessionOptions = {}): MinhSession
         const raw = data && data.message ? data.message : data;
         if (!raw) return;
         if (raw.leadId && String(raw.leadId) !== room) return;
+        if (raw.metadata?.isSysMsg) return;
         const msg = interactionToMessage(raw);
         if (msg && handlers.onMessage) handlers.onMessage(msg);
+      };
+      const pendingStatusAfterConnect = async () => {
+        const pending = readPendingRun();
+        if (!pending) return;
+        const status = await session.getPendingStatus(pending.inboundInteractionId);
+        handlers.onReconnectStatus?.(status);
       };
       const onMode = (data: any) => {
         if (data && data.leadId && String(data.leadId) !== room) return;
@@ -483,16 +572,40 @@ export function createMinhSession(options: MinhSessionOptions = {}): MinhSession
         if (handlers.onModeChange) handlers.onModeChange(status);
       };
 
-      socket.on("connect", join);
+      const onConnect = () => {
+        join();
+        void pendingStatusAfterConnect();
+      };
+      socket.on("connect", onConnect);
       socket.on(CHAT_SOCKET_EVENTS.receiveMessage, onMessage);
       socket.on(CHAT_SOCKET_EVENTS.aiModeChanged, onMode);
-      if (socket.connected) join();
+      socket.on(CHAT_SOCKET_EVENTS.agentRunStarted, (data: MinhRunStartedEvent) => {
+        if (!data || String(data.leadId) !== room) return;
+        savePendingRun({
+          runId: String(data.runId),
+          inboundInteractionId: String(data.inboundInteractionId),
+          startedAt: Date.now(),
+        });
+        handlers.onRunStarted?.(data);
+      });
+      socket.on(CHAT_SOCKET_EVENTS.agentRunProgress, (data: MinhRunProgressEvent) => {
+        if (!data || String(data.leadId) !== room) return;
+        handlers.onRunProgress?.(data);
+      });
+      socket.on(CHAT_SOCKET_EVENTS.agentRunFinished, (data: MinhRunFinishedEvent) => {
+        if (!data || String(data.leadId) !== room) return;
+        handlers.onRunFinished?.(data);
+      });
+      if (socket.connected) onConnect();
 
       return () => {
         try {
-          socket.off("connect", join);
+          socket.off("connect", onConnect);
           socket.off(CHAT_SOCKET_EVENTS.receiveMessage, onMessage);
           socket.off(CHAT_SOCKET_EVENTS.aiModeChanged, onMode);
+          socket.off(CHAT_SOCKET_EVENTS.agentRunStarted);
+          socket.off(CHAT_SOCKET_EVENTS.agentRunProgress);
+          socket.off(CHAT_SOCKET_EVENTS.agentRunFinished);
           socket.emit(CHAT_SOCKET_EVENTS.leaveRoom, room);
           socket.disconnect();
         } catch {
