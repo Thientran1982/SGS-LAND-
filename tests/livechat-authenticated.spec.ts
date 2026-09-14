@@ -184,6 +184,113 @@ test.describe('Authenticated public live chat', () => {
     expect(landingPages.rows[0].slug).toMatch(/^[a-z0-9-]+$/);
   });
 
+  test('isolates status polling from message writes in the public API', async ({
+    page,
+    request,
+  }) => {
+    test.setTimeout(90_000);
+
+    const loginResponse = await request.post(`${BASE_URL}/api/auth/login`, {
+      data: { email: fixtureEmail, password: fixturePassword },
+    });
+    expect(loginResponse.status()).toBe(200);
+    const loginBody = await loginResponse.json();
+
+    await page.context().addCookies([
+      {
+        name: 'token',
+        value: loginBody.token,
+        url: BASE_URL,
+        httpOnly: true,
+        sameSite: 'Lax',
+      },
+    ]);
+
+    // Use a request-scoped forwarded IP so this proof remains isolated from
+    // other browser tests, regardless of whether the server uses Redis or the
+    // in-memory fallback store.
+    const testIp = `livechat-status-isolation-${randomUUID()}`;
+    await page.setExtraHTTPHeaders({ 'x-forwarded-for': testIp });
+
+    const firstLeadResponse = page.waitForResponse(
+      (response) =>
+        response.url().endsWith('/api/public/leads') &&
+        response.request().method() === 'POST',
+    );
+    await page.goto(`${BASE_URL}/livechat`, { waitUntil: 'domcontentloaded' });
+    const firstLead = await firstLeadResponse;
+    expect(firstLead.status()).toBe(201);
+    const leadId = String((await firstLead.json()).id || '');
+    expect(leadId).toMatch(/^[0-9a-f-]{36}$/i);
+
+    const initialText = `status limiter baseline ${randomUUID()}`;
+    const followUpText = `status limiter follow-up ${randomUUID()}`;
+    const sendMessage = (content: string, idempotencyKey: string) =>
+      request.post(`${BASE_URL}/api/public/livechat/message`, {
+        headers: { 'x-forwarded-for': testIp },
+        data: {
+          leadId,
+          content,
+          direction: 'INBOUND',
+          idempotencyKey,
+        },
+      });
+
+    const initialMessage = await sendMessage(initialText, `status-isolation:${randomUUID()}`);
+    expect(initialMessage.status()).toBe(201);
+
+    const countMessages = async () => {
+      const result = await db.query(
+        `SELECT COUNT(*)::int AS count
+         FROM interactions
+         WHERE tenant_id = $1 AND lead_id = $2`,
+        [HOST_TENANT, leadId],
+      );
+      return Number(result.rows[0].count);
+    };
+    const countAfterInitialMessage = await countMessages();
+
+    const statusUrl = `${BASE_URL}/api/public/ai/livechat/status/${leadId}/${randomUUID()}`;
+    const statusResponses = await Promise.all(
+      Array.from({ length: 31 }, () =>
+        request.get(statusUrl, {
+          headers: { 'x-forwarded-for': testIp },
+        }),
+      ),
+    );
+    const limitedStatusResponses = statusResponses.filter(
+      (response) => response.status() === 429,
+    );
+    expect(limitedStatusResponses).toHaveLength(1);
+    for (const statusResponse of statusResponses) {
+      if (statusResponse.status() === 429) continue;
+      // The status handler may return a transient 503 when its read is
+      // contending for the database; that still proves the request passed the
+      // dedicated limiter rather than consuming the message bucket.
+      expect([200, 503]).toContain(statusResponse.status());
+    }
+
+    const limitedStatus = limitedStatusResponses[0];
+    expect(limitedStatus.status()).toBe(429);
+    const retryAfter = Number(limitedStatus.headers()['retry-after']);
+    expect(Number.isInteger(retryAfter)).toBe(true);
+    expect(retryAfter).toBeGreaterThan(0);
+    await expect(limitedStatus.json()).resolves.toMatchObject({
+      retryAfter: expect.any(Number),
+    });
+
+    // A rejected status read is read-only and must not alter the saved
+    // conversation.
+    expect(await countMessages()).toBe(countAfterInitialMessage);
+
+    const followUpMessage = await sendMessage(
+      followUpText,
+      `status-isolation:${randomUUID()}`,
+    );
+    expect(followUpMessage.status()).toBe(201);
+    expect(await countMessages()).toBe(countAfterInitialMessage + 1);
+  });
+
   test('keeps a slow 202 reply recoverable without duplicate messages', async ({
     page,
     request,
