@@ -2,7 +2,8 @@ import React, { useEffect, useState, useRef, useCallback, useMemo, memo } from '
 import { db } from '../services/dbApi';
 import { systemService } from '../services/systemService';
 import { chaosService } from '../services/chaosService';
-import { SystemHealth, ChaosConfig, LogEntry, UserRole } from '../types';
+import { analyticsApi } from '../services/api/analyticsApi';
+import { SystemHealth, ChaosConfig, LogEntry } from '../types';
 import { useTranslation } from '../services/i18n';
 import { useTheme } from '../services/theme';
 import { ConfirmModal } from '../components/ConfirmModal';
@@ -326,6 +327,291 @@ const LeadEmailMetricsPanel: React.FC = () => {
         </div>
     );
 };
+
+interface LiveChatLatencySummary {
+    count: number;
+    p50Ms: number;
+    p95Ms: number;
+}
+interface LiveChatTenantMetrics {
+    tenantKey: string;
+    acknowledgeLatency: LiveChatLatencySummary;
+    finalReplyLatency: LiveChatLatencySummary;
+}
+interface LiveChatMetricsSnapshot {
+    windowMs: number;
+    generatedAt: string;
+    acknowledgeLatency: LiveChatLatencySummary;
+    finalReplyLatency: LiveChatLatencySummary;
+    byTenant: LiveChatTenantMetrics[];
+    slowEndpointAlerts: Array<{
+        endpoint: 'history' | 'message' | 'ai';
+        thresholdMs: number;
+        count: number;
+        lastDurationMs: number;
+    }>;
+    databaseConnectionTimeouts: {
+        windowMs: number;
+        count: number;
+        threshold: number;
+        alertActive: boolean;
+    };
+}
+interface SystemMetricsResponse {
+    liveChat?: LiveChatMetricsSnapshot;
+}
+
+const EMPTY_LATENCY: LiveChatLatencySummary = { count: 0, p50Ms: 0, p95Ms: 0 };
+const STALE_AFTER_MS = 2 * 60_000;
+const HASHED_TENANT_KEY = /^[a-f0-9]{16}$/i;
+
+const isLiveChatSnapshot = (value: unknown): value is LiveChatMetricsSnapshot => {
+    if (!value || typeof value !== 'object') return false;
+    const snapshot = value as Partial<LiveChatMetricsSnapshot>;
+    return typeof snapshot.generatedAt === 'string'
+        && typeof snapshot.windowMs === 'number'
+        && !!snapshot.acknowledgeLatency
+        && !!snapshot.finalReplyLatency
+        && Array.isArray(snapshot.byTenant)
+        && Array.isArray(snapshot.slowEndpointAlerts)
+        && !!snapshot.databaseConnectionTimeouts;
+};
+
+const latencyValue = (summary: LiveChatLatencySummary | undefined, key: 'p50Ms' | 'p95Ms'): number =>
+    Number.isFinite(Number(summary?.[key])) ? Number(summary?.[key]) : 0;
+
+export const LiveChatTelemetryPanel: React.FC<{
+    t: (key: string, params?: Record<string, string | number>) => string;
+    formatDateTime: (date: string) => string;
+}> = ({ t, formatDateTime }) => {
+    const [snapshot, setSnapshot] = useState<LiveChatMetricsSnapshot | null>(null);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState<string | null>(null);
+
+    const load = useCallback(async () => {
+        try {
+            const response = await analyticsApi.getSystemMetrics() as SystemMetricsResponse;
+            if (!isLiveChatSnapshot(response?.liveChat)) {
+                throw new Error(t('system.live_chat_metrics.invalid'));
+            }
+            setSnapshot(response.liveChat);
+            setError(null);
+        } catch (err: any) {
+            setError(err?.message || t('system.live_chat_metrics.load_error'));
+        } finally {
+            setLoading(false);
+        }
+    }, [t]);
+
+    useEffect(() => {
+        let mounted = true;
+        const loadWhenVisible = async () => {
+            if (!mounted || document.hidden) return;
+            await load();
+        };
+        loadWhenVisible();
+        const interval = setInterval(loadWhenVisible, 30_000);
+        return () => {
+            mounted = false;
+            clearInterval(interval);
+        };
+    }, [load]);
+
+    const ageMs = snapshot ? Date.now() - new Date(snapshot.generatedAt).getTime() : Number.POSITIVE_INFINITY;
+    const isStale = !snapshot || !Number.isFinite(ageMs) || ageMs > STALE_AFTER_MS;
+    const hasSamples = !!snapshot && (
+        snapshot.acknowledgeLatency.count > 0
+        || snapshot.finalReplyLatency.count > 0
+        || snapshot.slowEndpointAlerts.some(alert => alert.count > 0)
+        || snapshot.databaseConnectionTimeouts.count > 0
+    );
+    const endpointAlertCount = snapshot?.slowEndpointAlerts.length ?? 0;
+    const endpointEventCount = snapshot?.slowEndpointAlerts.reduce((total, alert) => total + (Number.isFinite(alert.count) ? alert.count : 0), 0) ?? 0;
+    const validTenantMetrics = (snapshot?.byTenant ?? []).filter(item => HASHED_TENANT_KEY.test(item.tenantKey));
+    const dataState = loading && !snapshot
+        ? 'loading'
+        : error && !snapshot
+            ? 'error'
+            : isStale || !!error
+                ? 'stale'
+                : !hasSamples
+                    ? 'empty'
+                    : 'live';
+    const stateClass = dataState === 'live'
+        ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
+        : dataState === 'stale'
+            ? 'bg-amber-50 text-amber-700 border-amber-200'
+            : dataState === 'error'
+                ? 'bg-rose-50 text-rose-700 border-rose-200'
+                : 'bg-slate-100 text-slate-600 border-slate-200';
+
+    const formatMs = (value: number) => `${Math.round(Math.max(0, value))}ms`;
+    const formatSummary = (summary: LiveChatLatencySummary | undefined) => ({
+        count: Number.isFinite(Number(summary?.count)) ? Number(summary?.count) : 0,
+        p50: formatMs(latencyValue(summary, 'p50Ms')),
+        p95: formatMs(latencyValue(summary, 'p95Ms')),
+    });
+    const acknowledge = formatSummary(snapshot?.acknowledgeLatency ?? EMPTY_LATENCY);
+    const finalReply = formatSummary(snapshot?.finalReplyLatency ?? EMPTY_LATENCY);
+    const endpointLabel = (endpoint: 'history' | 'message' | 'ai') =>
+        t(`system.live_chat_metrics.endpoint.${endpoint}`);
+    const dataStateLabel = {
+        loading: t('system.live_chat_metrics.loading'),
+        error: t('system.live_chat_metrics.error'),
+        empty: t('system.live_chat_metrics.empty'),
+        stale: t('system.live_chat_metrics.stale'),
+        live: t('system.live_chat_metrics.live'),
+    }[dataState];
+
+    return (
+        <section
+            aria-labelledby="live-chat-telemetry-title"
+            className="bg-[var(--bg-surface)] p-6 rounded-[24px] border border-[var(--glass-border)] shadow-sm animate-enter"
+        >
+            <div className="flex items-start justify-between gap-4 flex-wrap">
+                <div>
+                    <div className="flex items-center gap-2">
+                        <h3 id="live-chat-telemetry-title" className="font-bold text-[var(--text-primary)]">
+                            {t('system.live_chat_metrics.title')}
+                        </h3>
+                        <span className="rounded-full border border-slate-200 bg-slate-50 px-2 py-0.5 text-2xs font-bold uppercase tracking-wide text-slate-500">
+                            {t('system.live_chat_metrics.super_admin')}
+                        </span>
+                    </div>
+                    <p className="text-xs text-[var(--text-tertiary)] mt-1">
+                        {t('system.live_chat_metrics.subtitle')}
+                    </p>
+                </div>
+                <div className={`rounded-full border px-3 py-1 text-xs font-bold ${stateClass}`} role="status">
+                    {dataStateLabel}
+                </div>
+            </div>
+
+            {error && snapshot && (
+                <div className="mt-4 rounded-xl border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-800" role="status">
+                    {t('system.live_chat_metrics.refresh_error')} {error}
+                </div>
+            )}
+            {!snapshot && dataState === 'error' && (
+                <div className="mt-4 rounded-xl border border-rose-200 bg-rose-50 px-3 py-2 text-xs text-rose-800" role="alert">
+                    {error || t('system.live_chat_metrics.load_error')}
+                    <button onClick={load} className="ml-2 font-bold underline underline-offset-2">
+                        {t('common.retry')}
+                    </button>
+                </div>
+            )}
+
+            <div className="mt-5 grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4">
+                {[
+                    { label: t('system.live_chat_metrics.acknowledge'), summary: acknowledge, tone: 'border-sky-100 bg-sky-50' },
+                    { label: t('system.live_chat_metrics.final_reply'), summary: finalReply, tone: 'border-violet-100 bg-violet-50' },
+                ].map(({ label, summary, tone }) => (
+                    <div key={label} className={`rounded-2xl border p-4 ${tone}`}>
+                        <div className="text-xs font-bold uppercase tracking-wide text-slate-500">{label}</div>
+                        <div className="mt-3 grid grid-cols-2 gap-3">
+                            <div>
+                                <div className="text-2xs uppercase text-slate-500">P50</div>
+                                <div className="font-mono text-xl font-bold text-slate-900">{summary.p50}</div>
+                            </div>
+                            <div>
+                                <div className="text-2xs uppercase text-slate-500">P95</div>
+                                <div className="font-mono text-xl font-bold text-slate-900">{summary.p95}</div>
+                            </div>
+                        </div>
+                        <div className="mt-2 text-2xs text-slate-500">{t('system.live_chat_metrics.samples', { count: summary.count })}</div>
+                    </div>
+                ))}
+                <div className="rounded-2xl border border-amber-100 bg-amber-50 p-4">
+                    <div className="text-xs font-bold uppercase tracking-wide text-slate-500">{t('system.live_chat_metrics.slow_endpoints')}</div>
+                    <div className="mt-3 font-mono text-3xl font-bold text-slate-900">{endpointAlertCount}</div>
+                    <div className="mt-2 text-2xs text-slate-500">{t('system.live_chat_metrics.slow_events', { count: endpointEventCount })}</div>
+                </div>
+                <div className={`rounded-2xl border p-4 ${snapshot?.databaseConnectionTimeouts.alertActive ? 'border-rose-200 bg-rose-50' : 'border-emerald-100 bg-emerald-50'}`}>
+                    <div className="text-xs font-bold uppercase tracking-wide text-slate-500">{t('system.live_chat_metrics.db_timeouts')}</div>
+                    <div className={`mt-3 text-lg font-bold ${snapshot?.databaseConnectionTimeouts.alertActive ? 'text-rose-700' : 'text-emerald-700'}`}>
+                        {snapshot?.databaseConnectionTimeouts.alertActive
+                            ? t('system.live_chat_metrics.active')
+                            : t('system.live_chat_metrics.normal')}
+                    </div>
+                    <div className="mt-2 text-2xs text-slate-500">
+                        {t('system.live_chat_metrics.timeout_count', {
+                            count: snapshot?.databaseConnectionTimeouts.count ?? 0,
+                            threshold: snapshot?.databaseConnectionTimeouts.threshold ?? 0,
+                        })}
+                    </div>
+                </div>
+            </div>
+
+            <div className="mt-5 grid grid-cols-1 gap-5 lg:grid-cols-2">
+                <div className="rounded-2xl border border-[var(--glass-border)] p-4">
+                    <div className="mb-3 flex items-center justify-between gap-2">
+                        <h4 className="text-xs font-bold uppercase tracking-wide text-[var(--text-secondary)]">{t('system.live_chat_metrics.endpoint_detail')}</h4>
+                        <span className="text-2xs text-[var(--text-tertiary)]">{t('system.live_chat_metrics.window', { minutes: Math.round((snapshot?.windowMs ?? 0) / 60_000) })}</span>
+                    </div>
+                    {endpointAlertCount === 0 ? (
+                        <p className="text-sm text-[var(--text-tertiary)]">{t('system.live_chat_metrics.no_slow_endpoints')}</p>
+                    ) : (
+                        <div className="space-y-2">
+                            {snapshot?.slowEndpointAlerts.map(alert => (
+                                <div key={alert.endpoint} className="flex items-center justify-between gap-3 rounded-xl bg-[var(--glass-surface)] px-3 py-2 text-xs">
+                                    <div>
+                                        <div className="font-semibold text-[var(--text-primary)]">{endpointLabel(alert.endpoint)}</div>
+                                        <div className="text-2xs text-[var(--text-tertiary)]">
+                                            {t('system.live_chat_metrics.threshold', { threshold: alert.thresholdMs })}
+                                        </div>
+                                    </div>
+                                    <div className="text-right">
+                                        <div className="font-mono font-bold text-amber-700">{alert.count}×</div>
+                                        <div className="text-2xs text-[var(--text-tertiary)]">{formatMs(alert.lastDurationMs)}</div>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    )}
+                </div>
+                <div className="rounded-2xl border border-[var(--glass-border)] p-4">
+                    <div className="mb-3 flex items-center justify-between gap-2">
+                        <h4 className="text-xs font-bold uppercase tracking-wide text-[var(--text-secondary)]">{t('system.live_chat_metrics.tenant_detail')}</h4>
+                        <span className="text-2xs text-[var(--text-tertiary)]">{t('system.live_chat_metrics.hashed_only')}</span>
+                    </div>
+                    {validTenantMetrics.length === 0 ? (
+                        <p className="text-sm text-[var(--text-tertiary)]">{t('system.live_chat_metrics.no_tenants')}</p>
+                    ) : (
+                        <div className="overflow-x-auto">
+                            <table className="w-full text-xs">
+                                <thead className="text-2xs uppercase tracking-wide text-[var(--text-tertiary)]">
+                                    <tr className="border-b border-[var(--glass-border)]">
+                                        <th className="pb-2 text-left">{t('system.live_chat_metrics.tenant_key')}</th>
+                                        <th className="pb-2 text-right">{t('system.live_chat_metrics.ack_short')}</th>
+                                        <th className="pb-2 text-right">{t('system.live_chat_metrics.reply_short')}</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {validTenantMetrics.map(item => {
+                                        const ack = formatSummary(item.acknowledgeLatency);
+                                        const reply = formatSummary(item.finalReplyLatency);
+                                        return (
+                                            <tr key={item.tenantKey} className="border-b border-[var(--glass-border)] last:border-0">
+                                                <td className="py-2 font-mono text-[var(--text-secondary)]">{item.tenantKey}</td>
+                                                <td className="py-2 text-right font-mono text-[var(--text-secondary)]">{ack.p50} / {ack.p95}</td>
+                                                <td className="py-2 text-right font-mono text-[var(--text-secondary)]">{reply.p50} / {reply.p95}</td>
+                                            </tr>
+                                        );
+                                    })}
+                                </tbody>
+                            </table>
+                        </div>
+                    )}
+                </div>
+            </div>
+
+            <div className="mt-4 flex flex-wrap items-center justify-between gap-2 text-2xs text-[var(--text-tertiary)]">
+                <span>{t('system.live_chat_metrics.snapshot', { time: snapshot ? formatDateTime(snapshot.generatedAt) : '—' })}</span>
+                <span>{t('system.live_chat_metrics.privacy')}</span>
+            </div>
+        </section>
+    );
+};
 const ChaosPanel = memo(({ config, onChange, t }: { config: ChaosConfig, onChange: (c: Partial<ChaosConfig>) => void, t: any }) => (
     <div className={`p-6 rounded-[24px] border-2 transition-all ${config.enabled ? 'bg-rose-50 border-rose-200' : 'bg-[var(--bg-surface)] border-[var(--glass-border)]'}`}>
         <div className="flex justify-between items-start mb-6">
@@ -382,7 +668,7 @@ export const SystemStatus: React.FC = () => {
     const [confirmClearLogs, setConfirmClearLogs] = useState(false);
     const [confirmFailover, setConfirmFailover] = useState(false);    
     const fileInputRef = useRef<HTMLInputElement>(null);
-    const { t } = useTranslation();
+    const { t, formatDateTime } = useTranslation();
     const { chartTheme } = useTheme();
     useEffect(() => {
         const init = async () => {
@@ -480,7 +766,12 @@ export const SystemStatus: React.FC = () => {
             </div>
             {health && <HealthHero health={health} theme={chartTheme} onBackup={handleBackup} onRestore={handleRestore} isRestoring={isRestoring} t={t} />}
             {isAdmin && <ChaosPanel config={chaosConfig} onChange={updateChaos} t={t} />}
-            {isSuperAdmin && <LeadEmailMetricsPanel />}
+            {isSuperAdmin && (
+                <>
+                    <LiveChatTelemetryPanel t={t} formatDateTime={formatDateTime} />
+                    <LeadEmailMetricsPanel />
+                </>
+            )}
             <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
                 {/* LOGS - Takes 2/3 width on large screens */}
                 <div className="xl:col-span-2">
