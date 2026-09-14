@@ -92,6 +92,7 @@ import {
   isLandingBuilderRequest,
   liveChatEngine,
   recordLandingClassificationTelemetry,
+  resolveLiveChatFollowUp,
 } from "./server/ai/liveChatEngine";
 import { createPublicProjectRoutes } from "./server/routes/publicProjectRoutes";
 import { createPublicDeveloperRoutes } from "./server/routes/publicDeveloperRoutes";
@@ -3172,7 +3173,14 @@ app.post('/api/public/ai/livechat', livechatRateLimit, aiRateLimit, async (req: 
       // evidence. Keep GENERAL on the legacy pipeline because ambiguous
       // questions benefit from its broader intent planner.
       const detectedPublicIntent = classifyLiveChatIntent(msgContent).intent;
-      const useFastLiveChatPipeline = isLandingRequest || detectedPublicIntent !== 'GENERAL';
+      const publicHistory = historyWithLatest.slice(-8).map((item: any) => ({
+        role: item.direction === 'INBOUND' ? 'user' : 'assistant',
+        content: item.content,
+      }));
+      const hasContextualFollowUp = resolveLiveChatFollowUp(msgContent, publicHistory).contextUsed;
+      const useFastLiveChatPipeline = isLandingRequest
+        || detectedPublicIntent !== 'GENERAL'
+        || hasContextualFollowUp;
       const executePublicChat = (resumeContext: any) => useFastLiveChatPipeline
         ? liveChatEngine.callTool('handle_live_chat', {
             tenantId: PUBLIC_TENANT,
@@ -3185,10 +3193,7 @@ app.post('/api/public/ai/livechat', livechatRateLimit, aiRateLimit, async (req: 
               leadName: (lead as any).name || '',
               language: replyLang === 'en' ? 'en' : 'vi',
                attachments,
-              history: historyWithLatest.slice(-8).map((item: any) => ({
-                role: item.direction === 'INBOUND' ? 'user' : 'assistant',
-                content: item.content,
-              })),
+              history: publicHistory,
             },
              requestId: String(requestId || '').slice(0, 200),
              __skipAgentEventEnqueue: true,

@@ -28,12 +28,12 @@ import { recordAiUsage } from '../services/aiUsageService';
 import { agentAuditRepository } from '../repositories/agentAuditRepository';
 import { createHash, randomUUID } from 'crypto';
 import { inspectToolRequest, normalizeEvidenceSource, type AgentEvidenceSource } from './agentGuardrails';
-import { classifyLiveChatIntent, classifyLiveChatIntents, getLiveChatClarification, hasLandingTargetText, isLandingBuilderRequest, isLongFormRequest, normalizeIntentText } from './liveChatIntent';
+import { classifyLiveChatIntent, classifyLiveChatIntents, getLiveChatClarification, hasLandingTargetText, isLandingBuilderRequest, isLongFormRequest, normalizeIntentText, resolveLiveChatFollowUp } from './liveChatIntent';
 
 // P2-2 slice 1: intent classification implementation moved to
 // ./liveChatIntent — re-exported so routes and tests keep importing from
 // liveChatEngine without behaviour change.
-export { classifyLiveChatIntent, classifyLiveChatIntents, getLiveChatClarification, isLandingBuilderRequest, isLongFormRequest };
+export { classifyLiveChatIntent, classifyLiveChatIntents, getLiveChatClarification, isLandingBuilderRequest, isLongFormRequest, resolveLiveChatFollowUp };
 import { runDurableAgentExecution } from '../services/durableAgentExecutionService';
 import {
     sharedCacheDeleteByPrefix,
@@ -1512,6 +1512,16 @@ async function handle_live_chat_core(args: Record<string, any>): Promise<any> {
             _liveChatTimings: liveChatTimings,
         };
     }
+    const conversationContext = resolveLiveChatFollowUp(
+        msg,
+        Array.isArray(context.history)
+            ? context.history.map((item: any) => ({
+                role: item?.role,
+                content: sanitizeChatInput(item?.content, 600),
+            }))
+            : [],
+    );
+    const routingMessage = conversationContext.routingMessage;
     const customerId = String(args.customerId || context.customerId || '').trim();
     let personalization = { enabled: false, block: '', stale: false, negativeStreak: 0 };
     if (customerId) {
@@ -1615,9 +1625,14 @@ async function handle_live_chat_core(args: Record<string, any>): Promise<any> {
     // === PHA 2: MINH ORCHESTRATOR — khi keyword map ve GENERAL, Minh (LLM) tu chon specialist theo ngu canh ===
   let minhPlan: Awaited<ReturnType<typeof minhChooseSpecialist>> = null;
   const minhStartedAt = Date.now();
+    if (conversationContext.contextUsed && detectedIntent === 'GENERAL') {
+        const contextualIntent = classifyLiveChatIntent(routingMessage);
+        detectedIntent = contextualIntent.intent;
+        suggestedTool = contextualIntent.suggestedTool;
+    }
   if (detectedIntent === 'GENERAL') {
     minhPlan = await minhChooseSpecialist({
-      tenantId, message: msg, sessionId: String(sessionId || ''), generateFn: generateLiveChatText,
+      tenantId, message: routingMessage, sessionId: String(sessionId || ''), generateFn: generateLiveChatText,
       fallbackIntent: detectedIntent, fallbackTool: suggestedTool,
       onTiming: addTiming,
     });
@@ -1629,8 +1644,14 @@ async function handle_live_chat_core(args: Record<string, any>): Promise<any> {
   }
  liveChatTimings.classifyMs = Date.now() - minhStartedAt;
  const plan = executionPlans[detectedIntent];
-    const classifierCandidates = classifyLiveChatIntents(msg);
-    const primaryCandidate = { intent: detectedIntent, suggestedTool, query: msg };
+    const classifierCandidates = classifyLiveChatIntents(
+        conversationContext.contextUsed ? routingMessage : msg,
+    );
+    const primaryCandidate = {
+        intent: detectedIntent,
+        suggestedTool,
+        query: conversationContext.contextUsed ? routingMessage : msg,
+    };
     const workstreamMap = new Map<string, typeof primaryCandidate>();
     workstreamMap.set(primaryCandidate.intent, primaryCandidate);
     for (const candidate of classifierCandidates) {

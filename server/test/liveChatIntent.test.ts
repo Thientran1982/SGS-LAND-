@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { buildLiveChatRequestHash, classifyLiveChatIntent, classifyLiveChatIntents, getLiveChatClarification, isLongFormRequest } from '../ai/liveChatEngine';
+import { buildLiveChatRequestHash, classifyLiveChatIntent, classifyLiveChatIntents, getLiveChatClarification, isLongFormRequest, resolveLiveChatFollowUp } from '../ai/liveChatEngine';
 
 describe('classifyLiveChatIntent — P0-5 keyword precision', () => {
   it('routes price-bounded search requests to SEARCH, not VALUATION', () => {
@@ -20,6 +20,27 @@ describe('classifyLiveChatIntent — P0-5 keyword precision', () => {
 
   it('does not clarify when a price request contains a specific project', () => {
     expect(getLiveChatClarification('Giá bán căn hộ Aqua City bao nhiêu?')).toBeNull();
+  });
+
+  it('carries the previous user topic into a short time follow-up', () => {
+    const resolved = resolveLiveChatFollowUp('mấy giờ?', [
+      { role: 'user', content: 'Aqua City có lịch mở cửa tham quan không?' },
+      { role: 'assistant', content: 'Mình cần kiểm tra lịch cụ thể.' },
+      { role: 'user', content: 'mấy giờ?' },
+    ]);
+
+    expect(resolved.contextUsed).toBe(true);
+    expect(resolved.previousUserMessage).toContain('Aqua City');
+    expect(resolved.routingMessage).toContain('Câu hỏi mới nhất của khách: mấy giờ?');
+  });
+
+  it('does not inject history into a complete new question', () => {
+    const resolved = resolveLiveChatFollowUp('Giá căn hộ Aqua City bao nhiêu?', [
+      { role: 'user', content: 'Long Thành có quy hoạch gì?' },
+    ]);
+
+    expect(resolved.contextUsed).toBe(false);
+    expect(resolved.routingMessage).toBe('Giá căn hộ Aqua City bao nhiêu?');
   });
 
   it('keeps the price-question contract from landingBuilderChat.test', () => {

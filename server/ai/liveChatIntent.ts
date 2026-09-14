@@ -47,6 +47,46 @@ export type LiveChatClarification = {
     missingData: string[];
 };
 
+export type LiveChatConversationContext = {
+    routingMessage: string;
+    contextUsed: boolean;
+    previousUserMessage?: string;
+};
+
+/**
+ * Resolve short follow-up questions against the most recent user turn.
+ * The current message remains the authoritative question; the previous turn
+ * is only a routing hint for classifier/specialist selection.
+ */
+export function resolveLiveChatFollowUp(
+    message: string,
+    history: Array<{ role?: string; content?: unknown }> = [],
+): LiveChatConversationContext {
+    const current = String(message || '').trim();
+    const normalized = normalizeIntentText(current);
+    const isShort = normalized.length > 0 && normalized.length <= 120;
+    const isFollowUp = isShort && (
+        /\b(?:may gio|khi nao|bao gio|luc nao|thoi gian|con|the con|vay con|the thi|cua no|no|nay|do|kia|vay|the)\b/.test(normalized)
+        || /^(?:va|v[aậ]y|the|còn|con|vay|thế|bao giờ|khi nào|mấy giờ)\b/.test(current.toLowerCase())
+    );
+    if (!isFollowUp) return { routingMessage: current, contextUsed: false };
+
+    const previousUserMessage = [...history]
+        .reverse()
+        .map(item => ({
+            role: String(item?.role || '').toLowerCase(),
+            content: typeof item?.content === 'string' ? item.content.trim() : '',
+        }))
+        .find(item => item.role === 'user' && item.content && item.content !== current)?.content;
+    if (!previousUserMessage) return { routingMessage: current, contextUsed: false };
+
+    return {
+        routingMessage: `Ngữ cảnh tin nhắn trước của khách: ${previousUserMessage.slice(0, 600)}\nCâu hỏi mới nhất của khách: ${current.slice(0, 300)}`,
+        contextUsed: true,
+        previousUserMessage,
+    };
+}
+
 /**
  * Generic price requests are not actionable enough to justify retrieval or an
  * LLM routing pass. Keep this deterministic and conservative: a named project,
