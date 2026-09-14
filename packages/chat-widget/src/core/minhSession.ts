@@ -157,9 +157,13 @@ export function createMinhSession(options: MinhSessionOptions = {}): MinhSession
   async function ask(text: string, lang?: string, attachments: ChatAttachment[] = []) {
     if (!leadId) throw new ChatTransportError("missing_lead_id", { code: "NO_LEAD" });
     let saved: any = null;
+    let inboundPersistMs: number | undefined;
+    let historyReadMs: number | undefined;
     const requestId = createClientRequestId();
+    const inboundStartedAt = Date.now();
     try {
       saved = await client.sendMessage(leadId, text, "INBOUND", { attachments }, requestId);
+      inboundPersistMs = Date.now() - inboundStartedAt;
     } catch (error: any) {
       // A response can be lost after the database committed. Recover the
       // durable inbound before deciding that the send failed. Never do this
@@ -169,7 +173,9 @@ export function createMinhSession(options: MinhSessionOptions = {}): MinhSession
         !error?.status || error.status >= 500 || error.status === 408;
       if (canBeAmbiguous) {
         try {
+          const historyStartedAt = Date.now();
           const recovered: any = await client.getMessages(leadId);
+          historyReadMs = Date.now() - historyStartedAt;
           const rows: any[] = Array.isArray(recovered?.messages) ? recovered.messages : [];
           saved = [...rows].reverse().find((row) =>
             String(row?.direction || "").toUpperCase() === "INBOUND" &&
@@ -184,7 +190,10 @@ export function createMinhSession(options: MinhSessionOptions = {}): MinhSession
     let data: any;
     let asyncAccepted = false;
     try {
-      data = await client.ask(leadId, text, lang, saved?.id, attachments, requestId);
+      data = await client.ask(leadId, text, lang, saved?.id, attachments, requestId, {
+        inboundPersistMs,
+        historyReadMs,
+      });
       if (data && (data as any).async === true) {
         asyncAccepted = true;
         data = undefined;

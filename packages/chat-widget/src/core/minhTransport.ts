@@ -9,7 +9,13 @@ import { getCsrfToken } from "./csrf";
 const MINH_REPLY_TIMEOUT_MS = 180_000;
 const DEFAULT_REQUEST_TIMEOUT_MS = 30_000;
 
-async function postJson<T>(path: string, body: any, apiBase?: string, errCode = "request_failed"): Promise<T> {
+async function postJson<T>(
+  path: string,
+  body: any,
+  apiBase?: string,
+  errCode = "request_failed",
+  extraHeaders: Record<string, string> = {},
+): Promise<T> {
   const controller = new AbortController();
   const timeoutId = setTimeout(
     () => controller.abort(),
@@ -24,6 +30,7 @@ async function postJson<T>(path: string, body: any, apiBase?: string, errCode = 
       headers: {
           "Content-Type": "application/json",
           "X-CSRF-Token": await getCsrfToken(apiBase),
+          ...extraHeaders,
         },
       body: JSON.stringify(body),
     });
@@ -176,7 +183,22 @@ export function createMinhClient(apiBase?: string) {
       inboundInteractionId?: string,
       attachments?: ChatAttachment[],
       requestId?: string,
+    clientTimings?: {
+      inboundPersistMs?: number;
+      historyReadMs?: number;
+      providerRoundTripMs?: number;
+    },
     ) {
+      const timingHeaders: Record<string, string> = {};
+      if (Number.isFinite(clientTimings?.inboundPersistMs)) {
+        timingHeaders["X-Minh-Client-Inbound-Ms"] = String(Math.max(0, Math.floor(clientTimings!.inboundPersistMs!)));
+      }
+      if (Number.isFinite(clientTimings?.historyReadMs)) {
+        timingHeaders["X-Minh-Client-History-Ms"] = String(Math.max(0, Math.floor(clientTimings!.historyReadMs!)));
+      }
+      if (Number.isFinite(clientTimings?.providerRoundTripMs)) {
+        timingHeaders["X-Minh-Client-AI-Ms"] = String(Math.max(0, Math.floor(clientTimings!.providerRoundTripMs!)));
+      }
       return postJson<any>(
         CHAT_ENDPOINTS.minhReply,
         {
@@ -189,6 +211,7 @@ export function createMinhClient(apiBase?: string) {
         },
         apiBase,
         "ai_failed",
+        timingHeaders,
       );
     },
   };

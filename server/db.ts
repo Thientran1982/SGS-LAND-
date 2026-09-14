@@ -5,6 +5,7 @@ import path from 'path';
 import dotenv from 'dotenv';
 import { DatabaseHealthTracker, isTransientDatabaseError, type DatabaseHealthSnapshot } from './dbHealth';
 import { monitoringService } from './services/monitoringService';
+import { isDatabaseConnectionTimeout, liveChatTelemetry } from './services/liveChatTelemetry';
 dotenv.config();
 // Parse numeric (OID 1700) and int8 (OID 20) columns as JS numbers instead of strings
 types.setTypeParser(1700, (val: string) => parseFloat(val));
@@ -93,6 +94,9 @@ const handledPoolErrors = new WeakSet<object>();
 function scheduleDatabaseRecovery(error: unknown): void {
   if (databaseRecoveryStopped) return;
 
+  if (isDatabaseConnectionTimeout(error)) {
+    liveChatTelemetry.recordDatabaseConnectionTimeout();
+  }
   const nextRetryAt = new Date(Date.now() + reconnectDelayMs);
   databaseHealth.markUnavailable(error, nextRetryAt);
   if (reconnectTimer || reconnectInFlight) return;

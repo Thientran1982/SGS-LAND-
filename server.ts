@@ -55,6 +55,7 @@ import { createAgentMemoryRoutes } from "./server/routes/agentMemoryRoutes";
 import { createCustomerProfileRoutes } from "./server/routes/customerProfileRoutes";
 import { customerProfileService } from "./server/services/customerProfileService";
 import { createMonitoringRoutes } from "./server/routes/monitoringRoutes";
+import { liveChatTelemetry } from "./server/services/liveChatTelemetry";
 import { createAgentRoutes } from "./server/routes/agentRoutes";
 import { createSessionRoutes, createTemplateRoutes } from "./server/routes/sessionRoutes";
 import { createTwoFactorRoutes } from "./server/routes/twoFactorRoutes";
@@ -2849,12 +2850,17 @@ app.get('/api/public/listings/:slugId', apiRateLimit, async (req: express.Reques
 
   // Public LiveChat: get messages for a lead session (no auth — rate limited)
   app.get('/api/public/livechat/messages/:leadId', livechatRateLimit, async (req: express.Request, res: express.Response) => {
+    const telemetry = liveChatTelemetry.begin({
+      tenantId: PUBLIC_TENANT,
+      endpoint: 'history',
+    });
     try {
       const leadId = req.params.leadId as string;
       if (!leadId) return res.status(400).json({ error: 'leadId bắt buộc' }) as any;
       const lead = await leadRepository.findById(PUBLIC_TENANT, leadId);
       if (!lead) return res.status(404).json({ error: 'Phiên chat không tồn tại' }) as any;
       const messages = await interactionRepository.findByLead(PUBLIC_TENANT, leadId);
+      telemetry.mark('history_read');
       res.json({ messages: messages || [], lead: { id: lead.id, name: lead.name, assignedTo: lead.assignedTo || null, threadStatus: (lead as any).thread_status || 'AI_ACTIVE' } });
     } catch (error) {
       console.error('Public livechat get messages error:', error);
@@ -2864,6 +2870,14 @@ app.get('/api/public/listings/:slugId', apiRateLimit, async (req: express.Reques
 
   // Public LiveChat: send a message (inbound from visitor or outbound welcome/system) — no auth, rate limited
   app.post('/api/public/livechat/message', livechatRateLimit, async (req: express.Request, res: express.Response) => {
+    const requestId = typeof req.body?.idempotencyKey === 'string'
+      ? req.body.idempotencyKey.slice(0, 200)
+      : undefined;
+    const telemetry = liveChatTelemetry.begin({
+      tenantId: PUBLIC_TENANT,
+      requestId,
+      endpoint: 'message',
+    });
     try {
       const { leadId, content, direction, metadata, idempotencyKey } = req.body;
        if (!leadId || !String(content || '').trim()) {
@@ -2894,6 +2908,7 @@ app.get('/api/public/listings/:slugId', apiRateLimit, async (req: express.Reques
           ? `web-inbound:${String(idempotencyKey).slice(0, 160)}`
           : undefined,
       });
+       telemetry.mark('inbound_persisted');
       // Push real-time updates to authenticated agents in Inbox
       // 1. Active chat pane (anyone currently viewing this lead's conversation)
       broadcastIo?.to(leadId).emit('receive_message', { room: leadId, message: msg });
@@ -2918,8 +2933,9 @@ app.get('/api/public/listings/:slugId', apiRateLimit, async (req: express.Reques
   inboundInteraction: { id: string };
   chatStartedAt: number;
   replyLang: string;
+   telemetry: ReturnType<typeof liveChatTelemetry.begin>;
 }) {
-  const { leadId, msgContent, isLandingRequest, executePublicChat, inboundInteraction, chatStartedAt, replyLang } = opts;
+   const { leadId, msgContent, isLandingRequest, executePublicChat, inboundInteraction, chatStartedAt, replyLang, telemetry } = opts;
   const { runDurableAgentExecution } = await import('./server/services/durableAgentExecutionService');
 let execution = await runDurableAgentExecution({
 tenantId: PUBLIC_TENANT,
@@ -2930,12 +2946,13 @@ triggerSource: 'public-livechat',
 message: msgContent,
 execute: executePublicChat,
       });
+      telemetry.mark('provider_completed');
       logger.info(`[PublicLiveChat] AI execution ${Date.now() - chatStartedAt}ms cached=${execution.cached}`);
 
       // P4.1: ghi latency chat ben vung vao agent_runs (fire-and-forget).
       void pool.query(
         "INSERT INTO agent_runs (agent_name, trigger_source, status, started_at, finished_at, duration_ms, summary_json) VALUES ('handle_live_chat', 'public-livechat', 'success', $1, NOW(), $2, $3::jsonb)",
-        [new Date(chatStartedAt), Date.now() - chatStartedAt, JSON.stringify({ leadId, cached: execution.cached })],
+         [new Date(chatStartedAt), Date.now() - chatStartedAt, JSON.stringify({ cached: execution.cached, telemetry: 'content-free' })],
       ).catch((logError: any) => logger.warn('[PublicLiveChat] agent_runs write failed: ' + (logError?.message || logError)));
       const chatLatencyMs = Date.now() - chatStartedAt;
       const chatSloMs = Number(process.env.MINH_CHAT_SLO_MS || 60000);
@@ -3006,12 +3023,14 @@ metadata: {
 },
 externalEventId: `agent:${execution.runId}`,
       });
+      telemetry.mark('outbound_persisted');
       logger.info(`[PublicLiveChat] outbound persistence ${Date.now() - chatStartedAt}ms`);
       // A cached execution is a retry: return the same interaction without duplicate socket fan-out.
       if (!execution.cached) {
 broadcastIo?.to(leadId).emit('receive_message', { room: leadId, message: aiReply });
 broadcastIo?.to(`tenant:${PUBLIC_TENANT}`).emit('new_inbound_message', { leadId, message: aiReply });
       }
+      telemetry.mark('reply_sent');
       if (result.escalated) {
 await interactionRepository.updateThreadAiMode(PUBLIC_TENANT, leadId, 'HUMAN_TAKEOVER');
 broadcastIo?.to(`tenant:${PUBLIC_TENANT}`).emit('escalate_to_human', {
@@ -3026,16 +3045,31 @@ app.post('/api/public/ai/livechat', livechatRateLimit, aiRateLimit, async (req: 
     try {
        const { leadId, message, lang, inboundInteractionId, requestId } = req.body;
       const chatStartedAt = Date.now();
+       const telemetry = liveChatTelemetry.begin({
+         tenantId: PUBLIC_TENANT,
+         requestId: String(requestId || inboundInteractionId || '').slice(0, 200) || undefined,
+         endpoint: 'ai',
+       });
+       liveChatTelemetry.recordClientTimings({
+         tenantId: PUBLIC_TENANT,
+         requestId: String(requestId || inboundInteractionId || '').slice(0, 200) || undefined,
+         endpoint: 'ai',
+         value: JSON.stringify({
+           inboundPersistMs: req.get('X-Minh-Client-Inbound-Ms'),
+           historyReadMs: req.get('X-Minh-Client-History-Ms'),
+           providerRoundTripMs: req.get('X-Minh-Client-AI-Ms'),
+         }),
+       });
       const attachments = normalizePublicChatAttachments(req.body?.attachments);
       if (!leadId || !String(message || '').trim()) {
         return res.status(400).json({ error: 'leadId và message là bắt buộc' }) as any;
       }
       const msgContent = String(message).trim().slice(0, 2000);
-       logger.info(
-         `[PublicLiveChat] request accepted lead=${String(leadId).slice(0, 80)} ` +
-         `inbound=${String(inboundInteractionId || 'unknown').slice(0, 80)} ` +
-         `request=${String(requestId || 'unknown').slice(0, 80)}`,
-       );
+       logger.info('[PublicLiveChat] request accepted', {
+         event: 'live_chat_request_accepted',
+         tenant: 'public',
+         endpoint: 'ai',
+       });
 
       const lead = await leadRepository.findById(PUBLIC_TENANT, leadId);
       logger.info(`[PublicLiveChat] lead lookup ${Date.now() - chatStartedAt}ms`);
@@ -3045,6 +3079,7 @@ app.post('/api/public/ai/livechat', livechatRateLimit, aiRateLimit, async (req: 
       // The agent will reply manually via the Inbox; the widget should wait silently.
       const threadStatus = (lead as any).thread_status || 'AI_ACTIVE';
       if (threadStatus === 'HUMAN_TAKEOVER') {
+         telemetry.mark('ack_sent');
         return res.json({ noReply: true }) as any;
       }
 
@@ -3065,6 +3100,7 @@ app.post('/api/public/ai/livechat', livechatRateLimit, aiRateLimit, async (req: 
           error: 'Tin nhắn đến chưa được lưu. Vui lòng gửi lại tin nhắn.',
         }) as any;
       }
+       telemetry.mark('history_read');
       logger.info(`[PublicLiveChat] history lookup ${Date.now() - chatStartedAt}ms`);
 
       const { aiService, detectMessageLang } = await import('./server/ai');
@@ -3112,6 +3148,7 @@ app.post('/api/public/ai/livechat', livechatRateLimit, aiRateLimit, async (req: 
   () => {
     if (!(res as any).headersSent) {
       logger.info(`[PublicLiveChat] async acknowledgement ${Date.now() - chatStartedAt}ms`);
+      telemetry.mark('ack_sent');
       res.status(202).json({ async: true, inboundInteractionId: inboundInteraction.id });
     }
   },
@@ -3122,7 +3159,7 @@ let asyncError: unknown = null;
 try {
   asyncRun = await runAgentAndPersist({
     leadId, msgContent, isLandingRequest, executePublicChat,
-    inboundInteraction, chatStartedAt, replyLang,
+     inboundInteraction, chatStartedAt, replyLang, telemetry,
   });
 } catch (e) {
   asyncError = e;
@@ -3132,6 +3169,7 @@ try {
 if ((res as any).headersSent) return;
 if (asyncRun) {
   const { aiReply, result } = asyncRun;
+   telemetry.mark('ack_sent');
   res.json({ reply: aiReply, artifact: result.artifact, suggestedAction: result.suggestedAction });
 } else {
   logger.error('Public AI livechat error:', asyncError as Error);
@@ -4939,6 +4977,7 @@ app.use('/api/approval-requests', apiRateLimit, createApprovalRequestRoutes(auth
         ? Math.round(window60s.reduce((sum, s) => sum + s.durationMs, 0) / window60s.length)
         : 0;
       const errorCount = window60s.filter(s => s.status >= 500).length;
+      const liveChatMetrics = liveChatTelemetry.getSnapshot(now);
 
       // Real DB latency from a quick ping
       let dbLatencyMs = 0;
@@ -4954,6 +4993,8 @@ app.use('/api/approval-requests', apiRateLimit, createApprovalRequestRoutes(auth
         avgLatencyMs,
         dbLatencyMs,
         errorCount,
+        liveChat: liveChatMetrics,
+        databaseConnectionTimeouts: liveChatMetrics.databaseConnectionTimeouts,
         connectedClients: io.engine?.clientsCount || 0,
         timestamp: new Date().toISOString(),
       });

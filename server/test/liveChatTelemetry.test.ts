@@ -1,0 +1,122 @@
+import { describe, expect, it, vi } from 'vitest';
+import {
+  LiveChatTelemetry,
+  isDatabaseConnectionTimeout,
+} from '../services/liveChatTelemetry';
+
+function testLogger() {
+  return {
+    debug: vi.fn(),
+    info: vi.fn(),
+    warn: vi.fn(),
+    error: vi.fn(),
+    request: vi.fn(),
+    audit: vi.fn(),
+  } as any;
+}
+
+describe('live-chat telemetry', () => {
+  it('aggregates acknowledge and final reply latency without exposing tenant identifiers', () => {
+    let now = 1_000;
+    const log = testLogger();
+    const telemetry = new LiveChatTelemetry({
+      now: () => now,
+      log,
+      windowMs: 10_000,
+      historyThresholdMs: 500,
+      messageThresholdMs: 500,
+    });
+
+    for (const [index, replyDelay] of [100, 200, 300].entries()) {
+      const span = telemetry.begin({
+        tenantId: `tenant-${index}`,
+        requestId: `request-${index}`,
+        endpoint: 'ai',
+        at: now,
+      });
+      span.mark('history_read', now + 20);
+      span.mark('ack_sent', now + 50);
+      span.mark('reply_sent', now + replyDelay);
+      now += 1;
+    }
+
+    const snapshot = telemetry.getSnapshot(now);
+    expect(snapshot.acknowledgeLatency).toEqual({ count: 3, p50Ms: 50, p95Ms: 50 });
+    expect(snapshot.finalReplyLatency).toEqual({ count: 3, p50Ms: 200, p95Ms: 290 });
+    expect(snapshot.byTenant).toHaveLength(3);
+    expect(snapshot.byTenant.map(item => item.tenantKey)).not.toContain('tenant-0');
+    expect(JSON.stringify(log.info.mock.calls)).not.toContain('request-0');
+    expect(JSON.stringify(log.info.mock.calls)).not.toContain('nội dung khách hàng');
+  });
+
+  it('warns once per window for slow history/message endpoints', () => {
+    let now = 1_000;
+    const log = testLogger();
+    const telemetry = new LiveChatTelemetry({
+      now: () => now,
+      log,
+      historyThresholdMs: 100,
+      messageThresholdMs: 100,
+    });
+    const history = telemetry.begin({
+      tenantId: 'tenant-a',
+      requestId: 'history-a',
+      endpoint: 'history',
+      at: now,
+    });
+    history.mark('history_read', now + 101);
+    history.mark('history_read', now + 102);
+    const message = telemetry.begin({
+      tenantId: 'tenant-a',
+      requestId: 'message-a',
+      endpoint: 'message',
+      at: now,
+    });
+    message.mark('inbound_persisted', now + 150);
+
+    expect(log.warn).toHaveBeenCalledTimes(2);
+    expect(telemetry.getSnapshot(now).slowEndpointAlerts).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ endpoint: 'history', count: 2, thresholdMs: 100 }),
+        expect.objectContaining({ endpoint: 'message', count: 1, thresholdMs: 100 }),
+      ]),
+    );
+  });
+
+  it('tracks a rolling database connection-timeout spike and removes expired samples', () => {
+    let now = 1_000;
+    const log = testLogger();
+    const telemetry = new LiveChatTelemetry({
+      now: () => now,
+      log,
+      databaseTimeoutWindowMs: 500,
+      databaseTimeoutAlertThreshold: 2,
+    });
+    telemetry.recordDatabaseConnectionTimeout();
+    now += 10;
+    telemetry.recordDatabaseConnectionTimeout();
+    expect(telemetry.getSnapshot().databaseConnectionTimeouts).toMatchObject({
+      count: 2,
+      threshold: 2,
+      alertActive: true,
+    });
+    expect(log.warn).toHaveBeenCalledTimes(1);
+
+    now += 501;
+    expect(telemetry.getSnapshot().databaseConnectionTimeouts).toMatchObject({
+      count: 0,
+      alertActive: false,
+    });
+  });
+
+  it.each([
+    Object.assign(new Error('timeout exceeded when trying to connect'), { code: 'ETIMEDOUT' }),
+    new Error('database probe timed out after 800ms'),
+  ])('recognizes %s as a database connection timeout', error => {
+    expect(isDatabaseConnectionTimeout(error)).toBe(true);
+  });
+
+  it('does not classify a statement timeout as a connection timeout', () => {
+    expect(isDatabaseConnectionTimeout(new Error('canceling statement due to statement timeout'))).toBe(false);
+  });
+});
