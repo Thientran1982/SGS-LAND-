@@ -90,4 +90,16 @@ describe("MinhChatPanel", () => {
       expect(link).toHaveAttribute("rel", "noopener noreferrer");
     }
   });
+
+  it("keeps the message composer centered and full width inside the panel", async () => {
+    render(<MinhChatPanel showHeader={false} heightClass="h-auto" />);
+
+    const input = await waitFor(() => screen.getByRole("textbox", { name: "Nội dung tin nhắn" }));
+    const composer = input.closest("div.flex.w-full");
+
+    expect(composer).not.toBeNull();
+    expect(composer).toHaveClass("max-w-full");
+    expect(composer).toHaveClass("min-w-0");
+    expect(composer?.parentElement).toHaveClass("w-full", "self-center");
+  });
 });

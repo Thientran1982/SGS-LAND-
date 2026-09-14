@@ -474,7 +474,7 @@ export function MinhChatPanel({
   }, [stopRecordingInternal, send]);
 
   const wrapper =
-    "flex flex-col rounded-[20px] overflow-hidden " +
+    "flex w-full min-w-0 flex-col rounded-[20px] overflow-hidden " +
     className;
 
   if (!ready) {
@@ -742,8 +742,8 @@ export function MinhChatPanel({
               ))}
             </div>
           ) : null}
-                    <div
-            className="flex items-end gap-2 rounded-b-[20px] border-t p-3"
+          <div
+            className="flex w-full max-w-full self-center items-end justify-center gap-2 rounded-b-[20px] border-t p-3"
             style={{ ...S.bar, borderBottomLeftRadius: "20px", borderBottomRightRadius: "20px" }}
           >
             {isRecording ? (
@@ -761,7 +761,7 @@ export function MinhChatPanel({
                 </button>
               </div>
             ) : (
-    <div className="flex-1 flex items-end gap-1 rounded-xl border px-2 py-1" style={S.field}>
+    <div className="flex w-full min-w-0 max-w-full flex-1 items-end gap-1 rounded-xl border px-2 py-1" style={S.field}>
                 <input
                   ref={attachmentInputRef}
                   type="file"
