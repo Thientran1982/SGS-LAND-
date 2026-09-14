@@ -12,7 +12,7 @@
  *
  * Env contract (all optional — the service no-ops with a clear reason when
  * credentials are missing, so the GEO cron never fails because of GSC):
- *   GSC_SITE_URL                default https://sgsland.vn/
+ *   GSC_SITE_URL                default sc-domain:sgsland.vn
  *   GSC_LOOKBACK_DAYS           default 28
  *   GOOGLE_SEARCH_CONSOLE_CLIENT_EMAIL
  *   GOOGLE_SEARCH_CONSOLE_PRIVATE_KEY   (\n escapes supported)
@@ -23,6 +23,7 @@ import { logger } from '../middleware/logger';
 
 const GSC_API_BASE = 'https://searchconsole.googleapis.com/webmasters/v3';
 const GSC_SCOPE = 'https://www.googleapis.com/auth/webmasters.readonly';
+const DEFAULT_GSC_SITE_PROPERTY = 'sc-domain:sgsland.vn';
 
 type GscCredentials = { clientEmail: string; privateKey: string } | null;
 
@@ -63,7 +64,7 @@ type PositionRow = { keyword: string; position: number | null };
 async function fetchKeywordPositions(creds: GscCredentials, keywords: string[], lookbackDays: number): Promise<PositionRow[]> {
   const token = await getAccessToken(creds);
   if (!token) throw new Error('GSC auth failed (no access token)');
-  const siteUrl = process.env.GSC_SITE_URL || 'https://sgsland.vn/';
+  const siteUrl = process.env.GSC_SITE_URL || DEFAULT_GSC_SITE_PROPERTY;
   const endDate = new Date();
   const startDate = new Date(endDate.getTime() - lookbackDays * 86_400_000);
   const fmt = (d: Date) => d.toISOString().slice(0, 10);
