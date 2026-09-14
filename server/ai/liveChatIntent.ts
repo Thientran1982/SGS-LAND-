@@ -41,6 +41,45 @@ export function hasLandingTargetText(normalized: string): boolean {
         || /\b(?:page|trang\s+(?:landing|ladning|lading|landng|dich|gioi thieu))\b/.test(normalized);
 }
 
+export type LiveChatClarification = {
+    reason: 'UNDERSPECIFIED_PRICE_REQUEST';
+    response: string;
+    missingData: string[];
+};
+
+/**
+ * Generic price requests are not actionable enough to justify retrieval or an
+ * LLM routing pass. Keep this deterministic and conservative: a named project,
+ * location, or other specific context remains eligible for the normal pipeline.
+ */
+export function getLiveChatClarification(
+    message: string,
+    language: 'vi' | 'en' = 'vi',
+): LiveChatClarification | null {
+    const normalized = normalizeIntentText(message)
+        .replace(/[?!.,;:()[\]{}]/g, ' ')
+        .replace(/\s+/g, ' ')
+        .trim();
+    const hasPriceSignal = /\b(?:bao gia|bang gia|gia ban|xin gia|cho hoi gia|gia bao nhieu|bao nhieu tien)\b/.test(normalized)
+        || normalized === 'gia';
+    if (!hasPriceSignal) return null;
+
+    const residual = normalized
+        .replace(/\b(?:bao gia|bang gia|gia ban|xin gia|cho hoi gia|gia bao nhieu|bao nhieu tien|gia)\b/g, ' ')
+        .replace(/\b(?:cho|hoi|xin|vui long|giup|toi|em|anh|chi|minh|muon|can|the|duoc|nhe|a|oi|du an|san pham|bat dong san|bds|can ho|nha|dat|nay|do|kia)\b/g, ' ')
+        .replace(/\s+/g, ' ')
+        .trim();
+    if (residual) return null;
+
+    return {
+        reason: 'UNDERSPECIFIED_PRICE_REQUEST',
+        response: language === 'en'
+            ? 'Which project or property would you like a price for? Please share the project/location and, if available, the property type and area.'
+            : 'Anh/chị muốn hỏi giá dự án hoặc sản phẩm nào? Vui lòng cho Minh tên dự án/khu vực, loại sản phẩm và diện tích nếu có.',
+        missingData: ['project_or_location', 'property_type_or_area'],
+    };
+}
+
 /**
  * A landing brief commonly contains project and price vocabulary. Those
  * details describe the page and must not win intent classification over an
@@ -64,7 +103,7 @@ export type LiveChatIntentCandidate = {
 };
 
 const INTENT_MAP: Array<{ keywords: Array<string | RegExp>; intent: string; suggestedTool: string }> = [
-    { keywords: [/gi[aá][^.?!]{0,30}bao\s*nhi[êe]u/i, /bao\s*nhi[êe]u[^.?!]{0,30}gi[aá]/i, 'định giá', 'valuation', 'trị giá', 'bao nhiêu tiền'], intent: 'VALUATION', suggestedTool: 'get_valuation' },
+    { keywords: [/gi[aá][^.?!]{0,30}bao\s*nhi[êe]u/i, /bao\s*nhi[êe]u[^.?!]{0,30}gi[aá]/i, /b[aá]o\s*gi[aá]/i, /b[aả]ng\s*gi[aá]/i, /gi[aá]\s*b[aá]n/i, 'định giá', 'valuation', 'trị giá', 'bao nhiêu tiền'], intent: 'VALUATION', suggestedTool: 'get_valuation' },
     { keywords: ['tìm', 'search', 'căn hộ', 'nhà', 'đất', 'còn hàng'], intent: 'SEARCH', suggestedTool: 'search_listings' },
     { keywords: ['pháp lý', 'sổ', 'hồng', 'đỏ', 'vi bằng', 'hđmb'], intent: 'LEGAL', suggestedTool: 'legal_qa' },
     { keywords: ['quy hoạch', 'planning', 'xây dựng'], intent: 'PLANNING', suggestedTool: 'check_planning' },

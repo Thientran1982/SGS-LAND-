@@ -28,12 +28,12 @@ import { recordAiUsage } from '../services/aiUsageService';
 import { agentAuditRepository } from '../repositories/agentAuditRepository';
 import { createHash, randomUUID } from 'crypto';
 import { inspectToolRequest, normalizeEvidenceSource, type AgentEvidenceSource } from './agentGuardrails';
-import { classifyLiveChatIntent, classifyLiveChatIntents, hasLandingTargetText, isLandingBuilderRequest, isLongFormRequest, normalizeIntentText } from './liveChatIntent';
+import { classifyLiveChatIntent, classifyLiveChatIntents, getLiveChatClarification, hasLandingTargetText, isLandingBuilderRequest, isLongFormRequest, normalizeIntentText } from './liveChatIntent';
 
 // P2-2 slice 1: intent classification implementation moved to
 // ./liveChatIntent — re-exported so routes and tests keep importing from
 // liveChatEngine without behaviour change.
-export { classifyLiveChatIntent, classifyLiveChatIntents, isLandingBuilderRequest, isLongFormRequest };
+export { classifyLiveChatIntent, classifyLiveChatIntents, getLiveChatClarification, isLandingBuilderRequest, isLongFormRequest };
 import { runDurableAgentExecution } from '../services/durableAgentExecutionService';
 import {
     sharedCacheDeleteByPrefix,
@@ -1481,6 +1481,37 @@ async function handle_live_chat_core(args: Record<string, any>): Promise<any> {
         const key = stage === 'memory' ? 'memoryMs' : 'llmMs';
         liveChatTimings[key] = (liveChatTimings[key] || 0) + Math.max(0, durationMs);
     };
+    const clarificationLanguage = String(context.language || args.language || 'vi').toLowerCase() === 'en' ? 'en' : 'vi';
+    const clarification = getLiveChatClarification(msg, clarificationLanguage);
+    if (clarification) {
+        liveChatTimings.classifyMs = Date.now() - liveChatStartedAt;
+        liveChatTimings.totalMs = Date.now() - liveChatStartedAt;
+        liveChatTelemetry.recordRunTimings({
+            tenantId,
+            runId: args.__parentRunId,
+            leadId: args.context?.leadId || args.leadId,
+            triggerSource: 'live-chat-clarify',
+            timings: liveChatTimings,
+        });
+        return {
+            sessionId: sessionId || `sess_${Date.now()}`,
+            intent: 'CLARIFY',
+            response: clarification.response,
+            content: clarification.response,
+            longForm: false,
+            executedTools: [],
+            suggestedNextTool: null,
+            suggestedAction: clarification.response,
+            sources: [],
+            specialistOutput: null,
+            uncertainty: 'HIGH',
+            missingData: clarification.missingData,
+            groundingStatus: 'INSUFFICIENT_DATA',
+            clarificationRequired: true,
+            degraded: false,
+            _liveChatTimings: liveChatTimings,
+        };
+    }
     const customerId = String(args.customerId || context.customerId || '').trim();
     let personalization = { enabled: false, block: '', stale: false, negativeStreak: 0 };
     if (customerId) {

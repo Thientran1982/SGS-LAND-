@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { buildLiveChatRequestHash, classifyLiveChatIntent, classifyLiveChatIntents, isLongFormRequest } from '../ai/liveChatEngine';
+import { buildLiveChatRequestHash, classifyLiveChatIntent, classifyLiveChatIntents, getLiveChatClarification, isLongFormRequest } from '../ai/liveChatEngine';
 
 describe('classifyLiveChatIntent — P0-5 keyword precision', () => {
   it('routes price-bounded search requests to SEARCH, not VALUATION', () => {
@@ -9,6 +9,17 @@ describe('classifyLiveChatIntent — P0-5 keyword precision', () => {
   it('still routes explicit valuation questions to VALUATION', () => {
     expect(classifyLiveChatIntent('nhà này định giá bao nhiêu tiền?').intent).toBe('VALUATION');
     expect(classifyLiveChatIntent('trị giá lô đất này là bao nhiêu?').intent).toBe('VALUATION');
+  });
+
+  it('routes generic price wording to the fast clarification path', () => {
+    expect(classifyLiveChatIntent('báo giá').intent).toBe('VALUATION');
+    expect(classifyLiveChatIntent('giá bán').intent).toBe('VALUATION');
+    expect(getLiveChatClarification('báo giá')?.reason).toBe('UNDERSPECIFIED_PRICE_REQUEST');
+    expect(getLiveChatClarification('giá bán')?.response).toContain('dự án');
+  });
+
+  it('does not clarify when a price request contains a specific project', () => {
+    expect(getLiveChatClarification('Giá bán căn hộ Aqua City bao nhiêu?')).toBeNull();
   });
 
   it('keeps the price-question contract from landingBuilderChat.test', () => {
