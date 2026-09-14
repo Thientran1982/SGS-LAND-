@@ -16,7 +16,12 @@ vi.mock('../services/agentRunsService', () => ({
   finishAgentRun,
 }));
 
-import { createGeoMonitorCronRouter } from '../routes/geoMonitorCronRoutes';
+import {
+  createGeoMonitorCronRouter,
+  probeOpenRouter,
+  probeOrcaRouter,
+  probeTokenRouter,
+} from '../routes/geoMonitorCronRoutes';
 
 type Query = (sql: string, params?: unknown[]) => Promise<{ rows: any[] }>;
 
@@ -84,6 +89,8 @@ describe('GEO monitor snapshot route', () => {
       'API_KEY',
       'OPENAI_API_KEY',
       'OPENROUTER_API_KEY',
+      'TOKENROUTER_API_KEY',
+      'ORCAROUTER_API_KEY',
       'ANTHROPIC_API_KEY',
       'XAI_API_KEY',
       'GOOGLE_CSE_KEY',
@@ -159,6 +166,31 @@ describe('GEO monitor snapshot route', () => {
       null,
       expect.any(Number),
     );
+  });
+
+  it('probes OpenRouter, TokenRouter, and OrcaRouter as separate GEO engines', async () => {
+    vi.stubEnv('OPENROUTER_API_KEY', 'openrouter-test-key');
+    vi.stubEnv('TOKENROUTER_API_KEY', 'tokenrouter-test-key');
+    vi.stubEnv('ORCAROUTER_API_KEY', 'orcarouter-test-key');
+    fetchMock.mockResolvedValue({
+      ok: true,
+      json: async () => ({ choices: [{ message: { content: 'SGS LAND được nhắc đến.' } }] }),
+    });
+
+    const [openrouter, tokenrouter, orcarouter] = await Promise.all([
+      probeOpenRouter(),
+      probeTokenRouter(),
+      probeOrcaRouter(),
+    ]);
+
+    expect(openrouter).toMatchObject({ engine: 'openrouter', queries: 5, mentions: 5, model: 'z-ai/glm-5.3' });
+    expect(tokenrouter).toMatchObject({ engine: 'tokenrouter', queries: 5, mentions: 5, model: 'z-ai/glm-5.3-free' });
+    expect(orcarouter).toMatchObject({ engine: 'orcarouter', queries: 5, mentions: 5, model: 'orcarouter/auto' });
+
+    const urls = fetchMock.mock.calls.map(([url]) => String(url));
+    expect(urls.filter(url => url.startsWith('https://openrouter.ai/api/v1/chat/completions'))).toHaveLength(5);
+    expect(urls.filter(url => url.startsWith('https://api.tokenrouter.com/v1/chat/completions'))).toHaveLength(5);
+    expect(urls.filter(url => url.startsWith('https://api.orcarouter.ai/v1/chat/completions'))).toHaveLength(5);
   });
 
   it('returns explicit GSC sync status and reason for successful and failed historical snapshots', async () => {

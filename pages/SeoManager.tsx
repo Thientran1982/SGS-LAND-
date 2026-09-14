@@ -1049,7 +1049,7 @@ export const GeoMonitor30Days: React.FC = () => {
         }
     };
     // ── Build chart data ────────────────────────────────────────────────────
-    const ENGINES = ['gemini', 'chatgpt', 'claude', 'perplexity', 'grok'] as const;
+    const ENGINES = ['gemini', 'chatgpt', 'claude', 'perplexity', 'grok', 'openrouter', 'tokenrouter', 'orcarouter'] as const;
     const getGscSync = (snapshot: Snap): GscSyncSummary => {
         if (snapshot.gscSync) return snapshot.gscSync;
         const raw = snapshot.gscTop20?.gsc_sync;
@@ -1115,7 +1115,15 @@ export const GeoMonitor30Days: React.FC = () => {
         ? Math.round(((latest.aiMentions.totals.rate - previous.aiMentions.totals.rate) as number) * 100)
         : null;
     const COLORS: Record<string, string> = {
-        gemini: '#4285f4', chatgpt: '#10a37f', claude: '#cc785c', perplexity: '#1f6feb', grok: '#1f2937', overall: '#1B3A5C',
+        gemini: '#4285f4',
+        chatgpt: '#10a37f',
+        claude: '#cc785c',
+        perplexity: '#1f6feb',
+        grok: '#1f2937',
+        openrouter: '#7c3aed',
+        tokenrouter: '#db2777',
+        orcarouter: '#ea580c',
+        overall: '#1B3A5C',
     };
     const KW_COLORS = ['#1B3A5C', '#10b981', '#f59e0b', '#ef4444', '#1B3A5C'];
 
@@ -1253,7 +1261,7 @@ export const GeoMonitor30Days: React.FC = () => {
                             <div className="text-2xs text-[var(--text-tertiary)] mb-2">
                                 Nguồn: {latest.aiMentions.source || 'Provider API answer probes'} · Đây là phép đo câu trả lời AI, không phải log bot crawl.
                             </div>
-                            <div className="grid grid-cols-2 md:grid-cols-5 gap-2">
+                             <div className="grid grid-cols-2 md:grid-cols-4 xl:grid-cols-8 gap-2">
                                 {ENGINES.map((e) => {
                                     const er = latest.aiMentions.engines[e];
                                     const rate = er?.queries > 0 ? Math.round((er.rate || 0) * 100) : null;

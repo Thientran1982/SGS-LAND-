@@ -104,6 +104,20 @@ export function normalizeGscSync(raw: unknown): GscSyncSummary {
 // skipped with the real reason instead of failing 5x per query.
 
 type OpenAiTarget = { baseUrl: string; model: string; apiKey: string };
+const GEO_PROVIDER_TIMEOUT_MS = 20_000;
+
+async function fetchProvider(
+  url: string,
+  init: RequestInit,
+): Promise<globalThis.Response> {
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), GEO_PROVIDER_TIMEOUT_MS);
+  try {
+    return await fetch(url, { ...init, signal: controller.signal });
+  } finally {
+    clearTimeout(timeout);
+  }
+}
 
 function chatCompletionsTargets(models: string[], apiKey: string | undefined, baseUrl: string, envName: string): { targets: OpenAiTarget[]; skipReason: string | null } {
   if (!apiKey) return { targets: [], skipReason: 'no ' + envName };
@@ -112,7 +126,7 @@ function chatCompletionsTargets(models: string[], apiKey: string | undefined, ba
 
 async function callOpenAiCompatible(target: OpenAiTarget, query: string, maxTokens: number): Promise<{ ok: true; text: string } | { ok: false; status: number }> {
   try {
-    const resp = await fetch(target.baseUrl + '/chat/completions', {
+    const resp = await fetchProvider(target.baseUrl + '/chat/completions', {
       method: 'POST',
       headers: {
         Authorization: 'Bearer ' + target.apiKey,
@@ -205,7 +219,7 @@ export async function probeGemini(): Promise<EngineResult> {
       let lastError = 'no model succeeded';
       for (const model of models) {
         if (pinnedModel && model !== pinnedModel) continue;
-        const resp = await fetch(
+        const resp = await fetchProvider(
           'https://generativelanguage.googleapis.com/v1beta/models/' + model + ':generateContent?key=' + apiKey,
           {
             method: 'POST',
@@ -242,17 +256,53 @@ export async function probeGemini(): Promise<EngineResult> {
 }
 
 export async function probeOpenAI(): Promise<EngineResult> {
-  // Direct key invalid (401) per 2026-09-13 probe; OpenRouter GLM currently
-  // reports 402 (no credits). Chain both so a renewed key revives either.
-  const direct = chatCompletionsTargets(['gpt-4o-mini'], process.env.OPENAI_API_KEY, 'https://api.openai.com/v1', 'OPENAI_API_KEY');
-  const routerKey = process.env.OPENROUTER_API_KEY;
-  const routerTargets: OpenAiTarget[] = routerKey
-    ? [{ baseUrl: 'https://openrouter.ai/api/v1', model: process.env.OPENROUTER_GLM_MODEL || 'z-ai/glm-5.3', apiKey: routerKey }]
-    : [];
-  return probeOpenAiCompatible(
-    'chatgpt',
-    [...direct.targets, ...routerTargets],
-    !direct.targets.length && !routerTargets.length ? direct.skipReason : null,
+  const direct = chatCompletionsTargets(
+    [process.env.GEO_OPENAI_MODEL, 'gpt-4o-mini'].filter((m): m is string => !!m),
+    process.env.OPENAI_API_KEY,
+    process.env.OPENAI_BASE_URL || 'https://api.openai.com/v1',
+    'OPENAI_API_KEY',
+  );
+  return probeOpenAiCompatible('chatgpt', direct.targets, direct.skipReason);
+}
+
+function routerProbe(
+  engine: string,
+  apiKey: string | undefined,
+  baseUrl: string,
+  models: string[],
+  envName: string,
+): Promise<EngineResult> {
+  const targets = chatCompletionsTargets(models.filter((m): m is string => !!m), apiKey, baseUrl, envName);
+  return probeOpenAiCompatible(engine, targets.targets, targets.skipReason);
+}
+
+export function probeOpenRouter(): Promise<EngineResult> {
+  return routerProbe(
+    'openrouter',
+    process.env.OPENROUTER_API_KEY,
+    process.env.OPENROUTER_BASE_URL || 'https://openrouter.ai/api/v1',
+    [process.env.GEO_OPENROUTER_MODEL, process.env.OPENROUTER_GLM_MODEL || 'z-ai/glm-5.3'].filter((m): m is string => !!m),
+    'OPENROUTER_API_KEY',
+  );
+}
+
+export function probeTokenRouter(): Promise<EngineResult> {
+  return routerProbe(
+    'tokenrouter',
+    process.env.TOKENROUTER_API_KEY,
+    process.env.TOKENROUTER_BASE_URL || 'https://api.tokenrouter.com/v1',
+    [process.env.GEO_TOKENROUTER_MODEL, 'z-ai/glm-5.3-free'].filter((m): m is string => !!m),
+    'TOKENROUTER_API_KEY',
+  );
+}
+
+export function probeOrcaRouter(): Promise<EngineResult> {
+  return routerProbe(
+    'orcarouter',
+    process.env.ORCAROUTER_API_KEY,
+    process.env.ORCAROUTER_BASE_URL || 'https://api.orcarouter.ai/v1',
+    [process.env.GEO_ORCAROUTER_MODEL, 'orcarouter/auto'].filter((m): m is string => !!m),
+    'ORCAROUTER_API_KEY',
   );
 }
 
@@ -279,7 +329,7 @@ export async function probeAnthropic(): Promise<EngineResult> {
       let lastError = 'no model succeeded';
       for (const model of models) {
         if (pinnedModel && model !== pinnedModel) continue;
-        const resp = await fetch('https://api.anthropic.com/v1/messages', {
+        const resp = await fetchProvider('https://api.anthropic.com/v1/messages', {
           method: 'POST',
           headers: {
             'x-api-key': apiKey,
@@ -586,18 +636,21 @@ export async function runSnapshot(pool: Pool): Promise<any> {
     await syncKeywordPositionsFromSearchConsole(pool, DEFAULT_TENANT_ID),
   );
 
-  const [gemini, chatgpt, claude, perplexity, grok, gscTop20, backlinks, lighthouse] = await Promise.all([
+  const [gemini, chatgpt, claude, perplexity, grok, openrouter, tokenrouter, orcarouter, gscTop20, backlinks, lighthouse] = await Promise.all([
     probeGemini(),
     probeOpenAI(),
     probeAnthropic(),
     probePerplexity(),
     probeGrok(),
+    probeOpenRouter(),
+    probeTokenRouter(),
+    probeOrcaRouter(),
     buildGscTop20(pool),
     probeCompetitorBacklinks(),
     probeLighthouse(),
   ]);
 
-  const engines = { gemini, chatgpt, claude, perplexity, grok };
+  const engines = { gemini, chatgpt, claude, perplexity, grok, openrouter, tokenrouter, orcarouter };
   const totals = Object.values(engines).reduce(
     (acc, e) => ({ queries: acc.queries + e.queries, mentions: acc.mentions + e.mentions }),
     { queries: 0, mentions: 0 },
@@ -607,7 +660,7 @@ export async function runSnapshot(pool: Pool): Promise<any> {
   const aiMentions = {
     capturedAt: new Date().toISOString(),
     source: 'Provider API answer probes — not crawler access logs',
-    methodology: '5 fixed prompts per configured provider; a mention means the returned answer or citation contains SGS LAND.',
+    methodology: '5 fixed prompts per configured engine; a mention means the returned answer or citation contains SGS LAND.',
     queries: BRAND_QUERIES,
     engines: Object.fromEntries(Object.entries(engines).map(([name, engine]) => {
       const errors = engine.details.filter((detail) => !!detail.error).length;
