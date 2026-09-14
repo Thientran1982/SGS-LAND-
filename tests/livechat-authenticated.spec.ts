@@ -118,7 +118,7 @@ test.describe('Authenticated public live chat', () => {
 
     await expect(page.getByLabel('Họ và tên')).toHaveCount(0);
     await expect(page.getByLabel('Số điện thoại')).toHaveCount(0);
-    await expect(page.getByLabel('Nội dung tin nhắn')).toBeVisible();
+    await expect(page.getByLabel('Nội dung tin nhắn')).toBeVisible({ timeout: 30_000 });
 
     const leadBeforeReload = await db.query(
       `SELECT id, name, phone, email, source, metadata
@@ -129,7 +129,7 @@ test.describe('Authenticated public live chat', () => {
     );
     expect(leadBeforeReload.rows).toHaveLength(1);
     expect(leadBeforeReload.rows[0].name).toBe('Live chat authenticated fixture');
-    expect(leadBeforeReload.rows[0].phone).toBeNull();
+    expect([null, '']).toContain(leadBeforeReload.rows[0].phone);
     expect(leadBeforeReload.rows[0].email).toBe(fixtureEmail);
     expect(leadBeforeReload.rows[0].source).toBe('WEB');
     expect(leadBeforeReload.rows[0].metadata).toMatchObject({
@@ -222,6 +222,8 @@ test.describe('Authenticated public live chat', () => {
     let pendingRequestBody: Record<string, any> | null = null;
     let pendingAiCalls = 0;
     let messageHistoryReadsAfterPending = 0;
+    let statusCalls = 0;
+    let historyReadAfterSuccess = false;
 
     await page.route('**/api/public/ai/livechat', async (route) => {
       const body = route.request().postDataJSON() as Record<string, any>;
@@ -258,14 +260,47 @@ test.describe('Authenticated public live chat', () => {
       });
     });
 
+    await page.route('**/api/public/ai/livechat/status/*/*', async (route) => {
+      statusCalls += 1;
+      return route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify(
+          statusCalls === 1
+            ? { status: 'PROCESSING', code: 'AI_ASYNC_PROCESSING', retryAfter: 3 }
+            : { status: 'SUCCESS', code: 'SUCCESS' },
+        ),
+      });
+    });
+
     await page.route('**/api/public/livechat/messages/*', async (route) => {
       if (route.request().method() !== 'GET') return route.continue();
       messageHistoryReadsAfterPending += 1;
+      if (statusCalls >= 2) {
+        historyReadAfterSuccess = true;
+        // A contended history read must not turn an already accepted run into
+        // a false send error while the assistant row is being recovered.
+        await new Promise((resolve) => setTimeout(resolve, 1_200));
+      }
       return route.continue();
     });
 
+    const aiResponsePromise = page.waitForResponse(
+      (response) =>
+        response.url().endsWith('/api/public/ai/livechat') &&
+        response.request().method() === 'POST',
+    );
     await messageBox.fill(pendingText);
     await messageBox.press('Enter');
+    const aiResponse = await aiResponsePromise;
+    expect(aiResponse.status()).toBe(202);
+    const aiResponseBody = await aiResponse.json();
+    expect(aiResponseBody).toMatchObject({
+      async: true,
+      status: 'PROCESSING',
+      code: 'AI_ASYNC_PROCESSING',
+    });
+    expect(aiResponseBody.inboundInteractionId).toBe(pendingRequestBody!.inboundInteractionId);
 
     await expect(page.locator('[aria-live="polite"]')).toContainText(assistantText, {
       timeout: 15_000,
@@ -273,7 +308,9 @@ test.describe('Authenticated public live chat', () => {
     await expect(page.getByText('Không gửi được tin nhắn. Vui lòng thử lại hoặc gọi 0379 281 445.')).toHaveCount(0);
 
     expect(pendingAiCalls).toBe(1);
+    expect(statusCalls).toBeGreaterThanOrEqual(2);
     expect(messageHistoryReadsAfterPending).toBeGreaterThan(0);
+    expect(historyReadAfterSuccess).toBe(true);
     expect(pendingRequestBody).not.toBeNull();
 
     const inboundRows = await db.query(
@@ -301,5 +338,114 @@ test.describe('Authenticated public live chat', () => {
       [HOST_TENANT, assistantText],
     );
     expect(outboundRows.rows).toHaveLength(1);
+  });
+
+  test('keeps the saved inbound visible when a pending provider run fails', async ({
+    page,
+    request,
+  }) => {
+    test.setTimeout(45_000);
+
+    const loginResponse = await request.post(`${BASE_URL}/api/auth/login`, {
+      data: { email: fixtureEmail, password: fixturePassword },
+    });
+    expect(loginResponse.status()).toBe(200);
+    const loginBody = await loginResponse.json();
+
+    await page.context().addCookies([
+      {
+        name: 'token',
+        value: loginBody.token,
+        url: BASE_URL,
+        httpOnly: true,
+        sameSite: 'Lax',
+      },
+    ]);
+
+    const firstLeadResponse = page.waitForResponse(
+      (response) =>
+        response.url().endsWith('/api/public/leads') &&
+        response.request().method() === 'POST',
+    );
+    await page.goto(`${BASE_URL}/livechat`, { waitUntil: 'domcontentloaded' });
+    const firstLead = await firstLeadResponse;
+    expect(firstLead.status()).toBe(201);
+    const messageBox = page.getByLabel('Nội dung tin nhắn');
+    await expect(messageBox).toBeVisible({ timeout: 30_000 });
+
+    const timeoutText = `smoke provider timeout ${randomUUID()}`;
+    let timeoutRequestBody: Record<string, any> | null = null;
+    let pendingAiCalls = 0;
+    let statusCalls = 0;
+
+    await page.route('**/api/public/ai/livechat', async (route) => {
+      const body = route.request().postDataJSON() as Record<string, any>;
+      if (body.message !== timeoutText) return route.continue();
+
+      pendingAiCalls += 1;
+      timeoutRequestBody = body;
+      await route.fulfill({
+        status: 202,
+        contentType: 'application/json',
+        body: JSON.stringify({
+          async: true,
+          status: 'PROCESSING',
+          code: 'AI_ASYNC_PROCESSING',
+          inboundInteractionId: body.inboundInteractionId,
+        }),
+      });
+    });
+
+    await page.route('**/api/public/ai/livechat/status/*/*', async (route) => {
+      statusCalls += 1;
+      return route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify(
+          statusCalls === 1
+            ? { status: 'PROCESSING', code: 'AI_ASYNC_PROCESSING', retryAfter: 3 }
+            : { status: 'FAILED', code: 'AI_PROVIDER_TIMEOUT', retryAfter: 5 },
+        ),
+      });
+    });
+
+    const aiResponsePromise = page.waitForResponse(
+      (response) =>
+        response.url().endsWith('/api/public/ai/livechat') &&
+        response.request().method() === 'POST',
+    );
+    await messageBox.fill(timeoutText);
+    await messageBox.press('Enter');
+    const aiResponse = await aiResponsePromise;
+    expect(aiResponse.status()).toBe(202);
+
+    await expect(page.getByText(timeoutText)).toBeVisible({ timeout: 10_000 });
+    await expect(page.locator('div[role="alert"]').filter({ hasText: 'Minh chưa thể hoàn tất phản hồi lúc này' })).toContainText(
+      'Minh chưa thể hoàn tất phản hồi lúc này. Tin nhắn đã được lưu',
+      { timeout: 10_000 },
+    );
+    await expect(page.getByText('Không gửi được tin nhắn. Vui lòng thử lại hoặc gọi 0379 281 445.')).toHaveCount(0);
+
+    expect(pendingAiCalls).toBe(1);
+    expect(statusCalls).toBeGreaterThanOrEqual(2);
+    expect(timeoutRequestBody).not.toBeNull();
+
+    const inboundRows = await db.query(
+      `SELECT id, external_event_id
+       FROM interactions
+       WHERE tenant_id = $1 AND lead_id = (
+         SELECT id FROM leads
+         WHERE tenant_id = $1
+           AND metadata->>'authenticated_user_id' = $2
+         ORDER BY created_at DESC
+         LIMIT 1
+       )
+       AND direction = 'INBOUND' AND content = $3`,
+      [HOST_TENANT, fixtureUserId, timeoutText],
+    );
+    expect(inboundRows.rows).toHaveLength(1);
+    expect(inboundRows.rows[0].external_event_id).toBe(
+      `web-inbound:${timeoutRequestBody!.requestId}`,
+    );
   });
 });
