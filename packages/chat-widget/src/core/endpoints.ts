@@ -16,6 +16,8 @@ export const CHAT_ENDPOINTS = {
   livechatEscalate: "/api/public/livechat/escalate",
   livechatBookViewing: "/api/public/livechat/book-viewing",
   minhReply: "/api/public/ai/livechat",
+  minhRunStatus: (leadId: string, inboundInteractionId: string) =>
+    `/api/public/ai/livechat/status/${encodeURIComponent(leadId)}/${encodeURIComponent(inboundInteractionId)}`,
 } as const;
 
 /** Ten su kien socket.io ma liveChatEngine dang emit/lang nghe. */

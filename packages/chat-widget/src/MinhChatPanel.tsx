@@ -148,15 +148,31 @@ export function MinhChatPanel({
   }, []);
 
   const startPendingReconcile = useCallback(
-    (userMessageId: string, userMessageText: string) => {
+    (userMessageId: string, userMessageText: string, inboundInteractionId?: string) => {
       stopPendingReconcile();
-      const deadline = Date.now() + 45_000;
+      const startedAt = Date.now();
+      const deadline = startedAt + 5 * 60_000;
+      const delayedNoticeAt = startedAt + 20_000;
 
       const poll = async () => {
         if (pendingReconcileBusyRef.current) return;
         pendingReconcileBusyRef.current = true;
         try {
-          const restored = await session.refreshMessages();
+          const status = inboundInteractionId
+            ? await session.getPendingStatus(inboundInteractionId)
+            : null;
+          if (status?.status === "FAILED") {
+            setLoading(false);
+            setError("Minh chưa thể hoàn tất phản hồi lúc này. Tin nhắn đã được lưu, bạn có thể thử lại.");
+            stopPendingReconcile();
+            return;
+          }
+          const shouldReadHistory =
+            !inboundInteractionId ||
+            !status ||
+            status.status === "SUCCESS" ||
+            status.status === "NOT_FOUND";
+          const restored = shouldReadHistory ? await session.refreshMessages() : null;
           if (restored) {
             const userIndexById = restored.messages.findIndex((message) => message.id === userMessageId);
             const userIndex =
@@ -175,14 +191,18 @@ export function MinhChatPanel({
               return;
             }
           }
+          if (Date.now() >= delayedNoticeAt) {
+            setError("Minh đang xử lý lâu hơn dự kiến. Tin nhắn đã được lưu; câu trả lời sẽ tự xuất hiện khi hoàn tất.");
+          }
         } finally {
           pendingReconcileBusyRef.current = false;
         }
 
         if (Date.now() < deadline) {
-          pendingReconcileTimerRef.current = setTimeout(poll, 1_500);
+          pendingReconcileTimerRef.current = setTimeout(poll, 3_000);
         } else {
           pendingReconcileTimerRef.current = null;
+          setError("Minh chưa thể hoàn tất phản hồi trong thời gian dự kiến. Tin nhắn đã được lưu; bạn có thể thử lại sau.");
         }
       };
 
@@ -341,7 +361,7 @@ export function MinhChatPanel({
         if (res.noReply) setMode("HUMAN_TAKEOVER");
         if (res.pending) {
           setError("Minh đang xử lý phản hồi. Câu trả lời sẽ tự xuất hiện khi hoàn tất.");
-          startPendingReconcile(res.user.id, text);
+          startPendingReconcile(res.user.id, text, res.raw?.inboundInteractionId);
         }
       } catch (err: any) {
                 // AI-phase failures happen AFTER the message was persisted on the server.
@@ -355,6 +375,9 @@ export function MinhChatPanel({
           err?.code === "AI_ASYNC_PROCESSING" ||
           err?.code === "AI_UNAVAILABLE" ||
           (err?.code === "ai_failed" && [408, 425, 502, 503, 504].includes(status));
+        if (aiPhaseFailure && err?.inboundInteractionId) {
+          startPendingReconcile(tempId, text, err.inboundInteractionId);
+        }
         if (!aiPhaseFailure) {
           setMessages((prev) => prev.filter((m) => m.id !== tempId));
           setLastFailed({ text, attachments: outgoingAttachments });

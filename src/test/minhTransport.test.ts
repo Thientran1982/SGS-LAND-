@@ -42,7 +42,11 @@ describe("Minh transport reliability contract", () => {
       .mockResolvedValueOnce({
         ok: true,
         status: 202,
-        json: async () => ({ async: true, status: "PROCESSING" }),
+        json: async () => ({
+          async: true,
+          status: "PROCESSING",
+          inboundInteractionId: "inbound-1",
+        }),
       });
     vi.stubGlobal("fetch", fetchMock);
 
@@ -55,7 +59,11 @@ describe("Minh transport reliability contract", () => {
       "request-2",
     );
 
-    expect(result).toEqual({ async: true });
+    expect(result).toEqual({
+      async: true,
+      status: "PROCESSING",
+      inboundInteractionId: "inbound-1",
+    });
     const body = JSON.parse(fetchMock.mock.calls[1][1].body as string);
     expect(body).toMatchObject({
       leadId: "lead-1",

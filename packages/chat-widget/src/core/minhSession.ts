@@ -75,6 +75,11 @@ export interface MinhSession {
   connect(handlers: MinhSocketHandlers): Promise<() => void>;
   /** Lam moi message history ma khong xoa session khi mot lan fetch bi loi. */
   refreshMessages(): Promise<MinhRestored | null>;
+  /** Doc trang thai durable run ma khong tai lai toan bo history. */
+  getPendingStatus(inboundInteractionId: string): Promise<{
+    status: "PROCESSING" | "SUCCESS" | "FAILED" | "NOT_FOUND";
+    code?: string;
+  } | null>;
   /** Ban ChatTransport de dung chung voi AiChatWidget. */
   transport: ChatTransport;
 }
@@ -196,7 +201,6 @@ export function createMinhSession(options: MinhSessionOptions = {}): MinhSession
       });
       if (data && (data as any).async === true) {
         asyncAccepted = true;
-        data = undefined;
       }
     } catch (error) {
       // The AI request can finish on the server after a proxy/browser
@@ -245,7 +249,11 @@ export function createMinhSession(options: MinhSessionOptions = {}): MinhSession
     // reconcile while Socket.IO remains the preferred delivery path. Waiting
     // here made the user stare at the composer for the whole poll window.
     if (asyncAccepted) {
-      data = { async: true, pending: true };
+      data = {
+        ...((data as any) || {}),
+        async: true,
+        pending: true,
+      };
 }
 
     const userMsg =
@@ -347,6 +355,23 @@ export function createMinhSession(options: MinhSessionOptions = {}): MinhSession
           threadStatus:
             data.lead.threadStatus === "HUMAN_TAKEOVER" ? "HUMAN_TAKEOVER" : "AI_ACTIVE",
           messages,
+        };
+      } catch {
+        return null;
+      }
+    },
+
+    async getPendingStatus(inboundInteractionId: string) {
+      readStored();
+      if (!leadId || !inboundInteractionId) return null;
+      try {
+        const data: any = await client.getRunStatus(leadId, inboundInteractionId);
+        if (!data || typeof data.status !== "string") return null;
+        const status = String(data.status).toUpperCase();
+        if (!["PROCESSING", "SUCCESS", "FAILED", "NOT_FOUND"].includes(status)) return null;
+        return {
+          status: status as "PROCESSING" | "SUCCESS" | "FAILED" | "NOT_FOUND",
+          code: typeof data.code === "string" ? data.code : undefined,
         };
       } catch {
         return null;

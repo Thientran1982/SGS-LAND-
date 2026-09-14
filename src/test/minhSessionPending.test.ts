@@ -35,6 +35,7 @@ describe("Minh session async acknowledgement", () => {
             async: true,
             status: "PROCESSING",
             code: "AI_ASYNC_PROCESSING",
+            inboundInteractionId: "inbound-1",
           }),
         };
       }
@@ -54,6 +55,7 @@ describe("Minh session async acknowledgement", () => {
 
     expect(result.pending).toBe(true);
     expect(result.assistant).toBeNull();
+    expect(result.raw.inboundInteractionId).toBe("inbound-1");
     expect(elapsedMs).toBeLessThan(1_000);
     expect(
       fetchMock.mock.calls.some(([url, init]) => init?.method !== "POST" && String(url).includes("/messages/")),

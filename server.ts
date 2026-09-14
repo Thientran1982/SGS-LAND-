@@ -2966,7 +2966,7 @@ execute: executePublicChat,
       const chatSloMs = Number(process.env.MINH_CHAT_SLO_MS || 60000);
       if (chatLatencyMs > chatSloMs) {
         void pool.query(
-          "INSERT INTO agent_signals (tenant_id, signal_type, actor_id, subject_type, subject_id, payload, dedupe_key, provenance) VALUES ($1, 'latency_slo_breach', 'MINH', 'chat', $2, $3::jsonb, $4, 'public_livechat')",
+          "INSERT INTO agent_signals (id, tenant_id, signal_type, actor_id, subject_type, subject_id, payload, dedupe_key, provenance) VALUES (gen_random_uuid()::text, $1, 'latency_slo_breach', 'MINH', 'chat', $2, $3::jsonb, $4, 'public_livechat')",
           [PUBLIC_TENANT, String(leadId).slice(0, 100), JSON.stringify({ latencyMs: chatLatencyMs, sloMs: chatSloMs }), 'slo:' + leadId + ':' + chatStartedAt],
         ).catch((sloError: any) => logger.warn('[PublicLiveChat] SLO signal failed: ' + (sloError?.message || sloError)));
       }
@@ -3203,6 +3203,37 @@ if (asyncRun) {
     } catch (error) {
       logger.error('Public AI livechat error:', error as Error);
       res.status(500).json({ error: 'AI đang bận, vui lòng thử lại sau' });
+    }
+  });
+
+  // Public durable-run status: lets the widget reconcile a 202 without
+  // repeatedly loading the whole conversation from a contended database.
+  app.get('/api/public/ai/livechat/status/:leadId/:inboundInteractionId', livechatRateLimit, async (req: express.Request, res: express.Response) => {
+    try {
+      const leadId = String(req.params.leadId || '');
+      const inboundInteractionId = String(req.params.inboundInteractionId || '');
+      if (!leadId || !inboundInteractionId) {
+        return res.status(400).json({ status: 'NOT_FOUND', code: 'LIVECHAT_RUN_NOT_FOUND' });
+      }
+      const { agentExecutionRepository } = await import('./server/repositories/agentExecutionRepository');
+      const execution = await agentExecutionRepository.getByIdempotencyKey(
+        PUBLIC_TENANT,
+        `web:${inboundInteractionId}`,
+        leadId,
+      );
+      if (!execution) {
+        return res.json({ status: 'NOT_FOUND', code: 'LIVECHAT_RUN_NOT_FOUND', retryAfter: 3 });
+      }
+      if (execution.status === 'SUCCESS' || execution.status === 'BLOCKED') {
+        return res.json({ status: 'SUCCESS', code: execution.status });
+      }
+      if (execution.status === 'ERROR') {
+        return res.json({ status: 'FAILED', code: 'AI_UNAVAILABLE', retryAfter: 5 });
+      }
+      return res.json({ status: 'PROCESSING', retryAfter: 3 });
+    } catch (error: any) {
+      logger.warn(`[PublicLiveChat] run status unavailable: ${error?.message || error}`);
+      return res.status(503).json({ status: 'PROCESSING', code: 'LIVECHAT_STATUS_UNAVAILABLE', retryAfter: 5 });
     }
   });
 

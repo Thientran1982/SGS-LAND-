@@ -54,6 +54,31 @@ const FALLBACK_CHAIN = [
   'gemini-3-flash-preview',        // fallback-1 -- verified working
   'gemini-3.1-flash-lite-preview', // fallback-2 -- verified working (gemini-2.0-flash retired by Google, 404)
 ] as const;
+// Native Gemini calls do not inherit the provider dispatcher timeout. Without
+// a local deadline one overloaded provider can keep the durable chat run alive
+// for several minutes before the fallback chain advances.
+const LEGACY_PROVIDER_TIMEOUT_MS = Math.max(
+  5_000,
+  Number(process.env.AI_PROVIDER_TIMEOUT_MS || 15_000),
+);
+
+function withLegacyProviderTimeout<T>(promise: Promise<T>, timeoutMs = LEGACY_PROVIDER_TIMEOUT_MS): Promise<T> {
+  return new Promise<T>((resolve, reject) => {
+    const timer = setTimeout(() => {
+      reject(Object.assign(new Error('AI provider timeout'), { status: 504, code: 'AI_PROVIDER_TIMEOUT' }));
+    }, timeoutMs);
+    promise.then(
+      value => {
+        clearTimeout(timer);
+        resolve(value);
+      },
+      error => {
+        clearTimeout(timer);
+        reject(error);
+      },
+    );
+  });
+}
 /**
  * I4: generateWithFallback
  * Attempts generation with the configured model; on timeout/overload,
@@ -114,14 +139,15 @@ async function generateWithFallback(
       console.log(`[MULTI-PROVIDER] ${_provider} bi circuit breaker skip, dung Gemini ngay`);
     } else {
     try {
-      const _res = await generateWithPolicy({
+       const _res = await generateWithPolicy({
         model: primaryModel,
         system: _system,
         prompt: _prompt,
         temperature: _temperature,
         maxOutputTokens: _maxOutputTokens,
         jsonMode: _jsonMode,
-      });
+         timeoutMs: LEGACY_PROVIDER_TIMEOUT_MS,
+       });
       return { text: _res.text } as any;
     } catch (err) {
       const _errStatus = extractProviderErrorStatus(err);
@@ -137,10 +163,10 @@ async function generateWithFallback(
   let lastErr: unknown;
   for (const model of chain) {
     try {
-      const result = await getAiClient().models.generateContent({
+      const result = await withLegacyProviderTimeout(getAiClient().models.generateContent({
         ...requestConfig,
         model,
-      });
+       }));
       if (model !== primaryModel) {
         console.log(`[I4-Fallback] Primary ${primaryModel} failed, used fallback: ${model}`);
       }
@@ -175,7 +201,8 @@ async function generateWithFallback(
         temperature: _temperature,
         maxOutputTokens: _maxOutputTokens,
         jsonMode: _jsonMode,
-      });
+         timeoutMs: LEGACY_PROVIDER_TIMEOUT_MS,
+       });
       console.log(`[CROSS-PROVIDER-FALLBACK] Thanh cong voi ${fb.provider}:${fb.model}`);
       return { text: _res.text } as any;
     } catch (err: any) {

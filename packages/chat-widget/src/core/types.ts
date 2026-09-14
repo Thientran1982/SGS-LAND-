@@ -36,12 +36,19 @@ export class ChatTransportError extends Error {
   status?: number;
   code?: string;
   retryAfter?: number;
-  constructor(message: string, opts: { status?: number; code?: string; retryAfter?: number } = {}) {
+  inboundInteractionId?: string;
+  constructor(message: string, opts: {
+    status?: number;
+    code?: string;
+    retryAfter?: number;
+    inboundInteractionId?: string;
+  } = {}) {
     super(message);
     this.name = "ChatTransportError";
     this.status = opts.status;
     this.code = opts.code;
     this.retryAfter = opts.retryAfter;
+    this.inboundInteractionId = opts.inboundInteractionId;
   }
 }
 

@@ -58,7 +58,7 @@
 - [Minh calibration telemetry](minh-calibration-telemetry.md) — calibrate only resolved delegations; persist tool outcomes before final synthesis so timeouts do not erase evidence
 - [Profile extraction fallback](profile-extraction-fallback.md) — optional LLM facts merge by category over regex facts, while provider failures leave deterministic extraction untouched
 - [Live-chat provider smoke evidence](livechat-provider-smoke.md) — separate uncached provider status from cached persistence/idempotency replay
-- [Live-chat agent timeouts](livechat-agent-timeouts.md) — landing-builder replies can outlive normal chat timeouts; reconcile durable history before showing failure
+- [Live-chat agent timeouts](livechat-agent-timeouts.md) — 202 replies need durable-run status and bounded provider attempts, not indefinite history polling
 - [Live-chat engine content contract](livechat-engine-content-contract.md) — durable guardrails validate `content`; keep it alongside the `response` alias
 - [Live-chat legacy cache repair](livechat-legacy-cache-repair.md) — versioned replay repairs old EMPTY_OUTPUT landing runs without changing normal idempotency
 - [Authenticated live-chat identity](authenticated-livechat-identity.md) — logged-in chat sessions need user-scoped storage and server-side identity deduplication

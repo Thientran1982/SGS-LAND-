@@ -52,15 +52,19 @@ async function postJson<T>(
         retryAfter: Number.isFinite(Number(payload?.retryAfter))
           ? Number(payload.retryAfter)
           : undefined,
+        inboundInteractionId: typeof payload?.inboundInteractionId === "string"
+          ? payload.inboundInteractionId
+          : undefined,
       },
     );
   }
-    // 202 Accepted = the agent is still running server-side; the widget
-  // receives the reply via socket / message polling instead of this response.
+  const payload = await res.json();
+  // 202 Accepted = the agent is still running server-side; preserve the
+  // durable run reference so the widget can poll a cheap status endpoint.
   if (res.status === 202 && path === CHAT_ENDPOINTS.minhReply) {
-    return { async: true } as unknown as T;
+    return { ...(payload || {}), async: true } as T;
   }
-return (await res.json()) as T;
+  return payload as T;
 }
 
 function createClientRequestId(): string {
@@ -112,6 +116,21 @@ export function createMinhClient(apiBase?: string) {
           cache: "no-store",
           signal: controller.signal,
         });
+      } finally {
+        clearTimeout(timeoutId);
+      }
+      if (!res.ok) return null;
+      return res.json();
+    },
+    async getRunStatus(leadId: string, inboundInteractionId: string) {
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 10_000);
+      let res: Response;
+      try {
+        res = await fetch(
+          apiUrl(CHAT_ENDPOINTS.minhRunStatus(leadId, inboundInteractionId), apiBase),
+          { credentials: "include", cache: "no-store", signal: controller.signal },
+        );
       } finally {
         clearTimeout(timeoutId);
       }

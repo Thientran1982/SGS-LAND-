@@ -329,6 +329,24 @@ class AgentExecutionRepository {
       return result.rows[0] ? mapExecution(result.rows[0]) : null;
     });
   }
+
+  async getByIdempotencyKey(
+    tenantId: string,
+    idempotencyKey: string,
+    leadId?: string,
+  ): Promise<AgentExecution | null> {
+    return withTenantContext(tenantId, async client => {
+      const result = await client.query(
+        `SELECT * FROM agent_executions
+           WHERE tenant_id = $1
+             AND idempotency_key = $2
+             AND ($3::text IS NULL OR lead_id::text = $3)
+           LIMIT 1`,
+        [tenantId, idempotencyKey, leadId || null],
+      );
+      return result.rows[0] ? mapExecution(result.rows[0]) : null;
+    });
+  }
 }
 
 export const agentExecutionRepository = new AgentExecutionRepository();
