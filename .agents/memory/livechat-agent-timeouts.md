@@ -23,6 +23,12 @@ Legacy provider calls must also have a bounded per-attempt deadline. A durable e
 
 **How to apply:** Add timeouts around native-provider calls as well as dispatcher calls, carry the inbound interaction ID in 202/error payloads, and make terminal `ERROR` visible as a user-safe retry state without deleting the saved inbound message.
 
+Async reconciliation must validate its generation after every awaited status/history read before mutating messages, errors, loading state, or timers; only the current generation may release the busy flag.
+
+**Why:** A slow history response could arrive after Socket.IO delivered the assistant reply, overwrite the newer message list with a stale snapshot, and show the delayed-processing warning again.
+
+**How to apply:** Increment the generation when a realtime reply or terminal state stops reconciliation, guard every post-await mutation, and keep a stale poll from clearing a newer poll's busy ownership.
+
 Status reconciliation must treat throttled, unavailable, and network-failed status reads as transient `PROCESSING` signals, not as permission to reload full message history. Honor a bounded server `retryAfter` and combine it with capped exponential backoff; stop after terminal status or the reconciliation deadline.
 
 **Why:** A long-running browser run can otherwise turn one status `429` or slow database read into a repeated history fan-out, consuming the same public rate-limit budget that visitors need for sending messages.

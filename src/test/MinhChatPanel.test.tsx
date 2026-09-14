@@ -163,4 +163,74 @@ describe("MinhChatPanel", () => {
       });
     });
   });
+
+  it("does not let stale history overwrite a realtime reply", async () => {
+    let releaseRefresh!: (value: any) => void;
+    const refreshMessages = vi.fn().mockImplementation(
+      () => new Promise((resolve) => {
+        releaseRefresh = resolve;
+      }),
+    );
+    const raceSession = {
+      restore: vi.fn().mockResolvedValue({
+        leadId: "lead-1",
+        name: "Nguyễn Minh",
+        threadStatus: "AI_ACTIVE",
+        messages: [],
+      }),
+      connect: vi.fn().mockImplementation(async (handlers: { onMessage?: (message: ChatMessage) => void }) => {
+        realtimeOnMessage = handlers.onMessage;
+        return () => undefined;
+      }),
+      getPendingStatus: vi.fn().mockResolvedValue({ status: "NOT_FOUND" }),
+      refreshMessages,
+      sendUserMessage: vi.fn().mockResolvedValue({
+        user: {
+          id: "user-1",
+          role: "user",
+          content: "Race condition smoke",
+          ts: Date.now(),
+        },
+        assistant: null,
+        noReply: false,
+        pending: true,
+        raw: { async: true, inboundInteractionId: "inbound-1" },
+      }),
+    } as unknown as MinhSession;
+    mockedCreateMinhSession.mockReturnValue(raceSession);
+
+    render(<MinhChatPanel showHeader={false} heightClass="h-auto" />);
+
+    const input = await waitFor(() => screen.getByRole("textbox", { name: "Nội dung tin nhắn" }));
+    fireEvent.change(input, { target: { value: "Race condition smoke" } });
+    fireEvent.keyDown(input, { key: "Enter", code: "Enter" });
+    await waitFor(() => expect(refreshMessages).toHaveBeenCalled());
+
+    act(() => {
+      realtimeOnMessage?.({
+        id: "assistant-realtime-1",
+        role: "assistant",
+        content: "Câu trả lời realtime",
+        ts: Date.now(),
+      });
+    });
+    await screen.findByText("Câu trả lời realtime");
+
+    await act(async () => {
+      releaseRefresh({
+        leadId: "lead-1",
+        name: "Nguyễn Minh",
+        threadStatus: "AI_ACTIVE",
+        messages: [{
+          id: "user-1",
+          role: "user",
+          content: "Race condition smoke",
+          ts: Date.now(),
+        }],
+      });
+    });
+
+    expect(screen.getByText("Câu trả lời realtime")).toBeVisible();
+    expect(screen.queryByText(/xử lý lâu hơn dự kiến/)).toBeNull();
+  });
 });

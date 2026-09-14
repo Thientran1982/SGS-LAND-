@@ -169,6 +169,7 @@ export function MinhChatPanel({
           const status = inboundInteractionId
             ? await session.getPendingStatus(inboundInteractionId)
             : null;
+          if (generation !== pendingReconcileGenerationRef.current) return;
           nextRetryAfter = status?.retryAfter;
           if (status?.status === "FAILED") {
             setLoading(false);
@@ -182,6 +183,7 @@ export function MinhChatPanel({
             status.status === "SUCCESS" ||
             status.status === "NOT_FOUND";
           const restored = shouldReadHistory ? await session.refreshMessages() : null;
+          if (generation !== pendingReconcileGenerationRef.current) return;
           if (restored) {
             const userIndexById = restored.messages.findIndex((message) => message.id === userMessageId);
             const userIndex =
@@ -212,7 +214,9 @@ export function MinhChatPanel({
             setError("Minh đang xử lý lâu hơn dự kiến. Tin nhắn đã được lưu; câu trả lời sẽ tự xuất hiện khi hoàn tất.");
           }
         } finally {
-          pendingReconcileBusyRef.current = false;
+          if (generation === pendingReconcileGenerationRef.current) {
+            pendingReconcileBusyRef.current = false;
+          }
         }
 
         if (generation !== pendingReconcileGenerationRef.current) return;
