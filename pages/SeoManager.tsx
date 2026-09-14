@@ -1020,7 +1020,7 @@ const AgentRuns7Days: React.FC = () => {
 // ── GEO Monitor (last 30 days) — Sprint #64 follow-up ─────────────────────────
 // Charts daily AI mention rate per engine + best SERP position deltas, fed by
 // QStash daily cron writing into seo_geo_snapshots.
-const GeoMonitor30Days: React.FC = () => {
+export const GeoMonitor30Days: React.FC = () => {
     type Snap = { date: string; aiMentions: any; gscTop20: any; gscSync?: GscSyncSummary; backlinks: any; lighthouse: any; createdAt: string };
     const [snaps, setSnaps] = useState<Snap[]>([]);
     const [loading, setLoading] = useState(true);
