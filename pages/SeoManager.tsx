@@ -5,7 +5,7 @@ import { UserRole } from '../types';
 import { useTranslation } from '../services/i18n';
 import { ROUTE_SEO, SEOConfig, getSEOOverrides, saveSEOOverride, clearSEOOverride, updatePageSEO } from '../utils/seo';
 import { copyToClipboard } from '../utils/clipboard';
-import seoApi, { SeoOverride, TargetKeyword, AiVisibilityStatus, SeoAuditItem } from '../services/api/seoApi';
+import seoApi, { SeoOverride, TargetKeyword, AiVisibilityStatus, SeoAuditItem, GscSyncSummary } from '../services/api/seoApi';
 import { Dropdown } from '../components/Dropdown';
 import {
     LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, Legend,
@@ -1021,7 +1021,7 @@ const AgentRuns7Days: React.FC = () => {
 // Charts daily AI mention rate per engine + best SERP position deltas, fed by
 // QStash daily cron writing into seo_geo_snapshots.
 const GeoMonitor30Days: React.FC = () => {
-    type Snap = { date: string; aiMentions: any; gscTop20: any; backlinks: any; lighthouse: any; createdAt: string };
+    type Snap = { date: string; aiMentions: any; gscTop20: any; gscSync?: GscSyncSummary; backlinks: any; lighthouse: any; createdAt: string };
     const [snaps, setSnaps] = useState<Snap[]>([]);
     const [loading, setLoading] = useState(true);
     const [running, setRunning] = useState(false);
@@ -1050,6 +1050,34 @@ const GeoMonitor30Days: React.FC = () => {
     };
     // ── Build chart data ────────────────────────────────────────────────────
     const ENGINES = ['gemini', 'chatgpt', 'claude', 'perplexity', 'grok'] as const;
+    const getGscSync = (snapshot: Snap): GscSyncSummary => {
+        if (snapshot.gscSync) return snapshot.gscSync;
+        const raw = snapshot.gscTop20?.gsc_sync;
+        if (!raw || typeof raw !== 'object') {
+            return { ok: false, status: 'unknown', reason: 'Chưa có kết quả đồng bộ trong snapshot lịch sử' };
+        }
+        const ok = raw.ok === true;
+        const reason = typeof raw.reason === 'string' && raw.reason.trim()
+            ? raw.reason
+            : ok ? 'synced' : 'GSC sync thất bại nhưng không có lý do';
+        const status = ok
+            ? 'ok'
+            : /credentials not configured|client[_ -]?email|private[_ -]?key/i.test(reason)
+                ? 'missing_credentials'
+                : 'error';
+        return { ...raw, ok, status, reason };
+    };
+    const GSC_STATUS_LABELS: Record<GscSyncSummary['status'], string> = {
+        ok: 'Đồng bộ thành công',
+        missing_credentials: 'Thiếu credential',
+        error: 'API lỗi',
+        unknown: 'Chưa có trạng thái',
+    };
+    const gscStatusClass = (status: GscSyncSummary['status']) => status === 'ok'
+        ? 'text-emerald-700 bg-emerald-100'
+        : status === 'error'
+            ? 'text-rose-700 bg-rose-100'
+            : 'text-amber-700 bg-amber-100';
     const mentionData = snaps.map((s) => {
         const engines = s.aiMentions?.engines || {};
         const row: any = { date: s.date.slice(5) }; // MM-DD
@@ -1063,14 +1091,18 @@ const GeoMonitor30Days: React.FC = () => {
         return row;
     });
     // Track best position over time for the 5 keywords with most recent data.
+    const latestSuccessfulGsc = [...snaps].reverse().find((snapshot) => getGscSync(snapshot).status === 'ok');
     const trackedKws: string[] = (() => {
-        const last = snaps[snaps.length - 1];
+        const last = latestSuccessfulGsc;
         const kws = (last?.gscTop20?.keywords || []).slice(0, 5).map((k: any) => k.keyword);
         return kws;
     })();
     const positionData = snaps.map((s) => {
         const row: any = { date: s.date.slice(5) };
-        const kwList: any[] = s.gscTop20?.keywords || [];
+        // A failed/unknown sync may contain stale current_position values.
+        // Keep the date visible but leave a gap rather than presenting them as
+        // measurements from this snapshot.
+        const kwList: any[] = getGscSync(s).status === 'ok' ? (s.gscTop20?.keywords || []) : [];
         for (const kw of trackedKws) {
             const found = kwList.find((k) => k.keyword === kw);
             row[kw] = found?.position ?? null;
@@ -1162,14 +1194,56 @@ const GeoMonitor30Days: React.FC = () => {
                                         <YAxis reversed domain={[1, 100]} tick={{ fontSize: 10 }} />
                                         <Tooltip />
                                         <Legend wrapperStyle={{ fontSize: 10 }} />
-                                        {trackedKws.map((kw, idx) => (
-                                            <Line key={kw} type="monotone" dataKey={kw} stroke={KW_COLORS[idx % KW_COLORS.length]} strokeWidth={2} dot={false} connectNulls />
+                                         {trackedKws.map((kw, idx) => (
+                                             <Line key={kw} type="monotone" dataKey={kw} stroke={KW_COLORS[idx % KW_COLORS.length]} strokeWidth={2} dot={false} connectNulls={false} />
                                         ))}
                                     </LineChart>
                                 </ResponsiveContainer>
                             </div>
                         )}
                     </div>
+                     {/* Search Console sync history — never infer success from a keyword payload alone */}
+                     <div className="lg:col-span-2 p-3 rounded-xl border border-[var(--glass-border)] bg-[var(--glass-surface-hover)]">
+                         <div className="text-2xs font-bold text-[var(--text-tertiary)] uppercase mb-1">
+                             Đồng bộ Google Search Console theo snapshot
+                         </div>
+                         <div className="text-2xs text-[var(--text-tertiary)] mb-2">
+                             Chỉ vị trí từ snapshot đồng bộ thành công mới được đưa vào biểu đồ. Snapshot thiếu credential hoặc lỗi API không được quy đổi thành hạng 0.
+                         </div>
+                         <div className="overflow-x-auto">
+                             <table className="w-full text-xs">
+                                 <thead>
+                                     <tr className="text-[var(--text-tertiary)] text-2xs uppercase border-b border-[var(--glass-border)]">
+                                         <th className="text-left py-1.5 px-2">Ngày</th>
+                                         <th className="text-left py-1.5 px-2">Trạng thái</th>
+                                         <th className="text-left py-1.5 px-2">Lý do</th>
+                                         <th className="text-right py-1.5 px-2">Từ khóa</th>
+                                     </tr>
+                                 </thead>
+                                 <tbody>
+                                     {snaps.map((snapshot) => {
+                                         const sync = getGscSync(snapshot);
+                                         return (
+                                             <tr key={snapshot.date} className="border-b border-[var(--glass-border)] align-top">
+                                                 <td className="py-1.5 px-2 whitespace-nowrap font-mono">{snapshot.date}</td>
+                                                 <td className="py-1.5 px-2 whitespace-nowrap">
+                                                     <span className={`inline-block px-1.5 py-0.5 rounded text-2xs font-bold ${gscStatusClass(sync.status)}`}>
+                                                         {GSC_STATUS_LABELS[sync.status]}
+                                                     </span>
+                                                 </td>
+                                                 <td className={`py-1.5 px-2 max-w-[420px] break-words ${sync.status === 'ok' ? 'text-[var(--text-tertiary)]' : 'text-rose-700'}`}>
+                                                     {sync.reason}
+                                                 </td>
+                                                 <td className="py-1.5 px-2 text-right text-[var(--text-tertiary)]">
+                                                     {sync.keywordsChecked ?? '—'}
+                                                 </td>
+                                             </tr>
+                                         );
+                                     })}
+                                 </tbody>
+                             </table>
+                         </div>
+                     </div>
                     {/* Latest engine breakdown */}
                     {latest?.aiMentions?.engines && (
                         <div className="lg:col-span-2 p-3 rounded-xl border border-[var(--glass-border)] bg-[var(--glass-surface-hover)]">

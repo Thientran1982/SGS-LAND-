@@ -9,6 +9,7 @@ const { startAgentRun, finishAgentRun } = vi.hoisted(() => ({
   startAgentRun: vi.fn(),
   finishAgentRun: vi.fn(),
 }));
+const authenticateToken = vi.hoisted(() => vi.fn());
 
 vi.mock('../services/agentRunsService', () => ({
   startAgentRun,
@@ -22,7 +23,7 @@ type Query = (sql: string, params?: unknown[]) => Promise<{ rows: any[] }>;
 async function startTestServer(pool: { query: Query }) {
   const app = express();
   app.use(express.json());
-  app.use(createGeoMonitorCronRouter(pool as any, 'cron-secret', vi.fn()));
+  app.use(createGeoMonitorCronRouter(pool as any, 'cron-secret', authenticateToken));
 
   const server = await new Promise<Server>((resolve) => {
     const instance = app.listen(0, '127.0.0.1', () => resolve(instance));
@@ -32,14 +33,14 @@ async function startTestServer(pool: { query: Query }) {
 
   return {
     server,
-    request: (path: string) => new Promise<{ status: number; body: any }>((resolve, reject) => {
+    request: (path: string, method = 'POST') => new Promise<{ status: number; body: any }>((resolve, reject) => {
       const request = http.request(
         {
           hostname: '127.0.0.1',
           port: address.port,
           path,
-          method: 'POST',
-          headers: { 'x-internal-secret': 'cron-secret' },
+          method,
+          headers: method === 'POST' ? { 'x-internal-secret': 'cron-secret' } : {},
         },
         (response: any) => {
           let body = '';
@@ -70,6 +71,10 @@ describe('GEO monitor snapshot route', () => {
     fetchMock.mockRejectedValue(new Error('external probe disabled in test'));
     startAgentRun.mockResolvedValue('run-1');
     finishAgentRun.mockResolvedValue(undefined);
+    authenticateToken.mockImplementation((req: any, _res: any, next: any) => {
+      req.user = { role: 'SUPER_ADMIN', tenantId: DEFAULT_TENANT_ID };
+      next();
+    });
 
     for (const envName of [
       'GOOGLE_SEARCH_CONSOLE_CLIENT_EMAIL',
@@ -141,6 +146,7 @@ describe('GEO monitor snapshot route', () => {
     const storedGscTop20 = JSON.parse(String(persistedParams[0][2]));
     expect(storedGscTop20.gsc_sync).toEqual({
       ok: false,
+       status: 'missing_credentials',
       reason: expect.stringContaining('GSC credentials not configured'),
     });
     expect(storedGscTop20.gsc_sync.ok).toBe(false);
@@ -153,5 +159,98 @@ describe('GEO monitor snapshot route', () => {
       null,
       expect.any(Number),
     );
+  });
+
+  it('returns explicit GSC sync status and reason for successful and failed historical snapshots', async () => {
+    const pool = {
+      query: vi.fn<Query>().mockImplementation(async (sql: string) => {
+        if (sql.includes('FROM seo_geo_snapshots')) {
+          return {
+            rows: [
+              {
+                date: '2026-09-12',
+                ai_mentions_json: {},
+                gsc_top20_json: {
+                  keywords: [{ keyword: 'Aqua City', position: 3.5 }],
+                  gsc_sync: { ok: true, reason: 'synced', keywordsChecked: 1, positionsUpdated: 1 },
+                },
+                backlinks_json: {},
+                lighthouse_json: {},
+                created_at: '2026-09-12T04:30:00.000Z',
+              },
+              {
+                date: '2026-09-13',
+                ai_mentions_json: {},
+                gsc_top20_json: {
+                  keywords: [{ keyword: 'Aqua City', position: 3.5 }],
+                  gsc_sync: { ok: false, reason: 'GSC query failed: HTTP 403 permission denied' },
+                },
+                backlinks_json: {},
+                lighthouse_json: {},
+                created_at: '2026-09-13T04:30:00.000Z',
+              },
+            ],
+          };
+        }
+        throw new Error(`Unexpected query: ${sql}`);
+      }),
+    };
+    const testServer = await startTestServer(pool);
+    server = testServer.server;
+
+    const response = await testServer.request('/api/seo/geo-snapshots?days=30', 'GET');
+
+    expect(response.status).toBe(200);
+    expect(response.body.snapshots).toEqual([
+      expect.objectContaining({
+        date: '2026-09-12',
+        gscSync: {
+          ok: true,
+          status: 'ok',
+          reason: 'synced',
+          keywordsChecked: 1,
+          positionsUpdated: 1,
+        },
+      }),
+      expect.objectContaining({
+        date: '2026-09-13',
+        gscSync: {
+          ok: false,
+          status: 'error',
+          reason: 'GSC query failed: HTTP 403 permission denied',
+        },
+      }),
+    ]);
+  });
+
+  it('marks historical snapshots without gsc_sync as unknown instead of successful', async () => {
+    const pool = {
+      query: vi.fn<Query>().mockImplementation(async (sql: string) => {
+        if (sql.includes('FROM seo_geo_snapshots')) {
+          return {
+            rows: [{
+              date: '2026-09-11',
+              ai_mentions_json: {},
+              gsc_top20_json: { keywords: [{ keyword: 'Aqua City', position: 3.5 }] },
+              backlinks_json: {},
+              lighthouse_json: {},
+              created_at: '2026-09-11T04:30:00.000Z',
+            }],
+          };
+        }
+        throw new Error(`Unexpected query: ${sql}`);
+      }),
+    };
+    const testServer = await startTestServer(pool);
+    server = testServer.server;
+
+    const response = await testServer.request('/api/seo/geo-snapshots?days=30', 'GET');
+
+    expect(response.status).toBe(200);
+    expect(response.body.snapshots[0].gscSync).toEqual({
+      ok: false,
+      status: 'unknown',
+      reason: 'No GSC sync result recorded for this snapshot',
+    });
   });
 });

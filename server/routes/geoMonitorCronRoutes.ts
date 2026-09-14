@@ -47,6 +47,51 @@ interface EngineResult {
   details: { query: string; mentioned: boolean; error?: string }[];
 }
 
+export type GscSyncStatus = 'ok' | 'missing_credentials' | 'error' | 'unknown';
+
+export interface GscSyncSummary {
+  ok: boolean;
+  status: GscSyncStatus;
+  reason: string;
+  keywordsChecked?: number;
+  positionsUpdated?: number;
+}
+
+/**
+ * Keep the Search Console result explicit at the API boundary. Older
+ * snapshots predate gsc_sync, so they must not look like successful syncs.
+ */
+export function normalizeGscSync(raw: unknown): GscSyncSummary {
+  if (!raw || typeof raw !== 'object') {
+    return {
+      ok: false,
+      status: 'unknown',
+      reason: 'No GSC sync result recorded for this snapshot',
+    };
+  }
+
+  const value = raw as Record<string, unknown>;
+  const ok = value.ok === true;
+  const reason = typeof value.reason === 'string' && value.reason.trim()
+    ? value.reason
+    : ok
+      ? 'synced'
+      : 'GSC sync failed without a reason';
+  const status: GscSyncStatus = ok
+    ? 'ok'
+    : /credentials not configured|client[_ -]?email|private[_ -]?key/i.test(reason)
+      ? 'missing_credentials'
+      : 'error';
+
+  return {
+    ok,
+    status,
+    reason,
+    ...(typeof value.keywordsChecked === 'number' ? { keywordsChecked: value.keywordsChecked } : {}),
+    ...(typeof value.positionsUpdated === 'number' ? { positionsUpdated: value.positionsUpdated } : {}),
+  };
+}
+
 // Multi-model probe engines (refactor 2026-09-13).
 // Verified live against provider APIs on 2026-09-13:
 //   gemini-2.5-flash / gemini-3-flash-preview / gemini-3.1-flash-lite-preview
@@ -537,7 +582,9 @@ export async function runSnapshot(pool: Pool): Promise<any> {
 
   // Pull real GSC positions first so buildGscTop20 sees fresh current_position.
   // Missing credentials no-op with a reason instead of failing the snapshot.
-  const gscSync = await syncKeywordPositionsFromSearchConsole(pool, DEFAULT_TENANT_ID);
+  const gscSync = normalizeGscSync(
+    await syncKeywordPositionsFromSearchConsole(pool, DEFAULT_TENANT_ID),
+  );
 
   const [gemini, chatgpt, claude, perplexity, grok, gscTop20, backlinks, lighthouse] = await Promise.all([
     probeGemini(),
@@ -676,6 +723,7 @@ export function createGeoMonitorCronRouter(
             date: row.date instanceof Date ? row.date.toISOString().slice(0, 10) : String(row.date),
             aiMentions: row.ai_mentions_json,
             gscTop20: row.gsc_top20_json,
+            gscSync: normalizeGscSync(row.gsc_top20_json?.gsc_sync),
             backlinks: row.backlinks_json,
             lighthouse: row.lighthouse_json,
             createdAt: row.created_at,

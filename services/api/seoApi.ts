@@ -41,6 +41,14 @@ export interface SeoAuditItem {
   source?: string;
   checkedAt?: string;
 }
+export type GscSyncStatus = 'ok' | 'missing_credentials' | 'error' | 'unknown';
+export interface GscSyncSummary {
+  ok: boolean;
+  status: GscSyncStatus;
+  reason: string;
+  keywordsChecked?: number;
+  positionsUpdated?: number;
+}
 const seoApi = {
   async getAll(): Promise<Record<string, SeoOverride>> {
     return api.get('/api/seo-overrides');
@@ -81,6 +89,7 @@ const seoApi = {
       date: string;
       aiMentions: any;
       gscTop20: any;
+      gscSync: GscSyncSummary;
       backlinks: any;
       lighthouse: any;
       createdAt: string;
