@@ -17,6 +17,7 @@ export const MINH_LEAD_STORAGE_KEY = "livechat_lead_id";
 export const MINH_NAME_STORAGE_KEY = "livechat_lead_name";
 const MINH_RECONCILE_TIMEOUT_MS = 60_000;
 const MINH_RECONCILE_POLL_MS = 1_500;
+const MINH_PENDING_RUN_TTL_MS = 5 * 60_000;
 
 export type MinhThreadStatus = "AI_ACTIVE" | "HUMAN_TAKEOVER";
 
@@ -177,6 +178,7 @@ export function createMinhSession(options: MinhSessionOptions = {}): MinhSession
   const storageKey = (base: string) =>
     authenticatedUser ? `${base}:${authenticatedUser.id}` : base;
   const pendingRunStorageKey = storageKey("livechat_pending_run");
+  let consecutiveStatusFailures = 0;
 
   function readStored() {
     const s = store();
@@ -212,10 +214,16 @@ export function createMinhSession(options: MinhSessionOptions = {}): MinhSession
       if (!raw) return null;
       const parsed = JSON.parse(raw);
       if (!parsed || typeof parsed.inboundInteractionId !== "string" || !parsed.startedAt) return null;
+      const startedAt = Number(parsed.startedAt);
+      if (!Number.isFinite(startedAt)) return null;
+      if (Date.now() - startedAt > MINH_PENDING_RUN_TTL_MS) {
+        s.removeItem(pendingRunStorageKey);
+        return null;
+      }
       return {
         runId: typeof parsed.runId === "string" ? parsed.runId : undefined,
         inboundInteractionId: parsed.inboundInteractionId,
-        startedAt: Number(parsed.startedAt),
+        startedAt,
       };
     } catch {
       return null;
@@ -224,6 +232,7 @@ export function createMinhSession(options: MinhSessionOptions = {}): MinhSession
 
   function savePendingRun(run: MinhPendingRun): void {
     try {
+      consecutiveStatusFailures = 0;
       store()?.setItem(pendingRunStorageKey, JSON.stringify(run));
     } catch {
       /* localStorage is optional */
@@ -454,6 +463,7 @@ export function createMinhSession(options: MinhSessionOptions = {}): MinhSession
         if (!data || typeof data.status !== "string") return null;
         const status = String(data.status).toUpperCase();
         if (!["PROCESSING", "SUCCESS", "FAILED", "NOT_FOUND"].includes(status)) return null;
+        consecutiveStatusFailures = 0;
         return {
           status: status as "PROCESSING" | "SUCCESS" | "FAILED" | "NOT_FOUND",
           code: typeof data.code === "string" ? data.code : undefined,
@@ -462,6 +472,13 @@ export function createMinhSession(options: MinhSessionOptions = {}): MinhSession
             : undefined,
         };
       } catch (error: any) {
+        consecutiveStatusFailures += 1;
+        if (consecutiveStatusFailures > 5) {
+          return {
+            status: "FAILED",
+            code: "STATUS_UNREACHABLE",
+          };
+        }
         // A throttled status read is not a failed AI run. Preserve the
         // server hint so the panel backs off instead of falling through to
         // an expensive history read on every 429/503 or network timeout.

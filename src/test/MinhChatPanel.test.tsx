@@ -366,9 +366,16 @@ describe("MinhChatPanel", () => {
     expect(screen.getByRole("alert")).toHaveTextContent(/chưa thể hoàn tất/);
     expect(screen.queryByText(/Minh đang/)).not.toBeInTheDocument();
     expect(screen.getByRole("button", { name: /Thử lại/ })).toBeInTheDocument();
+    expect(input).not.toBeDisabled();
+
+    fireEvent.change(input, { target: { value: "Tin nhắn mới sau lỗi" } });
+    expect(input).toHaveValue("Tin nhắn mới sau lỗi");
+    expect(screen.queryByRole("alert")).not.toBeInTheDocument();
   });
 
   it("restores thinking after reconnect while a durable run is processing", async () => {
+    vi.useFakeTimers();
+    const getPendingStatus = vi.fn().mockResolvedValue({ status: "PROCESSING" });
     const reconnectSession = {
       restore: vi.fn().mockResolvedValue({
         leadId: "lead-1",
@@ -386,7 +393,7 @@ describe("MinhChatPanel", () => {
         inboundInteractionId: "inbound-1",
         startedAt: Date.now() - 5_000,
       }),
-      getPendingStatus: vi.fn().mockResolvedValue({ status: "PROCESSING" }),
+      getPendingStatus,
       savePendingRun: vi.fn(),
       clearPendingRun: vi.fn(),
     } as unknown as MinhSession;
@@ -394,8 +401,54 @@ describe("MinhChatPanel", () => {
 
     render(<MinhChatPanel showHeader={false} heightClass="h-auto" />);
 
-    expect(await screen.findByText(/Minh đang/)).toBeInTheDocument();
+    await act(async () => {
+      await Promise.resolve();
+      await Promise.resolve();
+    });
+    expect(screen.getByText(/Minh đang/)).toBeInTheDocument();
     expect(screen.getByRole("textbox", { name: "Nội dung tin nhắn" })).toBeDisabled();
+
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(20_000);
+    });
+    expect(getPendingStatus).toHaveBeenCalledTimes(1);
+  });
+
+  it("fails cleanly when an AI-phase error has no inbound interaction id", async () => {
+    const aiFailureSession = {
+      restore: vi.fn().mockResolvedValue({
+        leadId: "lead-1",
+        name: "Nguyễn Minh",
+        threadStatus: "AI_ACTIVE",
+        messages: [],
+      }),
+      connect: vi.fn().mockResolvedValue(() => undefined),
+      savePendingRun: vi.fn(),
+      clearPendingRun: vi.fn(),
+      sendUserMessage: vi.fn().mockRejectedValue({
+        code: "AI_TIMEOUT",
+        status: 504,
+      }),
+    } as unknown as MinhSession;
+    mockedCreateMinhSession.mockReturnValue(aiFailureSession);
+
+    render(<MinhChatPanel showHeader={false} heightClass="h-auto" />);
+    await act(async () => {
+      await Promise.resolve();
+      await Promise.resolve();
+    });
+    const input = screen.getByRole("textbox", { name: "Nội dung tin nhắn" });
+    fireEvent.change(input, { target: { value: "Câu hỏi bị timeout" } });
+    fireEvent.keyDown(input, { key: "Enter", code: "Enter" });
+    await act(async () => {
+      await Promise.resolve();
+      await Promise.resolve();
+    });
+
+    expect(screen.getByRole("alert")).toHaveTextContent(/chưa thể hoàn tất/);
+    expect(screen.queryByText(/Minh đang/)).not.toBeInTheDocument();
+    expect(input).not.toBeDisabled();
+    expect(screen.getByRole("button", { name: /Thử lại/ })).toBeInTheDocument();
   });
 
   it("does not let stale history overwrite a realtime reply", async () => {

@@ -11,6 +11,24 @@ Under Aiven connection contention, public lead/message-history requests can take
 
 **How to apply:** Keep the server acknowledgement deadline short, preserve `requestId` and inbound interaction identity through the run, expose durable-run status for accepted requests, poll status before history, and never classify an accepted pending run as a send failure.
 
+Assistant replies must use strict run correlation, while lifecycle events may retain tolerant matching for backwards-compatible server payloads; an uncorrelated assistant message must never finish the current run.
+
+**Why:** A human-agent OUTBOUND message can share the live-chat room without carrying the AI run identifiers, so treating missing identifiers as a match prematurely hid the pending indicator.
+
+**How to apply:** Require matching `inboundInteractionId` or `runId` for assistant replies in both socket and history reconciliation, but keep lifecycle matching separate.
+
+Pending browser runs need a five-minute storage TTL and status-read failure circuit breaker; after repeated transient status failures, surface a terminal `STATUS_UNREACHABLE` state instead of spinning forever.
+
+**Why:** Reloads and reconnects can restore stale local state, while an unavailable status endpoint otherwise leaves the widget in an indefinite processing loop.
+
+**How to apply:** Clear expired pending records before restoration, arm bounded reconciliation after PROCESSING reconnects, and convert more than five consecutive status-read failures to FAILED.
+
+Every claimed durable execution must emit exactly one `agent_run_finished`, including lease-loss and checkpoint-loading failures; cached replays are the exception because no new execution is claimed.
+
+**Why:** The client needs a terminal lifecycle signal even when the worker loses its lease or cannot load checkpoints, otherwise it can remain in thinking indefinitely.
+
+**How to apply:** Keep database finalization conditional on lease ownership, but emit the FAILED lifecycle unconditionally for post-claim errors, guarded by the existing one-shot emitter.
+
 Content-free latency telemetry must use a unique request correlation key for each history poll; a lead identifier is not a request identifier.
 
 **Why:** Reusing the lead key made a later poll inherit the earlier request's start time, producing false slow-endpoint alerts and incorrect latency percentiles.

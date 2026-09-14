@@ -173,7 +173,7 @@ export function MinhChatPanel({
   const lastProgressAtRef = useRef(0);
   const [elapsedNow, setElapsedNow] = useState(Date.now());
   const runActive = runState.status === "sending" || runState.status === "thinking";
-  const composerDisabled = runState.status !== "idle";
+  const composerDisabled = runActive;
   messagesRef.current = messages;
 
   const transitionRun = useCallback((next: RunState) => {
@@ -499,6 +499,12 @@ export function MinhChatPanel({
           if (status.status === "PROCESSING") {
             lastProgressAtRef.current = Date.now();
             transitionRun(nextState);
+            startPendingReconcile(
+              request?.userMessageId || restoredUser?.id || pending.inboundInteractionId,
+              request?.text || restoredUser?.content || "",
+              pending.inboundInteractionId,
+              false,
+            );
             return;
           }
           if (status.status === "FAILED") {
@@ -603,8 +609,10 @@ export function MinhChatPanel({
         ...prev,
         { id: tempId, role: "user", content: text, ts: Date.now(), attachments: outgoingAttachments } as ChatMessage,
       ]);
+      let sentUserMessage: ChatMessage | null = null;
       try {
         const res = await session.sendUserMessage(text, undefined, outgoingAttachments);
+        sentUserMessage = res.user;
         const inboundInteractionId = res.raw?.inboundInteractionId || res.user.id;
         const runId = typeof res.raw?.runId === "string" ? res.raw.runId : undefined;
         setMessages((prev) => {
@@ -660,8 +668,11 @@ export function MinhChatPanel({
           err?.code === "AI_ASYNC_PROCESSING" ||
           err?.code === "AI_UNAVAILABLE" ||
           (err?.code === "ai_failed" && [408, 425, 502, 503, 504].includes(status));
-        if (aiPhaseFailure && err?.inboundInteractionId) {
-          const inboundInteractionId = err.inboundInteractionId;
+        const inboundInteractionId =
+          typeof err?.inboundInteractionId === "string"
+            ? err.inboundInteractionId
+            : sentUserMessage?.id;
+        if (aiPhaseFailure && inboundInteractionId) {
           setLastFailed({ text, attachments: outgoingAttachments });
           lastProgressAtRef.current = Date.now();
           session.savePendingRun({ inboundInteractionId, startedAt });
@@ -671,7 +682,11 @@ export function MinhChatPanel({
             startedAt,
             phase: "classify",
           });
-          startPendingReconcile(tempId, text, err.inboundInteractionId);
+          startPendingReconcile(tempId, text, inboundInteractionId);
+        } else if (aiPhaseFailure) {
+          stopPendingReconcile();
+          setLastFailed({ text, attachments: outgoingAttachments });
+          transitionRun({ status: "failed" });
         }
         if (!aiPhaseFailure) {
           setMessages((prev) => prev.filter((m) => m.id !== tempId));
@@ -685,7 +700,9 @@ export function MinhChatPanel({
             : status === 429
               ? `Bạn gửi hơi nhanh. Vui lòng thử lại sau ${retryAfter > 0 ? `${retryAfter} giây` : "một lát"}.`
               : aiPhaseFailure
-                ? ""
+                ? inboundInteractionId
+                  ? ""
+                  : "Minh chưa thể hoàn tất phản hồi lúc này. Tin nhắn đã được lưu, bạn có thể thử lại."
                 : err?.code === "send_failed"
                   ? "Chưa lưu được tin nhắn. Vui lòng thử lại hoặc gọi 0379 281 445."
                   : "Không gửi được tin nhắn. Vui lòng thử lại hoặc gọi 0379 281 445.",
@@ -710,6 +727,17 @@ export function MinhChatPanel({
       void send();
     }
   };
+
+  const handleInputChange = useCallback(
+    (event: React.ChangeEvent<HTMLTextAreaElement>) => {
+      if (runStateRef.current.status === "failed") {
+        transitionRun({ status: "idle" });
+        setError("");
+      }
+      setInput(event.target.value);
+    },
+    [transitionRun],
+  );
 
   const formatRecTime = (sec: number) => `${String(Math.floor(sec / 60)).padStart(2, "0")}:${String(sec % 60).padStart(2, "0")}`;
 
@@ -1216,7 +1244,7 @@ export function MinhChatPanel({
                 </button>
                 <textarea
                   value={input}
-                  onChange={(e) => setInput(e.target.value)}
+                  onChange={handleInputChange}
                   onKeyDown={handleKey}
                   disabled={composerDisabled}
                   rows={1}

@@ -188,6 +188,55 @@ describe('durable agent execution service', () => {
     ]);
   });
 
+  it('emits a failed lifecycle when the execution lease is lost', async () => {
+    repo.claim.mockResolvedValue({
+      execution: execution(),
+      claimed: true,
+      resumed: false,
+    });
+    const execute = vi.fn().mockRejectedValue(new Error('AGENT_EXECUTION_LEASE_LOST:run-1'));
+
+    await expect(runDurableAgentExecution({
+      ...baseParams,
+      inboundInteractionId: 'inbound-1',
+      message: 'find an apartment',
+      execute,
+    })).rejects.toThrow('AGENT_EXECUTION_LEASE_LOST');
+
+    expect(repo.finish).not.toHaveBeenCalled();
+    expect(events.filter((event) => event.type === 'agent_run_finished')).toEqual([
+      expect.objectContaining({
+        runId: 'run-1',
+        inboundInteractionId: 'inbound-1',
+        status: 'FAILED',
+      }),
+    ]);
+  });
+
+  it('emits a failed lifecycle when checkpoint loading fails after start', async () => {
+    repo.claim.mockResolvedValue({
+      execution: execution(),
+      claimed: true,
+      resumed: false,
+    });
+    repo.getSteps.mockRejectedValue(new Error('checkpoint read failed'));
+
+    await expect(runDurableAgentExecution({
+      ...baseParams,
+      inboundInteractionId: 'inbound-1',
+      message: 'find an apartment',
+      execute: vi.fn(),
+    })).rejects.toThrow('checkpoint read failed');
+
+    expect(events.filter((event) => event.type === 'agent_run_finished')).toEqual([
+      expect.objectContaining({
+        runId: 'run-1',
+        inboundInteractionId: 'inbound-1',
+        status: 'FAILED',
+      }),
+    ]);
+  });
+
   it('emits one ordered lifecycle for a successful public run', async () => {
     repo.claim.mockResolvedValue({
       execution: execution(),

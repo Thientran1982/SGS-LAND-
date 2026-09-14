@@ -121,4 +121,51 @@ describe("Minh session async acknowledgement", () => {
       transient: true,
     });
   });
+
+  it("expires a pending run from localStorage after five minutes", () => {
+    window.localStorage.setItem("livechat_pending_run", JSON.stringify({
+      runId: "run-1",
+      inboundInteractionId: "inbound-1",
+      startedAt: Date.now() - 5 * 60_000 - 1,
+    }));
+
+    const session = createMinhSession();
+
+    expect(session.getPendingRun()).toBeNull();
+    expect(window.localStorage.getItem("livechat_pending_run")).toBeNull();
+  });
+
+  it("returns STATUS_UNREACHABLE after six consecutive status failures", async () => {
+    window.localStorage.setItem("livechat_lead_id", "lead-1");
+    window.localStorage.setItem("livechat_lead_name", "Nguyễn Minh");
+
+    const fetchMock = vi.fn(async (url: string) => {
+      if (url.includes("/api/public/ai/livechat/status/")) {
+        return {
+          ok: false,
+          status: 503,
+          headers: { get: () => null },
+          json: async () => ({ error: "unavailable" }),
+        };
+      }
+      return {
+        ok: true,
+        status: 200,
+        json: async () => ({ csrfToken: "csrf-test" }),
+      };
+    });
+    vi.stubGlobal("fetch", fetchMock);
+
+    const session = createMinhSession();
+    for (let attempt = 1; attempt <= 5; attempt += 1) {
+      await expect(session.getPendingStatus("inbound-1")).resolves.toMatchObject({
+        status: "PROCESSING",
+        transient: true,
+      });
+    }
+    await expect(session.getPendingStatus("inbound-1")).resolves.toEqual({
+      status: "FAILED",
+      code: "STATUS_UNREACHABLE",
+    });
+  });
 });

@@ -212,7 +212,13 @@ export async function runDurableAgentExecution<T extends {
       inboundInteractionId,
     });
   }
-  const checkpointRows = await agentExecutionRepository.getSteps(params.tenantId, execution.id);
+  let checkpointRows: Awaited<ReturnType<typeof agentExecutionRepository.getSteps>>;
+  try {
+    checkpointRows = await agentExecutionRepository.getSteps(params.tenantId, execution.id);
+  } catch (error) {
+    emitFinished("FAILED");
+    throw error;
+  }
   const resumeContext: DurableResumeContext = {
     executionId: execution.id,
     attempt: execution.attempt,
@@ -586,8 +592,8 @@ export async function runDurableAgentExecution<T extends {
         status: 'ERROR',
         errorText: error?.message || String(error),
       }).catch(() => {});
-      emitFinished("FAILED");
     }
+    emitFinished("FAILED");
     logger.error(`[DurableAgent] execution ${execution.id} failed:`, error);
     throw error;
   } finally {
