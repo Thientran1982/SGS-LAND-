@@ -110,7 +110,6 @@ export function MinhChatPanel({
   const [input, setInput] = useState(initialMessage);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
-  const [pendingNotice, setPendingNotice] = useState("");
   const [lastFailed, setLastFailed] = useState<FailedChatRequest | null>(null);
   const [mode, setMode] = useState<MinhThreadStatus>("AI_ACTIVE");
 
@@ -156,7 +155,6 @@ export function MinhChatPanel({
       const generation = pendingReconcileGenerationRef.current;
       const startedAt = Date.now();
       const deadline = startedAt + 5 * 60_000;
-      const delayedNoticeAt = startedAt + 20_000;
       const minPollDelay = 1_500;
       const maxPollDelay = 30_000;
       let pollAttempt = 0;
@@ -174,7 +172,6 @@ export function MinhChatPanel({
           nextRetryAfter = status?.retryAfter;
           if (status?.status === "FAILED") {
             setLoading(false);
-            setPendingNotice("");
             setError("Minh chưa thể hoàn tất phản hồi lúc này. Tin nhắn đã được lưu, bạn có thể thử lại.");
             stopPendingReconcile();
             return;
@@ -199,7 +196,6 @@ export function MinhChatPanel({
               restored.messages.slice(userIndex + 1).some((message) => message.role === "assistant");
             setMessages(restored.messages);
             if (hasReply) {
-              setPendingNotice("");
               setError("");
               stopPendingReconcile();
               return;
@@ -210,12 +206,8 @@ export function MinhChatPanel({
           // the already-completed reply without another status request.
           if (status?.status === "SUCCESS") {
             setLoading(false);
-            setPendingNotice("");
             stopPendingReconcile();
             return;
-          }
-          if (Date.now() >= delayedNoticeAt) {
-            setPendingNotice("Minh đang xử lý lâu hơn dự kiến. Tin nhắn đã được lưu; câu trả lời sẽ tự xuất hiện khi hoàn tất.");
           }
         } finally {
           if (generation === pendingReconcileGenerationRef.current) {
@@ -237,7 +229,6 @@ export function MinhChatPanel({
           pendingReconcileTimerRef.current = setTimeout(poll, delay);
         } else {
           pendingReconcileTimerRef.current = null;
-          setPendingNotice("");
           setError("Minh chưa thể hoàn tất phản hồi trong thời gian dự kiến. Tin nhắn đã được lưu; bạn có thể thử lại sau.");
         }
       };
@@ -293,7 +284,6 @@ export function MinhChatPanel({
           appendUnique(m);
           if (m.role === "assistant") {
             setLoading(false);
-            setPendingNotice("");
             setError("");
               stopPendingReconcile();
           }
@@ -374,7 +364,6 @@ export function MinhChatPanel({
       setInput("");
       if (requestAttachments === undefined) setAttachments([]);
       setError("");
-      setPendingNotice("");
       setLastFailed(null);
       const tempId = "temp-" + Date.now();
       setMessages((prev) => [
@@ -398,7 +387,6 @@ export function MinhChatPanel({
         });
         if (res.noReply) setMode("HUMAN_TAKEOVER");
         if (res.pending) {
-          setPendingNotice("Minh đang xử lý phản hồi. Câu trả lời sẽ tự xuất hiện khi hoàn tất.");
           startPendingReconcile(res.user.id, text, res.raw?.inboundInteractionId);
         }
       } catch (err: any) {
@@ -433,7 +421,6 @@ export function MinhChatPanel({
                   : "Không gửi được tin nhắn. Vui lòng thử lại hoặc gọi 0379 281 445.",
         );
         if (aiPhaseFailure) {
-          setPendingNotice("Minh đang xử lý phản hồi. Tin nhắn đã được lưu và câu trả lời sẽ hiện sau ít phút.");
         }
       } finally {
         setLoading(false);
@@ -767,16 +754,6 @@ export function MinhChatPanel({
             {mode === "HUMAN_TAKEOVER" ? (
               <p className="text-center text-[11px] text-amber-600">
                 Chuyên viên đã tham gia hội thoại và sẽ trả lời trực tiếp.
-              </p>
-            ) : null}
-
-            {pendingNotice ? (
-              <p
-                role="status"
-                aria-live="polite"
-                className="rounded-xl border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-800"
-              >
-                {pendingNotice}
               </p>
             ) : null}
 

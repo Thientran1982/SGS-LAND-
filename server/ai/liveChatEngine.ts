@@ -143,7 +143,14 @@ export async function generateLiveChatText(params: {
 }): Promise<string> {
     const traceId = randomUUID();
     const startedAt = Date.now();
+    const feature = params.feature || 'LIVE_CHAT_RESPONSE';
+    const isMinhInteractivePath =
+        feature === 'LIVE_CHAT_RESPONSE' ||
+        feature === 'MINH_ORCHESTRATOR';
     const model = params.model || (params.jsonMode ? TASK_MODELS.EXTRACTOR : TASK_MODELS.WRITER);
+    const timeoutMs = isMinhInteractivePath
+        ? Math.min(params.timeoutMs || 8_000, 8_000)
+        : (params.timeoutMs || 15_000);
     try {
         const result = await generateWithPolicy({
             model,
@@ -151,8 +158,13 @@ export async function generateLiveChatText(params: {
             prompt: params.prompt,
             maxOutputTokens: params.maxOutputTokens,
             jsonMode: params.jsonMode,
-            timeoutMs: params.timeoutMs || 15000,
-        }, {}, { tenantId: params.tenantId });
+            timeoutMs,
+        }, {}, {
+            tenantId: params.tenantId,
+            ...(isMinhInteractivePath
+                ? { maxAttempts: 2, includeGoogleFallback: true }
+                : {}),
+        });
         const telemetry: LiveChatProviderTelemetry = {
             provider: result.provider,
             model: result.model,
@@ -162,13 +174,13 @@ export async function generateLiveChatText(params: {
         };
         params.onProviderTelemetry?.(telemetry);
         logger.info(
-            `[LiveChatProvider] trace=${traceId} feature=${params.feature} provider=${result.provider} ` +
+            `[LiveChatProvider] trace=${traceId} feature=${feature} provider=${result.provider} ` +
             `model=${result.model} fallback=${telemetry.fallbackUsed} attempts=${providerAttemptSummary(telemetry.attempts)} ` +
             `latencyMs=${Date.now() - startedAt}`,
         );
         recordAiUsage({
             tenantId: params.tenantId,
-            feature: params.feature,
+            feature,
             model: result.model,
             promptLen: params.prompt.length + (params.system?.length || 0),
             responseLen: result.text.length,
@@ -186,7 +198,7 @@ export async function generateLiveChatText(params: {
         };
         params.onProviderTelemetry?.(telemetry);
         logger.warn(
-            `[LiveChatProvider] trace=${traceId} feature=${params.feature} failed ` +
+            `[LiveChatProvider] trace=${traceId} feature=${feature} failed ` +
             `status=${telemetry.status || 'n/a'} attempts=${providerAttemptSummary(attempts)} latencyMs=${Date.now() - startedAt}`,
         );
         throw error;
@@ -1663,7 +1675,11 @@ const plan = executionPlans[detectedIntent];
                 });
                 const evidenceDomain = evidenceDomains[candidate.intent];
                 let supportingKnowledge: any = null;
-                if (evidenceDomain && HANDLERS.get_platform_knowledge) {
+                    if (
+                        evidenceDomain &&
+                        HANDLERS.get_platform_knowledge &&
+                        scoped.tool !== 'get_platform_knowledge'
+                    ) {
                     try {
                         supportingKnowledge = await runSubagent({
                             stepKey: `03.${String(index + 1).padStart(2, '0')}_KNOWLEDGE_${evidenceDomain}`,

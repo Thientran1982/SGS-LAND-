@@ -103,7 +103,8 @@ export async function minhChooseSpecialist(args: {
       system,
       prompt: 'Chon specialist phu hop nhat roi tra ve JSON.',
       jsonMode: true,
-      timeoutMs: 20000,
+        feature: 'MINH_ORCHESTRATOR',
+        timeoutMs: 6000,
     });
     const cleaned = String(raw)
       .replace(/^\s*```(?:json)?\s*/i, '')

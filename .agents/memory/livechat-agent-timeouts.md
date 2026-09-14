@@ -35,6 +35,12 @@ An accepted async run is a normal user-visible status, not an error; unavailable
 
 **How to apply:** Render pending copy as a neutral live status, reserve alert styling for terminal failures, and skip the failed primary model before entering the known-good fallback models.
 
+Public Minh chat should not insert a delayed informational bubble while an answer is running; the existing composer/loading state is enough, and interactive orchestration must use a bounded provider budget.
+
+**Why:** A post-202 pending notice looked like another AI message in the conversation, while duplicate grounding and an unrestricted provider chain made simple finance questions wait roughly 84 seconds.
+
+**How to apply:** Keep reconciliation silent until a reply or terminal failure, avoid duplicate specialist/grounding lookups, cap Minh's router and response provider attempts, and always advance past unavailable 401/402/403/404 routes.
+
 Status reconciliation must treat throttled, unavailable, and network-failed status reads as transient `PROCESSING` signals, not as permission to reload full message history. Honor a bounded server `retryAfter` and combine it with capped exponential backoff; stop after terminal status or the reconciliation deadline.
 
 **Why:** A long-running browser run can otherwise turn one status `429` or slow database read into a repeated history fan-out, consuming the same public rate-limit budget that visitors need for sending messages.

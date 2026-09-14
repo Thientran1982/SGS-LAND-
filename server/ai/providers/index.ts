@@ -168,7 +168,11 @@ function providerStatus(error: any): number | undefined {
 
 export function isProviderFallbackError(error: unknown): boolean {
   const status = providerStatus(error);
-  return status === 408 || status === 429 || status === 503 || status === 504;
+  // Invalid/expired provider routes must advance to the safe provider too.
+  // Treating 402/404 as terminal made a stale OpenRouter model block Minh
+  // before Gemini could answer.
+  return status === 401 || status === 402 || status === 403 ||
+    status === 404 || status === 408 || status === 429 || status === 503 || status === 504;
 }
 
 function withTimeout<T>(promise: Promise<T>, timeoutMs?: number): Promise<T> {
@@ -217,7 +221,7 @@ function addAttempt(
 export async function generateWithPolicy(
   params: GenerateParams,
   adapters: Partial<Record<AiProvider, ProviderAdapter>> = {},
-  options: { tenantId?: string } = {},
+  options: { tenantId?: string; maxAttempts?: number; includeGoogleFallback?: boolean } = {},
 ): Promise<GenerateResult> {
   let model = ensureSafeModel(params.model);
   let provider = getProviderForModel(model);
@@ -232,6 +236,9 @@ export async function generateWithPolicy(
   const fallbackSettings = await getProviderFallbackSettings(options.tenantId);
   const candidates: Array<{ provider: AiProvider; model: string }> = [
     { provider, model },
+    ...(options.includeGoogleFallback && provider !== 'google'
+      ? [{ provider: 'google' as AiProvider, model: SAFE_MODEL_FALLBACK }]
+      : []),
     ...fallbackSettings.order
       .filter(fallbackProvider => fallbackProvider !== provider)
       .filter(fallbackProvider => fallbackSettings.enabled[fallbackProvider])
@@ -244,13 +251,16 @@ export async function generateWithPolicy(
   );
 
   let lastError: unknown;
+  let attemptedProviders = 0;
   for (const [index, candidate] of candidates.entries()) {
+    if (options.maxAttempts && attemptedProviders >= options.maxAttempts) break;
     const adapter = adapters[candidate.provider] || getAdapter(candidate.provider);
     if (!adapter.isConfigured()) {
       addAttempt(attempts, candidate.provider, candidate.model, 'skipped', Date.now());
       continue;
     }
 
+    attemptedProviders += 1;
     const startedAt = Date.now();
     try {
       const result = await withTimeout(

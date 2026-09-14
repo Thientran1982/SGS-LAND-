@@ -140,9 +140,9 @@ describe("MinhChatPanel", () => {
     fireEvent.change(input, { target: { value: "Aiven contention smoke" } });
     fireEvent.keyDown(input, { key: "Enter", code: "Enter" });
 
-    expect(await screen.findByText("Minh đang xử lý phản hồi. Câu trả lời sẽ tự xuất hiện khi hoàn tất.")).toBeVisible();
+    expect(screen.queryByText(/Minh đang xử lý/)).not.toBeInTheDocument();
     expect(input).not.toBeDisabled();
-    expect(refreshMessages).toHaveBeenCalled();
+    await waitFor(() => expect(refreshMessages).toHaveBeenCalled());
 
     await act(async () => {
       releaseRefresh({

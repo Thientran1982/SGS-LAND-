@@ -71,6 +71,36 @@ describe('live-chat provider fallback policy', () => {
     expect(fallback.generate).toHaveBeenCalledTimes(1);
   });
 
+  it('moves from an unavailable non-Google primary model to Gemini', async () => {
+    const primary = adapter('openrouter', vi.fn().mockRejectedValue(
+      Object.assign(new Error('payment required'), { status: 402 }),
+    ));
+    const google = adapter('google', vi.fn().mockResolvedValue({
+      text: 'Tôi đã kiểm tra thông tin và có thể tư vấn tiếp.',
+      model: 'gemini-2.5-flash',
+      provider: 'google',
+    }));
+
+    const result = await generateWithPolicy(
+      {
+        model: 'z-ai/glm-5.3',
+        prompt: 'Tư vấn vay vốn',
+        timeoutMs: 50,
+      },
+      { openrouter: primary, google },
+      { includeGoogleFallback: true, maxAttempts: 2 },
+    );
+
+    expect(result.provider).toBe('google');
+    expect(result.fallbackUsed).toBe(true);
+    expect(primary.generate).toHaveBeenCalledTimes(1);
+    expect(google.generate).toHaveBeenCalledTimes(1);
+    expect(result.attempts).toEqual([
+      expect.objectContaining({ provider: 'openrouter', outcome: 'failed', status: 402 }),
+      expect.objectContaining({ provider: 'google', outcome: 'success' }),
+    ]);
+  });
+
   it('records a timeout and fails honestly when no configured provider can answer', async () => {
     const primary = adapter('google', vi.fn(() => new Promise<never>(() => {})));
     const fallback = adapter('anthropic', vi.fn().mockRejectedValue(Object.assign(new Error('service unavailable'), { status: 503 })));
