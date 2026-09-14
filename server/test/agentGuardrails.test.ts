@@ -40,3 +40,22 @@ describe('Agent guardrails — secret patterns (P2-4)', () => {
     expect(inspectAgentOutput({ content: 'AWS AKIAIOSFODNN7EXAMPLE' }).blocked).toBe(true);
   });
 });
+
+describe('Agent guardrails — long-form customer answers', () => {
+  it('allows a bounded long-form answer without cutting it at the normal reply limit', () => {
+    const content = Array.from({ length: 180 }, (_, index) =>
+      `## Mục ${index + 1}\nPhân tích dữ kiện và điểm cần xác minh.`,
+    ).join('\n\n');
+    const report = inspectAgentOutput({ content, longForm: true });
+
+    expect(report.flags).toContain('OUTPUT_TRUNCATED');
+    expect(report.sanitizedContent?.length).toBeLessThanOrEqual(6000);
+    expect(report.sanitizedContent).toMatch(/xác minh\.\.\.\.$/);
+  });
+
+  it('keeps the existing focused limit for ordinary answers', () => {
+    const report = inspectAgentOutput({ content: 'x'.repeat(2300) });
+    expect(report.flags).toContain('OUTPUT_TRUNCATED');
+    expect(report.sanitizedContent?.length).toBeLessThanOrEqual(2200);
+  });
+});

@@ -58,6 +58,7 @@ export async function runDurableAgentExecution<T extends {
   artifact?: unknown;
   steps?: Array<Record<string, any>>;
   escalated?: boolean;
+  longForm?: boolean;
 }>(params: {
   tenantId: string;
   idempotencyKey: string;

@@ -16,6 +16,17 @@ describe('Agent Minh focused-output contract', () => {
     expect(report.flags).toContain('OUTPUT_TRUNCATED');
   });
 
+  it('allows a bounded long-form answer and truncates at a readable boundary', () => {
+    const content = Array.from({ length: 180 }, (_, index) =>
+      `## Mục ${index + 1}\nPhân tích dữ kiện và điểm cần xác minh.`,
+    ).join('\n\n');
+    const report = inspectAgentOutput({ content, longForm: true });
+
+    expect(report.sanitizedContent!.length).toBeLessThanOrEqual(6000);
+    expect(report.flags).toContain('OUTPUT_TRUNCATED');
+    expect(report.sanitizedContent).toMatch(/xác minh\.\.\.\.$/);
+  });
+
   it('fails closed on unsourced sensitive claims', () => {
     const report = inspectAgentOutput({ content: 'Pháp lý chắc chắn hoàn chỉnh, giá là 80 tỷ.' });
     expect(report.requiresVerification).toBe(true);

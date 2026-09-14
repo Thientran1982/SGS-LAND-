@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { classifyLiveChatIntent } from '../ai/liveChatEngine';
+import { classifyLiveChatIntent, isLongFormRequest } from '../ai/liveChatEngine';
 
 describe('classifyLiveChatIntent — P0-5 keyword precision', () => {
   it('routes price-bounded search requests to SEARCH, not VALUATION', () => {
@@ -18,5 +18,10 @@ describe('classifyLiveChatIntent — P0-5 keyword precision', () => {
   it('no longer treats every mention of khách as LEAD_SCORING', () => {
     expect(classifyLiveChatIntent('khách hàng A muốn xem nhà quận 2').intent).not.toBe('LEAD_SCORING');
     expect(classifyLiveChatIntent('chấm điểm lead này giúp tôi').intent).toBe('LEAD_SCORING');
+  });
+
+  it('detects an explicit request for a detailed, structured answer', () => {
+    expect(isLongFormRequest('Hãy phân tích chi tiết ưu nhược điểm và giải thích từng bước.')).toBe(true);
+    expect(isLongFormRequest('Cho tôi biết giá căn hộ này.')).toBe(false);
   });
 });

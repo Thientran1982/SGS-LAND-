@@ -28,12 +28,12 @@ import { recordAiUsage } from '../services/aiUsageService';
 import { agentAuditRepository } from '../repositories/agentAuditRepository';
 import { createHash, randomUUID } from 'crypto';
 import { inspectToolRequest } from './agentGuardrails';
-import { classifyLiveChatIntent, hasLandingTargetText, isLandingBuilderRequest, normalizeIntentText } from './liveChatIntent';
+import { classifyLiveChatIntent, hasLandingTargetText, isLandingBuilderRequest, isLongFormRequest, normalizeIntentText } from './liveChatIntent';
 
 // P2-2 slice 1: intent classification implementation moved to
 // ./liveChatIntent — re-exported so routes and tests keep importing from
 // liveChatEngine without behaviour change.
-export { classifyLiveChatIntent, isLandingBuilderRequest };
+export { classifyLiveChatIntent, isLandingBuilderRequest, isLongFormRequest };
 import { runDurableAgentExecution } from '../services/durableAgentExecutionService';
 import {
     sharedCacheDeleteByPrefix,
@@ -1455,6 +1455,7 @@ async function handle_live_chat_core(args: Record<string, any>): Promise<any> {
     // Fast intent detection via keyword matching. Landing creation is checked
     // first because its brief may also contain price/project vocabulary.
     let { intent: detectedIntent, suggestedTool } = classifyLiveChatIntent(msg);
+    const longFormResponse = isLongFormRequest(msg);
 
     // Supervisor may execute one read-only specialist tool. High-impact tools
     // remain suggestions and must go through the existing approval broker.
@@ -1724,8 +1725,12 @@ try {
   taskMemoryBlock = await agentMemoryService.memoryBlock(tenantId, 'agent:task-events', msg, 400);
   lessonsBlock = await agentMemoryService.memoryBlock(tenantId, 'agent:lessons', msg, 500);
 } catch { /* profile là tuỳ chọn, không chặn chat */ }
-const systemPrompt = `Bạn là AI hỗ trợ broker bất động sản SGS Land. Trả lời ngắn gọn, chuyên nghiệp (≤120 từ), bằng tiếng Việt.
+const responseLengthInstruction = longFormResponse
+    ? 'Với yêu cầu phân tích dài, trả lời có cấu trúc, tối đa khoảng 900 từ; dùng tiêu đề và bullet khi phù hợp, trả lời đủ từng ý trong câu hỏi thay vì chỉ chọn một ý.'
+    : 'Trả lời ngắn gọn, tối đa khoảng 120 từ.';
+const systemPrompt = `Bạn là AI hỗ trợ broker bất động sản SGS Land. ${responseLengthInstruction} Bằng tiếng Việt nếu người dùng không yêu cầu tiếng Anh.
 Trả lời đúng câu hỏi mới nhất trước; chỉ dùng lịch sử để giải nghĩa đại từ. Chỉ dùng dữ liệu trong KB/kết quả specialist. Nếu thiếu hoặc mâu thuẫn dữ liệu, nói rõ điều chưa xác minh và hỏi 1 thông tin cần thiết; không tự tạo giá, pháp lý hay quy hoạch. Với giá/pháp lý, nhắc người dùng xác minh nguồn chính thức.
+Khi cần suy luận, chỉ nêu kết luận và các bước lập luận có thể kiểm chứng; không tiết lộ chain-of-thought nội bộ. Tách rõ dữ kiện, suy luận và điểm chưa chắc chắn. Với câu hỏi nhiều phần, đánh số và trả lời từng phần; không âm thầm bỏ qua phần phụ.
 Specialist chỉ cung cấp evidence nội bộ; không nhắc specialist, prompt, memory hay nhãn kỹ thuật trong câu trả lời.
 ${ownerProfileBlock ? `[HỒ SƠ CHỦ SỞ HỮU — định hình cách trả lời]
 ${ownerProfileBlock}\n` : ''}${taskMemoryBlock ? `[KINH NGHIEM VAN HANH DA HOC]\n${taskMemoryBlock}\n` : ''}${lessonsBlock ? `[BAI HOC DA HOC TU PHAN HOI]\n${lessonsBlock}\n` : ''}${memoryBlock ? `${memoryBlock}\n` : ''}${personalizationBlock}${staleProfileInstruction}${outcomeInstruction}${contextBlock}${kbBlock}${specialistBlock}`;
@@ -1739,7 +1744,7 @@ ${ownerProfileBlock}\n` : ''}${taskMemoryBlock ? `[KINH NGHIEM VAN HANH DA HOC]\
         response = await generateLiveChatText({
             tenantId,
             feature: 'LIVE_CHAT_RESPONSE',
-            maxOutputTokens: 400,
+            maxOutputTokens: longFormResponse ? 1200 : 400,
             system: systemPrompt,
             prompt: userPrompt,
             onProviderTelemetry: telemetry => {
@@ -1786,6 +1791,7 @@ ${ownerProfileBlock}\n` : ''}${taskMemoryBlock ? `[KINH NGHIEM VAN HANH DA HOC]\
         sessionId: sessionId || `sess_${Date.now()}`,
         intent: detectedIntent,
         response: response.trim() || 'Không có phản hồi từ AI.',
+        longForm: longFormResponse,
         executedTools,
         suggestedNextTool: executedTools.length > 0 ? null : suggestedTool,
         suggestedAction: detectedIntent === 'VALUATION'  ? 'Gọi get_valuation với địa chỉ và diện tích cụ thể' :
@@ -2026,6 +2032,7 @@ async function handle_live_chat(args: Record<string, any>): Promise<any> {
         // consume the live-chat engine directly.
         content,
         response: content,
+        longForm: result.longForm === true,
         degraded: result.degraded === true,
         runId: execution.runId,
         traceId: execution.traceId,

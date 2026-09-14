@@ -211,6 +211,7 @@ export function inspectAgentOutput(output: {
   suggestedAction?: string | null;
   sources?: unknown[];
   artifact?: unknown;
+  longForm?: boolean;
 }): GuardrailReport {
   let content = String(output.content || '').trim();
   const flags: GuardrailFlag[] = [];
@@ -266,11 +267,23 @@ export function inspectAgentOutput(output: {
     content += '\n\nThông tin giá/pháp lý chỉ mang tính tham khảo và cần được xác minh từ nguồn chính thức.';
   }
   // Customer replies should be focused even when a provider ignores the
-  // requested token budget. Durable specialist artifacts remain separate.
-  const maxCustomerReplyLength = output.artifact ? 2600 : 2200;
+  // requested token budget. Long-form answers get a bounded larger budget;
+  // durable specialist artifacts remain separate. Truncate at a readable
+  // boundary so the customer does not receive half a sentence or bullet.
+  const maxCustomerReplyLength = output.longForm ? 6000 : output.artifact ? 2600 : 2200;
   if (content.length > maxCustomerReplyLength) {
     flags.push('OUTPUT_TRUNCATED');
-    content = content.slice(0, maxCustomerReplyLength - 3).trimEnd() + '...';
+    const limit = maxCustomerReplyLength - 3;
+    const candidate = content.slice(0, limit).trimEnd();
+    const boundaryCandidates = [
+      candidate.lastIndexOf('\n\n'),
+      candidate.lastIndexOf('\n- '),
+      candidate.lastIndexOf('\n• '),
+      candidate.lastIndexOf('. '),
+      candidate.lastIndexOf('。'),
+    ].filter(index => index >= Math.floor(limit * 0.6));
+    const boundary = boundaryCandidates.length > 0 ? Math.max(...boundaryCandidates) : -1;
+    content = (boundary >= 0 ? candidate.slice(0, boundary + (candidate[boundary] === '。' ? 1 : 0)) : candidate).trimEnd() + '...';
   }
 
   const approvalRequired = HIGH_IMPACT_ACTIONS.has(String(output.suggestedAction || ''));

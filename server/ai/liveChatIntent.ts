@@ -13,6 +13,29 @@ export function normalizeIntentText(message: string): string {
         .replace(/[\u0300-\u036f]/g, '');
 }
 
+export function isLongFormRequest(message: string): boolean {
+    const normalized = normalizeIntentText(message);
+    return [
+        'chi tiet',
+        'phan tich',
+        'suy luan',
+        'toan dien',
+        'tung buoc',
+        'so sanh',
+        'uu nhuoc diem',
+        'danh gia ky',
+        'giai thich ky',
+        'tra loi dai',
+        'noi dung dai',
+        'long form',
+        'detailed',
+        'deep analysis',
+        'step by step',
+        'compare',
+        'audit',
+    ].some(marker => normalized.includes(marker));
+}
+
 export function hasLandingTargetText(normalized: string): boolean {
     return /\b(?:landing|ladning|lading|landng)(?:\s+(?:page|builder))?\b/.test(normalized)
         || /\b(?:page|trang\s+(?:landing|ladning|lading|landng|dich|gioi thieu))\b/.test(normalized);
