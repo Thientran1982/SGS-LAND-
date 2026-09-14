@@ -61,11 +61,31 @@ export async function resumeFailedChatExecutions(tenantId: string): Promise<numb
       const message = String(input.message || '').trim();
       if (!message || !row.lead_id) continue;
       const history = await interactionRepository.findByLead(tenantId, row.lead_id);
+      const inboundInteractionId = String(
+        (input as any).inboundInteractionId
+          || history
+            .slice()
+            .reverse()
+            .find((item: any) =>
+              item.direction === 'OUTBOUND'
+              && (
+                String(item.metadata?.agentRunId || '') === String(row.id)
+                || String(item.externalEventId || '') === `agent:${row.id}`
+              )
+              && typeof item.metadata?.inboundInteractionId === 'string'
+            )
+            ?.metadata?.inboundInteractionId
+          || '',
+      ).trim() || undefined;
+      if (!inboundInteractionId) {
+        logger.warn(`[SelfRepair] no inbound interaction id for exec=${row.id}; lifecycle correlation skipped`);
+      }
       const result = await runDurableAgentExecution({
         tenantId,
         idempotencyKey: row.idempotency_key,
         sessionId: row.session_id || undefined,
         leadId: row.lead_id || undefined,
+        inboundInteractionId,
         triggerSource: 'self_repair_retry',
         message,
         execute: () => runWithSubagentPolicy(
@@ -82,6 +102,7 @@ export async function resumeFailedChatExecutions(tenantId: string): Promise<numb
               history: (history || []).slice(-8).map((item: any) => ({ role: item.direction === 'INBOUND' ? 'user' : 'assistant', content: item.content })),
             },
             __skipAgentEventEnqueue: true,
+              inboundInteractionId,
           }),
           { timeoutMs: 90_000 },
         ),

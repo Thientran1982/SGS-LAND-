@@ -354,6 +354,7 @@ export async function triggerAutoReply(
       idempotencyKey: `${channel.toLowerCase()}:${inboundEventId}`,
       sessionId: lead.id,
       leadId: lead.id,
+       inboundInteractionId: inboundEventId,
       triggerSource: `${channel.toLowerCase()}-webhook`,
       message: inboundText,
       approval: (result: any) => {
@@ -438,6 +439,7 @@ export async function triggerAutoReply(
         userMessage: inboundText?.slice(0, 300),
         agentRunId: execution.runId,
         traceId: execution.traceId,
+         inboundInteractionId: inboundEventId,
         needsVerification: execution.guardrail.requiresVerification,
         ...(productShare ? {
           productShare: {

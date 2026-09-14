@@ -57,11 +57,11 @@ describe("GeneratedLandingPage", () => {
 
       expect(page.querySelector("h1")?.textContent).toBe("Tiêu đề do AI tạo");
       expect(page.querySelector("h1")?.textContent).not.toBe("Tên dự án gốc");
-      expect(page.querySelector('img[alt="Tên dự án gốc - hình ảnh 1"]')).toHaveAttribute(
+      expect(page.querySelector('img[alt="Tên dự án gốc - Bộ sưu tập hình ảnh - hình ảnh 1"]')).toHaveAttribute(
         "src",
         "/uploads/gallery-one.webp",
       );
-      expect(page.querySelector('img[alt="Tên dự án gốc - hình ảnh 2"]')).toHaveAttribute(
+      expect(page.querySelector('img[alt="Tên dự án gốc - Bộ sưu tập hình ảnh - hình ảnh 2"]')).toHaveAttribute(
         "src",
         "/uploads/gallery-two.webp",
       );

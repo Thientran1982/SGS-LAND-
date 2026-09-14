@@ -2953,6 +2953,7 @@ app.get('/api/public/listings/:slugId', apiRateLimit, async (req: express.Reques
 }) {
    const { leadId, msgContent, isLandingRequest, executePublicChat, inboundInteraction, chatStartedAt, replyLang, telemetry } = opts;
   const { runDurableAgentExecution } = await import('./server/services/durableAgentExecutionService');
+   let repairedLegacyRunId: string | undefined;
 let execution = await runDurableAgentExecution({
 tenantId: PUBLIC_TENANT,
 idempotencyKey: `web:${inboundInteraction.id}`,
@@ -2992,6 +2993,7 @@ execution.guardrail?.flags?.includes('EMPTY_OUTPUT')
 logger.warn(
   `[PublicLiveChat] repairing legacy EMPTY_OUTPUT execution for inbound=${inboundInteraction.id}`,
 );
+ repairedLegacyRunId = execution.runId;
 execution = await runDurableAgentExecution({
   tenantId: PUBLIC_TENANT,
   idempotencyKey: `web:repair-v1:${inboundInteraction.id}`,
@@ -3021,25 +3023,46 @@ specialistError: isLandingRequest && !result.specialistOutput
   : undefined,
       }).catch(error => logger.warn(`[LandingTelemetry] public record failed: ${error?.message || error}`));
 
-      const aiReply = await interactionRepository.create(PUBLIC_TENANT, {
+      const replyMetadata = {
+   isAi: true,
+   isAgent: true,
+   intent: result.intent,
+   aiConfidence: result.confidence,
+   escalated: result.escalated ?? false,
+   ...(result.isSysMsg ? { isSysMsg: true } : {}),
+   agentRunId: execution.runId,
+   traceId: execution.traceId,
+    inboundInteractionId: inboundInteraction.id,
+   needsVerification: execution.guardrail.requiresVerification,
+      };
+      const legacyInteraction = repairedLegacyRunId
+        ? await interactionRepository.findByExternalEventId(
+            PUBLIC_TENANT,
+            'WEB',
+            `agent:${repairedLegacyRunId}`,
+          )
+        : null;
+      const aiReply = legacyInteraction?.id
+        ? (await interactionRepository.updateById(PUBLIC_TENANT, legacyInteraction.id, {
+            content: result.content,
+            metadata: replyMetadata,
+          })) || await interactionRepository.create(PUBLIC_TENANT, {
+            leadId,
+            channel: 'WEB',
+            direction: 'OUTBOUND',
+            type: 'TEXT',
+            content: result.content,
+            metadata: replyMetadata,
+            externalEventId: `agent:${execution.runId}`,
+          })
+        : await interactionRepository.create(PUBLIC_TENANT, {
 leadId,
 channel: 'WEB',
 direction: 'OUTBOUND',
 type: 'TEXT',
 content: result.content,
 // Fix G: đánh dấu rõ tin nhắn AI để filter trong analytics + Inbox UI
-metadata: {
-  isAi: true,
-  isAgent: true,
-  intent: result.intent,
-  aiConfidence: result.confidence,
-  escalated: result.escalated ?? false,
-  ...(result.isSysMsg ? { isSysMsg: true } : {}),
-  agentRunId: execution.runId,
-  traceId: execution.traceId,
-   inboundInteractionId: inboundInteraction.id,
-  needsVerification: execution.guardrail.requiresVerification,
-},
+metadata: replyMetadata,
 externalEventId: `agent:${execution.runId}`,
       });
       telemetry.mark('outbound_persisted');

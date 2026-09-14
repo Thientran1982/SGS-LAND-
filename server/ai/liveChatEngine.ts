@@ -2021,6 +2021,9 @@ async function handle_live_chat(args: Record<string, any>): Promise<any> {
             idempotencyKey: `live-chat-tool:${messageHash}`,
             sessionId: effectiveSessionId,
             leadId: args.context?.leadId,
+            inboundInteractionId: typeof args.inboundInteractionId === 'string'
+                ? args.inboundInteractionId
+                : undefined,
             triggerSource: 'live-chat-engine',
             message,
             execute: executeCore,

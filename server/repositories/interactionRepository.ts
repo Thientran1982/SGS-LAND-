@@ -109,6 +109,28 @@ export class InteractionRepository extends BaseRepository {
     });
   }
 
+  async updateById(
+    tenantId: string,
+    interactionId: string,
+    data: { content: string; metadata?: any },
+  ): Promise<any | null> {
+    return this.withTenant(tenantId, async (client) => {
+      const result = await client.query(
+        `UPDATE interactions
+         SET content = $2,
+             metadata = $3
+         WHERE id = $1
+         RETURNING *`,
+        [
+          interactionId,
+          data.content,
+          data.metadata ? JSON.stringify(data.metadata) : null,
+        ],
+      );
+      return result.rows[0] ? this.rowToEntity(result.rows[0]) : null;
+    });
+  }
+
   async getInboxThreads(
     tenantId: string,
     userId?: string,

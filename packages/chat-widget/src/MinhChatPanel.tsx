@@ -336,17 +336,22 @@ export function MinhChatPanel({
 
   const appendUnique = useCallback((msg: ChatMessage) => {
     setMessages((prev) => {
+      const sameId = prev.findIndex((m) => m.id === msg.id);
+      if (sameId >= 0) {
+        const next = [...prev];
+        next[sameId] = { ...next[sameId], ...msg };
+        return next;
+      }
       const duplicate = prev.some(
         (m) =>
-          m.id === msg.id ||
-          (m.role === "assistant" &&
-            msg.role === "assistant" &&
-            m.runId &&
-            msg.runId &&
-            m.inboundInteractionId &&
-            msg.inboundInteractionId &&
-            m.runId === msg.runId &&
-            m.inboundInteractionId === msg.inboundInteractionId),
+          m.role === "assistant" &&
+          msg.role === "assistant" &&
+          m.runId &&
+          msg.runId &&
+          m.inboundInteractionId &&
+          msg.inboundInteractionId &&
+          m.runId === msg.runId &&
+          m.inboundInteractionId === msg.inboundInteractionId,
       );
       return duplicate ? prev : [...prev, msg];
     });
