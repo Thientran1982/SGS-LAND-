@@ -1,0 +1,22 @@
+[LỖI 6 — mức thấp, làm nếu không rủi ro] Bổ sung inboundInteractionId cho các nơi gọi runDurableAgentExecution còn thiếu, để lifecycle event hoạt động cả ở các luồng khác:
+  - server.ts:1385 (authenticated-process-message)
+  - server/queue.ts:352 (zalo/facebook webhook auto-reply) — đồng thời thêm inboundInteractionId vào metadata của interaction OUTBOUND ở luồng này
+  - server/ai/liveChatEngine.ts:2019 (live-chat-engine direct tool)
+  - server/services/selfRepairService.ts:64 (self_repair_retry)
+Nếu một chỗ nào không có sẵn id inbound thì báo lại, ĐỪNG bịa id.
+
+[LỖI 7 — kiểm tra, sửa nếu đúng] Nhánh repair `web:repair-v1:${inboundInteraction.id}` có thể tạo interaction OUTBOUND THỨ HAI cho cùng một tin nhắn của khách (interaction cũ của run legacy + interaction mới của run repair). Kiểm tra và nếu đúng thì cập nhật interaction cũ thay vì tạo mới, hoặc đánh dấu interaction cũ là superseded để widget không hiện hai câu trả lời.
+
+== BỔ SUNG TEST (thêm vào src/test/MinhChatPanel.test.tsx) ==
+1. Đang thinking, nhận một receive_message OUTBOUND KHÔNG có inboundInteractionId (giả lập tin chuyên viên gửi từ CRM): indicator PHẢI VẪN HIỆN, tin đó vẫn được append.
+2. Đang thinking, nhận receive_message có inboundInteractionId KHÁC run hiện tại: indicator vẫn hiện.
+3. Đang thinking, nhận receive_message đúng inboundInteractionId: indicator tắt.
+4. Run FAILED: ô nhập tin nhắn KHÔNG bị disable; gõ chữ vào thì error biến mất.
+5. Reconnect với status PROCESSING: poll được arm (giả lập thời gian, xác nhận có gọi getPendingStatus lần kế tiếp).
+6. Pending run trong localStorage cũ hơn 5 phút: KHÔNG khôi phục trạng thái thinking.
+7. Lỗi ai-phase không kèm inboundInteractionId: không kẹt ở "sending".
+
+== NGHIỆM THU ==
+- npx tsc --noEmit pass, npm run build pass, toàn bộ test pass (báo số lượng).
+- Liệt kê từng đường thoát của runDurableAgentExecution kèm event finished tương ứng.
+- Sau khi xong, RESTART workflow và báo rõ: thay đổi này đã có trên preview chưa, và có cần Republish để lên site production không.
