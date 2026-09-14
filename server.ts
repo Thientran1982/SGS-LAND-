@@ -2937,7 +2937,7 @@ app.get('/api/public/listings/:slugId', apiRateLimit, async (req: express.Reques
   leadId: string;
   msgContent: string;
   isLandingRequest: boolean;
-  executePublicChat: () => Promise<any>;
+  executePublicChat: (resumeContext: any) => Promise<any>;
   inboundInteraction: { id: string };
   chatStartedAt: number;
   replyLang: string;
@@ -3124,7 +3124,7 @@ app.post('/api/public/ai/livechat', livechatRateLimit, aiRateLimit, async (req: 
       // questions benefit from its broader intent planner.
       const detectedPublicIntent = classifyLiveChatIntent(msgContent).intent;
       const useFastLiveChatPipeline = isLandingRequest || detectedPublicIntent !== 'GENERAL';
-      const executePublicChat = () => useFastLiveChatPipeline
+      const executePublicChat = (resumeContext: any) => useFastLiveChatPipeline
         ? liveChatEngine.callTool('handle_live_chat', {
             tenantId: PUBLIC_TENANT,
             message: msgContent,
@@ -3143,8 +3143,10 @@ app.post('/api/public/ai/livechat', livechatRateLimit, aiRateLimit, async (req: 
             },
              requestId: String(requestId || '').slice(0, 200),
              __skipAgentEventEnqueue: true,
+             __resumeContext: resumeContext,
+             __parentRunId: resumeContext?.executionId,
           })
-        : aiService.processMessage(
+         : aiService.processMessage(
             lead,
             msgContent,
             historyWithLatest,

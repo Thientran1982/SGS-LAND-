@@ -1986,31 +1986,45 @@ async function handle_live_chat(args: Record<string, any>): Promise<any> {
             payload: { ...args, message, sessionId: effectiveSessionId },
         }).catch(error => logger.warn(`[LiveChatEvents] enqueue failed: ${error?.message || error}`));
     }
-    const execution = await runDurableAgentExecution({
-        tenantId,
-        idempotencyKey: `live-chat-tool:${messageHash}`,
-        sessionId: effectiveSessionId,
-        leadId: args.context?.leadId,
-        triggerSource: 'live-chat-engine',
-        message,
-        execute: async (resumeContext) => {
-            const raw = await handle_live_chat_core({
-                ...args,
-                tenantId,
-                sessionId: effectiveSessionId,
-                responseDeliveryIdempotencyKey: `live-chat-tool:${messageHash}`,
-                resumeContext,
-            });
-            return {
-                ...raw,
-                content: raw.response,
-                steps: (raw.executedTools || []).map((tool: string) => ({
-                    agent: tool,
-                    status: 'DONE',
-                })),
-            };
-        },
-    });
+    const executeCore = async (resumeContext: any) => {
+        const raw = await handle_live_chat_core({
+            ...args,
+            tenantId,
+            sessionId: effectiveSessionId,
+            responseDeliveryIdempotencyKey: `live-chat-tool:${messageHash}`,
+            resumeContext,
+        });
+        return {
+            ...raw,
+            content: raw.response,
+            steps: (raw.executedTools || []).map((tool: string) => ({
+                agent: tool,
+                status: 'DONE',
+            })),
+        };
+    };
+    // Public live-chat already owns a durable execution in server.ts. Reusing
+    // its resume context avoids a second nested claim/checkpoint/heartbeat
+    // cycle for the same inbound message.
+    const inlineResumeContext = args.__resumeContext;
+    const execution = inlineResumeContext
+        ? {
+            runId: String(args.__parentRunId || `inline-${messageHash}`),
+            traceId: String(args.__parentTraceId || `inline-trace-${messageHash}`),
+            result: await executeCore(inlineResumeContext),
+            guardrail: { requiresVerification: false, flags: [] },
+            resumed: false,
+            cached: false,
+        }
+        : await runDurableAgentExecution({
+            tenantId,
+            idempotencyKey: `live-chat-tool:${messageHash}`,
+            sessionId: effectiveSessionId,
+            leadId: args.context?.leadId,
+            triggerSource: 'live-chat-engine',
+            message,
+            execute: executeCore,
+        });
     const { content, steps, providerTelemetry, ...result } = execution.result as any;
     // Long-term customer memory is deliberately attached to the durable
     // success boundary, not handle_live_chat_core: retries/resumes must not
@@ -3043,8 +3057,10 @@ export const liveChatEngine = {
         const result = await handler(args);
         const latencyMs = Date.now() - t0;
         const tenantId = String(args.tenantId || DEFAULT_TENANT_ID);
+        const auditArgs = { ...args };
+        delete auditArgs.__resumeContext;
         const auditHash = createHash('sha256')
-            .update(`${toolName}|${JSON.stringify(args)}`)
+            .update(`${toolName}|${JSON.stringify(auditArgs)}`)
             .digest('hex')
             .slice(0, 32);
         await agentAuditRepository.record(tenantId, {
@@ -3052,7 +3068,7 @@ export const liveChatEngine = {
             eventType: 'TOOL_EXECUTION',
             toolName,
             status: 'SUCCESS',
-            input: args,
+            input: auditArgs,
             output: result,
             sessionId: args.sessionId,
             leadId: args.leadId || args.context?.leadId,

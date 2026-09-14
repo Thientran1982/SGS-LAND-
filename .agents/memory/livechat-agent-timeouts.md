@@ -41,6 +41,12 @@ Public Minh chat should not insert a delayed informational bubble while an answe
 
 **How to apply:** Keep reconciliation silent until a reply or terminal failure, avoid duplicate specialist/grounding lookups, cap Minh's router and response provider attempts, and always advance past unavailable 401/402/403/404 routes.
 
+Public live-chat must have one durable execution owner; do not wrap the public route's execution in a second durable handle_live_chat run.
+
+**Why:** Nested claims duplicated checkpoints, heartbeats, guardrails, and audit writes for one inbound message, increasing Aiven contention and allowing the inner run to appear stalled independently of the outer `202` request.
+
+**How to apply:** Pass the outer resume context into the live-chat core for public requests, keep the inner durable wrapper only for direct tool invocations, and correlate inline audit records to the outer execution ID.
+
 Status reconciliation must treat throttled, unavailable, and network-failed status reads as transient `PROCESSING` signals, not as permission to reload full message history. Honor a bounded server `retryAfter` and combine it with capped exponential backoff; stop after terminal status or the reconciliation deadline.
 
 **Why:** A long-running browser run can otherwise turn one status `429` or slow database read into a repeated history fan-out, consuming the same public rate-limit budget that visitors need for sending messages.
