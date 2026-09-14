@@ -86,3 +86,4 @@
 - [Auto-posting repository fixtures](auto-posting-repository-fixtures.md) — migration-backed isolated tests need the project/publication columns used by phase-three indexes
 - [Google Search Console property API](gsc-property-api.md) — SGS LAND uses the sc-domain property identifier with the Search Console v3 endpoint
 - [LangChain direct dependency](langchain-direct-dependency.md) — transitive lockfile entries do not guarantee clean installs contain modules imported by the app
+- [Notification dedupe parameter types](notification-dedupe-parameter-types.md) — bind reused notification values through an explicitly typed CTE

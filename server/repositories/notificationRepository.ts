@@ -61,20 +61,35 @@ class NotificationRepository {
   async createForTenantAdmins(tenantId: string, data: CreateAdminNotificationData): Promise<void> {
     if (data.dedupeKey) {
       await pool.query(
-        `INSERT INTO notifications (tenant_id, user_id, type, title, body, metadata)
-         SELECT $1, u.id, $2, $3, $4, $5::jsonb
-         FROM users u
-         WHERE u.tenant_id = $1
-           AND u.status = 'ACTIVE'
-           AND u.role IN ('SUPER_ADMIN', 'ADMIN', 'TEAM_LEAD')
-           AND NOT EXISTS (
-             SELECT 1
-             FROM notifications existing
-             WHERE existing.tenant_id = $1
-               AND existing.user_id = u.id
-               AND existing.type = $2
-               AND existing.metadata->>'transitionEventId' = $6
-           )`,
+        `WITH input AS (
+           SELECT
+             $1::uuid AS tenant_id,
+             $2::text AS notification_type,
+             $3::text AS notification_title,
+             $4::text AS notification_body,
+             $5::jsonb AS notification_metadata,
+             $6::text AS dedupe_key
+         )
+         INSERT INTO notifications (tenant_id, user_id, type, title, body, metadata)
+         SELECT input.tenant_id,
+                u.id,
+                input.notification_type,
+                input.notification_title,
+                input.notification_body,
+                input.notification_metadata
+           FROM users u
+           CROSS JOIN input
+          WHERE u.tenant_id = input.tenant_id
+            AND u.status = 'ACTIVE'
+            AND u.role IN ('SUPER_ADMIN', 'ADMIN', 'TEAM_LEAD')
+            AND NOT EXISTS (
+              SELECT 1
+                FROM notifications existing
+               WHERE existing.tenant_id = input.tenant_id
+                 AND existing.user_id = u.id
+                 AND existing.type = input.notification_type
+                 AND existing.metadata->>'transitionEventId' = input.dedupe_key
+            )`,
         [
           tenantId,
           data.type,
