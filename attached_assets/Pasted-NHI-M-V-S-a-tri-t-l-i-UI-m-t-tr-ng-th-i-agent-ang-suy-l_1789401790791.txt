@@ -1,0 +1,61 @@
+NHIỆM VỤ: Sửa triệt để lỗi UI mất trạng thái "agent đang suy luận" trong live chat. KHÔNG refactor ngoài phạm vi liệt kê.
+
+== NGUYÊN NHÂN ĐÃ XÁC ĐỊNH (không cần chẩn đoán lại) ==
+1. packages/chat-widget/src/MinhChatPanel.tsx — hàm send(): khối `finally { setLoading(false) }` chạy cả khi server trả 202 (res.pending === true) hoặc ném lỗi ai-phase (AI_TIMEOUT, AGENT_EXECUTION_IN_PROGRESS, AI_ASYNC_PROCESSING). Indicator tắt trong khi durable run vẫn đang chạy.
+2. MinhChatPanel.tsx — session.connect({ onModeChange }) gọi setLoading(false) vô điều kiện.
+3. startPendingReconcile() không bao giờ set lại loading = true.
+4. packages/chat-widget/src/core/endpoints.ts — CHAT_SOCKET_EVENTS không có event vòng đời run, client không biết run còn sống hay đã chết.
+
+== YÊU CẦU SỬA ==
+
+[A] Thay state `loading: boolean` bằng MỘT state machine duy nhất trong MinhChatPanel.tsx:
+    type RunState = {
+      status: 'idle' | 'sending' | 'thinking' | 'failed';
+      runId?: string;
+      inboundInteractionId?: string;
+      startedAt?: number;
+      phase?: 'classify' | 'retrieve' | 'specialist' | 'compose' | 'guardrail';
+    }
+    - XÓA HẲN `setLoading(false)` trong khối `finally` của send().
+    - status chuyển về 'idle' CHỈ khi một trong các điều kiện sau xảy ra:
+      (a) đã append được message role='assistant' khớp với inboundInteractionId của run hiện tại;
+      (b) getPendingStatus trả về SUCCESS VÀ history đã có reply sau message của user;
+      (c) getPendingStatus trả về FAILED;
+      (d) quá deadline cứng 5 phút.
+    - Khi res.pending === true hoặc gặp lỗi ai-phase: giữ status = 'thinking', KHÔNG tắt indicator.
+    - onModeChange chỉ tắt indicator khi status HUMAN_TAKEOVER VÀ run hiện tại đã kết thúc; nếu run đang chạy thì đổi nhãn indicator chứ không tắt.
+
+[B] Thêm sự kiện Socket.IO cho vòng đời run (server → client), room = leadId:
+    - 'agent_run_started'  { leadId, runId, inboundInteractionId }
+    - 'agent_run_progress' { leadId, runId, phase, elapsedMs }
+    - 'agent_run_finished' { leadId, runId, status: 'SUCCESS'|'FAILED'|'BLOCKED' }
+    Khai báo tên event trong packages/chat-widget/src/core/endpoints.ts (CHAT_SOCKET_EVENTS) — KHÔNG hardcode chuỗi rải rác.
+    Server emit tại server/services/durableAgentExecutionService.ts: started ngay sau claim thành công, progress tại mỗi mốc step (01_INPUT_GUARDRAIL, 02_SUPERVISOR, 03_SPECIALIST_PIPELINE, 04_OUTPUT_GUARDRAIL), finished trong nhánh finish()/catch. Emit phải fire-and-forget, lỗi socket KHÔNG được làm hỏng run.
+
+[C] Resume sau reconnect: trong minhSession.connect(), khi socket bắn 'connect' (kể cả reconnect), sau join_livechat_room thì gọi ngay getPendingStatus cho inboundInteractionId đang chờ. Nếu PROCESSING thì khôi phục status='thinking'. Người dùng reload trang giữa chừng phải thấy lại indicator.
+
+[D] Fallback poll vẫn giữ nhưng chỉ là lưới an toàn: socket là đường chính. Nếu không nhận được 'agent_run_progress' nào trong 20 giây thì mới bắt đầu poll getPendingStatus.
+
+[E] Chống gửi chồng: khóa composer (disable textarea + nút gửi) khi status !== 'idle'. Dedupe message theo interactionId ở appendUnique (đã có) VÀ theo cặp (runId, inboundInteractionId) để tránh hiển thị trùng khi cả socket lẫn poll cùng trả về.
+
+[F] Indicator phải cho biết agent còn sống:
+    - hiện phase đang chạy (VD "Đang tra cứu dữ liệu dự án...") + đồng hồ đếm giây;
+    - sau 15s đổi câu: "Câu này cần tra cứu sâu, Minh đang xử lý...";
+    - sau 45s hiện thêm nút "Vẫn đang chạy — xem trạng thái" gọi getPendingStatus.
+
+[G] Server: kiểm tra mọi đường thoát của run async đều emit 'receive_message' vào room leadId, KỂ CẢ khi HTTP đã trả 202 từ trước và kể cả nhánh BLOCKED bởi guardrail. Nếu có đường nào chỉ ghi DB mà không emit socket thì bổ sung.
+
+== KHÔNG ĐƯỢC LÀM ==
+- Không xóa hoặc vô hiệu hóa durable run / checkpoint / guardrail.
+- Không đổi đường dẫn REST công khai trong CHAT_ENDPOINTS.
+- Không đổi schema DB.
+- Không dùng setTimeout để "đoán" là run đã xong.
+
+== TIÊU CHÍ NGHIỆM THU (chạy và báo cáo kết quả từng mục) ==
+1. Gửi 1 câu hỏi nặng (VD "So sánh pháp lý và chính sách thanh toán Aqua City với Izumi City"): indicator hiển thị LIÊN TỤC từ lúc gửi đến khi chữ trả lời hiện ra, KHÔNG có khoảng trống nào.
+2. Trong lúc agent đang chạy, reload trang: sau khi tải xong indicator phải hiện lại và câu trả lời vẫn về đúng chỗ.
+3. Ngắt mạng 10 giây giữa run rồi nối lại: indicator không mất, trả lời vẫn về.
+4. Ép server trả 202: indicator vẫn giữ. Ép run FAILED: indicator tắt và hiện thông báo lỗi kèm nút Thử lại.
+5. Gửi 2 tin liên tiếp thật nhanh: không tạo 2 run song song, không hiện message trùng.
+6. `npx tsc --noEmit` pass, production build pass, không có lỗi console ở /livechat.
+7. Viết test cho state machine: mỗi nhánh (pending, socket-first, poll-first, failed, reconnect) có 1 test.
