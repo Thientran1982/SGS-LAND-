@@ -1,4 +1,4 @@
-import { act, render, screen, waitFor } from "@testing-library/react";
+import { act, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { MinhChatPanel } from "../../packages/chat-widget/src/MinhChatPanel";
 import { createMinhSession } from "../../packages/chat-widget/src/core/minhSession";
@@ -101,5 +101,66 @@ describe("MinhChatPanel", () => {
     expect(composer).toHaveClass("max-w-full");
     expect(composer).toHaveClass("min-w-0");
     expect(composer?.parentElement).toHaveClass("w-full", "self-center");
+  });
+
+  it("shows pending immediately while a slow history read continues in the background", async () => {
+    let releaseRefresh!: (value: any) => void;
+    const refreshMessages = vi.fn().mockImplementation(
+      () => new Promise((resolve) => {
+        releaseRefresh = resolve;
+      }),
+    );
+    const slowSession = {
+      restore: vi.fn().mockResolvedValue({
+        leadId: "lead-1",
+        name: "Nguyễn Minh",
+        threadStatus: "AI_ACTIVE",
+        messages: [],
+      }),
+      connect: vi.fn().mockResolvedValue(() => undefined),
+      refreshMessages,
+      sendUserMessage: vi.fn().mockResolvedValue({
+        user: {
+          id: "user-1",
+          role: "user",
+          content: "Aiven contention smoke",
+          ts: Date.now(),
+        },
+        assistant: null,
+        noReply: false,
+        pending: true,
+        raw: { async: true },
+      }),
+    } as unknown as MinhSession;
+    mockedCreateMinhSession.mockReturnValue(slowSession);
+
+    render(<MinhChatPanel showHeader={false} heightClass="h-auto" />);
+
+    const input = await waitFor(() => screen.getByRole("textbox", { name: "Nội dung tin nhắn" }));
+    fireEvent.change(input, { target: { value: "Aiven contention smoke" } });
+    fireEvent.keyDown(input, { key: "Enter", code: "Enter" });
+
+    expect(await screen.findByText("Minh đang xử lý phản hồi. Câu trả lời sẽ tự xuất hiện khi hoàn tất.")).toBeVisible();
+    expect(input).not.toBeDisabled();
+    expect(refreshMessages).toHaveBeenCalled();
+
+    await act(async () => {
+      releaseRefresh({
+        leadId: "lead-1",
+        name: "Nguyễn Minh",
+        threadStatus: "AI_ACTIVE",
+        messages: [{
+          id: "user-1",
+          role: "user",
+          content: "Aiven contention smoke",
+          ts: Date.now(),
+        }, {
+          id: "assistant-1",
+          role: "assistant",
+          content: "Đã nhận tin nhắn.",
+          ts: Date.now(),
+        }],
+      });
+    });
   });
 });

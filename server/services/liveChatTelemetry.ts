@@ -52,6 +52,32 @@ export interface LiveChatTelemetrySnapshot {
   };
 }
 
+export interface LiveChatTelemetryPersistenceState {
+  version: 1;
+  savedAt: number;
+  databaseTimeoutAlertAt?: number;
+  samples: Array<{
+    key: string;
+    tenantKey: string;
+    at: number;
+    acknowledgeMs?: number;
+    finalReplyMs?: number;
+  }>;
+  databaseTimeouts: number[];
+  slowEndpoints: Array<{
+    endpoint: LiveChatTelemetryEndpoint;
+    thresholdMs: number;
+    lastDurationMs: number;
+    lastAlertAt: number;
+    eventTimes: number[];
+  }>;
+}
+
+export interface LiveChatTelemetryPersistence {
+  load: () => Promise<LiveChatTelemetryPersistenceState | null>;
+  save: (state: LiveChatTelemetryPersistenceState) => Promise<void>;
+}
+
 export interface LiveChatTelemetryOptions {
   now?: () => number;
   windowMs?: number;
@@ -93,6 +119,10 @@ const DEFAULT_MESSAGE_THRESHOLD_MS = 1_500;
 const DEFAULT_DATABASE_TIMEOUT_WINDOW_MS = 5 * 60_000;
 const DEFAULT_DATABASE_TIMEOUT_ALERT_THRESHOLD = 3;
 const ALERT_DEDUPE_MS = 60_000;
+const PERSISTENCE_DEBOUNCE_MS = 1_000;
+const PERSISTENCE_FAILURE_BACKOFF_MS = 30_000;
+const MAX_PERSISTED_SAMPLES = 5_000;
+const MAX_PERSISTED_EVENTS = 5_000;
 let requestSequence = 0;
 
 function positiveNumber(value: unknown, fallback: number, minimum = 0): number {
@@ -177,6 +207,13 @@ export class LiveChatTelemetry {
   private readonly databaseTimeouts: number[] = [];
   private readonly slowEndpoints = new Map<LiveChatTelemetryEndpoint, SlowEndpointState>();
   private databaseTimeoutAlertAt = Number.NEGATIVE_INFINITY;
+  private persistence: LiveChatTelemetryPersistence | null = null;
+  private persistenceTimer: ReturnType<typeof setTimeout> | null = null;
+  private persistenceInFlight = false;
+  private persistencePromise: Promise<void> | null = null;
+  private persistenceDirty = false;
+  private persistenceBlockedUntil = 0;
+  private hydrated = false;
 
   constructor(options: LiveChatTelemetryOptions = {}) {
     this.now = options.now || (() => Date.now());
@@ -259,6 +296,76 @@ export class LiveChatTelemetry {
         count,
         threshold: this.databaseTimeoutAlertThreshold,
       });
+    }
+    this.schedulePersistence();
+  }
+
+  configurePersistence(persistence: LiveChatTelemetryPersistence | null): void {
+    this.persistence = persistence;
+    this.hydrated = false;
+  }
+
+  async flushPersistenceNow(): Promise<void> {
+    if (!this.persistence) return;
+    if (this.persistenceTimer) {
+      clearTimeout(this.persistenceTimer);
+      this.persistenceTimer = null;
+    }
+    this.persistenceBlockedUntil = 0;
+    if (this.persistenceInFlight) {
+      await this.persistencePromise;
+      return;
+    }
+    this.persistenceDirty = true;
+    await this.flushPersistence();
+  }
+
+  async hydrateFromPersistence(): Promise<boolean> {
+    if (!this.persistence || this.hydrated) return false;
+    this.hydrated = true;
+    try {
+      const state = await this.persistence.load();
+      if (!state || state.version !== 1) return false;
+
+      const now = this.now();
+      this.samples.splice(0, this.samples.length, ...state.samples
+        .filter(sample => (
+          typeof sample?.key === 'string'
+          && typeof sample?.tenantKey === 'string'
+          && Number.isFinite(sample?.at)
+        ))
+        .map(sample => ({
+          key: sample.key,
+          tenantKey: sample.tenantKey,
+          at: Number(sample.at),
+          acknowledgeMs: safeDuration(sample.acknowledgeMs),
+          finalReplyMs: safeDuration(sample.finalReplyMs),
+        })));
+      this.databaseTimeouts.splice(0, this.databaseTimeouts.length, ...state.databaseTimeouts
+        .filter(value => Number.isFinite(value))
+        .map(Number));
+      this.slowEndpoints.clear();
+      for (const item of state.slowEndpoints || []) {
+        if (!['history', 'message', 'ai'].includes(item?.endpoint)) continue;
+        const eventTimes = (item.eventTimes || []).filter(value => Number.isFinite(value)).map(Number);
+        this.slowEndpoints.set(item.endpoint, {
+          thresholdMs: positiveNumber(item.thresholdMs, 0),
+          count: eventTimes.length,
+          lastDurationMs: safeDuration(item.lastDurationMs) || 0,
+          lastAlertAt: Number.isFinite(item.lastAlertAt) ? Number(item.lastAlertAt) : Number.NEGATIVE_INFINITY,
+          eventTimes,
+        });
+      }
+      this.databaseTimeoutAlertAt = Number.isFinite(state.databaseTimeoutAlertAt)
+        ? Number(state.databaseTimeoutAlertAt)
+        : Number.NEGATIVE_INFINITY;
+      this.prune(now);
+      return true;
+    } catch (error: any) {
+      this.log.warn('[LiveChatTelemetry] persistence hydrate failed', {
+        error: String(error?.message || error).slice(0, 200),
+      });
+      return false;
     }
   }
 
@@ -349,9 +456,14 @@ export class LiveChatTelemetry {
     if (stage === 'history_read' || stage === 'inbound_persisted') {
       const alertEndpoint: LiveChatTelemetryEndpoint =
         stage === 'history_read' ? 'history' : 'message';
-      this.checkSlowEndpoint(alertEndpoint, durationMs, at);
+      if (this.checkSlowEndpoint(alertEndpoint, durationMs, at)) {
+        this.schedulePersistence();
+      }
     }
-    if (stage === 'ack_sent' || stage === 'reply_sent') this.recordSample(requestKey, state, at);
+    if (stage === 'ack_sent' || stage === 'reply_sent') {
+      this.recordSample(requestKey, state, at);
+      this.schedulePersistence();
+    }
   }
 
   setClientTimingsInternal(requestKey: string, state: RequestState, timings: LiveChatClientTimings): void {
@@ -391,7 +503,73 @@ export class LiveChatTelemetry {
     else this.samples.push({ ...sample, at: state.startedAt });
   }
 
-  private checkSlowEndpoint(endpoint: LiveChatTelemetryEndpoint, durationMs: number, at: number): void {
+  private exportPersistenceState(): LiveChatTelemetryPersistenceState {
+    this.prune(this.now());
+    const slowEndpoints = [...this.slowEndpoints.entries()].map(([endpoint, state]) => ({
+      endpoint,
+      thresholdMs: state.thresholdMs,
+      lastDurationMs: state.lastDurationMs,
+      lastAlertAt: state.lastAlertAt,
+      eventTimes: state.eventTimes.slice(-MAX_PERSISTED_EVENTS),
+    }));
+    return {
+      version: 1,
+      savedAt: this.now(),
+      databaseTimeoutAlertAt: this.databaseTimeoutAlertAt,
+      samples: this.samples.slice(-MAX_PERSISTED_SAMPLES).map(sample => ({
+        key: safeRequestKey(sample.key),
+        tenantKey: sample.tenantKey,
+        at: sample.at,
+        ...(sample.acknowledgeMs === undefined ? {} : { acknowledgeMs: sample.acknowledgeMs }),
+        ...(sample.finalReplyMs === undefined ? {} : { finalReplyMs: sample.finalReplyMs }),
+      })),
+      databaseTimeouts: this.databaseTimeouts.slice(-MAX_PERSISTED_EVENTS),
+      slowEndpoints,
+    };
+  }
+
+  private schedulePersistence(): void {
+    if (!this.persistence) return;
+    this.persistenceDirty = true;
+    if (this.persistenceTimer || this.persistenceInFlight) return;
+    const delayMs = Math.max(0, this.persistenceBlockedUntil - this.now());
+    this.persistenceTimer = setTimeout(() => {
+      this.persistenceTimer = null;
+      void this.flushPersistence();
+    }, Math.max(PERSISTENCE_DEBOUNCE_MS, delayMs));
+    this.persistenceTimer.unref?.();
+  }
+
+  private async flushPersistence(): Promise<void> {
+    if (!this.persistence || this.persistenceInFlight || !this.persistenceDirty) return;
+    this.persistenceDirty = false;
+    this.persistenceInFlight = true;
+    const persistence = this.persistence;
+    const savePromise = (async () => {
+      try {
+        await persistence.save(this.exportPersistenceState());
+      } catch (error: any) {
+        this.persistenceBlockedUntil = this.now() + PERSISTENCE_FAILURE_BACKOFF_MS;
+        this.persistenceDirty = true;
+        this.log.warn('[LiveChatTelemetry] persistence save failed', {
+          error: String(error?.message || error).slice(0, 200),
+        });
+      } finally {
+        this.persistenceInFlight = false;
+        this.persistencePromise = null;
+        if (this.persistenceDirty) this.schedulePersistence();
+      }
+    })();
+    this.persistencePromise = savePromise;
+    try {
+      await savePromise;
+    } catch {
+      // The save task handles and logs its own error; this guard protects
+      // callers such as graceful shutdown from a rejected persistence promise.
+    }
+  }
+
+  private checkSlowEndpoint(endpoint: LiveChatTelemetryEndpoint, durationMs: number, at: number): boolean {
     const thresholdMs = endpoint === 'history' ? this.historyThresholdMs : this.messageThresholdMs;
     const state = this.slowEndpoints.get(endpoint) || {
       thresholdMs,
@@ -404,7 +582,7 @@ export class LiveChatTelemetry {
     state.lastDurationMs = durationMs;
     if (durationMs < thresholdMs) {
       this.slowEndpoints.set(endpoint, state);
-      return;
+      return false;
     }
     state.eventTimes.push(at);
     state.count = state.eventTimes.length;
@@ -419,6 +597,7 @@ export class LiveChatTelemetry {
       });
     }
     this.slowEndpoints.set(endpoint, state);
+    return true;
   }
 
   private prune(at: number): void {

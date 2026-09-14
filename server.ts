@@ -56,6 +56,7 @@ import { createCustomerProfileRoutes } from "./server/routes/customerProfileRout
 import { customerProfileService } from "./server/services/customerProfileService";
 import { createMonitoringRoutes } from "./server/routes/monitoringRoutes";
 import { liveChatTelemetry } from "./server/services/liveChatTelemetry";
+import { loadLiveChatTelemetryState, saveLiveChatTelemetryState } from "./server/services/liveChatTelemetryPersistence";
 import { createAgentRoutes } from "./server/routes/agentRoutes";
 import { createSessionRoutes, createTemplateRoutes } from "./server/routes/sessionRoutes";
 import { createTwoFactorRoutes } from "./server/routes/twoFactorRoutes";
@@ -1788,6 +1789,13 @@ app.use(globalMutationAudit);
     }
     if (!migrationOk) {
       logger.warn('[migrations] Skipped due to DB connectivity issue. Schema may be out of date until restart.');
+    } else {
+      liveChatTelemetry.configurePersistence({
+        load: loadLiveChatTelemetryState,
+        save: saveLiveChatTelemetryState,
+      });
+      const hydrated = await liveChatTelemetry.hydrateFromPersistence();
+      logger.info(`[LiveChatTelemetry] ${hydrated ? 'restored persisted snapshot' : 'no persisted snapshot to restore'}`);
     }
 
     // ── Tenant white-label (task #28): cron 5 phút verify TXT custom domain ──
@@ -7415,6 +7423,7 @@ app.use('/api/v1', (req, _res, next) => {
       logger.info('In-process cron timers stopped.');
       try {
         stopDatabaseRecovery();
+        await liveChatTelemetry.flushPersistenceNow();
         await pool.end();
         logger.info('Database pool closed.');
       } catch (e) { /* ignore */ }

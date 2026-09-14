@@ -119,4 +119,52 @@ describe('live-chat telemetry', () => {
   it('does not classify a statement timeout as a connection timeout', () => {
     expect(isDatabaseConnectionTimeout(new Error('canceling statement due to statement timeout'))).toBe(false);
   });
+
+  it('restores recent latency samples and alerts after a process restart', async () => {
+    let now = 10_000;
+    const telemetry = new LiveChatTelemetry({
+      now: () => now,
+      log: testLogger(),
+      windowMs: 10_000,
+      historyThresholdMs: 100,
+      databaseTimeoutWindowMs: 5_000,
+      databaseTimeoutAlertThreshold: 2,
+    });
+    telemetry.configurePersistence({
+      load: async () => ({
+        version: 1,
+        savedAt: 9_900,
+        databaseTimeoutAlertAt: 9_800,
+        samples: [{
+          key: 'safe-request-key',
+          tenantKey: '0123456789abcdef',
+          at: 9_500,
+          acknowledgeMs: 80,
+          finalReplyMs: 320,
+        }],
+        databaseTimeouts: [9_700, 9_800],
+        slowEndpoints: [{
+          endpoint: 'history',
+          thresholdMs: 100,
+          lastDurationMs: 250,
+          lastAlertAt: 9_700,
+          eventTimes: [9_700],
+        }],
+      }),
+      save: async () => undefined,
+    });
+
+    await expect(telemetry.hydrateFromPersistence()).resolves.toBe(true);
+    const snapshot = telemetry.getSnapshot(now);
+
+    expect(snapshot.acknowledgeLatency).toEqual({ count: 1, p50Ms: 80, p95Ms: 80 });
+    expect(snapshot.finalReplyLatency).toEqual({ count: 1, p50Ms: 320, p95Ms: 320 });
+    expect(snapshot.slowEndpointAlerts).toEqual([
+      expect.objectContaining({ endpoint: 'history', count: 1, lastDurationMs: 250 }),
+    ]);
+    expect(snapshot.databaseConnectionTimeouts).toMatchObject({
+      count: 2,
+      alertActive: true,
+    });
+  });
 });
