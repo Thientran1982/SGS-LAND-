@@ -1,12 +1,20 @@
-import { describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import {
+  buildSocialProjectSnapshot,
   buildPublicListingUrl,
   buildPlatformContent,
   getPublicationCatalog,
+  getSocialProjectImageCandidates,
   normalizePublicationCaption,
   normalizePublicationImages,
   normalizeSocialPlatforms,
 } from '../services/socialPublicationService';
+import { projectPriceMatrixRepository } from '../repositories/projectPriceMatrixRepository';
+import { projectRepository } from '../repositories/projectRepository';
+
+afterEach(() => {
+  vi.restoreAllMocks();
+});
 
 describe('social publication foundation', () => {
   it('builds listing links from the public BDS route and UUID, not the listing code', () => {
@@ -130,6 +138,55 @@ describe('social publication foundation', () => {
     expect(content.text).toContain('45.000.000 VNĐ/m² – 60.000.000 VNĐ/m²');
     expect(content.text).toContain('https://sgsland.vn/du-an/PRJ-001');
     expect(content.imageUrls).toEqual(['https://cdn.test/project-cover.jpg']);
+  });
+
+  it.each([
+    {
+      name: 'metadata.image',
+      metadata: { image: 'https://cdn.test/metadata-image.jpg' },
+      expected: ['https://cdn.test/metadata-image.jpg'],
+    },
+    {
+      name: 'coverImage without overwriting it with metadata.image',
+      metadata: {
+        coverImage: 'https://cdn.test/approved-cover.jpg',
+        image: 'https://cdn.test/legacy-image.jpg',
+      },
+      expected: [
+        'https://cdn.test/approved-cover.jpg',
+        'https://cdn.test/legacy-image.jpg',
+      ],
+    },
+    {
+      name: 'gallery',
+      metadata: {
+        gallery: [
+          'https://cdn.test/gallery-one.jpg',
+          'https://cdn.test/gallery-two.jpg',
+        ],
+      },
+      expected: [
+        'https://cdn.test/gallery-one.jpg',
+        'https://cdn.test/gallery-two.jpg',
+      ],
+    },
+  ])('reads project images from $name', async ({ metadata, expected }) => {
+    vi.spyOn(projectRepository, 'findById').mockResolvedValue({
+      id: 'project-1',
+      name: 'Dự án kiểm thử',
+      code: 'PROJECT-1',
+      status: 'ACTIVE',
+      metadata,
+      description: null,
+      location: null,
+      total_units: null,
+    });
+    vi.spyOn(projectPriceMatrixRepository, 'findByProject').mockResolvedValue([]);
+
+    const snapshot = await buildSocialProjectSnapshot('tenant-1', 'project-1');
+
+    expect(getSocialProjectImageCandidates(metadata)).toEqual(expected);
+    expect(snapshot.images).toEqual(expected);
   });
 
   it('localizes listing enum values case-insensitively in the preview caption', () => {

@@ -25,6 +25,7 @@ import {
   buildPlatformContent,
   buildSocialProductSnapshot,
   buildSocialProjectSnapshot,
+  getSocialProjectImageCandidates,
   normalizePublicationImages,
   normalizeSocialPlatforms,
   PUBLISHABLE_LISTING_STATUSES,
@@ -296,13 +297,7 @@ function listingImages(value: unknown): string[] {
 
 function projectImages(value: unknown): string[] {
   const metadata = jsonValue(value);
-  if (!metadata || typeof metadata !== 'object') return [];
-  const record = metadata as Record<string, unknown>;
-  return normalizePublicationImages([
-    record.coverImage,
-    record.cover_image,
-    ...(Array.isArray(record.gallery) ? record.gallery : []),
-  ]);
+  return normalizePublicationImages(getSocialProjectImageCandidates(metadata));
 }
 
 type AutoPostingResult = {

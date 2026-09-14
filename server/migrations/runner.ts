@@ -219,6 +219,7 @@ import m195 from './195_agent_skill_runtime_bindings';
 import m196 from './196_agent_skill_binding_rls_bypass';
 import m197 from './197_auto_posting_multi_slot';
 import m198 from './198_seo_keyword_decimal_positions';
+import m199 from './199_normalize_project_social_images';
 dotenv.config();
 
 export interface Migration {
@@ -433,6 +434,7 @@ export const MIGRATION_REGISTRY: Record<string, Migration> = {
   '196_agent_skill_binding_rls_bypass.ts': m196,
   '197_auto_posting_multi_slot.ts': m197,
   '198_seo_keyword_decimal_positions.ts': m198,
+  '199_normalize_project_social_images.ts': m199,
 };
 
 /**

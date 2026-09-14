@@ -7,6 +7,8 @@ import migration190 from '../migrations/190_auto_posting_phase3';
 import migration192 from '../migrations/192_social_publication_project_source';
 import migration193 from '../migrations/193_marketing_facebook_daily_runs';
 import migration194 from '../migrations/194_marketing_facebook_backfills';
+import migration197 from '../migrations/197_auto_posting_multi_slot';
+import migration199 from '../migrations/199_normalize_project_social_images';
 import {
   createSocialPublication,
   findSocialPublication,
@@ -127,6 +129,7 @@ describePostgres('Marketing Facebook daily selector against PostgreSQL', () => {
     name?: string;
     status?: string;
     images?: string[];
+    metadata?: Record<string, unknown>;
     createdAt?: string;
   }) {
     const id = randomUUID();
@@ -137,18 +140,18 @@ describePostgres('Marketing Facebook daily selector against PostgreSQL', () => {
                COALESCE($7::timestamptz, NOW()), COALESCE($7::timestamptz, NOW()))`,
       [
         id,
-        input.tenantId,
-        input.name || `Project ${id}`,
-        `PROJECT-${id.slice(0, 8)}`,
-        input.status || 'ACTIVE',
-        JSON.stringify(input.images === undefined ? {
-          coverImage: 'https://cdn.example.test/project.jpg',
-          gallery: [],
-        } : {
-          coverImage: input.images[0] || null,
-          gallery: input.images.slice(1),
-        }),
-        input.createdAt || null,
+         input.tenantId,
+         input.name || `Project ${id}`,
+         `PROJECT-${id.slice(0, 8)}`,
+         input.status || 'ACTIVE',
+         JSON.stringify(input.metadata ?? (input.images === undefined ? {
+           coverImage: 'https://cdn.example.test/project.jpg',
+           gallery: [],
+         } : {
+           coverImage: input.images[0] || null,
+           gallery: input.images.slice(1),
+         })),
+         input.createdAt || null,
       ],
     );
     return id;
@@ -291,6 +294,8 @@ describePostgres('Marketing Facebook daily selector against PostgreSQL', () => {
     await migration192.up(setupClient);
     await migration193.up(setupClient);
     await migration194.up(setupClient);
+    await migration197.up(setupClient);
+    await migration199.up(setupClient);
     setupClient.release();
     setupClient = undefined;
   });
@@ -343,6 +348,26 @@ describePostgres('Marketing Facebook daily selector against PostgreSQL', () => {
       status: 'PROCESSING',
       source: 'AUTO',
     }]);
+  });
+
+  it('selects a project whose only image is stored in metadata.image', async () => {
+    const projectId = await insertProject({
+      tenantId: tenantA,
+      metadata: { image: 'https://cdn.example.test/metadata-image.jpg' },
+    });
+    await configureSelector(tenantA);
+    configureCapabilities({
+      FACEBOOK_PAGE: { status: 'READY', reason: 'Facebook đã xác minh', retryable: false },
+    });
+
+    const result = await runAutoPostingForTenant(setupPool, tenantA, runAtSevenPmVietnam);
+
+    expect(result).toMatchObject({
+      created: 1,
+      reason: 'OK',
+      sourceType: 'PROJECT',
+      sourceId: projectId,
+    });
   });
 
   it('prioritizes a source that has never had a successful Facebook publication', async () => {
@@ -415,12 +440,7 @@ describePostgres('Marketing Facebook daily selector against PostgreSQL', () => {
     const secondRun = secondTrigger.find(result => result.tenantId === tenantA);
 
     expect(firstRun).toMatchObject({ created: 1, reason: 'OK', sourceId: listingId });
-    expect(secondRun).toMatchObject({
-      created: 0,
-      published: 0,
-      skipped: 0,
-      reason: 'DAILY_RUN_ALREADY_CLAIMED',
-    });
+    expect(secondRun).toBeUndefined();
     const audit = await query(
       `SELECT status, to_char(logical_day, 'YYYY-MM-DD') AS logical_day, source_id
          FROM marketing_facebook_daily_runs WHERE tenant_id = $1`,
@@ -506,7 +526,7 @@ describePostgres('Marketing Facebook daily selector against PostgreSQL', () => {
         WHERE tenant_id = $1`,
       [tenantA],
     );
-    expect(publication.rows[0].auto_posting_key).toBe(`2025-12-31:LISTING:${listingId}`);
+    expect(publication.rows[0].auto_posting_key).toBe(`2025-12-31:0:LISTING:${listingId}`);
   });
 
   it('blocks backfill after an ambiguous Facebook result and never creates another publication', async () => {

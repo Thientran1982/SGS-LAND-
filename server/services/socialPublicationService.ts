@@ -48,6 +48,17 @@ function textValue(value: unknown): string | null {
   return String(value).trim();
 }
 
+export function getSocialProjectImageCandidates(metadata: unknown): unknown[] {
+  if (!metadata || typeof metadata !== 'object') return [];
+  const record = metadata as Record<string, unknown>;
+  return [
+    record.coverImage,
+    record.cover_image,
+    record.image,
+    ...(Array.isArray(record.gallery) ? record.gallery : []),
+  ].filter(value => value !== null && value !== undefined && value !== '');
+}
+
 export function normalizePublicationCaption(value: unknown): string | null {
   if (value === null || value === undefined) return null;
   if (typeof value !== 'string') throw new Error('Caption phải là chuỗi văn bản');
@@ -185,11 +196,11 @@ export async function buildSocialProjectSnapshot(
   const metadata = project.metadata && typeof project.metadata === 'object'
     ? project.metadata as Record<string, unknown>
     : {};
-  const coverImage = textValue(metadata.coverImage ?? metadata.cover_image);
-  const gallery = Array.isArray(metadata.gallery)
-    ? metadata.gallery.map(textValue).filter((value): value is string => Boolean(value))
-    : [];
-  const images = Array.from(new Set([coverImage, ...gallery].filter((value): value is string => Boolean(value))));
+  const images = Array.from(new Set(
+    getSocialProjectImageCandidates(metadata)
+      .map(textValue)
+      .filter((value): value is string => Boolean(value)),
+  ));
   const priceRows = await projectPriceMatrixRepository.findByProject(tenantId, projectId);
 
   return {
