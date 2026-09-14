@@ -188,6 +188,22 @@ export function MinhChatPanel({
     }
   }, [transitionRun]);
 
+  const replyMatchesRun = useCallback((message: ChatMessage) => {
+    const current = runStateRef.current;
+    if (current.status === "idle") return false;
+    const inboundMatches = Boolean(
+      current.inboundInteractionId &&
+      message.inboundInteractionId &&
+      message.inboundInteractionId === current.inboundInteractionId,
+    );
+    const runMatches = Boolean(
+      current.runId &&
+      message.runId &&
+      message.runId === current.runId,
+    );
+    return inboundMatches || runMatches;
+  }, []);
+
   useEffect(() => {
     if (!runActive) return;
     const timer = setInterval(() => setElapsedNow(Date.now()), 1_000);
@@ -258,11 +274,7 @@ export function MinhChatPanel({
             const hasReply =
               userIndex >= 0 &&
               restored.messages.slice(userIndex + 1).some(
-                (message) =>
-                  message.role === "assistant" &&
-                  (!inboundInteractionId ||
-                    !message.inboundInteractionId ||
-                    message.inboundInteractionId === inboundInteractionId),
+                (message) => message.role === "assistant" && replyMatchesRun(message),
               );
             setMessages(restored.messages);
             if (hasReply) {
@@ -319,7 +331,7 @@ export function MinhChatPanel({
         : Math.max(0, Math.min(20_000, 20_000 - Math.max(0, progressAge)));
       pendingReconcileTimerRef.current = setTimeout(poll, initialDelay);
     },
-    [finishRun, session, stopPendingReconcile, transitionRun],
+    [finishRun, replyMatchesRun, session, stopPendingReconcile, transitionRun],
   );
 
   const appendUnique = useCallback((msg: ChatMessage) => {
@@ -376,7 +388,7 @@ export function MinhChatPanel({
     if (!hasLead) return;
     let alive = true;
     let cleanup: (() => void) | null = null;
-    const runMatches = (event: { runId?: string; inboundInteractionId?: string }) => {
+    const lifecycleMatches = (event: { runId?: string; inboundInteractionId?: string }) => {
       const current = runStateRef.current;
       if (current.status === "idle") return false;
       if (
@@ -406,7 +418,7 @@ export function MinhChatPanel({
       .connect({
         onMessage: (m) => {
           appendUnique(m);
-          if (m.role === "assistant" && runMatches(m)) {
+          if (m.role === "assistant" && replyMatchesRun(m)) {
             session.clearPendingRun(m.inboundInteractionId);
             setError("");
             stopPendingReconcile();
@@ -425,7 +437,7 @@ export function MinhChatPanel({
           }
         },
         onRunStarted: (event: MinhRunStartedEvent) => {
-          if (!runMatches(event) && runStateRef.current.status !== "sending") return;
+          if (!lifecycleMatches(event) && runStateRef.current.status !== "sending") return;
           lastProgressAtRef.current = Date.now();
           session.savePendingRun({
             runId: event.runId,
@@ -441,7 +453,7 @@ export function MinhChatPanel({
           });
         },
         onRunProgress: (event: MinhRunProgressEvent) => {
-          if (!runMatches(event)) return;
+          if (!lifecycleMatches(event)) return;
           lastProgressAtRef.current = Date.now();
           transitionRun({
             ...runStateRef.current,
@@ -452,7 +464,7 @@ export function MinhChatPanel({
           });
         },
         onRunFinished: (event: MinhRunFinishedEvent) => {
-          if (!runMatches(event)) return;
+          if (!lifecycleMatches(event)) return;
           if (event.status === "FAILED" || event.status === "BLOCKED") {
             failCurrentRun(
               event.status === "BLOCKED"
@@ -515,6 +527,7 @@ export function MinhChatPanel({
     appendUnique,
     finishRun,
     hasLead,
+    replyMatchesRun,
     session,
     startPendingReconcile,
     stopPendingReconcile,

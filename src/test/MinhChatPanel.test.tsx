@@ -262,6 +262,64 @@ describe("MinhChatPanel", () => {
     expect(refreshMessages).not.toHaveBeenCalled();
   });
 
+  it("keeps the pending run active when an assistant reply lacks correlation ids", async () => {
+    vi.useFakeTimers();
+    const pendingSession = {
+      restore: vi.fn().mockResolvedValue({
+        leadId: "lead-1",
+        name: "Nguyễn Minh",
+        threadStatus: "AI_ACTIVE",
+        messages: [],
+      }),
+      connect: vi.fn().mockImplementation(async (handlers: any) => {
+        realtimeOnMessage = handlers.onMessage;
+        return () => undefined;
+      }),
+      savePendingRun: vi.fn(),
+      clearPendingRun: vi.fn(),
+      sendUserMessage: vi.fn().mockResolvedValue({
+        user: {
+          id: "user-1",
+          role: "user",
+          content: "Câu hỏi đang xử lý",
+          ts: Date.now(),
+        },
+        assistant: null,
+        noReply: false,
+        pending: true,
+        raw: { async: true, inboundInteractionId: "inbound-1" },
+      }),
+    } as unknown as MinhSession;
+    mockedCreateMinhSession.mockReturnValue(pendingSession);
+
+    render(<MinhChatPanel showHeader={false} heightClass="h-auto" />);
+    await act(async () => {
+      await Promise.resolve();
+      await Promise.resolve();
+    });
+    const input = screen.getByRole("textbox", { name: "Nội dung tin nhắn" });
+    fireEvent.change(input, { target: { value: "Câu hỏi đang xử lý" } });
+    fireEvent.keyDown(input, { key: "Enter", code: "Enter" });
+    await act(async () => {
+      await Promise.resolve();
+      await Promise.resolve();
+    });
+    expect(screen.getByText(/Minh đang/)).toBeInTheDocument();
+
+    act(() => {
+      realtimeOnMessage?.({
+        id: "assistant-unrelated-1",
+        role: "assistant",
+        content: "Tin của chuyên viên khác",
+        ts: Date.now(),
+      });
+    });
+
+    expect(screen.getByText("Tin của chuyên viên khác")).toBeInTheDocument();
+    expect(screen.getByText(/Minh đang/)).toBeInTheDocument();
+    expect(input).toBeDisabled();
+  });
+
   it("turns the indicator off and offers retry after a failed run", async () => {
     vi.useFakeTimers();
     const getPendingStatus = vi.fn().mockResolvedValue({ status: "FAILED", code: "AI_UNAVAILABLE" });
