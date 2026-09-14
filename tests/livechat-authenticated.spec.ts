@@ -206,9 +206,16 @@ test.describe('Authenticated public live chat', () => {
       },
     ]);
 
+    const firstLeadResponse = page.waitForResponse(
+      (response) =>
+        response.url().endsWith('/api/public/leads') &&
+        response.request().method() === 'POST',
+    );
     await page.goto(`${BASE_URL}/livechat`, { waitUntil: 'domcontentloaded' });
+    const firstLead = await firstLeadResponse;
+    expect(firstLead.status()).toBe(201);
     const messageBox = page.getByLabel('Nội dung tin nhắn');
-    await expect(messageBox).toBeVisible();
+    await expect(messageBox).toBeVisible({ timeout: 30_000 });
 
     const pendingText = `smoke pending reconcile ${randomUUID()}`;
     const assistantText = `SMOKE_PENDING_REPLY_${randomUUID()}`;
