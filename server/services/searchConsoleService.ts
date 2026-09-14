@@ -21,7 +21,7 @@
 import { JWT } from 'google-auth-library';
 import { logger } from '../middleware/logger';
 
-const GSC_API_BASE = 'https://searchconsole.googleapis.com/webmasters/v4';
+const GSC_API_BASE = 'https://searchconsole.googleapis.com/webmasters/v3';
 const GSC_SCOPE = 'https://www.googleapis.com/auth/webmasters.readonly';
 
 type GscCredentials = { clientEmail: string; privateKey: string } | null;

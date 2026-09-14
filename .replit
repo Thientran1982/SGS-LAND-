@@ -104,6 +104,7 @@ ALLOWED_ORIGINS = "https://sgsland.vn,https://www.sgsland.vn"
 AI_ORCHESTRATION_MODE = "langgraph"
 LANGGRAPH_ORCHESTRATION_ADAPTER_READY = "true"
 LANGGRAPH_ORCHESTRATION_APPROVED = "true"
+GSC_SITE_URL = "sc-domain:sgsland.vn"
 [userenv.development]
 NODE_ENV = "development"
 PORT = "5000"
