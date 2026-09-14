@@ -122,8 +122,54 @@ const SECRET_PATTERNS = [
 
 const SENSITIVE_CLAIM_PATTERN =
   /(pháp lý|quy hoạch|sổ hồng|sổ đỏ|giá|triệu\/m²|tỷ|lãi suất|cam kết lợi nhuận)/i;
-const SOURCE_PATTERN =
-  /(nguồn|source|theo dữ liệu|benchmark|luật|nghị định|sgs-avm|cần xác minh|tham khảo)/i;
+
+export type AgentEvidenceSource = {
+  source: string;
+  sourceId?: string;
+  url?: string;
+  quote?: string;
+  observedAt?: string;
+  unit?: string;
+  tool?: string;
+};
+
+const INVALID_SOURCE_LABELS = new Set([
+  'source',
+  'unknown source',
+  'specialist result',
+  'durable-specialist-checkpoint',
+  'sgs land tenant-scoped data',
+  'tenant-db',
+  'internal data',
+  'database',
+]);
+
+export function normalizeEvidenceSource(value: unknown, tool?: string): AgentEvidenceSource | null {
+  if (typeof value === 'string') {
+    const source = value.trim();
+    if (!source || source.length < 3 || INVALID_SOURCE_LABELS.has(source.toLowerCase())) return null;
+    return { source, ...(tool ? { tool } : {}) };
+  }
+  if (!value || typeof value !== 'object') return null;
+  const item = value as Record<string, unknown>;
+  const source = String(item.source || item.name || item.title || item.url || '').trim();
+  if (!source || source.length < 3 || INVALID_SOURCE_LABELS.has(source.toLowerCase())) return null;
+  return {
+    source,
+    ...(item.id || item.sourceId ? { sourceId: String(item.sourceId || item.id) } : {}),
+    ...(item.url ? { url: String(item.url) } : {}),
+    ...(item.quote ? { quote: String(item.quote).slice(0, 500) } : {}),
+    ...(item.observedAt || item.fetchedAt || item.updatedAt
+      ? { observedAt: String(item.observedAt || item.fetchedAt || item.updatedAt) }
+      : {}),
+    ...(item.unit ? { unit: String(item.unit) } : {}),
+    ...(tool || item.tool ? { tool: String(item.tool || tool) } : {}),
+  };
+}
+
+export function hasUsableEvidenceSources(sources: unknown): boolean {
+  return Array.isArray(sources) && sources.some(source => normalizeEvidenceSource(source));
+}
 
 export function inspectAgentInput(message: string): GuardrailReport {
   const normalized = String(message || '').slice(0, 4000);
@@ -260,8 +306,8 @@ export function inspectAgentOutput(output: {
   }
 
   let requiresVerification = false;
-  const hasExplicitSources = Array.isArray(output.sources) && output.sources.length > 0;
-  if (SENSITIVE_CLAIM_PATTERN.test(content) && !hasExplicitSources && !SOURCE_PATTERN.test(content)) {
+  const hasExplicitSources = hasUsableEvidenceSources(output.sources);
+  if (SENSITIVE_CLAIM_PATTERN.test(content) && !hasExplicitSources) {
     flags.push('UNSUPPORTED_SENSITIVE_CLAIM');
     requiresVerification = true;
     content += '\n\nThông tin giá/pháp lý chỉ mang tính tham khảo và cần được xác minh từ nguồn chính thức.';

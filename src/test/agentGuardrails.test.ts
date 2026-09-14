@@ -30,9 +30,19 @@ describe('agent guardrails', () => {
   it('does not escalate sourced content even though it discusses price/legal topics', () => {
     const report = inspectAgentOutput({
       content: 'Giá tham khảo theo dữ liệu SGS-AVM là 80 triệu/m², pháp lý cần xác minh với chủ đầu tư.',
+      sources: [{ source: 'SGS-AVM valuation snapshot', sourceId: 'valuation-1', observedAt: '2026-09-14T00:00:00Z', unit: 'VND/m²' }],
     });
     expect(report.flags).not.toContain('UNSUPPORTED_SENSITIVE_CLAIM');
     expect(report.escalate).toBe(false);
+  });
+
+  it('does not treat an empty or generic source object as grounding', () => {
+    const report = inspectAgentOutput({
+      content: 'Giá là 80 triệu/m² và pháp lý hoàn chỉnh.',
+      sources: [{ source: 'SGS Land tenant-scoped data' }, {}],
+    });
+    expect(report.flags).toContain('UNSUPPORTED_SENSITIVE_CLAIM');
+    expect(report.requiresVerification).toBe(true);
   });
 
   it('blocks secret-like output', () => {

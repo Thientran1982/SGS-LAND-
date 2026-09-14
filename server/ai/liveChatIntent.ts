@@ -57,30 +57,67 @@ export function isLandingBuilderRequest(message: string): boolean {
     return hasLandingTarget && hasCreateAction;
 }
 
+export type LiveChatIntentCandidate = {
+    intent: string;
+    suggestedTool: string;
+    query: string;
+};
+
+const INTENT_MAP: Array<{ keywords: Array<string | RegExp>; intent: string; suggestedTool: string }> = [
+    { keywords: [/gi[aá][^.?!]{0,30}bao\s*nhi[êe]u/i, /bao\s*nhi[êe]u[^.?!]{0,30}gi[aá]/i, 'định giá', 'valuation', 'trị giá', 'bao nhiêu tiền'], intent: 'VALUATION', suggestedTool: 'get_valuation' },
+    { keywords: ['tìm', 'search', 'căn hộ', 'nhà', 'đất', 'còn hàng'], intent: 'SEARCH', suggestedTool: 'search_listings' },
+    { keywords: ['pháp lý', 'sổ', 'hồng', 'đỏ', 'vi bằng', 'hđmb'], intent: 'LEGAL', suggestedTool: 'legal_qa' },
+    { keywords: ['quy hoạch', 'planning', 'xây dựng'], intent: 'PLANNING', suggestedTool: 'check_planning' },
+    { keywords: ['vay', 'lãi suất', 'tín dụng', 'ngân hàng'], intent: 'FINANCE', suggestedTool: 'get_platform_knowledge' },
+    { keywords: ['dự án', 'project', 'aqua city', 'vinhomes', 'izumi'], intent: 'PROJECT', suggestedTool: 'get_project_info' },
+    { keywords: ['long thành', 'sân bay', 'airport'], intent: 'LONGTHANH', suggestedTool: 'get_longthanh_market' },
+    { keywords: ['đầu tư', 'cho thuê', 'yield', 'roi', 'lợi nhuận'], intent: 'INVESTMENT', suggestedTool: 'analyze_investment' },
+    { keywords: ['landing', 'trang landing', 'landing page'], intent: 'LANDING', suggestedTool: 'landing_builder' },
+    { keywords: ['chấm điểm', 'lead', 'tiềm năng', 'score lead'], intent: 'LEAD_SCORING', suggestedTool: 'score_lead' },
+];
+
+function classifyFromIntentMap(message: string): { intent: string; suggestedTool: string } {
+    const lower = message.toLowerCase();
+    for (const { keywords, intent, suggestedTool } of INTENT_MAP) {
+        if (keywords.some(keyword => typeof keyword === 'string' ? lower.includes(keyword) : keyword.test(message))) {
+            return { intent, suggestedTool };
+        }
+    }
+    return { intent: 'GENERAL', suggestedTool: 'get_platform_knowledge' };
+}
+
 export function classifyLiveChatIntent(message: string): { intent: string; suggestedTool: string } {
     const msg = String(message || '').trim();
     if (isLandingBuilderRequest(msg)) {
         return { intent: 'LANDING', suggestedTool: 'landing_builder' };
     }
+    return classifyFromIntentMap(msg);
+}
 
-    const lower = msg.toLowerCase();
-    const intentMap: Array<{ keywords: Array<string | RegExp>; intent: string; suggestedTool: string }> = [
-        { keywords: [/gi[aá][^.?!]{0,30}bao\s*nhi[êe]u/i, /bao\s*nhi[êe]u[^.?!]{0,30}gi[aá]/i, 'định giá', 'valuation', 'trị giá', 'bao nhiêu tiền'], intent: 'VALUATION', suggestedTool: 'get_valuation' },
-        { keywords: ['tìm', 'search', 'căn hộ', 'nhà', 'đất', 'còn hàng'], intent: 'SEARCH', suggestedTool: 'search_listings' },
-        { keywords: ['pháp lý', 'sổ', 'hồng', 'đỏ', 'vi bằng', 'hđmb'], intent: 'LEGAL', suggestedTool: 'legal_qa' },
-        { keywords: ['quy hoạch', 'planning', 'xây dựng'], intent: 'PLANNING', suggestedTool: 'check_planning' },
-        { keywords: ['vay', 'lãi suất', 'tín dụng', 'ngân hàng'], intent: 'FINANCE', suggestedTool: 'get_platform_knowledge' },
-        { keywords: ['dự án', 'project', 'aqua city', 'vinhomes', 'izumi'], intent: 'PROJECT', suggestedTool: 'get_project_info' },
-        { keywords: ['long thành', 'sân bay', 'airport'], intent: 'LONGTHANH', suggestedTool: 'get_longthanh_market' },
-        { keywords: ['đầu tư', 'cho thuê', 'yield', 'roi', 'lợi nhuận'], intent: 'INVESTMENT', suggestedTool: 'analyze_investment' },
-        { keywords: ['landing', 'trang landing', 'landing page'], intent: 'LANDING', suggestedTool: 'landing_builder' },
-        { keywords: ['chấm điểm', 'lead', 'tiềm năng', 'score lead'], intent: 'LEAD_SCORING', suggestedTool: 'score_lead' },
-    ];
-
-    for (const { keywords, intent, suggestedTool } of intentMap) {
-        if (keywords.some(keyword => typeof keyword === 'string' ? lower.includes(keyword) : keyword.test(msg))) {
-            return { intent, suggestedTool };
-        }
+/**
+ * Return at most three independent workstreams for a compound question.
+ * The original message remains the primary query so a clause such as
+ * "pháp lý của Aqua City" does not lose its project context.
+ */
+export function classifyLiveChatIntents(message: string): LiveChatIntentCandidate[] {
+    const msg = String(message || '').trim();
+    if (!msg) return [];
+    if (isLandingBuilderRequest(msg)) {
+        return [{ intent: 'LANDING', suggestedTool: 'landing_builder', query: msg }];
     }
-    return { intent: 'GENERAL', suggestedTool: 'get_platform_knowledge' };
+
+    const clauses = msg
+        .split(/(?:[?;]|\n+|\s+(?:và|and|ngoài ra|đồng thời|also)\s+)/i)
+        .map(clause => clause.trim())
+        .filter(Boolean);
+    const candidates = [
+        { ...classifyLiveChatIntent(msg), query: msg },
+        ...clauses.map(query => ({ ...classifyFromIntentMap(query), query })),
+    ];
+    const usable = candidates.filter(candidate => candidate.intent !== 'GENERAL');
+    const unique = new Map<string, LiveChatIntentCandidate>();
+    for (const candidate of usable.length > 0 ? usable : candidates) {
+        if (!unique.has(candidate.intent)) unique.set(candidate.intent, candidate);
+    }
+    return Array.from(unique.values()).slice(0, 3);
 }

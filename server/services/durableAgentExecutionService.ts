@@ -51,6 +51,21 @@ export function checkpointHash(input: unknown): string {
   return createHash('sha256').update(stableSerialize(input)).digest('hex');
 }
 
+async function waitForTerminalExecution(
+  tenantId: string,
+  executionId: string,
+  timeoutMs = 30_000,
+  pollMs = 250,
+): Promise<Awaited<ReturnType<typeof agentExecutionRepository.get>> | null> {
+  const deadline = Date.now() + timeoutMs;
+  let latest = await agentExecutionRepository.get(tenantId, executionId);
+  while (latest && latest.status === 'RUNNING' && Date.now() < deadline) {
+    await new Promise(resolve => setTimeout(resolve, pollMs));
+    latest = await agentExecutionRepository.get(tenantId, executionId);
+  }
+  return latest;
+}
+
 export async function runDurableAgentExecution<T extends {
   content?: string;
   suggestedAction?: string | null;
@@ -102,6 +117,19 @@ export async function runDurableAgentExecution<T extends {
         resumed: false,
         cached: true,
       };
+    }
+    if (execution.status === 'RUNNING') {
+      const terminal = await waitForTerminalExecution(params.tenantId, execution.id);
+      if (terminal && (terminal.status === 'SUCCESS' || terminal.status === 'BLOCKED') && terminal.output?.result) {
+        return {
+          runId: terminal.id,
+          traceId: terminal.traceId,
+          result: terminal.output.result as T,
+          guardrail: terminal.guardrail as unknown as GuardrailReport,
+          resumed: false,
+          cached: true,
+        };
+      }
     }
     throw new Error(`AGENT_EXECUTION_IN_PROGRESS:${execution.id}`);
   }

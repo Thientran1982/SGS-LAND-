@@ -89,3 +89,4 @@
 - [LangChain direct dependency](langchain-direct-dependency.md) — transitive lockfile entries do not guarantee clean installs contain modules imported by the app
 - [Notification dedupe parameter types](notification-dedupe-parameter-types.md) — bind reused notification values through an explicitly typed CTE
 - [Server test public URL](server-test-public-url.md) — set APP_URL explicitly when server tests assert a production public origin
+- [Minh evidence orchestration](minh-evidence-orchestration.md) — compound workstreams, structured evidence, filtered memory, and separate response/telemetry idempotency

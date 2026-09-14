@@ -5,6 +5,7 @@ const { repo, operatingRepo, logger } = vi.hoisted(() => ({
     claim: vi.fn(),
     saveStep: vi.fn(),
     getSteps: vi.fn(),
+    get: vi.fn(),
     finish: vi.fn(),
     heartbeat: vi.fn(),
   },
@@ -93,6 +94,31 @@ describe('durable agent execution service', () => {
     expect(result.cached).toBe(true);
     expect(result.result).toEqual(completed);
     expect(execute).not.toHaveBeenCalled();
+  });
+
+  it('waits for a concurrent RUNNING execution and replays its single completed result', async () => {
+    const completed = { content: 'one reply', steps: [] };
+    repo.claim.mockResolvedValue({
+      execution: execution(),
+      claimed: false,
+      resumed: false,
+    });
+    repo.get
+      .mockResolvedValueOnce(execution())
+      .mockResolvedValueOnce(execution({
+        status: 'SUCCESS',
+        output: { result: completed },
+        guardrail: { safe: true, flags: [], requiresVerification: false },
+      }));
+
+    const result = await runDurableAgentExecution({
+      ...baseParams,
+      message: 'same request after reconnect',
+      execute: vi.fn(),
+    });
+
+    expect(result.cached).toBe(true);
+    expect(result.result).toEqual(completed);
   });
 
   it('blocks prompt injection before any provider call and escalates', async () => {

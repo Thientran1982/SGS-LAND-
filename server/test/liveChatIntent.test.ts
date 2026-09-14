@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { classifyLiveChatIntent, isLongFormRequest } from '../ai/liveChatEngine';
+import { buildLiveChatRequestHash, classifyLiveChatIntent, classifyLiveChatIntents, isLongFormRequest } from '../ai/liveChatEngine';
 
 describe('classifyLiveChatIntent — P0-5 keyword precision', () => {
   it('routes price-bounded search requests to SEARCH, not VALUATION', () => {
@@ -23,5 +23,38 @@ describe('classifyLiveChatIntent — P0-5 keyword precision', () => {
   it('detects an explicit request for a detailed, structured answer', () => {
     expect(isLongFormRequest('Hãy phân tích chi tiết ưu nhược điểm và giải thích từng bước.')).toBe(true);
     expect(isLongFormRequest('Cho tôi biết giá căn hộ này.')).toBe(false);
+  });
+
+  it('keeps independent valuation and legal workstreams for a compound question', () => {
+    expect(classifyLiveChatIntents('Giá căn hộ này bao nhiêu và pháp lý ra sao?').map(item => item.intent))
+      .toEqual(['VALUATION', 'LEGAL']);
+  });
+
+  it('does not turn a price filter into a valuation workstream', () => {
+    expect(classifyLiveChatIntents('Tìm căn hộ giá 3 tỷ ở Long Thành và pháp lý thế nào?').map(item => item.intent))
+      .toEqual(['SEARCH', 'LEGAL']);
+  });
+
+  it('keeps reconnect idempotency stable when history has changed', () => {
+    const first = buildLiveChatRequestHash({
+      sessionId: 'session-1',
+      message: 'Tìm căn hộ ở Long Thành',
+      attachmentFingerprint: 'none',
+    });
+    const replay = buildLiveChatRequestHash({
+      sessionId: 'session-1',
+      message: 'Tìm căn hộ ở Long Thành',
+      attachmentFingerprint: 'none',
+    });
+    expect(replay).toBe(first);
+    expect(buildLiveChatRequestHash({
+      sessionId: 'session-1',
+      message: 'Tìm căn hộ ở Long Thành',
+      requestId: 'event-1',
+    })).toBe(buildLiveChatRequestHash({
+      sessionId: 'different-session',
+      message: 'changed local history',
+      requestId: 'event-1',
+    }));
   });
 });
