@@ -76,7 +76,7 @@ describe('Search Console domain-property sync', () => {
       expiry_date: Date.now() + 3_600_000,
     });
     fetchMock.mockResolvedValueOnce(new Response(JSON.stringify({
-      rows: [{ keys: ['Aqua City'], position: 3.5 }],
+      rows: [{ keys: ['Aqua City'], position: 51.25 }],
     }), { status: 200 }));
 
     const pool = {
@@ -93,6 +93,11 @@ describe('Search Console domain-property sync', () => {
       keywordsChecked: 1,
       positionsUpdated: 1,
     });
+    expect(pool.query).toHaveBeenNthCalledWith(
+      2,
+      expect.stringContaining('SET current_position = $3'),
+      ['tenant-1', 'aqua city', 51.25],
+    );
 
     expect(jwtOptions).toHaveBeenCalledWith(expect.objectContaining({
       email: 'search-console@example.iam.gserviceaccount.com',
