@@ -22,6 +22,7 @@
 - [Recurring campaign schedules](recurring-campaign-schedules.md) — recurring campaigns advance scheduled_at atomically before delivery and remain ACTIVE after successful runs
 - [Sequence journey design](sequence-journey-design.md) — separate lead-stage triggers prevent overlapping journeys while content journeys drive both care and site traffic
 - [Preview proxy error handling](preview-proxy-error-handling.md) — HTTP and WebSocket proxy failures pass different response types; feature-detect before writing or destroying
+- [Public Socket.IO proxy path](public-socketio-proxy-path.md) — Engine.IO must disable its trailing slash when going through the Next public rewrite
 - [GEO database environment](geo-database-environment.md) — runtime GEO tables use the app’s configured database, not necessarily the generic database-tool default
 - [Analytics SQL naming](analytics-sql-naming.md) — avoid PostgreSQL reserved words as CTE names because runtime-only analytics queries can fail despite mocked tests
 - [Replit preview port mapping](replit-preview-port-mapping.md) — expose one canonical webview port; redundant public proxy mappings can create misleading replit.dev:<port> URLs

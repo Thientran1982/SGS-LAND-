@@ -555,6 +555,11 @@ export function createMinhSession(options: MinhSessionOptions = {}): MinhSession
       if (typeof io !== "function") return noop;
 
       const socket = io(apiBase || undefined, {
+        // Next's public rewrite normalizes /socket.io/ to /socket.io with a
+        // 308 redirect. Keep the Engine.IO path slashless so the handshake
+        // reaches the Express Socket.IO server through the public proxy.
+        path: "/socket.io",
+        addTrailingSlash: false,
         transports: ["websocket", "polling"],
         withCredentials: true,
         reconnectionAttempts: 5,
