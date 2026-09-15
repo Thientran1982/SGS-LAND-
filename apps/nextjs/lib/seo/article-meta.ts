@@ -6,14 +6,19 @@ const SITE_URL = "https://sgsland.vn";
 
 /** Generates a Next.js Metadata object from an Article for use in generateMetadata(). */
 export function generateArticleMeta(article: Article): Metadata {
-  const canonicalUrl = `${SITE_URL}/news/${article.slug}`;
+  const canonicalUrl = `${SITE_URL}/tin-tuc/${article.slug}`;
+  const description =
+    article.seo?.metaDescription?.trim() ||
+    article.excerpt?.trim() ||
+    article.title?.trim() ||
+    "Thông tin và kiến thức bất động sản từ SGS LAND.";
   const ogImage = article.coverImage.startsWith("http")
     ? article.coverImage
     : `${SITE_URL}${article.coverImage}`;
 
   return {
     title: `${article.seo.metaTitle} | SGS Land`,
-    description: article.seo.metaDescription,
+    description,
     keywords: [article.seo.focusKeyword, ...article.seo.secondaryKeywords],
     alternates: { canonical: canonicalUrl },
     authors: [{ name: article.authorName ?? article.author, url: `${SITE_URL}/tac-gia/${article.author}` }],
@@ -21,7 +26,7 @@ export function generateArticleMeta(article: Article): Metadata {
       type: "article",
       url: canonicalUrl,
       title: article.seo.metaTitle,
-      description: article.seo.metaDescription,
+      description,
       siteName: "SGS LAND",
       publishedTime: article.publishedAt,
       modifiedTime: article.updatedAt,
@@ -32,7 +37,7 @@ export function generateArticleMeta(article: Article): Metadata {
     twitter: {
       card: "summary_large_image",
       title: article.seo.metaTitle,
-      description: article.seo.metaDescription,
+      description,
       images: { url: ogImage, alt: article.title },
     },
   };

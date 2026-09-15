@@ -1,20 +1,25 @@
 // @ts-nocheck
 import type { Metadata } from "next";
 import { LocalLandingPageTemplate } from "@/components/public/LocalLandingPageTemplate";
+import { getLang, langAlternates } from "@/lib/lang";
 
-export const metadata: Metadata = {
-  title: "Bất Động Sản Nhơn Trạch 2026 – Giá Đất, Dự Án & Đầu Tư | SGS Land",
-  description:
-    "Bất động sản Nhơn Trạch 2026: giá đất nền 12–25 triệu/m², khu công nghiệp Nhơn Trạch, cầu Nhơn Trạch & Vành đai 3. Tư vấn đầu tư miễn phí từ SGS Land.",
-  keywords: ["bất động sản Nhơn Trạch", "đất Nhơn Trạch", "khu công nghiệp Nhơn Trạch", "bđs Nhơn Trạch Đồng Nai"],
-  alternates: { canonical: "https://sgsland.vn/bat-dong-san-nhon-trach", languages: { "vi-VN": "https://sgsland.vn/bat-dong-san-nhon-trach", "en-US": "https://sgsland.vn/en/bat-dong-san-nhon-trach", "x-default": "https://sgsland.vn/bat-dong-san-nhon-trach" } },
-  openGraph: {
-    title: "Bất Động Sản Nhơn Trạch 2026 – Giá Đất & Dự Án | SGS Land",
-    description: "Thị trường BĐS Nhơn Trạch 2026: giá đất, khu công nghiệp, cầu Nhơn Trạch. Cập nhật từ SGS Land.",
-    url: "https://sgsland.vn/bat-dong-san-nhon-trach",
-    type: "website",
-  },
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const en = (await getLang()) === "en";
+  const canonical = `https://sgsland.vn${en ? "/en/bat-dong-san-nhon-trach" : "/bat-dong-san-nhon-trach"}`;
+  return {
+    title: "Bất Động Sản Nhơn Trạch 2026 – Giá Đất, Dự Án & Đầu Tư | SGS Land",
+    description:
+      "Bất động sản Nhơn Trạch 2026: giá đất nền 12–25 triệu/m², khu công nghiệp Nhơn Trạch, cầu Nhơn Trạch & Vành đai 3. Tư vấn đầu tư miễn phí từ SGS Land.",
+    keywords: ["bất động sản Nhơn Trạch", "đất Nhơn Trạch", "khu công nghiệp Nhơn Trạch", "bđs Nhơn Trạch Đồng Nai"],
+    alternates: { canonical, ...langAlternates("/bat-dong-san-nhon-trach") },
+    openGraph: {
+      title: "Bất Động Sản Nhơn Trạch 2026 – Giá Đất & Dự Án | SGS Land",
+      description: "Thị trường BĐS Nhơn Trạch 2026: giá đất, khu công nghiệp, cầu Nhơn Trạch. Cập nhật từ SGS Land.",
+      url: canonical,
+      type: "website",
+    },
+  };
+}
 
 export const dynamic = "force-dynamic";
 

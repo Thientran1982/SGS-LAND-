@@ -2,13 +2,18 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { BarChart3, Users, Zap, Globe2, Shield, Bot } from "lucide-react";
+import { getLang, langAlternates } from "@/lib/lang";
 
-export const metadata: Metadata = {
-  title: "CRM Bất Động Sản AI | Giải Pháp #1 Việt Nam",
-  description:
-    "SGS LAND CRM — Quản lý leads, hợp đồng, kho hàng BĐS trên 1 nền tảng. AI định giá, chat đa kênh (Zalo, Facebook, Email), báo cáo realtime. Dùng miễn phí.",
-  alternates: { canonical: "https://sgsland.vn/crm-platform", languages: { "vi-VN": "https://sgsland.vn/crm-platform", "en-US": "https://sgsland.vn/en/crm-platform", "x-default": "https://sgsland.vn/crm-platform" } },
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const en = (await getLang()) === "en";
+  const canonical = `https://sgsland.vn${en ? "/en/crm-platform" : "/crm-platform"}`;
+  return {
+    title: "CRM Bất Động Sản AI | Giải Pháp #1 Việt Nam",
+    description:
+      "SGS LAND CRM — Quản lý leads, hợp đồng, kho hàng BĐS trên 1 nền tảng. AI định giá, chat đa kênh (Zalo, Facebook, Email), báo cáo realtime. Dùng miễn phí.",
+    alternates: { canonical, ...langAlternates("/crm-platform") },
+  };
+}
 
 export const dynamic = "force-dynamic";
 

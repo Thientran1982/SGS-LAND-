@@ -2,12 +2,15 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { MiniSiteProjectPage } from "@/components/public/MiniSiteProjectPage";
+import { getLang } from "@/lib/lang";
 // ─── ISR — Mini-site projects (Cosmo Central, etc.) ──────
 export const dynamic = "force-dynamic";
 
 // ─── Metadata ─────────────────────────────────────────────
 export async function generateMetadata({ params }: { params: Promise<{ code: string }> }): Promise<Metadata> {
   const { code } = await params;
+  const en = (await getLang()) === "en";
+  const canonical = `https://sgsland.vn${en ? `/en/p/${code}` : `/p/${code}`}`;
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   let project: any = null;
   try {
@@ -25,11 +28,11 @@ export async function generateMetadata({ params }: { params: Promise<{ code: str
   return {
     title: `${name} | Dự án BĐS`,
     description: `${name} — ${loc}. Xem danh sách căn hộ, bảng giá và thông tin chi tiết tại SGS LAND.`,
-    alternates: { canonical: `https://sgsland.vn/p/${code}` },
+    alternates: { canonical },
     openGraph: {
       title: `${name}`,
       description: `Dự án ${name} tại ${loc} — xem bảng giá và danh sách căn hộ thực tế.`,
-      url: `https://sgsland.vn/p/${code}`,
+      url: canonical,
     },
   };
 }

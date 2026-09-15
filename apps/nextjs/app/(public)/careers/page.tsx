@@ -1,12 +1,17 @@
 // @ts-nocheck
 import type { Metadata } from "next";
+import { getLang, langAlternates } from "@/lib/lang";
 
-export const metadata: Metadata = {
-  title: "Tuyển Dụng",
-  description:
-    "Cơ hội nghề nghiệp tại SGS LAND — Môi giới BĐS, Kỹ sư phần mềm, Product Manager, Data Analyst. Startup proptech hàng đầu Việt Nam.",
-  alternates: { canonical: "https://sgsland.vn/careers", languages: { "vi-VN": "https://sgsland.vn/careers", "en-US": "https://sgsland.vn/en/careers", "x-default": "https://sgsland.vn/careers" } },
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const en = (await getLang()) === "en";
+  const canonical = `https://sgsland.vn${en ? "/en/careers" : "/careers"}`;
+  return {
+    title: "Tuyển Dụng",
+    description:
+      "Cơ hội nghề nghiệp tại SGS LAND — Môi giới BĐS, Kỹ sư phần mềm, Product Manager, Data Analyst. Startup proptech hàng đầu Việt Nam.",
+    alternates: { canonical, ...langAlternates("/careers") },
+  };
+}
 
 export const dynamic = "force-dynamic";
 

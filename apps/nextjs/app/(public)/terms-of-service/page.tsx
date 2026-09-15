@@ -1,6 +1,11 @@
 // @ts-nocheck
 import type { Metadata } from "next";
-export const metadata: Metadata = { title: "Điều Khoản Sử Dụng", alternates: { canonical: "https://sgsland.vn/terms-of-service", languages: { "vi-VN": "https://sgsland.vn/terms-of-service", "en-US": "https://sgsland.vn/en/terms-of-service", "x-default": "https://sgsland.vn/terms-of-service" } } };
+import { getLang, langAlternates } from "@/lib/lang";
+export async function generateMetadata(): Promise<Metadata> {
+  const en = (await getLang()) === "en";
+  const canonical = `https://sgsland.vn${en ? "/en/terms-of-service" : "/terms-of-service"}`;
+  return { title: "Điều Khoản Sử Dụng", alternates: { canonical, ...langAlternates("/terms-of-service") } };
+}
 export const dynamic = "force-dynamic";
 export default function TermsPage() {
   return (

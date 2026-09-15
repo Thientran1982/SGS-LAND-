@@ -8,11 +8,11 @@ export function sitemapVi(): MetadataRoute.Sitemap {
 const now = new Date("2026-08-21T00:00:00Z");
   const staticRoutes: MetadataRoute.Sitemap = [
     { url: `${BASE}/`,                            lastModified: now, changeFrequency: "daily",   priority: 1.0 },
-    { url: `${BASE}/marketplace`,                 lastModified: now, changeFrequency: "hourly",  priority: 0.9 },
+    { url: `${BASE}/bat-dong-san`,                lastModified: now, changeFrequency: "hourly",  priority: 0.9 },
     { url: `${BASE}/ai-valuation`,                lastModified: now, changeFrequency: "weekly",  priority: 0.8 },
     { url: `${BASE}/crm-platform`,                lastModified: now, changeFrequency: "monthly", priority: 0.7 },
     { url: `${BASE}/du-an`,                       lastModified: now, changeFrequency: "weekly",  priority: 0.8 },
-    { url: `${BASE}/news`,                        lastModified: now, changeFrequency: "daily",   priority: 0.8 },
+    { url: `${BASE}/tin-tuc`,                     lastModified: now, changeFrequency: "daily",   priority: 0.8 },
     { url: `${BASE}/about-us`,                    lastModified: now, changeFrequency: "monthly", priority: 0.6 },
     { url: `${BASE}/chuyen-gia`,                  lastModified: now, changeFrequency: "monthly", priority: 0.7 },
     { url: `${BASE}/contact`,                     lastModified: now, changeFrequency: "monthly", priority: 0.6 },

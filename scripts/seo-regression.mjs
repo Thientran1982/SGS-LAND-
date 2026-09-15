@@ -17,8 +17,16 @@ const REPORT_DIR = path.resolve("docs/seo");
 const failures = [];
 const warnings = [];
 
+function resolveLocalUrl(route) {
+  if (!route.startsWith("http")) return `${BASE_URL}${route}`;
+  const url = new URL(route);
+  return url.hostname === "sgsland.vn"
+    ? `${BASE_URL}${url.pathname}${url.search}`
+    : route;
+}
+
 async function fetchText(route) {
-  const url = route.startsWith("http") ? route : `${BASE_URL}${route}`;
+  const url = resolveLocalUrl(route);
   const response = await fetch(url, {
     redirect: "manual",
     headers: { "user-agent": "SGSLandSeoRegression/1.0" },
@@ -27,7 +35,7 @@ async function fetchText(route) {
 }
 
 async function collectSitemapRoutes(route, seen = new Set()) {
-  const url = route.startsWith("http") ? route : `${BASE_URL}${route}`;
+  const url = resolveLocalUrl(route);
   if (seen.has(url)) return [];
   seen.add(url);
   const result = await fetchText(url);
@@ -64,6 +72,17 @@ function auditHtml(route, html) {
   if (canonical && !canonical.startsWith("https://sgsland.vn/") && canonical !== "https://sgsland.vn") {
     addFailure("canonical_host", `${route}: canonical points outside sgsland.vn (${canonical})`);
   }
+  if (canonical) {
+    try {
+      const canonicalPath = new URL(canonical).pathname.replace(/\/+$/, "") || "/";
+      const sitemapPath = new URL(route, BASE_URL).pathname.replace(/\/+$/, "") || "/";
+      if (canonicalPath !== sitemapPath) {
+        addFailure("canonical_mismatch", `${route}: sitemap URL canonicalizes to ${canonical}`);
+      }
+    } catch {
+      addFailure("canonical_invalid", `${route}: canonical is not an absolute URL (${canonical})`);
+    }
+  }
 
   $('script[type="application/ld+json"]').each((index, element) => {
     try {
@@ -75,6 +94,20 @@ function auditHtml(route, html) {
   return { title, description, canonical, h1Count, isNoIndex };
 }
 
+async function mapWithConcurrency(items, limit, worker) {
+  const results = new Array(items.length);
+  let nextIndex = 0;
+  async function consume() {
+    while (true) {
+      const index = nextIndex++;
+      if (index >= items.length) return;
+      results[index] = await worker(items[index], index);
+    }
+  }
+  await Promise.all(Array.from({ length: Math.min(limit, items.length) }, consume));
+  return results;
+}
+
 async function main() {
   const robots = await fetchText("/robots.txt");
   if (!robots.response.ok) addFailure("robots_status", `/robots.txt returned ${robots.response.status}`);
@@ -82,27 +115,33 @@ async function main() {
     addFailure("robots_sitemap", "/robots.txt does not advertise sitemap.xml");
   }
 
-  const sitemapUrls = await collectSitemapRoutes("/sitemap.xml");
+  const sitemapSources = [...robots.text.matchAll(/^Sitemap:\s*(\S+)/gim)].map((match) => match[1]);
+  const sitemapLocations = new Set();
+  for (const source of sitemapSources.length ? sitemapSources : [`${BASE_URL}/sitemap.xml`]) {
+    for (const location of await collectSitemapRoutes(source)) sitemapLocations.add(location);
+  }
+  const sitemapUrls = [...sitemapLocations];
   const routes = [...new Set(sitemapUrls.map((url) => new URL(url).pathname))];
   if (!routes.length) addFailure("empty_sitemap", "sitemap.xml has no URL entries");
 
-  const pages = [];
-  for (const route of routes) {
+  const pageResults = await mapWithConcurrency(routes, 4, async (route) => {
     const result = await fetchText(route);
     if (result.response.status >= 300 && result.response.status < 400) {
       addFailure("sitemap_redirect", `${route} redirects (${result.response.status})`);
-      continue;
+      return null;
     }
     if (!result.response.ok) {
       addFailure("sitemap_broken_url", `${route} returned ${result.response.status}`);
-      continue;
+      return null;
     }
-    pages.push({ route, ...auditHtml(route, result.text) });
-  }
+    return { route, ...auditHtml(route, result.text) };
+  });
+  const pages = pageResults.filter(Boolean);
 
   const report = {
     generatedAt: new Date().toISOString(),
     baseUrl: BASE_URL,
+    sitemapSources,
     sitemapUrlCount: routes.length,
     pagesChecked: pages.length,
     failures,

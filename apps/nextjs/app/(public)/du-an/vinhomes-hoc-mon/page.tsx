@@ -2,8 +2,9 @@ import type { Metadata } from "next";
 import { SchemaScript } from "@/components/SchemaScript";
 import { getBreadcrumbSchema, getFAQSchema, SITE_URL } from "@/lib/schema";
 import type { FAQItem } from "@/lib/schema";
+import { getLang, langAlternates } from "@/lib/lang";
 export const dynamic = "force-dynamic";
-export const metadata: Metadata = {
+const VHM_METADATA: Metadata = {
   title: "Vinhomes Hóc Môn — Smart City 4.0, 667ha | Giá Từ 6,5 Tỷ",
   description:
     "Vinhomes Smart City Hóc Môn — thông tin tham khảo về quy mô, vị trí, sản phẩm và mốc mở bán dự kiến. Giá, pháp lý, tiến độ và tư cách phân phối cần được xác minh bằng hồ sơ gốc trước khi giao dịch.",
@@ -34,6 +35,19 @@ export const metadata: Metadata = {
     description: "667ha, từ 6,5 tỷ. Ra mắt Q4/2026. Đăng ký đặt chỗ ưu tiên.",
   },
 };
+export async function generateMetadata(): Promise<Metadata> {
+  const en = (await getLang()) === "en";
+  const canonical = `${SITE_URL}${en ? "/en/du-an/vinhomes-hoc-mon" : "/du-an/vinhomes-hoc-mon"}`;
+  return {
+    ...VHM_METADATA,
+    alternates: { canonical, ...langAlternates("/du-an/vinhomes-hoc-mon") },
+    openGraph: {
+      ...VHM_METADATA.openGraph,
+      url: canonical,
+      locale: en ? "en_US" : "vi_VN",
+    },
+  };
+}
 const FAQ_VHM: FAQItem[] = [
   {
     question: "Vinhomes Hóc Môn giá bao nhiêu?",

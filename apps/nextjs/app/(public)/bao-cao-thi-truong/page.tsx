@@ -60,7 +60,7 @@ export async function generateMetadata(): Promise<Metadata> {
     description: en
       ? "Reference real estate prices by area in Ho Chi Minh City and nearby markets, with period, methodology and data limitations."
       : "Báo cáo giá bất động sản theo khu vực TP.HCM và vùng ven: giá tham khảo bình quân, khoảng giá, biến động cùng kỳ, kỳ dữ liệu, phương pháp và giới hạn sử dụng.",
-    alternates: { canonical: PAGE_URL, ...langAlternates("/bao-cao-thi-truong") },
+    alternates: { canonical: en ? `${SITE_URL}/en/bao-cao-thi-truong` : PAGE_URL, ...langAlternates("/bao-cao-thi-truong") },
     openGraph: {
       title: en ? "Ho Chi Minh City and nearby real estate market report" : "Báo cáo thị trường bất động sản TP.HCM và vùng ven",
       description: en ? "Compare reference price indicators across 11 areas with methodology and verification caveats." : "So sánh chỉ số giá tham khảo theo 11 khu vực, kèm kỳ dữ liệu, phương pháp và caveat xác minh.",

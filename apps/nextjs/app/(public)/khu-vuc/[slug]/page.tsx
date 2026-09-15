@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import ProjectPage, {
   generateMetadata as generateProjectMetadata,
 } from "../../du-an/[slug]/page";
-import { langAlternates } from "@/lib/lang";
+import { getLang, langAlternates } from "@/lib/lang";
 
 const AREA_SLUGS = new Set([
   "bat-dong-san-quan-7",
@@ -30,7 +30,8 @@ export async function generateMetadata({
   }
 
   const metadata = await generateProjectMetadata({ params });
-  const canonical = `https://sgsland.vn/khu-vuc/${slug}`;
+  const en = (await getLang()) === "en";
+  const canonical = `https://sgsland.vn${en ? `/en/khu-vuc/${slug}` : `/khu-vuc/${slug}`}`;
   return {
     ...metadata,
     alternates: {

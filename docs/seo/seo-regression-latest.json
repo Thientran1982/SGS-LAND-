@@ -1,9 +1,50 @@
 {
-  "generatedAt": "2026-09-15T04:33:09.483Z",
-  "baseUrl": "https://bc72de0b-fc4e-4e50-bcce-71b9685b0ab7-00-srgpeliovbek.worf.replit.dev",
-  "sitemapUrlCount": 52,
-  "pagesChecked": 52,
-  "failures": [],
+  "generatedAt": "2026-09-15T05:13:30.573Z",
+  "baseUrl": "http://localhost:5000",
+  "sitemapSources": [
+    "https://sgsland.vn/sitemap.xml",
+    "https://sgsland.vn/sitemap-en.xml",
+    "https://sgsland.vn/sitemap-answers.xml",
+    "https://sgsland.vn/sitemap-areas.xml",
+    "https://sgsland.vn/sitemap-faq.xml",
+    "https://sgsland.vn/sitemap-local.xml",
+    "https://sgsland.vn/sitemap-images.xml",
+    "https://sgsland.vn/sitemap-videos.xml",
+    "https://sgsland.vn/sitemap-news.xml",
+    "https://sgsland.vn/feed.xml"
+  ],
+  "sitemapUrlCount": 228,
+  "pagesChecked": 228,
+  "failures": [
+    {
+      "code": "h1_count",
+      "message": "/bds/co-hoi-vang-dat-an-phuoc-tam-an-long-tha-4f40da30-37ee-4e9e-b998-8368706c338a: expected 1 H1, found 0"
+    },
+    {
+      "code": "h1_count",
+      "message": "/bds/co-hoi-so-huu-biet-thu-sv3-11-dien-tich-a4b2359c-e8d2-41ff-9c53-f9500e3eb916: expected 1 H1, found 0"
+    },
+    {
+      "code": "h1_count",
+      "message": "/bds/biet-thu-don-lap-na-gv5-09-du-an-aqua-ci-6e17f219-838b-41f0-9f4c-721b9278dbbf: expected 1 H1, found 0"
+    },
+    {
+      "code": "h1_count",
+      "message": "/bds/biet-thu-don-lap-na-gv5-05-aqua-city-1471a804-c167-495a-9088-451e1e7dd407: expected 1 H1, found 0"
+    },
+    {
+      "code": "h1_count",
+      "message": "/bds/sieu-pham-moi-vinhomes-hoc-mon-tam-diem-6cd44048-c944-46f8-8f3e-1730df7461c5: expected 1 H1, found 0"
+    },
+    {
+      "code": "h1_count",
+      "message": "/bds/can-ho-3-phong-ngu-victoria-village-nova-df5382aa-28e1-4f54-aa9a-cf3bf93a1262: expected 1 H1, found 0"
+    },
+    {
+      "code": "missing_description",
+      "message": "/tin-tuc/test-bai-viet-upload-anh-video: missing meta description"
+    }
+  ],
   "warnings": [],
   "pages": [
     {
@@ -15,7 +56,7 @@
       "isNoIndex": false
     },
     {
-      "route": "/marketplace",
+      "route": "/bat-dong-san",
       "title": "Tìm kiếm Bất Động Sản | Marketplace SGS LAND | SGS LAND",
       "description": "Tìm kiếm 45.000+ bất động sản tại TP.HCM, Đồng Nai, Bình Dương. Lọc theo khu vực, loại, giá, số phòng ngủ. Pháp lý rõ ràng, giá thực, cập nhật liên tục.",
       "canonical": "https://sgsland.vn/bat-dong-san",
@@ -47,7 +88,7 @@
       "isNoIndex": false
     },
     {
-      "route": "/news",
+      "route": "/tin-tuc",
       "title": "Kiến Thức & Tin Tức BĐS | Chuyên gia SGS LAND | SGS LAND",
       "description": "Phân tích thị trường BĐS chuyên sâu, hướng dẫn pháp lý và kiến thức đầu tư từ chuyên gia SGS LAND.",
       "canonical": "https://sgsland.vn/tin-tuc",
@@ -419,6 +460,1414 @@
       "title": "Đại Quang Minh — Dự Án & Phân Phối | SGS LAND | SGS LAND",
       "description": "Đại Quang Minh là chủ đầu tư khu đô thị Sala tại Thủ Thiêm, TP Thủ Đức — một trong những khu đô thị trung tâm mới của TP.HCM.",
       "canonical": "https://sgsland.vn/chu-dau-tu/dai-quang-minh",
+      "h1Count": 1,
+      "isNoIndex": false
+    },
+    {
+      "route": "/en",
+      "title": "Vietnam's #1 AI Real Estate Platform | SGS LAND",
+      "description": "SGS LAND — property marketplace, automated AI valuation to ±5%, omnichannel CRM. Explore 45,000+ listings across Ho Chi Minh City, Dong Nai and Binh Duong. Authorised tier-1 agent: Vinhomes Hoc Mon, Vinhomes Can Gio, Aqua City.",
+      "canonical": "https://sgsland.vn/en",
+      "h1Count": 1,
+      "isNoIndex": false
+    },
+    {
+      "route": "/en/bat-dong-san",
+      "title": "Property Search | SGS LAND Marketplace | SGS LAND",
+      "description": "Search 45,000+ properties across Ho Chi Minh City, Dong Nai and Binh Duong. Filter by area, type, price and bedrooms. Verified legal status, real prices, updated continuously.",
+      "canonical": "https://sgsland.vn/en/bat-dong-san",
+      "h1Count": 1,
+      "isNoIndex": false
+    },
+    {
+      "route": "/en/ai-valuation",
+      "title": "Định Giá Bất Động Sản AI Miễn Phí | Sai Số ±5% — SGS LAND | SGS LAND",
+      "description": "Công cụ định giá bất động sản AI miễn phí của SGS LAND: nhập địa chỉ và diện tích, nhận giá thị trường ước tính trong 30 giây với sai số ±5% theo chuẩn TĐGVN/IVS. Đối chiếu trên 45.000+ giao dịch lịch sử tại TP.HCM, Đồng Nai, Bình Dương.",
+      "canonical": "https://sgsland.vn/en/ai-valuation",
+      "h1Count": 1,
+      "isNoIndex": false
+    },
+    {
+      "route": "/en/crm-platform",
+      "title": "CRM Bất Động Sản AI | Giải Pháp #1 Việt Nam | SGS LAND",
+      "description": "SGS LAND CRM — Quản lý leads, hợp đồng, kho hàng BĐS trên 1 nền tảng. AI định giá, chat đa kênh (Zalo, Facebook, Email), báo cáo realtime. Dùng miễn phí.",
+      "canonical": "https://sgsland.vn/en/crm-platform",
+      "h1Count": 1,
+      "isNoIndex": false
+    },
+    {
+      "route": "/en/du-an",
+      "title": "Dự Án Bất Động Sản | SGS LAND",
+      "description": "Khám phá các dự án BĐS lớn nhất TP.HCM, Đồng Nai, Bình Dương, Long An. Aqua City, The Global City, Vinhomes, Masterise Homes và nhiều dự án nổi bật khác.",
+      "canonical": "https://sgsland.vn/en/du-an",
+      "h1Count": 1,
+      "isNoIndex": false
+    },
+    {
+      "route": "/en/tin-tuc",
+      "title": "Real Estate Knowledge & News | SGS LAND Experts | SGS LAND",
+      "description": "In-depth real estate market analysis, legal guidance and investment knowledge from SGS LAND experts.",
+      "canonical": "https://sgsland.vn/en/tin-tuc",
+      "h1Count": 1,
+      "isNoIndex": false
+    },
+    {
+      "route": "/en/about-us",
+      "title": "About SGS LAND | Vietnam's Leading AI Real Estate Platform | SGS LAND",
+      "description": "SGS LAND — SGS Land Co., Ltd, founded in 2024. Authorised distribution agent for Vinhomes, Novaland, Masterise and Nam Long. 15,000+ brokers, 45,000+ listings, US$200 million in transactions. Top Vietnam Proptech 2025.",
+      "canonical": "https://sgsland.vn/en/about-us",
+      "h1Count": 1,
+      "isNoIndex": false
+    },
+    {
+      "route": "/en/chuyen-gia",
+      "title": "Real Estate Experts | The SGS LAND Advisory Team | SGS LAND",
+      "description": "SGS LAND's 50+ property experts: 10+ years distributing Vinhomes, Novaland and Masterise. Investment advice, ±5% AI AVM valuation, Vietnamese real estate law.",
+      "canonical": "https://sgsland.vn/en/chuyen-gia",
+      "h1Count": 1,
+      "isNoIndex": false
+    },
+    {
+      "route": "/en/contact",
+      "title": "Liên Hệ | SGS LAND",
+      "description": "Liên hệ SGS LAND — Hotline: 0379 281 445 | Email: info@sgsland.vn | TP. Hồ Chí Minh. Tư vấn BĐS, CRM, định giá AI miễn phí.",
+      "canonical": "https://sgsland.vn/en/contact",
+      "h1Count": 1,
+      "isNoIndex": false
+    },
+    {
+      "route": "/en/careers",
+      "title": "Tuyển Dụng | SGS LAND",
+      "description": "Cơ hội nghề nghiệp tại SGS LAND — Môi giới BĐS, Kỹ sư phần mềm, Product Manager, Data Analyst. Startup proptech hàng đầu Việt Nam.",
+      "canonical": "https://sgsland.vn/en/careers",
+      "h1Count": 1,
+      "isNoIndex": false
+    },
+    {
+      "route": "/en/help-center",
+      "title": "Trung Tâm Trợ Giúp | SGS LAND",
+      "description": "Hỗ trợ khách hàng SGS LAND: hướng dẫn sử dụng nền tảng, tư vấn BĐS, giải đáp thắc mắc. Liên hệ qua hotline, chat hoặc email.",
+      "canonical": "https://sgsland.vn/en/help-center",
+      "h1Count": 1,
+      "isNoIndex": false
+    },
+    {
+      "route": "/en/bao-cao-thi-truong",
+      "title": "Ho Chi Minh City Real Estate Market Report 2026 | SGS LAND | SGS LAND",
+      "description": "Reference real estate prices by area in Ho Chi Minh City and nearby markets, with period, methodology and data limitations.",
+      "canonical": "https://sgsland.vn/en/bao-cao-thi-truong",
+      "h1Count": 1,
+      "isNoIndex": false
+    },
+    {
+      "route": "/en/khu-vuc/bat-dong-san-dong-nai",
+      "title": "Dong Nai Real Estate | Area reference | SGS LAND",
+      "description": "Dong Nai Real Estate — Đồng Nai. Đất nền từ 1,5 tỷ; biệt thự từ 5 tỷ VNĐ. Indicative area information from SGS LAND; verify current price, legal status, progress and distribution authorization against original documents.",
+      "canonical": "https://sgsland.vn/en/khu-vuc/bat-dong-san-dong-nai",
+      "h1Count": 1,
+      "isNoIndex": false
+    },
+    {
+      "route": "/en/khu-vuc/bat-dong-san-long-thanh",
+      "title": "Long Thanh Real Estate | Area reference | SGS LAND",
+      "description": "Long Thanh Real Estate — Long Thành, Đồng Nai. Đất nền từ 1,8 tỷ; biệt thự từ 8 tỷ VNĐ. Indicative area information from SGS LAND; verify current price, legal status, progress and distribution authorization against original documents.",
+      "canonical": "https://sgsland.vn/en/khu-vuc/bat-dong-san-long-thanh",
+      "h1Count": 1,
+      "isNoIndex": false
+    },
+    {
+      "route": "/en/bat-dong-san-nhon-trach",
+      "title": "Bất Động Sản Nhơn Trạch 2026 – Giá Đất, Dự Án & Đầu Tư | SGS Land | SGS LAND",
+      "description": "Bất động sản Nhơn Trạch 2026: giá đất nền 12–25 triệu/m², khu công nghiệp Nhơn Trạch, cầu Nhơn Trạch & Vành đai 3. Tư vấn đầu tư miễn phí từ SGS Land.",
+      "canonical": "https://sgsland.vn/en/bat-dong-san-nhon-trach",
+      "h1Count": 1,
+      "isNoIndex": false
+    },
+    {
+      "route": "/en/khu-vuc/bat-dong-san-thu-duc",
+      "title": "Thu Duc Real Estate | Area reference | SGS LAND",
+      "description": "Thu Duc Real Estate — TP Thủ Đức, TP.HCM. Căn hộ từ 2 tỷ; biệt thự từ 10 tỷ VNĐ. Indicative area information from SGS LAND; verify current price, legal status, progress and distribution authorization against original documents.",
+      "canonical": "https://sgsland.vn/en/khu-vuc/bat-dong-san-thu-duc",
+      "h1Count": 1,
+      "isNoIndex": false
+    },
+    {
+      "route": "/en/khu-vuc/bat-dong-san-binh-duong",
+      "title": "Binh Duong Real Estate | Area reference | SGS LAND",
+      "description": "Binh Duong Real Estate — Bình Dương. Đất nền từ 1,2 tỷ; nhà phố từ 3 tỷ VNĐ. Indicative area information from SGS LAND; verify current price, legal status, progress and distribution authorization against original documents.",
+      "canonical": "https://sgsland.vn/en/khu-vuc/bat-dong-san-binh-duong",
+      "h1Count": 1,
+      "isNoIndex": false
+    },
+    {
+      "route": "/en/khu-vuc/bat-dong-san-quan-7",
+      "title": "District 7 Real Estate | Area reference | SGS LAND",
+      "description": "District 7 Real Estate — Quận 7, TP.HCM. Căn hộ từ 3 tỷ; biệt thự từ 15 tỷ VNĐ. Indicative area information from SGS LAND; verify current price, legal status, progress and distribution authorization against original documents.",
+      "canonical": "https://sgsland.vn/en/khu-vuc/bat-dong-san-quan-7",
+      "h1Count": 1,
+      "isNoIndex": false
+    },
+    {
+      "route": "/en/khu-vuc/bat-dong-san-phu-nhuan",
+      "title": "Phu Nhuan Real Estate | Area reference | SGS LAND",
+      "description": "Phu Nhuan Real Estate — Quận Phú Nhuận, TP.HCM. Căn hộ từ 3,5 tỷ; nhà phố từ 10 tỷ VNĐ. Indicative area information from SGS LAND; verify current price, legal status, progress and distribution authorization against original documents.",
+      "canonical": "https://sgsland.vn/en/khu-vuc/bat-dong-san-phu-nhuan",
+      "h1Count": 1,
+      "isNoIndex": false
+    },
+    {
+      "route": "/en/khu-vuc/bat-dong-san-binh-chanh",
+      "title": "Bất Động Sản Bình Chánh | Area reference | SGS LAND",
+      "description": "Bất Động Sản Bình Chánh — Huyện Bình Chánh, TP.HCM. Đất nền từ 1,5 tỷ; nhà phố từ 4 tỷ VNĐ. Indicative area information from SGS LAND; verify current price, legal status, progress and distribution authorization against original documents.",
+      "canonical": "https://sgsland.vn/en/khu-vuc/bat-dong-san-binh-chanh",
+      "h1Count": 1,
+      "isNoIndex": false
+    },
+    {
+      "route": "/en/khu-vuc/bat-dong-san-can-gio",
+      "title": "Can Gio Real Estate | Area reference | SGS LAND",
+      "description": "Can Gio Real Estate — Cần Giờ, TP.HCM. 18–55 triệu/m² (giá tham khảo). Indicative area information from SGS LAND; verify current price, legal status, progress and distribution authorization against original documents.",
+      "canonical": "https://sgsland.vn/en/khu-vuc/bat-dong-san-can-gio",
+      "h1Count": 1,
+      "isNoIndex": false
+    },
+    {
+      "route": "/en/khu-vuc/bat-dong-san-hoc-mon",
+      "title": "Hoc Mon Real Estate | Area reference | SGS LAND",
+      "description": "Hoc Mon Real Estate — Hóc Môn, TP.HCM. 15–42 triệu/m² (giá tham khảo). Indicative area information from SGS LAND; verify current price, legal status, progress and distribution authorization against original documents.",
+      "canonical": "https://sgsland.vn/en/khu-vuc/bat-dong-san-hoc-mon",
+      "h1Count": 1,
+      "isNoIndex": false
+    },
+    {
+      "route": "/en/khu-vuc/bat-dong-san-binh-thanh",
+      "title": "Binh Thanh Real Estate | Area reference | SGS LAND",
+      "description": "Binh Thanh Real Estate — Quận Bình Thạnh, TP.HCM. Căn hộ từ 3 tỷ; biệt thự từ 15 tỷ VNĐ. Indicative area information from SGS LAND; verify current price, legal status, progress and distribution authorization against original documents.",
+      "canonical": "https://sgsland.vn/en/khu-vuc/bat-dong-san-binh-thanh",
+      "h1Count": 1,
+      "isNoIndex": false
+    },
+    {
+      "route": "/en/khu-vuc/bat-dong-san-long-an",
+      "title": "Long An Real Estate | Area reference | SGS LAND",
+      "description": "Long An Real Estate — Long An. Đất nền từ 1 tỷ; biệt thự từ 3 tỷ VNĐ. Indicative area information from SGS LAND; verify current price, legal status, progress and distribution authorization against original documents.",
+      "canonical": "https://sgsland.vn/en/khu-vuc/bat-dong-san-long-an",
+      "h1Count": 1,
+      "isNoIndex": false
+    },
+    {
+      "route": "/en/privacy-policy",
+      "title": "Chính Sách Bảo Mật | SGS LAND",
+      "description": "SGS LAND — nền tảng bất động sản với định giá AI, CRM đa kênh và quản lý kho hàng cho sàn giao dịch, môi giới và doanh nghiệp tại Việt Nam.",
+      "canonical": "https://sgsland.vn/en/privacy-policy",
+      "h1Count": 1,
+      "isNoIndex": false
+    },
+    {
+      "route": "/en/terms-of-service",
+      "title": "Điều Khoản Sử Dụng | SGS LAND",
+      "description": "SGS LAND — nền tảng bất động sản với định giá AI, CRM đa kênh và quản lý kho hàng cho sàn giao dịch, môi giới và doanh nghiệp tại Việt Nam.",
+      "canonical": "https://sgsland.vn/en/terms-of-service",
+      "h1Count": 1,
+      "isNoIndex": false
+    },
+    {
+      "route": "/en/du-an/aqua-city",
+      "title": "Aqua City Novaland Đồng Nai | Property project | SGS LAND",
+      "description": "Aqua City Novaland Đồng Nai — Long Hưng, Biên Hòa, Đồng Nai. Biệt thự đảo từ 6,5 tỷ; sản phẩm khoảng 8–50 tỷ VNĐ/căn (2026). Indicative project information from SGS LAND; verify current price, legal status, progress and distribution authorization against original documents.",
+      "canonical": "https://sgsland.vn/en/du-an/aqua-city",
+      "h1Count": 1,
+      "isNoIndex": false
+    },
+    {
+      "route": "/en/du-an/the-global-city",
+      "title": "The Global City | Property project | SGS LAND",
+      "description": "The Global City — An Phú, TP Thủ Đức. Shophouse từ 15 tỷ; căn hộ từ 5 tỷ VNĐ. Indicative project information from SGS LAND; verify current price, legal status, progress and distribution authorization against original documents.",
+      "canonical": "https://sgsland.vn/en/du-an/the-global-city",
+      "h1Count": 1,
+      "isNoIndex": false
+    },
+    {
+      "route": "/en/du-an/izumi-city",
+      "title": "Izumi City Nam Long | Property project | SGS LAND",
+      "description": "Izumi City Nam Long — Biên Hòa, Đồng Nai. Nhà phố từ 8,4 tỷ; biệt thự từ 20 tỷ VNĐ. Indicative project information from SGS LAND; verify current price, legal status, progress and distribution authorization against original documents.",
+      "canonical": "https://sgsland.vn/en/du-an/izumi-city",
+      "h1Count": 1,
+      "isNoIndex": false
+    },
+    {
+      "route": "/en/du-an/vinhomes-can-gio",
+      "title": "Vinhomes Cần Giờ | Property project | SGS LAND",
+      "description": "Vinhomes Cần Giờ — Cần Giờ, TP.HCM. Dự kiến mở bán Q3/2026. Indicative project information from SGS LAND; verify current price, legal status, progress and distribution authorization against original documents.",
+      "canonical": "https://sgsland.vn/en/du-an/vinhomes-can-gio",
+      "h1Count": 1,
+      "isNoIndex": false
+    },
+    {
+      "route": "/en/du-an/vinhomes-grand-park",
+      "title": "Vinhomes Grand Park | Property project | SGS LAND",
+      "description": "Vinhomes Grand Park — TP Thủ Đức, TP.HCM. Căn hộ từ 2,5 tỷ; The Opus One từ 8 tỷ VNĐ. Indicative project information from SGS LAND; verify current price, legal status, progress and distribution authorization against original documents.",
+      "canonical": "https://sgsland.vn/en/du-an/vinhomes-grand-park",
+      "h1Count": 1,
+      "isNoIndex": false
+    },
+    {
+      "route": "/en/du-an/vinhomes-central-park",
+      "title": "Vinhomes Central Park Bình Thạnh – Căn hộ Landmark 81 | Property project | SGS LAND",
+      "description": "Vinhomes Central Park Bình Thạnh – Căn hộ Landmark 81 — Bình Thạnh, TP.HCM. Căn hộ từ 4 tỷ; Shophouse từ 15 tỷ VNĐ (2026). Indicative project information from SGS LAND; verify current price, legal status, progress and distribution authorization against original documents.",
+      "canonical": "https://sgsland.vn/en/du-an/vinhomes-central-park",
+      "h1Count": 1,
+      "isNoIndex": false
+    },
+    {
+      "route": "/en/du-an/masterise-homes",
+      "title": "Masterise Homes | Property project | SGS LAND",
+      "description": "Masterise Homes — TP.HCM. Căn hộ từ 5 tỷ VNĐ. Indicative project information from SGS LAND; verify current price, legal status, progress and distribution authorization against original documents.",
+      "canonical": "https://sgsland.vn/en/du-an/masterise-homes",
+      "h1Count": 1,
+      "isNoIndex": false
+    },
+    {
+      "route": "/en/du-an/lumiere",
+      "title": "Lumière Riverside | Property project | SGS LAND",
+      "description": "Lumière Riverside — Bình Thạnh, TP.HCM. Căn hộ từ 7 tỷ VNĐ. Indicative project information from SGS LAND; verify current price, legal status, progress and distribution authorization against original documents.",
+      "canonical": "https://sgsland.vn/en/du-an/lumiere",
+      "h1Count": 1,
+      "isNoIndex": false
+    },
+    {
+      "route": "/en/du-an/waterpoint",
+      "title": "Waterpoint Nam Long | Property project | SGS LAND",
+      "description": "Waterpoint Nam Long — Bến Lức, Long An. Nhà phố từ 5 tỷ VNĐ. Indicative project information from SGS LAND; verify current price, legal status, progress and distribution authorization against original documents.",
+      "canonical": "https://sgsland.vn/en/du-an/waterpoint",
+      "h1Count": 1,
+      "isNoIndex": false
+    },
+    {
+      "route": "/en/du-an/the-privia",
+      "title": "The Privia Khang Điền | Property project | SGS LAND",
+      "description": "The Privia Khang Điền — Bình Tân, TP.HCM. Căn hộ từ 3,5 tỷ VNĐ. Indicative project information from SGS LAND; verify current price, legal status, progress and distribution authorization against original documents.",
+      "canonical": "https://sgsland.vn/en/du-an/the-privia",
+      "h1Count": 1,
+      "isNoIndex": false
+    },
+    {
+      "route": "/en/du-an/van-phuc-city",
+      "title": "Văn Phúc City | Property project | SGS LAND",
+      "description": "Văn Phúc City — Thủ Đức, TP.HCM. Nhà phố từ 8 tỷ VNĐ. Indicative project information from SGS LAND; verify current price, legal status, progress and distribution authorization against original documents.",
+      "canonical": "https://sgsland.vn/en/du-an/van-phuc-city",
+      "h1Count": 1,
+      "isNoIndex": false
+    },
+    {
+      "route": "/en/du-an/sala",
+      "title": "Sala Đại Quang Minh | Property project | SGS LAND",
+      "description": "Sala Đại Quang Minh — TP Thủ Đức, TP.HCM. Căn hộ từ 5 tỷ VNĐ. Indicative project information from SGS LAND; verify current price, legal status, progress and distribution authorization against original documents.",
+      "canonical": "https://sgsland.vn/en/du-an/sala",
+      "h1Count": 1,
+      "isNoIndex": false
+    },
+    {
+      "route": "/en/du-an/thu-thiem",
+      "title": "Thủ Thiêm | Property project | SGS LAND",
+      "description": "Thủ Thiêm — TP Thủ Đức, TP.HCM. Căn hộ từ 8 tỷ VNĐ. Indicative project information from SGS LAND; verify current price, legal status, progress and distribution authorization against original documents.",
+      "canonical": "https://sgsland.vn/en/du-an/thu-thiem",
+      "h1Count": 1,
+      "isNoIndex": false
+    },
+    {
+      "route": "/en/du-an/manhattan",
+      "title": "Manhattan | Property project | SGS LAND",
+      "description": "Manhattan — Quận 7, TP.HCM. Căn hộ từ 3,8 tỷ VNĐ. Indicative project information from SGS LAND; verify current price, legal status, progress and distribution authorization against original documents.",
+      "canonical": "https://sgsland.vn/en/du-an/manhattan",
+      "h1Count": 1,
+      "isNoIndex": false
+    },
+    {
+      "route": "/en/du-an/son-kim-land",
+      "title": "Sơn Kim Land | Property project | SGS LAND",
+      "description": "Sơn Kim Land — TP.HCM. Từ 5 tỷ VNĐ. Indicative project information from SGS LAND; verify current price, legal status, progress and distribution authorization against original documents.",
+      "canonical": "https://sgsland.vn/en/du-an/son-kim-land",
+      "h1Count": 1,
+      "isNoIndex": false
+    },
+    {
+      "route": "/en/du-an/vinhomes-hoc-mon",
+      "title": "Vinhomes Hóc Môn — Smart City 4.0, 667ha | Giá Từ 6,5 Tỷ | SGS LAND",
+      "description": "Vinhomes Smart City Hóc Môn — thông tin tham khảo về quy mô, vị trí, sản phẩm và mốc mở bán dự kiến. Giá, pháp lý, tiến độ và tư cách phân phối cần được xác minh bằng hồ sơ gốc trước khi giao dịch.",
+      "canonical": "https://sgsland.vn/en/du-an/vinhomes-hoc-mon",
+      "h1Count": 1,
+      "isNoIndex": false
+    },
+    {
+      "route": "/en/du-an/masteri-cosmo-central",
+      "title": "Masteri Cosmo Central The Global City Thủ Đức | Property project | SGS LAND",
+      "description": "Masteri Cosmo Central The Global City Thủ Đức — An Phú, TP. Thủ Đức, TP.HCM. Studio từ 6,4 tỷ; 2PN từ 9 tỷ; 3PN từ 13 tỷ VNĐ (2026). Indicative project information from SGS LAND; verify current price, legal status, progress and distribution authorization against original documents.",
+      "canonical": "https://sgsland.vn/en/du-an/masteri-cosmo-central",
+      "h1Count": 1,
+      "isNoIndex": false
+    },
+    {
+      "route": "/en/p/mcc",
+      "title": "Masteri Cosmo Central | Dự án BĐS | SGS LAND",
+      "description": "Masteri Cosmo Central — Đỗ Xuân Hợp, Thủ Đức, TP.HCM. Xem danh sách căn hộ, bảng giá và thông tin chi tiết tại SGS LAND.",
+      "canonical": "https://sgsland.vn/en/p/mcc",
+      "h1Count": 1,
+      "isNoIndex": false
+    },
+    {
+      "route": "/en/chu-dau-tu",
+      "title": "Property Developers in Vietnam | SGS LAND Partners | SGS LAND",
+      "description": "Property developers distributed by SGS LAND: Vinhomes, Novaland, Masterise Homes, Nam Long, Van Phuc Group, SonKim Land and Dai Quang Minh — projects, locations and authorised distribution.",
+      "canonical": "https://sgsland.vn/en/chu-dau-tu",
+      "h1Count": 1,
+      "isNoIndex": false
+    },
+    {
+      "route": "/en/chu-dau-tu/vinhomes",
+      "title": "Vinhomes — Projects & Distribution | SGS LAND | SGS LAND",
+      "description": "Vinhomes is Vingroup's residential real estate brand, developing large integrated townships with a full in-house amenity ecosystem (Vinschool, Vinmec, Vincom). SGS LAND is an authorised distribution agent for Vinhomes.",
+      "canonical": "https://sgsland.vn/en/chu-dau-tu/vinhomes",
+      "h1Count": 1,
+      "isNoIndex": false
+    },
+    {
+      "route": "/en/chu-dau-tu/novaland",
+      "title": "Novaland — Projects & Distribution | SGS LAND | SGS LAND",
+      "description": "Novaland develops large eco-townships and resort real estate across Ho Chi Minh City, Dong Nai and the southern provinces. SGS LAND is an authorised tier-1 agent for Novaland.",
+      "canonical": "https://sgsland.vn/en/chu-dau-tu/novaland",
+      "h1Count": 1,
+      "isNoIndex": false
+    },
+    {
+      "route": "/en/chu-dau-tu/masterise-homes",
+      "title": "Masterise Homes — Projects & Distribution | SGS LAND | SGS LAND",
+      "description": "Masterise Homes focuses on branded residences and high-end property in central locations. SGS LAND is an authorised distribution agent for Masterise Homes.",
+      "canonical": "https://sgsland.vn/en/chu-dau-tu/masterise-homes",
+      "h1Count": 1,
+      "isNoIndex": false
+    },
+    {
+      "route": "/en/chu-dau-tu/nam-long",
+      "title": "Nam Long Group — Projects & Distribution | SGS LAND | SGS LAND",
+      "description": "Nam Long Group builds Japanese-standard integrated townships with affordable and mid-tier products. SGS LAND is an authorised distribution agent for Nam Long.",
+      "canonical": "https://sgsland.vn/en/chu-dau-tu/nam-long",
+      "h1Count": 1,
+      "isNoIndex": false
+    },
+    {
+      "route": "/en/chu-dau-tu/van-phuc-group",
+      "title": "Tập đoàn Vạn Phúc — Projects & Distribution | SGS LAND | SGS LAND",
+      "description": "Van Phuc Group develops the riverside Van Phuc City township in Thu Duc, together with townhouse, villa and luxury apartment lines.",
+      "canonical": "https://sgsland.vn/en/chu-dau-tu/van-phuc-group",
+      "h1Count": 1,
+      "isNoIndex": false
+    },
+    {
+      "route": "/en/chu-dau-tu/son-kim-land",
+      "title": "Sơn Kim Land — Projects & Distribution | SGS LAND | SGS LAND",
+      "description": "SonKim Land develops high-end property in central Ho Chi Minh City with a strong focus on design and living experience.",
+      "canonical": "https://sgsland.vn/en/chu-dau-tu/son-kim-land",
+      "h1Count": 1,
+      "isNoIndex": false
+    },
+    {
+      "route": "/en/chu-dau-tu/dai-quang-minh",
+      "title": "Đại Quang Minh — Projects & Distribution | SGS LAND | SGS LAND",
+      "description": "Dai Quang Minh is the developer of the Sala urban area in Thu Thiem, Thu Duc — part of Ho Chi Minh City's new central district.",
+      "canonical": "https://sgsland.vn/en/chu-dau-tu/dai-quang-minh",
+      "h1Count": 1,
+      "isNoIndex": false
+    },
+    {
+      "route": "/dau-tu-bat-dong-san",
+      "title": "Đầu Tư Bất Động Sản 2026: 5 Kênh Sinh Lời 8-15%/Năm | SGS Land | SGS LAND",
+      "description": "Đầu tư BĐS 2026 sinh lời 8-15%/năm: chọn dự án tiềm năng, pháp lý rõ ràng, dòng tiền ổn định tại TP.HCM, Đồng Nai, Bình Dương. ☎ Nhận tư vấn & báo giá miễn phí từ SGS Land!",
+      "canonical": "https://sgsland.vn/dau-tu-bat-dong-san",
+      "h1Count": 1,
+      "isNoIndex": false
+    },
+    {
+      "route": "/ky-gui-bat-dong-san",
+      "title": "Ký Gửi Bất Động Sản | SGS LAND",
+      "description": "Ký gửi BĐS tại SGS LAND: đăng ký miễn phí, không phí ban đầu, định giá AI, thẩm định pháp lý, hoa hồng chỉ thu khi giao dịch thành công. Mua bán 1–2%, cho thuê 1 tháng tiền thuê.",
+      "canonical": "https://sgsland.vn/ky-gui-bat-dong-san",
+      "h1Count": 1,
+      "isNoIndex": false
+    },
+    {
+      "route": "/phap-ly-nha-dat",
+      "title": "Pháp Lý Nhà Đất 2025 | Hướng Dẫn Mua Bán BĐS | SGS LAND",
+      "description": "Hướng dẫn pháp lý mua bán nhà đất 2025: kiểm tra sổ hồng, thủ tục sang tên, thuế phí, lưu ý khi ký hợp đồng. Bảo vệ quyền lợi người mua.",
+      "canonical": "https://sgsland.vn/phap-ly-nha-dat",
+      "h1Count": 1,
+      "isNoIndex": false
+    },
+    {
+      "route": "/lai-suat-ngan-hang",
+      "title": "Lãi Suất Ngân Hàng 2026 | Vay Mua BĐS | SGS LAND",
+      "description": "Tổng hợp lãi suất vay mua nhà tốt nhất 2026 từ Vietcombank, BIDV, VietinBank, Techcombank, VPBank, MB. Tính toán khoản vay thông minh cùng SGS LAND.",
+      "canonical": "https://sgsland.vn/lai-suat-ngan-hang",
+      "h1Count": 1,
+      "isNoIndex": false
+    },
+    {
+      "route": "/tin-tuc/luat-dat-dai-2024-nhung-diem-moi-quan-trong",
+      "title": "Bài viết không tìm thấy | SGS LAND",
+      "description": "SGS LAND — nền tảng bất động sản với định giá AI, CRM đa kênh và quản lý kho hàng cho sàn giao dịch, môi giới và doanh nghiệp tại Việt Nam.",
+      "canonical": "https://sgsland.vn/tin-tuc/luat-dat-dai-2024-nhung-diem-moi-quan-trong",
+      "h1Count": 0,
+      "isNoIndex": true
+    },
+    {
+      "route": "/tin-tuc/dau-tu-bds-dong-nai-2025",
+      "title": "Bài viết không tìm thấy | SGS LAND",
+      "description": "SGS LAND — nền tảng bất động sản với định giá AI, CRM đa kênh và quản lý kho hàng cho sàn giao dịch, môi giới và doanh nghiệp tại Việt Nam.",
+      "canonical": "https://sgsland.vn/tin-tuc/dau-tu-bds-dong-nai-2025",
+      "h1Count": 0,
+      "isNoIndex": true
+    },
+    {
+      "route": "/tin-tuc/gia-chung-cu-tphcm-2025",
+      "title": "Bài viết không tìm thấy | SGS LAND",
+      "description": "SGS LAND — nền tảng bất động sản với định giá AI, CRM đa kênh và quản lý kho hàng cho sàn giao dịch, môi giới và doanh nghiệp tại Việt Nam.",
+      "canonical": "https://sgsland.vn/tin-tuc/gia-chung-cu-tphcm-2025",
+      "h1Count": 0,
+      "isNoIndex": true
+    },
+    {
+      "route": "/tin-tuc/vay-mua-nha-ngan-hang-nao-tot-nhat",
+      "title": "Bài viết không tìm thấy | SGS LAND",
+      "description": "SGS LAND — nền tảng bất động sản với định giá AI, CRM đa kênh và quản lý kho hàng cho sàn giao dịch, môi giới và doanh nghiệp tại Việt Nam.",
+      "canonical": "https://sgsland.vn/tin-tuc/vay-mua-nha-ngan-hang-nao-tot-nhat",
+      "h1Count": 0,
+      "isNoIndex": true
+    },
+    {
+      "route": "/tin-tuc/dau-tu-vinhomes-grand-park",
+      "title": "Bài viết không tìm thấy | SGS LAND",
+      "description": "SGS LAND — nền tảng bất động sản với định giá AI, CRM đa kênh và quản lý kho hàng cho sàn giao dịch, môi giới và doanh nghiệp tại Việt Nam.",
+      "canonical": "https://sgsland.vn/tin-tuc/dau-tu-vinhomes-grand-park",
+      "h1Count": 0,
+      "isNoIndex": true
+    },
+    {
+      "route": "/tin-tuc/phong-thuy-mua-nha",
+      "title": "Bài viết không tìm thấy | SGS LAND",
+      "description": "SGS LAND — nền tảng bất động sản với định giá AI, CRM đa kênh và quản lý kho hàng cho sàn giao dịch, môi giới và doanh nghiệp tại Việt Nam.",
+      "canonical": "https://sgsland.vn/tin-tuc/phong-thuy-mua-nha",
+      "h1Count": 0,
+      "isNoIndex": true
+    },
+    {
+      "route": "/tin-tuc/can-ho-ha-tang-tphcm-2025-2026",
+      "title": "Bài viết không tìm thấy | SGS LAND",
+      "description": "SGS LAND — nền tảng bất động sản với định giá AI, CRM đa kênh và quản lý kho hàng cho sàn giao dịch, môi giới và doanh nghiệp tại Việt Nam.",
+      "canonical": "https://sgsland.vn/tin-tuc/can-ho-ha-tang-tphcm-2025-2026",
+      "h1Count": 0,
+      "isNoIndex": true
+    },
+    {
+      "route": "/bat-dong-san-dong-nai",
+      "title": "Bất Động Sản Đồng Nai 2026 – Giá Bán, Dự Án & Tư Vấn Đầu Tư | SGS Land | SGS LAND",
+      "description": "Bất động sản Đồng Nai 2026: giá bán, danh sách dự án nhà phố, biệt thự, đất nền Long Thành, Biên Hòa, Nhơn Trạch. Cập nhật Aqua City, Izumi City, tiến độ & pháp lý. ☎ Tư vấn mua bán BĐS Đồng Nai miễn phí từ SGS Land!",
+      "canonical": "https://sgsland.vn/bat-dong-san-dong-nai",
+      "h1Count": 1,
+      "isNoIndex": false
+    },
+    {
+      "route": "/bat-dong-san-long-thanh",
+      "title": "Bất Động Sản Long Thành 2026 | BĐS Hành Lang Sân Bay | SGS LAND",
+      "description": "3.200+ bất động sản Long Thành, Đồng Nai. Hưởng lợi từ Sân Bay Quốc Tế Long Thành, cao tốc Bến Lức — Long Thành. Đất nền, nhà phố, khu công nghiệp.",
+      "canonical": "https://sgsland.vn/bat-dong-san-long-thanh",
+      "h1Count": 1,
+      "isNoIndex": false
+    },
+    {
+      "route": "/bat-dong-san-thu-duc",
+      "title": "Bất Động Sản Thủ Đức 2026 | The Global City, Thủ Thiêm | SGS LAND",
+      "description": "BDS Thu Duc 2026: Masteri Cosmo The Global City tu 6,4 ty, Empire City Thu Thiem, can ho Thu Thiem gia bao nhieu. Quy hoach Thu Duc 2026, du an moi nhat. SGS LAND - dai ly F1 Masterise Homes.",
+      "canonical": "https://sgsland.vn/bat-dong-san-thu-duc",
+      "h1Count": 1,
+      "isNoIndex": false
+    },
+    {
+      "route": "/bat-dong-san-binh-duong",
+      "title": "Bất Động Sản Bình Dương 2025 | SGS LAND",
+      "description": "6400+ bất động sản Bình Dương — nhà phố, căn hộ, đất nền.",
+      "canonical": "https://sgsland.vn/bat-dong-san-binh-duong",
+      "h1Count": 1,
+      "isNoIndex": false
+    },
+    {
+      "route": "/bat-dong-san-quan-7",
+      "title": "Bất Động Sản Quận 7 2025 | SGS LAND",
+      "description": "4100+ bất động sản Quận 7 — nhà phố, căn hộ, đất nền.",
+      "canonical": "https://sgsland.vn/bat-dong-san-quan-7",
+      "h1Count": 1,
+      "isNoIndex": false
+    },
+    {
+      "route": "/bat-dong-san-phu-nhuan",
+      "title": "Bất Động Sản Phú Nhuận 2025 | SGS LAND",
+      "description": "2300+ bất động sản Phú Nhuận — nhà phố, căn hộ, đất nền.",
+      "canonical": "https://sgsland.vn/bat-dong-san-phu-nhuan",
+      "h1Count": 1,
+      "isNoIndex": false
+    },
+    {
+      "route": "/bat-dong-san-binh-chanh",
+      "title": "Bất Động Sản Bình Chánh | Nhà Đất Bình Chánh TP.HCM | SGS LAND",
+      "description": "Tìm BĐS Bình Chánh TP.HCM: đất nền, nhà phố, căn hộ giá tốt. Hạ tầng vành đai, KCN Vĩnh Lộc phát triển mạnh. Pháp lý rõ ràng, cập nhật liên tục.",
+      "canonical": "https://sgsland.vn/bat-dong-san-binh-chanh",
+      "h1Count": 1,
+      "isNoIndex": false
+    },
+    {
+      "route": "/bat-dong-san-can-gio",
+      "title": "Bất Động Sản Cần Giờ | Siêu Đô Thị Lấn Biển | SGS LAND",
+      "description": "BĐS Cần Giờ TP.HCM: cơ hội đầu tư đón sóng Vinhomes Cần Giờ 2.870ha và Metro số 4. Giá đất còn thấp, tiềm năng tăng trưởng cao nhất TP.HCM.",
+      "canonical": "https://sgsland.vn/bat-dong-san-can-gio",
+      "h1Count": 1,
+      "isNoIndex": false
+    },
+    {
+      "route": "/bat-dong-san-binh-thanh",
+      "title": "Bất Động Sản Bình Thạnh 2026 | Căn Hộ Cao Cấp Vỉn Sông | SGS LAND",
+      "description": "BDS Binh Thanh 2026: Can ho Vinhomes Central Park tu 4 ty, Lumiere Riverside, can ho cho thue Binh Thanh tu 15 trieu/thang. Gia dat Binh Thanh theo duong cap nhat. Xem du an, gia ban, cho thue tai sgsland.vn.",
+      "canonical": "https://sgsland.vn/bat-dong-san-binh-thanh",
+      "h1Count": 1,
+      "isNoIndex": false
+    },
+    {
+      "route": "/bat-dong-san-long-an",
+      "title": "Bất Động Sản Long An | Đất Nền Long An Giá Tốt | SGS LAND",
+      "description": "Tìm BĐS Long An: đất nền, nhà phố, Waterpoint Nam Long. Giá tốt, pháp lý rõ ràng, giáp TP.HCM, tiềm năng đầu tư cao nhờ hạ tầng kết nối đang hoàn thiện.",
+      "canonical": "https://sgsland.vn/bat-dong-san-long-an",
+      "h1Count": 1,
+      "isNoIndex": false
+    },
+    {
+      "route": "/tin-tuc/vinhomes-hoc-mon-du-an-moi-2026",
+      "title": "Bài viết không tìm thấy | SGS LAND",
+      "description": "SGS LAND — nền tảng bất động sản với định giá AI, CRM đa kênh và quản lý kho hàng cho sàn giao dịch, môi giới và doanh nghiệp tại Việt Nam.",
+      "canonical": "https://sgsland.vn/tin-tuc/vinhomes-hoc-mon-du-an-moi-2026",
+      "h1Count": 0,
+      "isNoIndex": true
+    },
+    {
+      "route": "/tin-tuc/masteri-cosmo-central-co-dang-mua-khong",
+      "title": "Bài viết không tìm thấy | SGS LAND",
+      "description": "SGS LAND — nền tảng bất động sản với định giá AI, CRM đa kênh và quản lý kho hàng cho sàn giao dịch, môi giới và doanh nghiệp tại Việt Nam.",
+      "canonical": "https://sgsland.vn/tin-tuc/masteri-cosmo-central-co-dang-mua-khong",
+      "h1Count": 0,
+      "isNoIndex": true
+    },
+    {
+      "route": "/tin-tuc/nha-o-xa-hoi-tphcm-2026",
+      "title": "Bài viết không tìm thấy | SGS LAND",
+      "description": "SGS LAND — nền tảng bất động sản với định giá AI, CRM đa kênh và quản lý kho hàng cho sàn giao dịch, môi giới và doanh nghiệp tại Việt Nam.",
+      "canonical": "https://sgsland.vn/tin-tuc/nha-o-xa-hoi-tphcm-2026",
+      "h1Count": 0,
+      "isNoIndex": true
+    },
+    {
+      "route": "/tin-tuc/quy-trinh-mua-nha-lan-dau",
+      "title": "Bài viết không tìm thấy | SGS LAND",
+      "description": "SGS LAND — nền tảng bất động sản với định giá AI, CRM đa kênh và quản lý kho hàng cho sàn giao dịch, môi giới và doanh nghiệp tại Việt Nam.",
+      "canonical": "https://sgsland.vn/tin-tuc/quy-trinh-mua-nha-lan-dau",
+      "h1Count": 0,
+      "isNoIndex": true
+    },
+    {
+      "route": "/tin-tuc/so-hong-so-do-khac-nhau-gi",
+      "title": "Bài viết không tìm thấy | SGS LAND",
+      "description": "SGS LAND — nền tảng bất động sản với định giá AI, CRM đa kênh và quản lý kho hàng cho sàn giao dịch, môi giới và doanh nghiệp tại Việt Nam.",
+      "canonical": "https://sgsland.vn/tin-tuc/so-hong-so-do-khac-nhau-gi",
+      "h1Count": 0,
+      "isNoIndex": true
+    },
+    {
+      "route": "/tin-tuc/nhon-trach-co-nen-mua-dat",
+      "title": "Bài viết không tìm thấy | SGS LAND",
+      "description": "SGS LAND — nền tảng bất động sản với định giá AI, CRM đa kênh và quản lý kho hàng cho sàn giao dịch, môi giới và doanh nghiệp tại Việt Nam.",
+      "canonical": "https://sgsland.vn/tin-tuc/nhon-trach-co-nen-mua-dat",
+      "h1Count": 0,
+      "isNoIndex": true
+    },
+    {
+      "route": "/tin-tuc/dau-tu-can-gio-vinhomes",
+      "title": "Bài viết không tìm thấy | SGS LAND",
+      "description": "SGS LAND — nền tảng bất động sản với định giá AI, CRM đa kênh và quản lý kho hàng cho sàn giao dịch, môi giới và doanh nghiệp tại Việt Nam.",
+      "canonical": "https://sgsland.vn/tin-tuc/dau-tu-can-gio-vinhomes",
+      "h1Count": 0,
+      "isNoIndex": true
+    },
+    {
+      "route": "/tin-tuc/thue-nha-hay-mua-nha-tphcm",
+      "title": "Bài viết không tìm thấy | SGS LAND",
+      "description": "SGS LAND — nền tảng bất động sản với định giá AI, CRM đa kênh và quản lý kho hàng cho sàn giao dịch, môi giới và doanh nghiệp tại Việt Nam.",
+      "canonical": "https://sgsland.vn/tin-tuc/thue-nha-hay-mua-nha-tphcm",
+      "h1Count": 0,
+      "isNoIndex": true
+    },
+    {
+      "route": "/tin-tuc/lai-suat-vay-mua-nha-2026",
+      "title": "Bài viết không tìm thấy | SGS LAND",
+      "description": "SGS LAND — nền tảng bất động sản với định giá AI, CRM đa kênh và quản lý kho hàng cho sàn giao dịch, môi giới và doanh nghiệp tại Việt Nam.",
+      "canonical": "https://sgsland.vn/tin-tuc/lai-suat-vay-mua-nha-2026",
+      "h1Count": 0,
+      "isNoIndex": true
+    },
+    {
+      "route": "/tin-tuc/bien-dong-gia-bds-sau-vat-dai-3",
+      "title": "Bài viết không tìm thấy | SGS LAND",
+      "description": "SGS LAND — nền tảng bất động sản với định giá AI, CRM đa kênh và quản lý kho hàng cho sàn giao dịch, môi giới và doanh nghiệp tại Việt Nam.",
+      "canonical": "https://sgsland.vn/tin-tuc/bien-dong-gia-bds-sau-vat-dai-3",
+      "h1Count": 0,
+      "isNoIndex": true
+    },
+    {
+      "route": "/tin-tuc/chung-cu-biet-thu-nha-pho-nen-mua-gi",
+      "title": "Bài viết không tìm thấy | SGS LAND",
+      "description": "SGS LAND — nền tảng bất động sản với định giá AI, CRM đa kênh và quản lý kho hàng cho sàn giao dịch, môi giới và doanh nghiệp tại Việt Nam.",
+      "canonical": "https://sgsland.vn/tin-tuc/chung-cu-biet-thu-nha-pho-nen-mua-gi",
+      "h1Count": 0,
+      "isNoIndex": true
+    },
+    {
+      "route": "/tin-tuc/long-thanh-airport-bds-2026",
+      "title": "Bài viết không tìm thấy | SGS LAND",
+      "description": "SGS LAND — nền tảng bất động sản với định giá AI, CRM đa kênh và quản lý kho hàng cho sàn giao dịch, môi giới và doanh nghiệp tại Việt Nam.",
+      "canonical": "https://sgsland.vn/tin-tuc/long-thanh-airport-bds-2026",
+      "h1Count": 0,
+      "isNoIndex": true
+    },
+    {
+      "route": "/tin-tuc/foreigner-buy-property-vietnam",
+      "title": "Bài viết không tìm thấy | SGS LAND",
+      "description": "SGS LAND — nền tảng bất động sản với định giá AI, CRM đa kênh và quản lý kho hàng cho sàn giao dịch, môi giới và doanh nghiệp tại Việt Nam.",
+      "canonical": "https://sgsland.vn/tin-tuc/foreigner-buy-property-vietnam",
+      "h1Count": 0,
+      "isNoIndex": true
+    },
+    {
+      "route": "/bat-dong-san-hoc-mon",
+      "title": "Bất Động Sản Hóc Môn | Đất Nền & Nhà Phố Vùng Ven | SGS LAND",
+      "description": "BĐS Hóc Môn TP.HCM: đất nền, nhà phố vùng ven phía Tây Bắc. Giá còn mềm quanh 25 triệu/m², hạ tầng Vành đai 3 và Quốc lộ 22 thúc đẩy tăng trưởng.",
+      "canonical": "https://sgsland.vn/bat-dong-san-hoc-mon",
+      "h1Count": 1,
+      "isNoIndex": false
+    },
+    {
+      "route": "/bds/ban-dat-nen-vinh-thanh-nhon-trach-dong-n-1c048c0f-f744-4659-9c1c-fb8e0266f8be",
+      "title": "BÁN ĐẤT NỀN VĨNH THẠNH – NHƠN TRẠCH, ĐỒNG NAI | 5.90 tỷ | SGS LAND",
+      "description": "BÁN ĐẤT NỀN VĨNH THẠNH – NHƠN TRẠCH, ĐỒNG NAI — xã Vĩnh Thanh, Nhơn Trạch, Đồng Nai. Giá: 5.90 tỷ. 1094m², PN. Pháp lý: Đang cập nhật.",
+      "canonical": "https://sgsland.vn/bds/ban-dat-nen-vinh-thanh-nhon-trach-dong-n-1c048c0f-f744-4659-9c1c-fb8e0266f8be",
+      "h1Count": 1,
+      "isNoIndex": false
+    },
+    {
+      "route": "/bds/ban-nha-pho-aqua-city-120m-chi-6-8-ty-1-b5b7ba4a-4392-45b7-9985-fb5a8cd846b0",
+      "title": "Bán nhà phố Aqua City 120m² chỉ 6.8 tỷ – 1 trệt 2 lầu, hoàn thiện thô | 6.80 tỷ | SGS LAND",
+      "description": "Bán nhà phố Aqua City 120m² chỉ 6.8 tỷ – 1 trệt 2 lầu, hoàn thiện thô — đường Ngô Quyền, Long Hưng, Đồng Nai. Giá: 6.80 tỷ. 120m², PN. Pháp lý: Đang cập nhật.",
+      "canonical": "https://sgsland.vn/bds/ban-nha-pho-aqua-city-120m-chi-6-8-ty-1-b5b7ba4a-4392-45b7-9985-fb5a8cd846b0",
+      "h1Count": 1,
+      "isNoIndex": false
+    },
+    {
+      "route": "/bds/ban-nha-pho-khu-elite-aqua-city-140m-chi-5af03bbd-e77f-4d59-8fbf-7aa162130d33",
+      "title": "Bán nhà phố khu Elite Aqua City 140m² chỉ 11.9 tỷ – Vị trí đẹp, view thoáng | 11.90 tỷ | SGS LAND",
+      "description": "Bán nhà phố khu Elite Aqua City 140m² chỉ 11.9 tỷ – Vị trí đẹp, view thoáng — đường Ngô Quyền, Long Hưng, Biên Hoà. Giá: 11.90 tỷ. 140m², PN. Pháp lý: Đang cập nhật.",
+      "canonical": "https://sgsland.vn/bds/ban-nha-pho-khu-elite-aqua-city-140m-chi-5af03bbd-e77f-4d59-8fbf-7aa162130d33",
+      "h1Count": 1,
+      "isNoIndex": false
+    },
+    {
+      "route": "/bds/co-hoi-vang-dat-an-phuoc-tam-an-long-tha-4f40da30-37ee-4e9e-b998-8368706c338a",
+      "title": "Bất động sản | SGS LAND",
+      "description": "SGS LAND — nền tảng bất động sản với định giá AI, CRM đa kênh và quản lý kho hàng cho sàn giao dịch, môi giới và doanh nghiệp tại Việt Nam.",
+      "canonical": "https://sgsland.vn/bds/co-hoi-vang-dat-an-phuoc-tam-an-long-tha-4f40da30-37ee-4e9e-b998-8368706c338a",
+      "h1Count": 0,
+      "isNoIndex": false
+    },
+    {
+      "route": "/bds/chuyen-nhuong-gia-tot-cac-bat-dong-san-d-1c222cf4-670c-405f-bdfe-8aa2aae42f41",
+      "title": "Chuyển nhượng giá tốt các bất động sản dự án Aqua City | 6.20 tỷ | SGS LAND",
+      "description": "Chuyển nhượng giá tốt các bất động sản dự án Aqua City — đường Ngô Quyền, Long Hưng, Đồng Nai. Giá: 6.20 tỷ. 120m², PN. Pháp lý: Đang cập nhật.",
+      "canonical": "https://sgsland.vn/bds/chuyen-nhuong-gia-tot-cac-bat-dong-san-d-1c222cf4-670c-405f-bdfe-8aa2aae42f41",
+      "h1Count": 1,
+      "isNoIndex": false
+    },
+    {
+      "route": "/bds/ban-nha-pho-dao-phuong-hoang-aqua-city-1-f2309ad6-131f-444d-a55c-b96ea3a80878",
+      "title": "Bán nhà phố Đảo Phượng Hoàng Aqua City 130m² chỉ 8,6 tỷ – View sông thoáng, phân khu cao cấp. | 8.60 tỷ | SGS LAND",
+      "description": "Bán nhà phố Đảo Phượng Hoàng Aqua City 130m² chỉ 8,6 tỷ – View sông thoáng, phân khu cao cấp. — đường Ngô Quyền, Long Hưng, Đồng Nai. Giá: 8.60 tỷ. 130m², PN. Pháp lý: Đang cập nhật.",
+      "canonical": "https://sgsland.vn/bds/ban-nha-pho-dao-phuong-hoang-aqua-city-1-f2309ad6-131f-444d-a55c-b96ea3a80878",
+      "h1Count": 1,
+      "isNoIndex": false
+    },
+    {
+      "route": "/bds/ban-nha-pho-dao-phuong-hoang-aqua-city-1-05f9f511-57d5-4685-88e1-24d8deea3f14",
+      "title": "Bán nhà phố đảo Phượng Hoàng Aqua City 130m² chỉ 8.1 tỷ – 1 trệt 2 lầu, hoàn thiện thô, vị trí đẹp ven sông | 8.10 tỷ | SGS LAND",
+      "description": "Bán nhà phố đảo Phượng Hoàng Aqua City 130m² chỉ 8.1 tỷ – 1 trệt 2 lầu, hoàn thiện thô, vị trí đẹp ven sông — đường Ngô Quyền, Long Hưng, Đồng Nai. Giá: 8.10 tỷ. 130m², PN. Pháp lý: Đang cập nhật.",
+      "canonical": "https://sgsland.vn/bds/ban-nha-pho-dao-phuong-hoang-aqua-city-1-05f9f511-57d5-4685-88e1-24d8deea3f14",
+      "h1Count": 1,
+      "isNoIndex": false
+    },
+    {
+      "route": "/bds/ban-nha-pho-dao-phuong-hoang-aqua-city-1-93ad1ea4-8ec9-4843-9d56-d893c976edc6",
+      "title": "Bán nhà phố Đảo Phượng Hoàng Aqua City 110m² chỉ 7,9 tỷ – View sông thoáng, phân khu cao cấp. | 7.90 tỷ | SGS LAND",
+      "description": "Bán nhà phố Đảo Phượng Hoàng Aqua City 110m² chỉ 7,9 tỷ – View sông thoáng, phân khu cao cấp. — đường Ngô Quyền, Long Hưng, Biên Hoà, Đồng Nai. Giá: 7.90 tỷ. 110m², PN. Pháp lý: Đang cập nhật.",
+      "canonical": "https://sgsland.vn/bds/ban-nha-pho-dao-phuong-hoang-aqua-city-1-93ad1ea4-8ec9-4843-9d56-d893c976edc6",
+      "h1Count": 1,
+      "isNoIndex": false
+    },
+    {
+      "route": "/bds/ban-gap-dat-tho-cu-100-long-duc-long-tha-88608ea0-19d8-4643-a1c6-dd3ca1a6e644",
+      "title": "BÁN GẤP ĐẤT THỔ CƯ 100% LONG ĐỨC - LONG THÀNH - ĐỒNG NAI | 1.29 tỷ | SGS LAND",
+      "description": "BÁN GẤP ĐẤT THỔ CƯ 100% LONG ĐỨC - LONG THÀNH - ĐỒNG NAI — xã Long Đức, Long Thành, Đồng Nai. Giá: 1.29 tỷ. 161m², PN. Pháp lý: Đang cập nhật.",
+      "canonical": "https://sgsland.vn/bds/ban-gap-dat-tho-cu-100-long-duc-long-tha-88608ea0-19d8-4643-a1c6-dd3ca1a6e644",
+      "h1Count": 1,
+      "isNoIndex": false
+    },
+    {
+      "route": "/bds/chuyen-nhuong-can-ho-vinhomes-central-pa-d475527c-f1e7-40ee-a815-cff16394369b",
+      "title": "Chuyển Nhượng Căn Hộ Vinhomes Central Park Bình Thạnh - Giá Tốt Nhất 2026 | View Sông Thoáng, Tiện Ích 5 Sao, Sổ Hồng Sẵn | 10.90 tỷ | SGS LAND",
+      "description": "Chuyển Nhượng Căn Hộ Vinhomes Central Park Bình Thạnh - Giá Tốt Nhất 2026 | View Sông Thoáng, Tiện Ích 5 Sao, Sổ Hồng Sẵn — 208 Nguyễn Hữu Cảnh, Bình Thạnh, HCM. Giá: 10.90 tỷ. 80m², 2PN. Pháp lý: Đang cập nhật.",
+      "canonical": "https://sgsland.vn/bds/chuyen-nhuong-can-ho-vinhomes-central-pa-d475527c-f1e7-40ee-a815-cff16394369b",
+      "h1Count": 1,
+      "isNoIndex": false
+    },
+    {
+      "route": "/bds/co-hoi-so-huu-shophouse-sh3-01-vi-tri-ki-58d3cb6b-02b6-4d68-9bfb-b57e1eaec80d",
+      "title": "Cơ hội sở hữu Shophouse SH3-01 – Vị trí kinh doanh đắc địa | 17.64 tỷ | SGS LAND",
+      "description": "Cơ hội sở hữu Shophouse SH3-01 – Vị trí kinh doanh đắc địa — đường Ngô Quyền, Long Hưng, Đồng Nai. Giá: 17.64 tỷ. 157m², PN. Pháp lý: Đang cập nhật.",
+      "canonical": "https://sgsland.vn/bds/co-hoi-so-huu-shophouse-sh3-01-vi-tri-ki-58d3cb6b-02b6-4d68-9bfb-b57e1eaec80d",
+      "h1Count": 1,
+      "isNoIndex": false
+    },
+    {
+      "route": "/bds/co-hoi-so-huu-biet-thu-sv3-11-dien-tich-a4b2359c-e8d2-41ff-9c53-f9500e3eb916",
+      "title": "Bất động sản | SGS LAND",
+      "description": "SGS LAND — nền tảng bất động sản với định giá AI, CRM đa kênh và quản lý kho hàng cho sàn giao dịch, môi giới và doanh nghiệp tại Việt Nam.",
+      "canonical": "https://sgsland.vn/bds/co-hoi-so-huu-biet-thu-sv3-11-dien-tich-a4b2359c-e8d2-41ff-9c53-f9500e3eb916",
+      "h1Count": 0,
+      "isNoIndex": false
+    },
+    {
+      "route": "/bds/co-hoi-vang-so-huu-biet-thu-sv3-14-dien-effacd43-9a1c-4169-9656-fc736e86c98b",
+      "title": "Cơ hội vàng sở hữu Biệt thự SV3-14 – Diện tích khủng chỉ 10,4 tỷ | 10.92 tỷ | SGS LAND",
+      "description": "Cơ hội vàng sở hữu Biệt thự SV3-14 – Diện tích khủng chỉ 10,4 tỷ — đường Ngô Quyền, Long Hưng, Đồng Nai. Giá: 10.92 tỷ. 200m², PN. Pháp lý: Đang cập nhật.",
+      "canonical": "https://sgsland.vn/bds/co-hoi-vang-so-huu-biet-thu-sv3-14-dien-effacd43-9a1c-4169-9656-fc736e86c98b",
+      "h1Count": 1,
+      "isNoIndex": false
+    },
+    {
+      "route": "/bds/biet-thu-sv3-13-sieu-pham-dien-tich-lon-9646d196-5e2d-4117-9cb3-5593cd361a6b",
+      "title": "Biệt thự SV3-13 – Siêu phẩm diện tích lớn, giá trị đầu tư vượt trội | 24.88 tỷ | SGS LAND",
+      "description": "Biệt thự SV3-13 – Siêu phẩm diện tích lớn, giá trị đầu tư vượt trội — đường Ngô Quyền, Long Hưng, Đồng Nai. Giá: 24.88 tỷ. 312m², PN. Pháp lý: Đang cập nhật.",
+      "canonical": "https://sgsland.vn/bds/biet-thu-sv3-13-sieu-pham-dien-tich-lon-9646d196-5e2d-4117-9cb3-5593cd361a6b",
+      "h1Count": 1,
+      "isNoIndex": false
+    },
+    {
+      "route": "/bds/nha-pho-na-t12-11-dien-tich-vang-gia-cuc-e30d53ab-8df6-4c21-88a9-5dfad64f8552",
+      "title": "Nhà phố NA.T12-11 – Diện tích vàng, giá cực kỳ cạnh tranh | 9.45 tỷ | SGS LAND",
+      "description": "Nhà phố NA.T12-11 – Diện tích vàng, giá cực kỳ cạnh tranh — đường Ngô Quyền, Long Hưng, Đồng Nai. Giá: 9.45 tỷ. 160m², PN. Pháp lý: Đang cập nhật.",
+      "canonical": "https://sgsland.vn/bds/nha-pho-na-t12-11-dien-tich-vang-gia-cuc-e30d53ab-8df6-4c21-88a9-5dfad64f8552",
+      "h1Count": 1,
+      "isNoIndex": false
+    },
+    {
+      "route": "/bds/biet-thu-don-lap-na-gv4-04-sieu-biet-thu-d497185e-309b-45d1-8c33-9697170ae8ab",
+      "title": "Biệt thự đơn lập NA.GV4-04 – Siêu biệt thự diện tích lớn, vị trí đắc địa | 32.00 tỷ | SGS LAND",
+      "description": "Biệt thự đơn lập NA.GV4-04 – Siêu biệt thự diện tích lớn, vị trí đắc địa — đường Ngô Quyền, Long Hưng, Đồng Nai. Giá: 32.00 tỷ. 375m², PN. Pháp lý: Đang cập nhật.",
+      "canonical": "https://sgsland.vn/bds/biet-thu-don-lap-na-gv4-04-sieu-biet-thu-d497185e-309b-45d1-8c33-9697170ae8ab",
+      "h1Count": 1,
+      "isNoIndex": false
+    },
+    {
+      "route": "/bds/ban-biet-thu-don-lap-na-gv2-05-dien-tich-c57cc4ff-c299-40de-97d2-983f03b0c4b9",
+      "title": "Bán Biệt Thự Đơn Lập NA.GV2-05 – Diện Tích 15x25m, Giá Chỉ 30,5 Tỷ (Chưa VAT) – Cơ Hội Sống Sang, Đầu Tư Sinh Lời Ngay! | 33.55 tỷ | SGS LAND",
+      "description": "Bán Biệt Thự Đơn Lập NA.GV2-05 – Diện Tích 15x25m, Giá Chỉ 30,5 Tỷ (Chưa VAT) – Cơ Hội Sống Sang, Đầu Tư Sinh Lời Ngay! — đường Ngô Quyền, Long Hưng, Biên Hoà, Đồng Nai. Giá: 33.55 tỷ. 375m², PN. Pháp lý: Đang cập nhật.",
+      "canonical": "https://sgsland.vn/bds/ban-biet-thu-don-lap-na-gv2-05-dien-tich-c57cc4ff-c299-40de-97d2-983f03b0c4b9",
+      "h1Count": 1,
+      "isNoIndex": false
+    },
+    {
+      "route": "/bds/ban-nha-pho-thuong-mai-can-goc-na-t12-05-baef1241-7576-4a7e-b64b-725846cd9c64",
+      "title": "BÁN NHÀ PHỐ THƯƠNG MẠI CĂN GÓC NA.T12-05 – Diện Tích 10x22.5m (225m²) – Giá Chỉ 23 Tỷ (Chưa VAT) | Giá Bao Gồm VAT ~25,3 Tỷ | 25.30 tỷ | SGS LAND",
+      "description": "BÁN NHÀ PHỐ THƯƠNG MẠI CĂN GÓC NA.T12-05 – Diện Tích 10x22.5m (225m²) – Giá Chỉ 23 Tỷ (Chưa VAT) | Giá Bao Gồm VAT ~25,3 Tỷ — đường Ngô Quyền, Long Hưng, Biên Hoà, Đồng Nai. Giá: 25.30 tỷ. 225m², PN. Pháp lý: Đang cập nhật.",
+      "canonical": "https://sgsland.vn/bds/ban-nha-pho-thuong-mai-can-goc-na-t12-05-baef1241-7576-4a7e-b64b-725846cd9c64",
+      "h1Count": 1,
+      "isNoIndex": false
+    },
+    {
+      "route": "/bds/ban-shopehouse-aqua-city-na-t12-05-dien-410337df-a923-47cc-a40b-e5db6ee6fe93",
+      "title": "BÁN SHOPEHOUSE AQUA CITY NA.T12-05 – Diện Tích 8x22.5m (180m²) – Giá Chỉ 13,48 Tỷ (Chưa VAT) | Giá Bao Gồm VAT ~14,83 Tỷ | 14.82 tỷ | SGS LAND",
+      "description": "BÁN SHOPEHOUSE AQUA CITY NA.T12-05 – Diện Tích 8x22.5m (180m²) – Giá Chỉ 13,48 Tỷ (Chưa VAT) | Giá Bao Gồm VAT ~14,83 Tỷ — đường Ngô Quyền, Long Hưng, Đồng Nai. Giá: 14.82 tỷ. 180m², PN. Pháp lý: Đang cập nhật.",
+      "canonical": "https://sgsland.vn/bds/ban-shopehouse-aqua-city-na-t12-05-dien-410337df-a923-47cc-a40b-e5db6ee6fe93",
+      "h1Count": 1,
+      "isNoIndex": false
+    },
+    {
+      "route": "/bds/ban-nha-pho-aqua-city-na-t12-03-dien-tic-141b92c6-c87f-4ff7-9412-7d9f1d742248",
+      "title": "BÁN NHÀ PHỐ AQUA CITY NA.T12-03 – Diện Tích 8x20m (160m²) – Giá Chỉ 10,8 Tỷ (Chưa VAT) | Giá Bao Gồm VAT ~11,88 Tỷ | 11.88 tỷ | SGS LAND",
+      "description": "BÁN NHÀ PHỐ AQUA CITY NA.T12-03 – Diện Tích 8x20m (160m²) – Giá Chỉ 10,8 Tỷ (Chưa VAT) | Giá Bao Gồm VAT ~11,88 Tỷ — đường Ngô Quyền, Long Hưng, Đồng Nai. Giá: 11.88 tỷ. 160m², PN. Pháp lý: Đang cập nhật.",
+      "canonical": "https://sgsland.vn/bds/ban-nha-pho-aqua-city-na-t12-03-dien-tic-141b92c6-c87f-4ff7-9412-7d9f1d742248",
+      "h1Count": 1,
+      "isNoIndex": false
+    },
+    {
+      "route": "/bds/ban-nha-pho-aqua-city-na-t12-03-dien-tic-eb89c991-3824-437b-838a-df38145c9583",
+      "title": "Bán nhà phố Aqua City NA.T12-03 – Diện Tích 8x20m (160m²) – Giá Chỉ 10 Tỷ (Chưa VAT) | Giá Bao Gồm VAT ~11 Tỷ | 11.00 tỷ | SGS LAND",
+      "description": "Bán nhà phố Aqua City NA.T12-03 – Diện Tích 8x20m (160m²) – Giá Chỉ 10 Tỷ (Chưa VAT) | Giá Bao Gồm VAT ~11 Tỷ — đường Ngô Quyền, Long Hưng, Đồng Nai. Giá: 11.00 tỷ. 160m², PN. Pháp lý: Đang cập nhật.",
+      "canonical": "https://sgsland.vn/bds/ban-nha-pho-aqua-city-na-t12-03-dien-tic-eb89c991-3824-437b-838a-df38145c9583",
+      "h1Count": 1,
+      "isNoIndex": false
+    },
+    {
+      "route": "/bds/ban-biet-thu-don-lap-cao-cap-na-gv2-04-d-6b4452dc-ab28-4f4f-a9bc-13e1029f9503",
+      "title": "BÁN BIỆT THỰ ĐƠN LẬP CAO CẤP NA.GV2-04 – Diện Tích “Khủng” 15x25m (375m²) – Giá Chỉ 30 Tỷ (Chưa VAT) | Giá Bao Gồm VAT 33 Tỷ | 33.00 tỷ | SGS LAND",
+      "description": "BÁN BIỆT THỰ ĐƠN LẬP CAO CẤP NA.GV2-04 – Diện Tích “Khủng” 15x25m (375m²) – Giá Chỉ 30 Tỷ (Chưa VAT) | Giá Bao Gồm VAT 33 Tỷ — đường Ngô Quyền, Long Hưng, Đồng Nai. Giá: 33.00 tỷ. 375m², PN. Pháp lý: Đang cập nhật.",
+      "canonical": "https://sgsland.vn/bds/ban-biet-thu-don-lap-cao-cap-na-gv2-04-d-6b4452dc-ab28-4f4f-a9bc-13e1029f9503",
+      "h1Count": 1,
+      "isNoIndex": false
+    },
+    {
+      "route": "/bds/ban-biet-thu-song-lap-cao-cap-na-sv2-04-13b7241c-cab4-49fd-a52c-abbf9ce7a634",
+      "title": "BÁN BIỆT THỰ SONG LẬP CAO CẤP NA.SV2-04 – Diện Tích 10x20m (200m²) – Giá Chỉ 15,5 Tỷ (Chưa VAT) | Giá Bao Gồm VAT 17,05 Tỷ | 17.05 tỷ | SGS LAND",
+      "description": "BÁN BIỆT THỰ SONG LẬP CAO CẤP NA.SV2-04 – Diện Tích 10x20m (200m²) – Giá Chỉ 15,5 Tỷ (Chưa VAT) | Giá Bao Gồm VAT 17,05 Tỷ — đường Ngô Quyền, Long Hưng, Đồng Nai. Giá: 17.05 tỷ. 200m², PN. Pháp lý: Đang cập nhật.",
+      "canonical": "https://sgsland.vn/bds/ban-biet-thu-song-lap-cao-cap-na-sv2-04-13b7241c-cab4-49fd-a52c-abbf9ce7a634",
+      "h1Count": 1,
+      "isNoIndex": false
+    },
+    {
+      "route": "/bds/ban-nha-pho-na-t12-01-mat-tien-8m-dien-t-1d1090af-30b9-4ab2-95f6-1ffa6c373be9",
+      "title": "BÁN NHÀ PHỐ NA.T12-01 – Mặt Tiền 8m, Diện Tích 160m² – Giá Chỉ 10,12 Tỷ (Chưa VAT) | Giá Bao Gồm VAT 11,132 Tỷ | 11.13 tỷ | SGS LAND",
+      "description": "BÁN NHÀ PHỐ NA.T12-01 – Mặt Tiền 8m, Diện Tích 160m² – Giá Chỉ 10,12 Tỷ (Chưa VAT) | Giá Bao Gồm VAT 11,132 Tỷ — đường Ngô Quyền, Long Hưng Đồng Nai. Giá: 11.13 tỷ. 160m², PN. Pháp lý: Đang cập nhật.",
+      "canonical": "https://sgsland.vn/bds/ban-nha-pho-na-t12-01-mat-tien-8m-dien-t-1d1090af-30b9-4ab2-95f6-1ffa6c373be9",
+      "h1Count": 1,
+      "isNoIndex": false
+    },
+    {
+      "route": "/bds/ban-nha-pho-na-t12-01-gia-sieu-tot-chi-9-6764f620-6e10-49c9-851b-ab4c347f2d70",
+      "title": "BÁN NHÀ PHỐ NA.T12-01 – Giá Siêu Tốt Chỉ 9,2 Tỷ (Chưa VAT) | Diện Tích 8x20m (160m²) – Giá Bao Gồm VAT ~10,12 Tỷ | 10.12 tỷ | SGS LAND",
+      "description": "BÁN NHÀ PHỐ NA.T12-01 – Giá Siêu Tốt Chỉ 9,2 Tỷ (Chưa VAT) | Diện Tích 8x20m (160m²) – Giá Bao Gồm VAT ~10,12 Tỷ — đường Ngô Quyền, Long Hưng, Đồng Nai. Giá: 10.12 tỷ. 160m², PN. Pháp lý: Đang cập nhật.",
+      "canonical": "https://sgsland.vn/bds/ban-nha-pho-na-t12-01-gia-sieu-tot-chi-9-6764f620-6e10-49c9-851b-ab4c347f2d70",
+      "h1Count": 1,
+      "isNoIndex": false
+    },
+    {
+      "route": "/bds/ban-nha-pho-na-t12-02-gia-sieu-hoi-chi-8-c54d4599-72bd-4810-a82f-dcb986ce1054",
+      "title": "BÁN NHÀ PHỐ NA.T12-02 – Giá Siêu Hời Chỉ 8,99 Tỷ (Chưa VAT) | Diện Tích 8x20m (160m²) – Giá Bao Gồm VAT Chỉ ~9,89 Tỷ | 9.90 tỷ | SGS LAND",
+      "description": "BÁN NHÀ PHỐ NA.T12-02 – Giá Siêu Hời Chỉ 8,99 Tỷ (Chưa VAT) | Diện Tích 8x20m (160m²) – Giá Bao Gồm VAT Chỉ ~9,89 Tỷ — đường Ngô Quyền, Long Hưng, Đồng Nai. Giá: 9.90 tỷ. 160m², PN. Pháp lý: Đang cập nhật.",
+      "canonical": "https://sgsland.vn/bds/ban-nha-pho-na-t12-02-gia-sieu-hoi-chi-8-c54d4599-72bd-4810-a82f-dcb986ce1054",
+      "h1Count": 1,
+      "isNoIndex": false
+    },
+    {
+      "route": "/bds/ban-nha-pho-na-t12-03-dien-tich-8x20m-16-3c6463ec-758b-4318-9f47-67756766b99b",
+      "title": "BÁN NHÀ PHỐ NA.T12-03 – Diện Tích 8x20m (160m²) Giá Chỉ 9,6 Tỷ (Chưa VAT) | Giá Bao Gồm VAT ~10,56 Tỷ | 10.56 tỷ | SGS LAND",
+      "description": "BÁN NHÀ PHỐ NA.T12-03 – Diện Tích 8x20m (160m²) Giá Chỉ 9,6 Tỷ (Chưa VAT) | Giá Bao Gồm VAT ~10,56 Tỷ — đường Ngô Quyền, Long Hưng, Đồng Nai. Giá: 10.56 tỷ. 160m², PN. Pháp lý: Đang cập nhật.",
+      "canonical": "https://sgsland.vn/bds/ban-nha-pho-na-t12-03-dien-tich-8x20m-16-3c6463ec-758b-4318-9f47-67756766b99b",
+      "h1Count": 1,
+      "isNoIndex": false
+    },
+    {
+      "route": "/bds/ban-nha-pho-na-t22-01-dien-tich-6x20m-12-a9d6f740-dfa4-4d27-96ec-9b4b92a40de8",
+      "title": "BÁN NHÀ PHỐ NA.T22-01 – Diện Tích 6x20m (120m²) Giá Chỉ 7,8 Tỷ (Chưa VAT) | Giá Bao Gồm VAT ~8,58 Tỷ | 8.58 tỷ | SGS LAND",
+      "description": "BÁN NHÀ PHỐ NA.T22-01 – Diện Tích 6x20m (120m²) Giá Chỉ 7,8 Tỷ (Chưa VAT) | Giá Bao Gồm VAT ~8,58 Tỷ — đường Ngô Quyền, Long Hưng, Đồng Nai. Giá: 8.58 tỷ. 120m², PN. Pháp lý: Đang cập nhật.",
+      "canonical": "https://sgsland.vn/bds/ban-nha-pho-na-t22-01-dien-tich-6x20m-12-a9d6f740-dfa4-4d27-96ec-9b4b92a40de8",
+      "h1Count": 1,
+      "isNoIndex": false
+    },
+    {
+      "route": "/bds/ban-nha-pho-na-t12-07-mat-tien-8m-dien-t-0a9de694-e74f-46dd-9bda-863d30a36796",
+      "title": "BÁN NHÀ PHỐ NA.T12-07 – Mặt Tiền 8m, Diện Tích 160m² – Giá Chỉ 8,5 Tỷ (Chưa VAT) | Giá Bao Gồm VAT ~9,35 Tỷ | 9.35 tỷ | SGS LAND",
+      "description": "BÁN NHÀ PHỐ NA.T12-07 – Mặt Tiền 8m, Diện Tích 160m² – Giá Chỉ 8,5 Tỷ (Chưa VAT) | Giá Bao Gồm VAT ~9,35 Tỷ — đường Ngô Quyền, Long Hưng, Đồng Nai. Giá: 9.35 tỷ. 160m², PN. Pháp lý: Đang cập nhật.",
+      "canonical": "https://sgsland.vn/bds/ban-nha-pho-na-t12-07-mat-tien-8m-dien-t-0a9de694-e74f-46dd-9bda-863d30a36796",
+      "h1Count": 1,
+      "isNoIndex": false
+    },
+    {
+      "route": "/bds/ban-nha-pho-na-t12-09-dien-tich-8x20m-gi-19287ca5-0086-4f33-8ef3-7db3b551e1f9",
+      "title": "Bán nhà phố NA.T12-09 diện tích 8x20m giá đầu tư trực tiếp chủ đầu tư | 10.12 tỷ | SGS LAND",
+      "description": "Bán nhà phố NA.T12-09 diện tích 8x20m giá đầu tư trực tiếp chủ đầu tư — đường Ngô Quyền, Long Hưng, Đồng Nai. Giá: 10.12 tỷ. 160m², PN. Pháp lý: Đang cập nhật.",
+      "canonical": "https://sgsland.vn/bds/ban-nha-pho-na-t12-09-dien-tich-8x20m-gi-19287ca5-0086-4f33-8ef3-7db3b551e1f9",
+      "h1Count": 1,
+      "isNoIndex": false
+    },
+    {
+      "route": "/bds/phan-tich-gia-tri-dau-tu-nha-pho-aqua-ci-ff27b5e8-35b2-4216-8f3b-6556d68399f9",
+      "title": "Phân tích giá trị đầu tư nhà phố Aqua City NA.T12-10 diện tích 8x20m giá từ 8.8 tỷ đồng | 9.68 tỷ | SGS LAND",
+      "description": "Phân tích giá trị đầu tư nhà phố Aqua City NA.T12-10 diện tích 8x20m giá từ 8.8 tỷ đồng — đường Ngô Quyền, Long Hưng, Đồng Nai. Giá: 9.68 tỷ. 160m², PN. Pháp lý: Đang cập nhật.",
+      "canonical": "https://sgsland.vn/bds/phan-tich-gia-tri-dau-tu-nha-pho-aqua-ci-ff27b5e8-35b2-4216-8f3b-6556d68399f9",
+      "h1Count": 1,
+      "isNoIndex": false
+    },
+    {
+      "route": "/bds/ban-biet-thu-song-lap-aqua-city-na-sv-1-907771bc-acbe-4dc7-8eb0-b185ffcaaaec",
+      "title": "Bán biệt thự song lập Aqua City NA.SV.1-1 diện tích 10x20m giá tốt nhất thị trường | 16.39 tỷ | SGS LAND",
+      "description": "Bán biệt thự song lập Aqua City NA.SV.1-1 diện tích 10x20m giá tốt nhất thị trường — đường Ngô Quyền, Long Hưng, Đồng Nai. Giá: 16.39 tỷ. 200m², PN. Pháp lý: Đang cập nhật.",
+      "canonical": "https://sgsland.vn/bds/ban-biet-thu-song-lap-aqua-city-na-sv-1-907771bc-acbe-4dc7-8eb0-b185ffcaaaec",
+      "h1Count": 1,
+      "isNoIndex": false
+    },
+    {
+      "route": "/bds/so-huu-biet-thu-song-lap-aqua-city-na-gv-fcda87d7-b1cb-47e0-b501-398bae53954a",
+      "title": "Sở hữu biệt thự song lập Aqua City NA.GV.1-2 diện tích 12x20m với chính sách giá ưu đãi | 23.10 tỷ | SGS LAND",
+      "description": "Sở hữu biệt thự song lập Aqua City NA.GV.1-2 diện tích 12x20m với chính sách giá ưu đãi — đường Ngô Quyền, Long Hưng, Đồng Nai. Giá: 23.10 tỷ. 240m², PN. Pháp lý: Đang cập nhật.",
+      "canonical": "https://sgsland.vn/bds/so-huu-biet-thu-song-lap-aqua-city-na-gv-fcda87d7-b1cb-47e0-b501-398bae53954a",
+      "h1Count": 1,
+      "isNoIndex": false
+    },
+    {
+      "route": "/bds/ban-biet-thu-song-lap-na-sv-1-2-dien-tic-1803dc67-fc38-475b-b44e-7bcf1969aced",
+      "title": "Bán biệt thự song lập NA.SV.1-2 diện tích 10x20m giá cực tốt chỉ từ 11.85 tỷ | 13.00 tỷ | SGS LAND",
+      "description": "Bán biệt thự song lập NA.SV.1-2 diện tích 10x20m giá cực tốt chỉ từ 11.85 tỷ — đường Ngô Quyền, Long Hưng, Đồng Nai. Giá: 13.00 tỷ. 200m², PN. Pháp lý: Đang cập nhật.",
+      "canonical": "https://sgsland.vn/bds/ban-biet-thu-song-lap-na-sv-1-2-dien-tic-1803dc67-fc38-475b-b44e-7bcf1969aced",
+      "h1Count": 1,
+      "isNoIndex": false
+    },
+    {
+      "route": "/bds/ban-biet-thu-don-lap-na-gv-1-3-dien-tich-053116b7-e0be-41fc-95b1-5451d69971c8",
+      "title": "Bán biệt thự đơn lập NA.GV.1-3 diện tích 12x20m với đặc quyền không gian sống thượng lưu | 23.54 tỷ | SGS LAND",
+      "description": "Bán biệt thự đơn lập NA.GV.1-3 diện tích 12x20m với đặc quyền không gian sống thượng lưu — đường Ngô Quyền, Long Hưng, Đồng Nai. Giá: 23.54 tỷ. 240m², PN. Pháp lý: Đang cập nhật.",
+      "canonical": "https://sgsland.vn/bds/ban-biet-thu-don-lap-na-gv-1-3-dien-tich-053116b7-e0be-41fc-95b1-5451d69971c8",
+      "h1Count": 1,
+      "isNoIndex": false
+    },
+    {
+      "route": "/bds/ban-biet-thu-don-lap-na-gv-1-3-dien-tich-55ccf6bd-0ba3-4340-af0f-b5d3b9568ba1",
+      "title": "Bán biệt thự đơn lập NA.GV.1-3 diện tích 12x20m giá đầu tư chỉ 21 tỷ đồng | 23.10 tỷ | SGS LAND",
+      "description": "Bán biệt thự đơn lập NA.GV.1-3 diện tích 12x20m giá đầu tư chỉ 21 tỷ đồng — đường Ngô Quyền, Long Hưng, Đồng Nai. Giá: 23.10 tỷ. 240m², PN. Pháp lý: Đang cập nhật.",
+      "canonical": "https://sgsland.vn/bds/ban-biet-thu-don-lap-na-gv-1-3-dien-tich-55ccf6bd-0ba3-4340-af0f-b5d3b9568ba1",
+      "h1Count": 1,
+      "isNoIndex": false
+    },
+    {
+      "route": "/bds/ban-nha-pho-na-t11-6-dien-tich-8x20m-so-e019ed5a-b242-4556-aa3c-8b49458c348c",
+      "title": "Bán nhà phố NA.T11-6 diện tích 8x20m sở hữu vị trí chiến lược và giá đầu tư hấp dẫn | 10.12 tỷ | SGS LAND",
+      "description": "Bán nhà phố NA.T11-6 diện tích 8x20m sở hữu vị trí chiến lược và giá đầu tư hấp dẫn — đường Ngô Quyền, Long Hưng, Đồng Nai. Giá: 10.12 tỷ. 160m², PN. Pháp lý: Đang cập nhật.",
+      "canonical": "https://sgsland.vn/bds/ban-nha-pho-na-t11-6-dien-tich-8x20m-so-e019ed5a-b242-4556-aa3c-8b49458c348c",
+      "h1Count": 1,
+      "isNoIndex": false
+    },
+    {
+      "route": "/bds/ban-biet-thu-song-lap-na-sv1-3-dien-tich-ada3c31b-17c8-4ac8-95bc-1bc340680d1a",
+      "title": "Bán biệt thự song lập NA.SV1-3 diện tích 10x20m giá đầu tư 12 tỷ đồng | 13.20 tỷ | SGS LAND",
+      "description": "Bán biệt thự song lập NA.SV1-3 diện tích 10x20m giá đầu tư 12 tỷ đồng — đường Ngô Quyền, Long Hưng, Đồng Nai. Giá: 13.20 tỷ. 200m², PN. Pháp lý: Đang cập nhật.",
+      "canonical": "https://sgsland.vn/bds/ban-biet-thu-song-lap-na-sv1-3-dien-tich-ada3c31b-17c8-4ac8-95bc-1bc340680d1a",
+      "h1Count": 1,
+      "isNoIndex": false
+    },
+    {
+      "route": "/bds/ban-nha-pho-na-t11-6-dien-tich-8x20m-gia-64c763b0-05e0-4046-b747-7d4c8163926b",
+      "title": "Bán nhà phố NA.T11-6 diện tích 8x20m giá đầu tư 9.7 tỷ đồng sở hữu vị trí đắc địa | 10.67 tỷ | SGS LAND",
+      "description": "Bán nhà phố NA.T11-6 diện tích 8x20m giá đầu tư 9.7 tỷ đồng sở hữu vị trí đắc địa — đường Ngô Quyền, Long Hưng, Đồng Nai. Giá: 10.67 tỷ. 160m², PN. Pháp lý: Đang cập nhật.",
+      "canonical": "https://sgsland.vn/bds/ban-nha-pho-na-t11-6-dien-tich-8x20m-gia-64c763b0-05e0-4046-b747-7d4c8163926b",
+      "h1Count": 1,
+      "isNoIndex": false
+    },
+    {
+      "route": "/bds/phan-tich-tiem-nang-sinh-loi-nha-pho-na-29a7b966-33ea-421b-8fb2-84010af28345",
+      "title": "Phân tích tiềm năng sinh lời nhà phố NA.T11-6 diện tích 8x20m giá từ 9.2 tỷ đồng | 10.12 tỷ | SGS LAND",
+      "description": "Phân tích tiềm năng sinh lời nhà phố NA.T11-6 diện tích 8x20m giá từ 9.2 tỷ đồng — đường Ngô Quyền, Long Hưng, Đồng Nai. Giá: 10.12 tỷ. 160m², PN. Pháp lý: Đang cập nhật.",
+      "canonical": "https://sgsland.vn/bds/phan-tich-tiem-nang-sinh-loi-nha-pho-na-29a7b966-33ea-421b-8fb2-84010af28345",
+      "h1Count": 1,
+      "isNoIndex": false
+    },
+    {
+      "route": "/bds/ban-biet-thu-don-lap-na-gv1-5-dien-tich-93818df6-ec57-4b8f-8d71-920eb84aee37",
+      "title": "Bán biệt thự đơn lập NA.GV1-5 diện tích 12x22m đẳng cấp thượng lưu giá 23.5 tỷ | 25.85 tỷ | SGS LAND",
+      "description": "Bán biệt thự đơn lập NA.GV1-5 diện tích 12x22m đẳng cấp thượng lưu giá 23.5 tỷ — đường Ngô Quyền, Long Hưng, Đồng Nai. Giá: 25.85 tỷ. 264m², PN. Pháp lý: Đang cập nhật.",
+      "canonical": "https://sgsland.vn/bds/ban-biet-thu-don-lap-na-gv1-5-dien-tich-93818df6-ec57-4b8f-8d71-920eb84aee37",
+      "h1Count": 1,
+      "isNoIndex": false
+    },
+    {
+      "route": "/bds/ban-biet-thu-don-lap-na-gv1-5-dien-tich-441edd35-6026-4e5b-b056-3120f43eeb40",
+      "title": "Bán biệt thự đơn lập NA.GV1-5 diện tích 12x22m giá đầu tư chỉ 22.3 tỷ đồng | 24.53 tỷ | SGS LAND",
+      "description": "Bán biệt thự đơn lập NA.GV1-5 diện tích 12x22m giá đầu tư chỉ 22.3 tỷ đồng — đường Ngô Quyền, Long Hưng, Đồng Nai. Giá: 24.53 tỷ. 264m², PN. Pháp lý: Đang cập nhật.",
+      "canonical": "https://sgsland.vn/bds/ban-biet-thu-don-lap-na-gv1-5-dien-tich-441edd35-6026-4e5b-b056-3120f43eeb40",
+      "h1Count": 1,
+      "isNoIndex": false
+    },
+    {
+      "route": "/bds/ban-nha-pho-aqua-city-na-t21-dien-tich-6-ea2ee3f0-4912-4259-ad8b-5392c44e5217",
+      "title": "Bán nhà phố Aqua City NA.T21 diện tích 6x20m giá đầu tư chỉ 7.5 tỷ đồng vị trí tiềm năng | 8.25 tỷ | SGS LAND",
+      "description": "Bán nhà phố Aqua City NA.T21 diện tích 6x20m giá đầu tư chỉ 7.5 tỷ đồng vị trí tiềm năng — đường Ngô Quyền, Long Hưng, Đồng Nai. Giá: 8.25 tỷ. 120m², PN. Pháp lý: Đang cập nhật.",
+      "canonical": "https://sgsland.vn/bds/ban-nha-pho-aqua-city-na-t21-dien-tich-6-ea2ee3f0-4912-4259-ad8b-5392c44e5217",
+      "h1Count": 1,
+      "isNoIndex": false
+    },
+    {
+      "route": "/bds/ban-shophouse-aqua-city-can-goc-na-sh1-d-0b120232-9041-4073-9778-9abc173e795f",
+      "title": "Bán Shophouse Aqua City căn góc NA.SH1 diện tích 8.4x20m giá đầu tư 16 tỷ đồng vị trí kinh doanh đắc địa | 17.60 tỷ | SGS LAND",
+      "description": "Bán Shophouse Aqua City căn góc NA.SH1 diện tích 8.4x20m giá đầu tư 16 tỷ đồng vị trí kinh doanh đắc địa — đường Ngô Quyền, Long Hưng, Đồng Nai. Giá: 17.60 tỷ. 168m², PN. Pháp lý: Đang cập nhật.",
+      "canonical": "https://sgsland.vn/bds/ban-shophouse-aqua-city-can-goc-na-sh1-d-0b120232-9041-4073-9778-9abc173e795f",
+      "h1Count": 1,
+      "isNoIndex": false
+    },
+    {
+      "route": "/bds/ban-shophouse-aqua-city-can-goc-na-sh1-3-89fcf5cb-ea4d-49c8-9aae-858b13c78b7e",
+      "title": "Bán Shophouse Aqua City căn góc NA.SH1-3, diện tích 6x20m giá đầu tư 13.7 tỷ đồng sở hữu lợi thế 2 mặt tiền | 15.07 tỷ | SGS LAND",
+      "description": "Bán Shophouse Aqua City căn góc NA.SH1-3, diện tích 6x20m giá đầu tư 13.7 tỷ đồng sở hữu lợi thế 2 mặt tiền — đường Ngô Quyền, Long Hưng, Đồng Nai. Giá: 15.07 tỷ. 120m², PN. Pháp lý: Đang cập nhật.",
+      "canonical": "https://sgsland.vn/bds/ban-shophouse-aqua-city-can-goc-na-sh1-3-89fcf5cb-ea4d-49c8-9aae-858b13c78b7e",
+      "h1Count": 1,
+      "isNoIndex": false
+    },
+    {
+      "route": "/bds/ban-shophouse-na-sh1-2-dien-tich-6x20m-g-cf89bd8b-e986-4862-ab8f-8c5cf4a0b6e6",
+      "title": "Bán Shophouse NA.SH1-2 diện tích 6x20m giá đầu tư chỉ 9 tỷ đồng sở hữu lợi thế kinh doanh | 9.90 tỷ | SGS LAND",
+      "description": "Bán Shophouse NA.SH1-2 diện tích 6x20m giá đầu tư chỉ 9 tỷ đồng sở hữu lợi thế kinh doanh — đường Ngô Quyền, Long Hưng, Đồng Nai. Giá: 9.90 tỷ. 120m², PN. Pháp lý: Đang cập nhật.",
+      "canonical": "https://sgsland.vn/bds/ban-shophouse-na-sh1-2-dien-tich-6x20m-g-cf89bd8b-e986-4862-ab8f-8c5cf4a0b6e6",
+      "h1Count": 1,
+      "isNoIndex": false
+    },
+    {
+      "route": "/bds/ban-shophouse-can-goc-na-sh1-2-dien-tich-bd2ab765-973a-469f-a286-f17b0f6c367f",
+      "title": "Bán Shophouse căn góc NA.SH1-2 diện tích 6x20m giá đầu tư 11.4 tỷ đồng vị trí kinh doanh đắc địa | 12.54 tỷ | SGS LAND",
+      "description": "Bán Shophouse căn góc NA.SH1-2 diện tích 6x20m giá đầu tư 11.4 tỷ đồng vị trí kinh doanh đắc địa — đường Ngô Quyền, Long Hưng, Đồng Nai. Giá: 12.54 tỷ. 120m², PN. Pháp lý: Đang cập nhật.",
+      "canonical": "https://sgsland.vn/bds/ban-shophouse-can-goc-na-sh1-2-dien-tich-bd2ab765-973a-469f-a286-f17b0f6c367f",
+      "h1Count": 1,
+      "isNoIndex": false
+    },
+    {
+      "route": "/bds/ban-nha-pho-na-t11-6-dien-tich-8x20m-gia-6a5e785c-108f-4b26-a08f-0614b2b9297a",
+      "title": "Bán nhà phố NA.T11-6 diện tích 8x20m giá đầu tư 10.7 tỷ sở hữu mặt tiền rộng thông thoáng | 11.77 tỷ | SGS LAND",
+      "description": "Bán nhà phố NA.T11-6 diện tích 8x20m giá đầu tư 10.7 tỷ sở hữu mặt tiền rộng thông thoáng — đường Ngô Quyền, Long Hưng, Đồng Nai. Giá: 11.77 tỷ. 160m², PN. Pháp lý: Đang cập nhật.",
+      "canonical": "https://sgsland.vn/bds/ban-nha-pho-na-t11-6-dien-tich-8x20m-gia-6a5e785c-108f-4b26-a08f-0614b2b9297a",
+      "h1Count": 1,
+      "isNoIndex": false
+    },
+    {
+      "route": "/bds/ban-nha-pho-na-t11-4-dien-tich-8x20m-gia-d9a8f94d-3491-46cd-8c75-b6f59bc5d836",
+      "title": "Bán nhà phố NA.T11-4 diện tích 8x20m giá đầu tư 8.35 tỷ đồng vị trí đắc địa | 9.18 tỷ | SGS LAND",
+      "description": "Bán nhà phố NA.T11-4 diện tích 8x20m giá đầu tư 8.35 tỷ đồng vị trí đắc địa — đường Ngô Quyền, Long Hưng, Đồng Nai. Giá: 9.18 tỷ. 160m², PN. Pháp lý: Đang cập nhật.",
+      "canonical": "https://sgsland.vn/bds/ban-nha-pho-na-t11-4-dien-tich-8x20m-gia-d9a8f94d-3491-46cd-8c75-b6f59bc5d836",
+      "h1Count": 1,
+      "isNoIndex": false
+    },
+    {
+      "route": "/bds/ban-nha-pho-na-t11-4-dien-tich-8x20m-gia-5a386a93-1605-4a9b-be19-fab365b38bb8",
+      "title": "Bán nhà phố NA.T11-4 diện tích 8x20m giá đầu tư 8.6 tỷ sở hữu không gian sống lý tưởng | 9.46 tỷ | SGS LAND",
+      "description": "Bán nhà phố NA.T11-4 diện tích 8x20m giá đầu tư 8.6 tỷ sở hữu không gian sống lý tưởng — đường Ngô Quyền, Long Hưng, Đồng Nai. Giá: 9.46 tỷ. 160m², PN. Pháp lý: Đang cập nhật.",
+      "canonical": "https://sgsland.vn/bds/ban-nha-pho-na-t11-4-dien-tich-8x20m-gia-5a386a93-1605-4a9b-be19-fab365b38bb8",
+      "h1Count": 1,
+      "isNoIndex": false
+    },
+    {
+      "route": "/bds/ban-nha-pho-na-t11-3-dien-tich-8x20m-gia-84340b42-c0a2-4474-967e-85fe9bb9ba2f",
+      "title": "Bán nhà phố NA.T11-3 diện tích 8x20m giá đầu tư 8.6 tỷ đồng tại phân khu trung tâm | 9.46 tỷ | SGS LAND",
+      "description": "Bán nhà phố NA.T11-3 diện tích 8x20m giá đầu tư 8.6 tỷ đồng tại phân khu trung tâm — đường Ngô Quyền, Long Hưng, Đồng Nai. Giá: 9.46 tỷ. 160m², PN. Pháp lý: Đang cập nhật.",
+      "canonical": "https://sgsland.vn/bds/ban-nha-pho-na-t11-3-dien-tich-8x20m-gia-84340b42-c0a2-4474-967e-85fe9bb9ba2f",
+      "h1Count": 1,
+      "isNoIndex": false
+    },
+    {
+      "route": "/bds/ban-nha-pho-can-goc-na-t11-3-dien-tich-1-d3de328e-47d1-46f3-a534-c0613e4e89aa",
+      "title": "Bán nhà phố căn góc NA.T11-3 diện tích 11x20m giá đầu tư 13 tỷ sở hữu hai mặt tiền đắc địa | 14.30 tỷ | SGS LAND",
+      "description": "Bán nhà phố căn góc NA.T11-3 diện tích 11x20m giá đầu tư 13 tỷ sở hữu hai mặt tiền đắc địa — đường Ngô Quyền, Long Hưng, Đồng Nai. Giá: 14.30 tỷ. 220m², PN. Pháp lý: Đang cập nhật.",
+      "canonical": "https://sgsland.vn/bds/ban-nha-pho-can-goc-na-t11-3-dien-tich-1-d3de328e-47d1-46f3-a534-c0613e4e89aa",
+      "h1Count": 1,
+      "isNoIndex": false
+    },
+    {
+      "route": "/bds/ban-biet-thu-song-lap-na-sv1-1-dien-tich-dd9a0dfb-87c8-4f8b-a5b1-f43285b3d43e",
+      "title": "Bán biệt thự song lập NA.SV1-1 diện tích 10x20m giá đầu tư 12 tỷ đồng tại phân khu đẳng cấp | 13.20 tỷ | SGS LAND",
+      "description": "Bán biệt thự song lập NA.SV1-1 diện tích 10x20m giá đầu tư 12 tỷ đồng tại phân khu đẳng cấp — đường Ngô Quyền, Long Hưng, Đồng Nai. Giá: 13.20 tỷ. 200m², PN. Pháp lý: Đang cập nhật.",
+      "canonical": "https://sgsland.vn/bds/ban-biet-thu-song-lap-na-sv1-1-dien-tich-dd9a0dfb-87c8-4f8b-a5b1-f43285b3d43e",
+      "h1Count": 1,
+      "isNoIndex": false
+    },
+    {
+      "route": "/bds/biet-thu-song-lap-retreat-db22f5a9-6a88-4d4a-a1d6-a93dc1f5cd49",
+      "title": "Biệt thự song lập Retreat | 18.20 tỷ | SGS LAND",
+      "description": "Biệt thự song lập Retreat — Eco Retreat, xã Thanh Phú, Tây Ninh, Việt Nam. Giá: 18.20 tỷ. 220m², 3PN. Pháp lý: Đang cập nhật.",
+      "canonical": "https://sgsland.vn/bds/biet-thu-song-lap-retreat-db22f5a9-6a88-4d4a-a1d6-a93dc1f5cd49",
+      "h1Count": 1,
+      "isNoIndex": false
+    },
+    {
+      "route": "/bds/biet-thu-la-villa-green-du-an-ecopark-17b4595e-0c88-426c-b173-e4251853aae2",
+      "title": "Biệt thự La Villa Green dự án Ecopark  | 5.20 tỷ | SGS LAND",
+      "description": "Biệt thự La Villa Green dự án Ecopark  — Bến Lức, Long An . Giá: 5.20 tỷ. 103m², PN. Pháp lý: Đang cập nhật.",
+      "canonical": "https://sgsland.vn/bds/biet-thu-la-villa-green-du-an-ecopark-17b4595e-0c88-426c-b173-e4251853aae2",
+      "h1Count": 1,
+      "isNoIndex": false
+    },
+    {
+      "route": "/bds/biet-thu-don-lap-na-gv5-09-du-an-aqua-ci-6e17f219-838b-41f0-9f4c-721b9278dbbf",
+      "title": "Bất động sản | SGS LAND",
+      "description": "SGS LAND — nền tảng bất động sản với định giá AI, CRM đa kênh và quản lý kho hàng cho sàn giao dịch, môi giới và doanh nghiệp tại Việt Nam.",
+      "canonical": "https://sgsland.vn/bds/biet-thu-don-lap-na-gv5-09-du-an-aqua-ci-6e17f219-838b-41f0-9f4c-721b9278dbbf",
+      "h1Count": 0,
+      "isNoIndex": false
+    },
+    {
+      "route": "/bds/biet-thu-don-lap-na-gv5-09-du-an-aqua-ci-82859a25-fb22-4e51-ac2d-1f4a6949d6d8",
+      "title": "Biệt thự đơn lập NA.GV5.09 dự án Aqua City | 27.50 tỷ | SGS LAND",
+      "description": "Biệt thự đơn lập NA.GV5.09 dự án Aqua City — đường Ngô Quyền, Long Hưng, Đồng Nai. Giá: 27.50 tỷ. 300m², PN. Pháp lý: Đang cập nhật.",
+      "canonical": "https://sgsland.vn/bds/biet-thu-don-lap-na-gv5-09-du-an-aqua-ci-82859a25-fb22-4e51-ac2d-1f4a6949d6d8",
+      "h1Count": 1,
+      "isNoIndex": false
+    },
+    {
+      "route": "/bds/biet-thu-don-lap-na-gv5-03-du-an-aqua-ci-b1b13b8a-08ae-45a9-ab0e-a63c00d33c0b",
+      "title": "Biệt thự đơn lập NA.GV5-03 dự án Aqua City | 19.80 tỷ | SGS LAND",
+      "description": "Biệt thự đơn lập NA.GV5-03 dự án Aqua City — đường Ngô Quyền, Long Hưng, Đồng Nai. Giá: 19.80 tỷ. 300m², PN. Pháp lý: Đang cập nhật.",
+      "canonical": "https://sgsland.vn/bds/biet-thu-don-lap-na-gv5-03-du-an-aqua-ci-b1b13b8a-08ae-45a9-ab0e-a63c00d33c0b",
+      "h1Count": 1,
+      "isNoIndex": false
+    },
+    {
+      "route": "/bds/biet-thu-don-lap-na-gv5-07-du-an-aqua-ci-33780c22-6274-47a2-b2a4-1720d2dfd90c",
+      "title": "Biệt thự đơn lập NA.GV5-07 dự án Aqua City | 28.60 tỷ | SGS LAND",
+      "description": "Biệt thự đơn lập NA.GV5-07 dự án Aqua City — đường Ngô Quyền, Long Hưng, Đồng Nai. Giá: 28.60 tỷ. 300m², PN. Pháp lý: Đang cập nhật.",
+      "canonical": "https://sgsland.vn/bds/biet-thu-don-lap-na-gv5-07-du-an-aqua-ci-33780c22-6274-47a2-b2a4-1720d2dfd90c",
+      "h1Count": 1,
+      "isNoIndex": false
+    },
+    {
+      "route": "/bds/biet-thu-don-lap-na-gv5-04-aqua-city-c2ee7475-86b1-489d-a13c-382bc4e1f063",
+      "title": "Biệt thự đơn lập NA.GV5-04 Aqua City | 38.50 tỷ | SGS LAND",
+      "description": "Biệt thự đơn lập NA.GV5-04 Aqua City — đường Ngô Quyền, Long Hưng, Đồng Nai. Giá: 38.50 tỷ. 300m², PN. Pháp lý: Đang cập nhật.",
+      "canonical": "https://sgsland.vn/bds/biet-thu-don-lap-na-gv5-04-aqua-city-c2ee7475-86b1-489d-a13c-382bc4e1f063",
+      "h1Count": 1,
+      "isNoIndex": false
+    },
+    {
+      "route": "/bds/biet-thu-don-lap-na-gv5-05-aqua-city-1471a804-c167-495a-9088-451e1e7dd407",
+      "title": "Bất động sản | SGS LAND",
+      "description": "SGS LAND — nền tảng bất động sản với định giá AI, CRM đa kênh và quản lý kho hàng cho sàn giao dịch, môi giới và doanh nghiệp tại Việt Nam.",
+      "canonical": "https://sgsland.vn/bds/biet-thu-don-lap-na-gv5-05-aqua-city-1471a804-c167-495a-9088-451e1e7dd407",
+      "h1Count": 0,
+      "isNoIndex": false
+    },
+    {
+      "route": "/bds/shop-villas-na-gv5-01-du-an-aqua-city-8a15ae53-53b6-4a9e-b8ca-0528f6975ad8",
+      "title": "Shop Villas NA.GV5-01 dự án Aqua City | 57.20 tỷ | SGS LAND",
+      "description": "Shop Villas NA.GV5-01 dự án Aqua City — đường Ngô Quyền, Long Hưng, Đồng Nai. Giá: 57.20 tỷ. 465m², PN. Pháp lý: Đang cập nhật.",
+      "canonical": "https://sgsland.vn/bds/shop-villas-na-gv5-01-du-an-aqua-city-8a15ae53-53b6-4a9e-b8ca-0528f6975ad8",
+      "h1Count": 1,
+      "isNoIndex": false
+    },
+    {
+      "route": "/bds/shop-villas-na-gv5-01-du-an-aqua-city-c581da7d-5162-4333-9951-69191c53ade5",
+      "title": "Shop Villas NA.GV5-01 dự án Aqua City | 57.20 tỷ | SGS LAND",
+      "description": "Shop Villas NA.GV5-01 dự án Aqua City — đường Ngô Quyền, Long Hưng, Đồng Nai. Giá: 57.20 tỷ. 465m², PN. Pháp lý: Đang cập nhật.",
+      "canonical": "https://sgsland.vn/bds/shop-villas-na-gv5-01-du-an-aqua-city-c581da7d-5162-4333-9951-69191c53ade5",
+      "h1Count": 1,
+      "isNoIndex": false
+    },
+    {
+      "route": "/bds/biet-thu-don-lap-na-gv5-04-du-an-aqua-ci-bab07f71-236f-4b5c-a39e-5c8416410c47",
+      "title": "Biệt thự đơn lập NA.GV5-04 dự án Aqua City | 20.90 tỷ | SGS LAND",
+      "description": "Biệt thự đơn lập NA.GV5-04 dự án Aqua City — đường Ngô Quyền, Long Hưng, Đồng Nai. Giá: 20.90 tỷ. 300m², PN. Pháp lý: Đang cập nhật.",
+      "canonical": "https://sgsland.vn/bds/biet-thu-don-lap-na-gv5-04-du-an-aqua-ci-bab07f71-236f-4b5c-a39e-5c8416410c47",
+      "h1Count": 1,
+      "isNoIndex": false
+    },
+    {
+      "route": "/bds/ban-can-ho-vinhomes-central-park-33fcf0a5-de0d-4bf4-8048-3fc6d71e9a79",
+      "title": "Bán căn hộ Vinhomes Central Park | 9.50 tỷ | SGS LAND",
+      "description": "Bán căn hộ Vinhomes Central Park — Tòa Park 7 lầu 34. Giá: 9.50 tỷ. 82m², 2PN. Pháp lý: Đang cập nhật.",
+      "canonical": "https://sgsland.vn/bds/ban-can-ho-vinhomes-central-park-33fcf0a5-de0d-4bf4-8048-3fc6d71e9a79",
+      "h1Count": 1,
+      "isNoIndex": false
+    },
+    {
+      "route": "/bds/ban-nha-pho-vuon-la4-t116-09-izumi-canar-d78548ce-8448-466c-be94-89abe2e7e56d",
+      "title": "Bán Nhà Phố Vườn LA4-T116.09 Izumi Canaria – Diện Tích Đất 114m² | Xây Dựng 152,85m² | Giá Chỉ 8.499 Tỷ (74,55 Triệu/m² Đất) | 8.50 tỷ | SGS LAND",
+      "description": "Bán Nhà Phố Vườn LA4-T116.09 Izumi Canaria – Diện Tích Đất 114m² | Xây Dựng 152,85m² | Giá Chỉ 8.499 Tỷ (74,55 Triệu/m² Đất) — đường Ngô Quyền, Long Hưng, Đồng Nai. Giá: 8.50 tỷ. 114m², PN. Pháp lý: Đang cập nhật.",
+      "canonical": "https://sgsland.vn/bds/ban-nha-pho-vuon-la4-t116-09-izumi-canar-d78548ce-8448-466c-be94-89abe2e7e56d",
+      "h1Count": 1,
+      "isNoIndex": false
+    },
+    {
+      "route": "/bds/ban-nha-pho-vuon-la4-t116-05-izumi-canar-aac21368-5624-4480-bec4-e52da1ec7c32",
+      "title": "Bán Nhà Phố Vườn LA4-T116.05 Izumi Canaria – Diện Tích Đất 114m² | Xây Dựng 156,82m² | Giá Chỉ 8.554 Tỷ (Giá/m² Đất Hấp Dẫn) | 8.55 tỷ | SGS LAND",
+      "description": "Bán Nhà Phố Vườn LA4-T116.05 Izumi Canaria – Diện Tích Đất 114m² | Xây Dựng 156,82m² | Giá Chỉ 8.554 Tỷ (Giá/m² Đất Hấp Dẫn) — đường Ngô Quyền, Long Hưng, Đồng Nai. Giá: 8.55 tỷ. 114m², PN. Pháp lý: Đang cập nhật.",
+      "canonical": "https://sgsland.vn/bds/ban-nha-pho-vuon-la4-t116-05-izumi-canar-aac21368-5624-4480-bec4-e52da1ec7c32",
+      "h1Count": 1,
+      "isNoIndex": false
+    },
+    {
+      "route": "/bds/ban-nha-pho-vuon-la4-t117-17-izumi-canar-766a3ff4-badf-4c22-8a80-69d5a6c02860",
+      "title": "Bán Nhà Phố Vườn LA4-T117.17 Izumi Canaria – Diện Tích Đất 114m² | Xây Dựng 151,64m² | Giá Chỉ 8.483 Tỷ (Giá/m² Đất Hấp Dẫn) | 8.48 tỷ | SGS LAND",
+      "description": "Bán Nhà Phố Vườn LA4-T117.17 Izumi Canaria – Diện Tích Đất 114m² | Xây Dựng 151,64m² | Giá Chỉ 8.483 Tỷ (Giá/m² Đất Hấp Dẫn) — đường Ngô Quyền, Long Hưng, Đồng Nai. Giá: 8.48 tỷ. 114m², PN. Pháp lý: Đang cập nhật.",
+      "canonical": "https://sgsland.vn/bds/ban-nha-pho-vuon-la4-t117-17-izumi-canar-766a3ff4-badf-4c22-8a80-69d5a6c02860",
+      "h1Count": 1,
+      "isNoIndex": false
+    },
+    {
+      "route": "/bds/ban-nha-pho-vuon-la4-t202-20-izumi-canar-d766e906-cb77-4ec4-a33d-68031679c068",
+      "title": "Bán Nhà Phố Vườn LA4-T202.20 Izumi Canaria – Diện Tích Đất 143,5m² | Xây Dựng 141,52m² | Giá Chỉ 10 Tỷ (Giá/m² Đất Hấp Dẫn) | 10.00 tỷ | SGS LAND",
+      "description": "Bán Nhà Phố Vườn LA4-T202.20 Izumi Canaria – Diện Tích Đất 143,5m² | Xây Dựng 141,52m² | Giá Chỉ 10 Tỷ (Giá/m² Đất Hấp Dẫn) — đường Ngô Quyền, Long Hưng, Đồng Nai. Giá: 10.00 tỷ. 143.5m², PN. Pháp lý: Đang cập nhật.",
+      "canonical": "https://sgsland.vn/bds/ban-nha-pho-vuon-la4-t202-20-izumi-canar-d766e906-cb77-4ec4-a33d-68031679c068",
+      "h1Count": 1,
+      "isNoIndex": false
+    },
+    {
+      "route": "/bds/ban-biet-thu-song-lap-la4-sd02-14-izumi-814e09c9-ed7a-4717-b7e8-51ab13c782a0",
+      "title": "Bán Biệt Thự Song Lập LA4-SD02.14 Izumi Canaria – Diện Tích Đất 234m² | Xây Dựng 244,81m² | Giá Chỉ 16.399 Tỷ (Giá/m² Đất Hấp Dẫn) | 16.40 tỷ | SGS LAND",
+      "description": "Bán Biệt Thự Song Lập LA4-SD02.14 Izumi Canaria – Diện Tích Đất 234m² | Xây Dựng 244,81m² | Giá Chỉ 16.399 Tỷ (Giá/m² Đất Hấp Dẫn) — đường Ngô Quyền, Long Hưng, Đồng Nai. Giá: 16.40 tỷ. 234m², PN. Pháp lý: Đang cập nhật.",
+      "canonical": "https://sgsland.vn/bds/ban-biet-thu-song-lap-la4-sd02-14-izumi-814e09c9-ed7a-4717-b7e8-51ab13c782a0",
+      "h1Count": 1,
+      "isNoIndex": false
+    },
+    {
+      "route": "/bds/ban-biet-thu-song-lap-la4-sd05-04-izumi-28ce7a6c-3798-4759-aa89-c667973db088",
+      "title": "Bán Biệt Thự Song Lập LA4-SD05.04 Izumi Canaria – Diện Tích Đất 256,65m² | Xây Dựng 277,51m² | Giá Chỉ 25.197 Tỷ (Giá/m² Đất Cạnh Tranh) | 25.20 tỷ | SGS LAND",
+      "description": "Bán Biệt Thự Song Lập LA4-SD05.04 Izumi Canaria – Diện Tích Đất 256,65m² | Xây Dựng 277,51m² | Giá Chỉ 25.197 Tỷ (Giá/m² Đất Cạnh Tranh) — đường Ngô Quyền, Long Hưng, Đồng Nai. Giá: 25.20 tỷ. 256.65m², PN. Pháp lý: Đang cập nhật.",
+      "canonical": "https://sgsland.vn/bds/ban-biet-thu-song-lap-la4-sd05-04-izumi-28ce7a6c-3798-4759-aa89-c667973db088",
+      "h1Count": 1,
+      "isNoIndex": false
+    },
+    {
+      "route": "/bds/the-marq-ed9a4e04-25b2-44bf-9c31-ee93726919c5",
+      "title": "THE MARQ | 280 triệu | SGS LAND",
+      "description": "THE MARQ — 29 NGUYỄN ĐÌNH CHIỂU, ĐAKAO, SÀI GÒN, HCM. Giá: 280 triệu. 109m², 3PN. Pháp lý: Đang cập nhật.",
+      "canonical": "https://sgsland.vn/bds/the-marq-ed9a4e04-25b2-44bf-9c31-ee93726919c5",
+      "h1Count": 1,
+      "isNoIndex": false
+    },
+    {
+      "route": "/bds/sieu-pham-moi-vinhomes-hoc-mon-tam-diem-6cd44048-c944-46f8-8f3e-1730df7461c5",
+      "title": "Bất động sản | SGS LAND",
+      "description": "SGS LAND — nền tảng bất động sản với định giá AI, CRM đa kênh và quản lý kho hàng cho sàn giao dịch, môi giới và doanh nghiệp tại Việt Nam.",
+      "canonical": "https://sgsland.vn/bds/sieu-pham-moi-vinhomes-hoc-mon-tam-diem-6cd44048-c944-46f8-8f3e-1730df7461c5",
+      "h1Count": 0,
+      "isNoIndex": false
+    },
+    {
+      "route": "/bds/bang-gia-vinhomes-hoc-mon-moi-nhat-nhan-317b7730-c458-464c-a696-6a07ce88d688",
+      "title": "Bảng Giá Vinhomes Hóc Môn Mới Nhất – Nhận Ngay Ưu Đãi Đợt 1 | 3.16 tỷ | SGS LAND",
+      "description": "Bảng Giá Vinhomes Hóc Môn Mới Nhất – Nhận Ngay Ưu Đãi Đợt 1 — hốc môn . Giá: 3.16 tỷ. 52m², PN. Pháp lý: Đang cập nhật.",
+      "canonical": "https://sgsland.vn/bds/bang-gia-vinhomes-hoc-mon-moi-nhat-nhan-317b7730-c458-464c-a696-6a07ce88d688",
+      "h1Count": 1,
+      "isNoIndex": false
+    },
+    {
+      "route": "/bds/the-marq-32f59de6-b6d0-477b-848b-43dd8e5b0689",
+      "title": "THE MARQ | 280 triệu | SGS LAND",
+      "description": "THE MARQ — 29 Nguyễn Đình Chiểu, Đakao, HCM. Giá: 280 triệu. 45m², 1PN. Pháp lý: Đang cập nhật.",
+      "canonical": "https://sgsland.vn/bds/the-marq-32f59de6-b6d0-477b-848b-43dd8e5b0689",
+      "h1Count": 1,
+      "isNoIndex": false
+    },
+    {
+      "route": "/bds/can-ho-2-phong-ngu-victoria-village-vtv-21d1ef79-bd92-49e8-875f-a0533994ea8b",
+      "title": "Căn hộ 2 phòng ngủ Victoria Village — VTV.3-1X.05 | 7.30 tỷ | SGS LAND",
+      "description": "Căn hộ 2 phòng ngủ Victoria Village — VTV.3-1X.05 — đường Trương Văn Bang, Thạnh Mỹ Lợi, Thủ Đức, TPHCM. Giá: 7.30 tỷ. 67.3m², 2PN. Pháp lý: Đang cập nhật.",
+      "canonical": "https://sgsland.vn/bds/can-ho-2-phong-ngu-victoria-village-vtv-21d1ef79-bd92-49e8-875f-a0533994ea8b",
+      "h1Count": 1,
+      "isNoIndex": false
+    },
+    {
+      "route": "/bds/victoria-village-novaland-khu-do-thi-dan-7aa47a07-18ff-46c4-aca6-6db14e56d785",
+      "title": "Victoria Village Novaland - Khu đô thị đẳng cấp ven sông Sài Gòn | 6.35 tỷ | SGS LAND",
+      "description": "Victoria Village Novaland - Khu đô thị đẳng cấp ven sông Sài Gòn — đường Trương Văn Bang, Thạnh Mỹ Lợi, Thủ Đức, TP.HCM. Giá: 6.35 tỷ. 64.6m², PN. Pháp lý: Đang cập nhật.",
+      "canonical": "https://sgsland.vn/bds/victoria-village-novaland-khu-do-thi-dan-7aa47a07-18ff-46c4-aca6-6db14e56d785",
+      "h1Count": 1,
+      "isNoIndex": false
+    },
+    {
+      "route": "/bds/can-ho-3-phong-ngu-victoria-village-nova-df5382aa-28e1-4f54-aa9a-cf3bf93a1262",
+      "title": "Bất động sản | SGS LAND",
+      "description": "SGS LAND — nền tảng bất động sản với định giá AI, CRM đa kênh và quản lý kho hàng cho sàn giao dịch, môi giới và doanh nghiệp tại Việt Nam.",
+      "canonical": "https://sgsland.vn/bds/can-ho-3-phong-ngu-victoria-village-nova-df5382aa-28e1-4f54-aa9a-cf3bf93a1262",
+      "h1Count": 0,
+      "isNoIndex": false
+    },
+    {
+      "route": "/bds/ban-can-ho-2-phong-ngu-victoria-village-0d73b4d3-37df-4bdd-92cd-3306bd126b9e",
+      "title": "Bán Căn Hộ 2 Phòng Ngủ Victoria Village Novaland – Mã Căn VTV.2-0X.06 (Giá Tốt Nhất Quận 2) | 6.55 tỷ | SGS LAND",
+      "description": "Bán Căn Hộ 2 Phòng Ngủ Victoria Village Novaland – Mã Căn VTV.2-0X.06 (Giá Tốt Nhất Quận 2) — đường Trương Văn Bang, Thạnh Mỹ Lợi, Thủ Đức, TP.HCM. Giá: 6.55 tỷ. 66.8m², 2PN. Pháp lý: Đang cập nhật.",
+      "canonical": "https://sgsland.vn/bds/ban-can-ho-2-phong-ngu-victoria-village-0d73b4d3-37df-4bdd-92cd-3306bd126b9e",
+      "h1Count": 1,
+      "isNoIndex": false
+    },
+    {
+      "route": "/bds/ban-can-ho-2-phong-ngu-victoria-village-c9415b98-687e-4d97-8fe5-b3156f11c43c",
+      "title": "Bán Căn Hộ 2 Phòng Ngủ Victoria Village (Novaland) – Mã Căn VTV.4-0X.05 Giá Cực Tốt Tại Quận 2 | 6.25 tỷ | SGS LAND",
+      "description": "Bán Căn Hộ 2 Phòng Ngủ Victoria Village (Novaland) – Mã Căn VTV.4-0X.05 Giá Cực Tốt Tại Quận 2 — đường Trương Văn Bang, Thạnh Mỹ Lợi, Thủ Đức, TP.HCM. Giá: 6.25 tỷ. 60.4m², PN. Pháp lý: Đang cập nhật.",
+      "canonical": "https://sgsland.vn/bds/ban-can-ho-2-phong-ngu-victoria-village-c9415b98-687e-4d97-8fe5-b3156f11c43c",
+      "h1Count": 1,
+      "isNoIndex": false
+    },
+    {
+      "route": "/bds/grand-manhatan-novaland-cac-can-chuyen-n-340f6d7d-9c7c-4747-8f49-ec806a47adb3",
+      "title": "Grand Manhatan Novaland - Các căn chuyển nhượng giá tốt | 13.40 tỷ | SGS LAND",
+      "description": "Grand Manhatan Novaland - Các căn chuyển nhượng giá tốt — 100 Cô Giang, Cô Giang, Quận 1, TP.HCM. Giá: 13.40 tỷ. 68m², PN. Pháp lý: Đang cập nhật.",
+      "canonical": "https://sgsland.vn/bds/grand-manhatan-novaland-cac-can-chuyen-n-340f6d7d-9c7c-4747-8f49-ec806a47adb3",
+      "h1Count": 1,
+      "isNoIndex": false
+    },
+    {
+      "route": "/bds/the-grand-manhattan-so-huu-toa-do-kim-cu-8cedc05b-547a-4fd7-a8d4-b5a71c188f18",
+      "title": "The Grand Manhattan: Sở Hữu & Tọa Độ Kim Cương&quot; – Căn Hộ 2PN Đẳng Cấp Nhất Quận 1 | 13.20 tỷ | SGS LAND",
+      "description": "The Grand Manhattan: Sở Hữu & Tọa Độ Kim Cương&quot; – Căn Hộ 2PN Đẳng Cấp Nhất Quận 1 — 100 Cô Giang, Cô Giang, Quận 1, TP.HCM. Giá: 13.20 tỷ. 67.9m², 2PN. Pháp lý: Đang cập nhật.",
+      "canonical": "https://sgsland.vn/bds/the-grand-manhattan-so-huu-toa-do-kim-cu-8cedc05b-547a-4fd7-a8d4-b5a71c188f18",
+      "h1Count": 1,
+      "isNoIndex": false
+    },
+    {
+      "route": "/bds/so-huu-can-ho-3-phong-ngu-gia-3-ty-8-b8ddfca8-7ae2-4696-bb6c-39b1327ea14b",
+      "title": "Sở hữu căn hộ 3 phòng ngủ giá 3 tỹ 8  | 3.80 tỷ | SGS LAND",
+      "description": "Sở hữu căn hộ 3 phòng ngủ giá 3 tỹ 8  — Vinhomes Grand Park Quận 9. Giá: 3.80 tỷ. 80m², 3PN. Pháp lý: Đang cập nhật.",
+      "canonical": "https://sgsland.vn/bds/so-huu-can-ho-3-phong-ngu-gia-3-ty-8-b8ddfca8-7ae2-4696-bb6c-39b1327ea14b",
+      "h1Count": 1,
+      "isNoIndex": false
+    },
+    {
+      "route": "/bds/sieu-pham-khach-san-goc-2-mat-tien-quan-c8d12531-041b-414e-b513-3f100a2cd590",
+      "title": "SIÊU PHẨM KHÁCH SẠN GÓC 2 MẶT TIỀN QUẬN 1 TP.HCM | 4.48 tỷ | SGS LAND",
+      "description": "SIÊU PHẨM KHÁCH SẠN GÓC 2 MẶT TIỀN QUẬN 1 TP.HCM — Góc 2 MT Hai Bà Trưng và Lê Thánh Tôn, Bến Nghé, Quận 1. Giá: 4.48 tỷ. 788.8m², 99PN. Pháp lý: Đang cập nhật.",
+      "canonical": "https://sgsland.vn/bds/sieu-pham-khach-san-goc-2-mat-tien-quan-c8d12531-041b-414e-b513-3f100a2cd590",
+      "h1Count": 1,
+      "isNoIndex": false
+    },
+    {
+      "route": "/bds/chinh-chu-cho-thue-can-1pn-lumiere-boule-5c389760-d0d7-4832-9ecb-e4b79bea612b",
+      "title": "CHÍNH CHỦ CHO THUÊ CĂN 1PN LUMIERE BOULEVARD – VIEW SÔNG MÁT LÀNH – CHỈ 8TR BAO PHÍ | 8 triệu | SGS LAND",
+      "description": "CHÍNH CHỦ CHO THUÊ CĂN 1PN LUMIERE BOULEVARD – VIEW SÔNG MÁT LÀNH – CHỈ 8TR BAO PHÍ — Khu dân cư Vinhomes Grand Park. Giá: 8 triệu. 52m², PN. Pháp lý: Đang cập nhật.",
+      "canonical": "https://sgsland.vn/bds/chinh-chu-cho-thue-can-1pn-lumiere-boule-5c389760-d0d7-4832-9ecb-e4b79bea612b",
+      "h1Count": 1,
+      "isNoIndex": false
+    },
+    {
+      "route": "/tin-tuc/test-bai-viet-upload-anh-video",
+      "title": "Test bai viet upload anh video | SGS Land | SGS LAND",
+      "description": "",
+      "canonical": "https://sgsland.vn/tin-tuc/test-bai-viet-upload-anh-video",
+      "h1Count": 1,
+      "isNoIndex": false
+    },
+    {
+      "route": "/tin-tuc/phan-tich-gia-mua-gia-cho-thue-va-ty-suat-cho-thue-victoria-village-vista-verde-feliz-en-vista",
+      "title": "PHÂN TÍCH GIÁ MUA, GIÁ CHO THUÊ VÀ TỶ SUẤT CHO THUÊ  Victoria Village – Vista Verde – Feliz En Vista | SGS Land | SGS LAND",
+      "description": "Thị trường căn hộ cao cấp tại khu vực Thạnh Mỹ Lợi, TP. Thủ Đức đang thu hút sự quan tâm của nhiều nhà đầu tư nhờ vị trí liền kề Khu đô thị Thủ Thiêm, kết nối thuận tiện đến Quận 1 và trung tâm TP.HCM. Trong phân khúc này, ba dự án nổi bật gồm Victoria Village (Novaland), Vista Verde (CapitaLand) và Feliz En Vista (CapitaLand). Dưới đây là phân tích về giá bán, giá cho thuê và hiệu suất đầu tư của từng dự án.",
+      "canonical": "https://sgsland.vn/tin-tuc/phan-tich-gia-mua-gia-cho-thue-va-ty-suat-cho-thue-victoria-village-vista-verde-feliz-en-vista",
+      "h1Count": 1,
+      "isNoIndex": false
+    },
+    {
+      "route": "/tin-tuc/gio-hang-dac-biet-aqua-city",
+      "title": "GIỎ HÀNG ĐẶC BIỆT AQUA CITY | SGS Land | SGS LAND",
+      "description": "Cam kết giá thấp nhất",
+      "canonical": "https://sgsland.vn/tin-tuc/gio-hang-dac-biet-aqua-city",
+      "h1Count": 1,
+      "isNoIndex": false
+    },
+    {
+      "route": "/tin-tuc/gioi-thieu-sgs-land-phan-mem-quan-ly-bat-dong-san-chuyen-nghiep",
+      "title": "SGS Land - Sàn Bất Động Sản Uy Tín Top Đầu TP.HCM 05/2026 | Review chi tiết, Đại Lý F1, Định Giá AI, Pháp Lý | SGS Land | SGS LAND",
+      "description": "SGS Land (sgsland.vn) là một trong những sàn giao dịch bất động sản uy tín và hiện đại nhất TP.HCM hiện nay. Với công nghệ AI định giá sai số chỉ ±5%, SGS Land đang dẫn đầu xu hướng số hóa ngành BĐS miền Nam.\nĐược thành lập từ năm 2018, SGS Land là đại lý phân phối ủy quyền F1 của nhiều ông lớn: Novaland, Masterise Homes, Nam Long Group, Vinhomes... và đã xử lý hơn 100 tr USD giá trị giao dịch.",
+      "canonical": "https://sgsland.vn/tin-tuc/gioi-thieu-sgs-land-phan-mem-quan-ly-bat-dong-san-chuyen-nghiep",
       "h1Count": 1,
       "isNoIndex": false
     }

@@ -7,13 +7,13 @@ const ANSWER_PAGES = [
   { path: "/phap-ly-nha-dat",         title: "Pháp lý nhà đất" },
   { path: "/lai-suat-ngan-hang",      title: "Lãi suất ngân hàng" },
   { path: "/ai-valuation",            title: "Định giá AI" },
-  { path: "/news/luat-dat-dai-2024-nhung-diem-moi-quan-trong", title: "Luật Đất Đai 2024" },
-  { path: "/news/dau-tu-bds-dong-nai-2025", title: "Đầu tư BĐS Đồng Nai 2025" },
-  { path: "/news/gia-chung-cu-tphcm-2025", title: "Giá chung cư TP.HCM 2025" },
-  { path: "/news/vay-mua-nha-ngan-hang-nao-tot-nhat", title: "Vay mua nhà ngân hàng nào tốt nhất" },
-  { path: "/news/dau-tu-vinhomes-grand-park", title: "Đầu tư Vinhomes Grand Park" },
-  { path: "/news/phong-thuy-mua-nha", title: "Phong thuỷ mua nhà" },
-  { path: "/news/can-ho-ha-tang-tphcm-2025-2026", title: "Căn hộ hạ tầng TP.HCM 2025-2026" },
+  { path: "/tin-tuc/luat-dat-dai-2024-nhung-diem-moi-quan-trong", title: "Luật Đất Đai 2024" },
+  { path: "/tin-tuc/dau-tu-bds-dong-nai-2025", title: "Đầu tư BĐS Đồng Nai 2025" },
+  { path: "/tin-tuc/gia-chung-cu-tphcm-2025", title: "Giá chung cư TP.HCM 2025" },
+  { path: "/tin-tuc/vay-mua-nha-ngan-hang-nao-tot-nhat", title: "Vay mua nhà ngân hàng nào tốt nhất" },
+  { path: "/tin-tuc/dau-tu-vinhomes-grand-park", title: "Đầu tư Vinhomes Grand Park" },
+  { path: "/tin-tuc/phong-thuy-mua-nha", title: "Phong thuỷ mua nhà" },
+  { path: "/tin-tuc/can-ho-ha-tang-tphcm-2025-2026", title: "Căn hộ hạ tầng TP.HCM 2025-2026" },
 ];
 export async function GET() {
   const now = new Date().toISOString();

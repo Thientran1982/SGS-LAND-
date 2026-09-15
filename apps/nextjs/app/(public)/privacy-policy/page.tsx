@@ -1,6 +1,11 @@
 // @ts-nocheck
 import type { Metadata } from "next";
-export const metadata: Metadata = { title: "Chính Sách Bảo Mật", alternates: { canonical: "https://sgsland.vn/privacy-policy", languages: { "vi-VN": "https://sgsland.vn/privacy-policy", "en-US": "https://sgsland.vn/en/privacy-policy", "x-default": "https://sgsland.vn/privacy-policy" } } };
+import { getLang, langAlternates } from "@/lib/lang";
+export async function generateMetadata(): Promise<Metadata> {
+  const en = (await getLang()) === "en";
+  const canonical = `https://sgsland.vn${en ? "/en/privacy-policy" : "/privacy-policy"}`;
+  return { title: "Chính Sách Bảo Mật", alternates: { canonical, ...langAlternates("/privacy-policy") } };
+}
 export const dynamic = "force-dynamic";
 export default function PrivacyPolicyPage() {
   return (

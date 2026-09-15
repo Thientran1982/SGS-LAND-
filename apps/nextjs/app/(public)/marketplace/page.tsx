@@ -8,7 +8,7 @@ import { getLang } from "@/lib/lang";
 export async function generateMetadata(): Promise<Metadata> {
   const lang = await getLang();
   const en = lang === "en";
-  const url = en ? "https://sgsland.vn/en/marketplace" : "https://sgsland.vn/bat-dong-san";
+  const url = en ? "https://sgsland.vn/en/bat-dong-san" : "https://sgsland.vn/bat-dong-san";
   return {
     title: en
       ? "Property Search | SGS LAND Marketplace"
@@ -20,7 +20,7 @@ export async function generateMetadata(): Promise<Metadata> {
       canonical: url,
       languages: {
         "vi-VN": "https://sgsland.vn/bat-dong-san",
-        "en-US": "https://sgsland.vn/en/marketplace",
+        "en-US": "https://sgsland.vn/en/bat-dong-san",
         "x-default": "https://sgsland.vn/bat-dong-san",
       },
     },

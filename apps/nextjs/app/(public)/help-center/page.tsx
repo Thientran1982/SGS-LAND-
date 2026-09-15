@@ -2,12 +2,17 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { HelpCircle, MessageSquare, Phone, Mail, BookOpen, ChevronRight } from "lucide-react";
+import { getLang, langAlternates } from "@/lib/lang";
 
-export const metadata: Metadata = {
-  title: "Trung Tâm Trợ Giúp",
-  description: "Hỗ trợ khách hàng SGS LAND: hướng dẫn sử dụng nền tảng, tư vấn BĐS, giải đáp thắc mắc. Liên hệ qua hotline, chat hoặc email.",
-  alternates: { canonical: "https://sgsland.vn/help-center", languages: { "vi-VN": "https://sgsland.vn/help-center", "en-US": "https://sgsland.vn/en/help-center", "x-default": "https://sgsland.vn/help-center" } },
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const en = (await getLang()) === "en";
+  const canonical = `https://sgsland.vn${en ? "/en/help-center" : "/help-center"}`;
+  return {
+    title: "Trung Tâm Trợ Giúp",
+    description: "Hỗ trợ khách hàng SGS LAND: hướng dẫn sử dụng nền tảng, tư vấn BĐS, giải đáp thắc mắc. Liên hệ qua hotline, chat hoặc email.",
+    alternates: { canonical, ...langAlternates("/help-center") },
+  };
+}
 export const dynamic = "force-dynamic";
 
 const TOPICS = [

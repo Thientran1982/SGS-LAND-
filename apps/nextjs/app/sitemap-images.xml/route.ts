@@ -3,10 +3,10 @@ import { NextResponse } from "next/server";
 import { slugifyListingTitle } from "@/lib/listingSlug";
 
 const BASE = "https://sgsland.vn";
-const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
+const API_BASE = process.env.BACKEND_URL || process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
 
-function slugifyListing(title: string, code: string): string {
-  return `${slugifyListingTitle(title)}-${code}`;
+function slugifyListing(title: string, id: string): string {
+  return `${slugifyListingTitle(title)}-${id}`;
 }
 
 function esc(s: string): string {
@@ -48,7 +48,8 @@ export async function GET() {
   const entries = listings
     .filter((l) => Array.isArray(l.images) && l.images.length > 0)
     .map((l) => {
-      const slug = slugifyListing(l.title, l.code);
+      if (!l.id) return "";
+      const slug = slugifyListing(l.title, l.id);
       const imgTags = (l.images as string[])
         .filter(Boolean)
         .slice(0, 30)

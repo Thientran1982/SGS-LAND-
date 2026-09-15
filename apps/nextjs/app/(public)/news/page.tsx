@@ -16,7 +16,7 @@ import { getBreadcrumbSchema, SITE_URL } from "@/lib/schema";
 import { getLang } from "@/lib/lang";
 export async function generateMetadata(): Promise<Metadata> {
   const en = (await getLang()) === "en";
-  const url = `${SITE_URL}${en ? "/en/news" : "/tin-tuc"}`;
+  const url = `${SITE_URL}${en ? "/en/tin-tuc" : "/tin-tuc"}`;
   const title = en ? "Real Estate Knowledge & News | SGS LAND Experts" : "Kiến Thức & Tin Tức BĐS | Chuyên gia SGS LAND";
   const description = en
     ? "In-depth real estate market analysis, legal guidance and investment knowledge from SGS LAND experts."
@@ -24,7 +24,7 @@ export async function generateMetadata(): Promise<Metadata> {
   return {
     title,
     description,
-    alternates: { canonical: url, languages: { "vi-VN": `${SITE_URL}/news`, "en-US": `${SITE_URL}/en/news`, "x-default": `${SITE_URL}/news` } },
+    alternates: { canonical: url, languages: { "vi-VN": `${SITE_URL}/tin-tuc`, "en-US": `${SITE_URL}/en/tin-tuc`, "x-default": `${SITE_URL}/tin-tuc` } },
     openGraph: {
       type: "article",
       url,

@@ -46,7 +46,7 @@ export async function GET() {
     .map((a) => {
       const pubDate = new Date(a.published_at).toISOString();
       return `<url>
-  <loc>${esc(`${BASE}/news/${a.slug}`)}</loc>
+  <loc>${esc(`${BASE}/tin-tuc/${a.slug}`)}</loc>
   <news:news>
     <news:publication>
       <news:name>${esc(PUBLICATION_NAME)}</news:name>

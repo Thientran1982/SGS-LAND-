@@ -17,7 +17,7 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   const code = uuidMatch ? uuidMatch[0] : (slug.split("-").pop() ?? slug);
   let listing: Listing | null = null;
   try {
-    const res = await fetch(      `${process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000"}/api/public/listings/${code}`,
+    const res = await fetch(      `${process.env.BACKEND_URL || process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000"}/api/public/listings/${code}`,
       { cache: "no-store" }
     );
     if (res.ok) listing = await res.json();
@@ -56,8 +56,8 @@ export default async function ListingDetailRoute({ params }: { params: Promise<{
   let similarListings: Listing[] = [];
   try {
     const [listingRes, similarRes] = await Promise.all([
-      fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000"}/api/public/listings/${code}`, { cache: "no-store" }),
-      fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000"}/api/public/listings?limit=4&similar=${code}`, { cache: "no-store" }),
+      fetch(`${process.env.BACKEND_URL || process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000"}/api/public/listings/${code}`, { cache: "no-store" }),
+      fetch(`${process.env.BACKEND_URL || process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000"}/api/public/listings?limit=4&similar=${code}`, { cache: "no-store" }),
     ]);
     if (listingRes.ok) listing = await listingRes.json();
     if (similarRes.ok) {

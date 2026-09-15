@@ -14,7 +14,7 @@ const AREA_PAGES = [
   { path: "/bat-dong-san-long-an",     priority: 0.7 },
   // Price-index data pages (GEO: structured area price data)
   { path: "/lai-suat-ngan-hang",       priority: 0.7 },
-  { path: "/marketplace",              priority: 0.9 },
+  { path: "/bat-dong-san",             priority: 0.9 },
   { path: "/du-an",                    priority: 0.8 },
   { path: "/du-an/vinhomes-hoc-mon",   priority: 0.8 },
   { path: "/du-an/masteri-cosmo-central", priority: 0.8 },

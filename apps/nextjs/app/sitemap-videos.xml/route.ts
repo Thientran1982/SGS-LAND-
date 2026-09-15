@@ -59,7 +59,7 @@ export async function GET() {
         })
         .join("");
       if (!videoTags) return "";
-      return `<url><loc>${esc(`${BASE}/news/${a.slug}`)}</loc>${videoTags}</url>`;
+      return `<url><loc>${esc(`${BASE}/tin-tuc/${a.slug}`)}</loc>${videoTags}</url>`;
     })
     .filter(Boolean)
     .join("");

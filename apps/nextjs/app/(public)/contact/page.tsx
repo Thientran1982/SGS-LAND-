@@ -2,13 +2,18 @@
 import type { Metadata } from "next";
 import { Phone, Mail, MapPin, Linkedin } from "lucide-react";
 import { ContactForm } from "@/components/public/ContactForm";
+import { getLang, langAlternates } from "@/lib/lang";
 
-export const metadata: Metadata = {
-  title: "Liên Hệ",
-  description:
-    "Liên hệ SGS LAND — Hotline: 0379 281 445 | Email: info@sgsland.vn | TP. Hồ Chí Minh. Tư vấn BĐS, CRM, định giá AI miễn phí.",
-  alternates: { canonical: "https://sgsland.vn/contact", languages: { "vi-VN": "https://sgsland.vn/contact", "en-US": "https://sgsland.vn/en/contact", "x-default": "https://sgsland.vn/contact" } },
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const en = (await getLang()) === "en";
+  const canonical = `https://sgsland.vn${en ? "/en/contact" : "/contact"}`;
+  return {
+    title: "Liên Hệ",
+    description:
+      "Liên hệ SGS LAND — Hotline: 0379 281 445 | Email: info@sgsland.vn | TP. Hồ Chí Minh. Tư vấn BĐS, CRM, định giá AI miễn phí.",
+    alternates: { canonical, ...langAlternates("/contact") },
+  };
+}
 
 export const dynamic = "force-dynamic";
 

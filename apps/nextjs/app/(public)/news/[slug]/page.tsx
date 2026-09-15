@@ -26,7 +26,7 @@ export async function generateMetadata({
 }): Promise<Metadata> {
   const { slug } = await params;
   const lang = await getLang();
-  const newsBase = lang === "en" ? "https://sgsland.vn/en/news" : "https://sgsland.vn/tin-tuc";
+  const newsBase = lang === "en" ? "https://sgsland.vn/en/tin-tuc" : "https://sgsland.vn/tin-tuc";
   const canonicalUrl = `${newsBase}/${slug}`;
   const article = await getArticleBySlug(slug);
   if (!article) {
