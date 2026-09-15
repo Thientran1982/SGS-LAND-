@@ -25,6 +25,52 @@ const panelNames = [
   'rollbackAudits',
 ] as const;
 
+const commandCenterPanelNames = [
+  ['brainHealth', 'Brain health'],
+  ['opportunityQueue', 'Opportunity queue'],
+  ['approvalQueue', 'Approval queue'],
+  ['learningStatus', 'Learning status'],
+  ['schedulerRepair', 'Scheduler / repair'],
+] as const;
+
+type CommandCenterState = 'available' | 'degraded' | 'unavailable';
+
+function createCommandCenterPanel<T>(data: T | null, state: CommandCenterState = 'available', message?: string) {
+  return { state, data, ...(message ? { message } : {}) };
+}
+
+function createCommandCenter(overrides: Record<string, unknown> = {}) {
+  return {
+    generatedAt: '2026-09-15T00:00:00.000Z',
+    brainHealth: createCommandCenterPanel({
+      delegations7d: 12,
+      delegationSuccess7d: 10,
+      capabilityGaps7d: 2,
+      latencySloBreaches24h: 1,
+      pendingRuns: 3,
+      errors24h: 1,
+    }),
+    opportunityQueue: createCommandCenterPanel([]),
+    approvalQueue: createCommandCenterPanel([]),
+    learningStatus: createCommandCenterPanel({
+      candidate: null,
+      evaluation: null,
+      gateStatus: null,
+      canary: null,
+      regression: null,
+      rollback: null,
+    }),
+    schedulerRepair: createCommandCenterPanel({
+      timer: { mode: 'shadow', enabled: true, startedAt: null, lastTickAt: null, tickCount: 0, lastStatus: 'OBSERVED' },
+      deadLetterCount: 0,
+      staleLeaseCount: 0,
+      repairSpikeCount7d: 0,
+      lastSuccessfulRunAt: null,
+    }),
+    ...overrides,
+  };
+}
+
 function createSummary(overrides: Record<string, unknown> = {}) {
   const availability = Object.fromEntries(
     panelNames.map(panel => [panel, { available: true }]),
@@ -46,7 +92,11 @@ function createSummary(overrides: Record<string, unknown> = {}) {
   };
 }
 
-function mockCockpitRequests(summary: Record<string, unknown>, overview?: Record<string, unknown>) {
+function mockCockpitRequests(
+  summary: Record<string, unknown>,
+  overview?: Record<string, unknown>,
+  commandCenter: Record<string, unknown> = createCommandCenter(),
+) {
   vi.spyOn(api, 'get').mockImplementation((async (path: string) => {
     if (path === '/api/agent-operating/cockpit') return summary;
     if (path === '/api/agent-operating/questions') return [];
@@ -58,6 +108,7 @@ function mockCockpitRequests(summary: Record<string, unknown>, overview?: Record
       routing: { registryErrors: [] },
       opportunities: [],
     };
+    if (path === '/api/internal/minh-brain/command-center') return commandCenter;
     if (path === '/api/ai/memory/admin') return [];
     if (path === '/api/ai/weights') return { live: {}, versions: [] };
     throw new Error(`Unexpected GET request in test: ${path}`);
@@ -80,6 +131,101 @@ describe('AgentCockpit panel availability', () => {
 
   afterEach(() => {
     vi.restoreAllMocks();
+  });
+
+  it.each([
+    ['available', 'Sẵn sàng', createCommandCenter()],
+    ['degraded', 'Degraded', createCommandCenter(Object.fromEntries(
+      commandCenterPanelNames.map(([key]) => [key, createCommandCenterPanel(
+        key === 'brainHealth'
+          ? {
+            delegations7d: 12,
+            delegationSuccess7d: 10,
+            capabilityGaps7d: 2,
+            latencySloBreaches24h: 1,
+            pendingRuns: null,
+            errors24h: null,
+          }
+          : key === 'opportunityQueue' || key === 'approvalQueue'
+            ? []
+            : key === 'learningStatus'
+              ? { candidate: null, evaluation: null, gateStatus: null, canary: null, regression: null, rollback: null }
+              : {
+                timer: { mode: 'shadow', enabled: true, startedAt: null, lastTickAt: null, tickCount: 0, lastStatus: 'OBSERVED' },
+                deadLetterCount: null,
+                staleLeaseCount: null,
+                repairSpikeCount7d: null,
+                lastSuccessfulRunAt: null,
+              },
+        'degraded',
+        `${key} is temporarily degraded`,
+      )]),
+    ))],
+    ['unavailable', 'Không khả dụng', createCommandCenter(Object.fromEntries(
+      commandCenterPanelNames.map(([key]) => [key, createCommandCenterPanel(null, 'unavailable', `${key} is unavailable`)]),
+    ))],
+  ] as const)('renders the %s state for every Command Center panel', async (_state, stateLabel, commandCenter) => {
+    mockCockpitRequests(createSummary(), undefined, commandCenter);
+    render(<AgentCockpit />);
+
+    expect(await screen.findByRole('heading', { name: 'Command Center của Minh' })).toBeVisible();
+    for (const [, title] of commandCenterPanelNames) {
+      const panelHeading = screen.getByRole('heading', { name: title });
+      const panel = panelHeading.parentElement?.parentElement;
+      expect(panel).not.toBeNull();
+      expect(within(panel as HTMLElement).getByText(stateLabel)).toBeVisible();
+    }
+  });
+
+  it('shows unavailable warnings without fabricated counts or empty-success copy', async () => {
+    const unavailable = createCommandCenter(Object.fromEntries(
+      commandCenterPanelNames.map(([key]) => [key, createCommandCenterPanel(null, 'unavailable', `${key} did not load`)]),
+    ));
+    mockCockpitRequests(createSummary(), undefined, unavailable);
+    render(<AgentCockpit />);
+
+    expect(await screen.findByRole('heading', { name: 'Command Center của Minh' })).toBeVisible();
+    for (const [key, title] of commandCenterPanelNames) {
+      const panelHeading = screen.getByRole('heading', { name: title });
+      const panel = panelHeading.parentElement?.parentElement as HTMLElement;
+      expect(within(panel).getByText(`${key} did not load`)).toBeVisible();
+    }
+
+    expect(screen.queryByText('0 cơ hội')).not.toBeInTheDocument();
+    expect(screen.queryByText('0 đang chờ duyệt')).not.toBeInTheDocument();
+    expect(screen.queryByText('Gate:')).not.toBeInTheDocument();
+    expect(screen.queryByText('Scheduler:')).not.toBeInTheDocument();
+  });
+
+  it('distinguishes loaded empty queues from unavailable queues', async () => {
+    mockCockpitRequests(createSummary(), undefined, createCommandCenter({
+      opportunityQueue: createCommandCenterPanel([]),
+      approvalQueue: createCommandCenterPanel([]),
+    }));
+    render(<AgentCockpit />);
+
+    expect(await screen.findByText('0 cơ hội')).toBeVisible();
+    expect(screen.getByText('0 đang chờ duyệt')).toBeVisible();
+    expect(screen.queryByText('Không thể tải Opportunity queue. Dữ liệu chưa khả dụng; hãy thử làm mới.')).not.toBeInTheDocument();
+    expect(screen.queryByText('Không thể tải Approval queue. Dữ liệu chưa khả dụng; hãy thử làm mới.')).not.toBeInTheDocument();
+  });
+
+  it('keeps healthy Command Center panels visible when one panel is unavailable', async () => {
+    mockCockpitRequests(createSummary(), undefined, createCommandCenter({
+      opportunityQueue: createCommandCenterPanel(null, 'unavailable', 'Opportunity queue did not load'),
+    }));
+    render(<AgentCockpit />);
+
+    expect(await screen.findByText('Opportunity queue did not load')).toBeVisible();
+    expect(screen.queryByText('0 cơ hội')).not.toBeInTheDocument();
+    expect(screen.getByText('0 đang chờ duyệt')).toBeVisible();
+    expect(screen.getByText('12')).toBeVisible();
+
+    for (const [, title] of commandCenterPanelNames.filter(([key]) => key !== 'opportunityQueue')) {
+      const panelHeading = screen.getByRole('heading', { name: title });
+      const panel = panelHeading.parentElement?.parentElement as HTMLElement;
+      expect(within(panel).getByText('Sẵn sàng')).toBeVisible();
+    }
   });
 
   it('shows a panel-specific warning and em dash for unavailable metrics', async () => {
