@@ -222,6 +222,22 @@ export async function countSuccessfulAutoPostingRunsToday(
   return Number(result.rows[0]?.total || 0);
 }
 
+export async function countAutoPostingRunsToday(
+  pool: Pool,
+  tenantId: string,
+  logicalDay: string,
+): Promise<number> {
+  const result = await pool.query(
+    `SELECT COUNT(*)::int AS total
+       FROM marketing_facebook_daily_runs
+      WHERE tenant_id = $1
+        AND logical_day = $2::date
+        AND status IN ('RUNNING', 'SUCCESS', 'FAILED', 'SKIPPED')`,
+    [tenantId, logicalDay],
+  );
+  return Number(result.rows[0]?.total || 0);
+}
+
 export async function getNextAutoPostingSlotIndex(
   pool: Pool,
   tenantId: string,
@@ -385,7 +401,16 @@ export async function createMarketingFacebookBackfillRequest(
     `INSERT INTO marketing_facebook_backfill_requests
        (tenant_id, logical_day, reason, requested_by)
      VALUES ($1, $2::date, $3, $4)
-     ON CONFLICT (tenant_id, logical_day) DO NOTHING
+     ON CONFLICT (tenant_id, logical_day) DO UPDATE
+        SET reason = EXCLUDED.reason,
+            requested_by = EXCLUDED.requested_by,
+            status = 'REQUESTED',
+            result = '{}'::jsonb,
+            error_code = NULL,
+            error_message = NULL,
+            started_at = NULL,
+            finished_at = NULL
+      WHERE marketing_facebook_backfill_requests.status IN ('FAILED', 'SKIPPED')
      RETURNING *`,
     [input.tenantId, input.logicalDay, input.reason.trim(), input.requestedBy],
   );

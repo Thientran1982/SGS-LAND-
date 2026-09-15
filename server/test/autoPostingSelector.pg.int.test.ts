@@ -9,6 +9,7 @@ import migration193 from '../migrations/193_marketing_facebook_daily_runs';
 import migration194 from '../migrations/194_marketing_facebook_backfills';
 import migration197 from '../migrations/197_auto_posting_multi_slot';
 import migration199 from '../migrations/199_normalize_project_social_images';
+import migration201 from '../migrations/201_repair_auto_posting_conflict_targets';
 import {
   createSocialPublication,
   findSocialPublication,
@@ -296,6 +297,12 @@ describePostgres('Marketing Facebook daily selector against PostgreSQL', () => {
     await migration194.up(setupClient);
     await migration197.up(setupClient);
     await migration199.up(setupClient);
+    await setupClient.query(`
+      ALTER TABLE social_publication_targets
+        DROP CONSTRAINT IF EXISTS social_publication_targets_unique_target;
+      DROP INDEX IF EXISTS idx_marketing_facebook_daily_runs_day_slot;
+    `);
+    await migration201.up(setupClient);
     setupClient.release();
     setupClient = undefined;
   });
@@ -427,6 +434,30 @@ describePostgres('Marketing Facebook daily selector against PostgreSQL', () => {
     expect(audit.rows[0].error_message).toContain('không có listing hoặc dự án');
   });
 
+  it('does not create repeated skipped slots when the daily scheduler has no eligible source', async () => {
+    await insertListing({ tenantId: tenantA, images: [] });
+    await configureSelector(tenantA);
+    configureCapabilities({
+      FACEBOOK_PAGE: { status: 'READY', reason: 'Facebook đã xác minh', retryable: false },
+    });
+
+    const firstTick = await runAutoPostingTick(setupPool, runAtSevenPmVietnam);
+    const secondTick = await runAutoPostingTick(setupPool, runAtSevenPmVietnam);
+
+    expect(firstTick.find(result => result.tenantId === tenantA)).toMatchObject({
+      reason: 'NO_ELIGIBLE_SOURCE',
+      skipped: 1,
+    });
+    expect(secondTick.find(result => result.tenantId === tenantA)).toBeUndefined();
+    const audit = await query(
+      `SELECT COUNT(*)::int AS count
+         FROM marketing_facebook_daily_runs
+        WHERE tenant_id = $1`,
+      [tenantA],
+    );
+    expect(audit.rows[0].count).toBe(1);
+  });
+
   it('publishes directly through the worker pipeline and refuses a second run for the same Vietnam day', async () => {
     const listingId = await insertListing({ tenantId: tenantA });
     await configureSelector(tenantA);
@@ -527,6 +558,51 @@ describePostgres('Marketing Facebook daily selector against PostgreSQL', () => {
       [tenantA],
     );
     expect(publication.rows[0].auto_posting_key).toBe(`2025-12-31:0:LISTING:${listingId}`);
+  });
+
+  it('requeues a failed or skipped backfill without bypassing provider outcome guards', async () => {
+    await configureSelector(tenantA);
+    configureCapabilities({
+      FACEBOOK_PAGE: { status: 'READY', reason: 'Facebook đã xác minh', retryable: false },
+    });
+
+    const first = await runAutoPostingBackfill(
+      setupPool,
+      tenantA,
+      '2025-12-30',
+      'Lần đầu chưa có ảnh hợp lệ',
+      'manager-1',
+      new Date('2026-01-03T03:00:00.000Z'),
+    );
+    expect(first).toMatchObject({ reason: 'NO_ELIGIBLE_SOURCE', backfillRequestId: expect.any(String) });
+
+    const listingId = await insertListing({ tenantId: tenantA });
+    const retry = await runAutoPostingBackfill(
+      setupPool,
+      tenantA,
+      '2025-12-30',
+      'Đã bổ sung ảnh HTTPS, chạy lại',
+      'manager-2',
+      new Date('2026-01-03T03:00:00.000Z'),
+    );
+    expect(retry).toMatchObject({
+      created: 1,
+      reason: 'OK',
+      sourceId: listingId,
+      backfillRequestId: first.backfillRequestId,
+    });
+
+    const request = await query(
+      `SELECT status, reason, requested_by
+         FROM marketing_facebook_backfill_requests
+        WHERE tenant_id = $1 AND logical_day = $2::date`,
+      [tenantA, '2025-12-30'],
+    );
+    expect(request.rows[0]).toMatchObject({
+      status: 'SUCCESS',
+      reason: 'Đã bổ sung ảnh HTTPS, chạy lại',
+      requested_by: 'manager-2',
+    });
   });
 
   it('blocks backfill after an ambiguous Facebook result and never creates another publication', async () => {

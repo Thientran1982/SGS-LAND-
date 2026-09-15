@@ -6,9 +6,9 @@ import {
   recordSocialPublicationEvent,
 } from '../repositories/socialPublicationRepository';
 import {
+  countAutoPostingRunsToday,
   claimMarketingFacebookBackfillRun,
   claimMarketingFacebookDailyRun,
-  countSuccessfulAutoPostingRunsToday,
   createMarketingFacebookBackfillRequest,
   finishMarketingFacebookBackfillRequest,
   finishMarketingFacebookDailyRun,
@@ -599,8 +599,8 @@ export async function runAutoPostingTick(pool: Pool, now = new Date()) {
   for (const tenantId of tenants) {
     const settings = await computeEffectiveSettings(pool, tenantId, await getAutoPostingSettings(pool, tenantId));
     if (!settings.enabled || !inTimeWindow(settings, now)) continue;
-    const postsCompletedToday = await countSuccessfulAutoPostingRunsToday(pool, tenantId, logicalDayKey);
-    if (postsCompletedToday >= settings.postsPerDay) continue;
+    const postsAttemptedToday = await countAutoPostingRunsToday(pool, tenantId, logicalDayKey);
+    if (postsAttemptedToday >= settings.postsPerDay) continue;
     const slotIndex = await getNextAutoPostingSlotIndex(pool, tenantId, logicalDayKey);
     results.push({
       tenantId,
@@ -667,9 +667,9 @@ export function startAutoPostingScheduler(pool: Pool) {
           return Math.max(max, endHour * 60 + endMinute);
         }, -1);
         if (lastWindowEndMinutes < 0 || localMinutes(now) < lastWindowEndMinutes) continue;
-        const postsCompletedToday = await countSuccessfulAutoPostingRunsToday(pool, tenantId, today);
-        if (postsCompletedToday > 0) continue;
-        logger.info(`[MarketingAgent] Catch-up: tenant ${tenantId} has no successful post today (${today}), running backfill slot 0.`);
+        const postsAttemptedToday = await countAutoPostingRunsToday(pool, tenantId, today);
+        if (postsAttemptedToday > 0) continue;
+        logger.info(`[MarketingAgent] Catch-up: tenant ${tenantId} has no posting attempt today (${today}), running backfill slot 0.`);
         const result = await runAutoPostingBackfill(pool, tenantId, today, 'BOOT_CATCHUP', 'system:auto-scheduler', now);
         logger.info('[MarketingAgent] Catch-up result: ' + JSON.stringify(result));
       }

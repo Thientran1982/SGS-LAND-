@@ -14,3 +14,9 @@ Controlled backfills must create one tenant/day request with an operator reason 
 **Why:** Recovery after QStash or deployment outages needs an auditable operator path, but Facebook cannot prove whether an uncertain request was accepted, so a blind recovery retry can duplicate public content.
 
 **How to apply:** Allow a backfill to bypass the normal time window only after validating the requested historical day; preserve the publication auto key and expose the request result/status to operators.
+
+Schema drift must be treated as a first-class recovery case: the daily run ledger and publication target conflict keys need an idempotent repair, and duplicate historical rows must be surfaced rather than deleted. A failed or skipped backfill may be explicitly requeued, but unresolved, ambiguous, or already successful provider targets must still block a second submission.
+
+**Why:** A missing PostgreSQL conflict index can fail before Facebook receives anything, while blindly retrying after an uncertain provider response can create duplicate public content.
+
+**How to apply:** Keep repair migrations separate from application writes, count terminal daily attempts so a no-content tenant does not create a new skipped row every scheduler tick, and reuse the same audited backfill request when a safe retry is requested.
