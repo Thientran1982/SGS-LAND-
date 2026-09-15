@@ -9,9 +9,11 @@ import { getMinhBrainSchedulerSnapshot } from '../services/minhBrainScheduler';
 import { listMinhOpportunities } from '../services/minhOpportunityDetectors';
 import {
   getMinhProactiveBudgetStatus,
+  getMinhProactiveRollout,
   listMinhDecisionQueue,
   suggestMinhOpportunity,
 } from '../services/minhDecisionQueueService';
+import { getMinhDecisionLearning } from '../services/minhDecisionLearningService';
 
 const STAFF_ROLES = new Set(['SUPER_ADMIN', 'ADMIN', 'TEAM_LEAD']);
 
@@ -27,11 +29,13 @@ export function createMinhBrainRoutes(authenticateToken: any): Router {
     const registryErrors = validateAgentOrchestrationRegistry();
     const scheduler = getMinhBrainSchedulerSnapshot();
     try {
-      const [health, opportunities, decisionQueue, proactiveBudget] = await Promise.all([
+      const [health, opportunities, decisionQueue, proactiveBudget, proactiveRollout, learning] = await Promise.all([
         getMinhBrainHealth(String(user.tenantId)),
         listMinhOpportunities(String(user.tenantId), Number(req.query.limit) || 100),
         listMinhDecisionQueue(String(user.tenantId), Number(req.query.limit) || 50),
         getMinhProactiveBudgetStatus(String(user.tenantId)),
+        getMinhProactiveRollout(String(user.tenantId)),
+        getMinhDecisionLearning(String(user.tenantId)),
       ]);
       return res.json({
         generatedAt: new Date().toISOString(),
@@ -47,6 +51,8 @@ export function createMinhBrainRoutes(authenticateToken: any): Router {
         opportunities,
         decisionQueue,
         proactiveBudget,
+        proactiveRollout,
+        learning,
       });
     } catch {
       return res.json({
@@ -64,6 +70,8 @@ export function createMinhBrainRoutes(authenticateToken: any): Router {
         opportunities: [],
         decisionQueue: [],
         proactiveBudget: null,
+        proactiveRollout: null,
+        learning: null,
       });
     }
   });

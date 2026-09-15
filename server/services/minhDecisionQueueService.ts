@@ -27,6 +27,15 @@ export type MinhDecisionQueueSummary = {
   budgetUsed: number;
   budget: number;
   budgetExceeded: boolean;
+  rollout: 'SHADOW' | 'CANARY_25' | 'CANARY_50' | 'LIVE';
+  canarySkipped: number;
+  rolloutSkipped: boolean;
+};
+
+export type MinhProactiveRollout = {
+  rollout: 'SHADOW' | 'CANARY_25' | 'CANARY_50' | 'LIVE';
+  active: boolean;
+  capabilityKey: string;
 };
 
 function actionForKind(kind: unknown): HighImpactAction | null {
@@ -104,6 +113,40 @@ async function readBudget(tenantId: string): Promise<{ used: number; budget: num
   return { used, budget: MINH_PROACTIVE_DAILY_BUDGET, exceeded: used >= MINH_PROACTIVE_DAILY_BUDGET };
 }
 
+export async function getMinhProactiveRollout(tenantId: string): Promise<MinhProactiveRollout> {
+  const result = await withTenantContext(tenantId, client => client.query(
+    `SELECT capability_key, rollout, active
+       FROM marketing_growth_capabilities
+      WHERE tenant_id=$1::uuid AND capability_key='MINH_PROACTIVE_DECISION_QUEUE'
+      LIMIT 1`,
+    [tenantId],
+  ));
+  const row = result.rows[0];
+  if (!row) {
+    return { capabilityKey: 'MINH_PROACTIVE_DECISION_QUEUE', rollout: 'SHADOW', active: false };
+  }
+  const rollout = ['SHADOW', 'CANARY_25', 'CANARY_50', 'LIVE'].includes(row.rollout)
+    ? row.rollout
+    : 'SHADOW';
+  return { capabilityKey: row.capability_key, rollout, active: row.active === true };
+}
+
+function canaryBucket(value: string): number {
+  let hash = 2166136261;
+  for (const character of value) {
+    hash ^= character.charCodeAt(0);
+    hash = Math.imul(hash, 16777619);
+  }
+  return (hash >>> 0) % 100;
+}
+
+export function isSelectedForRollout(rollout: MinhProactiveRollout['rollout'], signalId: string): boolean {
+  if (rollout === 'LIVE') return true;
+  if (rollout === 'CANARY_50') return canaryBucket(signalId) < 50;
+  if (rollout === 'CANARY_25') return canaryBucket(signalId) < 25;
+  return false;
+}
+
 export async function getMinhProactiveBudgetStatus(tenantId: string) {
   return readBudget(tenantId);
 }
@@ -144,6 +187,21 @@ export async function enqueueMinhOpportunitySuggestions(
   tenantId: string,
   limit = MINH_PROACTIVE_DAILY_BUDGET,
 ): Promise<MinhDecisionQueueSummary> {
+  const rollout = await getMinhProactiveRollout(tenantId);
+  const initialBudget = await readBudget(tenantId);
+  const summary: MinhDecisionQueueSummary = {
+    created: 0,
+    existing: 0,
+    skipped: 0,
+    budgetUsed: initialBudget.used,
+    budget: initialBudget.budget,
+    budgetExceeded: initialBudget.exceeded,
+    rollout: rollout.rollout,
+    canarySkipped: 0,
+    rolloutSkipped: !rollout.active || rollout.rollout === 'SHADOW',
+  };
+  if (summary.rolloutSkipped) return summary;
+
   const candidates = await withTenantContext(tenantId, async client => {
     const result = await client.query(
       `SELECT s.id, s.subject_type, s.subject_id, s.payload
@@ -162,15 +220,11 @@ export async function enqueueMinhOpportunitySuggestions(
     return result.rows as OpportunitySignalRow[];
   });
 
-  const summary: MinhDecisionQueueSummary = {
-    created: 0,
-    existing: 0,
-    skipped: 0,
-    budgetUsed: 0,
-    budget: MINH_PROACTIVE_DAILY_BUDGET,
-    budgetExceeded: false,
-  };
   for (const candidate of candidates) {
+    if (!isSelectedForRollout(rollout.rollout, candidate.id)) {
+      summary.canarySkipped++;
+      continue;
+    }
     const actionType = actionForKind(parseSignalPayload(candidate.payload).kind);
     if (!actionType) {
       summary.skipped++;

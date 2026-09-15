@@ -17,7 +17,7 @@ import {
   detectCsatDrop,
   detectMarketPriceDrift,
 } from '../services/minhOpportunityDetectors';
-import { validateProactiveApprovalBoundary } from '../services/minhDecisionQueueService';
+import { isSelectedForRollout, validateProactiveApprovalBoundary } from '../services/minhDecisionQueueService';
 
 describe('Minh Week 1 specialist manifests', () => {
   it('gives every registered capability a complete manifest', () => {
@@ -222,5 +222,18 @@ describe('Minh Week 3 decision queue', () => {
     expect(validateProactiveApprovalBoundary('DRAFT_PROACTIVE_FOLLOWUP').decision).toBe('approved');
     expect(validateProactiveApprovalBoundary('REVIEW_LISTING_PRICE').decision).toBe('approved');
     expect(validateProactiveApprovalBoundary('REVIEW_CSAT_DROP').decision).toBe('approved');
+  });
+});
+
+describe('Minh Week 4 controlled rollout', () => {
+  it('fails closed in shadow and remains deterministic for canary buckets', () => {
+    expect(isSelectedForRollout('SHADOW', 'signal-1')).toBe(false);
+    expect(isSelectedForRollout('LIVE', 'signal-1')).toBe(true);
+    expect(isSelectedForRollout('CANARY_25', 'signal-1')).toBe(
+      isSelectedForRollout('CANARY_25', 'signal-1'),
+    );
+    expect(isSelectedForRollout('CANARY_50', 'signal-2')).toBe(
+      isSelectedForRollout('CANARY_50', 'signal-2'),
+    );
   });
 });

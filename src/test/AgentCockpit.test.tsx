@@ -142,6 +142,13 @@ describe('AgentCockpit panel availability', () => {
          subjectId: 'lead-1',
        }],
        proactiveBudget: { used: 1, budget: 20, exceeded: false },
+       proactiveRollout: { capabilityKey: 'MINH_PROACTIVE_DECISION_QUEUE', rollout: 'CANARY_25', active: true },
+       learning: {
+         windowDays: 30,
+         totals: { total: 3, approved: 1, rejected: 1, executed: 1, execution_failed: 0, answered: 0 },
+         byAction: [],
+         rawPayloadIncluded: false,
+       },
     });
     render(<AgentCockpit />);
 
@@ -150,7 +157,9 @@ describe('AgentCockpit panel availability', () => {
     expect(screen.getByText('READ-only')).toBeVisible();
      expect(screen.getByText('Decision Queue')).toBeVisible();
      expect(screen.getByText('DRAFT_PROACTIVE_FOLLOWUP')).toBeVisible();
-     expect(screen.getByText('Duyệt')).toBeVisible();
+     expect(screen.getByRole('button', { name: 'Duyệt' })).toBeVisible();
+     expect(screen.getByText('Learning loop')).toBeVisible();
+     expect(screen.getByText('Rollout: CANARY_25')).toBeVisible();
     expect(screen.getByText((_, element) => element?.textContent === 'score: 86')).toBeVisible();
     expect(screen.queryByText('Gửi follow-up')).not.toBeInTheDocument();
   });

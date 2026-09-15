@@ -224,6 +224,7 @@ import m200 from './200_live_chat_telemetry';
 import m201 from './201_repair_auto_posting_conflict_targets';
 import m202 from './202_minh_proactive_decision_queue';
 import m203 from './203_minh_proactive_signal_id_text';
+import m204 from './204_minh_decision_learning_rollout';
 dotenv.config();
 
 export interface Migration {
@@ -443,6 +444,7 @@ export const MIGRATION_REGISTRY: Record<string, Migration> = {
   '201_repair_auto_posting_conflict_targets.ts': m201,
   '202_minh_proactive_decision_queue.ts': m202,
   '203_minh_proactive_signal_id_text.ts': m203,
+  '204_minh_decision_learning_rollout.ts': m204,
 };
 
 /**

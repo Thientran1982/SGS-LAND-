@@ -96,6 +96,19 @@ type MinhDecisionApproval = {
   subjectId?: string | null;
   payload?: Record<string, unknown>;
 };
+type MinhDecisionLearning = {
+  windowDays: number;
+  totals: {
+    total: number;
+    approved: number;
+    rejected: number;
+    executed: number;
+    execution_failed: number;
+    answered: number;
+  };
+  byAction: Array<{ action_type: string; outcome: string; count: number }>;
+  rawPayloadIncluded: boolean;
+};
 type MinhBrainOverview = {
   scheduler: {
     mode: string;
@@ -115,6 +128,8 @@ type MinhBrainOverview = {
   opportunities: MinhOpportunity[];
   decisionQueue?: MinhDecisionApproval[];
   proactiveBudget?: { used: number; budget: number; exceeded: boolean } | null;
+  proactiveRollout?: { capabilityKey: string; rollout: string; active: boolean } | null;
+  learning?: MinhDecisionLearning | null;
 };
 
 const count = (rows: Array<{ status: string; count: number }> = [], status: string) => rows.find(row => row.status === status)?.count || 0;
@@ -423,6 +438,9 @@ export default function AgentCockpit() {
                 {minhBrainOverview.proactiveBudget && <span className={`rounded-full px-2.5 py-1 font-semibold ${minhBrainOverview.proactiveBudget.exceeded ? 'bg-rose-100 text-rose-700' : 'bg-white text-slate-600'}`}>
                   Budget: {minhBrainOverview.proactiveBudget.used}/{minhBrainOverview.proactiveBudget.budget}
                 </span>}
+                {minhBrainOverview.proactiveRollout && <span className={`rounded-full px-2.5 py-1 font-semibold ${minhBrainOverview.proactiveRollout.rollout === 'SHADOW' || !minhBrainOverview.proactiveRollout.active ? 'bg-slate-100 text-slate-600' : 'bg-indigo-100 text-indigo-700'}`}>
+                  Rollout: {minhBrainOverview.proactiveRollout.active ? minhBrainOverview.proactiveRollout.rollout : 'paused'}
+                </span>}
              </div>
            </div>
            {minhBrainOverview.scheduler.detectorSummary.detectorStatus.length > 0 && <div className="mb-3 flex flex-wrap gap-2">
@@ -478,6 +496,24 @@ export default function AgentCockpit() {
                   </div>
                 </div>)}</div>}
             </div>
+            {minhBrainOverview.learning && <div className="mt-4 border-t border-amber-100 pt-4">
+              <div className="mb-2 flex items-center justify-between gap-3">
+                <div>
+                  <h3 className="text-sm font-semibold text-slate-900">Learning loop</h3>
+                  <p className="text-xs text-slate-500">Chỉ lưu outcome phân loại trong {minhBrainOverview.learning.windowDays} ngày; không lưu raw payload.</p>
+                </div>
+                <span className="rounded-full bg-white px-2.5 py-1 text-xs font-semibold text-slate-600">{minhBrainOverview.learning.totals.total} events</span>
+              </div>
+              <div className="grid gap-2 sm:grid-cols-5">
+                {[
+                  ['Duyệt', minhBrainOverview.learning.totals.approved, 'text-emerald-700'],
+                  ['Từ chối', minhBrainOverview.learning.totals.rejected, 'text-rose-700'],
+                  ['Đã chạy', minhBrainOverview.learning.totals.executed, 'text-indigo-700'],
+                  ['Lỗi', minhBrainOverview.learning.totals.execution_failed, 'text-amber-700'],
+                  ['Đã trả lời', minhBrainOverview.learning.totals.answered, 'text-slate-700'],
+                ].map(([label, value, color]) => <div key={String(label)} className="rounded-lg bg-white p-2.5"><div className="text-[11px] text-slate-500">{label}</div><b className={`text-lg ${color}`}>{value}</b></div>)}
+              </div>
+            </div>}
          </section>}
         {zaloReadinessWarnings.length > 0 && <section className="rounded-xl border border-amber-200 bg-amber-50/50 p-5 shadow-sm" aria-labelledby="zalo-readiness-warning-title">
           <div className="mb-4 flex flex-wrap items-center justify-between gap-3">

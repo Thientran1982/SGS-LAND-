@@ -3,6 +3,7 @@ import { agentOperatingRepository, COCKPIT_PANELS, type CockpitPanel, type Cockp
 import { processAgentEvents } from '../services/agentOperatorDaemon';
 import { companyBrainRepository } from '../repositories/companyBrainRepository';
 import { DEFAULT_AGENT_ROLE_CARDS } from '../ai/agentRoleCards';
+import { recordMinhDecisionFeedbackSafely } from '../services/minhDecisionLearningService';
 
 const STAFF_ROLES = ['SUPER_ADMIN', 'ADMIN', 'TEAM_LEAD'];
 const BRAIN_DOCUMENT_TYPES = ['brand_voice', 'developer', 'project', 'legal_disclaimer', 'broker', 'faq', 'competitor_note'];
@@ -191,6 +192,20 @@ export function createAgentOperatingRoutes(authenticateToken: any): Router {
     try {
       const row = await agentOperatingRepository.answerHumanQuestion(user.tenantId, req.params.id, String(req.body.answer), user.id, req.body.approveMemory === true);
       if (!row) return res.status(404).json({ error: 'Câu hỏi không tồn tại hoặc đã được xử lý.' });
+      const context = row.context_json && typeof row.context_json === 'object' ? row.context_json : {};
+      if (context.approvalId || context.sourceSignalId) {
+        await recordMinhDecisionFeedbackSafely(user.tenantId, {
+          eventKey: `question:${row.id}:answered`,
+          sourceSignalId: context.sourceSignalId || null,
+          approvalRequestId: context.approvalId || null,
+          humanQuestionId: row.id,
+          actionType: String(context.actionType || 'MINH_PROACTIVE_REVIEW'),
+          outcome: 'ANSWERED',
+          feedbackCategory: req.body.approveMemory === true ? 'MEMORY_APPROVED' : 'HUMAN_REVIEWED',
+          createdBy: user.id,
+          metadata: { memoryApproved: req.body.approveMemory === true },
+        });
+      }
       res.json(row);
     } catch { res.status(500).json({ error: 'Không thể ghi câu trả lời.' }); }
   });
