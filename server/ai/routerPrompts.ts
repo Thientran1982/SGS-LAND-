@@ -234,7 +234,20 @@ Chỉ trả JSON hợp lệ. KHÔNG markdown. KHÔNG giải thích. KHÔNG text 
     "contract_type": "<ENUM|null>",
     "lead_name": "<string|null>",
     "escalation_reason": "<string>",
-    "explicit_question": "<string>"
+    "explicit_question": "<string>",
+    "marketing_campaign": "<string>",
+    "valuation_road_width": null,
+    "valuation_direction": "<string>",
+    "valuation_floor": null,
+    "valuation_frontage": null,
+    "valuation_furnishing": "<LUXURY|FULL|BASIC|NONE|null>",
+    "valuation_building_age": null,
+    "floor_min": null,
+    "floor_max": null,
+    "unit_direction": "<string>",
+    "tower": "<string>",
+    "project_name": "<string>",
+    "inventory_page": null
   },
   "persona_signals": {
     "inferred_persona": "<ENUM|null>",

@@ -23,6 +23,7 @@ import * as fs from 'fs';
 import * as path from 'path';
 import { GoogleGenAI, Type } from '@google/genai';
 import { DEFAULT_ROUTER_INSTRUCTION } from '../server/ai/defaultPrompts';
+import { ROUTER_SCHEMA } from '../server/ai/routerSchema';
 
 interface GoldCase {
   id: string;
@@ -105,31 +106,6 @@ async function callJudge(client: GoogleGenAI, userInput: string, aiOutput: strin
     return { passed: false, reasons: [`judge-error: ${e?.message || e}`] };
   }
 }
-
-const ROUTER_SCHEMA = {
-  type: Type.OBJECT,
-  properties: {
-    next_step: { type: Type.STRING },
-    additional_intents: { type: Type.ARRAY, items: { type: Type.STRING } },
-    extraction: {
-      type: Type.OBJECT,
-      properties: {
-        loan_amount: { type: Type.NUMBER },
-        loan_years: { type: Type.NUMBER },
-        loan_rate: { type: Type.NUMBER },
-        loan_to_value_percent: { type: Type.NUMBER },
-        loan_metric: { type: Type.STRING },
-        loan_program: { type: Type.STRING },
-        loan_fee_type: { type: Type.STRING },
-        tax_rate: { type: Type.NUMBER },
-        valuation_area: { type: Type.NUMBER },
-        valuation_bedrooms: { type: Type.NUMBER },
-        lead_name: { type: Type.STRING },
-      },
-    },
-  },
-  required: ['next_step'],
-};
 
 // Same intent→agent mapping as server/ai.ts orchestrator.
 const INTENT_TO_AGENT: Record<string, string> = {

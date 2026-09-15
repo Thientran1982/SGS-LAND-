@@ -33,6 +33,7 @@ import { GENAI_CONFIG, SAFE_MODEL_FALLBACK, DEPRECATED_MODEL_PREFIXES, ensureSaf
 import { generateWithPolicy } from './ai/providers';
 import { getAgentRoleForIntent, isCompoundRoutingEnabled, selectSecondaryIntents } from './ai/agentOrchestrationRegistry';
 import { appendActivatedCatalogSkills } from './ai/agentSkillRuntime';
+import { ROUTER_SCHEMA, type RouterExtraction } from './ai/routerSchema';
 // -----------------------------------------------------------------------------
 // 1. CONFIGURATION & SCHEMA DEFINITIONS
 // -----------------------------------------------------------------------------
@@ -782,104 +783,8 @@ type RouterPlan = {
      * Writer, but only the primary `next_step` chooses the writer template.
      */
     additional_intents?: string[];
-    extraction: {
-        explicit_question?: string;
-        budget_max?: number;
-        location_keyword?: string;
-        legal_concern?: string;
-        property_type?: string;
-        area_min?: number;
-        /** Minimum bedrooms for inventory search (e.g. "3PN" → 3). */
-        bedrooms?: number;
-        loan_rate?: number;
-        loan_years?: number;
-        loan_to_value_percent?: number;
-        loan_metric?: 'DTI' | 'LTV' | string;
-        loan_program?: 'SOCIAL_HOUSING' | 'STANDARD' | string;
-        loan_fee_type?: 'EARLY_REPAYMENT_PENALTY' | string;
-        tax_rate?: number;
-        marketing_campaign?: string;
-        contract_type?: string;
-        lead_name?: string;
-        valuation_address?: string;
-        valuation_area?: number;
-        valuation_legal?: string;
-        valuation_road_width?: number;
-        valuation_direction?: string;
-        valuation_floor?: number;
-        valuation_frontage?: number;
-        valuation_furnishing?: 'LUXURY' | 'FULL' | 'BASIC' | 'NONE';
-        valuation_building_age?: number;
-        valuation_bedrooms?: number;
-        /** Unit/apartment floor filter for search_inventory */
-        floor_min?: number;
-        floor_max?: number;
-        /** Cardinal direction of the unit (DONG, TAY, NAM, BAC, DONG_NAM, etc.) */
-        unit_direction?: string;
-        /** Tower / block identifier (A, B, T1, S2, etc.) */
-        tower?: string;
-        /** Pagination: page number for search_inventory results (default 1) */
-        inventory_page?: number;
-    };
+    extraction: RouterExtraction;
     confidence: number;
-};
-const ROUTER_SCHEMA: Schema = {
-    type: Type.OBJECT,
-    properties: {
-        next_step: { 
-            type: Type.STRING, 
-            enum: ['SEARCH_INVENTORY', 'CALCULATE_LOAN', 'DRAFT_BOOKING', 'EXPLAIN_LEGAL', 'EXPLAIN_MARKETING', 'DRAFT_CONTRACT', 'ANALYZE_LEAD', 'ESTIMATE_VALUATION', 'DIRECT_ANSWER', 'CLARIFY', 'ESCALATE_TO_HUMAN'] as string[],
-            description: "Hành động phù hợp nhất cho tin nhắn khách hàng. Dùng CLARIFY khi tin nhắn quá mơ hồ (confidence < 0.5) để hỏi lại khách 1 câu cụ thể."
-        },
-        extraction: {
-            type: Type.OBJECT,
-            properties: {
-                explicit_question: { type: Type.STRING, description: "Câu hỏi chính xác của khách hàng." },
-                budget_max: { type: Type.NUMBER, description: "Ngân sách tối đa (VNĐ)" },
-                location_keyword: { type: Type.STRING, description: "Khu vực/địa điểm khách đề cập" },
-                legal_concern: { type: Type.STRING, enum: ['PINK_BOOK', 'HDMB', 'VI_BANG', 'NONE'], description: "Loại pháp lý khách quan tâm" },
-                property_type: { type: Type.STRING, description: "Loại BĐS (căn hộ, nhà phố, biệt thự, đất nền)" },
-                area_min: { type: Type.NUMBER, description: "Diện tích tối thiểu (m²)" },
-                bedrooms: { type: Type.NUMBER, description: "Số phòng ngủ tối thiểu để lọc kho hàng. VD: '3PN' → 3, '2 phòng ngủ' → 2" },
-                loan_rate: { type: Type.NUMBER, description: "Lãi suất (%/năm)" },
-                loan_years: { type: Type.NUMBER, description: "Thời hạn vay (năm)" },
-                loan_to_value_percent: { type: Type.NUMBER, description: "Tỷ lệ khoản vay trên giá trị tài sản (%)" },
-                loan_metric: { type: Type.STRING, description: "Chỉ số vay được hỏi: DTI hoặc LTV" },
-                loan_program: { type: Type.STRING, description: "Chương trình vay: SOCIAL_HOUSING hoặc STANDARD" },
-                loan_fee_type: { type: Type.STRING, description: "Loại phí vay, ví dụ EARLY_REPAYMENT_PENALTY" },
-                tax_rate: { type: Type.NUMBER, description: "Thuế suất phần trăm, ví dụ thuế trước bạ = 0.5" },
-                marketing_campaign: { type: Type.STRING, description: "Tên chiến dịch/ưu đãi" },
-                contract_type: { type: Type.STRING, enum: ['Deposit', 'Sales', 'Lease', 'Broker'], description: "Loại hợp đồng: Deposit (đặt cọc/cọc), Sales (mua bán/HĐMB), Lease (thuê/cho thuê), Broker (môi giới/phí dịch vụ)" },
-                lead_name: { type: Type.STRING, description: "Tên lead nếu khách nêu rõ" },
-                valuation_address: { type: Type.STRING, description: "Địa chỉ BĐS cần định giá" },
-                valuation_area: { type: Type.NUMBER, description: "Diện tích BĐS cần định giá (m²)" },
-                valuation_legal: { type: Type.STRING, enum: ['PINK_BOOK', 'HDMB', 'VI_BANG', 'UNKNOWN'], description: "Pháp lý BĐS cần định giá" },
-                valuation_road_width: { type: Type.NUMBER, description: "Lộ giới/chiều rộng đường trước nhà (mét). VD: 'hẻm 3m' → 3, 'mặt tiền 12m' → 12" },
-                valuation_direction: { type: Type.STRING, description: "Hướng nhà: Đông, Tây, Nam, Bắc, Đông Nam, Tây Bắc, v.v." },
-                valuation_floor: { type: Type.NUMBER, description: "Vị trí tầng (cho căn hộ). VD: 'tầng 10' → 10, 'tầng trệt' → 1, 'tầng cao nhất/penthouse' → 30" },
-                valuation_frontage: { type: Type.NUMBER, description: "Chiều rộng mặt tiền nhà/lô đất (mét). VD: 'mặt tiền 5m' → 5, 'ngang 4m' → 4, 'mặt ngang 6 mét' → 6" },
-                valuation_furnishing: { type: Type.STRING, enum: ['LUXURY', 'FULL', 'BASIC', 'NONE'], description: "Tình trạng nội thất. LUXURY=nội thất cao cấp/luxury, FULL=full nội thất/đầy đủ, BASIC=nội thất cơ bản/một phần, NONE=không nội thất/bàn giao thô" },
-                valuation_building_age: { type: Type.NUMBER, description: "Tuổi công trình (năm). VD: 'nhà xây 2010' → 15 (năm 2025), 'mới xây/2024' → 1, 'xây 5 năm' → 5, 'cũ 20 năm' → 20" },
-                valuation_bedrooms: { type: Type.NUMBER, description: "Số phòng ngủ (chỉ cho căn hộ/penthouse). VD: 'studio/1 phòng' → 0/1, '2PN/2 phòng ngủ' → 2, '3PN' → 3, '4 phòng ngủ trở lên' → 4" },
-                floor_min: { type: Type.NUMBER, description: "Tầng tối thiểu khách muốn. VD: 'từ tầng 10', 'tầng cao', 'trên tầng 15' → 10/15/15. 'tầng thấp' → 1" },
-                floor_max: { type: Type.NUMBER, description: "Tầng tối đa khách muốn. VD: 'dưới tầng 10', 'tầng thấp (dưới 5)' → 10/5. Nếu chỉ hỏi 1 tầng cụ thể thì floor_min = floor_max = số đó" },
-                unit_direction: { type: Type.STRING, description: "Hướng căn hộ/nhà khách muốn. VD: 'hướng đông' → 'DONG', 'hướng đông nam' → 'DONG_NAM', 'hướng nam' → 'NAM', 'tây bắc' → 'TAY_BAC'. Giá trị: DONG | TAY | NAM | BAC | DONG_NAM | DONG_BAC | TAY_NAM | TAY_BAC" },
-                tower: { type: Type.STRING, description: "Tòa/Block/Tháp khách muốn. VD: 'tòa A', 'block B', 'tháp T1', 'tòa S1' → 'A'/'B'/'T1'/'S1'. Chỉ lấy ký hiệu tòa, không lấy chữ 'tòa'/'tháp'/'block'" },
-                project_name: { type: Type.STRING, description: "Tên dự án cụ thể khi khách hỏi về danh sách sản phẩm/căn hộ trong một dự án. Ghi nguyên văn từ tin nhắn. VD: 'Cosmo Central', 'Masteri Cosmo Central', 'Vinhomes Grand Park', 'Aqua City'. Chỉ điền khi khách hỏi rõ về sản phẩm/căn của 1 dự án nhất định." },
-                inventory_page: { type: Type.NUMBER, description: "Số trang kết quả kho hàng khách muốn xem. VD: 'trang 2', 'tiếp theo' → 2, 'trang 3' → 3. Mặc định = 1 nếu không đề cập." }
-            }
-        },
-        confidence: { type: Type.NUMBER, description: "Độ tin cậy phân loại từ 0 đến 1 (ví dụ: 0.85 = 85%)" },
-        additional_intents: {
-            type: Type.ARRAY,
-            description: "Tối đa 2 intent phụ mà câu hỏi cũng đề cập (vd hỏi vừa giá vừa pháp lý). KHÔNG lặp lại next_step. Bỏ trống nếu chỉ có 1 intent.",
-            items: {
-                type: Type.STRING,
-                enum: ['SEARCH_INVENTORY', 'CALCULATE_LOAN', 'EXPLAIN_LEGAL', 'EXPLAIN_MARKETING', 'DRAFT_CONTRACT', 'ANALYZE_LEAD', 'ESTIMATE_VALUATION'] as string[],
-            }
-        }
-    },
-    required: ['next_step', 'confidence', 'extraction']
 };
 // -----------------------------------------------------------------------------
 // 2. TOOL BINDINGS (Simulated RAG)
