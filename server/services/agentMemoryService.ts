@@ -1,5 +1,6 @@
 import { createHash, randomUUID } from 'crypto';
 import { withTenantContext } from '../db';
+import type { PoolClient } from 'pg';
 
 export type MemoryKind = 'fact' | 'episodic' | 'procedural';
 export type MemoryRow = {
@@ -617,9 +618,16 @@ export const agentMemoryService = {
     });
   },
 
-  async promoteWeights(tenantId: string, id: string, passed: boolean, operatorId: string, metrics: Record<string, unknown> = {}) {
+  async promoteWeights(
+    tenantId: string,
+    id: string,
+    passed: boolean,
+    operatorId: string,
+    metrics: Record<string, unknown> = {},
+    existingClient?: PoolClient,
+  ) {
     if (!passed) throw new Error('Golden-set gate chưa đạt; không thể promote weights');
-    return withTenantContext(tenantId, async client => {
+    const execute = async (client: PoolClient) => {
       const candidate = (await client.query(`SELECT * FROM agent_weight_versions WHERE tenant_id=$1 AND id=$2 AND status='draft'`, [tenantId, id])).rows[0];
       if (!candidate) return null;
       await client.query(`UPDATE agent_weight_versions SET status='shadow' WHERE tenant_id=$1 AND status='live'`, [tenantId]);
@@ -633,7 +641,46 @@ export const agentMemoryService = {
         [tenantId, id, JSON.stringify({ ...metrics, operatorId })],
       );
       return promoted;
-    });
+    };
+    return existingClient ? execute(existingClient) : withTenantContext(tenantId, execute);
+  },
+
+  async restoreWeights(
+    tenantId: string,
+    id: string,
+    operatorId: string,
+    metrics: Record<string, unknown> = {},
+    existingClient?: PoolClient,
+  ) {
+    const execute = async (client: PoolClient) => {
+      const candidate = (await client.query(
+        `SELECT * FROM agent_weight_versions
+          WHERE tenant_id=$1 AND id=$2 AND status='shadow'`,
+        [tenantId, id],
+      )).rows[0];
+      if (!candidate) return null;
+      await client.query(
+        `UPDATE agent_weight_versions SET status='shadow'
+          WHERE tenant_id=$1 AND status='live' AND id<>$2`,
+        [tenantId, id],
+      );
+      const restored = (await client.query(
+        `UPDATE agent_weight_versions
+            SET status='live', metrics=$3, created_by=$4
+          WHERE tenant_id=$1 AND id=$2 AND status='shadow'
+          RETURNING *`,
+        [tenantId, id, JSON.stringify({ ...metrics, restoredFromLastKnownGood: true }), operatorId],
+      )).rows[0];
+      await client.query(
+        `INSERT INTO ai_learning_audit_events
+          (tenant_id,event_type,entity_type,entity_id,reason,metrics_json)
+         VALUES ($1,'WEIGHTS_RESTORED','MATCHER_WEIGHTS',$2,
+                 'last_known_good_weight_restored_after_rollback',$3::jsonb)`,
+        [tenantId, id, JSON.stringify({ ...metrics, operatorId })],
+      );
+      return restored;
+    };
+    return existingClient ? execute(existingClient) : withTenantContext(tenantId, execute);
   },
 
   fingerprint,

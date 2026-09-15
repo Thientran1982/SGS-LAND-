@@ -114,6 +114,27 @@ describe('Minh Brain Scheduler shadow overlay', () => {
       { detector: 'market_price_drift', status: 'DEGRADED', tenantRuns: 2, found: 0, persisted: 0, lastError: 'QUERY_FAILED' },
     ]);
   });
+
+  it('runs the Week 5 model loop from the unified scheduler without changing detector ownership', async () => {
+    const calls: string[] = [];
+    const snapshot = await runMinhBrainSchedulerTick(
+      async () => ['tenant-a'],
+      () => new Date('2026-09-15T10:03:00.000Z'),
+      undefined,
+      async (tenantId, now, traceId) => {
+        calls.push(`${tenantId}:${now.toISOString()}:${traceId.length > 0}`);
+        return { results: [{ status: 'APPROVAL_REQUESTED' }, { status: 'ROLLBACK_REQUESTED' }] };
+      },
+    );
+    expect(calls).toEqual(['tenant-a:2026-09-15T10:03:00.000Z:true']);
+    expect(snapshot.modelPromotionSummary).toMatchObject({
+      enabled: true,
+      tenantRuns: 1,
+      approvalRequests: 1,
+      rollbackRequests: 1,
+      degradedRuns: 0,
+    });
+  });
 });
 
 describe('Minh Week 2 opportunity detectors', () => {

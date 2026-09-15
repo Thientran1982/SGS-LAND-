@@ -1,5 +1,8 @@
 import { withTenantContext } from '../db';
 import { validateProactiveApprovalBoundary } from './minhDecisionQueueService';
+import { detectColdLeads, detectMarketPriceDrift, detectCsatDrop, DEFAULT_OPPORTUNITY_DETECTOR_CONFIG } from './minhOpportunityDetectors';
+import { autonomousLearningService, evaluatePromotionGate, DEFAULT_MODEL_PROMOTION_GATE } from './autonomousLearningService';
+import { agentMemoryService } from './agentMemoryService';
 
 const LEAD_STAGES = new Set(['NEW', 'CONTACTED', 'QUALIFIED', 'PROPOSAL', 'NEGOTIATION', 'WON', 'LOST']);
 
@@ -18,6 +21,107 @@ export function buildChangeLeadStageApproval(result: any, leadId: string, idempo
     payload: { ...payload, userMessage: String(result?.userMessage || '').slice(0, 500) },
     idempotencyKey: `${idempotencyKey}:${actionType}`,
   };
+}
+
+async function revalidateProactiveOpportunity(
+  client: { query: (text: string, params?: any[]) => Promise<{ rows: any[] }> },
+  tenantId: string,
+  actionType: string,
+  subjectType: string | null,
+  subjectId: string | null,
+): Promise<boolean> {
+  // Week 5 rule: if underlying data changed after approval, revalidate
+  // before acting. Re-runs the same detector the suggestion came from and
+  // checks whether the opportunity is still there, instead of trusting the
+  // evidence snapshot captured back when the suggestion was created.
+  const now = new Date();
+  if (actionType === 'DRAFT_PROACTIVE_FOLLOWUP') {
+    if (subjectType !== 'lead' || !subjectId) return true;
+    const rows = await client.query(
+      `SELECT l.id::text, l.stage, l.score::text, l.created_at, l.updated_at,
+              MAX(i.timestamp) AS last_interaction_at,
+              COUNT(i.id) FILTER (WHERE UPPER(COALESCE(i.direction,''))='OUTBOUND')::int AS outbound_interactions
+         FROM leads l
+         LEFT JOIN interactions i
+           ON i.tenant_id=l.tenant_id AND i.lead_id=l.id
+        WHERE l.tenant_id=$1 AND l.id::text=$2
+          AND COALESCE(l.care_status,'ACTIVE') <> 'INACTIVE'
+        GROUP BY l.id, l.stage, l.score, l.created_at, l.updated_at`,
+      [tenantId, subjectId],
+    );
+    if (!rows.rows[0]) return false;
+    const opportunities = detectColdLeads(
+      rows.rows.map((row: any) => ({
+        id: row.id,
+        stage: row.stage,
+        score: row.score,
+        createdAt: row.created_at,
+        updatedAt: row.updated_at,
+        lastInteractionAt: row.last_interaction_at,
+        outboundInteractions: row.outbound_interactions,
+      })),
+      now,
+      DEFAULT_OPPORTUNITY_DETECTOR_CONFIG,
+    );
+    return opportunities.length > 0;
+  }
+  if (actionType === 'REVIEW_LISTING_PRICE') {
+    if (subjectType !== 'listing' || !subjectId) return true;
+    const [listings, references] = await Promise.all([
+      client.query(
+        `SELECT id::text, title, price, area, location, address, type
+           FROM listings
+          WHERE tenant_id=$1 AND id::text=$2
+            AND status NOT IN ('SOLD','RENTED','INACTIVE')
+            AND price IS NOT NULL AND price > 0
+            AND area IS NOT NULL AND area > 0`,
+        [tenantId, subjectId],
+      ),
+      client.query(
+        `SELECT location_key, location_display, price_per_m2, confidence, source, recorded_at
+           FROM market_price_history
+          WHERE recorded_at > NOW() - INTERVAL '180 days'
+          UNION ALL
+          SELECT location_key, location_display, calibrated_price_per_m2 AS price_per_m2,
+                 confidence_score AS confidence, 'avm_calibration' AS source, last_calibrated_at AS recorded_at
+            FROM avm_calibration
+           WHERE last_calibrated_at > NOW() - INTERVAL '180 days'
+          ORDER BY recorded_at DESC
+          LIMIT 300`,
+      ),
+    ]);
+    if (!listings.rows[0]) return false;
+    const opportunities = detectMarketPriceDrift(
+      listings.rows.map((row: any) => row),
+      references.rows.map((row: any) => ({
+        locationKey: row.location_key,
+        locationDisplay: row.location_display,
+        pricePerM2: row.price_per_m2,
+        confidence: row.confidence,
+        source: row.source,
+        recordedAt: row.recorded_at,
+      })),
+      DEFAULT_OPPORTUNITY_DETECTOR_CONFIG,
+    );
+    return opportunities.some((opportunity: any) => opportunity.subjectId === subjectId);
+  }
+  if (actionType === 'REVIEW_CSAT_DROP') {
+    const rows = await client.query(
+      `SELECT payload, created_at
+         FROM agent_signals
+        WHERE tenant_id=$1 AND signal_type='support_csat' AND created_at > NOW() - INTERVAL '60 days'
+        ORDER BY created_at DESC
+        LIMIT 1000`,
+      [tenantId],
+    );
+    const opportunities = detectCsatDrop(
+      rows.rows.map((row: any) => ({ payload: row.payload, createdAt: row.created_at })),
+      now,
+      DEFAULT_OPPORTUNITY_DETECTOR_CONFIG,
+    );
+    return opportunities.length > 0;
+  }
+  return true;
 }
 
 export async function executeApprovedAction(tenantId: string, approvalId: string, reviewerId: string): Promise<any> {
@@ -118,6 +222,113 @@ export async function executeApprovedAction(tenantId: string, approvalId: string
         throw new Error('APPROVAL_DEPOSIT_REQUIRES_VERIFIED_VNPAY');
       }
       actionResult = { bookingId, verified: true, status: 'PAID', mutation: 'NONE' };
+    } else if (request.action_type === 'PROMOTE_LEARNING_CANDIDATE') {
+      const candidateId = String(payload.candidateId || request.subject_id || '');
+      const candidate = await autonomousLearningService.findCandidate(tenantId, candidateId);
+      if (!candidate || candidate.status !== 'CANARY') throw new Error('APPROVAL_CANDIDATE_NOT_CANARY');
+      const artifact = typeof candidate.artifact_json === 'string'
+        ? JSON.parse(candidate.artifact_json)
+        : (candidate.artifact_json || {});
+      const weightVersionId = String(artifact.weightVersionId || '');
+      if (!weightVersionId) throw new Error('APPROVAL_CANDIDATE_WEIGHT_VERSION_REQUIRED');
+      const metrics = payload.metrics && typeof payload.metrics === 'object' ? payload.metrics : {};
+      const gate = evaluatePromotionGate({
+        safety: Number(metrics.safety || 0),
+        groundedness: Number(metrics.groundedness || 0),
+        quality: Number(metrics.quality || 0),
+        latencyP95Ms: Number(metrics.latencyP95Ms || 0),
+        costUsd: Number(metrics.costUsd || 0),
+        minSamples: Number(metrics.minSamples || 0),
+      }, DEFAULT_MODEL_PROMOTION_GATE);
+      if (!gate.passed) throw new Error(`APPROVAL_RUNTIME_GATE_FAILED:${gate.failures.join(',')}`);
+      const promotedWeights = await agentMemoryService.promoteWeights(
+        tenantId,
+        weightVersionId,
+        true,
+        reviewerId,
+        { ...metrics, candidateId },
+        client,
+      );
+      if (!promotedWeights) throw new Error('APPROVAL_WEIGHT_VERSION_NOT_DRAFT');
+      const promotedCandidate = await autonomousLearningService.promoteCandidate(
+        tenantId,
+        candidateId,
+        'ACTIVE',
+        gate,
+        undefined,
+        client,
+      );
+      if (!promotedCandidate) throw new Error('APPROVAL_CANDIDATE_PROMOTION_FAILED');
+      await autonomousLearningService.recordAudit({
+        tenantId,
+        eventType: 'GO_LIVE_APPROVED',
+        entityType: 'LEARNING_CANDIDATE',
+        entityId: candidateId,
+        reason: 'manager_approved_candidate_after_runtime_gate',
+        metrics: { ...metrics, weightVersionId },
+        existingClient: client,
+      });
+      actionResult = {
+        candidateId,
+        weightVersionId,
+        candidateStatus: 'ACTIVE',
+        mutation: 'MODEL_CONTROL_PLANE_ONLY',
+      };
+    } else if (request.action_type === 'ROLLBACK_LEARNING_CANDIDATE') {
+      const candidateId = String(payload.candidateId || request.subject_id || '');
+      const candidate = await autonomousLearningService.findCandidate(tenantId, candidateId);
+      if (!candidate || candidate.status !== 'ACTIVE') throw new Error('APPROVAL_CANDIDATE_NOT_ACTIVE');
+      const previous = await autonomousLearningService.findLastKnownGoodCandidate(tenantId, candidateId);
+      const candidateArtifact = typeof candidate.artifact_json === 'string'
+        ? JSON.parse(candidate.artifact_json)
+        : (candidate.artifact_json || {});
+      const previousArtifact = previous && typeof previous.artifact_json === 'string'
+        ? JSON.parse(previous.artifact_json)
+        : (previous?.artifact_json || {});
+      const previousWeightVersionId = String(
+        previousArtifact.weightVersionId
+          || candidateArtifact.previousWeightVersionId
+          || '',
+      );
+      if (!previousWeightVersionId) throw new Error('APPROVAL_PREVIOUS_WEIGHT_VERSION_REQUIRED');
+      const metrics = payload.metrics && typeof payload.metrics === 'object' ? payload.metrics : {};
+      const restoredWeights = await agentMemoryService.restoreWeights(
+        tenantId,
+        previousWeightVersionId,
+        reviewerId,
+        { ...metrics, candidateId, rolledBackCandidateId: candidateId },
+        client,
+      );
+      if (!restoredWeights) throw new Error('APPROVAL_PREVIOUS_WEIGHT_VERSION_NOT_SHADOW');
+      const rolledBack = await autonomousLearningService.rollbackCandidate(
+        tenantId,
+        candidateId,
+        Array.isArray(payload.failures) ? payload.failures.join(',') : 'runtime_regression',
+        metrics,
+        undefined,
+        client,
+      );
+      if (!rolledBack) throw new Error('APPROVAL_CANDIDATE_ROLLBACK_FAILED');
+      const restoredCandidate = previous
+        ? await autonomousLearningService.restoreCandidate(tenantId, String(previous.id), undefined, client)
+        : null;
+      if (previous && !restoredCandidate) throw new Error('APPROVAL_PREVIOUS_CANDIDATE_RESTORE_FAILED');
+      await autonomousLearningService.recordAudit({
+        tenantId,
+        eventType: 'ROLLBACK_APPROVED',
+        entityType: 'LEARNING_CANDIDATE',
+        entityId: candidateId,
+        reason: 'manager_approved_runtime_regression_rollback',
+        metrics: { ...metrics, previousCandidateId: previous ? String(previous.id) : null, previousWeightVersionId },
+        existingClient: client,
+      });
+      actionResult = {
+        candidateId,
+        previousCandidateId: previous ? String(previous.id) : null,
+        previousWeightVersionId,
+        candidateStatus: 'ROLLED_BACK',
+        mutation: 'MODEL_CONTROL_PLANE_ONLY',
+      };
     } else if (
       request.action_type === 'DRAFT_PROACTIVE_FOLLOWUP'
       || request.action_type === 'REVIEW_LISTING_PRICE'
@@ -130,44 +341,67 @@ export async function executeApprovedAction(tenantId: string, approvalId: string
       if (boundary.decision !== 'approved') {
         throw new Error(`APPROVAL_PROACTIVE_BOUNDARY:${boundary.reasons.join(',')}`);
       }
-      const existingQuestion = await client.query(
-        `SELECT id FROM agent_human_questions
-          WHERE tenant_id=current_setting('app.current_tenant_id', true)::uuid
-            AND context_json->>'approvalId'=$1
-          LIMIT 1`,
-        [approvalId],
-      );
-      const question = existingQuestion.rows[0] || (await client.query(
-        `INSERT INTO agent_human_questions
-          (tenant_id, agent_key, question, lead_id, priority, context_json)
-         VALUES (current_setting('app.current_tenant_id', true)::uuid, 'minh_proactive', $1, $2, $3, $4::jsonb)
-         RETURNING id`,
-        [
-          request.action_type === 'DRAFT_PROACTIVE_FOLLOWUP'
-            ? 'Minh đã tạo bản nháp follow-up sau khi được duyệt; nhân viên kiểm tra và gửi thủ công nếu phù hợp.'
-            : request.action_type === 'REVIEW_LISTING_PRICE'
-              ? 'Minh đề nghị nhân viên rà soát lại giá listing và nguồn tham chiếu trước khi thay đổi dữ liệu.'
-              : 'Minh đề nghị nhân viên rà soát nhóm nguyên nhân CSAT giảm và xác minh mẫu hội thoại.',
-          request.lead_id || null,
-          Math.max(0, Math.min(100, Number(payload.priority || 60))),
-          JSON.stringify({
-            approvalId,
-            sourceSignalId: payload.sourceSignalId || request.source_signal_id || null,
-            subjectType: payload.subjectType || request.subject_type || null,
-            subjectId: payload.subjectId || request.subject_id || null,
-            actionType: request.action_type,
-            evidence: payload.evidence || {},
-            providerCalled: false,
-            mutation: 'NONE',
-          }),
-        ],
-      )).rows[0];
-      actionResult = {
-        mutation: 'NONE',
-        providerCalled: false,
-        humanQuestionId: question.id,
-        draftCreated: request.action_type === 'DRAFT_PROACTIVE_FOLLOWUP',
-      };
+      // Week 5 rule: if underlying data changed after approval,
+      // revalidate before acting rather than trusting stale evidence.
+      // Older manually-created proactive approvals do not carry the Week 5
+      // evidence schema. Preserve their existing review behavior; only
+      // detector-generated schema v2 suggestions use stale-evidence blocking.
+      const stillValid = Number(payload.schemaVersion || 0) >= 2
+        ? await revalidateProactiveOpportunity(
+          client,
+          tenantId,
+          request.action_type,
+          payload.subjectType || request.subject_type || null,
+          payload.subjectId || request.subject_id || null,
+        )
+        : true;
+      if (!stillValid) {
+        actionResult = {
+          mutation: 'NONE',
+          providerCalled: false,
+          skipped: true,
+          reason: 'OPPORTUNITY_STALE',
+        };
+      } else {
+        const existingQuestion = await client.query(
+          `SELECT id FROM agent_human_questions
+            WHERE tenant_id=current_setting('app.current_tenant_id', true)::uuid
+              AND context_json->>'approvalId'=$1
+            LIMIT 1`,
+          [approvalId],
+        );
+        const question = existingQuestion.rows[0] || (await client.query(
+          `INSERT INTO agent_human_questions
+            (tenant_id, agent_key, question, lead_id, priority, context_json)
+           VALUES (current_setting('app.current_tenant_id', true)::uuid, 'minh_proactive', $1, $2, $3, $4::jsonb)
+           RETURNING id`,
+          [
+            request.action_type === 'DRAFT_PROACTIVE_FOLLOWUP'
+              ? 'Minh đã tạo bản nháp follow-up sau khi được duyệt; nhân viên kiểm tra và gửi thủ công nếu phù hợp.'
+              : request.action_type === 'REVIEW_LISTING_PRICE'
+                ? 'Minh đề nghị nhân viên rà soát lại giá listing và nguồn tham chiếu trước khi thay đổi dữ liệu.'
+                : 'Minh đề nghị nhân viên rà soát nhóm nguyên nhân CSAT giảm và xác minh mẫu hội thoại.',
+            request.lead_id || null,
+            Math.max(0, Math.min(100, Number(payload.priority || 60))),
+            JSON.stringify({
+              approvalId,
+              sourceSignalId: payload.sourceSignalId || request.source_signal_id || null,
+              subjectType: payload.subjectType || request.subject_type || null,
+              subjectId: payload.subjectId || request.subject_id || null,
+              actionType: request.action_type,
+              evidence: payload.evidence || {},
+              providerCalled: false,
+              mutation: 'NONE',
+            }),
+          ],
+        )).rows[0];
+        actionResult = {
+          mutation: 'NONE',
+          providerCalled: false,
+          humanQuestionId: question.id,
+          draftCreated: request.action_type === 'DRAFT_PROACTIVE_FOLLOWUP',
+        };
+      }
     } else {
       throw new Error(`APPROVAL_ACTION_UNSUPPORTED:${request.action_type}`);
     }

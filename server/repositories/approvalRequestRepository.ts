@@ -2,6 +2,17 @@ import { pool, withTenantContext } from '../db';
 
 export const MINH_PROACTIVE_CHANNEL = 'MINH_PROACTIVE';
 
+// Week 5 decision-queue TTL: proactive suggestions sit in a staff review
+// queue, not a synchronous in-flight action, so they must not inherit the
+// generic 30-minute approval expiry used by create() below. A window that
+// short silently locks staff out of approving/rejecting once it passes,
+// because setStatus() requires expires_at > NOW().
+export const DEFAULT_MINH_PROACTIVE_APPROVAL_TTL_HOURS = 24;
+export const MINH_PROACTIVE_APPROVAL_TTL_HOURS = Math.max(
+  1,
+  Number(process.env.MINH_PROACTIVE_APPROVAL_TTL_HOURS || DEFAULT_MINH_PROACTIVE_APPROVAL_TTL_HOURS),
+);
+
 /**
  * approval_requests -- hang doi cho Permission Broker.
  * Khi AI de xuat 1 hanh dong "high-impact" (CONFIRM_DEPOSIT, CHANGE_LEAD_STAGE,
@@ -19,6 +30,8 @@ export const HIGH_IMPACT_ACTIONS = [
   'DRAFT_PROACTIVE_FOLLOWUP',
   'REVIEW_LISTING_PRICE',
   'REVIEW_CSAT_DROP',
+  'PROMOTE_LEARNING_CANDIDATE',
+  'ROLLBACK_LEARNING_CANDIDATE',
 ] as const;
 
 export type HighImpactAction = typeof HIGH_IMPACT_ACTIONS[number];
@@ -59,6 +72,7 @@ class ApprovalRequestRepository {
   }
 
   async createProactive(data: CreateApprovalRequestData, dailyBudget: number): Promise<any> {
+    const expiresAt = data.expiresAt || new Date(Date.now() + MINH_PROACTIVE_APPROVAL_TTL_HOURS * 3600000);
     return withTenantContext(data.tenantId, async client => {
       const existing = await client.query(
         `SELECT * FROM approval_requests
@@ -66,12 +80,27 @@ class ApprovalRequestRepository {
           LIMIT 1`,
         [data.tenantId, data.sourceSignalId || null],
       );
-      if (existing.rows[0]) return this.rowToEntity(existing.rows[0]);
+      if (existing.rows[0]) return { ...this.rowToEntity(existing.rows[0]), reused: 'DUPLICATE_SOURCE_SIGNAL' };
 
       await client.query(
         `SELECT pg_advisory_xact_lock(hashtextextended($1, 0))`,
         [`minh-proactive-budget:${data.tenantId}:${new Date().toISOString().slice(0, 10)}`],
       );
+
+      // Week 5 rule: the same lead may not receive more than one proactive
+      // suggestion per day, even if a different detector or signal flags it.
+      if (data.leadId) {
+        const existingForLead = await client.query(
+          `SELECT * FROM approval_requests
+             WHERE tenant_id=$1::uuid AND channel='MINH_PROACTIVE' AND lead_id=$2::uuid
+               AND requested_at >= CURRENT_DATE
+             ORDER BY requested_at ASC
+             LIMIT 1`,
+          [data.tenantId, data.leadId],
+        );
+        if (existingForLead.rows[0]) return { ...this.rowToEntity(existingForLead.rows[0]), reused: 'LEAD_DAILY_LIMIT' };
+      }
+
       const budgetResult = await client.query(
         `SELECT COUNT(*)::int AS used
            FROM approval_requests
@@ -91,7 +120,7 @@ class ApprovalRequestRepository {
         `INSERT INTO approval_requests
           (tenant_id, lead_id, channel, action_type, payload, reasoning, execution_id,
            step_key, idempotency_key, expires_at, source_signal_id, subject_type, subject_id)
-         VALUES ($1::uuid,$2::uuid,$3,$4,$5,$6,$7::uuid,$8,$9,COALESCE($10,NOW()+INTERVAL '30 minutes'),$11::text,$12,$13)
+         VALUES ($1::uuid,$2::uuid,$3,$4,$5,$6,$7::uuid,$8,$9,$10,$11::text,$12,$13)
          ON CONFLICT (tenant_id, source_signal_id)
            WHERE source_signal_id IS NOT NULL
          DO UPDATE SET id=approval_requests.id
@@ -99,11 +128,47 @@ class ApprovalRequestRepository {
         [
           data.tenantId, data.leadId || null, MINH_PROACTIVE_CHANNEL, data.actionType,
           JSON.stringify(data.payload || {}), data.reasoning || null, data.executionId || null,
-          data.stepKey || null, data.idempotencyKey || null, data.expiresAt || null,
+          data.stepKey || null, data.idempotencyKey || null, expiresAt,
           data.sourceSignalId || null, data.subjectType || null, data.subjectId || null,
         ],
       );
-      return this.rowToEntity(result.rows[0]);
+      return { ...this.rowToEntity(result.rows[0]), reused: null as string | null };
+    });
+  }
+
+  async createLearningCandidateApproval(data: CreateApprovalRequestData): Promise<any> {
+    if (!data.subjectId || !data.idempotencyKey) throw new Error('LEARNING_APPROVAL_IDEMPOTENCY_REQUIRED');
+    const expiresAt = data.expiresAt || new Date(Date.now() + MINH_PROACTIVE_APPROVAL_TTL_HOURS * 3600000);
+    return withTenantContext(data.tenantId, async client => {
+      await client.query(
+        `SELECT pg_advisory_xact_lock(hashtextextended($1, 0))`,
+        [`minh-learning-approval:${data.tenantId}:${data.subjectId}:${data.actionType}`],
+      );
+      const existing = await client.query(
+        `SELECT * FROM approval_requests
+          WHERE tenant_id=$1::uuid AND idempotency_key=$2
+          LIMIT 1`,
+        [data.tenantId, data.idempotencyKey],
+      );
+      if (existing.rows[0]) return { ...this.rowToEntity(existing.rows[0]), reused: true };
+      const result = await client.query(
+        `INSERT INTO approval_requests
+          (tenant_id,lead_id,channel,action_type,payload,reasoning,idempotency_key,expires_at,subject_type,subject_id)
+         VALUES ($1::uuid,NULL,$2,$3,$4::jsonb,$5,$6,$7,$8,$9)
+         RETURNING *`,
+        [
+          data.tenantId,
+          MINH_PROACTIVE_CHANNEL,
+          data.actionType,
+          JSON.stringify(data.payload || {}),
+          data.reasoning || null,
+          data.idempotencyKey,
+          expiresAt,
+          data.subjectType || 'learning_candidate',
+          data.subjectId,
+        ],
+      );
+      return { ...this.rowToEntity(result.rows[0]), reused: false };
     });
   }
 

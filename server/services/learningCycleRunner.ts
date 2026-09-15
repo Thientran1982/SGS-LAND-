@@ -2,7 +2,16 @@ import { createHash } from 'crypto';
 import { pool, withTenantContext } from '../db';
 import { logger } from '../middleware/logger';
 import { agentMemoryService, scrubPii } from './agentMemoryService';
-import { autonomousLearningService, assessFeedback } from './autonomousLearningService';
+import {
+  autonomousLearningService,
+  assessFeedback,
+  buildPromotionMetrics,
+  DEFAULT_MODEL_PROMOTION_GATE,
+  detectRuntimeRegression,
+  evaluatePromotionGate,
+  getModelPromotionLoopMode,
+} from './autonomousLearningService';
+import { approvalRequestRepository } from '../repositories/approvalRequestRepository';
 import {
   computeMinhWeeklyKpiForAllTenants,
   runMinhConfidenceCalibrationForAllTenants,
@@ -181,7 +190,253 @@ export async function runLearningCycleForTenant(
       };
     },
   });
+  if (
+    evaluation.claimed
+    && evaluation.cycle?.status === 'PASSED'
+    && getModelPromotionLoopMode() === 'shadow'
+  ) {
+    const summary = parseJson(evaluation.cycle.summary_json);
+    const draftId = summary.feedback?.draftId;
+    if (draftId) {
+      const registered = await autonomousLearningService.registerWeightCandidate({
+        tenantId,
+        cycleId: String(evaluation.cycle.id),
+        weightVersionId: String(draftId),
+        summary,
+        traceId,
+      });
+      const metrics = buildPromotionMetrics(summary);
+      const gate = evaluatePromotionGate(metrics, DEFAULT_MODEL_PROMOTION_GATE);
+      const candidate = registered.candidate;
+      const transitioned = candidate.status === 'SHADOW'
+        ? await autonomousLearningService.promoteCandidate(
+          tenantId,
+          String(candidate.id),
+          'CANARY',
+          gate,
+          traceId,
+        )
+        : candidate;
+      return {
+        ...evaluation,
+        candidate: {
+          id: transitioned?.id || candidate.id,
+          status: transitioned?.status || candidate.status,
+          reused: registered.reused,
+          gate,
+        },
+      };
+    }
+  }
   return evaluation;
+}
+
+type RuntimeMetrics = {
+  safety: number;
+  groundedness: number;
+  quality: number;
+  latencyP95Ms: number;
+  costUsd: number;
+  minSamples: number;
+  errorRate: number;
+};
+
+async function sampleCandidateRuntimeMetrics(tenantId: string): Promise<RuntimeMetrics> {
+  return withTenantContext(tenantId, async client => {
+    const [usage, signals, feedback, executions] = await Promise.all([
+      client.query(
+        `SELECT COUNT(*)::int AS samples,
+                COALESCE(percentile_cont(0.95) WITHIN GROUP (ORDER BY latency_ms),0)::int AS latency_p95_ms,
+                COALESCE(SUM(cost_usd),0)::float AS cost_usd
+           FROM ai_usage_log
+          WHERE tenant_id=$1 AND created_at >= NOW() - INTERVAL '24 hours'`,
+        [tenantId],
+      ),
+      client.query(
+        `SELECT COUNT(*)::int AS samples
+           FROM agent_signals
+          WHERE tenant_id=$1 AND signal_type='match_chosen'
+            AND created_at >= NOW() - INTERVAL '24 hours'`,
+        [tenantId],
+      ),
+      client.query(
+        `SELECT COUNT(*)::int AS samples,
+                COALESCE(AVG(CASE WHEN rating=1 THEN 1.0 ELSE 0.0 END),0)::float AS quality
+           FROM ai_feedback
+          WHERE tenant_id=$1 AND created_at >= NOW() - INTERVAL '24 hours'
+            AND adjudication_status='ACCEPTED'`,
+        [tenantId],
+      ),
+      client.query(
+        `SELECT COUNT(*)::int AS samples,
+                COALESCE(AVG(CASE WHEN status='ERROR' THEN 1.0 ELSE 0.0 END),0)::float AS error_rate
+           FROM agent_executions
+          WHERE tenant_id=$1 AND created_at >= NOW() - INTERVAL '24 hours'`,
+        [tenantId],
+      ),
+    ]);
+    const usageRow = usage.rows[0] || {};
+    const signalSamples = Number(signals.rows[0]?.samples || 0);
+    const feedbackSamples = Number(feedback.rows[0]?.samples || 0);
+    const executionSamples = Number(executions.rows[0]?.samples || 0);
+    const sampleCount = Math.max(
+      Number(usageRow.samples || 0),
+      signalSamples,
+      feedbackSamples,
+      executionSamples,
+    );
+    const errorRate = Math.max(0, Math.min(1, Number(executions.rows[0]?.error_rate || 0)));
+    return {
+      safety: Math.max(0, 1 - errorRate),
+      groundedness: signalSamples > 0 ? 1 : 0,
+      quality: feedbackSamples > 0 ? Math.max(0, Math.min(1, Number(feedback.rows[0]?.quality || 0))) : 0,
+      latencyP95Ms: Math.max(0, Number(usageRow.latency_p95_ms || 0)),
+      costUsd: Math.max(0, Number(usageRow.cost_usd || 0)),
+      minSamples: sampleCount,
+      errorRate,
+    };
+  });
+}
+
+export async function runModelPromotionLoopForTenant(
+  tenantId: string,
+  now = new Date(),
+  traceId?: string,
+) {
+  if (getModelPromotionLoopMode() !== 'shadow') {
+    return { skipped: true, reason: 'model_promotion_loop_disabled' };
+  }
+
+  const candidates = await withTenantContext(tenantId, async client => (await client.query(
+    `SELECT * FROM ai_learning_candidates
+      WHERE tenant_id=$1 AND status IN ('CANARY','ACTIVE')
+      ORDER BY created_at ASC
+      LIMIT 20`,
+    [tenantId],
+  )).rows);
+  const results: Array<Record<string, unknown>> = [];
+
+  for (const candidate of candidates) {
+    const runtime = await sampleCandidateRuntimeMetrics(tenantId);
+    await autonomousLearningService.recordRuntimeMetrics({
+      tenantId,
+      candidateId: String(candidate.id),
+      metrics: runtime,
+    });
+    const ageHours = Math.max(0, (now.getTime() - new Date(candidate.created_at).getTime()) / 3600000);
+    if (candidate.status === 'CANARY') {
+      if (ageHours < 24 || runtime.minSamples < DEFAULT_MODEL_PROMOTION_GATE.minSamples) {
+        results.push({
+          candidateId: candidate.id,
+          status: 'SOAKING',
+          ageHours: Number(ageHours.toFixed(2)),
+          sampleCount: runtime.minSamples,
+        });
+        continue;
+      }
+      const gate = evaluatePromotionGate(runtime, DEFAULT_MODEL_PROMOTION_GATE);
+      if (!gate.passed) {
+        await autonomousLearningService.promoteCandidate(tenantId, String(candidate.id), 'ACTIVE', gate, traceId)
+          .catch(() => undefined);
+        results.push({ candidateId: candidate.id, status: 'REJECTED', gate });
+        continue;
+      }
+      const approval = await approvalRequestRepository.createLearningCandidateApproval({
+        tenantId,
+        actionType: 'PROMOTE_LEARNING_CANDIDATE',
+        subjectType: 'learning_candidate',
+        subjectId: String(candidate.id),
+        idempotencyKey: `minh-learning:promote:${candidate.id}`,
+        reasoning: 'Candidate đã soak đủ 24 giờ và vượt qua gate runtime; cần quản lý duyệt go-live.',
+        payload: {
+          schemaVersion: 1,
+          candidateId: String(candidate.id),
+          metrics: {
+            safety: runtime.safety,
+            groundedness: runtime.groundedness,
+            quality: runtime.quality,
+            latencyP95Ms: runtime.latencyP95Ms,
+            costUsd: runtime.costUsd,
+            minSamples: runtime.minSamples,
+          },
+          thresholds: DEFAULT_MODEL_PROMOTION_GATE,
+          requiredApproval: true,
+        },
+      });
+      if (!approval.reused) {
+        await autonomousLearningService.recordAudit({
+          tenantId,
+          eventType: 'GO_LIVE_APPROVAL_REQUESTED',
+          entityType: 'LEARNING_CANDIDATE',
+          entityId: String(candidate.id),
+          reason: 'canary_soak_and_runtime_gate_passed',
+          metrics: runtime,
+          traceId,
+        });
+      }
+      results.push({ candidateId: candidate.id, status: 'APPROVAL_REQUESTED', approvalId: approval.id });
+      continue;
+    }
+
+    if (runtime.minSamples < DEFAULT_MODEL_PROMOTION_GATE.minSamples) {
+      results.push({
+        candidateId: candidate.id,
+        status: 'ACTIVE_WAITING_FOR_SAMPLES',
+        sampleCount: runtime.minSamples,
+      });
+      continue;
+    }
+
+    const gateSummary = parseJson(candidate.gate_summary);
+    const baseline = {
+      safety: Number(gateSummary.metrics?.safety ?? 1),
+      groundedness: Number(gateSummary.metrics?.groundedness ?? 1),
+      quality: Number(gateSummary.metrics?.quality ?? 1),
+      errorRate: 0,
+      latencyP95Ms: Number(gateSummary.metrics?.latencyP95Ms ?? 0),
+    };
+    const regression = detectRuntimeRegression(runtime, baseline);
+    if (regression.regressed) {
+      const approval = await approvalRequestRepository.createLearningCandidateApproval({
+        tenantId,
+        actionType: 'ROLLBACK_LEARNING_CANDIDATE',
+        subjectType: 'learning_candidate',
+        subjectId: String(candidate.id),
+        idempotencyKey: `minh-learning:rollback:${candidate.id}`,
+        reasoning: `Runtime regression cần quản lý duyệt rollback: ${regression.failures.join(', ')}`,
+        payload: {
+          schemaVersion: 1,
+          candidateId: String(candidate.id),
+          failures: regression.failures,
+          metrics: {
+            safety: runtime.safety,
+            groundedness: runtime.groundedness,
+            quality: runtime.quality,
+            latencyP95Ms: runtime.latencyP95Ms,
+            costUsd: runtime.costUsd,
+            minSamples: runtime.minSamples,
+            errorRate: runtime.errorRate,
+          },
+          requiredApproval: true,
+        },
+      });
+      if (!approval.reused) {
+        await autonomousLearningService.recordAudit({
+          tenantId,
+          eventType: 'ROLLBACK_APPROVAL_REQUESTED',
+          entityType: 'LEARNING_CANDIDATE',
+          entityId: String(candidate.id),
+          reason: regression.failures.join(','),
+          metrics: runtime,
+          traceId,
+        });
+      }
+      results.push({ candidateId: candidate.id, status: 'ROLLBACK_REQUESTED', approvalId: approval.id });
+    } else {
+      results.push({ candidateId: candidate.id, status: 'ACTIVE_HEALTHY', sampleCount: runtime.minSamples });
+    }
+  }
+  return { skipped: false, tenantId, results };
 }
 
 export async function runLearningCyclesForAllTenants(

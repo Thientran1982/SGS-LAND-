@@ -3,9 +3,11 @@ import { evaluateMarketingApproval } from '../ai/agentGuardrails';
 import {
   approvalRequestRepository,
   MINH_PROACTIVE_CHANNEL,
+  MINH_PROACTIVE_APPROVAL_TTL_HOURS,
   type HighImpactAction,
 } from '../repositories/approvalRequestRepository';
 import { logger } from '../middleware/logger';
+import { notificationRepository } from '../repositories/notificationRepository';
 
 export const DEFAULT_MINH_PROACTIVE_DAILY_BUDGET = 20;
 export const MINH_PROACTIVE_DAILY_BUDGET = Math.max(
@@ -62,9 +64,18 @@ function parseSignalPayload(value: OpportunitySignalRow['payload']): Record<stri
   return {};
 }
 
+function priorityLabel(priority: unknown): 'HIGH' | 'MEDIUM' | 'LOW' {
+  const value = Number(priority);
+  if (!Number.isFinite(value)) return 'MEDIUM';
+  if (value >= 75) return 'HIGH';
+  if (value >= 50) return 'MEDIUM';
+  return 'LOW';
+}
+
 function buildApprovalData(signal: OpportunitySignalRow, actionType: HighImpactAction) {
   const payload = parseSignalPayload(signal.payload);
   const kind = safeText(payload.kind, 80);
+  const expiresAt = new Date(Date.now() + MINH_PROACTIVE_APPROVAL_TTL_HOURS * 3600000);
   const title = safeText(payload.title, 240) || `Minh đề xuất xử lý ${kind}`;
   const rationale = safeText(payload.rationale, 1000);
   const evidence = payload.evidence && typeof payload.evidence === 'object' && !Array.isArray(payload.evidence)
@@ -72,7 +83,18 @@ function buildApprovalData(signal: OpportunitySignalRow, actionType: HighImpactA
     : {};
 
   const approvalPayload: Record<string, unknown> = {
-    schemaVersion: 1,
+    schemaVersion: 2,
+    // Week 5 decision-queue schema fields, kept alongside the original
+    // field names below so existing readers of this payload keep working.
+    opportunityId: signal.id,
+    entityType: signal.subject_type,
+    entityId: signal.subject_id,
+    detector: kind.toLowerCase(),
+    priority: priorityLabel(payload.priority),
+    confidence: Number.isFinite(Number(payload.confidence)) ? Number(payload.confidence) : undefined,
+    requiredApproval: true,
+    expiresAt: expiresAt.toISOString(),
+    dedupeKey: `${kind.toLowerCase()}:${signal.subject_type || 'unknown'}:${signal.subject_id}:${new Date().toISOString().slice(0, 10)}`,
     sourceSignalId: signal.id,
     opportunityKind: kind,
     subjectType: signal.subject_type,
@@ -88,6 +110,10 @@ function buildApprovalData(signal: OpportunitySignalRow, actionType: HighImpactA
       : undefined,
   };
 
+  if (actionType === 'DRAFT_PROACTIVE_FOLLOWUP') {
+    approvalPayload.suggestedActionPayload = { draftText: approvalPayload.draftText };
+  }
+
   return {
     tenantId: '',
     leadId: signal.subject_type === 'lead' ? signal.subject_id : null,
@@ -98,19 +124,57 @@ function buildApprovalData(signal: OpportunitySignalRow, actionType: HighImpactA
     subjectId: signal.subject_id,
     idempotencyKey: `minh-proactive:${signal.id}:${actionType}`,
     reasoning: rationale || title,
+    expiresAt,
     payload: approvalPayload,
   };
 }
 
-async function readBudget(tenantId: string): Promise<{ used: number; budget: number; exceeded: boolean }> {
-  const result = await withTenantContext(tenantId, client => client.query(
-    `SELECT COUNT(*)::int AS used
-       FROM approval_requests
-      WHERE tenant_id=$1::uuid AND channel=$2 AND requested_at >= CURRENT_DATE`,
-    [tenantId, MINH_PROACTIVE_CHANNEL],
-  ));
-  const used = Number(result.rows[0]?.used || 0);
-  return { used, budget: MINH_PROACTIVE_DAILY_BUDGET, exceeded: used >= MINH_PROACTIVE_DAILY_BUDGET };
+async function readBudget(tenantId: string): Promise<{
+  used: number; budget: number; exceeded: boolean;
+  proactiveDetectionsPerTenantPerDay: number;
+  proactiveSuggestionsPerTenantPerDay: number;
+  proactiveApprovalsPending: number;
+  proactiveActionsExecutedPerDay: number;
+}> {
+  const counts = await withTenantContext(tenantId, async client => {
+    const [suggestions, detections, pending, executed] = await Promise.all([
+      client.query(
+        `SELECT COUNT(*)::int AS n FROM approval_requests
+          WHERE tenant_id=$1::uuid AND channel=$2 AND requested_at >= CURRENT_DATE`,
+        [tenantId, MINH_PROACTIVE_CHANNEL],
+      ),
+      client.query(
+        `SELECT COUNT(*)::int AS n FROM agent_signals
+          WHERE tenant_id=$1::uuid AND signal_type='proactive_opportunity' AND created_at >= CURRENT_DATE`,
+        [tenantId],
+      ),
+      client.query(
+        `SELECT COUNT(*)::int AS n FROM approval_requests
+          WHERE tenant_id=$1::uuid AND channel=$2 AND status='PENDING'`,
+        [tenantId, MINH_PROACTIVE_CHANNEL],
+      ),
+      client.query(
+        `SELECT COUNT(*)::int AS n FROM approval_requests
+          WHERE tenant_id=$1::uuid AND channel=$2 AND status='APPROVED' AND resumed_at >= CURRENT_DATE`,
+        [tenantId, MINH_PROACTIVE_CHANNEL],
+      ),
+    ]);
+    return {
+      suggestions: Number(suggestions.rows[0]?.n || 0),
+      detections: Number(detections.rows[0]?.n || 0),
+      pending: Number(pending.rows[0]?.n || 0),
+      executed: Number(executed.rows[0]?.n || 0),
+    };
+  });
+  return {
+    used: counts.suggestions,
+    budget: MINH_PROACTIVE_DAILY_BUDGET,
+    exceeded: counts.suggestions >= MINH_PROACTIVE_DAILY_BUDGET,
+    proactiveDetectionsPerTenantPerDay: counts.detections,
+    proactiveSuggestionsPerTenantPerDay: counts.suggestions,
+    proactiveApprovalsPending: counts.pending,
+    proactiveActionsExecutedPerDay: counts.executed,
+  };
 }
 
 export async function getMinhProactiveRollout(tenantId: string): Promise<MinhProactiveRollout> {
@@ -231,14 +295,11 @@ export async function enqueueMinhOpportunitySuggestions(
       continue;
     }
     try {
-      const existing = await withTenantContext(tenantId, client => client.query(
-        `SELECT id FROM approval_requests
-          WHERE tenant_id=$1::uuid AND source_signal_id=$2::text
-          LIMIT 1`,
-        [tenantId, candidate.id],
-      ));
+      // Week 5: the repository reports whether this suggestion was reused
+      // (duplicate signal, or the lead's one-per-day cap) via `reused`, so a
+      // second, racy existence check here is no longer needed.
       const request = await suggestMinhOpportunity(tenantId, candidate.id);
-      if (existing.rows[0]) summary.existing++;
+      if (request?.reused) summary.existing++;
       else if (request) summary.created++;
     } catch (error: any) {
       if (error?.code === 'MINH_PROACTIVE_BUDGET_EXCEEDED') {
@@ -257,6 +318,25 @@ export async function enqueueMinhOpportunitySuggestions(
   summary.budgetUsed = budget.used;
   summary.budget = budget.budget;
   summary.budgetExceeded ||= budget.exceeded;
+
+  // Week 5 STOP_SUGGESTING rule: once the daily proactive budget is spent,
+  // keep the underlying signals (they stay in agent_signals untouched) but
+  // stop pushing new suggestions, and raise an operational alert so staff
+  // know detection kept running while suggestion output is paused.
+  if (summary.budgetExceeded) {
+    try {
+      await notificationRepository.createForTenantAdmins(tenantId, {
+        type: 'MINH_PROACTIVE_BUDGET_EXCEEDED',
+        title: 'Minh proactive budget da het cho hom nay',
+        body: `Da dat gioi han ${summary.budget} de xuat proactive/ngay. Tin hieu van duoc luu, nhung se khong gui them de xuat moi cho den ngay mai.`,
+        metadata: { budgetUsed: summary.budgetUsed, budget: summary.budget },
+        dedupeKey: `minh-proactive-budget:${tenantId}:${new Date().toISOString().slice(0, 10)}`,
+      });
+    } catch (error) {
+      logger.warn(`[MinhDecisionQueue] failed to raise STOP_SUGGESTING alert tenant=${tenantId}: ${(error as any)?.message || error}`);
+    }
+  }
+
   return summary;
 }
 

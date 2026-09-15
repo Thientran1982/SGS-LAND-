@@ -85,6 +85,14 @@ const APPROVAL_ROLES = new Set(['SUPER_ADMIN', 'ADMIN', 'MANAGER', 'TEAM_LEAD'])
         return res.status(403).json({ error: 'Only authorized managers can reject AI actions' });
       }
       const note = typeof req.body?.note === 'string' ? req.body.note.slice(0, 1000) : undefined;
+      // Week 5 rule: a Minh proactive suggestion that gets rejected must
+      // record why, so the false-positive rate is actually reviewable.
+      const existingForReject = await approvalRequestRepository.findById(user.tenantId, String(req.params.id));
+      if (existingForReject?.channel === 'MINH_PROACTIVE'
+        && existingForReject.status === 'PENDING'
+        && !note?.trim()) {
+        return res.status(400).json({ error: 'A reason is required when rejecting a Minh proactive suggestion' });
+      }
       const updated = await approvalRequestRepository.setStatus(user.tenantId, String(req.params.id), 'REJECTED', user.id, note);
       if (!updated) return res.status(404).json({ error: 'Approval request not found or already reviewed' });
       if (updated.channel === 'MINH_PROACTIVE') await recordMinhDecisionFeedbackSafely(user.tenantId, {

@@ -1,5 +1,6 @@
 import { createHash } from 'crypto';
 import { withTenantContext } from '../db';
+import type { PoolClient } from 'pg';
 
 export type FeedbackAssessment = {
   qualityScore: number;
@@ -27,6 +28,52 @@ export type GateThresholds = {
   maxCostUsd: number;
   minSamples: number;
 };
+
+export type ModelPromotionLoopMode = 'off' | 'shadow';
+
+export const MINH_MODEL_PROMOTION_LOOP_ENV = 'MINH_MODEL_PROMOTION_LOOP';
+export const DEFAULT_MODEL_PROMOTION_GATE: GateThresholds = {
+  minSafety: 0.99,
+  minGroundedness: 0.7,
+  minQuality: 0.8,
+  maxLatencyP95Ms: 1000,
+  maxCostUsd: 0.05,
+  minSamples: 20,
+};
+
+export function getModelPromotionLoopMode(
+  env: NodeJS.ProcessEnv = process.env,
+): ModelPromotionLoopMode {
+  return String(env[MINH_MODEL_PROMOTION_LOOP_ENV] || 'off').trim().toLowerCase() === 'shadow'
+    ? 'shadow'
+    : 'off';
+}
+
+function boundedMetrics(input: Record<string, unknown>): Record<string, unknown> {
+  const allowed = ['safety', 'groundedness', 'quality', 'latencyP95Ms', 'costUsd', 'minSamples',
+    'matchAccuracy', 'valuationPassRate', 'feedbackSamples', 'windowHours'];
+  return Object.fromEntries(allowed
+    .filter(key => input[key] !== undefined)
+    .map(key => {
+      const value = input[key];
+      if (typeof value === 'number') return [key, Number.isFinite(value) ? Number(value.toFixed(6)) : 0];
+      return [key, String(value).slice(0, 80)];
+    }));
+}
+
+export function buildPromotionMetrics(summary: Record<string, any>): EvaluationGate {
+  const matchAccuracy = Number(summary.match?.accuracy || 0);
+  const valuationPassRate = Number(summary.valuation?.passRate || 0);
+  const minSamples = Number(summary.casesEvaluated || 0);
+  return {
+    safety: 1,
+    groundedness: Math.max(0, Math.min(1, valuationPassRate)),
+    quality: Math.max(0, Math.min(1, matchAccuracy)),
+    latencyP95Ms: 0,
+    costUsd: 0,
+    minSamples,
+  };
+}
 
 export function assessFeedback(input: {
   rating: -1 | 1;
@@ -90,7 +137,10 @@ export function detectRuntimeRegression(current: {
   if (current.groundedness < baseline.groundedness - limits.qualityDrop) failures.push('groundedness_regression');
   if (current.quality < baseline.quality - limits.qualityDrop) failures.push('quality_regression');
   if (current.errorRate > baseline.errorRate + limits.errorRateIncrease) failures.push('error_rate_regression');
-  if (current.latencyP95Ms > baseline.latencyP95Ms * limits.latencyIncreaseRatio) failures.push('latency_regression');
+  if (baseline.latencyP95Ms > 0
+    && current.latencyP95Ms > baseline.latencyP95Ms * limits.latencyIncreaseRatio) {
+    failures.push('latency_regression');
+  }
   return { regressed: failures.length > 0, failures };
 }
 
@@ -173,10 +223,17 @@ export const autonomousLearningService = {
     });
   },
 
-  async promoteCandidate(tenantId: string, candidateId: string, target: 'SHADOW' | 'CANARY' | 'ACTIVE', gate: { passed: boolean; failures: string[] }, traceId?: string) {
-    return withTenantContext(tenantId, async client => {
+  async promoteCandidate(
+    tenantId: string,
+    candidateId: string,
+    target: 'SHADOW' | 'CANARY' | 'ACTIVE',
+    gate: { passed: boolean; failures: string[] },
+    traceId?: string,
+    existingClient?: PoolClient,
+  ) {
+    const execute = async (client: PoolClient) => {
       const candidate = (await client.query(
-        `SELECT * FROM ai_learning_candidates WHERE tenant_id=$1 AND id=$2 FOR UPDATE`,
+        `SELECT * FROM ai_learning_candidates WHERE tenant_id=$1 AND id::text=$2 FOR UPDATE`,
         [tenantId, candidateId],
       )).rows[0];
       if (!candidate) return null;
@@ -189,14 +246,29 @@ export const autonomousLearningService = {
            VALUES ($1,$2,$3,'REJECTED','REJECT',$4,$5::jsonb,$6)`,
           [tenantId, candidateId, candidate.status, gate.failures.join(','), JSON.stringify(gate), traceId || null],
         );
+        await client.query(
+          `INSERT INTO ai_learning_audit_events
+            (tenant_id,event_type,entity_type,entity_id,reason,metrics_json,trace_id)
+           VALUES ($1,'CANDIDATE_GATE_FAILED','LEARNING_CANDIDATE',$2,$3,$4::jsonb,$5)`,
+          [tenantId, candidateId, gate.failures.join(','), JSON.stringify(gate), traceId || null],
+        );
         return { ...candidate, status: 'REJECTED', gate };
       }
       const allowed = candidate.status === 'SHADOW' && target === 'CANARY'
         || candidate.status === 'CANARY' && target === 'ACTIVE'
         || candidate.status === target;
       if (!allowed) throw new Error(`INVALID_PROMOTION:${candidate.status}->${target}`);
+      if (target === 'ACTIVE') {
+        await client.query(
+          `UPDATE ai_learning_candidates
+              SET status='SHADOW', last_known_good=TRUE
+            WHERE tenant_id=$1 AND status='ACTIVE' AND id<>$2`,
+          [tenantId, candidateId],
+        );
+      }
       const updated = (await client.query(
-        `UPDATE ai_learning_candidates SET status=$3, gate_summary=$4::jsonb
+        `UPDATE ai_learning_candidates SET status=$3, gate_summary=$4::jsonb,
+                last_known_good=CASE WHEN $3='ACTIVE' THEN TRUE ELSE last_known_good END
          WHERE tenant_id=$1 AND id=$2 RETURNING *`,
         [tenantId, candidateId, target, JSON.stringify(gate)],
       )).rows[0];
@@ -206,12 +278,152 @@ export const autonomousLearningService = {
          VALUES ($1,$2,$3,$4,'PROMOTE','promotion_gate_passed',$5::jsonb,$6)`,
         [tenantId, candidateId, candidate.status, target, JSON.stringify(gate), traceId || null],
       );
+      await client.query(
+        `INSERT INTO ai_learning_audit_events
+          (tenant_id,event_type,entity_type,entity_id,reason,metrics_json,trace_id)
+         VALUES ($1,'CANDIDATE_PROMOTED','LEARNING_CANDIDATE',$2,$3,$4::jsonb,$5)`,
+        [tenantId, candidateId, `promotion_${candidate.status.toLowerCase()}_to_${target.toLowerCase()}`,
+          JSON.stringify(gate), traceId || null],
+      );
       return updated;
+    };
+    return existingClient ? execute(existingClient) : withTenantContext(tenantId, execute);
+  },
+
+  async registerWeightCandidate(input: {
+    tenantId: string;
+    cycleId: string;
+    weightVersionId: string;
+    summary: Record<string, any>;
+    traceId?: string;
+  }) {
+    return withTenantContext(input.tenantId, async client => {
+      const existing = (await client.query(
+        `SELECT * FROM ai_learning_candidates
+          WHERE tenant_id=$1 AND cycle_id=$2 AND agent_key='matcher_weights'
+          LIMIT 1`,
+        [input.tenantId, input.cycleId],
+      )).rows[0];
+      if (existing) return { candidate: existing, reused: true };
+
+      const metrics = buildPromotionMetrics(input.summary);
+      const previousWeight = (await client.query(
+        `SELECT id FROM agent_weight_versions
+          WHERE tenant_id=$1 AND status='live'
+          ORDER BY created_at DESC LIMIT 1`,
+        [input.tenantId],
+      )).rows[0];
+      const artifact = {
+        kind: 'MATCHER_WEIGHTS',
+        weightVersionId: String(input.weightVersionId),
+        previousWeightVersionId: previousWeight?.id ? String(previousWeight.id) : null,
+        source: 'learning_cycle',
+        sampleCount: Math.max(0, Number(input.summary.feedback?.matchChosenSignals || 0)),
+      };
+      const result = await client.query(
+        `INSERT INTO ai_learning_candidates
+          (tenant_id,cycle_id,agent_key,prompt_hash,model,artifact_json,status,gate_summary,candidate_key)
+         VALUES ($1,$2,'matcher_weights',$3,'calibrated-value-only-classifier',$4::jsonb,'SHADOW',$5::jsonb,$6)
+         ON CONFLICT (tenant_id,cycle_id,agent_key) WHERE cycle_id IS NOT NULL
+         DO UPDATE SET id=ai_learning_candidates.id
+         RETURNING *`,
+        [
+          input.tenantId,
+          input.cycleId,
+          fingerprint(artifact),
+          JSON.stringify(artifact),
+          JSON.stringify({ metrics, thresholds: DEFAULT_MODEL_PROMOTION_GATE }),
+          `matcher_weights:${input.cycleId}`,
+        ],
+      );
+      const candidate = result.rows[0];
+      await client.query(
+        `INSERT INTO ai_learning_audit_events
+          (tenant_id,event_type,entity_type,entity_id,reason,metrics_json,trace_id)
+         VALUES ($1,'CANDIDATE_REGISTERED','LEARNING_CANDIDATE',$2,'draft_weight_version_registered',$3::jsonb,$4)`,
+        [input.tenantId, candidate.id, JSON.stringify({ metrics, cycleId: input.cycleId }), input.traceId || null],
+      );
+      return { candidate, reused: false };
     });
   },
 
-  async rollbackCandidate(tenantId: string, candidateId: string, reason: string, metrics: Record<string, unknown> = {}, traceId?: string) {
-    return withTenantContext(tenantId, async client => {
+  async recordRuntimeMetrics(input: {
+    tenantId: string;
+    candidateId: string;
+    metrics: EvaluationGate & { errorRate: number };
+    windowHours?: number;
+  }) {
+    return withTenantContext(input.tenantId, async client => {
+      const result = await client.query(
+        `INSERT INTO ai_learning_runtime_metrics
+          (tenant_id,candidate_id,metric_window,sample_count,safety,groundedness,quality,
+           latency_p95_ms,cost_usd,error_rate)
+         VALUES ($1,$2,'TRAILING_24H',$3,$4,$5,$6,$7,$8,$9)
+         RETURNING *`,
+        [
+          input.tenantId,
+          input.candidateId,
+          Math.max(0, Math.floor(input.metrics.minSamples)),
+          Math.max(0, Math.min(1, input.metrics.safety)),
+          Math.max(0, Math.min(1, input.metrics.groundedness)),
+          Math.max(0, Math.min(1, input.metrics.quality)),
+          Math.max(0, Math.floor(input.metrics.latencyP95Ms)),
+          Math.max(0, input.metrics.costUsd),
+          Math.max(0, Math.min(1, input.metrics.errorRate)),
+        ],
+      );
+      return result.rows[0];
+    });
+  },
+
+  async findCandidate(tenantId: string, candidateId: string) {
+    return withTenantContext(tenantId, async client => (await client.query(
+      `SELECT * FROM ai_learning_candidates WHERE tenant_id=$1 AND id::text=$2`,
+      [tenantId, candidateId],
+    )).rows[0] || null);
+  },
+
+  async findLastKnownGoodCandidate(tenantId: string, excludingId?: string) {
+    return withTenantContext(tenantId, async client => (await client.query(
+      `SELECT * FROM ai_learning_candidates
+        WHERE tenant_id=$1 AND status='SHADOW' AND last_known_good=TRUE
+          AND ($2 IS NULL OR id::text<>$2)
+        ORDER BY created_at DESC LIMIT 1`,
+      [tenantId, excludingId || null],
+    )).rows[0] || null);
+  },
+
+  async restoreCandidate(tenantId: string, candidateId: string, traceId?: string, existingClient?: PoolClient) {
+    const execute = async (client: PoolClient) => {
+      const result = await client.query(
+        `UPDATE ai_learning_candidates
+            SET status='ACTIVE', last_known_good=TRUE
+          WHERE tenant_id=$1 AND id::text=$2 AND status='SHADOW' AND last_known_good=TRUE
+          RETURNING *`,
+        [tenantId, candidateId],
+      );
+      if (!result.rows[0]) return null;
+      await client.query(
+        `INSERT INTO ai_learning_audit_events
+          (tenant_id,event_type,entity_type,entity_id,reason,metrics_json,trace_id)
+         VALUES ($1,'CANDIDATE_RESTORED','LEARNING_CANDIDATE',$2,
+                 'last_known_good_restored_after_rollback','{}'::jsonb,$3)`,
+        [tenantId, candidateId, traceId || null],
+      );
+      return result.rows[0];
+    };
+    return existingClient ? execute(existingClient) : withTenantContext(tenantId, execute);
+  },
+
+  async rollbackCandidate(
+    tenantId: string,
+    candidateId: string,
+    reason: string,
+    metrics: Record<string, unknown> = {},
+    traceId?: string,
+    existingClient?: PoolClient,
+  ) {
+    const execute = async (client: PoolClient) => {
       const result = await client.query(
         `WITH previous AS (
            SELECT id, status AS previous_status FROM ai_learning_candidates
@@ -231,19 +443,22 @@ export const autonomousLearningService = {
         [tenantId, candidateId, result.rows[0].previous_status, reason.slice(0, 1000), JSON.stringify(metrics), traceId || null],
       );
       return result.rows[0] || null;
-    });
+    };
+    return existingClient ? execute(existingClient) : withTenantContext(tenantId, execute);
   },
   async recordAudit(input: {
     tenantId?: string | null; eventType: string; entityType: string; entityId?: string;
     reason: string; metrics?: Record<string, unknown>; traceId?: string;
+    existingClient?: PoolClient;
   }): Promise<void> {
-    await withTenantContext(input.tenantId || '', client => client.query(
+    const write = (client: PoolClient) => client.query(
       `INSERT INTO ai_learning_audit_events
        (tenant_id,event_type,entity_type,entity_id,reason,metrics_json,trace_id)
        VALUES ($1,$2,$3,$4,$5,$6::jsonb,$7)`,
       [input.tenantId || null, input.eventType, input.entityType, input.entityId || null,
         input.reason.slice(0, 1000), JSON.stringify(input.metrics || {}), input.traceId || null],
-    ));
+    );
+    await (input.existingClient ? write(input.existingClient) : withTenantContext(input.tenantId || '', write));
   },
 
   async adjudicateFeedback(tenantId: string, feedbackId: string, assessment: FeedbackAssessment) {

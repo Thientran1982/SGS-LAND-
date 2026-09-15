@@ -38,6 +38,14 @@ export type MinhBrainSchedulerSnapshot = {
       lastError?: string;
     }>;
   };
+  modelPromotionSummary: {
+    enabled: boolean;
+    lastRunAt: string | null;
+    tenantRuns: number;
+    approvalRequests: number;
+    rollbackRequests: number;
+    degradedRuns: number;
+  };
 };
 
 export type MinhOpportunityDetectorRunner = (
@@ -50,6 +58,14 @@ export type MinhOpportunityDetectorRunner = (
   persisted: number;
   error?: string;
 }>>;
+
+export type MinhModelPromotionRunner = (
+  tenantId: string,
+  now: Date,
+  traceId: string,
+) => Promise<{
+  results?: Array<{ status?: string }>;
+}>;
 
 const LEGACY_JOBS: MinhBrainSchedulerJob[] = [
   { key: 'agent_operator_worker', legacyOwner: 'agentOperatorDaemon', observedOnly: true },
@@ -81,6 +97,14 @@ let snapshot: MinhBrainSchedulerSnapshot = {
     degradedRuns: 0,
     detectorStatus: [],
   },
+  modelPromotionSummary: {
+    enabled: false,
+    lastRunAt: null,
+    tenantRuns: 0,
+    approvalRequests: 0,
+    rollbackRequests: 0,
+    degradedRuns: 0,
+  },
 };
 
 export function getMinhBrainSchedulerMode(
@@ -102,6 +126,7 @@ export async function runMinhBrainSchedulerTick(
   getTenantIds: () => Promise<string[]>,
   now: () => Date = () => new Date(),
   runOpportunityDetectors?: MinhOpportunityDetectorRunner,
+  runModelPromotion?: MinhModelPromotionRunner,
 ): Promise<MinhBrainSchedulerSnapshot> {
   if (tickInFlight) return getMinhBrainSchedulerSnapshot();
   tickInFlight = true;
@@ -116,6 +141,15 @@ export async function runMinhBrainSchedulerTick(
       tenantRuns: 0,
       opportunitiesFound: 0,
       opportunitiesPersisted: 0,
+      degradedRuns: 0,
+    };
+    const modelPromotionSummary = {
+      ...snapshot.modelPromotionSummary,
+      enabled: Boolean(runModelPromotion),
+      lastRunAt: tickAt.toISOString(),
+      tenantRuns: 0,
+      approvalRequests: 0,
+      rollbackRequests: 0,
       degradedRuns: 0,
     };
     if (runOpportunityDetectors) {
@@ -156,6 +190,21 @@ export async function runMinhBrainSchedulerTick(
       }
       detectorSummary.detectorStatus = [...detectorStatus.values()].sort((a, b) => a.detector.localeCompare(b.detector));
     }
+    if (runModelPromotion) {
+      for (const tenantId of tenantIds) {
+        try {
+          const result = await runModelPromotion(tenantId, tickAt, traceId);
+          modelPromotionSummary.tenantRuns++;
+          for (const item of result.results || []) {
+            if (item.status === 'APPROVAL_REQUESTED') modelPromotionSummary.approvalRequests++;
+            if (item.status === 'ROLLBACK_REQUESTED') modelPromotionSummary.rollbackRequests++;
+          }
+        } catch (error: any) {
+          modelPromotionSummary.degradedRuns++;
+          logger.warn(`[MinhBrainScheduler] model promotion degraded traceId=${traceId} tenant=${tenantId}: ${error?.message || error}`);
+        }
+      }
+    }
     snapshot = {
       ...snapshot,
       mode: 'shadow',
@@ -168,6 +217,7 @@ export async function runMinhBrainSchedulerTick(
       lastStatus: 'OBSERVED',
       jobs: LEGACY_JOBS.map(job => ({ ...job })),
       detectorSummary,
+      modelPromotionSummary,
     };
     logger.info(`[MinhBrainScheduler] shadow tick traceId=${traceId} tenants=${tenantIds.length} jobs=${LEGACY_JOBS.length}`);
   } catch (error: any) {
@@ -186,6 +236,12 @@ export async function runMinhBrainSchedulerTick(
         ...snapshot.detectorSummary,
         lastRunAt: tickAt.toISOString(),
       },
+      modelPromotionSummary: {
+        ...snapshot.modelPromotionSummary,
+        enabled: Boolean(runModelPromotion),
+        lastRunAt: tickAt.toISOString(),
+        degradedRuns: snapshot.modelPromotionSummary.degradedRuns + (runModelPromotion ? 1 : 0),
+      },
     };
     logger.warn(`[MinhBrainScheduler] shadow tick degraded traceId=${traceId}: ${error?.message || error}`);
   } finally {
@@ -201,6 +257,7 @@ export function startMinhBrainSchedulerOverlay(
     initialDelayMs?: number;
     env?: NodeJS.ProcessEnv;
     runOpportunityDetectors?: MinhOpportunityDetectorRunner;
+    runModelPromotion?: MinhModelPromotionRunner;
   } = {},
 ): { enabled: boolean; stop: () => void } {
   const mode = getMinhBrainSchedulerMode(options.env);
@@ -219,7 +276,14 @@ export function startMinhBrainSchedulerOverlay(
   };
   const intervalMs = options.intervalMs ?? MINH_BRAIN_SCHEDULER_INTERVAL_MS;
   const initialDelayMs = options.initialDelayMs ?? 5_000;
-  const tick = () => { void runMinhBrainSchedulerTick(getTenantIds, () => new Date(), options.runOpportunityDetectors); };
+  const tick = () => {
+    void runMinhBrainSchedulerTick(
+      getTenantIds,
+      () => new Date(),
+      options.runOpportunityDetectors,
+      options.runModelPromotion,
+    );
+  };
   initialTimer = setTimeout(() => {
     initialTimer = null;
     tick();

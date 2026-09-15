@@ -1,6 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import {
   assessFeedback,
+  buildPromotionMetrics,
+  getModelPromotionLoopMode,
   detectRuntimeRegression,
   evaluatePromotionGate,
   nextFeedbackFollowup,
@@ -46,5 +48,26 @@ describe('autonomous learning safety gates', () => {
     );
     expect(result.regressed).toBe(true);
     expect(result.failures).toEqual(expect.arrayContaining(['safety_regression', 'quality_regression', 'error_rate_regression']));
+  });
+
+  it('keeps the model-promotion loop fail-closed unless shadow mode is explicit', () => {
+    expect(getModelPromotionLoopMode({})).toBe('off');
+    expect(getModelPromotionLoopMode({ MINH_MODEL_PROMOTION_LOOP: 'shadow' })).toBe('shadow');
+    expect(getModelPromotionLoopMode({ MINH_MODEL_PROMOTION_LOOP: 'active' })).toBe('off');
+  });
+
+  it('maps bounded golden-set results to the promotion gate metrics', () => {
+    expect(buildPromotionMetrics({
+      casesEvaluated: 24,
+      match: { accuracy: 0.875 },
+      valuation: { passRate: 0.75 },
+    })).toEqual({
+      safety: 1,
+      groundedness: 0.75,
+      quality: 0.875,
+      latencyP95Ms: 0,
+      costUsd: 0,
+      minSamples: 24,
+    });
   });
 });

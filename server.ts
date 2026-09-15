@@ -19,7 +19,7 @@ import { systemService } from "./server/services/systemService";
 import { webhookQueue, setupWebhookWorker, processWebhookJob, isQStashEnabled, isQstashVerified, getQstashToken, getQstashBaseUrl, getQstashOperationalStatus } from "./server/queue";
 import { startAgentOperatorWorker, setAgentOperatorIo } from "./server/services/agentOperatorDaemon";
 import { startAgentOperationsLoop } from './server/services/agentLoopService';
-import { startLearningCycleScheduler } from "./server/services/learningCycleRunner";
+import { runModelPromotionLoopForTenant, startLearningCycleScheduler } from "./server/services/learningCycleRunner";
 import { startMinhBrainSchedulerOverlay } from "./server/services/minhBrainScheduler";
 import { runMinhOpportunityDetectors } from "./server/services/minhOpportunityDetectors";
 import { userRepository } from "./server/repositories/userRepository";
@@ -1770,6 +1770,7 @@ app.use(globalMutationAudit);
   startLearningCycleScheduler(getAgentTenantIds);
   startMinhBrainSchedulerOverlay(getAgentTenantIds, {
     runOpportunityDetectors: (tenantId, traceId) => runMinhOpportunityDetectors(tenantId, new Date(), undefined, traceId),
+    runModelPromotion: (tenantId, now, traceId) => runModelPromotionLoopForTenant(tenantId, now, traceId),
   });
 
   // Start market data service — Redis persistence + background seed for all provinces

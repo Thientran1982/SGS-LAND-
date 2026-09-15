@@ -226,6 +226,7 @@ import m202 from './202_minh_proactive_decision_queue';
 import m203 from './203_minh_proactive_signal_id_text';
 import m204 from './204_minh_decision_learning_rollout';
 import m205 from './205_minh_learning_export_history';
+import m206 from './206_minh_model_promotion_loop';
 dotenv.config();
 
 export interface Migration {
@@ -447,6 +448,7 @@ export const MIGRATION_REGISTRY: Record<string, Migration> = {
   '203_minh_proactive_signal_id_text.ts': m203,
   '204_minh_decision_learning_rollout.ts': m204,
   '205_minh_learning_export_history.ts': m205,
+  '206_minh_model_promotion_loop.ts': m206,
 };
 
 /**
