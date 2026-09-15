@@ -6,6 +6,7 @@ import {
 } from '../ai/agentOrchestrationRegistry';
 import { getMinhBrainHealth } from '../ai/minhHealth';
 import { getMinhBrainSchedulerSnapshot } from '../services/minhBrainScheduler';
+import { listMinhOpportunities } from '../services/minhOpportunityDetectors';
 
 const STAFF_ROLES = new Set(['SUPER_ADMIN', 'ADMIN', 'TEAM_LEAD']);
 
@@ -21,7 +22,10 @@ export function createMinhBrainRoutes(authenticateToken: any): Router {
     const registryErrors = validateAgentOrchestrationRegistry();
     const scheduler = getMinhBrainSchedulerSnapshot();
     try {
-      const health = await getMinhBrainHealth(String(user.tenantId));
+      const [health, opportunities] = await Promise.all([
+        getMinhBrainHealth(String(user.tenantId)),
+        listMinhOpportunities(String(user.tenantId), Number(req.query.limit) || 100),
+      ]);
       return res.json({
         generatedAt: new Date().toISOString(),
         degraded: false,
@@ -33,6 +37,7 @@ export function createMinhBrainRoutes(authenticateToken: any): Router {
           manifestCount: AGENT_ORCHESTRATION_REGISTRY.filter(item => item.manifest).length,
         },
         health,
+        opportunities,
       });
     } catch {
       return res.json({
@@ -47,6 +52,7 @@ export function createMinhBrainRoutes(authenticateToken: any): Router {
           manifestCount: AGENT_ORCHESTRATION_REGISTRY.filter(item => item.manifest).length,
         },
         health: null,
+        opportunities: [],
       });
     }
   });

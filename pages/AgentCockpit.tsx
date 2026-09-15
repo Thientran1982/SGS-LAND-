@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useState } from 'react';
-import { AlertTriangle, Bot, CheckCircle2, Clock3, RefreshCw, Send, ShieldCheck, XCircle, BarChart3, ClipboardCheck, RotateCcw, Filter, PlayCircle, Save, Trash2, Edit3, BrainCircuit } from 'lucide-react';
+import { AlertTriangle, Bot, CheckCircle2, Clock3, RefreshCw, Send, ShieldCheck, XCircle, BarChart3, ClipboardCheck, RotateCcw, Filter, PlayCircle, Save, Trash2, Edit3, BrainCircuit, Lightbulb } from 'lucide-react';
 import { api } from '../services/api/apiClient';
 import { Dropdown } from '../components/Dropdown';
 import { GalleryCleanupPanel } from '../components/GalleryCleanupPanel';
@@ -70,6 +70,39 @@ type AutoPostingDiagnostic = {
     qstashWrites: boolean;
   };
 };
+type MinhOpportunity = {
+  id: string;
+  subjectType: string;
+  subjectId: string;
+  createdAt: string;
+  kind: string;
+  priority: number;
+  confidence: number;
+  title: string;
+  rationale: string;
+  suggestedNextStep: string;
+  evidence: Record<string, unknown>;
+  permission: string;
+  actionCreated: boolean;
+};
+type MinhBrainOverview = {
+  scheduler: {
+    mode: string;
+    enabled: boolean;
+    lastTickAt: string | null;
+    detectorSummary: {
+      enabled: boolean;
+      lastRunAt: string | null;
+      tenantRuns: number;
+      opportunitiesFound: number;
+      opportunitiesPersisted: number;
+      degradedRuns: number;
+    detectorStatus: Array<{ detector: string; status: 'OBSERVED' | 'DEGRADED'; tenantRuns: number; found: number; persisted: number; lastError?: string }>;
+    };
+  };
+  routing: { registryErrors: string[] };
+  opportunities: MinhOpportunity[];
+};
 
 const count = (rows: Array<{ status: string; count: number }> = [], status: string) => rows.find(row => row.status === status)?.count || 0;
 const cockpitPanelAvailable = (summary: CockpitSummary, panel: CockpitPanel) =>
@@ -131,6 +164,7 @@ export default function AgentCockpit() {
   const [zaloReadinessWarnings, setZaloReadinessWarnings] = useState<ZaloReadinessWarning[]>([]);
   const [autoPostingDiagnostic, setAutoPostingDiagnostic] = useState<AutoPostingDiagnostic | null>(null);
   const [autoPostingDiagnosticError, setAutoPostingDiagnosticError] = useState('');
+  const [minhBrainOverview, setMinhBrainOverview] = useState<MinhBrainOverview | null>(null);
 
   const load = useCallback(async () => {
     setLoading(true); setError(''); setAutoPostingDiagnosticError(''); setAutoPostingDiagnostic(null);
@@ -138,13 +172,14 @@ export default function AgentCockpit() {
       const query = new URLSearchParams(eventFilters).toString();
       const nextSummary = await api.get<CockpitSummary>('/api/agent-operating/cockpit');
       setSummary(nextSummary);
-      const [questionsResult, eventsResult, supportResult, marketingGrowthResult, zaloReadinessResult, autoPostingDiagnosticResult] = await Promise.allSettled([
+      const [questionsResult, eventsResult, supportResult, marketingGrowthResult, zaloReadinessResult, autoPostingDiagnosticResult, minhBrainResult] = await Promise.allSettled([
         api.get<HumanQuestion[]>('/api/agent-operating/questions'),
         api.get<OperatingEvent[]>(`/api/agent-operating/events?${query}`),
         api.get<{ data: SupportRequest[] }>('/api/live-chat/support-requests'),
         api.get<MarketingGrowthStatus>('/api/agent-operating/marketing-growth'),
         notificationApi.getZaloReadinessWarnings(),
         api.get<AutoPostingDiagnostic>('/api/auto-posting/diagnostic'),
+        api.get<MinhBrainOverview>('/api/internal/minh-brain/overview?limit=50'),
       ]);
       if (questionsResult.status === 'fulfilled') setQuestions(questionsResult.value);
       if (eventsResult.status === 'fulfilled') setEvents(eventsResult.value);
@@ -156,6 +191,7 @@ export default function AgentCockpit() {
       } else {
         setAutoPostingDiagnosticError(autoPostingDiagnosticResult.reason?.message || 'Không thể tải readiness trigger Facebook.');
       }
+      if (minhBrainResult.status === 'fulfilled') setMinhBrainOverview(minhBrainResult.value);
       // Secondary panels must not hide a successfully loaded cockpit or a
       // successful role-card approval.
       const [memoryResult, weightsResult] = await Promise.allSettled([
@@ -336,6 +372,57 @@ export default function AgentCockpit() {
              ['Đã hoàn tất', cockpitMetric(summary, 'executions', summary.executions, 'SUCCESS'), 'text-emerald-600'],
            ].map(([label, value, color]) => <div key={String(label)} className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm"><div className="text-xs font-medium text-slate-500">{label}</div><div className={`mt-2 text-2xl font-bold ${color}`}>{value}</div></div>)}
         </div>
+         {minhBrainOverview && <section className="rounded-xl border border-amber-200 bg-amber-50/30 p-5 shadow-sm" aria-labelledby="minh-opportunities-title">
+           <div className="mb-4 flex flex-wrap items-start justify-between gap-3">
+             <div className="flex items-start gap-2">
+               <Lightbulb size={19} className="mt-0.5 text-amber-600" />
+               <div>
+                 <h2 id="minh-opportunities-title" className="font-semibold text-slate-900">Cơ hội proactive của Minh</h2>
+                 <p className="text-xs text-slate-600">Quan sát read-only từ lead nguội, lệch giá tham chiếu và CSAT. Không có hành động nào được tự động tạo.</p>
+               </div>
+             </div>
+             <div className="flex flex-wrap items-center gap-2 text-xs">
+               <span className={`rounded-full px-2.5 py-1 font-semibold ${minhBrainOverview.scheduler.detectorSummary.enabled ? 'bg-emerald-100 text-emerald-800' : 'bg-slate-100 text-slate-600'}`}>
+                 Detector: {minhBrainOverview.scheduler.detectorSummary.enabled ? 'đang quan sát' : 'tắt'}
+               </span>
+               <span className="rounded-full bg-white px-2.5 py-1 text-slate-600">
+                 Tìm thấy: {minhBrainOverview.scheduler.detectorSummary.opportunitiesFound}
+               </span>
+               {minhBrainOverview.scheduler.detectorSummary.degradedRuns > 0 && <span className="rounded-full bg-rose-100 px-2.5 py-1 font-semibold text-rose-700">
+                 Degraded: {minhBrainOverview.scheduler.detectorSummary.degradedRuns}
+               </span>}
+             </div>
+           </div>
+           {minhBrainOverview.scheduler.detectorSummary.detectorStatus.length > 0 && <div className="mb-3 flex flex-wrap gap-2">
+             {minhBrainOverview.scheduler.detectorSummary.detectorStatus.map(detector => <span key={detector.detector} className={`rounded-full px-2.5 py-1 text-[11px] font-semibold ${detector.status === 'DEGRADED' ? 'bg-rose-100 text-rose-700' : 'bg-emerald-100 text-emerald-700'}`}>
+               {detector.detector}: {detector.status === 'DEGRADED' ? 'degraded' : 'observed'} · {detector.found} cơ hội
+             </span>)}
+           </div>}
+           {minhBrainOverview.routing.registryErrors.length > 0 && <div role="status" className="mb-3 rounded-lg border border-rose-200 bg-rose-50 px-3 py-2 text-xs text-rose-700">Registry agent chưa hợp lệ; cơ hội chỉ được hiển thị để kiểm tra, không được phép hành động.</div>}
+           {minhBrainOverview.opportunities.length === 0
+             ? <div className="rounded-lg border border-dashed border-amber-200 bg-white/70 p-6 text-center text-sm text-slate-500">Chưa có cơ hội nào trong lần quan sát gần nhất.</div>
+             : <div className="space-y-2">{minhBrainOverview.opportunities.map(opportunity => (
+               <div key={opportunity.id} className="rounded-lg border border-amber-100 bg-white p-3">
+                 <div className="flex flex-wrap items-start justify-between gap-3">
+                   <div className="min-w-0">
+                     <div className="flex flex-wrap items-center gap-2">
+                       <b className="text-sm text-slate-900">{opportunity.title}</b>
+                       <span className="rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-bold text-amber-800">{opportunity.kind}</span>
+                       <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-semibold text-slate-600">READ-only</span>
+                     </div>
+                     <p className="mt-1 text-xs text-slate-500">{opportunity.subjectType}: {opportunity.subjectId} · {new Date(opportunity.createdAt).toLocaleString('vi-VN')}</p>
+                   </div>
+                   <div className="flex shrink-0 gap-2 text-[11px] text-slate-600">
+                     <span>Ưu tiên <b className="text-slate-900">{opportunity.priority}</b></span>
+                     <span>Tin cậy <b className="text-slate-900">{Math.round(opportunity.confidence * 100)}%</b></span>
+                   </div>
+                 </div>
+                 <p className="mt-2 text-sm text-slate-700">{opportunity.rationale}</p>
+                 <p className="mt-1 text-xs text-slate-500">Bước tiếp theo: {opportunity.suggestedNextStep}</p>
+                 <div className="mt-2 flex flex-wrap gap-1.5">{Object.entries(opportunity.evidence || {}).filter(([key]) => key !== 'detector').slice(0, 6).map(([key, value]) => <span key={key} className="rounded bg-slate-50 px-2 py-1 text-[11px] text-slate-600">{key}: <b>{String(value)}</b></span>)}</div>
+               </div>
+             ))}</div>}
+         </section>}
         {zaloReadinessWarnings.length > 0 && <section className="rounded-xl border border-amber-200 bg-amber-50/50 p-5 shadow-sm" aria-labelledby="zalo-readiness-warning-title">
           <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
             <div className="flex items-center gap-2">

@@ -22,7 +22,34 @@ export type MinhBrainSchedulerSnapshot = {
   tenantCount: number | null;
   lastStatus: 'NOT_STARTED' | 'OBSERVED' | 'DEGRADED';
   jobs: MinhBrainSchedulerJob[];
+  detectorSummary: {
+    enabled: boolean;
+    lastRunAt: string | null;
+    tenantRuns: number;
+    opportunitiesFound: number;
+    opportunitiesPersisted: number;
+    degradedRuns: number;
+    detectorStatus: Array<{
+      detector: string;
+      status: 'OBSERVED' | 'DEGRADED';
+      tenantRuns: number;
+      found: number;
+      persisted: number;
+      lastError?: string;
+    }>;
+  };
 };
+
+export type MinhOpportunityDetectorRunner = (
+  tenantId: string,
+  traceId: string,
+) => Promise<Array<{
+  detector: string;
+  status: 'OBSERVED' | 'DEGRADED';
+  found: number;
+  persisted: number;
+  error?: string;
+}>>;
 
 const LEGACY_JOBS: MinhBrainSchedulerJob[] = [
   { key: 'agent_operator_worker', legacyOwner: 'agentOperatorDaemon', observedOnly: true },
@@ -45,6 +72,15 @@ let snapshot: MinhBrainSchedulerSnapshot = {
   tenantCount: null,
   lastStatus: 'NOT_STARTED',
   jobs: LEGACY_JOBS.map(job => ({ ...job })),
+  detectorSummary: {
+    enabled: false,
+    lastRunAt: null,
+    tenantRuns: 0,
+    opportunitiesFound: 0,
+    opportunitiesPersisted: 0,
+    degradedRuns: 0,
+    detectorStatus: [],
+  },
 };
 
 export function getMinhBrainSchedulerMode(
@@ -65,6 +101,7 @@ export function getMinhBrainSchedulerSnapshot(): MinhBrainSchedulerSnapshot {
 export async function runMinhBrainSchedulerTick(
   getTenantIds: () => Promise<string[]>,
   now: () => Date = () => new Date(),
+  runOpportunityDetectors?: MinhOpportunityDetectorRunner,
 ): Promise<MinhBrainSchedulerSnapshot> {
   if (tickInFlight) return getMinhBrainSchedulerSnapshot();
   tickInFlight = true;
@@ -72,6 +109,53 @@ export async function runMinhBrainSchedulerTick(
   const tickAt = now();
   try {
     const tenantIds = await getTenantIds();
+    const detectorSummary = {
+      ...snapshot.detectorSummary,
+      enabled: Boolean(runOpportunityDetectors),
+      lastRunAt: tickAt.toISOString(),
+      tenantRuns: 0,
+      opportunitiesFound: 0,
+      opportunitiesPersisted: 0,
+      degradedRuns: 0,
+    };
+    if (runOpportunityDetectors) {
+      const detectorStatus = new Map<string, {
+        detector: string;
+        status: 'OBSERVED' | 'DEGRADED';
+        tenantRuns: number;
+        found: number;
+        persisted: number;
+        lastError?: string;
+      }>();
+      for (const tenantId of tenantIds) {
+        try {
+          const detectorResults = await runOpportunityDetectors(tenantId, traceId);
+          detectorSummary.tenantRuns++;
+          detectorSummary.opportunitiesFound += detectorResults.reduce((sum, result) => sum + result.found, 0);
+          detectorSummary.opportunitiesPersisted += detectorResults.reduce((sum, result) => sum + result.persisted, 0);
+          if (detectorResults.some(result => result.status === 'DEGRADED')) detectorSummary.degradedRuns++;
+          for (const result of detectorResults) {
+            const current = detectorStatus.get(result.detector) || {
+              detector: result.detector,
+              status: 'OBSERVED' as const,
+              tenantRuns: 0,
+              found: 0,
+              persisted: 0,
+            };
+            current.status = result.status === 'DEGRADED' ? 'DEGRADED' : current.status;
+            current.tenantRuns++;
+            current.found += result.found;
+            current.persisted += result.persisted;
+            if (result.error) current.lastError = result.error;
+            detectorStatus.set(result.detector, current);
+          }
+        } catch (error: any) {
+          detectorSummary.degradedRuns++;
+          logger.warn(`[MinhBrainScheduler] detector run degraded traceId=${traceId} tenant=${tenantId}: ${error?.message || error}`);
+        }
+      }
+      detectorSummary.detectorStatus = [...detectorStatus.values()].sort((a, b) => a.detector.localeCompare(b.detector));
+    }
     snapshot = {
       ...snapshot,
       mode: 'shadow',
@@ -83,6 +167,7 @@ export async function runMinhBrainSchedulerTick(
       tenantCount: tenantIds.length,
       lastStatus: 'OBSERVED',
       jobs: LEGACY_JOBS.map(job => ({ ...job })),
+      detectorSummary,
     };
     logger.info(`[MinhBrainScheduler] shadow tick traceId=${traceId} tenants=${tenantIds.length} jobs=${LEGACY_JOBS.length}`);
   } catch (error: any) {
@@ -97,6 +182,10 @@ export async function runMinhBrainSchedulerTick(
       tenantCount: null,
       lastStatus: 'DEGRADED',
       jobs: LEGACY_JOBS.map(job => ({ ...job })),
+      detectorSummary: {
+        ...snapshot.detectorSummary,
+        lastRunAt: tickAt.toISOString(),
+      },
     };
     logger.warn(`[MinhBrainScheduler] shadow tick degraded traceId=${traceId}: ${error?.message || error}`);
   } finally {
@@ -107,7 +196,12 @@ export async function runMinhBrainSchedulerTick(
 
 export function startMinhBrainSchedulerOverlay(
   getTenantIds: () => Promise<string[]>,
-  options: { intervalMs?: number; initialDelayMs?: number; env?: NodeJS.ProcessEnv } = {},
+  options: {
+    intervalMs?: number;
+    initialDelayMs?: number;
+    env?: NodeJS.ProcessEnv;
+    runOpportunityDetectors?: MinhOpportunityDetectorRunner;
+  } = {},
 ): { enabled: boolean; stop: () => void } {
   const mode = getMinhBrainSchedulerMode(options.env);
   if (mode === 'off') {
@@ -125,7 +219,7 @@ export function startMinhBrainSchedulerOverlay(
   };
   const intervalMs = options.intervalMs ?? MINH_BRAIN_SCHEDULER_INTERVAL_MS;
   const initialDelayMs = options.initialDelayMs ?? 5_000;
-  const tick = () => { void runMinhBrainSchedulerTick(getTenantIds); };
+  const tick = () => { void runMinhBrainSchedulerTick(getTenantIds, () => new Date(), options.runOpportunityDetectors); };
   initialTimer = setTimeout(() => {
     initialTimer = null;
     tick();

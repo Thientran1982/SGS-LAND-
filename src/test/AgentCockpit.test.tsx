@@ -46,13 +46,18 @@ function createSummary(overrides: Record<string, unknown> = {}) {
   };
 }
 
-function mockCockpitRequests(summary: Record<string, unknown>) {
+function mockCockpitRequests(summary: Record<string, unknown>, overview?: Record<string, unknown>) {
   vi.spyOn(api, 'get').mockImplementation((async (path: string) => {
     if (path === '/api/agent-operating/cockpit') return summary;
     if (path === '/api/agent-operating/questions') return [];
     if (path.startsWith('/api/agent-operating/events')) return [];
     if (path === '/api/live-chat/support-requests') return { data: [] };
     if (path === '/api/agent-operating/marketing-growth') return { brain: [], capabilities: [] };
+    if (path.startsWith('/api/internal/minh-brain/overview')) return overview || {
+      scheduler: { mode: 'shadow', enabled: true, lastTickAt: null, detectorSummary: { enabled: true, lastRunAt: null, tenantRuns: 0, opportunitiesFound: 0, opportunitiesPersisted: 0, degradedRuns: 0, detectorStatus: [] } },
+      routing: { registryErrors: [] },
+      opportunities: [],
+    };
     if (path === '/api/ai/memory/admin') return [];
     if (path === '/api/ai/weights') return { live: {}, versions: [] };
     throw new Error(`Unexpected GET request in test: ${path}`);
@@ -94,5 +99,47 @@ describe('AgentCockpit panel availability', () => {
 
     expect(await screen.findByText('Chưa có audit gần đây.')).toBeVisible();
     expect(screen.queryByText('Không thể tải audit gần đây. Dữ liệu chưa khả dụng; hãy thử làm mới.')).not.toBeInTheDocument();
+  });
+
+  it('renders proactive opportunities as read-only observations', async () => {
+    mockCockpitRequests(createSummary(), {
+      scheduler: {
+        mode: 'shadow',
+        enabled: true,
+        lastTickAt: '2026-09-15T10:00:00.000Z',
+        detectorSummary: {
+          enabled: true,
+          lastRunAt: '2026-09-15T10:00:00.000Z',
+          tenantRuns: 1,
+          opportunitiesFound: 1,
+          opportunitiesPersisted: 1,
+          degradedRuns: 0,
+          detectorStatus: [{ detector: 'cold_lead', status: 'OBSERVED', tenantRuns: 1, found: 1, persisted: 1 }],
+        },
+      },
+      routing: { registryErrors: [] },
+      opportunities: [{
+        id: 'signal-1',
+        subjectType: 'lead',
+        subjectId: 'lead-1',
+        createdAt: '2026-09-15T10:00:00.000Z',
+        kind: 'COLD_LEAD',
+        priority: 82,
+        confidence: 0.87,
+        title: 'Lead tiềm năng đang nguội',
+        rationale: 'Lead có điểm 86 nhưng chưa có tương tác trong 5 ngày.',
+        suggestedNextStep: 'Xem lại ngữ cảnh lead.',
+        evidence: { detector: 'cold_lead', score: 86, inactiveDays: 5 },
+        permission: 'READ',
+        actionCreated: false,
+      }],
+    });
+    render(<AgentCockpit />);
+
+    expect(await screen.findByText('Cơ hội proactive của Minh')).toBeVisible();
+    expect(screen.getByText('Lead tiềm năng đang nguội')).toBeVisible();
+    expect(screen.getByText('READ-only')).toBeVisible();
+    expect(screen.getByText((_, element) => element?.textContent === 'score: 86')).toBeVisible();
+    expect(screen.queryByText('Gửi follow-up')).not.toBeInTheDocument();
   });
 });

@@ -21,6 +21,7 @@ import { startAgentOperatorWorker, setAgentOperatorIo } from "./server/services/
 import { startAgentOperationsLoop } from './server/services/agentLoopService';
 import { startLearningCycleScheduler } from "./server/services/learningCycleRunner";
 import { startMinhBrainSchedulerOverlay } from "./server/services/minhBrainScheduler";
+import { runMinhOpportunityDetectors } from "./server/services/minhOpportunityDetectors";
 import { userRepository } from "./server/repositories/userRepository";
 import { listingRepository } from "./server/repositories/listingRepository";
 import { leadRepository } from "./server/repositories/leadRepository";
@@ -1767,7 +1768,9 @@ app.use(globalMutationAudit);
   startAgentOperationsLoop(getAgentTenantIds);
   void agentOperatorWorker;
   startLearningCycleScheduler(getAgentTenantIds);
-  startMinhBrainSchedulerOverlay(getAgentTenantIds);
+  startMinhBrainSchedulerOverlay(getAgentTenantIds, {
+    runOpportunityDetectors: (tenantId, traceId) => runMinhOpportunityDetectors(tenantId, new Date(), undefined, traceId),
+  });
 
   // Start market data service — Redis persistence + background seed for all provinces
   marketDataService.start(io).catch((err: any) =>
