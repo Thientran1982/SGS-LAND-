@@ -87,7 +87,7 @@ const APPROVAL_ROLES = new Set(['SUPER_ADMIN', 'ADMIN', 'MANAGER', 'TEAM_LEAD'])
       const note = typeof req.body?.note === 'string' ? req.body.note.slice(0, 1000) : undefined;
       const updated = await approvalRequestRepository.setStatus(user.tenantId, String(req.params.id), 'REJECTED', user.id, note);
       if (!updated) return res.status(404).json({ error: 'Approval request not found or already reviewed' });
-      await recordMinhDecisionFeedbackSafely(user.tenantId, {
+      if (updated.channel === 'MINH_PROACTIVE') await recordMinhDecisionFeedbackSafely(user.tenantId, {
         eventKey: `approval:${updated.id}:rejected`,
         sourceSignalId: updated.sourceSignalId,
         approvalRequestId: updated.id,
