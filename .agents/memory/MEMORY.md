@@ -94,6 +94,7 @@
 - [Server test public URL](server-test-public-url.md) — set APP_URL explicitly when server tests assert a production public origin
 - [Minh evidence orchestration](minh-evidence-orchestration.md) — compound workstreams, structured evidence, filtered memory, and separate response/telemetry idempotency
 - [Minh Week 0 contracts](minh-week-0-contracts.md) — stable lifecycle/error vocabulary and end-to-end trace links precede proactive orchestration
+- [Minh Week 1 overlay](minh-week-1-overlay.md) — observe legacy schedulers in shadow mode before replacing or connecting proactive actions
 - [Live-chat telemetry persistence](livechat-telemetry-persistence.md) — persist bounded hashed latency metrics asynchronously with startup hydration and outage backoff
 - [Live-chat repair interaction identity](livechat-repair-interaction.md) — repair runs reuse the original outbound interaction instead of creating a second answer
 - [Admin Cockpit degraded mode](admin-cockpit-degraded-mode.md) — temporary DB pool failures return explicit degraded data instead of a fatal dashboard error or false healthy zeroes

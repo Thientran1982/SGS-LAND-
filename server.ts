@@ -20,6 +20,7 @@ import { webhookQueue, setupWebhookWorker, processWebhookJob, isQStashEnabled, i
 import { startAgentOperatorWorker, setAgentOperatorIo } from "./server/services/agentOperatorDaemon";
 import { startAgentOperationsLoop } from './server/services/agentLoopService';
 import { startLearningCycleScheduler } from "./server/services/learningCycleRunner";
+import { startMinhBrainSchedulerOverlay } from "./server/services/minhBrainScheduler";
 import { userRepository } from "./server/repositories/userRepository";
 import { listingRepository } from "./server/repositories/listingRepository";
 import { leadRepository } from "./server/repositories/leadRepository";
@@ -84,6 +85,7 @@ import { createAgentAuditRoutes } from "./server/routes/agentAuditRoutes";
 import { createAgentOperatingRoutes } from "./server/routes/agentOperatingRoutes";
 import { createLearningCycleRoutes } from "./server/routes/learningCycleRoutes";
 import { createDailyAdminReportRoutes } from "./server/routes/dailyAdminReportRoutes";
+import { createMinhBrainRoutes } from "./server/routes/minhBrainRoutes";
 import { startDailyReportScheduler } from "./server/services/dailyAdminReportService";
 import { createLiveChatAgentRoutes } from "./server/routes/liveChatAgentRoutes";
 import { createPublicLiveChatAttachmentRoutes } from "./server/routes/publicLiveChatAttachmentRoutes";
@@ -1765,6 +1767,7 @@ app.use(globalMutationAudit);
   startAgentOperationsLoop(getAgentTenantIds);
   void agentOperatorWorker;
   startLearningCycleScheduler(getAgentTenantIds);
+  startMinhBrainSchedulerOverlay(getAgentTenantIds);
 
   // Start market data service — Redis persistence + background seed for all provinces
   marketDataService.start(io).catch((err: any) =>
@@ -4939,6 +4942,7 @@ app.use('/api/public/livechat', agentP1Router);
   app.use('/api/tenant', apiRateLimit, createTenantRoutes(authenticateToken));
 app.use('/api/approval-requests', apiRateLimit, createApprovalRequestRoutes(authenticateToken));
   app.use('/api/internal', createLearningCycleRoutes());
+  app.use('/api/internal/minh-brain', createMinhBrainRoutes(authenticateToken));
 
   // ─── PUBLIC mini-site cho từng dự án (no auth, server-side cache 5min) ────
   // Không bọc apiRateLimit chung — endpoint này có rate limit riêng
