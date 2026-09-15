@@ -18,6 +18,7 @@ import { PROJECT_DETAIL_EN, type ProjectDetailEnglishCopy } from "@/data/project
 import { PROJECT_CONFIG_EN } from "@/data/project-config-en";
 import { useLang } from "@/components/shared/useLang";
 import { tt } from "@/lib/i18n";
+import { GEO_REVIEW_DATE } from "@/lib/seo/geo-provenance";
 
 interface ProjectDetail {
   name: string;
@@ -261,7 +262,7 @@ const lastUpdated = lastUpdatedProp || "21/08/2026";
   ];
 
   return (
-    <main className="bg-[var(--bg-page)]">
+    <main className="bg-[var(--bg-page)]" data-geo-reviewed-at={GEO_REVIEW_DATE} data-geo-evidence="unavailable">
       <div className="mx-auto max-w-6xl px-4 py-6 sm:px-6 sm:py-10 lg:px-8">
         <nav aria-label="Breadcrumb" className="mb-6 flex flex-wrap items-center gap-2 text-xs" style={{ color: "var(--text-tertiary)" }}>
           <Link href="/" className="hover:underline">{tt(lang, "Trang chủ", "Home")}</Link><span>/</span>

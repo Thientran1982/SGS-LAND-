@@ -63,6 +63,13 @@ import {
 } from "@/lib/schema";
 import type { FAQItem } from "@/lib/schema";
 import { getLang, langAlternates } from "@/lib/lang";
+import {
+  GEO_DEFAULT_EVIDENCE_NOTE,
+  GEO_EDITOR_NAME,
+  GEO_REVIEW_DATE,
+  buildGeoDirectAnswer,
+  getGeoEvidenceLinks,
+} from "@/lib/seo/geo-provenance";
 
 const AQUA_STYLE_DETAIL_SLUGS = new Set([
   "manhattan",
@@ -253,6 +260,8 @@ const PROJECT_META: Record<
     priceHigh?: number;
     metaTitle?: string;
     metaDescription?: string;
+    reviewedAt?: string;
+    evidenceNote?: string;
     subdivisions?: { name: string; price: string; area?: string; note?: string }[];
   }
 > = {
@@ -992,6 +1001,16 @@ export default async function ProjectPage({
   const schemaPriceRange = en && AREA_DETAIL_SLUGS.has(slug)
     ? "Reference figures vary by sub-zone and property; verify current pricing against dated documents"
     : (meta?.priceRange || (en ? "Contact SGS LAND for the latest price list" : "Liên hệ SGS LAND để biết giá cập nhật"));
+  const reviewedAt = meta?.reviewedAt || GEO_REVIEW_DATE;
+  const directAnswer = buildGeoDirectAnswer({
+    projectName: schemaProjectName,
+    developer: schemaProjectDeveloper || meta?.dev,
+    location: schemaLocation,
+    isArea: AREA_DETAIL_SLUGS.has(slug),
+    en,
+  });
+  const evidenceNote = cms?.evidenceNote || GEO_DEFAULT_EVIDENCE_NOTE;
+  const hasDatedSource = Boolean(cms?.sourceUrl || cms?.sourceUrls || cms?.factsSource);
   // ─── JSON-LD schemas ──────────────────────────────────
   const listingSchema = getRealEstateListingSchema({
     name: schemaProjectName,
@@ -1001,10 +1020,11 @@ export default async function ProjectPage({
     developer: schemaProjectDeveloper,
     images: projectData.images,
     amenities: projectData.amenities,
-    total_units: projectData.total_units ?? projectData.listing_count,
-    area_ha: meta?.areaHa,
-    price_low: meta?.priceLow,
-    price_high: meta?.priceHigh,
+    total_units: hasDatedSource ? (projectData.total_units ?? projectData.listing_count) : undefined,
+    area_ha: hasDatedSource ? meta?.areaHa : undefined,
+    price_low: hasDatedSource ? meta?.priceLow : undefined,
+    price_high: hasDatedSource ? meta?.priceHigh : undefined,
+    date_modified: reviewedAt,
   });
   const detailPath = getDetailBasePath(slug);
   const isArea = AREA_DETAIL_SLUGS.has(slug);
@@ -1081,9 +1101,7 @@ export default async function ProjectPage({
       >
         <p itemProp="name" className="font-semibold">{schemaProjectName}</p>
         <p className="answer-box" role="note">
-          {en
-             ? `${schemaProjectName} is an area-level real-estate reference in ${schemaLocation} with multiple individual and organizational owners. This page summarizes indicative area information and buyer questions; price, legal status and property conditions must be verified against current original documents.`
-            : `${projectData.name} là dự án bất động sản tại ${projectData.location || meta?.loc || "Việt Nam"} do ${projectData.developer || meta?.dev || "chủ đầu tư được ghi trên trang"} phát triển. Trang này tổng hợp thông tin tham khảo, loại hình và câu hỏi người mua; giá, pháp lý và tiến độ cần được xác minh bằng hồ sơ gốc hiện hành.`}
+          {directAnswer}
         </p>
         <p itemProp="description">{schemaProjectDescription ?? meta?.desc}</p>
 
@@ -1113,8 +1131,8 @@ export default async function ProjectPage({
             </table>
             <p>
               {en
-                ? `${projectData.name} price list, updated for 2026. Contact SGS LAND for the developer's original price list, detailed sub-zone floor plans and current sales policy.`
-                : `Bảng giá ${projectData.name} cập nhật mới nhất 2026. Liên hệ SGS Land để nhận bảng giá gốc, mặt bằng chi tiết từng phân khu và chính sách bán hàng.`}
+                ? `${projectData.name} figures shown here are indicative only. Check the developer's dated original price list, detailed floor plans and current sales policy.`
+                : `Các mức tham khảo của ${projectData.name} không thay thế báo giá. Hãy kiểm tra bảng giá gốc có ngày, mặt bằng chi tiết và chính sách hiện hành của chủ đầu tư.`}
             </p>
           </section>
         )}
@@ -1136,11 +1154,11 @@ export default async function ProjectPage({
                <dd itemProp="offers">{en && AREA_DETAIL_SLUGS.has(slug) ? schemaPriceRange : meta.priceRange}</dd>
             </>
           )}
-          <dt>{en ? "Authorised distribution agent" : "Đại lý phân phối uỷ quyền"}</dt>
+          <dt>{en ? "Distribution information" : "Thông tin phân phối"}</dt>
           <dd>
             {en
-              ? "SGS LAND (sgsland.vn) — provides project information and buyer support. Verify authorization, legal status and pricing against original documents and the current developer policy. Hotline: +84 379 281 445."
-              : "SGS LAND (sgsland.vn) — cung cấp thông tin dự án và hỗ trợ người mua. Người mua cần xác minh tư cách phân phối, pháp lý và giá bán bằng hồ sơ gốc cùng chính sách hiện hành của chủ đầu tư. Hotline: +84 379 281 445."}
+              ? "SGS LAND provides project information and buyer support. Verify authorization, legal status and pricing against original documents and current developer policy."
+              : "SGS LAND cung cấp thông tin dự án và hỗ trợ người mua. Người mua cần xác minh tư cách phân phối, pháp lý và giá bán bằng hồ sơ gốc cùng chính sách hiện hành của chủ đầu tư."}
           </dd>
           <dt>URL</dt>
           <dd>
@@ -1162,6 +1180,20 @@ export default async function ProjectPage({
           ))}
         </section>
       </article>
+      <section className="mx-auto max-w-5xl px-4 py-5 sm:px-6 lg:px-8" aria-labelledby="geo-answer-heading">
+        <div className="rounded-2xl border-l-4 px-5 py-4" data-geo-reviewed-at={reviewedAt} data-geo-evidence={hasDatedSource ? "available" : "unavailable"} style={{ borderColor: "var(--sgs-accent)", background: "var(--ui-surface-subtle)" }}>
+          <h2 id="geo-answer-heading" className="text-xs font-bold uppercase tracking-[.12em]" style={{ color: "var(--sgs-accent-text)" }}>
+            {en ? "Quick answer" : "Câu trả lời nhanh"}
+          </h2>
+          <p className="mt-2 max-w-4xl text-base leading-7" style={{ color: "var(--text-secondary)" }}>{directAnswer}</p>
+          <p className="mt-2 text-xs leading-5" style={{ color: "var(--text-tertiary)" }}>
+            {en ? `Editorial review: ${GEO_EDITOR_NAME}, ${reviewedAt}. ${evidenceNote}` : `Biên tập: ${GEO_EDITOR_NAME}; rà soát: ${reviewedAt}. ${evidenceNote}`}
+          </p>
+          <div className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-xs">
+            {getGeoEvidenceLinks(slug).map((link) => <a key={link.href} href={link.href} className="underline underline-offset-2" style={{ color: "var(--sgs-accent-text)" }}>{link.label}</a>)}
+          </div>
+        </div>
+      </section>
       {/* ── Interactive client component ── */}
       <ProjectDetailPage
         project={projectData}

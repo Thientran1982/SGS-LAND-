@@ -1,14 +1,15 @@
 {
-  "generatedAt": "2026-09-15T05:37:54.851Z",
-  "base": "http://localhost:5000",
-  "methodology": "Rendered HTML audit for project sitemap URLs: status, metadata, H1, direct answer, visible FAQ, JSON-LD and provenance caveat.",
-  "total": 17,
-  "passed": 17,
-  "averageScore": 100,
+  "generatedAt": "2026-09-15T06:46:36.145Z",
+  "base": "http://127.0.0.1:5000",
+  "methodology": "Rendered HTML audit for project and landing sitemap URLs: status, metadata, H1, 40–60 word visible direct answer, visible FAQ, JSON-LD, review date, evidence state and provenance caveat.",
+  "total": 26,
+  "passed": 25,
+  "averageScore": 99,
   "results": [
     {
       "slug": "aqua-city",
-      "url": "http://localhost:5000/du-an/aqua-city",
+      "routePath": "/du-an/aqua-city",
+      "url": "http://127.0.0.1:5000/du-an/aqua-city",
       "status": 200,
       "score": 100,
       "title": "Aqua City Novaland Đồng Nai 2026 — Giá, Mặt Bằng | SGS LAND",
@@ -31,12 +32,16 @@
         "SpecialAnnouncement"
       ],
       "directAnswer": true,
+      "directAnswerWords": 54,
+      "reviewedAt": "2026-09-15",
+      "evidenceState": "unavailable",
       "visibleFaq": true,
       "issues": []
     },
     {
       "slug": "the-global-city",
-      "url": "http://localhost:5000/du-an/the-global-city",
+      "routePath": "/du-an/the-global-city",
+      "url": "http://127.0.0.1:5000/du-an/the-global-city",
       "status": 200,
       "score": 100,
       "title": "The Global City Thủ Đức 2026 — Giá, Mặt Bằng | SGS LAND",
@@ -59,12 +64,16 @@
         "SpecialAnnouncement"
       ],
       "directAnswer": true,
+      "directAnswerWords": 51,
+      "reviewedAt": "2026-09-15",
+      "evidenceState": "unavailable",
       "visibleFaq": true,
       "issues": []
     },
     {
       "slug": "izumi-city",
-      "url": "http://localhost:5000/du-an/izumi-city",
+      "routePath": "/du-an/izumi-city",
+      "url": "http://127.0.0.1:5000/du-an/izumi-city",
       "status": 200,
       "score": 100,
       "title": "Izumi City Nam Long Đồng Nai 2026 — Giá, Mặt Bằng | SGS LAND",
@@ -86,12 +95,16 @@
         "SpecialAnnouncement"
       ],
       "directAnswer": true,
+      "directAnswerWords": 51,
+      "reviewedAt": "2026-09-15",
+      "evidenceState": "unavailable",
       "visibleFaq": true,
       "issues": []
     },
     {
       "slug": "vinhomes-can-gio",
-      "url": "http://localhost:5000/du-an/vinhomes-can-gio",
+      "routePath": "/du-an/vinhomes-can-gio",
+      "url": "http://127.0.0.1:5000/du-an/vinhomes-can-gio",
       "status": 200,
       "score": 100,
       "title": "Vinhomes Cần Giờ Green Paradise 2026 — Giá | SGS LAND",
@@ -114,12 +127,16 @@
         "SpecialAnnouncement"
       ],
       "directAnswer": true,
+      "directAnswerWords": 49,
+      "reviewedAt": "2026-09-15",
+      "evidenceState": "unavailable",
       "visibleFaq": true,
       "issues": []
     },
     {
       "slug": "vinhomes-grand-park",
-      "url": "http://localhost:5000/du-an/vinhomes-grand-park",
+      "routePath": "/du-an/vinhomes-grand-park",
+      "url": "http://127.0.0.1:5000/du-an/vinhomes-grand-park",
       "status": 200,
       "score": 100,
       "title": "Vinhomes Grand Park Quận 9 2026 — Giá, Mặt Bằng | SGS LAND",
@@ -141,12 +158,16 @@
         "SpecialAnnouncement"
       ],
       "directAnswer": true,
+      "directAnswerWords": 50,
+      "reviewedAt": "2026-09-15",
+      "evidenceState": "unavailable",
       "visibleFaq": true,
       "issues": []
     },
     {
       "slug": "vinhomes-central-park",
-      "url": "http://localhost:5000/du-an/vinhomes-central-park",
+      "routePath": "/du-an/vinhomes-central-park",
+      "url": "http://127.0.0.1:5000/du-an/vinhomes-central-park",
       "status": 200,
       "score": 100,
       "title": "Vinhomes Central Park Bình Thạnh 2026 — Giá | SGS LAND",
@@ -167,12 +188,16 @@
         "FAQPage"
       ],
       "directAnswer": true,
+      "directAnswerWords": 56,
+      "reviewedAt": "2026-09-15",
+      "evidenceState": "unavailable",
       "visibleFaq": true,
       "issues": []
     },
     {
       "slug": "masterise-homes",
-      "url": "http://localhost:5000/du-an/masterise-homes",
+      "routePath": "/du-an/masterise-homes",
+      "url": "http://127.0.0.1:5000/du-an/masterise-homes",
       "status": 200,
       "score": 100,
       "title": "Masterise Homes | Dự án BĐS | SGS LAND | SGS LAND",
@@ -193,12 +218,16 @@
         "FAQPage"
       ],
       "directAnswer": true,
+      "directAnswerWords": 46,
+      "reviewedAt": "2026-09-15",
+      "evidenceState": "unavailable",
       "visibleFaq": true,
       "issues": []
     },
     {
       "slug": "lumiere",
-      "url": "http://localhost:5000/du-an/lumiere",
+      "routePath": "/du-an/lumiere",
+      "url": "http://127.0.0.1:5000/du-an/lumiere",
       "status": 200,
       "score": 100,
       "title": "Lumière Riverside | Dự án BĐS | SGS LAND | SGS LAND",
@@ -219,12 +248,16 @@
         "FAQPage"
       ],
       "directAnswer": true,
+      "directAnswerWords": 48,
+      "reviewedAt": "2026-09-15",
+      "evidenceState": "unavailable",
       "visibleFaq": true,
       "issues": []
     },
     {
       "slug": "waterpoint",
-      "url": "http://localhost:5000/du-an/waterpoint",
+      "routePath": "/du-an/waterpoint",
+      "url": "http://127.0.0.1:5000/du-an/waterpoint",
       "status": 200,
       "score": 100,
       "title": "Waterpoint Nam Long | Dự án BĐS | SGS LAND | SGS LAND",
@@ -245,12 +278,16 @@
         "FAQPage"
       ],
       "directAnswer": true,
+      "directAnswerWords": 50,
+      "reviewedAt": "2026-09-15",
+      "evidenceState": "unavailable",
       "visibleFaq": true,
       "issues": []
     },
     {
       "slug": "the-privia",
-      "url": "http://localhost:5000/du-an/the-privia",
+      "routePath": "/du-an/the-privia",
+      "url": "http://127.0.0.1:5000/du-an/the-privia",
       "status": 200,
       "score": 100,
       "title": "The Privia Khang Điền | Dự án BĐS | SGS LAND | SGS LAND",
@@ -271,12 +308,16 @@
         "FAQPage"
       ],
       "directAnswer": true,
+      "directAnswerWords": 50,
+      "reviewedAt": "2026-09-15",
+      "evidenceState": "unavailable",
       "visibleFaq": true,
       "issues": []
     },
     {
       "slug": "van-phuc-city",
-      "url": "http://localhost:5000/du-an/van-phuc-city",
+      "routePath": "/du-an/van-phuc-city",
+      "url": "http://127.0.0.1:5000/du-an/van-phuc-city",
       "status": 200,
       "score": 100,
       "title": "Văn Phúc City | Dự án BĐS | SGS LAND | SGS LAND",
@@ -297,12 +338,16 @@
         "FAQPage"
       ],
       "directAnswer": true,
+      "directAnswerWords": 49,
+      "reviewedAt": "2026-09-15",
+      "evidenceState": "unavailable",
       "visibleFaq": true,
       "issues": []
     },
     {
       "slug": "sala",
-      "url": "http://localhost:5000/du-an/sala",
+      "routePath": "/du-an/sala",
+      "url": "http://127.0.0.1:5000/du-an/sala",
       "status": 200,
       "score": 100,
       "title": "Sala Đại Quang Minh Thủ Thiêm 2026 — Giá | SGS LAND",
@@ -323,12 +368,16 @@
         "FAQPage"
       ],
       "directAnswer": true,
+      "directAnswerWords": 51,
+      "reviewedAt": "2026-09-15",
+      "evidenceState": "unavailable",
       "visibleFaq": true,
       "issues": []
     },
     {
       "slug": "thu-thiem",
-      "url": "http://localhost:5000/du-an/thu-thiem",
+      "routePath": "/du-an/thu-thiem",
+      "url": "http://127.0.0.1:5000/du-an/thu-thiem",
       "status": 200,
       "score": 100,
       "title": "Dự án Thủ Thiêm Quận 2 TP Thủ Đức 2026 — Giá | SGS LAND",
@@ -349,12 +398,16 @@
         "FAQPage"
       ],
       "directAnswer": true,
+      "directAnswerWords": 49,
+      "reviewedAt": "2026-09-15",
+      "evidenceState": "unavailable",
       "visibleFaq": true,
       "issues": []
     },
     {
       "slug": "manhattan",
-      "url": "http://localhost:5000/du-an/manhattan",
+      "routePath": "/du-an/manhattan",
+      "url": "http://127.0.0.1:5000/du-an/manhattan",
       "status": 200,
       "score": 100,
       "title": "Grand Manhattan Novaland Quận 1 2026 — Giá | SGS LAND",
@@ -375,12 +428,16 @@
         "FAQPage"
       ],
       "directAnswer": true,
+      "directAnswerWords": 47,
+      "reviewedAt": "2026-09-15",
+      "evidenceState": "unavailable",
       "visibleFaq": true,
       "issues": []
     },
     {
       "slug": "son-kim-land",
-      "url": "http://localhost:5000/du-an/son-kim-land",
+      "routePath": "/du-an/son-kim-land",
+      "url": "http://127.0.0.1:5000/du-an/son-kim-land",
       "status": 200,
       "score": 100,
       "title": "SonKim Land 2026 — The Metropole, Serenity Sky | SGS LAND",
@@ -401,14 +458,18 @@
         "FAQPage"
       ],
       "directAnswer": true,
+      "directAnswerWords": 47,
+      "reviewedAt": "2026-09-15",
+      "evidenceState": "unavailable",
       "visibleFaq": true,
       "issues": []
     },
     {
       "slug": "vinhomes-hoc-mon",
-      "url": "http://localhost:5000/du-an/vinhomes-hoc-mon",
+      "routePath": "/du-an/vinhomes-hoc-mon",
+      "url": "http://127.0.0.1:5000/du-an/vinhomes-hoc-mon",
       "status": 200,
-      "score": 100,
+      "score": 86,
       "title": "Vinhomes Hóc Môn — Smart City 4.0, 667ha | Giá Từ 6,5 Tỷ | SGS LAND",
       "description": "Vinhomes Smart City Hóc Môn — thông tin tham khảo về quy mô, vị trí, sản phẩm và mốc mở bán dự kiến. Giá, pháp lý, tiến độ và tư cách phân phối cần được xác minh bằng hồ sơ gốc trước khi giao dịch.",
       "canonical": "https://sgsland.vn/du-an/vinhomes-hoc-mon",
@@ -429,12 +490,19 @@
         "BreadcrumbList"
       ],
       "directAnswer": true,
+      "directAnswerWords": 48,
+      "reviewedAt": "",
+      "evidenceState": "",
       "visibleFaq": true,
-      "issues": []
+      "issues": [
+        "MISSING_REVIEW_DATE",
+        "MISSING_EVIDENCE_STATE"
+      ]
     },
     {
       "slug": "masteri-cosmo-central",
-      "url": "http://localhost:5000/du-an/masteri-cosmo-central",
+      "routePath": "/du-an/masteri-cosmo-central",
+      "url": "http://127.0.0.1:5000/du-an/masteri-cosmo-central",
       "status": 200,
       "score": 100,
       "title": "Masteri Cosmo Central 2026 – Giá & Mặt bằng | SGS Land | SGS LAND",
@@ -455,6 +523,288 @@
         "FAQPage"
       ],
       "directAnswer": true,
+      "directAnswerWords": 57,
+      "reviewedAt": "2026-09-15",
+      "evidenceState": "unavailable",
+      "visibleFaq": true,
+      "issues": []
+    },
+    {
+      "slug": "legacy-66",
+      "routePath": "/landing/legacy-66",
+      "url": "http://127.0.0.1:5000/landing/legacy-66",
+      "status": 200,
+      "score": 100,
+      "title": "Legacy 66 Quận 5 2026 – Giá & Mặt bằng | SGS Land | SGS LAND",
+      "description": "Legacy 66 tại 66 Tân Thành, Phường Chợ Lớn TP.HCM: 348 căn hộ 1–3PN (45–95m²), sở hữu lâu dài, quản lý Savills chuẩn quốc tế, bàn giao Q2/2027. Bảng giá, chính sách thanh toán và tư vấn miễn phí từ SGS Land.",
+      "canonical": "https://sgsland.vn/landing/legacy-66",
+      "h1": [
+        "Legacy 66"
+      ],
+      "schemaTypes": [
+        "WebSite",
+        "Organization",
+        "LocalBusiness",
+        "RealEstateAgent",
+        "ItemPage",
+        "Dataset",
+        "WebPage",
+        "RealEstateListing",
+        "FAQPage",
+        "BreadcrumbList"
+      ],
+      "directAnswer": true,
+      "directAnswerWords": 56,
+      "reviewedAt": "2026-09-15",
+      "evidenceState": "unavailable",
+      "visibleFaq": true,
+      "issues": []
+    },
+    {
+      "slug": "masteri-cosmo-central",
+      "routePath": "/landing/masteri-cosmo-central",
+      "url": "http://127.0.0.1:5000/landing/masteri-cosmo-central",
+      "status": 200,
+      "score": 100,
+      "title": "Masteri Cosmo Central 2026 – Giá & Mặt bằng | SGS Land | SGS LAND",
+      "description": "Masteri Cosmo Central ở đâu? Căn hộ tại The Global City 117,4ha, TP Thủ Đức – 6 tòa tháp 19-29 tầng do Foster + Partners thiết kế. Loại căn 1PN-4PN, giá từ 6,429 tỷ, lãi suất 0%. ☎ Xem bảng giá & mặt bằng miễn phí từ SGS Land!",
+      "canonical": "https://sgsland.vn/landing/masteri-cosmo-central",
+      "h1": [
+        "Masteri Cosmo Central"
+      ],
+      "schemaTypes": [
+        "WebSite",
+        "Organization",
+        "LocalBusiness",
+        "RealEstateAgent",
+        "ItemPage",
+        "Dataset",
+        "WebPage",
+        "RealEstateListing",
+        "FAQPage",
+        "BreadcrumbList"
+      ],
+      "directAnswer": true,
+      "directAnswerWords": 57,
+      "reviewedAt": "2026-09-15",
+      "evidenceState": "unavailable",
+      "visibleFaq": true,
+      "issues": []
+    },
+    {
+      "slug": "vinhomes-grand-park",
+      "routePath": "/landing/vinhomes-grand-park",
+      "url": "http://127.0.0.1:5000/landing/vinhomes-grand-park",
+      "status": 200,
+      "score": 100,
+      "title": "Vinhomes Grand Park TP Thủ Đức 2026 – Giá, Mặt Bằng, Pháp Lý | SGS LAND | SGS LAND",
+      "description": "Vinhomes Grand Park là đại đô thị 271ha của Vingroup tại TP Thủ Đức, quy mô 44.000 sản phẩm, sổ hồng lâu dài, công viên trung tâm 36ha. Cập nhật giá bán, pháp lý 2026.",
+      "canonical": "https://sgsland.vn/landing/vinhomes-grand-park",
+      "h1": [
+        "Vinhomes Grand Park – Đại Đô Thị Công Viên Lớn Nhất TP.HCM"
+      ],
+      "schemaTypes": [
+        "WebSite",
+        "Organization",
+        "LocalBusiness",
+        "RealEstateAgent",
+        "ItemPage",
+        "Dataset",
+        "WebPage",
+        "RealEstateListing",
+        "FAQPage",
+        "BreadcrumbList"
+      ],
+      "directAnswer": true,
+      "directAnswerWords": 54,
+      "reviewedAt": "2026-09-15",
+      "evidenceState": "unavailable",
+      "visibleFaq": true,
+      "issues": []
+    },
+    {
+      "slug": "the-global-city",
+      "routePath": "/landing/the-global-city",
+      "url": "http://127.0.0.1:5000/landing/the-global-city",
+      "status": 200,
+      "score": 100,
+      "title": "The Global City TP Thủ Đức 2026 – Giá, Mặt Bằng, Pháp Lý | SGS LAND | SGS LAND",
+      "description": "The Global City là khu đô thị phức hợp 117,4ha của Masterise Homes tại phường Bình Trưng, TP Thủ Đức, cách trung tâm Quận 1 khoảng 7-9km. Cập nhật giá bán, pháp lý, tiến độ 2026.",
+      "canonical": "https://sgsland.vn/landing/the-global-city",
+      "h1": [
+        "The Global City – Khu đô thị phức hợp trung tâm mới của Masterise Homes tại TP Thủ Đức"
+      ],
+      "schemaTypes": [
+        "WebSite",
+        "Organization",
+        "LocalBusiness",
+        "RealEstateAgent",
+        "ItemPage",
+        "Dataset",
+        "WebPage",
+        "RealEstateListing",
+        "FAQPage",
+        "BreadcrumbList"
+      ],
+      "directAnswer": true,
+      "directAnswerWords": 51,
+      "reviewedAt": "2026-09-15",
+      "evidenceState": "unavailable",
+      "visibleFaq": true,
+      "issues": []
+    },
+    {
+      "slug": "izumi-city",
+      "routePath": "/landing/izumi-city",
+      "url": "http://127.0.0.1:5000/landing/izumi-city",
+      "status": 200,
+      "score": 100,
+      "title": "Izumi City Biên Hòa Đồng Nai 2026 – Giá, Mặt Bằng, Pháp Lý | SGS LAND | SGS LAND",
+      "description": "Izumi City Biên Hòa: KĐT 170ha của Nam Long & Hankyu Hanshin (Nhật), 9 phân khu, ~13.500 sản phẩm, sổ hồng lâu dài, cách TP.HCM 20 phút. Giá bán, pháp lý 2026.",
+      "canonical": "https://sgsland.vn/landing/izumi-city",
+      "h1": [
+        "Izumi City Biên Hòa – Khu Đô Thị Ven Sông Chuẩn Nhật Bản Của Nam Long"
+      ],
+      "schemaTypes": [
+        "WebSite",
+        "Organization",
+        "LocalBusiness",
+        "RealEstateAgent",
+        "ItemPage",
+        "Dataset",
+        "WebPage",
+        "RealEstateListing",
+        "FAQPage",
+        "BreadcrumbList"
+      ],
+      "directAnswer": true,
+      "directAnswerWords": 51,
+      "reviewedAt": "2026-09-15",
+      "evidenceState": "unavailable",
+      "visibleFaq": true,
+      "issues": []
+    },
+    {
+      "slug": "vinhomes-central-park",
+      "routePath": "/landing/vinhomes-central-park",
+      "url": "http://127.0.0.1:5000/landing/vinhomes-central-park",
+      "status": 200,
+      "score": 100,
+      "title": "Vinhomes Central Park Bình Thạnh 2026 – Giá, Mặt Bằng, Pháp Lý | SGS LAND | SGS LAND",
+      "description": "Vinhomes Central Park là khu đô thị phức hợp ven sông Sài Gòn tại Bình Thạnh, cạnh tòa Landmark 81, đã bàn giao và cấp sổ hồng toàn bộ. Cập nhật giá thứ cấp, pháp lý 2026.",
+      "canonical": "https://sgsland.vn/landing/vinhomes-central-park",
+      "h1": [
+        "Vinhomes Central Park – Khu Đô Thị Ven Sông Sài Gòn Cạnh Landmark 81"
+      ],
+      "schemaTypes": [
+        "WebSite",
+        "Organization",
+        "LocalBusiness",
+        "RealEstateAgent",
+        "ItemPage",
+        "Dataset",
+        "WebPage",
+        "RealEstateListing",
+        "FAQPage",
+        "BreadcrumbList"
+      ],
+      "directAnswer": true,
+      "directAnswerWords": 50,
+      "reviewedAt": "2026-09-15",
+      "evidenceState": "unavailable",
+      "visibleFaq": true,
+      "issues": []
+    },
+    {
+      "slug": "masteri-park-place",
+      "routePath": "/landing/masteri-park-place",
+      "url": "http://127.0.0.1:5000/landing/masteri-park-place",
+      "status": 200,
+      "score": 100,
+      "title": "Masteri Park Place The Global City 2026 – Giá, Mặt Bằng, Pháp Lý | SGS LAND | SGS LAND",
+      "description": "Masteri Park Place là cụm căn hộ cao tầng của Masterise Homes thuộc khu đô thị The Global City, phường Bình Trưng, TP Thủ Đức. Cập nhật giá bán, tiến độ, pháp lý 2026.",
+      "canonical": "https://sgsland.vn/landing/masteri-park-place",
+      "h1": [
+        "Masteri Park Place – Căn Hộ Cao Tầng Trong Lòng The Global City"
+      ],
+      "schemaTypes": [
+        "WebSite",
+        "Organization",
+        "LocalBusiness",
+        "RealEstateAgent",
+        "ItemPage",
+        "Dataset",
+        "WebPage",
+        "RealEstateListing",
+        "FAQPage",
+        "BreadcrumbList"
+      ],
+      "directAnswer": true,
+      "directAnswerWords": 50,
+      "reviewedAt": "2026-09-15",
+      "evidenceState": "unavailable",
+      "visibleFaq": true,
+      "issues": []
+    },
+    {
+      "slug": "diamond-sky-van-phuc-city",
+      "routePath": "/landing/diamond-sky-van-phuc-city",
+      "url": "http://127.0.0.1:5000/landing/diamond-sky-van-phuc-city",
+      "status": 200,
+      "score": 100,
+      "title": "Diamond Sky Vạn Phúc City 2026 – Giá, Mặt Bằng, Pháp Lý | SGS LAND | SGS LAND",
+      "description": "Diamond Sky là phân khu căn hộ cao tầng thuộc khu đô thị Vạn Phúc City, TP Thủ Đức, do Tập đoàn Vạn Phúc phát triển, quy mô 198ha, 3 mặt sông. Giá bán, pháp lý cập nhật 2026.",
+      "canonical": "https://sgsland.vn/landing/diamond-sky-van-phuc-city",
+      "h1": [
+        "Diamond Sky – Căn Hộ Cao Tầng Ven Sông Trong Lòng Vạn Phúc City"
+      ],
+      "schemaTypes": [
+        "WebSite",
+        "Organization",
+        "LocalBusiness",
+        "RealEstateAgent",
+        "ItemPage",
+        "Dataset",
+        "WebPage",
+        "RealEstateListing",
+        "FAQPage",
+        "BreadcrumbList"
+      ],
+      "directAnswer": true,
+      "directAnswerWords": 54,
+      "reviewedAt": "2026-09-15",
+      "evidenceState": "unavailable",
+      "visibleFaq": true,
+      "issues": []
+    },
+    {
+      "slug": "thu-thiem",
+      "routePath": "/landing/thu-thiem",
+      "url": "http://127.0.0.1:5000/landing/thu-thiem",
+      "status": 200,
+      "score": 100,
+      "title": "Khu Đô Thị Mới Thủ Thiêm 2026 – Quy Hoạch, Dự Án, Giá Đất | SGS LAND | SGS LAND",
+      "description": "Thủ Thiêm là khu đô thị mới 657ha bên bờ Đông sông Sài Gòn, đối diện Quận 1, quy hoạch thành trung tâm tài chính - thương mại TP.HCM. Cập nhật hạ tầng, dự án, giá đất 2026.",
+      "canonical": "https://sgsland.vn/landing/thu-thiem",
+      "h1": [
+        "Khu Đô Thị Mới Thủ Thiêm – Trung Tâm Tài Chính Tương Lai Của TP.HCM"
+      ],
+      "schemaTypes": [
+        "WebSite",
+        "Organization",
+        "LocalBusiness",
+        "RealEstateAgent",
+        "ItemPage",
+        "Dataset",
+        "WebPage",
+        "RealEstateListing",
+        "FAQPage",
+        "BreadcrumbList"
+      ],
+      "directAnswer": true,
+      "directAnswerWords": 52,
+      "reviewedAt": "2026-09-15",
+      "evidenceState": "unavailable",
       "visibleFaq": true,
       "issues": []
     }

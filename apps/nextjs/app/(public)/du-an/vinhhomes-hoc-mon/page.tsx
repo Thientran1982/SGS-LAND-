@@ -4,6 +4,13 @@ import { ProjectDetailPage } from "@/components/public/ProjectDetailPage";
 import { ALL_PROJECTS } from "@/data/projects";
 import type { LandingProject } from "@/data/landing-projects";
 import { SITE_URL } from "@/lib/schema";
+import {
+  GEO_DEFAULT_EVIDENCE_NOTE,
+  GEO_EDITOR_NAME,
+  GEO_REVIEW_DATE,
+  buildGeoDirectAnswer,
+  getGeoEvidenceLinks,
+} from "@/lib/seo/geo-provenance";
 
 export const dynamic = "force-dynamic";
 
@@ -117,26 +124,54 @@ const HOC_MON: LandingProject = {
 export default function VinhomesHocMonPage() {
   const listedProject = ALL_PROJECTS.find((project) => project.slug === HOC_MON.slug);
   if (!listedProject) notFound();
+  const directAnswer = buildGeoDirectAnswer({
+    projectName: HOC_MON.schemaName,
+    developer: HOC_MON.schemaDev,
+    location: `${HOC_MON.schemaLocality}, ${HOC_MON.schemaRegion}`,
+  });
 
   return (
-    <ProjectDetailPage
-      slug={HOC_MON.slug}
-      landingProject={HOC_MON}
-      project={{
-        name: listedProject.name,
-        developer: listedProject.developer,
-        location: listedProject.location,
-        description: HOC_MON.desc,
-        images: [],
-      }}
-      config={{
-        details: HOC_MON.entityTable.map((row) => ({ label: row.k, value: row.v })),
-        amenities: [{
-          title: "Tiện ích và trạng thái cần kiểm tra",
-          items: HOC_MON.schemaAmenities,
-        }],
-        faqs: HOC_MON.faq.map((item) => ({ q: item.q, a: item.a })),
-      }}
-    />
+    <>
+      <section className="mx-auto max-w-5xl px-4 py-5 sm:px-6 lg:px-8" aria-labelledby="geo-answer-heading">
+        <div
+          className="rounded-2xl border-l-4 px-5 py-4"
+          data-geo-reviewed-at={GEO_REVIEW_DATE}
+          data-geo-evidence="unavailable"
+          style={{ borderColor: "var(--sgs-accent)", background: "var(--ui-surface-subtle)" }}
+        >
+          <h2 id="geo-answer-heading" className="text-xs font-bold uppercase tracking-[.12em]" style={{ color: "var(--sgs-accent-text)" }}>
+            Câu trả lời nhanh
+          </h2>
+          <p className="mt-2 max-w-4xl text-base leading-7" style={{ color: "var(--text-secondary)" }}>{directAnswer}</p>
+          <p className="mt-2 text-xs leading-5" style={{ color: "var(--text-tertiary)" }}>
+            Biên tập: {GEO_EDITOR_NAME}; rà soát: {GEO_REVIEW_DATE}. {GEO_DEFAULT_EVIDENCE_NOTE}
+          </p>
+          <div className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-xs">
+            {getGeoEvidenceLinks(HOC_MON.slug).map((link) => (
+              <a key={link.href} href={link.href} className="underline underline-offset-2" style={{ color: "var(--sgs-accent-text)" }}>{link.label}</a>
+            ))}
+          </div>
+        </div>
+      </section>
+      <ProjectDetailPage
+        slug={HOC_MON.slug}
+        landingProject={HOC_MON}
+        project={{
+          name: listedProject.name,
+          developer: listedProject.developer,
+          location: listedProject.location,
+          description: HOC_MON.desc,
+          images: [],
+        }}
+        config={{
+          details: HOC_MON.entityTable.map((row) => ({ label: row.k, value: row.v })),
+          amenities: [{
+            title: "Tiện ích và trạng thái cần kiểm tra",
+            items: HOC_MON.schemaAmenities,
+          }],
+          faqs: HOC_MON.faq.map((item) => ({ q: item.q, a: item.a })),
+        }}
+      />
+    </>
   );
 }

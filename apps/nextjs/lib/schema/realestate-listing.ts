@@ -19,6 +19,8 @@ export interface RealEstateProject {
   price_high?: number;
   /** Hectares */
   area_ha?: number;
+  /** Date of the editorial review or dated source used for the facts. */
+  date_modified?: string;
   amenities?: string[];
   geo?: { latitude: number; longitude: number };
 }
@@ -137,7 +139,7 @@ export function getRealEstateListingSchema(project: RealEstateProject): RealEsta
     ...(project.developer && {
       brand: { "@type": "Brand", name: project.developer },
     }),
-    dateModified: new Date().toISOString().split("T")[0],
+    dateModified: project.date_modified ?? new Date().toISOString().split("T")[0],
   };
 }
 

@@ -14,7 +14,12 @@ const output = process.argv.includes("--out")
   : "docs/seo/project-geo-audit-latest.json";
 
 async function fetchText(url) {
-  const response = await fetch(url, { redirect: "manual", signal: AbortSignal.timeout(20_000) });
+  const response = await fetch(url, {
+    redirect: "manual",
+    cache: "no-store",
+    headers: { "cache-control": "no-cache", "x-geo-audit": "rendered-html" },
+    signal: AbortSignal.timeout(20_000),
+  });
   return { response, html: await response.text() };
 }
 
@@ -24,7 +29,7 @@ function jsonLd($) {
   }).get().flatMap((value) => Array.isArray(value) ? value : [value]).filter(Boolean);
 }
 
-function auditPage(slug, status, html) {
+function auditPage(routePath, status, html) {
   const $ = cheerio.load(html);
   const text = $("body").text().replace(/\s+/g, " ").trim();
   const title = $("title").first().text().trim();
@@ -36,7 +41,17 @@ function auditPage(slug, status, html) {
     const type = schema["@type"];
     return Array.isArray(type) ? type : type ? [type] : [];
   });
-  const answerLike = $(".answer-box, [role='note'], [itemprop='description']").filter((_, el) => $(el).text().trim().length >= 80).length > 0;
+  const visibleAnswerNode = $(".lp-answer p, .lp-hero-answer, [aria-labelledby='geo-answer-heading'] p")
+    .filter((_, el) => $(el).text().trim().length >= 80)
+    .first();
+  const answerNode = visibleAnswerNode.length
+    ? visibleAnswerNode
+    : $(".answer-box").filter((_, el) => $(el).text().trim().length >= 80).first();
+  const answerText = answerNode.text().replace(/\s+/g, " ").trim();
+  const answerWords = answerText ? answerText.split(/\s+/).length : 0;
+  const answerLike = answerNode.length > 0;
+  const reviewedAt = $("[data-geo-reviewed-at]").attr("data-geo-reviewed-at") || "";
+  const evidenceState = $("[data-geo-evidence]").attr("data-geo-evidence") || "";
   const faqVisible = $("h2, h3").filter((_, el) => /câu hỏi|faq|frequently asked/i.test($(el).text())).length > 0;
   const issues = [];
   if (status !== 200) issues.push(`HTTP_${status}`);
@@ -45,22 +60,29 @@ function auditPage(slug, status, html) {
   if (!canonical) issues.push("MISSING_CANONICAL");
   if (h1.length !== 1) issues.push(`H1_COUNT_${h1.length}`);
   if (!answerLike) issues.push("MISSING_DIRECT_ANSWER");
+  if (answerLike && (answerWords < 40 || answerWords > 60)) issues.push(`DIRECT_ANSWER_WORDS_${answerWords}`);
+  if (!reviewedAt) issues.push("MISSING_REVIEW_DATE");
+  if (!evidenceState) issues.push("MISSING_EVIDENCE_STATE");
   if (!schemaTypes.includes("BreadcrumbList")) issues.push("MISSING_BREADCRUMB_SCHEMA");
   if (!schemaTypes.includes("FAQPage") && !faqVisible) issues.push("MISSING_VISIBLE_FAQ");
-  if (canonical && !canonical.startsWith("https://sgsland.vn/du-an/")) issues.push("CANONICAL_HOST_OR_PATH");
+  if (canonical && !/^https:\/\/sgsland\.vn\/(du-an|landing)\//.test(canonical)) issues.push("CANONICAL_HOST_OR_PATH");
   if (!/xác minh|xem xét|tham khảo|verify|indicative|official/i.test(text)) issues.push("MISSING_CAVEAT_OR_PROVENANCE");
-  const passed = 10 - issues.length;
+  const passed = 14 - issues.length;
   return {
-    slug,
-    url: `${base}/du-an/${slug}`,
+    slug: routePath.split("/").filter(Boolean).pop(),
+    routePath,
+    url: `${base}${routePath}`,
     status,
-    score: Math.max(0, Math.round((passed / 10) * 100)),
+    score: Math.max(0, Math.round((passed / 14) * 100)),
     title,
     description,
     canonical,
     h1,
     schemaTypes: [...new Set(schemaTypes)],
     directAnswer: answerLike,
+    directAnswerWords: answerWords,
+    reviewedAt,
+    evidenceState,
     visibleFaq: faqVisible,
     issues,
   };
@@ -70,22 +92,46 @@ const sitemap = await fetchText(`${base}/sitemap.xml`);
 if (!sitemap.response.ok) throw new Error(`Sitemap returned HTTP ${sitemap.response.status}`);
 const sitemapXml = cheerio.load(sitemap.html, { xmlMode: true });
 const urls = sitemapXml("url loc").map((_, el) => sitemapXml(el).text().trim()).get()
-  .filter((url) => /\/du-an\/[^/?#]+$/.test(url));
+  .filter((url) => /\/(du-an|landing)\/[^/?#]+$/.test(url));
+const landingSlugs = [
+  "legacy-66",
+  "masteri-cosmo-central",
+  "vinhomes-grand-park",
+  "the-global-city",
+  "izumi-city",
+  "vinhomes-central-park",
+  "masteri-park-place",
+  "diamond-sky-van-phuc-city",
+  "thu-thiem",
+];
+for (const slug of landingSlugs) urls.push(`${base}/landing/${slug}`);
 const results = [];
-for (const url of [...new Set(urls)]) {
-  const slug = url.split("/").pop();
-  try {
-    const page = await fetchText(`${base}/du-an/${slug}`);
-    results.push(auditPage(slug, page.response.status, page.html));
-  } catch (error) {
-    results.push(auditPage(slug, 0, `<!doctype html><title>Fetch error</title><p>${error.message}</p>`));
-  }
+const uniqueUrls = [...new Set(urls.map((url) => new URL(url).pathname))];
+const concurrency = Number(process.env.GEO_AUDIT_CONCURRENCY || 1);
+for (let index = 0; index < uniqueUrls.length; index += concurrency) {
+  const batch = uniqueUrls.slice(index, index + concurrency);
+  const batchResults = await Promise.all(batch.map(async (url) => {
+    const routePath = url;
+    try {
+      const separator = routePath.includes("?") ? "&" : "?";
+      let page = await fetchText(`${base}${routePath}${separator}__geo_audit=1`);
+      let result = auditPage(routePath, page.response.status, page.html);
+      if (result.issues.includes("MISSING_REVIEW_DATE") || result.issues.includes("MISSING_EVIDENCE_STATE")) {
+        page = await fetchText(`${base}${routePath}${separator}__geo_audit=retry`);
+        result = auditPage(routePath, page.response.status, page.html);
+      }
+      return result;
+    } catch (error) {
+      return auditPage(routePath, 0, `<!doctype html><title>Fetch error</title><p>${error.message}</p>`);
+    }
+  }));
+  results.push(...batchResults);
 }
 
 const report = {
   generatedAt: new Date().toISOString(),
   base,
-  methodology: "Rendered HTML audit for project sitemap URLs: status, metadata, H1, direct answer, visible FAQ, JSON-LD and provenance caveat.",
+  methodology: "Rendered HTML audit for project and landing sitemap URLs: status, metadata, H1, 40–60 word visible direct answer, visible FAQ, JSON-LD, review date, evidence state and provenance caveat.",
   total: results.length,
   passed: results.filter((r) => r.issues.length === 0).length,
   averageScore: results.length ? Math.round(results.reduce((sum, r) => sum + r.score, 0) / results.length) : 0,

@@ -6,8 +6,8 @@ import { NextResponse } from "next/server";
 // on 2026-08-11 - it collided with this route and made /llms.txt return 500.
 // Bump LLMS_VERSION + LAST_UPDATED whenever the content below changes so that
 // answer engines can detect freshness (llms-full.txt must be bumped too).
-const LLMS_VERSION = "2026.08.2";
-const LAST_UPDATED = "2026-08-21";
+const LLMS_VERSION = "2026.09.15";
+const LAST_UPDATED = "2026-09-15";
 
 export const dynamic = "force-static";
 export const revalidate = 86400;
@@ -34,7 +34,7 @@ export async function GET() {
 
 # What We Do
 SGS LAND la nen tang proptech tai TP.HCM, cung cap:
-- AI Valuation: dinh gia bat dong san tu dong, sai so muc tieu +-5%
+- AI Valuation: công cụ ước tính tham khảo; không thay thế thẩm định chính thức hoặc tư vấn pháp lý
 - Marketplace: san giao dich BDS truc tuyen (can ho, dat nen, nha pho, biet thu)
 - CRM Platform: quan ly khach hang da kenh cho moi gioi
 - Market Data: du lieu thi truong BDS TP.HCM va vung ven
@@ -58,6 +58,8 @@ SGS LAND la nen tang proptech tai TP.HCM, cung cap:
 - Organization schema: https://sgsland.vn/api/public/schema.json
 - Listings: https://sgsland.vn/api/public/listings
 - Featured projects: https://sgsland.vn/api/public/projects/featured
+- Project reference pages: https://sgsland.vn/du-an/aqua-city, https://sgsland.vn/du-an/izumi-city
+- Editorial policy: https://sgsland.vn/chinh-sach-bien-tap
 - Area price index: https://sgsland.vn/data/area-price-index.json
 - Structured answers (POST): https://sgsland.vn/api/v1/ask
 - Plugin manifest: https://sgsland.vn/.well-known/ai-plugin.json
@@ -66,6 +68,9 @@ SGS LAND la nen tang proptech tai TP.HCM, cung cap:
 # AI Usage Policy
 Noi dung duoc phep dung de tra loi cau hoi ve SGS LAND, bat dong san TP.HCM
 va thi truong BDS Viet Nam. Vui long dan nguon ve https://sgsland.vn.
+Gia, phap ly, tien do, ton kho va tu cach phan phoi phai duoc doi chieu
+voi tai lieu goc co ngay cap nhat. Khong suy ra xep hang, doanh so, review,
+rating, gia thi truong hoac quan he doi tac tu file nay.
 `;
   return new NextResponse(content, {
     headers: {

@@ -20,6 +20,13 @@ import {
   LANDING_SLUGS,
   type LandingProject,
 } from "@/data/landing-projects";
+import {
+  GEO_DEFAULT_EVIDENCE_NOTE,
+  GEO_EDITOR_NAME,
+  GEO_REVIEW_DATE,
+  buildGeoDirectAnswer,
+  getGeoEvidenceLinks,
+} from "@/lib/seo/geo-provenance";
 import LandingPageClient from "../LandingPageClient";
 import GeneratedLandingPage, {
   LandingNotFound,
@@ -78,6 +85,7 @@ export async function generateMetadata({
   const project = LANDING_PROJECTS[slug];
   if (!project) return {};
   const canonicalUrl = `${SITE_URL}/landing/${slug}`;
+  const reviewedAt = project.reviewedAt || GEO_REVIEW_DATE;
   return {
     title: slug === "legacy-66"
       ? "Legacy 66 Quận 5 2026 – Giá & Mặt bằng | SGS Land"
@@ -132,7 +140,9 @@ function buildNoscriptHtml(p: LandingProject): string {
   return [
     '<div class="lp-noscript"><article>',
     `<h1>${esc(p.schemaName)}</h1>`,
-    `<p>Chủ đầu tư: ${esc(p.schemaDev)} | Địa điểm: ${esc(p.schemaLocality)}, ${esc(p.schemaRegion)} | Đại lý ủy quyền: SGS Land — sgsland.vn</p>`,
+    `<p>${esc(p.directAnswer || buildGeoDirectAnswer({ projectName: p.schemaName, developer: p.schemaDev, location: `${p.schemaLocality}, ${p.schemaRegion}` }))}</p>`,
+    `<p>Biên tập: ${esc(GEO_EDITOR_NAME)} | Rà soát: ${esc(p.reviewedAt || GEO_REVIEW_DATE)}</p>`,
+    `<p>${esc(p.evidenceNote || GEO_DEFAULT_EVIDENCE_NOTE)}</p>`,
     p.schemaAreaHa != null ? `<p>Quy mô: ${p.schemaAreaHa} ha</p>` : "",
     paras,
     `<h2>Câu hỏi thường gặp về ${esc(p.schemaName)}</h2>`,
@@ -160,6 +170,14 @@ export default async function LandingProjectPage({
   const project = LANDING_PROJECTS[slug];
   if (!project) return <LandingNotFound />;
   const canonicalUrl = `${SITE_URL}/landing/${slug}`;
+  const reviewedAt = project.reviewedAt || GEO_REVIEW_DATE;
+  const directAnswer = project.directAnswer || buildGeoDirectAnswer({
+    projectName: project.schemaName,
+    developer: project.schemaDev,
+    location: `${project.schemaLocality}, ${project.schemaRegion}`,
+  });
+  const evidenceNote = project.evidenceNote || GEO_DEFAULT_EVIDENCE_NOTE;
+  const evidenceLinks = project.sourceLinks || getGeoEvidenceLinks(slug);
   // ── JSON-LD schemas ────────────────────────────────────────────────────
   const webPageSchema = {
     "@context": "https://schema.org",
@@ -174,7 +192,10 @@ export default async function LandingProjectPage({
       "@type": "RealEstateListing",
       name: project.schemaName,
     },
-    dateModified: new Date().toISOString().split("T")[0],
+    dateModified: reviewedAt,
+    author: { "@id": `${SITE_URL}/#organization` },
+    publisher: { "@id": `${SITE_URL}/#organization` },
+    mainEntity: { "@id": `${canonicalUrl}#listing` },
   };
   const listingSchema = {
     "@context": "https://schema.org",
@@ -198,15 +219,17 @@ export default async function LandingProjectPage({
         longitude: project.geo.lng,
       },
     }),
-    offers: {
-      "@type": "AggregateOffer",
-      priceCurrency: "VND",
-      ...(project.schemaPriceLow !== undefined && { lowPrice: project.schemaPriceLow }),
-      ...(project.schemaPriceHigh !== undefined && { highPrice: project.schemaPriceHigh }),
-      ...(project.schemaTotalUnits !== undefined && { offerCount: project.schemaTotalUnits }),
-      availability: "https://schema.org/InStock",
-    },
-    ...(project.schemaAreaHa !== undefined && {
+    ...(project.schemaPriceSource && (project.schemaPriceLow !== undefined || project.schemaPriceHigh !== undefined) && {
+      offers: {
+        "@type": "AggregateOffer",
+        priceCurrency: "VND",
+        ...(project.schemaPriceLow !== undefined && { lowPrice: project.schemaPriceLow }),
+        ...(project.schemaPriceHigh !== undefined && { highPrice: project.schemaPriceHigh }),
+        ...(project.schemaTotalUnits !== undefined && { offerCount: project.schemaTotalUnits }),
+        availability: "https://schema.org/InStock",
+      },
+    }),
+    ...(project.schemaFactsSource && project.schemaAreaHa !== undefined && {
       floorSize: {
         "@type": "QuantitativeValue",
         value: project.schemaAreaHa,
@@ -214,14 +237,18 @@ export default async function LandingProjectPage({
         unitText: "ha",
       },
     }),
-    amenityFeature: project.schemaAmenities.map((name) => ({
-      "@type": "LocationFeatureSpecification",
-      name,
-      value: true,
-    })),
+    ...(project.schemaFactsSource && {
+      amenityFeature: project.schemaAmenities.map((name) => ({
+        "@type": "LocationFeatureSpecification",
+        name,
+        value: true,
+      })),
+    }),
     brand: { "@type": "Brand", name: project.schemaDev },
     provider: { "@id": `${SITE_URL}/#organization` },
-    dateModified: new Date().toISOString().split("T")[0],
+    dateModified: reviewedAt,
+    author: { "@id": `${SITE_URL}/#organization` },
+    publisher: { "@id": `${SITE_URL}/#organization` },
   };
   const faqSchema = getFAQSchema(
     project.faq.map((f) => ({ question: f.q, answer: f.a })),
@@ -298,6 +325,7 @@ export default async function LandingProjectPage({
             <h1>{project.heroH1}</h1>
             <p className="lp-sub">{project.heroSub}</p>
             <p className="lp-meta">{project.heroMeta}</p>
+            <p className="lp-hero-answer">{directAnswer}</p>
             {/* Hero stats bar */}
             <div className="lp-stats" role="list" aria-label="Thông số dự án">
               {project.stats.map((s) => (
@@ -324,12 +352,26 @@ export default async function LandingProjectPage({
             <h2 id="h-tong-quan" className="lp-reveal">
               {project.titleShort} — <span className="ac">Thông Tin Chi Tiết</span>
             </h2>
+            <div className="lp-answer lp-reveal" role="note" aria-label="Câu trả lời nhanh" data-geo-reviewed-at={reviewedAt} data-geo-evidence="unavailable">
+              <strong>Câu trả lời nhanh</strong>
+              <p>{directAnswer}</p>
+              <small>Biên tập: {GEO_EDITOR_NAME} · Rà soát: {reviewedAt}</small>
+            </div>
             {/* SSR article block for GEO AI indexing */}
             <article className="lp-exec lp-reveal" aria-label={`Giới thiệu ${project.schemaName}`}>
               {project.overviewParas.map((para, i) => (
                 <p key={i} dangerouslySetInnerHTML={{ __html: para }} />
               ))}
             </article>
+            <aside className="lp-provenance lp-reveal" aria-label="Nguồn và phạm vi xác minh">
+              <h3>Phạm vi và nguồn xác minh</h3>
+              <p>{evidenceNote}</p>
+              <ul>
+                {evidenceLinks.map((link) => (
+                  <li key={link.href}><a href={link.href}>{link.label}</a></li>
+                ))}
+              </ul>
+            </aside>
             {/* Entity table */}
             <div
               className="lp-entity lp-reveal"

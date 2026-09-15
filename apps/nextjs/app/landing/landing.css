@@ -38,6 +38,16 @@
 .lp-page h2 .ac { color: var(--lpg); }
 .lp-page h3 { font-size: 20px; font-weight: 600; margin-bottom: 10px; }
 .lp-page h2 + .lp-lead { font-size: 16px; color: var(--lpts); max-width: 780px; margin-bottom: 32px; }
+.lp-answer { max-width: 780px; margin: 24px 0 30px; padding: 18px 20px; border-left: 4px solid var(--lpg); border-radius: 0 14px 14px 0; background: color-mix(in srgb, var(--lpps) 72%, white); color: var(--lpt); }
+.lp-answer strong { display: block; margin-bottom: 8px; font-size: 12px; letter-spacing: .08em; text-transform: uppercase; }
+.lp-answer p { margin: 0; font-size: 16px; line-height: 1.7; }
+.lp-answer small { display: block; margin-top: 10px; color: var(--lpts); }
+.lp-hero-answer { max-width: 760px; margin: 18px 0 0; padding: 14px 16px; border-left: 3px solid var(--lpg); background: rgba(0,0,0,.2); color: rgba(255,255,255,.92); font-size: 15px; line-height: 1.65; }
+.lp-provenance { max-width: 780px; margin-top: 28px; padding: 16px 18px; border: 1px solid color-mix(in srgb, var(--lpts) 28%, transparent); border-radius: 14px; color: var(--lpts); font-size: 13px; line-height: 1.6; }
+.lp-provenance h3 { margin: 0 0 6px; color: var(--lpt); font-size: 15px; }
+.lp-provenance p { margin: 0 0 8px; }
+.lp-provenance ul { display: flex; flex-wrap: wrap; gap: 12px 20px; margin: 0; padding-left: 18px; }
+.lp-provenance a { color: var(--lpp); text-decoration: underline; text-underline-offset: 2px; }
 @media (max-width: 768px) {
   .lp-page h2 { font-size: 28px; }
   .lp-page h3 { font-size: 20px; }

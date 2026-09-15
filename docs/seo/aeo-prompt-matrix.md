@@ -26,3 +26,20 @@ Use this matrix for manual or automated answer-engine evaluation. Score each res
 - Project pages must identify the developer and avoid implying SGS LAND owns or guarantees the project.
 - Freshness must be explicit for rates, inventory, legal status and construction progress.
 - A high score is not a ranking guarantee; use Search Console and answer-engine mention monitoring for outcome measurement.
+
+## Sprint 3 coverage contract
+
+The rendered project and landing templates now expose the following signals
+for each answer-engine response:
+
+| Signal | Pass condition | Fallback |
+|---|---|---|
+| Direct answer | Visible server-rendered answer, 40–60 words | `warn` if unavailable or outside the range |
+| Provenance | Named editorial owner and fixed review date | `warn` when source evidence is unavailable |
+| Source boundary | Dated original source is linked before numeric schema facts are emitted | `unavailable` rather than inferred |
+| Entity graph | Project/area name, location, organization and canonical URL agree | `warn` on mismatch |
+| Schema parity | JSON-LD does not claim facts absent from the visible evidence boundary | `warn` and remove unsupported offer/fact schema |
+
+The current implementation has no live Search Console or external source
+measurement attached to this report. `pass` therefore means the rendered
+contract is present, not that an answer engine has cited or ranked the page.

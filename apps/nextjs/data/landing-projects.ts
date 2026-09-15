@@ -58,6 +58,13 @@ export interface LandingProject {
   schemaPriceLow?: number;
   schemaPriceHigh?: number;
   schemaTotalUnits?: number;
+  /** Only populate numeric schema facts when a dated source is attached. */
+  schemaFactsSource?: string;
+  schemaPriceSource?: string;
+  reviewedAt?: string;
+  evidenceNote?: string;
+  directAnswer?: string;
+  sourceLinks?: { label: string; href: string }[];
   schemaAmenities: string[];
 }
 
