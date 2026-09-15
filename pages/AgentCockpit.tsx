@@ -175,6 +175,39 @@ type MinhBrainOverview = {
   degraded?: boolean;
   warning?: string;
 };
+type MinhCommandCenterPanel<T> = {
+  state: 'available' | 'unavailable' | 'degraded' | 'not_loaded';
+  data: T | null;
+  message?: string;
+};
+type MinhCommandCenterSummary = {
+  generatedAt: string;
+  brainHealth: MinhCommandCenterPanel<{
+    delegations7d: number;
+    delegationSuccess7d: number;
+    capabilityGaps7d: number;
+    latencySloBreaches24h: number;
+    pendingRuns: number | null;
+    errors24h: number | null;
+  }>;
+  opportunityQueue: MinhCommandCenterPanel<Array<{ opportunityId: string; detector: string | null; priority: string | number | null; confidence: number | null; approvalStatus: string | null }>>;
+  approvalQueue: MinhCommandCenterPanel<Array<{ id: string; actionType: string | null; risk: string; requiredApprover: string; status: string }>>;
+  learningStatus: MinhCommandCenterPanel<{
+    candidate: { id: string; agentKey: string; status: string; createdAt: string; gateSummary: unknown } | null;
+    evaluation: { id: string; cycleKey: string; status: string; startedAt: string; finishedAt: string | null; summary: unknown } | null;
+    gateStatus: 'PASSED' | 'FAILED' | 'PENDING' | null;
+    canary: { candidateId: string; agentKey: string; since: string } | null;
+    regression: { failures: string[] } | null;
+    rollback: { candidateId: string; reason: string; createdAt: string } | null;
+  }>;
+  schedulerRepair: MinhCommandCenterPanel<{
+    timer: { mode: string; enabled: boolean; startedAt: string | null; lastTickAt: string | null; tickCount: number; lastStatus: string };
+    deadLetterCount: number | null;
+    staleLeaseCount: number | null;
+    repairSpikeCount7d: number | null;
+    lastSuccessfulRunAt: string | null;
+  }>;
+};
 
 const count = (rows: Array<{ status: string; count: number }> = [], status: string) => rows.find(row => row.status === status)?.count || 0;
 const cockpitPanelAvailable = (summary: CockpitSummary, panel: CockpitPanel) =>
@@ -197,6 +230,28 @@ const panelUnavailableMessage = (summary: CockpitSummary, panel: CockpitPanel) =
 function PanelWarning({ summary, panel }: { summary: CockpitSummary; panel: CockpitPanel }) {
   const message = panelUnavailableMessage(summary, panel);
   return message ? <div role="status" className="mb-3 flex items-center gap-2 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-800"><AlertTriangle size={15} /> {message}</div> : null;
+}
+function MinhCommandCenterPanelCard({ title, panel, children }: { title: string; panel: MinhCommandCenterPanel<unknown>; children: React.ReactNode }) {
+  const stateLabel = panel.state === 'available' ? 'Sẵn sàng'
+    : panel.state === 'degraded' ? 'Degraded'
+      : panel.state === 'not_loaded' ? 'Chưa tải' : 'Không khả dụng';
+  const stateClass = panel.state === 'available' ? 'bg-emerald-100 text-emerald-700'
+    : panel.state === 'degraded' ? 'bg-amber-100 text-amber-800'
+      : 'bg-rose-100 text-rose-700';
+  return (
+    <div className="rounded-lg border border-slate-200 bg-white p-3">
+      <div className="mb-2 flex items-center justify-between gap-2">
+        <h3 className="text-xs font-semibold text-slate-800">{title}</h3>
+        <span className={`rounded-full px-2 py-0.5 text-[10px] font-semibold ${stateClass}`}>{stateLabel}</span>
+      </div>
+      {panel.data === null
+        ? <div role="status" className="text-xs text-rose-700">{panel.message || 'Dữ liệu chưa khả dụng; hãy thử làm mới.'}</div>
+        : <>
+          {panel.message && <div role="status" className="mb-2 text-[11px] text-amber-700">{panel.message}</div>}
+          {children}
+        </>}
+    </div>
+  );
 }
 const eventStatusLabel: Record<string, string> = { FAILED: 'Thất bại', DEAD_LETTER: 'Hàng chờ lỗi', PROCESSING: 'Đang xử lý', DONE: 'Hoàn tất', PENDING: 'Đang chờ' };
 const memoryKindLabel: Record<string, string> = { fact: 'Sự thật', episodic: 'Theo sự kiện', procedural: 'Quy trình' };
@@ -237,6 +292,7 @@ export default function AgentCockpit() {
   const [autoPostingDiagnostic, setAutoPostingDiagnostic] = useState<AutoPostingDiagnostic | null>(null);
   const [autoPostingDiagnosticError, setAutoPostingDiagnosticError] = useState('');
   const [minhBrainOverview, setMinhBrainOverview] = useState<MinhBrainOverview | null>(null);
+  const [minhCommandCenter, setMinhCommandCenter] = useState<MinhCommandCenterSummary | null>(null);
   const [minhLearningTrend, setMinhLearningTrend] = useState<MinhLearningTrendResponse | null>(null);
   const [minhDecisionBusy, setMinhDecisionBusy] = useState<string | null>(null);
   const [minhLearningDays, setMinhLearningDays] = useState(30);
@@ -246,11 +302,12 @@ export default function AgentCockpit() {
   const load = useCallback(async () => {
     setLoading(true); setError(''); setAutoPostingDiagnosticError(''); setAutoPostingDiagnostic(null);
     setMinhLearningTrend(null);
+    setMinhCommandCenter(null);
     try {
       const query = new URLSearchParams(eventFilters).toString();
       const nextSummary = await api.get<CockpitSummary>('/api/agent-operating/cockpit');
       setSummary(nextSummary);
-      const [questionsResult, eventsResult, supportResult, marketingGrowthResult, zaloReadinessResult, autoPostingDiagnosticResult, minhBrainResult, minhLearningTrendResult, minhLearningExportHistoryResult] = await Promise.allSettled([
+      const [questionsResult, eventsResult, supportResult, marketingGrowthResult, zaloReadinessResult, autoPostingDiagnosticResult, minhBrainResult, minhCommandCenterResult, minhLearningTrendResult, minhLearningExportHistoryResult] = await Promise.allSettled([
         api.get<HumanQuestion[]>('/api/agent-operating/questions'),
         api.get<OperatingEvent[]>(`/api/agent-operating/events?${query}`),
         api.get<{ data: SupportRequest[] }>('/api/live-chat/support-requests'),
@@ -258,6 +315,7 @@ export default function AgentCockpit() {
         notificationApi.getZaloReadinessWarnings(),
         api.get<AutoPostingDiagnostic>('/api/auto-posting/diagnostic'),
         api.get<MinhBrainOverview>(`/api/internal/minh-brain/overview?limit=50&days=${minhLearningDays}`),
+        api.get<MinhCommandCenterSummary>('/api/internal/minh-brain/command-center'),
         api.get<MinhLearningTrendResponse>(`/api/internal/minh-brain/learning/trends?days=${minhLearningDays}`),
         api.get<MinhLearningExportHistoryResponse>('/api/internal/minh-brain/learning/trends/exports?limit=20&offset=0'),
       ]);
@@ -272,6 +330,7 @@ export default function AgentCockpit() {
         setAutoPostingDiagnosticError(autoPostingDiagnosticResult.reason?.message || 'Không thể tải readiness trigger Facebook.');
       }
       if (minhBrainResult.status === 'fulfilled') setMinhBrainOverview(minhBrainResult.value);
+      if (minhCommandCenterResult.status === 'fulfilled') setMinhCommandCenter(minhCommandCenterResult.value);
       if (minhLearningTrendResult.status === 'fulfilled') setMinhLearningTrend(minhLearningTrendResult.value);
       if (minhLearningExportHistoryResult.status === 'fulfilled') setMinhLearningExportHistory(minhLearningExportHistoryResult.value);
       // Secondary panels must not hide a successfully loaded cockpit or a
@@ -495,6 +554,53 @@ export default function AgentCockpit() {
              ['Đã hoàn tất', cockpitMetric(summary, 'executions', summary.executions, 'SUCCESS'), 'text-emerald-600'],
            ].map(([label, value, color]) => <div key={String(label)} className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm"><div className="text-xs font-medium text-slate-500">{label}</div><div className={`mt-2 text-2xl font-bold ${color}`}>{value}</div></div>)}
         </div>
+          {minhCommandCenter && <section className="rounded-xl border border-indigo-200 bg-indigo-50/30 p-5 shadow-sm" aria-labelledby="minh-command-center-title">
+            <div className="mb-4 flex flex-wrap items-start justify-between gap-3">
+              <div className="flex items-start gap-2">
+                <BrainCircuit size={19} className="mt-0.5 text-indigo-600" />
+                <div>
+                  <h2 id="minh-command-center-title" className="font-semibold text-slate-900">Command Center của Minh</h2>
+                  <p className="text-xs text-slate-600">Năm panel vận hành độc lập; dữ liệu chưa tải được luôn được hiển thị rõ ràng.</p>
+                </div>
+              </div>
+              <span className="text-[11px] text-slate-500">Cập nhật {new Date(minhCommandCenter.generatedAt).toLocaleTimeString('vi-VN')}</span>
+            </div>
+            <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-5">
+              <MinhCommandCenterPanelCard title="Brain health" panel={minhCommandCenter.brainHealth as MinhCommandCenterPanel<unknown>}>
+                <div className="grid grid-cols-2 gap-2 text-xs">
+                  <div><span className="text-slate-500">Delegation 7 ngày</span><b className="block text-lg text-slate-900">{minhCommandCenter.brainHealth.data?.delegations7d ?? '—'}</b></div>
+                  <div><span className="text-slate-500">Thành công</span><b className="block text-lg text-emerald-700">{minhCommandCenter.brainHealth.data?.delegationSuccess7d ?? '—'}</b></div>
+                  <div><span className="text-slate-500">Capability gap</span><b className="block text-lg text-amber-700">{minhCommandCenter.brainHealth.data?.capabilityGaps7d ?? '—'}</b></div>
+                  <div><span className="text-slate-500">Lỗi 24 giờ</span><b className="block text-lg text-rose-700">{minhCommandCenter.brainHealth.data?.errors24h ?? '—'}</b></div>
+                </div>
+              </MinhCommandCenterPanelCard>
+              <MinhCommandCenterPanelCard title="Opportunity queue" panel={minhCommandCenter.opportunityQueue as MinhCommandCenterPanel<unknown>}>
+                <div className="text-sm font-semibold text-slate-900">{minhCommandCenter.opportunityQueue.data?.length ?? '—'} cơ hội</div>
+                <p className="mt-1 text-[11px] text-slate-500">Chỉ đọc; hành động vẫn phải qua approval.</p>
+              </MinhCommandCenterPanelCard>
+              <MinhCommandCenterPanelCard title="Approval queue" panel={minhCommandCenter.approvalQueue as MinhCommandCenterPanel<unknown>}>
+                <div className="text-sm font-semibold text-slate-900">{minhCommandCenter.approvalQueue.data?.filter(item => item.status === 'PENDING').length ?? '—'} đang chờ duyệt</div>
+                <p className="mt-1 text-[11px] text-slate-500">Risk cao yêu cầu SUPER_ADMIN.</p>
+                {minhCommandCenter.approvalQueue.data?.slice(0, 2).map(item => <div key={item.id} className="mt-2 rounded bg-slate-50 px-2 py-1 text-[11px] text-slate-600">{item.actionType || 'Unknown'} · {item.risk}</div>)}
+              </MinhCommandCenterPanelCard>
+              <MinhCommandCenterPanelCard title="Learning status" panel={minhCommandCenter.learningStatus as MinhCommandCenterPanel<unknown>}>
+                <div className="space-y-1 text-xs text-slate-600">
+                  <div>Gate: <b className="text-slate-900">{minhCommandCenter.learningStatus.data?.gateStatus || 'Chưa có'}</b></div>
+                  <div>Candidate: <b className="text-slate-900">{minhCommandCenter.learningStatus.data?.candidate?.status || 'Chưa có'}</b></div>
+                  <div>Canary: <b className="text-slate-900">{minhCommandCenter.learningStatus.data?.canary?.agentKey || 'Không có'}</b></div>
+                  {minhCommandCenter.learningStatus.data?.regression && <div className="text-rose-700">Regression: {minhCommandCenter.learningStatus.data.regression.failures.length}</div>}
+                </div>
+              </MinhCommandCenterPanelCard>
+              <MinhCommandCenterPanelCard title="Scheduler / repair" panel={minhCommandCenter.schedulerRepair as MinhCommandCenterPanel<unknown>}>
+                <div className="space-y-1 text-xs text-slate-600">
+                  <div>Scheduler: <b className="text-slate-900">{minhCommandCenter.schedulerRepair.data?.timer.lastStatus || '—'}</b></div>
+                  <div>Dead-letter: <b className="text-rose-700">{minhCommandCenter.schedulerRepair.data?.deadLetterCount ?? '—'}</b></div>
+                  <div>Lease cũ: <b className="text-amber-700">{minhCommandCenter.schedulerRepair.data?.staleLeaseCount ?? '—'}</b></div>
+                  <div>Repair spike 7 ngày: <b className="text-slate-900">{minhCommandCenter.schedulerRepair.data?.repairSpikeCount7d ?? '—'}</b></div>
+                </div>
+              </MinhCommandCenterPanelCard>
+            </div>
+          </section>}
          {minhBrainOverview && <section className="rounded-xl border border-amber-200 bg-amber-50/30 p-5 shadow-sm" aria-labelledby="minh-opportunities-title">
            <div className="mb-4 flex flex-wrap items-start justify-between gap-3">
              <div className="flex items-start gap-2">

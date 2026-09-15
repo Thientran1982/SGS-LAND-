@@ -53,7 +53,12 @@ async function buildBrainHealthPanel(tenantId: string): Promise<CommandCenterPan
   };
   try {
     const execCounts = await withTenantContext(tenantId, client => client.query(
-      `SELECT status, COUNT(*)::int AS count FROM agent_executions WHERE tenant_id=$1 GROUP BY status`,
+      `SELECT status, COUNT(*)::int AS count
+         FROM agent_executions
+        WHERE tenant_id=$1
+          AND status='ERROR'
+          AND created_at >= NOW() - INTERVAL '24 hours'
+        GROUP BY status`,
       [tenantId],
     ));
     const byStatus = new Map(execCounts.rows.map((row: any) => [String(row.status), Number(row.count)]));
@@ -108,14 +113,24 @@ async function buildOpportunityQueuePanel(tenantId: string): Promise<CommandCent
   }
 }
 
-const HIGH_RISK_ACTIONS = new Set(['REVIEW_REPAIR_SPIKE']);
-const MEDIUM_RISK_ACTIONS = new Set(['REVIEW_LISTING_PRICE', 'REVIEW_CSAT_DROP']);
+const HIGH_RISK_ACTIONS = new Set([
+  'REVIEW_REPAIR_SPIKE',
+  'PROMOTE_LEARNING_CANDIDATE',
+  'ROLLBACK_LEARNING_CANDIDATE',
+]);
+const MEDIUM_RISK_ACTIONS = new Set([
+  'REVIEW_LISTING_PRICE',
+  'REVIEW_CSAT_DROP',
+  'DRAFT_PROACTIVE_FOLLOWUP',
+]);
 
 function riskForActionType(actionType: string | null): 'LOW' | 'MEDIUM' | 'HIGH' {
   if (!actionType) return 'MEDIUM';
   if (HIGH_RISK_ACTIONS.has(actionType)) return 'HIGH';
   if (MEDIUM_RISK_ACTIONS.has(actionType)) return 'MEDIUM';
-  return 'LOW';
+  // Unknown actions must fail closed. A new action should not silently
+  // inherit the least restrictive approval requirement.
+  return 'HIGH';
 }
 
 function requiredApproverForRisk(risk: 'LOW' | 'MEDIUM' | 'HIGH'): string {
@@ -357,10 +372,6 @@ async function buildSchedulerRepairPanel(tenantId: string): Promise<CommandCente
   } catch (error: any) {
     failures.push('repair-spike');
     logger.warn(`[CommandCenter] repair spike read failed tenant=${tenantId}: ${error?.message || error}`);
-  }
-
-  if (!lastSuccessfulRunAt && timer.lastStatus === 'OBSERVED') {
-    lastSuccessfulRunAt = timer.lastTickAt;
   }
 
   const data: SchedulerRepairData = { timer, deadLetterCount, staleLeaseCount, repairSpikeCount7d, lastSuccessfulRunAt };

@@ -21,6 +21,7 @@ import {
   normalizeMinhLearningWindow,
   recordMinhLearningExport,
 } from '../services/minhDecisionLearningService';
+import { getCommandCenterSummary } from '../services/commandCenterService';
 
 const STAFF_ROLES = new Set(['SUPER_ADMIN', 'ADMIN', 'TEAM_LEAD']);
 
@@ -174,6 +175,24 @@ export function createMinhBrainRoutes(authenticateToken: any): Router {
         proactiveBudget: null,
         proactiveRollout: null,
         learning: null,
+      });
+    }
+  });
+
+  router.get('/command-center', authenticateToken, async (req: Request, res: Response) => {
+    const user = (req as any).user;
+    if (!STAFF_ROLES.has(user?.role)) {
+      return res.status(403).json({ error: 'Chỉ quản lý mới có quyền xem Command Center của Minh.' });
+    }
+
+    try {
+      return res.json(await getCommandCenterSummary(String(user.tenantId)));
+    } catch {
+      return res.status(503).json({
+        generatedAt: new Date().toISOString(),
+        degraded: true,
+        warning: 'Command Center của Minh tạm thời chưa tải được.',
+        panels: null,
       });
     }
   });
