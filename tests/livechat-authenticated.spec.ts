@@ -573,4 +573,135 @@ test.describe('Authenticated public live chat', () => {
       `web-inbound:${timeoutRequestBody!.requestId}`,
     );
   });
+
+  test('keeps degraded recovery actions on one inbound interaction', async ({
+    page,
+    request,
+  }) => {
+    test.setTimeout(90_000);
+
+    const loginResponse = await request.post(`${BASE_URL}/api/auth/login`, {
+      data: { email: fixtureEmail, password: fixturePassword },
+    });
+    expect(loginResponse.status()).toBe(200);
+    const loginBody = await loginResponse.json();
+
+    await page.context().addCookies([
+      {
+        name: 'token',
+        value: loginBody.token,
+        url: BASE_URL,
+        httpOnly: true,
+        sameSite: 'Lax',
+      },
+    ]);
+
+    const firstLeadResponse = page.waitForResponse(
+      (response) =>
+        response.url().endsWith('/api/public/leads') &&
+        response.request().method() === 'POST',
+    );
+    await page.goto(`${BASE_URL}/livechat`, { waitUntil: 'domcontentloaded' });
+    const firstLead = await firstLeadResponse;
+    expect(firstLead.status()).toBe(201);
+    const leadId = String((await firstLead.json()).id || '');
+    expect(leadId).toMatch(/^[0-9a-f-]{36}$/i);
+
+    const degradedText = `smoke degraded recovery ${randomUUID()}`;
+    const degradedReply = `SMOKE_DEGRADED_REPLY_${randomUUID()}`;
+    const aiRequests: Record<string, any>[] = [];
+    let inboundInteractionId = '';
+
+    await page.route('**/api/public/ai/livechat', async (route) => {
+      const body = route.request().postDataJSON() as Record<string, any>;
+      if (body.message !== degradedText) return route.continue();
+
+      aiRequests.push(body);
+      inboundInteractionId = String(body.inboundInteractionId || '');
+      expect(inboundInteractionId).toMatch(/^[0-9a-f-]{36}$/i);
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({
+          reply: {
+            id: `degraded-reply:${inboundInteractionId}`,
+            direction: 'OUTBOUND',
+            content: degradedReply,
+            metadata: {
+              isAgent: true,
+              isAi: true,
+              inboundInteractionId,
+              degraded: true,
+              degradedReason: 'PRIMARY_PROVIDER_UNAVAILABLE',
+              providerOutcome: 'UNAVAILABLE',
+            },
+          },
+          inboundInteractionId,
+        }),
+      });
+    });
+
+    const messageBox = page.getByLabel('Nội dung tin nhắn');
+    await expect(messageBox).toBeVisible({ timeout: 30_000 });
+    await messageBox.fill(degradedText);
+    await messageBox.press('Enter');
+
+    await expect(page.getByText(degradedReply, { exact: true })).toBeVisible({
+      timeout: 10_000,
+    });
+    const recoveryNotice = page
+      .getByRole('status')
+      .filter({ hasText: 'Phản hồi trên dùng chế độ dự phòng' });
+    await expect(recoveryNotice).toContainText(
+      'Bạn có thể thử lại câu hỏi này hoặc kết nối tư vấn viên.',
+    );
+    await expect(recoveryNotice.getByRole('button', { name: 'Thử lại' })).toBeVisible();
+    await expect(
+      recoveryNotice.getByRole('button', { name: 'Gặp tư vấn viên' }),
+    ).toBeVisible();
+    expect(aiRequests).toHaveLength(1);
+    expect(aiRequests[0].retry).not.toBe(true);
+
+    const retryResponsePromise = page.waitForResponse(
+      (response) =>
+        response.url().endsWith('/api/public/ai/livechat') &&
+        response.request().method() === 'POST',
+    );
+    await recoveryNotice.getByRole('button', { name: 'Thử lại' }).click();
+    expect((await retryResponsePromise).status()).toBe(200);
+    await expect(page.getByText(degradedText, { exact: true })).toHaveCount(1);
+    await expect(page.getByText(degradedReply, { exact: true })).toHaveCount(1);
+    await expect(recoveryNotice.getByRole('button', { name: 'Gặp tư vấn viên' })).toBeVisible();
+    expect(aiRequests).toHaveLength(2);
+    expect(aiRequests[1].retry).toBe(true);
+    expect(aiRequests[1].inboundInteractionId).toBe(inboundInteractionId);
+
+    const escalationResponsePromise = page.waitForResponse(
+      (response) =>
+        response.url().endsWith('/api/public/livechat/escalate') &&
+        response.request().method() === 'POST',
+    );
+    await recoveryNotice.getByRole('button', { name: 'Gặp tư vấn viên' }).click();
+    const escalationResponse = await escalationResponsePromise;
+    expect(escalationResponse.status()).toBe(200);
+    await expect(page.getByText('Chuyên viên đã tham gia hội thoại và sẽ trả lời trực tiếp.')).toBeVisible({
+      timeout: 10_000,
+    });
+    await expect(
+      page.getByRole('alert').filter({ hasText: 'Tin nhắn cũ vẫn được giữ nguyên' }),
+    ).toBeVisible();
+
+    const inboundRows = await db.query(
+      `SELECT id, external_event_id
+       FROM interactions
+       WHERE tenant_id = $1
+         AND lead_id = $2
+         AND direction = 'INBOUND'
+         AND content = $3`,
+      [HOST_TENANT, leadId, degradedText],
+    );
+    expect(inboundRows.rows).toHaveLength(1);
+    expect(inboundRows.rows[0].id).toBe(inboundInteractionId);
+    expect(inboundRows.rows[0].external_event_id).toMatch(/^web-inbound:/);
+  });
 });
