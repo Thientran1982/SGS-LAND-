@@ -483,6 +483,22 @@ export async function listMarketingFacebookBackfillRequests(
   return result.rows.map(mapBackfillRequest);
 }
 
+export async function getMarketingFacebookBackfillRequest(
+  pool: Pool,
+  tenantId: string,
+  logicalDay: string,
+): Promise<MarketingFacebookBackfillRequest | null> {
+  const result = await pool.query(
+    `SELECT *
+       FROM marketing_facebook_backfill_requests
+      WHERE tenant_id = $1
+        AND logical_day = $2::date
+      LIMIT 1`,
+    [tenantId, logicalDay],
+  );
+  return result.rows[0] ? mapBackfillRequest(result.rows[0]) : null;
+}
+
 export async function finishMarketingFacebookDailyRun(
   pool: Pool,
   runId: string,

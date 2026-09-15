@@ -12,6 +12,7 @@ import {
   createMarketingFacebookBackfillRequest,
   finishMarketingFacebookBackfillRequest,
   finishMarketingFacebookDailyRun,
+  getMarketingFacebookBackfillRequest,
   getAutoPostingSettings,
   getNextAutoPostingSlotIndex,
   listEnabledAutoPostingTenants,
@@ -613,6 +614,46 @@ export async function runAutoPostingTick(pool: Pool, now = new Date()) {
   return results;
 }
 
+export async function runAutoPostingCatchUp(pool: Pool, now = new Date()): Promise<void> {
+  const today = localDayKey(now);
+  const tenants = await listEnabledAutoPostingTenants(pool);
+  for (const tenantId of tenants) {
+    const settings = await computeEffectiveSettings(pool, tenantId, await getAutoPostingSettings(pool, tenantId));
+    if (!settings.enabled) continue;
+    const lastWindowEndMinutes = settings.timeWindows.reduce((max, window) => {
+      const [endHour, endMinute] = String(window.end || '').split(':').map(Number);
+      if (![endHour, endMinute].every(Number.isFinite)) return max;
+      return Math.max(max, endHour * 60 + endMinute);
+    }, -1);
+    if (lastWindowEndMinutes < 0 || localMinutes(now) < lastWindowEndMinutes) continue;
+
+    // A failed backfill may have stopped before creating a publication (for
+    // example, during a schema outage). Retry that durable request once the
+    // scheduler is healthy. runAutoPostingBackfill still blocks ambiguous,
+    // unresolved, and already-successful provider targets.
+    const existingBackfill = await getMarketingFacebookBackfillRequest(pool, tenantId, today);
+    if (existingBackfill?.status === 'FAILED') {
+      logger.info(`[MarketingAgent] Catch-up: retrying failed backfill for tenant ${tenantId}, day ${today}.`);
+      const result = await runAutoPostingBackfill(
+        pool,
+        tenantId,
+        today,
+        'BOOT_CATCHUP_RETRY',
+        'system:auto-scheduler',
+        now,
+      );
+      logger.info('[MarketingAgent] Catch-up retry result: ' + JSON.stringify(result));
+      continue;
+    }
+
+    const postsAttemptedToday = await countAutoPostingRunsToday(pool, tenantId, today);
+    if (postsAttemptedToday > 0) continue;
+    logger.info(`[MarketingAgent] Catch-up: tenant ${tenantId} has no posting attempt today (${today}), running backfill slot 0.`);
+    const result = await runAutoPostingBackfill(pool, tenantId, today, 'BOOT_CATCHUP', 'system:auto-scheduler', now);
+    logger.info('[MarketingAgent] Catch-up result: ' + JSON.stringify(result));
+  }
+}
+
 async function checkStaleNotReadySocialTargets(pool: Pool): Promise<void> {
   const result = await pool.query(
     `SELECT t.id, t.tenant_id, t.publication_id, t.platform, t.created_at
@@ -655,24 +696,7 @@ export function startAutoPostingScheduler(pool: Pool) {
   tickTimer.unref?.();
   const catchUpMissedTodayRun = async () => {
     try {
-      const now = new Date();
-      const today = localDayKey(now);
-      const tenants = await listEnabledAutoPostingTenants(pool);
-      for (const tenantId of tenants) {
-        const settings = await computeEffectiveSettings(pool, tenantId, await getAutoPostingSettings(pool, tenantId));
-        if (!settings.enabled) continue;
-        const lastWindowEndMinutes = settings.timeWindows.reduce((max, window) => {
-          const [endHour, endMinute] = String(window.end || '').split(':').map(Number);
-          if (![endHour, endMinute].every(Number.isFinite)) return max;
-          return Math.max(max, endHour * 60 + endMinute);
-        }, -1);
-        if (lastWindowEndMinutes < 0 || localMinutes(now) < lastWindowEndMinutes) continue;
-        const postsAttemptedToday = await countAutoPostingRunsToday(pool, tenantId, today);
-        if (postsAttemptedToday > 0) continue;
-        logger.info(`[MarketingAgent] Catch-up: tenant ${tenantId} has no posting attempt today (${today}), running backfill slot 0.`);
-        const result = await runAutoPostingBackfill(pool, tenantId, today, 'BOOT_CATCHUP', 'system:auto-scheduler', now);
-        logger.info('[MarketingAgent] Catch-up result: ' + JSON.stringify(result));
-      }
+      await runAutoPostingCatchUp(pool, new Date());
     } catch (error: any) {
       logger.error('[MarketingAgent] Boot catch-up failed', error);
     }

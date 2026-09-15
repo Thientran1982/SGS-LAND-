@@ -24,6 +24,7 @@ import {
   upsertAutoPostingSettings,
 } from '../repositories/autoPostingRepository';
 import {
+  runAutoPostingCatchUp,
   runAutoPostingBackfill,
   runAutoPostingForTenant,
   runAutoPostingTick,
@@ -602,6 +603,38 @@ describePostgres('Marketing Facebook daily selector against PostgreSQL', () => {
       status: 'SUCCESS',
       reason: 'Đã bổ sung ảnh HTTPS, chạy lại',
       requested_by: 'manager-2',
+    });
+  });
+
+  it('automatically retries a failed backfill after the scheduled window', async () => {
+    await configureSelector(tenantA);
+    configureCapabilities({
+      FACEBOOK_PAGE: { status: 'READY', reason: 'Facebook đã xác minh', retryable: false },
+    });
+    const request = await createMarketingFacebookBackfillRequest(setupPool, {
+      tenantId: tenantA,
+      logicalDay: '2026-01-02',
+      reason: 'QStash bị gián đoạn',
+      requestedBy: 'system:auto-scheduler',
+    });
+    await finishMarketingFacebookBackfillRequest(setupPool, request.request.id, {
+      status: 'FAILED',
+      errorCode: '42P10',
+      errorMessage: 'missing conflict index',
+      result: { reason: 'ERROR', logicalDay: '2026-01-02' },
+    });
+
+    await runAutoPostingCatchUp(setupPool, new Date('2026-01-03T17:30:00.000Z'));
+
+    const retried = await query(
+      `SELECT status, error_code, error_message
+         FROM marketing_facebook_backfill_requests
+        WHERE id = $1`,
+      [request.request.id],
+    );
+    expect(retried.rows[0]).toMatchObject({
+      status: 'SKIPPED',
+      error_code: 'NO_ELIGIBLE_SOURCE',
     });
   });
 
