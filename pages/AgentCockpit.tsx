@@ -19,7 +19,10 @@ type CockpitSummary = {
   generatedAt: string;
   degraded?: boolean;
   warning?: string;
+  availability?: Partial<Record<CockpitPanel, { available: boolean; error?: string }>>;
+  unavailablePanels?: CockpitPanel[];
 };
+type CockpitPanel = 'events' | 'questions' | 'executions' | 'audit' | 'rollouts' | 'weeklyKpi' | 'shiftReports' | 'roleCards' | 'rollbackAudits';
 type ReplayHistory = { id: string; operator_id: string; reason: string; replay_number: number; result_status: string; result_error?: string; requested_at: string; completed_at?: string };
 type OperatingEvent = { id: string; event_id: string; event_type: string; idempotency_key: string; urgency: number; status: string; attempts: number; last_error?: string; lease_expires_at?: string; lease_expired?: boolean; created_at: string; updated_at: string; replay_history: ReplayHistory[] };
 type HumanQuestion = { id: string; agent_key: string; question: string; priority: number; created_at: string; context_json: Record<string, unknown> };
@@ -32,8 +35,27 @@ type MarketingGrowthStatus = {
 };
 
 const count = (rows: Array<{ status: string; count: number }> = [], status: string) => rows.find(row => row.status === status)?.count || 0;
-const cockpitMetric = (degraded: boolean | undefined, rows: Array<{ status: string; count: number }>, status: string) =>
-  degraded ? '—' : count(rows, status);
+const cockpitPanelAvailable = (summary: CockpitSummary, panel: CockpitPanel) =>
+  summary.availability?.[panel]?.available ?? !summary.degraded;
+const cockpitMetric = (summary: CockpitSummary, panel: CockpitPanel, rows: Array<{ status: string; count: number }>, status: string) =>
+  cockpitPanelAvailable(summary, panel) ? count(rows, status) : '—';
+const cockpitPanelLabel: Record<CockpitPanel, string> = {
+  events: 'sự kiện',
+  questions: 'hàng đợi câu hỏi nhân viên',
+  executions: 'lượt chạy',
+  audit: 'audit gần đây',
+  rollouts: 'rollout',
+  weeklyKpi: 'KPI tuần',
+  shiftReports: 'báo cáo ca',
+  roleCards: 'thẻ vai trò',
+  rollbackAudits: 'audit rollback',
+};
+const panelUnavailableMessage = (summary: CockpitSummary, panel: CockpitPanel) =>
+  cockpitPanelAvailable(summary, panel) ? null : `Không thể tải ${cockpitPanelLabel[panel]}. Dữ liệu chưa khả dụng; hãy thử làm mới.`;
+function PanelWarning({ summary, panel }: { summary: CockpitSummary; panel: CockpitPanel }) {
+  const message = panelUnavailableMessage(summary, panel);
+  return message ? <div role="status" className="mb-3 flex items-center gap-2 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-800"><AlertTriangle size={15} /> {message}</div> : null;
+}
 const eventStatusLabel: Record<string, string> = { FAILED: 'Thất bại', DEAD_LETTER: 'Hàng chờ lỗi', PROCESSING: 'Đang xử lý', DONE: 'Hoàn tất', PENDING: 'Đang chờ' };
 const memoryKindLabel: Record<string, string> = { fact: 'Sự thật', episodic: 'Theo sự kiện', procedural: 'Quy trình' };
 const brainTypeLabel: Record<string, string> = { brand_voice: 'Giọng thương hiệu', developer: 'Chủ đầu tư', project: 'Dự án', legal_disclaimer: 'Lưu ý pháp lý', broker: 'Môi giới', faq: 'Câu hỏi thường gặp', competitor_note: 'Ghi chú cạnh tranh' };
@@ -257,14 +279,17 @@ export default function AgentCockpit() {
       <AgentNeuronMap />
       {error && <div role="alert" className="flex items-center gap-2 rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700"><AlertTriangle size={17} /> {error}</div>}
       {loading && !summary ? <div className="rounded-xl border border-slate-200 bg-white p-10 text-center text-sm text-slate-500">Đang tải trạng thái agent…</div> : summary && <>
-         {summary.degraded && <div role="status" className="flex items-center gap-2 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800"><AlertTriangle size={17} /> {summary.warning || 'Một phần dữ liệu vận hành đang tạm thời không khả dụng.'}</div>}
+         {summary.degraded && <div role="status" className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
+           <div className="flex items-center gap-2"><AlertTriangle size={17} /> {summary.warning || 'Một phần dữ liệu vận hành đang tạm thời không khả dụng.'}</div>
+           {!!summary.unavailablePanels?.length && <div className="mt-1 pl-6 text-xs">Chưa tải được: {summary.unavailablePanels.map(panel => cockpitPanelLabel[panel]).join(', ')}.</div>}
+         </div>}
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
            {[
-            ['Lần chạy đang xử lý', cockpitMetric(summary.degraded, summary.executions, 'RUNNING'), 'text-indigo-600'],
-            ['Chờ nhân viên', cockpitMetric(summary.degraded, summary.humanQuestions, 'OPEN'), 'text-amber-600'],
-            ['Event lỗi', summary.degraded ? '—' : count(summary.events, 'FAILED') + count(summary.events, 'DEAD_LETTER'), 'text-rose-600'],
-            ['Đã hoàn tất', cockpitMetric(summary.degraded, summary.executions, 'SUCCESS'), 'text-emerald-600'],
-          ].map(([label, value, color]) => <div key={String(label)} className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm"><div className="text-xs font-medium text-slate-500">{label}</div><div className={`mt-2 text-2xl font-bold ${color}`}>{value}</div></div>)}
+             ['Lần chạy đang xử lý', cockpitMetric(summary, 'executions', summary.executions, 'RUNNING'), 'text-indigo-600'],
+             ['Chờ nhân viên', cockpitMetric(summary, 'questions', summary.humanQuestions, 'OPEN'), 'text-amber-600'],
+             ['Event lỗi', cockpitPanelAvailable(summary, 'events') ? count(summary.events, 'FAILED') + count(summary.events, 'DEAD_LETTER') : '—', 'text-rose-600'],
+             ['Đã hoàn tất', cockpitMetric(summary, 'executions', summary.executions, 'SUCCESS'), 'text-emerald-600'],
+           ].map(([label, value, color]) => <div key={String(label)} className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm"><div className="text-xs font-medium text-slate-500">{label}</div><div className={`mt-2 text-2xl font-bold ${color}`}>{value}</div></div>)}
         </div>
         {zaloReadinessWarnings.length > 0 && <section className="rounded-xl border border-amber-200 bg-amber-50/50 p-5 shadow-sm" aria-labelledby="zalo-readiness-warning-title">
           <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
@@ -300,12 +325,13 @@ export default function AgentCockpit() {
              <div className="flex items-center gap-2"><Filter size={19} className="text-rose-600" /><div><h2 className="font-semibold text-slate-900">Sự kiện cần vận hành</h2><p className="text-xs text-slate-500">Sự kiện treo phiên xử lý hoặc lỗi nhiều lần được đưa lên đầu.</p></div></div>
             <button onClick={() => void load()} className="inline-flex items-center gap-1 rounded-lg border border-slate-200 px-3 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50"><RefreshCw size={14} /> Làm mới</button>
           </div>
+           <PanelWarning summary={summary} panel="events" />
           <div className="mb-4 grid gap-2 sm:grid-cols-3">
              <Dropdown label="Mức độ ưu tiên" value={eventFilters.urgency} onChange={value => eventFilter('urgency', String(value))} options={[{ value: 'ALL', label: 'Mọi mức độ' }, { value: 'HIGH', label: 'Cao (≥75)' }, { value: 'NORMAL', label: 'Vừa (40–74)' }, { value: 'LOW', label: 'Thấp (<40)' }]} variant="compact" />
              <Dropdown label="Phiên xử lý" value={eventFilters.lease} onChange={value => eventFilter('lease', String(value))} options={[{ value: 'ALL', label: 'Mọi phiên' }, { value: 'EXPIRED', label: 'Đã hết hạn' }, { value: 'ACTIVE', label: 'Đang giữ phiên' }, { value: 'NONE', label: 'Không có phiên' }]} variant="compact" />
              <Dropdown label="Sự kiện lỗi" value={eventFilters.deadLetter} onChange={value => eventFilter('deadLetter', String(value))} options={[{ value: 'ALL', label: 'Tất cả sự kiện' }, { value: 'YES', label: 'Chỉ sự kiện lỗi' }, { value: 'NO', label: 'Không có sự kiện lỗi' }]} variant="compact" />
           </div>
-           {events.length === 0 ? <div className="rounded-lg bg-slate-50 p-6 text-center text-sm text-slate-500">Không có sự kiện phù hợp bộ lọc.</div> : <div className="space-y-2">{events.map(event => {
+            {events.length === 0 && cockpitPanelAvailable(summary, 'events') ? <div className="rounded-lg bg-slate-50 p-6 text-center text-sm text-slate-500">Không có sự kiện phù hợp bộ lọc.</div> : events.length > 0 ? <div className="space-y-2">{events.map(event => {
             const attention = event.status === 'DEAD_LETTER' || event.lease_expired;
             return <div key={event.id} className={`rounded-lg border p-4 ${event.status === 'DEAD_LETTER' ? 'border-rose-200 bg-rose-50/40' : event.lease_expired ? 'border-amber-200 bg-amber-50/40' : 'border-slate-100'}`}>
                <div className="flex flex-wrap items-start justify-between gap-3"><div><div className="flex flex-wrap items-center gap-2"><b className="text-sm text-slate-900">{event.event_type}</b><span className={`rounded-full px-2 py-0.5 text-[10px] font-bold ${event.status === 'DEAD_LETTER' ? 'bg-rose-100 text-rose-800' : event.status === 'PROCESSING' ? 'bg-amber-100 text-amber-800' : 'bg-slate-100 text-slate-700'}`}>{eventStatusLabel[event.status] || event.status}</span><span className="text-xs text-slate-500">Mức độ {event.urgency}</span></div><p className="mt-1 text-xs text-slate-500">Mã {event.event_id} · {new Date(event.created_at).toLocaleString('vi-VN')}</p></div>{(event.status === 'FAILED' || event.status === 'DEAD_LETTER') && <button onClick={() => void replayEvent(event)} disabled={replaying === event.id} className="inline-flex items-center gap-1 rounded-lg bg-indigo-600 px-3 py-2 text-xs font-semibold text-white disabled:opacity-50"><PlayCircle size={14} /> {replaying === event.id ? 'Đang chạy lại…' : 'Chạy lại có kiểm soát'}</button>}</div>
@@ -313,7 +339,7 @@ export default function AgentCockpit() {
               {(attention || event.last_error) && <div className="mt-3 rounded-md bg-white/80 px-3 py-2 text-xs"><b>{event.last_error ? 'Lỗi cuối: ' : ''}</b>{event.last_error || (event.lease_expired ? 'Worker không hoàn tất trước khi lease hết hạn.' : '')}</div>}
                {event.replay_history?.length > 0 && <div className="mt-3 border-t border-slate-200 pt-3"><div className="mb-2 text-xs font-semibold text-slate-700">Lịch sử chạy lại</div><div className="space-y-1.5">{event.replay_history.map(replay => <div key={replay.id} className="rounded-md bg-slate-50 px-3 py-2 text-xs text-slate-600"><div className="flex flex-wrap justify-between gap-2"><span><b>Lần {replay.replay_number}</b> · {eventStatusLabel[replay.result_status] || replay.result_status} · người vận hành {replay.operator_id}</span><span>{new Date(replay.requested_at).toLocaleString('vi-VN')}</span></div><div className="mt-1">{replay.reason}</div>{replay.result_error && <div className="mt-1 text-rose-700">Kết quả lỗi: {replay.result_error}</div>}</div>)}</div></div>}
             </div>;
-          })}</div>}
+           })}</div> : null}
         </section>
            <section className="rounded-xl border border-indigo-200 bg-indigo-50/30 p-5 shadow-sm">
            <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
@@ -355,16 +381,20 @@ export default function AgentCockpit() {
          {editingMemory && <div className="rounded-xl border border-indigo-300 bg-white p-5 shadow-sm"><div className="mb-3 flex items-center justify-between"><h3 className="font-semibold text-slate-900">Sửa memory: {editingMemory.key}</h3><button onClick={() => setEditingMemory(null)} className="text-sm text-slate-500">Hủy</button></div><div className="grid gap-3 md:grid-cols-2"><input value={memoryForm.namespace} onChange={e => setMemoryForm({ ...memoryForm, namespace: e.target.value })} placeholder="Namespace" className="rounded-lg border px-3 py-2 text-sm" /><input value={memoryForm.key} onChange={e => setMemoryForm({ ...memoryForm, key: e.target.value })} placeholder="Key" className="rounded-lg border px-3 py-2 text-sm" /><Dropdown value={memoryForm.kind} onChange={value => setMemoryForm({ ...memoryForm, kind: String(value) })} options={[{ value: 'fact', label: 'Fact' }, { value: 'episodic', label: 'Episodic' }, { value: 'procedural', label: 'Procedural' }]} variant="compact" /><input type="number" min="0" max="1" step="0.05" value={memoryForm.importance} onChange={e => setMemoryForm({ ...memoryForm, importance: e.target.value })} placeholder="Importance" className="rounded-lg border px-3 py-2 text-sm" /><textarea value={memoryForm.value} onChange={e => setMemoryForm({ ...memoryForm, value: e.target.value })} placeholder="Nội dung memory" className="min-h-24 rounded-lg border px-3 py-2 text-sm md:col-span-2" /></div><button onClick={() => void saveMemory()} className="mt-3 inline-flex items-center gap-1 rounded-lg bg-indigo-600 px-3 py-2 text-sm font-semibold text-white"><Save size={15} /> Lưu an toàn</button></div>}
         <section className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
           <div className="mb-4 flex items-center gap-2"><ShieldCheck size={19} className="text-indigo-600" /><h2 className="font-semibold text-slate-900">Thẻ vai trò và triển khai</h2></div>
+           <PanelWarning summary={summary} panel="roleCards" />
+           <PanelWarning summary={summary} panel="rollouts" />
           <div className="grid gap-3 md:grid-cols-3">{summary.roleCards.map(card => {
             const rollout = summary.rollouts.find(item => item.agent_key === card.agentKey);
+             const roleCardsAvailable = cockpitPanelAvailable(summary, 'roleCards');
+             const rolloutsAvailable = cockpitPanelAvailable(summary, 'rollouts');
             return <div key={card.agentKey} className="rounded-lg border border-slate-100 bg-slate-50 p-4">
-              <div className="flex items-center justify-between gap-2"><h3 className="font-semibold text-slate-900">{card.title}</h3><span className="rounded-full bg-indigo-50 px-2 py-1 text-[10px] font-bold text-indigo-700">{rollout?.status || card.rollout}</span></div>
+               <div className="flex items-center justify-between gap-2"><h3 className="font-semibold text-slate-900">{card.title}</h3><span className="rounded-full bg-indigo-50 px-2 py-1 text-[10px] font-bold text-indigo-700">{rolloutsAvailable ? rollout?.status || card.rollout : 'Chưa tải'}</span></div>
               <p className="mt-2 text-xs leading-5 text-slate-600">{card.mission}</p>
               <div className="mt-3 text-[11px] text-slate-500">KPI: {card.kpis.join(' · ')}</div>
-              {rollout?.shadow_enabled && <div className="mt-2 text-[11px] font-medium text-amber-700">Chế độ quan sát · không tác động hệ thống thật</div>}
+               {rolloutsAvailable && rollout?.shadow_enabled && <div className="mt-2 text-[11px] font-medium text-amber-700">Chế độ quan sát · không tác động hệ thống thật</div>}
               <div className="mt-3 flex items-center justify-between gap-2 border-t border-slate-200 pt-3">
-                <span className={`text-[11px] font-semibold ${card.approval_status === 'APPROVED' ? 'text-emerald-700' : 'text-amber-700'}`}>{card.approval_status === 'APPROVED' ? 'Đã duyệt' : 'Chờ duyệt'}</span>
-                <button onClick={() => void approveCard(card.agentKey, card.approval_status !== 'APPROVED')} disabled={approving === card.agentKey} className="rounded-md border border-indigo-200 bg-white px-2 py-1 text-[11px] font-semibold text-indigo-700 disabled:opacity-50">{approving === card.agentKey ? 'Đang cập nhật…' : card.approval_status === 'APPROVED' ? 'Thu hồi phê duyệt' : 'Thực hiện phê duyệt thẻ vai trò'}</button>
+                 <span className={`text-[11px] font-semibold ${!roleCardsAvailable ? 'text-amber-700' : card.approval_status === 'APPROVED' ? 'text-emerald-700' : 'text-amber-700'}`}>{!roleCardsAvailable ? 'Chưa tải' : card.approval_status === 'APPROVED' ? 'Đã duyệt' : 'Chờ duyệt'}</span>
+                 <button onClick={() => void approveCard(card.agentKey, card.approval_status !== 'APPROVED')} disabled={!roleCardsAvailable || approving === card.agentKey} className="rounded-md border border-indigo-200 bg-white px-2 py-1 text-[11px] font-semibold text-indigo-700 disabled:opacity-50">{!roleCardsAvailable ? 'Không khả dụng' : approving === card.agentKey ? 'Đang cập nhật…' : card.approval_status === 'APPROVED' ? 'Thu hồi phê duyệt' : 'Thực hiện phê duyệt thẻ vai trò'}</button>
               </div>
             </div>;
           })}</div>
@@ -372,22 +402,25 @@ export default function AgentCockpit() {
         <div className="grid gap-4 lg:grid-cols-2">
           <section className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
             <div className="mb-4 flex items-center gap-2"><BarChart3 size={19} className="text-indigo-600" /><h2 className="font-semibold text-slate-900">KPI tuần</h2></div>
-            {summary.weeklyKpi.length === 0 ? <p className="text-sm text-slate-500">Chưa có snapshot KPI.</p> : <div className="space-y-2">{summary.weeklyKpi.map((kpi, i) => <div key={`${kpi.agent_key}-${kpi.period_start}-${i}`} className="rounded-lg bg-slate-50 p-3"><div className="flex justify-between text-xs font-semibold text-slate-700"><span>{kpi.agent_key}</span><span>{kpi.period_start} → {kpi.period_end}</span></div><div className="mt-2 flex flex-wrap gap-2">{Object.entries(kpi.metrics_json || {}).map(([key, value]) => <span key={key} className="rounded-full bg-white px-2 py-1 text-[11px] text-slate-600">{key}: <b>{String(value)}</b></span>)}</div></div>)}</div>}
+             <PanelWarning summary={summary} panel="weeklyKpi" />
+             {summary.weeklyKpi.length === 0 && cockpitPanelAvailable(summary, 'weeklyKpi') ? <p className="text-sm text-slate-500">Chưa có snapshot KPI.</p> : summary.weeklyKpi.length > 0 ? <div className="space-y-2">{summary.weeklyKpi.map((kpi, i) => <div key={`${kpi.agent_key}-${kpi.period_start}-${i}`} className="rounded-lg bg-slate-50 p-3"><div className="flex justify-between text-xs font-semibold text-slate-700"><span>{kpi.agent_key}</span><span>{kpi.period_start} → {kpi.period_end}</span></div><div className="mt-2 flex flex-wrap gap-2">{Object.entries(kpi.metrics_json || {}).map(([key, value]) => <span key={key} className="rounded-full bg-white px-2 py-1 text-[11px] text-slate-600">{key}: <b>{String(value)}</b></span>)}</div></div>)}</div> : null}
           </section>
           <section className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
             <div className="mb-4 flex items-center gap-2"><ClipboardCheck size={19} className="text-emerald-600" /><h2 className="font-semibold text-slate-900">Báo cáo ca hằng ngày</h2></div>
-            {summary.shiftReports.length === 0 ? <p className="text-sm text-slate-500">Chưa có báo cáo ca.</p> : <div className="space-y-2">{summary.shiftReports.slice(0, 7).map(report => <div key={report.id} className="rounded-lg border border-slate-100 p-3"><div className="flex items-center justify-between text-xs"><b>{report.report_date} · {report.shift}</b>{report.reviewed ? <span className="text-emerald-700">Đã duyệt</span> : <button onClick={() => void reviewShift(report.id)} className="font-semibold text-indigo-700">Duyệt</button>}</div><p className="mt-2 text-sm text-slate-700">{report.summary || 'Không có ghi chú.'}</p></div>)}</div>}
+             <PanelWarning summary={summary} panel="shiftReports" />
+             {summary.shiftReports.length === 0 && cockpitPanelAvailable(summary, 'shiftReports') ? <p className="text-sm text-slate-500">Chưa có báo cáo ca.</p> : summary.shiftReports.length > 0 ? <div className="space-y-2">{summary.shiftReports.slice(0, 7).map(report => <div key={report.id} className="rounded-lg border border-slate-100 p-3"><div className="flex items-center justify-between text-xs"><b>{report.report_date} · {report.shift}</b>{report.reviewed ? <span className="text-emerald-700">Đã duyệt</span> : <button onClick={() => void reviewShift(report.id)} className="font-semibold text-indigo-700">Duyệt</button>}</div><p className="mt-2 text-sm text-slate-700">{report.summary || 'Không có ghi chú.'}</p></div>)}</div> : null}
           </section>
         </div>
-        <section className="rounded-xl border border-rose-200 bg-rose-50/40 p-5 shadow-sm"><div className="mb-3 flex items-center gap-2"><RotateCcw size={18} className="text-rose-700" /><h2 className="font-semibold text-slate-900">Audit rollback</h2></div>{summary.rollbackAudits.length === 0 ? <p className="text-sm text-slate-500">Chưa có rollback.</p> : <div className="space-y-2">{summary.rollbackAudits.slice(0, 8).map((audit, i) => <div key={`${audit.created_at}-${i}`} className="flex flex-wrap justify-between gap-2 rounded-lg bg-white p-3 text-sm"><span><b>{audit.entity_id}</b> · {audit.from_status} → ROLLED_BACK</span><span className="text-xs text-slate-500">{audit.reason} · {new Date(audit.created_at).toLocaleString('vi-VN')}</span></div>)}</div>}</section>
+         <section className="rounded-xl border border-rose-200 bg-rose-50/40 p-5 shadow-sm"><div className="mb-3 flex items-center gap-2"><RotateCcw size={18} className="text-rose-700" /><h2 className="font-semibold text-slate-900">Audit rollback</h2></div><PanelWarning summary={summary} panel="rollbackAudits" />{summary.rollbackAudits.length === 0 && cockpitPanelAvailable(summary, 'rollbackAudits') ? <p className="text-sm text-slate-500">Chưa có rollback.</p> : summary.rollbackAudits.length > 0 ? <div className="space-y-2">{summary.rollbackAudits.slice(0, 8).map((audit, i) => <div key={`${audit.created_at}-${i}`} className="flex flex-wrap justify-between gap-2 rounded-lg bg-white p-3 text-sm"><span><b>{audit.entity_id}</b> · {audit.from_status} → ROLLED_BACK</span><span className="text-xs text-slate-500">{audit.reason} · {new Date(audit.created_at).toLocaleString('vi-VN')}</span></div>)}</div> : null}</section>
         <section className="rounded-xl border border-amber-200 bg-amber-50/50 p-5 shadow-sm">
-          <div className="mb-4 flex items-center gap-2"><Clock3 size={19} className="text-amber-700" /><h2 className="font-semibold text-slate-900">Hàng đợi cần nhân viên xử lý</h2><span className="rounded-full bg-amber-100 px-2 py-0.5 text-xs font-semibold text-amber-800">{questions.length}</span></div>
-          {questions.length === 0 ? <div className="flex items-center gap-2 text-sm text-slate-600"><CheckCircle2 size={16} className="text-emerald-600" /> Không có câu hỏi đang chờ.</div> : <div className="space-y-3">{questions.map(question => <div key={question.id} className="rounded-lg border border-amber-200 bg-white p-4">
+           <div className="mb-4 flex items-center gap-2"><Clock3 size={19} className="text-amber-700" /><h2 className="font-semibold text-slate-900">Hàng đợi cần nhân viên xử lý</h2><span className="rounded-full bg-amber-100 px-2 py-0.5 text-xs font-semibold text-amber-800">{cockpitPanelAvailable(summary, 'questions') ? questions.length : '—'}</span></div>
+           <PanelWarning summary={summary} panel="questions" />
+           {questions.length === 0 && cockpitPanelAvailable(summary, 'questions') ? <div className="flex items-center gap-2 text-sm text-slate-600"><CheckCircle2 size={16} className="text-emerald-600" /> Không có câu hỏi đang chờ.</div> : questions.length > 0 ? <div className="space-y-3">{questions.map(question => <div key={question.id} className="rounded-lg border border-amber-200 bg-white p-4">
             <div className="flex flex-wrap items-center justify-between gap-2"><span className="text-xs font-bold uppercase text-indigo-700">{question.agent_key}</span><span className="text-xs text-slate-500">Ưu tiên {question.priority}</span></div>
             <p className="mt-2 text-sm text-slate-800">{question.question}</p>
             <div className="mt-3 flex flex-wrap gap-2"><input value={answering === question.id ? answer : ''} onChange={event => { setAnswering(question.id); setAnswer(event.target.value); }} placeholder="Trả lời để agent tiếp tục…" className="min-w-0 flex-1 rounded-lg border border-slate-200 px-3 py-2 text-sm outline-none focus:border-indigo-400" /><button onClick={() => void submitAnswer(question.id)} disabled={answering === question.id && !answer.trim()} className="inline-flex items-center gap-1 rounded-lg bg-indigo-600 px-3 py-2 text-sm font-semibold text-white disabled:opacity-50"><Send size={15} /> Trả lời</button></div>
             <label className="mt-2 flex items-center gap-2 text-xs text-slate-600"><input type="checkbox" checked={approveMemory} onChange={event => setApproveMemory(event.target.checked)} /> Cho phép đưa câu trả lời vào memory</label>
-          </div>)}</div>}
+           </div>)}</div> : null}
         </section>
          <section className="rounded-xl border border-sky-200 bg-sky-50/40 p-5 shadow-sm">
            <div className="mb-4 flex items-center gap-2"><Send size={19} className="text-sky-700" /><h2 className="font-semibold text-slate-900">Yêu cầu hỗ trợ từ người dùng</h2><span className="rounded-full bg-sky-100 px-2 py-0.5 text-xs font-semibold text-sky-800">{supportRequests.length}</span></div>
@@ -396,9 +429,9 @@ export default function AgentCockpit() {
              <h3 className="mt-2 text-sm font-semibold text-slate-800">{request.title}</h3><p className="mt-1 whitespace-pre-wrap text-sm text-slate-600">{request.description}</p>
              {request.latestReply && <p className="mt-2 rounded-md bg-slate-50 p-2 text-xs text-slate-600">Phản hồi gần nhất: {request.latestReply}</p>}
              <div className="mt-3 grid gap-2 sm:grid-cols-[180px_1fr_auto]"><Dropdown value={supportStatus[request.id] || (request.status === 'RECEIVED' ? 'IN_PROGRESS' : request.status)} onChange={value => setSupportStatus(current => ({ ...current, [request.id]: String(value) }))} options={[{ value: 'IN_PROGRESS', label: 'Đang xử lý' }, { value: 'WAITING_FOR_USER', label: 'Chờ người dùng' }, { value: 'RESOLVED', label: 'Đã xử lý' }, { value: 'CLOSED', label: 'Đóng yêu cầu' }]} variant="compact" /><input value={supportReply[request.id] || ''} onChange={event => setSupportReply(current => ({ ...current, [request.id]: event.target.value }))} placeholder="Phản hồi cho người dùng (không gửi dữ liệu nhạy cảm)" maxLength={2000} className="rounded-lg border border-slate-200 px-3 py-2 text-sm" /><button onClick={() => void updateSupport(request)} disabled={updatingSupport === request.id} className="rounded-lg bg-sky-700 px-3 py-2 text-xs font-semibold text-white disabled:opacity-50">{updatingSupport === request.id ? 'Đang lưu…' : 'Cập nhật'}</button></div>
-           </div>)}</div>}
+            </div>)}</div>}
          </section>
-        <section className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm"><div className="mb-3 flex items-center gap-2"><XCircle size={18} className="text-slate-500" /><h2 className="font-semibold text-slate-900">Audit gần đây</h2></div><div className="divide-y divide-slate-100">{summary.recentAudit.slice(0, 8).map((event, index) => <div key={`${event.created_at}-${index}`} className="flex items-center justify-between gap-3 py-2 text-sm"><span className="text-slate-700">{event.event_type}</span><span className="text-xs text-slate-500">{event.status} · {new Date(event.created_at).toLocaleString('vi-VN')}</span></div>)}</div></section>
+         <section className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm"><div className="mb-3 flex items-center gap-2"><XCircle size={18} className="text-slate-500" /><h2 className="font-semibold text-slate-900">Audit gần đây</h2></div><PanelWarning summary={summary} panel="audit" />{summary.recentAudit.length > 0 ? <div className="divide-y divide-slate-100">{summary.recentAudit.slice(0, 8).map((event, index) => <div key={`${event.created_at}-${index}`} className="flex items-center justify-between gap-3 py-2 text-sm"><span className="text-slate-700">{event.event_type}</span><span className="text-xs text-slate-500">{event.status} · {new Date(event.created_at).toLocaleString('vi-VN')}</span></div>)}</div> : cockpitPanelAvailable(summary, 'audit') ? <p className="text-sm text-slate-500">Chưa có audit gần đây.</p> : null}</section>
       </>}
     </div>
   );

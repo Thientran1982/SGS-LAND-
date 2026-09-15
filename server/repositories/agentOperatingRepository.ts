@@ -1,6 +1,24 @@
 import { withTenantContext } from '../db';
 import { DEFAULT_AGENT_ROLE_CARDS } from '../ai/agentRoleCards';
 
+export const COCKPIT_PANELS = [
+  'events',
+  'questions',
+  'executions',
+  'audit',
+  'rollouts',
+  'weeklyKpi',
+  'shiftReports',
+  'roleCards',
+  'rollbackAudits',
+] as const;
+
+export type CockpitPanel = typeof COCKPIT_PANELS[number];
+export type CockpitPanelAvailability = {
+  available: boolean;
+  error?: 'QUERY_FAILED';
+};
+
 export type OperatingEventInput = {
   eventId: string;
   eventType: string;
@@ -272,14 +290,19 @@ class AgentOperatingRepository {
     return withTenantContext(tenantId, async client => {
       // Cockpit is an operational overview, so one optional/older subsystem
       // must not take down the whole page during schema rollout. Required
-      // tenant scoping is retained for every query; failed panels are empty
-      // and logged for migration/ops follow-up.
+      // tenant scoping is retained for every query. Failed panels remain
+      // empty for backwards-compatible rendering, but their availability is
+      // returned separately so an empty result is never mistaken for no data.
       const safeQuery = async (name: string, text: string, values: unknown[]) => {
         try {
-          return await client.query(text, values);
+          const result = await client.query(text, values);
+          return { rows: result.rows, availability: { available: true } as CockpitPanelAvailability };
         } catch (error: any) {
           console.error(`[AgentCockpit] ${name} panel unavailable:`, error?.message || error);
-          return { rows: [] as any[] };
+          return {
+            rows: [] as any[],
+            availability: { available: false, error: 'QUERY_FAILED' } as CockpitPanelAvailability,
+          };
         }
       };
       const [events, questions, executions, audits, rollouts, kpis, shifts, roleCards, rollbackAudits] = await Promise.all([
@@ -294,8 +317,24 @@ class AgentOperatingRepository {
         safeQuery('rollback-audits', `SELECT id, entity_id, from_status, to_status, decision, reason, metrics_json, trace_id, created_at FROM ai_promotion_decisions WHERE tenant_id=$1 AND decision='ROLLBACK' ORDER BY created_at DESC LIMIT 30`, [tenantId]),
       ]);
       const savedCards = new Map(roleCards.rows.map(card => [card.agent_key, card]));
+      const availability: Record<CockpitPanel, CockpitPanelAvailability> = {
+        events: events.availability,
+        questions: questions.availability,
+        executions: executions.availability,
+        audit: audits.availability,
+        rollouts: rollouts.availability,
+        weeklyKpi: kpis.availability,
+        shiftReports: shifts.availability,
+        roleCards: roleCards.availability,
+        rollbackAudits: rollbackAudits.availability,
+      };
+      const unavailablePanels = COCKPIT_PANELS.filter(panel => !availability[panel].available);
       return {
-        roleCards: DEFAULT_AGENT_ROLE_CARDS.map(card => ({ ...card, ...(savedCards.get(card.agentKey) || {}) })),
+        roleCards: DEFAULT_AGENT_ROLE_CARDS.map(card => ({
+          ...card,
+          ...(savedCards.get(card.agentKey) || {}),
+          ...(availability.roleCards.available ? {} : { approval_status: 'UNAVAILABLE' }),
+        })),
         events: events.rows,
         humanQuestions: questions.rows,
         executions: executions.rows,
@@ -304,6 +343,12 @@ class AgentOperatingRepository {
         weeklyKpi: kpis.rows,
         shiftReports: shifts.rows,
         rollbackAudits: rollbackAudits.rows,
+        availability,
+        unavailablePanels,
+        degraded: unavailablePanels.length > 0,
+        warning: unavailablePanels.length > 0
+          ? 'Một hoặc nhiều panel vận hành chưa tải được; hãy thử làm mới sau.'
+          : undefined,
         generatedAt: new Date().toISOString(),
       };
     });

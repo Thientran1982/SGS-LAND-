@@ -1,5 +1,5 @@
 import { Router, Request, Response } from 'express';
-import { agentOperatingRepository } from '../repositories/agentOperatingRepository';
+import { agentOperatingRepository, COCKPIT_PANELS, type CockpitPanel, type CockpitPanelAvailability } from '../repositories/agentOperatingRepository';
 import { processAgentEvents } from '../services/agentOperatorDaemon';
 import { companyBrainRepository } from '../repositories/companyBrainRepository';
 import { DEFAULT_AGENT_ROLE_CARDS } from '../ai/agentRoleCards';
@@ -9,6 +9,9 @@ const BRAIN_DOCUMENT_TYPES = ['brand_voice', 'developer', 'project', 'legal_disc
 const BRAIN_VERIFICATION_STATUSES = ['verified', 'unverified', 'needs_review', 'stale'];
 
 function degradedCockpitSummary() {
+  const availability = Object.fromEntries(
+    COCKPIT_PANELS.map(panel => [panel, { available: false, error: 'QUERY_FAILED' }]),
+  ) as Record<CockpitPanel, CockpitPanelAvailability>;
   return {
     roleCards: DEFAULT_AGENT_ROLE_CARDS.map(card => ({
       ...card,
@@ -22,6 +25,8 @@ function degradedCockpitSummary() {
     weeklyKpi: [],
     shiftReports: [],
     rollbackAudits: [],
+    availability,
+    unavailablePanels: [...COCKPIT_PANELS],
     generatedAt: new Date().toISOString(),
     degraded: true,
     warning: 'Dữ liệu vận hành tạm thời chưa tải được; hãy thử làm mới sau.',
