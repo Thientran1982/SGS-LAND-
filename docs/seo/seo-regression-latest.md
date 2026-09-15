@@ -1,7 +1,7 @@
 # SEO/GEO/AEO Regression Check
 
-- Generated: 2026-08-22T05:11:26.671Z
-- Base URL: http://localhost:5000
+- Generated: 2026-09-15T04:33:09.483Z
+- Base URL: https://bc72de0b-fc4e-4e50-bcce-71b9685b0ab7-00-srgpeliovbek.worf.replit.dev
 - Sitemap URLs: 52
 - Pages checked: 52
 - Failures: 0
