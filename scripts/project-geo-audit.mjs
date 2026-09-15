@@ -52,6 +52,19 @@ function auditPage(routePath, status, html) {
   const answerLike = answerNode.length > 0;
   const reviewedAt = $("[data-geo-reviewed-at]").attr("data-geo-reviewed-at") || "";
   const evidenceState = $("[data-geo-evidence]").attr("data-geo-evidence") || "";
+  const sourceLinks = $("a[href]").map((_, el) => $(el).attr("href")).get()
+    .filter((href) => /^https?:\/\//i.test(href || "") && !href.startsWith(base));
+  const schemaFactKeys = schemas
+    .filter((schema) => {
+      const type = Array.isArray(schema["@type"]) ? schema["@type"] : [schema["@type"]];
+      return type.some((item) => ["RealEstateProject", "RealEstateListing", "Residence", "Offer", "AggregateOffer"].includes(item));
+    })
+    .flatMap((schema) => [
+    schema.offers ? "offers" : null,
+    schema.floorSize ? "floorSize" : null,
+    schema.amenityFeature ? "amenityFeature" : null,
+    schema.priceRange ? "priceRange" : null,
+  ].filter(Boolean));
   const faqVisible = $("h2, h3").filter((_, el) => /câu hỏi|faq|frequently asked/i.test($(el).text())).length > 0;
   const issues = [];
   if (status !== 200) issues.push(`HTTP_${status}`);
@@ -67,13 +80,22 @@ function auditPage(routePath, status, html) {
   if (!schemaTypes.includes("FAQPage") && !faqVisible) issues.push("MISSING_VISIBLE_FAQ");
   if (canonical && !/^https:\/\/sgsland\.vn\/(du-an|landing)\//.test(canonical)) issues.push("CANONICAL_HOST_OR_PATH");
   if (!/xác minh|xem xét|tham khảo|verify|indicative|official/i.test(text)) issues.push("MISSING_CAVEAT_OR_PROVENANCE");
-  const passed = 14 - issues.length;
+  if (schemaFactKeys.length && evidenceState !== "available") issues.push("UNSUPPORTED_SCHEMA_FACTS");
+  if (evidenceState === "available" && sourceLinks.length === 0) issues.push("EVIDENCE_WITHOUT_SOURCE_LINK");
+  const normalizeEntity = (value) => value
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLocaleLowerCase()
+    .replace(/[^a-z0-9]/g, "");
+  const routeSlug = routePath.split("/").filter(Boolean).pop() || "";
+  if (routeSlug && !normalizeEntity(text).includes(normalizeEntity(routeSlug))) issues.push("ENTITY_ROUTE_MISMATCH");
+  const passed = 17 - issues.length;
   return {
     slug: routePath.split("/").filter(Boolean).pop(),
     routePath,
     url: `${base}${routePath}`,
     status,
-    score: Math.max(0, Math.round((passed / 14) * 100)),
+    score: Math.max(0, Math.round((passed / 17) * 100)),
     title,
     description,
     canonical,
@@ -83,6 +105,8 @@ function auditPage(routePath, status, html) {
     directAnswerWords: answerWords,
     reviewedAt,
     evidenceState,
+    sourceLinkCount: sourceLinks.length,
+    schemaFactKeys: [...new Set(schemaFactKeys)],
     visibleFaq: faqVisible,
     issues,
   };
@@ -131,7 +155,7 @@ for (let index = 0; index < uniqueUrls.length; index += concurrency) {
 const report = {
   generatedAt: new Date().toISOString(),
   base,
-  methodology: "Rendered HTML audit for project and landing sitemap URLs: status, metadata, H1, 40–60 word visible direct answer, visible FAQ, JSON-LD, review date, evidence state and provenance caveat.",
+  methodology: "Rendered HTML audit for project and landing sitemap URLs: status, metadata, H1, 40–60 word visible direct answer, visible FAQ, JSON-LD, review date, evidence state, source links, entity consistency and unsupported schema facts.",
   total: results.length,
   passed: results.filter((r) => r.issues.length === 0).length,
   averageScore: results.length ? Math.round(results.reduce((sum, r) => sum + r.score, 0) / results.length) : 0,

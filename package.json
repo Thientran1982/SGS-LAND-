@@ -31,6 +31,8 @@
     "audit:seo-regression": "node scripts/seo-regression.mjs",
     "audit:project-geo": "node scripts/project-geo-audit.mjs",
     "report:gsc-opportunities": "node scripts/gsc-opportunity-report.mjs",
+    "report:gsc-snapshot": "node scripts/gsc-snapshot.mjs",
+    "compare:gsc-snapshots": "node scripts/gsc-snapshot-compare.mjs",
     "audit:ui": "node scripts/audit-ui-system.mjs",
     "test:contrast": "node scripts/check-theme-contrast.mjs",
     "test:visual": "node scripts/visual-regression.mjs",

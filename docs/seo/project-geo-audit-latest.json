@@ -1,10 +1,10 @@
 {
-  "generatedAt": "2026-09-15T06:46:36.145Z",
+  "generatedAt": "2026-09-15T07:29:35.589Z",
   "base": "http://127.0.0.1:5000",
-  "methodology": "Rendered HTML audit for project and landing sitemap URLs: status, metadata, H1, 40–60 word visible direct answer, visible FAQ, JSON-LD, review date, evidence state and provenance caveat.",
+  "methodology": "Rendered HTML audit for project and landing sitemap URLs: status, metadata, H1, 40–60 word visible direct answer, visible FAQ, JSON-LD, review date, evidence state, source links, entity consistency and unsupported schema facts.",
   "total": 26,
-  "passed": 25,
-  "averageScore": 99,
+  "passed": 26,
+  "averageScore": 100,
   "results": [
     {
       "slug": "aqua-city",
@@ -35,6 +35,8 @@
       "directAnswerWords": 54,
       "reviewedAt": "2026-09-15",
       "evidenceState": "unavailable",
+      "sourceLinkCount": 7,
+      "schemaFactKeys": [],
       "visibleFaq": true,
       "issues": []
     },
@@ -67,6 +69,8 @@
       "directAnswerWords": 51,
       "reviewedAt": "2026-09-15",
       "evidenceState": "unavailable",
+      "sourceLinkCount": 7,
+      "schemaFactKeys": [],
       "visibleFaq": true,
       "issues": []
     },
@@ -98,6 +102,8 @@
       "directAnswerWords": 51,
       "reviewedAt": "2026-09-15",
       "evidenceState": "unavailable",
+      "sourceLinkCount": 7,
+      "schemaFactKeys": [],
       "visibleFaq": true,
       "issues": []
     },
@@ -130,6 +136,8 @@
       "directAnswerWords": 49,
       "reviewedAt": "2026-09-15",
       "evidenceState": "unavailable",
+      "sourceLinkCount": 7,
+      "schemaFactKeys": [],
       "visibleFaq": true,
       "issues": []
     },
@@ -161,6 +169,8 @@
       "directAnswerWords": 50,
       "reviewedAt": "2026-09-15",
       "evidenceState": "unavailable",
+      "sourceLinkCount": 7,
+      "schemaFactKeys": [],
       "visibleFaq": true,
       "issues": []
     },
@@ -191,6 +201,8 @@
       "directAnswerWords": 56,
       "reviewedAt": "2026-09-15",
       "evidenceState": "unavailable",
+      "sourceLinkCount": 7,
+      "schemaFactKeys": [],
       "visibleFaq": true,
       "issues": []
     },
@@ -221,6 +233,8 @@
       "directAnswerWords": 46,
       "reviewedAt": "2026-09-15",
       "evidenceState": "unavailable",
+      "sourceLinkCount": 7,
+      "schemaFactKeys": [],
       "visibleFaq": true,
       "issues": []
     },
@@ -251,6 +265,8 @@
       "directAnswerWords": 48,
       "reviewedAt": "2026-09-15",
       "evidenceState": "unavailable",
+      "sourceLinkCount": 7,
+      "schemaFactKeys": [],
       "visibleFaq": true,
       "issues": []
     },
@@ -281,6 +297,8 @@
       "directAnswerWords": 50,
       "reviewedAt": "2026-09-15",
       "evidenceState": "unavailable",
+      "sourceLinkCount": 7,
+      "schemaFactKeys": [],
       "visibleFaq": true,
       "issues": []
     },
@@ -311,6 +329,8 @@
       "directAnswerWords": 50,
       "reviewedAt": "2026-09-15",
       "evidenceState": "unavailable",
+      "sourceLinkCount": 7,
+      "schemaFactKeys": [],
       "visibleFaq": true,
       "issues": []
     },
@@ -341,6 +361,8 @@
       "directAnswerWords": 49,
       "reviewedAt": "2026-09-15",
       "evidenceState": "unavailable",
+      "sourceLinkCount": 7,
+      "schemaFactKeys": [],
       "visibleFaq": true,
       "issues": []
     },
@@ -371,6 +393,8 @@
       "directAnswerWords": 51,
       "reviewedAt": "2026-09-15",
       "evidenceState": "unavailable",
+      "sourceLinkCount": 7,
+      "schemaFactKeys": [],
       "visibleFaq": true,
       "issues": []
     },
@@ -401,6 +425,8 @@
       "directAnswerWords": 49,
       "reviewedAt": "2026-09-15",
       "evidenceState": "unavailable",
+      "sourceLinkCount": 7,
+      "schemaFactKeys": [],
       "visibleFaq": true,
       "issues": []
     },
@@ -431,6 +457,8 @@
       "directAnswerWords": 47,
       "reviewedAt": "2026-09-15",
       "evidenceState": "unavailable",
+      "sourceLinkCount": 7,
+      "schemaFactKeys": [],
       "visibleFaq": true,
       "issues": []
     },
@@ -461,6 +489,8 @@
       "directAnswerWords": 47,
       "reviewedAt": "2026-09-15",
       "evidenceState": "unavailable",
+      "sourceLinkCount": 7,
+      "schemaFactKeys": [],
       "visibleFaq": true,
       "issues": []
     },
@@ -469,12 +499,12 @@
       "routePath": "/du-an/vinhomes-hoc-mon",
       "url": "http://127.0.0.1:5000/du-an/vinhomes-hoc-mon",
       "status": 200,
-      "score": 86,
-      "title": "Vinhomes Hóc Môn — Smart City 4.0, 667ha | Giá Từ 6,5 Tỷ | SGS LAND",
-      "description": "Vinhomes Smart City Hóc Môn — thông tin tham khảo về quy mô, vị trí, sản phẩm và mốc mở bán dự kiến. Giá, pháp lý, tiến độ và tư cách phân phối cần được xác minh bằng hồ sơ gốc trước khi giao dịch.",
+      "score": 100,
+      "title": "Vinhomes Hóc Môn — Thông tin dự án | SGS LAND | SGS LAND",
+      "description": "Thông tin tham khảo về Vinhomes Hóc Môn: vị trí, sản phẩm và các điểm cần xác minh. Giá, pháp lý, tiến độ và tư cách phân phối cần được đối chiếu với hồ sơ hiện hành.",
       "canonical": "https://sgsland.vn/du-an/vinhomes-hoc-mon",
       "h1": [
-        "Vinhomes Hóc MônSmart City 4.0"
+        "Vinhomes Hóc Môn"
       ],
       "schemaTypes": [
         "WebSite",
@@ -483,21 +513,19 @@
         "RealEstateAgent",
         "ItemPage",
         "Dataset",
-        "RealEstateListing",
+        "RealEstateProject",
         "Place",
-        "SpecialAnnouncement",
         "FAQPage",
         "BreadcrumbList"
       ],
       "directAnswer": true,
-      "directAnswerWords": 48,
-      "reviewedAt": "",
-      "evidenceState": "",
+      "directAnswerWords": 52,
+      "reviewedAt": "2026-09-15",
+      "evidenceState": "unavailable",
+      "sourceLinkCount": 7,
+      "schemaFactKeys": [],
       "visibleFaq": true,
-      "issues": [
-        "MISSING_REVIEW_DATE",
-        "MISSING_EVIDENCE_STATE"
-      ]
+      "issues": []
     },
     {
       "slug": "masteri-cosmo-central",
@@ -526,6 +554,8 @@
       "directAnswerWords": 57,
       "reviewedAt": "2026-09-15",
       "evidenceState": "unavailable",
+      "sourceLinkCount": 7,
+      "schemaFactKeys": [],
       "visibleFaq": true,
       "issues": []
     },
@@ -557,6 +587,8 @@
       "directAnswerWords": 56,
       "reviewedAt": "2026-09-15",
       "evidenceState": "unavailable",
+      "sourceLinkCount": 3,
+      "schemaFactKeys": [],
       "visibleFaq": true,
       "issues": []
     },
@@ -588,6 +620,8 @@
       "directAnswerWords": 57,
       "reviewedAt": "2026-09-15",
       "evidenceState": "unavailable",
+      "sourceLinkCount": 3,
+      "schemaFactKeys": [],
       "visibleFaq": true,
       "issues": []
     },
@@ -619,6 +653,8 @@
       "directAnswerWords": 54,
       "reviewedAt": "2026-09-15",
       "evidenceState": "unavailable",
+      "sourceLinkCount": 3,
+      "schemaFactKeys": [],
       "visibleFaq": true,
       "issues": []
     },
@@ -650,6 +686,8 @@
       "directAnswerWords": 51,
       "reviewedAt": "2026-09-15",
       "evidenceState": "unavailable",
+      "sourceLinkCount": 3,
+      "schemaFactKeys": [],
       "visibleFaq": true,
       "issues": []
     },
@@ -681,6 +719,8 @@
       "directAnswerWords": 51,
       "reviewedAt": "2026-09-15",
       "evidenceState": "unavailable",
+      "sourceLinkCount": 3,
+      "schemaFactKeys": [],
       "visibleFaq": true,
       "issues": []
     },
@@ -712,6 +752,8 @@
       "directAnswerWords": 50,
       "reviewedAt": "2026-09-15",
       "evidenceState": "unavailable",
+      "sourceLinkCount": 3,
+      "schemaFactKeys": [],
       "visibleFaq": true,
       "issues": []
     },
@@ -743,6 +785,8 @@
       "directAnswerWords": 50,
       "reviewedAt": "2026-09-15",
       "evidenceState": "unavailable",
+      "sourceLinkCount": 3,
+      "schemaFactKeys": [],
       "visibleFaq": true,
       "issues": []
     },
@@ -774,6 +818,8 @@
       "directAnswerWords": 54,
       "reviewedAt": "2026-09-15",
       "evidenceState": "unavailable",
+      "sourceLinkCount": 3,
+      "schemaFactKeys": [],
       "visibleFaq": true,
       "issues": []
     },
@@ -805,6 +851,8 @@
       "directAnswerWords": 52,
       "reviewedAt": "2026-09-15",
       "evidenceState": "unavailable",
+      "sourceLinkCount": 3,
+      "schemaFactKeys": [],
       "visibleFaq": true,
       "issues": []
     }

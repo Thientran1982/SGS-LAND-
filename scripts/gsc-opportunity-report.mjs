@@ -57,7 +57,7 @@ function readFiles(target) {
 function intent(query) {
   const q = normalise(query);
   if (/sgs\s*land|sgsland/.test(q)) return "brand";
-  if (/đại nhật|dai nhat|legacy\s*66|masteri\s*cosmo|central\s*park|vinhomes?|diamond sky|aqua city|izumi|grand manhattan|manhattan|đồng nai|dong nai|long thành|long thanh|biên hòa|bien hoa/.test(q)) return "location-project";
+  if (/đại nhật|dai nhat|legacy\s*66|masteri\s*cosmo|hóc môn|hoc mon|central\s*park|vinhomes?|diamond sky|aqua city|izumi|grand manhattan|manhattan|đồng nai|dong nai|long thành|long thanh|biên hòa|bien hoa/.test(q)) return "location-project";
   if (/pháp lý|phap ly|sổ hồng|so hong|hợp đồng|hop dong/.test(q)) return "legal";
   if (/lãi suất|lai suat|vay|tài chính|tai chinh/.test(q)) return "financing";
   if (/định giá|dinh gia|giá nhà|gia nha|giá đất|gia dat/.test(q)) return "valuation";
@@ -71,7 +71,10 @@ function recommendedPage(query) {
       if (/legacy\s*66/.test(q)) return "/landing/legacy-66";
       if (/masteri\s*cosmo/.test(q)) return "/landing/masteri-cosmo-central";
       if (/đại nhật|dai nhat|diamond sky/.test(q)) return "/du-an/diamond-sky-van-phuc-city";
-      if (/central\s*park|vinhome/.test(q)) return "/du-an/vinhomes-central-park";
+      if (/hóc môn|hoc mon/.test(q)) return "/du-an/vinhomes-hoc-mon";
+      if (/central\s*park/.test(q)) return "/du-an/vinhomes-central-park";
+      if (/vinhomes?\s+(grand|can gio|cần giờ)/.test(q)) return "/du-an/vinhomes-grand-park";
+      if (/vinhomes?/.test(q)) return "/du-an";
       if (/long thành|long thanh/.test(q)) return "/bat-dong-san-long-thanh";
       if (/đồng nai|dong nai/.test(q)) return "/bat-dong-san-dong-nai";
       if (/aqua city/.test(q)) return "/du-an/aqua-city";
@@ -84,6 +87,28 @@ function recommendedPage(query) {
     case "valuation": return "/ai-valuation";
     default: return "/marketplace";
   }
+}
+
+function flagValue(flag) {
+  const index = process.argv.indexOf(flag);
+  return index >= 0 ? process.argv[index + 1] || null : null;
+}
+
+function prioritise({ impressions, ctr, position, opportunity, pageEvidence }) {
+  const reasons = [];
+  if (!pageEvidence) reasons.push("page destination is inferred and must be verified");
+  if (impressions >= 50) reasons.push("meaningful impression volume");
+  if (ctr < 0.03) reasons.push("CTR below 3%");
+  if (position >= 4 && position <= 20) reasons.push("ranking is within optimization range");
+  const priority = (!pageEvidence && impressions >= 50) || opportunity >= 20
+    ? "P0"
+    : opportunity >= 5 || impressions >= 25
+      ? "P1"
+      : "P2";
+  return {
+    priority,
+    priorityReason: reasons.length ? reasons.join("; ") : "low-volume or low-opportunity observation",
+  };
 }
 
 const records = [];
@@ -116,17 +141,28 @@ for (const file of readFiles(input)) {
     const ctr = number(row[ctrIndex]) > 1 ? number(row[ctrIndex]) / 100 : number(row[ctrIndex]);
     const position = number(row[positionIndex]);
     const opportunity = Math.round(impressions * Math.max(0, 0.12 - ctr) * (position > 0 && position < 20 ? 1 + (20 - position) / 20 : 0.5) * 100) / 100;
+    const pageEvidence = Boolean(observedPage);
     records.push({
       query, page, intent: intent(query), impressions, clicks, ctr, position, opportunity,
-      pageEvidence: Boolean(observedPage),
-      source: file.toString(),
+      pageEvidence,
+      source: path.basename(file.toString()),
+      pageResolution: observedPage ? "exported" : "inferred",
+      ...prioritise({ impressions, ctr, position, opportunity, pageEvidence }),
     });
   }
 }
 records.sort((a, b) => b.opportunity - a.opportunity || b.impressions - a.impressions);
 const report = {
   generatedAt: new Date().toISOString(),
-  methodology: "Opportunity = impressions × max(0, 12% − CTR) × position-weight; source is the GSC CSV export named per row.",
+  methodology: "Opportunity = impressions × max(0, 12% − CTR) × position-weight. Priority is P0/P1/P2 from opportunity, impression volume and page-evidence status; source is the GSC CSV export named per row.",
+  provenance: {
+    property: flagValue("--property"),
+    searchType: flagValue("--search-type"),
+    periodStart: flagValue("--period-start"),
+    periodEnd: flagValue("--period-end"),
+    exportedAt: flagValue("--exported-at"),
+    liveApi: false,
+  },
   totalRows: records.length,
   totals: records.reduce((a, r) => ({ impressions: a.impressions + r.impressions, clicks: a.clicks + r.clicks }), { impressions: 0, clicks: 0 }),
   rows: records,

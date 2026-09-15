@@ -3,44 +3,53 @@ import { SchemaScript } from "@/components/SchemaScript";
 import { getBreadcrumbSchema, getFAQSchema, SITE_URL } from "@/lib/schema";
 import type { FAQItem } from "@/lib/schema";
 import { getLang, langAlternates } from "@/lib/lang";
+import {
+  GEO_DEFAULT_EVIDENCE_NOTE,
+  GEO_EDITOR_NAME,
+  GEO_REVIEW_DATE,
+  buildGeoDirectAnswer,
+  getGeoEvidenceLinks,
+} from "@/lib/seo/geo-provenance";
+
 export const dynamic = "force-dynamic";
+
+const CANONICAL_PATH = "/du-an/vinhomes-hoc-mon";
+const PROJECT_NAME = "Vinhomes Hóc Môn";
+
 const VHM_METADATA: Metadata = {
-  title: "Vinhomes Hóc Môn — Smart City 4.0, 667ha | Giá Từ 6,5 Tỷ",
+  title: `${PROJECT_NAME} — Thông tin dự án | SGS LAND`,
   description:
-    "Vinhomes Smart City Hóc Môn — thông tin tham khảo về quy mô, vị trí, sản phẩm và mốc mở bán dự kiến. Giá, pháp lý, tiến độ và tư cách phân phối cần được xác minh bằng hồ sơ gốc trước khi giao dịch.",
+    "Thông tin tham khảo về Vinhomes Hóc Môn: vị trí, sản phẩm và các điểm cần xác minh. Giá, pháp lý, tiến độ và tư cách phân phối cần được đối chiếu với hồ sơ hiện hành.",
   keywords: [
     "Vinhomes Hóc Môn",
     "Vinhomes Smart City Hóc Môn",
     "dự án Hóc Môn 2026",
-    "giá Vinhomes Hóc Môn",
-    "Smart City 4.0 TP.HCM",
     "BĐS Hóc Môn Vành đai 3",
-    "Vinhomes Hóc Môn 667ha",
   ],
-  alternates: { canonical: `${SITE_URL}/du-an/vinhomes-hoc-mon` },
+  alternates: { canonical: `${SITE_URL}${CANONICAL_PATH}` },
   openGraph: {
     type: "article",
-    title: "Vinhomes Hóc Môn — Smart City 4.0, 667ha",
+    title: `${PROJECT_NAME} — Thông tin dự án`,
     description:
-      "Thông tin tham khảo về dự án Vinhomes Smart City Hóc Môn tại TP.HCM. Mọi giá bán, mốc mở bán, pháp lý và tư cách phân phối cần được xác minh theo tài liệu hiện hành.",
-    url: `${SITE_URL}/du-an/vinhomes-hoc-mon`,
+      "Tổng hợp thông tin tham khảo về Vinhomes Hóc Môn và các nội dung cần kiểm tra trước giao dịch.",
+    url: `${SITE_URL}${CANONICAL_PATH}`,
     siteName: "SGS LAND",
     locale: "vi_VN",
-    publishedTime: "2026-06-05T00:00:00.000Z",
-    modifiedTime: new Date().toISOString(),
+    modifiedTime: GEO_REVIEW_DATE,
   },
   twitter: {
     card: "summary_large_image",
-    title: "Vinhomes Hóc Môn Smart City — Thông tin dự án",
-    description: "667ha, từ 6,5 tỷ. Ra mắt Q4/2026. Đăng ký đặt chỗ ưu tiên.",
+    title: `${PROJECT_NAME} — Thông tin tham khảo`,
+    description: "Thông tin tham khảo và các điểm cần xác minh trước giao dịch.",
   },
 };
+
 export async function generateMetadata(): Promise<Metadata> {
   const en = (await getLang()) === "en";
-  const canonical = `${SITE_URL}${en ? "/en/du-an/vinhomes-hoc-mon" : "/du-an/vinhomes-hoc-mon"}`;
+  const canonical = `${SITE_URL}${en ? `/en${CANONICAL_PATH}` : CANONICAL_PATH}`;
   return {
     ...VHM_METADATA,
-    alternates: { canonical, ...langAlternates("/du-an/vinhomes-hoc-mon") },
+    alternates: { canonical, ...langAlternates(CANONICAL_PATH) },
     openGraph: {
       ...VHM_METADATA.openGraph,
       url: canonical,
@@ -48,338 +57,172 @@ export async function generateMetadata(): Promise<Metadata> {
     },
   };
 }
+
 const FAQ_VHM: FAQItem[] = [
   {
-    question: "Vinhomes Hóc Môn giá bao nhiêu?",
+    question: "Vinhomes Hóc Môn là gì?",
     answer:
-      "Các mức giá được nhắc đến cho Vinhomes Smart City Hóc Môn chỉ là tham khảo thị trường và có thể thay đổi. Người mua cần xác nhận bảng giá, chính sách và tư cách phân phối bằng văn bản trước khi đặt chỗ.",
+      "Đây là trang tham khảo entity/dự án Vinhomes Hóc Môn tại khu vực Hóc Môn, TP.HCM. Thông tin về sản phẩm, quy mô, giá, pháp lý và tiến độ cần được đối chiếu với hồ sơ gốc có ngày xác minh.",
   },
   {
     question: "Vinhomes Hóc Môn ở đâu?",
     answer:
-      "Vinhomes Smart City Hóc Môn tại huyện Hóc Môn, TP.HCM, cách Quận 1 khoảng 20km về phía Tây Bắc. Kết nối: Vành đai 3 (vận hành 2026) kết nối Hóc Môn với Bình Dương, Đồng Nai, Long An; Quốc lộ 22 mở rộng đến cửa khẩu Mộc Bài; Cầu Bình Phước rút ngắn kết nối TP Thủ Đức.",
+      "Trang xác định entity ở khu vực Hóc Môn, TP.HCM. Các mốc khoảng cách, hạ tầng kết nối và ranh giới dự án không được xem là dữ kiện đã xác minh nếu chưa có bản đồ hoặc hồ sơ chính thức kèm ngày cập nhật.",
   },
   {
-    question: "Vinhomes Hóc Môn bao nhiêu ha?",
+    question: "Vinhomes Hóc Môn giá bao nhiêu?",
     answer:
-      "Vinhomes Smart City Hóc Môn có quy mô 667 ha — lớn hơn Vinhomes Grand Park (271ha) và gần bằng Vinhomes Cần Giờ (2.870ha). Đây là một trong những quỹ đất phát triển đô thị quy mô lớn cuối cùng còn lại tại TP.HCM.",
+      "Hiện trang không phát hành một mức giá đã xác minh. Người mua nên yêu cầu bảng giá, chính sách và điều kiện áp dụng bằng văn bản từ chủ đầu tư hoặc bên có thẩm quyền trước khi đặt chỗ hay giao dịch.",
   },
   {
-    question: "Vinhomes Hóc Môn ra mắt khi nào?",
+    question: "Pháp lý Vinhomes Hóc Môn cần kiểm tra gì?",
     answer:
-      "Mốc ra mắt hoặc mở bán Vinhomes Smart City Hóc Môn là thông tin dự kiến và cần được xác nhận bằng thông báo chính thức của chủ đầu tư hoặc cơ quan có thẩm quyền. Quy hoạch và pháp lý có thể thay đổi theo hồ sơ được phê duyệt.",
+      "Cần kiểm tra pháp nhân dự án, chấp thuận chủ trương, quy hoạch, giấy phép, điều kiện huy động vốn và hồ sơ sản phẩm tương ứng. SGS LAND không coi nội dung tham khảo trên trang là bảo đảm pháp lý.",
   },
   {
-    question: "Vinhomes Hóc Môn có nên đặt chỗ trước không?",
+    question: "Có nên đặt chỗ Vinhomes Hóc Môn trước không?",
     answer:
-      "Theo kinh nghiệm của SGS LAND với các dự án Vinhomes (Grand Park, Cần Giờ), đăng ký đặt chỗ trước qua kênh F1 giúp: ưu tiên chọn vị trí tốt nhất (căn góc, view đẹp, phân khu đắc địa), nhận chính sách chiết khấu và ưu đãi từ chủ đầu tư, và cập nhật thông tin mở bán chính thức sớm nhất. Đăng ký miễn phí tại sgsland.vn/du-an/vinhomes-hoc-mon.",
-  },
-  {
-    question: "So sánh Vinhomes Hóc Môn và Vinhomes Grand Park?",
-    answer:
-      "Vinhomes Grand Park (271ha, TP Thủ Đức): Metro số 1 vận hành, đã bàn giao, sổ hồng riêng, giá 45-90 triệu/m², thanh khoản cao nhất khu Đông — phù hợp mua ở ngay. Vinhomes Hóc Môn (667ha, Q4/2026): giá dự kiến 65-80 triệu/m² (thấp hơn 20-35%), quy mô lớn hơn, Smart City 4.0 — phù hợp đầu tư trung hạn 3-5 năm và người mua ở thực ngân sách hợp lý.",
-  },
-  {
-    question: "Chủ đầu tư Vinhomes Hóc Môn là ai?",
-    answer:
-      "Thông tin trên trang hiện ghi Vinhomes Joint Stock Company là chủ đầu tư dự kiến của Vinhomes Smart City Hóc Môn. Người mua cần đối chiếu pháp nhân, quyết định chấp thuận chủ trương và hồ sơ dự án bằng tài liệu chính thức.",
-  },
-  {
-    question: "Pháp lý Vinhomes Hóc Môn có tốt không?",
-    answer:
-      "Vinhomes Smart City Hóc Môn (Q2/2026): chủ trương đầu tư đã được UBND TP.HCM phê duyệt; quy hoạch 1/500 đang triển khai; chủ đầu tư Vinhomes có lịch sử bàn giao sổ hồng riêng từng căn tại tất cả dự án đã hoàn thành. SGS LAND theo dõi và cập nhật tình trạng pháp lý dự án hàng tuần.",
+      "Không nên đặt chỗ chỉ dựa trên thông tin chưa có nguồn độc lập và ngày xác minh. Hãy kiểm tra điều khoản hoàn tiền, bên nhận tiền, văn bản ủy quyền, chính sách chính thức và tình trạng pháp lý trước khi thanh toán.",
   },
 ];
-const REAL_ESTATE_LISTING_SCHEMA = {
+
+const PROJECT_SCHEMA = {
   "@context": "https://schema.org",
-  "@type": ["RealEstateListing", "Place"],
-  "@id": `${SITE_URL}/du-an/vinhomes-hoc-mon#listing`,
-  name: "Vinhomes Smart City Hóc Môn — SGS LAND",
+  "@type": ["RealEstateProject", "Place"],
+  "@id": `${SITE_URL}${CANONICAL_PATH}#project`,
+  name: PROJECT_NAME,
   description:
-    "Trang cung cấp thông tin tham khảo về Vinhomes Smart City Hóc Môn: vị trí, quy mô, sản phẩm và mốc mở bán dự kiến. Giá, pháp lý và tư cách phân phối phải được xác minh bằng tài liệu hiện hành.",
-  url: `${SITE_URL}/du-an/vinhomes-hoc-mon`,
-  datePosted: "2026-06-05",
-  validThrough: "2027-12-31",
-  priceRange: "6.5–60 tỷ VNĐ",
-  floorSize: {
-    "@type": "QuantitativeValue",
-    value: 6670000,
-    unitCode: "MTK",
-  },
+    "Trang tham khảo entity/dự án Vinhomes Hóc Môn tại khu vực Hóc Môn, TP.HCM; các dữ kiện thương mại và pháp lý cần được xác minh theo hồ sơ hiện hành.",
+  url: `${SITE_URL}${CANONICAL_PATH}`,
   address: {
     "@type": "PostalAddress",
     addressLocality: "Hóc Môn",
     addressRegion: "TP. Hồ Chí Minh",
     addressCountry: "VN",
   },
-  geo: {
-    "@type": "GeoCoordinates",
-    latitude: 10.8913,
-    longitude: 106.5939,
+  containedInPlace: {
+    "@type": "AdministrativeArea",
+    name: "TP. Hồ Chí Minh",
   },
-  containedIn: {
-    "@type": "Place",
-    name: "Hóc Môn, TP.HCM",
-    containedIn: {
-      "@type": "City",
-      name: "TP. Hồ Chí Minh",
-      containedInPlace: { "@type": "Country", name: "Việt Nam" },
-    },
-  },
-  // Reference the canonical Organization node by @id only - repeating its
-  // properties here created two competing nodes with the same @id.
-  seller: { "@id": `${SITE_URL}/#organization` },
-  // GEO: a price *range* must be AggregateOffer; schema.org Offer has no
-  // lowPrice/highPrice, so Google/AI parsers dropped the whole offer node.
-  offers: {
-    "@type": "AggregateOffer",
-    priceCurrency: "VND",
-    lowPrice: 6500000000,
-    highPrice: 60000000000,
-    availability: "https://schema.org/PreOrder",
-    validFrom: "2026-06-05",
-  },
+  dateModified: GEO_REVIEW_DATE,
 };
-const SPECIAL_ANNOUNCEMENT_SCHEMA = {
-  "@context": "https://schema.org",
-  "@type": "SpecialAnnouncement",
-  "@id": `${SITE_URL}/du-an/vinhomes-hoc-mon#announcement`,
-  name: "Mở bán Vinhomes Smart City Hóc Môn Q4/2026",
-  text: "SGS LAND cung cấp thông tin tham khảo về Vinhomes Smart City Hóc Môn. Giá, thời điểm mở bán, pháp lý, hạ tầng và tư cách phân phối cần được xác minh bằng thông báo hoặc hồ sơ chính thức trước khi đăng ký hay giao dịch.",
-  datePosted: "2026-06-05",
-  expires: "2027-06-30",
-  category: "RealEstate",
-  spatialCoverage: {
-    "@type": "Place",
-    name: "Hóc Môn, TP.HCM, Việt Nam",
-  },
-  announcementLocation: {
-    "@type": "VirtualLocation",
-    url: `${SITE_URL}/du-an/vinhomes-hoc-mon`,
-  },
-};
+
+const ENTITY_FACTS = [
+  ["Entity", PROJECT_NAME],
+  ["Khu vực", "Hóc Môn, TP. Hồ Chí Minh"],
+  ["Sản phẩm", "Cần xác minh theo hồ sơ dự án"],
+  ["Giá, pháp lý, tiến độ", "Chưa có nguồn định ngày trên trang"],
+];
+
+const CHECK_ITEMS = [
+  ["Pháp nhân và chủ đầu tư", "Đối chiếu giấy tờ pháp nhân, quyết định/chấp thuận dự án và văn bản ủy quyền."],
+  ["Sản phẩm và bảng giá", "Yêu cầu tài liệu chính thức, ngày hiệu lực, điều kiện áp dụng và chính sách hoàn tiền."],
+  ["Hạ tầng và tiến độ", "Kiểm tra hồ sơ quy hoạch, giấy phép, mốc thi công và nguồn công bố của cơ quan có thẩm quyền."],
+  ["Tư cách phân phối", "Không mặc định SGS LAND là đại lý/đối tác nếu chưa có văn bản xác minh còn hiệu lực."],
+];
+
 export default function VinhomesHocMonPage() {
+  const directAnswer = buildGeoDirectAnswer({
+    projectName: PROJECT_NAME,
+    location: "Hóc Môn, TP. Hồ Chí Minh",
+  });
   const breadcrumb = getBreadcrumbSchema([
     { name: "Trang chủ", url: SITE_URL },
     { name: "Dự án", url: `${SITE_URL}/du-an` },
-    { name: "Vinhomes Hóc Môn", url: `${SITE_URL}/du-an/vinhomes-hoc-mon` },
+    { name: PROJECT_NAME, url: `${SITE_URL}${CANONICAL_PATH}` },
   ]);
-  const faqSchema = getFAQSchema(FAQ_VHM, `${SITE_URL}/du-an/vinhomes-hoc-mon#faq`);
+  const faqSchema = getFAQSchema(FAQ_VHM, `${SITE_URL}${CANONICAL_PATH}#faq`);
+
   return (
     <>
-      <SchemaScript schemas={[REAL_ESTATE_LISTING_SCHEMA, SPECIAL_ANNOUNCEMENT_SCHEMA, faqSchema, breadcrumb]} />
-      <main className="min-h-screen bg-[var(--bg-surface)] dark:bg-sgs-primary-deep">
-        <p className="sr-only answer-box" role="note">
-          Vinhomes Smart City Hóc Môn is a proposed real-estate project in Hóc Môn, Ho Chi Minh City.
-          This page provides indicative information about location, products and expected timing;
-          price, legal status, construction progress and distribution authorization must be verified
-          against current original documents before any reservation or transaction.
-        </p>
-        {/* Hero */}
-        <section className="relative bg-gradient-to-br from-sgs-primary-deep via-sgs-primary-deep to-slate-900 text-white py-20 px-4">
-          <div className="max-w-5xl mx-auto">
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-indigo-500/20 border border-indigo-400/30 mb-6 text-sm font-semibold tracking-widest uppercase text-sgs-on-dark-muted">
-              <span className="relative flex h-2 w-2">
-                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
-                <span className="relative inline-flex rounded-full h-2 w-2 bg-green-400"></span>
-              </span>
-              Thông tin dự án — Cần xác minh trước giao dịch
+      <SchemaScript schemas={[PROJECT_SCHEMA, faqSchema, breadcrumb]} />
+      <main
+        className="min-h-screen bg-[var(--bg-surface)] dark:bg-sgs-primary-deep"
+        data-geo-reviewed-at={GEO_REVIEW_DATE}
+        data-geo-evidence="unavailable"
+      >
+        <section className="bg-gradient-to-br from-sgs-primary-deep via-sgs-primary-deep to-slate-900 px-4 py-16 text-white sm:py-20">
+          <div className="mx-auto max-w-5xl">
+            <div className="mb-5 inline-flex items-center gap-2 rounded-full border border-indigo-400/30 bg-indigo-500/20 px-3 py-1 text-xs font-semibold uppercase tracking-widest text-sgs-on-dark-muted">
+              Thông tin dự án — cần xác minh trước giao dịch
             </div>
-            <h1 className="text-4xl md:text-6xl font-black tracking-tight mb-4">
-              Vinhomes Hóc Môn<br />
-              <span className="text-sgs-on-dark-muted">Smart City 4.0</span>
-            </h1>
-            <p className="text-xl md:text-2xl text-slate-300 mb-3 font-medium">
-              667ha · Ra mắt Q4/2026 · Giá từ 6,5 tỷ VNĐ
+            <h1 className="text-4xl font-black tracking-tight md:text-6xl">{PROJECT_NAME}</h1>
+            <p className="mt-4 max-w-3xl text-lg leading-8 text-slate-300">
+              Trang tham khảo entity, vị trí khu vực, sản phẩm và các bước kiểm tra. Không dùng nội dung trên trang này thay cho hồ sơ pháp lý, bảng giá hoặc thông báo chính thức.
             </p>
-            <p className="text-slate-400 max-w-2xl leading-relaxed">
-              Siêu đô thị thông minh thế hệ 4.0 — quỹ đất quy mô lớn cuối cùng tại TP.HCM. Chủ đầu tư: Vinhomes (Vingroup, mã VHM-HOSE). Vành đai 3 (2026) kết nối toàn vùng Đông Nam Bộ.
-            </p>
-            <div className="flex flex-wrap gap-3 mt-8">
-              <a                href="https://sgsland.vn/contact"
-                className="px-6 py-3 bg-sgs-primary hover:bg-indigo-400 rounded-xl font-bold text-white transition-colors"
-              >
-                Đăng ký đặt chỗ ưu tiên
-              </a>
-              <a                href="https://sgsland.vn/ai-valuation"
-                className="px-6 py-3 bg-white/10 hover:bg-white/20 rounded-xl font-bold text-white border border-white/20 transition-colors"
-              >
-                Định giá AI miễn phí
-              </a>
+            <div
+              className="mt-8 rounded-2xl border border-white/15 bg-white/10 p-5"
+              aria-labelledby="geo-answer-heading"
+            >
+              <h2 id="geo-answer-heading" className="text-xs font-bold uppercase tracking-[0.14em] text-indigo-200">
+                Câu trả lời nhanh
+              </h2>
+              <p className="mt-2 max-w-4xl text-base leading-7 text-white">{directAnswer}</p>
+              <p className="mt-3 text-xs leading-5 text-slate-300">
+                Biên tập: {GEO_EDITOR_NAME}; rà soát: {GEO_REVIEW_DATE}. {GEO_DEFAULT_EVIDENCE_NOTE}
+              </p>
+              <div className="mt-3 flex flex-wrap gap-x-4 gap-y-2 text-xs">
+                {getGeoEvidenceLinks("vinhomes-hoc-mon").map((link) => (
+                  <a key={link.href} href={link.href} className="underline underline-offset-2 text-indigo-200">
+                    {link.label}
+                  </a>
+                ))}
+              </div>
             </div>
           </div>
         </section>
-        {/* Key Facts */}
-        <section className="py-12 px-4 bg-sgs-bg dark:bg-slate-800">
-          <div className="max-w-5xl mx-auto">
-            <h2 className="text-2xl font-bold text-sgs-text dark:text-white mb-8">
-              Thông tin dự án
-            </h2>
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-              {[
-                { label: "Quy mô", value: "667 ha", sub: "Smart City 4.0" },
-                { label: "Chủ đầu tư", value: "Vinhomes", sub: "Vingroup · VHM" },
-                { label: "Ra mắt", value: "Q4/2026", sub: "Đặt chỗ ngay" },
-                { label: "Giá từ", value: "6,5 tỷ", sub: "65-80 triệu/m²" },
-              ].map((item) => (
-                <div
-                  key={item.label}
-                  className="bg-[var(--bg-surface)] dark:bg-slate-700 rounded-xl p-5 shadow-sm border border-slate-100 dark:border-slate-600"
-                >
-                  <p className="text-xs text-sgs-text-muted dark:text-slate-400 font-semibold uppercase tracking-wider mb-1">
-                    {item.label}
-                  </p>
-                  <p className="text-xl font-black text-sgs-primary dark:text-sgs-text-muted">
-                    {item.value}
-                  </p>
-                  <p className="text-xs text-slate-400 mt-1">{item.sub}</p>
+
+        <section className="px-4 py-12">
+          <div className="mx-auto max-w-5xl">
+            <h2 className="mb-6 text-2xl font-bold text-sgs-text dark:text-white">Thông tin entity cần đối chiếu</h2>
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+              {ENTITY_FACTS.map(([label, value]) => (
+                <div key={label} className="rounded-xl border border-slate-200 bg-[var(--bg-surface)] p-5 shadow-sm dark:border-slate-700 dark:bg-slate-800">
+                  <p className="text-xs font-semibold uppercase tracking-wider text-sgs-text-muted dark:text-slate-400">{label}</p>
+                  <p className="mt-2 text-base font-bold text-sgs-primary dark:text-sgs-text-muted">{value}</p>
                 </div>
               ))}
             </div>
           </div>
         </section>
 
-        {/* Price Table */}
-        <section className="py-12 px-4">
-          <div className="max-w-5xl mx-auto">
-            <h2 className="text-2xl font-bold text-sgs-text dark:text-white mb-6">
-              Bảng giá dự kiến (Q4/2026)
-            </h2>
-            <p className="text-sm text-sgs-text-muted mb-6">
-              Nguồn: SGS LAND broker network Q2/2026. Giá thực tế có thể thay đổi theo từng đợt mở bán của Vinhomes.
-            </p>
-            <div className="overflow-x-auto">
-              <table className="w-full text-sm border-collapse">
-                <thead>
-                  <tr className="bg-sgs-champagne dark:bg-slate-800">
-                    <th className="text-left p-3 font-semibold text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-600">
-                      Loại hình
-                    </th>
-                    <th className="text-left p-3 font-semibold text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-600">
-                      Diện tích
-                    </th>
-                    <th className="text-left p-3 font-semibold text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-600">
-                      Giá dự kiến
-                    </th>
-                    <th className="text-left p-3 font-semibold text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-600">
-                      Ghi chú
-                    </th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {[
-                    { type: "Căn hộ Studio", area: "30-45 m²", price: "4,5–3,5 tỷ", note: "Phù hợp đầu tư cho thuê" },
-                    { type: "Căn hộ 1 phòng ngủ", area: "50-65 m²", price: "3,5–5 tỷ", note: "Ở thực hoặc cho thuê" },
-                    { type: "Căn hộ 2 phòng ngủ", area: "70-90 m²", price: "5–7 tỷ", note: "Gia đình nhỏ" },
-                    { type: "Căn hộ 3 phòng ngủ", area: "95-120 m²", price: "7–10 tỷ", note: "Gia đình lớn" },
-                    { type: "Nhà phố liền kề", area: "80-150 m² đất", price: "8–20 tỷ", note: "Kinh doanh + ở thực" },
-                    { type: "Shophouse mặt đại lộ", area: "100-200 m²", price: "15–40 tỷ", note: "Mặt tiền đường chính" },
-                    { type: "Biệt thự song lập", area: "150-250 m² đất", price: "20–40 tỷ", note: "Vườn riêng" },
-                    { type: "Biệt thự đơn lập", area: "250-500 m² đất", price: "30–60 tỷ", note: "Hạng sang nội khu" },
-                  ].map((row) => (
-                    <tr key={row.type} className="border-b border-slate-100 dark:border-slate-700 hover:bg-sgs-bg dark:hover:bg-slate-800/50">
-                      <td className="p-3 font-medium text-slate-800 dark:text-slate-200 border border-slate-200 dark:border-slate-600">{row.type}</td>
-                      <td className="p-3 text-sgs-text-muted dark:text-slate-400 border border-slate-200 dark:border-slate-600">{row.area}</td>
-                      <td className="p-3 font-bold text-sgs-primary dark:text-sgs-text-muted border border-slate-200 dark:border-slate-600">{row.price}</td>
-                      <td className="p-3 text-sgs-text-muted dark:text-slate-400 border border-slate-200 dark:border-slate-600">{row.note}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </div>
-        </section>
-
-        {/* Infrastructure */}
-        <section className="py-12 px-4 bg-sgs-bg dark:bg-slate-800">
-          <div className="max-w-5xl mx-auto">
-            <h2 className="text-2xl font-bold text-sgs-text dark:text-white mb-6">
-              Hạ tầng kết nối — Catalyst tăng giá
-            </h2>
-            <div className="grid md:grid-cols-2 gap-4">
-              {[
-                {
-                  title: "Vành đai 3 TP.HCM (2026)",
-                  desc: "Kết nối trực tiếp Hóc Môn với Bình Dương, Đồng Nai, Long An. Rút ngắn thời gian di chuyển, tăng giá BĐS khu vực 25-35%.",
-                  badge: "Vận hành 2026",
-                },
-                {
-                  title: "Quốc lộ 22 mở rộng",
-                  desc: "Kết nối cửa khẩu Mộc Bài (Tây Ninh) — tuyến giao thương quốc tế quan trọng phía Tây TP.HCM.",
-                  badge: "Đang thi công",
-                },
-                {
-                  title: "Cầu Bình Phước mới",
-                  desc: "Rút ngắn kết nối Hóc Môn với TP Thủ Đức — giảm thời gian di chuyển qua trung tâm.",
-                  badge: "Quy hoạch 2026-2027",
-                },
-                {
-                  title: "Metro số 2 (dài hạn)",
-                  desc: "Tuyến Bến Thành – Tham Lương đang nghiên cứu mở rộng đến Hóc Môn trong giai đoạn 2030+.",
-                  badge: "Nghiên cứu",
-                },
-              ].map((item) => (
-                <div
-                  key={item.title}
-                  className="bg-[var(--bg-surface)] dark:bg-slate-700 rounded-xl p-5 border border-slate-100 dark:border-slate-600"
-                >
-                  <div className="flex items-start justify-between gap-3 mb-3">
-                    <h3 className="font-bold text-sgs-text dark:text-white">{item.title}</h3>
-                    <span className="text-xs px-2 py-1 bg-sgs-champagne dark:bg-sgs-primary/40 text-sgs-primary dark:text-sgs-on-dark-muted rounded-full whitespace-nowrap font-medium">
-                      {item.badge}
-                    </span>
-                  </div>
-                  <p className="text-sm text-sgs-text-muted dark:text-slate-400 leading-relaxed">{item.desc}</p>
-                </div>
+        <section className="bg-sgs-bg px-4 py-12 dark:bg-slate-800">
+          <div className="mx-auto max-w-5xl">
+            <h2 className="mb-6 text-2xl font-bold text-sgs-text dark:text-white">Checklist trước khi xem xét giao dịch</h2>
+            <div className="grid gap-4 md:grid-cols-2">
+              {CHECK_ITEMS.map(([title, description]) => (
+                <article key={title} className="rounded-xl border border-slate-200 bg-[var(--bg-surface)] p-5 dark:border-slate-700 dark:bg-slate-700">
+                  <h3 className="font-bold text-sgs-text dark:text-white">{title}</h3>
+                  <p className="mt-2 text-sm leading-6 text-sgs-text-muted dark:text-slate-400">{description}</p>
+                </article>
               ))}
             </div>
           </div>
         </section>
 
-        {/* FAQ */}
-        <section className="py-12 px-4">
-          <div className="max-w-5xl mx-auto">
-            <h2 className="text-2xl font-bold text-sgs-text dark:text-white mb-8">
-              Câu hỏi thường gặp về Vinhomes Hóc Môn
-            </h2>
+        <section id="faq" className="px-4 py-12">
+          <div className="mx-auto max-w-5xl">
+            <h2 className="mb-8 text-2xl font-bold text-sgs-text dark:text-white">Câu hỏi thường gặp về {PROJECT_NAME}</h2>
             <div className="space-y-4">
               {FAQ_VHM.map((item) => (
-                <div
-                  key={item.question}
-                  className="bg-sgs-bg dark:bg-slate-800 rounded-xl p-5 border border-slate-100 dark:border-slate-700"
-                >
-                  <h3 className="font-bold text-sgs-text dark:text-white mb-2">{item.question}</h3>
-                  <p className="text-sm text-sgs-text-muted dark:text-slate-400 leading-relaxed">{item.answer}</p>
-                </div>
+                <article key={item.question} className="rounded-xl border border-slate-100 bg-sgs-bg p-5 dark:border-slate-700 dark:bg-slate-800">
+                  <h3 className="mb-2 font-bold text-sgs-text dark:text-white">{item.question}</h3>
+                  <p className="text-sm leading-relaxed text-sgs-text-muted dark:text-slate-400">{item.answer}</p>
+                </article>
               ))}
             </div>
           </div>
         </section>
 
-        {/* CTA */}
-        <section className="py-16 px-4 bg-sgs-primary text-white text-center">
-          <div className="max-w-2xl mx-auto">
-            <h2 className="text-3xl font-black mb-4">Đăng ký đặt chỗ ưu tiên ngay</h2>
-            <p className="text-indigo-200 mb-8 leading-relaxed">
-              SGS LAND cung cấp thông tin tham khảo và hỗ trợ người mua tìm hiểu dự án. Vui lòng xác minh tư cách phân phối, giá, pháp lý và chính sách trực tiếp bằng hồ sơ hiện hành của chủ đầu tư.
+        <section className="bg-sgs-primary px-4 py-14 text-center text-white">
+          <div className="mx-auto max-w-2xl">
+            <h2 className="text-3xl font-black">Cần hỗ trợ kiểm tra thông tin?</h2>
+            <p className="mt-4 leading-7 text-indigo-200">
+              SGS LAND có thể hỗ trợ tổng hợp câu hỏi và tài liệu cần kiểm tra. Vui lòng xác minh nguồn độc lập trước mọi khoản thanh toán hoặc cam kết.
             </p>
-            <div className="flex flex-wrap gap-4 justify-center">
-              <a
-                href="https://sgsland.vn/contact"
-                className="px-8 py-4 bg-[var(--bg-surface)] text-sgs-primary rounded-xl font-black text-lg hover:bg-sgs-champagne transition-colors"
-              >
-                Liên hệ tư vấn ngay
-              </a>
-              <a
-                href="tel:+84379281445"
-                className="px-8 py-4 bg-white/10 border border-white/30 text-white rounded-xl font-bold text-lg hover:bg-white/20 transition-colors"
-              >
-                +84 379 281 445
-              </a>
-            </div>
-            <p className="text-xs text-sgs-text-muted mt-6">
-              Miễn phí tư vấn · Không ép cọc · Pháp lý 2 lớp kiểm chứng
-            </p>
+            <a href="https://sgsland.vn/contact" className="mt-7 inline-flex rounded-xl bg-[var(--bg-surface)] px-7 py-3 font-bold text-sgs-primary hover:bg-sgs-champagne">
+              Liên hệ SGS LAND
+            </a>
           </div>
         </section>
       </main>

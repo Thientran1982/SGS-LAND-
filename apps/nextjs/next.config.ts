@@ -167,6 +167,7 @@ const nextConfig: NextConfig = {
       { source: "/du-an/bat-dong-san-long-an", destination: "/khu-vuc/bat-dong-san-long-an", permanent: true },
       { source: "/du-an/bat-dong-san-dong-nai", destination: "/khu-vuc/bat-dong-san-dong-nai", permanent: true },
       { source: "/landing/aqua-city", destination: "/du-an/aqua-city", permanent: true },
+      { source: "/du-an/vinhhomes-hoc-mon", destination: "/du-an/vinhomes-hoc-mon", permanent: true },
     ];
   },
 

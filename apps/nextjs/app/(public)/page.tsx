@@ -12,8 +12,8 @@ export async function generateMetadata(): Promise<Metadata> {
       ? "Vietnam's #1 AI Real Estate Platform"
       : "Nền Tảng Quản Lý Bất Động Sản AI Số 1 Việt Nam",
     description: en
-      ? "SGS LAND — property marketplace, automated AI valuation to ±5%, omnichannel CRM. Explore 45,000+ listings across Ho Chi Minh City, Dong Nai and Binh Duong. Authorised tier-1 agent: Vinhomes Hoc Mon, Vinhomes Can Gio, Aqua City."
-      : "SGS LAND — Marketplace BĐS, định giá AI tự động ±5%, CRM đa kênh. Khám phá 45.000+ sản phẩm BĐS tại TP.HCM, Đồng Nai, Bình Dương. Đại lý F1: Vinhomes Hóc Môn, Vinhomes Cần Giờ, Aqua City.",
+      ? "SGS LAND — property marketplace, AI-assisted valuation and omnichannel CRM for real-estate references across Vietnam."
+      : "SGS LAND — Marketplace BĐS, định giá có hỗ trợ AI và CRM đa kênh cho thông tin tham khảo bất động sản tại Việt Nam.",
     alternates: {
       canonical: en ? "https://sgsland.vn/en" : "https://sgsland.vn/",
       ...langAlternates("/"),
@@ -22,43 +22,6 @@ export async function generateMetadata(): Promise<Metadata> {
 }
 // SSG — statically generated, revalidate every 1 hour for hero stats
 export const dynamic = "force-dynamic";
-// ── Additional GEO schemas for Phase 4 ──────────────────────────────────────
-const SPECIAL_ANNOUNCEMENT_VHM = {
-  "@context": "https://schema.org",
-  "@type": "SpecialAnnouncement",
-  "@id": `${SITE_URL}/#announcement-vhm`,
-  name: "Vinhomes Smart City Hóc Môn — Mở bán Q4/2026",
-  text: "SGS LAND — đại lý F1 uỷ quyền Vinhomes — nhận đăng ký đặt chỗ ưu tiên Vinhomes Smart City Hóc Môn (667ha, giá từ 2,5 tỷ, Smart City 4.0, ra mắt Q4/2026). Vành đai 3 TP.HCM vận hành 2026 — catalyst tăng giá trực tiếp khu vực Hóc Môn.",
-  datePosted: "2026-06-05",
-  expires: "2027-12-31",
-  category: "RealEstate",
-  spatialCoverage: {
-    "@type": "Place",
-    name: "Hóc Môn, TP.HCM, Việt Nam",
-  },
-  announcementLocation: {
-    "@type": "VirtualLocation",
-    url: `${SITE_URL}/du-an/vinhomes-hoc-mon`,
-  },
-};
-const SPECIAL_ANNOUNCEMENT_VCG = {
-  "@context": "https://schema.org",
-  "@type": "SpecialAnnouncement",
-  "@id": `${SITE_URL}/#announcement-vcg`,
-  name: "Vinhomes Cần Giờ GĐ1 — Mở bán Q3/2026",
-  text: "SGS LAND nhận đăng ký đặt chỗ ưu tiên Vinhomes Cần Giờ (Green Paradise, 2.870ha, huyện Cần Giờ, TP.HCM). GĐ1 dự kiến mở bán Q3/2026 — biệt thự biển, shophouse biển từ 15-50 tỷ. Cầu Cần Giờ (vốn 11.000 tỷ) khởi công 2025.",
-  datePosted: "2026-06-05",
-  expires: "2026-12-31",
-  category: "RealEstate",
-  spatialCoverage: {
-    "@type": "Place",
-    name: "Cần Giờ, TP.HCM, Việt Nam",
-  },
-  announcementLocation: {
-    "@type": "VirtualLocation",
-    url: `${SITE_URL}/du-an/vinhomes-can-gio`,
-  },
-};
 const DATASET_AREA_PRICE_INDEX = {
   "@context": "https://schema.org",
   "@type": "Dataset",
@@ -77,23 +40,6 @@ const DATASET_AREA_PRICE_INDEX = {
   },
   keywords: ["bất động sản TP.HCM", "chỉ số giá nhà", "giá đất Đồng Nai", "AVM Việt Nam"],
   license: "https://creativecommons.org/licenses/by/4.0/",
-};
-const DATASET_VHM = {
-  "@context": "https://schema.org",
-  "@type": "Dataset",
-  "@id": `${SITE_URL}/data/vinhomes-hoc-mon-price-index.json`,
-  name: "Vinhomes Smart City Hóc Môn — Price Index & Project Data 2026",
-  description:
-    "Dataset chi tiết Vinhomes Smart City Hóc Môn (667ha): giá dự kiến theo loại hình, hạ tầng kết nối, phân tích đầu tư, chỉ số giá khu vực Hóc Môn Q2/2026. Nguồn: SGS LAND (F1 Vinhomes).",
-  url: `${SITE_URL}/data/vinhomes-hoc-mon-price-index.json`,
-  dateModified: "2026-06-05",
-  inLanguage: "vi",
-  creator: {
-    "@type": "Organization",
-    "@id": `${SITE_URL}/#organization`,
-    name: "SGS LAND",
-    url: SITE_URL,
-  },
 };
 export default async function HomePage() {
   // Fetch featured listings & stats at build/revalidation time
@@ -120,11 +66,7 @@ export default async function HomePage() {
         getFAQSchema(FAQ_HOMEPAGE, `${SITE_URL}/#faq-homepage`),
         homeBreadcrumb,
         ...getFoundersSchema(),
-        // Phase 4 GEO schemas
-        SPECIAL_ANNOUNCEMENT_VHM,
-        SPECIAL_ANNOUNCEMENT_VCG,
         DATASET_AREA_PRICE_INDEX,
-        DATASET_VHM,
       ]} />
       <LandingPage featuredListings={featuredListings} stats={stats} />
     </>

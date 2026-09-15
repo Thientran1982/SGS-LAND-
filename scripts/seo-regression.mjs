@@ -30,6 +30,7 @@ async function fetchText(route) {
   const response = await fetch(url, {
     redirect: "manual",
     headers: { "user-agent": "SGSLandSeoRegression/1.0" },
+    signal: AbortSignal.timeout(Number(process.env.SEO_REQUEST_TIMEOUT_MS || 20_000)),
   });
   return { url, response, text: await response.text() };
 }
@@ -61,6 +62,10 @@ function auditHtml(route, html) {
   const title = $("title").first().text().trim();
   const description = $('meta[name="description"]').attr("content")?.trim() || "";
   const canonical = $('link[rel="canonical"]').attr("href")?.trim() || "";
+  const ogTitle = $('meta[property="og:title"]').attr("content")?.trim() || "";
+  const ogDescription = $('meta[property="og:description"]').attr("content")?.trim() || "";
+  const twitterCard = $('meta[name="twitter:card"]').attr("content")?.trim() || "";
+  const hreflangCount = $('link[rel="alternate"][hreflang]').length;
   const h1Count = $("h1").length;
   const robots = $('meta[name="robots"]').attr("content") || "";
   const isNoIndex = /noindex/i.test(robots);
@@ -83,6 +88,10 @@ function auditHtml(route, html) {
       addFailure("canonical_invalid", `${route}: canonical is not an absolute URL (${canonical})`);
     }
   }
+  if (!ogTitle) warnings.push({ code: "missing_og_title", message: `${route}: missing og:title` });
+  if (!ogDescription) warnings.push({ code: "missing_og_description", message: `${route}: missing og:description` });
+  if (!twitterCard) warnings.push({ code: "missing_twitter_card", message: `${route}: missing twitter:card` });
+  if (hreflangCount === 0) warnings.push({ code: "missing_hreflang", message: `${route}: no hreflang alternate links` });
 
   $('script[type="application/ld+json"]').each((index, element) => {
     try {
@@ -91,7 +100,18 @@ function auditHtml(route, html) {
       addFailure("invalid_jsonld", `${route}: JSON-LD block ${index + 1} is not valid JSON`);
     }
   });
-  return { title, description, canonical, h1Count, isNoIndex };
+  return {
+    title,
+    description,
+    canonical,
+    h1Count,
+    isNoIndex,
+    ogTitle,
+    ogDescription,
+    twitterCard,
+    hreflangCount,
+    internalLinkCount: $('a[href^="/"]').length,
+  };
 }
 
 async function mapWithConcurrency(items, limit, worker) {
@@ -124,17 +144,25 @@ async function main() {
   const routes = [...new Set(sitemapUrls.map((url) => new URL(url).pathname))];
   if (!routes.length) addFailure("empty_sitemap", "sitemap.xml has no URL entries");
 
-  const pageResults = await mapWithConcurrency(routes, 4, async (route) => {
-    const result = await fetchText(route);
-    if (result.response.status >= 300 && result.response.status < 400) {
-      addFailure("sitemap_redirect", `${route} redirects (${result.response.status})`);
-      return null;
-    }
-    if (!result.response.ok) {
-      addFailure("sitemap_broken_url", `${route} returned ${result.response.status}`);
-      return null;
-    }
-    return { route, ...auditHtml(route, result.text) };
+  const pageResults = await mapWithConcurrency(
+    routes,
+    Number(process.env.SEO_REGRESSION_CONCURRENCY || 6),
+    async (route) => {
+      try {
+        const result = await fetchText(route);
+        if (result.response.status >= 300 && result.response.status < 400) {
+          addFailure("sitemap_redirect", `${route} redirects (${result.response.status})`);
+          return null;
+        }
+        if (!result.response.ok) {
+          addFailure("sitemap_broken_url", `${route} returned ${result.response.status}`);
+          return null;
+        }
+        return { route, ...auditHtml(route, result.text) };
+      } catch (error) {
+        addFailure("sitemap_fetch_error", `${route} could not be fetched: ${error.message}`);
+        return null;
+      }
   });
   const pages = pageResults.filter(Boolean);
 
@@ -161,6 +189,7 @@ async function main() {
     `- Sitemap URLs: ${routes.length}`,
     `- Pages checked: ${pages.length}`,
     `- Failures: ${failures.length}`,
+    `- Warnings: ${warnings.length}`,
     "",
     ...(failures.length ? failures.map((item) => `- **${item.code}** — ${item.message}`) : ["- No failures"]),
   ].join("\n") + "\n";
