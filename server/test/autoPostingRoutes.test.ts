@@ -83,6 +83,18 @@ async function putSettings(origin: string, body: unknown) {
   return { status: response.status, body: await response.json() };
 }
 
+async function triggerCron(origin: string, secret = 'cron-secret') {
+  const response = await fetch(`${origin}/api/internal/auto-posting-cron`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'x-internal-secret': secret,
+    },
+    body: JSON.stringify({}),
+  });
+  return { status: response.status, body: await response.json() };
+}
+
 describe('Marketing Facebook backfill route', () => {
   let server: Server;
   let origin: string;
@@ -123,6 +135,29 @@ describe('Marketing Facebook backfill route', () => {
       'QStash outage during deployment',
       'manager-1',
     );
+  });
+
+  it('returns a valid QStash trigger response and delegates one idempotent tick', async () => {
+    mocks.runAutoPostingTick.mockResolvedValueOnce([
+      { tenantId: 'tenant-1', created: 1, published: 1, skipped: 0, reason: 'OK' },
+    ]);
+
+    const result = await triggerCron(origin);
+
+    expect(result.status).toBe(200);
+    expect(result.body).toEqual({
+      ok: true,
+      results: [{ tenantId: 'tenant-1', created: 1, published: 1, skipped: 0, reason: 'OK' }],
+    });
+    expect(mocks.runAutoPostingTick).toHaveBeenCalledTimes(1);
+  });
+
+  it('rejects a QStash trigger with a wrong secret without touching the daily runner', async () => {
+    const result = await triggerCron(origin, 'wrong-secret');
+
+    expect(result.status).toBe(403);
+    expect(result.body).toEqual({ error: 'Forbidden' });
+    expect(mocks.runAutoPostingTick).not.toHaveBeenCalled();
   });
 
   it('rejects users outside the manager roles before creating a backfill request', async () => {

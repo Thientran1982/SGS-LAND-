@@ -16,7 +16,7 @@ import { isTransientDatabaseError } from "./server/dbHealth";
 import bcrypt from "bcrypt";
 import { runPendingMigrations } from "./server/migrations/runner";
 import { systemService } from "./server/services/systemService";
-import { webhookQueue, setupWebhookWorker, processWebhookJob, isQStashEnabled, isQstashVerified, getQstashToken, getQstashBaseUrl, verifyQstashTokenAtStartup } from "./server/queue";
+import { webhookQueue, setupWebhookWorker, processWebhookJob, isQStashEnabled, isQstashVerified, getQstashToken, getQstashBaseUrl, getQstashOperationalStatus, registerAutoPostingSchedule, verifyQstashTokenAtStartup } from "./server/queue";
 import { startAgentOperatorWorker, setAgentOperatorIo } from "./server/services/agentOperatorDaemon";
 import { startAgentOperationsLoop } from './server/services/agentLoopService';
 import { startLearningCycleScheduler } from "./server/services/learningCycleRunner";
@@ -5088,15 +5088,20 @@ app.use('/api/approval-requests', apiRateLimit, createApprovalRequestRoutes(auth
         };
       }
 
+      const qstashOperational = getQstashOperationalStatus();
+      const qstashScheduleUnavailable =
+        process.env.NODE_ENV === 'production'
+        && qstashOperational.autoPostingSchedule.status !== 'REGISTERED';
       const components: Record<string, any> = {
         database: { status: health.checks?.database ? 'healthy' : 'down' },
         aiService: { status: health.checks?.aiService ? 'healthy' : 'unconfigured' },
         redis: { status: (process.env.UPSTASH_REDIS_REST_URL && process.env.UPSTASH_REDIS_REST_TOKEN) ? 'upstash-rest' : 'in-memory-fallback' },
         websocket: { status: 'healthy', adapter: 'in-memory' },
         queue: {
-          status: isQStashEnabled() && !isQstashVerified() ? 'degraded' : 'healthy',
+          status: (isQStashEnabled() && !isQstashVerified()) || qstashScheduleUnavailable ? 'degraded' : 'healthy',
           type: isQStashEnabled() ? (isQstashVerified() ? 'qstash' : 'in-memory-fallback') : 'in-memory',
         },
+        qstashScheduler: qstashOperational,
       };
 
       // Real Postgres ping (with latency), capped so a slow DB never blocks
@@ -7275,44 +7280,6 @@ app.use('/api/v1', (req, _res, next) => {
         logger.warn('[RLHF] Lỗi khi đăng ký QStash schedule:', e.message);
       }
 
-      // ── Marketing Agent Facebook Cron — 18:30 ICT = 11:30 UTC hàng ngày ──
-      // Use a forwarded destination header instead of putting the internal
-      // secret in the scheduled request body. QStash retries this external
-      // trigger after a sleeping/restarted app, while the daily-run ledger
-      // makes a second delivery for the same tenant/day harmless.
-      try {
-        const autoPostingSecret =
-          process.env.AUTO_POSTING_CRON_SECRET ||
-          process.env.SOCIAL_PUBLISHING_CRON_SECRET ||
-          process.env.JWT_SECRET?.slice(0, 32) ||
-          '';
-        const appDomain = QSTASH_SCHEDULE_DOMAIN;
-        if (appDomain && autoPostingSecret) {
-          const scheduleUrl = `https://${appDomain}/api/internal/auto-posting-cron`;
-          const scheduleId = 'marketing-auto-posting-daily-1830';
-          const qstashScheduleEndpoint = `${getQstashBaseUrl()}/v2/schedules/${scheduleId}`;
-          const resp = await fetch(qstashScheduleEndpoint, {
-            method: 'POST',
-            headers: {
-              'Authorization': `Bearer ${getQstashToken()}`,
-              'Content-Type': 'application/json',
-              'Upstash-Destination': scheduleUrl,
-              'Upstash-Cron': '30 11 * * *', // 18:30 Asia/Ho_Chi_Minh = 11:30 UTC
-              'Upstash-Method': 'POST',
-              'Upstash-Forward-x-internal-secret': autoPostingSecret,
-            },
-          });
-          if (resp.ok) {
-            logger.info('[MarketingAgent] Đã đăng ký QStash daily schedule — chạy lúc 18:30 ICT');
-          } else {
-            const errText = await resp.text();
-            logger.warn(`[MarketingAgent] Không thể đăng ký QStash schedule: ${resp.status} ${errText}`);
-          }
-        }
-      } catch (e: any) {
-        logger.warn('[MarketingAgent] Lỗi khi đăng ký QStash schedule:', e.message);
-      }
-
       // ── Engagement Email Cron (NUDGE_A / B / C) — 3:00 SA ICT = 20:00 UTC ──
       try {
         const engagementSecret =
@@ -7588,6 +7555,11 @@ app.use('/api/v1', (req, _res, next) => {
         logger.warn('[ChatFollowUpCron] Lỗi khi đăng ký QStash schedule:', e.message);
       }
     }
+    // ── Marketing Agent Facebook Cron — 18:30 ICT = 11:30 UTC hàng ngày ──
+    // Keep this call outside the verified-only block so a missing or invalid
+    // QStash configuration records an explicit NOT_READY state in health/logs
+    // instead of leaving operators with an ambiguous "not attempted" status.
+    await registerAutoPostingSchedule();
   });
 
   // RELIABILITY FIX (audit Low): shutdown phai idempotent - SIGTERM roi SIGINT

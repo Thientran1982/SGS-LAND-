@@ -154,6 +154,219 @@ let qstashVerified = false;
 export function isQstashVerified(): boolean {
   return qstashVerified;
 }
+
+const MARKETING_AUTO_POSTING_SCHEDULE_ID = 'marketing-auto-posting-daily-1830';
+const MARKETING_AUTO_POSTING_CRON = '30 11 * * *'; // 18:30 Asia/Ho_Chi_Minh = 11:30 UTC
+
+type AutoPostingScheduleStatus =
+  | 'NOT_ATTEMPTED'
+  | 'NOT_CONFIGURED'
+  | 'NOT_PRODUCTION'
+  | 'NOT_READY'
+  | 'REGISTERED'
+  | 'FAILED';
+
+let autoPostingScheduleStatus: {
+  status: AutoPostingScheduleStatus;
+  destination?: string;
+  cron?: string;
+  reason?: string;
+  verifiedAt?: string;
+} = { status: 'NOT_ATTEMPTED' };
+
+function safeQstashError(error: unknown): string {
+  const message = error instanceof Error ? error.message : String(error);
+  const redacted = [
+    [getQstashToken(), '[redacted-token]'],
+    [process.env.AUTO_POSTING_CRON_SECRET || '', '[redacted-secret]'],
+    [process.env.SOCIAL_PUBLISHING_CRON_SECRET || '', '[redacted-secret]'],
+    [process.env.JWT_SECRET || '', '[redacted-secret]'],
+  ].filter(([value]) => Boolean(value)).reduce(
+    (result, [value, replacement]) => result.replace(value, replacement),
+    message,
+  );
+  return redacted.replace(/\bBearer\s+\S+/gi, 'Bearer [redacted]').slice(0, 300);
+}
+
+function getValidatedQstashBaseUrl(): URL | null {
+  try {
+    const url = new URL(getQstashBaseUrl());
+    if (url.protocol !== 'https:' || url.username || url.password || url.search || url.hash) {
+      return null;
+    }
+    if (url.pathname.replace(/\/+$/, '')) return null;
+    return url;
+  } catch {
+    return null;
+  }
+}
+
+function getProductionScheduleDestination(): string | null {
+  if (process.env.NODE_ENV !== 'production') return null;
+  const configuredDomain = (process.env.PROD_DOMAIN || '').trim();
+  if (!configuredDomain) return null;
+
+  try {
+    const url = new URL(
+      configuredDomain.startsWith('http://') || configuredDomain.startsWith('https://')
+        ? configuredDomain
+        : `https://${configuredDomain}`,
+    );
+    if (url.protocol !== 'https:' || url.username || url.password || url.pathname !== '/' || url.search || url.hash) {
+      return null;
+    }
+    return `${url.origin}/api/internal/auto-posting-cron`;
+  } catch {
+    return null;
+  }
+}
+
+function getAutoPostingCronSecret(): string {
+  return (
+    process.env.AUTO_POSTING_CRON_SECRET
+    || process.env.SOCIAL_PUBLISHING_CRON_SECRET
+    || process.env.JWT_SECRET?.slice(0, 32)
+    || ''
+  );
+}
+
+/**
+ * Return QStash state safe for health endpoints and operational dashboards.
+ * It intentionally exposes only the QStash host and schedule metadata, never
+ * a token or a cron authentication secret.
+ */
+export function getQstashOperationalStatus() {
+  const qstashUrl = getValidatedQstashBaseUrl();
+  return {
+    configured: Boolean(getQstashToken()),
+    verified: qstashVerified,
+    endpoint: qstashUrl?.host || null,
+    autoPostingSchedule: {
+      id: MARKETING_AUTO_POSTING_SCHEDULE_ID,
+      cron: MARKETING_AUTO_POSTING_CRON,
+      ...autoPostingScheduleStatus,
+    },
+  };
+}
+
+/**
+ * Register the durable 18:30 Vietnam-time trigger. The stable schedule ID
+ * makes this an upsert, so process restarts and repeated deployments cannot
+ * create a second trigger. The daily ledger remains the final duplicate guard.
+ */
+export async function registerAutoPostingSchedule(): Promise<{
+  status: AutoPostingScheduleStatus;
+  destination?: string;
+  reason?: string;
+}> {
+  if (process.env.NODE_ENV !== 'production') {
+    autoPostingScheduleStatus = {
+      status: 'NOT_PRODUCTION',
+      reason: 'QStash production schedules are disabled outside production.',
+    };
+    return autoPostingScheduleStatus;
+  }
+
+  if (!getQstashToken()) {
+    autoPostingScheduleStatus = {
+      status: 'NOT_CONFIGURED',
+      reason: 'QSTASH_TOKEN is not configured; no production schedule was registered.',
+    };
+    logger.warn('[MarketingAgent] QStash NOT READY — QSTASH_TOKEN chưa được cấu hình; lịch 18:30 không được đăng ký.');
+    return autoPostingScheduleStatus;
+  }
+
+  if (!qstashVerified) {
+    autoPostingScheduleStatus = {
+      status: 'NOT_READY',
+      reason: 'QStash token verification did not succeed; no production schedule was registered.',
+    };
+    logger.warn('[MarketingAgent] QStash NOT READY — bỏ qua đăng ký lịch auto-posting 18:30; chưa xác minh được kết nối.');
+    return autoPostingScheduleStatus;
+  }
+
+  const qstashBaseUrl = getValidatedQstashBaseUrl();
+  if (!qstashBaseUrl) {
+    autoPostingScheduleStatus = {
+      status: 'FAILED',
+      reason: 'QSTASH_URL must be a valid HTTPS origin.',
+    };
+    logger.error('[MarketingAgent] QStash NOT READY — QSTASH_URL không phải HTTPS origin hợp lệ; lịch 18:30 không được đăng ký.');
+    return autoPostingScheduleStatus;
+  }
+
+  const destination = getProductionScheduleDestination();
+  if (!destination) {
+    autoPostingScheduleStatus = {
+      status: 'FAILED',
+      reason: 'PROD_DOMAIN is missing or invalid; no production schedule was registered.',
+    };
+    logger.error('[MarketingAgent] QStash NOT READY — PROD_DOMAIN thiếu hoặc không hợp lệ; lịch 18:30 không được đăng ký.');
+    return autoPostingScheduleStatus;
+  }
+
+  const cronSecret = getAutoPostingCronSecret();
+  if (!cronSecret) {
+    autoPostingScheduleStatus = {
+      status: 'FAILED',
+      destination,
+      reason: 'Auto-posting cron secret is missing; no production schedule was registered.',
+    };
+    logger.error('[MarketingAgent] QStash NOT READY — thiếu secret cho endpoint auto-posting; lịch 18:30 không được đăng ký.');
+    return autoPostingScheduleStatus;
+  }
+
+  try {
+    const { Client } = await import('@upstash/qstash');
+    const client = new Client({
+      token: getQstashToken(),
+      baseUrl: qstashBaseUrl.origin,
+    });
+    await client.schedules.create({
+      destination,
+      scheduleId: MARKETING_AUTO_POSTING_SCHEDULE_ID,
+      cron: MARKETING_AUTO_POSTING_CRON,
+      method: 'POST',
+      body: '{}',
+      headers: {
+        'content-type': 'application/json',
+        'x-internal-secret': cronSecret,
+      },
+      retries: 3,
+      label: 'sgs-land-auto-posting',
+      redact: {
+        body: true,
+        header: ['x-internal-secret'],
+      },
+    });
+
+    const schedule = await client.schedules.get(MARKETING_AUTO_POSTING_SCHEDULE_ID);
+    if (schedule.destination !== destination || schedule.cron !== MARKETING_AUTO_POSTING_CRON) {
+      throw new Error('QStash returned a schedule with unexpected destination or cron');
+    }
+
+    autoPostingScheduleStatus = {
+      status: 'REGISTERED',
+      destination,
+      cron: MARKETING_AUTO_POSTING_CRON,
+      verifiedAt: new Date().toISOString(),
+    };
+    logger.info(
+      `[MarketingAgent] QStash schedule registered: ${MARKETING_AUTO_POSTING_SCHEDULE_ID} at ${MARKETING_AUTO_POSTING_CRON} UTC → ${destination}`,
+    );
+    return autoPostingScheduleStatus;
+  } catch (error) {
+    autoPostingScheduleStatus = {
+      status: 'FAILED',
+      destination,
+      reason: safeQstashError(error),
+    };
+    logger.error(
+      `[MarketingAgent] QStash schedule NOT READY — lịch 18:30 không được đăng ký: ${safeQstashError(error)}`,
+    );
+    return autoPostingScheduleStatus;
+  }
+}
 // ---------------------------------------------------------------------------
 // Startup token verification
 //
@@ -171,9 +384,15 @@ export async function verifyQstashTokenAtStartup(): Promise<boolean> {
     logger.info('[Queue] QStash token check bỏ qua — QSTASH_TOKEN chưa được cấu hình (dùng in-memory queue).');
     return false;
   }
+  const qstashBaseUrl = getValidatedQstashBaseUrl();
+  if (!qstashBaseUrl) {
+    qstashVerified = false;
+    logger.error('[Queue] QStash scheduler NOT READY — QSTASH_URL không phải HTTPS origin hợp lệ.');
+    return false;
+  }
   try {
     const { Client } = await import('@upstash/qstash');
-    const client = new Client({ token, baseUrl: getQstashBaseUrl() });
+    const client = new Client({ token, baseUrl: qstashBaseUrl.origin });
     // schedules.list() is a cheap, read-only, no-side-effect call — perfect
     // for an auth check without touching any real schedule/job.
     await client.schedules.list();
@@ -182,7 +401,7 @@ export async function verifyQstashTokenAtStartup(): Promise<boolean> {
     return true;
   } catch (err: any) {
     qstashVerified = false;
-    const detail = err?.message || String(err);
+    const detail = safeQstashError(err);
     logger.error(`[Queue] QStash scheduler NOT READY — token lỗi: ${detail}. Production schedules sẽ không được đăng ký; in-process fallback chỉ là biện pháp tạm thời và không bền vững sau restart. Vào Upstash dashboard để lấy token mới.`);
     return false;
   }

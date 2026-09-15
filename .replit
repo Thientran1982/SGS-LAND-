@@ -69,6 +69,7 @@ AI_ORCHESTRATION_MODE = "langgraph"
 LANGGRAPH_ORCHESTRATION_ADAPTER_READY = "true"
 LANGGRAPH_ORCHESTRATION_APPROVED = "true"
 GSC_SITE_URL = "sc-domain:sgsland.vn"
+QSTASH_URL = "https://qstash-us-east-1.upstash.io"
 [userenv.development]
 NODE_ENV = "development"
 PORT = "5000"
@@ -76,6 +77,7 @@ PORT = "5000"
 NODE_ENV = "production"
 PORT = "5000"
 APP_URL = "https://sgsland.vn"
+PROD_DOMAIN = "sgsland.vn"
 [objectStorage]
 defaultBucketID = "replit-objstore-b2bda06e-8535-430b-b2ac-45839c6a59c1"
 [postMerge]
