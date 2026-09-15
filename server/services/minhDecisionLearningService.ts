@@ -33,6 +33,12 @@ function category(value: unknown): string | null {
   return ALLOWED_CATEGORIES.has(normalized) ? normalized : null;
 }
 
+export function normalizeMinhLearningWindow(days: unknown): number {
+  const parsed = typeof days === 'number' ? days : Number(days);
+  if (!Number.isFinite(parsed)) return 30;
+  return Math.max(1, Math.min(90, Math.trunc(parsed)));
+}
+
 export async function recordMinhDecisionFeedback(
   tenantId: string,
   input: MinhDecisionFeedbackInput,
@@ -70,8 +76,9 @@ export async function recordMinhDecisionFeedbackSafely(
 }
 
 export async function getMinhDecisionLearning(tenantId: string, days = 30) {
+  const windowDays = normalizeMinhLearningWindow(days);
   return withTenantContext(tenantId, async client => {
-    const [totals, byAction, recent] = await Promise.all([
+    const [totals, byOutcome, byCategory, byAction, recent] = await Promise.all([
       client.query(
         `SELECT
            COUNT(*)::int AS total,
@@ -83,7 +90,26 @@ export async function getMinhDecisionLearning(tenantId: string, days = 30) {
          FROM minh_decision_feedback
         WHERE tenant_id=$1::uuid
           AND created_at >= NOW() - ($2::int * INTERVAL '1 day')`,
-        [tenantId, Math.max(1, Math.min(90, days))],
+        [tenantId, windowDays],
+      ),
+      client.query(
+        `SELECT outcome, COUNT(*)::int AS count
+           FROM minh_decision_feedback
+          WHERE tenant_id=$1::uuid
+            AND created_at >= NOW() - ($2::int * INTERVAL '1 day')
+          GROUP BY outcome
+          ORDER BY outcome`,
+        [tenantId, windowDays],
+      ),
+      client.query(
+        `SELECT COALESCE(NULLIF(feedback_category, ''), 'UNSPECIFIED') AS category,
+                COUNT(*)::int AS count
+           FROM minh_decision_feedback
+          WHERE tenant_id=$1::uuid
+            AND created_at >= NOW() - ($2::int * INTERVAL '1 day')
+          GROUP BY COALESCE(NULLIF(feedback_category, ''), 'UNSPECIFIED')
+          ORDER BY category`,
+        [tenantId, windowDays],
       ),
       client.query(
         `SELECT action_type, outcome, COUNT(*)::int AS count
@@ -92,25 +118,30 @@ export async function getMinhDecisionLearning(tenantId: string, days = 30) {
             AND created_at >= NOW() - ($2::int * INTERVAL '1 day')
           GROUP BY action_type, outcome
           ORDER BY action_type, outcome`,
-        [tenantId, Math.max(1, Math.min(90, days))],
+        [tenantId, windowDays],
       ),
       client.query(
         `SELECT action_type, outcome, feedback_category, created_at
            FROM minh_decision_feedback
-          WHERE tenant_id=$1::uuid
+           WHERE tenant_id=$1::uuid
+             AND created_at >= NOW() - ($2::int * INTERVAL '1 day')
           ORDER BY created_at DESC
           LIMIT 20`,
-        [tenantId],
+        [tenantId, windowDays],
       ),
     ]);
     return {
-      windowDays: Math.max(1, Math.min(90, days)),
+      windowDays,
       totals: totals.rows[0] || {
         total: 0, approved: 0, rejected: 0, executed: 0, execution_failed: 0, answered: 0,
       },
+      byOutcome: byOutcome.rows,
+      byCategory: byCategory.rows,
       byAction: byAction.rows,
       recent: recent.rows,
       rawPayloadIncluded: false,
+      rawAnswerIncluded: false,
+      providerPayloadIncluded: false,
     };
   });
 }

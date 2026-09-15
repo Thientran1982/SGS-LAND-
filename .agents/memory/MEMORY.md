@@ -103,3 +103,4 @@
 - [Minh opportunity detectors](minh-opportunity-detectors.md) — proactive scans stay fail-closed, tenant-scoped, read-only, and bounded with indexed evidence matching
 - [Minh decision queue](minh-decision-queue.md) — proactive suggestions use explicit approval actions, tenant/day budget, source-signal idempotency and no provider side effects
 - [Minh controlled rollout](minh-controlled-rollout.md) — proactive suggestions use deterministic tenant capability canaries and categorical outcome telemetry only
+- [Minh learning trend privacy](minh-learning-trends.md) — operator aggregates stay tenant-scoped, date-bounded, categorical, and free of raw answers/provider payloads

@@ -106,8 +106,12 @@ type MinhDecisionLearning = {
     execution_failed: number;
     answered: number;
   };
+  byOutcome?: Array<{ outcome: string; count: number }>;
+  byCategory?: Array<{ category: string; count: number }>;
   byAction: Array<{ action_type: string; outcome: string; count: number }>;
   rawPayloadIncluded: boolean;
+  rawAnswerIncluded?: boolean;
+  providerPayloadIncluded?: boolean;
 };
 type MinhBrainOverview = {
   scheduler: {
@@ -130,6 +134,8 @@ type MinhBrainOverview = {
   proactiveBudget?: { used: number; budget: number; exceeded: boolean } | null;
   proactiveRollout?: { capabilityKey: string; rollout: string; active: boolean } | null;
   learning?: MinhDecisionLearning | null;
+  degraded?: boolean;
+  warning?: string;
 };
 
 const count = (rows: Array<{ status: string; count: number }> = [], status: string) => rows.find(row => row.status === status)?.count || 0;
@@ -194,6 +200,7 @@ export default function AgentCockpit() {
   const [autoPostingDiagnosticError, setAutoPostingDiagnosticError] = useState('');
   const [minhBrainOverview, setMinhBrainOverview] = useState<MinhBrainOverview | null>(null);
   const [minhDecisionBusy, setMinhDecisionBusy] = useState<string | null>(null);
+  const [minhLearningDays, setMinhLearningDays] = useState(30);
 
   const load = useCallback(async () => {
     setLoading(true); setError(''); setAutoPostingDiagnosticError(''); setAutoPostingDiagnostic(null);
@@ -208,7 +215,7 @@ export default function AgentCockpit() {
         api.get<MarketingGrowthStatus>('/api/agent-operating/marketing-growth'),
         notificationApi.getZaloReadinessWarnings(),
         api.get<AutoPostingDiagnostic>('/api/auto-posting/diagnostic'),
-        api.get<MinhBrainOverview>('/api/internal/minh-brain/overview?limit=50'),
+        api.get<MinhBrainOverview>(`/api/internal/minh-brain/overview?limit=50&days=${minhLearningDays}`),
       ]);
       if (questionsResult.status === 'fulfilled') setQuestions(questionsResult.value);
       if (eventsResult.status === 'fulfilled') setEvents(eventsResult.value);
@@ -232,7 +239,7 @@ export default function AgentCockpit() {
     } catch (e: any) {
       setError(e?.message || 'Không thể tải bảng điều khiển quản trị Agent.');
     } finally { setLoading(false); }
-  }, [eventFilters, memoryFilters]);
+  }, [eventFilters, memoryFilters, minhLearningDays]);
   useEffect(() => { void load(); }, [load]);
 
   const submitAnswer = async (id: string) => {
@@ -496,24 +503,70 @@ export default function AgentCockpit() {
                   </div>
                 </div>)}</div>}
             </div>
-            {minhBrainOverview.learning && <div className="mt-4 border-t border-amber-100 pt-4">
-              <div className="mb-2 flex items-center justify-between gap-3">
+            <div className="mt-4 border-t border-amber-100 pt-4">
+              <div className="mb-3 flex flex-wrap items-start justify-between gap-3">
                 <div>
                   <h3 className="text-sm font-semibold text-slate-900">Learning loop</h3>
-                  <p className="text-xs text-slate-500">Chỉ lưu outcome phân loại trong {minhBrainOverview.learning.windowDays} ngày; không lưu raw payload.</p>
+                  <p className="text-xs text-slate-500">Chỉ lưu outcome phân loại; không hiển thị câu trả lời thô hoặc payload từ provider.</p>
                 </div>
-                <span className="rounded-full bg-white px-2.5 py-1 text-xs font-semibold text-slate-600">{minhBrainOverview.learning.totals.total} events</span>
+                <label className="flex items-center gap-2 text-xs font-medium text-slate-600">
+                  Khoảng thời gian
+                  <select
+                    aria-label="Khoảng thời gian learning của Minh"
+                    value={minhLearningDays}
+                    onChange={event => setMinhLearningDays(Number(event.target.value))}
+                    className="rounded-md border border-amber-200 bg-white px-2 py-1.5 text-xs text-slate-700"
+                  >
+                    <option value={7}>7 ngày</option>
+                    <option value={30}>30 ngày</option>
+                    <option value={90}>90 ngày</option>
+                  </select>
+                </label>
               </div>
-              <div className="grid gap-2 sm:grid-cols-5">
-                {[
-                  ['Duyệt', minhBrainOverview.learning.totals.approved, 'text-emerald-700'],
-                  ['Từ chối', minhBrainOverview.learning.totals.rejected, 'text-rose-700'],
-                  ['Đã chạy', minhBrainOverview.learning.totals.executed, 'text-indigo-700'],
-                  ['Lỗi', minhBrainOverview.learning.totals.execution_failed, 'text-amber-700'],
-                  ['Đã trả lời', minhBrainOverview.learning.totals.answered, 'text-slate-700'],
-                ].map(([label, value, color]) => <div key={String(label)} className="rounded-lg bg-white p-2.5"><div className="text-[11px] text-slate-500">{label}</div><b className={`text-lg ${color}`}>{value}</b></div>)}
-              </div>
-            </div>}
+              {!minhBrainOverview.learning
+                ? <div role="status" className="rounded-lg border border-dashed border-amber-200 bg-white/70 p-4 text-center text-xs text-amber-800">
+                  {minhBrainOverview.degraded
+                    ? (minhBrainOverview.warning || 'Learning loop đang degraded; dữ liệu tạm thời chưa khả dụng.')
+                    : 'Learning loop chưa khả dụng; hãy thử làm mới.'}
+                </div>
+                : <>
+                  <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
+                    <span className="text-xs text-slate-500">Trong {minhBrainOverview.learning.windowDays} ngày gần nhất</span>
+                    <span className="rounded-full bg-white px-2.5 py-1 text-xs font-semibold text-slate-600">{minhBrainOverview.learning.totals.total} events</span>
+                  </div>
+                  <div className="grid gap-2 sm:grid-cols-5">
+                    {[
+                      ['Duyệt', minhBrainOverview.learning.totals.approved, 'text-emerald-700'],
+                      ['Từ chối', minhBrainOverview.learning.totals.rejected, 'text-rose-700'],
+                      ['Đã chạy', minhBrainOverview.learning.totals.executed, 'text-indigo-700'],
+                      ['Lỗi', minhBrainOverview.learning.totals.execution_failed, 'text-amber-700'],
+                      ['Đã trả lời', minhBrainOverview.learning.totals.answered, 'text-slate-700'],
+                    ].map(([label, value, color]) => <div key={String(label)} className="rounded-lg bg-white p-2.5"><div className="text-[11px] text-slate-500">{label}</div><b className={`text-lg ${color}`}>{value}</b></div>)}
+                  </div>
+                  {minhBrainOverview.learning.totals.total === 0
+                    ? <div className="mt-3 rounded-lg border border-dashed border-amber-200 bg-white/70 p-4 text-center text-xs text-slate-500">Chưa có dữ liệu learning trong khoảng thời gian này.</div>
+                    : <div className="mt-3 grid gap-3 md:grid-cols-3">
+                      <div className="rounded-lg bg-white p-3">
+                        <h4 className="text-xs font-semibold text-slate-700">Theo outcome</h4>
+                        <div className="mt-2 space-y-1.5">
+                          {(minhBrainOverview.learning.byOutcome || []).map(row => <div key={row.outcome} className="flex items-center justify-between text-xs"><span className="text-slate-500">{row.outcome}</span><b className="text-slate-800">{row.count}</b></div>)}
+                        </div>
+                      </div>
+                      <div className="rounded-lg bg-white p-3">
+                        <h4 className="text-xs font-semibold text-slate-700">Theo phản hồi phân loại</h4>
+                        <div className="mt-2 space-y-1.5">
+                          {(minhBrainOverview.learning.byCategory || []).map(row => <div key={row.category} className="flex items-center justify-between text-xs"><span className="text-slate-500">{row.category}</span><b className="text-slate-800">{row.count}</b></div>)}
+                        </div>
+                      </div>
+                      <div className="rounded-lg bg-white p-3">
+                        <h4 className="text-xs font-semibold text-slate-700">Theo action</h4>
+                        <div className="mt-2 space-y-1.5">
+                          {(minhBrainOverview.learning.byAction || []).map(row => <div key={`${row.action_type}-${row.outcome}`} className="flex items-center justify-between gap-2 text-xs"><span className="truncate text-slate-500">{row.action_type} · {row.outcome}</span><b className="text-slate-800">{row.count}</b></div>)}
+                        </div>
+                      </div>
+                    </div>}
+                </>}
+            </div>
          </section>}
         {zaloReadinessWarnings.length > 0 && <section className="rounded-xl border border-amber-200 bg-amber-50/50 p-5 shadow-sm" aria-labelledby="zalo-readiness-warning-title">
           <div className="mb-4 flex flex-wrap items-center justify-between gap-3">

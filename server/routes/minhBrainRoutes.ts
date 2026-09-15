@@ -13,9 +13,14 @@ import {
   listMinhDecisionQueue,
   suggestMinhOpportunity,
 } from '../services/minhDecisionQueueService';
-import { getMinhDecisionLearning } from '../services/minhDecisionLearningService';
+import { getMinhDecisionLearning, normalizeMinhLearningWindow } from '../services/minhDecisionLearningService';
 
 const STAFF_ROLES = new Set(['SUPER_ADMIN', 'ADMIN', 'TEAM_LEAD']);
+
+function requestedLearningWindow(value: unknown): number {
+  if (Array.isArray(value)) return normalizeMinhLearningWindow(value[0]);
+  return normalizeMinhLearningWindow(value);
+}
 
 export function createMinhBrainRoutes(authenticateToken: any): Router {
   const router = Router();
@@ -28,6 +33,7 @@ export function createMinhBrainRoutes(authenticateToken: any): Router {
 
     const registryErrors = validateAgentOrchestrationRegistry();
     const scheduler = getMinhBrainSchedulerSnapshot();
+    const learningWindowDays = requestedLearningWindow(req.query.days);
     try {
       const [health, opportunities, decisionQueue, proactiveBudget, proactiveRollout, learning] = await Promise.all([
         getMinhBrainHealth(String(user.tenantId)),
@@ -35,7 +41,7 @@ export function createMinhBrainRoutes(authenticateToken: any): Router {
         listMinhDecisionQueue(String(user.tenantId), Number(req.query.limit) || 50),
         getMinhProactiveBudgetStatus(String(user.tenantId)),
         getMinhProactiveRollout(String(user.tenantId)),
-        getMinhDecisionLearning(String(user.tenantId)),
+        getMinhDecisionLearning(String(user.tenantId), learningWindowDays),
       ]);
       return res.json({
         generatedAt: new Date().toISOString(),

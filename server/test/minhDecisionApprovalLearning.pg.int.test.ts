@@ -325,7 +325,14 @@ describePostgres('authenticated Minh approval-to-learning flow', () => {
       [tenantA, signalB],
     ).then(result => result.rows[0].count)).toBe(0);
 
-    const learningA = await getMinhDecisionLearning(tenantA);
+    await query(
+      `INSERT INTO minh_decision_feedback
+        (tenant_id, event_key, action_type, outcome, feedback_category, created_at)
+       VALUES ($1, $2, 'OLD_EVENT', 'REJECTED', 'OPERATOR_REJECTED', NOW() - INTERVAL '8 days')`,
+      [tenantA, `old-event-${randomUUID()}`],
+    );
+
+    const learningA = await getMinhDecisionLearning(tenantA, 7);
     expect(learningA.totals).toMatchObject({
       total: 3,
       approved: 1,
@@ -333,6 +340,27 @@ describePostgres('authenticated Minh approval-to-learning flow', () => {
       executed: 1,
       answered: 1,
     });
+    expect(learningA.byOutcome).toEqual([
+      { outcome: 'ANSWERED', count: 1 },
+      { outcome: 'APPROVED', count: 1 },
+      { outcome: 'EXECUTED', count: 1 },
+    ]);
+    expect(learningA.byCategory).toEqual([
+      { category: 'MEMORY_APPROVED', count: 1 },
+      { category: 'NO_PROVIDER_SIDE_EFFECT', count: 1 },
+      { category: 'OPERATOR_APPROVED', count: 1 },
+    ]);
     expect(learningA.rawPayloadIncluded).toBe(false);
+    expect(learningA.rawAnswerIncluded).toBe(false);
+    expect(learningA.providerPayloadIncluded).toBe(false);
+
+    const widerLearningA = await getMinhDecisionLearning(tenantA, 90);
+    expect(widerLearningA.totals.total).toBe(4);
+    expect(widerLearningA.byOutcome).toEqual([
+      { outcome: 'ANSWERED', count: 1 },
+      { outcome: 'APPROVED', count: 1 },
+      { outcome: 'EXECUTED', count: 1 },
+      { outcome: 'REJECTED', count: 1 },
+    ]);
   });
 });

@@ -1,5 +1,5 @@
 import React from 'react';
-import { render, screen, within } from '@testing-library/react';
+import { fireEvent, render, screen, within } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import AgentCockpit from '../../pages/AgentCockpit';
 import { api } from '../../services/api/apiClient';
@@ -146,7 +146,9 @@ describe('AgentCockpit panel availability', () => {
        learning: {
          windowDays: 30,
          totals: { total: 3, approved: 1, rejected: 1, executed: 1, execution_failed: 0, answered: 0 },
-         byAction: [],
+          byOutcome: [{ outcome: 'APPROVED', count: 1 }, { outcome: 'REJECTED', count: 1 }, { outcome: 'EXECUTED', count: 1 }],
+          byCategory: [{ category: 'OPERATOR_APPROVED', count: 1 }],
+          byAction: [{ action_type: 'REVIEW_LISTING_PRICE', outcome: 'APPROVED', count: 1 }],
          rawPayloadIncluded: false,
        },
     });
@@ -159,8 +161,46 @@ describe('AgentCockpit panel availability', () => {
      expect(screen.getByText('DRAFT_PROACTIVE_FOLLOWUP')).toBeVisible();
      expect(screen.getByRole('button', { name: 'Duyệt' })).toBeVisible();
      expect(screen.getByText('Learning loop')).toBeVisible();
+     expect(screen.getByText('Theo outcome')).toBeVisible();
+     expect(screen.getByText('OPERATOR_APPROVED')).toBeVisible();
      expect(screen.getByText('Rollout: CANARY_25')).toBeVisible();
     expect(screen.getByText((_, element) => element?.textContent === 'score: 86')).toBeVisible();
     expect(screen.queryByText('Gửi follow-up')).not.toBeInTheDocument();
+  });
+
+  it('shows an explicit empty learning state and requests the selected bounded window', async () => {
+    mockCockpitRequests(createSummary(), {
+      scheduler: { mode: 'shadow', enabled: true, lastTickAt: null, detectorSummary: { enabled: true, lastRunAt: null, tenantRuns: 0, opportunitiesFound: 0, opportunitiesPersisted: 0, degradedRuns: 0, detectorStatus: [] } },
+      routing: { registryErrors: [] },
+      opportunities: [],
+      learning: {
+        windowDays: 30,
+        totals: { total: 0, approved: 0, rejected: 0, executed: 0, execution_failed: 0, answered: 0 },
+        byOutcome: [],
+        byCategory: [],
+        byAction: [],
+        rawPayloadIncluded: false,
+      },
+    });
+    render(<AgentCockpit />);
+
+    expect(await screen.findByText('Chưa có dữ liệu learning trong khoảng thời gian này.')).toBeVisible();
+    fireEvent.change(screen.getByRole('combobox', { name: 'Khoảng thời gian learning của Minh' }), { target: { value: '7' } });
+    expect(await screen.findByText('Chưa có dữ liệu learning trong khoảng thời gian này.')).toBeVisible();
+    expect((api.get as any).mock.calls.some(([path]: [string]) => path.includes('/api/internal/minh-brain/overview?limit=50&days=7'))).toBe(true);
+  });
+
+  it('makes learning degradation explicit when the overview cannot load it', async () => {
+    mockCockpitRequests(createSummary(), {
+      degraded: true,
+      warning: 'Dữ liệu Minh Brain tạm thời chưa tải được.',
+      scheduler: { mode: 'shadow', enabled: true, lastTickAt: null, detectorSummary: { enabled: true, lastRunAt: null, tenantRuns: 0, opportunitiesFound: 0, opportunitiesPersisted: 0, degradedRuns: 0, detectorStatus: [] } },
+      routing: { registryErrors: [] },
+      opportunities: [],
+      learning: null,
+    });
+    render(<AgentCockpit />);
+
+    expect(await screen.findByText('Dữ liệu Minh Brain tạm thời chưa tải được.')).toBeVisible();
   });
 });
