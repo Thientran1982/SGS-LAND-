@@ -13,7 +13,11 @@ import {
   listMinhDecisionQueue,
   suggestMinhOpportunity,
 } from '../services/minhDecisionQueueService';
-import { getMinhDecisionLearning, normalizeMinhLearningWindow } from '../services/minhDecisionLearningService';
+import {
+  getMinhDecisionLearning,
+  getMinhDecisionLearningTrend,
+  normalizeMinhLearningWindow,
+} from '../services/minhDecisionLearningService';
 
 const STAFF_ROLES = new Set(['SUPER_ADMIN', 'ADMIN', 'TEAM_LEAD']);
 
@@ -24,6 +28,30 @@ function requestedLearningWindow(value: unknown): number {
 
 export function createMinhBrainRoutes(authenticateToken: any): Router {
   const router = Router();
+
+  router.get('/learning/trends', authenticateToken, async (req: Request, res: Response) => {
+    const user = (req as any).user;
+    if (!STAFF_ROLES.has(user?.role)) {
+      return res.status(403).json({ error: 'Chỉ quản lý mới có quyền xem xu hướng learning của Minh.' });
+    }
+
+    const learningWindowDays = requestedLearningWindow(req.query.days);
+    try {
+      const trend = await getMinhDecisionLearningTrend(String(user.tenantId), learningWindowDays);
+      return res.json({
+        generatedAt: new Date().toISOString(),
+        degraded: false,
+        trend,
+      });
+    } catch {
+      return res.json({
+        generatedAt: new Date().toISOString(),
+        degraded: true,
+        warning: 'Xu hướng learning của Minh tạm thời chưa tải được.',
+        trend: null,
+      });
+    }
+  });
 
   router.get('/overview', authenticateToken, async (req: Request, res: Response) => {
     const user = (req as any).user;

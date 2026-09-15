@@ -113,6 +113,28 @@ type MinhDecisionLearning = {
   rawAnswerIncluded?: boolean;
   providerPayloadIncluded?: boolean;
 };
+type MinhLearningTrendResponse = {
+  generatedAt: string;
+  degraded: boolean;
+  warning?: string;
+  trend: {
+    windowDays: number;
+    granularity: 'day';
+    points: Array<{
+      date: string;
+      total: number;
+      approved: number;
+      rejected: number;
+      executed: number;
+      execution_failed: number;
+      answered: number;
+    }>;
+    empty: boolean;
+    rawPayloadIncluded: false;
+    rawAnswerIncluded: false;
+    providerPayloadIncluded: false;
+  } | null;
+};
 type MinhBrainOverview = {
   scheduler: {
     mode: string;
@@ -199,16 +221,18 @@ export default function AgentCockpit() {
   const [autoPostingDiagnostic, setAutoPostingDiagnostic] = useState<AutoPostingDiagnostic | null>(null);
   const [autoPostingDiagnosticError, setAutoPostingDiagnosticError] = useState('');
   const [minhBrainOverview, setMinhBrainOverview] = useState<MinhBrainOverview | null>(null);
+  const [minhLearningTrend, setMinhLearningTrend] = useState<MinhLearningTrendResponse | null>(null);
   const [minhDecisionBusy, setMinhDecisionBusy] = useState<string | null>(null);
   const [minhLearningDays, setMinhLearningDays] = useState(30);
 
   const load = useCallback(async () => {
     setLoading(true); setError(''); setAutoPostingDiagnosticError(''); setAutoPostingDiagnostic(null);
+    setMinhLearningTrend(null);
     try {
       const query = new URLSearchParams(eventFilters).toString();
       const nextSummary = await api.get<CockpitSummary>('/api/agent-operating/cockpit');
       setSummary(nextSummary);
-      const [questionsResult, eventsResult, supportResult, marketingGrowthResult, zaloReadinessResult, autoPostingDiagnosticResult, minhBrainResult] = await Promise.allSettled([
+      const [questionsResult, eventsResult, supportResult, marketingGrowthResult, zaloReadinessResult, autoPostingDiagnosticResult, minhBrainResult, minhLearningTrendResult] = await Promise.allSettled([
         api.get<HumanQuestion[]>('/api/agent-operating/questions'),
         api.get<OperatingEvent[]>(`/api/agent-operating/events?${query}`),
         api.get<{ data: SupportRequest[] }>('/api/live-chat/support-requests'),
@@ -216,6 +240,7 @@ export default function AgentCockpit() {
         notificationApi.getZaloReadinessWarnings(),
         api.get<AutoPostingDiagnostic>('/api/auto-posting/diagnostic'),
         api.get<MinhBrainOverview>(`/api/internal/minh-brain/overview?limit=50&days=${minhLearningDays}`),
+        api.get<MinhLearningTrendResponse>(`/api/internal/minh-brain/learning/trends?days=${minhLearningDays}`),
       ]);
       if (questionsResult.status === 'fulfilled') setQuestions(questionsResult.value);
       if (eventsResult.status === 'fulfilled') setEvents(eventsResult.value);
@@ -228,6 +253,7 @@ export default function AgentCockpit() {
         setAutoPostingDiagnosticError(autoPostingDiagnosticResult.reason?.message || 'Không thể tải readiness trigger Facebook.');
       }
       if (minhBrainResult.status === 'fulfilled') setMinhBrainOverview(minhBrainResult.value);
+      if (minhLearningTrendResult.status === 'fulfilled') setMinhLearningTrend(minhLearningTrendResult.value);
       // Secondary panels must not hide a successfully loaded cockpit or a
       // successful role-card approval.
       const [memoryResult, weightsResult] = await Promise.allSettled([
@@ -565,6 +591,57 @@ export default function AgentCockpit() {
                         </div>
                       </div>
                     </div>}
+                   <div className="mt-3 rounded-lg bg-white p-3">
+                     <div className="flex flex-wrap items-start justify-between gap-3">
+                       <div>
+                         <h4 className="text-xs font-semibold text-slate-700">Xu hướng theo ngày</h4>
+                         <p className="mt-1 text-[11px] text-slate-500">Mỗi cột là tổng outcome trong một ngày; dữ liệu chỉ là số lượng phân loại.</p>
+                       </div>
+                       {minhLearningTrend?.trend && minhLearningTrend.trend.points.length > 0 && <div className="flex flex-wrap gap-x-3 gap-y-1 text-[10px] text-slate-500">
+                         {[
+                           ['Duyệt', 'bg-emerald-500'],
+                           ['Từ chối', 'bg-rose-500'],
+                           ['Đã chạy', 'bg-indigo-500'],
+                           ['Lỗi', 'bg-amber-500'],
+                           ['Trả lời', 'bg-slate-500'],
+                         ].map(([label, color]) => <span key={label} className="inline-flex items-center gap-1"><i className={`h-2 w-2 rounded-sm ${color}`} />{label}</span>)}
+                       </div>}
+                     </div>
+                     {minhLearningTrend?.degraded
+                       ? <div role="status" className="mt-3 rounded-lg border border-dashed border-amber-200 bg-amber-50/70 p-4 text-center text-xs text-amber-800">{minhLearningTrend.warning || 'Xu hướng learning đang degraded; dữ liệu tạm thời chưa khả dụng.'}</div>
+                       : !minhLearningTrend?.trend
+                         ? <div role="status" className="mt-3 rounded-lg border border-dashed border-amber-200 bg-amber-50/70 p-4 text-center text-xs text-amber-800">Xu hướng learning chưa khả dụng; hãy thử làm mới.</div>
+                         : minhLearningTrend.trend.empty
+                           ? <div className="mt-3 rounded-lg border border-dashed border-amber-200 bg-amber-50/70 p-4 text-center text-xs text-slate-500">Chưa có dữ liệu xu hướng trong khoảng thời gian này.</div>
+                           : <div className="mt-3 overflow-x-auto pb-1">
+                             <div className="min-w-[360px]">
+                               <div className="flex h-20 items-end gap-1 border-b border-slate-100 px-1" aria-label="Biểu đồ xu hướng learning theo ngày">
+                                 {(() => {
+                                   const points = minhLearningTrend.trend.points;
+                                   const maxTotal = Math.max(...points.map(point => point.total), 1);
+                                   return points.map(point => {
+                                     const segments: Array<[number, string]> = [
+                                       [point.approved, 'bg-emerald-500'],
+                                       [point.rejected, 'bg-rose-500'],
+                                       [point.executed, 'bg-indigo-500'],
+                                       [point.execution_failed, 'bg-amber-500'],
+                                       [point.answered, 'bg-slate-500'],
+                                     ];
+                                     return <div key={point.date} className="flex min-w-[7px] flex-1 items-end justify-center" title={`${point.date}: ${point.total} events`}>
+                                       <div className="flex w-full max-w-[18px] flex-col-reverse overflow-hidden rounded-t-sm" style={{ height: `${Math.max(point.total ? 4 : 1, Math.round((point.total / maxTotal) * 72))}px` }} aria-label={`${point.date}: ${point.total} events`}>
+                                         {segments.map(([count, color], index) => count > 0 && <div key={`${point.date}-${index}`} className={`min-h-[2px] ${color}`} style={{ flex: count }} />)}
+                                       </div>
+                                     </div>;
+                                   });
+                                 })()}
+                               </div>
+                               <div className="mt-1 flex justify-between px-1 text-[10px] text-slate-400">
+                                 <span>{minhLearningTrend.trend.points[0]?.date}</span>
+                                 <span>{minhLearningTrend.trend.points[minhLearningTrend.trend.points.length - 1]?.date}</span>
+                               </div>
+                             </div>
+                           </div>}
+                   </div>
                 </>}
             </div>
          </section>}

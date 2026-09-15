@@ -20,6 +20,24 @@ export type MinhDecisionFeedbackInput = {
   metadata?: Record<string, unknown>;
 };
 
+export type MinhDecisionLearningTrend = {
+  windowDays: number;
+  granularity: 'day';
+  points: Array<{
+    date: string;
+    total: number;
+    approved: number;
+    rejected: number;
+    executed: number;
+    execution_failed: number;
+    answered: number;
+  }>;
+  empty: boolean;
+  rawPayloadIncluded: false;
+  rawAnswerIncluded: false;
+  providerPayloadIncluded: false;
+};
+
 const ALLOWED_CATEGORIES = new Set([
   'OPERATOR_APPROVED',
   'OPERATOR_REJECTED',
@@ -73,6 +91,46 @@ export async function recordMinhDecisionFeedbackSafely(
   } catch (error: any) {
     logger.warn(`[MinhLearning] feedback write degraded tenant=${tenantId}: ${error?.message || error}`);
   }
+}
+
+async function queryMinhDecisionLearningTrend(
+  client: { query: (text: string, values?: unknown[]) => Promise<{ rows: MinhDecisionLearningTrend['points'] }> },
+  tenantId: string,
+  windowDays: number,
+): Promise<MinhDecisionLearningTrend> {
+  const result = await client.query(
+    `SELECT
+       to_char((created_at AT TIME ZONE 'UTC')::date, 'YYYY-MM-DD') AS date,
+       COUNT(*)::int AS total,
+       COUNT(*) FILTER (WHERE outcome='APPROVED')::int AS approved,
+       COUNT(*) FILTER (WHERE outcome='REJECTED')::int AS rejected,
+       COUNT(*) FILTER (WHERE outcome='EXECUTED')::int AS executed,
+       COUNT(*) FILTER (WHERE outcome='EXECUTION_FAILED')::int AS execution_failed,
+       COUNT(*) FILTER (WHERE outcome='ANSWERED')::int AS answered
+      FROM minh_decision_feedback
+     WHERE tenant_id=$1::uuid
+       AND created_at >= NOW() - ($2::int * INTERVAL '1 day')
+     GROUP BY (created_at AT TIME ZONE 'UTC')::date
+     ORDER BY (created_at AT TIME ZONE 'UTC')::date`,
+    [tenantId, windowDays],
+  );
+  return {
+    windowDays,
+    granularity: 'day',
+    points: result.rows,
+    empty: result.rows.length === 0,
+    rawPayloadIncluded: false,
+    rawAnswerIncluded: false,
+    providerPayloadIncluded: false,
+  };
+}
+
+export async function getMinhDecisionLearningTrend(
+  tenantId: string,
+  days = 30,
+): Promise<MinhDecisionLearningTrend> {
+  const windowDays = normalizeMinhLearningWindow(days);
+  return withTenantContext(tenantId, client => queryMinhDecisionLearningTrend(client, tenantId, windowDays));
 }
 
 export async function getMinhDecisionLearning(tenantId: string, days = 30) {

@@ -36,6 +36,8 @@ describePostgres('authenticated Minh approval-to-learning flow', () => {
   let origin: { port: number };
   let approvalRequestRepository: typeof import('../repositories/approvalRequestRepository').approvalRequestRepository;
   let getMinhDecisionLearning: typeof import('../services/minhDecisionLearningService').getMinhDecisionLearning;
+  let getMinhDecisionLearningTrend: typeof import('../services/minhDecisionLearningService').getMinhDecisionLearningTrend;
+  let createMinhBrainRoutes: typeof import('../routes/minhBrainRoutes').createMinhBrainRoutes;
   let schema: string;
   const previousDatabaseUrl = process.env.AIVEN_DATABASE_URL;
   const previousDbRole = process.env.APP_DB_ROLE;
@@ -181,8 +183,10 @@ describePostgres('authenticated Minh approval-to-learning flow', () => {
     ({ pool: appPool } = await import('../db'));
     ({ approvalRequestRepository } = await import('../repositories/approvalRequestRepository'));
     ({ getMinhDecisionLearning } = await import('../services/minhDecisionLearningService'));
+    ({ getMinhDecisionLearningTrend } = await import('../services/minhDecisionLearningService'));
     const { createApprovalRequestRoutes } = await import('../routes/approvalRequestRoutes');
     const { createAgentOperatingRoutes } = await import('../routes/agentOperatingRoutes');
+    ({ createMinhBrainRoutes } = await import('../routes/minhBrainRoutes'));
 
     app = express();
     app.use(express.json());
@@ -198,6 +202,7 @@ describePostgres('authenticated Minh approval-to-learning flow', () => {
     };
     app.use('/api/approval-requests', createApprovalRequestRoutes(authenticateToken));
     app.use('/api/agent-operating', createAgentOperatingRoutes(authenticateToken));
+    app.use('/api/internal/minh-brain', createMinhBrainRoutes(authenticateToken));
     server = app.listen(0);
     await new Promise<void>(resolve => server.once('listening', resolve));
     const address = server.address();
@@ -362,5 +367,36 @@ describePostgres('authenticated Minh approval-to-learning flow', () => {
       { outcome: 'EXECUTED', count: 1 },
       { outcome: 'REJECTED', count: 1 },
     ]);
+
+    await query(
+      `INSERT INTO minh_decision_feedback
+        (tenant_id, event_key, action_type, outcome, feedback_category, created_at)
+       VALUES ($1, $2, 'REVIEW_LISTING_PRICE', 'REJECTED', 'OPERATOR_REJECTED', NOW() - INTERVAL '2 days')`,
+      [tenantA, `trend-event-${randomUUID()}`],
+    );
+    const trendA = await getMinhDecisionLearningTrend(tenantA, 7);
+    expect(trendA).toMatchObject({
+      windowDays: 7,
+      granularity: 'day',
+      empty: false,
+      rawPayloadIncluded: false,
+      rawAnswerIncluded: false,
+      providerPayloadIncluded: false,
+    });
+    expect(trendA.points.reduce((total, point) => total + point.total, 0)).toBe(4);
+    expect(trendA.points.some(point => point.rejected === 1)).toBe(true);
+    expect(JSON.stringify(trendA)).not.toContain('private answer');
+
+    const trendB = await getMinhDecisionLearningTrend(tenantB, 7);
+    expect(trendB.points.reduce((total, point) => total + point.total, 0)).toBe(1);
+
+    const boundedTrend = await send('/api/internal/minh-brain/learning/trends?days=999', {
+      cookie: authCookie(staffA, tenantA),
+    });
+    expect(boundedTrend.status).toBe(200);
+    expect(boundedTrend.body).toMatchObject({
+      degraded: false,
+      trend: { windowDays: 90, granularity: 'day', empty: false },
+    });
   });
 });
