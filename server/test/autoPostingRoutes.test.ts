@@ -5,6 +5,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 const mocks = vi.hoisted(() => ({
   runAutoPostingBackfill: vi.fn(),
   runAutoPostingTick: vi.fn(),
+  getAutoPostingTriggerDiagnostic: vi.fn(),
   getMarketingFacebookDailyStatus: vi.fn(),
   getAutoPostingSettings: vi.fn(),
   upsertAutoPostingSettings: vi.fn(),
@@ -14,6 +15,10 @@ vi.mock('../services/autoPostingSelector', () => ({
   localDayKey: () => '2026-01-03',
   runAutoPostingBackfill: mocks.runAutoPostingBackfill,
   runAutoPostingTick: mocks.runAutoPostingTick,
+}));
+
+vi.mock('../queue', () => ({
+  getAutoPostingTriggerDiagnostic: mocks.getAutoPostingTriggerDiagnostic,
 }));
 
 vi.mock('../repositories/autoPostingRepository', () => ({
@@ -64,6 +69,11 @@ async function getStatus(origin: string) {
   return { status: response.status, body: await response.json() };
 }
 
+async function getDiagnostic(origin: string) {
+  const response = await fetch(`${origin}/api/auto-posting/diagnostic`);
+  return { status: response.status, body: await response.json() };
+}
+
 async function getSettings(origin: string) {
   const response = await fetch(`${origin}/api/auto-posting/settings`);
   return { status: response.status, body: await response.json() };
@@ -108,6 +118,19 @@ describe('Marketing Facebook backfill route', () => {
       reason: 'OK',
       backfillRequestId: 'request-1',
     });
+    mocks.getAutoPostingTriggerDiagnostic.mockResolvedValue({
+      ok: true,
+      code: 'AUTO_POSTING_TRIGGER_READY',
+      dryRun: true,
+      failedComponents: [],
+      sideEffects: {
+        dailyRuns: false,
+        ledgerWrites: false,
+        publications: false,
+        providerCalls: false,
+        qstashWrites: false,
+      },
+    });
     ({ server, origin } = await startServer());
   });
 
@@ -150,6 +173,46 @@ describe('Marketing Facebook backfill route', () => {
       results: [{ tenantId: 'tenant-1', created: 1, published: 1, skipped: 0, reason: 'OK' }],
     });
     expect(mocks.runAutoPostingTick).toHaveBeenCalledTimes(1);
+  });
+
+  it('lets a manager inspect trigger readiness without running or writing anything', async () => {
+    const result = await getDiagnostic(origin);
+
+    expect(result.status).toBe(200);
+    expect(result.body).toMatchObject({
+      ok: true,
+      code: 'AUTO_POSTING_TRIGGER_READY',
+      dryRun: true,
+      sideEffects: {
+        dailyRuns: false,
+        ledgerWrites: false,
+        publications: false,
+        providerCalls: false,
+        qstashWrites: false,
+      },
+    });
+    expect(mocks.getAutoPostingTriggerDiagnostic).toHaveBeenCalledWith('cron-secret');
+    expect(mocks.runAutoPostingTick).not.toHaveBeenCalled();
+    expect(mocks.runAutoPostingBackfill).not.toHaveBeenCalled();
+    expect(mocks.upsertAutoPostingSettings).not.toHaveBeenCalled();
+  });
+
+  it('protects trigger diagnostics from non-manager users', async () => {
+    const deniedServer = await startServer({
+      id: 'agent-1',
+      tenantId: 'tenant-1',
+      role: 'AGENT',
+    });
+
+    try {
+      const result = await getDiagnostic(deniedServer.origin);
+
+      expect(result.status).toBe(403);
+      expect(result.body.error).toContain('quyền quản lý');
+      expect(mocks.getAutoPostingTriggerDiagnostic).not.toHaveBeenCalled();
+    } finally {
+      await new Promise<void>(resolve => deniedServer.server.close(() => resolve()));
+    }
   });
 
   it('rejects a QStash trigger with a wrong secret without touching the daily runner', async () => {

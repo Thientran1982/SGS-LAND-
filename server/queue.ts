@@ -249,6 +249,170 @@ export function getQstashOperationalStatus() {
   };
 }
 
+type AutoPostingDiagnosticComponent = {
+  ready: boolean;
+  code: string;
+  message: string;
+};
+
+/**
+ * Read-only trigger diagnostic for operators. This deliberately uses
+ * schedules.get(), never schedules.create/update/delete, and never invokes
+ * the auto-posting runner.
+ */
+export async function getAutoPostingTriggerDiagnostic(cronSecret: string) {
+  const checkedAt = new Date().toISOString();
+  const expectedDestination = getProductionScheduleDestination();
+  const endpoint: AutoPostingDiagnosticComponent & {
+    destination: string | null;
+    path: string;
+    auth: string;
+  } = {
+    ready: false,
+    code: 'ENDPOINT_NOT_PRODUCTION',
+    message: 'Auto-posting schedules are enabled only in production.',
+    destination: expectedDestination,
+    path: '/api/internal/auto-posting-cron',
+    auth: 'x-internal-secret',
+  };
+
+  if (process.env.NODE_ENV === 'production') {
+    const configuredDomain = (process.env.PROD_DOMAIN || '').trim();
+    if (!configuredDomain) {
+      endpoint.code = 'ENDPOINT_DOMAIN_MISSING';
+      endpoint.message = 'PROD_DOMAIN is missing; QStash has no safe callback destination.';
+    } else if (!expectedDestination) {
+      endpoint.code = 'ENDPOINT_DOMAIN_INVALID';
+      endpoint.message = 'PROD_DOMAIN must be a bare HTTPS origin without a path or credentials.';
+    } else {
+      endpoint.ready = true;
+      endpoint.code = 'ENDPOINT_READY';
+      endpoint.message = 'The production callback destination is valid.';
+    }
+  }
+
+  const cronSecretConfigured = Boolean(cronSecret.trim());
+  const cronSecretComponent: AutoPostingDiagnosticComponent & {
+    configured: boolean;
+  } = {
+    ready: cronSecretConfigured,
+    configured: cronSecretConfigured,
+    code: cronSecretConfigured ? 'CRON_SECRET_CONFIGURED' : 'CRON_SECRET_MISSING',
+    message: cronSecretConfigured
+      ? 'The cron endpoint has an internal authentication secret.'
+      : 'The cron endpoint secret is missing; QStash cannot authenticate its callback.',
+  };
+
+  const qstashUrl = getValidatedQstashBaseUrl();
+  const startupSchedule = autoPostingScheduleStatus;
+  const qstash: AutoPostingDiagnosticComponent & {
+    configured: boolean;
+    verified: boolean;
+    endpoint: string | null;
+    schedule: {
+      id: string;
+      destination: string | null;
+      cron: string | null;
+      startup: typeof startupSchedule;
+      current: {
+        destination: string | null;
+        cron: string | null;
+        method: string | null;
+      } | null;
+    };
+  } = {
+    ready: false,
+    configured: Boolean(getQstashToken()),
+    verified: qstashVerified,
+    endpoint: qstashUrl?.host || null,
+    code: 'QSTASH_NOT_READY',
+    message: 'QStash is not ready for the Facebook auto-posting trigger.',
+    schedule: {
+      id: MARKETING_AUTO_POSTING_SCHEDULE_ID,
+      destination: startupSchedule.destination || null,
+      cron: startupSchedule.cron || null,
+      startup: { ...startupSchedule },
+      current: null,
+    },
+  };
+
+  if (!qstash.configured) {
+    qstash.code = 'QSTASH_TOKEN_MISSING';
+    qstash.message = 'QSTASH_TOKEN is missing; no durable trigger can run.';
+  } else if (!qstashUrl) {
+    qstash.code = 'QSTASH_URL_INVALID';
+    qstash.message = 'QSTASH_URL must be a valid HTTPS origin.';
+  } else if (!qstash.verified) {
+    qstash.code = 'QSTASH_NOT_VERIFIED';
+    qstash.message = 'The QStash token has not passed the read-only startup verification.';
+  } else {
+    try {
+      const { Client } = await import('@upstash/qstash');
+      const client = new Client({
+        token: getQstashToken(),
+        baseUrl: qstashUrl.origin,
+      });
+      const currentSchedule = await client.schedules.get(MARKETING_AUTO_POSTING_SCHEDULE_ID);
+      const currentDestination = typeof currentSchedule?.destination === 'string'
+        ? currentSchedule.destination
+        : null;
+      const currentCron = typeof currentSchedule?.cron === 'string'
+        ? currentSchedule.cron
+        : null;
+      const currentMethod = typeof currentSchedule?.method === 'string'
+        ? currentSchedule.method
+        : null;
+      qstash.schedule.current = {
+        destination: currentDestination,
+        cron: currentCron,
+        method: currentMethod,
+      };
+      qstash.schedule.destination = currentDestination;
+      qstash.schedule.cron = currentCron;
+
+      const scheduleMatches = currentDestination === expectedDestination
+        && currentCron === MARKETING_AUTO_POSTING_CRON;
+      if (!scheduleMatches) {
+        qstash.code = 'QSTASH_SCHEDULE_MISMATCH';
+        qstash.message = 'The current QStash schedule does not match the production callback or cron.';
+      } else {
+        qstash.ready = true;
+        qstash.code = 'QSTASH_READY';
+        qstash.message = 'The QStash token and current Facebook schedule are ready.';
+      }
+    } catch (error) {
+      qstash.code = 'QSTASH_SCHEDULE_UNAVAILABLE';
+      qstash.message = `The current QStash schedule could not be read: ${safeQstashError(error)}`;
+    }
+  }
+
+  const failedComponents = [
+    !endpoint.ready ? 'endpoint' : null,
+    !cronSecretComponent.ready ? 'cronSecret' : null,
+    !qstash.ready ? 'qstash' : null,
+  ].filter((component): component is string => Boolean(component));
+
+  return {
+    ok: failedComponents.length === 0,
+    code: failedComponents.length === 0
+      ? 'AUTO_POSTING_TRIGGER_READY'
+      : 'AUTO_POSTING_TRIGGER_NOT_READY',
+    dryRun: true,
+    checkedAt,
+    failedComponents,
+    endpoint,
+    cronSecret: cronSecretComponent,
+    qstash,
+    sideEffects: {
+      dailyRuns: false,
+      ledgerWrites: false,
+      publications: false,
+      providerCalls: false,
+      qstashWrites: false,
+    },
+  };
+}
+
 /**
  * Register the durable 18:30 Vietnam-time trigger. The stable schedule ID
  * makes this an upsert, so process restarts and repeated deployments cannot

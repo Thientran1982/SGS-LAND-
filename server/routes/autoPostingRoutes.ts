@@ -15,6 +15,7 @@ import { getBudgetStatus } from '../ai/minhBrain';
 import { listGraphThreads, resumeMinhGraph } from '../ai/minhGraphAdapter';
 import { getMinhBrainHealth } from '../ai/minhHealth';
 import { MINH_INTENT_TOOLS } from '../ai/minhOrchestrator';
+import { getAutoPostingTriggerDiagnostic } from '../queue';
 import {
   localDayKey,
   runAutoPostingBackfill,
@@ -110,6 +111,27 @@ export function createAutoPostingRouter(
   router.get('/api/auto-posting/status', authenticateToken, async (req, res) => {
     if (!requireManager(req, res)) return;
     res.json(await getMarketingFacebookDailyStatus(pool, tenantId(req), localDayKey()));
+  });
+
+  router.get('/api/auto-posting/diagnostic', authenticateToken, async (req, res) => {
+    if (!requireManager(req, res)) return;
+    try {
+      return res.json(await getAutoPostingTriggerDiagnostic(cronSecret));
+    } catch (error: any) {
+      return res.status(500).json({
+        ok: false,
+        code: 'AUTO_POSTING_DIAGNOSTIC_FAILED',
+        dryRun: true,
+        sideEffects: {
+          dailyRuns: false,
+          ledgerWrites: false,
+          publications: false,
+          providerCalls: false,
+          qstashWrites: false,
+        },
+        error: error?.message || 'Auto-posting diagnostic failed',
+      });
+    }
   });
 
   router.put('/api/auto-posting/settings', authenticateToken, async (req, res) => {

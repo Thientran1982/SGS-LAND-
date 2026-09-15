@@ -123,4 +123,98 @@ describe('QStash Facebook auto-posting schedule', () => {
     expect(qstashMocks.create).not.toHaveBeenCalled();
     expect(getQstashOperationalStatus().autoPostingSchedule.status).toBe('NOT_READY');
   });
+
+  it('reads current schedule metadata without changing the schedule or triggering a run', async () => {
+    process.env.NODE_ENV = 'production';
+    process.env.PROD_DOMAIN = 'sgs-land.example.test';
+    process.env.QSTASH_URL = 'https://qstash.example.test';
+    process.env.QSTASH_TOKEN = 'qstash-test-token';
+    process.env.QSTASH_CURRENT_SIGNING_KEY = 'signing-test-key';
+    process.env.AUTO_POSTING_CRON_SECRET = 'cron-test-secret';
+
+    qstashMocks.list.mockResolvedValueOnce([]);
+    qstashMocks.get.mockResolvedValueOnce({
+      scheduleId: 'marketing-auto-posting-daily-1830',
+      destination: 'https://sgs-land.example.test/api/internal/auto-posting-cron',
+      cron: '30 11 * * *',
+      method: 'POST',
+    });
+
+    const {
+      getAutoPostingTriggerDiagnostic,
+      verifyQstashTokenAtStartup,
+    } = await import('../queue');
+
+    expect(await verifyQstashTokenAtStartup()).toBe(true);
+    const diagnostic = await getAutoPostingTriggerDiagnostic('cron-test-secret');
+
+    expect(diagnostic).toMatchObject({
+      ok: true,
+      code: 'AUTO_POSTING_TRIGGER_READY',
+      dryRun: true,
+      endpoint: {
+        ready: true,
+        code: 'ENDPOINT_READY',
+      },
+      cronSecret: {
+        ready: true,
+        code: 'CRON_SECRET_CONFIGURED',
+      },
+      qstash: {
+        ready: true,
+        code: 'QSTASH_READY',
+        schedule: {
+          current: {
+            destination: 'https://sgs-land.example.test/api/internal/auto-posting-cron',
+            cron: '30 11 * * *',
+            method: 'POST',
+          },
+        },
+      },
+      sideEffects: {
+        dailyRuns: false,
+        ledgerWrites: false,
+        publications: false,
+        providerCalls: false,
+        qstashWrites: false,
+      },
+    });
+    expect(qstashMocks.get).toHaveBeenCalledWith('marketing-auto-posting-daily-1830');
+    expect(qstashMocks.create).not.toHaveBeenCalled();
+    expect(JSON.stringify(diagnostic)).not.toContain('qstash-test-token');
+    expect(JSON.stringify(diagnostic)).not.toContain('cron-test-secret');
+  });
+
+  it('reports separate configuration failure codes without contacting or changing QStash', async () => {
+    process.env.NODE_ENV = 'production';
+    delete process.env.PROD_DOMAIN;
+    delete process.env.QSTASH_URL;
+    delete process.env.QSTASH_TOKEN;
+
+    const { getAutoPostingTriggerDiagnostic } = await import('../queue');
+    const diagnostic = await getAutoPostingTriggerDiagnostic('');
+
+    expect(diagnostic).toMatchObject({
+      ok: false,
+      code: 'AUTO_POSTING_TRIGGER_NOT_READY',
+      endpoint: {
+        ready: false,
+        code: 'ENDPOINT_DOMAIN_MISSING',
+      },
+      cronSecret: {
+        ready: false,
+        configured: false,
+        code: 'CRON_SECRET_MISSING',
+      },
+      qstash: {
+        ready: false,
+        configured: false,
+        code: 'QSTASH_TOKEN_MISSING',
+      },
+    });
+    expect(diagnostic.failedComponents).toEqual(['endpoint', 'cronSecret', 'qstash']);
+    expect(qstashMocks.list).not.toHaveBeenCalled();
+    expect(qstashMocks.get).not.toHaveBeenCalled();
+    expect(qstashMocks.create).not.toHaveBeenCalled();
+  });
 });
