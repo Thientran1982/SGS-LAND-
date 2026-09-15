@@ -33,6 +33,43 @@ type MarketingGrowthStatus = {
   brain: Array<{ id: string; documentType: string; documentKey: string; content?: Record<string, unknown>; source: string; sourceUrl?: string | null; verificationStatus: string; verifiedAt?: string | null; updatedAt: string }>;
   capabilities: Array<{ capabilityKey: string; displayName: string; role: string; cadence: string; requiresHumanApproval: boolean; rollout: string; active: boolean; promptVersion: string; updatedAt?: string | null }>;
 };
+type AutoPostingDiagnosticComponent = {
+  ready: boolean;
+  code: string;
+  message: string;
+};
+type AutoPostingDiagnostic = {
+  ok: boolean;
+  code: string;
+  dryRun: boolean;
+  checkedAt: string;
+  failedComponents: string[];
+  endpoint: AutoPostingDiagnosticComponent & {
+    destination: string | null;
+    path: string;
+    auth: string;
+  };
+  cronSecret: AutoPostingDiagnosticComponent & { configured: boolean };
+  qstash: AutoPostingDiagnosticComponent & {
+    configured: boolean;
+    verified: boolean;
+    endpoint: string | null;
+    schedule: {
+      id: string;
+      destination: string | null;
+      cron: string | null;
+      startup: { status?: string; destination?: string | null; cron?: string | null };
+      current: { destination: string | null; cron: string | null; method: string | null } | null;
+    };
+  };
+  sideEffects: {
+    dailyRuns: boolean;
+    ledgerWrites: boolean;
+    publications: boolean;
+    providerCalls: boolean;
+    qstashWrites: boolean;
+  };
+};
 
 const count = (rows: Array<{ status: string; count: number }> = [], status: string) => rows.find(row => row.status === status)?.count || 0;
 const cockpitPanelAvailable = (summary: CockpitSummary, panel: CockpitPanel) =>
@@ -92,25 +129,33 @@ export default function AgentCockpit() {
   const [brainForm, setBrainForm] = useState({ documentType: 'brand_voice', documentKey: '', content: '{}', source: 'internal', sourceUrl: '', verificationStatus: 'unverified' });
   const [savingBrain, setSavingBrain] = useState(false);
   const [zaloReadinessWarnings, setZaloReadinessWarnings] = useState<ZaloReadinessWarning[]>([]);
+  const [autoPostingDiagnostic, setAutoPostingDiagnostic] = useState<AutoPostingDiagnostic | null>(null);
+  const [autoPostingDiagnosticError, setAutoPostingDiagnosticError] = useState('');
 
   const load = useCallback(async () => {
-    setLoading(true); setError('');
+    setLoading(true); setError(''); setAutoPostingDiagnosticError(''); setAutoPostingDiagnostic(null);
     try {
       const query = new URLSearchParams(eventFilters).toString();
       const nextSummary = await api.get<CockpitSummary>('/api/agent-operating/cockpit');
       setSummary(nextSummary);
-      const [questionsResult, eventsResult, supportResult, marketingGrowthResult, zaloReadinessResult] = await Promise.allSettled([
+      const [questionsResult, eventsResult, supportResult, marketingGrowthResult, zaloReadinessResult, autoPostingDiagnosticResult] = await Promise.allSettled([
         api.get<HumanQuestion[]>('/api/agent-operating/questions'),
         api.get<OperatingEvent[]>(`/api/agent-operating/events?${query}`),
         api.get<{ data: SupportRequest[] }>('/api/live-chat/support-requests'),
         api.get<MarketingGrowthStatus>('/api/agent-operating/marketing-growth'),
         notificationApi.getZaloReadinessWarnings(),
+        api.get<AutoPostingDiagnostic>('/api/auto-posting/diagnostic'),
       ]);
       if (questionsResult.status === 'fulfilled') setQuestions(questionsResult.value);
       if (eventsResult.status === 'fulfilled') setEvents(eventsResult.value);
       if (supportResult.status === 'fulfilled') setSupportRequests(supportResult.value.data || []);
       if (marketingGrowthResult.status === 'fulfilled') setMarketingGrowth(marketingGrowthResult.value);
       if (zaloReadinessResult.status === 'fulfilled') setZaloReadinessWarnings(zaloReadinessResult.value.warnings || []);
+      if (autoPostingDiagnosticResult.status === 'fulfilled') {
+        setAutoPostingDiagnostic(autoPostingDiagnosticResult.value);
+      } else {
+        setAutoPostingDiagnosticError(autoPostingDiagnosticResult.reason?.message || 'Không thể tải readiness trigger Facebook.');
+      }
       // Secondary panels must not hide a successfully loaded cockpit or a
       // successful role-card approval.
       const [memoryResult, weightsResult] = await Promise.allSettled([
@@ -320,6 +365,50 @@ export default function AgentCockpit() {
             })}
           </div>
         </section>}
+         <section className={`rounded-xl border p-5 shadow-sm ${autoPostingDiagnostic?.ok ? 'border-emerald-200 bg-emerald-50/40' : 'border-rose-200 bg-rose-50/40'}`} aria-labelledby="facebook-trigger-readiness-title">
+           <div className="mb-4 flex flex-wrap items-start justify-between gap-3">
+             <div className="flex items-start gap-2">
+               <ShieldCheck size={19} className={autoPostingDiagnostic?.ok ? 'text-emerald-700' : 'text-rose-700'} />
+               <div>
+                 <h2 id="facebook-trigger-readiness-title" className="font-semibold text-slate-900">Readiness trigger Facebook</h2>
+                 <p className="text-xs text-slate-600">Kiểm tra chỉ đọc endpoint, cron secret và QStash; không chạy cron hoặc tạo publication.</p>
+               </div>
+             </div>
+             {autoPostingDiagnostic && <span className={`rounded-full px-2.5 py-1 text-xs font-bold ${autoPostingDiagnostic.ok ? 'bg-emerald-100 text-emerald-800' : 'bg-rose-100 text-rose-800'}`}>
+               {autoPostingDiagnostic.ok ? 'Sẵn sàng' : 'Chưa sẵn sàng'}
+             </span>}
+           </div>
+           {autoPostingDiagnosticError ? <div role="alert" className="rounded-lg border border-rose-200 bg-white px-3 py-2 text-sm text-rose-700">{autoPostingDiagnosticError}</div> : autoPostingDiagnostic ? <>
+             <div className="mb-3 flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-slate-600">
+               <span>Mã tổng: <code className="font-semibold text-slate-800">{autoPostingDiagnostic.code}</code></span>
+               <span>Kiểm tra lúc: <time dateTime={autoPostingDiagnostic.checkedAt}>{autoPostingDiagnostic.checkedAt}</time></span>
+             </div>
+             <div className="grid gap-3 md:grid-cols-3">
+               {[
+                 { key: 'endpoint', label: 'Endpoint production', component: autoPostingDiagnostic.endpoint },
+                 { key: 'cronSecret', label: 'Cron secret', component: autoPostingDiagnostic.cronSecret },
+                 { key: 'qstash', label: 'QStash', component: autoPostingDiagnostic.qstash },
+               ].map(({ key, label, component }) => (
+                 <div key={key} className="rounded-lg border border-white/80 bg-white p-3">
+                   <div className="flex items-center justify-between gap-2">
+                     <b className="text-sm text-slate-800">{label}</b>
+                     {component.ready
+                       ? <CheckCircle2 size={16} className="text-emerald-600" aria-label="Sẵn sàng" />
+                       : <XCircle size={16} className="text-rose-600" aria-label="Chưa sẵn sàng" />}
+                   </div>
+                   <div className={`mt-2 break-words font-mono text-xs font-semibold ${component.ready ? 'text-emerald-700' : 'text-rose-700'}`}>{component.code}</div>
+                   <p className="mt-1 text-xs leading-5 text-slate-600">{component.message}</p>
+                   {key === 'endpoint' && <div className="mt-2 text-[11px] text-slate-500">Đường dẫn: <code>{(component as AutoPostingDiagnostic['endpoint']).path}</code> · header: <code>{(component as AutoPostingDiagnostic['endpoint']).auth}</code></div>}
+                   {key === 'cronSecret' && <div className="mt-2 text-[11px] text-slate-500">Trạng thái cấu hình: {(component as AutoPostingDiagnostic['cronSecret']).configured ? 'Đã cấu hình' : 'Chưa cấu hình'}</div>}
+                   {key === 'qstash' && <div className="mt-2 space-y-1 text-[11px] text-slate-500">
+                     <div>Host: {(component as AutoPostingDiagnostic['qstash']).endpoint || '—'} · lịch: {(component as AutoPostingDiagnostic['qstash']).schedule.id}</div>
+                     <div>Cron: <code>{(component as AutoPostingDiagnostic['qstash']).schedule.cron || '—'}</code></div>
+                   </div>}
+                 </div>
+               ))}
+             </div>
+           </> : <div className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-500">Chưa có kết quả readiness.</div>}
+         </section>
         <section className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
           <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
              <div className="flex items-center gap-2"><Filter size={19} className="text-rose-600" /><div><h2 className="font-semibold text-slate-900">Sự kiện cần vận hành</h2><p className="text-xs text-slate-500">Sự kiện treo phiên xử lý hoặc lỗi nhiều lần được đưa lên đầu.</p></div></div>
