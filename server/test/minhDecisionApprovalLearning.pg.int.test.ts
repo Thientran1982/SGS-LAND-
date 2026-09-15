@@ -434,6 +434,71 @@ describePostgres('authenticated Minh approval-to-learning flow', () => {
     expect(JSON.stringify(historyA.body)).not.toContain('metadata_json');
     expect(JSON.stringify(historyA.body)).not.toContain('private answer');
 
+    await query('REVOKE SELECT ON TABLE minh_decision_feedback FROM sgs_app');
+    let failedSnapshot: TestResponse;
+    try {
+      failedSnapshot = await send('/api/internal/minh-brain/learning/trends/export?days=7', {
+        cookie: authCookie(staffA, tenantA),
+      });
+    } finally {
+      await query('GRANT SELECT ON TABLE minh_decision_feedback TO sgs_app');
+    }
+    expect(failedSnapshot.status).toBe(503);
+    expect(failedSnapshot.body).toMatchObject({
+      degraded: true,
+      snapshot: null,
+    });
+    expect(failedSnapshot.body).not.toHaveProperty('points');
+    expect(failedSnapshot.text).not.toContain('private answer');
+    expect(failedSnapshot.text).not.toContain('metadata_json');
+    expect(failedSnapshot.text).not.toContain('provider_response');
+
+    const failedHistoryA = await send('/api/internal/minh-brain/learning/trends/exports?limit=2', {
+      cookie: authCookie(staffA, tenantA),
+    });
+    expect(failedHistoryA.status).toBe(200);
+    expect(failedHistoryA.body.exports).toEqual([
+      expect.objectContaining({
+        operatorId: staffA,
+        windowDays: 7,
+        status: 'FAILED',
+      }),
+      expect.objectContaining({
+        operatorId: staffA,
+        windowDays: 7,
+        status: 'SUCCESS',
+      }),
+    ]);
+    expect(JSON.stringify(failedHistoryA.body)).not.toContain('points');
+    expect(JSON.stringify(failedHistoryA.body)).not.toContain('answers');
+    expect(JSON.stringify(failedHistoryA.body)).not.toContain('metadata_json');
+    expect(JSON.stringify(failedHistoryA.body)).not.toContain('provider_payload');
+    expect(JSON.stringify(failedHistoryA.body)).not.toContain('provider_response');
+
+    const failedRows = (await query(
+      `SELECT to_jsonb(history) AS history
+         FROM minh_learning_export_history history
+        WHERE tenant_id=$1 AND status='FAILED'`,
+      [tenantA],
+    )).rows;
+    expect(failedRows).toHaveLength(1);
+    expect(failedRows[0].history).toEqual(expect.objectContaining({
+      tenant_id: tenantA,
+      operator_id: staffA,
+      window_days: 7,
+      status: 'FAILED',
+    }));
+    for (const sensitiveField of [
+      'learning_rows',
+      'metadata_json',
+      'answers',
+      'provider_payload',
+      'provider_response',
+      'snapshot',
+    ]) {
+      expect(failedRows[0].history).not.toHaveProperty(sensitiveField);
+    }
+
     const snapshotB = await send('/api/internal/minh-brain/learning/trends/export?days=7', {
       cookie: authCookie(staffB, tenantB),
     });
