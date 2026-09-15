@@ -20,3 +20,9 @@ Schema drift must be treated as a first-class recovery case: the daily run ledge
 **Why:** A missing PostgreSQL conflict index can fail before Facebook receives anything, while blindly retrying after an uncertain provider response can create duplicate public content.
 
 **How to apply:** Keep repair migrations separate from application writes, count terminal daily attempts so a no-content tenant does not create a new skipped row every scheduler tick, and reuse the same audited backfill request when a safe retry is requested.
+
+Catch-up date selection must handle both a failed request during the current posting window and a missed previous day after midnight; checking only the current local day after its end can miss the recovery window entirely.
+
+**Why:** Vietnam-local midnight changes the logical day before a naive `23:59` check can run, especially when QStash is unavailable and the process restarts the next morning.
+
+**How to apply:** Retry an existing `FAILED` request once the day's window opens, and before the next day's first window inspect the previous local calendar day; terminal `SKIPPED` results must remain bounded.

@@ -616,23 +616,35 @@ export async function runAutoPostingTick(pool: Pool, now = new Date()) {
 
 export async function runAutoPostingCatchUp(pool: Pool, now = new Date()): Promise<void> {
   const today = localDayKey(now);
+  const currentMinutes = localMinutes(now);
   const tenants = await listEnabledAutoPostingTenants(pool);
   for (const tenantId of tenants) {
     const settings = await computeEffectiveSettings(pool, tenantId, await getAutoPostingSettings(pool, tenantId));
     if (!settings.enabled) continue;
-    const lastWindowEndMinutes = settings.timeWindows.reduce((max, window) => {
-      const [endHour, endMinute] = String(window.end || '').split(':').map(Number);
-      if (![endHour, endMinute].every(Number.isFinite)) return max;
-      return Math.max(max, endHour * 60 + endMinute);
+    const validWindows = settings.timeWindows
+      .map(window => {
+        const [startHour, startMinute] = String(window.start || '').split(':').map(Number);
+        const [endHour, endMinute] = String(window.end || '').split(':').map(Number);
+        return {
+          start: startHour * 60 + startMinute,
+          end: endHour * 60 + endMinute,
+          valid: [startHour, startMinute, endHour, endMinute].every(Number.isFinite),
+        };
+      })
+      .filter(window => window.valid);
+    if (!validWindows.length) continue;
+    const earliestWindowStart = validWindows.reduce((min, window) => Math.min(min, window.start), 24 * 60);
+    const lastWindowEndMinutes = validWindows.reduce((max, window) => {
+      if (window.end >= window.start) return Math.max(max, window.end);
+      return Math.max(max, window.end);
     }, -1);
-    if (lastWindowEndMinutes < 0 || localMinutes(now) < lastWindowEndMinutes) continue;
+    const previousDay = localDayKey(new Date(now.getTime() - 24 * 60 * 60 * 1000));
 
-    // A failed backfill may have stopped before creating a publication (for
-    // example, during a schema outage). Retry that durable request once the
-    // scheduler is healthy. runAutoPostingBackfill still blocks ambiguous,
-    // unresolved, and already-successful provider targets.
-    const existingBackfill = await getMarketingFacebookBackfillRequest(pool, tenantId, today);
-    if (existingBackfill?.status === 'FAILED') {
+    // A failed request for today's scheduled day is safe to retry as soon as
+    // the posting window opens. The backfill claim still blocks any uncertain
+    // or already-delivered provider target.
+    const todayBackfill = await getMarketingFacebookBackfillRequest(pool, tenantId, today);
+    if (todayBackfill?.status === 'FAILED' && currentMinutes >= earliestWindowStart) {
       logger.info(`[MarketingAgent] Catch-up: retrying failed backfill for tenant ${tenantId}, day ${today}.`);
       const result = await runAutoPostingBackfill(
         pool,
@@ -646,10 +658,36 @@ export async function runAutoPostingCatchUp(pool: Pool, now = new Date()): Promi
       continue;
     }
 
-    const postsAttemptedToday = await countAutoPostingRunsToday(pool, tenantId, today);
+    // Before today's first window, a process that missed yesterday's trigger
+    // should reconcile yesterday rather than waiting for today's date to end.
+    const catchUpDay = currentMinutes < earliestWindowStart
+      ? previousDay
+      : currentMinutes >= lastWindowEndMinutes
+        ? today
+        : null;
+    if (!catchUpDay) continue;
+
+    const existingBackfill = catchUpDay === today
+      ? todayBackfill
+      : await getMarketingFacebookBackfillRequest(pool, tenantId, catchUpDay);
+    if (existingBackfill?.status === 'FAILED') {
+      logger.info(`[MarketingAgent] Catch-up: retrying failed backfill for tenant ${tenantId}, day ${catchUpDay}.`);
+      const result = await runAutoPostingBackfill(
+        pool,
+        tenantId,
+        catchUpDay,
+        'BOOT_CATCHUP_RETRY',
+        'system:auto-scheduler',
+        now,
+      );
+      logger.info('[MarketingAgent] Catch-up retry result: ' + JSON.stringify(result));
+      continue;
+    }
+
+    const postsAttemptedToday = await countAutoPostingRunsToday(pool, tenantId, catchUpDay);
     if (postsAttemptedToday > 0) continue;
-    logger.info(`[MarketingAgent] Catch-up: tenant ${tenantId} has no posting attempt today (${today}), running backfill slot 0.`);
-    const result = await runAutoPostingBackfill(pool, tenantId, today, 'BOOT_CATCHUP', 'system:auto-scheduler', now);
+    logger.info(`[MarketingAgent] Catch-up: tenant ${tenantId} has no posting attempt for ${catchUpDay}, running backfill slot 0.`);
+    const result = await runAutoPostingBackfill(pool, tenantId, catchUpDay, 'BOOT_CATCHUP', 'system:auto-scheduler', now);
     logger.info('[MarketingAgent] Catch-up result: ' + JSON.stringify(result));
   }
 }

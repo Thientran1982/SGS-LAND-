@@ -613,7 +613,7 @@ describePostgres('Marketing Facebook daily selector against PostgreSQL', () => {
     });
     const request = await createMarketingFacebookBackfillRequest(setupPool, {
       tenantId: tenantA,
-      logicalDay: '2026-01-02',
+      logicalDay: '2026-01-03',
       reason: 'QStash bị gián đoạn',
       requestedBy: 'system:auto-scheduler',
     });
