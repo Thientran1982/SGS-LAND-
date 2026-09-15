@@ -32,6 +32,8 @@ type MarketingGrowthStatus = {
 };
 
 const count = (rows: Array<{ status: string; count: number }> = [], status: string) => rows.find(row => row.status === status)?.count || 0;
+const cockpitMetric = (degraded: boolean | undefined, rows: Array<{ status: string; count: number }>, status: string) =>
+  degraded ? '—' : count(rows, status);
 const eventStatusLabel: Record<string, string> = { FAILED: 'Thất bại', DEAD_LETTER: 'Hàng chờ lỗi', PROCESSING: 'Đang xử lý', DONE: 'Hoàn tất', PENDING: 'Đang chờ' };
 const memoryKindLabel: Record<string, string> = { fact: 'Sự thật', episodic: 'Theo sự kiện', procedural: 'Quy trình' };
 const brainTypeLabel: Record<string, string> = { brand_voice: 'Giọng thương hiệu', developer: 'Chủ đầu tư', project: 'Dự án', legal_disclaimer: 'Lưu ý pháp lý', broker: 'Môi giới', faq: 'Câu hỏi thường gặp', competitor_note: 'Ghi chú cạnh tranh' };
@@ -258,10 +260,10 @@ export default function AgentCockpit() {
          {summary.degraded && <div role="status" className="flex items-center gap-2 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800"><AlertTriangle size={17} /> {summary.warning || 'Một phần dữ liệu vận hành đang tạm thời không khả dụng.'}</div>}
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
            {[
-            ['Lần chạy đang xử lý', count(summary.executions, 'RUNNING'), 'text-indigo-600'],
-            ['Chờ nhân viên', count(summary.humanQuestions, 'OPEN'), 'text-amber-600'],
-            ['Event lỗi', count(summary.events, 'FAILED') + count(summary.events, 'DEAD_LETTER'), 'text-rose-600'],
-            ['Đã hoàn tất', count(summary.executions, 'SUCCESS'), 'text-emerald-600'],
+            ['Lần chạy đang xử lý', cockpitMetric(summary.degraded, summary.executions, 'RUNNING'), 'text-indigo-600'],
+            ['Chờ nhân viên', cockpitMetric(summary.degraded, summary.humanQuestions, 'OPEN'), 'text-amber-600'],
+            ['Event lỗi', summary.degraded ? '—' : count(summary.events, 'FAILED') + count(summary.events, 'DEAD_LETTER'), 'text-rose-600'],
+            ['Đã hoàn tất', cockpitMetric(summary.degraded, summary.executions, 'SUCCESS'), 'text-emerald-600'],
           ].map(([label, value, color]) => <div key={String(label)} className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm"><div className="text-xs font-medium text-slate-500">{label}</div><div className={`mt-2 text-2xl font-bold ${color}`}>{value}</div></div>)}
         </div>
         {zaloReadinessWarnings.length > 0 && <section className="rounded-xl border border-amber-200 bg-amber-50/50 p-5 shadow-sm" aria-labelledby="zalo-readiness-warning-title">
