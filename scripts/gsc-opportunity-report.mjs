@@ -56,8 +56,8 @@ function readFiles(target) {
 }
 function intent(query) {
   const q = normalise(query);
-  if (/sgs\\s*land|sgsland/.test(q)) return "brand";
-  if (/đồng nai|dong nai|long thành|long thanh|biên hòa|bien hoa|aqua city|izumi|grand manhattan/.test(q)) return "location-project";
+  if (/sgs\s*land|sgsland/.test(q)) return "brand";
+  if (/đại nhật|dai nhat|legacy\s*66|masteri\s*cosmo|central\s*park|vinhomes?|diamond sky|aqua city|izumi|grand manhattan|manhattan|đồng nai|dong nai|long thành|long thanh|biên hòa|bien hoa/.test(q)) return "location-project";
   if (/pháp lý|phap ly|sổ hồng|so hong|hợp đồng|hop dong/.test(q)) return "legal";
   if (/lãi suất|lai suat|vay|tài chính|tai chinh/.test(q)) return "financing";
   if (/định giá|dinh gia|giá nhà|gia nha|giá đất|gia dat/.test(q)) return "valuation";
@@ -68,9 +68,10 @@ function recommendedPage(query) {
     case "brand": return "/";
     case "location-project": {
       const q = normalise(query);
-      if (/legacy\\s*66/.test(q)) return "/landing/legacy-66/";
-      if (/masteri\\s*cosmo/.test(q)) return "/landing/masteri-cosmo-central/";
-      if (/central\\s*park|vinhome/.test(q)) return "/du-an/vinhomes-central-park";
+      if (/legacy\s*66/.test(q)) return "/landing/legacy-66";
+      if (/masteri\s*cosmo/.test(q)) return "/landing/masteri-cosmo-central";
+      if (/đại nhật|dai nhat|diamond sky/.test(q)) return "/du-an/diamond-sky-van-phuc-city";
+      if (/central\s*park|vinhome/.test(q)) return "/du-an/vinhomes-central-park";
       if (/long thành|long thanh/.test(q)) return "/bat-dong-san-long-thanh";
       if (/đồng nai|dong nai/.test(q)) return "/bat-dong-san-dong-nai";
       if (/aqua city/.test(q)) return "/du-an/aqua-city";

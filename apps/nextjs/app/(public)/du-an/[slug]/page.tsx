@@ -249,8 +249,8 @@ const PROJECT_META: Record<
     priceRange: string;
     scale: string;
     areaHa: number;
-    priceLow: number;
-    priceHigh: number;
+    priceLow?: number;
+    priceHigh?: number;
     metaTitle?: string;
     metaDescription?: string;
     subdivisions?: { name: string; price: string; area?: string; note?: string }[];
@@ -266,8 +266,8 @@ const PROJECT_META: Record<
     areaHa: 198,
     priceLow: 9_600_000_000,
     priceHigh: 30_000_000_000,
-    metaTitle: "Diamond Sky Vạn Phúc City 2026 — Giá, Mặt Bằng",
-    metaDescription: "Diamond Sky Vạn Phúc City: căn hộ Thủ Đức từ 9,6 tỷ (1PN), 2PN 14 tỷ, 3PN 20 tỷ, bàn giao Q4/2026, sổ hồng lâu dài. Xem giá & chính sách gốc tại SGS Land.",
+    metaTitle: "Chung cư Diamond Sky 2026 – Giá & Vị trí | SGS Land",
+    metaDescription: "Chung cư Diamond Sky Vạn Phúc City tại Thủ Đức, gần hồ Đại Nhật. Xem vị trí, loại căn và thông tin tham khảo; giá, pháp lý, tiến độ cần xác minh.",
   },
   "aqua-city": {
     name: "Aqua City Novaland Đồng Nai",
@@ -302,7 +302,7 @@ const PROJECT_META: Record<
   "izumi-city": {
     name: "Izumi City Nam Long",
     metaTitle: "Izumi City Nam Long Đồng Nai 2026 — Giá, Mặt Bằng",
-    metaDescription: "Izumi City Nam Long Biên Hòa Đồng Nai: nhà phố, biệt thự 2026, giá & mặt bằng phân khu, tiến độ ven sông Đồng Nai. Nhận báo giá gốc tại SGS Land.",
+    metaDescription: "Izumi City Nam Long tại Biên Hòa, Đồng Nai: tổng quan nhà phố, biệt thự, vị trí và tiến độ tham khảo. Xác minh giá, pháp lý và hồ sơ hiện hành.",
     subdivisions: [{"name":"Nhà phố Izumi","price":"Từ 6 tỷ","area":"5x18m","note":"Ven sông"},{"name":"Biệt thự Izumi","price":"Từ 12 tỷ","area":"8x18m","note":"View công viên"},{"name":"Shophouse Izumi","price":"Từ 9 tỷ","area":"5x20m","note":"Mặt đường lớn"}],
     dev: "Nam Long Group",
     loc: "Biên Hòa, Đồng Nai",
@@ -448,14 +448,12 @@ const PROJECT_META: Record<
     metaTitle: "Grand Manhattan Novaland Quận 1 2026 — Giá",
     metaDescription: "The Grand Manhattan Novaland Quận 1: giá căn hộ 2026, mặt bằng tháp A/B, cho thuê, tiến độ trung tâm Quận 1. Nhận báo giá gốc tại SGS Land.",
     subdivisions: [{"name":"Tháp A","price":"Từ 9 tỷ","area":"1–3PN","note":"Trung tâm Quận 1"},{"name":"Tháp B","price":"Từ 10 tỷ","area":"2–3PN","note":"Cao cấp"}],
-    dev: "Hưng Thịnh Land",
-    loc: "Quận 7, TP.HCM",
-    desc: "Khu căn hộ cao tầng 5,1ha tại Quận 7, tiện ích đầy đủ, gần Phú Mỹ Hưng.",
-    priceRange: "Căn hộ từ 3,8 tỷ VNĐ",
-    scale: "5,1 ha",
-    areaHa: 5.1,
-    priceLow: 3_800_000_000,
-    priceHigh: 12_000_000_000,
+    dev: "Novaland",
+    loc: "Trung tâm TP.HCM",
+    desc: "Grand Manhattan Novaland là dự án căn hộ tại trung tâm TP.HCM. Trang tổng hợp thông tin tham khảo về entity, vị trí và câu hỏi người mua; giá, pháp lý và tiến độ cần xác minh theo hồ sơ hiện hành.",
+    priceRange: "Cần xác minh theo sản phẩm",
+    scale: "Đang cập nhật",
+    areaHa: 0,
   },
   "son-kim-land": {
     name: "Sơn Kim Land",
@@ -509,6 +507,8 @@ const PROJECT_META: Record<
     areaHa: 117,
     priceLow: 5000000000,
     priceHigh: 30000000000,
+    metaTitle: "Masteri Cosmo Central 2026 – Giá & Mặt bằng | SGS Land",
+    metaDescription: "Masteri Cosmo Central tại The Global City, Thủ Đức: vị trí, loại căn và mặt bằng tham khảo. Xác minh giá, chính sách, pháp lý và tiến độ bằng hồ sơ gốc.",
 },
   "legacy-66": {
     name: "Căn hộ Legacy 66 Quận 5",
@@ -865,10 +865,10 @@ export async function generateStaticParams() {
 // ─── Metadata ─────────────────────────────────────────────
 const SLUG_KEYWORDS: Record<string, string> = {
   "aqua-city": "Aqua City Novaland Dong Nai, nha pho Aqua City, biet thu Aqua City, gia du an Aqua City, Aqua City Long Thanh, Aqua City co nen mua khong 2026, Aqua City gia bao nhieu, mat bang Aqua City",
-  "vinhomes-central-park": "Vinhomes Central Park Binh Thanh, can ho Vinhomes Central Park, Central Park Binh Thanh, Landmark 81, can ho cho thue Vinhomes Central Park, gia can ho Vinhomes Central Park 2026, mat bang Vinhomes Central Park",
+  "diamond-sky-van-phuc-city": "chung cu Diamond Sky, Diamond Sky Van Phuc City, ho Dai Nhat, Diamond Sky Thu Duc, can ho Thu Duc, gia Diamond Sky, mat bang Diamond Sky, can ho Van Phuc City 2026",
+  "vinhomes-central-park": "Vinhomes Central Park Bình Thạnh, căn hộ Vinhomes Central Park, Central Park Bình Thạnh, Landmark 81, căn hộ cho thuê Vinhomes Central Park",
   "masteri-cosmo-central": "Masteri Cosmo Central The Global City, Masteri Cosmo o dau, Masteri Cosmo Thu Duc, Masteri Cosmo gia bao nhieu, can ho The Global City 2026",
   "legacy-66": "can ho Legacy 66 Quan 5, Legacy 66 gia bao nhieu, Legacy 66 ban phong nao, mua can ho Legacy 66",
-  "diamond-sky-van-phuc-city": "Diamond Sky Van Phuc City, Diamond Sky Thu Duc, can ho Diamond Sky gia bao nhieu, can ho Van Phuc City 2026",
   "vinhomes-grand-park": "Vinhomes Grand Park Quan 9, Vinhomes Grand Park Thu Duc, can ho Vinhomes Grand Park, Vinhomes Grand Park gia bao nhieu, mua ban Vinhomes Grand Park 2026",
   "the-global-city": "The Global City Quan 2, The Global City An Phu, can ho The Global City, SOHO The Global City, gia ban The Global City 2026",
   "izumi-city": "Izumi City Nam Long, Izumi City Bien Hoa, Izumi City Dong Nai, dat nen Izumi City, biet thu Izumi City, gia Izumi City 2026",

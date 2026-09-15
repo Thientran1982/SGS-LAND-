@@ -79,7 +79,11 @@ export async function generateMetadata({
   if (!project) return {};
   const canonicalUrl = `${SITE_URL}/landing/${slug}`;
   return {
-    title: project.titleFull,
+    title: slug === "legacy-66"
+      ? "Legacy 66 Quận 5 2026 – Giá & Mặt bằng | SGS Land"
+      : slug === "masteri-cosmo-central"
+        ? "Masteri Cosmo Central 2026 – Giá & Mặt bằng | SGS Land"
+        : project.titleFull,
     description: project.desc,
     keywords: project.keywords,
     alternates: { canonical: canonicalUrl },

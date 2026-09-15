@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-09-15T05:13:30.573Z",
+  "generatedAt": "2026-09-15T05:37:09.528Z",
   "baseUrl": "http://localhost:5000",
   "sitemapSources": [
     "https://sgsland.vn/sitemap.xml",
@@ -15,36 +15,7 @@
   ],
   "sitemapUrlCount": 228,
   "pagesChecked": 228,
-  "failures": [
-    {
-      "code": "h1_count",
-      "message": "/bds/co-hoi-vang-dat-an-phuoc-tam-an-long-tha-4f40da30-37ee-4e9e-b998-8368706c338a: expected 1 H1, found 0"
-    },
-    {
-      "code": "h1_count",
-      "message": "/bds/co-hoi-so-huu-biet-thu-sv3-11-dien-tich-a4b2359c-e8d2-41ff-9c53-f9500e3eb916: expected 1 H1, found 0"
-    },
-    {
-      "code": "h1_count",
-      "message": "/bds/biet-thu-don-lap-na-gv5-09-du-an-aqua-ci-6e17f219-838b-41f0-9f4c-721b9278dbbf: expected 1 H1, found 0"
-    },
-    {
-      "code": "h1_count",
-      "message": "/bds/biet-thu-don-lap-na-gv5-05-aqua-city-1471a804-c167-495a-9088-451e1e7dd407: expected 1 H1, found 0"
-    },
-    {
-      "code": "h1_count",
-      "message": "/bds/sieu-pham-moi-vinhomes-hoc-mon-tam-diem-6cd44048-c944-46f8-8f3e-1730df7461c5: expected 1 H1, found 0"
-    },
-    {
-      "code": "h1_count",
-      "message": "/bds/can-ho-3-phong-ngu-victoria-village-nova-df5382aa-28e1-4f54-aa9a-cf3bf93a1262: expected 1 H1, found 0"
-    },
-    {
-      "code": "missing_description",
-      "message": "/tin-tuc/test-bai-viet-upload-anh-video: missing meta description"
-    }
-  ],
+  "failures": [],
   "warnings": [],
   "pages": [
     {
@@ -274,7 +245,7 @@
     {
       "route": "/du-an/izumi-city",
       "title": "Izumi City Nam Long Đồng Nai 2026 — Giá, Mặt Bằng | SGS LAND",
-      "description": "Izumi City Nam Long Biên Hòa Đồng Nai: nhà phố, biệt thự 2026, giá & mặt bằng phân khu, tiến độ ven sông Đồng Nai. Nhận báo giá gốc tại SGS Land.",
+      "description": "Izumi City Nam Long tại Biên Hòa, Đồng Nai: tổng quan nhà phố, biệt thự, vị trí và tiến độ tham khảo. Xác minh giá, pháp lý và hồ sơ hiện hành.",
       "canonical": "https://sgsland.vn/du-an/izumi-city",
       "h1Count": 1,
       "isNoIndex": false
@@ -385,8 +356,8 @@
     },
     {
       "route": "/du-an/masteri-cosmo-central",
-      "title": "Masteri Cosmo Central The Global City Thủ Đức | Dự án BĐS | SGS LAND | SGS LAND",
-      "description": "Masteri Cosmo Central tại The Global City Thủ Đức – dự án căn hộ All-in-One 6 tòa tháp, quần 2 cũ, cách trung tâm 10 phút. Masteri Cosmo ở đâu? Tọa lạc tại An Phú, nơi giao thoa giữa Thủ Thêem và Quận 2. Tổng 3.000 căn, giá từ 6,429 tỷ/căn. Loại: studio, 1PN+, 2PN, 3PN. Tiện ích 5 sao: hồ bơi sky, clubhouse, trung tâm thương mại. Masteri Cosmo Central The Global City – từ khóa SEO chính. Mở bán 2026.",
+      "title": "Masteri Cosmo Central 2026 – Giá & Mặt bằng | SGS Land | SGS LAND",
+      "description": "Masteri Cosmo Central tại The Global City, Thủ Đức: vị trí, loại căn và mặt bằng tham khảo. Xác minh giá, chính sách, pháp lý và tiến độ bằng hồ sơ gốc.",
       "canonical": "https://sgsland.vn/du-an/masteri-cosmo-central",
       "h1Count": 1,
       "isNoIndex": false
@@ -778,7 +749,7 @@
     {
       "route": "/en/du-an/manhattan",
       "title": "Manhattan | Property project | SGS LAND",
-      "description": "Manhattan — Quận 7, TP.HCM. Căn hộ từ 3,8 tỷ VNĐ. Indicative project information from SGS LAND; verify current price, legal status, progress and distribution authorization against original documents.",
+      "description": "Manhattan — Trung tâm TP.HCM. Cần xác minh theo sản phẩm. Indicative project information from SGS LAND; verify current price, legal status, progress and distribution authorization against original documents.",
       "canonical": "https://sgsland.vn/en/du-an/manhattan",
       "h1Count": 1,
       "isNoIndex": false
@@ -969,16 +940,16 @@
     },
     {
       "route": "/bat-dong-san-dong-nai",
-      "title": "Bất Động Sản Đồng Nai 2026 – Giá Bán, Dự Án & Tư Vấn Đầu Tư | SGS Land | SGS LAND",
-      "description": "Bất động sản Đồng Nai 2026: giá bán, danh sách dự án nhà phố, biệt thự, đất nền Long Thành, Biên Hòa, Nhơn Trạch. Cập nhật Aqua City, Izumi City, tiến độ & pháp lý. ☎ Tư vấn mua bán BĐS Đồng Nai miễn phí từ SGS Land!",
+      "title": "Bất động sản Đồng Nai 2026 – Dự án & Giá | SGS Land | SGS LAND",
+      "description": "Bất động sản Đồng Nai 2026: Aqua City, Izumi City, đất nền Long Thành và nhà phố Biên Hòa. Xem giá tham khảo, pháp lý và nguồn cần kiểm tra.",
       "canonical": "https://sgsland.vn/bat-dong-san-dong-nai",
       "h1Count": 1,
       "isNoIndex": false
     },
     {
       "route": "/bat-dong-san-long-thanh",
-      "title": "Bất Động Sản Long Thành 2026 | BĐS Hành Lang Sân Bay | SGS LAND",
-      "description": "3.200+ bất động sản Long Thành, Đồng Nai. Hưởng lợi từ Sân Bay Quốc Tế Long Thành, cao tốc Bến Lức — Long Thành. Đất nền, nhà phố, khu công nghiệp.",
+      "title": "Bất động sản Long Thành 2026 – Giá & Dự án | SGS Land | SGS LAND",
+      "description": "Bất động sản Long Thành 2026: đất nền, nhà phố, dự án và kết nối khu vực sân bay. Kiểm tra giá, pháp lý, quy hoạch theo từng sản phẩm.",
       "canonical": "https://sgsland.vn/bat-dong-san-long-thanh",
       "h1Count": 1,
       "isNoIndex": false
@@ -1185,10 +1156,10 @@
     },
     {
       "route": "/bds/co-hoi-vang-dat-an-phuoc-tam-an-long-tha-4f40da30-37ee-4e9e-b998-8368706c338a",
-      "title": "Bất động sản | SGS LAND",
-      "description": "SGS LAND — nền tảng bất động sản với định giá AI, CRM đa kênh và quản lý kho hàng cho sàn giao dịch, môi giới và doanh nghiệp tại Việt Nam.",
+      "title": "CƠ HỘI VÀNG ĐẤT AN PHƯỚC (TAM AN) - LONG THÀNH, ĐỒNG NAI - NGAY KHU ĐÔ THỊ AQUA CITY | 8.20 tỷ | SGS LAND",
+      "description": "CƠ HỘI VÀNG ĐẤT AN PHƯỚC (TAM AN) - LONG THÀNH, ĐỒNG NAI - NGAY KHU ĐÔ THỊ AQUA CITY — xã An Phước, Long Thành, Đồng nai. Giá: 8.20 tỷ. 1928m², PN. Pháp lý: Đang cập nhật.",
       "canonical": "https://sgsland.vn/bds/co-hoi-vang-dat-an-phuoc-tam-an-long-tha-4f40da30-37ee-4e9e-b998-8368706c338a",
-      "h1Count": 0,
+      "h1Count": 1,
       "isNoIndex": false
     },
     {
@@ -1249,10 +1220,10 @@
     },
     {
       "route": "/bds/co-hoi-so-huu-biet-thu-sv3-11-dien-tich-a4b2359c-e8d2-41ff-9c53-f9500e3eb916",
-      "title": "Bất động sản | SGS LAND",
-      "description": "SGS LAND — nền tảng bất động sản với định giá AI, CRM đa kênh và quản lý kho hàng cho sàn giao dịch, môi giới và doanh nghiệp tại Việt Nam.",
+      "title": "Cơ hội sở hữu Biệt thự SV3-11 – Diện tích lớn, giá cạnh tranh | 14.17 tỷ | SGS LAND",
+      "description": "Cơ hội sở hữu Biệt thự SV3-11 – Diện tích lớn, giá cạnh tranh — đường Ngô Quyền, Long Hưng, Đồng Nai. Giá: 14.17 tỷ. 200m², PN. Pháp lý: Đang cập nhật.",
       "canonical": "https://sgsland.vn/bds/co-hoi-so-huu-biet-thu-sv3-11-dien-tich-a4b2359c-e8d2-41ff-9c53-f9500e3eb916",
-      "h1Count": 0,
+      "h1Count": 1,
       "isNoIndex": false
     },
     {
@@ -1601,10 +1572,10 @@
     },
     {
       "route": "/bds/biet-thu-don-lap-na-gv5-09-du-an-aqua-ci-6e17f219-838b-41f0-9f4c-721b9278dbbf",
-      "title": "Bất động sản | SGS LAND",
-      "description": "SGS LAND — nền tảng bất động sản với định giá AI, CRM đa kênh và quản lý kho hàng cho sàn giao dịch, môi giới và doanh nghiệp tại Việt Nam.",
+      "title": "Biệt thự đơn lập NA.GV5-09 dự án Aqua City | 46.20 tỷ | SGS LAND",
+      "description": "Biệt thự đơn lập NA.GV5-09 dự án Aqua City — đường Ngô Quyền, Long Hưng, Đồng Nai. Giá: 46.20 tỷ. 465m², PN. Pháp lý: Đang cập nhật.",
       "canonical": "https://sgsland.vn/bds/biet-thu-don-lap-na-gv5-09-du-an-aqua-ci-6e17f219-838b-41f0-9f4c-721b9278dbbf",
-      "h1Count": 0,
+      "h1Count": 1,
       "isNoIndex": false
     },
     {
@@ -1641,10 +1612,10 @@
     },
     {
       "route": "/bds/biet-thu-don-lap-na-gv5-05-aqua-city-1471a804-c167-495a-9088-451e1e7dd407",
-      "title": "Bất động sản | SGS LAND",
-      "description": "SGS LAND — nền tảng bất động sản với định giá AI, CRM đa kênh và quản lý kho hàng cho sàn giao dịch, môi giới và doanh nghiệp tại Việt Nam.",
+      "title": "Biệt thự đơn lập NA.GV5-05 Aqua City | 26.40 tỷ | SGS LAND",
+      "description": "Biệt thự đơn lập NA.GV5-05 Aqua City — đường Ngô Quyền, Long Hưng, Đồng Nai. Giá: 26.40 tỷ. 300m², PN. Pháp lý: Đang cập nhật.",
       "canonical": "https://sgsland.vn/bds/biet-thu-don-lap-na-gv5-05-aqua-city-1471a804-c167-495a-9088-451e1e7dd407",
-      "h1Count": 0,
+      "h1Count": 1,
       "isNoIndex": false
     },
     {
@@ -1737,10 +1708,10 @@
     },
     {
       "route": "/bds/sieu-pham-moi-vinhomes-hoc-mon-tam-diem-6cd44048-c944-46f8-8f3e-1730df7461c5",
-      "title": "Bất động sản | SGS LAND",
-      "description": "SGS LAND — nền tảng bất động sản với định giá AI, CRM đa kênh và quản lý kho hàng cho sàn giao dịch, môi giới và doanh nghiệp tại Việt Nam.",
+      "title": "SIÊU PHẨM MỚI – Vinhomes HÓC MÔN – TÂM ĐIỂM ĐẦU TƯ PHÍA TÂY TP.HCM | 3.36 tỷ | SGS LAND",
+      "description": "SIÊU PHẨM MỚI – Vinhomes HÓC MÔN – TÂM ĐIỂM ĐẦU TƯ PHÍA TÂY TP.HCM — HOC  MON . Giá: 3.36 tỷ. 50m², PN. Pháp lý: Đang cập nhật.",
       "canonical": "https://sgsland.vn/bds/sieu-pham-moi-vinhomes-hoc-mon-tam-diem-6cd44048-c944-46f8-8f3e-1730df7461c5",
-      "h1Count": 0,
+      "h1Count": 1,
       "isNoIndex": false
     },
     {
@@ -1777,10 +1748,10 @@
     },
     {
       "route": "/bds/can-ho-3-phong-ngu-victoria-village-nova-df5382aa-28e1-4f54-aa9a-cf3bf93a1262",
-      "title": "Bất động sản | SGS LAND",
-      "description": "SGS LAND — nền tảng bất động sản với định giá AI, CRM đa kênh và quản lý kho hàng cho sàn giao dịch, môi giới và doanh nghiệp tại Việt Nam.",
+      "title": "Căn hộ 3 phòng ngủ Victoria Village Novaland — VTV.2-0X.11 | 8.60 tỷ | SGS LAND",
+      "description": "Căn hộ 3 phòng ngủ Victoria Village Novaland — VTV.2-0X.11 — đường Trương Văn Bang, Thạnh Mỹ Lợi, Thủ Đức, TP.HCM. Giá: 8.60 tỷ. 79.2m², 3PN. Pháp lý: Đang cập nhật.",
       "canonical": "https://sgsland.vn/bds/can-ho-3-phong-ngu-victoria-village-nova-df5382aa-28e1-4f54-aa9a-cf3bf93a1262",
-      "h1Count": 0,
+      "h1Count": 1,
       "isNoIndex": false
     },
     {
@@ -1842,7 +1813,7 @@
     {
       "route": "/tin-tuc/test-bai-viet-upload-anh-video",
       "title": "Test bai viet upload anh video | SGS Land | SGS LAND",
-      "description": "",
+      "description": "Test bai viet upload anh video",
       "canonical": "https://sgsland.vn/tin-tuc/test-bai-viet-upload-anh-video",
       "h1Count": 1,
       "isNoIndex": false

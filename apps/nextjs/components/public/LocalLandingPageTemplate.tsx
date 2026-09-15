@@ -11,16 +11,20 @@ interface Props {
   districts: string[];
   projects: string[];
   priceRange: string;
-  totalListings: number;
+  totalListings?: number;
   description: string;
   intro?: { heading: string; body: string }[];
   subAreas?: { label: string; href: string }[];
   faqs?: FAQItem[];
+  updatedAt?: string;
+  evidenceNote?: string;
 }
 // Server Component — pure SSG
-export async function LocalLandingPageTemplate({ area, areaSlug, districts, projects, priceRange, totalListings, description, intro, subAreas, faqs }: Props) {
+export async function LocalLandingPageTemplate({ area, areaSlug, districts, projects, priceRange, totalListings, description, intro, subAreas, faqs, updatedAt, evidenceNote }: Props) {
   const en = (await getLang()) === "en";
   const lp = (p: string) => (en ? "/en" + p : p);
+  const canonicalPath = areaSlug.startsWith("bat-dong-san-") ? `/${areaSlug}` : `/bat-dong-san-${areaSlug}`;
+  const listingCount = typeof totalListings === "number" ? `${totalListings.toLocaleString()}+` : "Theo dữ liệu";
   return (
     <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-16 sm:py-24">
       {/* Hero */}
@@ -36,6 +40,14 @@ export async function LocalLandingPageTemplate({ area, areaSlug, districts, proj
         <p className="text-lg max-w-2xl leading-relaxed" style={{ color: "var(--text-secondary)" }}>
           {description}
         </p>
+        {(updatedAt || evidenceNote) && (
+          <p className="mt-3 max-w-2xl text-xs leading-relaxed" style={{ color: "var(--text-tertiary)" }}>
+            {updatedAt ? `${en ? "Content review" : "Rà soát nội dung"}: ${updatedAt}. ` : ""}
+            {evidenceNote || (en
+              ? "Prices, legal status, progress and distribution authorization must be verified against current original documents."
+              : "Giá, pháp lý, tiến độ và tư cách phân phối cần được xác minh bằng hồ sơ gốc hiện hành.")}
+          </p>
+        )}
       </div>
       {/* Intro content sections (SEO/AEO) */}
         {intro && intro.length > 0 && (
@@ -54,7 +66,7 @@ export async function LocalLandingPageTemplate({ area, areaSlug, districts, proj
             <h2 className="text-2xl font-bold mb-4" style={{ color: "var(--text-primary)" }}>{en ? "Key areas & projects" : "Khu vực & dự án nổi bật"}</h2>
             <div className="flex flex-wrap gap-3">
               {subAreas.map((sa) => (
-                <Link key={sa.href} href={sa.href} className="px-4 py-2 rounded-xl text-sm font-medium" style={{ background: "var(--primary-subtle)", color: "var(--primary-600)" }}>{sa.label}</Link>
+                <Link key={sa.href} href={lp(sa.href)} className="px-4 py-2 rounded-xl text-sm font-medium" style={{ background: "var(--primary-subtle)", color: "var(--primary-600)" }}>{sa.label}</Link>
               ))}
             </div>
           </div>
@@ -62,7 +74,7 @@ export async function LocalLandingPageTemplate({ area, areaSlug, districts, proj
         {/* Quick stats */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-12">
         {[
-          { label: en ? "Listings" : "Sản phẩm", value: `${totalListings.toLocaleString()}+` },
+          { label: en ? "Listings" : "Sản phẩm", value: listingCount },
           { label: en ? "Districts" : "Quận/Huyện", value: `${districts.length}` },
           { label: en ? "Major projects" : "Dự án lớn", value: `${projects.length}+` },
           { label: en ? "From" : "Giá từ", value: priceRange.split("—")[0].trim() },
@@ -83,7 +95,7 @@ export async function LocalLandingPageTemplate({ area, areaSlug, districts, proj
           {districts.map((d) => (
             <Link
               key={d}
-              href={`/marketplace?area=${encodeURIComponent(d)}`}
+              href={lp(`/marketplace?area=${encodeURIComponent(d)}`)}
               className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium transition-all hover:shadow-token-md hover:-translate-y-0.5"
               style={{ background: "var(--bg-elevated)", border: "1px solid var(--border-default)", color: "var(--text-primary)" }}
             >
@@ -108,7 +120,7 @@ export async function LocalLandingPageTemplate({ area, areaSlug, districts, proj
               </div>
               <div className="flex-1 min-w-0">
                 <p className="font-semibold text-sm truncate" style={{ color: "var(--text-primary)" }}>{proj}</p>
-                <p className="text-xs" style={{ color: "var(--text-tertiary)" }}>{en ? "SGS LAND — authorised agent" : "SGS LAND — đại lý uỷ quyền"}</p>
+                <p className="text-xs" style={{ color: "var(--text-tertiary)" }}>{en ? "Reference information · verify authorization" : "Thông tin tham khảo · cần xác minh tư cách phân phối"}</p>
               </div>
               <Link href={lp(`/marketplace?q=${encodeURIComponent(proj)}`)}
                 className="shrink-0 p-2 rounded-lg hover:bg-[var(--bg-app)] transition-colors">
@@ -134,17 +146,17 @@ export async function LocalLandingPageTemplate({ area, areaSlug, districts, proj
         )}
         {/* JSON-LD structured data (SSR) */}
         <SchemaScript schemas={[
-          getBreadcrumbSchema([{ name: en ? `${area} property` : `Bất động sản ${area}`, url: en ? `https://sgsland.vn/en/${areaSlug}` : `https://sgsland.vn/${areaSlug}` }]),
-          ...(faqs && faqs.length > 0 ? [getFAQSchema(faqs, `https://sgsland.vn/${areaSlug}`)] : []),
+          getBreadcrumbSchema([{ name: en ? `${area} property` : `Bất động sản ${area}`, url: `https://sgsland.vn${en ? `/en${canonicalPath}` : canonicalPath}` }]),
+          ...(faqs && faqs.length > 0 ? [getFAQSchema(faqs, `https://sgsland.vn${en ? `/en${canonicalPath}` : canonicalPath}`)] : []),
         ]} />
         {/* CTA */}
       <div className="p-8 rounded-2xl text-center"
         style={{ background: "var(--primary-subtle)", border: "1px solid var(--primary-600)20" }}>
         <h2 className="text-xl font-bold mb-3" style={{ color: "var(--text-primary)" }}>
-          {en ? `Browse ${totalListings.toLocaleString()}+ properties in ${area}` : `Xem ${totalListings.toLocaleString()}+ BĐS tại ${area}`}
+          {en ? `Browse properties in ${area}` : `Xem BĐS tại ${area}`}
         </h2>
         <p className="text-sm mb-6" style={{ color: "var(--text-secondary)" }}>
-          {en ? `Priced ${priceRange} · Clear pink-book title · Updated continuously` : `Giá ${priceRange} · Pháp lý sổ hồng rõ ràng · Cập nhật liên tục`}
+          {en ? `Indicative price: ${priceRange} · Verify legal status and availability` : `Giá tham khảo: ${priceRange} · Xác minh pháp lý và tình trạng sản phẩm`}
         </p>
         <Link href={lp(`/marketplace?area=${encodeURIComponent(area)}`)}
           className="inline-flex items-center gap-2 px-6 py-3 rounded-xl text-sm font-semibold text-white"

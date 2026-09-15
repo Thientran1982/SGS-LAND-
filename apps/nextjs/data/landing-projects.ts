@@ -191,7 +191,7 @@ const AQUA_CITY: LandingProject = {
 // ─────────────────────────────────────────────
 const LEGACY_66: LandingProject = {
   slug: "legacy-66",
-  titleFull: "Legacy 66 — Căn Hộ Cao Cấp 66 Tân Thành Chợ Lớn TP.HCM | Savills | Q2/2027",
+  titleFull: "Legacy 66 Quận 5 2026 – Giá & Mặt bằng | SGS Land",
   titleShort: "Legacy 66",
   eyebrow: "Tân Thành • Savills • DELTA • Phú Hoàng Land",
   desc: "Legacy 66 tại 66 Tân Thành, Phường Chợ Lớn TP.HCM: 348 căn hộ 1–3PN (45–95m²), sở hữu lâu dài, quản lý Savills chuẩn quốc tế, bàn giao Q2/2027. Bảng giá, chính sách thanh toán và tư vấn miễn phí từ SGS Land.",
@@ -313,7 +313,7 @@ const LEGACY_66: LandingProject = {
 // ─────────────────────────────────────────────
 const MASTERI_COSMO: LandingProject = {
   slug: "masteri-cosmo-central",
-  titleFull: "Masteri Cosmo Central – Giá & Mặt Bằng Căn Hộ The Global City 2026 | SGS Land",
+  titleFull: "Masteri Cosmo Central 2026 – Giá & Mặt bằng | SGS Land",
   titleShort: "Masteri Cosmo Central",
   eyebrow: "Masterise Homes • Foster + Partners • The Global City 117,4ha",
   desc: "Masteri Cosmo Central ở đâu? Căn hộ tại The Global City 117,4ha, TP Thủ Đức – 6 tòa tháp 19-29 tầng do Foster + Partners thiết kế. Loại căn 1PN-4PN, giá từ 6,429 tỷ, lãi suất 0%. ☎ Xem bảng giá & mặt bằng miễn phí từ SGS Land!",
