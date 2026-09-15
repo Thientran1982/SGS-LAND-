@@ -201,6 +201,10 @@ function checkExtraction(
       }
       continue;
     }
+    if (actualValue === null || actualValue === undefined || actualValue === '') {
+      reasons.push(`${key}: missing (expected ${JSON.stringify(expectedValue)})`);
+      continue;
+    }
     if (typeof expectedValue === 'number') {
       const actualNumber = numericValue(actualValue);
       if (actualNumber === null || Math.abs(actualNumber - expectedValue) > 0.000001) {

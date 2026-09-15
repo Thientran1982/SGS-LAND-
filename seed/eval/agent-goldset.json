@@ -63,6 +63,9 @@
     { "id": "inventory-010","input": "Còn căn studio nào ở Vinhomes Smart City không","expectedIntent": "SEARCH_INVENTORY",  "expectedAgent": "inventory_specialist", "mustContain": ["studio"] },
     { "id": "inventory-011","input": "Anh tìm penthouse view sông SG",                 "expectedIntent": "SEARCH_INVENTORY",  "expectedAgent": "inventory_specialist" },
     { "id": "inventory-012","input": "Cho em xem giỏ hàng dự án Akari City",          "expectedIntent": "SEARCH_INVENTORY",  "expectedAgent": "inventory_specialist", "mustContain": ["Akari"] },
+    { "id": "inventory-013","input": "Tìm căn hộ dự án Vinhomes Grand Park, ngân sách từ 2 đến 3 tỷ", "expectedIntent": "SEARCH_INVENTORY", "expectedAgent": "inventory_specialist", "expectedExtraction": { "project_name": "Vinhomes Grand Park", "budget_min": 2000000000, "budget_max": 3000000000 } },
+    { "id": "inventory-014","input": "Tìm căn hộ từ tầng 10 đến tầng 15, hướng Đông Nam", "expectedIntent": "SEARCH_INVENTORY", "expectedAgent": "inventory_specialist", "expectedExtraction": { "floor_min": 10, "floor_max": 15, "unit_direction": "DONG_NAM" } },
+    { "id": "inventory-015","input": "Tìm căn hộ tòa A, diện tích tối đa 75m²",       "expectedIntent": "SEARCH_INVENTORY", "expectedAgent": "inventory_specialist", "expectedExtraction": { "tower": "A", "area_max": 75 } },
 
     { "id": "marketing-001","input": "Viết caption Facebook quảng cáo căn hộ Q7",     "expectedIntent": "EXPLAIN_MARKETING", "expectedAgent": "marketing_specialist" },
     { "id": "marketing-002","input": "Phân tích thị trường BĐS Hà Nội Q1/2026",       "expectedIntent": "EXPLAIN_MARKETING", "expectedAgent": "marketing_specialist", "mustContain": ["Hà Nội"] },
