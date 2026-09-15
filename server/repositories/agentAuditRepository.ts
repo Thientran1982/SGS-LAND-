@@ -36,6 +36,7 @@ export type ProviderHealthSummary = {
     exhaustedRequests: number;
     fallbackRate: number;
     p95LatencyMs: number | null;
+    providerOutcomes: Record<string, number>;
   };
   providers: Array<{
     provider: string;
@@ -256,6 +257,16 @@ class AgentAuditRepository {
                     SELECT 1 FROM attempts a
                     WHERE a.id = o.id AND a.outcome = 'success'
                   )) AS exhausted_requests,
+             COALESCE(
+               (SELECT jsonb_object_agg(outcome_counts.outcome, outcome_counts.total)
+                FROM (
+                  SELECT COALESCE(metadata_json->>'aiProviderOutcome', 'UNKNOWN') AS outcome,
+                         COUNT(*)::int AS total
+                  FROM outbound
+                  GROUP BY COALESCE(metadata_json->>'aiProviderOutcome', 'UNKNOWN')
+                ) outcome_counts),
+               '{}'::jsonb
+             ) AS provider_outcomes,
              (SELECT percentile_cont(0.95) WITHIN GROUP (ORDER BY latency_ms)
                 FROM attempts WHERE latency_ms IS NOT NULL) AS p95_latency_ms`,
           [tenantId, from, to],
@@ -295,6 +306,11 @@ class AgentAuditRepository {
       const totalRequests = Number(rawSummary.total_requests || 0);
       const fallbackRequests = Number(rawSummary.fallback_requests || 0);
       const exhaustedRequests = Number(rawSummary.exhausted_requests || 0);
+      const providerOutcomes = rawSummary.provider_outcomes && typeof rawSummary.provider_outcomes === 'object'
+        ? Object.fromEntries(
+            Object.entries(rawSummary.provider_outcomes).map(([key, value]) => [key, Number(value || 0)]),
+          )
+        : {};
       const providers = providerResult.rows.map(row => ({
         provider: String(row.provider),
         attempts: Number(row.attempts || 0),
@@ -319,6 +335,7 @@ class AgentAuditRepository {
           exhaustedRequests,
           fallbackRate: totalRequests ? Math.round((fallbackRequests / totalRequests) * 10000) / 100 : 0,
           p95LatencyMs: rawSummary.p95_latency_ms == null ? null : Math.round(Number(rawSummary.p95_latency_ms)),
+          providerOutcomes,
         },
         providers,
         alerts: {

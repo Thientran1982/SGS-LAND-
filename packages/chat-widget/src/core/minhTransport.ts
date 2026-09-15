@@ -247,6 +247,7 @@ export function createMinhClient(apiBase?: string) {
       historyReadMs?: number;
       providerRoundTripMs?: number;
     },
+    options?: { retry?: boolean },
     ) {
       const timingHeaders: Record<string, string> = {};
       if (Number.isFinite(clientTimings?.inboundPersistMs)) {
@@ -266,6 +267,7 @@ export function createMinhClient(apiBase?: string) {
           lang,
           inboundInteractionId,
           requestId,
+          retry: options?.retry === true,
           attachments: attachments || [],
         },
         apiBase,

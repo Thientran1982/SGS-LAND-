@@ -32,6 +32,13 @@ type FailedChatRequest = {
   attachments: ChatAttachment[];
 };
 
+type DegradedChatNotice = {
+  inboundInteractionId: string;
+  text: string;
+  attachments: ChatAttachment[];
+  reason?: string;
+};
+
 type RunPhase = "classify" | "retrieve" | "specialist" | "compose" | "guardrail";
 type RunState = {
   status: "idle" | "sending" | "thinking" | "failed";
@@ -135,6 +142,8 @@ export function MinhChatPanel({
   const [runState, setRunState] = useState<RunState>({ status: "idle" });
   const [error, setError] = useState("");
   const [lastFailed, setLastFailed] = useState<FailedChatRequest | null>(null);
+  const [degradedNotice, setDegradedNotice] = useState<DegradedChatNotice | null>(null);
+  const [escalating, setEscalating] = useState(false);
   const [mode, setMode] = useState<MinhThreadStatus>("AI_ACTIVE");
 
   // Voice input (client-side only via Web Speech API, no new backend endpoint)
@@ -202,6 +211,16 @@ export function MinhChatPanel({
       message.runId === current.runId,
     );
     return inboundMatches || runMatches;
+  }, []);
+
+  const noteDegradedReply = useCallback((message: ChatMessage, fallbackText?: string) => {
+    if (!message.degraded || !message.inboundInteractionId) return;
+    setDegradedNotice({
+      inboundInteractionId: message.inboundInteractionId,
+      text: fallbackText || pendingRequestRef.current?.text || "",
+      attachments: pendingRequestRef.current?.attachments || message.attachments || [],
+      reason: message.degradedReason,
+    });
   }, []);
 
   useEffect(() => {
@@ -277,6 +296,11 @@ export function MinhChatPanel({
                 (message) => message.role === "assistant" && replyMatchesRun(message),
               );
             setMessages(restored.messages);
+            const degradedReply = restored.messages
+              .slice(Math.max(0, userIndex + 1))
+              .reverse()
+              .find((message) => message.role === "assistant" && message.degraded);
+            if (degradedReply) noteDegradedReply(degradedReply, userMessageText);
             if (hasReply) {
               setError("");
               session.clearPendingRun(inboundInteractionId);
@@ -331,7 +355,7 @@ export function MinhChatPanel({
         : Math.max(0, Math.min(20_000, 20_000 - Math.max(0, progressAge)));
       pendingReconcileTimerRef.current = setTimeout(poll, initialDelay);
     },
-    [finishRun, replyMatchesRun, session, stopPendingReconcile, transitionRun],
+    [finishRun, noteDegradedReply, replyMatchesRun, session, stopPendingReconcile, transitionRun],
   );
 
   const appendUnique = useCallback((msg: ChatMessage) => {
@@ -423,6 +447,7 @@ export function MinhChatPanel({
       .connect({
         onMessage: (m) => {
           appendUnique(m);
+          if (m.role === "assistant") noteDegradedReply(m);
           if (m.role === "assistant" && replyMatchesRun(m)) {
             session.clearPendingRun(m.inboundInteractionId);
             setError("");
@@ -597,7 +622,11 @@ export function MinhChatPanel({
   );
 
   const send = useCallback(
-    async (raw?: string, requestAttachments?: ChatAttachment[]) => {
+    async (
+      raw?: string,
+      requestAttachments?: ChatAttachment[],
+      reuseInboundInteractionId?: string,
+    ) => {
       const outgoingAttachments = requestAttachments ?? (raw === undefined ? attachments : []);
       const typedText = (raw ?? input).trim();
       const text = typedText || (outgoingAttachments.length ? EMPTY_ATTACHMENT_PROMPT : "");
@@ -606,22 +635,29 @@ export function MinhChatPanel({
       if (requestAttachments === undefined) setAttachments([]);
       setError("");
       setLastFailed(null);
-      const tempId = "temp-" + Date.now();
+      setDegradedNotice(null);
+      const tempId = reuseInboundInteractionId || "temp-" + Date.now();
       const startedAt = Date.now();
       pendingRequestRef.current = { userMessageId: tempId, text, attachments: outgoingAttachments };
       transitionRun({ status: "sending", startedAt });
-      setMessages((prev) => [
-        ...prev,
-        { id: tempId, role: "user", content: text, ts: Date.now(), attachments: outgoingAttachments } as ChatMessage,
-      ]);
+      if (!reuseInboundInteractionId) {
+        setMessages((prev) => [
+          ...prev,
+          { id: tempId, role: "user", content: text, ts: Date.now(), attachments: outgoingAttachments } as ChatMessage,
+        ]);
+      }
       let sentUserMessage: ChatMessage | null = null;
       try {
-        const res = await session.sendUserMessage(text, undefined, outgoingAttachments);
+        const res = reuseInboundInteractionId
+          ? await session.retryUserMessage(reuseInboundInteractionId, text, undefined, outgoingAttachments)
+          : await session.sendUserMessage(text, undefined, outgoingAttachments);
         sentUserMessage = res.user;
         const inboundInteractionId = res.raw?.inboundInteractionId || res.user.id;
         const runId = typeof res.raw?.runId === "string" ? res.raw.runId : undefined;
         setMessages((prev) => {
-          const replaced = prev.map((m) => (m.id === tempId ? res.user : m));
+          const replaced = reuseInboundInteractionId
+            ? prev
+            : prev.map((m) => (m.id === tempId ? res.user : m));
           const seen = new Set<string>();
           const out: ChatMessage[] = [];
           for (const m of replaced) {
@@ -632,6 +668,7 @@ export function MinhChatPanel({
           if (res.assistant && !seen.has(res.assistant.id)) out.push(res.assistant);
           return out;
         });
+        if (res.assistant) noteDegradedReply(res.assistant, text);
         if (res.noReply) {
           setMode("HUMAN_TAKEOVER");
           session.clearPendingRun(inboundInteractionId);
@@ -694,7 +731,9 @@ export function MinhChatPanel({
           transitionRun({ status: "failed" });
         }
         if (!aiPhaseFailure) {
-          setMessages((prev) => prev.filter((m) => m.id !== tempId));
+          if (!reuseInboundInteractionId) {
+            setMessages((prev) => prev.filter((m) => m.id !== tempId));
+          }
           setLastFailed({ text, attachments: outgoingAttachments });
           transitionRun({ status: "failed" });
         }
@@ -718,6 +757,7 @@ export function MinhChatPanel({
       attachments,
       finishRun,
       input,
+      noteDegradedReply,
       session,
       startPendingReconcile,
       stopPendingReconcile,
@@ -725,6 +765,22 @@ export function MinhChatPanel({
       uploadingAttachments,
     ],
   );
+
+  const escalateDegradedReply = useCallback(async () => {
+    if (!degradedNotice || escalating) return;
+    setEscalating(true);
+    try {
+      const accepted = await session.requestHumanEscalation("degraded_provider_response");
+      if (!accepted) throw new Error("escalation_failed");
+      setDegradedNotice(null);
+      setMode("HUMAN_TAKEOVER");
+      setError("Đã ghi nhận yêu cầu kết nối tư vấn viên. Tin nhắn cũ vẫn được giữ nguyên.");
+    } catch {
+      setError("Chưa thể kết nối tư vấn viên. Bạn có thể thử lại sau ít phút.");
+    } finally {
+      setEscalating(false);
+    }
+  }, [degradedNotice, escalating, session]);
 
   const handleKey = (e: React.KeyboardEvent) => {
     if (e.key === "Enter" && !e.shiftKey) {
@@ -1095,6 +1151,35 @@ export function MinhChatPanel({
               <p className="text-center text-[11px] text-amber-600">
                 Chuyên viên đã tham gia hội thoại và sẽ trả lời trực tiếp.
               </p>
+            ) : null}
+
+            {degradedNotice ? (
+              <div
+                role="status"
+                className="flex flex-wrap items-center justify-between gap-2 rounded-xl border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-800"
+              >
+                <span>
+                  Phản hồi trên dùng chế độ dự phòng nên có thể chưa đầy đủ. Bạn có thể thử lại câu hỏi này hoặc kết nối tư vấn viên.
+                </span>
+                <div className="flex shrink-0 items-center gap-1.5">
+                  <button
+                    type="button"
+                    onClick={() => void send(degradedNotice.text, degradedNotice.attachments, degradedNotice.inboundInteractionId)}
+                    className="inline-flex items-center gap-1 rounded-lg bg-amber-100 px-2 py-1 font-medium"
+                  >
+                    <RefreshCw className="h-3 w-3" />
+                    Thử lại
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => void escalateDegradedReply()}
+                    disabled={escalating}
+                    className="rounded-lg border border-amber-300 px-2 py-1 font-medium disabled:opacity-50"
+                  >
+                    {escalating ? "Đang kết nối..." : "Gặp tư vấn viên"}
+                  </button>
+                </div>
+              </div>
             ) : null}
 
             {error ? (

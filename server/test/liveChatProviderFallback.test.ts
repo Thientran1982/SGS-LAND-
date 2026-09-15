@@ -4,6 +4,7 @@ import {
   normalizeProviderFallbackSettings,
   ProviderExhaustedError,
 } from '../ai/providers';
+import { classifyLiveChatProviderOutcome } from '../ai/liveChatEngine';
 import type { ProviderAdapter } from '../ai/providers';
 
 function adapter(
@@ -26,6 +27,31 @@ function unavailableAdapter(provider: string): ProviderAdapter {
 }
 
 describe('live-chat provider fallback policy', () => {
+  it('uses stable outcomes for fallback, timeout, and unavailable responses', () => {
+    expect(classifyLiveChatProviderOutcome([
+      { provider: 'google', model: 'gemini', outcome: 'failed', status: 429, latencyMs: 10 },
+      { provider: 'anthropic', model: 'claude', outcome: 'success', latencyMs: 20 },
+    ], true)).toEqual({
+      outcome: 'FALLBACK',
+      degraded: true,
+      degradedReason: 'PRIMARY_PROVIDER_UNAVAILABLE',
+    });
+    expect(classifyLiveChatProviderOutcome([
+      { provider: 'google', model: 'gemini', outcome: 'failed', status: 504, latencyMs: 10 },
+    ], false)).toEqual({
+      outcome: 'TIMEOUT',
+      degraded: true,
+      degradedReason: 'PROVIDER_TIMEOUT',
+    });
+    expect(classifyLiveChatProviderOutcome([
+      { provider: 'google', model: 'gemini', outcome: 'failed', status: 503, latencyMs: 10 },
+    ], false)).toEqual({
+      outcome: 'UNAVAILABLE',
+      degraded: true,
+      degradedReason: 'ALL_CONFIGURED_PROVIDERS_UNAVAILABLE',
+    });
+  });
+
   it('normalizes fallback order and keeps provider toggles bounded to supported providers', () => {
     const settings = normalizeProviderFallbackSettings({
       order: ['xai', 'xai', 'not-a-provider', 'anthropic'],

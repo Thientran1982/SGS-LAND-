@@ -2951,6 +2951,8 @@ app.get('/api/public/listings/:slugId', apiRateLimit, async (req: express.Reques
   isLandingRequest: boolean;
   executePublicChat: (resumeContext: any) => Promise<any>;
   inboundInteraction: { id: string };
+  retry?: boolean;
+  retryRequestId?: string;
   chatStartedAt: number;
   replyLang: string;
    telemetry: ReturnType<typeof liveChatTelemetry.begin>;
@@ -2967,6 +2969,8 @@ app.get('/api/public/listings/:slugId', apiRateLimit, async (req: express.Reques
      isLandingRequest,
      executePublicChat,
      inboundInteraction,
+    retry = false,
+    retryRequestId,
      chatStartedAt,
      replyLang,
      telemetry,
@@ -2977,7 +2981,9 @@ app.get('/api/public/listings/:slugId', apiRateLimit, async (req: express.Reques
    let repairedLegacyRunId: string | undefined;
 let execution = await runDurableAgentExecution({
 tenantId: PUBLIC_TENANT,
-idempotencyKey: `web:${inboundInteraction.id}`,
+idempotencyKey: retry
+  ? `web:retry-v1:${inboundInteraction.id}:${retryRequestId || 'default'}`
+  : `web:${inboundInteraction.id}`,
 sessionId: leadId,
 leadId,
    inboundInteractionId: inboundInteraction.id,
@@ -3027,6 +3033,7 @@ execution = await runDurableAgentExecution({
 });
       }
       const result = execution.result;
+      const providerTelemetry = result.providerTelemetry;
       // Record the classifier decision so candidate misses remain visible
       // without persisting the visitor's brief.
       void recordLandingClassificationTelemetry({
@@ -3055,6 +3062,11 @@ specialistError: isLandingRequest && !result.specialistOutput
    traceId: execution.traceId,
     inboundInteractionId: inboundInteraction.id,
    needsVerification: execution.guardrail.requiresVerification,
+   degraded: result.degraded === true,
+   degradedReason: result.degradedReason || null,
+   providerOutcome: providerTelemetry?.outcome || null,
+   aiFallbackUsed: providerTelemetry?.fallbackUsed === true,
+   aiStatus: providerTelemetry?.status || null,
       };
       const legacyInteraction = repairedLegacyRunId
         ? await interactionRepository.findByExternalEventId(
@@ -3291,6 +3303,8 @@ try {
   asyncRun = await runAgentAndPersist({
     leadId, msgContent, isLandingRequest, executePublicChat,
       inboundInteraction,
+      retry: req.body?.retry === true,
+      retryRequestId: String(requestId || '').slice(0, 80) || undefined,
       chatStartedAt,
       replyLang,
       telemetry,

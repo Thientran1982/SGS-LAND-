@@ -62,6 +62,57 @@ describe("Minh session async acknowledgement", () => {
     ).toBe(false);
   });
 
+  it("retries a degraded answer using the same inbound interaction", async () => {
+    window.localStorage.setItem("livechat_lead_id", "lead-1");
+    window.localStorage.setItem("livechat_lead_name", "Nguyễn Minh");
+
+    const fetchMock = vi.fn(async (url: string, init?: RequestInit) => {
+      if (init?.method === "POST" && url.includes("/api/public/ai/livechat")) {
+        const body = JSON.parse(String(init.body));
+        expect(body.inboundInteractionId).toBe("inbound-1");
+        expect(body.retry).toBe(true);
+        return {
+          ok: true,
+          status: 200,
+          json: async () => ({
+            reply: {
+              id: "outbound-2",
+              direction: "OUTBOUND",
+              content: "Mình sẽ kiểm tra lại thông tin.",
+              metadata: {
+                isAgent: true,
+                inboundInteractionId: "inbound-1",
+                degraded: true,
+                degradedReason: "PROVIDER_TIMEOUT",
+                providerOutcome: "TIMEOUT",
+              },
+            },
+          }),
+        };
+      }
+      return {
+        ok: true,
+        status: 200,
+        json: async () => ({ csrfToken: "csrf-test" }),
+      };
+    });
+    vi.stubGlobal("fetch", fetchMock);
+
+    const session = createMinhSession();
+    const result = await session.retryUserMessage("inbound-1", "Tin nhắn cũ");
+
+    expect(result.user.id).toBe("inbound-1");
+    expect(result.assistant).toMatchObject({
+      id: "outbound-2",
+      degraded: true,
+      degradedReason: "PROVIDER_TIMEOUT",
+      providerOutcome: "TIMEOUT",
+    });
+    expect(fetchMock.mock.calls.some(([url, init]) =>
+      String(url).includes("/api/public/livechat/message") && init?.method === "POST",
+    )).toBe(false);
+  });
+
   it("keeps a rate-limited status read transient and preserves its retry hint", async () => {
     window.localStorage.setItem("livechat_lead_id", "lead-1");
     window.localStorage.setItem("livechat_lead_name", "Nguyễn Minh");

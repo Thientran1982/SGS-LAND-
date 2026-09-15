@@ -1180,6 +1180,7 @@ type ProviderHealthData = {
     exhaustedRequests: number;
     fallbackRate: number;
     p95LatencyMs: number | null;
+    providerOutcomes: Record<string, number>;
   };
   providers: Array<{
     provider: string;
@@ -1205,7 +1206,7 @@ type ProviderFallbackStatus = {
 };
 
 const emptyProviderHealth: ProviderHealthData = {
-  summary: { totalRequests: 0, fallbackRequests: 0, degradedRequests: 0, exhaustedRequests: 0, fallbackRate: 0, p95LatencyMs: null },
+  summary: { totalRequests: 0, fallbackRequests: 0, degradedRequests: 0, exhaustedRequests: 0, fallbackRate: 0, p95LatencyMs: null, providerOutcomes: {} },
   providers: [],
   alerts: { allFallbackProvidersFailed: false, exhaustedRequests: 0 },
 };
@@ -1242,6 +1243,11 @@ const ProviderHealthTab = () => {
           exhaustedRequests: Number(summary.exhaustedRequests || 0),
           fallbackRate: Number(summary.fallbackRate || 0),
           p95LatencyMs: summary.p95LatencyMs == null ? null : Number(summary.p95LatencyMs),
+          providerOutcomes: summary.providerOutcomes && typeof summary.providerOutcomes === 'object'
+            ? Object.fromEntries(
+                Object.entries(summary.providerOutcomes).map(([key, value]) => [key, Number(value || 0)]),
+              )
+            : {},
         },
         providers: providers.map((provider: any) => ({
           provider: String(provider?.provider || 'unknown'),
@@ -1427,6 +1433,11 @@ const ProviderHealthTab = () => {
             <div className="mt-1 text-xl font-bold text-slate-900">{loading ? '…' : value}</div>
           </div>
         ))}
+      </div>
+      <div className="mt-3 rounded-xl border border-slate-200 bg-white px-4 py-3 text-xs text-slate-600">
+        <span className="font-semibold text-slate-500">Outcome provider:</span>{" "}
+        Fallback {data.summary.providerOutcomes.FALLBACK || 0} · Timeout {data.summary.providerOutcomes.TIMEOUT || 0} ·
+        Unavailable {data.summary.providerOutcomes.UNAVAILABLE || 0}
       </div>
 
       <div className="overflow-x-auto rounded-xl border border-slate-200 bg-white">

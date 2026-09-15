@@ -50,12 +50,20 @@ import { listEnabledMcpServers, callMcpTool, resolveMcpToolName } from '../servi
 import { buildLandingBuilderResponse, ensureLandingResponseLink } from './landingResponse';
 import { liveChatTelemetry, type LiveChatRunTimings } from '../services/liveChatTelemetry';
 
-type LiveChatProviderTelemetry = {
+export type LiveChatProviderOutcome = 'PRIMARY' | 'FALLBACK' | 'TIMEOUT' | 'UNAVAILABLE';
+export type LiveChatDegradedReason =
+    | 'PRIMARY_PROVIDER_UNAVAILABLE'
+    | 'PROVIDER_TIMEOUT'
+    | 'ALL_CONFIGURED_PROVIDERS_UNAVAILABLE';
+
+export type LiveChatProviderTelemetry = {
     provider?: string;
     model?: string;
     status?: number;
     fallbackUsed: boolean;
     degraded: boolean;
+    outcome: LiveChatProviderOutcome;
+    degradedReason?: LiveChatDegradedReason;
     attempts: ProviderAttempt[];
 };
 
@@ -63,6 +71,45 @@ function providerAttemptSummary(attempts: ProviderAttempt[]): string {
     return attempts
         .map(attempt => `${attempt.provider}:${attempt.status || 'ok'}:${attempt.latencyMs}ms`)
         .join(',');
+}
+
+function hasProviderTimeout(attempts: ProviderAttempt[]): boolean {
+    return attempts.some(attempt =>
+        attempt.outcome === 'failed' &&
+        [408, 504, 524].includes(Number(attempt.status)),
+    );
+}
+
+export function classifyLiveChatProviderOutcome(
+    attempts: ProviderAttempt[],
+    fallbackUsed: boolean,
+    providerFailed = false,
+    failureStatus?: number,
+): Pick<LiveChatProviderTelemetry, 'outcome' | 'degraded' | 'degradedReason'> {
+    if (fallbackUsed) {
+        return {
+            outcome: 'FALLBACK',
+            degraded: true,
+            degradedReason: hasProviderTimeout(attempts)
+                ? 'PROVIDER_TIMEOUT'
+                : 'PRIMARY_PROVIDER_UNAVAILABLE',
+        };
+    }
+    if (hasProviderTimeout(attempts) || [408, 504, 524].includes(Number(failureStatus))) {
+        return {
+            outcome: 'TIMEOUT',
+            degraded: true,
+            degradedReason: 'PROVIDER_TIMEOUT',
+        };
+    }
+    if (providerFailed || attempts.some(attempt => attempt.outcome === 'failed')) {
+        return {
+            outcome: 'UNAVAILABLE',
+            degraded: true,
+            degradedReason: 'ALL_CONFIGURED_PROVIDERS_UNAVAILABLE',
+        };
+    }
+    return { outcome: 'PRIMARY', degraded: false };
 }
 
 // Prompt-injection sanitizer for live-chat user content (message, leadName, history).
@@ -166,11 +213,15 @@ export async function generateLiveChatText(params: {
                 ? { maxAttempts: 2, includeGoogleFallback: true }
                 : {}),
         });
+        const outcome = classifyLiveChatProviderOutcome(
+            result.attempts || [],
+            result.fallbackUsed === true,
+        );
         const telemetry: LiveChatProviderTelemetry = {
             provider: result.provider,
             model: result.model,
             fallbackUsed: result.fallbackUsed === true,
-            degraded: result.fallbackUsed === true,
+            ...outcome,
             attempts: result.attempts || [],
         };
         params.onProviderTelemetry?.(telemetry);
@@ -191,10 +242,16 @@ export async function generateLiveChatText(params: {
         return result.text;
     } catch (error: any) {
         const attempts = error instanceof ProviderExhaustedError ? error.attempts : [];
+        const outcome = classifyLiveChatProviderOutcome(
+            attempts,
+            false,
+            true,
+            Number(error?.status),
+        );
         const telemetry: LiveChatProviderTelemetry = {
             status: error instanceof ProviderExhaustedError ? error.status : undefined,
             fallbackUsed: false,
-            degraded: true,
+            ...outcome,
             attempts,
         };
         params.onProviderTelemetry?.(telemetry);
@@ -1971,7 +2028,7 @@ ${ownerProfileBlock}\n` : ''}${taskMemoryBlock ? `[KINH NGHIEM VAN HANH DA HOC]\
         providerTelemetry = providerTelemetry || {
             status: e.status,
             fallbackUsed: false,
-            degraded: true,
+            ...classifyLiveChatProviderOutcome(e.attempts || [], false, true, Number(e.status)),
             attempts: e.attempts,
         };
         logger.warn(
@@ -2012,11 +2069,7 @@ ${ownerProfileBlock}\n` : ''}${taskMemoryBlock ? `[KINH NGHIEM VAN HANH DA HOC]\
         missingData: specialistOutput ? [] : [specialistError || 'specialist_data'],
         groundingStatus: specialistOutput ? 'GROUNDED' : 'INSUFFICIENT_DATA',
         degraded: providerTelemetry?.degraded === true,
-        degradedReason: providerTelemetry?.fallbackUsed
-            ? 'PRIMARY_PROVIDER_UNAVAILABLE'
-            : providerTelemetry?.degraded
-                ? 'ALL_CONFIGURED_PROVIDERS_UNAVAILABLE'
-                : undefined,
+        degradedReason: providerTelemetry?.degradedReason,
         providerTelemetry,
         _liveChatTimings: liveChatTimings,
         personalization: {
@@ -2226,6 +2279,8 @@ async function handle_live_chat(args: Record<string, any>): Promise<any> {
                 aiModel: providerTelemetry?.model || null,
                 aiStatus: providerTelemetry?.status || null,
                 aiFallbackUsed: providerTelemetry?.fallbackUsed === true,
+                aiProviderOutcome: providerTelemetry?.outcome || null,
+                aiDegradedReason: providerTelemetry?.degradedReason || null,
                 aiProviderAttempts: providerTelemetry?.attempts || [],
             },
         }).catch(error => logger.warn(`[LiveChatAudit] outbound record failed: ${error?.message || error}`));
@@ -2260,6 +2315,8 @@ async function handle_live_chat(args: Record<string, any>): Promise<any> {
         // consume the live-chat engine directly.
         content,
         response: content,
+        providerTelemetry,
+        providerOutcome: providerTelemetry?.outcome,
         requestId: explicitRequestId || messageHash,
         longForm: result.longForm === true,
         degraded: result.degraded === true,

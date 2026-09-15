@@ -112,6 +112,10 @@ export interface MinhSession {
   }>;
   /** Luu tin nhan khach + hoi agent Minh. */
   sendUserMessage(text: string, lang?: string, attachments?: ChatAttachment[]): Promise<MinhSendResult>;
+  /** Retry the existing inbound request without persisting another visitor message. */
+  retryUserMessage(inboundInteractionId: string, text: string, lang?: string, attachments?: ChatAttachment[]): Promise<MinhSendResult>;
+  /** Ask a human agent to take over without creating another inbound message. */
+  requestHumanEscalation(reason?: string): Promise<boolean>;
   uploadAttachments(files: File[]): Promise<ChatAttachment[]>;
   /** Ket noi socket cho realtime + human takeover. Tra ve ham cleanup. */
   connect(handlers: MinhSocketHandlers): Promise<() => void>;
@@ -147,6 +151,17 @@ export function interactionToMessage(raw: any): ChatMessage | null {
     inboundInteractionId:
       typeof raw.metadata?.inboundInteractionId === "string"
         ? raw.metadata.inboundInteractionId
+        : undefined,
+    degraded: raw.metadata?.degraded === true,
+    degradedReason: typeof raw.metadata?.degradedReason === "string"
+      ? raw.metadata.degradedReason
+      : undefined,
+    providerOutcome:
+      raw.metadata?.providerOutcome === "PRIMARY" ||
+      raw.metadata?.providerOutcome === "FALLBACK" ||
+      raw.metadata?.providerOutcome === "TIMEOUT" ||
+      raw.metadata?.providerOutcome === "UNAVAILABLE"
+        ? raw.metadata.providerOutcome
         : undefined,
   };
 }
@@ -250,14 +265,26 @@ export function createMinhSession(options: MinhSessionOptions = {}): MinhSession
     }
   }
 
-  async function ask(text: string, lang?: string, attachments: ChatAttachment[] = []) {
+  async function ask(
+    text: string,
+    lang?: string,
+    attachments: ChatAttachment[] = [],
+    existingInboundInteractionId?: string,
+  ) {
     if (!leadId) throw new ChatTransportError("missing_lead_id", { code: "NO_LEAD" });
     let saved: any = null;
     let inboundPersistMs: number | undefined;
     let historyReadMs: number | undefined;
     const requestId = createClientRequestId();
     const inboundStartedAt = Date.now();
-    try {
+    if (existingInboundInteractionId) {
+      saved = {
+        id: existingInboundInteractionId,
+        direction: "INBOUND",
+        content: text,
+        metadata: { attachments },
+      };
+    } else try {
       saved = await client.sendMessage(leadId, text, "INBOUND", { attachments }, requestId);
       inboundPersistMs = Date.now() - inboundStartedAt;
     } catch (error: any) {
@@ -289,7 +316,7 @@ export function createMinhSession(options: MinhSessionOptions = {}): MinhSession
       data = await client.ask(leadId, text, lang, saved?.id, attachments, requestId, {
         inboundPersistMs,
         historyReadMs,
-      });
+      }, { retry: Boolean(existingInboundInteractionId) });
       if (data && (data as any).async === true) {
         asyncAccepted = true;
       }
@@ -526,6 +553,12 @@ export function createMinhSession(options: MinhSessionOptions = {}): MinhSession
     },
 
     sendUserMessage: (text, lang, attachments) => ask(text, lang, attachments),
+    retryUserMessage: (inboundInteractionId, text, lang, attachments) =>
+      ask(text, lang, attachments, inboundInteractionId),
+    requestHumanEscalation: async (reason = "degraded_provider_response") => {
+      if (!leadId) throw new ChatTransportError("missing_lead_id", { code: "NO_LEAD" });
+      return client.escalate(leadId, reason);
+    },
     uploadAttachments: async (files) => {
       if (!leadId) throw new ChatTransportError("missing_lead_id", { code: "NO_LEAD" });
       return client.uploadAttachments(leadId, files);

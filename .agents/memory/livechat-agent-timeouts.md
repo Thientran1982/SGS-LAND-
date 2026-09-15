@@ -82,3 +82,9 @@ The public widget must model an accepted run as `sending → thinking → idle/f
 **Why:** `202` acknowledgement, reconnects, and `agent_run_finished` can all arrive before the outbound interaction; clearing the indicator from HTTP cleanup or a finished event alone creates duplicate sends and false failures.
 
 **How to apply:** Keep the composer locked for every non-idle state, wait 20 seconds without progress before fallback polling, retain the indicator until a correlated assistant message or terminal failure/deadline, and make system-only socket events invisible to the customer bubble.
+
+Degraded provider answers must carry both a stable reason and an explicit outcome; retry and escalation actions must reuse the original inbound interaction.
+
+**Why:** A successful durable run can still be materially degraded after provider fallback, and creating another inbound message during recovery makes the conversation and operator telemetry misleading.
+
+**How to apply:** Persist the reason/outcome on the outbound interaction, aggregate fallback/timeout/unavailable outcomes separately, and use a retry-scoped idempotency key tied to the original inbound ID.

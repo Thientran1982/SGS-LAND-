@@ -18,6 +18,9 @@ export interface ChatMessage {
   attachments?: ChatAttachment[];
   runId?: string;
   inboundInteractionId?: string;
+  degraded?: boolean;
+  degradedReason?: string;
+  providerOutcome?: "PRIMARY" | "FALLBACK" | "TIMEOUT" | "UNAVAILABLE";
 }
 
 export interface ChatSendInput {
