@@ -976,7 +976,6 @@ export const Dashboard: React.FC = () => {
     return (
     <>
       <SeoHead title="Dashboard | SGS LAND" description="Bảng điều khiển tổng quan SGS LAND - quản lý bất động sản, phân tích thị trường và theo dõi hiệu suất kinh doanh." canonicalPath="/dashboard" />
-      <AutoPostingOnboardingCard />
         <div className="sgs-dashboard min-h-full overflow-y-auto px-4 py-5 sm:px-6 lg:px-8 pb-24 animate-enter">
             <div className="mx-auto max-w-[1480px] space-y-6">
                 <header className="dashboard-header flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
@@ -1276,6 +1275,9 @@ export const Dashboard: React.FC = () => {
                             ))}
                         </div>
                         {!overview.demandAreas?.length && <div className="mx-4 mb-4 py-3 text-xs text-[var(--text-tertiary)]">{language === 'vn' ? 'Chưa có dữ liệu nhu cầu theo khu vực' : 'No area demand data yet'}</div>}
+                    </section>
+                    <section aria-label={language === 'vn' ? 'Marketing Agent và kênh quảng cáo' : 'Marketing Agent and advertising channels'}>
+                        <AutoPostingOnboardingCard />
                     </section>
                 </div>
             </div>
