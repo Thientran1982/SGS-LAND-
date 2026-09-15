@@ -39,6 +39,20 @@ export type MinhDecisionLearningTrend = {
 };
 
 export type MinhDecisionLearningSnapshot = MinhDecisionLearningTrend;
+export type MinhLearningExportStatus = 'SUCCESS' | 'FAILED';
+export type MinhLearningExportHistoryItem = {
+  operatorId: string;
+  windowDays: number;
+  status: MinhLearningExportStatus;
+  createdAt: string;
+};
+export type MinhLearningExportHistoryPage = {
+  exports: MinhLearningExportHistoryItem[];
+  limit: number;
+  offset: number;
+  hasMore: boolean;
+  nextOffset: number | null;
+};
 
 const ALLOWED_CATEGORIES = new Set([
   'OPERATOR_APPROVED',
@@ -57,6 +71,62 @@ export function normalizeMinhLearningWindow(days: unknown): number {
   const parsed = typeof days === 'number' ? days : Number(days);
   if (!Number.isFinite(parsed)) return 30;
   return Math.max(1, Math.min(90, Math.trunc(parsed)));
+}
+
+function normalizeMinhLearningExportLimit(value: unknown): number {
+  const parsed = typeof value === 'number' ? value : Number(value);
+  if (!Number.isFinite(parsed)) return 20;
+  return Math.max(1, Math.min(50, Math.trunc(parsed)));
+}
+
+function normalizeMinhLearningExportOffset(value: unknown): number {
+  const parsed = typeof value === 'number' ? value : Number(value);
+  if (!Number.isFinite(parsed)) return 0;
+  return Math.max(0, Math.min(500, Math.trunc(parsed)));
+}
+
+export async function recordMinhLearningExport(
+  tenantId: string,
+  operatorId: string,
+  windowDays: number,
+  status: MinhLearningExportStatus,
+): Promise<void> {
+  await withTenantContext(tenantId, client => client.query(
+    `INSERT INTO minh_learning_export_history
+      (tenant_id, operator_id, window_days, status)
+     VALUES ($1::uuid, $2::uuid, $3::int, $4)`,
+    [tenantId, operatorId, normalizeMinhLearningWindow(windowDays), status],
+  ).then(() => undefined));
+}
+
+export async function listMinhLearningExports(
+  tenantId: string,
+  options: { limit?: unknown; offset?: unknown } = {},
+): Promise<MinhLearningExportHistoryPage> {
+  const limit = normalizeMinhLearningExportLimit(options.limit);
+  const offset = normalizeMinhLearningExportOffset(options.offset);
+  return withTenantContext(tenantId, async client => {
+    const result = await client.query(
+      `SELECT operator_id::text AS "operatorId",
+              window_days AS "windowDays",
+              status,
+              created_at AS "createdAt"
+         FROM minh_learning_export_history
+        WHERE tenant_id=$1::uuid
+        ORDER BY created_at DESC, id DESC
+        LIMIT $2::int OFFSET $3::int`,
+      [tenantId, limit + 1, offset],
+    );
+    const exports = result.rows.slice(0, limit) as MinhLearningExportHistoryItem[];
+    const hasMore = result.rows.length > limit;
+    return {
+      exports,
+      limit,
+      offset,
+      hasMore,
+      nextOffset: hasMore ? offset + limit : null,
+    };
+  });
 }
 
 export async function recordMinhDecisionFeedback(

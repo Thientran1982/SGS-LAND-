@@ -11,6 +11,7 @@ import migration123 from '../migrations/123_approval_requests';
 import migration202 from '../migrations/202_minh_proactive_decision_queue';
 import migration203 from '../migrations/203_minh_proactive_signal_id_text';
 import migration204 from '../migrations/204_minh_decision_learning_rollout';
+import migration205 from '../migrations/205_minh_learning_export_history';
 
 const integrationUrl = process.env.INTEGRITY_PG_URL || process.env.AIVEN_DATABASE_URL;
 const describePostgres = integrationUrl ? describe : describe.skip;
@@ -165,6 +166,7 @@ describePostgres('authenticated Minh approval-to-learning flow', () => {
         WHERE idempotency_key IS NOT NULL;
     `);
     await migration204.up(setupClient);
+    await migration205.up(setupClient);
     await query(`
       DO $$
       BEGIN
@@ -415,11 +417,36 @@ describePostgres('authenticated Minh approval-to-learning flow', () => {
     expect(snapshotA.text).not.toContain('metadata_json');
     expect(snapshotA.text).not.toContain('provider_response');
 
+    const historyA = await send('/api/internal/minh-brain/learning/trends/exports?limit=1', {
+      cookie: authCookie(staffA, tenantA),
+    });
+    expect(historyA.status).toBe(200);
+    expect(historyA.body).toMatchObject({
+      limit: 1,
+      offset: 0,
+      hasMore: false,
+    });
+    expect(historyA.body.exports).toEqual([expect.objectContaining({
+      operatorId: staffA,
+      windowDays: 7,
+      status: 'SUCCESS',
+    })]);
+    expect(JSON.stringify(historyA.body)).not.toContain('metadata_json');
+    expect(JSON.stringify(historyA.body)).not.toContain('private answer');
+
     const snapshotB = await send('/api/internal/minh-brain/learning/trends/export?days=7', {
       cookie: authCookie(staffB, tenantB),
     });
     expect(snapshotB.status).toBe(200);
     expect(snapshotB.body.points.reduce((total: number, point: { total: number }) => total + point.total, 0)).toBe(1);
+    const historyB = await send('/api/internal/minh-brain/learning/trends/exports', {
+      cookie: authCookie(staffB, tenantB),
+    });
+    expect(historyB.body.exports).toEqual([expect.objectContaining({
+      operatorId: staffB,
+      windowDays: 7,
+      status: 'SUCCESS',
+    })]);
 
     const forbiddenSnapshot = await send('/api/internal/minh-brain/learning/trends/export?days=7', {
       cookie: `token=${jwt.sign({ id: staffA, tenantId: tenantA, role: 'AGENT' }, jwtSecret)}`,

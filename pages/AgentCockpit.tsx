@@ -136,6 +136,21 @@ type MinhLearningTrendResponse = {
   } | null;
 };
 type MinhLearningSnapshot = NonNullable<MinhLearningTrendResponse['trend']>;
+type MinhLearningExportHistoryItem = {
+  operatorId: string;
+  windowDays: number;
+  status: 'SUCCESS' | 'FAILED';
+  createdAt: string;
+};
+type MinhLearningExportHistoryResponse = {
+  exports: MinhLearningExportHistoryItem[];
+  limit: number;
+  offset: number;
+  hasMore: boolean;
+  nextOffset: number | null;
+  degraded?: boolean;
+  warning?: string;
+};
 type MinhBrainOverview = {
   scheduler: {
     mode: string;
@@ -226,6 +241,7 @@ export default function AgentCockpit() {
   const [minhDecisionBusy, setMinhDecisionBusy] = useState<string | null>(null);
   const [minhLearningDays, setMinhLearningDays] = useState(30);
   const [minhLearningExporting, setMinhLearningExporting] = useState(false);
+  const [minhLearningExportHistory, setMinhLearningExportHistory] = useState<MinhLearningExportHistoryResponse | null>(null);
 
   const load = useCallback(async () => {
     setLoading(true); setError(''); setAutoPostingDiagnosticError(''); setAutoPostingDiagnostic(null);
@@ -234,7 +250,7 @@ export default function AgentCockpit() {
       const query = new URLSearchParams(eventFilters).toString();
       const nextSummary = await api.get<CockpitSummary>('/api/agent-operating/cockpit');
       setSummary(nextSummary);
-      const [questionsResult, eventsResult, supportResult, marketingGrowthResult, zaloReadinessResult, autoPostingDiagnosticResult, minhBrainResult, minhLearningTrendResult] = await Promise.allSettled([
+      const [questionsResult, eventsResult, supportResult, marketingGrowthResult, zaloReadinessResult, autoPostingDiagnosticResult, minhBrainResult, minhLearningTrendResult, minhLearningExportHistoryResult] = await Promise.allSettled([
         api.get<HumanQuestion[]>('/api/agent-operating/questions'),
         api.get<OperatingEvent[]>(`/api/agent-operating/events?${query}`),
         api.get<{ data: SupportRequest[] }>('/api/live-chat/support-requests'),
@@ -243,6 +259,7 @@ export default function AgentCockpit() {
         api.get<AutoPostingDiagnostic>('/api/auto-posting/diagnostic'),
         api.get<MinhBrainOverview>(`/api/internal/minh-brain/overview?limit=50&days=${minhLearningDays}`),
         api.get<MinhLearningTrendResponse>(`/api/internal/minh-brain/learning/trends?days=${minhLearningDays}`),
+        api.get<MinhLearningExportHistoryResponse>('/api/internal/minh-brain/learning/trends/exports?limit=20&offset=0'),
       ]);
       if (questionsResult.status === 'fulfilled') setQuestions(questionsResult.value);
       if (eventsResult.status === 'fulfilled') setEvents(eventsResult.value);
@@ -256,6 +273,7 @@ export default function AgentCockpit() {
       }
       if (minhBrainResult.status === 'fulfilled') setMinhBrainOverview(minhBrainResult.value);
       if (minhLearningTrendResult.status === 'fulfilled') setMinhLearningTrend(minhLearningTrendResult.value);
+      if (minhLearningExportHistoryResult.status === 'fulfilled') setMinhLearningExportHistory(minhLearningExportHistoryResult.value);
       // Secondary panels must not hide a successfully loaded cockpit or a
       // successful role-card approval.
       const [memoryResult, weightsResult] = await Promise.allSettled([
@@ -283,6 +301,12 @@ export default function AgentCockpit() {
       anchor.click();
       anchor.remove();
       URL.revokeObjectURL(url);
+      try {
+        const history = await api.get<MinhLearningExportHistoryResponse>('/api/internal/minh-brain/learning/trends/exports?limit=20&offset=0');
+        setMinhLearningExportHistory(history);
+      } catch {
+        // The downloaded snapshot remains successful even if history refresh is temporarily unavailable.
+      }
     } catch (e: any) {
       setError(e?.data?.warning || e?.message || 'Không thể xuất snapshot learning của Minh.');
     } finally {
@@ -528,6 +552,43 @@ export default function AgentCockpit() {
                   {opportunity.approval && <div className="mt-3 flex flex-wrap items-center justify-between gap-2 border-t border-slate-100 pt-2 text-xs">
                     <span className="text-slate-500">Đề xuất: <b className="text-slate-700">{opportunity.approval.actionType}</b> · {opportunity.approval.status}</span>
                   </div>}
+                    <div className="mt-3 rounded-lg bg-white p-3">
+                      <div className="flex flex-wrap items-start justify-between gap-3">
+                        <div>
+                          <h4 className="text-xs font-semibold text-slate-700">Lịch sử xuất snapshot</h4>
+                          <p className="mt-1 text-[11px] text-slate-500">Chỉ lưu người xuất, khoảng thời gian, trạng thái và thời điểm; không lưu nội dung snapshot.</p>
+                        </div>
+                        {minhLearningExportHistory?.degraded && <span role="status" className="text-[11px] text-amber-700">{minhLearningExportHistory.warning || 'Lịch sử tạm thời chưa khả dụng.'}</span>}
+                      </div>
+                      {!minhLearningExportHistory
+                        ? <div role="status" className="mt-3 text-xs text-slate-500">Lịch sử snapshot chưa khả dụng; hãy thử làm mới.</div>
+                        : minhLearningExportHistory.exports.length === 0
+                          ? <div className="mt-3 rounded-lg border border-dashed border-slate-200 p-3 text-center text-xs text-slate-500">Chưa có lần xuất snapshot nào.</div>
+                          : <div className="mt-3 space-y-2">
+                            {minhLearningExportHistory.exports.map((entry, index) => (
+                              <div key={`${entry.createdAt}-${entry.operatorId}-${index}`} className="flex flex-wrap items-center justify-between gap-2 rounded-md border border-slate-100 px-3 py-2 text-xs">
+                                <div className="text-slate-600">
+                                  <span className="font-semibold text-slate-800">{entry.windowDays} ngày</span>
+                                  <span className="mx-1.5 text-slate-300">·</span>
+                                  <span>{new Date(entry.createdAt).toLocaleString('vi-VN')}</span>
+                                  <span className="mx-1.5 text-slate-300">·</span>
+                                  <span title={entry.operatorId}>Người xuất: {entry.operatorId.slice(0, 8)}</span>
+                                </div>
+                                <span className={`rounded-full px-2 py-1 font-semibold ${entry.status === 'SUCCESS' ? 'bg-emerald-100 text-emerald-700' : 'bg-rose-100 text-rose-700'}`}>
+                                  {entry.status === 'SUCCESS' ? 'Đã xuất' : 'Thất bại'}
+                                </span>
+                              </div>
+                            ))}
+                            {minhLearningExportHistory.hasMore && <button
+                              type="button"
+                              onClick={async () => {
+                                const next = await api.get<MinhLearningExportHistoryResponse>(`/api/internal/minh-brain/learning/trends/exports?limit=${minhLearningExportHistory.limit}&offset=${minhLearningExportHistory.nextOffset || 0}`);
+                                setMinhLearningExportHistory(current => current ? { ...next, exports: [...current.exports, ...next.exports] } : next);
+                              }}
+                              className="w-full rounded-md border border-slate-200 px-3 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-50"
+                            >Xem thêm lịch sử</button>}
+                          </div>}
+                    </div>
                </div>
              ))}</div>}
             <div className="mt-4 border-t border-amber-100 pt-4">

@@ -17,7 +17,9 @@ import {
   getMinhDecisionLearning,
   getMinhDecisionLearningSnapshot,
   getMinhDecisionLearningTrend,
+  listMinhLearningExports,
   normalizeMinhLearningWindow,
+  recordMinhLearningExport,
 } from '../services/minhDecisionLearningService';
 
 const STAFF_ROLES = new Set(['SUPER_ADMIN', 'ADMIN', 'TEAM_LEAD']);
@@ -63,6 +65,12 @@ export function createMinhBrainRoutes(authenticateToken: any): Router {
     const learningWindowDays = requestedLearningWindow(req.query.days);
     try {
       const snapshot = await getMinhDecisionLearningSnapshot(String(user.tenantId), learningWindowDays);
+      await recordMinhLearningExport(
+        String(user.tenantId),
+        String(user.id),
+        snapshot.windowDays,
+        'SUCCESS',
+      );
       res.setHeader('Content-Type', 'application/json; charset=utf-8');
       res.setHeader(
         'Content-Disposition',
@@ -70,10 +78,45 @@ export function createMinhBrainRoutes(authenticateToken: any): Router {
       );
       return res.json(snapshot);
     } catch {
+      try {
+        await recordMinhLearningExport(
+          String(user.tenantId),
+          String(user.id),
+          learningWindowDays,
+          'FAILED',
+        );
+      } catch {
+        // Preserve the export failure response if the history ledger is unavailable.
+      }
       return res.status(503).json({
         degraded: true,
         warning: 'Snapshot learning của Minh tạm thời chưa thể tạo.',
         snapshot: null,
+      });
+    }
+  });
+
+  router.get('/learning/trends/exports', authenticateToken, async (req: Request, res: Response) => {
+    const user = (req as any).user;
+    if (!STAFF_ROLES.has(user?.role)) {
+      return res.status(403).json({ error: 'Chỉ quản lý mới có quyền xem lịch sử snapshot learning của Minh.' });
+    }
+
+    try {
+      const history = await listMinhLearningExports(String(user.tenantId), {
+        limit: req.query.limit,
+        offset: req.query.offset,
+      });
+      return res.json(history);
+    } catch {
+      return res.status(503).json({
+        degraded: true,
+        warning: 'Lịch sử snapshot learning của Minh tạm thời chưa tải được.',
+        exports: [],
+        limit: 20,
+        offset: 0,
+        hasMore: false,
+        nextOffset: null,
       });
     }
   });
