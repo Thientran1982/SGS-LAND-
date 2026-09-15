@@ -32,6 +32,8 @@ interface GoldCase {
   mustContain?: string[];
   mustNotContain?: string[];
   mustHaveCitation?: boolean;
+  /** Exact entity assertions against router extraction output. */
+  expectedExtraction?: Record<string, unknown>;
   /** Optional: secondary intent(s) that router MUST list in additional_intents (multi-intent cases). */
   expectedAdditional?: string[];
 }
@@ -50,6 +52,7 @@ interface RunResult {
   agentMatch: boolean;
   additionalCheck: CheckResult;
   contentCheck: CheckResult;
+  extractionCheck: CheckResult;
   citationCheck: CheckResult;
   judgeCheck: CheckResult;
   durationMs: number;
@@ -108,7 +111,22 @@ const ROUTER_SCHEMA = {
   properties: {
     next_step: { type: Type.STRING },
     additional_intents: { type: Type.ARRAY, items: { type: Type.STRING } },
-    extraction: { type: Type.OBJECT, properties: {} },
+    extraction: {
+      type: Type.OBJECT,
+      properties: {
+        loan_amount: { type: Type.NUMBER },
+        loan_years: { type: Type.NUMBER },
+        loan_rate: { type: Type.NUMBER },
+        loan_to_value_percent: { type: Type.NUMBER },
+        loan_metric: { type: Type.STRING },
+        loan_program: { type: Type.STRING },
+        loan_fee_type: { type: Type.STRING },
+        tax_rate: { type: Type.NUMBER },
+        valuation_area: { type: Type.NUMBER },
+        valuation_bedrooms: { type: Type.NUMBER },
+        lead_name: { type: Type.STRING },
+      },
+    },
   },
   required: ['next_step'],
 };
@@ -126,7 +144,7 @@ const INTENT_TO_AGENT: Record<string, string> = {
   CLARIFY:             'writer',
 };
 
-async function callRouter(client: GoogleGenAI, input: string): Promise<{ intent: string; additional: string[]; raw: string }> {
+async function callRouter(client: GoogleGenAI, input: string): Promise<{ intent: string; additional: string[]; extraction: Record<string, unknown>; raw: string }> {
   const res = await client.models.generateContent({
     model: 'gemini-2.5-flash',
     contents: `Tin nhắn khách hàng:\n"${input}"\n\nPhân tích intent và trả về JSON.`,
@@ -143,7 +161,12 @@ async function callRouter(client: GoogleGenAI, input: string): Promise<{ intent:
   const additional = Array.isArray(parsed?.additional_intents)
     ? parsed.additional_intents.filter((s: any) => typeof s === 'string')
     : [];
-  return { intent: parsed?.next_step || 'UNKNOWN', additional, raw: txt };
+  return {
+    intent: parsed?.next_step || 'UNKNOWN',
+    additional,
+    extraction: parsed?.extraction && typeof parsed.extraction === 'object' ? parsed.extraction : {},
+    raw: txt,
+  };
 }
 
 async function callE2E(input: string): Promise<{ intent: string; finalText: string }> {
@@ -170,6 +193,56 @@ function checkContent(text: string, mustContain: string[] = [], mustNotContain: 
   const reasons: string[] = [];
   if (missing.length) reasons.push(`missing: ${missing.join(', ')}`);
   if (forbidden.length) reasons.push(`forbidden: ${forbidden.join(', ')}`);
+  return { passed: reasons.length === 0, reasons };
+}
+
+function numericValue(value: unknown): number | null {
+  if (typeof value === 'number' && Number.isFinite(value)) return value;
+  if (typeof value !== 'string') return null;
+  const normalized = value.toLowerCase().replace(/,/g, '.').replace(/\s+/g, '');
+  const match = normalized.match(/-?\d+(?:\.\d+)?/);
+  if (!match) return null;
+  const multiplier = normalized.includes('tỷ') || normalized.includes('tỷ')
+    ? 1_000_000_000
+    : normalized.includes('triệu')
+      ? 1_000_000
+      : normalized.includes('nghìn') || normalized.includes('ngan')
+        ? 1_000
+        : 1;
+  return Number(match[0]) * multiplier;
+}
+
+function checkExtraction(
+  actual: Record<string, unknown>,
+  expected: Record<string, unknown> = {},
+): CheckResult {
+  const reasons: string[] = [];
+  for (const [key, expectedValue] of Object.entries(expected)) {
+    const actualValue = actual?.[key];
+    if (expectedValue === null) {
+      if (actualValue !== null && actualValue !== undefined) {
+        reasons.push(`${key}: expected null, got ${JSON.stringify(actualValue)}`);
+      }
+      continue;
+    }
+    if (typeof expectedValue === 'number') {
+      const actualNumber = numericValue(actualValue);
+      if (actualNumber === null || Math.abs(actualNumber - expectedValue) > 0.000001) {
+        reasons.push(`${key}: expected ${expectedValue}, got ${JSON.stringify(actualValue)}`);
+      }
+      continue;
+    }
+    if (typeof expectedValue === 'string') {
+      const actualText = String(actualValue ?? '').trim().toLowerCase();
+      if (actualText !== expectedValue.trim().toLowerCase()) {
+        reasons.push(`${key}: expected ${expectedValue}, got ${JSON.stringify(actualValue)}`);
+      }
+      continue;
+    }
+    if (JSON.stringify(actualValue) !== JSON.stringify(expectedValue)) {
+      reasons.push(`${key}: expected ${JSON.stringify(expectedValue)}, got ${JSON.stringify(actualValue)}`);
+    }
+  }
   return { passed: reasons.length === 0, reasons };
 }
 
@@ -278,6 +351,7 @@ async function main() {
     try {
       let actualIntent: string;
       let actualAdditional: string[] = [];
+      let actualExtraction: Record<string, unknown> = {};
       let textToCheck: string;
       if (isE2E) {
         const e = await callE2E(c.input);
@@ -303,6 +377,7 @@ throw e;
 if (!r) { throw new Error("callRouter did not return a result after retries"); }
         actualIntent = r.intent;
         actualAdditional = r.additional;
+        actualExtraction = r.extraction;
         textToCheck = r.raw;
       }
 
@@ -320,6 +395,9 @@ if (!r) { throw new Error("callRouter did not return a result after retries"); }
           ? { passed: true, reasons: [] }
           : { passed: false, reasons: [`additional_intents missing: ${missing.join(',')} (got: ${actualAdditional.join(',') || '∅'})`] };
       })();
+      const extractionCheck = isE2E
+        ? { passed: true, reasons: [] }
+        : checkExtraction(actualExtraction, c.expectedExtraction);
       // Citation check only meaningful in E2E mode (router JSON never carries citations)
       const citationCheck = isE2E
         ? checkCitation(textToCheck, !!c.mustHaveCitation)
@@ -338,12 +416,13 @@ if (!r) { throw new Error("callRouter did not return a result after retries"); }
         agentMatch,
         additionalCheck,
         contentCheck,
+        extractionCheck,
         citationCheck,
         judgeCheck,
         durationMs: Date.now() - t0,
       });
 
-      const fullPass = intentMatch && agentMatch && additionalCheck.passed && contentCheck.passed && citationCheck.passed && judgeCheck.passed;
+       const fullPass = intentMatch && agentMatch && additionalCheck.passed && contentCheck.passed && extractionCheck.passed && citationCheck.passed && judgeCheck.passed;
       const mark = fullPass ? '✓' : '✗';
       console.log(
         `${mark} ${c.id.padEnd(18)} ${c.expectedAgent.padEnd(22)} ` +
@@ -351,6 +430,7 @@ if (!r) { throw new Error("callRouter did not return a result after retries"); }
         `agent=${agentMatch ? 'OK' : 'FAIL'}  ` +
         `addl=${additionalCheck.passed ? 'OK' : additionalCheck.reasons.join(';')}  ` +
         `content=${contentCheck.passed ? 'OK' : contentCheck.reasons.join(';')}  ` +
+        `extract=${extractionCheck.passed ? 'OK' : extractionCheck.reasons.join(';')}  ` +
         `cite=${citationCheck.passed ? 'OK' : 'MISSING'}  ` +
         (useJudge ? `judge=${judgeCheck.passed ? 'OK' : judgeCheck.reasons.join(';')}  ` : '') +
         `(${Date.now() - t0}ms)`
@@ -365,6 +445,7 @@ if (!r) { throw new Error("callRouter did not return a result after retries"); }
         agentMatch: false,
         additionalCheck: { passed: false, reasons: [] },
         contentCheck: { passed: false, reasons: [e?.message || String(e)] },
+        extractionCheck: { passed: false, reasons: [] },
         citationCheck: { passed: false, reasons: [] },
         judgeCheck: { passed: false, reasons: [] },
         durationMs: Date.now() - t0,
@@ -382,7 +463,7 @@ if (!r) { throw new Error("callRouter did not return a result after retries"); }
   const modelTotal = modelResults.length;
   const intentPass = modelResults.filter(r => r.intentMatch).length;
   const agentPass = modelResults.filter(r => r.agentMatch).length;
-  const isFullPass = (r: RunResult) => r.intentMatch && r.agentMatch && r.additionalCheck.passed && r.contentCheck.passed && r.citationCheck.passed && r.judgeCheck.passed;
+  const isFullPass = (r: RunResult) => r.intentMatch && r.agentMatch && r.additionalCheck.passed && r.contentCheck.passed && r.extractionCheck.passed && r.citationCheck.passed && r.judgeCheck.passed;
   const fullPass = modelResults.filter(isFullPass).length;
 
   const byAgent: Record<string, { total: number; intent: number; agent: number; full: number }> = {};
@@ -413,7 +494,7 @@ if (!r) { throw new Error("callRouter did not return a result after retries"); }
     console.log(`  ${agent.padEnd(22)} ${String(s.total).padStart(5)}  ${ip}%    ${ap}%    ${fp}%`);
   }
 
-  const failures = modelResults.filter(r => !r.intentMatch || !r.agentMatch || !r.additionalCheck.passed || !r.contentCheck.passed || !r.citationCheck.passed || !r.judgeCheck.passed);
+  const failures = modelResults.filter(r => !r.intentMatch || !r.agentMatch || !r.additionalCheck.passed || !r.contentCheck.passed || !r.extractionCheck.passed || !r.citationCheck.passed || !r.judgeCheck.passed);
   if (failures.length) {
     console.log('\nFailures:');
     for (const f of failures) {
@@ -422,6 +503,7 @@ if (!r) { throw new Error("callRouter did not return a result after retries"); }
       if (!f.agentMatch) why.push('agent-route');
       if (!f.additionalCheck.passed) why.push(`additional[${f.additionalCheck.reasons.join(';')}]`);
       if (!f.contentCheck.passed) why.push(`content[${f.contentCheck.reasons.join(';')}]`);
+      if (!f.extractionCheck.passed) why.push(`extraction[${f.extractionCheck.reasons.join(';')}]`);
       if (!f.citationCheck.passed) why.push('citation');
       if (!f.judgeCheck.passed) why.push(`judge[${f.judgeCheck.reasons.join(';')}]`);
       console.log(`  [${f.id}] ${f.agent} → ${why.join(', ')}${f.error ? ` (${f.error})` : ''}`);
@@ -460,7 +542,7 @@ if (!r) { throw new Error("callRouter did not return a result after retries"); }
 
   // ── Threshold enforcement ────────────────────────────────────────────────
   // Both modes enforce the complete case contract. Router-only still reports
-  // intent accuracy separately, but mustContain/additional checks are part of
+  // intent accuracy separately, but content/additional/extraction checks are part of
   // the gate so extraction regressions cannot appear as router passes.
   const passRate = fullPass / modelTotal;
   const failures2: string[] = [];

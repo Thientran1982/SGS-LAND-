@@ -12,16 +12,29 @@ SEARCH_INVENTORY
   Kích hoạt: tìm nhà/đất/căn hộ, xem dự án, lọc theo tiêu chí
   Ranh giới: KHÁC ESTIMATE_VALUATION (khách chưa sở hữu, đang tìm mua)
   VD: "tìm căn 3PN", "có dự án nào quận 7 không", "cho xem nhà mặt tiền"
+  - "có dự án nào đang mở bán/sale/đang bán", "dự án nào còn hàng" là
+    yêu cầu tìm danh sách sản phẩm → SEARCH_INVENTORY, dù có từ "sale" hay
+    "ưu đãi". Chỉ chọn EXPLAIN_MARKETING khi khách hỏi chính sách/chiết khấu
+    hoặc phân tích thị trường mà không yêu cầu tìm dự án/căn cụ thể.
   → Khi khách hỏi danh sách sản phẩm/căn hộ trong một dự án cụ thể ("dự án X có những căn nào", "cho xem kho hàng Cosmo Central"):
     • location_keyword = tên dự án
     • project_name     = tên dự án (nguyên văn, để tra mã code)
 CALCULATE_LOAN
-  Kích hoạt: tính vay, lãi suất, số tiền trả hàng tháng, khả năng vay
+  Kích hoạt: tính vay, lãi suất, số tiền trả hàng tháng, khả năng vay, DTI/tỷ lệ
+  nợ trên thu nhập, LTV, phí phạt trả nợ trước hạn, hoặc gói vay ưu đãi.
   Ranh giới: KHÁC EXPLAIN_LEGAL (không hỏi điều kiện pháp lý vay, chỉ hỏi số)
   VD: "vay 2 tỷ 20 năm trả bao nhiêu", "lãi suất hiện tại bao nhiêu"
+  - Các câu về DTI, LTV, chứng minh thu nhập, lãi suất ưu đãi, nhà ở xã hội,
+    phí phạt trả nợ trước hạn/ngân hàng → CALCULATE_LOAN, không chuyển sang
+    EXPLAIN_LEGAL hoặc EXPLAIN_MARKETING.
+  - Với "trả góp X% trước, vay Y%, giá nhà Z", phải tính và ghi
+    loan_amount = Y% của Z, loan_to_value_percent = Y.
 EXPLAIN_LEGAL
   Kích hoạt: hỏi về pháp lý, sổ hồng, sổ đỏ, quyền sở hữu, tranh chấp, thuế phí
   Ranh giới: KHÁC DRAFT_CONTRACT (hỏi để hiểu, chưa yêu cầu soạn)
+  - Hỏi nội dung/tác động của Luật, Nghị định, Thông tư hoặc quy định pháp lý
+    luôn là EXPLAIN_LEGAL, kể cả có nhắc đến vay ngân hàng; chỉ chọn
+    CALCULATE_LOAN khi khách yêu cầu tính số tiền/lãi suất/khả năng vay.
   legal_concern enum: PINK_BOOK | RED_BOOK | FOREIGN_OWNERSHIP | MORTGAGE |
                       TRANSFER_TAX | DISPUTE | CONDO_LAW | OTHER_LEGAL
  RULE GD1 - PHAN DINH VOI DIRECT_ANSWER (tuyet doi):
@@ -35,7 +48,8 @@ EXPLAIN_LEGAL
  "Cho hoi pink book vs red book khac gi" -> EXPLAIN_LEGAL (PINK_BOOK)
  "Can Aquacity 2PN gia bao nhieu?" -> SEARCH_INVENTORY
  "So hong co thoi han 50 nam la sao a?" -> EXPLAIN_LEGAL (PINK_BOOK)
- - Khi routing EXPLAIN_LEGAL chu de thue/phi: extraction PHAI kem tax_rate="0,5%"
+  - Khi routing EXPLAIN_LEGAL chủ đề thuế trước bạ: extraction PHẢI kèm
+    tax_rate = 0.5 (phần trăm).
 DRAFT_BOOKING
   Kích hoạt: đặt cọc, giữ chỗ, đặt lịch xem nhà, booking căn
   Ranh giới: KHÁC DRAFT_CONTRACT (chưa đến bước ký hợp đồng chính thức)
@@ -44,6 +58,9 @@ EXPLAIN_MARKETING
   hoặc hỏi nhận định/xu hướng/thực trạng thị trường BĐS theo thời điểm hay khu vực
   Ranh giới: KHÁC SEARCH_INVENTORY (không hỏi tìm căn, chỉ hỏi policy bán)
   VD: "Thị trường BĐS Q4/2025 ở HCM thế nào?" → EXPLAIN_MARKETING
+  - Yêu cầu tạo nội dung/quảng cáo/kịch bản cho Facebook, email, TikTok,
+    cold-call, slogan, caption, content hoặc campaign → EXPLAIN_MARKETING,
+    kể cả khi viết bằng tiếng Anh.
 DRAFT_CONTRACT
   Kích hoạt: soạn/xem hợp đồng mua bán, hợp đồng thuê, điều khoản hợp đồng
   contract_type enum: SALE | LEASE | TRANSFER | DEPOSIT | OTHER_CONTRACT
@@ -52,15 +69,23 @@ DRAFT_CONTRACT
 ANALYZE_LEAD
   Kích hoạt: yêu cầu nội bộ phân tích lead, chất lượng khách, lịch sử tương tác
   [CHỈ dùng cho user nội bộ — không bao giờ trigger từ tin nhắn khách thông thường]
+  Khi tin nhắn nêu tên lead, giữ nguyên tên riêng trong extraction.lead_name;
+  bỏ tiền tố xưng hô/đại từ hoặc lỗi gõ như "anh", "chị", "a", "c" (ví dụ
+  "khach a Tuan" → lead_name = "Tuan").
 ESTIMATE_VALUATION
-  Kích hoạt: định giá nhà/đất khách đang SỞ HỮU hoặc đang MUỐN BÁN
+  Kích hoạt: định giá/estimate/valuation nhà/đất/căn hộ khách đang SỞ HỮU
+  hoặc đang MUỐN BÁN
   Ranh giới: KHÁC SEARCH_INVENTORY (khách đã có tài sản, cần biết giá trị)
   VD: "nhà em ở Q7 80m² giá bao nhiêu", "em muốn bán, định giá giúp"
+  - "giá khoảng nhiêu", "estimate giá", "giá đất bao nhiêu/m²" cho một
+    căn/nhà/dự án cụ thể → ESTIMATE_VALUATION. SEARCH_INVENTORY chỉ dùng
+    khi khách muốn tìm, xem, liệt kê hoặc kiểm tra còn sản phẩm nào.
 DIRECT_ANSWER
   Kích hoạt: câu hỏi thực tế không cần tra CRM [TRÁNH: câu về thuế/phí giao dịch BĐS hay thuật ngữ BĐS → EXPLAIN_LEGAL]
   VD: "sổ hồng màu gì", "ngành xây dựng gồm những lĩnh vực nào"
   [KHÔNG dùng cho câu hỏi cần dữ liệu dự án cụ thể → dùng SEARCH_INVENTORY]
-  Lời chào/nghênh đón ngắn như "chào em", "xin chào", "hello" → DIRECT_ANSWER
+  Lời chào/nghênh đón hoặc xác nhận ngắn như "chào em", "xin chào", "hello",
+  "OK em", "dạ", "rồi", "được rồi", "cảm ơn" → DIRECT_ANSWER
   (không chọn CLARIFY chỉ vì tin nhắn ngắn; CLARIFY chỉ dành cho nội dung không
   thể xác định được nhu cầu sau khi đã loại trừ lời chào)
 CLARIFY
@@ -86,7 +111,7 @@ SỐ TIẾNG VIỆT → SỐ NGUYÊN (VNĐ):
 ĐỊA DANH → CHUẨN HOÁ:
   "Q.1","Q1","quận một"    → "Quận 1"
   "Thủ Thiêm","Q2"         → "TP Thủ Đức"
-  "Q9","Q.9"               → "TP Thủ Đức"
+  "Q9","Q.9","TĐ","TĐức"   → "TP Thủ Đức"
   "Phú Mỹ Hưng"            → "Quận 7"
   "Sài Gòn","SG"           → "Tp.HCM"
   "LA"                     → "Long An"
@@ -195,12 +220,19 @@ Chỉ trả JSON hợp lệ. KHÔNG markdown. KHÔNG giải thích. KHÔNG text 
     "loan_amount": null,
     "loan_years": null,
     "loan_rate": null,
+    "loan_to_value_percent": null,
+    "loan_metric": "<DTI|LTV|null>",
+    "loan_program": "<SOCIAL_HOUSING|STANDARD|null>",
+    "loan_fee_type": "<EARLY_REPAYMENT_PENALTY|null>",
+    "tax_rate": null,
     "loan_type": "simple | compound | null",
     "legal_concern": "<ENUM>",
     "valuation_address": "<string>",
     "valuation_area": null,
+    "valuation_bedrooms": null,
     "valuation_legal": "<PINK_BOOK|RED_BOOK|NO_BOOK|null>",
     "contract_type": "<ENUM|null>",
+    "lead_name": "<string|null>",
     "escalation_reason": "<string>",
     "explicit_question": "<string>"
   },

@@ -793,8 +793,14 @@ type RouterPlan = {
         bedrooms?: number;
         loan_rate?: number;
         loan_years?: number;
+        loan_to_value_percent?: number;
+        loan_metric?: 'DTI' | 'LTV' | string;
+        loan_program?: 'SOCIAL_HOUSING' | 'STANDARD' | string;
+        loan_fee_type?: 'EARLY_REPAYMENT_PENALTY' | string;
+        tax_rate?: number;
         marketing_campaign?: string;
         contract_type?: string;
+        lead_name?: string;
         valuation_address?: string;
         valuation_area?: number;
         valuation_legal?: string;
@@ -837,8 +843,14 @@ const ROUTER_SCHEMA: Schema = {
                 bedrooms: { type: Type.NUMBER, description: "Số phòng ngủ tối thiểu để lọc kho hàng. VD: '3PN' → 3, '2 phòng ngủ' → 2" },
                 loan_rate: { type: Type.NUMBER, description: "Lãi suất (%/năm)" },
                 loan_years: { type: Type.NUMBER, description: "Thời hạn vay (năm)" },
+                loan_to_value_percent: { type: Type.NUMBER, description: "Tỷ lệ khoản vay trên giá trị tài sản (%)" },
+                loan_metric: { type: Type.STRING, description: "Chỉ số vay được hỏi: DTI hoặc LTV" },
+                loan_program: { type: Type.STRING, description: "Chương trình vay: SOCIAL_HOUSING hoặc STANDARD" },
+                loan_fee_type: { type: Type.STRING, description: "Loại phí vay, ví dụ EARLY_REPAYMENT_PENALTY" },
+                tax_rate: { type: Type.NUMBER, description: "Thuế suất phần trăm, ví dụ thuế trước bạ = 0.5" },
                 marketing_campaign: { type: Type.STRING, description: "Tên chiến dịch/ưu đãi" },
                 contract_type: { type: Type.STRING, enum: ['Deposit', 'Sales', 'Lease', 'Broker'], description: "Loại hợp đồng: Deposit (đặt cọc/cọc), Sales (mua bán/HĐMB), Lease (thuê/cho thuê), Broker (môi giới/phí dịch vụ)" },
+                lead_name: { type: Type.STRING, description: "Tên lead nếu khách nêu rõ" },
                 valuation_address: { type: Type.STRING, description: "Địa chỉ BĐS cần định giá" },
                 valuation_area: { type: Type.NUMBER, description: "Diện tích BĐS cần định giá (m²)" },
                 valuation_legal: { type: Type.STRING, enum: ['PINK_BOOK', 'HDMB', 'VI_BANG', 'UNKNOWN'], description: "Pháp lý BĐS cần định giá" },
