@@ -164,6 +164,7 @@ type AutoPostingScheduleStatus =
   | 'NOT_PRODUCTION'
   | 'NOT_READY'
   | 'REGISTERED'
+  | 'IN_PROCESS_ONLY'
   | 'FAILED';
 
 let autoPostingScheduleStatus: {
@@ -172,7 +173,11 @@ let autoPostingScheduleStatus: {
   cron?: string;
   reason?: string;
   verifiedAt?: string;
-} = { status: 'NOT_ATTEMPTED' };
+} = {
+  status: 'IN_PROCESS_ONLY',
+  cron: MARKETING_AUTO_POSTING_CRON,
+  reason: 'Facebook auto-posting runs on the in-process scheduler; QStash is optional.',
+};
 
 function safeQstashError(error: unknown): string {
   const message = error instanceof Error ? error.message : String(error);
@@ -238,6 +243,7 @@ function getAutoPostingCronSecret(): string {
 export function getQstashOperationalStatus() {
   const qstashUrl = getValidatedQstashBaseUrl();
   return {
+    autoPostingMode: 'IN_PROCESS_ONLY' as const,
     configured: Boolean(getQstashToken()),
     verified: qstashVerified,
     endpoint: qstashUrl?.host || null,
@@ -256,12 +262,57 @@ type AutoPostingDiagnosticComponent = {
 };
 
 /**
- * Read-only trigger diagnostic for operators. This deliberately uses
- * schedules.get(), never schedules.create/update/delete, and never invokes
- * the auto-posting runner.
+ * Read-only trigger diagnostic for operators. Facebook auto-posting is
+ * intentionally in-process; this endpoint reports that mode without calling
+ * or mutating QStash.
  */
 export async function getAutoPostingTriggerDiagnostic(cronSecret: string) {
   const checkedAt = new Date().toISOString();
+  const qstashUrl = getValidatedQstashBaseUrl();
+  const inProcessOnly = {
+    ready: true,
+    code: 'IN_PROCESS_ONLY',
+    message: 'Facebook auto-posting is handled by the in-process scheduler; QStash is optional.',
+  };
+  return {
+    ok: true,
+    code: 'AUTO_POSTING_TRIGGER_READY',
+    mode: 'IN_PROCESS_ONLY' as const,
+    dryRun: true,
+    checkedAt,
+    failedComponents: [],
+    endpoint: {
+      ...inProcessOnly,
+      destination: null,
+      path: '/api/internal/auto-posting-cron',
+      auth: 'not-required',
+    },
+    cronSecret: {
+      ...inProcessOnly,
+      configured: Boolean(cronSecret.trim()),
+    },
+    qstash: {
+      ...inProcessOnly,
+      configured: Boolean(getQstashToken()),
+      verified: qstashVerified,
+      endpoint: qstashUrl?.host || null,
+      schedule: {
+        id: MARKETING_AUTO_POSTING_SCHEDULE_ID,
+        destination: null,
+        cron: MARKETING_AUTO_POSTING_CRON,
+        startup: { ...autoPostingScheduleStatus },
+        current: null,
+      },
+    },
+    sideEffects: {
+      dailyRuns: false,
+      ledgerWrites: false,
+      publications: false,
+      providerCalls: false,
+      qstashWrites: false,
+    },
+  };
+  /*
   const expectedDestination = getProductionScheduleDestination();
   const endpoint: AutoPostingDiagnosticComponent & {
     destination: string | null;
@@ -411,6 +462,7 @@ export async function getAutoPostingTriggerDiagnostic(cronSecret: string) {
       qstashWrites: false,
     },
   };
+  */
 }
 
 /**

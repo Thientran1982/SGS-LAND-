@@ -26,3 +26,9 @@ Catch-up date selection must handle both a failed request during the current pos
 **Why:** Vietnam-local midnight changes the logical day before a naive `23:59` check can run, especially when QStash is unavailable and the process restarts the next morning.
 
 **How to apply:** Retry an existing `FAILED` request once the day's window opens, and before the next day's first window inspect the previous local calendar day; terminal `SKIPPED` results must remain bounded.
+
+Facebook auto-posting is intentionally in-process-only; QStash is optional and must not make the scheduler or its health status degraded.
+
+**Why:** The deployment must continue selecting and publishing content when QStash credentials or regional endpoints are unavailable.
+
+**How to apply:** Keep the in-process scheduler active at boot, report `IN_PROCESS_ONLY` to operators, and reserve QStash integration for optional queue features rather than the Facebook trigger.

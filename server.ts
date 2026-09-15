@@ -16,7 +16,7 @@ import { isTransientDatabaseError } from "./server/dbHealth";
 import bcrypt from "bcrypt";
 import { runPendingMigrations } from "./server/migrations/runner";
 import { systemService } from "./server/services/systemService";
-import { webhookQueue, setupWebhookWorker, processWebhookJob, isQStashEnabled, isQstashVerified, getQstashToken, getQstashBaseUrl, getQstashOperationalStatus, registerAutoPostingSchedule, verifyQstashTokenAtStartup } from "./server/queue";
+import { webhookQueue, setupWebhookWorker, processWebhookJob, isQStashEnabled, isQstashVerified, getQstashToken, getQstashBaseUrl, getQstashOperationalStatus } from "./server/queue";
 import { startAgentOperatorWorker, setAgentOperatorIo } from "./server/services/agentOperatorDaemon";
 import { startAgentOperationsLoop } from './server/services/agentLoopService';
 import { startLearningCycleScheduler } from "./server/services/learningCycleRunner";
@@ -1823,11 +1823,9 @@ app.use(globalMutationAudit);
     // Console only (no file) — avoids disk growth on the VM.
     startMemoryUsageLogger();
 
-    // ── QStash token verification ─────────────────────────────────────────
-    // Makes a bad/expired QSTASH_TOKEN impossible to miss at boot (see
-    // verifyQstashTokenAtStartup() for why — every cron already logs a 401
-    // but those lines are easy to miss among the rest of startup output).
-    await verifyQstashTokenAtStartup();
+    // Facebook auto-posting intentionally runs in-process. QStash is not a
+    // runtime dependency; webhookQueue already falls back to its in-memory
+    // worker when QStash is unavailable.
 
     // ── Init self-learning price calibration engine ──────────────────────────
     // Must run AFTER migrations so market_price_history & avm_calibration tables exist
@@ -5089,16 +5087,13 @@ app.use('/api/approval-requests', apiRateLimit, createApprovalRequestRoutes(auth
       }
 
       const qstashOperational = getQstashOperationalStatus();
-      const qstashScheduleUnavailable =
-        process.env.NODE_ENV === 'production'
-        && qstashOperational.autoPostingSchedule.status !== 'REGISTERED';
       const components: Record<string, any> = {
         database: { status: health.checks?.database ? 'healthy' : 'down' },
         aiService: { status: health.checks?.aiService ? 'healthy' : 'unconfigured' },
         redis: { status: (process.env.UPSTASH_REDIS_REST_URL && process.env.UPSTASH_REDIS_REST_TOKEN) ? 'upstash-rest' : 'in-memory-fallback' },
         websocket: { status: 'healthy', adapter: 'in-memory' },
         queue: {
-          status: (isQStashEnabled() && !isQstashVerified()) || qstashScheduleUnavailable ? 'degraded' : 'healthy',
+          status: 'healthy',
           type: isQStashEnabled() ? (isQstashVerified() ? 'qstash' : 'in-memory-fallback') : 'in-memory',
         },
         qstashScheduler: qstashOperational,
@@ -7555,11 +7550,8 @@ app.use('/api/v1', (req, _res, next) => {
         logger.warn('[ChatFollowUpCron] Lỗi khi đăng ký QStash schedule:', e.message);
       }
     }
-    // ── Marketing Agent Facebook Cron — 18:30 ICT = 11:30 UTC hàng ngày ──
-    // Keep this call outside the verified-only block so a missing or invalid
-    // QStash configuration records an explicit NOT_READY state in health/logs
-    // instead of leaving operators with an ambiguous "not attempted" status.
-    await registerAutoPostingSchedule();
+    // Facebook auto-posting is driven by the in-process scheduler. QStash is
+    // intentionally not contacted or required for this trigger.
   });
 
   // RELIABILITY FIX (audit Low): shutdown phai idempotent - SIGTERM roi SIGINT

@@ -151,24 +151,21 @@ describe('QStash Facebook auto-posting schedule', () => {
     expect(diagnostic).toMatchObject({
       ok: true,
       code: 'AUTO_POSTING_TRIGGER_READY',
+      mode: 'IN_PROCESS_ONLY',
       dryRun: true,
       endpoint: {
         ready: true,
-        code: 'ENDPOINT_READY',
+        code: 'IN_PROCESS_ONLY',
       },
       cronSecret: {
         ready: true,
-        code: 'CRON_SECRET_CONFIGURED',
+        code: 'IN_PROCESS_ONLY',
       },
       qstash: {
         ready: true,
-        code: 'QSTASH_READY',
+        code: 'IN_PROCESS_ONLY',
         schedule: {
-          current: {
-            destination: 'https://sgs-land.example.test/api/internal/auto-posting-cron',
-            cron: '30 11 * * *',
-            method: 'POST',
-          },
+          current: null,
         },
       },
       sideEffects: {
@@ -179,7 +176,7 @@ describe('QStash Facebook auto-posting schedule', () => {
         qstashWrites: false,
       },
     });
-    expect(qstashMocks.get).toHaveBeenCalledWith('marketing-auto-posting-daily-1830');
+    expect(qstashMocks.get).not.toHaveBeenCalled();
     expect(qstashMocks.create).not.toHaveBeenCalled();
     expect(JSON.stringify(diagnostic)).not.toContain('qstash-test-token');
     expect(JSON.stringify(diagnostic)).not.toContain('cron-test-secret');
@@ -195,24 +192,25 @@ describe('QStash Facebook auto-posting schedule', () => {
     const diagnostic = await getAutoPostingTriggerDiagnostic('');
 
     expect(diagnostic).toMatchObject({
-      ok: false,
-      code: 'AUTO_POSTING_TRIGGER_NOT_READY',
+      ok: true,
+      code: 'AUTO_POSTING_TRIGGER_READY',
+      mode: 'IN_PROCESS_ONLY',
       endpoint: {
-        ready: false,
-        code: 'ENDPOINT_DOMAIN_MISSING',
+        ready: true,
+        code: 'IN_PROCESS_ONLY',
       },
       cronSecret: {
-        ready: false,
+        ready: true,
         configured: false,
-        code: 'CRON_SECRET_MISSING',
+        code: 'IN_PROCESS_ONLY',
       },
       qstash: {
-        ready: false,
+        ready: true,
         configured: false,
-        code: 'QSTASH_TOKEN_MISSING',
+        code: 'IN_PROCESS_ONLY',
       },
     });
-    expect(diagnostic.failedComponents).toEqual(['endpoint', 'cronSecret', 'qstash']);
+    expect(diagnostic.failedComponents).toEqual([]);
     expect(qstashMocks.list).not.toHaveBeenCalled();
     expect(qstashMocks.get).not.toHaveBeenCalled();
     expect(qstashMocks.create).not.toHaveBeenCalled();
