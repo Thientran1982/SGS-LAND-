@@ -17,6 +17,7 @@ import {
   detectCsatDrop,
   detectMarketPriceDrift,
 } from '../services/minhOpportunityDetectors';
+import { validateProactiveApprovalBoundary } from '../services/minhDecisionQueueService';
 
 describe('Minh Week 1 specialist manifests', () => {
   it('gives every registered capability a complete manifest', () => {
@@ -213,5 +214,13 @@ describe('Minh Week 2 opportunity detectors', () => {
       { payload: { score: 2 }, createdAt: '2026-09-14T10:00:00.000Z' },
       { payload: { score: 2 }, createdAt: '2026-09-13T10:00:00.000Z' },
     ], now)).toEqual([]);
+  });
+});
+
+describe('Minh Week 3 decision queue', () => {
+  it('keeps proactive suggestions behind the existing approval boundary', () => {
+    expect(validateProactiveApprovalBoundary('DRAFT_PROACTIVE_FOLLOWUP').decision).toBe('approved');
+    expect(validateProactiveApprovalBoundary('REVIEW_LISTING_PRICE').decision).toBe('approved');
+    expect(validateProactiveApprovalBoundary('REVIEW_CSAT_DROP').decision).toBe('approved');
   });
 });

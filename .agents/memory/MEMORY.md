@@ -101,3 +101,4 @@
 - [QStash regional endpoint](qstash-regional-endpoint.md) — QStash tokens are region-bound; verify the configured API origin before registering schedules
 - [Router eval provider separation](router-evaluation-provider-separation.md) — separate provider outages from model/extraction failures and gate router-only runs on full contract pass
 - [Minh opportunity detectors](minh-opportunity-detectors.md) — proactive scans stay fail-closed, tenant-scoped, read-only, and bounded with indexed evidence matching
+- [Minh decision queue](minh-decision-queue.md) — proactive suggestions use explicit approval actions, tenant/day budget, source-signal idempotency and no provider side effects

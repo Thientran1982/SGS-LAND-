@@ -1,6 +1,7 @@
 import { randomUUID } from 'node:crypto';
 import { withTenantContext } from '../db';
 import { logger } from '../middleware/logger';
+import { enqueueMinhOpportunitySuggestions } from './minhDecisionQueueService';
 
 export const PROACTIVE_OPPORTUNITY_SIGNAL = 'proactive_opportunity';
 
@@ -417,7 +418,7 @@ export async function runMinhOpportunityDetectors(
   config: OpportunityDetectorConfig = DEFAULT_OPPORTUNITY_DETECTOR_CONFIG,
   traceId: string = randomUUID(),
 ): Promise<DetectorRunResult[]> {
-  return withTenantContext(tenantId, async client => {
+  const results = await withTenantContext(tenantId, async client => {
     const results: DetectorRunResult[] = [];
 
     try {
@@ -534,6 +535,12 @@ export async function runMinhOpportunityDetectors(
 
     return results;
   });
+  try {
+    await enqueueMinhOpportunitySuggestions(tenantId);
+  } catch (error: any) {
+    logger.warn(`[MinhDecisionQueue] enqueue degraded tenant=${tenantId}: ${error?.message || error}`);
+  }
+  return results;
 }
 
 export async function listMinhOpportunities(
@@ -542,10 +549,14 @@ export async function listMinhOpportunities(
 ): Promise<Array<Record<string, unknown>>> {
   return withTenantContext(tenantId, async client => {
     const result = await client.query(
-      `SELECT id, subject_type, subject_id, payload, created_at
-         FROM agent_signals
-        WHERE tenant_id=$1 AND signal_type=$2
-        ORDER BY created_at DESC
+      `SELECT s.id, s.subject_type, s.subject_id, s.payload, s.created_at,
+              ar.id AS approval_id, ar.status AS approval_status,
+              ar.action_type AS approval_action_type
+         FROM agent_signals s
+         LEFT JOIN approval_requests ar
+           ON ar.tenant_id=s.tenant_id AND ar.source_signal_id=s.id
+        WHERE s.tenant_id=$1::uuid AND s.signal_type=$2
+        ORDER BY s.created_at DESC
         LIMIT $3`,
       [tenantId, PROACTIVE_OPPORTUNITY_SIGNAL, Math.max(1, Math.min(200, Number(limit) || 100))],
     );
@@ -554,6 +565,11 @@ export async function listMinhOpportunities(
       subjectType: row.subject_type,
       subjectId: row.subject_id,
       createdAt: row.created_at,
+      approval: row.approval_id ? {
+        id: row.approval_id,
+        status: row.approval_status,
+        actionType: row.approval_action_type,
+      } : null,
       ...(parseJsonObject(row.payload) || { payload: row.payload }),
     }));
   });

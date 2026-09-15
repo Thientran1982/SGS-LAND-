@@ -222,6 +222,8 @@ import m198 from './198_seo_keyword_decimal_positions';
 import m199 from './199_normalize_project_social_images';
 import m200 from './200_live_chat_telemetry';
 import m201 from './201_repair_auto_posting_conflict_targets';
+import m202 from './202_minh_proactive_decision_queue';
+import m203 from './203_minh_proactive_signal_id_text';
 dotenv.config();
 
 export interface Migration {
@@ -439,6 +441,8 @@ export const MIGRATION_REGISTRY: Record<string, Migration> = {
   '199_normalize_project_social_images.ts': m199,
   '200_live_chat_telemetry.ts': m200,
   '201_repair_auto_posting_conflict_targets.ts': m201,
+  '202_minh_proactive_decision_queue.ts': m202,
+  '203_minh_proactive_signal_id_text.ts': m203,
 };
 
 /**

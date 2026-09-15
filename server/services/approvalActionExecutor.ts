@@ -1,4 +1,5 @@
 import { withTenantContext } from '../db';
+import { validateProactiveApprovalBoundary } from './minhDecisionQueueService';
 
 const LEAD_STAGES = new Set(['NEW', 'CONTACTED', 'QUALIFIED', 'PROPOSAL', 'NEGOTIATION', 'WON', 'LOST']);
 
@@ -117,6 +118,56 @@ export async function executeApprovedAction(tenantId: string, approvalId: string
         throw new Error('APPROVAL_DEPOSIT_REQUIRES_VERIFIED_VNPAY');
       }
       actionResult = { bookingId, verified: true, status: 'PAID', mutation: 'NONE' };
+    } else if (
+      request.action_type === 'DRAFT_PROACTIVE_FOLLOWUP'
+      || request.action_type === 'REVIEW_LISTING_PRICE'
+      || request.action_type === 'REVIEW_CSAT_DROP'
+    ) {
+      const boundary = validateProactiveApprovalBoundary(
+        request.action_type,
+        payload.consentValid === true,
+      );
+      if (boundary.decision !== 'approved') {
+        throw new Error(`APPROVAL_PROACTIVE_BOUNDARY:${boundary.reasons.join(',')}`);
+      }
+      const existingQuestion = await client.query(
+        `SELECT id FROM agent_human_questions
+          WHERE tenant_id=current_setting('app.current_tenant_id', true)::uuid
+            AND context_json->>'approvalId'=$1
+          LIMIT 1`,
+        [approvalId],
+      );
+      const question = existingQuestion.rows[0] || (await client.query(
+        `INSERT INTO agent_human_questions
+          (tenant_id, agent_key, question, lead_id, priority, context_json)
+         VALUES (current_setting('app.current_tenant_id', true)::uuid, 'minh_proactive', $1, $2, $3, $4::jsonb)
+         RETURNING id`,
+        [
+          request.action_type === 'DRAFT_PROACTIVE_FOLLOWUP'
+            ? 'Minh đã tạo bản nháp follow-up sau khi được duyệt; nhân viên kiểm tra và gửi thủ công nếu phù hợp.'
+            : request.action_type === 'REVIEW_LISTING_PRICE'
+              ? 'Minh đề nghị nhân viên rà soát lại giá listing và nguồn tham chiếu trước khi thay đổi dữ liệu.'
+              : 'Minh đề nghị nhân viên rà soát nhóm nguyên nhân CSAT giảm và xác minh mẫu hội thoại.',
+          request.lead_id || null,
+          Math.max(0, Math.min(100, Number(payload.priority || 60))),
+          JSON.stringify({
+            approvalId,
+            sourceSignalId: payload.sourceSignalId || request.source_signal_id || null,
+            subjectType: payload.subjectType || request.subject_type || null,
+            subjectId: payload.subjectId || request.subject_id || null,
+            actionType: request.action_type,
+            evidence: payload.evidence || {},
+            providerCalled: false,
+            mutation: 'NONE',
+          }),
+        ],
+      )).rows[0];
+      actionResult = {
+        mutation: 'NONE',
+        providerCalled: false,
+        humanQuestionId: question.id,
+        draftCreated: request.action_type === 'DRAFT_PROACTIVE_FOLLOWUP',
+      };
     } else {
       throw new Error(`APPROVAL_ACTION_UNSUPPORTED:${request.action_type}`);
     }

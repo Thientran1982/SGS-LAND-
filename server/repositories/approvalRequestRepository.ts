@@ -1,4 +1,6 @@
-import { pool } from '../db';
+import { pool, withTenantContext } from '../db';
+
+export const MINH_PROACTIVE_CHANNEL = 'MINH_PROACTIVE';
 
 /**
  * approval_requests -- hang doi cho Permission Broker.
@@ -14,6 +16,9 @@ export const HIGH_IMPACT_ACTIONS = [
   'BOOK_VIEWING',
   'SEND_DOCS',
   'REVIEW_REPAIR_SPIKE',
+  'DRAFT_PROACTIVE_FOLLOWUP',
+  'REVIEW_LISTING_PRICE',
+  'REVIEW_CSAT_DROP',
 ] as const;
 
 export type HighImpactAction = typeof HIGH_IMPACT_ACTIONS[number];
@@ -24,7 +29,7 @@ export function isHighImpactAction(action: string | undefined | null): action is
 
 export interface CreateApprovalRequestData {
   tenantId: string;
-  leadId: string;
+  leadId?: string | null;
   channel?: string;
   actionType: HighImpactAction;
   payload?: Record<string, any>;
@@ -33,6 +38,9 @@ export interface CreateApprovalRequestData {
   stepKey?: string;
   idempotencyKey?: string;
   expiresAt?: Date;
+  sourceSignalId?: string | null;
+  subjectType?: string | null;
+  subjectId?: string | null;
 }
 
 class ApprovalRequestRepository {
@@ -44,10 +52,72 @@ class ApprovalRequestRepository {
        ON CONFLICT (tenant_id, idempotency_key) WHERE idempotency_key IS NOT NULL
        DO UPDATE SET id = approval_requests.id
        RETURNING *`,
-      [data.tenantId, data.leadId, data.channel || null, data.actionType, JSON.stringify(data.payload || {}),
+      [data.tenantId, data.leadId || null, data.channel || null, data.actionType, JSON.stringify(data.payload || {}),
         data.reasoning || null, data.executionId || null, data.stepKey || null, data.idempotencyKey || null, data.expiresAt || null],
     );
     return this.rowToEntity(result.rows[0]);
+  }
+
+  async createProactive(data: CreateApprovalRequestData, dailyBudget: number): Promise<any> {
+    return withTenantContext(data.tenantId, async client => {
+      const existing = await client.query(
+        `SELECT * FROM approval_requests
+          WHERE tenant_id=$1::uuid AND source_signal_id=$2::text
+          LIMIT 1`,
+        [data.tenantId, data.sourceSignalId || null],
+      );
+      if (existing.rows[0]) return this.rowToEntity(existing.rows[0]);
+
+      await client.query(
+        `SELECT pg_advisory_xact_lock(hashtextextended($1, 0))`,
+        [`minh-proactive-budget:${data.tenantId}:${new Date().toISOString().slice(0, 10)}`],
+      );
+      const budgetResult = await client.query(
+        `SELECT COUNT(*)::int AS used
+           FROM approval_requests
+          WHERE tenant_id=$1::uuid
+            AND channel='MINH_PROACTIVE'
+            AND requested_at >= CURRENT_DATE`,
+        [data.tenantId],
+      );
+      const used = Number(budgetResult.rows[0]?.used || 0);
+      if (used >= dailyBudget) {
+        const error = new Error(`MINH_PROACTIVE_BUDGET_EXCEEDED:${used}/${dailyBudget}`);
+        (error as any).code = 'MINH_PROACTIVE_BUDGET_EXCEEDED';
+        throw error;
+      }
+
+      const result = await client.query(
+        `INSERT INTO approval_requests
+          (tenant_id, lead_id, channel, action_type, payload, reasoning, execution_id,
+           step_key, idempotency_key, expires_at, source_signal_id, subject_type, subject_id)
+         VALUES ($1::uuid,$2::uuid,$3,$4,$5,$6,$7::uuid,$8,$9,COALESCE($10,NOW()+INTERVAL '30 minutes'),$11::text,$12,$13)
+         ON CONFLICT (tenant_id, source_signal_id)
+           WHERE source_signal_id IS NOT NULL
+         DO UPDATE SET id=approval_requests.id
+         RETURNING *`,
+        [
+          data.tenantId, data.leadId || null, MINH_PROACTIVE_CHANNEL, data.actionType,
+          JSON.stringify(data.payload || {}), data.reasoning || null, data.executionId || null,
+          data.stepKey || null, data.idempotencyKey || null, data.expiresAt || null,
+          data.sourceSignalId || null, data.subjectType || null, data.subjectId || null,
+        ],
+      );
+      return this.rowToEntity(result.rows[0]);
+    });
+  }
+
+  async findPendingProactiveByTenant(tenantId: string, limit = 50): Promise<any[]> {
+    const result = await withTenantContext(tenantId, client => client.query(
+      `SELECT ar.*, l.name AS lead_name, l.phone AS lead_phone
+         FROM approval_requests ar
+         LEFT JOIN leads l ON l.id = ar.lead_id
+        WHERE ar.tenant_id=$1::uuid AND ar.channel='MINH_PROACTIVE' AND ar.status='PENDING'
+        ORDER BY ar.requested_at DESC
+        LIMIT $2`,
+      [tenantId, limit],
+    ));
+    return result.rows.map(row => this.rowToEntity(row));
   }
 
   /** Danh sach PENDING cho tab duyet trong Inbox, moi nhat truoc */
@@ -130,6 +200,9 @@ class ApprovalRequestRepository {
       idempotencyKey: row.idempotency_key,
       expiresAt: row.expires_at,
       resumedAt: row.resumed_at,
+      sourceSignalId: row.source_signal_id,
+      subjectType: row.subject_type,
+      subjectId: row.subject_id,
       createdAt: row.created_at,
     };
   }

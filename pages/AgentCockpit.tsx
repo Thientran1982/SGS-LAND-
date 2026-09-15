@@ -84,6 +84,17 @@ type MinhOpportunity = {
   evidence: Record<string, unknown>;
   permission: string;
   actionCreated: boolean;
+  approval?: { id: string; status: string; actionType: string } | null;
+};
+type MinhDecisionApproval = {
+  id: string;
+  actionType: string;
+  status: string;
+  reasoning?: string | null;
+  requestedAt?: string;
+  subjectType?: string | null;
+  subjectId?: string | null;
+  payload?: Record<string, unknown>;
 };
 type MinhBrainOverview = {
   scheduler: {
@@ -102,6 +113,8 @@ type MinhBrainOverview = {
   };
   routing: { registryErrors: string[] };
   opportunities: MinhOpportunity[];
+  decisionQueue?: MinhDecisionApproval[];
+  proactiveBudget?: { used: number; budget: number; exceeded: boolean } | null;
 };
 
 const count = (rows: Array<{ status: string; count: number }> = [], status: string) => rows.find(row => row.status === status)?.count || 0;
@@ -165,6 +178,7 @@ export default function AgentCockpit() {
   const [autoPostingDiagnostic, setAutoPostingDiagnostic] = useState<AutoPostingDiagnostic | null>(null);
   const [autoPostingDiagnosticError, setAutoPostingDiagnosticError] = useState('');
   const [minhBrainOverview, setMinhBrainOverview] = useState<MinhBrainOverview | null>(null);
+  const [minhDecisionBusy, setMinhDecisionBusy] = useState<string | null>(null);
 
   const load = useCallback(async () => {
     setLoading(true); setError(''); setAutoPostingDiagnosticError(''); setAutoPostingDiagnostic(null);
@@ -229,6 +243,21 @@ export default function AgentCockpit() {
     }
     catch (e: any) { setError(e?.message || 'Không thể cập nhật duyệt role card.'); }
     finally { setApproving(null); }
+  };
+  const reviewMinhDecision = async (id: string, action: 'approve' | 'reject') => {
+    setMinhDecisionBusy(id);
+    try {
+      const note = action === 'reject'
+        ? window.prompt('Lý do từ chối đề xuất Minh:', 'Chưa đủ bằng chứng hoặc chưa phù hợp') || ''
+        : '';
+      if (action === 'reject' && !note.trim()) return;
+      await api.post(`/api/approval-requests/${id}/${action}`, note ? { note: note.trim() } : {});
+      await load();
+    } catch (e: any) {
+      setError(e?.message || 'Không thể cập nhật đề xuất proactive.');
+    } finally {
+      setMinhDecisionBusy(null);
+    }
   };
   const reviewShift = async (id: string) => {
     try { await api.post(`/api/agent-operating/shift-reports/${id}/review`, {}); await load(); }
@@ -378,7 +407,7 @@ export default function AgentCockpit() {
                <Lightbulb size={19} className="mt-0.5 text-amber-600" />
                <div>
                  <h2 id="minh-opportunities-title" className="font-semibold text-slate-900">Cơ hội proactive của Minh</h2>
-                 <p className="text-xs text-slate-600">Quan sát read-only từ lead nguội, lệch giá tham chiếu và CSAT. Không có hành động nào được tự động tạo.</p>
+                  <p className="text-xs text-slate-600">Minh phát hiện cơ hội và tạo đề xuất chờ duyệt; chưa gửi provider hoặc sửa dữ liệu khi chưa có approval.</p>
                </div>
              </div>
              <div className="flex flex-wrap items-center gap-2 text-xs">
@@ -391,6 +420,9 @@ export default function AgentCockpit() {
                {minhBrainOverview.scheduler.detectorSummary.degradedRuns > 0 && <span className="rounded-full bg-rose-100 px-2.5 py-1 font-semibold text-rose-700">
                  Degraded: {minhBrainOverview.scheduler.detectorSummary.degradedRuns}
                </span>}
+                {minhBrainOverview.proactiveBudget && <span className={`rounded-full px-2.5 py-1 font-semibold ${minhBrainOverview.proactiveBudget.exceeded ? 'bg-rose-100 text-rose-700' : 'bg-white text-slate-600'}`}>
+                  Budget: {minhBrainOverview.proactiveBudget.used}/{minhBrainOverview.proactiveBudget.budget}
+                </span>}
              </div>
            </div>
            {minhBrainOverview.scheduler.detectorSummary.detectorStatus.length > 0 && <div className="mb-3 flex flex-wrap gap-2">
@@ -420,8 +452,32 @@ export default function AgentCockpit() {
                  <p className="mt-2 text-sm text-slate-700">{opportunity.rationale}</p>
                  <p className="mt-1 text-xs text-slate-500">Bước tiếp theo: {opportunity.suggestedNextStep}</p>
                  <div className="mt-2 flex flex-wrap gap-1.5">{Object.entries(opportunity.evidence || {}).filter(([key]) => key !== 'detector').slice(0, 6).map(([key, value]) => <span key={key} className="rounded bg-slate-50 px-2 py-1 text-[11px] text-slate-600">{key}: <b>{String(value)}</b></span>)}</div>
+                  {opportunity.approval && <div className="mt-3 flex flex-wrap items-center justify-between gap-2 border-t border-slate-100 pt-2 text-xs">
+                    <span className="text-slate-500">Đề xuất: <b className="text-slate-700">{opportunity.approval.actionType}</b> · {opportunity.approval.status}</span>
+                  </div>}
                </div>
              ))}</div>}
+            <div className="mt-4 border-t border-amber-100 pt-4">
+              <div className="mb-2 flex items-center justify-between gap-3">
+                <div>
+                  <h3 className="text-sm font-semibold text-slate-900">Decision Queue</h3>
+                  <p className="text-xs text-slate-500">Mọi đề xuất proactive phải qua approval; approve chỉ tạo draft/review nội bộ, không gọi provider.</p>
+                </div>
+                <span className="rounded-full bg-white px-2.5 py-1 text-xs font-semibold text-slate-600">{minhBrainOverview.decisionQueue?.length || 0} pending</span>
+              </div>
+              {(minhBrainOverview.decisionQueue?.length || 0) === 0
+                ? <div className="rounded-lg border border-dashed border-amber-200 bg-white/70 p-4 text-center text-xs text-slate-500">Không có đề xuất đang chờ duyệt.</div>
+                : <div className="space-y-2">{minhBrainOverview.decisionQueue?.map(request => <div key={request.id} className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-slate-200 bg-white p-3">
+                  <div className="min-w-0">
+                    <b className="text-xs text-slate-900">{request.actionType}</b>
+                    <p className="mt-1 text-xs text-slate-500">{request.reasoning || `${request.subjectType || 'subject'}: ${request.subjectId || 'n/a'}`}</p>
+                  </div>
+                  <div className="flex shrink-0 gap-2">
+                    <button onClick={() => void reviewMinhDecision(request.id, 'reject')} disabled={minhDecisionBusy === request.id} className="rounded-md border border-rose-200 px-2.5 py-1.5 text-xs font-semibold text-rose-700 disabled:opacity-50">Từ chối</button>
+                    <button onClick={() => void reviewMinhDecision(request.id, 'approve')} disabled={minhDecisionBusy === request.id} className="rounded-md bg-emerald-600 px-2.5 py-1.5 text-xs font-semibold text-white disabled:opacity-50">Duyệt</button>
+                  </div>
+                </div>)}</div>}
+            </div>
          </section>}
         {zaloReadinessWarnings.length > 0 && <section className="rounded-xl border border-amber-200 bg-amber-50/50 p-5 shadow-sm" aria-labelledby="zalo-readiness-warning-title">
           <div className="mb-4 flex flex-wrap items-center justify-between gap-3">

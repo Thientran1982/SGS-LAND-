@@ -133,12 +133,24 @@ describe('AgentCockpit panel availability', () => {
         permission: 'READ',
         actionCreated: false,
       }],
+       decisionQueue: [{
+         id: 'approval-1',
+         actionType: 'DRAFT_PROACTIVE_FOLLOWUP',
+         status: 'PENDING',
+         reasoning: 'Lead có điểm cao nhưng đã nguội.',
+         subjectType: 'lead',
+         subjectId: 'lead-1',
+       }],
+       proactiveBudget: { used: 1, budget: 20, exceeded: false },
     });
     render(<AgentCockpit />);
 
     expect(await screen.findByText('Cơ hội proactive của Minh')).toBeVisible();
     expect(screen.getByText('Lead tiềm năng đang nguội')).toBeVisible();
     expect(screen.getByText('READ-only')).toBeVisible();
+     expect(screen.getByText('Decision Queue')).toBeVisible();
+     expect(screen.getByText('DRAFT_PROACTIVE_FOLLOWUP')).toBeVisible();
+     expect(screen.getByText('Duyệt')).toBeVisible();
     expect(screen.getByText((_, element) => element?.textContent === 'score: 86')).toBeVisible();
     expect(screen.queryByText('Gửi follow-up')).not.toBeInTheDocument();
   });

@@ -8,11 +8,12 @@ import { validateUUIDParam } from '../middleware/validation';
  */
 export function createApprovalRequestRoutes(authenticateToken: any) {
   const router = Router();
+const APPROVAL_ROLES = new Set(['SUPER_ADMIN', 'ADMIN', 'MANAGER', 'TEAM_LEAD']);
 
   router.get('/', authenticateToken, async (req: Request, res: Response) => {
     try {
       const user = (req as any).user;
-      if (!['SUPER_ADMIN', 'ADMIN', 'MANAGER'].includes(user?.role)) {
+      if (!APPROVAL_ROLES.has(user?.role)) {
         return res.status(403).json({ error: 'Only authorized managers can approve AI actions' });
       }
       const [items, pendingCount] = await Promise.all([
@@ -29,6 +30,9 @@ export function createApprovalRequestRoutes(authenticateToken: any) {
   router.post('/:id/approve', authenticateToken, validateUUIDParam(), async (req: Request, res: Response) => {
     try {
       const user = (req as any).user;
+      if (!APPROVAL_ROLES.has(user?.role)) {
+        return res.status(403).json({ error: 'Only authorized managers can approve AI actions' });
+      }
       const note = typeof req.body?.note === 'string' ? req.body.note.slice(0, 1000) : undefined;
       const updated = await approvalRequestRepository.setStatus(user.tenantId, String(req.params.id), 'APPROVED', user.id, note);
       if (!updated) return res.status(404).json({ error: 'Approval request not found or already reviewed' });
@@ -44,7 +48,7 @@ export function createApprovalRequestRoutes(authenticateToken: any) {
   router.post('/:id/reject', authenticateToken, validateUUIDParam(), async (req: Request, res: Response) => {
     try {
       const user = (req as any).user;
-      if (!['SUPER_ADMIN', 'ADMIN', 'MANAGER'].includes(user?.role)) {
+      if (!APPROVAL_ROLES.has(user?.role)) {
         return res.status(403).json({ error: 'Only authorized managers can reject AI actions' });
       }
       const note = typeof req.body?.note === 'string' ? req.body.note.slice(0, 1000) : undefined;
