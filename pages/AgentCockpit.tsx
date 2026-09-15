@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useState } from 'react';
-import { AlertTriangle, Bot, CheckCircle2, Clock3, RefreshCw, Send, ShieldCheck, XCircle, BarChart3, ClipboardCheck, RotateCcw, Filter, PlayCircle, Save, Trash2, Edit3, BrainCircuit, Lightbulb } from 'lucide-react';
+import { AlertTriangle, Bot, CheckCircle2, Clock3, RefreshCw, Send, ShieldCheck, XCircle, BarChart3, ClipboardCheck, RotateCcw, Filter, PlayCircle, Save, Trash2, Edit3, BrainCircuit, Lightbulb, Download } from 'lucide-react';
 import { api } from '../services/api/apiClient';
 import { Dropdown } from '../components/Dropdown';
 import { GalleryCleanupPanel } from '../components/GalleryCleanupPanel';
@@ -135,6 +135,7 @@ type MinhLearningTrendResponse = {
     providerPayloadIncluded: false;
   } | null;
 };
+type MinhLearningSnapshot = NonNullable<MinhLearningTrendResponse['trend']>;
 type MinhBrainOverview = {
   scheduler: {
     mode: string;
@@ -224,6 +225,7 @@ export default function AgentCockpit() {
   const [minhLearningTrend, setMinhLearningTrend] = useState<MinhLearningTrendResponse | null>(null);
   const [minhDecisionBusy, setMinhDecisionBusy] = useState<string | null>(null);
   const [minhLearningDays, setMinhLearningDays] = useState(30);
+  const [minhLearningExporting, setMinhLearningExporting] = useState(false);
 
   const load = useCallback(async () => {
     setLoading(true); setError(''); setAutoPostingDiagnosticError(''); setAutoPostingDiagnostic(null);
@@ -267,6 +269,26 @@ export default function AgentCockpit() {
     } finally { setLoading(false); }
   }, [eventFilters, memoryFilters, minhLearningDays]);
   useEffect(() => { void load(); }, [load]);
+
+  const exportMinhLearningSnapshot = async () => {
+    setMinhLearningExporting(true);
+    try {
+      const snapshot = await api.get<MinhLearningSnapshot>(`/api/internal/minh-brain/learning/trends/export?days=${minhLearningDays}`);
+      const blob = new Blob([`${JSON.stringify(snapshot, null, 2)}\n`], { type: 'application/json;charset=utf-8' });
+      const url = URL.createObjectURL(blob);
+      const anchor = document.createElement('a');
+      anchor.href = url;
+      anchor.download = `minh-learning-${snapshot.windowDays}d-${new Date().toISOString().slice(0, 10)}.json`;
+      document.body.appendChild(anchor);
+      anchor.click();
+      anchor.remove();
+      URL.revokeObjectURL(url);
+    } catch (e: any) {
+      setError(e?.data?.warning || e?.message || 'Không thể xuất snapshot learning của Minh.');
+    } finally {
+      setMinhLearningExporting(false);
+    }
+  };
 
   const submitAnswer = async (id: string) => {
     if (!answer.trim()) return;
@@ -548,6 +570,16 @@ export default function AgentCockpit() {
                     <option value={90}>90 ngày</option>
                   </select>
                 </label>
+                <button
+                  type="button"
+                  onClick={() => void exportMinhLearningSnapshot()}
+                  disabled={minhLearningExporting}
+                  className="inline-flex items-center gap-1.5 rounded-md border border-amber-200 bg-white px-2.5 py-1.5 text-xs font-semibold text-amber-800 hover:bg-amber-50 disabled:cursor-wait disabled:opacity-50"
+                  title="Xuất snapshot learning chỉ gồm số lượng phân loại theo ngày"
+                >
+                  <Download size={14} />
+                  {minhLearningExporting ? 'Đang xuất…' : 'Xuất snapshot'}
+                </button>
               </div>
               {!minhBrainOverview.learning
                 ? <div role="status" className="rounded-lg border border-dashed border-amber-200 bg-white/70 p-4 text-center text-xs text-amber-800">

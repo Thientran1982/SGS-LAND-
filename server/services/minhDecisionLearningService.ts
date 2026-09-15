@@ -38,6 +38,8 @@ export type MinhDecisionLearningTrend = {
   providerPayloadIncluded: false;
 };
 
+export type MinhDecisionLearningSnapshot = MinhDecisionLearningTrend;
+
 const ALLOWED_CATEGORIES = new Set([
   'OPERATOR_APPROVED',
   'OPERATOR_REJECTED',
@@ -131,6 +133,18 @@ export async function getMinhDecisionLearningTrend(
 ): Promise<MinhDecisionLearningTrend> {
   const windowDays = normalizeMinhLearningWindow(days);
   return withTenantContext(tenantId, client => queryMinhDecisionLearningTrend(client, tenantId, windowDays));
+}
+
+/**
+ * Build the archival export from the exact same bounded, categorical dataset
+ * used by the operator trend. Keep this as a named service boundary so future
+ * export formats cannot accidentally reach the learning ledger's raw fields.
+ */
+export async function getMinhDecisionLearningSnapshot(
+  tenantId: string,
+  days = 30,
+): Promise<MinhDecisionLearningSnapshot> {
+  return getMinhDecisionLearningTrend(tenantId, days);
 }
 
 export async function getMinhDecisionLearning(tenantId: string, days = 30) {

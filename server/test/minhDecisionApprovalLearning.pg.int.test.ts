@@ -398,5 +398,32 @@ describePostgres('authenticated Minh approval-to-learning flow', () => {
       degraded: false,
       trend: { windowDays: 90, granularity: 'day', empty: false },
     });
+
+    const snapshotA = await send('/api/internal/minh-brain/learning/trends/export?days=7', {
+      cookie: authCookie(staffA, tenantA),
+    });
+    expect(snapshotA.status).toBe(200);
+    expect(snapshotA.body).toMatchObject({
+      windowDays: 7,
+      granularity: 'day',
+      rawPayloadIncluded: false,
+      rawAnswerIncluded: false,
+      providerPayloadIncluded: false,
+    });
+    expect(snapshotA.body.points).toEqual(trendA.points);
+    expect(snapshotA.text).not.toContain('private answer');
+    expect(snapshotA.text).not.toContain('metadata_json');
+    expect(snapshotA.text).not.toContain('provider_response');
+
+    const snapshotB = await send('/api/internal/minh-brain/learning/trends/export?days=7', {
+      cookie: authCookie(staffB, tenantB),
+    });
+    expect(snapshotB.status).toBe(200);
+    expect(snapshotB.body.points.reduce((total: number, point: { total: number }) => total + point.total, 0)).toBe(1);
+
+    const forbiddenSnapshot = await send('/api/internal/minh-brain/learning/trends/export?days=7', {
+      cookie: `token=${jwt.sign({ id: staffA, tenantId: tenantA, role: 'AGENT' }, jwtSecret)}`,
+    });
+    expect(forbiddenSnapshot.status).toBe(403);
   });
 });

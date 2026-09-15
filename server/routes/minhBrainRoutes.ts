@@ -15,6 +15,7 @@ import {
 } from '../services/minhDecisionQueueService';
 import {
   getMinhDecisionLearning,
+  getMinhDecisionLearningSnapshot,
   getMinhDecisionLearningTrend,
   normalizeMinhLearningWindow,
 } from '../services/minhDecisionLearningService';
@@ -49,6 +50,30 @@ export function createMinhBrainRoutes(authenticateToken: any): Router {
         degraded: true,
         warning: 'Xu hướng learning của Minh tạm thời chưa tải được.',
         trend: null,
+      });
+    }
+  });
+
+  router.get('/learning/trends/export', authenticateToken, async (req: Request, res: Response) => {
+    const user = (req as any).user;
+    if (!STAFF_ROLES.has(user?.role)) {
+      return res.status(403).json({ error: 'Chỉ quản lý mới có quyền xuất snapshot learning của Minh.' });
+    }
+
+    const learningWindowDays = requestedLearningWindow(req.query.days);
+    try {
+      const snapshot = await getMinhDecisionLearningSnapshot(String(user.tenantId), learningWindowDays);
+      res.setHeader('Content-Type', 'application/json; charset=utf-8');
+      res.setHeader(
+        'Content-Disposition',
+        `attachment; filename="minh-learning-${snapshot.windowDays}d.json"`,
+      );
+      return res.json(snapshot);
+    } catch {
+      return res.status(503).json({
+        degraded: true,
+        warning: 'Snapshot learning của Minh tạm thời chưa thể tạo.',
+        snapshot: null,
       });
     }
   });
