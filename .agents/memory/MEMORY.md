@@ -95,3 +95,4 @@
 - [Minh evidence orchestration](minh-evidence-orchestration.md) — compound workstreams, structured evidence, filtered memory, and separate response/telemetry idempotency
 - [Live-chat telemetry persistence](livechat-telemetry-persistence.md) — persist bounded hashed latency metrics asynchronously with startup hydration and outage backoff
 - [Live-chat repair interaction identity](livechat-repair-interaction.md) — repair runs reuse the original outbound interaction instead of creating a second answer
+- [Admin Cockpit degraded mode](admin-cockpit-degraded-mode.md) — temporary DB pool failures return explicit degraded data instead of a fatal dashboard error or false healthy zeroes

@@ -4908,6 +4908,15 @@ app.use('/api/public/livechat', agentP1Router);
   app.use('/api/customer-profile', apiRateLimit, createCustomerProfileRoutes(authenticateToken));
   app.use('/api/monitoring', apiRateLimit, createMonitoringRoutes(authenticateToken));
   app.use('/api/v1/ai', apiRateLimit, createAgentMemoryRoutes(authenticateToken));
+  // Register the full-path auto-posting router before the generic
+  // /api/agents/:name route below. Otherwise /api/agents/neuron-map is
+  // interpreted as an agent named "NEURON-MAP" and returns a false 404.
+  const autoPostingSecret =
+    process.env.AUTO_POSTING_CRON_SECRET ||
+    process.env.SOCIAL_PUBLISHING_CRON_SECRET ||
+    process.env.JWT_SECRET?.slice(0, 32) ||
+    '';
+  app.use(createAutoPostingRouter(pool, authenticateToken, autoPostingSecret));
   app.use('/api/agents', apiRateLimit, createAgentRoutes(authenticateToken));
   app.use('/api/enterprise', apiRateLimit, createEnterpriseRoutes(authenticateToken, io));
   app.use('/api/upload', apiRateLimit, createUploadRoutes(authenticateToken));
@@ -5868,12 +5877,6 @@ app.get('/api/admin/agent-tasks', apiRateLimit, authenticateToken, async (req: e
     }
   }
   {
-    const autoPostingSecret =
-      process.env.AUTO_POSTING_CRON_SECRET ||
-      process.env.SOCIAL_PUBLISHING_CRON_SECRET ||
-      process.env.JWT_SECRET?.slice(0, 32) ||
-      '';
-    app.use(createAutoPostingRouter(pool, authenticateToken, autoPostingSecret));
     try {
       startAutoPostingScheduler(pool);
     } catch (err: any) {

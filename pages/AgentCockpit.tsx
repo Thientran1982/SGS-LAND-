@@ -17,6 +17,8 @@ type CockpitSummary = {
   shiftReports: Array<{ id: string; report_date: string; shift: string; metrics_json: Record<string, unknown>; summary: string; reviewed: boolean }>;
   rollbackAudits: Array<{ entity_id: string; from_status: string; reason: string; created_at: string }>;
   generatedAt: string;
+  degraded?: boolean;
+  warning?: string;
 };
 type ReplayHistory = { id: string; operator_id: string; reason: string; replay_number: number; result_status: string; result_error?: string; requested_at: string; completed_at?: string };
 type OperatingEvent = { id: string; event_id: string; event_type: string; idempotency_key: string; urgency: number; status: string; attempts: number; last_error?: string; lease_expires_at?: string; lease_expired?: boolean; created_at: string; updated_at: string; replay_history: ReplayHistory[] };
@@ -253,6 +255,7 @@ export default function AgentCockpit() {
       <AgentNeuronMap />
       {error && <div role="alert" className="flex items-center gap-2 rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700"><AlertTriangle size={17} /> {error}</div>}
       {loading && !summary ? <div className="rounded-xl border border-slate-200 bg-white p-10 text-center text-sm text-slate-500">Đang tải trạng thái agent…</div> : summary && <>
+         {summary.degraded && <div role="status" className="flex items-center gap-2 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800"><AlertTriangle size={17} /> {summary.warning || 'Một phần dữ liệu vận hành đang tạm thời không khả dụng.'}</div>}
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
            {[
             ['Lần chạy đang xử lý', count(summary.executions, 'RUNNING'), 'text-indigo-600'],

@@ -2,10 +2,31 @@ import { Router, Request, Response } from 'express';
 import { agentOperatingRepository } from '../repositories/agentOperatingRepository';
 import { processAgentEvents } from '../services/agentOperatorDaemon';
 import { companyBrainRepository } from '../repositories/companyBrainRepository';
+import { DEFAULT_AGENT_ROLE_CARDS } from '../ai/agentRoleCards';
 
 const STAFF_ROLES = ['SUPER_ADMIN', 'ADMIN', 'TEAM_LEAD'];
 const BRAIN_DOCUMENT_TYPES = ['brand_voice', 'developer', 'project', 'legal_disclaimer', 'broker', 'faq', 'competitor_note'];
 const BRAIN_VERIFICATION_STATUSES = ['verified', 'unverified', 'needs_review', 'stale'];
+
+function degradedCockpitSummary() {
+  return {
+    roleCards: DEFAULT_AGENT_ROLE_CARDS.map(card => ({
+      ...card,
+      approval_status: 'UNAVAILABLE',
+    })),
+    events: [],
+    humanQuestions: [],
+    executions: [],
+    recentAudit: [],
+    rollouts: [],
+    weeklyKpi: [],
+    shiftReports: [],
+    rollbackAudits: [],
+    generatedAt: new Date().toISOString(),
+    degraded: true,
+    warning: 'Dữ liệu vận hành tạm thời chưa tải được; hãy thử làm mới sau.',
+  };
+}
 
 export function validateBrainDocument(body: any) {
   const documentType = String(body?.documentType || '');
@@ -42,7 +63,10 @@ export function createAgentOperatingRoutes(authenticateToken: any): Router {
     try { res.json(await agentOperatingRepository.cockpitSummary(user.tenantId)); }
     catch (error: any) {
       console.error('[AgentOperating] cockpit summary failed:', error?.message || error);
-      res.status(500).json({ error: 'Không thể tải Admin Cockpit.' });
+      // Keep the operational shell usable during a transient pool/DB outage.
+      // The degraded marker prevents empty metrics from being mistaken for
+      // healthy zeroes while allowing the operator to retry from the UI.
+      res.json(degradedCockpitSummary());
     }
   });
 

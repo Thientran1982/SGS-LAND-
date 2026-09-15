@@ -69,6 +69,11 @@ async function getSettings(origin: string) {
   return { status: response.status, body: await response.json() };
 }
 
+async function getNeuronMap(origin: string) {
+  const response = await fetch(`${origin}/api/agents/neuron-map`);
+  return { status: response.status, body: await response.json() };
+}
+
 async function putSettings(origin: string, body: unknown) {
   const response = await fetch(`${origin}/api/auto-posting/settings`, {
     method: 'PUT',
@@ -136,6 +141,25 @@ describe('Marketing Facebook backfill route', () => {
       expect(result.status).toBe(403);
       expect(result.body.error).toContain('quyền quản lý');
       expect(mocks.runAutoPostingBackfill).not.toHaveBeenCalled();
+    } finally {
+      await new Promise<void>(resolve => deniedServer.server.close(() => resolve()));
+    }
+  });
+
+  it('keeps the neuron map endpoint distinct from the generic agent lookup route', async () => {
+    const deniedServer = await startServer({
+      id: 'agent-1',
+      tenantId: 'tenant-1',
+      role: 'AGENT',
+    });
+
+    try {
+      const result = await getNeuronMap(deniedServer.origin);
+
+      // A registered neuron-map handler must reject by authorization (403),
+      // rather than falling through to /api/agents/:name (404).
+      expect(result.status).toBe(403);
+      expect(result.body.error).toContain('quyền quản lý');
     } finally {
       await new Promise<void>(resolve => deniedServer.server.close(() => resolve()));
     }
