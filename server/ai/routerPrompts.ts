@@ -40,11 +40,15 @@ DRAFT_BOOKING
   Kích hoạt: đặt cọc, giữ chỗ, đặt lịch xem nhà, booking căn
   Ranh giới: KHÁC DRAFT_CONTRACT (chưa đến bước ký hợp đồng chính thức)
 EXPLAIN_MARKETING
-  Kích hoạt: hỏi ưu đãi, chính sách bán hàng, chiết khấu, quà tặng, tiến độ TT
+  Kích hoạt: hỏi ưu đãi, chính sách bán hàng, chiết khấu, quà tặng, tiến độ TT,
+  hoặc hỏi nhận định/xu hướng/thực trạng thị trường BĐS theo thời điểm hay khu vực
   Ranh giới: KHÁC SEARCH_INVENTORY (không hỏi tìm căn, chỉ hỏi policy bán)
+  VD: "Thị trường BĐS Q4/2025 ở HCM thế nào?" → EXPLAIN_MARKETING
 DRAFT_CONTRACT
   Kích hoạt: soạn/xem hợp đồng mua bán, hợp đồng thuê, điều khoản hợp đồng
   contract_type enum: SALE | LEASE | TRANSFER | DEPOSIT | OTHER_CONTRACT
+  Khi khách yêu cầu "soạn hợp đồng đặt cọc" hoặc nêu "hợp đồng đặt cọc" → DRAFT_CONTRACT
+  (không chọn DRAFT_BOOKING; đó là đặt/giữ chỗ hoặc đặt lịch, chưa yêu cầu văn bản)
 ANALYZE_LEAD
   Kích hoạt: yêu cầu nội bộ phân tích lead, chất lượng khách, lịch sử tương tác
   [CHỈ dùng cho user nội bộ — không bao giờ trigger từ tin nhắn khách thông thường]
@@ -56,6 +60,9 @@ DIRECT_ANSWER
   Kích hoạt: câu hỏi thực tế không cần tra CRM [TRÁNH: câu về thuế/phí giao dịch BĐS hay thuật ngữ BĐS → EXPLAIN_LEGAL]
   VD: "sổ hồng màu gì", "ngành xây dựng gồm những lĩnh vực nào"
   [KHÔNG dùng cho câu hỏi cần dữ liệu dự án cụ thể → dùng SEARCH_INVENTORY]
+  Lời chào/nghênh đón ngắn như "chào em", "xin chào", "hello" → DIRECT_ANSWER
+  (không chọn CLARIFY chỉ vì tin nhắn ngắn; CLARIFY chỉ dành cho nội dung không
+  thể xác định được nhu cầu sau khi đã loại trừ lời chào)
 CLARIFY
   Kích hoạt: CHỈ khi confidence < 0.5 VÀ không thể đoán intent dù đọc lịch sử
   VD hợp lệ: "alo?", "có ai không", "..."
@@ -207,8 +214,27 @@ Chỉ trả JSON hợp lệ. KHÔNG markdown. KHÔNG giải thích. KHÔNG text 
 Field bắt buộc: next_step, extraction, confidence.
 Field tuỳ chọn: additional_intents, low_confidence_reason, context_resolved,
   resolved_from, note, persona_signals — chỉ thêm khi có giá trị thực.
+QUY TẮC GIỮ BẰNG CHỨNG CHO CÁC TRƯỜNG HỢP BIÊN:
+- CALCULATE_LOAN với câu hỏi "trả bao nhiêu mỗi tháng" phải giữ số tiền và số năm
+  trong extraction. Nếu khách chưa nêu lãi suất, không tự bịa số; đặt loan_rate=null
+  và note phải nói rõ "cần lãi suất" để specialist biết điều kiện còn thiếu.
+- SEARCH_INVENTORY phải ghi bedrooms=3 khi gặp "3PN"/"3 phòng ngủ", và giữ nguyên
+  token "3PN" trong explicit_question; đồng thời trích xuất budget_max/location_keyword
+  nếu có. Không chuyển bedrooms sang valuation_bedrooms cho câu hỏi tìm mua.
 KHÔNG bịa thực thể không có trong tin nhắn. Nếu khách không nói khu vực → location_keyword để null.
 PHẦN VIII — TEST CASES MỞ RỘNG
+INPUT: "Vay 2 tỷ trong 20 năm thì trả bao nhiêu mỗi tháng?"
+OUTPUT: next_step = CALCULATE_LOAN, extraction.loan_amount = 2000000000,
+        extraction.loan_years = 20
+INPUT: "Soạn giúp em hợp đồng đặt cọc 500 triệu"
+OUTPUT: next_step = DRAFT_CONTRACT, extraction.contract_type = DEPOSIT
+INPUT: "Thị trường BĐS Q4/2025 ở HCM thế nào?"
+OUTPUT: next_step = EXPLAIN_MARKETING
+INPUT: "Chào em"
+OUTPUT: next_step = DIRECT_ANSWER
+INPUT: "Cho anh xem căn 3PN dưới 5 tỷ ở Thủ Đức"
+OUTPUT: next_step = SEARCH_INVENTORY, extraction.bedrooms = 3,
+        extraction.budget_max = 5000000000, extraction.location_keyword = "Thủ Đức"
 INPUT: "Em đang ở Úc, sắp về VN, muốn mua căn penthouse quận 1, budget tầm 15-20 tỷ,
         cần biết người Việt kiều có mua được không và tính vay luôn"
 OUTPUT:

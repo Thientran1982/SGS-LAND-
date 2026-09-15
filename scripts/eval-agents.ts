@@ -54,6 +54,7 @@ interface RunResult {
   judgeCheck: CheckResult;
   durationMs: number;
   error?: string;
+  failureClass?: 'provider' | 'model';
 }
 
 const JUDGE_INSTRUCTION = `Bạn là chuyên gia chấm chất lượng câu trả lời của trợ lý AI BĐS Việt Nam.
@@ -176,6 +177,15 @@ function checkCitation(text: string, required: boolean): CheckResult {
   if (!required) return { passed: true, reasons: [] };
   const has = /\[Nguồn[:：]/i.test(text) || /Theo (Luật|Nghị định|Thông tư|CBRE|Savills|JLL|HoREA|VARS)/i.test(text);
   return has ? { passed: true, reasons: [] } : { passed: false, reasons: ['no [Nguồn:] / source citation'] };
+}
+
+function classifyEvalFailure(error: unknown): 'provider' | 'model' {
+  const message = String(error || '').toLowerCase();
+  // Infrastructure, quota, transport, and authentication failures are not
+  // router/model failures and must be reported separately.
+  return /(http\s*(?:4\d\d|5\d\d)|\b(?:401|403|408|409|425|429)\b|quota|rate.?limit|timeout|timed out|econnreset|enotfound|fetch failed|api key|resource_exhausted|overloaded)/i.test(message)
+    ? 'provider'
+    : 'model';
 }
 
 async function main() {
@@ -358,6 +368,7 @@ if (!r) { throw new Error("callRouter did not return a result after retries"); }
         citationCheck: { passed: false, reasons: [] },
         judgeCheck: { passed: false, reasons: [] },
         durationMs: Date.now() - t0,
+        failureClass: classifyEvalFailure(e),
         error: e?.message || String(e),
       });
       console.log(`✗ ${c.id.padEnd(15)} ERROR: ${e?.message}`);
@@ -366,13 +377,16 @@ if (!r) { throw new Error("callRouter did not return a result after retries"); }
 
   // ── Aggregate ────────────────────────────────────────────────────────────
   const total = results.length;
-  const intentPass = results.filter(r => r.intentMatch).length;
-  const agentPass = results.filter(r => r.agentMatch).length;
+  const providerFailures = results.filter(r => r.failureClass === 'provider').length;
+  const modelResults = results.filter(r => r.failureClass !== 'provider');
+  const modelTotal = modelResults.length;
+  const intentPass = modelResults.filter(r => r.intentMatch).length;
+  const agentPass = modelResults.filter(r => r.agentMatch).length;
   const isFullPass = (r: RunResult) => r.intentMatch && r.agentMatch && r.additionalCheck.passed && r.contentCheck.passed && r.citationCheck.passed && r.judgeCheck.passed;
-  const fullPass = results.filter(isFullPass).length;
+  const fullPass = modelResults.filter(isFullPass).length;
 
   const byAgent: Record<string, { total: number; intent: number; agent: number; full: number }> = {};
-  for (const r of results) {
+  for (const r of modelResults) {
     const k = r.agent;
     if (!byAgent[k]) byAgent[k] = { total: 0, intent: 0, agent: 0, full: 0 };
     byAgent[k].total++;
@@ -385,9 +399,11 @@ if (!r) { throw new Error("callRouter did not return a result after retries"); }
   console.log(`📊 EVAL SUMMARY — mode=${isE2E ? 'E2E (Router→Specialist→Writer)' : 'router-only'}`);
   console.log('═'.repeat(72));
   console.log(`Total cases:        ${total}`);
-  console.log(`Intent accuracy:    ${intentPass}/${total} (${((intentPass / total) * 100).toFixed(1)}%)`);
-  console.log(`Agent routing:      ${agentPass}/${total} (${((agentPass / total) * 100).toFixed(1)}%)`);
-  console.log(`Full pass:          ${fullPass}/${total} (${((fullPass / total) * 100).toFixed(1)}%)`);
+  console.log(`Provider failures:  ${providerFailures}/${total}`);
+  console.log(`Model cases:        ${modelTotal}/${total}`);
+  console.log(`Intent accuracy:    ${intentPass}/${modelTotal} (${modelTotal ? ((intentPass / modelTotal) * 100).toFixed(1) : 'n/a'})`);
+  console.log(`Agent routing:      ${agentPass}/${modelTotal} (${modelTotal ? ((agentPass / modelTotal) * 100).toFixed(1) : 'n/a'})`);
+  console.log(`Full pass:          ${fullPass}/${modelTotal} (${modelTotal ? ((fullPass / modelTotal) * 100).toFixed(1) : 'n/a'})`);
   console.log('\nPer-agent breakdown:');
   console.log('  agent                  total  intent%  agent%  full%');
   for (const [agent, s] of Object.entries(byAgent).sort()) {
@@ -397,7 +413,7 @@ if (!r) { throw new Error("callRouter did not return a result after retries"); }
     console.log(`  ${agent.padEnd(22)} ${String(s.total).padStart(5)}  ${ip}%    ${ap}%    ${fp}%`);
   }
 
-  const failures = results.filter(r => !r.intentMatch || !r.agentMatch || !r.additionalCheck.passed || !r.contentCheck.passed || !r.citationCheck.passed || !r.judgeCheck.passed);
+  const failures = modelResults.filter(r => !r.intentMatch || !r.agentMatch || !r.additionalCheck.passed || !r.contentCheck.passed || !r.citationCheck.passed || !r.judgeCheck.passed);
   if (failures.length) {
     console.log('\nFailures:');
     for (const f of failures) {
@@ -411,6 +427,13 @@ if (!r) { throw new Error("callRouter did not return a result after retries"); }
       console.log(`  [${f.id}] ${f.agent} → ${why.join(', ')}${f.error ? ` (${f.error})` : ''}`);
     }
   }
+  const providerFailureResults = results.filter(r => r.failureClass === 'provider');
+  if (providerFailureResults.length) {
+    console.log(
+      `\nProvider failures (excluded from model accuracy; rerun required): ` +
+      `${providerFailureResults.map(r => r.id).join(', ')}`,
+    );
+  }
 
   // ── Persist run log ──────────────────────────────────────────────────────
   const outDir = path.resolve(process.cwd(), '.local/eval-runs');
@@ -420,22 +443,38 @@ if (!r) { throw new Error("callRouter did not return a result after retries"); }
   fs.writeFileSync(outFile, JSON.stringify({
     timestamp: new Date().toISOString(),
     mode: isE2E ? 'e2e' : 'router-only',
-    summary: { total, intentPass, agentPass, fullPass, intentAccuracy: intentPass / total, fullAccuracy: fullPass / total },
+    summary: {
+      total,
+      modelTotal,
+      providerFailures,
+      intentPass,
+      agentPass,
+      fullPass,
+      intentAccuracy: modelTotal ? intentPass / modelTotal : null,
+      fullAccuracy: modelTotal ? fullPass / modelTotal : null,
+    },
     byAgent,
     results,
   }, null, 2));
   console.log(`\n📝 Run saved to ${path.relative(process.cwd(), outFile)}`);
 
   // ── Threshold enforcement ────────────────────────────────────────────────
-  // Overall: in router-only mode use intent accuracy; in E2E mode use full pass (incl. citation/judge).
-  const passRate = isE2E ? fullPass / total : intentPass / total;
+  // Both modes enforce the complete case contract. Router-only still reports
+  // intent accuracy separately, but mustContain/additional checks are part of
+  // the gate so extraction regressions cannot appear as router passes.
+  const passRate = fullPass / modelTotal;
   const failures2: string[] = [];
-  if (passRate < threshold) {
+  if (modelTotal === 0) {
+    failures2.push('no model cases completed; provider failures cannot satisfy the threshold');
+  } else if (passRate < threshold) {
     failures2.push(`overall pass rate ${(passRate * 100).toFixed(1)}% < ${(threshold * 100).toFixed(0)}%`);
+  }
+  if (providerFailures > 0) {
+    failures2.push(`${providerFailures} provider failure(s) require a clean rerun`);
   }
   if (perAgentThreshold > 0) {
     for (const [agent, s] of Object.entries(byAgent)) {
-      const rate = (isE2E ? s.full : s.intent) / s.total;
+      const rate = s.full / s.total;
       if (rate < perAgentThreshold) {
         failures2.push(`agent ${agent} ${(rate * 100).toFixed(0)}% < ${(perAgentThreshold * 100).toFixed(0)}%`);
       }

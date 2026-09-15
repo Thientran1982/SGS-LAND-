@@ -24,6 +24,18 @@ export type RuntimeAgent = {
   active: boolean;
 };
 
+/**
+ * Secondary specialist fan-out is opt-in. Keep it disabled while the
+ * single-intent router baseline is being evaluated.
+ */
+export const COMPOUND_ROUTING_ENV = 'MINH_COMPOUND_ROUTING_ENABLED';
+
+export function isCompoundRoutingEnabled(
+  env: NodeJS.ProcessEnv = process.env,
+): boolean {
+  return String(env[COMPOUND_ROUTING_ENV] || '').trim().toLowerCase() === 'true';
+}
+
 export const AGENT_ORCHESTRATION_REGISTRY: readonly AgentCapability[] = [
   { skillKey: 'ROUTER_SYSTEM', promptKey: 'ROUTER_SYSTEM', displayName: 'Router', descriptionKey: 'ai.agent_router_desc', role: 'router', intents: [], mode: 'router', ownerIntent: 'Phân loại và định tuyến' },
   { skillKey: 'WRITER_PERSONA', promptKey: 'WRITER_PERSONA', displayName: 'Writer', descriptionKey: 'ai.agent_writer_desc', role: 'writer', intents: ['DIRECT_ANSWER', 'CLARIFY'], mode: 'writer', ragDomains: ['legal', 'finance', 'market', 'product'], ownerIntent: 'DIRECT_ANSWER · CLARIFY' },

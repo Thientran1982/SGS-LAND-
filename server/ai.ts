@@ -31,7 +31,7 @@ import {
 } from './ai/defaultPrompts';
 import { GENAI_CONFIG, SAFE_MODEL_FALLBACK, DEPRECATED_MODEL_PREFIXES, ensureSafeModel, getProviderForModel, getModelCost, isProviderConfigured, MODEL_REGISTRY, TASK_MODELS, taskProfile, CROSS_PROVIDER_FALLBACK } from './ai/modelPolicy';
 import { generateWithPolicy } from './ai/providers';
-import { getAgentRoleForIntent, selectSecondaryIntents } from './ai/agentOrchestrationRegistry';
+import { getAgentRoleForIntent, isCompoundRoutingEnabled, selectSecondaryIntents } from './ai/agentOrchestrationRegistry';
 import { appendActivatedCatalogSkills } from './ai/agentSkillRuntime';
 // -----------------------------------------------------------------------------
 // 1. CONFIGURATION & SCHEMA DEFINITIONS
@@ -789,6 +789,8 @@ type RouterPlan = {
         legal_concern?: string;
         property_type?: string;
         area_min?: number;
+        /** Minimum bedrooms for inventory search (e.g. "3PN" → 3). */
+        bedrooms?: number;
         loan_rate?: number;
         loan_years?: number;
         marketing_campaign?: string;
@@ -832,6 +834,7 @@ const ROUTER_SCHEMA: Schema = {
                 legal_concern: { type: Type.STRING, enum: ['PINK_BOOK', 'HDMB', 'VI_BANG', 'NONE'], description: "Loại pháp lý khách quan tâm" },
                 property_type: { type: Type.STRING, description: "Loại BĐS (căn hộ, nhà phố, biệt thự, đất nền)" },
                 area_min: { type: Type.NUMBER, description: "Diện tích tối thiểu (m²)" },
+                bedrooms: { type: Type.NUMBER, description: "Số phòng ngủ tối thiểu để lọc kho hàng. VD: '3PN' → 3, '2 phòng ngủ' → 2" },
                 loan_rate: { type: Type.NUMBER, description: "Lãi suất (%/năm)" },
                 loan_years: { type: Type.NUMBER, description: "Thời hạn vay (năm)" },
                 marketing_campaign: { type: Type.STRING, description: "Tên chiến dịch/ưu đãi" },
@@ -876,6 +879,7 @@ const TOOL_EXECUTOR = {
         priceMax?: number,
         propertyType?: string,
         areaMin?: number,
+        bedrooms?: number,
         floorMin?: number,
         floorMax?: number,
         direction?: string,
@@ -891,6 +895,7 @@ const TOOL_EXECUTOR = {
             if (priceMax) filters.price_lte = priceMax;
             if (propertyType) filters.type = propertyType;
             if (areaMin) filters.area_gte = areaMin;
+            if (bedrooms !== undefined) filters.bedrooms_gte = bedrooms;
             if (floorMin !== undefined) filters.floor_gte = floorMin;
             if (floorMax !== undefined) filters.floor_lte = floorMax;
             if (direction) filters.direction = direction;
@@ -917,6 +922,7 @@ const TOOL_EXECUTOR = {
             if (priceMax) activeFilters.push(`Giá ≤ ${(priceMax / 1e9).toFixed(2)} Tỷ`);
             if (propertyType) activeFilters.push(`Loại: ${propertyType}`);
             if (areaMin) activeFilters.push(`Diện tích ≥ ${areaMin}m²`);
+            if (bedrooms !== undefined) activeFilters.push(`Phòng ngủ ≥ ${bedrooms}PN`);
             if (floorMin !== undefined && floorMax !== undefined && floorMin === floorMax) activeFilters.push(`Tầng: ${floorMin}`);
             else if (floorMin !== undefined) activeFilters.push(`Tầng ≥ ${floorMin}`);
             else if (floorMax !== undefined) activeFilters.push(`Tầng ≤ ${floorMax}`);
@@ -1501,6 +1507,7 @@ LOẠI HÌNH BĐS → property_type (chuẩn hoá):
                 budgetMax,
                 extraction.property_type,
                 extraction.area_min,
+                extraction.bedrooms,
                 extraction.floor_min,
                 extraction.floor_max,                extraction.unit_direction,
                 extraction.tower,
@@ -2249,11 +2256,13 @@ PHÂN TÍCH LEAD (bullet point, sắc bén):
             let secondaryIntentsSection = '';
             let secondaryArtifact: AgentArtifact | undefined;
             const SECONDARY_ELIGIBLE = new Set(['SEARCH_INVENTORY', 'CALCULATE_LOAN', 'EXPLAIN_LEGAL', 'EXPLAIN_MARKETING', 'DRAFT_CONTRACT', 'ANALYZE_LEAD', 'ESTIMATE_VALUATION']);
-            const additionalIntents = selectSecondaryIntents(
-                currentIntent,
-                (state.plan?.additional_intents || []).filter(i => SECONDARY_ELIGIBLE.has(i)),
-                2,
-            );
+            const additionalIntents = isCompoundRoutingEnabled()
+                ? selectSecondaryIntents(
+                    currentIntent,
+                    (state.plan?.additional_intents || []).filter(i => SECONDARY_ELIGIBLE.has(i)),
+                    2,
+                )
+                : [];
             if (additionalIntents.length > 0) {
                 try {
                     const ext = state.plan?.extraction || {};
@@ -2270,7 +2279,8 @@ PHÂN TÍCH LEAD (bullet point, sắc bén):
                                     ext.location_keyword || '',
                                     bMax,
                                     ext.property_type,
-                                    ext.area_min
+                                    ext.area_min,
+                                    ext.bedrooms,
                                 );
                                 payload = `[INVENTORY (intent phụ)]:\n${inv}`;
                             } else if (secIntent === 'CALCULATE_LOAN') {

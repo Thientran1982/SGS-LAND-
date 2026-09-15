@@ -98,3 +98,4 @@
 - [Live-chat repair interaction identity](livechat-repair-interaction.md) — repair runs reuse the original outbound interaction instead of creating a second answer
 - [Admin Cockpit degraded mode](admin-cockpit-degraded-mode.md) — temporary DB pool failures return explicit degraded data instead of a fatal dashboard error or false healthy zeroes
 - [QStash regional endpoint](qstash-regional-endpoint.md) — QStash tokens are region-bound; verify the configured API origin before registering schedules
+- [Router eval provider separation](router-evaluation-provider-separation.md) — separate provider outages from model/extraction failures and gate router-only runs on full contract pass

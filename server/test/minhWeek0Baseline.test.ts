@@ -10,6 +10,7 @@ import { inspectAgentOutput } from '../ai/agentGuardrails';
 import {
   AGENT_ORCHESTRATION_REGISTRY,
   getAgentCapabilityForIntent,
+  isCompoundRoutingEnabled,
 } from '../ai/agentOrchestrationRegistry';
 
 describe('Minh Week 0 baseline contracts', () => {
@@ -90,5 +91,12 @@ describe('Minh Week 0 baseline contracts', () => {
         expect(getAgentCapabilityForIntent(intent)?.skillKey).toBe(capability.skillKey);
       }
     }
+  });
+
+  it('keeps compound specialist fan-out disabled unless explicitly enabled', () => {
+    expect(isCompoundRoutingEnabled({})).toBe(false);
+    expect(isCompoundRoutingEnabled({ MINH_COMPOUND_ROUTING_ENABLED: 'false' })).toBe(false);
+    expect(isCompoundRoutingEnabled({ MINH_COMPOUND_ROUTING_ENABLED: 'true' })).toBe(true);
+    expect(isCompoundRoutingEnabled({ MINH_COMPOUND_ROUTING_ENABLED: 'TRUE' })).toBe(true);
   });
 });
