@@ -194,6 +194,7 @@ describe('live-chat telemetry', () => {
       historyThresholdMs: 100,
       databaseTimeoutWindowMs: 5_000,
       databaseTimeoutAlertThreshold: 2,
+      statusRateLimitAlertThreshold: 2,
     });
     telemetry.configurePersistence({
       load: async () => ({
