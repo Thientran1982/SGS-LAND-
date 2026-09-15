@@ -47,6 +47,12 @@ Async reconciliation must validate its generation after every awaited status/his
 
 **How to apply:** Increment the generation when a realtime reply or terminal state stops reconciliation, guard every post-await mutation, and keep a stale poll from clearing a newer poll's busy ownership.
 
+Preparation failures after a 202 acknowledgement must emit a correlated terminal lifecycle event even when no durable execution was claimed.
+
+**Why:** Database contention can reject lead/history/inbound preparation after the browser has already entered its pending state; without a correlated failure, the widget can wait until its reconciliation deadline.
+
+**How to apply:** Guard the post-ack catch path against a second HTTP response and notify the lead room with the inbound interaction identity so Socket.IO can fail the current run safely.
+
 An accepted async run is a normal user-visible status, not an error; unavailable non-Gemini primary models must be removed from the current fallback chain after provider failure or circuit-open.
 
 **Why:** The public chat completed successfully, but a paid/unavailable GLM route followed by native retries stretched one answer to roughly 84 seconds and rendered the pending notice as a red alert, making healthy async work look broken.

@@ -26,6 +26,16 @@ export interface LiveChatRunTimings {
   retrieveMs?: number;
   llmMs?: number;
   guardrailMs?: number;
+  /** Database work before the durable agent starts (inbound interaction/lead lookup). */
+  leadLookupDbMs?: number;
+  inboundDbMs?: number;
+  /** Conversation history read used to build the agent context. */
+  historyDbMs?: number;
+  /** Database work owned by durable execution (claim/checkpoints/lease/finalize). */
+  agentExecutionDbMs?: number;
+  /** Database write that persists the assistant interaction after execution. */
+  outboundDbMs?: number;
+  /** Kept for compatibility with existing aggregate consumers. */
   dbMs?: number;
   totalMs?: number;
   ttfbMs?: number;
@@ -506,6 +516,11 @@ export class LiveChatTelemetry {
       'retrieveMs',
       'llmMs',
       'guardrailMs',
+      'leadLookupDbMs',
+      'inboundDbMs',
+      'historyDbMs',
+      'agentExecutionDbMs',
+      'outboundDbMs',
       'dbMs',
       'totalMs',
       'ttfbMs',

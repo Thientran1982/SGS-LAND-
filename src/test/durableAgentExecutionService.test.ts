@@ -256,6 +256,10 @@ describe('durable agent execution service', () => {
     });
 
     expect(result.result.content).toBe('Đây là câu trả lời.');
+    expect(result.timings).toEqual(expect.objectContaining({
+      agentExecutionDbMs: expect.any(Number),
+      guardrailMs: expect.any(Number),
+    }));
     expect(events[0]).toEqual(expect.objectContaining({
       type: 'agent_run_started',
       runId: 'run-1',

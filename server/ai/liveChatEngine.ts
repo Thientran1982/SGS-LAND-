@@ -1905,9 +1905,14 @@ let lessonsBlock = '';
 const responseMemoryStartedAt = Date.now();
 try {
   // === PHA 0: cá nhân hoá theo owner_profile — mục tiêu & quy tắc riêng của chủ sở hữu ===
-  ownerProfileBlock = relevantMemoryBlock(msg, await agentMemoryService.memoryBlock(tenantId, 'agent:owner-profile', msg, 600));
-  taskMemoryBlock = relevantMemoryBlock(msg, await agentMemoryService.memoryBlock(tenantId, 'agent:task-events', msg, 400));
-  lessonsBlock = relevantMemoryBlock(msg, await agentMemoryService.memoryBlock(tenantId, 'agent:lessons', msg, 500));
+  const [ownerProfile, taskMemory, lessons] = await Promise.all([
+    agentMemoryService.memoryBlock(tenantId, 'agent:owner-profile', msg, 600),
+    agentMemoryService.memoryBlock(tenantId, 'agent:task-events', msg, 400),
+    agentMemoryService.memoryBlock(tenantId, 'agent:lessons', msg, 500),
+  ]);
+  ownerProfileBlock = relevantMemoryBlock(msg, ownerProfile);
+  taskMemoryBlock = relevantMemoryBlock(msg, taskMemory);
+  lessonsBlock = relevantMemoryBlock(msg, lessons);
 } catch { /* profile là tuỳ chọn, không chặn chat */ }
 liveChatTimings.memoryMs = (liveChatTimings.memoryMs || 0) + (Date.now() - responseMemoryStartedAt);
 const responseLengthInstruction = longFormResponse

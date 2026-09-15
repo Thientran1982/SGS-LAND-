@@ -1840,7 +1840,10 @@ app.use(globalMutationAudit);
   // Keep the public request short enough that a slow provider cannot make the
   // browser/proxy look broken. The durable run continues and the widget
   // receives the persisted answer through Socket.IO or reconciliation.
-  const PUBLIC_LIVECHAT_ASYNC_DEADLINE_MS = 5_000;
+  // Acknowledgement is deliberately independent from lead/history/agent DB
+  // work. The widget has a durable status endpoint and Socket.IO for the
+  // eventual answer, so keeping the HTTP request open only increases TTFB.
+  const PUBLIC_LIVECHAT_ASYNC_DEADLINE_MS = 750;
 const PUBLIC_TENANT = DEFAULT_TENANT_ID;
 
   /** Strip Vietnamese diacritics → lowercase, collapse spaces/dots for map lookups */
@@ -2951,8 +2954,25 @@ app.get('/api/public/listings/:slugId', apiRateLimit, async (req: express.Reques
   chatStartedAt: number;
   replyLang: string;
    telemetry: ReturnType<typeof liveChatTelemetry.begin>;
+   preparationTimings?: {
+     leadLookupDbMs?: number;
+     inboundDbMs?: number;
+     historyDbMs?: number;
+   };
+   acknowledgedAt?: number;
 }) {
-   const { leadId, msgContent, isLandingRequest, executePublicChat, inboundInteraction, chatStartedAt, replyLang, telemetry } = opts;
+   const {
+     leadId,
+     msgContent,
+     isLandingRequest,
+     executePublicChat,
+     inboundInteraction,
+     chatStartedAt,
+     replyLang,
+     telemetry,
+     preparationTimings,
+     acknowledgedAt,
+   } = opts;
   const { runDurableAgentExecution } = await import('./server/services/durableAgentExecutionService');
    let repairedLegacyRunId: string | undefined;
 let execution = await runDurableAgentExecution({
@@ -3077,8 +3097,16 @@ externalEventId: `agent:${execution.runId}`,
         timings: {
           ...runTimings,
           dbMs,
+          leadLookupDbMs: preparationTimings?.leadLookupDbMs,
+          inboundDbMs: preparationTimings?.inboundDbMs,
+          historyDbMs: preparationTimings?.historyDbMs,
+          agentExecutionDbMs: execution.timings?.agentExecutionDbMs,
+          guardrailMs: execution.timings?.guardrailMs,
+          outboundDbMs: dbMs,
           totalMs: Date.now() - chatStartedAt,
-          ttfbMs: Date.now() - chatStartedAt,
+          ttfbMs: acknowledgedAt
+            ? Math.max(0, acknowledgedAt - chatStartedAt)
+            : Date.now() - chatStartedAt,
         },
       });
       telemetry.mark('outbound_persisted');
@@ -3100,6 +3128,8 @@ broadcastIo?.to(`tenant:${PUBLIC_TENANT}`).emit('escalate_to_human', {
 }
 
 app.post('/api/public/ai/livechat', livechatRateLimit, aiRateLimit, async (req: express.Request, res: express.Response) => {
+    let asyncDeadline: ReturnType<typeof setTimeout> | null = null;
+    let acknowledgedAt: number | undefined;
     try {
        const { leadId, message, lang, inboundInteractionId, requestId } = req.body;
       const chatStartedAt = Date.now();
@@ -3123,15 +3153,68 @@ app.post('/api/public/ai/livechat', livechatRateLimit, aiRateLimit, async (req: 
         return res.status(400).json({ error: 'leadId và message là bắt buộc' }) as any;
       }
       const msgContent = String(message).trim().slice(0, 2000);
+       const requestedInboundInteractionId = String(inboundInteractionId || '').trim().slice(0, 200);
        logger.info('[PublicLiveChat] request accepted', {
          event: 'live_chat_request_accepted',
          tenant: 'public',
          endpoint: 'ai',
        });
 
-      const lead = await leadRepository.findById(PUBLIC_TENANT, leadId);
-      logger.info(`[PublicLiveChat] lead lookup ${Date.now() - chatStartedAt}ms`);
-      if (!lead) return res.status(404).json({ error: 'Lead not found' }) as any;
+       // The browser already persisted the inbound interaction and supplies
+       // its id. Acknowledge immediately for the normal public-widget path;
+       // preparation and durable execution continue below without holding the
+       // HTTP request open. Keep the legacy no-id path synchronous so status
+       // reconciliation never loses its correlation key.
+       if (requestedInboundInteractionId) {
+         asyncDeadline = setTimeout(() => {
+           if (!(res as any).headersSent) {
+             acknowledgedAt = Date.now();
+             logger.info(`[PublicLiveChat] async acknowledgement ${acknowledgedAt - chatStartedAt}ms`);
+             telemetry.mark('ack_sent', acknowledgedAt);
+             res.status(202).json({
+               async: true,
+               status: 'PROCESSING',
+               code: 'AI_ASYNC_PROCESSING',
+               inboundInteractionId: requestedInboundInteractionId,
+             });
+           }
+         }, PUBLIC_LIVECHAT_ASYNC_DEADLINE_MS);
+         asyncDeadline.unref?.();
+       }
+
+       const leadLookupStartedAt = Date.now();
+       const historyStartedAt = Date.now();
+       const inboundLookupStartedAt = Date.now();
+       // These reads are independent. Running them together removes the
+       // sequential lead → history → inbound latency that dominated the old
+       // pre-acknowledgement path under Aiven contention.
+       const [lead, history, inboundInteraction] = await Promise.all([
+         leadRepository.findById(PUBLIC_TENANT, leadId),
+         interactionRepository.findByLead(PUBLIC_TENANT, leadId),
+         interactionRepository.findInboundForAgentRun(
+           PUBLIC_TENANT,
+           leadId,
+           requestedInboundInteractionId
+             ? { interactionId: requestedInboundInteractionId }
+             : { content: msgContent },
+         ),
+       ]);
+       const preparationTimings = {
+         leadLookupDbMs: Date.now() - leadLookupStartedAt,
+         historyDbMs: Date.now() - historyStartedAt,
+         inboundDbMs: Date.now() - inboundLookupStartedAt,
+       };
+       logger.info('[PublicLiveChat] preparation timings', {
+         event: 'live_chat_inbound_preparation',
+         leadLookupDbMs: preparationTimings.leadLookupDbMs,
+         historyDbMs: preparationTimings.historyDbMs,
+         inboundDbMs: preparationTimings.inboundDbMs,
+       });
+       if (!lead) {
+         if ((res as any).headersSent) return;
+         if (asyncDeadline) clearTimeout(asyncDeadline);
+         return res.status(404).json({ error: 'Lead not found' }) as any;
+       }
 
       // If a human agent has taken over this conversation, skip AI processing entirely.
       // The agent will reply manually via the Inbox; the widget should wait silently.
@@ -3144,21 +3227,15 @@ app.post('/api/public/ai/livechat', livechatRateLimit, aiRateLimit, async (req: 
       // The client already saved the visitor's inbound message via /api/public/livechat/message
       // before calling this endpoint, so fetch history directly — it already contains that message.
       // This avoids persisting a duplicate INBOUND record.
-      const history = await interactionRepository.findByLead(PUBLIC_TENANT, leadId);
       const historyWithLatest = history; // includes the already-saved visitor message
-      const inboundInteraction = await interactionRepository.findInboundForAgentRun(
-        PUBLIC_TENANT,
-        leadId,
-        inboundInteractionId
-          ? { interactionId: String(inboundInteractionId) }
-          : { content: msgContent },
-      );
       if (!inboundInteraction?.id) {
+         if ((res as any).headersSent) return;
+         if (asyncDeadline) clearTimeout(asyncDeadline);
         return res.status(409).json({
           error: 'Tin nhắn đến chưa được lưu. Vui lòng gửi lại tin nhắn.',
         }) as any;
       }
-       telemetry.mark('history_read');
+        telemetry.mark('history_read', undefined, preparationTimings.historyDbMs);
       logger.info(`[PublicLiveChat] history lookup ${Date.now() - chatStartedAt}ms`);
 
       const { aiService, detectMessageLang } = await import('./server/ai');
@@ -3208,32 +3285,28 @@ app.post('/api/public/ai/livechat', livechatRateLimit, aiRateLimit, async (req: 
             PUBLIC_TENANT,
             replyLang,
           );
-      const asyncDeadline = setTimeout(
-  () => {
-    if (!(res as any).headersSent) {
-      logger.info(`[PublicLiveChat] async acknowledgement ${Date.now() - chatStartedAt}ms`);
-      telemetry.mark('ack_sent');
-      res.status(202).json({ async: true, inboundInteractionId: inboundInteraction.id });
-    }
-  },
-  PUBLIC_LIVECHAT_ASYNC_DEADLINE_MS,
-);
 let asyncRun: { aiReply: any; result: any } | null = null;
 let asyncError: unknown = null;
 try {
   asyncRun = await runAgentAndPersist({
     leadId, msgContent, isLandingRequest, executePublicChat,
-     inboundInteraction, chatStartedAt, replyLang, telemetry,
+      inboundInteraction,
+      chatStartedAt,
+      replyLang,
+      telemetry,
+      preparationTimings,
+      acknowledgedAt,
   });
 } catch (e) {
   asyncError = e;
 } finally {
-  clearTimeout(asyncDeadline);
+     if (asyncDeadline) clearTimeout(asyncDeadline);
 }
 if ((res as any).headersSent) return;
 if (asyncRun) {
   const { aiReply, result } = asyncRun;
-   telemetry.mark('ack_sent');
+   acknowledgedAt = Date.now();
+    telemetry.mark('ack_sent', acknowledgedAt);
   res.json({ reply: aiReply, artifact: result.artifact, suggestedAction: result.suggestedAction });
 } else {
   logger.error('Public AI livechat error:', asyncError as Error);
@@ -3246,7 +3319,7 @@ if (asyncRun) {
       async: true,
       status: 'PROCESSING',
       code: 'AI_ASYNC_PROCESSING',
-      inboundInteractionId: inboundInteraction.id,
+       inboundInteractionId: inboundInteraction.id,
       retryAfter: 3,
     }) as any;
   }
@@ -3273,6 +3346,20 @@ if (asyncRun) {
   });
 }
     } catch (error) {
+      if (asyncDeadline) clearTimeout(asyncDeadline);
+      if ((res as any).headersSent) {
+        const failedLeadId = String(req.body?.leadId || '').trim();
+        const failedInboundInteractionId = String(req.body?.inboundInteractionId || '').trim();
+        if (failedLeadId && failedInboundInteractionId) {
+          broadcastIo?.to(failedLeadId).emit('agent_run_finished', {
+            runId: `preparation-failure:${failedInboundInteractionId}`,
+            inboundInteractionId: failedInboundInteractionId,
+            status: 'FAILED',
+          });
+        }
+        logger.error('Public AI livechat failed after acknowledgement:', error as Error);
+        return;
+      }
       logger.error('Public AI livechat error:', error as Error);
       res.status(500).json({ error: 'AI đang bận, vui lòng thử lại sau' });
     }

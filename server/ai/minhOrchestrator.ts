@@ -93,16 +93,23 @@ export async function minhChooseSpecialist(args: {
     // Memory la gợi ý — không bắt buộc; lỗi không chặn delegation.
     let ownerBlock = '';
     let lessonsBlock = '';
-    const memoryStartedAt = Date.now();
-    try {
-      ownerBlock = await agentMemoryService.memoryBlock(args.tenantId, 'agent:owner-profile', undefined, 300);
-      lessonsBlock = await agentMemoryService.memoryBlock(args.tenantId, 'agent:lessons', args.message, 300);
-    } catch { /* memory optional */ }
-    finally {
-      args.onTiming?.('memory', Date.now() - memoryStartedAt);
-    }
-
-    const calibrationLine = await getMinhCalibrationPromptLine(args.tenantId);
+    const [memoryBlocks, calibrationLine] = await Promise.all([
+      (async () => {
+        const memoryStartedAt = Date.now();
+        try {
+          return await Promise.all([
+            agentMemoryService.memoryBlock(args.tenantId, 'agent:owner-profile', undefined, 300),
+            agentMemoryService.memoryBlock(args.tenantId, 'agent:lessons', args.message, 300),
+          ]);
+        } catch {
+          return ['', ''];
+        } finally {
+          args.onTiming?.('memory', Date.now() - memoryStartedAt);
+        }
+      })(),
+      getMinhCalibrationPromptLine(args.tenantId).catch(() => ''),
+    ]);
+    [ownerBlock, lessonsBlock] = memoryBlocks;
     const system = buildMinhOrchestratorPrompt(args.message, ownerBlock, lessonsBlock, calibrationLine);
     const llmStartedAt = Date.now();
     let raw: string;
@@ -112,7 +119,8 @@ export async function minhChooseSpecialist(args: {
         prompt: 'Chon specialist phu hop nhat roi tra ve JSON.',
         jsonMode: true,
           feature: 'MINH_ORCHESTRATOR',
-          timeoutMs: 6000,
+          // GENERAL is optional: keyword fallback must win over a slow router.
+          timeoutMs: 2500,
       });
     } finally {
       args.onTiming?.('llm', Date.now() - llmStartedAt);
@@ -154,7 +162,7 @@ export async function minhChooseSpecialist(args: {
       // via the signals ON CONFLICT DO NOTHING.
       const uniqueToken = `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 10)}`;
       plan.delegationToken = uniqueToken;
-      await agentMemoryService.recordSignal(args.tenantId, {
+      void agentMemoryService.recordSignal(args.tenantId, {
         signalType: 'minh_delegation',
         actorId: 'MINH',
         subjectType: 'chat_message',
@@ -166,8 +174,8 @@ export async function minhChooseSpecialist(args: {
           delegationToken: uniqueToken,
         },
         provenance: 'minh_orchestrator',
-      });
-    } catch { /* signal optional */ }
+      }).catch(() => undefined);
+     } catch { /* signal optional */ }
     return plan;
   } catch (err: any) {
     logger.warn('[MinhOrch] LLM delegation failed (' + (Date.now() - started) + 'ms): ' + (err?.message || err));

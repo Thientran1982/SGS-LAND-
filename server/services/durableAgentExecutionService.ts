@@ -20,7 +20,15 @@ export interface DurableAgentResult<T> {
   guardrail: GuardrailReport;
   resumed: boolean;
   cached: boolean;
+  timings?: DurableAgentTimings;
   approvalRequestId?: string;
+}
+
+export interface DurableAgentTimings {
+  /** Time spent in agent_execution claim/checkpoint/lease/finalize queries. */
+  agentExecutionDbMs: number;
+  /** Input/output guardrail inspection and persistence preparation time. */
+  guardrailMs: number;
 }
 
 export type DurableAgentRunEvent =
@@ -97,12 +105,13 @@ async function waitForTerminalExecution(
   executionId: string,
   timeoutMs = 30_000,
   pollMs = 250,
+  repository: typeof agentExecutionRepository = agentExecutionRepository,
 ): Promise<Awaited<ReturnType<typeof agentExecutionRepository.get>> | null> {
   const deadline = Date.now() + timeoutMs;
-  let latest = await agentExecutionRepository.get(tenantId, executionId);
+  let latest = await repository.get(tenantId, executionId);
   while (latest && latest.status === 'RUNNING' && Date.now() < deadline) {
     await new Promise(resolve => setTimeout(resolve, pollMs));
-    latest = await agentExecutionRepository.get(tenantId, executionId);
+    latest = await repository.get(tenantId, executionId);
   }
   return latest;
 }
@@ -133,12 +142,30 @@ export async function runDurableAgentExecution<T extends {
     idempotencyKey?: string;
   } | undefined;
 }): Promise<DurableAgentResult<T>> {
+  const durableTimings: DurableAgentTimings = {
+    agentExecutionDbMs: 0,
+    guardrailMs: 0,
+  };
+  const timedRepository = new Proxy(agentExecutionRepository, {
+    get(target, property, receiver) {
+      const value = Reflect.get(target, property, receiver);
+      if (typeof value !== 'function') return value;
+      return async (...args: any[]) => {
+        const startedAt = Date.now();
+        try {
+          return await value.apply(target, args);
+        } finally {
+          durableTimings.agentExecutionDbMs += Math.max(0, Date.now() - startedAt);
+        }
+      };
+    },
+  }) as typeof agentExecutionRepository;
   const orchestration = getOrchestrationDecision();
   logger.info(`[DurableAgent] orchestration mode=${orchestration.mode} enabled=${orchestration.enabled}`);
   if (!orchestration.enabled) {
     logger.warn(`[DurableAgent] Orchestration gate kept TypeScript mode: ${orchestration.reason}`);
   }
-  const claim = await agentExecutionRepository.claim({
+  const claim = await timedRepository.claim({
     tenantId: params.tenantId,
     idempotencyKey: params.idempotencyKey,
     sessionId: params.sessionId,
@@ -158,10 +185,11 @@ export async function runDurableAgentExecution<T extends {
         guardrail: execution.guardrail as unknown as GuardrailReport,
         resumed: false,
         cached: true,
+        timings: durableTimings,
       };
     }
     if (execution.status === 'RUNNING') {
-      const terminal = await waitForTerminalExecution(params.tenantId, execution.id);
+      const terminal = await waitForTerminalExecution(params.tenantId, execution.id, 30_000, 250, timedRepository);
       if (terminal && (terminal.status === 'SUCCESS' || terminal.status === 'BLOCKED') && terminal.output?.result) {
         return {
           runId: terminal.id,
@@ -170,6 +198,7 @@ export async function runDurableAgentExecution<T extends {
           guardrail: terminal.guardrail as unknown as GuardrailReport,
           resumed: false,
           cached: true,
+          timings: durableTimings,
         };
       }
     }
@@ -214,7 +243,7 @@ export async function runDurableAgentExecution<T extends {
   }
   let checkpointRows: Awaited<ReturnType<typeof agentExecutionRepository.getSteps>>;
   try {
-    checkpointRows = await agentExecutionRepository.getSteps(params.tenantId, execution.id);
+    checkpointRows = await timedRepository.getSteps(params.tenantId, execution.id);
   } catch (error) {
     emitFinished("FAILED");
     throw error;
@@ -242,7 +271,7 @@ export async function runDurableAgentExecution<T extends {
       step.output?.planHash === planHash,
     );
     if (!savedPlan) {
-      await agentExecutionRepository.saveStep({
+      await timedRepository.saveStep({
         tenantId: params.tenantId,
         executionId: execution.id,
         claimToken,
@@ -275,7 +304,7 @@ export async function runDurableAgentExecution<T extends {
       throw new Error(`SPECIALIST_OUTPUT_BLOCKED:${specialistGuardrail.reason || 'guardrail'}`);
     }
     const outputHash = checkpointHash(output);
-    await agentExecutionRepository.saveStep({
+    await timedRepository.saveStep({
       tenantId: params.tenantId,
       executionId: execution.id,
       claimToken,
@@ -303,7 +332,7 @@ export async function runDurableAgentExecution<T extends {
     );
     if (existing) return (existing.output?.value ?? existing.output) as T;
     logger.info(`[DurableAgent] subagent replay step=${stepKey} execution=${execution.id}`);
-    await agentExecutionRepository.saveStep({
+    await timedRepository.saveStep({
       tenantId: params.tenantId,
       executionId: execution.id,
       claimToken,
@@ -315,7 +344,7 @@ export async function runDurableAgentExecution<T extends {
     try {
       const startedAt = Date.now();
       const value = await runWithSubagentPolicy(execute);
-      await agentExecutionRepository.saveStep({
+      await timedRepository.saveStep({
         tenantId: params.tenantId,
         executionId: execution.id,
         claimToken,
@@ -334,7 +363,7 @@ export async function runDurableAgentExecution<T extends {
       return value;
     } catch (error: any) {
       logger.warn(`[DurableAgent] subagent failed step=${stepKey} execution=${execution.id} error=${String(error?.message || error)}`);
-      await agentExecutionRepository.saveStep({
+      await timedRepository.saveStep({
         tenantId: params.tenantId,
         executionId: execution.id,
         claimToken,
@@ -349,7 +378,7 @@ export async function runDurableAgentExecution<T extends {
   };
   let heartbeatError: Error | null = null;
   const heartbeat = setInterval(() => {
-    agentExecutionRepository
+    timedRepository
       .heartbeat(params.tenantId, execution.id, claimToken)
       .catch((error: any) => {
         const err = error instanceof Error ? error : new Error(String(error));
@@ -369,9 +398,11 @@ export async function runDurableAgentExecution<T extends {
   };
 
   try {
+  const inputGuardrailStartedAt = Date.now();
   const inputGuardrail = inspectAgentInput(params.message);
+  durableTimings.guardrailMs += Math.max(0, Date.now() - inputGuardrailStartedAt);
   if (!checkpointRows.some(step => step.stepKey === '01_INPUT_GUARDRAIL' && step.status === 'SUCCESS')) {
-    await agentExecutionRepository.saveStep({
+    await timedRepository.saveStep({
       tenantId: params.tenantId,
       executionId: execution.id,
       claimToken,
@@ -388,7 +419,7 @@ export async function runDurableAgentExecution<T extends {
       escalated: true,
       steps: [],
     } as unknown as T;
-    await agentExecutionRepository.finish({
+    await timedRepository.finish({
       tenantId: params.tenantId,
       executionId: execution.id,
       claimToken,
@@ -405,13 +436,14 @@ export async function runDurableAgentExecution<T extends {
       guardrail: inputGuardrail,
       resumed: claim.resumed,
       cached: false,
+      timings: durableTimings,
     };
   }
   emitProgress("classify");
 
   assertLease();
   if (!checkpointRows.some(step => step.stepKey === '02_SUPERVISOR' && step.status === 'SUCCESS')) {
-    await agentExecutionRepository.saveStep({
+    await timedRepository.saveStep({
       tenantId: params.tenantId,
       executionId: execution.id,
       claimToken,
@@ -423,7 +455,7 @@ export async function runDurableAgentExecution<T extends {
   }
   emitProgress("retrieve");
   if (!checkpointRows.some(step => step.stepKey === '03_SPECIALIST_PIPELINE' && step.status === 'SUCCESS')) {
-    await agentExecutionRepository.saveStep({
+    await timedRepository.saveStep({
       tenantId: params.tenantId,
       executionId: execution.id,
       claimToken,
@@ -440,7 +472,7 @@ export async function runDurableAgentExecution<T extends {
     assertLease();
     emitProgress("compose");
     const completedSteps = Array.isArray(result.steps) ? result.steps.slice(0, execution.maxSteps) : [];
-    await agentExecutionRepository.saveStep({
+    await timedRepository.saveStep({
       tenantId: params.tenantId,
       executionId: execution.id,
       claimToken,
@@ -462,7 +494,7 @@ export async function runDurableAgentExecution<T extends {
       const specialist = String(
         (step as any).agent || (step as any).node || (step as any).name || 'UNKNOWN_SPECIALIST',
       );
-      await agentExecutionRepository.saveStep({
+      await timedRepository.saveStep({
         tenantId: params.tenantId,
         executionId: execution.id,
         claimToken,
@@ -477,7 +509,9 @@ export async function runDurableAgentExecution<T extends {
       });
     }
 
+    const outputGuardrailStartedAt = Date.now();
     const outputGuardrail = inspectAgentOutput(result);
+    durableTimings.guardrailMs += Math.max(0, Date.now() - outputGuardrailStartedAt);
     const guardedResult = {
       ...result,
       content: outputGuardrail.blocked
@@ -486,7 +520,7 @@ export async function runDurableAgentExecution<T extends {
       escalated: result.escalated || outputGuardrail.escalate,
       suggestedAction: outputGuardrail.blocked ? 'NONE' : result.suggestedAction,
     } as T;
-    await agentExecutionRepository.saveStep({
+    await timedRepository.saveStep({
       tenantId: params.tenantId,
       executionId: execution.id,
       claimToken,
@@ -527,7 +561,7 @@ export async function runDurableAgentExecution<T extends {
         stepKey: approvalSpec.stepKey || '05_APPROVAL_INTERRUPT',
         idempotencyKey: approvalSpec.idempotencyKey || `${execution.id}:${approvalSpec.actionType}`,
       });
-      await agentExecutionRepository.saveStep({
+      await timedRepository.saveStep({
         tenantId: params.tenantId,
         executionId: execution.id,
         claimToken,
@@ -536,7 +570,7 @@ export async function runDurableAgentExecution<T extends {
         status: 'BLOCKED',
         output: { approvalRequestId: approval.id, actionType: approvalSpec.actionType },
       });
-      await agentExecutionRepository.pauseForApproval({
+      await timedRepository.pauseForApproval({
         tenantId: params.tenantId,
         executionId: execution.id,
         claimToken,
@@ -551,10 +585,11 @@ export async function runDurableAgentExecution<T extends {
         guardrail: outputGuardrail,
         resumed: claim.resumed,
         cached: false,
+        timings: durableTimings,
         approvalRequestId: approval.id,
       };
     }
-    await agentExecutionRepository.finish({
+    await timedRepository.finish({
       tenantId: params.tenantId,
       executionId: execution.id,
       claimToken,
@@ -570,11 +605,12 @@ export async function runDurableAgentExecution<T extends {
       guardrail: outputGuardrail,
       resumed: claim.resumed,
       cached: false,
+      timings: durableTimings,
     };
   } catch (error: any) {
     const leaseLost = String(error?.message || error).startsWith('AGENT_EXECUTION_LEASE_LOST:');
     if (!leaseLost && !specialistCheckpointCommitted) {
-      await agentExecutionRepository.saveStep({
+      await timedRepository.saveStep({
         tenantId: params.tenantId,
         executionId: execution.id,
         claimToken,
@@ -585,7 +621,7 @@ export async function runDurableAgentExecution<T extends {
       }).catch(() => {});
     }
     if (!leaseLost) {
-      await agentExecutionRepository.finish({
+      await timedRepository.finish({
         tenantId: params.tenantId,
         executionId: execution.id,
         claimToken,
