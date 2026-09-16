@@ -16,6 +16,8 @@ export interface GenerateParams {
   jsonMode?: boolean;
   /** Gioi han cho tung lan goi provider; dispatcher dung de chuyen fallback. */
   timeoutMs?: number;
+  /** Optional inline images for vision-capable models. */
+  images?: Array<{ mimeType: string; dataBase64: string }>;
 }
 
 export interface ProviderAttempt {

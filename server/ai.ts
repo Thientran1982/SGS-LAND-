@@ -31,6 +31,7 @@ import {
 } from './ai/defaultPrompts';
 import { GENAI_CONFIG, SAFE_MODEL_FALLBACK, DEPRECATED_MODEL_PREFIXES, ensureSafeModel, getProviderForModel, getModelCost, isProviderConfigured, MODEL_REGISTRY, TASK_MODELS, taskProfile, CROSS_PROVIDER_FALLBACK } from './ai/modelPolicy';
 import { generateWithPolicy } from './ai/providers';
+import type { ProviderAttempt } from './ai/providers';
 import { getAgentRoleForIntent, isCompoundRoutingEnabled, selectSecondaryIntents } from './ai/agentOrchestrationRegistry';
 import { appendActivatedCatalogSkills } from './ai/agentSkillRuntime';
 import { ROUTER_SCHEMA, type RouterExtraction } from './ai/routerSchema';
@@ -113,10 +114,34 @@ function extractProviderErrorStatus(err: any): number | null {
   return null;
 }
 
+function recordLegacyProviderFallbackTelemetry(params: {
+  primaryModel: string;
+  attempts: ProviderAttempt[];
+  selectedProvider?: string;
+  selectedModel?: string;
+  feature?: string;
+}): void {
+  const usedFallback = params.attempts.length > 1
+    || params.attempts.some(attempt => attempt.outcome === 'skipped');
+  if (!usedFallback && params.attempts.every(attempt => attempt.outcome === 'success')) return;
+  const signature = params.attempts
+    .slice(0, 8)
+    .map(attempt => `${attempt.provider}:${attempt.outcome}:${attempt.status || 0}`)
+    .join('|')
+    .slice(0, 180);
+  recordAiUsage({
+    feature: params.feature || 'LEGACY_PROVIDER_FALLBACK',
+    model: params.selectedModel || params.primaryModel || 'unknown',
+    aiCalls: Math.max(1, params.attempts.length),
+    source: `provider_fallback:${params.selectedProvider || 'none'}:${signature}`,
+  }).catch(() => {});
+}
+
 async function generateWithFallback(
   requestConfig: Parameters<ReturnType<typeof getAiClient>['models']['generateContent']>[0]
 ): Promise<Awaited<ReturnType<ReturnType<typeof getAiClient>['models']['generateContent']>>> {
   const primaryModel = requestConfig.model as string;
+  const legacyAttempts: ProviderAttempt[] = [];
 
   // ===== Trich xuat prompt/system dung chung cho moi nhanh multi-provider =====
   const _cfg: any = (requestConfig as any).config || {};
@@ -149,8 +174,16 @@ async function generateWithFallback(
         temperature: _temperature,
         maxOutputTokens: _maxOutputTokens,
         jsonMode: _jsonMode,
-         timeoutMs: LEGACY_PROVIDER_TIMEOUT_MS,
-       });
+        timeoutMs: LEGACY_PROVIDER_TIMEOUT_MS,
+      }, {}, {
+        onTelemetry: telemetry => recordLegacyProviderFallbackTelemetry({
+          primaryModel,
+          attempts: telemetry.attempts,
+          selectedProvider: telemetry.provider,
+          selectedModel: telemetry.model,
+          feature: _cfg.feature,
+        }),
+      });
       return { text: _res.text } as any;
     } catch (err) {
       const _errStatus = extractProviderErrorStatus(err);
@@ -174,6 +207,7 @@ async function generateWithFallback(
   ];
   let lastErr: unknown;
   for (const model of chain) {
+    const modelStartedAt = Date.now();
     try {
       const result = await withLegacyProviderTimeout(getAiClient().models.generateContent({
         ...requestConfig,
@@ -182,12 +216,32 @@ async function generateWithFallback(
       if (model !== primaryModel) {
         console.log(`[I4-Fallback] Primary ${primaryModel} failed, used fallback: ${model}`);
       }
+      legacyAttempts.push({
+        provider: 'google',
+        model,
+        outcome: 'success',
+        latencyMs: Math.max(0, Date.now() - modelStartedAt),
+      });
+      recordLegacyProviderFallbackTelemetry({
+        primaryModel,
+        attempts: legacyAttempts,
+        selectedProvider: 'google',
+        selectedModel: model,
+        feature: _cfg.feature,
+      });
       return result;
     } catch (err: any) {
       const isRetriable = err?.status === 503 || err?.status === 429 ||
         err?.code === 'DEADLINE_EXCEEDED' || /timeout|overload|unavailable/i.test(err?.message || '') ||
         err?.status === 404 || err?.error?.status === 'NOT_FOUND' || /no longer available|model not found/i.test(err?.message || '');
       if (isRetriable) {
+        legacyAttempts.push({
+          provider: 'google',
+          model,
+          outcome: 'failed',
+          status: Number(err?.status || err?.code) || undefined,
+          latencyMs: Math.max(0, Date.now() - modelStartedAt),
+        });
         lastErr = err;
         console.warn(`[I4-Fallback] Model ${model} retriable error (${err?.status || err?.code}), trying next...`);
         continue;
@@ -213,8 +267,16 @@ async function generateWithFallback(
         temperature: _temperature,
         maxOutputTokens: _maxOutputTokens,
         jsonMode: _jsonMode,
-         timeoutMs: LEGACY_PROVIDER_TIMEOUT_MS,
-       });
+        timeoutMs: LEGACY_PROVIDER_TIMEOUT_MS,
+      }, {}, {
+        onTelemetry: telemetry => recordLegacyProviderFallbackTelemetry({
+          primaryModel,
+          attempts: telemetry.attempts,
+          selectedProvider: telemetry.provider,
+          selectedModel: telemetry.model,
+          feature: _cfg.feature,
+        }),
+      });
       console.log(`[CROSS-PROVIDER-FALLBACK] Thanh cong voi ${fb.provider}:${fb.model}`);
       return { text: _res.text } as any;
     } catch (err: any) {

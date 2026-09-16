@@ -39,6 +39,8 @@ export interface MinhRestored {
   name: string;
   threadStatus: MinhThreadStatus;
   messages: ChatMessage[];
+  nextCursor?: string | null;
+  hasNext?: boolean;
 }
 
 export interface MinhPendingRun {
@@ -126,6 +128,7 @@ export interface MinhSession {
   connect(handlers: MinhSocketHandlers): Promise<() => void>;
   /** Lam moi message history ma khong xoa session khi mot lan fetch bi loi. */
   refreshMessages(): Promise<MinhRestored | null>;
+  loadOlderMessages(before?: string): Promise<MinhRestored | null>;
   /** Doc trang thai durable run ma khong tai lai toan bo history. */
   getPendingStatus(inboundInteractionId: string): Promise<MinhPendingStatus | null>;
   /** Ban ChatTransport de dung chung voi AiChatWidget. */
@@ -471,7 +474,7 @@ export function createMinhSession(options: MinhSessionOptions = {}): MinhSession
       if (!leadId && authenticatedUser) return restoreAuthenticated();
       if (!leadId) return null;
       try {
-        const data: any = await client.getMessages(leadId);
+        const data: any = await client.getMessages(leadId, { pageSize: 30 });
         if (!data || !data.lead || !data.lead.id) {
           clear();
           if (authenticatedUser) return restoreAuthenticated();
@@ -480,7 +483,7 @@ export function createMinhSession(options: MinhSessionOptions = {}): MinhSession
         persist(String(data.lead.id), data.lead.name || leadName || "");
         const list: any[] = Array.isArray(data.messages) ? data.messages : [];
         const messages = list
-          .filter((m) => !(m && m.metadata && m.metadata.isSysMsg))
+          .filter((m: any) => !(m && m.metadata && m.metadata.isSysMsg))
           .map(interactionToMessage)
           .filter(Boolean) as ChatMessage[];
         return {
@@ -489,6 +492,8 @@ export function createMinhSession(options: MinhSessionOptions = {}): MinhSession
           threadStatus:
             data.lead.threadStatus === "HUMAN_TAKEOVER" ? "HUMAN_TAKEOVER" : "AI_ACTIVE",
           messages,
+          nextCursor: data.nextCursor ?? null,
+          hasNext: data.hasNext === true,
         } as MinhRestored;
       } catch {
         clear();
@@ -501,11 +506,11 @@ export function createMinhSession(options: MinhSessionOptions = {}): MinhSession
       readStored();
       if (!leadId) return null;
       try {
-        const data: any = await client.getMessages(leadId);
+        const data: any = await client.getMessages(leadId, { pageSize: 30 });
         if (!data?.lead?.id) return null;
         const list: any[] = Array.isArray(data.messages) ? data.messages : [];
         const messages = list
-          .filter((m) => !(m && m.metadata && m.metadata.isSysMsg))
+        .filter((m: any) => !(m && m.metadata && m.metadata.isSysMsg))
           .map(interactionToMessage)
           .filter(Boolean) as ChatMessage[];
         return {
@@ -514,6 +519,31 @@ export function createMinhSession(options: MinhSessionOptions = {}): MinhSession
           threadStatus:
             data.lead.threadStatus === "HUMAN_TAKEOVER" ? "HUMAN_TAKEOVER" : "AI_ACTIVE",
           messages,
+          nextCursor: data.nextCursor ?? null,
+          hasNext: data.hasNext === true,
+        };
+      } catch {
+        return null;
+      }
+    },
+
+    async loadOlderMessages(before?: string) {
+      readStored();
+      if (!leadId || !before) return null;
+      try {
+        const data: any = await client.getMessages(leadId, { before, pageSize: 30 });
+        if (!data?.lead?.id) return null;
+        const messages = (Array.isArray(data.messages) ? data.messages : [])
+          .filter((m: any) => !(m && m.metadata && m.metadata.isSysMsg))
+          .map(interactionToMessage)
+          .filter(Boolean) as ChatMessage[];
+        return {
+          leadId: String(data.lead.id),
+          name: data.lead.name || leadName || "",
+          threadStatus: data.lead.threadStatus === "HUMAN_TAKEOVER" ? "HUMAN_TAKEOVER" : "AI_ACTIVE",
+          messages,
+          nextCursor: data.nextCursor ?? null,
+          hasNext: data.hasNext === true,
         };
       } catch {
         return null;

@@ -125,12 +125,16 @@ export function createMinhClient(apiBase?: string) {
       );
       return data.message;
     },
-    async getMessages(leadId: string) {
+    async getMessages(leadId: string, options: { before?: string; pageSize?: number } = {}) {
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), 10_000);
       let res: Response;
       try {
-        res = await fetch(apiUrl(CHAT_ENDPOINTS.livechatMessages(leadId), apiBase), {
+        const query = new URLSearchParams();
+        if (options.before) query.set("before", options.before);
+        if (options.pageSize) query.set("pageSize", String(options.pageSize));
+        const endpoint = CHAT_ENDPOINTS.livechatMessages(leadId) + (query.toString() ? `?${query}` : "");
+        res = await fetch(apiUrl(endpoint, apiBase), {
           credentials: "include",
           cache: "no-store",
           signal: controller.signal,

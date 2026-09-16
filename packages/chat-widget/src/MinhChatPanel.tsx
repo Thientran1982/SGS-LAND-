@@ -14,7 +14,7 @@ import type {
   MinhSession,
   MinhThreadStatus,
 } from "./core/minhSession";
-import type { ChatAttachment, ChatMessage } from "./core/types";
+import type { AudioTranscriptionResponse, ChatAttachment, ChatMessage } from "./core/types";
 import { renderChatContent } from "./renderChatContent";
 
 const SUGGESTIONS = [
@@ -138,6 +138,9 @@ export function MinhChatPanel({
   const [authStartError, setAuthStartError] = useState("");
 
   const [messages, setMessages] = useState<ChatMessage[]>([]);
+  const [historyCursor, setHistoryCursor] = useState<string | null>(null);
+  const [historyHasMore, setHistoryHasMore] = useState(false);
+  const [historyLoading, setHistoryLoading] = useState(false);
   const [input, setInput] = useState(initialMessage);
   const [runState, setRunState] = useState<RunState>({ status: "idle" });
   const [error, setError] = useState("");
@@ -169,6 +172,8 @@ export function MinhChatPanel({
   const voiceTranscriptRef = useRef("");
 
   const bottomRef = useRef<HTMLDivElement | null>(null);
+  const historyListRef = useRef<HTMLDivElement | null>(null);
+  const preserveHistoryScrollRef = useRef(false);
   const pendingReconcileTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const pendingReconcileBusyRef = useRef(false);
   const pendingReconcileGenerationRef = useRef(0);
@@ -301,6 +306,8 @@ export function MinhChatPanel({
               .reverse()
               .find((message) => message.role === "assistant" && message.degraded);
             if (degradedReply) noteDegradedReply(degradedReply, userMessageText);
+            setHistoryCursor(restored.nextCursor || null);
+            setHistoryHasMore(restored.hasNext === true);
             if (hasReply) {
               setError("");
               session.clearPendingRun(inboundInteractionId);
@@ -390,6 +397,8 @@ export function MinhChatPanel({
         if (!alive) return;
         if (r) {
           setMessages(r.messages);
+            setHistoryCursor(r.nextCursor || null);
+            setHistoryHasMore(r.hasNext === true);
           setMode(r.threadStatus);
           setName(r.name);
           setHasLead(true);
@@ -573,8 +582,38 @@ export function MinhChatPanel({
   useEffect(() => stopPendingReconcile, [stopPendingReconcile]);
 
   useEffect(() => {
+    if (preserveHistoryScrollRef.current) {
+      preserveHistoryScrollRef.current = false;
+      return;
+    }
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages, runState.status]);
+
+  const loadOlderHistory = useCallback(async () => {
+    if (!historyCursor || historyLoading) return;
+    const container = historyListRef.current;
+    const previousHeight = container?.scrollHeight || 0;
+    const previousTop = container?.scrollTop || 0;
+    setHistoryLoading(true);
+    try {
+      const page = await session.loadOlderMessages(historyCursor);
+      if (!page) return;
+      preserveHistoryScrollRef.current = true;
+      setMessages((previous) => {
+        const seen = new Set(previous.map((message) => message.id));
+        const older = page.messages.filter((message) => !seen.has(message.id));
+        return [...older, ...previous];
+      });
+      setHistoryCursor(page.nextCursor || null);
+      setHistoryHasMore(page.hasNext === true);
+      requestAnimationFrame(() => {
+        if (!container) return;
+        container.scrollTop = previousTop + (container.scrollHeight - previousHeight);
+      });
+    } finally {
+      setHistoryLoading(false);
+    }
+  }, [historyCursor, historyLoading, session]);
 
   const handleStart = useCallback(
     async (e: React.FormEvent) => {
@@ -879,8 +918,10 @@ export function MinhChatPanel({
         },
       );
       if (!res.ok) return null;
-      const data: any = await res.json();
-      return typeof data?.text === "string" ? data.text : null;
+       const data = (await res.json()) as Partial<AudioTranscriptionResponse>;
+       return data.audio?.contract === "TRANSCRIPT_ONLY" && typeof data.text === "string"
+         ? data.text
+         : null;
     } catch {
       return null;
     }
@@ -1078,9 +1119,23 @@ export function MinhChatPanel({
       ) : (
         <>
           <div
+            ref={historyListRef}
             className={"flex-1 min-h-0 overflow-y-auto px-4 py-4 space-y-3 " + heightClass}
             aria-live="polite"
           >
+            {historyHasMore ? (
+              <div className="flex justify-center pb-1">
+                <button
+                  type="button"
+                  onClick={() => void loadOlderHistory()}
+                  disabled={historyLoading}
+                  className="rounded-full border px-3 py-1.5 text-xs disabled:opacity-60"
+                  style={S.chip}
+                >
+                  {historyLoading ? "Đang tải lịch sử..." : "Tải tin nhắn cũ hơn"}
+                </button>
+              </div>
+            ) : null}
             {messages.map((m) => (
               <div key={m.id} className={m.role === "user" ? "flex justify-end" : "flex justify-start"}>
                 <div

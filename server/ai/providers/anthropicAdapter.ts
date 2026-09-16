@@ -30,7 +30,20 @@ export class AnthropicAdapter implements ProviderAdapter {
       system: params.jsonMode
         ? (params.system ? params.system + '\n\nChi tra ve JSON hop le, khong kem markdown/giai thich.' : 'Chi tra ve JSON hop le, khong kem markdown/giai thich.')
         : params.system,
-      messages: [{ role: 'user', content: params.prompt }],
+      messages: [{
+        role: 'user',
+        content: [
+          { type: 'text', text: params.prompt },
+          ...(params.images || []).map(image => ({
+            type: 'image',
+            source: {
+              type: 'base64',
+              media_type: image.mimeType,
+              data: image.dataBase64,
+            },
+          })),
+        ] as any,
+      }],
     });
     const text = (resp.content || [])
       .map((b: any) => (b.type === 'text' ? b.text : ''))

@@ -10,7 +10,18 @@ export interface ChatAttachment {
   text?: string;
   contentHash?: string;
   textHash?: string;
+  extractionStatus?: "NOT_APPLICABLE" | "READY" | "EMPTY" | "FAILED";
+  extractionErrorCode?: string;
   proof?: string;
+}
+
+export interface AudioTranscriptionResponse {
+  text: string;
+  audio: {
+    contract: "TRANSCRIPT_ONLY";
+    stored: false;
+    persistedRepresentation: "TRANSCRIPT";
+  };
 }
 
 export interface ChatMessage {

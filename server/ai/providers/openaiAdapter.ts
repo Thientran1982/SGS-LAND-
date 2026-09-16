@@ -48,7 +48,18 @@ export class OpenAiCompatibleAdapter implements ProviderAdapter {
       ? (params.system ? params.system + '\n\nCHi tra ve JSON hop le, khong kem markdown/giai thich.' : 'Chi tra ve JSON hop le, khong kem markdown/giai thich.')
       : params.system;
     if (sys) messages.push({ role: 'system', content: sys });
-    messages.push({ role: 'user', content: params.prompt });
+    messages.push({
+      role: 'user',
+      content: params.images?.length
+        ? [
+            { type: 'text', text: params.prompt },
+            ...params.images.map(image => ({
+              type: 'image_url',
+              image_url: { url: `data:${image.mimeType};base64,${image.dataBase64}` },
+            })),
+          ]
+        : params.prompt,
+    });
     const resp = await client.chat.completions.create({
       model: REMOTE_MODEL_MAP[params.model] || params.model,
       messages,

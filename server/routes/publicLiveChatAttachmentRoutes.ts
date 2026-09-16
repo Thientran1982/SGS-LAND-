@@ -3,7 +3,10 @@ import multer from 'multer';
 import crypto from 'crypto';
 import path from 'path';
 import { fileTypeFromBuffer } from 'file-type';
-import { resolvePublicLiveChatTenant } from '../constants';
+import {
+  PUBLIC_LIVECHAT_MAX_ATTACHMENT_BYTES,
+  resolvePublicLiveChatTenant,
+} from '../constants';
 import { leadRepository } from '../repositories/leadRepository';
 import { storeFile } from '../services/storageService';
 import { extractTextFromBuffer } from '../services/textExtractor';
@@ -112,14 +115,22 @@ export function createPublicLiveChatAttachmentRoutes() {
 
         const files = (req.files as Express.Multer.File[] | undefined) || [];
         if (files.length === 0) return res.status(400).json({ error: 'Chưa có file được chọn' });
+        const aggregateBytes = files.reduce((total, file) => total + file.buffer.length, 0);
+        if (aggregateBytes > PUBLIC_LIVECHAT_MAX_ATTACHMENT_BYTES) {
+          return res.status(413).json({
+            error: 'Tổng dung lượng file vượt quá 20MB cho mỗi tin nhắn',
+            code: 'LIVECHAT_ATTACHMENT_AGGREGATE_TOO_LARGE',
+          });
+        }
 
-        const attachments: Array<Record<string, unknown>> = [];
-        for (const file of files) {
+        const attachments = await Promise.all(files.map(async file => {
           let contentType = file.mimetype;
           if (contentType !== 'text/plain') {
             const detected = await fileTypeFromBuffer(file.buffer);
             if (!detected || !REAL_MIMES.has(detected.mime)) {
-              return res.status(415).json({ error: `File "${safeOriginalName(file.originalname)}" không đúng định dạng` });
+              const error = new Error(`File "${safeOriginalName(file.originalname)}" không đúng định dạng`);
+              (error as any).statusCode = 415;
+              throw error;
             }
             contentType = detected.mime === 'application/x-cfb' ? 'application/msword' : detected.mime;
           }
@@ -141,12 +152,23 @@ export function createPublicLiveChatAttachmentRoutes() {
             // Only images are exposed as public landing gallery assets.
             result.url = url;
             result.contentHash = contentHash;
+            result.extractionStatus = 'NOT_APPLICABLE';
           } else {
-            const extracted = await extractTextFromBuffer(file.buffer, ext);
-            const text = extracted.trim().slice(0, MAX_EXTRACTED_TEXT);
-            if (text) result.text = text;
+            try {
+              const extracted = await extractTextFromBuffer(file.buffer, ext);
+              const text = extracted.trim().slice(0, MAX_EXTRACTED_TEXT);
+              if (text) result.text = text;
+              result.extractionStatus = text ? 'READY' : 'EMPTY';
+              result.textHash = crypto.createHash('sha256').update(text).digest('hex');
+            } catch {
+              // Upload remains usable even if document parsing is unavailable.
+              // The explicit status prevents callers from treating missing text
+              // as proof that the document was empty.
+              result.extractionStatus = 'FAILED';
+              result.extractionErrorCode = 'TEXT_EXTRACTION_UNAVAILABLE';
+              result.textHash = crypto.createHash('sha256').update('').digest('hex');
+            }
             result.contentHash = contentHash;
-            result.textHash = crypto.createHash('sha256').update(text).digest('hex');
           }
           result.proof = createPublicLiveChatAttachmentProof({
             leadId,
@@ -158,12 +180,15 @@ export function createPublicLiveChatAttachmentRoutes() {
             contentHash: String(result.contentHash || ''),
             ...(typeof result.textHash === 'string' ? { textHash: result.textHash } : {}),
           });
-          attachments.push(result);
-        }
+          return result;
+        }));
 
         return res.status(201).json({ attachments });
       } catch (error: any) {
         console.error('[PublicLiveChatAttachment] upload failed:', error);
+        if (Number(error?.statusCode) === 415) {
+          return res.status(415).json({ error: error.message });
+        }
         return res.status(500).json({ error: 'Tải file thất bại. Vui lòng thử lại.' });
       }
     },

@@ -23,7 +23,17 @@ export class GoogleAdapter implements ProviderAdapter {
     const client = this.getClient();
     const resp = await client.models.generateContent({
       model: params.model,
-      contents: params.prompt,
+      contents: params.images?.length
+        ? [{
+            role: 'user',
+            parts: [
+              { text: params.prompt },
+              ...params.images.map(image => ({
+                inlineData: { mimeType: image.mimeType, data: image.dataBase64 },
+              })),
+            ],
+          }]
+        : params.prompt,
       config: {
         systemInstruction: params.system,
         temperature: params.temperature,

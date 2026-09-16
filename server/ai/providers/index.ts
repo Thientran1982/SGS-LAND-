@@ -221,7 +221,18 @@ function addAttempt(
 export async function generateWithPolicy(
   params: GenerateParams,
   adapters: Partial<Record<AiProvider, ProviderAdapter>> = {},
-  options: { tenantId?: string; maxAttempts?: number; includeGoogleFallback?: boolean } = {},
+  options: {
+    tenantId?: string;
+    maxAttempts?: number;
+    includeGoogleFallback?: boolean;
+    onTelemetry?: (telemetry: {
+      attempts: ProviderAttempt[];
+      provider?: string;
+      model?: string;
+      fallbackUsed: boolean;
+      status?: number;
+    }) => void;
+  } = {},
 ): Promise<GenerateResult> {
   let model = ensureSafeModel(params.model);
   let provider = getProviderForModel(model);
@@ -268,6 +279,12 @@ export async function generateWithPolicy(
         params.timeoutMs,
       );
       addAttempt(attempts, candidate.provider, candidate.model, 'success', startedAt);
+      options.onTelemetry?.({
+        attempts: [...attempts],
+        provider: result.provider || candidate.provider,
+        model: result.model || candidate.model,
+        fallbackUsed: index > 0,
+      });
       return {
         ...result,
         model: result.model || candidate.model,
@@ -283,6 +300,11 @@ export async function generateWithPolicy(
     }
   }
 
+  options.onTelemetry?.({
+    attempts,
+    fallbackUsed: attempts.length > 1 || attempts.some(attempt => attempt.outcome === 'skipped'),
+    status: [...attempts].reverse().find(attempt => attempt.status !== undefined)?.status,
+  });
   throw new ProviderExhaustedError(attempts, lastError);
 }
 

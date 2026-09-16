@@ -27,6 +27,7 @@ import { TASK_MODELS } from './modelPolicy';
 import { recordAiUsage } from '../services/aiUsageService';
 import { agentAuditRepository } from '../repositories/agentAuditRepository';
 import { createHash, randomUUID } from 'crypto';
+import { getFile } from '../services/storageService';
 import { inspectToolRequest, normalizeEvidenceSource, type AgentEvidenceSource } from './agentGuardrails';
 import { classifyLiveChatIntent, classifyLiveChatIntents, getLiveChatClarification, hasLandingTargetText, isLandingBuilderRequest, isLongFormRequest, normalizeIntentText, resolveLiveChatFollowUp, shouldUseFastLiveChatPipeline } from './liveChatIntent';
 
@@ -194,6 +195,7 @@ export async function generateLiveChatText(params: {
     maxOutputTokens?: number;
     jsonMode?: boolean;
     timeoutMs?: number;
+    images?: Array<{ mimeType: string; dataBase64: string }>;
     onProviderTelemetry?: (telemetry: LiveChatProviderTelemetry) => void;
 }): Promise<string> {
     const traceId = randomUUID();
@@ -214,6 +216,7 @@ export async function generateLiveChatText(params: {
             maxOutputTokens: params.maxOutputTokens,
             jsonMode: params.jsonMode,
             timeoutMs,
+            images: params.images,
         }, {}, {
             tenantId: params.tenantId,
             ...(isMinhInteractivePath
@@ -1988,6 +1991,20 @@ ${ownerProfileBlock}\n` : ''}${taskMemoryBlock ? `[KINH NGHIEM VAN HANH DA HOC]\
     let response: string;
     const llmStartedAt = Date.now();
     try {
+        const visionImages = detectedIntent === 'GENERAL'
+            ? (await Promise.all(imageAttachments.slice(0, 4).map(async (url: string) => {
+                const match = url.match(/^\/uploads\/([0-9a-f-]{36})\/([A-Za-z0-9][A-Za-z0-9._-]{0,254})$/i);
+                if (!match || match[1] !== tenantId) return null;
+                const stored = await getFile(tenantId, match[2]);
+                if (!stored || !stored.contentType.startsWith('image/') || stored.buffer.length > 5 * 1024 * 1024) {
+                    return null;
+                }
+                return {
+                    mimeType: stored.contentType,
+                    dataBase64: stored.buffer.toString('base64'),
+                };
+            }))).filter(Boolean) as Array<{ mimeType: string; dataBase64: string }>
+            : [];
         response = await generateLiveChatText({
             tenantId,
             feature: 'LIVE_CHAT_RESPONSE',
@@ -1997,6 +2014,7 @@ ${ownerProfileBlock}\n` : ''}${taskMemoryBlock ? `[KINH NGHIEM VAN HANH DA HOC]\
             onProviderTelemetry: telemetry => {
                 providerTelemetry = telemetry;
             },
+            ...(visionImages.length ? { images: visionImages } : {}),
         });
         if (customerId && personalization.enabled) {
             const outcome = classifyInteractionOutcome(msg);

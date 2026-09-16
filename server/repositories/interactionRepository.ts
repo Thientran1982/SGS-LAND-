@@ -1,8 +1,84 @@
 import { BaseRepository, PaginatedResult, PaginationParams } from './baseRepository';
 
+export interface InteractionCursorPage {
+  messages: any[];
+  nextCursor: string | null;
+  hasNext: boolean;
+  pageSize: number;
+}
+
+function encodeInteractionCursor(timestamp: string | Date, id: string): string {
+  return Buffer.from(JSON.stringify({
+    timestamp: new Date(timestamp).toISOString(),
+    id: String(id),
+  }), 'utf8').toString('base64url');
+}
+
+function decodeInteractionCursor(cursor: string): { timestamp: string; id: string } {
+  try {
+    const decoded = JSON.parse(Buffer.from(cursor, 'base64url').toString('utf8'));
+    if (
+      !decoded ||
+      typeof decoded.timestamp !== 'string' ||
+      Number.isNaN(Date.parse(decoded.timestamp)) ||
+      typeof decoded.id !== 'string' ||
+      !decoded.id
+    ) throw new Error('invalid');
+    return { timestamp: new Date(decoded.timestamp).toISOString(), id: decoded.id };
+  } catch {
+    throw new Error('INVALID_INTERACTION_CURSOR');
+  }
+}
+
 export class InteractionRepository extends BaseRepository {
   constructor() {
     super('interactions');
+  }
+
+  async findByLeadCursor(
+    tenantId: string,
+    leadId: string,
+    options: { before?: string; pageSize?: number } = {},
+    userId?: string,
+    userRole?: string,
+  ): Promise<InteractionCursorPage> {
+    return this.withTenant(tenantId, async client => {
+      if (userRole === 'SALES' && userId) {
+        const leadCheck = await client.query(
+          `SELECT assigned_to FROM leads WHERE id = $1`,
+          [leadId],
+        );
+        if (!leadCheck.rows[0] || leadCheck.rows[0].assigned_to !== userId) {
+          return { messages: [], nextCursor: null, hasNext: false, pageSize: 0 };
+        }
+      }
+
+      const pageSize = Math.min(100, Math.max(1, Math.floor(options.pageSize || 30)));
+      const cursor = options.before ? decodeInteractionCursor(options.before) : null;
+      const result = await client.query(
+        `SELECT * FROM interactions
+          WHERE lead_id = $1
+            AND (
+              $2::timestamptz IS NULL
+              OR timestamp < $2::timestamptz
+              OR (timestamp = $2::timestamptz AND id::text < $3)
+            )
+          ORDER BY timestamp DESC, id DESC
+          LIMIT $4`,
+        [leadId, cursor?.timestamp || null, cursor?.id || null, pageSize + 1],
+      );
+      const hasNext = result.rows.length > pageSize;
+      const rows = result.rows.slice(0, pageSize);
+      const oldest = rows[rows.length - 1];
+      return {
+        messages: this.rowsToEntities(rows.reverse()),
+        nextCursor: hasNext && oldest
+          ? encodeInteractionCursor(oldest.timestamp, oldest.id)
+          : null,
+        hasNext,
+        pageSize,
+      };
+    });
   }
 
   async findByLead(

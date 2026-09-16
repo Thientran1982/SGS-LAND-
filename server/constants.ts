@@ -9,6 +9,12 @@ export const PUBLIC_LIVECHAT_TENANT_ID = DEFAULT_TENANT_ID;
 export function resolvePublicLiveChatTenant(): string {
   return PUBLIC_LIVECHAT_TENANT_ID;
 }
+
+/** Aggregate cap for one public chat message's uploaded attachments. */
+export const PUBLIC_LIVECHAT_MAX_ATTACHMENT_BYTES = 20 * 1024 * 1024;
+
+/** Audio is intentionally ephemeral: only the returned transcript is persisted. */
+export const PUBLIC_LIVECHAT_AUDIO_CONTRACT = 'TRANSCRIPT_ONLY' as const;
 // --- Valuation engine defaults (can be overridden per request) ---
 export const DEFAULT_VACANCY_RATE = 0.08;   // 8% vacancy
 export const DEFAULT_OPEX_RATE = 0.20;      // 20% of gross income as operating expenses

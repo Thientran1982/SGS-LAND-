@@ -11,7 +11,10 @@ import { pool } from '../db';
 import { interactionRepository } from '../repositories/interactionRepository';
 import { logger } from '../middleware/logger';
 import { livechatRateLimit } from '../middleware/rateLimiter';
-import { resolvePublicLiveChatTenant } from '../constants';
+import {
+  PUBLIC_LIVECHAT_AUDIO_CONTRACT,
+  resolvePublicLiveChatTenant,
+} from '../constants';
 import {
   denyPublicLiveChatRequest,
   verifyPublicLiveChatRequest,
@@ -84,7 +87,14 @@ agentP1Router.post('/transcribe', livechatRateLimit, async (req: Request, res: R
     });
     const text = (result.text || '').trim();
     if (!text) return res.status(422).json({ error: 'Khong nghe duoc noi dung' });
-    return res.json({ text: text.slice(0, 4000) });
+    return res.json({
+      text: text.slice(0, 4000),
+      audio: {
+        contract: PUBLIC_LIVECHAT_AUDIO_CONTRACT,
+        stored: false,
+        persistedRepresentation: 'TRANSCRIPT',
+      },
+    });
   } catch (err: any) {
     logger.warn(`[P1Transcribe] failed: ${err?.message || err}`);
     return res.status(500).json({ error: 'Transcribe that bai, vui long thu lai hoac goi 0379 281 445' });

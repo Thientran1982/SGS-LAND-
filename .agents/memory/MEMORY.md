@@ -68,6 +68,8 @@
 - [Live-chat legacy cache repair](livechat-legacy-cache-repair.md) — versioned replay repairs old EMPTY_OUTPUT landing runs without changing normal idempotency
 - [Authenticated live-chat identity](authenticated-livechat-identity.md) — logged-in chat sessions need user-scoped storage and server-side identity deduplication
 - [Public live-chat boundaries](public-livechat-boundaries.md) — lead IDs, attachments, metadata, Socket rooms and retries need server-bound ownership and provenance
+- [Live-chat history pagination](livechat-history-pagination.md) — public history uses a timestamp/id keyset cursor while legacy no-cursor reads remain compatible
+- [Attachment extraction contract](livechat-attachment-extraction.md) — uploads enforce an aggregate cap and expose explicit document extraction status; audio remains transcript-only
 - [Live-chat browser smoke prerequisites](livechat-browser-smoke.md) — Aiven hostname, Chromium system libraries, and one direct DB connection are required before authenticated smoke assertions can run
 - [Landing classification telemetry](landing-classification-telemetry.md) — monitor language and classifier outcomes with categorical signals, never raw briefs or price details
 - [Replit publish with external DB](replit-publish-external-db.md) — managed DB cloning can fail on missing sgs_app even when runtime uses Aiven; disable data copy for external production

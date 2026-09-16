@@ -152,7 +152,11 @@ import { brevoSendEmail } from "./server/services/brevoService";
 import { logger, requestLogger } from "./server/middleware/logger";
 import { requestIdMiddleware } from "./server/middleware/requestId";
 import { writeAuditLog, globalMutationAudit } from "./server/middleware/auditLog";
-import { DEFAULT_TENANT_ID, resolvePublicLiveChatTenant } from "./server/constants";
+import {
+  DEFAULT_TENANT_ID,
+  PUBLIC_LIVECHAT_MAX_ATTACHMENT_BYTES,
+  resolvePublicLiveChatTenant,
+} from "./server/constants";
 import { DICTIONARY } from "./config/locales";
 import { interactionRepository } from "./server/repositories/interactionRepository";
 import { agentExecutionRepository } from "./server/repositories/agentExecutionRepository";
@@ -224,9 +228,15 @@ async function normalizePublicChatAttachments(
 ): Promise<Array<Record<string, unknown>>> {
   if (!Array.isArray(value)) return [];
   if (value.length > 5) return [];
+  const aggregateBytes = value.reduce(
+    (total, item: any) => total + Math.max(0, Number(item?.size) || 0),
+    0,
+  );
+  if (aggregateBytes > PUBLIC_LIVECHAT_MAX_ATTACHMENT_BYTES) return [];
   const publicTenant = resolvePublicLiveChatTenant();
   const uploadPrefix = `/uploads/${publicTenant}/`;
   const normalizedAttachments: Array<Record<string, unknown>> = [];
+  let actualAggregateBytes = 0;
 
   for (const item of value) {
     const kind = item?.kind === 'image' ? 'image' : item?.kind === 'document' ? 'document' : '';
@@ -266,6 +276,8 @@ async function normalizePublicChatAttachments(
 
     const storedFile = await getFile(publicTenant, id);
     if (!storedFile) return [];
+    actualAggregateBytes += storedFile.buffer.length;
+    if (actualAggregateBytes > PUBLIC_LIVECHAT_MAX_ATTACHMENT_BYTES) return [];
     const actualContentHash = createHash('sha256').update(storedFile.buffer).digest('hex');
     const storedKind = storedFile.contentType.startsWith('image/') ? 'image' : 'document';
     if (
@@ -279,16 +291,27 @@ async function normalizePublicChatAttachments(
     normalized.size = storedFile.buffer.length;
     normalized.contentHash = contentHash;
     normalized.proof = proof;
+    const extractionStatus = ['NOT_APPLICABLE', 'READY', 'EMPTY', 'FAILED'].includes(String(item?.extractionStatus))
+      ? String(item.extractionStatus)
+      : undefined;
+    if (extractionStatus) normalized.extractionStatus = extractionStatus;
+    if (item?.extractionErrorCode === 'TEXT_EXTRACTION_UNAVAILABLE') {
+      normalized.extractionErrorCode = item.extractionErrorCode;
+    }
     if (kind === 'image') {
       normalized.url = `${uploadPrefix}${id}`;
     } else {
-      const extracted = await extractTextFromBuffer(storedFile.buffer, path.extname(id));
-      const text = extracted.trim().slice(0, 50_000);
-      if (
-        !textHash
-        || createHash('sha256').update(text).digest('hex') !== textHash
-      ) return [];
-      normalized.text = text;
+      if (extractionStatus === 'FAILED') {
+        normalized.textHash = textHash;
+      } else {
+        const extracted = await extractTextFromBuffer(storedFile.buffer, path.extname(id));
+        const text = extracted.trim().slice(0, 50_000);
+        if (
+          !textHash
+          || createHash('sha256').update(text).digest('hex') !== textHash
+        ) return [];
+        normalized.text = text;
+      }
       normalized.textHash = textHash;
     }
     normalizedAttachments.push(normalized);
@@ -3052,9 +3075,44 @@ app.get('/api/public/listings/:slugId', apiRateLimit, async (req: express.Reques
       }
       const lead = await leadRepository.findById(PUBLIC_TENANT, leadId);
       if (!lead) return res.status(404).json({ error: 'Phiên chat không tồn tại' }) as any;
-      const messages = await interactionRepository.findByLead(PUBLIC_TENANT, leadId);
+       const hasCursorRequest = req.query.before !== undefined
+         || req.query.cursor !== undefined
+         || req.query.pageSize !== undefined
+         || req.query.limit !== undefined;
+       let messages: any[];
+       let pagination: { nextCursor: string | null; hasNext: boolean; pageSize: number } | undefined;
+       if (hasCursorRequest) {
+         const rawCursor = String(req.query.before ?? req.query.cursor ?? '').trim();
+         const rawPageSize = req.query.pageSize ?? req.query.limit ?? '30';
+         const parsedPageSize = Number(rawPageSize);
+         if (
+           (rawCursor && rawCursor.length > 500)
+           || !Number.isInteger(parsedPageSize)
+           || parsedPageSize < 1
+           || parsedPageSize > 100
+         ) {
+           return res.status(400).json({ error: 'Cursor hoặc pageSize không hợp lệ', code: 'LIVECHAT_HISTORY_QUERY_INVALID' }) as any;
+         }
+         const page = await interactionRepository.findByLeadCursor(
+           PUBLIC_TENANT,
+           leadId,
+           { before: rawCursor || undefined, pageSize: parsedPageSize },
+         );
+         messages = page.messages;
+         pagination = {
+           nextCursor: page.nextCursor,
+           hasNext: page.hasNext,
+           pageSize: page.pageSize,
+         };
+       } else {
+         messages = await interactionRepository.findByLead(PUBLIC_TENANT, leadId);
+       }
       telemetry.mark('history_read');
-      res.json({ messages: messages || [], lead: { id: lead.id, name: lead.name, assignedTo: lead.assignedTo || null, threadStatus: (lead as any).thread_status || 'AI_ACTIVE' } });
+       res.json({
+         messages: messages || [],
+         lead: { id: lead.id, name: lead.name, assignedTo: lead.assignedTo || null, threadStatus: (lead as any).thread_status || 'AI_ACTIVE' },
+         ...(pagination ? { nextCursor: pagination.nextCursor, hasNext: pagination.hasNext, pageSize: pagination.pageSize } : {}),
+       });
     } catch (error) {
       console.error('Public livechat get messages error:', error);
       res.status(500).json({ error: 'Không thể tải lịch sử chat' });
@@ -3118,7 +3176,11 @@ app.get('/api/public/listings/:slugId', apiRateLimit, async (req: express.Reques
           }) as any;
         }
        const attachments = await normalizePublicChatAttachments(rawAttachments, String(leadId));
-        if (rawAttachments.length > 5 || attachments.length !== rawAttachments.length) {
+        if (
+          rawAttachments.length > 5
+          || rawAttachments.reduce((total: number, item: any) => total + Math.max(0, Number(item?.size) || 0), 0) > PUBLIC_LIVECHAT_MAX_ATTACHMENT_BYTES
+          || attachments.length !== rawAttachments.length
+        ) {
          return res.status(400).json({
            error: 'Attachment không hợp lệ hoặc không thuộc phiên chat',
            code: 'LIVECHAT_ATTACHMENT_PROVENANCE_INVALID',
@@ -3432,7 +3494,10 @@ app.post('/api/public/ai/livechat', livechatRateLimit, aiRateLimit, async (req: 
          || typeof message !== 'string'
          || !message.trim()
          || (req.body?.attachments !== undefined && !Array.isArray(req.body.attachments))
-         || (Array.isArray(req.body?.attachments) && req.body.attachments.length > 5)
+         || (Array.isArray(req.body?.attachments) && (
+           req.body.attachments.length > 5
+           || req.body.attachments.reduce((total: number, item: any) => total + Math.max(0, Number(item?.size) || 0), 0) > PUBLIC_LIVECHAT_MAX_ATTACHMENT_BYTES
+         ))
        ) {
         return res.status(400).json({ error: 'leadId và message là bắt buộc' }) as any;
       }
@@ -3442,7 +3507,11 @@ app.post('/api/public/ai/livechat', livechatRateLimit, aiRateLimit, async (req: 
        }
         const rawAttachments = req.body?.attachments === undefined ? [] : req.body.attachments;
        const attachments = await normalizePublicChatAttachments(rawAttachments, String(leadId));
-       if (attachments.length !== Math.min(rawAttachments.length, 5)) {
+       if (
+         rawAttachments.length > 5
+         || rawAttachments.reduce((total: number, item: any) => total + Math.max(0, Number(item?.size) || 0), 0) > PUBLIC_LIVECHAT_MAX_ATTACHMENT_BYTES
+         || attachments.length !== rawAttachments.length
+       ) {
          return res.status(400).json({
            error: 'Attachment không hợp lệ hoặc không thuộc phiên chat',
            code: 'LIVECHAT_ATTACHMENT_PROVENANCE_INVALID',
