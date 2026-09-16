@@ -114,3 +114,4 @@
 - [Playwright route query matching](playwright-route-query-matching.md) — API fixtures with query strings need a trailing wildcard after the path
 - [Outreach approval boundary](outreach-approval-boundary.md) — Week 8 creates grounded drafts and revalidates consent at approval without provider side effects
 - [Outreach delivery audit history](outreach-delivery-audit-history.md) — manual lookup and reconciliation need ordered, tenant-scoped append-only evidence without raw provider payloads
+- [Facebook auto-posting runtime](facebook-auto-posting-runtime.md) — daily claim indexes and explicit HTTPS asset origins are runtime prerequisites, not migration assumptions

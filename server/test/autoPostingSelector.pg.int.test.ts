@@ -10,6 +10,7 @@ import migration194 from '../migrations/194_marketing_facebook_backfills';
 import migration197 from '../migrations/197_auto_posting_multi_slot';
 import migration199 from '../migrations/199_normalize_project_social_images';
 import migration201 from '../migrations/201_repair_auto_posting_conflict_targets';
+import migration211 from '../migrations/211_repair_marketing_daily_run_ledger';
 import {
   createSocialPublication,
   findSocialPublication,
@@ -298,12 +299,17 @@ describePostgres('Marketing Facebook daily selector against PostgreSQL', () => {
     await migration194.up(setupClient);
     await migration197.up(setupClient);
     await migration199.up(setupClient);
+    await setupClient.query(`SET search_path TO "${schema}"`);
+    await setupClient.query(`
+      CREATE UNIQUE INDEX IF NOT EXISTS idx_marketing_facebook_daily_runs_day_slot
+        ON marketing_facebook_daily_runs(tenant_id, logical_day, slot_index);
+    `);
     await setupClient.query(`
       ALTER TABLE social_publication_targets
         DROP CONSTRAINT IF EXISTS social_publication_targets_unique_target;
-      DROP INDEX IF EXISTS idx_marketing_facebook_daily_runs_day_slot;
     `);
     await migration201.up(setupClient);
+    await setupClient.query(`SET search_path TO "${schema}", public`);
     setupClient.release();
     setupClient = undefined;
   });
@@ -316,10 +322,47 @@ describePostgres('Marketing Facebook daily selector against PostgreSQL', () => {
     vi.clearAllMocks();
   });
 
+  it('repairs the daily-run conflict key after migration history drift', async () => {
+    await query(`DROP INDEX IF EXISTS "${schema}".idx_marketing_facebook_daily_runs_day_slot`);
+
+    await query(
+      `INSERT INTO marketing_facebook_daily_runs
+         (tenant_id, logical_day, slot_index, status)
+       VALUES
+         ($1, $2::date, 0, 'RUNNING'),
+         ($1, $2::date, 1, 'SKIPPED')`,
+      [tenantA, '2026-01-04'],
+    );
+
+    const client = await setupPool.connect();
+    try {
+      await migration211.up(client);
+    } finally {
+      client.release();
+    }
+
+    const duplicate = await claimMarketingFacebookDailyRun(setupPool, tenantA, '2026-01-04', 0);
+    expect(duplicate).toBeNull();
+    const index = await query(
+      `SELECT 1
+         FROM pg_indexes
+        WHERE schemaname = current_schema()
+          AND indexname = 'idx_marketing_facebook_daily_runs_day_slot'`,
+    );
+    expect(index.rowCount).toBe(1);
+  });
+
   afterAll(async () => {
     setupClient?.release();
     setupClient = undefined;
     if (setupPool) {
+      const repairClient = await setupPool.connect();
+      try {
+        await repairClient.query('SET search_path TO public');
+        await migration211.up(repairClient);
+      } finally {
+        repairClient.release();
+      }
       await setupPool.query(`DROP SCHEMA IF EXISTS "${schema}" CASCADE`);
       await setupPool.end();
     }

@@ -129,6 +129,7 @@ GSC_SITE_URL = "sc-domain:sgsland.vn"
 QSTASH_URL = "https://qstash-us-east-1.upstash.io"
 LANGGRAPH_ORCHESTRATION_ADAPTER_READY = "true"
 LANGGRAPH_ORCHESTRATION_APPROVED = "true"
+PUBLIC_URL = "https://sgsland.vn"
 [userenv.development]
 NODE_ENV = "development"
 PORT = "5000"
