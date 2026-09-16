@@ -205,8 +205,12 @@ class ApprovalRequestRepository {
       `SELECT ar.*, l.name AS lead_name, l.phone AS lead_phone,
               COALESCE((
                 SELECT json_agg(json_build_object(
+                  'deliveryId', d.id,
                   'executionId', d.execution_id,
+                  'variantId', d.variant_id,
                   'status', d.status,
+                  'channel', d.channel,
+                  'deliveryKey', d.delivery_key,
                   'providerMessageId', d.provider_message_id,
                   'error', d.error_text,
                   'updatedAt', d.updated_at

@@ -72,6 +72,67 @@ const APPROVAL_ROLES = new Set(['SUPER_ADMIN', 'ADMIN', 'MANAGER', 'TEAM_LEAD'])
     }
   });
 
+  router.post('/:id/delivery-lookup', authenticateToken, validateUUIDParam(), async (req: Request, res: Response) => {
+    try {
+      const user = (req as any).user;
+      if (!APPROVAL_ROLES.has(user?.role)) {
+        return res.status(403).json({ error: 'Only authorized managers can reconcile outreach deliveries' });
+      }
+      const variantId = typeof req.body?.variantId === 'string' ? req.body.variantId.trim() : '';
+      if (!variantId) return res.status(400).json({ error: 'OUTREACH_VARIANT_REQUIRED' });
+      const { lookupApprovedOutreachDelivery } = await import('../services/outreachManualSendService');
+      return res.json(await lookupApprovedOutreachDelivery(
+        String(user.tenantId),
+        String(req.params.id),
+        variantId,
+      ));
+    } catch (error: any) {
+      const code = String(error?.message || 'OUTREACH_DELIVERY_LOOKUP_FAILED');
+      const status = new Set([
+        'OUTREACH_DELIVERY_NOT_FOUND',
+        'OUTREACH_VARIANT_REQUIRED',
+      ]).has(code) ? 404 : 409;
+      console.error('[approval-requests] outreach delivery lookup error:', code);
+      return res.status(status).json({ error: code });
+    }
+  });
+
+  router.post('/:id/reconcile', authenticateToken, validateUUIDParam(), async (req: Request, res: Response) => {
+    try {
+      const user = (req as any).user;
+      if (!APPROVAL_ROLES.has(user?.role)) {
+        return res.status(403).json({ error: 'Only authorized managers can reconcile outreach deliveries' });
+      }
+      const variantId = typeof req.body?.variantId === 'string' ? req.body.variantId.trim() : '';
+      const status = req.body?.status;
+      const note = typeof req.body?.note === 'string' ? req.body.note.trim() : '';
+      if (!variantId || !['SENT', 'FAILED'].includes(status) || !note) {
+        return res.status(400).json({ error: 'variantId, status SENT|FAILED, and note are required' });
+      }
+      const { reconcileApprovedOutreachDelivery } = await import('../services/outreachManualSendService');
+      return res.json(await reconcileApprovedOutreachDelivery({
+        tenantId: String(user.tenantId),
+        approvalId: String(req.params.id),
+        variantId,
+        status,
+        note,
+        providerMessageId: typeof req.body?.providerMessageId === 'string'
+          ? req.body.providerMessageId.trim()
+          : undefined,
+      }));
+    } catch (error: any) {
+      const code = String(error?.message || 'OUTREACH_DELIVERY_RECONCILE_FAILED');
+      const status = new Set([
+        'OUTREACH_DELIVERY_NOT_FOUND',
+        'OUTREACH_RECONCILIATION_NOTE_REQUIRED',
+      ]).has(code) ? 400
+        : new Set(['OUTREACH_DELIVERY_ALREADY_RESOLVED']).has(code) ? 409
+          : 500;
+      console.error('[approval-requests] outreach delivery reconcile error:', code);
+      return res.status(status).json({ error: code });
+    }
+  });
+
   router.post('/:id/approve', authenticateToken, validateUUIDParam(), async (req: Request, res: Response) => {
     let updated: any = null;
     try {

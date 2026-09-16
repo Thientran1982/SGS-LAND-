@@ -21,7 +21,29 @@ interface OutreachApproval {
     status: string;
     leadName?: string;
     payload?: { draftVariants?: Array<{ id: string; channel: string; subject?: string; message: string }> };
-    deliveries?: Array<{ executionId: string; status: string; providerMessageId?: string; error?: string }>;
+    deliveries?: Array<{
+        deliveryId?: string;
+        executionId?: string | null;
+        variantId?: string;
+        channel?: string;
+        deliveryKey?: string;
+        status: string;
+        providerMessageId?: string;
+        error?: string;
+    }>;
+}
+interface OutreachDeliveryLookup {
+    deliveryId: string;
+    variantId: string;
+    channel: string;
+    deliveryKey: string;
+    provider: 'BREVO' | 'ZALO' | 'NONE';
+    status: 'DELIVERED' | 'NOT_RECEIVED' | 'UNKNOWN' | 'UNSUPPORTED';
+    recommendedStatus?: 'SENT' | 'FAILED';
+    providerMessageId?: string;
+    event?: string;
+    error?: string;
+    instruction: string;
 }
 interface RiskAssessment {
     level: RiskLevel;
@@ -255,6 +277,8 @@ export const ApprovalInbox: React.FC = () => {
     const [sortMode, setSortMode] = useState<'RISK' | 'DATE'>('RISK');
     const [filterMode, setFilterMode] = useState<'ALL' | 'HIGH' | 'MEDIUM' | 'LOW'>('ALL');
     const [toast, setToast] = useState<{ msg: string, type: 'success' | 'error' } | null>(null);
+    const [deliveryLookups, setDeliveryLookups] = useState<Record<string, OutreachDeliveryLookup>>({});
+    const [deliveryLookupLoading, setDeliveryLookupLoading] = useState<string | null>(null);
     const { t, formatDateTime, formatCurrency } = useTranslation();
     const notify = useCallback((msg: string, type: 'success' | 'error' = 'success', duration?: number) => {
         setToast({ msg, type });
@@ -388,9 +412,66 @@ export const ApprovalInbox: React.FC = () => {
             await loadData();
         }
     };
+    const deliveryLookupKey = (approvalId: string, variantId: string) => `${approvalId}:${variantId}`;
+    const lookupOutreachDelivery = async (approvalId: string, variantId: string) => {
+        const key = deliveryLookupKey(approvalId, variantId);
+        setDeliveryLookupLoading(key);
+        try {
+            const result = await api.post<OutreachDeliveryLookup>(
+                `/api/approval-requests/${approvalId}/delivery-lookup`,
+                { variantId },
+            );
+            setDeliveryLookups(previous => ({ ...previous, [key]: result }));
+            notify(
+                result.status === 'DELIVERED'
+                    ? 'Provider đã ghi nhận message. Hãy đối chiếu người nhận trước khi chốt SENT.'
+                    : result.status === 'NOT_RECEIVED'
+                        ? 'Provider không ghi nhận message đã giao. Hãy đối chiếu trước khi chốt FAILED.'
+                        : 'Provider chưa có bằng chứng đủ chắc chắn. Không gửi lại; kiểm tra thủ công.',
+                result.status === 'UNKNOWN' || result.status === 'UNSUPPORTED' ? 'error' : 'success',
+                7000,
+            );
+        } catch (e: any) {
+            notify(e?.data?.error || e?.message || 'Không thể tra cứu provider.', 'error', 7000);
+        } finally {
+            setDeliveryLookupLoading(null);
+        }
+    };
+    const reconcileOutreachDelivery = async (
+        approvalId: string,
+        variantId: string,
+        status: 'SENT' | 'FAILED',
+    ) => {
+        const note = window.prompt(
+            status === 'SENT'
+                ? 'Ghi chú đối soát: bằng chứng nào xác nhận provider đã gửi?'
+                : 'Ghi chú đối soát: bằng chứng nào xác nhận provider không gửi?',
+        );
+        if (!note?.trim()) return;
+        const key = deliveryLookupKey(approvalId, variantId);
+        setDeliveryLookupLoading(key);
+        try {
+            await api.post(`/api/approval-requests/${approvalId}/reconcile`, {
+                variantId,
+                status,
+                note: note.trim(),
+                providerMessageId: deliveryLookups[key]?.providerMessageId,
+            });
+            notify(status === 'SENT' ? 'Đã chốt delivery là SENT.' : 'Đã chốt delivery là FAILED.', 'success', 6000);
+            await loadData();
+        } catch (e: any) {
+            notify(e?.data?.error || e?.message || 'Không thể chốt kết quả đối soát.', 'error', 7000);
+            await loadData();
+        } finally {
+            setDeliveryLookupLoading(null);
+        }
+    };
     const pendingOutreach = brokerApprovals.filter(item => item.actionType === 'DRAFT_OUTREACH');
     const deliveryForVariant = (item: OutreachApproval, variantId: string) =>
-        (item.deliveries || []).find(delivery => delivery.executionId.endsWith(`:${variantId}`));
+        (item.deliveries || []).find(delivery =>
+            delivery.variantId === variantId
+            || Boolean(delivery.executionId?.endsWith(`:${variantId}`)),
+        );
     if (loading) return <div className="p-10 text-center text-[var(--text-secondary)] font-mono animate-pulse">{t('common.loading')}</div>;
 
     return (
@@ -429,7 +510,10 @@ export const ApprovalInbox: React.FC = () => {
                                 {(item.payload?.draftVariants || []).map(variant => {
                                     const delivery = deliveryForVariant(item, variant.id);
                                     const sent = delivery?.status === 'SENT';
-                                    const blocked = delivery?.status === 'UNKNOWN' || delivery?.status === 'FAILED';
+                                    const unknown = delivery?.status === 'UNKNOWN';
+                                    const lookupKey = deliveryLookupKey(item.id, variant.id);
+                                    const lookup = deliveryLookups[lookupKey];
+                                    const lookupLoading = deliveryLookupLoading === lookupKey;
                                     return (
                                         <div key={variant.id} className="rounded-xl border border-[var(--glass-border)] bg-[var(--glass-surface)] p-4">
                                             <div className="flex justify-between gap-3 items-center">
@@ -441,13 +525,58 @@ export const ApprovalInbox: React.FC = () => {
                                             {!item._pending && variant.channel === 'CALL_SCRIPT' && (
                                                 <p className="text-xs text-amber-700 mt-3">Kịch bản này chỉ để broker gọi thủ công; hệ thống không gọi thay.</p>
                                             )}
-                                            {!item._pending && variant.channel !== 'CALL_SCRIPT' && (
+                                            {unknown && (
+                                                <div className="mt-3 rounded-lg border border-amber-200 bg-amber-50 p-3 text-xs text-amber-900">
+                                                    <p className="font-bold">Delivery chưa rõ — không gửi lại.</p>
+                                                    <p className="mt-1">Tra cứu provider bằng delivery key trước khi chốt SENT hoặc FAILED.</p>
+                                                    {delivery?.deliveryKey && (
+                                                        <code className="mt-2 block break-all rounded bg-white/70 px-2 py-1 text-[10px]">
+                                                            {delivery.deliveryKey}
+                                                        </code>
+                                                    )}
+                                                    <button
+                                                        onClick={() => lookupOutreachDelivery(item.id, variant.id)}
+                                                        disabled={lookupLoading}
+                                                        className="mt-2 rounded-lg border border-amber-300 bg-white px-3 py-2 font-bold text-amber-900 hover:bg-amber-100 disabled:opacity-50"
+                                                    >
+                                                        {lookupLoading ? 'Đang tra cứu…' : 'Tra cứu provider'}
+                                                    </button>
+                                                    {lookup && (
+                                                        <div className="mt-3 border-t border-amber-200 pt-2">
+                                                            <p className="font-semibold">
+                                                                Kết quả: {lookup.status}
+                                                                {lookup.event ? ` (${lookup.event})` : ''}
+                                                                {lookup.providerMessageId ? ` · ${lookup.providerMessageId}` : ''}
+                                                            </p>
+                                                            <p className="mt-1">{lookup.instruction}</p>
+                                                            {lookup.error && <p className="mt-1 text-rose-700">{lookup.error}</p>}
+                                                            <div className="mt-2 flex flex-wrap gap-2">
+                                                                <button
+                                                                    onClick={() => reconcileOutreachDelivery(item.id, variant.id, 'SENT')}
+                                                                    disabled={lookupLoading}
+                                                                    className="rounded-lg bg-emerald-700 px-3 py-2 font-bold text-white hover:bg-emerald-800 disabled:opacity-50"
+                                                                >
+                                                                    Chốt SENT
+                                                                </button>
+                                                                <button
+                                                                    onClick={() => reconcileOutreachDelivery(item.id, variant.id, 'FAILED')}
+                                                                    disabled={lookupLoading}
+                                                                    className="rounded-lg border border-rose-300 bg-white px-3 py-2 font-bold text-rose-700 hover:bg-rose-50 disabled:opacity-50"
+                                                                >
+                                                                    Chốt FAILED
+                                                                </button>
+                                                            </div>
+                                                        </div>
+                                                    )}
+                                                </div>
+                                            )}
+                                            {!item._pending && variant.channel !== 'CALL_SCRIPT' && !unknown && (
                                                 <button
                                                     onClick={() => sendOutreach(item.id, variant.id)}
-                                                    disabled={sent || blocked}
+                                                    disabled={sent || delivery?.status === 'FAILED'}
                                                     className="mt-3 w-full py-2 rounded-lg bg-sgs-primary-deep text-white text-xs font-bold hover:bg-slate-800 disabled:opacity-50 disabled:cursor-not-allowed"
                                                 >
-                                                    {sent ? 'Đã gửi' : blocked ? 'Cần kiểm tra provider' : 'Gửi thủ công'}
+                                                    {sent ? 'Đã gửi' : delivery?.status === 'FAILED' ? 'Đã thất bại — cần xử lý lại theo quy trình' : 'Gửi thủ công'}
                                                 </button>
                                             )}
                                         </div>

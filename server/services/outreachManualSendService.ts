@@ -3,6 +3,7 @@ import { interactionRepository } from '../repositories/interactionRepository';
 import { withTenantContext } from '../db';
 import { getAdapter } from '../channels/registry';
 import { emailService } from './emailService';
+import { brevoLookupDeliveryStatus } from './brevoService';
 
 const OUTREACH_CHANNELS = new Set(['EMAIL', 'ZALO', 'CALL_SCRIPT']);
 
@@ -22,6 +23,124 @@ function escapeHtml(value: string): string {
     .replace(/>/g, '&gt;')
     .replace(/"/g, '&quot;')
     .replace(/'/g, '&#x27;');
+}
+
+export type OutreachDeliveryLookup = {
+  deliveryId: string;
+  approvalId: string;
+  variantId: string;
+  channel: string;
+  deliveryKey: string;
+  provider: 'BREVO' | 'ZALO' | 'NONE';
+  status: 'DELIVERED' | 'NOT_RECEIVED' | 'UNKNOWN' | 'UNSUPPORTED';
+  recommendedStatus?: 'SENT' | 'FAILED';
+  providerMessageId?: string;
+  event?: string;
+  error?: string;
+  instruction: string;
+};
+
+/**
+ * Look up an already-attempted delivery without sending anything. Provider
+ * lookups are deliberately separate from reconciliation so a broker can see
+ * the evidence before recording SENT/FAILED.
+ */
+export async function lookupApprovedOutreachDelivery(
+  tenantId: string,
+  approvalId: string,
+  variantId: string,
+): Promise<OutreachDeliveryLookup> {
+  const delivery = await agentOutboundRepository.findByApprovalVariant(
+    tenantId,
+    approvalId,
+    variantId.trim(),
+  );
+  if (!delivery) throw error('OUTREACH_DELIVERY_NOT_FOUND');
+  if (delivery.status !== 'UNKNOWN') throw error('OUTREACH_DELIVERY_ALREADY_RESOLVED');
+
+  const base = {
+    deliveryId: String(delivery.id),
+    approvalId,
+    variantId: String(delivery.variant_id || variantId),
+    channel: String(delivery.channel),
+    deliveryKey: String(delivery.delivery_key),
+  };
+
+  if (delivery.channel !== 'EMAIL') {
+    return {
+      ...base,
+      provider: delivery.channel === 'ZALO' ? 'ZALO' : 'NONE',
+      status: 'UNSUPPORTED',
+      instruction: 'Provider này chưa có API tra cứu delivery. Dùng delivery key để kiểm tra trực tiếp trên dashboard provider, rồi ghi nhận kết quả thủ công.',
+    };
+  }
+
+  const result = await brevoLookupDeliveryStatus(base.deliveryKey);
+  if (result.status === 'delivered') {
+    return {
+      ...base,
+      provider: 'BREVO',
+      status: 'DELIVERED',
+      recommendedStatus: 'SENT',
+      providerMessageId: result.messageId,
+      event: result.event,
+      instruction: 'Brevo đã ghi nhận message. Xác nhận SENT nếu broker đối chiếu đúng người nhận.',
+    };
+  }
+  if (result.status === 'not_received') {
+    return {
+      ...base,
+      provider: 'BREVO',
+      status: 'NOT_RECEIVED',
+      recommendedStatus: 'FAILED',
+      providerMessageId: result.messageId,
+      event: result.event,
+      instruction: 'Brevo không ghi nhận message đã giao. Xác nhận FAILED để cho phép xử lý lại theo quy trình an toàn.',
+    };
+  }
+  return {
+    ...base,
+    provider: 'BREVO',
+    status: 'UNKNOWN',
+    providerMessageId: result.messageId,
+    event: result.event,
+    error: result.error,
+    instruction: 'Brevo chưa trả bằng chứng đủ chắc chắn. Không quyết định tự động; kiểm tra thủ công trước khi chọn SENT hoặc FAILED.',
+  };
+}
+
+export async function reconcileApprovedOutreachDelivery(params: {
+  tenantId: string;
+  approvalId: string;
+  variantId: string;
+  status: 'SENT' | 'FAILED';
+  note: string;
+  providerMessageId?: string;
+}): Promise<Record<string, any>> {
+  if (!params.note.trim()) throw error('OUTREACH_RECONCILIATION_NOTE_REQUIRED');
+  const lookup = await lookupApprovedOutreachDelivery(
+    params.tenantId,
+    params.approvalId,
+    params.variantId,
+  );
+  const row = await agentOutboundRepository.reconcileUnknown({
+    tenantId: params.tenantId,
+    deliveryId: lookup.deliveryId,
+    status: params.status,
+    providerMessageId: params.providerMessageId || lookup.providerMessageId,
+    note: params.note,
+  });
+  if (!row) throw error('OUTREACH_DELIVERY_ALREADY_RESOLVED');
+  return {
+    approvalId: params.approvalId,
+    variantId: params.variantId,
+    deliveryId: lookup.deliveryId,
+    deliveryKey: lookup.deliveryKey,
+    status: params.status,
+    provider: lookup.provider,
+    lookupStatus: lookup.status,
+    providerMessageId: row.provider_message_id || null,
+  };
 }
 
 async function loadApprovedVariant(tenantId: string, approvalId: string, variantId: string) {

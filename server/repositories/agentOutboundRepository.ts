@@ -199,6 +199,24 @@ class AgentOutboundRepository {
     )).rows);
   }
 
+  async findByApprovalVariant(
+    tenantId: string,
+    approvalRequestId: string,
+    variantId: string,
+  ): Promise<any | null> {
+    return withTenantContext(tenantId, async client => {
+      const result = await client.query(
+        `SELECT id, approval_request_id, variant_id, lead_id, channel, status,
+                delivery_key, provider_message_id, error_text, updated_at
+           FROM agent_outbound_deliveries
+          WHERE tenant_id=$1 AND approval_request_id=$2 AND variant_id=$3
+          LIMIT 1`,
+        [tenantId, approvalRequestId, variantId],
+      );
+      return result.rows[0] || null;
+    });
+  }
+
   async reconcileUnknown(params: {
     tenantId: string; deliveryId: string; status: OutboundReconciliation;
     providerMessageId?: string; note: string;
