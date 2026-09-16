@@ -1,15 +1,24 @@
 // @ts-nocheck
 import type { Metadata } from "next";
 import CookieSettingsClient from "@/components/CookieSettingsClient";
-export const metadata: Metadata = { title: "Cookie Settings", alternates: { canonical: "https://sgsland.vn/cookie-settings", languages: { "vi-VN": "https://sgsland.vn/cookie-settings", "en-US": "https://sgsland.vn/en/cookie-settings", "x-default": "https://sgsland.vn/cookie-settings" } } };
+import { getLang, langAlternates } from "@/lib/lang";
+export async function generateMetadata(): Promise<Metadata> {
+  const en = (await getLang()) === "en";
+  return {
+    title: en ? "Cookie Settings" : "Cài Đặt Cookie",
+    alternates: { canonical: `https://sgsland.vn${en ? "/en/cookie-settings" : "/cookie-settings"}`, ...langAlternates("/cookie-settings") },
+  };
+}
 export const dynamic = "force-dynamic";
-export default function CookieSettingsPage() {
+export default async function CookieSettingsPage() {
+  const en = (await getLang()) === "en";
   return (
     <div className="max-w-3xl mx-auto px-4 py-16 sm:py-24" style={{ color: "var(--text-primary)" }}>
-      <h1 className="text-3xl font-bold mb-8">Cai Dat Cookie</h1>
+      <h1 className="text-3xl font-bold mb-8">{en ? "Cookie Settings" : "Cài Đặt Cookie"}</h1>
       <p style={{ color: "var(--text-secondary)" }}>
-        SGS LAND su dung cookie de cai thien trai nghiem nguoi dung. Ban co the tuy chinh cac loai cookie duoc
-        su dung tai day. Thay doi se duoc ap dung ngay va luu lai cho lan truy cap sau.
+        {en
+          ? "SGS LAND uses cookies to improve your experience. You can customise the types of cookies used here. Changes apply immediately and are saved for your next visit."
+          : "SGS LAND sử dụng cookie để cải thiện trải nghiệm người dùng. Bạn có thể tuỳ chỉnh các loại cookie được sử dụng tại đây. Thay đổi sẽ được áp dụng ngay và lưu lại cho lần truy cập sau."}
       </p>
       <CookieSettingsClient />
     </div>

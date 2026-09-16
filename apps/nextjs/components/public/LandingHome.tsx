@@ -317,7 +317,7 @@ function MapHero({ lang, onChatOpen }: { lang: Lang; onChatOpen: () => void }) {
                   <div style={{ fontSize: "14px", fontWeight:600, color:"var(--lp-navy)", marginTop:"8px", display:"flex", justifyContent:"space-between", alignItems:"center" }}>
                     <span>{proj.price[lang]}</span>
                     <a
-                      href={pin.href}
+                      href={lpath(pin.href, lang)}
                       className="lp-serif"
                       style={{ fontStyle:"italic", fontWeight:340, color:"var(--lp-gold)", fontSize:"12px", textDecoration:"none", cursor:"pointer" }}
                       aria-label={`${lang === "vi" ? "Xem dự án" : "View project"}: ${proj.name}`}
@@ -408,7 +408,7 @@ function ProjectCard({ p, lang }: { p: typeof PROJECTS[number]; lang: Lang }) {
   return (
     <a
       ref={ref as any}
-      href={`/du-an/${p.slug}`}
+      href={lpath(`/du-an/${p.slug}`, lang)}
       className={`lp-rv${inView ? " in" : ""}`}
       style={{ position:"relative", borderRadius:"20px", overflow:"hidden", border:"1px solid var(--lp-line)", background:"var(--lp-cardbg)", display:"block", textDecoration:"none", transition:"transform .25s,box-shadow .3s" }}
       onMouseEnter={e => { (e.currentTarget as HTMLElement).style.transform="translateY(-4px)"; (e.currentTarget as HTMLElement).style.boxShadow="0 24px 60px var(--lp-shadow)"; }}

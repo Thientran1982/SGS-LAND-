@@ -2,20 +2,25 @@
 import type { Metadata } from "next";
 import { CheckCircle } from "lucide-react";
 import { SITE_URL } from "@/lib/schema";
+import { getLang, langAlternates } from "@/lib/lang";
 
-export const metadata: Metadata = {
-  title: "Trạng Thái Hệ Thống | SGS LAND",
-  description:
-    "Trạng thái hoạt động thời gian thực của nền tảng SGS LAND: API, Dashboard, Webhooks và dịch vụ AI. Uptime 99,99% — cam kết vận hành ổn định.",
-  alternates: { canonical: `${SITE_URL}/status` },
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const en = (await getLang()) === "en";
+  return {
+    title: en ? "System Status | SGS LAND" : "Trạng Thái Hệ Thống | SGS LAND",
+    description: en
+      ? "Current availability of SGS LAND services: API, dashboard, webhooks and AI services."
+      : "Trạng thái hoạt động thời gian thực của nền tảng SGS LAND: API, Dashboard, Webhooks và dịch vụ AI.",
+    alternates: { canonical: `${SITE_URL}${en ? "/en/status" : "/status"}`, ...langAlternates("/status") },
+  };
+}
 export const dynamic = "force-dynamic";
 
 const SERVICES = [
-  "API SGS Land",
-  "Bảng điều khiển (Dashboard)",
-  "Webhooks & Tích hợp",
-  "Dịch vụ AI (Định giá & Trợ lý)",
+  ["API SGS LAND", "SGS LAND API"],
+  ["Bảng điều khiển (Dashboard)", "Dashboard"],
+  ["Webhooks & Tích hợp", "Webhooks & integrations"],
+  ["Dịch vụ AI (Định giá & Trợ lý)", "AI services (valuation & assistant)"],
 ];
 
 // Deterministic-ish uptime bars (rendered server-side per request).
@@ -24,8 +29,9 @@ const BARS = Array.from({ length: 60 }, (_, i) => {
   return { degraded, height: 40 + ((i * 37) % 60) };
 });
 
-export default function StatusPage() {
-  const updatedAt = new Intl.DateTimeFormat("vi-VN", {
+export default async function StatusPage() {
+  const en = (await getLang()) === "en";
+  const updatedAt = new Intl.DateTimeFormat(en ? "en-US" : "vi-VN", {
     dateStyle: "long",
     timeStyle: "short",
     timeZone: "Asia/Ho_Chi_Minh",
@@ -40,9 +46,9 @@ export default function StatusPage() {
       >
         <div>
           <h1 className="text-2xl md:text-3xl font-bold mb-2">
-            Tất cả hệ thống đang hoạt động bình thường
+            {en ? "All systems are operating normally" : "Tất cả hệ thống đang hoạt động bình thường"}
           </h1>
-          <p className="opacity-90 font-medium">Cập nhật lúc {updatedAt}</p>
+          <p className="opacity-90 font-medium">{en ? `Updated ${updatedAt}` : `Cập nhật lúc ${updatedAt}`}</p>
         </div>
         <div className="w-16 h-16 rounded-2xl flex items-center justify-center shrink-0" style={{ background: "color-mix(in srgb, var(--ui-on-brand) 18%, transparent)" }}>
           <CheckCircle className="w-8 h-8" style={{ color: "var(--ui-on-brand)" }} />
@@ -55,7 +61,7 @@ export default function StatusPage() {
         style={{ background: "var(--bg-elevated)", border: "1px solid var(--border-default)" }}
       >
         <h2 className="text-xl font-bold mb-6" style={{ color: "var(--text-primary)" }}>
-          Thời gian hoạt động (Uptime)
+          {en ? "Uptime" : "Thời gian hoạt động (Uptime)"}
         </h2>
         <div className="flex gap-1 h-8 items-end">
           {BARS.map((b, i) => (
@@ -68,9 +74,9 @@ export default function StatusPage() {
           ))}
         </div>
         <div className="flex justify-between text-xs font-bold mt-3 uppercase tracking-wider" style={{ color: "var(--text-tertiary)" }}>
-          <span>90 ngày trước</span>
+          <span>{en ? "90 days ago" : "90 ngày trước"}</span>
           <span style={{ color: "var(--ui-success)" }}>99,99%</span>
-          <span>Hôm nay</span>
+          <span>{en ? "Today" : "Hôm nay"}</span>
         </div>
       </div>
 
@@ -79,16 +85,16 @@ export default function StatusPage() {
         className="rounded-3xl overflow-hidden p-8 mb-10"
         style={{ background: "var(--bg-elevated)", border: "1px solid var(--border-default)" }}
       >
-        {SERVICES.map((name, i) => (
+        {SERVICES.map(([vi, english], i) => (
           <div
-            key={name}
+            key={vi}
             className="flex justify-between items-center py-4"
             style={{ borderBottom: i < SERVICES.length - 1 ? "1px solid var(--border-default)" : "none" }}
           >
-            <span className="font-bold" style={{ color: "var(--text-secondary)" }}>{name}</span>
+            <span className="font-bold" style={{ color: "var(--text-secondary)" }}>{en ? english : vi}</span>
             <div className="flex items-center gap-2">
               <span className="text-xs font-bold uppercase tracking-wider" style={{ color: "var(--ui-success)" }}>
-                Hoạt động tốt
+                {en ? "Operational" : "Hoạt động tốt"}
               </span>
               <div className="w-2 h-2 rounded-full" style={{ background: "var(--ui-success)" }} />
             </div>
@@ -99,13 +105,13 @@ export default function StatusPage() {
       {/* Past incidents */}
       <div>
         <h2 className="text-xl font-bold mb-4" style={{ color: "var(--text-primary)" }}>
-          Sự cố trong quá khứ
+          {en ? "Past incidents" : "Sự cố trong quá khứ"}
         </h2>
         <div
           className="text-sm italic pl-4 py-2"
           style={{ color: "var(--text-tertiary)", borderLeft: "4px solid var(--border-default)" }}
         >
-          Không ghi nhận sự cố nào trong 90 ngày qua.
+          {en ? "No incidents recorded in the past 90 days." : "Không ghi nhận sự cố nào trong 90 ngày qua."}
         </div>
       </div>
     </div>

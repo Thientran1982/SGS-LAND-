@@ -161,6 +161,22 @@ export default async function NewsPage() {
   const lang = await getLang();
   const en = lang === "en";
   const prefix = en ? "/en/news" : "/tin-tuc";
+  if (en) {
+    return (
+      <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-16 sm:py-24">
+        <div className="rounded-3xl p-8 sm:p-10 text-center" style={{ background: "var(--bg-elevated)", border: "1px solid var(--border-default)" }}>
+          <p className="text-xs font-bold uppercase tracking-[.18em] mb-3" style={{ color: "var(--sgs-accent-text)" }}>SGS LAND Editorial</p>
+          <h1 className="text-3xl sm:text-4xl font-extrabold mb-4" style={{ color: "var(--text-primary)" }}>Real Estate Knowledge &amp; News</h1>
+          <p className="leading-7 mb-6" style={{ color: "var(--text-secondary)" }}>
+            English editions of our market analysis and legal guides are being prepared. Vietnamese articles remain available at the Vietnamese site.
+          </p>
+          <a href="/tin-tuc" className="inline-flex items-center rounded-xl px-5 py-3 text-sm font-semibold text-white" style={{ background: "var(--primary-600)" }}>
+            Read the Vietnamese edition
+          </a>
+        </div>
+      </div>
+    );
+  }
   // Single source of truth: the Postgres `articles` table (via /api/public/articles)
   const all = await getAllArticles();
   const featured = all.filter((a) => a.featured).slice(0, 1);

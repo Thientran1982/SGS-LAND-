@@ -22,6 +22,7 @@ export interface DirectoryProject {
   hot: boolean;
   img: string;
   description: string;
+  en?: Partial<Pick<DirectoryProject, "dev" | "loc" | "province" | "scale" | "price" | "type" | "typeGroup" | "badge" | "description">>;
 }
 
 const INITIAL_VISIBLE = 6;
@@ -64,7 +65,7 @@ function StatusBadges({ project }: { project: DirectoryProject }) {
     : badge.includes("sắp") ? tt(lang, "SẮP MỞ BÁN", "COMING SOON")
     : badge.includes("bàn giao") ? tt(lang, "ĐANG BÀN GIAO", "HANDOVER IN PROGRESS")
     : badge.includes("cao cấp") ? tt(lang, "CAO CẤP", "PREMIUM")
-    : project.badge;
+    : lang === "en" ? "STATUS TO VERIFY" : project.badge;
   return (
     <div className="absolute left-3 top-3 flex flex-wrap gap-1.5">
       {project.hot && (
@@ -79,9 +80,10 @@ function StatusBadges({ project }: { project: DirectoryProject }) {
 
 function ProjectCard({ project }: { project: DirectoryProject }) {
   const lang = useLang();
+  const localized = lang === "en" ? { ...project, ...project.en } : project;
   return (
     <Link
-      href={`/du-an/${project.slug}`}
+      href={`${lang === "en" ? "/en" : ""}/du-an/${project.slug}`}
       className="group flex min-h-[338px] flex-col overflow-hidden rounded-2xl border transition-all duration-200 hover:-translate-y-1 hover:shadow-[var(--ui-shadow-md)]"
       style={{ background: "var(--bg-elevated)", borderColor: "var(--border-default)" }}
     >
@@ -92,14 +94,14 @@ function ProjectCard({ project }: { project: DirectoryProject }) {
       </div>
       <div className="flex flex-1 flex-col p-4">
         <h2 className="line-clamp-1 text-[17px] font-bold tracking-[-0.02em]" style={{ color: "var(--text-primary)" }}>{project.name}</h2>
-        <p className="mt-1 line-clamp-1 text-xs" style={{ color: "var(--text-tertiary)" }}>{project.dev} · {lang === "en" && project.typeGroup === "Căn hộ" ? "Apartment" : project.typeGroup}</p>
+        <p className="mt-1 line-clamp-1 text-xs" style={{ color: "var(--text-tertiary)" }}>{localized.dev} · {localized.typeGroup}</p>
         <p className="mt-3 flex items-start gap-1.5 text-xs leading-5" style={{ color: "var(--text-secondary)" }}>
-          <MapPin className="mt-0.5 h-3.5 w-3.5 shrink-0" /> <span className="line-clamp-1">{project.loc}</span>
+          <MapPin className="mt-0.5 h-3.5 w-3.5 shrink-0" /> <span className="line-clamp-1">{localized.loc}</span>
         </p>
         <div className="mt-auto flex items-end justify-between gap-3 border-t pt-3" style={{ borderColor: "var(--border-default)" }}>
           <div>
              <p className="text-[11px]" style={{ color: "var(--text-tertiary)" }}>{tt(lang, "Giá tham khảo", "Reference price")}</p>
-            <p className="mt-0.5 line-clamp-1 text-sm font-bold" style={{ color: "var(--sgs-accent-text)" }}>{project.price}</p>
+            <p className="mt-0.5 line-clamp-1 text-sm font-bold" style={{ color: "var(--sgs-accent-text)" }}>{localized.price}</p>
           </div>
           <ArrowRight className="mb-0.5 h-4 w-4 shrink-0 transition-transform group-hover:translate-x-1" style={{ color: "var(--sgs-accent-text)" }} />
         </div>
@@ -110,9 +112,10 @@ function ProjectCard({ project }: { project: DirectoryProject }) {
 
 function FeaturedProject({ project }: { project: DirectoryProject }) {
   const lang = useLang();
+  const localized = lang === "en" ? { ...project, ...project.en } : project;
   return (
     <Link
-      href={`/du-an/${project.slug}`}
+      href={`${lang === "en" ? "/en" : ""}/du-an/${project.slug}`}
       className="group grid overflow-hidden rounded-3xl border shadow-[var(--ui-shadow-sm)] transition-all duration-200 hover:-translate-y-0.5 hover:shadow-[var(--ui-shadow-md)] md:grid-cols-[minmax(0,1.12fr)_minmax(320px,.88fr)]"
       style={{ background: "var(--bg-elevated)", borderColor: "var(--border-default)" }}
     >
@@ -122,7 +125,7 @@ function FeaturedProject({ project }: { project: DirectoryProject }) {
         <div className="absolute left-5 top-5 flex gap-2">
            <span className="rounded-full bg-[var(--sgs-accent)] px-3 py-1.5 text-[11px] font-bold tracking-[.08em] text-[var(--ui-on-accent)]">{tt(lang, "DỰ ÁN NỔI BẬT", "FEATURED PROJECT")}</span>
            {project.hot && <span className="rounded-full bg-[#b42318] px-2.5 py-1.5 text-[11px] font-bold tracking-wide text-white shadow-sm">{tt(lang, "ƯU TIÊN", "PRIORITY")}</span>}
-          <span className="rounded-full bg-white/95 px-2.5 py-1.5 text-[11px] font-semibold text-[var(--ui-brand)] shadow-sm backdrop-blur-sm">{project.badge}</span>
+           <span className="rounded-full bg-white/95 px-2.5 py-1.5 text-[11px] font-semibold text-[var(--ui-brand)] shadow-sm backdrop-blur-sm">{lang === "en" ? "STATUS TO VERIFY" : project.badge}</span>
         </div>
         <div className="absolute bottom-5 left-5 right-5 text-white">
            <p className="mb-1 text-xs font-medium uppercase tracking-[.16em] text-white/75">{tt(lang, "Lựa chọn ưu tiên", "Priority pick")}</p>
@@ -131,10 +134,10 @@ function FeaturedProject({ project }: { project: DirectoryProject }) {
       </div>
       <div className="flex flex-col justify-center p-6 md:p-8">
          <p className="text-xs font-semibold uppercase tracking-[.14em]" style={{ color: "var(--sgs-accent-text)" }}>{tt(lang, "Thông tin dự án", "Project information")}</p>
-         <p className="mt-3 text-sm leading-6" style={{ color: "var(--text-secondary)" }}>{lang === "en" ? (CARD_EN[project.slug] || project.description) : project.description}</p>
+          <p className="mt-3 text-sm leading-6" style={{ color: "var(--text-secondary)" }}>{lang === "en" ? (localized.description || CARD_EN[project.slug]) : project.description}</p>
         <div className="mt-5 grid grid-cols-2 gap-3 border-y py-4" style={{ borderColor: "var(--border-default)" }}>
-           <div><p className="text-xs" style={{ color: "var(--text-tertiary)" }}>{tt(lang, "Quy mô", "Scale")}</p><p className="mt-1 text-sm font-semibold" style={{ color: "var(--text-primary)" }}>{project.scale}</p></div>
-           <div><p className="text-xs" style={{ color: "var(--text-tertiary)" }}>{tt(lang, "Giá tham khảo", "Reference price")}</p><p className="mt-1 text-sm font-bold" style={{ color: "var(--sgs-accent-text)" }}>{project.price}</p></div>
+            <div><p className="text-xs" style={{ color: "var(--text-tertiary)" }}>{tt(lang, "Quy mô", "Scale")}</p><p className="mt-1 text-sm font-semibold" style={{ color: "var(--text-primary)" }}>{localized.scale}</p></div>
+            <div><p className="text-xs" style={{ color: "var(--text-tertiary)" }}>{tt(lang, "Giá tham khảo", "Reference price")}</p><p className="mt-1 text-sm font-bold" style={{ color: "var(--sgs-accent-text)" }}>{localized.price}</p></div>
         </div>
          <p className="mt-5 inline-flex items-center gap-2 text-sm font-bold" style={{ color: "var(--ui-brand)" }}>{tt(lang, "Xem thông tin dự án", "View project details")} <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" /></p>
       </div>
@@ -197,6 +200,12 @@ export default function ProjectDirectoryClient({ projects }: { projects: Directo
   }, [projects]);
 
   const provinces = useMemo(() => [...new Set(allProjects.map((project) => project.province))].sort((a, b) => a.localeCompare(b, "vi")), [allProjects]);
+  const provinceLabel = (value: string) => lang === "en"
+    ? ({ "TP.HCM": "Ho Chi Minh City", "Đồng Nai": "Dong Nai", "Bình Dương": "Binh Duong", "Long An": "Long An" }[value] || value)
+    : value;
+  const typeLabel = (value: string) => lang === "en"
+    ? ({ "Đô thị tổng hợp": "Mixed-use township", "Căn hộ cao cấp": "Premium apartments" }[value] || "Property project")
+    : value;
   const filtered = useMemo(() => allProjects.filter((project) => matchesProject(project, query, province, type, price)), [allProjects, query, province, type, price]);
   const featured = filtered.find((project) => project.slug === FEATURED_SLUG);
   const regular = filtered.filter((project) => project.slug !== FEATURED_SLUG);
@@ -235,9 +244,9 @@ export default function ProjectDirectoryClient({ projects }: { projects: Directo
           </button>
         </div>
         {filtersOpen && <div id="project-filters" className="mt-3 flex flex-col gap-3 border-t pt-3 sm:flex-row sm:items-end" style={{ borderColor: "var(--border-default)" }}>
-           <FilterDropdown label={tt(lang, "Khu vực", "Area")} value={province} onChange={(value) => { setProvince(value); setVisibleCount(INITIAL_VISIBLE); }} open={openDropdown === "province"} onToggle={() => setOpenDropdown(openDropdown === "province" ? null : "province")} onClose={() => setOpenDropdown(null)} options={[{ value: "", label: tt(lang, "Tất cả khu vực", "All areas") }, ...provinces.map((item) => ({ value: item, label: item }))]} />
+            <FilterDropdown label={tt(lang, "Khu vực", "Area")} value={province} onChange={(value) => { setProvince(value); setVisibleCount(INITIAL_VISIBLE); }} open={openDropdown === "province"} onToggle={() => setOpenDropdown(openDropdown === "province" ? null : "province")} onClose={() => setOpenDropdown(null)} options={[{ value: "", label: tt(lang, "Tất cả khu vực", "All areas") }, ...provinces.map((item) => ({ value: item, label: provinceLabel(item) }))]} />
            <FilterDropdown label={tt(lang, "Mức giá", "Price range")} value={price} onChange={(value) => { setPrice(value); setVisibleCount(INITIAL_VISIBLE); }} open={openDropdown === "price"} onToggle={() => setOpenDropdown(openDropdown === "price" ? null : "price")} onClose={() => setOpenDropdown(null)} options={[{ value: "", label: tt(lang, "Tất cả mức giá", "All prices") }, { value: "under-10", label: tt(lang, "Dưới 10 tỷ", "Under VND 10B") }, { value: "10-20", label: tt(lang, "10 – 20 tỷ", "VND 10–20B") }, { value: "over-20", label: tt(lang, "Trên 20 tỷ", "Over VND 20B") }, { value: "sqm", label: tt(lang, "Theo triệu/m²", "By million/m²") }, { value: "contact", label: tt(lang, "Liên hệ", "Contact") }]} />
-              <FilterDropdown label={tt(lang, "Loại hình", "Property type")} value={type} onChange={(value) => { setType(value); setVisibleCount(INITIAL_VISIBLE); }} open={openDropdown === "type"} onToggle={() => setOpenDropdown(openDropdown === "type" ? null : "type")} onClose={() => setOpenDropdown(null)} options={[{ value: "", label: tt(lang, "Tất cả loại hình", "All property types") }, ...[...new Set(allProjects.map((project) => project.typeGroup))].sort((a, b) => a.localeCompare(b, "vi")).map((item) => ({ value: item, label: item }))]} />
+               <FilterDropdown label={tt(lang, "Loại hình", "Property type")} value={type} onChange={(value) => { setType(value); setVisibleCount(INITIAL_VISIBLE); }} open={openDropdown === "type"} onToggle={() => setOpenDropdown(openDropdown === "type" ? null : "type")} onClose={() => setOpenDropdown(null)} options={[{ value: "", label: tt(lang, "Tất cả loại hình", "All property types") }, ...[...new Set(allProjects.map((project) => project.typeGroup))].sort((a, b) => a.localeCompare(b, "vi")).map((item) => ({ value: item, label: typeLabel(item) }))]} />
         </div>}
         <div className="mt-3 flex items-center justify-between gap-3 text-sm">
            <p style={{ color: "var(--text-secondary)" }}><strong style={{ color: "var(--text-primary)" }}>{filtered.length}</strong> {tt(lang, "kết quả phù hợp", "matching results")}</p>

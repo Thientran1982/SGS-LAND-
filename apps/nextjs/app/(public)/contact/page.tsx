@@ -8,24 +8,26 @@ export async function generateMetadata(): Promise<Metadata> {
   const en = (await getLang()) === "en";
   const canonical = `https://sgsland.vn${en ? "/en/contact" : "/contact"}`;
   return {
-    title: "Liên Hệ",
-    description:
-      "Liên hệ SGS LAND — Hotline: 0379 281 445 | Email: info@sgsland.vn | TP. Hồ Chí Minh. Tư vấn BĐS, CRM, định giá AI miễn phí.",
+    title: en ? "Contact SGS LAND" : "Liên Hệ",
+    description: en
+      ? "Contact SGS LAND — Hotline: 0379 281 445 | Email: info@sgsland.vn | Ho Chi Minh City. Property, CRM and AI-assisted valuation support."
+      : "Liên hệ SGS LAND — Hotline: 0379 281 445 | Email: info@sgsland.vn | TP. Hồ Chí Minh. Tư vấn BĐS, CRM, định giá có hỗ trợ AI.",
     alternates: { canonical, ...langAlternates("/contact") },
   };
 }
 
 export const dynamic = "force-dynamic";
 
-export default function ContactPage() {
+export default async function ContactPage() {
+  const en = (await getLang()) === "en";
   return (
     <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-16 sm:py-24">
       <div className="text-center mb-14">
         <h1 className="text-4xl font-bold mb-4" style={{ color: "var(--text-primary)" }}>
-          Liên hệ với chúng tôi
+          {en ? "Contact us" : "Liên hệ với chúng tôi"}
         </h1>
         <p className="text-lg" style={{ color: "var(--text-secondary)" }}>
-          Đội ngũ tư vấn luôn sẵn sàng hỗ trợ bạn
+          {en ? "Our team is ready to help." : "Đội ngũ tư vấn luôn sẵn sàng hỗ trợ bạn"}
         </p>
       </div>
 
@@ -35,7 +37,7 @@ export default function ContactPage() {
           {[
             { icon: Phone, label: "Hotline", value: "0379 281 445", href: "tel:+84379281445" },
             { icon: Mail, label: "Email", value: "info@sgsland.vn", href: "mailto:info@sgsland.vn" },
-            { icon: MapPin, label: "Địa chỉ", value: "TP. Hồ Chí Minh, Việt Nam" },
+            { icon: MapPin, label: en ? "Location" : "Địa chỉ", value: en ? "Ho Chi Minh City, Vietnam" : "TP. Hồ Chí Minh, Việt Nam" },
             { icon: Linkedin, label: "LinkedIn", value: "linkedin.com/company/sgsland", href: "https://www.linkedin.com/company/sgsland" },
           ].map((c) => (
             <div key={c.label} className="flex items-start gap-4 p-5 rounded-2xl"

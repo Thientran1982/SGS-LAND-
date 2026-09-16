@@ -31,7 +31,14 @@ export async function generateMetadata({
   const article = await getArticleBySlug(slug);
   if (!article) {
     return {
-      title: "Bài viết không tìm thấy",
+      title: lang === "en" ? "Article not found" : "Bài viết không tìm thấy",
+      alternates: { canonical: canonicalUrl },
+    };
+  }
+  if (lang === "en") {
+    return {
+      title: "English edition coming soon | SGS LAND",
+      description: "This SGS LAND editorial article is currently available in Vietnamese. English editions are being prepared.",
       alternates: { canonical: canonicalUrl },
     };
   }
@@ -52,6 +59,22 @@ export default async function ArticlePage({
   const lang = await getLang();
   const article = await getArticleBySlug(slug);
   if (!article) notFound();
+  if (lang === "en") {
+    return (
+      <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-16 sm:py-24">
+        <div className="rounded-3xl p-8 sm:p-10 text-center" style={{ background: "var(--bg-elevated)", border: "1px solid var(--border-default)" }}>
+          <p className="text-xs font-bold uppercase tracking-[.18em] mb-3" style={{ color: "var(--sgs-accent-text)" }}>SGS LAND Editorial</p>
+          <h1 className="text-3xl font-extrabold mb-4" style={{ color: "var(--text-primary)" }}>English edition coming soon</h1>
+          <p className="leading-7 mb-6" style={{ color: "var(--text-secondary)" }}>
+            This article is currently available in Vietnamese. We are preparing a reviewed English edition rather than showing untranslated content.
+          </p>
+          <a href="/en/news" className="inline-flex items-center rounded-xl px-5 py-3 text-sm font-semibold text-white" style={{ background: "var(--primary-600)" }}>
+            Back to English news
+          </a>
+        </div>
+      </div>
+    );
+  }
 
   const author = getAuthorBySlug(article.author) ?? getAuthorBySlug("ban-bien-tap");
   if (!author) notFound();
