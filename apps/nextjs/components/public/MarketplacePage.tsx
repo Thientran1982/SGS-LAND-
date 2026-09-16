@@ -19,7 +19,7 @@ import { slugifyListingTitle } from "@/lib/listingSlug";
 
 const MarketplaceMap = dynamic(() => import("./MarketplaceMap").then((m) => m.MarketplaceMap), {
   ssr: false,
-  loading: () => <div className="w-full rounded-2xl flex items-center justify-center" style={{ height: 620, background: "var(--bg-elevated)", color: "var(--text-tertiary)" }}>Đang tải bản đồ…</div>,
+  loading: () => <div className="w-full rounded-2xl flex items-center justify-center" style={{ height: 620, background: "var(--bg-elevated)", color: "var(--text-tertiary)" }}>Loading map…</div>,
 });
 
 interface Props {
@@ -57,7 +57,7 @@ const TYPE_OPTIONS = (g: L) => [
 ];
 const LOCATION_OPTIONS = (g: L, locs?: string[]) => [
   { label: tt(g, "Vị trí", "Location"), value: "" },
-  ...(((locs || []).length > 0) ? (locs as string[]).map((loc) => ({ label: loc, value: loc })) : []),
+  ...(((locs || []).length > 0) ? (locs as string[]).map((loc) => ({ label: locationLabel(loc, g), value: loc })) : []),
 ];
 const PRICE_OPTIONS = (g: L) => [
   { label: tt(g, "Mức giá", "Price"), min: "", max: "" },
@@ -81,6 +81,25 @@ const CHIP_EN: Record<string, string> = {
   "BĐS Cần Giờ": "Can Gio property",
 };
 const chipLabel = (label: string, g: "vi" | "en") => (g === "en" ? CHIP_EN[label] || label : label);
+const LOCATION_EN: Record<string, string> = {
+  "Quận 1": "District 1",
+  "Quận 7": "District 7",
+  "Bình Thạnh": "Binh Thanh",
+  "Phú Nhuận": "Phu Nhuan",
+  "Bình Chánh": "Binh Chanh",
+  "Cần Giờ": "Can Gio",
+  "Thủ Đức": "Thu Duc",
+  "Đồng Nai": "Dong Nai",
+  "Long Thành": "Long Thanh",
+  "Nhơn Trạch": "Nhon Trach",
+  "Bình Dương": "Binh Duong",
+  "Long An": "Long An",
+};
+const locationLabel = (value: string, g: L) => {
+  if (g !== "en") return value;
+  return LOCATION_EN[value] || `Original area name: ${value}`;
+};
+const hasVietnameseSourceText = (value: unknown) => /[ăâđêôơưáàảãạấầẩẫậắằẳẵặéèẻẽẹếềểễệíìỉĩịóòỏõọốồổỗộớờởỡợúùủũụứừửữựýỳỷỹỵ]/i.test(String(value || ""));
 
 const LOCATION_CHIPS = [
   { label: "BĐS Đồng Nai", href: "/khu-vuc/bat-dong-san-dong-nai" }, { label: "BĐS Long Thành", href: "/khu-vuc/bat-dong-san-long-thanh" },
@@ -241,6 +260,8 @@ export function PublicListingCard({ listing, list, eager, facets }: { listing: a
   const optimized = src.startsWith("/") && !optFailed;
   const sizes = list ? "288px" : "(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw";
   const savedLabel = fav ? ui("saved", lang) : ui("save", lang);
+  const sourceTitle = lang === "en" && hasVietnameseSourceText(listing.title);
+  const sourceLocation = lang === "en" && hasVietnameseSourceText(listing.location);
   return (
     <Link href={lang === "en" ? `/en/bds/${slug}` : `/bds/${slug}`}
       className={`group block rounded-3xl overflow-hidden hover:shadow-token-lg transition-all hover:-translate-y-1 ${list ? "flex" : ""}`}
@@ -323,10 +344,12 @@ export function PublicListingCard({ listing, list, eager, facets }: { listing: a
           )}
         </div>
         <h3 className="font-semibold text-sm mb-2 line-clamp-2 leading-snug group-hover:text-sgs-primary transition-colors" style={{ color: "var(--text-primary)" }}>
-          {listing.title}
+           <span lang={sourceTitle ? "vi" : undefined}>{listing.title}</span>
+           {sourceTitle && <span className="ml-1 text-[10px] font-normal uppercase tracking-wide" style={{ color: "var(--text-tertiary)" }}>({tt(lang, "nguồn tiếng Việt", "Vietnamese source")})</span>}
         </h3>
         <div className="flex items-center gap-1.5 mb-3 text-xs" style={{ color: "var(--text-secondary)" }}>
-          <MapPin className="w-3 h-3 shrink-0" /><span className="truncate">{listing.location}</span>
+           <MapPin className="w-3 h-3 shrink-0" /><span className="truncate" lang={sourceLocation ? "vi" : undefined}>{locationLabel(listing.location, lang)}</span>
+           {sourceLocation && <span className="sr-only">{tt(lang, "Tên vị trí theo nguồn tiếng Việt", "Location name is supplied in the original Vietnamese listing")}</span>}
         </div>
         <div className="flex items-end justify-between gap-2">
           <div className="min-w-0">
@@ -382,6 +405,7 @@ export function MarketplacePage({ initialListings, totalCount, totalPages, searc
   const lang = useLang();
   const router = useRouter();
   const pathname = usePathname();
+  const localizedPathname = lang === "en" ? `/en${pathname === "/" ? "" : pathname}` : pathname;
   const [search, setSearch] = useState(sp.q ?? "");
   const [view, setView] = useState<"GRID" | "LIST" | "BOARD" | "MAP">("GRID");
   const [heroOpen, setHeroOpen] = useState(false);
@@ -430,8 +454,8 @@ export function MarketplacePage({ initialListings, totalCount, totalPages, searc
     if (sp.sort) params.set("sort", sp.sort);
     mut(params);
     params.delete("page");
-    router.push(`${pathname}?${params.toString()}`);
-  }, [sp, pathname, router]);
+     router.push(`${localizedPathname}?${params.toString()}`);
+   }, [sp, localizedPathname, router]);
 
   const setParam = (key: string, value: string) => pushParams((p) => { if (value) p.set(key, value); else p.delete(key); });
   const handleSearch = (e: React.FormEvent) => {
@@ -557,7 +581,8 @@ export function MarketplacePage({ initialListings, totalCount, totalPages, searc
                           <li key={a.name}>
                             <button type="button" onClick={() => { setHeroOpen(false); setParam("area", a.name); }}
                               className="text-xs text-left hover:opacity-70 transition-opacity w-full flex items-center justify-between gap-2" style={{ color: "var(--text-secondary)" }}>
-                              <span className="truncate">{a.name}</span>
+                              <span className="truncate" lang={lang === "en" && hasVietnameseSourceText(a.name) ? "vi" : undefined}>{locationLabel(a.name, lang)}</span>
+                              {lang === "en" && hasVietnameseSourceText(a.name) && <span className="sr-only">Original Vietnamese area name</span>}
                               <span className="shrink-0" style={{ color: "var(--text-tertiary)" }}>{a.count} {tt(lang, "tin \u0111\u0103ng", "listings")}</span>
                             </button>
                           </li>
@@ -678,7 +703,7 @@ export function MarketplacePage({ initialListings, totalCount, totalPages, searc
 
       {/* Result count + active filter chips */}
       <div className="flex items-center gap-2 overflow-x-auto no-scrollbar pb-2 mb-5 -mx-4 px-4 sm:mx-0 sm:px-0 [mask-image:linear-gradient(to_right,black_88%,transparent)] [-webkit-mask-image:linear-gradient(to_right,black_88%,transparent)]">
-        <span className="text-sm font-medium shrink-0 whitespace-nowrap" style={{ color: "var(--text-secondary)" }}>{totalCount} kết quả</span>
+         <span className="text-sm font-medium shrink-0 whitespace-nowrap" style={{ color: "var(--text-secondary)" }}>{totalCount} {tt(lang, "kết quả", "results")}</span>
         {sp.type && sp.type !== "PROJECT" && (
           <ActiveChip label={TYPE_OPTIONS(lang).find((o) => o.value === sp.type)?.label ?? sp.type}
             onRemove={() => pushParams((p) => p.delete("type"))} />
@@ -752,13 +777,13 @@ export function MarketplacePage({ initialListings, totalCount, totalPages, searc
             )}
             {totalPages > 1 && (
         <div className="flex items-center justify-center gap-2 mt-10">
-          <Link href={`${pathname}?${new URLSearchParams({ ...sp, page: String(Math.max(1, currentPage - 1)) }).toString()}`}
+          <Link href={`${localizedPathname}?${new URLSearchParams({ ...sp, page: String(Math.max(1, currentPage - 1)) }).toString()}`}
             className={`flex items-center gap-1 px-4 py-2 rounded-xl text-sm font-medium ${currentPage <= 1 ? "opacity-40 pointer-events-none" : ""}`}
             style={{ color: "var(--text-primary)", border: "1px solid var(--border-default)" }}>
             <ChevronLeft className="w-4 h-4" /> {tt(lang, "Trước", "Previous")}
           </Link>
           <span className="px-4 py-2 text-sm" style={{ color: "var(--text-secondary)" }}>{tt(lang, "Trang", "Page")} {currentPage} / {totalPages}</span>
-          <Link href={`${pathname}?${new URLSearchParams({ ...sp, page: String(Math.min(totalPages, currentPage + 1)) }).toString()}`}
+          <Link href={`${localizedPathname}?${new URLSearchParams({ ...sp, page: String(Math.min(totalPages, currentPage + 1)) }).toString()}`}
             className={`flex items-center gap-1 px-4 py-2 rounded-xl text-sm font-medium ${currentPage >= totalPages ? "opacity-40 pointer-events-none" : ""}`}
             style={{ color: "var(--text-primary)", border: "1px solid var(--border-default)" }}>
             {tt(lang, "Tiếp", "Next")} <ChevronRight className="w-4 h-4" />

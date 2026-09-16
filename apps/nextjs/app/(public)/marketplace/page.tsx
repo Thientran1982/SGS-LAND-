@@ -3,12 +3,12 @@ import type { Metadata } from "next";
 import { Suspense } from "react";
 import type { Listing } from "@/types";
 import { MarketplacePage } from "@/components/public/MarketplacePage";
-import { getLang } from "@/lib/lang";
+import { getLang, langAlternates } from "@/lib/lang";
 
 export async function generateMetadata(): Promise<Metadata> {
   const lang = await getLang();
   const en = lang === "en";
-  const url = en ? "https://sgsland.vn/en/bat-dong-san" : "https://sgsland.vn/bat-dong-san";
+  const url = en ? "https://sgsland.vn/en/marketplace" : "https://sgsland.vn/marketplace";
   return {
     title: en
       ? "Property Search | SGS LAND Marketplace"
@@ -19,9 +19,7 @@ export async function generateMetadata(): Promise<Metadata> {
     alternates: {
       canonical: url,
       languages: {
-        "vi-VN": "https://sgsland.vn/bat-dong-san",
-        "en-US": "https://sgsland.vn/en/bat-dong-san",
-        "x-default": "https://sgsland.vn/bat-dong-san",
+        ...langAlternates("/marketplace").languages,
       },
     },
     openGraph: {
@@ -57,6 +55,8 @@ export default async function MarketplaceRoute({
   searchParams: Promise<SearchParams>;
 }) {
   const sp = await searchParams;
+  const lang = await getLang();
+  const en = lang === "en";
 
   // Fetch results and facets in parallel. Both are needed for the initial
   // page, but serial requests made every filter navigation feel stuck.
@@ -114,9 +114,9 @@ export default async function MarketplaceRoute({
   }
 
   return (
-    <Suspense fallback={<div className="h-screen flex items-center justify-center" style={{ color: "var(--text-tertiary)" }}>Đang tải...</div>}>
+    <Suspense fallback={<div className="h-screen flex items-center justify-center" style={{ color: "var(--text-tertiary)" }}>{en ? "Loading..." : "Đang tải..."}</div>}>
       <>
-        <h1 className="sr-only">Tìm kiếm bất động sản tại Việt Nam</h1>
+        <h1 className="sr-only">{en ? "Search properties in Vietnam" : "Tìm kiếm bất động sản tại Việt Nam"}</h1>
         <MarketplacePage
           initialListings={initialListings}
           totalCount={totalCount}

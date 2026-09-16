@@ -25,6 +25,20 @@ function areaHref(slug: string) {
   return AREA_DETAIL_SLUGS.has(slug) ? `/khu-vuc/${slug}` : `/${slug}`;
 }
 
+const AREA_EN_NAMES: Record<string, string> = {
+  "TP. Thủ Đức": "Thu Duc City",
+  "Quận 7 (Phú Mỹ Hưng)": "District 7 (Phu My Hung)",
+  "Bình Thạnh": "Binh Thanh",
+  "Phú Nhuận": "Phu Nhuan",
+  "Bình Chánh": "Binh Chanh",
+  "Cần Giờ": "Can Gio",
+  "Hóc Môn": "Hoc Mon",
+  "Biên Hòa, Đồng Nai": "Bien Hoa, Dong Nai",
+  "Long Thành, Đồng Nai": "Long Thanh, Dong Nai",
+  "Bình Dương": "Binh Duong",
+  "Long An": "Long An",
+};
+
 export async function generateMetadata(): Promise<Metadata> {
   const en = (await getLang()) === "en";
   return {
@@ -52,7 +66,7 @@ export default async function KhuVucPage() {
     itemListElement: AREA_PRICES.map((a, i) => ({
       "@type": "ListItem",
       position: i + 1,
-       name: en ? `Real estate in ${a.area}` : `Bất động sản ${a.area}`,
+        name: en ? `Real estate in ${AREA_EN_NAMES[a.area] || a.area}` : `Bất động sản ${a.area}`,
        url: `${SITE_URL}${localeHref(areaHref(a.slug))}`,
     })),
   };
@@ -99,7 +113,7 @@ export default async function KhuVucPage() {
         {AREA_PRICES.map((a) => (
           <Link
             key={a.slug}
-            href={areaHref(a.slug)}
+             href={localeHref(areaHref(a.slug))}
             className="block p-6 rounded-2xl border hover:shadow-md transition"
             style={{
               borderColor: "var(--border)",
@@ -111,7 +125,7 @@ export default async function KhuVucPage() {
                 className="text-xl font-bold"
                 style={{ color: "var(--text-primary)" }}
               >
-                {a.area}
+                 {en ? (AREA_EN_NAMES[a.area] || a.area) : a.area}
               </h2>
               {typeof a.yoyChangePct === "number" && (
                 <span

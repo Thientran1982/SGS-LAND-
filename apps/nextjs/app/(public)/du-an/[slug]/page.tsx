@@ -63,6 +63,7 @@ import {
 } from "@/lib/schema";
 import type { FAQItem } from "@/lib/schema";
 import { getLang, langAlternates } from "@/lib/lang";
+import { PROJECT_DETAIL_EN } from "@/data/project-detail-en";
 import {
   GEO_DEFAULT_EVIDENCE_NOTE,
   GEO_EDITOR_NAME,
@@ -906,7 +907,7 @@ export async function generateMetadata({
     : `Dự án ${slug} | SGS LAND`;
   const description = en
     ? meta
-      ? `${areaName} — ${meta.loc}. ${meta.priceRange}. ${AREA_DETAIL_SLUGS.has(slug) ? "Indicative area information" : "Indicative project information"} from SGS LAND; verify current price, legal status, progress and distribution authorization against original documents.`
+      ? PROJECT_DETAIL_EN[slug]?.desc || `${areaName} — ${AREA_DETAIL_SLUGS.has(slug) ? "Indicative area information" : "Indicative project information"} from SGS LAND; verify current price, legal status, progress and distribution authorization against original documents.`
       : "Detailed real estate project information from SGS LAND."
     : meta?.metaDescription ??
       meta?.desc ??
@@ -918,7 +919,9 @@ export async function generateMetadata({
       canonical: en ? `https://sgsland.vn/en/du-an/${slug}` : `https://sgsland.vn/du-an/${slug}`,
       ...langAlternates(`/du-an/${slug}`),
     },
-      keywords: SLUG_KEYWORDS[slug] ?? `${meta?.name ?? slug} gia ban, phap ly, tien do 2026`,
+      keywords: en
+        ? `${areaName || meta?.name || slug}, real estate, reference price, legal status, SGS LAND`
+        : SLUG_KEYWORDS[slug] ?? `${meta?.name ?? slug} gia ban, phap ly, tien do 2026`,
     openGraph: {
       title,
       description,
@@ -991,16 +994,18 @@ export default async function ProjectPage({
     ? (projectData.location || meta?.loc || "Vietnam")
       .replace(/TP\.?HCM/gi, "Ho Chi Minh City")
       .replace(/Quận\s+/gi, "District ")
-    : (projectData.location || meta?.loc || "");
-  const schemaProjectDescription = cmsContent?.content?.seoDescription || (en && AREA_DETAIL_SLUGS.has(slug)
-    ? `${schemaProjectName} is an area-level real estate reference page, not a single development. Verify the specific property, legal documents, pricing and operating status before a transaction.`
-    : projectData.description);
+    : en
+      ? `Original project location for ${schemaProjectName}; verify the current address and phase documents.`
+      : (projectData.location || meta?.loc || "");
+  const schemaProjectDescription = en
+    ? PROJECT_DETAIL_EN[slug]?.desc || `Reference information for ${schemaProjectName}. Translation is not available for every source field; verify current pricing, legal status, progress and distribution authorization against original documents.`
+    : cmsContent?.content?.seoDescription || projectData.description;
   const schemaProjectDeveloper = en && AREA_DETAIL_SLUGS.has(slug)
     ? (slug === "nha-pho-trung-tam" ? "Multiple individual and organizational owners" : "Multiple developers")
     : projectData.developer;
-  const schemaPriceRange = en && AREA_DETAIL_SLUGS.has(slug)
-    ? "Reference figures vary by sub-zone and property; verify current pricing against dated documents"
-    : (meta?.priceRange || (en ? "Contact SGS LAND for the latest price list" : "Liên hệ SGS LAND để biết giá cập nhật"));
+  const schemaPriceRange = en
+    ? "Reference figures require verification against a dated price list for the specific property"
+    : (meta?.priceRange || "Liên hệ SGS LAND để biết giá cập nhật");
   const reviewedAt = meta?.reviewedAt || GEO_REVIEW_DATE;
   const directAnswer = buildGeoDirectAnswer({
     projectName: schemaProjectName,
@@ -1012,6 +1017,8 @@ export default async function ProjectPage({
   const evidenceNote = cms?.evidenceNote || GEO_DEFAULT_EVIDENCE_NOTE;
   const hasDatedSource = Boolean(cms?.sourceUrl || cms?.sourceUrls || cms?.factsSource);
   // ─── JSON-LD schemas ──────────────────────────────────
+  const detailPath = `${en ? "/en" : ""}${getDetailBasePath(slug)}`;
+  const isArea = AREA_DETAIL_SLUGS.has(slug);
   const listingSchema = getRealEstateListingSchema({
     name: schemaProjectName,
     slug,
@@ -1026,14 +1033,20 @@ export default async function ProjectPage({
     price_high: hasDatedSource ? meta?.priceHigh : undefined,
     date_modified: reviewedAt,
   });
-  const detailPath = getDetailBasePath(slug);
-  const isArea = AREA_DETAIL_SLUGS.has(slug);
+  const localizedListingSchema = {
+    ...listingSchema,
+    "@id": `${SITE_URL}${detailPath}#listing`,
+    url: `${SITE_URL}${detailPath}`,
+    inLanguage: en ? "en-US" : "vi-VN",
+  };
   const breadcrumbSchema = getBreadcrumbSchema([
     { name: en ? "Home" : "Trang chủ", url: en ? `${SITE_URL}/en` : SITE_URL },
     { name: en ? (isArea ? "Areas" : "Property projects") : (isArea ? "Khu vực" : "Dự án BĐS"), url: en ? `${SITE_URL}/en/${isArea ? "khu-vuc" : "du-an"}` : `${SITE_URL}/${isArea ? "khu-vuc" : "du-an"}` },
     { name: schemaProjectName, url: `${SITE_URL}${detailPath}` },
   ]);
+  if (en) breadcrumbSchema.itemListElement[0].item = `${SITE_URL}/en`;
   const orgSchema = getOrganizationSchema();
+  const localizedOrgSchema = en ? { ...orgSchema, inLanguage: ["en"] } : orgSchema;
   const faqItems = buildProjectFAQ(
     slug,
     schemaProjectName,
@@ -1042,29 +1055,29 @@ export default async function ProjectPage({
     schemaPriceRange,
     en
   );
-  const faqSchema = getFAQSchema(faqItems, `${SITE_URL}${detailPath}#faq`);
+  const faqSchema = { ...getFAQSchema(faqItems, `${SITE_URL}${detailPath}#faq`), inLanguage: en ? "en-US" : "vi-VN" };
   const videoSchema = getVideoSchema(slug);
   const announcementSchema = getSpecialAnnouncementSchema(slug);
   // Serialised JSON for noscript layer
   const aptMeta = APARTMENT_COMPLEX_META[slug];
   const apartmentSchema = aptMeta && slug !== "aqua-city" ? getApartmentComplexSchema({
-    name: projectData.name,
+      name: en && PROJECT_DETAIL_EN[slug] ? schemaProjectName : projectData.name,
      url: `${SITE_URL}${detailPath}`,
-     description: schemaProjectDescription,
-    location: projectData.location,
-    developer: projectData.developer,
+      description: schemaProjectDescription,
+     location: en && PROJECT_DETAIL_EN[slug] ? PROJECT_DETAIL_EN[slug].heroMeta : projectData.location,
+     developer: en && PROJECT_DETAIL_EN[slug] ? (PROJECT_DETAIL_EN[slug].heroMeta.split("•")[0]?.trim() || projectData.developer) : projectData.developer,
     numberOfRooms: aptMeta.numberOfRooms,
     amenities: aptMeta.amenities,
     priceRange: aptMeta.priceRange,
   }) : null;
   const schemasJson = JSON.stringify(
-    [listingSchema, breadcrumbSchema, orgSchema, faqSchema, ...(apartmentSchema ? [apartmentSchema] : [])],
+    [localizedListingSchema, breadcrumbSchema, localizedOrgSchema, faqSchema, ...(apartmentSchema ? [{ ...apartmentSchema, inLanguage: en ? "en-US" : "vi-VN" }] : [])],
     null, 2
   );
   return (
     <>
       {/* ── JSON-LD schemas: SSR-rendered, visible in raw HTML ── */}
-      <SchemaScript schemas={[listingSchema, breadcrumbSchema, orgSchema, faqSchema, ...(videoSchema ? [videoSchema] : []), ...(announcementSchema ? [announcementSchema] : [])]} />
+      <SchemaScript schemas={[localizedListingSchema, breadcrumbSchema, localizedOrgSchema, faqSchema, ...(videoSchema ? [{ ...videoSchema, inLanguage: en ? "en-US" : "vi-VN" }] : []), ...(announcementSchema ? [announcementSchema] : [])]} />
       {/*
        * ── noscript fallback layer ──────────────────────────────
        * AI crawlers that do not execute JavaScript still receive
@@ -1151,7 +1164,7 @@ export default async function ProjectPage({
           {meta?.priceRange && (
             <>
               <dt>{en ? "Indicative price" : "Giá tham khảo"}</dt>
-               <dd itemProp="offers">{en && AREA_DETAIL_SLUGS.has(slug) ? schemaPriceRange : meta.priceRange}</dd>
+               <dd itemProp="offers">{en ? schemaPriceRange : meta.priceRange}</dd>
             </>
           )}
           <dt>{en ? "Distribution information" : "Thông tin phân phối"}</dt>

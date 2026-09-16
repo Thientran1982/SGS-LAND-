@@ -3,16 +3,23 @@
 import { useEffect, useRef } from "react";
 import "leaflet/dist/leaflet.css";
 import { slugifyListingTitle } from "@/lib/listingSlug";
+import { useLang } from "@/components/shared/useLang";
+import { tt } from "@/lib/i18n";
 
-function formatPrice(price: number): string {
-  return price >= 1e9 ? `${(price / 1e9).toFixed(2)} tỷ` : `${Math.round(price / 1e6)} triệu`;
+function formatPrice(price: number, lang: "vi" | "en"): string {
+  return price >= 1e9
+    ? `${(price / 1e9).toFixed(2)}${lang === "en" ? "B VND" : " tỷ"}`
+    : `${Math.round(price / 1e6)}${lang === "en" ? "M VND" : " triệu"}`;
 }
-function priceLabel(price: number): string {
+function priceLabel(price: number, lang: "vi" | "en"): string {
   if (!price) return "--";
-  return price >= 1e9 ? `${(price / 1e9).toFixed(1).replace(".", ",")} tỷ` : `${Math.round(price / 1e6)} tr`;
+  return price >= 1e9
+    ? `${(price / 1e9).toFixed(1).replace(".", lang === "en" ? "." : ",")}${lang === "en" ? "B" : " tỷ"}`
+    : `${Math.round(price / 1e6)}${lang === "en" ? "M" : " tr"}`;
 }
 
 export function MarketplaceMap({ listings, height = "620px" }: { listings: any[]; height?: string }) {
+  const lang = useLang();
   const ref = useRef<HTMLDivElement>(null);
   const mapRef = useRef<any>(null);
 
@@ -107,7 +114,7 @@ export function MarketplaceMap({ listings, height = "620px" }: { listings: any[]
             className: "",
             html:
               '<div style="background:#1B3A5C;color:#fff;font-weight:700;font-size:12px;line-height:1;padding:5px 9px;border-radius:999px;white-space:nowrap;border:2px solid #C8963E;box-shadow:0 2px 6px rgba(0,0,0,.35)">' +
-              priceLabel(l.price) +
+               priceLabel(l.price, lang) +
               "</div>",
             iconSize: [64, 24],
             iconAnchor: [32, 12],
@@ -115,15 +122,15 @@ export function MarketplaceMap({ listings, height = "620px" }: { listings: any[]
           const m = L.marker([lat, lng], { icon, riseOnHover: true }).addTo(map);
           const slug = `${slugifyListingTitle(l.title)}-${l.id}`;
           const img = (l.images && l.images[0]) || "";
-          m.bindPopup(
-            `<a href="/bds/${slug}" style="display:block;text-decoration:none;color:inherit;width:232px">` +
+           m.bindPopup(
+             `<a href="${lang === "en" ? "/en" : ""}/bds/${slug}" style="display:block;text-decoration:none;color:inherit;width:232px">` +
               (img ? `<img src="${img}" alt="" style="width:100%;height:120px;object-fit:cover;display:block;border-radius:6px"/>` : "") +
               `<div style="padding:8px 2px 2px">` +
               `<div style="font-weight:700;font-size: 14px;line-height:1.3;margin-bottom:4px;color:#152232">${l.title || ""}</div>` +
-              `<div style="color:#1B3A5C;font-weight:800;font-size: 16px">${formatPrice(l.price)}</div>` +
+               `<div style="color:#1B3A5C;font-weight:800;font-size: 16px">${formatPrice(l.price, lang)}</div>` +
               `<div style="color:#64748b;font-size: 12px;margin-top:2px">${l.location || ""}</div>` +
-              (l._approx ? `<div style="color:#94a3b8;font-size: 12px;margin-top:3px">Vị trí tương đối theo khu vực</div>` : "") +
-              `<div style="margin-top:8px;color:#C8963E;font-weight:700;font-size:12px">Xem chi tiết →</div>` +
+               (l._approx ? `<div style="color:#94a3b8;font-size: 12px;margin-top:3px">${tt(lang, "Vị trí tương đối theo khu vực", "Approximate area location")}</div>` : "") +
+               `<div style="margin-top:8px;color:#C8963E;font-weight:700;font-size:12px">${tt(lang, "Xem chi tiết →", "View details →")}</div>` +
               `</div></a>`,
             { maxWidth: 252, minWidth: 232 }
           );
@@ -140,7 +147,7 @@ export function MarketplaceMap({ listings, height = "620px" }: { listings: any[]
         mapRef.current = null;
       }
     };
-  }, [listings]);
+   }, [listings, lang]);
 
   return (
     <div

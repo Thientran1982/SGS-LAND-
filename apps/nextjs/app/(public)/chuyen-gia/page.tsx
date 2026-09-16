@@ -2,6 +2,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { getLang, langAlternates } from "@/lib/lang";
+import { EXPERTS as EXPERT_DATA } from "@/data/experts";
 
 function expertSlug(name) {
   return name
@@ -37,50 +38,13 @@ export async function generateMetadata(): Promise<Metadata> {
 
 export const dynamic = "force-dynamic";
 
-const EXPERTS = (en: boolean) => [
-  {
-    name: "Trần Minh Thiện",
-    title: en ? "CEO & Founder — Primary distribution specialist" : "CEO & Founder — Chuyên gia phân phối sơ cấp",
-    exp: en ? "10+ years" : "10+ năm",
-    spec: "Vinhomes, Novaland, Aqua City",
-    desc: en ? "Authorised tier-1 agent for Novaland (2017), Vinhomes (2019) and Masterise Homes (2021). Specialises in long-term investment analysis and luxury property advice in Ho Chi Minh City." : "Đại lý F1 ủy quyền Novaland (2017), Vinhomes (2019), Masterise Homes (2021). Chuyên phân tích đầu tư dài hạn và tư vấn BĐS hạng sang TP.HCM.",
-  },
-  {
-    name: "Nguyễn Hoàng Nam",
-    title: en ? "CTO — AI valuation (AVM) specialist" : "CTO — Chuyên gia định giá AI (AVM)",
-    exp: en ? "10+ years" : "10+ năm",
-    spec: en ? "AI valuation, PropTech, CRM" : "Định giá AI, PropTech, CRM",
-    desc: en ? "Architect of the AVM valuation engine, accurate to ±5% across 45,000+ real transactions. Specialises in big-data market analysis." : "Kiến trúc sư hệ thống AVM định giá BĐS với sai số ±5% trên 45.000+ giao dịch thực. Chuyên phân tích thị trường dữ liệu lớn.",
-  },
-  {
-    name: "Lê Thị Hoa",
-    title: en ? "COO — Legal & operations specialist" : "COO — Chuyên gia pháp lý & vận hành",
-    exp: en ? "15+ years" : "15+ năm",
-    spec: en ? "Property law, Ministry of Construction brokerage" : "Pháp lý BĐS, Môi giới Bộ Xây Dựng",
-    desc: en ? "Licensed real estate broker (Ministry of Construction). Designed the two-layer legal due-diligence process (AI + specialist review) and runs the nationwide network of 15,000+ brokers." : "Chứng chỉ môi giới BĐS Bộ Xây Dựng. Thiết kế quy trình kiểm tra pháp lý 2 lớp (AI + chuyên viên). Quản lý mạng lưới 15.000+ môi giới toàn quốc.",
-  },
-  {
-    name: "Nguyễn Thị Lan",
-    title: en ? "Head of Advisory — South-East region" : "Trưởng Phòng Tư Vấn — BĐS Đông Nam Bộ",
-    exp: en ? "8+ years" : "8+ năm",
-    spec: "Aqua City, Izumi City, Đồng Nai",
-    desc: en ? "Deep expertise in the Dong Nai, Long An and Binh Duong markets. Advises on industrial-park investment and suburban eco-township projects." : "Chuyên sâu thị trường BĐS Đồng Nai, Long An, Bình Dương. Tư vấn đầu tư khu công nghiệp và dự án sinh thái ven đô.",
-  },
-  {
-    name: "Phạm Văn Đức",
-    title: en ? "Senior Consultant — HCMC luxury property" : "Senior Tư Vấn — BĐS Cao Cấp TP.HCM",
-    exp: en ? "7+ years" : "7+ năm",
-    spec: en ? "Thu Duc, Binh Thanh, District 1" : "Thủ Đức, Bình Thạnh, Quận 1",
-    desc: en ? "Distributes high-end Thu Duc apartments: The Global City, Vinhomes Grand Park, Masteri Thao Dien. Supports mortgage applications and e-signed contracts." : "Chuyên phân phối căn hộ cao cấp Thủ Đức: The Global City, Vinhomes Grand Park, Masteri Thảo Điền. Hỗ trợ vay ngân hàng và ký hợp đồng điện tử.",
-  },
-  {
-    name: "Trần Thị Thu",
-    title: en ? "Senior Consultant — Coastal & resort property" : "Senior Tư Vấn — BĐS Ven Biển & Nghỉ Dưỡng",
-    exp: en ? "6+ years" : "6+ năm",
-    spec: "Vinhomes Cần Giờ, NovaWorld Phan Thiết",
-    desc: en ? "Advises on coastal resort property: rental yields, resort pink-book legal status and 5–10 year capital growth potential." : "Chuyên tư vấn BĐS nghỉ dưỡng ven biển: yield cho thuê, pháp lý sổ hồng resort, tiềm năng tăng giá 5-10 năm.",
-  },
-];
+const EXPERTS = (en: boolean) => EXPERT_DATA.map((expert) => ({
+  name: expert.name,
+  title: en ? expert.titleEn : expert.title,
+  exp: en ? expert.exp.replace("năm", "years") : expert.exp,
+  spec: en ? expert.specEn : expert.spec,
+  desc: en ? expert.descEn : expert.desc,
+}));
 
 const STATS = (en: boolean) => [
   { value: "50+", label: en ? "Licensed property experts" : "Chuyên gia có chứng chỉ hành nghề" },
