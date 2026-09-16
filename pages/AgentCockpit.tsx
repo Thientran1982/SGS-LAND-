@@ -238,16 +238,25 @@ function MinhCommandCenterPanelCard({ title, panel, children }: { title: string;
   const stateClass = panel.state === 'available' ? 'bg-emerald-100 text-emerald-700'
     : panel.state === 'degraded' ? 'bg-amber-100 text-amber-800'
       : 'bg-rose-100 text-rose-700';
+  const headingId = `minh-command-center-panel-${title.toLowerCase().replace(/[^a-z0-9]+/g, '-')}`;
   return (
-    <div className="rounded-lg border border-slate-200 bg-white p-3">
+    <div className="rounded-lg border border-slate-200 bg-white p-3" role="group" aria-labelledby={headingId}>
       <div className="mb-2 flex items-center justify-between gap-2">
-        <h3 className="text-xs font-semibold text-slate-800">{title}</h3>
-        <span className={`rounded-full px-2 py-0.5 text-[10px] font-semibold ${stateClass}`}>{stateLabel}</span>
+        <h3 id={headingId} className="text-xs font-semibold text-slate-800">{title}</h3>
+        <span
+          className={`rounded-full px-2 py-0.5 text-[10px] font-semibold ${stateClass}`}
+          role="status"
+          aria-label={`${title}: ${stateLabel}`}
+          aria-live="polite"
+          aria-atomic="true"
+        >
+          {stateLabel}
+        </span>
       </div>
       {panel.data === null
-        ? <div role="status" className="text-xs text-rose-700">{panel.message || 'Dữ liệu chưa khả dụng; hãy thử làm mới.'}</div>
+        ? <div role="status" aria-live="polite" aria-atomic="true" className="text-xs text-rose-700">{panel.message || 'Dữ liệu chưa khả dụng; hãy thử làm mới.'}</div>
         : <>
-          {panel.message && <div role="status" className="mb-2 text-[11px] text-amber-700">{panel.message}</div>}
+          {panel.message && <div role="status" aria-live="polite" aria-atomic="true" className="mb-2 text-[11px] text-amber-700">{panel.message}</div>}
           {children}
         </>}
     </div>
