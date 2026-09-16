@@ -93,6 +93,7 @@
 - [Notification dedupe parameter types](notification-dedupe-parameter-types.md) — bind reused notification values through an explicitly typed CTE
 - [Server test public URL](server-test-public-url.md) — set APP_URL explicitly when server tests assert a production public origin
 - [Minh evidence orchestration](minh-evidence-orchestration.md) — compound workstreams, structured evidence, filtered memory, and separate response/telemetry idempotency
+- [Minh active-brain contract](minh-active-brain-contract.md) — proactive decisions need one validated dossier covering evidence, tenant, specialists, permission, retry, and rollback
 - [Minh Week 0 contracts](minh-week-0-contracts.md) — stable lifecycle/error vocabulary and end-to-end trace links precede proactive orchestration
 - [Minh Week 1 overlay](minh-week-1-overlay.md) — observe legacy schedulers in shadow mode before replacing or connecting proactive actions
 - [Live-chat telemetry persistence](livechat-telemetry-persistence.md) — persist bounded hashed latency metrics asynchronously with startup hydration and outage backoff

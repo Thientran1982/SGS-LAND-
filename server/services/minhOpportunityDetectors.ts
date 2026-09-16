@@ -2,6 +2,7 @@ import { randomUUID } from 'node:crypto';
 import { withTenantContext } from '../db';
 import { logger } from '../middleware/logger';
 import { enqueueMinhOpportunitySuggestions } from './minhDecisionQueueService';
+import { createMinhActiveBrainDecision } from '../ai/minhActiveBrainContract';
 
 export const PROACTIVE_OPPORTUNITY_SIGNAL = 'proactive_opportunity';
 
@@ -348,8 +349,65 @@ async function persistOpportunities(
 ): Promise<number> {
   let persisted = 0;
   for (const opportunity of opportunities) {
+    const signalId = randomUUID();
+    const dedupeKey = [
+      'proactive-opportunity',
+      opportunity.kind,
+      opportunity.subjectType,
+      opportunity.subjectId,
+      observationDate(now),
+    ].join(':').slice(0, 240);
+    const evidenceId = `detector:${opportunity.kind}:${opportunity.subjectType}:${opportunity.subjectId}`;
+    const activeBrainDecision = createMinhActiveBrainDecision({
+      whyDetected: opportunity.rationale,
+      evidence: [{
+        id: evidenceId,
+        source: `detector:${opportunity.kind}`,
+        tenantId,
+        claim: opportunity.rationale,
+        observedAt: now.toISOString(),
+        freshness: {
+          status: 'FRESH',
+          checkedAt: now.toISOString(),
+          policy: 'tenant_detector_snapshot',
+          reason: 'Detector vừa đọc dữ liệu trong tenant ở cùng lần quét.',
+          sourceObservedAt: typeof opportunity.evidence.observedAt === 'string'
+            ? opportunity.evidence.observedAt
+            : null,
+        },
+        facts: opportunity.evidence,
+      }],
+      tenant: {
+        tenantId,
+        scopeVerifiedAt: now.toISOString(),
+        scope: 'TENANT_SCOPED',
+      },
+      specialists: {
+        run: [],
+        skipped: [{
+          name: 'specialist_followup_review',
+          reason: 'Giai đoạn Observe chỉ chạy detector Read-only; chưa cần specialist tạo nội dung hay hành động.',
+        }],
+      },
+      action: {
+        mode: 'READ',
+        type: 'OBSERVE_OPPORTUNITY',
+        approvalRequired: false,
+        approvalReason: 'Read-only observation không thay đổi dữ liệu và không gọi provider.',
+      },
+      retry: {
+        idempotencyKey: dedupeKey,
+        duplicateRecordBehavior: 'REPLAY_EXISTING_TENANT_SIGNAL',
+        duplicateMessageBehavior: 'NO_PROVIDER_MESSAGE',
+      },
+      rollback: {
+        target: 'DISABLE_PROACTIVE_ROLLOUT_AND_RESTORE_LAST_KNOWN_GOOD_POLICY',
+        trigger: 'Detector regression, stale evidence, cross-tenant scope failure, or duplicate rate above threshold.',
+        approvalRequired: true,
+      },
+    });
     const payload = {
-      schemaVersion: 1,
+      schemaVersion: 3,
       kind: opportunity.kind,
       priority: opportunity.priority,
       confidence: opportunity.confidence,
@@ -361,14 +419,8 @@ async function persistOpportunities(
       actionCreated: false,
       observedAt: now.toISOString(),
       traceId,
+      activeBrainDecision,
     };
-    const dedupeKey = [
-      'proactive-opportunity',
-      opportunity.kind,
-      opportunity.subjectType,
-      opportunity.subjectId,
-      observationDate(now),
-    ].join(':').slice(0, 240);
     const result = await client.query(
       `INSERT INTO agent_signals
          (id, tenant_id, signal_type, actor_id, subject_type, subject_id, payload, dedupe_key, provenance)
@@ -376,7 +428,7 @@ async function persistOpportunities(
        ON CONFLICT (tenant_id, dedupe_key) WHERE dedupe_key IS NOT NULL DO NOTHING
        RETURNING id`,
       [
-        randomUUID(),
+        signalId,
         tenantId,
         PROACTIVE_OPPORTUNITY_SIGNAL,
         'MINH',

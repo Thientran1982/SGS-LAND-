@@ -267,10 +267,31 @@ khớp với outbound interaction. Không yêu cầu khách bấm gửi lại n�
 - Tạo candidate lesson có provenance.
 - Promote/rollback tự động theo gate; không tự học từ lỗi chưa giải quyết.
 
-## 8. Định nghĩa hoàn thành
+## 8. Định nghĩa hoàn thành: chỉ được gọi là "bộ não chủ động"
 
-Minh được xem là "bộ não hệ thống" khi có thể trả lời được vì sao đã chọn
-specialist nào, dùng evidence nào, bỏ qua nguồn nào, quyền nào đã kiểm tra,
-run đang ở state nào, và có thể resume/replay chính xác sau timeout. Một câu
-trả lời hay nhưng không truy được nguồn, không biết quyền, hoặc gửi trùng
-không phải là hệ thống đã được huấn luyện hoàn chỉnh.
+Minh **chỉ** được gọi là **"bộ não chủ động"** khi mỗi opportunity/decision
+đều có một decision dossier hợp lệ và có thể trả lời đầy đủ tất cả câu hỏi sau:
+
+1. **Vì sao phát hiện cơ hội này?** — rationale phải gắn với detector và claim cụ thể.
+2. **Evidence nào hỗ trợ?** — mỗi evidence phải có source, claim, tenant và thời điểm quan sát.
+3. **Evidence đó còn mới không?** — phải có trạng thái `FRESH`, `STALE` hoặc `UNKNOWN`,
+   thời điểm kiểm tra, policy freshness và lý do; không được suy luận missing thành zero.
+4. **Dữ liệu thuộc tenant nào?** — dossier và từng evidence phải có tenant scope đã xác minh.
+5. **Specialist nào đã chạy?** — ghi tên, trạng thái, run/checkpoint và evidence liên quan.
+6. **Specialist nào bị bỏ qua và vì sao?** — phải ghi rõ từng specialist bị skip; nếu không có
+   specialist thì phải ghi rõ "không cần chạy" và lý do.
+7. **Hành động này là Read, Suggest hay Act?** — action mode và loại action phải là enum,
+   không suy ra từ tên detector.
+8. **Có cần approval không?** — lưu boolean và lý do. Act/high-impact không được bypass approval.
+9. **Nếu retry thì có tạo bản ghi hoặc tin nhắn trùng không?** — phải có idempotency key và
+   chính sách replay riêng cho record và message. Provider outcome không rõ không được retry mù.
+10. **Nếu model/policy mới lỗi thì rollback về đâu?** — phải có target rollback, trigger và
+    trạng thái approval. Target mặc định là policy/model last-known-good hoặc tắt proactive rollout.
+
+Decision dossier thiếu một câu trả lời phải bị fail-closed và không được gắn nhãn
+"bộ não chủ động", không được đưa vào Suggest queue. Command Center phải hiển thị
+dossier này cạnh opportunity và approval để người vận hành kiểm tra cùng một nguồn sự thật.
+
+Một câu trả lời hay nhưng không truy được nguồn, không biết quyền, không biết retry có
+gửi trùng hay không, hoặc không chỉ ra được rollback target không phải là hệ thống đã
+được huấn luyện hoàn chỉnh.

@@ -88,6 +88,7 @@ export interface OpportunityQueueItem {
   expiresAt: string | null;
   suggestedAction: { type: string | null; payload?: unknown } | null;
   approvalStatus: string | null;
+  activeBrainDecision: unknown;
 }
 
 async function buildOpportunityQueuePanel(tenantId: string): Promise<CommandCenterPanel<OpportunityQueueItem[]>> {
@@ -105,6 +106,7 @@ async function buildOpportunityQueuePanel(tenantId: string): Promise<CommandCent
       expiresAt: row.expiresAt ?? null,
       suggestedAction: row.suggestedAction ?? (row.approval?.actionType ? { type: row.approval.actionType } : null),
       approvalStatus: row.approval?.status ?? null,
+      activeBrainDecision: row.activeBrainDecision ?? null,
     }));
     return ok(items);
   } catch (error: any) {

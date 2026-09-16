@@ -8,6 +8,11 @@ import {
 } from '../repositories/approvalRequestRepository';
 import { logger } from '../middleware/logger';
 import { notificationRepository } from '../repositories/notificationRepository';
+import {
+  reclassifyMinhActiveBrainAction,
+  validateMinhActiveBrainDecision,
+  type MinhActiveBrainDecision,
+} from '../ai/minhActiveBrainContract';
 
 export const DEFAULT_MINH_PROACTIVE_DAILY_BUDGET = 20;
 export const MINH_PROACTIVE_DAILY_BUDGET = Math.max(
@@ -74,6 +79,13 @@ function priorityLabel(priority: unknown): 'HIGH' | 'MEDIUM' | 'LOW' {
 
 function buildApprovalData(signal: OpportunitySignalRow, actionType: HighImpactAction) {
   const payload = parseSignalPayload(signal.payload);
+  const sourceDecision = payload.activeBrainDecision as MinhActiveBrainDecision | undefined;
+  const contractErrors = validateMinhActiveBrainDecision(sourceDecision);
+  if (contractErrors.length > 0) {
+    const error = new Error(`MINH_ACTIVE_BRAIN_CONTRACT_INVALID:${contractErrors.join('|')}`);
+    (error as any).code = 'MINH_ACTIVE_BRAIN_CONTRACT_INVALID';
+    throw error;
+  }
   const kind = safeText(payload.kind, 80);
   const expiresAt = new Date(Date.now() + MINH_PROACTIVE_APPROVAL_TTL_HOURS * 3600000);
   const title = safeText(payload.title, 240) || `Minh đề xuất xử lý ${kind}`;
@@ -81,9 +93,19 @@ function buildApprovalData(signal: OpportunitySignalRow, actionType: HighImpactA
   const evidence = payload.evidence && typeof payload.evidence === 'object' && !Array.isArray(payload.evidence)
     ? payload.evidence
     : {};
+  const idempotencyKey = `minh-proactive:${signal.id}:${actionType}`;
+  const activeBrainDecision = reclassifyMinhActiveBrainAction(sourceDecision!, {
+    mode: 'SUGGEST',
+    type: actionType,
+    approvalRequired: true,
+    approvalReason: 'Đây là đề xuất chủ động; broker phải xem và duyệt trước khi có hành động tiếp theo.',
+    idempotencyKey,
+    duplicateRecordBehavior: 'REPLAY_EXISTING_APPROVAL_REQUEST',
+    duplicateMessageBehavior: 'NO_PROVIDER_MESSAGE_UNTIL_MANUAL_SEND',
+  });
 
   const approvalPayload: Record<string, unknown> = {
-    schemaVersion: 2,
+    schemaVersion: 3,
     // Week 5 decision-queue schema fields, kept alongside the original
     // field names below so existing readers of this payload keep working.
     opportunityId: signal.id,
@@ -105,6 +127,7 @@ function buildApprovalData(signal: OpportunitySignalRow, actionType: HighImpactA
     permission: 'SUGGEST',
     actionCreated: false,
     suggestedAction: actionType,
+    activeBrainDecision,
     draftText: actionType === 'DRAFT_PROACTIVE_FOLLOWUP'
       ? 'Soạn follow-up để xác minh lại nhu cầu và thời điểm phù hợp của khách; chưa gửi tin.'
       : undefined,
@@ -122,7 +145,7 @@ function buildApprovalData(signal: OpportunitySignalRow, actionType: HighImpactA
     sourceSignalId: signal.id,
     subjectType: signal.subject_type,
     subjectId: signal.subject_id,
-    idempotencyKey: `minh-proactive:${signal.id}:${actionType}`,
+    idempotencyKey,
     reasoning: rationale || title,
     expiresAt,
     payload: approvalPayload,
@@ -233,6 +256,14 @@ export async function suggestMinhOpportunity(
   if (!signal) {
     const error = new Error('MINH_OPPORTUNITY_NOT_FOUND');
     (error as any).code = 'MINH_OPPORTUNITY_NOT_FOUND';
+    throw error;
+  }
+  const sourceContractErrors = validateMinhActiveBrainDecision(
+    parseSignalPayload(signal.payload).activeBrainDecision,
+  );
+  if (sourceContractErrors.length > 0) {
+    const error = new Error(`MINH_ACTIVE_BRAIN_CONTRACT_INVALID:${sourceContractErrors.join('|')}`);
+    (error as any).code = 'MINH_ACTIVE_BRAIN_CONTRACT_INVALID';
     throw error;
   }
   const actionType = actionForKind(parseSignalPayload(signal.payload).kind);
