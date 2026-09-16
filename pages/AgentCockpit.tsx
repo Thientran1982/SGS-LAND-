@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { AlertTriangle, Bot, CheckCircle2, Clock3, RefreshCw, Send, ShieldCheck, XCircle, BarChart3, ClipboardCheck, RotateCcw, Filter, PlayCircle, Save, Trash2, Edit3, BrainCircuit, Lightbulb, Download } from 'lucide-react';
 import { api } from '../services/api/apiClient';
 import { Dropdown } from '../components/Dropdown';
@@ -306,6 +306,7 @@ export default function AgentCockpit() {
   const [minhBrainOverview, setMinhBrainOverview] = useState<MinhBrainOverview | null>(null);
   const [minhCommandCenter, setMinhCommandCenter] = useState<MinhCommandCenterSummary | null>(null);
   const [minhCommandCenterRefreshError, setMinhCommandCenterRefreshError] = useState('');
+  const loadRequestIdRef = useRef(0);
   const [minhLearningTrend, setMinhLearningTrend] = useState<MinhLearningTrendResponse | null>(null);
   const [minhDecisionBusy, setMinhDecisionBusy] = useState<string | null>(null);
   const [minhLearningDays, setMinhLearningDays] = useState(30);
@@ -313,6 +314,7 @@ export default function AgentCockpit() {
   const [minhLearningExportHistory, setMinhLearningExportHistory] = useState<MinhLearningExportHistoryResponse | null>(null);
 
   const load = useCallback(async () => {
+    const loadRequestId = ++loadRequestIdRef.current;
     setLoading(true); setError(''); setAutoPostingDiagnosticError(''); setAutoPostingDiagnostic(null);
     setMinhLearningTrend(null);
     try {
@@ -342,15 +344,22 @@ export default function AgentCockpit() {
         setAutoPostingDiagnosticError(autoPostingDiagnosticResult.reason?.message || 'Không thể tải readiness trigger Facebook.');
       }
       if (minhBrainResult.status === 'fulfilled') setMinhBrainOverview(minhBrainResult.value);
-      if (minhCommandCenterResult.status === 'fulfilled') {
-        setMinhCommandCenter({ ...minhCommandCenterResult.value, stale: false, warning: undefined });
-        setMinhCommandCenterRefreshError('');
-      } else {
-        const refreshWarning = 'Không thể làm mới Command Center. Dữ liệu đang hiển thị có thể đã cũ; hãy thử lại.';
-        setMinhCommandCenter(current => current
-          ? { ...current, stale: true, warning: refreshWarning }
-          : current);
-        setMinhCommandCenterRefreshError(refreshWarning);
+      if (loadRequestId === loadRequestIdRef.current) {
+        if (minhCommandCenterResult.status === 'fulfilled') {
+          setMinhCommandCenter({ ...minhCommandCenterResult.value, stale: false, warning: undefined });
+          setMinhCommandCenterRefreshError('');
+        } else {
+          const refreshWarning = 'Không thể làm mới Command Center. Dữ liệu đang hiển thị có thể đã cũ; hãy thử lại.';
+          setMinhCommandCenter(current => current
+            ? { ...current, stale: true, warning: refreshWarning }
+            : current);
+          setMinhCommandCenterRefreshError(refreshWarning);
+        }
+      } else if (minhCommandCenterResult.status === 'fulfilled') {
+        // StrictMode and future callers can start an overlapping load. Keep a
+        // successful first snapshot when there is no newer snapshot yet, but
+        // never let it clear the latest request's warning.
+        setMinhCommandCenter(current => current || { ...minhCommandCenterResult.value, stale: false, warning: undefined });
       }
       if (minhLearningTrendResult.status === 'fulfilled') setMinhLearningTrend(minhLearningTrendResult.value);
       if (minhLearningExportHistoryResult.status === 'fulfilled') setMinhLearningExportHistory(minhLearningExportHistoryResult.value);
@@ -363,8 +372,12 @@ export default function AgentCockpit() {
       if (memoryResult.status === 'fulfilled') setMemories(memoryResult.value);
       if (weightsResult.status === 'fulfilled') setWeights(weightsResult.value);
     } catch (e: any) {
-      setError(e?.message || 'Không thể tải bảng điều khiển quản trị Agent.');
-    } finally { setLoading(false); }
+      if (loadRequestId === loadRequestIdRef.current) {
+        setError(e?.message || 'Không thể tải bảng điều khiển quản trị Agent.');
+      }
+    } finally {
+      if (loadRequestId === loadRequestIdRef.current) setLoading(false);
+    }
   }, [eventFilters, memoryFilters, minhLearningDays]);
   useEffect(() => { void load(); }, [load]);
 

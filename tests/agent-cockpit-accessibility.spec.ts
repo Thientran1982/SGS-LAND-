@@ -206,15 +206,12 @@ test.describe('Command Center accessibility', () => {
   });
 
   test('announces when Command Center refresh is in progress and clears it when results arrive', async ({ page }) => {
-    let commandCenterReads = 0;
+    let refreshStarted = false;
     let releaseRefresh!: () => void;
     const refreshGate = new Promise<void>(resolve => { releaseRefresh = resolve; });
     await mockCockpitApis(page, commandCenter());
     await page.route('**/api/internal/minh-brain/command-center', async route => {
-      commandCenterReads += 1;
-      if (commandCenterReads === 1) {
-        return route.fulfill({ json: commandCenter() });
-      }
+      if (!refreshStarted) return route.fulfill({ json: commandCenter() });
       await refreshGate;
       return route.fulfill({
         json: commandCenter({
@@ -229,6 +226,7 @@ test.describe('Command Center accessibility', () => {
     const refreshAnnouncement = page.getByRole('status', { name: 'Đang làm mới Command Center' });
     const opportunities = page.getByRole('group', { name: 'Opportunity queue' });
 
+    refreshStarted = true;
     await refresh.click();
     await expect(refreshAnnouncement).toHaveCount(1);
     await expect(refreshAnnouncement).toHaveAttribute('aria-live', 'polite');
@@ -240,16 +238,15 @@ test.describe('Command Center accessibility', () => {
   });
 
   test('announces a failed refresh and marks the last-known Command Center snapshot stale', async ({ page }) => {
-    let commandCenterReads = 0;
+    let refreshStarted = false;
     await mockCockpitApis(page, commandCenter());
     await page.route('**/api/internal/minh-brain/command-center', route => {
-      commandCenterReads += 1;
-      if (commandCenterReads === 1) return route.fulfill({ json: commandCenter() });
-      return route.abort('failed');
+      return refreshStarted ? route.abort('failed') : route.fulfill({ json: commandCenter() });
     });
     await page.goto(`${BASE_URL}/agent-cockpit`);
     await expect(page.getByRole('heading', { name: 'Command Center của Minh' })).toBeVisible();
 
+    refreshStarted = true;
     await page.getByRole('button', { name: 'Làm mới' }).first().click();
 
     const warning = page.getByRole('alert', { name: 'Không thể làm mới Command Center' });
@@ -257,5 +254,49 @@ test.describe('Command Center accessibility', () => {
     await expect(warning).toContainText('Dữ liệu đang hiển thị có thể đã cũ');
     await expect(page.getByText('Snapshot cuối có thể đã cũ')).toHaveCount(1);
     await expect(page.getByRole('group', { name: 'Opportunity queue' })).toContainText('0 cơ hội');
+  });
+
+  test('keeps the newest refresh result when an older request finishes afterward', async ({ page }) => {
+    let refreshPhase = 0;
+    let markOlderRefreshSeen!: () => void;
+    const olderRefreshSeen = new Promise<void>(resolve => { markOlderRefreshSeen = resolve; });
+    let releaseOlderRefresh!: () => void;
+    const olderRefreshGate = new Promise<void>(resolve => { releaseOlderRefresh = resolve; });
+    await mockCockpitApis(page, commandCenter());
+    await page.route('**/api/internal/minh-brain/command-center', async route => {
+      if (refreshPhase === 0) return route.fulfill({ json: commandCenter() });
+      if (refreshPhase === 1) {
+        markOlderRefreshSeen();
+        await olderRefreshGate;
+        return route.abort('failed');
+      }
+      return route.fulfill({
+        json: commandCenter({
+          generatedAt: '2026-09-15T10:05:00.000Z',
+          opportunityQueue: panel('degraded', [], 'Newest refresh completed'),
+        }),
+      });
+    });
+    await page.goto(`${BASE_URL}/agent-cockpit`);
+    await expect(page.getByRole('heading', { name: 'Command Center của Minh' })).toBeVisible();
+
+    const refresh = page.getByRole('button', { name: 'Làm mới' }).first();
+    const opportunities = page.getByRole('group', { name: 'Opportunity queue' });
+
+    refreshPhase = 1;
+    await refresh.click();
+    await expect(page.getByRole('status', { name: 'Đang làm mới Command Center' })).toHaveCount(1);
+    await olderRefreshSeen;
+    refreshPhase = 2;
+    await page.getByLabel('Khoảng thời gian learning của Minh').selectOption('7');
+
+    await expect(opportunities).toContainText('Newest refresh completed');
+    await expect(page.getByText('Snapshot cuối có thể đã cũ')).toHaveCount(0);
+    await expect(page.getByRole('alert', { name: 'Không thể làm mới Command Center' })).toHaveCount(0);
+
+    releaseOlderRefresh();
+    await expect(opportunities).toContainText('Newest refresh completed');
+    await expect(page.getByText('Snapshot cuối có thể đã cũ')).toHaveCount(0);
+    await expect(page.getByRole('alert', { name: 'Không thể làm mới Command Center' })).toHaveCount(0);
   });
 });
