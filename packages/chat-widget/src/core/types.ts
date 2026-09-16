@@ -18,6 +18,9 @@ export interface ChatMessage {
   attachments?: ChatAttachment[];
   runId?: string;
   inboundInteractionId?: string;
+  intent?: string;
+  missingData?: string[];
+  clarificationRequired?: boolean;
   degraded?: boolean;
   degradedReason?: string;
   providerOutcome?: "PRIMARY" | "FALLBACK" | "TIMEOUT" | "UNAVAILABLE";

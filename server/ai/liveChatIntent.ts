@@ -10,7 +10,8 @@ export function normalizeIntentText(message: string): string {
     return String(message || '')
         .toLowerCase()
         .normalize('NFD')
-        .replace(/[\u0300-\u036f]/g, '');
+        .replace(/[\u0300-\u036f]/g, '')
+        .replace(/đ/g, 'd');
 }
 
 export function isLongFormRequest(message: string): boolean {
@@ -48,6 +49,7 @@ export type LiveChatClarification = {
         | 'UNDERSPECIFIED_PROPERTY_TYPE'
         | 'UNDERSPECIFIED_PROJECT_OR_LOCATION'
         | 'UNDERSPECIFIED_SEARCH_CRITERIA'
+        | 'UNDERSPECIFIED_FINANCE_CONTEXT'
         | 'UNDERSPECIFIED_INTENT';
     response: string;
     missingData: string[];
@@ -97,9 +99,10 @@ export function resolveLiveChatFollowUp(
 }
 
 /**
- * Generic price requests are not actionable enough to justify retrieval or an
- * LLM routing pass. Keep this deterministic and conservative: a named project,
- * location, or other specific context remains eligible for the normal pipeline.
+ * Short or underspecified requests are not actionable enough to justify
+ * retrieval or an LLM routing pass. Keep this deterministic and conservative:
+ * a named project/location is only enough to continue when the requested topic
+ * is explicit; a bare entity still needs an intent from the customer.
  */
 export function getLiveChatClarification(
     message: string,
@@ -111,6 +114,7 @@ export function getLiveChatClarification(
         .replace(/\s+/g, ' ')
         .trim();
     const currentWords = currentNormalized.split(/\s+/).filter(Boolean);
+    const isExactTopicFollowUp = /^(?:gia|price|bao gia|gia ban|phap ly|phap luat|quy hoach|tien do|tien ich|mo ban|lai suat|vay|mua|thue|xem|tim)$/.test(currentNormalized);
     const previousNormalized = normalizeIntentText(previousUserMessage || '')
         .replace(/[?!.,;:()[\]{}]/g, ' ')
         .replace(/\s+/g, ' ')
@@ -133,21 +137,23 @@ export function getLiveChatClarification(
         };
     }
 
-    const hasPriceSignal = /\b(?:bao gia|bang gia|gia ban|xin gia|cho hoi gia|gia bao nhieu|bao nhieu tien|gia|price)\b/.test(normalized);
+    const hasPriceSignal = /\b(?:bao gia|bang gia|gia ban|xin gia|cho hoi gia|gia bao nhieu|bao nhieu tien|bao nhieu|dinh gia|tri gia|valuation|gia(?!\s+tri\b)|price)\b/.test(normalized);
     const hasLegalSignal = /\b(?:phap ly|phap luat|so hong|so do|vi bang|hdmb|hop dong)\b/.test(normalized);
     const hasPlanningSignal = /\b(?:quy hoach|xay dung|lo gioi)\b/.test(normalized);
     const hasProjectSignal = /\b(?:du an|project|tien do|tien ich|mo ban|chinh sach)\b/.test(normalized);
     const hasSearchSignal = /\b(?:tim|search|can tim|con hang|mua|thue|xem)\b/.test(normalized);
+    const hasFinanceSignal = /\b(?:vay|lai suat|tin dung|ngan hang)\b/.test(normalized);
     const hasInvestmentSignal = /\b(?:dau tu|cho thue|yield|roi|loi nhuan)\b/.test(normalized);
+    const hasBudgetSignal = /\b\d+(?:[.,]\d+)?\s*(?:ty|trieu|nghin|m|billion|million)\b/.test(normalized);
     const hasTopicSignal = hasPriceSignal || hasLegalSignal || hasPlanningSignal || hasProjectSignal
-        || hasSearchSignal || hasInvestmentSignal;
+        || hasSearchSignal || hasFinanceSignal || hasInvestmentSignal;
 
     const residual = normalized
-        .replace(/\b(?:bao gia|bang gia|gia ban|xin gia|cho hoi gia|gia bao nhieu|bao nhieu tien|gia|price|phap ly|phap luat|so hong|so do|vi bang|hdmb|hop dong|quy hoach|xay dung|lo gioi|du an|project|tien do|tien ich|mo ban|chinh sach|tim|search|can tim|con hang|mua|thue|xem|dau tu|cho thue|yield|roi|loi nhuan)\b/g, ' ')
-        .replace(/\b(?:cho|hoi|xin|vui long|giup|toi|em|anh|chi|minh|muon|can|the|duoc|nhe|a|oi|san pham|bat dong san|bds|can ho|nha|dat|nay|do|kia)\b/g, ' ')
+        .replace(/\b(?:bao gia|bang gia|gia ban|xin gia|cho hoi gia|gia bao nhieu|bao nhieu tien|bao nhieu|dinh gia|tri gia|valuation|gia(?!\s+tri\b)|price|phap ly|phap luat|so hong|so do|vi bang|hdmb|hop dong|quy hoach|xay dung|lo gioi|du an|project|tien do|tien ich|mo ban|chinh sach|tim|search|can tim|con hang|mua|thue|xem|vay|lai suat|tin dung|ngan hang|dau tu|cho thue|yield|roi|loi nhuan)\b/g, ' ')
+        .replace(/\b(?:cho|hoi|xin|vui long|giup|toi|em|anh|chi|minh|muon|can ho|nha pho|nha lien ke|biet thu|dat nen|apartment|condo|penthouse|studio|townhouse|shophouse|villa|land|can|the|duoc|nhe|a|oi|san pham|bat dong san|bds|nha|dat|nay|do|kia)\b/g, ' ')
         .replace(/\s+/g, ' ')
         .trim();
-    const hasExplicitPropertyType = /\b(?:can ho|apartment|condo|penthouse|studio|nha pho|nha lien ke|townhouse|shophouse|biet thu|villa|dat nen|dat thoi|land)\b/.test(normalized)
+    const hasExplicitPropertyType = /\b(?:can ho|apartment|condo|penthouse|studio|nha pho|nha lien ke|townhouse|shophouse|biet thu|villa|lo dat|dat nen|dat thoi|land|dat)\b/.test(normalized)
         || /\b(?:\d+\s*(?:phong ngu|pn)|phong ngu)\b/.test(normalized);
     const hasSpecificSubject = Boolean(residual)
         && !/^(?:bao nhieu|nao|gi|sao|the nao|khong|khong a)$/.test(residual);
@@ -155,7 +161,9 @@ export function getLiveChatClarification(
     // A named project can contain several product families. Never let the
     // valuation tool or the writer silently default this to APARTMENT.
     if (hasPriceSignal && hasSpecificSubject && !hasExplicitPropertyType) {
-        const subject = extractPriceSubject(hasContextualTopic ? `${previousUserMessage || ''} ${message}` : message);
+        const subject = extractPriceSubject(hasContextualTopic && isExactTopicFollowUp
+            ? (previousUserMessage || message)
+            : message);
         return {
             reason: 'UNDERSPECIFIED_PROPERTY_TYPE',
             response: language === 'en'
@@ -198,6 +206,16 @@ export function getLiveChatClarification(
         };
     }
 
+    if (hasFinanceSignal && !hasSpecificSubject) {
+        return {
+            reason: 'UNDERSPECIFIED_FINANCE_CONTEXT',
+            response: language === 'en'
+                ? 'Are you asking about a mortgage, interest rate, or financing for a specific property?'
+                : 'Anh/chị muốn hỏi vay mua nhà, lãi suất hay phương án tài chính cho sản phẩm nào ạ?',
+            missingData: ['finance_context'],
+        };
+    }
+
     if (hasInvestmentSignal && !hasSpecificSubject) {
         return {
             reason: 'UNDERSPECIFIED_PROJECT_OR_LOCATION',
@@ -205,6 +223,16 @@ export function getLiveChatClarification(
                 ? 'Which property or project would you like to evaluate for investment?'
                 : 'Anh/chị muốn đánh giá đầu tư cho sản phẩm hoặc dự án nào ạ?',
             missingData: ['project_or_location'],
+        };
+    }
+
+    if (hasBudgetSignal && currentWords.length <= 5) {
+        return {
+            reason: 'UNDERSPECIFIED_SEARCH_CRITERIA',
+            response: language === 'en'
+                ? `With a budget of ${String(message).trim()}, which area and property type should Minh search for?`
+                : `Với ngân sách ${String(message).trim()}, anh/chị muốn tìm loại bất động sản nào và ở khu vực nào ạ?`,
+            missingData: ['property_type', 'project_or_location'],
         };
     }
 
@@ -290,12 +318,20 @@ export function classifyLiveChatIntent(message: string): { intent: string; sugge
     // legacy router/provider chain, and can spend minutes before asking the
     // missing product-type question.
     const normalized = normalizeIntentText(msg);
-    const hasPriceWord = /\b(?:gia|price)\b/.test(normalized);
+    const hasPriceWord = /\b(?:gia(?!\s+tri\b)|price)\b/.test(normalized);
     const hasSearchIntent = /\b(?:tim|search|can tim|con hang|mua|thue)\b/.test(normalized);
     if (hasPriceWord && !hasSearchIntent) {
         return { intent: 'VALUATION', suggestedTool: 'get_valuation' };
     }
-    return classifyFromIntentMap(msg);
+    const mapped = classifyFromIntentMap(msg);
+    if (mapped.intent !== 'GENERAL') return mapped;
+    // Public live-chat chooses between the fast engine and the legacy
+    // pipeline before handle_live_chat runs. Keep deterministic short-input
+    // clarifications on the fast path so they never pay for an LLM router.
+    if (getLiveChatClarification(msg)) {
+        return { intent: 'CLARIFY', suggestedTool: 'clarify' };
+    }
+    return mapped;
 }
 
 /**

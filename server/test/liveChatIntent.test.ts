@@ -50,6 +50,67 @@ describe('classifyLiveChatIntent — P0-5 keyword precision', () => {
     expect(getLiveChatClarification(message)).toBeNull();
   });
 
+  it('clarifies short non-price topics before specialist retrieval', () => {
+    expect(getLiveChatClarification('pháp lý')).toMatchObject({
+      reason: 'UNDERSPECIFIED_PROJECT_OR_LOCATION',
+      missingData: ['project_or_location'],
+    });
+    expect(getLiveChatClarification('quy hoạch')).toMatchObject({
+      reason: 'UNDERSPECIFIED_PROJECT_OR_LOCATION',
+      missingData: ['project_or_location'],
+    });
+    expect(getLiveChatClarification('tìm căn hộ')).toMatchObject({
+      reason: 'UNDERSPECIFIED_SEARCH_CRITERIA',
+      missingData: ['location_or_budget'],
+    });
+    expect(getLiveChatClarification('pháp lý Aqua City')).toBeNull();
+    expect(classifyLiveChatIntent('Xin chào').intent).toBe('CLARIFY');
+    expect(classifyLiveChatIntent('Masteri').intent).toBe('CLARIFY');
+  });
+
+  it('asks what the customer wants for a bare project or location', () => {
+    expect(getLiveChatClarification('Masteri')).toMatchObject({
+      reason: 'UNDERSPECIFIED_INTENT',
+      missingData: ['intent'],
+    });
+    expect(getLiveChatClarification('Long Thành')).toMatchObject({
+      reason: 'UNDERSPECIFIED_INTENT',
+      missingData: ['intent'],
+    });
+  });
+
+  it('handles greetings deterministically without invoking a provider', () => {
+    expect(getLiveChatClarification('Xin chào')).toMatchObject({
+      reason: 'GREETING',
+      missingData: [],
+    });
+  });
+
+  it('uses the previous project for a topic-only price follow-up', () => {
+    const resolved = resolveLiveChatFollowUp('giá', [
+      { role: 'user', content: 'Aqua City' },
+      { role: 'user', content: 'giá' },
+    ]);
+    expect(resolved.contextUsed).toBe(true);
+    expect(getLiveChatClarification('giá', 'vi', resolved.previousUserMessage)).toMatchObject({
+      reason: 'UNDERSPECIFIED_PROPERTY_TYPE',
+      missingData: ['property_type'],
+    });
+  });
+
+  it('does not confuse “giá trị pháp lý” with a price lookup', () => {
+    expect(classifyLiveChatIntent('Giá trị pháp lý của Aqua City').intent).toBe('LEGAL');
+    expect(getLiveChatClarification('Giá trị pháp lý của Aqua City')).toBeNull();
+  });
+
+  it('clarifies bare budgets and preserves land as an explicit property type', () => {
+    expect(getLiveChatClarification('2 tỷ')).toMatchObject({
+      reason: 'UNDERSPECIFIED_SEARCH_CRITERIA',
+      missingData: ['property_type', 'project_or_location'],
+    });
+    expect(getLiveChatClarification('Trị giá lô đất này')).toBeNull();
+  });
+
   it('carries the previous user topic into a short time follow-up', () => {
     const resolved = resolveLiveChatFollowUp('mấy giờ?', [
       { role: 'user', content: 'Aqua City có lịch mở cửa tham quan không?' },

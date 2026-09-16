@@ -1524,8 +1524,21 @@ async function handle_live_chat_core(args: Record<string, any>): Promise<any> {
         const key = stage === 'memory' ? 'memoryMs' : 'llmMs';
         liveChatTimings[key] = (liveChatTimings[key] || 0) + Math.max(0, durationMs);
     };
+    const conversationContext = resolveLiveChatFollowUp(
+        msg,
+        Array.isArray(context.history)
+            ? context.history.map((item: any) => ({
+                role: item?.role,
+                content: sanitizeChatInput(item?.content, 600),
+            }))
+            : [],
+    );
     const clarificationLanguage = String(context.language || args.language || 'vi').toLowerCase() === 'en' ? 'en' : 'vi';
-    const clarification = getLiveChatClarification(msg, clarificationLanguage);
+    const clarification = getLiveChatClarification(
+        msg,
+        clarificationLanguage,
+        conversationContext.previousUserMessage,
+    );
     if (clarification) {
         liveChatTimings.classifyMs = Date.now() - liveChatStartedAt;
         liveChatTimings.totalMs = Date.now() - liveChatStartedAt;
@@ -1556,15 +1569,6 @@ async function handle_live_chat_core(args: Record<string, any>): Promise<any> {
             _liveChatTimings: liveChatTimings,
         };
     }
-    const conversationContext = resolveLiveChatFollowUp(
-        msg,
-        Array.isArray(context.history)
-            ? context.history.map((item: any) => ({
-                role: item?.role,
-                content: sanitizeChatInput(item?.content, 600),
-            }))
-            : [],
-    );
     const routingMessage = conversationContext.routingMessage;
     const customerId = String(args.customerId || context.customerId || '').trim();
     let personalization = { enabled: false, block: '', stale: false, negativeStreak: 0 };

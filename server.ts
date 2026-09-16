@@ -3061,6 +3061,8 @@ specialistError: isLandingRequest && !result.specialistOutput
    isAi: true,
    isAgent: true,
    intent: result.intent,
+    missingData: Array.isArray(result.missingData) ? result.missingData : [],
+    clarificationRequired: result.clarificationRequired === true,
    aiConfidence: result.confidence,
    escalated: result.escalated ?? false,
    ...(result.isSysMsg ? { isSysMsg: true } : {}),
@@ -3327,7 +3329,14 @@ if (asyncRun) {
   const { aiReply, result } = asyncRun;
    acknowledgedAt = Date.now();
     telemetry.mark('ack_sent', acknowledgedAt);
-  res.json({ reply: aiReply, artifact: result.artifact, suggestedAction: result.suggestedAction });
+  res.json({
+    reply: aiReply,
+    artifact: result.artifact,
+    suggestedAction: result.suggestedAction,
+    intent: result.intent,
+    missingData: Array.isArray(result.missingData) ? result.missingData : [],
+    clarificationRequired: result.clarificationRequired === true,
+  });
 } else {
   logger.error('Public AI livechat error:', asyncError as Error);
   const errorMessage = String((asyncError as any)?.message || asyncError || '');

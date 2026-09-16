@@ -1,11 +1,29 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { createMinhSession } from "../../packages/chat-widget/src/core/minhSession";
+import { createMinhSession, interactionToMessage } from "../../packages/chat-widget/src/core/minhSession";
 
 describe("Minh session async acknowledgement", () => {
   afterEach(() => {
     vi.unstubAllGlobals();
     vi.restoreAllMocks();
     window.localStorage.clear();
+  });
+
+  it("preserves clarification metadata on restored assistant messages", () => {
+    expect(interactionToMessage({
+      id: "outbound-clarify",
+      direction: "OUTBOUND",
+      content: "Anh/chị muốn hỏi loại sản phẩm nào ạ?",
+      metadata: {
+        isAgent: true,
+        intent: "CLARIFY",
+        missingData: ["property_type"],
+        clarificationRequired: true,
+      },
+    })).toMatchObject({
+      intent: "CLARIFY",
+      missingData: ["property_type"],
+      clarificationRequired: true,
+    });
   });
 
   it("returns pending immediately instead of blocking on the reconcile window", async () => {

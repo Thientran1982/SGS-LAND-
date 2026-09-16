@@ -14,3 +14,9 @@ Named-project price questions that omit the property type are clarification case
 **Why:** A short question such as “Giá Masteri” previously fell through to GENERAL, invoked the legacy provider chain, and eventually answered with an implicit APARTMENT assumption after more than two minutes.
 
 **How to apply:** Preserve the explicit product type when present (apartment, townhouse, villa, or bedroom count); otherwise ask which type the customer means and do not invent a price.
+
+Short non-price inputs follow the same fail-closed rule: greetings, bare project/location names, topic-only legal/planning/search/finance prompts, and bare budgets must receive a deterministic clarification before specialist retrieval or legacy routing. Topic-only follow-ups may use the immediately previous user turn as routing context, but never as new answer evidence.
+
+**Why:** A classifier-only fix is insufficient when the public route chooses the legacy pipeline before the live-chat engine gets a chance to clarify.
+
+**How to apply:** Return `CLARIFY` for deterministic short cases at the public classifier boundary; keep empty/short UI submissions local, preserve pending correlation, and keep the clarification response visible as a normal assistant message.
