@@ -238,4 +238,24 @@ test.describe('Command Center accessibility', () => {
     await expect(refreshAnnouncement).toHaveCount(0);
     await expect(opportunities).toContainText('Opportunity queue is temporarily degraded after refresh');
   });
+
+  test('announces a failed refresh and marks the last-known Command Center snapshot stale', async ({ page }) => {
+    let commandCenterReads = 0;
+    await mockCockpitApis(page, commandCenter());
+    await page.route('**/api/internal/minh-brain/command-center', route => {
+      commandCenterReads += 1;
+      if (commandCenterReads === 1) return route.fulfill({ json: commandCenter() });
+      return route.abort('failed');
+    });
+    await page.goto(`${BASE_URL}/agent-cockpit`);
+    await expect(page.getByRole('heading', { name: 'Command Center của Minh' })).toBeVisible();
+
+    await page.getByRole('button', { name: 'Làm mới' }).first().click();
+
+    const warning = page.getByRole('alert', { name: 'Không thể làm mới Command Center' });
+    await expect(warning).toHaveCount(1);
+    await expect(warning).toContainText('Dữ liệu đang hiển thị có thể đã cũ');
+    await expect(page.getByText('Snapshot cuối có thể đã cũ')).toHaveCount(1);
+    await expect(page.getByRole('group', { name: 'Opportunity queue' })).toContainText('0 cơ hội');
+  });
 });

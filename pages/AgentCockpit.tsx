@@ -182,6 +182,8 @@ type MinhCommandCenterPanel<T> = {
 };
 type MinhCommandCenterSummary = {
   generatedAt: string;
+  stale?: boolean;
+  warning?: string;
   brainHealth: MinhCommandCenterPanel<{
     delegations7d: number;
     delegationSuccess7d: number;
@@ -303,6 +305,7 @@ export default function AgentCockpit() {
   const [autoPostingDiagnosticError, setAutoPostingDiagnosticError] = useState('');
   const [minhBrainOverview, setMinhBrainOverview] = useState<MinhBrainOverview | null>(null);
   const [minhCommandCenter, setMinhCommandCenter] = useState<MinhCommandCenterSummary | null>(null);
+  const [minhCommandCenterRefreshError, setMinhCommandCenterRefreshError] = useState('');
   const [minhLearningTrend, setMinhLearningTrend] = useState<MinhLearningTrendResponse | null>(null);
   const [minhDecisionBusy, setMinhDecisionBusy] = useState<string | null>(null);
   const [minhLearningDays, setMinhLearningDays] = useState(30);
@@ -339,7 +342,16 @@ export default function AgentCockpit() {
         setAutoPostingDiagnosticError(autoPostingDiagnosticResult.reason?.message || 'Không thể tải readiness trigger Facebook.');
       }
       if (minhBrainResult.status === 'fulfilled') setMinhBrainOverview(minhBrainResult.value);
-      if (minhCommandCenterResult.status === 'fulfilled') setMinhCommandCenter(minhCommandCenterResult.value);
+      if (minhCommandCenterResult.status === 'fulfilled') {
+        setMinhCommandCenter({ ...minhCommandCenterResult.value, stale: false, warning: undefined });
+        setMinhCommandCenterRefreshError('');
+      } else {
+        const refreshWarning = 'Không thể làm mới Command Center. Dữ liệu đang hiển thị có thể đã cũ; hãy thử lại.';
+        setMinhCommandCenter(current => current
+          ? { ...current, stale: true, warning: refreshWarning }
+          : current);
+        setMinhCommandCenterRefreshError(refreshWarning);
+      }
       if (minhLearningTrendResult.status === 'fulfilled') setMinhLearningTrend(minhLearningTrendResult.value);
       if (minhLearningExportHistoryResult.status === 'fulfilled') setMinhLearningExportHistory(minhLearningExportHistoryResult.value);
       // Secondary panels must not hide a successfully loaded cockpit or a
@@ -568,7 +580,7 @@ export default function AgentCockpit() {
              ['Đã hoàn tất', cockpitMetric(summary, 'executions', summary.executions, 'SUCCESS'), 'text-emerald-600'],
            ].map(([label, value, color]) => <div key={String(label)} className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm"><div className="text-xs font-medium text-slate-500">{label}</div><div className={`mt-2 text-2xl font-bold ${color}`}>{value}</div></div>)}
         </div>
-          {minhCommandCenter && <section className="rounded-xl border border-indigo-200 bg-indigo-50/30 p-5 shadow-sm" aria-labelledby="minh-command-center-title">
+          {(minhCommandCenter || minhCommandCenterRefreshError) && <section className="rounded-xl border border-indigo-200 bg-indigo-50/30 p-5 shadow-sm" aria-labelledby="minh-command-center-title">
             <div className="mb-4 flex flex-wrap items-start justify-between gap-3">
               <div className="flex items-start gap-2">
                 <BrainCircuit size={19} className="mt-0.5 text-indigo-600" />
@@ -577,9 +589,17 @@ export default function AgentCockpit() {
                   <p className="text-xs text-slate-600">Năm panel vận hành độc lập; dữ liệu chưa tải được luôn được hiển thị rõ ràng.</p>
                 </div>
               </div>
-              <span className="text-[11px] text-slate-500">Cập nhật {new Date(minhCommandCenter.generatedAt).toLocaleTimeString('vi-VN')}</span>
+              {minhCommandCenter
+                ? <span className={`text-[11px] ${minhCommandCenter.stale ? 'font-semibold text-amber-700' : 'text-slate-500'}`}>
+                    {minhCommandCenter.stale ? 'Snapshot cuối có thể đã cũ' : `Cập nhật ${new Date(minhCommandCenter.generatedAt).toLocaleTimeString('vi-VN')}`}
+                  </span>
+                : <span className="text-[11px] font-semibold text-rose-700">Chưa có snapshot</span>}
             </div>
-            <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-5">
+            {minhCommandCenterRefreshError && <div role="alert" aria-label="Không thể làm mới Command Center" className="mb-4 flex items-center gap-2 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-800">
+              <AlertTriangle size={16} /> {minhCommandCenterRefreshError}
+            </div>}
+            {minhCommandCenter
+              ? <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-5">
               <MinhCommandCenterPanelCard title="Brain health" panel={minhCommandCenter.brainHealth as MinhCommandCenterPanel<unknown>}>
                 <div className="grid grid-cols-2 gap-2 text-xs">
                   <div><span className="text-slate-500">Delegation 7 ngày</span><b className="block text-lg text-slate-900">{minhCommandCenter.brainHealth.data?.delegations7d ?? '—'}</b></div>
@@ -613,7 +633,10 @@ export default function AgentCockpit() {
                   <div>Repair spike 7 ngày: <b className="text-slate-900">{minhCommandCenter.schedulerRepair.data?.repairSpikeCount7d ?? '—'}</b></div>
                 </div>
               </MinhCommandCenterPanelCard>
-            </div>
+              </div>
+              : <div role="status" className="rounded-lg border border-dashed border-rose-200 bg-white p-4 text-sm text-rose-700">
+                Command Center hiện không khả dụng vì chưa tải được dữ liệu.
+              </div>}
           </section>}
          {minhBrainOverview && <section className="rounded-xl border border-amber-200 bg-amber-50/30 p-5 shadow-sm" aria-labelledby="minh-opportunities-title">
            <div className="mb-4 flex flex-wrap items-start justify-between gap-3">
