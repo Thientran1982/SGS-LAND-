@@ -13,6 +13,8 @@
     "test:production-dependencies": "node --test scripts/check-production-dependencies.test.mjs",
     "build:all": "node scripts/build-all.mjs",
     "build:next": "cd apps/nextjs && npm run build",
+    "check:publish-size": "bash scripts/check-publish-size.sh",
+    "test:publish-size": "node --test scripts/check-publish-size.test.mjs",
     "preview": "vite preview",
     "lint": "tsc --noEmit",
     "seed": "tsx server/seed.ts",
