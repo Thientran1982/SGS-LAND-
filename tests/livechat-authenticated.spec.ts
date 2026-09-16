@@ -343,18 +343,21 @@ test.describe('Authenticated public live chat', () => {
       expect(body.requestId.length).toBeGreaterThan(10);
 
       // Simulate the durable worker completing after the public AI request has
-      // crossed its acknowledgement deadline. The widget receives 202 first,
-      // then recovers this committed assistant row from message history.
-      const outboundResponse = await request.post(`${BASE_URL}/api/public/livechat/message`, {
-        data: {
-          leadId: body.leadId,
-          content: assistantText,
-          direction: 'OUTBOUND',
-          metadata: { isAgent: true, isAi: true },
-          idempotencyKey: `pending-smoke-outbound:${body.requestId}`,
-        },
-      });
-      expect(outboundResponse.status()).toBe(201);
+      // crossed its acknowledgement deadline. The visitor endpoint is
+      // inbound-only, so seed the assistant row through the fixture DB rather
+      // than trying to spoof an outbound public message.
+      await db.query(
+        `INSERT INTO interactions
+          (tenant_id, lead_id, channel, direction, type, content, metadata, status, external_event_id)
+         VALUES ($1, $2, 'WEB', 'OUTBOUND', 'TEXT', $3, $4, 'SENT', $5)`,
+        [
+          HOST_TENANT,
+          body.leadId,
+          assistantText,
+          JSON.stringify({ isAgent: true, isAi: true }),
+          `agent:pending-smoke-outbound:${body.requestId}`,
+        ],
+      );
 
       await route.fulfill({
         status: 202,

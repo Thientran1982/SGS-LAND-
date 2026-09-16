@@ -3,7 +3,42 @@ modules = ["nodejs-20", "web", "python-3.11", "postgresql-16"]
 expertMode = true
 [nix]
 channel = "stable-25_05"
-packages = ["psmisc", "glib", "nodejs_20"]
+packages = [
+  "psmisc",
+  "glib",
+  "nodejs_20",
+  "nspr",
+  "nss",
+  "atk",
+  "at-spi2-atk",
+  "cups",
+  "dbus",
+  "expat",
+  "fontconfig",
+  "freetype",
+  "gdk-pixbuf",
+  "gtk3",
+  "libdrm",
+  "libgbm",
+  "libxkbcommon",
+  "mesa",
+  "pango",
+  "alsa-lib",
+  "xorg.libX11",
+  "xorg.libXcomposite",
+  "xorg.libXdamage",
+  "xorg.libXext",
+  "xorg.libXfixes",
+  "xorg.libXrandr",
+  "xorg.libXcursor",
+  "xorg.libXi",
+  "xorg.libXrender",
+  "xorg.libXtst",
+  "xorg.libXScrnSaver",
+  "xorg.libxcb",
+  "xorg.libXau",
+  "xorg.libXdmcp"
+]
 [workflows]
 runButton = "Project"
 [[workflows.workflow]]

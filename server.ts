@@ -2979,7 +2979,7 @@ app.get('/api/public/listings/:slugId', apiRateLimit, async (req: express.Reques
       endpoint: 'message',
     });
     try {
-       const { leadId, content, metadata, idempotencyKey } = req.body;
+       const { leadId, content, direction, metadata, idempotencyKey } = req.body;
        if (!leadId || !String(content || '').trim()) {
          return res.status(400).json({
            error: 'leadId và content bắt buộc',
@@ -2989,6 +2989,12 @@ app.get('/api/public/listings/:slugId', apiRateLimit, async (req: express.Reques
        if (!verifyPublicLiveChatRequest(req, String(leadId), PUBLIC_TENANT)) {
          denyPublicLiveChatRequest(res);
          return;
+       }
+       if (direction !== undefined && direction !== 'INBOUND') {
+         return res.status(400).json({
+           error: 'Khách truy cập chỉ được gửi tin nhắn đến',
+           code: 'LIVECHAT_DIRECTION_FORBIDDEN',
+         }) as any;
        }
        if (typeof idempotencyKey !== 'string' || !idempotencyKey.trim()) {
          return res.status(400).json({
@@ -3539,6 +3545,19 @@ if (asyncRun) {
         leadId,
       );
       if (!execution) {
+        // The public AI route acknowledges before durable execution claims its
+        // row. If the inbound interaction is already committed, the run is
+        // accepted and still being prepared—not missing. This keeps the
+        // browser's first status poll from turning a valid 202 into a false
+        // NOT_FOUND.
+        const inboundInteraction = await interactionRepository.findInboundForAgentRun(
+          PUBLIC_TENANT,
+          leadId,
+          { interactionId: inboundInteractionId },
+        );
+        if (inboundInteraction) {
+          return res.json({ status: 'PROCESSING', retryAfter: 3 });
+        }
         return res.json({ status: 'NOT_FOUND', code: 'LIVECHAT_RUN_NOT_FOUND', retryAfter: 3 });
       }
       if (execution.status === 'SUCCESS' || execution.status === 'BLOCKED') {
