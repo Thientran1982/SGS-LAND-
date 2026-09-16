@@ -88,10 +88,15 @@ resolve_npx_bin() {
 
 NODE_BIN="$(resolve_node_bin || true)"
 NPX_BIN="$(resolve_npx_bin || true)"
-NEXT_CLI="$PWD/apps/nextjs/node_modules/next/dist/bin/next"
+BACKEND_ENTRYPOINT="${SUPERVISOR_BACKEND_ENTRYPOINT:-$PWD/server.js}"
+NEXT_CLI="${SUPERVISOR_FRONTEND_CLI:-$PWD/apps/nextjs/node_modules/next/dist/bin/next}"
 
 if [ -z "$NODE_BIN" ] || [ ! -x "$NODE_BIN" ]; then
   echo "[supervisor] fatal: Node runtime not found (npm_node_execpath is unavailable)" >&2
+  exit 127
+fi
+if [ ! -f "$BACKEND_ENTRYPOINT" ]; then
+  echo "[supervisor] fatal: backend entrypoint not found at $BACKEND_ENTRYPOINT" >&2
   exit 127
 fi
 if [ ! -f "$NEXT_CLI" ]; then
@@ -217,10 +222,10 @@ backoff_secs() {
 run_backend_loop() {
   local restarts=0 pid exit_code sleep_secs
   while ! is_shutting_down; do
-    log "starting backend (node server.js) on port ${BACKEND_PORT} (restart #${restarts})"
+    log "starting backend (node ${BACKEND_ENTRYPOINT}) on port ${BACKEND_PORT} (restart #${restarts})"
     PORT="${BACKEND_PORT}" NODE_ENV=production \
       NODE_OPTIONS="--max-old-space-size=${BACKEND_MAX_OLD_SPACE_MB} ${NODE_OPTIONS:-}" \
-      "$NODE_BIN" server.js &
+      "$NODE_BIN" "$BACKEND_ENTRYPOINT" &
     pid=$!
     echo "$pid" > "$BACKEND_PID_FILE"
     wait "$pid"

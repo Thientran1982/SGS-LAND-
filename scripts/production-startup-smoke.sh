@@ -14,6 +14,9 @@ BACKEND_PORT="${STARTUP_SMOKE_BACKEND_PORT:-5511}"
 FRONTEND_PORT="${STARTUP_SMOKE_FRONTEND_PORT:-5510}"
 TIMEOUT_SECS="${STARTUP_SMOKE_TIMEOUT_SECS:-90}"
 STABLE_SECS="${STARTUP_SMOKE_STABLE_SECS:-8}"
+BACKEND_ENTRYPOINT="${STARTUP_SMOKE_BACKEND_ENTRYPOINT:-$ROOT_DIR/server.js}"
+FRONTEND_CLI="${STARTUP_SMOKE_FRONTEND_CLI:-$ROOT_DIR/apps/nextjs/node_modules/next/dist/bin/next}"
+REQUIRE_PRODUCTION_ARTIFACTS="${STARTUP_SMOKE_REQUIRE_PRODUCTION_ARTIFACTS:-1}"
 LOG_FILE="$(mktemp "${TMPDIR:-/tmp}/sgs-production-startup.XXXXXX.log")"
 SUPERVISOR_PID=""
 
@@ -41,10 +44,16 @@ fail() {
   exit 1
 }
 
-[[ -f "$ROOT_DIR/server.js" ]] ||
-  fail "generated backend bundle server.js is missing; run the production build first"
-[[ -f "$ROOT_DIR/apps/nextjs/.next/BUILD_ID" ]] ||
-  fail "Next.js production build is missing; run the production build first"
+if [[ "$REQUIRE_PRODUCTION_ARTIFACTS" == "1" ]]; then
+  [[ -f "$ROOT_DIR/server.js" ]] ||
+    fail "generated backend bundle server.js is missing; run the production build first"
+  [[ -f "$ROOT_DIR/apps/nextjs/.next/BUILD_ID" ]] ||
+    fail "Next.js production build is missing; run the production build first"
+fi
+[[ -f "$BACKEND_ENTRYPOINT" ]] ||
+  fail "backend startup entrypoint is missing: $BACKEND_ENTRYPOINT"
+[[ -f "$FRONTEND_CLI" ]] ||
+  fail "frontend startup entrypoint is missing: $FRONTEND_CLI"
 [[ "$BACKEND_PORT" != "$FRONTEND_PORT" ]] ||
   fail "backend and frontend smoke ports must be different"
 
@@ -75,6 +84,8 @@ env -i \
   ALLOWED_ORIGINS="$frontend_url" \
   PROD_DOMAIN= \
   APP_URL="$frontend_url" \
+  SUPERVISOR_BACKEND_ENTRYPOINT="$BACKEND_ENTRYPOINT" \
+  SUPERVISOR_FRONTEND_CLI="$FRONTEND_CLI" \
   QSTASH_TOKEN= \
   QSTASH_CURRENT_SIGNING_KEY= \
   QSTASH_NEXT_SIGNING_KEY= \

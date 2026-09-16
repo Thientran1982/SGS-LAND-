@@ -8,6 +8,7 @@
     "start": "node server.js",
     "start:production": "bash scripts/supervisor.sh",
     "check:production-startup": "bash scripts/production-startup-smoke.sh",
+    "test:production-startup-failures": "bash scripts/production-startup-failure-smoke.sh",
     "build": "node ./node_modules/vite/bin/vite.js build && esbuild server.ts --bundle --external:http-proxy-middleware --external:http-proxy --platform=node --format=esm --outfile=server.js --external:pg --external:bcrypt --external:socket.io --external:@socket.io/redis-adapter --external:redis --external:ioredis --external:bullmq --external:nodemailer --external:multer --external:file-type --external:pdf-parse --external:mammoth --external:pdfjs-dist --external:exceljs --external:ws --external:y-websocket --external:yjs --external:@google/genai --external:google-auth-library --external:openai --external:@anthropic-ai/sdk --external:vite --external:express --external:cookie-parser --external:jsonwebtoken --external:helmet --external:dotenv --external:sharp --external:compression --external:cheerio --external:jsdom --external:canvas",
     "check:production-dependencies": "node scripts/check-production-dependencies.mjs",
     "check:router-schema": "tsx scripts/check-router-schema.ts",
