@@ -104,6 +104,20 @@ describe('outreach audit export route', () => {
     expect(agentOutboundRepository.listAuditEventsForApproval).not.toHaveBeenCalled();
   });
 
+  it('returns a retryable error when audit history cannot be read', async () => {
+    approvalRequestRepository.findApprovedOutreachForExport.mockResolvedValue({ id: approvalId });
+    agentOutboundRepository.listAuditEventsForApproval.mockRejectedValue(new Error('database unavailable'));
+
+    const response = await fetch(`${origin}/api/approval-requests/${approvalId}/outreach-audit-export`, {
+      headers: { 'x-test-tenant': tenantA },
+    });
+
+    expect(response.status).toBe(503);
+    expect(await response.json()).toEqual({
+      error: 'OUTREACH_AUDIT_EXPORT_TEMPORARILY_UNAVAILABLE',
+    });
+  });
+
   it('keeps the Approval Inbox role boundary for exports', async () => {
     const response = await fetch(`${origin}/api/approval-requests/${approvalId}/outreach-audit-export`, {
       headers: { 'x-test-role': 'BROKER' },

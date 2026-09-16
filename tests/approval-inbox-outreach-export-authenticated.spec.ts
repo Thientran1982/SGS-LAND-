@@ -324,4 +324,68 @@ test.describe('Authenticated Approval Inbox outreach evidence export', () => {
       await brokerContext.close();
     }
   });
+
+  test('explains temporary export failures, keeps the button retryable, and distinguishes invalid approvals', async ({
+    page,
+    request,
+  }) => {
+    test.setTimeout(60_000);
+
+    await loginAndOpenApprovalInbox(page, request, managerEmail, managerPassword);
+    const temporaryFailureCard = page.getByTestId(`outreach-approval-card-${approvalIds[0]}`);
+    const invalidApprovalCard = page.getByTestId(`outreach-approval-card-${approvalIds[1]}`);
+    await expect(temporaryFailureCard).toBeVisible({ timeout: 30_000 });
+    await expect(invalidApprovalCard).toBeVisible({ timeout: 30_000 });
+
+    let temporaryFailureAttempts = 0;
+    await page.route(
+      `**/api/approval-requests/${approvalIds[0]}/outreach-audit-export`,
+      async route => {
+        temporaryFailureAttempts += 1;
+        if (temporaryFailureAttempts === 1) {
+          await route.fulfill({
+            status: 503,
+            contentType: 'application/json',
+            body: JSON.stringify({ error: 'OUTREACH_AUDIT_EXPORT_TEMPORARILY_UNAVAILABLE' }),
+          });
+          return;
+        }
+        await route.continue();
+      },
+    );
+
+    const failedDownload = page.waitForEvent('download', { timeout: 1_500 }).catch(() => null);
+    await temporaryFailureCard.getByRole('button', { name: 'Xuất lịch sử đối soát' }).click();
+    expect(await failedDownload).toBeNull();
+    await expect(page.getByText(
+      'Chưa thể tải lịch sử đối soát lúc này. Không có tệp nào được tạo; hãy thử lại.',
+    )).toBeVisible();
+    await expect(
+      temporaryFailureCard.getByRole('button', { name: 'Xuất lịch sử đối soát' }),
+    ).toBeEnabled();
+
+    const retryDownload = page.waitForEvent('download');
+    await temporaryFailureCard.getByRole('button', { name: 'Xuất lịch sử đối soát' }).click();
+    const download = await retryDownload;
+    expect(download.suggestedFilename()).toContain(`outreach-audit-${approvalIds[0]}-`);
+
+    await page.unroute(`**/api/approval-requests/${approvalIds[0]}/outreach-audit-export`);
+    await page.route(
+      `**/api/approval-requests/${approvalIds[1]}/outreach-audit-export`,
+      route => route.fulfill({
+        status: 404,
+        contentType: 'application/json',
+        body: JSON.stringify({ error: 'OUTREACH_APPROVAL_NOT_FOUND' }),
+      }),
+    );
+    const invalidDownload = page.waitForEvent('download', { timeout: 1_500 }).catch(() => null);
+    await invalidApprovalCard.getByRole('button', { name: 'Xuất lịch sử đối soát' }).click();
+    expect(await invalidDownload).toBeNull();
+    await expect(page.getByText(
+      'Approval không còn hợp lệ nên không thể tải lịch sử đối soát. Hãy làm mới danh sách để kiểm tra lại.',
+    )).toBeVisible();
+    await expect(
+      invalidApprovalCard.getByRole('button', { name: 'Xuất lịch sử đối soát' }),
+    ).toBeEnabled();
+  });
 });

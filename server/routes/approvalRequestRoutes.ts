@@ -91,7 +91,7 @@ const APPROVAL_ROLES = new Set(['SUPER_ADMIN', 'ADMIN', 'MANAGER', 'TEAM_LEAD'])
       return res.send(`\uFEFF${csv}\r\n`);
     } catch (error) {
       console.error('[approval-requests] outreach audit export error:', error);
-      return res.status(500).json({ error: 'Failed to export outreach delivery history' });
+      return res.status(503).json({ error: 'OUTREACH_AUDIT_EXPORT_TEMPORARILY_UNAVAILABLE' });
     }
   });
 

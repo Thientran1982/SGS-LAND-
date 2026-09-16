@@ -490,9 +490,23 @@ export const ApprovalInbox: React.FC = () => {
             });
             if (!response.ok) {
                 const errorData = await response.json().catch(() => ({}));
-                throw new Error(errorData?.error || `Không thể xuất lịch sử đối soát (${response.status}).`);
+                const exportError = new Error(
+                    errorData?.error || `Không thể xuất lịch sử đối soát (${response.status}).`,
+                ) as Error & { code?: string; status?: number };
+                exportError.code = errorData?.error;
+                exportError.status = response.status;
+                throw exportError;
             }
             const blob = await response.blob();
+            if (blob.size === 0) {
+                const exportError = new Error('OUTREACH_AUDIT_EXPORT_TEMPORARILY_UNAVAILABLE') as Error & {
+                    code?: string;
+                    status?: number;
+                };
+                exportError.code = 'OUTREACH_AUDIT_EXPORT_TEMPORARILY_UNAVAILABLE';
+                exportError.status = 503;
+                throw exportError;
+            }
             const url = URL.createObjectURL(blob);
             const anchor = document.createElement('a');
             const contentDisposition = response.headers.get('content-disposition') || '';
@@ -506,7 +520,25 @@ export const ApprovalInbox: React.FC = () => {
             URL.revokeObjectURL(url);
             notify('Đã xuất lịch sử tra cứu và quyết định outreach.', 'success', 5000);
         } catch (error: any) {
-            notify(error?.message || 'Không thể xuất lịch sử đối soát.', 'error', 7000);
+            if (error?.code === 'OUTREACH_APPROVAL_NOT_FOUND' || error?.status === 404) {
+                notify(
+                    'Approval không còn hợp lệ nên không thể tải lịch sử đối soát. Hãy làm mới danh sách để kiểm tra lại.',
+                    'error',
+                    7000,
+                );
+            } else if (
+                error?.code === 'OUTREACH_AUDIT_EXPORT_TEMPORARILY_UNAVAILABLE'
+                || error?.status === 503
+                || !error?.status
+            ) {
+                notify(
+                    'Chưa thể tải lịch sử đối soát lúc này. Không có tệp nào được tạo; hãy thử lại.',
+                    'error',
+                    7000,
+                );
+            } else {
+                notify(error?.message || 'Không thể xuất lịch sử đối soát.', 'error', 7000);
+            }
         } finally {
             setAuditExportLoading(null);
         }
