@@ -1,5 +1,6 @@
 import { Router, Request, Response } from 'express';
 import { approvalRequestRepository } from '../repositories/approvalRequestRepository';
+import { agentOutboundRepository } from '../repositories/agentOutboundRepository';
 import { validateUUIDParam } from '../middleware/validation';
 import { recordMinhDecisionFeedbackSafely } from '../services/minhDecisionLearningService';
 
@@ -10,6 +11,14 @@ import { recordMinhDecisionFeedbackSafely } from '../services/minhDecisionLearni
 export function createApprovalRequestRoutes(authenticateToken: any) {
   const router = Router();
 const APPROVAL_ROLES = new Set(['SUPER_ADMIN', 'ADMIN', 'MANAGER', 'TEAM_LEAD']);
+
+  const csvCell = (value: unknown): string => {
+    const text = value === null || value === undefined ? '' : String(value);
+    // Keep exported evidence safe to open in spreadsheet applications while
+    // retaining the original value for normal audit fields.
+    const safeText = /^[=+\-@]/.test(text) ? `'${text}` : text;
+    return `"${safeText.replace(/"/g, '""')}"`;
+  };
 
   router.get('/', authenticateToken, async (req: Request, res: Response) => {
     try {
@@ -26,6 +35,63 @@ const APPROVAL_ROLES = new Set(['SUPER_ADMIN', 'ADMIN', 'MANAGER', 'TEAM_LEAD'])
     } catch (error) {
       console.error('[approval-requests] list error:', error);
       res.status(500).json({ error: 'Failed to fetch approval requests' });
+    }
+  });
+
+  router.get('/:id/outreach-audit-export', authenticateToken, validateUUIDParam(), async (req: Request, res: Response) => {
+    try {
+      const user = (req as any).user;
+      if (!APPROVAL_ROLES.has(user?.role)) {
+        return res.status(403).json({ error: 'Only authorized managers can export outreach delivery history' });
+      }
+
+      const tenantId = String(user.tenantId);
+      const approvalId = String(req.params.id);
+      const approval = await approvalRequestRepository.findApprovedOutreachForExport(tenantId, approvalId);
+      if (!approval) return res.status(404).json({ error: 'OUTREACH_APPROVAL_NOT_FOUND' });
+
+      const events = await agentOutboundRepository.listAuditEventsForApproval(tenantId, approval.id);
+      const headers = [
+        'Approval ID',
+        'Delivery ID',
+        'Variant ID',
+        'Channel',
+        'Provider',
+        'Event type',
+        'Lookup time',
+        'Lookup status',
+        'Provider event',
+        'Provider message ID',
+        'Decision',
+        'Note',
+        'Operator',
+      ];
+      const rows = events.map(event => [
+        approval.id,
+        event.delivery_id,
+        event.variant_id,
+        event.channel,
+        event.provider,
+        event.event_type,
+        event.created_at instanceof Date ? event.created_at.toISOString() : event.created_at,
+        event.lookup_status,
+        event.provider_event,
+        event.provider_message_id,
+        event.decision_status,
+        event.decision_note,
+        event.operator_name || event.operator_id || 'Unknown operator',
+      ]);
+      const csv = [headers, ...rows].map(row => row.map(csvCell).join(',')).join('\r\n');
+
+      res.setHeader('Content-Type', 'text/csv; charset=utf-8');
+      res.setHeader(
+        'Content-Disposition',
+        `attachment; filename="outreach-audit-${approval.id}-${new Date().toISOString().slice(0, 10)}.csv"`,
+      );
+      return res.send(`\uFEFF${csv}\r\n`);
+    } catch (error) {
+      console.error('[approval-requests] outreach audit export error:', error);
+      return res.status(500).json({ error: 'Failed to export outreach delivery history' });
     }
   });
 

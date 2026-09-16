@@ -294,6 +294,26 @@ class AgentOutboundRepository {
     )).rows);
   }
 
+  async listAuditEventsForApproval(
+    tenantId: string,
+    approvalRequestId: string,
+  ): Promise<any[]> {
+    return withTenantContext(tenantId, async client => (await client.query(
+      `SELECT ae.id, ae.approval_request_id, ae.delivery_id, ae.variant_id,
+              d.channel, ae.event_type, ae.provider, ae.lookup_status,
+              ae.provider_event, ae.provider_message_id, ae.decision_status,
+              ae.decision_note, ae.operator_id, ae.operator_name, ae.created_at
+         FROM outreach_delivery_audit_events ae
+         INNER JOIN agent_outbound_deliveries d
+           ON d.id = ae.delivery_id
+          AND d.tenant_id = ae.tenant_id
+        WHERE ae.tenant_id = $1
+          AND ae.approval_request_id = $2
+        ORDER BY ae.created_at ASC, ae.id ASC`,
+      [tenantId, approvalRequestId],
+    )).rows);
+  }
+
   async reconcileUnknown(params: {
     tenantId: string; deliveryId: string; status: OutboundReconciliation;
     providerMessageId?: string; note: string;

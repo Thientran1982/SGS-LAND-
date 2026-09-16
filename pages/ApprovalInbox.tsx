@@ -292,6 +292,7 @@ export const ApprovalInbox: React.FC = () => {
     const [toast, setToast] = useState<{ msg: string, type: 'success' | 'error' } | null>(null);
     const [deliveryLookups, setDeliveryLookups] = useState<Record<string, OutreachDeliveryLookup>>({});
     const [deliveryLookupLoading, setDeliveryLookupLoading] = useState<string | null>(null);
+    const [auditExportLoading, setAuditExportLoading] = useState<string | null>(null);
     const { t, formatDateTime, formatCurrency } = useTranslation();
     const notify = useCallback((msg: string, type: 'success' | 'error' = 'success', duration?: number) => {
         setToast({ msg, type });
@@ -480,6 +481,36 @@ export const ApprovalInbox: React.FC = () => {
             setDeliveryLookupLoading(null);
         }
     };
+    const exportOutreachAuditHistory = async (approvalId: string) => {
+        setAuditExportLoading(approvalId);
+        try {
+            const response = await fetch(`/api/approval-requests/${approvalId}/outreach-audit-export`, {
+                credentials: 'include',
+                cache: 'no-store',
+            });
+            if (!response.ok) {
+                const errorData = await response.json().catch(() => ({}));
+                throw new Error(errorData?.error || `Không thể xuất lịch sử đối soát (${response.status}).`);
+            }
+            const blob = await response.blob();
+            const url = URL.createObjectURL(blob);
+            const anchor = document.createElement('a');
+            const contentDisposition = response.headers.get('content-disposition') || '';
+            const filename = contentDisposition.match(/filename="([^"]+)"/i)?.[1]
+                || `outreach-audit-${approvalId}.csv`;
+            anchor.href = url;
+            anchor.download = filename;
+            document.body.appendChild(anchor);
+            anchor.click();
+            anchor.remove();
+            URL.revokeObjectURL(url);
+            notify('Đã xuất lịch sử tra cứu và quyết định outreach.', 'success', 5000);
+        } catch (error: any) {
+            notify(error?.message || 'Không thể xuất lịch sử đối soát.', 'error', 7000);
+        } finally {
+            setAuditExportLoading(null);
+        }
+    };
     const pendingOutreach = brokerApprovals.filter(item => item.actionType === 'DRAFT_OUTREACH');
     const deliveryForVariant = (item: OutreachApproval, variantId: string) =>
         (item.deliveries || []).find(delivery =>
@@ -511,14 +542,26 @@ export const ApprovalInbox: React.FC = () => {
                                         {item._pending ? 'Đang chờ broker duyệt' : 'Đã duyệt — chọn variant để gửi'}
                                     </p>
                                 </div>
-                                {item._pending && (
-                                    <button
-                                        onClick={() => approveOutreach(item.id)}
-                                        className="px-4 py-2 rounded-xl bg-sgs-primary-deep text-white text-xs font-bold hover:bg-slate-800"
-                                    >
-                                        Duyệt draft
-                                    </button>
-                                )}
+                                <div className="flex flex-wrap gap-2">
+                                    {!item._pending && (
+                                        <button
+                                            type="button"
+                                            onClick={() => exportOutreachAuditHistory(item.id)}
+                                            disabled={auditExportLoading === item.id}
+                                            className="px-3 py-2 rounded-xl border border-[var(--glass-border)] text-[var(--text-primary)] text-xs font-bold hover:bg-[var(--glass-surface-hover)] disabled:opacity-50 disabled:cursor-not-allowed"
+                                        >
+                                            {auditExportLoading === item.id ? 'Đang xuất…' : 'Xuất lịch sử đối soát'}
+                                        </button>
+                                    )}
+                                    {item._pending && (
+                                        <button
+                                            onClick={() => approveOutreach(item.id)}
+                                            className="px-4 py-2 rounded-xl bg-sgs-primary-deep text-white text-xs font-bold hover:bg-slate-800"
+                                        >
+                                            Duyệt draft
+                                        </button>
+                                    )}
+                                </div>
                             </div>
                             <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 mt-4">
                                 {(item.payload?.draftVariants || []).map(variant => {

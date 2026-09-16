@@ -250,6 +250,21 @@ class ApprovalRequestRepository {
     return result.rows.map(r => this.rowToEntity(r));
   }
 
+  async findApprovedOutreachForExport(tenantId: string, id: string): Promise<{ id: string } | null> {
+    const result = await withTenantContext(tenantId, client => client.query(
+      `SELECT id
+         FROM approval_requests
+        WHERE tenant_id = $1
+          AND id = $2
+          AND action_type = 'DRAFT_OUTREACH'
+          AND status = 'APPROVED'
+          AND resumed_at IS NOT NULL
+        LIMIT 1`,
+      [tenantId, id],
+    ));
+    return result.rows[0] ? { id: result.rows[0].id } : null;
+  }
+
   async findById(tenantId: string, id: string): Promise<any | null> {
     const result = await pool.query(
       `SELECT * FROM approval_requests WHERE tenant_id = $1 AND id = $2`,
