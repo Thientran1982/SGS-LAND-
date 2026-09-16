@@ -15,39 +15,81 @@ export type OutboundReconciliation = 'SENT' | 'FAILED';
 class AgentOutboundRepository {
   async createAndClaim(params: {
     tenantId: string;
-    executionId: string;
+    executionId?: string;
+    approvalRequestId?: string;
+    variantId?: string;
     interactionId?: string;
     leadId: string;
     channel: string;
     content: string;
   }): Promise<OutboundClaim> {
     return withTenantContext(params.tenantId, async client => {
+      if (!params.executionId && (!params.approvalRequestId || !params.variantId)) {
+        throw new Error('Outbound delivery requires an execution or approval variant key');
+      }
       const contentHash = createHash('sha256').update(params.content).digest('hex');
-      const insertDeliveryKey = `agent-outbound:${params.executionId}`;
-      await client.query(
-        `INSERT INTO agent_outbound_deliveries
-          (tenant_id, execution_id, interaction_id, lead_id, channel, content_hash, delivery_key)
-         VALUES ($1,$2,$3,$4,$5,$6,$7)
-         ON CONFLICT (tenant_id, execution_id) DO NOTHING`,
-        [
-          params.tenantId,
-          params.executionId,
-          params.interactionId || null,
-          params.leadId,
-          params.channel,
-          contentHash,
-          insertDeliveryKey,
-        ],
-      );
-      const selected = await client.query(
-        `SELECT * FROM agent_outbound_deliveries
-          WHERE tenant_id = $1 AND execution_id = $2
-          FOR UPDATE`,
-        [params.tenantId, params.executionId],
-      );
+      const insertDeliveryKey = params.approvalRequestId
+        ? `outreach-approval:${params.approvalRequestId}:${createHash('sha256').update(params.variantId || '').digest('hex').slice(0, 24)}`
+        : `agent-outbound:${params.executionId}`;
+      if (params.approvalRequestId) {
+        await client.query(
+          `INSERT INTO agent_outbound_deliveries
+            (tenant_id, execution_id, approval_request_id, variant_id, interaction_id, lead_id, channel, content_hash, delivery_key)
+           VALUES ($1,NULL,$2,$3,$4,$5,$6,$7,$8)
+           ON CONFLICT (tenant_id, approval_request_id, variant_id)
+           WHERE approval_request_id IS NOT NULL AND variant_id IS NOT NULL DO NOTHING`,
+          [
+            params.tenantId,
+            params.approvalRequestId,
+            params.variantId,
+            params.interactionId || null,
+            params.leadId,
+            params.channel,
+            contentHash,
+            insertDeliveryKey,
+          ],
+        );
+      } else {
+        await client.query(
+          `INSERT INTO agent_outbound_deliveries
+            (tenant_id, execution_id, interaction_id, lead_id, channel, content_hash, delivery_key)
+           VALUES ($1,$2,$3,$4,$5,$6,$7)
+           ON CONFLICT (tenant_id, execution_id) DO NOTHING`,
+          [
+            params.tenantId,
+            params.executionId,
+            params.interactionId || null,
+            params.leadId,
+            params.channel,
+            contentHash,
+            insertDeliveryKey,
+          ],
+        );
+      }
+      const selected = params.approvalRequestId
+        ? await client.query(
+          `SELECT * FROM agent_outbound_deliveries
+            WHERE tenant_id=$1 AND approval_request_id=$2 AND variant_id=$3
+            FOR UPDATE`,
+          [params.tenantId, params.approvalRequestId, params.variantId],
+        )
+        : await client.query(
+          `SELECT * FROM agent_outbound_deliveries
+            WHERE tenant_id = $1 AND execution_id = $2
+            FOR UPDATE`,
+          [params.tenantId, params.executionId],
+        );
       const row = selected.rows[0];
       if (!row) throw new Error('Outbound delivery disappeared during claim');
-      if (row.content_hash !== contentHash || row.channel !== params.channel || row.lead_id !== params.leadId) {
+      if (
+        row.content_hash !== contentHash
+        || row.channel !== params.channel
+        || row.lead_id !== params.leadId
+        || (params.approvalRequestId && (
+          row.approval_request_id !== params.approvalRequestId
+          || row.variant_id !== params.variantId
+        ))
+      ) {
         throw new Error(`OUTBOUND_DELIVERY_CONFLICT:${row.id}`);
       }
       const deliveryKey = row.delivery_key || `agent-outbound:${row.id}`;

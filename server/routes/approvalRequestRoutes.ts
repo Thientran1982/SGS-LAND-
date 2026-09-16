@@ -17,14 +17,58 @@ const APPROVAL_ROLES = new Set(['SUPER_ADMIN', 'ADMIN', 'MANAGER', 'TEAM_LEAD'])
       if (!APPROVAL_ROLES.has(user?.role)) {
         return res.status(403).json({ error: 'Only authorized managers can approve AI actions' });
       }
-      const [items, pendingCount] = await Promise.all([
+      const [items, pendingCount, approvedOutreach] = await Promise.all([
         approvalRequestRepository.findPendingByTenant(user.tenantId, 50),
         approvalRequestRepository.countPending(user.tenantId),
+        approvalRequestRepository.findApprovedOutreachByTenant(user.tenantId, 50),
       ]);
-      res.json({ items, pendingCount });
+      res.json({ items, pendingCount, approvedOutreach });
     } catch (error) {
       console.error('[approval-requests] list error:', error);
       res.status(500).json({ error: 'Failed to fetch approval requests' });
+    }
+  });
+
+  router.post('/:id/send', authenticateToken, validateUUIDParam(), async (req: Request, res: Response) => {
+    try {
+      const user = (req as any).user;
+      if (!APPROVAL_ROLES.has(user?.role)) {
+        return res.status(403).json({ error: 'Only authorized managers can send approved AI actions' });
+      }
+      const variantId = typeof req.body?.variantId === 'string' ? req.body.variantId.trim() : '';
+      const { sendApprovedOutreachVariant } = await import('../services/outreachManualSendService');
+      const result = await sendApprovedOutreachVariant(
+        String(user.tenantId),
+        String(req.params.id),
+        variantId,
+        String(user.id),
+      );
+      return res.json(result);
+    } catch (error: any) {
+      const code = String(error?.message || 'OUTREACH_SEND_FAILED');
+      const status = new Set([
+        'OUTREACH_APPROVAL_NOT_FOUND',
+        'OUTREACH_VARIANT_NOT_FOUND',
+        'OUTREACH_VARIANT_REQUIRED',
+        'OUTREACH_EMAIL_REQUIRED',
+        'OUTREACH_ZALO_ID_REQUIRED',
+      ]).has(code) ? 404
+        : new Set([
+          'OUTREACH_APPROVAL_NOT_APPROVED',
+          'OUTREACH_APPROVAL_EXPIRED',
+          'OUTREACH_CONSENT_REVOKED',
+          'OUTREACH_CALL_SCRIPT_MANUAL_ONLY',
+          'OUTREACH_CHANNEL_INVALID',
+          'OUTREACH_CONTENT_EMPTY',
+        ]).has(code) ? 409
+          : new Set([
+            'OUTREACH_SEND_IN_PROGRESS',
+            'OUTREACH_DELIVERY_UNKNOWN',
+            'OUTREACH_DELIVERY_FAILED',
+          ]).has(code) ? 409
+            : 500;
+      console.error('[approval-requests] outreach send error:', code);
+      return res.status(status).json({ error: code });
     }
   });
 

@@ -200,6 +200,34 @@ class ApprovalRequestRepository {
     return result.rows.map(r => this.rowToEntity(r));
   }
 
+  async findApprovedOutreachByTenant(tenantId: string, limit = 50): Promise<any[]> {
+    const result = await pool.query(
+      `SELECT ar.*, l.name AS lead_name, l.phone AS lead_phone,
+              COALESCE((
+                SELECT json_agg(json_build_object(
+                  'executionId', d.execution_id,
+                  'status', d.status,
+                  'providerMessageId', d.provider_message_id,
+                  'error', d.error_text,
+                  'updatedAt', d.updated_at
+                ) ORDER BY d.updated_at DESC)
+                FROM agent_outbound_deliveries d
+                WHERE d.tenant_id = ar.tenant_id
+                  AND d.approval_request_id = ar.id
+              ), '[]'::json) AS deliveries
+       FROM approval_requests ar
+       LEFT JOIN leads l ON l.id = ar.lead_id
+       WHERE ar.tenant_id = $1
+         AND ar.action_type = 'DRAFT_OUTREACH'
+         AND ar.status = 'APPROVED'
+         AND ar.resumed_at IS NOT NULL
+       ORDER BY ar.reviewed_at DESC NULLS LAST
+       LIMIT $2`,
+      [tenantId, limit],
+    );
+    return result.rows.map(r => this.rowToEntity(r));
+  }
+
   async findById(tenantId: string, id: string): Promise<any | null> {
     const result = await pool.query(
       `SELECT * FROM approval_requests WHERE tenant_id = $1 AND id = $2`,
@@ -261,6 +289,7 @@ class ApprovalRequestRepository {
       reviewedBy: row.reviewed_by,
       reviewedAt: row.reviewed_at,
       reviewNote: row.review_note,
+      deliveries: row.deliveries ?? [],
       executionId: row.execution_id,
       stepKey: row.step_key,
       idempotencyKey: row.idempotency_key,

@@ -228,6 +228,7 @@ import m204 from './204_minh_decision_learning_rollout';
 import m205 from './205_minh_learning_export_history';
 import m206 from './206_minh_model_promotion_loop';
 import m207 from './207_outreach_draft_approval';
+import m208 from './208_outreach_delivery_claims';
 dotenv.config();
 
 export interface Migration {
@@ -451,6 +452,7 @@ export const MIGRATION_REGISTRY: Record<string, Migration> = {
   '205_minh_learning_export_history.ts': m205,
   '206_minh_model_promotion_loop.ts': m206,
   '207_outreach_draft_approval.ts': m207,
+  '208_outreach_delivery_claims.ts': m208,
 };
 
 /**

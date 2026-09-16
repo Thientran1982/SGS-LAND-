@@ -1,6 +1,7 @@
 import React, { useEffect, useState, useCallback, memo, useMemo } from 'react';
 import { createPortal } from 'react-dom';
 import { db } from '../services/dbApi';
+import { api } from '../services/api';
 import { Proposal, Listing, Lead, User, LeadScore } from '../types';
 import { useTranslation } from '../services/i18n';
 import { Dropdown } from '../components/Dropdown';
@@ -14,6 +15,14 @@ const RISK_CONSTANTS = {
     TOAST_DURATION: 3000
 };
 type RiskLevel = 'HIGH' | 'MEDIUM' | 'LOW';
+interface OutreachApproval {
+    id: string;
+    actionType?: string;
+    status: string;
+    leadName?: string;
+    payload?: { draftVariants?: Array<{ id: string; channel: string; subject?: string; message: string }> };
+    deliveries?: Array<{ executionId: string; status: string; providerMessageId?: string; error?: string }>;
+}
 interface RiskAssessment {
     level: RiskLevel;
     reasonKeys: string[];
@@ -234,6 +243,8 @@ const ProposalCard = memo(({ proposal, listing, lead, currentUser, isSelected, o
 export const ApprovalInbox: React.FC = () => {
     // Data State
     const [pending, setPending] = useState<Proposal[]>([]);
+    const [brokerApprovals, setBrokerApprovals] = useState<OutreachApproval[]>([]);
+    const [approvedOutreach, setApprovedOutreach] = useState<OutreachApproval[]>([]);
     const [listings, setListings] = useState<Record<string, Listing>>({});
     const [leads, setLeads] = useState<Record<string, Lead>>({});
     const [currentUser, setCurrentUser] = useState<User | null>(null);
@@ -252,12 +263,16 @@ export const ApprovalInbox: React.FC = () => {
     const loadData = useCallback(async () => {
         setLoading(true);
         try {
-            const [props, user] = await Promise.all([
+            const [props, user, approvalData] = await Promise.all([
                 db.getPendingProposals(),
-                db.getCurrentUser()
+                db.getCurrentUser(),
+                api.get<{ items?: OutreachApproval[]; approvedOutreach?: OutreachApproval[] }>('/api/approval-requests')
+                    .catch(() => ({ items: [], approvedOutreach: [] })),
             ]);
             setPending(props || []);
             setCurrentUser(user);            
+            setBrokerApprovals(approvalData.items || []);
+            setApprovedOutreach(approvalData.approvedOutreach || []);
             // Efficient Data Loading (Map Pattern)
             const safeProps = props || [];
             const listingIds = [...new Set(safeProps.map(p => p.listingId))];
@@ -354,12 +369,95 @@ export const ApprovalInbox: React.FC = () => {
             loadData();
         } catch (e) { notify(t('common.error'), 'error'); }
     };
+    const approveOutreach = async (id: string) => {
+        try {
+            await api.post(`/api/approval-requests/${id}/approve`, {});
+            notify('Draft outreach đã được duyệt. Broker có thể gửi thủ công theo từng kênh.', 'success', 6000);
+            await loadData();
+        } catch (e: any) {
+            notify(e?.data?.error || e?.message || t('common.error'), 'error', 6000);
+        }
+    };
+    const sendOutreach = async (approvalId: string, variantId: string) => {
+        try {
+            await api.post(`/api/approval-requests/${approvalId}/send`, { variantId });
+            notify('Đã gửi draft outreach qua provider.', 'success', 5000);
+            await loadData();
+        } catch (e: any) {
+            notify(e?.data?.error || e?.message || 'Không thể gửi draft outreach. Hãy kiểm tra consent/provider.', 'error', 7000);
+            await loadData();
+        }
+    };
+    const pendingOutreach = brokerApprovals.filter(item => item.actionType === 'DRAFT_OUTREACH');
+    const deliveryForVariant = (item: OutreachApproval, variantId: string) =>
+        (item.deliveries || []).find(delivery => delivery.executionId.endsWith(`:${variantId}`));
     if (loading) return <div className="p-10 text-center text-[var(--text-secondary)] font-mono animate-pulse">{t('common.loading')}</div>;
 
     return (
         <>
           <SeoHead title="Hộp Phê Duyệt | SGS LAND" description="Xem xét và phê duyệt các yêu cầu, hợp đồng và giao dịch bất động sản." canonicalPath="/approval-inbox" />
         <div className="p-4 sm:p-6 space-y-6 pb-24 relative animate-enter">
+
+            {(pendingOutreach.length > 0 || approvedOutreach.length > 0) && (
+                <section className="space-y-4">
+                    <div>
+                        <p className="text-xs font-bold uppercase tracking-widest text-sgs-primary">Outreach broker</p>
+                        <h2 className="text-xl font-bold text-[var(--text-primary)]">Draft đã duyệt và gửi thủ công</h2>
+                        <p className="text-sm text-[var(--text-secondary)] mt-1">
+                            Consent được kiểm tra lại ngay trước khi gửi. Không có auto-send và kết quả không rõ sẽ không được gửi lại tự động.
+                        </p>
+                    </div>
+                    {[...pendingOutreach.map(item => ({ ...item, _pending: true })), ...approvedOutreach.map(item => ({ ...item, _pending: false }))].map(item => (
+                        <div key={item.id} className="bg-[var(--bg-surface)] border border-[var(--glass-border)] rounded-2xl p-4 md:p-5 shadow-sm">
+                            <div className="flex flex-wrap justify-between gap-3 items-start">
+                                <div>
+                                    <p className="font-bold text-[var(--text-primary)]">{item.leadName || 'Lead'}</p>
+                                    <p className="text-xs text-[var(--text-secondary)] mt-1">
+                                        {item._pending ? 'Đang chờ broker duyệt' : 'Đã duyệt — chọn variant để gửi'}
+                                    </p>
+                                </div>
+                                {item._pending && (
+                                    <button
+                                        onClick={() => approveOutreach(item.id)}
+                                        className="px-4 py-2 rounded-xl bg-sgs-primary-deep text-white text-xs font-bold hover:bg-slate-800"
+                                    >
+                                        Duyệt draft
+                                    </button>
+                                )}
+                            </div>
+                            <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 mt-4">
+                                {(item.payload?.draftVariants || []).map(variant => {
+                                    const delivery = deliveryForVariant(item, variant.id);
+                                    const sent = delivery?.status === 'SENT';
+                                    const blocked = delivery?.status === 'UNKNOWN' || delivery?.status === 'FAILED';
+                                    return (
+                                        <div key={variant.id} className="rounded-xl border border-[var(--glass-border)] bg-[var(--glass-surface)] p-4">
+                                            <div className="flex justify-between gap-3 items-center">
+                                                <span className="text-xs font-bold uppercase tracking-wider text-sgs-primary">{variant.channel}</span>
+                                                {delivery && <span className={`text-[11px] font-bold ${sent ? 'text-emerald-600' : 'text-amber-600'}`}>{delivery.status}</span>}
+                                            </div>
+                                            {variant.subject && <p className="text-sm font-semibold mt-2 text-[var(--text-primary)]">{variant.subject}</p>}
+                                            <p className="text-sm text-[var(--text-secondary)] whitespace-pre-line mt-2">{variant.message}</p>
+                                            {!item._pending && variant.channel === 'CALL_SCRIPT' && (
+                                                <p className="text-xs text-amber-700 mt-3">Kịch bản này chỉ để broker gọi thủ công; hệ thống không gọi thay.</p>
+                                            )}
+                                            {!item._pending && variant.channel !== 'CALL_SCRIPT' && (
+                                                <button
+                                                    onClick={() => sendOutreach(item.id, variant.id)}
+                                                    disabled={sent || blocked}
+                                                    className="mt-3 w-full py-2 rounded-lg bg-sgs-primary-deep text-white text-xs font-bold hover:bg-slate-800 disabled:opacity-50 disabled:cursor-not-allowed"
+                                                >
+                                                    {sent ? 'Đã gửi' : blocked ? 'Cần kiểm tra provider' : 'Gửi thủ công'}
+                                                </button>
+                                            )}
+                                        </div>
+                                    );
+                                })}
+                            </div>
+                        </div>
+                    ))}
+                </section>
+            )}
 
             {/* METRICS BAR */}
             <div className="grid grid-cols-2 md:grid-cols-3 gap-3 md:gap-4">
