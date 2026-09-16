@@ -75,6 +75,7 @@ import { createProjectRoutes } from "./server/routes/projectRoutes";
 import { createCommissionRoutes } from "./server/routes/commissionRoutes";
 import { createTenantRoutes } from "./server/routes/tenantRoutes";
 import { createApprovalRequestRoutes } from "./server/routes/approvalRequestRoutes";
+import { createOutreachRoutes } from "./server/routes/outreachRoutes";
 import { resolveTenantByHost, startCustomDomainVerifyCron, stopCustomDomainVerifyCron } from "./server/services/tenantBrandingService";
 import { createTaskRoutes } from "./server/routes/taskRoutes";
 import { createDepartmentRoutes } from "./server/routes/departmentRoutes";
@@ -4881,6 +4882,7 @@ if (asyncRun) {
   });
 
   app.use('/api/leads', apiRateLimit, createLeadRoutes(authenticateToken, () => broadcastIo));
+  app.use('/api/outreach', apiRateLimit, createOutreachRoutes(authenticateToken));
   app.use('/api/listings', apiRateLimit, createListingRoutes(authenticateToken));
   app.use('/api/proposals', apiRateLimit, createProposalRoutes(authenticateToken, () => broadcastIo));
   app.use('/api/contracts', apiRateLimit, createContractRoutes(authenticateToken));

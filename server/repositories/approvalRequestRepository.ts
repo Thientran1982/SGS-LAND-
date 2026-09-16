@@ -32,6 +32,7 @@ export const HIGH_IMPACT_ACTIONS = [
   'REVIEW_CSAT_DROP',
   'PROMOTE_LEARNING_CANDIDATE',
   'ROLLBACK_LEARNING_CANDIDATE',
+  'DRAFT_OUTREACH',
 ] as const;
 
 export type HighImpactAction = typeof HIGH_IMPACT_ACTIONS[number];

@@ -329,6 +329,48 @@ export async function executeApprovedAction(tenantId: string, approvalId: string
         candidateStatus: 'ROLLED_BACK',
         mutation: 'MODEL_CONTROL_PLANE_ONLY',
       };
+    } else if (request.action_type === 'DRAFT_OUTREACH') {
+      const variants = Array.isArray(payload.draftVariants) ? payload.draftVariants : [];
+      if (payload.requiresBrokerApproval !== true || payload.providerCalled === true || !variants.length) {
+        throw new Error('APPROVAL_INVALID_OUTREACH_DRAFT');
+      }
+      const lead = await client.query(
+        `SELECT id, marketing_email_consent, marketing_email_consent_at, metadata, opt_out_channels
+           FROM leads
+          WHERE id=$1 AND tenant_id=current_setting('app.current_tenant_id', true)::uuid
+          FOR UPDATE`,
+        [request.lead_id],
+      );
+      if (!lead.rows[0]) throw new Error('APPROVAL_LEAD_NOT_FOUND');
+      const metadata = lead.rows[0].metadata && typeof lead.rows[0].metadata === 'object'
+        ? lead.rows[0].metadata
+        : {};
+      const optedOutChannels = Array.isArray(lead.rows[0].opt_out_channels)
+        ? lead.rows[0].opt_out_channels.map((channel: unknown) => String(channel).toLowerCase())
+        : [];
+      const invalidChannel = variants.some((variant: any) => {
+        const channel = String(variant?.channel || '').toUpperCase();
+        if (channel === 'EMAIL') {
+          return lead.rows[0].marketing_email_consent !== true || optedOutChannels.includes('email');
+        }
+        if (channel === 'ZALO') {
+          return metadata.outreachConsent !== true || optedOutChannels.includes('zalo');
+        }
+        if (channel === 'CALL_SCRIPT') {
+          return lead.rows[0].marketing_email_consent !== true && metadata.outreachConsent !== true;
+        }
+        return true;
+      });
+      if (invalidChannel) {
+        throw new Error('APPROVAL_OUTREACH_CONSENT_REVOKED');
+      }
+      actionResult = {
+        mutation: 'NONE',
+        providerCalled: false,
+        draftApproved: true,
+        manualSendRequired: true,
+        draftVariantCount: variants.length,
+      };
     } else if (
       request.action_type === 'DRAFT_PROACTIVE_FOLLOWUP'
       || request.action_type === 'REVIEW_LISTING_PRICE'

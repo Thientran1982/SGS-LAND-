@@ -108,3 +108,4 @@
 - [Minh Week 6 Command Center](minh-week6-command-center.md) — five tenant-scoped panels preserve explicit availability states and fail closed on unknown actions
 - [Lead qualification Vietnamese normalization](lead-qualification-vietnamese-normalization.md) — NFD does not remove đ; map it explicitly before area scoring
 - [Playwright route query matching](playwright-route-query-matching.md) — API fixtures with query strings need a trailing wildcard after the path
+- [Outreach approval boundary](outreach-approval-boundary.md) — Week 8 creates grounded drafts and revalidates consent at approval without provider side effects
