@@ -534,7 +534,11 @@ export const ApprovalInbox: React.FC = () => {
                         </p>
                     </div>
                     {[...pendingOutreach.map(item => ({ ...item, _pending: true })), ...approvedOutreach.map(item => ({ ...item, _pending: false }))].map(item => (
-                        <div key={item.id} className="bg-[var(--bg-surface)] border border-[var(--glass-border)] rounded-2xl p-4 md:p-5 shadow-sm">
+                        <div
+                            key={item.id}
+                            data-testid={`outreach-approval-card-${item.id}`}
+                            className="bg-[var(--bg-surface)] border border-[var(--glass-border)] rounded-2xl p-4 md:p-5 shadow-sm"
+                        >
                             <div className="flex flex-wrap justify-between gap-3 items-start">
                                 <div>
                                     <p className="font-bold text-[var(--text-primary)]">{item.leadName || 'Lead'}</p>
