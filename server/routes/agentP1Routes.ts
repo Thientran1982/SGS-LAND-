@@ -11,6 +11,11 @@ import { pool } from '../db';
 import { interactionRepository } from '../repositories/interactionRepository';
 import { logger } from '../middleware/logger';
 import { livechatRateLimit } from '../middleware/rateLimiter';
+import { PUBLIC_LIVECHAT_TENANT_ID } from '../constants';
+import {
+  denyPublicLiveChatRequest,
+  verifyPublicLiveChatRequest,
+} from '../services/publicLiveChatCapability';
 
 export const agentP1Router = Router();
 
@@ -28,7 +33,11 @@ function getGeminiP1(): GoogleGenAI {
 // ===== 1) TRANSCRIBE VOICE =====
 agentP1Router.post('/transcribe', livechatRateLimit, async (req: Request, res: Response) => {
   try {
-    const { audioBase64, mimeType, lang } = req.body || {};
+    const { audioBase64, mimeType, lang, leadId } = req.body || {};
+    if (!leadId || !verifyPublicLiveChatRequest(req, String(leadId), PUBLIC_LIVECHAT_TENANT_ID)) {
+      denyPublicLiveChatRequest(res);
+      return;
+    }
     if (!audioBase64 || typeof audioBase64 !== 'string') {
       return res.status(400).json({ error: 'audioBase64 la bat buoc' });
     }
@@ -36,6 +45,9 @@ agentP1Router.post('/transcribe', livechatRateLimit, async (req: Request, res: R
       return res.status(413).json({ error: 'Audio qua lon (toi da ~4.5MB)' });
     }
     if (!/^[A-Za-z0-9+/=]+$/.test(audioBase64.slice(0, 256))) {
+      return res.status(400).json({ error: 'audioBase64 khong hop le' });
+    }
+    if (!/^[A-Za-z0-9+/=]+$/.test(audioBase64)) {
       return res.status(400).json({ error: 'audioBase64 khong hop le' });
     }
     const audioMime = /^(audio|video)\/[a-z0-9.+-]+$/.test(String(mimeType))
@@ -70,7 +82,11 @@ agentP1Router.get('/outline/:leadId', livechatRateLimit, async (req: Request, re
     if (!/^[0-9a-f-]{36}$/i.test(leadId)) {
       return res.status(400).json({ error: 'leadId khong hop le' });
     }
-    const PT = process.env.DEFAULT_TENANT_ID || '00000000-0000-0000-0000-000000000001';
+    if (!verifyPublicLiveChatRequest(req, leadId, PUBLIC_LIVECHAT_TENANT_ID)) {
+      denyPublicLiveChatRequest(res);
+      return;
+    }
+    const PT = PUBLIC_LIVECHAT_TENANT_ID;
     const all: any[] = (await interactionRepository.findByLead(PT, leadId)) || [];
     if (all.length === 0) {
       return res.status(404).json({ error: 'Khong tim thay phien chat' });

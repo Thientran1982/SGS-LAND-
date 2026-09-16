@@ -58,6 +58,8 @@ import { createCustomerProfileRoutes } from "./server/routes/customerProfileRout
 import { customerProfileService } from "./server/services/customerProfileService";
 import { createMonitoringRoutes } from "./server/routes/monitoringRoutes";
 import { liveChatTelemetry } from "./server/services/liveChatTelemetry";
+import { getFile } from "./server/services/storageService";
+import { extractTextFromBuffer } from "./server/services/textExtractor";
 import { loadLiveChatTelemetryState, saveLiveChatTelemetryState } from "./server/services/liveChatTelemetryPersistence";
 import { createAgentRoutes } from "./server/routes/agentRoutes";
 import { createSessionRoutes, createTemplateRoutes } from "./server/routes/sessionRoutes";
@@ -101,6 +103,14 @@ import { createPublicProjectRoutes } from "./server/routes/publicProjectRoutes";
 import { createPublicDeveloperRoutes } from "./server/routes/publicDeveloperRoutes";
 import { createPublicProjectContentRoutes } from "./server/routes/publicProjectContentRoutes";
 import { createVisitorTrackingRoutes } from "./server/routes/visitorTrackingRoutes";
+import {
+  denyPublicLiveChatRequest,
+  setPublicLiveChatCapability,
+  verifyPublicLiveChatRequest,
+  verifyPublicLiveChatCapability,
+  publicLiveChatCapabilityCookieName,
+  verifyPublicLiveChatAttachmentProof,
+} from "./server/services/publicLiveChatCapability";
 import { createConnectorRoutes } from "./server/routes/connectorRoutes";
 import { createScraperRoutes } from "./server/routes/scraperRoutes";
 import { createScraperProjectRoutes } from "./server/routes/scraperProjectRoutes";
@@ -141,7 +151,7 @@ import { brevoSendEmail } from "./server/services/brevoService";
 import { logger, requestLogger } from "./server/middleware/logger";
 import { requestIdMiddleware } from "./server/middleware/requestId";
 import { writeAuditLog, globalMutationAudit } from "./server/middleware/auditLog";
-import { DEFAULT_TENANT_ID } from "./server/constants";
+import { DEFAULT_TENANT_ID, PUBLIC_LIVECHAT_TENANT_ID } from "./server/constants";
 import { DICTIONARY } from "./config/locales";
 import { interactionRepository } from "./server/repositories/interactionRepository";
 import { sessionRepository } from "./server/repositories/sessionRepository";
@@ -202,32 +212,81 @@ function isPublicLandingBuilderRequest(message: string): boolean {
   return isLandingBuilderRequest(message);
 }
 
-function normalizePublicChatAttachments(value: unknown): Array<Record<string, unknown>> {
+async function normalizePublicChatAttachments(
+  value: unknown,
+  leadId?: string,
+): Promise<Array<Record<string, unknown>>> {
   if (!Array.isArray(value)) return [];
-  const uploadPrefix = `/uploads/${DEFAULT_TENANT_ID}/`;
-  return value
-    .slice(0, 5)
-    .map((item: any) => {
-      const kind = item?.kind === 'image' ? 'image' : item?.kind === 'document' ? 'document' : '';
-      const id = String(item?.id || '').trim().slice(0, 260);
-      const name = String(item?.name || 'Tài liệu đính kèm').trim().slice(0, 160);
-      if (!kind || !id || !name) return null;
-      const normalized: Record<string, unknown> = {
-        id,
-        name,
-        kind,
-        mimeType: String(item?.mimeType || '').slice(0, 120),
-        size: Math.min(Math.max(Number(item?.size) || 0, 0), 10 * 1024 * 1024),
-      };
-      if (kind === 'image' && typeof item?.url === 'string' && item.url.startsWith(uploadPrefix)) {
-        normalized.url = item.url.slice(0, 520);
-      }
-      if (kind === 'document' && typeof item?.text === 'string') {
-        normalized.text = item.text.slice(0, 50_000);
-      }
-      return normalized;
-    })
-    .filter(Boolean) as Array<Record<string, unknown>>;
+  const uploadPrefix = `/uploads/${PUBLIC_LIVECHAT_TENANT_ID}/`;
+  const normalizedAttachments: Array<Record<string, unknown>> = [];
+
+  for (const item of value.slice(0, 5)) {
+    const kind = item?.kind === 'image' ? 'image' : item?.kind === 'document' ? 'document' : '';
+    const id = String(item?.id || '').trim().slice(0, 260);
+    const name = String(item?.name || 'Tài liệu đính kèm').trim().slice(0, 160);
+    if (!kind || !/^[A-Za-z0-9][A-Za-z0-9._-]{0,254}$/.test(id) || !name) return [];
+
+    const normalized: Record<string, unknown> = {
+      id,
+      name,
+      kind,
+      mimeType: String(item?.mimeType || '').slice(0, 120),
+      size: Math.min(Math.max(Number(item?.size) || 0, 0), 10 * 1024 * 1024),
+    };
+    const contentHash = String(item?.contentHash || '').trim().slice(0, 128);
+    const textHash = typeof item?.textHash === 'string'
+      ? item.textHash.trim().slice(0, 128)
+      : '';
+    const proof = String(item?.proof || '').trim().slice(0, 256);
+    if (
+      !leadId
+      || !contentHash
+      || !verifyPublicLiveChatAttachmentProof(
+        {
+          leadId,
+          tenantId: PUBLIC_LIVECHAT_TENANT_ID,
+          id,
+          kind,
+          mimeType: String(normalized.mimeType || ''),
+          size: Number(normalized.size || 0),
+          contentHash,
+          ...(textHash ? { textHash } : {}),
+        },
+        proof,
+      )
+    ) return [];
+
+    const storedFile = await getFile(PUBLIC_LIVECHAT_TENANT_ID, id);
+    if (!storedFile) return [];
+    const actualContentHash = createHash('sha256').update(storedFile.buffer).digest('hex');
+    const storedKind = storedFile.contentType.startsWith('image/') ? 'image' : 'document';
+    if (
+      storedKind !== kind
+      || storedFile.contentType !== normalized.mimeType
+      || storedFile.buffer.length !== Number(normalized.size)
+      || actualContentHash !== contentHash
+    ) return [];
+
+    normalized.mimeType = storedFile.contentType;
+    normalized.size = storedFile.buffer.length;
+    normalized.contentHash = contentHash;
+    normalized.proof = proof;
+    if (kind === 'image') {
+      normalized.url = `${uploadPrefix}${id}`;
+    } else {
+      const extracted = await extractTextFromBuffer(storedFile.buffer, path.extname(id));
+      const text = extracted.trim().slice(0, 50_000);
+      if (
+        !textHash
+        || createHash('sha256').update(text).digest('hex') !== textHash
+      ) return [];
+      normalized.text = text;
+      normalized.textHash = textHash;
+    }
+    normalizedAttachments.push(normalized);
+  }
+
+  return normalizedAttachments;
 }
 
 
@@ -1849,7 +1908,7 @@ app.use(globalMutationAudit);
   // work. The widget has a durable status endpoint and Socket.IO for the
   // eventual answer, so keeping the HTTP request open only increases TTFB.
   const PUBLIC_LIVECHAT_ASYNC_DEADLINE_MS = 750;
-const PUBLIC_TENANT = DEFAULT_TENANT_ID;
+const PUBLIC_TENANT = PUBLIC_LIVECHAT_TENANT_ID;
 
   /** Strip Vietnamese diacritics → lowercase, collapse spaces/dots for map lookups */
   function vnDeaccent(s: string): string {
@@ -2832,7 +2891,14 @@ app.get('/api/public/listings/:slugId', apiRateLimit, async (req: express.Reques
           );
           return result.rows[0] || null;
         });
-        if (existing?.id) return res.status(201).json({ id: existing.id, success: true, deduped: true });
+        if (existing?.id) {
+          setPublicLiveChatCapability(res, req, {
+            leadId: String(existing.id),
+            tenantId: PUBLIC_TENANT,
+            userId: String(authUser.id),
+          });
+          return res.status(201).json({ id: existing.id, success: true, deduped: true });
+        }
       }
 
       if (!name || (!phone && !authUser?.id)) {
@@ -2858,6 +2924,11 @@ app.get('/api/public/listings/:slugId', apiRateLimit, async (req: express.Reques
         email,
         metadata: authenticatedMetadata,
       });
+      setPublicLiveChatCapability(res, req, {
+        leadId: String(lead.id),
+        tenantId: PUBLIC_TENANT,
+        ...(authUser?.id ? { userId: String(authUser.id) } : {}),
+      });
       // Notify Inbox in real-time so the new thread appears without a page refresh
       broadcastIo?.to(`tenant:${PUBLIC_TENANT}`).emit('lead_created', {
         id: lead.id, name: lead.name, assignedTo: lead.assignedTo,
@@ -2882,6 +2953,10 @@ app.get('/api/public/listings/:slugId', apiRateLimit, async (req: express.Reques
     try {
       const leadId = req.params.leadId as string;
       if (!leadId) return res.status(400).json({ error: 'leadId bắt buộc' }) as any;
+      if (!verifyPublicLiveChatRequest(req, leadId, PUBLIC_TENANT)) {
+        denyPublicLiveChatRequest(res);
+        return;
+      }
       const lead = await leadRepository.findById(PUBLIC_TENANT, leadId);
       if (!lead) return res.status(404).json({ error: 'Phiên chat không tồn tại' }) as any;
       const messages = await interactionRepository.findByLead(PUBLIC_TENANT, leadId);
@@ -2904,13 +2979,23 @@ app.get('/api/public/listings/:slugId', apiRateLimit, async (req: express.Reques
       endpoint: 'message',
     });
     try {
-      const { leadId, content, direction, metadata, idempotencyKey } = req.body;
+       const { leadId, content, metadata, idempotencyKey } = req.body;
        if (!leadId || !String(content || '').trim()) {
          return res.status(400).json({
            error: 'leadId và content bắt buộc',
            code: 'LIVECHAT_MESSAGE_INVALID',
          }) as any;
       }
+       if (!verifyPublicLiveChatRequest(req, String(leadId), PUBLIC_TENANT)) {
+         denyPublicLiveChatRequest(res);
+         return;
+       }
+       if (typeof idempotencyKey !== 'string' || !idempotencyKey.trim()) {
+         return res.status(400).json({
+           error: 'idempotencyKey bắt buộc',
+           code: 'LIVECHAT_IDEMPOTENCY_REQUIRED',
+         }) as any;
+       }
       const lead = await leadRepository.findById(PUBLIC_TENANT, leadId);
        if (!lead) {
          return res.status(404).json({
@@ -2918,27 +3003,47 @@ app.get('/api/public/listings/:slugId', apiRateLimit, async (req: express.Reques
            code: 'LIVECHAT_LEAD_NOT_FOUND',
          }) as any;
        }
-      const resolvedDirection = direction === 'OUTBOUND' ? 'OUTBOUND' : 'INBOUND';
-      const msg = await interactionRepository.create(PUBLIC_TENANT, {
-        leadId,
-        channel: 'WEB',
-        direction: resolvedDirection,
-        type: 'TEXT',
-        content: String(content).trim().slice(0, 2000),
+       const rawAttachments = Array.isArray(metadata?.attachments) ? metadata.attachments : [];
+       const attachments = await normalizePublicChatAttachments(rawAttachments, String(leadId));
+       if (attachments.length !== Math.min(rawAttachments.length, 5)) {
+         return res.status(400).json({
+           error: 'Attachment không hợp lệ hoặc không thuộc phiên chat',
+           code: 'LIVECHAT_ATTACHMENT_PROVENANCE_INVALID',
+         }) as any;
+       }
+       const externalEventId = `web-inbound:${String(idempotencyKey).slice(0, 160)}`;
+       const existingMessage = await interactionRepository.findByExternalEventId(
+         PUBLIC_TENANT,
+         'WEB',
+         externalEventId,
+       );
+       if (existingMessage && String(existingMessage.leadId) !== String(leadId)) {
+         return res.status(409).json({
+           error: 'idempotencyKey đã được dùng cho phiên chat khác',
+           code: 'LIVECHAT_IDEMPOTENCY_SCOPE_CONFLICT',
+         }) as any;
+       }
+       const msg = existingMessage || await interactionRepository.create(PUBLIC_TENANT, {
+         leadId,
+         channel: 'WEB',
+         direction: 'INBOUND',
+         type: 'TEXT',
+         content: String(content).trim().slice(0, 2000),
          metadata: {
-           ...(metadata && typeof metadata === 'object' ? metadata : {}),
-           attachments: normalizePublicChatAttachments((metadata as any)?.attachments),
+           attachments,
          },
-        externalEventId: idempotencyKey
-          ? `web-inbound:${String(idempotencyKey).slice(0, 160)}`
-          : undefined,
-      });
+         externalEventId,
+       });
        telemetry.mark('inbound_persisted');
       // Push real-time updates to authenticated agents in Inbox
       // 1. Active chat pane (anyone currently viewing this lead's conversation)
-      broadcastIo?.to(leadId).emit('receive_message', { room: leadId, message: msg });
+       if (!existingMessage) {
+         broadcastIo?.to(leadId).emit('receive_message', { room: leadId, message: msg });
+       }
       // 2. Inbox sidebar (thread list + unread badge) for all agents in the tenant
-      broadcastIo?.to(`tenant:${PUBLIC_TENANT}`).emit('new_inbound_message', { leadId, message: msg });
+       if (!existingMessage) {
+         broadcastIo?.to(`tenant:${PUBLIC_TENANT}`).emit('new_inbound_message', { leadId, message: msg });
+       }
        res.status(201).json({ message: msg });
     } catch (error) {
       console.error('Public livechat send message error:', error);
@@ -2953,6 +3058,7 @@ app.get('/api/public/listings/:slugId', apiRateLimit, async (req: express.Reques
   async function runAgentAndPersist(opts: {
   leadId: string;
   msgContent: string;
+   attachments?: Array<Record<string, unknown>>;
   isLandingRequest: boolean;
   executePublicChat: (resumeContext: any) => Promise<any>;
   inboundInteraction: { id: string };
@@ -2971,6 +3077,7 @@ app.get('/api/public/listings/:slugId', apiRateLimit, async (req: express.Reques
    const {
      leadId,
      msgContent,
+      attachments = [],
      isLandingRequest,
      executePublicChat,
      inboundInteraction,
@@ -2984,16 +3091,17 @@ app.get('/api/public/listings/:slugId', apiRateLimit, async (req: express.Reques
    } = opts;
   const { runDurableAgentExecution } = await import('./server/services/durableAgentExecutionService');
    let repairedLegacyRunId: string | undefined;
-let execution = await runDurableAgentExecution({
+   let execution = await runDurableAgentExecution({
 tenantId: PUBLIC_TENANT,
-idempotencyKey: retry
-  ? `web:retry-v1:${inboundInteraction.id}:${retryRequestId || 'default'}`
-  : `web:${inboundInteraction.id}`,
+idempotencyKey: `web:${inboundInteraction.id}`,
 sessionId: leadId,
 leadId,
    inboundInteractionId: inboundInteraction.id,
 triggerSource: 'public-livechat',
 message: msgContent,
+       input: {
+         attachments,
+       },
 execute: executePublicChat,
       });
       telemetry.mark('provider_completed');
@@ -3034,6 +3142,7 @@ execution = await runDurableAgentExecution({
    inboundInteractionId: inboundInteraction.id,
   triggerSource: 'public-livechat-repair',
   message: msgContent,
+   input: { attachments },
   execute: executePublicChat,
 });
       }
@@ -3168,10 +3277,21 @@ app.post('/api/public/ai/livechat', livechatRateLimit, aiRateLimit, async (req: 
            providerRoundTripMs: req.get('X-Minh-Client-AI-Ms'),
          }),
        });
-      const attachments = normalizePublicChatAttachments(req.body?.attachments);
       if (!leadId || !String(message || '').trim()) {
         return res.status(400).json({ error: 'leadId và message là bắt buộc' }) as any;
       }
+       if (!verifyPublicLiveChatRequest(req, String(leadId), PUBLIC_TENANT)) {
+         denyPublicLiveChatRequest(res);
+         return;
+       }
+       const rawAttachments = Array.isArray(req.body?.attachments) ? req.body.attachments : [];
+       const attachments = await normalizePublicChatAttachments(rawAttachments, String(leadId));
+       if (attachments.length !== Math.min(rawAttachments.length, 5)) {
+         return res.status(400).json({
+           error: 'Attachment không hợp lệ hoặc không thuộc phiên chat',
+           code: 'LIVECHAT_ATTACHMENT_PROVENANCE_INVALID',
+         }) as any;
+       }
       const msgContent = String(message).trim().slice(0, 2000);
        const requestedInboundInteractionId = String(inboundInteractionId || '').trim().slice(0, 200);
        logger.info('[PublicLiveChat] request accepted', {
@@ -3307,6 +3427,7 @@ try {
   asyncRun = await runAgentAndPersist({
     leadId, msgContent, isLandingRequest, executePublicChat,
       inboundInteraction,
+       attachments,
       retry: req.body?.retry === true,
       retryRequestId: String(requestId || '').slice(0, 80) || undefined,
       chatStartedAt,
@@ -3337,6 +3458,13 @@ if (asyncRun) {
 } else {
   logger.error('Public AI livechat error:', asyncError as Error);
   const errorMessage = String((asyncError as any)?.message || asyncError || '');
+  if (errorMessage.startsWith('AGENT_EXECUTION_INPUT_MISMATCH:')) {
+    return res.status(409).json({
+      error: 'Nội dung hoặc tệp đính kèm đã thay đổi. Vui lòng gửi thành tin nhắn mới.',
+      code: 'LIVECHAT_INPUT_CHANGED',
+      inboundInteractionId: inboundInteraction.id,
+    }) as any;
+  }
   const stillRunning =
     errorMessage.startsWith('AGENT_EXECUTION_IN_PROGRESS:') ||
     /timeout|timed out|deadline|temporarily unavailable|provider/i.test(errorMessage);
@@ -3400,6 +3528,10 @@ if (asyncRun) {
       if (!leadId || !inboundInteractionId) {
         return res.status(400).json({ status: 'NOT_FOUND', code: 'LIVECHAT_RUN_NOT_FOUND' });
       }
+      if (!verifyPublicLiveChatRequest(req, leadId, PUBLIC_TENANT)) {
+        denyPublicLiveChatRequest(res);
+        return;
+      }
       const { agentExecutionRepository } = await import('./server/repositories/agentExecutionRepository');
       const execution = await agentExecutionRepository.getByIdempotencyKey(
         PUBLIC_TENANT,
@@ -3427,6 +3559,11 @@ if (asyncRun) {
     try {
       const { leadId, name, phone, notes, source } = req.body;
       if (!phone) return res.status(400).json({ error: 'phone bắt buộc' }) as any;
+      if (leadId && typeof leadId === 'string' && /^[0-9a-f-]{36}$/i.test(leadId)
+        && !verifyPublicLiveChatRequest(req, leadId, PUBLIC_TENANT)) {
+        denyPublicLiveChatRequest(res);
+        return;
+      }
 
       const result = await liveChatEngine.callTool('capture_lead', {
         tenantId: PUBLIC_TENANT,
@@ -3438,6 +3575,10 @@ if (asyncRun) {
 
       // If there is an existing leadId session, send a confirmation message into that thread
       if (leadId && typeof leadId === 'string' && /^[0-9a-f-]{36}$/i.test(leadId)) {
+        if (!verifyPublicLiveChatRequest(req, leadId, PUBLIC_TENANT)) {
+          denyPublicLiveChatRequest(res);
+          return;
+        }
         const confirmMsg = await interactionRepository.create(PUBLIC_TENANT, {
           leadId,
           channel: 'WEB' as any,
@@ -3452,6 +3593,10 @@ if (asyncRun) {
       broadcastIo?.to(`tenant:${PUBLIC_TENANT}`).emit('lead_created', {
         id: result.leadId, name: String(name || phone), source: source || 'WIDGET_CAPTURE',
       });
+      setPublicLiveChatCapability(res, req, {
+        leadId: String(result.leadId),
+        tenantId: PUBLIC_TENANT,
+      });
       res.status(201).json({ id: result.leadId, score: result.score, grade: result.grade, success: true });
     } catch (error) {
       logger.error('Capture lead error:', error as Error);
@@ -3465,6 +3610,10 @@ if (asyncRun) {
       const { leadId, reason, priority } = req.body;
       if (!leadId || typeof leadId !== 'string' || !/^[0-9a-f-]{36}$/i.test(leadId)) {
         return res.status(400).json({ error: 'leadId không hợp lệ' }) as any;
+      }
+      if (!verifyPublicLiveChatRequest(req, leadId, PUBLIC_TENANT)) {
+        denyPublicLiveChatRequest(res);
+        return;
       }
 
       const result = await liveChatEngine.callTool('escalate_to_human', {
@@ -3505,6 +3654,10 @@ if (asyncRun) {
       const { leadId, dateText, listingId, notes } = req.body;
       if (!leadId || typeof leadId !== 'string' || !/^[0-9a-f-]{36}$/i.test(leadId)) {
         return res.status(400).json({ error: 'leadId không hợp lệ' }) as any;
+      }
+      if (!verifyPublicLiveChatRequest(req, leadId, PUBLIC_TENANT)) {
+        denyPublicLiveChatRequest(res);
+        return;
       }
       if (!dateText) return res.status(400).json({ error: 'dateText bắt buộc' }) as any;
 
@@ -6100,6 +6253,17 @@ app.get('/api/admin/agent-tasks', apiRateLimit, authenticateToken, async (req: e
     socket.on("join_livechat_room", (leadId: string) => {
       if (!leadId || typeof leadId !== 'string') return;
       if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(leadId)) return;
+      const cookies: Record<string, string> = {};
+      String(socket.handshake.headers.cookie || '').split(';').forEach(part => {
+        const [key, ...values] = part.trim().split('=');
+        if (key) cookies[key] = values.join('=');
+      });
+      if (!verifyPublicLiveChatCapability(
+        cookies[publicLiveChatCapabilityCookieName(leadId)],
+        { leadId, tenantId: PUBLIC_TENANT },
+      )) return;
+      socket.data.publicLiveChatLeads ||= new Set<string>();
+      socket.data.publicLiveChatLeads.add(leadId);
       socket.join(leadId);
       logger.debug(`LiveChat guest ${socket.id} joined room ${leadId}`);
     });

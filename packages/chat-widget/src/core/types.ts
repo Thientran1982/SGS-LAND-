@@ -8,6 +8,9 @@ export interface ChatAttachment {
   kind: "image" | "document";
   url?: string;
   text?: string;
+  contentHash?: string;
+  textHash?: string;
+  proof?: string;
 }
 
 export interface ChatMessage {

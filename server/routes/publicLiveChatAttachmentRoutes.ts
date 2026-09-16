@@ -3,11 +3,16 @@ import multer from 'multer';
 import crypto from 'crypto';
 import path from 'path';
 import { fileTypeFromBuffer } from 'file-type';
-import { DEFAULT_TENANT_ID } from '../constants';
+import { PUBLIC_LIVECHAT_TENANT_ID } from '../constants';
 import { leadRepository } from '../repositories/leadRepository';
 import { storeFile } from '../services/storageService';
 import { extractTextFromBuffer } from '../services/textExtractor';
 import { livechatRateLimit } from '../middleware/rateLimiter';
+import {
+  denyPublicLiveChatRequest,
+  verifyPublicLiveChatRequest,
+  createPublicLiveChatAttachmentProof,
+} from '../services/publicLiveChatCapability';
 
 const MAX_FILE_SIZE = 10 * 1024 * 1024;
 const MAX_FILES = 5;
@@ -97,7 +102,11 @@ export function createPublicLiveChatAttachmentRoutes() {
         const leadId = String(req.body?.leadId || '').trim();
         if (!leadId) return res.status(400).json({ error: 'leadId bắt buộc' });
         if (!UUID_RE.test(leadId)) return res.status(400).json({ error: 'leadId không hợp lệ' });
-        const lead = await leadRepository.findById(DEFAULT_TENANT_ID, leadId);
+        if (!verifyPublicLiveChatRequest(req, leadId, PUBLIC_LIVECHAT_TENANT_ID)) {
+          denyPublicLiveChatRequest(res);
+          return;
+        }
+        const lead = await leadRepository.findById(PUBLIC_LIVECHAT_TENANT_ID, leadId);
         if (!lead) return res.status(404).json({ error: 'Phiên chat không tồn tại' });
 
         const files = (req.files as Express.Multer.File[] | undefined) || [];
@@ -116,7 +125,7 @@ export function createPublicLiveChatAttachmentRoutes() {
 
           const ext = MIME_TO_EXT[contentType] || path.extname(file.originalname).toLowerCase();
           const filename = `chat-${Date.now()}-${crypto.randomBytes(12).toString('hex')}${ext}`;
-          const url = await storeFile(DEFAULT_TENANT_ID, filename, file.buffer, contentType);
+            const url = await storeFile(PUBLIC_LIVECHAT_TENANT_ID, filename, file.buffer, contentType);
           const kind = attachmentKind(contentType);
           const result: Record<string, unknown> = {
             id: filename,
@@ -125,14 +134,29 @@ export function createPublicLiveChatAttachmentRoutes() {
             size: file.buffer.length,
             kind,
           };
+          const contentHash = crypto.createHash('sha256').update(file.buffer).digest('hex');
 
           if (kind === 'image') {
             // Only images are exposed as public landing gallery assets.
             result.url = url;
+            result.contentHash = contentHash;
           } else {
             const extracted = await extractTextFromBuffer(file.buffer, ext);
-            if (extracted.trim()) result.text = extracted.slice(0, MAX_EXTRACTED_TEXT);
+            const text = extracted.trim().slice(0, MAX_EXTRACTED_TEXT);
+            if (text) result.text = text;
+            result.contentHash = contentHash;
+            result.textHash = crypto.createHash('sha256').update(text).digest('hex');
           }
+          result.proof = createPublicLiveChatAttachmentProof({
+            leadId,
+            tenantId: PUBLIC_LIVECHAT_TENANT_ID,
+            id: String(result.id),
+            kind,
+            mimeType: contentType,
+            size: Number(result.size),
+            contentHash: String(result.contentHash || ''),
+            ...(typeof result.textHash === 'string' ? { textHash: result.textHash } : {}),
+          });
           attachments.push(result);
         }
 

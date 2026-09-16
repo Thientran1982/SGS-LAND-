@@ -1,4 +1,5 @@
 import { withTenantContext } from '../db';
+import { createHash } from 'crypto';
 
 export type AgentExecutionStatus = 'RUNNING' | 'SUCCESS' | 'ERROR' | 'BLOCKED' | 'WAITING_APPROVAL';
 export type AgentExecutionStepStatus = 'PENDING' | 'RUNNING' | 'SUCCESS' | 'ERROR' | 'SKIPPED' | 'BLOCKED';
@@ -63,6 +64,20 @@ export function canClaimExecution(status: AgentExecutionStatus, leaseExpired: bo
   return status === 'ERROR' || (status === 'RUNNING' && leaseExpired);
 }
 
+function canonicalInput(value: any): string {
+  if (value === null || typeof value !== 'object') return JSON.stringify(value);
+  if (Array.isArray(value)) return `[${value.map(canonicalInput).join(',')}]`;
+  return `{${Object.keys(value)
+    .filter(key => !(key === 'attachments' && Array.isArray(value[key]) && value[key].length === 0))
+    .sort()
+    .map(key => `${JSON.stringify(key)}:${canonicalInput(value[key])}`)
+    .join(',')}}`;
+}
+
+function inputHash(value: any): string {
+  return createHash('sha256').update(canonicalInput(value || {})).digest('hex');
+}
+
 class AgentExecutionRepository {
   async claim(params: {
     tenantId: string;
@@ -104,6 +119,9 @@ class AgentExecutionRepository {
       );
       const existing = existingResult.rows[0];
       if (!existing) throw new Error('Agent execution disappeared during claim');
+      if (inputHash(existing.input_json || {}) !== inputHash(params.input || {})) {
+        throw new Error(`AGENT_EXECUTION_INPUT_MISMATCH:${existing.id}`);
+      }
       const leaseExpired = new Date(existing.lease_expires_at).getTime() <= Date.now();
       if (!canClaimExecution(existing.status, leaseExpired)) {
         return { execution: mapExecution(existing), claimed: false, resumed: false };

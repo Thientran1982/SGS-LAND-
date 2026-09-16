@@ -541,22 +541,15 @@ export function createMinhSession(options: MinhSessionOptions = {}): MinhSession
       if (!id) throw new ChatTransportError("create_lead_failed", { code: "CREATE_LEAD_FAILED" });
       persist(id, name);
       let welcome: ChatMessage | null = null;
-      try {
-        const saved = await client.sendMessage(id, welcomeText(name), "OUTBOUND", {
-          isAgent: true,
-        });
-        welcome = interactionToMessage(saved);
-      } catch {
-        welcome = null;
-      }
-      if (!welcome) {
-        welcome = {
-          id: "welcome-" + Date.now(),
-          role: "assistant",
-          content: welcomeText(name),
-          ts: Date.now(),
-        };
-      }
+      // Public message ingestion is intentionally inbound-only. Keep the
+      // welcome message local instead of spoofing an outbound agent message
+      // through the visitor endpoint.
+      welcome = {
+        id: "welcome-" + Date.now(),
+        role: "assistant",
+        content: welcomeText(name),
+        ts: Date.now(),
+      };
       return { leadId: id, name, welcome };
     },
 

@@ -116,9 +116,10 @@ export function createMinhClient(apiBase?: string) {
       metadata?: object,
       idempotencyKey?: string,
     ) {
+      const stableIdempotencyKey = idempotencyKey || createClientRequestId();
       const data = await postJson<{ message: any }>(
         CHAT_ENDPOINTS.livechatMessage,
-        { leadId, content, direction, metadata: metadata || {}, idempotencyKey },
+        { leadId, content, direction, metadata: metadata || {}, idempotencyKey: stableIdempotencyKey },
         apiBase,
         "send_failed",
       );

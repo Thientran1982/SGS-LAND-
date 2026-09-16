@@ -871,7 +871,11 @@ export function MinhChatPanel({
           method: "POST",
           credentials: "include",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ audioBase64: b64, mimeType: blob.type || "audio/webm" }),
+          body: JSON.stringify({
+            audioBase64: b64,
+            mimeType: blob.type || "audio/webm",
+            leadId: session.getLeadId(),
+          }),
         },
       );
       if (!res.ok) return null;
@@ -880,7 +884,7 @@ export function MinhChatPanel({
     } catch {
       return null;
     }
-  }, [apiBase]);
+  }, [apiBase, session]);
 
   const startMediaRecording = useCallback(async () => {
     try {
