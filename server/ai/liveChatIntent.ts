@@ -42,7 +42,13 @@ export function hasLandingTargetText(normalized: string): boolean {
 }
 
 export type LiveChatClarification = {
-    reason: 'UNDERSPECIFIED_PRICE_REQUEST' | 'UNDERSPECIFIED_PROPERTY_TYPE';
+    reason:
+        | 'GREETING'
+        | 'UNDERSPECIFIED_PRICE_REQUEST'
+        | 'UNDERSPECIFIED_PROPERTY_TYPE'
+        | 'UNDERSPECIFIED_PROJECT_OR_LOCATION'
+        | 'UNDERSPECIFIED_SEARCH_CRITERIA'
+        | 'UNDERSPECIFIED_INTENT';
     response: string;
     missingData: string[];
 };
@@ -65,9 +71,12 @@ export function resolveLiveChatFollowUp(
     const current = String(message || '').trim();
     const normalized = normalizeIntentText(current);
     const isShort = normalized.length > 0 && normalized.length <= 120;
+    const isTopicOnly = /^(?:gia|price|phap ly|phap luat|quy hoach|tien do|tien ich|mo ban|lai suat|vay|mua|thue|xem|tim)\b/.test(normalized)
+        && normalized.split(/\s+/).length <= 5;
     const isFollowUp = isShort && (
         /\b(?:may gio|khi nao|bao gio|luc nao|thoi gian|con|the con|vay con|the thi|cua no|no|nay|do|kia|vay|the)\b/.test(normalized)
         || /^(?:va|v[aậ]y|the|còn|con|vay|thế|bao giờ|khi nào|mấy giờ)\b/.test(current.toLowerCase())
+        || isTopicOnly
     );
     if (!isFollowUp) return { routingMessage: current, contextUsed: false };
 
@@ -95,26 +104,58 @@ export function resolveLiveChatFollowUp(
 export function getLiveChatClarification(
     message: string,
     language: 'vi' | 'en' = 'vi',
+    previousUserMessage?: string,
 ): LiveChatClarification | null {
-    const normalized = normalizeIntentText(message)
+    const currentNormalized = normalizeIntentText(message)
         .replace(/[?!.,;:()[\]{}]/g, ' ')
         .replace(/\s+/g, ' ')
         .trim();
+    const currentWords = currentNormalized.split(/\s+/).filter(Boolean);
+    const previousNormalized = normalizeIntentText(previousUserMessage || '')
+        .replace(/[?!.,;:()[\]{}]/g, ' ')
+        .replace(/\s+/g, ' ')
+        .trim();
+    const hasContextualTopic = Boolean(previousNormalized)
+        && currentWords.length <= 5
+        && /^(?:gia|price|phap ly|phap luat|quy hoach|tien do|tien ich|mo ban|lai suat|vay|mua|thue|xem|tim)\b/.test(currentNormalized);
+    const normalized = hasContextualTopic
+        ? `${previousNormalized} ${currentNormalized}`
+        : currentNormalized;
+
+    const isGreeting = /^(?:xin chao|chao|hello|hi|alo|hey|good morning|good afternoon|good evening)(?: minh| ban| anh chi| em)?$/.test(currentNormalized);
+    if (isGreeting) {
+        return {
+            reason: 'GREETING',
+            response: language === 'en'
+                ? 'Hello. Would you like to check a project, find a property, or ask about price/legal status?'
+                : 'Chào anh/chị. Minh có thể hỗ trợ tra dự án, tìm sản phẩm, kiểm tra giá hoặc pháp lý. Anh/chị muốn bắt đầu từ nội dung nào ạ?',
+            missingData: [],
+        };
+    }
+
     const hasPriceSignal = /\b(?:bao gia|bang gia|gia ban|xin gia|cho hoi gia|gia bao nhieu|bao nhieu tien|gia|price)\b/.test(normalized);
-    if (!hasPriceSignal) return null;
+    const hasLegalSignal = /\b(?:phap ly|phap luat|so hong|so do|vi bang|hdmb|hop dong)\b/.test(normalized);
+    const hasPlanningSignal = /\b(?:quy hoach|xay dung|lo gioi)\b/.test(normalized);
+    const hasProjectSignal = /\b(?:du an|project|tien do|tien ich|mo ban|chinh sach)\b/.test(normalized);
+    const hasSearchSignal = /\b(?:tim|search|can tim|con hang|mua|thue|xem)\b/.test(normalized);
+    const hasInvestmentSignal = /\b(?:dau tu|cho thue|yield|roi|loi nhuan)\b/.test(normalized);
+    const hasTopicSignal = hasPriceSignal || hasLegalSignal || hasPlanningSignal || hasProjectSignal
+        || hasSearchSignal || hasInvestmentSignal;
 
     const residual = normalized
-        .replace(/\b(?:bao gia|bang gia|gia ban|xin gia|cho hoi gia|gia bao nhieu|bao nhieu tien|gia|price)\b/g, ' ')
-        .replace(/\b(?:cho|hoi|xin|vui long|giup|toi|em|anh|chi|minh|muon|can|the|duoc|nhe|a|oi|du an|san pham|bat dong san|bds|can ho|nha|dat|nay|do|kia)\b/g, ' ')
+        .replace(/\b(?:bao gia|bang gia|gia ban|xin gia|cho hoi gia|gia bao nhieu|bao nhieu tien|gia|price|phap ly|phap luat|so hong|so do|vi bang|hdmb|hop dong|quy hoach|xay dung|lo gioi|du an|project|tien do|tien ich|mo ban|chinh sach|tim|search|can tim|con hang|mua|thue|xem|dau tu|cho thue|yield|roi|loi nhuan)\b/g, ' ')
+        .replace(/\b(?:cho|hoi|xin|vui long|giup|toi|em|anh|chi|minh|muon|can|the|duoc|nhe|a|oi|san pham|bat dong san|bds|can ho|nha|dat|nay|do|kia)\b/g, ' ')
         .replace(/\s+/g, ' ')
         .trim();
     const hasExplicitPropertyType = /\b(?:can ho|apartment|condo|penthouse|studio|nha pho|nha lien ke|townhouse|shophouse|biet thu|villa|dat nen|dat thoi|land)\b/.test(normalized)
         || /\b(?:\d+\s*(?:phong ngu|pn)|phong ngu)\b/.test(normalized);
+    const hasSpecificSubject = Boolean(residual)
+        && !/^(?:bao nhieu|nao|gi|sao|the nao|khong|khong a)$/.test(residual);
 
     // A named project can contain several product families. Never let the
     // valuation tool or the writer silently default this to APARTMENT.
-    if (residual && !hasExplicitPropertyType) {
-        const subject = extractPriceSubject(message);
+    if (hasPriceSignal && hasSpecificSubject && !hasExplicitPropertyType) {
+        const subject = extractPriceSubject(hasContextualTopic ? `${previousUserMessage || ''} ${message}` : message);
         return {
             reason: 'UNDERSPECIFIED_PROPERTY_TYPE',
             response: language === 'en'
@@ -123,15 +164,64 @@ export function getLiveChatClarification(
             missingData: ['property_type'],
         };
     }
-    if (residual) return null;
 
-    return {
-        reason: 'UNDERSPECIFIED_PRICE_REQUEST',
-        response: language === 'en'
-            ? 'Which project or property would you like a price for? Please share the project/location and, if available, the property type and area.'
-            : 'Anh/chị muốn hỏi giá dự án hoặc sản phẩm nào? Vui lòng cho Minh tên dự án/khu vực, loại sản phẩm và diện tích nếu có.',
-        missingData: ['project_or_location', 'property_type_or_area'],
-    };
+    if (hasPriceSignal && !hasSpecificSubject) {
+        return {
+            reason: 'UNDERSPECIFIED_PRICE_REQUEST',
+            response: language === 'en'
+                ? 'Which project or property would you like a price for? Please share the project or location first.'
+                : 'Anh/chị muốn hỏi giá dự án hoặc sản phẩm nào? Vui lòng cho Minh tên dự án hoặc khu vực trước nhé.',
+            missingData: ['project_or_location'],
+        };
+    }
+
+    if ((hasLegalSignal || hasPlanningSignal || hasProjectSignal) && !hasSpecificSubject) {
+        const topic = hasLegalSignal ? (language === 'en' ? 'legal status' : 'pháp lý')
+            : hasPlanningSignal ? (language === 'en' ? 'planning' : 'quy hoạch')
+                : (language === 'en' ? 'project information' : 'thông tin dự án');
+        return {
+            reason: 'UNDERSPECIFIED_PROJECT_OR_LOCATION',
+            response: language === 'en'
+                ? `Which project or location would you like to ask about ${topic}?`
+                : `Anh/chị muốn hỏi ${topic} của dự án hoặc khu vực nào ạ?`,
+            missingData: ['project_or_location'],
+        };
+    }
+
+    if (hasSearchSignal && !hasSpecificSubject) {
+        return {
+            reason: 'UNDERSPECIFIED_SEARCH_CRITERIA',
+            response: language === 'en'
+                ? 'Which area should Minh search in? If you know it, please also share your budget.'
+                : 'Anh/chị muốn tìm bất động sản ở khu vực nào ạ? Nếu có, cho Minh thêm ngân sách để lọc đúng hơn nhé.',
+            missingData: ['location_or_budget'],
+        };
+    }
+
+    if (hasInvestmentSignal && !hasSpecificSubject) {
+        return {
+            reason: 'UNDERSPECIFIED_PROJECT_OR_LOCATION',
+            response: language === 'en'
+                ? 'Which property or project would you like to evaluate for investment?'
+                : 'Anh/chị muốn đánh giá đầu tư cho sản phẩm hoặc dự án nào ạ?',
+            missingData: ['project_or_location'],
+        };
+    }
+
+    // Very short bare entities ("Aqua City", "Masteri", "Long Thành") should
+    // not be sent to a provider to guess the user's intent.
+    const isShortMessage = currentWords.length <= 4 && currentNormalized.length <= 48;
+    if (isShortMessage && !hasTopicSignal && currentWords.length > 0) {
+        return {
+            reason: 'UNDERSPECIFIED_INTENT',
+            response: language === 'en'
+                ? `What would you like to know about "${String(message).trim()}" — price, legal status, project details, or available properties?`
+                : `Anh/chị muốn biết "${String(message).trim()}" về giá, pháp lý, thông tin dự án hay sản phẩm đang có ạ?`,
+            missingData: ['intent'],
+        };
+    }
+
+    return null;
 }
 
 function extractPriceSubject(message: string): string {
