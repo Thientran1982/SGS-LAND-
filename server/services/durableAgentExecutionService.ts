@@ -4,7 +4,7 @@ import { agentExecutionRepository } from '../repositories/agentExecutionReposito
 import type { AgentExecutionStepRecord } from '../repositories/agentExecutionRepository';
 import {
   blockedAgentResponse,
-  inspectAgentInput,
+  inspectAgentEnvelope,
   inspectAgentOutput,
   type GuardrailReport,
 } from '../ai/agentGuardrails';
@@ -403,9 +403,7 @@ export async function runDurableAgentExecution<T extends {
 
   try {
   const inputGuardrailStartedAt = Date.now();
-  const inputGuardrail = inspectAgentInput(
-    `${params.message}\n${stableSerialize(params.input || {}).slice(0, 120_000)}`,
-  );
+  const inputGuardrail = inspectAgentEnvelope(params.message, params.input || {});
   durableTimings.guardrailMs += Math.max(0, Date.now() - inputGuardrailStartedAt);
   if (!checkpointRows.some(step => step.stepKey === '01_INPUT_GUARDRAIL' && step.status === 'SUCCESS')) {
     await timedRepository.saveStep({

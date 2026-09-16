@@ -28,6 +28,12 @@ export interface ChatMessage {
   degraded?: boolean;
   degradedReason?: string;
   providerOutcome?: "PRIMARY" | "FALLBACK" | "TIMEOUT" | "UNAVAILABLE";
+  sources?: unknown[];
+  artifact?: unknown;
+  suggestedAction?: unknown;
+  responseEnvelope?: Record<string, unknown>;
+  replyStatus?: "REPLY_PENDING" | "DELIVERED" | "FAILED";
+  failureCode?: string;
 }
 
 export interface ChatSendInput {

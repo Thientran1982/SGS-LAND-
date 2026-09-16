@@ -11,13 +11,15 @@ import { pool } from '../db';
 import { interactionRepository } from '../repositories/interactionRepository';
 import { logger } from '../middleware/logger';
 import { livechatRateLimit } from '../middleware/rateLimiter';
-import { PUBLIC_LIVECHAT_TENANT_ID } from '../constants';
+import { resolvePublicLiveChatTenant } from '../constants';
 import {
   denyPublicLiveChatRequest,
   verifyPublicLiveChatRequest,
 } from '../services/publicLiveChatCapability';
+import { inspectAgentEnvelope } from '../ai/agentGuardrails';
 
 export const agentP1Router = Router();
+const PUBLIC_LIVECHAT_TENANT_ID = resolvePublicLiveChatTenant();
 
 const MAX_AUDIO_B64 = 6 * 1024 * 1024; // ~4.5MB audio sau khi base64
 
@@ -44,22 +46,38 @@ agentP1Router.post('/transcribe', livechatRateLimit, async (req: Request, res: R
     if (audioBase64.length > MAX_AUDIO_B64) {
       return res.status(413).json({ error: 'Audio qua lon (toi da ~4.5MB)' });
     }
-    if (!/^[A-Za-z0-9+/=]+$/.test(audioBase64.slice(0, 256))) {
+    if (audioBase64.length % 4 !== 0 || !/^[A-Za-z0-9+/]+={0,2}$/.test(audioBase64)) {
       return res.status(400).json({ error: 'audioBase64 khong hop le' });
     }
-    if (!/^[A-Za-z0-9+/=]+$/.test(audioBase64)) {
-      return res.status(400).json({ error: 'audioBase64 khong hop le' });
+    const audioBuffer = Buffer.from(audioBase64, 'base64');
+    if (!audioBuffer.length || audioBuffer.length > Math.floor(MAX_AUDIO_B64 * 0.75)) {
+      return res.status(413).json({ error: 'Audio qua lon hoac rong' });
     }
-    const audioMime = /^(audio|video)\/[a-z0-9.+-]+$/.test(String(mimeType))
+    const audioMime = /^audio\/[a-z0-9.+-]+$/i.test(String(mimeType))
       ? String(mimeType)
-      : 'audio/webm';
+      : '';
+    if (!audioMime) {
+      return res.status(415).json({ error: 'Chi chap nhan MIME audio hop le' });
+    }
+    const audioLang = typeof lang === 'string' && /^[a-z-]{2,12}$/i.test(lang)
+      ? lang
+      : 'vi';
+    const inputGuardrail = inspectAgentEnvelope('', {
+      kind: 'audio',
+      mimeType: audioMime,
+      language: audioLang,
+      byteLength: audioBuffer.length,
+    });
+    if (inputGuardrail.blocked) {
+      return res.status(400).json({ error: 'Audio envelope khong hop le', code: 'LIVECHAT_INPUT_BLOCKED' });
+    }
     const ai = getGeminiP1();
     const result = await ai.models.generateContent({
       model: String(process.env.GEMINI_TRANSCRIBE_MODEL || 'gemini-2.5-flash'),
       contents: [{
         role: 'user',
         parts: [
-          { text: `Transcribe hoan chinh doan am thanh sau sang tieng Viet (lang ${lang || 'vi'}). Chi xuat van ban chuyen bi, khong binh luan, khong thut lai.` },
+          { text: `Transcribe hoan chinh doan am thanh sau sang tieng Viet (lang ${audioLang}). Chi xuat van ban chuyen bi, khong binh luan, khong thut lai.` },
           { inlineData: { mimeType: audioMime, data: audioBase64 } },
         ],
       }],

@@ -88,10 +88,15 @@ export interface MinhRunFinishedEvent {
 }
 
 export type MinhPendingStatus = {
-  status: "PROCESSING" | "SUCCESS" | "FAILED" | "NOT_FOUND";
+  status: "PROCESSING" | "REPLY_PENDING" | "SUCCESS" | "BLOCKED" | "FAILED" | "NOT_FOUND" | "STATUS_UNAVAILABLE";
   code?: string;
   retryAfter?: number;
   transient?: boolean;
+  runId?: string;
+  traceId?: string;
+  attempt?: number;
+  response?: any;
+  reply?: any;
 };
 
 export interface MinhSession {
@@ -171,6 +176,26 @@ export function interactionToMessage(raw: any): ChatMessage | null {
       raw.metadata?.providerOutcome === "UNAVAILABLE"
         ? raw.metadata.providerOutcome
         : undefined,
+    sources: Array.isArray(raw.metadata?.responseEnvelope?.sources)
+      ? raw.metadata.responseEnvelope.sources
+      : Array.isArray(raw.metadata?.sources)
+        ? raw.metadata.sources
+        : undefined,
+    artifact: raw.metadata?.responseEnvelope?.artifact ?? raw.metadata?.artifact,
+    suggestedAction: raw.metadata?.responseEnvelope?.suggestedAction ?? raw.metadata?.suggestedAction,
+    responseEnvelope:
+      raw.metadata?.responseEnvelope && typeof raw.metadata.responseEnvelope === "object"
+        ? raw.metadata.responseEnvelope
+        : undefined,
+    replyStatus:
+      raw.metadata?.replyStatus === "REPLY_PENDING" ||
+      raw.metadata?.replyStatus === "DELIVERED" ||
+      raw.metadata?.replyStatus === "FAILED"
+        ? raw.metadata.replyStatus
+        : undefined,
+    failureCode: typeof raw.metadata?.failureCode === "string"
+      ? raw.metadata.failureCode
+      : undefined,
   };
 }
 
@@ -380,6 +405,11 @@ export function createMinhSession(options: MinhSessionOptions = {}): MinhSession
         async: true,
         pending: true,
       };
+      savePendingRun({
+        runId: typeof data.runId === "string" ? data.runId : undefined,
+        inboundInteractionId: String(saved?.id || ""),
+        startedAt: Date.now(),
+      });
 }
 
     const userMsg =
@@ -497,14 +527,27 @@ export function createMinhSession(options: MinhSessionOptions = {}): MinhSession
         const data: any = await client.getRunStatus(leadId, inboundInteractionId);
         if (!data || typeof data.status !== "string") return null;
         const status = String(data.status).toUpperCase();
-        if (!["PROCESSING", "SUCCESS", "FAILED", "NOT_FOUND"].includes(status)) return null;
+         if (![
+           "PROCESSING",
+           "REPLY_PENDING",
+           "SUCCESS",
+           "BLOCKED",
+           "FAILED",
+           "NOT_FOUND",
+           "STATUS_UNAVAILABLE",
+         ].includes(status)) return null;
         consecutiveStatusFailures = 0;
         return {
-          status: status as "PROCESSING" | "SUCCESS" | "FAILED" | "NOT_FOUND",
+           status: status as MinhPendingStatus["status"],
           code: typeof data.code === "string" ? data.code : undefined,
           retryAfter: Number.isFinite(Number(data.retryAfter))
             ? Math.max(0, Number(data.retryAfter))
             : undefined,
+           runId: typeof data.runId === "string" ? data.runId : undefined,
+           traceId: typeof data.traceId === "string" ? data.traceId : undefined,
+           attempt: Number.isFinite(Number(data.attempt)) ? Number(data.attempt) : undefined,
+           response: data.response,
+           reply: data.reply,
         };
       } catch (error: any) {
         consecutiveStatusFailures += 1;

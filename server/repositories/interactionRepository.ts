@@ -44,8 +44,9 @@ export class InteractionRepository extends BaseRepository {
         ? await client.query(
             `SELECT * FROM interactions
               WHERE id = $1 AND lead_id = $2 AND direction = 'INBOUND'
+                AND ($3::text IS NULL OR content = $3)
               LIMIT 1`,
-            [options.interactionId, leadId],
+            [options.interactionId, leadId, options.content ?? null],
           )
         : await client.query(
             `SELECT * FROM interactions

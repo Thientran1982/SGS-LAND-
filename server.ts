@@ -109,6 +109,7 @@ import {
   verifyPublicLiveChatRequest,
   verifyPublicLiveChatCapability,
   publicLiveChatCapabilityCookieName,
+  getPublicLiveChatCapabilityToken,
   verifyPublicLiveChatAttachmentProof,
 } from "./server/services/publicLiveChatCapability";
 import { createConnectorRoutes } from "./server/routes/connectorRoutes";
@@ -151,9 +152,11 @@ import { brevoSendEmail } from "./server/services/brevoService";
 import { logger, requestLogger } from "./server/middleware/logger";
 import { requestIdMiddleware } from "./server/middleware/requestId";
 import { writeAuditLog, globalMutationAudit } from "./server/middleware/auditLog";
-import { DEFAULT_TENANT_ID, PUBLIC_LIVECHAT_TENANT_ID } from "./server/constants";
+import { DEFAULT_TENANT_ID, resolvePublicLiveChatTenant } from "./server/constants";
 import { DICTIONARY } from "./config/locales";
 import { interactionRepository } from "./server/repositories/interactionRepository";
+import { agentExecutionRepository } from "./server/repositories/agentExecutionRepository";
+import { liveChatReplyOutboxRepository } from "./server/repositories/liveChatReplyOutboxRepository";
 import { sessionRepository } from "./server/repositories/sessionRepository";
 import { visitorRepository } from "./server/repositories/visitorRepository";
 import { lookupIp, getClientIp } from "./server/services/geoService";
@@ -217,10 +220,12 @@ async function normalizePublicChatAttachments(
   leadId?: string,
 ): Promise<Array<Record<string, unknown>>> {
   if (!Array.isArray(value)) return [];
-  const uploadPrefix = `/uploads/${PUBLIC_LIVECHAT_TENANT_ID}/`;
+  if (value.length > 5) return [];
+  const publicTenant = resolvePublicLiveChatTenant();
+  const uploadPrefix = `/uploads/${publicTenant}/`;
   const normalizedAttachments: Array<Record<string, unknown>> = [];
 
-  for (const item of value.slice(0, 5)) {
+  for (const item of value) {
     const kind = item?.kind === 'image' ? 'image' : item?.kind === 'document' ? 'document' : '';
     const id = String(item?.id || '').trim().slice(0, 260);
     const name = String(item?.name || 'Tài liệu đính kèm').trim().slice(0, 160);
@@ -244,7 +249,7 @@ async function normalizePublicChatAttachments(
       || !verifyPublicLiveChatAttachmentProof(
         {
           leadId,
-          tenantId: PUBLIC_LIVECHAT_TENANT_ID,
+           tenantId: publicTenant,
           id,
           kind,
           mimeType: String(normalized.mimeType || ''),
@@ -256,7 +261,7 @@ async function normalizePublicChatAttachments(
       )
     ) return [];
 
-    const storedFile = await getFile(PUBLIC_LIVECHAT_TENANT_ID, id);
+    const storedFile = await getFile(publicTenant, id);
     if (!storedFile) return [];
     const actualContentHash = createHash('sha256').update(storedFile.buffer).digest('hex');
     const storedKind = storedFile.contentType.startsWith('image/') ? 'image' : 'document';
@@ -1908,7 +1913,92 @@ app.use(globalMutationAudit);
   // work. The widget has a durable status endpoint and Socket.IO for the
   // eventual answer, so keeping the HTTP request open only increases TTFB.
   const PUBLIC_LIVECHAT_ASYNC_DEADLINE_MS = 750;
-const PUBLIC_TENANT = PUBLIC_LIVECHAT_TENANT_ID;
+const PUBLIC_TENANT = resolvePublicLiveChatTenant();
+
+const PUBLIC_LIVECHAT_MAX_RETRIES = 3;
+const PUBLIC_UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+
+function buildPublicLiveChatResponseEnvelope(result: any, execution: any, inboundInteractionId: string): Record<string, any> {
+  return {
+    content: typeof result?.content === 'string' ? result.content : '',
+    reply: typeof result?.content === 'string' ? result.content : '',
+    sources: Array.isArray(result?.sources) ? result.sources : [],
+    artifact: result?.artifact ?? null,
+    suggestedAction: result?.suggestedAction ?? null,
+    intent: result?.intent ?? null,
+    clarificationReason: result?.clarificationReason ?? null,
+    missingData: Array.isArray(result?.missingData) ? result.missingData : [],
+    clarificationRequired: result?.clarificationRequired === true,
+    confidence: result?.confidence ?? null,
+    degraded: result?.degraded === true,
+    degradedReason: result?.degradedReason || null,
+    providerOutcome: result?.providerTelemetry?.outcome || null,
+    runId: execution.runId,
+    traceId: execution.traceId,
+    inboundInteractionId,
+  };
+}
+
+async function persistPublicLiveChatFailure(params: {
+  leadId: string;
+  inboundInteractionId: string;
+  code: string;
+  error: string;
+  runId?: string;
+}): Promise<any | null> {
+  const safeCode = params.code.slice(0, 120);
+  const content = 'Minh chưa thể hoàn tất phản hồi lúc này. Tin nhắn của bạn đã được ghi nhận.';
+  const responseEnvelope = {
+    content,
+    reply: content,
+    sources: [],
+    artifact: null,
+    suggestedAction: 'RETRY',
+    status: 'FAILED',
+    failureCode: safeCode,
+    inboundInteractionId: params.inboundInteractionId,
+    ...(params.runId ? { runId: params.runId } : {}),
+  };
+  try {
+    const failedInteraction = await interactionRepository.create(PUBLIC_TENANT, {
+      leadId: params.leadId,
+      channel: 'WEB',
+      direction: 'OUTBOUND',
+      type: 'TEXT',
+      content,
+      status: 'FAILED',
+      metadata: {
+        isAi: true,
+        isAgent: true,
+        replyStatus: 'FAILED',
+        failureCode: safeCode,
+        inboundInteractionId: params.inboundInteractionId,
+        responseEnvelope,
+      },
+      externalEventId: `agent-failure:${params.inboundInteractionId}`,
+    });
+    await liveChatReplyOutboxRepository.markFailed({
+      tenantId: PUBLIC_TENANT,
+      inboundInteractionId: params.inboundInteractionId,
+      code: safeCode,
+      error: params.error,
+    });
+    broadcastIo?.to(params.leadId).emit('receive_message', {
+      room: params.leadId,
+      message: failedInteraction,
+    });
+    return failedInteraction;
+  } catch (persistError: any) {
+    logger.error(`[PublicLiveChat] failed interaction persistence failed: ${persistError?.message || persistError}`);
+    await liveChatReplyOutboxRepository.markFailed({
+      tenantId: PUBLIC_TENANT,
+      inboundInteractionId: params.inboundInteractionId,
+      code: safeCode,
+      error: params.error,
+    }).catch(() => {});
+    return null;
+  }
+}
 
   /** Strip Vietnamese diacritics → lowercase, collapse spaces/dots for map lookups */
   function vnDeaccent(s: string): string {
@@ -2979,8 +3069,14 @@ app.get('/api/public/listings/:slugId', apiRateLimit, async (req: express.Reques
       endpoint: 'message',
     });
     try {
-       const { leadId, content, direction, metadata, idempotencyKey } = req.body;
-       if (!leadId || !String(content || '').trim()) {
+        const { leadId, content, direction, metadata, idempotencyKey } = req.body || {};
+        if (
+          typeof leadId !== 'string'
+          || !PUBLIC_UUID_RE.test(leadId)
+          || typeof content !== 'string'
+          || !content.trim()
+          || (metadata !== undefined && (!metadata || typeof metadata !== 'object' || Array.isArray(metadata)))
+        ) {
          return res.status(400).json({
            error: 'leadId và content bắt buộc',
            code: 'LIVECHAT_MESSAGE_INVALID',
@@ -3009,9 +3105,17 @@ app.get('/api/public/listings/:slugId', apiRateLimit, async (req: express.Reques
            code: 'LIVECHAT_LEAD_NOT_FOUND',
          }) as any;
        }
-       const rawAttachments = Array.isArray(metadata?.attachments) ? metadata.attachments : [];
+        const rawAttachments = metadata?.attachments === undefined
+          ? []
+          : metadata?.attachments;
+        if (!Array.isArray(rawAttachments) || rawAttachments.length > 5) {
+          return res.status(400).json({
+            error: 'Tối đa 5 attachment hợp lệ mỗi tin nhắn',
+            code: 'LIVECHAT_ATTACHMENT_ENVELOPE_INVALID',
+          }) as any;
+        }
        const attachments = await normalizePublicChatAttachments(rawAttachments, String(leadId));
-       if (attachments.length !== Math.min(rawAttachments.length, 5)) {
+        if (rawAttachments.length > 5 || attachments.length !== rawAttachments.length) {
          return res.status(400).json({
            error: 'Attachment không hợp lệ hoặc không thuộc phiên chat',
            code: 'LIVECHAT_ATTACHMENT_PROVENANCE_INVALID',
@@ -3034,7 +3138,7 @@ app.get('/api/public/listings/:slugId', apiRateLimit, async (req: express.Reques
          channel: 'WEB',
          direction: 'INBOUND',
          type: 'TEXT',
-         content: String(content).trim().slice(0, 2000),
+          content: content.trim().slice(0, 2000),
          metadata: {
            attachments,
          },
@@ -3097,6 +3201,24 @@ app.get('/api/public/listings/:slugId', apiRateLimit, async (req: express.Reques
    } = opts;
   const { runDurableAgentExecution } = await import('./server/services/durableAgentExecutionService');
    let repairedLegacyRunId: string | undefined;
+    await liveChatReplyOutboxRepository.ensurePending({
+      tenantId: PUBLIC_TENANT,
+      leadId,
+      inboundInteractionId: inboundInteraction.id,
+    });
+    const { agentExecutionRepository } = await import('./server/repositories/agentExecutionRepository');
+    const existingExecution = await agentExecutionRepository.getByIdempotencyKey(
+      PUBLIC_TENANT,
+      `web:${inboundInteraction.id}`,
+      leadId,
+    );
+    if (
+      retry &&
+      existingExecution?.status === 'ERROR' &&
+      existingExecution.attempt >= PUBLIC_LIVECHAT_MAX_RETRIES
+    ) {
+      throw new Error(`LIVECHAT_RETRY_EXHAUSTED:${existingExecution.id}`);
+    }
    let execution = await runDurableAgentExecution({
 tenantId: PUBLIC_TENANT,
 idempotencyKey: `web:${inboundInteraction.id}`,
@@ -3154,6 +3276,17 @@ execution = await runDurableAgentExecution({
       }
       const result = execution.result;
       const providerTelemetry = result.providerTelemetry;
+       const responseEnvelope = buildPublicLiveChatResponseEnvelope(
+         result,
+         execution,
+         inboundInteraction.id,
+       );
+       await liveChatReplyOutboxRepository.recordResponse({
+         tenantId: PUBLIC_TENANT,
+         inboundInteractionId: inboundInteraction.id,
+         executionId: execution.runId,
+         response: responseEnvelope,
+       });
       // Record the classifier decision so candidate misses remain visible
       // without persisting the visitor's brief.
       void recordLandingClassificationTelemetry({
@@ -3190,6 +3323,8 @@ specialistError: isLandingRequest && !result.specialistOutput
    providerOutcome: providerTelemetry?.outcome || null,
    aiFallbackUsed: providerTelemetry?.fallbackUsed === true,
    aiStatus: providerTelemetry?.status || null,
+    replyStatus: 'DELIVERED',
+    responseEnvelope,
       };
       const legacyInteraction = repairedLegacyRunId
         ? await interactionRepository.findByExternalEventId(
@@ -3222,6 +3357,11 @@ content: result.content,
 metadata: replyMetadata,
 externalEventId: `agent:${execution.runId}`,
       });
+       await liveChatReplyOutboxRepository.markDelivered({
+         tenantId: PUBLIC_TENANT,
+         inboundInteractionId: inboundInteraction.id,
+         interactionId: aiReply.id,
+       });
       const dbMs = Date.now() - dbStartedAt;
       const runTimings = (result as any)._liveChatTimings || {};
       liveChatTelemetry.recordRunTimings({
@@ -3283,14 +3423,21 @@ app.post('/api/public/ai/livechat', livechatRateLimit, aiRateLimit, async (req: 
            providerRoundTripMs: req.get('X-Minh-Client-AI-Ms'),
          }),
        });
-      if (!leadId || !String(message || '').trim()) {
+       if (
+         typeof leadId !== 'string'
+         || !PUBLIC_UUID_RE.test(leadId)
+         || typeof message !== 'string'
+         || !message.trim()
+         || (req.body?.attachments !== undefined && !Array.isArray(req.body.attachments))
+         || (Array.isArray(req.body?.attachments) && req.body.attachments.length > 5)
+       ) {
         return res.status(400).json({ error: 'leadId và message là bắt buộc' }) as any;
       }
        if (!verifyPublicLiveChatRequest(req, String(leadId), PUBLIC_TENANT)) {
          denyPublicLiveChatRequest(res);
          return;
        }
-       const rawAttachments = Array.isArray(req.body?.attachments) ? req.body.attachments : [];
+        const rawAttachments = req.body?.attachments === undefined ? [] : req.body.attachments;
        const attachments = await normalizePublicChatAttachments(rawAttachments, String(leadId));
        if (attachments.length !== Math.min(rawAttachments.length, 5)) {
          return res.status(400).json({
@@ -3381,6 +3528,11 @@ app.post('/api/public/ai/livechat', livechatRateLimit, aiRateLimit, async (req: 
           error: 'Tin nhắn đến chưa được lưu. Vui lòng gửi lại tin nhắn.',
         }) as any;
       }
+       await liveChatReplyOutboxRepository.ensurePending({
+         tenantId: PUBLIC_TENANT,
+         leadId,
+         inboundInteractionId: inboundInteraction.id,
+       });
         telemetry.mark('history_read', undefined, preparationTimings.historyDbMs);
       logger.info(`[PublicLiveChat] history lookup ${Date.now() - chatStartedAt}ms`);
 
@@ -3447,7 +3599,6 @@ try {
 } finally {
      if (asyncDeadline) clearTimeout(asyncDeadline);
 }
-if ((res as any).headersSent) return;
 if (asyncRun) {
   const { aiReply, result } = asyncRun;
    acknowledgedAt = Date.now();
@@ -3471,10 +3622,21 @@ if (asyncRun) {
       inboundInteractionId: inboundInteraction.id,
     }) as any;
   }
+   const executionAfterError = await agentExecutionRepository.getByIdempotencyKey(
+     PUBLIC_TENANT,
+     `web:${inboundInteraction.id}`,
+     leadId,
+   ).catch(() => null);
+   const terminalFailure = executionAfterError?.status === 'ERROR'
+     || errorMessage.startsWith('LIVECHAT_RETRY_EXHAUSTED:');
   const stillRunning =
-    errorMessage.startsWith('AGENT_EXECUTION_IN_PROGRESS:') ||
-    /timeout|timed out|deadline|temporarily unavailable|provider/i.test(errorMessage);
+     !terminalFailure && (
+       errorMessage.startsWith('AGENT_EXECUTION_IN_PROGRESS:')
+       || executionAfterError?.status === 'RUNNING'
+       || /timeout|timed out|deadline|temporarily unavailable|provider/i.test(errorMessage)
+     );
   if (stillRunning) {
+     if ((res as any).headersSent) return;
     return res.status(202).json({
       async: true,
       status: 'PROCESSING',
@@ -3483,25 +3645,21 @@ if (asyncRun) {
       retryAfter: 3,
     }) as any;
   }
-  broadcastIo?.to(leadId).emit('receive_message', {
-    room: leadId,
-    message: {
-      id: `agent-failure:${inboundInteraction.id}`,
-      leadId,
-      direction: 'OUTBOUND',
-      content: '',
-      metadata: {
-        isAgent: true,
-        isAi: true,
-        isSysMsg: true,
-        inboundInteractionId: inboundInteraction.id,
-        code: 'AI_UNAVAILABLE',
-      },
-    },
+   const failureCode = errorMessage.startsWith('LIVECHAT_RETRY_EXHAUSTED:')
+     ? 'LIVECHAT_RETRY_EXHAUSTED'
+     : executionAfterError?.errorText?.startsWith('AGENT_EXECUTION_LEASE_LOST:')
+       ? 'AGENT_EXECUTION_LEASE_LOST'
+       : 'AI_UNAVAILABLE';
+   await persistPublicLiveChatFailure({
+     leadId,
+     inboundInteractionId: inboundInteraction.id,
+     code: failureCode,
+     error: executionAfterError?.errorText || errorMessage,
   });
+   if ((res as any).headersSent) return;
   res.status(503).json({
     error: 'Minh chưa thể hoàn tất phản hồi lúc này. Tin nhắn của bạn đã được ghi nhận.',
-    code: 'AI_UNAVAILABLE',
+     code: failureCode,
     inboundInteractionId: inboundInteraction.id,
   });
 }
@@ -3511,6 +3669,17 @@ if (asyncRun) {
         const failedLeadId = String(req.body?.leadId || '').trim();
         const failedInboundInteractionId = String(req.body?.inboundInteractionId || '').trim();
         if (failedLeadId && failedInboundInteractionId) {
+          await liveChatReplyOutboxRepository.ensurePending({
+            tenantId: PUBLIC_TENANT,
+            leadId: failedLeadId,
+            inboundInteractionId: failedInboundInteractionId,
+          }).catch(() => {});
+          await persistPublicLiveChatFailure({
+            leadId: failedLeadId,
+            inboundInteractionId: failedInboundInteractionId,
+            code: 'LIVECHAT_PREPARATION_FAILED',
+            error: String((error as any)?.message || error),
+          });
           broadcastIo?.to(failedLeadId).emit('agent_run_finished', {
             runId: `preparation-failure:${failedInboundInteractionId}`,
             inboundInteractionId: failedInboundInteractionId,
@@ -3538,12 +3707,43 @@ if (asyncRun) {
         denyPublicLiveChatRequest(res);
         return;
       }
-      const { agentExecutionRepository } = await import('./server/repositories/agentExecutionRepository');
       const execution = await agentExecutionRepository.getByIdempotencyKey(
         PUBLIC_TENANT,
         `web:${inboundInteractionId}`,
         leadId,
       );
+      const replyOutbox = await liveChatReplyOutboxRepository.get(
+        PUBLIC_TENANT,
+        inboundInteractionId,
+      );
+      if (replyOutbox?.status === 'DELIVERED') {
+        return res.json({
+          status: 'SUCCESS',
+          code: 'REPLY_DELIVERED',
+          runId: replyOutbox.executionId || undefined,
+          inboundInteractionId,
+          reply: replyOutbox.response,
+        });
+      }
+      if (replyOutbox?.status === 'FAILED') {
+        return res.json({
+          status: 'FAILED',
+          code: replyOutbox.failureCode || 'AI_UNAVAILABLE',
+          error: replyOutbox.failureText || undefined,
+          retryAfter: 5,
+          inboundInteractionId,
+        });
+      }
+      if (replyOutbox?.status === 'REPLY_PENDING') {
+        return res.json({
+          status: 'REPLY_PENDING',
+          code: 'REPLY_PENDING',
+          runId: replyOutbox.executionId || undefined,
+          response: Object.keys(replyOutbox.response || {}).length ? replyOutbox.response : undefined,
+          retryAfter: 3,
+          inboundInteractionId,
+        });
+      }
       if (!execution) {
         // The public AI route acknowledges before durable execution claims its
         // row. If the inbound interaction is already committed, the run is
@@ -3560,13 +3760,52 @@ if (asyncRun) {
         }
         return res.json({ status: 'NOT_FOUND', code: 'LIVECHAT_RUN_NOT_FOUND', retryAfter: 3 });
       }
-      if (execution.status === 'SUCCESS' || execution.status === 'BLOCKED') {
-        return res.json({ status: 'SUCCESS', code: execution.status });
+      if (execution.status === 'SUCCESS') {
+        return res.json({
+          status: 'REPLY_PENDING',
+          code: 'REPLY_PENDING',
+          runId: execution.id,
+          traceId: execution.traceId,
+          attempt: execution.attempt,
+          retryAfter: 3,
+          inboundInteractionId,
+        });
+      }
+      if (execution.status === 'BLOCKED') {
+        return res.json({
+          status: 'BLOCKED',
+          code: 'AGENT_OUTPUT_BLOCKED',
+          runId: execution.id,
+          traceId: execution.traceId,
+          attempt: execution.attempt,
+          response: execution.output?.result || undefined,
+          retryAfter: 5,
+          inboundInteractionId,
+        });
       }
       if (execution.status === 'ERROR') {
-        return res.json({ status: 'FAILED', code: 'AI_UNAVAILABLE', retryAfter: 5 });
+        return res.json({
+          status: 'FAILED',
+          code: execution.errorText?.startsWith('LIVECHAT_RETRY_EXHAUSTED:')
+            ? 'LIVECHAT_RETRY_EXHAUSTED'
+            : 'AI_UNAVAILABLE',
+          runId: execution.id,
+          traceId: execution.traceId,
+          attempt: execution.attempt,
+          error: execution.errorText || undefined,
+          retryAfter: 5,
+          inboundInteractionId,
+        });
       }
-      return res.json({ status: 'PROCESSING', retryAfter: 3 });
+      return res.json({
+        status: 'PROCESSING',
+        code: 'AI_PROCESSING',
+        runId: execution.id,
+        traceId: execution.traceId,
+        attempt: execution.attempt,
+        retryAfter: 3,
+        inboundInteractionId,
+      });
     } catch (error: any) {
       logger.warn(`[PublicLiveChat] run status unavailable: ${error?.message || error}`);
       return res.status(503).json({ status: 'PROCESSING', code: 'LIVECHAT_STATUS_UNAVAILABLE', retryAfter: 5 });
@@ -6263,24 +6502,37 @@ app.get('/api/admin/agent-tasks', apiRateLimit, authenticateToken, async (req: e
 
     socket.on("join_room", (room) => {
       if (!socket.data.authUser) return;
+      if (typeof room !== 'string' || room.length > 180) return;
+      const user = socket.data.authUser;
+      const allowed = room === `tenant:${user.tenantId}`
+        || room === `user:${user.id}`
+        || room === `buyer:${socket.data.buyerUser?.id || ''}`;
+      if (!allowed) return;
       socket.join(room);
       logger.debug(`User ${socket.id} joined room ${room}`);
     });
 
     // Allow unauthenticated live-chat visitors to join their conversation room.
     // Validates that the room value is a UUID (can't join arbitrary rooms).
-    socket.on("join_livechat_room", (leadId: string) => {
+    socket.on("join_livechat_room", async (leadId: string) => {
       if (!leadId || typeof leadId !== 'string') return;
-      if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(leadId)) return;
+      if (!PUBLIC_UUID_RE.test(leadId)) return;
       const cookies: Record<string, string> = {};
       String(socket.handshake.headers.cookie || '').split(';').forEach(part => {
         const [key, ...values] = part.trim().split('=');
         if (key) cookies[key] = values.join('=');
       });
-      if (!verifyPublicLiveChatCapability(
-        cookies[publicLiveChatCapabilityCookieName(leadId)],
-        { leadId, tenantId: PUBLIC_TENANT },
-      )) return;
+      const requestLike = {
+        cookies,
+        get: (name: string) => name.toLowerCase() === 'x-minh-chat-capability'
+          ? String(socket.handshake.headers['x-minh-chat-capability'] || '')
+          : undefined,
+      };
+      const token = getPublicLiveChatCapabilityToken(requestLike)
+        || cookies[publicLiveChatCapabilityCookieName(leadId)];
+      if (!verifyPublicLiveChatCapability(token, { leadId, tenantId: PUBLIC_TENANT })) return;
+      const lead = await leadRepository.findById(PUBLIC_TENANT, leadId).catch(() => null);
+      if (!lead) return;
       socket.data.publicLiveChatLeads ||= new Set<string>();
       socket.data.publicLiveChatLeads.add(leadId);
       socket.join(leadId);
@@ -6294,9 +6546,20 @@ app.get('/api/admin/agent-tasks', apiRateLimit, authenticateToken, async (req: e
       };
     };
 
+    const canAccessLead = async (leadId: string): Promise<boolean> => {
+      const user = socket.data.authUser;
+      if (!user || !PUBLIC_UUID_RE.test(leadId)) return false;
+      const lead = await leadRepository.findById(String(user.tenantId), leadId);
+      if (!lead) return false;
+      const role = String(user.role || '').toUpperCase();
+      if (['ADMIN', 'OWNER', 'SUPER_ADMIN', 'MANAGER'].includes(role)) return true;
+      return String((lead as any).assignedTo || (lead as any).assigned_to || '') === String(user.id);
+    };
+
     // Collaboration Presence Tracking
     socket.on("view_lead", requireAuth(async (data) => {
-      const { leadId, user } = data;
+      const { leadId, user } = data || {};
+      if (!(await canAccessLead(String(leadId || '')))) return;
       const room = `lead_view_${leadId}`;
       socket.join(room);
       
@@ -6310,7 +6573,9 @@ app.get('/api/admin/agent-tasks', apiRateLimit, authenticateToken, async (req: e
     }));
 
     socket.on("leave_lead", requireAuth(async (data) => {
-      const { leadId } = data;
+      const { leadId } = data || {};
+      if (!PUBLIC_UUID_RE.test(String(leadId || ''))) return;
+      if (socket.data.viewingLead !== leadId) return;
       const room = `lead_view_${leadId}`;
       socket.leave(room);
       socket.data.viewingLead = null;
@@ -6326,24 +6591,36 @@ app.get('/api/admin/agent-tasks', apiRateLimit, authenticateToken, async (req: e
       const tenantId = user?.tenantId || DEFAULT_TENANT_ID;
 
       try {
+        if (
+          !data
+          || typeof data.leadId !== 'string'
+          || !PUBLIC_UUID_RE.test(data.leadId)
+          || typeof data.content !== 'string'
+          || !data.content.trim()
+          || data.room !== data.leadId
+          || !(await canAccessLead(data.leadId))
+        ) {
+          socket.emit('send_message_error', { error: 'Lead hoặc phòng chat không hợp lệ.' });
+          return;
+        }
         if (data.leadId && data.content) {
           const saved = await interactionRepository.create(tenantId, {
             leadId: data.leadId,
-            content: data.content,
+            content: data.content.trim().slice(0, 5000),
             channel: data.channel || 'INTERNAL',
             direction: 'OUTBOUND',
             type: data.type || 'TEXT',
             senderId: user?.id,
-            metadata: data.metadata,
+            metadata: {
+              senderRole: user?.role || null,
+              source: 'authenticated_socket',
+            },
           });
-          data.id = saved.id;
-          data.timestamp = saved.timestamp || saved.createdAt;
-          data.senderId = user?.id;
-          data.senderName = user?.name;
+          socket.to(data.leadId).emit("receive_message", {
+            room: data.leadId,
+            message: saved,
+          });
         }
-
-        // Emit only after successful DB save — emit to room but not back to sender
-        socket.to(data.room).emit("receive_message", data);
       } catch (err) {
         logger.error('Failed to persist socket message to DB', err);
         socket.emit('send_message_error', { error: 'Failed to send message. Please try again.' });

@@ -6,7 +6,8 @@ export type GuardrailFlag =
   | 'HIGH_IMPACT_ACTION'
   | 'OUTPUT_TRUNCATED'
   | 'TECHNICAL_MARKUP'
-  | 'DUPLICATE_CONTENT';
+  | 'DUPLICATE_CONTENT'
+  | 'INPUT_ENVELOPE_INVALID';
 
 export interface GuardrailReport {
   safe: boolean;
@@ -202,6 +203,32 @@ export function inspectAgentInput(message: string): GuardrailReport {
     requiresVerification: false,
     approvalRequired: false,
   };
+}
+
+/**
+ * Input guardrails must see the same envelope that the agent receives.
+ * Checking only the visible text lets prompt injection hide in document text,
+ * image metadata, or another multimodal field.
+ */
+export function inspectAgentEnvelope(
+  message: string,
+  envelope: unknown,
+): GuardrailReport {
+  let serialized = '';
+  try {
+    serialized = JSON.stringify({ message, envelope }) || '';
+  } catch {
+    return {
+      safe: false,
+      blocked: true,
+      escalate: true,
+      flags: ['INPUT_ENVELOPE_INVALID'],
+      requiresVerification: false,
+      approvalRequired: false,
+      reason: 'Dữ liệu đa phương tiện không hợp lệ.',
+    };
+  }
+  return inspectAgentInput(serialized);
 }
 
 export function inspectToolRequest(toolName: string): GuardrailReport {

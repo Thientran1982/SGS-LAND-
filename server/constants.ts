@@ -1,6 +1,14 @@
 export const DEFAULT_TENANT_ID = '00000000-0000-0000-0000-000000000001';
 /** Tenant boundary shared by every unauthenticated public live-chat route. */
 export const PUBLIC_LIVECHAT_TENANT_ID = DEFAULT_TENANT_ID;
+
+/**
+ * Keep public chat, attachment storage, and capability verification on one
+ * resolver. Do not let individual routes fall back to DEFAULT_TENANT_ID.
+ */
+export function resolvePublicLiveChatTenant(): string {
+  return PUBLIC_LIVECHAT_TENANT_ID;
+}
 // --- Valuation engine defaults (can be overridden per request) ---
 export const DEFAULT_VACANCY_RATE = 0.08;   // 8% vacancy
 export const DEFAULT_OPEX_RATE = 0.20;      // 20% of gross income as operating expenses
