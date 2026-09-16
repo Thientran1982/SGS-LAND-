@@ -54,9 +54,14 @@ externalPort = 80
 localPort = 5001
 externalPort = 3000
 
+
+[[ports]]
+localPort = 5501
+externalPort = 3002
+
 [deployment]
 deploymentTarget = "vm"
-run = ["sh", "-c", "PORT_BACKEND=5001 PORT=5000 bash scripts/supervisor.sh"]
+run = ["npm", "run", "start:production"]
 build = ["sh", "-c", "npm run build && cd apps/nextjs && npm install && BACKEND_URL=http://localhost:5001 npm run build && cd ../.. && bash scripts/prepare-publish.sh && npm run check:publish-size"]
 [userenv]
 [userenv.shared]
