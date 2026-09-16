@@ -19,6 +19,21 @@ export interface LiveChatReplyOutboxRow {
   deliveredAt: string | null;
 }
 
+export function isRestorableLiveChatResponse(
+  response: unknown,
+): response is Record<string, any> {
+  if (!response || typeof response !== 'object' || Array.isArray(response)) {
+    return false;
+  }
+  const envelope = response as Record<string, any>;
+  return (
+    typeof envelope.content === 'string' &&
+    envelope.content.trim().length > 0 &&
+    typeof envelope.reply === 'string' &&
+    envelope.reply.trim().length > 0
+  );
+}
+
 function mapRow(row: any): LiveChatReplyOutboxRow {
   return {
     id: row.id,
@@ -36,6 +51,13 @@ function mapRow(row: any): LiveChatReplyOutboxRow {
     updatedAt: row.updated_at,
     deliveredAt: row.delivered_at,
   };
+}
+
+function mapEntity(row: any): Record<string, any> {
+  return Object.entries(row).reduce<Record<string, any>>((entity, [key, value]) => {
+    entity[key.replace(/_([a-z])/g, (_, letter) => letter.toUpperCase())] = value;
+    return entity;
+  }, {});
 }
 
 class LiveChatReplyOutboxRepository {
@@ -150,6 +172,128 @@ class LiveChatReplyOutboxRepository {
         ],
       );
       return result.rows[0] ? mapRow(result.rows[0]) : null;
+    });
+  }
+
+  /**
+   * Reconcile a pending reply whose durable response envelope cannot be
+   * restored. The outbox transition and the idempotent failure interaction
+   * must commit together so a second status poll cannot observe FAILED before
+   * history contains the terminal interaction.
+   */
+  async reconcileMissingResponse(params: {
+    tenantId: string;
+    leadId: string;
+    inboundInteractionId: string;
+    code: string;
+    error: string;
+    runId?: string | null;
+  }): Promise<{
+    outbox: LiveChatReplyOutboxRow | null;
+    interaction: Record<string, any> | null;
+    claimed: boolean;
+  }> {
+    return withTenantContext(params.tenantId, async client => {
+      const safeCode = params.code.slice(0, 120);
+      const safeError = params.error.slice(0, 4000);
+      const content = 'Minh chưa thể hoàn tất phản hồi lúc này. Tin nhắn của bạn đã được ghi nhận.';
+      const responseEnvelope = {
+        content,
+        reply: content,
+        sources: [],
+        artifact: null,
+        suggestedAction: 'RETRY',
+        status: 'FAILED',
+        failureCode: safeCode,
+        inboundInteractionId: params.inboundInteractionId,
+        ...(params.runId ? { runId: params.runId } : {}),
+      };
+
+      const failed = await client.query(
+        `UPDATE livechat_reply_outbox
+            SET status = 'FAILED',
+                failure_code = $3,
+                failure_text = $4,
+                updated_at = NOW()
+          WHERE tenant_id = $1
+            AND inbound_interaction_id = $2
+            AND status = 'REPLY_PENDING'
+            AND NOT (
+              jsonb_typeof(response_json) = 'object'
+              AND NULLIF(BTRIM(response_json->>'content'), '') IS NOT NULL
+              AND NULLIF(BTRIM(response_json->>'reply'), '') IS NOT NULL
+            )
+          RETURNING *`,
+        [params.tenantId, params.inboundInteractionId, safeCode, safeError],
+      );
+
+      if (!failed.rows[0]) {
+        const existing = await client.query(
+          `SELECT * FROM livechat_reply_outbox
+            WHERE tenant_id = $1 AND inbound_interaction_id = $2
+            LIMIT 1`,
+          [params.tenantId, params.inboundInteractionId],
+        );
+        if (!existing.rows[0]) {
+          return { outbox: null, interaction: null, claimed: false };
+        }
+        const existingInteraction = await client.query(
+          `SELECT * FROM interactions
+            WHERE tenant_id = current_setting('app.current_tenant_id', true)::uuid
+              AND channel = 'WEB'
+              AND external_event_id = $1
+            LIMIT 1`,
+          [`agent-failure:${params.inboundInteractionId}`],
+        );
+        return {
+          outbox: mapRow(existing.rows[0]),
+          interaction: existingInteraction.rows[0]
+            ? mapEntity(existingInteraction.rows[0])
+            : null,
+          claimed: false,
+        };
+      }
+
+      const interaction = await client.query(
+        `INSERT INTO interactions (
+          tenant_id, lead_id, channel, direction, type, content, metadata, status, external_event_id
+        ) VALUES (
+          current_setting('app.current_tenant_id', true)::uuid,
+          $1, 'WEB', 'OUTBOUND', 'TEXT', $2, $3::jsonb, 'FAILED', $4
+        )
+        ON CONFLICT (tenant_id, channel, external_event_id)
+        WHERE external_event_id IS NOT NULL
+        DO UPDATE SET id = interactions.id
+        RETURNING *`,
+        [
+          params.leadId,
+          content,
+          JSON.stringify({
+            isAi: true,
+            isAgent: true,
+            replyStatus: 'FAILED',
+            failureCode: safeCode,
+            inboundInteractionId: params.inboundInteractionId,
+            responseEnvelope,
+          }),
+          `agent-failure:${params.inboundInteractionId}`,
+        ],
+      );
+      const interactionEntity = mapEntity(interaction.rows[0]);
+      const linked = await client.query(
+        `UPDATE livechat_reply_outbox
+            SET interaction_id = $3,
+                updated_at = NOW()
+          WHERE tenant_id = $1 AND inbound_interaction_id = $2
+          RETURNING *`,
+        [params.tenantId, params.inboundInteractionId, interactionEntity.id],
+      );
+
+      return {
+        outbox: mapRow(linked.rows[0] || failed.rows[0]),
+        interaction: interactionEntity,
+        claimed: true,
+      };
     });
   }
 }

@@ -156,7 +156,10 @@ import { DEFAULT_TENANT_ID, resolvePublicLiveChatTenant } from "./server/constan
 import { DICTIONARY } from "./config/locales";
 import { interactionRepository } from "./server/repositories/interactionRepository";
 import { agentExecutionRepository } from "./server/repositories/agentExecutionRepository";
-import { liveChatReplyOutboxRepository } from "./server/repositories/liveChatReplyOutboxRepository";
+import {
+  isRestorableLiveChatResponse,
+  liveChatReplyOutboxRepository,
+} from "./server/repositories/liveChatReplyOutboxRepository";
 import { sessionRepository } from "./server/repositories/sessionRepository";
 import { visitorRepository } from "./server/repositories/visitorRepository";
 import { lookupIp, getClientIp } from "./server/services/geoService";
@@ -3712,7 +3715,7 @@ if (asyncRun) {
         `web:${inboundInteractionId}`,
         leadId,
       );
-      const replyOutbox = await liveChatReplyOutboxRepository.get(
+      let replyOutbox = await liveChatReplyOutboxRepository.get(
         PUBLIC_TENANT,
         inboundInteractionId,
       );
@@ -3735,6 +3738,45 @@ if (asyncRun) {
         });
       }
       if (replyOutbox?.status === 'REPLY_PENDING') {
+        if (!isRestorableLiveChatResponse(replyOutbox.response)) {
+          const reconciliation = await liveChatReplyOutboxRepository.reconcileMissingResponse({
+            tenantId: PUBLIC_TENANT,
+            leadId: replyOutbox.leadId,
+            inboundInteractionId,
+            code: 'LIVECHAT_REPLY_ENVELOPE_MISSING',
+            error: 'The durable live-chat reply envelope is missing or invalid.',
+            runId: replyOutbox.executionId,
+          });
+          const reconciledOutbox = reconciliation.outbox;
+          if (reconciliation.claimed && reconciliation.interaction) {
+            broadcastIo?.to(leadId).emit('receive_message', {
+              room: leadId,
+              message: reconciliation.interaction,
+            });
+          }
+          if (reconciledOutbox?.status === 'FAILED') {
+            return res.json({
+              status: 'FAILED',
+              code: reconciledOutbox.failureCode || 'LIVECHAT_REPLY_ENVELOPE_MISSING',
+              error: reconciledOutbox.failureText || undefined,
+              response: reconciliation.interaction?.metadata?.responseEnvelope,
+              retryAfter: 5,
+              inboundInteractionId,
+            });
+          }
+          if (reconciledOutbox?.status === 'DELIVERED') {
+            return res.json({
+              status: 'SUCCESS',
+              code: 'REPLY_DELIVERED',
+              runId: reconciledOutbox.executionId || undefined,
+              inboundInteractionId,
+              reply: reconciledOutbox.response,
+            });
+          }
+          if (reconciledOutbox) {
+            replyOutbox = reconciledOutbox;
+          }
+        }
         return res.json({
           status: 'REPLY_PENDING',
           code: 'REPLY_PENDING',

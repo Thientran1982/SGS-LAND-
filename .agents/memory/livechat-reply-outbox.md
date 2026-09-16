@@ -8,3 +8,9 @@ Public live-chat execution and reply delivery are separate durable steps. An acc
 **Why:** HTTP 202 and Socket.IO delivery can both be interrupted after the agent has finished, so execution success alone cannot prove that the customer received or can restore the reply.
 
 **How to apply:** Keep status responses explicit (`PROCESSING`, `REPLY_PENDING`, `SUCCESS`, `BLOCKED`, `FAILED`) and persist content, sources, artifact, suggested action, intent, clarification, and correlation IDs in one response envelope used by history and retry reconciliation.
+
+An invalid or missing pending response envelope must fail closed in the same tenant-scoped transaction that creates its idempotent failed outbound interaction; status polling must not leave it pending or create a second history entry.
+
+**Why:** A restart can preserve the execution row while losing the reply envelope, and a failed transition committed before history would expose a terminal state without evidence for the visitor or operator.
+
+**How to apply:** Validate the minimum restorable content before returning `REPLY_PENDING`; use a stable failure code and external event key when reconciling the missing envelope.

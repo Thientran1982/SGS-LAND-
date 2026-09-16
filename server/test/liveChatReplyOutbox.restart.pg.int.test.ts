@@ -21,10 +21,13 @@ const baseConnectionString = integrationUrl?.replace(
 const tenantB = randomUUID();
 const leadA = randomUUID();
 const leadB = randomUUID();
+const leadC = randomUUID();
 const inboundA = randomUUID();
 const inboundB = randomUUID();
+const inboundC = randomUUID();
 const executionA = randomUUID();
 const executionB = randomUUID();
+const executionC = randomUUID();
 const jwtSecret = `live-chat-reply-outbox-restart-${randomUUID()}`;
 const tsxCli = path.resolve(process.cwd(), 'node_modules/tsx/dist/cli.mjs');
 const serverEntrypoint = path.resolve(process.cwd(), 'server.ts');
@@ -129,6 +132,10 @@ describeEntrypoint('live-chat reply outbox survives a backend restart', () => {
     leadId: leadB,
     tenantId: tenantB,
   });
+  const capabilityC = () => createPublicLiveChatCapability({
+    leadId: leadC,
+    tenantId: DEFAULT_TENANT_ID,
+  });
 
   async function query(text: string, values: unknown[] = []) {
     return db.query(text, values);
@@ -192,10 +199,11 @@ describeEntrypoint('live-chat reply outbox survives a backend restart', () => {
     );
     await query(
       `INSERT INTO leads (id, tenant_id, name, phone)
-       VALUES ($1, $2, $3, $4), ($5, $6, $7, $8)`,
+       VALUES ($1, $2, $3, $4), ($5, $6, $7, $8), ($9, $10, $11, $12)`,
       [
         leadA, DEFAULT_TENANT_ID, 'Restart visitor A', '0900000001',
         leadB, tenantB, 'Restart visitor B', '0900000002',
+        leadC, DEFAULT_TENANT_ID, 'Restart visitor C', '0900000003',
       ],
     );
     await query(
@@ -203,10 +211,12 @@ describeEntrypoint('live-chat reply outbox survives a backend restart', () => {
         (id, tenant_id, lead_id, channel, direction, type, content, metadata, external_event_id)
        VALUES
         ($1, $2, $3, 'WEB', 'INBOUND', 'TEXT', $4, '{}'::jsonb, $5),
-        ($6, $7, $8, 'WEB', 'INBOUND', 'TEXT', $9, '{}'::jsonb, $10)`,
+        ($6, $7, $8, 'WEB', 'INBOUND', 'TEXT', $9, '{}'::jsonb, $10),
+        ($11, $12, $13, 'WEB', 'INBOUND', 'TEXT', $14, '{}'::jsonb, $15)`,
       [
         inboundA, DEFAULT_TENANT_ID, leadA, 'Giá căn hộ sau khi backend restart?', `restart-inbound:${inboundA}`,
         inboundB, tenantB, leadB, 'Tenant B private message', `restart-inbound:${inboundB}`,
+        inboundC, DEFAULT_TENANT_ID, leadC, 'Tin nhắn bị mất envelope', `restart-inbound:${inboundC}`,
       ],
     );
     await query(
@@ -217,11 +227,14 @@ describeEntrypoint('live-chat reply outbox survives a backend restart', () => {
         ($1, $2, $3, $4, 'SGS_AGENT', 'public-livechat', 'SUCCESS', 'SYNTHESIZE',
          $5::jsonb, NOW()),
         ($6, $7, $8, $9, 'SGS_AGENT', 'public-livechat', 'SUCCESS', 'SYNTHESIZE',
+         '{}'::jsonb, NOW()),
+        ($10, $11, $12, $13, 'SGS_AGENT', 'public-livechat', 'SUCCESS', 'SYNTHESIZE',
          '{}'::jsonb, NOW())`,
       [
         executionA, DEFAULT_TENANT_ID, `web:${inboundA}`, leadA,
         JSON.stringify({ result: { content: 'Đây là câu trả lời đã lưu trước khi restart.' } }),
         executionB, tenantB, `web:${inboundB}`, leadB,
+        executionC, DEFAULT_TENANT_ID, `web:${inboundC}`, leadC,
       ],
     );
 
@@ -250,10 +263,12 @@ describeEntrypoint('live-chat reply outbox survives a backend restart', () => {
         (tenant_id, lead_id, inbound_interaction_id, execution_id, status, response_json)
        VALUES
         ($1, $2, $3, $4, 'REPLY_PENDING', $5::jsonb),
-        ($6, $7, $8, $9, 'REPLY_PENDING', $10::jsonb)`,
+        ($6, $7, $8, $9, 'REPLY_PENDING', $10::jsonb),
+        ($11, $12, $13, $14, 'REPLY_PENDING', $15::jsonb)`,
       [
         DEFAULT_TENANT_ID, leadA, inboundA, executionA, JSON.stringify(responseEnvelope),
         tenantB, leadB, inboundB, executionB, JSON.stringify({ content: 'Tenant B secret' }),
+        DEFAULT_TENANT_ID, leadC, inboundC, executionC, JSON.stringify({}),
       ],
     );
 
@@ -279,9 +294,13 @@ describeEntrypoint('live-chat reply outbox survives a backend restart', () => {
         DEFAULT_TENANT_ID,
         tenantB,
       ]);
-      await query('DELETE FROM agent_executions WHERE id IN ($1, $2)', [executionA, executionB]);
-      await query('DELETE FROM interactions WHERE id IN ($1, $2)', [inboundA, inboundB]);
-      await query('DELETE FROM leads WHERE id IN ($1, $2)', [leadA, leadB]);
+      await query('DELETE FROM agent_executions WHERE id IN ($1, $2, $3)', [
+        executionA,
+        executionB,
+        executionC,
+      ]);
+      await query('DELETE FROM interactions WHERE lead_id IN ($1, $2, $3)', [leadA, leadB, leadC]);
+      await query('DELETE FROM leads WHERE id IN ($1, $2, $3)', [leadA, leadB, leadC]);
       await query('DELETE FROM tenants WHERE id = $1', [tenantB]);
     } finally {
       await db?.end();
@@ -375,5 +394,64 @@ describeEntrypoint('live-chat reply outbox survives a backend restart', () => {
       status: 'REPLY_PENDING',
       response_json: { content: 'Tenant B secret' },
     });
+  });
+
+  it('fails a missing pending envelope after restart without duplicating the failure interaction', async () => {
+    const statuses = await Promise.all([
+      status(leadC, inboundC, capabilityC()),
+      status(leadC, inboundC, capabilityC()),
+    ]);
+
+    for (const result of statuses) {
+      expect(result.response.status).toBe(200);
+      expect(result.body).toMatchObject({
+        status: 'FAILED',
+        code: 'LIVECHAT_REPLY_ENVELOPE_MISSING',
+        response: {
+          suggestedAction: 'RETRY',
+          failureCode: 'LIVECHAT_REPLY_ENVELOPE_MISSING',
+        },
+      });
+    }
+
+    const repeated = await waitForStatus(leadC, inboundC, capabilityC());
+    expect(repeated.response.status).toBe(200);
+    expect(repeated.body).toMatchObject({
+      status: 'FAILED',
+      code: 'LIVECHAT_REPLY_ENVELOPE_MISSING',
+    });
+
+    const persisted = await query(
+      `SELECT status, failure_code, interaction_id
+         FROM livechat_reply_outbox
+        WHERE tenant_id = $1 AND inbound_interaction_id = $2`,
+      [DEFAULT_TENANT_ID, inboundC],
+    );
+    expect(persisted.rows[0]).toMatchObject({
+      status: 'FAILED',
+      failure_code: 'LIVECHAT_REPLY_ENVELOPE_MISSING',
+    });
+    expect(persisted.rows[0].interaction_id).toBeTruthy();
+
+    const failedInteractions = await query(
+      `SELECT count(*)::int AS count, min(metadata->>'failureCode') AS failure_code
+         FROM interactions
+        WHERE tenant_id = $1 AND lead_id = $2
+          AND direction = 'OUTBOUND'
+          AND external_event_id = $3`,
+      [DEFAULT_TENANT_ID, leadC, `agent-failure:${inboundC}`],
+    );
+    expect(failedInteractions.rows[0]).toEqual({
+      count: 1,
+      failure_code: 'LIVECHAT_REPLY_ENVELOPE_MISSING',
+    });
+
+    const failedHistory = await history(leadC, capabilityC());
+    expect(failedHistory.response.status).toBe(200);
+    expect(
+      failedHistory.body.messages.filter(
+        (message: any) => message.direction === 'OUTBOUND',
+      ),
+    ).toHaveLength(1);
   });
 });
