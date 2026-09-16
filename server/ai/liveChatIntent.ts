@@ -42,7 +42,7 @@ export function hasLandingTargetText(normalized: string): boolean {
 }
 
 export type LiveChatClarification = {
-    reason: 'UNDERSPECIFIED_PRICE_REQUEST';
+    reason: 'UNDERSPECIFIED_PRICE_REQUEST' | 'UNDERSPECIFIED_PROPERTY_TYPE';
     response: string;
     missingData: string[];
 };
@@ -100,15 +100,29 @@ export function getLiveChatClarification(
         .replace(/[?!.,;:()[\]{}]/g, ' ')
         .replace(/\s+/g, ' ')
         .trim();
-    const hasPriceSignal = /\b(?:bao gia|bang gia|gia ban|xin gia|cho hoi gia|gia bao nhieu|bao nhieu tien)\b/.test(normalized)
-        || normalized === 'gia';
+    const hasPriceSignal = /\b(?:bao gia|bang gia|gia ban|xin gia|cho hoi gia|gia bao nhieu|bao nhieu tien|gia|price)\b/.test(normalized);
     if (!hasPriceSignal) return null;
 
     const residual = normalized
-        .replace(/\b(?:bao gia|bang gia|gia ban|xin gia|cho hoi gia|gia bao nhieu|bao nhieu tien|gia)\b/g, ' ')
+        .replace(/\b(?:bao gia|bang gia|gia ban|xin gia|cho hoi gia|gia bao nhieu|bao nhieu tien|gia|price)\b/g, ' ')
         .replace(/\b(?:cho|hoi|xin|vui long|giup|toi|em|anh|chi|minh|muon|can|the|duoc|nhe|a|oi|du an|san pham|bat dong san|bds|can ho|nha|dat|nay|do|kia)\b/g, ' ')
         .replace(/\s+/g, ' ')
         .trim();
+    const hasExplicitPropertyType = /\b(?:can ho|apartment|condo|penthouse|studio|nha pho|nha lien ke|townhouse|shophouse|biet thu|villa|dat nen|dat thoi|land)\b/.test(normalized)
+        || /\b(?:\d+\s*(?:phong ngu|pn)|phong ngu)\b/.test(normalized);
+
+    // A named project can contain several product families. Never let the
+    // valuation tool or the writer silently default this to APARTMENT.
+    if (residual && !hasExplicitPropertyType) {
+        const subject = extractPriceSubject(message);
+        return {
+            reason: 'UNDERSPECIFIED_PROPERTY_TYPE',
+            response: language === 'en'
+                ? `Are you asking about ${subject || 'this project'} for an apartment, townhouse, or villa? If it is an apartment, please also share the bedroom count or area if you have it.`
+                : `Anh/chị đang hỏi giá ${subject ? `dự án ${subject}` : 'dự án này'} cho căn hộ, nhà phố hay biệt thự ạ? Nếu là căn hộ, anh/chị cho Minh thêm số phòng ngủ hoặc diện tích nếu có nhé.`,
+            missingData: ['property_type'],
+        };
+    }
     if (residual) return null;
 
     return {
@@ -118,6 +132,17 @@ export function getLiveChatClarification(
             : 'Anh/chị muốn hỏi giá dự án hoặc sản phẩm nào? Vui lòng cho Minh tên dự án/khu vực, loại sản phẩm và diện tích nếu có.',
         missingData: ['project_or_location', 'property_type_or_area'],
     };
+}
+
+function extractPriceSubject(message: string): string {
+    return String(message || '')
+        .replace(/(?:báo\s+giá|bảng\s+giá|giá\s+bán|xin\s+giá|cho\s+hỏi\s+giá|giá\s+bao\s+nhiêu|bao\s+nhiêu\s+tiền|giá|price)/giu, ' ')
+        .replace(/\b(?:cho|hỏi|xin|vui lòng|giúp|tôi|em|anh|chị|minh|muốn|cần|thế|được|nhé|ạ|ơi|dự án|sản phẩm|bất động sản|bđs)\b/giu, ' ')
+        .replace(/\b(?:căn hộ|apartment|condo|penthouse|studio|nhà phố|nhà liền kề|townhouse|shophouse|biệt thự|villa|đất nền|đất thổ cư|land)\b/giu, ' ')
+        .replace(/[?!.,;:()[\]{}]/g, ' ')
+        .replace(/\s+/g, ' ')
+        .trim()
+        .slice(0, 80);
 }
 
 /**
@@ -169,6 +194,16 @@ export function classifyLiveChatIntent(message: string): { intent: string; sugge
     const msg = String(message || '').trim();
     if (isLandingBuilderRequest(msg)) {
         return { intent: 'LANDING', suggestedTool: 'landing_builder' };
+    }
+    // Keep short named-project price questions on the fast live-chat path.
+    // Without this guard, "giá Masteri" falls through to GENERAL, invokes the
+    // legacy router/provider chain, and can spend minutes before asking the
+    // missing product-type question.
+    const normalized = normalizeIntentText(msg);
+    const hasPriceWord = /\b(?:gia|price)\b/.test(normalized);
+    const hasSearchIntent = /\b(?:tim|search|can tim|con hang|mua|thue)\b/.test(normalized);
+    if (hasPriceWord && !hasSearchIntent) {
+        return { intent: 'VALUATION', suggestedTool: 'get_valuation' };
     }
     return classifyFromIntentMap(msg);
 }

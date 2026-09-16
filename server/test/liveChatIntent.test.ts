@@ -22,6 +22,34 @@ describe('classifyLiveChatIntent — P0-5 keyword precision', () => {
     expect(getLiveChatClarification('Giá bán căn hộ Aqua City bao nhiêu?')).toBeNull();
   });
 
+  it('asks for the product type before answering a named project price question', () => {
+    const clarification = getLiveChatClarification('Giá Masteri');
+    expect(classifyLiveChatIntent('Giá Masteri')).toEqual({
+      intent: 'VALUATION',
+      suggestedTool: 'get_valuation',
+    });
+    expect(clarification).toMatchObject({
+      reason: 'UNDERSPECIFIED_PROPERTY_TYPE',
+      missingData: ['property_type'],
+    });
+    expect(clarification?.response).toContain('Masteri');
+    expect(clarification?.response).toContain('căn hộ, nhà phố hay biệt thự');
+  });
+
+  it('keeps price-filter searches out of the project-price clarification path', () => {
+    expect(classifyLiveChatIntent('Tìm căn hộ giá 3 tỷ ở Long Thành').intent).toBe('SEARCH');
+    expect(getLiveChatClarification('Tìm căn hộ giá 3 tỷ ở Long Thành')).toBeNull();
+  });
+
+  it.each([
+    'Giá căn hộ Masteri?',
+    'Giá nhà phố Masteri?',
+    'Giá biệt thự Masteri?',
+    'Giá Masteri 2 phòng ngủ?',
+  ])('does not ask for property type when the request identifies it: %s', (message) => {
+    expect(getLiveChatClarification(message)).toBeNull();
+  });
+
   it('carries the previous user topic into a short time follow-up', () => {
     const resolved = resolveLiveChatFollowUp('mấy giờ?', [
       { role: 'user', content: 'Aqua City có lịch mở cửa tham quan không?' },
