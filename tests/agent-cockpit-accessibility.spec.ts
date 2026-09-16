@@ -256,7 +256,7 @@ test.describe('Command Center accessibility', () => {
     await expect(page.getByRole('group', { name: 'Opportunity queue' })).toContainText('0 cơ hội');
   });
 
-  test('keeps the newest refresh result when an older request finishes afterward', async ({ page }) => {
+  test('keeps the newest refresh result after an older request finishes', async ({ page }) => {
     let refreshPhase = 0;
     let markOlderRefreshSeen!: () => void;
     const olderRefreshSeen = new Promise<void>(resolve => { markOlderRefreshSeen = resolve; });
@@ -289,14 +289,66 @@ test.describe('Command Center accessibility', () => {
     await olderRefreshSeen;
     refreshPhase = 2;
     await page.getByLabel('Khoảng thời gian learning của Minh').selectOption('7');
-
-    await expect(opportunities).toContainText('Newest refresh completed');
-    await expect(page.getByText('Snapshot cuối có thể đã cũ')).toHaveCount(0);
-    await expect(page.getByRole('alert', { name: 'Không thể làm mới Command Center' })).toHaveCount(0);
-
     releaseOlderRefresh();
+
     await expect(opportunities).toContainText('Newest refresh completed');
     await expect(page.getByText('Snapshot cuối có thể đã cũ')).toHaveCount(0);
     await expect(page.getByRole('alert', { name: 'Không thể làm mới Command Center' })).toHaveCount(0);
+    await expect(opportunities).toContainText('Newest refresh completed');
+    await expect(page.getByText('Snapshot cuối có thể đã cũ')).toHaveCount(0);
+    await expect(page.getByRole('alert', { name: 'Không thể làm mới Command Center' })).toHaveCount(0);
+  });
+
+  test('coalesces rapid learning filter changes into one queued reload', async ({ page }) => {
+    let commandCenterCalls = 0;
+    let maxActiveCommandCenterCalls = 0;
+    let activeCommandCenterCalls = 0;
+    await mockCockpitApis(page, commandCenter());
+    await page.route('**/api/internal/minh-brain/command-center', async route => {
+      commandCenterCalls += 1;
+      activeCommandCenterCalls += 1;
+      maxActiveCommandCenterCalls = Math.max(maxActiveCommandCenterCalls, activeCommandCenterCalls);
+      await new Promise(resolve => setTimeout(resolve, 250));
+      activeCommandCenterCalls -= 1;
+      return route.fulfill({
+        json: commandCenter(commandCenterCalls > 1
+          ? { opportunityQueue: panel('degraded', [], 'Final filter reload completed') }
+          : {}),
+      });
+    });
+    await page.route('**/api/internal/minh-brain/overview**', route => {
+      const days = Number(new URL(route.request().url()).searchParams.get('days') || 30);
+      return route.fulfill({
+        json: {
+          scheduler: { mode: 'shadow', enabled: true, lastTickAt: null, detectorSummary: { enabled: true, lastRunAt: null, tenantRuns: 0, opportunitiesFound: 0, opportunitiesPersisted: 0, degradedRuns: 0, detectorStatus: [] } },
+          routing: { registryErrors: [] },
+          opportunities: [],
+          learning: {
+            windowDays: days,
+            totals: { total: 0, approved: 0, rejected: 0, executed: 0, execution_failed: 0, answered: 0 },
+            byAction: [],
+            rawPayloadIncluded: false,
+            rawAnswerIncluded: false,
+            providerPayloadIncluded: false,
+          },
+        },
+      });
+    });
+    await page.goto(`${BASE_URL}/agent-cockpit`);
+    await expect(page.getByRole('heading', { name: 'Command Center của Minh' })).toBeVisible();
+    await expect.poll(() => commandCenterCalls).toBe(1);
+
+    const learningFilter = page.getByLabel('Khoảng thời gian learning của Minh');
+    await learningFilter.selectOption('7');
+    await learningFilter.selectOption('30');
+    await learningFilter.selectOption('90');
+
+    await expect.poll(() => commandCenterCalls, { timeout: 5_000 }).toBe(2);
+    await expect.poll(() => maxActiveCommandCenterCalls).toBe(1);
+    await expect(page.getByRole('group', { name: 'Opportunity queue' })).toContainText('Final filter reload completed');
+    await expect(page.getByText('Trong 90 ngày gần nhất')).toHaveCount(1);
+    await expect(learningFilter).toHaveValue('90');
+    await page.waitForTimeout(300);
+    expect(commandCenterCalls).toBe(2);
   });
 });

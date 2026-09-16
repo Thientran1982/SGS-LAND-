@@ -307,6 +307,10 @@ export default function AgentCockpit() {
   const [minhCommandCenter, setMinhCommandCenter] = useState<MinhCommandCenterSummary | null>(null);
   const [minhCommandCenterRefreshError, setMinhCommandCenterRefreshError] = useState('');
   const loadRequestIdRef = useRef(0);
+  const loadDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const loadInFlightRef = useRef(false);
+  const queuedLoadRef = useRef(false);
+  const latestLoadRef = useRef<(() => Promise<void>) | null>(null);
   const [minhLearningTrend, setMinhLearningTrend] = useState<MinhLearningTrendResponse | null>(null);
   const [minhDecisionBusy, setMinhDecisionBusy] = useState<string | null>(null);
   const [minhLearningDays, setMinhLearningDays] = useState(30);
@@ -314,6 +318,15 @@ export default function AgentCockpit() {
   const [minhLearningExportHistory, setMinhLearningExportHistory] = useState<MinhLearningExportHistoryResponse | null>(null);
 
   const load = useCallback(async () => {
+    if (loadDebounceRef.current !== null) {
+      clearTimeout(loadDebounceRef.current);
+      loadDebounceRef.current = null;
+    }
+    if (loadInFlightRef.current) {
+      queuedLoadRef.current = true;
+      return;
+    }
+    loadInFlightRef.current = true;
     const loadRequestId = ++loadRequestIdRef.current;
     setLoading(true); setError(''); setAutoPostingDiagnosticError(''); setAutoPostingDiagnostic(null);
     setMinhLearningTrend(null);
@@ -377,9 +390,27 @@ export default function AgentCockpit() {
       }
     } finally {
       if (loadRequestId === loadRequestIdRef.current) setLoading(false);
+      loadInFlightRef.current = false;
+      if (queuedLoadRef.current) {
+        queuedLoadRef.current = false;
+        void latestLoadRef.current?.();
+      }
     }
   }, [eventFilters, memoryFilters, minhLearningDays]);
-  useEffect(() => { void load(); }, [load]);
+  useEffect(() => {
+    latestLoadRef.current = load;
+  }, [load]);
+  useEffect(() => {
+    const timeoutId = setTimeout(() => {
+      loadDebounceRef.current = null;
+      void load();
+    }, 150);
+    loadDebounceRef.current = timeoutId;
+    return () => {
+      clearTimeout(timeoutId);
+      if (loadDebounceRef.current === timeoutId) loadDebounceRef.current = null;
+    };
+  }, [load]);
 
   const exportMinhLearningSnapshot = async () => {
     setMinhLearningExporting(true);
