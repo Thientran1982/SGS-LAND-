@@ -549,6 +549,11 @@ export default function AgentCockpit() {
       </div>
       <GalleryCleanupPanel />
       <AgentNeuronMap />
+      {loading && minhCommandCenter && (
+        <div className="sr-only" role="status" aria-label="Đang làm mới Command Center" aria-live="polite" aria-atomic="true">
+          Đang làm mới Command Center…
+        </div>
+      )}
       {error && <div role="alert" className="flex items-center gap-2 rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700"><AlertTriangle size={17} /> {error}</div>}
       {loading && !summary ? <div className="rounded-xl border border-slate-200 bg-white p-10 text-center text-sm text-slate-500">Đang tải trạng thái agent…</div> : summary && <>
          {summary.degraded && <div role="status" className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">

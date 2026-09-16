@@ -204,4 +204,38 @@ test.describe('Command Center accessibility', () => {
     await expect(opportunities).toContainText('0 cơ hội');
     await expect(opportunities).not.toContainText('Opportunity queue is unavailable after refresh');
   });
+
+  test('announces when Command Center refresh is in progress and clears it when results arrive', async ({ page }) => {
+    let commandCenterReads = 0;
+    let releaseRefresh!: () => void;
+    const refreshGate = new Promise<void>(resolve => { releaseRefresh = resolve; });
+    await mockCockpitApis(page, commandCenter());
+    await page.route('**/api/internal/minh-brain/command-center', async route => {
+      commandCenterReads += 1;
+      if (commandCenterReads === 1) {
+        return route.fulfill({ json: commandCenter() });
+      }
+      await refreshGate;
+      return route.fulfill({
+        json: commandCenter({
+          opportunityQueue: panel('degraded', [], 'Opportunity queue is temporarily degraded after refresh'),
+        }),
+      });
+    });
+    await page.goto(`${BASE_URL}/agent-cockpit`);
+    await expect(page.getByRole('heading', { name: 'Command Center của Minh' })).toBeVisible();
+
+    const refresh = page.getByRole('button', { name: 'Làm mới' }).first();
+    const refreshAnnouncement = page.getByRole('status', { name: 'Đang làm mới Command Center' });
+    const opportunities = page.getByRole('group', { name: 'Opportunity queue' });
+
+    await refresh.click();
+    await expect(refreshAnnouncement).toHaveCount(1);
+    await expect(refreshAnnouncement).toHaveAttribute('aria-live', 'polite');
+    await expect(opportunities).toContainText('0 cơ hội');
+
+    releaseRefresh();
+    await expect(refreshAnnouncement).toHaveCount(0);
+    await expect(opportunities).toContainText('Opportunity queue is temporarily degraded after refresh');
+  });
 });
