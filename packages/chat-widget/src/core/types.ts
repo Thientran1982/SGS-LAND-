@@ -19,6 +19,7 @@ export interface ChatMessage {
   runId?: string;
   inboundInteractionId?: string;
   intent?: string;
+  clarificationReason?: string;
   missingData?: string[];
   clarificationRequired?: boolean;
   degraded?: boolean;

@@ -92,11 +92,10 @@ import { startDailyReportScheduler } from "./server/services/dailyAdminReportSer
 import { createLiveChatAgentRoutes } from "./server/routes/liveChatAgentRoutes";
 import { createPublicLiveChatAttachmentRoutes } from "./server/routes/publicLiveChatAttachmentRoutes";
 import {
-  classifyLiveChatIntent,
   isLandingBuilderRequest,
   liveChatEngine,
   recordLandingClassificationTelemetry,
-  resolveLiveChatFollowUp,
+  shouldUseFastLiveChatPipeline,
 } from "./server/ai/liveChatEngine";
 import { createPublicProjectRoutes } from "./server/routes/publicProjectRoutes";
 import { createPublicDeveloperRoutes } from "./server/routes/publicDeveloperRoutes";
@@ -3061,6 +3060,7 @@ specialistError: isLandingRequest && !result.specialistOutput
    isAi: true,
    isAgent: true,
    intent: result.intent,
+    clarificationReason: result.clarificationReason,
     missingData: Array.isArray(result.missingData) ? result.missingData : [],
     clarificationRequired: result.clarificationRequired === true,
    aiConfidence: result.confidence,
@@ -3269,15 +3269,11 @@ app.post('/api/public/ai/livechat', livechatRateLimit, aiRateLimit, async (req: 
       // keyword-selected specialist directly, then synthesize once from its
       // evidence. Keep GENERAL on the legacy pipeline because ambiguous
       // questions benefit from its broader intent planner.
-      const detectedPublicIntent = classifyLiveChatIntent(msgContent).intent;
       const publicHistory = historyWithLatest.slice(-8).map((item: any) => ({
         role: item.direction === 'INBOUND' ? 'user' : 'assistant',
         content: item.content,
       }));
-      const hasContextualFollowUp = resolveLiveChatFollowUp(msgContent, publicHistory).contextUsed;
-      const useFastLiveChatPipeline = isLandingRequest
-        || detectedPublicIntent !== 'GENERAL'
-        || hasContextualFollowUp;
+      const useFastLiveChatPipeline = shouldUseFastLiveChatPipeline(msgContent, publicHistory);
       const executePublicChat = (resumeContext: any) => useFastLiveChatPipeline
         ? liveChatEngine.callTool('handle_live_chat', {
             tenantId: PUBLIC_TENANT,
@@ -3334,6 +3330,7 @@ if (asyncRun) {
     artifact: result.artifact,
     suggestedAction: result.suggestedAction,
     intent: result.intent,
+    clarificationReason: result.clarificationReason,
     missingData: Array.isArray(result.missingData) ? result.missingData : [],
     clarificationRequired: result.clarificationRequired === true,
   });

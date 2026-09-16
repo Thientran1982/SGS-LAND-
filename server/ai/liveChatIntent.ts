@@ -73,11 +73,14 @@ export function resolveLiveChatFollowUp(
     const current = String(message || '').trim();
     const normalized = normalizeIntentText(current);
     const isShort = normalized.length > 0 && normalized.length <= 120;
-    const isTopicOnly = /^(?:gia|price|phap ly|phap luat|quy hoach|tien do|tien ich|mo ban|lai suat|vay|mua|thue|xem|tim)\b/.test(normalized)
-        && normalized.split(/\s+/).length <= 5;
+    const isTopicOnly = /^(?:gia|price|asking price|how much|bao gia|gia ban|gia bao nhieu|phap ly|phap luat|legal|legal status|quy hoach|planning|zoning|tien do|progress|tien ich|amenities|mo ban|launch|lai suat|interest rate|mortgage|vay|mua|find|search|available|thue|rent|xem|view|tim)$/.test(normalized);
+    // Only pronoun-led fragments may borrow the previous user turn. Do not
+    // treat a complete query such as "pháp lý Aqua City" or "giá căn hộ
+    // Aqua City" as a follow-up merely because it contains "này"/"còn".
+    const isReferentialFragment = /^(?:còn|con|vậy|vay|thế|the|của nó|cua no|nó|no|này|nay|đó|do|kia|bao giờ|bao gio|khi nào|khi nao|mấy giờ|may gio|lúc nào|luc nao)(?:\s+(?:hàng|hang|không|khong|vậy|vay|thế|the|còn|con))?(?:\s+(?:không|khong))?$/.test(normalized);
     const isFollowUp = isShort && (
-        /\b(?:may gio|khi nao|bao gio|luc nao|thoi gian|con|the con|vay con|the thi|cua no|no|nay|do|kia|vay|the)\b/.test(normalized)
-        || /^(?:va|v[aậ]y|the|còn|con|vay|thế|bao giờ|khi nào|mấy giờ)\b/.test(current.toLowerCase())
+        /\b(?:may gio|khi nao|bao gio|luc nao|thoi gian)\b/.test(normalized)
+        || isReferentialFragment
         || isTopicOnly
     );
     if (!isFollowUp) return { routingMessage: current, contextUsed: false };
@@ -114,14 +117,14 @@ export function getLiveChatClarification(
         .replace(/\s+/g, ' ')
         .trim();
     const currentWords = currentNormalized.split(/\s+/).filter(Boolean);
-    const isExactTopicFollowUp = /^(?:gia|price|bao gia|gia ban|phap ly|phap luat|quy hoach|tien do|tien ich|mo ban|lai suat|vay|mua|thue|xem|tim)$/.test(currentNormalized);
+    const isExactTopicFollowUp = /^(?:gia|price|asking price|how much|bao gia|gia ban|phap ly|phap luat|legal|legal status|quy hoach|planning|zoning|tien do|progress|tien ich|amenities|mo ban|launch|lai suat|interest rate|mortgage|vay|mua|find|search|available|thue|rent|xem|view|tim)$/.test(currentNormalized);
     const previousNormalized = normalizeIntentText(previousUserMessage || '')
         .replace(/[?!.,;:()[\]{}]/g, ' ')
         .replace(/\s+/g, ' ')
         .trim();
     const hasContextualTopic = Boolean(previousNormalized)
         && currentWords.length <= 5
-        && /^(?:gia|price|phap ly|phap luat|quy hoach|tien do|tien ich|mo ban|lai suat|vay|mua|thue|xem|tim)\b/.test(currentNormalized);
+        && isExactTopicFollowUp;
     const normalized = hasContextualTopic
         ? `${previousNormalized} ${currentNormalized}`
         : currentNormalized;
@@ -137,26 +140,37 @@ export function getLiveChatClarification(
         };
     }
 
-    const hasPriceSignal = /\b(?:bao gia|bang gia|gia ban|xin gia|cho hoi gia|gia bao nhieu|bao nhieu tien|bao nhieu|dinh gia|tri gia|valuation|gia(?!\s+tri\b)|price)\b/.test(normalized);
-    const hasLegalSignal = /\b(?:phap ly|phap luat|so hong|so do|vi bang|hdmb|hop dong)\b/.test(normalized);
-    const hasPlanningSignal = /\b(?:quy hoach|xay dung|lo gioi)\b/.test(normalized);
-    const hasProjectSignal = /\b(?:du an|project|tien do|tien ich|mo ban|chinh sach)\b/.test(normalized);
-    const hasSearchSignal = /\b(?:tim|search|can tim|con hang|mua|thue|xem)\b/.test(normalized);
-    const hasFinanceSignal = /\b(?:vay|lai suat|tin dung|ngan hang)\b/.test(normalized);
-    const hasInvestmentSignal = /\b(?:dau tu|cho thue|yield|roi|loi nhuan)\b/.test(normalized);
+    const hasPriceSignal = /\b(?:bao gia|bang gia|gia ban|xin gia|cho hoi gia|gia bao nhieu|bao nhieu tien|bao nhieu(?!\s+phong ngu)|dinh gia|tri gia|valuation|asking price|how much|gia(?!\s+tri\b)|price)\b/.test(normalized);
+    const hasLegalSignal = /\b(?:phap ly|phap luat|so hong|so do|vi bang|hdmb|hop dong|legal|legal status|ownership|title|documents)\b/.test(normalized);
+    const hasPlanningSignal = /\b(?:quy hoach|planning|zoning|xay dung|construction|lo gioi)\b/.test(normalized);
+    const hasProjectSignal = /\b(?:du an|project|project details|tien do|progress|tien ich|amenities|mo ban|launch|chinh sach|policy)\b/.test(normalized);
+    const hasSearchSignal = /\b(?:tim|find|search|can tim|con hang|available|for sale|mua|buy|thue|rent|xem|view)\b/.test(normalized);
+    const hasFinanceSignal = /\b(?:vay|mortgage|lai suat|interest rate|tin dung|credit|ngan hang|bank|financing)\b/.test(normalized);
+    const hasInvestmentSignal = /\b(?:dau tu|investment|cho thue|rent|yield|roi|loi nhuan|profit)\b/.test(normalized);
     const hasBudgetSignal = /\b\d+(?:[.,]\d+)?\s*(?:ty|trieu|nghin|m|billion|million)\b/.test(normalized);
     const hasTopicSignal = hasPriceSignal || hasLegalSignal || hasPlanningSignal || hasProjectSignal
         || hasSearchSignal || hasFinanceSignal || hasInvestmentSignal;
 
     const residual = normalized
-        .replace(/\b(?:bao gia|bang gia|gia ban|xin gia|cho hoi gia|gia bao nhieu|bao nhieu tien|bao nhieu|dinh gia|tri gia|valuation|gia(?!\s+tri\b)|price|phap ly|phap luat|so hong|so do|vi bang|hdmb|hop dong|quy hoach|xay dung|lo gioi|du an|project|tien do|tien ich|mo ban|chinh sach|tim|search|can tim|con hang|mua|thue|xem|vay|lai suat|tin dung|ngan hang|dau tu|cho thue|yield|roi|loi nhuan)\b/g, ' ')
-        .replace(/\b(?:cho|hoi|xin|vui long|giup|toi|em|anh|chi|minh|muon|can ho|nha pho|nha lien ke|biet thu|dat nen|apartment|condo|penthouse|studio|townhouse|shophouse|villa|land|can|the|duoc|nhe|a|oi|san pham|bat dong san|bds|nha|dat|nay|do|kia)\b/g, ' ')
+        .replace(/\b(?:bao gia|bang gia|gia ban|xin gia|cho hoi gia|gia bao nhieu|bao nhieu tien|bao nhieu(?!\s+phong ngu)|dinh gia|tri gia|valuation|asking price|how much|gia(?!\s+tri\b)|price|phap ly|phap luat|so hong|so do|vi bang|hdmb|hop dong|legal status|legal|ownership|title|documents|quy hoach|planning|zoning|xay dung|construction|lo gioi|du an|project details|project|tien do|progress|tien ich|amenities|mo ban|launch|chinh sach|policy|tim|find|search|can tim|con hang|available|for sale|mua|buy|thue|rent|xem|view|vay|mortgage|lai suat|interest rate|tin dung|credit|ngan hang|bank|financing|dau tu|investment|cho thue|yield|roi|loi nhuan|profit)\b/g, ' ')
+        .replace(/\b(?:\d+(?:[.,]\d+)?\s*(?:ty|trieu|nghin|m|billion|million)|\d+\s*(?:phong ngu|pn))\b/g, ' ')
+        .replace(/\b(?:cho|hoi|xin|vui long|giup|toi|em|anh|chi|minh|muon|can ho|nha pho|nha lien ke|biet thu|dat nen|apartment|condo|penthouse|studio|townhouse|shophouse|villa|land|property|real estate|can|the|duoc|nhe|a|oi|san pham|bat dong san|bds|nha|dat|nay|do|kia|phong ngu|pn|what|is|the|of|about|tell|me|please|can|you|would|like|to|know|want|need|help|some|more|information|info|details|this|that|for|an)\b/g, ' ')
         .replace(/\s+/g, ' ')
         .trim();
     const hasExplicitPropertyType = /\b(?:can ho|apartment|condo|penthouse|studio|nha pho|nha lien ke|townhouse|shophouse|biet thu|villa|lo dat|dat nen|dat thoi|land|dat)\b/.test(normalized)
         || /\b(?:\d+\s*(?:phong ngu|pn)|phong ngu)\b/.test(normalized);
     const hasSpecificSubject = Boolean(residual)
         && !/^(?:bao nhieu|nao|gi|sao|the nao|khong|khong a)$/.test(residual);
+
+    if (currentWords.length === 0) {
+        return {
+            reason: 'UNDERSPECIFIED_INTENT',
+            response: language === 'en'
+                ? 'What would you like to ask Minh about?'
+                : 'Anh/chị muốn hỏi Minh về nội dung nào ạ?',
+            missingData: ['intent'],
+        };
+    }
 
     // A named project can contain several product families. Never let the
     // valuation tool or the writer silently default this to APARTMENT.
@@ -197,12 +211,17 @@ export function getLiveChatClarification(
     }
 
     if (hasSearchSignal && !hasSpecificSubject) {
+        const hasBudget = hasBudgetSignal;
         return {
             reason: 'UNDERSPECIFIED_SEARCH_CRITERIA',
             response: language === 'en'
-                ? 'Which area should Minh search in? If you know it, please also share your budget.'
-                : 'Anh/chị muốn tìm bất động sản ở khu vực nào ạ? Nếu có, cho Minh thêm ngân sách để lọc đúng hơn nhé.',
-            missingData: ['location_or_budget'],
+                ? hasBudget
+                    ? 'Which area should Minh search in with this budget? Please also mention the property type if you have one in mind.'
+                    : 'Which area should Minh search in? If you know it, please also share your budget.'
+                : hasBudget
+                    ? 'Với ngân sách này, anh/chị muốn tìm ở khu vực nào ạ? Nếu có, cho Minh biết thêm loại sản phẩm nhé.'
+                    : 'Anh/chị muốn tìm bất động sản ở khu vực nào ạ? Nếu có, cho Minh thêm ngân sách để lọc đúng hơn nhé.',
+            missingData: hasBudget ? ['project_or_location'] : ['location_or_budget'],
         };
     }
 
@@ -254,8 +273,8 @@ export function getLiveChatClarification(
 
 function extractPriceSubject(message: string): string {
     return String(message || '')
-        .replace(/(?:báo\s+giá|bảng\s+giá|giá\s+bán|xin\s+giá|cho\s+hỏi\s+giá|giá\s+bao\s+nhiêu|bao\s+nhiêu\s+tiền|giá|price)/giu, ' ')
-        .replace(/\b(?:cho|hỏi|xin|vui lòng|giúp|tôi|em|anh|chị|minh|muốn|cần|thế|được|nhé|ạ|ơi|dự án|sản phẩm|bất động sản|bđs)\b/giu, ' ')
+        .replace(/(?:báo\s+giá|bảng\s+giá|giá\s+bán|xin\s+giá|cho\s+hỏi\s+giá|giá\s+bao\s+nhiêu|bao\s+nhiêu\s+tiền|asking\s+price|how\s+much|what\s+is\s+the\s+price|giá|price)/giu, ' ')
+        .replace(/\b(?:cho|hỏi|xin|vui lòng|giúp|tôi|em|anh|chị|minh|muốn|cần|thế|được|nhé|ạ|ơi|dự án|sản phẩm|bất động sản|bđs|what|is|the|of|about|tell|me|please|can|you|would|like|to|know|want|need|help|some|more|information|info|details|this|that|for|a|an|property|real estate)\b/giu, ' ')
         .replace(/\b(?:căn hộ|apartment|condo|penthouse|studio|nhà phố|nhà liền kề|townhouse|shophouse|biệt thự|villa|đất nền|đất thổ cư|land)\b/giu, ' ')
         .replace(/[?!.,;:()[\]{}]/g, ' ')
         .replace(/\s+/g, ' ')
@@ -286,22 +305,34 @@ export type LiveChatIntentCandidate = {
 };
 
 const INTENT_MAP: Array<{ keywords: Array<string | RegExp>; intent: string; suggestedTool: string }> = [
-    { keywords: [/gi[aá][^.?!]{0,30}bao\s*nhi[êe]u/i, /bao\s*nhi[êe]u[^.?!]{0,30}gi[aá]/i, /b[aá]o\s*gi[aá]/i, /b[aả]ng\s*gi[aá]/i, /gi[aá]\s*b[aá]n/i, 'định giá', 'valuation', 'trị giá', 'bao nhiêu tiền'], intent: 'VALUATION', suggestedTool: 'get_valuation' },
-    { keywords: ['tìm', 'search', 'căn hộ', 'nhà', 'đất', 'còn hàng'], intent: 'SEARCH', suggestedTool: 'search_listings' },
-    { keywords: ['pháp lý', 'sổ', 'hồng', 'đỏ', 'vi bằng', 'hđmb'], intent: 'LEGAL', suggestedTool: 'legal_qa' },
-    { keywords: ['quy hoạch', 'planning', 'xây dựng'], intent: 'PLANNING', suggestedTool: 'check_planning' },
-    { keywords: ['vay', 'lãi suất', 'tín dụng', 'ngân hàng'], intent: 'FINANCE', suggestedTool: 'get_platform_knowledge' },
-    { keywords: ['dự án', 'project', 'aqua city', 'vinhomes', 'izumi'], intent: 'PROJECT', suggestedTool: 'get_project_info' },
+    { keywords: [/gi[aá][^.?!]{0,30}bao\s*nhi[êe]u/i, /bao\s*nhi[êe]u[^.?!]{0,30}gi[aá]/i, /b[aá]o\s*gi[aá]/i, /b[aả]ng\s*gi[aá]/i, /gi[aá]\s*b[aá]n/i, 'định giá', 'valuation', 'price', 'asking price', 'how much', 'trị giá', 'bao nhiêu tiền'], intent: 'VALUATION', suggestedTool: 'get_valuation' },
+    { keywords: ['tìm', 'find', 'search', 'căn hộ', 'apartment', 'condo', 'nhà', 'đất', 'available', 'for sale', 'buy', 'còn hàng'], intent: 'SEARCH', suggestedTool: 'search_listings' },
+    { keywords: ['pháp lý', 'legal', 'legal status', 'ownership', 'title', 'documents', 'sổ', 'hồng', 'đỏ', 'vi bằng', 'hđmb'], intent: 'LEGAL', suggestedTool: 'legal_qa' },
+    { keywords: ['quy hoạch', 'planning', 'zoning', 'xây dựng', 'construction'], intent: 'PLANNING', suggestedTool: 'check_planning' },
+    { keywords: ['vay', 'mortgage', 'lãi suất', 'interest rate', 'financing', 'tín dụng', 'credit', 'ngân hàng', 'bank'], intent: 'FINANCE', suggestedTool: 'get_platform_knowledge' },
+    { keywords: ['dự án', 'project', 'project details', 'aqua city', 'vinhomes', 'izumi', 'progress', 'amenities'], intent: 'PROJECT', suggestedTool: 'get_project_info' },
     { keywords: ['long thành', 'sân bay', 'airport'], intent: 'LONGTHANH', suggestedTool: 'get_longthanh_market' },
-    { keywords: ['đầu tư', 'cho thuê', 'yield', 'roi', 'lợi nhuận'], intent: 'INVESTMENT', suggestedTool: 'analyze_investment' },
+    { keywords: ['đầu tư', 'investment', 'cho thuê', 'rent', 'yield', 'roi', 'lợi nhuận', 'profit'], intent: 'INVESTMENT', suggestedTool: 'analyze_investment' },
     { keywords: ['landing', 'trang landing', 'landing page'], intent: 'LANDING', suggestedTool: 'landing_builder' },
     { keywords: ['chấm điểm', 'lead', 'tiềm năng', 'score lead'], intent: 'LEAD_SCORING', suggestedTool: 'score_lead' },
 ];
 
 function classifyFromIntentMap(message: string): { intent: string; suggestedTool: string } {
-    const lower = message.toLowerCase();
+    const normalized = normalizeIntentText(message)
+        .replace(/[^a-z0-9]+/g, ' ')
+        .replace(/\s+/g, ' ')
+        .trim();
+    const containsPhrase = (keyword: string): boolean => {
+        const needle = normalizeIntentText(keyword)
+            .replace(/[^a-z0-9]+/g, ' ')
+            .replace(/\s+/g, ' ')
+            .trim();
+        return Boolean(needle) && (` ${normalized} `).includes(` ${needle} `);
+    };
     for (const { keywords, intent, suggestedTool } of INTENT_MAP) {
-        if (keywords.some(keyword => typeof keyword === 'string' ? lower.includes(keyword) : keyword.test(message))) {
+        if (keywords.some(keyword => typeof keyword === 'string'
+            ? containsPhrase(keyword)
+            : keyword.test(message) || keyword.test(normalized))) {
             return { intent, suggestedTool };
         }
     }
@@ -332,6 +363,20 @@ export function classifyLiveChatIntent(message: string): { intent: string; sugge
         return { intent: 'CLARIFY', suggestedTool: 'clarify' };
     }
     return mapped;
+}
+
+/**
+ * The public route must make the same fast/legacy decision as the engine.
+ * Keep this pure and shared so a new short-input rule cannot be added to the
+ * classifier while the route still sends that message to the legacy provider.
+ */
+export function shouldUseFastLiveChatPipeline(
+    message: string,
+    history: Array<{ role?: string; content?: unknown }> = [],
+): boolean {
+    return isLandingBuilderRequest(message)
+        || classifyLiveChatIntent(message).intent !== 'GENERAL'
+        || resolveLiveChatFollowUp(message, history).contextUsed;
 }
 
 /**

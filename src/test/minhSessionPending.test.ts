@@ -16,11 +16,13 @@ describe("Minh session async acknowledgement", () => {
       metadata: {
         isAgent: true,
         intent: "CLARIFY",
+        clarificationReason: "UNDERSPECIFIED_PROPERTY_TYPE",
         missingData: ["property_type"],
         clarificationRequired: true,
       },
     })).toMatchObject({
       intent: "CLARIFY",
+      clarificationReason: "UNDERSPECIFIED_PROPERTY_TYPE",
       missingData: ["property_type"],
       clarificationRequired: true,
     });

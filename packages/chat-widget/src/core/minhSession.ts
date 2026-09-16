@@ -153,6 +153,9 @@ export function interactionToMessage(raw: any): ChatMessage | null {
         ? raw.metadata.inboundInteractionId
         : undefined,
     intent: typeof raw.metadata?.intent === "string" ? raw.metadata.intent : undefined,
+    clarificationReason: typeof raw.metadata?.clarificationReason === "string"
+      ? raw.metadata.clarificationReason
+      : undefined,
     missingData: Array.isArray(raw.metadata?.missingData)
       ? raw.metadata.missingData.filter((value: unknown): value is string => typeof value === "string")
       : undefined,

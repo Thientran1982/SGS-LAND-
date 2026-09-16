@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { buildLiveChatRequestHash, classifyLiveChatIntent, classifyLiveChatIntents, getLiveChatClarification, isLongFormRequest, resolveLiveChatFollowUp } from '../ai/liveChatEngine';
+import { buildLiveChatRequestHash, classifyLiveChatIntent, classifyLiveChatIntents, getLiveChatClarification, isLongFormRequest, resolveLiveChatFollowUp, shouldUseFastLiveChatPipeline } from '../ai/liveChatEngine';
 
 describe('classifyLiveChatIntent — P0-5 keyword precision', () => {
   it('routes price-bounded search requests to SEARCH, not VALUATION', () => {
@@ -130,6 +130,74 @@ describe('classifyLiveChatIntent — P0-5 keyword precision', () => {
 
     expect(resolved.contextUsed).toBe(false);
     expect(resolved.routingMessage).toBe('Giá căn hộ Aqua City bao nhiêu?');
+  });
+
+  it('does not inject history into complete topic questions or product-specific price questions', () => {
+    expect(resolveLiveChatFollowUp('pháp lý Aqua City', [
+      { role: 'user', content: 'Long Thành' },
+    ]).contextUsed).toBe(false);
+    expect(resolveLiveChatFollowUp('giá căn hộ Aqua City', [
+      { role: 'user', content: 'Masteri' },
+    ]).contextUsed).toBe(false);
+    expect(getLiveChatClarification('giá căn hộ Aqua City', 'vi', 'Masteri')).toBeNull();
+  });
+
+  it('routes no-diacritic topic messages to the same fast intent path', () => {
+    expect(classifyLiveChatIntent('phap ly Aqua City').intent).toBe('LEGAL');
+    expect(classifyLiveChatIntent('quy hoach Aqua City').intent).toBe('PLANNING');
+    expect(shouldUseFastLiveChatPipeline('phap ly Aqua City')).toBe(true);
+  });
+
+  it('keeps English short inputs on the same clarification contract', () => {
+    expect(classifyLiveChatIntent('legal Aqua City').intent).toBe('LEGAL');
+    expect(getLiveChatClarification('legal')).toMatchObject({
+      reason: 'UNDERSPECIFIED_PROJECT_OR_LOCATION',
+      missingData: ['project_or_location'],
+    });
+    expect(getLiveChatClarification('legal Aqua City')).toBeNull();
+    expect(getLiveChatClarification('what is the price of Masteri')?.reason)
+      .toBe('UNDERSPECIFIED_PROPERTY_TYPE');
+    expect(getLiveChatClarification('find apartment')?.reason)
+      .toBe('UNDERSPECIFIED_SEARCH_CRITERIA');
+  });
+
+  it('does not match legal keywords inside unrelated words', () => {
+    expect(classifyLiveChatIntent('Cho tôi thông tin dự án Aqua City').intent).toBe('PROJECT');
+    expect(classifyLiveChatIntent('Thông tin dự án').intent).toBe('PROJECT');
+  });
+
+  it('fails closed for punctuation-only and bedroom-count questions', () => {
+    expect(getLiveChatClarification('???')).toMatchObject({
+      reason: 'UNDERSPECIFIED_INTENT',
+      missingData: ['intent'],
+    });
+    expect(classifyLiveChatIntent('???').intent).toBe('CLARIFY');
+    expect(getLiveChatClarification('bao nhiêu phòng ngủ')).toMatchObject({
+      reason: 'UNDERSPECIFIED_INTENT',
+      missingData: ['intent'],
+    });
+  });
+
+  it('does not treat budget or bedroom count as a project subject', () => {
+    expect(getLiveChatClarification('giá căn hộ 2 tỷ')).toMatchObject({
+      reason: 'UNDERSPECIFIED_PRICE_REQUEST',
+      missingData: ['project_or_location'],
+    });
+    expect(getLiveChatClarification('giá căn hộ 2 phòng ngủ')).toMatchObject({
+      reason: 'UNDERSPECIFIED_PRICE_REQUEST',
+      missingData: ['project_or_location'],
+    });
+    expect(getLiveChatClarification('tìm căn hộ 2 tỷ')).toMatchObject({
+      reason: 'UNDERSPECIFIED_SEARCH_CRITERIA',
+      missingData: ['project_or_location'],
+    });
+  });
+
+  it('keeps public routing on the fast path for every deterministic clarification', () => {
+    for (const message of ['???', 'Masteri', 'giá Masteri', 'pháp lý', 'tìm căn hộ', '2 tỷ']) {
+      expect(shouldUseFastLiveChatPipeline(message), message).toBe(true);
+    }
+    expect(shouldUseFastLiveChatPipeline('câu hỏi mới hoàn chỉnh về tiến độ Aqua City')).toBe(true);
   });
 
   it('keeps the price-question contract from landingBuilderChat.test', () => {

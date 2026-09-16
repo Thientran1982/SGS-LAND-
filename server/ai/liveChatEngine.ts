@@ -28,12 +28,12 @@ import { recordAiUsage } from '../services/aiUsageService';
 import { agentAuditRepository } from '../repositories/agentAuditRepository';
 import { createHash, randomUUID } from 'crypto';
 import { inspectToolRequest, normalizeEvidenceSource, type AgentEvidenceSource } from './agentGuardrails';
-import { classifyLiveChatIntent, classifyLiveChatIntents, getLiveChatClarification, hasLandingTargetText, isLandingBuilderRequest, isLongFormRequest, normalizeIntentText, resolveLiveChatFollowUp } from './liveChatIntent';
+import { classifyLiveChatIntent, classifyLiveChatIntents, getLiveChatClarification, hasLandingTargetText, isLandingBuilderRequest, isLongFormRequest, normalizeIntentText, resolveLiveChatFollowUp, shouldUseFastLiveChatPipeline } from './liveChatIntent';
 
 // P2-2 slice 1: intent classification implementation moved to
 // ./liveChatIntent — re-exported so routes and tests keep importing from
 // liveChatEngine without behaviour change.
-export { classifyLiveChatIntent, classifyLiveChatIntents, getLiveChatClarification, isLandingBuilderRequest, isLongFormRequest, resolveLiveChatFollowUp };
+export { classifyLiveChatIntent, classifyLiveChatIntents, getLiveChatClarification, isLandingBuilderRequest, isLongFormRequest, resolveLiveChatFollowUp, shouldUseFastLiveChatPipeline };
 import { runDurableAgentExecution } from '../services/durableAgentExecutionService';
 import {
     sharedCacheDeleteByPrefix,
@@ -1552,6 +1552,7 @@ async function handle_live_chat_core(args: Record<string, any>): Promise<any> {
         return {
             sessionId: sessionId || `sess_${Date.now()}`,
             intent: 'CLARIFY',
+            clarificationReason: clarification.reason,
             response: clarification.response,
             content: clarification.response,
             longForm: false,
