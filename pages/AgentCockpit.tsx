@@ -239,6 +239,7 @@ function MinhCommandCenterPanelCard({ title, panel, children }: { title: string;
     : panel.state === 'degraded' ? 'bg-amber-100 text-amber-800'
       : 'bg-rose-100 text-rose-700';
   const headingId = `minh-command-center-panel-${title.toLowerCase().replace(/[^a-z0-9]+/g, '-')}`;
+  const statusAnnouncement = `${title}: ${stateLabel}${panel.message ? `. ${panel.message}` : ''}`;
   return (
     <div className="rounded-lg border border-slate-200 bg-white p-3" role="group" aria-labelledby={headingId}>
       <div className="mb-2 flex items-center justify-between gap-2">
@@ -246,7 +247,7 @@ function MinhCommandCenterPanelCard({ title, panel, children }: { title: string;
         <span
           className={`rounded-full px-2 py-0.5 text-[10px] font-semibold ${stateClass}`}
           role="status"
-          aria-label={`${title}: ${stateLabel}`}
+          aria-label={statusAnnouncement}
           aria-live="polite"
           aria-atomic="true"
         >
@@ -254,9 +255,9 @@ function MinhCommandCenterPanelCard({ title, panel, children }: { title: string;
         </span>
       </div>
       {panel.data === null
-        ? <div role="status" aria-live="polite" aria-atomic="true" className="text-xs text-rose-700">{panel.message || 'Dữ liệu chưa khả dụng; hãy thử làm mới.'}</div>
+        ? <div className="text-xs text-rose-700">{panel.message || 'Dữ liệu chưa khả dụng; hãy thử làm mới.'}</div>
         : <>
-          {panel.message && <div role="status" aria-live="polite" aria-atomic="true" className="mb-2 text-[11px] text-amber-700">{panel.message}</div>}
+          {panel.message && <div className="mb-2 text-[11px] text-amber-700">{panel.message}</div>}
           {children}
         </>}
     </div>
@@ -311,7 +312,6 @@ export default function AgentCockpit() {
   const load = useCallback(async () => {
     setLoading(true); setError(''); setAutoPostingDiagnosticError(''); setAutoPostingDiagnostic(null);
     setMinhLearningTrend(null);
-    setMinhCommandCenter(null);
     try {
       const query = new URLSearchParams(eventFilters).toString();
       const nextSummary = await api.get<CockpitSummary>('/api/agent-operating/cockpit');

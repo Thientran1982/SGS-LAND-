@@ -124,7 +124,8 @@ test.describe('Command Center accessibility', () => {
       await openCommandCenter(page, commandCenter(states));
       const panelGroup = page.getByRole('group', { name: title });
       await expect(panelGroup).toHaveCount(1);
-      const status = panelGroup.getByRole('status').first();
+      const status = panelGroup.getByRole('status');
+      await expect(status).toHaveCount(1);
       await expect(status).toBeVisible();
       await expect(status).toHaveAttribute('aria-live', 'polite');
       await expect(status).toHaveAttribute('aria-atomic', 'true');
@@ -140,7 +141,8 @@ test.describe('Command Center accessibility', () => {
 
     for (const [key, title] of panelNames) {
       const panelGroup = page.getByRole('group', { name: title });
-      await expect(panelGroup.getByRole('status').first()).toHaveAttribute('aria-label', `${title}: Không khả dụng`);
+      await expect(panelGroup.getByRole('status')).toHaveCount(1);
+      await expect(panelGroup.getByRole('status')).toHaveAttribute('aria-label', `${title}: Không khả dụng. ${title} is unavailable`);
       if (key === 'opportunityQueue') await expect(panelGroup).not.toContainText('0 cơ hội');
       if (key === 'approvalQueue') await expect(panelGroup).not.toContainText('0 đang chờ duyệt');
       if (key === 'learningStatus') await expect(panelGroup).not.toContainText('Gate:');
@@ -162,5 +164,44 @@ test.describe('Command Center accessibility', () => {
     await expect(approvals.getByRole('status')).toHaveAttribute('aria-label', 'Approval queue: Sẵn sàng');
     await expect(opportunities).not.toContainText('unavailable');
     await expect(approvals).not.toContainText('unavailable');
+  });
+
+  test('announces the current panel state once after refresh and clears recovered warnings', async ({ page }) => {
+    let commandCenterReads = 0;
+    await mockCockpitApis(page, commandCenter());
+    await page.route('**/api/internal/minh-brain/command-center', route => {
+      commandCenterReads += 1;
+      const response = commandCenterReads === 1
+        ? commandCenter({
+          opportunityQueue: panel('available', []),
+        })
+        : commandCenterReads === 2
+          ? commandCenter({
+            opportunityQueue: panel('unavailable', null, 'Opportunity queue is unavailable after refresh'),
+          })
+          : commandCenter({
+            opportunityQueue: panel('available', []),
+          });
+      return route.fulfill({ json: response });
+    });
+    await page.goto(`${BASE_URL}/agent-cockpit`);
+    await expect(page.getByRole('heading', { name: 'Command Center của Minh' })).toBeVisible();
+
+    const opportunities = page.getByRole('group', { name: 'Opportunity queue' });
+    const refresh = page.getByRole('button', { name: 'Làm mới' }).first();
+
+    await refresh.click();
+    await expect(opportunities.getByRole('status')).toHaveCount(1);
+    await expect(opportunities.getByRole('status')).toHaveAttribute(
+      'aria-label',
+      'Opportunity queue: Không khả dụng. Opportunity queue is unavailable after refresh',
+    );
+    await expect(opportunities).toContainText('Opportunity queue is unavailable after refresh');
+
+    await refresh.click();
+    await expect(opportunities.getByRole('status')).toHaveCount(1);
+    await expect(opportunities.getByRole('status')).toHaveAttribute('aria-label', 'Opportunity queue: Sẵn sàng');
+    await expect(opportunities).toContainText('0 cơ hội');
+    await expect(opportunities).not.toContainText('Opportunity queue is unavailable after refresh');
   });
 });
