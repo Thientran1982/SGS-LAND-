@@ -106,3 +106,4 @@
 - [Minh learning trend privacy](minh-learning-trends.md) — operator aggregates stay tenant-scoped, date-bounded, categorical, and free of raw answers/provider payloads
 - [Minh Week 5 promotion control](minh-week5-promotion.md) — model promotion stays fail-closed, approval-atomic, and compatible with legacy proactive approvals
 - [Minh Week 6 Command Center](minh-week6-command-center.md) — five tenant-scoped panels preserve explicit availability states and fail closed on unknown actions
+- [Playwright route query matching](playwright-route-query-matching.md) — API fixtures with query strings need a trailing wildcard after the path

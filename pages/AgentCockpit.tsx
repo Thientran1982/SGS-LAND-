@@ -311,6 +311,7 @@ export default function AgentCockpit() {
   const loadInFlightRef = useRef(false);
   const queuedLoadRef = useRef(false);
   const latestLoadRef = useRef<(() => Promise<void>) | null>(null);
+  const memoryLoadRequestIdRef = useRef(0);
   const [minhLearningTrend, setMinhLearningTrend] = useState<MinhLearningTrendResponse | null>(null);
   const [minhDecisionBusy, setMinhDecisionBusy] = useState<string | null>(null);
   const [minhLearningDays, setMinhLearningDays] = useState(30);
@@ -328,6 +329,7 @@ export default function AgentCockpit() {
     }
     loadInFlightRef.current = true;
     const loadRequestId = ++loadRequestIdRef.current;
+    const memoryLoadRequestId = ++memoryLoadRequestIdRef.current;
     setLoading(true); setError(''); setAutoPostingDiagnosticError(''); setAutoPostingDiagnostic(null);
     setMinhLearningTrend(null);
     try {
@@ -382,7 +384,9 @@ export default function AgentCockpit() {
         api.get<AdminMemory[]>('/api/ai/memory/admin', memoryFilters),
         api.get<{ live: Record<string, number>; versions: WeightVersion[] }>('/api/ai/weights'),
       ]);
-      if (memoryResult.status === 'fulfilled') setMemories(memoryResult.value);
+      if (memoryResult.status === 'fulfilled' && memoryLoadRequestId === memoryLoadRequestIdRef.current) {
+        setMemories(memoryResult.value);
+      }
       if (weightsResult.status === 'fulfilled') setWeights(weightsResult.value);
     } catch (e: any) {
       if (loadRequestId === loadRequestIdRef.current) {
@@ -496,6 +500,7 @@ export default function AgentCockpit() {
   };
   const saveMemory = async () => {
     if (!editingMemory || !memoryForm.namespace || !memoryForm.key || !memoryForm.value.trim()) return;
+    memoryLoadRequestIdRef.current += 1;
     try {
       const result = await api.put<AdminMemory & { piiScrubbed?: boolean; conflict?: boolean }>(`/api/ai/memory/${editingMemory.id}`, {
         ...memoryForm, importance: Number(memoryForm.importance), ttlDays: memoryForm.ttlDays ? Number(memoryForm.ttlDays) : null,
@@ -506,6 +511,7 @@ export default function AgentCockpit() {
   };
   const deleteMemory = async (memory: AdminMemory) => {
     if (!window.confirm(`Xóa bộ nhớ “${memory.key}” khỏi ${memory.namespace}?`)) return;
+    memoryLoadRequestIdRef.current += 1;
     try { await api.delete(`/api/ai/memory/${memory.id}`); await load(); }
     catch (e: any) { setError(e?.message || 'Không thể xóa bộ nhớ.'); }
   };

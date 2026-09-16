@@ -409,4 +409,114 @@ test.describe('Command Center accessibility', () => {
     await page.waitForTimeout(300);
     expect(memoryCalls).toBe(2);
   });
+
+  test('keeps memory filters and ignores stale results while editing and deleting', async ({ page }) => {
+    let memoryCalls = 0;
+    let releaseInitialMemory!: () => void;
+    const initialMemoryGate = new Promise<void>(resolve => { releaseInitialMemory = resolve; });
+    let releaseStaleEditReload!: () => void;
+    const staleEditReloadGate = new Promise<void>(resolve => { releaseStaleEditReload = resolve; });
+    let releaseFreshEditReload!: () => void;
+    const freshEditReloadGate = new Promise<void>(resolve => { releaseFreshEditReload = resolve; });
+    let releaseStaleDeleteReload!: () => void;
+    const staleDeleteReloadGate = new Promise<void>(resolve => { releaseStaleDeleteReload = resolve; });
+    let releaseFreshDeleteReload!: () => void;
+    const freshDeleteReloadGate = new Promise<void>(resolve => { releaseFreshDeleteReload = resolve; });
+    let markEditMutationSeen!: () => void;
+    const editMutationSeen = new Promise<void>(resolve => { markEditMutationSeen = resolve; });
+    let markDeleteMutationSeen!: () => void;
+    const deleteMutationSeen = new Promise<void>(resolve => { markDeleteMutationSeen = resolve; });
+    const editedMemory = {
+      id: 'memory-filtered',
+      namespace: 'customer:final',
+      key: 'memory-filtered-key',
+      kind: 'procedural' as const,
+      value: 'Edited memory value',
+      importance: 0.9,
+      hits: 1,
+      expires_at: null,
+      updated_at: '2026-09-15T10:05:00.000Z',
+    };
+    const originalMemory = { ...editedMemory, value: 'Original memory value', updated_at: '2026-09-15T10:00:00.000Z' };
+    const staleEditMemory = { ...editedMemory, value: 'Stale response after edit' };
+    const staleDeleteMemory = { ...editedMemory, value: 'Stale response after delete' };
+    await mockCockpitApis(page, commandCenter());
+    await page.route('**/api/ai/memory/admin**', async route => {
+      memoryCalls += 1;
+      const callNumber = memoryCalls;
+      const filters = new URL(route.request().url()).searchParams;
+      expect(filters.get('namespace')).toBe(callNumber === 1 ? null : 'customer:final');
+      expect(filters.get('kind')).toBe(callNumber === 1 ? null : 'procedural');
+      expect(filters.get('importance')).toBe(callNumber === 1 ? null : 'HIGH');
+      if (callNumber === 1) await initialMemoryGate;
+      if (callNumber === 3) await staleEditReloadGate;
+      if (callNumber === 4) await freshEditReloadGate;
+      if (callNumber === 5) await staleDeleteReloadGate;
+      if (callNumber === 6) await freshDeleteReloadGate;
+      const response = callNumber === 1 || callNumber === 2
+        ? originalMemory
+        : callNumber === 3
+          ? staleEditMemory
+          : callNumber === 4
+            ? editedMemory
+            : callNumber === 5
+              ? staleDeleteMemory
+              : null;
+      return route.fulfill({ json: response ? [response] : [] });
+    });
+    await page.route('**/api/ai/memory/memory-filtered', async route => {
+      if (route.request().method() === 'PUT') {
+        markEditMutationSeen();
+        return route.fulfill({ json: editedMemory });
+      }
+      if (route.request().method() === 'DELETE') {
+        markDeleteMutationSeen();
+        return route.fulfill({ status: 204 });
+      }
+      return route.continue();
+    });
+
+    await page.goto(`${BASE_URL}/agent-cockpit`);
+    await expect(page.getByRole('heading', { name: 'Command Center của Minh' })).toBeVisible();
+    await expect.poll(() => memoryCalls).toBe(1);
+    const cockpitRefresh = page
+      .getByRole('heading', { name: 'Bảng điều khiển quản trị Agent' })
+      .locator('..')
+      .locator('..')
+      .getByRole('button', { name: 'Làm mới' });
+
+    await page.getByLabel('Lọc không gian bộ nhớ').fill('customer:final');
+    await page.getByRole('button', { name: 'Loại bộ nhớ' }).click();
+    await page.getByRole('option', { name: 'Quy trình', exact: true }).click();
+    await page.getByRole('button', { name: 'Mức độ quan trọng' }).click();
+    await page.getByRole('option', { name: 'Cao (≥ 0,7)', exact: true }).click();
+    await page.waitForTimeout(300);
+    releaseInitialMemory();
+    await expect.poll(() => memoryCalls, { timeout: 5_000 }).toBe(2);
+    await expect(page.getByText('Original memory value')).toHaveCount(1);
+
+    await cockpitRefresh.click();
+    await expect.poll(() => memoryCalls).toBe(3);
+    await page.getByRole('button', { name: 'Sửa memory-filtered-key' }).click();
+    await page.locator('textarea[placeholder="Nội dung memory"]').fill('Edited memory value');
+    await page.getByRole('button', { name: 'Lưu an toàn' }).click();
+    await editMutationSeen;
+    releaseStaleEditReload();
+    await expect.poll(() => memoryCalls, { timeout: 5_000 }).toBe(4);
+    await expect(page.getByText('Stale response after edit')).toHaveCount(0);
+    releaseFreshEditReload();
+    await expect(page.getByText('Edited memory value')).toHaveCount(1);
+
+    await cockpitRefresh.click();
+    await expect.poll(() => memoryCalls).toBe(5);
+    page.once('dialog', dialog => dialog.accept());
+    await page.getByRole('button', { name: 'Xóa memory-filtered-key' }).click();
+    await deleteMutationSeen;
+    releaseStaleDeleteReload();
+    await expect.poll(() => memoryCalls, { timeout: 5_000 }).toBe(6);
+    await expect(page.getByText('Stale response after delete')).toHaveCount(0);
+    releaseFreshDeleteReload();
+    await expect(page.getByText('Edited memory value')).toHaveCount(0);
+    await expect(page.getByText('Không có bản ghi phù hợp.')).toHaveCount(1);
+  });
 });
