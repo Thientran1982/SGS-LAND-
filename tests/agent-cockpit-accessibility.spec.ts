@@ -81,7 +81,7 @@ async function mockCockpitApis(page: Page, commandCenterResponse: Record<string,
   await page.route('**/api/internal/minh-brain/learning/trends**', route => route.fulfill({ json: { degraded: false, trend: null } }));
   await page.route('**/api/internal/minh-brain/learning/trends/exports**', route => route.fulfill({ json: { exports: [], limit: 20, offset: 0, hasMore: false, nextOffset: null } }));
   await page.route('**/api/notifications/zalo-readiness**', route => route.fulfill({ json: { warnings: [] } }));
-  await page.route('**/api/ai/memory/admin', route => route.fulfill({ json: [] }));
+  await page.route('**/api/ai/memory/admin**', route => route.fulfill({ json: [] }));
   await page.route('**/api/ai/weights', route => route.fulfill({ json: { live: {}, versions: [] } }));
 }
 
@@ -350,5 +350,63 @@ test.describe('Command Center accessibility', () => {
     await expect(learningFilter).toHaveValue('90');
     await page.waitForTimeout(300);
     expect(commandCenterCalls).toBe(2);
+  });
+
+  test('keeps memory results aligned with the final rapid filter selection', async ({ page }) => {
+    let memoryCalls = 0;
+    let maxActiveMemoryCalls = 0;
+    let activeMemoryCalls = 0;
+    let releaseInitialMemory!: () => void;
+    const initialMemoryGate = new Promise<void>(resolve => { releaseInitialMemory = resolve; });
+    await mockCockpitApis(page, commandCenter());
+    await page.route('**/api/ai/memory/admin**', async route => {
+      memoryCalls += 1;
+      const callNumber = memoryCalls;
+      activeMemoryCalls += 1;
+      maxActiveMemoryCalls = Math.max(maxActiveMemoryCalls, activeMemoryCalls);
+      const filters = new URL(route.request().url()).searchParams;
+      const namespace = filters.get('namespace') || 'all';
+      const kind = filters.get('kind') || 'all';
+      const importance = filters.get('importance') || 'all';
+      if (callNumber === 1) {
+        await initialMemoryGate;
+      } else {
+        await new Promise(resolve => setTimeout(resolve, 250));
+      }
+      activeMemoryCalls -= 1;
+      return route.fulfill({
+        json: [{
+          id: `memory-${callNumber}`,
+          namespace,
+          key: `memory-${namespace}-${kind}-${importance}`,
+          kind: kind === 'all' ? 'fact' : kind,
+          value: `Visible memory for ${namespace}/${kind}/${importance}`,
+          importance: importance === 'HIGH' ? 0.9 : 0.5,
+          hits: 1,
+          expires_at: null,
+          updated_at: '2026-09-15T10:00:00.000Z',
+        }],
+      });
+    });
+
+    await page.goto(`${BASE_URL}/agent-cockpit`);
+    await expect(page.getByRole('heading', { name: 'Command Center của Minh' })).toBeVisible();
+    await expect.poll(() => memoryCalls).toBe(1);
+
+    await page.getByLabel('Lọc không gian bộ nhớ').fill('customer:final');
+    await page.getByRole('button', { name: 'Loại bộ nhớ' }).click();
+    await page.getByRole('option', { name: 'Quy trình', exact: true }).click();
+    await page.getByRole('button', { name: 'Mức độ quan trọng' }).click();
+    await page.getByRole('option', { name: 'Cao (≥ 0,7)', exact: true }).click();
+
+    expect(memoryCalls).toBe(1);
+    releaseInitialMemory();
+    await expect.poll(() => memoryCalls, { timeout: 5_000 }).toBe(2);
+    await expect.poll(() => maxActiveMemoryCalls).toBe(1);
+    await expect(page.getByText('memory-customer:final-procedural-HIGH')).toHaveCount(1);
+    await expect(page.getByText('Visible memory for customer:final/procedural/HIGH')).toHaveCount(1);
+    await expect(page.getByText('memory-all-all-all')).toHaveCount(0);
+    await page.waitForTimeout(300);
+    expect(memoryCalls).toBe(2);
   });
 });
