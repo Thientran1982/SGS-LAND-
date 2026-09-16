@@ -3,6 +3,10 @@ import { approvalRequestRepository } from '../repositories/approvalRequestReposi
 import { agentOutboundRepository } from '../repositories/agentOutboundRepository';
 import { validateUUIDParam } from '../middleware/validation';
 import { recordMinhDecisionFeedbackSafely } from '../services/minhDecisionLearningService';
+import {
+  recordOutreachAuditExportFailureSafely,
+  type OutreachAuditExportFailureCategory,
+} from '../services/outreachAuditExportTelemetry';
 
 /**
  * Permission Broker API: danh sach + duyet/tu choi cac approval_requests
@@ -39,6 +43,7 @@ const APPROVAL_ROLES = new Set(['SUPER_ADMIN', 'ADMIN', 'MANAGER', 'TEAM_LEAD'])
   });
 
   router.get('/:id/outreach-audit-export', authenticateToken, validateUUIDParam(), async (req: Request, res: Response) => {
+    let failureCategory: OutreachAuditExportFailureCategory = 'UNKNOWN';
     try {
       const user = (req as any).user;
       if (!APPROVAL_ROLES.has(user?.role)) {
@@ -47,10 +52,22 @@ const APPROVAL_ROLES = new Set(['SUPER_ADMIN', 'ADMIN', 'MANAGER', 'TEAM_LEAD'])
 
       const tenantId = String(user.tenantId);
       const approvalId = String(req.params.id);
-      const approval = await approvalRequestRepository.findApprovedOutreachForExport(tenantId, approvalId);
+      let approval: { id: string } | null;
+      try {
+        approval = await approvalRequestRepository.findApprovedOutreachForExport(tenantId, approvalId);
+      } catch (error) {
+        failureCategory = 'APPROVAL_LOOKUP';
+        throw error;
+      }
       if (!approval) return res.status(404).json({ error: 'OUTREACH_APPROVAL_NOT_FOUND' });
 
-      const events = await agentOutboundRepository.listAuditEventsForApproval(tenantId, approval.id);
+      let events: any[];
+      try {
+        failureCategory = 'AUDIT_HISTORY_LOOKUP';
+        events = await agentOutboundRepository.listAuditEventsForApproval(tenantId, approval.id);
+      } catch (error) {
+        throw error;
+      }
       const headers = [
         'Approval ID',
         'Delivery ID',
@@ -66,6 +83,7 @@ const APPROVAL_ROLES = new Set(['SUPER_ADMIN', 'ADMIN', 'MANAGER', 'TEAM_LEAD'])
         'Note',
         'Operator',
       ];
+      failureCategory = 'CSV_SERIALIZATION';
       const rows = events.map(event => [
         approval.id,
         event.delivery_id,
@@ -89,8 +107,12 @@ const APPROVAL_ROLES = new Set(['SUPER_ADMIN', 'ADMIN', 'MANAGER', 'TEAM_LEAD'])
         `attachment; filename="outreach-audit-${approval.id}-${new Date().toISOString().slice(0, 10)}.csv"`,
       );
       return res.send(`\uFEFF${csv}\r\n`);
-    } catch (error) {
-      console.error('[approval-requests] outreach audit export error:', error);
+    } catch {
+      const user = (req as any).user;
+      await recordOutreachAuditExportFailureSafely(String(user?.tenantId || ''), failureCategory);
+      console.error('[approval-requests] outreach audit export temporarily unavailable', {
+        category: failureCategory,
+      });
       return res.status(503).json({ error: 'OUTREACH_AUDIT_EXPORT_TEMPORARILY_UNAVAILABLE' });
     }
   });

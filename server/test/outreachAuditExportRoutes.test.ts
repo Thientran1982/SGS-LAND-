@@ -2,19 +2,27 @@ import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from 'vites
 import express from 'express';
 import type { Server } from 'node:http';
 
-const { approvalRequestRepository, agentOutboundRepository } = vi.hoisted(() => ({
+const {
+  approvalRequestRepository,
+  agentOutboundRepository,
+  recordOutreachAuditExportFailureSafely,
+} = vi.hoisted(() => ({
   approvalRequestRepository: {
     findApprovedOutreachForExport: vi.fn(),
   },
   agentOutboundRepository: {
     listAuditEventsForApproval: vi.fn(),
   },
+  recordOutreachAuditExportFailureSafely: vi.fn(),
 }));
 
 vi.mock('../repositories/approvalRequestRepository', () => ({ approvalRequestRepository }));
 vi.mock('../repositories/agentOutboundRepository', () => ({ agentOutboundRepository }));
 vi.mock('../services/minhDecisionLearningService', () => ({
   recordMinhDecisionFeedbackSafely: vi.fn(),
+}));
+vi.mock('../services/outreachAuditExportTelemetry', () => ({
+  recordOutreachAuditExportFailureSafely,
 }));
 
 import { createApprovalRequestRoutes } from '../routes/approvalRequestRoutes';
@@ -116,6 +124,27 @@ describe('outreach audit export route', () => {
     expect(await response.json()).toEqual({
       error: 'OUTREACH_AUDIT_EXPORT_TEMPORARILY_UNAVAILABLE',
     });
+    expect(recordOutreachAuditExportFailureSafely).toHaveBeenCalledWith(
+      tenantA,
+      'AUDIT_HISTORY_LOOKUP',
+    );
+  });
+
+  it('records approval lookup failures without retaining request or provider data', async () => {
+    approvalRequestRepository.findApprovedOutreachForExport.mockRejectedValue(
+      new Error('database failed while reading approval'),
+    );
+
+    const response = await fetch(`${origin}/api/approval-requests/${approvalId}/outreach-audit-export`, {
+      headers: { 'x-test-tenant': tenantA },
+    });
+
+    expect(response.status).toBe(503);
+    expect(recordOutreachAuditExportFailureSafely).toHaveBeenCalledWith(
+      tenantA,
+      'APPROVAL_LOOKUP',
+    );
+    expect(recordOutreachAuditExportFailureSafely.mock.calls[0][1]).not.toContain(approvalId);
   });
 
   it('keeps the Approval Inbox role boundary for exports', async () => {
@@ -128,5 +157,6 @@ describe('outreach audit export route', () => {
       error: 'Only authorized managers can export outreach delivery history',
     });
     expect(approvalRequestRepository.findApprovedOutreachForExport).not.toHaveBeenCalled();
+    expect(recordOutreachAuditExportFailureSafely).not.toHaveBeenCalled();
   });
 });
