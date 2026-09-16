@@ -49,6 +49,13 @@ import { customerProfileService, observeCustomerMessage, extractFactsWithLLM, cl
 import { listEnabledMcpServers, callMcpTool, resolveMcpToolName } from '../services/mcpClientService';
 import { buildLandingBuilderResponse, ensureLandingResponseLink } from './landingResponse';
 import { liveChatTelemetry, type LiveChatRunTimings } from '../services/liveChatTelemetry';
+import {
+    scoreLeadDeterministically,
+    qualifyLeadConversation,
+    type LeadQualificationMessage,
+    type LeadQualificationResult,
+    type LeadScoreInput,
+} from '../services/leadQualificationService';
 
 export type LiveChatProviderOutcome = 'PRIMARY' | 'FALLBACK' | 'TIMEOUT' | 'UNAVAILABLE';
 export type LiveChatDegradedReason =
@@ -1289,67 +1296,7 @@ async function handle_search_projects(args: Record<string, any>): Promise<any> {
 }
 
 function handle_score_lead(args: Record<string, any>): any {
-    const {
-        budget = 0, timeline = 'EXPLORING', area = '', source = 'UNKNOWN',
-        interactions = 0, hasPhone = false, hasEmail = false,
-        viewedListings = 0, askedLegal = false, askedValuation = false,
-        bookedViewing = false, isReturning = false, justSoldProperty = false,
-    } = args;
-
-    // Factor 1: Budget (25pts)
-    const budgetPts = (() => {
-        const b = Number(budget);
-        if (b >= 10e9) return 25;
-        if (b >= 5e9)  return 20;
-        if (b >= 2e9)  return 15;
-        if (b > 0)     return 8;
-        return 5;
-    })();
-
-    // Factor 2: Timeline (20pts)
-    const timelinePts = ({ URGENT: 20, '1M': 20, '3M': 16, '6M': 12, '12M': 8, EXPLORING: 3 } as any)[timeline] ?? 5;
-
-    // Factor 3: Area interest (20pts)
-    const areaLow = (area || '').toLowerCase();
-    const areaPts = (areaLow.includes('quận 1') || areaLow.includes('thủ thiêm') || areaLow.includes('sala')) ? 20
-        : (areaLow.includes('thủ đức') || areaLow.includes('quận 7') || areaLow.includes('long thành')) ? 15
-        : (areaLow.includes('bình dương') || areaLow.includes('đồng nai')) ? 10
-        : area ? 8 : 5;
-
-    // Factor 4: Engagement (15pts, capped)
-    let engPts = 0;
-    if (viewedListings >= 5)  engPts += 6;
-    else if (viewedListings >= 2) engPts += 3;
-    if (askedLegal)           engPts += 4;
-    if (askedValuation)       engPts += 3;
-    if (interactions >= 10)   engPts += 2;
-    engPts = Math.min(15, engPts);
-
-    // Factor 5: Source (10pts)
-    const sourcePts = ({ REFERRAL: 10, WEBSITE: 8, ZALO: 6, FACEBOOK: 4 } as any)[source?.toUpperCase()] ?? 3;
-    let baseScore = budgetPts + timelinePts + areaPts + engPts + sourcePts;
-
-    // Bonuses
-    if (askedLegal && askedValuation) baseScore += 5;
-    if (bookedViewing)    baseScore += 5;
-    if (justSoldProperty) baseScore += 5;
-    if (isReturning)      baseScore += 3;
-    if (hasPhone)         baseScore += 2;
-    baseScore = Math.min(100, baseScore);
-
-    const grade = baseScore >= 70 ? 'A' : baseScore >= 50 ? 'B' : baseScore >= 30 ? 'C' : 'D';
-    const priority = grade === 'A' ? 'HOT — xử lý trong 2h' : grade === 'B' ? 'WARM — xử lý trong 24h' : grade === 'C' ? 'COOL — xử lý trong 48h' : 'COLD — nurture 2 tuần/lần';
-    const churnRisk = baseScore >= 70 && interactions < 3 ? 'HIGH' : baseScore < 40 ? 'LOW' : 'MEDIUM';
-
-    const factors = [
-        { factor: 'Ngân sách', points: budgetPts, max: 25 },
-        { factor: 'Timeline',  points: timelinePts, max: 20 },
-        { factor: 'Khu vực',  points: areaPts, max: 20 },
-        { factor: 'Tương tác', points: engPts, max: 15 },
-        { factor: 'Nguồn',    points: sourcePts, max: 10 },
-    ].sort((a, b) => b.points - a.points);
-
-    return { score: baseScore, grade, priority, churnRisk, topFactors: factors.slice(0, 3) };
+    return scoreLeadDeterministically(args as LeadScoreInput);
 }
 
 async function handle_route_lead(args: Record<string, any>): Promise<any> {
@@ -1526,12 +1473,51 @@ export function parseRentText(text: string): number | null {
   return rent ? Math.round(parseVnGroupText(rent[1]) * 1_000_000) : null;
 }
 
+function liveChatQualificationContext(context: Record<string, any>): Partial<LeadScoreInput> {
+    const allowedKeys: Array<keyof LeadScoreInput> = [
+        'budget', 'timeline', 'area', 'source', 'interactions',
+        'hasPhone', 'hasEmail', 'viewedListings', 'askedLegal',
+        'askedValuation', 'bookedViewing', 'isReturning', 'justSoldProperty',
+    ];
+    return Object.fromEntries(
+        allowedKeys
+            .filter(key => context[key] !== undefined && context[key] !== null)
+            .map(key => [key, context[key]]),
+    ) as Partial<LeadScoreInput>;
+}
+
+/**
+ * Qualification is deliberately deterministic and read-only. The chat model
+ * may phrase the answer, but it must not be the source of truth for score,
+ * captured fields, or the next-best-action contract.
+ */
+export function qualifyLiveChatMessage(
+    message: string,
+    context: Record<string, any> = {},
+): LeadQualificationResult {
+    const history: LeadQualificationMessage[] = Array.isArray(context.history)
+        ? context.history.slice(-20).map((item: any) => ({
+            role: typeof item?.role === 'string' ? item.role : 'user',
+            content: sanitizeChatInput(item?.content, 1200),
+            ts: item?.ts,
+        }))
+        : [];
+    history.push({ role: 'user', content: sanitizeChatInput(message, 1200) });
+    const scoreContext = liveChatQualificationContext(context);
+    return qualifyLeadConversation({
+        messages: history,
+        source: String(context.source || 'AI_CHAT'),
+        context: scoreContext,
+    });
+}
+
 
 async function handle_live_chat_core(args: Record<string, any>): Promise<any> {
     const { tenantId, message, sessionId, context = {} } = args;
     const responseDeliveryIdempotencyKey = String(args.responseDeliveryIdempotencyKey || '').slice(0, 240);
     const msg = (message || '').trim();
     if (!msg) return { error: 'message không được trống.' };
+    const qualification = qualifyLiveChatMessage(msg, context);
     const liveChatStartedAt = Date.now();
     const liveChatTimings: LiveChatRunTimings = {};
     const addTiming = (stage: 'memory' | 'llm', durationMs: number) => {
@@ -1563,6 +1549,7 @@ async function handle_live_chat_core(args: Record<string, any>): Promise<any> {
             specialistOutput: null,
             uncertainty: 'HIGH',
             missingData: clarification.missingData,
+            qualification,
             groundingStatus: 'INSUFFICIENT_DATA',
             clarificationRequired: true,
             degraded: false,
@@ -2068,6 +2055,7 @@ ${ownerProfileBlock}\n` : ''}${taskMemoryBlock ? `[KINH NGHIEM VAN HANH DA HOC]\
         uncertainty: specialistOutput ? 'LOW' : 'HIGH',
         missingData: specialistOutput ? [] : [specialistError || 'specialist_data'],
         groundingStatus: specialistOutput ? 'GROUNDED' : 'INSUFFICIENT_DATA',
+        qualification,
         degraded: providerTelemetry?.degraded === true,
         degradedReason: providerTelemetry?.degradedReason,
         providerTelemetry,
@@ -2379,6 +2367,18 @@ async function handle_analyze_chat_session(args: Record<string, any>): Promise<a
         return { error: 'messages[] không được trống.' };
     }
 
+    // Keep a provider-independent qualification contract alongside the richer
+    // model analysis. This is also the fallback when the provider is down.
+    const qualification = qualifyLeadConversation({
+        messages: messages.slice(-20).map((message: any) => ({
+            role: typeof message?.role === 'string' ? message.role : 'user',
+            content: sanitizeChatInput(message?.content, 1200),
+            ts: message?.ts,
+        })),
+        source: String(args.source || 'AI_CHAT'),
+        context: liveChatQualificationContext(args.context || {}),
+    });
+
     const transcript = messages
         .slice(-20)
         .map((m: any) => `[${m.role === 'user' ? 'KHÁCH' : 'AGENT'}] ${sanitizeChatInput(m.content)}`)
@@ -2420,6 +2420,9 @@ Trả về JSON với các trường sau:
         });
         let analysis: any;
         try { analysis = JSON.parse(raw); } catch { analysis = { raw }; }
+        if (analysis && typeof analysis === 'object' && !Array.isArray(analysis)) {
+            analysis = { ...analysis, qualification };
+        }
 
         // C4: Sync analyze_chat_session output to ai_agent_memories + lead_journey_memory
         // This allows Pipeline 1 (conversational AI) to read LiveChat context
@@ -2449,11 +2452,18 @@ Trả về JSON với các trường sau:
             leadId: leadId || null,
             messageCount: messages.length,
             analysis,
+            qualification,
             generatedAt: new Date().toISOString(),
         };
     } catch (e: any) {
         logger.error('[LiveChatEngine] analyze_chat_session error:', e);
-        return { sessionId, error: e.message, analysis: null };
+        return {
+            sessionId,
+            error: e.message,
+            analysis: null,
+            qualification,
+            degraded: true,
+        };
     }
 }
 

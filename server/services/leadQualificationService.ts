@@ -53,7 +53,10 @@ function textOf(value: unknown): string {
 }
 
 function normalize(value: string): string {
-  return value.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+  return value.toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/đ/g, 'd');
 }
 
 function parseBudget(text: string): number | undefined {
@@ -87,7 +90,8 @@ function parseArea(text: string): string | undefined {
 }
 
 function hasPhone(text: string): boolean {
-  return /(?:^|\D)(?:0|\+84)\d[\d .-]{8,12}\d(?:\D|$)/.test(text);
+  const compact = text.replace(/[ .-]/g, '');
+  return /(?:^|\D)(?:0\d{9}|\+84\d{9})(?:\D|$)/.test(compact);
 }
 
 function hasEmail(text: string): boolean {
