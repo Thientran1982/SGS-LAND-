@@ -30,6 +30,19 @@ interface OutreachApproval {
         status: string;
         providerMessageId?: string;
         error?: string;
+        auditHistory?: Array<{
+            id: string;
+            eventType: 'PROVIDER_LOOKUP' | 'OPERATOR_DECISION';
+            provider: 'BREVO' | 'ZALO' | 'NONE';
+            lookupStatus?: string;
+            providerEvent?: string;
+            providerMessageId?: string;
+            decisionStatus?: 'SENT' | 'FAILED';
+            decisionNote?: string;
+            operatorId?: string;
+            operatorName?: string;
+            createdAt: string;
+        }>;
     }>;
 }
 interface OutreachDeliveryLookup {
@@ -422,6 +435,7 @@ export const ApprovalInbox: React.FC = () => {
                 { variantId },
             );
             setDeliveryLookups(previous => ({ ...previous, [key]: result }));
+            await loadData();
             notify(
                 result.status === 'DELIVERED'
                     ? 'Provider đã ghi nhận message. Hãy đối chiếu người nhận trước khi chốt SENT.'
@@ -515,7 +529,7 @@ export const ApprovalInbox: React.FC = () => {
                                     const lookup = deliveryLookups[lookupKey];
                                     const lookupLoading = deliveryLookupLoading === lookupKey;
                                     return (
-                                        <div key={variant.id} className="rounded-xl border border-[var(--glass-border)] bg-[var(--glass-surface)] p-4">
+                                            <div key={variant.id} className="rounded-xl border border-[var(--glass-border)] bg-[var(--glass-surface)] p-4">
                                             <div className="flex justify-between gap-3 items-center">
                                                 <span className="text-xs font-bold uppercase tracking-wider text-sgs-primary">{variant.channel}</span>
                                                 {delivery && <span className={`text-[11px] font-bold ${sent ? 'text-emerald-600' : 'text-amber-600'}`}>{delivery.status}</span>}
@@ -570,6 +584,43 @@ export const ApprovalInbox: React.FC = () => {
                                                     )}
                                                 </div>
                                             )}
+                                             {delivery?.auditHistory && delivery.auditHistory.length > 0 && (
+                                                 <details className="mt-3 rounded-lg border border-[var(--glass-border)] bg-[var(--bg-surface)]" open>
+                                                     <summary className="cursor-pointer px-3 py-2 text-xs font-bold text-[var(--text-primary)]">
+                                                         Lịch sử tra cứu và quyết định ({delivery.auditHistory.length})
+                                                     </summary>
+                                                     <div className="space-y-2 border-t border-[var(--glass-border)] px-3 py-3">
+                                                         {delivery.auditHistory.map(event => (
+                                                             <div key={event.id} className="rounded-lg bg-[var(--glass-surface)] p-2.5 text-xs text-[var(--text-secondary)]">
+                                                                 <div className="flex flex-wrap items-center justify-between gap-2">
+                                                                     <span className="font-bold text-[var(--text-primary)]">
+                                                                         {event.eventType === 'PROVIDER_LOOKUP' ? 'Tra cứu provider' : 'Quyết định operator'}
+                                                                     </span>
+                                                                     <time dateTime={event.createdAt}>{formatDateTime(event.createdAt)}</time>
+                                                                 </div>
+                                                                 <div className="mt-1 space-y-0.5">
+                                                                     {event.eventType === 'PROVIDER_LOOKUP' && (
+                                                                         <p>
+                                                                             Kết quả: <strong>{event.lookupStatus || '—'}</strong>
+                                                                             {event.providerEvent ? ` · Event: ${event.providerEvent}` : ''}
+                                                                         </p>
+                                                                     )}
+                                                                     {event.providerMessageId && (
+                                                                         <p>Provider message ID: <code className="break-all">{event.providerMessageId}</code></p>
+                                                                     )}
+                                                                     {event.eventType === 'OPERATOR_DECISION' && (
+                                                                         <p>
+                                                                             Quyết định: <strong>{event.decisionStatus || '—'}</strong>
+                                                                             {event.decisionNote ? ` · ${event.decisionNote}` : ''}
+                                                                         </p>
+                                                                     )}
+                                                                     <p>Operator: {event.operatorName || event.operatorId || 'Không xác định'}</p>
+                                                                 </div>
+                                                             </div>
+                                                         ))}
+                                                     </div>
+                                                 </details>
+                                             )}
                                             {!item._pending && variant.channel !== 'CALL_SCRIPT' && !unknown && (
                                                 <button
                                                     onClick={() => sendOutreach(item.id, variant.id)}

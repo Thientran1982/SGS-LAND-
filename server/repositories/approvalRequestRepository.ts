@@ -213,7 +213,25 @@ class ApprovalRequestRepository {
                   'deliveryKey', d.delivery_key,
                   'providerMessageId', d.provider_message_id,
                   'error', d.error_text,
-                  'updatedAt', d.updated_at
+                   'updatedAt', d.updated_at,
+                   'auditHistory', COALESCE((
+                     SELECT json_agg(json_build_object(
+                       'id', ae.id,
+                       'eventType', ae.event_type,
+                       'provider', ae.provider,
+                       'lookupStatus', ae.lookup_status,
+                       'providerEvent', ae.provider_event,
+                       'providerMessageId', ae.provider_message_id,
+                       'decisionStatus', ae.decision_status,
+                       'decisionNote', ae.decision_note,
+                       'operatorId', ae.operator_id,
+                       'operatorName', ae.operator_name,
+                       'createdAt', ae.created_at
+                     ) ORDER BY ae.created_at ASC, ae.id ASC)
+                     FROM outreach_delivery_audit_events ae
+                     WHERE ae.tenant_id = d.tenant_id
+                       AND ae.delivery_id = d.id
+                   ), '[]'::json)
                 ) ORDER BY d.updated_at DESC)
                 FROM agent_outbound_deliveries d
                 WHERE d.tenant_id = ar.tenant_id

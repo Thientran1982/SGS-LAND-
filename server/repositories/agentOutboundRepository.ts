@@ -13,6 +13,51 @@ export interface OutboundClaim {
 export type OutboundReconciliation = 'SENT' | 'FAILED';
 
 class AgentOutboundRepository {
+  private async insertAuditEvent(client: any, params: {
+    tenantId: string;
+    deliveryId: string;
+    approvalRequestId: string;
+    variantId: string;
+    eventType: 'PROVIDER_LOOKUP' | 'OPERATOR_DECISION';
+    provider: 'BREVO' | 'ZALO' | 'NONE';
+    lookupStatus?: 'DELIVERED' | 'NOT_RECEIVED' | 'UNKNOWN' | 'UNSUPPORTED';
+    providerEvent?: string;
+    providerMessageId?: string;
+    decisionStatus?: OutboundReconciliation;
+    decisionNote?: string;
+    operatorId?: string;
+  }): Promise<any> {
+    const result = await client.query(
+      `INSERT INTO outreach_delivery_audit_events
+        (tenant_id, delivery_id, approval_request_id, variant_id, event_type,
+         provider, lookup_status, provider_event, provider_message_id,
+         decision_status, decision_note, operator_id, operator_name)
+       SELECT $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12,
+              COALESCE(NULLIF(u.name, ''), NULLIF(u.email, ''), 'Unknown operator')
+         FROM (SELECT 1) AS anchor
+         LEFT JOIN users u
+           ON u.tenant_id = $1 AND u.id = $12
+       RETURNING id, event_type, provider, lookup_status, provider_event,
+                 provider_message_id, decision_status, decision_note,
+                 operator_id, operator_name, created_at`,
+      [
+        params.tenantId,
+        params.deliveryId,
+        params.approvalRequestId,
+        params.variantId,
+        params.eventType,
+        params.provider,
+        params.lookupStatus || null,
+        params.providerEvent?.slice(0, 200) || null,
+        params.providerMessageId?.slice(0, 500) || null,
+        params.decisionStatus || null,
+        params.decisionNote?.slice(0, 1000) || null,
+        params.operatorId || null,
+      ],
+    );
+    return result.rows[0];
+  }
+
   async createAndClaim(params: {
     tenantId: string;
     executionId?: string;
@@ -217,6 +262,38 @@ class AgentOutboundRepository {
     });
   }
 
+  async recordAuditEvent(params: {
+    tenantId: string;
+    deliveryId: string;
+    approvalRequestId: string;
+    variantId: string;
+    eventType: 'PROVIDER_LOOKUP' | 'OPERATOR_DECISION';
+    provider: 'BREVO' | 'ZALO' | 'NONE';
+    lookupStatus?: 'DELIVERED' | 'NOT_RECEIVED' | 'UNKNOWN' | 'UNSUPPORTED';
+    providerEvent?: string;
+    providerMessageId?: string;
+    decisionStatus?: OutboundReconciliation;
+    decisionNote?: string;
+    operatorId?: string;
+  }): Promise<any> {
+    return withTenantContext(params.tenantId, client => this.insertAuditEvent(client, params));
+  }
+
+  async listAuditEventsForDelivery(
+    tenantId: string,
+    deliveryId: string,
+  ): Promise<any[]> {
+    return withTenantContext(tenantId, async client => (await client.query(
+      `SELECT id, event_type, provider, lookup_status, provider_event,
+              provider_message_id, decision_status, decision_note,
+              operator_id, operator_name, created_at
+         FROM outreach_delivery_audit_events
+        WHERE tenant_id=$1 AND delivery_id=$2
+        ORDER BY created_at ASC, id ASC`,
+      [tenantId, deliveryId],
+    )).rows);
+  }
+
   async reconcileUnknown(params: {
     tenantId: string; deliveryId: string; status: OutboundReconciliation;
     providerMessageId?: string; note: string;
@@ -231,6 +308,55 @@ class AgentOutboundRepository {
         [params.tenantId, params.deliveryId, params.status, params.providerMessageId || null, params.note.slice(0, 1000)],
       );
       return result.rows[0] || null;
+    });
+  }
+
+  async reconcileUnknownWithAudit(params: {
+    tenantId: string;
+    deliveryId: string;
+    status: OutboundReconciliation;
+    providerMessageId?: string;
+    note: string;
+    approvalRequestId: string;
+    variantId: string;
+    provider: 'BREVO' | 'ZALO' | 'NONE';
+    lookupStatus: 'DELIVERED' | 'NOT_RECEIVED' | 'UNKNOWN' | 'UNSUPPORTED';
+    providerEvent?: string;
+    operatorId: string;
+  }): Promise<any | null> {
+    return withTenantContext(params.tenantId, async client => {
+      const result = await client.query(
+        `UPDATE agent_outbound_deliveries
+            SET status=$3, provider_message_id=COALESCE($4,provider_message_id),
+                error_text=$5, updated_at=NOW(),
+                sent_at=CASE WHEN $3='SENT' THEN COALESCE(sent_at,NOW()) ELSE sent_at END
+          WHERE tenant_id=$1 AND id=$2 AND status='UNKNOWN'
+          RETURNING *`,
+        [
+          params.tenantId,
+          params.deliveryId,
+          params.status,
+          params.providerMessageId || null,
+          params.note.slice(0, 1000),
+        ],
+      );
+      const row = result.rows[0];
+      if (!row) return null;
+      await this.insertAuditEvent(client, {
+        tenantId: params.tenantId,
+        deliveryId: params.deliveryId,
+        approvalRequestId: params.approvalRequestId,
+        variantId: params.variantId,
+        eventType: 'OPERATOR_DECISION',
+        provider: params.provider,
+        lookupStatus: params.lookupStatus,
+        providerEvent: params.providerEvent,
+        providerMessageId: row.provider_message_id || params.providerMessageId,
+        decisionStatus: params.status,
+        decisionNote: params.note,
+        operatorId: params.operatorId,
+      });
+      return row;
     });
   }
 }

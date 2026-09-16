@@ -109,3 +109,4 @@
 - [Lead qualification Vietnamese normalization](lead-qualification-vietnamese-normalization.md) — NFD does not remove đ; map it explicitly before area scoring
 - [Playwright route query matching](playwright-route-query-matching.md) — API fixtures with query strings need a trailing wildcard after the path
 - [Outreach approval boundary](outreach-approval-boundary.md) — Week 8 creates grounded drafts and revalidates consent at approval without provider side effects
+- [Outreach delivery audit history](outreach-delivery-audit-history.md) — manual lookup and reconciliation need ordered, tenant-scoped append-only evidence without raw provider payloads

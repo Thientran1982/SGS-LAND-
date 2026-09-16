@@ -85,6 +85,7 @@ const APPROVAL_ROLES = new Set(['SUPER_ADMIN', 'ADMIN', 'MANAGER', 'TEAM_LEAD'])
         String(user.tenantId),
         String(req.params.id),
         variantId,
+        String(user.id),
       ));
     } catch (error: any) {
       const code = String(error?.message || 'OUTREACH_DELIVERY_LOOKUP_FAILED');
@@ -119,6 +120,7 @@ const APPROVAL_ROLES = new Set(['SUPER_ADMIN', 'ADMIN', 'MANAGER', 'TEAM_LEAD'])
         providerMessageId: typeof req.body?.providerMessageId === 'string'
           ? req.body.providerMessageId.trim()
           : undefined,
+        operatorId: String(user.id),
       }));
     } catch (error: any) {
       const code = String(error?.message || 'OUTREACH_DELIVERY_RECONCILE_FAILED');

@@ -40,6 +40,25 @@ export type OutreachDeliveryLookup = {
   instruction: string;
 };
 
+async function recordLookupAudit(
+  tenantId: string,
+  operatorId: string,
+  lookup: OutreachDeliveryLookup,
+): Promise<void> {
+  await agentOutboundRepository.recordAuditEvent({
+    tenantId,
+    deliveryId: lookup.deliveryId,
+    approvalRequestId: lookup.approvalId,
+    variantId: lookup.variantId,
+    eventType: 'PROVIDER_LOOKUP',
+    provider: lookup.provider,
+    lookupStatus: lookup.status,
+    providerEvent: lookup.event,
+    providerMessageId: lookup.providerMessageId,
+    operatorId,
+  });
+}
+
 /**
  * Look up an already-attempted delivery without sending anything. Provider
  * lookups are deliberately separate from reconciliation so a broker can see
@@ -49,6 +68,7 @@ export async function lookupApprovedOutreachDelivery(
   tenantId: string,
   approvalId: string,
   variantId: string,
+  operatorId: string,
 ): Promise<OutreachDeliveryLookup> {
   const delivery = await agentOutboundRepository.findByApprovalVariant(
     tenantId,
@@ -67,17 +87,19 @@ export async function lookupApprovedOutreachDelivery(
   };
 
   if (delivery.channel !== 'EMAIL') {
-    return {
+    const lookup: OutreachDeliveryLookup = {
       ...base,
       provider: delivery.channel === 'ZALO' ? 'ZALO' : 'NONE',
       status: 'UNSUPPORTED',
       instruction: 'Provider này chưa có API tra cứu delivery. Dùng delivery key để kiểm tra trực tiếp trên dashboard provider, rồi ghi nhận kết quả thủ công.',
     };
+    await recordLookupAudit(tenantId, operatorId, lookup);
+    return lookup;
   }
 
   const result = await brevoLookupDeliveryStatus(base.deliveryKey);
   if (result.status === 'delivered') {
-    return {
+    const lookup: OutreachDeliveryLookup = {
       ...base,
       provider: 'BREVO',
       status: 'DELIVERED',
@@ -86,9 +108,11 @@ export async function lookupApprovedOutreachDelivery(
       event: result.event,
       instruction: 'Brevo đã ghi nhận message. Xác nhận SENT nếu broker đối chiếu đúng người nhận.',
     };
+    await recordLookupAudit(tenantId, operatorId, lookup);
+    return lookup;
   }
   if (result.status === 'not_received') {
-    return {
+    const lookup: OutreachDeliveryLookup = {
       ...base,
       provider: 'BREVO',
       status: 'NOT_RECEIVED',
@@ -97,8 +121,10 @@ export async function lookupApprovedOutreachDelivery(
       event: result.event,
       instruction: 'Brevo không ghi nhận message đã giao. Xác nhận FAILED để cho phép xử lý lại theo quy trình an toàn.',
     };
+    await recordLookupAudit(tenantId, operatorId, lookup);
+    return lookup;
   }
-  return {
+  const lookup: OutreachDeliveryLookup = {
     ...base,
     provider: 'BREVO',
     status: 'UNKNOWN',
@@ -107,6 +133,8 @@ export async function lookupApprovedOutreachDelivery(
     error: result.error,
     instruction: 'Brevo chưa trả bằng chứng đủ chắc chắn. Không quyết định tự động; kiểm tra thủ công trước khi chọn SENT hoặc FAILED.',
   };
+  await recordLookupAudit(tenantId, operatorId, lookup);
+  return lookup;
 }
 
 export async function reconcileApprovedOutreachDelivery(params: {
@@ -116,19 +144,27 @@ export async function reconcileApprovedOutreachDelivery(params: {
   status: 'SENT' | 'FAILED';
   note: string;
   providerMessageId?: string;
+  operatorId: string;
 }): Promise<Record<string, any>> {
   if (!params.note.trim()) throw error('OUTREACH_RECONCILIATION_NOTE_REQUIRED');
   const lookup = await lookupApprovedOutreachDelivery(
     params.tenantId,
     params.approvalId,
     params.variantId,
+    params.operatorId,
   );
-  const row = await agentOutboundRepository.reconcileUnknown({
+  const row = await agentOutboundRepository.reconcileUnknownWithAudit({
     tenantId: params.tenantId,
     deliveryId: lookup.deliveryId,
     status: params.status,
     providerMessageId: params.providerMessageId || lookup.providerMessageId,
     note: params.note,
+    approvalRequestId: params.approvalId,
+    variantId: params.variantId,
+    provider: lookup.provider,
+    lookupStatus: lookup.status,
+    providerEvent: lookup.event,
+    operatorId: params.operatorId,
   });
   if (!row) throw error('OUTREACH_DELIVERY_ALREADY_RESOLVED');
   return {
