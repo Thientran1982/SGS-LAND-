@@ -63,6 +63,14 @@ localPort = 5099
 externalPort = 4200
 
 [[ports]]
+localPort = 5510
+externalPort = 5000
+
+[[ports]]
+localPort = 5511
+externalPort = 5173
+
+[[ports]]
 localPort = 23636
 externalPort = 3000
 
@@ -72,8 +80,8 @@ externalPort = 3002
 
 [deployment]
 deploymentTarget = "vm"
-run = ["sh", "-c", "PORT_BACKEND=5001 PORT=5000 bash scripts/supervisor.sh"]
-build = ["sh", "-c", "npm run build && cd apps/nextjs && npm install && BACKEND_URL=http://localhost:5001 npm run build"]
+run = ["npm", "run", "start:production"]
+build = ["sh", "-c", "npm run build && cd apps/nextjs && npm install && BACKEND_URL=http://localhost:5001 npm run build && cd ../.. && npm run check:production-startup && bash scripts/prepare-publish.sh && npm run check:publish-size"]
 [userenv]
 [userenv.shared]
 COMMISSION_RATE = "0.02"
@@ -82,6 +90,8 @@ BREVO_FROM_EMAIL = "noreply@sgsland.vn"
 BREVO_FROM_NAME = "SGS LAND"
 ALLOWED_ORIGINS = "https://sgsland.vn,https://www.sgsland.vn"
 AI_ORCHESTRATION_MODE = "langgraph"
+GSC_SITE_URL = "sc-domain:sgsland.vn"
+QSTASH_URL = "https://qstash-us-east-1.upstash.io"
 LANGGRAPH_ORCHESTRATION_ADAPTER_READY = "true"
 LANGGRAPH_ORCHESTRATION_APPROVED = "true"
 [userenv.development]
@@ -91,6 +101,7 @@ PORT = "5000"
 NODE_ENV = "production"
 PORT = "5000"
 APP_URL = "https://sgsland.vn"
+PROD_DOMAIN = "sgsland.vn"
 [objectStorage]
 defaultBucketID = "replit-objstore-b2bda06e-8535-430b-b2ac-45839c6a59c1"
 [postMerge]
