@@ -675,6 +675,50 @@ async function sendDailyReportDeliveryAlertEmail(
     skipQuota: true,
   });
 }
+
+async function sendMarketingPublicationFailureEmail(
+  tenantId: string,
+  to: string,
+  details: {
+    logicalDay: string;
+    errorCode: string;
+    publicationId?: string;
+    runId?: string;
+  },
+): Promise<EmailResult> {
+  const publicationLabel = details.publicationId
+    ? `Publication: ${details.publicationId}`
+    : 'Publication chưa được tạo';
+  const subject = '[SGS LAND] Agent Marketing không đăng được Facebook';
+  const text =
+    `Agent Marketing không đăng được bài Facebook cho ngày ${details.logicalDay}.\n\n` +
+    `Mã lỗi: ${details.errorCode}\n${publicationLabel}\n` +
+    (details.runId ? `Daily run: ${details.runId}\n` : '') +
+    '\nHệ thống đã ghi nhận lỗi để kiểm tra. Vui lòng mở lịch sử đăng Marketing trước khi chạy bù để tránh đăng trùng.\n\n— SGS LAND';
+  const html = emailBase(
+    `<h1 class="email-title" style="color:#0F172A;font-size:22px;font-weight:bold;margin:0 0 20px;font-family:Arial,sans-serif;">Agent Marketing không đăng được Facebook</h1>` +
+    `<p style="color:#475569;font-size:14px;line-height:1.8;margin:0 0 16px;font-family:Arial,sans-serif;">Hệ thống đã xử lý lịch đăng tự động nhưng không thể hoàn tất bài Facebook cho ngày <strong>${escapeHtml(details.logicalDay)}</strong>.</p>` +
+    `<table width="100%" cellpadding="0" cellspacing="0" border="0" bgcolor="#F7F9FC" style="border:1px solid #DCE5EE;border-radius:8px;">` +
+    `<tr><td style="padding:12px 16px;color:#334155;font-size:13px;font-family:Arial,sans-serif;"><strong>Mã lỗi:</strong> ${escapeHtml(details.errorCode)}</td></tr>` +
+    `<tr><td style="padding:12px 16px;border-top:1px solid #DCE5EE;color:#334155;font-size:13px;font-family:Arial,sans-serif;"><strong>${escapeHtml(publicationLabel)}</strong></td></tr>` +
+    (details.runId ? `<tr><td style="padding:12px 16px;border-top:1px solid #DCE5EE;color:#334155;font-size:13px;font-family:Arial,sans-serif;"><strong>Daily run:</strong> ${escapeHtml(details.runId)}</td></tr>` : '') +
+    `</table>` +
+    `<p style="color:#475569;font-size:14px;line-height:1.8;margin:18px 0 0;font-family:Arial,sans-serif;">Hệ thống đã ghi nhận lỗi để kiểm tra. Vui lòng mở lịch sử đăng Marketing trước khi chạy bù để tránh đăng trùng.</p>`,
+    'Email này được gửi tự động cho quản trị viên workspace.',
+  );
+  const deliveryKey = `marketing-facebook-failure:${tenantId}:${details.logicalDay}:${details.runId || details.publicationId || details.errorCode}:${to.toLowerCase()}`;
+  return sendEmail(tenantId, {
+    to,
+    subject,
+    html,
+    text,
+    template: 'marketing_publication_failure',
+    dedupeKey: deliveryKey,
+    deliveryKey,
+    dedupeWindowMinutes: 0,
+    skipQuota: true,
+  });
+}
 async function testSmtpConnection(tenantId: string): Promise<EmailResult> {
   const smtp = await getSmtpConfig(tenantId);
   if (!smtp.enabled || !smtp.host || !smtp.user) {
@@ -2061,6 +2105,7 @@ export const emailService = {
   sendListingBoost,
   sendEmail,
   sendDailyReportDeliveryAlertEmail,
+  sendMarketingPublicationFailureEmail,
   sendPasswordResetEmail,
   sendEmailOtp,
   sendWelcomeEmail,

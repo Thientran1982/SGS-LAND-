@@ -1,4 +1,5 @@
 import type { Pool } from 'pg';
+import { randomUUID } from 'node:crypto';
 import {
   activateSocialPublication,
   createSocialPublication,
@@ -22,6 +23,7 @@ import {
   type AutoPostingTimeWindow,
 } from '../repositories/autoPostingRepository';
 import { notificationRepository } from '../repositories/notificationRepository';
+import { emailService } from './emailService';
 import {
   buildPlatformContent,
   buildSocialProductSnapshot,
@@ -105,6 +107,145 @@ const STALE_NOT_READY_BODY_MID1 = [32,99,7911,97,32,112,117,98,108,105,99,97,116
 const STALE_NOT_READY_BODY_MID2 = [32,118,7851,110,32,78,79,84,95,82,69,65,68,89,32,116,7915,32].map(function (c) { return String.fromCharCode(c); }).join('');
 const STALE_NOT_READY_BODY_MID3 = [44,32,113,117,225,32].map(function (c) { return String.fromCharCode(c); }).join('');
 const STALE_NOT_READY_BODY_SUFFIX = [32,103,105,7901,46,32,86,117,105,32,108,242,110,103,32,107,105,7875,109,32,116,114,97,32,107,7871,116,32,110,7889,105,47,113,117,121,7873,110,32,273,259,110,103,32,98,224,105,46].map(function (c) { return String.fromCharCode(c); }).join('');
+
+type MarketingPostingProblem = {
+  tenantId: string;
+  logicalDay: string;
+  runId: string;
+  errorCode: string;
+  publicationId?: string;
+  sourceType?: string;
+  sourceId?: string;
+};
+
+async function notifyMarketingPostingProblem(db: Pool, problem: MarketingPostingProblem): Promise<void> {
+  let errorCode = problem.errorCode;
+  if (problem.publicationId) {
+    try {
+      const target = await db.query<{ last_error_code: string | null }>(
+        `SELECT last_error_code
+           FROM social_publication_targets
+          WHERE tenant_id = $1 AND publication_id = $2
+          ORDER BY updated_at DESC
+          LIMIT 1`,
+        [problem.tenantId, problem.publicationId],
+      );
+      if (target.rows[0]?.last_error_code) errorCode = target.rows[0].last_error_code;
+    } catch (error) {
+      logger.warn(`[MarketingAgent] could not enrich failure alert for ${problem.runId}: ${error instanceof Error ? error.message : String(error)}`);
+    }
+  }
+  const alertKey = [
+    'marketing-facebook-failure',
+    problem.logicalDay,
+    problem.runId,
+    errorCode,
+  ].join(':');
+  const publicationLabel = problem.publicationId
+    ? `publication ${problem.publicationId}`
+    : 'publication chưa được tạo';
+  const body =
+    `Agent Marketing không hoàn tất lịch đăng Facebook ngày ${problem.logicalDay}: ` +
+    `${errorCode} (${publicationLabel}). Mở lịch sử Marketing để kiểm tra trước khi chạy bù.`;
+
+  try {
+    const signal = await db.query<{ id: string }>(
+      `INSERT INTO agent_signals
+         (id, tenant_id, signal_type, actor_id, subject_type, subject_id, payload, dedupe_key, provenance)
+       VALUES ($1, $2, 'marketing_publication_failed', 'MARKETING_AGENT',
+               'marketing_facebook_daily_run', $3, $4::jsonb, $5, 'marketing_agent')
+       ON CONFLICT (tenant_id, dedupe_key) WHERE dedupe_key IS NOT NULL DO NOTHING
+       RETURNING id`,
+      [
+        randomUUID(),
+        problem.tenantId,
+        problem.runId,
+        JSON.stringify({
+          logicalDay: problem.logicalDay,
+          errorCode,
+          publicationId: problem.publicationId || null,
+          sourceType: problem.sourceType || null,
+          sourceId: problem.sourceId || null,
+          provenance: 'marketing_agent',
+        }),
+        alertKey,
+      ],
+    );
+    if (signal.rows[0]?.id) {
+      await db.query(
+        `INSERT INTO ai_learning_audit_events
+           (tenant_id, event_type, entity_type, entity_id, reason, metrics_json)
+         VALUES ($1, 'SIGNAL_RECORDED', 'AGENT_SIGNAL', $2, 'signal:marketing_publication_failed', $3::jsonb)`,
+        [
+          problem.tenantId,
+          signal.rows[0].id,
+          JSON.stringify({ signalType: 'marketing_publication_failed', subjectId: problem.runId, dedupeKey: alertKey }),
+        ],
+      );
+    }
+  } catch (error) {
+    logger.error(`[MarketingAgent] could not record Minh failure signal for ${problem.runId}`, error);
+  }
+
+  let admins: { id: string; email: string }[] = [];
+  try {
+    const result = await db.query<{ id: string; email: string }>(
+      `SELECT id, email
+         FROM users
+        WHERE tenant_id = $1
+          AND status = 'ACTIVE'
+          AND role IN ('SUPER_ADMIN', 'ADMIN', 'TEAM_LEAD')
+          AND email IS NOT NULL
+        ORDER BY email
+        LIMIT 20`,
+      [problem.tenantId],
+    );
+    admins = result.rows;
+    await db.query(
+      `INSERT INTO notifications (tenant_id, user_id, type, title, body, metadata)
+       SELECT $1, u.id, 'MARKETING_PUBLICATION_FAILED',
+              'Agent Marketing không đăng được Facebook', $2, $3::jsonb
+         FROM users u
+        WHERE u.tenant_id = $1
+          AND u.status = 'ACTIVE'
+          AND u.role IN ('SUPER_ADMIN', 'ADMIN', 'TEAM_LEAD')
+          AND NOT EXISTS (
+            SELECT 1
+              FROM notifications existing
+             WHERE existing.tenant_id = $1
+               AND existing.user_id = u.id
+               AND existing.type = 'MARKETING_PUBLICATION_FAILED'
+               AND existing.metadata->>'transitionEventId' = $4
+          )`,
+      [
+        problem.tenantId,
+        body,
+        JSON.stringify({
+          transitionEventId: alertKey,
+          runId: problem.runId,
+          logicalDay: problem.logicalDay,
+          errorCode,
+          publicationId: problem.publicationId || null,
+        }),
+        alertKey,
+      ],
+    );
+  } catch (error) {
+    logger.error(`[MarketingAgent] could not create failure notification for ${problem.runId}`, error);
+  }
+  await Promise.all(admins.map(async ({ email }) => {
+    try {
+      await emailService.sendMarketingPublicationFailureEmail(problem.tenantId, email, {
+        logicalDay: problem.logicalDay,
+        errorCode,
+        publicationId: problem.publicationId,
+        runId: problem.runId,
+      });
+    } catch (error) {
+      logger.warn(`[MarketingAgent] failure alert email failed for tenant ${problem.tenantId}: ${error instanceof Error ? error.message : String(error)}`);
+    }
+  }));
+}
 
 function sameTimeWindows(left: AutoPostingTimeWindow[], right: AutoPostingTimeWindow[]): boolean {
   return left.length === right.length
@@ -398,6 +539,20 @@ export async function runAutoPostingForTenant(
     }
     return finished;
   };
+  const reportProblem = async (
+    errorCode: string,
+    details: { publicationId?: string; sourceType?: string; sourceId?: string } = {},
+  ) => {
+    await notifyMarketingPostingProblem(pool, {
+      tenantId,
+      logicalDay: logicalDayKey,
+      runId: run.id,
+      errorCode,
+      ...details,
+    }).catch(error => {
+      logger.error(`[MarketingAgent] failed to report posting problem for run ${run.id}`, error);
+    });
+  };
 
   try {
     const capabilityChecks: Array<{ platform: SocialPlatform; status: string; canPublish: boolean; reason: string }> = [];
@@ -416,6 +571,7 @@ export async function runAutoPostingForTenant(
         errorCode: 'NO_READY_PLATFORM',
         errorMessage: reason,
       });
+      await reportProblem('NO_READY_PLATFORM');
       logger.warn(`[MarketingAgent] ${tenantId}: ${reason}`);
       return { created: 0, published: 0, skipped: 1, reason: 'NO_READY_PLATFORM', warning: reason };
     }
@@ -438,6 +594,7 @@ export async function runAutoPostingForTenant(
         errorCode: 'NO_ELIGIBLE_SOURCE',
         errorMessage: reason,
       });
+      await reportProblem('NO_ELIGIBLE_SOURCE');
       logger.warn(`[MarketingAgent] ${tenantId}: ${reason}`);
       return { created: 0, published: 0, skipped: 1, reason: 'NO_ELIGIBLE_SOURCE', warning: reason };
     }
@@ -457,6 +614,10 @@ export async function runAutoPostingForTenant(
         result: { reason: 'SOURCE_IMAGES_CHANGED', checkedAt: new Date().toISOString() },
         errorCode: 'SOURCE_IMAGES_CHANGED',
         errorMessage: reason,
+      });
+      await reportProblem('SOURCE_IMAGES_CHANGED', {
+        sourceType: candidate.sourceType,
+        sourceId: candidate.sourceId,
       });
       logger.warn(`[MarketingAgent] ${tenantId}: ${reason}`);
       return { created: 0, published: 0, skipped: 1, reason: 'SOURCE_IMAGES_CHANGED', warning: reason };
@@ -525,6 +686,13 @@ export async function runAutoPostingForTenant(
           }
         : {}),
     });
+    if (deliveryFailed) {
+      await reportProblem('FACEBOOK_DELIVERY_FAILED', {
+        publicationId: publication.id,
+        sourceType: candidate.sourceType,
+        sourceId: candidate.sourceId,
+      });
+    }
     return {
       created: 1,
       published: delivery.published,
@@ -543,6 +711,7 @@ export async function runAutoPostingForTenant(
       errorCode: String(error?.code || 'MARKETING_AGENT_ERROR'),
       errorMessage: message,
     }).catch(finishError => logger.error('[MarketingAgent] Failed to persist daily run failure', finishError));
+    await reportProblem(String(error?.code || 'MARKETING_AGENT_ERROR'));
     logger.error(`[MarketingAgent] tenant ${tenantId} failed`, error);
     return { created: 0, published: 0, skipped: 0, reason: 'ERROR', warning: message };
   }

@@ -110,6 +110,7 @@ export type MinhBriefing = {
   geo: { lastSnapshotDate: string | null; stale: boolean };
   sloBreaches24h: number;
   capabilityGaps7d: number;
+  marketingFailures24h: number;
   deadLetters: number;
   budget: { used: number; budget: number };
   proposals: BriefingProposal[];
@@ -133,6 +134,10 @@ export async function getMinhBriefing(tenantId: string): Promise<MinhBriefing> {
     "SELECT count(*)::int AS c FROM agent_signals WHERE tenant_id=$1 AND signal_type='minh_capability_gap' AND created_at > NOW() - INTERVAL '7 days'",
     [tenantId],
   );
+  const marketingFailures = await pool.query(
+    "SELECT count(*)::int AS c FROM agent_signals WHERE tenant_id=$1 AND signal_type='marketing_publication_failed' AND created_at > NOW() - INTERVAL '24 hours'",
+    [tenantId],
+  );
   const dead = await withTenantContext(tenantId, async (client: any) => client.query(
     "SELECT count(*)::int AS c FROM agent_operating_events WHERE status='DEAD_LETTER'",
   ));
@@ -143,6 +148,14 @@ export async function getMinhBriefing(tenantId: string): Promise<MinhBriefing> {
   if (geo.stale) proposals.push({ area: 'GEO', proposal: 'Snapshot GEO cu hon 3 ngay — kiem tra QStash schedule/token', severity: 'medium' });
   const gapCount = Number(gaps.rows[0]?.c || 0);
   if (gapCount > 0) proposals.push({ area: 'capability', proposal: gapCount + ' capability gaps 7 ngay qua — xem minh_capability_gap signals', severity: 'medium' });
+  const marketingFailureCount = Number(marketingFailures.rows[0]?.c || 0);
+  if (marketingFailureCount > 0) {
+    proposals.push({
+      area: 'marketing',
+      proposal: marketingFailureCount + ' lịch đăng Facebook lỗi trong 24 giờ — kiểm tra publication trước khi chạy bù',
+      severity: 'high',
+    });
+  }
   const issueCount = Number(seoIssues.rows[0]?.c || 0);
   if (issueCount > 0) proposals.push({ area: 'SEO', proposal: issueCount + ' keyword co van de — xem seo_audit_issue signals', severity: 'low' });
   return {
@@ -151,6 +164,7 @@ export async function getMinhBriefing(tenantId: string): Promise<MinhBriefing> {
     geo,
     sloBreaches24h: Number(slo.rows[0]?.c || 0),
     capabilityGaps7d: gapCount,
+    marketingFailures24h: marketingFailureCount,
     deadLetters: deadCount,
     budget: { used: budget.used, budget: budget.budget },
     proposals,

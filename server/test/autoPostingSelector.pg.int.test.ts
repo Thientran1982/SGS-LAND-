@@ -33,6 +33,7 @@ import {
 import { getTenantSocialPlatformCapability } from '../social-publishing/registry';
 import { processSocialPublicationTick } from '../services/socialPublishingWorker';
 import type { SocialPlatform } from '../social-publishing/types';
+import { emailService } from '../services/emailService';
 
 vi.mock('../social-publishing/registry', () => ({
   getTenantSocialPlatformCapability: vi.fn(),
@@ -45,6 +46,12 @@ vi.mock('../services/socialPublishingWorker', () => ({
     failed: 0,
     skipped: false,
   })),
+}));
+
+vi.mock('../services/emailService', () => ({
+  emailService: {
+    sendMarketingPublicationFailureEmail: vi.fn(async () => ({ success: true, status: 'sent' })),
+  },
 }));
 
 vi.mock('../services/socialPublicationService', async () => {
@@ -249,10 +256,47 @@ describePostgres('Marketing Facebook daily selector against PostgreSQL', () => {
     await setupClient.query(`
       CREATE TABLE users (
         id UUID PRIMARY KEY,
+        tenant_id UUID,
         name TEXT,
         email TEXT,
         avatar TEXT,
-        role TEXT
+        role TEXT,
+        status TEXT NOT NULL DEFAULT 'ACTIVE'
+      );
+      CREATE TABLE agent_signals (
+        id UUID PRIMARY KEY,
+        tenant_id UUID NOT NULL,
+        signal_type TEXT NOT NULL,
+        actor_id TEXT,
+        subject_type TEXT NOT NULL,
+        subject_id TEXT NOT NULL,
+        payload JSONB NOT NULL DEFAULT '{}'::jsonb,
+        dedupe_key TEXT,
+        provenance TEXT NOT NULL DEFAULT 'system',
+        created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+      );
+      CREATE UNIQUE INDEX agent_signals_tenant_dedupe
+        ON agent_signals(tenant_id, dedupe_key) WHERE dedupe_key IS NOT NULL;
+      CREATE TABLE ai_learning_audit_events (
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        tenant_id UUID NOT NULL,
+        event_type TEXT NOT NULL,
+        entity_type TEXT NOT NULL,
+        entity_id UUID NOT NULL,
+        reason TEXT NOT NULL,
+        metrics_json JSONB NOT NULL DEFAULT '{}'::jsonb,
+        created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+      );
+      CREATE TABLE notifications (
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        tenant_id UUID NOT NULL,
+        user_id UUID NOT NULL,
+        type TEXT NOT NULL,
+        title TEXT NOT NULL,
+        body TEXT,
+        metadata JSONB NOT NULL DEFAULT '{}'::jsonb,
+        created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+        read_at TIMESTAMPTZ
       );
       CREATE TABLE projects (
         id UUID PRIMARY KEY,
@@ -317,7 +361,8 @@ describePostgres('Marketing Facebook daily selector against PostgreSQL', () => {
   beforeEach(async () => {
     await query(`
       TRUNCATE marketing_facebook_backfill_requests, marketing_facebook_daily_runs, social_publication_events,
-        social_publications, auto_posting_settings, listings, projects CASCADE
+        social_publications, auto_posting_settings, listings, projects,
+        agent_signals, ai_learning_audit_events, notifications, users CASCADE
     `);
     vi.clearAllMocks();
   });
@@ -530,6 +575,11 @@ describePostgres('Marketing Facebook daily selector against PostgreSQL', () => {
 
   it('records a failed daily run when the Facebook worker reports delivery failure', async () => {
     await insertListing({ tenantId: tenantA });
+    await query(
+      `INSERT INTO users (id, tenant_id, name, email, role)
+       VALUES ($1, $2, 'Marketing Admin', 'admin@example.test', 'ADMIN')`,
+      [randomUUID(), tenantA],
+    );
     await configureSelector(tenantA);
     configureCapabilities({
       FACEBOOK_PAGE: { status: 'READY', reason: 'Facebook đã xác minh', retryable: false },
@@ -553,6 +603,33 @@ describePostgres('Marketing Facebook daily selector against PostgreSQL', () => {
       error_code: 'FACEBOOK_DELIVERY_FAILED',
       result: expect.objectContaining({ reason: 'FACEBOOK_DELIVERY_FAILED' }),
     });
+    const signal = await query(
+      `SELECT signal_type, subject_type, payload
+         FROM agent_signals
+        WHERE tenant_id = $1`,
+      [tenantA],
+    );
+    expect(signal.rows).toHaveLength(1);
+    expect(signal.rows[0]).toMatchObject({
+      signal_type: 'marketing_publication_failed',
+      subject_type: 'marketing_facebook_daily_run',
+      payload: expect.objectContaining({
+        errorCode: 'FACEBOOK_DELIVERY_FAILED',
+      }),
+    });
+    const notification = await query(
+      `SELECT type, title, metadata
+         FROM notifications
+        WHERE tenant_id = $1`,
+      [tenantA],
+    );
+    expect(notification.rows).toHaveLength(1);
+    expect(notification.rows[0]).toMatchObject({
+      type: 'MARKETING_PUBLICATION_FAILED',
+      title: 'Agent Marketing không đăng được Facebook',
+      metadata: expect.objectContaining({ errorCode: 'FACEBOOK_DELIVERY_FAILED' }),
+    });
+    expect(emailService.sendMarketingPublicationFailureEmail).toHaveBeenCalledTimes(1);
   });
 
   it('runs a requested missed day outside the normal window and audits the requester, reason, and result', async () => {
