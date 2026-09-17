@@ -1,6 +1,6 @@
 import React from 'react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { render, screen } from '@testing-library/react';
+import { cleanup, render, screen } from '@testing-library/react';
 import { LiveChatTelemetryPanel } from '../../pages/SystemStatus';
 import { analyticsApi } from '../../services/api/analyticsApi';
 
@@ -51,6 +51,35 @@ const translate = (key: string, params?: Record<string, string | number>) => {
     'system.live_chat_metrics.last_429': '429 gần nhất',
     'system.live_chat_metrics.rate_limit_backend': 'Backend rate-limit',
     'system.live_chat_metrics.backend_counts': 'Redis {redis} · memory {memory}',
+    'system.live_chat_metrics.attachment_readability': 'Khả năng đọc tệp',
+    'system.live_chat_metrics.attachment_window': 'Cửa sổ {minutes} phút',
+    'system.live_chat_metrics.standardized_dimensions': 'Chiều dữ liệu chuẩn hóa',
+    'system.live_chat_metrics.attachment_unavailable': 'Metrics khả năng đọc tệp chưa khả dụng trong snapshot này.',
+    'system.live_chat_metrics.unreadable_rate': 'Tỷ lệ không đọc được',
+    'system.live_chat_metrics.unreadable_count': '{count} tệp không đọc được',
+    'system.live_chat_metrics.not_processed': 'Chưa xử lý',
+    'system.live_chat_metrics.attachment_total': '{count} tệp trong cửa sổ',
+    'system.live_chat_metrics.provider_outcomes': 'Kết quả provider',
+    'system.live_chat_metrics.provider.primary': 'Chính',
+    'system.live_chat_metrics.provider.fallback': 'Dự phòng',
+    'system.live_chat_metrics.provider.timeout': 'Timeout',
+    'system.live_chat_metrics.provider.outage': 'Gián đoạn',
+    'system.live_chat_metrics.provider.not_attempted': 'Chưa thử',
+    'system.live_chat_metrics.attachment_by_tenant': 'Theo tenant',
+    'system.live_chat_metrics.no_attachment_tenants': 'Chưa có dữ liệu theo tenant.',
+    'system.live_chat_metrics.attachment_by_extraction': 'Theo trạng thái trích xuất',
+    'system.live_chat_metrics.attachment_by_type': 'Theo định dạng',
+    'system.live_chat_metrics.attachment_privacy': 'Chỉ hiển thị mã tenant đã băm và số liệu tổng hợp; không hiển thị tên tệp, nội dung, hash đầy đủ hoặc danh tính provider.',
+    'system.live_chat_metrics.extraction.NOT_APPLICABLE': 'Không áp dụng',
+    'system.live_chat_metrics.extraction.READY': 'Sẵn sàng',
+    'system.live_chat_metrics.extraction.EMPTY': 'Trống',
+    'system.live_chat_metrics.extraction.FAILED': 'Thất bại',
+    'system.live_chat_metrics.extraction.UNKNOWN': 'Không xác định',
+    'system.live_chat_metrics.file_type.image': 'Ảnh',
+    'system.live_chat_metrics.file_type.pdf': 'PDF',
+    'system.live_chat_metrics.file_type.docx': 'DOCX',
+    'system.live_chat_metrics.file_type.document': 'Tài liệu khác',
+    'system.live_chat_metrics.file_type.other': 'Khác',
     'common.retry': 'Thử lại',
   };
   return (labels[key] || key).replace(/{(\w+)}/g, (_match, name) =>
@@ -110,6 +139,35 @@ const snapshot = (generatedAt = new Date().toISOString()) => ({
       backendCounts: { redis: 8, 'in-memory': 2 },
     }],
   },
+  attachmentReadability: {
+    windowMs: 900_000,
+    overall: {
+      total: 4,
+      unreadable: 1,
+      notProcessed: 2,
+      unreadableRatePercent: 25,
+      providerOutcomes: { primary: 1, fallback: 0, timeout: 1, outage: 1, not_attempted: 1 },
+    },
+    byTenant: [{
+      tenantKey: '0123456789abcdef',
+      total: 4, unreadable: 1, notProcessed: 2, unreadableRatePercent: 25,
+      providerOutcomes: { primary: 1, fallback: 0, timeout: 1, outage: 1, not_attempted: 1 },
+    }, {
+      tenantKey: 'tenant-raw-value',
+      total: 1, unreadable: 1, notProcessed: 0, unreadableRatePercent: 100,
+      providerOutcomes: { primary: 0, fallback: 0, timeout: 0, outage: 0, not_attempted: 1 },
+    }],
+    byExtractionStatus: [{
+      extractionStatus: 'FAILED',
+      total: 1, unreadable: 1, notProcessed: 0, unreadableRatePercent: 100,
+      providerOutcomes: { primary: 0, fallback: 0, timeout: 0, outage: 0, not_attempted: 1 },
+    }],
+    byFileType: [{
+      fileType: 'pdf',
+      total: 4, unreadable: 1, notProcessed: 2, unreadableRatePercent: 25,
+      providerOutcomes: { primary: 1, fallback: 0, timeout: 1, outage: 1, not_attempted: 1 },
+    }],
+  },
 });
 
 const renderPanel = () => render(
@@ -120,6 +178,7 @@ const renderPanel = () => render(
 );
 
 afterEach(() => {
+  cleanup();
   vi.restoreAllMocks();
 });
 
@@ -133,14 +192,20 @@ describe('LiveChatTelemetryPanel', () => {
     expect(screen.getByText('Dữ liệu mới')).toBeVisible();
     expect(screen.getByText('80ms')).toBeVisible();
     expect(screen.getByText('900ms')).toBeVisible();
-    expect(screen.getByText('2')).toBeVisible();
+    expect(screen.getAllByText('2')[0]).toBeVisible();
     expect(screen.getByText('Đang cảnh báo')).toBeVisible();
     expect(screen.getByText('Status polling bị giới hạn')).toBeVisible();
     expect(screen.getByText('20%')).toBeVisible();
     expect(screen.getAllByText('4s')[0]).toBeVisible();
     expect(screen.getAllByText('mixed')[0]).toBeVisible();
     expect(screen.getAllByText('0123456789abcdef')[0]).toBeVisible();
+    expect(screen.getByText('Khả năng đọc tệp')).toBeVisible();
+    expect(screen.getAllByText('25%')[0]).toBeVisible();
+    expect(screen.getAllByText('Tỷ lệ không đọc được')[0]).toBeVisible();
+    expect(screen.getByText('PDF')).toBeVisible();
+    expect(screen.getByText('Thất bại')).toBeVisible();
     expect(screen.queryByText('tenant-raw-value')).not.toBeInTheDocument();
+    expect(screen.queryByText('private-document.pdf')).not.toBeInTheDocument();
     expect(screen.queryByText(/payload chat/i)).toBeVisible();
   });
 
@@ -163,6 +228,19 @@ describe('LiveChatTelemetryPanel', () => {
         backendCounts: { redis: 0, 'in-memory': 0 },
         byTenant: [],
       },
+      attachmentReadability: {
+        windowMs: 900_000,
+        overall: {
+          total: 0,
+          unreadable: 0,
+          notProcessed: 0,
+          unreadableRatePercent: 0,
+          providerOutcomes: { primary: 0, fallback: 0, timeout: 0, outage: 0, not_attempted: 0 },
+        },
+        byTenant: [],
+        byExtractionStatus: [],
+        byFileType: [],
+      },
     };
     vi.spyOn(analyticsApi, 'getSystemMetrics').mockResolvedValue({ liveChat: emptySnapshot });
 
@@ -175,6 +253,7 @@ describe('LiveChatTelemetryPanel', () => {
     vi.spyOn(analyticsApi, 'getSystemMetrics').mockResolvedValue({
       liveChat: snapshot(new Date(Date.now() - 3 * 60_000).toISOString()),
     });
+    cleanup();
     renderPanel();
     expect(await screen.findAllByText('Snapshot đã cũ')).not.toHaveLength(0);
   });

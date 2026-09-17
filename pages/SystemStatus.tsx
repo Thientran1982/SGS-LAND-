@@ -338,6 +338,24 @@ interface LiveChatTenantMetrics {
     acknowledgeLatency: LiveChatLatencySummary;
     finalReplyLatency: LiveChatLatencySummary;
 }
+type AttachmentProcessingStatus = 'processed' | 'unreadable' | 'not_processed';
+type AttachmentProviderOutcome = 'primary' | 'fallback' | 'timeout' | 'outage' | 'not_attempted';
+type AttachmentExtractionStatus = 'NOT_APPLICABLE' | 'READY' | 'EMPTY' | 'FAILED' | 'UNKNOWN';
+type AttachmentFileType = 'image' | 'pdf' | 'docx' | 'document' | 'other';
+interface AttachmentReadabilityBreakdown {
+    total: number;
+    unreadable: number;
+    notProcessed: number;
+    unreadableRatePercent: number;
+    providerOutcomes: Record<AttachmentProviderOutcome, number>;
+}
+interface AttachmentReadabilitySnapshot {
+    windowMs: number;
+    overall: AttachmentReadabilityBreakdown;
+    byTenant: Array<AttachmentReadabilityBreakdown & { tenantKey: string }>;
+    byExtractionStatus: Array<AttachmentReadabilityBreakdown & { extractionStatus: AttachmentExtractionStatus }>;
+    byFileType: Array<AttachmentReadabilityBreakdown & { fileType: AttachmentFileType }>;
+}
 interface LiveChatMetricsSnapshot {
     windowMs: number;
     generatedAt: string;
@@ -381,6 +399,7 @@ interface LiveChatMetricsSnapshot {
             backendCounts: { redis: number; 'in-memory': number };
         }>;
     };
+    attachmentReadability?: AttachmentReadabilitySnapshot;
 }
 interface SystemMetricsResponse {
     liveChat?: LiveChatMetricsSnapshot;
@@ -404,6 +423,28 @@ const isLiveChatSnapshot = (value: unknown): value is LiveChatMetricsSnapshot =>
 
 const latencyValue = (summary: LiveChatLatencySummary | undefined, key: 'p50Ms' | 'p95Ms'): number =>
     Number.isFinite(Number(summary?.[key])) ? Number(summary?.[key]) : 0;
+
+const attachmentValue = (
+    breakdown: AttachmentReadabilityBreakdown | undefined,
+    key: 'total' | 'unreadable' | 'notProcessed' | 'unreadableRatePercent',
+): number =>
+    Number.isFinite(Number(breakdown?.[key])) ? Number(breakdown?.[key]) : 0;
+
+const attachmentProviderOutcomes: AttachmentProviderOutcome[] = [
+    'primary',
+    'fallback',
+    'timeout',
+    'outage',
+    'not_attempted',
+];
+const attachmentExtractionStatuses: AttachmentExtractionStatus[] = [
+    'NOT_APPLICABLE',
+    'READY',
+    'EMPTY',
+    'FAILED',
+    'UNKNOWN',
+];
+const attachmentFileTypes: AttachmentFileType[] = ['image', 'pdf', 'docx', 'document', 'other'];
 
 export const LiveChatTelemetryPanel: React.FC<{
     t: (key: string, params?: Record<string, string | number>) => string;
@@ -450,6 +491,7 @@ export const LiveChatTelemetryPanel: React.FC<{
         || snapshot.slowEndpointAlerts.some(alert => alert.count > 0)
         || snapshot.databaseConnectionTimeouts.count > 0
         || (snapshot.statusRateLimits?.limitedCount ?? 0) > 0
+        || (snapshot.attachmentReadability?.overall.total ?? 0) > 0
     );
     const endpointAlertCount = snapshot?.slowEndpointAlerts.length ?? 0;
     const endpointEventCount = snapshot?.slowEndpointAlerts.reduce((total, alert) => total + (Number.isFinite(alert.count) ? alert.count : 0), 0) ?? 0;
@@ -480,6 +522,11 @@ export const LiveChatTelemetryPanel: React.FC<{
     const acknowledge = formatSummary(snapshot?.acknowledgeLatency ?? EMPTY_LATENCY);
     const finalReply = formatSummary(snapshot?.finalReplyLatency ?? EMPTY_LATENCY);
     const statusRateLimits = snapshot?.statusRateLimits;
+    const attachmentReadability = snapshot?.attachmentReadability;
+    const attachmentOverall = attachmentReadability?.overall;
+    const attachmentTenantMetrics = (attachmentReadability?.byTenant ?? [])
+        .filter(item => HASHED_TENANT_KEY.test(item.tenantKey));
+    const attachmentWindowMinutes = Math.round((attachmentReadability?.windowMs ?? snapshot?.windowMs ?? 0) / 60_000);
     const endpointLabel = (endpoint: 'history' | 'message' | 'ai') =>
         t(`system.live_chat_metrics.endpoint.${endpoint}`);
     const dataStateLabel = {
@@ -653,6 +700,113 @@ export const LiveChatTelemetryPanel: React.FC<{
                     )}
                 </div>
             )}
+
+            <section className="mt-5 rounded-2xl border border-cyan-100 bg-cyan-50/50 p-4" aria-labelledby="attachment-readability-title">
+                <div className="flex items-start justify-between gap-3 flex-wrap">
+                    <div>
+                        <h4 id="attachment-readability-title" className="text-xs font-bold uppercase tracking-wide text-slate-600">
+                            {t('system.live_chat_metrics.attachment_readability')}
+                        </h4>
+                        <p className="mt-1 text-2xs text-slate-500">
+                            {t('system.live_chat_metrics.attachment_window', { minutes: attachmentWindowMinutes })}
+                        </p>
+                    </div>
+                    <span className="rounded-full border border-cyan-200 bg-white/70 px-2 py-1 text-2xs font-bold uppercase text-cyan-700">
+                        {t('system.live_chat_metrics.standardized_dimensions')}
+                    </span>
+                </div>
+
+                {!attachmentReadability ? (
+                    <div className="mt-4 rounded-xl border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-800" role="status">
+                        {t('system.live_chat_metrics.attachment_unavailable')}
+                    </div>
+                ) : (
+                    <>
+                        <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-3">
+                            <div className="rounded-xl border border-rose-100 bg-white/80 p-3">
+                                <div className="text-2xs font-bold uppercase tracking-wide text-slate-500">{t('system.live_chat_metrics.unreadable_rate')}</div>
+                                <div className="mt-2 font-mono text-2xl font-bold text-rose-700">{attachmentValue(attachmentOverall, 'unreadableRatePercent')}%</div>
+                                <div className="mt-1 text-2xs text-slate-500">
+                                    {t('system.live_chat_metrics.unreadable_count', { count: attachmentValue(attachmentOverall, 'unreadable') })}
+                                </div>
+                            </div>
+                            <div className="rounded-xl border border-amber-100 bg-white/80 p-3">
+                                <div className="text-2xs font-bold uppercase tracking-wide text-slate-500">{t('system.live_chat_metrics.not_processed')}</div>
+                                <div className="mt-2 font-mono text-2xl font-bold text-amber-700">{attachmentValue(attachmentOverall, 'notProcessed')}</div>
+                                <div className="mt-1 text-2xs text-slate-500">
+                                    {t('system.live_chat_metrics.attachment_total', { count: attachmentValue(attachmentOverall, 'total') })}
+                                </div>
+                            </div>
+                            <div className="rounded-xl border border-sky-100 bg-white/80 p-3">
+                                <div className="text-2xs font-bold uppercase tracking-wide text-slate-500">{t('system.live_chat_metrics.provider_outcomes')}</div>
+                                <div className="mt-2 flex flex-wrap gap-x-3 gap-y-1 text-2xs text-slate-700">
+                                    {attachmentProviderOutcomes.map(outcome => (
+                                        <span key={outcome}>
+                                            <span className="font-semibold">{t(`system.live_chat_metrics.provider.${outcome}`)}</span>{' '}
+                                            <span className="font-mono">{Number.isFinite(Number(attachmentOverall?.providerOutcomes?.[outcome]))
+                                                ? Number(attachmentOverall?.providerOutcomes?.[outcome])
+                                                : 0}</span>
+                                        </span>
+                                    ))}
+                                </div>
+                            </div>
+                        </div>
+
+                        <div className="mt-4 grid grid-cols-1 gap-4 xl:grid-cols-3">
+                            <div className="rounded-xl border border-white/80 bg-white/70 p-3">
+                                <h5 className="mb-2 text-2xs font-bold uppercase tracking-wide text-slate-600">{t('system.live_chat_metrics.attachment_by_tenant')}</h5>
+                                {attachmentTenantMetrics.length === 0 ? (
+                                    <p className="text-xs text-slate-500">{t('system.live_chat_metrics.no_attachment_tenants')}</p>
+                                ) : (
+                                    <div className="overflow-x-auto">
+                                        <table className="w-full text-2xs">
+                                            <thead className="text-slate-500"><tr className="border-b border-slate-200">
+                                                <th className="pb-2 text-left">{t('system.live_chat_metrics.tenant_key')}</th>
+                                                <th className="pb-2 text-right">{t('system.live_chat_metrics.unreadable_rate')}</th>
+                                                <th className="pb-2 text-right">{t('system.live_chat_metrics.not_processed')}</th>
+                                            </tr></thead>
+                                            <tbody>{attachmentTenantMetrics.map(item => (
+                                                <tr key={item.tenantKey} className="border-b border-slate-100 last:border-0">
+                                                    <td className="py-2 font-mono text-slate-700">{item.tenantKey}</td>
+                                                    <td className="py-2 text-right font-mono">{attachmentValue(item, 'unreadableRatePercent')}%</td>
+                                                    <td className="py-2 text-right font-mono">{attachmentValue(item, 'notProcessed')}</td>
+                                                </tr>
+                                            ))}</tbody>
+                                        </table>
+                                    </div>
+                                )}
+                            </div>
+                            <div className="rounded-xl border border-white/80 bg-white/70 p-3">
+                                <h5 className="mb-2 text-2xs font-bold uppercase tracking-wide text-slate-600">{t('system.live_chat_metrics.attachment_by_extraction')}</h5>
+                                <div className="space-y-1">
+                                    {(attachmentReadability.byExtractionStatus ?? [])
+                                        .filter(item => attachmentExtractionStatuses.includes(item.extractionStatus))
+                                        .map(item => (
+                                        <div key={item.extractionStatus} className="flex items-center justify-between gap-2 border-b border-slate-100 py-1.5 last:border-0 text-2xs">
+                                            <span className="font-semibold text-slate-700">{t(`system.live_chat_metrics.extraction.${item.extractionStatus}`)}</span>
+                                            <span className="font-mono text-slate-600">{attachmentValue(item, 'unreadableRatePercent')}% · {attachmentValue(item, 'notProcessed')}</span>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                            <div className="rounded-xl border border-white/80 bg-white/70 p-3">
+                                <h5 className="mb-2 text-2xs font-bold uppercase tracking-wide text-slate-600">{t('system.live_chat_metrics.attachment_by_type')}</h5>
+                                <div className="space-y-1">
+                                    {(attachmentReadability.byFileType ?? [])
+                                        .filter(item => attachmentFileTypes.includes(item.fileType))
+                                        .map(item => (
+                                        <div key={item.fileType} className="flex items-center justify-between gap-2 border-b border-slate-100 py-1.5 last:border-0 text-2xs">
+                                            <span className="font-semibold text-slate-700">{t(`system.live_chat_metrics.file_type.${item.fileType}`)}</span>
+                                            <span className="font-mono text-slate-600">{attachmentValue(item, 'unreadableRatePercent')}% · {attachmentValue(item, 'notProcessed')}</span>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                        </div>
+                        <p className="mt-3 text-2xs text-slate-500">{t('system.live_chat_metrics.attachment_privacy')}</p>
+                    </>
+                )}
+            </section>
 
             <div className="mt-5 grid grid-cols-1 gap-5 lg:grid-cols-2">
                 <div className="rounded-2xl border border-[var(--glass-border)] p-4">
