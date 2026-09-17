@@ -153,16 +153,16 @@ const UI_LABELS: Record<string, Bi> = {
 };
 const ui = (k: string, g: L): string => bi(UI_LABELS, k, g);
 
-function updatedAgoLabel(raw: unknown, lang: L): string | null {
+function updatedAgoLabel(raw: unknown, lang: L, nowMs: number): string | null {
   if (!raw) return null;
   const d = new Date(String(raw));
   if (Number.isNaN(d.getTime())) return null;
-  const diffDays = Math.floor((Date.now() - d.getTime()) / 86400000);
+  const diffDays = Math.floor((nowMs - d.getTime()) / 86400000);
   const prefix = ui("updated", lang);
   if (diffDays <= 0) return `${prefix}: ${lang === "en" ? "today" : "h\u00f4m nay"}`;
   if (diffDays === 1) return `${prefix}: ${lang === "en" ? "yesterday" : "h\u00f4m qua"}`;
   if (diffDays < 30) return `${prefix}: ${lang === "en" ? `${diffDays}d ago` : `${diffDays} ng\u00e0y tr\u01b0\u1edbc`}`;
-  return `${prefix}: ${d.toLocaleDateString(lang === "en" ? "en-US" : "vi-VN")}`;
+  return `${prefix}: ${d.toLocaleDateString(lang === "en" ? "en-US" : "vi-VN", { timeZone: "UTC" })}`;
 }
 
 /* Same thumbnail contract as components/ListingCard.tsx: round the width up to
@@ -275,10 +275,11 @@ export function PublicListingCard({ listing, list, eager, facets }: { listing: a
   const savedLabel = fav ? ui("saved", lang) : ui("save", lang);
   const sourceTitle = lang === "en" && hasVietnameseSourceText(listing.title);
   const sourceLocation = lang === "en" && hasVietnameseSourceText(listing.location);
-  const updatedLabel = updatedAgoLabel(
-    (listing as any)?.lastSeenAt ?? (listing as any)?.updatedAt ?? (listing as any)?.last_seen_at ?? (listing as any)?.updated_at,
-    lang,
-  );
+  const updatedAt = (listing as any)?.lastSeenAt ?? (listing as any)?.updatedAt ?? (listing as any)?.last_seen_at ?? (listing as any)?.updated_at;
+  const [updatedLabel, setUpdatedLabel] = useState<string | null>(null);
+  useEffect(() => {
+    setUpdatedLabel(updatedAgoLabel(updatedAt, lang, Date.now()));
+  }, [updatedAt, lang]);
   return (
     <Link href={lang === "en" ? `/en/bds/${slug}` : `/bds/${slug}`}
       className={`group block rounded-3xl overflow-hidden hover:shadow-token-lg transition-all hover:-translate-y-1 ${list ? "flex" : ""}`}

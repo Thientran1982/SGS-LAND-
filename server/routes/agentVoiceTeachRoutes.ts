@@ -12,7 +12,14 @@ import { apiRateLimit } from '../middleware/rateLimiter';
 export const agentVoiceRouter = Router();
 export const agentTeachRouter = Router();
 
-const DEFAULT_TENANT = process.env.DEFAULT_TENANT_ID || '00000000-0000-0000-0000-000000000001';
+function authenticatedTenant(req: Request, res: Response): string | null {
+  const tenantId = String((req as any).user?.tenantId || '').trim();
+  if (!tenantId) {
+    res.status(403).json({ error: 'Khong xac dinh duoc tenant cua nguoi dung' });
+    return null;
+  }
+  return tenantId;
+}
 
 function gemini(): GoogleGenAI {
   const apiKey = process.env.GOOGLE_API_KEY || process.env.GEMINI_API_KEY || process.env.API_KEY;
@@ -23,7 +30,8 @@ function gemini(): GoogleGenAI {
 // ===== #11 VOICE CALL =====
 agentVoiceRouter.get('/', apiRateLimit, async (req: Request, res: Response) => {
   try {
-    const tenantId = String((req as any).user?.tenantId || DEFAULT_TENANT);
+    const tenantId = authenticatedTenant(req, res);
+    if (!tenantId) return;
     const r = await pool.query(
       "SELECT v.id, v.phone, v.direction, v.status, v.duration_sec, v.started_at, v.ended_at, l.name AS lead_name" +
       " FROM agent_voice_calls v LEFT JOIN leads l ON l.id = v.lead_id" +
@@ -39,7 +47,8 @@ agentVoiceRouter.get('/', apiRateLimit, async (req: Request, res: Response) => {
 
 agentVoiceRouter.post('/', apiRateLimit, async (req: Request, res: Response) => {
   try {
-    const tenantId = String((req as any).user?.tenantId || DEFAULT_TENANT);
+    const tenantId = authenticatedTenant(req, res);
+    if (!tenantId) return;
     const { lead_id, phone, direction, status, duration_sec, transcript_json, recording_url } = req.body || {};
     if (!phone || !/^[0-9+\s.-]{6,20}$/.test(String(phone))) {
       return res.status(400).json({ error: 'So dien thoai khong hop le' });
@@ -62,13 +71,16 @@ agentVoiceRouter.post('/', apiRateLimit, async (req: Request, res: Response) => 
 
 agentVoiceRouter.patch('/:id', apiRateLimit, async (req: Request, res: Response) => {
   try {
+    const tenantId = authenticatedTenant(req, res);
+    if (!tenantId) return;
     const { status, duration_sec, transcript_json } = req.body || {};
     const r = await pool.query(
-      "UPDATE agent_voice_calls SET status = COALESCE($2, status), duration_sec = COALESCE($3, duration_sec), transcript_json = COALESCE($4::jsonb, transcript_json), ended_at = CASE WHEN $2::text IN ('ENDED','FAILED','MISSED') THEN NOW() ELSE ended_at END WHERE id = $1 RETURNING id, status, duration_sec",
+      "UPDATE agent_voice_calls SET status = COALESCE($2, status), duration_sec = COALESCE($3, duration_sec), transcript_json = COALESCE($4::jsonb, transcript_json), ended_at = CASE WHEN $2::text IN ('ENDED','FAILED','MISSED') THEN NOW() ELSE ended_at END WHERE id = $1 AND tenant_id = $5 RETURNING id, status, duration_sec",
       [req.params.id,
        ['DIALING','ACTIVE','ENDED','FAILED','MISSED'].includes(String(status)) ? String(status) : null,
        Math.max(0, Math.min(7200, Number(duration_sec) || 0)) || null,
-       transcript_json ? JSON.stringify(transcript_json).slice(0, 100000) : null],
+       transcript_json ? JSON.stringify(transcript_json).slice(0, 100000) : null,
+       tenantId],
     );
     if (r.rowCount === 0) return res.status(404).json({ error: 'Cuoc goi khong ton tai' });
     res.json({ call: r.rows[0] });
@@ -81,7 +93,8 @@ agentVoiceRouter.patch('/:id', apiRateLimit, async (req: Request, res: Response)
 // ===== #12 TEACH BY DEMONSTRATION =====
 agentTeachRouter.get('/', apiRateLimit, async (req: Request, res: Response) => {
   try {
-    const tenantId = String((req as any).user?.tenantId || DEFAULT_TENANT);
+    const tenantId = authenticatedTenant(req, res);
+    if (!tenantId) return;
     const r = await pool.query(
       "SELECT id, title, scenario, status, derived_skill_id, created_at FROM agent_teach_recordings WHERE tenant_id = $1 ORDER BY created_at DESC LIMIT 50",
       [tenantId],
@@ -96,7 +109,8 @@ agentTeachRouter.get('/', apiRateLimit, async (req: Request, res: Response) => {
 agentTeachRouter.post('/', apiRateLimit, async (req: Request, res: Response) => {
   try {
     const user = (req as any).user;
-    const tenantId = String(user?.tenantId || DEFAULT_TENANT);
+    const tenantId = authenticatedTenant(req, res);
+    if (!tenantId) return;
     const { title, scenario, transcript, media_url } = req.body || {};
     if (!title || !transcript) {
       return res.status(400).json({ error: 'title va transcript la bat buoc' });
@@ -117,7 +131,8 @@ agentTeachRouter.post('/', apiRateLimit, async (req: Request, res: Response) => 
 // POST /:id/extract — Gemini trich cac buoc ban hang tu transcript
 agentTeachRouter.post('/:id/extract', apiRateLimit, async (req: Request, res: Response) => {
   try {
-    const tenantId = String((req as any).user?.tenantId || DEFAULT_TENANT);
+    const tenantId = authenticatedTenant(req, res);
+    if (!tenantId) return;
     const rec = await pool.query(
       "SELECT id, title, transcript FROM agent_teach_recordings WHERE tenant_id = $1 AND id = $2",
       [tenantId, req.params.id],
@@ -149,7 +164,8 @@ agentTeachRouter.post('/:id/extract', apiRateLimit, async (req: Request, res: Re
 agentTeachRouter.post('/:id/promote', apiRateLimit, async (req: Request, res: Response) => {
   try {
     const user = (req as any).user;
-    const tenantId = String(user?.tenantId || DEFAULT_TENANT);
+    const tenantId = authenticatedTenant(req, res);
+    if (!tenantId) return;
     const rec = await pool.query(
       "SELECT id, title, scenario, transcript, extracted_steps FROM agent_teach_recordings WHERE tenant_id = $1 AND id = $2",
       [tenantId, req.params.id],

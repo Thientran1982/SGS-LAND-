@@ -10,12 +10,20 @@ import { apiRateLimit } from '../middleware/rateLimiter';
 
 export const chatRoomsRouter = Router();
 
-const DEFAULT_TENANT = process.env.DEFAULT_TENANT_ID || '00000000-0000-0000-0000-000000000001';
+function authenticatedTenant(req: Request, res: Response): string | null {
+  const tenantId = String((req as any).user?.tenantId || '').trim();
+  if (!tenantId) {
+    res.status(403).json({ error: 'Khong xac dinh duoc tenant cua nguoi dung' });
+    return null;
+  }
+  return tenantId;
+}
 
 // GET / — danh sach phong cua tenant (+ so thanh vien, tin nhan cuoi)
 chatRoomsRouter.get('/', apiRateLimit, async (req: Request, res: Response) => {
   try {
-    const tenantId = String((req as any).user?.tenantId || DEFAULT_TENANT);
+    const tenantId = authenticatedTenant(req, res);
+    if (!tenantId) return;
     const r = await pool.query(
       "SELECT r.id, r.name, r.slug, r.topic, r.is_open, r.max_members, r.last_activity_at, r.created_at," +
       " (SELECT COUNT(*)::int FROM chat_room_members m WHERE m.room_id = r.id) AS member_count," +
@@ -34,7 +42,9 @@ chatRoomsRouter.get('/', apiRateLimit, async (req: Request, res: Response) => {
 chatRoomsRouter.post('/', apiRateLimit, async (req: Request, res: Response) => {
   try {
     const user = (req as any).user;
-    const tenantId = String(user?.tenantId || DEFAULT_TENANT);
+    const tenantId = authenticatedTenant(req, res);
+    if (!tenantId) return;
+    if (!user?.id) return res.status(401).json({ error: 'Can dang nhap' });
     const { name, slug, topic, max_members } = req.body || {};
     if (!name || !slug) return res.status(400).json({ error: 'name va slug la bat buoc' });
     if (!/^[a-z0-9-]{3,64}$/.test(String(slug))) {
@@ -64,10 +74,13 @@ chatRoomsRouter.post('/', apiRateLimit, async (req: Request, res: Response) => {
 // GET /:slug/messages — 100 tin nhan gan nhat cua phong
 chatRoomsRouter.get('/:slug/messages', apiRateLimit, async (req: Request, res: Response) => {
   try {
-    const tenantId = String((req as any).user?.tenantId || DEFAULT_TENANT);
+    const tenantId = authenticatedTenant(req, res);
+    if (!tenantId) return;
+    const userId = String((req as any).user?.id || '').trim();
+    if (!userId) return res.status(401).json({ error: 'Can dang nhap' });
     const room = await pool.query(
-      "SELECT id FROM chat_rooms WHERE tenant_id = $1 AND slug = $2",
-      [tenantId, req.params.slug],
+      "SELECT r.id FROM chat_rooms r JOIN chat_room_members m ON m.room_id = r.id AND m.user_id = $3 WHERE r.tenant_id = $1 AND r.slug = $2",
+      [tenantId, req.params.slug, userId],
     );
     if (room.rowCount === 0) return res.status(404).json({ error: 'Phong khong ton tai' });
     const msgs = await pool.query(
@@ -85,13 +98,16 @@ chatRoomsRouter.get('/:slug/messages', apiRateLimit, async (req: Request, res: R
 chatRoomsRouter.post('/:slug/messages', apiRateLimit, async (req: Request, res: Response) => {
   try {
     const user = (req as any).user;
-    const tenantId = String(user?.tenantId || DEFAULT_TENANT);
+    const tenantId = authenticatedTenant(req, res);
+    if (!tenantId) return;
+    const userId = String(user?.id || '').trim();
+    if (!userId) return res.status(401).json({ error: 'Can dang nhap' });
     const content = String((req.body || {}).content || '').trim();
     const kind = (req.body || {}).kind === 'AGENT' ? 'AGENT' : 'TEXT';
     if (!content) return res.status(400).json({ error: 'content la bat buoc' });
     const room = await pool.query(
-      "SELECT id FROM chat_rooms WHERE tenant_id = $1 AND slug = $2 AND is_open = TRUE",
-      [tenantId, req.params.slug],
+      "SELECT r.id FROM chat_rooms r JOIN chat_room_members m ON m.room_id = r.id AND m.user_id = $3 WHERE r.tenant_id = $1 AND r.slug = $2 AND r.is_open = TRUE",
+      [tenantId, req.params.slug, userId],
     );
     if (room.rowCount === 0) return res.status(404).json({ error: 'Phong khong ton tai hoac da dong' });
     const ins = await pool.query(
@@ -112,7 +128,8 @@ chatRoomsRouter.post('/:slug/messages', apiRateLimit, async (req: Request, res: 
 chatRoomsRouter.post('/:slug/join', apiRateLimit, async (req: Request, res: Response) => {
   try {
     const user = (req as any).user;
-    const tenantId = String(user?.tenantId || DEFAULT_TENANT);
+    const tenantId = authenticatedTenant(req, res);
+    if (!tenantId) return;
     const room = await pool.query(
       "SELECT id, max_members FROM chat_rooms WHERE tenant_id = $1 AND slug = $2 AND is_open = TRUE",
       [tenantId, req.params.slug],
@@ -138,7 +155,8 @@ chatRoomsRouter.post('/:slug/join', apiRateLimit, async (req: Request, res: Resp
 chatRoomsRouter.delete('/:slug', apiRateLimit, async (req: Request, res: Response) => {
   try {
     const user = (req as any).user;
-    const tenantId = String(user?.tenantId || DEFAULT_TENANT);
+    const tenantId = authenticatedTenant(req, res);
+    if (!tenantId) return;
     const r = await pool.query(
       "DELETE FROM chat_rooms WHERE tenant_id = $1 AND slug = $2 AND created_by = $3 RETURNING slug",
       [tenantId, req.params.slug, user?.id],

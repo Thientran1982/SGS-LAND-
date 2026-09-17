@@ -125,3 +125,4 @@
 - [Product information architecture](product-information-architecture.md) — organize customer, CRM, and agent operations by user jobs, not backend routes or tool names
 - [Public SEO TTFB](public-seo-ttfb.md) — server-rendered public content should use the internal backend URL and bounded caching to avoid rewrite latency
 - [Public header breakpoints](public-header-breakpoints.md) — full desktop navigation starts at xl; smaller widths use one hamburger path without repeated destinations
+- [P2 tenant and realtime boundaries](p2-tenant-and-realtime-boundaries.md) — P2 routes fail closed on tenant identity; room broadcasts need tenant-safe socket joins
