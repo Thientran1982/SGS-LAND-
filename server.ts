@@ -280,6 +280,8 @@ async function normalizePublicChatAttachments(
     if (actualAggregateBytes > PUBLIC_LIVECHAT_MAX_ATTACHMENT_BYTES) return [];
     const actualContentHash = createHash('sha256').update(storedFile.buffer).digest('hex');
     const storedKind = storedFile.contentType.startsWith('image/') ? 'image' : 'document';
+    const expectedUrl = `${uploadPrefix}${id}`;
+    if (item?.url !== undefined && String(item.url) !== expectedUrl) return [];
     if (
       storedKind !== kind
       || storedFile.contentType !== normalized.mimeType
@@ -299,7 +301,9 @@ async function normalizePublicChatAttachments(
       normalized.extractionErrorCode = item.extractionErrorCode;
     }
     if (kind === 'image') {
-      normalized.url = `${uploadPrefix}${id}`;
+      normalized.url = expectedUrl;
+      normalized.visualStatus = 'READY';
+      normalized.visualPath = 'VISION_IMAGE';
     } else {
       if (extractionStatus === 'FAILED') {
         normalized.textHash = textHash;
@@ -313,6 +317,13 @@ async function normalizePublicChatAttachments(
         normalized.text = text;
       }
       normalized.textHash = textHash;
+      if (
+        storedFile.contentType === 'application/pdf'
+        || storedFile.contentType === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+      ) {
+        normalized.visualStatus = 'READY';
+        normalized.visualPath = 'PROVIDER_FILE_PART';
+      }
     }
     normalizedAttachments.push(normalized);
   }

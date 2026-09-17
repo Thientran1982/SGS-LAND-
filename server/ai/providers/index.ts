@@ -308,5 +308,13 @@ export async function generateWithPolicy(
   throw new ProviderExhaustedError(attempts, lastError);
 }
 
-export type { ProviderAdapter, GenerateParams, GenerateResult, ProviderAttempt } from './types';
+export type {
+  ProviderAdapter,
+  GenerateParams,
+  GenerateResult,
+  ProviderAttempt,
+  ProviderEvidenceRef,
+  ProviderFilePart,
+  ProviderImagePart,
+} from './types';
 export { ProviderExhaustedError } from './types';

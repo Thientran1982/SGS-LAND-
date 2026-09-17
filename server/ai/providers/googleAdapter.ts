@@ -31,9 +31,22 @@ export class GoogleAdapter implements ProviderAdapter {
               ...params.images.map(image => ({
                 inlineData: { mimeType: image.mimeType, data: image.dataBase64 },
               })),
+              ...(params.files || []).map(file => ({
+                inlineData: { mimeType: file.mimeType, data: file.dataBase64 },
+              })),
             ],
           }]
-        : params.prompt,
+        : params.files?.length
+          ? [{
+              role: 'user',
+              parts: [
+                { text: params.prompt },
+                ...(params.files || []).map(file => ({
+                  inlineData: { mimeType: file.mimeType, data: file.dataBase64 },
+                })),
+              ],
+            }]
+          : params.prompt,
       config: {
         systemInstruction: params.system,
         temperature: params.temperature,

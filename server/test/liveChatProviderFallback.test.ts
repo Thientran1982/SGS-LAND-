@@ -97,6 +97,48 @@ describe('live-chat provider fallback policy', () => {
     expect(fallback.generate).toHaveBeenCalledTimes(1);
   });
 
+  it('preserves authenticated image and visual-document parts through policy dispatch', async () => {
+    let received: any;
+    const google = adapter('google', vi.fn(async (params) => {
+      received = params;
+      return { text: 'Đã đọc tài liệu trực quan.', model: params.model, provider: 'google' };
+    }));
+
+    await generateWithPolicy(
+      {
+        model: 'gemini-2.5-flash',
+        prompt: 'Đọc ảnh và biểu đồ, chỉ nêu điều nhìn thấy.',
+        timeoutMs: 50,
+        images: [{
+          mimeType: 'image/png',
+          dataBase64: 'aW1hZ2U=',
+          source: { attachmentId: 'chat-image.png', contentHash: 'a'.repeat(64) },
+        }],
+        files: [{
+          mimeType: 'application/pdf',
+          dataBase64: 'cGRm',
+          filename: 'brochure.pdf',
+          source: {
+            attachmentId: 'chat-brochure.pdf',
+            contentHash: 'b'.repeat(64),
+            extractionStatus: 'FAILED',
+          },
+        }],
+      },
+      { google },
+    );
+
+    expect(received.images).toHaveLength(1);
+    expect(received.files).toMatchObject([{
+      mimeType: 'application/pdf',
+      filename: 'brochure.pdf',
+      source: expect.objectContaining({
+        extractionStatus: 'FAILED',
+        contentHash: 'b'.repeat(64),
+      }),
+    }]);
+  });
+
   it('moves from an unavailable non-Google primary model to Gemini', async () => {
     const primary = adapter('openrouter', vi.fn().mockRejectedValue(
       Object.assign(new Error('payment required'), { status: 402 }),

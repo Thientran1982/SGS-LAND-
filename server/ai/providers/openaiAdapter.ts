@@ -57,8 +57,26 @@ export class OpenAiCompatibleAdapter implements ProviderAdapter {
               type: 'image_url',
               image_url: { url: `data:${image.mimeType};base64,${image.dataBase64}` },
             })),
+            ...(params.files || []).map(file => ({
+              type: 'file',
+              file: {
+                filename: file.filename || 'attachment',
+                file_data: `data:${file.mimeType};base64,${file.dataBase64}`,
+              },
+            })),
           ]
-        : params.prompt,
+        : params.files?.length
+          ? [
+              { type: 'text', text: params.prompt },
+              ...(params.files || []).map(file => ({
+                type: 'file',
+                file: {
+                  filename: file.filename || 'attachment',
+                  file_data: `data:${file.mimeType};base64,${file.dataBase64}`,
+                },
+              })),
+            ]
+          : params.prompt,
     });
     const resp = await client.chat.completions.create({
       model: REMOTE_MODEL_MAP[params.model] || params.model,

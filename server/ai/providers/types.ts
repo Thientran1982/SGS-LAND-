@@ -17,8 +17,29 @@ export interface GenerateParams {
   /** Gioi han cho tung lan goi provider; dispatcher dung de chuyen fallback. */
   timeoutMs?: number;
   /** Optional inline images for vision-capable models. */
-  images?: Array<{ mimeType: string; dataBase64: string }>;
+  images?: ProviderImagePart[];
+  /** Optional visual document parts. Adapters choose the provider-native file shape. */
+  files?: ProviderFilePart[];
 }
+
+export type ProviderEvidenceRef = {
+  attachmentId: string;
+  contentHash: string;
+  extractionStatus?: 'NOT_APPLICABLE' | 'READY' | 'EMPTY' | 'FAILED';
+};
+
+export type ProviderImagePart = {
+  mimeType: string;
+  dataBase64: string;
+  source?: ProviderEvidenceRef;
+};
+
+export type ProviderFilePart = {
+  mimeType: string;
+  dataBase64: string;
+  filename?: string;
+  source?: ProviderEvidenceRef;
+};
 
 export interface ProviderAttempt {
   provider: string;

@@ -3,11 +3,11 @@ name: Live-chat multimodal boundaries
 description: Minh accepts image/document/audio inputs, but each modality follows a different evidence and provider path.
 ---
 
-Public Minh image questions in the GENERAL path can reach vision-capable providers as tenant-validated image bytes. Documents are currently text-extraction only, and audio is transcript-only; scanned PDFs, charts, and raw audio are not available to the response model.
+Public Minh image questions in GENERAL, LEGAL, VALUATION, PROJECT, and LANDING can reach vision-capable providers as tenant-validated image bytes. PDF/DOCX attachments also retain their original bytes for provider-native file parts, so scanned pages and visual tables/charts can be inspected even when text extraction is EMPTY or FAILED. Audio remains transcript-only.
 
-**Why:** The attachment contract stores secure files and returns normalized envelopes, but provider payloads only define image parts. Treating every accepted attachment as equally understood would overstate Minh's evidence.
+**Why:** The attachment contract stores secure files and returns normalized envelopes, while providers need different native payloads for images versus documents. Treating every accepted attachment as equally understood would overstate Minh's evidence.
 
-**How to apply:** Label modality support explicitly, preserve extraction failures, and add visual document/file-part support before claiming that legal, valuation, or project intents can interpret attached images.
+**How to apply:** Keep the allowlist and tenant/path/content-hash checks before provider fetch, label `visualPath` and `extractionStatus`, preserve extraction failures, and expose validated attachment sources alongside specialist evidence.
 
 Durable input guardrails must receive the same attachment envelope as the live-chat core, including direct tool invocations outside the public outer execution.
 

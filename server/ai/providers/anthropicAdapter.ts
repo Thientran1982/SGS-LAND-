@@ -42,6 +42,15 @@ export class AnthropicAdapter implements ProviderAdapter {
               data: image.dataBase64,
             },
           })),
+          ...(params.files || []).map(file => ({
+            type: 'document',
+            source: {
+              type: 'base64',
+              media_type: file.mimeType,
+              data: file.dataBase64,
+            },
+            ...(file.filename ? { title: file.filename } : {}),
+          })),
         ] as any,
       }],
     });

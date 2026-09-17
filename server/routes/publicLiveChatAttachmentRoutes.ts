@@ -153,6 +153,8 @@ export function createPublicLiveChatAttachmentRoutes() {
             result.url = url;
             result.contentHash = contentHash;
             result.extractionStatus = 'NOT_APPLICABLE';
+            result.visualStatus = 'READY';
+            result.visualPath = 'VISION_IMAGE';
           } else {
             try {
               const extracted = await extractTextFromBuffer(file.buffer, ext);
@@ -169,6 +171,18 @@ export function createPublicLiveChatAttachmentRoutes() {
               result.textHash = crypto.createHash('sha256').update('').digest('hex');
             }
             result.contentHash = contentHash;
+            if (
+              contentType === 'application/pdf'
+              || contentType === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+            ) {
+              // The original bytes are retained for provider-native file parts.
+              // This covers scanned pages and visual tables/charts even when
+              // text extraction is EMPTY or FAILED.
+              result.visualStatus = 'READY';
+              result.visualPath = 'PROVIDER_FILE_PART';
+            } else {
+              result.visualStatus = 'NOT_APPLICABLE';
+            }
           }
           result.proof = createPublicLiveChatAttachmentProof({
             leadId,
