@@ -6,9 +6,14 @@ import {
   normalizeProviderFallbackSettings,
   ProviderExhaustedError,
 } from '../ai/providers';
-import { renderDocumentVisualPages } from '../ai/documentVisualRenderer';
+import {
+  MAX_RENDERED_DOCUMENT_PAGES,
+  renderDocumentVisualPages,
+} from '../ai/documentVisualRenderer';
 import { classifyLiveChatProviderOutcome } from '../ai/liveChatEngine';
 import type { ProviderAdapter } from '../ai/providers';
+
+const PDFDocument = require('pdfkit');
 
 function adapter(
   provider: string,
@@ -29,6 +34,38 @@ function unavailableAdapter(provider: string): ProviderAdapter {
     supportsFilePart: () => true,
     generate: vi.fn(),
   };
+}
+
+async function createPngPage(
+  color: { r: number; g: number; b: number },
+  width = 4,
+  height = 4,
+): Promise<Buffer> {
+  return sharp({
+    create: {
+      width,
+      height,
+      channels: 3,
+      background: color,
+    },
+  }).png().toBuffer();
+}
+
+async function createPdf(pageCount: number): Promise<Buffer> {
+  const document = new PDFDocument({ autoFirstPage: false });
+  const chunks: Buffer[] = [];
+  const finished = new Promise<Buffer>((resolve) => {
+    document.on('data', (chunk: Buffer) => chunks.push(chunk));
+    document.on('end', () => resolve(Buffer.concat(chunks)));
+  });
+
+  for (let page = 1; page <= pageCount; page += 1) {
+    document.addPage({ size: [72, 72] });
+    document.fillColor('#333333').fontSize(12).text(`Page ${page}`, 8, 28);
+  }
+  document.end();
+
+  return finished;
 }
 
 describe('live-chat provider fallback policy', () => {
@@ -144,18 +181,20 @@ describe('live-chat provider fallback policy', () => {
     }]);
   });
 
-  it('renders an unsupported DOCX as bounded page images before dispatch', async () => {
-    const page = await sharp({
-      create: {
-        width: 4,
-        height: 4,
-        channels: 3,
-        background: { r: 220, g: 30, b: 30 },
-      },
-    }).png().toBuffer();
+  it('renders only the first bounded DOCX pages before dispatch', async () => {
+    const pages = await Promise.all([
+      createPngPage({ r: 220, g: 30, b: 30 }),
+      createPngPage({ r: 30, g: 220, b: 30 }),
+      createPngPage({ r: 30, g: 30, b: 220 }),
+      createPngPage({ r: 220, g: 220, b: 30 }),
+      createPngPage({ r: 220, g: 30, b: 220 }),
+      createPngPage({ r: 30, g: 220, b: 220 }),
+    ]);
     const docx = Buffer.from(zipSync({
       '[Content_Types].xml': new TextEncoder().encode('<Types/>'),
-      'word/media/image1.png': page,
+      ...Object.fromEntries(
+        pages.map((page, index) => [`word/media/image${index + 1}.png`, page]),
+      ),
     }));
     let received: any;
     const google = adapter('google', vi.fn(async (params) => {
@@ -185,16 +224,24 @@ describe('live-chat provider fallback policy', () => {
     );
 
     expect(received.files).toBeUndefined();
-    expect(received.images).toHaveLength(1);
-    expect(received.images[0]).toMatchObject({
-      mimeType: 'image/png',
-      filename: 'scan.docx.page-1.png',
-      source: {
-        attachmentId: 'scan.docx',
-        contentHash: 'c'.repeat(64),
-        extractionStatus: 'EMPTY',
-      },
-    });
+    expect(received.images).toHaveLength(MAX_RENDERED_DOCUMENT_PAGES);
+    expect(received.images.map((image: { filename: string }) => image.filename))
+      .toEqual([
+        'scan.docx.page-1.png',
+        'scan.docx.page-2.png',
+        'scan.docx.page-3.png',
+        'scan.docx.page-4.png',
+      ]);
+    for (const image of received.images) {
+      expect(image).toMatchObject({
+        mimeType: 'image/png',
+        source: {
+          attachmentId: 'scan.docx',
+          contentHash: 'c'.repeat(64),
+          extractionStatus: 'EMPTY',
+        },
+      });
+    }
   });
 
   it('renders only the first bounded PDF pages and preserves attachment evidence', async () => {
@@ -222,6 +269,87 @@ describe('live-chat provider fallback policy', () => {
         extractionStatus: 'FAILED',
       },
     });
+  });
+
+  it('renders only the first bounded pages from a multi-page PDF', async () => {
+    const pdf = await createPdf(MAX_RENDERED_DOCUMENT_PAGES + 2);
+    const pages = await renderDocumentVisualPages({
+      mimeType: 'application/pdf',
+      dataBase64: pdf.toString('base64'),
+      filename: 'multi-page-scan.pdf',
+      source: {
+        attachmentId: 'multi-page-scan.pdf',
+        contentHash: 'd'.repeat(64),
+        extractionStatus: 'FAILED',
+      },
+    });
+
+    expect(pages).toHaveLength(MAX_RENDERED_DOCUMENT_PAGES);
+    expect(pages.map(page => page.filename)).toEqual([
+      'multi-page-scan.pdf.page-1.png',
+      'multi-page-scan.pdf.page-2.png',
+      'multi-page-scan.pdf.page-3.png',
+      'multi-page-scan.pdf.page-4.png',
+    ]);
+    for (const page of pages) {
+      expect(page).toMatchObject({
+        mimeType: 'image/png',
+        source: {
+          attachmentId: 'multi-page-scan.pdf',
+          contentHash: 'd'.repeat(64),
+          extractionStatus: 'FAILED',
+        },
+      });
+    }
+  });
+
+  it('drops oversized and invalid DOCX images without forwarding a file part', async () => {
+    const validPages = await Promise.all([
+      createPngPage({ r: 220, g: 30, b: 30 }),
+      createPngPage({ r: 30, g: 220, b: 30 }),
+    ]);
+    const oversizedPixels = await createPngPage(
+      { r: 10, g: 20, b: 30 },
+      5_000,
+      5_000,
+    );
+    const docx = Buffer.from(zipSync({
+      '[Content_Types].xml': new TextEncoder().encode('<Types/>'),
+      // Rejected by the archive source-byte guard before inflation.
+      'word/media/image1.png': Buffer.alloc(8 * 1024 * 1024 + 1, 0),
+      // Below the source-byte limit but above sharp's pixel limit.
+      'word/media/image2.png': oversizedPixels,
+      'word/media/image3.png': Buffer.from('not an image'),
+      'word/media/image4.png': validPages[0],
+      'word/media/image5.png': validPages[1],
+    }));
+    const pages = await renderDocumentVisualPages({
+      mimeType: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+      dataBase64: docx.toString('base64'),
+      filename: 'unsafe-scan.docx',
+      source: {
+        attachmentId: 'unsafe-scan.docx',
+        contentHash: 'e'.repeat(64),
+        extractionStatus: 'FAILED',
+      },
+    });
+
+    expect(pages).toHaveLength(2);
+    expect(pages.map(page => page.filename)).toEqual([
+      'unsafe-scan.docx.page-3.png',
+      'unsafe-scan.docx.page-4.png',
+    ]);
+    for (const page of pages) {
+      expect(page).toMatchObject({
+        mimeType: 'image/png',
+        source: {
+          attachmentId: 'unsafe-scan.docx',
+          contentHash: 'e'.repeat(64),
+          extractionStatus: 'FAILED',
+        },
+      });
+      expect(Buffer.byteLength(page.dataBase64, 'base64')).toBeLessThanOrEqual(2 * 1024 * 1024);
+    }
   });
 
   it('moves from an unavailable non-Google primary model to Gemini', async () => {
