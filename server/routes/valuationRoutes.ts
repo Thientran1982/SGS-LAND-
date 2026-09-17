@@ -36,6 +36,11 @@ import { sendAiError } from '../utils/aiErrorHandler';
 import { valuationGoldSet } from '../data/valuationGoldSet';
 import { notificationRepository } from '../repositories/notificationRepository';
 import { verifyPublicListingTeaserToken } from '../services/publicListingTeaserCapability';
+import {
+  buildMarketObservationProvenance,
+  getFreshnessStatus,
+  VALUATION_UNITS,
+} from '../services/valuationDataContract';
 
 function normalizeAddrKey(addr: string): string {
   return addr.toLowerCase()
@@ -680,6 +685,17 @@ export function createValuationRoutes(
         sources: {
           ...avmResult.sources,
           marketDataSource,
+          dataContract: {
+            priceUnit: VALUATION_UNITS.marketPricePerM2,
+            totalPriceUnit: VALUATION_UNITS.totalPrice,
+            areaUnit: VALUATION_UNITS.area,
+            monthlyRentUnit: VALUATION_UNITS.monthlyRent,
+            marketDataObservedAt: cacheEntry?.provenance?.observedAt || new Date().toISOString(),
+            marketDataExpiresAt: cacheEntry?.expiresAt || null,
+            marketDataFreshness: cacheEntry
+              ? getFreshnessStatus(cacheEntry.expiresAt)
+              : 'FRESH',
+          },
           cacheAge: cacheEntry ? Math.round((Date.now() - new Date(cacheEntry.fetchedAt).getTime()) / 60000) + 'm' : null,
           cacheExpiresAt: cacheEntry?.expiresAt,
           rlhfFactor: rlhfFactor !== 1.0 ? rlhfFactor : undefined,
@@ -742,15 +758,19 @@ export function createValuationRoutes(
       res.json({
         location: data.location,
         pricePerM2: data.pricePerM2,
+        priceUnit: data.priceUnit,
         pricePerM2Display: `${(data.pricePerM2 / 1_000_000).toFixed(0)} triệu/m²`,
         confidence: data.confidence,
         marketTrend: data.marketTrend,
         monthlyRentEstimate: data.monthlyRentEstimate,
+        monthlyRentUnit: data.monthlyRentUnit,
         source: data.source,
         fetchedAt: data.fetchedAt,
         expiresAt: data.expiresAt,
         region: data.region,
-        isFresh: new Date(data.expiresAt) > new Date(),
+        isFresh: getFreshnessStatus(data.expiresAt) === 'FRESH',
+        freshnessStatus: getFreshnessStatus(data.expiresAt),
+        provenance: data.provenance,
       });
     } catch (err: any) {
       logger.error('[Valuation] Market index error:', err);
@@ -912,6 +932,10 @@ export function createValuationRoutes(
         trend_text: string | null;
         source: string;
         recorded_at: string;
+        price_unit: string;
+        observed_at: string;
+        expires_at: string | null;
+        provenance: Record<string, unknown>;
         similarity: number;
       }>(
         `SELECT
@@ -925,6 +949,10 @@ export function createValuationRoutes(
            trend_text,
            source,
            recorded_at,
+           price_unit,
+           observed_at,
+           expires_at,
+           provenance,
            -- Only exact keys or meaningful full-location containment are valid.
            -- Never match on a first/last token: "Quan 1, TP.HCM" must not
            -- accidentally match "Long An" because both contain "an".
@@ -937,6 +965,7 @@ export function createValuationRoutes(
          FROM market_price_history
          WHERE
             tenant_id IS NULL
+            AND price_unit = $3
             AND property_type = $2
             AND (
            location_key = $1
@@ -958,7 +987,7 @@ export function createValuationRoutes(
             END DESC,
             recorded_at DESC
           LIMIT 20`,
-         [normalKey, resolvedPropertyType]
+         [normalKey, resolvedPropertyType, VALUATION_UNITS.marketPricePerM2]
       );
 
       let pricePerM2: number;
@@ -1061,6 +1090,7 @@ export function createValuationRoutes(
         found:          foundMatch,
         locationDisplay,
         pricePerM2,
+        priceUnit: VALUATION_UNITS.marketPricePerM2,
         priceMin,
         priceMax,
         pricePerM2Display: `${(pricePerM2 / 1_000_000).toFixed(0)} triệu/m²`,
@@ -1071,10 +1101,43 @@ export function createValuationRoutes(
         totalMidDisplay: formatBillion(totalMid),
         totalMaxDisplay: formatBillion(totalMax),
         area,
+        areaUnit: VALUATION_UNITS.area,
+        totalPriceUnit: VALUATION_UNITS.totalPrice,
         confidence,
         trendText,
         dataSource,
         dataAge,
+        freshnessStatus: foundMatch
+          ? getFreshnessStatus((safeRows[0] as any)?.expires_at)
+          : 'UNKNOWN',
+        provenance: foundMatch
+          ? (
+              Object.keys((safeRows[0] as any)?.provenance || {}).length > 0
+                ? (safeRows[0] as any).provenance
+                : buildMarketObservationProvenance({
+                    source: (safeRows[0] as any).source === 'transaction'
+                      ? 'TRANSACTION'
+                      : (safeRows[0] as any).source === 'manual'
+                        ? 'MANUAL'
+                        : (safeRows[0] as any).source === 'blended'
+                          ? 'BLENDED'
+                          : (safeRows[0] as any).source === 'internal_comps'
+                            ? 'INTERNAL_COMPS'
+                            : (safeRows[0] as any).source === 'ai_search'
+                              ? 'AI'
+                              : 'REGIONAL_TABLE',
+                    locationKey: (safeRows[0] as any).location_key,
+                    propertyType: (safeRows[0] as any).property_type,
+                    observedAt: (safeRows[0] as any).observed_at,
+                    expiresAt: (safeRows[0] as any).expires_at,
+                  })
+            )
+          : {
+              source: 'REGIONAL_TABLE',
+              priceUnit: VALUATION_UNITS.marketPricePerM2,
+              scope: 'GLOBAL',
+              note: 'Static regional fallback; historical observation timestamp unavailable',
+            },
         internalCompsCount,
         internalCompsMedian: internalCompsMedian ?? null,
       });

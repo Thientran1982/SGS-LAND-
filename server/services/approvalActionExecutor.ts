@@ -80,7 +80,8 @@ async function revalidateProactiveOpportunity(
       client.query(
         `SELECT location_key, location_display, price_per_m2, confidence, source, recorded_at
            FROM market_price_history
-          WHERE recorded_at > NOW() - INTERVAL '180 days'
+          WHERE price_unit = 'VND_PER_M2'
+            AND recorded_at > NOW() - INTERVAL '180 days'
           UNION ALL
           SELECT location_key, location_display, calibrated_price_per_m2 AS price_per_m2,
                  confidence_score AS confidence, 'avm_calibration' AS source, last_calibrated_at AS recorded_at

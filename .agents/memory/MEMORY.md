@@ -130,3 +130,4 @@
 - [P2 tenant and realtime boundaries](p2-tenant-and-realtime-boundaries.md) — P2 routes fail closed on tenant identity; room broadcasts need tenant-safe socket joins
 - [Socket.IO distributed adapter](socketio-distributed-adapter.md) — multi-process room revocation needs explicit TCP Redis pub/sub, not Upstash REST or an in-memory mock
 - [Public listing teaser capability](public-listing-teaser-capability.md) — signed tenant/listing capabilities still require an explicit public flag and exact server-side scope checks
+- [Valuation data contract](valuation-data-contract.md) — valuation prices, rent, area, and yields use explicit units with persisted provenance and freshness

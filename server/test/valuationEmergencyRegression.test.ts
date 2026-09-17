@@ -186,7 +186,11 @@ describe('public valuation teaser boundaries', () => {
     expect(body.internalCompsCount).toBe(0);
     expect(findPublicTeaserListing).toHaveBeenCalledWith('public-tenant', 'public-listing');
     expect(dbQuery).toHaveBeenCalledOnce();
-    expect(dbQuery.mock.calls[0][1]).toEqual(['quan 1 tp hcm', 'apartment_center']);
+    expect(dbQuery.mock.calls[0][1]).toEqual([
+      'quan 1 tp hcm',
+      'apartment_center',
+      'VND_PER_M2',
+    ]);
   });
 
   it('uses only global, property-type-matched history and never queries listings', async () => {
@@ -199,7 +203,11 @@ describe('public valuation teaser boundaries', () => {
     expect(sql).toContain('tenant_id IS NULL');
     expect(sql).toContain('property_type = $2');
     expect(sql).not.toMatch(/\bFROM listings\b/i);
-    expect(params).toEqual(['quan 1 tp hcm', 'apartment_center']);
+    expect(params).toEqual([
+      'quan 1 tp hcm',
+      'apartment_center',
+      'VND_PER_M2',
+    ]);
   });
 });
 

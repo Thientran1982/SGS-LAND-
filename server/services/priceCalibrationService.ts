@@ -24,6 +24,12 @@ import { createHash } from 'crypto';
 import { logger } from '../middleware/logger';
 import { valuationGoldSet, type VerifiedTransaction } from '../data/valuationGoldSet';
 import {
+  buildMarketObservationProvenance,
+  normalizePricePerM2,
+  VALUATION_UNITS,
+  type ValuationSource,
+} from './valuationDataContract';
+import {
   evaluateValuationGoldSet,
   type GoldSetEvaluation,
   type ValuationPrediction,
@@ -127,30 +133,73 @@ export class PriceCalibrationService {
     dataRecency?: string;
     listingId?: string | number;
     tenantId?: string;
+    observedAt?: string | Date;
+    fetchedAt?: string | Date;
+    expiresAt?: string | Date | null;
   }): Promise<void> {
     if (!this.pool) return;
-    if (!opts.pricePerM2 || opts.pricePerM2 < 1_000_000) return; // sanity guard
+    const pricePerM2 = normalizePricePerM2(opts.pricePerM2);
+    if (pricePerM2 === null || pricePerM2 < 1_000_000) return; // sanity guard
     try {
+      const observedAt = opts.observedAt
+        ? new Date(opts.observedAt).toISOString()
+        : new Date().toISOString();
+      const fetchedAt = opts.fetchedAt
+        ? new Date(opts.fetchedAt).toISOString()
+        : observedAt;
+      const expiresAt = opts.expiresAt
+        ? new Date(opts.expiresAt).toISOString()
+        : null;
+      const sourceMap: Record<typeof opts.source, ValuationSource> = {
+        ai_search: 'AI',
+        internal_comps: 'INTERNAL_COMPS',
+        manual: 'MANUAL',
+        transaction: 'TRANSACTION',
+        regional_table: 'REGIONAL_TABLE',
+        blended: 'BLENDED',
+      };
+      const locationKey = opts.locationKey.slice(0, 120);
+      const propertyType = opts.propertyType || 'townhouse_center';
+      const normalizedMin = normalizePricePerM2(opts.priceMin);
+      const normalizedMax = normalizePricePerM2(opts.priceMax);
+      const priceMin = normalizedMin !== null && normalizedMin <= pricePerM2 ? normalizedMin : null;
+      const priceMax = normalizedMax !== null && normalizedMax >= pricePerM2 ? normalizedMax : null;
+      const provenance = buildMarketObservationProvenance({
+        source: sourceMap[opts.source],
+        locationKey,
+        propertyType,
+        observedAt,
+        fetchedAt,
+        expiresAt,
+        sourceCount: opts.sourceCount,
+        dataRecency: opts.dataRecency,
+        tenantId: opts.tenantId,
+      });
       await this.pool.query(
         `INSERT INTO market_price_history
            (location_key, location_display, price_per_m2, price_min, price_max,
             property_type, source, confidence, trend_text, source_count,
-            data_recency, listing_id, tenant_id)
-         VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13)`,
+            data_recency, listing_id, tenant_id, price_unit, observed_at,
+            expires_at, provenance)
+         VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17)`,
         [
-          opts.locationKey.slice(0, 120),
+          locationKey,
           opts.locationDisplay.slice(0, 255),
-          Math.round(opts.pricePerM2),
-          opts.priceMin ? Math.round(opts.priceMin) : null,
-          opts.priceMax ? Math.round(opts.priceMax) : null,
-          opts.propertyType || 'townhouse_center',
+          pricePerM2,
+          priceMin,
+          priceMax,
+          propertyType,
           opts.source,
           Math.round(Math.min(100, Math.max(0, opts.confidence ?? 60))),
           opts.trendText?.slice(0, 100) ?? null,
-          opts.sourceCount ?? 1,
+          Math.max(1, Math.round(opts.sourceCount ?? 1)),
           opts.dataRecency ?? 'current_year',
           opts.listingId ?? null,
           opts.tenantId ?? null,
+          VALUATION_UNITS.marketPricePerM2,
+          observedAt,
+          expiresAt,
+          JSON.stringify(provenance),
         ],
       );
     } catch (err: any) {
@@ -183,7 +232,8 @@ export class PriceCalibrationService {
     try {
       const { rows } = await this.pool.query<{ location_key: string }>(
         `SELECT DISTINCT location_key FROM market_price_history
-         WHERE recorded_at > NOW() - INTERVAL '${CALIBRATION_WINDOW_DAYS} days'`,
+         WHERE price_unit = 'VND_PER_M2'
+           AND recorded_at > NOW() - INTERVAL '${CALIBRATION_WINDOW_DAYS} days'`,
       );
       if (rows.length === 0) {
         logger.info('[Calibration] No new history — nothing to calibrate');
@@ -223,6 +273,7 @@ export class PriceCalibrationService {
            MAX(trend_text)           AS avg_trend_text
          FROM market_price_history
          WHERE location_key = $1
+           AND price_unit = 'VND_PER_M2'
            AND recorded_at  > NOW() - INTERVAL '${CALIBRATION_WINDOW_DAYS} days'
            AND price_per_m2 > 1000000
           GROUP BY source, property_type`,
@@ -626,6 +677,7 @@ export class PriceCalibrationService {
         `SELECT recorded_at, price_per_m2, source, confidence
          FROM market_price_history
          WHERE location_key = $1
+           AND price_unit = 'VND_PER_M2'
            AND recorded_at > NOW() - INTERVAL '${days} days'
          ORDER BY recorded_at DESC
          LIMIT 200`,

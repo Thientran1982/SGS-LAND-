@@ -32,6 +32,11 @@
  */
 
 import { DEFAULT_VACANCY_RATE, DEFAULT_OPEX_RATE, DEFAULT_CAP_RATE } from './constants';
+import {
+  normalizeAreaM2,
+  normalizeMonthlyRentMillionVnd,
+  normalizePricePerM2,
+} from './services/valuationDataContract';
 
 export type LegalStatus = 'PINK_BOOK' | 'CONTRACT' | 'PENDING' | 'WAITING';
 
@@ -756,7 +761,7 @@ export function applyAVM(input: AVMInput): AVMOutput {
   // ── Multi-source blending: determine actual base price ────────
   // Numeric hallucination guard at the source: an AI/LLM-derived marketBasePrice that
   // is NaN / Infinity / negative / absurd must never flow into the output or any math.
-  const _mbpFinite = (typeof marketBasePrice === "number" && Number.isFinite(marketBasePrice)) ? marketBasePrice : 0;
+  const _mbpFinite = normalizePricePerM2(marketBasePrice) ?? 0;
   let effectiveBasePrice = Math.min(MAX_SAFE_MARKET_PRICE_PER_M2, Math.max(0, _mbpFinite));
   let effectiveConfidence = confidence;
   let sources: ValuationSources | undefined;
@@ -808,9 +813,8 @@ export function applyAVM(input: AVMInput): AVMOutput {
   // ── Method 1: AVM/Comps ────────────────────────────────────────
   // --- Numeric hallucination guard: Math.max(0, NaN) === NaN, so a non-finite
   // area/base would silently poison every downstream price. Coerce to finite first.
-  const finiteArea = (typeof area === "number" && Number.isFinite(area)) ? area : 0;
-  const safeArea = Math.min(100000, Math.max(1, finiteArea));
-  const finiteBase = (typeof effectiveBasePrice === "number" && Number.isFinite(effectiveBasePrice)) ? effectiveBasePrice : 0;
+  const safeArea = Math.min(100000, Math.max(1, normalizeAreaM2(area) ?? 0));
+  const finiteBase = normalizePricePerM2(effectiveBasePrice) ?? 0;
   const safeMarketBase = Math.min(MAX_SAFE_MARKET_PRICE_PER_M2, Math.max(0, finiteBase));
   const rawPricePerM2 = safeMarketBase * Kd * Kp * Ka * Kfl * Kdir * Kmf * Kfurn * Kage * Kbr;
   const pricePerM2 = Math.max(0, Math.round(rawPricePerM2));
@@ -821,7 +825,8 @@ export function applyAVM(input: AVMInput): AVMOutput {
   let reconciliation: AVMOutput['reconciliation'] | undefined;
   let totalPrice = compsPrice;
 
-  if (monthlyRent && monthlyRent > 0) {
+  const safeMonthlyRent = normalizeMonthlyRentMillionVnd(monthlyRent);
+  if (safeMonthlyRent !== null) {
     // Dynamic cap rate: positive growth trend → investors accept lower yield → lower cap rate
     // Negative/stable trend → standard cap rate table
     const trendLower = (marketTrend || '').toLowerCase();
@@ -831,7 +836,7 @@ export function applyAVM(input: AVMInput): AVMOutput {
                      : trendGrowthPct >= 8  ? -0.003   // moderate growth → −0.3%
                      : 0;                              // stable/declining → no adjustment
 
-    incomeApproach = applyIncomeApproach(monthlyRent, compsPrice, pType, undefined, undefined, capRateAdj);
+    incomeApproach = applyIncomeApproach(safeMonthlyRent, compsPrice, pType, undefined, undefined, capRateAdj);
 
     // ── Method 3: Reconciliation ──────────────────────────────
     const weights = RECONCILE_WEIGHTS[pType];

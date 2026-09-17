@@ -18,6 +18,11 @@ import { Server as SocketServer } from 'socket.io';
 import { logger } from '../middleware/logger';
 import { getRegionalBasePrice } from '../valuationEngine';
 import { priceCalibrationService } from './priceCalibrationService';
+import {
+  buildMarketObservationProvenance,
+  VALUATION_UNITS,
+  type MarketObservationProvenance,
+} from './valuationDataContract';
 
 const CACHE_TTL_MS      = parseInt(process.env.MARKET_CACHE_TTL_HOURS || '6') * 3_600_000;
 const SEED_TTL_MS       = 24 * 3_600_000;    // seed data valid for 24h
@@ -281,9 +286,11 @@ export interface MarketDataEntry {
   propertyType: string;
   /** True when pricePerM2 is already adjusted for propertyType. */
   isTypeSpecific: boolean;
+  priceUnit: typeof VALUATION_UNITS.marketPricePerM2;
   pricePerM2: number;
   confidence: number;
   marketTrend: string;
+  monthlyRentUnit: typeof VALUATION_UNITS.monthlyRent;
   monthlyRentEstimate?: number;
   source: 'AI' | 'REGIONAL_TABLE' | 'BLENDED' | 'SEED';
   fetchedAt: string;
@@ -294,6 +301,7 @@ export interface MarketDataEntry {
   priceMax?: number;
   sourceCount?: number;
   dataRecency?: string;
+  provenance: MarketObservationProvenance;
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -679,6 +687,18 @@ class MarketDataService {
               ?? (parsed.propertyType
                 ? !['townhouse_center', 'townhouse_suburb'].includes(parsed.propertyType)
                 : normKey.includes(':')),
+            priceUnit: parsed.priceUnit || VALUATION_UNITS.marketPricePerM2,
+            monthlyRentUnit: parsed.monthlyRentUnit || VALUATION_UNITS.monthlyRent,
+            provenance: parsed.provenance || buildMarketObservationProvenance({
+              source: parsed.source || 'REGIONAL_TABLE',
+              locationKey: parsed.normalizedKey || normKey,
+              propertyType: parsed.propertyType || 'townhouse_center',
+              observedAt: parsed.fetchedAt || new Date().toISOString(),
+              fetchedAt: parsed.fetchedAt,
+              expiresAt: parsed.expiresAt,
+              sourceCount: parsed.sourceCount,
+              dataRecency: parsed.dataRecency,
+            }),
           } as MarketDataEntry;
           if (new Date(entry.expiresAt) > new Date()) {
             this.cache.set(normKey, entry);
@@ -734,13 +754,23 @@ class MarketDataService {
         normalizedKey: key,
         propertyType: fetchPropertyType,
         isTypeSpecific: !['townhouse_center', 'townhouse_suburb'].includes(fetchPropertyType),
+        priceUnit:       VALUATION_UNITS.marketPricePerM2,
         pricePerM2:     result.basePrice,
         confidence:     result.confidence,
         marketTrend:    result.marketTrend,
+        monthlyRentUnit: VALUATION_UNITS.monthlyRent,
         monthlyRentEstimate: result.incomeApproach?.monthlyRent,
         source:         'AI',
         fetchedAt:      now.toISOString(),
         expiresAt:      new Date(now.getTime() + CACHE_TTL_MS).toISOString(),
+        provenance: buildMarketObservationProvenance({
+          source: 'AI',
+          locationKey: key,
+          propertyType: fetchPropertyType,
+          observedAt: now.toISOString(),
+          fetchedAt: now.toISOString(),
+          expiresAt: new Date(now.getTime() + CACHE_TTL_MS).toISOString(),
+        }),
       };
 
       // ── Sanity check: AI price must be within ±70% of regional baseline ────
@@ -804,11 +834,13 @@ class MarketDataService {
         normalizedKey: key,
         propertyType: pType,
         isTypeSpecific: !['townhouse_center', 'townhouse_suburb'].includes(pType),
+        priceUnit:       VALUATION_UNITS.marketPricePerM2,
         pricePerM2:     price,
         priceMin:       data.priceMin  || price,
         priceMax:       data.priceMax  || price,
         confidence:     data.confidence,
         marketTrend:    data.trend,
+        monthlyRentUnit: VALUATION_UNITS.monthlyRent,
         monthlyRentEstimate: data.rentMedian || undefined,
         source,
         fetchedAt:  now.toISOString(),
@@ -817,6 +849,16 @@ class MarketDataService {
         sourceCount: data.sourceCount,
         dataRecency: data.dataRecency,
         sampleNotes: `Seed: ${data.sourceCount} nguồn, ${data.dataRecency}`,
+        provenance: buildMarketObservationProvenance({
+          source,
+          locationKey: key,
+          propertyType: pType,
+          observedAt: now.toISOString(),
+          fetchedAt: now.toISOString(),
+          expiresAt: new Date(now.getTime() + SEED_TTL_MS).toISOString(),
+          sourceCount: data.sourceCount,
+          dataRecency: data.dataRecency,
+        }),
       };
 
       return this.storeEntry(key, entry);
@@ -838,13 +880,23 @@ class MarketDataService {
       normalizedKey: key,
       propertyType,
       isTypeSpecific: !['townhouse_center', 'townhouse_suburb'].includes(propertyType),
+      priceUnit:     VALUATION_UNITS.marketPricePerM2,
       pricePerM2:   regional.price,
       confidence:   regional.confidence,
       marketTrend:  'Bảng khu vực — cập nhật định kỳ',
+      monthlyRentUnit: VALUATION_UNITS.monthlyRent,
       source:       'REGIONAL_TABLE',
       fetchedAt:    now.toISOString(),
       expiresAt:    new Date(now.getTime() + 2 * 3_600_000).toISOString(),
       region:       regional.region,
+      provenance: buildMarketObservationProvenance({
+        source: 'REGIONAL_TABLE',
+        locationKey: key,
+        propertyType,
+        observedAt: now.toISOString(),
+        fetchedAt: now.toISOString(),
+        expiresAt: new Date(now.getTime() + 2 * 3_600_000).toISOString(),
+      }),
     };
   }
 
@@ -852,7 +904,7 @@ class MarketDataService {
     // Sanity bounds
     if (!Number.isFinite(entry.pricePerM2) || entry.pricePerM2 < MIN_PRICE_VND || entry.pricePerM2 > MAX_PRICE_VND) {
       logger.warn(`[MarketData] Price out of range for "${entry.location}" (${entry.pricePerM2}) — falling back`);
-      entry = this.buildRegionalEntry(entry.location, key);
+      entry = this.buildRegionalEntry(entry.location, key, entry.propertyType);
     }
 
     // LRU eviction
@@ -889,6 +941,9 @@ class MarketDataService {
           trendText:       entry.marketTrend?.slice(0, 100),
           sourceCount:     entry.sourceCount,
           dataRecency:     entry.dataRecency,
+          observedAt:      entry.provenance.observedAt,
+          fetchedAt:       entry.fetchedAt,
+          expiresAt:        entry.expiresAt,
         }).catch(() => {})
       );
     }
