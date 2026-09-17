@@ -7,6 +7,7 @@ const state = vi.hoisted(() => ({
   sendDailyReportDeliveryAlertEmail: vi.fn(),
   lockCalls: 0,
   collectionRows: null as Record<string, any> | null,
+  recipientRows: null as Array<Record<string, any>> | null,
 }));
 
 const query = vi.hoisted(() => vi.fn(async (sql: string, params: any[] = []) => {
@@ -29,7 +30,11 @@ const query = vi.hoisted(() => vi.fn(async (sql: string, params: any[] = []) => 
     return { rows: [state.collectionRows.interactions] };
   }
   if (sql.includes('FROM users WHERE role IN')) {
-    return { rows: [{ tenantId: '11111111-1111-1111-1111-111111111111', email: 'admin@example.com' }] };
+    return {
+      rows: state.recipientRows || [
+        { tenantId: '11111111-1111-1111-1111-111111111111', email: 'admin@example.com', role: 'ADMIN', status: 'ACTIVE' },
+      ],
+    };
   }
   if (sql.includes('FROM agent_report_log')) return { rows: state.report ? [state.report] : [] };
   if (sql.startsWith('INSERT INTO agent_report_log')) {
@@ -105,6 +110,7 @@ describe('daily admin report', () => {
     state.sendDailyReportDeliveryAlertEmail.mockReset().mockResolvedValue({ success: true, status: 'sent' });
     state.lockCalls = 0;
     state.collectionRows = null;
+    state.recipientRows = null;
   });
 
   it('keeps unavailable sources explicit instead of inventing zeroes', () => {
@@ -245,6 +251,92 @@ describe('daily admin report', () => {
     expect(state.report.status).toBe('failed');
     expect(state.sendEmail.mock.calls.every(([, options]) =>
       options.deliveryKey === 'daily-report:11111111-1111-1111-1111-111111111111:2026-08-24:admin@example.com')).toBe(true);
+  });
+
+  it('delivers to every active admin role and keeps the second delivery idempotent', async () => {
+    state.recipientRows = [
+      {
+        tenantId: '11111111-1111-1111-1111-111111111111',
+        email: 'admin@example.com',
+        role: 'ADMIN',
+        status: 'ACTIVE',
+      },
+      {
+        tenantId: '11111111-1111-1111-1111-111111111111',
+        email: 'super-admin@example.com',
+        role: 'SUPER_ADMIN',
+        status: 'ACTIVE',
+      },
+    ];
+    state.sendEmail.mockResolvedValue({ success: true, status: 'sent', messageId: 'provider-1' });
+
+    const first = await runDailyReport('2026-08-24');
+    await runDailyReport('2026-08-24');
+
+    expect(first.results).toEqual([{
+      tenantId: '11111111-1111-1111-1111-111111111111',
+      status: 'sent',
+      recipients: 2,
+    }]);
+    expect(state.report.recipients).toEqual(['admin@example.com', 'super-admin@example.com']);
+    expect(state.sendEmail).toHaveBeenCalledTimes(2);
+
+    const deliveries = state.sendEmail.mock.calls.map(([, options]) => options);
+    expect(deliveries.map(options => options.to)).toEqual([
+      'admin@example.com',
+      'super-admin@example.com',
+    ]);
+    expect(deliveries.map(options => options.deliveryKey)).toEqual([
+      'daily-report:11111111-1111-1111-1111-111111111111:2026-08-24:admin@example.com',
+      'daily-report:11111111-1111-1111-1111-111111111111:2026-08-24:super-admin@example.com',
+    ]);
+    expect(new Set(deliveries.map(options => options.deliveryKey)).size).toBe(2);
+  });
+
+  it('retries every recipient without dropping the other admin role', async () => {
+    state.recipientRows = [
+      {
+        tenantId: '11111111-1111-1111-1111-111111111111',
+        email: 'admin@example.com',
+        role: 'ADMIN',
+        status: 'ACTIVE',
+      },
+      {
+        tenantId: '11111111-1111-1111-1111-111111111111',
+        email: 'super-admin@example.com',
+        role: 'SUPER_ADMIN',
+        status: 'ACTIVE',
+      },
+    ];
+    let attempts = 0;
+    state.sendEmail.mockImplementation(async () => {
+      attempts++;
+      return attempts <= 4
+        ? { success: false, status: 'failed', error: 'provider rejected request' }
+        : { success: true, status: 'sent', messageId: `provider-${attempts}` };
+    });
+
+    const result = await runDailyReport('2026-08-24');
+
+    expect(result.results).toEqual([{
+      tenantId: '11111111-1111-1111-1111-111111111111',
+      status: 'sent',
+      recipients: 2,
+    }]);
+    expect(state.report.recipients).toEqual(['admin@example.com', 'super-admin@example.com']);
+    expect(state.sendEmail).toHaveBeenCalledTimes(6);
+
+    const deliveries = state.sendEmail.mock.calls.map(([, options]) => options);
+    for (let offset = 0; offset < deliveries.length; offset += 2) {
+      expect(deliveries.slice(offset, offset + 2).map(options => options.to)).toEqual([
+        'admin@example.com',
+        'super-admin@example.com',
+      ]);
+      expect(deliveries.slice(offset, offset + 2).map(options => options.deliveryKey)).toEqual([
+        'daily-report:11111111-1111-1111-1111-111111111111:2026-08-24:admin@example.com',
+        'daily-report:11111111-1111-1111-1111-111111111111:2026-08-24:super-admin@example.com',
+      ]);
+    }
   });
 
   it('does not retry an ambiguous timeout, preventing a possible duplicate provider delivery', async () => {
