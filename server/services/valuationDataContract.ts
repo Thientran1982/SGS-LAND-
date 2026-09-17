@@ -5,6 +5,8 @@
  * can validate the same values without importing one another.
  */
 
+import { parseValuationLocation } from './valuationLocationContract';
+
 export const VALUATION_UNITS = {
   marketPricePerM2: 'VND_PER_M2',
   totalPrice: 'VND_TOTAL',
@@ -27,6 +29,11 @@ export type ValuationFreshnessStatus = 'FRESH' | 'STALE' | 'UNKNOWN';
 export interface MarketObservationProvenance {
   source: ValuationSource;
   locationKey: string;
+  locationHierarchy: {
+    province: string | null;
+    district: string | null;
+    project: string | null;
+  };
   propertyType: string;
   priceUnit: ValuationPriceUnit;
   observedAt: string;
@@ -87,9 +94,15 @@ export function buildMarketObservationProvenance(input: {
   dataRecency?: string | null;
   tenantId?: string | null;
 }): MarketObservationProvenance {
+  const locationHierarchy = parseValuationLocation(input.locationKey);
   return {
     source: input.source,
     locationKey: input.locationKey.slice(0, 120),
+    locationHierarchy: {
+      province: locationHierarchy.province,
+      district: locationHierarchy.district,
+      project: locationHierarchy.project,
+    },
     propertyType: input.propertyType,
     priceUnit: VALUATION_UNITS.marketPricePerM2,
     observedAt: input.observedAt,

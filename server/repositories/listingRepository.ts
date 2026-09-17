@@ -1,16 +1,15 @@
 import { BaseRepository, PaginatedResult, PaginationParams } from './baseRepository';
 import { validateListingFields } from '../services/listingValidation';
 import { withRlsBypass } from '../db';
+import {
+  buildValuationLocationCandidatePattern,
+  isValuationLocationMatch,
+  normalizeValuationLocation,
+} from '../services/valuationLocationContract';
 
 /** Shared normalization used by valuation comparable provenance checks. */
 export function normalizeComparableLocation(value: unknown): string {
-  return String(value || '')
-    .toLowerCase()
-    .replace(/đ/g, 'd')
-    .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
-    .replace(/[^a-z0-9\s]/g, ' ')
-    .replace(/\s+/g, ' ')
-    .trim();
+  return normalizeValuationLocation(value);
 }
 
 export function normalizeComparableType(value: unknown): string {
@@ -27,37 +26,7 @@ export function normalizeComparableType(value: unknown): string {
 
 /** Rejects cross-project/cross-province candidates before they reach a median. */
 export function isComparableLocationMatch(target: unknown, candidate: unknown): boolean {
-  const targetText = normalizeComparableLocation(target);
-  const candidateText = normalizeComparableLocation(candidate);
-  const project = targetText.match(/\b(aqua\s*city|aquacity|vinhomes?\s+grand\s+park|grand\s+park)\b/);
-  if (project) {
-    const projectKey = project[1].replace(/\s+/g, ' ');
-    if (projectKey.includes('aqua')) {
-      if (!/\baqua\s*city\b|\baquacity\b/.test(candidateText)) return false;
-    } else if (!/\bvinhomes?\s+grand\s+park\b|\bgrand\s+park\b/.test(candidateText)) {
-      return false;
-    }
-  }
-  const regions: RegExp[] = [
-    /\bq\s*1\b|\bquan\s*1\b|\bdistrict\s*1\b/,
-    /\bq\s*2\b|\bquan\s*2\b|\bdistrict\s*2\b/,
-    /\bq\s*7\b|\bquan\s*7\b|\bdistrict\s*7\b/,
-    /\bq\s*9\b|\bquan\s*9\b|\bdistrict\s*9\b/,
-    /\bbinh thanh\b/, /\bthu duc\b/, /\bbien hoa\b/, /\bdong nai\b/,
-    /\bhcm\b|\btp hcm\b|\bho chi minh\b|\bsaigon\b/,
-  ];
-  for (const region of regions) {
-    if (region.test(targetText)) {
-      const hcm = region.source.includes('hcm');
-      if (hcm
-        ? !(/\bhcm\b|\btp hcm\b|\bho chi minh\b|\bsaigon\b/.test(candidateText))
-        : !region.test(candidateText)) return false;
-    }
-  }
-  if (!project && !regions.some(region => region.test(targetText))) {
-    return candidateText.includes(targetText.slice(0, 50));
-  }
-  return true;
+  return isValuationLocationMatch(target, candidate);
 }
 
 export interface ListingFilters {
@@ -1028,35 +997,13 @@ export class ListingRepository extends BaseRepository {
       const areaMin = params.area * 0.60;
       const areaMax = params.area * 1.60;
 
-      const normalizedTarget = normalizeComparableLocation(params.location);
-      const aliases = [
-        { rx: /\bq\s*1\b|\bquan\s*1\b|\bdistrict\s*1\b/, key: 'quan 1', sql: 'quận 1' },
-        { rx: /\bq\s*2\b|\bquan\s*2\b|\bdistrict\s*2\b/, key: 'quan 2', sql: 'quận 2' },
-        { rx: /\bq\s*7\b|\bquan\s*7\b|\bdistrict\s*7\b/, key: 'quan 7', sql: 'quận 7' },
-        { rx: /\bq\s*9\b|\bquan\s*9\b|\bdistrict\s*9\b/, key: 'quan 9', sql: 'quận 9' },
-        { rx: /\bbinh thanh\b/, key: 'binh thanh', sql: 'Bình Thạnh' },
-        { rx: /\bthu duc\b/, key: 'thu duc', sql: 'Thủ Đức' },
-        { rx: /\bbien hoa\b/, key: 'bien hoa', sql: 'Biên Hòa' },
-        { rx: /\bdong nai\b/, key: 'dong nai', sql: 'Đồng Nai' },
-        { rx: /\bhcm\b|\btp hcm\b|\bho chi minh\b|\bsaigon\b/, key: 'ho chi minh', sql: 'HCM' },
-      ];
-      const projects = [
-        { rx: /\baqua\s*city|\baquacity\b/, key: 'aqua city' },
-        { rx: /\bvinhomes?\s+grand\s+park\b|\bgrand\s+park\b/, key: 'grand park' },
-      ];
-      const targetProject = projects.find(p => p.rx.test(normalizedTarget))?.key;
-      const targetRegions = aliases.filter(a => a.rx.test(normalizedTarget)).map(a => a.key);
-      // A project is a stronger provenance signal than a district. For ordinary
-      // addresses require every explicit regional anchor (e.g. district + province).
-      const locationPattern = targetProject
-        || aliases.find(a => targetRegions.includes(a.key))?.sql
-        || params.location.slice(0, 50);
+      const locationPattern = buildValuationLocationCandidatePattern(params.location);
 
       const maxSamples = params.maxSamples || 20;
 
       // SQL is deliberately only a candidate pre-filter. The full normalized
       // location and type provenance checks below are authoritative.
-      const values: any[] = [areaMin, areaMax, `%${locationPattern}%`];
+      const values: any[] = [areaMin, areaMax, locationPattern];
 
       const query = `
         SELECT

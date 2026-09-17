@@ -47,6 +47,11 @@ describe('valuation data contract', () => {
       priceUnit: 'VND_PER_M2',
       scope: 'GLOBAL',
       sourceCount: 1,
+      locationHierarchy: {
+        province: 'ho chi minh',
+        district: 'quan 1',
+        project: null,
+      },
     });
   });
 });

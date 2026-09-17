@@ -190,6 +190,7 @@ describe('public valuation teaser boundaries', () => {
       'quan 1 tp hcm',
       'apartment_center',
       'VND_PER_M2',
+      '%quan 1%',
     ]);
   });
 
@@ -207,6 +208,7 @@ describe('public valuation teaser boundaries', () => {
       'quan 1 tp hcm',
       'apartment_center',
       'VND_PER_M2',
+      '%quan 1%',
     ]);
   });
 });
