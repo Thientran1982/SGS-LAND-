@@ -260,7 +260,7 @@ export async function publishFacebookPageContent(input: {
         reason: validation.reason,
         idempotencyKey: input.idempotencyKey,
       });
-      return unavailableImageResult(imageUrl, validation.reason);
+      return unavailableImageResult(imageUrl, validation.reason, validation.retryable);
     }
   }
 
@@ -530,46 +530,74 @@ export async function getFacebookDefaultPage(
   }
 }
 
-function unavailableImageResult(imageUrl: string, reason: string): SocialPublishResult {
+function unavailableImageResult(
+  imageUrl: string,
+  reason: string,
+  retryable = false,
+): SocialPublishResult {
   return {
     status: 'FAILED',
-    retryable: false,
+    retryable,
     errorCode: 'FACEBOOK_IMAGE_NOT_PUBLIC',
     safeMessage: `Facebook không thể tải ảnh công khai (${safeImageUrlLabel(imageUrl)}): ${reason}. Không gửi yêu cầu đăng tới Facebook.`,
   };
 }
 
-async function validatePublicImage(imageUrl: string): Promise<{ valid: true } | { valid: false; reason: string }> {
-  try {
-    // This probe intentionally has no provider token, cookies, or authorization
-    // headers. Facebook must be able to retrieve the image as an anonymous client.
-    const response = await fetch(imageUrl, {
-      method: 'GET',
-      redirect: 'follow',
-      credentials: 'omit',
-      headers: { Accept: 'image/*' },
-      signal: AbortSignal.timeout(10_000),
-    });
+type PublicImageValidation =
+  | { valid: true }
+  | { valid: false; reason: string; retryable: boolean };
 
-    if (!response.ok) {
-      return { valid: false, reason: `origin trả về HTTP ${response.status}` };
+async function validatePublicImage(imageUrl: string): Promise<PublicImageValidation> {
+  // A cold deployment, database-backed upload read, or transient proxy failure
+  // can make an otherwise public image unavailable for one request. Retry only
+  // network and upstream failures; permanent 4xx/content-type failures must
+  // remain final so a broken asset does not loop forever.
+  const maxAttempts = 3;
+  for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+    try {
+      // This probe intentionally has no provider token, cookies, or authorization
+      // headers. Facebook must be able to retrieve the image as an anonymous client.
+      const response = await fetch(imageUrl, {
+        method: 'GET',
+        redirect: 'follow',
+        credentials: 'omit',
+        headers: { Accept: 'image/*' },
+        signal: AbortSignal.timeout(10_000),
+      });
+
+      if (!response.ok) {
+        const retryable = response.status === 408 || response.status === 425
+          || response.status === 429 || response.status >= 500;
+        if (retryable && attempt < maxAttempts) {
+          await new Promise(resolve => setTimeout(resolve, 250 * attempt));
+          continue;
+        }
+        return { valid: false, reason: `origin trả về HTTP ${response.status}`, retryable };
+      }
+
+      const contentType = response.headers.get('content-type')?.split(';', 1)[0].trim().toLowerCase();
+      if (!contentType?.startsWith('image/')) {
+        return {
+          valid: false,
+          reason: `origin không trả về nội dung ảnh (Content-Type: ${contentType || 'không có'})`,
+          retryable: false,
+        };
+      }
+
+      const body = await response.arrayBuffer();
+      if (body.byteLength === 0) {
+        return { valid: false, reason: 'origin trả về nội dung ảnh rỗng', retryable: false };
+      }
+
+      return { valid: true };
+    } catch {
+      if (attempt < maxAttempts) {
+        await new Promise(resolve => setTimeout(resolve, 250 * attempt));
+        continue;
+      }
+      return { valid: false, reason: 'không thể kết nối tới origin ảnh', retryable: true };
     }
-
-    const contentType = response.headers.get('content-type')?.split(';', 1)[0].trim().toLowerCase();
-    if (!contentType?.startsWith('image/')) {
-      return {
-        valid: false,
-        reason: `origin không trả về nội dung ảnh (Content-Type: ${contentType || 'không có'})`,
-      };
-    }
-
-    const body = await response.arrayBuffer();
-    if (body.byteLength === 0) {
-      return { valid: false, reason: 'origin trả về nội dung ảnh rỗng' };
-    }
-
-    return { valid: true };
-  } catch {
-    return { valid: false, reason: 'không thể kết nối tới origin ảnh' };
   }
+
+  return { valid: false, reason: 'không thể kết nối tới origin ảnh', retryable: true };
 }

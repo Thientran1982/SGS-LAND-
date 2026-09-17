@@ -106,6 +106,14 @@ const STALE_NOT_READY_BODY_MID2 = [32,118,7851,110,32,78,79,84,95,82,69,65,68,89
 const STALE_NOT_READY_BODY_MID3 = [44,32,113,117,225,32].map(function (c) { return String.fromCharCode(c); }).join('');
 const STALE_NOT_READY_BODY_SUFFIX = [32,103,105,7901,46,32,86,117,105,32,108,242,110,103,32,107,105,7875,109,32,116,114,97,32,107,7871,116,32,110,7889,105,47,113,117,121,7873,110,32,273,259,110,103,32,98,224,105,46].map(function (c) { return String.fromCharCode(c); }).join('');
 
+function sameTimeWindows(left: AutoPostingTimeWindow[], right: AutoPostingTimeWindow[]): boolean {
+  return left.length === right.length
+    && left.every((window, index) => (
+      String(window.start || '') === String(right[index]?.start || '')
+      && String(window.end || '') === String(right[index]?.end || '')
+    ));
+}
+
 type AutoPostingReadiness = {
   readyPlatforms: SocialPlatform[];
   eligibleContentCount: number;
@@ -164,7 +172,7 @@ async function computeEffectiveSettings(
   const targetPlatforms = readyPlatforms.length ? readyPlatforms : [FACEBOOK_PLATFORM];
 
   const changed = targetPostsPerDay !== settings.postsPerDay
-    || JSON.stringify(targetTimeWindows) !== JSON.stringify(settings.timeWindows)
+    || !sameTimeWindows(targetTimeWindows, settings.timeWindows)
     || JSON.stringify([...targetPlatforms].sort()) !== JSON.stringify([...settings.platforms].sort());
 
   if (changed) {

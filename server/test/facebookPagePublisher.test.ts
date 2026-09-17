@@ -677,4 +677,30 @@ describe('Facebook album contract smoke', () => {
     });
     expect(JSON.stringify(fetchMock.mock.calls[0][1])).not.toContain('fake-page-token');
   });
+
+  it('retries a transient image-origin failure before contacting Facebook', async () => {
+    fetchMock
+      .mockRejectedValueOnce(new Error('temporary origin reset'))
+      .mockResolvedValueOnce(new Response('image bytes', {
+        status: 200,
+        headers: { 'content-type': 'image/jpeg' },
+      }))
+      .mockResolvedValueOnce(new Response(JSON.stringify({
+        post_id: 'page-1_43',
+      }), {
+        status: 200,
+        headers: { 'x-fb-trace-id': 'trace-retried-image' },
+      }));
+
+    await expect(publishFacebookPageContent({
+      pageId: 'page-1',
+      pageAccessToken: 'page-token',
+      content: albumContent(['https://cdn.test/retry.jpg']),
+      idempotencyKey: 'smoke:facebook-image-retry',
+    })).resolves.toMatchObject({
+      status: 'PUBLISHED',
+      providerPostId: 'page-1_43',
+    });
+    expect(fetchMock).toHaveBeenCalledTimes(3);
+  });
 });
