@@ -149,8 +149,21 @@ const UI_LABELS: Record<string, Bi> = {
   noImage: ["Ch\u01b0a c\u00f3 \u1ea3nh", "No photo"],
   save: ["L\u01b0u tin", "Save"],
   saved: ["\u0110\u00e3 l\u01b0u", "Saved"],
+  updated: ["C\u1eadp nh\u1eadt", "Updated"],
 };
 const ui = (k: string, g: L): string => bi(UI_LABELS, k, g);
+
+function updatedAgoLabel(raw: unknown, lang: L): string | null {
+  if (!raw) return null;
+  const d = new Date(String(raw));
+  if (Number.isNaN(d.getTime())) return null;
+  const diffDays = Math.floor((Date.now() - d.getTime()) / 86400000);
+  const prefix = ui("updated", lang);
+  if (diffDays <= 0) return `${prefix}: ${lang === "en" ? "today" : "h\u00f4m nay"}`;
+  if (diffDays === 1) return `${prefix}: ${lang === "en" ? "yesterday" : "h\u00f4m qua"}`;
+  if (diffDays < 30) return `${prefix}: ${lang === "en" ? `${diffDays}d ago` : `${diffDays} ng\u00e0y tr\u01b0\u1edbc`}`;
+  return `${prefix}: ${d.toLocaleDateString(lang === "en" ? "en-US" : "vi-VN")}`;
+}
 
 /* Same thumbnail contract as components/ListingCard.tsx: round the width up to
    a multiple of 64 so both apps share the server resize cache. */
@@ -262,6 +275,10 @@ export function PublicListingCard({ listing, list, eager, facets }: { listing: a
   const savedLabel = fav ? ui("saved", lang) : ui("save", lang);
   const sourceTitle = lang === "en" && hasVietnameseSourceText(listing.title);
   const sourceLocation = lang === "en" && hasVietnameseSourceText(listing.location);
+  const updatedLabel = updatedAgoLabel(
+    (listing as any)?.lastSeenAt ?? (listing as any)?.updatedAt ?? (listing as any)?.last_seen_at ?? (listing as any)?.updated_at,
+    lang,
+  );
   return (
     <Link href={lang === "en" ? `/en/bds/${slug}` : `/bds/${slug}`}
       className={`group block rounded-3xl overflow-hidden hover:shadow-token-lg transition-all hover:-translate-y-1 ${list ? "flex" : ""}`}
@@ -358,6 +375,7 @@ export function PublicListingCard({ listing, list, eager, facets }: { listing: a
               {isRent && <span className="text-xs font-semibold ml-0.5" style={{ color: "var(--text-tertiary)" }}>{rentSuffix(lang)}</span>}
             </p>
             {ppm && <p className="text-[12px] font-medium mt-0.5 truncate" style={{ color: "var(--text-tertiary)" }}>{ppm}</p>}
+          {updatedLabel && <p className="text-[11px] mt-0.5 truncate" style={{ color: "var(--text-tertiary)" }}>{updatedLabel}</p>}
             {(() => {
               if (!facets || area <= 0) return null;
               const locKey = String(listing.location || "").split(",").pop()?.trim() || "";

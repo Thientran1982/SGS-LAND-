@@ -36,10 +36,45 @@ type LiveChatSearchParams = {
   source?: string | string[];
   prompt?: string | string[];
   prefill?: string | string[];
+  listing?: string | string[];
+  project?: string | string[];
+  purpose?: string | string[];
 };
 
 function firstParam(value: string | string[] | undefined, fallback: string) {
   return typeof value === "string" && value.trim() ? value : fallback;
+}
+
+type ContactPurpose = "buy" | "rent" | "consignment" | "valuation" | "brokerage" | "other";
+
+const PURPOSE_INTENT_VI: Record<ContactPurpose, string> = {
+  buy: "tư vấn mua bất động sản",
+  rent: "tư vấn thuê bất động sản",
+  consignment: "ký gửi bất động sản",
+  valuation: "được tư vấn thêm về định giá",
+  brokerage: "kết nối với môi giới phụ trách khu vực",
+  other: "được tư vấn thêm",
+};
+
+// Giu context khi chuyen tu listing/du an/muc dich sang Minh.
+function buildContextPrompt(params: LiveChatSearchParams): string {
+  const listing = firstParam(params.listing, "");
+  const project = firstParam(params.project, "");
+  const purposeRaw = firstParam(params.purpose, "");
+  const purpose = (Object.keys(PURPOSE_INTENT_VI) as ContactPurpose[]).includes(purposeRaw as ContactPurpose)
+    ? (purposeRaw as ContactPurpose)
+    : undefined;
+  if (listing) {
+    const intent = purpose ? PURPOSE_INTENT_VI[purpose] : "tư vấn thêm";
+    return `Tôi đang xem tin đăng mã ${listing}, vui lòng hỗ trợ tôi ${intent}.`;
+  }
+  if (project) {
+    return `Tôi quan tâm dự án ${project}, vui lòng gửi tôi bảng giá và thông tin chi tiết.`;
+  }
+  if (purpose) {
+    return `Tôi muốn ${PURPOSE_INTENT_VI[purpose]}, vui lòng hỗ trợ tôi.`;
+  }
+  return "";
 }
 
 export default async function LiveChatPage({
@@ -54,7 +89,7 @@ export default async function LiveChatPage({
     "Hỏi bất kỳ điều gì về thị trường BĐS — giá, pháp lý, dự án, lãi suất ngân hàng",
   );
   const source = firstParam(params.source, "WEB");
-  const prompt = firstParam(params.prompt, firstParam(params.prefill, ""));
+  const prompt = firstParam(params.prompt, firstParam(params.prefill, buildContextPrompt(params)));
   const en = (await getLang()) === "en";
 
   return (
