@@ -11,6 +11,12 @@ export class GoogleAdapter implements ProviderAdapter {
     return !!getProviderApiKey('google');
   }
 
+  supportsFilePart(mimeType: string): boolean {
+    // Gemini's inline document path is portable for PDF. DOCX must be
+    // represented as page images instead of being sent as an unknown part.
+    return mimeType === 'application/pdf';
+  }
+
   private getClient(): GoogleGenAI {
     if (this.client) return this.client;
     const apiKey = getProviderApiKey('google');

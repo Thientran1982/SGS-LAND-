@@ -11,6 +11,11 @@ export class AnthropicAdapter implements ProviderAdapter {
     return !!getProviderApiKey('anthropic');
   }
 
+  supportsFilePart(mimeType: string): boolean {
+    // Claude's document content block supports PDF, not Office Open XML.
+    return mimeType === 'application/pdf';
+  }
+
   private getClient(): Anthropic {
     if (this.client) return this.client;
     const apiKey = getProviderApiKey('anthropic');

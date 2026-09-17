@@ -31,6 +31,7 @@ export type ProviderEvidenceRef = {
 export type ProviderImagePart = {
   mimeType: string;
   dataBase64: string;
+  filename?: string;
   source?: ProviderEvidenceRef;
 };
 
@@ -77,6 +78,8 @@ export interface ProviderAdapter {
   readonly name: string;
   /** True neu da co API key (Secret) cho provider nay. */
   isConfigured(): boolean;
+  /** True when the selected model/provider accepts this native file part. */
+  supportsFilePart?(mimeType: string): boolean;
   /** Sinh noi dung 1 lan (non-stream). */
   generate(params: GenerateParams): Promise<GenerateResult>;
 }

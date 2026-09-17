@@ -2,7 +2,7 @@
  * Provider dispatcher — chon adapter dua tren model (qua getProviderForModel).
  * Fallback an toan ve Gemini neu provider chua cau hinh key.
  */
-import type { ProviderAdapter, GenerateParams, GenerateResult } from './types';
+import type { ProviderAdapter, GenerateParams, GenerateResult, ProviderImagePart } from './types';
 import { GoogleAdapter } from './googleAdapter';
 import { AnthropicAdapter } from './anthropicAdapter';
 import { OpenAiCompatibleAdapter } from './openaiAdapter';
@@ -16,6 +16,7 @@ import type { AiProvider } from '../modelPolicy';
 import { ProviderExhaustedError } from './types';
 import type { ProviderAttempt } from './types';
 import { aiGovernanceRepository } from '../../repositories/aiGovernanceRepository';
+import { DocumentVisualFallbackError, renderDocumentVisualPages } from '../documentVisualRenderer';
 
 const XAI_BASE_URL = process.env.XAI_BASE_URL || 'https://api.x.ai/v1';
 const OPENROUTER_BASE_URL = process.env.OPENROUTER_BASE_URL || 'https://openrouter.ai/api/v1';
@@ -172,6 +173,7 @@ export function isProviderFallbackError(error: unknown): boolean {
   // Treating 402/404 as terminal made a stale OpenRouter model block Minh
   // before Gemini could answer.
   return status === 401 || status === 402 || status === 403 ||
+    status === 415 ||
     status === 404 || status === 408 || status === 429 || status === 503 || status === 504;
 }
 
@@ -263,6 +265,7 @@ export async function generateWithPolicy(
 
   let lastError: unknown;
   let attemptedProviders = 0;
+  const renderedDocumentCache = new Map<string, Promise<ProviderImagePart[]>>();
   for (const [index, candidate] of candidates.entries()) {
     if (options.maxAttempts && attemptedProviders >= options.maxAttempts) break;
     const adapter = adapters[candidate.provider] || getAdapter(candidate.provider);
@@ -274,8 +277,35 @@ export async function generateWithPolicy(
     attemptedProviders += 1;
     const startedAt = Date.now();
     try {
+      const candidateParams = { ...params, model: candidate.model };
+      const unsupportedFiles = (params.files || []).filter(file =>
+        adapter.supportsFilePart ? !adapter.supportsFilePart(file.mimeType) : false,
+      );
+      if (unsupportedFiles.length > 0) {
+        const renderedImages: ProviderImagePart[] = [];
+        for (const file of unsupportedFiles) {
+          const cacheKey = `${file.source?.contentHash || ''}:${file.mimeType}:${file.dataBase64.length}`;
+          let rendered = renderedDocumentCache.get(cacheKey);
+          if (!rendered) {
+            rendered = renderDocumentVisualPages(file);
+            renderedDocumentCache.set(cacheKey, rendered);
+          }
+          const pages = await rendered;
+          if (pages.length === 0) {
+            throw new DocumentVisualFallbackError(
+              `Không có trang trực quan để gửi cho ${file.filename || 'tài liệu'}`,
+            );
+          }
+          renderedImages.push(...pages);
+        }
+        const supportedFiles = (params.files || []).filter(file =>
+          !unsupportedFiles.includes(file),
+        );
+        candidateParams.files = supportedFiles.length ? supportedFiles : undefined;
+        candidateParams.images = [...(params.images || []), ...renderedImages];
+      }
       const result = await withTimeout(
-        adapter.generate({ ...params, model: candidate.model }),
+        adapter.generate(candidateParams),
         params.timeoutMs,
       );
       addAttempt(attempts, candidate.provider, candidate.model, 'success', startedAt);

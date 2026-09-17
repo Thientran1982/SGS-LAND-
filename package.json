@@ -90,6 +90,7 @@
     "esbuild": "^0.28.2",
     "exceljs": "^4.4.0",
     "express": "^5.2.1",
+    "fflate": "^0.8.3",
     "file-type": "^21.3.4",
     "framer-motion": "^12.38.0",
     "helmet": "^8.1.0",

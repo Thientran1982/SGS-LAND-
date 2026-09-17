@@ -22,6 +22,12 @@ export class OpenAiCompatibleAdapter implements ProviderAdapter {
     return !!getProviderApiKey(this.provider);
   }
 
+  supportsFilePart(mimeType: string): boolean {
+    // Chat Completions file parts are portable for PDFs, but DOCX support is
+    // not consistent across OpenAI-compatible gateways.
+    return mimeType === 'application/pdf';
+  }
+
   private getClient(): OpenAI {
     if (this.client) return this.client;
     const apiKey = getProviderApiKey(this.provider);
