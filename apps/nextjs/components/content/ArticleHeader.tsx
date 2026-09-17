@@ -29,12 +29,12 @@ export function ArticleHeader({ article, author, category, className = "" }: Art
         <ol className="flex items-center flex-wrap gap-1 text-xs" style={{ color: "var(--text-tertiary)" }}>
           <li><Link href="/" className="hover:underline">Trang chủ</Link></li>
           <li aria-hidden>/</li>
-          <li><Link href="/news" className="hover:underline">Kiến thức & Tin tức</Link></li>
+          <li><Link href="/tin-tuc" className="hover:underline">Kiến thức & Tin tức</Link></li>
           {category && (
             <>
               <li aria-hidden>/</li>
               <li>
-                <Link href={`/news?category=${category.slug}`} className="hover:underline">
+                <Link href={`/tin-tuc?category=${category.slug}`} className="hover:underline">
                   {category.name}
                 </Link>
               </li>

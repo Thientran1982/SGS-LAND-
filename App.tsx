@@ -445,10 +445,22 @@ const useRouter = () => {
         const _seg = target.split('?')[0].replace(/\/+$/, '');
         if (_seg === '/login') { window.location.href = target; return; }
         if (_seg === '/home' || _seg === '') { window.location.href = '/'; return; }
-        // /marketplace (San Giao Dich) is a Next.js page: apps/nextjs/app/(public)/marketplace.
-        // Client-side routing would render the legacy Vite pages/ProductSearch.tsx instead,
-        // so hand off with a full-page navigation exactly like /home and /login.
-        if (_seg === '/marketplace' || _seg.startsWith('/marketplace/')) { window.location.href = target; return; }
+        // Public customer journeys are owned by the Next shell. A Vite
+        // client-side push would render legacy pages instead of the canonical
+        // route and would also produce a different header/footer.
+        const withoutLocale = _seg.replace(/^\/en(?=\/|$)/, '') || '/';
+        const NEXT_PUBLIC_PREFIXES = [
+            '/marketplace', '/search', '/mua', '/thue', '/du-an', '/khu-vuc',
+            '/tin-tuc', '/news', '/landing', '/landing-ai', '/p',
+            '/ai-valuation', '/ky-gui-bat-dong-san', '/livechat', '/contact',
+            '/about-us', '/careers', '/chu-dau-tu', '/chuyen-gia',
+            '/help-center', '/huong-dan-su-dung', '/lai-suat-ngan-hang',
+            '/phap-ly-nha-dat', '/bao-cao-thi-truong',
+        ];
+        if (NEXT_PUBLIC_PREFIXES.some(prefix => withoutLocale === prefix || withoutLocale.startsWith(`${prefix}/`))) {
+            window.location.href = target;
+            return;
+        }
         window.history.pushState(null, '', target);
         setRoute(getPathData());
     }, [getPathData]);

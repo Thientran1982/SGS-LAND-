@@ -54,7 +54,7 @@ export async function GET() {
     .sort((a, b) => b._pub - a._pub)
     .slice(0, MAX_ITEMS)
     .map((a) => {
-      const link = `${BASE}/news/${a.slug}`;
+      const link = `${BASE}/tin-tuc/${a.slug}`;
       const pubDate = new Date(a._pub).toUTCString();
       const desc = a.excerpt || a.summary || "";
       const cat = a.category ? `\n      <category>${esc(a.category)}</category>` : "";

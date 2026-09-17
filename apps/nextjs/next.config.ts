@@ -155,10 +155,15 @@ const nextConfig: NextConfig = {
   async redirects() {
     return [
       { source: "/search",                  destination: "/marketplace",             permanent: true },
-      { source: "/mua",                    destination: "/marketplace?transaction=SALE", permanent: false },
-      { source: "/thue",                   destination: "/marketplace?transaction=RENT", permanent: false },
-      { source: "/en/mua",                 destination: "/en/marketplace?transaction=SALE", permanent: false },
-      { source: "/en/thue",                destination: "/en/marketplace?transaction=RENT", permanent: false },
+      { source: "/mua",                    destination: "/marketplace?transaction=SALE", permanent: true },
+      { source: "/thue",                   destination: "/marketplace?transaction=RENT", permanent: true },
+      { source: "/en/mua",                 destination: "/en/marketplace?transaction=SALE", permanent: true },
+      { source: "/en/thue",                destination: "/en/marketplace?transaction=RENT", permanent: true },
+      // `/tin-tuc` is the canonical consumer editorial route. Keep the legacy
+      // collection aliases for existing links while leaving `/news/dang-tin`
+      // and its edit routes available to authenticated staff.
+      { source: "/news",                   destination: "/tin-tuc",             permanent: true },
+      { source: "/en/news",                destination: "/en/tin-tuc",          permanent: true },
       { source: "/lai-suat-vay-ngan-hang",  destination: "/lai-suat-ngan-hang",      permanent: true },
       { source: "/lai-suat-vay-mua-nha",    destination: "/lai-suat-ngan-hang",      permanent: true },
       { source: "/nha-pho-trung-tam",       destination: "/khu-vuc/nha-pho-trung-tam", permanent: true },
@@ -167,6 +172,9 @@ const nextConfig: NextConfig = {
       { source: "/du-an/bat-dong-san-long-an", destination: "/khu-vuc/bat-dong-san-long-an", permanent: true },
       { source: "/du-an/bat-dong-san-dong-nai", destination: "/khu-vuc/bat-dong-san-dong-nai", permanent: true },
       { source: "/landing/aqua-city", destination: "/du-an/aqua-city", permanent: true },
+      { source: "/landing/masteri-cosmo-central", destination: "/du-an/masteri-cosmo-central", permanent: true },
+      { source: "/landing/vinhomes-hoc-mon", destination: "/du-an/vinhomes-hoc-mon", permanent: true },
+      { source: "/landing/legacy-66", destination: "/du-an/legacy-66", permanent: true },
       { source: "/du-an/vinhhomes-hoc-mon", destination: "/du-an/vinhomes-hoc-mon", permanent: true },
     ];
   },

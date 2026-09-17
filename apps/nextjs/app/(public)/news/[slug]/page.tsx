@@ -68,7 +68,7 @@ export default async function ArticlePage({
           <p className="leading-7 mb-6" style={{ color: "var(--text-secondary)" }}>
             This article is currently available in Vietnamese. We are preparing a reviewed English edition rather than showing untranslated content.
           </p>
-          <a href="/en/news" className="inline-flex items-center rounded-xl px-5 py-3 text-sm font-semibold text-white" style={{ background: "var(--primary-600)" }}>
+          <a href="/en/tin-tuc" className="inline-flex items-center rounded-xl px-5 py-3 text-sm font-semibold text-white" style={{ background: "var(--primary-600)" }}>
             Back to English news
           </a>
         </div>

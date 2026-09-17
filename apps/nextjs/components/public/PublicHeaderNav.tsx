@@ -64,14 +64,15 @@ export function PublicHeader({ authed = false }: { authed?: boolean }) {
   };
 
   const realEstateLinks = [
-    { href: "/mua",                 vi: "Mua",           en: "Buy"          },
-    { href: "/thue",                vi: "Thuê",          en: "Rent"         },
-    { href: "/du-an",              vi: "Dự Án",        en: "Projects"     },
+    { href: "/mua",                vi: "Mua nhà đất",    en: "Buy property" },
+    { href: "/thue",               vi: "Thuê nhà đất",   en: "Rent property" },
+    { href: "/du-an",              vi: "Dự án",          en: "Projects"      },
   ];
   const navLinks = [
-    { href: "/ai-valuation",         vi: "Định Giá AI",  en: "AI Valuation" },
-    { href: "/news",                 vi: "Tin Tức",      en: "News"         },
-    { href: "/contact",              vi: "Liên Hệ",      en: "Contact"      },
+    { href: "/ai-valuation",        vi: "Định giá BĐS",      en: "Property valuation" },
+    { href: "/tin-tuc",             vi: "Kiến thức & Tin tức", en: "Knowledge & News" },
+    { href: "/ky-gui-bat-dong-san", vi: "Ký gửi tài sản",    en: "Consign property" },
+    { href: "/contact",             vi: "Liên hệ",            en: "Contact" },
   ];
   const localizedHref = (href: string) => {
     const viPath = VI_PUBLIC_PATHS[href] || href;
@@ -149,7 +150,7 @@ export function PublicHeader({ authed = false }: { authed?: boolean }) {
                 aria-haspopup="menu"
                 aria-expanded={realEstateOpen}
               >
-                {lang === "vi" ? "Bất Động Sản" : "Real Estate"}
+                {lang === "vi" ? "Mua bán & cho thuê" : "Buy & rent"}
                 <ChevronDown className={`w-3.5 h-3.5 transition-transform ${realEstateOpen ? "rotate-180" : ""}`} />
               </button>
               <div
@@ -360,6 +361,14 @@ export function PublicHeader({ authed = false }: { authed?: boolean }) {
               </button>
             </div>
             <div className="flex gap-2">
+              <Link
+                href={localizedHref("/ky-gui-bat-dong-san")}
+                onClick={() => setMenuOpen(false)}
+                className="flex-1 text-center text-sm font-semibold py-2.5 rounded-lg"
+                style={{ border: "1.5px solid var(--sgs-primary)", color: "var(--sgs-primary)" }}
+              >
+                {lang === "vi" ? "Ký gửi tài sản" : "Consign property"}
+              </Link>
               <Link
                 href={authed ? "/dashboard" : "/login"}
                 onClick={() => setMenuOpen(false)}

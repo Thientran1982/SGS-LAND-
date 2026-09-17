@@ -160,7 +160,7 @@ function FeaturedArticle({ article, prefix = "", lang = "vi" }: { article: Artic
 export default async function NewsPage() {
   const lang = await getLang();
   const en = lang === "en";
-  const prefix = en ? "/en/news" : "/tin-tuc";
+  const prefix = en ? "/en/tin-tuc" : "/tin-tuc";
   if (en) {
     return (
       <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-16 sm:py-24">
@@ -170,7 +170,7 @@ export default async function NewsPage() {
           <p className="leading-7 mb-6" style={{ color: "var(--text-secondary)" }}>
             English editions of our market analysis and legal guides are being prepared. Vietnamese articles remain available at the Vietnamese site.
           </p>
-          <a href="/tin-tuc" className="inline-flex items-center rounded-xl px-5 py-3 text-sm font-semibold text-white" style={{ background: "var(--primary-600)" }}>
+           <a href="/en/tin-tuc" className="inline-flex items-center rounded-xl px-5 py-3 text-sm font-semibold text-white" style={{ background: "var(--primary-600)" }}>
             Read the Vietnamese edition
           </a>
         </div>

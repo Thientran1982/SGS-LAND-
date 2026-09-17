@@ -11,10 +11,10 @@ const FOOTER_PROJECTS = [
   { label: "Izumi City Nam Long",      href: "/du-an/izumi-city" },
   { label: "Vinhomes Grand Park",      href: "/du-an/vinhomes-grand-park" },
   { label: "Vinhomes Cần Giờ",         href: "/du-an/vinhomes-can-gio" },
-  { label: "Masteri Cosmo Central",    href: "/landing/masteri-cosmo-central/" },
-  { label: "Vinhomes Hóc Môn",          href: "/landing/vinhomes-hoc-mon/" },
+  { label: "Masteri Cosmo Central",    href: "/du-an/masteri-cosmo-central" },
+  { label: "Vinhomes Hóc Môn",          href: "/du-an/vinhomes-hoc-mon" },
   { label: "Diamond Sky Van Phúc City", href: "/du-an/diamond-sky-van-phuc-city" },
-  { label: "Legacy 66",                href: "/landing/legacy-66/" },
+  { label: "Legacy 66",                href: "/du-an/legacy-66" },
   { label: "Grand Manhattan Novaland", href: "/du-an/grand-manhattan-novaland" },
   { label: "Khu đô thị Thủ Thiêm",      href: "/du-an/thu-thiem" },
   { label: "Sơn Kim Land",             href: "/du-an/son-kim-land" },
@@ -29,6 +29,7 @@ const FOOTER_SUPPORT_CUSTOMER = [
   { vi: "Định giá AI", en: "AI Valuation", href: "/ai-valuation" },
   { vi: "Lãi suất ngân hàng", en: "Bank Rates", href: "/lai-suat-ngan-hang" },
   { vi: "Trò chuyện với Minh", en: "Chat with Minh", href: "/livechat" },
+  { vi: "Ký gửi tài sản", en: "Consign property", href: "/ky-gui-bat-dong-san" },
   { vi: "Hướng dẫn sử dụng", en: "User Guide", href: "/huong-dan-su-dung" },
 ];
 const FOOTER_SUPPORT_AGENT = [
@@ -37,7 +38,7 @@ const FOOTER_SUPPORT_AGENT = [
 ];
 const FOOTER_ABOUT = [
   { vi: "Về chúng tôi",     en: "About Us",             href: "/about-us" },
-  { vi: "Tin tức",          en: "News",                 href: "/news" },
+  { vi: "Kiến thức & tin tức", en: "Knowledge & News",  href: "/tin-tuc" },
   { vi: "Tuyển dụng",       en: "Careers",              href: "/careers" },
   { vi: "Liên hệ",          en: "Contact",              href: "/contact" },
   { vi: "Chủ đầu tư",       en: "Developers",           href: "/chu-dau-tu" },
@@ -269,12 +270,6 @@ export function PublicFooter() {
             </Link>
           ))}
         </div>
-        </div>
-
-        <div className="flex justify-end pt-4">
-          <p className="text-xs" style={{ color: "var(--sgs-on-dark-muted)" }}>
-            API: <a href="/developers" style={{ color: "#B9C6D4" }} onMouseEnter={e => linkHover(e, true)} onMouseLeave={e => linkHover(e, false)}>developers</a>
-          </p>
         </div>
 
         <div className="flex flex-col sm:flex-row items-center justify-between gap-3 pt-5 pb-20 sm:pb-6 sm:pr-24">

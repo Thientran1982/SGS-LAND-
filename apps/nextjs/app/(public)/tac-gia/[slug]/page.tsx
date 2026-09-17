@@ -86,7 +86,7 @@ export default async function AuthorPage({
           <ol className="flex items-center flex-wrap gap-1 text-xs" style={{ color: "var(--text-tertiary)" }}>
             <li><Link href="/" className="hover:underline">Trang chủ</Link></li>
             <li aria-hidden>/</li>
-            <li><Link href="/news" className="hover:underline">Kiến thức</Link></li>
+            <li><Link href="/tin-tuc" className="hover:underline">Kiến thức</Link></li>
             <li aria-hidden>/</li>
             <li style={{ color: "var(--text-secondary)" }} aria-current="page">{author.name}</li>
           </ol>
@@ -218,7 +218,7 @@ export default async function AuthorPage({
                       )}
                       <h3 className="font-semibold text-sm leading-snug mb-1 group-hover:text-sgs-primary transition-colors"
                         style={{ color: "var(--text-primary)" }}>
-                        <Link href={`/news/${article.slug}`}>{article.title}</Link>
+                        <Link href={`/tin-tuc/${article.slug}`}>{article.title}</Link>
                       </h3>
                       <p className="text-xs line-clamp-2 mb-2" style={{ color: "var(--text-secondary)" }}>
                         {article.excerpt}
@@ -234,7 +234,7 @@ export default async function AuthorPage({
                         </span>
                       </div>
                     </div>
-                    <Link href={`/news/${article.slug}`} className="shrink-0 mt-1"
+                    <Link href={`/tin-tuc/${article.slug}`} className="shrink-0 mt-1"
                       style={{ color: "var(--primary-600)" }} aria-label={`Đọc ${article.title}`}>
                       <ArrowRight className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" />
                     </Link>

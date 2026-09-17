@@ -35,8 +35,8 @@ must not be interpreted as zero or as a ranking.
 - https://sgsland.vn/bat-dong-san-long-thanh
 - https://sgsland.vn/du-an/aqua-city
 - https://sgsland.vn/du-an/izumi-city
-- https://sgsland.vn/landing/legacy-66
-- https://sgsland.vn/landing/masteri-cosmo-central
+- https://sgsland.vn/du-an/legacy-66
+- https://sgsland.vn/du-an/masteri-cosmo-central
 - https://sgsland.vn/phap-ly-nha-dat
 - https://sgsland.vn/lai-suat-ngan-hang
 - https://sgsland.vn/ai-valuation

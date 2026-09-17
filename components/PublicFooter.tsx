@@ -15,10 +15,10 @@ const FOOTER_PROJECTS = [
   { label: "Izumi City Nam Long",       href: "/du-an/izumi-city"              },
   { label: "Vinhomes Grand Park",       href: "/du-an/vinhomes-grand-park"     },
   { label: "Vinhomes Cần Giờ",          href: "/du-an/vinhomes-can-gio"        },
-  { label: "Masteri Cosmo Central",     href: "/landing/masteri-cosmo-central/"},
-  { label: "Vinhomes Hóc Môn",          href: "/landing/vinhomes-hoc-mon/"     },
+   { label: "Masteri Cosmo Central",     href: "/du-an/masteri-cosmo-central"  },
+   { label: "Vinhomes Hóc Môn",          href: "/du-an/vinhomes-hoc-mon"       },
   { label: "Diamond Sky Vạn Phúc City", href: "/du-an/diamond-sky-van-phuc-city"},
-  { label: "Legacy 66",                 href: "/landing/legacy-66/"            },
+   { label: "Legacy 66",                 href: "/du-an/legacy-66"               },
   { label: "Grand Manhattan Novaland",  href: "/du-an/grand-manhattan-novaland"},
   { label: "Khu đô thị Thủ Thiêm",      href: "/du-an/thu-thiem"               },
   { label: "Sơn Kim Land",              href: "/du-an/son-kim-land"            },
@@ -40,7 +40,7 @@ const SOCIAL_LINKS = [
 ];
 const FOOTER_ABOUT = [
   { vi: "Về chúng tôi",       en: "About Us",              href: "/about-us"               },
-  { vi: "Tin tức",             en: "News",                  href: "/news"                   },
+   { vi: "Kiến thức & tin tức", en: "Knowledge & News",      href: "/tin-tuc"               },
   { vi: "Tuyển dụng",          en: "Careers",               href: "/careers"                },
   { vi: "Liên hệ",             en: "Contact",               href: "/contact"                },
   { vi: "Chủ đầu tư",         en: "Developers",            href: "/chu-dau-tu"             },
@@ -50,7 +50,7 @@ const FOOTER_ABOUT = [
   { vi: "BĐS Bình Thạnh",     en: "Binh Thanh Properties", href: "/bat-dong-san-binh-thanh"},
   { vi: "BĐS Quận 7",         en: "District 7 Properties", href: "/bat-dong-san-quan-7"    },
   { vi: "BĐS Long An",        en: "Long An Properties",    href: "/bat-dong-san-long-an"   },
-  { vi: "Nhà phố Trung Tâm",  en: "Central Townhouses",    href: "/du-an/nha-pho-trung-tam"},
+   { vi: "Nhà phố Trung Tâm",  en: "Central Townhouses",    href: "/khu-vuc/nha-pho-trung-tam"},
   { vi: "Trạng thái hệ thống", en: "System Status",        href: "/status"                 },
 ];
 const LEGAL_LINKS = [

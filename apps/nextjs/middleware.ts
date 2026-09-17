@@ -30,6 +30,19 @@ export function middleware(request: NextRequest) {
     localeRewrite = true;
   }
 
+  // Consumer articles use `/tin-tuc`; keep the authenticated publishing
+  // workspace under `/news/dang-tin` while canonicalizing old public article
+  // links, including deep links shared by search engines and social posts.
+  if (pathname === "/news" || pathname.startsWith("/news/")) {
+    const segments = pathname.split("/").filter(Boolean);
+    const articlePath = segments.slice(1).join("/");
+    if (segments[1] !== "dang-tin") {
+      const canonical = request.nextUrl.clone();
+      canonical.pathname = `${lang === "en" ? "/en" : ""}/tin-tuc${articlePath ? `/${articlePath}` : ""}`;
+      return NextResponse.redirect(canonical, 308);
+    }
+  }
+
   // —— Hard 404 cho cac route co tap slug dong (tranh soft-404) ——
   // notFound() trong route dong chi tra 200 vi shell da stream, nen chan tu day.
   const DEV_SLUGS = new Set([

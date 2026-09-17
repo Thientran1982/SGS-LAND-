@@ -2175,7 +2175,7 @@ export const AiValuation: React.FC = () => {
                                     {!currentUser && (
                                         <div className="mt-4 inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-sgs-verified/10 border border-sgs-verified/30 text-sgs-verified text-xs font-semibold">
                                             <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" /></svg>
-                                            <a href="/#/auth/login" className="hover:text-sgs-on-dark-muted transition-colors">Đăng nhập để xem số liệu đầy đủ →</a>
+                                             <a href="/login?redirect=%2Fai-valuation" className="hover:text-sgs-on-dark-muted transition-colors">Đăng nhập để xem số liệu đầy đủ →</a>
                                         </div>
                                     )}
                                 </div>
