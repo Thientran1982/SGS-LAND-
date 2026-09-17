@@ -1479,13 +1479,13 @@ class DatabaseApiClient {
         'campaigns', 'seq', 'social-publishing', 'routing', 'auction', 'my-landing',
       ]),
       makeGroup('administration', 'menu.administration', [
-        'approvals', 'users', 'set', 'vendors', 'billing', 'security',
+        'approvals', 'users', 'set', 'vendors', 'billing', 'security', 'system',
       ]),
       makeGroup('ai-data-infrastructure', 'menu.ai_data_infrastructure', [
         'home', 'custom-fields', 'scoring', 'knowledge', 'rep',
         'ai-gov', 'agent-audit', 'agent-cockpit', 'agent-tasks',
         'ai-cost', 'valuation-accuracy', 'data', 'seo', 'scraper',
-        'error-monitor', 'system',
+        'error-monitor',
       ]),
     ];
     return groups.filter(group => group.items.length > 0);
