@@ -155,16 +155,6 @@ export default async function RootLayout({ children }: { children: React.ReactNo
         className={`${beVietnamPro.variable} ${ibmPlexMono.variable} font-sans antialiased`}
         style={{ background: "var(--bg-app)", color: "var(--text-primary)" }}
       >
-        {/* Remove a production service worker before preview hydration. A
-            stale cache can otherwise serve old client chunks beside fresh SSR
-            HTML after switching the same origin back to the dev workflow. */}
-        {process.env.NODE_ENV !== "production" && (
-          <script
-            dangerouslySetInnerHTML={{
-              __html: `try{if("serviceWorker"in navigator){navigator.serviceWorker.getRegistrations().then(function(rs){rs.forEach(function(r){r.unregister()})});if("caches"in window){caches.keys().then(function(ks){ks.filter(function(k){return k.indexOf("sgsland-")===0}).forEach(function(k){caches.delete(k)})})}}}catch(e){}`,
-            }}
-          />
-        )}
         {/* Inline <script> tags live at the top of <body>, not in <head>:
             the Replit dev proxy injects its own <script> into <head>, which
             shifts positions and breaks React hydration in the preview. */}
@@ -173,6 +163,19 @@ export default async function RootLayout({ children }: { children: React.ReactNo
             __html: `window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag('js',new Date());gtag('config','G-3LBRB691S4');`,
           }}
         />
+
+        {/* A development preview can retain a worker from an older build.
+            Remove its registrations and caches before React hydrates, then
+            reload once so the document and client chunks come from the same
+            Next.js build. Production keeps the offline worker untouched. */}
+        {process.env.NODE_ENV !== "production" && (
+          <script
+            id="sgs-dev-service-worker-cleanup"
+            dangerouslySetInnerHTML={{
+              __html: `(()=>{const k="sgs-dev-sw-cleanup";if(!("serviceWorker"in navigator))return;let r=false;try{r=sessionStorage.getItem(k)==="reloading";if(r)sessionStorage.removeItem(k)}catch(e){}const c="caches"in window?caches.keys().catch(()=>[]):Promise.resolve([]);const p=Promise.all([navigator.serviceWorker.getRegistrations().catch(()=>[]),c]).then(async([s,n])=>{const stale=s.length>0||n.length>0;await Promise.all(s.map(x=>x.unregister().catch(()=>false)));await Promise.all(n.map(x=>caches.delete(x).catch(()=>false)));if(stale&&!r){try{sessionStorage.setItem(k,"reloading")}catch(e){}window.location.reload()}}).catch(()=>{});window.__sgsDevServiceWorkerCleanup=p})()`,
+            }}
+          />
+        )}
 
         {/* Sitewide JSON-LD: WebSite (SearchAction) + Organization (E-E-A-T) */}
         <SchemaScript schemas={[

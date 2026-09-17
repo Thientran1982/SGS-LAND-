@@ -69,4 +69,47 @@ test.describe("public header responsive navigation", () => {
       ).toHaveCount(1);
     });
   }
+
+  test("cleans stale preview service workers before desktop header hydration", async ({ page }) => {
+    const hydrationErrors: string[] = [];
+
+    page.on("console", (message) => {
+      if (message.type() === "error" && /hydration|hydrat/i.test(message.text())) {
+        hydrationErrors.push(message.text());
+      }
+    });
+    page.on("pageerror", (error) => {
+      if (/hydration|hydrat/i.test(error.message)) {
+        hydrationErrors.push(error.message);
+      }
+    });
+
+    await page.setViewportSize({ width: 1280, height: 800 });
+    await page.goto("/", { waitUntil: "domcontentloaded" });
+    await page.evaluate(async () => {
+      const registration = await navigator.serviceWorker.register("/sw.js");
+      await registration.update();
+      await navigator.serviceWorker.ready;
+
+      const legacyCache = await caches.open("sgsland-preview-legacy-v0");
+      await legacyCache.put(
+        "/_next/static/chunks/legacy-preview.js",
+        new Response("/* stale preview chunk */", {
+          headers: { "Content-Type": "application/javascript" },
+        }),
+      );
+    });
+
+    await page.reload({ waitUntil: "domcontentloaded" });
+    const desktopNav = page.locator("[data-public-desktop-nav]");
+    await expect(desktopNav).toBeVisible();
+    await expect(desktopNav).toHaveClass(/(?:^|\s)hidden(?:\s|$)/);
+    await expect(desktopNav).toHaveClass(/(?:^|\s)xl:flex(?:\s|$)/);
+
+    await expect.poll(async () => page.evaluate(async () => ({
+      registrations: (await navigator.serviceWorker.getRegistrations()).length,
+      caches: await caches.keys(),
+    }))).toEqual({ registrations: 0, caches: [] });
+    expect(hydrationErrors).toEqual([]);
+  });
 });

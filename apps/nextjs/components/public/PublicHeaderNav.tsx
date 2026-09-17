@@ -16,7 +16,8 @@ export function PublicHeader({ authed = false }: { authed?: boolean }) {
   const [menuOpen, setMenuOpen]   = useState(false);
   const [realEstateOpen, setRealEstateOpen] = useState(false);
   const [theme, setTheme]         = useState<Theme>("light");
-  // mounted flag: prevents typeof-document server/client branch that triggers hydration mismatch
+  // Keep the server and first client render identical; browser-only portal
+  // content is enabled only after hydration.
   const [mounted, setMounted]     = useState(false);
   useEffect(() => setMounted(true), []);
 

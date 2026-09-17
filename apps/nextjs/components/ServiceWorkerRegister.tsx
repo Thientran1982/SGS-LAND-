@@ -2,11 +2,46 @@
 
 import { useEffect } from "react";
 
+const DEV_CLEANUP_KEY = "sgs-dev-sw-cleanup";
+
+async function cleanupDevelopmentServiceWorkers() {
+  if (!("serviceWorker" in navigator)) return;
+
+  let isReloading = false;
+  try {
+    isReloading = sessionStorage.getItem(DEV_CLEANUP_KEY) === "reloading";
+    if (isReloading) sessionStorage.removeItem(DEV_CLEANUP_KEY);
+  } catch {
+    /* storage may be unavailable in a restricted preview */
+  }
+
+  const [registrations, cacheNames] = await Promise.all([
+    navigator.serviceWorker.getRegistrations().catch(() => []),
+    typeof caches === "undefined" ? Promise.resolve<string[]>([]) : caches.keys().catch(() => []),
+  ]);
+  const hasStaleState = registrations.length > 0 || cacheNames.length > 0;
+
+  await Promise.all(registrations.map((registration) => registration.unregister().catch(() => false)));
+  if (typeof caches !== "undefined") {
+    await Promise.all(cacheNames.map((name) => caches.delete(name).catch(() => false)));
+  }
+
+  if (hasStaleState && !isReloading) {
+    try {
+      sessionStorage.setItem(DEV_CLEANUP_KEY, "reloading");
+    } catch {
+      /* storage may be unavailable in a restricted preview */
+    }
+    window.location.reload();
+  }
+}
+
 /**
  * Registers the service worker (/sw.js) for offline support.
  * Registration only runs in the browser, in production, and when
- * the browser supports service workers. Failures are swallowed so
- * they never affect page rendering.
+ * the browser supports service workers. In development the root layout
+ * starts an early cleanup; this component waits for it so a stale worker
+ * cannot keep serving old chunks after the page has hydrated.
  */
 export default function ServiceWorkerRegister() {
   useEffect(() => {
@@ -19,18 +54,15 @@ export default function ServiceWorkerRegister() {
     // producing an apparent hydration mismatch. Preview/dev must never be
     // controlled by that worker.
     if (process.env.NODE_ENV !== "production") {
-      navigator.serviceWorker.getRegistrations()
-        .then((registrations) => Promise.all(registrations.map((registration) => registration.unregister())))
-        .catch(() => {});
-      if ("caches" in window) {
-        caches.keys()
-          .then((keys) => Promise.all(
-            keys
-              .filter((key) => key.startsWith("sgsland-"))
-              .map((key) => caches.delete(key)),
-          ))
-          .catch(() => {});
-      }
+      // The inline bootstrap in the root layout runs before React hydration.
+      // Keep this effect as a fallback for pages rendered without that layout
+      // (and for browsers that finish the cleanup after this component mounts).
+      const cleanup = (
+        window as Window & {
+          __sgsDevServiceWorkerCleanup?: Promise<void>;
+        }
+      ).__sgsDevServiceWorkerCleanup;
+      void (cleanup ?? cleanupDevelopmentServiceWorkers());
       return;
     }
 
