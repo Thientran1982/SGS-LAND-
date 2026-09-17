@@ -22,6 +22,25 @@ type ChatRoomSocketLike = {
   join: (room: string) => void | Promise<void>;
 };
 
+type ChatRoomAuthUser = {
+  id?: unknown;
+  tenantId?: unknown;
+} | null | undefined;
+
+type ChatRoomRemoteSocketLike = {
+  data?: {
+    authUser?: ChatRoomAuthUser;
+  };
+  leave: (room: string) => void | Promise<void>;
+  emit: (event: 'room_message', message: unknown) => void;
+};
+
+type ChatRoomIoLike = {
+  in: (room: string) => {
+    fetchSockets: () => Promise<ChatRoomRemoteSocketLike[]>;
+  };
+};
+
 function authenticatedTenant(req: Request, res: Response): string | null {
   const tenantId = String((req as any).user?.tenantId || '').trim();
   if (!tenantId) {
@@ -70,6 +89,62 @@ export async function joinChatRoomSocket(
   if (!roomId) return false;
   await socket.join(chatRoomSocketName(roomId));
   return true;
+}
+
+async function isCurrentChatRoomMember(
+  roomId: string,
+  user: ChatRoomAuthUser,
+): Promise<boolean> {
+  const tenantId = String(user?.tenantId || '').trim();
+  const userId = String(user?.id || '').trim();
+  if (!tenantId || !userId) return false;
+
+  const membership = await pool.query(
+    "SELECT 1 FROM chat_rooms r JOIN chat_room_members m ON m.room_id = r.id AND m.user_id = $2 WHERE r.id = $1 AND r.tenant_id = $3 LIMIT 1",
+    [roomId, userId, tenantId],
+  );
+  return (membership.rowCount ?? 0) > 0;
+}
+
+/**
+ * Emit only to sockets whose membership is still current.
+ *
+ * A Socket.IO room is only a transport subscription; deleting a membership
+ * row does not automatically remove an already-connected socket. Re-check
+ * the tenant and membership immediately before every room broadcast, leaving
+ * stale sockets behind so later messages cannot reach them either.
+ */
+export async function broadcastChatRoomMessage(
+  io: ChatRoomIoLike,
+  roomId: string,
+  message: unknown,
+): Promise<void> {
+  const roomName = chatRoomSocketName(roomId);
+  let sockets: ChatRoomRemoteSocketLike[];
+  try {
+    sockets = await io.in(roomName).fetchSockets();
+  } catch (err: any) {
+    logger.warn(`[Rooms] realtime broadcast skipped: ${err?.message || err}`);
+    return;
+  }
+
+  for (const socket of sockets) {
+    let allowed = false;
+    try {
+      allowed = await isCurrentChatRoomMember(roomId, socket.data?.authUser);
+    } catch (err: any) {
+      logger.warn(`[Rooms] realtime membership check failed: ${err?.message || err}`);
+    }
+    if (!allowed) {
+      try {
+        await socket.leave(roomName);
+      } catch (err: any) {
+        logger.warn(`[Rooms] stale socket leave failed: ${err?.message || err}`);
+      }
+      continue;
+    }
+    socket.emit('room_message', message);
+  }
 }
 
 // GET / — danh sach phong cua tenant (+ so thanh vien, tin nhan cuoi)
@@ -163,7 +238,7 @@ chatRoomsRouter.post('/:slug/messages', apiRateLimit, async (req: Request, res: 
     );
     await pool.query("UPDATE chat_rooms SET last_activity_at = NOW() WHERE id = $1", [roomId]);
     const io = (globalThis as any).__broadcastIo;
-    if (io) io.to(chatRoomSocketName(roomId)).emit('room_message', ins.rows[0]);
+    if (io) await broadcastChatRoomMessage(io, roomId, ins.rows[0]);
     res.status(201).json({ message: ins.rows[0] });
   } catch (err: any) {
     logger.warn('[Rooms] send failed: ' + (err?.message || err));

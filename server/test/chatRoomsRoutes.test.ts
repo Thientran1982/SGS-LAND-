@@ -13,6 +13,7 @@ vi.mock('../middleware/rateLimiter', () => ({
 
 import {
   chatRoomSocketName,
+  broadcastChatRoomMessage,
   chatRoomsRouter,
   joinChatRoomSocket,
 } from '../routes/chatRoomsRoutes';
@@ -129,16 +130,23 @@ describe('chat room tenant and membership boundaries', () => {
   });
 
   it('sends only after membership and tenant checks pass', async () => {
-    const emit = vi.fn();
-    const to = vi.fn(() => ({ emit }));
-    (globalThis as any).__broadcastIo = { to };
+    const recipient = {
+      data: { authUser: { id: 'user-a', tenantId: 'tenant-a' } },
+      leave: vi.fn(),
+      emit: vi.fn(),
+    };
+    const fetchSockets = vi.fn().mockResolvedValue([recipient]);
+    (globalThis as any).__broadcastIo = {
+      in: vi.fn(() => ({ fetchSockets })),
+    };
     query
       .mockResolvedValueOnce({ rows: [{ id: 'room-a' }], rowCount: 1 })
       .mockResolvedValueOnce({
         rows: [{ id: 'message-a', sender_name: 'User A', kind: 'TEXT', content: 'Hello', created_at: '2026-09-17T10:00:00Z' }],
         rowCount: 1,
       })
-      .mockResolvedValueOnce({ rows: [], rowCount: 1 });
+      .mockResolvedValueOnce({ rows: [], rowCount: 1 })
+      .mockResolvedValueOnce({ rows: [{ '?column?': 1 }], rowCount: 1 });
 
     const response = await fetch(`${origin}/rooms/shared-room/messages`, {
       method: 'POST',
@@ -151,8 +159,38 @@ describe('chat room tenant and membership boundaries', () => {
     expect(query.mock.calls[0][1]).toEqual(['tenant-a', 'shared-room', 'user-a']);
     expect(query.mock.calls[1][1]).toEqual(['room-a', 'user-a', 'User A', 'TEXT', 'Hello']);
     expect(query.mock.calls[2][1]).toEqual(['room-a']);
-    expect(to).toHaveBeenCalledWith(chatRoomSocketName('room-a'));
-    expect(emit).toHaveBeenCalledWith('room_message', expect.objectContaining({ id: 'message-a' }));
+    expect(fetchSockets).toHaveBeenCalledTimes(1);
+    expect(recipient.emit).toHaveBeenCalledWith('room_message', expect.objectContaining({ id: 'message-a' }));
+  });
+
+  it('removes revoked sockets before the next broadcast without affecting current members', async () => {
+    const revokedSocket = {
+      data: { authUser: { id: 'user-revoked', tenantId: 'tenant-a' } },
+      leave: vi.fn(),
+      emit: vi.fn(),
+    };
+    const currentSocket = {
+      data: { authUser: { id: 'user-current', tenantId: 'tenant-a' } },
+      leave: vi.fn(),
+      emit: vi.fn(),
+    };
+    const io = {
+      in: vi.fn(() => ({
+        fetchSockets: vi.fn().mockResolvedValue([revokedSocket, currentSocket]),
+      })),
+    };
+    query
+      .mockResolvedValueOnce({ rows: [], rowCount: 0 })
+      .mockResolvedValueOnce({ rows: [{ '?column?': 1 }], rowCount: 1 });
+
+    await broadcastChatRoomMessage(io, 'room-a', { id: 'message-a' });
+
+    expect(revokedSocket.leave).toHaveBeenCalledWith(chatRoomSocketName('room-a'));
+    expect(revokedSocket.emit).not.toHaveBeenCalled();
+    expect(currentSocket.leave).not.toHaveBeenCalled();
+    expect(currentSocket.emit).toHaveBeenCalledWith('room_message', { id: 'message-a' });
+    expect(query.mock.calls[0][1]).toEqual(['room-a', 'user-revoked', 'tenant-a']);
+    expect(query.mock.calls[1][1]).toEqual(['room-a', 'user-current', 'tenant-a']);
   });
 
   it('joins identical slugs into tenant-specific realtime rooms', async () => {
