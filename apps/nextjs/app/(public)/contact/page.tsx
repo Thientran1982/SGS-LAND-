@@ -3,16 +3,27 @@ import type { Metadata } from "next";
 import { Phone, Mail, MapPin, Linkedin } from "lucide-react";
 import { ContactForm } from "@/components/public/ContactForm";
 import { getLang, langAlternates } from "@/lib/lang";
+import { normalizeMetaDescription } from "@/lib/seo/meta-utils";
 
 export async function generateMetadata(): Promise<Metadata> {
   const en = (await getLang()) === "en";
   const canonical = `https://sgsland.vn${en ? "/en/contact" : "/contact"}`;
   return {
-    title: en ? "Contact SGS LAND" : "Liên Hệ",
-    description: en
-      ? "Contact SGS LAND — Hotline: 0379 281 445 | Email: info@sgsland.vn | Ho Chi Minh City. Property, CRM and AI-assisted valuation support."
-      : "Liên hệ SGS LAND — Hotline: 0379 281 445 | Email: info@sgsland.vn | TP. Hồ Chí Minh. Tư vấn BĐS, CRM, định giá có hỗ trợ AI.",
+    title: { absolute: en ? "Contact SGS LAND | Property & AI Support" : "Liên Hệ SGS LAND | Tư Vấn BĐS & Định Giá AI" },
+    description: normalizeMetaDescription(en
+      ? "Contact SGS LAND — Hotline: 0379 281 445, email info@sgsland.vn and Ho Chi Minh City support for property, CRM and AI-assisted valuation."
+      : "Liên hệ SGS LAND — Hotline 0379 281 445, email info@sgsland.vn và đội ngũ TP.HCM hỗ trợ BĐS, CRM, định giá có AI.",
+      en ? " Verify current property and service information with our team before making a decision." : " Xác minh thông tin BĐS và dịch vụ với đội ngũ trước khi quyết định giao dịch."),
     alternates: { canonical, ...langAlternates("/contact") },
+    openGraph: {
+      type: "website",
+      title: en ? "Contact SGS LAND | Property & AI Support" : "Liên Hệ SGS LAND | Tư Vấn BĐS & Định Giá AI",
+      description: en
+        ? "Reach SGS LAND for property, CRM and AI valuation support."
+        : "Liên hệ SGS LAND để được hỗ trợ BĐS, CRM và định giá AI.",
+      url: canonical,
+      images: [{ url: "https://sgsland.vn/og-image.jpg", width: 1200, height: 630, alt: "Contact SGS LAND" }],
+    },
   };
 }
 
@@ -29,6 +40,19 @@ export default async function ContactPage() {
         <p className="text-lg" style={{ color: "var(--text-secondary)" }}>
           {en ? "Our team is ready to help." : "Đội ngũ tư vấn luôn sẵn sàng hỗ trợ bạn"}
         </p>
+      </div>
+
+      <div className="grid grid-cols-3 gap-3 mb-10" aria-label={en ? "SGS LAND service facts" : "Thông tin dịch vụ SGS LAND"}>
+        {[
+          { value: "24/7", label: en ? "AI chat support" : "Hỗ trợ AI" },
+          { value: "3 giây", label: en ? "Reference valuation" : "Định giá tham khảo" },
+          { value: "45.000+", label: en ? "Reference listings" : "Sản phẩm tham khảo" },
+        ].map((fact) => (
+          <div key={fact.value} className="rounded-2xl p-4 text-center" style={{ background: "var(--primary-subtle)", border: "1px solid var(--border-default)" }}>
+            <strong className="block text-lg sm:text-xl" style={{ color: "var(--primary-600)" }}>{fact.value}</strong>
+            <span className="text-xs" style={{ color: "var(--text-secondary)" }}>{fact.label}</span>
+          </div>
+        ))}
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">

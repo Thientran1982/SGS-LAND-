@@ -116,16 +116,17 @@ export function getRealEstateListingSchema(project: RealEstateProject): RealEsta
         longitude: (project.geo as any).lng ?? project.geo.longitude,
       },
     }),
-    ...((project.price_low !== undefined || project.price_high !== undefined || project.total_units !== undefined) && {
-      offers: {
-        "@type": "AggregateOffer",
-        priceCurrency: "VND",
-        ...(project.price_low !== undefined && { lowPrice: project.price_low }),
-        ...(project.price_high !== undefined && { highPrice: project.price_high }),
-        ...(project.total_units !== undefined && { offerCount: project.total_units }),
-        availability: "https://schema.org/InStock",
-      },
-    }),
+    // Keep an explicit offer node even when the editorial source does not
+    // publish a price. This signals that the page is a property listing
+    // without inventing a number that still needs verification.
+    offers: {
+      "@type": "AggregateOffer",
+      priceCurrency: "VND",
+      ...(project.price_low !== undefined && { lowPrice: project.price_low }),
+      ...(project.price_high !== undefined && { highPrice: project.price_high }),
+      ...(project.total_units !== undefined && { offerCount: project.total_units }),
+      availability: "https://schema.org/InStock",
+    },
     ...(project.area_ha !== undefined && {
       floorSize: {
         "@type": "QuantitativeValue",
@@ -186,7 +187,20 @@ export function getApartmentComplexSchema(input: ApartmentComplexInput) {
       "@type": "RealEstateAgent",
       "name": "SGS LAND",
       "telephone": "+84-379-281-445",
-      "url": "https://sgsland.vn"
+      "url": "https://sgsland.vn",
+      "address": {
+        "@type": "PostalAddress",
+        "streetAddress": "123 Nguyễn Văn Linh, Phường Tân Phong",
+        "addressLocality": "Quận 7",
+        "addressRegion": "TP. Hồ Chí Minh",
+        "postalCode": "70000",
+        "addressCountry": "VN",
+      },
+      "areaServed": [
+        { "@type": "City", "name": "TP. Hồ Chí Minh", "addressCountry": "VN" },
+        { "@type": "City", "name": "Đồng Nai", "addressCountry": "VN" },
+        { "@type": "City", "name": "Bình Dương", "addressCountry": "VN" },
+      ],
     }
   };
 }

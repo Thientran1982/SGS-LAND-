@@ -14,15 +14,17 @@ import { NewsAdminBar } from "@/components/content/NewsAdminBar";
 import { SchemaScript } from "@/components/SchemaScript";
 import { getBreadcrumbSchema, SITE_URL } from "@/lib/schema";
 import { getLang } from "@/lib/lang";
+import { normalizeMetaDescription } from "@/lib/seo/meta-utils";
 export async function generateMetadata(): Promise<Metadata> {
   const en = (await getLang()) === "en";
   const url = `${SITE_URL}${en ? "/en/tin-tuc" : "/tin-tuc"}`;
   const title = en ? "Real Estate Knowledge & News | SGS LAND Experts" : "Kiến Thức & Tin Tức BĐS | Chuyên gia SGS LAND";
-  const description = en
+  const description = normalizeMetaDescription(en
     ? "In-depth real estate market analysis, legal guidance and investment knowledge from SGS LAND experts."
-    : "Phân tích thị trường BĐS chuyên sâu, hướng dẫn pháp lý và kiến thức đầu tư từ chuyên gia SGS LAND.";
+    : "Phân tích thị trường BĐS chuyên sâu, hướng dẫn pháp lý và kiến thức đầu tư từ chuyên gia SGS LAND.",
+    en ? " Use current references to compare projects and verify information before a transaction." : " Đọc nguồn tham khảo, so sánh dự án và xác minh thông tin trước khi giao dịch.");
   return {
-    title,
+    title: { absolute: title },
     description,
     alternates: { canonical: url, languages: { "vi-VN": `${SITE_URL}/tin-tuc`, "en-US": `${SITE_URL}/en/tin-tuc`, "x-default": `${SITE_URL}/tin-tuc` } },
     openGraph: {

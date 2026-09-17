@@ -63,6 +63,7 @@ import {
 } from "@/lib/schema";
 import type { FAQItem } from "@/lib/schema";
 import { getLang, langAlternates } from "@/lib/lang";
+import { normalizeMetaDescription, normalizeMetaTitle } from "@/lib/seo/meta-utils";
 import { PROJECT_DETAIL_EN } from "@/data/project-detail-en";
 import {
   GEO_DEFAULT_EVIDENCE_NOTE,
@@ -896,7 +897,7 @@ export async function generateMetadata({
   const areaName = en && AREA_DETAIL_SLUGS.has(slug)
     ? (AREA_ENGLISH_NAMES[slug] || meta?.name || slug)
     : meta?.name;
-  const title = en
+  const rawTitle = en
     ? meta
       ? `${areaName} | ${AREA_DETAIL_SLUGS.has(slug) ? "Area reference" : "Property project"}`
       : `Project ${slug} | SGS LAND`
@@ -905,15 +906,22 @@ export async function generateMetadata({
     : meta
     ? `${meta.name} | Dự án BĐS | SGS LAND`
     : `Dự án ${slug} | SGS LAND`;
-  const description = en
+  const title = normalizeMetaTitle(rawTitle, "SGS LAND");
+  const rawDescription = en
     ? meta
       ? PROJECT_DETAIL_EN[slug]?.desc || `${areaName} — ${AREA_DETAIL_SLUGS.has(slug) ? "Indicative area information" : "Indicative project information"} from SGS LAND; verify current price, legal status, progress and distribution authorization against original documents.`
       : "Detailed real estate project information from SGS LAND."
     : meta?.metaDescription ??
       meta?.desc ??
       "Thông tin chi tiết dự án bất động sản tại SGS LAND.";
+  const description = normalizeMetaDescription(
+    rawDescription,
+    en
+      ? " Verify current price, legal status and availability against dated project documents."
+      : " Xem giá tham khảo, pháp lý và tình trạng sản phẩm trước khi giao dịch.",
+  );
   return {
-    title,
+    title: { absolute: title },
     description,
     alternates: {
       canonical: en ? `https://sgsland.vn/en/du-an/${slug}` : `https://sgsland.vn/du-an/${slug}`,
@@ -926,7 +934,12 @@ export async function generateMetadata({
       title,
       description,
       url: en ? `https://sgsland.vn/en/du-an/${slug}` : `https://sgsland.vn/du-an/${slug}`,
-      images: [{ url: `/images/projects/${slug}.jpg`, width: 1200, height: 630 }],
+      images: [{
+        url: "https://sgsland.vn/og-image.jpg",
+        width: 1200,
+        height: 630,
+        alt: `${areaName || meta?.name || slug} - SGS LAND`,
+      }],
     },
   };
 }
@@ -946,7 +959,7 @@ export default async function ProjectPage({
   let cmsContent: any = null;
   try {
     const res = await fetch(
-      `${process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000"}/api/public/projects/${slug}`,
+      `${process.env.BACKEND_URL || process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000"}/api/public/projects/${slug}`,
       { next: { revalidate: 21600 } }
     );
     if (res.ok) {
@@ -954,8 +967,13 @@ export default async function ProjectPage({
       project = data.project ?? null;
     }
     const cmsRes = await fetch(
-      `${process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000"}/api/public-project-content/published/${slug}`,
-      { cache: "no-store" }
+      `${process.env.BACKEND_URL || process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000"}/api/public-project-content/published/${slug}`,
+      {
+        next: {
+          revalidate: 300,
+          tags: ["public-project-content", `public-project-content:${slug}`],
+        },
+      }
     );
     if (cmsRes.ok) cmsContent = await cmsRes.json();
   } catch {

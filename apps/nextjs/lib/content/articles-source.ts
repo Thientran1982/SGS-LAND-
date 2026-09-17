@@ -12,7 +12,7 @@ import { AUTHORS } from "@/data/authors";
 
 const BASE_URL =
   typeof window === "undefined"
-    ? process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:5000"
+    ? process.env.BACKEND_URL ?? process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:5000"
     : "";
 
 /** Remove Vietnamese diacritics so DB labels can be matched reliably. */
@@ -150,7 +150,11 @@ async function fetchJson<T>(path: string): Promise<T | null> {
   try {
     const res = await fetch(`${BASE_URL}${path}`, {
       headers: { "Content-Type": "application/json" },
-      cache: "no-store",
+      // Editorial content is public and changes through the CMS, not per
+      // visitor. A short Data Cache window removes the multi-second database
+      // round-trip from every article/list page while keeping publication
+      // freshness bounded.
+      next: { revalidate: 300, tags: ["public-articles"] },
     });
     if (!res.ok) return null;
     return (await res.json()) as T;

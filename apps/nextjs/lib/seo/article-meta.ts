@@ -1,23 +1,29 @@
 // @ts-nocheck
 import type { Metadata } from "next";
 import type { Article } from "@/data/articles";
+import { normalizeMetaDescription, normalizeMetaTitle } from "./meta-utils";
 
 const SITE_URL = "https://sgsland.vn";
 
 /** Generates a Next.js Metadata object from an Article for use in generateMetadata(). */
 export function generateArticleMeta(article: Article): Metadata {
   const canonicalUrl = `${SITE_URL}/tin-tuc/${article.slug}`;
-  const description =
+  const rawDescription =
     article.seo?.metaDescription?.trim() ||
     article.excerpt?.trim() ||
     article.title?.trim() ||
     "Thông tin và kiến thức bất động sản từ SGS LAND.";
+  const description = normalizeMetaDescription(
+    rawDescription,
+    " Xem phân tích, pháp lý và dữ liệu tham khảo trước khi giao dịch.",
+  );
+  const title = normalizeMetaTitle(article.seo.metaTitle || article.title || "Bất động sản", "SGS LAND");
   const ogImage = article.coverImage.startsWith("http")
     ? article.coverImage
     : `${SITE_URL}${article.coverImage}`;
 
   return {
-    title: `${article.seo.metaTitle} | SGS Land`,
+    title: { absolute: title },
     description,
     keywords: [article.seo.focusKeyword, ...article.seo.secondaryKeywords],
     alternates: { canonical: canonicalUrl },
@@ -25,7 +31,7 @@ export function generateArticleMeta(article: Article): Metadata {
     openGraph: {
       type: "article",
       url: canonicalUrl,
-      title: article.seo.metaTitle,
+      title,
       description,
       siteName: "SGS LAND",
       publishedTime: article.publishedAt,
@@ -36,7 +42,7 @@ export function generateArticleMeta(article: Article): Metadata {
     },
     twitter: {
       card: "summary_large_image",
-      title: article.seo.metaTitle,
+      title,
       description,
       images: { url: ogImage, alt: article.title },
     },

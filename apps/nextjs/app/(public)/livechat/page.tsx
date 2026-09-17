@@ -2,12 +2,32 @@
 import type { Metadata } from "next";
 import { MessageCircle } from "lucide-react";
 import LiveChatPanel from "@/components/public/LiveChatPanel";
+import { getLang, langAlternates } from "@/lib/lang";
+import { normalizeMetaDescription } from "@/lib/seo/meta-utils";
 
-export const metadata: Metadata = {
-  title: "Live Chat AI BĐS",
-  description: "Chat trực tiếp với AI Agent SGS LAND: hỏi về giá BĐS, pháp lý, dự án, lãi suất vay. Phản hồi tức thì 24/7.",
-  alternates: { canonical: "https://sgsland.vn/livechat", languages: { "vi-VN": "https://sgsland.vn/livechat", "en-US": "https://sgsland.vn/en/livechat", "x-default": "https://sgsland.vn/livechat" } },
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const en = (await getLang()) === "en";
+  const canonical = `https://sgsland.vn${en ? "/en/livechat" : "/livechat"}`;
+  const title = en ? "24/7 Real Estate AI Live Chat | SGS LAND" : "Live Chat AI Bất Động Sản 24/7 | SGS LAND";
+  const description = normalizeMetaDescription(
+    en
+      ? "Chat with SGS LAND AI about property prices, legal checks, projects, mortgage rates and next steps before contacting a consultant."
+      : "Chat với AI SGS LAND về giá BĐS, pháp lý, dự án, lãi suất vay và bước tiếp theo trước khi kết nối chuyên viên tư vấn.",
+    en ? " Available 24/7 with references and clear verification boundaries." : " Hỗ trợ 24/7 với nguồn tham khảo và giới hạn xác minh rõ ràng.",
+  );
+  return {
+    title: { absolute: title },
+    description,
+    alternates: { canonical, ...langAlternates("/livechat") },
+    openGraph: {
+      type: "website",
+      title,
+      description,
+      url: canonical,
+      images: [{ url: "https://sgsland.vn/og-image.jpg", width: 1200, height: 630, alt: "SGS LAND AI Live Chat" }],
+    },
+  };
+}
 export const dynamic = "force-dynamic";
 
 type LiveChatSearchParams = {
@@ -35,6 +55,7 @@ export default async function LiveChatPage({
   );
   const source = firstParam(params.source, "WEB");
   const prompt = firstParam(params.prompt, firstParam(params.prefill, ""));
+  const en = (await getLang()) === "en";
 
   return (
     <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-12 text-center">
@@ -47,6 +68,19 @@ export default async function LiveChatPage({
         <p style={{ color: "var(--text-secondary)" }}>
           {description}
         </p>
+      </div>
+
+      <div className="grid grid-cols-3 gap-3 mb-6 text-left" aria-label={en ? "Live Chat facts" : "Thông tin Live Chat"}>
+        {[
+          { value: "24/7", label: en ? "Available" : "Hoạt động" },
+          { value: "3 giây", label: en ? "Valuation estimate" : "Ước tính định giá" },
+          { value: "45.000+", label: en ? "Reference listings" : "Sản phẩm tham khảo" },
+        ].map((fact) => (
+          <div key={fact.value} className="rounded-xl p-3" style={{ background: "var(--bg-elevated)", border: "1px solid var(--border-default)" }}>
+            <strong className="block text-base" style={{ color: "var(--primary-600)" }}>{fact.value}</strong>
+            <span className="text-[11px]" style={{ color: "var(--text-tertiary)" }}>{fact.label}</span>
+          </div>
+        ))}
       </div>
 
       <LiveChatPanel source={source} title={title} description={description} initialMessage={prompt} />
