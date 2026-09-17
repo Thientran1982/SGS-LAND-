@@ -177,6 +177,14 @@ import { visitorRepository } from "./server/repositories/visitorRepository";
 import { lookupIp, getClientIp } from "./server/services/geoService";
 import { sendAiError, parseAiError } from "./server/utils/aiErrorHandler";
 import { setDurableAgentRunEventSink } from "./server/services/durableAgentExecutionService";
+import {
+  attachSocketIoAdapterHealth,
+  getSocketIoAdapterHealth,
+  markSocketIoAdapterConnecting,
+  markSocketIoAdapterInMemory,
+  markSocketIoAdapterReady,
+  noteSocketIoAdapterFailure,
+} from "./server/services/socketIoAdapterHealth";
 
 // Module-level guard for the periodic memory-usage logger (see
 // startMemoryUsageLogger() further down) — prevents a double registration if
@@ -189,10 +197,12 @@ let socketIoRedisClients: { publisher: Redis; subscriber: Redis } | null = null;
 async function configureSocketIoAdapter(io: Server): Promise<void> {
   const redisUrl = process.env.SOCKET_IO_REDIS_URL?.trim();
   if (!redisUrl) {
+    markSocketIoAdapterInMemory();
     logger.info("Socket.io using in-memory adapter (set SOCKET_IO_REDIS_URL for multi-process deployments).");
     return;
   }
 
+  markSocketIoAdapterConnecting();
   const publisher = new Redis(redisUrl, {
     lazyConnect: true,
     maxRetriesPerRequest: null,
@@ -201,13 +211,16 @@ async function configureSocketIoAdapter(io: Server): Promise<void> {
     lazyConnect: true,
     maxRetriesPerRequest: null,
   });
+  attachSocketIoAdapterHealth(publisher, subscriber);
 
   try {
     await Promise.all([publisher.connect(), subscriber.connect()]);
+    markSocketIoAdapterReady();
     io.adapter(createSocketIoRedisAdapter(publisher, subscriber));
     socketIoRedisClients = { publisher, subscriber };
     logger.info("Socket.io using Redis adapter for multi-process delivery.");
   } catch (error) {
+    noteSocketIoAdapterFailure('redis_initial_connect_failed');
     publisher.disconnect();
     subscriber.disconnect();
     throw new Error(
@@ -5693,11 +5706,21 @@ app.use('/api/approval-requests', apiRateLimit, createApprovalRequestRoutes(auth
       }
 
       const qstashOperational = getQstashOperationalStatus();
+      const socketIoHealth = getSocketIoAdapterHealth();
       const components: Record<string, any> = {
         database: { status: health.checks?.database ? 'healthy' : 'down' },
         aiService: { status: health.checks?.aiService ? 'healthy' : 'unconfigured' },
         redis: { status: (process.env.UPSTASH_REDIS_REST_URL && process.env.UPSTASH_REDIS_REST_TOKEN) ? 'upstash-rest' : 'in-memory-fallback' },
-        websocket: { status: 'healthy', adapter: 'in-memory' },
+        websocket: {
+          status: socketIoHealth.status,
+          adapter: socketIoHealth.adapter,
+          distributed: socketIoHealth.distributed,
+          broadcastAvailable: socketIoHealth.broadcastAvailable,
+          publisherStatus: socketIoHealth.publisherStatus,
+          subscriberStatus: socketIoHealth.subscriberStatus,
+          reason: socketIoHealth.reason,
+          lastTransitionAt: socketIoHealth.lastTransitionAt,
+        },
         queue: {
           status: 'healthy',
           type: isQStashEnabled() ? (isQstashVerified() ? 'qstash' : 'in-memory-fallback') : 'in-memory',
@@ -5766,10 +5789,11 @@ app.use('/api/approval-requests', apiRateLimit, createApprovalRequestRoutes(auth
       // /health (server.ts) van la liveness probe tra 200 khong phu thuoc DB.
       const dbDown = components.database.status !== 'healthy';
       const redisDegraded = components.redis.status === 'down';
+      const websocketDegraded = components.websocket.status === 'degraded';
       const httpStatus = dbDown ? 503 : 200;
       res.status(httpStatus).json({
         ...health,
-        status: dbDown ? 'critical' : (redisDegraded ? 'degraded' : 'healthy'),
+        status: dbDown ? 'critical' : (redisDegraded || websocketDegraded ? 'degraded' : 'healthy'),
         components,
         connectedClients: io.engine?.clientsCount || 0,
         migration_version: migrationVersion,

@@ -94,6 +94,29 @@ async function stopWorker(worker: RunningWorker | undefined): Promise<void> {
   });
 }
 
+async function controlRedis(worker: RunningWorker, action: 'disconnect' | 'reconnect'): Promise<void> {
+  const response = await fetch(`http://127.0.0.1:${worker.port}/__test/redis/${action}`, {
+    method: 'POST',
+  });
+  if (!response.ok) {
+    throw new Error(`Redis ${action} failed with ${response.status}: ${await response.text()}`);
+  }
+}
+
+async function waitForRedisHealth(
+  worker: RunningWorker,
+  status: 'healthy' | 'degraded',
+): Promise<void> {
+  const deadline = Date.now() + 10_000;
+  while (Date.now() < deadline) {
+    const response = await fetch(`http://127.0.0.1:${worker.port}/__test/redis-health`);
+    const health = await response.json() as { status?: string };
+    if (health.status === status) return;
+    await new Promise(resolve => setTimeout(resolve, 100));
+  }
+  throw new Error(`Worker did not reach Redis adapter status ${status}:\n${worker.output()}`);
+}
+
 function connectClient(worker: RunningWorker, userId: string): Socket {
   return createSocket(`http://127.0.0.1:${worker.port}`, {
     transports: ['websocket'],
@@ -119,6 +142,7 @@ function waitForEvent(socket: Socket, event: string): Promise<unknown> {
 async function observeRoomMessages(
   sockets: Socket[],
   action: () => Promise<Response>,
+  settleMs = 5_000,
 ): Promise<{ response: Response; messages: unknown[][] }> {
   const messages = sockets.map(() => [] as unknown[]);
   let firstMessageResolve: () => void = () => undefined;
@@ -138,7 +162,7 @@ async function observeRoomMessages(
     const response = await action();
     await Promise.race([
       firstMessage,
-      new Promise<void>(resolve => setTimeout(resolve, 5_000)),
+      new Promise<void>(resolve => setTimeout(resolve, settleMs)),
     ]);
     // Allow a delayed duplicate to arrive while keeping revoked sockets
     // observable as silent after the broadcast has completed.
@@ -259,5 +283,60 @@ describeDistributed('chat room membership revocation across Socket.IO processes'
       expect.objectContaining({ content: 'Second after revocation' }),
     ]);
     expect(second.messages[1]).toEqual([]);
+  });
+
+  it('skips room delivery during adapter loss and resumes without replaying old messages', async () => {
+    if (!workerA || !workerB) throw new Error('Distributed workers were not started');
+
+    await controlRedis(workerA, 'disconnect');
+    await waitForRedisHealth(workerA, 'degraded');
+
+    const duringOutage = await observeRoomMessages(
+      [memberSocket, hostSocket],
+      () => fetch(`http://127.0.0.1:${workerA?.port}/rooms/${roomSlug}/messages`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-test-user-id': hostId,
+          'x-test-tenant-id': tenantId,
+        },
+        body: JSON.stringify({ content: 'Stored while adapter is unavailable' }),
+      }),
+      1_000,
+    );
+    expect(duringOutage.response.status).toBe(201);
+    expect((await duringOutage.response.json()).realtime).toEqual({
+      status: 'skipped',
+      distributed: false,
+      reason: 'adapter_unavailable',
+    });
+    expect(duringOutage.messages).toEqual([[], []]);
+
+    await controlRedis(workerA, 'reconnect');
+    await waitForRedisHealth(workerA, 'healthy');
+
+    const afterRecovery = await observeRoomMessages(
+      [memberSocket, hostSocket],
+      () => fetch(`http://127.0.0.1:${workerA?.port}/rooms/${roomSlug}/messages`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-test-user-id': hostId,
+          'x-test-tenant-id': tenantId,
+        },
+        body: JSON.stringify({ content: 'Delivered after adapter recovery' }),
+      }),
+    );
+    expect(afterRecovery.response.status).toBe(201);
+    expect((await afterRecovery.response.json()).realtime).toMatchObject({
+      status: 'delivered',
+      distributed: true,
+    });
+    expect(afterRecovery.messages[0]).toEqual([
+      expect.objectContaining({ content: 'Delivered after adapter recovery' }),
+    ]);
+    expect(afterRecovery.messages[1]).toEqual([
+      expect.objectContaining({ content: 'Delivered after adapter recovery' }),
+    ]);
   });
 });

@@ -22,3 +22,15 @@ already been revoked.
 **How to apply:** Keep the revocation handler tenant- and user-matched before
 calling `leave`, and never include message content or other room data in the
 cross-process payload.
+
+Redis adapter readiness must require both pub/sub clients to be `ready`; room
+broadcasts fail closed while either client is unavailable, and an adapter
+generation check discards in-flight operations that cross an outage/recovery.
+
+**Why:** ioredis can queue an operation during a disconnect and resolve it
+after reconnect. Emitting that stale operation would make recovery look
+healthy while delivering an old message late or inconsistently.
+
+**How to apply:** Expose bounded adapter state in readiness health, skip
+distributed room work while degraded, and compare the captured generation
+after every awaited adapter lookup before emitting.

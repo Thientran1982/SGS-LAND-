@@ -18,6 +18,12 @@ import {
   disconnectRevokedChatRoomSockets,
   joinChatRoomSocket,
 } from '../routes/chatRoomsRoutes';
+import {
+  attachSocketIoAdapterHealth,
+  getSocketIoAdapterHealth,
+  markSocketIoAdapterConnecting,
+  markSocketIoAdapterInMemory,
+} from '../services/socketIoAdapterHealth';
 
 type TestUser = {
   id?: string;
@@ -49,6 +55,7 @@ describe('chat room tenant and membership boundaries', () => {
 
   beforeEach(async () => {
     query.mockReset();
+    markSocketIoAdapterInMemory();
     ({ server, origin } = await startServer({ id: 'user-a', name: 'User A', tenantId: 'tenant-a' }));
   });
 
@@ -193,6 +200,78 @@ describe('chat room tenant and membership boundaries', () => {
     expect(currentSocket.emit).toHaveBeenCalledWith('room_message', { id: 'message-a' });
     expect(query.mock.calls[0][1]).toEqual(['room-a', 'user-revoked', 'tenant-a']);
     expect(query.mock.calls[1][1]).toEqual(['room-a', 'user-current', 'tenant-a']);
+  });
+
+  it('fails closed when the distributed adapter is unavailable', async () => {
+    markSocketIoAdapterConnecting();
+    const fetchSockets = vi.fn();
+
+    const result = await broadcastChatRoomMessage(
+      { in: vi.fn(() => ({ fetchSockets })) },
+      'room-a',
+      { id: 'message-a' },
+    );
+
+    expect(result).toEqual({
+      status: 'skipped',
+      distributed: false,
+      reason: 'adapter_unavailable',
+    });
+    expect(fetchSockets).not.toHaveBeenCalled();
+    expect(getSocketIoAdapterHealth()).toMatchObject({
+      status: 'connecting',
+      broadcastAvailable: false,
+      distributed: false,
+    });
+  });
+
+  it('does not replay a broadcast that crossed an adapter outage', async () => {
+    class FakeRedisClient {
+      status = 'ready';
+      private listeners = new Map<string, Array<() => void>>();
+      on(event: string, listener: () => void) {
+        const callbacks = this.listeners.get(event) || [];
+        callbacks.push(listener);
+        this.listeners.set(event, callbacks);
+      }
+      emit(event: string) {
+        for (const listener of this.listeners.get(event) || []) listener();
+      }
+    }
+
+    const publisher = new FakeRedisClient();
+    const subscriber = new FakeRedisClient();
+    markSocketIoAdapterConnecting();
+    attachSocketIoAdapterHealth(publisher, subscriber);
+
+    let resolveSockets: (sockets: unknown[]) => void = () => undefined;
+    const fetchSockets = vi.fn(() => new Promise<any[]>(resolve => {
+      resolveSockets = resolve;
+    }));
+    const recipient = {
+      data: { authUser: { id: 'user-current', tenantId: 'tenant-a' } },
+      leave: vi.fn(),
+      emit: vi.fn(),
+    };
+
+    const broadcast = broadcastChatRoomMessage(
+      { in: vi.fn(() => ({ fetchSockets })) },
+      'room-a',
+      { id: 'message-a' },
+    );
+
+    publisher.status = 'end';
+    publisher.emit('close');
+    publisher.status = 'ready';
+    publisher.emit('ready');
+    resolveSockets([recipient]);
+
+    expect(await broadcast).toEqual({
+      status: 'skipped',
+      distributed: false,
+      reason: 'adapter_unavailable',
+    });
+    expect(recipient.emit).not.toHaveBeenCalled();
   });
 
   it('revokes a member, leaves matching sockets, and sends only a scoped signal', async () => {

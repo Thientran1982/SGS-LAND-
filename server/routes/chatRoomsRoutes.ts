@@ -7,6 +7,10 @@ import { Router, type Request, type Response } from 'express';
 import { pool } from '../db';
 import { logger } from '../middleware/logger';
 import { apiRateLimit } from '../middleware/rateLimiter';
+import {
+  getSocketIoAdapterHealth,
+  noteSocketIoAdapterFailure,
+} from '../services/socketIoAdapterHealth';
 
 export const chatRoomsRouter = Router();
 
@@ -42,6 +46,18 @@ type ChatRoomIoLike = {
   };
   serverSideEmit?: (event: string, payload: unknown) => boolean | void | Promise<void>;
 };
+
+export type ChatRoomBroadcastResult =
+  | {
+      status: 'delivered';
+      distributed: boolean;
+      deliveredSocketCount: number;
+    }
+  | {
+      status: 'skipped';
+      distributed: false;
+      reason: 'adapter_unavailable' | 'socket_lookup_failed';
+    };
 
 export type ChatRoomMembershipRevocation = {
   tenantId: string;
@@ -126,17 +142,59 @@ export async function broadcastChatRoomMessage(
   io: ChatRoomIoLike,
   roomId: string,
   message: unknown,
-): Promise<void> {
+): Promise<ChatRoomBroadcastResult> {
+  const initialHealth = getSocketIoAdapterHealth();
+  const adapterGeneration = initialHealth.generation;
+  if (!initialHealth.broadcastAvailable) {
+    logger.warn(`[Rooms] realtime broadcast skipped: Socket.IO adapter is ${initialHealth.status}`);
+    return {
+      status: 'skipped',
+      distributed: false,
+      reason: 'adapter_unavailable',
+    };
+  }
+
   const roomName = chatRoomSocketName(roomId);
   let sockets: ChatRoomRemoteSocketLike[];
   try {
     sockets = await io.in(roomName).fetchSockets();
   } catch (err: any) {
+    noteSocketIoAdapterFailure('socket_lookup_failed');
     logger.warn(`[Rooms] realtime broadcast skipped: ${err?.message || err}`);
-    return;
+    return {
+      status: 'skipped',
+      distributed: false,
+      reason: 'socket_lookup_failed',
+    };
   }
 
+  const afterLookupHealth = getSocketIoAdapterHealth();
+  if (
+    !afterLookupHealth.broadcastAvailable
+    || afterLookupHealth.generation !== adapterGeneration
+  ) {
+    logger.warn('[Rooms] realtime broadcast discarded after Socket.IO adapter changed state during lookup');
+    return {
+      status: 'skipped',
+      distributed: false,
+      reason: 'adapter_unavailable',
+    };
+  }
+
+  let deliveredSocketCount = 0;
   for (const socket of sockets) {
+    const currentHealth = getSocketIoAdapterHealth();
+    if (
+      !currentHealth.broadcastAvailable
+      || currentHealth.generation !== adapterGeneration
+    ) {
+      logger.warn('[Rooms] realtime broadcast stopped after Socket.IO adapter became unavailable');
+      return {
+        status: 'skipped',
+        distributed: false,
+        reason: 'adapter_unavailable',
+      };
+    }
     let allowed = false;
     try {
       allowed = await isCurrentChatRoomMember(roomId, socket.data?.authUser);
@@ -152,7 +210,15 @@ export async function broadcastChatRoomMessage(
       continue;
     }
     socket.emit('room_message', message);
+    deliveredSocketCount += 1;
   }
+
+  return {
+    status: 'delivered',
+    distributed: getSocketIoAdapterHealth().generation === adapterGeneration
+      && getSocketIoAdapterHealth().distributed,
+    deliveredSocketCount,
+  };
 }
 
 function isChatRoomMembershipRevocation(value: unknown): value is ChatRoomMembershipRevocation {
@@ -176,12 +242,18 @@ export async function disconnectRevokedChatRoomSockets(
   payload: unknown,
 ): Promise<void> {
   if (!isChatRoomMembershipRevocation(payload)) return;
+  const adapterHealth = getSocketIoAdapterHealth();
+  if (!adapterHealth.broadcastAvailable) {
+    logger.warn(`[Rooms] membership revocation socket lookup skipped: Socket.IO adapter is ${adapterHealth.status}`);
+    return;
+  }
   const roomName = chatRoomSocketName(payload.roomId);
 
   let sockets: ChatRoomRemoteSocketLike[] = [];
   try {
     sockets = await io.in(roomName).fetchSockets();
   } catch (err: any) {
+    noteSocketIoAdapterFailure('socket_lookup_failed');
     logger.warn(`[Rooms] membership revocation socket lookup skipped: ${err?.message || err}`);
     return;
   }
@@ -291,8 +363,14 @@ chatRoomsRouter.post('/:slug/messages', apiRateLimit, async (req: Request, res: 
     );
     await pool.query("UPDATE chat_rooms SET last_activity_at = NOW() WHERE id = $1", [roomId]);
     const io = (globalThis as any).__broadcastIo;
-    if (io) await broadcastChatRoomMessage(io, roomId, ins.rows[0]);
-    res.status(201).json({ message: ins.rows[0] });
+    const realtime = io
+      ? await broadcastChatRoomMessage(io, roomId, ins.rows[0])
+      : {
+          status: 'skipped' as const,
+          distributed: false as const,
+          reason: 'adapter_unavailable' as const,
+        };
+    res.status(201).json({ message: ins.rows[0], realtime });
   } catch (err: any) {
     logger.warn('[Rooms] send failed: ' + (err?.message || err));
     res.status(500).json({ error: 'Gui tin that bai' });
@@ -360,10 +438,15 @@ chatRoomsRouter.delete('/:slug/members/:userId', apiRateLimit, async (req: Reque
       // Handle this process immediately. Other Socket.IO processes receive the
       // same non-sensitive signal through serverSideEmit.
       await disconnectRevokedChatRoomSockets(io, payload);
-      try {
-        await io.serverSideEmit?.(chatRoomMembershipRevokedEvent, payload);
-      } catch (err: any) {
-        logger.warn(`[Rooms] membership revocation signal skipped: ${err?.message || err}`);
+      if (getSocketIoAdapterHealth().broadcastAvailable) {
+        try {
+          await io.serverSideEmit?.(chatRoomMembershipRevokedEvent, payload);
+        } catch (err: any) {
+          noteSocketIoAdapterFailure('server_side_emit_failed');
+          logger.warn(`[Rooms] membership revocation signal skipped: ${err?.message || err}`);
+        }
+      } else {
+        logger.warn('[Rooms] membership revocation signal skipped: Socket.IO adapter unavailable');
       }
     }
 
