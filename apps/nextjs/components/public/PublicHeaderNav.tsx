@@ -133,7 +133,10 @@ export function PublicHeader({ authed = false }: { authed?: boolean }) {
           </Link>
 
           {/* ── Desktop Nav ───────────────────────────────── */}
-          <nav className="hidden xl:flex items-center gap-0.5">
+          <nav
+            className="hidden xl:flex items-center gap-0.5"
+            data-public-desktop-nav
+          >
             <div
               className="relative"
               onMouseEnter={() => setRealEstateOpen(true)}
@@ -180,6 +183,7 @@ export function PublicHeader({ authed = false }: { authed?: boolean }) {
               <Link
                 key={link.href}
                 href={localizedHref(link.href)}
+                data-public-nav-link={link.href}
                 className="px-3.5 py-2 rounded-lg text-sm font-medium transition-all"
                 style={{
                   color: isHero ? "rgba(255,255,255,0.85)" : "var(--sgs-primary)",
@@ -272,6 +276,7 @@ export function PublicHeader({ authed = false }: { authed?: boolean }) {
             className="xl:hidden p-2 rounded-lg transition-colors"
             style={{ color: isHero ? "#FFFFFF" : "var(--sgs-primary)" }}
             aria-label="Mở menu"
+            data-public-menu-toggle
           >
             {menuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
           </button>
@@ -293,6 +298,7 @@ export function PublicHeader({ authed = false }: { authed?: boolean }) {
       {menuOpen && (
         <div
           className="xl:hidden relative z-50"
+          data-public-mobile-menu
           style={{
             background: "var(--hdr-panel)",
             backdropFilter: "blur(14px)",
@@ -332,6 +338,7 @@ export function PublicHeader({ authed = false }: { authed?: boolean }) {
               <Link
                 key={link.href}
                 href={localizedHref(link.href)}
+                data-public-nav-link={link.href}
                 onClick={() => setMenuOpen(false)}
                 className="block px-3 py-2.5 rounded-lg text-sm font-medium transition-colors hover:bg-sgs-bg"
                 style={{ color: "var(--sgs-primary)" }}
