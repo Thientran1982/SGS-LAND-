@@ -34,6 +34,7 @@ describe('agent guardrails', () => {
     });
     expect(report.flags).not.toContain('UNSUPPORTED_SENSITIVE_CLAIM');
     expect(report.escalate).toBe(false);
+    expect(report.sanitizedContent).toContain('cần được xác minh từ nguồn chính thức');
   });
 
   it('does not treat an empty or generic source object as grounding', () => {

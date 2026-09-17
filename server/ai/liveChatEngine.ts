@@ -2172,6 +2172,11 @@ async function handle_live_chat(args: Record<string, any>): Promise<any> {
                 : undefined,
             triggerSource: 'live-chat-engine',
             message,
+            input: {
+                attachments: Array.isArray(args.context?.attachments)
+                    ? args.context.attachments
+                    : [],
+            },
             execute: executeCore,
         });
     const { content, steps, providerTelemetry, ...result } = execution.result as any;

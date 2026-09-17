@@ -63,6 +63,7 @@
 - [Profile extraction fallback](profile-extraction-fallback.md) — optional LLM facts merge by category over regex facts, while provider failures leave deterministic extraction untouched
 - [Live-chat provider smoke evidence](livechat-provider-smoke.md) — separate uncached provider status from cached persistence/idempotency replay
 - [Live-chat agent timeouts](livechat-agent-timeouts.md) — async chat needs neutral pending status, bounded provider fallback, and generation-safe reconciliation
+- [Live-chat multimodal boundaries](livechat-multimodal.md) — images can reach vision in GENERAL; documents are text-only and audio is transcript-only
 - [Live-chat reply outbox](livechat-reply-outbox.md) — accepted async runs need durable pending/delivered/failed reply state and one complete restore envelope
 - [Live-chat engine content contract](livechat-engine-content-contract.md) — durable guardrails validate `content`; keep it alongside the `response` alias
 - [Live-chat legacy cache repair](livechat-legacy-cache-repair.md) — versioned replay repairs old EMPTY_OUTPUT landing runs without changing normal idempotency

@@ -340,10 +340,19 @@ export function inspectAgentOutput(output: {
 
   let requiresVerification = false;
   const hasExplicitSources = hasUsableEvidenceSources(output.sources);
-  if (SENSITIVE_CLAIM_PATTERN.test(content) && !hasExplicitSources) {
-    flags.push('UNSUPPORTED_SENSITIVE_CLAIM');
-    requiresVerification = true;
-    content += '\n\nThông tin giá/pháp lý chỉ mang tính tham khảo và cần được xác minh từ nguồn chính thức.';
+  const containsSensitiveClaim = SENSITIVE_CLAIM_PATTERN.test(content);
+  const verificationDisclaimer = 'Thông tin giá/pháp lý chỉ mang tính tham khảo và cần được xác minh từ nguồn chính thức.';
+  if (containsSensitiveClaim) {
+    // The disclosure is mandatory for every customer-facing price/legal
+    // answer. Evidence can remove the escalation flag, but it must not let the
+    // model decide that official verification is unnecessary.
+    if (!content.toLowerCase().includes(verificationDisclaimer.toLowerCase())) {
+      content += `\n\n${verificationDisclaimer}`;
+    }
+    if (!hasExplicitSources) {
+      flags.push('UNSUPPORTED_SENSITIVE_CLAIM');
+      requiresVerification = true;
+    }
   }
   // Customer replies should be focused even when a provider ignores the
   // requested token budget. Long-form answers get a bounded larger budget;
