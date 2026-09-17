@@ -122,3 +122,4 @@
  - [Facebook auto-posting runtime](facebook-auto-posting-runtime.md) — daily claim indexes and explicit HTTPS asset origins are runtime prerequisites, not migration assumptions
  - [Public locale verification](public-locale-verification.md) — middleware rewrites /en paths, so browser smoke must assert html lang and locale-preserving client links together
  - [Public locale copy policy](public-locale-copy-policy.md) — English routes must use reviewed copy or an explicit availability state, never silent mixed-language rendering
+- [Product information architecture](product-information-architecture.md) — organize customer, CRM, and agent operations by user jobs, not backend routes or tool names
