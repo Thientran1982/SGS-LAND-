@@ -1360,116 +1360,135 @@ class DatabaseApiClient {
     // họ chỉ nên quản lý sản phẩm của chính mình qua ROUTES.INVENTORY.
     const isHostTenant = !tenantId || tenantId === DEFAULT_TENANT_ID;
 
-    // Put the daily operating loop first. Public/home and secondary tools stay
-    // available, but should not displace the screens users work from all day.
+    const item = (id: string, labelKey: string, route: string) => ({
+      id, labelKey, route, iconKey: route
+    });
+
+    // Keep the role allow-list unchanged; only the presentation groups below move
+    // these same 43 routes into the recommended daily/weekly/monthly workflow.
     const coreItems: any[] = [
-      { id: 'dash', labelKey: 'menu.dashboard', route: ROUTES.DASHBOARD, iconKey: ROUTES.DASHBOARD },
-      { id: 'leads', labelKey: 'menu.leads', route: ROUTES.LEADS, iconKey: ROUTES.LEADS },
-      { id: 'inv', labelKey: 'menu.inventory', route: ROUTES.INVENTORY, iconKey: ROUTES.INVENTORY },
-      { id: 'inbox', labelKey: 'menu.inbox', route: ROUTES.INBOX, iconKey: ROUTES.INBOX },
-      { id: 'contracts', labelKey: 'menu.contracts', route: ROUTES.CONTRACTS, iconKey: ROUTES.CONTRACTS },
-      { id: 'ai-advisor', labelKey: 'menu.ai-advisor', route: ROUTES.AI_ADVISOR, iconKey: ROUTES.AI_ADVISOR },
-    { id: 'my-landing', labelKey: 'menu.my-landing', route: ROUTES.MY_LANDING, iconKey: ROUTES.MY_LANDING },
+      item('dash', 'menu.dashboard', ROUTES.DASHBOARD),
+      item('leads', 'menu.leads', ROUTES.LEADS),
+      item('inv', 'menu.inventory', ROUTES.INVENTORY),
+      item('inbox', 'menu.inbox', ROUTES.INBOX),
+      item('contracts', 'menu.contracts', ROUTES.CONTRACTS),
+      item('ai-advisor', 'menu.ai-advisor', ROUTES.AI_ADVISOR),
+      item('my-landing', 'menu.my-landing', ROUTES.MY_LANDING),
+      ...(isHostTenant ? [item('search', 'menu.marketplace', ROUTES.SEARCH)] : []),
+      item('fav', 'menu.favorites', ROUTES.FAVORITES),
+      item('home', 'menu.home', ROUTES.LANDING),
     ];
-    if (isHostTenant) {
-      coreItems.push({ id: 'search', labelKey: 'menu.marketplace', route: ROUTES.SEARCH, iconKey: ROUTES.SEARCH });
-    }
-    coreItems.push(
-      { id: 'fav', labelKey: 'menu.favorites', route: ROUTES.FAVORITES, iconKey: ROUTES.FAVORITES },
-      { id: 'home', labelKey: 'menu.home', route: ROUTES.LANDING, iconKey: ROUTES.LANDING }
-    );
-    const core = { id: 'core', labelKey: 'menu.core', items: coreItems };
-    const ops = { id: 'ops', labelKey: 'menu.operations', items: [
-      { id: 'projects', labelKey: 'menu.projects', route: ROUTES.PROJECTS, iconKey: ROUTES.PROJECTS },
-      { id: 'unit-inventory', labelKey: 'menu.unit-inventory', route: ROUTES.UNIT_INVENTORY, iconKey: ROUTES.UNIT_INVENTORY },
-      { id: 'approvals', labelKey: 'menu.approvals', route: ROUTES.APPROVALS, iconKey: ROUTES.APPROVALS },
-      { id: 'routing', labelKey: 'menu.routing-rules', route: ROUTES.ROUTING_RULES, iconKey: ROUTES.ROUTING_RULES },
-      { id: 'campaigns', labelKey: 'menu.campaigns', route: ROUTES.CAMPAIGNS, iconKey: ROUTES.CAMPAIGNS },
-      { id: 'social-publishing', labelKey: 'menu.social-publishing', route: ROUTES.SOCIAL_PUBLISHING, iconKey: ROUTES.SOCIAL_PUBLISHING },
-      { id: 'seq', labelKey: 'menu.sequences', route: ROUTES.SEQUENCES, iconKey: ROUTES.SEQUENCES },
-      { id: 'auction', labelKey: 'menu.auction', route: ROUTES.AUCTION, iconKey: ROUTES.AUCTION },
-      { id: 'custom-fields', labelKey: 'menu.custom-fields', route: ROUTES.CUSTOM_FIELDS, iconKey: ROUTES.CUSTOM_FIELDS },
-      { id: 'scoring', labelKey: 'menu.scoring-rules', route: ROUTES.SCORING_RULES, iconKey: ROUTES.SCORING_RULES },
-      { id: 'knowledge', labelKey: 'menu.knowledge', route: ROUTES.KNOWLEDGE, iconKey: ROUTES.KNOWLEDGE },
-      { id: 'rep', labelKey: 'menu.reports', route: ROUTES.REPORTS, iconKey: ROUTES.REPORTS }
-    ]};
-    // SALES: dự án (xem rổ hàng), tài liệu, báo cáo
-    const opsBasic = { id: 'ops', labelKey: 'menu.operations', items: [
-      { id: 'projects', labelKey: 'menu.projects', route: ROUTES.PROJECTS, iconKey: ROUTES.PROJECTS },
-      { id: 'knowledge', labelKey: 'menu.knowledge', route: ROUTES.KNOWLEDGE, iconKey: ROUTES.KNOWLEDGE },
-      { id: 'rep', labelKey: 'menu.reports', route: ROUTES.REPORTS, iconKey: ROUTES.REPORTS }
-    ]};
-    // MARKETING: dự án + công cụ marketing (campaigns/sequences) + tài liệu + báo cáo
-    const opsMarketing = { id: 'ops', labelKey: 'menu.operations', items: [
-      { id: 'projects', labelKey: 'menu.projects', route: ROUTES.PROJECTS, iconKey: ROUTES.PROJECTS },
-      { id: 'campaigns', labelKey: 'menu.campaigns', route: ROUTES.CAMPAIGNS, iconKey: ROUTES.CAMPAIGNS },
-      { id: 'social-publishing', labelKey: 'menu.social-publishing', route: ROUTES.SOCIAL_PUBLISHING, iconKey: ROUTES.SOCIAL_PUBLISHING },
-      { id: 'seq', labelKey: 'menu.sequences', route: ROUTES.SEQUENCES, iconKey: ROUTES.SEQUENCES },
-      { id: 'knowledge', labelKey: 'menu.knowledge', route: ROUTES.KNOWLEDGE, iconKey: ROUTES.KNOWLEDGE },
-      { id: 'rep', labelKey: 'menu.reports', route: ROUTES.REPORTS, iconKey: ROUTES.REPORTS }
-    ]};
-    // Các công cụ ADMIN thấy: quản lý người dùng + cài đặt doanh nghiệp
-    const sysAdminItems = [
-      { id: 'users', labelKey: 'menu.admin-users', route: ROUTES.ADMIN_USERS, iconKey: ROUTES.ADMIN_USERS },
-      { id: 'set', labelKey: 'menu.enterprise-settings', route: ROUTES.ENTERPRISE_SETTINGS, iconKey: ROUTES.ENTERPRISE_SETTINGS },
-      { id: 'agent-audit', labelKey: 'menu.agent-audit', route: ROUTES.AGENT_AUDIT, iconKey: ROUTES.AGENT_AUDIT },
-      { id: 'agent-cockpit', labelKey: 'menu.agent-cockpit', route: ROUTES.AGENT_COCKPIT, iconKey: ROUTES.AGENT_COCKPIT },
-      { id: 'agent-tasks', labelKey: 'menu.agent-tasks', route: ROUTES.AGENT_TASKS, iconKey: ROUTES.AGENT_TASKS },
-      { id: 'valuation-accuracy', labelKey: 'menu.valuation-accuracy', route: ROUTES.VALUATION_ACCURACY, iconKey: ROUTES.VALUATION_ACCURACY },
+    const taskFullItems: any[] = [
+      item('task-dashboard', 'menu.task-dashboard', ROUTES.TASK_DASHBOARD),
+      item('tasks', 'menu.tasks', ROUTES.TASKS),
+      item('task-kanban', 'menu.task-kanban', ROUTES.TASK_KANBAN),
+      item('employees', 'menu.employees', ROUTES.EMPLOYEES),
+      item('task-reports', 'menu.task-reports', ROUTES.TASK_REPORTS),
     ];
-    // Các công cụ chỉ SUPER_ADMIN thấy: hệ thống, chi phí, bảo mật, hạ tầng, v.v.
-    const sysSuperAdminItems = [
-      { id: 'users', labelKey: 'menu.admin-users', route: ROUTES.ADMIN_USERS, iconKey: ROUTES.ADMIN_USERS },
-      { id: 'set', labelKey: 'menu.enterprise-settings', route: ROUTES.ENTERPRISE_SETTINGS, iconKey: ROUTES.ENTERPRISE_SETTINGS },
-      { id: 'vendors', labelKey: 'menu.vendor-management', route: ROUTES.VENDOR_MANAGEMENT, iconKey: ROUTES.VENDOR_MANAGEMENT },
-      { id: 'security', labelKey: 'menu.security', route: ROUTES.SECURITY, iconKey: ROUTES.SECURITY },
-      { id: 'ai-gov', labelKey: 'menu.ai-governance', route: ROUTES.AI_GOVERNANCE, iconKey: ROUTES.AI_GOVERNANCE },
-      { id: 'agent-audit', labelKey: 'menu.agent-audit', route: ROUTES.AGENT_AUDIT, iconKey: ROUTES.AGENT_AUDIT },
-      { id: 'agent-cockpit', labelKey: 'menu.agent-cockpit', route: ROUTES.AGENT_COCKPIT, iconKey: ROUTES.AGENT_COCKPIT },
-      { id: 'agent-tasks', labelKey: 'menu.agent-tasks', route: ROUTES.AGENT_TASKS, iconKey: ROUTES.AGENT_TASKS },
-      { id: 'billing', labelKey: 'menu.billing', route: ROUTES.BILLING, iconKey: ROUTES.BILLING },
-      { id: 'ai-cost', labelKey: 'menu.admin-ai-cost', route: ROUTES.ADMIN_AI_COST, iconKey: ROUTES.ADMIN_AI_COST },
-      { id: 'valuation-accuracy', labelKey: 'menu.valuation-accuracy', route: ROUTES.VALUATION_ACCURACY, iconKey: ROUTES.VALUATION_ACCURACY },
-      { id: 'data', labelKey: 'menu.data-platform', route: ROUTES.DATA_PLATFORM, iconKey: ROUTES.DATA_PLATFORM },
-      { id: 'seo', labelKey: 'menu.seo-manager', route: ROUTES.SEO_MANAGER, iconKey: ROUTES.SEO_MANAGER },
-      { id: 'scraper', labelKey: 'menu.scraper', route: ROUTES.SCRAPER, iconKey: ROUTES.SCRAPER },
-      { id: 'error-monitor', labelKey: 'menu.error-monitor', route: ROUTES.ERROR_MONITOR, iconKey: ROUTES.ERROR_MONITOR },
-      { id: 'system', labelKey: 'menu.system', route: ROUTES.SYSTEM, iconKey: ROUTES.SYSTEM },
+    const taskBasicItems: any[] = [
+      item('tasks', 'menu.tasks', ROUTES.TASKS),
+      item('task-kanban', 'menu.task-kanban', ROUTES.TASK_KANBAN),
     ];
-    // ADMIN/TEAM_LEAD: chỉ thấy người dùng + cài đặt doanh nghiệp
-    const sys = { id: 'sys', labelKey: 'menu.ecosystem', items: sysAdminItems };
-    // SUPER_ADMIN: thấy toàn bộ hệ thống (vendor management + tất cả công cụ)
-    const sysSuperAdmin = { id: 'sys', labelKey: 'menu.ecosystem', items: sysSuperAdminItems };
-    const taskMgmt = { id: 'task', labelKey: 'menu.task_management', items: [
-      { id: 'task-dashboard', labelKey: 'menu.task-dashboard', route: ROUTES.TASK_DASHBOARD, iconKey: ROUTES.TASK_DASHBOARD },
-      { id: 'tasks', labelKey: 'menu.tasks', route: ROUTES.TASKS, iconKey: ROUTES.TASKS },
-      { id: 'task-kanban', labelKey: 'menu.task-kanban', route: ROUTES.TASK_KANBAN, iconKey: ROUTES.TASK_KANBAN },
-      { id: 'employees', labelKey: 'menu.employees', route: ROUTES.EMPLOYEES, iconKey: ROUTES.EMPLOYEES },
-      { id: 'task-reports', labelKey: 'menu.task-reports', route: ROUTES.TASK_REPORTS, iconKey: ROUTES.TASK_REPORTS },
-    ]};
-    const taskMgmtBasic = { id: 'task', labelKey: 'menu.task_management', items: [
-      { id: 'tasks', labelKey: 'menu.tasks', route: ROUTES.TASKS, iconKey: ROUTES.TASKS },
-      { id: 'task-kanban', labelKey: 'menu.task-kanban', route: ROUTES.TASK_KANBAN, iconKey: ROUTES.TASK_KANBAN },
-    ]};
-    const partnerCore = { id: 'partner-core', labelKey: 'menu.partner_core', items: [
-      { id: 'projects', labelKey: 'menu.projects', route: ROUTES.PROJECTS, iconKey: ROUTES.PROJECTS },
-      { id: 'inv', labelKey: 'menu.inventory', route: ROUTES.INVENTORY, iconKey: ROUTES.INVENTORY },
-    ]};
+    const opsItems: any[] = [
+      item('projects', 'menu.projects', ROUTES.PROJECTS),
+      item('unit-inventory', 'menu.unit-inventory', ROUTES.UNIT_INVENTORY),
+      item('approvals', 'menu.approvals', ROUTES.APPROVALS),
+      item('routing', 'menu.routing-rules', ROUTES.ROUTING_RULES),
+      item('campaigns', 'menu.campaigns', ROUTES.CAMPAIGNS),
+      item('social-publishing', 'menu.social-publishing', ROUTES.SOCIAL_PUBLISHING),
+      item('seq', 'menu.sequences', ROUTES.SEQUENCES),
+      item('auction', 'menu.auction', ROUTES.AUCTION),
+      item('custom-fields', 'menu.custom-fields', ROUTES.CUSTOM_FIELDS),
+      item('scoring', 'menu.scoring-rules', ROUTES.SCORING_RULES),
+      item('knowledge', 'menu.knowledge', ROUTES.KNOWLEDGE),
+      item('rep', 'menu.reports', ROUTES.REPORTS),
+    ];
+    const sysAdminItems: any[] = [
+      item('users', 'menu.admin-users', ROUTES.ADMIN_USERS),
+      item('set', 'menu.enterprise-settings', ROUTES.ENTERPRISE_SETTINGS),
+      item('agent-audit', 'menu.agent-audit', ROUTES.AGENT_AUDIT),
+      item('agent-cockpit', 'menu.agent-cockpit', ROUTES.AGENT_COCKPIT),
+      item('agent-tasks', 'menu.agent-tasks', ROUTES.AGENT_TASKS),
+      item('valuation-accuracy', 'menu.valuation-accuracy', ROUTES.VALUATION_ACCURACY),
+    ];
+    const sysSuperAdminItems: any[] = [
+      ...sysAdminItems.slice(0, 2),
+      item('vendors', 'menu.vendor-management', ROUTES.VENDOR_MANAGEMENT),
+      item('security', 'menu.security', ROUTES.SECURITY),
+      item('ai-gov', 'menu.ai-governance', ROUTES.AI_GOVERNANCE),
+      ...sysAdminItems.slice(2),
+      item('billing', 'menu.billing', ROUTES.BILLING),
+      item('ai-cost', 'menu.admin-ai-cost', ROUTES.ADMIN_AI_COST),
+      item('data', 'menu.data-platform', ROUTES.DATA_PLATFORM),
+      item('seo', 'menu.seo-manager', ROUTES.SEO_MANAGER),
+      item('scraper', 'menu.scraper', ROUTES.SCRAPER),
+      item('error-monitor', 'menu.error-monitor', ROUTES.ERROR_MONITOR),
+      item('system', 'menu.system', ROUTES.SYSTEM),
+    ];
+
+    const partnerItems = [
+      item('projects', 'menu.projects', ROUTES.PROJECTS),
+      item('inv', 'menu.inventory', ROUTES.INVENTORY),
+    ];
     if (role === 'PARTNER_ADMIN' || role === 'PARTNER_AGENT') {
-      return [partnerCore];
+      return [{ id: 'products-work', labelKey: 'menu.products_work', items: partnerItems }];
     }
+
+    let visibleItems: any[] = [...coreItems];
     if (role === UserRole.SUPER_ADMIN) {
-      return [core, taskMgmt, ops, sysSuperAdmin];
-    }
-    if (role === UserRole.ADMIN || role === UserRole.TEAM_LEAD) {
-      return [core, taskMgmt, ops, sys];
+      visibleItems = [...coreItems, ...taskFullItems, ...opsItems, ...sysSuperAdminItems];
+    } else if (role === UserRole.ADMIN || role === UserRole.TEAM_LEAD) {
+      visibleItems = [...coreItems, ...taskFullItems, ...opsItems, ...sysAdminItems];
     } else if (role === UserRole.MARKETING) {
-      return [core, taskMgmtBasic, opsMarketing];
+      visibleItems = [...coreItems, ...taskBasicItems, ...opsItems.filter(i =>
+        ['projects', 'campaigns', 'social-publishing', 'seq', 'knowledge', 'rep'].includes(i.id)
+      )];
     } else if (role === UserRole.SALES) {
-      return [core, taskMgmtBasic, opsBasic];
+      visibleItems = [...coreItems, ...taskBasicItems, ...opsItems.filter(i =>
+        ['projects', 'knowledge', 'rep'].includes(i.id)
+      )];
+    } else {
+      // VIEWER + unknown role: core plus the same basic task access as before.
+      visibleItems = [...coreItems, ...taskBasicItems];
     }
-    // VIEWER + bất kỳ role không xác định: chỉ core + task kanban cơ bản (read-only UX)
-    return [core, taskMgmtBasic];
+
+    const byId: Record<string, any> = Object.fromEntries(
+      visibleItems.map(navItem => [navItem.id, navItem])
+    );
+    const allowedIds = new Set(visibleItems.map(navItem => navItem.id));
+    const makeGroup = (id: string, labelKey: string, itemIds: string[]) => ({
+      id,
+      labelKey,
+      items: itemIds
+        .filter(itemId => allowedIds.has(itemId))
+        .map(itemId => byId[itemId])
+        .filter(Boolean),
+    });
+
+    // The quick-access row intentionally reuses five high-frequency routes.
+    // They remain in their functional groups too, so the 43-route menu is not
+    // changed—only its order and information architecture are changed.
+    const groups = [
+      makeGroup('quick-actions', 'menu.quick_actions', ['dash', 'leads', 'inbox', 'inv', 'tasks']),
+      makeGroup('sales-customers', 'menu.sales_customers', ['leads', 'inbox', 'contracts', 'fav', 'ai-advisor']),
+      makeGroup('products-work', 'menu.products_work', [
+        'inv', 'projects', 'unit-inventory', 'search',
+        'task-dashboard', 'tasks', 'task-kanban', 'employees', 'task-reports',
+      ]),
+      makeGroup('marketing-distribution', 'menu.marketing_distribution', [
+        'campaigns', 'seq', 'social-publishing', 'routing', 'auction', 'my-landing',
+      ]),
+      makeGroup('administration', 'menu.administration', [
+        'approvals', 'users', 'set', 'vendors', 'billing', 'security',
+      ]),
+      makeGroup('ai-data-infrastructure', 'menu.ai_data_infrastructure', [
+        'home', 'custom-fields', 'scoring', 'knowledge', 'rep',
+        'ai-gov', 'agent-audit', 'agent-cockpit', 'agent-tasks',
+        'ai-cost', 'valuation-accuracy', 'data', 'seo', 'scraper',
+        'error-monitor', 'system',
+      ]),
+    ];
+    return groups.filter(group => group.items.length > 0);
   }
   async ping(): Promise<boolean> {
     try {
