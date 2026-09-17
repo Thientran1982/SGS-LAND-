@@ -32,6 +32,7 @@
  - [Live-chat regression fixture](livechat-regression-fixture.md) — use the stable public `mcc` project for found-project boundary checks, not optional tenant-specific env codes
 - [Valuation location matching](valuation-location-matching.md) — historical rows must match full location keys; token matching causes cross-province price contamination
 - [Next.js Turbopack watcher exhaustion](nextjs-turbopack-watchers.md) — ENOSPC can surface as misleading missing React modules after repeated preview restarts; clear .next and restart
+- [Preview Service Worker hydration](preview-service-worker-hydration.md) — stale production SW assets can mismatch fresh SSR HTML after returning to the dev preview
 - [SPA loading ownership](spa-loading-ownership.md) — keep one React-controlled loading fallback; a static Vite index loader duplicates Next/SPA route loading
 - [Preview map tile policy](preview-map-tiles.md) — map tiles in the Preview iframe must use a same-origin proxy, not third-party client fallbacks
 - [Agent event worker payloads](agent-event-worker-payloads.md) — durable event payloads stay JSON-serializable; process-bound Socket.IO belongs in the worker, not QStash jobs
