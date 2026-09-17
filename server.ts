@@ -38,7 +38,7 @@ import { agentP1Router } from './server/routes/agentP1Routes';
 import { createUserRoutes } from "./server/routes/userRoutes";
 import { agentMcpRouter } from './server/routes/agentMcpRoutes';
 import { agentSkillsRouter } from './server/routes/agentSkillsRoutes';
-import { chatRoomsRouter } from './server/routes/chatRoomsRoutes';
+import { chatRoomSocketName, chatRoomsRouter, joinChatRoomSocket } from './server/routes/chatRoomsRoutes';
 import { agentVoiceRouter, agentTeachRouter } from './server/routes/agentVoiceTeachRoutes';
 import { createAnalyticsRoutes } from "./server/routes/analyticsRoutes";
 import { createScoringRoutes } from "./server/routes/scoringRoutes";
@@ -1743,6 +1743,9 @@ app.use(globalMutationAudit);
     }
   });
   broadcastIo = io;
+  // chatRoomsRoutes uses this shared broadcaster for HTTP-originated messages.
+  // The room itself is still resolved by database-backed membership below.
+  (globalThis as any).__broadcastIo = io;
   setDurableAgentRunEventSink((event) => {
     try {
       broadcastIo?.to(event.leadId).emit(event.type, event);
@@ -6628,9 +6631,20 @@ app.get('/api/admin/agent-tasks', apiRateLimit, authenticateToken, async (req: e
       socket.leave(`conv:${conversationId}`);
     });
 
-    socket.on("join_room", (room) => {
+    socket.on("join_room", async (room) => {
       if (!socket.data.authUser) return;
       if (typeof room !== 'string' || room.length > 180) return;
+      if (room.startsWith('room:')) {
+        try {
+          const joined = await joinChatRoomSocket(socket, room.slice('room:'.length));
+          if (joined) {
+            logger.debug(`User ${socket.id} joined chat room ${room.slice('room:'.length)}`);
+          }
+        } catch (err: any) {
+          logger.warn(`[Socket] chat room join rejected: ${err?.message || err}`);
+        }
+        return;
+      }
       const user = socket.data.authUser;
       const allowed = room === `tenant:${user.tenantId}`
         || room === `user:${user.id}`
@@ -6638,6 +6652,18 @@ app.get('/api/admin/agent-tasks', apiRateLimit, authenticateToken, async (req: e
       if (!allowed) return;
       socket.join(room);
       logger.debug(`User ${socket.id} joined room ${room}`);
+    });
+
+    socket.on("join_chat_room", async (slug: unknown) => {
+      if (!socket.data.authUser) return;
+      try {
+        const joined = await joinChatRoomSocket(socket, slug);
+        if (joined) {
+          logger.debug(`User ${socket.id} joined chat room ${String(slug)}`);
+        }
+      } catch (err: any) {
+        logger.warn(`[Socket] chat room join rejected: ${err?.message || err}`);
+      }
     });
 
     // Allow unauthenticated live-chat visitors to join their conversation room.

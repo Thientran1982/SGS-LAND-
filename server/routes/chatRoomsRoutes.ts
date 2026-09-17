@@ -10,6 +10,18 @@ import { apiRateLimit } from '../middleware/rateLimiter';
 
 export const chatRoomsRouter = Router();
 
+export const chatRoomSocketName = (roomId: string): string => `chat-room:${roomId}`;
+
+type ChatRoomSocketLike = {
+  data?: {
+    authUser?: {
+      id?: unknown;
+      tenantId?: unknown;
+    } | null;
+  };
+  join: (room: string) => void | Promise<void>;
+};
+
 function authenticatedTenant(req: Request, res: Response): string | null {
   const tenantId = String((req as any).user?.tenantId || '').trim();
   if (!tenantId) {
@@ -17,6 +29,47 @@ function authenticatedTenant(req: Request, res: Response): string | null {
     return null;
   }
   return tenantId;
+}
+
+export async function findChatRoomForMember(
+  tenantId: string,
+  slug: string,
+  userId: string,
+  openOnly = false,
+): Promise<string | null> {
+  const openClause = openOnly ? " AND r.is_open = TRUE" : "";
+  const room = await pool.query(
+    "SELECT r.id FROM chat_rooms r JOIN chat_room_members m ON m.room_id = r.id AND m.user_id = $3 WHERE r.tenant_id = $1 AND r.slug = $2" + openClause,
+    [tenantId, slug, userId],
+  );
+  return room.rowCount ? String(room.rows[0].id) : null;
+}
+
+/**
+ * Authorize a Socket.IO chat-room join from the authenticated socket identity.
+ * The socket never receives a slug-only room name: the database-resolved room
+ * id keeps identical slugs in different tenants on separate realtime channels.
+ */
+export async function joinChatRoomSocket(
+  socket: ChatRoomSocketLike,
+  slug: unknown,
+): Promise<boolean> {
+  const user = socket.data?.authUser;
+  const tenantId = String(user?.tenantId || '').trim();
+  const userId = String(user?.id || '').trim();
+  const roomSlug = typeof slug === 'string' ? slug.trim() : '';
+  if (
+    !tenantId
+    || !userId
+    || !/^[a-z0-9-]{3,64}$/.test(roomSlug)
+  ) {
+    return false;
+  }
+
+  const roomId = await findChatRoomForMember(tenantId, roomSlug, userId);
+  if (!roomId) return false;
+  await socket.join(chatRoomSocketName(roomId));
+  return true;
 }
 
 // GET / — danh sach phong cua tenant (+ so thanh vien, tin nhan cuoi)
@@ -78,14 +131,11 @@ chatRoomsRouter.get('/:slug/messages', apiRateLimit, async (req: Request, res: R
     if (!tenantId) return;
     const userId = String((req as any).user?.id || '').trim();
     if (!userId) return res.status(401).json({ error: 'Can dang nhap' });
-    const room = await pool.query(
-      "SELECT r.id FROM chat_rooms r JOIN chat_room_members m ON m.room_id = r.id AND m.user_id = $3 WHERE r.tenant_id = $1 AND r.slug = $2",
-      [tenantId, req.params.slug, userId],
-    );
-    if (room.rowCount === 0) return res.status(404).json({ error: 'Phong khong ton tai' });
+    const roomId = await findChatRoomForMember(tenantId, String(req.params.slug), userId, true);
+    if (!roomId) return res.status(404).json({ error: 'Phong khong ton tai' });
     const msgs = await pool.query(
       "SELECT id, sender_name, kind, content, created_at FROM chat_room_messages WHERE room_id = $1 ORDER BY created_at DESC LIMIT 100",
-      [room.rows[0].id],
+      [roomId],
     );
     res.json({ messages: msgs.rows.reverse() });
   } catch (err: any) {
@@ -105,18 +155,15 @@ chatRoomsRouter.post('/:slug/messages', apiRateLimit, async (req: Request, res: 
     const content = String((req.body || {}).content || '').trim();
     const kind = (req.body || {}).kind === 'AGENT' ? 'AGENT' : 'TEXT';
     if (!content) return res.status(400).json({ error: 'content la bat buoc' });
-    const room = await pool.query(
-      "SELECT r.id FROM chat_rooms r JOIN chat_room_members m ON m.room_id = r.id AND m.user_id = $3 WHERE r.tenant_id = $1 AND r.slug = $2 AND r.is_open = TRUE",
-      [tenantId, req.params.slug, userId],
-    );
-    if (room.rowCount === 0) return res.status(404).json({ error: 'Phong khong ton tai hoac da dong' });
+    const roomId = await findChatRoomForMember(tenantId, String(req.params.slug), userId);
+    if (!roomId) return res.status(404).json({ error: 'Phong khong ton tai hoac da dong' });
     const ins = await pool.query(
       "INSERT INTO chat_room_messages (room_id, sender_id, sender_name, kind, content) VALUES ($1,$2,$3,$4,$5) RETURNING id, sender_name, kind, content, created_at",
-      [room.rows[0].id, user?.id || null, user?.name || 'Khach', kind, content.slice(0, 4000)],
+      [roomId, user?.id || null, user?.name || 'Khach', kind, content.slice(0, 4000)],
     );
-    await pool.query("UPDATE chat_rooms SET last_activity_at = NOW() WHERE id = $1", [room.rows[0].id]);
+    await pool.query("UPDATE chat_rooms SET last_activity_at = NOW() WHERE id = $1", [roomId]);
     const io = (globalThis as any).__broadcastIo;
-    if (io) io.to('room:' + req.params.slug).emit('room_message', ins.rows[0]);
+    if (io) io.to(chatRoomSocketName(roomId)).emit('room_message', ins.rows[0]);
     res.status(201).json({ message: ins.rows[0] });
   } catch (err: any) {
     logger.warn('[Rooms] send failed: ' + (err?.message || err));

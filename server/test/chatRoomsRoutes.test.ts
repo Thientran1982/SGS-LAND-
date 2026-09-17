@@ -11,7 +11,11 @@ vi.mock('../middleware/rateLimiter', () => ({
   apiRateLimit: (_req: unknown, _res: unknown, next: () => void) => next(),
 }));
 
-import { chatRoomsRouter } from '../routes/chatRoomsRoutes';
+import {
+  chatRoomSocketName,
+  chatRoomsRouter,
+  joinChatRoomSocket,
+} from '../routes/chatRoomsRoutes';
 
 type TestUser = {
   id?: string;
@@ -46,6 +50,7 @@ describe('chat room tenant and membership boundaries', () => {
   });
 
   afterEach(async () => {
+    delete (globalThis as any).__broadcastIo;
     await new Promise<void>(resolve => server.close(() => resolve()));
   });
 
@@ -124,6 +129,9 @@ describe('chat room tenant and membership boundaries', () => {
   });
 
   it('sends only after membership and tenant checks pass', async () => {
+    const emit = vi.fn();
+    const to = vi.fn(() => ({ emit }));
+    (globalThis as any).__broadcastIo = { to };
     query
       .mockResolvedValueOnce({ rows: [{ id: 'room-a' }], rowCount: 1 })
       .mockResolvedValueOnce({
@@ -143,5 +151,47 @@ describe('chat room tenant and membership boundaries', () => {
     expect(query.mock.calls[0][1]).toEqual(['tenant-a', 'shared-room', 'user-a']);
     expect(query.mock.calls[1][1]).toEqual(['room-a', 'user-a', 'User A', 'TEXT', 'Hello']);
     expect(query.mock.calls[2][1]).toEqual(['room-a']);
+    expect(to).toHaveBeenCalledWith(chatRoomSocketName('room-a'));
+    expect(emit).toHaveBeenCalledWith('room_message', expect.objectContaining({ id: 'message-a' }));
+  });
+
+  it('joins identical slugs into tenant-specific realtime rooms', async () => {
+    const tenantASocket = {
+      data: { authUser: { id: 'user-a', tenantId: 'tenant-a' } },
+      join: vi.fn(),
+    };
+    const tenantBSocket = {
+      data: { authUser: { id: 'user-b', tenantId: 'tenant-b' } },
+      join: vi.fn(),
+    };
+    query
+      .mockResolvedValueOnce({ rows: [{ id: 'room-a' }], rowCount: 1 })
+      .mockResolvedValueOnce({ rows: [{ id: 'room-b' }], rowCount: 1 });
+
+    await expect(joinChatRoomSocket(tenantASocket, 'shared-room')).resolves.toBe(true);
+    await expect(joinChatRoomSocket(tenantBSocket, 'shared-room')).resolves.toBe(true);
+
+    expect(query.mock.calls[0][1]).toEqual(['tenant-a', 'shared-room', 'user-a']);
+    expect(query.mock.calls[1][1]).toEqual(['tenant-b', 'shared-room', 'user-b']);
+    expect(tenantASocket.join).toHaveBeenCalledWith(chatRoomSocketName('room-a'));
+    expect(tenantBSocket.join).toHaveBeenCalledWith(chatRoomSocketName('room-b'));
+    expect(tenantASocket.join).not.toHaveBeenCalledWith(chatRoomSocketName('room-b'));
+    expect(tenantBSocket.join).not.toHaveBeenCalledWith(chatRoomSocketName('room-a'));
+  });
+
+  it('does not join a realtime room for a user who is not a member', async () => {
+    const socket = {
+      data: { authUser: { id: 'user-outsider', tenantId: 'tenant-a' } },
+      join: vi.fn(),
+    };
+    query.mockResolvedValueOnce({ rows: [], rowCount: 0 });
+
+    await expect(joinChatRoomSocket(socket, 'shared-room')).resolves.toBe(false);
+
+    expect(query).toHaveBeenCalledWith(
+      expect.stringContaining('JOIN chat_room_members m'),
+      ['tenant-a', 'shared-room', 'user-outsider'],
+    );
+    expect(socket.join).not.toHaveBeenCalled();
   });
 });
