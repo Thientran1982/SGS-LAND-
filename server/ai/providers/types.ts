@@ -32,6 +32,8 @@ export type ProviderAttachmentFailure = {
   code: 'ATTACHMENT_VISUAL_UNREADABLE';
   attachmentId?: string;
   attachmentName: string;
+  /** Used only for content-free operational classification. */
+  mimeType?: string;
   extractionStatus?: ProviderEvidenceRef['extractionStatus'];
 };
 

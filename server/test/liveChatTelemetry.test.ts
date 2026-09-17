@@ -174,6 +174,129 @@ describe('live-chat telemetry', () => {
     });
   });
 
+  it('tracks unreadable attachments separately from provider failures using safe dimensions', () => {
+    let now = 1_000;
+    const log = testLogger();
+    const telemetry = new LiveChatTelemetry({
+      now: () => now,
+      log,
+      windowMs: 10_000,
+    });
+
+    telemetry.recordAttachmentOutcome({
+      tenantId: 'tenant-a-secret',
+      processingStatus: 'unreadable',
+      providerOutcome: 'not_attempted',
+      failure: {
+        mimeType: 'application/pdf',
+        extractionStatus: 'FAILED',
+      },
+    });
+    now += 10;
+    telemetry.recordAttachmentOutcome({
+      tenantId: 'tenant-a-secret',
+      processingStatus: 'processed',
+      providerOutcome: 'primary',
+      attachments: [{
+        mimeType: 'image/png',
+        extractionStatus: 'READY',
+      }],
+    });
+    now += 10;
+    telemetry.recordAttachmentOutcome({
+      tenantId: 'tenant-b-secret',
+      processingStatus: 'not_processed',
+      providerOutcome: 'timeout',
+      attachments: [{
+        mimeType: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+        extractionStatus: 'EMPTY',
+      }],
+    });
+    now += 10;
+    telemetry.recordAttachmentOutcome({
+      tenantId: 'tenant-b-secret',
+      processingStatus: 'not_processed',
+      providerOutcome: 'outage',
+      attachments: [{
+        mimeType: 'application/pdf',
+        extractionStatus: 'READY',
+      }],
+    });
+
+    const snapshot = telemetry.getSnapshot();
+    expect(snapshot.attachmentReadability.overall).toEqual({
+      total: 4,
+      unreadable: 1,
+      notProcessed: 2,
+      unreadableRatePercent: 25,
+      providerOutcomes: {
+        primary: 1,
+        fallback: 0,
+        timeout: 1,
+        outage: 1,
+        not_attempted: 1,
+      },
+    });
+    expect(snapshot.attachmentReadability.byFileType).toEqual(expect.arrayContaining([
+      expect.objectContaining({
+        fileType: 'pdf',
+        total: 2,
+        unreadable: 1,
+        unreadableRatePercent: 50,
+      }),
+      expect.objectContaining({ fileType: 'image', total: 1, unreadable: 0 }),
+      expect.objectContaining({ fileType: 'docx', total: 1, notProcessed: 1 }),
+    ]));
+    expect(snapshot.attachmentReadability.byExtractionStatus).toEqual(expect.arrayContaining([
+      expect.objectContaining({ extractionStatus: 'FAILED', unreadable: 1 }),
+      expect.objectContaining({ extractionStatus: 'EMPTY', notProcessed: 1 }),
+      expect.objectContaining({ extractionStatus: 'READY', total: 2 }),
+    ]));
+    expect(snapshot.attachmentReadability.byTenant).toHaveLength(2);
+    expect(snapshot.attachmentReadability.byTenant.map(item => item.tenantKey))
+      .not.toEqual(expect.arrayContaining(['tenant-a-secret', 'tenant-b-secret']));
+    expect(JSON.stringify(snapshot)).not.toContain('tenant-a-secret');
+    expect(JSON.stringify(log.warn.mock.calls)).not.toContain('secret-file-name.pdf');
+  });
+
+  it('persists attachment classifications without retaining attachment identity', async () => {
+    let now = 2_000;
+    let savedState: any;
+    const telemetry = new LiveChatTelemetry({
+      now: () => now,
+      log: testLogger(),
+    });
+    telemetry.configurePersistence({
+      load: async () => null,
+      save: async state => {
+        savedState = state;
+      },
+    });
+
+    telemetry.recordAttachmentOutcome({
+      tenantId: 'tenant-persisted',
+      processingStatus: 'unreadable',
+      providerOutcome: 'not_attempted',
+      failure: {
+        mimeType: 'application/pdf',
+        extractionStatus: 'FAILED',
+      },
+    });
+    await telemetry.flushPersistenceNow();
+
+    expect(savedState.attachmentEvents).toEqual([{
+      tenantKey: expect.stringMatching(/^[a-f0-9]{16}$/),
+      at: 2_000,
+      processingStatus: 'unreadable',
+      providerOutcome: 'not_attempted',
+      extractionStatus: 'FAILED',
+      fileType: 'pdf',
+    }]);
+    expect(JSON.stringify(savedState)).not.toContain('tenant-persisted');
+    expect(JSON.stringify(savedState)).not.toContain('private-document.pdf');
+    expect(JSON.stringify(savedState)).not.toContain('sha256');
+  });
+
   it.each([
     Object.assign(new Error('timeout exceeded when trying to connect'), { code: 'ETIMEDOUT' }),
     new Error('database probe timed out after 800ms'),
@@ -222,6 +345,16 @@ describe('live-chat telemetry', () => {
          ],
          statusRateLimitAlertAt: 9_800,
          statusRateLimitTenantAlerts: { 'fedcba9876543210': 9_800 },
+         attachmentEvents: [
+           {
+             tenantKey: 'fedcba9876543210',
+             at: 9_700,
+             processingStatus: 'unreadable',
+             providerOutcome: 'not_attempted',
+             extractionStatus: 'FAILED',
+             fileType: 'pdf',
+           },
+         ],
       }),
       save: async () => undefined,
     });
@@ -246,5 +379,13 @@ describe('live-chat telemetry', () => {
       backend: 'mixed',
       alertActive: true,
     });
+    expect(snapshot.attachmentReadability.overall).toMatchObject({
+      total: 1,
+      unreadable: 1,
+      unreadableRatePercent: 100,
+    });
+    expect(snapshot.attachmentReadability.byFileType).toEqual(expect.arrayContaining([
+      expect.objectContaining({ fileType: 'pdf', total: 1, unreadable: 1 }),
+    ]));
   });
 });

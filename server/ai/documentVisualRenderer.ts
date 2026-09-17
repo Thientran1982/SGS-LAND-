@@ -50,6 +50,7 @@ export class DocumentVisualFallbackError extends Error {
       code: 'ATTACHMENT_VISUAL_UNREADABLE',
       ...(file?.source?.attachmentId ? { attachmentId: file.source.attachmentId } : {}),
       attachmentName,
+      ...(file?.mimeType ? { mimeType: file.mimeType } : {}),
       ...(file?.source?.extractionStatus
         ? { extractionStatus: file.source.extractionStatus }
         : {}),

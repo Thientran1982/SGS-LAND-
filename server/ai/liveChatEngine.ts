@@ -54,7 +54,12 @@ import { getGuidePolicyResponse, normalizeGuideInput } from './guideAssistantPol
 import { customerProfileService, observeCustomerMessage, extractFactsWithLLM, classifyInteractionOutcome } from '../services/customerProfileService';
 import { listEnabledMcpServers, callMcpTool, resolveMcpToolName } from '../services/mcpClientService';
 import { buildLandingBuilderResponse, ensureLandingResponseLink } from './landingResponse';
-import { liveChatTelemetry, type LiveChatRunTimings } from '../services/liveChatTelemetry';
+import {
+    liveChatTelemetry,
+    type LiveChatAttachmentProcessingStatus,
+    type LiveChatAttachmentProviderOutcome,
+    type LiveChatRunTimings,
+} from '../services/liveChatTelemetry';
 import {
     scoreLeadDeterministically,
     qualifyLeadConversation,
@@ -98,6 +103,33 @@ function hasProviderTimeout(attempts: ProviderAttempt[]): boolean {
         attempt.outcome === 'failed' &&
         [408, 504, 524].includes(Number(attempt.status)),
     );
+}
+
+function attachmentProviderOutcome(
+    telemetry: Pick<LiveChatProviderTelemetry, 'outcome'>,
+): LiveChatAttachmentProviderOutcome {
+    switch (telemetry.outcome) {
+        case 'ATTACHMENT_UNREADABLE':
+            return 'not_attempted';
+        case 'TIMEOUT':
+            return 'timeout';
+        case 'UNAVAILABLE':
+            return 'outage';
+        case 'FALLBACK':
+            return 'fallback';
+        default:
+            return 'primary';
+    }
+}
+
+function attachmentProcessingStatus(
+    telemetry: Pick<LiveChatProviderTelemetry, 'outcome'>,
+): LiveChatAttachmentProcessingStatus {
+    if (telemetry.outcome === 'ATTACHMENT_UNREADABLE') return 'unreadable';
+    if (telemetry.outcome === 'TIMEOUT' || telemetry.outcome === 'UNAVAILABLE') {
+        return 'not_processed';
+    }
+    return 'processed';
 }
 
 export function classifyLiveChatProviderOutcome(
@@ -339,6 +371,30 @@ export async function generateLiveChatText(params: {
     const timeoutMs = isMinhInteractivePath
         ? Math.min(params.timeoutMs || 8_000, 8_000)
         : (params.timeoutMs || 15_000);
+    const attachmentParts = [
+        ...(params.images || []),
+        ...(params.files || []),
+    ];
+    const recordAttachmentTelemetry = (telemetry: LiveChatProviderTelemetry) => {
+        if (!attachmentParts.length && !telemetry.attachmentFailure) return;
+        liveChatTelemetry.recordAttachmentOutcome({
+            tenantId: params.tenantId || 'unknown',
+            processingStatus: attachmentProcessingStatus(telemetry),
+            providerOutcome: attachmentProviderOutcome(telemetry),
+            attachments: attachmentParts.map(part => ({
+                mimeType: part.mimeType,
+                extractionStatus: part.source?.extractionStatus,
+            })),
+            ...(telemetry.attachmentFailure
+                ? {
+                    failure: {
+                        mimeType: telemetry.attachmentFailure.mimeType,
+                        extractionStatus: telemetry.attachmentFailure.extractionStatus,
+                    },
+                }
+                : {}),
+        });
+    };
     try {
         const result = await generateWithPolicy({
             model,
@@ -366,6 +422,7 @@ export async function generateLiveChatText(params: {
             ...outcome,
             attempts: result.attempts || [],
         };
+        recordAttachmentTelemetry(telemetry);
         params.onProviderTelemetry?.(telemetry);
         logger.info(
             `[LiveChatProvider] trace=${traceId} feature=${feature} provider=${result.provider} ` +
@@ -401,6 +458,7 @@ export async function generateLiveChatText(params: {
             attempts,
             ...(attachmentFailure ? { attachmentFailure } : {}),
         };
+        recordAttachmentTelemetry(telemetry);
         params.onProviderTelemetry?.(telemetry);
         logger.warn(
             `[LiveChatProvider] trace=${traceId} feature=${feature} failed ` +

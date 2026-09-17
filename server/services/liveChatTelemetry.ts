@@ -20,6 +20,31 @@ export interface LiveChatClientTimings {
   finalReplyMs?: number;
 }
 
+export type LiveChatAttachmentProcessingStatus = 'processed' | 'unreadable' | 'not_processed';
+export type LiveChatAttachmentProviderOutcome =
+  | 'primary'
+  | 'fallback'
+  | 'timeout'
+  | 'outage'
+  | 'not_attempted';
+export type LiveChatAttachmentFileType = 'image' | 'pdf' | 'docx' | 'document' | 'other';
+export type LiveChatAttachmentExtractionStatus =
+  | 'NOT_APPLICABLE'
+  | 'READY'
+  | 'EMPTY'
+  | 'FAILED'
+  | 'UNKNOWN';
+
+export interface LiveChatAttachmentTelemetryBreakdown {
+  total: number;
+  unreadable: number;
+  notProcessed: number;
+  unreadableRatePercent: number;
+  providerOutcomes: Record<LiveChatAttachmentProviderOutcome, number>;
+}
+
+export type LiveChatAttachmentTelemetryDimension = LiveChatAttachmentTelemetryBreakdown;
+
 export interface LiveChatRunTimings {
   classifyMs?: number;
   memoryMs?: number;
@@ -72,6 +97,17 @@ export interface LiveChatTelemetrySnapshot {
     alertActive: boolean;
   };
   statusRateLimits: LiveChatStatusRateLimitSnapshot;
+  attachmentReadability: {
+    windowMs: number;
+    overall: LiveChatAttachmentTelemetryBreakdown;
+    byTenant: Array<LiveChatAttachmentTelemetryDimension & { tenantKey: string }>;
+    byExtractionStatus: Array<LiveChatAttachmentTelemetryDimension & {
+      extractionStatus: LiveChatAttachmentExtractionStatus;
+    }>;
+    byFileType: Array<LiveChatAttachmentTelemetryDimension & {
+      fileType: LiveChatAttachmentFileType;
+    }>;
+  };
 }
 
 export type LiveChatRateLimitBackend = 'redis' | 'in-memory';
@@ -131,6 +167,14 @@ export interface LiveChatTelemetryPersistenceState {
   }>;
   statusRateLimitAlertAt?: number;
   statusRateLimitTenantAlerts?: Record<string, number>;
+  attachmentEvents?: Array<{
+    tenantKey: string;
+    at: number;
+    processingStatus: LiveChatAttachmentProcessingStatus;
+    providerOutcome: LiveChatAttachmentProviderOutcome;
+    extractionStatus: LiveChatAttachmentExtractionStatus;
+    fileType: LiveChatAttachmentFileType;
+  }>;
 }
 
 export interface LiveChatTelemetryPersistence {
@@ -183,6 +227,15 @@ interface StatusRateLimitEvent {
   backend: LiveChatRateLimitBackend;
 }
 
+interface AttachmentTelemetryEvent {
+  tenantKey: string;
+  at: number;
+  processingStatus: LiveChatAttachmentProcessingStatus;
+  providerOutcome: LiveChatAttachmentProviderOutcome;
+  extractionStatus: LiveChatAttachmentExtractionStatus;
+  fileType: LiveChatAttachmentFileType;
+}
+
 const DEFAULT_WINDOW_MS = 15 * 60_000;
 const DEFAULT_HISTORY_THRESHOLD_MS = 1_500;
 const DEFAULT_MESSAGE_THRESHOLD_MS = 1_500;
@@ -219,6 +272,25 @@ function safeDuration(value: unknown): number | undefined {
   return Number.isFinite(duration) && duration >= 0 && duration <= 24 * 60 * 60_000
     ? Math.floor(duration)
     : undefined;
+}
+
+function normalizeExtractionStatus(value: unknown): LiveChatAttachmentExtractionStatus {
+  return ['NOT_APPLICABLE', 'READY', 'EMPTY', 'FAILED'].includes(String(value))
+    ? String(value) as LiveChatAttachmentExtractionStatus
+    : 'UNKNOWN';
+}
+
+export function normalizeLiveChatAttachmentFileType(
+  mimeType: unknown,
+): LiveChatAttachmentFileType {
+  const mime = String(mimeType || '').trim().toLowerCase();
+  if (mime.startsWith('image/')) return 'image';
+  if (mime === 'application/pdf') return 'pdf';
+  if (mime === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document') {
+    return 'docx';
+  }
+  if (mime.startsWith('application/') || mime.startsWith('text/')) return 'document';
+  return 'other';
 }
 
 function percentile(values: number[], fraction: number): number {
@@ -283,6 +355,7 @@ export class LiveChatTelemetry {
   private readonly databaseTimeouts: number[] = [];
   private readonly slowEndpoints = new Map<LiveChatTelemetryEndpoint, SlowEndpointState>();
   private readonly statusRateLimitEvents: StatusRateLimitEvent[] = [];
+  private readonly attachmentEvents: AttachmentTelemetryEvent[] = [];
   private databaseTimeoutAlertAt = Number.NEGATIVE_INFINITY;
   private statusRateLimitAlertAt = Number.NEGATIVE_INFINITY;
   private readonly statusRateLimitTenantAlerts = new Map<string, number>();
@@ -476,6 +549,22 @@ export class LiveChatTelemetry {
           this.statusRateLimitTenantAlerts.set(tenantKey, Number(alertAt));
         }
       }
+      this.attachmentEvents.splice(0, this.attachmentEvents.length, ...(state.attachmentEvents || [])
+        .filter(event => (
+          typeof event?.tenantKey === 'string'
+          && Number.isFinite(event?.at)
+          && ['processed', 'unreadable', 'not_processed'].includes(event?.processingStatus)
+          && ['primary', 'fallback', 'timeout', 'outage', 'not_attempted'].includes(event?.providerOutcome)
+          && ['image', 'pdf', 'docx', 'document', 'other'].includes(event?.fileType)
+        ))
+        .map(event => ({
+          tenantKey: event.tenantKey,
+          at: Number(event.at),
+          processingStatus: event.processingStatus,
+          providerOutcome: event.providerOutcome,
+          extractionStatus: normalizeExtractionStatus(event.extractionStatus),
+          fileType: event.fileType,
+        })));
       this.prune(now);
       return true;
     } catch (error: any) {
@@ -598,6 +687,54 @@ export class LiveChatTelemetry {
     this.schedulePersistence();
   }
 
+  recordAttachmentOutcome(params: {
+    tenantId: string;
+    processingStatus: LiveChatAttachmentProcessingStatus;
+    providerOutcome: LiveChatAttachmentProviderOutcome;
+    attachments?: Array<{
+      mimeType?: unknown;
+      extractionStatus?: unknown;
+    }>;
+    failure?: {
+      mimeType?: unknown;
+      extractionStatus?: unknown;
+    };
+  }): void {
+    const at = this.now();
+    this.prune(at);
+    const tenantKey = safeTenantKey(params.tenantId);
+    const attachments = params.failure
+      ? [{
+          mimeType: params.failure.mimeType,
+          extractionStatus: params.failure.extractionStatus,
+        }]
+      : (params.attachments || []);
+    if (!attachments.length) return;
+
+    for (const attachment of attachments.slice(0, 5)) {
+      const event: AttachmentTelemetryEvent = {
+        tenantKey,
+        at,
+        processingStatus: params.processingStatus,
+        providerOutcome: params.providerOutcome,
+        extractionStatus: normalizeExtractionStatus(attachment.extractionStatus),
+        fileType: normalizeLiveChatAttachmentFileType(attachment.mimeType),
+      };
+      this.attachmentEvents.push(event);
+      if (event.processingStatus === 'unreadable') {
+        this.log.warn('[LiveChatTelemetry] unreadable attachment recorded', {
+          event: 'live_chat_attachment_unreadable',
+          tenantKey,
+          fileType: event.fileType,
+          extractionStatus: event.extractionStatus,
+          providerOutcome: event.providerOutcome,
+        });
+      }
+    }
+    this.attachmentEvents.splice(0, Math.max(0, this.attachmentEvents.length - MAX_PERSISTED_EVENTS));
+    this.schedulePersistence();
+  }
+
   getSnapshot(at = this.now()): LiveChatTelemetrySnapshot {
     this.prune(at);
     const acknowledge = this.samples
@@ -621,6 +758,7 @@ export class LiveChatTelemetry {
         count: state.count,
         lastDurationMs: state.lastDurationMs,
       }));
+    const attachmentReadability = this.getAttachmentReadabilitySnapshot();
     return {
       windowMs: this.windowMs,
       generatedAt: new Date(at).toISOString(),
@@ -639,6 +777,7 @@ export class LiveChatTelemetry {
         alertActive: this.databaseTimeouts.length >= this.databaseTimeoutAlertThreshold,
       },
       statusRateLimits: this.getStatusRateLimitSnapshot(),
+      attachmentReadability,
     };
   }
 
@@ -742,6 +881,7 @@ export class LiveChatTelemetry {
       statusRateLimitEvents: this.statusRateLimitEvents.slice(-MAX_PERSISTED_EVENTS),
       statusRateLimitAlertAt: this.statusRateLimitAlertAt,
       statusRateLimitTenantAlerts: Object.fromEntries(this.statusRateLimitTenantAlerts),
+      attachmentEvents: this.attachmentEvents.slice(-MAX_PERSISTED_EVENTS),
     };
   }
 
@@ -862,6 +1002,53 @@ export class LiveChatTelemetry {
     };
   }
 
+  private getAttachmentReadabilitySnapshot(): LiveChatTelemetrySnapshot['attachmentReadability'] {
+    const breakdown = (events: AttachmentTelemetryEvent[]): LiveChatAttachmentTelemetryBreakdown => {
+      const unreadable = events.filter(event => event.processingStatus === 'unreadable').length;
+      const notProcessed = events.filter(event => event.processingStatus === 'not_processed').length;
+      const providerOutcomes: Record<LiveChatAttachmentProviderOutcome, number> = {
+        primary: 0,
+        fallback: 0,
+        timeout: 0,
+        outage: 0,
+        not_attempted: 0,
+      };
+      for (const event of events) providerOutcomes[event.providerOutcome] += 1;
+      return {
+        total: events.length,
+        unreadable,
+        notProcessed,
+        unreadableRatePercent: events.length
+          ? Math.round((unreadable / events.length) * 10_000) / 100
+          : 0,
+        providerOutcomes,
+      };
+    };
+    const events = this.attachmentEvents;
+    const tenants = [...new Set(events.map(event => event.tenantKey))];
+    const extractionStatuses: LiveChatAttachmentExtractionStatus[] = [
+      'NOT_APPLICABLE', 'READY', 'EMPTY', 'FAILED', 'UNKNOWN',
+    ];
+    const fileTypes: LiveChatAttachmentFileType[] = ['image', 'pdf', 'docx', 'document', 'other'];
+    const tenantBreakdowns = tenants.map(tenantKey => ({
+      tenantKey,
+      ...breakdown(events.filter(event => event.tenantKey === tenantKey)),
+    })).sort((a, b) => b.unreadable - a.unreadable || b.total - a.total);
+    return {
+      windowMs: this.windowMs,
+      overall: breakdown(events),
+      byTenant: tenantBreakdowns,
+      byExtractionStatus: extractionStatuses.map(extractionStatus => ({
+        extractionStatus,
+        ...breakdown(events.filter(event => event.extractionStatus === extractionStatus)),
+      })),
+      byFileType: fileTypes.map(fileType => ({
+        fileType,
+        ...breakdown(events.filter(event => event.fileType === fileType)),
+      })),
+    };
+  }
+
   private prune(at: number): void {
     const cutoff = at - this.windowMs;
     while (this.samples.length && this.samples[0].at < cutoff) this.samples.shift();
@@ -877,6 +1064,9 @@ export class LiveChatTelemetry {
       && this.statusRateLimitEvents[0].at < at - this.statusRateLimitWindowMs
     ) {
       this.statusRateLimitEvents.shift();
+    }
+    while (this.attachmentEvents.length && this.attachmentEvents[0].at < at - this.windowMs) {
+      this.attachmentEvents.shift();
     }
     for (const [key, state] of this.requests) {
       if (state.expiresAt < at) this.requests.delete(key);

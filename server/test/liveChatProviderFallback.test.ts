@@ -348,6 +348,7 @@ describe('live-chat provider fallback policy', () => {
         code: 'ATTACHMENT_VISUAL_UNREADABLE',
         attachmentId: 'scan.pdf',
         attachmentName: 'scan.pdf',
+        mimeType: 'application/pdf',
         extractionStatus: 'FAILED',
       },
       attempts: [
