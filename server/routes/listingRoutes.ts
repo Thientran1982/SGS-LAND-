@@ -20,6 +20,10 @@ import {
 import { ListingValidationError } from '../services/listingValidation';
 import { notificationRepository } from '../repositories/notificationRepository';
 import { storeFile } from '../services/storageService';
+import {
+  createPublicListingTeaserToken,
+  PUBLIC_LISTING_TEASER_TTL_SECONDS,
+} from '../services/publicListingTeaserCapability';
 
 // Lazy-load sharp so a missing/broken native build never crashes the route module
 let _sharpBulk: typeof import('sharp') | null = null;
@@ -480,6 +484,34 @@ export function createListingRoutes(authenticateToken: any) {
     } catch (error) {
       console.error('Error fetching listing:', error);
       res.status(500).json({ error: 'Failed to fetch listing' });
+    }
+  });
+
+  // ── POST /api/listings/:id/public-teaser-token ────────────────────────────
+  // A raw listing ID is never a public capability. Issue a short-lived,
+  // tenant-bound token only after the listing has explicitly been marked
+  // public.
+  router.post('/:id/public-teaser-token', authenticateToken, validateUUIDParam(), async (req: Request, res: Response) => {
+    try {
+      const user = (req as any).user;
+      const listing = await listingRepository.findPublicTeaserListing(
+        String(user.tenantId),
+        String(req.params.id),
+      );
+      if (!listing) return res.status(404).json({ error: 'Public listing not found' });
+
+      const token = createPublicListingTeaserToken({
+        tenantId: String(user.tenantId),
+        listingId: String(req.params.id),
+      });
+      return res.json({
+        token,
+        listingId: String(req.params.id),
+        expiresInSeconds: PUBLIC_LISTING_TEASER_TTL_SECONDS,
+      });
+    } catch (error) {
+      console.error('Error issuing public teaser token:', error);
+      return res.status(500).json({ error: 'Failed to issue public teaser token' });
     }
   });
 

@@ -45,6 +45,7 @@ export const LISTING_SYSTEM_FIELDS: readonly string[] = [
 /** Fields that need elevated roles. */
 export const LISTING_PRIVILEGED_FIELDS: Record<string, readonly string[]> = {
   isVerified: ['SUPER_ADMIN', 'ADMIN', 'TEAM_LEAD'],
+  isPublic: ['SUPER_ADMIN', 'ADMIN', 'TEAM_LEAD'],
   authorizedAgents: ['SUPER_ADMIN', 'ADMIN', 'TEAM_LEAD'],
 };
 

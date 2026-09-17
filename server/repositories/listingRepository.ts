@@ -1,5 +1,6 @@
 import { BaseRepository, PaginatedResult, PaginationParams } from './baseRepository';
 import { validateListingFields } from '../services/listingValidation';
+import { withRlsBypass } from '../db';
 
 /** Shared normalization used by valuation comparable provenance checks. */
 export function normalizeComparableLocation(value: unknown): string {
@@ -347,6 +348,42 @@ export class ListingRepository extends BaseRepository {
       ownerPhone: undefined,
       commission: undefined,
       commissionUnit: undefined,
+    };
+  }
+
+  /**
+   * Public teaser lookup. The signed token supplies both IDs, but the
+   * database remains the authority: only an explicitly public row in that
+   * tenant can be resolved. Return only the valuation inputs, never the
+   * listing's full private record.
+   */
+  async findPublicTeaserListing(
+    tenantId: string,
+    listingId: string,
+  ): Promise<{
+    tenantId: string;
+    listingId: string;
+    location: string | null;
+    area: number | string | null;
+    type: string | null;
+  } | null> {
+    const result = await withRlsBypass((client) => client.query(
+      `SELECT tenant_id, id, COALESCE(location, address) AS location, area, type
+         FROM listings
+        WHERE tenant_id = $1
+          AND id = $2
+          AND is_public = TRUE
+        LIMIT 1`,
+      [tenantId, listingId],
+    ));
+    const row = result.rows[0];
+    if (!row) return null;
+    return {
+      tenantId: String(row.tenant_id),
+      listingId: String(row.id),
+      location: row.location ?? null,
+      area: row.area ?? null,
+      type: row.type ?? null,
     };
   }
 
@@ -783,14 +820,14 @@ export class ListingRepository extends BaseRepository {
         `INSERT INTO listings (
           tenant_id, code, title, location, price, currency, area, built_area, bedrooms, bathrooms,
           type, status, transaction, attributes, images, project_code, contact_phone,
-          coordinates, is_verified, owner_name, owner_phone, commission, commission_unit,
+          coordinates, is_verified, is_public, owner_name, owner_phone, commission, commission_unit,
           created_by, authorized_agents, total_units, available_units, project_id
         ) VALUES (
           current_setting('app.current_tenant_id', true)::uuid,
           $1, $2, $3, $4, $5, $6, $7, $8, $9,
           $10, $11, $12, $13, $14, $15, $16,
-          $17, $18, $19, $20, $21, $22,
-          $23, $24, $25, $26, $27
+          $17, $18, $19, $20, $21, $22, $23,
+          $24, $25, $26, $27, $28
         ) RETURNING *`,
         [
           data.code, data.title, data.location, data.price, data.currency || 'VND',
@@ -799,7 +836,7 @@ export class ListingRepository extends BaseRepository {
           JSON.stringify(data.attributes || {}), JSON.stringify(data.images || []),
           projectCode, data.contactPhone || null,
           data.coordinates ? JSON.stringify(data.coordinates) : null,
-          data.isVerified || false, data.ownerName || null, data.ownerPhone || null,
+          data.isVerified || false, data.isPublic === true, data.ownerName || null, data.ownerPhone || null,
           data.commission || null, data.commissionUnit || null,
           data.createdBy || null, JSON.stringify(data.authorizedAgents || []),
           data.totalUnits || null, data.availableUnits || null,
@@ -857,7 +894,7 @@ export class ListingRepository extends BaseRepository {
 
       const directFields = [
         'code', 'title', 'location', 'price', 'currency', 'area', 'builtArea', 'bedrooms', 'bathrooms',
-        'type', 'status', 'transaction', 'projectCode', 'contactPhone', 'isVerified',
+        'type', 'status', 'transaction', 'projectCode', 'contactPhone', 'isVerified', 'isPublic',
         'ownerName', 'ownerPhone', 'commission', 'commissionUnit', 'totalUnits', 'availableUnits',
         'viewCount', 'bookingCount', 'projectId',
       ];

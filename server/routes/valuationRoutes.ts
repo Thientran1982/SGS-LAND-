@@ -35,6 +35,7 @@ import { getFeatureBreakdown } from '../services/aiUsageService';
 import { sendAiError } from '../utils/aiErrorHandler';
 import { valuationGoldSet } from '../data/valuationGoldSet';
 import { notificationRepository } from '../repositories/notificationRepository';
+import { verifyPublicListingTeaserToken } from '../services/publicListingTeaserCapability';
 
 function normalizeAddrKey(addr: string): string {
   return addr.toLowerCase()
@@ -838,6 +839,8 @@ export function createValuationRoutes(
   //   location  (string, required) — address / district / city
   //   area      (number, required) — property area in m²
   //   type      (string, optional) — PropertyType enum value
+  //   listing_token (string, optional) — signed capability for an explicitly
+  //       public listing; location/area are resolved server-side from it
   //   listing_id — deliberately unsupported on this public endpoint
   // ──────────────────────────────────────────────────────────────────────────
   router.get('/teaser', async (req: Request, res: Response) => {
@@ -845,20 +848,51 @@ export function createValuationRoutes(
     const rawArea     = req.query.area as string | undefined;
     const propertyType = (req.query.type as string | undefined) || 'townhouse_center';
     const listingIdParam = req.query.listing_id as string | undefined;
+    const listingToken = req.query.listing_token as string | undefined;
 
-    // A raw listing id is not a public capability: resolving it with an RLS
-    // bypass would disclose private tenant inventory. Require public-safe
-    // location/area inputs instead until a signed public listing token exists.
+    // A raw listing id is not a public capability. It must never be allowed
+    // to select a private row through an RLS bypass.
     if (listingIdParam) {
       return res.status(400).json({
-        error: 'listing_id is not supported on the public teaser; provide location and area',
+        error: 'listing_id is not supported on the public teaser; use listing_token',
       });
     }
 
     let location = rawLocation;
     let area     = rawArea ? parseFloat(rawArea) : NaN;
+    let resolvedPropertyType = propertyType;
+
+    if (listingToken) {
+      const capability = verifyPublicListingTeaserToken(listingToken);
+      if (!capability) return res.status(404).json({ error: 'Public listing not found' });
+
+      const listing = await listingRepository.findPublicTeaserListing(
+        capability.tenantId,
+        capability.listingId,
+      );
+      if (
+        !listing
+        || listing.tenantId !== capability.tenantId
+        || listing.listingId !== capability.listingId
+      ) {
+        return res.status(404).json({ error: 'Public listing not found' });
+      }
+
+      // Token-backed requests must use the server-resolved listing inputs.
+      // Caller-supplied location/area/type cannot override them.
+      location = listing.location?.trim() || '';
+      area = Number(listing.area);
+      const listingType = String(listing.type || '').toLowerCase();
+      if (listingType.includes('apartment')) resolvedPropertyType = 'apartment_center';
+      else if (listingType.includes('villa')) resolvedPropertyType = 'villa';
+      else if (listingType.includes('land')) resolvedPropertyType = 'land';
+      else if (listingType.includes('office')) resolvedPropertyType = 'office';
+      else if (listingType.includes('shophouse')) resolvedPropertyType = 'shophouse';
+      else resolvedPropertyType = 'townhouse_center';
+    }
 
     if (!location || isNaN(area) || area <= 0) {
+      if (listingToken) return res.status(404).json({ error: 'Public listing not found' });
       return res.status(400).json({ error: 'location and area are required' });
     }
 
@@ -924,7 +958,7 @@ export function createValuationRoutes(
             END DESC,
             recorded_at DESC
           LIMIT 20`,
-         [normalKey, propertyType]
+         [normalKey, resolvedPropertyType]
       );
 
       let pricePerM2: number;
@@ -982,7 +1016,7 @@ export function createValuationRoutes(
         foundMatch       = true;
       } else {
         // ── 2. Fallback to getRegionalBasePrice() from valuationEngine ────
-        const fallbackResult = getRegionalBasePrice(location, propertyType);
+        const fallbackResult = getRegionalBasePrice(location, resolvedPropertyType);
         pricePerM2     = fallbackResult.price;
         priceMin       = Math.round(fallbackResult.price * 0.80);
         priceMax       = Math.round(fallbackResult.price * 1.25);
@@ -1000,9 +1034,9 @@ export function createValuationRoutes(
       // Historical global rows are townhouse reference prices unless their
       // explicit property_type says otherwise. Never multiply a type-specific
       // row or the already-adjusted regional fallback a second time.
-      const typeMult = PROPERTY_TYPE_PRICE_MULT[propertyType as PropertyType] ?? 1.0;
+      const typeMult = PROPERTY_TYPE_PRICE_MULT[resolvedPropertyType as PropertyType] ?? 1.0;
       if (!priceIsTypeSpecific && typeMult !== 1.0
-        && propertyType !== 'townhouse_center' && propertyType !== 'townhouse_suburb') {
+        && resolvedPropertyType !== 'townhouse_center' && resolvedPropertyType !== 'townhouse_suburb') {
         pricePerM2 = Math.round(pricePerM2 * typeMult);
         priceMin   = Math.round(priceMin   * typeMult);
         priceMax   = Math.round(priceMax   * typeMult);
