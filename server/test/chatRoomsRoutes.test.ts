@@ -15,6 +15,7 @@ import {
   chatRoomSocketName,
   broadcastChatRoomMessage,
   chatRoomsRouter,
+  disconnectRevokedChatRoomSockets,
   joinChatRoomSocket,
 } from '../routes/chatRoomsRoutes';
 
@@ -22,6 +23,7 @@ type TestUser = {
   id?: string;
   name?: string;
   tenantId?: string;
+  role?: string;
 };
 
 async function startServer(user: TestUser) {
@@ -191,6 +193,93 @@ describe('chat room tenant and membership boundaries', () => {
     expect(currentSocket.emit).toHaveBeenCalledWith('room_message', { id: 'message-a' });
     expect(query.mock.calls[0][1]).toEqual(['room-a', 'user-revoked', 'tenant-a']);
     expect(query.mock.calls[1][1]).toEqual(['room-a', 'user-current', 'tenant-a']);
+  });
+
+  it('revokes a member, leaves matching sockets, and sends only a scoped signal', async () => {
+    const revokedSocket = {
+      data: { authUser: { id: 'user-revoked', tenantId: 'tenant-a' } },
+      leave: vi.fn(),
+      emit: vi.fn(),
+    };
+    const sameUserOtherTenantSocket = {
+      data: { authUser: { id: 'user-revoked', tenantId: 'tenant-b' } },
+      leave: vi.fn(),
+      emit: vi.fn(),
+    };
+    const fetchSockets = vi.fn().mockResolvedValue([revokedSocket, sameUserOtherTenantSocket]);
+    const serverSideEmit = vi.fn();
+    (globalThis as any).__broadcastIo = {
+      in: vi.fn(() => ({ fetchSockets })),
+      serverSideEmit,
+    };
+    query.mockResolvedValueOnce({
+      rows: [{ room_id: 'room-a', user_id: 'user-revoked' }],
+      rowCount: 1,
+    });
+    await new Promise<void>(resolve => server.close(() => resolve()));
+    ({ server, origin } = await startServer({
+      id: 'host-a',
+      name: 'Host A',
+      tenantId: 'tenant-a',
+      role: 'ADMIN',
+    }));
+
+    const response = await fetch(`${origin}/rooms/shared-room/members/user-revoked`, {
+      method: 'DELETE',
+    });
+
+    expect(response.status).toBe(200);
+    expect(await response.json()).toEqual({ revoked: 'user-revoked' });
+    expect(query).toHaveBeenCalledWith(
+      expect.stringContaining("DELETE FROM chat_room_members m USING chat_rooms r"),
+      ['tenant-a', 'shared-room', 'host-a', 'user-revoked', true],
+    );
+    expect(revokedSocket.leave).toHaveBeenCalledWith(chatRoomSocketName('room-a'));
+    expect(sameUserOtherTenantSocket.leave).not.toHaveBeenCalled();
+    expect(serverSideEmit).toHaveBeenCalledWith('chat_room_membership_revoked', {
+      tenantId: 'tenant-a',
+      roomId: 'room-a',
+      userId: 'user-revoked',
+    });
+    expect(serverSideEmit.mock.calls[0][1]).not.toHaveProperty('content');
+  });
+
+  it('keeps membership revocation successful when the member disconnected', async () => {
+    const fetchSockets = vi.fn().mockResolvedValue([]);
+    (globalThis as any).__broadcastIo = {
+      in: vi.fn(() => ({ fetchSockets })),
+      serverSideEmit: vi.fn(),
+    };
+    query.mockResolvedValueOnce({
+      rows: [{ room_id: 'room-a', user_id: 'user-gone' }],
+      rowCount: 1,
+    });
+
+    const response = await fetch(`${origin}/rooms/shared-room/members/user-gone`, {
+      method: 'DELETE',
+    });
+
+    expect(response.status).toBe(200);
+    expect(await response.json()).toEqual({ revoked: 'user-gone' });
+    expect((globalThis as any).__broadcastIo.in).toHaveBeenCalledWith(chatRoomSocketName('room-a'));
+    expect(fetchSockets).toHaveBeenCalledTimes(1);
+  });
+
+  it('leaves only the revoked tenant and user when the socket is gone between lookup and leave', async () => {
+    const socket = {
+      data: { authUser: { id: 'user-revoked', tenantId: 'tenant-a' } },
+      leave: vi.fn().mockRejectedValue(new Error('socket disconnected')),
+      emit: vi.fn(),
+    };
+    const io = {
+      in: vi.fn(() => ({ fetchSockets: vi.fn().mockResolvedValue([socket]) })),
+    };
+
+    await expect(disconnectRevokedChatRoomSockets(io, {
+      tenantId: 'tenant-a',
+      roomId: 'room-a',
+      userId: 'user-revoked',
+    })).resolves.toBeUndefined();
   });
 
   it('joins identical slugs into tenant-specific realtime rooms', async () => {

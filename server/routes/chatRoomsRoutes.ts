@@ -11,6 +11,7 @@ import { apiRateLimit } from '../middleware/rateLimiter';
 export const chatRoomsRouter = Router();
 
 export const chatRoomSocketName = (roomId: string): string => `chat-room:${roomId}`;
+export const chatRoomMembershipRevokedEvent = 'chat_room_membership_revoked' as const;
 
 type ChatRoomSocketLike = {
   data?: {
@@ -32,13 +33,20 @@ type ChatRoomRemoteSocketLike = {
     authUser?: ChatRoomAuthUser;
   };
   leave: (room: string) => void | Promise<void>;
-  emit: (event: 'room_message', message: unknown) => void;
+  emit: (event: string, message: unknown) => void;
 };
 
 type ChatRoomIoLike = {
   in: (room: string) => {
     fetchSockets: () => Promise<ChatRoomRemoteSocketLike[]>;
   };
+  serverSideEmit?: (event: string, payload: unknown) => boolean | void | Promise<void>;
+};
+
+export type ChatRoomMembershipRevocation = {
+  tenantId: string;
+  roomId: string;
+  userId: string;
 };
 
 function authenticatedTenant(req: Request, res: Response): string | null {
@@ -144,6 +152,51 @@ export async function broadcastChatRoomMessage(
       continue;
     }
     socket.emit('room_message', message);
+  }
+}
+
+function isChatRoomMembershipRevocation(value: unknown): value is ChatRoomMembershipRevocation {
+  if (!value || typeof value !== 'object') return false;
+  const payload = value as Record<string, unknown>;
+  return [payload.tenantId, payload.roomId, payload.userId]
+    .every(item => typeof item === 'string' && item.trim().length > 0);
+}
+
+/**
+ * Remove sockets for a member after the membership row has been deleted.
+ *
+ * The Socket.IO adapter may return sockets from other backend processes. A
+ * missing socket is expected when a client disconnected during revocation.
+ * Neither that case nor an adapter/leave failure should undo the database
+ * deletion; the next broadcast still performs the authoritative membership
+ * check.
+ */
+export async function disconnectRevokedChatRoomSockets(
+  io: ChatRoomIoLike,
+  payload: unknown,
+): Promise<void> {
+  if (!isChatRoomMembershipRevocation(payload)) return;
+  const roomName = chatRoomSocketName(payload.roomId);
+
+  let sockets: ChatRoomRemoteSocketLike[] = [];
+  try {
+    sockets = await io.in(roomName).fetchSockets();
+  } catch (err: any) {
+    logger.warn(`[Rooms] membership revocation socket lookup skipped: ${err?.message || err}`);
+    return;
+  }
+
+  for (const socket of sockets) {
+    const user = socket.data?.authUser;
+    const tenantId = String(user?.tenantId || '').trim();
+    const userId = String(user?.id || '').trim();
+    if (tenantId !== payload.tenantId || userId !== payload.userId) continue;
+
+    try {
+      await socket.leave(roomName);
+    } catch (err: any) {
+      logger.warn(`[Rooms] revoked socket leave failed: ${err?.message || err}`);
+    }
   }
 }
 
@@ -270,6 +323,54 @@ chatRoomsRouter.post('/:slug/join', apiRateLimit, async (req: Request, res: Resp
   } catch (err: any) {
     logger.warn('[Rooms] join failed: ' + (err?.message || err));
     res.status(500).json({ error: 'Vao phong that bai' });
+  }
+});
+
+// DELETE /:slug/members/:userId — thu hoi thanh vien (HOST hoac ADMIN)
+chatRoomsRouter.delete('/:slug/members/:userId', apiRateLimit, async (req: Request, res: Response) => {
+  try {
+    const user = (req as any).user;
+    const tenantId = authenticatedTenant(req, res);
+    if (!tenantId) return;
+    const actorId = String(user?.id || '').trim();
+    const memberId = String(req.params.userId || '').trim();
+    if (!actorId) return res.status(401).json({ error: 'Can dang nhap' });
+    if (!memberId) return res.status(400).json({ error: 'userId la bat buoc' });
+
+    const isTenantAdmin = user?.role === 'ADMIN' || user?.role === 'SUPER_ADMIN';
+    const revoked = await pool.query(
+      "DELETE FROM chat_room_members m USING chat_rooms r " +
+      "WHERE r.id = m.room_id AND r.tenant_id = $1 AND r.slug = $2 " +
+      "AND m.user_id = $4 AND m.role = 'MEMBER' " +
+      "AND (r.created_by = $3 OR $5 = TRUE) " +
+      "RETURNING r.id AS room_id, m.user_id",
+      [tenantId, req.params.slug, actorId, memberId, isTenantAdmin],
+    );
+    if (revoked.rowCount === 0) {
+      return res.status(404).json({ error: 'Phong khong ton tai, thanh vien khong ton tai hoac ban khong co quyen' });
+    }
+
+    const payload: ChatRoomMembershipRevocation = {
+      tenantId,
+      roomId: String(revoked.rows[0].room_id),
+      userId: String(revoked.rows[0].user_id),
+    };
+    const io = (globalThis as any).__broadcastIo as ChatRoomIoLike | undefined;
+    if (io) {
+      // Handle this process immediately. Other Socket.IO processes receive the
+      // same non-sensitive signal through serverSideEmit.
+      await disconnectRevokedChatRoomSockets(io, payload);
+      try {
+        await io.serverSideEmit?.(chatRoomMembershipRevokedEvent, payload);
+      } catch (err: any) {
+        logger.warn(`[Rooms] membership revocation signal skipped: ${err?.message || err}`);
+      }
+    }
+
+    res.json({ revoked: payload.userId });
+  } catch (err: any) {
+    logger.warn('[Rooms] member revoke failed: ' + (err?.message || err));
+    res.status(500).json({ error: 'Thu hoi thanh vien that bai' });
   }
 });
 

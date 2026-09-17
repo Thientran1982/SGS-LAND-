@@ -40,7 +40,13 @@ import { agentP1Router } from './server/routes/agentP1Routes';
 import { createUserRoutes } from "./server/routes/userRoutes";
 import { agentMcpRouter } from './server/routes/agentMcpRoutes';
 import { agentSkillsRouter } from './server/routes/agentSkillsRoutes';
-import { chatRoomSocketName, chatRoomsRouter, joinChatRoomSocket } from './server/routes/chatRoomsRoutes';
+import {
+  chatRoomMembershipRevokedEvent,
+  chatRoomSocketName,
+  chatRoomsRouter,
+  disconnectRevokedChatRoomSockets,
+  joinChatRoomSocket,
+} from './server/routes/chatRoomsRoutes';
 import { agentVoiceRouter, agentTeachRouter } from './server/routes/agentVoiceTeachRoutes';
 import { createAnalyticsRoutes } from "./server/routes/analyticsRoutes";
 import { createScoringRoutes } from "./server/routes/scoringRoutes";
@@ -1779,6 +1785,14 @@ app.use(globalMutationAudit);
   // chatRoomsRoutes uses this shared broadcaster for HTTP-originated messages.
   // The room itself is still resolved by database-backed membership below.
   (globalThis as any).__broadcastIo = io;
+  // A membership deletion can originate in any backend process. The route
+  // handles its local sockets and uses Socket.IO's server-side event channel
+  // to make every other process remove the same user's room subscriptions.
+  io.on(chatRoomMembershipRevokedEvent as any, (payload: unknown) => {
+    void disconnectRevokedChatRoomSockets(io, payload).catch((error: unknown) => {
+      logger.warn(`[Socket] membership revocation handler failed: ${error instanceof Error ? error.message : String(error)}`);
+    });
+  });
   setDurableAgentRunEventSink((event) => {
     try {
       broadcastIo?.to(event.leadId).emit(event.type, event);
