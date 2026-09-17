@@ -3675,6 +3675,12 @@ if (asyncRun) {
   const { aiReply, result } = asyncRun;
    acknowledgedAt = Date.now();
     telemetry.mark('ack_sent', acknowledgedAt);
+   // The normal public-widget path may already have acknowledged with 202
+   // while the durable run was still executing. The reply is delivered through
+   // the outbox/Socket.IO path in that case; attempting a second HTTP response
+   // raises ERR_HTTP_HEADERS_SENT and the outer catch would incorrectly persist
+   // the generic Minh failure after a successful run.
+   if ((res as any).headersSent) return;
   res.json({
     reply: aiReply,
     artifact: result.artifact,

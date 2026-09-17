@@ -88,3 +88,9 @@ Degraded provider answers must carry both a stable reason and an explicit outcom
 **Why:** A successful durable run can still be materially degraded after provider fallback, and creating another inbound message during recovery makes the conversation and operator telemetry misleading.
 
 **How to apply:** Persist the reason/outcome on the outbound interaction, aggregate fallback/timeout/unavailable outcomes separately, and use a retry-scoped idempotency key tied to the original inbound ID.
+
+The async public route must never send a second HTTP response after its 202 acknowledgement; a late successful run is delivered through the outbox and Socket.IO.
+
+**Why:** A slow run can persist a valid outbound reply, then `res.json()` after the 202 throws `ERR_HTTP_HEADERS_SENT`; the post-ack catch can incorrectly persist the generic Minh failure over a successful run.
+
+**How to apply:** Check `headersSent` before the success response, keep the late result on the durable delivery path, and treat post-ack errors as preparation failures only when no successful response was already persisted.
