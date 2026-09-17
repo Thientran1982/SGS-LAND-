@@ -633,17 +633,42 @@ async function sendDailyReportDeliveryAlertEmail(
   tenantId: string,
   to: string,
   reportDate: string,
-  recipients: string[],
+  deliveries: Array<{
+    email: string;
+    role: string;
+    deliveryKey: string;
+    deliveryStatus: string;
+    verificationStatus: string;
+    error?: string;
+  }>,
 ): Promise<EmailResult> {
   const subject = `[SGSLand] Cần kiểm tra gửi báo cáo ngày ${reportDate}`;
-  const recipientList = recipients.map(escapeHtml).join(', ');
+  const statusLabel = (status: string): string => ({
+    sent: 'Đã gửi / provider đã chấp nhận',
+    delivered: 'Đã xác minh đã nhận',
+    not_received: 'Provider xác nhận chưa nhận',
+    unknown: 'Chưa xác định',
+    unsupported: 'Chưa hỗ trợ tra cứu',
+    failed: 'Gửi thất bại',
+    not_checked: 'Chưa xác minh',
+  }[status] || status);
+  const deliveryRows = deliveries.map((delivery) =>
+    `<tr><td style="padding:9px 10px;border-top:1px solid #DCE5EE;color:#334155;font-size:12px;font-family:Arial,sans-serif;">${escapeHtml(delivery.role)}</td>` +
+    `<td style="padding:9px 10px;border-top:1px solid #DCE5EE;color:#334155;font-size:12px;font-family:Arial,sans-serif;">${escapeHtml(delivery.email)}</td>` +
+    `<td style="padding:9px 10px;border-top:1px solid #DCE5EE;color:#334155;font-size:12px;font-family:Arial,sans-serif;">${escapeHtml(statusLabel(delivery.deliveryStatus))}<br><span style="color:#64748B;">Xác minh: ${escapeHtml(statusLabel(delivery.verificationStatus))}</span></td>` +
+    `<td style="padding:9px 10px;border-top:1px solid #DCE5EE;color:#475569;font-size:11px;word-break:break-all;font-family:monospace;">${escapeHtml(delivery.deliveryKey)}</td></tr>`,
+  ).join('');
+  const deliveryTable = `<table width="100%" cellpadding="0" cellspacing="0" border="0" bgcolor="#F7F9FC" style="border:1px solid #DCE5EE;border-radius:8px;"><tr><th align="left" style="padding:10px;color:#334155;font-size:12px;font-family:Arial,sans-serif;">Vai trò</th><th align="left" style="padding:10px;color:#334155;font-size:12px;font-family:Arial,sans-serif;">Email</th><th align="left" style="padding:10px;color:#334155;font-size:12px;font-family:Arial,sans-serif;">Trạng thái</th><th align="left" style="padding:10px;color:#334155;font-size:12px;font-family:Arial,sans-serif;">Delivery key</th></tr>${deliveryRows}</table>`;
   const guidance = 'Không bấm gửi lại ngay. Hãy kiểm tra trạng thái trên provider bằng delivery key trước; chỉ gửi thủ công sau khi provider xác nhận chưa nhận thư.';
+  const textDeliveries = deliveries.map((delivery) =>
+    `- ${delivery.role} | ${delivery.email} | delivery: ${delivery.deliveryKey} | trạng thái: ${statusLabel(delivery.deliveryStatus)} | xác minh: ${statusLabel(delivery.verificationStatus)}${delivery.error ? ` | lỗi: ${delivery.error}` : ''}`,
+  ).join('\n');
   return sendEmail(tenantId, {
     to,
     subject,
     template: 'daily_admin_report_delivery_alert',
-    html: emailBase(`<h1 class="email-title" style="color:#0F172A;font-size:22px;font-weight:bold;margin:0 0 20px;font-family:Arial,sans-serif;">Cần kiểm tra trạng thái gửi báo cáo</h1><p style="color:#475569;font-size:14px;line-height:1.8;margin:0 0 16px;font-family:Arial,sans-serif;">Provider đã timeout nên chưa thể xác định báo cáo ngày <strong>${escapeHtml(reportDate)}</strong> có được nhận hay chưa.</p><p style="color:#475569;font-size:14px;line-height:1.8;margin:0 0 16px;font-family:Arial,sans-serif;"><strong>Người nhận bị ảnh hưởng:</strong> ${recipientList}</p><table width="100%" cellpadding="0" cellspacing="0" border="0" bgcolor="#F7F9FC" style="border:1px solid #DCE5EE;border-radius:8px;"><tr><td style="padding:14px 18px;color:#334155;font-size:13px;line-height:1.7;font-family:Arial,Helvetica,sans-serif;"><strong>Hướng dẫn an toàn:</strong> ${escapeHtml(guidance)}</td></tr></table>`, 'Cần hỗ trợ? Liên hệ support@sgsland.vn'),
-    text: `Cần kiểm tra trạng thái gửi báo cáo ngày ${reportDate}.\nProvider đã timeout, chưa thể xác định provider có nhận thư hay chưa.\nNgười nhận bị ảnh hưởng: ${recipients.join(', ')}\n\n${guidance}`,
+    html: emailBase(`<h1 class="email-title" style="color:#0F172A;font-size:22px;font-weight:bold;margin:0 0 20px;font-family:Arial,sans-serif;">Cần kiểm tra trạng thái gửi báo cáo</h1><p style="color:#475569;font-size:14px;line-height:1.8;margin:0 0 16px;font-family:Arial,sans-serif;">Provider đã timeout nên chưa thể xác định báo cáo ngày <strong>${escapeHtml(reportDate)}</strong> có được nhận hay chưa.</p><p style="color:#475569;font-size:14px;line-height:1.8;margin:0 0 12px;font-family:Arial,sans-serif;">Trạng thái được tách riêng cho từng người nhận:</p>${deliveryTable}<table width="100%" cellpadding="0" cellspacing="0" border="0" bgcolor="#F7F9FC" style="border:1px solid #DCE5EE;border-radius:8px;margin-top:16px;"><tr><td style="padding:14px 18px;color:#334155;font-size:13px;line-height:1.7;font-family:Arial,Helvetica,sans-serif;"><strong>Hướng dẫn an toàn:</strong> ${escapeHtml(guidance)}</td></tr></table>`, 'Cần hỗ trợ? Liên hệ support@sgsland.vn'),
+    text: `Cần kiểm tra trạng thái gửi báo cáo ngày ${reportDate}.\nProvider đã timeout, chưa thể xác định provider có nhận thư hay chưa.\nTrạng thái từng người nhận:\n${textDeliveries}\n\n${guidance}`,
     dedupeKey: `daily-report-delivery-alert:${reportDate}:${to.toLowerCase()}`,
     deliveryKey: `daily-report-delivery-alert:${tenantId}:${reportDate}:${to.toLowerCase()}`,
     dedupeWindowMinutes: 0,

@@ -25,11 +25,31 @@ export function createDailyAdminReportRoutes(authenticateToken: any): Router {
       const report = await getDailyReport(user.tenantId, date);
       if (!report) return res.status(404).json({ error: 'Không tìm thấy báo cáo.' });
       const recipients = report.recipients || [];
-      const verification = await Promise.all(recipients.map((email: string) =>
-        emailService.verifyDelivery(user.tenantId, `daily-report:${user.tenantId}:${date}:${email}`),
-      ));
-      const canRetry = verification.length > 0 && verification.every((item: any) => item.status === 'not_received');
-      res.json({ reportDate: date, canRetry, verification });
+      let savedDeliveries: any[] = [];
+      try {
+        const parsed = typeof report.error_detail === 'string'
+          ? JSON.parse(report.error_detail)
+          : report.error_detail;
+        savedDeliveries = Array.isArray(parsed?.deliveries) ? parsed.deliveries : [];
+      } catch {
+        savedDeliveries = [];
+      }
+      const verification = await Promise.all(recipients.map((email: string, index: number) => {
+        const saved = savedDeliveries.find(item => item?.email === email) || savedDeliveries[index] || {};
+        const deliveryKey = saved.deliveryKey || `daily-report:${user.tenantId}:${date}:${email}`;
+        return emailService.verifyDelivery(user.tenantId, deliveryKey).then((item: any) => ({
+          email,
+          role: saved.role || 'UNKNOWN',
+          deliveryKey,
+          deliveryStatus: item.status === 'delivered' ? 'sent' : item.status,
+          verificationStatus: item.status,
+          provider: item.provider,
+          ...(item.error ? { error: item.error } : {}),
+        }));
+      }));
+      const canRetry = verification.some(item => item.verificationStatus === 'not_received')
+        && verification.every(item => item.verificationStatus === 'not_received' || item.verificationStatus === 'delivered');
+      res.json({ reportDate: date, canRetry, verification, deliveryStatuses: verification });
     } catch {
       res.status(500).json({ error: 'Không thể xác minh trạng thái provider.' });
     }

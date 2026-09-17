@@ -58,6 +58,18 @@ export interface DailyReportSummary extends DailyReportMetrics {
   };
 }
 
+type DailyReportRecipientRole = 'ADMIN' | 'SUPER_ADMIN' | 'UNKNOWN';
+
+export interface DailyReportDeliveryStatus {
+  email: string;
+  role: DailyReportRecipientRole;
+  deliveryKey: string;
+  deliveryStatus: string;
+  verificationStatus: string;
+  provider?: string;
+  error?: string;
+}
+
 function vnDate(date = new Date()): string {
   return new Intl.DateTimeFormat('en-CA', { timeZone: REPORT_TIME_ZONE }).format(date);
 }
@@ -415,19 +427,56 @@ export function renderReportEmail(summary: DailyReportSummary): { subject: strin
   return { subject, html, text };
 }
 
-async function adminsByTenant(): Promise<Array<{ tenantId: string; email: string }>> {
+async function adminsByTenant(): Promise<Array<{ tenantId: string; email: string; role: DailyReportRecipientRole }>> {
   return withRlsBypass(async client => {
-    const result = await client.query(`SELECT tenant_id AS "tenantId", email FROM users WHERE role IN ('ADMIN','SUPER_ADMIN') AND status='ACTIVE' AND email IS NOT NULL ORDER BY tenant_id,email`);
-    return result.rows;
+    const result = await client.query(`SELECT tenant_id AS "tenantId", email, role FROM users WHERE role IN ('ADMIN','SUPER_ADMIN') AND status='ACTIVE' AND email IS NOT NULL ORDER BY tenant_id,email`);
+    return result.rows.map((row: any) => ({
+      ...row,
+      role: row.role === 'ADMIN' || row.role === 'SUPER_ADMIN' ? row.role : 'UNKNOWN',
+    }));
+  });
+}
+
+function parseDeliveryStatuses(
+  errorDetail: unknown,
+  recipients: string[],
+  tenantRecipients: Array<{ email: string; role: DailyReportRecipientRole }>,
+  tenantId: string,
+  reportDate: string,
+): DailyReportDeliveryStatus[] {
+  let parsed: any = null;
+  if (typeof errorDetail === 'string') {
+    try { parsed = JSON.parse(errorDetail); } catch { parsed = null; }
+  } else {
+    parsed = errorDetail;
+  }
+  const saved = Array.isArray(parsed) ? parsed : Array.isArray(parsed?.deliveries) ? parsed.deliveries : [];
+  return recipients.map((email, index) => {
+    const prior = saved.find((item: any) => item?.email === email) || saved[index] || {};
+    const current = tenantRecipients.find(item => item.email === email);
+    return {
+      email,
+      role: prior.role === 'ADMIN' || prior.role === 'SUPER_ADMIN'
+        ? prior.role
+        : current?.role || 'UNKNOWN',
+      deliveryKey: prior.deliveryKey || `daily-report:${tenantId}:${reportDate}:${email}`,
+      deliveryStatus: prior.deliveryStatus || (prior.success ? 'sent' : 'unknown'),
+      verificationStatus: prior.verificationStatus || (prior.success ? 'sent' : 'unknown'),
+      ...(prior.provider ? { provider: prior.provider } : {}),
+      ...(prior.error ? { error: prior.error } : {}),
+    };
   });
 }
 
 export async function runDailyReport(reportDate = vnDate(), force = false) {
   const recipients = await adminsByTenant();
-  const byTenant = new Map<string, string[]>();
-  for (const r of recipients) byTenant.set(r.tenantId, [...(byTenant.get(r.tenantId) || []), r.email]);
+  const byTenant = new Map<string, Array<{ email: string; role: DailyReportRecipientRole }>>();
+  for (const r of recipients) {
+    byTenant.set(r.tenantId, [...(byTenant.get(r.tenantId) || []), { email: r.email, role: r.role }]);
+  }
   const results: any[] = [];
-  for (const [tenantId, emails] of byTenant) {
+  for (const [tenantId, tenantRecipients] of byTenant) {
+    const emails = tenantRecipients.map(recipient => recipient.email);
     const agentShiftReport = await agentOperatingRepository.generateDailyShiftReport(tenantId, reportDate, 'ALL_DAY')
       .catch((error: any) => {
         logger.warn(`[DailyReport] agent shift report unavailable for tenant ${tenantId}: ${error?.message || error}`);
@@ -437,26 +486,62 @@ export async function runDailyReport(reportDate = vnDate(), force = false) {
       const existing = await client.query('SELECT * FROM agent_report_log WHERE tenant_id=$1 AND report_date=$2::date', [tenantId, reportDate]);
       if (existing.rows[0]?.status === 'sent' && !force) return { tenantId, status: 'skipped', reason: 'already_sent' };
       if (existing.rows[0]?.status === 'delivery_unknown' && !force) {
+        const priorRecipients = Array.isArray(existing.rows[0].recipients)
+          ? existing.rows[0].recipients.map((item: any) => typeof item === 'string' ? item : item.email).filter(Boolean)
+          : emails;
+        const deliveryStatuses = parseDeliveryStatuses(existing.rows[0].error_detail, priorRecipients, tenantRecipients, tenantId, reportDate);
         return {
           tenantId,
           status: 'delivery_unknown',
           recipients: (existing.rows[0].recipients || emails).length,
+          deliveryStatuses,
           manualAction: 'Kiểm tra provider bằng delivery key trước khi gửi thủ công; hệ thống không tự động gửi lại.',
         };
       }
+      let emailsToSend = emails;
+      let verifiedStatuses: DailyReportDeliveryStatus[] = [];
       if (force && existing.rows[0]?.status === 'delivery_unknown') {
-        const priorRecipients = existing.rows[0].recipients || emails;
-        const verification = await Promise.all(priorRecipients.map((email: string) =>
-          emailService.verifyDelivery(tenantId, `daily-report:${tenantId}:${reportDate}:${email}`),
-        ));
-        const canRetry = verification.every((result: any) => result.status === 'not_received');
-        if (!canRetry) {
+        const priorRecipients = Array.isArray(existing.rows[0].recipients)
+          ? existing.rows[0].recipients.map((item: any) => typeof item === 'string' ? item : item.email).filter(Boolean)
+          : emails;
+        const priorStatuses = parseDeliveryStatuses(existing.rows[0].error_detail, priorRecipients, tenantRecipients, tenantId, reportDate);
+        verifiedStatuses = await Promise.all(priorRecipients.map((email: string) => {
+          const prior = priorStatuses.find(item => item.email === email);
+          const deliveryKey = prior?.deliveryKey || `daily-report:${tenantId}:${reportDate}:${email}`;
+          return emailService.verifyDelivery(tenantId, deliveryKey).then((verification: any) => ({
+            email,
+            role: prior?.role || tenantRecipients.find(item => item.email === email)?.role || 'UNKNOWN',
+            deliveryKey,
+            deliveryStatus: verification.status === 'delivered' ? 'sent' : verification.status,
+            verificationStatus: verification.status,
+            provider: verification.provider,
+            ...(verification.error ? { error: verification.error } : {}),
+          }));
+        }));
+        const blocked = verifiedStatuses.filter(item => item.verificationStatus !== 'not_received' && item.verificationStatus !== 'delivered');
+        if (blocked.length > 0) {
           return {
             tenantId,
             status: 'delivery_unknown',
             recipients: priorRecipients.length,
-            deliveryVerification: verification,
+            deliveryStatuses: verifiedStatuses,
             manualAction: 'Provider chưa xác nhận tất cả thư chưa nhận. Không được tự động gửi lại; cần xử lý thủ công.',
+          };
+        }
+        emailsToSend = verifiedStatuses
+          .filter(item => item.verificationStatus === 'not_received')
+          .map(item => item.email);
+        if (emailsToSend.length === 0) {
+          await client.query(
+            `UPDATE agent_report_log SET status='sent', sent_at=COALESCE(sent_at,NOW()), updated_at=NOW()
+             WHERE tenant_id=$1 AND report_date=$2::date`,
+            [tenantId, reportDate],
+          );
+          return {
+            tenantId,
+            status: 'sent',
+            recipients: priorRecipients.length,
+            deliveryStatuses: verifiedStatuses,
           };
         }
       }
@@ -481,15 +566,29 @@ export async function runDailyReport(reportDate = vnDate(), force = false) {
       const mail = renderReportEmail(summary);
       let last: any;
       for (let attempt=1; attempt<=3; attempt++) {
-        last = await Promise.all(emails.map(email => emailService.sendEmail(tenantId, { to: email, subject: mail.subject, html: mail.html, text: mail.text, template: 'daily_admin_report', dedupeKey: `daily-report:${reportDate}:${email}`, deliveryKey: `daily-report:${tenantId}:${reportDate}:${email}`, dedupeWindowMinutes: 0, skipQuota: true })));
+        last = await Promise.all(emailsToSend.map(email => emailService.sendEmail(tenantId, { to: email, subject: mail.subject, html: mail.html, text: mail.text, template: 'daily_admin_report', dedupeKey: `daily-report:${reportDate}:${email}`, deliveryKey: `daily-report:${tenantId}:${reportDate}:${email}`, dedupeWindowMinutes: 0, skipQuota: true })));
         if (last.every((x: any) => x.success) || last.some((x: any) => x.ambiguous)) break;
         await new Promise(resolve => setTimeout(resolve, attempt * 100));
       }
-      const ok = last?.every((x: any) => x.success);
-      const ambiguous = !ok && last?.some((x: any) => x.ambiguous);
+      const sentStatuses: DailyReportDeliveryStatus[] = emailsToSend.map((email, index) => {
+        const result = last[index] || { status: 'failed', error: 'Không có kết quả gửi email' };
+        const recipient = tenantRecipients.find(item => item.email === email);
+        return {
+          email,
+          role: verifiedStatuses.find(item => item.email === email)?.role || recipient?.role || 'UNKNOWN',
+          deliveryKey: `daily-report:${tenantId}:${reportDate}:${email}`,
+          deliveryStatus: result.success ? 'sent' : result.ambiguous ? 'unknown' : 'failed',
+          verificationStatus: result.success ? 'sent' : result.ambiguous ? 'unknown' : 'failed',
+          ...(result.provider ? { provider: result.provider } : {}),
+          ...(result.error ? { error: result.error } : {}),
+        };
+      });
+      const deliveryStatuses = [...verifiedStatuses.filter(item => !emailsToSend.includes(item.email)), ...sentStatuses];
+      const ok = deliveryStatuses.length > 0 && deliveryStatuses.every(item => item.deliveryStatus === 'sent');
+      const ambiguous = deliveryStatuses.some(item => item.verificationStatus === 'unknown');
       const status = ok ? 'sent' : ambiguous ? 'delivery_unknown' : 'failed';
       await client.query(`UPDATE agent_report_log SET status=$3,error_detail=$4,sent_at=CASE WHEN $3='sent' THEN NOW() ELSE NULL END,updated_at=NOW() WHERE tenant_id=$1 AND report_date=$2::date`,
-        [tenantId, reportDate, status, ok ? null : JSON.stringify(last)]);
+        [tenantId, reportDate, status, ok ? null : JSON.stringify({ deliveries: deliveryStatuses })]);
       if (ok) {
         await notificationRepository.createForTenantAdmins(tenantId, {
           type: 'daily_admin_report',
@@ -504,8 +603,10 @@ export async function runDailyReport(reportDate = vnDate(), force = false) {
         const payload = {
           reportDate,
           recipients: emails,
-          deliveryKeys: emails.map(email => `daily-report:${tenantId}:${reportDate}:${email}`),
-          providerErrors: last.filter((x: any) => x.ambiguous).map((x: any) => x.error || 'provider timeout'),
+          deliveryStatuses,
+          deliveries: deliveryStatuses,
+          deliveryKeys: deliveryStatuses.map(item => item.deliveryKey),
+          providerErrors: deliveryStatuses.filter(item => item.verificationStatus === 'unknown').map(item => item.error || 'provider timeout'),
           manualAction: 'Xác minh trạng thái trên provider bằng delivery key. Chỉ gửi thủ công sau khi provider xác nhận chưa nhận thư.',
         };
         await notificationRepository.recordOperationalEvent(tenantId, 'daily_report_delivery_unknown', payload).catch(err =>
@@ -513,16 +614,17 @@ export async function runDailyReport(reportDate = vnDate(), force = false) {
         await notificationRepository.createForTenantAdmins(tenantId, {
           type: 'daily_report_delivery_unknown',
           title: `Báo cáo ngày ${reportDate} chưa xác định trạng thái gửi`,
-          body: `Provider timeout. Kiểm tra provider trước khi gửi lại; người nhận: ${emails.join(', ')}`,
+          body: `Provider timeout. Kiểm tra từng người nhận bằng delivery key trước khi gửi lại.`,
           metadata: payload,
         }).catch(err => logger.error(`[DailyReport] could not create in-app alert for tenant ${tenantId}`, err));
-        await Promise.all(emails.map(email => emailService.sendDailyReportDeliveryAlertEmail(tenantId, email, reportDate, emails)
+        await Promise.all(emails.map(email => emailService.sendDailyReportDeliveryAlertEmail(tenantId, email, reportDate, deliveryStatuses)
           .catch(err => logger.error(`[DailyReport] could not email unknown-delivery alert to ${email}`, err))));
       }
       return {
         tenantId,
         status,
         recipients: emails.length,
+        ...(ambiguous ? { deliveryStatuses } : {}),
         ...(ambiguous ? { manualAction: 'Kiểm tra provider bằng delivery key trước khi gửi thủ công; hệ thống không tự động gửi lại.' } : {}),
       };
     });

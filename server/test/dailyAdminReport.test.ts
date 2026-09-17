@@ -8,6 +8,7 @@ const state = vi.hoisted(() => ({
   lockCalls: 0,
   collectionRows: null as Record<string, any> | null,
   recipientRows: null as Array<Record<string, any>> | null,
+  createForTenantAdmins: vi.fn(),
 }));
 
 const query = vi.hoisted(() => vi.fn(async (sql: string, params: any[] = []) => {
@@ -75,7 +76,7 @@ vi.mock('../services/emailService', () => ({
 vi.mock('../repositories/notificationRepository', () => ({
   notificationRepository: {
     recordOperationalEvent: vi.fn().mockResolvedValue({}),
-    createForTenantAdmins: vi.fn().mockResolvedValue(undefined),
+    createForTenantAdmins: state.createForTenantAdmins,
   },
 }));
 
@@ -108,6 +109,7 @@ describe('daily admin report', () => {
     state.sendEmail.mockReset();
     state.verifyDelivery.mockReset().mockResolvedValue({ status: 'unknown', provider: 'brevo' });
     state.sendDailyReportDeliveryAlertEmail.mockReset().mockResolvedValue({ success: true, status: 'sent' });
+    state.createForTenantAdmins.mockReset().mockResolvedValue(undefined);
     state.lockCalls = 0;
     state.collectionRows = null;
     state.recipientRows = null;
@@ -357,8 +359,57 @@ describe('daily admin report', () => {
       '11111111-1111-1111-1111-111111111111',
       'admin@example.com',
       '2026-08-24',
-      ['admin@example.com'],
+      [{
+        email: 'admin@example.com',
+        role: 'ADMIN',
+        deliveryKey: 'daily-report:11111111-1111-1111-1111-111111111111:2026-08-24:admin@example.com',
+        deliveryStatus: 'unknown',
+        verificationStatus: 'unknown',
+        error: 'provider timeout',
+      }],
     );
+  });
+
+  it('shows each role and delivery key separately when only one recipient is uncertain', async () => {
+    state.recipientRows = [
+      {
+        tenantId: '11111111-1111-1111-1111-111111111111',
+        email: 'admin@example.com',
+        role: 'ADMIN',
+        status: 'ACTIVE',
+      },
+      {
+        tenantId: '11111111-1111-1111-1111-111111111111',
+        email: 'super-admin@example.com',
+        role: 'SUPER_ADMIN',
+        status: 'ACTIVE',
+      },
+    ];
+    state.sendEmail
+      .mockResolvedValueOnce({ success: true, status: 'sent', messageId: 'provider-admin' })
+      .mockResolvedValueOnce({ success: false, status: 'failed', ambiguous: true, error: 'provider timeout' });
+
+    await runDailyReport('2026-08-24');
+
+    const alert = state.createForTenantAdmins.mock.calls
+      .find(([, data]) => data.type === 'daily_report_delivery_unknown');
+    expect(alert?.[1].metadata.deliveryStatuses).toEqual([
+      {
+        email: 'admin@example.com',
+        role: 'ADMIN',
+        deliveryKey: 'daily-report:11111111-1111-1111-1111-111111111111:2026-08-24:admin@example.com',
+        deliveryStatus: 'sent',
+        verificationStatus: 'sent',
+      },
+      {
+        email: 'super-admin@example.com',
+        role: 'SUPER_ADMIN',
+        deliveryKey: 'daily-report:11111111-1111-1111-1111-111111111111:2026-08-24:super-admin@example.com',
+        deliveryStatus: 'unknown',
+        verificationStatus: 'unknown',
+        error: 'provider timeout',
+      },
+    ]);
   });
 
   it('automatically verifies an unknown delivery before allowing a retry', async () => {
@@ -396,6 +447,62 @@ describe('daily admin report', () => {
 
     expect(result.results[0].status).toBe('delivery_unknown');
     expect(state.sendEmail).not.toHaveBeenCalled();
+  });
+
+  it('retries only the recipient that provider confirms was not received', async () => {
+    state.recipientRows = [
+      {
+        tenantId: '11111111-1111-1111-1111-111111111111',
+        email: 'admin@example.com',
+        role: 'ADMIN',
+        status: 'ACTIVE',
+      },
+      {
+        tenantId: '11111111-1111-1111-1111-111111111111',
+        email: 'super-admin@example.com',
+        role: 'SUPER_ADMIN',
+        status: 'ACTIVE',
+      },
+    ];
+    state.report = {
+      tenant_id: '11111111-1111-1111-1111-111111111111',
+      report_date: '2026-08-24',
+      status: 'delivery_unknown',
+      recipients: ['admin@example.com', 'super-admin@example.com'],
+      error_detail: JSON.stringify({
+        deliveries: [
+          {
+            email: 'admin@example.com',
+            role: 'ADMIN',
+            deliveryKey: 'daily-report:11111111-1111-1111-1111-111111111111:2026-08-24:admin@example.com',
+            deliveryStatus: 'sent',
+            verificationStatus: 'unknown',
+          },
+          {
+            email: 'super-admin@example.com',
+            role: 'SUPER_ADMIN',
+            deliveryKey: 'daily-report:11111111-1111-1111-1111-111111111111:2026-08-24:super-admin@example.com',
+            deliveryStatus: 'unknown',
+            verificationStatus: 'unknown',
+          },
+        ],
+      }),
+      summary_snapshot: buildReportSummary(metrics),
+    };
+    state.verifyDelivery.mockImplementation(async (_tenantId: string, deliveryKey: string) =>
+      deliveryKey.endsWith(':admin@example.com')
+        ? { status: 'delivered', provider: 'brevo', messageId: 'provider-admin' }
+        : { status: 'not_received', provider: 'brevo', messageId: 'provider-super-admin' });
+    state.sendEmail.mockResolvedValue({ success: true, status: 'sent', messageId: 'provider-retry' });
+
+    const result = await runDailyReport('2026-08-24', true);
+
+    expect(result.results[0].status).toBe('sent');
+    expect(state.sendEmail).toHaveBeenCalledTimes(1);
+    expect(state.sendEmail.mock.calls[0][1].to).toBe('super-admin@example.com');
+    expect(state.sendEmail.mock.calls[0][1].deliveryKey).toBe(
+      'daily-report:11111111-1111-1111-1111-111111111111:2026-08-24:super-admin@example.com',
+    );
   });
 
   it('keeps the failed report snapshot when force-running delivery again', async () => {
