@@ -5,6 +5,8 @@ import path from "path";
 import fs from "fs";
 import { createHash } from "crypto";
 import { Server } from "socket.io";
+import { createAdapter as createSocketIoRedisAdapter } from "@socket.io/redis-adapter";
+import Redis from "ioredis";
 import http from "http";
 import cookieParser from "cookie-parser";
 import jwt from "jsonwebtoken";
@@ -176,6 +178,37 @@ import { setDurableAgentRunEventSink } from "./server/services/durableAgentExecu
 let memoryLoggerStarted = false;
 
 let broadcastIo: any = null;
+let socketIoRedisClients: { publisher: Redis; subscriber: Redis } | null = null;
+
+async function configureSocketIoAdapter(io: Server): Promise<void> {
+  const redisUrl = process.env.SOCKET_IO_REDIS_URL?.trim();
+  if (!redisUrl) {
+    logger.info("Socket.io using in-memory adapter (set SOCKET_IO_REDIS_URL for multi-process deployments).");
+    return;
+  }
+
+  const publisher = new Redis(redisUrl, {
+    lazyConnect: true,
+    maxRetriesPerRequest: null,
+  });
+  const subscriber = publisher.duplicate({
+    lazyConnect: true,
+    maxRetriesPerRequest: null,
+  });
+
+  try {
+    await Promise.all([publisher.connect(), subscriber.connect()]);
+    io.adapter(createSocketIoRedisAdapter(publisher, subscriber));
+    socketIoRedisClients = { publisher, subscriber };
+    logger.info("Socket.io using Redis adapter for multi-process delivery.");
+  } catch (error) {
+    publisher.disconnect();
+    subscriber.disconnect();
+    throw new Error(
+      `Socket.io Redis adapter could not connect: ${error instanceof Error ? error.message : String(error)}`,
+    );
+  }
+}
 
 // Install process-level recovery handlers before any startup task can open a
 // database connection. Startup launches background workers before migrations,
@@ -1882,9 +1915,10 @@ app.use(globalMutationAudit);
     console.error('[MarketData] Start error:', err?.message)
   );
 
-  // Socket.io uses in-memory adapter (single-instance).
-  // Upstash REST API does not support TCP pub/sub required by @socket.io/redis-adapter.
-  logger.info("Socket.io using in-memory adapter (Upstash REST — no TCP pub/sub needed for single-instance).");
+  // Upstash REST API does not support TCP pub/sub required by
+  // @socket.io/redis-adapter. An explicit TCP URL is required for processes
+  // to share Socket.IO rooms; never infer it from the REST credentials.
+  await configureSocketIoAdapter(io);
 
   // Initialize DB schema via migration runner (with retry for cold-start DB wakeup)
   if (process.env.AIVEN_DATABASE_URL) {
@@ -8199,6 +8233,11 @@ app.use('/api/v1', (req, _res, next) => {
       await new Promise<void>(resolve => io.close(() => resolve()));
       logger.info('Socket.io closed.');
     } catch (e) { /* ignore */ }
+    if (socketIoRedisClients) {
+      socketIoRedisClients.publisher.disconnect();
+      socketIoRedisClients.subscriber.disconnect();
+      socketIoRedisClients = null;
+    }
     server.close(async () => {
       logger.info('HTTP server closed.');
       try {
