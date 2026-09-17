@@ -150,13 +150,13 @@ agentTeachRouter.post('/:id/extract', apiRateLimit, async (req: Request, res: Re
     const steps = raw.split("\n").map((s: string) => s.replace(/^\s*[-*\d.]+\s*/, "").trim()).filter(Boolean).slice(0, 30);
 
     await pool.query(
-      "UPDATE agent_teach_recordings SET extracted_steps = $2::jsonb, status = 'EXTRACTED' WHERE id = $1",
-      [req.params.id, JSON.stringify({ steps })],
+      "UPDATE agent_teach_recordings SET extracted_steps = $2::jsonb, status = 'EXTRACTED' WHERE id = $1 AND tenant_id = $3",
+      [req.params.id, JSON.stringify({ steps }), tenantId],
     );
     res.json({ steps });
   } catch (err: any) {
     logger.warn('[Teach] extract failed: ' + (err?.message || err));
-    res.status(500).json({ error: 'Trich buoc that bai: ' + String(err?.message || err).slice(0, 150) });
+    res.status(500).json({ error: 'Trich buoc that bai' });
   }
 });
 
@@ -186,8 +186,8 @@ agentTeachRouter.post('/:id/promote', apiRateLimit, async (req: Request, res: Re
        'sales', prompt, user?.id || null, user?.name || 'Admin'],
     );
     await pool.query(
-      "UPDATE agent_teach_recordings SET derived_skill_id = $2, status = 'APPROVED' WHERE id = $1",
-      [req.params.id, skill.rows[0].id],
+      "UPDATE agent_teach_recordings SET derived_skill_id = $2, status = 'APPROVED' WHERE id = $1 AND tenant_id = $3",
+      [req.params.id, skill.rows[0].id, tenantId],
     );
     res.json({ skill: skill.rows[0] });
   } catch (err: any) {
