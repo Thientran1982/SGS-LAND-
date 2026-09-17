@@ -139,13 +139,31 @@ const Sidebar = memo(({
     useEffect(() => {
         localStorage.setItem('sgs_nav_groups', JSON.stringify(openGroups));
     }, [openGroups]);
-    // Initialize all groups to open by default
+    // Initialize newly introduced groups to open by default while preserving
+    // the user's existing choices. Remove retired group ids so old sidebar
+    // state cannot leave the new information architecture unexpectedly closed.
     useEffect(() => {
-        if (menuGroups && menuGroups.length > 0 && Object.keys(openGroups).length === 0) {
-            const initial: Record<string, boolean> = {};
-            menuGroups.forEach(g => initial[g.id] = true);
-            setOpenGroups(initial);
-        }
+        if (!menuGroups || menuGroups.length === 0) return;
+        setOpenGroups(previous => {
+            const next: Record<string, boolean> = { ...previous };
+            let changed = false;
+            const activeGroupIds = new Set(menuGroups.map(group => group.id));
+
+            menuGroups.forEach(group => {
+                if (!(group.id in next)) {
+                    next[group.id] = true;
+                    changed = true;
+                }
+            });
+            Object.keys(next).forEach(groupId => {
+                if (!activeGroupIds.has(groupId)) {
+                    delete next[groupId];
+                    changed = true;
+                }
+            });
+
+            return changed ? next : previous;
+        });
     }, [menuGroups]);
     // Auto-expand group containing active page
     useEffect(() => {
