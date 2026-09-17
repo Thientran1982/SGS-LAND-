@@ -2,7 +2,13 @@
  * Provider dispatcher — chon adapter dua tren model (qua getProviderForModel).
  * Fallback an toan ve Gemini neu provider chua cau hinh key.
  */
-import type { ProviderAdapter, GenerateParams, GenerateResult, ProviderImagePart } from './types';
+import type {
+  ProviderAdapter,
+  GenerateParams,
+  GenerateResult,
+  ProviderAttachmentFailure,
+  ProviderImagePart,
+} from './types';
 import { GoogleAdapter } from './googleAdapter';
 import { AnthropicAdapter } from './anthropicAdapter';
 import { OpenAiCompatibleAdapter } from './openaiAdapter';
@@ -233,6 +239,7 @@ export async function generateWithPolicy(
       model?: string;
       fallbackUsed: boolean;
       status?: number;
+      attachmentFailure?: ProviderAttachmentFailure;
     }) => void;
   } = {},
 ): Promise<GenerateResult> {
@@ -264,6 +271,7 @@ export async function generateWithPolicy(
   );
 
   let lastError: unknown;
+  let attachmentFailure: ProviderAttachmentFailure | undefined;
   let attemptedProviders = 0;
   const renderedDocumentCache = new Map<string, Promise<ProviderImagePart[]>>();
   for (const [index, candidate] of candidates.entries()) {
@@ -294,6 +302,7 @@ export async function generateWithPolicy(
           if (pages.length === 0) {
             throw new DocumentVisualFallbackError(
               `Không có trang trực quan để gửi cho ${file.filename || 'tài liệu'}`,
+              file,
             );
           }
           renderedImages.push(...pages);
@@ -326,6 +335,12 @@ export async function generateWithPolicy(
       const status = providerStatus(error);
       addAttempt(attempts, candidate.provider, candidate.model, 'failed', startedAt, status);
       lastError = error;
+      if (error instanceof DocumentVisualFallbackError) {
+        // A malformed or visually empty document will produce the same result
+        // for every provider. Do not resend the unusable attachment blindly.
+        attachmentFailure = error.attachmentFailure;
+        break;
+      }
       if (!isProviderFallbackError(error)) break;
     }
   }
@@ -334,8 +349,9 @@ export async function generateWithPolicy(
     attempts,
     fallbackUsed: attempts.length > 1 || attempts.some(attempt => attempt.outcome === 'skipped'),
     status: [...attempts].reverse().find(attempt => attempt.status !== undefined)?.status,
+    ...(attachmentFailure ? { attachmentFailure } : {}),
   });
-  throw new ProviderExhaustedError(attempts, lastError);
+  throw new ProviderExhaustedError(attempts, lastError, attachmentFailure);
 }
 
 export type {
@@ -343,6 +359,7 @@ export type {
   GenerateParams,
   GenerateResult,
   ProviderAttempt,
+  ProviderAttachmentFailure,
   ProviderEvidenceRef,
   ProviderFilePart,
   ProviderImagePart,

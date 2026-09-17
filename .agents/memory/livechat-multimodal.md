@@ -9,6 +9,12 @@ Public Minh image questions in GENERAL, LEGAL, VALUATION, PROJECT, and LANDING c
 
 **How to apply:** Keep the allowlist and tenant/path/content-hash checks before provider fetch, label `visualPath` and `extractionStatus`, preserve extraction failures, and expose validated attachment sources alongside specialist evidence.
 
+Provider-unsupported documents whose bounded renderer produces no usable page are terminal attachment failures, not provider outages: retain only the safe attachment name/status and do not retry the same document across providers.
+
+**Why:** Retrying an intrinsically unreadable scan cannot improve the input and previously turned a user-actionable format/manual-review problem into a misleading generic AI outage.
+
+**How to apply:** Carry a typed attachment failure through provider exhaustion and live-chat telemetry, classify it separately from timeout/unavailability, and keep the user-facing message free of provider error details.
+
 Durable input guardrails must receive the same attachment envelope as the live-chat core, including direct tool invocations outside the public outer execution.
 
 **Why:** Attachment fingerprints provide idempotency only; omitting attachments from durable input inspection leaves document text and metadata outside prompt-injection checks.

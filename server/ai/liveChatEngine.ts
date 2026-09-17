@@ -21,7 +21,12 @@ import { applyAVM, getRegionalBasePrice } from '../valuationEngine';
 import { logger } from '../middleware/logger';
 import { agentRepository } from '../repositories/agentRepository';
 import { generateWithPolicy, ProviderExhaustedError } from './providers';
-import type { ProviderAttempt, ProviderFilePart, ProviderImagePart } from './providers';
+import type {
+    ProviderAttempt,
+    ProviderAttachmentFailure,
+    ProviderFilePart,
+    ProviderImagePart,
+} from './providers';
 import { minhChooseSpecialist, MINH_INTENT_TOOLS } from './minhOrchestrator';
 import { TASK_MODELS } from './modelPolicy';
 import { recordAiUsage } from '../services/aiUsageService';
@@ -58,11 +63,17 @@ import {
     type LeadScoreInput,
 } from '../services/leadQualificationService';
 
-export type LiveChatProviderOutcome = 'PRIMARY' | 'FALLBACK' | 'TIMEOUT' | 'UNAVAILABLE';
+export type LiveChatProviderOutcome =
+    | 'PRIMARY'
+    | 'FALLBACK'
+    | 'TIMEOUT'
+    | 'UNAVAILABLE'
+    | 'ATTACHMENT_UNREADABLE';
 export type LiveChatDegradedReason =
     | 'PRIMARY_PROVIDER_UNAVAILABLE'
     | 'PROVIDER_TIMEOUT'
-    | 'ALL_CONFIGURED_PROVIDERS_UNAVAILABLE';
+    | 'ALL_CONFIGURED_PROVIDERS_UNAVAILABLE'
+    | 'ATTACHMENT_UNREADABLE';
 
 export type LiveChatProviderTelemetry = {
     provider?: string;
@@ -73,6 +84,7 @@ export type LiveChatProviderTelemetry = {
     outcome: LiveChatProviderOutcome;
     degradedReason?: LiveChatDegradedReason;
     attempts: ProviderAttempt[];
+    attachmentFailure?: ProviderAttachmentFailure;
 };
 
 function providerAttemptSummary(attempts: ProviderAttempt[]): string {
@@ -93,7 +105,15 @@ export function classifyLiveChatProviderOutcome(
     fallbackUsed: boolean,
     providerFailed = false,
     failureStatus?: number,
+    attachmentFailure?: ProviderAttachmentFailure,
 ): Pick<LiveChatProviderTelemetry, 'outcome' | 'degraded' | 'degradedReason'> {
+    if (attachmentFailure) {
+        return {
+            outcome: 'ATTACHMENT_UNREADABLE',
+            degraded: true,
+            degradedReason: 'ATTACHMENT_UNREADABLE',
+        };
+    }
     if (fallbackUsed) {
         return {
             outcome: 'FALLBACK',
@@ -131,6 +151,13 @@ function sanitizeChatInput(str: any, maxLen = 600): string {
   out = out.replace(/^[ \t]*(AI|Assistant|System|Khach|Kh\u00e1ch)[ \t]*:/gim, "-");
   out = out.replace(/\b(ignore|system\s+prompt|instruction|override|jailbreak|forget\s+everything)\b/gi, "[x]");
   return out.trim();
+}
+
+function buildUnreadableAttachmentResponse(failure: ProviderAttachmentFailure): string {
+    const attachmentName = failure.attachmentName || 'tài liệu đính kèm';
+    const extractionStatus = failure.extractionStatus || 'UNKNOWN';
+    return `Mình chưa thể đọc trực quan tệp đính kèm "${attachmentName}" (trạng thái trích xuất: ${extractionStatus}). ` +
+        'Vui lòng gửi bản PDF hoặc ảnh rõ hơn, một định dạng khác, hoặc để đội ngũ hỗ trợ kiểm tra thủ công.';
 }
 
 export function buildLiveChatRequestHash(input: {
@@ -357,17 +384,22 @@ export async function generateLiveChatText(params: {
         return result.text;
     } catch (error: any) {
         const attempts = error instanceof ProviderExhaustedError ? error.attempts : [];
+        const attachmentFailure = error instanceof ProviderExhaustedError
+            ? error.attachmentFailure
+            : undefined;
         const outcome = classifyLiveChatProviderOutcome(
             attempts,
             false,
             true,
             Number(error?.status),
+            attachmentFailure,
         );
         const telemetry: LiveChatProviderTelemetry = {
             status: error instanceof ProviderExhaustedError ? error.status : undefined,
             fallbackUsed: false,
             ...outcome,
             attempts,
+            ...(attachmentFailure ? { attachmentFailure } : {}),
         };
         params.onProviderTelemetry?.(telemetry);
         logger.warn(
@@ -2140,12 +2172,22 @@ ${ownerProfileBlock}\n` : ''}${taskMemoryBlock ? `[KINH NGHIEM VAN HANH DA HOC]\
         // Provider failure must remain visible and actionable, not become a
         // generic 500. The durable execution still completes, so consent,
         // memory and journey idempotency follow their normal success boundary.
-        response = 'Hiện trợ lý AI chưa thể xử lý câu hỏi này vì các nhà cung cấp đang tạm thời không khả dụng. Bạn hãy thử lại sau ít phút hoặc để lại yêu cầu để đội ngũ hỗ trợ tiếp tục.';
+        const attachmentFailure = e.attachmentFailure as ProviderAttachmentFailure | undefined;
+        response = attachmentFailure
+            ? buildUnreadableAttachmentResponse(attachmentFailure)
+            : 'Hiện trợ lý AI chưa thể xử lý câu hỏi này vì các nhà cung cấp đang tạm thời không khả dụng. Bạn hãy thử lại sau ít phút hoặc để lại yêu cầu để đội ngũ hỗ trợ tiếp tục.';
         providerTelemetry = providerTelemetry || {
             status: e.status,
             fallbackUsed: false,
-            ...classifyLiveChatProviderOutcome(e.attempts || [], false, true, Number(e.status)),
+            ...classifyLiveChatProviderOutcome(
+                e.attempts || [],
+                false,
+                true,
+                Number(e.status),
+                attachmentFailure,
+            ),
             attempts: e.attempts,
+            ...(attachmentFailure ? { attachmentFailure } : {}),
         };
         logger.warn(
             `[LiveChatEngine] degraded response status=${providerTelemetry.status || 'n/a'} ` +
@@ -2187,6 +2229,7 @@ ${ownerProfileBlock}\n` : ''}${taskMemoryBlock ? `[KINH NGHIEM VAN HANH DA HOC]\
         qualification,
         degraded: providerTelemetry?.degraded === true,
         degradedReason: providerTelemetry?.degradedReason,
+        attachmentFailure: providerTelemetry?.attachmentFailure,
         providerTelemetry,
         _liveChatTimings: liveChatTimings,
         personalization: {

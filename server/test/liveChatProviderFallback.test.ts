@@ -92,6 +92,18 @@ describe('live-chat provider fallback policy', () => {
       degraded: true,
       degradedReason: 'ALL_CONFIGURED_PROVIDERS_UNAVAILABLE',
     });
+    expect(classifyLiveChatProviderOutcome([
+      { provider: 'google', model: 'gemini', outcome: 'failed', status: 415, latencyMs: 10 },
+    ], false, true, 415, {
+      code: 'ATTACHMENT_VISUAL_UNREADABLE',
+      attachmentId: 'scan.pdf',
+      attachmentName: 'scan.pdf',
+      extractionStatus: 'FAILED',
+    })).toEqual({
+      outcome: 'ATTACHMENT_UNREADABLE',
+      degraded: true,
+      degradedReason: 'ATTACHMENT_UNREADABLE',
+    });
   });
 
   it('normalizes fallback order and keeps provider toggles bounded to supported providers', () => {
@@ -301,6 +313,54 @@ describe('live-chat provider fallback policy', () => {
         },
       });
     }
+  });
+
+  it('does not retry a document when no visual page can be produced', async () => {
+    const primary = adapter('google', vi.fn(),);
+    primary.supportsFilePart = () => false;
+    const fallback = adapter('anthropic', vi.fn().mockResolvedValue({
+      text: 'Không nên được gọi',
+      model: 'claude-sonnet-4-5',
+      provider: 'anthropic',
+    }));
+    fallback.supportsFilePart = () => false;
+
+    await expect(generateWithPolicy(
+      {
+        model: 'gemini-2.5-flash',
+        prompt: 'Đọc tài liệu',
+        files: [{
+          mimeType: 'application/pdf',
+          dataBase64: Buffer.from('not a pdf').toString('base64'),
+          filename: 'scan.pdf',
+          source: {
+            attachmentId: 'scan.pdf',
+            contentHash: 'f'.repeat(64),
+            extractionStatus: 'FAILED',
+          },
+        }],
+      },
+      { google: primary, anthropic: fallback },
+      { maxAttempts: 2 },
+    )).rejects.toMatchObject({
+      name: 'ProviderExhaustedError',
+      attachmentFailure: {
+        code: 'ATTACHMENT_VISUAL_UNREADABLE',
+        attachmentId: 'scan.pdf',
+        attachmentName: 'scan.pdf',
+        extractionStatus: 'FAILED',
+      },
+      attempts: [
+        expect.objectContaining({
+          provider: 'google',
+          outcome: 'failed',
+          status: 415,
+        }),
+      ],
+    });
+
+    expect(primary.generate).not.toHaveBeenCalled();
+    expect(fallback.generate).not.toHaveBeenCalled();
   });
 
   it('drops oversized and invalid DOCX images without forwarding a file part', async () => {

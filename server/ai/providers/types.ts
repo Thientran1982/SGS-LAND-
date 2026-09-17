@@ -28,6 +28,13 @@ export type ProviderEvidenceRef = {
   extractionStatus?: 'NOT_APPLICABLE' | 'READY' | 'EMPTY' | 'FAILED';
 };
 
+export type ProviderAttachmentFailure = {
+  code: 'ATTACHMENT_VISUAL_UNREADABLE';
+  attachmentId?: string;
+  attachmentName: string;
+  extractionStatus?: ProviderEvidenceRef['extractionStatus'];
+};
+
 export type ProviderImagePart = {
   mimeType: string;
   dataBase64: string;
@@ -64,13 +71,19 @@ export class ProviderExhaustedError extends Error {
   readonly attempts: ProviderAttempt[];
   readonly status?: number;
   readonly lastError?: unknown;
+  readonly attachmentFailure?: ProviderAttachmentFailure;
 
-  constructor(attempts: ProviderAttempt[], lastError?: unknown) {
+  constructor(
+    attempts: ProviderAttempt[],
+    lastError?: unknown,
+    attachmentFailure?: ProviderAttachmentFailure,
+  ) {
     super('AI providers unavailable after configured fallback attempts');
     this.name = 'ProviderExhaustedError';
     this.attempts = attempts;
     this.status = [...attempts].reverse().find(attempt => attempt.status !== undefined)?.status;
     this.lastError = lastError;
+    this.attachmentFailure = attachmentFailure;
   }
 }
 

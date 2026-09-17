@@ -5,7 +5,11 @@ import path from 'node:path';
 import { promisify } from 'node:util';
 import { unzipSync } from 'fflate';
 import sharp from 'sharp';
-import type { ProviderFilePart, ProviderImagePart } from './providers/types';
+import type {
+  ProviderAttachmentFailure,
+  ProviderFilePart,
+  ProviderImagePart,
+} from './providers/types';
 
 const execFileAsync = promisify(execFile);
 
@@ -31,10 +35,25 @@ const MIME_BY_EXTENSION: Record<string, string> = {
 
 export class DocumentVisualFallbackError extends Error {
   readonly status = 415;
+  readonly attachmentFailure: ProviderAttachmentFailure;
 
-  constructor(message: string) {
+  constructor(message: string, file?: ProviderFilePart) {
     super(message);
     this.name = 'DocumentVisualFallbackError';
+    const rawName = String(file?.filename || 'tài liệu đính kèm');
+    const attachmentName = rawName
+      .replace(/[\u0000-\u001f\u007f]/g, ' ')
+      .replace(/[<>]/g, '')
+      .trim()
+      .slice(0, 160) || 'tài liệu đính kèm';
+    this.attachmentFailure = {
+      code: 'ATTACHMENT_VISUAL_UNREADABLE',
+      ...(file?.source?.attachmentId ? { attachmentId: file.source.attachmentId } : {}),
+      attachmentName,
+      ...(file?.source?.extractionStatus
+        ? { extractionStatus: file.source.extractionStatus }
+        : {}),
+    };
   }
 }
 
@@ -118,6 +137,7 @@ async function renderPdf(file: ProviderFilePart): Promise<ProviderImagePart[]> {
   } catch (error) {
     throw new DocumentVisualFallbackError(
       `Không thể render các trang trực quan của ${file.filename || 'tài liệu'}`,
+      file,
     );
   } finally {
     await rm(directory, { recursive: true, force: true }).catch(() => undefined);
@@ -141,6 +161,7 @@ async function renderDocx(file: ProviderFilePart): Promise<ProviderImagePart[]> 
   } catch {
     throw new DocumentVisualFallbackError(
       `Không thể đọc nội dung trực quan của ${file.filename || 'tài liệu'}`,
+      file,
     );
   }
 
