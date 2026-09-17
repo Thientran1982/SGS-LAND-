@@ -452,11 +452,11 @@ export function createValuationRoutes(
       const cacheEntry = skipCache ? null : await marketDataService.getMarketData(marketAddress, resolvedPropertyType);
 
       if (cacheEntry) {
-        // Determine if this cache entry is type-specific (key contains ':' separator).
+        // Use explicit metadata rather than interpreting the cache key.
         // Type-specific entries have the correct price for the requested property type
         // and must NOT be multiplied again. Townhouse-reference entries (legacy baseline)
         // still need the type multiplier to project the price onto other property types.
-        const isTypeSpecificCache = cacheEntry.normalizedKey.includes(':');
+        const isTypeSpecificCache = cacheEntry.isTypeSpecific === true;
         let typeAdjustedPrice: number;
         if (isTypeSpecificCache) {
           // Price is already for the correct property type → use as-is
@@ -838,7 +838,7 @@ export function createValuationRoutes(
   //   location  (string, required) — address / district / city
   //   area      (number, required) — property area in m²
   //   type      (string, optional) — PropertyType enum value
-  //   listing_id (number, optional) — if provided, auto-resolves location+area
+  //   listing_id — deliberately unsupported on this public endpoint
   // ──────────────────────────────────────────────────────────────────────────
   router.get('/teaser', async (req: Request, res: Response) => {
     const rawLocation = (req.query.location as string | undefined)?.trim();
@@ -846,30 +846,17 @@ export function createValuationRoutes(
     const propertyType = (req.query.type as string | undefined) || 'townhouse_center';
     const listingIdParam = req.query.listing_id as string | undefined;
 
+    // A raw listing id is not a public capability: resolving it with an RLS
+    // bypass would disclose private tenant inventory. Require public-safe
+    // location/area inputs instead until a signed public listing token exists.
+    if (listingIdParam) {
+      return res.status(400).json({
+        error: 'listing_id is not supported on the public teaser; provide location and area',
+      });
+    }
+
     let location = rawLocation;
     let area     = rawArea ? parseFloat(rawArea) : NaN;
-
-    // Auto-resolve from listing when listing_id is provided
-    if (listingIdParam) {
-      const listingId = parseInt(listingIdParam, 10);
-      if (!isNaN(listingId)) {
-        try {
-          const { withRlsBypass } = await import('../db');
-          const lRow = await withRlsBypass((client) => client.query(
-            `SELECT address, area, property_type FROM listings WHERE id = $1 LIMIT 1`,
-            [listingId]
-          ));
-          if (lRow.rows.length > 0) {
-            const l = lRow.rows[0];
-            if (!location && l.address) location = l.address;
-            if (isNaN(area) && l.area)   area     = parseFloat(l.area);
-            if (propertyType === 'townhouse_center' && l.property_type) {
-              // don't override user-supplied type
-            }
-          }
-        } catch { /* ignore, proceed with query params */ }
-      }
-    }
 
     if (!location || isNaN(area) || area <= 0) {
       return res.status(400).json({ error: 'location and area are required' });
@@ -883,6 +870,7 @@ export function createValuationRoutes(
       const histResult = await pool.query<{
         location_key: string;
         location_display: string;
+        property_type: string;
         price_per_m2: string;
         price_min: string | null;
         price_max: string | null;
@@ -895,6 +883,7 @@ export function createValuationRoutes(
         `SELECT
            location_key,
            location_display,
+           property_type,
            price_per_m2,
            price_min,
            price_max,
@@ -913,6 +902,9 @@ export function createValuationRoutes(
            END AS similarity
          FROM market_price_history
          WHERE
+            tenant_id IS NULL
+            AND property_type = $2
+            AND (
            location_key = $1
            OR (
               length(location_key) >= 8
@@ -922,6 +914,7 @@ export function createValuationRoutes(
               length($1) >= 8
               AND location_key LIKE '%' || $1 || '%'
            )
+            )
           ORDER BY
             similarity DESC,
             CASE source
@@ -931,7 +924,7 @@ export function createValuationRoutes(
             END DESC,
             recorded_at DESC
           LIMIT 20`,
-        [normalKey]
+         [normalKey, propertyType]
       );
 
       let pricePerM2: number;
@@ -943,6 +936,7 @@ export function createValuationRoutes(
       let dataSource: string;
       let dataAge: string;
       let foundMatch = false;
+      let priceIsTypeSpecific = false;
 
       // Cross-province collision guard: drop rows whose location_key references
       // a different VN province than the input address. Prevents Hai Phong's
@@ -959,6 +953,7 @@ export function createValuationRoutes(
       if (safeRows.length > 0) {
         const row = safeRows[0];
         pricePerM2     = parseInt(row.price_per_m2, 10);
+         priceIsTypeSpecific = !['townhouse_center', 'townhouse_suburb'].includes(row.property_type);
         const candidateMin = row.price_min ? parseInt(row.price_min, 10) : NaN;
         const candidateMax = row.price_max ? parseInt(row.price_max, 10) : NaN;
         // Stored AI ranges can be malformed or wider than the selected
@@ -987,7 +982,7 @@ export function createValuationRoutes(
         foundMatch       = true;
       } else {
         // ── 2. Fallback to getRegionalBasePrice() from valuationEngine ────
-        const fallbackResult = getRegionalBasePrice(location);
+        const fallbackResult = getRegionalBasePrice(location, propertyType);
         pricePerM2     = fallbackResult.price;
         priceMin       = Math.round(fallbackResult.price * 0.80);
         priceMax       = Math.round(fallbackResult.price * 1.25);
@@ -997,81 +992,26 @@ export function createValuationRoutes(
         trendText       = `Tham chiếu khu vực ${cleanLoc2}`;
         dataSource      = 'Bảng giá tham chiếu';
         dataAge         = 'Dữ liệu tham chiếu';
+         // getRegionalBasePrice(location, propertyType) already applies the
+         // requested segment multiplier.
+         priceIsTypeSpecific = true;
       }
 
-      // Apply property-type multiplier (same logic as advanced endpoint)
+      // Historical global rows are townhouse reference prices unless their
+      // explicit property_type says otherwise. Never multiply a type-specific
+      // row or the already-adjusted regional fallback a second time.
       const typeMult = PROPERTY_TYPE_PRICE_MULT[propertyType as PropertyType] ?? 1.0;
-      if (typeMult !== 1.0 && propertyType !== 'townhouse_center' && propertyType !== 'townhouse_suburb') {
+      if (!priceIsTypeSpecific && typeMult !== 1.0
+        && propertyType !== 'townhouse_center' && propertyType !== 'townhouse_suburb') {
         pricePerM2 = Math.round(pricePerM2 * typeMult);
         priceMin   = Math.round(priceMin   * typeMult);
         priceMax   = Math.round(priceMax   * typeMult);
       }
 
-      // ── 3. Query internal listing inventory for comparable unit prices ─────
-      // Uses pool (owner role) for a public aggregate — no tenant context needed.
-      // Provides real market signal from actual transactions in the DB.
-      let internalCompsMedian: number | undefined;
-      let internalCompsCount = 0;
-      try {
-        const areaMin = area * 0.55;
-        const areaMax = area * 1.55;
-        // Extract district-level keyword from location for fuzzy matching
-        const locParts = location.split(/[,;]/);
-        const districtKw = (locParts[1] || locParts[0] || location).trim().slice(0, 50);
-        // Broad type prefix match (e.g. "apartment", "townhouse", "land", "shophouse")
-        const typePrefix = (propertyType as string).split('_')[0];
-
-        const { withRlsBypass } = await import('../db');
-
-        const compsRes = await withRlsBypass((client) => client.query<{ price_per_m2: string }>(
-          `SELECT ROUND(price::numeric / area::numeric) AS price_per_m2
-           FROM listings
-           WHERE area BETWEEN $1 AND $2
-             AND location ILIKE $3
-             AND type ILIKE $4
-             AND price > 0 AND area > 0
-             AND status IN ('AVAILABLE', 'SOLD', 'HOLD')
-           ORDER BY updated_at DESC
-           LIMIT 40`,
-          [areaMin, areaMax, `%${districtKw}%`, `%${typePrefix}%`]
-        ));
-
-        if (compsRes.rows.length >= 2) {
-          const validPrices = compsRes.rows
-            .map((r) => Number(r.price_per_m2))
-            .filter((p) => p > 500_000 && p < 2_000_000_000) // sanity: 0.5M – 2B VNĐ/m²
-            .sort((a, b) => a - b);
-
-          if (validPrices.length >= 2) {
-            internalCompsCount = validPrices.length;
-            internalCompsMedian = validPrices[Math.floor(validPrices.length / 2)];
-            logger.info(
-              `[Teaser] Internal comps: ${internalCompsCount} listings, ` +
-              `median=${(internalCompsMedian / 1_000_000).toFixed(0)} tr/m²`
-            );
-          }
-        }
-      } catch (compsErr: any) {
-        logger.warn('[Teaser] Could not fetch internal comps:', compsErr.message);
-      }
-
-      // ── 4. Blend internal comps median into price estimate ────────────────
-      // Only blend when the comps median is plausible relative to market price
-      // (within 0.25× – 4× range) to guard against bad data.
-      if (internalCompsMedian && internalCompsCount >= 2) {
-        const ratio = internalCompsMedian / pricePerM2;
-        if (ratio >= 0.25 && ratio <= 4.0) {
-          // Weight: 40% comps when market_price_history matched; 50% when using fallback only
-          const compsWeight  = foundMatch ? 0.40 : 0.50;
-          const marketWeight = 1 - compsWeight;
-          pricePerM2 = Math.round(pricePerM2 * marketWeight + internalCompsMedian * compsWeight);
-          priceMin   = Math.round(pricePerM2 * 0.85);
-          priceMax   = Math.round(pricePerM2 * 1.18);
-          // Boost confidence: each additional comp adds ~3 points, capped at +15
-          confidence = Math.min(92, confidence + Math.min(15, internalCompsCount * 3));
-        }
-      }
-
+      // Public teaser intentionally excludes internal inventory. Listings are
+      // tenant-owned and no public aggregate contract exists yet.
+      const internalCompsMedian: number | undefined = undefined;
+      const internalCompsCount = 0;
       // Compute total value range
       const totalMin = Math.round(priceMin * area);
       const totalMid = Math.round(pricePerM2 * area);

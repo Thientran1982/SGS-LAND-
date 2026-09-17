@@ -77,6 +77,11 @@ export interface AVMInput {
   cachedConfidence?: number;     // confidence from cache entry
 }
 
+// Market data is stored in VNĐ/m². Keep a generous safety ceiling in the
+// same unit; do not use a small value such as 100,000 which would silently
+// turn valid Vietnamese property prices into the wrong unit.
+const MAX_SAFE_MARKET_PRICE_PER_M2 = 1_000_000_000;
+
 // Source breakdown for multi-source transparency
 export interface ValuationSources {
   aiPrice: number;
@@ -752,7 +757,7 @@ export function applyAVM(input: AVMInput): AVMOutput {
   // Numeric hallucination guard at the source: an AI/LLM-derived marketBasePrice that
   // is NaN / Infinity / negative / absurd must never flow into the output or any math.
   const _mbpFinite = (typeof marketBasePrice === "number" && Number.isFinite(marketBasePrice)) ? marketBasePrice : 0;
-  let effectiveBasePrice = Math.min(100000, Math.max(0, _mbpFinite));
+  let effectiveBasePrice = Math.min(MAX_SAFE_MARKET_PRICE_PER_M2, Math.max(0, _mbpFinite));
   let effectiveConfidence = confidence;
   let sources: ValuationSources | undefined;
 
@@ -806,7 +811,7 @@ export function applyAVM(input: AVMInput): AVMOutput {
   const finiteArea = (typeof area === "number" && Number.isFinite(area)) ? area : 0;
   const safeArea = Math.min(100000, Math.max(1, finiteArea));
   const finiteBase = (typeof effectiveBasePrice === "number" && Number.isFinite(effectiveBasePrice)) ? effectiveBasePrice : 0;
-  const safeMarketBase = Math.min(100000, Math.max(0, finiteBase));
+  const safeMarketBase = Math.min(MAX_SAFE_MARKET_PRICE_PER_M2, Math.max(0, finiteBase));
   const rawPricePerM2 = safeMarketBase * Kd * Kp * Ka * Kfl * Kdir * Kmf * Kfurn * Kage * Kbr;
   const pricePerM2 = Math.max(0, Math.round(rawPricePerM2));
   const compsPrice = Math.max(0, Math.round(pricePerM2 * safeArea));

@@ -277,6 +277,10 @@ export const SEED_LOCATIONS: Array<{ location: string; pType?: string }> = [
 export interface MarketDataEntry {
   location: string;
   normalizedKey: string;
+  /** Property segment used to obtain this price. */
+  propertyType: string;
+  /** True when pricePerM2 is already adjusted for propertyType. */
+  isTypeSpecific: boolean;
   pricePerM2: number;
   confidence: number;
   marketTrend: string;
@@ -661,9 +665,22 @@ class MarketDataService {
         try {
           const raw = await this.redisClient.get(key);
           if (!raw) continue;
-          const entry: MarketDataEntry = typeof raw === 'string' ? JSON.parse(raw) : raw;
+          const parsed: Partial<MarketDataEntry> = typeof raw === 'string' ? JSON.parse(raw) : raw;
+          const normKey = key.replace(REDIS_KEY_PREFIX, '');
+          // Redis may contain entries written before the explicit metadata was
+          // introduced. Normalize those once at the boundary; new entries must
+          // never infer their segment from a cache-key delimiter.
+          const entry: MarketDataEntry = {
+            ...parsed,
+            normalizedKey: parsed.normalizedKey || normKey,
+            propertyType: parsed.propertyType
+              || (normKey.includes(':') ? normKey.slice(normKey.lastIndexOf(':') + 1) : 'townhouse_center'),
+            isTypeSpecific: parsed.isTypeSpecific
+              ?? (parsed.propertyType
+                ? !['townhouse_center', 'townhouse_suburb'].includes(parsed.propertyType)
+                : normKey.includes(':')),
+          } as MarketDataEntry;
           if (new Date(entry.expiresAt) > new Date()) {
-            const normKey = key.replace(REDIS_KEY_PREFIX, '');
             this.cache.set(normKey, entry);
             loaded++;
           }
@@ -703,7 +720,7 @@ class MarketDataService {
     const canCallAvm = await this.tryConsumeGeminiQuota();
     if (!canCallAvm) {
       logger.debug(`[MarketData] Quota guard — using regional table for "${location}"`);
-      return this.storeEntry(key, this.buildRegionalEntry(location, key));
+      return this.storeEntry(key, this.buildRegionalEntry(location, key, fetchPropertyType));
     }
 
     try {
@@ -715,6 +732,8 @@ class MarketDataService {
       entry = {
         location,
         normalizedKey: key,
+        propertyType: fetchPropertyType,
+        isTypeSpecific: !['townhouse_center', 'townhouse_suburb'].includes(fetchPropertyType),
         pricePerM2:     result.basePrice,
         confidence:     result.confidence,
         marketTrend:    result.marketTrend,
@@ -745,7 +764,7 @@ class MarketDataService {
       if (msg.includes('RESOURCE_EXHAUSTED') || msg.includes('quota') || msg.includes('429')) {
         this.markQuotaExhausted();
       }
-      entry = this.buildRegionalEntry(location, key);
+      entry = this.buildRegionalEntry(location, key, fetchPropertyType);
     }
 
     return this.storeEntry(key, entry);
@@ -760,7 +779,7 @@ class MarketDataService {
     // fetchLightMarketPrice uses 2 Gemini calls — consume 2 quota slots
     const canCall = (await this.tryConsumeGeminiQuota()) && (await this.tryConsumeGeminiQuota());
     if (!canCall) {
-      return this.storeEntry(key, this.buildRegionalEntry(location, key));
+      return this.storeEntry(key, this.buildRegionalEntry(location, key, pType));
     }
 
     try {
@@ -783,6 +802,8 @@ class MarketDataService {
       const entry: MarketDataEntry = {
         location,
         normalizedKey: key,
+        propertyType: pType,
+        isTypeSpecific: !['townhouse_center', 'townhouse_suburb'].includes(pType),
         pricePerM2:     price,
         priceMin:       data.priceMin  || price,
         priceMax:       data.priceMax  || price,
@@ -805,16 +826,18 @@ class MarketDataService {
         this.markQuotaExhausted();
       }
       logger.warn(`[MarketData] Seed AI failed "${location}" — using regional table: ${err.message}`);
-      return this.storeEntry(key, this.buildRegionalEntry(location, key));
+      return this.storeEntry(key, this.buildRegionalEntry(location, key, pType));
     }
   }
 
-  private buildRegionalEntry(location: string, key: string): MarketDataEntry {
-    const regional = getRegionalBasePrice(location);
+  private buildRegionalEntry(location: string, key: string, propertyType = 'townhouse_center'): MarketDataEntry {
+    const regional = getRegionalBasePrice(location, propertyType);
     const now = new Date();
     return {
       location,
       normalizedKey: key,
+      propertyType,
+      isTypeSpecific: !['townhouse_center', 'townhouse_suburb'].includes(propertyType),
       pricePerM2:   regional.price,
       confidence:   regional.confidence,
       marketTrend:  'Bảng khu vực — cập nhật định kỳ',
@@ -860,7 +883,7 @@ class MarketDataService {
           pricePerM2:      entry.pricePerM2,
           priceMin:        entry.priceMin,
           priceMax:        entry.priceMax,
-          propertyType:    'townhouse_center',
+      propertyType:    entry.propertyType,
           source:          sourceMap[entry.source] ?? 'ai_search',
           confidence:      entry.confidence,
           trendText:       entry.marketTrend?.slice(0, 100),
@@ -899,7 +922,7 @@ class MarketDataService {
 
     for (const entry of stale) {
       try {
-        await this.fetchAndCache(entry.location, entry.normalizedKey);
+        await this.fetchAndCache(entry.location, entry.normalizedKey, entry.propertyType);
         await new Promise(r => setTimeout(r, 2_000));
       } catch (err: any) {
         logger.error(`[MarketData] Refresh failed for "${entry.location}": ${err.message}`);

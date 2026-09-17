@@ -108,7 +108,10 @@ export function createListingPriceRefreshRouter(pool: Pool, cronSecret: string):
             let marketTrend: string;
 
             if (marketEntry && marketEntry.pricePerM2 > 0) {
-              const mult = PROPERTY_TYPE_PRICE_MULT[pType] ?? 1.0;
+              const needsTypeAdjustment = !marketEntry.isTypeSpecific
+                && pType !== 'townhouse_center'
+                && pType !== 'townhouse_suburb';
+              const mult = needsTypeAdjustment ? (PROPERTY_TYPE_PRICE_MULT[pType] ?? 1.0) : 1.0;
               marketBasePrice = Math.round(marketEntry.pricePerM2 * mult);
               confidence      = marketEntry.confidence;
               marketTrend     = marketEntry.marketTrend;
@@ -153,7 +156,7 @@ export function createListingPriceRefreshRouter(pool: Pool, cronSecret: string):
 
             if (!dryRun) {
               await withRlsBypass((client) => client.query(
-                `UPDATE listings SET price =                 , updated_at = NOW() WHERE id =               `,
+                `UPDATE listings SET price = $1, updated_at = NOW() WHERE id = $2`,
                 [newPrice, listing.id]
               ));
 
