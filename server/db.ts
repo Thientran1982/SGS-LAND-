@@ -24,6 +24,9 @@ function stripSslMode(url: string | undefined): string | undefined {
 }
 
 function buildSslConfig() {
+  if (process.env.DB_DISABLE_SSL === '1') {
+    return {};
+  }
   const caPath = path.join(process.cwd(), 'certs', 'aiven-ca.pem');
   try {
     const ca = fs.readFileSync(caPath, 'utf8');

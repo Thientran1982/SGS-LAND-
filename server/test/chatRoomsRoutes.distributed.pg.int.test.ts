@@ -10,7 +10,14 @@ vi.setConfig({ testTimeout: 120_000, hookTimeout: 120_000 });
 
 const databaseUrl = process.env.AIVEN_DATABASE_URL || process.env.INTEGRITY_PG_URL;
 const socketIoRedisUrl = process.env.SOCKET_IO_REDIS_URL;
-const describeDistributed = databaseUrl && socketIoRedisUrl ? describe : describe.skip;
+const hasDistributedFixture = Boolean(databaseUrl && socketIoRedisUrl);
+if (!hasDistributedFixture && process.env.CHAT_ROOMS_DISTRIBUTED_REQUIRED === '1') {
+  throw new Error(
+    'The distributed chat integration test requires AIVEN_DATABASE_URL and SOCKET_IO_REDIS_URL. ' +
+    'Use the CI fixture job or provide isolated TCP services explicitly.',
+  );
+}
+const describeDistributed = hasDistributedFixture ? describe : describe.skip;
 const tsxCli = path.resolve(process.cwd(), 'node_modules/tsx/dist/cli.mjs');
 const workerPath = path.resolve(process.cwd(), 'server/test/chatRoomsRoutes.distributed.worker.ts');
 const tenantId = randomUUID();
@@ -28,6 +35,54 @@ type RunningWorker = {
   output: () => string;
   port: number;
 };
+
+async function ensureChatRoomSchema(pool: Pool): Promise<void> {
+  await pool.query('CREATE EXTENSION IF NOT EXISTS "uuid-ossp"');
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS tenants (
+      id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+      name VARCHAR(255) NOT NULL,
+      domain VARCHAR(255) UNIQUE NOT NULL,
+      config JSONB DEFAULT '{}'::jsonb,
+      created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
+    )
+  `);
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS chat_rooms (
+      id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+      tenant_id UUID NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
+      name TEXT NOT NULL,
+      slug TEXT NOT NULL,
+      topic TEXT,
+      created_by UUID,
+      is_open BOOLEAN NOT NULL DEFAULT TRUE,
+      max_members INT NOT NULL DEFAULT 20,
+      last_activity_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+      created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+      UNIQUE (tenant_id, slug)
+    )
+  `);
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS chat_room_members (
+      room_id UUID NOT NULL REFERENCES chat_rooms(id) ON DELETE CASCADE,
+      user_id UUID NOT NULL,
+      role TEXT NOT NULL DEFAULT 'MEMBER' CHECK (role IN ('HOST', 'MEMBER')),
+      joined_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+      PRIMARY KEY (room_id, user_id)
+    )
+  `);
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS chat_room_messages (
+      id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+      room_id UUID NOT NULL REFERENCES chat_rooms(id) ON DELETE CASCADE,
+      sender_id UUID,
+      sender_name TEXT NOT NULL,
+      kind TEXT NOT NULL DEFAULT 'TEXT' CHECK (kind IN ('TEXT', 'SYSTEM', 'AGENT')),
+      content TEXT NOT NULL,
+      created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    )
+  `);
+}
 
 async function findFreePort(): Promise<number> {
   const probe = net.createServer();
@@ -173,7 +228,7 @@ async function observeRoomMessages(
   }
 }
 
-describeDistributed('chat room membership revocation across Socket.IO processes', () => {
+describe('chat room membership revocation across Socket.IO processes', () => {
   let db: Pool;
   let workerA: RunningWorker | undefined;
   let workerB: RunningWorker | undefined;
@@ -181,14 +236,40 @@ describeDistributed('chat room membership revocation across Socket.IO processes'
   let revokedSocket: Socket;
   let memberSocket: Socket;
   let roomId: string;
+  let cleanupPromise: Promise<void> | undefined;
+
+  const cleanup = async (): Promise<void> => {
+    if (cleanupPromise) return cleanupPromise;
+    cleanupPromise = (async () => {
+      hostSocket?.close();
+      revokedSocket?.close();
+      memberSocket?.close();
+      await Promise.all([stopWorker(workerA), stopWorker(workerB)]);
+      await db?.query('DELETE FROM chat_rooms WHERE id = $1', [roomId]).catch(() => undefined);
+      await db?.query('DELETE FROM tenants WHERE id = $1', [tenantId]).catch(() => undefined);
+      await db?.end();
+    })();
+    return cleanupPromise;
+  };
+
+  const handleTermination = (signal: NodeJS.Signals): void => {
+    void cleanup().finally(() => {
+      process.exit(128 + (signal === 'SIGINT' ? 2 : 15));
+    });
+  };
 
   beforeAll(async () => {
+    process.once('SIGINT', handleTermination);
+    process.once('SIGTERM', handleTermination);
     db = new Pool({
       connectionString: baseConnectionString,
       max: 1,
       idleTimeoutMillis: 10_000,
-      ssl: { rejectUnauthorized: false },
+      ...(process.env.DB_DISABLE_SSL === '1'
+        ? {}
+        : { ssl: { rejectUnauthorized: false } }),
     });
+    await ensureChatRoomSchema(db);
     await db.query(
       `INSERT INTO tenants (id, name, domain)
        VALUES ($1, $2, $3)
@@ -233,13 +314,12 @@ describeDistributed('chat room membership revocation across Socket.IO processes'
   });
 
   afterAll(async () => {
-    hostSocket?.close();
-    revokedSocket?.close();
-    memberSocket?.close();
-    await Promise.all([stopWorker(workerA), stopWorker(workerB)]);
-    await db?.query('DELETE FROM chat_rooms WHERE id = $1', [roomId]).catch(() => undefined);
-    await db?.query('DELETE FROM tenants WHERE id = $1', [tenantId]).catch(() => undefined);
-    await db?.end();
+    try {
+      await cleanup();
+    } finally {
+      process.removeListener('SIGINT', handleTermination);
+      process.removeListener('SIGTERM', handleTermination);
+    }
   });
 
   it('revalidates remote membership and delivers one copy only to the valid member', async () => {
@@ -305,12 +385,26 @@ describeDistributed('chat room membership revocation across Socket.IO processes'
       1_000,
     );
     expect(duringOutage.response.status).toBe(201);
-    expect((await duringOutage.response.json()).realtime).toEqual({
+    const duringOutageBody = await duringOutage.response.json();
+    expect(duringOutageBody.message).toEqual(
+      expect.objectContaining({ content: 'Stored while adapter is unavailable' }),
+    );
+    expect(duringOutageBody.realtime).toEqual({
       status: 'skipped',
       distributed: false,
       reason: 'adapter_unavailable',
     });
     expect(duringOutage.messages).toEqual([[], []]);
+    const outageRows = await db.query(
+      `SELECT content, COUNT(*)::int AS count
+       FROM chat_room_messages
+       WHERE room_id = $1 AND content = $2
+       GROUP BY content`,
+      [roomId, 'Stored while adapter is unavailable'],
+    );
+    expect(outageRows.rows).toEqual([
+      { content: 'Stored while adapter is unavailable', count: 1 },
+    ]);
 
     await controlRedis(workerA, 'reconnect');
     await waitForRedisHealth(workerA, 'healthy');
@@ -338,5 +432,8 @@ describeDistributed('chat room membership revocation across Socket.IO processes'
     expect(afterRecovery.messages[1]).toEqual([
       expect.objectContaining({ content: 'Delivered after adapter recovery' }),
     ]);
+    expect(new Set(
+      afterRecovery.messages.map(messages => (messages[0] as { id: string }).id),
+    ).size).toBe(1);
   });
 });
