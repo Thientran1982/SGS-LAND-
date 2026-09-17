@@ -133,7 +133,7 @@ export function PublicHeader({ authed = false }: { authed?: boolean }) {
           </Link>
 
           {/* ── Desktop Nav ───────────────────────────────── */}
-          <nav className="hidden lg:flex items-center gap-0.5">
+          <nav className="hidden xl:flex items-center gap-0.5">
             <div
               className="relative"
               onMouseEnter={() => setRealEstateOpen(true)}
@@ -202,7 +202,7 @@ export function PublicHeader({ authed = false }: { authed?: boolean }) {
           </nav>
 
           {/* ── Right Controls ─────────────────────────────── */}
-          <div className="hidden md:flex items-center gap-2">
+          <div className="hidden xl:flex items-center gap-2">
             {/* VI/EN Toggle */}
             <button
               onClick={toggleLang}
@@ -269,7 +269,7 @@ export function PublicHeader({ authed = false }: { authed?: boolean }) {
           {/* ── Mobile Hamburger ──────────────────────────── */}
           <button
             onClick={() => setMenuOpen(!menuOpen)}
-            className="md:hidden p-2 rounded-lg transition-colors"
+            className="xl:hidden p-2 rounded-lg transition-colors"
             style={{ color: isHero ? "#FFFFFF" : "var(--sgs-primary)" }}
             aria-label="Mở menu"
           >
@@ -283,7 +283,7 @@ export function PublicHeader({ authed = false }: { authed?: boolean }) {
       {mounted && menuOpen &&
         createPortal(
           <div
-            className="md:hidden fixed inset-0 z-40"
+            className="xl:hidden fixed inset-0 z-40"
             style={{ top: 64, background: "rgba(0,0,0,0.45)" }}
             onClick={() => setMenuOpen(false)}
             aria-hidden
@@ -292,7 +292,7 @@ export function PublicHeader({ authed = false }: { authed?: boolean }) {
         )}
       {menuOpen && (
         <div
-          className="md:hidden relative z-50"
+          className="xl:hidden relative z-50"
           style={{
             background: "var(--hdr-panel)",
             backdropFilter: "blur(14px)",
@@ -361,14 +361,6 @@ export function PublicHeader({ authed = false }: { authed?: boolean }) {
               </button>
             </div>
             <div className="flex gap-2">
-              <Link
-                href={localizedHref("/ky-gui-bat-dong-san")}
-                onClick={() => setMenuOpen(false)}
-                className="flex-1 text-center text-sm font-semibold py-2.5 rounded-lg"
-                style={{ border: "1.5px solid var(--sgs-primary)", color: "var(--sgs-primary)" }}
-              >
-                {lang === "vi" ? "Ký gửi tài sản" : "Consign property"}
-              </Link>
               <Link
                 href={authed ? "/dashboard" : "/login"}
                 onClick={() => setMenuOpen(false)}
