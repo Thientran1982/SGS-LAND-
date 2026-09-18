@@ -1,0 +1,10 @@
+---
+name: Deployment promote timeout flake
+description: VM deployment promote step can time out (~8min) waiting for readiness even when a fresh local rebuild of the exact same artifact boots and serves 200 in seconds
+---
+
+For this project's `vm` deployment (Express backend + Next.js frontend behind `scripts/supervisor.sh`), promote-step failures ("Waiting for deployment to be ready" followed by `failed` many minutes later) have occurred intermittently while the build phase itself succeeds cleanly (Vite/esbuild/Next build all pass, migrations apply, no code errors).
+
+**Why:** `fetchDeploymentLogs` returns nothing for these failures because the app never went live, so there is no runtime log to inspect — only the build log's tail is available. Rebuilding the exact production artifact locally (`npm run build` for backend, `cd apps/nextjs && npm run build`, then `PORT=<free> PORT_BACKEND=<free> NODE_ENV=production bash scripts/supervisor.sh`) and curling `/` reliably reproduces a healthy boot (migrations clean, `GET /` 200 in ~3s) even right after a failed real publish — pointing at a transient VM/promote-infrastructure issue (the Reserved VM is only 0.5 vCPU/2GiB) rather than an application defect. Successful builds reach "Deployment successful" in under a minute; the failed one waited ~8 minutes before being marked failed.
+
+**How to apply:** When a user reports "publish failed at promote" for this app, don't assume a code bug. Get `listDeploymentBuilds`/`getDeploymentBuild` to confirm build succeeded but promote failed, do a full clean local rebuild + `supervisor.sh` run against the real production DB to confirm the artifact boots and serves 200, and if it does, tell the user this looks like an infrastructure flake and suggest retrying the publish rather than chasing code changes. Reserved-VM cold start on constrained CPU is the most likely explanation if it recurs — consider whether startup work can be deferred further only if the flake becomes frequent and reproducible.
