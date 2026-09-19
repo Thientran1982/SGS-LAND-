@@ -1,0 +1,13 @@
+import { runLearningCycleForTenant } from "../server/services/learningCycleRunner";
+import { pool } from "../server/db";
+const EMPTY = "82f33046-8d56-43b1-a680-de4f3b1427b8";
+const MAIN = "00000000-0000-0000-0000-000000000001";
+const key = `fixcheck-${Date.now().toString(36)}`;
+await runLearningCycleForTenant(EMPTY, key, "p234-fix");
+let r = await pool.query(`SELECT status, error_text FROM ai_learning_cycles WHERE tenant_id=$1 AND cycle_key=$2`, [EMPTY, key]);
+console.log("EMPTY-TENANT", JSON.stringify(r.rows[0]));
+await runLearningCycleForTenant(MAIN, key, "p234-fix");
+r = await pool.query(`SELECT status, error_text, summary_json::text FROM ai_learning_cycles WHERE tenant_id=$1 AND cycle_key=$2`, [MAIN, key]);
+console.log("MAIN-TENANT", JSON.stringify(r.rows[0]).slice(0, 420));
+await pool.end();
+process.exit(0);

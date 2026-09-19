@@ -196,8 +196,7 @@ class LiveChatReplyOutboxRepository {
     return withTenantContext(params.tenantId, async client => {
       const safeCode = params.code.slice(0, 120);
       const safeError = params.error.slice(0, 4000);
-      // P-AUDIT #A1: khong lo thong bao loi noi bo cho khach — thong diep an toan + huong dan
-    const content = 'Xin lỗi anh/chị, Minh đang xử lý nên chưa trả lời được ngay. Yêu cầu của anh/chị đã được ghi nhận và Minh sẽ ưu tiên phản hồi trong ít phút. Trường hợp cần hỗ trợ ngay, anh/chị vui lòng để lại số điện thoại hoặc gọi hotline 1900999 nhé.';
+      const content = 'Minh chưa thể hoàn tất phản hồi lúc này. Tin nhắn của bạn đã được ghi nhận.';
       const responseEnvelope = {
         content,
         reply: content,
@@ -210,19 +209,6 @@ class LiveChatReplyOutboxRepository {
         ...(params.runId ? { runId: params.runId } : {}),
       };
 
-    // P-AUDIT #A1b: escalation co ngu canh — nguoi xem biet khach hoi gi va loi gi
-    try {
-      const inb = await client.query(`SELECT LEFT(content, 400) AS c FROM interactions WHERE id = ${'$'}{params.inboundInteractionId}`);
-      const custQ = inb.rows[0]?.c || '(không đọc được tin nhắn khách)';
-      await client.query(
-        `INSERT INTO agent_human_questions (tenant_id, agent_key, question, lead_id, priority, context_json)
-         VALUES (${'$'}1, 'MINH', ${'$'}2, ${'$'}3, 80, ${'$'}4::jsonb)`,
-        [params.tenantId,
-         `Lỗi hệ thống khi trả lời khách — cần người xử lý thay. Câu hỏi của khách: ${custQ}. Mã lỗi: ${safeCode}`,
-         params.leadId,
-         JSON.stringify({ error: safeError, inboundInteractionId: params.inboundInteractionId })]
-      );
-    } catch { /* escalation optional */ }
       const failed = await client.query(
         `UPDATE livechat_reply_outbox
             SET status = 'FAILED',

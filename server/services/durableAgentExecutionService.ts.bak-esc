@@ -540,7 +540,7 @@ export async function runDurableAgentExecution<T extends {
       try {
         await agentOperatingRepository.createHumanQuestion(params.tenantId, {
           agentKey: 'MINH',
-          question: `Minh đã escalate một phản hồi cần con người xác minh (session=${params.sessionId || 'n/a'}). Câu hỏi của khách: ${String(params.message || '').slice(0, 300)}`,
+          question: `Minh đã escalate một phản hồi cần con người xác minh (session=${params.sessionId || 'n/a'}).`,
           leadId: params.leadId,
           priority: 70,
           context: {

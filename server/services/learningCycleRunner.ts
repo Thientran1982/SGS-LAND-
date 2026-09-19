@@ -184,12 +184,44 @@ export async function runLearningCycleForTenant(
     run: async () => {
       const golden = await evaluateGoldenSet(tenantId);
       const feedback = await adjudicateFeedbackForTenant(tenantId);
+      // P-AUDIT #1: tenant chua co golden set du toi thieu → SKIPPED (khong phai FAILED gia)
+      const minCases = Number(golden.summary?.gates?.minimumCases ?? 20);
+      const casesEvaluated = Number(golden.summary?.casesEvaluated ?? 0);
+      if (casesEvaluated < minCases) {
+        return {
+          passed: true,
+          status: 'SKIPPED' as const,
+          summary: { ...golden.summary, feedback, skippedReason: `golden_set_insufficient:${casesEvaluated}/${minCases}` },
+        };
+      }
       return {
         passed: golden.passed,
         summary: { ...golden.summary, feedback },
+        errorText: golden.passed ? undefined : `gate failed: match=${golden.summary?.match?.accuracy} valuation=${golden.summary?.valuation?.passRate} cases=${casesEvaluated}`,
       };
     },
   });
+  // P-AUDIT #1b: alert khi cycle FAILED 2 lan lien tiep cua tenant
+  if (evaluation.claimed && evaluation.cycle?.status === 'FAILED') {
+    try {
+      const consec = await withTenantContext(tenantId, async (client) => (await client.query(
+        `SELECT COUNT(*)::int AS c FROM (SELECT status FROM ai_learning_cycles WHERE tenant_id=$1 ORDER BY started_at DESC LIMIT 2) t WHERE status='FAILED'`,
+        [tenantId],
+      )).rows[0]?.c || 0);
+      if (consec >= 2) {
+        void agentMemoryService.recordSignal(tenantId, {
+          signalType: 'learning_cycle_failed',
+          actorId: 'MINH',
+          subjectType: 'learning_cycle',
+          subjectId: String(evaluation.cycle.cycle_key || evaluation.cycle.id),
+          dedupeKey: `lc-fail:${tenantId}:${evaluation.cycle.cycle_key || evaluation.cycle.id}`,
+          payload: { cycleKey: evaluation.cycle.cycle_key, errorText: evaluation.cycle.error_text },
+          provenance: 'learning_cycle_runner',
+        }).catch(() => undefined);
+        logger.warn(`[LearningCycle] FAILED x${consec} lien tiep tenant=${tenantId} cycle=${evaluation.cycle.cycle_key}`);
+      }
+    } catch { /* alert optional */ }
+  }
   if (
     evaluation.claimed
     && evaluation.cycle?.status === 'PASSED'

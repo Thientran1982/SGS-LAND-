@@ -1,0 +1,118 @@
+// ═══ SELF-HOSTED SYSTEMONE (TypeSafe-compatible, zero-dep) ═══
+// Engine "TypeSafe riêng" cho Jev: cùng giao thức POST /v1/systemone của
+// typesafe-sdk-js (body {model, state, questions} → {answers}), nhưng chạy trên
+// LLM nội bộ của Hub (glm-5.3-flash qua tokenrouter) thay vì api.typesafe.ai.
+// Nhờ vậy JEV compaction hoạt động KHÔNG CẦN key TypeSafe (settings.jev.mode="local").
+//
+// Đồng bộ kiểu question theo SDK (src/types.ts):
+//   noul   → { noul: số 0..1 }
+//   choice → { choice: <label>, confidence: 0..1, probabilities: {label: 0..1, tổng ≈1} }
+//   score  → { score: số, confidence: 0..1 }
+// Sai shape → throw để caller fallback hành vi cũ (fail-closed, như mọi nhánh Jev khác).
+// Lưu ý privacy: state vẫn đi tới LLM provider qua tokenrouter (giống mọi callLLM khác);
+// server.js đã redactPII state trước khi vào đây.
+import { validateChoice } from "./jevcompact.js";
+
+export const SYSTEMONE_TYPES = ["noul", "choice", "score"];
+
+const SYSTEM_PROMPT =
+  "Bạn là engine SystemOne chấm câu hỏi theo STATE đã cho. CHỈ trả về JSON thuần, không markdown, không giải thích, đúng shape: " +
+  '{"answers": {"<tên câu hỏi>": <kết quả>}}. ' +
+  "Kết quả theo type của từng câu hỏi: noul → {\"noul\": số 0..1} (xác suất câu phát biểu ĐÚNG dựa trên STATE); " +
+  "choice → {\"choice\": \"<chọn đúng 1 label trong criteria>\", \"confidence\": số 0..1, \"probabilities\": {mỗi label: số 0..1, tổng ≈ 1, label được chọn phải có xác suất cao nhất}}; " +
+  "score → {\"score\": số theo rubric, \"confidence\": số 0..1}. " +
+  "Chấm TỪNG câu độc lập, chỉ dựa trên STATE, không suy diễn ngoài dữ liệu.";
+
+// LLM trả text → tách JSON (chịu codefence ```json … ```), trả object hoặc throw
+export function extractJson(text) {
+  const s = String(text || "").trim();
+  const fence = s.match(/```(?:json)?\s*([\s\S]*?)```/i);
+  const raw = (fence ? fence[1] : s).trim();
+  const start = raw.indexOf("{"), end = raw.lastIndexOf("}");
+  if (start === -1 || end <= start) throw new Error("SystemOne local: LLM không trả JSON");
+  let parsed;
+  try { parsed = JSON.parse(raw.slice(start, end + 1)); } catch { throw new Error("SystemOne local: JSON hỏng"); }
+  if (!parsed || typeof parsed !== "object" || !parsed.answers || typeof parsed.answers !== "object")
+    throw new Error("SystemOne local: thiếu answers");
+  return parsed;
+}
+
+// Chấm 1 câu theo type — sai shape throw (fail-closed)
+export function validateAnswer(name, q, a) {
+  if (a === null || (typeof a !== "object" && typeof a !== "number")) throw new Error(`SystemOne local: đáp ${name} sai shape`);
+  if (q?.type === "noul") {
+    // Tolerant: chấp nhận {noul: 0.9} · {noul: "0.9"} · 0.9 (số trần) — model hay lệch nhẹ shape
+    let v = (typeof a === "number") ? a : (a ?? {}).noul;
+    if (typeof v === "string" && v.trim() !== "") v = Number(v);
+    if (typeof v !== "number" || !Number.isFinite(v) || v < 0 || v > 1)
+      throw new Error(`SystemOne local: đáp ${name} noul phải là số 0..1`);
+    return { noul: v };
+  }
+  if (q?.type === "choice") {
+    // Đủ shape (choice+confidence+probabilities) → validate chặt như SDK/ultra-jev.
+    // Thiếu probabilities → chấp nhận nếu choice ∈ criteria (LLM local hay lười) —
+    // caller của speculative cần shape đủ, sẽ tự throw ở validateChoice khi dùng.
+    if (typeof a.choice !== "string" || !(q.criteria || {})[a.choice])
+      throw new Error(`SystemOne local: đáp ${name} choice không thuộc criteria`);
+    if (a.probabilities && a.confidence !== undefined) return validateChoice(a, Object.keys(q.criteria || {}));
+    return a;
+  }
+  if (q?.type === "score") {
+    if (typeof a.score !== "number" || !Number.isFinite(a.score))
+      throw new Error(`SystemOne local: đáp ${name} score phải là số`);
+    if (a.confidence !== undefined && (typeof a.confidence !== "number" || a.confidence < 0 || a.confidence > 1))
+      throw new Error(`SystemOne local: đáp ${name} confidence phải là số 0..1`);
+    return a;
+  }
+  throw new Error(`SystemOne local: câu ${name} type lạ (${q?.type})`);
+}
+
+// Validate danh sách câu hỏi đầu vào (theo ràng buộc SDK: criteria ≥ 2 entry cho choice/score)
+export function validateQuestions(questions) {
+  if (!questions || typeof questions !== "object" || Array.isArray(questions) || !Object.keys(questions).length)
+    throw new Error("SystemOne: questions rỗng hoặc sai shape");
+  for (const [name, q] of Object.entries(questions)) {
+    if (!q || typeof q !== "object" || !SYSTEMONE_TYPES.includes(q.type))
+      throw new Error(`SystemOne: câu "${name}" type không hợp lệ (noul|choice|score)`);
+    if ((q.type === "choice" || q.type === "score")) {
+      const n = q.type === "choice" ? Object.keys(q.criteria || {}).length : (Array.isArray(q.criteria) ? q.criteria.length : 0);
+      if (n < 2) throw new Error(`SystemOne: câu "${name}" criteria cần ≥ 2 entry`);
+    }
+  }
+  return questions;
+}
+
+// Messages cho LLM nội bộ — state cap 60k chars như các nhánh jev khác
+export function buildMessages(state, questions) {
+  return [
+    { role: "system", content: SYSTEM_PROMPT },
+    { role: "user", content: `STATE:\n${JSON.stringify(state ?? null).slice(0, 60000)}\n\nQUESTIONS:\n${JSON.stringify(questions)}` },
+  ];
+}
+
+// Gọi 1 lượt SystemOne: llmCall(messages) → {ok, text, ...} (inject từ server để dùng callLLM/tokenrouter)
+export async function systemOneAnswer({ llmCall, state, questions, model }) {
+  validateQuestions(questions);
+  const r = await llmCall(buildMessages(state, questions));
+  if (!r || !r.ok || !String(r.text || "").trim())
+    throw new Error(`SystemOne local: LLM lỗi ${(r && r.error) || "trống đáp"}`);
+  const parsed = extractJson(r.text);
+  const answers = {};
+  for (const [name, q] of Object.entries(questions)) {
+    if (!(name in parsed.answers)) throw new Error(`SystemOne local: thiếu đáp cho câu "${name}"`);
+    answers[name] = validateAnswer(name, q, parsed.answers[name]);
+  }
+  return { model: model || "systemone-local", answers, usage: { input_tokens: r.tokensIn || 0, output_tokens: r.tokensOut || 0 } };
+}
+
+// Asker tương thích interface asker của compact()/chooseSpeculative() trong jevcompact.js:
+//   ask(state, questions) → {answers, ...} — throw khi LLM/shape lỗi để caller fallback.
+export function makeLocalAsker({ llmCall, model } = {}) {
+  if (typeof llmCall !== "function") throw new Error("SystemOne local: thiếu llmCall");
+  return {
+    async ask(state, questions) {
+      const out = await systemOneAnswer({ llmCall, state, questions, model });
+      return { answers: out.answers, model: out.model, usage: out.usage };
+    },
+  };
+}

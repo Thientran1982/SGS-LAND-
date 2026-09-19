@@ -156,7 +156,7 @@ export function nextFeedbackFollowup(createdAt: Date, stage: number): Date | nul
 export const autonomousLearningService = {
   async runLockedEvaluationCycle(input: {
     tenantId: string; cycleKey: string; fixtureVersion: string; traceId?: string;
-    run: () => Promise<{ passed: boolean; summary: Record<string, unknown> }>;
+    run: () => Promise<{ passed: boolean; summary: Record<string, unknown>; status?: 'SKIPPED'; errorText?: string }>;
   }) {
     const claimed = await this.startEvaluationCycle(input);
     if (!claimed.claimed) return { claimed: false, cycle: claimed.cycle };
@@ -202,10 +202,10 @@ export const autonomousLearningService = {
   },
 
   async finishEvaluationCycle(tenantId: string, cycleId: string, input: {
-    passed: boolean; summary: Record<string, unknown>; errorText?: string; traceId?: string;
+    passed: boolean; summary: Record<string, unknown>; status?: 'SKIPPED'; errorText?: string; traceId?: string;
   }) {
     return withTenantContext(tenantId, async client => {
-      const status = input.passed ? 'PASSED' : 'FAILED';
+      const status = input.status === 'SKIPPED' ? 'SKIPPED' : input.passed ? 'PASSED' : 'FAILED';
       const result = await client.query(
         `UPDATE ai_learning_cycles SET status=$3, summary_json=$4::jsonb, error_text=$5, finished_at=NOW()
          WHERE tenant_id=$1 AND id=$2 AND status='RUNNING' RETURNING *`,
@@ -215,7 +215,7 @@ export const autonomousLearningService = {
         `INSERT INTO ai_learning_audit_events
          (tenant_id,event_type,entity_type,entity_id,reason,metrics_json,trace_id)
          VALUES ($1,$2,'LEARNING_CYCLE',$3,$4,$5::jsonb,$6)`,
-        [tenantId, input.passed ? 'EVALUATION_PASSED' : 'EVALUATION_FAILED', cycleId,
+        [tenantId, input.status === 'SKIPPED' ? 'EVALUATION_SKIPPED' : input.passed ? 'EVALUATION_PASSED' : 'EVALUATION_FAILED', cycleId,
           input.passed ? 'all_locked_fixture_gates_passed' : (input.errorText || 'evaluation_gate_failed'),
           JSON.stringify(input.summary), input.traceId || null],
       );

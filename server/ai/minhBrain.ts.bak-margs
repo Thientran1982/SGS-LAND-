@@ -153,16 +153,8 @@ export async function runSpecialistTool(params: {
   const runId = await startAgentRun(pool, tool, params.triggerSource || 'minh_brain');
   let status: 'SUCCESS' | 'FAILED' = 'FAILED';
   let output: unknown = null;
-  let error: string | null = null;
-  let needsInfo = false;
-  if (missing.length) {
-    // P-AUDIT: thiếu tham số không phải lỗi hệ thống — trả needs-info để Minh hỏi lại khách
-    needsInfo = true;
-    status = 'SUCCESS';
-    output = { needsInfo: true, missing, message: `Để xử lý chính xác, cho Minh biết thêm: ${missing.join(', ')}` } as any;
-  }
-  if (!error && !needsInfo) {
-  
+  let error: string | null = missing.length ? 'MINH_MISSING_ARGS: ' + missing.join(', ') : null;
+  if (!error) {
     try {
       output = await runWithSubagentPolicy(
         () => liveChatEngine.callTool(tool, args),

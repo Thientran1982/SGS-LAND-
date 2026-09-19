@@ -7,7 +7,6 @@ import crypto from 'node:crypto';
 import { pool, withTenantContext } from '../db';
 import { liveChatEngine, generateLiveChatText } from './liveChatEngine';
 import { minhChooseSpecialist, keywordPlan, MINH_INTENT_TOOLS } from './minhOrchestrator';
-import { verifyMinhAnswer } from "../lib/minhSystemOneRouter.js";
 import type { MinhPlan } from './minhOrchestrator';
 import { runWithSubagentPolicy } from '../services/subagentPolicy';
 import { startAgentRun, finishAgentRun } from '../services/agentRunsService';
@@ -153,16 +152,8 @@ export async function runSpecialistTool(params: {
   const runId = await startAgentRun(pool, tool, params.triggerSource || 'minh_brain');
   let status: 'SUCCESS' | 'FAILED' = 'FAILED';
   let output: unknown = null;
-  let error: string | null = null;
-  let needsInfo = false;
-  if (missing.length) {
-    // P-AUDIT: thiếu tham số không phải lỗi hệ thống — trả needs-info để Minh hỏi lại khách
-    needsInfo = true;
-    status = 'SUCCESS';
-    output = { needsInfo: true, missing, message: `Để xử lý chính xác, cho Minh biết thêm: ${missing.join(', ')}` } as any;
-  }
-  if (!error && !needsInfo) {
-  
+  let error: string | null = missing.length ? 'MINH_MISSING_ARGS: ' + missing.join(', ') : null;
+  if (!error) {
     try {
       output = await runWithSubagentPolicy(
         () => liveChatEngine.callTool(tool, args),
@@ -280,18 +271,5 @@ export async function minhDelegateTask(
     }).catch(signalError => logger.warn('[MinhBrain] delegation signal failed: ' + (signalError?.message || signalError)));
   }
   const specialist = await runSpecialistTool({ tenantId, task, sessionId, plan: planWithToken, triggerSource: options.triggerSource || 'minh_brain' });
-  // JEV-ULTRAFAST P3c: DONE khong tu chung minh thanh cong — verifier doc lap (env JEV_VERIFY=1, chi GHI DAU khong chan)
-    let verify: Record<string, any> | null = null;
-    if (specialist.status === 'SUCCESS' && process.env.JEV_VERIFY === '1') {
-      try {
-        verify = await verifyMinhAnswer({
-          generateFn: (p: any) => generateLiveChatText({ ...p, feature: 'MINH_VERIFY' }),
-          question: task,
-          answer: typeof specialist.output === 'string' ? specialist.output : JSON.stringify(specialist.output ?? {}).slice(0, 3000),
-          timeoutMs: 12000,
-          onResult: (r: any) => { try { void agentMemoryService.recordSignal(tenantId, { signalType: 'minh_verify', actorId: 'MINH', subjectType: 'brain_task', subjectId: String(task).slice(0, 120), dedupeKey: 'minh-verify:' + crypto.randomUUID(), payload: r, provenance: 'minh_brain' }).catch(() => undefined); } catch {} },
-        });
-      } catch { verify = null; }
-    }
-    return { plan: planWithToken, tool: specialist.tool, args: specialist.args, status: specialist.status, output: specialist.output, error: specialist.error, durationMs: Date.now() - started, runId: specialist.runId, correct: specialist.correct, via: 'typescript', ...(verify ? { verify } : {}) };
+  return { plan: planWithToken, tool: specialist.tool, args: specialist.args, status: specialist.status, output: specialist.output, error: specialist.error, durationMs: Date.now() - started, runId: specialist.runId, correct: specialist.correct, via: 'typescript' };
 }

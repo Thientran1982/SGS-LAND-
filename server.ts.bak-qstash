@@ -1,5 +1,4 @@
 import express from "express";
-import { startAgentCronFallback } from "./server/cron/agentCronFallback";
 import { createFollowUpRoutes } from "./server/routes/followupRoutes";
 import { createFollowUpCronRouter, startFollowUpCron } from "./server/routes/followupCronRoutes";
 import helmet from "helmet";
@@ -7941,8 +7940,6 @@ app.use('/api/v1', (req, _res, next) => {
       logger.warn(`[FollowUpCron] Không thể khởi động in-process cron: ${err?.message || err}`);
     }
   }
-  // P-AUDIT: QStash watchdog — cron nội bộ thay thế khi QStash hết token/chết
-  startAgentCronFallback();
   server.listen(PORT, "0.0.0.0", async () => {
     logger.info(`Server running on http://localhost:${PORT}`);
     //  RELIABILITY FIX (audit): gate cho viec dang ky QStash schedule 
