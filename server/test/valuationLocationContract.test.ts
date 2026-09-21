@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import {
+  buildValuationLocationObservationKey,
   buildValuationLocationCandidatePattern,
   matchValuationLocations,
   normalizeValuationLocation,
@@ -48,5 +49,28 @@ describe('valuation location contract', () => {
   it('uses the strongest hierarchy anchor for SQL candidate pre-filtering', () => {
     expect(buildValuationLocationCandidatePattern('Bến Nghé, Quận 1, TP.HCM')).toBe('%quan 1%');
     expect(buildValuationLocationCandidatePattern('Aqua City, Đồng Nai')).toBe('%aqua city%');
+  });
+
+  it('never labels an entirely unknown location as an exact match', () => {
+    const result = matchValuationLocations('Khu pho ven song', 'Khu pho ven song');
+    expect(result).toMatchObject({ matches: false, level: 'UNKNOWN' });
+  });
+
+  it('uses a reviewed alias but does not trust an unapproved alias implicitly', () => {
+    const location = 'Thanh pho Moi, Dong Nai';
+    expect(parseValuationLocation(location).district).toBeNull();
+    expect(parseValuationLocation(location, [{
+      level: 'district',
+      canonical: 'bien hoa',
+      alias: 'thanh pho moi',
+    }])).toMatchObject({ district: 'bien hoa', province: 'dong nai' });
+  });
+
+  it('creates a report-safe stable key without exposing the normalized address', () => {
+    const first = buildValuationLocationObservationKey('12 Nguyen Hue, Quan 1, TP.HCM');
+    const second = buildValuationLocationObservationKey('12 Nguyen Hue, Quan 1, TP.HCM');
+    expect(first).toBe(second);
+    expect(first).toMatch(/^ho chi minh\|quan 1\|unknown:[a-f0-9]{16}$/);
+    expect(first).not.toContain('nguyen hue');
   });
 });

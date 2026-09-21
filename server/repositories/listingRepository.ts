@@ -5,6 +5,7 @@ import {
   buildValuationLocationCandidatePattern,
   isValuationLocationMatch,
   normalizeValuationLocation,
+  type ValuationLocationAlias,
 } from '../services/valuationLocationContract';
 
 /** Shared normalization used by valuation comparable provenance checks. */
@@ -1041,7 +1042,24 @@ export class ListingRepository extends BaseRepository {
       const areaMin = params.area * 0.60;
       const areaMax = params.area * 1.60;
 
-      const locationPattern = buildValuationLocationCandidatePattern(params.location);
+      // Only reviewed aliases may affect matching. Pending proposals remain
+      // visible to admins but cannot widen a comparable search.
+      const approvedAliasRows = await client.query(
+        `SELECT level, canonical, alias
+           FROM valuation_location_aliases
+          WHERE tenant_id = $1 AND status = 'approved'`,
+        [tenantId],
+      );
+      const approvedAliases: ValuationLocationAlias[] = approvedAliasRows.rows
+        .map((row: any) => ({
+          level: row.level,
+          canonical: String(row.canonical),
+          alias: String(row.alias),
+        }))
+        .filter((row: ValuationLocationAlias) =>
+          row.level === 'province' || row.level === 'district' || row.level === 'project');
+
+      const locationPattern = buildValuationLocationCandidatePattern(params.location, approvedAliases);
 
       const maxSamples = params.maxSamples || 20;
 
@@ -1067,7 +1085,7 @@ export class ListingRepository extends BaseRepository {
 
       const targetType = params.propertyType ? normalizeComparableType(params.propertyType) : null;
       const acceptedRows = result.rows.filter((row: any) => {
-        if (!isComparableLocationMatch(params.location, row.location)) return false;
+        if (!isValuationLocationMatch(params.location, row.location, approvedAliases)) return false;
         if (targetType && normalizeComparableType(row.type) !== targetType) return false;
         return true;
       });

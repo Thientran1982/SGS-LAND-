@@ -132,4 +132,5 @@
 - [Socket.IO distributed adapter](socketio-distributed-adapter.md) — multi-process room revocation needs explicit TCP Redis pub/sub, not Upstash REST or an in-memory mock
 - [Public listing teaser capability](public-listing-teaser-capability.md) — signed tenant/listing capabilities still require an explicit public flag and exact server-side scope checks
 - [Valuation data contract](valuation-data-contract.md) — valuation prices, rent, area, and yields use explicit units with persisted provenance and freshness
+- [Valuation location observability](valuation-location-observability.md) — unknown locations stay explicit reference estimates; aliases affect matching only after tenant review
 - [Marketplace type normalization](marketplace-type-normalization.md) — public filters and BOARD grouping must handle enum, Vietnamese slug, and legacy JSON type fields

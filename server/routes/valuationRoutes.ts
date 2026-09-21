@@ -9,13 +9,14 @@
  */
 
 import { Router, Request, Response } from 'express';
+import { randomUUID } from 'node:crypto';
 import { applyAVM, getRegionalBasePrice, PROPERTY_TYPE_PRICE_MULT } from '../valuationEngine';
 import type { LegalStatus, PropertyType } from '../valuationEngine';
 import { marketDataService } from '../services/marketDataService';
 import { priceCalibrationService } from '../services/priceCalibrationService';
 import { listingRepository } from '../repositories/listingRepository';
 import { logger } from '../middleware/logger';
-import { pool } from '../db';
+import { pool, withTenantContext } from '../db';
 import { getMonthlyQuotaStatus, monthlyValuationQuota, VALUATION_PLAN_LIMITS, getUserPlan } from '../middleware/rateLimiter';
 import {
   recordValuationUsage,
@@ -36,6 +37,7 @@ import { sendAiError } from '../utils/aiErrorHandler';
 import { valuationGoldSet } from '../data/valuationGoldSet';
 import { notificationRepository } from '../repositories/notificationRepository';
 import { verifyPublicListingTeaserToken } from '../services/publicListingTeaserCapability';
+import { agentMemoryService } from '../services/agentMemoryService';
 import {
   buildMarketObservationProvenance,
   getFreshnessStatus,
@@ -43,13 +45,74 @@ import {
 } from '../services/valuationDataContract';
 import {
   buildValuationLocationCandidatePattern,
+  buildValuationLocationObservationKey,
+  getValuationLocationUnknownLevels,
   isValuationLocationMatch,
   normalizeValuationLocation,
   parseValuationLocation,
+  type ValuationLocationAlias,
+  type ValuationLocationAliasLevel,
 } from '../services/valuationLocationContract';
 
 function normalizeAddrKey(addr: string): string {
   return normalizeValuationLocation(addr).slice(0, 80);
+}
+
+function isValuationAdmin(user: any): boolean {
+  return ['SUPER_ADMIN', 'ADMIN'].includes(user?.role);
+}
+
+async function loadApprovedValuationAliases(tenantId: string): Promise<ValuationLocationAlias[]> {
+  return withTenantContext(tenantId, async client => {
+    const result = await client.query(
+      `SELECT level, canonical, alias
+         FROM valuation_location_aliases
+        WHERE tenant_id = $1 AND status = 'approved'`,
+      [tenantId],
+    );
+    return result.rows
+      .map((row: any) => ({
+        level: row.level,
+        canonical: String(row.canonical),
+        alias: String(row.alias),
+      }))
+      .filter((row: ValuationLocationAlias) =>
+        row.level === 'province' || row.level === 'district' || row.level === 'project');
+  });
+}
+
+function recordUnknownValuationLocation(
+  tenantId: string | undefined,
+  actorId: string | undefined,
+  identity: ReturnType<typeof parseValuationLocation>,
+  fallbackStatus: 'REGIONAL_BASELINE' | 'NOT_USED',
+  approvedAliases: readonly ValuationLocationAlias[] = [],
+): void {
+  if (!tenantId || !identity.normalized) return;
+  const missingLevels = getValuationLocationUnknownLevels(identity);
+  if (missingLevels.length === 0) return;
+
+  // Keep this signal categorical and report-safe: no raw address, area, or
+  // price is persisted. The digest lets admins group repeated misses without
+  // turning telemetry into an address store.
+  void agentMemoryService.recordSignal(tenantId, {
+    signalType: 'valuation_location_unrecognized',
+    actorId,
+    subjectType: 'valuation_location',
+    subjectId: buildValuationLocationObservationKey(identity.normalized, approvedAliases),
+    dedupeKey: `valuation-location-unrecognized:${randomUUID()}`,
+    provenance: 'valuation',
+    payload: {
+      missingLevels,
+      locationKey: buildValuationLocationObservationKey(identity.normalized, approvedAliases),
+      normalizedLocationKey: buildValuationLocationObservationKey(identity.normalized, approvedAliases),
+      fallbackStatus,
+    },
+  }).catch((error: unknown) => {
+    logger.warn('[Valuation] Could not record unknown-location telemetry', {
+      error: error instanceof Error ? error.message : 'unknown error',
+    });
+  });
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -343,6 +406,10 @@ export function createValuationRoutes(
       // Re-assign so rest of handler uses sanitized value
       (req.body as any).address = sanitizedAddress;
       const addressClean: string = sanitizedAddress;
+      const approvedValuationAliases = user?.tenantId
+        ? await loadApprovedValuationAliases(String(user.tenantId))
+        : [];
+      const valuationLocationIdentity = parseValuationLocation(addressClean, approvedValuationAliases);
 
       const areaNum = Number(area);
       const roadWidthNum = Number(roadWidth);
@@ -576,6 +643,16 @@ export function createValuationRoutes(
         : avmResult.confidence < 55
           ? 'INSUFFICIENT_DATA'
           : 'ESTIMATE';
+
+      recordUnknownValuationLocation(
+        user?.tenantId,
+        user?.id || user?.userId,
+        valuationLocationIdentity,
+        marketDataSource === 'REGIONAL_TABLE' || marketDataSource === 'REGIONAL_OVERRIDE'
+          ? 'REGIONAL_BASELINE'
+          : 'NOT_USED',
+        approvedValuationAliases,
+      );
 
       // ── Record usage for cost report (fire-and-forget) ────────────────────
       try {
@@ -1116,6 +1193,156 @@ export function createValuationRoutes(
         isFresh: new Date(e.expiresAt) > new Date(),
       })),
     });
+  });
+
+  // ──────────────────────────────────────────────────────────────────────────
+  // ADMIN: Unknown-location coverage and reviewed alias queue
+  // ──────────────────────────────────────────────────────────────────────────
+  router.get('/admin/location-coverage', authenticateToken, async (req: Request, res: Response) => {
+    const user = (req as any).user;
+    if (!isValuationAdmin(user)) return res.status(403).json({ error: 'Admin only' });
+
+    const requestedDays = Number(req.query.days || 30);
+    const days = Number.isFinite(requestedDays) ? Math.max(1, Math.min(90, Math.floor(requestedDays))) : 30;
+    const tenantId = String(user.tenantId);
+    try {
+      const report = await withTenantContext(tenantId, async client => {
+        const since = new Date(Date.now() - days * 86_400_000).toISOString();
+        const [summary, levels, topKeys, aliases] = await Promise.all([
+          client.query(
+            `SELECT COUNT(*)::int AS total_requests,
+                    COUNT(*) FILTER (
+                      WHERE payload::jsonb->>'fallbackStatus' = 'REGIONAL_BASELINE'
+                    )::int AS regional_baseline_requests,
+                    COUNT(*) FILTER (
+                      WHERE payload::jsonb->>'fallbackStatus' = 'NOT_USED'
+                    )::int AS non_fallback_requests
+               FROM agent_signals
+              WHERE tenant_id = $1
+                AND signal_type = 'valuation_location_unrecognized'
+                AND created_at >= $2`,
+            [tenantId, since],
+          ),
+          client.query(
+            `SELECT level, COUNT(*)::int AS count
+               FROM agent_signals s
+               CROSS JOIN LATERAL jsonb_array_elements_text(
+                 COALESCE(s.payload::jsonb->'missingLevels', '[]'::jsonb)
+               ) AS missing(level)
+              WHERE s.tenant_id = $1
+                AND s.signal_type = 'valuation_location_unrecognized'
+                AND s.created_at >= $2
+              GROUP BY level
+              ORDER BY count DESC, level ASC`,
+            [tenantId, since],
+          ),
+          client.query(
+            `SELECT payload::jsonb->>'normalizedLocationKey' AS location_key,
+                    COUNT(*)::int AS signal_count
+               FROM agent_signals
+              WHERE tenant_id = $1
+                AND signal_type = 'valuation_location_unrecognized'
+                AND created_at >= $2
+              GROUP BY location_key
+              ORDER BY signal_count DESC, location_key ASC
+              LIMIT 20`,
+            [tenantId, since],
+          ),
+          client.query(
+            `SELECT id, level, canonical, alias, status, proposed_by, reviewed_by,
+                    reviewed_at, created_at
+               FROM valuation_location_aliases
+              WHERE tenant_id = $1
+              ORDER BY CASE status WHEN 'pending' THEN 0 WHEN 'approved' THEN 1 ELSE 2 END,
+                       created_at DESC
+              LIMIT 100`,
+            [tenantId],
+          ),
+        ]);
+
+        return {
+          windowDays: days,
+          totalRequests: summary.rows[0]?.total_requests || 0,
+          fallbackRequests: summary.rows[0]?.regional_baseline_requests || 0,
+          fallbackStatus: {
+            REGIONAL_BASELINE: summary.rows[0]?.regional_baseline_requests || 0,
+            NOT_USED: summary.rows[0]?.non_fallback_requests || 0,
+          },
+          missingByLevel: levels.rows,
+          topNormalizedLocationKeys: topKeys.rows,
+          aliases: aliases.rows,
+        };
+      });
+      return res.json({ tenantScoped: true, ...report });
+    } catch (err: any) {
+      logger.error('[Valuation location-coverage] error', err);
+      return res.status(500).json({ error: 'Không thể tải báo cáo coverage location' });
+    }
+  });
+
+  router.post('/admin/location-aliases', authenticateToken, async (req: Request, res: Response) => {
+    const user = (req as any).user;
+    if (!isValuationAdmin(user)) return res.status(403).json({ error: 'Admin only' });
+    const level = String(req.body?.level || '') as ValuationLocationAliasLevel;
+    const canonical = normalizeValuationLocation(req.body?.canonical).slice(0, 120);
+    const alias = normalizeValuationLocation(req.body?.alias).slice(0, 120);
+    if (!['province', 'district', 'project'].includes(level) || !canonical || !alias) {
+      return res.status(400).json({ error: 'level, canonical và alias là bắt buộc' });
+    }
+    if (canonical.length < 2 || alias.length < 2) {
+      return res.status(400).json({ error: 'canonical và alias quá ngắn' });
+    }
+
+    try {
+      const row = await withTenantContext(String(user.tenantId), async client => (
+        await client.query(
+          `INSERT INTO valuation_location_aliases
+             (id, tenant_id, level, canonical, alias, normalized_alias, status, proposed_by)
+           VALUES ($1, $2, $3, $4, $5, $5, 'pending', $6)
+           ON CONFLICT (tenant_id, level, normalized_alias)
+           DO UPDATE SET canonical = EXCLUDED.canonical,
+                         alias = EXCLUDED.alias,
+                         status = 'pending',
+                         proposed_by = EXCLUDED.proposed_by,
+                         reviewed_by = NULL,
+                         reviewed_at = NULL
+           RETURNING id, level, canonical, alias, status, proposed_by, reviewed_by,
+                     reviewed_at, created_at`,
+          [randomUUID(), user.tenantId, level, canonical, alias, user.id || user.userId || null],
+        )
+      ).rows[0]);
+      return res.status(201).json({ alias: row });
+    } catch (err: any) {
+      logger.error('[Valuation location-aliases] proposal error', err);
+      return res.status(500).json({ error: 'Không thể tạo đề xuất alias' });
+    }
+  });
+
+  router.put('/admin/location-aliases/:id/review', authenticateToken, async (req: Request, res: Response) => {
+    const user = (req as any).user;
+    if (!isValuationAdmin(user)) return res.status(403).json({ error: 'Admin only' });
+    const status = String(req.body?.status || '');
+    if (!['approved', 'rejected'].includes(status)) {
+      return res.status(400).json({ error: 'status phải là approved hoặc rejected' });
+    }
+
+    try {
+      const row = await withTenantContext(String(user.tenantId), async client => (
+        await client.query(
+          `UPDATE valuation_location_aliases
+              SET status = $1, reviewed_by = $2, reviewed_at = NOW()
+            WHERE id = $3 AND tenant_id = $4
+            RETURNING id, level, canonical, alias, status, proposed_by, reviewed_by,
+                      reviewed_at, created_at`,
+          [status, user.id || user.userId || null, req.params.id, user.tenantId],
+        )
+      ).rows[0]);
+      if (!row) return res.status(404).json({ error: 'Không tìm thấy alias cần review' });
+      return res.json({ alias: row });
+    } catch (err: any) {
+      logger.error('[Valuation location-aliases] review error', err);
+      return res.status(500).json({ error: 'Không thể review alias' });
+    }
   });
 
   // ──────────────────────────────────────────────────────────────────────────

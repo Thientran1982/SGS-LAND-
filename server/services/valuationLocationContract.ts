@@ -6,6 +6,7 @@
  * below uses the strongest hierarchy that can be extracted and fails closed
  * when an explicit province, district, or project conflicts.
  */
+import { createHash } from 'node:crypto';
 
 export type ValuationLocationMatchLevel =
   | 'EXACT'
@@ -27,6 +28,14 @@ export interface ValuationLocationMatch {
   level: ValuationLocationMatchLevel;
   target: ValuationLocationIdentity;
   candidate: ValuationLocationIdentity;
+}
+
+export type ValuationLocationAliasLevel = 'province' | 'district' | 'project';
+
+export interface ValuationLocationAlias {
+  level: ValuationLocationAliasLevel;
+  canonical: string;
+  alias: string;
 }
 
 const PROVINCE_ALIASES: Array<{ canonical: string; aliases: string[] }> = [
@@ -132,20 +141,26 @@ export function normalizeValuationLocation(value: unknown): string {
     .slice(0, 240);
 }
 
-function extractProvince(normalized: string): string | null {
+function extractProvince(normalized: string, approvedAliases: readonly ValuationLocationAlias[] = []): string | null {
   const matches = PROVINCE_ALIASES
     .flatMap(entry => entry.aliases.map(alias => ({ canonical: entry.canonical, alias })))
+    .concat(approvedAliases
+      .filter(entry => entry.level === 'province')
+      .map(entry => ({ canonical: normalizeValuationLocation(entry.canonical), alias: normalizeValuationLocation(entry.alias) })))
     .filter(({ alias }) => hasWordSequence(normalized, alias))
     .sort((a, b) => b.alias.length - a.alias.length);
   return matches[0]?.canonical || null;
 }
 
-function extractDistrict(normalized: string): string | null {
+function extractDistrict(normalized: string, approvedAliases: readonly ValuationLocationAlias[] = []): string | null {
   const numbered = normalized.match(/\b(?:quan|q|district)\s*([0-9]{1,2})\b/);
   if (numbered) return `quan ${Number(numbered[1])}`;
 
   const named = DISTRICT_NAME_ALIASES
     .flatMap(entry => entry.aliases.map(alias => ({ canonical: entry.canonical, alias })))
+    .concat(approvedAliases
+      .filter(entry => entry.level === 'district')
+      .map(entry => ({ canonical: normalizeValuationLocation(entry.canonical), alias: normalizeValuationLocation(entry.alias) })))
     .filter(({ alias }) => hasWordSequence(normalized, alias))
     .sort((a, b) => b.alias.length - a.alias.length);
   if (named[0]) return named[0].canonical;
@@ -154,38 +169,77 @@ function extractDistrict(normalized: string): string | null {
   return administrative?.[1]?.trim() || null;
 }
 
-function extractProject(normalized: string): string | null {
+function extractProject(normalized: string, approvedAliases: readonly ValuationLocationAlias[] = []): string | null {
   const matches = PROJECT_ALIASES
     .flatMap(entry => entry.aliases.map(alias => ({ canonical: entry.canonical, alias })))
+    .concat(approvedAliases
+      .filter(entry => entry.level === 'project')
+      .map(entry => ({ canonical: normalizeValuationLocation(entry.canonical), alias: normalizeValuationLocation(entry.alias) })))
     .filter(({ alias }) => hasWordSequence(normalized, alias))
     .sort((a, b) => b.alias.length - a.alias.length);
   return matches[0]?.canonical || null;
 }
 
-export function parseValuationLocation(value: unknown): ValuationLocationIdentity {
+export function parseValuationLocation(
+  value: unknown,
+  approvedAliases: readonly ValuationLocationAlias[] = [],
+): ValuationLocationIdentity {
   const normalized = normalizeValuationLocation(value);
   return {
     normalized,
-    province: extractProvince(normalized),
-    district: extractDistrict(normalized),
-    project: extractProject(normalized),
+    province: extractProvince(normalized, approvedAliases),
+    district: extractDistrict(normalized, approvedAliases),
+    project: extractProject(normalized, approvedAliases),
   };
 }
 
-export function buildValuationLocationCandidatePattern(value: unknown): string {
-  const identity = parseValuationLocation(value);
+export function getValuationLocationUnknownLevels(
+  identity: ValuationLocationIdentity,
+): ValuationLocationAliasLevel[] {
+  return (['province', 'district', 'project'] as const)
+    .filter(level => !identity[level]);
+}
+
+/**
+ * Report-safe key for unknown-location telemetry. Known hierarchy values remain
+ * reviewable, while the unrecognized portion is a short one-way digest rather
+ * than an address or price.
+ */
+export function buildValuationLocationObservationKey(
+  value: unknown,
+  approvedAliases: readonly ValuationLocationAlias[] = [],
+): string {
+  const identity = parseValuationLocation(value, approvedAliases);
+  const known = [identity.province, identity.district, identity.project].filter(Boolean).join('|');
+  const digest = createHash('sha256').update(identity.normalized).digest('hex').slice(0, 16);
+  return `${known ? `${known}|` : ''}unknown:${digest}`;
+}
+
+export function buildValuationLocationCandidatePattern(
+  value: unknown,
+  approvedAliases: readonly ValuationLocationAlias[] = [],
+): string {
+  const identity = parseValuationLocation(value, approvedAliases);
   const anchor = identity.project || identity.district || identity.province;
   return `%${(anchor || identity.normalized).slice(0, 100)}%`;
 }
 
-export function matchValuationLocations(targetValue: unknown, candidateValue: unknown): ValuationLocationMatch {
-  const target = parseValuationLocation(targetValue);
-  const candidate = parseValuationLocation(candidateValue);
+export function matchValuationLocations(
+  targetValue: unknown,
+  candidateValue: unknown,
+  approvedAliases: readonly ValuationLocationAlias[] = [],
+): ValuationLocationMatch {
+  const target = parseValuationLocation(targetValue, approvedAliases);
+  const candidate = parseValuationLocation(candidateValue, approvedAliases);
 
   if (!target.normalized || !candidate.normalized) {
     return { matches: false, level: 'UNKNOWN', target, candidate };
   }
-  if (target.normalized === candidate.normalized) {
+  // An identical opaque string is not evidence of a location match. Without
+  // at least one recognized hierarchy level it must remain UNKNOWN, otherwise
+  // a regional fallback can be presented as an exact observation.
+  if (target.normalized === candidate.normalized
+    && (target.province || target.district || target.project)) {
     return { matches: true, level: 'EXACT', target, candidate };
   }
   if (target.province && candidate.province && target.province !== candidate.province) {
@@ -213,6 +267,11 @@ export function matchValuationLocations(targetValue: unknown, candidateValue: un
     return { matches: true, level: 'PROVINCE', target, candidate };
   }
 
+  if (!target.province && !target.district && !target.project
+    && !candidate.province && !candidate.district && !candidate.project) {
+    return { matches: false, level: 'UNKNOWN', target, candidate };
+  }
+
   const containment =
     (target.normalized.length >= 8 && candidate.normalized.includes(target.normalized))
     || (candidate.normalized.length >= 8 && target.normalized.includes(candidate.normalized));
@@ -224,6 +283,10 @@ export function matchValuationLocations(targetValue: unknown, candidateValue: un
   };
 }
 
-export function isValuationLocationMatch(targetValue: unknown, candidateValue: unknown): boolean {
-  return matchValuationLocations(targetValue, candidateValue).matches;
+export function isValuationLocationMatch(
+  targetValue: unknown,
+  candidateValue: unknown,
+  approvedAliases: readonly ValuationLocationAlias[] = [],
+): boolean {
+  return matchValuationLocations(targetValue, candidateValue, approvedAliases).matches;
 }
