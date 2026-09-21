@@ -16,7 +16,7 @@ import Image from "next/image";
 import { formatPriceLang, formatUnitPriceLang, rentSuffix } from "@/utils/priceFormat";
 import { trackEvent } from "@/lib/tracking";
 import { slugifyListingTitle } from "@/lib/listingSlug";
-import { readFavoriteIds, toggleFavoriteId } from "@/lib/favorites";
+import { readFavoriteIds, subscribeFavoriteChanges, toggleFavoriteId } from "@/lib/favorites";
 
 const MarketplaceMap = dynamic(() => import("./MarketplaceMap").then((m) => m.MarketplaceMap), {
   ssr: false,
@@ -457,8 +457,14 @@ export function MarketplacePage({ initialListings, totalCount, totalPages, searc
   const [filtersOpen, setFiltersOpen] = useState(false);
   const [boardListings, setBoardListings] = useState<any[]>(initialListings || []);
   const [boardLoading, setBoardLoading] = useState(false);
+  const [favoriteCount, setFavoriteCount] = useState(0);
   const heroRef = useRef<HTMLDivElement>(null);
   const [recentSearches, setRecentSearches] = useState<string[]>([]);
+  useEffect(() => {
+    const refresh = () => setFavoriteCount(readFavoriteIds().length);
+    refresh();
+    return subscribeFavoriteChanges(refresh);
+  }, []);
   useEffect(() => {
     try {
       const raw = JSON.parse(window.localStorage.getItem("sgs:recentSearches") || "[]");
@@ -738,6 +744,18 @@ export function MarketplacePage({ initialListings, totalCount, totalPages, searc
         </div>
 
         <div className="relative flex items-center justify-between sm:justify-end gap-2 w-full sm:w-auto shrink-0">
+          {favoriteCount > 0 && (
+            <Link
+              href={lang === "en" ? "/en/yeu-thich" : "/yeu-thich"}
+              className="h-9 px-3 rounded-lg flex items-center gap-1.5 text-sm font-semibold transition-colors whitespace-nowrap"
+              style={{ background: "var(--primary-subtle)", color: "var(--primary-600)" }}
+              aria-label={lang === "en" ? `Favorites, ${favoriteCount} saved` : `Đã yêu thích, ${favoriteCount} sản phẩm`}
+            >
+              <Heart className="w-4 h-4 fill-current" aria-hidden />
+              <span>{tt(lang, "Đã yêu thích", "Favorites")}</span>
+              <span className="min-w-5 rounded-full px-1.5 py-0.5 text-center text-xs font-bold" style={{ background: "var(--primary-600)", color: "var(--text-inverse)" }}>{favoriteCount}</span>
+            </Link>
+          )}
           <button type="button" onClick={() => setFiltersOpen((open) => !open)}
             className="h-9 px-3 rounded-lg flex items-center gap-2 text-sm font-semibold transition-colors"
             style={filtersOpen || activeFilterCount > 0

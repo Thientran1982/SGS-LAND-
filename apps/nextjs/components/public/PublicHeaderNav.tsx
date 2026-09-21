@@ -6,8 +6,7 @@ import { useState, useEffect } from "react";
 import { createPortal } from "react-dom";
 import { usePathname } from "next/navigation";
 import { useLang, switchLangPath, VI_PUBLIC_PATHS } from "@/components/shared/useLang";
-import { Sun, Moon, Globe, User, Menu, X, Sparkles, ChevronDown, Heart } from "lucide-react";
-import { readFavoriteIds, subscribeFavoriteChanges } from "@/lib/favorites";
+import { Sun, Moon, Globe, User, Menu, X, Sparkles, ChevronDown } from "lucide-react";
 
 type Lang = "vi" | "en";
 type Theme = "light" | "dark";
@@ -20,13 +19,7 @@ export function PublicHeader({ authed = false }: { authed?: boolean }) {
   // Keep the server and first client render identical; browser-only portal
   // content is enabled only after hydration.
   const [mounted, setMounted]     = useState(false);
-  const [favoriteCount, setFavoriteCount] = useState(0);
   useEffect(() => setMounted(true), []);
-  useEffect(() => {
-    const refresh = () => setFavoriteCount(readFavoriteIds().length);
-    refresh();
-    return subscribeFavoriteChanges(refresh);
-  }, []);
 
   // Khoa cuon nen khi menu mobile mo
   useEffect(() => {
@@ -215,16 +208,6 @@ export function PublicHeader({ authed = false }: { authed?: boolean }) {
 
           {/* ── Right Controls ─────────────────────────────── */}
           <div className="hidden xl:flex items-center gap-2">
-            <Link
-              href={lang === "en" ? "/en/yeu-thich" : "/yeu-thich"}
-              className="flex items-center gap-1.5 rounded-lg px-3 py-2 text-sm font-medium transition-colors"
-              style={{ color: "var(--sgs-primary)" }}
-              aria-label={lang === "en" ? `Favorites${favoriteCount ? `, ${favoriteCount} saved` : ""}` : `Đã yêu thích${favoriteCount ? `, ${favoriteCount} sản phẩm` : ""}`}
-            >
-              <Heart className={`h-4 w-4 ${favoriteCount ? "fill-rose-500 text-rose-500" : ""}`} aria-hidden />
-              <span>{lang === "en" ? "Favorites" : "Đã yêu thích"}</span>
-              {favoriteCount > 0 && <span className="min-w-5 rounded-full px-1.5 py-0.5 text-center text-[11px] font-bold" style={{ background: "var(--primary-subtle)", color: "var(--primary-600)" }}>{favoriteCount}</span>}
-            </Link>
             {/* VI/EN Toggle */}
             <button
               onClick={toggleLang}
@@ -364,18 +347,6 @@ export function PublicHeader({ authed = false }: { authed?: boolean }) {
                 {lang === "vi" ? link.vi : link.en}
               </Link>
             ))}
-            <Link
-              href={lang === "en" ? "/en/yeu-thich" : "/yeu-thich"}
-              onClick={() => setMenuOpen(false)}
-              className="flex items-center justify-between rounded-lg px-3 py-2.5 text-sm font-semibold transition-colors hover:bg-sgs-bg"
-              style={{ color: "var(--sgs-primary)" }}
-            >
-              <span className="flex items-center gap-2">
-                <Heart className={`h-4 w-4 ${favoriteCount ? "fill-rose-500 text-rose-500" : ""}`} aria-hidden />
-                {lang === "en" ? "Favorites" : "Đã yêu thích"}
-              </span>
-              {favoriteCount > 0 && <span className="rounded-full px-2 py-0.5 text-xs font-bold" style={{ background: "var(--primary-subtle)", color: "var(--primary-600)" }}>{favoriteCount}</span>}
-            </Link>
             <div
               className="pt-3 flex gap-2"
               style={{ borderTop: "1px solid rgba(27,58,92,0.08)" }}
