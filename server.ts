@@ -447,27 +447,30 @@ async function startServer() {
       return res.status(400).end();
     }
     try {
-      // Fetch server-side. Some tile hosts return a 200 PNG policy placeholder
-      // ("Access blocked"), so status/content-type alone are not sufficient.
+      // Fetch server-side so the embedded preview never talks to a third-party
+      // tile host directly. Keep the allowlist to providers that do not need a
+      // browser API key.
       const tileSources = [
-        `https://basemaps.cartocdn.com/light_all/${z}/${x}/${y}.png`,
-        `https://basemaps.cartocdn.com/rastertiles/voyager/${z}/${x}/${y}.png`,
+        `https://a.tile.openstreetmap.fr/hot/${z}/${x}/${y}.png`,
+        `https://tile.openstreetmap.de/${z}/${x}/${y}.png`,
       ];
       let tile: Buffer | null = null;
       for (const tileUrl of tileSources) {
         const upstream = await fetch(tileUrl, {
           headers: {
-            'User-Agent': 'Mozilla/5.0',
+            'User-Agent': 'SGS-LAND/1.0 (+https://sgsland.vn)',
             'Accept': 'image/avif,image/webp,image/apng,image/svg+xml,image/*,*/*;q=0.8',
           },
           signal: AbortSignal.timeout(8000),
         });
         if (!upstream.ok) continue;
+        // OSM may answer a throttled/blocked request with HTTP 200 and a
+        // placeholder image. Do not relay that response to Leaflet.
+        if (upstream.headers.get('x-blocked') || upstream.headers.get('x-robots-tag')) continue;
         const candidate = Buffer.from(await upstream.arrayBuffer());
-        // The blocked OSM response in this environment is a fixed ~6.9 KB
-        // PNG placeholder. Reject suspiciously small tiles before they reach
-        // Leaflet, so the warning can never be rendered as map content.
-        if (candidate.length < 8000 || candidate.subarray(0, 8).toString('hex') !== '89504e470d0a1a0a') continue;
+        // Keep the validation format-based rather than size-based: valid
+        // coast/ocean tiles can be very small.
+        if (candidate.length < 100 || candidate.subarray(0, 8).toString('hex') !== '89504e470d0a1a0a') continue;
         tile = candidate;
         break;
       }
