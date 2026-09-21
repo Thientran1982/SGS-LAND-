@@ -16,6 +16,7 @@ import Image from "next/image";
 import { formatPriceLang, formatUnitPriceLang, rentSuffix } from "@/utils/priceFormat";
 import { trackEvent } from "@/lib/tracking";
 import { slugifyListingTitle } from "@/lib/listingSlug";
+import { readFavoriteIds, toggleFavoriteId, writeFavoriteIds } from "@/lib/favorites";
 
 const MarketplaceMap = dynamic(() => import("./MarketplaceMap").then((m) => m.MarketplaceMap), {
   ssr: false,
@@ -216,17 +217,6 @@ function toThumbnailUrl(src: string, width = 800): string {
 /* Anonymous visitors have no favourites API yet - persist locally so the heart
    is a real control instead of a dead icon inside the card link. */
 // Keep the same key as the listing detail page and the Vite public flow.
-const FAV_KEY = "sgs_favorites";
-const readFavs = (): string[] => {
-  try {
-    const v = JSON.parse(window.localStorage.getItem(FAV_KEY) || "[]");
-    return Array.isArray(v) ? v : [];
-  } catch { return []; }
-};
-const writeFavs = (ids: string[]) => {
-  try { window.localStorage.setItem(FAV_KEY, JSON.stringify(ids.slice(0, 300))); } catch { /* quota */ }
-};
-
 const boxStyle: React.CSSProperties = { background: "var(--bg-elevated)", border: "1.5px solid var(--border-default)", color: "var(--text-primary)" };
 
 /* ── Custom dropdown component ────────────────────────────── */
@@ -297,14 +287,12 @@ export function PublicListingCard({ listing, list, eager, facets }: { listing: a
   const [imgFailed, setImgFailed] = useState(false);
   const [optFailed, setOptFailed] = useState(false);
   const [fav, setFav] = useState(false);
-  useEffect(() => { setFav(readFavs().includes(listing.id)); }, [listing.id]);
+  useEffect(() => { setFav(readFavoriteIds().includes(listing.id)); }, [listing.id]);
   const toggleFav = (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
-    const ids = readFavs();
-    const next = ids.includes(listing.id) ? ids.filter((x) => x !== listing.id) : [listing.id, ...ids];
-    writeFavs(next);
-    setFav(next.includes(listing.id));
+    const { saved } = toggleFavoriteId(listing.id);
+    setFav(saved);
   };
   // next/image only for same-origin paths (/uploads/...): a remote host that is
   // missing from next.config remotePatterns must never blank out the card.
