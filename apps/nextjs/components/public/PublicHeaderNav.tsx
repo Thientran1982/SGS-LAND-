@@ -70,9 +70,9 @@ export function PublicHeader({ authed = false }: { authed?: boolean }) {
     { href: "/du-an",              vi: "Dự án",          en: "Projects"      },
   ];
   const navLinks = [
-    { href: "/ai-valuation",        vi: "Định giá BĐS",      en: "Property valuation" },
-    { href: "/tin-tuc",             vi: "Kiến thức & Tin tức", en: "Knowledge & News" },
-    { href: "/ky-gui-bat-dong-san", vi: "Ký gửi tài sản",    en: "Consign property" },
+    { href: "/ai-valuation",        vi: "Định giá",      en: "Property valuation" },
+    { href: "/tin-tuc",             vi: "Tin tức",       en: "Knowledge & News" },
+    { href: "/ky-gui-bat-dong-san", vi: "Ký gửi",       en: "Consign property" },
     { href: "/contact",             vi: "Liên hệ",            en: "Contact" },
   ];
   const localizedHref = (href: string) => {
