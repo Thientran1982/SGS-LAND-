@@ -74,6 +74,31 @@ describe("MinhChatPanel", () => {
     }
   });
 
+  it("supports favorite, reply, and copy actions on a chat message", async () => {
+    const writeText = vi.fn().mockResolvedValue(undefined);
+    Object.defineProperty(navigator, "clipboard", {
+      configurable: true,
+      value: { writeText },
+    });
+
+    render(<MinhChatPanel showHeader={false} heightClass="h-auto" />);
+    await screen.findByText(/Landing công khai/);
+
+    const favorite = screen.getByRole("button", { name: "Thêm tin nhắn vào yêu thích" });
+    fireEvent.click(favorite);
+    expect(favorite).toHaveAttribute("aria-pressed", "true");
+
+    const copy = screen.getByRole("button", { name: "Sao chép tin nhắn" });
+    fireEvent.click(copy);
+    await waitFor(() => expect(writeText).toHaveBeenCalledWith(expect.stringContaining("Landing công khai")));
+    expect(screen.getByRole("button", { name: "Đã sao chép tin nhắn" })).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("button", { name: "Trả lời tin nhắn" }));
+    expect(screen.getByText("Đang trả lời tin nhắn")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Hủy trả lời" })).toBeInTheDocument();
+    await waitFor(() => expect(screen.getByRole("textbox", { name: "Nội dung tin nhắn" })).toHaveFocus());
+  });
+
   it("keeps landing URLs clickable when a realtime assistant message arrives", async () => {
     render(<MinhChatPanel showHeader={false} heightClass="h-auto" />);
 

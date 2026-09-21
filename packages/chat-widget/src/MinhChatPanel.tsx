@@ -16,6 +16,8 @@ import type {
 } from "./core/minhSession";
 import type { AudioTranscriptionResponse, ChatAttachment, ChatMessage } from "./core/types";
 import { renderChatContent } from "./renderChatContent";
+import { ChatMessageActions, useChatMessageActions } from "./ChatMessageActions";
+import type { ChatActionMessage } from "./ChatMessageActions";
 
 const SUGGESTIONS = [
   "Aqua City pháp lý thế nào?",
@@ -175,12 +177,19 @@ export function MinhChatPanel({
   const [historyHasMore, setHistoryHasMore] = useState(false);
   const [historyLoading, setHistoryLoading] = useState(false);
   const [input, setInput] = useState(initialMessage);
+  const [replyingTo, setReplyingTo] = useState<ChatMessage | null>(null);
   const [runState, setRunState] = useState<RunState>({ status: "idle" });
   const [error, setError] = useState("");
   const [lastFailed, setLastFailed] = useState<FailedChatRequest | null>(null);
   const [degradedNotice, setDegradedNotice] = useState<DegradedChatNotice | null>(null);
   const [escalating, setEscalating] = useState(false);
   const [mode, setMode] = useState<MinhThreadStatus>("AI_ACTIVE");
+  const {
+    favoriteIds,
+    copiedMessageId,
+    toggleFavorite,
+    copyMessage,
+  } = useChatMessageActions(authenticatedUser?.id ? `minh:${authenticatedUser.id}` : "minh:guest");
 
   // Voice input (client-side only via Web Speech API, no new backend endpoint)
   const [isRecording, setIsRecording] = useState(false);
@@ -206,6 +215,7 @@ export function MinhChatPanel({
 
   const bottomRef = useRef<HTMLDivElement | null>(null);
   const historyListRef = useRef<HTMLDivElement | null>(null);
+  const composerInputRef = useRef<HTMLTextAreaElement | null>(null);
   const preserveHistoryScrollRef = useRef(false);
   const pendingReconcileTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const pendingReconcileBusyRef = useRef(false);
@@ -222,6 +232,11 @@ export function MinhChatPanel({
   const runActive = runState.status === "sending" || runState.status === "thinking";
   const composerDisabled = runActive;
   messagesRef.current = messages;
+
+  const handleReply = useCallback((message: ChatActionMessage) => {
+    setReplyingTo(message as ChatMessage);
+    window.setTimeout(() => composerInputRef.current?.focus(), 0);
+  }, []);
 
   const transitionRun = useCallback((next: RunState) => {
     runStateRef.current = next;
@@ -702,9 +717,14 @@ export function MinhChatPanel({
     ) => {
       const outgoingAttachments = requestAttachments ?? (raw === undefined ? attachments : []);
       const typedText = (raw ?? input).trim();
-      const text = typedText || (outgoingAttachments.length ? EMPTY_ATTACHMENT_PROMPT : "");
+      const replyQuote = replyingTo?.content.trim().replace(/\s+/g, " ").slice(0, 500);
+      const replyContext = raw === undefined && replyQuote && typedText
+        ? `\n\n↪ Trả lời tin nhắn: "${replyQuote}"\n`
+        : "";
+      const text = `${replyContext}${typedText || (outgoingAttachments.length ? EMPTY_ATTACHMENT_PROMPT : "")}`;
       if (!text || runStateRef.current.status === "sending" || runStateRef.current.status === "thinking" || uploadingAttachments) return;
       setInput("");
+      setReplyingTo(null);
       if (requestAttachments === undefined) setAttachments([]);
       setError("");
       setLastFailed(null);
@@ -836,6 +856,7 @@ export function MinhChatPanel({
       stopPendingReconcile,
       transitionRun,
       uploadingAttachments,
+      replyingTo,
     ],
   );
 
@@ -1172,29 +1193,42 @@ export function MinhChatPanel({
             ) : null}
             {messages.map((m) => (
               <div key={m.id} className={m.role === "user" ? "flex justify-end" : "flex justify-start"}>
-                <div
-                  className="max-w-[85%] rounded-2xl border px-3.5 py-2.5 text-sm leading-relaxed"
-                  style={m.role === "user" ? S.bubbleUser : S.bubbleAi}
-                >
-                  {m.attachments?.length ? (
-                    <div className="mb-2 flex flex-wrap gap-1.5">
-                      {m.attachments.map((attachment) => (
-                        <div
-                          key={attachment.id}
-                          className="flex items-center gap-1.5 rounded-lg border px-2 py-1 text-[11px]"
-                          style={{ borderColor: m.role === "user" ? "rgba(255,255,255,0.25)" : "var(--cw-line, #EAE4D4)" }}
-                        >
-                          {attachment.kind === "image" && attachment.url ? (
-                            <img src={attachment.url} alt={attachment.name} className="h-8 w-8 rounded object-cover" />
-                          ) : (
-                            <FileText className="h-3.5 w-3.5 shrink-0" aria-hidden />
-                          )}
-                          <span className="max-w-[150px] truncate">{attachment.name}</span>
-                        </div>
-                      ))}
-                    </div>
-                  ) : null}
-                  <div dangerouslySetInnerHTML={{ __html: renderChatContent(m.content) }} />
+                <div className="flex max-w-[85%] flex-col">
+                  <div
+                    className="rounded-2xl border px-3.5 py-2.5 text-sm leading-relaxed"
+                    style={m.role === "user" ? S.bubbleUser : S.bubbleAi}
+                  >
+                    {m.attachments?.length ? (
+                      <div className="mb-2 flex flex-wrap gap-1.5">
+                        {m.attachments.map((attachment) => (
+                          <div
+                            key={attachment.id}
+                            className="flex items-center gap-1.5 rounded-lg border px-2 py-1 text-[11px]"
+                            style={{ borderColor: m.role === "user" ? "rgba(255,255,255,0.25)" : "var(--cw-line, #EAE4D4)" }}
+                          >
+                            {attachment.kind === "image" && attachment.url ? (
+                              <img src={attachment.url} alt={attachment.name} className="h-8 w-8 rounded object-cover" />
+                            ) : (
+                              <FileText className="h-3.5 w-3.5 shrink-0" aria-hidden />
+                            )}
+                            <span className="max-w-[150px] truncate">{attachment.name}</span>
+                          </div>
+                        ))}
+                      </div>
+                    ) : null}
+                    <div dangerouslySetInnerHTML={{ __html: renderChatContent(m.content) }} />
+                  </div>
+                  <div className={m.role === "user" ? "flex justify-end" : "flex justify-start"}>
+                    <ChatMessageActions
+                      message={m}
+                      isFavorite={favoriteIds.includes(m.id)}
+                      copied={copiedMessageId === m.id}
+                      dark={m.role === "user"}
+                      onToggleFavorite={toggleFavorite}
+                      onReply={handleReply}
+                      onCopy={(message) => void copyMessage(message)}
+                    />
+                  </div>
                 </div>
               </div>
             ))}
@@ -1363,6 +1397,23 @@ export function MinhChatPanel({
               {attachmentError}
             </div>
           ) : null}
+          {replyingTo ? (
+            <div className="mx-3 mb-2 flex items-start gap-2 rounded-lg border-l-2 px-2 py-1.5 text-xs" style={{ borderColor: "var(--cw-gold, #C6923D)", color: "var(--cw-ink-dim, #8A8474)" }}>
+              <div className="min-w-0 flex-1">
+                <div className="font-semibold">Đang trả lời tin nhắn</div>
+                <div className="truncate">{replyingTo.content}</div>
+              </div>
+              <button
+                type="button"
+                aria-label="Hủy trả lời"
+                title="Hủy trả lời"
+                className="inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-md border-0 bg-transparent p-0 hover:bg-black/5"
+                onClick={() => setReplyingTo(null)}
+              >
+                <X className="h-3.5 w-3.5" />
+              </button>
+            </div>
+          ) : null}
           {attachments.length ? (
             <div className="mx-3 mb-2 flex flex-wrap gap-2">
               {attachments.map((attachment) => (
@@ -1426,6 +1477,7 @@ export function MinhChatPanel({
                   {uploadingAttachments ? <Loader2 className="h-4 w-4 animate-spin" /> : <Paperclip className="h-4 w-4" />}
                 </button>
                 <textarea
+                  ref={composerInputRef}
                   value={input}
                   onChange={handleInputChange}
                   onKeyDown={handleKey}

@@ -4,6 +4,8 @@ import React, { useState, useRef, useEffect } from "react";
 import { MessageCircle, X, Send, Bot, Loader2, Minimize2 } from "lucide-react";
 import type { ChatTransport } from "./core";
 import { createLandingAiTransport } from "./core";
+import { ChatMessageActions, useChatMessageActions } from "./ChatMessageActions";
+import type { ChatActionMessage } from "./ChatMessageActions";
 interface Message {
   id: string;
   role: "user" | "assistant";
@@ -37,10 +39,13 @@ export function AiChatWidget({ transport, apiBase }: AiChatWidgetProps = {}) {
   const [minimized, setMinimized] = useState(false);
   const [messages, setMessages] = useState<Message[]>([WELCOME]);
   const [input, setInput] = useState("");
+  const [replyingTo, setReplyingTo] = useState<Message | null>(null);
   const [loading, setLoading] = useState(false);
   const [unread, setUnread] = useState(0);
   const bottomRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
+  const { favoriteIds, copiedMessageId, toggleFavorite, copyMessage } =
+    useChatMessageActions("ai-widget");
   // Auto-scroll
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -56,12 +61,23 @@ export function AiChatWidget({ transport, apiBase }: AiChatWidgetProps = {}) {
     setMinimized(false);
     setUnread(0);
   };
+  const handleReply = (message: ChatActionMessage) => {
+    const replyMessage = messages.find((candidate) => candidate.id === message.id) || message;
+    setReplyingTo(replyMessage);
+    setTimeout(() => inputRef.current?.focus(), 0);
+  };
   const handleSend = async () => {
-    const text = input.trim();
+    const typedText = input.trim();
+    const replyQuote = replyingTo?.content.trim().replace(/\s+/g, " ").slice(0, 500);
+    const replyContext = replyQuote && typedText
+      ? `\n\n↪ Trả lời tin nhắn: "${replyQuote}"\n`
+      : "";
+    const text = `${replyContext}${typedText}`;
     if (!text || loading) return;
     const userMsg: Message = { id: Date.now().toString(), role: "user", content: text, ts: Date.now() };
     setMessages((prev) => [...prev, userMsg]);
     setInput("");
+    setReplyingTo(null);
     setLoading(true);
     try {
       // Backend endpoint: POST /api/landing-ai/consult (public, Gemini-backed,
@@ -169,15 +185,28 @@ export function AiChatWidget({ transport, apiBase }: AiChatWidgetProps = {}) {
                         <Bot className="w-3.5 h-3.5" style={{ color: "var(--primary-600)" }} />
                       </div>
                     )}
-                    <div
-                      className="max-w-[78%] px-3 py-2.5 rounded-2xl text-sm leading-relaxed"
-                      style={
-                        msg.role === "user"
-                          ? { background: "var(--primary-600)", color: "#fff", borderBottomRightRadius: "4px" }
-                          : { background: "var(--bg-elevated)", color: "var(--text-primary)", borderBottomLeftRadius: "4px", border: "1px solid var(--border-default)" }
-                      }
-                      dangerouslySetInnerHTML={{ __html: renderContent(msg.content) }}
-                    />
+                    <div className="flex max-w-[78%] flex-col">
+                      <div
+                        className="rounded-2xl px-3 py-2.5 text-sm leading-relaxed"
+                        style={
+                          msg.role === "user"
+                            ? { background: "var(--primary-600)", color: "#fff", borderBottomRightRadius: "4px" }
+                            : { background: "var(--bg-elevated)", color: "var(--text-primary)", borderBottomLeftRadius: "4px", border: "1px solid var(--border-default)" }
+                        }
+                        dangerouslySetInnerHTML={{ __html: renderContent(msg.content) }}
+                      />
+                      <div className={msg.role === "user" ? "flex justify-end" : "flex justify-start"}>
+                        <ChatMessageActions
+                          message={msg}
+                          isFavorite={favoriteIds.includes(msg.id)}
+                          copied={copiedMessageId === msg.id}
+                          dark={msg.role === "user"}
+                          onToggleFavorite={toggleFavorite}
+                          onReply={handleReply}
+                          onCopy={(message) => void copyMessage(message)}
+                        />
+                      </div>
+                    </div>
                   </div>
                 ))}
                 {loading && (
@@ -194,6 +223,23 @@ export function AiChatWidget({ transport, apiBase }: AiChatWidgetProps = {}) {
               </div>
               {/* Input */}
               <div className="px-3 py-3 border-t shrink-0" style={{ borderColor: "var(--border-default)" }}>
+                {replyingTo ? (
+                  <div className="mb-2 flex items-start gap-2 rounded-lg border-l-2 px-2 py-1.5 text-xs" style={{ borderColor: "var(--primary-600)", color: "var(--text-tertiary)" }}>
+                    <div className="min-w-0 flex-1">
+                      <div className="font-semibold">Đang trả lời tin nhắn</div>
+                      <div className="truncate">{replyingTo.content}</div>
+                    </div>
+                    <button
+                      type="button"
+                      aria-label="Hủy trả lời"
+                      title="Hủy trả lời"
+                      className="inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-md border-0 bg-transparent p-0 hover:bg-black/5"
+                      onClick={() => setReplyingTo(null)}
+                    >
+                      <X className="h-3.5 w-3.5" />
+                    </button>
+                  </div>
+                ) : null}
                 <div className="flex items-end gap-2 rounded-xl border px-3 py-2" style={{ borderColor: "var(--border-default)", background: "var(--bg-elevated)" }}>
                   <textarea
                     ref={inputRef}
