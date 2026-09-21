@@ -749,7 +749,7 @@ export function MarketplacePage({ initialListings, totalCount, totalPages, searc
           </Link>
         </div>
 
-        <div className="flex items-center justify-between sm:justify-end gap-2 w-full sm:w-auto shrink-0">
+        <div className="relative flex items-center justify-between sm:justify-end gap-2 w-full sm:w-auto shrink-0">
           <button type="button" onClick={() => setFiltersOpen((open) => !open)}
             className="h-9 px-3 rounded-lg flex items-center gap-2 text-sm font-semibold transition-colors"
             style={filtersOpen || activeFilterCount > 0
@@ -771,16 +771,16 @@ export function MarketplacePage({ initialListings, totalCount, totalPages, searc
             );
           })}
           </div>
+          {filtersOpen && (
+            <div className="hidden sm:grid absolute z-50 left-0 top-full mt-2 grid-cols-3 gap-2 p-3 rounded-2xl shadow-xl w-[430px] max-w-[calc(100vw-24px)]"
+              style={{ background: "var(--bg-elevated)", border: "1px solid var(--border-default)" }}>
+              <div className="min-w-0"><Dropdown value={sp.type ?? ""} options={TYPE_OPTIONS(lang)} onChange={(v) => setParam("type", v)} minWidth={0} /></div>
+              <div className="min-w-0"><Dropdown value={sp.area ?? ""} options={LOCATION_OPTIONS(lang, locations)} onChange={(v) => setParam("area", v)} minWidth={0} /></div>
+              <div className="min-w-0"><Dropdown value={activePriceLabel} options={PRICE_OPTIONS(lang).map((o) => ({ label: o.label, value: o.label }))}
+                onChange={(label) => { const pr = PRICE_OPTIONS(lang).find((x) => x.label === label) || PRICE_OPTIONS(lang)[0]; pushParams((p) => { p.delete("minPrice"); p.delete("maxPrice"); if (pr.min) p.set("minPrice", pr.min); if (pr.max) p.set("maxPrice", pr.max); }); }}
+                minWidth={0} /></div>
         </div>
       </div>
-      {filtersOpen && (
-        <div className="hidden sm:grid absolute z-30 right-4 mt-[-12px] grid-cols-3 gap-2 p-3 rounded-2xl shadow-xl"
-          style={{ background: "var(--bg-elevated)", border: "1px solid var(--border-default)", minWidth: 430 }}>
-          <div className="min-w-0"><Dropdown value={sp.type ?? ""} options={TYPE_OPTIONS(lang)} onChange={(v) => setParam("type", v)} minWidth={0} /></div>
-          <div className="min-w-0"><Dropdown value={sp.area ?? ""} options={LOCATION_OPTIONS(lang, locations)} onChange={(v) => setParam("area", v)} minWidth={0} /></div>
-          <div className="min-w-0"><Dropdown value={activePriceLabel} options={PRICE_OPTIONS(lang).map((o) => ({ label: o.label, value: o.label }))}
-            onChange={(label) => { const pr = PRICE_OPTIONS(lang).find((x) => x.label === label) || PRICE_OPTIONS(lang)[0]; pushParams((p) => { p.delete("minPrice"); p.delete("maxPrice"); if (pr.min) p.set("minPrice", pr.min); if (pr.max) p.set("maxPrice", pr.max); }); }}
-            minWidth={0} /></div>
           <div className="min-w-0"><Dropdown value={sp.sort ?? ""} options={[
             { label: tt(lang, "Mới nhất", "Newest"), value: "" },
             { label: tt(lang, "Giá: Thấp đến cao", "Price: Low to high"), value: "price_asc" },
