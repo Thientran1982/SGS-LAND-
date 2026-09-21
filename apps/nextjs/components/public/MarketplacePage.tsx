@@ -778,28 +778,28 @@ export function MarketplacePage({ initialListings, totalCount, totalPages, searc
               <div className="min-w-0"><Dropdown value={sp.area ?? ""} options={LOCATION_OPTIONS(lang, locations)} onChange={(v) => setParam("area", v)} minWidth={0} /></div>
               <div className="min-w-0"><Dropdown value={activePriceLabel} options={PRICE_OPTIONS(lang).map((o) => ({ label: o.label, value: o.label }))}
                 onChange={(label) => { const pr = PRICE_OPTIONS(lang).find((x) => x.label === label) || PRICE_OPTIONS(lang)[0]; pushParams((p) => { p.delete("minPrice"); p.delete("maxPrice"); if (pr.min) p.set("minPrice", pr.min); if (pr.max) p.set("maxPrice", pr.max); }); }}
-                minWidth={0} /></div>
-        </div>
-      </div>
-          <div className="min-w-0"><Dropdown value={sp.sort ?? ""} options={[
-            { label: tt(lang, "Mới nhất", "Newest"), value: "" },
-            { label: tt(lang, "Giá: Thấp đến cao", "Price: Low to high"), value: "price_asc" },
-            { label: tt(lang, "Giá: Cao đến thấp", "Price: High to low"), value: "price_desc" },
-          ]} onChange={(v) => setParam("sort", v)} minWidth={0} /></div>
-          {!!facets && facets.legalStatus.length > 0 && (
-            <div className="min-w-0"><Dropdown value={sp.legalStatus ?? ""} options={[
-              { label: tt(lang, "Pháp lý", "Legal"), value: "" },
-              ...facets.legalStatus.map((f) => ({ label: bi(LEGAL_LABELS, f.value, lang) || f.value, value: f.value })),
-            ]} onChange={(v) => setParam("legalStatus", v)} minWidth={0} /></div>
-          )}
-          {!!facets && facets.direction.length > 0 && (
-            <div className="min-w-0"><Dropdown value={sp.direction ?? ""} options={[
-              { label: tt(lang, "Hướng", "Direction"), value: "" },
-              ...facets.direction.map((f) => ({ label: bi(DIRECTION_LABELS, f.value, lang) || f.value, value: f.value })),
-            ]} onChange={(v) => setParam("direction", v)} minWidth={0} /></div>
-          )}
-        </div>
-      )}
+                 minWidth={0} /></div>
+               <div className="min-w-0"><Dropdown value={sp.sort ?? ""} options={[
+                 { label: tt(lang, "Mới nhất", "Newest"), value: "" },
+                 { label: tt(lang, "Giá: Thấp đến cao", "Price: Low to high"), value: "price_asc" },
+                 { label: tt(lang, "Giá: Cao đến thấp", "Price: High to low"), value: "price_desc" },
+               ]} onChange={(v) => setParam("sort", v)} minWidth={0} /></div>
+               {!!facets && facets.legalStatus.length > 0 && (
+                 <div className="min-w-0"><Dropdown value={sp.legalStatus ?? ""} options={[
+                   { label: tt(lang, "Pháp lý", "Legal"), value: "" },
+                   ...facets.legalStatus.map((f) => ({ label: bi(LEGAL_LABELS, f.value, lang) || f.value, value: f.value })),
+                 ]} onChange={(v) => setParam("legalStatus", v)} minWidth={0} /></div>
+               )}
+               {!!facets && facets.direction.length > 0 && (
+                 <div className="min-w-0"><Dropdown value={sp.direction ?? ""} options={[
+                   { label: tt(lang, "Hướng", "Direction"), value: "" },
+                    ...facets.direction.map((f) => ({ label: bi(DIRECTION_LABELS, f.value, lang) || f.value, value: f.value })),
+                 ]} onChange={(v) => setParam("direction", v)} minWidth={0} /></div>
+                )}
+             </div>
+           )}
+          </div>
+       </div>
       <div className="sm:hidden mb-3">
         {filtersOpen && (
           <div className="mt-2 p-3 rounded-2xl grid grid-cols-2 gap-2" style={{ background: "var(--bg-elevated)", border: "1px solid var(--border-default)" }}>
