@@ -91,7 +91,7 @@ export default function ListingMap({ lat, lng, title, location, projectCode }: L
       zoomControl: true,
     }).setView([resolved.lat, resolved.lng], exact ? 16 : 14);
     mapRef.current = map;
-    L.tileLayer("/api/map-tiles/{z}/{x}/{y}.png?v=5", {
+    L.tileLayer("/api/map-tiles/{z}/{x}/{y}.png?v=6", {
       attribution: "© OpenStreetMap contributors",
       maxZoom: 20,
     }).addTo(map);

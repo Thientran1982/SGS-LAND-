@@ -67,7 +67,7 @@ export default function ServiceWorkerRegister() {
     }
 
     const register = () => {
-      navigator.serviceWorker.register("/sw.js").catch(() => {
+      navigator.serviceWorker.register("/sw.js?rev=2", { updateViaCache: "none" }).catch(() => {
         /* ignore registration errors */
       });
     };

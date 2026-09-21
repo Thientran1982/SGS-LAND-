@@ -3,7 +3,7 @@
    - Navigation requests: network-first, fall back to cache, then /offline.html
    - Static assets (_next/static, images, fonts): cache-first
    - Never caches API calls or authenticated content. */
-const CACHE_VERSION = "sgsland-v1";
+ const CACHE_VERSION = "sgsland-v2";
 const OFFLINE_URL = "/offline.html";
 const PRECACHE = [OFFLINE_URL];
 
@@ -38,6 +38,9 @@ self.addEventListener("fetch", (event) => {
 
   const url = new URL(req.url);
   if (url.origin !== self.location.origin) return;
+  // Always let the browser revalidate the worker script itself. Caching this
+  // file would prevent CACHE_VERSION changes from evicting stale app bundles.
+  if (url.pathname === "/sw.js") return;
   // Never intercept API or auth-sensitive requests.
   if (url.pathname.startsWith("/api/")) return;
 

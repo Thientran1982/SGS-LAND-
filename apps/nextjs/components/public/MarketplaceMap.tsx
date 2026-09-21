@@ -37,7 +37,7 @@ export function MarketplaceMap({ listings, height = "620px" }: { listings: any[]
       // Keep tiles same-origin. A direct OSM/CARTO fallback is intentionally
       // avoided because the Replit Preview iframe can receive policy-block
       // placeholder images from third-party tile hosts.
-      L.tileLayer("/api/map-tiles/{z}/{x}/{y}.png?v=5", {
+      L.tileLayer("/api/map-tiles/{z}/{x}/{y}.png?v=6", {
         attribution: "&copy; OpenStreetMap contributors",
         maxZoom: 19,
       }).addTo(map);

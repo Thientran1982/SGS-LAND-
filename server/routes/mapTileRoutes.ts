@@ -53,7 +53,10 @@ export function createMapTileRouter(fetchImpl: FetchLike = fetch): Router {
       try {
         const upstream = await fetchImpl(tileUrl, {
           headers: {
-            'User-Agent': 'SGS-LAND/1.0 (+https://sgsland.vn)',
+            // OSM tile servers may return a tiny empty PNG to unknown bot-style
+            // user agents. Use a browser-compatible UA while keeping requests
+            // server-side so the Preview iframe never contacts OSM directly.
+            'User-Agent': 'Mozilla/5.0',
             'Accept': 'image/avif,image/webp,image/apng,image/svg+xml,image/*,*/*;q=0.8',
           },
           signal: AbortSignal.timeout(8000),
