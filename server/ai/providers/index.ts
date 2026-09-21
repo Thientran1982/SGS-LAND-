@@ -180,7 +180,7 @@ export function isProviderFallbackError(error: unknown): boolean {
   // before Gemini could answer.
   return status === 401 || status === 402 || status === 403 ||
     status === 415 ||
-    status >= 400; // P-OR: moi loi 4xx/5xx cua 1 provider deu fallback sang provider ke — 400/401/402 la loi rieng tung provider (sai model/key/het credit), khong duoc chet ca chain
+    (status !== undefined && status >= 400); // P-OR: moi loi 4xx/5xx cua 1 provider deu fallback sang provider ke — 400/401/402 la loi rieng tung provider (sai model/key/het credit), khong duoc chet ca chain
 }
 
 function withTimeout<T>(promise: Promise<T>, timeoutMs?: number): Promise<T> {

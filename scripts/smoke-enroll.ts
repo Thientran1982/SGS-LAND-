@@ -7,7 +7,7 @@ if (!l) { console.log("NO-LEAD"); process.exit(1); }
 const existing = await followupSequenceRepository.getActiveSequenceForLead(pool, MAIN, l.id);
 if (existing) { console.log("ALREADY", existing.id); process.exit(0); }
 const seq = await followupSequenceRepository.createSequence(pool, MAIN, {
-  leadId: l.id, leadName: l.name, leadPhone: l.phone, leadEmail: l.email, leadZaloId: null, source: "LIVE_CHAT",
+  leadId: l.id, leadName: l.name, leadPhone: l.phone, leadEmail: l.email, source: "LIVE_CHAT",
 });
 const cnt = await pool.query(`SELECT COUNT(*)::int c FROM follow_up_sequences`);
 const sends = await pool.query(`SELECT COUNT(*)::int c FROM follow_up_sends`);

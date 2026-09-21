@@ -131,7 +131,7 @@ export async function minhChooseSpecialist(args: {
       const s1 = await minhSystemOneIntentJson({
         generateFn: args.generateFn, message: args.message, intents: MINH_INTENT_TOOLS,
         feature: "MINH_ORCHESTRATOR", timeoutMs: 2500,
-        onResult: (r) => { try { void agentMemoryService.recordSignal(args.tenantId, { signalType: "minh_systemone_router", actorId: "MINH", subjectType: "chat_message", subjectId: String(args.message).slice(0, 120), dedupeKey: "minh-s1:" + (args.sessionId || "no-session") + ":" + Date.now().toString(36), payload: r, provenance: "minh_orchestrator" }).catch(() => undefined); } catch {} },
+        onResult: (r) => { try { void agentMemoryService.recordSignal(args.tenantId, { signalType: "minh_systemone_router", actorId: "MINH", subjectType: "chat_message", subjectId: String(args.message).slice(0, 120), dedupeKey: "minh-s1:" + (args.sessionId || "no-session") + ":" + Date.now().toString(36), payload: { ...r }, provenance: "minh_orchestrator" }).catch(() => undefined); } catch {} },
       });
       raw = s1
         ? JSON.stringify({ intent: s1.intent, reason: s1.reason, confidence: s1.confidence })
