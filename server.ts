@@ -18,6 +18,7 @@ import { WebSocketServer } from "ws";
 import { setupWSConnection } from "y-websocket/bin/utils";
 import { pool, probeDatabase, stopDatabaseRecovery, withTenantContext, withRlsBypass } from "./server/db";
 import { isTransientDatabaseError } from "./server/dbHealth";
+import { preparePublicLiveChat } from "./server/services/publicLiveChatPreparation";
 import bcrypt from "bcrypt";
 import { runPendingMigrations } from "./server/migrations/runner";
 import { systemService } from "./server/services/systemService";
@@ -3647,41 +3648,26 @@ app.post('/api/public/ai/livechat', livechatRateLimit, aiRateLimit, async (req: 
         // third RLS transaction and materially reduces pool pressure on Aiven.
         // A short retry handles transient connection exhaustion without
         // turning a recoverable DB blip into a user-visible AI failure.
-        let lead: any;
-        let history: any[] = [];
-        let inboundInteraction: any;
-        for (let attempt = 0; attempt < PUBLIC_LIVECHAT_PREPARATION_RETRIES; attempt += 1) {
-          try {
-            const prepared = await Promise.all([
-              leadRepository.findById(PUBLIC_TENANT, leadId),
-              interactionRepository.findByLead(PUBLIC_TENANT, leadId),
-            ]);
-            lead = prepared[0];
-            history = prepared[1] || [];
-            inboundInteraction = requestedInboundInteractionId
-              ? history.find((item: any) => String(item?.id) === requestedInboundInteractionId) || null
-              : await interactionRepository.findInboundForAgentRun(
-                  PUBLIC_TENANT,
-                  leadId,
-                  { content: msgContent },
-                );
-            break;
-          } catch (preparationError) {
-            if (
-              !isTransientDatabaseError(preparationError) ||
-              attempt >= PUBLIC_LIVECHAT_PREPARATION_RETRIES - 1
-            ) {
-              throw preparationError;
-            }
-            const delayMs = PUBLIC_LIVECHAT_PREPARATION_RETRY_DELAYS_MS[attempt]
-              || PUBLIC_LIVECHAT_PREPARATION_RETRY_DELAYS_MS.at(-1)
-              || 750;
+        const { lead, history, inboundInteraction } = await preparePublicLiveChat({
+          tenantId: PUBLIC_TENANT,
+          leadId,
+          message: msgContent,
+          inboundInteractionId: requestedInboundInteractionId || undefined,
+          dependencies: {
+            findLead: (tenantId, id) => leadRepository.findById(tenantId, id),
+            findHistory: (tenantId, id) => interactionRepository.findByLead(tenantId, id),
+            findInboundForAgentRun: (tenantId, id, options) => (
+              interactionRepository.findInboundForAgentRun(tenantId, id, options)
+            ),
+          },
+          maxAttempts: PUBLIC_LIVECHAT_PREPARATION_RETRIES,
+          retryDelaysMs: PUBLIC_LIVECHAT_PREPARATION_RETRY_DELAYS_MS,
+          onRetry: ({ nextAttempt, delayMs }) => {
             logger.warn(
-              `[PublicLiveChat] transient preparation DB failure; retrying attempt=${attempt + 2}/${PUBLIC_LIVECHAT_PREPARATION_RETRIES} delayMs=${delayMs}`,
+              `[PublicLiveChat] transient preparation DB failure; retrying attempt=${nextAttempt}/${PUBLIC_LIVECHAT_PREPARATION_RETRIES} delayMs=${delayMs}`,
             );
-            await new Promise((resolve) => setTimeout(resolve, delayMs));
-          }
-        }
+          },
+        });
        const preparationTimings = {
          leadLookupDbMs: Date.now() - leadLookupStartedAt,
          historyDbMs: Date.now() - historyStartedAt,
