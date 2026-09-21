@@ -48,6 +48,39 @@ type RunState = {
   phase?: RunPhase;
 };
 
+/**
+ * History reads can briefly lag the inbound write or the realtime delivery.
+ * Never replace the visible conversation with that incomplete snapshot.
+ * Server rows win when ids match; local optimistic/realtime rows are retained
+ * until a later history read can reconcile them.
+ */
+export function mergeChatMessages(
+  history: ChatMessage[],
+  local: ChatMessage[],
+): ChatMessage[] {
+  const merged = new Map<string, ChatMessage>();
+  for (const message of history) {
+    if (message?.id) merged.set(message.id, message);
+  }
+  for (const message of local) {
+    if (!message?.id || merged.has(message.id)) continue;
+    const isTemporaryUser =
+      message.role === "user" &&
+      message.id.startsWith("temp-") &&
+      history.some(
+        (candidate) =>
+          candidate.role === "user" &&
+          candidate.content.trim() === message.content.trim(),
+      );
+    if (isTemporaryUser) continue;
+    merged.set(message.id, message);
+  }
+  return [...merged.values()].sort((a, b) => {
+    const timeDifference = (a.ts || 0) - (b.ts || 0);
+    return timeDifference || a.id.localeCompare(b.id);
+  });
+}
+
 const RUN_PHASE_LABELS: Record<RunPhase, string> = {
   classify: "Minh đang xác định yêu cầu...",
   retrieve: "Minh đang tra cứu dữ liệu...",
@@ -288,20 +321,21 @@ export function MinhChatPanel({
           const restored = shouldReadHistory ? await session.refreshMessages() : null;
           if (generation !== pendingReconcileGenerationRef.current) return;
           if (restored) {
-            const userIndexById = restored.messages.findIndex((message) => message.id === userMessageId);
+            const mergedMessages = mergeChatMessages(restored.messages, messagesRef.current);
+            const userIndexById = mergedMessages.findIndex((message) => message.id === userMessageId);
             const userIndex =
               userIndexById >= 0
                 ? userIndexById
-                : restored.messages
+                : mergedMessages
                     .map((message) => message.content.trim())
                     .lastIndexOf(userMessageText.trim());
             const hasReply =
               userIndex >= 0 &&
-              restored.messages.slice(userIndex + 1).some(
+              mergedMessages.slice(userIndex + 1).some(
                 (message) => message.role === "assistant" && replyMatchesRun(message),
               );
-            setMessages(restored.messages);
-            const degradedReply = restored.messages
+            setMessages(mergedMessages);
+            const degradedReply = mergedMessages
               .slice(Math.max(0, userIndex + 1))
               .reverse()
               .find((message) => message.role === "assistant" && message.degraded);

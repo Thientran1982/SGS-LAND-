@@ -543,4 +543,73 @@ describe("MinhChatPanel", () => {
     expect(screen.getByText("Câu trả lời realtime")).toBeVisible();
     expect(screen.queryByText(/xử lý lâu hơn dự kiến/)).toBeNull();
   });
+
+  it("keeps the user's question visible when a reconciliation history snapshot is incomplete", async () => {
+    vi.useFakeTimers();
+    const refreshMessages = vi.fn().mockResolvedValue({
+      leadId: "lead-1",
+      name: "Nguyễn Minh",
+      threadStatus: "AI_ACTIVE",
+      messages: [],
+    });
+    const pendingSession = {
+      restore: vi.fn().mockResolvedValue({
+        leadId: "lead-1",
+        name: "Nguyễn Minh",
+        threadStatus: "AI_ACTIVE",
+        messages: [],
+      }),
+      connect: vi.fn().mockImplementation(async (handlers: any) => {
+        socketHandlers = handlers;
+        return () => undefined;
+      }),
+      getPendingStatus: vi.fn().mockResolvedValue({ status: "SUCCESS" }),
+      refreshMessages,
+      savePendingRun: vi.fn(),
+      clearPendingRun: vi.fn(),
+      sendUserMessage: vi.fn().mockResolvedValue({
+        user: {
+          id: "user-1",
+          role: "user",
+          content: "Câu hỏi cần được giữ lại",
+          ts: Date.now(),
+        },
+        assistant: null,
+        noReply: false,
+        pending: true,
+        raw: { async: true, inboundInteractionId: "inbound-1" },
+      }),
+    } as unknown as MinhSession;
+    mockedCreateMinhSession.mockReturnValue(pendingSession);
+
+    render(<MinhChatPanel showHeader={false} heightClass="h-auto" />);
+    await act(async () => {
+      await Promise.resolve();
+      await Promise.resolve();
+    });
+    const input = screen.getByRole("textbox", { name: "Nội dung tin nhắn" });
+    fireEvent.change(input, { target: { value: "Câu hỏi cần được giữ lại" } });
+    fireEvent.keyDown(input, { key: "Enter", code: "Enter" });
+    await act(async () => {
+      await Promise.resolve();
+      await Promise.resolve();
+    });
+    expect(screen.getByText("Câu hỏi cần được giữ lại")).toBeInTheDocument();
+
+    act(() => {
+      socketHandlers?.onRunFinished?.({
+        leadId: "lead-1",
+        runId: "run-1",
+        inboundInteractionId: "inbound-1",
+        status: "SUCCESS",
+      });
+    });
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(0);
+      await Promise.resolve();
+    });
+
+    expect(refreshMessages).toHaveBeenCalled();
+    expect(screen.getByText("Câu hỏi cần được giữ lại")).toBeInTheDocument();
+  });
 });
