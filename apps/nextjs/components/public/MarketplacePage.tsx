@@ -729,7 +729,7 @@ export function MarketplacePage({ initialListings, totalCount, totalPages, searc
           </div>
         </div>
       </div>
-      {/* Main control row: transaction tabs + basic filters + filter trigger. */}
+      {/* Main control row: transaction tabs + filter trigger. */}
       <div className="relative flex flex-col sm:flex-row sm:items-center gap-2 pb-1 mb-3">
         <div className="flex items-center gap-1 p-0.5 rounded-lg shrink-0 w-full sm:w-auto" style={{ background: "var(--bg-app)" }}>
           <button type="button" onClick={() => setTransactionTab("SALE")}
@@ -747,16 +747,6 @@ export function MarketplacePage({ initialListings, totalCount, totalPages, searc
             style={{ color: "var(--text-secondary)" }}>
             {tt(lang, "Dự án", "Projects")}
           </Link>
-        </div>
-
-        <div className="hidden sm:flex items-center gap-2 min-w-0 flex-1 overflow-visible">
-          <div className="flex items-center gap-2 shrink-0">
-            <div className="min-w-0"><Dropdown value={sp.type ?? ""} options={TYPE_OPTIONS(lang)} onChange={(v) => setParam("type", v)} minWidth={0} /></div>
-            <div className="min-w-0"><Dropdown value={sp.area ?? ""} options={LOCATION_OPTIONS(lang, locations)} onChange={(v) => setParam("area", v)} minWidth={0} /></div>
-            <div className="min-w-0"><Dropdown value={activePriceLabel} options={PRICE_OPTIONS(lang).map((o) => ({ label: o.label, value: o.label }))}
-              onChange={(label) => { const pr = PRICE_OPTIONS(lang).find((x) => x.label === label) || PRICE_OPTIONS(lang)[0]; pushParams((p) => { p.delete("minPrice"); p.delete("maxPrice"); if (pr.min) p.set("minPrice", pr.min); if (pr.max) p.set("maxPrice", pr.max); }); }}
-              minWidth={0} /></div>
-          </div>
         </div>
 
         <div className="flex items-center justify-between sm:justify-end gap-2 w-full sm:w-auto shrink-0">
@@ -786,6 +776,11 @@ export function MarketplacePage({ initialListings, totalCount, totalPages, searc
       {filtersOpen && (
         <div className="hidden sm:grid absolute z-30 right-4 mt-[-12px] grid-cols-3 gap-2 p-3 rounded-2xl shadow-xl"
           style={{ background: "var(--bg-elevated)", border: "1px solid var(--border-default)", minWidth: 430 }}>
+          <div className="min-w-0"><Dropdown value={sp.type ?? ""} options={TYPE_OPTIONS(lang)} onChange={(v) => setParam("type", v)} minWidth={0} /></div>
+          <div className="min-w-0"><Dropdown value={sp.area ?? ""} options={LOCATION_OPTIONS(lang, locations)} onChange={(v) => setParam("area", v)} minWidth={0} /></div>
+          <div className="min-w-0"><Dropdown value={activePriceLabel} options={PRICE_OPTIONS(lang).map((o) => ({ label: o.label, value: o.label }))}
+            onChange={(label) => { const pr = PRICE_OPTIONS(lang).find((x) => x.label === label) || PRICE_OPTIONS(lang)[0]; pushParams((p) => { p.delete("minPrice"); p.delete("maxPrice"); if (pr.min) p.set("minPrice", pr.min); if (pr.max) p.set("maxPrice", pr.max); }); }}
+            minWidth={0} /></div>
           <div className="min-w-0"><Dropdown value={sp.sort ?? ""} options={[
             { label: tt(lang, "Mới nhất", "Newest"), value: "" },
             { label: tt(lang, "Giá: Thấp đến cao", "Price: Low to high"), value: "price_asc" },
@@ -876,6 +871,31 @@ export function MarketplacePage({ initialListings, totalCount, totalPages, searc
           </button>
         </div>
       ) : view === "BOARD" ? (
+        <>
+        <style>{`
+          .marketplace-board-column-scroll {
+            scrollbar-width: thin;
+            scrollbar-color: transparent transparent;
+          }
+          .marketplace-board-column-scroll:hover,
+          .marketplace-board-column-scroll:focus-within {
+            scrollbar-color: var(--text-tertiary) transparent;
+          }
+          .marketplace-board-column-scroll::-webkit-scrollbar {
+            width: 4px;
+          }
+          .marketplace-board-column-scroll::-webkit-scrollbar-track {
+            background: transparent;
+          }
+          .marketplace-board-column-scroll::-webkit-scrollbar-thumb {
+            background: transparent;
+            border-radius: 999px;
+          }
+          .marketplace-board-column-scroll:hover::-webkit-scrollbar-thumb,
+          .marketplace-board-column-scroll:focus-within::-webkit-scrollbar-thumb {
+            background: var(--text-tertiary);
+          }
+        `}</style>
         <div className="flex gap-4 no-scrollbar pb-2" style={{ overflowX: "auto", WebkitOverflowScrolling: "touch" }}>
           {boards.map(([label, items]) => (
             <div key={label} className="shrink-0 w-80 rounded-2xl p-3" style={{ background: "var(--bg-elevated)", border: "1px solid var(--border-default)" }}>
@@ -883,7 +903,7 @@ export function MarketplacePage({ initialListings, totalCount, totalPages, searc
                 <h3 className="font-bold text-sm uppercase tracking-wide" style={{ color: "var(--text-primary)" }}>{label}</h3>
                 <span className="text-xs font-bold px-2 py-0.5 rounded-full" style={{ background: "var(--primary-subtle)", color: "var(--primary-600)" }}>{items.length}</span>
               </div>
-              <div className="flex flex-col gap-3" style={{ maxHeight: "70vh", overflowY: "auto", WebkitOverflowScrolling: "touch", paddingRight: "6px", scrollbarWidth: "thin" }}>
+              <div className="marketplace-board-column-scroll flex flex-col gap-3" style={{ maxHeight: "70vh", overflowY: "auto", WebkitOverflowScrolling: "touch", paddingRight: "6px" }}>
                 {items.map((l: any) => (
                   <div key={l.id} style={{ flexShrink: 0 }}>
                     <PublicListingCard listing={l} />
@@ -893,6 +913,7 @@ export function MarketplacePage({ initialListings, totalCount, totalPages, searc
             </div>
           ))}
         </div>
+        </>
       ) : (
         <div className="lg:flex lg:gap-6 lg:items-start">
           <div className="hidden lg:block lg:w-[42%] lg:shrink-0 lg:sticky overflow-hidden rounded-2xl" style={{ top: 96, height: "calc(100vh - 120px)" }}>
