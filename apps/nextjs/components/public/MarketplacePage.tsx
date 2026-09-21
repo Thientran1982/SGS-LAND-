@@ -16,7 +16,7 @@ import Image from "next/image";
 import { formatPriceLang, formatUnitPriceLang, rentSuffix } from "@/utils/priceFormat";
 import { trackEvent } from "@/lib/tracking";
 import { slugifyListingTitle } from "@/lib/listingSlug";
-import { readFavoriteIds, toggleFavoriteId, writeFavoriteIds } from "@/lib/favorites";
+import { readFavoriteIds, toggleFavoriteId } from "@/lib/favorites";
 
 const MarketplaceMap = dynamic(() => import("./MarketplaceMap").then((m) => m.MarketplaceMap), {
   ssr: false,

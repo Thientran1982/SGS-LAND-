@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
-import { ArrowRight, Heart, Loader2 } from "lucide-react";
+import { ArrowRight, Heart } from "lucide-react";
 import { PublicListingCard } from "./MarketplacePage";
 import { useLang } from "@/components/shared/useLang";
 import { readFavoriteIds, subscribeFavoriteChanges } from "@/lib/favorites";

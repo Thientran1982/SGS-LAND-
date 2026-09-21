@@ -7,6 +7,7 @@ import dynamic from "next/dynamic";
 import { useLang } from "@/components/shared/useLang";
 import { tt } from "@/lib/i18n";
 import { PublicListingCard } from "./MarketplacePage";
+import { readFavoriteIds, toggleFavoriteId } from "@/lib/favorites";
 type L = "vi" | "en";
 import { MapPin, Bed, Bath, Square, Phone, Share2, Heart, ArrowLeft, CheckCircle, Calendar, Landmark, Eye, ChevronDown } from "lucide-react";
 interface Listing {
@@ -271,19 +272,13 @@ export function ListingDetailPage({ listing, similarListings }: Props) {
 
   // Favourites persist locally so the heart survives a reload (no public API).
   useEffect(() => {
-    try {
-      const fav = JSON.parse(localStorage.getItem("sgs_favorites") || "[]");
-      setIsFav(Array.isArray(fav) && fav.indexOf(listing.id) >= 0);
-    } catch {}
+    setIsFav(readFavoriteIds().includes(listing.id));
   }, [listing.id]);
   const toggleFav = () => {
     try {
-      const fav = JSON.parse(localStorage.getItem("sgs_favorites") || "[]");
-      const arr = Array.isArray(fav) ? fav : [];
-      const next = arr.indexOf(listing.id) >= 0 ? arr.filter((x) => x !== listing.id) : arr.concat([listing.id]);
-      localStorage.setItem("sgs_favorites", JSON.stringify(next));
-      setIsFav(next.indexOf(listing.id) >= 0);
-      trackListingEvent("favorite_click", listingCode, { saved: next.indexOf(listing.id) >= 0 });
+      const { saved } = toggleFavoriteId(listing.id);
+      setIsFav(saved);
+      trackListingEvent("favorite_click", listingCode, { saved });
     } catch { setIsFav((v) => !v); }
   };
 
