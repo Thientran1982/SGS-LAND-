@@ -15,6 +15,7 @@ describe('database connection resilience', () => {
     Object.assign(new Error('Connection terminated unexpectedly'), { code: 'ECONNRESET' }),
     Object.assign(new Error('terminating connection due to administrator command'), { code: '57P01' }),
     new Error('server closed the connection unexpectedly'),
+    new Error('timeout exceeded when trying to connect'),
   ])('classifies %s as a recoverable database outage', (error) => {
     expect(isTransientDatabaseError(error)).toBe(true);
   });

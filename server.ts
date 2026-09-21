@@ -2021,6 +2021,8 @@ const PUBLIC_TENANT = resolvePublicLiveChatTenant();
 
 const PUBLIC_LIVECHAT_MAX_RETRIES = 3;
 const PUBLIC_UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+const PUBLIC_LIVECHAT_PREPARATION_RETRIES = 3;
+const PUBLIC_LIVECHAT_PREPARATION_RETRY_DELAYS_MS = [250, 750];
 
 function buildPublicLiveChatResponseEnvelope(result: any, execution: any, inboundInteractionId: string): Record<string, any> {
   return {
@@ -2060,6 +2062,9 @@ async function persistPublicLiveChatFailure(params: {
     suggestedAction: 'RETRY',
     status: 'FAILED',
     failureCode: safeCode,
+    degraded: true,
+    degradedReason: safeCode,
+    providerOutcome: 'UNAVAILABLE',
     inboundInteractionId: params.inboundInteractionId,
     ...(params.runId ? { runId: params.runId } : {}),
   };
@@ -2074,6 +2079,9 @@ async function persistPublicLiveChatFailure(params: {
       metadata: {
         isAi: true,
         isAgent: true,
+         degraded: true,
+         degradedReason: safeCode,
+         providerOutcome: 'UNAVAILABLE',
         replyStatus: 'FAILED',
         failureCode: safeCode,
         inboundInteractionId: params.inboundInteractionId,
@@ -3634,20 +3642,46 @@ app.post('/api/public/ai/livechat', livechatRateLimit, aiRateLimit, async (req: 
        const leadLookupStartedAt = Date.now();
        const historyStartedAt = Date.now();
        const inboundLookupStartedAt = Date.now();
-       // These reads are independent. Running them together removes the
-       // sequential lead → history → inbound latency that dominated the old
-       // pre-acknowledgement path under Aiven contention.
-       const [lead, history, inboundInteraction] = await Promise.all([
-         leadRepository.findById(PUBLIC_TENANT, leadId),
-         interactionRepository.findByLead(PUBLIC_TENANT, leadId),
-         interactionRepository.findInboundForAgentRun(
-           PUBLIC_TENANT,
-           leadId,
-           requestedInboundInteractionId
-             ? { interactionId: requestedInboundInteractionId }
-             : { content: msgContent },
-         ),
-       ]);
+        // These reads are independent, but the normal widget path already has
+        // the persisted inbound id. Reusing that row from history avoids a
+        // third RLS transaction and materially reduces pool pressure on Aiven.
+        // A short retry handles transient connection exhaustion without
+        // turning a recoverable DB blip into a user-visible AI failure.
+        let lead: any;
+        let history: any[] = [];
+        let inboundInteraction: any;
+        for (let attempt = 0; attempt < PUBLIC_LIVECHAT_PREPARATION_RETRIES; attempt += 1) {
+          try {
+            const prepared = await Promise.all([
+              leadRepository.findById(PUBLIC_TENANT, leadId),
+              interactionRepository.findByLead(PUBLIC_TENANT, leadId),
+            ]);
+            lead = prepared[0];
+            history = prepared[1] || [];
+            inboundInteraction = requestedInboundInteractionId
+              ? history.find((item: any) => String(item?.id) === requestedInboundInteractionId) || null
+              : await interactionRepository.findInboundForAgentRun(
+                  PUBLIC_TENANT,
+                  leadId,
+                  { content: msgContent },
+                );
+            break;
+          } catch (preparationError) {
+            if (
+              !isTransientDatabaseError(preparationError) ||
+              attempt >= PUBLIC_LIVECHAT_PREPARATION_RETRIES - 1
+            ) {
+              throw preparationError;
+            }
+            const delayMs = PUBLIC_LIVECHAT_PREPARATION_RETRY_DELAYS_MS[attempt]
+              || PUBLIC_LIVECHAT_PREPARATION_RETRY_DELAYS_MS.at(-1)
+              || 750;
+            logger.warn(
+              `[PublicLiveChat] transient preparation DB failure; retrying attempt=${attempt + 2}/${PUBLIC_LIVECHAT_PREPARATION_RETRIES} delayMs=${delayMs}`,
+            );
+            await new Promise((resolve) => setTimeout(resolve, delayMs));
+          }
+        }
        const preparationTimings = {
          leadLookupDbMs: Date.now() - leadLookupStartedAt,
          historyDbMs: Date.now() - historyStartedAt,

@@ -59,6 +59,8 @@ const TRANSIENT_ERROR_MESSAGES = [
   'connection reset',
   'socket hang up',
   'timeout expired',
+  'timeout exceeded when trying to connect',
+  'connection timeout',
   'remaining connection slots are reserved',
   'too many clients already',
 ];
