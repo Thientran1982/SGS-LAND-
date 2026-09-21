@@ -24,6 +24,47 @@ export function normalizeComparableType(value: unknown): string {
   return 'townhouse';
 }
 
+/**
+ * Marketplace type aliases are intentionally kept at the repository boundary.
+ * Imported listings are not consistent: some sources use the enum value
+ * (Apartment), some use Vietnamese labels/slugs (Căn hộ, can-ho), and older
+ * rows may store the value in attributes.propertyType instead of type.
+ */
+export function marketplaceTypeAliases(value: unknown): string[] {
+  const normalized = normalizeComparableLocation(value);
+  const groups: Record<string, string[]> = {
+    project: ['project', 'du an', 'du-an', 'duan'],
+    apartment: [
+      'apartment', 'apartments', 'can ho', 'can-ho', 'canho', 'căn hộ',
+      'chung cu', 'chung-cu', 'chungcu', 'chung cư', 'penthouse', 'condotel', 'officetel',
+      'apartment center', 'apartment-center', 'apartment_center',
+      'apartment suburb', 'apartment-suburb', 'apartment_suburb',
+    ],
+    villa: ['villa', 'biet thu', 'biet-thu', 'bietthu', 'biệt thự'],
+    townhouse: ['townhouse', 'nha pho', 'nha-pho', 'nhapho', 'nhà phố', 'house', 'nha rieng', 'nha-rieng', 'nhà riêng'],
+    land: ['land', 'dat', 'đất', 'dat nen', 'dat-nen', 'datnen', 'đất nền'],
+    commercial: ['commercial', 'thuong mai', 'thuong-mai', 'thuongmai', 'thương mại', 'shophouse', 'shop-house', 'shop house'],
+    office: ['office', 'van phong', 'van-phong', 'vanphong', 'văn phòng'],
+    factory: ['factory', 'nha xuong', 'nha-xuong', 'nhaxuong', 'nhà xưởng', 'warehouse', 'kho'],
+  };
+  const group = Object.prototype.hasOwnProperty.call(groups, normalized)
+    ? normalized
+    : Object.entries(groups).find(([, aliases]) => aliases.includes(normalized))?.[0];
+  return group ? [...new Set(groups[group])] : [normalized];
+}
+
+function marketplaceTypeCondition(parameterIndex: number): string {
+  const typeExpressions = [
+    `LOWER(TRIM(l.type))`,
+    `LOWER(TRIM(l.attributes->>'propertyType'))`,
+    `LOWER(TRIM(l.attributes->>'property_type'))`,
+    `LOWER(TRIM(l.attributes->>'type'))`,
+  ];
+  return `(${typeExpressions
+    .map(expression => `${expression} = ANY($${parameterIndex}::text[])`)
+    .join(' OR ')})`;
+}
+
 /** Rejects cross-project/cross-province candidates before they reach a median. */
 export function isComparableLocationMatch(target: unknown, candidate: unknown): boolean {
   return isValuationLocationMatch(target, candidate);
@@ -75,12 +116,15 @@ export class ListingRepository extends BaseRepository {
     const values: any[] = [];
     let paramIndex = startIndex;
 
-    if (filters?.type) { conditions.push(`type = $${paramIndex++}`); values.push(filters.type); }
+    if (filters?.type) {
+      const aliases = marketplaceTypeAliases(filters.type);
+      conditions.push(marketplaceTypeCondition(paramIndex++));
+      values.push(aliases.map(alias => alias.toLowerCase()));
+    }
     if (filters?.type_in?.length) {
-      const ph = filters.type_in.map((_, i) => `$${paramIndex + i}`).join(', ');
-      conditions.push(`type IN (${ph})`);
-      values.push(...filters.type_in);
-      paramIndex += filters.type_in.length;
+      const aliases = [...new Set(filters.type_in.flatMap(type => marketplaceTypeAliases(type)))];
+      conditions.push(marketplaceTypeCondition(paramIndex++));
+      values.push(aliases.map(alias => alias.toLowerCase()));
     }
     if (filters?.status) { conditions.push(`status = $${paramIndex++}`); values.push(filters.status); }
     if (filters?.status_in?.length) {

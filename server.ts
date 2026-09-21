@@ -2241,6 +2241,12 @@ function sanitizePublicListingFeed(row: any): Record<string, any> {
   if (!row) return row;
   const out: Record<string, any> = {};
   for (const f of PUBLIC_LISTING_FEED_FIELDS) out[f] = (row as any)[f] ?? null;
+  // Imported feeds are not uniform. Keep the public contract on `type` even
+  // when an older row stored its property type under one of the JSON fields.
+  if (!out.type) {
+    const attrs = out.attributes && typeof out.attributes === 'object' ? out.attributes : {};
+    out.type = row.propertyType || attrs.propertyType || attrs.property_type || attrs.type || null;
+  }
   if (Array.isArray(out.images)) out.images = out.images.slice(0, 20);
   return out;
 }

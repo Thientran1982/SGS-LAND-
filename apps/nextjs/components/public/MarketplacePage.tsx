@@ -116,6 +116,44 @@ const TYPE_LABELS = (g: L): Record<string, string> => ({
   PROJECT: tt(g, "Dự án", "Project"),
 });
 
+function normalizeMarketplaceType(value: unknown): string {
+  return String(value || "")
+    .trim()
+    .toLocaleLowerCase("vi")
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/đ/g, "d")
+    .replace(/[_-]+/g, " ")
+    .replace(/\s+/g, " ");
+}
+
+function canonicalMarketplaceType(value: unknown): keyof ReturnType<typeof TYPE_LABELS> | "OTHER" {
+  const type = normalizeMarketplaceType(value);
+  if (!type) return "OTHER";
+  if (type === "project" || type === "du an") return "PROJECT";
+  if (
+    type.includes("apartment") || type.includes("can ho") || type.includes("chung cu") ||
+    type === "penthouse" || type === "condotel" || type === "officetel"
+  ) return "Apartment";
+  if (type.includes("villa") || type.includes("biet thu")) return "Villa";
+  if (type.includes("townhouse") || type.includes("nha pho") || type.includes("nha rieng") || type === "house") return "Townhouse";
+  if (type === "land" || type.includes("dat nen") || type === "dat") return "Land";
+  if (type.includes("commercial") || type.includes("thuong mai") || type.includes("shophouse") || type.includes("shop house")) return "Commercial";
+  if (type.includes("office") || type.includes("van phong")) return "Office";
+  if (type.includes("factory") || type.includes("nha xuong") || type === "warehouse" || type === "kho") return "Commercial";
+  return "OTHER";
+}
+
+function listingTypeLabel(value: unknown, lang: L): string {
+  const canonical = canonicalMarketplaceType(value);
+  return canonical === "OTHER" ? tt(lang, "Khác", "Other") : TYPE_LABELS(lang)[canonical];
+}
+
+function listingTypeValue(listing: any): unknown {
+  const attrs = listing?.attributes && typeof listing.attributes === "object" ? listing.attributes : {};
+  return listing?.type || listing?.propertyType || attrs.propertyType || attrs.property_type || attrs.type;
+}
+
 /* Shared listing presentation helpers.
    Price formatting comes from utils/priceFormat.ts - the SAME module the CRM
    inventory card uses, so one listing now renders identically on both sides.
@@ -429,6 +467,8 @@ export function MarketplacePage({ initialListings, totalCount, totalPages, searc
   const [view, setView] = useState<"GRID" | "LIST" | "BOARD" | "MAP">("GRID");
   const [heroOpen, setHeroOpen] = useState(false);
   const [filtersOpen, setFiltersOpen] = useState(false);
+  const [boardListings, setBoardListings] = useState<any[]>(initialListings || []);
+  const [boardLoading, setBoardLoading] = useState(false);
   const heroRef = useRef<HTMLDivElement>(null);
   const [recentSearches, setRecentSearches] = useState<string[]>([]);
   useEffect(() => {
@@ -506,15 +546,89 @@ export function MarketplacePage({ initialListings, totalCount, totalPages, searc
     { id: "GRID", icon: LayoutGrid }, { id: "LIST", icon: ListIcon }, { id: "BOARD", icon: Columns }, { id: "MAP", icon: MapIcon },
   ] as const;
 
-  // Group for board view
+  // BOARD is a client-side view, but it must not be limited to the SSR page
+  // (the normal page size is 20). Fetch all matching pages in batches before
+  // grouping so every listing is represented in exactly one column.
+  useEffect(() => {
+    if (view !== "BOARD") {
+      setBoardListings(initialListings || []);
+      return;
+    }
+
+    const controller = new AbortController();
+    const params = new URLSearchParams();
+    const setIfPresent = (key: string, value?: string) => {
+      if (value) params.set(key, value);
+    };
+    setIfPresent("search", sp.q);
+    setIfPresent("type", sp.type);
+    setIfPresent("location", sp.area);
+    setIfPresent("transaction", sp.transaction);
+    setIfPresent("bedroomsMin", sp.bedrooms);
+    setIfPresent("legalStatus", sp.legalStatus);
+    setIfPresent("direction", sp.direction);
+    setIfPresent("sort", sp.sort);
+    const toVnd = (value?: string) => {
+      const number = Number(value);
+      return Number.isFinite(number) && number > 0 ? String(Math.round(number * 1_000_000_000)) : "";
+    };
+    setIfPresent("priceMin", toVnd(sp.minPrice));
+    setIfPresent("priceMax", toVnd(sp.maxPrice));
+    const pageSize = 500;
+    params.set("pageSize", String(pageSize));
+
+    setBoardLoading(true);
+    (async () => {
+      try {
+        const firstResponse = await fetch(`/api/public/listings?${params.toString()}&page=1`, {
+          credentials: "include",
+          cache: "no-store",
+          signal: controller.signal,
+        });
+        if (!firstResponse.ok) throw new Error(`BOARD listings API ${firstResponse.status}`);
+        const firstPage = await firstResponse.json();
+        const totalPagesForBoard = Math.max(1, Number(firstPage.totalPages) || 1);
+        const pageRequests = Array.from({ length: totalPagesForBoard - 1 }, (_, index) => {
+          const pageParams = new URLSearchParams(params);
+          pageParams.set("page", String(index + 2));
+          return fetch(`/api/public/listings?${pageParams.toString()}`, {
+            credentials: "include",
+            cache: "no-store",
+            signal: controller.signal,
+          }).then((response) => {
+            if (!response.ok) throw new Error(`BOARD listings API ${response.status}`);
+            return response.json();
+          });
+        });
+        const remainingPages = await Promise.all(pageRequests);
+        const allPages = [firstPage, ...remainingPages];
+        const allListings = allPages.flatMap((page) => Array.isArray(page?.data) ? page.data : []);
+        if (!controller.signal.aborted) setBoardListings(allListings);
+      } catch (error: any) {
+        if (error?.name !== "AbortError") {
+          console.error("[Marketplace] BOARD listings load failed:", error);
+          if (!controller.signal.aborted) setBoardListings(initialListings || []);
+        }
+      } finally {
+        if (!controller.signal.aborted) setBoardLoading(false);
+      }
+    })();
+
+    return () => controller.abort();
+  }, [
+    view, initialListings, sp.q, sp.type, sp.area, sp.minPrice, sp.maxPrice,
+    sp.bedrooms, sp.transaction, sp.legalStatus, sp.direction, sp.sort,
+  ]);
+
+  // Group for board view after normalizing imported type values.
   const boards = React.useMemo(() => {
     const groups: Record<string, any[]> = {};
-    (initialListings || []).forEach((l: any) => {
-      const label = TYPE_LABELS(lang)[l.type] || tt(lang, "Khác", "Other");
+    (boardListings || []).forEach((l: any) => {
+      const label = listingTypeLabel(listingTypeValue(l), lang);
       (groups[label] = groups[label] || []).push(l);
     });
     return Object.entries(groups);
-  }, [initialListings, lang]);
+  }, [boardListings, lang]);
 
   return (
     <div className="max-w-[1600px] mx-auto px-3 sm:px-6 lg:px-8 pb-10 pt-3 sm:pt-24">
