@@ -65,8 +65,8 @@ export async function preparePublicLiveChat(
         throw error;
       }
       const delayMs = retryDelaysMs[attempt]
-        || retryDelaysMs.at(-1)
-        || 750;
+        ?? retryDelaysMs.at(-1)
+        ?? 750;
       options.onRetry?.({
         attempt: attempt + 1,
         nextAttempt: attempt + 2,
