@@ -8,6 +8,10 @@ import { listingApi } from '../../services/api/listingApi';
 import { socialPublicationApi } from '../../services/api/socialPublicationApi';
 import { db } from '../../services/dbApi';
 
+vi.mock('../../components/AutoPostingOnboardingCard', () => ({
+  AutoPostingOnboardingCard: () => null,
+}));
+
 const eligibleListings = [
   { id: 'listing-available', code: 'SGS-001', title: 'Căn hộ sẵn sàng', status: 'AVAILABLE' },
   { id: 'listing-opening', code: 'SGS-002', title: 'Căn hộ đang mở bán', status: 'OPENING' },

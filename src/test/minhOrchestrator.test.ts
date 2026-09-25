@@ -45,11 +45,11 @@ describe('minhChooseSpecialist delegation signal', () => {
       generateFn,
     });
 
-    expect(recordSignal).toHaveBeenCalledTimes(2);
-    const [firstCallArgs] = recordSignal.mock.calls[0];
-    void firstCallArgs;
-    const firstDedupeKey = recordSignal.mock.calls[0][1].dedupeKey;
-    const secondDedupeKey = recordSignal.mock.calls[1][1].dedupeKey;
+    // The fast System-1 router may also record a routing signal; only delegation signals matter here.
+    const delegationCalls = recordSignal.mock.calls.filter((call: any[]) => call[1]?.signalType === 'minh_delegation');
+    expect(delegationCalls).toHaveLength(2);
+    const firstDedupeKey = delegationCalls[0][1].dedupeKey;
+    const secondDedupeKey = delegationCalls[1][1].dedupeKey;
     expect(firstDedupeKey).toBeTruthy();
     expect(secondDedupeKey).toBeTruthy();
     expect(firstDedupeKey).not.toEqual(secondDedupeKey);

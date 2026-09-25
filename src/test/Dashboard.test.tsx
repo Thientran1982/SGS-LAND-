@@ -116,7 +116,7 @@ describe("VisitorFunnelWidget", () => {
 
     renderWidgetInLanguage("vn");
 
-    expect(await screen.findByRole("region", { name: "Funnel hành vi người xem" })).toBeVisible();
+    expect(await screen.findByRole("region", { name: "Phễu hành vi người xem" })).toBeVisible();
     expect((await screen.findAllByText("Phiên đọc sâu")).length).toBeGreaterThanOrEqual(2);
     expect(screen.getByText("Thời gian xem TB")).toBeVisible();
     expect(screen.getByText("Tỷ lệ rời trang")).toBeVisible();

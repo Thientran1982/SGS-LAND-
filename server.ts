@@ -5432,7 +5432,11 @@ if (asyncRun) {
       return res.status(500).json({ error: 'Không thể tạo link rút gọn' }) as any;
     }
 
-    const origin = `${req.protocol}://${req.get('host')}`;
+    // Behind the dev proxy req.host is the internal port (localhost:5001); prefer the browser's
+    // Origin header when it matches the (already validated) livechat URL being shortened.
+    const reqOrigin = req.get('origin');
+    let origin = `${req.get('x-forwarded-proto') || req.protocol}://${req.get('x-forwarded-host') || req.get('host')}`;
+    try { if (reqOrigin && new URL(url).origin === reqOrigin) origin = reqOrigin; } catch { /* keep fallback */ }
     res.json({ shortUrl: `${origin}/c/${code}`, code, ttlDays: 30 });
   });
 

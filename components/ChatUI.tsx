@@ -31,7 +31,7 @@ export const ThinkingProcess = memo(({ steps, t }: { steps?: AgentTraceStep[], t
         <div className="mb-3 w-full max-w-full flex justify-end">
             <button 
                 onClick={() => setIsExpanded(!isExpanded)}
-                className="flex items-center gap-2 text-xs2 font-bold text-sgs-primary bg-[var(--sgs-primary)]/10 hover:bg-sgs-champagne transition-colors uppercase tracking-wider px-3 py-1.5 rounded-lg border border-sgs-border group w-fit max-w-full"
+                className="flex items-center gap-2 text-xs2 font-semibold text-sgs-primary bg-[var(--sgs-primary)]/10 hover:bg-sgs-champagne transition-colors px-3 py-1.5 rounded-lg border border-sgs-border group w-fit max-w-full"
             >
                 <div className={`w-2 h-2 rounded-full shadow-sm transition-all duration-500 shrink-0 ${isExpanded ? 'bg-sgs-primary' : 'bg-sgs-primary animate-pulse'}`}></div>
                 <span className="flex-1 text-left flex items-center gap-1 truncate">
@@ -206,7 +206,7 @@ export const FileBubble = memo(({ name, size, url }: { name: string, size?: numb
             </div>
             <div className="min-w-0 flex-1">
                 <div className="text-xs font-bold truncate">{name}</div>
-                <div className="text-xs2 opacity-70">{size ? `${(size / 1024).toFixed(1)} KB` : 'Unknown size'}</div>
+                <div className="text-xs2 opacity-70">{size ? `${(size / 1024).toFixed(1)} KB` : t('inbox.file_size_unknown')}</div>
             </div>
             {url && (
                 <a href={url} download={name} aria-label={t('inbox.download_file')} className="p-1.5 md:p-2 hover:bg-black/5 rounded-full transition-colors ml-1 md:ml-2 shrink-0">
@@ -217,6 +217,7 @@ export const FileBubble = memo(({ name, size, url }: { name: string, size?: numb
     );
 });
 const AiFeedbackButtons = memo(({ msg, onFeedback }: { msg: any; onFeedback?: (rating: -1 | 1, correction?: string) => Promise<boolean> }) => {
+    const { t } = useTranslation();
     const [feedbackState, setFeedbackState] = useState<-1 | 0 | 1>(0);
     const [showCorrection, setShowCorrection] = useState(false);
     const [correction, setCorrection] = useState('');
@@ -248,7 +249,7 @@ const AiFeedbackButtons = memo(({ msg, onFeedback }: { msg: any; onFeedback?: (r
         return (
             <div className="flex items-center gap-1 mt-1">
                 <span className={`text-xs2 font-medium ${feedbackState === 1 ? 'text-sgs-verified' : 'text-amber-500'}`}>
-                    {feedbackState === 1 ? '✓ Hữu ích' : '✓ Đã ghi nhận'}
+                    {feedbackState === 1 ? t('inbox.feedback_helpful_done') : t('inbox.feedback_recorded')}
                 </span>
             </div>
         );
@@ -259,9 +260,9 @@ const AiFeedbackButtons = memo(({ msg, onFeedback }: { msg: any; onFeedback?: (r
                 <div className="flex items-center gap-1">
                     <button
                         onClick={() => handleFeedback(1)}
-                        aria-label="Đánh giá câu trả lời hữu ích"
-                        className="p-1 rounded-md hover:bg-sgs-verified/20 text-white/60 hover:text-sgs-verified transition-colors"
-                        title="Phản hồi tốt"
+                        aria-label={t('inbox.feedback_up')}
+                        className="p-1.5 rounded-md hover:bg-sgs-verified/15 text-[var(--text-tertiary)] hover:text-sgs-verified transition-colors"
+                        title={t('inbox.feedback_up')}
                     >
                         <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 10h4.764a2 2 0 011.789 2.894l-3.5 7A2 2 0 0115.263 21h-4.017c-.163 0-.326-.02-.485-.06L7 20m7-10V5a2 2 0 00-2-2h-.095c-.5 0-.905.405-.905.905 0 .714-.211 1.412-.608 2.006L7 11v9m7-10h-2M7 20H5a2 2 0 01-2-2v-6a2 2 0 012-2h2.5" />
@@ -269,9 +270,9 @@ const AiFeedbackButtons = memo(({ msg, onFeedback }: { msg: any; onFeedback?: (r
                     </button>
                     <button
                         onClick={() => handleFeedback(-1)}
-                        aria-label="Đánh giá câu trả lời cần cải thiện"
-                        className="p-1 rounded-md hover:bg-sgs-accent/20 text-white/60 hover:text-sgs-accent-text transition-colors"
-                        title="Cần cải thiện"
+                        aria-label={t('inbox.feedback_down')}
+                        className="p-1.5 rounded-md hover:bg-sgs-accent/15 text-[var(--text-tertiary)] hover:text-sgs-accent-text transition-colors"
+                        title={t('inbox.feedback_down')}
                     >
                         <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 14H5.236a2 2 0 01-1.789-2.894l3.5-7A2 2 0 018.736 3h4.018a2 2 0 01.485.06l3.76.94m-7 10v5a2 2 0 002 2h.096c.5 0 .905-.405.905-.904 0-.715.211-1.413.608-2.008L17 13V4m-7 10h2m5-10h2a2 2 0 012 2v6a2 2 0 01-2 2h-2.5" />
@@ -283,22 +284,22 @@ const AiFeedbackButtons = memo(({ msg, onFeedback }: { msg: any; onFeedback?: (r
                     <textarea
                         value={correction}
                         onChange={(e) => setCorrection(e.target.value)}
-                        placeholder="Câu trả lời đúng nên là gì? (tùy chọn)"
-                        className="w-full text-xs bg-white/10 border border-white/20 rounded-lg px-2.5 py-1.5 text-white placeholder:text-white/40 focus:outline-none focus:border-amber-400/50 resize-none"
+                        placeholder={t('inbox.feedback_correction_placeholder')}
+                        className="w-full text-xs bg-[var(--bg-surface)] border border-[var(--glass-border)] rounded-lg px-2.5 py-1.5 text-[var(--text-primary)] placeholder:text-[var(--text-muted)] focus:outline-none focus:border-[var(--sgs-primary)] resize-none"
                         rows={2}
                     />
                     <div className="flex gap-1.5 justify-end">
                         <button
                             onClick={() => { setShowCorrection(false); setCorrection(''); }}
-                            className="text-xs2 px-2 py-1 text-white/50 hover:text-white/80 transition-colors"
+                            className="text-xs2 px-2.5 py-1.5 text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors"
                         >
-                            Hủy
+                            {t('common.cancel')}
                         </button>
                         <button
                             onClick={submitCorrection}
-                            className="text-xs2 px-2.5 py-1 bg-sgs-accent/30 hover:bg-sgs-accent/50 text-amber-200 rounded-md font-medium transition-colors"
+                            className="text-xs2 px-2.5 py-1.5 bg-[var(--sgs-primary)] hover:opacity-90 text-white rounded-md font-medium transition-opacity"
                         >
-                            Gửi góp ý
+                            {t('inbox.feedback_send')}
                         </button>
                     </div>
                 </div>
@@ -318,17 +319,19 @@ export const MessageBubble = memo(({ msg, t, formatTime, formatCurrency, formatD
     return (
         <div className={`flex flex-col ${isOutbound ? 'items-end' : 'items-start'} animate-enter`}>
             {showDate && (
-                <div className="w-full text-center my-4">
-                    <span className="text-xs2 font-bold text-[var(--text-secondary)] bg-[var(--glass-surface)] px-3 py-1 rounded-full border border-[var(--glass-border)]">
+                <div className="w-full flex items-center gap-3 my-3" role="separator">
+                    <span className="h-px flex-1 bg-[var(--glass-border)]" />
+                    <span className="text-xs2 font-semibold text-[var(--text-tertiary)] bg-[var(--bg-surface)] px-2.5 py-0.5 rounded-full border border-[var(--glass-border)]">
                         {formatDate(msg.timestamp)}
                     </span>
+                    <span className="h-px flex-1 bg-[var(--glass-border)]" />
                 </div>
             )}            
-            <div className={`flex gap-2 max-w-[82%] md:max-w-[74%] ${isOutbound ? 'flex-row-reverse' : 'flex-row'}`}>
+            <div className={`flex items-end gap-2 max-w-[86%] md:max-w-[72%] ${isOutbound ? 'flex-row-reverse' : 'flex-row'}`}>
                 {/* Avatar Column */}
-                <div className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 shadow-sm border overflow-hidden
+                <div className={`w-7 h-7 mb-5 rounded-full flex items-center justify-center shrink-0 border overflow-hidden
                     ${isOutbound 
-                        ? (isAgent ? 'bg-[var(--cw-navy,#0B1D26)] border-transparent text-white' : 'bg-slate-900 border-slate-800 text-white') 
+                        ? (isAgent ? 'bg-[var(--sgs-primary)] border-transparent text-[var(--sgs-champagne)]' : 'bg-sgs-champagne border-transparent text-[var(--sgs-primary)]') 
                         : 'bg-[var(--bg-surface)] border-[var(--glass-border)] text-[var(--text-secondary)]'
                     }`}
                 >
@@ -340,13 +343,16 @@ export const MessageBubble = memo(({ msg, t, formatTime, formatCurrency, formatD
                 </div>
                 <div className={`flex flex-col ${isOutbound ? 'items-end' : 'items-start'} min-w-0 flex-1`}>
                     {/* Trace Visualization (Only for AI Messages) */}
+                    {isOutbound && (
+                        <span className="text-2xs font-semibold text-[var(--text-tertiary)] mb-1 px-1">{isAgent ? t('inbox.sender_ai') : t('inbox.sender_staff')}</span>
+                    )}
                     {isAgent && trace && <ThinkingProcess steps={trace} t={t} />}
 
                     <div className={`
-                        relative px-4 py-3 rounded-2xl text-sm shadow-sm border w-fit max-w-full
+                        relative px-3.5 py-2.5 rounded-2xl text-sm shadow-sm border w-fit max-w-full
                         ${isOutbound 
-                            ? 'bg-[var(--cw-navy,#0B1D26)] text-white border-[var(--cw-navy,#0B1D26)] rounded-tr-none' 
-                            : 'bg-[var(--cw-paper,#FFFFFF)] text-[var(--cw-ink,#26221C)] border-[var(--cw-line,#EAE4D4)] rounded-tl-none'
+                            ? (isAgent ? 'bg-[var(--sgs-primary)] text-white border-[var(--sgs-primary)] rounded-br-md' : 'bg-sgs-champagne text-[var(--sgs-primary-deep,#10263D)] border-transparent rounded-br-md')
+                            : 'bg-[var(--bg-surface)] text-[var(--text-primary)] border-[var(--glass-border)] rounded-bl-md'
                         }
                     `}>
                         {/* Content */}
@@ -374,11 +380,11 @@ export const MessageBubble = memo(({ msg, t, formatTime, formatCurrency, formatD
                     {/* Metadata & Grounding */}
                     <div className="mt-1 flex flex-col gap-1 w-full">
                         <div className={`flex items-center gap-2 text-xs2 ${isOutbound ? 'justify-end' : 'justify-start'}`}>
-                            <span className="text-[var(--cw-ink-dim,#8A8474)] font-mono cw-mono">{formatTime(msg.timestamp)}</span>
+                            <span className="text-[var(--text-tertiary)]">{formatTime(msg.timestamp)}</span>
                             {isOutbound && (
-                                <span className={`font-bold ${msg.status === 'READ' ? 'text-sgs-primary' : 'text-[var(--text-secondary)]'}`}>
+                                <span className={`font-medium ${msg.status === 'READ' ? 'text-sgs-primary' : 'text-[var(--text-tertiary)]'}`}>
                                     {(msg.status === 'PENDING' && msg.metadata?.deliveryError)
-                  ? <span title={String(msg.metadata.deliveryError)}>{'Đã lưu · Chưa gửi ra kênh'}</span>
+                  ? <span title={String(msg.metadata.deliveryError)}>{t('inbox.status_not_delivered')}</span>
                   : msg.status === 'PENDING' ? t('inbox.status_sending') : msg.status === 'READ' ? t('inbox.status_read') : t('inbox.status_received')}
                                 </span>
                             )}

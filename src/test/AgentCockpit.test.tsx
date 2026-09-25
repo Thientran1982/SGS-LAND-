@@ -1,5 +1,5 @@
 import React from 'react';
-import { fireEvent, render, screen, within } from '@testing-library/react';
+import { fireEvent, render, screen, within, waitFor } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import AgentCockpit from '../../pages/AgentCockpit';
 import { api } from '../../services/api/apiClient';
@@ -333,7 +333,7 @@ describe('AgentCockpit panel availability', () => {
     expect(await screen.findByText('Chưa có dữ liệu learning trong khoảng thời gian này.')).toBeVisible();
     fireEvent.change(screen.getByRole('combobox', { name: 'Khoảng thời gian learning của Minh' }), { target: { value: '7' } });
     expect(await screen.findByText('Chưa có dữ liệu learning trong khoảng thời gian này.')).toBeVisible();
-    expect((api.get as any).mock.calls.some(([path]: [string]) => path.includes('/api/internal/minh-brain/overview?limit=50&days=7'))).toBe(true);
+    await waitFor(() => expect((api.get as any).mock.calls.some(([path]: [string]) => path.includes('/api/internal/minh-brain/overview?limit=50&days=7'))).toBe(true));
   });
 
   it('makes learning degradation explicit when the overview cannot load it', async () => {
