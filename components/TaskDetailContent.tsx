@@ -814,7 +814,7 @@ export function TaskDetailContent({ taskId, onBack }: Props) {
       {/* Status Confirm Popup */}
       {statusConfirm && (
         <div className="fixed inset-0 z-[200] flex items-center justify-center p-4">
-          <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={() => setStatusConfirm(null)} />
+          <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={() => setStatusConfirm(null)} aria-hidden="true" />
           <div className="relative z-10 w-full max-w-sm bg-[var(--bg-surface)] rounded-2xl shadow-2xl border border-[var(--glass-border)] p-5 space-y-4">
             <div className="flex items-center justify-between">
               <h3 className="font-bold text-[var(--text-primary)]">
@@ -864,7 +864,7 @@ export function TaskDetailContent({ taskId, onBack }: Props) {
       {/* Delete Confirm Popup */}
       {showDeleteConfirm && (
         <div className="fixed inset-0 z-[200] flex items-center justify-center p-4">
-          <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={() => setShowDeleteConfirm(false)} />
+          <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={() => setShowDeleteConfirm(false)} aria-hidden="true" />
           <div className="relative z-10 w-full max-w-sm bg-[var(--bg-surface)] rounded-2xl shadow-2xl border border-[var(--glass-border)] p-5 space-y-4">
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 rounded-full bg-rose-100 dark:bg-rose-900/30 flex items-center justify-center flex-shrink-0">
@@ -888,7 +888,7 @@ export function TaskDetailContent({ taskId, onBack }: Props) {
       {/* Remove Primary Assignee Confirm Dialog */}
       {removePrimaryConfirm && (
         <div className="fixed inset-0 z-[210] flex items-center justify-center p-4">
-          <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={() => setRemovePrimaryConfirm(null)} />
+          <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={() => setRemovePrimaryConfirm(null)} aria-hidden="true" />
           <div className="relative z-10 w-full max-w-sm bg-[var(--bg-surface)] rounded-2xl shadow-2xl border border-[var(--glass-border)] p-5 space-y-4">
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 rounded-full bg-amber-100 dark:bg-amber-900/30 flex items-center justify-center flex-shrink-0">

@@ -1,3 +1,4 @@
+import { uiConfirm } from '../utils/uiDialog';
 import React, { useState, useEffect, useRef } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { errorMonitorApi } from '../services/api/errorMonitorApi';
@@ -213,7 +214,7 @@ export default function ErrorMonitor() {
     }
   };
   const handleResolveAll = async () => {
-    if (!window.confirm('Đánh dấu tất cả lỗi chưa xử lý là đã giải quyết?')) return;
+    if (!(await uiConfirm('Đánh dấu tất cả lỗi chưa xử lý là đã giải quyết?'))) return;
     setActionLoading(true);
     try {
       await fetch('/api/error-logs/resolve-all', { method: 'POST', credentials: 'include' });
@@ -224,7 +225,7 @@ export default function ErrorMonitor() {
     }
   };
   const handleDeleteResolved = async () => {
-    if (!window.confirm('Xóa vĩnh viễn tất cả lỗi đã xử lý? Thao tác không thể hoàn tác.')) return;
+    if (!(await uiConfirm('Xóa vĩnh viễn tất cả lỗi đã xử lý? Thao tác không thể hoàn tác.'))) return;
     setActionLoading(true);
     try {
       await fetch('/api/error-logs/resolved', { method: 'DELETE', credentials: 'include' });

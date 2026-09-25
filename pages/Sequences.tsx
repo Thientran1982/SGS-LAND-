@@ -117,7 +117,7 @@ const StepModal: React.FC<StepModalProps> = ({ isOpen, step, onClose, onSave, t 
     const isMessage = form.type === 'EMAIL' || form.type === 'SMS' || form.type === 'ZALO';
     return createPortal(
                 <div className="fixed inset-0 z-[110] flex items-center justify-center p-4" role="dialog" aria-modal="true">
-            <div className="absolute inset-0 bg-black/50 backdrop-blur-sm animate-fade-in" onClick={onClose} />
+            <div className="absolute inset-0 bg-black/50 backdrop-blur-sm animate-fade-in" onClick={onClose} aria-hidden="true" />
             <div className="bg-[var(--bg-surface)] w-full max-w-md rounded-[24px] p-6 shadow-2xl border border-[var(--glass-border)] relative z-10 animate-scale-up">
                 <div className="flex justify-between items-center mb-5">
                     <h3 className="text-base font-bold text-[var(--text-primary)]">
@@ -351,7 +351,7 @@ const SequenceDrawer: React.FC<SequenceDrawerProps> = ({ isOpen, onClose, sequen
     };
     return createPortal(
         <div className="fixed inset-0 z-[100] flex justify-end">
-            <div className="absolute inset-0 bg-black/30 backdrop-blur-sm animate-fade-in" onClick={onClose} />
+            <div className="absolute inset-0 bg-black/30 backdrop-blur-sm animate-fade-in" onClick={onClose} aria-hidden="true" />
             <div className="w-full max-w-2xl bg-[var(--glass-surface)] h-full shadow-2xl relative animate-slide-in-right flex flex-col">
                 {/* Header */}
                 <div className="bg-[var(--bg-surface)] px-6 py-4 border-b border-[var(--glass-border)] flex justify-between items-center shrink-0">
@@ -515,7 +515,7 @@ const TemplateGallery: React.FC<TemplateGalleryProps> = ({ isOpen, templates, lo
     const filtered = filter === 'all' ? templates : templates.filter(t => t.category === filter);
     return createPortal(
         <div className="fixed inset-0 z-[120] flex items-start justify-end" role="dialog" aria-modal="true">
-            <div className="absolute inset-0 bg-black/40 backdrop-blur-sm animate-fade-in" onClick={onClose} />
+            <div className="absolute inset-0 bg-black/40 backdrop-blur-sm animate-fade-in" onClick={onClose} aria-hidden="true" />
             <div className="relative z-10 h-full w-full max-w-2xl bg-[var(--bg-surface)] shadow-2xl border-l border-[var(--glass-border)] flex flex-col animate-slide-left overflow-hidden">
                 {/* Header */}
                 <div className="flex justify-between items-center px-6 py-5 border-b border-[var(--glass-border)] flex-shrink-0">

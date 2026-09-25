@@ -1,3 +1,4 @@
+import { uiConfirm, uiPrompt } from '../utils/uiDialog';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { AlertTriangle, Bot, CheckCircle2, Clock3, RefreshCw, Send, ShieldCheck, XCircle, BarChart3, ClipboardCheck, RotateCcw, Filter, PlayCircle, Save, Trash2, Edit3, BrainCircuit, Lightbulb, Download } from 'lucide-react';
 import { api } from '../services/api/apiClient';
@@ -470,7 +471,7 @@ export default function AgentCockpit() {
     setMinhDecisionBusy(id);
     try {
       const note = action === 'reject'
-        ? window.prompt('Lý do từ chối đề xuất Minh:', 'Chưa đủ bằng chứng hoặc chưa phù hợp') || ''
+        ? (await uiPrompt('Lý do từ chối đề xuất Minh:', 'Chưa đủ bằng chứng hoặc chưa phù hợp')) || ''
         : '';
       if (action === 'reject' && !note.trim()) return;
       await api.post(`/api/approval-requests/${id}/${action}`, note ? { note: note.trim() } : {});
@@ -486,7 +487,7 @@ export default function AgentCockpit() {
     catch (e: any) { setError(e?.message || 'Không thể duyệt báo cáo ca.'); }
   };
   const replayEvent = async (event: OperatingEvent) => {
-    const reason = window.prompt(`Lý do replay ${event.event_id}:`, 'Đã xử lý nguyên nhân lỗi, cho chạy lại có kiểm soát');
+    const reason = (await uiPrompt(`Lý do replay ${event.event_id}:`, 'Đã xử lý nguyên nhân lỗi, cho chạy lại có kiểm soát'));
     if (!reason?.trim()) return;
     setReplaying(event.id);
     try { await api.post(`/api/agent-operating/events/${event.id}/replay`, { reason: reason.trim() }); await load(); }
@@ -510,7 +511,7 @@ export default function AgentCockpit() {
     } catch (e: any) { setError(e?.message || 'Không thể sửa bộ nhớ.'); }
   };
   const deleteMemory = async (memory: AdminMemory) => {
-    if (!window.confirm(`Xóa bộ nhớ “${memory.key}” khỏi ${memory.namespace}?`)) return;
+    if (!(await uiConfirm(`Xóa bộ nhớ “${memory.key}” khỏi ${memory.namespace}?`))) return;
     memoryLoadRequestIdRef.current += 1;
     try { await api.delete(`/api/ai/memory/${memory.id}`); await load(); }
     catch (e: any) { setError(e?.message || 'Không thể xóa bộ nhớ.'); }
@@ -540,7 +541,7 @@ export default function AgentCockpit() {
       setError('Chưa thể triển khai: bản nháp chưa đạt bộ kiểm thử chuẩn.');
       return;
     }
-    if (!window.confirm('Chỉ triển khai khi bộ kiểm thử chuẩn đã đạt. Tiếp tục?')) return;
+    if (!(await uiConfirm('Chỉ triển khai khi bộ kiểm thử chuẩn đã đạt. Tiếp tục?'))) return;
     try { await api.post(`/api/ai/weights/${version.id}/promote`, { goldenSetPassed: true, metrics: version.metrics }); await load(); }
     catch (e: any) { setError(e?.message || 'Không thể promote weights.'); }
   };

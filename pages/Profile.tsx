@@ -455,7 +455,7 @@ export const Profile: React.FC = () => {
             <div className="bg-[var(--bg-surface)] p-8 rounded-[32px] border border-[var(--glass-border)] shadow-sm relative overflow-hidden flex flex-col md:flex-row items-center gap-8">
                 <div className="absolute top-0 right-0 p-40 bg-gradient-to-br from-[var(--sgs-primary)]/10 to-blue-50 rounded-full blur-3xl -mr-20 -mt-20 opacity-60 pointer-events-none"></div>                
                 {/* Avatar */}
-                <div className="relative group cursor-pointer z-10" onClick={() => !saving && !uploading && fileInputRef.current?.click()} role="button" aria-label={t('common.upload')}>
+                <div className="relative group cursor-pointer z-10" onClick={() => !saving && !uploading && fileInputRef.current?.click()} role="button" tabIndex={0} onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); (e.currentTarget as HTMLElement).click(); } }} aria-label={t('common.upload')}>
                     <div className="w-32 h-32 rounded-full p-1 border-4 border-white shadow-xl bg-[var(--bg-surface)] overflow-hidden relative">
                         {uploading ? (
                             <div className="w-full h-full flex items-center justify-center bg-[var(--glass-surface-hover)]">

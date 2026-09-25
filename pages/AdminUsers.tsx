@@ -137,7 +137,7 @@ const PerformanceModal: React.FC<{ user: User; onClose: () => void; t: any }> = 
     const circumference = 2 * Math.PI * 50;
     return createPortal(
         <div className="fixed inset-0 z-[110] flex items-center justify-center p-4">
-            <div className="absolute inset-0 bg-black/60 backdrop-blur-sm animate-fade-in" onClick={onClose} />
+            <div className="absolute inset-0 bg-black/60 backdrop-blur-sm animate-fade-in" onClick={onClose} aria-hidden="true" />
             <div className="relative z-10 bg-[var(--bg-surface)] w-full max-w-xl rounded-[24px] shadow-2xl border border-[var(--glass-border)] animate-scale-up flex flex-col max-h-[90vh]">
                 {/* Header */}
                 <div className="flex items-center justify-between px-6 pt-5 pb-4 border-b border-[var(--glass-border)] shrink-0">
@@ -345,7 +345,7 @@ const InviteUserModal: React.FC<InviteModalProps> = ({ isOpen, onClose, onConfir
     return createPortal(
         <div className="fixed inset-0 z-[100] flex items-end sm:items-center justify-center sm:p-6">
             {/* Backdrop */}
-            <div className="absolute inset-0 bg-black/60 backdrop-blur-sm animate-fade-in" onClick={onClose} />
+            <div className="absolute inset-0 bg-black/60 backdrop-blur-sm animate-fade-in" onClick={onClose} aria-hidden="true" />
             {/* Card */}
             <div className="relative z-10 w-full sm:max-w-sm bg-[var(--bg-surface)] rounded-t-[28px] sm:rounded-[24px] shadow-2xl border border-[var(--glass-border)] animate-scale-up flex flex-col overflow-hidden" style={{ maxHeight: 'calc(100vh - 48px)' }}>
 
@@ -968,7 +968,7 @@ export const AdminUsers: React.FC = () => {
             {/* Role Change Confirmation Modal */}
             {userToRoleChange && createPortal(
                 <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
-                    <div className="absolute inset-0 bg-black/60 backdrop-blur-sm animate-fade-in" onClick={() => setUserToRoleChange(null)} />
+                    <div className="absolute inset-0 bg-black/60 backdrop-blur-sm animate-fade-in" onClick={() => setUserToRoleChange(null)} aria-hidden="true" />
                     <div className="bg-[var(--bg-surface)] w-full max-w-sm rounded-[24px] p-6 shadow-2xl border border-[var(--glass-border)] relative z-10 animate-scale-up">
                         <div className="flex justify-between items-center mb-4">
                             <h3 className="text-lg font-bold text-[var(--text-primary)]">{t('common.confirm')}</h3>

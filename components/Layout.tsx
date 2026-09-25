@@ -132,12 +132,12 @@ const Sidebar = memo(({
     // Persist open groups
     const [openGroups, setOpenGroups] = useState<Record<string, boolean>>(() => {
         try {
-            const saved = localStorage.getItem('sgs_nav_groups');
+            const saved = localStorage.getItem('sgs_nav_groups_v2');
             return saved ? JSON.parse(saved) : {};
         } catch { return {}; }
     });
     useEffect(() => {
-        localStorage.setItem('sgs_nav_groups', JSON.stringify(openGroups));
+        localStorage.setItem('sgs_nav_groups_v2', JSON.stringify(openGroups));
     }, [openGroups]);
     // Initialize newly introduced groups to open by default while preserving
     // the user's existing choices. Remove retired group ids so old sidebar
@@ -151,7 +151,8 @@ const Sidebar = memo(({
 
             menuGroups.forEach(group => {
                 if (!(group.id in next)) {
-                    next[group.id] = true;
+                    // UX audit 3.1: secondary groups start collapsed.
+                    next[group.id] = !['more-tools', 'administration', 'ai-data-infrastructure'].includes(group.id);
                     changed = true;
                 }
             });
@@ -192,7 +193,7 @@ const Sidebar = memo(({
             <div className="h-20 flex items-center justify-center relative shrink-0">
                 <button 
                     onClick={() => onNavigate(ROUTES.DASHBOARD)}
-                    className={`flex items-center gap-3 transition-all duration-300 outline-none ${isCollapsed ? 'scale-0 opacity-0 absolute' : 'scale-100 opacity-100'}`}
+                    className={`flex items-center gap-3 transition-all duration-300 outline-none focus-visible:ring-2 focus-visible:ring-[var(--sgs-primary)] ${isCollapsed ? 'scale-0 opacity-0 absolute' : 'scale-100 opacity-100'}`}
                     aria-label={t('nav.go_to_dashboard') || "Đi đến Tổng quan"}
                 >
                     <div className="w-8 h-8 text-sgs-primary">

@@ -1,3 +1,4 @@
+import { uiConfirm } from '../utils/uiDialog';
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { useTranslation } from '../services/i18n';
 import { db } from '../services/dbApi';
@@ -107,7 +108,7 @@ export const Campaigns: React.FC = () => {
   const showOk  = (msg: string) => setToast({ kind: 'ok',  msg });
   const showErr = (msg: string) => setToast({ kind: 'err', msg });
   const onActivate = async (c: Campaign) => {
-    if (!confirm(`Kích hoạt chiến dịch "${c.name}"?\n\nNếu lịch là "Gửi ngay", email sẽ được gửi ngay lập tức cho toàn bộ audience.`)) return;
+    if (!(await uiConfirm(`Kích hoạt chiến dịch "${c.name}"?\n\nNếu lịch là "Gửi ngay", email sẽ được gửi ngay lập tức cho toàn bộ audience.`))) return;
     setBusy(c.id);
     try {
       const r = await db.activateCampaign(c.id);
@@ -130,7 +131,7 @@ export const Campaigns: React.FC = () => {
     finally { setBusy(null); }
   };
   const onRunNow = async (c: Campaign) => {
-    if (!confirm(`Gửi chiến dịch "${c.name}" ngay bây giờ?`)) return;
+    if (!(await uiConfirm(`Gửi chiến dịch "${c.name}" ngay bây giờ?`))) return;
     setBusy(c.id);
     try {
       const r = await db.runCampaignNow(c.id);
@@ -140,7 +141,7 @@ export const Campaigns: React.FC = () => {
     finally { setBusy(null); }
   };
   const onDelete = async (c: Campaign) => {
-    if (!confirm(`Xóa chiến dịch "${c.name}"? Hành động này không thể hoàn tác.`)) return;
+    if (!(await uiConfirm(`Xóa chiến dịch "${c.name}"? Hành động này không thể hoàn tác.`))) return;
     setBusy(c.id);
     try { await db.deleteCampaign(c.id); showOk('Đã xóa'); await load(); }
     catch (e: any) { showErr(e.message); }
@@ -352,7 +353,7 @@ const CampaignDrawer: React.FC<DrawerProps> = ({ initial, onClose, onSaved, onEr
         canonicalPath="/campaigns"
       />
 
-      <div className="flex-1 bg-black/40" onClick={onClose} />
+      <div className="flex-1 bg-black/40" onClick={onClose} aria-hidden="true" />
       <div className="w-full max-w-2xl h-full bg-[var(--bg-surface)] dark:bg-sgs-primary-deep shadow-2xl overflow-y-auto">
         <div className="sticky top-0 bg-[var(--bg-surface)] dark:bg-sgs-primary-deep border-b border-[var(--glass-border)] px-6 py-4 flex items-center justify-between z-10">
           <h2 className="text-lg font-bold">{isEdit ? 'Sửa chiến dịch' : 'Tạo chiến dịch mới'}</h2>

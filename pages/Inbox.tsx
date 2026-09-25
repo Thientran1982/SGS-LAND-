@@ -1,3 +1,4 @@
+import { uiPrompt } from '../utils/uiDialog';
 import React, { useEffect, useState, useCallback, useMemo, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
@@ -73,7 +74,7 @@ function InboxDropdown<T extends string>({
             <button
                 type="button"
                 onClick={() => setOpen(v => !v)}
-                className={`w-full flex items-center justify-between gap-1.5 text-xs font-bold rounded-xl px-3 py-2 min-h-[38px] outline-none transition-all border ${
+                className={`w-full flex items-center justify-between gap-1.5 text-xs font-bold rounded-xl px-3 py-2 min-h-[38px] outline-none focus-visible:ring-2 focus-visible:ring-[var(--sgs-primary)] transition-all border ${
                     open ? triggerTokens.open : 'bg-[var(--glass-surface)] border-[var(--glass-border)] text-[var(--text-secondary)]'
                 }`}
             >
@@ -584,7 +585,7 @@ export const Inbox: React.FC = () => {
             notify('Khách hàng chưa liên kết tài khoản Zalo.', 'error');
             return;
         }
-        const code = window.prompt('Nhập mã sản phẩm cần gửi qua Zalo:');
+        const code = (await uiPrompt('Nhập mã sản phẩm cần gửi qua Zalo:'));
         if (!code?.trim()) return;
         setSharingProduct(true);
         try {

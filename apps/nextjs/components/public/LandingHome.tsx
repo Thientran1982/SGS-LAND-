@@ -2,6 +2,7 @@
 "use client";
 import React, { useState, useEffect, useRef, useCallback } from "react";
 import { useLang } from "@/components/shared/useLang";
+import HeroSearch from "./HeroSearch";
 
 type Lang = "vi" | "en";
 
@@ -202,36 +203,8 @@ function MapHero({ lang, onChatOpen, listingCount = 0 }: { lang: Lang; onChatOpe
           </p>
         </div>
 
-        {/* UX audit U3: primary search + CTA in the first viewport */}
-        <form
-          action={lpath("/marketplace", lang)}
-          method="get"
-          role="search"
-          data-hero-search
-          style={{ display:"flex", flexWrap:"wrap", gap:"10px", marginBottom:"26px" }}
-        >
-          <label htmlFor="lp-hero-q" className="sr-only">{lang==="vi" ? "Tìm bất động sản" : "Search properties"}</label>
-          <input
-            id="lp-hero-q"
-            name="q"
-            type="search"
-            autoComplete="off"
-            placeholder={lang==="vi" ? "Dự án, khu vực hoặc mã căn (vd: Izumi, Thủ Đức)" : "Project, area or unit code (e.g. Izumi, Thu Duc)"}
-            style={{ flex:"1 1 280px", minWidth:0, height:"52px", borderRadius:"14px", border:"1px solid var(--lp-line)", background:"var(--lp-paper)", color:"var(--lp-ink)", padding:"0 18px", fontSize:"16px" }}
-          />
-          <button
-            type="submit"
-            style={{ flex:"0 0 auto", height:"52px", padding:"0 26px", borderRadius:"14px", border:"none", background:"var(--lp-navy)", color:"var(--lp-bg)", fontSize:"15px", fontWeight:600, cursor:"pointer" }}
-          >
-            {lang==="vi" ? "Tìm bất động sản" : "Search properties"}
-          </button>
-          <a
-            href={lpath("/ai-valuation", lang)}
-            style={{ flex:"0 0 auto", display:"inline-flex", alignItems:"center", height:"52px", padding:"0 22px", borderRadius:"14px", border:"1px solid var(--lp-line)", color:"var(--lp-ink)", fontSize:"15px", fontWeight:600, textDecoration:"none" }}
-          >
-            {lang==="vi" ? "Định giá miễn phí" : "Free valuation"}
-          </a>
-        </form>
+        {/* UX audit wave 3: one search field with a split button (search | valuation) */}
+        <HeroSearch lang={lang} action={lpath("/marketplace", lang)} valuationHref={lpath("/ai-valuation", lang)} />
 
         {/* Map card */}
         <div style={{ position:"relative", perspective:"1400px" }}>

@@ -1,3 +1,4 @@
+import { uiConfirm } from '../utils/uiDialog';
 import React, { useEffect, useState, useCallback, useMemo, memo } from 'react';
 import { createPortal } from 'react-dom';
 import { db } from '../services/dbApi';
@@ -204,7 +205,7 @@ const DiffPromoteModal: React.FC<DiffPromoteModalProps> = ({ open, prompt, targe
         }
     };
     const handlePromote = async () => {
-        if (!confirm(`Promote v${targetVersion} thành ACTIVE? Các request mới sẽ dùng prompt này ngay lập tức.`)) return;
+        if (!(await uiConfirm(`Promote v${targetVersion} thành ACTIVE? Các request mới sẽ dùng prompt này ngay lập tức.`))) return;
         setPromoting(true);
         try {
             await db.promotePromptVersion(prompt.id, targetVersion);

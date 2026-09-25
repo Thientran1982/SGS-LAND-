@@ -53,7 +53,7 @@ const ShareModal = ({ isOpen, onClose, t }: { isOpen: boolean; onClose: () => vo
     if (!isOpen) return null;
     return createPortal(
         <div className="fixed inset-0 z-[110] flex items-center justify-center p-4">
-            <div className="absolute inset-0 bg-black/60 backdrop-blur-sm animate-fade-in" onClick={onClose} />
+            <div className="absolute inset-0 bg-black/60 backdrop-blur-sm animate-fade-in" onClick={onClose} aria-hidden="true" />
             <div className="bg-[var(--bg-surface)] w-full max-w-sm rounded-[24px] p-6 shadow-2xl border border-[var(--glass-border)] relative z-10 animate-scale-up">
                 <div className="flex justify-between items-center mb-4">
                     <h3 className="text-lg font-bold text-[var(--text-primary)]">{t('common.share_link')}</h3>
@@ -1617,7 +1617,7 @@ export const ListingDetail: React.FC = () => {
                     {displayImages.length > 1 && (
                         <div className="hidden md:grid md:row-span-2 grid-cols-2 grid-rows-2 gap-1.5 min-h-0">
                             {displayImages.slice(1).map((img, idx) => (
-                                <div key={idx} className={`relative cursor-pointer overflow-hidden h-full w-full ${displayImages.length === 2 ? 'col-span-2 row-span-2' : ''}`} onClick={() => { setLightboxIndex(idx + 1); setLightboxOpen(true); }}>
+                                <div key={idx} className={`relative cursor-pointer overflow-hidden h-full w-full ${displayImages.length === 2 ? 'col-span-2 row-span-2' : ''}`} role="button" tabIndex={0} aria-label={`Xem ảnh ${idx + 2}`} onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); (e.currentTarget as HTMLElement).click(); } }} onClick={() => { setLightboxIndex(idx + 1); setLightboxOpen(true); }}>
                                     <img src={optimizedImageUrl(img || NO_IMAGE_URL, 640)} className="w-full h-full object-cover transition-transform duration-700 hover:scale-105" alt={`Gallery ${idx}`} loading="lazy" decoding="async" onError={(e) => { (e.target as HTMLImageElement).src = NO_IMAGE_URL; }} />
                                     {/* Overlay for +More on the last item if needed */}
                                     {idx === displayImages.length - 2 && hasMoreImages && (

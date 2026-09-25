@@ -1,3 +1,4 @@
+import { uiConfirm } from '../utils/uiDialog';
 import React, { useCallback, useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
 import {
@@ -72,7 +73,7 @@ export const ProjectCommissionPanel: React.FC<Props> = ({ projectId, projectName
     }
   };
   const handleClose = async () => {
-    if (!window.confirm('Đóng chính sách hoa hồng đang hiệu lực? Các giao dịch SOLD sau thời điểm này sẽ không sinh hoa hồng cho tới khi tạo chính sách mới.')) return;
+    if (!(await uiConfirm('Đóng chính sách hoa hồng đang hiệu lực? Các giao dịch SOLD sau thời điểm này sẽ không sinh hoa hồng cho tới khi tạo chính sách mới.'))) return;
     try {
       setWorking(true);
       await commissionApi.closeActivePolicy(projectId);

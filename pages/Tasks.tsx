@@ -1,3 +1,4 @@
+import { uiConfirm } from '../utils/uiDialog';
 import React, { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import {
   Loader2, Plus, ListTodo, ChevronRight, ArrowUp, ArrowDown, ArrowUpDown,
@@ -182,7 +183,7 @@ function TaskList() {
     try {
       const ids = Array.from(selectedIds);
       if (bulkAction === 'delete') {
-        if (!window.confirm(`Xóa ${ids.length} công việc đã chọn?`)) { setBulkLoading(false); return; }
+        if (!(await uiConfirm(`Xóa ${ids.length} công việc đã chọn?`))) { setBulkLoading(false); return; }
         await taskApi.bulkDelete(ids);
         setTasks(prev => prev.filter(t => !selectedIds.has(t.id)));
         setTotal(prev => Math.max(0, prev - ids.length));

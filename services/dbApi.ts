@@ -1465,6 +1465,18 @@ class DatabaseApiClient {
         .filter(Boolean),
     });
 
+    // UX audit 3.1: front-line roles get a short primary menu (at most 7 items);
+    // everything else they may open stays reachable in a collapsed "More tools" group.
+    const isManager = role === UserRole.SUPER_ADMIN || role === UserRole.ADMIN || role === UserRole.TEAM_LEAD;
+    if (!isManager) {
+      const primaryIds = role === UserRole.MARKETING
+        ? ['dash', 'leads', 'inbox', 'campaigns', 'social-publishing', 'tasks', 'projects']
+        : ['dash', 'leads', 'inbox', 'inv', 'tasks', 'contracts', 'projects'];
+      const primary = makeGroup('work-primary', 'menu.quick_actions', primaryIds);
+      const primarySet = new Set(primary.items.map((navItem: any) => navItem.id));
+      const more = { id: 'more-tools', labelKey: 'menu.more_tools', items: visibleItems.filter(navItem => !primarySet.has(navItem.id)) };
+      return [primary, more].filter(group => group.items.length > 0);
+    }
     // The quick-access row intentionally reuses five high-frequency routes.
     // They remain in their functional groups too, so the 43-route menu is not
     // changed—only its order and information architecture are changed.

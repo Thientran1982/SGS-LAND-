@@ -1,3 +1,4 @@
+import { UiDialogHost } from './components/UiDialogHost';
 import React, { useState, useEffect, useCallback, Suspense, useRef } from 'react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { Layout } from './components/Layout';
@@ -1052,6 +1053,7 @@ const App: React.FC = () => {
                 <TenantProvider>
                     <ThemeProvider>
                         <I18nProvider>
+                            <UiDialogHost />
                             <AppShell />
                         </I18nProvider>
                     </ThemeProvider>

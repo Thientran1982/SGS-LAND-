@@ -1,3 +1,4 @@
+import { useUrlState, readUrlParam } from '../utils/useUrlState';
 import React, { useState, useEffect, useCallback, useMemo, memo, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import { db } from '../services/dbApi';
@@ -560,10 +561,11 @@ export const Leads: React.FC = () => {
     useDraggableScroll(tableRef, viewMode);
     useDraggableScroll(metricsRef, null);
     // Filters
-    const [search, setSearch] = useState('');
-    const [debouncedSearch, setDebouncedSearch] = useState('');
-    const [stageFilter, setStageFilter] = useState('ALL');
-    const [sourceFilter, setSourceFilter] = useState('ALL');
+    // UX audit 3.6: filters live in the URL (reload/back/share keep the view)
+    const [search, setSearch] = useUrlState('q', '');
+    const [debouncedSearch, setDebouncedSearch] = useState(() => readUrlParam('q', ''));
+    const [stageFilter, setStageFilter] = useUrlState('stage', 'ALL');
+    const [sourceFilter, setSourceFilter] = useUrlState('source', 'ALL');
     // Debounce search
     useEffect(() => {
         const handler = setTimeout(() => {

@@ -1,3 +1,4 @@
+import { uiNotify } from '../utils/uiDialog';
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { scraperApi } from '../services/api/scraperApi';
@@ -811,7 +812,7 @@ function LeadsTab() {
     if (res.ok) {
       const data = await res.json();
       setImported(prev => { const n = new Set(prev); toImport.forEach(l => n.add(l.id)); return n; });
-      alert(`✅ Import ${data.imported} lead, bỏ qua ${data.skipped} trùng SĐT`);
+      uiNotify(`Import ${data.imported} lead, bỏ qua ${data.skipped} trùng SĐT`, 'success');
     }
   };
   const handleRunChotot = async () => {

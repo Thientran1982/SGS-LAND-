@@ -1,3 +1,4 @@
+import { useUrlState, readUrlParam } from '../utils/useUrlState';
 import React, { useState, useEffect, useCallback, useMemo, useRef, memo } from 'react';
 import { createPortal } from 'react-dom';
 import { NO_IMAGE_URL } from '../utils/constants';
@@ -553,11 +554,12 @@ export const Inventory: React.FC = () => {
     const [boardLoading, setBoardLoading] = useState(false);
     const [currentUser, setCurrentUser] = useState<any>(null);    
     // Filters & Cursor Pagination State
-    const [search, setSearch] = useState('');
-    const [debouncedSearch, setDebouncedSearch] = useState('');
-    const [typeFilter, setTypeFilter] = useState('ALL');
-    const [statusFilter, setStatusFilter] = useState('ALL');
-    const [transactionFilter, setTransactionFilter] = useState('ALL');
+    // UX audit 3.6: filters live in the URL (reload/back/share keep the view)
+    const [search, setSearch] = useUrlState('q', '');
+    const [debouncedSearch, setDebouncedSearch] = useState(() => readUrlParam('q', ''));
+    const [typeFilter, setTypeFilter] = useUrlState('type', 'ALL');
+    const [statusFilter, setStatusFilter] = useUrlState('status', 'ALL');
+    const [transactionFilter, setTransactionFilter] = useUrlState('tx', 'ALL');
     const [pageSize, setPageSize] = useState(12);
     // Cursor stack — for O(1) forward/backward navigation (no OFFSET)
     const [cursorStack, setCursorStack] = useState<string[]>([]);   // prev cursors

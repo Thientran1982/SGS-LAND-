@@ -1,3 +1,4 @@
+import { uiNotify } from '../utils/uiDialog';
 import React, { useState, useMemo, useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import { db } from '../services/dbApi';
@@ -213,8 +214,9 @@ export const CreateLeadModal: React.FC<CreateLeadModalProps> = ({ onClose, onSuc
             const updatedLead = await db.mergeLead(duplicateLead.id, mergePayload);
             socket?.emit("lead_updated", updatedLead ?? { ...duplicateLead, ...mergePayload });
             onSuccess();
-        } catch (e) {
+        } catch (e: any) {
             setLoading(false);
+            uiNotify(e?.message || 'Không thể gộp khách hàng. Vui lòng thử lại.', 'error');
         }
     };
     // Compute what the merge will actually contribute — shown in the preview
@@ -254,7 +256,7 @@ export const CreateLeadModal: React.FC<CreateLeadModalProps> = ({ onClose, onSuc
     return createPortal(
         <div className="fixed inset-0 z-[80] flex items-center justify-center p-4" role="dialog" aria-modal="true" aria-labelledby="create-lead-title">
             {/* Backdrop */}
-            <div className="absolute inset-0 bg-black/50 backdrop-blur-sm animate-fade-in" onClick={!loading ? onClose : undefined} />            
+            <div className="absolute inset-0 bg-black/50 backdrop-blur-sm animate-fade-in" onClick={!loading ? onClose : undefined} aria-hidden="true" />            
             {/* Modal */}
             <div className="bg-[var(--bg-surface)] w-full max-w-2xl rounded-[24px] p-8 shadow-2xl border border-[var(--glass-border)] relative z-10 animate-scale-up max-h-[90vh] overflow-y-auto no-scrollbar">
                 <div className="flex justify-between items-center mb-6">

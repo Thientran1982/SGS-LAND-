@@ -1,3 +1,4 @@
+import { uiPrompt } from '../utils/uiDialog';
 import React, { useEffect, useState, useCallback, memo, useMemo } from 'react';
 import { createPortal } from 'react-dom';
 import { db } from '../services/dbApi';
@@ -457,11 +458,11 @@ export const ApprovalInbox: React.FC = () => {
         variantId: string,
         status: 'SENT' | 'FAILED',
     ) => {
-        const note = window.prompt(
+        const note = (await uiPrompt(
             status === 'SENT'
                 ? 'Ghi chú đối soát: bằng chứng nào xác nhận provider đã gửi?'
                 : 'Ghi chú đối soát: bằng chứng nào xác nhận provider không gửi?',
-        );
+        ));
         if (!note?.trim()) return;
         const key = deliveryLookupKey(approvalId, variantId);
         setDeliveryLookupLoading(key);

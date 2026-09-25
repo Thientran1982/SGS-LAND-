@@ -65,7 +65,7 @@ export const BookingModal: React.FC<BookingModalProps> = memo(({ isOpen, onClose
     };
     return createPortal(
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4" role="dialog" aria-modal="true" aria-label={t('detail.book_viewing')}>
-            <div className="absolute inset-0 bg-black/60 backdrop-blur-sm animate-fade-in" onClick={!isSubmitting ? onClose : undefined}></div>
+            <div className="absolute inset-0 bg-black/60 backdrop-blur-sm animate-fade-in" onClick={!isSubmitting ? onClose : undefined} aria-hidden="true"></div>
             <div className="bg-[var(--bg-surface)] w-full max-w-sm rounded-[24px] p-6 shadow-2xl border border-[var(--glass-border)] relative z-10 animate-scale-up">
                 <h3 className="text-lg font-bold text-[var(--text-primary)] mb-4 flex items-center gap-2">
                     <div className="p-1.5 bg-sgs-champagne text-sgs-primary rounded-lg">{ICONS.CALENDAR}</div>

@@ -1,3 +1,4 @@
+import { uiNotify } from '../utils/uiDialog';
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import { db } from '../services/dbApi';
@@ -1905,7 +1906,7 @@ function ProjectListingsPanel({ project, canCreate, isAdmin, userRole, onClose, 
             const result = await parseListingsFromExcel(file);
             setImportPreview(result);
         } catch (err) {
-            alert('Không thể đọc file. Vui lòng dùng đúng định dạng .xlsx');
+            uiNotify('Không thể đọc file. Vui lòng dùng đúng định dạng .xlsx', 'error');
         } finally {
             setImporting(false);
         }
@@ -1927,7 +1928,7 @@ function ProjectListingsPanel({ project, canCreate, isAdmin, userRole, onClose, 
             setImportDone(result);
             load();
         } catch (err: any) {
-            alert(err?.message ?? 'Lỗi nhập dữ liệu');
+            uiNotify(err?.message ?? 'Lỗi nhập dữ liệu', 'error');
         } finally {
             setImportUploading(false);
         }

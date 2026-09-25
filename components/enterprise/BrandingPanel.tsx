@@ -10,6 +10,7 @@
  *
  * Backed by `tenantApi`. ADMIN/SUPER_ADMIN of tenant only — backend cũng enforce RBAC.
  */
+import { uiConfirm } from '../../utils/uiDialog';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   tenantApi,
@@ -222,7 +223,7 @@ const BrandingPanel: React.FC<Props> = ({ notify }) => {
     }
   };
   const handleRemoveSubdomain = async () => {
-    if (!confirm('Gỡ subdomain? Mini-site sẽ chỉ truy cập được qua sgsland.vn.')) return;
+    if (!(await uiConfirm('Gỡ subdomain? Mini-site sẽ chỉ truy cập được qua sgsland.vn.'))) return;
     setSlugBusy(true);
     try {
       const res = await tenantApi.removeSubdomain();
@@ -262,7 +263,7 @@ const BrandingPanel: React.FC<Props> = ({ notify }) => {
     }
   };
   const handleRemoveCustomDomain = async () => {
-    if (!confirm('Gỡ custom domain?')) return;
+    if (!(await uiConfirm('Gỡ custom domain?'))) return;
     setHostBusy(true);
     try {
       const res = await tenantApi.removeCustomDomain();

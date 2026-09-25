@@ -1,3 +1,4 @@
+import { uiConfirm } from '../utils/uiDialog';
 import React, { useEffect, useMemo, useState, useCallback } from 'react';
 import { commissionApi, type LedgerItem, type LedgerStatus } from '../services/api/commissionApi';
 import { db } from '../services/dbApi';
@@ -91,7 +92,7 @@ export const Commissions: React.FC = () => {
   const handleBulkPaid = async () => {
     const ids = Array.from(selected);
     if (ids.length === 0) return;
-    if (!window.confirm(`Đánh dấu đã trả ${ids.length} bút toán?`)) return;
+    if (!(await uiConfirm(`Đánh dấu đã trả ${ids.length} bút toán?`))) return;
     try {
       setBulkPaying(true);
       const res = await commissionApi.markPaidBulk(ids, payNote || undefined);

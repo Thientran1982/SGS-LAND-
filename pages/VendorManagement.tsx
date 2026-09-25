@@ -1,3 +1,4 @@
+import { uiConfirm } from '../utils/uiDialog';
 import React, { useState, useEffect, useCallback } from 'react';
 import { db } from '../services/dbApi';
 import { useTranslation } from '../services/i18n';
@@ -199,7 +200,7 @@ export default function VendorManagement() {
     setTimeout(() => setSuccessMsg(''), 3500);
   };
   const handleApprove = async (vendor: Vendor) => {
-    if (!confirm(`Duyệt workspace "${vendor.name}" (${vendor.admin?.email})?`)) return;
+    if (!(await uiConfirm(`Duyệt workspace "${vendor.name}" (${vendor.admin?.email})?`))) return;
     setActionLoading(vendor.id);
     try {
       await db.approveVendor(vendor.id);

@@ -1,3 +1,4 @@
+import { uiConfirm, uiNotify } from '../utils/uiDialog';
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import { db } from '../services/dbApi';
@@ -191,7 +192,7 @@ const SerpPageDropdown: React.FC<{
                 ref={btnRef}
                 type="button"
                 onClick={() => (isOpen ? setIsOpen(false) : openMenu())}
-                className={`w-full flex items-center gap-3 px-4 py-3 border rounded-xl bg-[var(--bg-surface)] transition-all outline-none text-left ${isOpen ? 'border-[var(--sgs-primary)] ring-2 ring-[var(--sgs-primary)]/20' : 'border-[var(--glass-border)] hover:border-[var(--sgs-primary)] hover:shadow-sm'}`}
+                className={`w-full flex items-center gap-3 px-4 py-3 border rounded-xl bg-[var(--bg-surface)] transition-all outline-none focus-visible:ring-2 focus-visible:ring-[var(--sgs-primary)] text-left ${isOpen ? 'border-[var(--sgs-primary)] ring-2 ring-[var(--sgs-primary)]/20' : 'border-[var(--glass-border)] hover:border-[var(--sgs-primary)] hover:shadow-sm'}`}
             >
                 {/* Status dot */}
                 <span className={`w-2.5 h-2.5 rounded-full shrink-0 ring-2 ${statusDotClass(selectedStatus)} ${statusRingClass(selectedStatus)}`} />
@@ -1464,7 +1465,7 @@ const GeoAiSearch: React.FC = () => {
         finally { setUpdatingId(null); }
     };
     const removeKeyword = async (id: string) => {
-        if (!confirm('Xoá từ khóa này?')) return;
+        if (!(await uiConfirm('Xoá từ khóa này?'))) return;
         try { await seoApi.deleteKeyword(id); loadKeywords(); } catch { /* noop */ }
     };
     // ── AI Citation Checklist (client-side, runs against current DOM) ────────
@@ -1639,8 +1640,8 @@ const GeoAiSearch: React.FC = () => {
                                 try {
                                     const r = await seoApi.seedDefaultKeywords();
                                     await loadKeywords();
-                                    alert(`Đã nạp: ${r.inserted} từ khoá mới (bỏ qua ${r.skipped} đã tồn tại)`);
-                                } catch { alert('Lỗi khi nạp bộ mặc định'); }
+                                    uiNotify(`Đã nạp: ${r.inserted} từ khoá mới (bỏ qua ${r.skipped} đã tồn tại)`, 'success');
+                                } catch { uiNotify('Lỗi khi nạp bộ mặc định', 'error'); }
                                 finally { setSeeding(false); }
                             }}
                             className="shrink-0 px-3 py-1.5 text-xs font-bold rounded-md bg-sgs-primary text-white hover:bg-sgs-primary disabled:opacity-60 disabled:cursor-wait">

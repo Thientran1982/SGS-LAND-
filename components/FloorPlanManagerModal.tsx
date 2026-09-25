@@ -7,6 +7,7 @@
  *
  * Mounted as a portal-style modal from ProjectListingsPanel's admin menu.
  */
+import { uiConfirm } from '../utils/uiDialog';
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { floorPlanApi, FloorPlanSummary, FloorPlanUploadResponse } from '../services/api/floorPlanApi';
@@ -95,7 +96,7 @@ export const FloorPlanManagerModal: React.FC<FloorPlanManagerModalProps> = ({
     }
   };
   const handleDelete = async (planId: string) => {
-    if (!window.confirm(t('floorplan.confirm_delete') || 'Xoá sa bàn này?')) return;
+    if (!(await uiConfirm(t('floorplan.confirm_delete') || 'Xoá sa bàn này?'))) return;
     setDeletingId(planId);
     try {
       await floorPlanApi.delete(projectId, planId);

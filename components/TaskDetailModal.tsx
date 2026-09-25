@@ -1,3 +1,4 @@
+import { uiConfirm, uiNotify } from '../utils/uiDialog';
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import {
@@ -137,7 +138,7 @@ export function TaskDetailModal({ taskId, onClose, onUpdated, onDeleted, onOpenF
       onUpdated(updated);
       setEditing(false);
     } catch (e: any) {
-      alert(e?.message || 'Không thể lưu');
+      uiNotify(e?.message || 'Không thể lưu', 'error');
     } finally {
       setSaving(false);
     }
@@ -153,7 +154,7 @@ export function TaskDetailModal({ taskId, onClose, onUpdated, onDeleted, onOpenF
       const newAct: TaskActivityLog[] = await api.get<{ data: TaskActivityLog[] }>(`/api/tasks/${task.id}/activity`).then(r => r.data || []);
       setActivity(newAct);
     } catch (e: any) {
-      alert(e?.message || 'Không thể đổi trạng thái');
+      uiNotify(e?.message || 'Không thể đổi trạng thái', 'error');
     } finally {
       setChangingStatus(false);
     }
@@ -166,21 +167,21 @@ export function TaskDetailModal({ taskId, onClose, onUpdated, onDeleted, onOpenF
       setComments(prev => [...prev, comment]);
       setNewComment('');
     } catch {
-      alert('Không thể gửi bình luận');
+      uiNotify('Không thể gửi bình luận', 'error');
     } finally {
       setSendingComment(false);
     }
   };
   const handleDelete = async () => {
     if (!task) return;
-    if (!confirm('Bạn có chắc muốn xóa công việc này?')) return;
+    if (!(await uiConfirm('Bạn có chắc muốn xóa công việc này?'))) return;
     setDeleting(true);
     try {
       await api.delete(`/api/tasks/${task.id}`);
       onDeleted?.(task.id);
       onClose();
     } catch {
-      alert('Không thể xóa công việc');
+      uiNotify('Không thể xóa công việc', 'error');
       setDeleting(false);
     }
   };
@@ -188,7 +189,7 @@ export function TaskDetailModal({ taskId, onClose, onUpdated, onDeleted, onOpenF
 
   return createPortal(
     <div className="fixed inset-0 z-[100] flex items-stretch justify-end" role="dialog" aria-modal="true">
-      <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={onClose} />
+      <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={onClose} aria-hidden="true" />
       <div className="relative z-10 w-full max-w-2xl bg-[var(--bg-surface)] shadow-2xl flex flex-col animate-slide-in-right overflow-hidden border-l border-[var(--glass-border)]">
         {loading && (
           <div className="flex-1 flex items-center justify-center">
