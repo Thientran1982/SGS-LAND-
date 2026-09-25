@@ -445,14 +445,19 @@ export class LeadRepository extends BaseRepository {
       };
       const jsonFields = ['tags', 'score', 'socialIds', 'optOutChannels', 'attributes', 'preferences'];
 
+      // SECURITY (audit M3): restricted roles cannot reassign leads or tamper with
+      // system-managed fields (AI score, linked social ids, SLA flag).
+      const isRestrictedRole = RESTRICTED.includes(userRole || '');
+      const SYSTEM_FIELDS = new Set(['assignedTo', 'slaBreached', 'score', 'socialIds']);
       for (const [key, col] of Object.entries(fieldMap)) {
-        if (key === 'assignedTo' && userRole === 'SALES') continue;
+        if (isRestrictedRole && SYSTEM_FIELDS.has(key)) continue;
         if (data[key] !== undefined) {
           updates.push(`${col} = $${paramIndex++}`);
           values.push(data[key]);
         }
       }
       for (const key of jsonFields) {
+        if (isRestrictedRole && SYSTEM_FIELDS.has(key)) continue;
         if (data[key] !== undefined) {
           updates.push(`${this.camelToSnake(key)} = $${paramIndex++}`);
           values.push(JSON.stringify(data[key]));

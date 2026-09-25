@@ -1,3 +1,4 @@
+import { internalFallbackSecret } from './config/internalSecrets';
 import { Server } from 'socket.io';
 import { logger } from './middleware/logger';
 import { getAdapter } from './channels/registry';
@@ -230,7 +231,7 @@ function getAutoPostingCronSecret(): string {
   return (
     process.env.AUTO_POSTING_CRON_SECRET
     || process.env.SOCIAL_PUBLISHING_CRON_SECRET
-    || process.env.JWT_SECRET?.slice(0, 32)
+    || internalFallbackSecret()
     || ''
   );
 }

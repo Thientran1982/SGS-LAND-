@@ -29,6 +29,18 @@ const STAGE_LABEL_VN: Record<string, string> = {
   MANUAL:      'Thủ công',
 };
 
+const RESTRICTED_LEAD_ROLES = ['SALES', 'MARKETING', 'VIEWER'];
+
+// SECURITY (audit H4): duplicate checks must not leak another agent's customer
+// PII to restricted roles. They learn only that a duplicate exists (and who owns it).
+function duplicateView(user: any, dup: any) {
+  const ownsIt = dup.assignedTo && dup.assignedTo === user.id;
+  if (RESTRICTED_LEAD_ROLES.includes(user.role) && !ownsIt) {
+    return { id: dup.id, name: null, phone: null, email: null, stage: dup.stage, assignedTo: dup.assignedTo ?? null, restricted: true };
+  }
+  return null;
+}
+
 export function createLeadRoutes(authenticateToken: any, getBroadcast?: () => any) {
   const router = Router();
 
@@ -97,6 +109,8 @@ export function createLeadRoutes(authenticateToken: any, getBroadcast?: () => an
       const duplicate = await leadRepository.checkDuplicateEmail(user.tenantId, email);
       if (!duplicate) return res.json({ duplicate: null });
 
+      const limited = duplicateView(user, duplicate);
+      if (limited) return res.json({ duplicate: limited });
       return res.json({
         duplicate: {
           id: duplicate.id,
@@ -122,6 +136,8 @@ export function createLeadRoutes(authenticateToken: any, getBroadcast?: () => an
       const duplicate = await leadRepository.checkDuplicatePhone(user.tenantId, phone);
       if (!duplicate) return res.json({ duplicate: null });
 
+      const limited = duplicateView(user, duplicate);
+      if (limited) return res.json({ duplicate: limited });
       return res.json({
         duplicate: {
           id: duplicate.id,
@@ -166,6 +182,15 @@ export function createLeadRoutes(authenticateToken: any, getBroadcast?: () => an
 
       const duplicate = await leadRepository.checkDuplicatePhone(user.tenantId, phone);
       if (duplicate) {
+        const limited = duplicateView(user, duplicate);
+        if (limited) {
+          return res.status(409).json({
+            error: 'DUPLICATE_LEAD',
+            message: `A lead with this phone number already exists`,
+            existingLeadId: duplicate.id,
+            existingLead: limited,
+          });
+        }
         return res.status(409).json({
           error: 'DUPLICATE_LEAD',
           message: `A lead with this phone number already exists`,
@@ -243,8 +268,12 @@ export function createLeadRoutes(authenticateToken: any, getBroadcast?: () => an
       // name is intentionally excluded — merging never changes the existing lead's identity
 
       // Fetch existing lead to check which fields are already populated
+      // SECURITY (audit 1.3/H4): use the caller's real role instead of a hardcoded
+      // 'ADMIN'. ADMIN/TEAM_LEAD still merge across owners; SALES/MARKETING/VIEWER
+      // can only merge into leads assigned to them.
+      const effectiveRole = user.role;
       const existing = await leadRepository.findByIdWithAccess(
-        user.tenantId, String(req.params.id), user.id, 'ADMIN'
+        user.tenantId, String(req.params.id), user.id, effectiveRole
       );
       if (!existing) return res.status(404).json({ error: 'Lead not found' });
 
@@ -258,7 +287,7 @@ export function createLeadRoutes(authenticateToken: any, getBroadcast?: () => an
 
       // Tags: union of existing + new (de-duplicated)
       if (tags !== undefined) {
-        mergeData.tags = Array.from(new Set([...(existing.tags || []), ...tags]));
+        mergeData.tags = Array.from(new Set([...(existing.tags || []), ...normalizeLeadTags(tags)]));
       }
 
       // If nothing to update, return existing lead as-is
@@ -266,9 +295,8 @@ export function createLeadRoutes(authenticateToken: any, getBroadcast?: () => an
         return res.json(existing);
       }
 
-      // Bypass RBAC ownership check by passing ADMIN as effective role for this operation
       const lead = await leadRepository.update(
-        user.tenantId, String(req.params.id), mergeData, user.id, 'ADMIN'
+        user.tenantId, String(req.params.id), mergeData, user.id, effectiveRole
       );
       if (!lead) return res.status(404).json({ error: 'Lead not found' });
 
@@ -439,7 +467,7 @@ export function createLeadRoutes(authenticateToken: any, getBroadcast?: () => an
     }
   });
 
-  router.get('/:id/interactions', authenticateToken, async (req: Request, res: Response) => {
+  router.get('/:id/interactions', authenticateToken, validateUUIDParam(), async (req: Request, res: Response) => {
     try {
       const user = (req as any).user;
       const { interactionRepository } = await import('../repositories/interactionRepository');
@@ -453,7 +481,7 @@ export function createLeadRoutes(authenticateToken: any, getBroadcast?: () => an
     }
   });
 
-  router.post('/:id/interactions', authenticateToken, async (req: Request, res: Response) => {
+  router.post('/:id/interactions', authenticateToken, validateUUIDParam(), async (req: Request, res: Response) => {
     try {
       const user = (req as any).user;
       const { channel, content, type, metadata } = req.body;
@@ -629,7 +657,7 @@ export function createLeadRoutes(authenticateToken: any, getBroadcast?: () => an
         actorId: user.id,
         subjectId: lead.id,
         channel: resolvedChannel,
-        dedupeKey: `match_chosen:interaction:${lead.id}:${req.body?.idempotencyKey || `${resolvedChannel}:${content.slice(0, 80)}`}`,
+        dedupeKey: `match_chosen:interaction:${lead.id}:${req.body?.idempotencyKey || `${resolvedChannel}:${String(interactionContent || '').slice(0, 80)}`}`,
       }).catch(() => {});
 
       // Push real-time reply to customer's live chat widget (and other agents watching)

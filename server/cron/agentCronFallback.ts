@@ -1,9 +1,10 @@
 // agentCronFallback.ts — QStash watchdog: khi QStash hết token/chết, tự gọi cron endpoint nội bộ
+import { internalFallbackSecret } from '../config/internalSecrets';
 import { pool } from "../db";
 import { logger } from "../middleware/logger";
 
 const INTERNAL_BASE = process.env.INTERNAL_CRON_BASE || `http://127.0.0.1:${process.env.PORT || 5000}`;
-const jwtSlice = process.env.JWT_SECRET?.slice(0, 32) || "";
+const jwtSlice = internalFallbackSecret();
 // Per-endpoint secrets — đồng bộ với cách mount từng router trong server.ts
 const ENDPOINT_DEFS: { ep: string; secret: string }[] = [
   { ep: "/api/internal/followup-cron", secret: process.env.FOLLOWUP_CRON_SECRET || jwtSlice },

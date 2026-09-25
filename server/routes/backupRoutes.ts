@@ -11,14 +11,13 @@ import { Router, Request, Response, NextFunction, RequestHandler } from 'express
 import { createReadStream, promises as fs } from 'fs';
 import { logger } from '../middleware/logger';
 import { runBackup, listBackups, getBackupFilePath } from '../services/backupService';
+import { requirePlatformAdmin } from '../middleware/requireRole';
+import { safeSecretEqual } from '../config/internalSecrets';
 
-function requireAdmin(req: Request, res: Response, next: NextFunction) {
-  const user = (req as any).user;
-  if (!user || !['SUPER_ADMIN', 'ADMIN'].includes(user.role)) {
-    return res.status(403).json({ error: 'Admin only' });
-  }
-  next();
-}
+// SECURITY (audit C2): backups are a full pg_dump of EVERY tenant, so only the
+// platform operator may list/download/trigger them - never a vendor ADMIN.
+const requireAdmin = requirePlatformAdmin;
+let manualBackupRunning = false;
 
 export function createBackupRouter(cronSecret: string, authenticateToken: RequestHandler): Router {
   const router = Router();
@@ -29,7 +28,7 @@ export function createBackupRouter(cronSecret: string, authenticateToken: Reques
       (req.headers['x-internal-secret'] as string | undefined) ||
       (req.body?.secret as string | undefined);
 
-    if (!provided || provided !== cronSecret) {
+    if (!safeSecretEqual(provided, cronSecret)) {
       logger.warn('[BackupCron] Từ chối — sai secret');
       return res.status(403).json({ error: 'Forbidden' });
     }
@@ -68,9 +67,15 @@ export function createBackupRouter(cronSecret: string, authenticateToken: Reques
 
   // ── Admin: Trigger backup manually ────────────────────────────────────────
   router.post('/api/admin/backups/run', authenticateToken, requireAdmin, async (_req: Request, res: Response) => {
-    logger.info('[BackupCron] Trigger thủ công bởi admin');
-    const result = await runBackup();
-    res.status(result.ok ? 200 : 500).json(result);
+    if (manualBackupRunning) return res.status(409).json({ error: 'Backup đang chạy' });
+    manualBackupRunning = true;
+    try {
+      logger.info('[BackupCron] Trigger thủ công bởi admin');
+      const result = await runBackup();
+      res.status(result.ok ? 200 : 500).json(result);
+    } finally {
+      manualBackupRunning = false;
+    }
   });
 
   return router;

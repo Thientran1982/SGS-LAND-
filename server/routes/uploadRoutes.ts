@@ -1,6 +1,8 @@
 import { Router, Request, Response, NextFunction } from 'express';
 import multer from 'multer';
 import path from 'path';
+import os from 'os';
+import { promises as fsp } from 'fs';
 import crypto from 'crypto';
 import { fileTypeFromBuffer } from 'file-type';
 import { DEFAULT_TENANT_ID } from '../constants';
@@ -16,7 +18,7 @@ let sharp: typeof import('sharp') | null = null;
 })();
 
 const MAX_IMAGE_SIZE = 10 * 1024 * 1024;   // 10 MB for images
-const MAX_VIDEO_SIZE = 100 * 1024 * 1024;  // 100 MB for videos
+const MAX_VIDEO_SIZE = 50 * 1024 * 1024;   // 50 MB for videos (audit H5: bounded memory)
 const MAX_FILE_SIZE = MAX_VIDEO_SIZE;       // multer uses the highest limit; per-file check below
 const MAX_FILES = 10;
 
@@ -119,7 +121,12 @@ function resizeLruSet(key: string, buffer: Buffer): void {
 }
 
 // Use memory storage so we can forward buffers to any backend (disk or Object Storage)
-const memStorage = multer.memoryStorage();
+// SECURITY (audit H5): spool uploads to disk; files are read one at a time so a
+// burst of large uploads cannot exhaust the 384 MB backend heap.
+const memStorage = multer.diskStorage({
+  destination: os.tmpdir(),
+  filename: (_req, _file, cb) => cb(null, `sgs-upload-${crypto.randomBytes(12).toString('hex')}`),
+});
 
 const fileFilter = (_req: any, file: Express.Multer.File, cb: multer.FileFilterCallback) => {
   if (ALL_ALLOWED.includes(file.mimetype)) {
@@ -138,7 +145,7 @@ const upload = multer({
 function handleMulterError(err: any, _req: Request, res: Response, next: NextFunction) {
   if (err instanceof multer.MulterError) {
     if (err.code === 'LIMIT_FILE_SIZE') {
-      return res.status(413).json({ error: 'File quá lớn (tối đa 10MB cho ảnh, 100MB cho video)' });
+      return res.status(413).json({ error: 'File quá lớn (tối đa 10MB cho ảnh, 50MB cho video)' });
     }
     if (err.code === 'LIMIT_FILE_COUNT') {
       return res.status(400).json({ error: 'Số lượng file vượt giới hạn (tối đa 10 file)' });
@@ -187,7 +194,12 @@ export function createUploadRoutes(authenticateToken: any) {
       const rejected: string[] = [];
 
       for (const f of files) {
-        let buf = f.buffer;
+        let buf: Buffer;
+        try {
+          buf = await fsp.readFile(f.path);
+        } finally {
+          fsp.unlink(f.path).catch(() => undefined);
+        }
         let contentType = f.mimetype;
 
         if (f.mimetype !== 'text/plain') {
@@ -241,6 +253,9 @@ export function createUploadRoutes(authenticateToken: any) {
 
       res.json({ files: uploaded });
     } catch (error) {
+      for (const f of ((req.files as Express.Multer.File[]) || [])) {
+        if (f?.path) fsp.unlink(f.path).catch(() => undefined);
+      }
       console.error('Upload error:', error);
       res.status(500).json({ error: 'Tải ảnh thất bại. Vui lòng thử lại.' });
     }

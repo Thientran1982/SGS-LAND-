@@ -1,3 +1,4 @@
+import { internalFallbackSecret, safeSecretEqual } from '../config/internalSecrets';
 import { Router, Request, Response } from 'express';
 import {
   consolidateMemoryForAllTenants,
@@ -9,13 +10,13 @@ import {
 function configuredSecret(): string {
   return process.env.LEARNING_CYCLE_CRON_SECRET
     || process.env.RLHF_CRON_SECRET
-    || process.env.JWT_SECRET?.slice(0, 32)
+    || internalFallbackSecret()
     || '';
 }
 
 function isAuthorized(req: Request): boolean {
   const provided = req.headers['x-internal-secret'] || req.body?.secret;
-  return Boolean(provided && provided === configuredSecret());
+  return safeSecretEqual(provided, configuredSecret());
 }
 
 export function createLearningCycleRoutes(): Router {

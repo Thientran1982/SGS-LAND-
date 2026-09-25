@@ -36,3 +36,9 @@ uploads/
 *.env
 !.env.example
 archive/
+
+# Database dumps / exports must never be committed (audit C1)
+migration_dump/
+*.dump
+*.sql.gz
+.auditfix/

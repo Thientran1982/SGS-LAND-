@@ -1,3 +1,4 @@
+import { internalFallbackSecret, safeSecretEqual } from './server/config/internalSecrets';
 import express from "express";
 import { startAgentCronFallback } from "./server/cron/agentCronFallback";
 import { createFollowUpRoutes } from "./server/routes/followupRoutes";
@@ -573,7 +574,7 @@ app.use(globalMutationAudit);
     const token = req.cookies?.token;
     if (token) {
       try {
-        const decoded = jwt.verify(token, JWT_SECRET) as any;
+        const decoded = jwt.verify(token, JWT_SECRET, { algorithms: ['HS256'] }) as any;
         if (decoded?.tenantId) tenantId = decoded.tenantId;
       } catch (e) {
         logger.warn('Invalid JWT token in tenant middleware', { ip: req.ip });
@@ -587,7 +588,7 @@ app.use(globalMutationAudit);
     const token = req.cookies.token;
     if (!token) return res.status(401).json({ error: 'Unauthorized' });
 
-    jwt.verify(token, JWT_SECRET, (err: any, user: any) => {
+    jwt.verify(token, JWT_SECRET, { algorithms: ['HS256'] }, (err: any, user: any) => {
       if (err) return res.status(403).json({ error: 'Forbidden' });
       (req as any).user = user;
       if (user?.tenantId) (req as any).tenantId = user.tenantId;
@@ -624,7 +625,7 @@ app.use(globalMutationAudit);
   const optionalAuth = (req: express.Request, _res: express.Response, next: express.NextFunction) => {
     const token = req.cookies?.token;
     if (token) {
-      jwt.verify(token, JWT_SECRET, (_err: any, user: any) => {
+      jwt.verify(token, JWT_SECRET, { algorithms: ['HS256'] }, (_err: any, user: any) => {
         if (user) {
           (req as any).user = user;
           if (user.tenantId) (req as any).tenantId = user.tenantId;
@@ -1794,7 +1795,7 @@ app.use(globalMutationAudit);
         (socket.handshake.query as any)?.token;
       if (typeof handshakeToken === 'string' && handshakeToken.length > 0) {
         try {
-          const decoded: any = jwt.verify(handshakeToken, JWT_SECRET);
+          const decoded: any = jwt.verify(handshakeToken, JWT_SECRET, { algorithms: ['HS256'] });
           if (decoded && decoded.aud === 'buyer' && decoded.sub) {
             socket.data.buyerUser = { id: decoded.sub, phone: decoded.phone };
           }
@@ -1816,7 +1817,7 @@ app.use(globalMutationAudit);
       const token = cookies['token'];
       if (!token) return next();
 
-      jwt.verify(token, JWT_SECRET, (err: any, decoded: any) => {
+      jwt.verify(token, JWT_SECRET, { algorithms: ['HS256'] }, (err: any, decoded: any) => {
         if (!err && decoded && decoded.aud !== 'buyer') {
           socket.data.authUser = decoded;
         }
@@ -1839,7 +1840,7 @@ app.use(globalMutationAudit);
     const token = cookies['token'];
     if (!token) return null;
     try {
-      return jwt.verify(token, JWT_SECRET);
+      return jwt.verify(token, JWT_SECRET, { algorithms: ['HS256'] });
     } catch {
       return null;
     }
@@ -5522,7 +5523,7 @@ app.use('/api/public/livechat', agentP1Router);
   const autoPostingSecret =
     process.env.AUTO_POSTING_CRON_SECRET ||
     process.env.SOCIAL_PUBLISHING_CRON_SECRET ||
-    process.env.JWT_SECRET?.slice(0, 32) ||
+    internalFallbackSecret() ||
     '';
   app.use(createAutoPostingRouter(pool, authenticateToken, autoPostingSecret));
   app.use('/api/agents', apiRateLimit, createAgentRoutes(authenticateToken));
@@ -6219,8 +6220,8 @@ app.use('/api/approval-requests', apiRateLimit, createApprovalRequestRoutes(auth
   app.post("/api/internal/rlhf-recompute", async (req, res) => {
     try {
       const secret = req.headers['x-internal-secret'] || req.body?.secret;
-      const configuredSecret = process.env.RLHF_CRON_SECRET || process.env.JWT_SECRET?.slice(0, 32);
-      if (!secret || secret !== configuredSecret) {
+      const configuredSecret = process.env.RLHF_CRON_SECRET || internalFallbackSecret();
+      if (!safeSecretEqual(secret, configuredSecret)) {
         return res.status(401).json({ error: 'Không có quyền truy cập' });
       }
       const tenantId = req.body?.tenantId;
@@ -6255,8 +6256,8 @@ app.use('/api/approval-requests', apiRateLimit, createApprovalRequestRoutes(auth
   // are purged per tenant and each purge is recorded in the audit ledger.
   app.post("/api/internal/customer-profile-retention", async (req, res) => {
     const secret = req.headers['x-internal-secret'] || req.body?.secret;
-    const configuredSecret = process.env.CUSTOMER_PROFILE_RETENTION_SECRET || process.env.JWT_SECRET?.slice(0, 32);
-    if (!secret || secret !== configuredSecret) return res.status(401).json({ error: 'Không có quyền truy cập' });
+    const configuredSecret = process.env.CUSTOMER_PROFILE_RETENTION_SECRET || internalFallbackSecret();
+    if (!safeSecretEqual(secret, configuredSecret)) return res.status(401).json({ error: 'Không có quyền truy cập' });
     try {
       const tenantId = req.body?.tenantId;
       const tenants = tenantId && tenantId !== 'all'
@@ -6282,7 +6283,7 @@ app.use('/api/approval-requests', apiRateLimit, createApprovalRequestRoutes(auth
   {
     const engagementSecret =
       process.env.ENGAGEMENT_CRON_SECRET ||
-      process.env.JWT_SECRET?.slice(0, 32) ||
+      internalFallbackSecret() ||
       '';
     app.use(createEngagementCronRouter(pool, engagementSecret));
   }
@@ -6294,11 +6295,11 @@ app.use('/api/approval-requests', apiRateLimit, createApprovalRequestRoutes(auth
   {
     const engagementSecret =
       process.env.ENGAGEMENT_CRON_SECRET ||
-      process.env.JWT_SECRET?.slice(0, 32) ||
+      internalFallbackSecret() ||
       '';
     const chatFollowUpSecret =
       process.env.CHAT_FOLLOWUP_CRON_SECRET ||
-      process.env.JWT_SECRET?.slice(0, 32) ||
+      internalFallbackSecret() ||
       '';
     app.use(createChatFollowUpCronRouter(pool, chatFollowUpSecret, io));
     startFreeFollowupScheduler(pool, {
@@ -6314,7 +6315,7 @@ app.use('/api/approval-requests', apiRateLimit, createApprovalRequestRoutes(auth
   {
     const backupSecret =
       process.env.BACKUP_CRON_SECRET ||
-      process.env.JWT_SECRET?.slice(0, 32) ||
+      internalFallbackSecret() ||
       '';
     app.use(createBackupRouter(backupSecret, authenticateToken));
   }
@@ -6325,7 +6326,7 @@ app.use('/api/approval-requests', apiRateLimit, createApprovalRequestRoutes(auth
   {
     const priceRefreshSecret =
       process.env.PRICE_REFRESH_CRON_SECRET ||
-      process.env.JWT_SECRET?.slice(0, 32) ||
+      internalFallbackSecret() ||
       '';
     app.use(createListingPriceRefreshRouter(pool, priceRefreshSecret));
   }
@@ -6336,7 +6337,7 @@ app.use('/api/approval-requests', apiRateLimit, createApprovalRequestRoutes(auth
   {
     const taskReminderSecret =
       process.env.TASK_REMINDER_CRON_SECRET ||
-      process.env.JWT_SECRET?.slice(0, 32) ||
+      internalFallbackSecret() ||
       '';
     app.use(createTaskReminderCronRouter(pool, taskReminderSecret));
   }
@@ -6348,7 +6349,7 @@ app.use('/api/approval-requests', apiRateLimit, createApprovalRequestRoutes(auth
   {
     const geoMonitorSecret =
       process.env.GEO_MONITOR_CRON_SECRET ||
-      process.env.JWT_SECRET?.slice(0, 32) ||
+      internalFallbackSecret() ||
       '';
     app.use(createGeoMonitorCronRouter(pool, geoMonitorSecret, authenticateToken));
   }
@@ -6489,7 +6490,7 @@ app.get('/api/admin/agent-tasks', apiRateLimit, authenticateToken, async (req: e
   {
     const socialPublishingSecret =
       process.env.SOCIAL_PUBLISHING_CRON_SECRET ||
-      process.env.JWT_SECRET?.slice(0, 32) ||
+      internalFallbackSecret() ||
       '';
     app.use(createSocialPublishingCronRouter(pool, socialPublishingSecret));
     try {
@@ -6516,7 +6517,7 @@ app.get('/api/admin/agent-tasks', apiRateLimit, authenticateToken, async (req: e
   {
     const campaignSchedulerSecret =
       process.env.CAMPAIGN_SCHEDULER_CRON_SECRET ||
-      process.env.JWT_SECRET?.slice(0, 32) ||
+      internalFallbackSecret() ||
       '';
     app.use(createCampaignSchedulerCronRouter(pool, campaignSchedulerSecret));
     try {
@@ -6541,7 +6542,7 @@ app.get('/api/admin/agent-tasks', apiRateLimit, authenticateToken, async (req: e
   {
     const buyerPushSecret =
       process.env.BUYER_PUSH_CRON_SECRET ||
-      process.env.JWT_SECRET?.slice(0, 32) ||
+      internalFallbackSecret() ||
       '';
     app.use('/api', apiRateLimit);
     app.use(createBuyerPushRoutes(pool, buyerPushSecret, JWT_SECRET));
@@ -7921,7 +7922,7 @@ app.use('/api/v1', (req, _res, next) => {
   {
     const followUpCronSecret =
       process.env.FOLLOWUP_CRON_SECRET ||
-      process.env.JWT_SECRET?.slice(0, 32) ||
+      internalFallbackSecret() ||
       '';
     app.use(createFollowUpCronRouter(pool, followUpCronSecret));
     try {
@@ -7954,7 +7955,7 @@ app.use('/api/v1', (req, _res, next) => {
     if (isQstashVerified()) {
       try {
         const qstashToken = getQstashToken();
-        const rlhfSecret = process.env.RLHF_CRON_SECRET || process.env.JWT_SECRET?.slice(0, 32) || '';
+        const rlhfSecret = process.env.RLHF_CRON_SECRET || internalFallbackSecret() || '';
         const devDomain = process.env.REPLIT_DEV_DOMAIN;
         const prodDomain = process.env.REPLIT_DOMAINS?.split(',')[0]?.trim() || process.env.APP_DOMAIN;
         const appDomain = QSTASH_SCHEDULE_DOMAIN; // reliability fix: prod + PROD_DOMAIN only (was prodDomain || devDomain)
@@ -7989,7 +7990,7 @@ app.use('/api/v1', (req, _res, next) => {
       try {
         const engagementSecret =
           process.env.ENGAGEMENT_CRON_SECRET ||
-          process.env.JWT_SECRET?.slice(0, 32) ||
+          internalFallbackSecret() ||
           '';
         const devDomain2  = process.env.REPLIT_DEV_DOMAIN;
         const prodDomain2 = process.env.REPLIT_DOMAINS?.split(',')[0]?.trim() || process.env.APP_DOMAIN;
@@ -8029,7 +8030,7 @@ app.use('/api/v1', (req, _res, next) => {
       try {
         const backupSecret =
           process.env.BACKUP_CRON_SECRET ||
-          process.env.JWT_SECRET?.slice(0, 32) ||
+          internalFallbackSecret() ||
           '';
         const devDomain3  = process.env.REPLIT_DEV_DOMAIN;
         const prodDomain3 = process.env.REPLIT_DOMAINS?.split(',')[0]?.trim() || process.env.APP_DOMAIN;
@@ -8069,7 +8070,7 @@ app.use('/api/v1', (req, _res, next) => {
       try {
         const priceRefreshSecret =
           process.env.PRICE_REFRESH_CRON_SECRET ||
-          process.env.JWT_SECRET?.slice(0, 32) ||
+          internalFallbackSecret() ||
           '';
         const devDomain4  = process.env.REPLIT_DEV_DOMAIN;
         const prodDomain4 = process.env.REPLIT_DOMAINS?.split(',')[0]?.trim() || process.env.APP_DOMAIN;
@@ -8108,7 +8109,7 @@ app.use('/api/v1', (req, _res, next) => {
       try {
         const taskReminderSecret =
           process.env.TASK_REMINDER_CRON_SECRET ||
-          process.env.JWT_SECRET?.slice(0, 32) ||
+          internalFallbackSecret() ||
           '';
         const devDomain5  = process.env.REPLIT_DEV_DOMAIN;
         const prodDomain5 = process.env.REPLIT_DOMAINS?.split(',')[0]?.trim() || process.env.APP_DOMAIN;
@@ -8147,7 +8148,7 @@ app.use('/api/v1', (req, _res, next) => {
       try {
         const geoSecret =
           process.env.GEO_MONITOR_CRON_SECRET ||
-          process.env.JWT_SECRET?.slice(0, 32) ||
+          internalFallbackSecret() ||
           '';
         const devDomain7  = process.env.REPLIT_DEV_DOMAIN;
         const prodDomain7 = process.env.REPLIT_DOMAINS?.split(',')[0]?.trim() || process.env.APP_DOMAIN;
@@ -8186,7 +8187,7 @@ app.use('/api/v1', (req, _res, next) => {
       try {
         const campaignSchedulerSecret =
           process.env.CAMPAIGN_SCHEDULER_CRON_SECRET ||
-          process.env.JWT_SECRET?.slice(0, 32) ||
+          internalFallbackSecret() ||
           '';
         const devDomain6  = process.env.REPLIT_DEV_DOMAIN;
         const prodDomain6 = process.env.REPLIT_DOMAINS?.split(',')[0]?.trim() || process.env.APP_DOMAIN;
@@ -8225,7 +8226,7 @@ app.use('/api/v1', (req, _res, next) => {
       try {
         const chatFollowUpSecret8 =
           process.env.CHAT_FOLLOWUP_CRON_SECRET ||
-          process.env.JWT_SECRET?.slice(0, 32) ||
+          internalFallbackSecret() ||
           '';
         const prodDomain8  = process.env.PROD_DOMAIN;
         const devDomain8   = process.env.REPLIT_DEV_DOMAIN;

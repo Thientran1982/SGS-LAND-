@@ -28,7 +28,7 @@ export function authenticateBuyer(secret: string) {
     if (!token) return res.status(401).json({ error: 'Chưa đăng nhập' });
 
     try {
-      const decoded = jwt.verify(token, secret) as BuyerJwtPayload;
+      const decoded = jwt.verify(token, secret, { algorithms: ['HS256'] }) as BuyerJwtPayload;
       if (!decoded || decoded.aud !== 'buyer' || !decoded.sub) {
         return res.status(401).json({ error: 'Token không hợp lệ' });
       }

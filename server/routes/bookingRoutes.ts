@@ -434,7 +434,7 @@ export function createBookingRoutes(
       const tok = header.slice(7).trim();
       if (tok) {
         try {
-          const d = jwt.verify(tok, jwtSecret) as any;
+          const d = jwt.verify(tok, jwtSecret, { algorithms: ['HS256'] }) as any;
           if (d?.aud === 'buyer' && d?.sub) {
             return { kind: 'buyer', userId: String(d.sub) };
           }
@@ -447,7 +447,7 @@ export function createBookingRoutes(
     const cookieTok = (req as any).cookies?.token;
     if (cookieTok) {
       try {
-        const d = jwt.verify(cookieTok, jwtSecret) as any;
+        const d = jwt.verify(cookieTok, jwtSecret, { algorithms: ['HS256'] }) as any;
         if (d?.id || d?.userId) {
           return {
             kind: 'staff',
@@ -542,7 +542,9 @@ export function createBookingRoutes(
         );
         const proto = (req.headers['x-forwarded-proto'] as string) || req.protocol || 'https';
         const host = (req.headers['x-forwarded-host'] as string) || req.headers.host || '';
-        const url = `${proto}://${host}/api/bookings/${id}/receipt?t=${encodeURIComponent(token)}`;
+        const configuredBase = (process.env.APP_URL || process.env.PUBLIC_URL || '').replace(/\/+$/, '');
+        const base = configuredBase || `${proto}://${host}`;
+        const url = `${base}/api/bookings/${id}/receipt?t=${encodeURIComponent(token)}`;
         res.json({ url, expiresInSec: 300 });
       } catch (err: any) {
         logger.error('[bookings/receipt-token] ' + (err?.message || err));
@@ -563,7 +565,7 @@ export function createBookingRoutes(
       const queryToken = String(req.query.t || '');
       if (queryToken) {
         try {
-          const d = jwt.verify(queryToken, jwtSecret) as any;
+          const d = jwt.verify(queryToken, jwtSecret, { algorithms: ['HS256'] }) as any;
           if (d?.kind === 'booking_receipt' && d?.sub === id) {
             const r = await pool.query(
               `SELECT b.*, l.title AS listing_title, l.code AS listing_code
