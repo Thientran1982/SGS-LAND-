@@ -110,6 +110,7 @@
 - [Live-chat attachment telemetry](livechat-attachment-telemetry.md) — separate unreadable attachments from provider failures using bounded categorical metrics only
 - [Live-chat repair interaction identity](livechat-repair-interaction.md) — repair runs reuse the original outbound interaction instead of creating a second answer
 - [Admin Cockpit degraded mode](admin-cockpit-degraded-mode.md) — temporary DB pool failures return explicit degraded data instead of a fatal dashboard error or false healthy zeroes
+- [Dashboard visualization data policy](dashboard-visualization-data-policy.md) — preserve zero vs unavailable and metric direction; never invent targets or fill missing trends
 - [QStash regional endpoint](qstash-regional-endpoint.md) — QStash tokens are region-bound; verify the configured API origin before registering schedules
 - [Router eval provider separation](router-evaluation-provider-separation.md) — separate provider outages from model/extraction failures and gate router-only runs on full contract pass
 - [Minh opportunity detectors](minh-opportunity-detectors.md) — proactive scans stay fail-closed, tenant-scoped, read-only, and bounded with indexed evidence matching

@@ -19,6 +19,7 @@ import { useSocket, socket } from '../services/websocket';
 import { SeoHead } from '../components/SeoHead';
 import { OverviewHome, OverviewGreeting, ShellPageActions } from '../components/dashboard/OverviewHome';
 import { AdvancedTrendCharts } from '../components/dashboard/AdvancedTrendCharts';
+import { DashboardMetricRing, DashboardValueBars } from '../components/dashboard/DashboardVisuals';
 // --- ICONS ---
 const ICONS = {
     TREND_UP: <svg className="w-3 h-3 text-sgs-verified dark:text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" /></svg>,
@@ -229,16 +230,6 @@ const SegmentToggle = ({ value, onChange, options }: { value: string; onChange: 
     </div>
 );
 
-const DashboardMiniCard = ({ label, value, href, tone = 'default', surface = 'glass' }: { label: string; value: number | string; href?: string; tone?: 'default' | 'warning' | 'danger'; surface?: 'glass' | 'panel' }) => {
-    const content = (
-        <div className={`rounded-xl border px-3 py-3 text-center transition-colors ${tone === 'danger' ? 'border-[var(--ui-danger)]/25 bg-[var(--ui-danger)]/5' : tone === 'warning' ? 'border-[var(--sgs-accent)]/25 bg-[var(--sgs-accent)]/5' : `border-[var(--glass-border)] ${surface === 'panel' ? 'bg-[var(--bg-surface)]' : 'bg-[var(--glass-surface)]'}`} ${href ? 'hover:border-[var(--sgs-primary)]/40' : ''}`}>
-            <div className="text-xs2 font-bold uppercase tracking-wider text-[var(--text-tertiary)]">{label}</div>
-            <div className={`mt-1 text-xl font-extrabold ${tone === 'danger' ? 'text-[var(--ui-danger)]' : tone === 'warning' ? 'text-[var(--sgs-accent-text)]' : 'text-[var(--text-primary)]'}`}>{value}</div>
-        </div>
-    );
-    return href ? <a href={href} className="block min-w-0">{content}</a> : content;
-};
-
 const PriorityAlertCenter = ({ analytics, language }: { analytics: any; language: string }) => {
     const copy = language === 'vn'
         ? { title: 'Cảnh báo ưu tiên', empty: 'Không có cảnh báo ưu tiên', system: 'Hệ thống', followup: 'Khách chưa phản hồi', contract: 'Hợp đồng sắp hết hạn', ai: 'Cảnh báo AI' }
@@ -276,21 +267,24 @@ const WorkQueueStrip = ({ analytics, language }: { analytics: any; language: str
         ? { title: 'Việc cần làm', contracts: 'Hợp đồng cần xử lý', approvals: 'Yêu cầu chờ duyệt', followups: 'Khách cần follow-up' }
         : { title: 'Tasks & Approvals', contracts: 'Contracts to handle', approvals: 'Pending approvals', followups: 'Leads to follow up' };
     const queue = analytics?.workQueue || {};
+    const valueOrNull = (value: unknown): number | null => {
+        const parsed = Number(value);
+        return value !== undefined && value !== null && Number.isFinite(parsed) && parsed >= 0 ? parsed : null;
+    };
+    const metrics = [
+        { label: copy.contracts, value: valueOrNull(queue.contracts ?? analytics?.pendingContracts), href: '/contracts', color: 'var(--ui-danger)' },
+        { label: copy.approvals, value: valueOrNull(queue.approvals ?? analytics?.pendingApprovals), href: '/approvals', color: 'var(--sgs-accent)' },
+        { label: copy.followups, value: valueOrNull(queue.followups ?? analytics?.unresponsiveLeadCount), href: '/leads', color: 'var(--sgs-primary)' },
+    ];
     return (
         <section aria-label={copy.title}>
             <div className="dashboard-subhead mb-2">{copy.title}</div>
-            <div className="dashboard-queue grid grid-cols-3 gap-2">
-                {(() => {
-                    const contracts = Number(queue.contracts ?? analytics?.pendingContracts ?? 0) || 0;
-                    const approvals = Number(queue.approvals ?? analytics?.pendingApprovals ?? 0) || 0;
-                    const followups = Number(queue.followups ?? analytics?.unresponsiveLeadCount ?? 0) || 0;
-                    return <>
-                        <DashboardMiniCard label={copy.contracts} value={contracts} href="/contracts" tone={contracts > 0 ? 'danger' : 'default'} surface="panel" />
-                        <DashboardMiniCard label={copy.approvals} value={approvals} href="/approvals" tone={approvals > 0 ? 'warning' : 'default'} surface="panel" />
-                        <DashboardMiniCard label={copy.followups} value={followups} href="/leads" tone={followups > 0 ? 'warning' : 'default'} surface="panel" />
-                    </>;
-                })()}
-            </div>
+            <DashboardValueBars
+                items={metrics}
+                locale={language === 'vn' ? 'vi-VN' : 'en-US'}
+                ariaLabel={copy.title}
+                emptyText={language === 'vn' ? 'Chưa có dữ liệu hàng đợi' : 'Queue data unavailable'}
+            />
         </section>
     );
 };
@@ -301,20 +295,32 @@ const InventoryOverviewWidget = ({ analytics, language }: { analytics: any; lang
         : { title: 'Property Inventory', active: 'Active', sold: 'Sold', rented: 'Rented', expired: 'Expired', pending: 'Pending approval', top: 'Most viewed this week', empty: 'No featured data yet' };
     const inventory = analytics?.inventoryOverview || {};
     const topListings = Array.isArray(inventory.topListings) ? inventory.topListings : [];
+    const valueOrNull = (value: unknown): number | null => {
+        const parsed = Number(value);
+        return value !== undefined && value !== null && Number.isFinite(parsed) && parsed >= 0 ? parsed : null;
+    };
+    const inventoryMetrics = [
+        { label: copy.active, value: valueOrNull(inventory.active ?? analytics?.availableListings), color: 'var(--sgs-primary)' },
+        { label: copy.sold, value: valueOrNull(inventory.sold), color: 'var(--ui-success)' },
+        { label: copy.rented, value: valueOrNull(inventory.rented), color: 'var(--ui-info)' },
+        { label: copy.expired, value: valueOrNull(inventory.expired), color: 'var(--ui-danger)' },
+    ];
     return (
         <section className="dashboard-panel min-w-0" aria-label={copy.title}>
             <div className="dashboard-panel-head">
                 <h2>{copy.title}</h2>
                 <a href="/inventory" className="text-xs font-semibold text-[var(--sgs-primary)]">{language === 'vn' ? 'Xem kho' : 'Open inventory'}</a>
             </div>
-            <div className="grid grid-cols-2 gap-2 px-4 py-4">
-                <DashboardMiniCard label={copy.active} value={inventory.active ?? analytics?.availableListings ?? 0} surface="panel" />
-                <DashboardMiniCard label={copy.sold} value={inventory.sold ?? 0} surface="panel" />
-                <DashboardMiniCard label={copy.rented} value={inventory.rented ?? 0} surface="panel" />
-                <DashboardMiniCard label={copy.expired} value={inventory.expired ?? 0} surface="panel" />
+            <div className="px-4 py-4">
+                <DashboardValueBars
+                    items={inventoryMetrics}
+                    locale={language === 'vn' ? 'vi-VN' : 'en-US'}
+                    ariaLabel={copy.title}
+                    emptyText={language === 'vn' ? 'Chưa có dữ liệu tồn kho' : 'Inventory data unavailable'}
+                />
             </div>
-            <a href="/approvals" className="mx-4 mt-3 flex items-center justify-between rounded-xl border border-[var(--sgs-accent)]/25 bg-[var(--sgs-accent)]/5 px-3 py-2 text-xs font-semibold text-[var(--sgs-accent-text)]">
-                <span>{copy.pending}</span><strong>{inventory.pendingApproval ?? 0}</strong>
+            <a href="/approvals" className="mx-4 mt-1 flex items-center justify-between gap-3 rounded-xl border border-[var(--sgs-accent)]/25 bg-[var(--sgs-accent)]/5 px-3 py-2 text-xs font-semibold text-[var(--sgs-accent-text)]">
+                <span>{copy.pending}</span><strong className="font-mono">{valueOrNull(inventory.pendingApproval) === null ? '—' : valueOrNull(inventory.pendingApproval)}</strong>
             </a>
             <div className="mx-4 mt-4 dashboard-subhead">{copy.top}</div>
             <div className="mx-4 mt-2 space-y-2 pb-4">
@@ -332,24 +338,34 @@ const InventoryOverviewWidget = ({ analytics, language }: { analytics: any; lang
 const InboxOverviewWidget = ({ analytics, language }: { analytics: any; language: string }) => {
     const copy = language === 'vn' ? { title: 'Hộp thư đa kênh', response: 'Phản hồi trung bình', empty: 'Chưa có tin nhắn chưa đọc' } : { title: 'Omnichannel Inbox', response: 'Average response', empty: 'No unread messages' };
     const inbox = analytics?.inboxOverview || {};
-    const safeCount = (value: unknown) => {
+    const safeCount = (value: unknown): number | null => {
         const parsed = Number(value);
-        return Number.isFinite(parsed) && parsed >= 0 ? parsed : 0;
+        return value !== undefined && value !== null && Number.isFinite(parsed) && parsed >= 0 ? parsed : null;
     };
     const channels = [
-        { key: 'Zalo', value: safeCount(inbox.zalo) },
-        { key: 'Facebook', value: safeCount(inbox.facebook) },
-        { key: 'Web chat', value: safeCount(inbox.webChat ?? inbox.web_chat) },
+        { label: 'Zalo', value: safeCount(inbox.zalo), color: 'var(--sgs-primary)' },
+        { label: 'Facebook', value: safeCount(inbox.facebook), color: 'var(--ui-info)' },
+        { label: language === 'vn' ? 'Trò chuyện web' : 'Web chat', value: safeCount(inbox.webChat ?? inbox.web_chat), color: 'var(--sgs-accent)' },
     ];
+    const inboxChannelsAvailable = channels.every(channel => channel.value !== null);
     return (
         <section className="dashboard-panel min-w-0" aria-label={copy.title}>
             <div className="dashboard-panel-head"><h2>{copy.title}</h2><a href="/inbox" className="text-xs font-semibold text-[var(--sgs-primary)]">{language === 'vn' ? 'Mở hộp thư' : 'Open inbox'}</a></div>
-            <div className="grid grid-cols-3 gap-2 px-4 py-4">{channels.map(channel => <DashboardMiniCard key={channel.key} label={channel.key} value={channel.value} surface="panel" />)}</div>
+            <div className="px-4 py-4">
+                <DashboardValueBars
+                    items={channels}
+                    locale={language === 'vn' ? 'vi-VN' : 'en-US'}
+                    ariaLabel={copy.title}
+                    emptyText={language === 'vn' ? 'Chưa có dữ liệu kênh' : 'Channel data unavailable'}
+                />
+            </div>
+            {inboxChannelsAvailable && channels.every(channel => channel.value === 0) && (
+                <div className="mx-4 -mt-2 pb-3 text-xs text-[var(--text-tertiary)]">{copy.empty}</div>
+            )}
             <div className="mx-4 mb-4 flex items-center justify-between rounded-xl bg-[var(--bg-surface)] px-3 py-2.5 text-xs">
                 <span className="text-[var(--text-tertiary)]">{copy.response}</span>
-                <strong className="font-mono text-[var(--text-primary)]">{formatDuration(inbox.avgResponseMinutes, language)}</strong>
+                <strong className="font-mono text-[var(--text-primary)]">{inbox.avgResponseMinutes == null ? '—' : formatDuration(inbox.avgResponseMinutes, language)}</strong>
             </div>
-            {!channels.some(channel => channel.value > 0) && <div className="mx-4 mt-3 pb-4 text-xs text-[var(--text-tertiary)]">{copy.empty}</div>}
         </section>
     );
 };
@@ -1013,6 +1029,17 @@ export const Dashboard: React.FC = () => {
     };
     const pipelineTarget = kpiTarget('pipeline', Number(overview.pipelineValue || 0));
     const velocityTarget = kpiTarget('salesVelocity', Number(overview.salesVelocity || 0));
+    const pipelineValueAvailable = overview.pipelineValue != null && Number.isFinite(Number(overview.pipelineValue));
+    const velocityValueAvailable = overview.salesVelocity != null && Number.isFinite(Number(overview.salesVelocity));
+    const velocityMetric = velocityValueAvailable ? Number(overview.salesVelocity) : null;
+    const velocityHasClosedDeals = velocityMetric !== null && velocityMetric > 0;
+    const winProbabilityValue = overview.winProbability == null || !Number.isFinite(Number(overview.winProbability))
+        || Number(overview.winProbability) < 0 || Number(overview.winProbability) > 100
+        ? null
+        : Number(overview.winProbability);
+    const aiDeflectionValue = overview.aiDeflectionRate == null || !Number.isFinite(Number(overview.aiDeflectionRate))
+        ? null
+        : Number(overview.aiDeflectionRate);
     const sourceData = Object.entries(overview.leadsBySource || {}).sort(([, a]: any, [, b]: any) => b - a);
     const sourceTotal = sourceData.reduce((total, [, count]: any) => total + Math.max(0, Number(count) || 0), 0);
     const lbRows: any[] = leaderboardMode === 'team' ? (overview.teamLeaderboard || []) : (analytics.agentLeaderboard || []);
@@ -1117,20 +1144,72 @@ export const Dashboard: React.FC = () => {
                         <section className="dashboard-kpis" aria-label={t('dash.overview_subtitle')}>
                         <div className="dashboard-kpi">
                             <div className="kpi-label">{t('dash.pipeline_value')}</div>
-                            <div className="kpi-value dash-number break-words">{formatCompactNumber(analytics.pipelineValue || 0)}</div>
-                            <div className="kpi-meta">{t('dash.win_probability')}: <strong className="dash-number text-[var(--sgs-primary)]">{analytics.winProbability || 0}%</strong></div>
-                            {pipelineTarget.target > 0 && <ProgressBar value={pipelineTarget.progress} label={`${pipelineTarget.progress}% ${ui.target}`} />}
+                            <div className="flex items-center justify-between gap-2">
+                                <div className="kpi-value dash-number min-w-0 break-words">{pipelineValueAvailable ? formatCompactNumber(analytics.pipelineValue) : '—'}</div>
+                                <DashboardMetricRing
+                                    value={winProbabilityValue}
+                                    color="var(--sgs-accent)"
+                                    label={language === 'vn'
+                                        ? `Xác suất chốt: ${winProbabilityValue === null ? 'chưa có dữ liệu' : `${Math.round(winProbabilityValue)}%`}`
+                                        : `Win probability: ${winProbabilityValue === null ? 'unavailable' : `${Math.round(winProbabilityValue)}%`}`}
+                                />
+                            </div>
+                            <div className="kpi-meta">{t('dash.win_probability')}: <strong className="dash-number text-[var(--sgs-primary)]">{winProbabilityValue === null ? '—' : `${Math.round(winProbabilityValue)}%`}</strong></div>
+                            {pipelineTarget.target > 0 && pipelineValueAvailable && <ProgressBar value={pipelineTarget.progress} label={`${pipelineTarget.progress}% ${ui.target}`} />}
                         </div>
                         <div className="dashboard-kpi">
                             <div className="kpi-label">{t('dash.ai_deflection_rate')}</div>
-                            <div className="kpi-value dash-number">{Math.round(Number(analytics.aiDeflectionRate) || 0)}%</div>
-                            <div className="kpi-meta"><TrendIndicator value={analytics.aiDeflectionRateDelta || 0} label={t('dash.vs_last_period')} /></div>
+                            <div className="flex items-center justify-between gap-2">
+                                <div className="kpi-value dash-number">{aiDeflectionValue === null ? '—' : `${Math.round(aiDeflectionValue)}%`}</div>
+                                <DashboardMetricRing
+                                    value={aiDeflectionValue}
+                                    label={language === 'vn'
+                                        ? `Tỷ lệ AI tự xử lý: ${aiDeflectionValue === null ? 'chưa có dữ liệu' : `${Math.round(aiDeflectionValue)}%`}`
+                                        : `AI deflection rate: ${aiDeflectionValue === null ? 'unavailable' : `${Math.round(aiDeflectionValue)}%`}`}
+                                />
+                            </div>
+                            <div className="kpi-meta">
+                                {overview.aiDeflectionRateDelta == null || !Number.isFinite(Number(overview.aiDeflectionRateDelta))
+                                    ? <span className="text-[var(--text-tertiary)]">— · {t('dash.vs_last_period')}</span>
+                                    : <TrendIndicator value={Number(overview.aiDeflectionRateDelta)} label={t('dash.vs_last_period')} />}
+                            </div>
                         </div>
                         <div className="dashboard-kpi">
                             <div className="kpi-label">{t('dash.sales_velocity')}</div>
                             <div className="kpi-value dash-number">{analytics.salesVelocity > 0 && analytics.salesVelocity < 1 ? '< 1' : (analytics.salesVelocity || '--')}</div>
-                            <div className="kpi-meta">{analytics.salesVelocity > 0 ? t('dash.days_to_close') : t('dash.no_closed_deals')} <TrendIndicator value={analytics.salesVelocityDelta || 0} label="" /></div>
-                            {velocityTarget.target > 0 && <ProgressBar value={velocityTarget.progress} label={`${velocityTarget.progress}% ${ui.target}`} />}
+                            <div className="kpi-meta">
+                                {analytics.salesVelocity > 0 ? t('dash.days_to_close') : t('dash.no_closed_deals')}{' '}
+                                {overview.salesVelocityDelta == null || !Number.isFinite(Number(overview.salesVelocityDelta))
+                                    ? <span className="text-[var(--text-tertiary)]">—</span>
+                                    : <TrendIndicator value={Number(overview.salesVelocityDelta)} label="" />}
+                            </div>
+                            {velocityTarget.target > 0 && velocityHasClosedDeals && (
+                                <div
+                                    className="mt-3 space-y-1.5"
+                                    role="group"
+                                    aria-label={language === 'vn'
+                                        ? `Tốc độ bán hàng trung bình ${velocityMetric!.toLocaleString('vi-VN', { maximumFractionDigits: 1 })} ngày; mục tiêu không quá ${velocityTarget.target.toLocaleString('vi-VN', { maximumFractionDigits: 1 })} ngày`
+                                        : `Average sales velocity ${velocityMetric!.toLocaleString('en-US', { maximumFractionDigits: 1 })} days; target no more than ${velocityTarget.target.toLocaleString('en-US', { maximumFractionDigits: 1 })} days`}
+                                >
+                                    <div className="flex items-center justify-between gap-2 text-[11px] text-[var(--text-tertiary)]">
+                                        <span>{language === 'vn' ? 'Thời gian chốt TB' : 'Average close time'}</span>
+                                        <span className="shrink-0">
+                                            {language === 'vn' ? 'Mục tiêu ≤ ' : 'Target ≤ '}
+                                            {velocityTarget.target.toLocaleString(language === 'vn' ? 'vi-VN' : 'en-US', { maximumFractionDigits: 1 })}
+                                            {language === 'vn' ? ' ngày' : ' days'}
+                                        </span>
+                                    </div>
+                                    <div className="h-2 overflow-hidden rounded-full bg-[var(--glass-surface-hover)]" aria-hidden="true">
+                                        <div
+                                            className="h-full rounded-full transition-[width] duration-300"
+                                            style={{
+                                                width: `${Math.min(100, (velocityMetric! / velocityTarget.target) * 100)}%`,
+                                                background: velocityMetric! <= velocityTarget.target ? 'var(--ui-success)' : 'var(--ui-danger)',
+                                            }}
+                                        />
+                                    </div>
+                                </div>
+                            )}
                         </div>
                         </section>
                     </section>

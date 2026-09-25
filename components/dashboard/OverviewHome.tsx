@@ -7,6 +7,7 @@ import { api } from '../../services/api';
 import { useTranslation } from '../../services/i18n';
 import { ROUTES } from '../../config/routes';
 import { LeadStage } from '../../types';
+import { DashboardMetricRing } from './DashboardVisuals';
 
 /**
  * Overview home (Phase 2 redesign).
@@ -90,6 +91,7 @@ export const OverviewGreeting: React.FC<{ analytics: any }> = ({ analytics }) =>
 /* ---------- Shared bits ---------- */
 const Delta: React.FC<{ value: unknown }> = ({ value }) => {
     const tr = useTr();
+    if (value == null || !Number.isFinite(Number(value))) return <span className="text-[var(--text-tertiary)]">—</span>;
     const v = Math.round(toNum(value) * 10) / 10;
     if (v === 0) return <span className="text-[var(--text-tertiary)]">{tr('overview.delta_flat')}</span>;
     return (
@@ -99,12 +101,15 @@ const Delta: React.FC<{ value: unknown }> = ({ value }) => {
     );
 };
 
-const KpiCell: React.FC<{ label: string; value?: React.ReactNode; meta?: React.ReactNode; emptyText?: string; emptyLink?: { to: string; label: string }; accent?: boolean; footer?: React.ReactNode }> = ({ label, value, meta, emptyText, emptyLink, accent, footer }) => (
+const KpiCell: React.FC<{ label: string; value?: React.ReactNode; meta?: React.ReactNode; emptyText?: string; emptyLink?: { to: string; label: string }; accent?: boolean; footer?: React.ReactNode; visual?: React.ReactNode }> = ({ label, value, meta, emptyText, emptyLink, accent, footer, visual }) => (
     <div className="dashboard-kpi">
         <div className="kpi-label">{label}</div>
         {value !== undefined ? (
             <>
-                <div className={`kpi-value dash-number break-words ${accent ? 'text-[var(--sgs-primary)]' : ''}`}>{value}</div>
+                <div className="flex items-center justify-between gap-2">
+                    <div className={`kpi-value dash-number min-w-0 break-words ${accent ? 'text-[var(--sgs-primary)]' : ''}`}>{value}</div>
+                    {visual}
+                </div>
                 <div className="kpi-meta">{meta}</div>
             </>
         ) : (
@@ -212,6 +217,7 @@ export const OverviewHome: React.FC<{ analytics: any; formatCompactNumber: (n: n
 
     const totalLeads = toNum(analytics?.totalLeads);
     const revenue = toNum(analytics?.revenue);
+    const revenueAvailable = analytics?.revenue != null && Number.isFinite(Number(analytics.revenue));
     const revenueTarget = toNum(analytics?.targets?.revenue?.monthly_target ?? analytics?.targets?.revenue?.monthlyTarget);
     const revenueTargetProgress = revenueTarget > 0 ? Math.round((revenue / revenueTarget) * 100) : 0;
 
@@ -266,13 +272,15 @@ export const OverviewHome: React.FC<{ analytics: any; formatCompactNumber: (n: n
                             value={revenue > 0 ? formatCompactNumber(revenue) : undefined}
                             meta={<Delta value={analytics?.revenueDelta} />}
                             emptyText={tr('overview.empty_revenue')}
-                            footer={revenueTarget > 0 ? (
-                                <div className="space-y-1">
-                                    <div className="text-xs text-[var(--text-tertiary)]">{tr('overview.target_progress', { n: revenueTargetProgress })}</div>
-                                    <div className="h-1.5 overflow-hidden rounded-full bg-[var(--glass-surface-hover)]">
-                                        <div className="h-full rounded-full bg-[var(--sgs-primary)]" style={{ width: `${Math.min(100, Math.max(0, revenueTargetProgress))}%` }} />
-                                    </div>
-                                </div>
+                            visual={revenueAvailable && revenueTarget > 0 ? (
+                                <DashboardMetricRing
+                                    value={revenueTargetProgress}
+                                    color="var(--sgs-accent)"
+                                    label={`${tr('overview.kpi_revenue')}: ${revenueTargetProgress}% ${tr('overview.target_progress', { n: revenueTargetProgress })}`}
+                                />
+                            ) : undefined}
+                            footer={revenueAvailable && revenueTarget > 0 ? (
+                                <div className="text-xs text-[var(--text-tertiary)]">{tr('overview.target_progress', { n: revenueTargetProgress })}</div>
                             ) : undefined}
                         />
                         <KpiCell
