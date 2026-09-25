@@ -1,5 +1,21 @@
-import React, { useEffect, useRef, useState } from 'react';
-import { Bot, ChevronDown, MessageCircle, RefreshCw, Send, X, LifeBuoy, Clock3 } from 'lucide-react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
+import {
+    Bot,
+    ChevronDown,
+    Clock3,
+    LifeBuoy,
+    ListTodo,
+    Maximize2,
+    Mic,
+    MicOff,
+    Minimize2,
+    Paperclip,
+    Plus,
+    RefreshCw,
+    Send,
+    ShieldCheck,
+    X,
+} from 'lucide-react';
 import { api } from '../services/api/apiClient';
 import { useTranslation } from '../services/i18n';
 
@@ -12,6 +28,11 @@ type ChatMessage = {
     freshness?: string;
     status?: 'ok' | 'empty' | 'forbidden';
     escalationReason?: string;
+    approval?: {
+        id: string;
+        title?: string;
+        status?: string;
+    };
 };
 
 type AssistantResponse = {
@@ -22,142 +43,129 @@ type AssistantResponse = {
     freshness?: string;
     status?: 'ok' | 'empty' | 'forbidden';
     escalationReason?: string;
+    approval?: {
+        id?: string;
+        title?: string;
+        status?: string;
+    };
 };
 
 type SupportRequest = {
-    id: string; trackingCode: string; title: string; status: string; updatedAt: string;
+    id: string;
+    trackingCode: string;
+    title: string;
+    status: string;
+    updatedAt: string;
     latestReply?: string | null;
 };
 
-const MAX_HISTORY = 12;
+type PendingApprovalRequest = {
+    id: string;
+    actionType?: string;
+    title?: string;
+    summary?: string;
+    status: string;
+    leadName?: string;
+};
 
-export const GuideAssistant: React.FC = () => {
-    const { language } = useTranslation();
-    const isVietnamese = language === 'vn';
-    const [open, setOpen] = useState(false);
+type Conversation = {
+    id: string;
+    sessionId: string;
+    messages: ChatMessage[];
+    updatedAt: number;
+};
+
+type SupportDraft = { title: string; description: string };
+
+type SpeechResultEvent = {
+    results: ArrayLike<ArrayLike<{ transcript?: string }>>;
+};
+
+type SpeechRecognitionLike = {
+    lang: string;
+    interimResults: boolean;
+    onresult: ((event: SpeechResultEvent) => void) | null;
+    onerror: (() => void) | null;
+    onend: (() => void) | null;
+    start: () => void;
+    stop: () => void;
+};
+
+type SpeechRecognitionConstructor = new () => SpeechRecognitionLike;
+
+type GuideAssistantProps = {
+    open: boolean;
+    onClose: () => void;
+    onOpenApprovals?: () => void;
+    canApprove?: boolean;
+    activeRoute?: string;
+    currentTitle?: string;
+};
+
+const MAX_HISTORY = 12;
+const MAX_RECENT_CONVERSATIONS = 8;
+
+const createConversation = (): Conversation => {
+    const id = `conversation-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+    return {
+        id,
+        sessionId: `guide-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+        messages: [],
+        updatedAt: Date.now(),
+    };
+};
+
+export const GuideAssistant: React.FC<GuideAssistantProps> = ({
+    open,
+    onClose,
+    onOpenApprovals,
+    canApprove = false,
+    activeRoute,
+    currentTitle,
+}) => {
+    const { t, formatDateTime } = useTranslation();
     const [input, setInput] = useState('');
-    const [sending, setSending] = useState(false);
+    const [sendingConversationIds, setSendingConversationIds] = useState<string[]>([]);
     const [error, setError] = useState('');
-    const [messages, setMessages] = useState<ChatMessage[]>([]);
+    const [approvingApprovalId, setApprovingApprovalId] = useState<string | null>(null);
+    const [conversations, setConversations] = useState<Conversation[]>(() => [createConversation()]);
+    const [activeConversationId, setActiveConversationId] = useState('');
     const [support, setSupport] = useState<SupportRequest[]>([]);
-    const [supportDraft, setSupportDraft] = useState<{ title: string; description: string } | null>(null);
+    const [supportDraft, setSupportDraft] = useState<SupportDraft | null>(null);
     const [supportConsent, setSupportConsent] = useState(false);
     const [supportSending, setSupportSending] = useState(false);
-    const [togglePosition, setTogglePosition] = useState<{ left: number; top: number } | null>(null);
+    const [pendingApprovals, setPendingApprovals] = useState<PendingApprovalRequest[]>([]);
+    const [approvalQueueCount, setApprovalQueueCount] = useState(0);
+    const [approvalQueueLoading, setApprovalQueueLoading] = useState(false);
+    const [approvalQueueUnavailable, setApprovalQueueUnavailable] = useState(false);
+    const [expanded, setExpanded] = useState(false);
+    const [isListening, setIsListening] = useState(false);
+    const [voiceNotice, setVoiceNotice] = useState('');
     const endRef = useRef<HTMLDivElement>(null);
-    const sessionIdRef = useRef(`guide-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`);
-    const togglePositionRef = useRef(togglePosition);
-    const dragOffsetRef = useRef({ x: 0, y: 0 });
-    const dragStartRef = useRef({ x: 0, y: 0 });
-    const draggingRef = useRef(false);
-    const movedRef = useRef(false);
+    const recognitionRef = useRef<SpeechRecognitionLike | null>(null);
+    const [failedMessage, setFailedMessage] = useState('');
+
+    const activeConversation = useMemo(
+        () => conversations.find(conversation => conversation.id === activeConversationId) ?? conversations[0],
+        [activeConversationId, conversations],
+    );
+    const messages = activeConversation?.messages ?? [];
+    const sending = Boolean(activeConversation && sendingConversationIds.includes(activeConversation.id));
+    const isSupportDraftOpen = supportDraft !== null;
+    const todoCount = canApprove ? Math.max(approvalQueueCount, pendingApprovals.length) : 0;
+    const hasUncertainApproval = pendingApprovals.some(approval => approval.status.toUpperCase() === 'UNKNOWN');
 
     useEffect(() => {
-        try {
-            const saved = window.localStorage.getItem('sgs_guide_toggle_position');
-            if (saved) {
-                const position = JSON.parse(saved);
-                if (Number.isFinite(position?.left) && Number.isFinite(position?.top)) {
-                    setTogglePosition({ left: position.left, top: position.top });
-                }
-            }
-        } catch {
-            // Ignore malformed local position and use the default corner.
-        }
-    }, []);
+        if (!activeConversationId && conversations[0]) setActiveConversationId(conversations[0].id);
+    }, [activeConversationId, conversations]);
 
     useEffect(() => {
-        togglePositionRef.current = togglePosition;
-    }, [togglePosition]);
-
-    const handleTogglePointerDown = (event: React.PointerEvent<HTMLButtonElement>) => {
-        if (event.button !== 0) return;
-        const rect = event.currentTarget.getBoundingClientRect();
-        dragOffsetRef.current = { x: event.clientX - rect.left, y: event.clientY - rect.top };
-        dragStartRef.current = { x: event.clientX, y: event.clientY };
-        draggingRef.current = true;
-        movedRef.current = false;
-        event.currentTarget.setPointerCapture(event.pointerId);
-    };
-
-    const handleTogglePointerMove = (event: React.PointerEvent<HTMLButtonElement>) => {
-        if (!draggingRef.current) return;
-        const deltaX = Math.abs(event.clientX - dragStartRef.current.x);
-        const deltaY = Math.abs(event.clientY - dragStartRef.current.y);
-        if (deltaX > 4 || deltaY > 4) movedRef.current = true;
-        const width = event.currentTarget.offsetWidth;
-        const height = event.currentTarget.offsetHeight;
-        const left = Math.max(8, Math.min(window.innerWidth - width - 8, event.clientX - dragOffsetRef.current.x));
-        const top = Math.max(8, Math.min(window.innerHeight - height - 8, event.clientY - dragOffsetRef.current.y));
-        setTogglePosition({ left, top });
-    };
-
-    const handleTogglePointerUp = (event: React.PointerEvent<HTMLButtonElement>) => {
-        if (!draggingRef.current) return;
-        draggingRef.current = false;
-        if (event.currentTarget.hasPointerCapture(event.pointerId)) event.currentTarget.releasePointerCapture(event.pointerId);
-        if (movedRef.current && togglePositionRef.current) {
-            window.localStorage.setItem('sgs_guide_toggle_position', JSON.stringify(togglePositionRef.current));
-        }
-    };
-
-    const copy = isVietnamese ? {
-        title: 'Trợ lý hướng dẫn',
-        subtitle: 'Hỏi về cách dùng và dữ liệu bạn được phép xem',
-        placeholder: 'Bạn muốn hỏi điều gì?',
-        welcome: 'Xin chào! Tôi có thể hướng dẫn cách dùng SGS LAND hoặc tra cứu số liệu trong phạm vi quyền của bạn.',
-        suggestion1: 'Tôi có thể làm gì trên Dashboard?',
-        suggestion2: 'Tóm tắt các lead hiện tại',
-        suggestion3: 'Làm thế nào để tạo một lead?',
-        empty: 'Chưa có cuộc trò chuyện',
-        reset: 'Bắt đầu lại',
-        close: 'Đóng trợ lý',
-        open: 'Mở trợ lý hướng dẫn',
-        sending: 'Đang tra cứu...',
-        error: 'Không thể kết nối trợ lý. Vui lòng thử lại.',
-        source: 'Nguồn',
-        scope: 'Dữ liệu theo quyền truy cập của bạn',
-        escalation: 'Cần nhân viên xác minh',
-        support: 'Tạo yêu cầu hỗ trợ',
-        supportTitle: 'Gửi yêu cầu cho nhân viên',
-        supportDescription: 'Mô tả ngắn gọn vấn đề (không gửi mật khẩu, OTP, token hoặc thông tin thẻ).',
-        supportConsent: 'Tôi đồng ý gửi thông tin này cho nhân viên SGS LAND để xử lý.',
-        submitSupport: 'Gửi yêu cầu',
-        tracking: 'Mã yêu cầu',
-        updated: 'Cập nhật',
-        received: 'Đã tiếp nhận',
-        supportError: 'Không thể tạo yêu cầu. Vui lòng thử lại.',
-    } : {
-        title: 'Guide assistant',
-        subtitle: 'Ask about workflows and data you can access',
-        placeholder: 'What would you like to ask?',
-        welcome: 'Hello! I can guide you through SGS LAND or look up metrics within your access scope.',
-        suggestion1: 'What can I do on the Dashboard?',
-        suggestion2: 'Summarize the current leads',
-        suggestion3: 'How do I create a lead?',
-        empty: 'No conversation yet',
-        reset: 'Start over',
-        close: 'Close assistant',
-        open: 'Open guide assistant',
-        sending: 'Looking it up...',
-        error: 'The assistant could not connect. Please try again.',
-        source: 'Source',
-        scope: 'Data is limited to your access scope',
-        escalation: 'Employee verification required',
-        support: 'Create support request',
-        supportTitle: 'Send to an employee',
-        supportDescription: 'Briefly describe the issue (do not send passwords, OTPs, tokens or card details).',
-        supportConsent: 'I agree to send this information to an SGS LAND employee for handling.',
-        submitSupport: 'Submit request',
-        tracking: 'Request code',
-        updated: 'Updated',
-        received: 'Received',
-        supportError: 'Could not create the request. Please try again.',
-    };
-
-    useEffect(() => {
-        if (open) endRef.current?.scrollIntoView({ behavior: 'smooth' });
+        if (open) endRef.current?.scrollIntoView({ behavior: 'smooth', block: 'end' });
     }, [messages, open, sending]);
+
+    useEffect(() => {
+        if (open && isSupportDraftOpen) endRef.current?.scrollIntoView({ behavior: 'smooth', block: 'end' });
+    }, [open, isSupportDraftOpen]);
 
     useEffect(() => {
         if (!open) return;
@@ -166,52 +174,159 @@ export const GuideAssistant: React.FC = () => {
             .catch(() => { /* Support history is optional; chat remains usable. */ });
     }, [open]);
 
+    useEffect(() => {
+        if (!open || !canApprove || hasUncertainApproval) return;
+        let isCurrent = true;
+        setApprovalQueueLoading(true);
+        setApprovalQueueUnavailable(false);
+        api.get<{ items?: PendingApprovalRequest[]; pendingCount?: number }>('/api/approval-requests')
+            .then(result => {
+                if (!isCurrent) return;
+                const items = Array.isArray(result?.items) ? result.items : [];
+                setPendingApprovals(items);
+                setApprovalQueueCount(
+                    typeof result?.pendingCount === 'number' && Number.isFinite(result.pendingCount)
+                        ? Math.max(0, result.pendingCount)
+                        : items.length,
+                );
+            })
+            .catch(() => {
+                if (!isCurrent) return;
+                setPendingApprovals([]);
+                setApprovalQueueCount(0);
+                setApprovalQueueUnavailable(true);
+            })
+            .finally(() => {
+                if (isCurrent) setApprovalQueueLoading(false);
+            });
+        return () => { isCurrent = false; };
+    }, [open, canApprove, hasUncertainApproval]);
+
+    useEffect(() => {
+        if (!open) return;
+        const handleKeyDown = (event: KeyboardEvent) => {
+            if (event.key === 'Escape') onClose();
+        };
+        window.addEventListener('keydown', handleKeyDown);
+        return () => window.removeEventListener('keydown', handleKeyDown);
+    }, [open, onClose]);
+
+    useEffect(() => {
+        if (open) return;
+        recognitionRef.current?.stop();
+        setIsListening(false);
+        setVoiceNotice('');
+    }, [open]);
+
+    useEffect(() => () => {
+        recognitionRef.current?.stop();
+    }, []);
+
+    const updateConversationMessages = (conversationId: string, updater: (current: ChatMessage[]) => ChatMessage[]) => {
+        setConversations(previous => previous.map(conversation => conversation.id === conversationId
+            ? { ...conversation, messages: updater(conversation.messages), updatedAt: Date.now() }
+            : conversation));
+    };
+
+    const selectConversation = (conversationId: string) => {
+        setActiveConversationId(conversationId);
+        setInput('');
+        setError('');
+        setFailedMessage('');
+        setSupportDraft(null);
+        setSupportConsent(false);
+        setVoiceNotice('');
+    };
+
+    const startConversation = () => {
+        const conversation = createConversation();
+        setConversations(previous => [conversation, ...previous].slice(0, MAX_RECENT_CONVERSATIONS));
+        setActiveConversationId(conversation.id);
+        setInput('');
+        setError('');
+        setFailedMessage('');
+        setSupportDraft(null);
+        setSupportConsent(false);
+        setVoiceNotice('');
+    };
+
     const reset = () => {
-        sessionIdRef.current = `guide-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
-        setMessages([]);
+        if (!activeConversation) return;
+        const resetConversation: Conversation = {
+            ...activeConversation,
+            sessionId: `guide-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+            messages: [],
+            updatedAt: Date.now(),
+        };
+        setConversations(previous => [resetConversation, ...previous.filter(item => item.id !== resetConversation.id)]);
         setError('');
         setInput('');
+        setFailedMessage('');
         setSupportDraft(null);
+        setSupportConsent(false);
+        setVoiceNotice('');
     };
 
     const createSupportRequest = async () => {
-        if (!supportDraft || !supportConsent || supportSending) return;
+        if (!supportDraft || !supportConsent || supportSending || !activeConversation) return;
         setSupportSending(true);
         try {
             const created = await api.post<SupportRequest>('/api/live-chat/support-requests', {
-                ...supportDraft, category: 'GUIDE_ESCALATION', sourceSessionId: sessionIdRef.current, consent: true,
+                ...supportDraft,
+                category: 'GUIDE_ESCALATION',
+                sourceSessionId: activeConversation.sessionId,
+                consent: true,
             });
-            setSupport(prev => [created, ...prev.filter(item => item.id !== created.id)]);
+            setSupport(previous => [created, ...previous.filter(item => item.id !== created.id)]);
             setSupportDraft(null);
             setSupportConsent(false);
         } catch {
-            setError(copy.supportError);
-        } finally { setSupportSending(false); }
+            setError(t('guide.support_error'));
+        } finally {
+            setSupportSending(false);
+        }
     };
 
-    const send = async (value = input) => {
+    const send = async (value = input, isRetry = false) => {
         const message = value.trim();
-        if (!message || sending) return;
+        if (!message || sending || !activeConversation) return;
+        const conversationId = activeConversation.id;
+        const conversationSessionId = activeConversation.sessionId;
+        const conversationMessages = activeConversation.messages;
         const userMessage: ChatMessage = { id: `u-${Date.now()}`, role: 'user', content: message };
-        const history = messages.slice(-MAX_HISTORY).map(item => ({ role: item.role, content: item.content }));
-        setMessages(prev => [...prev, userMessage]);
+        const historyMessages = isRetry
+            && conversationMessages[conversationMessages.length - 1]?.role === 'user'
+            && conversationMessages[conversationMessages.length - 1]?.content === message
+            ? conversationMessages.slice(0, -1)
+            : conversationMessages;
+        const history = historyMessages.slice(-MAX_HISTORY).map(item => ({ role: item.role, content: item.content }));
+        if (!isRetry) updateConversationMessages(conversationId, current => [...current, userMessage]);
         setInput('');
         setError('');
-        setSending(true);
+        setFailedMessage('');
+        setVoiceNotice('');
+        setSendingConversationIds(previous => previous.includes(conversationId) ? previous : [...previous, conversationId]);
         try {
             const result = await api.post<AssistantResponse>('/api/live-chat/chat', {
                 message,
-                sessionId: sessionIdRef.current,
+                sessionId: conversationSessionId,
                 context: {
                     mode: 'platform_guide',
-                    language,
+                    language: 'vn',
                     history,
                 },
             });
             const rawResponse = typeof result?.response === 'string' && result.response.trim()
                 ? result.response.trim()
-                : (isVietnamese ? 'Tôi chưa có đủ dữ liệu để trả lời câu hỏi này.' : 'I do not have enough verified data to answer that.');
-            setMessages(prev => [...prev, {
+                : t('guide.response_unavailable');
+            const approval = result?.approval && typeof result.approval.id === 'string' && result.approval.id.trim()
+                ? {
+                    id: result.approval.id,
+                    title: typeof result.approval.title === 'string' ? result.approval.title : undefined,
+                    status: typeof result.approval.status === 'string' ? result.approval.status : undefined,
+                }
+                : undefined;
+            updateConversationMessages(conversationId, current => [...current, {
                 id: `a-${Date.now()}`,
                 role: 'assistant',
                 content: rawResponse,
@@ -220,135 +335,534 @@ export const GuideAssistant: React.FC = () => {
                 freshness: result?.freshness,
                 status: result?.status,
                 escalationReason: result?.escalationReason,
+                approval,
             }]);
         } catch {
-            setError(copy.error);
+            setError(t('guide.connection_error'));
+            setFailedMessage(message);
         } finally {
-            setSending(false);
+            setSendingConversationIds(previous => previous.filter(id => id !== conversationId));
         }
     };
 
+    const approveRequest = async (approvalId: string) => {
+        if (!canApprove || !activeConversation || !/^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(approvalId)) return;
+        const conversationId = activeConversation.id;
+        const isQueueItem = pendingApprovals.some(approval => approval.id === approvalId);
+        setApprovingApprovalId(approvalId);
+        setError('');
+        try {
+            await api.post(`/api/approval-requests/${encodeURIComponent(approvalId)}/approve`, {});
+            updateConversationMessages(conversationId, current => current.map(message => message.approval?.id === approvalId
+                ? { ...message, approval: { ...message.approval, status: 'APPROVED' } }
+                : message));
+            if (isQueueItem) {
+                setPendingApprovals(previous => previous.filter(approval => approval.id !== approvalId));
+                setApprovalQueueCount(previous => Math.max(0, previous - 1));
+            }
+        } catch {
+            // An approval may have committed before its response was lost. Never
+            // retry a high-impact action blindly; send the user to verify its status.
+            updateConversationMessages(conversationId, current => current.map(message => message.approval?.id === approvalId
+                ? { ...message, approval: { ...message.approval, status: 'UNKNOWN' } }
+                : message));
+            setPendingApprovals(previous => previous.map(approval => approval.id === approvalId
+                ? { ...approval, status: 'UNKNOWN' }
+                : approval));
+            setError(t('guide.approval_uncertain'));
+        } finally {
+            setApprovingApprovalId(null);
+        }
+    };
+
+    const toggleVoiceInput = () => {
+        if (isListening) {
+            recognitionRef.current?.stop();
+            setIsListening(false);
+            setVoiceNotice('');
+            return;
+        }
+        const speechWindow = window as Window & {
+            SpeechRecognition?: SpeechRecognitionConstructor;
+            webkitSpeechRecognition?: SpeechRecognitionConstructor;
+        };
+        const Recognition = speechWindow.SpeechRecognition ?? speechWindow.webkitSpeechRecognition;
+        if (!Recognition) {
+            setVoiceNotice(t('guide.voice_unsupported'));
+            return;
+        }
+        try {
+            const recognition = new Recognition();
+            recognition.lang = 'vi-VN';
+            recognition.interimResults = false;
+            recognition.onresult = event => {
+                const transcript = Array.from(event.results)
+                    .map(result => result[0]?.transcript?.trim() ?? '')
+                    .filter(Boolean)
+                    .join(' ');
+                if (transcript) setInput(previous => previous ? `${previous} ${transcript}` : transcript);
+            };
+            recognition.onerror = () => {
+                setIsListening(false);
+                setVoiceNotice(t('guide.voice_error'));
+            };
+            recognition.onend = () => {
+                setIsListening(false);
+                setVoiceNotice(previous => previous === t('guide.voice_listening') ? '' : previous);
+            };
+            recognitionRef.current = recognition;
+            recognition.start();
+            setIsListening(true);
+            setVoiceNotice(t('guide.voice_listening'));
+        } catch {
+            setIsListening(false);
+            setVoiceNotice(t('guide.voice_error'));
+        }
+    };
+
+    const conversationLabel = (conversation: Conversation) => {
+        const firstUserMessage = conversation.messages.find(message => message.role === 'user')?.content;
+        if (!firstUserMessage) return t('guide.conversation_untitled');
+        return firstUserMessage.length > 48 ? `${firstUserMessage.slice(0, 48)}…` : firstUserMessage;
+    };
+
+    const sourceLine = (message: ChatMessage) => {
+        const parts = [t('guide.source_checked')];
+        const sourceNames = message.sources
+            ?.map(source => source.source || source.tool)
+            .filter((source): source is string => Boolean(source));
+        if (sourceNames?.length) parts.push(`${t('guide.source_label')}: ${sourceNames.join(', ')}`);
+        if (message.dataScope) {
+            parts.push(`${t('guide.scope_label')}: ${t(message.dataScope === 'personal' ? 'guide.scope_personal' : 'guide.scope_company')}`);
+        }
+        if (message.freshness) parts.push(`${t('guide.freshness_label')}: ${formatDateTime(message.freshness)}`);
+        if (message.status) parts.push(t(`guide.response_status_${message.status}`));
+        if (message.escalationReason) parts.push(t('guide.escalation_required'));
+        return parts.join(' · ');
+    };
+
+    if (!open) return null;
+
     return (
         <>
-            {open && (
-                <section
-                    className="fixed bottom-20 right-4 sm:right-6 sm:bottom-24 z-[140] w-[min(calc(100vw-2rem),390px)] h-[min(650px,calc(100dvh-7rem))] flex flex-col overflow-hidden rounded-2xl border border-[var(--glass-border)] bg-[var(--bg-surface)] shadow-2xl ring-1 ring-black/5 dark:ring-white/10"
-                    aria-label={copy.title}
-                >
-                    <header className="flex items-center gap-3 border-b border-[var(--glass-border)] bg-[var(--glass-surface)] px-4 py-3">
-                        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[var(--sgs-primary)]/12 text-[var(--sgs-primary)]">
-                            <Bot size={21} aria-hidden="true" />
+            <button
+                type="button"
+                tabIndex={-1}
+                aria-hidden="true"
+                onClick={onClose}
+                className="fixed inset-0 z-[139] bg-[var(--sgs-hero-deep)]/25 backdrop-blur-[2px] lg:hidden"
+            />
+            <section
+                role="dialog"
+                aria-modal="true"
+                aria-label={t('guide.panel_title')}
+                data-active-route={activeRoute}
+                className={`sgs-guide-panel fixed z-[140] flex min-h-0 flex-col overflow-hidden border border-[var(--glass-border)] bg-[var(--bg-surface)] shadow-[var(--ui-shadow-md)] transition-[width,transform,opacity] duration-200 motion-reduce:transition-none
+                    bottom-0 left-0 right-0 h-[min(88dvh,780px)] rounded-t-[1.35rem]
+                    md:bottom-0 md:left-auto md:top-0 md:h-[100dvh] md:w-[min(460px,94vw)] md:rounded-none
+                    lg:bottom-4 lg:right-4 lg:top-4 lg:h-auto lg:w-[380px] lg:rounded-2xl
+                    ${expanded ? 'h-[min(94dvh,860px)] md:w-[min(600px,96vw)] lg:w-[min(560px,calc(100vw_-_3rem))]' : ''}`}
+            >
+                <div className="shrink-0 border-b border-[var(--glass-border)] bg-[var(--sgs-hero-deep)] px-4 pb-3 pt-2 text-[var(--sgs-champagne)] sm:px-5 sm:pt-4">
+                    <div className="mx-auto mb-2 h-1 w-10 rounded-full bg-[var(--sgs-champagne)]/50 md:hidden" />
+                    <header className="flex min-h-11 items-center gap-2">
+                        <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-[var(--sgs-champagne)]/20 bg-[var(--sgs-champagne)]/10">
+                            <Bot size={19} aria-hidden="true" />
                         </div>
                         <div className="min-w-0 flex-1">
-                            <h2 className="truncate text-sm font-bold text-[var(--text-primary)]">{copy.title}</h2>
-                            <p className="mt-0.5 text-[11px] leading-4 text-[var(--text-tertiary)]">{copy.subtitle}</p>
+                            <p className="truncate text-[10px] font-semibold uppercase tracking-[0.12em] text-[var(--sgs-on-dark-muted)]">
+                                {t('guide.brand')}
+                            </p>
+                            <h2 className="truncate text-[15px] font-semibold leading-5">{t('guide.title')}</h2>
                         </div>
-                        <button type="button" onClick={reset} className="rounded-lg p-2 text-[var(--text-tertiary)] hover:bg-[var(--glass-surface-hover)] hover:text-[var(--text-primary)]" title={copy.reset} aria-label={copy.reset}>
-                            <RefreshCw size={16} />
+                        <button
+                            type="button"
+                            onClick={reset}
+                            className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl text-[var(--sgs-on-dark-muted)] transition-colors hover:bg-[var(--sgs-champagne)]/10 hover:text-[var(--sgs-champagne)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--sgs-accent)]"
+                            title={t('guide.reset')}
+                            aria-label={t('guide.reset')}
+                        >
+                            <RefreshCw size={17} aria-hidden="true" />
                         </button>
-                        <button type="button" onClick={() => setOpen(false)} className="rounded-lg p-2 text-[var(--text-tertiary)] hover:bg-[var(--glass-surface-hover)] hover:text-[var(--text-primary)]" title={copy.close} aria-label={copy.close}>
-                            <X size={17} />
+                        <button
+                            type="button"
+                            onClick={() => setExpanded(value => !value)}
+                            className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl text-[var(--sgs-on-dark-muted)] transition-colors hover:bg-[var(--sgs-champagne)]/10 hover:text-[var(--sgs-champagne)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--sgs-accent)]"
+                            title={t(expanded ? 'guide.collapse' : 'guide.expand')}
+                            aria-label={t(expanded ? 'guide.collapse' : 'guide.expand')}
+                            aria-pressed={expanded}
+                        >
+                            {expanded ? <Minimize2 size={17} aria-hidden="true" /> : <Maximize2 size={17} aria-hidden="true" />}
+                        </button>
+                        <button
+                            type="button"
+                            onClick={onClose}
+                            className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl text-[var(--sgs-on-dark-muted)] transition-colors hover:bg-[var(--sgs-champagne)]/10 hover:text-[var(--sgs-champagne)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--sgs-accent)]"
+                            title={t('guide.close')}
+                            aria-label={t('guide.close')}
+                        >
+                            <X size={18} aria-hidden="true" />
                         </button>
                     </header>
+                    <div className="mt-3 flex items-center gap-2">
+                        <label className="relative min-w-0 flex-1">
+                            <span className="sr-only">{t('guide.conversation_selector')}</span>
+                            <select
+                                value={activeConversation?.id ?? ''}
+                                onChange={event => selectConversation(event.target.value)}
+                                aria-label={t('guide.conversation_selector')}
+                                className="h-11 w-full appearance-none rounded-xl border border-[var(--sgs-champagne)]/20 bg-[var(--sgs-champagne)]/10 py-2 pl-3 pr-9 text-xs font-medium text-[var(--sgs-champagne)] outline-none focus-visible:ring-2 focus-visible:ring-[var(--sgs-accent)]"
+                            >
+                                {conversations.map(conversation => (
+                                    <option key={conversation.id} value={conversation.id} className="bg-[var(--bg-surface)] text-[var(--text-primary)]">
+                                        {conversationLabel(conversation)}
+                                    </option>
+                                ))}
+                            </select>
+                            <ChevronDown size={15} aria-hidden="true" className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-[var(--sgs-on-dark-muted)]" />
+                        </label>
+                        <button
+                            type="button"
+                            onClick={startConversation}
+                            className="flex h-11 shrink-0 items-center justify-center gap-1.5 rounded-xl border border-[var(--sgs-champagne)]/20 bg-[var(--sgs-champagne)]/10 px-3 text-xs font-semibold text-[var(--sgs-champagne)] transition-colors hover:bg-[var(--sgs-champagne)]/15 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--sgs-accent)]"
+                            aria-label={t('guide.new_conversation')}
+                            title={t('guide.new_conversation')}
+                        >
+                            <Plus size={16} aria-hidden="true" />
+                            <span className="hidden sm:inline">{t('guide.new_conversation')}</span>
+                        </button>
+                    </div>
+                    {currentTitle && (
+                        <p className="mt-2 truncate text-[11px] text-[var(--sgs-on-dark-muted)]">
+                            {t('guide.context_label')}: {currentTitle}
+                        </p>
+                    )}
+                </div>
 
-                    <div className="flex-1 space-y-3 overflow-y-auto p-3">
-                        {support.length > 0 && (
-                            <div className="rounded-xl border border-[var(--sgs-primary)]/20 bg-[var(--sgs-primary)]/5 p-2.5">
-                                <div className="mb-1.5 flex items-center gap-1.5 text-xs font-bold text-[var(--text-primary)]"><Clock3 size={14} /> {copy.support}</div>
-                                {support.slice(0, 3).map(item => <div key={item.id} className="border-t border-[var(--glass-border)] py-1.5 text-[11px] text-[var(--text-secondary)]">
-                                    <b>{item.trackingCode}</b> · {item.status} · {copy.updated}: {new Date(item.updatedAt).toLocaleString(isVietnamese ? 'vi-VN' : 'en-US')}
-                                    {item.latestReply && <div className="mt-1">{item.latestReply}</div>}
-                                </div>)}
+                <div className="min-h-0 flex-1 space-y-4 overflow-y-auto overscroll-contain px-4 py-4 sm:px-5">
+                    <section
+                        aria-label={t('guide.todos_title')}
+                        className="rounded-2xl border border-[var(--glass-border)] bg-[var(--glass-surface)] p-3.5"
+                    >
+                        <div className="flex items-start gap-3">
+                            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-[var(--sgs-champagne)] text-[var(--sgs-primary-deep)]">
+                                <ListTodo size={18} aria-hidden="true" />
+                            </div>
+                            <div className="min-w-0 flex-1">
+                                <div className="flex items-center justify-between gap-2">
+                                    <h3 className="text-sm font-semibold text-[var(--text-primary)]">{t('guide.todos_title')}</h3>
+                                    <span className="rounded-lg border border-[var(--glass-border)] bg-[var(--bg-surface)] px-2 py-1 font-mono text-[11px] font-semibold tabular-nums text-[var(--text-secondary)]">
+                                        {approvalQueueLoading ? '…' : `0/${todoCount}`}
+                                    </span>
+                                </div>
+                                {approvalQueueLoading && (
+                                    <p role="status" className="mt-1 text-xs leading-5 text-[var(--text-secondary)]">{t('guide.approvals_loading')}</p>
+                                )}
+                                {!approvalQueueLoading && approvalQueueUnavailable && (
+                                    <p role="status" className="mt-1 text-xs leading-5 text-[var(--text-secondary)]">{t('guide.approvals_unavailable')}</p>
+                                )}
+                                {!approvalQueueLoading && !approvalQueueUnavailable && pendingApprovals.length === 0 && (
+                                    <p className="mt-1 text-xs leading-5 text-[var(--text-secondary)]">{t('guide.todos_empty')}</p>
+                                )}
+                            </div>
+                        </div>
+                        {canApprove && pendingApprovals.length > 0 && (
+                            <div className="mt-3 space-y-2 border-t border-[var(--glass-border)] pt-3">
+                                {pendingApprovals.slice(0, 3).map(approval => {
+                                    const status = approval.status.toUpperCase();
+                                    const canAct = ['PENDING', 'AWAITING_APPROVAL'].includes(status);
+                                    const title = approval.title || approval.summary || approval.leadName || approval.actionType || t('guide.approval_action');
+                                    return (
+                                        <article key={approval.id} className="rounded-xl border border-[var(--glass-border)] bg-[var(--bg-surface)] p-3">
+                                            <div className="flex items-start justify-between gap-2">
+                                                <p className="min-w-0 text-xs font-semibold leading-5 text-[var(--text-primary)]">{title}</p>
+                                                <span className="shrink-0 rounded-full bg-[var(--sgs-champagne)]/70 px-2 py-1 text-[10px] font-semibold text-[var(--sgs-primary-deep)]">
+                                                    {status === 'UNKNOWN' ? t('guide.approval_uncertain') : t('guide.approval_pending')}
+                                                </span>
+                                            </div>
+                                            <div className="mt-2 flex flex-wrap gap-2">
+                                                <button
+                                                    type="button"
+                                                    disabled={!onOpenApprovals}
+                                                    onClick={onOpenApprovals}
+                                                    className="min-h-11 rounded-lg border border-[var(--glass-border)] bg-[var(--bg-surface)] px-3 text-xs font-semibold text-[var(--sgs-primary-deep)] hover:bg-[var(--glass-surface)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--sgs-accent)] disabled:opacity-50"
+                                                >
+                                                    {t('guide.view_draft')}
+                                                </button>
+                                                {canAct && (
+                                                    <button
+                                                        type="button"
+                                                        disabled={approvingApprovalId === approval.id}
+                                                        onClick={() => void approveRequest(approval.id)}
+                                                        className="min-h-11 rounded-lg bg-[var(--sgs-primary-deep)] px-3 text-xs font-semibold text-[var(--ui-text-inverse)] hover:opacity-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--sgs-accent)] disabled:cursor-wait disabled:opacity-60"
+                                                    >
+                                                        {approvingApprovalId === approval.id ? t('guide.approving') : t('guide.approve_send')}
+                                                    </button>
+                                                )}
+                                            </div>
+                                        </article>
+                                    );
+                                })}
                             </div>
                         )}
-                        {messages.length === 0 && (
-                            <div className="space-y-3">
-                                <div className="rounded-2xl rounded-tl-sm bg-[var(--glass-surface)] px-3 py-2.5 text-sm leading-6 text-[var(--text-secondary)]">
-                                    {copy.welcome}
-                                </div>
-                                <div className="space-y-2">
-                                    {[copy.suggestion1, copy.suggestion2, copy.suggestion3].map(item => (
-                                        <button key={item} type="button" onClick={() => send(item)} className="block w-full rounded-xl border border-[var(--glass-border)] px-3 py-2 text-left text-xs font-medium text-[var(--text-secondary)] transition-colors hover:border-[var(--sgs-primary)]/40 hover:bg-[var(--sgs-primary)]/5">
-                                            {item}
-                                        </button>
-                                    ))}
-                                </div>
+                    </section>
+
+                    {support.length > 0 && (
+                        <section className="rounded-2xl border border-[var(--glass-border)] bg-[var(--bg-surface)] p-3.5">
+                            <div className="mb-2 flex items-center gap-2 text-xs font-semibold text-[var(--text-primary)]">
+                                <Clock3 size={15} aria-hidden="true" className="text-[var(--sgs-primary)]" />
+                                {t('guide.support_history')}
                             </div>
-                        )}
-                        {messages.map(message => (
-                            <div key={message.id} className={`flex ${message.role === 'user' ? 'justify-end' : 'justify-start'}`}>
-                                <div className={`max-w-[88%] rounded-2xl px-3 py-2.5 text-sm leading-6 ${message.role === 'user' ? 'rounded-br-sm bg-[var(--sgs-primary)] text-white' : 'rounded-bl-sm bg-[var(--glass-surface)] text-[var(--text-secondary)]'}`}>
-                                    <div className="whitespace-pre-wrap">{message.content}</div>
-                                    {message.role === 'assistant' && (
-                                        <div className="mt-2 border-t border-[var(--glass-border)]/70 pt-1.5 text-[10px] text-[var(--text-tertiary)]">
-                                         {message.escalationReason
-                                          ? copy.escalation
-                                          : message.sources?.length
-                                              ? `${copy.source}: ${message.sources.map(source => source.source || source.tool).filter(Boolean).join(', ')}${message.dataScope ? ` · ${message.dataScope === 'personal' ? (isVietnamese ? 'cá nhân' : 'personal') : (isVietnamese ? 'công ty' : 'company')}` : ''}${message.freshness ? ` · ${new Date(message.freshness).toLocaleString(isVietnamese ? 'vi-VN' : 'en-US')}` : ''}`
-                                              : copy.scope}
+                            <div className="divide-y divide-[var(--glass-border)]">
+                                {support.slice(0, 3).map(item => (
+                                    <div key={item.id} className="py-2 text-[11px] leading-5 text-[var(--text-secondary)]">
+                                        <div className="flex flex-wrap items-center gap-x-1.5">
+                                            <span className="font-semibold text-[var(--text-primary)]">{item.trackingCode}</span>
+                                            <span aria-hidden="true">·</span>
+                                            <span>{item.status}</span>
+                                            <span className="text-[var(--text-tertiary)]">
+                                                {t('guide.updated_label')}: {formatDateTime(item.updatedAt)}
+                                            </span>
                                         </div>
+                                        {item.latestReply && <p className="mt-1">{item.latestReply}</p>}
+                                    </div>
+                                ))}
+                            </div>
+                        </section>
+                    )}
+
+                    {messages.length === 0 && (
+                        <div className="space-y-3">
+                            <div className="flex items-start gap-2.5">
+                                <div className="mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-[var(--sgs-champagne)]/70 text-[var(--sgs-primary-deep)]">
+                                    <Bot size={15} aria-hidden="true" />
+                                </div>
+                                <div className="max-w-[calc(100%_-_2.5rem)] rounded-2xl rounded-tl-sm border border-[var(--glass-border)] bg-[var(--bg-surface)] px-3.5 py-3 text-sm leading-6 text-[var(--text-secondary)]">
+                                    {t('guide.welcome')}
+                                </div>
+                            </div>
+                            <div className="space-y-2 pl-9">
+                                {[
+                                    'guide.suggestion_dashboard',
+                                    'guide.suggestion_leads',
+                                    'guide.suggestion_create_lead',
+                                ].map(key => (
+                                    <button
+                                        key={key}
+                                        type="button"
+                                        onClick={() => void send(t(key))}
+                                        className="min-h-11 w-full rounded-xl border border-[var(--glass-border)] bg-[var(--bg-surface)] px-3 py-2 text-left text-xs font-medium leading-5 text-[var(--text-secondary)] transition-colors hover:border-[var(--sgs-primary)]/35 hover:bg-[var(--glass-surface)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--sgs-accent)]"
+                                    >
+                                        {t(key)}
+                                    </button>
+                                ))}
+                            </div>
+                        </div>
+                    )}
+
+                    <div className="space-y-4">
+                        {messages.map(message => message.role === 'user' ? (
+                            <div key={message.id} className="flex justify-end">
+                                <div className="max-w-[86%] rounded-2xl rounded-br-sm border border-[var(--glass-border)] bg-[var(--glass-surface)] px-3.5 py-2.5 text-sm leading-6 text-[var(--text-primary)]">
+                                    <div className="whitespace-pre-wrap break-words">{message.content}</div>
+                                </div>
+                            </div>
+                        ) : (
+                            <article key={message.id} className="min-w-0">
+                                <div className="mb-1.5 flex items-center gap-2 text-[10px] font-medium leading-4 text-[var(--text-tertiary)]">
+                                    <ShieldCheck size={13} aria-hidden="true" className="shrink-0 text-[var(--sgs-primary)]" />
+                                    <span>{sourceLine(message)}</span>
+                                </div>
+                                <div className="pl-5 text-sm leading-6 text-[var(--text-primary)]">
+                                    <div className="whitespace-pre-wrap break-words">{message.content}</div>
+                                    {message.approval && (
+                                        <section className="mt-3 rounded-xl border border-[var(--sgs-accent)]/40 bg-[var(--sgs-champagne)]/45 p-3">
+                                            <div className="flex items-start gap-2.5">
+                                                <ShieldCheck size={17} aria-hidden="true" className="mt-0.5 shrink-0 text-[var(--sgs-primary-deep)]" />
+                                                <div className="min-w-0 flex-1">
+                                                    <h4 className="text-xs font-semibold text-[var(--text-primary)]">{t('guide.approval_title')}</h4>
+                                                    {message.approval.title && (
+                                                        <p className="mt-1 text-xs leading-5 text-[var(--text-secondary)]">{message.approval.title}</p>
+                                                    )}
+                                                    {message.approval.status && (
+                                                        <p className="mt-1 text-[11px] text-[var(--text-tertiary)]">
+                                                            {t('guide.approval_status')}: {message.approval.status.toUpperCase() === 'APPROVED'
+                                                                ? t('guide.approval_approved')
+                                                                : message.approval.status === 'UNKNOWN'
+                                                                    ? t('guide.approval_uncertain')
+                                                                    : message.approval.status}
+                                                        </p>
+                                                    )}
+                                                    <button
+                                                        type="button"
+                                                        disabled={!onOpenApprovals}
+                                                        onClick={onOpenApprovals}
+                                                        className="mt-2 inline-flex min-h-11 items-center rounded-lg border border-[var(--glass-border)] bg-[var(--bg-surface)] px-3 text-xs font-semibold text-[var(--sgs-primary-deep)] transition-colors hover:bg-[var(--glass-surface)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--sgs-accent)] disabled:cursor-not-allowed disabled:opacity-50"
+                                                    >
+                                                        {t('guide.view_draft')}
+                                                    </button>
+                                                    {canApprove
+                                                        && (!message.approval.status || ['PENDING', 'AWAITING_APPROVAL'].includes(message.approval.status.toUpperCase()))
+                                                        && (
+                                                            <button
+                                                                type="button"
+                                                                disabled={approvingApprovalId === message.approval.id}
+                                                                onClick={() => void approveRequest(message.approval!.id)}
+                                                                className="ml-2 mt-2 inline-flex min-h-11 items-center rounded-lg bg-[var(--sgs-primary-deep)] px-3 text-xs font-semibold text-[var(--ui-text-inverse)] transition-opacity hover:opacity-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--sgs-accent)] disabled:cursor-wait disabled:opacity-60"
+                                                            >
+                                                                {approvingApprovalId === message.approval.id
+                                                                    ? t('guide.approving')
+                                                                    : t('guide.approve_send')}
+                                                            </button>
+                                                        )}
+                                                </div>
+                                            </div>
+                                        </section>
                                     )}
-                                    {message.role === 'assistant' && message.escalationReason && (
-                                        <button type="button" onClick={() => setSupportDraft({ title: message.content.slice(0, 120), description: message.content })} className="mt-2 flex items-center gap-1 rounded-lg border border-[var(--sgs-primary)]/30 px-2 py-1 text-[11px] font-semibold text-[var(--sgs-primary)]">
-                                            <LifeBuoy size={13} /> {copy.support}
+                                    {message.escalationReason && (
+                                        <button
+                                            type="button"
+                                            onClick={() => {
+                                                setSupportDraft({ title: message.content.slice(0, 120), description: message.content });
+                                                setSupportConsent(false);
+                                            }}
+                                            className="mt-3 inline-flex min-h-11 items-center gap-2 rounded-xl border border-[var(--glass-border)] bg-[var(--glass-surface)] px-3 text-xs font-semibold text-[var(--sgs-primary-deep)] transition-colors hover:border-[var(--sgs-primary)]/40 hover:bg-[var(--sgs-champagne)]/35 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--sgs-accent)]"
+                                        >
+                                            <LifeBuoy size={15} aria-hidden="true" />
+                                            {t('guide.create_support')}
                                         </button>
                                     )}
                                 </div>
-                            </div>
+                            </article>
                         ))}
-                        {sending && (
-                            <div className="flex justify-start">
-                                <div className="rounded-2xl rounded-bl-sm bg-[var(--glass-surface)] px-3 py-2.5 text-xs text-[var(--text-tertiary)]">
-                                    <span className="mr-2 inline-block h-2 w-2 animate-pulse rounded-full bg-[var(--sgs-primary)]" />
-                                    {copy.sending}
-                                </div>
-                            </div>
-                        )}
-                        {error && <div className="rounded-xl border border-[var(--ui-danger)]/25 bg-[var(--ui-danger)]/5 px-3 py-2 text-xs text-[var(--ui-danger)]">{error}</div>}
-                        {supportDraft && <div className="rounded-xl border border-[var(--sgs-primary)]/30 bg-[var(--bg-surface)] p-3">
-                            <div className="mb-1 text-xs font-bold text-[var(--text-primary)]">{copy.supportTitle}</div>
-                            <textarea value={supportDraft.description} onChange={e => setSupportDraft({ ...supportDraft, description: e.target.value })} maxLength={2000} rows={3} className="w-full rounded-lg border border-[var(--glass-border)] bg-transparent p-2 text-xs text-[var(--text-primary)] outline-none" aria-label={copy.supportDescription} />
-                            <label className="mt-2 flex gap-2 text-[11px] text-[var(--text-secondary)]"><input type="checkbox" checked={supportConsent} onChange={e => setSupportConsent(e.target.checked)} /> {copy.supportConsent}</label>
-                            <button type="button" disabled={!supportConsent || supportSending} onClick={() => void createSupportRequest()} className="mt-2 rounded-lg bg-[var(--sgs-primary)] px-3 py-1.5 text-xs font-bold text-white disabled:opacity-40">{copy.submitSupport}</button>
-                        </div>}
-                        <div ref={endRef} />
                     </div>
 
-                    <form onSubmit={event => { event.preventDefault(); void send(); }} className="border-t border-[var(--glass-border)] bg-[var(--glass-surface)] p-3">
-                        <div className="flex items-center rounded-xl border border-[var(--glass-border)] bg-[var(--bg-surface)] focus-within:border-[var(--sgs-primary)]">
+                    {sending && (
+                        <div className="flex items-center gap-2 pl-5 text-xs text-[var(--text-tertiary)]" role="status" aria-live="polite">
+                            <span className="h-2 w-2 animate-pulse rounded-full bg-[var(--sgs-accent)] motion-reduce:animate-none" />
+                            {t('guide.sending')}
+                        </div>
+                    )}
+                    {error && (
+                        <div role="alert" className="rounded-xl border border-[var(--ui-danger)]/25 bg-[var(--ui-danger)]/5 px-3 py-2.5 text-xs text-[var(--ui-danger)]">
+                            <p>{error}</p>
+                            {failedMessage && (
+                                <button
+                                    type="button"
+                                    onClick={() => void send(failedMessage, true)}
+                                    disabled={sending}
+                                    className="mt-2 min-h-11 rounded-lg px-2 text-xs font-semibold underline underline-offset-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--sgs-accent)] disabled:opacity-50"
+                                >
+                                    {t('guide.retry')}
+                                </button>
+                            )}
+                        </div>
+                    )}
+                    {supportDraft && (
+                        <section className="rounded-2xl border border-[var(--glass-border)] bg-[var(--bg-surface)] p-3.5">
+                            <div className="mb-2 flex items-center gap-2 text-xs font-semibold text-[var(--text-primary)]">
+                                <LifeBuoy size={15} aria-hidden="true" className="text-[var(--sgs-primary)]" />
+                                {t('guide.support_form_title')}
+                            </div>
+                            <label className="block">
+                                <span className="sr-only">{t('guide.support_description')}</span>
+                                <textarea
+                                    value={supportDraft.description}
+                                    onChange={event => setSupportDraft({ ...supportDraft, description: event.target.value })}
+                                    maxLength={2000}
+                                    rows={3}
+                                    className="min-h-24 w-full resize-y rounded-xl border border-[var(--glass-border)] bg-[var(--glass-surface)] p-3 text-sm leading-5 text-[var(--text-primary)] outline-none focus-visible:ring-2 focus-visible:ring-[var(--sgs-accent)]"
+                                    aria-label={t('guide.support_description')}
+                                />
+                            </label>
+                            <label className="mt-3 flex min-h-11 cursor-pointer items-start gap-2.5 text-xs leading-5 text-[var(--text-secondary)]">
+                                <input
+                                    type="checkbox"
+                                    checked={supportConsent}
+                                    onChange={event => setSupportConsent(event.target.checked)}
+                                    className="mt-1 h-4 w-4 shrink-0 accent-[var(--sgs-primary)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--sgs-accent)]"
+                                />
+                                <span>{t('guide.support_consent')}</span>
+                            </label>
+                            <div className="mt-2 flex items-center gap-2">
+                                <button
+                                    type="button"
+                                    disabled={!supportConsent || supportSending}
+                                    onClick={() => void createSupportRequest()}
+                                    className="min-h-11 rounded-xl bg-[var(--sgs-primary-deep)] px-4 text-xs font-semibold text-[var(--ui-text-inverse)] transition-opacity hover:opacity-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--sgs-accent)] disabled:cursor-not-allowed disabled:opacity-45"
+                                >
+                                    {supportSending ? t('guide.sending') : t('guide.submit_support')}
+                                </button>
+                                <button
+                                    type="button"
+                                    onClick={() => { setSupportDraft(null); setSupportConsent(false); }}
+                                    className="min-h-11 rounded-xl px-3 text-xs font-semibold text-[var(--text-secondary)] hover:bg-[var(--glass-surface)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--sgs-accent)]"
+                                >
+                                    {t('guide.cancel')}
+                                </button>
+                            </div>
+                        </section>
+                    )}
+                    <div ref={endRef} />
+                </div>
+
+                <form
+                    onSubmit={event => { event.preventDefault(); void send(); }}
+                    className="shrink-0 border-t border-[var(--glass-border)] bg-[var(--bg-surface)] px-3 pb-[max(12px,env(safe-area-inset-bottom))] pt-3 sm:px-4"
+                >
+                    <div className="flex items-end gap-1.5 rounded-2xl border border-[var(--glass-border)] bg-[var(--glass-surface)] p-1.5 transition-colors focus-within:border-[var(--sgs-primary)]/50 focus-within:ring-2 focus-within:ring-[var(--sgs-primary)]/10">
+                        <button
+                            type="button"
+                            disabled
+                            aria-label={t('guide.attach')}
+                            aria-describedby="guide-attach-help"
+                            title={t('guide.attach_unavailable')}
+                            className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl text-[var(--text-tertiary)] opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--sgs-accent)]"
+                        >
+                            <Paperclip size={17} aria-hidden="true" />
+                        </button>
+                        <span id="guide-attach-help" className="sr-only">{t('guide.attach_unavailable')}</span>
                         <textarea
                             value={input}
                             onChange={event => setInput(event.target.value)}
-                            onKeyDown={event => { if (event.key === 'Enter' && !event.shiftKey) { event.preventDefault(); void send(); } }}
-                            placeholder={copy.placeholder}
+                            onKeyDown={event => {
+                                if (event.key === 'Enter' && !event.shiftKey) {
+                                    event.preventDefault();
+                                    void send();
+                                }
+                            }}
+                            placeholder={t('guide.placeholder')}
                             rows={1}
                             maxLength={600}
-                            className="min-h-10 max-h-24 min-w-0 flex-1 resize-none bg-transparent px-3 py-2.5 text-base text-[var(--text-primary)] outline-none placeholder:text-[var(--text-muted)] sm:text-sm"
-                            aria-label={copy.placeholder}
+                            className="max-h-24 min-h-11 min-w-0 flex-1 resize-y bg-transparent px-1 py-3 text-base leading-5 text-[var(--text-primary)] outline-none placeholder:text-[var(--text-tertiary)] sm:text-sm"
+                            aria-label={t('guide.placeholder')}
                         />
-                        <button type="submit" disabled={!input.trim() || sending} className="mr-1.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-[var(--sgs-primary)] text-white transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-40" aria-label={copy.placeholder}>
-                            <Send size={17} />
+                        <button
+                            type="button"
+                            onClick={toggleVoiceInput}
+                            className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-xl transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--sgs-accent)] ${isListening ? 'bg-[var(--sgs-champagne)] text-[var(--sgs-primary-deep)]' : 'text-[var(--text-secondary)] hover:bg-[var(--bg-surface)]'}`}
+                            aria-label={t(isListening ? 'guide.voice_stop' : 'guide.voice_start')}
+                            title={t(isListening ? 'guide.voice_stop' : 'guide.voice_start')}
+                            aria-pressed={isListening}
+                        >
+                            {isListening ? <MicOff size={17} aria-hidden="true" /> : <Mic size={17} aria-hidden="true" />}
                         </button>
-                        </div>
-                    </form>
-                </section>
-            )}
-            <button
-                type="button"
-                onClick={() => { if (!movedRef.current) setOpen(value => !value); movedRef.current = false; }}
-                onPointerDown={handleTogglePointerDown}
-                onPointerMove={handleTogglePointerMove}
-                onPointerUp={handleTogglePointerUp}
-                style={togglePosition ? { left: togglePosition.left, top: togglePosition.top, right: 'auto', bottom: 'auto' } : undefined}
-                className="group fixed bottom-4 right-4 sm:right-6 z-[139] flex h-12 w-12 touch-none cursor-grab items-center justify-center gap-0 overflow-hidden rounded-full bg-[var(--sgs-primary)] px-3 text-sm font-bold text-white shadow-lg shadow-[var(--sgs-primary)]/25 transition-[width,transform] duration-200 hover:w-auto hover:scale-[1.02] active:cursor-grabbing focus-visible:w-auto focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--sgs-primary)] focus-visible:ring-offset-2"
-                aria-label={open ? copy.close : copy.open}
-                title={open ? copy.close : copy.open}
-            >
-                 <span className="flex h-5 w-5 shrink-0 items-center justify-center" aria-hidden="true">
-                     {open ? <ChevronDown size={18} /> : <MessageCircle size={18} />}
-                 </span>
-                 <span className="ml-0 max-w-0 overflow-hidden whitespace-nowrap opacity-0 transition-[max-width,opacity,margin] duration-200 group-hover:ml-2 group-hover:max-w-[10rem] group-hover:opacity-100 group-focus-visible:ml-2 group-focus-visible:max-w-[10rem] group-focus-visible:opacity-100">{copy.title}</span>
-            </button>
+                        <button
+                            type="submit"
+                            disabled={!input.trim() || sending}
+                            className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-[var(--sgs-primary-deep)] text-[var(--ui-text-inverse)] transition-opacity hover:opacity-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--sgs-accent)] disabled:cursor-not-allowed disabled:opacity-40"
+                            aria-label={t('guide.send')}
+                        >
+                            <Send size={17} aria-hidden="true" />
+                        </button>
+                    </div>
+                    {voiceNotice && (
+                        <p className="px-2 pt-1.5 text-[11px] text-[var(--text-tertiary)]" role="status" aria-live="polite">
+                            {voiceNotice}
+                        </p>
+                    )}
+                </form>
+            </section>
         </>
     );
 };

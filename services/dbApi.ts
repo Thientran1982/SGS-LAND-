@@ -1398,6 +1398,8 @@ class DatabaseApiClient {
       item('social-publishing', 'menu.social-publishing', ROUTES.SOCIAL_PUBLISHING),
       item('seq', 'menu.sequences', ROUTES.SEQUENCES),
       item('auction', 'menu.auction', ROUTES.AUCTION),
+      item('checkout', 'menu.checkout', ROUTES.CHECKOUT),
+      item('commissions', 'menu.commissions', ROUTES.COMMISSIONS),
       item('custom-fields', 'menu.custom-fields', ROUTES.CUSTOM_FIELDS),
       item('scoring', 'menu.scoring-rules', ROUTES.SCORING_RULES),
       item('knowledge', 'menu.knowledge', ROUTES.KNOWLEDGE),
@@ -1422,6 +1424,8 @@ class DatabaseApiClient {
       item('data', 'menu.data-platform', ROUTES.DATA_PLATFORM),
       item('seo', 'menu.seo-manager', ROUTES.SEO_MANAGER),
       item('scraper', 'menu.scraper', ROUTES.SCRAPER),
+      item('marketplace-apps', 'menu.marketplace-apps', ROUTES.MARKETPLACE),
+      item('ai-evaluation', 'menu.ai-evaluation', ROUTES.AI_EVALUATION),
       item('error-monitor', 'menu.error-monitor', ROUTES.ERROR_MONITOR),
       item('system', 'menu.system', ROUTES.SYSTEM),
     ];
@@ -1445,7 +1449,7 @@ class DatabaseApiClient {
       )];
     } else if (role === UserRole.SALES) {
       visibleItems = [...coreItems, ...taskBasicItems, ...opsItems.filter(i =>
-        ['projects', 'knowledge', 'rep'].includes(i.id)
+        ['projects', 'knowledge', 'rep', 'checkout', 'commissions'].includes(i.id)
       )];
     } else {
       // VIEWER + unknown role: core plus the same basic task access as before.

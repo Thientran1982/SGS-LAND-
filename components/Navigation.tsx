@@ -100,6 +100,7 @@ const NotificationPanel = memo(({
     onNavigate,
     onClose,
     t,
+    placement = 'header',
 }: { 
     notifications: AppNotification[];
     onMarkRead: (id: string) => void;
@@ -109,11 +110,12 @@ const NotificationPanel = memo(({
     onNavigate: (path: string) => void;
     onClose: () => void;
     t: (key: string) => string;
+    placement?: 'header' | 'rail';
 }) => {
     const hasRead = notifications.some(n => !!n.readAt);
     const hasUnread = notifications.some(n => !n.readAt);
     return (
-        <div className="absolute right-0 top-full mt-2 w-80 bg-[var(--bg-surface)] border border-[var(--glass-border)] rounded-2xl shadow-2xl shadow-slate-200/60 dark:shadow-slate-900/60 z-50 overflow-hidden">
+        <div className={`absolute ${placement === 'rail' ? 'left-full bottom-0 ml-3' : 'right-0 top-full mt-2'} w-80 max-w-[calc(100vw-6rem)] bg-[var(--bg-surface)] border border-[var(--glass-border)] rounded-2xl shadow-2xl z-[120] overflow-hidden`}>
             {/* Header */}
             <div className="flex items-center justify-between px-4 py-3 border-b border-[var(--glass-border)]">
                 <span className="text-sm font-bold text-[var(--text-primary)]">{t('nav.notifications')}</span>
@@ -216,6 +218,79 @@ const NotificationPanel = memo(({
                     ))
                 )}
             </div>
+        </div>
+    );
+});
+
+type NotificationButtonProps = Pick<CommandCenterProps,
+    'unreadCount' | 'notifications' | 'onMarkRead' | 'onMarkAllRead' |
+    'onDeleteNotification' | 'onDeleteAllRead' | 'onNavigate'
+> & {
+    placement?: 'header' | 'rail';
+    className?: string;
+};
+
+export const NotificationButton: React.FC<NotificationButtonProps> = memo(({
+    unreadCount = 0,
+    notifications = [],
+    onMarkRead,
+    onMarkAllRead,
+    onDeleteNotification,
+    onDeleteAllRead,
+    onNavigate,
+    placement = 'header',
+    className = '',
+}) => {
+    const { t } = useTranslation();
+    const [panelOpen, setPanelOpen] = useState(false);
+    const panelRef = useRef<HTMLDivElement>(null);
+
+    useEffect(() => {
+        if (!panelOpen) return;
+        const handleOutsideClick = (event: MouseEvent) => {
+            if (panelRef.current && !panelRef.current.contains(event.target as Node)) {
+                setPanelOpen(false);
+            }
+        };
+        document.addEventListener('mousedown', handleOutsideClick);
+        return () => document.removeEventListener('mousedown', handleOutsideClick);
+    }, [panelOpen]);
+
+    return (
+        <div ref={panelRef} className={`relative ${className}`}>
+            <button
+                type="button"
+                onClick={() => setPanelOpen(value => !value)}
+                className={`group relative flex min-h-11 min-w-11 items-center justify-center rounded-xl transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--sgs-accent)] ${
+                    placement === 'rail'
+                        ? 'text-[var(--sgs-champagne)] hover:bg-[var(--ui-text-inverse)]/10'
+                        : 'text-[var(--text-tertiary)] hover:bg-[var(--glass-surface-hover)]'
+                }`}
+                aria-label={t('nav.notifications')}
+                aria-expanded={panelOpen}
+            >
+                <span className="relative flex h-9 w-9 items-center justify-center">
+                    {ICONS.BELL}
+                    {unreadCount > 0 && (
+                        <span className="absolute -right-1 -top-1 flex h-[18px] min-w-[18px] items-center justify-center rounded-full bg-[var(--sgs-accent)] px-1 text-[10px] font-black leading-none text-[var(--sgs-primary-deep)]">
+                            {unreadCount > 99 ? '99+' : unreadCount}
+                        </span>
+                    )}
+                </span>
+            </button>
+            {panelOpen && (
+                <NotificationPanel
+                    notifications={notifications}
+                    onMarkRead={id => onMarkRead?.(id)}
+                    onMarkAllRead={() => onMarkAllRead?.()}
+                    onDelete={id => onDeleteNotification?.(id)}
+                    onDeleteAllRead={() => onDeleteAllRead?.()}
+                    onNavigate={onNavigate ?? (() => {})}
+                    onClose={() => setPanelOpen(false)}
+                    t={t}
+                    placement={placement}
+                />
+            )}
         </div>
     );
 });

@@ -1,14 +1,15 @@
-import React, { useState, useEffect, memo, useCallback, useMemo } from 'react';
+import React, { useState, useEffect, memo, useCallback } from 'react';
 import { useTranslation } from '../services/i18n';
 import { useTheme } from '../services/theme';
 import { db } from '../services/dbApi';
 import { User, NavGroup } from '../types';
 import { ROUTES } from '../config/routes';
-import { CommandCenter, UserAvatar } from './Navigation';
+import { UserAvatar } from './Navigation';
 import { GlobalSearch } from './GlobalSearch';
 import { Logo } from './Logo';
 import { OnboardingWizard } from './OnboardingWizard';
 import { GuideAssistant } from './GuideAssistant';
+import { WorkspaceNavigation } from './WorkspaceNavigation';
 import { prefetchRoute } from '../utils/reactUtils';
 import { notificationApi, AppNotification } from '../services/api/notificationApi';
 import { socket } from '../services/websocket';
@@ -20,7 +21,8 @@ import {
     GitMerge, Target, Share2, BookOpen, BarChart2, Store, Shield,
     Database, Activity, Settings, CreditCard, Lock, Smartphone, Bot,
     User as UserIcon, Moon, Sun, LogOut, PanelLeft, ChevronDown, Languages, Home, Globe,
-    ClipboardList, Kanban, ListTodo, UserCheck, PieChart, Bug, Rss, Building2, Mail, Briefcase, ScrollText
+    ClipboardList, Kanban, ListTodo, UserCheck, PieChart, Bug, Rss, Building2, Mail, Briefcase, ScrollText,
+    ChevronUp, MessageCircle
 } from 'lucide-react';
 // Icons mapping - SYNCHRONIZED with mockDb.ts iconKeys
 const NAV_ICONS: Record<string, React.ReactNode> = {
@@ -115,7 +117,7 @@ interface SidebarContentProps {
     t: (k: string) => string;
     user: User | null;
 }
-const Sidebar = memo(({ 
+export const Sidebar = memo(({
     activePage, 
     onNavigate, 
     collapsed, 
@@ -352,28 +354,40 @@ interface LayoutProps {
     onLogout: () => void;
 }
 export const Layout: React.FC<LayoutProps> = memo(({ children, activePage, onNavigate, onLogout }) => {
-    const [desktopCollapsed, setDesktopCollapsed] = useState(false);
-    // Tablets (768-1023px): default to the icon rail so content keeps ~90% of the width.
-    const TABLET_QUERY = '(min-width: 768px) and (max-width: 1023px)';
-    const [isTablet, setIsTablet] = useState(() => typeof window !== 'undefined' && typeof window.matchMedia === 'function' && window.matchMedia(TABLET_QUERY).matches);
-    const [tabletExpanded, setTabletExpanded] = useState(false);
-    useEffect(() => {
-        if (typeof window.matchMedia !== 'function') return;
-        const mq = window.matchMedia(TABLET_QUERY);
-        const onChange = () => { setIsTablet(mq.matches); setTabletExpanded(false); };
-        mq.addEventListener('change', onChange);
-        return () => mq.removeEventListener('change', onChange);
-    }, []);
-    const sidebarCollapsed = isTablet ? !tabletExpanded : desktopCollapsed;
-    const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
     const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);    
     const [user, setUser] = useState<User | null>(null);
     const [menuGroups, setMenuGroups] = useState<NavGroup[]>([]);
     const [isSearchOpen, setIsSearchOpen] = useState(false);
+    const [assistantOpen, setAssistantOpen] = useState(false);
+    const [assistantPreferenceFor, setAssistantPreferenceFor] = useState<string | null>(null);
     const [notifications, setNotifications] = useState<AppNotification[]>([]);
     const [unreadCount, setUnreadCount] = useState(0);
     const { t, language, setLanguage } = useTranslation();
     const { theme, toggleTheme } = useTheme();
+    const assistantPreferenceKey = user ? `sgs_minh_assistant_open:${user.id}` : null;
+    useEffect(() => {
+        if (!assistantPreferenceKey) {
+            setAssistantPreferenceFor(null);
+            setAssistantOpen(false);
+            return;
+        }
+        setAssistantPreferenceFor(null);
+        try {
+            const saved = window.localStorage.getItem(assistantPreferenceKey);
+            setAssistantOpen(saved === null ? window.innerWidth >= 1024 : saved === 'true');
+        } catch {
+            setAssistantOpen(window.innerWidth >= 1024);
+        }
+        setAssistantPreferenceFor(assistantPreferenceKey);
+    }, [assistantPreferenceKey]);
+    useEffect(() => {
+        if (!assistantPreferenceKey || assistantPreferenceFor !== assistantPreferenceKey) return;
+        try {
+            window.localStorage.setItem(assistantPreferenceKey, String(assistantOpen));
+        } catch {
+            // The assistant remains usable if browser storage is unavailable.
+        }
+    }, [assistantOpen, assistantPreferenceFor, assistantPreferenceKey]);
     useEffect(() => {
         let pollInterval: ReturnType<typeof setInterval> | null = null;
         const fetchNotifications = () => {
@@ -479,104 +493,60 @@ export const Layout: React.FC<LayoutProps> = memo(({ children, activePage, onNav
     }, []);
     const handleNavigate = useCallback((path: string) => {
         onNavigate(path);
-        setMobileMenuOpen(false);
     }, [onNavigate]);
     // Replaced native window.confirm with Modal state trigger
     const handleLogoutClick = useCallback(() => {
         setShowLogoutConfirm(true);
-        setMobileMenuOpen(false); // Close drawer to prevent visual glitch
     }, []);
     const handleLogoutConfirm = useCallback(() => {
         setShowLogoutConfirm(false);
         onLogout();
     }, [onLogout]);
     const pageTitle = t(`menu.${activePage}`) || activePage;
-    const sidebarProps = useMemo(() => ({
-        activePage,
-        onNavigate: handleNavigate,
-        onLogoutClick: handleLogoutClick,
-        menuGroups,
-        t,
-        user
-    }), [activePage, handleNavigate, handleLogoutClick, menuGroups, t, user]);
     return (
-        <div className="crm-vite-app fixed inset-0 h-[100dvh] supports-[height:100cqh]:h-[100cqh] w-full bg-[var(--bg-app)] p-0 sm:p-2 md:p-3 flex gap-0 sm:gap-2 md:gap-3 overflow-hidden font-sans text-[var(--text-primary)] transition-colors duration-300 relative selection:bg-[var(--sgs-primary)]/30">
-            {/* SIDEBAR ISLAND (Desktop/Tablet) */}
-            <aside 
-                className={`
-                    relative h-full z-40 transition-all duration-500 ease-[cubic-bezier(0.25,0.1,0.25,1)]
-                    bg-[var(--bg-app)]
-                    rounded-none sm:rounded-[24px] shadow-none border-none
-                    flex flex-col shrink-0 no-scrollbar
-                     ${sidebarCollapsed ? 'w-0 md:w-16' : 'w-0 md:w-64'}
-                    hidden md:flex overflow-visible
-                `}
-            >
-                <Sidebar 
-                    {...sidebarProps} 
-                    isMobile={false} 
-                    collapsed={sidebarCollapsed} 
-                    onToggleCollapse={() => (isTablet ? setTabletExpanded(v => !v) : setDesktopCollapsed(!desktopCollapsed))} 
-                />
-            </aside>
-            {/* MOBILE DRAWER (Overlay) */}
-            <div 
-                className={`fixed inset-0 bg-black/60 backdrop-blur-sm z-[100] md:hidden transition-opacity duration-300 ${mobileMenuOpen ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'}`}
-                onClick={() => setMobileMenuOpen(false)}
-                aria-hidden="true"
-            />            
-            <div
-                className={`fixed inset-y-0 left-0 w-72 bg-[var(--bg-app)] shadow-2xl z-[101] md:hidden transition-transform duration-300 ease-out transform flex flex-col no-scrollbar ${mobileMenuOpen ? 'translate-x-0' : '-translate-x-full'}`}
-                role="dialog"
-                aria-modal="true"
-                aria-label={t('common.menu')}
-            >
-                <Sidebar 
-                    {...sidebarProps} 
-                    isMobile={true} 
-                    collapsed={false} 
-                    onToggleCollapse={() => {}} 
-                />
-            </div>
-            {/* MAIN CONTENT ISLAND */}
-            <main 
-                className={`
-                    flex-1 flex flex-col min-w-0 min-h-0 relative 
-                    bg-[var(--bg-app)]
-                    rounded-none sm:rounded-[24px] shadow-none
-                    border-none
-                    isolate overflow-hidden
-                `}
-            >
-                {/* Header: Structurally Fixed at top of flex column */}
-                <div className="flex-none z-30 w-full relative">
-                    {user && (
-                        <CommandCenter 
-                            title={pageTitle}
-                            user={user}
-                            onSearch={() => setIsSearchOpen(true)}
-                            onMenuClick={() => setMobileMenuOpen(true)}
-                            onNavigate={onNavigate}
-                            isProfileActive={activePage === ROUTES.PROFILE}
-                            unreadCount={unreadCount}
-                            notifications={notifications}
-                            onMarkRead={handleMarkRead}
-                            onMarkAllRead={handleMarkAllRead}
-                            onDeleteNotification={handleDeleteNotification}
-                            onDeleteAllRead={handleDeleteAllRead}
-                            onToggleTheme={toggleTheme}
-                            onToggleLang={() => setLanguage(language === 'en' ? 'vn' : 'en')}
-                            themeMode={theme}
-                            lang={language}
-                        />
-                    )}
-                </div>                
-                {/* Content Area — each page mounts as absolute inset-0 inside children
-                    and manages its own overflow/scrolling via overflow-y-auto. */}
-                <div className="flex-1 relative w-full min-h-0 bg-[var(--bg-app)]">
+        <div className="crm-vite-app fixed inset-0 flex h-[100dvh] w-full gap-0 overflow-hidden bg-[var(--bg-app)] font-sans text-[var(--text-primary)] selection:bg-[var(--sgs-primary)]/30 supports-[height:100cqh]:h-[100cqh] md:gap-3 md:p-3">
+            {user ? (
+                <WorkspaceNavigation
+                    activePage={activePage}
+                    menuGroups={menuGroups}
+                    user={user}
+                    assistantOpen={assistantOpen}
+                    onNavigate={handleNavigate}
+                    onLogout={handleLogoutClick}
+                    onOpenAssistant={() => setAssistantOpen(true)}
+                    unreadCount={unreadCount}
+                    notifications={notifications}
+                    onMarkRead={handleMarkRead}
+                    onMarkAllRead={handleMarkAllRead}
+                    onDeleteNotification={handleDeleteNotification}
+                    onDeleteAllRead={handleDeleteAllRead}
+                    onSearch={() => setIsSearchOpen(true)}
+                    onToggleTheme={toggleTheme}
+                    onToggleLanguage={() => setLanguage(language === 'en' ? 'vn' : 'en')}
+                    themeMode={theme}
+                    language={language}
+                >
                     {children}
-                </div>
-            </main>
+                </WorkspaceNavigation>
+            ) : (
+                <main className="flex min-h-0 min-w-0 flex-1 overflow-hidden bg-[var(--bg-app)]">
+                    {children}
+                </main>
+            )}
+            {user && !assistantOpen && (
+                <button
+                    type="button"
+                    onClick={() => setAssistantOpen(true)}
+                    aria-label={t('shell.assistant_open')}
+                    className="fixed inset-x-3 bottom-[calc(4.5rem+env(safe-area-inset-bottom))] z-[70] flex min-h-12 items-center gap-3 rounded-2xl border border-[var(--glass-border)] bg-[var(--bg-surface)] px-4 text-left shadow-lg md:hidden"
+                >
+                    <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-[var(--sgs-primary-deep)] text-[var(--sgs-champagne)]">
+                        <MessageCircle size={17} aria-hidden="true" />
+                    </span>
+                    <span className="min-w-0 flex-1 truncate text-sm text-[var(--text-tertiary)]">{t('shell.assistant_compact_placeholder')}</span>
+                    <ChevronUp size={17} className="shrink-0 text-[var(--text-tertiary)]" aria-hidden="true" />
+                </button>
+            )}
             <GlobalSearch 
                 isOpen={isSearchOpen} 
                 onClose={() => setIsSearchOpen(false)} 
@@ -594,7 +564,16 @@ export const Layout: React.FC<LayoutProps> = memo(({ children, activePage, onNav
                 t={t} 
             />
             <OnboardingWizard />
-            {user && <GuideAssistant />}
+            {user && (
+                <GuideAssistant
+                    open={assistantOpen}
+                    onClose={() => setAssistantOpen(false)}
+                    onOpenApprovals={() => onNavigate(ROUTES.APPROVALS)}
+                    canApprove={['SUPER_ADMIN', 'ADMIN', 'MANAGER', 'TEAM_LEAD'].includes(user.role)}
+                    activeRoute={activePage}
+                    currentTitle={pageTitle}
+                />
+            )}
         </div>
     );
 });
