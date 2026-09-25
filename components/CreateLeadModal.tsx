@@ -218,7 +218,10 @@ export const CreateLeadModal: React.FC<CreateLeadModalProps> = ({ onClose, onSuc
         }
     };
     // Compute what the merge will actually contribute — shown in the preview
-    const mergePreview = duplicateLead ? (() => {
+    // Audit H4: the API hides another agent's customer details from restricted roles
+    // and flags the duplicate as `restricted`; such leads cannot be merged by this user.
+    const isRestrictedDuplicate = Boolean((duplicateLead as any)?.restricted);
+    const mergePreview = duplicateLead && !isRestrictedDuplicate ? (() => {
         const items: string[] = [];
         if (formData.email && !duplicateLead.email) items.push(`Email: ${formData.email}`);
         if (formData.address && !duplicateLead.address) items.push(`Địa chỉ: ${formData.address}`);
@@ -418,7 +421,7 @@ export const CreateLeadModal: React.FC<CreateLeadModalProps> = ({ onClose, onSuc
                             <div className="bg-[var(--bg-surface)]/60 p-3 rounded-lg mt-3 text-xs border border-amber-200/50">
                                 <div className="grid grid-cols-[60px_1fr] gap-1">
                                     <span className="text-sgs-accent-text/60 font-bold">{t('leads.name')}:</span>
-                                    <span className="font-bold">{duplicateLead?.name}</span>
+                                    <span className="font-bold">{duplicateLead?.name || '—'}</span>
                                     
                                     <span className="text-sgs-accent-text/60 font-bold">{t('leads.phone')}:</span>
                                     <span className="font-mono tracking-wider">
@@ -434,8 +437,13 @@ export const CreateLeadModal: React.FC<CreateLeadModalProps> = ({ onClose, onSuc
                                     </span>
                                 </div>
                             </div>
+                            {isRestrictedDuplicate && (
+                                <p className="mt-3 pt-2 border-t border-amber-200/40 text-xs font-bold">
+                                    Khách hàng này đang do nhân viên khác phụ trách. Liên hệ trưởng nhóm hoặc quản trị viên để gộp hồ sơ.
+                                </p>
+                            )}
                             {/* What will actually be added */}
-                            <div className="mt-3 pt-2 border-t border-amber-200/40">
+                            {!isRestrictedDuplicate && <div className="mt-3 pt-2 border-t border-amber-200/40">
                                 <p className="text-xs font-bold text-sgs-accent-text/80 mb-1.5">Thông tin sẽ bổ sung vào hồ sơ:</p>
                                 {mergePreview.length > 0 ? (
                                     <ul className="space-y-0.5">
@@ -448,7 +456,7 @@ export const CreateLeadModal: React.FC<CreateLeadModalProps> = ({ onClose, onSuc
                                 ) : (
                                     <p className="text-xs text-sgs-accent-text/70 italic">Không có thông tin mới để bổ sung — chỉ gộp hồ sơ.</p>
                                 )}
-                            </div>
+                            </div>}
                         </div>                        
                         <div className="pt-2 flex gap-3">
                             <button 
@@ -461,7 +469,7 @@ export const CreateLeadModal: React.FC<CreateLeadModalProps> = ({ onClose, onSuc
                             <button 
                                 type="button" 
                                 onClick={handleMerge} 
-                                disabled={loading}
+                                disabled={loading || isRestrictedDuplicate}
                                 className="flex-1 py-3 bg-sgs-primary text-white font-bold rounded-xl text-sm shadow-lg hover:bg-sgs-primary transition-all flex items-center justify-center gap-2"
                             >
                                 {loading && <div className="w-3 h-3 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>}
