@@ -82,4 +82,64 @@ describe('approval request soft archive repository', () => {
     expect(sql).not.toContain('archived_at IS NULL');
     expect(mocks.query).toHaveBeenCalledOnce();
   });
+
+  it('lists only archived rejections for the requested tenant with the actor name', async () => {
+    mocks.query.mockResolvedValueOnce({
+      rows: [{
+        id: approvalId,
+        tenant_id: tenantId,
+        status: 'REJECTED',
+        archived_at: '2026-09-26T10:00:00.000Z',
+        archived_by: operatorId,
+        archived_by_name: 'Review Manager',
+        archive_reason: 'No longer relevant',
+      }],
+    });
+
+    const result = await approvalRequestRepository.findArchivedByTenant(tenantId, 25, 50);
+
+    expect(result).toMatchObject([{
+      id: approvalId,
+      status: 'REJECTED',
+      archivedBy: operatorId,
+      archivedByName: 'Review Manager',
+      archiveReason: 'No longer relevant',
+    }]);
+    const [sql, params] = mocks.query.mock.calls[0];
+    expect(sql).toContain('ar.tenant_id = $1');
+    expect(sql).toContain("ar.status = 'REJECTED'");
+    expect(sql).toContain('ar.archived_at IS NOT NULL');
+    expect(sql).toContain('u.tenant_id = ar.tenant_id');
+    expect(sql).toContain('ORDER BY ar.archived_at DESC');
+    expect(params).toEqual([tenantId, 25, 50]);
+  });
+
+  it('counts archived rejections separately from pending requests', async () => {
+    mocks.query.mockResolvedValueOnce({ rows: [{ count: 3 }] });
+
+    await expect(approvalRequestRepository.countArchivedByTenant(tenantId)).resolves.toBe(3);
+    const [sql, params] = mocks.query.mock.calls[0];
+    expect(sql).toContain('tenant_id = $1');
+    expect(sql).toContain("status = 'REJECTED'");
+    expect(sql).toContain('archived_at IS NOT NULL');
+    expect(params).toEqual([tenantId]);
+  });
+
+  it('keeps archived requests out of the active queue and pending count', async () => {
+    mocks.query.mockResolvedValueOnce({ rows: [] }).mockResolvedValueOnce({ rows: [{ count: 2 }] });
+
+    await approvalRequestRepository.findPendingByTenant(tenantId);
+    await approvalRequestRepository.countPending(tenantId);
+
+    const [queueSql, queueParams] = mocks.query.mock.calls[0];
+    const [countSql, countParams] = mocks.query.mock.calls[1];
+    for (const sql of [queueSql, countSql]) {
+      expect(sql).toContain("status = 'PENDING'");
+      expect(sql).toContain('archived_at IS NULL');
+    }
+    expect(queueSql).toContain('tenant_id = $1');
+    expect(countSql).toContain('tenant_id = $1');
+    expect(queueParams[0]).toBe(tenantId);
+    expect(countParams).toEqual([tenantId]);
+  });
 });

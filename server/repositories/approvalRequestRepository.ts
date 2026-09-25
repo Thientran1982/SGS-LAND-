@@ -201,6 +201,37 @@ class ApprovalRequestRepository {
     return result.rows.map(r => this.rowToEntity(r));
   }
 
+  async findArchivedByTenant(tenantId: string, limit = 50, offset = 0): Promise<any[]> {
+    const safeLimit = Math.max(1, Math.min(Math.trunc(limit) || 50, 100));
+    const safeOffset = Math.max(0, Math.trunc(offset) || 0);
+    const result = await withTenantContext(tenantId, client => client.query(
+      `SELECT ar.*, l.name AS lead_name, l.phone AS lead_phone,
+              COALESCE(NULLIF(u.name, ''), NULLIF(u.email, '')) AS archived_by_name
+         FROM approval_requests ar
+         LEFT JOIN leads l ON l.id = ar.lead_id AND l.tenant_id = ar.tenant_id
+         LEFT JOIN users u ON u.id = ar.archived_by AND u.tenant_id = ar.tenant_id
+        WHERE ar.tenant_id = $1
+          AND ar.status = 'REJECTED'
+          AND ar.archived_at IS NOT NULL
+        ORDER BY ar.archived_at DESC, ar.id DESC
+        LIMIT $2 OFFSET $3`,
+      [tenantId, safeLimit, safeOffset],
+    ));
+    return result.rows.map(row => this.rowToEntity(row));
+  }
+
+  async countArchivedByTenant(tenantId: string): Promise<number> {
+    const result = await withTenantContext(tenantId, client => client.query(
+      `SELECT COUNT(*)::int AS count
+         FROM approval_requests
+        WHERE tenant_id = $1
+          AND status = 'REJECTED'
+          AND archived_at IS NOT NULL`,
+      [tenantId],
+    ));
+    return result.rows[0]?.count || 0;
+  }
+
   async findApprovedOutreachByTenant(tenantId: string, limit = 50): Promise<any[]> {
     const result = await pool.query(
       `SELECT ar.*, l.name AS lead_name, l.phone AS lead_phone,
@@ -356,6 +387,7 @@ class ApprovalRequestRepository {
       reviewNote: row.review_note,
       archivedAt: row.archived_at,
       archivedBy: row.archived_by,
+      archivedByName: row.archived_by_name,
       archiveReason: row.archive_reason,
       deliveries: row.deliveries ?? [],
       executionId: row.execution_id,

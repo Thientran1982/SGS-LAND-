@@ -8,6 +8,8 @@ const {
 } = vi.hoisted(() => ({
   approvalRequestRepository: {
     archivePending: vi.fn(),
+    findArchivedByTenant: vi.fn(),
+    countArchivedByTenant: vi.fn(),
   },
   recordMinhDecisionFeedbackSafely: vi.fn(),
 }));
@@ -115,5 +117,41 @@ describe('approval request archive route', () => {
     });
 
     expect(response.status).toBe(404);
+  });
+
+  it('returns a tenant-scoped archived history page and total to managers', async () => {
+    approvalRequestRepository.findArchivedByTenant.mockResolvedValue([{
+      id: approvalId,
+      status: 'REJECTED',
+      archiveReason: 'No longer relevant',
+      archivedBy: operatorId,
+      archivedByName: 'Review Manager',
+      archivedAt: '2026-09-26T10:00:00.000Z',
+    }]);
+    approvalRequestRepository.countArchivedByTenant.mockResolvedValue(61);
+
+    const response = await fetch(`${origin}/api/approval-requests/archived?limit=25&offset=50`, {
+      headers: { 'x-test-tenant': tenantId },
+    });
+
+    expect(response.status).toBe(200);
+    expect(await response.json()).toMatchObject({
+      total: 61,
+      limit: 25,
+      offset: 50,
+      items: [{ id: approvalId, status: 'REJECTED', archivedByName: 'Review Manager' }],
+    });
+    expect(approvalRequestRepository.findArchivedByTenant).toHaveBeenCalledWith(tenantId, 25, 50);
+    expect(approvalRequestRepository.countArchivedByTenant).toHaveBeenCalledWith(tenantId);
+  });
+
+  it('does not return archived history to unauthorized roles', async () => {
+    const response = await fetch(`${origin}/api/approval-requests/archived`, {
+      headers: { 'x-test-role': 'AGENT' },
+    });
+
+    expect(response.status).toBe(403);
+    expect(approvalRequestRepository.findArchivedByTenant).not.toHaveBeenCalled();
+    expect(approvalRequestRepository.countArchivedByTenant).not.toHaveBeenCalled();
   });
 });

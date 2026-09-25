@@ -42,6 +42,27 @@ const APPROVAL_ROLES = new Set(['SUPER_ADMIN', 'ADMIN', 'MANAGER', 'TEAM_LEAD'])
     }
   });
 
+  router.get('/archived', authenticateToken, async (req: Request, res: Response) => {
+    try {
+      const user = (req as any).user;
+      if (!APPROVAL_ROLES.has(user?.role)) {
+        return res.status(403).json({ error: 'Only authorized managers can view archived approval requests' });
+      }
+      const requestedLimit = Number.parseInt(String(req.query.limit ?? '50'), 10);
+      const requestedOffset = Number.parseInt(String(req.query.offset ?? '0'), 10);
+      const limit = Number.isFinite(requestedLimit) ? Math.max(1, Math.min(requestedLimit, 100)) : 50;
+      const offset = Number.isFinite(requestedOffset) ? Math.max(0, requestedOffset) : 0;
+      const [items, total] = await Promise.all([
+        approvalRequestRepository.findArchivedByTenant(user.tenantId, limit, offset),
+        approvalRequestRepository.countArchivedByTenant(user.tenantId),
+      ]);
+      res.json({ items, total, limit, offset });
+    } catch (error) {
+      console.error('[approval-requests] archived list error:', error);
+      res.status(500).json({ error: 'Failed to fetch archived approval requests' });
+    }
+  });
+
   router.get('/:id/outreach-audit-export', authenticateToken, validateUUIDParam(), async (req: Request, res: Response) => {
     let failureCategory: OutreachAuditExportFailureCategory = 'UNKNOWN';
     try {

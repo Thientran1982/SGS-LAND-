@@ -1,6 +1,6 @@
 import { fireEvent, render, screen, within } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
-import { ApprovalRequestQueue, type PendingApprovalRequest } from '../../components/approval/ApprovalRequestQueue';
+import { ApprovalRequestArchiveHistory, ApprovalRequestQueue, type PendingApprovalRequest } from '../../components/approval/ApprovalRequestQueue';
 
 describe('ApprovalRequestQueue', () => {
     it('shows non-outreach approvals and only offers actions for supported types', () => {
@@ -95,5 +95,39 @@ describe('ApprovalRequestQueue', () => {
         expect(within(screen.getByTestId('approval-request-expired')).getByText('Đã hết hạn — không thể phê duyệt')).toBeInTheDocument();
         expect(within(screen.getByTestId('approval-request-uncertain')).queryByRole('button')).not.toBeInTheDocument();
         expect(within(screen.getByTestId('approval-request-uncertain')).getByRole('alert')).toBeInTheDocument();
+    });
+
+    it('shows archived rejection evidence in a separate read-only history', () => {
+        const onLoadMore = vi.fn();
+        render(
+            <ApprovalRequestArchiveHistory
+                items={[{
+                    id: 'archived-one',
+                    actionType: 'CHANGE_LEAD_STAGE',
+                    status: 'REJECTED',
+                    archiveReason: 'Yêu cầu không còn phù hợp.',
+                    archivedBy: 'operator-id',
+                    archivedByName: 'Nguyễn Quản lý',
+                    archivedAt: '2026-09-26T10:00:00.000Z',
+                }]}
+                total={2}
+                language="vn"
+                loading={false}
+                unavailable={false}
+                loadingMore={false}
+                onRetry={vi.fn()}
+                onLoadMore={onLoadMore}
+            />,
+        );
+
+        const history = screen.getByTestId('approval-archive-history');
+        const entry = within(history).getByTestId('archived-approval-request-archived-one');
+        expect(within(entry).getByText('Đã từ chối')).toBeInTheDocument();
+        expect(within(entry).getByText('Yêu cầu không còn phù hợp.')).toBeInTheDocument();
+        expect(within(entry).getByText('Nguyễn Quản lý')).toBeInTheDocument();
+        expect(within(entry).getByText(/26\/9\/2026/)).toBeInTheDocument();
+        expect(within(entry).queryByRole('button')).not.toBeInTheDocument();
+        fireEvent.click(within(history).getByRole('button', { name: 'Tải thêm' }));
+        expect(onLoadMore).toHaveBeenCalledOnce();
     });
 });

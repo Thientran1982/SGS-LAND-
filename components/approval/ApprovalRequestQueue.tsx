@@ -14,6 +14,13 @@ export interface PendingApprovalRequest {
     payload?: unknown;
 }
 
+export interface ArchivedApprovalRequest extends PendingApprovalRequest {
+    archiveReason?: string | null;
+    archivedAt?: string | null;
+    archivedBy?: string | null;
+    archivedByName?: string | null;
+}
+
 const ACTION_LABELS: Record<string, { vn: string; en: string }> = {
     CONFIRM_DEPOSIT: { vn: 'Xác minh đặt cọc', en: 'Verify deposit' },
     CHANGE_LEAD_STAGE: { vn: 'Chuyển giai đoạn khách hàng', en: 'Change lead stage' },
@@ -301,6 +308,150 @@ export const ApprovalRequestQueue: React.FC<ApprovalRequestQueueProps> = ({
                     );
                 })}
             </div>
+        </section>
+    );
+};
+
+interface ApprovalRequestArchiveHistoryProps {
+    items: ArchivedApprovalRequest[];
+    total: number;
+    language: string;
+    loading: boolean;
+    unavailable: boolean;
+    loadingMore: boolean;
+    onRetry: () => void;
+    onLoadMore: () => void;
+}
+
+export const ApprovalRequestArchiveHistory: React.FC<ApprovalRequestArchiveHistoryProps> = ({
+    items,
+    total,
+    language,
+    loading,
+    unavailable,
+    loadingMore,
+    onRetry,
+    onLoadMore,
+}) => {
+    const isVietnamese = language === 'vn';
+    const locale = isVietnamese ? 'vi-VN' : 'en-US';
+    const copy = isVietnamese
+        ? {
+            title: 'Lịch sử yêu cầu đã lưu trữ',
+            empty: 'Chưa có yêu cầu nào được lưu trữ.',
+            loading: 'Đang tải lịch sử lưu trữ…',
+            unavailable: 'Không thể tải lịch sử lưu trữ.',
+            retry: 'Thử tải lại',
+            rejected: 'Đã từ chối',
+            reason: 'Lý do lưu trữ',
+            performedBy: 'Người thực hiện',
+            archivedAt: 'Thời điểm lưu trữ',
+            unknown: 'Không xác định',
+            loadMore: 'Tải thêm',
+            loadingMore: 'Đang tải…',
+        }
+        : {
+            title: 'Archived request history',
+            empty: 'No requests have been archived.',
+            loading: 'Loading archived history…',
+            unavailable: 'Archived history could not be loaded.',
+            retry: 'Retry',
+            rejected: 'Rejected',
+            reason: 'Archive reason',
+            performedBy: 'Performed by',
+            archivedAt: 'Archived at',
+            unknown: 'Unknown',
+            loadMore: 'Load more',
+            loadingMore: 'Loading…',
+        };
+
+    return (
+        <section aria-label={copy.title} className="space-y-3" data-testid="approval-archive-history">
+            <div className="flex items-center justify-between gap-3">
+                <h2 className="text-lg font-bold text-[var(--text-primary)]">
+                    {copy.title} <span className="text-sm font-semibold text-[var(--text-tertiary)]">({total})</span>
+                </h2>
+            </div>
+            {unavailable ? (
+                <div role="alert" className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-rose-300/50 bg-rose-50 px-4 py-3 text-sm text-rose-800 dark:bg-rose-950/30 dark:text-rose-200">
+                    <span>{copy.unavailable}</span>
+                    <button type="button" onClick={onRetry} className="rounded-lg border border-current px-3 py-1.5 text-xs font-bold">
+                        {copy.retry}
+                    </button>
+                </div>
+            ) : loading && !items.length ? (
+                <p role="status" className="rounded-xl border border-[var(--glass-border)] px-4 py-3 text-sm text-[var(--text-secondary)]">
+                    {copy.loading}
+                </p>
+            ) : items.length === 0 ? (
+                <p className="rounded-xl border border-[var(--glass-border)] px-4 py-3 text-sm text-[var(--text-secondary)]">
+                    {copy.empty}
+                </p>
+            ) : (
+                <>
+                    <div className="grid grid-cols-1 gap-4 xl:grid-cols-2">
+                        {items.map(item => {
+                            const actionLabel = ACTION_LABELS[item.actionType || ''];
+                            const action = actionLabel
+                                ? (isVietnamese ? actionLabel.vn : actionLabel.en)
+                                : safeText(item.actionType, 100).replace(/_/g, ' ');
+                            const archivedAt = formatDate(item.archivedAt || null, locale) || copy.unknown;
+                            const performedBy = safeText(item.archivedByName, 200)
+                                || safeText(item.archivedBy, 100)
+                                || copy.unknown;
+                            return (
+                                <article
+                                    key={item.id}
+                                    data-testid={`archived-approval-request-${item.id}`}
+                                    className="rounded-2xl border border-[var(--glass-border)] bg-[var(--bg-surface)] p-4 shadow-sm"
+                                >
+                                    <div className="flex flex-wrap items-start justify-between gap-3">
+                                        <div>
+                                            <h3 className="font-bold text-[var(--text-primary)]">{action || item.id}</h3>
+                                            {item.leadName && <p className="mt-1 text-sm text-[var(--text-secondary)]">{item.leadName}</p>}
+                                        </div>
+                                        <span className="rounded-full bg-rose-100 px-3 py-1 text-xs font-bold text-rose-800 dark:bg-rose-950/40 dark:text-rose-200">
+                                            {copy.rejected}
+                                        </span>
+                                    </div>
+                                    <dl className="mt-4 grid gap-3 text-sm">
+                                        <div>
+                                            <dt className="text-xs font-semibold text-[var(--text-tertiary)]">{copy.reason}</dt>
+                                            <dd className="mt-1 whitespace-pre-wrap text-[var(--text-primary)]">
+                                                {safeText(item.archiveReason, 1000) || copy.unknown}
+                                            </dd>
+                                        </div>
+                                        <div className="flex flex-wrap gap-x-6 gap-y-2">
+                                            <div>
+                                                <dt className="text-xs font-semibold text-[var(--text-tertiary)]">{copy.performedBy}</dt>
+                                                <dd className="mt-1 text-[var(--text-primary)]">{performedBy}</dd>
+                                            </div>
+                                            <div>
+                                                <dt className="text-xs font-semibold text-[var(--text-tertiary)]">{copy.archivedAt}</dt>
+                                                <dd className="mt-1 text-[var(--text-primary)]">
+                                                    <time dateTime={item.archivedAt || undefined}>{archivedAt}</time>
+                                                </dd>
+                                            </div>
+                                        </div>
+                                    </dl>
+                                </article>
+                            );
+                        })}
+                    </div>
+                    {items.length < total && (
+                        <div className="flex justify-center">
+                            <button
+                                type="button"
+                                onClick={onLoadMore}
+                                disabled={loadingMore}
+                                className="rounded-xl border border-[var(--glass-border)] px-4 py-2 text-sm font-bold text-[var(--text-primary)] hover:bg-[var(--glass-surface-hover)] disabled:cursor-wait disabled:opacity-50"
+                            >
+                                {loadingMore ? copy.loadingMore : copy.loadMore}
+                            </button>
+                        </div>
+                    )}
+                </>
+            )}
         </section>
     );
 };

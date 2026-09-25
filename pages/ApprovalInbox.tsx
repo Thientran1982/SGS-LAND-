@@ -7,8 +7,8 @@ import { Proposal, Listing, Lead, User, LeadScore } from '../types';
 import { useTranslation } from '../services/i18n';
 import { Dropdown } from '../components/Dropdown';
 import { SeoHead } from '../components/SeoHead';
-import { ApprovalRequestQueue, isApprovalActionSupported } from '../components/approval/ApprovalRequestQueue';
-import type { PendingApprovalRequest } from '../components/approval/ApprovalRequestQueue';
+import { ApprovalRequestArchiveHistory, ApprovalRequestQueue, isApprovalActionSupported } from '../components/approval/ApprovalRequestQueue';
+import type { ArchivedApprovalRequest, PendingApprovalRequest } from '../components/approval/ApprovalRequestQueue';
 // -----------------------------------------------------------------------------
 // 1. CONSTANTS & CONFIGURATION
 // -----------------------------------------------------------------------------
@@ -278,6 +278,10 @@ export const ApprovalInbox: React.FC = () => {
     // Data State
     const [pending, setPending] = useState<Proposal[]>([]);
     const [brokerApprovals, setBrokerApprovals] = useState<OutreachApproval[]>([]);
+    const [archivedApprovalRequests, setArchivedApprovalRequests] = useState<ArchivedApprovalRequest[]>([]);
+    const [archivedApprovalCount, setArchivedApprovalCount] = useState(0);
+    const [archiveHistoryUnavailable, setArchiveHistoryUnavailable] = useState(false);
+    const [archiveHistoryLoadingMore, setArchiveHistoryLoadingMore] = useState(false);
     const [approvedOutreach, setApprovedOutreach] = useState<OutreachApproval[]>([]);
     const [approvalPendingCount, setApprovalPendingCount] = useState<number | null>(null);
     const [approvalRequestsUnavailable, setApprovalRequestsUnavailable] = useState(false);
@@ -304,7 +308,7 @@ export const ApprovalInbox: React.FC = () => {
     const loadData = useCallback(async () => {
         setLoading(true);
         try {
-            const [props, user, approvalData] = await Promise.all([
+            const [props, user, approvalData, archiveData] = await Promise.all([
                 db.getPendingProposals(),
                 db.getCurrentUser(),
                 api.get<{ items?: OutreachApproval[]; pendingCount?: number; approvedOutreach?: OutreachApproval[] }>('/api/approval-requests')
@@ -318,11 +322,22 @@ export const ApprovalInbox: React.FC = () => {
                         setApprovalPendingCount(null);
                         return { items: [], approvedOutreach: [] };
                     }),
+                api.get<{ items?: ArchivedApprovalRequest[]; total?: number }>('/api/approval-requests/archived')
+                    .then(data => {
+                        setArchiveHistoryUnavailable(false);
+                        return data;
+                    })
+                    .catch(() => {
+                        setArchiveHistoryUnavailable(true);
+                        return { items: [], total: 0 };
+                    }),
             ]);
             setPending(props || []);
             setCurrentUser(user);            
             setBrokerApprovals(approvalData.items || []);
             setApprovedOutreach(approvalData.approvedOutreach || []);
+            setArchivedApprovalRequests(archiveData.items || []);
+            setArchivedApprovalCount(Number.isFinite(Number(archiveData.total)) ? Number(archiveData.total) : 0);
             // Efficient Data Loading (Map Pattern)
             const safeProps = props || [];
             const listingIds = [...new Set(safeProps.map(p => p.listingId))];
@@ -346,6 +361,25 @@ export const ApprovalInbox: React.FC = () => {
         }
     }, []);
     useEffect(() => { loadData(); }, [loadData]);
+    const loadMoreArchivedApprovalRequests = async () => {
+        if (archiveHistoryLoadingMore || archivedApprovalRequests.length >= archivedApprovalCount) return;
+        setArchiveHistoryLoadingMore(true);
+        try {
+            const nextPage = await api.get<{ items?: ArchivedApprovalRequest[]; total?: number }>(
+                `/api/approval-requests/archived?offset=${archivedApprovalRequests.length}`,
+            );
+            setArchivedApprovalRequests(previous => [...previous, ...(nextPage.items || [])]);
+            setArchivedApprovalCount(Number.isFinite(Number(nextPage.total)) ? Number(nextPage.total) : archivedApprovalCount);
+            setArchiveHistoryUnavailable(false);
+        } catch {
+            notify(
+                language === 'vn' ? 'Không thể tải thêm lịch sử lưu trữ.' : 'Could not load more archived history.',
+                'error',
+            );
+        } finally {
+            setArchiveHistoryLoadingMore(false);
+        }
+    };
     // Sorting & Filtering
     const sortedProposals = useMemo(() => {
         let filtered = [...pending];
@@ -669,6 +703,16 @@ export const ApprovalInbox: React.FC = () => {
                 onApprove={approveApprovalRequest}
                 onReject={rejectApprovalRequest}
                 onArchive={archiveApprovalRequest}
+            />
+            <ApprovalRequestArchiveHistory
+                items={archivedApprovalRequests}
+                total={archivedApprovalCount}
+                language={language}
+                loading={loading}
+                unavailable={archiveHistoryUnavailable}
+                loadingMore={archiveHistoryLoadingMore}
+                onRetry={() => { void loadData(); }}
+                onLoadMore={() => { void loadMoreArchivedApprovalRequests(); }}
             />
 
             {(pendingOutreach.length > 0 || approvedOutreach.length > 0) && (
