@@ -52,8 +52,9 @@ const STYLE = `
       var(--lp-bg); }
   .lp-hero-grid { display:grid; gap: clamp(32px,4vw,56px); align-items:center; grid-template-columns: 1fr; }
   @media (min-width: 1024px) { .lp-hero-grid { grid-template-columns: minmax(0,1.15fr) minmax(0,.85fr); } }
-  .lp-h1 { font-size: clamp(34px,5.4vw,62px); font-weight: 700; line-height: 1.04; letter-spacing: -.03em; color: var(--lp-ink); }
+  .lp-h1 { font-size: clamp(34px,4.4vw,56px); font-weight: 700; line-height: 1.06; letter-spacing: -.03em; color: var(--lp-ink); }
   .lp-h1 em { font-style: normal; color: var(--lp-navy); }
+  .lp-h1 .nw { white-space: nowrap; }
   .lp-badge { display:inline-flex; align-items:center; gap:8px; padding:6px 12px 6px 8px; border-radius:999px;
     background: var(--lp-paper); border:1px solid var(--lp-line); font-size:13px; color: var(--lp-muted); }
   .lp-badge b { color: var(--lp-ink); font-weight: 600; }
@@ -71,7 +72,7 @@ const STYLE = `
   .lp-collage .ph { position:absolute; overflow:hidden; border-radius:24px; background: var(--lp-hair); box-shadow: 0 30px 80px var(--lp-shadow); }
   .lp-collage .ph img { width:100%; height:100%; object-fit:cover; display:block; transition: transform .6s ease; }
   .lp-collage .ph:hover img { transform: scale(1.04); }
-  .lp-collage .ph-a { inset: 0 18% 22% 0; }
+  .lp-collage .ph-a { inset: 0 14% 18% 0; }
   .lp-collage .ph-b { width: 46%; aspect-ratio: 4/3.2; right: 0; bottom: 0; border: 6px solid var(--lp-bg); }
   .lp-collage .tag { position:absolute; left:16px; bottom:16px; display:flex; flex-direction:column; gap:2px; padding:10px 14px;
     border-radius:14px; background: color-mix(in srgb, #0b1220 62%, transparent); backdrop-filter: blur(8px); color:#fff; text-decoration:none; }
@@ -94,6 +95,7 @@ const STYLE = `
 
   /* listings */
   .lp-listings { display:grid; gap:20px; grid-template-columns: 1fr; }
+  .lp-listings .font-mono { display:none; } /* internal listing codes are noise for buyers */
   @media (min-width: 640px) { .lp-listings { grid-template-columns: repeat(2, minmax(0,1fr)); } }
   @media (min-width: 1100px) { .lp-listings { grid-template-columns: repeat(4, minmax(0,1fr)); } }
 
@@ -305,7 +307,6 @@ function Hero({ lang, listingCount, onAskAi }: { lang: Lang; listingCount: numbe
     { vi: "Căn hộ Thủ Đức", en: "Thu Duc apartments", href: "/marketplace?q=Th%E1%BB%A7%20%C4%90%E1%BB%A9c&type=APARTMENT" },
     { vi: "Vinhomes Grand Park", en: "Vinhomes Grand Park", href: "/marketplace?q=Vinhomes%20Grand%20Park" },
     { vi: "Aqua City", en: "Aqua City", href: "/marketplace?q=Aqua%20City" },
-    { vi: "The Global City", en: "The Global City", href: "/marketplace?q=Global%20City" },
     { vi: "Dưới 3 tỷ", en: "Under 3B VND", href: "/marketplace?maxPrice=3000000000&transaction=SALE" },
   ];
   return (
@@ -318,8 +319,8 @@ function Hero({ lang, listingCount, onAskAi }: { lang: Lang; listingCount: numbe
           </span>
           <h1 className="lp-h1" style={{ marginTop: 20 }}>
             {T(lang,
-              <>Tìm đúng nhà.<br /><em>Đúng giá.</em> Pháp lý rõ ràng.</>,
-              <>The right home.<br /><em>The right price.</em> Clear title.</>)}
+              <><span className="nw">Tìm đúng nhà.</span><br /><em className="nw">Đúng giá.</em><br /><span className="nw">Pháp lý rõ ràng.</span></>,
+              <><span className="nw">The right home.</span><br /><em className="nw">The right price.</em><br /><span className="nw">Clear title.</span></>)}
           </h1>
           <p className="lp-lead" style={{ fontSize: "clamp(15px,1.4vw,18px)", maxWidth: 560, marginTop: 18 }}>
             {T(lang,
@@ -354,14 +355,6 @@ function Hero({ lang, listingCount, onAskAi }: { lang: Lang; listingCount: numbe
           <a className="ph ph-b" href={lpath("/du-an/aqua-city", lang)}>
             <img src={projImg("aqua-city")} alt="Aqua City" loading="lazy" />
             <span className="tag"><small>Novaland · Biên Hòa</small><b>Aqua City</b></span>
-          </a>
-          <a className="lp-float" href={lpath("/ai-valuation", lang)}>
-            <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-              <span className="ic"><Calculator size={18} aria-hidden="true" /></span>
-              <b style={{ fontSize: 15 }}>{T(lang, "Nhà bạn đáng giá bao nhiêu?", "What is your home worth?")}</b>
-            </div>
-            <p style={{ fontSize: 13, color: "var(--lp-muted)", marginTop: 8 }}>{T(lang, "Định giá AI theo dữ liệu giao dịch trong khu vực.", "AI valuation from local transaction data.")}</p>
-            <span className="lp-link" style={{ marginTop: 10 }}>{T(lang, "Định giá miễn phí", "Free valuation")} <ArrowRight size={16} aria-hidden="true" /></span>
           </a>
         </div>
       </div>
@@ -402,7 +395,14 @@ function Categories({ lang }: { lang: Lang }) {
 // ─── 3. LATEST LISTINGS ──────────────────────────────────────────────────────
 function LatestListings({ lang, listings, total }: { lang: Lang; listings: any[]; total: number }) {
   const withPhotos = listings.filter(l => Array.isArray(l?.images) && l.images.length > 0);
-  const pool = withPhotos.length >= 4 ? withPhotos : listings;
+  const seen = new Set<string>();
+  const clean = (withPhotos.length >= 4 ? withPhotos : listings).filter(l => {
+    const t = String(l?.title || "").toLowerCase().replace(/\s+/g, " ").trim();
+    if (seen.has(t)) return false; seen.add(t);
+    const isSale = String(l?.transaction || "SALE").toUpperCase() !== "RENT";
+    return !(isSale && Number(l?.price) > 0 && Number(l?.price) < 500_000_000);
+  });
+  const pool = clean.length >= 4 ? clean : listings;
   // Show variety: at most two listings from the same area/project, then fill up.
   const perArea: Record<string, number> = {};
   const varied = pool.filter(l => {
