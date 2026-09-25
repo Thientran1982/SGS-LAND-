@@ -201,7 +201,7 @@ const AgentAvatar = ({ name, avatar }: { name: string; avatar?: string }) => {
 const ProgressBar = ({ value, label, muted = false }: { value: number; label: string; muted?: boolean }) => {
     const safeValue = Math.max(0, Math.min(100, Number(value) || 0));
     return (
-        <div className="mt-3">
+        <div className="mt-3 w-full">
             <div className="flex items-center justify-between gap-2 text-xs2 font-semibold uppercase tracking-wider text-[var(--text-tertiary)]">
                 <span>{label}</span>
                 <span className={muted ? 'text-[var(--text-tertiary)]' : 'text-[var(--sgs-primary)]'}>{muted ? '—' : `${safeValue}%`}</span>
@@ -1040,6 +1040,28 @@ export const Dashboard: React.FC = () => {
     const aiDeflectionValue = overview.aiDeflectionRate == null || !Number.isFinite(Number(overview.aiDeflectionRate))
         ? null
         : Number(overview.aiDeflectionRate);
+    const pipelineDisplayValue = pipelineValueAvailable ? formatCompactNumber(Number(overview.pipelineValue)) : '—';
+    const pipelineRingValue = winProbabilityValue;
+    const winProbabilityDisplayValue = winProbabilityValue === null ? '—' : `${Math.round(winProbabilityValue)}%`;
+    const aiDeflectionDisplayValue = aiDeflectionValue === null ? '—' : `${Math.round(aiDeflectionValue)}%`;
+    const salesVelocityDisplayValue = velocityHasClosedDeals
+        ? (velocityMetric! < 1 ? '< 1' : velocityMetric!.toLocaleString(language === 'vn' ? 'vi-VN' : 'en-US', { maximumFractionDigits: 1 }))
+        : '—';
+    const velocityRingValue = velocityHasClosedDeals && velocityTarget.target > 0
+        ? (velocityMetric! / velocityTarget.target) * 100
+        : null;
+    const velocityRingColor = velocityTarget.target > 0 && velocityHasClosedDeals
+        ? (velocityMetric! <= velocityTarget.target ? 'var(--ui-success)' : 'var(--ui-danger)')
+        : 'var(--sgs-primary)';
+    const pipelineRingLabel = language === 'vn'
+        ? `Giá trị Pipeline: ${pipelineDisplayValue}; xác suất chốt: ${winProbabilityDisplayValue}`
+        : `Pipeline value: ${pipelineDisplayValue}; win probability: ${winProbabilityDisplayValue}`;
+    const aiRingLabel = language === 'vn'
+        ? `Tỷ lệ AI tự xử lý: ${aiDeflectionDisplayValue}`
+        : `AI deflection rate: ${aiDeflectionDisplayValue}`;
+    const velocityRingLabel = language === 'vn'
+        ? `${velocityHasClosedDeals ? `Tốc độ bán hàng: ${salesVelocityDisplayValue} ngày` : t('dash.no_closed_deals')}${velocityTarget.target > 0 ? `; mục tiêu không quá ${velocityTarget.target} ngày, ít ngày hơn là tốt hơn` : ''}`
+        : `${velocityHasClosedDeals ? `Sales velocity: ${salesVelocityDisplayValue} days` : t('dash.no_closed_deals')}${velocityTarget.target > 0 ? `; maximum target ${velocityTarget.target} days, fewer days is better` : ''}`;
     const sourceData = Object.entries(overview.leadsBySource || {}).sort(([, a]: any, [, b]: any) => b - a);
     const sourceTotal = sourceData.reduce((total, [, count]: any) => total + Math.max(0, Number(count) || 0), 0);
     const lbRows: any[] = leaderboardMode === 'team' ? (overview.teamLeaderboard || []) : (analytics.agentLeaderboard || []);
@@ -1142,81 +1164,74 @@ export const Dashboard: React.FC = () => {
                             <WorkQueueStrip analytics={overview} language={language} />
                         </div>
                         <section className="dashboard-kpis dashboard-performance-kpis" aria-label={t('dash.overview_subtitle')}>
-                        <div className="dashboard-kpi">
+                        <div className="dashboard-kpi dashboard-performance-kpi">
                             <div className="kpi-label">{t('dash.pipeline_value')}</div>
-                            <div className="flex items-center justify-between gap-2">
-                                <div className="min-w-0">
-                                    <div className="kpi-value dash-number break-words">{pipelineValueAvailable ? formatCompactNumber(analytics.pipelineValue) : '—'}</div>
-                                    <div className="kpi-meta">{t('dash.win_probability')}</div>
-                                </div>
+                            <div className="dashboard-performance-ring">
                                 <DashboardMetricRing
-                                    value={winProbabilityValue}
+                                    value={pipelineRingValue}
+                                    centerValue={pipelineDisplayValue}
+                                    size={82}
                                     color="var(--sgs-accent)"
-                                    label={language === 'vn'
-                                        ? `Xác suất chốt: ${winProbabilityValue === null ? 'chưa có dữ liệu' : `${Math.round(winProbabilityValue)}%`}`
-                                        : `Win probability: ${winProbabilityValue === null ? 'unavailable' : `${Math.round(winProbabilityValue)}%`}`}
+                                    label={pipelineRingLabel}
                                 />
                             </div>
-                            {pipelineTarget.target > 0 && pipelineValueAvailable && <ProgressBar value={pipelineTarget.progress} label={`${pipelineTarget.progress}% ${ui.target}`} />}
+                            <div className="dashboard-performance-meta">
+                                <div className="kpi-meta">
+                                    {t('dash.win_probability')}: {winProbabilityDisplayValue}
+                                </div>
+                            </div>
+                            {pipelineTarget.target > 0 && pipelineValueAvailable && (
+                                <ProgressBar value={pipelineTarget.progress} label={`${pipelineTarget.progress}% ${ui.target}`} />
+                            )}
                         </div>
-                        <div className="dashboard-kpi">
+                        <div className="dashboard-kpi dashboard-performance-kpi">
                             <div className="kpi-label">{t('dash.ai_deflection_rate')}</div>
-                            <div className="flex items-center justify-between gap-2">
-                                <div className="kpi-value dash-number">{aiDeflectionValue === null ? '—' : `${Math.round(aiDeflectionValue)}%`}</div>
+                            <div className="dashboard-performance-ring">
                                 <DashboardMetricRing
                                     value={aiDeflectionValue}
-                                    showValue={false}
-                                    label={language === 'vn'
-                                        ? `Tỷ lệ AI tự xử lý: ${aiDeflectionValue === null ? 'chưa có dữ liệu' : `${Math.round(aiDeflectionValue)}%`}`
-                                        : `AI deflection rate: ${aiDeflectionValue === null ? 'unavailable' : `${Math.round(aiDeflectionValue)}%`}`}
+                                    centerValue={aiDeflectionDisplayValue}
+                                    size={82}
+                                    label={aiRingLabel}
                                 />
                             </div>
-                            <div className="kpi-meta">
-                                {overview.aiDeflectionRateDelta == null || !Number.isFinite(Number(overview.aiDeflectionRateDelta))
-                                    ? <span className="text-[var(--text-tertiary)]">— · {t('dash.vs_last_period')}</span>
-                                    : <TrendIndicator value={Number(overview.aiDeflectionRateDelta)} label={t('dash.vs_last_period')} />}
+                            <div className="dashboard-performance-meta">
+                                <div className="kpi-meta">
+                                    {overview.aiDeflectionRateDelta == null || !Number.isFinite(Number(overview.aiDeflectionRateDelta))
+                                        ? <span className="text-[var(--text-tertiary)]">— · {t('dash.vs_last_period')}</span>
+                                        : <TrendIndicator value={Number(overview.aiDeflectionRateDelta)} label={t('dash.vs_last_period')} />}
+                                </div>
                             </div>
                         </div>
-                        <div className="dashboard-kpi">
+                        <div className="dashboard-kpi dashboard-performance-kpi">
                             <div className="kpi-label">{t('dash.sales_velocity')}</div>
-                            <div className="kpi-value dash-number">{velocityHasClosedDeals && analytics.salesVelocity < 1 ? '< 1' : (velocityHasClosedDeals ? analytics.salesVelocity : '--')}</div>
-                            <div className="kpi-meta">
-                                {velocityHasClosedDeals
-                                    ? <>
-                                        {t('dash.days_to_close')}{' '}
-                                        {overview.salesVelocityDelta == null || !Number.isFinite(Number(overview.salesVelocityDelta))
-                                            ? <span className="text-[var(--text-tertiary)]">—</span>
-                                            : <TrendIndicator value={Number(overview.salesVelocityDelta)} label="" />}
-                                    </>
-                                    : t('dash.no_closed_deals')}
+                            <div className="dashboard-performance-ring">
+                                <DashboardMetricRing
+                                    value={velocityRingValue}
+                                    centerValue={salesVelocityDisplayValue}
+                                    size={82}
+                                    color={velocityRingColor}
+                                    label={velocityRingLabel}
+                                />
                             </div>
-                            {velocityTarget.target > 0 && velocityHasClosedDeals && (
-                                <div
-                                    className="mt-3 space-y-1.5"
-                                    role="group"
-                                    aria-label={language === 'vn'
-                                        ? `Tốc độ bán hàng trung bình ${velocityMetric!.toLocaleString('vi-VN', { maximumFractionDigits: 1 })} ngày; mục tiêu không quá ${velocityTarget.target.toLocaleString('vi-VN', { maximumFractionDigits: 1 })} ngày`
-                                        : `Average sales velocity ${velocityMetric!.toLocaleString('en-US', { maximumFractionDigits: 1 })} days; target no more than ${velocityTarget.target.toLocaleString('en-US', { maximumFractionDigits: 1 })} days`}
-                                >
-                                    <div className="flex items-center justify-between gap-2 text-[11px] text-[var(--text-tertiary)]">
-                                        <span>{language === 'vn' ? 'Thời gian chốt TB' : 'Average close time'}</span>
-                                        <span className="shrink-0">
-                                            {language === 'vn' ? 'Mục tiêu ≤ ' : 'Target ≤ '}
-                                            {velocityTarget.target.toLocaleString(language === 'vn' ? 'vi-VN' : 'en-US', { maximumFractionDigits: 1 })}
-                                            {language === 'vn' ? ' ngày' : ' days'}
-                                        </span>
-                                    </div>
-                                    <div className="h-2 overflow-hidden rounded-full bg-[var(--glass-surface-hover)]" aria-hidden="true">
-                                        <div
-                                            className="h-full rounded-full transition-[width] duration-300"
-                                            style={{
-                                                width: `${Math.min(100, (velocityMetric! / velocityTarget.target) * 100)}%`,
-                                                background: velocityMetric! <= velocityTarget.target ? 'var(--ui-success)' : 'var(--ui-danger)',
-                                            }}
-                                        />
-                                    </div>
+                            <div className="dashboard-performance-meta">
+                                <div className="kpi-meta">
+                                    {velocityHasClosedDeals
+                                        ? <>
+                                            {t('dash.days_to_close')}{' '}
+                                            {overview.salesVelocityDelta == null || !Number.isFinite(Number(overview.salesVelocityDelta))
+                                                ? <span className="text-[var(--text-tertiary)]">—</span>
+                                                : <TrendIndicator value={Number(overview.salesVelocityDelta)} label={t('dash.vs_last_period')} />}
+                                        </>
+                                        : t('dash.no_closed_deals')}
                                 </div>
-                            )}
+                                {velocityHasClosedDeals && velocityTarget.target > 0 && (
+                                    <div className="kpi-meta">
+                                        {language === 'vn' ? 'Mục tiêu ≤ ' : 'Target ≤ '}
+                                        {velocityTarget.target.toLocaleString(language === 'vn' ? 'vi-VN' : 'en-US', { maximumFractionDigits: 1 })}
+                                        {language === 'vn' ? ' ngày' : ' days'}
+                                    </div>
+                                )}
+                            </div>
                         </div>
                         </section>
                     </section>

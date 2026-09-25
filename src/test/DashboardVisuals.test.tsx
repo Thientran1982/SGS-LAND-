@@ -55,4 +55,19 @@ describe("DashboardMetricRing", () => {
     expect(screen.getByRole("img", { name: "AI automation: 92%" })).toBeInTheDocument();
     expect(screen.queryByText("92%")).toBeNull();
   });
+
+  it("shows a non-percent KPI value inside the ring", () => {
+    render(
+      <DashboardMetricRing
+        value={0}
+        centerValue="0"
+        size={82}
+        label="Pipeline value: 0; target progress: 0%; win probability: 0%"
+      />,
+    );
+
+    expect(screen.getByRole("img", { name: "Pipeline value: 0; target progress: 0%; win probability: 0%" })).toBeInTheDocument();
+    expect(screen.getByText("0")).toBeInTheDocument();
+    expect(screen.queryByText("0%")).toBeNull();
+  });
 });

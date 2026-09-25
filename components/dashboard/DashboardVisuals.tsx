@@ -70,16 +70,25 @@ export const DashboardMetricRing: React.FC<{
     color?: string;
     size?: number;
     showValue?: boolean;
-}> = ({ value, label, color = 'var(--sgs-primary)', size = 52, showValue = true }) => {
+    centerValue?: string;
+}> = ({ value, label, color = 'var(--sgs-primary)', size = 52, showValue = true, centerValue }) => {
     const valid = value !== null && Number.isFinite(value);
     const normalized = valid ? Math.max(0, Math.min(100, value as number)) : 0;
     const radius = 19;
     const circumference = 2 * Math.PI * radius;
     const dash = circumference * normalized / 100;
+    const displayedValue = centerValue ?? (valid ? `${Math.round(value as number)}%` : '—');
+    const centerFontSize = displayedValue.length > 6 ? 8 : displayedValue.length > 4 ? 9 : size >= 72 ? 12 : 10;
 
     return (
-        <div className="shrink-0" role="img" aria-label={label} title={label}>
-            <svg width={size} height={size} viewBox="0 0 48 48" aria-hidden="true">
+        <div
+            className="relative flex shrink-0 items-center justify-center"
+            style={{ width: size, height: size }}
+            role="img"
+            aria-label={label}
+            title={label}
+        >
+            <svg width="100%" height="100%" viewBox="0 0 48 48" aria-hidden="true">
                 <circle cx="24" cy="24" r={radius} fill="none" stroke="var(--glass-surface-hover)" strokeWidth="5" />
                 {valid && (
                     <circle
@@ -88,12 +97,16 @@ export const DashboardMetricRing: React.FC<{
                         transform="rotate(-90 24 24)"
                     />
                 )}
-                {showValue && (
-                    <text x="24" y="27" textAnchor="middle" className="fill-[var(--text-secondary)]" fontSize="10" fontWeight="700">
-                        {valid ? `${Math.round(value as number)}%` : '—'}
-                    </text>
-                )}
             </svg>
+            {showValue && (
+                <span
+                    className="absolute inset-0 flex items-center justify-center overflow-hidden px-1 text-center font-mono font-bold leading-none text-[var(--text-primary)]"
+                    style={{ fontSize: `${centerFontSize}px` }}
+                    aria-hidden="true"
+                >
+                    {displayedValue}
+                </span>
+            )}
         </div>
     );
 };

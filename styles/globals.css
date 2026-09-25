@@ -568,8 +568,44 @@ html.dark body {
 .sgs-dashboard .dashboard-performance-kpis > .dashboard-kpi {
   background: transparent;
 }
+.sgs-dashboard .dashboard-performance-kpis > .dashboard-performance-kpi {
+  display: flex;
+  min-height: 11.25rem;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+}
 .sgs-dashboard .dashboard-performance-kpis > .dashboard-kpi:last-child {
   border-right: 0;
+}
+.sgs-dashboard .dashboard-performance-kpi .kpi-label {
+  display: flex;
+  min-height: 2.2em;
+  width: 100%;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+}
+.sgs-dashboard .dashboard-performance-ring {
+  display: flex;
+  justify-content: center;
+  margin: .4rem auto .55rem;
+}
+.sgs-dashboard .dashboard-performance-meta {
+  display: flex;
+  min-height: 2.25rem;
+  width: 100%;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: .25rem;
+}
+.sgs-dashboard .dashboard-performance-meta .kpi-meta {
+  justify-content: center;
+  margin-top: 0;
+  text-align: center;
+  line-height: 1.35;
+  flex-wrap: wrap;
 }
 .sgs-dashboard .dashboard-kpi {
   min-width: 0;
@@ -892,6 +928,9 @@ html.dark body {
     border-top: 1px solid var(--dash-rule);
   }
   .sgs-dashboard .dashboard-performance-kpis > .dashboard-kpi:first-child { border-top: 0; }
+  .sgs-dashboard .dashboard-performance-kpis > .dashboard-performance-kpi { min-height: 0; }
+  .sgs-dashboard .dashboard-performance-kpi .kpi-label { min-height: 0; }
+  .sgs-dashboard .dashboard-performance-ring { margin: .35rem auto .45rem; }
    .sgs-dashboard .dashboard-kpi {
      padding-left: .75rem;
      padding-right: .75rem;
