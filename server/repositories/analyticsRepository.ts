@@ -26,7 +26,7 @@ export interface AnalyticsSummary {
   leadsByStage: Record<string, number>;
   leadsBySource: Record<string, number>;
   revenueByMonth: { month: string; revenue: number }[];
-  leadsTrend: { date: string; count: number }[];
+  leadsTrend: { date: string; dateKey?: string; count: number }[];
   recentActivities: { id: string; type: string; content: string; time: string }[];
   marketPulse: { location: string; area: number; price: number; pricePerM2: number; interest: number }[];
   agentLeaderboard: { name: string; avatar: string | null; deals: number; closeRate: number; slaScore: number; avgResponseMinutes: number | null }[];
@@ -79,7 +79,7 @@ const TENANT_FILTER = `tenant_id = current_setting('app.current_tenant_id', true
 
 export class AnalyticsRepository extends BaseRepository {
   private static readonly SUMMARY_CACHE_TTL_MS = 15_000;
-  private static readonly SUMMARY_CACHE_VERSION = 'v2';
+  private static readonly SUMMARY_CACHE_VERSION = 'v3';
   private static readonly summaryInFlight = new Map<string, Promise<AnalyticsSummary>>();
   constructor() {
     super('leads');
@@ -465,13 +465,14 @@ export class AnalyticsRepository extends BaseRepository {
 
       const leadsTrendResult = await client.query(`
         SELECT
-          TO_CHAR(created_at, 'DD/MM') as date,
+          TO_CHAR(DATE(created_at), 'DD/MM') as date,
+          TO_CHAR(DATE(created_at), 'YYYY-MM-DD') as date_key,
           COUNT(*)::int as count
         FROM leads
         WHERE ${TENANT_FILTER}
           ${userLeadFilterNoAlias}
           ${useTimeFilter ? `AND created_at >= NOW() - INTERVAL '${days} days'` : `AND created_at >= NOW() - INTERVAL '30 days'`}
-        GROUP BY TO_CHAR(created_at, 'DD/MM'), DATE(created_at)
+        GROUP BY DATE(created_at)
         ORDER BY DATE(created_at) ASC
       `);
 
@@ -911,6 +912,7 @@ export class AnalyticsRepository extends BaseRepository {
         })(),
         leadsTrend: leadsTrendResult.rows.map((r: any) => ({
           date: r.date,
+          dateKey: r.date_key,
           count: r.count,
         })),
         recentActivities,

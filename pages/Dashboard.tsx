@@ -18,6 +18,7 @@ import { SelectDropdown } from '../components/task/SelectDropdown';
 import { useSocket, socket } from '../services/websocket';
 import { SeoHead } from '../components/SeoHead';
 import { OverviewHome, OverviewGreeting, ShellPageActions } from '../components/dashboard/OverviewHome';
+import { AdvancedTrendCharts } from '../components/dashboard/AdvancedTrendCharts';
 // --- ICONS ---
 const ICONS = {
     TREND_UP: <svg className="w-3 h-3 text-sgs-verified dark:text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" /></svg>,
@@ -51,10 +52,6 @@ const formatProjectName = (v: string) => {
     const s = String(v || '').replace(/[-_]+/g, ' ').trim();
     const pretty = s.length <= 4 ? s.toUpperCase() : (s === s.toLowerCase() || s === s.toUpperCase()) ? toTitleCase(s) : s;
     return pretty.length > 18 ? pretty.slice(0, 17) + '…' : pretty;
-};
-const formatShortDate = (v: string) => {
-    const m = /^(\d{4})-(\d{2})-(\d{2})/.exec(String(v || ''));
-    return m ? `${m[3]}/${m[2]}` : String(v || '');
 };
 const suggestionText = (item: any): string => typeof item === 'string' ? item : (item?.title || item?.message || item?.content || '');
 const isUsefulSuggestion = (item: any) => {
@@ -854,7 +851,7 @@ function getTenantIdFromCookie(): string | null {
 export const Dashboard: React.FC = () => {
     const [timeRange, setTimeRange] = useState('30d');
     const selectedDays = timeRange === 'all' ? 365 : Number.parseInt(timeRange, 10) || 30;
-    const [pipelineMode, setPipelineMode] = useState<'overview' | 'source'>('overview');
+    const [pipelineMode, setPipelineMode] = useState<'stages' | 'source'>('stages');
     const [leaderboardMode, setLeaderboardMode] = useState<'individual' | 'team'>('individual');
     const [isExporting, setIsExporting] = useState(false);
     const [isReturningUser, setIsReturningUser] = useState(false);
@@ -1009,8 +1006,8 @@ export const Dashboard: React.FC = () => {
     const scopeLabel = scopeKey === 'personal' ? t('dash.scope_personal') : t('dash.scope_company');
     const overview: any = analytics;
     const ui = language === 'vn'
-         ? { quick: 'Thao tác nhanh', addLead: '+ Thêm khách hàng', contract: '+ Tạo hợp đồng', listing: '+ Đăng tin BĐS', target: 'mục tiêu tháng', source: 'Theo nguồn', overview: 'Tổng quan', project: 'Theo dự án', demand: 'Nhu cầu theo khu vực', team: 'Theo team', individual: 'Theo cá nhân', overloaded: 'Quá tải' }
-         : { quick: 'Quick actions', addLead: '+ Add lead', contract: '+ Create contract', listing: '+ Add listing', target: 'monthly target', source: 'By source', overview: 'Overview', project: 'By project', demand: 'Demand by area', team: 'By team', individual: 'By person', overloaded: 'Overloaded' };
+         ? { quick: 'Thao tác nhanh', addLead: '+ Thêm khách hàng', contract: '+ Tạo hợp đồng', listing: '+ Đăng tin BĐS', target: 'mục tiêu tháng', source: 'Theo nguồn', stages: t('overview.pipeline_by_stage'), project: 'Theo dự án', demand: 'Nhu cầu theo khu vực', team: 'Theo team', individual: 'Theo cá nhân', overloaded: 'Quá tải' }
+         : { quick: 'Quick actions', addLead: '+ Add lead', contract: '+ Create contract', listing: '+ Add listing', target: 'monthly target', source: 'By source', stages: t('overview.pipeline_by_stage'), project: 'By project', demand: 'Demand by area', team: 'By team', individual: 'By person', overloaded: 'Overloaded' };
     const kpiTarget = (key: string, actual: number) => {
         const target = Number(overview?.targets?.[key]?.monthly_target ?? overview?.targets?.[key]?.monthlyTarget ?? 0);
         return { target, progress: target > 0 ? Math.round((actual / target) * 100) : 0 };
@@ -1019,6 +1016,21 @@ export const Dashboard: React.FC = () => {
     const pipelineTarget = kpiTarget('pipeline', Number(overview.pipelineValue || 0));
     const velocityTarget = kpiTarget('salesVelocity', Number(overview.salesVelocity || 0));
     const sourceData = Object.entries(overview.leadsBySource || {}).sort(([, a]: any, [, b]: any) => b - a);
+    const pipelineStageDefinitions = [
+        { key: 'NEW', labelKey: 'overview.stage_new' },
+        { key: 'CONTACTED', labelKey: 'overview.stage_contacted' },
+        { key: 'QUALIFIED', labelKey: 'overview.stage_qualified' },
+        { key: 'PROPOSAL', labelKey: 'overview.stage_proposal' },
+        { key: 'NEGOTIATION', labelKey: 'overview.stage_negotiation' },
+        { key: 'WON', labelKey: 'overview.stage_won' },
+    ];
+    const pipelineStageRows = pipelineStageDefinitions.map(({ key, labelKey }) => ({
+        key,
+        label: t(labelKey),
+        count: Math.max(0, Number(overview.leadsByStage?.[key]) || 0),
+    }));
+    const maxPipelineStageCount = Math.max(1, ...pipelineStageRows.map(({ count }) => count));
+    const hasPipelineStageData = pipelineStageRows.some(({ count }) => count > 0);
     const lbRows: any[] = leaderboardMode === 'team' ? (overview.teamLeaderboard || []) : (analytics.agentLeaderboard || []);
     const lbHasData = lbRows.some((a: any) => Number(a?.deals) > 0 || Number(a?.closeRate) > 0 || Number(a?.slaScore) > 0);
     const usefulSuggestions = (Array.isArray(overview.aiAdvisor?.suggestions) ? overview.aiAdvisor.suggestions : []).filter(isUsefulSuggestion);
@@ -1098,6 +1110,10 @@ export const Dashboard: React.FC = () => {
                         </summary>
                         <div className="space-y-6 p-4 sm:p-5">
                     <PriorityAlertCenter analytics={overview} language={language} />
+                    <AdvancedTrendCharts
+                        leadsTrend={analytics.leadsTrend}
+                        revenueByMonth={analytics.revenueByMonth}
+                    />
                     <section className="dashboard-panel dashboard-command-panel overflow-hidden" aria-label={language === 'vn' ? 'Điều hành nhanh và KPI' : 'Quick actions and KPIs'}>
                          <div className="p-4 sm:p-5">
                             <div className="grid grid-cols-3 gap-2">
@@ -1148,7 +1164,7 @@ export const Dashboard: React.FC = () => {
                     <section className="dashboard-panel" aria-label={t('dash.pipeline_title')}>
                         <div className="dashboard-panel-head">
                             <h2>{t('dash.pipeline_title')}</h2>
-                            <SegmentToggle value={pipelineMode} onChange={(value) => setPipelineMode(value as 'overview' | 'source')} options={[{ value: 'overview', label: ui.overview }, { value: 'source', label: ui.source }]} />
+                            <SegmentToggle value={pipelineMode} onChange={(value) => setPipelineMode(value as 'stages' | 'source')} options={[{ value: 'stages', label: ui.stages }, { value: 'source', label: ui.source }]} />
                         </div>
                         <div className="dashboard-workbench">
                             <div className="dashboard-chart">
@@ -1167,13 +1183,7 @@ export const Dashboard: React.FC = () => {
                                     </div>
                                 </div>
                                 <div className="mb-2 flex items-center justify-between gap-3">
-                                    <div className="dashboard-subhead">{pipelineMode === 'source' ? ui.source : language === 'vn' ? 'Khách mới theo ngày' : 'New leads by day'}</div>
-                                    {pipelineMode === 'overview' && (
-                                        <div className="flex items-center gap-3 text-xs text-[var(--text-tertiary)]" aria-label={language === 'vn' ? 'Chú giải biểu đồ' : 'Chart legend'}>
-                                            <span className="inline-flex items-center gap-1.5"><span className="h-2 w-2 rounded-sm bg-[var(--sgs-primary)]" />{t('dash.chart_new_leads')}</span>
-                                            
-                                        </div>
-                                    )}
+                                    <div className="dashboard-subhead">{pipelineMode === 'source' ? ui.source : t('overview.pipeline_title')}</div>
                                 </div>
                                 <div className="h-[260px] w-full min-w-0 sm:h-[300px]">
                                     {pipelineMode === 'source' ? (
@@ -1185,18 +1195,24 @@ export const Dashboard: React.FC = () => {
                                                 </div>
                                             )) : <EmptyState message={language === 'vn' ? 'Chưa có dữ liệu nguồn khách hàng' : 'No lead source data'} />}
                                         </div>
-                                    ) : analytics.leadsTrend && analytics.leadsTrend.length > 0 ? (
-                                        <ResponsiveContainer width="100%" height="100%" minHeight={200} minWidth={200}>
-                                            <ComposedChart data={analytics.leadsTrend}>
-                                                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke={chartTheme.colors.grid} opacity={0.5} />
-                                                <XAxis dataKey="date" tickFormatter={formatShortDate} stroke={chartTheme.colors.text} fontSize={11} tickLine={false} axisLine={false} minTickGap={18} />
-                                                <YAxis allowDecimals={false} width={28} stroke={chartTheme.colors.text} fontSize={11} tickLine={false} axisLine={false} />
-                                                <Tooltip content={<CustomTooltip t={t} formatCurrency={formatCurrency} language={language} />} cursor={{fill: 'transparent'}} />
-                                                <Bar dataKey="count" fill="var(--sgs-primary)" barSize={18} radius={[2, 2, 0, 0]} name={t('dash.chart_new_leads')} />
-                                                
-                                            </ComposedChart>
-                                        </ResponsiveContainer>
-                                    ) : <EmptyState message={t('dash.chart_empty')} />}
+                                    ) : hasPipelineStageData ? (
+                                        <div className="max-h-[285px] space-y-3 overflow-y-auto px-2 pt-4 pr-3">
+                                            {pipelineStageRows.map(({ key, label, count }) => (
+                                                <div key={key}>
+                                                    <div className="mb-1 flex justify-between gap-3 text-xs">
+                                                        <span className="text-[var(--text-secondary)]">{label}</span>
+                                                        <strong className="font-mono text-[var(--text-primary)]">{count}</strong>
+                                                    </div>
+                                                    <div className="h-2 rounded-full bg-[var(--glass-surface-hover)]">
+                                                        <div
+                                                            className={`h-full rounded-full ${key === 'WON' ? 'bg-[var(--sgs-accent)]' : 'bg-[var(--sgs-primary)]'}`}
+                                                            style={{ width: `${Math.min(100, (count / maxPipelineStageCount) * 100)}%` }}
+                                                        />
+                                                    </div>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    ) : <EmptyState message={t('overview.pipeline_empty')} />}
                                 </div>
                             </div>
                             <div className="dashboard-side">

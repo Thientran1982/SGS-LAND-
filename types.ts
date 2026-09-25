@@ -990,7 +990,8 @@ export interface AnalyticsSummary {
     totalLeads: number;
     totalLeadsDelta: number;
     slaBreachedCount: number;
-    leadsTrend: { date: string; count: number }[];
+    leadsTrend: { date: string; dateKey?: string; count: number }[];
+    revenueByMonth?: { month: string; revenue: number }[];
     forecast: { month: string; actual: number; target: number }[];
     aiHighlights: string[];
     conversionRate: number;
