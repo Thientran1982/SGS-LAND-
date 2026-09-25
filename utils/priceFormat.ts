@@ -12,7 +12,7 @@
 export type PriceLang = 'vi' | 'en';
 
 const LABELS: Record<PriceLang, { billion: string; million: string; perMonth: string; unit: string }> = {
-  vi: { billion: 'T\u1ef7', million: 'Tri\u1ec7u', perMonth: '/th\u00e1ng', unit: '\u0111/m\u00b2' },
+  vi: { billion: 't\u1ef7', million: 'tri\u1ec7u', perMonth: '/th\u00e1ng', unit: '\u0111/m\u00b2' },
   en: { billion: 'B VND', million: 'M VND', perMonth: '/month', unit: 'VND/m\u00b2' },
 };
 

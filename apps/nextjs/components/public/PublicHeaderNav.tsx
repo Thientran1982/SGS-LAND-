@@ -135,7 +135,7 @@ export function PublicHeader({ authed = false }: { authed?: boolean }) {
 
           {/* ── Desktop Nav ───────────────────────────────── */}
           <nav
-            className="hidden xl:flex items-center gap-0.5"
+            className="hidden lg:flex items-center gap-0.5"
             data-public-desktop-nav
           >
             <div
@@ -146,7 +146,7 @@ export function PublicHeader({ authed = false }: { authed?: boolean }) {
               <button
                 type="button"
                 onClick={() => setRealEstateOpen(open => !open)}
-                className="flex items-center gap-1 px-3.5 py-2 rounded-lg text-sm font-medium transition-all"
+                className="flex items-center gap-1 px-2.5 xl:px-3.5 py-2 rounded-lg text-sm font-medium transition-all"
                 style={{
                   color: isHero ? "rgba(255,255,255,0.85)" : "var(--sgs-primary)",
                   fontFamily: "var(--font-ui, var(--font-be-vietnam), sans-serif)",
@@ -185,7 +185,7 @@ export function PublicHeader({ authed = false }: { authed?: boolean }) {
                 key={link.href}
                 href={localizedHref(link.href)}
                 data-public-nav-link={link.href}
-                className="px-3.5 py-2 rounded-lg text-sm font-medium transition-all"
+                className="px-2.5 xl:px-3.5 py-2 rounded-lg text-sm font-medium transition-all"
                 style={{
                   color: isHero ? "rgba(255,255,255,0.85)" : "var(--sgs-primary)",
                   fontFamily: "var(--font-ui, var(--font-be-vietnam), sans-serif)",
@@ -207,7 +207,7 @@ export function PublicHeader({ authed = false }: { authed?: boolean }) {
           </nav>
 
           {/* ── Right Controls ─────────────────────────────── */}
-          <div className="hidden xl:flex items-center gap-2">
+          <div className="hidden lg:flex items-center gap-1.5 xl:gap-2">
             {/* VI/EN Toggle */}
             <button
               onClick={toggleLang}
@@ -267,14 +267,14 @@ export function PublicHeader({ authed = false }: { authed?: boolean }) {
               onMouseEnter={e => (e.currentTarget as HTMLElement).style.background = "#D9A94E"}
               onMouseLeave={e => (e.currentTarget as HTMLElement).style.background = "var(--sgs-accent)"}
             >
-              {lang === "vi" ? "Định giá miễn phí" : "Free Valuation"}
+              {lang === "vi" ? "Định giá miễn phí" : "Free valuation"}
             </Link>
           </div>
 
           {/* ── Mobile Hamburger ──────────────────────────── */}
           <button
             onClick={() => setMenuOpen(!menuOpen)}
-            className="xl:hidden p-2 rounded-lg transition-colors"
+            className="lg:hidden p-2 rounded-lg transition-colors"
             style={{ color: isHero ? "#FFFFFF" : "var(--sgs-primary)" }}
             aria-label="Mở menu"
             data-public-menu-toggle
@@ -289,7 +289,7 @@ export function PublicHeader({ authed = false }: { authed?: boolean }) {
       {mounted && menuOpen &&
         createPortal(
           <div
-            className="xl:hidden fixed inset-0 z-40"
+            className="lg:hidden fixed inset-0 z-40"
             style={{ top: 64, background: "rgba(0,0,0,0.45)" }}
             onClick={() => setMenuOpen(false)}
             aria-hidden
@@ -298,7 +298,7 @@ export function PublicHeader({ authed = false }: { authed?: boolean }) {
         )}
       {menuOpen && (
         <div
-          className="xl:hidden relative z-50"
+          className="lg:hidden relative z-50"
           data-public-mobile-menu
           style={{
             background: "var(--hdr-panel)",
@@ -316,7 +316,7 @@ export function PublicHeader({ authed = false }: { authed?: boolean }) {
               aria-haspopup="menu"
               aria-expanded={realEstateOpen}
             >
-              <span>{lang === "vi" ? "Bất Động Sản" : "Real Estate"}</span>
+              <span>{lang === "vi" ? "Mua bán & cho thuê" : "Buy & rent"}</span>
               <ChevronDown className={`w-4 h-4 transition-transform ${realEstateOpen ? "rotate-180" : ""}`} />
             </button>
             {realEstateOpen && (
@@ -383,7 +383,7 @@ export function PublicHeader({ authed = false }: { authed?: boolean }) {
                 className="flex-1 text-center text-sm font-semibold py-2.5 rounded-lg"
                 style={{ background: "var(--sgs-accent)", color: "var(--sgs-primary-deep)" }}
               >
-                Định Giá AI
+                {lang === "vi" ? "Định giá miễn phí" : "Free valuation"}
               </Link>
             </div>
           </div>

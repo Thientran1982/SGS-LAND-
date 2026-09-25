@@ -14,8 +14,8 @@ export async function generateMetadata(): Promise<Metadata> {
       ? "Property Search | SGS LAND Marketplace"
       : "Tìm kiếm Bất Động Sản | Marketplace SGS LAND",
     description: en
-      ? "Search 45,000+ properties across Ho Chi Minh City, Dong Nai and Binh Duong. Filter by area, type, price and bedrooms. Verified legal status, real prices, updated continuously."
-      : "Tìm kiếm 45.000+ bất động sản tại TP.HCM, Đồng Nai, Bình Dương. Lọc theo khu vực, loại, giá, số phòng ngủ. Pháp lý rõ ràng, giá thực, cập nhật liên tục.",
+      ? "Search verified properties across Ho Chi Minh City, Dong Nai and Binh Duong. Filter by area, type, price and bedrooms. Verified legal status, real prices, updated continuously."
+      : "Tìm kiếm bất động sản đã xác minh tại TP.HCM, Đồng Nai, Bình Dương. Lọc theo khu vực, loại, giá, số phòng ngủ. Pháp lý rõ ràng, giá thực, cập nhật liên tục.",
     alternates: {
       canonical: url,
       languages: {
@@ -25,8 +25,8 @@ export async function generateMetadata(): Promise<Metadata> {
     openGraph: {
       title: en ? "Property Search | SGS LAND Marketplace" : "Tìm kiếm Bất Động Sản | SGS LAND Marketplace",
       description: en
-        ? "45,000+ properties in HCMC, Dong Nai, Binh Duong — verified legal status, real prices"
-        : "45.000+ BĐS TP.HCM, Đồng Nai, Bình Dương — pháp lý rõ ràng, giá thực",
+        ? "Properties in HCMC, Dong Nai, Binh Duong — verified legal status, real prices"
+        : "BĐS TP.HCM, Đồng Nai, Bình Dương — pháp lý rõ ràng, giá thực",
       url,
     },
   };

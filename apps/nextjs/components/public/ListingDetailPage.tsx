@@ -8,6 +8,7 @@ import { useLang } from "@/components/shared/useLang";
 import { tt } from "@/lib/i18n";
 import { PublicListingCard } from "./MarketplacePage";
 import { readFavoriteIds, toggleFavoriteId } from "@/lib/favorites";
+import { formatPriceLang, formatUnitPriceLang } from "@/utils/priceFormat";
 type L = "vi" | "en";
 import { MapPin, Bed, Bath, Square, Phone, Share2, Heart, ArrowLeft, CheckCircle, Calendar, Landmark, Eye, ChevronDown } from "lucide-react";
 interface Listing {
@@ -46,15 +47,13 @@ const ListingMap = dynamic(() => import("./ListingMap"), {
   ),
 });
 
+// UX audit U5: same formatter as marketplace cards and the CRM (utils/priceFormat).
 function formatPrice(price: number, g: L = "vi"): string {
-  if (price >= 1e9) return g === "en" ? `${(price / 1e9).toFixed(2)}B VND` : `${(price / 1e9).toFixed(2)} tỷ VNĐ`;
-  const m = Math.round(price / 1e6).toLocaleString();
-  return g === "en" ? `${m}M VND` : `${m} triệu VNĐ`;
+  return formatPriceLang(price, g);
 }
 function formatUnitPrice(price: number, area?: number, g: L = "vi"): string {
   if (!area) return "";
-  const unitPrice = price / area / 1e6;
-  return g === "en" ? `${unitPrice.toFixed(1)}M/m²` : `${unitPrice.toFixed(1)} triệu/m²`;
+  return formatUnitPriceLang(price, area, g);
 }
 
 function buildListingShareText(listing: Listing, lang: L): string {

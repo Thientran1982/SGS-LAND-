@@ -64,8 +64,10 @@ const STYLE = `
   .lp-route { animation: lp-dash 30s linear infinite; }
 
   /* reveal on scroll */
-  .lp-rv { opacity:0; transform:translateY(26px); transition: opacity .8s ease, transform .8s cubic-bezier(.2,.7,.2,1); }
-  .lp-rv.in { opacity:1; transform:none; }
+  /* UX audit U1/U14: content is visible by default (SSR / no-JS / slow hydration).
+     Only after hydration (.lp-ready) do below-the-fold blocks get a short, subtle reveal. */
+  .lp-rv { transition: opacity .45s ease, transform .45s cubic-bezier(.2,.7,.2,1); }
+  .lp-ready .lp-rv:not(.in) { opacity:.25; transform:translateY(12px); }
 
   /* FAQ */
   .lp-faq-body { overflow:hidden; transition: max-height .35s ease, opacity .35s ease; }
@@ -77,7 +79,7 @@ const STYLE = `
 
   @media (prefers-reduced-motion:reduce) {
     .lp-pin-ring, .lp-route { animation: none !important; }
-    .lp-rv { opacity:1; transform:none; }
+    .lp-rv, .lp-ready .lp-rv:not(.in) { opacity:1 !important; transform:none !important; transition:none !important; }
   }
 `;
 
@@ -132,7 +134,7 @@ function useReveal() {
 }
 
 // ─── MAP SECTION ─────────────────────────────────────────────────────────────
-function MapHero({ lang, onChatOpen }: { lang: Lang; onChatOpen: () => void }) {
+function MapHero({ lang, onChatOpen, listingCount = 0 }: { lang: Lang; onChatOpen: () => void; listingCount?: number }) {
   // Goi y AI: doi cau moi 4s (chi render 1 cau nen khong pha layout pill)
   const [phIdx, setPhIdx] = useState(0);
   useEffect(() => {
@@ -185,8 +187,6 @@ function MapHero({ lang, onChatOpen }: { lang: Lang; onChatOpen: () => void }) {
             style={{
               fontSize:"clamp(28px,6vw,64px)", fontWeight:550, lineHeight:1.03, letterSpacing:"-.015em",
               color:"var(--lp-ink)",
-              opacity: visible ? 1 : 0, transform: visible ? "translateY(0)" : "translateY(20px)",
-              transition: "opacity .75s ease .1s, transform .75s ease .1s",
             }}
           >
             {lang === "vi"
@@ -194,13 +194,44 @@ function MapHero({ lang, onChatOpen }: { lang: Lang; onChatOpen: () => void }) {
               : <>Search, buy & invest · real estate<br /><em style={{ color:"var(--lp-navy)", fontStyle:"italic", fontWeight:340 }}> </em></>
             }
           </h1>
-          <p style={{ maxWidth:"320px", fontSize:"14px", color:"var(--lp-muted)", textAlign:"right", opacity: visible ? 1 : 0, transition:"opacity .75s ease .3s" }}
+          <p style={{ maxWidth:"320px", fontSize:"14px", color:"var(--lp-muted)", textAlign:"right" }}
              className="lp-map-hero-description">
             {lang === "vi"
-              ? "Mua đúng giá, pháp lý rõ ràng. 15.000+ môi giới và 45.000+ bất động sản chờ bạn tại Tp.HCM - Đồng Nai - Tây Ninh."
-              : "Buy at the right price, clear legal status. 15000+ agents and 45.000+ properties waiting for you across HCMC - Dong Nai - Tay Ninh."}
+              ? "Mua đúng giá, pháp lý rõ ràng. Bất động sản đã xác minh tại TP.HCM, Đồng Nai và Tây Ninh."
+              : "Buy at the right price with clear legal status. Verified properties across HCMC, Dong Nai and Tay Ninh."}
           </p>
         </div>
+
+        {/* UX audit U3: primary search + CTA in the first viewport */}
+        <form
+          action={lpath("/marketplace", lang)}
+          method="get"
+          role="search"
+          data-hero-search
+          style={{ display:"flex", flexWrap:"wrap", gap:"10px", marginBottom:"26px" }}
+        >
+          <label htmlFor="lp-hero-q" className="sr-only">{lang==="vi" ? "Tìm bất động sản" : "Search properties"}</label>
+          <input
+            id="lp-hero-q"
+            name="q"
+            type="search"
+            autoComplete="off"
+            placeholder={lang==="vi" ? "Dự án, khu vực hoặc mã căn (vd: Izumi, Thủ Đức)" : "Project, area or unit code (e.g. Izumi, Thu Duc)"}
+            style={{ flex:"1 1 280px", minWidth:0, height:"52px", borderRadius:"14px", border:"1px solid var(--lp-line)", background:"var(--lp-paper)", color:"var(--lp-ink)", padding:"0 18px", fontSize:"16px" }}
+          />
+          <button
+            type="submit"
+            style={{ flex:"0 0 auto", height:"52px", padding:"0 26px", borderRadius:"14px", border:"none", background:"var(--lp-navy)", color:"var(--lp-bg)", fontSize:"15px", fontWeight:600, cursor:"pointer" }}
+          >
+            {lang==="vi" ? "Tìm bất động sản" : "Search properties"}
+          </button>
+          <a
+            href={lpath("/ai-valuation", lang)}
+            style={{ flex:"0 0 auto", display:"inline-flex", alignItems:"center", height:"52px", padding:"0 22px", borderRadius:"14px", border:"1px solid var(--lp-line)", color:"var(--lp-ink)", fontSize:"15px", fontWeight:600, textDecoration:"none" }}
+          >
+            {lang==="vi" ? "Định giá miễn phí" : "Free valuation"}
+          </a>
+        </form>
 
         {/* Map card */}
         <div style={{ position:"relative", perspective:"1400px" }}>
@@ -371,10 +402,12 @@ function MapHero({ lang, onChatOpen }: { lang: Lang; onChatOpen: () => void }) {
         {/* Stats */}
         <div className="max-sm:!grid max-sm:grid-cols-2 max-sm:gap-y-7" style={{ display:"flex", justifyContent:"center", gap:0, padding:"56px 0 0", flexWrap:"wrap" }}>
           {[
-            { num:"45.000+", vi:"sản phẩm realtime",    en:"listings in realtime"   },
-            { num:"±4.8%",   vi:"sai số định giá AI",   en:"AI valuation error"     },
+            ...(listingCount > 0
+              ? [{ num: listingCount.toLocaleString("vi-VN"), vi:"tin đang mở bán", en:"live listings" }]
+              : []),
+            { num:"±4,8%",   vi:"sai số định giá AI",   en:"AI valuation error"     },
             { num:"24h",     vi:"xác minh thực địa",    en:"on-site verification"   },
-            { num:"$1B+",    vi:"giao dịch xử lý",      en:"transactions processed" },
+            { num:"0 đ",     vi:"phí cho người mua",    en:"fee for buyers"         },
           ].map((s, i) => (
             <div key={i} className="max-sm:!px-2 max-sm:!border-0" style={{ padding:"0 34px", borderLeft: i===0 ? "none" : "1px solid var(--lp-hair)", textAlign:"center" }}>
               <b className="lp-serif" style={{ fontSize:"clamp(20px,2.6vw,28px)", fontWeight:550, display:"block", lineHeight:1.15, color:"var(--lp-ink)" }}>{s.num}</b>
@@ -446,7 +479,7 @@ function MethodCard({ m, lang }: { m: { n: string; ti: { vi: string; en: string 
 }
 
 // ─── PROJECTS SECTION ────────────────────────────────────────────────────────
-function ProjectsSection({ lang }: { lang: Lang }) {
+function ProjectsSection({ lang, listingCount = 0 }: { lang: Lang; listingCount?: number }) {
   return (
     <section id="du-an" style={{ padding:"120px 0", background:"var(--lp-bg)" }}>
       <div className="lp-wrap">
@@ -466,7 +499,7 @@ function ProjectsSection({ lang }: { lang: Lang }) {
             onMouseLeave={e => { (e.currentTarget as HTMLElement).style.opacity="1"; }}
           >
             <div style={{ padding:"40px 24px" }}>
-              <h3 className="lp-serif" style={{ color:"var(--lp-gold)", fontSize: "28px", fontWeight:550 }}>+45.000 {lang==="vi" ? "sản phẩm" : "listings"}</h3>
+              <h3 className="lp-serif" style={{ color:"var(--lp-gold)", fontSize: "28px", fontWeight:550 }}>{listingCount > 0 ? `${listingCount.toLocaleString("vi-VN")} ${lang==="vi" ? "sản phẩm" : "listings"}` : (lang==="vi" ? "Xem tất cả sản phẩm" : "Browse all listings")}</h3>
               <p style={{ opacity:.7, fontSize: "14px", marginTop:"6px", color:"var(--lp-bg)" }}>
                 {lang==="vi" ? "Nhà phố · Căn hộ · Đất nền · Cho thuê" : "Townhouses · Apartments · Land · Rentals"}<br/>→ Marketplace
               </p>
@@ -595,15 +628,17 @@ const lpath = (p: string, g: string) => (g === "en" ? "/en" + p : p);
 
 export function LandingPage({ featuredListings = [], stats }: Props) {
   const lang: Lang = useLang();
+  const [ready, setReady] = useState(false);
+  useEffect(() => { setReady(true); }, []);
 
   const onChatOpen = React.useCallback(() => { window.dispatchEvent(new CustomEvent("sgs-open-chat")); }, []);
 
   return (
     <>
       <style dangerouslySetInnerHTML={{ __html: STYLE }} />
-      <div className="lp-root lp-sans" style={{ background:"var(--lp-bg)", color:"var(--lp-ink)", minHeight:"100vh" }}>
-        <MapHero lang={lang} onChatOpen={onChatOpen} />
-        <ProjectsSection lang={lang} />
+      <div className={`lp-root lp-sans${ready ? " lp-ready" : ""}`} style={{ background:"var(--lp-bg)", color:"var(--lp-ink)", minHeight:"100vh" }}>
+        <MapHero lang={lang} onChatOpen={onChatOpen} listingCount={stats?.totalListings ?? 0} />
+        <ProjectsSection lang={lang} listingCount={stats?.totalListings ?? 0} />
         <MethodSection lang={lang} />
         <FaqSection lang={lang} />
         <CtaSection lang={lang} onChatOpen={onChatOpen} />

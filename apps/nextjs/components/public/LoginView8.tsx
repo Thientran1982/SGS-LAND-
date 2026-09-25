@@ -931,7 +931,7 @@ export function LoginPage() {
         <div className="p-8 flex justify-between items-center">
              <div className="flex items-center gap-3">
                 <Logo className="w-8 h-8 text-white" strokeWidth={2.5} />
-                <span className="font-bold text-lg tracking-tight">SGS<span className="text-sgs-text-muted">ID</span></span>
+                <span className="font-bold text-lg tracking-tight">SGS <span style={{ color: "var(--sgs-accent)" }}>LAND</span></span>
              </div>
              <div className="flex items-center gap-3">
                 <button
@@ -940,11 +940,11 @@ export function LoginPage() {
                     aria-label={t('nav.lang_switch')}
                     className="w-9 h-9 flex items-center justify-center rounded-full text-xs2 font-extrabold text-gray-400 hover:text-white border border-white/10 hover:border-white/30 hover:bg-white/5 transition-all tracking-tighter"
                 >
-                    {language.toUpperCase()}
+                    {language === 'vn' ? 'VI' : language.toUpperCase()}
                 </button>
                 <button 
                     onClick={() => window.location.href = language === 'en' ? '/en' : `/${ROUTES.LANDING}`}
-                    className="text-xs font-bold text-sgs-text-muted hover:text-white transition-colors"
+                    className="text-xs font-bold text-sgs-on-dark-muted hover:text-white transition-colors"
                 >
                     {t('legal.back_home')}
                 </button>
@@ -1403,7 +1403,7 @@ export function LoginPage() {
                     </div>
                 </div>
             )}
-            <div className="mt-auto py-8 text-center text-sm font-medium text-sgs-text-muted animate-enter">
+            <div className="mt-auto py-8 text-center text-sm font-medium text-sgs-on-dark-muted animate-enter">
                 {view === 'REGISTER' ? t('auth.has_account') : (view.startsWith('FORGOT') || view === 'VERIFY_EMAIL' || view === 'PENDING_APPROVAL' || view === 'TENANT_REJECTED') ? '' : t('auth.no_account')}
                 
                 {!view.startsWith('FORGOT') && view !== 'VERIFY_EMAIL' && view !== 'PENDING_APPROVAL' && view !== 'TENANT_REJECTED' && (

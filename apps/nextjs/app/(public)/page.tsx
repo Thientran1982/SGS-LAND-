@@ -44,7 +44,8 @@ const DATASET_AREA_PRICE_INDEX = {
 export default async function HomePage() {
   // Fetch featured listings & stats at build/revalidation time
   let featuredListings: Listing[] = [];
-  let stats = { totalListings: 45000, totalProjects: 12, totalBrokers: 15000 };
+  // UX audit U4: never show invented totals. 0 = unknown -> the stat is hidden.
+  let stats = { totalListings: 0, totalProjects: 0, totalBrokers: 0 };
   try {
     const res = await fetch(      `${process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000"}/api/public/listings?limit=6&featured=true`,
       { next: { revalidate: 3600 } }
@@ -52,6 +53,13 @@ export default async function HomePage() {
     if (res.ok) {
       const data = await res.json();
       featuredListings = data.data || [];
+    }
+    const apiBase = process.env.BACKEND_URL || process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
+    const countRes = await fetch(`${apiBase}/api/public/listings?page=1&pageSize=1`, { next: { revalidate: 600 } });
+    if (countRes.ok) {
+      const countData = await countRes.json();
+      const total = Number(countData?.total);
+      if (Number.isFinite(total) && total > 0) stats = { ...stats, totalListings: total };
     }
   } catch {
     // Fallback to static data during build

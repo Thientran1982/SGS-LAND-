@@ -1,4 +1,5 @@
 // @ts-nocheck
+import { formatPriceLang } from "@/utils/priceFormat";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import type { Listing } from "@/types";
@@ -29,9 +30,7 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
       openGraph: { url: `https://sgsland.vn/bds/${slug}` },
     };
   }
-  const price = listing.price >= 1e9
-    ? (en ? `${(listing.price / 1e9).toFixed(2)}B VND` : `${(listing.price / 1e9).toFixed(2)} tỷ`)
-    : (en ? `${Math.round(listing.price / 1e6)}M VND` : `${Math.round(listing.price / 1e6)} triệu`);
+  const price = formatPriceLang(listing.price, en ? "en" : "vi");
   return {
     title: `${listing.title} | ${price}`,
     description: en
