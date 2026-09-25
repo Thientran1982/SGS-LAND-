@@ -7,6 +7,8 @@ import { Proposal, Listing, Lead, User, LeadScore } from '../types';
 import { useTranslation } from '../services/i18n';
 import { Dropdown } from '../components/Dropdown';
 import { SeoHead } from '../components/SeoHead';
+import { ApprovalRequestQueue, isApprovalActionSupported } from '../components/approval/ApprovalRequestQueue';
+import type { PendingApprovalRequest } from '../components/approval/ApprovalRequestQueue';
 // -----------------------------------------------------------------------------
 // 1. CONSTANTS & CONFIGURATION
 // -----------------------------------------------------------------------------
@@ -16,12 +18,8 @@ const RISK_CONSTANTS = {
     TOAST_DURATION: 3000
 };
 type RiskLevel = 'HIGH' | 'MEDIUM' | 'LOW';
-interface OutreachApproval {
-    id: string;
-    actionType?: string;
-    status: string;
-    leadName?: string;
-    payload?: { draftVariants?: Array<{ id: string; channel: string; subject?: string; message: string }> };
+interface OutreachApproval extends PendingApprovalRequest {
+    payload?: Record<string, unknown> & { draftVariants?: Array<{ id: string; channel: string; subject?: string; message: string }> };
     deliveries?: Array<{
         deliveryId?: string;
         executionId?: string | null;
@@ -281,6 +279,10 @@ export const ApprovalInbox: React.FC = () => {
     const [pending, setPending] = useState<Proposal[]>([]);
     const [brokerApprovals, setBrokerApprovals] = useState<OutreachApproval[]>([]);
     const [approvedOutreach, setApprovedOutreach] = useState<OutreachApproval[]>([]);
+    const [approvalPendingCount, setApprovalPendingCount] = useState<number | null>(null);
+    const [approvalRequestsUnavailable, setApprovalRequestsUnavailable] = useState(false);
+    const [approvalRequestProcessingId, setApprovalRequestProcessingId] = useState<string | null>(null);
+    const [approvalRequestUncertainIds, setApprovalRequestUncertainIds] = useState<Set<string>>(new Set());
     const [listings, setListings] = useState<Record<string, Listing>>({});
     const [leads, setLeads] = useState<Record<string, Lead>>({});
     const [currentUser, setCurrentUser] = useState<User | null>(null);
@@ -294,7 +296,7 @@ export const ApprovalInbox: React.FC = () => {
     const [deliveryLookups, setDeliveryLookups] = useState<Record<string, OutreachDeliveryLookup>>({});
     const [deliveryLookupLoading, setDeliveryLookupLoading] = useState<string | null>(null);
     const [auditExportLoading, setAuditExportLoading] = useState<string | null>(null);
-    const { t, formatDateTime, formatCurrency } = useTranslation();
+    const { t, formatDateTime, formatCurrency, language } = useTranslation();
     const notify = useCallback((msg: string, type: 'success' | 'error' = 'success', duration?: number) => {
         setToast({ msg, type });
         setTimeout(() => setToast(null), duration ?? RISK_CONSTANTS.TOAST_DURATION);
@@ -305,8 +307,17 @@ export const ApprovalInbox: React.FC = () => {
             const [props, user, approvalData] = await Promise.all([
                 db.getPendingProposals(),
                 db.getCurrentUser(),
-                api.get<{ items?: OutreachApproval[]; approvedOutreach?: OutreachApproval[] }>('/api/approval-requests')
-                    .catch(() => ({ items: [], approvedOutreach: [] })),
+                api.get<{ items?: OutreachApproval[]; pendingCount?: number; approvedOutreach?: OutreachApproval[] }>('/api/approval-requests')
+                    .then(data => {
+                        setApprovalRequestsUnavailable(false);
+                        setApprovalPendingCount(Number.isFinite(Number(data.pendingCount)) ? Number(data.pendingCount) : null);
+                        return data;
+                    })
+                    .catch(() => {
+                        setApprovalRequestsUnavailable(true);
+                        setApprovalPendingCount(null);
+                        return { items: [], approvedOutreach: [] };
+                    }),
             ]);
             setPending(props || []);
             setCurrentUser(user);            
@@ -416,6 +427,57 @@ export const ApprovalInbox: React.FC = () => {
         } catch (e: any) {
             notify(e?.data?.error || e?.message || t('common.error'), 'error', 6000);
         }
+    };
+    const processApprovalRequest = async (id: string, action: 'approve' | 'reject', reason?: string) => {
+        const request = brokerApprovals.find(item => item.id === id);
+        if (!request || !isApprovalActionSupported(request.actionType)) {
+            notify(
+                language === 'vn'
+                    ? 'Loại yêu cầu này chưa được hỗ trợ để thao tác trong màn hình phê duyệt.'
+                    : 'This request type is not supported in the approval screen.',
+                'error',
+                6000,
+            );
+            return;
+        }
+        setApprovalRequestProcessingId(id);
+        try {
+            if (action === 'approve') {
+                await api.post(`/api/approval-requests/${id}/approve`, {});
+                notify(
+                    language === 'vn' ? 'Đã phê duyệt và thực hiện yêu cầu.' : 'The request was approved and executed.',
+                    'success',
+                    6000,
+                );
+            } else {
+                await api.post(`/api/approval-requests/${id}/reject`, { reason });
+                notify(language === 'vn' ? 'Đã từ chối yêu cầu.' : 'The request was rejected.', 'success', 5000);
+            }
+            setApprovalRequestUncertainIds(previous => {
+                const next = new Set(previous);
+                next.delete(id);
+                return next;
+            });
+            await loadData();
+        } catch (error: any) {
+            setApprovalRequestUncertainIds(previous => new Set(previous).add(id));
+            await loadData();
+            notify(
+                error?.data?.error || (language === 'vn'
+                    ? 'Chưa xác định được kết quả thao tác. Danh sách đã làm mới; hãy kiểm tra trạng thái trước khi thử lại.'
+                    : 'The action result is unknown. The list was refreshed; verify the status before trying again.'),
+                'error',
+                8000,
+            );
+        } finally {
+            setApprovalRequestProcessingId(null);
+        }
+    };
+    const approveApprovalRequest = (id: string) => processApprovalRequest(id, 'approve');
+    const rejectApprovalRequest = async (id: string) => {
+        const reason = await uiPrompt(language === 'vn' ? 'Lý do từ chối yêu cầu phê duyệt:' : 'Reason for rejecting this request:');
+        if (!reason?.trim()) return;
+        await processApprovalRequest(id, 'reject', reason.trim());
     };
     const sendOutreach = async (approvalId: string, variantId: string) => {
         try {
@@ -556,6 +618,36 @@ export const ApprovalInbox: React.FC = () => {
         <>
           <SeoHead title="Hộp Phê Duyệt | SGS LAND" description="Xem xét và phê duyệt các yêu cầu, hợp đồng và giao dịch bất động sản." canonicalPath="/approval-inbox" />
         <div className="p-4 sm:p-6 space-y-6 pb-24 relative animate-enter">
+
+            {approvalRequestsUnavailable && (
+                <section role="alert" className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-rose-300/50 bg-rose-50 px-4 py-3 text-sm text-rose-800 dark:bg-rose-950/30 dark:text-rose-200">
+                    <span>{language === 'vn'
+                        ? 'Không thể tải danh sách yêu cầu phê duyệt. Số liệu trên Dashboard có thể vẫn hiển thị.'
+                        : 'Approval requests could not be loaded. The Dashboard count may still be visible.'}</span>
+                    <button
+                        type="button"
+                        onClick={() => { void loadData(); }}
+                        className="rounded-lg border border-current px-3 py-1.5 text-xs font-bold"
+                    >
+                        {language === 'vn' ? 'Thử tải lại' : 'Retry'}
+                    </button>
+                </section>
+            )}
+            {!approvalRequestsUnavailable && approvalPendingCount !== null && approvalPendingCount > brokerApprovals.length && (
+                <p role="status" className="rounded-xl border border-amber-300/50 bg-amber-50 px-4 py-3 text-sm text-amber-900 dark:bg-amber-950/30 dark:text-amber-200">
+                    {language === 'vn'
+                        ? `Đang hiển thị ${brokerApprovals.length} trong tổng số ${approvalPendingCount} yêu cầu đang chờ duyệt.`
+                        : `Showing ${brokerApprovals.length} of ${approvalPendingCount} pending approval requests.`}
+                </p>
+            )}
+            <ApprovalRequestQueue
+                items={brokerApprovals}
+                language={language}
+                processingId={approvalRequestProcessingId}
+                uncertainIds={approvalRequestUncertainIds}
+                onApprove={approveApprovalRequest}
+                onReject={rejectApprovalRequest}
+            />
 
             {(pendingOutreach.length > 0 || approvedOutreach.length > 0) && (
                 <section className="space-y-4">
