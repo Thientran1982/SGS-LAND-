@@ -1011,3 +1011,22 @@ html.dark body {
 @media (min-width: 768px) {
   .crm-vite-app h1 { font-size: 2rem; }
 }
+
+/* Dashboard design review: one type family, calmer labels, collapsible analytics */
+.sgs-dashboard .dash-number,
+.sgs-dashboard .font-mono,
+.sgs-dashboard [data-dash-mono] { font-family: var(--font-ui); letter-spacing: 0; font-variant-numeric: tabular-nums; }
+.sgs-dashboard .dash-eyebrow,
+.sgs-dashboard .text-xs2,
+.sgs-dashboard .text-3xs,
+.sgs-dashboard .text-2xs { font-family: var(--font-ui); letter-spacing: .02em; }
+.sgs-dashboard .dashboard-kpi .kpi-label,
+.sgs-dashboard .dashboard-subhead { font-family: var(--font-ui); font-weight: 600; letter-spacing: .04em; }
+.sgs-dashboard .dashboard-kpi .kpi-value { font-family: var(--font-ui); font-weight: 700; letter-spacing: -.02em; font-variant-numeric: tabular-nums; }
+.sgs-dashboard .dashboard-title { font-size: clamp(1.25rem, 1.6vw, 1.6rem); }
+.sgs-dashboard .dashboard-header { padding-bottom: 1rem; }
+.sgs-dashboard .dashboard-advanced > summary { display: flex; align-items: center; justify-content: space-between; gap: 1rem; border-bottom: 0; list-style: none; }
+.sgs-dashboard .dashboard-advanced > summary::-webkit-details-marker { display: none; }
+.sgs-dashboard .dashboard-advanced > summary::after { content: ''; flex: none; width: .55rem; height: .55rem; border-right: 2px solid var(--text-tertiary); border-bottom: 2px solid var(--text-tertiary); transform: rotate(45deg); transition: transform .2s; }
+.sgs-dashboard .dashboard-advanced[open] > summary { border-bottom: 1px solid var(--dash-rule); }
+.sgs-dashboard .dashboard-advanced[open] > summary::after { transform: rotate(-135deg); }
