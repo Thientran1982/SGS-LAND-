@@ -200,21 +200,23 @@ const WorkspaceRail: React.FC<WorkspaceRailProps> = ({
 
     return (
         <aside className={`flex h-full w-full flex-col bg-[var(--sgs-hero-deep)] py-3 text-[var(--sgs-champagne)] transition-[padding] duration-200 ${expanded ? 'items-stretch px-2' : 'items-center px-1'}`}>
-            <div className={`mb-4 flex h-12 w-full shrink-0 items-center ${expanded ? 'justify-between gap-1' : 'justify-center gap-0'}`}>
+            <div className={`group/brand relative mb-3 flex h-12 w-full shrink-0 items-center ${expanded ? 'justify-between gap-1' : 'justify-center'}`}>
                 <button
                     type="button"
                     onClick={() => onNavigate(ROUTES.DASHBOARD)}
-                    className={`flex h-10 min-w-0 shrink-0 items-center rounded-xl text-[var(--sgs-champagne)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--sgs-accent)] ${expanded ? 'flex-1 justify-start gap-2 px-2' : 'w-9 justify-center'}`}
+                    className={`flex h-11 min-w-0 shrink-0 items-center rounded-xl text-[var(--sgs-champagne)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--sgs-accent)] ${expanded ? 'flex-1 justify-start gap-2.5 px-1' : 'w-11 justify-center'}`}
                     aria-label={t('nav.go_to_dashboard')}
                     title={t('nav.go_to_dashboard')}
                 >
-                    <Logo className="h-7 w-7 shrink-0" />
+                    <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-white p-1.5 shadow-sm">
+                        <Logo className="h-7 w-7" />
+                    </span>
                     {expanded && <span className="truncate text-sm font-bold tracking-tight">SGS LAND</span>}
                 </button>
                 <button
                     type="button"
                     onClick={onToggleExpanded}
-                    className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl text-[var(--sgs-champagne)] transition-colors hover:bg-[var(--ui-text-inverse)]/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--sgs-accent)]"
+                    className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-xl text-[var(--sgs-champagne)] transition-opacity hover:bg-[var(--ui-text-inverse)]/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--sgs-accent)] ${expanded ? '' : 'absolute -right-1 -top-1 z-10 h-6 w-6 rounded-full bg-[var(--sgs-primary-deep)] opacity-0 shadow-md focus-visible:opacity-100 group-hover/brand:opacity-100'}`}
                     aria-label={expanded
                         ? (language === 'vn' ? 'Thu gọn thanh điều hướng' : 'Collapse navigation')
                         : (language === 'vn' ? 'Mở rộng thanh điều hướng' : 'Expand navigation')}
@@ -224,7 +226,7 @@ const WorkspaceRail: React.FC<WorkspaceRailProps> = ({
                         ? (language === 'vn' ? 'Thu gọn thanh điều hướng' : 'Collapse navigation')
                         : (language === 'vn' ? 'Mở rộng thanh điều hướng' : 'Expand navigation')}
                 >
-                    <PanelLeft size={17} aria-hidden="true" />
+                    <PanelLeft size={expanded ? 17 : 13} aria-hidden="true" />
                 </button>
             </div>
 
@@ -234,7 +236,7 @@ const WorkspaceRail: React.FC<WorkspaceRailProps> = ({
                     onClick={onSearch}
                     aria-label={t('common.search')}
                     title={t('common.search')}
-                    className={`group relative mb-2 flex min-h-12 w-full shrink-0 items-center rounded-2xl text-[var(--sgs-champagne)] transition-colors hover:bg-[var(--ui-text-inverse)]/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--sgs-accent)] ${expanded ? 'justify-start gap-3 px-3' : 'justify-center'}`}
+                    className={`group relative mb-2 flex min-h-12 [@media(max-height:880px)]:min-h-10 w-full shrink-0 items-center rounded-2xl text-[var(--sgs-champagne)] transition-colors hover:bg-[var(--ui-text-inverse)]/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--sgs-accent)] ${expanded ? 'justify-start gap-3 px-3' : 'justify-center'}`}
                 >
                     <Search size={20} aria-hidden="true" />
                     {expanded
@@ -255,7 +257,7 @@ const WorkspaceRail: React.FC<WorkspaceRailProps> = ({
                             aria-current={isActive ? 'page' : undefined}
                             aria-label={hub.id === 'inbox' && inboxUnread > 0 ? `${t(hub.labelKey)}, ${t('shell.inbox_unread').replace('{n}', String(inboxUnread))}` : t(hub.labelKey)}
                             title={t(hub.labelKey)}
-                            className={`group relative flex min-h-12 w-full shrink-0 items-center transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--sgs-accent)] ${expanded ? 'justify-start gap-3 rounded-xl px-3' : 'justify-center rounded-2xl'} ${
+                            className={`group relative flex min-h-12 [@media(max-height:880px)]:min-h-10 w-full shrink-0 items-center transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--sgs-accent)] ${expanded ? 'justify-start gap-3 rounded-xl px-3' : 'justify-center rounded-2xl'} ${
                                 isActive
                                     ? 'bg-[var(--sgs-champagne)] text-[var(--sgs-primary-deep)]'
                                     : 'text-[var(--sgs-champagne)] hover:bg-[var(--ui-text-inverse)]/10'
@@ -276,7 +278,7 @@ const WorkspaceRail: React.FC<WorkspaceRailProps> = ({
                 <button
                     type="button"
                     onClick={onOpenAssistant}
-                    className={`group relative flex min-h-12 w-full items-center rounded-2xl text-[var(--sgs-champagne)] transition-colors hover:bg-[var(--ui-text-inverse)]/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--sgs-accent)] ${expanded ? 'justify-start gap-3 px-3' : 'justify-center'}`}
+                    className={`group relative flex min-h-12 [@media(max-height:880px)]:min-h-10 w-full items-center rounded-2xl text-[var(--sgs-champagne)] transition-colors hover:bg-[var(--ui-text-inverse)]/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--sgs-accent)] ${expanded ? 'justify-start gap-3 px-3' : 'justify-center'}`}
                     aria-label={t('shell.assistant_open')}
                     title={t('shell.assistant_open')}
                 >
@@ -340,7 +342,7 @@ const WorkspaceRail: React.FC<WorkspaceRailProps> = ({
                         aria-expanded={profileOpen}
                         aria-haspopup="menu"
                         title={t('menu.profile')}
-                        className={`flex min-h-12 w-full items-center rounded-2xl hover:bg-[var(--ui-text-inverse)]/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--sgs-accent)] ${expanded ? 'justify-start gap-3 px-3' : 'justify-center'}`}
+                        className={`flex min-h-12 [@media(max-height:880px)]:min-h-10 w-full items-center rounded-2xl hover:bg-[var(--ui-text-inverse)]/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--sgs-accent)] ${expanded ? 'justify-start gap-3 px-3' : 'justify-center'}`}
                     >
                         <UserAvatar user={user} isActive={activePage === ROUTES.PROFILE} />
                         {expanded && <span className="min-w-0 truncate text-sm font-medium">{user.name}</span>}
@@ -391,16 +393,15 @@ const WorkspaceTopBar: React.FC<WorkspaceTopBarProps> = ({
     const { t } = useTranslation();
     const pageTitle = t(`menu.${activePage}`);
     const hubLabel = activeHub ? t(activeHub.labelKey) : '';
+    // With a tab row the tabs name the page, so the bar names the hub (no duplicated title).
+    const hasTabs = Boolean(activeHub && activeHub.items.length > 1);
     const shortcutLabel = typeof navigator !== 'undefined' && /Mac|iPhone|iPad/.test(navigator.platform) ? '⌘K' : 'Ctrl K';
 
     return (
         <header className="relative z-30 flex min-h-[68px] shrink-0 items-center gap-3 border-b border-[var(--glass-border)] bg-[var(--bg-surface)] px-4 sm:px-6 lg:px-7">
             <div className="min-w-0 flex-1">
-                {hubLabel && hubLabel.toLocaleLowerCase() !== (pageTitle || activePage).toLocaleLowerCase() && (
-                    <div className="mb-0.5 truncate text-[11px] font-semibold uppercase tracking-[0.12em] text-[var(--text-tertiary)]">{hubLabel}</div>
-                )}
                 <h1 className="truncate text-base font-bold leading-5 text-[var(--text-primary)] sm:text-lg">
-                    {pageTitle || activePage}
+                    {hasTabs ? hubLabel : (pageTitle || activePage)}
                 </h1>
             </div>
 
@@ -476,6 +477,11 @@ interface WorkspaceTabsProps {
     onNavigate: (path: string) => void;
 }
 
+const TAB_LABEL: Record<string, string> = {
+    [ROUTES.DASHBOARD]: 'shell.tab_dashboard',
+    [ROUTES.LEADS]: 'shell.tab_leads',
+};
+
 const WorkspaceTabs: React.FC<WorkspaceTabsProps> = ({ activePage, hub, onNavigate }) => {
     const { t } = useTranslation();
     if (!hub || hub.items.length === 0) return null;
@@ -496,7 +502,7 @@ const WorkspaceTabs: React.FC<WorkspaceTabsProps> = ({ activePage, hub, onNaviga
                                 : 'text-[var(--text-tertiary)] hover:bg-[var(--glass-surface-hover)] hover:text-[var(--text-primary)]'
                         }`}
                     >
-                        {item.route === ROUTES.DASHBOARD ? t('shell.tab_dashboard') : t(item.labelKey)}
+                        {t(TAB_LABEL[item.route] ?? item.labelKey)}
                         {selected && <span className="absolute inset-x-3 bottom-0 h-0.5 rounded-full bg-[var(--sgs-accent)]" />}
                     </button>
                 );
@@ -618,7 +624,7 @@ const MobileNavigation: React.FC<MobileNavigationProps> = ({
                                                     type="button"
                                                     onClick={() => { setMoreOpen(false); onNavigate(item.route); }}
                                                     aria-current={activePage === item.route ? 'page' : undefined}
-                                                    className={`flex min-h-12 items-center rounded-xl border px-3 text-left text-xs font-semibold focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--ui-focus)] ${
+                                                    className={`flex min-h-12 [@media(max-height:880px)]:min-h-10 items-center rounded-xl border px-3 text-left text-xs font-semibold focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--ui-focus)] ${
                                                         activePage === item.route
                                                             ? 'border-[var(--ui-border-strong)] bg-[var(--sgs-champagne)] text-[var(--sgs-primary-deep)]'
                                                             : 'border-[var(--glass-border)] bg-[var(--bg-surface)] text-[var(--text-secondary)] hover:bg-[var(--glass-surface-hover)]'

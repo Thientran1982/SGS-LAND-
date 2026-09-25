@@ -6,6 +6,7 @@ import { NO_IMAGE_URL } from '../utils/constants';
 import { copyToClipboard } from '../utils/clipboard';
 import { ROUTES } from '../config/routes';
 import { formatSmartPrice, formatUnitPrice, detailHref } from '../utils/textUtils';
+import { decodeHtmlEntities } from '../utils/htmlEntities';
 // Encapsulated Icons
 export const LISTING_ICONS = {
     HEART_FILLED: <svg className="w-5 h-5 text-rose-500" fill="currentColor" viewBox="0 0 24 24"><path d="M11.645 20.91l-.007-.003-.022-.012a15.247 15.247 0 01-.383-.218 25.18 25.18 0 01-4.244-3.17C4.688 15.36 2.25 12.174 2.25 8.25 2.25 5.322 4.714 3.25 7.688 3.25c1.544 0 3.04.99 3.812 2.55.242.49.878.49 1.12 0C13.272 4.24 14.768 3.25 16.312 3.25c2.974 0 5.438 2.072 5.438 5.002 0 3.925-2.438 7.111-4.739 9.256a25.175 25.175 0 01-4.244 3.17 15.247 15.247 0 01-.383.219l-.022.012-.007.004-.003.001a.752.752 0 01-.704 0l-.003-.001z"/></svg>,
@@ -37,7 +38,7 @@ function toThumbnailUrl(src: string, width = 800): string {
     }
     return src;
 }
-const ImageCarousel = memo(({ images, title, isVerified, isFavorite, onToggleFavorite, t, bookingCount, viewCount, onClick, type, transaction, eagerLoad }: { images?: string[], title: string, isVerified: boolean, isFavorite: boolean, onToggleFavorite: (e: React.MouseEvent) => void, t: any, bookingCount?: number, viewCount?: number, onClick?: () => void, type: PropertyType, transaction?: TransactionType, eagerLoad?: boolean }) => {
+const ImageCarousel = memo(({ images, title, isVerified, isFavorite, onToggleFavorite, t, bookingCount, viewCount, onClick, type, transaction, eagerLoad, compact }: { images?: string[], title: string, isVerified: boolean, isFavorite: boolean, onToggleFavorite: (e: React.MouseEvent) => void, t: any, bookingCount?: number, viewCount?: number, onClick?: () => void, type: PropertyType, transaction?: TransactionType, eagerLoad?: boolean, compact?: boolean }) => {
     const [currentIndex, setCurrentIndex] = useState(0);
     const [imgError, setImgError] = useState(false);
     const hasImages = images && images.length > 0 && !imgError;
@@ -56,7 +57,7 @@ const ImageCarousel = memo(({ images, title, isVerified, isFavorite, onToggleFav
     const isHot = (bookingCount || 0) > 100;
     const isRent = transaction === 'RENT';
     return (
-        <div className="relative aspect-[4/3] w-full bg-[var(--glass-surface-hover)] dark:bg-slate-800 group overflow-hidden cursor-pointer isolate z-0" onClick={onClick}>
+        <div className={`relative ${compact ? 'aspect-[16/10]' : 'aspect-[4/3]'} w-full bg-[var(--glass-surface-hover)] dark:bg-slate-800 group overflow-hidden cursor-pointer isolate z-0`} onClick={onClick}>
             {/* Status Badges - Z-index elevated */}
             <div className="absolute top-3 left-3 z-30 flex flex-col gap-1.5 items-start pointer-events-none">
                 <div className="flex gap-1.5">
@@ -202,8 +203,10 @@ interface ListingCardProps {
     onClick?: () => void;
     showActions?: boolean;
   eagerLoad?: boolean;
+    /** Shorter image (16:10) for dense CRM grids; public pages keep 4:3. */
+    compact?: boolean;
 }
-export const ListingCard = memo(({ item, t, formatCurrency, onToggleFavorite, onEdit, onDelete, onCopy, onDuplicate, onClick, showActions, eagerLoad }: ListingCardProps) => {
+export const ListingCard = memo(({ item, t, formatCurrency, onToggleFavorite, onEdit, onDelete, onCopy, onDuplicate, onClick, showActions, eagerLoad, compact }: ListingCardProps) => {
     // 1. Guard Clause: Essential for crash prevention if data is malformed
     if (!item) return null;
     const viewCount = item.viewCount || 0;
@@ -266,7 +269,7 @@ export const ListingCard = memo(({ item, t, formatCurrency, onToggleFavorite, on
             <div className="shrink-0">
                 <ImageCarousel 
                     images={item.images} 
-                    title={item.title} 
+                    title={decodeHtmlEntities(item.title)} 
                     isVerified={item.isVerified && !isProject} 
                     isFavorite={item.isFavorite}
                     bookingCount={item.bookingCount}
@@ -275,6 +278,7 @@ export const ListingCard = memo(({ item, t, formatCurrency, onToggleFavorite, on
                     t={t}
                     type={item.type}
                     transaction={item.transaction}
+                    compact={compact}
                     onClick={handleCardClick}
                 />
             </div>
@@ -289,8 +293,8 @@ export const ListingCard = memo(({ item, t, formatCurrency, onToggleFavorite, on
                                 {item.status === 'AVAILABLE' && item.transaction === 'RENT' ? t('status.READY') : t(`status.${item.status}`)}
                             </span>
                         </div>
-                        <h3 className="font-semibold text-[var(--text-primary)] dark:text-slate-200 text-sm leading-snug line-clamp-2 mb-2 group-hover:text-sgs-primary transition-colors" title={item.title}>
-                            {item.title}
+                        <h3 className="font-semibold text-[var(--text-primary)] dark:text-slate-200 text-sm leading-snug line-clamp-2 mb-2 group-hover:text-sgs-primary transition-colors" title={decodeHtmlEntities(item.title)}>
+                            {decodeHtmlEntities(item.title)}
                         </h3>
                     </div>
                 </div>

@@ -1,4 +1,5 @@
 import { useUrlState, readUrlParam } from '../utils/useUrlState';
+import { decodeHtmlEntities } from '../utils/htmlEntities';
 import React, { useState, useEffect, useCallback, useMemo, useRef, memo } from 'react';
 import { createPortal } from 'react-dom';
 import { NO_IMAGE_URL } from '../utils/constants';
@@ -225,7 +226,7 @@ const InventoryRow = memo(({ item, onEdit, onDelete, onDuplicate, onClick, t, fo
                                 {t(`transaction.${item.transaction}`)}
                             </span>
                         </div>
-                        <div className="font-bold text-[var(--text-primary)] dark:text-slate-200 text-xs truncate max-w-[180px]" title={item.title}>{item.title}</div>
+                        <div className="font-bold text-[var(--text-primary)] dark:text-slate-200 text-xs truncate max-w-[180px]" title={decodeHtmlEntities(item.title)}>{decodeHtmlEntities(item.title)}</div>
                     </div>
                 </div>
             </td>
@@ -384,7 +385,7 @@ const CompactInventoryRow = memo(({ item, onEdit, onDelete, onDuplicate, onClick
                         {item.status === 'AVAILABLE' && item.transaction === 'RENT' ? t('status.READY') : t(`status.${item.status}`)}
                     </span>
                 </div>
-                <h4 className="font-bold text-[var(--text-primary)] dark:text-slate-200 text-xs truncate mb-0.5">{item.title}</h4>
+                <h4 className="font-bold text-[var(--text-primary)] dark:text-slate-200 text-xs truncate mb-0.5">{decodeHtmlEntities(item.title)}</h4>
                 <div className="text-xs2 text-[var(--text-tertiary)] truncate">{item.location}</div>
             </div>
 
@@ -485,7 +486,7 @@ const InventoryKanbanCard = memo(({ item, onClick, onEdit, onDelete, onDuplicate
                         </span>
                         <span className="font-mono text-xs2 font-bold text-[var(--text-tertiary)] bg-[var(--glass-surface-hover)] px-1 py-0.5 rounded">{item.code}</span>
                     </div>
-                    <div className="font-bold text-[var(--text-primary)] text-xs line-clamp-2 leading-tight group-hover:text-sgs-primary transition-colors">{item.title}</div>
+                    <div className="font-bold text-[var(--text-primary)] text-xs line-clamp-2 leading-tight group-hover:text-sgs-primary transition-colors">{decodeHtmlEntities(item.title)}</div>
                 </div>
                 {canViewInternal && (
                     <button
@@ -757,7 +758,7 @@ export const Inventory: React.FC = () => {
           <SeoHead title="Quản Lý Kho Hàng | SGS LAND" description="Quản lý danh sách bất động sản, theo dõi tình trạng và cập nhật thông tin tài sản." canonicalPath="/inventory" />
         <div className="h-full flex flex-col relative">
             {/* Header & Controls */}
-             <div className="sticky top-0 z-30 bg-[var(--bg-surface)]/95 backdrop-blur-xl border-b border-[var(--glass-border)] shadow-sm px-3 py-2 md:px-5 md:py-2.5 transition-all flex-none">
+             <div className="sticky top-0 z-30 bg-[var(--bg-surface)] border-b border-[var(--glass-border)] shadow-sm px-3 py-2 md:px-5 md:py-2.5 transition-all flex-none">
                 <div className="flex flex-col md:flex-row md:items-center justify-between gap-2 md:gap-4">
                     <div className="flex items-center gap-2 w-full md:w-auto">
                         <div className="relative flex-1 md:w-64 group">
@@ -905,7 +906,7 @@ export const Inventory: React.FC = () => {
                                 ) : listings.length > 0 ? (
                                     listings.map(item => (
                                         <div key={item.id} className="w-full h-full">
-                                            <ListingCard
+                                            <ListingCard compact
                                                 item={{...item, isFavorite: favorites.has(item.id)}} t={t} formatCurrency={formatCurrency}
                                                 onToggleFavorite={handleToggleFavorite}
                                                 onEdit={canViewInternalInfo ? (l) => { setEditingListing(l); setIsCreateModalOpen(true); } : undefined}

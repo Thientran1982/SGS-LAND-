@@ -199,6 +199,12 @@ const CursorPaginationControl = memo(({ totalItems, pageSize, hasPrev, hasNext, 
     );
 });
 // --- TABLE ROW ---
+/** Display-only: capitalise names typed entirely in lower case (e.g. "nguyệt" -> "Nguyệt"). */
+const displayLeadName = (name: string) => {
+    const s = String(name || '').trim();
+    return s && s === s.toLocaleLowerCase('vi-VN') ? s.replace(/(^|\s)(\S)/g, (_m, sp, c) => sp + c.toLocaleUpperCase('vi-VN')) : s;
+};
+
 const LeadRow = memo(({ lead, isSelected, onSelect, onClick, onProposal, onDuplicate, onDelete, canDelete, t, visibleColumns, density, formatDate, users }: any) => {
     const [menuOpen, setMenuOpen] = useState(false);
     const [menuPos, setMenuPos] = useState({ top: 0, right: 0 });
@@ -257,7 +263,7 @@ const LeadRow = memo(({ lead, isSelected, onSelect, onClick, onProposal, onDupli
             <td className={`px-4 ${paddingY} sticky left-[50px] z-10 transition-colors shadow-[2px_0_5px_-2px_rgba(0,0,0,0.05)] ${stickyClass} min-w-[220px]`}>
                 <div className="flex items-center gap-3">
                     <div>
-                        <div className="font-bold text-[var(--text-primary)] dark:text-slate-200 text-sm whitespace-nowrap">{lead.name}</div>
+                        <div className="font-bold text-[var(--text-primary)] dark:text-slate-200 text-sm whitespace-nowrap">{displayLeadName(lead.name)}</div>
                         {lead.tags && lead.tags.length > 0 && (
                             <div className="flex flex-wrap gap-1 mt-1">
                                 {lead.tags.slice(0, 3).map((tag: string) => (
@@ -307,6 +313,7 @@ const LeadRow = memo(({ lead, isSelected, onSelect, onClick, onProposal, onDupli
             )}
             {visibleColumns.has('score') && (
                 <td className={`px-4 ${paddingY}`}>
+                    {lead.score ? (
                     <div className="flex items-center gap-2" title={`Grade: ${scoreGrade}`}>
                         <div className="w-16 h-1.5 bg-[var(--glass-surface-hover)] dark:bg-slate-800 rounded-full overflow-hidden">
                             <div 
@@ -316,6 +323,9 @@ const LeadRow = memo(({ lead, isSelected, onSelect, onClick, onProposal, onDupli
                         </div>
                         <span className="text-xs2 font-bold text-[var(--text-secondary)] dark:text-slate-300 min-w-[20px]">{scoreValue}</span>
                     </div>
+                    ) : (
+                        <span className="text-xs text-[var(--text-tertiary)]">{t('leads.not_scored')}</span>
+                    )}
                 </td>
             )}
             {visibleColumns.has('owner') && (
@@ -1230,10 +1240,10 @@ export const Leads: React.FC = () => {
                 </div>
             </div>
             {/* Metrics Bar — compact */}
-            <div ref={metricsRef} className="px-3 md:px-5 py-1.5 flex gap-1 md:gap-0 items-center border-b border-[var(--glass-border)] bg-[var(--glass-surface)]/60 flex-none overflow-x-auto no-scrollbar cursor-grab active:cursor-grabbing divide-x divide-[var(--glass-border)]">
+            <div ref={metricsRef} className="px-3 md:px-5 py-2 md:py-1.5 grid grid-cols-2 gap-x-2 gap-y-1.5 md:flex md:gap-0 items-center border-b border-[var(--glass-border)] bg-[var(--glass-surface)]/60 flex-none md:overflow-x-auto no-scrollbar md:cursor-grab md:active:cursor-grabbing md:divide-x divide-[var(--glass-border)] [&>div]:max-md:!px-0">
                 {/* Scope badge — shown when the user sees their own data only */}
                 {isScopedView && (
-                    <div className="flex items-center pr-2.5 md:pr-3 shrink-0">
+                    <div className="col-span-2 flex items-center pr-2.5 md:pr-3 shrink-0">
                         <span className="text-xs2 font-bold px-2 py-0.5 rounded-full border bg-sgs-champagne text-sgs-primary border-sgs-border flex items-center gap-1 whitespace-nowrap">
                             <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" /></svg>
                             {t('leads.scope_mine')}
@@ -1429,7 +1439,7 @@ export const Leads: React.FC = () => {
                                     <div className="flex justify-between items-start mb-3">
                                         <div className="flex items-center gap-3">
                                             <div>
-                                                <div className="font-bold text-[var(--text-primary)] text-sm">{lead.name}</div>
+                                                <div className="font-bold text-[var(--text-primary)] text-sm">{displayLeadName(lead.name)}</div>
                                                 <div className="text-xs2 text-[var(--text-secondary)] font-medium flex items-center gap-1">
                                                     {formatSource(lead.source, t)} • {formatDate(lead.createdAt)}
                                                 </div>
@@ -1459,29 +1469,47 @@ export const Leads: React.FC = () => {
                                         </div>
                                         <div className="text-right">
                                             <div className="text-2xs font-bold text-[var(--text-tertiary)] uppercase mb-0.5">{t('leads.score')}</div>
-                                            <div className="flex items-center justify-end gap-1.5">
+                                            {lead.score ? (
+<div className="flex items-center justify-end gap-1.5">
                                                 <div className="w-12 h-1.5 bg-[var(--glass-surface-hover)] rounded-full overflow-hidden">
                                                     <div className={`h-full rounded-full ${(lead.score?.score || 0) >= 70 ? 'bg-emerald-500' : (lead.score?.score || 0) >= 40 ? 'bg-amber-500' : 'bg-rose-500'}`} style={{ width: `${lead.score?.score || 0}%` }} />
                                                 </div>
                                                 <span className="text-xs font-bold text-[var(--text-primary)]">{lead.score?.score || 0}</span>
                                             </div>
+) : (<div className="text-xs text-[var(--text-tertiary)]">{t('leads.not_scored')}</div>)}
                                         </div>
                                     </div>
 
                                     <div className="flex gap-2">
-                                        <button 
-                                            onClick={(e) => { e.stopPropagation(); setProposalLead(lead); }} 
-                                            className="flex-1 min-h-[40px] py-2 bg-sgs-champagne text-sgs-primary rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 active:bg-sgs-champagne transition-colors"
+                                        {lead.phone && (
+                                            <a
+                                                href={`tel:${String(lead.phone).replace(/\s+/g, '')}`}
+                                                onClick={(e) => e.stopPropagation()}
+                                                aria-label={`${t('leads.call')} ${displayLeadName(lead.name)}`}
+                                                className="flex-1 min-h-[44px] rounded-xl bg-[var(--sgs-primary)] text-[var(--ui-on-brand)] text-sm font-semibold flex items-center justify-center gap-1.5 active:opacity-90"
+                                            >
+                                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" /></svg>
+                                                {t('leads.call')}
+                                            </a>
+                                        )}
+                                        <button
+                                            type="button"
+                                            onClick={(e) => { e.stopPropagation(); setProposalLead(lead); }}
+                                            className="flex-1 min-h-[44px] rounded-xl border border-[var(--glass-border)] bg-[var(--bg-surface)] text-[var(--sgs-primary)] text-sm font-semibold flex items-center justify-center gap-1.5 active:bg-[var(--glass-surface-hover)]"
                                         >
                                             {ICONS.PROPOSAL} {t('leads.create_proposal')}
                                         </button>
                                         {canDelete && (
-                                        <button 
-                                            onClick={(e) => { e.stopPropagation(); handleDeleteClick(lead); }} 
-                                            className="w-10 h-10 flex items-center justify-center text-rose-400 bg-rose-50 rounded-xl active:bg-rose-100 transition-colors shrink-0"
-                                        >
-                                            {ICONS.TRASH}
-                                        </button>
+                                            <details className="relative shrink-0" onClick={(e) => e.stopPropagation()}>
+                                                <summary aria-label={t('leads.more_actions')} className="list-none [&::-webkit-details-marker]:hidden w-11 h-11 flex items-center justify-center rounded-xl text-[var(--text-tertiary)] border border-[var(--glass-border)] cursor-pointer">
+                                                    <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true"><circle cx="5" cy="12" r="1.8" /><circle cx="12" cy="12" r="1.8" /><circle cx="19" cy="12" r="1.8" /></svg>
+                                                </summary>
+                                                <div className="absolute right-0 bottom-full mb-2 z-20 w-40 rounded-xl border border-[var(--glass-border)] bg-[var(--bg-surface)] p-1 shadow-xl">
+                                                    <button type="button" onClick={(e) => { e.stopPropagation(); (e.currentTarget.closest('details') as HTMLDetailsElement | null)?.removeAttribute('open'); handleDeleteClick(lead); }} className="w-full min-h-[40px] rounded-lg px-3 text-left text-sm font-semibold text-[var(--ui-danger)] hover:bg-[var(--glass-surface-hover)] flex items-center gap-2">
+                                                        {ICONS.TRASH} {t('common.delete')}
+                                                    </button>
+                                                </div>
+                                            </details>
                                         )}
                                     </div>
                                 </div>
