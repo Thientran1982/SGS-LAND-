@@ -77,6 +77,146 @@ function calcDelta(current: number, previous: number): number {
 // Reusable tenant filter expression for use in WHERE clauses
 const TENANT_FILTER = `tenant_id = current_setting('app.current_tenant_id', true)::uuid`;
 
+interface AnalyticsRevenueQueries {
+  currentProposals: string;
+  previousProposals: string | null;
+  proposalsByMonth: string;
+  currentListings: string;
+  previousListings: string | null;
+  listingsByMonth: string;
+}
+
+/**
+ * Build the revenue queries used by the dashboard. Keeping proposal deduplication
+ * and sold-listing exclusion in one query builder ensures totals, deltas, charts,
+ * and personal SALES scope use the same attribution rules.
+ */
+export function buildAnalyticsRevenueQueries(options: {
+  days?: number;
+  salesUserId?: string;
+}): AnalyticsRevenueQueries {
+  const days = Number.isInteger(options.days) && (options.days ?? 0) > 0
+    ? Math.min(options.days!, 3650)
+    : undefined;
+  const safeSalesUserId = options.salesUserId &&
+    /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(options.salesUserId)
+    ? options.salesUserId
+    : null;
+  const wonLeadJoin = safeSalesUserId
+    ? `INNER JOIN leads lrev ON p.lead_id = lrev.id AND lrev.tenant_id = p.tenant_id AND lrev.stage = 'WON' AND lrev.assigned_to = '${safeSalesUserId}'::uuid`
+    : `INNER JOIN leads lrev ON p.lead_id = lrev.id AND lrev.tenant_id = p.tenant_id AND lrev.stage = 'WON'`;
+  const proposalRevenueFilter = `
+    AND p.id = (
+      SELECT p2.id
+      FROM proposals p2
+      WHERE p2.lead_id = p.lead_id
+        AND p2.tenant_id = p.tenant_id
+        AND p2.status = 'APPROVED'
+      ORDER BY p2.updated_at DESC, p2.id DESC
+      LIMIT 1
+    )
+    -- A sold listing with a configured commission is the recognized source
+    -- for that sale; do not also count its linked proposal's estimated rate.
+    AND NOT EXISTS (
+      SELECT 1
+      FROM listings sold_listing
+      WHERE sold_listing.id = p.listing_id
+        AND sold_listing.tenant_id = p.tenant_id
+        AND sold_listing.status = 'SOLD'
+        AND sold_listing.commission IS NOT NULL
+        AND sold_listing.commission > 0
+        ${safeSalesUserId
+          ? `AND (sold_listing.assigned_to = '${safeSalesUserId}'::uuid OR sold_listing.created_by = '${safeSalesUserId}'::uuid)`
+          : ''}
+    )
+  `;
+  const salesListingFilter = safeSalesUserId
+    ? `AND (l.assigned_to = '${safeSalesUserId}'::uuid OR l.created_by = '${safeSalesUserId}'::uuid)`
+    : '';
+  const proposalCurrentPeriod = days
+    ? `AND COALESCE(lrev.won_at, lrev.updated_at) >= NOW() - INTERVAL '${days} days'`
+    : '';
+  const listingCurrentPeriod = days
+    ? `AND l.updated_at >= NOW() - INTERVAL '${days} days'`
+    : '';
+
+  return {
+    currentProposals: `
+      SELECT COALESCE(SUM(p.final_price * $1), 0)::numeric as revenue
+      FROM proposals p
+      ${wonLeadJoin}
+      WHERE p.${TENANT_FILTER}
+        AND p.status = 'APPROVED'
+        ${proposalRevenueFilter}
+        ${proposalCurrentPeriod}
+    `,
+    previousProposals: days ? `
+      SELECT COALESCE(SUM(p.final_price * $1), 0)::numeric as revenue
+      FROM proposals p
+      ${wonLeadJoin}
+      WHERE p.${TENANT_FILTER}
+        AND p.status = 'APPROVED'
+        ${proposalRevenueFilter}
+        AND COALESCE(lrev.won_at, lrev.updated_at) >= NOW() - INTERVAL '${days * 2} days'
+        AND COALESCE(lrev.won_at, lrev.updated_at) < NOW() - INTERVAL '${days} days'
+    ` : null,
+    proposalsByMonth: `
+      SELECT
+        TO_CHAR(COALESCE(lrev.won_at, lrev.updated_at), 'YYYY-MM') as month,
+        SUM(p.final_price * $1)::numeric as revenue
+      FROM proposals p
+      ${wonLeadJoin}
+      WHERE p.${TENANT_FILTER}
+        AND p.status = 'APPROVED'
+        ${proposalRevenueFilter}
+      GROUP BY TO_CHAR(COALESCE(lrev.won_at, lrev.updated_at), 'YYYY-MM')
+      ORDER BY month DESC
+      LIMIT 12
+    `,
+    currentListings: `
+      SELECT COALESCE(SUM(
+        CASE WHEN l.commission_unit = 'PERCENT' THEN l.price * l.commission / 100
+             ELSE l.commission END
+      ), 0)::numeric as revenue
+      FROM listings l
+      WHERE l.${TENANT_FILTER}
+        AND l.status = 'SOLD'
+        AND l.commission IS NOT NULL AND l.commission > 0
+        ${salesListingFilter}
+        ${listingCurrentPeriod}
+    `,
+    previousListings: days ? `
+      SELECT COALESCE(SUM(
+        CASE WHEN l.commission_unit = 'PERCENT' THEN l.price * l.commission / 100
+             ELSE l.commission END
+      ), 0)::numeric as revenue
+      FROM listings l
+      WHERE l.${TENANT_FILTER}
+        AND l.status = 'SOLD'
+        AND l.commission IS NOT NULL AND l.commission > 0
+        ${salesListingFilter}
+        AND l.updated_at >= NOW() - INTERVAL '${days * 2} days'
+        AND l.updated_at < NOW() - INTERVAL '${days} days'
+    ` : null,
+    listingsByMonth: `
+      SELECT
+        TO_CHAR(l.updated_at, 'YYYY-MM') as month,
+        SUM(
+          CASE WHEN l.commission_unit = 'PERCENT' THEN l.price * l.commission / 100
+               ELSE l.commission END
+        )::numeric as revenue
+      FROM listings l
+      WHERE l.${TENANT_FILTER}
+        AND l.status = 'SOLD'
+        AND l.commission IS NOT NULL AND l.commission > 0
+        ${salesListingFilter}
+      GROUP BY TO_CHAR(l.updated_at, 'YYYY-MM')
+      ORDER BY month DESC
+      LIMIT 12
+    `,
+  };
+}
+
 export class AnalyticsRepository extends BaseRepository {
   private static readonly SUMMARY_CACHE_TTL_MS = 15_000;
   private static readonly SUMMARY_CACHE_VERSION = 'v4';
@@ -266,100 +406,17 @@ export class AnalyticsRepository extends BaseRepository {
       `);
 
       const commissionRate = parseFloat(process.env.COMMISSION_RATE || '0.02');
-
-      // Revenue JOIN: proposals must belong to WON leads (APPROVED proposal + WON lead = recognised revenue).
-      // For SALES scope also enforce assigned_to filter. This is consistent with generateBiMarts attribution.
-      const wonLeadJoin = isSalesScope && safeUserId
-        ? `INNER JOIN leads lrev ON p.lead_id = lrev.id AND lrev.tenant_id = p.tenant_id AND lrev.stage = 'WON' AND lrev.assigned_to = '${safeUserId}'::uuid`
-        : `INNER JOIN leads lrev ON p.lead_id = lrev.id AND lrev.tenant_id = p.tenant_id AND lrev.stage = 'WON'`;
-
-      // Filter revenue by won_at (deal close date) — financially correct.
-      // Fallback to lrev.updated_at for legacy WON leads that pre-date the won_at column.
-      //
-      // Dedup: keep only the LATEST approved proposal per WON lead.
-      // If a deal was renegotiated (multiple APPROVED proposals exist), only the most
-      // recently approved one counts — prevents double-counting inflating revenue.
-      const latestApprovedProposalFilter = `
-        AND p.id = (
-          SELECT p2.id
-          FROM proposals p2
-          WHERE p2.lead_id = p.lead_id
-            AND p2.tenant_id = p.tenant_id
-            AND p2.status = 'APPROVED'
-          ORDER BY p2.updated_at DESC, p2.id DESC
-          LIMIT 1
-        )
-        -- A sold listing with a configured commission is the recognized source
-        -- for that sale; do not also count its linked proposal's estimated rate.
-        AND NOT EXISTS (
-          SELECT 1
-          FROM listings sold_listing
-          WHERE sold_listing.id = p.listing_id
-            AND sold_listing.tenant_id = p.tenant_id
-            AND sold_listing.status = 'SOLD'
-            AND sold_listing.commission IS NOT NULL
-            AND sold_listing.commission > 0
-            ${isSalesScope && safeUserId
-              ? `AND (sold_listing.assigned_to = '${safeUserId}'::uuid OR sold_listing.created_by = '${safeUserId}'::uuid)`
-              : ''}
-        )
-      `;
-
-      const revenueResult = await client.query(`
-        SELECT COALESCE(SUM(p.final_price * $1), 0)::numeric as revenue
-        FROM proposals p
-        ${wonLeadJoin}
-        WHERE p.${TENANT_FILTER}
-          AND p.status = 'APPROVED'
-          ${latestApprovedProposalFilter}
-          ${useTimeFilter ? `AND COALESCE(lrev.won_at, lrev.updated_at) >= NOW() - INTERVAL '${days} days'` : ''}
-      `, [commissionRate]);
-
-      const prevRevenueResult = useTimeFilter
-        ? await client.query(`
-            SELECT COALESCE(SUM(p.final_price * $1), 0)::numeric as revenue
-            FROM proposals p
-            ${wonLeadJoin}
-            WHERE p.${TENANT_FILTER}
-              AND p.status = 'APPROVED'
-              ${latestApprovedProposalFilter}
-              AND COALESCE(lrev.won_at, lrev.updated_at) >= NOW() - INTERVAL '${days * 2} days'
-              AND COALESCE(lrev.won_at, lrev.updated_at) < NOW() - INTERVAL '${days} days'
-          `, [commissionRate])
+      const revenueQueries = buildAnalyticsRevenueQueries({
+        days: useTimeFilter ? days : undefined,
+        salesUserId: isSalesScope && safeUserId ? safeUserId : undefined,
+      });
+      const revenueResult = await client.query(revenueQueries.currentProposals, [commissionRate]);
+      const prevRevenueResult = revenueQueries.previousProposals
+        ? await client.query(revenueQueries.previousProposals, [commissionRate])
         : { rows: [{ revenue: '0' }] };
-
-      // ── SOLD listing commission (stored directly on listing, not via proposals) ──
-      // commission_unit = 'PERCENT': revenue = price * commission / 100
-      // commission_unit = 'FIXED' or other: revenue = commission (fixed amount)
-      const listingUserFilter = isSalesScope && safeUserId
-        ? `AND (l.assigned_to = '${safeUserId}'::uuid OR l.created_by = '${safeUserId}'::uuid)`
-        : '';
-      const listingRevenueResult = await client.query(`
-        SELECT COALESCE(SUM(
-          CASE WHEN l.commission_unit = 'PERCENT' THEN l.price * l.commission / 100
-               ELSE l.commission END
-        ), 0)::numeric as revenue
-        FROM listings l
-        WHERE l.${TENANT_FILTER}
-          AND l.status = 'SOLD'
-          AND l.commission IS NOT NULL AND l.commission > 0
-          ${listingUserFilter}
-          ${useTimeFilter ? `AND l.updated_at >= NOW() - INTERVAL '${days} days'` : ''}
-      `);
-      const prevListingRevenueResult = useTimeFilter
-        ? await client.query(`
-            SELECT COALESCE(SUM(
-              CASE WHEN l.commission_unit = 'PERCENT' THEN l.price * l.commission / 100
-                   ELSE l.commission END
-            ), 0)::numeric as revenue
-            FROM listings l
-            WHERE l.${TENANT_FILTER}
-              AND l.status = 'SOLD'
-              AND l.commission IS NOT NULL AND l.commission > 0
-              ${listingUserFilter}
-              AND l.updated_at >= NOW() - INTERVAL '${days * 2} days'
-              AND l.updated_at < NOW() - INTERVAL '${days} days'
-          `)
+      const listingRevenueResult = await client.query(revenueQueries.currentListings);
+      const prevListingRevenueResult = revenueQueries.previousListings
+        ? await client.query(revenueQueries.previousListings)
         : { rows: [{ revenue: '0' }] };
 
       // Pipeline value: total expected value of currently open deals, weighted by AI grade probability.
@@ -611,40 +668,9 @@ export class AnalyticsRepository extends BaseRepository {
         LIMIT 10
       `);
 
-      // Group by the month the deal was WON (won_at), not when the proposal was created.
-      // Fallback to lrev.updated_at for legacy rows that pre-date the won_at column.
-      // Dedup: same latestApprovedProposalFilter as revenueResult — one price per WON deal.
-      const revenueByMonthResult = await client.query(`
-        SELECT
-          TO_CHAR(COALESCE(lrev.won_at, lrev.updated_at), 'YYYY-MM') as month,
-          SUM(p.final_price * $1)::numeric as revenue
-        FROM proposals p
-        ${wonLeadJoin}
-        WHERE p.${TENANT_FILTER}
-          AND p.status = 'APPROVED'
-          ${latestApprovedProposalFilter}
-        GROUP BY TO_CHAR(COALESCE(lrev.won_at, lrev.updated_at), 'YYYY-MM')
-        ORDER BY month DESC
-        LIMIT 12
-      `, [commissionRate]);
-
-      // SOLD listing commission by month (merged into revenueByMonth below)
-      const listingRevenueByMonthResult = await client.query(`
-        SELECT
-          TO_CHAR(l.updated_at, 'YYYY-MM') as month,
-          SUM(
-            CASE WHEN l.commission_unit = 'PERCENT' THEN l.price * l.commission / 100
-                 ELSE l.commission END
-          )::numeric as revenue
-        FROM listings l
-        WHERE l.${TENANT_FILTER}
-          AND l.status = 'SOLD'
-          AND l.commission IS NOT NULL AND l.commission > 0
-          ${listingUserFilter}
-        GROUP BY TO_CHAR(l.updated_at, 'YYYY-MM')
-        ORDER BY month DESC
-        LIMIT 12
-      `);
+      // Group proposals by deal close and merge with directly stored SOLD commissions.
+      const revenueByMonthResult = await client.query(revenueQueries.proposalsByMonth, [commissionRate]);
+      const listingRevenueByMonthResult = await client.query(revenueQueries.listingsByMonth);
 
       // ── Compute aggregates ────────────────────────────────────────────────
       let pipelineValue = 0;
