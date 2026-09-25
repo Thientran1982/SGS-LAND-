@@ -3,88 +3,180 @@
 import React, { useState, useEffect, useRef, useCallback } from "react";
 import { useLang } from "@/components/shared/useLang";
 import HeroSearch from "./HeroSearch";
+import { PublicListingCard } from "./MarketplacePage";
+import {
+  BadgeCheck, ShieldCheck, Wallet, Building2, Home, LandPlot, KeyRound, Sparkles, Handshake,
+  Calculator, Trees, ArrowRight, ArrowUpRight, MessageCircle, MapPin, Scale, Landmark, FileSearch,
+} from "lucide-react";
 
 type Lang = "vi" | "en";
+const T = (lang: Lang, vi: React.ReactNode, en: React.ReactNode) => (lang === "vi" ? vi : en);
 
-// ─── Dark-mode CSS vars injected once ──────────────────────────────────────
+// ─── Design tokens + section styles ─────────────────────────────────────────
 const STYLE = `
-  .lp-wrap { max-width: 1380px; margin: 0 auto; padding: 0 clamp(20px,4vw,64px); }
-  /* Be Vietnam Pro contains the complete Vietnamese glyph set and keeps
-     accented heading characters on the same font face. */
-  .lp-serif { font-family: var(--font-be-vietnam, system-ui, sans-serif); }
-  .lp-mono  { font-family: var(--font-ibm-plex-mono, monospace); font-size: 12px; letter-spacing: .16em; text-transform: uppercase; }
-  .lp-hero-title {
-    letter-spacing: -0.02em !important;
-    word-spacing: normal !important;
-    font-kerning: normal;
-    font-stretch: normal;
-    text-align: left !important;
-    text-indent: 0;
-    white-space: normal;
-    hyphens: none;
-    font-variant-ligatures: common-ligatures;
-    text-rendering: optimizeLegibility;
-  }
-  @media (max-width: 640px) {
-    .lp-map-hero-copy {
-      text-align: center !important;
-    }
-    .lp-map-hero-copy h1 {
-      width: auto !important;
-      text-align: center !important;
-    }
-    .lp-map-hero-copy p {
-      max-width: 100% !important;
-      margin-left: auto !important;
-      margin-right: auto !important;
-      text-align: center !important;
-    }
-  }
-  .lp-sans  { font-family: var(--font-be-vietnam, system-ui, sans-serif); }
+  .lp-wrap { max-width: 1280px; margin: 0 auto; padding: 0 clamp(16px,4vw,48px); }
+  .lp-serif, .lp-sans { font-family: var(--font-be-vietnam, system-ui, sans-serif); }
+  .lp-mono  { font-family: var(--font-ibm-plex-mono, monospace); font-size: 12px; letter-spacing: .14em; text-transform: uppercase; }
 
-  /* light / dark token bridge */
   .lp-root {
     --lp-bg: var(--ui-bg); --lp-paper: var(--ui-surface); --lp-ink: var(--ui-text);
     --lp-muted: var(--ui-text-secondary); --lp-soft: var(--ui-text-disabled); --lp-hair: var(--ui-border);
     --lp-line: var(--ui-border-strong); --lp-navy: var(--ui-brand); --lp-gold: var(--ui-accent-strong);
     --lp-ok: var(--ui-success); --lp-shadow: var(--ui-shadow-md);
     --lp-cardbg: var(--ui-surface); --lp-navbg: color-mix(in srgb, var(--ui-bg) 88%, transparent);
+    --lp-tint: color-mix(in srgb, var(--ui-brand) 6%, var(--ui-bg));
   }
   .dark .lp-root {
-    --lp-bg: var(--ui-bg); --lp-paper: var(--ui-surface); --lp-ink: var(--ui-text);
-    --lp-muted: var(--ui-text-secondary); --lp-soft: var(--ui-text-disabled); --lp-hair: var(--ui-border);
-    --lp-line: var(--ui-border-strong); --lp-navy: var(--ui-brand-strong); --lp-gold: var(--ui-accent);
-    --lp-ok: var(--ui-success); --lp-shadow: var(--ui-shadow-md);
-    --lp-cardbg: var(--ui-surface-raised); --lp-navbg: color-mix(in srgb, var(--ui-bg) 88%, transparent);
+    --lp-navy: var(--ui-brand-strong); --lp-gold: var(--ui-accent);
+    --lp-cardbg: var(--ui-surface-raised);
+    --lp-tint: color-mix(in srgb, var(--ui-brand-strong) 10%, var(--ui-bg));
   }
 
-  /* pin animations */
+  /* section rhythm */
+  .lp-sec { padding: clamp(56px,8vw,104px) 0; }
+  .lp-eyebrow { display:inline-flex; align-items:center; gap:8px; font-size:13px; font-weight:600; color:var(--lp-navy); }
+  .lp-h2 { font-size: clamp(26px,3.4vw,40px); font-weight: 650; line-height: 1.12; letter-spacing: -.02em; color: var(--lp-ink); }
+  .lp-lead { font-size: 15px; line-height: 1.65; color: var(--lp-muted); }
+  .lp-head { display:flex; align-items:flex-end; justify-content:space-between; gap:24px; flex-wrap:wrap; margin-bottom: clamp(24px,3vw,40px); }
+  .lp-link { display:inline-flex; align-items:center; gap:6px; font-size:14px; font-weight:600; color:var(--lp-navy); text-decoration:none; }
+  .lp-link:hover { text-decoration: underline; text-underline-offset: 4px; }
+  .lp-link:focus-visible, .lp-tile:focus-visible, .lp-proj:focus-visible, .lp-tool:focus-visible, .lp-chip:focus-visible, .lp-btn:focus-visible {
+    outline: 2px solid var(--lp-navy); outline-offset: 3px;
+  }
+
+  /* hero */
+  .lp-hero { padding: clamp(96px,11vw,132px) 0 clamp(40px,5vw,64px);
+    background:
+      radial-gradient(1200px 520px at 85% -10%, color-mix(in srgb, var(--lp-gold) 12%, transparent), transparent 60%),
+      radial-gradient(900px 480px at -10% 10%, color-mix(in srgb, var(--lp-navy) 10%, transparent), transparent 60%),
+      var(--lp-bg); }
+  .lp-hero-grid { display:grid; gap: clamp(32px,4vw,56px); align-items:center; grid-template-columns: 1fr; }
+  @media (min-width: 1024px) { .lp-hero-grid { grid-template-columns: minmax(0,1.15fr) minmax(0,.85fr); } }
+  .lp-h1 { font-size: clamp(34px,5.4vw,62px); font-weight: 700; line-height: 1.04; letter-spacing: -.03em; color: var(--lp-ink); }
+  .lp-h1 em { font-style: normal; color: var(--lp-navy); }
+  .lp-badge { display:inline-flex; align-items:center; gap:8px; padding:6px 12px 6px 8px; border-radius:999px;
+    background: var(--lp-paper); border:1px solid var(--lp-line); font-size:13px; color: var(--lp-muted); }
+  .lp-badge b { color: var(--lp-ink); font-weight: 600; }
+  .lp-chip { display:inline-flex; align-items:center; height:34px; padding:0 14px; border-radius:999px; font-size:13.5px;
+    color: var(--lp-ink); background: var(--lp-paper); border: 1px solid var(--lp-line); text-decoration:none; white-space:nowrap;
+    transition: border-color .15s, background .15s; }
+  .lp-chip:hover { border-color: var(--lp-navy); background: color-mix(in srgb, var(--lp-navy) 6%, var(--lp-paper)); }
+  .lp-trust { display:flex; flex-wrap:wrap; gap: 10px 26px; font-size: 14px; color: var(--lp-muted); }
+  .lp-trust span { display:inline-flex; align-items:center; gap:8px; }
+  .lp-trust svg { color: var(--lp-ok); flex-shrink: 0; }
+  .lp-trust b { color: var(--lp-ink); font-weight: 650; }
+
+  .lp-collage { position:relative; aspect-ratio: 5/5.4; display:none; }
+  @media (min-width: 1024px) { .lp-collage { display:block; } }
+  .lp-collage .ph { position:absolute; overflow:hidden; border-radius:24px; background: var(--lp-hair); box-shadow: 0 30px 80px var(--lp-shadow); }
+  .lp-collage .ph img { width:100%; height:100%; object-fit:cover; display:block; transition: transform .6s ease; }
+  .lp-collage .ph:hover img { transform: scale(1.04); }
+  .lp-collage .ph-a { inset: 0 18% 22% 0; }
+  .lp-collage .ph-b { width: 46%; aspect-ratio: 4/3.2; right: 0; bottom: 0; border: 6px solid var(--lp-bg); }
+  .lp-collage .tag { position:absolute; left:16px; bottom:16px; display:flex; flex-direction:column; gap:2px; padding:10px 14px;
+    border-radius:14px; background: color-mix(in srgb, #0b1220 62%, transparent); backdrop-filter: blur(8px); color:#fff; text-decoration:none; }
+  .lp-collage .tag small { font-size:11.5px; opacity:.8; }
+  .lp-collage .tag b { font-size:15px; font-weight:650; }
+  .lp-float { position:absolute; left:-28px; top:9%; width: 250px; padding:16px; border-radius:18px; text-decoration:none;
+    background: var(--lp-paper); border:1px solid var(--lp-line); box-shadow: 0 24px 60px var(--lp-shadow); color: var(--lp-ink); }
+  .lp-float .ic { width:36px; height:36px; border-radius:10px; display:grid; place-items:center; background: color-mix(in srgb, var(--lp-gold) 18%, transparent); color: var(--lp-gold); }
+
+  /* categories */
+  .lp-cats { display:grid; gap:12px; grid-template-columns: repeat(2, minmax(0,1fr)); }
+  @media (min-width: 640px) { .lp-cats { grid-template-columns: repeat(3, minmax(0,1fr)); } }
+  @media (min-width: 1024px) { .lp-cats { grid-template-columns: repeat(6, minmax(0,1fr)); } }
+  .lp-tile { display:flex; flex-direction:column; gap:12px; padding:18px; border-radius:18px; text-decoration:none; min-height:128px;
+    background: var(--lp-paper); border:1px solid var(--lp-line); color: var(--lp-ink); transition: transform .2s, box-shadow .2s, border-color .2s; }
+  .lp-tile:hover { transform: translateY(-3px); box-shadow: 0 18px 40px var(--lp-shadow); border-color: color-mix(in srgb, var(--lp-navy) 40%, var(--lp-line)); }
+  .lp-tile .ic { width:42px; height:42px; border-radius:12px; display:grid; place-items:center; background: color-mix(in srgb, var(--lp-navy) 9%, transparent); color: var(--lp-navy); }
+  .lp-tile b { font-size: 15px; font-weight: 650; }
+  .lp-tile small { font-size: 12.5px; color: var(--lp-muted); margin-top:-8px; }
+
+  /* listings */
+  .lp-listings { display:grid; gap:20px; grid-template-columns: 1fr; }
+  @media (min-width: 640px) { .lp-listings { grid-template-columns: repeat(2, minmax(0,1fr)); } }
+  @media (min-width: 1100px) { .lp-listings { grid-template-columns: repeat(4, minmax(0,1fr)); } }
+
+  /* projects bento */
+  .lp-bento { display:grid; gap:16px; grid-template-columns: 1fr; }
+  @media (min-width: 768px) { .lp-bento { grid-template-columns: repeat(4, minmax(0,1fr)); grid-auto-rows: 250px; }
+    .lp-bento .lp-proj:first-child { grid-column: span 2; grid-row: span 2; } }
+  .lp-proj { position:relative; display:block; overflow:hidden; border-radius:22px; min-height:240px; text-decoration:none; background: var(--lp-hair); isolation:isolate; }
+  .lp-proj img { position:absolute; inset:0; width:100%; height:100%; object-fit:cover; transition: transform .6s ease; z-index:-2; }
+  .lp-proj::after { content:""; position:absolute; inset:0; z-index:-1; background: linear-gradient(180deg, transparent 35%, rgba(6,12,24,.82) 100%); }
+  .lp-proj:hover img { transform: scale(1.05); }
+  .lp-proj .body { position:absolute; left:0; right:0; bottom:0; padding: 18px 20px; color:#fff; }
+  .lp-proj .dev { font-size:12px; letter-spacing:.08em; text-transform:uppercase; opacity:.85; }
+  .lp-proj h3 { font-size: 21px; font-weight: 650; line-height:1.15; margin-top:4px; }
+  .lp-proj:first-child h3 { font-size: clamp(24px,2.6vw,32px); }
+  .lp-proj p { font-size: 13.5px; opacity:.85; margin-top:4px; }
+  .lp-proj .go { position:absolute; top:16px; right:16px; width:38px; height:38px; border-radius:50%; display:grid; place-items:center;
+    background: rgba(255,255,255,.92); color:#0b1220; transform: translateY(-4px); opacity:0; transition: all .25s; }
+  .lp-proj:hover .go, .lp-proj:focus-visible .go { opacity:1; transform:none; }
+
+  /* map card */
   @keyframes lp-ring { 0%{transform:scale(.4);opacity:.7} 80%{transform:scale(1.9);opacity:0} 100%{opacity:0} }
-  .lp-pin-ring { animation: lp-ring 2.6s ease-out infinite; transform-origin: center; }
+  .lp-pin-ring { animation: lp-ring 2.6s ease-out infinite; transform-origin: center; transform-box: fill-box; }
   @keyframes lp-dash  { to{stroke-dashoffset:-540} }
   .lp-route { animation: lp-dash 30s linear infinite; }
+  .lp-map-grid { display:grid; gap: 28px; grid-template-columns: 1fr; align-items:center; }
+  @media (min-width: 1024px) { .lp-map-grid { grid-template-columns: minmax(0,.7fr) minmax(0,1.3fr); } }
+  .lp-plist { display:flex; flex-direction:column; border-top:1px solid var(--lp-hair); }
+  .lp-plist button { display:flex; align-items:center; gap:12px; padding:14px 4px; border:0; border-bottom:1px solid var(--lp-hair); background:none; cursor:pointer; text-align:left; color: var(--lp-ink); font: inherit; }
+  .lp-plist button[aria-pressed="true"] b { color: var(--lp-navy); }
+  .lp-plist .dot { width:10px; height:10px; border-radius:50%; background: var(--lp-navy); flex-shrink:0; }
+  .lp-plist button[aria-pressed="true"] .dot { background: var(--lp-gold); box-shadow: 0 0 0 4px color-mix(in srgb, var(--lp-gold) 25%, transparent); }
+  .lp-plist small { color: var(--lp-muted); font-size: 12.5px; }
 
-  /* reveal on scroll */
-  /* UX audit U1/U14: content is visible by default (SSR / no-JS / slow hydration).
-     Only after hydration (.lp-ready) do below-the-fold blocks get a short, subtle reveal. */
-  .lp-rv { transition: opacity .45s ease, transform .45s cubic-bezier(.2,.7,.2,1); }
-  .lp-ready .lp-rv:not(.in) { opacity:.25; transform:translateY(12px); }
+  /* why */
+  .lp-why { display:grid; gap:16px; grid-template-columns: 1fr; }
+  @media (min-width: 640px) { .lp-why { grid-template-columns: repeat(2, minmax(0,1fr)); } }
+  @media (min-width: 1100px) { .lp-why { grid-template-columns: repeat(4, minmax(0,1fr)); } }
+  .lp-why > div { padding: 24px; border-radius: 20px; background: var(--lp-paper); border: 1px solid var(--lp-line); }
+  .lp-why .ic { width:44px; height:44px; border-radius:12px; display:grid; place-items:center; background: color-mix(in srgb, var(--lp-navy) 9%, transparent); color: var(--lp-navy); margin-bottom: 18px; }
+  .lp-why h3 { font-size: 17px; font-weight: 650; color: var(--lp-ink); margin-bottom: 8px; }
+  .lp-why p { font-size: 14px; line-height: 1.6; color: var(--lp-muted); }
 
-  /* FAQ */
+  /* tools band */
+  .lp-band { border-radius: 28px; padding: clamp(28px,4vw,48px); background: var(--lp-navy); color: #fff; position:relative; overflow:hidden; }
+  .lp-band::before { content:""; position:absolute; width:520px; height:520px; right:-160px; top:-220px; border-radius:50%;
+    background: radial-gradient(circle, color-mix(in srgb, var(--lp-gold) 45%, transparent), transparent 65%); opacity:.5; }
+  .lp-tools { display:grid; gap:14px; grid-template-columns: 1fr; position:relative; }
+  @media (min-width: 900px) { .lp-tools { grid-template-columns: repeat(3, minmax(0,1fr)); } }
+  .lp-tool { display:flex; flex-direction:column; gap:10px; padding: 22px; border-radius: 18px; text-decoration:none; color:#fff;
+    background: rgba(255,255,255,.07); border: 1px solid rgba(255,255,255,.14); transition: background .2s, transform .2s; }
+  .lp-tool:hover { background: rgba(255,255,255,.13); transform: translateY(-2px); }
+  .lp-tool b { font-size: 17px; font-weight: 650; }
+  .lp-tool p { font-size: 14px; opacity: .78; line-height:1.55; }
+  .lp-tool .cta { margin-top:auto; display:inline-flex; align-items:center; gap:6px; font-size:14px; font-weight:600; color: var(--lp-gold); }
+
+  /* faq */
+  .lp-faq-grid { display:grid; gap: clamp(28px,4vw,64px); grid-template-columns: 1fr; }
+  @media (min-width: 1024px) { .lp-faq-grid { grid-template-columns: minmax(0,.8fr) minmax(0,1.2fr); } .lp-faq-side { position: sticky; top: 110px; align-self:start; } }
   .lp-faq-body { overflow:hidden; transition: max-height .35s ease, opacity .35s ease; }
   .lp-faq-body.closed { max-height:0; opacity:0; }
   .lp-faq-body.open   { max-height:600px; opacity:1; }
 
-  /* card tilt */
-  .lp-mapcard { transform-style: preserve-3d; transition: transform .25s ease-out, background .3s; will-change: transform; }
+  /* buttons */
+  .lp-btn { display:inline-flex; align-items:center; justify-content:center; gap:8px; min-height:48px; padding:0 22px; border-radius:14px;
+    font-size:15px; font-weight:600; text-decoration:none; cursor:pointer; border:1px solid transparent; transition: filter .15s, background .15s, transform .15s; }
+  .lp-btn-primary { background: var(--lp-navy); color: var(--lp-bg); }
+  .lp-btn-primary:hover { filter: brightness(1.12); }
+  .lp-btn-ghost { background: transparent; color: var(--lp-ink); border-color: var(--lp-line); }
+  .lp-btn-ghost:hover { border-color: var(--lp-navy); }
+
+  /* reveal (content visible without JS) */
+  .lp-rv { transition: opacity .45s ease, transform .45s cubic-bezier(.2,.7,.2,1); }
+  .lp-ready .lp-rv:not(.in) { opacity:.2; transform:translateY(14px); }
 
   @media (prefers-reduced-motion:reduce) {
     .lp-pin-ring, .lp-route { animation: none !important; }
     .lp-rv, .lp-ready .lp-rv:not(.in) { opacity:1 !important; transform:none !important; transition:none !important; }
+    .lp-tile, .lp-proj img, .lp-collage .ph img, .lp-tool { transition: none !important; }
   }
 `;
 
-// ─── FAQ data (15 items, bilingual) ────────────────────────────────────────
+// ─── FAQ data (bilingual) ────────────────────────────────────────────────────
 const FAQ_ITEMS = [
   { q:"Vì sao nên tham khảo bất động sản qua SGS LAND?", a:"SGS LAND tổng hợp thông tin dự án, sản phẩm và công cụ hỗ trợ người mua. Giá, pháp lý, tiến độ, tồn kho và tư cách phân phối cần được đối chiếu với tài liệu gốc có ngày cập nhật trước khi giao dịch.", q_en:"Why use SGS LAND for real-estate research?", a_en:"SGS LAND provides project references, listings and buyer-support tools. Check prices, legal status, progress, availability and distribution authorization against dated original documents before a transaction." },
   { q:"Công nghệ định giá AI của SGS LAND chính xác bao nhiêu?", a:"Công nghệ SGS-AVM v2.1 sử dụng 9 hệ số định giá chuẩn TĐGVN/IVS, MAPE ±4.8%, dựa trên hơn 2.400 giao dịch công chứng thực tế. Kết quả tức thì, minh bạch từng yếu tố ảnh hưởng.", q_en:"How accurate is SGS LAND's AI valuation technology?", a_en:"SGS-AVM v2.1 uses 9 valuation factors compliant with TĐGVN/IVS standards, MAPE ±4.8%, based on 2,400+ real notarized transactions. Instant results with full transparency on each contributing factor." },
@@ -105,378 +197,117 @@ const FAQ_ITEMS = [
 
 // ─── Projects ───────────────────────────────────────────────────────────────
 const PROJECTS = [
-  { slug:"aqua-city",        no:"№ 01 · Novaland",   name:"Aqua City",              desc:{ vi:"1.000 ha · Biên Hòa · từ 3 tỷ ₫",                  en:"1,000 ha · Bien Hoa · from 3B VND" },  price:{ vi:"Từ 3 tỷ ₫",         en:"From 3B VND" },  loc:{ vi:"Biên Hòa · Golf 18 lỗ, Marina", en:"Bien Hoa · 18-hole Golf, Marina" } },
-  { slug:"the-global-city",  no:"№ 02 · Masterise",  name:"The Global City",        desc:{ vi:"117 ha · Thủ Đức · bảng giá T7/2026",               en:"117 ha · Thu Duc · price list Jul/2026" }, price:{ vi:"Bảng giá T7/2026",  en:"Price list Jul/2026" }, loc:{ vi:"Thủ Đức · trung tâm mới quốc tế", en:"Thu Duc · New International CBD" } },
-  { slug:"vinhomes-can-gio", no:"№ 03 · Vinhomes",   name:"Vinhomes Cần Giờ",       desc:{ vi:"2.870 ha · siêu đô thị biển · 2026",                en:"2,870 ha · Coastal megacity · 2026" },  price:{ vi:"Mở bán 2026",       en:"Launch 2026" },  loc:{ vi:"Siêu đô thị biển lớn nhất TPHCM", en:"Largest coastal city in HCMC" } },
-  { slug:"izumi-city",       no:"№ 04 · Nam Long",   name:"Izumi City",             desc:{ vi:"170 ha · Biên Hòa · chuẩn Nhật Bản",               en:"170 ha · Bien Hoa · Japanese standard" }, price:{ vi:"Giá tốt",           en:"Competitive price" }, loc:{ vi:"Biên Hòa · chuẩn sống Nhật Bản", en:"Bien Hoa · Japanese living standard" } },
-  { slug:"masterise-homes",  no:"№ 05 · Masterise",  name:"Grand Marina · Masteri", desc:{ vi:"TPHCM · căn hộ hàng hiệu",                          en:"HCMC · Branded residences" },            price:{ vi:"Tư vấn 1-1",        en:"1-on-1 consultation" }, loc:{ vi:"Trung tâm TPHCM · hàng hiệu", en:"Central HCMC · luxury residences" } },
+  { slug:"aqua-city",        dev:"Novaland",  name:"Aqua City",              desc:{ vi:"1.000 ha · Biên Hòa · từ 3 tỷ ₫",       en:"1,000 ha · Bien Hoa · from 3B VND" },     price:{ vi:"Từ 3 tỷ ₫",        en:"From 3B VND" },        loc:{ vi:"Biên Hòa · Golf 18 lỗ, Marina",   en:"Bien Hoa · 18-hole Golf, Marina" } },
+  { slug:"the-global-city",  dev:"Masterise", name:"The Global City",        desc:{ vi:"117 ha · Thủ Đức · bảng giá T7/2026",    en:"117 ha · Thu Duc · price list Jul/2026" }, price:{ vi:"Bảng giá T7/2026", en:"Price list Jul/2026" }, loc:{ vi:"Thủ Đức · trung tâm mới quốc tế", en:"Thu Duc · New International CBD" } },
+  { slug:"vinhomes-can-gio", dev:"Vinhomes",  name:"Vinhomes Cần Giờ",       desc:{ vi:"2.870 ha · siêu đô thị biển · 2026",     en:"2,870 ha · Coastal megacity · 2026" },    price:{ vi:"Mở bán 2026",      en:"Launch 2026" },         loc:{ vi:"Siêu đô thị biển TP.HCM",          en:"Coastal megacity, HCMC" } },
+  { slug:"izumi-city",       dev:"Nam Long",  name:"Izumi City",             desc:{ vi:"170 ha · Biên Hòa · chuẩn Nhật Bản",     en:"170 ha · Bien Hoa · Japanese standard" }, price:{ vi:"Giá tốt",          en:"Competitive price" },   loc:{ vi:"Biên Hòa · chuẩn sống Nhật Bản",  en:"Bien Hoa · Japanese living standard" } },
+  { slug:"masterise-homes",  dev:"Masterise", name:"Grand Marina · Masteri", desc:{ vi:"TP.HCM · căn hộ hàng hiệu",               en:"HCMC · Branded residences" },             price:{ vi:"Tư vấn 1-1",       en:"1-on-1 consultation" }, loc:{ vi:"Trung tâm TP.HCM · hàng hiệu",    en:"Central HCMC · luxury residences" } },
 ];
 
-// ─── Map pin positions ───────────────────────────────────────────────────────
 const PIN_DATA = [
-  { i:0, cx:810, cy:300, label:"Aqua City",   href:"/du-an/aqua-city"       },
-  { i:1, cx:590, cy:285, label:"Global City",  href:"/du-an/the-global-city" },
-  { i:2, cx:520, cy:545, label:"Cần Giờ",      href:"/du-an/vinhomes-can-gio"},
-  { i:3, cx:700, cy:210, label:"Izumi City",   href:"/du-an/izumi-city"      },
-  { i:4, cx:452, cy:308, label:"Masterise",    href:"/du-an/masterise-homes" },
+  { i:0, cx:810, cy:300, label:"Aqua City"   },
+  { i:1, cx:590, cy:285, label:"Global City" },
+  { i:2, cx:520, cy:545, label:"Cần Giờ"     },
+  { i:3, cx:700, cy:210, label:"Izumi City"  },
+  { i:4, cx:452, cy:308, label:"Masterise"   },
 ];
 
-// ─── Helpers ────────────────────────────────────────────────────────────────
+const lpath = (p: string, g: string) => (g === "en" ? "/en" + p : p);
+const projImg = (slug: string) => `/images/projects/${slug}.webp`;
+
 function useReveal() {
   const ref = useRef<HTMLElement>(null);
   const [inView, setInView] = useState(false);
   useEffect(() => {
     const el = ref.current; if (!el) return;
-    const obs = new IntersectionObserver(([e]) => { if (e.isIntersecting) { setInView(true); obs.disconnect(); } }, { threshold: 0.12 });
+    const obs = new IntersectionObserver(([e]) => { if (e.isIntersecting) { setInView(true); obs.disconnect(); } }, { threshold: 0.1 });
     obs.observe(el);
     return () => obs.disconnect();
   }, []);
   return { ref, inView };
 }
 
-// ─── MAP SECTION ─────────────────────────────────────────────────────────────
-function MapHero({ lang, onChatOpen, listingCount = 0 }: { lang: Lang; onChatOpen: () => void; listingCount?: number }) {
-  // Goi y AI: doi cau moi 4s (chi render 1 cau nen khong pha layout pill)
-  const [phIdx, setPhIdx] = useState(0);
-  useEffect(() => {
-    const id = setInterval(() => setPhIdx((i) => (i + 1) % 2), 4000);
-    return () => clearInterval(id);
-  }, []);
-  const [activePin, setActivePin] = useState<number | null>(null);
-  const [cardPos, setCardPos]     = useState<{ left: number; top: number; w: number }>({ left: 0, top: 0, w: 290 });
-  const [query, setQuery]         = useState("");
-  const [visible, setVisible]     = useState(false);
-  const cardRef    = useRef<HTMLDivElement>(null);
-  const mapcardRef = useRef<HTMLDivElement>(null);
-  const hideTimer  = useRef<ReturnType<typeof setTimeout> | null>(null);
+function Reveal({ as: Tag = "div", className = "", children, ...rest }: any) {
+  const { ref, inView } = useReveal();
+  return <Tag ref={ref} className={`lp-rv${inView ? " in" : ""} ${className}`} {...rest}>{children}</Tag>;
+}
 
-  useEffect(() => { const t = setTimeout(() => setVisible(true), 80); return () => clearTimeout(t); }, []);
-
-  const showCard = useCallback((i: number, cx: number, cy: number) => {
-    if (hideTimer.current) clearTimeout(hideTimer.current);
-    const mr = mapcardRef.current?.getBoundingClientRect();
-    if (!mr) return;
-    const svgW = 1200, svgH = 640;
-    const scaleX = mr.width / svgW, scaleY = mr.height / svgH;
-    const pxX = cx * scaleX, pxY = cy * scaleY;
-    const cw = Math.min(290, mr.width - 32), ch = 250;
-    let left = pxX + 18, top = pxY - 10;
-    if (left + cw > mr.width - 20) left = pxX - cw - 18;
-    if (top + ch > mr.height - 16) top = mr.height - ch - 16;
-    if (top < 16) top = 16;
-    if (left < 16) left = 16;
-    if (left + cw > mr.width - 16) left = mr.width - cw - 16;
-    setCardPos({ left, top, w: cw });
-    setActivePin(i);
-  }, []);
-
-  const hideCard = useCallback(() => {
-    hideTimer.current = setTimeout(() => setActivePin(null), 260);
-  }, []);
-
-  const proj   = activePin !== null ? PROJECTS[activePin] : null;
-  const pin    = activePin !== null ? PIN_DATA[activePin] : null;
-  const imgSrc = proj ? (proj.img || `/images/projects/${proj.slug}.webp`) : "";
-
+function SectionHead({ eyebrow, title, lead, action }: { eyebrow?: React.ReactNode; title: React.ReactNode; lead?: React.ReactNode; action?: React.ReactNode }) {
   return (
-    <section id="ban-do" style={{ padding: "120px 0 0", background: "var(--lp-bg)" }}>
-      <div className="lp-wrap">
-        <div style={{ display:"grid", alignItems:"end", gap:"24px", marginBottom:"26px" }}
-          className="lp-map-hero-copy grid grid-cols-1 sm:[grid-template-columns:1fr_auto]">
-          <h1
-            className="lp-serif"
-            style={{
-              fontSize:"clamp(28px,6vw,64px)", fontWeight:550, lineHeight:1.03, letterSpacing:"-.015em",
-              color:"var(--lp-ink)",
-            }}
-          >
-            {lang === "vi"
-              ? <>Tìm kiếm, mua & đầu tư · bất động sản<br /><em style={{ color:"var(--lp-navy)", fontStyle:"italic", fontWeight:340 }}> </em></>
-              : <>Search, buy & invest · real estate<br /><em style={{ color:"var(--lp-navy)", fontStyle:"italic", fontWeight:340 }}> </em></>
-            }
+    <Reveal className="lp-head">
+      <div style={{ maxWidth: 680 }}>
+        {eyebrow && <span className="lp-eyebrow">{eyebrow}</span>}
+        <h2 className="lp-h2" style={{ marginTop: eyebrow ? 10 : 0 }}>{title}</h2>
+        {lead && <p className="lp-lead" style={{ marginTop: 10 }}>{lead}</p>}
+      </div>
+      {action}
+    </Reveal>
+  );
+}
+
+// ─── 1. HERO ─────────────────────────────────────────────────────────────────
+function Hero({ lang, listingCount, onAskAi }: { lang: Lang; listingCount: number; onAskAi: (q: string) => void }) {
+  const chips = [
+    { vi: "Căn hộ Thủ Đức", en: "Thu Duc apartments", href: "/marketplace?q=Th%E1%BB%A7%20%C4%90%E1%BB%A9c&type=APARTMENT" },
+    { vi: "Vinhomes Grand Park", en: "Vinhomes Grand Park", href: "/marketplace?q=Vinhomes%20Grand%20Park" },
+    { vi: "Aqua City", en: "Aqua City", href: "/marketplace?q=Aqua%20City" },
+    { vi: "The Global City", en: "The Global City", href: "/marketplace?q=Global%20City" },
+    { vi: "Dưới 3 tỷ", en: "Under 3B VND", href: "/marketplace?maxPrice=3000000000&transaction=SALE" },
+  ];
+  return (
+    <section className="lp-hero">
+      <div className="lp-wrap lp-hero-grid">
+        <div>
+          <span className="lp-badge">
+            <BadgeCheck size={16} color="var(--lp-ok)" aria-hidden="true" />
+            {T(lang, <><b>Tin đã kiểm tra</b> · TP.HCM · Đồng Nai · Tây Ninh</>, <><b>Checked listings</b> · HCMC · Dong Nai · Tay Ninh</>)}
+          </span>
+          <h1 className="lp-h1" style={{ marginTop: 20 }}>
+            {T(lang,
+              <>Tìm đúng nhà.<br /><em>Đúng giá.</em> Pháp lý rõ ràng.</>,
+              <>The right home.<br /><em>The right price.</em> Clear title.</>)}
           </h1>
-          <p style={{ maxWidth:"320px", fontSize:"14px", color:"var(--lp-muted)", textAlign:"right" }}
-             className="lp-map-hero-description">
-            {lang === "vi"
-              ? "Mua đúng giá, pháp lý rõ ràng. Bất động sản đã xác minh tại TP.HCM, Đồng Nai và Tây Ninh."
-              : "Buy at the right price with clear legal status. Verified properties across HCMC, Dong Nai and Tay Ninh."}
+          <p className="lp-lead" style={{ fontSize: "clamp(15px,1.4vw,18px)", maxWidth: 560, marginTop: 18 }}>
+            {T(lang,
+              "Xem tin đăng và dự án đã qua kiểm tra pháp lý, so sánh giá theo khu vực và định giá AI miễn phí trước khi xuống tiền.",
+              "Browse listings and projects with checked legal status, compare prices by area and get a free AI valuation before you commit.")}
           </p>
-        </div>
 
-        {/* UX audit wave 3: one search field with a split button (search | valuation) */}
-        <HeroSearch lang={lang} action={lpath("/marketplace", lang)} valuationHref={lpath("/ai-valuation", lang)} />
+          <div style={{ marginTop: 28 }}>
+            <HeroSearch lang={lang} action={lpath("/marketplace", lang)} valuationHref={lpath("/ai-valuation", lang)} onAskAi={onAskAi} withTabs />
+          </div>
 
-        {/* Map card */}
-        <div style={{ position:"relative", perspective:"1400px" }}>
-          <div
-            ref={mapcardRef}
-            className="lp-mapcard"
-            style={{ position:"relative", background:"var(--lp-paper)", border:"1px solid var(--lp-line)", borderRadius:"24px", overflow:"hidden", boxShadow:"0 40px 100px var(--lp-shadow)" }}
-          >
-            {/* Corner labels */}
-            {[
-              { cls:"tl", style:{top:26,left:30},    text: lang==="vi" ? "SGS LAND · Bản đồ 6 tỉnh miền Nam 2026" : "SGS LAND · 6-province map, South Vietnam 2026" },
-              { cls:"tr", style:{top:26,right:30},   text: lang==="vi" ? "Tỷ lệ 1:250.000 · WGS-84" : "Scale 1:250,000 · WGS-84" },
-              { cls:"bl", style:{bottom:24,left:30}, text:"10°25′–11°00′ N" },
-              { cls:"br", style:{bottom:24,right:30},text:"106°30′–107°00′ E" },
-            ].map(c => (
-              <span key={c.cls} className="lp-mono max-sm:!hidden" style={{ position:"absolute", color:"var(--lp-muted)", zIndex:3, pointerEvents:"none", fontSize: "12px", letterSpacing:".14em", ...c.style }}>
-                {c.text}
-              </span>
-            ))}
-            <div style={{ position:"absolute", inset:"14px", border:"1px solid var(--lp-line)", borderRadius:"14px", pointerEvents:"none", zIndex:1 }} />
+          <div style={{ display: "flex", flexWrap: "wrap", alignItems: "center", gap: 8, marginTop: -8 }}>
+            <span style={{ fontSize: 13, color: "var(--lp-muted)", marginRight: 4 }}>{T(lang, "Tìm nhiều:", "Popular:")}</span>
+            {chips.map(c => <a key={c.href} className="lp-chip" href={lpath(c.href, lang)}>{c[lang]}</a>)}
+          </div>
 
-            {/* SVG map */}
-            <svg
-              viewBox="0 0 1200 640"
-              preserveAspectRatio="xMidYMid meet"
-              fill="none"
-              xmlns="http://www.w3.org/2000/svg"
-              style={{ display:"block", width:"100%", height:"auto", overflow:"hidden" }}
-              role="img" aria-label={lang==="vi" ? "Bản đồ 5 dự án tại 6 tỉnh miền Nam" : "Map of 5 projects across 6 southern provinces"}>
-              <g stroke="var(--lp-hair)" strokeWidth="1" fill="none">
-                <path d="M200 0V640M400 0V640M600 0V640M800 0V640M1000 0V640"/>
-                <path d="M0 160H1200M0 320H1200M0 480H1200"/>
-              </g>
-              <path fill="var(--lp-navy)" fillOpacity=".08" d="M0 560 C220 530 420 555 620 585 C820 615 1020 600 1200 570 L1200 640 L0 640 Z"/>
-              <path stroke="var(--lp-line)" strokeWidth="1.6" fill="none" d="M0 560 C220 530 420 555 620 585 C820 615 1020 600 1200 570"/>
-              <path stroke="var(--lp-line)" strokeWidth="7" strokeLinecap="round" fill="none" d="M340 0 C360 90 300 150 350 220 C400 290 480 300 470 380 C460 450 380 470 400 545" opacity=".85"/>
-              <path stroke="var(--lp-line)" strokeWidth="6" strokeLinecap="round" fill="none" d="M980 0 C940 80 850 110 800 180 C750 250 640 260 560 320 C500 365 480 410 470 380" opacity=".85"/>
-              <g stroke="var(--lp-hair)" fill="none" strokeWidth="1">
-                <ellipse cx="180" cy="150" rx="90" ry="46"/><ellipse cx="180" cy="150" rx="60" ry="28"/>
-                <ellipse cx="1050" cy="360" rx="100" ry="50"/><ellipse cx="1050" cy="360" rx="66" ry="30"/>
-              </g>
-              <g fill="none" stroke="var(--lp-navy)" strokeWidth="1" strokeDasharray="4 5" opacity=".35">
-                <path className="lp-route" d="M430 330 C520 300 620 260 700 210"/>
-                <path className="lp-route" d="M430 330 C560 320 700 330 810 300"/>
-                <path className="lp-route" d="M430 330 C440 400 470 480 520 545"/>
-                <path className="lp-route" d="M430 330 C480 310 540 300 590 285"/>
-              </g>
-              <g fontFamily="var(--font-ibm-plex-mono,monospace)" fontSize="10" letterSpacing="2">
-                <text fill="var(--lp-soft)" x="150" y="90">TÂY NINH</text>
-                <text fill="var(--lp-soft)" x="120" y="430">LONG AN</text>
-                <text fill="var(--lp-soft)" x="960" y="520">BR-VT</text>
-                <text fill="var(--lp-soft)" x="620" y="120">BÌNH DƯƠNG</text>
-                <text fill="var(--lp-soft)" x="880" y="230">ĐỒNG NAI</text>
-              </g>
-              <g>
-                <circle fill="var(--lp-ink)" cx="430" cy="330" r="5"/>
-                <text x="430" y="356" textAnchor="middle" fontFamily="var(--font-ibm-plex-mono,monospace)" fontSize="10" letterSpacing="2" fill="var(--lp-soft)">TPHCM</text>
-              </g>
-              {PIN_DATA.map((p) => (
-                <g key={p.i} style={{ cursor:"pointer" }}
-                  onMouseEnter={() => showCard(p.i, p.cx, p.cy)}
-                  onMouseLeave={hideCard}
-                  onFocus={() => showCard(p.i, p.cx, p.cy)}
-                  onBlur={hideCard}
-                  onClick={() => { location.href = p.href; }}
-                  tabIndex={0} role="button" aria-label={p.label}>
-                  <circle className="lp-pin-ring" cx={p.cx} cy={p.cy} r="14" fill="none"
-                    stroke="var(--lp-navy)" strokeWidth="1.4" opacity=".55"
-                    style={{ animationDelay:`${p.i * 0.5}s` }} />
-                  <circle cx={p.cx} cy={p.cy} r="7"
-                    fill={activePin === p.i ? "var(--lp-gold)" : "var(--lp-navy)"}
-                    stroke="var(--lp-paper)" strokeWidth="2.5"
-                    style={{ transition:"fill .2s" }} />
-                  <text x={p.cx} y={p.cy - 18} textAnchor="middle"
-                    fontFamily="var(--font-ibm-plex-mono,monospace)" fontSize="9.5" letterSpacing=".1em"
-                    style={{ textTransform:"uppercase" }}
-                    fill="var(--lp-muted)">{p.label}</text>
-                </g>
-              ))}
-              <g transform="translate(1105,90)" fill="none">
-                <circle r="26" stroke="var(--lp-soft)"/>
-                <circle r="3" fill="var(--lp-ink)"/>
-                <path fill="var(--lp-ink)" fillOpacity=".85" d="M0 -26 L5 0 L0 26 L-5 0 Z"/>
-                <text y="-34" textAnchor="middle" fontFamily="var(--font-ibm-plex-mono,monospace)" fontSize="10" fill="var(--lp-muted)">N</text>
-              </g>
-            </svg>
-
-            {/* Legend */}
-            <div style={{ position:"absolute", left:30, bottom:52, zIndex:3, background:"var(--lp-navbg)", backdropFilter:"blur(6px)", border:"1px solid var(--lp-line)", borderRadius:"12px", padding:"12px 16px", fontSize: "12px", color:"var(--lp-muted)", flexDirection:"column", gap:"6px" }}
-              className="hidden sm:flex">
-              <b className="lp-mono" style={{ color:"var(--lp-ink)", fontSize: "12px" }}>{lang==="vi" ? "Chú giải" : "Legend"}</b>
-              <span style={{ display:"flex", alignItems:"center", gap:"8px" }}><i style={{ width:9,height:9,borderRadius:"50%",background:"var(--lp-navy)",flexShrink:0,display:"inline-block" }}/>{lang==="vi" ? "Dự án pháp lý 2 lớp" : "Two-layer legal verified"}</span>
-              <span style={{ display:"flex", alignItems:"center", gap:"8px" }}><i style={{ width:9,height:9,borderRadius:"50%",background:"var(--lp-gold)",flexShrink:0,display:"inline-block" }}/>{lang==="vi" ? "Đang xem" : "Viewing"}</span>
-            </div>
-
-            {/* Floating project card */}
-            {activePin !== null && proj && pin && (
-              <div
-                ref={cardRef}
-                style={{ position:"absolute", zIndex:10, width:(cardPos.w||290)+"px", maxWidth:"calc(100% - 20px)", background:"var(--lp-cardbg)", border:"1px solid var(--lp-line)", borderRadius:"16px", overflow:"hidden", boxShadow:"0 26px 60px var(--lp-shadow)", left:cardPos.left, top:cardPos.top, pointerEvents:"auto", transition:"opacity .2s,transform .2s" }}
-                onMouseEnter={() => { if (hideTimer.current) clearTimeout(hideTimer.current); }}
-                onMouseLeave={hideCard}
-              >
-                <img src={imgSrc} alt={proj.name} loading="lazy"
-                  style={{ aspectRatio:"16/9", objectFit:"cover", width:"100%", display:"block" }}
-                  onError={e => { (e.currentTarget as HTMLImageElement).style.display = "none"; }} />
-                <div style={{ padding:"14px 18px 16px" }}>
-                  <div style={{ display:"flex", justifyContent:"space-between", marginBottom:"5px" }}>
-                    <span className="lp-mono" style={{ fontSize: "12px", color:"var(--lp-muted)" }}>{proj.no}</span>
-                    <span style={{ color:"var(--lp-ok)", fontSize: "12px" }}>✓</span>
-                  </div>
-                  <h3 className="lp-serif" style={{ fontSize: "20px", fontWeight:550, color:"var(--lp-ink)", lineHeight:1.1 }}>{proj.name}</h3>
-                  <p style={{ fontSize: "12px", color:"var(--lp-muted)", marginTop:"2px" }}>{proj.loc[lang]}</p>
-                  <div style={{ fontSize: "14px", fontWeight:600, color:"var(--lp-navy)", marginTop:"8px", display:"flex", justifyContent:"space-between", alignItems:"center" }}>
-                    <span>{proj.price[lang]}</span>
-                    <a
-                      href={lpath(pin.href, lang)}
-                      className="lp-serif"
-                      style={{ fontStyle:"italic", fontWeight:340, color:"var(--lp-gold)", fontSize:"12px", textDecoration:"none", cursor:"pointer" }}
-                      aria-label={`${lang === "vi" ? "Xem dự án" : "View project"}: ${proj.name}`}
-                    >
-                      {lang==="vi" ? "Xem dự án →" : "View project →"}
-                    </a>
-                  </div>
-                </div>
-              </div>
+          <div className="lp-trust" style={{ marginTop: 28 }}>
+            {listingCount > 0 && (
+              <span><BadgeCheck size={18} aria-hidden="true" />{T(lang, <><b>{listingCount.toLocaleString("vi-VN")}</b>&nbsp;tin đang mở bán</>, <><b>{listingCount.toLocaleString("en-US")}</b>&nbsp;live listings</>)}</span>
             )}
+            <span><ShieldCheck size={18} aria-hidden="true" />{T(lang, <>Kiểm tra pháp lý&nbsp;<b>2 lớp</b></>, <><b>Two-layer</b>&nbsp;legal check</>)}</span>
+            <span><Wallet size={18} aria-hidden="true" />{T(lang, <><b>Miễn phí</b>&nbsp;cho người mua</>, <><b>Free</b>&nbsp;for buyers</>)}</span>
           </div>
         </div>
 
-        {/* AI Search bar */}
-        <div className="max-sm:!mt-3" style={{ display:"flex", justifyContent:"center", marginTop:"-30px", position:"relative", zIndex:20, padding:"0 20px" }}>
-          <form
-            className="max-sm:!pl-4"
-            style={{ background:"var(--lp-ink)", color:"var(--lp-bg)", borderRadius:"999px", boxShadow:"0 24px 60px var(--lp-shadow)", display:"flex", alignItems:"center", gap:"12px", padding:"10px 10px 10px 24px", width:"min(640px,100%)" }}
-            onSubmit={e => {
-              e.preventDefault();
-              onChatOpen();
-            }}
-          >
-            <span className="lp-mono" style={{ color:"var(--lp-gold)", fontSize:"14px" }}>⌘</span>
-            <div className="lp-ph-wrap">
-              {!query && (
-                <span className="lp-ph-over" aria-hidden="true">
-                  <span className="lp-ph-track">
-                    <span key={phIdx} className="sgs-ph-fade">{phIdx === 0
-                      ? (lang==="vi" ? "Nhà phố Aqua City dưới 6 tỷ, pháp lý sạch…" : "Townhouse Aqua City under 6B VND, clean title…")
-                      : (lang==="vi" ? "Căn hộ Global City dưới 8 tỷ, pháp lý sạch…" : "Apartment Global City under 8B VND, clean title…")}</span>
-                    
-                  </span>
-                </span>
-              )}
-              <input
-                value={query}
-                onChange={e => setQuery(e.target.value)}
-                type="search"
-                placeholder=""
-                style={{ width:"100%", border:"none", outline:"none", background:"none", color:"var(--lp-bg)", fontFamily:"var(--font-be-vietnam,sans-serif)", fontSize: "16px", minWidth:0 }}
-                aria-label={lang==="vi" ? "Hỏi AI về bất động sản" : "Ask AI about real estate"}
-              />
+        {/* Visual: real project photography + valuation entry */}
+        <div className="lp-collage" aria-label={T(lang, "Dự án nổi bật", "Featured projects")}>
+          <a className="ph ph-a" href={lpath("/du-an/the-global-city", lang)}>
+            <img src={projImg("the-global-city")} alt="The Global City" fetchPriority="high" />
+            <span className="tag"><small>Masterise · Thủ Đức</small><b>The Global City</b></span>
+          </a>
+          <a className="ph ph-b" href={lpath("/du-an/aqua-city", lang)}>
+            <img src={projImg("aqua-city")} alt="Aqua City" loading="lazy" />
+            <span className="tag"><small>Novaland · Biên Hòa</small><b>Aqua City</b></span>
+          </a>
+          <a className="lp-float" href={lpath("/ai-valuation", lang)}>
+            <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+              <span className="ic"><Calculator size={18} aria-hidden="true" /></span>
+              <b style={{ fontSize: 15 }}>{T(lang, "Nhà bạn đáng giá bao nhiêu?", "What is your home worth?")}</b>
             </div>
-            <button type="submit" style={{ background:"var(--lp-bg)", color:"var(--lp-ink)", borderRadius:"999px", padding:"11px 20px", fontSize: "14px", fontWeight:600, whiteSpace:"nowrap", cursor:"pointer", border:"none", transition:"opacity .2s" }}>
-              {lang==="vi" ? "Hỏi AI →" : "Ask AI →"}
-            </button>
-          </form>
-        </div>
-
-        {/* Stats */}
-        <div className="max-sm:!grid max-sm:grid-cols-2 max-sm:gap-y-7" style={{ display:"flex", justifyContent:"center", gap:0, padding:"56px 0 0", flexWrap:"wrap" }}>
-          {[
-            ...(listingCount > 0
-              ? [{ num: listingCount.toLocaleString("vi-VN"), vi:"tin đang mở bán", en:"live listings" }]
-              : []),
-            { num:"±4,8%",   vi:"sai số định giá AI",   en:"AI valuation error"     },
-            { num:"24h",     vi:"xác minh thực địa",    en:"on-site verification"   },
-            { num:"0 đ",     vi:"phí cho người mua",    en:"fee for buyers"         },
-          ].map((s, i) => (
-            <div key={i} className="max-sm:!px-2 max-sm:!border-0" style={{ padding:"0 34px", borderLeft: i===0 ? "none" : "1px solid var(--lp-hair)", textAlign:"center" }}>
-              <b className="lp-serif" style={{ fontSize:"clamp(20px,2.6vw,28px)", fontWeight:550, display:"block", lineHeight:1.15, color:"var(--lp-ink)" }}>{s.num}</b>
-              <span style={{ fontSize:"12px", color:"var(--lp-muted)" }}>{s[lang]}</span>
-            </div>
-          ))}
-        </div>
-      </div>
-    </section>
-  );
-}
-
-// ─── SECTION HEADER ───────────────────────────────────────────────────────────
-function ChapterHead({ no, title, side }: { no: string; title: React.ReactNode; side: string }) {
-  const { ref, inView } = useReveal();
-  return (
-    <div ref={ref as any} className={`lp-rv${inView ? " in" : ""}`}
-      style={{ display:"flex", alignItems:"baseline", gap:"22px", marginBottom:"60px", borderTop:"1px solid var(--lp-hair)", paddingTop:"22px", flexWrap:"wrap" }}>
-      <span className="lp-mono" style={{ color:"var(--lp-gold)", whiteSpace:"nowrap" }}>{no}</span>
-      <h2 className="lp-serif lp-hero-title" style={{ display:"block", width:"fit-content", maxWidth:"100%", fontSize:"clamp(28px,4.8vw,64px)", fontWeight:550, lineHeight:1.03, color:"var(--lp-ink)" }}>
-        {title}
-      </h2>
-      <span style={{ marginLeft:"auto", maxWidth:"300px", fontSize: "14px", color:"var(--lp-muted)", alignSelf:"flex-end" }}>{side}</span>
-    </div>
-  );
-}
-
-// ─── PROJECT CARD (isolated component so hooks aren't called in .map) ────────
-function ProjectCard({ p, lang }: { p: typeof PROJECTS[number]; lang: Lang }) {
-  const { ref, inView } = useReveal();
-  return (
-    <a
-      ref={ref as any}
-      href={lpath(`/du-an/${p.slug}`, lang)}
-      className={`lp-rv${inView ? " in" : ""}`}
-      style={{ position:"relative", borderRadius:"20px", overflow:"hidden", border:"1px solid var(--lp-line)", background:"var(--lp-cardbg)", display:"block", textDecoration:"none", transition:"transform .25s,box-shadow .3s" }}
-      onMouseEnter={e => { (e.currentTarget as HTMLElement).style.transform="translateY(-4px)"; (e.currentTarget as HTMLElement).style.boxShadow="0 24px 60px var(--lp-shadow)"; }}
-      onMouseLeave={e => { (e.currentTarget as HTMLElement).style.transform=""; (e.currentTarget as HTMLElement).style.boxShadow=""; }}
-    >
-      <img
-        src={`/images/projects/${p.slug}.webp`}
-        alt={p.name}
-        loading="lazy"
-        style={{ aspectRatio:"4/3", objectFit:"cover", width:"100%", display:"block" }}
-        onError={e => { const el = e.currentTarget as HTMLImageElement; el.style.background="var(--lp-hair)"; el.style.minHeight="200px"; }}
-      />
-      <div style={{ padding:"18px 20px 22px" }}>
-        <div style={{ display:"flex", justifyContent:"space-between", marginBottom:"6px" }}>
-          <span className="lp-mono" style={{ fontSize: "12px", color:"var(--lp-muted)" }}>{p.no}</span>
-          <span style={{ color:"var(--lp-ok)", fontSize: "12px", fontFamily:"var(--font-ibm-plex-mono,monospace)", letterSpacing:".1em" }}>✓ {lang==="vi" ? "2 lớp" : "2-layer"}</span>
-        </div>
-        <h3 className="lp-serif" style={{ fontSize: "20px", fontWeight:550, color:"var(--lp-ink)", lineHeight:1.1 }}>{p.name}</h3>
-        <p style={{ fontSize: "14px", color:"var(--lp-muted)", marginTop:"4px" }}>{p.desc[lang]}</p>
-      </div>
-    </a>
-  );
-}
-
-// ─── METHOD CARD ─────────────────────────────────────────────────────────────
-function MethodCard({ m, lang }: { m: { n: string; ti: { vi: string; en: string }; tx: { vi: React.ReactNode; en: React.ReactNode } }; lang: Lang }) {
-  const { ref, inView } = useReveal();
-  return (
-    <div ref={ref as any} className={`lp-rv${inView ? " in" : ""}`}>
-      <span className="lp-serif" style={{ fontStyle:"italic", fontWeight:340, fontSize: "40px", lineHeight:1, color:"var(--lp-gold)", display:"block", marginBottom:"14px" }}>{m.n}</span>
-      <h3 className="lp-serif" style={{ fontSize: "20px", fontWeight:550, color:"var(--lp-ink)", marginBottom:"8px" }}>{m.ti[lang]}</h3>
-      <p style={{ fontSize: "14px", color:"var(--lp-muted)", lineHeight:1.6 }}>{m.tx[lang]}</p>
-    </div>
-  );
-}
-
-// ─── PROJECTS SECTION ────────────────────────────────────────────────────────
-function ProjectsSection({ lang, listingCount = 0 }: { lang: Lang; listingCount?: number }) {
-  return (
-    <section id="du-an" style={{ padding:"120px 0", background:"var(--lp-bg)" }}>
-      <div className="lp-wrap">
-        <ChapterHead
-          no={lang==="vi" ? "Chương 01" : "Chapter 01"}
-          title={lang==="vi" ? <>Cầm dự án <em style={{ fontStyle:"italic", fontWeight:340, color:"var(--lp-navy)" }}>trên tay</em></> : <>Hold each project <em style={{ fontStyle:"italic", fontWeight:340, color:"var(--lp-navy)" }}>in hand</em></>}
-          side={lang==="vi" ? "Ảnh thật, giá gốc chủ đầu tư, pháp lý đã kiểm định 2 lớp." : "Real photos, developer prices, two-layer legal verification."}
-        />
-        <div style={{ display:"grid", gap:"26px" }} className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3">
-          {PROJECTS.map((p) => (
-            <ProjectCard key={p.slug} p={p} lang={lang} />
-          ))}
-          {/* +45k card */}
-          <a href={lpath("/marketplace", lang)}
-            style={{ display:"flex", alignItems:"center", justifyContent:"center", textAlign:"center", background:"var(--lp-ink)", borderRadius:"20px", border:"1px solid var(--lp-line)", textDecoration:"none", minHeight:"280px", transition:"opacity .2s" }}
-            onMouseEnter={e => { (e.currentTarget as HTMLElement).style.opacity="0.88"; }}
-            onMouseLeave={e => { (e.currentTarget as HTMLElement).style.opacity="1"; }}
-          >
-            <div style={{ padding:"40px 24px" }}>
-              <h3 className="lp-serif" style={{ color:"var(--lp-gold)", fontSize: "28px", fontWeight:550 }}>{listingCount > 0 ? `${listingCount.toLocaleString("vi-VN")} ${lang==="vi" ? "sản phẩm" : "listings"}` : (lang==="vi" ? "Xem tất cả sản phẩm" : "Browse all listings")}</h3>
-              <p style={{ opacity:.7, fontSize: "14px", marginTop:"6px", color:"var(--lp-bg)" }}>
-                {lang==="vi" ? "Nhà phố · Căn hộ · Đất nền · Cho thuê" : "Townhouses · Apartments · Land · Rentals"}<br/>→ Marketplace
-              </p>
-            </div>
+            <p style={{ fontSize: 13, color: "var(--lp-muted)", marginTop: 8 }}>{T(lang, "Định giá AI theo dữ liệu giao dịch trong khu vực.", "AI valuation from local transaction data.")}</p>
+            <span className="lp-link" style={{ marginTop: 10 }}>{T(lang, "Định giá miễn phí", "Free valuation")} <ArrowRight size={16} aria-hidden="true" /></span>
           </a>
         </div>
       </div>
@@ -484,142 +315,311 @@ function ProjectsSection({ lang, listingCount = 0 }: { lang: Lang; listingCount?
   );
 }
 
-// ─── METHOD SECTION ──────────────────────────────────────────────────────────
-function MethodSection({ lang }: { lang: Lang }) {
-  const methods = [
-    { n:"i.",   ti:{ vi:"Định giá minh bạch",          en:"Transparent valuation"    }, tx:{ vi:<><b>9 hệ số chuẩn TĐGVN/IVS</b>, huấn luyện trên 2.400+ giao dịch công chứng. 30 giây, sai số ±4.8%.</>, en:<><b>9 factors per TĐGVN/IVS</b>, trained on 2,400+ notarised transactions. 30 seconds, ±4.8% error.</> } },
-    { n:"ii.",  ti:{ vi:"Pháp lý hai lớp",              en:"Two-layer legal check"    }, tx:{ vi:<>AI quét quy hoạch, sổ hồng, tranh chấp tức thì. Chuyên viên thực địa trong <b>24 giờ</b>, trước khi bạn cọc.</>, en:<>AI scans zoning, land titles and disputes instantly. Field specialists verify within <b>24 hours</b>, before you deposit.</> } },
-    { n:"iii.", ti:{ vi:"Thông tin cần đối chiếu",       en:"Evidence to verify"       }, tx:{ vi:<>Giá và điều kiện giao dịch cần được <b>đối chiếu với tài liệu gốc</b>, không mặc định là cam kết của SGS LAND.</>, en:<>Prices and transaction terms must be <b>checked against original documents</b>; they are not automatically SGS LAND guarantees.</> } },
-    { n:"iv.",  ti:{ vi:"Một hồ sơ, 12+ ngân hàng",     en:"One file, 12+ banks"      }, tx:{ vi:<>Lãi từ <b>6-8,5%/năm</b>, LTV tới 80%: BIDV, Techcombank, VPBank… đồng hành đến giải ngân.</>, en:<>Rates from <b>6-8.5%/yr</b>, LTV up to 80%: BIDV, Techcombank, VPBank… with you until disbursement.</> } },
+// ─── 2. CATEGORIES ───────────────────────────────────────────────────────────
+function Categories({ lang }: { lang: Lang }) {
+  const cats = [
+    { icon: Building2, vi: "Căn hộ", en: "Apartments", svi: "Chung cư, căn hộ dự án", sen: "Condos & project units", href: "/marketplace?type=APARTMENT&transaction=SALE" },
+    { icon: Home, vi: "Nhà phố", en: "Townhouses", svi: "Nhà phố, nhà liền kề", sen: "Street & row houses", href: "/marketplace?type=TOWNHOUSE&transaction=SALE" },
+    { icon: LandPlot, vi: "Đất nền", en: "Land plots", svi: "Đất nền dự án, thổ cư", sen: "Residential land", href: "/marketplace?type=LAND&transaction=SALE" },
+    { icon: KeyRound, vi: "Cho thuê", en: "For rent", svi: "Căn hộ, nhà, mặt bằng", sen: "Homes & premises", href: "/marketplace?transaction=RENT" },
+    { icon: Sparkles, vi: "Dự án mới", en: "New projects", svi: "Bảng giá, mặt bằng", sen: "Price lists & plans", href: "/du-an" },
+    { icon: Trees, vi: "Biệt thự", en: "Villas", svi: "Biệt thự, song lập", sen: "Detached & semi-detached", href: "/marketplace?type=VILLA&transaction=SALE" },
   ];
   return (
-    <section style={{ padding:"120px 0", background:"var(--lp-paper)", borderTop:"1px solid var(--lp-hair)", borderBottom:"1px solid var(--lp-hair)" }}>
+    <section style={{ padding: "8px 0 0" }} aria-label={T(lang, "Danh mục", "Categories")}>
       <div className="lp-wrap">
-        <ChapterHead
-          no={lang==="vi" ? "Chương 02" : "Chapter 02"}
-          title={lang==="vi" ? <>Bốn lớp <em style={{ fontStyle:"italic", fontWeight:340, color:"var(--lp-navy)" }}>bảo chứng</em></> : <>Four layers of <em style={{ fontStyle:"italic", fontWeight:340, color:"var(--lp-navy)" }}>assurance</em></>}
-          side={lang==="vi" ? "Miễn phí hoàn toàn với người mua và người thuê." : "Completely free for buyers and renters."}
+        <Reveal className="lp-cats">
+          {cats.map(c => {
+            const Icon = c.icon;
+            return (
+              <a key={c.href} className="lp-tile" href={lpath(c.href, lang)}>
+                <span className="ic"><Icon size={20} aria-hidden="true" /></span>
+                <b>{c[lang]}</b>
+                <small>{lang === "vi" ? c.svi : c.sen}</small>
+              </a>
+            );
+          })}
+        </Reveal>
+      </div>
+    </section>
+  );
+}
+
+// ─── 3. LATEST LISTINGS ──────────────────────────────────────────────────────
+function LatestListings({ lang, listings, total }: { lang: Lang; listings: any[]; total: number }) {
+  const withPhotos = listings.filter(l => Array.isArray(l?.images) && l.images.length > 0);
+  const pool = withPhotos.length >= 4 ? withPhotos : listings;
+  // Show variety: at most two listings from the same area/project, then fill up.
+  const perArea: Record<string, number> = {};
+  const varied = pool.filter(l => {
+    const key = String(l?.location || l?.title || "").toLowerCase().slice(0, 24);
+    perArea[key] = (perArea[key] || 0) + 1;
+    return perArea[key] <= 2;
+  });
+  const items = [...varied, ...pool.filter(l => !varied.includes(l))].slice(0, 8);
+  if (items.length === 0) return null;
+  return (
+    <section className="lp-sec">
+      <div className="lp-wrap">
+        <SectionHead
+          eyebrow={T(lang, "Tin mới đăng", "Just listed")}
+          title={T(lang, "Bất động sản đang mở bán", "Properties on the market")}
+          lead={T(lang, "Ảnh thật, giá niêm yết và trạng thái kiểm tra của từng tin.", "Real photos, asking price and check status on every listing.")}
+          action={<a className="lp-link" href={lpath("/marketplace", lang)}>{total > 0 ? T(lang, `Xem tất cả ${total.toLocaleString("vi-VN")} tin`, `See all ${total.toLocaleString("en-US")} listings`) : T(lang, "Xem tất cả tin", "See all listings")} <ArrowRight size={16} aria-hidden="true" /></a>}
         />
-        <div style={{ display:"grid", gap:"clamp(20px,3vw,40px)" }} className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4">
-          {methods.map((m, i) => (
-            <MethodCard key={i} m={m} lang={lang} />
-          ))}
+        <div className="lp-listings">
+          {items.map((l, i) => <PublicListingCard key={l.id} listing={l} eager={i < 4} />)}
         </div>
       </div>
     </section>
   );
 }
 
-// ─── FAQ SECTION ──────────────────────────────────────────────────────────────
+// ─── 4. PROJECTS (bento) ─────────────────────────────────────────────────────
+function Projects({ lang }: { lang: Lang }) {
+  return (
+    <section className="lp-sec" style={{ background: "var(--lp-tint)" }}>
+      <div className="lp-wrap">
+        <SectionHead
+          eyebrow={T(lang, "Dự án nổi bật", "Featured projects")}
+          title={T(lang, "Dự án từ các chủ đầu tư lớn", "Projects from leading developers")}
+          lead={T(lang, "Bảng giá, mặt bằng và pháp lý dự án, đối chiếu với tài liệu gốc có ngày cập nhật.", "Price lists, floor plans and legal status, checked against dated source documents.")}
+          action={<a className="lp-link" href={lpath("/du-an", lang)}>{T(lang, "Tất cả dự án", "All projects")} <ArrowRight size={16} aria-hidden="true" /></a>}
+        />
+        <Reveal className="lp-bento">
+          {PROJECTS.map((p, i) => (
+            <a key={p.slug} className="lp-proj" href={lpath(`/du-an/${p.slug}`, lang)}>
+              <img src={projImg(p.slug)} alt={p.name} loading={i === 0 ? "eager" : "lazy"} />
+              <span className="go" aria-hidden="true"><ArrowUpRight size={18} /></span>
+              <div className="body">
+                <span className="dev">{p.dev}</span>
+                <h3>{p.name}</h3>
+                <p>{p.desc[lang]}</p>
+              </div>
+            </a>
+          ))}
+        </Reveal>
+      </div>
+    </section>
+  );
+}
+
+// ─── 5. MAP ──────────────────────────────────────────────────────────────────
+function MapSection({ lang }: { lang: Lang }) {
+  const [active, setActive] = useState(1);
+  const proj = PROJECTS[active];
+  return (
+    <section className="lp-sec" id="ban-do">
+      <div className="lp-wrap lp-map-grid">
+        <Reveal>
+          <span className="lp-eyebrow"><MapPin size={16} aria-hidden="true" />{T(lang, "Bản đồ dự án", "Project map")}</span>
+          <h2 className="lp-h2" style={{ marginTop: 10 }}>{T(lang, "Chọn khu vực, xem dự án gần bạn", "Pick an area, see projects nearby")}</h2>
+          <p className="lp-lead" style={{ marginTop: 10 }}>{T(lang, "Các dự án trọng điểm quanh TP.HCM, Đồng Nai và vùng ven.", "Key projects around HCMC, Dong Nai and the surrounding region.")}</p>
+          <div className="lp-plist" style={{ marginTop: 22 }}>
+            {PROJECTS.map((p, i) => (
+              <button key={p.slug} type="button" aria-pressed={active === i} onClick={() => setActive(i)} onMouseEnter={() => setActive(i)}>
+                <span className="dot" aria-hidden="true" />
+                <span style={{ flex: 1 }}><b style={{ fontWeight: 650 }}>{p.name}</b><br /><small>{p.loc[lang]}</small></span>
+                <span style={{ fontSize: 13, color: "var(--lp-muted)", whiteSpace: "nowrap" }}>{p.price[lang]}</span>
+              </button>
+            ))}
+          </div>
+          <a className="lp-btn lp-btn-primary" style={{ marginTop: 22 }} href={lpath(`/du-an/${proj.slug}`, lang)}>
+            {T(lang, `Xem ${proj.name}`, `View ${proj.name}`)} <ArrowRight size={16} aria-hidden="true" />
+          </a>
+        </Reveal>
+
+        <Reveal>
+          <div style={{ position: "relative", background: "var(--lp-paper)", border: "1px solid var(--lp-line)", borderRadius: 24, overflow: "hidden", boxShadow: "0 30px 80px var(--lp-shadow)" }}>
+            <svg viewBox="0 0 1200 640" preserveAspectRatio="xMidYMid meet" fill="none" xmlns="http://www.w3.org/2000/svg"
+              style={{ display: "block", width: "100%", height: "auto" }}
+              role="img" aria-label={T(lang, "Bản đồ vị trí các dự án nổi bật", "Map of featured project locations")}>
+              <g stroke="var(--lp-hair)" strokeWidth="1"><path d="M200 0V640M400 0V640M600 0V640M800 0V640M1000 0V640" /><path d="M0 160H1200M0 320H1200M0 480H1200" /></g>
+              <path fill="var(--lp-navy)" fillOpacity=".08" d="M0 560 C220 530 420 555 620 585 C820 615 1020 600 1200 570 L1200 640 L0 640 Z" />
+              <path stroke="var(--lp-line)" strokeWidth="1.6" d="M0 560 C220 530 420 555 620 585 C820 615 1020 600 1200 570" />
+              <path stroke="var(--lp-line)" strokeWidth="7" strokeLinecap="round" d="M340 0 C360 90 300 150 350 220 C400 290 480 300 470 380 C460 450 380 470 400 545" opacity=".85" />
+              <path stroke="var(--lp-line)" strokeWidth="6" strokeLinecap="round" d="M980 0 C940 80 850 110 800 180 C750 250 640 260 560 320 C500 365 480 410 470 380" opacity=".85" />
+              <g stroke="var(--lp-navy)" strokeWidth="1" strokeDasharray="4 5" opacity=".35">
+                <path className="lp-route" d="M430 330 C520 300 620 260 700 210" /><path className="lp-route" d="M430 330 C560 320 700 330 810 300" />
+                <path className="lp-route" d="M430 330 C440 400 470 480 520 545" /><path className="lp-route" d="M430 330 C480 310 540 300 590 285" />
+              </g>
+              <g fontFamily="var(--font-ibm-plex-mono,monospace)" fontSize="11" letterSpacing="2" fill="var(--lp-soft)">
+                <text x="150" y="90">TÂY NINH</text><text x="120" y="430">LONG AN</text><text x="960" y="520">BR-VT</text>
+                <text x="620" y="120">BÌNH DƯƠNG</text><text x="880" y="230">ĐỒNG NAI</text>
+              </g>
+              <circle fill="var(--lp-ink)" cx="430" cy="330" r="5" />
+              <text x="430" y="356" textAnchor="middle" fontFamily="var(--font-ibm-plex-mono,monospace)" fontSize="11" letterSpacing="2" fill="var(--lp-soft)">TP.HCM</text>
+              {PIN_DATA.map(p => (
+                <g key={p.i} style={{ cursor: "pointer" }} onClick={() => setActive(p.i)} onMouseEnter={() => setActive(p.i)}>
+                  <circle className="lp-pin-ring" cx={p.cx} cy={p.cy} r="14" stroke="var(--lp-navy)" strokeWidth="1.4" opacity=".55" style={{ animationDelay: `${p.i * 0.5}s` }} />
+                  <circle cx={p.cx} cy={p.cy} r={active === p.i ? 9 : 7} fill={active === p.i ? "var(--lp-gold)" : "var(--lp-navy)"} stroke="var(--lp-paper)" strokeWidth="2.5" style={{ transition: "all .2s" }} />
+                  <text x={p.cx} y={p.cy - 18} textAnchor="middle" fontFamily="var(--font-ibm-plex-mono,monospace)" fontSize="11" letterSpacing=".08em"
+                    fill={active === p.i ? "var(--lp-ink)" : "var(--lp-muted)"} style={{ textTransform: "uppercase", fontWeight: active === p.i ? 700 : 400 }}>{p.label}</text>
+                </g>
+              ))}
+            </svg>
+            <a href={lpath(`/du-an/${proj.slug}`, lang)} style={{ position: "absolute", right: 16, bottom: 16, display: "flex", gap: 12, alignItems: "center", padding: 10, paddingRight: 16, borderRadius: 16, background: "var(--lp-cardbg)", border: "1px solid var(--lp-line)", boxShadow: "0 18px 40px var(--lp-shadow)", textDecoration: "none", color: "var(--lp-ink)", maxWidth: "calc(100% - 32px)" }}>
+              <img src={projImg(proj.slug)} alt="" width={72} height={54} style={{ width: 72, height: 54, objectFit: "cover", borderRadius: 10, flexShrink: 0 }} />
+              <span style={{ minWidth: 0 }}>
+                <b style={{ display: "block", fontSize: 15, fontWeight: 650 }}>{proj.name}</b>
+                <span style={{ display: "block", fontSize: 12.5, color: "var(--lp-muted)", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{proj.dev} · {proj.price[lang]}</span>
+              </span>
+            </a>
+          </div>
+        </Reveal>
+      </div>
+    </section>
+  );
+}
+
+// ─── 6. WHY ──────────────────────────────────────────────────────────────────
+function Why({ lang }: { lang: Lang }) {
+  const items = [
+    { icon: Scale, ti: T(lang, "Định giá minh bạch", "Transparent valuation"), tx: T(lang, "Ước tính theo dữ liệu giao dịch trong khu vực, hiển thị rõ từng yếu tố ảnh hưởng đến giá.", "Estimates from local transaction data, showing every factor that moves the price.") },
+    { icon: ShieldCheck, ti: T(lang, "Pháp lý hai lớp", "Two-layer legal check"), tx: T(lang, "AI rà soát quy hoạch, sổ và tranh chấp; chuyên viên pháp lý xác nhận trước khi bạn đặt cọc.", "AI screens zoning, title and disputes; a legal specialist confirms before you deposit.") },
+    { icon: FileSearch, ti: T(lang, "Thông tin có nguồn", "Sourced information"), tx: T(lang, "Giá và điều kiện giao dịch luôn cần đối chiếu với tài liệu gốc có ngày cập nhật.", "Prices and terms should always be checked against dated source documents.") },
+    { icon: Landmark, ti: T(lang, "Hỗ trợ vay ngân hàng", "Mortgage support"), tx: T(lang, "Một bộ hồ sơ, so sánh gói vay của nhiều ngân hàng, đồng hành đến khi giải ngân.", "One application, compare offers from several banks, supported until disbursement.") },
+  ];
+  return (
+    <section className="lp-sec" style={{ background: "var(--lp-tint)" }}>
+      <div className="lp-wrap">
+        <SectionHead
+          eyebrow={T(lang, "Vì sao chọn SGS LAND", "Why SGS LAND")}
+          title={T(lang, "Mua nhà an tâm hơn, miễn phí cho người mua", "Buy with more confidence, free for buyers")}
+        />
+        <Reveal className="lp-why">
+          {items.map((it, i) => { const Icon = it.icon; return (
+            <div key={i}><span className="ic"><Icon size={22} aria-hidden="true" /></span><h3>{it.ti}</h3><p>{it.tx}</p></div>
+          ); })}
+        </Reveal>
+      </div>
+    </section>
+  );
+}
+
+// ─── 7. TOOLS ────────────────────────────────────────────────────────────────
+function Tools({ lang }: { lang: Lang }) {
+  const tools = [
+    { icon: Calculator, ti: T(lang, "Định giá AI miễn phí", "Free AI valuation"), tx: T(lang, "Nhập địa chỉ và diện tích để biết khoảng giá hợp lý trước khi mua hoặc bán.", "Enter an address and size to see a fair price range before buying or selling."), cta: T(lang, "Định giá ngay", "Get a valuation"), href: "/ai-valuation" },
+    { icon: Landmark, ti: T(lang, "Lãi suất & khoản vay", "Rates & mortgage"), tx: T(lang, "So sánh lãi suất ngân hàng, ước tính số tiền trả hằng tháng.", "Compare bank rates and estimate your monthly repayment."), cta: T(lang, "Xem lãi suất", "See rates"), href: "/lai-suat-ngan-hang" },
+    { icon: Handshake, ti: T(lang, "Ký gửi bất động sản", "List your property"), tx: T(lang, "Gửi thông tin nhà đất, đội ngũ SGS LAND kiểm tra và giới thiệu đến người mua phù hợp.", "Send us your property; our team checks it and presents it to the right buyers."), cta: T(lang, "Ký gửi ngay", "List now"), href: "/ky-gui-bat-dong-san" },
+  ];
+  return (
+    <section className="lp-sec" style={{ paddingTop: 0, background: "var(--lp-tint)" }}>
+      <div className="lp-wrap">
+        <Reveal className="lp-band">
+          <div style={{ position: "relative", maxWidth: 620, marginBottom: 28 }}>
+            <span style={{ fontSize: 13, fontWeight: 600, color: "var(--lp-gold)" }}>{T(lang, "Công cụ miễn phí", "Free tools")}</span>
+            <h2 style={{ fontSize: "clamp(24px,3vw,34px)", fontWeight: 650, lineHeight: 1.15, marginTop: 8, color: "#fff" }}>{T(lang, "Tính toán kỹ trước khi xuống tiền", "Run the numbers before you commit")}</h2>
+          </div>
+          <div className="lp-tools">
+            {tools.map((t, i) => { const Icon = t.icon; return (
+              <a key={i} className="lp-tool" href={lpath(t.href, lang)}>
+                <Icon size={24} aria-hidden="true" style={{ color: "var(--lp-gold)" }} />
+                <b>{t.ti}</b><p>{t.tx}</p>
+                <span className="cta">{t.cta} <ArrowRight size={16} aria-hidden="true" /></span>
+              </a>
+            ); })}
+          </div>
+        </Reveal>
+      </div>
+    </section>
+  );
+}
+
+// ─── 8. FAQ ──────────────────────────────────────────────────────────────────
 function FaqItem({ q, a, defaultOpen }: { q: string; a: string; defaultOpen?: boolean }) {
   const [open, setOpen] = useState(!!defaultOpen);
   return (
-    <div style={{ borderBottom:"1px solid var(--lp-hair)" }}>
-      <button
-        onClick={() => setOpen(o => !o)}
-        style={{ width:"100%", padding:"22px 4px", background:"none", border:"none", cursor:"pointer", display:"flex", justifyContent:"space-between", alignItems:"baseline", gap:"16px", textAlign:"left" }}
-        aria-expanded={open}
-      >
-        <span className="lp-serif" style={{ fontWeight:550, fontSize: "20px", color:"var(--lp-ink)", lineHeight:1.25 }}>{q}</span>
-        <span className="lp-serif" style={{ fontStyle:"italic", fontWeight:340, color:"var(--lp-gold)", fontSize: "28px", flexShrink:0 }}>{open ? "–" : "+"}</span>
+    <div style={{ borderBottom: "1px solid var(--lp-hair)" }}>
+      <button onClick={() => setOpen(o => !o)} aria-expanded={open}
+        style={{ width: "100%", padding: "20px 2px", background: "none", border: "none", cursor: "pointer", display: "flex", justifyContent: "space-between", alignItems: "center", gap: 16, textAlign: "left", font: "inherit" }}>
+        <span style={{ fontWeight: 600, fontSize: 17, color: "var(--lp-ink)", lineHeight: 1.35 }}>{q}</span>
+        <span aria-hidden="true" style={{ width: 30, height: 30, borderRadius: "50%", border: "1px solid var(--lp-line)", display: "grid", placeItems: "center", color: "var(--lp-navy)", flexShrink: 0, fontSize: 18, transition: "transform .2s", transform: open ? "rotate(45deg)" : "none" }}>+</span>
       </button>
       <div className={`lp-faq-body ${open ? "open" : "closed"}`}>
-        <p style={{ margin:"0 0 20px", color:"var(--lp-muted)", fontSize: "14px", maxWidth:"64ch", lineHeight:1.7, paddingLeft:"4px" }}>{a}</p>
+        <p style={{ margin: "0 0 20px", color: "var(--lp-muted)", fontSize: 15, maxWidth: "68ch", lineHeight: 1.7 }}>{a}</p>
       </div>
     </div>
   );
 }
 
-function FaqSection({ lang }: { lang: Lang }) {
-  const { ref, inView } = useReveal();
+function Faq({ lang, onChatOpen }: { lang: Lang; onChatOpen: () => void }) {
+  const [all, setAll] = useState(false);
+  const list = all ? FAQ_ITEMS : FAQ_ITEMS.slice(0, 6);
   return (
-    <section id="faq" style={{ padding:"120px 0", background:"var(--lp-bg)" }}>
-      <div className="lp-wrap">
-        <ChapterHead
-          no={lang==="vi" ? "Chương 03" : "Chapter 03"}
-          title={lang==="vi" ? <>Câu hỏi <em style={{ fontStyle:"italic", fontWeight:340, color:"var(--lp-navy)" }}>thường gặp</em></> : <>Frequently asked <em style={{ fontStyle:"italic", fontWeight:340, color:"var(--lp-navy)" }}>questions</em></>}
-          side={lang==="vi" ? "Giải đáp trước khi bạn quyết định." : "Answers before you decide."}
-        />
-        <div ref={ref as any} className={`lp-rv${inView ? " in" : ""}`} style={{ maxWidth:"820px", margin:"0 auto" }}>
-          {FAQ_ITEMS.map((f, i) => (
-            <FaqItem key={i} q={lang==="vi" ? f.q : f.q_en} a={lang==="vi" ? f.a : f.a_en} defaultOpen={i===0} />
-          ))}
+    <section id="faq" className="lp-sec">
+      <div className="lp-wrap lp-faq-grid">
+        <div className="lp-faq-side">
+          <span className="lp-eyebrow">{T(lang, "Hỏi đáp", "FAQ")}</span>
+          <h2 className="lp-h2" style={{ marginTop: 10 }}>{T(lang, "Câu hỏi thường gặp", "Frequently asked questions")}</h2>
+          <p className="lp-lead" style={{ marginTop: 10, maxWidth: 420 }}>{T(lang, "Chưa thấy câu trả lời bạn cần? Hỏi trợ lý AI hoặc chuyên viên tư vấn.", "Can't find your answer? Ask the AI assistant or an advisor.")}</p>
+          <button type="button" className="lp-btn lp-btn-ghost" style={{ marginTop: 20 }} onClick={onChatOpen}>
+            <MessageCircle size={18} aria-hidden="true" /> {T(lang, "Đặt câu hỏi", "Ask a question")}
+          </button>
         </div>
-      </div>
-    </section>
-  );
-}
-
-// ─── CTA SECTION ─────────────────────────────────────────────────────────────
-function CtaSection({ lang, onChatOpen }: { lang: Lang; onChatOpen: () => void }) {
-  const { ref, inView } = useReveal();
-  return (
-    <section style={{ padding:"120px 0", background:"var(--lp-bg)", textAlign:"center" }}>
-      <div className="lp-wrap">
-        <div ref={ref as any} className={`lp-rv${inView ? " in" : ""}`}>
-          <span className="lp-mono" style={{ color:"var(--lp-muted)" }}>{lang==="vi" ? "Miễn phí · Không cần đăng ký · 30 giây" : "Free · No sign-up · 30 seconds"}</span>
-          <h2 className="lp-serif" style={{ fontSize:"clamp(28px,6vw,64px)", fontWeight:550, lineHeight:1.03, letterSpacing:"-.015em", marginTop:"18px", color:"var(--lp-ink)" }}>
-            {lang==="vi"
-              ? <>Bắt đầu bằng<br /><em style={{ fontStyle:"italic", fontWeight:340, color:"var(--lp-navy)" }}>giá thật.</em></>
-              : <>Start with the<br /><em style={{ fontStyle:"italic", fontWeight:340, color:"var(--lp-navy)" }}>real price.</em></>}
-          </h2>
-          <p style={{ color:"var(--lp-muted)", margin:"22px auto 42px", maxWidth:"430px", fontSize: "16px" }}>
-            {lang==="vi"
-              ? "Định giá AI ngay, hoặc trò chuyện với chuyên gia: phản hồi trong 15 phút, bảy ngày mỗi tuần."
-              : "Get an AI valuation now, or talk to a specialist: reply within 15 minutes, seven days a week."}
-          </p>
-          <div style={{ display:"flex", gap:"14px", justifyContent:"center", flexWrap:"wrap" }}>
-            <a href={lpath("/ai-valuation", lang)}
-              style={{ display:"inline-flex", alignItems:"center", gap:"10px", padding:"17px 36px", borderRadius:"999px", fontWeight:500, fontSize: "16px", background:"var(--lp-ink)", color:"var(--lp-bg)", textDecoration:"none", transition:"all .25s" }}
-              onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background="var(--lp-navy)"; (e.currentTarget as HTMLElement).style.transform="translateY(-2px)"; }}
-              onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background="var(--lp-ink)"; (e.currentTarget as HTMLElement).style.transform=""; }}
-            >
-              {lang==="vi" ? "Định giá AI miễn phí" : "Free AI valuation"}
-            </a>
-            <button
-              onClick={onChatOpen}
-              style={{ display:"inline-flex", alignItems:"center", gap:"10px", padding:"17px 36px", borderRadius:"999px", fontWeight:500, fontSize: "16px", border:"1px solid var(--lp-ink)", color:"var(--lp-ink)", background:"transparent", cursor:"pointer", transition:"all .25s" }}
-              onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background="var(--lp-ink)"; (e.currentTarget as HTMLElement).style.color="var(--lp-bg)"; }}
-              onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background="transparent"; (e.currentTarget as HTMLElement).style.color="var(--lp-ink)"; }}
-            >
-              {lang==="vi" ? "Hỏi chuyên gia" : "Ask a specialist"}
+        <div>
+          {list.map((f, i) => <FaqItem key={i} q={lang === "vi" ? f.q : f.q_en} a={lang === "vi" ? f.a : f.a_en} defaultOpen={i === 0} />)}
+          {!all && (
+            <button type="button" className="lp-link" style={{ marginTop: 18, background: "none", border: 0, cursor: "pointer", padding: 0 }} onClick={() => setAll(true)}>
+              {T(lang, `Xem thêm ${FAQ_ITEMS.length - 6} câu hỏi`, `Show ${FAQ_ITEMS.length - 6} more questions`)} <ArrowRight size={16} aria-hidden="true" />
             </button>
-          </div>
+          )}
         </div>
       </div>
     </section>
   );
 }
 
-// ─── ROOT COMPONENT ──────────────────────────────────────────────────────────
+// ─── 9. FINAL CTA ────────────────────────────────────────────────────────────
+function FinalCta({ lang, onChatOpen }: { lang: Lang; onChatOpen: () => void }) {
+  return (
+    <section className="lp-sec" style={{ paddingTop: 0 }}>
+      <div className="lp-wrap">
+        <Reveal style={{ borderRadius: 28, border: "1px solid var(--lp-line)", background: "var(--lp-paper)", padding: "clamp(32px,5vw,64px)", textAlign: "center" }}>
+          <span className="lp-eyebrow">{T(lang, "Miễn phí · Không cần đăng ký", "Free · No sign-up")}</span>
+          <h2 className="lp-h2" style={{ marginTop: 12, fontSize: "clamp(28px,4vw,48px)" }}>{T(lang, <>Bắt đầu bằng <em style={{ fontStyle: "normal", color: "var(--lp-navy)" }}>giá thật.</em></>, <>Start with the <em style={{ fontStyle: "normal", color: "var(--lp-navy)" }}>real price.</em></>)}</h2>
+          <p className="lp-lead" style={{ margin: "14px auto 28px", maxWidth: 480 }}>{T(lang, "Định giá AI ngay, hoặc trò chuyện với chuyên viên tư vấn để được hỗ trợ theo nhu cầu.", "Get an AI valuation now, or chat with an advisor for help with your needs.")}</p>
+          <div style={{ display: "flex", gap: 12, justifyContent: "center", flexWrap: "wrap" }}>
+            <a className="lp-btn lp-btn-primary" href={lpath("/ai-valuation", lang)}>{T(lang, "Định giá AI miễn phí", "Free AI valuation")} <ArrowRight size={16} aria-hidden="true" /></a>
+            <button type="button" className="lp-btn lp-btn-ghost" onClick={onChatOpen}><MessageCircle size={18} aria-hidden="true" /> {T(lang, "Hỏi chuyên viên", "Ask an advisor")}</button>
+          </div>
+        </Reveal>
+      </div>
+    </section>
+  );
+}
+
+// ─── ROOT ────────────────────────────────────────────────────────────────────
 interface Props {
   featuredListings?: any[];
   stats?: { totalListings: number; totalProjects: number; totalBrokers: number };
 }
 
-const lpath = (p: string, g: string) => (g === "en" ? "/en" + p : p);
-
 export function LandingPage({ featuredListings = [], stats }: Props) {
   const lang: Lang = useLang();
   const [ready, setReady] = useState(false);
   useEffect(() => { setReady(true); }, []);
-
-  const onChatOpen = React.useCallback(() => { window.dispatchEvent(new CustomEvent("sgs-open-chat")); }, []);
+  const total = stats?.totalListings ?? 0;
+  const onChatOpen = useCallback(() => { window.dispatchEvent(new CustomEvent("sgs-open-chat")); }, []);
+  const onAskAi = useCallback((q: string) => { window.dispatchEvent(new CustomEvent("sgs-open-chat", { detail: q ? { message: q } : undefined })); }, []);
 
   return (
     <>
       <style dangerouslySetInnerHTML={{ __html: STYLE }} />
-      <div className={`lp-root lp-sans${ready ? " lp-ready" : ""}`} style={{ background:"var(--lp-bg)", color:"var(--lp-ink)", minHeight:"100vh" }}>
-        <MapHero lang={lang} onChatOpen={onChatOpen} listingCount={stats?.totalListings ?? 0} />
-        <ProjectsSection lang={lang} listingCount={stats?.totalListings ?? 0} />
-        <MethodSection lang={lang} />
-        <FaqSection lang={lang} />
-        <CtaSection lang={lang} onChatOpen={onChatOpen} />
+      <div className={`lp-root lp-sans${ready ? " lp-ready" : ""}`} style={{ background: "var(--lp-bg)", color: "var(--lp-ink)", minHeight: "100vh" }}>
+        <Hero lang={lang} listingCount={total} onAskAi={onAskAi} />
+        <Categories lang={lang} />
+        <LatestListings lang={lang} listings={featuredListings} total={total} />
+        <Projects lang={lang} />
+        <MapSection lang={lang} />
+        <Why lang={lang} />
+        <Tools lang={lang} />
+        <Faq lang={lang} onChatOpen={onChatOpen} />
+        <FinalCta lang={lang} onChatOpen={onChatOpen} />
       </div>
     </>
   );
 }
 
 export default LandingPage;
-
-// force turbopack recompile (stale SSR cache had og/ image urls)

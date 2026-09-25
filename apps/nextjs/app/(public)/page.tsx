@@ -55,11 +55,13 @@ export default async function HomePage() {
       featuredListings = data.data || [];
     }
     const apiBase = process.env.BACKEND_URL || process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
-    const countRes = await fetch(`${apiBase}/api/public/listings?page=1&pageSize=1`, { next: { revalidate: 600 } });
+    const countRes = await fetch(`${apiBase}/api/public/listings?page=1&pageSize=12`, { next: { revalidate: 600 } });
     if (countRes.ok) {
       const countData = await countRes.json();
       const total = Number(countData?.total);
       if (Number.isFinite(total) && total > 0) stats = { ...stats, totalListings: total };
+      // Homepage "just listed" grid: fall back to the newest listings when no featured set exists.
+      if (featuredListings.length < 4 && Array.isArray(countData?.data)) featuredListings = countData.data;
     }
   } catch {
     // Fallback to static data during build

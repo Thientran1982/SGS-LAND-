@@ -379,7 +379,7 @@ export function PublicListingCard({ listing, list, eager, facets }: { listing: a
       <div className="p-3 sm:p-4 flex-1 min-w-0">
         <div className="flex items-center gap-2 mb-1.5 flex-wrap">
           {listing.code && (
-            <span className="font-mono text-xs font-bold px-1.5 py-0.5 rounded uppercase tracking-wider" style={{ background: "var(--bg-elevated)", color: "var(--text-secondary)" }}>{listing.code}</span>
+            <span title={listing.code} className="font-mono text-xs font-bold px-1.5 py-0.5 rounded uppercase tracking-wider max-w-full truncate" style={{ background: "var(--bg-elevated)", color: "var(--text-secondary)" }}>{listing.code}</span>
           )}
           {statusLabel && (
             <span className="text-xs font-bold px-1.5 py-0.5 rounded uppercase tracking-wider"

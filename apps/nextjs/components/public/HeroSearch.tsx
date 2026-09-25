@@ -9,6 +9,8 @@ type Props = {
   lang: "vi" | "en";
   action: string;
   valuationHref: string;
+  onAskAi?: (question: string) => void;
+  withTabs?: boolean;
 };
 
 const CSS = `
@@ -33,12 +35,16 @@ const CSS = `
   .hs-menu { position:absolute; right:0; top:calc(100% + 8px); z-index:40; min-width:240px; padding:6px;
     border:1px solid var(--lp-line); border-radius:14px; background:var(--lp-paper);
     box-shadow:0 12px 32px rgba(15,23,42,.16); }
-  .hs-item { display:flex; flex-direction:column; gap:2px; padding:10px 12px; border-radius:10px;
+  .hs-item { width:100%; border:0; background:transparent; text-align:left; cursor:pointer; font:inherit; display:flex; flex-direction:column; gap:2px; padding:10px 12px; border-radius:10px;
     color:var(--lp-ink); text-decoration:none; }
   .hs-item:hover { background:color-mix(in srgb, var(--lp-navy) 8%, transparent); }
   .hs-item b { font-size:14px; font-weight:600; }
   .hs-item span { font-size:12.5px; color:var(--lp-muted); }
   .hs-short { display:none; }
+  .hs-tabs { display:inline-flex; gap:4px; padding:4px; margin-bottom:10px; border-radius:12px; background:color-mix(in srgb, var(--lp-navy) 7%, transparent); }
+  .hs-tab { height:34px; padding:0 16px; border:0; border-radius:9px; background:transparent; color:var(--lp-muted); font-size:14px; font-weight:600; cursor:pointer; }
+  .hs-tab[aria-pressed="true"] { background:var(--lp-paper); color:var(--lp-ink); box-shadow:0 1px 3px rgba(15,23,42,.12); }
+  .hs-tab:focus-visible { outline:2px solid var(--lp-navy); outline-offset:2px; }
   @media (max-width: 480px) {
     .hs-bar { padding-left:12px; }
     .hs-icon { display:none; }
@@ -48,16 +54,18 @@ const CSS = `
   }
 `;
 
-export default function HeroSearch({ lang, action, valuationHref }: Props) {
+export default function HeroSearch({ lang, action, valuationHref, onAskAi, withTabs }: Props) {
+  const [tx, setTx] = useState<"SALE" | "RENT">("SALE");
   const vi = lang === "vi";
   const [open, setOpen] = useState(false);
   const wrapRef = useRef<HTMLDivElement>(null);
   const moreRef = useRef<HTMLButtonElement>(null);
-  const itemRef = useRef<HTMLAnchorElement>(null);
+  const itemRef = useRef<HTMLButtonElement>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     if (!open) return;
-    itemRef.current?.focus();
+    (itemRef.current ?? wrapRef.current?.querySelector<HTMLElement>('[role="menuitem"]'))?.focus();
     const onDown = (e: MouseEvent) => {
       if (wrapRef.current && !wrapRef.current.contains(e.target as Node)) setOpen(false);
     };
@@ -73,19 +81,28 @@ export default function HeroSearch({ lang, action, valuationHref }: Props) {
   }, [open]);
 
   return (
+    <>
+    <style>{CSS}</style>
+    {withTabs && (
+      <div className="hs-tabs" role="group" aria-label={vi ? "Loại giao dịch" : "Transaction type"}>
+        <button type="button" className="hs-tab" aria-pressed={tx === "SALE"} onClick={() => setTx("SALE")}>{vi ? "Mua bán" : "Buy"}</button>
+        <button type="button" className="hs-tab" aria-pressed={tx === "RENT"} onClick={() => setTx("RENT")}>{vi ? "Cho thuê" : "Rent"}</button>
+      </div>
+    )}
     <form action={action} method="get" role="search" data-hero-search className="hs-bar">
-      <style>{CSS}</style>
+      {withTabs && <input type="hidden" name="transaction" value={tx} />}
       <svg className="hs-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
         <circle cx="11" cy="11" r="7" /><path d="m20 20-3.5-3.5" />
       </svg>
       <label htmlFor="lp-hero-q" className="sr-only">{vi ? "Tìm bất động sản" : "Search properties"}</label>
       <input
+        ref={inputRef}
         id="lp-hero-q"
         name="q"
         type="search"
         autoComplete="off"
         className="hs-input"
-        placeholder={vi ? "Dự án, khu vực hoặc mã căn (vd: Izumi, Thủ Đức)" : "Project, area or unit code (e.g. Izumi, Thu Duc)"}
+        placeholder={vi ? "Nhập dự án, khu vực hoặc mã căn" : "Project, area or unit code"}
       />
       <div className="hs-split" ref={wrapRef}>
         <button type="submit" className="hs-main">
@@ -106,7 +123,19 @@ export default function HeroSearch({ lang, action, valuationHref }: Props) {
         </button>
         {open && (
           <div id="hs-menu" role="menu" className="hs-menu">
-            <a ref={itemRef} role="menuitem" href={valuationHref} className="hs-item" onClick={() => setOpen(false)}>
+            {onAskAi && (
+              <button
+                ref={itemRef}
+                type="button"
+                role="menuitem"
+                className="hs-item"
+                onClick={() => { setOpen(false); onAskAi(inputRef.current?.value.trim() || ""); }}
+              >
+                <b>{vi ? "Hỏi AI tư vấn" : "Ask the AI advisor"}</b>
+                <span>{vi ? "Mô tả nhu cầu, AI gợi ý căn phù hợp" : "Describe what you need, get matching options"}</span>
+              </button>
+            )}
+            <a role="menuitem" href={valuationHref} className="hs-item" onClick={() => setOpen(false)}>
               <b>{vi ? "Định giá miễn phí" : "Free valuation"}</b>
               <span>{vi ? "Ước tính giá nhà đất bằng AI" : "Estimate a property's value with AI"}</span>
             </a>
@@ -114,5 +143,6 @@ export default function HeroSearch({ lang, action, valuationHref }: Props) {
         )}
       </div>
     </form>
+    </>
   );
 }
