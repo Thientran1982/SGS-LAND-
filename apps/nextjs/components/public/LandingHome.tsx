@@ -253,11 +253,11 @@ const FAQ_ITEMS = [
 
 // ─── Projects ───────────────────────────────────────────────────────────────
 const PROJECTS = [
-  { slug:"aqua-city",        dev:"Novaland",  name:"Aqua City",              desc:{ vi:"1.000 ha · Biên Hòa · từ 3 tỷ ₫",       en:"1,000 ha · Bien Hoa · from 3B VND" },     price:{ vi:"Từ 3 tỷ ₫",        en:"From 3B VND" },        loc:{ vi:"Biên Hòa · Golf 18 lỗ, Marina",   en:"Bien Hoa · 18-hole Golf, Marina" } },
-  { slug:"the-global-city",  dev:"Masterise", name:"The Global City",        desc:{ vi:"117 ha · Thủ Đức · bảng giá T7/2026",    en:"117 ha · Thu Duc · price list Jul/2026" }, price:{ vi:"Bảng giá T7/2026", en:"Price list Jul/2026" }, loc:{ vi:"Thủ Đức · trung tâm mới quốc tế", en:"Thu Duc · New International CBD" } },
-  { slug:"vinhomes-can-gio", dev:"Vinhomes",  name:"Vinhomes Cần Giờ",       desc:{ vi:"2.870 ha · siêu đô thị biển · 2026",     en:"2,870 ha · Coastal megacity · 2026" },    price:{ vi:"Mở bán 2026",      en:"Launch 2026" },         loc:{ vi:"Siêu đô thị biển TP.HCM",          en:"Coastal megacity, HCMC" } },
-  { slug:"izumi-city",       dev:"Nam Long",  name:"Izumi City",             desc:{ vi:"170 ha · Biên Hòa · chuẩn Nhật Bản",     en:"170 ha · Bien Hoa · Japanese standard" }, price:{ vi:"Giá tốt",          en:"Competitive price" },   loc:{ vi:"Biên Hòa · chuẩn sống Nhật Bản",  en:"Bien Hoa · Japanese living standard" } },
-  { slug:"masterise-homes",  dev:"Masterise", name:"Grand Marina · Masteri", desc:{ vi:"TP.HCM · căn hộ hàng hiệu",               en:"HCMC · Branded residences" },             price:{ vi:"Tư vấn 1-1",       en:"1-on-1 consultation" }, loc:{ vi:"Trung tâm TP.HCM · hàng hiệu",    en:"Central HCMC · luxury residences" } },
+  { slug:"aqua-city",        dev:"Novaland",  name:"Aqua City",              desc:{ vi:"1.000 ha · Biên Hòa · từ 6 tỷ",       en:"1,000 ha · Bien Hoa · from 6B VND" },     price:{ vi:"Từ 6 tỷ",          en:"From 6B VND" },        loc:{ vi:"Biên Hòa · Golf 18 lỗ, Marina",   en:"Bien Hoa · 18-hole Golf, Marina" } },
+  { slug:"the-global-city",  dev:"Masterise", name:"The Global City",        desc:{ vi:"117 ha · Thủ Đức · bảng giá T7/2026",    en:"117 ha · Thu Duc · price list Jul/2026" }, price:{ vi:"Từ 7 tỷ 8",        en:"From 7.8B VND" }, loc:{ vi:"Thủ Đức · trung tâm mới quốc tế", en:"Thu Duc · New International CBD" } },
+  { slug:"vinhomes-can-gio", dev:"Vinhomes",  name:"Vinhomes Cần Giờ",       desc:{ vi:"2.870 ha · siêu đô thị biển · 2026",     en:"2,870 ha · Coastal megacity · 2026" },    price:{ vi:"Từ 8 tỷ",          en:"From 8B VND" },         loc:{ vi:"Siêu đô thị biển TP.HCM",          en:"Coastal megacity, HCMC" } },
+  { slug:"izumi-city",       dev:"Nam Long",  name:"Izumi City",             desc:{ vi:"170 ha · Biên Hòa · chuẩn Nhật Bản",     en:"170 ha · Bien Hoa · Japanese standard" }, price:{ vi:"Từ 7 tỷ 6",        en:"From 7.6B VND" },   loc:{ vi:"Biên Hòa · chuẩn sống Nhật Bản",  en:"Bien Hoa · Japanese living standard" } },
+  { slug:"masterise-homes",  dev:"Masterise", name:"Grand Marina · Masteri", desc:{ vi:"TP.HCM · căn hộ hàng hiệu",               en:"HCMC · Branded residences" },             price:{ vi:"Từ 25 tỷ",         en:"From 25B VND" }, loc:{ vi:"Trung tâm TP.HCM · hàng hiệu",    en:"Central HCMC · luxury residences" } },
 ];
 
 const PIN_DATA = [
