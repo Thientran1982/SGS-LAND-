@@ -17,6 +17,7 @@ import { Dropdown } from '../components/Dropdown';
 import { SelectDropdown } from '../components/task/SelectDropdown';
 import { useSocket, socket } from '../services/websocket';
 import { SeoHead } from '../components/SeoHead';
+import { OverviewHome, OverviewGreeting, ShellPageActions } from '../components/dashboard/OverviewHome';
 // --- ICONS ---
 const ICONS = {
     TREND_UP: <svg className="w-3 h-3 text-sgs-verified dark:text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" /></svg>,
@@ -1027,20 +1028,8 @@ export const Dashboard: React.FC = () => {
         <div className="sgs-dashboard min-h-full overflow-y-auto px-4 py-5 sm:px-6 lg:px-8 pb-24 animate-enter">
             <div className="mx-auto max-w-[1480px] space-y-6">
                 <header className="dashboard-header flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
-                    <div className="min-w-0">
-                         {scopeKey === 'personal' && (
-                             <div className="dashboard-scope-label dash-eyebrow text-[var(--text-tertiary)]">{scopeLabel}</div>
-                         )}
-                        <h1 className="dashboard-title mt-2 text-[var(--text-primary)]">
-                            {userName ? `${greeting} ${userName}` : greeting}
-                        </h1>
-                        <p className="mt-2 max-w-xl text-sm leading-6 text-[var(--text-secondary)]">{t('dash.overview_subtitle')}</p>
-                        <div className="mt-3 flex items-center gap-2 text-xs text-[var(--text-tertiary)]">
-                            {ICONS.REFRESH}
-                            <span>{lastUpdated.toLocaleTimeString()}</span>
-                        </div>
-                    </div>
-                    <div className="flex w-full flex-wrap items-center gap-2 sm:w-auto sm:flex-nowrap">
+                    <OverviewGreeting analytics={overview} />
+                    <ShellPageActions><div className="flex w-full flex-wrap items-center gap-2 sm:w-auto sm:flex-nowrap">
                         <KpiTargetSettings user={currentUser} language={language} notify={notify} />
                         <button
                             onClick={handleExport}
@@ -1068,10 +1057,9 @@ export const Dashboard: React.FC = () => {
                                  className="dashboard-control dashboard-date-filter w-full text-xs"
                             />
                         </div>
-                    </div>
+                    </div></ShellPageActions>
                 </header>
 
-                <PriorityAlertCenter analytics={overview} language={language} />
                 {(analytics.totalLeads ?? 0) < 5 && !localStorage.getItem('sgs_guide_dismissed') && (
                     <div className="dashboard-guide flex flex-col gap-3 px-4 py-3 sm:flex-row sm:items-center sm:justify-between" data-guide-banner>
                         <div>
@@ -1102,6 +1090,14 @@ export const Dashboard: React.FC = () => {
                 )}
 
                 <div ref={dashboardRef} data-dashboard-export-root className="space-y-6">
+                    <OverviewHome analytics={overview} formatCompactNumber={formatCompactNumber} leaderboardMode={leaderboardMode} days={selectedDays} />
+                    <details className="dashboard-advanced dashboard-panel">
+                        <summary className="dashboard-panel-head min-h-[52px] cursor-pointer select-none">
+                            <h2>{t('overview.advanced_title')}</h2>
+                            <span className="ml-auto mr-3 hidden text-xs text-[var(--text-tertiary)] sm:inline">{t('overview.advanced_hint')}</span>
+                        </summary>
+                        <div className="space-y-6 p-4 sm:p-5">
+                    <PriorityAlertCenter analytics={overview} language={language} />
                     <section className="dashboard-panel dashboard-command-panel overflow-hidden" aria-label={language === 'vn' ? 'Điều hành nhanh và KPI' : 'Quick actions and KPIs'}>
                          <div className="p-4 sm:p-5">
                             <div className="grid grid-cols-3 gap-2">
@@ -1302,6 +1298,8 @@ export const Dashboard: React.FC = () => {
                             </nav>
                         );
                     })()}
+                    </div>
+                    </details>
                 </div>
             </div>
         </div>

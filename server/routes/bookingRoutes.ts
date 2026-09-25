@@ -493,6 +493,47 @@ export function createBookingRoutes(
     return row;
   }
 
+  // ── GET /api/bookings/summary ─────────────────────────────────────────────
+  // Staff-only aggregate for the CRM dashboard KPI "Cọc giữ chỗ (VNPay)".
+  // Tenant-scoped explicitly (pool may bypass RLS); non-elevated staff only
+  // see bookings assigned to them. Must stay above /:id so it is not shadowed.
+  router.get('/api/bookings/summary', async (req: Request, res: Response) => {
+    try {
+      const viewer = resolveViewer(req);
+      if (!viewer || viewer.kind !== 'staff' || !viewer.tenantId) {
+        return res.status(401).json({ error: 'Chưa đăng nhập' });
+      }
+      const days = Math.min(365, Math.max(1, Number(req.query.days) || 30));
+      const elevated = ['SUPER_ADMIN', 'ADMIN', 'MANAGER', 'TEAM_LEAD'].includes(viewer.role);
+      const params: any[] = [viewer.tenantId, days];
+      let scope = '';
+      if (!elevated) { params.push(viewer.userId); scope = ' AND agent_user_id = $3'; }
+      const r = await pool.query(
+        `SELECT
+            COUNT(*) FILTER (WHERE status = 'PAID' AND created_at >= NOW() - ($2::int * INTERVAL '1 day'))::int AS paid_count,
+            COALESCE(SUM(deposit_amount) FILTER (WHERE status = 'PAID' AND created_at >= NOW() - ($2::int * INTERVAL '1 day')), 0)::bigint AS paid_amount,
+            COUNT(*) FILTER (WHERE status = 'PENDING' AND expires_at > NOW())::int AS pending_count,
+            COUNT(*) FILTER (WHERE status = 'PAID' AND created_at < NOW() - ($2::int * INTERVAL '1 day'))::int AS prev_paid_count
+           FROM bookings
+          WHERE tenant_id = $1
+            AND created_at >= NOW() - (($2::int * 2) * INTERVAL '1 day')${scope}`,
+        params,
+      );
+      const row = r.rows[0] || {};
+      res.setHeader('Cache-Control', 'no-store');
+      res.json({
+        days,
+        paidCount: Number(row.paid_count) || 0,
+        paidAmount: Number(row.paid_amount) || 0,
+        pendingCount: Number(row.pending_count) || 0,
+        prevPaidCount: Number(row.prev_paid_count) || 0,
+      });
+    } catch (err: any) {
+      logger.error('[bookings/summary] ' + (err?.message || err));
+      res.status(500).json({ error: 'Không tải được thống kê đặt cọc' });
+    }
+  });
+
   // ── GET /api/bookings/:id ─────────────────────────────────────────────────
   // Dual-auth: buyer-owner via Bearer JWT OR assigned agent / same-tenant
   // admin via staff cookie session. 404 on mismatch (no existence leak).

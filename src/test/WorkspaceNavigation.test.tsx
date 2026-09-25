@@ -1,4 +1,5 @@
 import { render, screen } from '@testing-library/react';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { describe, expect, it, vi } from 'vitest';
 import { buildWorkspaceHubs, WorkspaceNavigation } from '../../components/WorkspaceNavigation';
 import { ROUTES } from '../../config/routes';
@@ -14,6 +15,14 @@ vi.mock('../../services/i18n', () => ({
 vi.mock('../../components/Navigation', () => ({
     NotificationButton: () => null,
     UserAvatar: () => null,
+}));
+
+vi.mock('../../services/websocket', () => ({
+    socket: { on: vi.fn(), off: vi.fn() },
+}));
+
+vi.mock('../../services/dbApi', () => ({
+    db: { getInboxThreads: vi.fn().mockResolvedValue([]) },
 }));
 
 vi.mock('../../components/Logo', () => ({
@@ -65,6 +74,7 @@ describe('buildWorkspaceHubs', () => {
 
     it('keeps existing page content inside the redesigned shell', () => {
         render(
+            <QueryClientProvider client={new QueryClient({ defaultOptions: { queries: { retry: false } } })}>
             <WorkspaceNavigation
                 {...({
                     activePage: ROUTES.DASHBOARD,
@@ -88,7 +98,8 @@ describe('buildWorkspaceHubs', () => {
                 } as any)}
             >
                 <div>Existing dashboard content</div>
-            </WorkspaceNavigation>,
+            </WorkspaceNavigation>
+            </QueryClientProvider>,
         );
 
         expect(screen.getByText('Existing dashboard content')).toBeTruthy();

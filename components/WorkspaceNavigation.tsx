@@ -1,10 +1,12 @@
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import {
     BarChart2,
     Bot,
     Building2,
     ChevronDown,
     CircleDollarSign,
+    ClipboardList,
+    Inbox,
     LayoutDashboard,
     LogOut,
     Megaphone,
@@ -20,7 +22,10 @@ import {
     X,
 } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { ROUTES } from '../config/routes';
+import { db } from '../services/dbApi';
+import { socket } from '../services/websocket';
 import { useTranslation } from '../services/i18n';
 import { AppNotification } from '../services/api/notificationApi';
 import { NavGroup, NavItem, User } from '../types';
@@ -29,9 +34,11 @@ import { NotificationButton, UserAvatar } from './Navigation';
 
 export type WorkspaceHubId =
     | 'overview'
+    | 'inbox'
     | 'leads'
     | 'listings'
     | 'deals'
+    | 'work'
     | 'marketing'
     | 'reports'
     | 'ai'
@@ -49,66 +56,19 @@ export interface WorkspaceHub extends HubDefinition {
 }
 
 const HUB_DEFINITIONS: HubDefinition[] = [
-    {
-        id: 'overview',
-        labelKey: 'shell.hub.overview',
-        icon: LayoutDashboard,
-        routes: [ROUTES.DASHBOARD, ROUTES.LANDING, ROUTES.TASK_DASHBOARD, ROUTES.TASKS, ROUTES.TASK_KANBAN, ROUTES.EMPLOYEES],
-    },
-    {
-        id: 'leads',
-        labelKey: 'shell.hub.leads',
-        icon: Users,
-        routes: [ROUTES.LEADS, ROUTES.INBOX, ROUTES.FAVORITES],
-    },
-    {
-        id: 'listings',
-        labelKey: 'shell.hub.listings',
-        icon: Building2,
-        routes: [ROUTES.INVENTORY, ROUTES.PROJECTS, ROUTES.UNIT_INVENTORY, ROUTES.SEARCH],
-    },
-    {
-        id: 'deals',
-        labelKey: 'shell.hub.deals',
-        icon: CircleDollarSign,
-        routes: [ROUTES.CHECKOUT, ROUTES.CONTRACTS, ROUTES.APPROVALS, ROUTES.COMMISSIONS, ROUTES.AUCTION],
-    },
-    {
-        id: 'marketing',
-        labelKey: 'shell.hub.marketing',
-        icon: Megaphone,
-        routes: [
-            ROUTES.CAMPAIGNS,
-            ROUTES.SOCIAL_PUBLISHING,
-            ROUTES.SEQUENCES,
-            ROUTES.MY_LANDING,
-            ROUTES.LANDING_AI,
-            ROUTES.ROUTING_RULES,
-            ROUTES.SEO_MANAGER,
-            ROUTES.SCRAPER,
-        ],
-    },
-    {
-        id: 'reports',
-        labelKey: 'shell.hub.reports',
-        icon: BarChart2,
-        routes: [ROUTES.REPORTS, ROUTES.TASK_REPORTS, ROUTES.VALUATION_ACCURACY, ROUTES.MARKET_REPORT, ROUTES.DATA_PLATFORM, ROUTES.ERROR_MONITOR],
-    },
+    { id: 'overview', labelKey: 'shell.hub.overview', icon: LayoutDashboard, routes: [ROUTES.DASHBOARD, ROUTES.FAVORITES, ROUTES.APPROVALS] },
+    { id: 'inbox', labelKey: 'shell.hub.inbox', icon: Inbox, routes: [ROUTES.INBOX] },
+    { id: 'leads', labelKey: 'shell.hub.leads', icon: Users, routes: [ROUTES.LEADS, ROUTES.SCORING_RULES, ROUTES.ROUTING_RULES, ROUTES.SEQUENCES] },
+    { id: 'listings', labelKey: 'shell.hub.listings', icon: Building2, routes: [ROUTES.INVENTORY, ROUTES.UNIT_INVENTORY, ROUTES.PROJECTS, ROUTES.SEARCH, ROUTES.AUCTION] },
+    { id: 'deals', labelKey: 'shell.hub.deals', icon: CircleDollarSign, routes: [ROUTES.CONTRACTS, ROUTES.CHECKOUT, ROUTES.COMMISSIONS] },
+    { id: 'work', labelKey: 'shell.hub.work', icon: ClipboardList, routes: [ROUTES.TASK_DASHBOARD, ROUTES.TASKS, ROUTES.TASK_KANBAN, ROUTES.EMPLOYEES, ROUTES.TASK_REPORTS] },
+    { id: 'marketing', labelKey: 'shell.hub.marketing', icon: Megaphone, routes: [ROUTES.CAMPAIGNS, ROUTES.SOCIAL_PUBLISHING, ROUTES.MY_LANDING, ROUTES.LANDING_AI, ROUTES.SEO_MANAGER] },
+    { id: 'reports', labelKey: 'shell.hub.reports', icon: BarChart2, routes: [ROUTES.REPORTS, ROUTES.MARKET_REPORT, ROUTES.VALUATION_ACCURACY] },
     {
         id: 'ai',
         labelKey: 'shell.hub.ai',
         icon: Sparkles,
-        routes: [
-            ROUTES.AI_ADVISOR,
-            ROUTES.AI_GOVERNANCE,
-            ROUTES.AI_EVALUATION,
-            ROUTES.ADMIN_AI_COST,
-            ROUTES.KNOWLEDGE,
-            ROUTES.SCORING_RULES,
-            ROUTES.AGENT_AUDIT,
-            ROUTES.AGENT_COCKPIT,
-            ROUTES.AGENT_TASKS,
-        ],
+        routes: [ROUTES.AI_ADVISOR, ROUTES.AGENT_COCKPIT, ROUTES.AGENT_TASKS, ROUTES.AGENT_AUDIT, ROUTES.AI_GOVERNANCE, ROUTES.AI_EVALUATION, ROUTES.ADMIN_AI_COST, ROUTES.KNOWLEDGE],
     },
     {
         id: 'settings',
@@ -122,6 +82,9 @@ const HUB_DEFINITIONS: HubDefinition[] = [
             ROUTES.BILLING,
             ROUTES.SECURITY,
             ROUTES.SYSTEM,
+            ROUTES.DATA_PLATFORM,
+            ROUTES.ERROR_MONITOR,
+            ROUTES.SCRAPER,
             ROUTES.CUSTOM_FIELDS,
             ROUTES.MARKETPLACE,
             ROUTES.MOBILE_APP,
@@ -151,7 +114,7 @@ export function buildWorkspaceHubs(menuGroups: NavGroup[]): WorkspaceHub[] {
     if (!byRoute.has(ROUTES.PROFILE)) byRoute.set(ROUTES.PROFILE, profileItem);
 
     const knownRoutes = new Set(definitions.flatMap(hub => hub.routes));
-    const unassigned = [...byRoute.values()].filter(item => !knownRoutes.has(item.route));
+    const unassigned = [...byRoute.values()].filter(item => !knownRoutes.has(item.route) && item.route !== ROUTES.LANDING);
     const fallbackHub = definitions.find(hub => hub.id === 'settings');
     if (fallbackHub) {
         for (const item of unassigned) {
@@ -203,6 +166,7 @@ interface WorkspaceRailProps {
     onDeleteNotification: (id: string) => void;
     onDeleteAllRead: () => void;
     onSearch: () => void;
+    inboxUnread?: number;
 }
 
 const WorkspaceRail: React.FC<WorkspaceRailProps> = ({
@@ -219,6 +183,7 @@ const WorkspaceRail: React.FC<WorkspaceRailProps> = ({
     onDeleteNotification,
     onDeleteAllRead,
     onSearch,
+    inboxUnread = 0,
 }) => {
     const { t } = useTranslation();
     const [profileOpen, setProfileOpen] = useState(false);
@@ -231,7 +196,7 @@ const WorkspaceRail: React.FC<WorkspaceRailProps> = ({
             <button
                 type="button"
                 onClick={() => onNavigate(ROUTES.DASHBOARD)}
-                className="mb-5 flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl text-[var(--sgs-champagne)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--sgs-accent)]"
+                className="mb-5 flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-white p-1.5 text-[var(--sgs-champagne)] dark:bg-transparent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--sgs-accent)]"
                 aria-label={t('nav.go_to_dashboard')}
                 title={t('nav.go_to_dashboard')}
             >
@@ -239,6 +204,18 @@ const WorkspaceRail: React.FC<WorkspaceRailProps> = ({
             </button>
 
             <nav className="flex min-h-0 w-full flex-1 flex-col items-center gap-1 overflow-y-auto pb-3" aria-label={t('shell.primary_navigation')}>
+                <button
+                    type="button"
+                    onClick={onSearch}
+                    aria-label={t('common.search')}
+                    title={t('common.search')}
+                    className="group relative mb-2 flex min-h-12 w-full shrink-0 items-center justify-center rounded-2xl text-[var(--sgs-champagne)] transition-colors hover:bg-[var(--ui-text-inverse)]/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--sgs-accent)]"
+                >
+                    <Search size={20} aria-hidden="true" />
+                    <span className="pointer-events-none absolute left-full z-50 ml-3 whitespace-nowrap rounded-lg bg-[var(--sgs-primary-deep)] px-2.5 py-1.5 text-xs font-semibold text-[var(--ui-text-inverse)] opacity-0 shadow-xl transition-opacity group-hover:opacity-100 group-focus-visible:opacity-100">
+                        {t('common.search')}
+                    </span>
+                </button>
                 {hubs.map(hub => {
                     const Icon = hub.icon;
                     const isActive = activeHubId === hub.id;
@@ -251,7 +228,7 @@ const WorkspaceRail: React.FC<WorkspaceRailProps> = ({
                                 if (nextRoute) onNavigate(nextRoute);
                             }}
                             aria-current={isActive ? 'page' : undefined}
-                            aria-label={t(hub.labelKey)}
+                            aria-label={hub.id === 'inbox' && inboxUnread > 0 ? `${t(hub.labelKey)}, ${t('shell.inbox_unread').replace('{n}', String(inboxUnread))}` : t(hub.labelKey)}
                             title={t(hub.labelKey)}
                             className={`group relative flex min-h-12 w-full shrink-0 items-center justify-center rounded-2xl transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--sgs-accent)] ${
                                 isActive
@@ -260,24 +237,15 @@ const WorkspaceRail: React.FC<WorkspaceRailProps> = ({
                             }`}
                         >
                             <Icon size={20} strokeWidth={isActive ? 2.3 : 1.8} aria-hidden="true" />
+                            {hub.id === 'inbox' && inboxUnread > 0 && (
+                                <span className="absolute right-1 top-1 flex h-[18px] min-w-[18px] items-center justify-center rounded-full bg-[var(--sgs-accent)] px-1 text-[10px] font-bold leading-none text-[var(--sgs-hero-deep)]" aria-hidden="true">{inboxUnread > 99 ? '99+' : inboxUnread}</span>
+                            )}
                             <span className="pointer-events-none absolute left-full z-50 ml-3 whitespace-nowrap rounded-lg bg-[var(--sgs-primary-deep)] px-2.5 py-1.5 text-xs font-semibold text-[var(--ui-text-inverse)] opacity-0 shadow-xl transition-opacity group-hover:opacity-100 group-focus-visible:opacity-100">
                                 {t(hub.labelKey)}
                             </span>
                         </button>
                     );
                 })}
-                <button
-                    type="button"
-                    onClick={onSearch}
-                    aria-label={t('common.search')}
-                    title={t('common.search')}
-                    className="group relative mt-auto flex min-h-12 w-full shrink-0 items-center justify-center rounded-2xl text-[var(--sgs-champagne)] transition-colors hover:bg-[var(--ui-text-inverse)]/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--sgs-accent)]"
-                >
-                    <Search size={20} aria-hidden="true" />
-                    <span className="pointer-events-none absolute left-full z-50 ml-3 whitespace-nowrap rounded-lg bg-[var(--sgs-primary-deep)] px-2.5 py-1.5 text-xs font-semibold text-[var(--ui-text-inverse)] opacity-0 shadow-xl transition-opacity group-hover:opacity-100 group-focus-visible:opacity-100">
-                        {t('common.search')}
-                    </span>
-                </button>
             </nav>
 
             <div className="flex w-full shrink-0 flex-col items-center gap-1 border-t border-[var(--ui-text-inverse)]/15 pt-2">
@@ -396,15 +364,15 @@ const WorkspaceTopBar: React.FC<WorkspaceTopBarProps> = ({
 }) => {
     const { t } = useTranslation();
     const pageTitle = t(`menu.${activePage}`);
+    const hubLabel = activeHub ? t(activeHub.labelKey) : '';
+    const shortcutLabel = typeof navigator !== 'undefined' && /Mac|iPhone|iPad/.test(navigator.platform) ? '⌘K' : 'Ctrl K';
 
     return (
         <header className="relative z-30 flex min-h-[68px] shrink-0 items-center gap-3 border-b border-[var(--glass-border)] bg-[var(--bg-surface)] px-4 sm:px-6 lg:px-7">
             <div className="min-w-0 flex-1">
-                <div className="mb-0.5 flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.12em] text-[var(--text-tertiary)]">
-                    <span>{t(activeHub?.labelKey ?? 'shell.hub.overview')}</span>
-                    <ChevronDown size={12} className="-rotate-90" aria-hidden="true" />
-                    <span className="normal-case tracking-normal">{t('shell.workspace')}</span>
-                </div>
+                {hubLabel && hubLabel.toLocaleLowerCase() !== (pageTitle || activePage).toLocaleLowerCase() && (
+                    <div className="mb-0.5 truncate text-[11px] font-semibold uppercase tracking-[0.12em] text-[var(--text-tertiary)]">{hubLabel}</div>
+                )}
                 <h1 className="truncate text-base font-bold leading-5 text-[var(--text-primary)] sm:text-lg">
                     {pageTitle || activePage}
                 </h1>
@@ -418,6 +386,7 @@ const WorkspaceTopBar: React.FC<WorkspaceTopBarProps> = ({
             >
                 <Search size={17} className="shrink-0" aria-hidden="true" />
                 <span className="min-w-0 flex-1 truncate">{t('shell.search_placeholder')}</span>
+                <kbd className="shrink-0 rounded-md border border-[var(--glass-border)] bg-[var(--bg-surface)] px-1.5 py-0.5 font-sans text-[11px] font-semibold text-[var(--text-tertiary)]">{shortcutLabel}</kbd>
             </button>
             <button
                 type="button"
@@ -429,6 +398,7 @@ const WorkspaceTopBar: React.FC<WorkspaceTopBarProps> = ({
             </button>
 
             <div data-shell-page-actions className="ml-auto flex shrink-0 items-center gap-1 sm:gap-1.5">
+                <div data-shell-page-slot className="mr-1 hidden items-center lg:flex" />
                 <NotificationButton
                     placement="header"
                     className="md:hidden"
@@ -500,7 +470,7 @@ const WorkspaceTabs: React.FC<WorkspaceTabsProps> = ({ activePage, hub, onNaviga
                                 : 'text-[var(--text-tertiary)] hover:bg-[var(--glass-surface-hover)] hover:text-[var(--text-primary)]'
                         }`}
                     >
-                        {t(item.labelKey)}
+                        {item.route === ROUTES.DASHBOARD ? t('shell.tab_dashboard') : t(item.labelKey)}
                         {selected && <span className="absolute inset-x-3 bottom-0 h-0.5 rounded-full bg-[var(--sgs-accent)]" />}
                     </button>
                 );
@@ -516,6 +486,7 @@ interface MobileNavigationProps {
     onNavigate: (path: string) => void;
     onSearch: () => void;
     onOpenAssistant: () => void;
+    inboxUnread?: number;
 }
 
 const MobileNavigation: React.FC<MobileNavigationProps> = ({
@@ -524,7 +495,8 @@ const MobileNavigation: React.FC<MobileNavigationProps> = ({
     isPartner,
     onNavigate,
     onSearch,
-    onOpenAssistant,
+    onOpenAssistant: _onOpenAssistant,
+    inboxUnread = 0,
 }) => {
     const { t } = useTranslation();
     const [moreOpen, setMoreOpen] = useState(false);
@@ -534,22 +506,30 @@ const MobileNavigation: React.FC<MobileNavigationProps> = ({
     const inventory = getItem(ROUTES.INVENTORY);
     const primaryItems = isPartner
         ? [partnerProjects, inventory].filter((item): item is NavItem => Boolean(item))
-        : [getItem(ROUTES.DASHBOARD), getItem(ROUTES.LEADS), getItem(ROUTES.INVENTORY)].filter((item): item is NavItem => Boolean(item));
+        : [getItem(ROUTES.DASHBOARD), getItem(ROUTES.LEADS), getItem(ROUTES.INVENTORY), getItem(ROUTES.INBOX)].filter((item): item is NavItem => Boolean(item));
 
-    const visibleTabs: Array<{ id: string; label: string; icon: LucideIcon; action: () => void; active: boolean }> = [];
+    const visibleTabs: Array<{ id: string; label: string; icon: LucideIcon; action: () => void; active: boolean; badge?: number }> = [];
+    const SHORT_LABEL: Record<string, string> = {
+        [ROUTES.DASHBOARD]: 'shell.mobile.overview',
+        [ROUTES.LEADS]: 'shell.mobile.leads',
+        [ROUTES.INVENTORY]: 'shell.mobile.inventory',
+        [ROUTES.INBOX]: 'shell.mobile.inbox',
+        [ROUTES.PROJECTS]: 'shell.mobile.projects',
+    };
     primaryItems.forEach(item => {
         const hubId = routeHub.get(item.route);
         const hub = hubs.find(candidate => candidate.id === hubId);
         const Icon = hub?.icon ?? Package;
         visibleTabs.push({
             id: item.route,
-            label: t(item.labelKey),
+            label: t(SHORT_LABEL[item.route] ?? item.labelKey),
             icon: Icon,
+            badge: item.route === ROUTES.INBOX ? inboxUnread : 0,
             action: () => { setMoreOpen(false); onNavigate(item.route); },
             active: activePage === item.route,
         });
     });
-    while (visibleTabs.length < 3) {
+    while (visibleTabs.length < 4) {
         visibleTabs.push({
             id: `search-${visibleTabs.length}`,
             label: t('common.search'),
@@ -558,13 +538,6 @@ const MobileNavigation: React.FC<MobileNavigationProps> = ({
             active: false,
         });
     }
-    visibleTabs.push({
-        id: 'assistant',
-        label: t('shell.assistant_short'),
-        icon: MessageCircle,
-        action: onOpenAssistant,
-        active: false,
-    });
     visibleTabs.push({
         id: 'more',
         label: t('shell.more'),
@@ -654,7 +627,10 @@ const MobileNavigation: React.FC<MobileNavigationProps> = ({
                                 tab.active ? 'text-[var(--sgs-primary-deep)]' : 'text-[var(--text-tertiary)]'
                             }`}
                         >
-                            <Icon size={19} strokeWidth={tab.active ? 2.4 : 1.8} aria-hidden="true" />
+                            <span className="relative">
+                                <Icon size={19} strokeWidth={tab.active ? 2.4 : 1.8} aria-hidden="true" />
+                                {tab.badge ? <span className="absolute -right-2.5 -top-1.5 flex h-4 min-w-[16px] items-center justify-center rounded-full bg-[var(--sgs-accent)] px-1 text-[9px] font-bold leading-none text-[var(--sgs-hero-deep)]" aria-hidden="true">{tab.badge > 99 ? '99+' : tab.badge}</span> : null}
+                            </span>
                             <span className="max-w-full truncate">{tab.label}</span>
                         </button>
                     );
@@ -690,11 +666,42 @@ export const WorkspaceNavigation: React.FC<WorkspaceNavigationProps> = ({
     const currentHub = hubs.find(hub => hub.items.some(item => item.route === activePage))
         ?? hubs.find(hub => hub.id === (routeHub.get(activePage) ?? 'overview'));
     const isPartner = user.role === 'PARTNER_ADMIN' || user.role === 'PARTNER_AGENT';
+    const hasInbox = hubs.some(hub => hub.id === 'inbox');
+    const queryClient = useQueryClient();
+    const unreadQuery = useQuery({
+        queryKey: ['shellInboxUnread', user.id],
+        queryFn: async () => {
+            const threads: any[] = await db.getInboxThreads();
+            return (threads || []).reduce((sum, thread) => sum + (Number(thread?.unreadCount) || 0), 0);
+        },
+        enabled: hasInbox,
+        refetchInterval: 60000,
+        staleTime: 20000,
+    });
+    const inboxUnread = hasInbox ? (unreadQuery.data ?? 0) : 0;
+    useEffect(() => {
+        if (!hasInbox) return;
+        const refresh = () => queryClient.invalidateQueries({ queryKey: ['shellInboxUnread'] });
+        socket.on('new_inbound_message', refresh);
+        socket.on('inbox_read', refresh);
+        return () => { socket.off('new_inbound_message', refresh); socket.off('inbox_read', refresh); };
+    }, [hasInbox, queryClient]);
+    useEffect(() => {
+        const onKey = (event: KeyboardEvent) => {
+            if ((event.metaKey || event.ctrlKey) && !event.altKey && event.key.toLowerCase() === 'k') {
+                event.preventDefault();
+                onSearch();
+            }
+        };
+        window.addEventListener('keydown', onKey);
+        return () => window.removeEventListener('keydown', onKey);
+    }, [onSearch]);
 
     return (
         <>
             <div className="hidden h-full shrink-0 overflow-visible rounded-[24px] border border-[var(--glass-border)] shadow-sm md:flex md:w-[76px] lg:w-[84px]">
                 <WorkspaceRail
+                    inboxUnread={inboxUnread}
                     activePage={activePage}
                     hubs={hubs}
                     user={user}
@@ -735,6 +742,7 @@ export const WorkspaceNavigation: React.FC<WorkspaceNavigationProps> = ({
                 </div>
             </div>
             <MobileNavigation
+                inboxUnread={inboxUnread}
                 activePage={activePage}
                 hubs={hubs}
                 isPartner={isPartner}
