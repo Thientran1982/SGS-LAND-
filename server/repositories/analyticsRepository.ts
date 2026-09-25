@@ -79,7 +79,7 @@ const TENANT_FILTER = `tenant_id = current_setting('app.current_tenant_id', true
 
 export class AnalyticsRepository extends BaseRepository {
   private static readonly SUMMARY_CACHE_TTL_MS = 15_000;
-  private static readonly SUMMARY_CACHE_VERSION = 'v3';
+  private static readonly SUMMARY_CACHE_VERSION = 'v4';
   private static readonly summaryInFlight = new Map<string, Promise<AnalyticsSummary>>();
   constructor() {
     super('leads');
@@ -230,8 +230,8 @@ export class AnalyticsRepository extends BaseRepository {
 
       const leadsBySourceResult = await client.query(`
         SELECT COALESCE(source, 'UNKNOWN') as source, COUNT(*)::int as count
-        FROM leads
-        WHERE ${TENANT_FILTER} ${userLeadFilterNoAlias}
+        FROM leads l
+        WHERE l.${TENANT_FILTER} ${timeFilter} ${userLeadFilter}
         GROUP BY source
       `);
 
@@ -280,12 +280,28 @@ export class AnalyticsRepository extends BaseRepository {
       // If a deal was renegotiated (multiple APPROVED proposals exist), only the most
       // recently approved one counts — prevents double-counting inflating revenue.
       const latestApprovedProposalFilter = `
-        AND p.updated_at = (
-          SELECT MAX(p2.updated_at)
+        AND p.id = (
+          SELECT p2.id
           FROM proposals p2
           WHERE p2.lead_id = p.lead_id
             AND p2.tenant_id = p.tenant_id
             AND p2.status = 'APPROVED'
+          ORDER BY p2.updated_at DESC, p2.id DESC
+          LIMIT 1
+        )
+        -- A sold listing with a configured commission is the recognized source
+        -- for that sale; do not also count its linked proposal's estimated rate.
+        AND NOT EXISTS (
+          SELECT 1
+          FROM listings sold_listing
+          WHERE sold_listing.id = p.listing_id
+            AND sold_listing.tenant_id = p.tenant_id
+            AND sold_listing.status = 'SOLD'
+            AND sold_listing.commission IS NOT NULL
+            AND sold_listing.commission > 0
+            ${isSalesScope && safeUserId
+              ? `AND (sold_listing.assigned_to = '${safeUserId}'::uuid OR sold_listing.created_by = '${safeUserId}'::uuid)`
+              : ''}
         )
       `;
 

@@ -851,7 +851,6 @@ function getTenantIdFromCookie(): string | null {
 export const Dashboard: React.FC = () => {
     const [timeRange, setTimeRange] = useState('30d');
     const selectedDays = timeRange === 'all' ? 365 : Number.parseInt(timeRange, 10) || 30;
-    const [pipelineMode, setPipelineMode] = useState<'stages' | 'source'>('stages');
     const [leaderboardMode, setLeaderboardMode] = useState<'individual' | 'team'>('individual');
     const [isExporting, setIsExporting] = useState(false);
     const [isReturningUser, setIsReturningUser] = useState(false);
@@ -1006,31 +1005,16 @@ export const Dashboard: React.FC = () => {
     const scopeLabel = scopeKey === 'personal' ? t('dash.scope_personal') : t('dash.scope_company');
     const overview: any = analytics;
     const ui = language === 'vn'
-         ? { quick: 'Thao tác nhanh', addLead: '+ Thêm khách hàng', contract: '+ Tạo hợp đồng', listing: '+ Đăng tin BĐS', target: 'mục tiêu tháng', source: 'Theo nguồn', stages: t('overview.pipeline_by_stage'), project: 'Theo dự án', demand: 'Nhu cầu theo khu vực', team: 'Theo team', individual: 'Theo cá nhân', overloaded: 'Quá tải' }
-         : { quick: 'Quick actions', addLead: '+ Add lead', contract: '+ Create contract', listing: '+ Add listing', target: 'monthly target', source: 'By source', stages: t('overview.pipeline_by_stage'), project: 'By project', demand: 'Demand by area', team: 'By team', individual: 'By person', overloaded: 'Overloaded' };
+         ? { addLead: '+ Thêm khách hàng', listing: '+ Đăng tin BĐS', target: 'mục tiêu tháng', source: 'Nguồn khách hàng', analysis: 'Phân tích bán hàng', team: 'Theo team', individual: 'Theo cá nhân', overloaded: 'Quá tải' }
+         : { addLead: '+ Add lead', listing: '+ Add listing', target: 'monthly target', source: 'Lead sources', analysis: 'Sales performance', team: 'By team', individual: 'By person', overloaded: 'Overloaded' };
     const kpiTarget = (key: string, actual: number) => {
         const target = Number(overview?.targets?.[key]?.monthly_target ?? overview?.targets?.[key]?.monthlyTarget ?? 0);
         return { target, progress: target > 0 ? Math.round((actual / target) * 100) : 0 };
     };
-    const revenueTarget = kpiTarget('revenue', Number(overview.revenue || 0));
     const pipelineTarget = kpiTarget('pipeline', Number(overview.pipelineValue || 0));
     const velocityTarget = kpiTarget('salesVelocity', Number(overview.salesVelocity || 0));
     const sourceData = Object.entries(overview.leadsBySource || {}).sort(([, a]: any, [, b]: any) => b - a);
-    const pipelineStageDefinitions = [
-        { key: 'NEW', labelKey: 'overview.stage_new' },
-        { key: 'CONTACTED', labelKey: 'overview.stage_contacted' },
-        { key: 'QUALIFIED', labelKey: 'overview.stage_qualified' },
-        { key: 'PROPOSAL', labelKey: 'overview.stage_proposal' },
-        { key: 'NEGOTIATION', labelKey: 'overview.stage_negotiation' },
-        { key: 'WON', labelKey: 'overview.stage_won' },
-    ];
-    const pipelineStageRows = pipelineStageDefinitions.map(({ key, labelKey }) => ({
-        key,
-        label: t(labelKey),
-        count: Math.max(0, Number(overview.leadsByStage?.[key]) || 0),
-    }));
-    const maxPipelineStageCount = Math.max(1, ...pipelineStageRows.map(({ count }) => count));
-    const hasPipelineStageData = pipelineStageRows.some(({ count }) => count > 0);
+    const sourceTotal = sourceData.reduce((total, [, count]: any) => total + Math.max(0, Number(count) || 0), 0);
     const lbRows: any[] = leaderboardMode === 'team' ? (overview.teamLeaderboard || []) : (analytics.agentLeaderboard || []);
     const lbHasData = lbRows.some((a: any) => Number(a?.deals) > 0 || Number(a?.closeRate) > 0 || Number(a?.slaScore) > 0);
     const usefulSuggestions = (Array.isArray(overview.aiAdvisor?.suggestions) ? overview.aiAdvisor.suggestions : []).filter(isUsefulSuggestion);
@@ -1116,14 +1100,10 @@ export const Dashboard: React.FC = () => {
                     />
                     <section className="dashboard-panel dashboard-command-panel overflow-hidden" aria-label={language === 'vn' ? 'Điều hành nhanh và KPI' : 'Quick actions and KPIs'}>
                          <div className="p-4 sm:p-5">
-                            <div className="grid grid-cols-3 gap-2">
+                            <div className="grid grid-cols-2 gap-2">
                                 <a href="/leads" className="dashboard-control quick-action flex items-center justify-center gap-1.5 px-2 py-2.5 text-center text-xs font-semibold text-[var(--sgs-primary)]" aria-label={ui.addLead} title={ui.addLead}>
                                     <svg className="dashboard-action-icon h-4 w-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M15 20.25v-1.5a4.5 4.5 0 0 0-4.5-4.5h-3A4.5 4.5 0 0 0 3 18.75v1.5M9 10.25a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7Zm8-5v7m3.5-3.5h-7" /></svg>
                                     <span className="dashboard-mobile-label">{ui.addLead}</span><span className="dashboard-mobile-short">{language === 'vn' ? 'Thêm khách' : 'Add lead'}</span>
-                                </a>
-                                <a href="/contracts" className="dashboard-control quick-action flex items-center justify-center gap-1.5 px-2 py-2.5 text-center text-xs font-semibold text-[var(--sgs-primary)]" aria-label={ui.contract} title={ui.contract}>
-                                    <svg className="dashboard-action-icon h-4 w-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M6 3.75h9l3 3v13.5H6V3.75Zm8.5.5v3h3M8.5 11h7m-7 3.5h7m-7 3.5h4" /></svg>
-                                    <span className="dashboard-mobile-label">{ui.contract}</span><span className="dashboard-mobile-short">{language === 'vn' ? 'Hợp đồng' : 'Contract'}</span>
                                 </a>
                                 <a href="/inventory" className="dashboard-control quick-action flex items-center justify-center gap-1.5 px-2 py-2.5 text-center text-xs font-semibold text-[var(--sgs-primary)]" aria-label={ui.listing} title={ui.listing}>
                                     <svg className="dashboard-action-icon h-4 w-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="m4 10 8-6 8 6v9.5H4V10Zm4 9.5v-5h8v5M9 10h.01M12 10h.01M15 10h.01" /></svg>
@@ -1135,12 +1115,6 @@ export const Dashboard: React.FC = () => {
                             <WorkQueueStrip analytics={overview} language={language} />
                         </div>
                         <section className="dashboard-kpis" aria-label={t('dash.overview_subtitle')}>
-                        <div className="dashboard-kpi">
-                            <div className="kpi-label">{t('dash.revenue_title')}</div>
-                            <div className="kpi-value dash-number break-words">{formatCompactNumber(analytics.revenue || 0)}</div>
-                            <div className="kpi-meta"><TrendIndicator value={analytics.revenueDelta || 0} label={t('dash.vs_last_period')} /></div>
-                            {revenueTarget.target > 0 && <ProgressBar value={revenueTarget.progress} label={`${revenueTarget.progress}% ${ui.target}`} />}
-                        </div>
                         <div className="dashboard-kpi">
                             <div className="kpi-label">{t('dash.pipeline_value')}</div>
                             <div className="kpi-value dash-number break-words">{formatCompactNumber(analytics.pipelineValue || 0)}</div>
@@ -1161,58 +1135,33 @@ export const Dashboard: React.FC = () => {
                         </section>
                     </section>
 
-                    <section className="dashboard-panel" aria-label={t('dash.pipeline_title')}>
+                    <section className="dashboard-panel" aria-label={ui.analysis}>
                         <div className="dashboard-panel-head">
-                            <h2>{t('dash.pipeline_title')}</h2>
-                            <SegmentToggle value={pipelineMode} onChange={(value) => setPipelineMode(value as 'stages' | 'source')} options={[{ value: 'stages', label: ui.stages }, { value: 'source', label: ui.source }]} />
+                            <h2>{ui.analysis}</h2>
                         </div>
                         <div className="dashboard-workbench">
                             <div className="dashboard-chart">
-                                <div className="mb-4 grid grid-cols-2 gap-2 sm:grid-cols-4">
-                                    <div className="rounded-xl border border-[var(--glass-border)] bg-[var(--bg-surface)] px-3 py-2.5">
-                                        <div className="dashboard-subhead">{t('dash.total_leads')}</div>
-                                        <div className="dash-number mt-1 text-xl font-bold text-[var(--text-primary)]">{analytics.totalLeads ?? 0}</div>
-                                    </div>
-                                    <div className="rounded-xl border border-[var(--glass-border)] bg-[var(--bg-surface)] px-3 py-2.5">
-                                        <div className="dashboard-subhead">{t('dash.conversion')}</div>
-                                        <div className="dash-number mt-1 text-xl font-bold text-[var(--sgs-verified)]">{!isNaN(analytics.conversionRate) ? analytics.conversionRate : 0}%</div>
-                                    </div>
-                                    <div className="col-span-2 flex items-center justify-between rounded-xl border border-[var(--glass-border)] bg-[var(--bg-surface)] px-3 py-2.5 sm:col-span-2">
-                                        <TrendIndicator value={analytics.totalLeadsDelta} label={t('dash.vs_last_period')} />
-                                        <span className="dashboard-subhead">{timeRange === 'all' ? (language === 'vn' ? 'Toàn thời gian' : 'All time') : `${parseInt(timeRange, 10)} ${language === 'vn' ? 'ngày' : 'days'}`}</span>
-                                    </div>
-                                </div>
                                 <div className="mb-2 flex items-center justify-between gap-3">
-                                    <div className="dashboard-subhead">{pipelineMode === 'source' ? ui.source : t('overview.pipeline_title')}</div>
+                                    <div className="dashboard-subhead">{ui.source}</div>
+                                    <span className="text-xs text-[var(--text-tertiary)]">
+                                        {timeRange === 'all' ? (language === 'vn' ? 'Toàn thời gian' : 'All time') : `${parseInt(timeRange, 10)} ${language === 'vn' ? 'ngày' : 'days'}`}
+                                    </span>
                                 </div>
                                 <div className="h-[260px] w-full min-w-0 sm:h-[300px]">
-                                    {pipelineMode === 'source' ? (
+                                    {sourceData.length ? (
                                         <div className="max-h-[285px] space-y-3 overflow-y-auto px-2 pt-4 pr-3">
-                                            {sourceData.length ? sourceData.map(([source, count]: any) => (
-                                                <div key={source}>
-                                                    <div className="mb-1 flex justify-between text-xs"><span className="text-[var(--text-secondary)]">{source}</span><strong className="font-mono text-[var(--text-primary)]">{count}</strong></div>
-                                                    <div className="h-2 rounded-full bg-[var(--glass-surface-hover)]"><div className="h-full rounded-full bg-[var(--sgs-primary)]" style={{ width: `${analytics.totalLeads ? Math.min(100, (count / analytics.totalLeads) * 100) : 0}%` }} /></div>
-                                                </div>
-                                            )) : <EmptyState message={language === 'vn' ? 'Chưa có dữ liệu nguồn khách hàng' : 'No lead source data'} />}
-                                        </div>
-                                    ) : hasPipelineStageData ? (
-                                        <div className="max-h-[285px] space-y-3 overflow-y-auto px-2 pt-4 pr-3">
-                                            {pipelineStageRows.map(({ key, label, count }) => (
-                                                <div key={key}>
-                                                    <div className="mb-1 flex justify-between gap-3 text-xs">
-                                                        <span className="text-[var(--text-secondary)]">{label}</span>
-                                                        <strong className="font-mono text-[var(--text-primary)]">{count}</strong>
+                                            {sourceData.map(([source, count]: any) => {
+                                                const safeCount = Math.max(0, Number(count) || 0);
+                                                const share = sourceTotal > 0 ? Math.min(100, (safeCount / sourceTotal) * 100) : 0;
+                                                return (
+                                                    <div key={source}>
+                                                        <div className="mb-1 flex justify-between text-xs"><span className="text-[var(--text-secondary)]">{source}</span><strong className="font-mono text-[var(--text-primary)]">{safeCount}</strong></div>
+                                                        <div className="h-2 rounded-full bg-[var(--glass-surface-hover)]"><div className="h-full rounded-full bg-[var(--sgs-primary)]" style={{ width: `${share}%` }} /></div>
                                                     </div>
-                                                    <div className="h-2 rounded-full bg-[var(--glass-surface-hover)]">
-                                                        <div
-                                                            className={`h-full rounded-full ${key === 'WON' ? 'bg-[var(--sgs-accent)]' : 'bg-[var(--sgs-primary)]'}`}
-                                                            style={{ width: `${Math.min(100, (count / maxPipelineStageCount) * 100)}%` }}
-                                                        />
-                                                    </div>
-                                                </div>
-                                            ))}
+                                                );
+                                            })}
                                         </div>
-                                    ) : <EmptyState message={t('overview.pipeline_empty')} />}
+                                    ) : <EmptyState message={language === 'vn' ? 'Chưa có dữ liệu nguồn khách hàng trong kỳ' : 'No lead-source data in this period'} />}
                                 </div>
                             </div>
                             <div className="dashboard-side">

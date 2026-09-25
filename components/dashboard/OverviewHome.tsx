@@ -99,7 +99,7 @@ const Delta: React.FC<{ value: unknown }> = ({ value }) => {
     );
 };
 
-const KpiCell: React.FC<{ label: string; value?: React.ReactNode; meta?: React.ReactNode; emptyText?: string; emptyLink?: { to: string; label: string }; accent?: boolean }> = ({ label, value, meta, emptyText, emptyLink, accent }) => (
+const KpiCell: React.FC<{ label: string; value?: React.ReactNode; meta?: React.ReactNode; emptyText?: string; emptyLink?: { to: string; label: string }; accent?: boolean; footer?: React.ReactNode }> = ({ label, value, meta, emptyText, emptyLink, accent, footer }) => (
     <div className="dashboard-kpi">
         <div className="kpi-label">{label}</div>
         {value !== undefined ? (
@@ -113,6 +113,7 @@ const KpiCell: React.FC<{ label: string; value?: React.ReactNode; meta?: React.R
                 {emptyLink && <a href={emptyLink.to} className="mt-1 inline-flex min-h-[28px] items-center text-xs font-semibold text-[var(--sgs-primary)] underline-offset-4 hover:underline">{emptyLink.label} →</a>}
             </>
         )}
+        {footer ? <div className="mt-2">{footer}</div> : null}
     </div>
 );
 
@@ -211,6 +212,8 @@ export const OverviewHome: React.FC<{ analytics: any; formatCompactNumber: (n: n
 
     const totalLeads = toNum(analytics?.totalLeads);
     const revenue = toNum(analytics?.revenue);
+    const revenueTarget = toNum(analytics?.targets?.revenue?.monthly_target ?? analytics?.targets?.revenue?.monthlyTarget);
+    const revenueTargetProgress = revenueTarget > 0 ? Math.round((revenue / revenueTarget) * 100) : 0;
 
     const healthCount = toNum(analytics?.unresponsiveLeadCount ?? analytics?.slaBreachedCount ?? followups);
     const healthLevel = healthCount === 0 ? 0 : healthCount <= 10 ? 1 : 2;
@@ -263,7 +266,14 @@ export const OverviewHome: React.FC<{ analytics: any; formatCompactNumber: (n: n
                             value={revenue > 0 ? formatCompactNumber(revenue) : undefined}
                             meta={<Delta value={analytics?.revenueDelta} />}
                             emptyText={tr('overview.empty_revenue')}
-                            emptyLink={{ to: href(ROUTES.CONTRACTS), label: tr('overview.empty_revenue_cta') }}
+                            footer={revenueTarget > 0 ? (
+                                <div className="space-y-1">
+                                    <div className="text-xs text-[var(--text-tertiary)]">{tr('overview.target_progress', { n: revenueTargetProgress })}</div>
+                                    <div className="h-1.5 overflow-hidden rounded-full bg-[var(--glass-surface-hover)]">
+                                        <div className="h-full rounded-full bg-[var(--sgs-primary)]" style={{ width: `${Math.min(100, Math.max(0, revenueTargetProgress))}%` }} />
+                                    </div>
+                                </div>
+                            ) : undefined}
                         />
                         <KpiCell
                             label={tr('overview.kpi_leads')}
@@ -421,6 +431,7 @@ export const OverviewHome: React.FC<{ analytics: any; formatCompactNumber: (n: n
                     <SideLabel>{tr('overview.quick_title')}</SideLabel>
                     <div className="flex flex-wrap gap-1.5">
                         {[
+                            { to: href(ROUTES.CONTRACTS), label: tr('overview.quick_contract') },
                             { to: href(ROUTES.AI_ADVISOR), label: tr('overview.quick_ai') },
                             { to: href(ROUTES.MY_LANDING), label: tr('overview.quick_landing') },
                             { to: href(ROUTES.CAMPAIGNS), label: tr('overview.quick_campaigns') },
