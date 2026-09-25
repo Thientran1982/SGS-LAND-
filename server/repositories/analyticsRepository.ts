@@ -802,7 +802,7 @@ export class AnalyticsRepository extends BaseRepository {
         client.query(`
           SELECT
             (SELECT COUNT(*)::int FROM contracts WHERE ${TENANT_FILTER} AND status NOT IN ('SIGNED','COMPLETED','CANCELLED')) AS pending_contracts,
-            (SELECT COUNT(*)::int FROM approval_requests WHERE ${TENANT_FILTER} AND status = 'PENDING') AS pending_approvals,
+            (SELECT COUNT(*)::int FROM approval_requests WHERE ${TENANT_FILTER} AND status = 'PENDING' AND archived_at IS NULL) AS pending_approvals,
             (SELECT COUNT(*)::int FROM leads WHERE ${TENANT_FILTER} AND stage NOT IN ('WON','LOST') AND updated_at < NOW() - INTERVAL '24 hours') AS followups
         `),
         client.query(`

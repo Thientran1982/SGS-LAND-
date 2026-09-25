@@ -178,7 +178,8 @@ class ApprovalRequestRepository {
       `SELECT ar.*, l.name AS lead_name, l.phone AS lead_phone
          FROM approval_requests ar
          LEFT JOIN leads l ON l.id = ar.lead_id
-        WHERE ar.tenant_id=$1::uuid AND ar.channel='MINH_PROACTIVE' AND ar.status='PENDING'
+        WHERE ar.tenant_id=$1::uuid AND ar.channel='MINH_PROACTIVE'
+          AND ar.status='PENDING' AND ar.archived_at IS NULL
         ORDER BY ar.requested_at DESC
         LIMIT $2`,
       [tenantId, limit],
@@ -192,7 +193,7 @@ class ApprovalRequestRepository {
       `SELECT ar.*, l.name AS lead_name, l.phone AS lead_phone
        FROM approval_requests ar
        LEFT JOIN leads l ON l.id = ar.lead_id
-       WHERE ar.tenant_id = $1 AND ar.status = 'PENDING'
+       WHERE ar.tenant_id = $1 AND ar.status = 'PENDING' AND ar.archived_at IS NULL
        ORDER BY ar.requested_at DESC
        LIMIT $2`,
       [tenantId, limit],
@@ -275,7 +276,9 @@ class ApprovalRequestRepository {
 
   async countPending(tenantId: string): Promise<number> {
     const result = await pool.query(
-      `SELECT COUNT(*)::int AS count FROM approval_requests WHERE tenant_id = $1 AND status = 'PENDING'`,
+      `SELECT COUNT(*)::int AS count
+         FROM approval_requests
+        WHERE tenant_id = $1 AND status = 'PENDING' AND archived_at IS NULL`,
       [tenantId],
     );
     return result.rows[0]?.count || 0;
@@ -292,10 +295,35 @@ class ApprovalRequestRepository {
       `UPDATE approval_requests
        SET status = $3, reviewed_by = $4, reviewed_at = NOW(), review_note = $5
        WHERE tenant_id = $1 AND id = $2 AND status = 'PENDING'
-         AND expires_at > NOW()
+         AND archived_at IS NULL AND expires_at > NOW()
        RETURNING *`,
       [tenantId, id, status, reviewedBy, reviewNote || null],
     );
+    return result.rows[0] ? this.rowToEntity(result.rows[0]) : null;
+  }
+
+  async archivePending(
+    tenantId: string,
+    id: string,
+    archivedBy: string,
+    reason: string,
+  ): Promise<any | null> {
+    const result = await withTenantContext(tenantId, client => client.query(
+      `UPDATE approval_requests
+          SET status = 'REJECTED',
+              reviewed_by = $3,
+              reviewed_at = NOW(),
+              review_note = $4,
+              archived_at = NOW(),
+              archived_by = $3,
+              archive_reason = $4
+        WHERE tenant_id = $1
+          AND id = $2
+          AND status = 'PENDING'
+          AND archived_at IS NULL
+        RETURNING *`,
+      [tenantId, id, archivedBy, reason],
+    ));
     return result.rows[0] ? this.rowToEntity(result.rows[0]) : null;
   }
 
@@ -326,6 +354,9 @@ class ApprovalRequestRepository {
       reviewedBy: row.reviewed_by,
       reviewedAt: row.reviewed_at,
       reviewNote: row.review_note,
+      archivedAt: row.archived_at,
+      archivedBy: row.archived_by,
+      archiveReason: row.archive_reason,
       deliveries: row.deliveries ?? [],
       executionId: row.execution_id,
       stepKey: row.step_key,

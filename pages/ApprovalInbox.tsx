@@ -419,18 +419,12 @@ export const ApprovalInbox: React.FC = () => {
             loadData();
         } catch (e) { notify(t('common.error'), 'error'); }
     };
-    const approveOutreach = async (id: string) => {
-        try {
-            await api.post(`/api/approval-requests/${id}/approve`, {});
-            notify('Draft outreach đã được duyệt. Broker có thể gửi thủ công theo từng kênh.', 'success', 6000);
-            await loadData();
-        } catch (e: any) {
-            notify(e?.data?.error || e?.message || t('common.error'), 'error', 6000);
-        }
-    };
-    const processApprovalRequest = async (id: string, action: 'approve' | 'reject', reason?: string) => {
+    const processApprovalRequest = async (id: string, action: 'approve' | 'reject' | 'archive', reason?: string) => {
         const request = brokerApprovals.find(item => item.id === id);
-        if (!request || !isApprovalActionSupported(request.actionType)) {
+        const supportedRequest = request
+            && (request.actionType === 'DRAFT_OUTREACH' || isApprovalActionSupported(request.actionType));
+        const canArchive = request?.status === 'PENDING' && action === 'archive';
+        if (!request || (!supportedRequest && !canArchive)) {
             notify(
                 language === 'vn'
                     ? 'Loại yêu cầu này chưa được hỗ trợ để thao tác trong màn hình phê duyệt.'
@@ -445,13 +439,24 @@ export const ApprovalInbox: React.FC = () => {
             if (action === 'approve') {
                 await api.post(`/api/approval-requests/${id}/approve`, {});
                 notify(
-                    language === 'vn' ? 'Đã phê duyệt và thực hiện yêu cầu.' : 'The request was approved and executed.',
+                    request.actionType === 'DRAFT_OUTREACH'
+                        ? 'Draft outreach đã được duyệt. Broker có thể gửi thủ công theo từng kênh.'
+                        : language === 'vn' ? 'Đã phê duyệt và thực hiện yêu cầu.' : 'The request was approved and executed.',
                     'success',
                     6000,
                 );
-            } else {
-                await api.post(`/api/approval-requests/${id}/reject`, { reason });
+            } else if (action === 'reject') {
+                await api.post(`/api/approval-requests/${id}/reject`, { note: reason });
                 notify(language === 'vn' ? 'Đã từ chối yêu cầu.' : 'The request was rejected.', 'success', 5000);
+            } else {
+                await api.post(`/api/approval-requests/${id}/archive`, { reason });
+                notify(
+                    language === 'vn'
+                        ? 'Đã từ chối và lưu trữ yêu cầu; lịch sử được giữ lại.'
+                        : 'The request was rejected and archived; its history was kept.',
+                    'success',
+                    6000,
+                );
             }
             setApprovalRequestUncertainIds(previous => {
                 const next = new Set(previous);
@@ -474,10 +479,26 @@ export const ApprovalInbox: React.FC = () => {
         }
     };
     const approveApprovalRequest = (id: string) => processApprovalRequest(id, 'approve');
+    const approveOutreach = (id: string) => processApprovalRequest(id, 'approve');
     const rejectApprovalRequest = async (id: string) => {
         const reason = await uiPrompt(language === 'vn' ? 'Lý do từ chối yêu cầu phê duyệt:' : 'Reason for rejecting this request:');
         if (!reason?.trim()) return;
         await processApprovalRequest(id, 'reject', reason.trim());
+    };
+    const archiveApprovalRequest = async (id: string) => {
+        const defaultReason = language === 'vn' ? 'Đã cũ, không còn cần xử lý.' : 'No longer needs review.';
+        const reason = await uiPrompt(
+            language === 'vn'
+                ? 'Lý do lưu trữ (lịch sử được giữ lại):'
+                : 'Reason for archiving (history will be kept):',
+            defaultReason,
+            {
+                confirmLabel: language === 'vn' ? 'Lưu trữ' : 'Archive',
+                cancelLabel: language === 'vn' ? 'Hủy' : 'Cancel',
+            },
+        );
+        if (!reason?.trim()) return;
+        await processApprovalRequest(id, 'archive', reason.trim());
     };
     const sendOutreach = async (approvalId: string, variantId: string) => {
         try {
@@ -647,6 +668,7 @@ export const ApprovalInbox: React.FC = () => {
                 uncertainIds={approvalRequestUncertainIds}
                 onApprove={approveApprovalRequest}
                 onReject={rejectApprovalRequest}
+                onArchive={archiveApprovalRequest}
             />
 
             {(pendingOutreach.length > 0 || approvedOutreach.length > 0) && (
@@ -683,12 +705,33 @@ export const ApprovalInbox: React.FC = () => {
                                         </button>
                                     )}
                                     {item._pending && (
-                                        <button
-                                            onClick={() => approveOutreach(item.id)}
-                                            className="px-4 py-2 rounded-xl bg-sgs-primary-deep text-white text-xs font-bold hover:bg-slate-800"
-                                        >
-                                            Duyệt draft
-                                        </button>
+                                        <div className="flex flex-wrap gap-2">
+                                            <button
+                                                type="button"
+                                                onClick={() => approveOutreach(item.id)}
+                                                disabled={approvalRequestProcessingId === item.id || approvalRequestUncertainIds.has(item.id)}
+                                                className="px-4 py-2 rounded-xl bg-sgs-primary-deep text-white text-xs font-bold hover:bg-slate-800 disabled:opacity-50"
+                                            >
+                                                Duyệt draft
+                                            </button>
+                                            <button
+                                                type="button"
+                                                onClick={() => rejectApprovalRequest(item.id)}
+                                                disabled={approvalRequestProcessingId === item.id || approvalRequestUncertainIds.has(item.id)}
+                                                className="px-4 py-2 rounded-xl border border-[var(--glass-border)] text-xs font-bold text-[var(--text-primary)] hover:bg-[var(--glass-surface-hover)] disabled:opacity-50"
+                                            >
+                                                Từ chối
+                                            </button>
+                                            <button
+                                                type="button"
+                                                onClick={() => archiveApprovalRequest(item.id)}
+                                                disabled={approvalRequestProcessingId === item.id || approvalRequestUncertainIds.has(item.id)}
+                                                title="Từ chối và lưu trữ; giữ lịch sử, ngăn tạo lại yêu cầu này."
+                                                className="px-4 py-2 rounded-xl border border-[var(--ui-danger)]/30 text-xs font-bold text-[var(--ui-danger)] hover:bg-[var(--ui-danger)]/5 disabled:opacity-50"
+                                            >
+                                                Từ chối + lưu trữ
+                                            </button>
+                                        </div>
                                     )}
                                 </div>
                             </div>

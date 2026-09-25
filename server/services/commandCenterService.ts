@@ -156,7 +156,7 @@ async function buildApprovalQueuePanel(tenantId: string): Promise<CommandCenterP
     const result = await withTenantContext(tenantId, client => client.query(
       `SELECT id, action_type, payload, status, review_note, requested_at, expires_at
          FROM approval_requests
-        WHERE tenant_id=$1
+        WHERE tenant_id=$1 AND archived_at IS NULL
         ORDER BY requested_at DESC
         LIMIT 50`,
       [tenantId],

@@ -140,6 +140,7 @@ interface ApprovalRequestQueueProps {
     uncertainIds: ReadonlySet<string>;
     onApprove: (id: string) => void;
     onReject: (id: string) => void;
+    onArchive: (id: string) => void;
 }
 
 export const ApprovalRequestQueue: React.FC<ApprovalRequestQueueProps> = ({
@@ -149,6 +150,7 @@ export const ApprovalRequestQueue: React.FC<ApprovalRequestQueueProps> = ({
     uncertainIds,
     onApprove,
     onReject,
+    onArchive,
 }) => {
     const isVietnamese = language === 'vn';
     const locale = isVietnamese ? 'vi-VN' : 'en-US';
@@ -163,6 +165,8 @@ export const ApprovalRequestQueue: React.FC<ApprovalRequestQueueProps> = ({
             uncertain: 'Chưa xác định được kết quả thao tác. Hãy kiểm tra trạng thái trước khi thử lại.',
             execute: 'Duyệt và thực hiện',
             reject: 'Từ chối',
+            archive: 'Từ chối + lưu trữ',
+            archiveHint: 'Giữ lịch sử và ngăn hệ thống tạo lại yêu cầu này khi quét lại.',
             requested: 'Gửi lúc',
             expires: 'Hết hạn lúc',
             subject: 'Đối tượng',
@@ -176,6 +180,8 @@ export const ApprovalRequestQueue: React.FC<ApprovalRequestQueueProps> = ({
             uncertain: 'The action result is unknown. Verify its status before trying again.',
             execute: 'Approve and execute',
             reject: 'Reject',
+            archive: 'Reject + archive',
+            archiveHint: 'Keeps its history and prevents later scans from recreating this request.',
             requested: 'Requested',
             expires: 'Expires',
             subject: 'Subject',
@@ -199,6 +205,7 @@ export const ApprovalRequestQueue: React.FC<ApprovalRequestQueueProps> = ({
                     const uncertain = uncertainIds.has(item.id);
                     const busy = processingId === item.id;
                     const canAct = supported && item.status === 'PENDING' && !expired && !uncertain;
+                    const canArchive = item.status === 'PENDING' && !uncertain;
                     const actionLabel = ACTION_LABELS[actionType];
                     const actionSummary = summarizeAction(item, isVietnamese, locale);
                     const reasoning = safeText(item.reasoning, 1000);
@@ -275,6 +282,20 @@ export const ApprovalRequestQueue: React.FC<ApprovalRequestQueueProps> = ({
                                         </button>
                                     </div>
                                 </>
+                            )}
+                            {canArchive && (
+                                <div className="mt-3 flex flex-wrap items-center gap-2">
+                                    <button
+                                        type="button"
+                                        onClick={() => onArchive(item.id)}
+                                        disabled={busy}
+                                        title={copy.archiveHint}
+                                        className="rounded-xl border border-[var(--ui-danger)]/30 px-4 py-2 text-xs font-bold text-[var(--ui-danger)] hover:bg-[var(--ui-danger)]/5 disabled:cursor-wait disabled:opacity-50"
+                                    >
+                                        {copy.archive}
+                                    </button>
+                                    <span className="text-[11px] text-[var(--text-tertiary)]">{copy.archiveHint}</span>
+                                </div>
                             )}
                         </article>
                     );

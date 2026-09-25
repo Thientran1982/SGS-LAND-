@@ -6,6 +6,7 @@ describe('ApprovalRequestQueue', () => {
     it('shows non-outreach approvals and only offers actions for supported types', () => {
         const onApprove = vi.fn();
         const onReject = vi.fn();
+        const onArchive = vi.fn();
         const requests: PendingApprovalRequest[] = [
             {
                 id: 'lead-change',
@@ -38,6 +39,7 @@ describe('ApprovalRequestQueue', () => {
                 uncertainIds={new Set()}
                 onApprove={onApprove}
                 onReject={onReject}
+                onArchive={onArchive}
             />,
         );
 
@@ -46,12 +48,17 @@ describe('ApprovalRequestQueue', () => {
         expect(within(supportedCard).getByText('Chuyển sang giai đoạn: QUALIFIED')).toBeInTheDocument();
         fireEvent.click(within(supportedCard).getByRole('button', { name: 'Duyệt và thực hiện' }));
         fireEvent.click(within(supportedCard).getByRole('button', { name: 'Từ chối' }));
+        fireEvent.click(within(supportedCard).getByRole('button', { name: 'Từ chối + lưu trữ' }));
         expect(onApprove).toHaveBeenCalledWith('lead-change');
         expect(onReject).toHaveBeenCalledWith('lead-change');
+        expect(onArchive).toHaveBeenCalledWith('lead-change');
 
         const unsupportedCard = screen.getByTestId('approval-request-future-action');
         expect(within(unsupportedCard).getByText('Loại yêu cầu này chưa được hỗ trợ trong màn hình phê duyệt.')).toBeInTheDocument();
-        expect(within(unsupportedCard).queryByRole('button')).not.toBeInTheDocument();
+        expect(within(unsupportedCard).queryByRole('button', { name: 'Duyệt và thực hiện' })).not.toBeInTheDocument();
+        expect(within(unsupportedCard).queryByRole('button', { name: 'Từ chối' })).not.toBeInTheDocument();
+        fireEvent.click(within(unsupportedCard).getByRole('button', { name: 'Từ chối + lưu trữ' }));
+        expect(onArchive).toHaveBeenCalledWith('future-action');
         expect(screen.queryByText('must not be rendered')).not.toBeInTheDocument();
         expect(screen.queryByTestId('approval-request-outreach')).not.toBeInTheDocument();
     });
@@ -79,10 +86,12 @@ describe('ApprovalRequestQueue', () => {
                 uncertainIds={new Set(['uncertain'])}
                 onApprove={vi.fn()}
                 onReject={vi.fn()}
+                onArchive={vi.fn()}
             />,
         );
 
-        expect(within(screen.getByTestId('approval-request-expired')).queryByRole('button')).not.toBeInTheDocument();
+        expect(within(screen.getByTestId('approval-request-expired')).queryByRole('button', { name: 'Duyệt và thực hiện' })).not.toBeInTheDocument();
+        expect(within(screen.getByTestId('approval-request-expired')).getByRole('button', { name: 'Từ chối + lưu trữ' })).toBeInTheDocument();
         expect(within(screen.getByTestId('approval-request-expired')).getByText('Đã hết hạn — không thể phê duyệt')).toBeInTheDocument();
         expect(within(screen.getByTestId('approval-request-uncertain')).queryByRole('button')).not.toBeInTheDocument();
         expect(within(screen.getByTestId('approval-request-uncertain')).getByRole('alert')).toBeInTheDocument();

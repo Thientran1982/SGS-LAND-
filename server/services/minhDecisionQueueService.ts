@@ -173,7 +173,7 @@ async function readBudget(tenantId: string): Promise<{
       ),
       client.query(
         `SELECT COUNT(*)::int AS n FROM approval_requests
-          WHERE tenant_id=$1::uuid AND channel=$2 AND status='PENDING'`,
+          WHERE tenant_id=$1::uuid AND channel=$2 AND status='PENDING' AND archived_at IS NULL`,
         [tenantId, MINH_PROACTIVE_CHANNEL],
       ),
       client.query(

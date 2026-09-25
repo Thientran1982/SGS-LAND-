@@ -307,5 +307,40 @@ const APPROVAL_ROLES = new Set(['SUPER_ADMIN', 'ADMIN', 'MANAGER', 'TEAM_LEAD'])
     }
   });
 
+  router.post('/:id/archive', authenticateToken, validateUUIDParam(), async (req: Request, res: Response) => {
+    try {
+      const user = (req as any).user;
+      if (!APPROVAL_ROLES.has(user?.role)) {
+        return res.status(403).json({ error: 'Only authorized managers can archive approval requests' });
+      }
+      const reason = typeof req.body?.reason === 'string' ? req.body.reason.trim().slice(0, 1000) : '';
+      if (!reason) return res.status(400).json({ error: 'An archive reason is required' });
+
+      const updated = await approvalRequestRepository.archivePending(
+        user.tenantId,
+        String(req.params.id),
+        user.id,
+        reason,
+      );
+      if (!updated) {
+        return res.status(404).json({ error: 'Approval request not found or no longer pending' });
+      }
+      if (updated.channel === 'MINH_PROACTIVE') await recordMinhDecisionFeedbackSafely(user.tenantId, {
+        eventKey: `approval:${updated.id}:archived`,
+        sourceSignalId: updated.sourceSignalId,
+        approvalRequestId: updated.id,
+        actionType: updated.actionType,
+        outcome: 'REJECTED',
+        feedbackCategory: 'OPERATOR_REJECTED',
+        createdBy: user.id,
+        metadata: { hasReviewNote: true, archived: true },
+      });
+      res.json({ archived: true, approval: updated });
+    } catch (error) {
+      console.error('[approval-requests] archive error:', error);
+      res.status(500).json({ error: 'Failed to archive approval request' });
+    }
+  });
+
   return router;
 }
