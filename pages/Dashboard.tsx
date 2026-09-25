@@ -1145,7 +1145,10 @@ export const Dashboard: React.FC = () => {
                         <div className="dashboard-kpi">
                             <div className="kpi-label">{t('dash.pipeline_value')}</div>
                             <div className="flex items-center justify-between gap-2">
-                                <div className="kpi-value dash-number min-w-0 break-words">{pipelineValueAvailable ? formatCompactNumber(analytics.pipelineValue) : '—'}</div>
+                                <div className="min-w-0">
+                                    <div className="kpi-value dash-number break-words">{pipelineValueAvailable ? formatCompactNumber(analytics.pipelineValue) : '—'}</div>
+                                    <div className="kpi-meta">{t('dash.win_probability')}</div>
+                                </div>
                                 <DashboardMetricRing
                                     value={winProbabilityValue}
                                     color="var(--sgs-accent)"
@@ -1162,6 +1165,7 @@ export const Dashboard: React.FC = () => {
                                 <div className="kpi-value dash-number">{aiDeflectionValue === null ? '—' : `${Math.round(aiDeflectionValue)}%`}</div>
                                 <DashboardMetricRing
                                     value={aiDeflectionValue}
+                                    showValue={false}
                                     label={language === 'vn'
                                         ? `Tỷ lệ AI tự xử lý: ${aiDeflectionValue === null ? 'chưa có dữ liệu' : `${Math.round(aiDeflectionValue)}%`}`
                                         : `AI deflection rate: ${aiDeflectionValue === null ? 'unavailable' : `${Math.round(aiDeflectionValue)}%`}`}
@@ -1175,12 +1179,16 @@ export const Dashboard: React.FC = () => {
                         </div>
                         <div className="dashboard-kpi">
                             <div className="kpi-label">{t('dash.sales_velocity')}</div>
-                            <div className="kpi-value dash-number">{analytics.salesVelocity > 0 && analytics.salesVelocity < 1 ? '< 1' : (analytics.salesVelocity || '--')}</div>
+                            <div className="kpi-value dash-number">{velocityHasClosedDeals && analytics.salesVelocity < 1 ? '< 1' : (velocityHasClosedDeals ? analytics.salesVelocity : '--')}</div>
                             <div className="kpi-meta">
-                                {analytics.salesVelocity > 0 ? t('dash.days_to_close') : t('dash.no_closed_deals')}{' '}
-                                {overview.salesVelocityDelta == null || !Number.isFinite(Number(overview.salesVelocityDelta))
-                                    ? <span className="text-[var(--text-tertiary)]">—</span>
-                                    : <TrendIndicator value={Number(overview.salesVelocityDelta)} label="" />}
+                                {velocityHasClosedDeals
+                                    ? <>
+                                        {t('dash.days_to_close')}{' '}
+                                        {overview.salesVelocityDelta == null || !Number.isFinite(Number(overview.salesVelocityDelta))
+                                            ? <span className="text-[var(--text-tertiary)]">—</span>
+                                            : <TrendIndicator value={Number(overview.salesVelocityDelta)} label="" />}
+                                    </>
+                                    : t('dash.no_closed_deals')}
                             </div>
                             {velocityTarget.target > 0 && velocityHasClosedDeals && (
                                 <div

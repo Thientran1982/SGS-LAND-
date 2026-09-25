@@ -69,7 +69,8 @@ export const DashboardMetricRing: React.FC<{
     label: string;
     color?: string;
     size?: number;
-}> = ({ value, label, color = 'var(--sgs-primary)', size = 52 }) => {
+    showValue?: boolean;
+}> = ({ value, label, color = 'var(--sgs-primary)', size = 52, showValue = true }) => {
     const valid = value !== null && Number.isFinite(value);
     const normalized = valid ? Math.max(0, Math.min(100, value as number)) : 0;
     const radius = 19;
@@ -87,9 +88,11 @@ export const DashboardMetricRing: React.FC<{
                         transform="rotate(-90 24 24)"
                     />
                 )}
-                <text x="24" y="27" textAnchor="middle" className="fill-[var(--text-secondary)]" fontSize="10" fontWeight="700">
-                    {valid ? `${Math.round(value as number)}%` : '—'}
-                </text>
+                {showValue && (
+                    <text x="24" y="27" textAnchor="middle" className="fill-[var(--text-secondary)]" fontSize="10" fontWeight="700">
+                        {valid ? `${Math.round(value as number)}%` : '—'}
+                    </text>
+                )}
             </svg>
         </div>
     );

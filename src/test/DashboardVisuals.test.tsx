@@ -48,4 +48,11 @@ describe("DashboardMetricRing", () => {
     rerender(<DashboardMetricRing value={null} label="AI automation: unavailable" />);
     expect(screen.getByRole("img", { name: "AI automation: unavailable" })).toBeInTheDocument();
   });
+
+  it("can keep the progress ring without repeating a KPI's displayed value", () => {
+    render(<DashboardMetricRing value={92} label="AI automation: 92%" showValue={false} />);
+
+    expect(screen.getByRole("img", { name: "AI automation: 92%" })).toBeInTheDocument();
+    expect(screen.queryByText("92%")).toBeNull();
+  });
 });

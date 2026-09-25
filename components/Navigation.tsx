@@ -271,14 +271,23 @@ export const NotificationButton: React.FC<NotificationButtonProps> = memo(({
                 aria-label={t('nav.notifications')}
                 aria-expanded={panelOpen}
             >
-                <span className="relative flex h-9 w-9 shrink-0 items-center justify-center">
-                    {ICONS.BELL}
-                    {unreadCount > 0 && (
-                        <span className="absolute -right-1 -top-1 flex h-[18px] min-w-[18px] items-center justify-center rounded-full bg-[var(--sgs-accent)] px-1 text-[10px] font-black leading-none text-[var(--sgs-primary-deep)]">
-                            {unreadCount > 99 ? '99+' : unreadCount}
-                        </span>
-                    )}
-                </span>
+                {placement === 'rail' ? (
+                    <span className="flex h-5 w-5 shrink-0 items-center justify-center">{ICONS.BELL}</span>
+                ) : (
+                    <span className="relative flex h-9 w-9 shrink-0 items-center justify-center">
+                        {ICONS.BELL}
+                        {unreadCount > 0 && (
+                            <span className="absolute -right-1 -top-1 flex h-[18px] min-w-[18px] items-center justify-center rounded-full bg-[var(--sgs-accent)] px-1 text-[10px] font-black leading-none text-[var(--sgs-primary-deep)]">
+                                {unreadCount > 99 ? '99+' : unreadCount}
+                            </span>
+                        )}
+                    </span>
+                )}
+                {placement === 'rail' && unreadCount > 0 && (
+                    <span className={`absolute top-1 flex h-[18px] min-w-[18px] items-center justify-center rounded-full bg-[var(--sgs-accent)] px-1 text-[10px] font-black leading-none text-[var(--sgs-primary-deep)] ${expanded ? 'right-2' : 'right-1'}`}>
+                        {unreadCount > 99 ? '99+' : unreadCount}
+                    </span>
+                )}
                 {placement === 'rail' && expanded && (
                     <span className="min-w-0 flex-1 truncate text-left text-sm font-medium">{t('nav.notifications')}</span>
                 )}
