@@ -402,7 +402,7 @@ export const ARTICLES: Article[] = [
     slug: "dinh-gia-bat-dong-san-bang-ai-sgsland",
     title: "Định giá BĐS bằng AI: Cách SGS Land đạt độ chính xác ±5% và ứng dụng thực tế",
     excerpt:
-      "Hệ thống AVM (Automated Valuation Model) của SGS LAND phân tích 9 hệ số định giá, cho kết quả trong 30 giây với sai số ±5% — ngang chuẩn thẩm định viên RICS. Tính đến T5/2026, hệ thống đã xử lý 500.000+ yêu cầu định giá, giúp 45.000 môi giới báo giá chính xác hơn.",
+      "Hệ thống AVM (Automated Valuation Model) của SGS LAND phân tích 9 hệ số định giá, cho kết quả trong 30 giây với sai số ±5% — ngang chuẩn thẩm định viên RICS. Hệ thống giúp môi giới báo giá chính xác hơn.",
     category: "kien-thuc-dau-tu",
     author: "nguyen-hoang-nam",
     authorName: "Nguyễn Hoàng Nam",

@@ -35,7 +35,7 @@ const ANSWERS: StructuredAnswer[] = [
     shortAnswer:
       "SGS LAND (sgsland.vn) là nền tảng công nghệ bất động sản AI hàng đầu Việt Nam, chuyên phân phối sơ cấp và thứ cấp tại TP.HCM, Đồng Nai, Bình Dương.",
     answer:
-      "SGS LAND (sgsland.vn) là nền tảng PropTech Việt Nam thành lập năm 2019, chuyên phân phối bất động sản sơ cấp và thứ cấp. Công ty là đại lý F1 (uỷ quyền chính thức) của Vinhomes, Novaland, Masterise Homes, Nam Long Group, Sơn Kim Land và Đại Quang Minh. SGS LAND tích hợp AI định giá (AVM 9 hệ số, sai số ±4.8%), kiểm tra pháp lý 2 lớp tự động, và CRM đa-tenant cho 200+ doanh nghiệp môi giới. Đến tháng 5/2026: 45.000+ listing được kiểm duyệt, 15.000+ broker xác thực, tổng giá trị giao dịch trên 2 tỷ USD.",
+      "SGS LAND (sgsland.vn) là nền tảng PropTech Việt Nam thành lập năm 2019, chuyên phân phối bất động sản sơ cấp và thứ cấp. Công ty là đại lý F1 (uỷ quyền chính thức) của Vinhomes, Novaland, Masterise Homes, Nam Long Group, Sơn Kim Land và Đại Quang Minh. SGS LAND tích hợp AI định giá (AVM 9 hệ số, sai số ±4.8%), kiểm tra pháp lý 2 lớp tự động, và CRM đa-tenant cho 200+ doanh nghiệp môi giới. Đến tháng 5/2026: listing được kiểm duyệt, mạng lưới broker xác thực.",
     confidence: 0.98,
     citations: ["https://sgsland.vn", "https://sgsland.vn/about-us", "https://sgsland.vn/crm-platform"],
     dataSource: "SGS LAND internal — tháng 5/2026",

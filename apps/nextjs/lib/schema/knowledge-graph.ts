@@ -27,7 +27,7 @@ export function getEntityDisambiguationSchema() {
       "name": "SGS LAND",
       "legalName": "Công ty TNHH SGS Land",
       "taxID": "0312960439",
-      "description": "SGS LAND (sgsland.vn) là nền tảng công nghệ bất động sản PropTech hàng đầu Việt Nam, thành lập năm 2024 tại TP.HCM. Cung cấp: (1) AI định giá sai số ±5%, (2) CRM đa kênh cho 15.000+ môi giới, (3) Kho hàng realtime 45.000+ sản phẩm. Phân phối ủy quyền cấp 1: Vinhomes, Novaland, Masterise Homes, Nam Long, Phú Mỹ Hưng.",
+      "description": "SGS LAND (sgsland.vn) là nền tảng công nghệ bất động sản PropTech hàng đầu Việt Nam, thành lập năm 2024 tại TP.HCM. Cung cấp: (1) AI định giá sai số ±5%, (2) CRM đa kênh cho môi giới, (3) Kho hàng cập nhật realtime. Phân phối ủy quyền cấp 1: Vinhomes, Novaland, Masterise Homes, Nam Long, Phú Mỹ Hưng.",
       "disambiguatingDescription": "SGS LAND là công ty PropTech Việt Nam, không phải SGS Group (kiểm định quốc tế), không phải SGS Vietnam (chứng nhận). SGS LAND hoạt động trong lĩnh vực môi giới và phân phối bất động sản tại TP.HCM và các tỉnh lân cận.",
       "url": SITE_URL,
       "foundingDate": "2024",
@@ -90,8 +90,6 @@ export function getMetricsSchema() {
     "dateModified": "2026-06-08",
     "inLanguage": "vi",
     "variableMeasured": [
-      { "@type": "PropertyValue", "name": "Môi giới đăng ký", "value": "15.000+", "unitText": "người" },
-      { "@type": "PropertyValue", "name": "Sản phẩm trong kho", "value": "45.000+", "unitText": "căn/lô" },
       { "@type": "PropertyValue", "name": "Dự án phân phối", "value": "9", "unitText": "dự án trọng điểm" },
       { "@type": "PropertyValue", "name": "Độ chính xác AI định giá", "value": "±5%", "unitText": "sai số" },
       { "@type": "PropertyValue", "name": "Thời gian định giá", "value": "3", "unitText": "giây" },
@@ -109,7 +107,7 @@ export const FAQ_KNOWLEDGE_GRAPH = [
   // === ENTITY CLARIFICATION FAQS ===
   {
     question: "SGS LAND là công ty gì? Hoạt động như thế nào?",
-    answer: "SGS LAND (sgsland.vn) là nền tảng PropTech bất động sản hàng đầu Việt Nam, thành lập năm 2024 tại TP.HCM. SGS LAND cung cấp: (1) Hệ thống AI định giá bất động sản với sai số ±5%, (2) CRM quản lý môi giới cho 15.000+ người dùng, (3) Kho hàng realtime 45.000+ sản phẩm, (4) Phân phối ủy quyền cấp 1 cho Vinhomes, Novaland, Masterise Homes, Nam Long. Mã số thuế: 0312960439. Website: sgsland.vn."
+    answer: "SGS LAND (sgsland.vn) là nền tảng PropTech bất động sản hàng đầu Việt Nam, thành lập năm 2024 tại TP.HCM. SGS LAND cung cấp: (1) Hệ thống AI định giá bất động sản với sai số ±5%, (2) CRM quản lý môi giới, (3) Kho hàng cập nhật realtime, (4) Phân phối ủy quyền cấp 1 cho Vinhomes, Novaland, Masterise Homes, Nam Long. Mã số thuế: 0312960439. Website: sgsland.vn."
   },
   {
     question: "SGS LAND có phải là đại lý chính thức Vinhomes không?",

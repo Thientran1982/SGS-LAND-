@@ -1211,10 +1211,18 @@ export default async function ProjectPage({
           ))}
         </section>
       </article>
+      {/* ── Interactive client component ── */}
+      <ProjectDetailPage
+        project={projectData}
+        slug={slug}
+        config={resolveProjectConfig(slug)}
+        landingProject={getAquaStyleLanding(slug)}
+      />
+      {/* UX audit U11: editorial summary sits after the project content, not above the H1. */}
       <section className="mx-auto max-w-5xl px-4 py-5 sm:px-6 lg:px-8" aria-labelledby="geo-answer-heading">
         <div className="rounded-2xl border-l-4 px-5 py-4" data-geo-reviewed-at={reviewedAt} data-geo-evidence={hasDatedSource ? "available" : "unavailable"} style={{ borderColor: "var(--sgs-accent)", background: "var(--ui-surface-subtle)" }}>
           <h2 id="geo-answer-heading" className="text-xs font-bold uppercase tracking-[.12em]" style={{ color: "var(--sgs-accent-text)" }}>
-            {en ? "Quick answer" : "Câu trả lời nhanh"}
+            {en ? "Project summary" : "Tóm tắt dự án"}
           </h2>
           <p className="mt-2 max-w-4xl text-base leading-7" style={{ color: "var(--text-secondary)" }}>{directAnswer}</p>
           <p className="mt-2 text-xs leading-5" style={{ color: "var(--text-tertiary)" }}>
@@ -1225,13 +1233,6 @@ export default async function ProjectPage({
           </div>
         </div>
       </section>
-      {/* ── Interactive client component ── */}
-      <ProjectDetailPage
-        project={projectData}
-        slug={slug}
-        config={resolveProjectConfig(slug)}
-        landingProject={getAquaStyleLanding(slug)}
-      />
     </>
   );
 }

@@ -1099,10 +1099,33 @@ export const ListingForm: React.FC<ListingFormProps> = memo(({ isOpen, onClose, 
                                      ))}
                                  </div>
                              </div>
-                             <div className="rounded-2xl border border-[var(--glass-border)] bg-[var(--bg-surface)] p-4 text-sm text-[var(--text-secondary)]">
-                                 <p className="font-semibold text-sgs-primary">Hình ảnh và xác thực</p>
-                                 <p className="mt-1">{images.length} ảnh đã chọn{formData.isVerified ? ' · Đã xác thực' : ''}</p>
-                             </div>
+                             {(() => {
+                                 // UX audit 2.5: listing quality standard shown before publishing (non-blocking).
+                                 const attrs = (formData.attributes || {}) as any;
+                                 const desc = String(attrs.description || (formData as any).description || '');
+                                 const checks = [
+                                     { ok: images.length >= 6, label: `Tối thiểu 6 ảnh (hiện có ${images.length})` },
+                                     { ok: Number(formData.area) > 0, label: 'Có diện tích' },
+                                     { ok: !!attrs.direction, label: 'Có hướng nhà' },
+                                     { ok: !!attrs.legalStatus, label: 'Có thông tin pháp lý' },
+                                     { ok: desc.trim().length >= 200, label: `Mô tả từ 200 ký tự (hiện có ${desc.trim().length})` },
+                                 ];
+                                 const passed = checks.filter(c => c.ok).length;
+                                 return (
+                                     <div className="rounded-2xl border border-[var(--glass-border)] bg-[var(--bg-surface)] p-4 text-sm text-[var(--text-secondary)]">
+                                         <p className="font-semibold text-sgs-primary">Chuẩn tin đăng: {passed}/{checks.length} tiêu chí{formData.isVerified ? ' · Đã xác thực' : ''}</p>
+                                         <ul className="mt-2 space-y-1">
+                                             {checks.map(c => (
+                                                 <li key={c.label} className="flex items-start gap-2">
+                                                     <span aria-hidden className={c.ok ? 'text-sgs-verified' : 'text-sgs-accent-text'}>{c.ok ? '✓' : '!'}</span>
+                                                     <span className={c.ok ? '' : 'font-medium text-[var(--text-primary)]'}>{c.label}</span>
+                                                 </li>
+                                             ))}
+                                         </ul>
+                                         {passed < checks.length && <p className="mt-2 text-xs">Tin chưa đạt chuẩn vẫn đăng được, nhưng sẽ kém hấp dẫn với người mua. Nên bổ sung trước khi đăng.</p>}
+                                     </div>
+                                 );
+                             })()}
                              <div className="rounded-2xl border border-sgs-border bg-sgs-champagne/40 p-4 text-sm text-[var(--text-secondary)]">
                                  <p className="font-semibold text-sgs-primary">Đã sẵn sàng đăng tin?</p>
                                  <p className="mt-1">Bạn có thể quay lại bước trước để chỉnh sửa. Hệ thống sẽ tự lưu ảnh, tọa độ và các trường thông tin cùng tin đăng.</p>

@@ -126,7 +126,7 @@ const DICT: Record<string, string> = {
         "auth.marketing_login_title": "Hệ Điều Hành Bất Động Sản Số 1",
         "auth.marketing_login_desc": "Tích hợp AI Định giá, Quản lý giao dịch và CRM đa kênh trên một nền tảng duy nhất.",
         "auth.marketing_register_title": "Chuyển Đổi Số Toàn Diện",
-        "auth.marketing_register_desc": "Gia nhập cộng đồng 15,000+ môi giới công nghệ và tiếp cận nguồn hàng độc quyền.",
+        "auth.marketing_register_desc": "Gia nhập cộng đồng môi giới công nghệ và tiếp cận nguồn hàng độc quyền.",
         "auth.marketing_reset_title": "Bảo Mật Tiêu Chuẩn Cao",
         "auth.marketing_reset_desc": "Hệ thống bảo vệ dữ liệu khách hàng với xác thực đa lớp và mã hóa đầu cuối.",
         "auth.mock_revenue": "Doanh thu tháng",
@@ -299,7 +299,7 @@ const EN_DICT: Record<string, string> = {
         "auth.marketing_login_title": "#1 Digital Real Estate OS",
         "auth.marketing_login_desc": "Integrating AI Valuation, Transaction Management and Omnichannel CRM on a single platform.",
         "auth.marketing_register_title": "Comprehensive Digital Transformation",
-        "auth.marketing_register_desc": "Join a community of 15,000+ tech agents and access exclusive inventory.",
+        "auth.marketing_register_desc": "Join a community of tech-enabled agents and access exclusive inventory.",
         "auth.marketing_reset_title": "High Standard Security",
         "auth.marketing_reset_desc": "System protecting customer data with multi-layer authentication and end-to-end encryption.",
         "auth.mock_revenue": "Monthly Revenue",
@@ -922,11 +922,11 @@ export function LoginPage() {
           : 'border-white/10 focus:border-[var(--sgs-primary)]/50 focus:ring-[var(--sgs-primary)]/50 focus:bg-white/8'}`;
   }, []);
   return (
-    <div className="min-h-[100dvh] w-full flex bg-black text-white font-sans selection:bg-[var(--sgs-primary)]/30 selection:text-[var(--sgs-primary)] overflow-hidden relative" data-login-root style={{ backgroundColor: "var(--sgs-primary-deep)", color: "#ffffff" }}><style>{`[data-login-root] input:not([type=checkbox]){padding-left:1rem !important;padding-right:2.5rem}[data-login-root] .auth-decorative-icon,[data-login-root] .relative>span:first-child,[data-login-root] .flex.items-start.gap-2>svg{display:none}[data-login-root] .auth-mode-button>svg{display:none}`}</style>
+    <div className="min-h-[100dvh] w-full flex bg-black text-white font-sans selection:bg-[var(--sgs-primary)]/30 selection:text-[var(--sgs-primary)] overflow-hidden relative" data-login-root style={{ backgroundColor: "var(--sgs-primary-deep)", color: "#ffffff" }}><style>{`[data-login-root] input:not([type=checkbox]){padding-left:1rem !important;padding-right:2.5rem}[data-login-root] .auth-decorative-icon,[data-login-root] .relative>span:first-child,[data-login-root] .flex.items-start.gap-2>svg{display:none}[data-login-root] .auth-mode-button>svg{display:none}html.light [data-login-root]{background-color:var(--ui-bg,#F7F9FA)!important;color:var(--ui-text,#16202B)!important}html.light [data-login-form-col]{background-color:var(--ui-surface,#FFFFFF)!important;backdrop-filter:none!important;border-color:var(--ui-border,rgba(27,58,92,.12))!important;box-shadow:none!important}html.light [data-login-form-col] .border-white\\/5,html.light [data-login-form-col] .border-white\\/10{border-color:var(--ui-border,rgba(27,58,92,.14))!important}html.light [data-login-form-col] .bg-white\\/5{background-color:var(--ui-bg,#F7F9FA)!important}html.light [data-login-form-col] .hover\\:bg-white\\/5:hover,html.light [data-login-form-col] .hover\\:bg-white\\/10:hover{background-color:rgba(27,58,92,.06)!important}html.light [data-login-form-col] .text-white:not([class*="bg-"]),html.light [data-login-form-col] .text-white\\/80,html.light [data-login-form-col] .text-white\\/70,html.light [data-login-form-col] .text-white\\/60{color:var(--ui-text,#16202B)!important}html.light [data-login-form-col] .text-gray-400,html.light [data-login-form-col] .text-sgs-on-dark-muted,html.light [data-login-form-col] .text-sgs-text-muted,html.light [data-login-form-col] .text-white\\/40,html.light [data-login-form-col] .text-white\\/35{color:var(--ui-text-secondary,#4C6471)!important}html.light [data-login-form-col] .hover\\:text-white:hover{color:var(--sgs-primary,#1B3A5C)!important}html.light [data-login-form-col] input:not([type=checkbox]){color:var(--ui-text,#16202B)!important}html.light [data-login-form-col] input::placeholder{color:#71838D!important}html.light [data-login-form-col] .bg-white{background-color:var(--sgs-primary,#1B3A5C)!important;color:#FFFFFF!important}`}</style>
       
       
       {/* FORM COLUMN */}
-      <div className="w-full 2xl:w-[600px] 2xl:flex-none flex flex-col relative z-20 overflow-y-auto no-scrollbar scroll-smooth h-[100dvh] bg-black/40 backdrop-blur-md border-r border-white/5 shadow-2xl">        
+      <div data-login-form-col className="w-full 2xl:w-[600px] 2xl:flex-none flex flex-col relative z-20 overflow-y-auto no-scrollbar scroll-smooth h-[100dvh] bg-black/40 backdrop-blur-md border-r border-white/5 shadow-2xl">        
         {/* Top Bar */}
         <div className="p-8 flex justify-between items-center">
              <div className="flex items-center gap-3">

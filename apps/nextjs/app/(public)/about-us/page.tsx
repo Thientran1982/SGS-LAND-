@@ -13,8 +13,8 @@ export async function generateMetadata(): Promise<Metadata> {
       ? "About SGS LAND | Vietnam's Leading AI Real Estate Platform"
       : "Về SGS LAND | Nền tảng BĐS AI hàng đầu Việt Nam",
     description: en
-      ? "SGS LAND — SGS Land Co., Ltd, founded in 2024. Authorised distribution agent for Vinhomes, Novaland, Masterise and Nam Long. 15,000+ brokers, 45,000+ listings, US$200 million in transactions. Top Vietnam Proptech 2025."
-      : "SGS LAND — Công ty TNHH SGS Land, thành lập 2024. Đại lý uỷ quyền Vinhomes, Novaland, Masterise, Nam Long. 15.000+ môi giới, 45.000+ sản phẩm, 200 triệu USD giao dịch. Top Proptech VN 2025.",
+      ? "SGS LAND — SGS Land Co., Ltd, founded in 2024. Authorised distribution agent for Vinhomes, Novaland, Masterise and Nam Long. Top Vietnam Proptech 2025."
+      : "SGS LAND — Công ty TNHH SGS Land, thành lập 2024. Đại lý uỷ quyền Vinhomes, Novaland, Masterise, Nam Long. Top Proptech VN 2025.",
     alternates: {
       canonical: en ? `${SITE_URL}/en/about-us` : `${SITE_URL}/about-us`,
       ...langAlternates("/about-us"),
@@ -24,8 +24,8 @@ export async function generateMetadata(): Promise<Metadata> {
 export const dynamic = "force-dynamic";
 const STATS = (en: boolean) => [
   { value: "2024", label: en ? "Year founded" : "Năm thành lập", icon: Building2 },
-  { value: en ? "15,000+" : "15.000+", label: en ? "Brokers in the network" : "Môi giới trong mạng lưới", icon: Users },
-  { value: en ? "45,000+" : "45.000+", label: en ? "Listings under management" : "Sản phẩm BĐS quản lý", icon: Building2 },
+  { value: "4", label: en ? "Authorised developers" : "Chủ đầu tư uỷ quyền", icon: Users },
+  { value: en ? "2-layer" : "2 lớp", label: en ? "Legal verification" : "Kiểm tra pháp lý", icon: Building2 },
   { value: en ? "US$2B+" : "2 tỷ USD+", label: en ? "Transaction value" : "Giá trị giao dịch", icon: TrendingUp },
 ];
 const TIMELINE = (en: boolean) => [
@@ -67,8 +67,8 @@ export default async function AboutUsPage() {
     url: `${SITE_URL}/about-us`,
     name: en ? "About SGS LAND" : "Về SGS LAND",
     description: en
-      ? "SGS LAND is Vietnam's leading AI real estate platform. Authorised distribution agent for Vinhomes, Novaland, Masterise Homes and Nam Long — 15,000+ brokers, 45,000+ listings."
-      : "SGS LAND là nền tảng bất động sản AI hàng đầu Việt Nam. Đại lý phân phối uỷ quyền Vinhomes, Novaland, Masterise Homes và Nam Long — 15.000+ môi giới, 45.000+ sản phẩm.",
+      ? "SGS LAND is Vietnam's leading AI real estate platform. Authorised distribution agent for Vinhomes, Novaland, Masterise Homes and Nam Long."
+      : "SGS LAND là nền tảng bất động sản AI hàng đầu Việt Nam. Đại lý phân phối uỷ quyền Vinhomes, Novaland, Masterise Homes và Nam Long.",
     about: { "@id": ORG_ID },
   };
   // Person JSON-LD for each leader (GEO Tier S: E-E-A-T named authorship)

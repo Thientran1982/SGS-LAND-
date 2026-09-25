@@ -75,7 +75,7 @@ export function getFoundersSchema(): PersonSchema[] {
       name: "Lê Thị Hoa",
       jobTitle: "Chief Operating Officer",
       description:
-        "COO của SGS LAND, phụ trách vận hành mạng lưới 15.000+ môi giới, quan hệ đối tác với Vinhomes, Novaland và Masterise Homes.",
+        "COO của SGS LAND, phụ trách vận hành mạng lưới môi giới, quan hệ đối tác với Vinhomes, Novaland và Masterise Homes.",
       worksFor: { "@id": ORG_ID },
       url: `${SITE_URL}/about-us`,
       knowsAbout: [

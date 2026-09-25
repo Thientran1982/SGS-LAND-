@@ -125,7 +125,7 @@ export function ArticleFooter({
             Cần tư vấn BĐS miễn phí?
           </p>
           <p className="text-sm" style={{ color: "var(--text-secondary)" }}>
-            Đội ngũ 15.000+ môi giới SGS Land sẵn sàng hỗ trợ bạn 24/7.
+            Đội ngũ môi giới SGS Land sẵn sàng hỗ trợ bạn 24/7.
           </p>
         </div>
         <Link

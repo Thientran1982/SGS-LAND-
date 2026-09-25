@@ -109,7 +109,7 @@ export default async function LiveChatPage({
         {[
           { value: "24/7", label: en ? "Available" : "Hoạt động" },
           { value: "3 giây", label: en ? "Valuation estimate" : "Ước tính định giá" },
-          { value: "45.000+", label: en ? "Reference listings" : "Sản phẩm tham khảo" },
+          { value: "0 đ", label: en ? "Fee for buyers" : "Phí cho người mua" },
         ].map((fact) => (
           <div key={fact.value} className="rounded-xl p-3" style={{ background: "var(--bg-elevated)", border: "1px solid var(--border-default)" }}>
             <strong className="block text-base" style={{ color: "var(--primary-600)" }}>{fact.value}</strong>

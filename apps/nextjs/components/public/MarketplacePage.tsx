@@ -1,5 +1,6 @@
 // @ts-nocheck
 "use client";
+import { displayListingTitle } from "@/lib/listingTitle";
 import React, { useState, useCallback, useRef, useEffect } from "react";
 import { useRouter, usePathname } from "next/navigation";
 import Link from "next/link";
@@ -165,7 +166,7 @@ const bi = (m: Record<string, Bi>, key: string, g: L): string => {
   return v ? (g === "en" ? v[1] : v[0]) : String(key || "");
 };
 const STATUS_LABELS: Record<string, Bi> = {
-  AVAILABLE: ["\u0110ang giao d\u1ecbch", "In transaction"],
+  AVAILABLE: ["\u0110ang b\u00e1n", "For sale"],
   READY: ["S\u1eb5n s\u00e0ng", "Ready"],
   BOOKING: ["Nh\u1eadn Booking", "Booking"],
   OPENING: ["\u0110ang m\u1edf b\u00e1n", "Opening"],
@@ -356,7 +357,7 @@ export function PublicListingCard({ listing, list, eager, facets }: { listing: a
                 <Star className="w-3.5 h-3.5" /> <span className="hidden sm:inline">{bi(STATUS_LABELS, "BEST_MARKET", lang)}</span>
               </span>
             )}
-            {views > 0 && (
+            {views >= 500 && (
               <span className="flex items-center gap-1 px-2 py-0.5 rounded-lg text-[12px] font-bold text-white shadow-sm backdrop-blur-sm" style={{ background: "rgba(0,0,0,0.6)" }}>
                 <Eye className="w-3.5 h-3.5" /> {views}
               </span>
@@ -388,7 +389,7 @@ export function PublicListingCard({ listing, list, eager, facets }: { listing: a
           )}
         </div>
         <h3 className="font-semibold text-sm mb-2 line-clamp-2 leading-snug group-hover:text-sgs-primary transition-colors" style={{ color: "var(--text-primary)" }}>
-           <span lang={sourceTitle ? "vi" : undefined}>{listing.title}</span>
+           <span lang={sourceTitle ? "vi" : undefined}>{displayListingTitle(listing.title)}</span>
            {sourceTitle && <span className="ml-1 text-[10px] font-normal uppercase tracking-wide" style={{ color: "var(--text-tertiary)" }}>({tt(lang, "nguồn tiếng Việt", "Vietnamese source")})</span>}
         </h3>
         <div className="flex items-center gap-1.5 mb-3 text-xs" style={{ color: "var(--text-secondary)" }}>
@@ -414,7 +415,8 @@ export function PublicListingCard({ listing, list, eager, facets }: { listing: a
               if (diffPct === 0) return null;
               const isBelow = diffPct < 0;
               return (
-                <p className="text-xs font-semibold mt-1" style={{ color: isBelow ? "var(--color-success)" : "var(--sgs-accent)" }}>
+                <p className="text-xs font-semibold mt-1" style={{ color: isBelow ? "var(--color-success)" : "var(--text-tertiary)" }}
+                  title={tt(lang, `So với giá/m² trung bình của ${bench.sampleSize} tin cùng loại trong khu vực`, `Compared with the average price per m² of ${bench.sampleSize} similar listings in this area`)}>
                   {isBelow
                     ? tt(lang, `Th\u1ea5p h\u01a1n ${Math.abs(diffPct)}% so v\u1edbi TB khu v\u1ef1c`, `${Math.abs(diffPct)}% below area average`)
                     : tt(lang, `Cao h\u01a1n ${Math.abs(diffPct)}% so v\u1edbi TB khu v\u1ef1c`, `${Math.abs(diffPct)}% above area average`)}
@@ -925,7 +927,7 @@ export function MarketplacePage({ initialListings, totalCount, totalPages, searc
           <div className="hidden lg:block lg:w-[42%] lg:shrink-0 lg:sticky overflow-hidden rounded-2xl" style={{ top: 96, height: "calc(100vh - 120px)" }}>
             <MarketplaceMap listings={initialListings} height="100%" />
           </div>
-          <div className="lg:flex-1 lg:min-w-0 lg:max-h-[calc(100vh-120px)] lg:overflow-y-auto lg:pr-1">
+          <div className="lg:flex-1 lg:min-w-0">
             {view === "LIST" ? (
               <div className="flex flex-col gap-4">
                 {initialListings.map((l: any, i: number) => <PublicListingCard key={l.id} listing={l} facets={facets} list eager={i < 2} />)}

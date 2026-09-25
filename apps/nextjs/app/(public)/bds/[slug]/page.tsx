@@ -1,4 +1,5 @@
 // @ts-nocheck
+import { displayListingTitle } from "@/lib/listingTitle";
 import { formatPriceLang } from "@/utils/priceFormat";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
@@ -32,7 +33,7 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   }
   const price = formatPriceLang(listing.price, en ? "en" : "vi");
   return {
-    title: `${listing.title} | ${price}`,
+    title: `${displayListingTitle(listing.title, 70)} | ${price}`,
     description: en
       ? `${listing.title} — ${listing.location}. Price: ${price}. ${listing.area}m², ${listing.bedrooms ?? ""} bedrooms. Legal status: ${listing.legalStatus ?? "Updating"}.`
       : `${listing.title} — ${listing.location}. Giá: ${price}. ${listing.area}m², ${listing.bedrooms ?? ""}PN. Pháp lý: ${listing.legalStatus ?? "Đang cập nhật"}.`,

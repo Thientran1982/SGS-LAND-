@@ -48,7 +48,7 @@ const EXPERTS = (en: boolean) => EXPERT_DATA.map((expert) => ({
 
 const STATS = (en: boolean) => [
   { value: "50+", label: en ? "Licensed property experts" : "Chuyên gia có chứng chỉ hành nghề" },
-  { value: en ? "45,000+" : "45.000+", label: en ? "Transactions successfully advised" : "Giao dịch được tư vấn thành công" },
+  { value: "24h", label: en ? "On-site legal verification" : "Xác minh pháp lý thực địa" },
   { value: "±5%", label: en ? "AI AVM valuation accuracy" : "Độ chính xác định giá AI AVM" },
   { value: en ? "2 hours" : "2 giờ", label: en ? "Advisory response time" : "Thời gian phản hồi tư vấn" },
 ];
@@ -75,8 +75,8 @@ const FAQ = (en: boolean) => [
   {
     q: en ? "How does SGS LAND's AI AVM valuation work?" : "Hệ thống định giá AI AVM của SGS LAND hoạt động như thế nào?",
     a: en
-      ? "The AVM (Automated Valuation Model) analyses 45,000+ real transactions and adjusts for 12 factors: location, legal status, amenities, zoning, area and frontage among them. Average error is ±5%."
-      : "AVM (Automated Valuation Model) phân tích 45.000+ giao dịch thực, điều chỉnh theo 12 yếu tố: vị trí, pháp lý, tiện ích, quy hoạch, diện tích, mặt tiền. Sai số trung bình ±5%.",
+      ? "The AVM (Automated Valuation Model) analyses real notarised transaction data and adjusts for 12 factors: location, legal status, amenities, zoning, area and frontage among them. Average error is ±5%."
+      : "AVM (Automated Valuation Model) phân tích dữ liệu giao dịch thực, điều chỉnh theo 12 yếu tố: vị trí, pháp lý, tiện ích, quy hoạch, diện tích, mặt tiền. Sai số trung bình ±5%.",
   },
 ];
 

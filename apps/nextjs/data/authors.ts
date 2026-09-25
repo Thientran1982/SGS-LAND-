@@ -41,7 +41,7 @@ export const AUTHORS: Author[] = [
 
 Trước khi thành lập SGS LAND, ông Thiện từng là chuyên viên phân tích BĐS tại các tập đoàn lớn, tích lũy kinh nghiệm về định giá tài sản, phân tích dòng tiền cho thuê và chiến lược đầu tư dài hạn. Ông đã trực tiếp tư vấn hơn 500 giao dịch BĐS với tổng giá trị vượt 1.000 tỷ VND.
 
-Dưới sự lãnh đạo của ông, SGS LAND đã xây dựng mạng lưới 15.000+ môi giới được xác thực, kho hàng 45.000+ sản phẩm và hệ thống định giá AVM với độ chính xác ±5%. SGS LAND được vinh danh Top Proptech Việt Nam 2025.
+Dưới sự lãnh đạo của ông, SGS LAND đã xây dựng mạng lưới môi giới được xác thực, kho hàng cập nhật liên tục và hệ thống định giá AVM với độ chính xác ±5%. SGS LAND được vinh danh Top Proptech Việt Nam 2025.
 
 Ông Thiện thường xuyên chia sẻ phân tích thị trường và là diễn giả tại các sự kiện BĐS lớn như Vietnam Real Estate Summit và PropTech Vietnam Conference.`,
     avatar: "",
@@ -102,8 +102,8 @@ Hệ thống AVM do ông thiết kế phân tích 9 hệ số định giá theo 
       "Quản lý sàn giao dịch BĐS",
     ],
     yearsExperience: 8,
-    bio: "COO của SGS LAND với 8+ năm quản lý giao dịch BĐS. Lê Thị Hoa am hiểu sâu về pháp lý nhà đất, quy trình mua bán theo Luật Đất Đai 2024 và quản lý mạng lưới 15.000+ môi giới.",
-    bioFull: `Lê Thị Hoa là Chief Operating Officer (COO) của SGS LAND, phụ trách vận hành mạng lưới 15.000+ môi giới được xác thực và quan hệ đối tác với Vinhomes, Novaland và Masterise Homes.
+    bio: "COO của SGS LAND với 8+ năm quản lý giao dịch BĐS. Lê Thị Hoa am hiểu sâu về pháp lý nhà đất, quy trình mua bán theo Luật Đất Đai 2024 và quản lý mạng lưới môi giới.",
+    bioFull: `Lê Thị Hoa là Chief Operating Officer (COO) của SGS LAND, phụ trách vận hành mạng lưới môi giới được xác thực và quan hệ đối tác với Vinhomes, Novaland và Masterise Homes.
 
 Bà Hoa có hơn 8 năm kinh nghiệm trong lĩnh vực quản lý giao dịch bất động sản và am hiểu sâu về pháp lý nhà đất theo Luật Đất Đai 2024, Luật Nhà Ở 2023 và Luật Kinh Doanh BĐS 2023. Bà đã trực tiếp giám sát hàng nghìn hợp đồng mua bán, chuyển nhượng tại TP.HCM và các tỉnh lân cận.
 

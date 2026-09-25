@@ -19,7 +19,7 @@ const JOBS = [
   { title: "Senior Môi Giới BĐS", dept: "Sales", location: "TP.HCM", type: "Full-time", desc: "Tư vấn và phân phối BĐS cao cấp tại khu vực Đông Nam Bộ. Thu nhập không giới hạn." },
   { title: "Full-Stack Engineer (Next.js / Node.js)", dept: "Engineering", location: "Remote", type: "Full-time", desc: "Xây dựng nền tảng PropTech AI quy mô lớn với Next.js 15, PostgreSQL, Redis." },
   { title: "AI/ML Engineer", dept: "Engineering", location: "TP.HCM / Remote", type: "Full-time", desc: "Phát triển mô hình định giá AVM, intent classifier, recommendation engine cho BĐS." },
-  { title: "Product Manager - CRM", dept: "Product", location: "TP.HCM", type: "Full-time", desc: "Quản lý roadmap sản phẩm CRM cho 15.000+ môi giới. Data-driven, user-centric." },
+  { title: "Product Manager - CRM", dept: "Product", location: "TP.HCM", type: "Full-time", desc: "Quản lý roadmap sản phẩm CRM cho mạng lưới môi giới. Data-driven, user-centric." },
   { title: "Data Analyst", dept: "Analytics", location: "TP.HCM", type: "Full-time", desc: "Phân tích thị trường BĐS Đông Nam Bộ, xây dựng báo cáo chỉ số giá tuần, quý." },
   { title: "Marketing Manager", dept: "Marketing", location: "TP.HCM", type: "Full-time", desc: "Xây dựng thương hiệu SGS LAND, performance marketing, SEO/content cho PropTech." },
 ];

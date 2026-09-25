@@ -31,7 +31,7 @@ export function getWebsiteSchema(): WebsiteSchema {
     url: SITE_URL,
     inLanguage: ["vi", "en"],
     description:
-      "Nền tảng mua bán và quản lý bất động sản hàng đầu Việt Nam — định giá AI ±5%, CRM đa kênh, 45.000+ sản phẩm cập nhật realtime.",
+      "Nền tảng mua bán và quản lý bất động sản hàng đầu Việt Nam — định giá AI ±5%, CRM đa kênh, kho sản phẩm cập nhật realtime.",
     potentialAction: {
       "@type": "SearchAction",
       target: {

@@ -34,8 +34,8 @@ export const EXPERTS: Expert[] = [
     "exp": "10+ năm",
     "spec": "Định giá AI, PropTech, CRM",
     "specEn": "AI valuation, PropTech, CRM",
-    "desc": "Kiến trúc sư hệ thống AVM định giá BĐS với sai số ±5% trên 45.000+ giao dịch thực. Chuyên phân tích thị trường dữ liệu lớn."
-    ,"descEn": "Architect of the AVM valuation engine, accurate to ±5% across 45,000+ real transactions. Specialises in big-data market analysis."
+    "desc": "Kiến trúc sư hệ thống AVM định giá BĐS với sai số ±5% trên dữ liệu giao dịch thực. Chuyên phân tích thị trường dữ liệu lớn."
+    ,"descEn": "Architect of the AVM valuation engine, accurate to ±5% across real transaction data. Specialises in big-data market analysis."
   },
   {
     "slug": "le-thi-hoa",
@@ -45,8 +45,8 @@ export const EXPERTS: Expert[] = [
     "exp": "15+ năm",
     "spec": "Pháp lý BĐS, Môi giới Bộ Xây Dựng",
     "specEn": "Property law, Ministry of Construction brokerage",
-    "desc": "Chứng chỉ môi giới BĐS Bộ Xây Dựng. Thiết kế quy trình kiểm tra pháp lý 2 lớp (AI + chuyên viên). Quản lý mạng lưới 15.000+ môi giới toàn quốc."
-    ,"descEn": "Licensed real estate broker (Ministry of Construction). Designed the two-layer legal due-diligence process (AI + specialist review) and runs the nationwide network of 15,000+ brokers."
+    "desc": "Chứng chỉ môi giới BĐS Bộ Xây Dựng. Thiết kế quy trình kiểm tra pháp lý 2 lớp (AI + chuyên viên). Quản lý mạng lưới môi giới toàn quốc."
+    ,"descEn": "Licensed real estate broker (Ministry of Construction). Designed the two-layer legal due-diligence process (AI + specialist review) and runs the nationwide broker network."
   },
   {
     "slug": "nguyen-thi-lan",

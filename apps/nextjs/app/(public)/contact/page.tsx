@@ -46,7 +46,7 @@ export default async function ContactPage() {
         {[
           { value: "24/7", label: en ? "AI chat support" : "Hỗ trợ AI" },
           { value: "3 giây", label: en ? "Reference valuation" : "Định giá tham khảo" },
-          { value: "45.000+", label: en ? "Reference listings" : "Sản phẩm tham khảo" },
+          { value: "0 đ", label: en ? "Fee for buyers" : "Phí cho người mua" },
         ].map((fact) => (
           <div key={fact.value} className="rounded-2xl p-4 text-center" style={{ background: "var(--primary-subtle)", border: "1px solid var(--border-default)" }}>
             <strong className="block text-lg sm:text-xl" style={{ color: "var(--primary-600)" }}>{fact.value}</strong>

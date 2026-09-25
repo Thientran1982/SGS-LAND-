@@ -20,7 +20,7 @@ export const dynamic = "force-dynamic";
 
 const FEATURES = (en: boolean) => [
   { icon: <Users className="w-6 h-6" />, title: en ? "Omnichannel CRM" : "CRM Đa kênh", desc: en ? "Manage leads from Zalo, Facebook, your website and email in one dashboard. Automate routing, scoring and AI-assisted assignment." : "Quản lý leads từ Zalo, Facebook, Website, Email trong 1 dashboard. Tự động phân loại, chấm điểm và phân công theo AI." },
-  { icon: <BarChart3 className="w-6 h-6" />, title: en ? "Smart inventory" : "Kho hàng thông minh", desc: en ? "Search, compare and match 45,000+ property records in real time with each buyer's needs." : "45.000+ sản phẩm BĐS. Tìm kiếm real-time, so sánh, match tự động với nhu cầu khách hàng." },
+  { icon: <BarChart3 className="w-6 h-6" />, title: en ? "Smart inventory" : "Kho hàng thông minh", desc: en ? "Search, compare and match property records in real time with each buyer's needs." : "Kho sản phẩm BĐS cập nhật liên tục. Tìm kiếm real-time, so sánh, match tự động với nhu cầu khách hàng." },
   { icon: <Bot className="w-6 h-6" />, title: en ? "24/7 AI agents" : "AI Agent 24/7", desc: en ? "Eight AI agents handle chat, valuation, legal and market workflows, reducing manual advisory time by up to 70%." : "8 AI Agent tự động xử lý chat, định giá, pháp lý, thị trường. Giảm 70% thời gian tư vấn thủ công." },
   { icon: <Zap className="w-6 h-6" />, title: en ? "Workflow automation" : "Tự động hoá", desc: en ? "Automate reminders, quotations and follow-ups with integrated email and Zalo sequences." : "Workflow tự động: nhắc lịch, gửi báo giá, follow-up. Sequences email/Zalo tích hợp." },
   { icon: <Globe2 className="w-6 h-6" />, title: en ? "Real-time reporting" : "Báo cáo realtime", desc: en ? "Track conversion, revenue and broker performance, then export a PDF report in seconds." : "Dashboard phân tích: conversion rate, doanh số, hiệu suất broker. Xuất báo cáo PDF tức thì." },
@@ -45,8 +45,8 @@ export default async function CrmLandingPage() {
           </h1>
           <p className="text-lg max-w-2xl mx-auto mb-10 leading-relaxed" style={{ color: "var(--text-secondary)" }}>
              {en
-               ? "Run your entire property business on one platform — CRM, inventory, contracts, AI agents and real-time reporting. Trusted by 15,000+ brokers."
-               : "Quản lý toàn bộ hoạt động kinh doanh BĐS trên 1 nền tảng — CRM, kho hàng, hợp đồng, AI agent và báo cáo realtime. Tin dùng bởi 15.000+ môi giới."}
+               ? "Run your entire property business on one platform — CRM, inventory, contracts, AI agents and real-time reporting."
+               : "Quản lý toàn bộ hoạt động kinh doanh BĐS trên 1 nền tảng — CRM, kho hàng, hợp đồng, AI agent và báo cáo realtime."}
           </p>
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
              <Link href={lp("/login")}

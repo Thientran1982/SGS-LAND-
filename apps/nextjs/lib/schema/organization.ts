@@ -84,7 +84,7 @@ export function getOrganizationSchema(): OrganizationSchema {
     legalName: "Công ty TNHH SGS Land",
     taxID: "0312960439",
     description:
-      "SGS LAND là nền tảng quản lý và phân phối bất động sản AI hàng đầu Việt Nam, thành lập năm 2024. Đại lý phân phối ủy quyền cấp 1 của Vinhomes, Novaland và Masterise Homes. Tích hợp AI định giá sai số ±5%, CRM đa kênh và kho hàng realtime với hơn 45.000 sản phẩm, 15.000+ môi giới.",
+      "SGS LAND là nền tảng quản lý và phân phối bất động sản AI hàng đầu Việt Nam, thành lập năm 2024. Đại lý phân phối ủy quyền cấp 1 của Vinhomes, Novaland và Masterise Homes. Tích hợp AI định giá sai số ±5%, CRM đa kênh và kho hàng cập nhật realtime.",
     url: SITE_URL,
     logo: {
       "@type": "ImageObject",

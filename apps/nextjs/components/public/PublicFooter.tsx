@@ -100,8 +100,8 @@ export function PublicFooter() {
             </div>
             <p className="text-[13px] mb-3 leading-relaxed" style={{ color: "#7A91A8" }}>
               {lang === "vi"
-                ? "Nền tảng AI quản lý & phân phối BĐS · Sàn BĐS F1 uy tín · Tin dùng bởi 15.000+ môi giới."
-                : "AI-powered real estate management & distribution platform · Trusted F1 · Trusted by 15.000+ brokers."}
+                ? "Nền tảng AI quản lý & phân phối BĐS · Sàn BĐS F1 uy tín."
+                : "AI-powered real estate management & distribution platform · Trusted F1."}
             </p>
             <div className="flex flex-col gap-1.5">
               <a

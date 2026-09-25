@@ -1,16 +1,13 @@
 // @ts-nocheck
 "use client";
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import "leaflet/dist/leaflet.css";
 import { slugifyListingTitle } from "@/lib/listingSlug";
 import { useLang } from "@/components/shared/useLang";
 import { tt } from "@/lib/i18n";
+import { formatPriceLang } from "@/utils/priceFormat";
 
-function formatPrice(price: number, lang: "vi" | "en"): string {
-  return price >= 1e9
-    ? `${(price / 1e9).toFixed(2)}${lang === "en" ? "B VND" : " tỷ"}`
-    : `${Math.round(price / 1e6)}${lang === "en" ? "M VND" : " triệu"}`;
-}
+/** Short pin label: 8,5 tỷ / 850 tr (full price lives in the popup). */
 function priceLabel(price: number, lang: "vi" | "en"): string {
   if (!price) return "--";
   return price >= 1e9
@@ -18,15 +15,62 @@ function priceLabel(price: number, lang: "vi" | "en"): string {
     : `${Math.round(price / 1e6)}${lang === "en" ? "M" : " tr"}`;
 }
 
+/** Listing text is user-authored: never interpolate it into popup HTML unescaped. */
+function esc(v: unknown): string {
+  return String(v ?? "")
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;");
+}
+
+// Approximate coordinates by place name, for listings with no lat/lng.
+const GAZ: [string, number, number][] = [
+  ["vinhomes grand park", 10.8430, 106.8430],
+  ["vinhomes central park", 10.7952, 106.7218],
+  ["tòa park", 10.7952, 106.7218],
+  ["thạnh mỹ lợi", 10.7710, 106.7560],
+  ["trương văn bang", 10.7710, 106.7560],
+  ["thủ đức", 10.8500, 106.7700],
+  ["đakao", 10.7905, 106.6955],
+  ["nguyễn đình chiểu", 10.7905, 106.6955],
+  ["bến nghé", 10.7780, 106.7020],
+  ["hai bà trưng", 10.7780, 106.7020],
+  ["cô giang", 10.7620, 106.6950],
+  ["quận 1", 10.7760, 106.7000],
+  ["quận 7", 10.7340, 106.7220],
+  ["bình thạnh", 10.8100, 106.7100],
+  ["phú nhuận", 10.7990, 106.6800],
+  ["bình chánh", 10.6870, 106.5950],
+  ["cần giờ", 10.4110, 106.9540],
+  ["long thành", 10.7930, 106.9460],
+  ["nhơn trạch", 10.6960, 106.8930],
+  ["biên hòa", 10.9450, 106.8240],
+  ["đồng nai", 10.9000, 106.8500],
+  ["bình dương", 10.9800, 106.6500],
+  ["long an", 10.6000, 106.4000],
+  ["tp.hcm", 10.7769, 106.7009],
+  ["tphcm", 10.7769, 106.7009],
+  ["hcm", 10.7769, 106.7009],
+];
+
+// UX audit U9: pins closer than this many screen pixels are merged into one
+// cluster bubble; clicking a cluster zooms into its members.
+const CLUSTER_CELL_PX = 64;
+
 export function MarketplaceMap({ listings, height = "620px" }: { listings: any[]; height?: string }) {
   const lang = useLang();
   const ref = useRef<HTMLDivElement>(null);
   const mapRef = useRef<any>(null);
+  const [ready, setReady] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
+    setReady(false);
     (async () => {
-      const L = (await import("leaflet")).default || (await import("leaflet"));
+      const mod = await import("leaflet");
+      const L = mod.default || mod;
       if (cancelled || !ref.current || mapRef.current) return;
       const map = L.map(ref.current, {
         scrollWheelZoom: true,
@@ -37,49 +81,21 @@ export function MarketplaceMap({ listings, height = "620px" }: { listings: any[]
       // Keep tiles same-origin. A direct OSM/CARTO fallback is intentionally
       // avoided because the Replit Preview iframe can receive policy-block
       // placeholder images from third-party tile hosts.
-      L.tileLayer("/api/map-tiles/{z}/{x}/{y}.png?v=6", {
+      const tiles = L.tileLayer("/api/map-tiles/{z}/{x}/{y}.png?v=6", {
         attribution: "&copy; OpenStreetMap contributors",
         maxZoom: 19,
       }).addTo(map);
+      tiles.once("load", () => { if (!cancelled) setReady(true); });
+      // Never leave the skeleton up forever if tiles are slow or blocked.
+      setTimeout(() => { if (!cancelled) setReady(true); }, 4000);
 
       const valid = (c) => c && c.lat && c.lng && !(+c.lat === 0 && +c.lng === 0);
-      // Derive a coordinate per project from the listings that do have one,
-      // so listings missing coordinates still land on the map.
       const projCoord = {};
       (listings || []).forEach((l) => {
         if (valid(l.coordinates) && l.projectCode && !projCoord[l.projectCode]) {
           projCoord[l.projectCode] = { lat: +l.coordinates.lat, lng: +l.coordinates.lng };
         }
       });
-      // Approximate coordinates by place name, for listings with no lat/lng.
-      const GAZ = [
-        ["vinhomes grand park", 10.8430, 106.8430],
-        ["vinhomes central park", 10.7952, 106.7218],
-        ["tòa park", 10.7952, 106.7218],
-        ["thạnh mỹ lợi", 10.7710, 106.7560],
-        ["trương văn bang", 10.7710, 106.7560],
-        ["thủ đức", 10.8500, 106.7700],
-        ["đakao", 10.7905, 106.6955],
-        ["nguyễn đình chiểu", 10.7905, 106.6955],
-        ["bến nghé", 10.7780, 106.7020],
-        ["hai bà trưng", 10.7780, 106.7020],
-        ["cô giang", 10.7620, 106.6950],
-        ["quận 1", 10.7760, 106.7000],
-        ["quận 7", 10.7340, 106.7220],
-        ["bình thạnh", 10.8100, 106.7100],
-        ["phú nhuận", 10.7990, 106.6800],
-        ["bình chánh", 10.6870, 106.5950],
-        ["cần giờ", 10.4110, 106.9540],
-        ["long thành", 10.7930, 106.9460],
-        ["nhơn trạch", 10.6960, 106.8930],
-        ["biên hòa", 10.9450, 106.8240],
-        ["đồng nai", 10.9000, 106.8500],
-        ["bình dương", 10.9800, 106.6500],
-        ["long an", 10.6000, 106.4000],
-        ["tp.hcm", 10.7769, 106.7009],
-        ["tphcm", 10.7769, 106.7009],
-        ["hcm", 10.7769, 106.7009],
-      ];
       const geoFromText = (txt) => {
         const t = String(txt || "").toLowerCase();
         for (let i = 0; i < GAZ.length; i++) {
@@ -87,58 +103,88 @@ export function MarketplaceMap({ listings, height = "620px" }: { listings: any[]
         }
         return null;
       };
-      const groups = {};
+
+      const points = [];
       (listings || []).forEach((l) => {
         const exact = valid(l.coordinates);
         const c = exact ? l.coordinates : (projCoord[l.projectCode] || geoFromText((l.location || "") + " " + (l.title || "")));
-        if (valid(c)) {
-          const k = (+c.lat).toFixed(5) + "," + (+c.lng).toFixed(5);
-          (groups[k] = groups[k] || []).push({ ...l, coordinates: { lat: +c.lat, lng: +c.lng }, _approx: !exact });
-        }
+        if (valid(c)) points.push({ ...l, _lat: +c.lat, _lng: +c.lng, _approx: !exact });
       });
 
-      const bounds = [];
-      Object.keys(groups).forEach((k) => {
-        const arr = groups[k];
-        arr.forEach((l, idx) => {
-          let lat = +l.coordinates.lat;
-          let lng = +l.coordinates.lng;
-          if (arr.length > 1) {
-            const ring = Math.floor(idx / 8);
-            const ang = (2 * Math.PI * (idx % 8)) / Math.min(arr.length, 8);
-            const R = 0.0019 + ring * 0.0015;
-            lat += R * Math.sin(ang);
-            lng += (R * Math.cos(ang)) / Math.max(0.2, Math.cos((lat * Math.PI) / 180));
+      const popupHtml = (l) => {
+        const slug = `${slugifyListingTitle(l.title)}-${l.id}`;
+        const img = (l.images && l.images[0]) || "";
+        return (
+          `<a href="${lang === "en" ? "/en" : ""}/bds/${esc(slug)}" style="display:block;text-decoration:none;color:inherit;width:232px">` +
+          (img ? `<img src="${esc(img)}" alt="" style="width:100%;height:120px;object-fit:cover;display:block;border-radius:6px"/>` : "") +
+          `<div style="padding:8px 2px 2px">` +
+          `<div style="font-weight:700;font-size:14px;line-height:1.3;margin-bottom:4px;color:#152232">${esc(l.title)}</div>` +
+          `<div style="color:#1B3A5C;font-weight:800;font-size:16px">${esc(formatPriceLang(Number(l.price) || 0, lang))}</div>` +
+          `<div style="color:#64748b;font-size:12px;margin-top:2px">${esc(l.location)}</div>` +
+          (l._approx ? `<div style="color:#64748b;font-size:12px;margin-top:3px">${esc(tt(lang, "Vị trí tương đối theo khu vực", "Approximate area location"))}</div>` : "") +
+          `<div style="margin-top:8px;color:#8C6420;font-weight:700;font-size:12px">${esc(tt(lang, "Xem chi tiết →", "View details →"))}</div>` +
+          `</div></a>`
+        );
+      };
+
+      const layer = L.layerGroup().addTo(map);
+      const render = () => {
+        layer.clearLayers();
+        const cells = new Map();
+        points.forEach((p) => {
+          const pt = map.latLngToLayerPoint([p._lat, p._lng]);
+          const key = Math.floor(pt.x / CLUSTER_CELL_PX) + ":" + Math.floor(pt.y / CLUSTER_CELL_PX);
+          if (!cells.has(key)) cells.set(key, []);
+          cells.get(key).push(p);
+        });
+        cells.forEach((group) => {
+          if (group.length === 1 || map.getZoom() >= 17) {
+            group.forEach((p, idx) => {
+              // Same building at max zoom: fan pins out slightly so each stays clickable.
+              let lat = p._lat, lng = p._lng;
+              if (group.length > 1) {
+                const ang = (2 * Math.PI * idx) / group.length;
+                lat += 0.00025 * Math.sin(ang);
+                lng += 0.00025 * Math.cos(ang);
+              }
+              const icon = L.divIcon({
+                className: "",
+                html: '<div style="background:#1B3A5C;color:#fff;font-weight:700;font-size:12px;line-height:1;padding:5px 9px;border-radius:999px;white-space:nowrap;border:2px solid #C8963E;box-shadow:0 2px 6px rgba(0,0,0,.35)">' + esc(priceLabel(p.price, lang)) + "</div>",
+                iconSize: [64, 24],
+                iconAnchor: [32, 12],
+              });
+              L.marker([lat, lng], { icon, riseOnHover: true, keyboard: true, title: String(p.title || "") })
+                .bindPopup(popupHtml(p), { maxWidth: 252, minWidth: 232 })
+                .addTo(layer);
+            });
+            return;
           }
+          const lat = group.reduce((s, p) => s + p._lat, 0) / group.length;
+          const lng = group.reduce((s, p) => s + p._lng, 0) / group.length;
+          const minPrice = Math.min(...group.map((p) => Number(p.price) || Infinity));
+          const label = tt(lang, `${group.length} tin`, `${group.length} listings`) + (Number.isFinite(minPrice) ? ` · ${tt(lang, "từ", "from")} ${priceLabel(minPrice, lang)}` : "");
           const icon = L.divIcon({
             className: "",
-            html:
-              '<div style="background:#1B3A5C;color:#fff;font-weight:700;font-size:12px;line-height:1;padding:5px 9px;border-radius:999px;white-space:nowrap;border:2px solid #C8963E;box-shadow:0 2px 6px rgba(0,0,0,.35)">' +
-               priceLabel(l.price, lang) +
-              "</div>",
-            iconSize: [64, 24],
-            iconAnchor: [32, 12],
+            html: '<div style="background:#C8963E;color:#0F2740;font-weight:800;font-size:12px;line-height:1;padding:7px 11px;border-radius:999px;white-space:nowrap;border:2px solid #fff;box-shadow:0 2px 8px rgba(0,0,0,.35)">' + esc(label) + "</div>",
+            iconSize: [120, 28],
+            iconAnchor: [60, 14],
           });
-          const m = L.marker([lat, lng], { icon, riseOnHover: true }).addTo(map);
-          const slug = `${slugifyListingTitle(l.title)}-${l.id}`;
-          const img = (l.images && l.images[0]) || "";
-           m.bindPopup(
-             `<a href="${lang === "en" ? "/en" : ""}/bds/${slug}" style="display:block;text-decoration:none;color:inherit;width:232px">` +
-              (img ? `<img src="${img}" alt="" style="width:100%;height:120px;object-fit:cover;display:block;border-radius:6px"/>` : "") +
-              `<div style="padding:8px 2px 2px">` +
-              `<div style="font-weight:700;font-size: 14px;line-height:1.3;margin-bottom:4px;color:#152232">${l.title || ""}</div>` +
-               `<div style="color:#1B3A5C;font-weight:800;font-size: 16px">${formatPrice(l.price, lang)}</div>` +
-              `<div style="color:#64748b;font-size: 12px;margin-top:2px">${l.location || ""}</div>` +
-               (l._approx ? `<div style="color:#94a3b8;font-size: 12px;margin-top:3px">${tt(lang, "Vị trí tương đối theo khu vực", "Approximate area location")}</div>` : "") +
-               `<div style="margin-top:8px;color:#C8963E;font-weight:700;font-size:12px">${tt(lang, "Xem chi tiết →", "View details →")}</div>` +
-              `</div></a>`,
-            { maxWidth: 252, minWidth: 232 }
-          );
-          bounds.push([lat, lng]);
+          L.marker([lat, lng], { icon, keyboard: true, title: label })
+            .on("click", () => {
+              const b = L.latLngBounds(group.map((p) => [p._lat, p._lng]));
+              if (b.getNorthEast().equals(b.getSouthWest())) map.setView(b.getCenter(), Math.min(18, map.getZoom() + 3));
+              else map.fitBounds(b, { padding: [60, 60], maxZoom: 18 });
+            })
+            .addTo(layer);
         });
-      });
-      if (bounds.length > 0) map.fitBounds(bounds, { padding: [50, 50], maxZoom: 14 });
-      setTimeout(() => map.invalidateSize(), 200);
+      };
+
+      if (points.length > 0) {
+        map.fitBounds(points.map((p) => [p._lat, p._lng]), { padding: [50, 50], maxZoom: 14 });
+      }
+      render();
+      map.on("zoomend", render);
+      setTimeout(() => { map.invalidateSize(); render(); }, 200);
     })();
     return () => {
       cancelled = true;
@@ -147,13 +193,22 @@ export function MarketplaceMap({ listings, height = "620px" }: { listings: any[]
         mapRef.current = null;
       }
     };
-   }, [listings, lang]);
+  }, [listings, lang]);
 
   return (
-    <div
-      ref={ref}
-      className="w-full rounded-2xl overflow-hidden"
-      style={{ height, border: "1px solid var(--border-default)", zIndex: 0 }}
-    />
+    <div className="relative w-full rounded-2xl overflow-hidden" style={{ height, border: "1px solid var(--border-default)" }}>
+      <div ref={ref} className="w-full h-full" style={{ zIndex: 0 }} />
+      {!ready && (
+        <div
+          className="absolute inset-0 flex flex-col items-center justify-center gap-3 animate-pulse"
+          style={{ background: "var(--bg-elevated)", color: "var(--text-tertiary)", zIndex: 500 }}
+          role="status"
+          aria-live="polite"
+        >
+          <div className="w-10 h-10 rounded-full" style={{ border: "3px solid var(--border-default)", borderTopColor: "var(--primary-600)" }} />
+          <span className="text-sm font-medium">{tt(lang, "Đang tải bản đồ…", "Loading map…")}</span>
+        </div>
+      )}
+    </div>
   );
 }

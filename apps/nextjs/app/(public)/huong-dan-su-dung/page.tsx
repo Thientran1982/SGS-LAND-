@@ -30,8 +30,8 @@ export default function UserGuidePage() {
       <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 pt-10">
         <div className="grid grid-cols-3 gap-3" aria-label="SGS LAND platform facts">
           {[
-            { value: "15.000+", label: "môi giới đăng ký" },
-            { value: "45.000+", label: "sản phẩm tham khảo" },
+            { value: "0 đ", label: "phí cho người mua" },
+            { value: "2 lớp", label: "kiểm tra pháp lý" },
             { value: "3 giây", label: "định giá AI tham khảo" },
           ].map((fact) => (
             <div key={fact.value} className="rounded-2xl p-4 text-center" style={{ background: "var(--primary-subtle)", border: "1px solid var(--border-default)" }}>

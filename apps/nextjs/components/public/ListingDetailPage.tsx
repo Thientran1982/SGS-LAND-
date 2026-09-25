@@ -1,5 +1,6 @@
 // @ts-nocheck
 "use client";
+import { displayListingTitle } from "@/lib/listingTitle";
 import React, { useState, useEffect, useMemo, useRef } from "react";
 import { trackListingEvent, trackPropertyView } from "@/lib/tracking";
 import Link from "next/link";
@@ -254,6 +255,65 @@ function LoanCalculator({ price, listingCode }: { price: number; listingCode: st
   );
 }
 
+// UX audit U6: listing descriptions are plain text written by agents. Render
+// them as headings / spec rows / bullet lists with React elements only (no HTML
+// injection), instead of one pre-formatted wall of text.
+const hasLetter = (c: string) => c.toLowerCase() !== c.toUpperCase();
+const isUpperStart = (w: string) => {
+  const c = Array.from(w).find(hasLetter) || "";
+  return !!c && c === c.toUpperCase();
+};
+function isTitleCaseLine(line: string): boolean {
+  const words = line.split(/\s+/).filter((w) => Array.from(w).some(hasLetter));
+  if (words.length < 2 || words.length > 14) return false;
+  return words.filter(isUpperStart).length / words.length >= 0.6;
+}
+function RichDescription({ text }: { text: string }) {
+  const lines = String(text || "").replace(/\r/g, "").split("\n").map((l) => l.trim());
+  const blocks: React.ReactNode[] = [];
+  let list: string[] = [];
+  let specs: [string, string][] = [];
+  const flush = () => {
+    if (list.length) {
+      const items = list;
+      blocks.push(<ul key={`u${blocks.length}`} className="list-disc pl-5 space-y-1">{items.map((li, i) => <li key={i}>{li}</li>)}</ul>);
+      list = [];
+    }
+    if (specs.length) {
+      const rows = specs;
+      blocks.push(
+        <dl key={`d${blocks.length}`} className="grid gap-x-4 gap-y-1.5 rounded-xl p-3" style={{ gridTemplateColumns: "minmax(0,auto) minmax(0,1fr)", background: "var(--bg-surface)" }}>
+          {rows.map(([k, v], i) => (
+            <React.Fragment key={i}>
+              <dt className="font-semibold" style={{ color: "var(--text-primary)" }}>{k}</dt>
+              <dd className="min-w-0 break-words">{v}</dd>
+            </React.Fragment>
+          ))}
+        </dl>
+      );
+      specs = [];
+    }
+  };
+  lines.forEach((raw) => {
+    if (!raw) { flush(); return; }
+    const clean = raw.replace(/\*\*/g, "");
+    const md = clean.match(/^#{1,4}\s+(.*)$/);
+    const bullet = clean.match(/^(?:[-•*+–]|\d+[.)])\s+(.*)$/);
+    const spec = clean.match(/^([^:：]{2,32})[:：]\s*(.{1,220})$/);
+    if (md || (clean.length <= 90 && !/[.!?;,:]$/.test(clean) && isTitleCaseLine(clean))) {
+      flush();
+      blocks.push(<h4 key={`h${blocks.length}`} className="pt-2 text-sm font-semibold" style={{ color: "var(--text-primary)" }}>{md ? md[1] : clean}</h4>);
+      return;
+    }
+    if (bullet) { if (specs.length) flush(); list.push(bullet[1]); return; }
+    if (spec && !/^https?$/i.test(spec[1].trim())) { if (list.length) flush(); specs.push([spec[1].trim(), spec[2].trim()]); return; }
+    flush();
+    blocks.push(<p key={`p${blocks.length}`}>{clean}</p>);
+  });
+  flush();
+  return <div className="space-y-3 text-sm leading-relaxed" style={{ color: "var(--text-secondary)" }}>{blocks}</div>;
+}
+
 export function ListingDetailPage({ listing, similarListings }: Props) {
   const lang = useLang();
   const [currentImg, setCurrentImg] = useState(0);
@@ -265,6 +325,9 @@ export function ListingDetailPage({ listing, similarListings }: Props) {
   const [bk, setBk] = useState({ name: "", phone: "", date: "", time: "09:00", notes: "" });
   const [bkState, setBkState] = useState({ loading: false, ok: "", err: "" });
   const listingCode = listing.code || listing.id;
+  // Zalo is the main messaging channel in Vietnam: zalo.me/<local phone number>.
+  const zaloPhone = String(listing.contactPhone || "").replace(/\D/g, "").replace(/^84(?=\d{9}$)/, "0");
+  const zaloHref = /^0\d{9}$/.test(zaloPhone) ? `https://zalo.me/${zaloPhone}` : "";
   const legalInfo = formatLegalInfo(listing.legalStatus || listing.attributes?.legalStatus, lang);
   const locationInfo = String(listing.location || "").trim();
   const engagementRef = useRef({ startedAt: 0, maxScroll: 0, leaveSent: false, exitShown: false });
@@ -441,7 +504,7 @@ export function ListingDetailPage({ listing, similarListings }: Props) {
         <span>/</span>
         <Link href={lang === "en" ? "/en/marketplace" : "/marketplace"} className="hover:opacity-80">{tt(lang, "Tìm kiếm", "Search")}</Link>
         <span>/</span>
-        <span className="truncate max-w-xs" style={{ color: "var(--text-primary)" }}>{listing.title}</span>
+        <span className="truncate max-w-xs" style={{ color: "var(--text-primary)" }}>{displayListingTitle(listing.title)}</span>
       </nav>
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         {/* Left: Images + Details */}
@@ -466,7 +529,7 @@ export function ListingDetailPage({ listing, similarListings }: Props) {
               <div className="flex gap-2 p-3 overflow-x-auto thin-scrollbar">
                 {images.map((img, i) => (
                    <button key={i} onClick={() => { setCurrentImg(i); trackListingEvent("gallery_interaction", listingCode, { imageIndex: i }); }}
-                    className={`shrink-0 w-16 h-12 rounded-lg overflow-hidden border-2 transition-all ${i === currentImg ? "border-indigo-500" : "border-transparent opacity-60"}`}>
+                    className={`shrink-0 w-16 h-12 rounded-lg overflow-hidden border-2 transition-all ${i === currentImg ? "border-[var(--sgs-primary,#1B3A5C)]" : "border-transparent opacity-60"}`}>
                     <img src={img} className="w-full h-full object-cover" alt="" />
                   </button>
                 ))}
@@ -490,8 +553,8 @@ export function ListingDetailPage({ listing, similarListings }: Props) {
                     </span>
                   )}
                 </div>
-                <h1 className="text-xl font-bold leading-tight sm:text-2xl" style={{ color: "var(--text-primary)" }}>
-                  {listing.title}
+                <h1 className="text-xl font-bold leading-tight sm:text-2xl" style={{ color: "var(--text-primary)" }} title={listing.title}>
+                  {displayListingTitle(listing.title)}
                 </h1>
               </div>
                   <button onClick={toggleFav} aria-label={tt(lang, "Yêu thích", "Favourite")}
@@ -537,10 +600,8 @@ export function ListingDetailPage({ listing, similarListings }: Props) {
             {/* Description */}
             {(listing.description || attr.description) && (
               <div className="p-4 rounded-2xl" style={{ background: "var(--bg-elevated)", border: "1px solid var(--border-default)" }}>
-                <h3 className="mb-2 text-sm font-semibold" style={{ color: "var(--text-primary)" }}>{tt(lang, "Thông Tin Chi Tiết", "Property Details")}</h3>
-                <p className="text-sm leading-relaxed whitespace-pre-line" style={{ color: "var(--text-secondary)" }}>
-                  {listing.description || attr.description}
-                </p>
+                <h3 className="mb-3 text-base font-semibold" style={{ color: "var(--text-primary)" }}>{tt(lang, "Mô tả chi tiết", "Property details")}</h3>
+                <RichDescription text={listing.description || attr.description} />
               </div>
             )}
             {(listing.coordinates?.lat || listing.location) && (
@@ -580,6 +641,14 @@ export function ListingDetailPage({ listing, similarListings }: Props) {
                 <Phone className="h-4 w-4 shrink-0" /> <span className="truncate">{tt(lang, "Chưa có số", "No phone")}</span>
               </div>}
             </div>
+            {zaloHref && (
+              <a href={zaloHref} target="_blank" rel="noopener noreferrer"
+                onClick={() => trackListingEvent("contact_click", listingCode, { channel: "zalo" })}
+                className="mt-2 flex w-full items-center justify-center gap-1.5 rounded-xl px-2 py-3 text-xs font-bold transition-transform hover:-translate-y-0.5 sm:text-sm"
+                style={{ background: "#0068FF", color: "#FFFFFF" }}>
+                {tt(lang, "Nhắn Zalo", "Message on Zalo")}
+              </a>
+            )}
             <p className="text-xs text-center mt-4" style={{ color: "var(--text-muted)" }}>
               {tt(lang, "SGS LAND — Đại lý uỷ quyền chính thức", "SGS LAND — Officially authorised agent")}
             </p>
@@ -615,7 +684,7 @@ export function ListingDetailPage({ listing, similarListings }: Props) {
          </div>
        </div>
        <div className="fixed bottom-0 inset-x-0 z-40 border-t p-2 sm:hidden" style={{ background: "var(--bg-surface)", borderColor: "var(--border-default)", paddingBottom: "max(8px, env(safe-area-inset-bottom))" }}>
-         <div className="grid grid-cols-3 gap-2 max-w-lg mx-auto">
+         <div className={`grid ${zaloHref ? "grid-cols-4" : "grid-cols-3"} gap-2 max-w-lg mx-auto`}>
            <button type="button" onClick={toggleFav} className="rounded-xl px-2 py-3 text-xs font-bold" style={{ background: "var(--bg-elevated)", color: "var(--text-primary)" }}>
              <Heart className={`w-4 h-4 mx-auto mb-1 ${isFav ? "fill-red-500 text-red-500" : ""}`} style={{ color: isFav ? undefined : "var(--text-tertiary)" }} />
              {isFav ? tt(lang, "Đã lưu", "Saved") : tt(lang, "Lưu tin", "Save")}
@@ -628,6 +697,12 @@ export function ListingDetailPage({ listing, similarListings }: Props) {
              <span className="block text-base leading-4 mb-1">💬</span>
              {tt(lang, "Chat", "Chat")}
            </a>
+           {zaloHref && (
+             <a href={zaloHref} target="_blank" rel="noopener noreferrer" onClick={() => trackListingEvent("contact_click", listingCode, { channel: "zalo", location: "mobile_sticky_cta" })} className="rounded-xl px-2 py-3 text-xs font-bold text-center" style={{ background: "#0068FF", color: "#FFFFFF" }}>
+               <span className="block text-base leading-4 mb-1">Z</span>
+               Zalo
+             </a>
+           )}
          </div>
        </div>
        {exitPromptOpen && (
