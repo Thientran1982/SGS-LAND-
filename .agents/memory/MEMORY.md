@@ -45,6 +45,7 @@
 - [Zalo readiness transition alerts](zalo-readiness-alerts.md) — serialize READY → NOT_READY detection per tenant and notify with allowlisted code/time only
 - [Durable signal health](durable-signal-health.md) — aggregate sanitized signal-write failures durably by tenant/type so restart does not erase operational alerts
 - [Minh answer focus](minh-answer-focus.md) — current user message and tenant-scoped evidence outrank old memory; unrelated history must not become prompt instructions
+- [Minh chat plan contract](minh-chat-plan-contract.md) — To-dos consumes backend-authored structured plans; progress is scoped to tenant, user, and conversation
 - [AI spend upsert reliability](ai-spend-upsert.md) — use atomic tenant-scoped increments and explicitly repair the unique key before ON CONFLICT upserts
 - [Admin AI defensive rendering](admin-ai-defensive-rendering.md) — admin AI data APIs can return legacy/null shapes; normalize before rendering to prevent Error Boundary crashes
 - [Email delivery claim RLS](email-delivery-rls.md) — internal idempotency claims need an explicit transaction-scoped bypass path in both RLS expressions

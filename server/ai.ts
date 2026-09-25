@@ -836,6 +836,26 @@ function buildSystemContext(lead: Lead | null, userFavorites?: CompactFavorite[]
     return parts.join(' | ') + favoritesBlock;
 }
 // Typed Router plan output
+export type MinhChatPlanStepStatus = 'PENDING' | 'IN_PROGRESS' | 'COMPLETED';
+
+export type MinhChatPlanStep = {
+    id: string;
+    title: string;
+    status: MinhChatPlanStepStatus;
+};
+
+export type MinhChatPlan = {
+    id: string;
+    title: string;
+    steps: MinhChatPlanStep[];
+    updatedAt: string;
+};
+
+export type MinhChatPlanDraft = {
+    title: string;
+    steps: Array<Pick<MinhChatPlanStep, 'id' | 'title'>>;
+};
+
 type RouterPlan = {
     next_step: string;
     platform_guide?: 'LISTING_FORM' | string;

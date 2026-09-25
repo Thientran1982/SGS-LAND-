@@ -236,6 +236,7 @@ import m212 from './212_livechat_reply_outbox';
 import m213 from './213_public_listing_teaser';
 import m214 from './214_valuation_data_contract';
 import m215 from './215_valuation_location_alias_review';
+import m216 from './216_minh_chat_plans';
 dotenv.config();
 
 export interface Migration {
@@ -467,6 +468,7 @@ export const MIGRATION_REGISTRY: Record<string, Migration> = {
   '213_public_listing_teaser.ts': m213,
   '214_valuation_data_contract.ts': m214,
   '215_valuation_location_alias_review.ts': m215,
+  '216_minh_chat_plans.ts': m216,
 };
 
 /**

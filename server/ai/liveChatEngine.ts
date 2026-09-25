@@ -35,6 +35,7 @@ import { createHash, randomUUID } from 'crypto';
 import { getFile } from '../services/storageService';
 import { inspectToolRequest, normalizeEvidenceSource, type AgentEvidenceSource } from './agentGuardrails';
 import { classifyLiveChatIntent, classifyLiveChatIntents, getLiveChatClarification, hasLandingTargetText, isLandingBuilderRequest, isLongFormRequest, normalizeIntentText, resolveLiveChatFollowUp, shouldUseFastLiveChatPipeline } from './liveChatIntent';
+import type { MinhChatPlanDraft } from '../ai';
 
 // P2-2 slice 1: intent classification implementation moved to
 // ./liveChatIntent — re-exported so routes and tests keep importing from
@@ -346,6 +347,30 @@ function relevantMemoryBlock(message: string, memory: string): string {
 
 function normalizeGuideQuery(value: string): string {
     return normalizeGuideInput(value);
+}
+
+function buildVerifiedGuidePlan(query: string, isEnglish: boolean): MinhChatPlanDraft | undefined {
+    const normalized = normalizeGuideQuery(query);
+    const asksToCreateLead = /\b(lead|leads|khach hang|customer)\b/.test(normalized)
+        && /\b(tao|them|create|add|new|moi)\b/.test(normalized);
+    if (!asksToCreateLead) return undefined;
+
+    return {
+        title: isEnglish ? 'Create a new lead' : 'Tạo lead mới',
+        steps: isEnglish
+            ? [
+                { id: 'create-lead.open', title: 'Open Leads from the main navigation.' },
+                { id: 'create-lead.start', title: 'Select New lead.' },
+                { id: 'create-lead.details', title: 'Enter the required contact and qualification details.' },
+                { id: 'create-lead.save', title: 'Save, then review the lead stage and owner.' },
+            ]
+            : [
+                { id: 'create-lead.open', title: 'Mở mục Leads trên thanh điều hướng.' },
+                { id: 'create-lead.start', title: 'Chọn Tạo lead mới.' },
+                { id: 'create-lead.details', title: 'Nhập thông tin liên hệ và nhu cầu bắt buộc.' },
+                { id: 'create-lead.save', title: 'Lưu lại, sau đó kiểm tra giai đoạn và người phụ trách.' },
+            ],
+    };
 }
 
 export async function generateLiveChatText(params: {
@@ -2745,9 +2770,16 @@ async function handle_get_platform_knowledge(args: Record<string, any>): Promise
         return { domain, query, knowledge: LONGTHANH_KB, source: 'SGS Land Market Intelligence', cached: true };
     }
     if (d === 'platform' || d === 'tính năng' || d === 'hướng dẫn') {
+        const planDraft = buildVerifiedGuidePlan(q, isEnglish);
         const policyResponse = getGuidePolicyResponse(q, isEnglish ? 'en' : 'vn');
         if (policyResponse) {
-            return { domain, query, ...policyResponse, cached: true };
+            return {
+                domain,
+                query,
+                ...policyResponse,
+                ...(planDraft ? { planDraft } : {}),
+                cached: true,
+            };
         }
         const normalizedQuery = normalizeGuideQuery(q);
         const asksOperations = /(van hanh|operations|phe duyet|approval|du an|project|dau gia|auction|truong tuy chinh|custom field|kho don vi|unit inventory|quy tac phan|routing|chuoi tu dong|sequence|chien dich|campaign|cham diem|scoring|co so kien thuc|knowledge base|bao cao|report)/i.test(normalizedQuery);
@@ -2797,6 +2829,7 @@ async function handle_get_platform_knowledge(args: Record<string, any>): Promise
             domain, query,
             knowledge: guide,
             source: 'SGS Land Platform Guide',
+            ...(planDraft ? { planDraft } : {}),
             cached: false,
         };
     }

@@ -19,6 +19,8 @@ import { sendAiError } from '../utils/aiErrorHandler';
 import { detectGuideDataGroup, renderGuideDataSummary } from '../ai/guideDataSources';
 import { supportRequestRepository, SUPPORT_STATUSES } from '../repositories/supportRequestRepository';
 import { canUseTool, requiredTier } from '../ai/toolPermissions';
+import { minhChatPlanRepository } from '../repositories/minhChatPlanRepository';
+import type { MinhChatPlanStepStatus } from '../ai';
 
 const AI_TOOLS = new Set([
     'handle_live_chat',
@@ -37,12 +39,59 @@ const GUIDE_SAFE_TOOLS = new Set([
     'get_guide_data_summary',
 ]);
 
+const PLAN_STEP_STATUSES = new Set<MinhChatPlanStepStatus>(['PENDING', 'IN_PROGRESS', 'COMPLETED']);
+
+function validPlanSessionId(value: unknown): value is string {
+    return typeof value === 'string' && value.trim().length > 0 && value.trim().length <= 200;
+}
+
 export function createLiveChatAgentRoutes(
     authenticateToken: any,
     aiRateLimit: any,
     apiRateLimit: any,
 ): Router {
     const router = Router();
+
+    router.get('/plans/:sessionId', authenticateToken, apiRateLimit, async (req: Request, res: Response) => {
+        const user = (req as any).user;
+        const sessionId = req.params.sessionId;
+        if (!user?.tenantId || !user?.id || !validPlanSessionId(sessionId)) {
+            return res.status(400).json({ error: 'sessionId không hợp lệ.', code: 'MINH_PLAN_SESSION_INVALID' });
+        }
+        try {
+            const plan = await minhChatPlanRepository.findForSession(user.tenantId, user.id, sessionId.trim());
+            return res.json({ plan });
+        } catch (e: any) {
+            logger.error('[liveChatAgentRoutes] plan lookup error:', e);
+            return res.status(500).json({ error: 'Không thể tải tiến độ kế hoạch.', code: 'MINH_PLAN_LOAD_FAILED' });
+        }
+    });
+
+    router.post('/plans/:sessionId/steps/:stepId', authenticateToken, apiRateLimit, async (req: Request, res: Response) => {
+        const user = (req as any).user;
+        const sessionId = req.params.sessionId;
+        const stepId = req.params.stepId;
+        const status = (req.body as any)?.status;
+        if (!user?.tenantId || !user?.id || !validPlanSessionId(sessionId)
+            || typeof stepId !== 'string' || !stepId.trim() || stepId.length > 120
+            || typeof status !== 'string' || !PLAN_STEP_STATUSES.has(status as MinhChatPlanStepStatus)) {
+            return res.status(400).json({ error: 'Bước kế hoạch không hợp lệ.', code: 'MINH_PLAN_STEP_INVALID' });
+        }
+        try {
+            const plan = await minhChatPlanRepository.updateStep(
+                user.tenantId,
+                user.id,
+                sessionId.trim(),
+                stepId,
+                status as MinhChatPlanStepStatus,
+            );
+            if (!plan) return res.status(404).json({ error: 'Không tìm thấy kế hoạch hoặc bước này.', code: 'MINH_PLAN_STEP_NOT_FOUND' });
+            return res.json({ plan });
+        } catch (e: any) {
+            logger.error('[liveChatAgentRoutes] plan update error:', e);
+            return res.status(500).json({ error: 'Không thể cập nhật tiến độ kế hoạch.', code: 'MINH_PLAN_UPDATE_FAILED' });
+        }
+    });
 
     // ── GET /tools — manifest of all 22 tools ─────────────────────────────
     router.get('/tools', authenticateToken, (_req: Request, res: Response) => {
@@ -134,6 +183,10 @@ export function createLiveChatAgentRoutes(
                 if (!language) {
                     return res.status(400).json({ error: 'language phải là vn hoặc en.', code: 'GUIDE_LANGUAGE_INVALID' });
                 }
+                const planSessionId = validPlanSessionId(sessionId) ? sessionId.trim() : null;
+                const userPlan = planSessionId && user?.tenantId && user?.id
+                    ? await minhChatPlanRepository.findForSession(user.tenantId, user.id, planSessionId)
+                    : null;
                 const group = detectGuideDataGroup(message);
                 if (group) {
                     const data = await liveChatEngine.callTool('get_guide_data_summary', {
@@ -154,6 +207,7 @@ export function createLiveChatAgentRoutes(
                         status: data.status,
                         group,
                         executedTools: ['get_guide_data_summary'],
+                        ...(userPlan ? { plan: userPlan } : {}),
                     });
                 }
                 const knowledge = await liveChatEngine.callTool('get_platform_knowledge', {
@@ -163,6 +217,21 @@ export function createLiveChatAgentRoutes(
                     sessionId,
                     language,
                 });
+                let plan = userPlan;
+                let planUnavailable = false;
+                if (knowledge?.planDraft && planSessionId && user?.tenantId && user?.id) {
+                    try {
+                        plan = await minhChatPlanRepository.createForSession(
+                            user.tenantId,
+                            user.id,
+                            planSessionId,
+                            knowledge.planDraft,
+                        );
+                    } catch (error: any) {
+                        planUnavailable = true;
+                        logger.warn(`[liveChatAgentRoutes] verified guide plan could not be saved: ${error?.message || error}`);
+                    }
+                }
                 return res.json({
                     sessionId,
                     intent: knowledge?.intent || 'PLATFORM_GUIDE',
@@ -175,6 +244,8 @@ export function createLiveChatAgentRoutes(
                     status: knowledge?.status,
                     escalationReason: knowledge?.escalationReason,
                     executedTools: ['get_platform_knowledge'],
+                    ...(plan ? { plan } : {}),
+                    ...(planUnavailable ? { planUnavailable: true } : {}),
                 });
             }
 

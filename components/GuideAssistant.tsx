@@ -28,11 +28,21 @@ type ChatMessage = {
     freshness?: string;
     status?: 'ok' | 'empty' | 'forbidden';
     escalationReason?: string;
+    planUnavailable?: boolean;
     approval?: {
         id: string;
         title?: string;
         status?: string;
     };
+};
+
+type PlanStepStatus = 'PENDING' | 'IN_PROGRESS' | 'COMPLETED';
+
+type ChatPlan = {
+    id: string;
+    title: string;
+    steps: Array<{ id: string; title: string; status: PlanStepStatus }>;
+    updatedAt: string;
 };
 
 type AssistantResponse = {
@@ -43,6 +53,8 @@ type AssistantResponse = {
     freshness?: string;
     status?: 'ok' | 'empty' | 'forbidden';
     escalationReason?: string;
+    plan?: ChatPlan;
+    planUnavailable?: boolean;
     approval?: {
         id?: string;
         title?: string;
@@ -72,6 +84,7 @@ type Conversation = {
     id: string;
     sessionId: string;
     messages: ChatMessage[];
+    plan?: ChatPlan | null;
     updatedAt: number;
 };
 
@@ -104,12 +117,13 @@ type GuideAssistantProps = {
 
 const MAX_HISTORY = 12;
 const MAX_RECENT_CONVERSATIONS = 8;
+const ACTIVE_SESSION_STORAGE_KEY = 'guide-assistant.active-session-id';
 
-const createConversation = (): Conversation => {
+const createConversation = (restoredSessionId?: string | null): Conversation => {
     const id = `conversation-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
     return {
         id,
-        sessionId: `guide-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+        sessionId: restoredSessionId || `guide-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
         messages: [],
         updatedAt: Date.now(),
     };
@@ -128,7 +142,17 @@ export const GuideAssistant: React.FC<GuideAssistantProps> = ({
     const [sendingConversationIds, setSendingConversationIds] = useState<string[]>([]);
     const [error, setError] = useState('');
     const [approvingApprovalId, setApprovingApprovalId] = useState<string | null>(null);
-    const [conversations, setConversations] = useState<Conversation[]>(() => [createConversation()]);
+    const [conversations, setConversations] = useState<Conversation[]>(() => {
+        let restoredSessionId: string | null = null;
+        if (typeof window !== 'undefined') {
+            try {
+                restoredSessionId = window.sessionStorage.getItem(ACTIVE_SESSION_STORAGE_KEY);
+            } catch {
+                // Browser storage can be unavailable; the conversation still works without restoration.
+            }
+        }
+        return [createConversation(restoredSessionId)];
+    });
     const [activeConversationId, setActiveConversationId] = useState('');
     const [support, setSupport] = useState<SupportRequest[]>([]);
     const [supportDraft, setSupportDraft] = useState<SupportDraft | null>(null);
@@ -138,6 +162,7 @@ export const GuideAssistant: React.FC<GuideAssistantProps> = ({
     const [approvalQueueCount, setApprovalQueueCount] = useState(0);
     const [approvalQueueLoading, setApprovalQueueLoading] = useState(false);
     const [approvalQueueUnavailable, setApprovalQueueUnavailable] = useState(false);
+    const [updatingPlanStepId, setUpdatingPlanStepId] = useState<string | null>(null);
     const [expanded, setExpanded] = useState(false);
     const [isListening, setIsListening] = useState(false);
     const [voiceNotice, setVoiceNotice] = useState('');
@@ -153,11 +178,51 @@ export const GuideAssistant: React.FC<GuideAssistantProps> = ({
     const sending = Boolean(activeConversation && sendingConversationIds.includes(activeConversation.id));
     const isSupportDraftOpen = supportDraft !== null;
     const todoCount = canApprove ? Math.max(approvalQueueCount, pendingApprovals.length) : 0;
+    const plan = activeConversation?.plan ?? null;
+    const planLoading = Boolean(activeConversation && activeConversation.plan === undefined);
+    const planCompletedCount = plan?.steps.filter(step => step.status === 'COMPLETED').length ?? 0;
+    const planProgressLabel = plan ? `${planCompletedCount}/${plan.steps.length}` : `0/${todoCount}`;
+    const latestAssistantMessage = [...messages].reverse().find(message => message.role === 'assistant');
+    const planUnavailable = !plan && latestAssistantMessage?.planUnavailable === true;
     const hasUncertainApproval = pendingApprovals.some(approval => approval.status.toUpperCase() === 'UNKNOWN');
 
     useEffect(() => {
         if (!activeConversationId && conversations[0]) setActiveConversationId(conversations[0].id);
     }, [activeConversationId, conversations]);
+
+    useEffect(() => {
+        if (!activeConversation) return;
+        try {
+            window.sessionStorage.setItem(ACTIVE_SESSION_STORAGE_KEY, activeConversation.sessionId);
+        } catch {
+            // Session restoration is optional; the server still scopes all plans by owner.
+        }
+    }, [activeConversation?.sessionId]);
+
+    useEffect(() => {
+        if (!open || !activeConversation || activeConversation.plan !== undefined) return;
+        let isCurrent = true;
+        const conversationId = activeConversation.id;
+        const sessionId = activeConversation.sessionId;
+        api.get<{ plan?: ChatPlan | null }>(`/api/live-chat/plans/${encodeURIComponent(sessionId)}`)
+            .then(result => {
+                if (!isCurrent) return;
+                setConversations(previous => previous.map(conversation => (
+                    conversation.id === conversationId && conversation.plan === undefined
+                        ? { ...conversation, plan: result?.plan || null }
+                        : conversation
+                )));
+            })
+            .catch(() => {
+                if (!isCurrent) return;
+                setConversations(previous => previous.map(conversation => (
+                    conversation.id === conversationId && conversation.plan === undefined
+                        ? { ...conversation, plan: null }
+                        : conversation
+                )));
+            });
+        return () => { isCurrent = false; };
+    }, [open, activeConversation?.id, activeConversation?.sessionId, activeConversation?.plan]);
 
     useEffect(() => {
         if (open) endRef.current?.scrollIntoView({ behavior: 'smooth', block: 'end' });
@@ -228,6 +293,12 @@ export const GuideAssistant: React.FC<GuideAssistantProps> = ({
             : conversation));
     };
 
+    const updateConversationPlan = (conversationId: string, nextPlan: ChatPlan | null) => {
+        setConversations(previous => previous.map(conversation => conversation.id === conversationId
+            ? { ...conversation, plan: nextPlan, updatedAt: Date.now() }
+            : conversation));
+    };
+
     const selectConversation = (conversationId: string) => {
         setActiveConversationId(conversationId);
         setInput('');
@@ -256,6 +327,7 @@ export const GuideAssistant: React.FC<GuideAssistantProps> = ({
             ...activeConversation,
             sessionId: `guide-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
             messages: [],
+            plan: undefined,
             updatedAt: Date.now(),
         };
         setConversations(previous => [resetConversation, ...previous.filter(item => item.id !== resetConversation.id)]);
@@ -335,13 +407,42 @@ export const GuideAssistant: React.FC<GuideAssistantProps> = ({
                 freshness: result?.freshness,
                 status: result?.status,
                 escalationReason: result?.escalationReason,
+                planUnavailable: result?.planUnavailable === true,
                 approval,
             }]);
+            if (result?.plan) updateConversationPlan(conversationId, result.plan);
+            else {
+                setConversations(previous => previous.map(conversation => (
+                    conversation.id === conversationId && conversation.plan === undefined
+                        ? { ...conversation, plan: null }
+                        : conversation
+                )));
+            }
         } catch {
             setError(t('guide.connection_error'));
             setFailedMessage(message);
         } finally {
             setSendingConversationIds(previous => previous.filter(id => id !== conversationId));
+        }
+    };
+
+    const updatePlanStepStatus = async (stepId: string, status: PlanStepStatus) => {
+        if (!activeConversation || !plan || updatingPlanStepId) return;
+        const conversationId = activeConversation.id;
+        const sessionId = activeConversation.sessionId;
+        setUpdatingPlanStepId(stepId);
+        setError('');
+        try {
+            const result = await api.post<{ plan?: ChatPlan }>(
+                `/api/live-chat/plans/${encodeURIComponent(sessionId)}/steps/${encodeURIComponent(stepId)}`,
+                { status },
+            );
+            if (!result?.plan) throw new Error('Missing updated plan');
+            updateConversationPlan(conversationId, result.plan);
+        } catch {
+            setError(t('guide.plan_update_error'));
+        } finally {
+            setUpdatingPlanStepId(null);
         }
     };
 
@@ -552,16 +653,76 @@ export const GuideAssistant: React.FC<GuideAssistantProps> = ({
                                 <div className="flex items-center justify-between gap-2">
                                     <h3 className="text-sm font-semibold text-[var(--text-primary)]">{t('guide.todos_title')}</h3>
                                     <span className="rounded-lg border border-[var(--glass-border)] bg-[var(--bg-surface)] px-2 py-1 font-mono text-[11px] font-semibold tabular-nums text-[var(--text-secondary)]">
-                                        {approvalQueueLoading ? '…' : `0/${todoCount}`}
+                                        {planLoading || (approvalQueueLoading && !plan) ? '…' : planProgressLabel}
                                     </span>
                                 </div>
+                                {planLoading && (
+                                    <p role="status" className="mt-1 text-xs leading-5 text-[var(--text-secondary)]">{t('guide.plan_loading')}</p>
+                                )}
+                                {planUnavailable && (
+                                    <p role="status" className="mt-1 text-xs leading-5 text-[var(--text-secondary)]">{t('guide.plan_unavailable')}</p>
+                                )}
+                                {plan && (
+                                    <div className="mt-3">
+                                        <p className="text-xs font-semibold leading-5 text-[var(--text-primary)]">{plan.title}</p>
+                                        <div
+                                            className="mt-2 h-1.5 overflow-hidden rounded-full bg-[var(--glass-border)]"
+                                            role="progressbar"
+                                            aria-label={t('guide.plan_progress')}
+                                            aria-valuemin={0}
+                                            aria-valuemax={plan.steps.length}
+                                            aria-valuenow={planCompletedCount}
+                                        >
+                                            <div
+                                                className="h-full rounded-full bg-[var(--sgs-primary)] transition-[width]"
+                                                style={{ width: `${plan.steps.length ? (planCompletedCount / plan.steps.length) * 100 : 0}%` }}
+                                            />
+                                        </div>
+                                        <ol className="mt-2 space-y-1.5">
+                                            {plan.steps.map(step => {
+                                                const nextStatus: PlanStepStatus = step.status === 'PENDING'
+                                                    ? 'IN_PROGRESS'
+                                                    : step.status === 'IN_PROGRESS'
+                                                        ? 'COMPLETED'
+                                                        : 'PENDING';
+                                                const actionLabel = nextStatus === 'IN_PROGRESS'
+                                                    ? 'guide.plan_mark_in_progress'
+                                                    : nextStatus === 'COMPLETED'
+                                                        ? 'guide.plan_mark_completed'
+                                                        : 'guide.plan_reopen';
+                                                return (
+                                                    <li key={step.id} className="flex items-start gap-2 rounded-lg bg-[var(--bg-surface)] px-2.5 py-2">
+                                                        <button
+                                                            type="button"
+                                                            disabled={updatingPlanStepId !== null}
+                                                            onClick={() => void updatePlanStepStatus(step.id, nextStatus)}
+                                                            aria-label={`${t(actionLabel)}: ${step.title}`}
+                                                            aria-pressed={step.status === 'COMPLETED'}
+                                                            className="mt-0.5 flex min-h-6 min-w-6 shrink-0 items-center justify-center rounded-full border border-[var(--glass-border)] text-[10px] font-bold text-[var(--sgs-primary-deep)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--sgs-accent)] disabled:cursor-wait disabled:opacity-50"
+                                                        >
+                                                            {step.status === 'COMPLETED' ? '✓' : step.status === 'IN_PROGRESS' ? '•' : ''}
+                                                        </button>
+                                                        <div className="min-w-0 flex-1">
+                                                            <p className={`text-xs leading-5 ${step.status === 'COMPLETED' ? 'text-[var(--text-tertiary)] line-through' : 'text-[var(--text-primary)]'}`}>
+                                                                {step.title}
+                                                            </p>
+                                                            <span className="text-[10px] font-medium text-[var(--text-tertiary)]">
+                                                                {t(`guide.plan_status_${step.status.toLowerCase()}`)}
+                                                            </span>
+                                                        </div>
+                                                    </li>
+                                                );
+                                            })}
+                                        </ol>
+                                    </div>
+                                )}
                                 {approvalQueueLoading && (
                                     <p role="status" className="mt-1 text-xs leading-5 text-[var(--text-secondary)]">{t('guide.approvals_loading')}</p>
                                 )}
                                 {!approvalQueueLoading && approvalQueueUnavailable && (
                                     <p role="status" className="mt-1 text-xs leading-5 text-[var(--text-secondary)]">{t('guide.approvals_unavailable')}</p>
                                 )}
-                                {!approvalQueueLoading && !approvalQueueUnavailable && pendingApprovals.length === 0 && (
+                                {!planLoading && !approvalQueueLoading && !approvalQueueUnavailable && pendingApprovals.length === 0 && !plan && !planUnavailable && (
                                     <p className="mt-1 text-xs leading-5 text-[var(--text-secondary)]">{t('guide.todos_empty')}</p>
                                 )}
                             </div>
