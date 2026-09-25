@@ -8,6 +8,7 @@ import { useTranslation } from '../services/i18n';
 import { Dropdown } from './Dropdown';
 import { ContractModal } from './ContractModal';
 import { useSocket } from '../services/websocket';
+import { DetailSection, LevelMeter, StatusChip } from './detail/DetailLayout';
 import { AiCreditBadge, AiQuotaGate, type QuotaInfo } from './AiCreditBadge';
 import { formatLeadTagsInput, normalizeLeadEmail, normalizeLeadTags, normalizeVNPhone } from '../utils/leadNormalization';
 const fmtDots = (n: number) => Math.round(n).toString().replace(/\B(?=(\d{3})+(?!\d))/g, '.');
@@ -329,16 +330,45 @@ export const LeadDetail: React.FC<LeadDetailProps> = ({ lead, onClose, onUpdate,
         return 'text-[var(--text-tertiary)] bg-[var(--glass-surface-hover)] border-[var(--glass-border)]';
     };
     // --- RENDER CONTENT ---
+    const scoreValue = Number(formData.score?.score ?? 0);
+    const scoreLevel = !formData.score ? -1 : scoreValue >= 70 ? 2 : scoreValue >= 40 ? 1 : 0;
+    const stageTone = formData.stage === LeadStage.WON ? 'success' : formData.stage === LeadStage.LOST ? 'danger' : (formData.stage === LeadStage.NEGOTIATION || formData.stage === LeadStage.PROPOSAL) ? 'warning' : 'info';
+    // --- RENDER CONTENT (detail page template: header → main + context column → action footer) ---
     const content = (
-        <div className={`bg-[var(--bg-surface)] ${isModal ? 'fixed inset-0 z-[70] md:inset-y-4 md:inset-x-auto md:right-4 md:w-[80vw] lg:w-[900px] md:rounded-3xl md:shadow-2xl animate-slide-in-right border border-[var(--glass-border)] overflow-y-auto no-scrollbar' : 'h-full flex flex-col'}`}>            
-            {/* Header - sticky at top when modal */}
-            <div className={`flex justify-between items-center p-4 md:p-6 border-b border-[var(--glass-border)] bg-[var(--bg-surface)] shadow-sm ${isModal ? 'sticky top-0 z-20' : 'flex-none relative z-20'}`}>
-                <div className="flex-1 mr-4 flex items-center gap-4">
-                    {/* Visual Anchor: Avatar */}
+        <div className={`bg-[var(--bg-surface)] ${isModal ? 'fixed inset-0 z-[70] flex flex-col md:inset-y-3 md:left-auto md:right-3 md:w-[calc(100vw-1.5rem)] lg:w-[min(1180px,calc(100vw-1.5rem))] md:rounded-[20px] md:shadow-2xl animate-slide-in-right border border-[var(--glass-border)] overflow-hidden' : 'h-full flex flex-col'}`}>
+            {/* Header strip */}
+            <div className="flex flex-none items-center gap-2 border-b border-[var(--glass-border)] bg-[var(--bg-surface)] px-3 py-2.5 md:px-5">
+                <button type="button" onClick={onClose} aria-label={t('common.close')} className="flex h-10 w-10 items-center justify-center rounded-full border border-[var(--glass-border)] text-[var(--text-secondary)] hover:bg-[var(--glass-surface-hover)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--ui-focus)]">
+                    <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="m15 18-6-6 6-6" /></svg>
+                </button>
+                <span className="text-sm font-semibold text-[var(--text-secondary)]">{t('shell.mobile.leads')}</span>
+                <div className="flex-1" />
+                            {activeViewers.length > 1 && (
+                                <div className="flex items-center ml-2">
+                                    <div className="flex -space-x-2">
+                                        {activeViewers.map((viewer, idx) => (
+                                            <div key={idx} className="w-6 h-6 rounded-full border-2 border-white bg-sgs-champagne flex items-center justify-center text-3xs font-bold text-sgs-primary shadow-sm" title={viewer.name}>
+                                                {viewer.name?.charAt(0).toUpperCase()}
+                                            </div>
+                                        ))}
+                                    </div>
+                                    <span className="ml-2 text-xs2 text-[var(--text-tertiary)] flex items-center gap-1">
+                                        <span className="w-1.5 h-1.5 rounded-full bg-sgs-verified animate-pulse"></span>
+                                        {t('detail.viewing')}
+                                    </span>
+                                </div>
+                            )}
+            </div>
+            {/* Body */}
+            <div className="min-h-0 flex-1 overflow-y-auto no-scrollbar">
+                <div className="grid grid-cols-1 gap-8 px-4 py-6 md:px-8 lg:grid-cols-[minmax(0,1fr)_320px] lg:gap-10">
+                    <div className="min-w-0 space-y-7">
+                        {/* Title block */}
+                        <div className="flex items-start gap-4">
                     <div className="w-12 h-12 rounded-full bg-sgs-champagne flex items-center justify-center text-sgs-primary font-bold text-xl border-2 border-white shadow-sm shrink-0">
                         {formData.name ? formData.name.charAt(0).toUpperCase() : '?'}
                     </div>
-                    <div className="flex-1 min-w-0">
+                            <div className="min-w-0 flex-1">
                         <div className="group relative">
                             <input 
                                 value={formData.name}
@@ -350,7 +380,8 @@ export const LeadDetail: React.FC<LeadDetailProps> = ({ lead, onClose, onUpdate,
                                 {ICONS.EDIT_PEN}
                             </div>
                         </div>
-                        <div className="flex items-center gap-2 px-2 mt-0.5">
+                                <div className="mt-1 flex flex-wrap items-center gap-2 px-2">
+                                    {formData.stage && <StatusChip tone={stageTone as any}>{t(`stage.${formData.stage}`)}</StatusChip>}
                             <span
                                 className="text-xs2 font-mono text-[var(--text-secondary)] bg-[var(--glass-surface)] px-1.5 py-0.5 rounded border border-[var(--glass-border)] cursor-pointer hover:text-sgs-primary hover:border-sgs-border hover:bg-sgs-champagne transition-colors"
                                 title={formData.id || ''}
@@ -384,123 +415,27 @@ export const LeadDetail: React.FC<LeadDetailProps> = ({ lead, onClose, onUpdate,
                                 )}
                                 {isScoring ? t('detail.scoring') : t('detail.score_btn')}
                             </button>                            
-                            {/* Active Viewers Collaboration */}
-                            {activeViewers.length > 1 && (
-                                <div className="flex items-center ml-2">
-                                    <div className="flex -space-x-2">
-                                        {activeViewers.map((viewer, idx) => (
-                                            <div key={idx} className="w-6 h-6 rounded-full border-2 border-white bg-sgs-champagne flex items-center justify-center text-3xs font-bold text-sgs-primary shadow-sm" title={viewer.name}>
-                                                {viewer.name?.charAt(0).toUpperCase()}
-                                            </div>
-                                        ))}
-                                    </div>
-                                    <span className="ml-2 text-xs2 text-[var(--text-tertiary)] flex items-center gap-1">
-                                        <span className="w-1.5 h-1.5 rounded-full bg-sgs-verified animate-pulse"></span>
-                                        {t('detail.viewing')}
-                                    </span>
                                 </div>
-                            )}
-                        </div>
-                    </div>
-                </div>
-                <button type="button" onClick={onClose} aria-label={t('common.close')} className="text-[var(--text-secondary)] hover:text-[var(--text-secondary)] p-2.5 rounded-full hover:bg-[var(--glass-surface-hover)] transition-colors shrink-0">
-                    <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
-                </button>
-            </div>
-            {/* Scrollable Body */}
-            <div className={`p-4 md:p-6 bg-[var(--glass-surface)]/30 ${!isModal ? 'flex-1 min-h-0 overflow-y-auto no-scrollbar' : ''}`}>
-                    <AIAnalysisCard summary={aiSummary} loading={isThinking} t={t} onRefresh={refreshAiSummary} quota={ariaQuota} onUpgrade={() => window.open('/pricing', '_blank')} />
-
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 md:gap-5 mb-8">
-                        <DetailField label={t('leads.phone')} error={errors.phone}>
-                            <input type="tel" autoComplete="tel" value={formData.phone} onChange={e => handleInputChange('phone', e.target.value)} onBlur={() => handleInputChange('phone', normalizeVNPhone(formData.phone))} className={errors.phone ? STYLES.INPUT_ERROR : STYLES.INPUT} />
-                        </DetailField>
-                        <DetailField label={t('leads.email')} error={errors.email}>
-                            <input type="email" autoComplete="email" value={formData.email || ''} onChange={e => handleInputChange('email', e.target.value)} onBlur={() => handleInputChange('email', normalizeLeadEmail(formData.email || ''))} className={errors.email ? STYLES.INPUT_ERROR : STYLES.INPUT} />
-                        </DetailField>
-                        {canManageConsent && <div className="sm:col-span-2 flex items-start gap-3 rounded-xl border border-[var(--glass-border)] bg-[var(--glass-surface)] p-3">
-                            <input
-                                id="lead-marketing-email-consent"
-                                type="checkbox"
-                                checked={formData.marketingEmailConsent === true}
-                                onChange={e => handleInputChange('marketingEmailConsent', e.target.checked)}
-                                className="mt-1 h-4 w-4 accent-[var(--sgs-primary)]"
-                            />
-                            <label htmlFor="lead-marketing-email-consent" className="text-sm text-[var(--text-secondary)] cursor-pointer">
-                                Đồng ý nhận email marketing
-                                {formData.marketingEmailConsentAt && (
-                                    <span className="block text-xs text-[var(--text-tertiary)] mt-1">
-                                        Ghi nhận: {new Date(formData.marketingEmailConsentAt).toLocaleString('vi-VN')}
-                                        {formData.marketingEmailConsentSource ? ` · Nguồn: ${formData.marketingEmailConsentSource}` : ''}
-                                    </span>
-                                )}
-                            </label>
-                        </div>}
-                        <DetailField label={t('leads.address')} className="sm:col-span-2">
-                            <input value={formData.address || ''} onChange={e => handleInputChange('address', e.target.value)} className={STYLES.INPUT} />
-                        </DetailField>
-                        <DetailField label={t('leads.stage')}>
-                            <Dropdown value={formData.stage} onChange={(val) => handleInputChange('stage', val)} options={stageOptions} className="w-full" />
-                        </DetailField>
-                        <DetailField label={t('leads.source')}>
-                            <Dropdown value={formData.source} onChange={(val) => handleInputChange('source', val)} options={sourceOptions} className="w-full" />
-                        </DetailField>
-                        <DetailField label={t('leads.tags')} className="sm:col-span-2">
-                            <input
-                                value={Array.isArray(formData.tags) ? formData.tags.join(', ') : (formData.tags || '')}
-                                onChange={e => handleInputChange('tags', e.target.value as any)}
-                                onBlur={() => handleInputChange('tags', formatLeadTagsInput(Array.isArray(formData.tags) ? formData.tags.join(', ') : String(formData.tags || '')) as any)}
-                                placeholder="VIP, căn hộ, Q2"
-                                className={STYLES.INPUT}
-                            />
-                            {normalizeLeadTags(formData.tags || []).length > 0 && (
-                                <div className="flex flex-wrap gap-1.5 pt-1">
-                                    {normalizeLeadTags(formData.tags || []).map(tag => <span key={tag.toLowerCase()} className="px-2 py-0.5 rounded-full bg-sgs-champagne text-sgs-primary text-xs2 font-semibold">{tag}</span>)}
-                                </div>
-                            )}
-                        </DetailField>
-                        {/* Social Profiles — auto-populated from Zalo/Facebook webhooks */}
-                        {(lead.socialIds?.zalo || lead.socialIds?.facebook || lead.socialIds?.telegram) && (
-                            <div className="sm:col-span-2">
-                                <div className="text-xs font-bold text-[var(--text-tertiary)] uppercase mb-2 tracking-wider">Tài khoản mạng xã hội</div>
-                                <div className="flex flex-wrap gap-2">
-                                    {lead.socialIds?.zalo && (
-                                        <div className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-blue-50 border border-blue-100 text-sgs-primary rounded-xl text-xs font-mono">
-                                            <span className="w-5 h-5 bg-sgs-primary text-white rounded font-bold text-xs flex items-center justify-center shrink-0">Z</span>
-                                            <span className="font-medium">Zalo:</span>
-                                            <span className="select-all">{lead.socialIds.zalo}</span>
-                                        </div>
-                                    )}
-                                    {lead.socialIds?.facebook && (
-                                        <div className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-[#1877F2]/5 border border-[#1877F2]/20 text-[#1877F2] rounded-xl text-xs font-mono">
-                                            <span className="w-5 h-5 bg-[#1877F2] text-white rounded-full font-bold text-xs flex items-center justify-center shrink-0">f</span>
-                                            <span className="font-medium">Facebook:</span>
-                                            <span className="select-all">{lead.socialIds.facebook}</span>
-                                        </div>
-                                    )}
-                                    {lead.socialIds?.telegram && (
-                                        <div className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-sky-50 border border-sky-100 text-sky-700 rounded-xl text-xs font-mono">
-                                            <span className="w-5 h-5 bg-sky-500 text-white rounded-full font-bold text-xs flex items-center justify-center shrink-0">✈</span>
-                                            <span className="font-medium">Telegram:</span>
-                                            <span className="select-all">{lead.socialIds.telegram}</span>
-                                        </div>
-                                    )}
-                                </div>
+                                <p className="mt-2 px-2 text-xs text-[var(--text-tertiary)]">
+                                    {lead.createdAt ? `${t('detail.created_at')} ${formatDateTime(lead.createdAt)}` : ''}
+                                    {lead.source ? ` · ${t('detail.via')} ${t(`source.${lead.source}`) !== `source.${lead.source}` ? t(`source.${lead.source}`) : lead.source}` : ''}
+                                    {lead.assignedToName ? ` · ${t('detail.owner')}: ${lead.assignedToName}` : ''}
+                                </p>
                             </div>
-                        )}
-                        <DetailField label={t('leads.assigned_to')}>
-                            <Dropdown value={formData.assignedTo || ''} onChange={(val) => handleInputChange('assignedTo', val)} options={users} className="w-full" />
-                        </DetailField>
-                        <DetailField label={t('leads.notes')} className="sm:col-span-2">
+                        </div>
+                        {/* Customer note, highlighted like an order note */}
+                        <div className="border-l-2 border-[var(--glass-border)] pl-4">
+                        <DetailField label={t('detail.customer_note')}>
                             <textarea
                                 value={formData.notes || ''}
                                 onChange={e => handleInputChange('notes', e.target.value)}
                                 rows={formData.notes ? 6 : 3}
-                                className={`w-full border border-[var(--glass-border)] rounded-xl p-3 text-sm focus:ring-2 focus:ring-[var(--sgs-primary)]/20 focus:border-[var(--sgs-primary)] outline-none resize-none no-scrollbar ${formData.notes ? 'bg-amber-50/60 font-mono text-xs text-[var(--text-secondary)] leading-relaxed' : ''}`}
+                                className={`w-full border border-[var(--glass-border)] rounded-xl p-3 text-sm focus:ring-2 focus:ring-[var(--sgs-primary)]/20 focus:border-[var(--sgs-primary)] outline-none resize-none no-scrollbar ${formData.notes ? 'bg-[var(--sgs-champagne)] text-[var(--ui-text)] leading-relaxed dark:bg-[var(--glass-surface)] dark:text-[var(--text-primary)]' : ''}`}
                                 placeholder={t('leads.notes_placeholder')}
                             />
                         </DetailField>
-                    </div>
+                        </div>
+                    <AIAnalysisCard summary={aiSummary} loading={isThinking} t={t} onRefresh={refreshAiSummary} quota={ariaQuota} onUpgrade={() => window.open('/pricing', '_blank')} />
                     {(() => {
                         const effectiveContractId = localContractInfo?.contractId ?? lead.contractId;
                         const effectiveStatus = localContractInfo?.contractStatus ?? lead.contractStatus;
@@ -679,18 +614,116 @@ export const LeadDetail: React.FC<LeadDetailProps> = ({ lead, onClose, onUpdate,
                             )}
                         </div>
                     </div>
-                    <div>
-                        <div className="flex items-center gap-2 mb-4 md:mb-6">
-                            <h4 className="font-bold text-xs text-[var(--text-secondary)] uppercase tracking-widest">{t('detail.history')}</h4>
-                            <div className="h-px bg-slate-200 flex-1"></div>
-                        </div>
-                        <div className="space-y-0">
-                            {interactions.map((i) => <TimelineItem key={i.id} item={i} t={t} formatDateTime={formatDateTime} />)}
-                            {interactions.length === 0 && <div className="text-center py-10 text-[var(--text-secondary)] border-2 border-dashed border-[var(--glass-border)] rounded-2xl text-xs">{t('detail.empty_history')}</div>}
-                        </div>
                     </div>
+                    {/* Context column */}
+                    <aside className="min-w-0 divide-y divide-[var(--glass-border)] lg:border-l lg:border-[var(--glass-border)] lg:pl-8" aria-label={t('detail.context')}>
+                        <DetailSection title={t('detail.section_contact')}>
+                            <div className="space-y-4">
+                        <DetailField label={t('leads.phone')} error={errors.phone}>
+                            <input type="tel" autoComplete="tel" value={formData.phone} onChange={e => handleInputChange('phone', e.target.value)} onBlur={() => handleInputChange('phone', normalizeVNPhone(formData.phone))} className={errors.phone ? STYLES.INPUT_ERROR : STYLES.INPUT} />
+                        </DetailField>
+                        <DetailField label={t('leads.email')} error={errors.email}>
+                            <input type="email" autoComplete="email" value={formData.email || ''} onChange={e => handleInputChange('email', e.target.value)} onBlur={() => handleInputChange('email', normalizeLeadEmail(formData.email || ''))} className={errors.email ? STYLES.INPUT_ERROR : STYLES.INPUT} />
+                        </DetailField>
+                        {canManageConsent && <div className="flex items-start gap-3 rounded-xl border border-[var(--glass-border)] bg-[var(--glass-surface)] p-3">
+                            <input
+                                id="lead-marketing-email-consent"
+                                type="checkbox"
+                                checked={formData.marketingEmailConsent === true}
+                                onChange={e => handleInputChange('marketingEmailConsent', e.target.checked)}
+                                className="mt-1 h-4 w-4 accent-[var(--sgs-primary)]"
+                            />
+                            <label htmlFor="lead-marketing-email-consent" className="text-sm text-[var(--text-secondary)] cursor-pointer">
+                                Đồng ý nhận email marketing
+                                {formData.marketingEmailConsentAt && (
+                                    <span className="block text-xs text-[var(--text-tertiary)] mt-1">
+                                        Ghi nhận: {new Date(formData.marketingEmailConsentAt).toLocaleString('vi-VN')}
+                                        {formData.marketingEmailConsentSource ? ` · Nguồn: ${formData.marketingEmailConsentSource}` : ''}
+                                    </span>
+                                )}
+                            </label>
+                        </div>}
+                        <DetailField label={t('leads.address')}>
+                            <input value={formData.address || ''} onChange={e => handleInputChange('address', e.target.value)} className={STYLES.INPUT} />
+                        </DetailField>
+                        {/* Social Profiles — auto-populated from Zalo/Facebook webhooks */}
+                        {(lead.socialIds?.zalo || lead.socialIds?.facebook || lead.socialIds?.telegram) && (
+                            <div>
+                                <div className="text-xs font-bold text-[var(--text-tertiary)] uppercase mb-2 tracking-wider">Tài khoản mạng xã hội</div>
+                                <div className="flex flex-wrap gap-2">
+                                    {lead.socialIds?.zalo && (
+                                        <div className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-blue-50 border border-blue-100 text-sgs-primary rounded-xl text-xs font-mono">
+                                            <span className="w-5 h-5 bg-sgs-primary text-white rounded font-bold text-xs flex items-center justify-center shrink-0">Z</span>
+                                            <span className="font-medium">Zalo:</span>
+                                            <span className="select-all">{lead.socialIds.zalo}</span>
+                                        </div>
+                                    )}
+                                    {lead.socialIds?.facebook && (
+                                        <div className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-[#1877F2]/5 border border-[#1877F2]/20 text-[#1877F2] rounded-xl text-xs font-mono">
+                                            <span className="w-5 h-5 bg-[#1877F2] text-white rounded-full font-bold text-xs flex items-center justify-center shrink-0">f</span>
+                                            <span className="font-medium">Facebook:</span>
+                                            <span className="select-all">{lead.socialIds.facebook}</span>
+                                        </div>
+                                    )}
+                                    {lead.socialIds?.telegram && (
+                                        <div className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-sky-50 border border-sky-100 text-sky-700 rounded-xl text-xs font-mono">
+                                            <span className="w-5 h-5 bg-sky-500 text-white rounded-full font-bold text-xs flex items-center justify-center shrink-0">✈</span>
+                                            <span className="font-medium">Telegram:</span>
+                                            <span className="select-all">{lead.socialIds.telegram}</span>
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
+                        )}
+                            </div>
+                        </DetailSection>
+                        <DetailSection title={t('detail.section_pipeline')}>
+                            <div className="space-y-4">
+                        <DetailField label={t('leads.stage')}>
+                            <Dropdown value={formData.stage} onChange={(val) => handleInputChange('stage', val)} options={stageOptions} className="w-full" />
+                        </DetailField>
+                        <DetailField label={t('leads.source')}>
+                            <Dropdown value={formData.source} onChange={(val) => handleInputChange('source', val)} options={sourceOptions} className="w-full" />
+                        </DetailField>
+                        <DetailField label={t('leads.tags')}>
+                            <input
+                                value={Array.isArray(formData.tags) ? formData.tags.join(', ') : (formData.tags || '')}
+                                onChange={e => handleInputChange('tags', e.target.value as any)}
+                                onBlur={() => handleInputChange('tags', formatLeadTagsInput(Array.isArray(formData.tags) ? formData.tags.join(', ') : String(formData.tags || '')) as any)}
+                                placeholder="VIP, căn hộ, Q2"
+                                className={STYLES.INPUT}
+                            />
+                            {normalizeLeadTags(formData.tags || []).length > 0 && (
+                                <div className="flex flex-wrap gap-1.5 pt-1">
+                                    {normalizeLeadTags(formData.tags || []).map(tag => <span key={tag.toLowerCase()} className="px-2 py-0.5 rounded-full bg-sgs-champagne text-sgs-primary text-xs2 font-semibold">{tag}</span>)}
+                                </div>
+                            )}
+                        </DetailField>
+                        <DetailField label={t('leads.assigned_to')}>
+                            <Dropdown value={formData.assignedTo || ''} onChange={(val) => handleInputChange('assignedTo', val)} options={users} className="w-full" />
+                        </DetailField>
+                            </div>
+                        </DetailSection>
+                        <DetailSection title={t('detail.section_win')}>
+                            {scoreLevel >= 0 ? (
+                                <>
+                                    {formData.score?.reasoning && <p className="mb-3 text-sm leading-5 text-[var(--text-primary)]">{formData.score.reasoning}</p>}
+                                    <LevelMeter level={scoreLevel} labels={[t('detail.level_low'), t('detail.level_medium'), t('detail.level_high')]} suffix={String(scoreValue)} />
+                                </>
+                            ) : (
+                                <p className="text-sm text-[var(--text-tertiary)]">{t('detail.win_empty')}</p>
+                            )}
+                        </DetailSection>
+                        <DetailSection title={t('detail.history')}>
+                            <div className="space-y-0">
+                                {interactions.map((i) => <TimelineItem key={i.id} item={i} t={t} formatDateTime={formatDateTime} />)}
+                                {interactions.length === 0 && <div className="rounded-2xl border-2 border-dashed border-[var(--glass-border)] py-8 text-center text-xs text-[var(--text-secondary)]">{t('detail.empty_history')}</div>}
+                            </div>
+                        </DetailSection>
+                    </aside>
+                </div>
             </div>
-            <div className={`p-4 border-t border-[var(--glass-border)] bg-[var(--bg-surface)] flex gap-3 ${isModal ? 'sticky bottom-0 z-20' : 'flex-none relative z-20'}`}>
+            <div className={`p-4 border-t border-[var(--glass-border)] bg-[var(--bg-surface)] flex gap-3 flex-none relative z-20`}>
                 {(() => {
                     const existingContractId = localContractInfo?.contractId ?? lead.contractId;
                     if (existingContractId) {
