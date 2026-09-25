@@ -169,6 +169,60 @@ const STYLE = `
   .lp-rv { transition: opacity .45s ease, transform .45s cubic-bezier(.2,.7,.2,1); }
   .lp-ready .lp-rv:not(.in) { opacity:.2; transform:translateY(14px); }
 
+
+  /* ── Responsive refinements (mobile ≤639, tablet 640–1023) ── */
+  @media (pointer: coarse) {
+    .lp-chip, .hs-tab { min-height: 40px; }
+    .lp-link { min-height: 44px; }
+    .lp-listings button[aria-label] { min-width: 40px; min-height: 40px; }
+  }
+  /* hero on tablet: image strip under the search instead of an empty right column */
+  @media (min-width: 640px) and (max-width: 1023px) {
+    .lp-collage { display:grid; grid-template-columns: 1.5fr 1fr; gap:14px; aspect-ratio:auto; height: 260px; }
+    .lp-collage .ph { position:relative; inset:auto; width:auto; height:100%; aspect-ratio:auto; border:0; box-shadow: 0 16px 40px var(--lp-shadow); }
+    .lp-collage .lp-float { display:none; }
+  }
+  /* categories: compact 3-up tiles on phones */
+  @media (max-width: 639px) {
+    .lp-cats { grid-template-columns: repeat(3, minmax(0,1fr)); gap:10px; }
+    .lp-tile { min-height: 0; padding: 14px 8px; align-items:center; text-align:center; gap:8px; border-radius:16px; }
+    .lp-tile b { font-size: 13.5px; }
+    .lp-tile small { display:none; }
+  }
+  /* listings: swipeable row on phones, 3-up on small laptops */
+  @media (max-width: 639px) {
+    .lp-listings { display:flex; overflow-x:auto; scroll-snap-type:x mandatory; gap:14px; margin: 0 calc(-1 * clamp(16px,4vw,48px)); padding: 4px clamp(16px,4vw,48px) 12px; scrollbar-width:none; }
+    .lp-listings::-webkit-scrollbar { display:none; }
+    .lp-listings > * { flex: 0 0 84%; scroll-snap-align: start; }
+  }
+  @media (min-width: 900px) and (max-width: 1099px) {
+    .lp-listings { grid-template-columns: repeat(3, minmax(0,1fr)); }
+    .lp-listings > :nth-child(n+7) { display:none; }
+  }
+  /* projects: 2-up on tablet with a wide lead card, 4-up bento from 1024 */
+  @media (min-width: 640px) and (max-width: 1023px) {
+    .lp-bento { grid-template-columns: repeat(2, minmax(0,1fr)); grid-auto-rows: 230px; }
+    .lp-bento .lp-proj:first-child { grid-column: span 2; grid-row: span 1; }
+  }
+  @media (max-width: 639px) {
+    .lp-bento { display:flex; overflow-x:auto; scroll-snap-type:x mandatory; gap:14px; margin: 0 calc(-1 * clamp(16px,4vw,48px)); padding: 4px clamp(16px,4vw,48px) 12px; scrollbar-width:none; }
+    .lp-bento::-webkit-scrollbar { display:none; }
+    .lp-bento .lp-proj { flex: 0 0 82%; min-height: 280px; scroll-snap-align: start; }
+    .lp-bento .lp-proj .go { opacity:1; transform:none; }
+  }
+  /* map: the schematic map is unreadable on phones; the list + card do the job */
+  @media (max-width: 639px) { .lp-mapcard { display:none; } }
+  /* why + tools: horizontal cards save height on small screens */
+  @media (max-width: 639px) {
+    .lp-why > div { display:grid; grid-template-columns: 44px 1fr; column-gap:14px; padding:18px; }
+    .lp-why .ic { margin-bottom:0; grid-row: span 2; }
+  }
+  @media (max-width: 899px) {
+    .lp-tool { display:grid; grid-template-columns: 28px 1fr; column-gap:14px; row-gap:6px; }
+    .lp-tool > svg { grid-row: span 3; }
+    .lp-tool .cta { margin-top: 4px; }
+  }
+
   @media (prefers-reduced-motion:reduce) {
     .lp-pin-ring, .lp-route { animation: none !important; }
     .lp-rv, .lp-ready .lp-rv:not(.in) { opacity:1 !important; transform:none !important; transition:none !important; }
@@ -429,7 +483,7 @@ function MapSection({ lang }: { lang: Lang }) {
           </a>
         </Reveal>
 
-        <Reveal>
+        <Reveal className="lp-mapcard">
           <div style={{ position: "relative", background: "var(--lp-paper)", border: "1px solid var(--lp-line)", borderRadius: 24, overflow: "hidden", boxShadow: "0 30px 80px var(--lp-shadow)" }}>
             <svg viewBox="0 0 1200 640" preserveAspectRatio="xMidYMid meet" fill="none" xmlns="http://www.w3.org/2000/svg"
               style={{ display: "block", width: "100%", height: "auto" }}
@@ -443,17 +497,17 @@ function MapSection({ lang }: { lang: Lang }) {
                 <path className="lp-route" d="M430 330 C520 300 620 260 700 210" /><path className="lp-route" d="M430 330 C560 320 700 330 810 300" />
                 <path className="lp-route" d="M430 330 C440 400 470 480 520 545" /><path className="lp-route" d="M430 330 C480 310 540 300 590 285" />
               </g>
-              <g fontFamily="var(--font-ibm-plex-mono,monospace)" fontSize="11" letterSpacing="2" fill="var(--lp-soft)">
+              <g fontFamily="var(--font-ibm-plex-mono,monospace)" fontSize="15" letterSpacing="2" fill="var(--lp-soft)">
                 <text x="150" y="90">TÂY NINH</text><text x="120" y="430">LONG AN</text><text x="960" y="520">BR-VT</text>
                 <text x="620" y="120">BÌNH DƯƠNG</text><text x="880" y="230">ĐỒNG NAI</text>
               </g>
               <circle fill="var(--lp-ink)" cx="430" cy="330" r="5" />
-              <text x="430" y="356" textAnchor="middle" fontFamily="var(--font-ibm-plex-mono,monospace)" fontSize="11" letterSpacing="2" fill="var(--lp-soft)">TP.HCM</text>
+              <text x="430" y="356" textAnchor="middle" fontFamily="var(--font-ibm-plex-mono,monospace)" fontSize="15" letterSpacing="2" fill="var(--lp-soft)">TP.HCM</text>
               {PIN_DATA.map(p => (
                 <g key={p.i} style={{ cursor: "pointer" }} onClick={() => setActive(p.i)} onMouseEnter={() => setActive(p.i)}>
                   <circle className="lp-pin-ring" cx={p.cx} cy={p.cy} r="14" stroke="var(--lp-navy)" strokeWidth="1.4" opacity=".55" style={{ animationDelay: `${p.i * 0.5}s` }} />
                   <circle cx={p.cx} cy={p.cy} r={active === p.i ? 9 : 7} fill={active === p.i ? "var(--lp-gold)" : "var(--lp-navy)"} stroke="var(--lp-paper)" strokeWidth="2.5" style={{ transition: "all .2s" }} />
-                  <text x={p.cx} y={p.cy - 18} textAnchor="middle" fontFamily="var(--font-ibm-plex-mono,monospace)" fontSize="11" letterSpacing=".08em"
+                  <text x={p.cx} y={p.cy - 22} textAnchor="middle" fontFamily="var(--font-ibm-plex-mono,monospace)" fontSize="17" letterSpacing=".06em"
                     fill={active === p.i ? "var(--lp-ink)" : "var(--lp-muted)"} style={{ textTransform: "uppercase", fontWeight: active === p.i ? 700 : 400 }}>{p.label}</text>
                 </g>
               ))}
