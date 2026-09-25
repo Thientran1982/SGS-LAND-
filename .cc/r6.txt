@@ -1,0 +1,17 @@
+ 60530 components/LeadDetail.tsx
+111303 pages/Leads.tsx
+148052 pages/ListingDetail.tsx
+ 40261 pages/Contracts.tsx
+360146 total
+== LeadDetail usage
+pages/Leads.tsx:1550:                <LeadDetail 
+components/LeadDetail.tsx:142:export const LeadDetail: React.FC<LeadDetailProps> = ({ lead, onClose, onUpdate, isModal }) => {
+== LeadDetail exports/props
+23:const AIAnalysisCard = ({ summary, loading, t, onRefresh, quota, onUpgrade }: any) => (
+76:const DetailField = ({ label, children, className, error }: any) => (
+83:const TimelineItem = ({ item, t, formatDateTime }: any) => {
+125:const ICONS = {
+132:const STYLES = {
+136:interface LeadDetailProps {
+142:export const LeadDetail: React.FC<LeadDetailProps> = ({ lead, onClose, onUpdate, isModal }) => {
+== tabs/sections
