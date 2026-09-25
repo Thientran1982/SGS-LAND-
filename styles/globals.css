@@ -1048,3 +1048,21 @@ html.dark body {
   .sgs-dashboard .dashboard-panel-head a,
   .sgs-dashboard .dashboard-panel-head button { min-height: 40px; display: inline-flex; align-items: center; }
 }
+
+/* ---- Dashboard mobile & tablet pass ---------------------------------- */
+.sgs-dashboard .dashboard-mobile-short { display: none; }
+@media (max-width: 640px) {
+  /* Quick actions: icon + short label instead of three bare icons. */
+  .sgs-dashboard .dashboard-mobile-short { display: block; font-size: .72rem; line-height: 1.2; }
+  .sgs-dashboard a.dashboard-control.quick-action { flex-direction: column; gap: .3rem; min-height: 3.4rem; padding: .55rem .35rem; }
+  /* Work queue: three compact tiles in one row instead of three stacked cards. */
+  .sgs-dashboard .dashboard-queue > a > div,
+  .sgs-dashboard .dashboard-queue > div { padding: .6rem .35rem; }
+  .sgs-dashboard .dashboard-queue .text-xs2 { font-size: .7rem; font-weight: 600; text-transform: none; letter-spacing: 0; line-height: 1.25; min-height: 2.5em; display: flex; align-items: center; justify-content: center; }
+  .sgs-dashboard .dashboard-queue .text-xl { font-size: 1.15rem; }
+  /* No scroll-inside-scroll on phones: show the latest five entries. */
+  .sgs-dashboard .dashboard-scroll-list { max-height: none; overflow: visible; }
+  .sgs-dashboard .dashboard-scroll-list > :nth-child(n+6) { display: none; }
+  /* Keep the floating chat button off the last panel. */
+  .sgs-dashboard { padding-bottom: 6rem; }
+}

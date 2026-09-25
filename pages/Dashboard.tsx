@@ -281,7 +281,7 @@ const WorkQueueStrip = ({ analytics, language }: { analytics: any; language: str
     return (
         <section aria-label={copy.title}>
             <div className="dashboard-subhead mb-2">{copy.title}</div>
-            <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
+            <div className="dashboard-queue grid grid-cols-3 gap-2">
                 {(() => {
                     const contracts = Number(queue.contracts ?? analytics?.pendingContracts ?? 0) || 0;
                     const approvals = Number(queue.approvals ?? analytics?.pendingApprovals ?? 0) || 0;
@@ -347,7 +347,7 @@ const InboxOverviewWidget = ({ analytics, language }: { analytics: any; language
         <section className="dashboard-panel min-w-0" aria-label={copy.title}>
             <div className="dashboard-panel-head"><h2>{copy.title}</h2><a href="/inbox" className="text-xs font-semibold text-[var(--sgs-primary)]">{language === 'vn' ? 'Mở hộp thư' : 'Open inbox'}</a></div>
             <div className="grid grid-cols-3 gap-2 px-4 py-4">{channels.map(channel => <DashboardMiniCard key={channel.key} label={channel.key} value={channel.value} surface="panel" />)}</div>
-            <div className="mx-4 mt-4 mb-4 flex items-center justify-between rounded-xl bg-[var(--bg-surface)] px-3 py-2 pb-3 text-xs">
+            <div className="mx-4 mb-4 flex items-center justify-between rounded-xl bg-[var(--bg-surface)] px-3 py-2.5 text-xs">
                 <span className="text-[var(--text-tertiary)]">{copy.response}</span>
                 <strong className="font-mono text-[var(--text-primary)]">{formatDuration(inbox.avgResponseMinutes, language)}</strong>
             </div>
@@ -1107,15 +1107,15 @@ export const Dashboard: React.FC = () => {
                             <div className="grid grid-cols-3 gap-2">
                                 <a href="/leads" className="dashboard-control quick-action flex items-center justify-center gap-1.5 px-2 py-2.5 text-center text-xs font-semibold text-[var(--sgs-primary)]" aria-label={ui.addLead} title={ui.addLead}>
                                     <svg className="dashboard-action-icon h-4 w-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M15 20.25v-1.5a4.5 4.5 0 0 0-4.5-4.5h-3A4.5 4.5 0 0 0 3 18.75v1.5M9 10.25a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7Zm8-5v7m3.5-3.5h-7" /></svg>
-                                    <span className="dashboard-mobile-label">{ui.addLead}</span>
+                                    <span className="dashboard-mobile-label">{ui.addLead}</span><span className="dashboard-mobile-short">{language === 'vn' ? 'Thêm khách' : 'Add lead'}</span>
                                 </a>
                                 <a href="/contracts" className="dashboard-control quick-action flex items-center justify-center gap-1.5 px-2 py-2.5 text-center text-xs font-semibold text-[var(--sgs-primary)]" aria-label={ui.contract} title={ui.contract}>
                                     <svg className="dashboard-action-icon h-4 w-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M6 3.75h9l3 3v13.5H6V3.75Zm8.5.5v3h3M8.5 11h7m-7 3.5h7m-7 3.5h4" /></svg>
-                                    <span className="dashboard-mobile-label">{ui.contract}</span>
+                                    <span className="dashboard-mobile-label">{ui.contract}</span><span className="dashboard-mobile-short">{language === 'vn' ? 'Hợp đồng' : 'Contract'}</span>
                                 </a>
                                 <a href="/inventory" className="dashboard-control quick-action flex items-center justify-center gap-1.5 px-2 py-2.5 text-center text-xs font-semibold text-[var(--sgs-primary)]" aria-label={ui.listing} title={ui.listing}>
                                     <svg className="dashboard-action-icon h-4 w-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="m4 10 8-6 8 6v9.5H4V10Zm4 9.5v-5h8v5M9 10h.01M12 10h.01M15 10h.01" /></svg>
-                                    <span className="dashboard-mobile-label">{ui.listing}</span>
+                                    <span className="dashboard-mobile-label">{ui.listing}</span><span className="dashboard-mobile-short">{language === 'vn' ? 'Đăng tin' : 'Listing'}</span>
                                 </a>
                             </div>
                         </div>
@@ -1254,8 +1254,8 @@ export const Dashboard: React.FC = () => {
                         </div>
                     </section>
 
-                    <section className="grid grid-cols-1 gap-6 lg:grid-cols-2 2xl:grid-cols-3" aria-label={language === 'vn' ? 'Tóm tắt vận hành' : 'Operations summary'}>
-                        <section className="dashboard-panel lg:col-span-2 2xl:col-span-1" aria-label={language === 'vn' ? 'Cố vấn AI' : 'AI Advisor'}>
+                    <section className="grid grid-cols-1 gap-6 md:grid-cols-2 2xl:grid-cols-3" aria-label={language === 'vn' ? 'Tóm tắt vận hành' : 'Operations summary'}>
+                        <section className="dashboard-panel md:col-span-2 2xl:col-span-1" aria-label={language === 'vn' ? 'Cố vấn AI' : 'AI Advisor'}>
                             <div className="dashboard-panel-head">
                                 <h2>{language === 'vn' ? 'Cố vấn AI' : 'AI Advisor'}</h2>
                                 <a href="/ai-governance" className="text-xs font-semibold text-[var(--sgs-primary)]">{language === 'vn' ? 'Chi tiết' : 'Details'}</a>

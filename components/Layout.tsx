@@ -353,6 +353,18 @@ interface LayoutProps {
 }
 export const Layout: React.FC<LayoutProps> = memo(({ children, activePage, onNavigate, onLogout }) => {
     const [desktopCollapsed, setDesktopCollapsed] = useState(false);
+    // Tablets (768-1023px): default to the icon rail so content keeps ~90% of the width.
+    const TABLET_QUERY = '(min-width: 768px) and (max-width: 1023px)';
+    const [isTablet, setIsTablet] = useState(() => typeof window !== 'undefined' && typeof window.matchMedia === 'function' && window.matchMedia(TABLET_QUERY).matches);
+    const [tabletExpanded, setTabletExpanded] = useState(false);
+    useEffect(() => {
+        if (typeof window.matchMedia !== 'function') return;
+        const mq = window.matchMedia(TABLET_QUERY);
+        const onChange = () => { setIsTablet(mq.matches); setTabletExpanded(false); };
+        mq.addEventListener('change', onChange);
+        return () => mq.removeEventListener('change', onChange);
+    }, []);
+    const sidebarCollapsed = isTablet ? !tabletExpanded : desktopCollapsed;
     const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
     const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);    
     const [user, setUser] = useState<User | null>(null);
@@ -496,15 +508,15 @@ export const Layout: React.FC<LayoutProps> = memo(({ children, activePage, onNav
                     bg-[var(--bg-app)]
                     rounded-none sm:rounded-[24px] shadow-none border-none
                     flex flex-col shrink-0 no-scrollbar
-                     ${desktopCollapsed ? 'w-0 md:w-16' : 'w-0 md:w-64'}
+                     ${sidebarCollapsed ? 'w-0 md:w-16' : 'w-0 md:w-64'}
                     hidden md:flex overflow-visible
                 `}
             >
                 <Sidebar 
                     {...sidebarProps} 
                     isMobile={false} 
-                    collapsed={desktopCollapsed} 
-                    onToggleCollapse={() => setDesktopCollapsed(!desktopCollapsed)} 
+                    collapsed={sidebarCollapsed} 
+                    onToggleCollapse={() => (isTablet ? setTabletExpanded(v => !v) : setDesktopCollapsed(!desktopCollapsed))} 
                 />
             </aside>
             {/* MOBILE DRAWER (Overlay) */}
