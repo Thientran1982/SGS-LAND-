@@ -560,6 +560,17 @@ html.dark body {
   border-top: 1px solid var(--dash-rule);
   border-bottom: 1px solid var(--dash-rule);
 }
+.sgs-dashboard .dashboard-kpis.dashboard-performance-kpis {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  background: transparent;
+  border-bottom: 0;
+}
+.sgs-dashboard .dashboard-performance-kpis > .dashboard-kpi {
+  background: transparent;
+}
+.sgs-dashboard .dashboard-performance-kpis > .dashboard-kpi:last-child {
+  border-right: 0;
+}
 .sgs-dashboard .dashboard-kpi {
   min-width: 0;
   padding: 1.05rem 1.2rem 1.1rem;
@@ -840,6 +851,12 @@ html.dark body {
   .sgs-dashboard .dashboard-kpi:nth-child(n+3) { border-top: 1px solid var(--dash-rule); }
   .sgs-dashboard .dashboard-kpi:nth-child(3) { padding-left: .75rem; }
   .sgs-dashboard .dashboard-kpi:nth-child(4) { padding-right: 0; }
+  .sgs-dashboard .dashboard-kpis.dashboard-performance-kpis { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .sgs-dashboard .dashboard-performance-kpis > .dashboard-kpi,
+  .sgs-dashboard .dashboard-performance-kpis > .dashboard-kpi:nth-child(n+3) { border-top: 0; }
+  .sgs-dashboard .dashboard-performance-kpis > .dashboard-kpi:nth-child(2) { border-right: 1px solid var(--dash-rule); }
+  .sgs-dashboard .dashboard-performance-kpis > .dashboard-kpi:nth-child(3) { padding-left: 1.2rem; }
+  .sgs-dashboard .dashboard-performance-kpis > .dashboard-kpi:last-child { border-right: 0; }
   .sgs-dashboard .dashboard-workbench { grid-template-columns: 1fr; }
   .sgs-dashboard .dashboard-chart { border-right: 0; border-bottom: 1px solid var(--dash-rule); }
 }
@@ -868,6 +885,13 @@ html.dark body {
   }
   .sgs-dashboard .dashboard-kpis { grid-template-columns: 1fr 1fr; }
   .sgs-dashboard .dashboard-kpi { padding: .9rem .75rem; }
+  .sgs-dashboard .dashboard-kpis.dashboard-performance-kpis { grid-template-columns: minmax(0, 1fr); }
+  .sgs-dashboard .dashboard-performance-kpis > .dashboard-kpi {
+    padding: .9rem .75rem;
+    border-right: 0;
+    border-top: 1px solid var(--dash-rule);
+  }
+  .sgs-dashboard .dashboard-performance-kpis > .dashboard-kpi:first-child { border-top: 0; }
    .sgs-dashboard .dashboard-kpi {
      padding-left: .75rem;
      padding-right: .75rem;

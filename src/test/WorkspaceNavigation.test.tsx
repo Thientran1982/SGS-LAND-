@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react';
+import { fireEvent, render, screen } from '@testing-library/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { describe, expect, it, vi } from 'vitest';
 import { buildWorkspaceHubs, WorkspaceNavigation } from '../../components/WorkspaceNavigation';
@@ -105,5 +105,14 @@ describe('buildWorkspaceHubs', () => {
         expect(screen.getByText('Existing dashboard content')).toBeTruthy();
         expect(screen.getByRole('navigation', { name: 'shell.primary_navigation' })).toBeTruthy();
         expect(screen.getByRole('navigation', { name: 'shell.mobile_navigation' })).toBeTruthy();
+
+        const expandButton = screen.getByRole('button', { name: 'Mở rộng thanh điều hướng' });
+        expect(expandButton).toHaveAttribute('aria-expanded', 'false');
+        fireEvent.click(expandButton);
+
+        const collapseButton = screen.getByRole('button', { name: 'Thu gọn thanh điều hướng' });
+        expect(collapseButton).toHaveAttribute('aria-expanded', 'true');
+        fireEvent.click(collapseButton);
+        expect(screen.getByRole('button', { name: 'Mở rộng thanh điều hướng' })).toHaveAttribute('aria-expanded', 'false');
     });
 });

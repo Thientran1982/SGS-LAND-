@@ -1141,7 +1141,7 @@ export const Dashboard: React.FC = () => {
                         <div className="p-4 sm:p-5">
                             <WorkQueueStrip analytics={overview} language={language} />
                         </div>
-                        <section className="dashboard-kpis" aria-label={t('dash.overview_subtitle')}>
+                        <section className="dashboard-kpis dashboard-performance-kpis" aria-label={t('dash.overview_subtitle')}>
                         <div className="dashboard-kpi">
                             <div className="kpi-label">{t('dash.pipeline_value')}</div>
                             <div className="flex items-center justify-between gap-2">
@@ -1154,7 +1154,6 @@ export const Dashboard: React.FC = () => {
                                         : `Win probability: ${winProbabilityValue === null ? 'unavailable' : `${Math.round(winProbabilityValue)}%`}`}
                                 />
                             </div>
-                            <div className="kpi-meta">{t('dash.win_probability')}: <strong className="dash-number text-[var(--sgs-primary)]">{winProbabilityValue === null ? '—' : `${Math.round(winProbabilityValue)}%`}</strong></div>
                             {pipelineTarget.target > 0 && pipelineValueAvailable && <ProgressBar value={pipelineTarget.progress} label={`${pipelineTarget.progress}% ${ui.target}`} />}
                         </div>
                         <div className="dashboard-kpi">

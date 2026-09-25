@@ -14,6 +14,7 @@ import {
     Moon,
     MoreHorizontal,
     Package,
+    PanelLeft,
     Search,
     Settings,
     Sparkles,
@@ -156,6 +157,9 @@ interface WorkspaceRailProps {
     activePage: string;
     hubs: WorkspaceHub[];
     user: User;
+    expanded: boolean;
+    language: string;
+    onToggleExpanded: () => void;
     onNavigate: (path: string) => void;
     onLogout: () => void;
     onOpenAssistant: () => void;
@@ -173,6 +177,9 @@ const WorkspaceRail: React.FC<WorkspaceRailProps> = ({
     activePage,
     hubs,
     user,
+    expanded,
+    language,
+    onToggleExpanded,
     onNavigate,
     onLogout,
     onOpenAssistant,
@@ -192,29 +199,47 @@ const WorkspaceRail: React.FC<WorkspaceRailProps> = ({
         ?? 'overview';
 
     return (
-        <aside className="flex h-full w-full flex-col items-center bg-[var(--sgs-hero-deep)] px-2.5 py-3 text-[var(--sgs-champagne)]">
-            <button
-                type="button"
-                onClick={() => onNavigate(ROUTES.DASHBOARD)}
-                className="mb-5 flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-white p-1.5 text-[var(--sgs-champagne)] dark:bg-transparent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--sgs-accent)]"
-                aria-label={t('nav.go_to_dashboard')}
-                title={t('nav.go_to_dashboard')}
-            >
-                <Logo className="h-8 w-8" />
-            </button>
+        <aside className={`flex h-full w-full flex-col bg-[var(--sgs-hero-deep)] py-3 text-[var(--sgs-champagne)] transition-[padding] duration-200 ${expanded ? 'items-stretch px-2' : 'items-center px-1'}`}>
+            <div className={`mb-4 flex h-12 w-full shrink-0 items-center ${expanded ? 'justify-between gap-1' : 'justify-center gap-0'}`}>
+                <button
+                    type="button"
+                    onClick={() => onNavigate(ROUTES.DASHBOARD)}
+                    className={`flex h-10 min-w-0 shrink-0 items-center rounded-xl text-[var(--sgs-champagne)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--sgs-accent)] ${expanded ? 'flex-1 justify-start gap-2 px-2' : 'w-9 justify-center'}`}
+                    aria-label={t('nav.go_to_dashboard')}
+                    title={t('nav.go_to_dashboard')}
+                >
+                    <Logo className="h-7 w-7 shrink-0" />
+                    {expanded && <span className="truncate text-sm font-bold tracking-tight">SGS LAND</span>}
+                </button>
+                <button
+                    type="button"
+                    onClick={onToggleExpanded}
+                    className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl text-[var(--sgs-champagne)] transition-colors hover:bg-[var(--ui-text-inverse)]/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--sgs-accent)]"
+                    aria-label={expanded
+                        ? (language === 'vn' ? 'Thu gọn thanh điều hướng' : 'Collapse navigation')
+                        : (language === 'vn' ? 'Mở rộng thanh điều hướng' : 'Expand navigation')}
+                    aria-expanded={expanded}
+                    aria-controls="workspace-primary-navigation"
+                    title={expanded
+                        ? (language === 'vn' ? 'Thu gọn thanh điều hướng' : 'Collapse navigation')
+                        : (language === 'vn' ? 'Mở rộng thanh điều hướng' : 'Expand navigation')}
+                >
+                    <PanelLeft size={17} aria-hidden="true" />
+                </button>
+            </div>
 
-            <nav className="flex min-h-0 w-full flex-1 flex-col items-center gap-1 overflow-y-auto pb-3" aria-label={t('shell.primary_navigation')}>
+            <nav id="workspace-primary-navigation" className={`flex min-h-0 w-full flex-1 flex-col gap-1 overflow-y-auto pb-3 ${expanded ? 'items-stretch' : 'items-center'}`} aria-label={t('shell.primary_navigation')}>
                 <button
                     type="button"
                     onClick={onSearch}
                     aria-label={t('common.search')}
                     title={t('common.search')}
-                    className="group relative mb-2 flex min-h-12 w-full shrink-0 items-center justify-center rounded-2xl text-[var(--sgs-champagne)] transition-colors hover:bg-[var(--ui-text-inverse)]/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--sgs-accent)]"
+                    className={`group relative mb-2 flex min-h-12 w-full shrink-0 items-center rounded-2xl text-[var(--sgs-champagne)] transition-colors hover:bg-[var(--ui-text-inverse)]/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--sgs-accent)] ${expanded ? 'justify-start gap-3 px-3' : 'justify-center'}`}
                 >
                     <Search size={20} aria-hidden="true" />
-                    <span className="pointer-events-none absolute left-full z-50 ml-3 whitespace-nowrap rounded-lg bg-[var(--sgs-primary-deep)] px-2.5 py-1.5 text-xs font-semibold text-[var(--ui-text-inverse)] opacity-0 shadow-xl transition-opacity group-hover:opacity-100 group-focus-visible:opacity-100">
-                        {t('common.search')}
-                    </span>
+                    {expanded
+                        ? <span className="truncate text-sm font-medium">{t('common.search')}</span>
+                        : <span className="pointer-events-none absolute left-full z-50 ml-3 whitespace-nowrap rounded-lg bg-[var(--sgs-primary-deep)] px-2.5 py-1.5 text-xs font-semibold text-[var(--ui-text-inverse)] opacity-0 shadow-xl transition-opacity group-hover:opacity-100 group-focus-visible:opacity-100">{t('common.search')}</span>}
                 </button>
                 {hubs.map(hub => {
                     const Icon = hub.icon;
@@ -230,19 +255,18 @@ const WorkspaceRail: React.FC<WorkspaceRailProps> = ({
                             aria-current={isActive ? 'page' : undefined}
                             aria-label={hub.id === 'inbox' && inboxUnread > 0 ? `${t(hub.labelKey)}, ${t('shell.inbox_unread').replace('{n}', String(inboxUnread))}` : t(hub.labelKey)}
                             title={t(hub.labelKey)}
-                            className={`group relative flex min-h-12 w-full shrink-0 items-center justify-center rounded-2xl transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--sgs-accent)] ${
+                            className={`group relative flex min-h-12 w-full shrink-0 items-center transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--sgs-accent)] ${expanded ? 'justify-start gap-3 rounded-xl px-3' : 'justify-center rounded-2xl'} ${
                                 isActive
                                     ? 'bg-[var(--sgs-champagne)] text-[var(--sgs-primary-deep)]'
                                     : 'text-[var(--sgs-champagne)] hover:bg-[var(--ui-text-inverse)]/10'
                             }`}
                         >
                             <Icon size={20} strokeWidth={isActive ? 2.3 : 1.8} aria-hidden="true" />
+                            {expanded && <span className="min-w-0 flex-1 truncate text-left text-sm font-medium">{t(hub.labelKey)}</span>}
                             {hub.id === 'inbox' && inboxUnread > 0 && (
-                                <span className="absolute right-1 top-1 flex h-[18px] min-w-[18px] items-center justify-center rounded-full bg-[var(--sgs-accent)] px-1 text-[10px] font-bold leading-none text-[var(--sgs-hero-deep)]" aria-hidden="true">{inboxUnread > 99 ? '99+' : inboxUnread}</span>
+                                <span className={`absolute top-1 flex h-[18px] min-w-[18px] items-center justify-center rounded-full bg-[var(--sgs-accent)] px-1 text-[10px] font-bold leading-none text-[var(--sgs-hero-deep)] ${expanded ? 'right-2' : 'right-1'}`} aria-hidden="true">{inboxUnread > 99 ? '99+' : inboxUnread}</span>
                             )}
-                            <span className="pointer-events-none absolute left-full z-50 ml-3 whitespace-nowrap rounded-lg bg-[var(--sgs-primary-deep)] px-2.5 py-1.5 text-xs font-semibold text-[var(--ui-text-inverse)] opacity-0 shadow-xl transition-opacity group-hover:opacity-100 group-focus-visible:opacity-100">
-                                {t(hub.labelKey)}
-                            </span>
+                            {!expanded && <span className="pointer-events-none absolute left-full z-50 ml-3 whitespace-nowrap rounded-lg bg-[var(--sgs-primary-deep)] px-2.5 py-1.5 text-xs font-semibold text-[var(--ui-text-inverse)] opacity-0 shadow-xl transition-opacity group-hover:opacity-100 group-focus-visible:opacity-100">{t(hub.labelKey)}</span>}
                         </button>
                     );
                 })}
@@ -252,18 +276,19 @@ const WorkspaceRail: React.FC<WorkspaceRailProps> = ({
                 <button
                     type="button"
                     onClick={onOpenAssistant}
-                    className="group relative flex min-h-12 w-full items-center justify-center rounded-2xl text-[var(--sgs-champagne)] transition-colors hover:bg-[var(--ui-text-inverse)]/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--sgs-accent)]"
+                    className={`group relative flex min-h-12 w-full items-center rounded-2xl text-[var(--sgs-champagne)] transition-colors hover:bg-[var(--ui-text-inverse)]/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--sgs-accent)] ${expanded ? 'justify-start gap-3 px-3' : 'justify-center'}`}
                     aria-label={t('shell.assistant_open')}
                     title={t('shell.assistant_open')}
                 >
                     <MessageCircle size={20} aria-hidden="true" />
-                    <span className="pointer-events-none absolute left-full z-50 ml-3 whitespace-nowrap rounded-lg bg-[var(--sgs-primary-deep)] px-2.5 py-1.5 text-xs font-semibold text-[var(--ui-text-inverse)] opacity-0 shadow-xl transition-opacity group-hover:opacity-100 group-focus-visible:opacity-100">
-                        {t('shell.assistant_open')}
-                    </span>
+                    {expanded
+                        ? <span className="truncate text-sm font-medium">{t('shell.assistant_open')}</span>
+                        : <span className="pointer-events-none absolute left-full z-50 ml-3 whitespace-nowrap rounded-lg bg-[var(--sgs-primary-deep)] px-2.5 py-1.5 text-xs font-semibold text-[var(--ui-text-inverse)] opacity-0 shadow-xl transition-opacity group-hover:opacity-100 group-focus-visible:opacity-100">{t('shell.assistant_open')}</span>}
                 </button>
                 <NotificationButton
                     placement="rail"
                     className="w-full"
+                    expanded={expanded}
                     unreadCount={unreadCount}
                     notifications={notifications}
                     onMarkRead={onMarkRead}
@@ -315,9 +340,10 @@ const WorkspaceRail: React.FC<WorkspaceRailProps> = ({
                         aria-expanded={profileOpen}
                         aria-haspopup="menu"
                         title={t('menu.profile')}
-                        className="flex min-h-12 w-full items-center justify-center rounded-2xl hover:bg-[var(--ui-text-inverse)]/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--sgs-accent)]"
+                        className={`flex min-h-12 w-full items-center rounded-2xl hover:bg-[var(--ui-text-inverse)]/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--sgs-accent)] ${expanded ? 'justify-start gap-3 px-3' : 'justify-center'}`}
                     >
                         <UserAvatar user={user} isActive={activePage === ROUTES.PROFILE} />
+                        {expanded && <span className="min-w-0 truncate text-sm font-medium">{user.name}</span>}
                     </button>
                 </div>
             </div>
@@ -662,6 +688,7 @@ export const WorkspaceNavigation: React.FC<WorkspaceNavigationProps> = ({
     language,
 }) => {
     const { t } = useTranslation();
+    const [railExpanded, setRailExpanded] = useState(false);
     const hubs = useMemo(() => buildWorkspaceHubs(menuGroups), [menuGroups]);
     const currentHub = hubs.find(hub => hub.items.some(item => item.route === activePage))
         ?? hubs.find(hub => hub.id === (routeHub.get(activePage) ?? 'overview'));
@@ -699,12 +726,15 @@ export const WorkspaceNavigation: React.FC<WorkspaceNavigationProps> = ({
 
     return (
         <>
-            <div className="hidden h-full shrink-0 overflow-visible rounded-[24px] border border-[var(--glass-border)] shadow-sm md:flex md:w-[76px] lg:w-[84px]">
+            <div className={`hidden h-full shrink-0 overflow-visible rounded-[24px] border border-[var(--glass-border)] shadow-sm transition-[width] duration-200 md:flex ${railExpanded ? 'md:w-60 lg:w-64' : 'md:w-[76px] lg:w-[84px]'}`}>
                 <WorkspaceRail
                     inboxUnread={inboxUnread}
                     activePage={activePage}
                     hubs={hubs}
                     user={user}
+                    expanded={railExpanded}
+                    language={language}
+                    onToggleExpanded={() => setRailExpanded(value => !value)}
                     onNavigate={onNavigate}
                     onLogout={onLogout}
                     onOpenAssistant={onOpenAssistant}

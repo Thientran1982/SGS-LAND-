@@ -227,6 +227,7 @@ type NotificationButtonProps = Pick<CommandCenterProps,
     'onDeleteNotification' | 'onDeleteAllRead' | 'onNavigate'
 > & {
     placement?: 'header' | 'rail';
+    expanded?: boolean;
     className?: string;
 };
 
@@ -239,6 +240,7 @@ export const NotificationButton: React.FC<NotificationButtonProps> = memo(({
     onDeleteAllRead,
     onNavigate,
     placement = 'header',
+    expanded = false,
     className = '',
 }) => {
     const { t } = useTranslation();
@@ -261,15 +263,15 @@ export const NotificationButton: React.FC<NotificationButtonProps> = memo(({
             <button
                 type="button"
                 onClick={() => setPanelOpen(value => !value)}
-                className={`group relative flex min-h-11 min-w-11 items-center justify-center rounded-xl transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--sgs-accent)] ${
+                className={`group relative flex items-center transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--sgs-accent)] ${
                     placement === 'rail'
-                        ? 'text-[var(--sgs-champagne)] hover:bg-[var(--ui-text-inverse)]/10'
-                        : 'text-[var(--text-tertiary)] hover:bg-[var(--glass-surface-hover)]'
+                        ? `min-h-12 w-full rounded-2xl ${expanded ? 'justify-start gap-3 px-3' : 'justify-center'} text-[var(--sgs-champagne)] hover:bg-[var(--ui-text-inverse)]/10`
+                        : 'min-h-11 min-w-11 justify-center rounded-xl text-[var(--text-tertiary)] hover:bg-[var(--glass-surface-hover)]'
                 }`}
                 aria-label={t('nav.notifications')}
                 aria-expanded={panelOpen}
             >
-                <span className="relative flex h-9 w-9 items-center justify-center">
+                <span className="relative flex h-9 w-9 shrink-0 items-center justify-center">
                     {ICONS.BELL}
                     {unreadCount > 0 && (
                         <span className="absolute -right-1 -top-1 flex h-[18px] min-w-[18px] items-center justify-center rounded-full bg-[var(--sgs-accent)] px-1 text-[10px] font-black leading-none text-[var(--sgs-primary-deep)]">
@@ -277,6 +279,9 @@ export const NotificationButton: React.FC<NotificationButtonProps> = memo(({
                         </span>
                     )}
                 </span>
+                {placement === 'rail' && expanded && (
+                    <span className="min-w-0 flex-1 truncate text-left text-sm font-medium">{t('nav.notifications')}</span>
+                )}
             </button>
             {panelOpen && (
                 <NotificationPanel
