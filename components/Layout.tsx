@@ -233,9 +233,9 @@ const Sidebar = memo(({
                                 <button 
                                     onClick={() => toggleGroup(group.id)}
                                      aria-expanded={isOpen}
-                                     className={`w-full min-h-9 flex items-center justify-between gap-2 px-2.5 py-1.5 mb-1 text-left text-xs2 font-bold uppercase tracking-[0.14em] leading-4 transition-colors hover:text-[var(--text-primary)] ${hasActiveChild ? 'text-sgs-primary' : 'text-[var(--text-tertiary)]'}`}
+                                     className={`w-full min-h-9 flex items-center justify-between gap-2 px-2.5 py-1.5 mb-1 text-left text-xs font-bold tracking-normal leading-4 transition-colors hover:text-[var(--text-primary)] ${hasActiveChild ? 'text-sgs-primary' : 'text-[var(--text-tertiary)]'}`}
                                 >
-                                     <span className="min-w-0 flex-1 text-left">{t(group.labelKey)}</span>
+                                     <span className="min-w-0 flex-1 truncate whitespace-nowrap text-left" title={t(group.labelKey)}>{t(group.labelKey)}</span>
                                      <div className={`w-5 h-5 shrink-0 flex items-center justify-center transition-transform duration-300 ${isOpen ? 'rotate-0' : '-rotate-90'}`}>
                                         {NAV_ICONS['chevron']}
                                     </div>

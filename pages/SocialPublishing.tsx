@@ -16,6 +16,7 @@ import {
   isSocialCapabilityReady,
 } from '../services/api/socialPublicationApi';
 import { useTranslation } from '../services/i18n';
+import { AutoPostingOnboardingCard } from '../components/AutoPostingOnboardingCard';
 
 const MAX_LISTING_IMAGES = 10;
 const STALE_PUBLICATION_PAGE_SIZE = 25;
@@ -1787,6 +1788,9 @@ export const SocialPublishing: React.FC = () => {
               ))}
             </div>
           )}
+        </section>
+        <section aria-label="Marketing Agent">
+          <AutoPostingOnboardingCard />
         </section>
       </div>
     </div>

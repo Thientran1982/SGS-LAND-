@@ -88,4 +88,7 @@ export const PRIVATE_PREFIXES = [
   "/enterprise-settings", "/admin-ai-cost", "/valuation-accuracy", "/billing", "/checkout",
   "/vendor-management", "/agent-cockpit", "/task-dashboard", "/task-kanban", "/tasks",
   "/employees", "/task-reports", "/scraper",
+  // CRM pages that were missing here returned 404 on refresh / direct link.
+  "/system", "/unit-inventory", "/auction", "/custom-fields", "/ai-advisor",
+  "/my-landing", "/agent-audit", "/agent-tasks",
 ] as const;

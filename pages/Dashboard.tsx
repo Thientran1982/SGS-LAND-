@@ -17,7 +17,6 @@ import { Dropdown } from '../components/Dropdown';
 import { SelectDropdown } from '../components/task/SelectDropdown';
 import { useSocket, socket } from '../services/websocket';
 import { SeoHead } from '../components/SeoHead';
-import { AutoPostingOnboardingCard } from '../components/AutoPostingOnboardingCard';
 // --- ICONS ---
 const ICONS = {
     TREND_UP: <svg className="w-3 h-3 text-sgs-verified dark:text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" /></svg>,
@@ -357,7 +356,7 @@ const InboxOverviewWidget = ({ analytics, language }: { analytics: any; language
     );
 };
 
-const SearchAnalyticsWidget = ({ analytics, language }: { analytics: any; language: string }) => {
+export const SearchAnalyticsWidget = ({ analytics, language }: { analytics: any; language: string }) => {
     const data = analytics?.searchAnalytics || {};
     const groups = [
         {
@@ -510,7 +509,7 @@ const KpiTargetSettings = ({ user, language, notify }: { user: any; language: st
     );
 };
 // --- GEOLOCATION TABLE ---
-const GeoLocationTable = memo(({ t, days }: { t: any; days: number }) => {
+export const GeoLocationTable = memo(({ t, days }: { t: any; days: number }) => {
     const { data: visitorStats, isLoading, isError } = useQuery({
         queryKey: ['visitorStats', days],
         queryFn: () => analyticsApi.getVisitorStats(days),
@@ -617,7 +616,7 @@ const GeoLocationTable = memo(({ t, days }: { t: any; days: number }) => {
     );
 });
 // --- REALTIME TRAFFIC WIDGET ---
-const RealtimeTrafficWidget = memo(({ t, theme }: any) => {
+export const RealtimeTrafficWidget = memo(({ t, theme }: any) => {
     const [data, setData] = useState<any[]>([]);
     const [stats, setStats] = useState({ rps: 0, latency: 0, dbLatency: 0, errors: 0 });
     const colors = theme?.colors || {};
@@ -1277,42 +1276,32 @@ export const Dashboard: React.FC = () => {
                         <InboxOverviewWidget analytics={overview} language={language} />
                     </section>
 
-                    <details className="dashboard-panel dashboard-advanced">
-                        <summary className="dashboard-panel-head cursor-pointer select-none">
-                            <div>
-                                <h2>{language === 'vn' ? 'Phân tích nâng cao & hệ thống' : 'Advanced analytics & system'}</h2>
-                                <p className="mt-1 text-xs font-normal text-[var(--text-tertiary)]">{language === 'vn' ? 'Hành vi tìm kiếm, phễu người xem, lưu lượng, nhu cầu theo khu vực và kênh tự động' : 'Search behaviour, viewer funnel, traffic, area demand and automated channels'}</p>
-                            </div>
-                        </summary>
-                        <div className="space-y-6 p-4 sm:p-5">
-                    <SearchAnalyticsWidget analytics={overview} language={language} />
-
-                    {(['SUPER_ADMIN', 'ADMIN', 'TEAM_LEAD'].includes(analytics.user?.role ?? '')) && (
-                        <>
-                            <VisitorFunnelWidget days={selectedDays} language={language} />
-                            <div className="grid grid-cols-1 gap-6 xl:grid-cols-2">
-                                <GeoLocationTable t={t} days={selectedDays} />
-                                <RealtimeTrafficWidget t={t} theme={chartTheme} />
-                            </div>
-                        </>
-                    )}
-                    <section className="dashboard-panel" aria-label={ui.demand}>
-                        <div className="dashboard-panel-head"><h2>{ui.demand}</h2><span className="text-xs text-[var(--text-tertiary)]">{overview.demandAreas?.length ?? 0}</span></div>
-                        <div className="grid grid-cols-1 gap-2 px-4 py-4 sm:grid-cols-2 lg:grid-cols-4">
-                            {(overview.demandAreas || []).slice(0, 8).map((area: any, index: number) => (
-                                <div key={area.name ?? index} className="rounded-xl border border-[var(--glass-border)] bg-[var(--bg-surface)] px-3 py-3">
-                                    <div className="flex items-center justify-between gap-2 text-xs"><span className="truncate text-[var(--text-secondary)]">{area.name}</span><strong className="font-mono text-[var(--sgs-primary)]">{area.score ?? area.count ?? 0}</strong></div>
-                                    <div className="mt-2 h-1.5 rounded-full bg-[var(--glass-surface-hover)]"><div className="h-full rounded-full bg-[var(--sgs-accent)]" style={{ width: `${Math.min(100, Number(area.score ?? area.count ?? 0))}%` }} /></div>
+                    {(() => {
+                        const role = analytics.user?.role ?? '';
+                        const vn = language === 'vn';
+                        const links = [
+                            { href: '/reports', show: ['SUPER_ADMIN', 'ADMIN', 'TEAM_LEAD', 'MARKETING', 'SALES'].includes(role), title: vn ? 'Báo cáo & hành vi khách' : 'Reports & visitor behaviour', desc: vn ? 'Tìm kiếm, phễu người xem, nhu cầu theo khu vực' : 'Search, viewer funnel, area demand' },
+                            { href: '/social-publishing', show: ['SUPER_ADMIN', 'ADMIN', 'TEAM_LEAD', 'MARKETING'].includes(role), title: vn ? 'Đăng mạng xã hội' : 'Social publishing', desc: vn ? 'Marketing Agent và kênh tự động' : 'Marketing Agent and automated channels' },
+                            { href: '/system', show: role === 'SUPER_ADMIN', title: vn ? 'Trạng thái hệ thống' : 'System status', desc: vn ? 'Vị trí khách truy cập, lưu lượng thời gian thực' : 'Visitor locations, realtime traffic' },
+                        ].filter(link => link.show);
+                        if (!links.length) return null;
+                        return (
+                            <nav className="dashboard-panel" aria-label={vn ? 'Phân tích chuyên sâu' : 'In-depth analysis'}>
+                                <div className="dashboard-panel-head"><h2>{vn ? 'Phân tích chuyên sâu' : 'In-depth analysis'}</h2></div>
+                                <div className="grid grid-cols-1 gap-2 p-4 sm:grid-cols-2 lg:grid-cols-3">
+                                    {links.map(link => (
+                                        <a key={link.href} href={link.href} className="dashboard-control group flex min-h-[56px] items-center justify-between gap-3 rounded-xl border border-[var(--glass-border)] px-3 py-2.5 hover:border-[var(--sgs-primary)]">
+                                            <span className="min-w-0">
+                                                <span className="block truncate text-sm font-semibold text-[var(--text-primary)]">{link.title}</span>
+                                                <span className="block truncate text-xs text-[var(--text-tertiary)]">{link.desc}</span>
+                                            </span>
+                                            <span aria-hidden="true" className="shrink-0 text-[var(--sgs-primary)] transition-transform group-hover:translate-x-0.5">→</span>
+                                        </a>
+                                    ))}
                                 </div>
-                            ))}
-                        </div>
-                        {!overview.demandAreas?.length && <div className="mx-4 mb-4 py-3 text-xs text-[var(--text-tertiary)]">{language === 'vn' ? 'Chưa có dữ liệu nhu cầu theo khu vực' : 'No area demand data yet'}</div>}
-                    </section>
-                    <section aria-label={language === 'vn' ? 'Marketing Agent và kênh quảng cáo' : 'Marketing Agent and advertising channels'}>
-                        <AutoPostingOnboardingCard />
-                    </section>
-                        </div>
-                    </details>
+                            </nav>
+                        );
+                    })()}
                 </div>
             </div>
         </div>

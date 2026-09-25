@@ -11,6 +11,7 @@ import { socket } from '../services/websocket';
 import { CampaignCost } from '../types';
 import { Dropdown } from '../components/Dropdown';
 import { SeoHead } from '../components/SeoHead';
+import { AudienceInsights } from '../components/reports/AudienceInsights';
 // -----------------------------------------------------------------------------
 // 1. TYPES & INTERFACES
 // -----------------------------------------------------------------------------
@@ -962,6 +963,7 @@ export const Reports: React.FC = () => {
                 {activeTab === 'ROI' && <RoiTab data={data} t={t} formatCurrency={formatCurrency} />}
                 {activeTab === 'COSTS' && <CostsTab data={data} t={t} formatCurrency={formatCurrency} currentUser={currentUser} onCostUpdated={loadData} notify={notify} />}
             </div>
+            {activeTab === 'OVERVIEW' && <AudienceInsights timeRange={timeRange} language={language} role={currentUser?.role} />}
 
             {createPortal(
                 toast ? <div className={`fixed bottom-6 left-1/2 -translate-x-1/2 z-[9999] flex items-center gap-3 px-5 py-3 rounded-2xl shadow-2xl text-sm font-bold transition-all animate-enter ${toast.type === 'success' ? 'bg-emerald-600 text-white' : 'bg-rose-600 text-white'}`}>

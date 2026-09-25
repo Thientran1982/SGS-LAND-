@@ -1477,9 +1477,8 @@ class DatabaseApiClient {
       const more = { id: 'more-tools', labelKey: 'menu.more_tools', items: visibleItems.filter(navItem => !primarySet.has(navItem.id)) };
       return [primary, more].filter(group => group.items.length > 0);
     }
-    // The quick-access row intentionally reuses five high-frequency routes.
-    // They remain in their functional groups too, so the 43-route menu is not
-    // changed—only its order and information architecture are changed.
+    // The quick-access row holds five high-frequency routes; they are filtered out
+    // of the functional groups below so every route is listed exactly once.
     const groups = [
       makeGroup('quick-actions', 'menu.quick_actions', ['dash', 'leads', 'inbox', 'inv', 'tasks']),
       makeGroup('sales-customers', 'menu.sales_customers', ['leads', 'inbox', 'contracts', 'fav', 'ai-advisor']),
@@ -1500,6 +1499,12 @@ class DatabaseApiClient {
         'error-monitor',
       ]),
     ];
+    // Each route appears once: items pinned in the quick-access group are removed
+    // from their functional groups so managers never see the same entry twice.
+    const pinnedIds = new Set(groups[0].items.map((navItem: any) => navItem.id));
+    for (const group of groups.slice(1)) {
+      group.items = group.items.filter((navItem: any) => !pinnedIds.has(navItem.id));
+    }
     return groups.filter(group => group.items.length > 0);
   }
   async ping(): Promise<boolean> {

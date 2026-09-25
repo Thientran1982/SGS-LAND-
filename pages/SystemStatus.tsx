@@ -8,6 +8,7 @@ import { useTranslation } from '../services/i18n';
 import { useTheme } from '../services/theme';
 import { ConfirmModal } from '../components/ConfirmModal';
 import { SeoHead } from '../components/SeoHead';
+import { GeoLocationTable, RealtimeTrafficWidget } from './Dashboard';
 const ICONS = {
     REFRESH: <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" /></svg>,
     DOWNLOAD: <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4-4m0 0L8 8m4-4v12" /></svg>,
@@ -1037,6 +1038,12 @@ export const SystemStatus: React.FC = () => {
                     <LiveChatTelemetryPanel t={t} formatDateTime={formatDateTime} />
                     <LeadEmailMetricsPanel />
                 </>
+            )}
+            {isAdmin && (
+                <div className="sgs-dashboard sgs-dashboard-embed grid grid-cols-1 gap-6 xl:grid-cols-2">
+                    <GeoLocationTable t={t} days={30} />
+                    <RealtimeTrafficWidget t={t} theme={chartTheme} />
+                </div>
             )}
             <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
                 {/* LOGS - Takes 2/3 width on large screens */}
