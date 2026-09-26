@@ -13,7 +13,10 @@ import { randomUUID } from 'node:crypto';
 import { applyAVM, getRegionalBasePrice, PROPERTY_TYPE_PRICE_MULT } from '../valuationEngine';
 import type { LegalStatus, PropertyType } from '../valuationEngine';
 import { marketDataService } from '../services/marketDataService';
-import { priceCalibrationService } from '../services/priceCalibrationService';
+import {
+  priceCalibrationService,
+  VALUATION_GROUP_TREND_MIN_EVALUATED_SAMPLES,
+} from '../services/priceCalibrationService';
 import { listingRepository } from '../repositories/listingRepository';
 import { logger } from '../middleware/logger';
 import { pool, withTenantContext } from '../db';
@@ -1363,6 +1366,9 @@ export function createValuationRoutes(
         report,
         history,
         drift,
+        supportPolicy: {
+          minimumEvaluatedSamples: VALUATION_GROUP_TREND_MIN_EVALUATED_SAMPLES,
+        },
         thresholdConfig,
         thresholdHistory,
         dataset: {

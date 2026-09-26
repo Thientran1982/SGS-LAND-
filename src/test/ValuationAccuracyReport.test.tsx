@@ -99,6 +99,7 @@ const evaluationReport = {
       intervalCoverage: 0.75,
     })),
   }],
+  supportPolicy: { minimumEvaluatedSamples: 50 },
   drift: {
     status: 'WARNING' as const,
     promotionBlocked: false,
@@ -191,6 +192,7 @@ describe('ValuationAccuracyReport localization', () => {
     expect(screen.getByRole('option', { name: 'Open' })).toBeInTheDocument();
     expect(screen.getByRole('img', { name: 'MAE chart with a VND per square meter value axis and thresholds for each run' })).toBeInTheDocument();
     expect(screen.getByRole('heading', { name: 'Error trends by area and property type' })).toBeInTheDocument();
+    expect(await screen.findByText('A group needs at least 50 verified transactions with evaluated predictions in each run to support a trend. “Low support” flags MAE/MAPE as noisy; measured values remain visible.')).toBeInTheDocument();
     expect(screen.getByRole('combobox', { name: 'Area and property type' })).toBeInTheDocument();
     expect(screen.getByRole('img', { name: /MAE history in VND per square meter for/ })).toBeInTheDocument();
     fireEvent.change(screen.getByRole('combobox', { name: 'Area and property type' }), {
@@ -199,6 +201,8 @@ describe('ValuationAccuracyReport localization', () => {
     const groupHistoryTable = screen.getByRole('columnheader', { name: 'Evaluation time' }).closest('table')!;
     expect(within(groupHistoryTable).getByText('18,000,000 VND/m²')).toBeInTheDocument();
     expect(within(groupHistoryTable).getByText('12,500,000 VND/m²')).toBeInTheDocument();
+    expect(within(groupHistoryTable).getAllByText('3 evaluated / 4 verified samples')).toHaveLength(2);
+    expect(within(groupHistoryTable).getAllByText('Low support')).toHaveLength(2);
     expect(await screen.findByText('Valuation drift thresholds updated')).toBeInTheDocument();
     expect(screen.getByText('an administrator updated drift thresholds to version 3: MAE 20,000,000 VND/m², MAPE 20.0%, 3 consecutive runs.')).toBeInTheDocument();
     expect(screen.getByText('City-center townhouse')).toBeInTheDocument();
@@ -227,6 +231,8 @@ describe('ValuationAccuracyReport localization', () => {
     expect(screen.getByRole('option', { name: 'Đang mở' })).toBeInTheDocument();
     expect(screen.getByRole('img', { name: 'Biểu đồ MAE có trục giá trị VND trên mét vuông và ngưỡng theo từng lần chạy' })).toBeInTheDocument();
     expect(screen.getByRole('heading', { name: 'Xu hướng sai số theo khu vực và loại bất động sản' })).toBeInTheDocument();
+    expect(await screen.findByText('Mỗi nhóm cần ít nhất 50 giao dịch đã xác minh có dự đoán được đánh giá trong mỗi lần chạy mới đủ cơ sở cho xu hướng. Nhãn “Chưa đủ mẫu” cảnh báo MAE/MAPE còn nhiễu; các số đo vẫn được giữ nguyên.')).toBeInTheDocument();
+    expect(screen.getAllByText('Chưa đủ mẫu').length).toBeGreaterThan(0);
     expect(screen.getByRole('combobox', { name: 'Khu vực và loại bất động sản' })).toBeInTheDocument();
     expect(screen.getByRole('img', { name: /Biểu đồ lịch sử MAE theo VND trên mét vuông cho/ })).toBeInTheDocument();
     expect(await screen.findByText('Ngưỡng drift định giá đã được cập nhật')).toBeInTheDocument();
@@ -304,6 +310,30 @@ describe('ValuationAccuracyReport localization', () => {
     const groupHistoryTable = screen.getByRole('columnheader', { name: timeColumn }).closest('table')!;
     expect(within(groupHistoryTable).getAllByText(unavailable)).toHaveLength(6);
     expect(within(groupHistoryTable).queryByText(/0 VND\/m²/)).toBeNull();
+  });
+
+  it('marks a group low-support below 50 evaluated samples but not at the threshold', async () => {
+    const boundaryReport = {
+      ...evaluationReport,
+      history: evaluationReport.history.map((run, runIndex) => ({
+        ...run,
+        groups: run.groups.map(group => ({
+          ...group,
+          sampleCount: runIndex === 0 ? 60 : 70,
+          evaluatedCount: runIndex === 0 ? 49 : 50,
+        })),
+      })),
+    };
+    apiGet.mockImplementation((path: string) => Promise.resolve(
+      path.endsWith('/operational-events') ? { events: [] } : boundaryReport,
+    ));
+    renderReport('en');
+
+    expect(await screen.findByRole('heading', { name: 'Error trends by area and property type' })).toBeInTheDocument();
+    const groupHistoryTable = screen.getByRole('columnheader', { name: 'Evaluation time' }).closest('table')!;
+    expect(await within(groupHistoryTable).findByText('49 evaluated / 60 verified samples')).toBeInTheDocument();
+    expect(within(groupHistoryTable).getByText('50 evaluated / 70 verified samples')).toBeInTheDocument();
+    expect(within(groupHistoryTable).getAllByText('Low support')).toHaveLength(1);
   });
 
   it.each([

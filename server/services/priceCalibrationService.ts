@@ -46,6 +46,14 @@ const COMPS_WEIGHT         = 0.15;
 const AI_WEIGHT_NO_TXN     = 0.70;
 const COMPS_WEIGHT_NO_TXN  = 0.30;
 
+/**
+ * Valuation-owner policy: a group needs 50 verified gold-set transactions with
+ * an evaluated prediction in a run before its MAE/MAPE trend is treated as
+ * adequately supported. This is an interpretation guard, not a promotion gate;
+ * measured values and both verified/evaluated counts remain available.
+ */
+export const VALUATION_GROUP_TREND_MIN_EVALUATED_SAMPLES = 50;
+
 export interface ValuationDriftThresholdConfig {
   version: number;
   thresholds: ValuationDriftThresholds;

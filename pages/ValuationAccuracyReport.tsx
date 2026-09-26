@@ -22,6 +22,7 @@ type GroupHistoryPoint = Metrics & { locationKey: string; propertyType: string }
 type ResponseData = {
   report: Metrics & { evaluatedAt: string; groups: Group[]; thresholdVersion?: number; appliedThresholds?: Thresholds };
   history: Array<Metrics & { evaluatedAt: string; thresholdVersion: number | null; thresholds: Thresholds | null; groups?: GroupHistoryPoint[] }>;
+  supportPolicy?: { minimumEvaluatedSamples?: number };
   drift: {
     status: 'CLEAR' | 'WARNING' | 'BLOCKED';
     promotionBlocked: boolean;
@@ -476,11 +477,13 @@ function GroupHistoryTrends({
   latestGroups,
   language,
   t,
+  minimumEvaluatedSamples,
 }: {
   history: ResponseData['history'];
   latestGroups: Group[];
   language: Language;
   t: Translate;
+  minimumEvaluatedSamples: number | null;
 }) {
   const [selectedGroupKey, setSelectedGroupKey] = useState('');
   const locale = localeFor(language);
@@ -514,6 +517,7 @@ function GroupHistoryTrends({
       evaluatedAt: run.evaluatedAt,
       dateLabel: new Date(run.evaluatedAt).toLocaleDateString(locale, { year: '2-digit', month: '2-digit', day: '2-digit' }),
       sampleCount: group?.sampleCount ?? null,
+      evaluatedCount: group?.evaluatedCount ?? null,
       mae: group?.mae ?? null,
       mapePercent: group?.mape == null ? null : group.mape * 100,
     };
@@ -557,7 +561,10 @@ function GroupHistoryTrends({
         <p className="mb-2 font-semibold text-[var(--text-primary)]">{dateTime(point.evaluatedAt, language)}</p>
         <p className="font-mono text-[var(--text-secondary)]">{t('valuationAccuracy.groupTrend.measured', { value: metric.format(value) })}</p>
         <p className="mt-1 text-[var(--text-tertiary)]">
-          {t('valuationAccuracy.groupTrend.samples', { count: point.sampleCount == null ? '—' : formatCount(point.sampleCount, language) })}
+          {t('valuationAccuracy.groupTrend.samples', {
+            evaluated: point.evaluatedCount == null ? t('valuationAccuracy.groupTrend.unavailable') : formatCount(point.evaluatedCount, language),
+            verified: point.sampleCount == null ? t('valuationAccuracy.groupTrend.unavailable') : formatCount(point.sampleCount, language),
+          })}
         </p>
       </div>
     );
@@ -569,6 +576,11 @@ function GroupHistoryTrends({
         <div>
           <h2 className="font-bold text-[var(--text-primary)]">{t('valuationAccuracy.groupTrend.title')}</h2>
           <p className="mt-1 max-w-3xl text-xs leading-relaxed text-[var(--text-tertiary)]">{t('valuationAccuracy.groupTrend.description')}</p>
+          <p className="mt-1 max-w-3xl text-xs leading-relaxed text-[var(--text-tertiary)]">
+            {minimumEvaluatedSamples == null
+              ? t('valuationAccuracy.groupTrend.policyUnavailable')
+              : t('valuationAccuracy.groupTrend.supportPolicy', { minimum: formatCount(minimumEvaluatedSamples, language) })}
+          </p>
         </div>
         {options.length > 0 && (
           <label className="min-w-[min(100%,18rem)] text-xs font-semibold text-[var(--text-secondary)]">
@@ -629,10 +641,27 @@ function GroupHistoryTrends({
                   const group = (run.groups ?? []).find(item =>
                     item.locationKey === selectedGroup?.locationKey && item.propertyType === selectedGroup?.propertyType,
                   );
+                  const lowSupport = group != null
+                    && minimumEvaluatedSamples != null
+                    && group.evaluatedCount < minimumEvaluatedSamples;
                   return (
                     <tr key={`group-${run.evaluatedAt}`} className="border-b border-[var(--glass-border)]">
                       <td className="py-2">{dateTime(run.evaluatedAt, language)}</td>
-                      <td>{group ? formatCount(group.sampleCount, language) : t('valuationAccuracy.groupTrend.unavailable')}</td>
+                      <td>
+                        {group ? (
+                          <span className="inline-flex flex-wrap items-center gap-2">
+                            <span>{t('valuationAccuracy.groupTrend.samples', {
+                              evaluated: formatCount(group.evaluatedCount, language),
+                              verified: formatCount(group.sampleCount, language),
+                            })}</span>
+                            {lowSupport && (
+                              <span className="rounded-full bg-amber-100 px-2 py-0.5 font-semibold text-amber-800 dark:bg-amber-900/40 dark:text-amber-200">
+                                {t('valuationAccuracy.groupTrend.lowSupport')}
+                              </span>
+                            )}
+                          </span>
+                        ) : t('valuationAccuracy.groupTrend.unavailable')}
+                      </td>
                       <td className="font-mono">{group ? formatVnd(group.mae, language) : t('valuationAccuracy.groupTrend.unavailable')}</td>
                       <td className="font-mono">{group ? formatPercent(group.mape, language) : t('valuationAccuracy.groupTrend.unavailable')}</td>
                     </tr>
@@ -653,6 +682,12 @@ const ValuationAccuracyReport: React.FC = () => {
   const [userResolved, setUserResolved] = useState(false);
   const [data, setData] = useState<ResponseData | null>(null);
   const [loading, setLoading] = useState(true);
+  const configuredMinimum = data?.supportPolicy?.minimumEvaluatedSamples;
+  const minimumEvaluatedSamples = typeof configuredMinimum === 'number'
+    && Number.isInteger(configuredMinimum)
+    && configuredMinimum > 0
+    ? configuredMinimum
+    : null;
   const [running, setRunning] = useState(false);
   const [error, setError] = useState('');
   const [savingThresholds, setSavingThresholds] = useState(false);
@@ -821,7 +856,13 @@ const ValuationAccuracyReport: React.FC = () => {
               </div>
               <TrendChart history={data.history} language={language} t={t} />
             </section>
-            <GroupHistoryTrends history={data.history} latestGroups={report.groups} language={language} t={t} />
+            <GroupHistoryTrends
+              history={data.history}
+              latestGroups={report.groups}
+              language={language}
+              t={t}
+              minimumEvaluatedSamples={minimumEvaluatedSamples}
+            />
             <DriftNotificationEvents language={language} t={t} />
 
             <section className="overflow-hidden rounded-[22px] border border-[var(--glass-border)] bg-[var(--bg-surface)] shadow-sm">
