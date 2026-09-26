@@ -1,6 +1,0 @@
-components/GuideAssistant.tsx
-config/locales.ts
-components/GuideAssistant.tsx
-11:import { GuideAssistant } from './GuideAssistant';
-568:                <GuideAssistant
-GuideAssistant.tsx

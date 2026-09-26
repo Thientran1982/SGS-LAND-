@@ -1,3 +1,0 @@
-server/repositories/routingRuleRepository.ts:35:  async matchLead(tenantId: string, lead: {
-server/routes/leadRoutes.ts:225:          const autoAssignId = await routingRuleRepository.matchLead(user.tenantId, {
-server/ai/liveChatEngine.ts:1528:        const match = await routingRuleRepository.matchLead(tenantId, leadData || {});

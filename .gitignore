@@ -42,3 +42,6 @@ migration_dump/
 *.dump
 *.sql.gz
 .auditfix/
+
+# Local scratch files used during assisted changes
+.cc/

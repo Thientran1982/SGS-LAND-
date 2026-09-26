@@ -1,4 +1,0 @@
-OK card min width
-OK code header
-OK code cell
-TSC_DONE

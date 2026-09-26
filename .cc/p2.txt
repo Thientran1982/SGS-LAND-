@@ -1,4 +1,0 @@
--rw-r--r-- 1 runner runner 90000 Sep 25 21:37 .cc/pj_00
--rw-r--r-- 1 runner runner 90000 Sep 25 21:37 .cc/pj_01
--rw-r--r-- 1 runner runner 76260 Sep 25 21:37 .cc/pj_02
-67b0da9c4a306e5f91eed807d284b4af  pages/Projects.tsx

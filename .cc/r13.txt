@@ -1,3 +1,0 @@
-1003:function PriceMatrixPanel({ project, canEdit, onClose }: { project: Project; canEdit: boolean; onClose: () => void }) {
-1004-    const { t } = useTranslation();
-000

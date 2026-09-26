@@ -1,2 +1,0 @@
-OK   components/WorkspaceNavigation.tsx (7 steps)
-INFO interface WorkspaceNavigationProps: true; UserAvatar: false; react import: import React, { useEffect, useMemo, useState } from 'react';
