@@ -170,9 +170,11 @@ export const OverviewHome: React.FC<{ analytics: any; formatCompactNumber: (n: n
     });
 
     const queueQuery = useQuery({
-        queryKey: ['overviewLeadQueue'],
+        queryKey: ['overviewLeadQueue', 'mine'],
         queryFn: async () => {
-            const r: any = await db.getLeads(1, 30, { stages: OPEN_STAGES });
+            // Only customers assigned to the signed-in user, for every role, so nobody
+            // sees or calls another salesperson's leads from the dashboard.
+            const r: any = await db.getLeads(1, 30, { stages: OPEN_STAGES, assignedTo: 'me' });
             return Array.isArray(r?.data) ? r.data : [];
         },
         staleTime: 30000,
@@ -344,7 +346,10 @@ export const OverviewHome: React.FC<{ analytics: any; formatCompactNumber: (n: n
 
                 <section className="dashboard-panel" aria-label={tr('overview.queue_title')}>
                     <div className="dashboard-panel-head flex-wrap">
-                        <h2>{tr('overview.queue_title')}</h2>
+                        <div className="min-w-0">
+                            <h2>{tr('overview.queue_title')}</h2>
+                            <p className="mt-0.5 text-xs text-[var(--text-tertiary)]">{tr('overview.queue_mine')}</p>
+                        </div>
                         <div className="flex flex-wrap gap-1.5">
                             {chip('all', tr('overview.queue_all'))}
                             {chip('overdue', `${tr('overview.queue_overdue')} · ${overdueCount}`)}

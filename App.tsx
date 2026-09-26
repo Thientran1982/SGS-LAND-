@@ -567,11 +567,12 @@ const AppShell: React.FC = () => {
         };
         initAuth();
         // Re-check on explicit auth events (login/logout)
-        const onLogin = () => db.getCurrentUser().then(u => {
+        // Drop cached queries on every auth change so one user's data never shows for another.
+        const onLogin = () => { queryClient.clear(); return db.getCurrentUser().then(u => {
             if (u) { localStorage.setItem(AUTH_CACHE_KEY, '1'); setCurrentUser(u); setAuthState('AUTH'); }
             else { localStorage.removeItem(AUTH_CACHE_KEY); setCurrentUser(null); setAuthState('GUEST'); }
-        }).catch(() => { localStorage.removeItem(AUTH_CACHE_KEY); setCurrentUser(null); setAuthState('GUEST'); });
-        const onLogout = () => { localStorage.removeItem(AUTH_CACHE_KEY); db.clearUserCache(); setCurrentUser(null); setAuthState('GUEST'); setSessionKey(k => k + 1); };
+        }).catch(() => { localStorage.removeItem(AUTH_CACHE_KEY); setCurrentUser(null); setAuthState('GUEST'); }); };
+        const onLogout = () => { localStorage.removeItem(AUTH_CACHE_KEY); db.clearUserCache(); queryClient.clear(); setCurrentUser(null); setAuthState('GUEST'); setSessionKey(k => k + 1); };
         window.addEventListener('auth:login', onLogin);
         window.addEventListener('auth:logout', onLogout);
         // Re-verify auth when user returns to the tab after being idle.

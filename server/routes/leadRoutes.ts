@@ -61,7 +61,13 @@ export function createLeadRoutes(authenticateToken: any, getBroadcast?: () => an
       const filters: any = {};
       if (req.query.stage) filters.stage = req.query.stage;
       if (req.query.stages) filters.stage_in = (req.query.stages as string).split(',');
-      if (req.query.assignedTo) filters.assignedTo = req.query.assignedTo;
+      if (req.query.assignedTo) {
+        // "me" = the signed-in user (used by the dashboard's own-customer queue).
+        const assignee = String(req.query.assignedTo);
+        if (assignee === 'me') filters.assignedTo = user.id;
+        else if (/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(assignee)) filters.assignedTo = assignee;
+        else return res.status(400).json({ error: 'assignedTo không hợp lệ' });
+      }
       if (req.query.source) filters.source = req.query.source;
       if (req.query.search) filters.search = req.query.search;
       if (req.query.slaBreached) filters.slaBreached = req.query.slaBreached === 'true';
