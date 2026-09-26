@@ -1,9 +1,11 @@
-import React, { useEffect, useMemo, useState, useRef } from 'react';
+import React, { useCallback, useEffect, useMemo, useState, useRef } from 'react';
 import {
     BarChart2,
     Bot,
     Building2,
     ChevronDown,
+    ChevronLeft,
+    ChevronRight,
     CircleDollarSign,
     ClipboardList,
     Inbox,
@@ -495,30 +497,92 @@ const TAB_LABEL: Record<string, string> = {
 
 const WorkspaceTabs: React.FC<WorkspaceTabsProps> = ({ activePage, hub, onNavigate }) => {
     const { t } = useTranslation();
+    const scrollerRef = useRef<HTMLElement>(null);
+    const [edges, setEdges] = useState({ left: false, right: false });
+    const updateEdges = useCallback(() => {
+        const el = scrollerRef.current;
+        if (!el) return;
+        setEdges({ left: el.scrollLeft > 4, right: el.scrollLeft + el.clientWidth < el.scrollWidth - 4 });
+    }, []);
+    // Hubs such as Settings have more tabs than fit: bring the active one into view.
+    useEffect(() => {
+        const el = scrollerRef.current;
+        const active = el?.querySelector<HTMLElement>('[aria-current="page"]');
+        if (el && active) {
+            const target = active.offsetLeft - (el.clientWidth - active.offsetWidth) / 2;
+            el.scrollLeft = Math.max(0, target);
+        }
+        updateEdges();
+    }, [activePage, hub, updateEdges]);
+    useEffect(() => {
+        const el = scrollerRef.current;
+        if (!el) return;
+        el.addEventListener('scroll', updateEdges, { passive: true });
+        window.addEventListener('resize', updateEdges);
+        // Web fonts and late labels change the row width after mount.
+        const observer = typeof ResizeObserver !== 'undefined' ? new ResizeObserver(updateEdges) : null;
+        observer?.observe(el);
+        if (el.firstElementChild) observer?.observe(el.firstElementChild);
+        const frame = typeof requestAnimationFrame !== 'undefined' ? requestAnimationFrame(updateEdges) : 0;
+        return () => {
+            el.removeEventListener('scroll', updateEdges);
+            window.removeEventListener('resize', updateEdges);
+            observer?.disconnect();
+            if (frame && typeof cancelAnimationFrame !== 'undefined') cancelAnimationFrame(frame);
+        };
+    }, [updateEdges, hub]);
     if (!hub || hub.items.length === 0) return null;
+    const scrollByPage = (direction: 1 | -1) => {
+        const el = scrollerRef.current;
+        if (el) el.scrollLeft += direction * Math.max(200, el.clientWidth * 0.6);
+    };
 
     return (
-        <nav className="flex h-12 shrink-0 items-end gap-1 overflow-x-auto border-b border-[var(--glass-border)] bg-[var(--bg-surface)] px-4 sm:px-6 lg:px-7" aria-label={t(hub.labelKey)}>
-            {hub.items.map(item => {
-                const selected = item.route === activePage;
-                return (
-                    <button
-                        key={item.route}
-                        type="button"
-                        onClick={() => onNavigate(item.route)}
-                        aria-current={selected ? 'page' : undefined}
-                        className={`relative flex h-11 shrink-0 items-center rounded-t-lg px-3 text-xs font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--ui-focus)] sm:px-3.5 sm:text-sm ${
-                            selected
-                                ? 'text-[var(--sgs-primary-deep)]'
-                                : 'text-[var(--text-tertiary)] hover:bg-[var(--glass-surface-hover)] hover:text-[var(--text-primary)]'
-                        }`}
-                    >
-                        {t(TAB_LABEL[item.route] ?? item.labelKey)}
-                        {selected && <span className="absolute inset-x-3 bottom-0 h-0.5 rounded-full bg-[var(--sgs-accent)]" />}
-                    </button>
-                );
-            })}
-        </nav>
+        <div className="relative shrink-0 border-b border-[var(--glass-border)] bg-[var(--bg-surface)]">
+            <nav ref={scrollerRef} className="no-scrollbar flex h-12 items-end gap-1 overflow-x-auto px-4 sm:px-6 lg:px-7" aria-label={t(hub.labelKey)}>
+                {hub.items.map(item => {
+                    const selected = item.route === activePage;
+                    return (
+                        <button
+                            key={item.route}
+                            type="button"
+                            onClick={() => onNavigate(item.route)}
+                            aria-current={selected ? 'page' : undefined}
+                            className={`relative flex h-11 shrink-0 items-center rounded-t-lg px-3 text-xs font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--ui-focus)] sm:px-3.5 sm:text-sm ${
+                                selected
+                                    ? 'text-[var(--sgs-primary-deep)]'
+                                    : 'text-[var(--text-tertiary)] hover:bg-[var(--glass-surface-hover)] hover:text-[var(--text-primary)]'
+                            }`}
+                        >
+                            {t(TAB_LABEL[item.route] ?? item.labelKey)}
+                            {selected && <span className="absolute inset-x-3 bottom-0 h-0.5 rounded-full bg-[var(--sgs-accent)]" />}
+                        </button>
+                    );
+                })}
+            </nav>
+            {edges.left && (
+                <button
+                    type="button"
+                    onClick={() => scrollByPage(-1)}
+                    aria-label={t('shell.tabs_prev')}
+                    title={t('shell.tabs_prev')}
+                    className="absolute inset-y-0 left-0 flex w-11 items-center justify-start bg-gradient-to-r from-[var(--bg-surface)] via-[var(--bg-surface)] to-transparent pl-2 text-[var(--text-secondary)] hover:text-[var(--text-primary)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--ui-focus)]"
+                >
+                    <ChevronLeft size={18} aria-hidden="true" />
+                </button>
+            )}
+            {edges.right && (
+                <button
+                    type="button"
+                    onClick={() => scrollByPage(1)}
+                    aria-label={t('shell.tabs_next')}
+                    title={t('shell.tabs_next')}
+                    className="absolute inset-y-0 right-0 flex w-11 items-center justify-end bg-gradient-to-l from-[var(--bg-surface)] via-[var(--bg-surface)] to-transparent pr-2 text-[var(--text-secondary)] hover:text-[var(--text-primary)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--ui-focus)]"
+                >
+                    <ChevronRight size={18} aria-hidden="true" />
+                </button>
+            )}
+        </div>
     );
 };
 

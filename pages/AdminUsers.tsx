@@ -7,6 +7,20 @@ import { useTranslation } from '../services/i18n';
 import { Dropdown } from '../components/Dropdown';
 import { ConfirmModal } from '../components/ConfirmModal';
 import { SeoHead } from '../components/SeoHead';
+import {
+    SettingsPage,
+    SettingsHeader,
+    SettingsCard,
+    StatTile,
+    StatGrid,
+    DistributionBar,
+    StatusBadge,
+    EmptyState,
+    TONE_COLOR,
+    SERIES_COLORS,
+} from '../components/settings/SettingsUI';
+import type { Tone, Segment } from '../components/settings/SettingsUI';
+
 interface AgentStatsData {
     deals: number;
     lost: number;
@@ -22,99 +36,97 @@ interface AgentStatsData {
     completedThisMonth: number;
     workloadScore: number;
 }
-function getRoleBadgeClass(role: string): string {
-    switch (role) {
-        case 'ADMIN':          return 'bg-rose-50 text-rose-700 border border-rose-200';
-        case 'MANAGER':        return 'bg-[var(--sgs-primary)]/10 text-[var(--sgs-primary)] border border-[var(--sgs-primary)]';
-        case 'TEAM_LEAD':      return 'bg-[var(--sgs-primary)]/10 text-sgs-primary border border-[var(--sgs-primary)]';
-        case 'SALES':          return 'bg-[var(--sgs-primary)]/10 text-[var(--sgs-primary)] border border-[var(--glass-border)]';
-        case 'MARKETING':      return 'bg-[var(--glass-surface)] text-[var(--text-secondary)] border border-[var(--glass-border)]';
-        case 'SUPPORTER':      return 'bg-sky-50 text-sky-700 border border-sky-200';
-        case 'VIEWER':         return 'bg-slate-100 text-slate-600 border border-slate-200';
-        case 'PARTNER_ADMIN':  return 'bg-[var(--sgs-primary)]/10 text-[var(--sgs-primary)] border border-[var(--sgs-primary)]';
-        case 'PARTNER_AGENT':  return 'bg-[var(--sgs-primary)]/10 text-[var(--sgs-primary)] border border-[var(--sgs-primary)]';
-        default:               return 'bg-[var(--glass-surface)] text-[var(--text-secondary)] border border-[var(--glass-border)]';
-    }
-}
-const ICONS = {
-    SEARCH: <svg className="w-5 h-5 text-[var(--text-secondary)]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>,
-    ADD: <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" /></svg>,
-    TRASH: <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>,
-    SEND: <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" /></svg>,
-    CLOSE: <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>,
-    INFO: <svg className="w-4 h-4 text-sgs-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>,
-    SORT: <svg className="w-3 h-3 ml-1 text-[var(--text-secondary)]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4" /></svg>,
-    X: <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>,
-    CHART: <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" /></svg>,
+
+const DAY_MS = 24 * 60 * 60 * 1000;
+
+// Status → badge tone (literal map so Tailwind/badge classes stay static).
+const STATUS_TONE: Record<string, Tone> = {
+    [CommonStatus.ACTIVE]: 'success',
+    [CommonStatus.PENDING]: 'warning',
+    [CommonStatus.INACTIVE]: 'danger',
+    [CommonStatus.DEACTIVATED]: 'neutral',
+    [CommonStatus.ARCHIVED]: 'neutral',
 };
+
+const avatarFallback = (name: string) =>
+    `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&size=40&background=6366f1&color=fff`;
+
+const ICONS = {
+    SEARCH: <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>,
+    ADD: <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" /></svg>,
+    TRASH: <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>,
+    SEND: <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" /></svg>,
+    CLOSE: <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>,
+    INFO: <svg className="w-4 h-4 text-sgs-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>,
+    X: <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>,
+    CHART: <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" /></svg>,
+    USERS: <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z" /></svg>,
+    LOCK: <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" /></svg>,
+    CHEVRON_LEFT: <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" /></svg>,
+    CHEVRON_RIGHT: <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" /></svg>,
+};
+
+const ICON_BTN = 'inline-flex h-10 w-10 items-center justify-center rounded-xl text-[var(--text-secondary)] transition-colors hover:bg-[var(--glass-surface-hover)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--ui-focus)] disabled:cursor-not-allowed disabled:opacity-40';
+const FIELD_LABEL = 'mb-1.5 flex items-center gap-1 text-xs font-semibold text-[var(--text-secondary)]';
+
 // --- SUB-COMPONENT: PAGINATION ---
 const PaginationControl = memo(({ page, total, pageSize, onPageChange, onPageSizeChange, t }: any) => {
     const totalPages = Math.ceil(total / pageSize);
     const start = (page - 1) * pageSize + 1;
     const end = Math.min(page * pageSize, total);
     return (
-        <>
-            {/* Mobile: slim icon-only bar */}
-            <div className="flex sm:hidden items-center w-fit mx-auto gap-3 px-4 py-1.5 bg-transparent rounded-xl">
+        <nav className="flex flex-wrap items-center justify-between gap-2" aria-label={t('adminusers.v2_pagination_aria')}>
+            <div className="hidden sm:flex items-center gap-1 text-xs text-[var(--text-tertiary)]">
+                <span>{t('pagination.showing')}</span>
+                <span className="font-semibold tabular-nums text-[var(--text-primary)]">{total > 0 ? start : 0}–{end}</span>
+                <span>{t('pagination.of')}</span>
+                <span className="font-semibold tabular-nums text-[var(--text-primary)]">{total}</span>
+                <span>{t('pagination.results')}</span>
+            </div>
+            <div className="mx-auto flex items-center gap-1.5 sm:mx-0">
+                <div className="hidden sm:block min-w-[64px] mr-1">
+                    <Dropdown
+                        value={pageSize}
+                        onChange={(v) => onPageSizeChange(Number(v))}
+                        options={[12, 24, 48, 100].map(n => ({ value: n, label: String(n) }))}
+                        className="text-xs"
+                        placement="top"
+                        variant="minimal"
+                    />
+                </div>
                 <button
+                    type="button"
                     onClick={() => onPageChange(page - 1)}
                     disabled={page === 1}
-                    className="w-9 h-9 flex items-center justify-center rounded-lg bg-transparent text-[var(--text-secondary)] hover:bg-[var(--glass-surface-hover)] disabled:opacity-40 disabled:cursor-not-allowed transition-all"
+                    className={ICON_BTN}
+                    aria-label={t('pagination.prev')}
                 >
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" /></svg>
+                    {ICONS.CHEVRON_LEFT}
                 </button>
-                <span className="text-xs font-bold text-[var(--text-primary)] min-w-[56px] text-center">{page} / {totalPages || 1}</span>
+                <span className="min-w-[56px] text-center text-xs font-semibold tabular-nums text-[var(--text-primary)]" aria-live="polite">{page} / {totalPages || 1}</span>
                 <button
+                    type="button"
                     onClick={() => onPageChange(page + 1)}
                     disabled={page === totalPages || total === 0}
-                    className="w-9 h-9 flex items-center justify-center rounded-lg bg-transparent text-[var(--text-secondary)] hover:bg-[var(--glass-surface-hover)] disabled:opacity-40 disabled:cursor-not-allowed transition-all"
+                    className={ICON_BTN}
+                    aria-label={t('pagination.next')}
                 >
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" /></svg>
+                    {ICONS.CHEVRON_RIGHT}
                 </button>
             </div>
-            {/* Desktop: full bar */}
-            <div className="hidden sm:flex flex-row justify-between items-center px-4 py-1.5 bg-transparent gap-2">
-                <div className="flex text-xs text-[var(--text-tertiary)] font-medium items-center gap-1">
-                    <span>{t('pagination.showing')}</span>
-                    <span className="font-bold text-[var(--text-primary)]">{total > 0 ? start : 0}-{end}</span>
-                    <span>{t('pagination.of')}</span>
-                    <span className="font-bold text-[var(--text-primary)]">{total}</span>
-                    <span>{t('pagination.results')}</span>
-                </div>
-                <div className="flex items-center gap-1.5">
-                    <div className="min-w-[60px] mr-1">
-                        <Dropdown
-                            value={pageSize}
-                            onChange={(v) => onPageSizeChange(Number(v))}
-                            options={[12, 24, 48, 100].map(n => ({ value: n, label: String(n) }))}
-                            className="text-xs"
-                            placement="top"
-                            variant="minimal"
-                        />
-                    </div>
-                    <button
-                        onClick={() => onPageChange(page - 1)}
-                        disabled={page === 1}
-                        className="px-3 py-1 rounded-lg bg-transparent text-[var(--text-secondary)] text-xs font-semibold hover:bg-[var(--glass-surface-hover)] disabled:opacity-50 disabled:cursor-not-allowed transition-all flex items-center justify-center"
-                    >
-                        {t('pagination.prev')}
-                    </button>
-                    <div className="flex items-center gap-1 px-1">
-                        <span className="text-xs font-bold text-[var(--text-primary)] whitespace-nowrap">{page} / {totalPages || 1}</span>
-                    </div>
-                    <button
-                        onClick={() => onPageChange(page + 1)}
-                        disabled={page === totalPages || total === 0}
-                        className="px-3 py-1 rounded-lg bg-transparent text-[var(--text-secondary)] text-xs font-semibold hover:bg-[var(--glass-surface-hover)] disabled:opacity-50 disabled:cursor-not-allowed transition-all flex items-center justify-center"
-                    >
-                        {t('pagination.next')}
-                    </button>
-                </div>
-            </div>
-        </>
+        </nav>
     );
 });
+
 // --- SUB-COMPONENT: PERFORMANCE MODAL ---
+const PerfTile: React.FC<{ label: React.ReactNode; value: React.ReactNode; hint?: React.ReactNode; tone?: Tone; highlight?: boolean }> = ({ label, value, hint, tone = 'neutral', highlight }) => (
+    <div className={`rounded-xl border p-3 sm:p-4 ${highlight ? 'border-[var(--ui-danger)] bg-[var(--glass-surface)]' : 'border-[var(--glass-border)] bg-[var(--glass-surface)]'}`}>
+        <p className="mb-1.5 text-xs font-medium text-[var(--text-secondary)]">{label}</p>
+        <p className="text-xl font-bold tabular-nums sm:text-2xl" style={{ color: tone === 'neutral' ? 'var(--text-primary)' : TONE_COLOR[tone] }}>{value}</p>
+        {hint && <p className="mt-1 text-2xs text-[var(--text-tertiary)]">{hint}</p>}
+    </div>
+);
+
 const PerformanceModal: React.FC<{ user: User; onClose: () => void; t: any }> = ({ user, onClose, t }) => {
     const [data, setData] = useState<AgentStatsData | null>(null);
     const [loading, setLoading] = useState(true);
@@ -128,154 +140,109 @@ const PerformanceModal: React.FC<{ user: User; onClose: () => void; t: any }> = 
             .then(d => { setData(d); setLoading(false); })
             .catch(() => { setError(true); setLoading(false); });
     }, [user.id]);
-    const slaColor = data
-        ? data.slaScore >= 90 ? 'text-[var(--sgs-primary)]' : data.slaScore >= 70 ? 'text-sgs-primary' : 'text-[var(--text-secondary)]'
-        : 'text-[var(--text-secondary)]';
-    const slaLabelColor = data
-        ? data.slaScore >= 90 ? 'text-[var(--sgs-primary)] dark:text-[var(--sgs-primary)]' : data.slaScore >= 70 ? 'text-[var(--sgs-primary)] dark:text-[var(--sgs-primary)]' : 'text-[var(--text-secondary)] dark:text-[var(--text-secondary)]'
-        : '';
+    const slaTone: Tone = data ? (data.slaScore >= 90 ? 'success' : data.slaScore >= 70 ? 'brand' : 'warning') : 'neutral';
     const circumference = 2 * Math.PI * 50;
+    const formatRevenue = (n: number) =>
+        n >= 1e9 ? `${(n / 1e9).toFixed(1)} ${t('profile.perf_billion')}`
+            : n >= 1e6 ? `${(n / 1e6).toFixed(0)} ${t('profile.perf_million')}`
+                : n.toLocaleString();
     return createPortal(
-        <div className="fixed inset-0 z-[110] flex items-center justify-center p-4">
+        <div className="fixed inset-0 z-[110] flex items-center justify-center p-4" role="dialog" aria-modal="true" aria-labelledby="perf-modal-title">
             <div className="absolute inset-0 bg-black/60 backdrop-blur-sm animate-fade-in" onClick={onClose} aria-hidden="true" />
-            <div className="relative z-10 bg-[var(--bg-surface)] w-full max-w-xl rounded-[24px] shadow-2xl border border-[var(--glass-border)] animate-scale-up flex flex-col max-h-[90vh]">
-                {/* Header */}
-                <div className="flex items-center justify-between px-6 pt-5 pb-4 border-b border-[var(--glass-border)] shrink-0">
-                    <div className="flex items-center gap-3 min-w-0">
+            <div className="relative z-10 flex max-h-[90vh] w-full max-w-xl flex-col rounded-2xl border border-[var(--glass-border)] bg-[var(--bg-surface)] shadow-2xl animate-scale-up">
+                <div className="flex shrink-0 items-center justify-between gap-2 border-b border-[var(--glass-border)] px-5 py-4">
+                    <div className="flex min-w-0 items-center gap-3">
                         <img
-                            src={user.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(user.name)}&size=40&background=6366f1&color=fff`}
-                            onError={e => { (e.currentTarget as HTMLImageElement).src = `https://ui-avatars.com/api/?name=${encodeURIComponent(user.name)}&size=40&background=6366f1&color=fff`; }}
-                            className="w-10 h-10 rounded-full object-cover border border-[var(--glass-border)] shrink-0"
-                            alt={user.name}
+                            src={user.avatar || avatarFallback(user.name)}
+                            onError={e => { (e.currentTarget as HTMLImageElement).src = avatarFallback(user.name); }}
+                            className="h-10 w-10 shrink-0 rounded-full border border-[var(--glass-border)] object-cover"
+                            alt=""
                         />
                         <div className="min-w-0">
-                            <h3 className="text-base font-bold text-[var(--text-primary)] truncate">{t('admin.users.perf_modal_title', { name: user.name })}</h3>
-                            <p className="text-xs text-[var(--text-tertiary)] truncate">{user.email}</p>
+                            <h3 id="perf-modal-title" className="truncate text-base font-bold text-[var(--text-primary)]">{t('admin.users.perf_modal_title', { name: user.name })}</h3>
+                            <p className="truncate text-xs text-[var(--text-tertiary)]">{user.email}</p>
                         </div>
                     </div>
-                    <button onClick={onClose} className="text-[var(--text-secondary)] hover:text-[var(--text-primary)] p-1.5 rounded-lg hover:bg-[var(--glass-surface-hover)] transition-colors shrink-0 ml-2">
+                    <button type="button" onClick={onClose} className={ICON_BTN} aria-label={t('adminusers.v2_close')}>
                         {ICONS.CLOSE}
                     </button>
                 </div>
-                {/* Body */}
-                <div className="overflow-y-auto px-6 py-5 space-y-5 no-scrollbar">
+                <div className="space-y-5 overflow-y-auto px-5 py-5 no-scrollbar">
                     {loading && (
-                        <div className="flex flex-col items-center justify-center py-16 gap-3">
-                            <div className="w-8 h-8 border-4 border-sgs-border border-t-[var(--sgs-primary)] rounded-full animate-spin" />
+                        <div className="flex flex-col items-center justify-center gap-3 py-16" role="status">
+                            <div className="h-8 w-8 animate-spin rounded-full border-4 border-[var(--glass-border)] border-t-[var(--sgs-primary)]" aria-hidden="true" />
                             <p className="text-sm text-[var(--text-secondary)]">{t('profile.perf_loading')}</p>
                         </div>
                     )}
                     {!loading && error && (
-                        <div className="flex flex-col items-center justify-center py-16 gap-2">
-                            <p className="text-sm font-bold text-rose-600">{t('admin.users.perf_error')}</p>
-                        </div>
+                        <p className="py-16 text-center text-sm font-semibold text-[var(--ui-danger)]" role="alert">{t('admin.users.perf_error')}</p>
                     )}
                     {!loading && !error && !data && (
-                        <div className="flex flex-col items-center justify-center py-16 gap-2">
-                            <p className="text-sm text-[var(--text-secondary)]">{t('admin.users.perf_no_data')}</p>
-                        </div>
+                        <EmptyState title={t('admin.users.perf_no_data')} />
                     )}
                     {!loading && !error && data && (
                         <>
-                            {/* SLA Ring */}
-                            <div className="rounded-2xl bg-[var(--glass-surface)] border border-[var(--glass-border)] p-5 flex items-center gap-6">
-                                <div className="relative shrink-0 w-24 h-24">
-                                    <svg viewBox="0 0 120 120" className="w-full h-full -rotate-90">
+                            {/* SLA ring */}
+                            <div className="flex items-center gap-5 rounded-xl border border-[var(--glass-border)] bg-[var(--glass-surface)] p-4">
+                                <div
+                                    className="relative h-24 w-24 shrink-0"
+                                    role="meter"
+                                    aria-valuemin={0}
+                                    aria-valuemax={100}
+                                    aria-valuenow={data.slaScore}
+                                    aria-label={t('profile.perf_sla')}
+                                >
+                                    <svg viewBox="0 0 120 120" className="h-full w-full -rotate-90" aria-hidden="true">
                                         <circle cx="60" cy="60" r="50" fill="none" stroke="var(--glass-border)" strokeWidth="10" />
                                         <circle
                                             cx="60" cy="60" r="50" fill="none"
-                                            stroke="currentColor"
+                                            stroke={TONE_COLOR[slaTone]}
                                             strokeWidth="10"
                                             strokeLinecap="round"
-                                            className={slaColor}
                                             strokeDasharray={`${circumference}`}
-                                            strokeDashoffset={`${circumference * (1 - data.slaScore / 100)}`}
+                                            strokeDashoffset={`${circumference * (1 - Math.max(0, Math.min(100, data.slaScore)) / 100)}`}
                                             style={{ transition: 'stroke-dashoffset 0.6s ease' }}
                                         />
                                     </svg>
-                                    <div className="absolute inset-0 flex items-center justify-center">
-                                        <span className={`text-2xl font-extrabold ${slaColor}`}>{data.slaScore}</span>
+                                    <div className="absolute inset-0 flex items-center justify-center" aria-hidden="true">
+                                        <span className="text-2xl font-extrabold tabular-nums" style={{ color: TONE_COLOR[slaTone] }}>{data.slaScore}</span>
                                     </div>
                                 </div>
                                 <div className="min-w-0">
-                                    <p className="text-xs font-bold uppercase tracking-wider text-[var(--text-tertiary)] mb-1">{t('profile.perf_sla')}</p>
-                                    <p className={`text-xl font-extrabold mb-1 ${slaLabelColor}`}>
+                                    <p className="mb-1 text-xs font-medium text-[var(--text-secondary)]">{t('profile.perf_sla')}</p>
+                                    <p className="mb-1 text-lg font-bold" style={{ color: TONE_COLOR[slaTone] }}>
                                         {data.slaScore >= 90 ? t('profile.perf_sla_excellent') : data.slaScore >= 70 ? t('profile.perf_sla_good') : t('profile.perf_sla_needs_work')}
                                     </p>
-                                    <p className="text-xs text-[var(--text-secondary)] leading-relaxed">
-                                        {t('profile.perf_close_rate')}: <span className="font-bold text-[var(--text-primary)]">{data.closeRate}%</span>
+                                    <p className="text-xs leading-relaxed text-[var(--text-secondary)]">
+                                        {t('profile.perf_close_rate')}: <span className="font-semibold text-[var(--text-primary)]">{data.closeRate}%</span>
                                         {data.avgResponseMinutes != null && (
-                                            <> · {t('profile.perf_avg_resp')}: <span className="font-bold text-[var(--text-primary)]">{data.avgResponseMinutes} {t('dash.minutes')}</span></>
+                                            <> · {t('profile.perf_avg_resp')}: <span className="font-semibold text-[var(--text-primary)]">{data.avgResponseMinutes} {t('dash.minutes')}</span></>
                                         )}
                                     </p>
                                 </div>
                             </div>
                             {/* Lead KPIs */}
-                            <div>
-                                <p className="text-xs font-bold uppercase tracking-wider text-[var(--text-tertiary)] mb-3">{t('profile.perf_lead_section')}</p>
-                                <div className="grid grid-cols-3 gap-3">
-                                    {/* Deals */}
-                                    <div className="rounded-2xl bg-[var(--glass-surface)] border border-[var(--glass-border)] p-4">
-                                        <p className="text-xs font-bold uppercase tracking-wider text-[var(--text-tertiary)] mb-2">{t('profile.perf_deals')}</p>
-                                        <p className="text-2xl font-extrabold text-[var(--sgs-primary)] dark:text-[var(--sgs-primary)]">{data.deals}</p>
-                                    </div>
-                                    {/* Close Rate */}
-                                    <div className="rounded-2xl bg-[var(--glass-surface)] border border-[var(--glass-border)] p-4">
-                                        <p className="text-xs font-bold uppercase tracking-wider text-[var(--text-tertiary)] mb-2">{t('profile.perf_close_rate')}</p>
-                                        <p className="text-2xl font-extrabold text-sgs-primary dark:text-sgs-text-muted">{data.closeRate}<span className="text-sm font-bold">%</span></p>
-                                        <p className="text-2xs text-[var(--text-secondary)] mt-1">{t('profile.perf_close_formula')}</p>
-                                    </div>
-                                    {/* Revenue */}
-                                    <div className="rounded-2xl bg-[var(--glass-surface)] border border-[var(--glass-border)] p-4">
-                                        <p className="text-xs font-bold uppercase tracking-wider text-[var(--text-tertiary)] mb-2">{t('profile.perf_revenue')}</p>
-                                        <p className="text-xl font-extrabold text-sgs-primary dark:text-[var(--sgs-primary)]">
-                                            {data.revenue >= 1e9
-                                                ? `${(data.revenue / 1e9).toFixed(1)} ${t('profile.perf_billion')}`
-                                                : data.revenue >= 1e6
-                                                ? `${(data.revenue / 1e6).toFixed(0)} ${t('profile.perf_million')}`
-                                                : data.revenue.toLocaleString()}
-                                        </p>
-                                        <p className="text-2xs text-[var(--text-secondary)] mt-1">VND</p>
-                                    </div>
-                                    {/* Total Leads */}
-                                    <div className="rounded-2xl bg-[var(--glass-surface)] border border-[var(--glass-border)] p-4">
-                                        <p className="text-xs font-bold uppercase tracking-wider text-[var(--text-tertiary)] mb-2">{t('profile.perf_total_leads')}</p>
-                                        <p className="text-2xl font-extrabold text-[var(--text-primary)]">{data.totalLeads}</p>
-                                    </div>
-                                    {/* In Progress */}
-                                    <div className="rounded-2xl bg-[var(--glass-surface)] border border-[var(--glass-border)] p-4">
-                                        <p className="text-xs font-bold uppercase tracking-wider text-[var(--text-tertiary)] mb-2">{t('profile.perf_in_progress')}</p>
-                                        <p className="text-2xl font-extrabold text-sgs-accent-text dark:text-sgs-accent-text">{data.inProgress}</p>
-                                    </div>
-                                    {/* Lost */}
-                                    <div className="rounded-2xl bg-[var(--glass-surface)] border border-[var(--glass-border)] p-4">
-                                        <p className="text-xs font-bold uppercase tracking-wider text-[var(--text-tertiary)] mb-2">{t('profile.perf_lost')}</p>
-                                        <p className="text-2xl font-extrabold text-rose-600 dark:text-rose-400">{data.lost}</p>
-                                    </div>
+                            <section>
+                                <h4 className="mb-3 text-sm font-semibold text-[var(--text-primary)]">{t('profile.perf_lead_section')}</h4>
+                                <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
+                                    <PerfTile label={t('profile.perf_deals')} value={data.deals} tone="brand" />
+                                    <PerfTile label={t('profile.perf_close_rate')} value={`${data.closeRate}%`} hint={t('profile.perf_close_formula')} tone="brand" />
+                                    <PerfTile label={t('profile.perf_revenue')} value={formatRevenue(data.revenue)} hint="VND" tone="brand" />
+                                    <PerfTile label={t('profile.perf_total_leads')} value={data.totalLeads} />
+                                    <PerfTile label={t('profile.perf_in_progress')} value={data.inProgress} tone="accent" />
+                                    <PerfTile label={t('profile.perf_lost')} value={data.lost} tone="danger" />
                                 </div>
-                            </div>
+                            </section>
                             {/* Workload */}
-                            <div>
-                                <p className="text-xs font-bold uppercase tracking-wider text-[var(--text-tertiary)] mb-3">{t('profile.perf_task_section')}</p>
+                            <section>
+                                <h4 className="mb-3 text-sm font-semibold text-[var(--text-primary)]">{t('profile.perf_task_section')}</h4>
                                 <div className="grid grid-cols-2 gap-3">
-                                    <div className={`rounded-2xl p-4 border ${data.activeTasks > 5 ? 'bg-[var(--glass-surface)] border-[var(--glass-border)]' : 'bg-[var(--glass-surface)] border-[var(--glass-border)]'}`}>
-                                        <p className="text-xs font-bold uppercase tracking-wider text-[var(--text-tertiary)] mb-2">{t('profile.perf_tasks_active')}</p>
-                                        <p className="text-2xl font-extrabold text-[var(--text-primary)]">{data.activeTasks}</p>
-                                    </div>
-                                    <div className={`rounded-2xl p-4 border ${data.overdueTasks > 0 ? 'bg-rose-50 dark:bg-rose-900/20 border-rose-200 dark:border-rose-800/40' : 'bg-[var(--glass-surface)] border-[var(--glass-border)]'}`}>
-                                        <p className="text-xs font-bold uppercase tracking-wider text-[var(--text-tertiary)] mb-2">{t('profile.perf_tasks_overdue')}</p>
-                                        <p className={`text-2xl font-extrabold ${data.overdueTasks > 0 ? 'text-rose-600 dark:text-rose-400' : 'text-[var(--text-primary)]'}`}>{data.overdueTasks}</p>
-                                    </div>
-                                    <div className="rounded-2xl bg-[var(--glass-surface)] border border-[var(--glass-border)] p-4">
-                                        <p className="text-xs font-bold uppercase tracking-wider text-[var(--text-tertiary)] mb-2">{t('profile.perf_tasks_week')}</p>
-                                        <p className="text-2xl font-extrabold text-[var(--sgs-primary)] dark:text-[var(--sgs-primary)]">{data.completedThisWeek}</p>
-                                    </div>
-                                    <div className="rounded-2xl bg-[var(--glass-surface)] border border-[var(--glass-border)] p-4">
-                                        <p className="text-xs font-bold uppercase tracking-wider text-[var(--text-tertiary)] mb-2">{t('profile.perf_tasks_month')}</p>
-                                        <p className="text-2xl font-extrabold text-sgs-primary dark:text-sgs-text-muted">{data.completedThisMonth}</p>
-                                    </div>
+                                    <PerfTile label={t('profile.perf_tasks_active')} value={data.activeTasks} />
+                                    <PerfTile label={t('profile.perf_tasks_overdue')} value={data.overdueTasks} tone={data.overdueTasks > 0 ? 'danger' : 'neutral'} highlight={data.overdueTasks > 0} />
+                                    <PerfTile label={t('profile.perf_tasks_week')} value={data.completedThisWeek} tone="brand" />
+                                    <PerfTile label={t('profile.perf_tasks_month')} value={data.completedThisMonth} tone="brand" />
                                 </div>
-                            </div>
+                            </section>
                         </>
                     )}
                 </div>
@@ -284,6 +251,18 @@ const PerformanceModal: React.FC<{ user: User; onClose: () => void; t: any }> = 
         document.body
     );
 };
+
+// --- SUB-COMPONENT: ROLE PERMISSIONS HINT ---
+const RolePermissionsHint: React.FC<{ role: UserRole; t: any }> = ({ role, t }) => (
+    <div className="flex gap-2 rounded-xl border border-[var(--glass-border)] bg-[var(--glass-surface)] p-3">
+        <div className="mt-0.5 shrink-0">{ICONS.INFO}</div>
+        <div>
+            <h4 className="mb-0.5 text-xs font-semibold text-[var(--text-primary)]">{t('admin.users.role_permissions')}</h4>
+            <p className="text-xs leading-relaxed text-[var(--text-secondary)]">{t(`role_desc.${role}`)}</p>
+        </div>
+    </div>
+);
+
 // --- SUB-COMPONENT: INVITE MODAL ---
 interface InviteFormData { name: string; email: string; role: UserRole; phone: string; departmentId?: string; }
 interface InviteModalProps {
@@ -340,88 +319,88 @@ const InviteUserModal: React.FC<InviteModalProps> = ({ isOpen, onClose, onConfir
 
     if (!isOpen) return null;
     const inputCls = (field: string) =>
-        `w-full border rounded-xl px-4 py-2.5 text-sm outline-none focus:ring-2 transition-all bg-[var(--bg-surface)] text-[var(--text-primary)] placeholder:text-[var(--text-muted)]
-        ${errors[field] ? 'border-rose-300 focus:ring-rose-500/20 focus:border-rose-400' : 'border-[var(--glass-border)] focus:ring-[var(--sgs-primary)]/20 focus:border-[var(--sgs-primary)]'}`;
+        `w-full min-h-[44px] rounded-xl border px-4 py-2.5 text-sm outline-none transition-all bg-[var(--bg-surface)] text-[var(--text-primary)] placeholder:text-[var(--text-muted)] focus:ring-2 ${errors[field] ? 'border-[var(--ui-danger)] focus:ring-[var(--ui-danger)]/20' : 'border-[var(--glass-border)] focus:border-[var(--sgs-primary)] focus:ring-[var(--sgs-primary)]/20'}`;
     return createPortal(
-        <div className="fixed inset-0 z-[100] flex items-end sm:items-center justify-center sm:p-6">
-            {/* Backdrop */}
+        <div className="fixed inset-0 z-[100] flex items-end justify-center sm:items-center sm:p-6" role="dialog" aria-modal="true" aria-labelledby="invite-modal-title">
             <div className="absolute inset-0 bg-black/60 backdrop-blur-sm animate-fade-in" onClick={onClose} aria-hidden="true" />
-            {/* Card */}
-            <div className="relative z-10 w-full sm:max-w-sm bg-[var(--bg-surface)] rounded-t-[28px] sm:rounded-[24px] shadow-2xl border border-[var(--glass-border)] animate-scale-up flex flex-col overflow-hidden" style={{ maxHeight: 'calc(100vh - 48px)' }}>
-
-                {/* Header — cố định, không cuộn */}
-                <div className="flex justify-between items-center px-6 pt-6 pb-4 shrink-0">
+            <div className="relative z-10 flex w-full flex-col overflow-hidden rounded-t-2xl border border-[var(--glass-border)] bg-[var(--bg-surface)] shadow-2xl animate-scale-up sm:max-w-sm sm:rounded-2xl" style={{ maxHeight: 'calc(100vh - 48px)' }}>
+                {/* Header — fixed */}
+                <div className="flex shrink-0 items-start justify-between gap-2 px-5 pt-5 pb-4">
                     <div>
-                        <h3 className="text-lg font-bold text-[var(--text-primary)]">{t('admin.users.invite_title')}</h3>
-                        <p className="text-xs text-[var(--text-tertiary)] mt-0.5">{t('admin.users.invite_hint')}</p>
+                        <h3 id="invite-modal-title" className="text-lg font-bold text-[var(--text-primary)]">{t('admin.users.invite_title')}</h3>
+                        <p className="mt-0.5 text-xs text-[var(--text-tertiary)]">{t('admin.users.invite_hint')}</p>
                     </div>
-                    <button onClick={onClose} className="text-[var(--text-secondary)] hover:text-[var(--text-primary)] p-1 rounded-lg hover:bg-[var(--glass-surface-hover)] transition-colors">
+                    <button type="button" onClick={onClose} className={ICON_BTN} aria-label={t('adminusers.v2_close')}>
                         {ICONS.CLOSE}
                     </button>
                 </div>
-                {/* Body — cuộn được */}
-                <div className="flex-1 min-h-0 overflow-y-auto no-scrollbar px-6">
+                {/* Body — scrollable */}
+                <div className="min-h-0 flex-1 overflow-y-auto px-5 no-scrollbar">
                     {errors.submit && (
-                        <div className="mb-4 px-4 py-3 bg-rose-50 border border-rose-200 rounded-xl text-sm text-rose-600 font-medium">
+                        <div className="mb-4 rounded-xl border border-[var(--ui-danger)] bg-[var(--glass-surface)] px-4 py-3 text-sm font-medium text-[var(--ui-danger)]" role="alert">
                             {errors.submit}
                         </div>
                     )}
-                    <form id="invite-user-form" onSubmit={handleSubmit} className="space-y-4">
-                        {/* Họ tên */}
+                    <form id="invite-user-form" onSubmit={handleSubmit} className="space-y-4" noValidate>
                         <div>
-                            <label className="text-xs font-bold text-[var(--text-tertiary)] uppercase block mb-1.5">
-                                {t('admin.users.name_label')} <span className="text-rose-500">*</span>
+                            <label htmlFor="invite-name" className={FIELD_LABEL}>
+                                {t('admin.users.name_label')} <span className="text-[var(--ui-danger)]" aria-hidden="true">*</span>
                             </label>
                             <input
+                                id="invite-name"
                                 type="text"
                                 className={inputCls('name')}
                                 placeholder={t('common.placeholder_fullname')}
                                 value={name}
                                 onChange={e => setName(e.target.value)}
+                                aria-invalid={!!errors.name}
+                                aria-required="true"
                                 autoFocus
                             />
-                            {errors.name && <p className="text-xs text-rose-500 font-medium mt-1">{errors.name}</p>}
+                            {errors.name && <p className="mt-1 text-xs font-medium text-[var(--ui-danger)]">{errors.name}</p>}
                         </div>
-                        {/* Email */}
                         <div>
-                            <label className="text-xs font-bold text-[var(--text-tertiary)] uppercase block mb-1.5">
-                                {t('admin.users.email_label')} <span className="text-rose-500">*</span>
+                            <label htmlFor="invite-email" className={FIELD_LABEL}>
+                                {t('admin.users.email_label')} <span className="text-[var(--ui-danger)]" aria-hidden="true">*</span>
                             </label>
                             <input
+                                id="invite-email"
                                 type="email"
                                 className={inputCls('email')}
                                 placeholder={t('admin.users.placeholder_email')}
                                 value={email}
                                 onChange={e => setEmail(e.target.value)}
+                                aria-invalid={!!errors.email}
+                                aria-required="true"
                             />
-                            {errors.email && <p className="text-xs text-rose-500 font-medium mt-1">{errors.email}</p>}
+                            {errors.email && <p className="mt-1 text-xs font-medium text-[var(--ui-danger)]">{errors.email}</p>}
                         </div>
-                        {/* Số điện thoại (optional) */}
                         <div>
-                            <label className="text-xs font-bold text-[var(--text-tertiary)] uppercase block mb-1.5 flex items-center gap-1">
+                            <label htmlFor="invite-phone" className={FIELD_LABEL}>
                                 {t('admin.users.phone_label')}
-                                <span className="text-3xs font-normal text-[var(--text-muted)] normal-case">{t('admin.users.phone_optional')}</span>
+                                <span className="font-normal text-[var(--text-tertiary)]">{t('admin.users.phone_optional')}</span>
                             </label>
                             <input
+                                id="invite-phone"
                                 type="tel"
                                 className={inputCls('phone')}
                                 placeholder={t('common.placeholder_phone')}
                                 value={phone}
                                 onChange={e => setPhone(e.target.value)}
+                                aria-invalid={!!errors.phone}
                             />
-                            {errors.phone && <p className="text-xs text-rose-500 font-medium mt-1">{errors.phone}</p>}
+                            {errors.phone && <p className="mt-1 text-xs font-medium text-[var(--ui-danger)]">{errors.phone}</p>}
                         </div>
-                        {/* Phòng ban */}
                         <div>
-                            <label className="text-xs font-bold text-[var(--text-tertiary)] uppercase block mb-1.5 flex items-center gap-1">
-                                Phòng ban
-                                <span className="text-3xs font-normal text-[var(--text-muted)] normal-case">(tuỳ chọn)</span>
-                            </label>
+                            <div className={FIELD_LABEL}>
+                                {t('adminusers.v2_department')}
+                                <span className="font-normal text-[var(--text-tertiary)]">{t('admin.users.phone_optional')}</span>
+                            </div>
                             <Dropdown
                                 value={departmentId}
                                 onChange={(v) => setDepartmentId(v as string)}
                                 options={[
-                                    { value: '', label: departments.length === 0 ? 'Chưa có phòng ban' : 'Chưa chọn' },
+                                    { value: '', label: departments.length === 0 ? t('adminusers.v2_no_departments') : t('adminusers.v2_not_selected') },
                                     ...departments.map(d => ({ value: d.id, label: d.name })),
                                 ]}
                                 disabled={departments.length === 0}
@@ -429,8 +408,7 @@ const InviteUserModal: React.FC<InviteModalProps> = ({ isOpen, onClose, onConfir
                                 placement="top"
                             />
                         </div>
-                        {/* Vai trò */}
-                        <div className="pb-2">
+                        <div className="space-y-2 pb-2">
                             <Dropdown
                                 label={t('admin.users.role_label')}
                                 value={role}
@@ -439,28 +417,20 @@ const InviteUserModal: React.FC<InviteModalProps> = ({ isOpen, onClose, onConfir
                                 className="w-full"
                                 placement="top"
                             />
-                            <div className="mt-2 bg-[var(--sgs-primary)]/10 border border-sgs-border rounded-xl p-3 flex gap-2">
-                                <div className="shrink-0 mt-0.5">{ICONS.INFO}</div>
-                                <div>
-                                    <h4 className="text-xs2 font-bold text-sgs-primary uppercase tracking-wide mb-0.5">{t('admin.users.role_permissions')}</h4>
-                                    <p className="text-xs text-[var(--text-secondary)] leading-relaxed">
-                                        {t(`role_desc.${role}`)}
-                                    </p>
-                                </div>
-                            </div>
+                            <RolePermissionsHint role={role} t={t} />
                         </div>
                     </form>
                 </div>
-                {/* Footer — cố định, luôn hiển thị */}
-                <div className="px-6 pt-3 pb-6 sm:pb-4 shrink-0 border-t border-[var(--glass-border)]">
+                {/* Footer — always visible */}
+                <div className="shrink-0 border-t border-[var(--glass-border)] px-5 pt-3 pb-6 sm:pb-4">
                     <button
                         type="submit"
                         form="invite-user-form"
                         disabled={loading || !name.trim() || !email.trim()}
-                        className="w-full py-3 bg-sgs-primary-deep text-white font-bold rounded-xl text-sm shadow-lg hover:bg-slate-800 transition-all disabled:opacity-60 flex items-center justify-center gap-2 active:scale-95"
+                        className="ui-button ui-button-primary ui-button-md inline-flex w-full min-h-[44px] items-center justify-center gap-2"
                     >
                         {loading
-                            ? <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                            ? <span className="h-4 w-4 animate-spin rounded-full border-2 border-white/30 border-t-white" aria-hidden="true" />
                             : ICONS.SEND}
                         {loading ? t('admin.users.sending') : t('admin.users.btn_send')}
                     </button>
@@ -470,18 +440,22 @@ const InviteUserModal: React.FC<InviteModalProps> = ({ isOpen, onClose, onConfir
         document.body
     );
 };
+
 // -----------------------------------------------------------------------------
 // MAIN COMPONENT
 // -----------------------------------------------------------------------------
 export const AdminUsers: React.FC = () => {
-    const { t, formatDateTime } = useTranslation();   
-    // Data State
+    const { t, formatDateTime } = useTranslation();
+    // Data state
     const [users, setUsers] = useState<User[]>([]);
     const [stats, setStats] = useState({ activeCount: 0, pendingCount: 0 });
     const [loading, setLoading] = useState(true);
+    const [hasLoaded, setHasLoaded] = useState(false);
     const [totalUsers, setTotalUsers] = useState(0);
-    const [currentUser, setCurrentUser] = useState<User | null>(null);   
-    // Filters & Pagination
+    // Unfiltered member count, captured whenever a fetch runs without filters.
+    const [teamTotal, setTeamTotal] = useState<number | null>(null);
+    const [currentUser, setCurrentUser] = useState<User | null>(null);
+    // Filters & pagination
     const [search, setSearch] = useState('');
     const [debouncedSearch, setDebouncedSearch] = useState('');
     const [roleFilter, setRoleFilter] = useState('ALL');
@@ -489,7 +463,7 @@ export const AdminUsers: React.FC = () => {
     const [page, setPage] = useState(1);
     const [pageSize, setPageSize] = useState(12);
     const [sort, setSort] = useState<{ field: string, order: 'asc' | 'desc' }>({ field: 'createdAt', order: 'desc' });
-    // Modals & Action States
+    // Modals & action states
     const [isInviteOpen, setIsInviteOpen] = useState(false);
     const [userToDelete, setUserToDelete] = useState<User | null>(null);
     const [userToStatusChange, setUserToStatusChange] = useState<User | null>(null);
@@ -520,7 +494,7 @@ export const AdminUsers: React.FC = () => {
         setLoading(true);
         try {
             const me = await db.getCurrentUser();
-            setCurrentUser(me);            
+            setCurrentUser(me);
             // If not super_admin, admin, or team_lead, don't fetch users
             if (me?.role !== UserRole.SUPER_ADMIN && me?.role !== UserRole.ADMIN && me?.role !== UserRole.TEAM_LEAD) {
                 setLoading(false);
@@ -530,6 +504,10 @@ export const AdminUsers: React.FC = () => {
             setUsers(usersData?.data || []);
             setTotalUsers(usersData?.total || 0);
             setStats(usersData?.stats || { activeCount: 0, pendingCount: 0 });
+            if (!debouncedSearch && roleFilter === 'ALL' && statusFilter === 'ALL') {
+                setTeamTotal(usersData?.total ?? null);
+            }
+            setHasLoaded(true);
         } catch (e) {
             notify(t('common.error_loading'), 'error');
             setUsers([]);
@@ -599,6 +577,8 @@ export const AdminUsers: React.FC = () => {
         }
         try {
             await db.deleteUser(userToDelete.id);
+            // Keep the cached team size in step while filters are active (an unfiltered refetch overwrites it).
+            setTeamTotal(n => (n == null ? n : Math.max(0, n - 1)));
             notify(t('admin.users.delete_success'), 'success');
             fetchData();
         } catch (e: any) {
@@ -620,6 +600,7 @@ export const AdminUsers: React.FC = () => {
     };
     const handleInviteConfirm = async (data: InviteFormData) => {
         await db.inviteUser({ name: data.name, email: data.email, role: data.role, phone: data.phone || undefined, departmentId: data.departmentId });
+        setTeamTotal(n => (n == null ? n : n + 1));
         notify(t('admin.users.invite_sent', { email: data.email }), 'success');
         fetchData();
     };
@@ -639,9 +620,9 @@ export const AdminUsers: React.FC = () => {
         }
     };
     const departmentOptions = useMemo(() => [
-        { value: '', label: 'Chưa chọn' },
+        { value: '', label: t('adminusers.v2_not_selected') },
         ...departments.map(d => ({ value: d.id, label: d.name })),
-    ], [departments]);
+    ], [departments, t]);
     const roleOptions = useMemo(() => [
         { value: 'ALL', label: t('admin.users.all_roles') },
         ...Object.values(UserRole)
@@ -661,269 +642,373 @@ export const AdminUsers: React.FC = () => {
             .filter(r => currentUser?.role === UserRole.SUPER_ADMIN || r !== UserRole.SUPER_ADMIN)
             .map(r => ({ value: r, label: t(`role.${r}`) }))
     , [t, currentUser?.role]);
-    // Header Helper
-    const SortableHeader = ({ field, label, className = "" }: { field: string, label: string, className?: string }) => (
-        <th 
-            className={`p-4 cursor-pointer hover:bg-[var(--glass-surface-hover)] transition-colors select-none ${className}`}
-            onClick={() => handleSort(field)}
-        >
-            <div className="flex items-center gap-1">
-                {label}
-                {sort.field === field && (
-                    <span className={`text-[var(--sgs-primary)] transition-transform ${sort.order === 'desc' ? 'rotate-180' : ''}`}>
-                        <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 24 24"><path d="M7 10l5 5 5-5z"/></svg>
-                    </span>
-                )}
-            </div>
-        </th>
-    );
+
+    // --- Derived KPIs & visuals ---
+    const hasFilters = !!debouncedSearch || roleFilter !== 'ALL' || statusFilter !== 'ALL';
+    // stats.activeCount / pendingCount are tenant-wide (unfiltered) counts from the API.
+    const otherCount = hasLoaded && teamTotal != null
+        ? Math.max(0, teamTotal - stats.activeCount - stats.pendingCount)
+        : null;
+    const activeShare = hasLoaded && teamTotal ? Math.round((stats.activeCount / teamTotal) * 100) : null;
+    const statusSegments: Segment[] = otherCount == null ? [] : [
+        { label: t('admin.users.status_active'), value: stats.activeCount, color: TONE_COLOR.success },
+        { label: t('admin.users.status_pending'), value: stats.pendingCount, color: TONE_COLOR.warning },
+        { label: t('adminusers.v2_kpi_other'), value: otherCount, color: TONE_COLOR.neutral },
+    ];
+    // Role and sign-in charts only see the loaded page; label the scope honestly.
+    const pageIsWholeTeam = !hasFilters && users.length > 0 && users.length >= totalUsers;
+    const pageScopeLabel = pageIsWholeTeam
+        ? t('adminusers.v2_scope_org')
+        : t('adminusers.v2_scope_page', { n: users.length });
+    const roleSegments: Segment[] = useMemo(() => {
+        const counts = new Map<string, number>();
+        users.forEach(u => counts.set(u.role, (counts.get(u.role) || 0) + 1));
+        return Array.from(counts.entries())
+            .sort((a, b) => b[1] - a[1])
+            .map(([role, value], i) => ({ label: t(`role.${role}`), value, color: SERIES_COLORS[i % SERIES_COLORS.length] }));
+    }, [users, t]);
+    const activitySegments: Segment[] = useMemo(() => {
+        const now = Date.now();
+        let week = 0, month = 0, older = 0, never = 0;
+        users.forEach(u => {
+            const ts = u.lastLoginAt ? new Date(u.lastLoginAt).getTime() : NaN;
+            if (!Number.isFinite(ts)) { never++; return; }
+            const age = now - ts;
+            if (age <= 7 * DAY_MS) week++;
+            else if (age <= 30 * DAY_MS) month++;
+            else older++;
+        });
+        return [
+            { label: t('adminusers.v2_activity_7d'), value: week, color: TONE_COLOR.success },
+            { label: t('adminusers.v2_activity_30d'), value: month, color: TONE_COLOR.info },
+            { label: t('adminusers.v2_activity_older'), value: older, color: TONE_COLOR.neutral },
+            { label: t('admin.users.never_logged_in'), value: never, color: TONE_COLOR.warning },
+        ];
+    }, [users, t]);
+
+    const clearFilters = () => {
+        setSearch('');
+        setDebouncedSearch('');
+        setRoleFilter('ALL');
+        setStatusFilter('ALL');
+    };
+    const toggleStatusFilter = (status: CommonStatus) =>
+        setStatusFilter(prev => (prev === status ? 'ALL' : status));
+    const kpi = (n: number | null) => (hasLoaded && n != null ? n.toLocaleString() : '—');
+
+    // Sortable header cell (rendered via call, not as a component, to avoid remounts).
+    const renderSortHeader = (field: string, label: string, className = '') => {
+        const activeSort = sort.field === field;
+        return (
+            <th
+                scope="col"
+                className={`px-4 py-3 ${className}`}
+                aria-sort={activeSort ? (sort.order === 'asc' ? 'ascending' : 'descending') : 'none'}
+            >
+                <button
+                    type="button"
+                    onClick={() => handleSort(field)}
+                    className="-mx-2 inline-flex min-h-[40px] items-center gap-1 rounded-lg px-2 font-semibold hover:bg-[var(--glass-surface-hover)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--ui-focus)]"
+                >
+                    {label}
+                    {activeSort && (
+                        <span className={`text-[var(--sgs-primary)] transition-transform ${sort.order === 'desc' ? 'rotate-180' : ''}`} aria-hidden="true">
+                            <svg className="h-3 w-3" fill="currentColor" viewBox="0 0 24 24"><path d="M7 10l5 5 5-5z" /></svg>
+                        </span>
+                    )}
+                </button>
+            </th>
+        );
+    };
+
+    // Status pill: clickable toggle for others, static for the current user.
+    const renderStatus = (user: User) => {
+        const label = t(`admin.users.status_${user.status.toLowerCase()}`);
+        const badge = <StatusBadge tone={STATUS_TONE[user.status] || 'neutral'}>{label}</StatusBadge>;
+        if (user.id === currentUser?.id) return <span className="inline-flex whitespace-nowrap">{badge}</span>;
+        return (
+            <button
+                type="button"
+                onClick={() => setUserToStatusChange(user)}
+                className="inline-flex min-h-[40px] items-center whitespace-nowrap rounded-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--ui-focus)]"
+                aria-label={t('adminusers.v2_change_status_aria', { name: user.name, status: label })}
+                title={label}
+            >
+                {badge}
+            </button>
+        );
+    };
+
     if (!loading && currentUser && currentUser.role !== UserRole.SUPER_ADMIN && currentUser.role !== UserRole.ADMIN && currentUser.role !== UserRole.TEAM_LEAD) {
         return (
-            <div className="flex flex-col items-center justify-center h-full p-8 text-center animate-enter">
-                <div className="w-16 h-16 bg-rose-50 text-rose-500 rounded-2xl flex items-center justify-center mb-4 shadow-sm">
-                    {ICONS.INFO}
-                </div>
-                <h2 className="text-xl font-bold text-[var(--text-primary)] mb-2">{t('common.access_denied')}</h2>
-                <p className="text-[var(--text-tertiary)] max-w-md">
-                    {t('admin.users.no_permission')}
-                </p>
-            </div>
+            <SettingsPage width="narrow">
+                <SettingsCard>
+                    <EmptyState icon={ICONS.LOCK} title={t('common.access_denied')} description={t('admin.users.no_permission')} />
+                </SettingsCard>
+            </SettingsPage>
         );
     }
     return (
         <>
-          <SeoHead title="Quản Lý Người Dùng | SGS LAND" description="Quản lý tài khoản người dùng, phân quyền và bảo mật hệ thống SGS LAND." canonicalPath="/admin/users" />
-        <div className="h-full flex flex-col relative animate-enter">
+            <SeoHead title={t('adminusers.v2_seo_title')} description={t('adminusers.v2_seo_description')} canonicalPath="/admin/users" />
+            <SettingsPage>
+                <SettingsHeader
+                    icon={ICONS.USERS}
+                    title={t('adminusers.v2_title')}
+                    description={t('adminusers.v2_description')}
+                    actions={
+                        <button type="button" onClick={() => setIsInviteOpen(true)} className="ui-button ui-button-primary ui-button-md inline-flex min-h-[40px] items-center gap-2">
+                            {ICONS.ADD}
+                            <span>{t('admin.users.invite')}</span>
+                        </button>
+                    }
+                />
 
-            {/* HEADER */}
-            <div className="flex flex-col bg-[var(--bg-surface)] border-b border-[var(--glass-border)] shrink-0">
-                {/* Row 1: Số liệu thành viên + nút mời */}
-                <div className="flex items-center justify-between gap-2 px-4 sm:px-6 pt-4 pb-3">
-                    {/* Stat chips — compact on mobile, full label on sm+ */}
-                    <div className="flex items-center gap-1.5 sm:gap-2 min-w-0">
-                        {/* Tổng */}
-                        <div className="flex items-center gap-1 sm:gap-1.5 bg-[var(--glass-surface)] border border-[var(--glass-border)] rounded-lg px-2 sm:px-3 py-1.5 shrink-0">
-                            <span className="text-2xs sm:text-xs2 font-bold text-[var(--text-secondary)] uppercase tracking-wide">{t('admin.users.total')}</span>
-                            <span className="text-xs sm:text-sm font-black text-[var(--text-primary)]">{totalUsers}</span>
-                        </div>
-                        {/* Hoạt động */}
-                        <div className="flex items-center gap-1 sm:gap-1.5 bg-[var(--glass-surface)] border border-[var(--glass-border)] rounded-lg px-2 sm:px-3 py-1.5 shrink-0">
+                {/* KPI tiles — active/pending double as quick status filters */}
+                <StatGrid cols={4}>
+                    <StatTile
+                        label={hasFilters ? t('adminusers.v2_kpi_matching') : t('adminusers.v2_kpi_total')}
+                        value={kpi(totalUsers)}
+                        hint={hasFilters ? t('adminusers.v2_kpi_show_all') : t('adminusers.v2_scope_org')}
+                        tone="brand"
+                        onClick={hasFilters ? clearFilters : undefined}
+                    />
+                    <StatTile
+                        label={t('admin.users.active_users')}
+                        value={kpi(stats.activeCount)}
+                        hint={activeShare != null ? t('adminusers.v2_kpi_active_share', { n: activeShare }) : t('adminusers.v2_kpi_filter_hint')}
+                        tone="success"
+                        onClick={() => toggleStatusFilter(CommonStatus.ACTIVE)}
+                        active={statusFilter === CommonStatus.ACTIVE}
+                    />
+                    <StatTile
+                        label={t('admin.users.pending_invites')}
+                        value={kpi(stats.pendingCount)}
+                        hint={t('adminusers.v2_kpi_filter_hint')}
+                        tone="accent"
+                        onClick={() => toggleStatusFilter(CommonStatus.PENDING)}
+                        active={statusFilter === CommonStatus.PENDING}
+                    />
+                    <StatTile
+                        label={t('adminusers.v2_kpi_other')}
+                        value={kpi(otherCount)}
+                        hint={t('adminusers.v2_kpi_other_hint')}
+                    />
+                </StatGrid>
 
-                            <span className="hidden sm:inline text-xs2 font-bold text-[var(--sgs-primary)] uppercase tracking-wide">{t('admin.users.active_users')}</span>
-                            <span className="sm:hidden text-2xs font-bold text-[var(--sgs-primary)] uppercase">{t('admin.users.mobile_active')}</span>
-                            <span className="text-xs sm:text-sm font-black text-[var(--sgs-primary)]">{stats.activeCount}</span>
-                        </div>
-                        {/* Chờ duyệt */}
-                        <div className="flex items-center gap-1 sm:gap-1.5 bg-[var(--glass-surface)] border border-[var(--glass-border)] rounded-lg px-2 sm:px-3 py-1.5 shrink-0">
-
-                            <span className="hidden sm:inline text-xs2 font-bold text-sgs-accent-text uppercase tracking-wide">{t('admin.users.pending_invites')}</span>
-                            <span className="sm:hidden text-2xs font-bold text-sgs-accent-text uppercase">{t('admin.users.mobile_pending')}</span>
-                            <span className="text-xs sm:text-sm font-black text-sgs-accent-text">{stats.pendingCount}</span>
-                        </div>
-                    </div>
-                    {/* Nút mời thành viên */}
-                    <button
-                        onClick={() => setIsInviteOpen(true)}
-                        className="shrink-0 px-3 sm:px-4 py-2 bg-sgs-primary-deep text-white font-bold rounded-xl text-xs sm:text-sm shadow-md hover:bg-slate-800 transition-all flex items-center gap-1.5 sm:gap-2 whitespace-nowrap active:scale-95 min-h-[36px]"
-                    >
-                        {ICONS.ADD}
-                        <span className="hidden sm:inline">{t('admin.users.invite')}</span>
-                        <span className="hidden">{t('admin.users.invite_short')}</span>
-                    </button>
-                </div>
-                {/* Row 2: Thanh tìm kiếm + bộ lọc vai trò */}
-                <div className="flex items-center gap-3 px-4 sm:px-5 py-2 border-t border-[var(--glass-border)] bg-[var(--glass-surface)]/50">
-                    {/* Ô tìm kiếm — kéo dài toàn bộ chiều ngang còn lại */}
-                    <div className="relative flex-1 group">
-                        <div className="absolute left-3 inset-y-0 flex items-center pointer-events-none text-[var(--text-secondary)] group-focus-within:text-sgs-primary transition-colors">
-                            {ICONS.SEARCH}
-                        </div>
-                        <input
-                            className="w-full pl-10 pr-10 h-10 bg-[var(--glass-surface)] border border-[var(--glass-border)] rounded-xl text-sm focus:ring-2 focus:ring-[var(--sgs-primary)]/20 focus:border-sgs-primary focus:bg-[var(--bg-surface)] transition-all outline-none placeholder:text-[var(--text-muted)]"
-                            placeholder={t('admin.users.search_placeholder')}
-                            value={search}
-                            onChange={e => setSearch(e.target.value)}
-                        />
-                        {search && (
-                            <div className="absolute right-2 inset-y-0 flex items-center">
-                                <button
-                                    onClick={() => setSearch('')}
-                                    className="text-[var(--text-secondary)] hover:text-[var(--text-secondary)] transition-colors p-1.5 rounded-full hover:bg-slate-200 flex items-center justify-center"
-                                    title={t('common.clear_search')}
-                                >
-                                    {ICONS.X}
-                                </button>
-                            </div>
+                {/* Team visuals */}
+                <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
+                    <SettingsCard title={t('adminusers.v2_status_card_title')} description={t('adminusers.v2_scope_org')}>
+                        {statusSegments.length > 0 ? (
+                            <DistributionBar segments={statusSegments} ariaLabel={t('adminusers.v2_status_chart_aria')} emptyText={t('adminusers.v2_no_data')} />
+                        ) : (
+                            <p className="py-2 text-xs text-[var(--text-tertiary)]">{t('adminusers.v2_no_data')}</p>
                         )}
-                    </div>
-                    {/* Dropdown lọc vai trò */}
-                    <div className="w-32 sm:w-44 shrink-0">
-                         <Dropdown value={roleFilter} onChange={(v) => setRoleFilter(v as string)} options={roleOptions} variant="compact" emptyValue="ALL" />
-                    </div>
-                    {/* Dropdown lọc trạng thái */}
-                    <div className="w-28 sm:w-36 shrink-0">
-                         <Dropdown value={statusFilter} onChange={(v) => setStatusFilter(v as string)} options={statusOptions} variant="compact" emptyValue="ALL" />
-                    </div>
+                    </SettingsCard>
+                    <SettingsCard title={t('adminusers.v2_roles_card_title')} description={pageScopeLabel}>
+                        <DistributionBar segments={roleSegments} ariaLabel={t('adminusers.v2_roles_chart_aria', { scope: pageScopeLabel })} emptyText={t('adminusers.v2_no_data')} />
+                    </SettingsCard>
+                    <SettingsCard title={t('adminusers.v2_activity_card_title')} description={pageScopeLabel}>
+                        <DistributionBar segments={activitySegments} ariaLabel={t('adminusers.v2_activity_chart_aria', { scope: pageScopeLabel })} emptyText={t('adminusers.v2_no_data')} />
+                    </SettingsCard>
                 </div>
-            </div>
-            {/* CONTENT */}
-            <div className="flex-1 overflow-auto bg-[var(--glass-surface)]/50 no-scrollbar pt-3 px-3 sm:px-0">
-                <div className="w-full overflow-x-auto no-scrollbar bg-[var(--bg-surface)] rounded-xl sm:rounded-none border border-[var(--glass-border)] sm:border-0 sm:border-b">
-                    <table className="w-full min-w-[320px] text-left text-sm">
-                        <thead className="bg-[var(--glass-surface)] text-[var(--text-tertiary)] text-xs font-bold uppercase tracking-wider sticky top-0 z-10 shadow-sm">
-                            <tr>
-                                <SortableHeader field="name" label={t('table.name')} />
-                                <SortableHeader field="role" label={t('table.role')} className="hidden sm:table-cell" />
-                                <th className="hidden lg:table-cell p-4 select-none">Phòng ban</th>
-                                <SortableHeader field="status" label={t('table.status')} />
-                                <SortableHeader field="lastLoginAt" label={t('table.last_active')} className="hidden md:table-cell" />
-                                <th className="p-4 text-right">{t('common.actions')}</th>
-                            </tr>
-                        </thead>
-                        <tbody className="divide-y divide-[var(--glass-border)]">
-                            {users.map(user => {
-                                const isPending = user.status === CommonStatus.PENDING;
-                                
-                                return (
-                                    <tr key={user.id} className="hover:bg-[var(--glass-surface)] transition-colors group">
-                                        <td className="p-3 sm:p-4">
-                                            <div className="flex items-center gap-2 sm:gap-3">
-                                                <img
-                                                    src={user.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(user.name)}&size=40&background=6366f1&color=fff`}
-                                                    onError={e => { (e.currentTarget as HTMLImageElement).src = `https://ui-avatars.com/api/?name=${encodeURIComponent(user.name)}&size=40&background=6366f1&color=fff`; }}
-                                                    className="w-8 h-8 sm:w-10 sm:h-10 rounded-full object-cover border border-[var(--glass-border)] shrink-0"
-                                                    alt={user.name}
-                                                    aria-label={user.name}
-                                                />
-                                                <div className="min-w-0">
-                                                    <div className="font-bold text-[var(--text-primary)] flex items-center gap-1.5 flex-wrap">
-                                                        <span className="truncate max-w-[140px] sm:max-w-[200px] text-xs sm:text-sm">{user.name}</span>
-                                                        {user.id === currentUser?.id && <span className="text-3xs sm:text-2xs bg-[var(--glass-surface)] text-sgs-primary px-1 sm:px-1.5 py-0.5 rounded shrink-0">{t('admin.users.you')}</span>}
-                                                    </div>
-                                                    <div className="text-xs2 sm:text-xs text-[var(--text-tertiary)] truncate max-w-[140px] sm:max-w-[200px]">{user.email}</div>
-                                                    {/* Role selector on mobile — interactive dropdown */}
-                                                    <div className="sm:hidden mt-1.5" onClick={e => e.stopPropagation()}>
-                                                        {user.id === currentUser?.id ? (
-                                                            <span className={`inline-flex items-center text-2xs font-bold uppercase px-2 py-0.5 rounded-full ${getRoleBadgeClass(user.role)}`}>
-                                                                {t(`role.${user.role}`)}
-                                                            </span>
-                                                        ) : (
-                                                            <Dropdown
-                                                                value={user.role}
-                                                                onChange={(v) => handleRoleChange(user.id, v as UserRole)}
-                                                                options={userRoleOptions}
-                                                                disabled={user.id === currentUser?.id}
-                                                                className="text-2xs"
-                                                            />
-                                                        )}
+
+                {/* Member list */}
+                <SettingsCard title={t('adminusers.v2_list_title')} bodyClassName="p-0">
+                    {/* Filters bar */}
+                    <div className="flex flex-col gap-2 border-b border-[var(--glass-border)] p-3 sm:flex-row sm:items-center sm:gap-3 sm:px-5" role="search" aria-label={t('adminusers.v2_filters_aria')}>
+                        <div className="relative flex-1">
+                            <div className="pointer-events-none absolute inset-y-0 left-3 flex items-center text-[var(--text-tertiary)]">
+                                {ICONS.SEARCH}
+                            </div>
+                            <input
+                                type="search"
+                                className="ui-input h-10 w-full pl-10 pr-10"
+                                placeholder={t('admin.users.search_placeholder')}
+                                aria-label={t('admin.users.search_placeholder')}
+                                value={search}
+                                onChange={e => setSearch(e.target.value)}
+                            />
+                            {search && (
+                                <div className="absolute inset-y-0 right-0 flex items-center">
+                                    <button
+                                        type="button"
+                                        onClick={() => setSearch('')}
+                                        className={ICON_BTN}
+                                        aria-label={t('common.clear_search')}
+                                        title={t('common.clear_search')}
+                                    >
+                                        {ICONS.X}
+                                    </button>
+                                </div>
+                            )}
+                        </div>
+                        <div className="grid grid-cols-2 gap-2 sm:flex sm:gap-3">
+                            <div className="min-w-0 sm:w-44">
+                                <Dropdown value={roleFilter} onChange={(v) => setRoleFilter(v as string)} options={roleOptions} variant="compact" emptyValue="ALL" />
+                            </div>
+                            <div className="min-w-0 sm:w-40">
+                                <Dropdown value={statusFilter} onChange={(v) => setStatusFilter(v as string)} options={statusOptions} variant="compact" emptyValue="ALL" />
+                            </div>
+                        </div>
+                    </div>
+
+                    <div className="w-full overflow-x-auto" aria-busy={loading}>
+                        <table className="w-full text-left text-sm" aria-label={t('adminusers.v2_list_title')}>
+                            <thead className="bg-[var(--glass-surface)] text-xs text-[var(--text-secondary)]">
+                                <tr>
+                                    {renderSortHeader('name', t('table.name'))}
+                                    {renderSortHeader('role', t('table.role'), 'hidden sm:table-cell')}
+                                    <th scope="col" className="hidden px-4 py-3 font-semibold lg:table-cell">{t('adminusers.v2_department')}</th>
+                                    {renderSortHeader('status', t('table.status'), 'hidden sm:table-cell')}
+                                    {renderSortHeader('lastLoginAt', t('table.last_active'), 'hidden md:table-cell')}
+                                    <th scope="col" className="px-4 py-3 text-right font-semibold">{t('common.actions')}</th>
+                                </tr>
+                            </thead>
+                            <tbody className="divide-y divide-[var(--glass-border)]">
+                                {users.map(user => {
+                                    const isPending = user.status === CommonStatus.PENDING;
+                                    const isSelf = user.id === currentUser?.id;
+                                    return (
+                                        <tr key={user.id} className="group transition-colors hover:bg-[var(--glass-surface)]">
+                                            <td className="px-3 py-3 sm:px-4">
+                                                <div className="flex items-start gap-3">
+                                                    <img
+                                                        src={user.avatar || avatarFallback(user.name)}
+                                                        onError={e => { (e.currentTarget as HTMLImageElement).src = avatarFallback(user.name); }}
+                                                        className="h-9 w-9 shrink-0 rounded-full border border-[var(--glass-border)] object-cover sm:h-10 sm:w-10"
+                                                        alt=""
+                                                    />
+                                                    <div className="min-w-0">
+                                                        <div className="flex flex-wrap items-center gap-1.5 font-semibold text-[var(--text-primary)]">
+                                                            <span className="max-w-[160px] truncate sm:max-w-[220px]">{user.name}</span>
+                                                            {isSelf && <StatusBadge tone="info">{t('admin.users.you')}</StatusBadge>}
+                                                        </div>
+                                                        <div className="max-w-[160px] truncate text-xs text-[var(--text-tertiary)] sm:max-w-[220px]">{user.email}</div>
+                                                        {/* Mobile: role + status stacked under the name */}
+                                                        <div className="mt-1.5 flex flex-wrap items-center gap-2 sm:hidden">
+                                                            {isSelf ? (
+                                                                <StatusBadge tone="neutral">{t(`role.${user.role}`)}</StatusBadge>
+                                                            ) : (
+                                                                <div className="w-40">
+                                                                    <Dropdown
+                                                                        value={user.role}
+                                                                        onChange={(v) => handleRoleChange(user.id, v as UserRole)}
+                                                                        options={userRoleOptions}
+                                                                        variant="compact"
+                                                                    />
+                                                                </div>
+                                                            )}
+                                                            {renderStatus(user)}
+                                                        </div>
+                                                        <div className="mt-1 text-2xs text-[var(--text-tertiary)] md:hidden">
+                                                            {t('table.last_active')}: {user.lastLoginAt ? formatDateTime(user.lastLoginAt) : t('admin.users.never_logged_in')}
+                                                        </div>
                                                     </div>
                                                 </div>
-                                            </div>
-                                        </td>
-                                        <td className="hidden sm:table-cell p-4">
-                                            <div className="w-40 lg:w-48" onClick={e => e.stopPropagation()}>
-                                                <Dropdown 
-                                                    value={user.role} 
-                                                    onChange={(v) => handleRoleChange(user.id, v as UserRole)} 
-                                                    options={userRoleOptions} 
-                                                    disabled={user.id === currentUser?.id}
-                                                    className="text-xs"
-                                                />
-                                            </div>
-                                        </td>
-                                        <td className="hidden lg:table-cell p-4">
-                                            <div className="w-40" onClick={e => e.stopPropagation()}>
-                                                <Dropdown
-                                                    value={(user as any).departmentId || ''}
-                                                    onChange={(v) => handleDepartmentChange(user.id, v as string)}
-                                                    options={departmentOptions}
-                                                    disabled={departments.length === 0}
-                                                    className="text-xs"
-                                                    placeholder={departments.length === 0 ? 'Chưa có' : 'Chưa chọn'}
-                                                />
-                                            </div>
-                                        </td>
-                                        <td className="p-3 sm:p-4">
-                                            <button 
-                                                onClick={() => user.id !== currentUser?.id && setUserToStatusChange(user)}
-                                                disabled={user.id === currentUser?.id}
-                                                className={`px-2 sm:px-3 py-1 rounded-full text-2xs sm:text-xs2 font-bold uppercase border whitespace-nowrap text-center transition-all active:scale-95 flex items-center justify-center gap-1 sm:gap-1.5
-                                                    ${user.status === CommonStatus.ACTIVE ? 'bg-[var(--sgs-primary)]/10 text-[var(--sgs-primary)] border-[var(--glass-border)] hover:bg-[var(--sgs-primary)]/20' : 
-                                                      user.status === CommonStatus.PENDING ? 'bg-[var(--glass-surface)] text-[var(--text-secondary)] border-[var(--glass-border)] hover:bg-[var(--glass-surface-hover)]' :
-                                                      user.status === CommonStatus.DEACTIVATED ? 'bg-[var(--glass-surface)] text-[var(--text-secondary)] border-[var(--glass-border)] hover:bg-[var(--glass-surface-hover)]' :
-                                                      user.status === CommonStatus.ARCHIVED ? 'bg-[var(--glass-surface)] text-[var(--text-tertiary)] border-[var(--glass-border)]' :
-                                                      'bg-[var(--glass-surface-hover)] text-[var(--text-tertiary)] border-[var(--glass-border)] hover:bg-slate-200'}
-                                                    ${user.id !== currentUser?.id ? 'cursor-pointer hover:shadow-sm' : 'cursor-default opacity-70'}
-                                                `}
-                                                title={t(`admin.users.status_${user.status.toLowerCase()}`)}
-                                            >
-                                                
-                                                {/* Mobile: short label | Desktop: full label */}
-                                                <span className="sm:hidden">
-                                                    {user.status === CommonStatus.ACTIVE ? t('admin.users.mobile_active') : user.status === CommonStatus.PENDING ? t('admin.users.mobile_pending') : user.status === CommonStatus.DEACTIVATED ? t('admin.users.mobile_deactivated') : user.status === CommonStatus.ARCHIVED ? t('admin.users.mobile_archived') : t('admin.users.mobile_inactive')}
-                                                </span>
-                                                <span className="hidden sm:inline">{t(`admin.users.status_${user.status.toLowerCase()}`)}</span>
-                                            </button>
-                                        </td>
-                                        <td className="hidden md:table-cell p-4 text-[var(--text-tertiary)] font-mono text-xs">
-                                            {user.lastLoginAt ? formatDateTime(user.lastLoginAt) : <span className="text-[var(--text-secondary)] italic">{t('admin.users.never_logged_in')}</span>}
-                                        </td>
-                                        <td className="p-4 text-right">
-                                            <div className="flex justify-end gap-1 sm:gap-2 opacity-100 md:opacity-0 group-hover:opacity-100 transition-opacity">
-                                                {/* View Performance — only for non-pending users with lead-bearing roles */}
-                                                {!isPending && [UserRole.SALES, UserRole.TEAM_LEAD, UserRole.ADMIN, UserRole.SUPER_ADMIN].includes(user.role) && (
-                                                    <button
-                                                        onClick={() => setPerfUser(user)}
-                                                        className="p-1.5 sm:p-2 text-[var(--text-secondary)] hover:text-sgs-primary hover:bg-[var(--glass-surface)] rounded-lg transition-colors"
-                                                        title={t('admin.users.view_perf')}
-                                                    >
-                                                        {ICONS.CHART}
-                                                    </button>
-                                                )}
-                                                {/* Only show Resend Invite if Pending */}
-                                                {isPending && (
-                                                    <button 
-                                                        onClick={() => handleResendInvite(user)}
-                                                        disabled={resendingId === user.id}
-                                                        className="p-1.5 sm:p-2 text-[var(--text-secondary)] hover:text-sgs-primary hover:bg-[var(--glass-surface)] rounded-lg transition-colors relative group/btn" 
-                                                        title={t('admin.users.resend')}
-                                                    >
-                                                        {resendingId === user.id ? (
-                                                            <div className="w-4 h-4 border-2 border-sgs-border border-t-[var(--sgs-primary)] rounded-full animate-spin"></div>
-                                                        ) : (
-                                                            ICONS.SEND
-                                                        )}
-                                                    </button>
-                                                )}
-                                                {user.id !== currentUser?.id && (
-                                                    <button onClick={() => handleDeleteClick(user)} className="p-1.5 sm:p-2 text-[var(--text-secondary)] hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-colors" title={t('admin.users.delete')}>
-                                                        {ICONS.TRASH}
-                                                    </button>
-                                                )}
-                                            </div>
+                                            </td>
+                                            <td className="hidden px-4 py-3 sm:table-cell">
+                                                <div className="w-40 lg:w-48">
+                                                    <Dropdown
+                                                        value={user.role}
+                                                        onChange={(v) => handleRoleChange(user.id, v as UserRole)}
+                                                        options={userRoleOptions}
+                                                        disabled={isSelf}
+                                                        className="text-xs"
+                                                        variant="compact"
+                                                    />
+                                                </div>
+                                            </td>
+                                            <td className="hidden px-4 py-3 lg:table-cell">
+                                                <div className="w-40">
+                                                    <Dropdown
+                                                        value={user.departmentId || ''}
+                                                        onChange={(v) => handleDepartmentChange(user.id, v as string)}
+                                                        options={departmentOptions}
+                                                        disabled={departments.length === 0}
+                                                        className="text-xs"
+                                                        variant="compact"
+                                                        placeholder={departments.length === 0 ? t('adminusers.v2_no_departments') : t('adminusers.v2_not_selected')}
+                                                    />
+                                                </div>
+                                            </td>
+                                            <td className="hidden px-4 py-3 sm:table-cell">
+                                                {renderStatus(user)}
+                                            </td>
+                                            <td className="hidden whitespace-nowrap px-4 py-3 text-xs tabular-nums text-[var(--text-secondary)] md:table-cell">
+                                                {user.lastLoginAt ? formatDateTime(user.lastLoginAt) : <span className="text-[var(--text-tertiary)]">{t('admin.users.never_logged_in')}</span>}
+                                            </td>
+                                            <td className="px-2 py-3 text-right sm:px-4">
+                                                <div className="flex justify-end gap-1 transition-opacity md:opacity-0 md:group-hover:opacity-100 md:group-focus-within:opacity-100">
+                                                    {/* View performance — only for non-pending users with lead-bearing roles */}
+                                                    {!isPending && [UserRole.SALES, UserRole.TEAM_LEAD, UserRole.ADMIN, UserRole.SUPER_ADMIN].includes(user.role) && (
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => setPerfUser(user)}
+                                                            className={`${ICON_BTN} hover:text-sgs-primary`}
+                                                            aria-label={`${t('admin.users.view_perf')}: ${user.name}`}
+                                                            title={t('admin.users.view_perf')}
+                                                        >
+                                                            {ICONS.CHART}
+                                                        </button>
+                                                    )}
+                                                    {/* Resend invite — pending users only */}
+                                                    {isPending && (
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => handleResendInvite(user)}
+                                                            disabled={resendingId === user.id}
+                                                            className={`${ICON_BTN} hover:text-sgs-primary`}
+                                                            aria-label={`${t('admin.users.resend')}: ${user.email}`}
+                                                            title={t('admin.users.resend')}
+                                                        >
+                                                            {resendingId === user.id ? (
+                                                                <span className="h-4 w-4 animate-spin rounded-full border-2 border-[var(--glass-border)] border-t-[var(--sgs-primary)]" aria-hidden="true" />
+                                                            ) : (
+                                                                ICONS.SEND
+                                                            )}
+                                                        </button>
+                                                    )}
+                                                    {!isSelf && (
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => handleDeleteClick(user)}
+                                                            className={`${ICON_BTN} hover:text-[var(--ui-danger)]`}
+                                                            aria-label={`${t('admin.users.delete')}: ${user.name}`}
+                                                            title={t('admin.users.delete')}
+                                                        >
+                                                            {ICONS.TRASH}
+                                                        </button>
+                                                    )}
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    );
+                                })}
+                                {users.length === 0 && !loading && (
+                                    <tr>
+                                        <td colSpan={6}>
+                                            <EmptyState icon={ICONS.USERS} title={t('admin.users.empty_search')} />
                                         </td>
                                     </tr>
-                                );
-                            })}
-                            {users.length === 0 && !loading && (
-                                <tr><td colSpan={6} className="p-12 text-center text-[var(--text-secondary)] italic">{t('admin.users.empty_search')}</td></tr>
-                            )}
-                        </tbody>
-                    </table>
-                </div>
-            </div>            
-            {/* FOOTER - Pagination */}
-            <div className="shrink-0 py-2 px-4 sm:px-5">
-                <PaginationControl 
-                    page={page} 
-                    total={totalUsers} 
-                    pageSize={pageSize} 
-                    onPageChange={setPage} 
-                    onPageSizeChange={(s: number) => { setPageSize(s); setPage(1); }}
-                    t={t}
-                />
-            </div>
-            {/* Performance Modal */}
+                                )}
+                            </tbody>
+                        </table>
+                    </div>
+                    <div className="border-t border-[var(--glass-border)] px-3 py-2 sm:px-5">
+                        <PaginationControl
+                            page={page}
+                            total={totalUsers}
+                            pageSize={pageSize}
+                            onPageChange={setPage}
+                            onPageSizeChange={(s: number) => { setPageSize(s); setPage(1); }}
+                            t={t}
+                        />
+                    </div>
+                </SettingsCard>
+            </SettingsPage>
+
+            {/* Performance modal */}
             {perfUser && (
                 <PerformanceModal
                     user={perfUser}
@@ -931,17 +1016,17 @@ export const AdminUsers: React.FC = () => {
                     t={t}
                 />
             )}
-            {/* Invite Modal */}
-            <InviteUserModal 
-                isOpen={isInviteOpen} 
-                onClose={() => setIsInviteOpen(false)} 
+            {/* Invite modal */}
+            <InviteUserModal
+                isOpen={isInviteOpen}
+                onClose={() => setIsInviteOpen(false)}
                 onConfirm={handleInviteConfirm}
                 t={t}
                 callerRole={currentUser?.role}
                 departments={departments}
             />
-            {/* Delete Confirmation Modal */}
-            <ConfirmModal 
+            {/* Delete confirmation */}
+            <ConfirmModal
                 isOpen={!!userToDelete}
                 title={t('common.delete')}
                 message={t('admin.users.confirm_delete', { email: userToDelete?.email || '' })}
@@ -951,12 +1036,12 @@ export const AdminUsers: React.FC = () => {
                 onCancel={() => setUserToDelete(null)}
                 variant="danger"
             />
-             {/* Status Change Confirmation Modal */}
-             <ConfirmModal 
+            {/* Status change confirmation */}
+            <ConfirmModal
                 isOpen={!!userToStatusChange}
                 title={t('common.confirm')}
-                message={userToStatusChange?.status === CommonStatus.ACTIVE 
-                    ? t('admin.users.confirm_deactivate', { name: userToStatusChange?.name ?? '' }) 
+                message={userToStatusChange?.status === CommonStatus.ACTIVE
+                    ? t('admin.users.confirm_deactivate', { name: userToStatusChange?.name ?? '' })
                     : t('admin.users.confirm_activate', { name: userToStatusChange?.name ?? '' })}
                 confirmLabel={userToStatusChange?.status === CommonStatus.ACTIVE ? t('common.disabled') : t('common.enabled')}
                 cancelLabel={t('common.cancel')}
@@ -964,43 +1049,28 @@ export const AdminUsers: React.FC = () => {
                 onCancel={() => setUserToStatusChange(null)}
                 variant={userToStatusChange?.status === CommonStatus.ACTIVE ? 'danger' : 'info'}
             />
-
-            {/* Role Change Confirmation Modal */}
+            {/* Role change confirmation */}
             {userToRoleChange && createPortal(
-                <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+                <div className="fixed inset-0 z-[100] flex items-center justify-center p-4" role="dialog" aria-modal="true" aria-labelledby="role-change-title">
                     <div className="absolute inset-0 bg-black/60 backdrop-blur-sm animate-fade-in" onClick={() => setUserToRoleChange(null)} aria-hidden="true" />
-                    <div className="bg-[var(--bg-surface)] w-full max-w-sm rounded-[24px] p-6 shadow-2xl border border-[var(--glass-border)] relative z-10 animate-scale-up">
-                        <div className="flex justify-between items-center mb-4">
-                            <h3 className="text-lg font-bold text-[var(--text-primary)]">{t('common.confirm')}</h3>
-                            <button onClick={() => setUserToRoleChange(null)} className="text-[var(--text-secondary)] hover:text-[var(--text-secondary)]">
+                    <div className="relative z-10 w-full max-w-sm rounded-2xl border border-[var(--glass-border)] bg-[var(--bg-surface)] p-5 shadow-2xl animate-scale-up">
+                        <div className="mb-3 flex items-center justify-between gap-2">
+                            <h3 id="role-change-title" className="text-lg font-bold text-[var(--text-primary)]">{t('common.confirm')}</h3>
+                            <button type="button" onClick={() => setUserToRoleChange(null)} className={ICON_BTN} aria-label={t('adminusers.v2_close')}>
                                 {ICONS.CLOSE}
                             </button>
                         </div>
-                        <p className="text-sm text-[var(--text-secondary)] mb-4">
+                        <p className="mb-4 text-sm text-[var(--text-secondary)]">
                             {t('admin.users.confirm_role_change', { name: userToRoleChange.user.name, role: t(`role.${userToRoleChange.newRole}`) })}
                         </p>
-                        
-                        <div className="bg-[var(--sgs-primary)]/10 border border-sgs-border rounded-xl p-3 flex gap-2 mb-6">
-                            <div className="shrink-0 mt-0.5">{ICONS.INFO}</div>
-                            <div>
-                                <h4 className="text-xs2 font-bold text-sgs-primary uppercase tracking-wide mb-1">{t('admin.users.role_permissions')}</h4>
-                                <p className="text-xs text-[var(--text-secondary)] leading-relaxed">
-                                    {t(`role_desc.${userToRoleChange.newRole}`)}
-                                </p>
-                            </div>
+                        <div className="mb-5">
+                            <RolePermissionsHint role={userToRoleChange.newRole} t={t} />
                         </div>
-
                         <div className="flex gap-3">
-                            <button 
-                                onClick={() => setUserToRoleChange(null)}
-                                className="flex-1 py-2.5 bg-[var(--glass-surface-hover)] text-[var(--text-secondary)] font-bold rounded-xl text-sm hover:bg-slate-200 transition-colors"
-                            >
+                            <button type="button" onClick={() => setUserToRoleChange(null)} className="ui-button ui-button-secondary ui-button-md inline-flex min-h-[44px] flex-1 items-center justify-center">
                                 {t('common.cancel')}
                             </button>
-                            <button 
-                                onClick={confirmRoleChange}
-                                className="flex-1 py-2.5 bg-sgs-primary text-white font-bold rounded-xl text-sm shadow-lg hover:bg-sgs-primary transition-colors"
-                            >
+                            <button type="button" onClick={confirmRoleChange} className="ui-button ui-button-primary ui-button-md inline-flex min-h-[44px] flex-1 items-center justify-center">
                                 {t('common.confirm')}
                             </button>
                         </div>
@@ -1008,15 +1078,14 @@ export const AdminUsers: React.FC = () => {
                 </div>,
                 document.body
             )}
-        </div>
-        {createPortal(
-            toast ? (
-                <div className={`fixed bottom-6 right-6 z-[100] px-6 py-3 rounded-xl shadow-2xl flex items-center gap-3 animate-enter border ${toast.type === 'success' ? 'bg-[var(--sgs-primary-deep)] border-[var(--sgs-primary)] text-white' : 'bg-[#8B2E2E] border-[#C0392B] text-white'}`}>
-                    <span className="font-bold text-sm">{toast.msg}</span>
-                </div>
-            ) : null,
-            document.body
-        )}
-    </>
+            {createPortal(
+                toast ? (
+                    <div role="status" aria-live="polite" className={`fixed bottom-6 left-4 right-4 z-[100] flex items-center gap-3 rounded-xl border px-5 py-3 text-white shadow-2xl animate-enter sm:left-auto sm:right-6 ${toast.type === 'success' ? 'bg-[var(--sgs-primary-deep)] border-[var(--sgs-primary)]' : 'bg-[#8B2E2E] border-[#C0392B]'}`}>
+                        <span className="text-sm font-semibold">{toast.msg}</span>
+                    </div>
+                ) : null,
+                document.body
+            )}
+        </>
     );
 };

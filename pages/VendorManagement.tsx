@@ -1,9 +1,26 @@
 import { uiConfirm } from '../utils/uiDialog';
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { db } from '../services/dbApi';
 import { useTranslation } from '../services/i18n';
 import { Dropdown } from '../components/Dropdown';
 import { SeoHead } from '../components/SeoHead';
+import {
+  SettingsPage,
+  SettingsHeader,
+  SettingsCard,
+  StatTile,
+  StatGrid,
+  DistributionBar,
+  DonutChart,
+  TrendBars,
+  StatusBadge,
+  EmptyState,
+  TONE_COLOR,
+  type Tone,
+  type Segment,
+  type TrendPoint,
+} from '../components/settings/SettingsUI';
+
 interface VendorAdmin {
   id: string;
   email: string;
@@ -28,22 +45,74 @@ interface Vendor {
   admin: VendorAdmin | null;
   subscription: VendorSubscription;
 }
-const STATUS_CLASSNAMES: Record<string, string> = {
-  PENDING_APPROVAL: 'bg-amber-100 text-amber-800 border border-amber-200',
-  APPROVED:         'bg-emerald-100 text-emerald-800 border border-emerald-200',
-  REJECTED:         'bg-rose-100 text-rose-800 border border-rose-200',
-  SUSPENDED:        'bg-slate-100 text-slate-700 border border-slate-200',
+
+const VENDOR_STATUSES = ['PENDING_APPROVAL', 'APPROVED', 'REJECTED', 'SUSPENDED'] as const;
+type VendorStatus = typeof VENDOR_STATUSES[number];
+
+const STATUS_TONE: Record<VendorStatus, Tone> = {
+  PENDING_APPROVAL: 'warning',
+  APPROVED: 'success',
+  REJECTED: 'danger',
+  SUSPENDED: 'neutral',
 };
-function StatusBadge({ status }: { status: string }) {
+
+const TREND_MONTHS = 6;
+
+/* ---------------- Icons ---------------- */
+
+const RefreshIcon = () => (
+  <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+  </svg>
+);
+const BuildingIcon = ({ className = 'h-5 w-5' }: { className?: string }) => (
+  <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+  </svg>
+);
+
+/* ---------------- Small helpers ---------------- */
+
+function VendorStatusBadge({ status }: { status: string }) {
   const { t } = useTranslation();
-  const className = STATUS_CLASSNAMES[status] || 'bg-gray-100 text-gray-700';
-  const label = t(`vendor.status_${status}` as any) || status;
-  return (
-    <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold ${className}`}>
-      {label}
+  const tone = STATUS_TONE[status as VendorStatus] ?? 'neutral';
+  const label = t(`vendor.status_${status}`);
+  return <StatusBadge tone={tone}>{label.startsWith('vendor.status_') ? status : label}</StatusBadge>;
+}
+
+function EmailVerifiedHint({ verified }: { verified: boolean }) {
+  const { t } = useTranslation();
+  return verified ? (
+    <span className="mt-1 inline-flex items-center gap-1 text-xs" style={{ color: TONE_COLOR.success }}>
+      <svg className="h-3 w-3" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true"><path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" /></svg>
+      {t('vendor.v2_email_verified')}
     </span>
+  ) : (
+    <span className="mt-1 inline-block text-xs" style={{ color: TONE_COLOR.warning }}>{t('vendor.v2_email_unverified')}</span>
   );
 }
+
+/* ---------------- Modals ---------------- */
+
+const ModalShell: React.FC<{ titleId: string; title: React.ReactNode; subtitle: React.ReactNode; onClose: () => void; children: React.ReactNode }> = ({ titleId, title, subtitle, onClose, children }) => {
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose(); };
+    document.addEventListener('keydown', onKey);
+    return () => document.removeEventListener('keydown', onKey);
+  }, [onClose]);
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm">
+      <div role="dialog" aria-modal="true" aria-labelledby={titleId} className="w-full max-w-md rounded-2xl border border-[var(--glass-border)] bg-[var(--bg-surface)] shadow-2xl">
+        <div className="border-b border-[var(--glass-border)] px-5 py-4">
+          <h3 id={titleId} className="text-base font-bold text-[var(--text-primary)]">{title}</h3>
+          <p className="mt-1 break-words text-sm text-[var(--text-secondary)]">{subtitle}</p>
+        </div>
+        {children}
+      </div>
+    </div>
+  );
+};
+
 function RejectModal({
   vendor,
   onConfirm,
@@ -53,65 +122,60 @@ function RejectModal({
   onConfirm: (reason: string) => Promise<void>;
   onClose: () => void;
 }) {
+  const { t } = useTranslation();
   const [reason, setReason] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!reason.trim()) { setError('Vui lòng nhập lý do từ chối'); return; }
+    if (!reason.trim()) { setError(t('vendor.v2_reject_reason_required')); return; }
     setLoading(true);
     try {
       await onConfirm(reason.trim());
       onClose();
     } catch (err: any) {
-      setError(err.message || 'Có lỗi xảy ra');
+      setError(err.message || t('vendor.v2_error_generic'));
       setLoading(false);
     }
   };
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
-      <div className="bg-[var(--bg-surface)] rounded-2xl shadow-2xl w-full max-w-md">
-        <div className="p-6 border-b border-gray-100">
-          <h3 className="text-lg font-bold text-sgs-text">Từ chối đăng ký</h3>
-          <p className="text-sm text-sgs-text-muted mt-1">
-            Workspace: <strong>{vendor.name}</strong> — {vendor.admin?.email}
-          </p>
+    <ModalShell
+      titleId="vendor-reject-title"
+      title={t('vendor.v2_reject_title')}
+      subtitle={<>{t('vendor.v2_workspace')}: <strong className="text-[var(--text-primary)]">{vendor.name}</strong>{vendor.admin?.email ? ` — ${vendor.admin.email}` : ''}</>}
+      onClose={onClose}
+    >
+      <form onSubmit={handleSubmit} className="space-y-4 p-5">
+        <div>
+          <label htmlFor="vendor-reject-reason" className="mb-2 block text-sm font-semibold text-[var(--text-primary)]">
+            {t('vendor.v2_reject_reason_label')} <span style={{ color: TONE_COLOR.danger }} aria-hidden="true">*</span>
+          </label>
+          <textarea
+            id="vendor-reject-reason"
+            className="ui-input w-full resize-none"
+            rows={4}
+            required
+            aria-invalid={!!error}
+            aria-describedby={error ? 'vendor-reject-error' : undefined}
+            placeholder={t('vendor.v2_reject_reason_placeholder')}
+            value={reason}
+            onChange={e => { setReason(e.target.value); setError(''); }}
+          />
+          {error && <p id="vendor-reject-error" role="alert" className="mt-1 text-xs" style={{ color: TONE_COLOR.danger }}>{error}</p>}
         </div>
-        <form onSubmit={handleSubmit} className="p-6 space-y-4">
-          <div>
-            <label className="block text-sm font-semibold text-gray-700 mb-2">
-              Lý do từ chối <span className="text-rose-500">*</span>
-            </label>
-            <textarea
-              className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-rose-400 resize-none"
-              rows={4}
-              placeholder="Ví dụ: Thông tin đăng ký không đầy đủ, chưa đủ điều kiện tham gia..."
-              value={reason}
-              onChange={e => { setReason(e.target.value); setError(''); }}
-            />
-            {error && <p className="text-xs text-rose-600 mt-1">{error}</p>}
-          </div>
-          <div className="flex gap-3 justify-end">
-            <button
-              type="button"
-              onClick={onClose}
-              className="px-4 py-2 rounded-xl text-sm font-semibold text-gray-700 bg-gray-100 hover:bg-gray-200 transition"
-            >
-              Hủy
-            </button>
-            <button
-              type="submit"
-              disabled={loading}
-              className="px-4 py-2 rounded-xl text-sm font-semibold text-white bg-rose-600 hover:bg-rose-700 transition disabled:opacity-60"
-            >
-              {loading ? 'Đang xử lý...' : 'Xác nhận từ chối'}
-            </button>
-          </div>
-        </form>
-      </div>
-    </div>
+        <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
+          <button type="button" onClick={onClose} className="ui-button ui-button-secondary ui-button-md min-h-[40px]">
+            {t('vendor.v2_cancel')}
+          </button>
+          <button type="submit" disabled={loading} className="ui-button ui-button-danger ui-button-md min-h-[40px] disabled:opacity-60">
+            {loading ? t('vendor.v2_processing') : t('vendor.v2_reject_confirm')}
+          </button>
+        </div>
+      </form>
+    </ModalShell>
   );
 }
+
 function SuspendModal({
   vendor,
   onConfirm,
@@ -121,12 +185,14 @@ function SuspendModal({
   onConfirm: (reason: string) => Promise<void>;
   onClose: () => void;
 }) {
+  const { t } = useTranslation();
   const [reason, setReason] = useState('');
   const [loading, setLoading] = useState(false);
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     try {
+      // Default reason is stored server-side, not shown in the UI.
       await onConfirm(reason.trim() || 'Suspended by platform admin');
       onClose();
     } catch {
@@ -134,37 +200,93 @@ function SuspendModal({
     }
   };
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
-      <div className="bg-[var(--bg-surface)] rounded-2xl shadow-2xl w-full max-w-md">
-        <div className="p-6 border-b border-gray-100">
-          <h3 className="text-lg font-bold text-sgs-text">Tạm ngừng workspace</h3>
-          <p className="text-sm text-sgs-text-muted mt-1"><strong>{vendor.name}</strong></p>
-        </div>
-        <form onSubmit={handleSubmit} className="p-6 space-y-4">
+    <ModalShell
+      titleId="vendor-suspend-title"
+      title={t('vendor.v2_suspend_title')}
+      subtitle={<strong className="text-[var(--text-primary)]">{vendor.name}</strong>}
+      onClose={onClose}
+    >
+      <form onSubmit={handleSubmit} className="space-y-4 p-5">
+        <div>
+          <label htmlFor="vendor-suspend-reason" className="mb-2 block text-sm font-semibold text-[var(--text-primary)]">
+            {t('vendor.v2_suspend_reason_label')}
+          </label>
           <textarea
-            className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-amber-400 resize-none"
+            id="vendor-suspend-reason"
+            className="ui-input w-full resize-none"
             rows={3}
-            placeholder="Lý do tạm ngừng (không bắt buộc)"
+            placeholder={t('vendor.v2_suspend_reason_placeholder')}
             value={reason}
             onChange={e => setReason(e.target.value)}
           />
-          <div className="flex gap-3 justify-end">
-            <button type="button" onClick={onClose} className="px-4 py-2 rounded-xl text-sm font-semibold text-gray-700 bg-gray-100 hover:bg-gray-200 transition">Hủy</button>
-            <button type="submit" disabled={loading} className="px-4 py-2 rounded-xl text-sm font-semibold text-white bg-sgs-accent hover:bg-sgs-accent-text transition disabled:opacity-60">
-              {loading ? 'Đang xử lý...' : 'Tạm ngừng'}
-            </button>
-          </div>
-        </form>
-      </div>
-    </div>
+        </div>
+        <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
+          <button type="button" onClick={onClose} className="ui-button ui-button-secondary ui-button-md min-h-[40px]">{t('vendor.v2_cancel')}</button>
+          <button type="submit" disabled={loading} className="ui-button ui-button-primary ui-button-md min-h-[40px] disabled:opacity-60">
+            {loading ? t('vendor.v2_processing') : t('vendor.v2_suspend')}
+          </button>
+        </div>
+      </form>
+    </ModalShell>
   );
 }
-const VENDOR_STATUSES = ['PENDING_APPROVAL', 'APPROVED', 'REJECTED', 'SUSPENDED'] as const;
-export default function VendorManagement() {
+
+/* ---------------- Row actions ---------------- */
+
+function VendorActions({
+  vendor,
+  busy,
+  onApprove,
+  onReject,
+  onSuspend,
+}: {
+  vendor: Vendor;
+  busy: boolean;
+  onApprove: (v: Vendor) => void;
+  onReject: (v: Vendor) => void;
+  onSuspend: (v: Vendor) => void;
+}) {
   const { t } = useTranslation();
+  const btn = 'ui-button ui-button-sm min-h-[40px] whitespace-nowrap disabled:opacity-60';
+  const busyLabel = t('vendor.v2_processing');
+  switch (vendor.approvalStatus) {
+    case 'PENDING_APPROVAL':
+      return (
+        <>
+          <button type="button" onClick={() => onApprove(vendor)} disabled={busy} className={`${btn} ui-button-primary`}>
+            {busy ? busyLabel : t('vendor.v2_approve')}
+          </button>
+          <button type="button" onClick={() => onReject(vendor)} disabled={busy} className={`${btn} ui-button-danger`}>
+            {t('vendor.v2_reject')}
+          </button>
+        </>
+      );
+    case 'APPROVED':
+      return (
+        <button type="button" onClick={() => onSuspend(vendor)} disabled={busy} className={`${btn} ui-button-secondary`}>
+          {t('vendor.v2_suspend')}
+        </button>
+      );
+    case 'REJECTED':
+    case 'SUSPENDED':
+      return (
+        <button type="button" onClick={() => onApprove(vendor)} disabled={busy} className={`${btn} ui-button-secondary`}>
+          {busy ? busyLabel : t('vendor.v2_reactivate')}
+        </button>
+      );
+    default:
+      return null;
+  }
+}
+
+/* ---------------- Page ---------------- */
+
+export default function VendorManagement() {
+  const { t, language, formatDate } = useTranslation();
+  const locale = language === 'vn' ? 'vi-VN' : 'en-US';
   const statusOptions = [
-    { value: '', label: t('vendor.status_all' as any) },
-    ...VENDOR_STATUSES.map(s => ({ value: s, label: t(`vendor.status_${s}` as any) })),
+    { value: '', label: t('vendor.status_all') },
+    ...VENDOR_STATUSES.map(s => ({ value: s, label: t(`vendor.status_${s}`) })),
   ];
   const [vendors, setVendors] = useState<Vendor[]>([]);
   const [loading, setLoading] = useState(true);
@@ -189,10 +311,12 @@ export default function VendorManagement() {
       setTotalPages(data.pagination?.totalPages || 1);
       setTotal(data.pagination?.total || 0);
     } catch (e: any) {
-      setError(e.message || 'Không tải được danh sách vendor');
+      setError(e.message || t('vendor.v2_error_load'));
     } finally {
       setLoading(false);
     }
+    // t is stable per language; excluded so switching language does not refetch.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [filterStatus, search, page]);
   useEffect(() => { fetchVendors(); }, [fetchVendors]);
   const showSuccess = (msg: string) => {
@@ -200,14 +324,14 @@ export default function VendorManagement() {
     setTimeout(() => setSuccessMsg(''), 3500);
   };
   const handleApprove = async (vendor: Vendor) => {
-    if (!(await uiConfirm(`Duyệt workspace "${vendor.name}" (${vendor.admin?.email})?`))) return;
+    if (!(await uiConfirm(t('vendor.v2_approve_confirm', { name: vendor.name, email: vendor.admin?.email ?? '—' })))) return;
     setActionLoading(vendor.id);
     try {
       await db.approveVendor(vendor.id);
-      showSuccess(`Đã duyệt workspace "${vendor.name}". Email thông báo đã được gửi.`);
+      showSuccess(t('vendor.v2_approved_msg', { name: vendor.name }));
       fetchVendors();
     } catch (e: any) {
-      setError(e.message || 'Duyệt thất bại');
+      setError(e.message || t('vendor.v2_error_approve'));
     } finally {
       setActionLoading(null);
     }
@@ -216,7 +340,7 @@ export default function VendorManagement() {
     setActionLoading(vendor.id);
     try {
       await db.rejectVendor(vendor.id, reason);
-      showSuccess(`Đã từ chối "${vendor.name}". Email thông báo đã được gửi.`);
+      showSuccess(t('vendor.v2_rejected_msg', { name: vendor.name }));
       fetchVendors();
     } finally {
       setActionLoading(null);
@@ -226,217 +350,294 @@ export default function VendorManagement() {
     setActionLoading(vendor.id);
     try {
       await db.suspendVendor(vendor.id, reason);
-      showSuccess(`Đã tạm ngừng workspace "${vendor.name}".`);
+      showSuccess(t('vendor.v2_suspended_msg', { name: vendor.name }));
       fetchVendors();
     } finally {
       setActionLoading(null);
     }
   };
-  const statusCounts = vendors.reduce<Record<string, number>>((acc, v) => {
+
+  const applyStatusFilter = (s: string) => { setFilterStatus(s); setPage(1); };
+
+  /* ---- Derived data (only from the vendors loaded on this page) ---- */
+  const statusCounts = useMemo(() => vendors.reduce<Record<string, number>>((acc, v) => {
     acc[v.approvalStatus] = (acc[v.approvalStatus] || 0) + 1;
     return acc;
-  }, {});
+  }, {}), [vendors]);
+
+  const statusSegments: Segment[] = VENDOR_STATUSES.map(s => ({
+    label: t(`vendor.status_${s}`),
+    value: statusCounts[s] || 0,
+    color: TONE_COLOR[STATUS_TONE[s]],
+  }));
+
+  // Plan ids (INDIVIDUAL/TEAM/ENTERPRISE) shown with the billing plan names.
+  const planLabel = useCallback((id?: string | null) => {
+    if (!id) return '—';
+    const key = `billing.plan_${id.toLowerCase()}`;
+    const label = t(key);
+    return label && label !== key ? label : id;
+  }, [t]);
+
+  const planSegments: Segment[] = useMemo(() => {
+    const noPlan = t('vendor.v2_no_plan');
+    const map = new Map<string, number>();
+    for (const v of vendors) {
+      const key = v.subscription?.planId ? planLabel(v.subscription.planId) : noPlan;
+      map.set(key, (map.get(key) || 0) + 1);
+    }
+    return [...map.entries()].sort((a, b) => b[1] - a[1]).map(([label, value]) => ({ label, value }));
+  }, [vendors, t, planLabel]);
+
+  const registrationPoints: TrendPoint[] = useMemo(() => {
+    const now = new Date();
+    const buckets: { key: string; label: string; value: number }[] = [];
+    for (let i = TREND_MONTHS - 1; i >= 0; i--) {
+      const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+      buckets.push({
+        key: `${d.getFullYear()}-${d.getMonth()}`,
+        label: d.toLocaleDateString(locale, { month: 'short', year: '2-digit' }),
+        value: 0,
+      });
+    }
+    for (const v of vendors) {
+      const d = new Date(v.createdAt);
+      if (Number.isNaN(d.getTime())) continue;
+      const b = buckets.find(x => x.key === `${d.getFullYear()}-${d.getMonth()}`);
+      if (b) b.value += 1;
+    }
+    return buckets.map(({ label, value }) => ({ label, value }));
+  }, [vendors, locale]);
+  const registrationsInWindow = registrationPoints.reduce((s, p) => s + (p.value ?? 0), 0);
+
+  const hasData = !loading && vendors.length > 0;
+  const hasFilters = !!filterStatus || !!search;
+
+  // A status tile shows '—' when the active filter hides that status (its count is not loaded).
+  const tileValue = (s: VendorStatus) => {
+    if (loading) return '—';
+    if (filterStatus && filterStatus !== s) return '—';
+    return (statusCounts[s] || 0).toLocaleString(locale);
+  };
+
+  const formatTime = (iso: string) => new Date(iso).toLocaleTimeString(locale, { hour: '2-digit', minute: '2-digit' });
+
+  const actionProps = {
+    onApprove: handleApprove,
+    onReject: (v: Vendor) => setRejectTarget(v),
+    onSuspend: (v: Vendor) => setSuspendTarget(v),
+  };
+
   return (
-    <div className="min-h-full bg-sgs-bg">
+    <SettingsPage>
       <SeoHead
-        title="Quản Lý Đối Tác | SGS LAND"
-        description="Quản lý đối tác và nhà cung cấp dịch vụ bất động sản: môi giới, nhà thầu, công ty quản lý BĐS trên SGS LAND."
+        title={t('vendor.v2_seo_title')}
+        description={t('vendor.v2_seo_description')}
         canonicalPath="/vendors"
       />
 
-      {/* Header */}
-      <div className="bg-[var(--bg-surface)] border-b border-gray-200 px-6 py-5">
-        <div className="max-w-7xl mx-auto">
-          <div className="flex items-center justify-between">
-            <div>
-              <h1 className="text-2xl font-bold text-sgs-text">Quản lý Vendor</h1>
-              <p className="text-sm text-sgs-text-muted mt-1">
-                Duyệt, từ chối hoặc tạm ngừng workspace của các công ty đăng ký trên SGS Land
-              </p>
+      <SettingsHeader
+        icon={<BuildingIcon />}
+        title={t('vendor.v2_title')}
+        description={t('vendor.v2_subtitle')}
+        meta={!loading && <span className="ui-badge ui-badge-neutral">{t('vendor.v2_total_badge', { n: total.toLocaleString(locale) })}</span>}
+        actions={
+          <button type="button" onClick={fetchVendors} disabled={loading} className="ui-button ui-button-secondary ui-button-md min-h-[40px] gap-2 disabled:opacity-60">
+            <span className={loading ? 'animate-spin' : undefined}><RefreshIcon /></span>
+            {t('vendor.v2_refresh')}
+          </button>
+        }
+      />
+
+      {/* Status tiles double as the status filter */}
+      <StatGrid cols={4}>
+        {VENDOR_STATUSES.map(s => (
+          <StatTile
+            key={s}
+            label={t(`vendor.status_${s}`)}
+            value={tileValue(s)}
+            tone={STATUS_TONE[s]}
+            hint={filterStatus === s ? t('vendor.v2_tile_filtering') : t('vendor.v2_tile_hint')}
+            active={filterStatus === s}
+            onClick={() => applyStatusFilter(filterStatus === s ? '' : s)}
+            visual={<span className="mt-1 h-2.5 w-2.5 shrink-0 rounded-full" style={{ background: TONE_COLOR[STATUS_TONE[s]] }} aria-hidden="true" />}
+          />
+        ))}
+      </StatGrid>
+
+      {/* Overview charts */}
+      {hasData && (
+        <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
+          <SettingsCard title={t('vendor.v2_chart_status')} description={t('vendor.v2_chart_scope', { n: vendors.length, total })}>
+            <div className="flex flex-col items-center gap-4 sm:flex-row lg:flex-col xl:flex-row">
+              <DonutChart
+                segments={statusSegments}
+                ariaLabel={`${t('vendor.v2_chart_status')}: ${statusSegments.map(s => `${s.label} ${s.value}`).join(', ')}`}
+                centerValue={vendors.length.toLocaleString(locale)}
+                centerLabel={t('vendor.v2_vendors_unit')}
+              />
+              <ul className="w-full min-w-0 flex-1 space-y-1.5 text-xs" aria-hidden="true">
+                {statusSegments.map(s => (
+                  <li key={s.label} className="flex items-center justify-between gap-2">
+                    <span className="flex min-w-0 items-center gap-2 text-[var(--text-secondary)]">
+                      <span className="h-2.5 w-2.5 shrink-0 rounded-sm" style={{ background: s.color }} />
+                      <span className="truncate">{s.label}</span>
+                    </span>
+                    <span className="shrink-0 font-semibold tabular-nums text-[var(--text-primary)]">
+                      {s.value}
+                      <span className="font-normal text-[var(--text-tertiary)]"> · {Math.round((s.value / vendors.length) * 100)}%</span>
+                    </span>
+                  </li>
+                ))}
+              </ul>
             </div>
-            <button
-              onClick={fetchVendors}
-              className="flex items-center gap-2 px-4 py-2 rounded-xl bg-sgs-primary hover:bg-sgs-primary text-white text-sm font-semibold transition"
-            >
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-              </svg>
-              Làm mới
-            </button>
-          </div>
+          </SettingsCard>
+
+          <SettingsCard title={t('vendor.v2_chart_plans')} description={t('vendor.v2_chart_scope', { n: vendors.length, total })}>
+            <DistributionBar
+              segments={planSegments}
+              ariaLabel={t('vendor.v2_chart_plans')}
+              emptyText={t('vendor.v2_chart_empty')}
+              formatValue={n => n.toLocaleString(locale)}
+            />
+          </SettingsCard>
+
+          <SettingsCard
+            title={t('vendor.v2_chart_registrations')}
+            description={t('vendor.v2_chart_registrations_desc', { months: TREND_MONTHS, n: registrationsInWindow })}
+          >
+            <TrendBars
+              points={registrationPoints}
+              ariaLabel={`${t('vendor.v2_chart_registrations')}: ${registrationPoints.map(p => `${p.label} ${p.value}`).join(', ')}`}
+              emptyText={t('vendor.v2_chart_empty')}
+              formatValue={n => n.toLocaleString(locale)}
+            />
+          </SettingsCard>
         </div>
-      </div>
-      <div className="max-w-7xl mx-auto px-6 py-6 space-y-5">
-        {/* Stats row */}
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-          {VENDOR_STATUSES.map(s => {
-            return (
-              <button
-                key={s}
-                onClick={() => { setFilterStatus(filterStatus === s ? '' : s); setPage(1); }}
-                className={`bg-[var(--bg-surface)] rounded-2xl border-2 p-4 text-left transition hover:shadow-md ${filterStatus === s ? 'border-[var(--sgs-primary)] ring-2 ring-[var(--sgs-primary)]' : 'border-gray-100'}`}
-              >
-                <p className="text-2xl font-bold text-sgs-text">{statusCounts[s] || 0}</p>
-                <p className="text-xs font-semibold mt-1">
-                  <StatusBadge status={s} />
-                </p>
-              </button>
-            );
-          })}
+      )}
+
+      {/* Messages */}
+      {successMsg && (
+        <div role="status" className="flex items-center gap-2 rounded-xl border border-[var(--glass-border)] bg-[var(--glass-surface)] px-4 py-3 text-sm font-medium" style={{ color: TONE_COLOR.success }}>
+          <svg className="h-4 w-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+          <span className="min-w-0 break-words">{successMsg}</span>
         </div>
-        {/* Filters */}
-        <div className="flex flex-col sm:flex-row gap-3">
+      )}
+      {error && (
+        <div role="alert" className="rounded-xl border border-[var(--glass-border)] bg-[var(--glass-surface)] px-4 py-3 text-sm font-medium" style={{ color: TONE_COLOR.danger }}>
+          {error}
+        </div>
+      )}
+
+      {/* Vendor list */}
+      <SettingsCard
+        title={t('vendor.v2_list_title')}
+        description={!loading ? t('vendor.v2_list_desc', { n: vendors.length, total }) : undefined}
+        bodyClassName="p-0"
+      >
+        <div className="flex flex-col gap-3 border-b border-[var(--glass-border)] p-4 sm:flex-row sm:p-5">
           <div className="relative flex-1">
-            <svg className="absolute left-3 top-3 w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[var(--text-tertiary)]" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
             </svg>
             <input
-              type="text"
+              type="search"
               value={search}
               onChange={e => { setSearch(e.target.value); setPage(1); }}
-              placeholder="Tìm theo tên công ty hoặc email..."
-              className="w-full pl-10 pr-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[var(--sgs-primary)] bg-[var(--bg-surface)]"
+              placeholder={t('vendor.v2_search_placeholder')}
+              aria-label={t('vendor.v2_search_label')}
+              className="ui-input min-h-[44px] w-full pl-10"
             />
           </div>
           <Dropdown
             value={filterStatus}
-            onChange={(v: string) => { setFilterStatus(v); setPage(1); }}
+            onChange={(v: string) => applyStatusFilter(v)}
             options={statusOptions.map(o =>
               o.value === '' ? { ...o, label: `${o.label} (${total})` } : o
             )}
+            placeholder={t('vendor.v2_filter_label')}
             className="sm:w-56"
           />
         </div>
-        {/* Messages */}
-        {successMsg && (
-          <div className="bg-sgs-champagne border border-emerald-200 text-emerald-800 rounded-xl px-4 py-3 text-sm font-medium flex items-center gap-2">
-            <svg className="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
-            {successMsg}
+
+        {loading ? (
+          <div className="flex items-center justify-center py-16 text-sm text-[var(--text-tertiary)]" role="status">
+            <svg className="mr-3 h-5 w-5 animate-spin" fill="none" viewBox="0 0 24 24" aria-hidden="true">
+              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+            </svg>
+            {t('vendor.v2_loading')}
           </div>
-        )}
-        {error && (
-          <div className="bg-rose-50 border border-rose-200 text-rose-800 rounded-xl px-4 py-3 text-sm font-medium">
-            {error}
-          </div>
-        )}
-        {/* Table */}
-        <div className="bg-[var(--bg-surface)] rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
-          {loading ? (
-            <div className="flex items-center justify-center py-20 text-gray-400">
-              <svg className="w-6 h-6 animate-spin mr-3" fill="none" viewBox="0 0 24 24">
-                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
-              </svg>
-              Đang tải...
-            </div>
-          ) : vendors.length === 0 ? (
-            <div className="flex flex-col items-center justify-center py-20 text-gray-400">
-              <svg className="w-12 h-12 mb-3 opacity-30" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
-              </svg>
-              <p className="text-sm">Không có vendor nào</p>
-            </div>
-          ) : (
-            <div className="overflow-x-auto">
+        ) : vendors.length === 0 ? (
+          <EmptyState
+            icon={<BuildingIcon className="h-6 w-6" />}
+            title={t('vendor.v2_empty_title')}
+            description={hasFilters ? t('vendor.v2_empty_filtered') : undefined}
+            action={hasFilters ? (
+              <button type="button" onClick={() => { setSearch(''); applyStatusFilter(''); }} className="ui-button ui-button-secondary ui-button-sm min-h-[40px]">
+                {t('vendor.v2_clear_filters')}
+              </button>
+            ) : undefined}
+          />
+        ) : (
+          <>
+            {/* Desktop table */}
+            <div className="hidden overflow-x-auto md:block">
               <table className="w-full text-sm">
-                <thead className="bg-sgs-bg border-b border-gray-100">
-                  <tr>
-                    <th className="text-left px-5 py-3.5 font-semibold text-sgs-text-muted text-xs uppercase tracking-wide">Công ty</th>
-                    <th className="text-left px-5 py-3.5 font-semibold text-sgs-text-muted text-xs uppercase tracking-wide">Admin</th>
-                    <th className="text-left px-5 py-3.5 font-semibold text-sgs-text-muted text-xs uppercase tracking-wide">Gói</th>
-                    <th className="text-left px-5 py-3.5 font-semibold text-sgs-text-muted text-xs uppercase tracking-wide">Trạng thái</th>
-                    <th className="text-left px-5 py-3.5 font-semibold text-sgs-text-muted text-xs uppercase tracking-wide">Ngày đăng ký</th>
-                    <th className="text-right px-5 py-3.5 font-semibold text-sgs-text-muted text-xs uppercase tracking-wide">Hành động</th>
+                <thead className="border-b border-[var(--glass-border)] bg-[var(--bg-app)]">
+                  <tr className="text-left text-xs font-semibold text-[var(--text-secondary)]">
+                    <th scope="col" className="px-5 py-3">{t('vendor.v2_col_company')}</th>
+                    <th scope="col" className="px-5 py-3">{t('vendor.v2_col_admin')}</th>
+                    <th scope="col" className="px-5 py-3">{t('vendor.v2_col_plan')}</th>
+                    <th scope="col" className="px-5 py-3">{t('vendor.v2_col_status')}</th>
+                    <th scope="col" className="px-5 py-3">{t('vendor.v2_col_created')}</th>
+                    <th scope="col" className="px-5 py-3 text-right">{t('vendor.v2_col_actions')}</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-gray-50">
+                <tbody className="divide-y divide-[var(--glass-border)]">
                   {vendors.map(vendor => (
-                    <tr key={vendor.id} className="hover:bg-sgs-bg/50 transition">
+                    <tr key={vendor.id} className="align-top transition-colors hover:bg-[var(--glass-surface)]">
                       <td className="px-5 py-4">
-                        <p className="font-semibold text-sgs-text">{vendor.name}</p>
-                        <p className="text-xs text-gray-400 mt-0.5">{vendor.domain}</p>
+                        <p className="font-semibold text-[var(--text-primary)]">{vendor.name}</p>
+                        <p className="mt-0.5 text-xs text-[var(--text-tertiary)]">{vendor.domain}</p>
                       </td>
                       <td className="px-5 py-4">
                         {vendor.admin ? (
-                          <div>
-                            <p className="font-medium text-gray-800">{vendor.admin.name}</p>
-                            <p className="text-xs text-sgs-text-muted">{vendor.admin.email}</p>
-                            <div className="flex items-center gap-1 mt-1">
-                              {vendor.admin.emailVerified ? (
-                                <span className="text-xs text-sgs-verified flex items-center gap-0.5">
-                                  <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" /></svg>
-                                  Email đã xác minh
-                                </span>
-                              ) : (
-                                <span className="text-xs text-sgs-accent-text">Email chưa xác minh</span>
-                              )}
-                            </div>
+                          <div className="min-w-0">
+                            <p className="font-medium text-[var(--text-primary)]">{vendor.admin.name}</p>
+                            <p className="break-all text-xs text-[var(--text-secondary)]">{vendor.admin.email}</p>
+                            <EmailVerifiedHint verified={vendor.admin.emailVerified} />
                           </div>
                         ) : (
-                          <span className="text-gray-400 text-xs">—</span>
+                          <span className="text-xs text-[var(--text-tertiary)]">—</span>
                         )}
                       </td>
                       <td className="px-5 py-4">
-                        <p className="text-gray-700 font-medium">{vendor.subscription?.planId || '—'}</p>
+                        <p className="font-medium text-[var(--text-primary)]">{planLabel(vendor.subscription?.planId)}</p>
                         {vendor.subscription?.trialEndsAt && (
-                          <p className="text-xs text-gray-400 mt-0.5">
-                            Trial đến {new Date(vendor.subscription.trialEndsAt).toLocaleDateString('vi-VN')}
+                          <p className="mt-0.5 text-xs text-[var(--text-tertiary)]">
+                            {t('vendor.v2_trial_until', { date: formatDate(vendor.subscription.trialEndsAt) })}
                           </p>
                         )}
                       </td>
                       <td className="px-5 py-4">
-                        <StatusBadge status={vendor.approvalStatus} />
+                        <VendorStatusBadge status={vendor.approvalStatus} />
                         {vendor.rejectionReason && (
-                          <p className="text-xs text-gray-400 mt-1 max-w-[150px] truncate" title={vendor.rejectionReason}>
+                          <p className="mt-1 max-w-[180px] truncate text-xs text-[var(--text-tertiary)]" title={vendor.rejectionReason}>
                             {vendor.rejectionReason}
                           </p>
                         )}
                         {vendor.approvedBy && vendor.approvalStatus === 'APPROVED' && (
-                          <p className="text-xs text-gray-400 mt-0.5">bởi {vendor.approvedBy}</p>
+                          <p className="mt-0.5 text-xs text-[var(--text-tertiary)]">{t('vendor.v2_approved_by', { name: vendor.approvedBy })}</p>
                         )}
                       </td>
-                      <td className="px-5 py-4">
-                        <p className="text-sgs-text-muted">{new Date(vendor.createdAt).toLocaleDateString('vi-VN')}</p>
-                        <p className="text-xs text-gray-400">{new Date(vendor.createdAt).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' })}</p>
+                      <td className="whitespace-nowrap px-5 py-4">
+                        <p className="text-[var(--text-secondary)]">{formatDate(vendor.createdAt)}</p>
+                        <p className="text-xs text-[var(--text-tertiary)]">{formatTime(vendor.createdAt)}</p>
                       </td>
                       <td className="px-5 py-4">
                         <div className="flex items-center justify-end gap-2">
-                          {vendor.approvalStatus === 'PENDING_APPROVAL' && (
-                            <>
-                              <button
-                                onClick={() => handleApprove(vendor)}
-                                disabled={actionLoading === vendor.id}
-                                className="px-3 py-1.5 rounded-lg text-xs font-semibold bg-sgs-verified text-white hover:bg-emerald-700 transition disabled:opacity-60"
-                              >
-                                {actionLoading === vendor.id ? '...' : 'Duyệt'}
-                              </button>
-                              <button
-                                onClick={() => setRejectTarget(vendor)}
-                                disabled={actionLoading === vendor.id}
-                                className="px-3 py-1.5 rounded-lg text-xs font-semibold bg-rose-50 text-rose-700 border border-rose-200 hover:bg-rose-100 transition disabled:opacity-60"
-                              >
-                                Từ chối
-                              </button>
-                            </>
-                          )}
-                          {vendor.approvalStatus === 'APPROVED' && (
-                            <button
-                              onClick={() => setSuspendTarget(vendor)}
-                              disabled={actionLoading === vendor.id}
-                              className="px-3 py-1.5 rounded-lg text-xs font-semibold bg-amber-50 text-sgs-accent-text border border-amber-200 hover:bg-amber-100 transition disabled:opacity-60"
-                            >
-                              Tạm ngừng
-                            </button>
-                          )}
-                          {(vendor.approvalStatus === 'REJECTED' || vendor.approvalStatus === 'SUSPENDED') && (
-                            <button
-                              onClick={() => handleApprove(vendor)}
-                              disabled={actionLoading === vendor.id}
-                              className="px-3 py-1.5 rounded-lg text-xs font-semibold bg-sgs-champagne text-sgs-primary border border-sgs-border hover:bg-sgs-champagne transition disabled:opacity-60"
-                            >
-                              {actionLoading === vendor.id ? '...' : 'Kích hoạt lại'}
-                            </button>
-                          )}
+                          <VendorActions vendor={vendor} busy={actionLoading === vendor.id} {...actionProps} />
                         </div>
                       </td>
                     </tr>
@@ -444,29 +645,81 @@ export default function VendorManagement() {
                 </tbody>
               </table>
             </div>
-          )}
-        </div>
-        {/* Pagination */}
+
+            {/* Mobile stacked cards */}
+            <ul className="divide-y divide-[var(--glass-border)] md:hidden">
+              {vendors.map(vendor => (
+                <li key={vendor.id} className="space-y-3 p-4">
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="min-w-0">
+                      <p className="break-words font-semibold text-[var(--text-primary)]">{vendor.name}</p>
+                      <p className="break-all text-xs text-[var(--text-tertiary)]">{vendor.domain}</p>
+                    </div>
+                    <VendorStatusBadge status={vendor.approvalStatus} />
+                  </div>
+                  {vendor.rejectionReason && (
+                    <p className="break-words text-xs text-[var(--text-tertiary)]">{vendor.rejectionReason}</p>
+                  )}
+                  <dl className="grid grid-cols-2 gap-x-3 gap-y-2 rounded-xl bg-[var(--glass-surface)] p-3 text-xs">
+                    <div className="col-span-2 min-w-0">
+                      <dt className="text-[var(--text-tertiary)]">{t('vendor.v2_col_admin')}</dt>
+                      <dd className="text-[var(--text-primary)]">
+                        {vendor.admin ? (
+                          <>
+                            <span className="font-medium">{vendor.admin.name}</span>
+                            <span className="block break-all text-[var(--text-secondary)]">{vendor.admin.email}</span>
+                            <EmailVerifiedHint verified={vendor.admin.emailVerified} />
+                          </>
+                        ) : '—'}
+                      </dd>
+                    </div>
+                    <div className="min-w-0">
+                      <dt className="text-[var(--text-tertiary)]">{t('vendor.v2_col_plan')}</dt>
+                      <dd className="font-medium text-[var(--text-primary)]">{planLabel(vendor.subscription?.planId)}</dd>
+                      {vendor.subscription?.trialEndsAt && (
+                        <dd className="text-[var(--text-tertiary)]">{t('vendor.v2_trial_until', { date: formatDate(vendor.subscription.trialEndsAt) })}</dd>
+                      )}
+                    </div>
+                    <div className="min-w-0">
+                      <dt className="text-[var(--text-tertiary)]">{t('vendor.v2_col_created')}</dt>
+                      <dd className="text-[var(--text-primary)]">{formatDate(vendor.createdAt)} · {formatTime(vendor.createdAt)}</dd>
+                    </div>
+                    {vendor.approvedBy && vendor.approvalStatus === 'APPROVED' && (
+                      <div className="col-span-2 text-[var(--text-tertiary)]">{t('vendor.v2_approved_by', { name: vendor.approvedBy })}</div>
+                    )}
+                  </dl>
+                  <div className="flex flex-wrap gap-2 [&>button]:flex-1">
+                    <VendorActions vendor={vendor} busy={actionLoading === vendor.id} {...actionProps} />
+                  </div>
+                </li>
+              ))}
+            </ul>
+          </>
+        )}
+
         {totalPages > 1 && (
-          <div className="flex items-center justify-center gap-2">
+          <nav className="flex items-center justify-between gap-2 border-t border-[var(--glass-border)] px-4 py-3 sm:justify-center sm:px-5" aria-label={t('vendor.v2_pagination')}>
             <button
+              type="button"
               onClick={() => setPage(p => Math.max(1, p - 1))}
               disabled={page === 1}
-              className="px-3 py-1.5 rounded-lg text-sm border border-gray-200 disabled:opacity-40 hover:bg-sgs-bg transition"
+              className="ui-button ui-button-secondary ui-button-sm min-h-[40px] disabled:opacity-40"
             >
-              Trước
+              {t('vendor.v2_prev')}
             </button>
-            <span className="text-sm text-sgs-text-muted">Trang {page} / {totalPages}</span>
+            <span className="text-sm tabular-nums text-[var(--text-secondary)]" aria-live="polite">{t('vendor.v2_page_of', { page, pages: totalPages })}</span>
             <button
+              type="button"
               onClick={() => setPage(p => Math.min(totalPages, p + 1))}
               disabled={page === totalPages}
-              className="px-3 py-1.5 rounded-lg text-sm border border-gray-200 disabled:opacity-40 hover:bg-sgs-bg transition"
+              className="ui-button ui-button-secondary ui-button-sm min-h-[40px] disabled:opacity-40"
             >
-              Sau
+              {t('vendor.v2_next')}
             </button>
-          </div>
+          </nav>
         )}
-      </div>
+      </SettingsCard>
+
       {rejectTarget && (
         <RejectModal
           vendor={rejectTarget}
@@ -481,6 +734,6 @@ export default function VendorManagement() {
           onClose={() => setSuspendTarget(null)}
         />
       )}
-    </div>
+    </SettingsPage>
   );
 }
