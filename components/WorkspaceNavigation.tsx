@@ -815,7 +815,7 @@ export const WorkspaceNavigation: React.FC<WorkspaceNavigationProps> = ({
                     language={language}
                 />
                 <WorkspaceTabs activePage={activePage} hub={currentHub} onNavigate={onNavigate} />
-                <div className="relative mb-[calc(4rem+env(safe-area-inset-bottom))] min-h-0 flex-1 overflow-hidden bg-[var(--bg-app)] md:mb-0">
+                <div className={`relative ${assistantOpen ? 'mb-[calc(4rem+env(safe-area-inset-bottom))]' : 'mb-[calc(7.75rem+env(safe-area-inset-bottom))]'} min-h-0 flex-1 overflow-hidden bg-[var(--bg-app)] md:mb-0`}>
                     {children}
                 </div>
             </div>

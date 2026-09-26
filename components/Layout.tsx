@@ -538,7 +538,7 @@ export const Layout: React.FC<LayoutProps> = memo(({ children, activePage, onNav
                     type="button"
                     onClick={() => setAssistantOpen(true)}
                     aria-label={t('shell.assistant_open')}
-                    className="fixed inset-x-3 bottom-[calc(4.5rem+env(safe-area-inset-bottom))] z-[70] flex min-h-12 items-center gap-3 rounded-2xl border border-[var(--glass-border)] bg-[var(--bg-surface)] px-4 text-left shadow-lg md:hidden"
+                    className="fixed inset-x-3 bottom-[calc(4.5rem+env(safe-area-inset-bottom))] z-[70] mx-auto flex min-h-12 max-w-xl items-center gap-3 rounded-2xl border border-[var(--glass-border)] bg-[var(--bg-surface)] px-4 text-left shadow-lg md:hidden"
                 >
                     <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-[var(--sgs-primary-deep)] text-[var(--sgs-champagne)]">
                         <MessageCircle size={17} aria-hidden="true" />

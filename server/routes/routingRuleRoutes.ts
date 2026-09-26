@@ -1,6 +1,8 @@
 import { validateUUIDParam } from '../middleware/validation';
 import { Router, Request, Response } from 'express';
-import { routingRuleRepository } from '../repositories/routingRuleRepository';
+import { routingRuleRepository, validateRuleInput } from '../repositories/routingRuleRepository';
+
+const WRITE_ROLES = ['SUPER_ADMIN', 'ADMIN', 'TEAM_LEAD'];
 
 export function createRoutingRuleRoutes(authenticateToken: any) {
   const router = Router();
@@ -12,61 +14,80 @@ export function createRoutingRuleRoutes(authenticateToken: any) {
       res.json(rules);
     } catch (error) {
       console.error('Error fetching routing rules:', error);
-      res.status(500).json({ error: 'Failed to fetch routing rules' });
+      res.status(500).json({ error: 'Không tải được luật phân bổ' });
+    }
+  });
+
+  // Dry run with the exact matching used on lead creation.
+  router.post('/simulate', authenticateToken, async (req: Request, res: Response) => {
+    try {
+      const user = (req as any).user;
+      const b = req.body || {};
+      const result = await routingRuleRepository.simulate(user.tenantId, {
+        source: b.source ? String(b.source) : undefined,
+        address: b.region ? String(b.region) : undefined,
+        preferences: { budget: Number(b.budget) || 0 },
+        tags: Array.isArray(b.tags) ? b.tags.map(String) : [],
+      });
+      res.json(result);
+    } catch (error) {
+      console.error('Error simulating routing rules:', error);
+      res.status(500).json({ error: 'Không chạy được mô phỏng' });
     }
   });
 
   router.post('/', authenticateToken, async (req: Request, res: Response) => {
     try {
       const user = (req as any).user;
-      if (!['SUPER_ADMIN', 'ADMIN', 'TEAM_LEAD'].includes(user.role)) {
-        return res.status(403).json({ error: 'Only admins and team leads can create routing rules' });
+      if (!WRITE_ROLES.includes(user.role)) {
+        return res.status(403).json({ error: 'Chỉ quản trị viên và trưởng nhóm được tạo luật phân bổ' });
       }
-
-      const { name, conditions, action, priority, isActive } = req.body;
-      if (!name) {
-        return res.status(400).json({ error: 'Name is required' });
-      }
-
+      const invalid = validateRuleInput(req.body || {});
+      if (invalid) return res.status(400).json({ error: invalid });
+      const { name, conditions, action, priority, isActive, enabled } = req.body;
       const rule = await routingRuleRepository.create(user.tenantId, {
-        name, conditions, action, priority, isActive,
+        name, conditions, action, priority, isActive: isActive ?? enabled,
       });
       res.status(201).json(rule);
     } catch (error) {
       console.error('Error creating routing rule:', error);
-      res.status(500).json({ error: 'Failed to create routing rule' });
+      res.status(500).json({ error: 'Không lưu được luật phân bổ' });
     }
   });
 
   router.put('/:id', authenticateToken, validateUUIDParam(), async (req: Request, res: Response) => {
     try {
       const user = (req as any).user;
-      if (!['SUPER_ADMIN', 'ADMIN', 'TEAM_LEAD'].includes(user.role)) {
-        return res.status(403).json({ error: 'Only admins and team leads can update routing rules' });
+      if (!WRITE_ROLES.includes(user.role)) {
+        return res.status(403).json({ error: 'Chỉ quản trị viên và trưởng nhóm được sửa luật phân bổ' });
       }
-
-      const rule = await routingRuleRepository.update(user.tenantId, req.params.id as string, req.body);
-      if (!rule) return res.status(404).json({ error: 'Routing rule not found' });
+      const invalid = validateRuleInput(req.body || {}, true);
+      if (invalid) return res.status(400).json({ error: invalid });
+      // Whitelist fields: the client may echo back id/tenantId/createdAt.
+      const { name, conditions, action, priority, isActive, enabled } = req.body || {};
+      const rule = await routingRuleRepository.update(user.tenantId, req.params.id as string, {
+        name, conditions, action, priority, isActive: isActive ?? enabled,
+      });
+      if (!rule) return res.status(404).json({ error: 'Không tìm thấy luật phân bổ' });
       res.json(rule);
     } catch (error) {
       console.error('Error updating routing rule:', error);
-      res.status(500).json({ error: 'Failed to update routing rule' });
+      res.status(500).json({ error: 'Không lưu được luật phân bổ' });
     }
   });
 
   router.delete('/:id', authenticateToken, validateUUIDParam(), async (req: Request, res: Response) => {
     try {
       const user = (req as any).user;
-      if (!['SUPER_ADMIN', 'ADMIN', 'TEAM_LEAD'].includes(user.role)) {
-        return res.status(403).json({ error: 'Only admins and team leads can delete routing rules' });
+      if (!WRITE_ROLES.includes(user.role)) {
+        return res.status(403).json({ error: 'Chỉ quản trị viên và trưởng nhóm được xóa luật phân bổ' });
       }
-
       const deleted = await routingRuleRepository.deleteById(user.tenantId, req.params.id as string);
-      if (!deleted) return res.status(404).json({ error: 'Routing rule not found' });
-      res.json({ message: 'Routing rule deleted' });
+      if (!deleted) return res.status(404).json({ error: 'Không tìm thấy luật phân bổ' });
+      res.json({ message: 'Đã xóa luật phân bổ' });
     } catch (error) {
       console.error('Error deleting routing rule:', error);
-      res.status(500).json({ error: 'Failed to delete routing rule' });
+      res.status(500).json({ error: 'Không xóa được luật phân bổ' });
     }
   });
 

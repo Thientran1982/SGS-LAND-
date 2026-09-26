@@ -51,6 +51,11 @@ class AuctionRepository extends BaseRepository {
         [data.listingId, tenantId],
       );
       if (!listing.rows[0]) throw new Error('LISTING_NOT_FOUND');
+      const active = await client.query(
+        `SELECT 1 FROM auction_sessions WHERE tenant_id = $1 AND listing_id = $2 AND status IN ('UPCOMING','LIVE','PAUSED') AND ends_at > NOW() LIMIT 1`,
+        [tenantId, data.listingId],
+      );
+      if (active.rows[0]) throw new Error('ACTIVE_AUCTION_EXISTS');
       const result = await client.query(`
         INSERT INTO auction_sessions
           (tenant_id, listing_id, title, start_price, step_price, current_bid,
@@ -67,10 +72,21 @@ class AuctionRepository extends BaseRepository {
     return this.withTenant(tenantId, async client => {
       const allowed = ['LIVE', 'PAUSED', 'ENDED', 'CANCELLED'];
       if (!allowed.includes(status)) throw new Error('INVALID_STATUS');
+      const TRANSITIONS: Record<string, string[]> = {
+        UPCOMING: ['LIVE', 'CANCELLED'],
+        LIVE: ['PAUSED', 'ENDED', 'CANCELLED'],
+        PAUSED: ['LIVE', 'ENDED', 'CANCELLED'],
+      };
+      const current = await client.query('SELECT status, ends_at FROM auction_sessions WHERE id = $1 AND tenant_id = $2', [id, tenantId]);
+      const row = current.rows[0];
+      if (!row) throw new Error('AUCTION_NOT_FOUND_OR_TERMINAL');
+      if (!(TRANSITIONS[row.status] || []).includes(status)) throw new Error('INVALID_TRANSITION');
+      if (status === 'LIVE' && new Date(row.ends_at).getTime() <= Date.now()) throw new Error('AUCTION_WINDOW_OVER');
       const result = await client.query(`
         UPDATE auction_sessions a
         SET status = $1,
             updated_at = NOW(),
+            starts_at = CASE WHEN $1 = 'LIVE' AND starts_at > NOW() THEN NOW() ELSE starts_at END,
             winning_bid = CASE WHEN $1 = 'ENDED' THEN current_bid ELSE winning_bid END,
             winner_user_id = CASE WHEN $1 = 'ENDED'
               THEN (SELECT b.bidder_id FROM auction_bids b WHERE b.auction_id = a.id ORDER BY b.amount DESC, b.created_at ASC LIMIT 1)
@@ -104,11 +120,20 @@ class AuctionRepository extends BaseRepository {
         if (!a) throw new Error('AUCTION_NOT_FOUND');
         const now = Date.now();
         if (a.ends_at <= new Date(now)) {
-          await client.query(`UPDATE auction_sessions SET status='ENDED', updated_at=NOW() WHERE id=$1`, [auctionId]);
+          if (!['ENDED', 'CANCELLED'].includes(a.status)) {
+            await client.query(`
+              UPDATE auction_sessions s SET status='ENDED', winning_bid=current_bid, updated_at=NOW(),
+                winner_user_id = (SELECT b.bidder_id FROM auction_bids b WHERE b.auction_id = s.id ORDER BY b.amount DESC, b.created_at ASC LIMIT 1)
+              WHERE id=$1`, [auctionId]);
+            await client.query('COMMIT');
+            const ended: any = new Error('AUCTION_ENDED');
+            ended.committed = true;
+            throw ended;
+          }
           throw new Error('AUCTION_ENDED');
         }
         if (a.status !== 'LIVE' || a.starts_at > new Date(now)) throw new Error('AUCTION_NOT_LIVE');
-        const minimum = Number(a.current_bid) + Number(a.step_price);
+        const minimum = Number(a.bid_count) === 0 ? Number(a.start_price) : Number(a.current_bid) + Number(a.step_price);
         if (!Number.isFinite(amount) || amount < minimum) {
           const err: any = new Error('BID_TOO_LOW');
           err.minimum = minimum;
@@ -126,8 +151,8 @@ class AuctionRepository extends BaseRepository {
         `, [amount, auctionId, tenantId]);
         await client.query('COMMIT');
         return { bid: this.rowToEntity<any>(bid.rows[0]), auction: this.rowToEntity<any>(updated.rows[0]), replayed: false };
-      } catch (error) {
-        await client.query('ROLLBACK');
+      } catch (error: any) {
+        if (!error?.committed) await client.query('ROLLBACK');
         throw error;
       }
     });

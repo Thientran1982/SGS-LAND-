@@ -721,7 +721,7 @@ class DatabaseApiClient {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(data),
     });
-    if (!result.ok) throw new Error('Failed to create routing rule');
+    if (!result.ok) throw new Error((await result.json().catch(() => ({}))).error || 'Không lưu được luật phân bổ');
     return result.json();
   }
   async updateRoutingRule(id: string, data: any) {
@@ -731,7 +731,7 @@ class DatabaseApiClient {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(data),
     });
-    if (!result.ok) throw new Error('Failed to update routing rule');
+    if (!result.ok) throw new Error((await result.json().catch(() => ({}))).error || 'Không lưu được luật phân bổ');
     return result.json();
   }
   async deleteRoutingRule(id: string) {
@@ -739,8 +739,18 @@ class DatabaseApiClient {
       method: 'DELETE',
       credentials: 'include',
     });
-    if (!result.ok) throw new Error('Failed to delete routing rule');
+    if (!result.ok) throw new Error((await result.json().catch(() => ({}))).error || 'Không xóa được luật phân bổ');
     return true;
+  }
+  async simulateRouting(input: { source?: string; region?: string; budget?: number }) {
+    const result = await fetch('/api/routing-rules/simulate', {
+      method: 'POST',
+      credentials: 'include',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(input),
+    });
+    if (!result.ok) throw new Error((await result.json().catch(() => ({}))).error || 'Không chạy được mô phỏng');
+    return result.json();
   }
   async getSequences() {
     try {

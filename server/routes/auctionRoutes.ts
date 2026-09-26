@@ -37,6 +37,7 @@ export function createAuctionRoutes(authenticateToken: any, io?: any) {
       }, user.id));
     } catch (error: any) {
       if (error.message === 'LISTING_NOT_FOUND') return res.status(404).json({ error: 'Không tìm thấy sản phẩm' });
+      if (error.message === 'ACTIVE_AUCTION_EXISTS') return res.status(409).json({ error: 'Sản phẩm này đang có phiên đấu giá chưa kết thúc' });
       console.error('[auction] create error:', error);
       res.status(500).json({ error: 'Không thể tạo phiên đấu giá' });
     }
@@ -81,7 +82,11 @@ export function createAuctionRoutes(authenticateToken: any, io?: any) {
       res.json(updated);
     } catch (error: any) {
       if (error.message === 'INVALID_STATUS') return res.status(400).json({ error: 'Trạng thái không hợp lệ' });
-      res.status(404).json({ error: 'Phiên không tồn tại hoặc đã kết thúc' });
+      if (error.message === 'INVALID_TRANSITION') return res.status(409).json({ error: 'Không thể chuyển phiên sang trạng thái này' });
+      if (error.message === 'AUCTION_WINDOW_OVER') return res.status(409).json({ error: 'Đã quá giờ kết thúc, không thể mở lại phiên' });
+      if (error.message === 'AUCTION_NOT_FOUND_OR_TERMINAL') return res.status(404).json({ error: 'Phiên không tồn tại hoặc đã kết thúc' });
+      console.error('[auction] status error:', error);
+      res.status(500).json({ error: 'Không thể cập nhật trạng thái phiên' });
     }
   });
   router.post('/:id/bids', authenticateToken, async (req: Request, res: Response) => {
