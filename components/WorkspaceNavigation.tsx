@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState, useRef } from 'react';
 import {
     BarChart2,
     Bot,
@@ -194,6 +194,17 @@ const WorkspaceRail: React.FC<WorkspaceRailProps> = ({
 }) => {
     const { t } = useTranslation();
     const [profileOpen, setProfileOpen] = useState(false);
+    const profileRef = useRef<HTMLDivElement>(null);
+    useEffect(() => {
+        if (!profileOpen) return;
+        const onDown = (event: MouseEvent) => {
+            if (profileRef.current && !profileRef.current.contains(event.target as Node)) setProfileOpen(false);
+        };
+        const onKey = (event: KeyboardEvent) => { if (event.key === 'Escape') setProfileOpen(false); };
+        document.addEventListener('mousedown', onDown);
+        document.addEventListener('keydown', onKey);
+        return () => { document.removeEventListener('mousedown', onDown); document.removeEventListener('keydown', onKey); };
+    }, [profileOpen]);
     const activeHubId = hubs.find(hub => hub.items.some(item => item.route === activePage))?.id
         ?? routeHub.get(activePage)
         ?? 'overview';
@@ -300,7 +311,7 @@ const WorkspaceRail: React.FC<WorkspaceRailProps> = ({
                     onNavigate={onNavigate}
                 />
 
-                <div className="relative flex w-full justify-center">
+                <div ref={profileRef} className="relative flex w-full justify-center">
                     {profileOpen && (
                         <div
                             role="menu"
@@ -519,6 +530,8 @@ interface MobileNavigationProps {
     onSearch: () => void;
     onOpenAssistant: () => void;
     inboxUnread?: number;
+    user: WorkspaceNavigationProps['user'];
+    onLogout: () => void;
 }
 
 const MobileNavigation: React.FC<MobileNavigationProps> = ({
@@ -529,6 +542,8 @@ const MobileNavigation: React.FC<MobileNavigationProps> = ({
     onSearch,
     onOpenAssistant: _onOpenAssistant,
     inboxUnread = 0,
+    user,
+    onLogout,
 }) => {
     const { t } = useTranslation();
     const [moreOpen, setMoreOpen] = useState(false);
@@ -609,6 +624,33 @@ const MobileNavigation: React.FC<MobileNavigationProps> = ({
                             </button>
                         </div>
                         <div className="space-y-5">
+                            {/* Account: profile + sign out (mobile had no way to log out) */}
+                            <section aria-label={t('menu.profile')} className="rounded-2xl border border-[var(--glass-border)] bg-[var(--glass-surface)] p-2">
+                                <div className="flex items-center gap-3 px-2 py-2">
+                                    <UserAvatar user={user} isActive={activePage === ROUTES.PROFILE} />
+                                    <div className="min-w-0 leading-tight">
+                                        <div className="truncate text-sm font-bold text-[var(--text-primary)]">{user.name}</div>
+                                        <div className="truncate text-xs text-[var(--text-tertiary)]">{t(`role.${user.role?.toUpperCase()}`) || user.role}</div>
+                                    </div>
+                                </div>
+                                <div className="grid grid-cols-2 gap-2 pt-1">
+                                    <button
+                                        type="button"
+                                        onClick={() => { setMoreOpen(false); onNavigate(ROUTES.PROFILE); }}
+                                        className="flex min-h-11 items-center justify-center gap-2 rounded-xl border border-[var(--glass-border)] bg-[var(--bg-surface)] px-3 text-xs font-semibold text-[var(--text-secondary)] hover:bg-[var(--glass-surface-hover)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--ui-focus)]"
+                                    >
+                                        {t('menu.profile')}
+                                    </button>
+                                    <button
+                                        type="button"
+                                        onClick={() => { setMoreOpen(false); onLogout(); }}
+                                        className="flex min-h-11 items-center justify-center gap-2 rounded-xl border border-[var(--glass-border)] bg-[var(--bg-surface)] px-3 text-xs font-semibold text-[var(--ui-danger)] hover:bg-[var(--glass-surface-hover)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--ui-focus)]"
+                                    >
+                                        <LogOut size={15} aria-hidden="true" />
+                                        {t('menu.logout')}
+                                    </button>
+                                </div>
+                            </section>
                             {hubs.map(hub => {
                                 const Icon = hub.icon;
                                 return (
@@ -785,6 +827,8 @@ export const WorkspaceNavigation: React.FC<WorkspaceNavigationProps> = ({
                 onNavigate={onNavigate}
                 onSearch={onSearch}
                 onOpenAssistant={onOpenAssistant}
+                user={user}
+                onLogout={onLogout}
             />
         </>
     );

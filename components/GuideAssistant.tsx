@@ -1,7 +1,6 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import {
     Bot,
-    ChevronDown,
     Clock3,
     LifeBuoy,
     ListTodo,
@@ -18,6 +17,7 @@ import {
 } from 'lucide-react';
 import { api } from '../services/api/apiClient';
 import { useTranslation } from '../services/i18n';
+import { Dropdown } from './Dropdown';
 
 type ChatMessage = {
     id: string;
@@ -574,7 +574,7 @@ export const GuideAssistant: React.FC<GuideAssistantProps> = ({
                             <p className="truncate text-[10px] font-semibold uppercase tracking-[0.12em] text-[var(--sgs-on-dark-muted)]">
                                 {t('guide.brand')}
                             </p>
-                            <h2 className="truncate text-[15px] font-semibold leading-5">{t('guide.title')}</h2>
+                            <h2 className="sr-only">{t('guide.title')}</h2>
                         </div>
                         <button
                             type="button"
@@ -606,26 +606,18 @@ export const GuideAssistant: React.FC<GuideAssistantProps> = ({
                         </button>
                     </header>
                     <div className="mt-3 flex items-center gap-2">
-                        <label className="relative min-w-0 flex-1">
-                            <span className="sr-only">{t('guide.conversation_selector')}</span>
-                            <select
-                                value={activeConversation?.id ?? ''}
-                                onChange={event => selectConversation(event.target.value)}
-                                aria-label={t('guide.conversation_selector')}
-                                className="h-11 w-full appearance-none rounded-xl border border-[var(--sgs-champagne)]/20 bg-[var(--sgs-champagne)]/10 py-2 pl-3 pr-9 text-xs font-medium text-[var(--sgs-champagne)] outline-none focus-visible:ring-2 focus-visible:ring-[var(--sgs-accent)]"
-                            >
-                                {conversations.map(conversation => (
-                                    <option key={conversation.id} value={conversation.id} className="bg-[var(--bg-surface)] text-[var(--text-primary)]">
-                                        {conversationLabel(conversation)}
-                                    </option>
-                                ))}
-                            </select>
-                            <ChevronDown size={15} aria-hidden="true" className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-[var(--sgs-on-dark-muted)]" />
-                        </label>
+                        <Dropdown
+                            className="min-w-0 flex-1"
+                            variant="compact"
+                            value={activeConversation?.id ?? ''}
+                            onChange={value => selectConversation(String(value))}
+                            placeholder={t('guide.conversation_selector')}
+                            options={conversations.map(conversation => ({ value: conversation.id, label: conversationLabel(conversation) }))}
+                        />
                         <button
                             type="button"
                             onClick={startConversation}
-                            className="flex h-11 shrink-0 items-center justify-center gap-1.5 rounded-xl border border-[var(--sgs-champagne)]/20 bg-[var(--sgs-champagne)]/10 px-3 text-xs font-semibold text-[var(--sgs-champagne)] transition-colors hover:bg-[var(--sgs-champagne)]/15 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--sgs-accent)]"
+                            className="flex h-10 shrink-0 items-center justify-center gap-1.5 rounded-lg border border-[var(--sgs-champagne)]/20 bg-[var(--sgs-champagne)]/10 px-3 text-xs font-semibold text-[var(--sgs-champagne)] transition-colors hover:bg-[var(--sgs-champagne)]/15 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--sgs-accent)]"
                             aria-label={t('guide.new_conversation')}
                             title={t('guide.new_conversation')}
                         >

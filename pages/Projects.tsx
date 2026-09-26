@@ -684,6 +684,13 @@ const STATUS_LISTING_COLOR: Record<string, string> = {
     RENTED:    'bg-[var(--sgs-primary)]/10 text-[var(--sgs-primary)]',
     INACTIVE:  'bg-rose-100 text-rose-500',
 };
+// Localised property type; falls back to the raw value (or a dash) when no key exists.
+function propertyTypeLabel(type: string | undefined | null, t: (k: string) => string): string {
+    if (!type) return '—';
+    const key = `property.${String(type).toUpperCase()}`;
+    const label = t(key);
+    return label && label !== key ? label : String(type);
+}
 function fmtNum(v: number, maxDec = 2) {
     return v.toLocaleString('vi-VN', { minimumFractionDigits: 0, maximumFractionDigits: maxDec });
 }
@@ -887,7 +894,7 @@ function ListingDetailPanel({ listing, canEdit, onEdit, onClose, onStatusChange,
                     )}
                     {/* Key specs grid */}
                     <div className="bg-[var(--bg-surface)] rounded-xl border border-[var(--glass-border)] p-4 grid grid-cols-2 sm:grid-cols-3 gap-x-6 gap-y-3">
-                        <DetailRow label={t('inventory.label_type')} value={t(`property.${listing.type?.toUpperCase()}`) || listing.type} />
+                        <DetailRow label={t('inventory.label_type')} value={propertyTypeLabel(listing.type, t)} />
                         <DetailRow label={t('inventory.label_area')} value={listing.area ? `${listing.area} m²` : undefined} />
                         {!!listing.builtArea && <DetailRow label={t('inventory.label_built_area')} value={`${listing.builtArea} m²`} />}
                         {!!attrs.clearArea && <DetailRow label={t('inventory.label_clear_area')} value={`${attrs.clearArea} m²`} />}
@@ -994,6 +1001,7 @@ function fmtSqm(v: number) {
 }
 const EMPTY_ROW = { tower: '', floor_from: 1, floor_to: 99, direction: 'ALL', bedroom_type: 'ALL', base_price_sqm: '', adjustment_pct: '0', notes: '' };
 function PriceMatrixPanel({ project, canEdit, onClose }: { project: Project; canEdit: boolean; onClose: () => void }) {
+    const { t } = useTranslation();
     const [rows, setRows] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
     const [form, setForm] = useState<any | null>(null);
@@ -1060,7 +1068,7 @@ function PriceMatrixPanel({ project, canEdit, onClose }: { project: Project; can
                 <div className="shrink-0 flex items-center gap-3 px-5 py-4 border-b border-[var(--glass-border)]">
                     <svg className="w-5 h-5 text-sgs-verified shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 11h.01M12 11h.01M15 11h.01M4 19h16a2 2 0 002-2V7a2 2 0 00-2-2H4a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>
                     <div className="flex-1 min-w-0">
-                        <h2 className="text-sm font-bold text-[var(--text-primary)] truncate">Bảng Giá — {project.name}</h2>
+                        <h2 className="text-sm font-bold text-[var(--text-primary)] truncate">{t('project.price_matrix')} — {project.name}</h2>
                         <p className="text-xs text-[var(--text-secondary)] mt-0.5">Giá theo tầng · hướng · loại phòng</p>
                     </div>
                     {canEdit && (
@@ -2124,7 +2132,7 @@ function ProjectListingsPanel({ project, canCreate, isAdmin, userRole, onClose, 
                                     <div className="flex items-center gap-2 flex-wrap">
                                         <h2 className="text-base font-bold text-[var(--text-primary)]">{project.name}</h2>
                                         {project.code && (
-                                            <span className="text-xs2 font-mono bg-[var(--glass-surface-hover)] text-[var(--text-tertiary)] px-1.5 py-0.5 rounded shrink-0">
+                                            <span className="text-2xs font-semibold tracking-wide bg-[var(--glass-surface-hover)] text-[var(--text-tertiary)] px-1.5 py-0.5 rounded shrink-0">
                                                 {project.code}
                                             </span>
                                         )}
@@ -2277,7 +2285,7 @@ function ProjectListingsPanel({ project, canCreate, isAdmin, userRole, onClose, 
                                                 ref={actionsBtnRef}
                                                 type="button"
                                                 onClick={toggleActionsMenu}
-                                                className="flex items-center gap-1.5 px-3 py-2 h-[36px] rounded-xl border border-[var(--glass-border)] text-[var(--text-secondary)] text-sm hover:bg-[var(--glass-surface-hover)] transition-colors"
+                                                className="flex items-center gap-1.5 px-3 py-2 h-10 rounded-xl border border-[var(--glass-border)] text-[var(--text-primary)] text-sm hover:bg-[var(--glass-surface-hover)] transition-colors"
                                                 aria-haspopup="menu"
                                                 aria-expanded={actionsOpen}
                                                 aria-label={t('project.actions_aria')}
@@ -2304,7 +2312,7 @@ function ProjectListingsPanel({ project, canCreate, isAdmin, userRole, onClose, 
                                                             onClick={it.onClick}
                                                             disabled={it.disabled}
                                                             title={it.title}
-                                                             className={`w-full flex items-center px-3 py-2.5 text-sm text-left transition-colors disabled:opacity-50 disabled:cursor-not-allowed hover:bg-[var(--glass-surface-hover)] first:rounded-t-xl last:rounded-b-xl ${it.accent === 'emerald' ? 'text-emerald-700 dark:text-emerald-300 font-semibold' : 'text-[var(--text-primary)]'}`}
+                                                             className={`w-full flex items-center px-3 py-2.5 text-sm text-left transition-colors disabled:opacity-50 disabled:cursor-not-allowed hover:bg-[var(--glass-surface-hover)] first:rounded-t-xl last:rounded-b-xl ${it.accent === 'emerald' ? 'text-sgs-primary font-semibold' : 'text-[var(--text-primary)]'}`}
                                                         >
                                                             <span className="flex-1 truncate">{it.label}</span>
                                                         </button>
@@ -2318,11 +2326,11 @@ function ProjectListingsPanel({ project, canCreate, isAdmin, userRole, onClose, 
                                 {/* Add */}
                                 {canCreate && (
                                     <button type="button" onClick={() => setShowCreate(true)}
-                                        className="flex items-center gap-1.5 px-3 py-2 h-[36px] rounded-xl bg-sgs-verified text-white text-sm font-bold hover:bg-emerald-700 transition-colors">
+                                        className="flex items-center gap-1.5 px-3 py-2 h-10 rounded-xl bg-sgs-primary text-white text-sm font-semibold hover:opacity-90 transition-opacity">
                                         {IC.PLUS} <span className="hidden sm:inline">{t('project.add_listing')}</span>
                                     </button>
                                 )}
-                                <button type="button" onClick={onClose} className="w-8 h-8 rounded-lg flex items-center justify-center hover:bg-[var(--glass-surface-hover)] text-[var(--text-secondary)]" aria-label={t('common.close')}>{IC.X}</button>
+                                <button type="button" onClick={onClose} className="w-10 h-10 rounded-xl flex items-center justify-center hover:bg-[var(--glass-surface-hover)] text-[var(--text-secondary)]" aria-label={t('common.close')}>{IC.X}</button>
                             </div>
                         </div>
                         {/* Stats pills row */}
@@ -2357,7 +2365,7 @@ function ProjectListingsPanel({ project, canCreate, isAdmin, userRole, onClose, 
                                 <button
                                     type="button"
                                     onClick={() => setViewMode('list')}
-                                    className={`px-2.5 h-[30px] rounded-lg text-xs font-bold transition-colors ${viewMode === 'list' ? 'bg-emerald-600 text-white' : 'text-[var(--text-secondary)] hover:bg-[var(--glass-surface-hover)]'}`}
+                                    className={`px-2.5 h-[30px] rounded-lg text-xs font-bold transition-colors ${viewMode === 'list' ? 'bg-sgs-primary text-white' : 'text-[var(--text-secondary)] hover:bg-[var(--glass-surface-hover)]'}`}
                                     aria-pressed={viewMode === 'list'}
                                 >
                                     {t('floorplan.view_list') || 'Danh sách'}
@@ -2365,7 +2373,7 @@ function ProjectListingsPanel({ project, canCreate, isAdmin, userRole, onClose, 
                                 <button
                                     type="button"
                                     onClick={() => setViewMode('floorplan')}
-                                    className={`px-2.5 h-[30px] rounded-lg text-xs font-bold transition-colors ${viewMode === 'floorplan' ? 'bg-emerald-600 text-white' : 'text-[var(--text-secondary)] hover:bg-[var(--glass-surface-hover)]'}`}
+                                    className={`px-2.5 h-[30px] rounded-lg text-xs font-bold transition-colors ${viewMode === 'floorplan' ? 'bg-sgs-primary text-white' : 'text-[var(--text-secondary)] hover:bg-[var(--glass-surface-hover)]'}`}
                                     aria-pressed={viewMode === 'floorplan'}
                                     title={t('floorplan.view_floorplan') || 'Sa bàn tương tác'}
                                 >
@@ -2390,7 +2398,8 @@ function ProjectListingsPanel({ project, canCreate, isAdmin, userRole, onClose, 
                                 <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--text-tertiary)]">{IC.SEARCH}</span>
                                 <input
                                     type="text"
-                                    placeholder={t('common.search') + '...'}
+                                    placeholder={t('project.listing_search_placeholder')}
+                                    aria-label={t('project.listing_search_placeholder')}
                                     value={search}
                                     onChange={e => { setSearch(e.target.value); setSelected(new Set()); }}
                                      className="w-full pl-10 pr-10 h-10 border border-[var(--glass-border)] rounded-xl bg-[var(--glass-surface)] text-sm focus:outline-none focus:ring-2 focus:ring-[var(--sgs-primary)]/20 focus:border-sgs-primary focus:bg-[var(--bg-surface)] placeholder:text-[var(--text-muted)]"
@@ -2399,7 +2408,7 @@ function ProjectListingsPanel({ project, canCreate, isAdmin, userRole, onClose, 
                             {/* Bulk actions — visible when rows selected */}
                             {selected.size > 0 && isAdmin && (
                                 <>
-                                    <span className="text-xs font-semibold text-sgs-verified bg-sgs-champagne border border-emerald-200 px-2.5 py-1.5 rounded-xl whitespace-nowrap">
+                                    <span className="text-xs font-semibold text-sgs-primary bg-sgs-champagne border border-[var(--glass-border)] px-2.5 py-1.5 rounded-xl whitespace-nowrap">
                                         {selected.size} {t('project.bulk_selected_suffix')}
                                     </span>
                                     <Dropdown
@@ -2419,7 +2428,7 @@ function ProjectListingsPanel({ project, canCreate, isAdmin, userRole, onClose, 
                                     </button>
                                     <button type="button" onClick={() => setAccessListings(selectedListings)}
                                         className="flex items-center gap-1.5 px-3 py-1.5 h-[36px] rounded-xl bg-sgs-primary text-white text-sm font-bold hover:bg-sgs-primary transition-colors">
-                                        <span className="hidden sm:inline">{t('project.bulk_access_btn')}</span>
+                                        {IC.SHIELD}<span className="hidden sm:inline">{t('project.bulk_access_btn')}</span>
                                     </button>
                                     <button type="button" onClick={() => setSelected(new Set())}
                                         className="text-xs text-[var(--text-tertiary)] hover:text-rose-600 px-1 py-1.5">
@@ -2434,7 +2443,7 @@ function ProjectListingsPanel({ project, canCreate, isAdmin, userRole, onClose, 
                         <div className="overflow-hidden bg-[var(--bg-surface)] dark:bg-sgs-primary-deep flex flex-col">
                             {!floorPlansLoaded ? (
                                 <div className="flex items-center justify-center h-40">
-                                    <div className="w-7 h-7 border-4 border-emerald-200 border-t-emerald-600 rounded-full animate-spin" />
+                                    <div className="w-7 h-7 border-4 border-[var(--glass-border)] border-t-[var(--sgs-primary)] rounded-full animate-spin" />
                                 </div>
                             ) : floorPlans.length === 0 ? (
                                 <div className="flex flex-col items-center justify-center h-60 text-[var(--text-secondary)] text-center px-6">
@@ -2443,7 +2452,7 @@ function ProjectListingsPanel({ project, canCreate, isAdmin, userRole, onClose, 
                                         <button
                                             type="button"
                                             onClick={() => setShowFloorPlanManager(true)}
-                                            className="mt-3 px-4 py-2 rounded-xl bg-sgs-verified text-white text-sm font-bold hover:bg-emerald-700"
+                                            className="mt-3 px-4 py-2 rounded-xl bg-sgs-primary text-white text-sm font-semibold hover:opacity-90"
                                         >
                                             {t('floorplan.upload_btn') || 'Tải lên SVG'}
                                         </button>
@@ -2472,7 +2481,7 @@ function ProjectListingsPanel({ project, canCreate, isAdmin, userRole, onClose, 
                         {loadError && (
                             <div className="m-4 rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700 flex items-start justify-between gap-3" role="alert">
                                 <div className="min-w-0">
-                                    <div className="font-bold mb-0.5">Không tải được danh mục sản phẩm</div>
+                                    <div className="font-bold mb-0.5">{t('project.listings_load_error')}</div>
                                     <div className="text-xs text-rose-600 break-words">{loadError}</div>
                                 </div>
                                 <button
@@ -2480,20 +2489,20 @@ function ProjectListingsPanel({ project, canCreate, isAdmin, userRole, onClose, 
                                     onClick={() => load()}
                                     className="shrink-0 px-3 py-1.5 rounded-lg bg-rose-600 hover:bg-rose-700 text-white text-xs font-bold"
                                 >
-                                    Thử lại
+                                    {t('project.listings_retry')}
                                 </button>
                             </div>
                         )}
                         {loading ? (
                             <div className="flex items-center justify-center h-40">
-                                <div className="w-7 h-7 border-4 border-emerald-200 border-t-emerald-600 rounded-full animate-spin" />
+                                <div className="w-7 h-7 border-4 border-[var(--glass-border)] border-t-[var(--sgs-primary)] rounded-full animate-spin" />
                             </div>
                         ) : filtered.length === 0 ? (
                             <div className="flex flex-col items-center justify-center h-40 text-[var(--text-secondary)]">
                                 <p className="font-semibold mb-1">{t('project.no_listings')}</p>
                                 {canCreate && !search && (
                                     <button type="button" onClick={() => setShowCreate(true)}
-                                        className="mt-2 flex items-center gap-2 px-4 py-2 rounded-xl bg-sgs-verified text-white text-sm font-bold hover:bg-emerald-700">
+                                        className="mt-2 flex items-center gap-2 px-4 py-2 rounded-xl bg-sgs-primary text-white text-sm font-semibold hover:opacity-90">
                                         {IC.PLUS} {t('project.add_listing')}
                                     </button>
                                 )}
@@ -2501,7 +2510,7 @@ function ProjectListingsPanel({ project, canCreate, isAdmin, userRole, onClose, 
                         ) : (
                             <div role="table" aria-label={t('project.listings_table') || 'Danh mục sản phẩm'} style={{ minWidth: '100%' }}>
                                 {/* Header row */}
-                                <div role="row" className="flex items-center px-4 py-2.5 border-b text-xs font-semibold uppercase tracking-wide whitespace-nowrap" style={{ background: '#F8FAFC', borderColor: 'var(--sgs-border)', color: 'var(--sgs-on-dark-muted)', minWidth: 'max-content' }}>
+                                <div role="row" className="sticky top-0 z-10 flex items-center px-4 py-2.5 border-b text-xs font-semibold whitespace-nowrap" style={{ background: '#F8FAFC', borderColor: 'var(--sgs-border)', color: '#475569', minWidth: 'max-content' }}>
                                     {isAdmin && (
                                         <div className="w-10 shrink-0">
                                             <input
@@ -2509,12 +2518,12 @@ function ProjectListingsPanel({ project, canCreate, isAdmin, userRole, onClose, 
                                                 checked={allSelected}
                                                 ref={el => { if (el) el.indeterminate = someSelected && !allSelected; }}
                                                 onChange={toggleAll}
-                                                className="w-4 h-4 rounded accent-emerald-600 cursor-pointer"
+                                                className="w-4 h-4 rounded accent-[#1B3A5C] cursor-pointer"
                                             />
                                         </div>
                                     )}
                                     <div className="w-14 shrink-0">{t('project.listing_col_image')}</div>
-                                    <div className="w-24 shrink-0">{t('project.listing_col_code')}</div>
+                                    <div className="w-28 shrink-0">{t('project.listing_col_code')}</div>
                                     <div className="w-56 shrink-0">{t('project.listing_col_title')}</div>
                                     <div className="w-28 shrink-0">{t('project.listing_col_type')}</div>
                                     <div className="w-36 shrink-0 pr-3">{t('project.listing_col_status')}</div>
@@ -2530,8 +2539,8 @@ function ProjectListingsPanel({ project, canCreate, isAdmin, userRole, onClose, 
                                     <div className="w-24 shrink-0">{t('project.listing_col_direction')}</div>
                                     <div className="w-28 shrink-0">{t('project.listing_col_unit_price')}</div>
                                     <div className="w-32 shrink-0">{t('project.listing_col_price')}</div>
-                                    {canEditOwn && <div className="w-20 shrink-0 text-center">{t('project.listing_col_actions')}</div>}
                                     {isAdmin && <div className="w-36 shrink-0 text-center">{t('project.listing_access_col_header')}</div>}
+                                    {canEditOwn && <div className="sticky right-0 w-16 shrink-0 text-center" style={{ background: 'inherit' }}>{t('project.listing_col_actions')}</div>}
                                 </div>
                                 {/* Data rows */}
                                 {filtered.map((l, idx) => (
@@ -2541,7 +2550,7 @@ function ProjectListingsPanel({ project, canCreate, isAdmin, userRole, onClose, 
                                         onClick={() => setDetailListing(l)}
                                         className="flex items-center px-4 py-2 border-b cursor-pointer transition-colors hover:bg-sgs-bg"
                                         style={{
-                                            background: selected.has(l.id) ? '#ECFDF5' : (idx % 2 === 0 ? '#FFFFFF' : '#FAFBFC'),
+                                            background: selected.has(l.id) ? '#EEF3F8' : (idx % 2 === 0 ? '#FFFFFF' : '#FAFBFC'),
                                             borderColor: '#E5E7EB',
                                             color: '#0D1526',
                                             minWidth: 'max-content',
@@ -2553,7 +2562,7 @@ function ProjectListingsPanel({ project, canCreate, isAdmin, userRole, onClose, 
                                                     type="checkbox"
                                                     checked={selected.has(l.id)}
                                                     onChange={() => toggleOne(l.id)}
-                                                    className="w-4 h-4 rounded accent-emerald-600 cursor-pointer"
+                                                    className="w-4 h-4 rounded accent-[#1B3A5C] cursor-pointer"
                                                 />
                                             </div>
                                         )}
@@ -2567,8 +2576,8 @@ function ProjectListingsPanel({ project, canCreate, isAdmin, userRole, onClose, 
                                             />
                                             </div>
                                         </div>
-                                        <div className="w-24 shrink-0">
-                                            <span className="font-mono text-xs px-1.5 py-0.5 rounded whitespace-nowrap" style={{ background: 'var(--sgs-bg)', color: 'var(--sgs-text-muted)' }}>
+                                        <div className="w-28 shrink-0 pr-2">
+                                            <span className="text-xs font-medium tabular-nums px-1.5 py-0.5 rounded whitespace-nowrap" style={{ background: 'var(--sgs-bg)', color: 'var(--sgs-text-muted)' }}>
                                                 {l.code}
                                             </span>
                                         </div>
@@ -2584,8 +2593,8 @@ function ProjectListingsPanel({ project, canCreate, isAdmin, userRole, onClose, 
                                             )}
                                         </div>
                                         <div className="w-32 shrink-0 pr-3">
-                                            <span className="text-xs2 font-semibold border px-1.5 py-0.5 rounded whitespace-nowrap" style={{ background: 'var(--sgs-bg)', color: 'var(--sgs-text-muted)', borderColor: 'var(--sgs-border)' }}>
-                                                {t(`property.${l.type?.toUpperCase()}`) || l.type}
+                                            <span className="inline-block max-w-full truncate align-middle text-xs2 font-semibold border px-1.5 py-0.5 rounded whitespace-nowrap" style={{ background: 'var(--sgs-bg)', color: 'var(--sgs-text-muted)', borderColor: 'var(--sgs-border)' }}>
+                                                {propertyTypeLabel(l.type, t)}
                                             </span>
                                         </div>
                                         <div className="w-36 shrink-0 pr-3 overflow-hidden">
@@ -2620,28 +2629,12 @@ function ProjectListingsPanel({ project, canCreate, isAdmin, userRole, onClose, 
                                                 ? <span className="font-medium">{t(`direction.${l.attributes.direction}`) || l.attributes.direction}</span>
                                                 : <span style={{ color: 'var(--sgs-border)' }}>—</span>}
                                         </div>
-                                        <div className="w-28 shrink-0 text-xs font-mono whitespace-nowrap" style={{ color: 'var(--sgs-text-muted)' }}>
+                                        <div className="w-28 shrink-0 text-xs tabular-nums whitespace-nowrap" style={{ color: 'var(--sgs-text-muted)' }}>
                                             {fmtUnitPrice(l.price, l.area)}
                                         </div>
-                                        <div className="w-32 shrink-0 font-bold whitespace-nowrap" style={{ color: 'var(--sgs-verified)' }}>{fmtPrice(l.price)}</div>
-                                        {canEditOwn && (
-                                            <div className="w-20 shrink-0 text-center" onClick={e => e.stopPropagation()}>
-                                                <button
-                                                    type="button"
-                                                    onClick={e => openRowMenu(e, l.id)}
-                                                     className="w-7 h-7 rounded-lg flex items-center justify-center transition-colors hover:bg-slate-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sgs-primary"
-                                                    style={{ color: menuOpenId === l.id ? '#0D1526' : 'var(--sgs-on-dark-muted)' }}
-                                                    title={t('common.actions')}
-                                                     aria-label={t('common.actions')}
-                                                >
-                                                    <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-                                                        <path d="M10 6a2 2 0 110-4 2 2 0 010 4zM10 12a2 2 0 110-4 2 2 0 010 4zM10 18a2 2 0 110-4 2 2 0 010 4z" />
-                                                    </svg>
-                                                </button>
-                                            </div>
-                                        )}
+                                        <div className="w-32 shrink-0 font-bold tabular-nums whitespace-nowrap" style={{ color: '#1B3A5C' }}>{fmtPrice(l.price)}</div>
                                         {isAdmin && (
-                                            <div className="w-36 shrink-0 text-center" onClick={e => e.stopPropagation()}>
+                                            <div className="w-36 shrink-0 flex justify-center" onClick={e => e.stopPropagation()}>
                                                 <button
                                                     type="button"
                                                     onClick={() => setAccessListings([l])}
@@ -2649,6 +2642,22 @@ function ProjectListingsPanel({ project, canCreate, isAdmin, userRole, onClose, 
                                                     style={{ color: '#1B3A5C', borderColor: '#DDD6FE' }}
                                                 >
                                                     {t('project.listing_access_single_btn')}
+                                                </button>
+                                            </div>
+                                        )}
+                                        {canEditOwn && (
+                                            <div className="sticky right-0 w-16 shrink-0 flex justify-center" style={{ background: 'inherit' }} onClick={e => e.stopPropagation()}>
+                                                <button
+                                                    type="button"
+                                                    onClick={e => openRowMenu(e, l.id)}
+                                                     className="w-9 h-9 rounded-lg flex items-center justify-center transition-colors hover:bg-slate-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sgs-primary"
+                                                    style={{ color: menuOpenId === l.id ? '#0D1526' : 'var(--sgs-on-dark-muted)' }}
+                                                    title={t('common.actions')}
+                                                     aria-label={t('common.actions')}
+                                                >
+                                                    <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                                                        <path d="M10 6a2 2 0 110-4 2 2 0 010 4zM10 12a2 2 0 110-4 2 2 0 010 4zM10 18a2 2 0 110-4 2 2 0 010 4z" />
+                                                    </svg>
                                                 </button>
                                             </div>
                                         )}
@@ -2673,7 +2682,7 @@ function ProjectListingsPanel({ project, canCreate, isAdmin, userRole, onClose, 
                                 <span className="text-sgs-primary">· {t('common.search')}: "{search}"</span>
                             )}
                         </div>
-                        <button type="button" onClick={onClose} className="px-4 py-1.5 rounded-xl border border-[var(--glass-border)] text-sm font-semibold hover:bg-[var(--glass-surface-hover)] transition-colors">{t('common.close')}</button>
+                        <button type="button" onClick={onClose} className="px-4 h-10 rounded-xl border border-[var(--glass-border)] text-sm font-semibold hover:bg-[var(--glass-surface-hover)] transition-colors">{t('common.close')}</button>
                     </div>
                 </div>
             </div>
@@ -2957,7 +2966,7 @@ function ProjectListingsPanel({ project, canCreate, isAdmin, userRole, onClose, 
                         // ── Mã căn / loại ─────────────────────────────────────────
                         propertyUnitCode: contractTarget.code,
                         // Translate enum ('Apartment') → localised label ('Căn hộ')
-                        propertyType: t(`property.${(contractTarget.type || '').toUpperCase()}`) || contractTarget.type || '',
+                        propertyType: contractTarget.type ? propertyTypeLabel(contractTarget.type, t) : '',
                         // ── Địa chỉ — dùng `location` (không có field `address` riêng) ─
                         propertyAddress: contractTarget.location ?? '',
                         // ── Diện tích ─────────────────────────────────────────────
@@ -3233,7 +3242,7 @@ function ProjectCardBase({ project, isAdmin, isPartner, onEdit, onDelete, onAcce
         <div className="bg-[var(--bg-surface)] border border-[var(--glass-border)] rounded-2xl shadow-sm hover:shadow-md hover:border-sgs-border transition-all flex flex-col overflow-hidden">
             {/* Cover image — 16:9 hero photo; falls back to neutral placeholder
                 so every card has a consistent visual height. */}
-            <div className="relative aspect-[16/9] w-full bg-[var(--bg-app)] border-b border-[var(--glass-border)]">
+            <div className="relative aspect-[2/1] w-full overflow-hidden bg-[var(--bg-app)] border-b border-[var(--glass-border)]">
                 <LazyImage
                     src={coverImage || NO_IMAGE_URL}
                     alt={project.name}
@@ -3242,14 +3251,14 @@ function ProjectCardBase({ project, isAdmin, isPartner, onEdit, onDelete, onAcce
                 />
             </div>
             {/* Card body */}
-            <div className="p-5 flex-1">
+            <div className="p-4 flex-1">
                 {/* Top row: name + status + admin menu */}
                 <div className="flex items-start gap-2 mb-2">
                     <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2 flex-wrap">
                             <h3 className="font-bold text-[var(--text-primary)] truncate">{project.name}</h3>
                             {project.code && (
-                                <span className="shrink-0 text-xs2 font-mono bg-[var(--glass-surface-hover)] text-[var(--text-tertiary)] px-1.5 py-0.5 rounded">
+                                <span className="shrink-0 text-2xs font-semibold tracking-wide bg-[var(--glass-surface-hover)] text-[var(--text-tertiary)] px-1.5 py-0.5 rounded">
                                     {project.code}
                                 </span>
                             )}
@@ -3276,8 +3285,9 @@ function ProjectCardBase({ project, isAdmin, isPartner, onEdit, onDelete, onAcce
                                 ref={btnRef}
                                 type="button"
                                 onClick={openMenu}
-                                className="w-6 h-6 rounded-lg flex items-center justify-center text-[var(--text-tertiary)] hover:bg-[var(--glass-surface-hover)] transition-colors"
+                                className="w-8 h-8 rounded-lg flex items-center justify-center text-[var(--text-tertiary)] hover:bg-[var(--glass-surface-hover)] transition-colors"
                                 title={t('common.actions')}
+                                aria-label={t('common.actions')}
                             >
                                 <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
                                     <path d="M10 6a2 2 0 110-4 2 2 0 010 4zM10 12a2 2 0 110-4 2 2 0 010 4zM10 18a2 2 0 110-4 2 2 0 010 4z"/>
@@ -3287,21 +3297,21 @@ function ProjectCardBase({ project, isAdmin, isPartner, onEdit, onDelete, onAcce
                     </div>
                 </div>
                     {(meta.projectType || meta.typeGroup || meta.scale || meta.priceRange || meta.price_range) && (
-                        <div className="mt-4 pt-3 border-t border-[var(--glass-border)] space-y-1.5">
+                        <div className="mt-3 pt-3 border-t border-[var(--glass-border)] space-y-1.5">
                             {(meta.projectType || meta.typeGroup) && (
                                 <div className="flex items-center gap-2 flex-wrap">
-                                    {meta.projectType && <span className="text-[10px] uppercase tracking-wide font-bold text-sgs-primary">{meta.projectType}</span>}
-                                    {meta.typeGroup && <span className="text-[10px] text-[var(--text-tertiary)]">· {meta.typeGroup}</span>}
+                                    {meta.projectType && <span className="text-xs font-semibold text-sgs-primary">{meta.projectType}</span>}
+                                    {meta.typeGroup && <span className="text-xs text-[var(--text-tertiary)]">· {meta.typeGroup}</span>}
                                 </div>
                             )}
                             <div className="grid grid-cols-2 gap-2 text-xs">
-                                {meta.scale && <span className="text-[var(--text-secondary)]"><b>Quy mô:</b> {meta.scale}</span>}
-                                {(meta.priceRange || meta.price_range) && <span className="text-[var(--text-secondary)] truncate"><b>Giá:</b> {meta.priceRange || meta.price_range}</span>}
+                                {meta.scale && <span className="text-[var(--text-secondary)]"><b className="font-semibold">{t('project.scale_label')}:</b> {meta.scale}</span>}
+                                {(meta.priceRange || meta.price_range) && <span className="text-[var(--text-secondary)] truncate"><b className="font-semibold">{t('project.price_label')}:</b> {meta.priceRange || meta.price_range}</span>}
                             </div>
                         </div>
                     )}
                 {project.description && (
-                    <p className="text-xs text-[var(--text-secondary)] mb-3 line-clamp-2 leading-relaxed">{project.description}</p>
+                    <p className="text-xs text-[var(--text-secondary)] mt-2 line-clamp-2 leading-relaxed">{project.description}</p>
                 )}
 
                 {/* Metadata grid */}
@@ -3316,7 +3326,7 @@ function ProjectCardBase({ project, isAdmin, isPartner, onEdit, onDelete, onAcce
                     )}
                     {(project as any).listingCount != null && (
                         <div className="flex items-center gap-1.5">
-                            <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 shrink-0" />
+                            <span className="w-1.5 h-1.5 rounded-full bg-sgs-verified shrink-0" />
                             <span className="text-xs text-[var(--text-tertiary)] truncate">
                                 <span className="font-semibold text-[var(--text-secondary)]">{(project as any).listingCount}</span> {t('project.listing_count')}
                             </span>
@@ -3345,16 +3355,16 @@ function ProjectCardBase({ project, isAdmin, isPartner, onEdit, onDelete, onAcce
                 </div>
             </div>
             {/* Card footer — CTAs */}
-            <div className="px-5 pb-4 pt-0 flex flex-col gap-2">
+            <div className="px-4 pb-4 pt-1 flex flex-col gap-2">
                 <div className="grid grid-cols-2 gap-2">
                     <button
                         type="button"
                         onClick={onListings}
-                        className="w-full flex items-center justify-center gap-2 py-2 px-3 bg-[var(--glass-surface)] hover:bg-sgs-champagne dark:hover:bg-emerald-900/20 border border-[var(--glass-border)] hover:border-emerald-300 text-[var(--text-secondary)] hover:text-sgs-verified text-sm font-semibold rounded-xl transition-all"
+                        className="w-full min-h-[40px] flex items-center justify-center gap-2 py-2 px-3 bg-sgs-primary text-white hover:opacity-90 text-sm font-semibold rounded-xl transition-opacity"
                     >
                         <span className="truncate">{t('project.view_listings')}</span>
                         {((project as any).listingCount || 0) > 0 && (
-                            <span className="shrink-0 px-2 py-0.5 bg-sgs-champagne text-sgs-verified text-xs font-bold rounded-full">
+                            <span className="shrink-0 px-2 py-0.5 bg-white/15 text-white text-xs font-bold rounded-full">
                                 {(project as any).listingCount}
                             </span>
                         )}
@@ -3362,9 +3372,9 @@ function ProjectCardBase({ project, isAdmin, isPartner, onEdit, onDelete, onAcce
                     <button
                         type="button"
                         onClick={onPriceMatrix}
-                        className="w-full flex items-center justify-center gap-2 py-2 px-3 bg-[var(--glass-surface)] hover:bg-sgs-champagne border border-[var(--glass-border)] hover:border-[var(--sgs-primary)] text-[var(--text-secondary)] hover:text-sgs-primary text-sm font-semibold rounded-xl transition-all"
+                        className="w-full min-h-[40px] flex items-center justify-center gap-2 py-2 px-3 bg-[var(--bg-surface)] hover:bg-[var(--glass-surface-hover)] border border-[var(--glass-border)] hover:border-[var(--sgs-primary)] text-[var(--text-primary)] text-sm font-semibold rounded-xl transition-all"
                     >
-                        <span className="truncate">Bảng Giá</span>
+                        <span className="truncate">{t('project.price_matrix')}</span>
                     </button>
                 </div>
             </div>
@@ -3377,7 +3387,7 @@ function ProjectCardBase({ project, isAdmin, isPartner, onEdit, onDelete, onAcce
                     className="bg-[var(--bg-surface)] border border-[var(--glass-border)] rounded-xl shadow-xl overflow-hidden min-w-[180px]"
                 >
                     <button onClick={() => { setMenuOpen(false); onEdit(); }}
-                        className="w-full text-left px-3 py-2.5 text-xs text-[var(--text-secondary)] hover:bg-[var(--glass-surface-hover)] flex items-center gap-2 first:rounded-t-xl">
+                        className="w-full text-left px-3 py-2.5 min-h-[40px] text-sm text-[var(--text-secondary)] hover:bg-[var(--glass-surface-hover)] flex items-center gap-2 first:rounded-t-xl">
                         <svg className="w-3.5 h-3.5 text-sgs-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"/></svg>
                         {t('common.edit')}
                     </button>
@@ -3600,13 +3610,13 @@ export function Projects() {
     };
     return (
         <div className="h-full flex flex-col bg-[var(--bg-app)] overflow-hidden">
-          <SeoHead title="Dự Án Bất Động Sản | SGS LAND" description="Khám phá các dự án bất động sản nổi bật tại TP.HCM và các tỉnh thành lân cận." canonicalPath="/projects" />
+          <SeoHead title="Dự án bất động sản | SGS LAND" description="Khám phá các dự án bất động sản nổi bật tại TP.HCM và các tỉnh thành lân cận." canonicalPath="/projects" />
             {/* Header — title + search + filters + create all in one bar */}
-            <div className="shrink-0 px-5 py-3.5 border-b border-[var(--glass-border)] bg-[var(--bg-surface)]">
+            <div className="shrink-0 px-4 lg:px-6 py-3 border-b border-[var(--glass-border)] bg-[var(--bg-surface)]">
                 <div className="flex items-center gap-3 flex-wrap">
                     {/* Title block */}
                     <div className="flex-none">
-                        <h1 className="text-lg font-extrabold text-[var(--text-primary)] leading-tight">
+                        <h1 className="text-base font-bold text-[var(--text-primary)] leading-tight">
                             {isPartner ? t('project.partner_view_title') : t('project.title')}
                         </h1>
                         <p className="text-xs text-[var(--text-secondary)] mt-0.5">
@@ -3621,7 +3631,8 @@ export function Projects() {
                         <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--text-tertiary)] flex items-center">{IC.SEARCH}</span>
                         <input
                             type="text"
-                            placeholder={t('common.search') + '...'}
+                            placeholder={t('project.search_placeholder')}
+                            aria-label={t('project.search_placeholder')}
                             value={search}
                             onChange={e => setSearch(e.target.value)}
                             className="w-full pl-9 pr-3 h-10 border border-[var(--glass-border)] rounded-xl bg-[var(--bg-app)] text-sm text-[var(--text-primary)] focus:outline-none focus:ring-2 focus:ring-sgs-primary"
@@ -3634,7 +3645,7 @@ export function Projects() {
                                 value={statusFilter}
                                 onChange={v => setStatusFilter(v as string)}
                                 options={[
-                                    { value: '', label: t('project.status') },
+                                    { value: '', label: t('project.status_all') },
                                     ...(['ACTIVE','BOOKING','COMPLETED','ON_HOLD','SUSPENDED'].map(s => ({ value: s, label: t('project.status_' + s) })))
                                 ]}
                                 className="text-sm"
@@ -3652,14 +3663,16 @@ export function Projects() {
                     {/* Create button */}
                     {isAdmin && (
                         <button type="button" onClick={() => setFormTarget('new')}
-                            className="shrink-0 flex items-center gap-1.5 px-4 h-10 rounded-xl bg-sgs-primary text-white text-sm font-bold hover:bg-sgs-primary shadow-sm transition-colors">
-                            <span className="hidden xs:inline">{t('project.new')}</span>
+                            aria-label={t('project.new')}
+                            className="shrink-0 flex items-center gap-1.5 px-3 sm:px-4 h-10 rounded-xl bg-sgs-primary text-white text-sm font-semibold hover:opacity-90 shadow-sm transition-opacity">
+                            {IC.PLUS}
+                            <span className="hidden sm:inline">{t('project.new')}</span>
                         </button>
                     )}
                 </div>
             </div>
             {/* Content */}
-            <div className="flex-1 overflow-y-auto no-scrollbar p-6">
+            <div className="flex-1 overflow-y-auto no-scrollbar p-4 lg:p-6">
                 {error && (
                     <div className="bg-rose-50 border border-rose-200 text-rose-700 rounded-xl px-4 py-3 mb-4 text-sm" role="alert">{error}</div>
                 )}
@@ -3677,13 +3690,13 @@ export function Projects() {
                         <p className="font-semibold">{t('common.no_data')}</p>
                         {isAdmin && (
                             <button type="button" onClick={() => setFormTarget('new')}
-                                className="mt-3 flex items-center gap-2 px-4 py-2 rounded-xl bg-sgs-primary text-white text-sm font-bold hover:bg-sgs-primary">
-                                {t('project.new')}
+                                className="mt-3 flex items-center gap-2 px-4 py-2 rounded-xl bg-sgs-primary text-white text-sm font-semibold hover:opacity-90">
+                                {IC.PLUS}{t('project.new')}
                             </button>
                         )}
                     </div>
                 ) : (
-                    <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+                    <div className="grid grid-cols-1 sm:grid-cols-[repeat(auto-fill,minmax(340px,1fr))] gap-4">
                         {projects.map((project, idx) => (
                             <div
                                 key={project.id}
