@@ -1378,6 +1378,8 @@ export function createValuationRoutes(
           unit: 'VND_PER_M2',
           unitLabel: 'VND/m²',
           sources: [...new Set(valuationGoldSet.map(row => row.verificationSource))],
+          // Readable place names for the canonical location keys used in groups.
+          locationLabels: Object.fromEntries(valuationGoldSet.map(row => [row.locationKey, row.location])),
         },
         disclaimer: 'Đây là backtest trên gold set giao dịch đã xác minh, không phải dữ liệu giao dịch trực tiếp hay báo giá cho khách hàng.',
       });

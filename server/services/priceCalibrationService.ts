@@ -38,6 +38,7 @@ import {
   type ValuationDriftThresholds,
   type ValuationDriftAssessment,
 } from './valuationEvaluationService';
+import { matchValuationLocations, type ValuationLocationMatchLevel } from './valuationLocationContract';
 
 const CALIBRATION_WINDOW_DAYS = 90;
 const TRANSACTION_WEIGHT = 0.50;
@@ -488,22 +489,53 @@ export class PriceCalibrationService {
   ): Promise<GoldSetEvaluation> {
     const predictions: ValuationPrediction[] = [];
     if (this.pool) {
+      // Calibrations are stored under the market-data key of the observed
+      // address (e.g. "quan 1 tp ho chi minh"), not the gold set's canonical
+      // key ("hcm|quan-1|ben-nghe"), and hold one price per location. Matching
+      // only on the canonical key rejected every sample, so the report never
+      // measured anything. Use the exact key when it exists, otherwise the
+      // valuation location contract at district level or finer (it fails
+      // closed on conflicting province/district/project).
       const { rows } = await this.pool.query<{
         location_key: string;
-        property_type: string;
+        location_display: string | null;
+        property_type: string | null;
         calibrated_price_per_m2: string;
+        last_calibrated_at: Date | null;
       }>(
-        `SELECT location_key, property_type, calibrated_price_per_m2
+        `SELECT location_key, location_display, property_type, calibrated_price_per_m2, last_calibrated_at
          FROM avm_calibration
-         WHERE location_key = ANY($1::text[])`,
-        [[...new Set(transactions.map(row => row.locationKey))]],
+         WHERE calibrated_price_per_m2 > 0`,
       );
-      const bySegment = new Map(rows.map(row => [
-        `${row.location_key}\u0000${row.property_type}`,
-        Number(row.calibrated_price_per_m2),
-      ]));
+      const LEVEL_RANK: Partial<Record<ValuationLocationMatchLevel, number>> = { EXACT: 3, PROJECT: 2, DISTRICT: 1 };
+      const priceFor = (transaction: VerifiedTransaction): number | undefined => {
+        const exact = rows.find(row => row.location_key === transaction.locationKey
+          && (!row.property_type || row.property_type === transaction.propertyType));
+        if (exact) return Number(exact.calibrated_price_per_m2);
+        let best: { rank: number; sameType: boolean; at: number; price: number } | null = null;
+        for (const row of rows) {
+          const match = matchValuationLocations(transaction.location, row.location_display || row.location_key);
+          const rank = match.matches ? LEVEL_RANK[match.level] : undefined;
+          // A calibration holds one price per location for its own property type;
+          // pricing an apartment with a townhouse calibration is not a valid test.
+          if (!rank || (row.property_type && row.property_type !== transaction.propertyType)) continue;
+          const candidate = {
+            rank,
+            sameType: row.property_type === transaction.propertyType,
+            at: row.last_calibrated_at ? new Date(row.last_calibrated_at).getTime() : 0,
+            price: Number(row.calibrated_price_per_m2),
+          };
+          if (!best
+            || candidate.rank > best.rank
+            || (candidate.rank === best.rank && candidate.sameType && !best.sameType)
+            || (candidate.rank === best.rank && candidate.sameType === best.sameType && candidate.at > best.at)) {
+            best = candidate;
+          }
+        }
+        return best?.price;
+      };
       for (const transaction of transactions) {
-        const price = bySegment.get(`${transaction.locationKey}\u0000${transaction.propertyType}`);
+        const price = priceFor(transaction);
         predictions.push(price && price > 0
           ? {
               transactionId: transaction.id,
@@ -528,6 +560,31 @@ export class PriceCalibrationService {
     try {
       client = await this.pool.connect();
       await client.query('BEGIN');
+      // Opening the report runs the backtest; a double render or a quick
+      // reload must not add identical runs, which would also count as extra
+      // "consecutive runs" for drift. Skip when the latest run (under 10
+      // minutes old) has exactly the same results and thresholds.
+      await client.query(`SELECT pg_advisory_xact_lock(hashtext('valuation_evaluation_runs'))`);
+      const duplicate = await client.query(
+        `SELECT 1 FROM (
+           SELECT * FROM valuation_evaluation_runs ORDER BY evaluated_at DESC LIMIT 1
+         ) latest
+         WHERE latest.evaluated_at > NOW() - INTERVAL '10 minutes'
+           AND latest.threshold_version IS NOT DISTINCT FROM $1
+           AND latest.sample_count = $2 AND latest.evaluated_count = $3 AND latest.rejected_count = $4
+           -- interval_coverage is stored as NUMERIC(8,6), so compare at that scale.
+           AND latest.mae IS NOT DISTINCT FROM $5::numeric AND latest.mape IS NOT DISTINCT FROM $6::numeric
+           AND latest.median_absolute_error IS NOT DISTINCT FROM $7::numeric
+           AND latest.interval_coverage IS NOT DISTINCT FROM round($8::numeric, 6)`,
+        [
+          thresholdConfig.version, evaluation.sampleCount, evaluation.evaluatedCount, evaluation.rejectedCount,
+          evaluation.mae, evaluation.mape, evaluation.medianAbsoluteError, evaluation.intervalCoverage,
+        ],
+      );
+      if (duplicate.rowCount) {
+        await client.query('COMMIT');
+        return;
+      }
       const result = await client.query<{ id: string }>(
         `INSERT INTO valuation_evaluation_runs
           (evaluated_at, sample_count, evaluated_count, rejected_count, reject_rate,

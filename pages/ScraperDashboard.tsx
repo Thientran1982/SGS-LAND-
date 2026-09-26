@@ -197,7 +197,7 @@ function MarketTab() {
   });
   const { data: scraperResultsData, isLoading: scraperResultsLoading } = useQuery<any>({
     queryKey: ['scraperResults'],
-    queryFn: () => scraperApi.getProjectsResults(),
+    queryFn: () => scraperApi.getMarketResults(),
     staleTime: 10_000,
   });
   useEffect(() => {
@@ -225,6 +225,7 @@ function MarketTab() {
       setResults(data.results ?? []);
       setListings(data.listings ?? []);
       setScrapedAt(data.scrapedAt ?? null);
+      queryClient.setQueryData(['scraperResults'], data);
       queryClient.invalidateQueries({ queryKey: ['scraperStatus'] });
     } catch (err) { setError(String(err)); }
     setRunning(false);

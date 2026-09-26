@@ -2,7 +2,7 @@ import React, { useEffect, useState, useMemo, memo, useRef, useCallback } from '
 import { createPortal } from 'react-dom';
 import { 
     BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, 
-    ComposedChart, Line, Area, AreaChart, Legend, Cell, ReferenceLine
+    Area, AreaChart, Legend, Cell, ReferenceLine
 } from 'recharts';
 import { db } from '../services/dbApi';
 import { useTranslation } from '../services/i18n';
@@ -173,14 +173,15 @@ const OverviewTab = memo(({ data, t, formatCurrency, formatCompactNumber, chartT
         [data.attribution],
     );
     const paidMarketingData = paidMarketing.channels;
-    const overviewChartData = useMemo(
-        () => data.attribution.map(row => ({
-            ...row,
-            roi: row.channel !== 'DIRECT_SALE' && row.spend > 0 ? row.roi : null,
-        })),
-        [data.attribution],
-    );
-    const hasData = overviewChartData.length > 0;
+    // "Source mix" = share of leads per channel; revenue per channel lives in the ROI tab.
+    const sourceMixData = useMemo(() => {
+        const rows = data.attribution.filter(row => row.leads > 0);
+        const total = rows.reduce((sum, row) => sum + row.leads, 0);
+        return rows
+            .map(row => ({ ...row, share: total > 0 ? Math.round((row.leads / total) * 100) : 0 }))
+            .sort((a, b) => b.leads - a.leads);
+    }, [data.attribution]);
+    const hasData = sourceMixData.length > 0;
     // Fix: reverse conversionByPeriod so trend chart shows oldest → newest (left → right)
     const trendData = useMemo(() => [...data.conversionByPeriod].reverse(), [data.conversionByPeriod]);
     const hasTrend = trendData.length > 0;
@@ -200,7 +201,7 @@ const OverviewTab = memo(({ data, t, formatCurrency, formatCompactNumber, chartT
                 ].map(({ label, value, color }) => (
                     <div key={label} className="bg-[var(--bg-surface)] p-4 sm:p-5 rounded-[20px] border border-[var(--glass-border)] shadow-sm relative overflow-hidden group min-w-0">
                         <div className={`absolute top-0 right-0 w-20 h-20 bg-${color}-50 rounded-full blur-2xl opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none`}></div>
-                        <div className="text-2xs sm:text-xs2 font-bold text-[var(--text-secondary)] uppercase tracking-widest mb-1.5 relative z-10 truncate">{label}</div>
+                        <div className="text-2xs sm:text-xs2 font-bold text-[var(--text-secondary)] mb-1.5 relative z-10 truncate">{label}</div>
                         <div className="text-sm sm:text-base xl:text-xl font-extrabold text-[var(--text-primary)] tracking-tight relative z-10 truncate" title={value}>{value}</div>
                     </div>
                 ))}
@@ -216,54 +217,41 @@ const OverviewTab = memo(({ data, t, formatCurrency, formatCompactNumber, chartT
                     <div style={{ width: '100%', height: 260 }}>
                         {hasData ? (
                             <ResponsiveContainer width="100%" height="100%" minWidth={200} minHeight={200}>
-                                <ComposedChart data={overviewChartData} margin={{ top: 8, right: 48, bottom: 36, left: 8 }}>
+                                <BarChart data={sourceMixData} margin={{ top: 8, right: 16, bottom: 36, left: 8 }}>
                                     <CartesianGrid strokeDasharray="3 3" vertical={false} stroke={colors.grid} />
-                                    <XAxis 
-                                        dataKey="channel" 
-                                        axisLine={false} 
-                                        tickLine={false} 
+                                    <XAxis
+                                        dataKey="channel"
+                                        axisLine={false}
+                                        tickLine={false}
                                         height={36}
+                                        interval={0}
                                         tick={{fill: colors.text, fontSize: 11}}
-                                        tickFormatter={(val) => t(`source.${val}`)}
+                                        tickFormatter={(val) => (t(`source.${val}`) !== `source.${val}` ? t(`source.${val}`) : val)}
                                     />
-                                    <YAxis 
-                                        yAxisId="left"
-                                        axisLine={false} 
-                                        tickLine={false} 
-                                        width={62}
+                                    <YAxis
+                                        axisLine={false}
+                                        tickLine={false}
+                                        width={40}
+                                        allowDecimals={false}
                                         tick={{fill: colors.text, fontSize: 11}}
-                                        tickFormatter={(val) => formatCompactNumber(val)}
                                     />
-                                    <YAxis 
-                                        yAxisId="right"
-                                        orientation="right"
-                                        axisLine={false} 
-                                        tickLine={false} 
-                                        width={44}
-                                        tick={{fill: colors.text, fontSize: 11}}
-                                        unit="%"
+                                    <Tooltip
+                                        cursor={{ fill: 'transparent' }}
+                                        content={({ active, payload }: any) => {
+                                            if (!active || !payload?.length) return null;
+                                            const row = payload[0].payload;
+                                            const name = t(`source.${row.channel}`) !== `source.${row.channel}` ? t(`source.${row.channel}`) : row.channel;
+                                            return (
+                                                <div className="rounded-xl border border-[var(--glass-border)] bg-[var(--bg-surface)] p-3 text-xs shadow-xl">
+                                                    <p className="mb-1.5 font-bold text-[var(--text-primary)]">{name}</p>
+                                                    <p className="text-[var(--text-secondary)]">{t('reports.table_leads')}: <span className="font-mono font-bold text-[var(--text-primary)]">{row.leads.toLocaleString(locale)}</span> ({row.share}%)</p>
+                                                    <p className="text-[var(--text-secondary)]">{t('reports.metric_revenue')}: <span className="font-mono font-bold text-[var(--text-primary)]">{formatCurrency(row.revenue)}</span></p>
+                                                </div>
+                                            );
+                                        }}
                                     />
-                                    <Tooltip content={<CustomTooltip formatCurrency={formatCurrency} theme={chartTheme} t={t} />} cursor={{ fill: 'transparent' }} />
-                                    <Bar 
-                                        yAxisId="left"
-                                        dataKey="revenue" 
-                                        name={t('reports.metric_revenue')} 
-                                        fill={colors.primary} 
-                                        radius={[4, 4, 0, 0]} 
-                                        barSize={32}
-                                        animationDuration={1000}
-                                    />
-                                    <Line 
-                                        yAxisId="right"
-                                        type="monotone" 
-                                        dataKey="roi" 
-                                        name={t('reports.metric_roi')} 
-                                        stroke={colors.success} 
-                                        strokeWidth={3}
-                                        dot={{r: 4, strokeWidth: 2, fill: '#fff'}}
-                                        animationDuration={1500}
-                                    />
-                                </ComposedChart>
+                                    <Bar dataKey="leads" name={t('reports.table_leads')} fill={colors.primary} radius={[4, 4, 0, 0]} maxBarSize={48} animationDuration={800} />
+                                </BarChart>
                             </ResponsiveContainer>
                         ) : (
                             <div style={{ height: 200 }}><EmptyChartState t={t} message={t('common.no_results')} /></div>
@@ -380,14 +368,14 @@ const FunnelTab = memo(({ data, t, chartTheme }: { data: BiData, t: any, chartTh
                     <div className="flex items-start gap-3">
                         {lostStage && lostStage.count > 0 && (
                             <div className="flex-shrink-0 bg-rose-50 border border-rose-100 rounded-[14px] px-4 py-2 text-center">
-                                <div className="text-xs2 font-bold text-rose-500 uppercase tracking-wider">{t('stage.LOST')}</div>
+                                <div className="text-xs2 font-bold text-rose-500">{t('stage.LOST')}</div>
                                 <div className="text-2xl font-extrabold text-rose-600">{lostStage.count.toLocaleString()}</div>
                                 <div className="text-xs2 text-rose-400">{lostStage.conversionRate}%</div>
                             </div>
                         )}
                         {overallRate !== null && (
                             <div className="flex-shrink-0 bg-sgs-champagne border border-emerald-100 rounded-[14px] px-4 py-2 text-center">
-                                <div className="text-xs2 font-bold text-sgs-verified uppercase tracking-wider">{t('reports.funnel_overall_rate')}</div>
+                                <div className="text-xs2 font-bold text-sgs-verified">{t('reports.funnel_overall_rate')}</div>
                                 <div className="text-2xl font-extrabold text-sgs-verified">{overallRate}%</div>
                             </div>
                         )}
@@ -505,7 +493,7 @@ const RoiTab = memo(({ data, t, formatCurrency, formatCompactNumber, chartTheme,
             ].map(({ label, value, color }) => (
                 <div key={label} className="bg-[var(--bg-surface)] p-4 sm:p-5 rounded-[20px] border border-[var(--glass-border)] shadow-sm relative overflow-hidden group min-w-0">
                     <div className={`absolute top-0 right-0 w-20 h-20 bg-${color}-50 rounded-full blur-2xl opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none`}></div>
-                    <div className="text-2xs sm:text-xs2 font-bold text-[var(--text-secondary)] uppercase tracking-widest mb-1.5 relative z-10 truncate">{label}</div>
+                    <div className="text-2xs sm:text-xs2 font-bold text-[var(--text-secondary)] mb-1.5 relative z-10 truncate">{label}</div>
                     <div className="text-sm sm:text-base xl:text-xl font-extrabold text-[var(--text-primary)] tracking-tight relative z-10 truncate" title={value}>{value}</div>
                 </div>
             ))}
@@ -574,7 +562,7 @@ const RoiTab = memo(({ data, t, formatCurrency, formatCompactNumber, chartTheme,
             ) : (
                 <div ref={scrollRef} className="overflow-x-auto no-scrollbar overscroll-contain">
                     <table className="min-w-[800px] md:min-w-full text-sm text-left">
-                        <thead className="bg-[var(--glass-surface)] text-[var(--text-tertiary)] font-bold text-xs uppercase tracking-wider sticky top-0 z-10">
+                        <thead className="bg-[var(--glass-surface)] text-[var(--text-tertiary)] font-bold text-xs sticky top-0 z-10">
                             <tr>
                                 <th className="p-5">{t('reports.table_channel')}</th>
                                 <th className="p-5 text-right">{t('reports.table_spend')}</th>
@@ -694,12 +682,12 @@ const CostsTab = memo(({ data, t, formatCurrency, currentUser, onCostUpdated, no
             <section className="space-y-4" aria-label={t('reports.cost_history')}>
                 <div className="grid grid-cols-2 gap-3 sm:gap-4">
                     <div className="rounded-[20px] border border-[var(--glass-border)] bg-[var(--bg-surface)] p-4 sm:p-5">
-                        <p className="text-xs font-bold uppercase tracking-wider text-[var(--text-secondary)]">{t('reports.metric_spend')}</p>
+                        <p className="text-xs font-bold text-[var(--text-secondary)]">{t('reports.metric_spend')}</p>
                         <p className="mt-2 truncate text-lg font-extrabold tabular-nums text-[var(--text-primary)] sm:text-2xl" title={formatCurrency(costSummary.totalCost)}>{formatCurrency(costSummary.totalCost)}</p>
                         <p className="mt-1 text-xs text-[var(--text-tertiary)]">{language === 'vn' ? 'Tổng chi phí trong kỳ đã chọn' : 'Total spend in the selected period'}</p>
                     </div>
                     <div className="rounded-[20px] border border-[var(--glass-border)] bg-[var(--bg-surface)] p-4 sm:p-5">
-                        <p className="text-xs font-bold uppercase tracking-wider text-[var(--text-secondary)]">{language === 'vn' ? 'Bản ghi chi phí' : 'Cost entries'}</p>
+                        <p className="text-xs font-bold text-[var(--text-secondary)]">{language === 'vn' ? 'Bản ghi chi phí' : 'Cost entries'}</p>
                         <p className="mt-2 text-lg font-extrabold tabular-nums text-[var(--text-primary)] sm:text-2xl">{costSummary.entryCount.toLocaleString()}</p>
                         <p className="mt-1 text-xs text-[var(--text-tertiary)]">{language === 'vn' ? 'Toàn bộ bản ghi phù hợp bộ lọc thời gian' : 'All entries matching the selected time range'}</p>
                     </div>
@@ -757,7 +745,7 @@ const CostsTab = memo(({ data, t, formatCurrency, currentUser, onCostUpdated, no
         )}
         <div className="bg-[var(--bg-surface)] p-0 md:p-2 rounded-[24px] border border-[var(--glass-border)] shadow-sm overflow-hidden">
             <div className="p-5 border-b border-[var(--glass-border)] flex justify-between items-center bg-[var(--bg-surface)]">
-                <h3 className="font-bold text-[var(--text-primary)] text-sm uppercase tracking-wide">{t('reports.cost_history')}</h3>
+                <h3 className="font-bold text-[var(--text-primary)] text-sm">{t('reports.cost_history')}</h3>
                 {canUpdateCosts && (
                     <button
                         onClick={() => setIsAdding(true)}
@@ -776,7 +764,7 @@ const CostsTab = memo(({ data, t, formatCurrency, currentUser, onCostUpdated, no
             ) : (
                 <div ref={scrollRef} className="overflow-x-auto no-scrollbar overscroll-contain">
                     <table className="min-w-[700px] md:min-w-full text-sm text-left">
-                        <thead className="bg-[var(--glass-surface)] text-[var(--text-tertiary)] font-bold text-xs uppercase tracking-wider">
+                        <thead className="bg-[var(--glass-surface)] text-[var(--text-tertiary)] font-bold text-xs">
                             <tr>
                                 <th className="p-5">{t('reports.cost_source')}</th>
                                 <th className="p-5">{t('reports.cost_campaign_name')}</th>
@@ -826,7 +814,7 @@ const CostsTab = memo(({ data, t, formatCurrency, currentUser, onCostUpdated, no
                     <h3 className="text-lg font-bold text-[var(--text-primary)] mb-5">{t('reports.btn_add_cost')}</h3>
                     <div className="space-y-4 mb-6">
                         <div>
-                            <label className="block text-xs font-bold text-[var(--text-tertiary)] uppercase tracking-wider mb-1.5">{t('reports.cost_source')} *</label>
+                            <label className="block text-xs font-bold text-[var(--text-tertiary)] mb-1.5">{t('reports.cost_source')} *</label>
                             <input 
                                 type="text"
                                 value={addForm.source}
@@ -836,7 +824,7 @@ const CostsTab = memo(({ data, t, formatCurrency, currentUser, onCostUpdated, no
                             />
                         </div>
                         <div>
-                            <label className="block text-xs font-bold text-[var(--text-tertiary)] uppercase tracking-wider mb-1.5">{t('reports.cost_campaign_name')}</label>
+                            <label className="block text-xs font-bold text-[var(--text-tertiary)] mb-1.5">{t('reports.cost_campaign_name')}</label>
                             <input 
                                 type="text"
                                 value={addForm.campaignName}
@@ -846,7 +834,7 @@ const CostsTab = memo(({ data, t, formatCurrency, currentUser, onCostUpdated, no
                             />
                         </div>
                         <div>
-                            <label className="block text-xs font-bold text-[var(--text-tertiary)] uppercase tracking-wider mb-1.5">{t('reports.cost_month')} *</label>
+                            <label className="block text-xs font-bold text-[var(--text-tertiary)] mb-1.5">{t('reports.cost_month')} *</label>
                             <input 
                                 type="month"
                                 value={addForm.period}
@@ -855,7 +843,7 @@ const CostsTab = memo(({ data, t, formatCurrency, currentUser, onCostUpdated, no
                             />
                         </div>
                         <div>
-                            <label className="block text-xs font-bold text-[var(--text-tertiary)] uppercase tracking-wider mb-1.5">{t('reports.cost_amount')} {t('reports.cost_currency')} *</label>
+                            <label className="block text-xs font-bold text-[var(--text-tertiary)] mb-1.5">{t('reports.cost_amount')} {t('reports.cost_currency')} *</label>
                             <input 
                                 type="number"
                                 value={addForm.cost}
@@ -913,7 +901,7 @@ const CostsTab = memo(({ data, t, formatCurrency, currentUser, onCostUpdated, no
                     <h3 className="text-lg font-bold text-[var(--text-primary)] mb-1">{t('reports.btn_update')}</h3>
                     <p className="text-xs text-[var(--text-secondary)] mb-5">{editingCost.source} · {editingCost.period}</p>
                     <div className="mb-6">
-                        <label className="block text-xs font-bold text-[var(--text-tertiary)] uppercase tracking-wider mb-2">{t('reports.cost_amount')} {t('reports.cost_currency')}</label>
+                        <label className="block text-xs font-bold text-[var(--text-tertiary)] mb-2">{t('reports.cost_amount')} {t('reports.cost_currency')}</label>
                         <input 
                             type="number" 
                             value={newCostValue}
@@ -1072,14 +1060,14 @@ export const Reports: React.FC = () => {
             {/* Header: single bar — Tabs (left) + Time Filter (right) on desktop; stacked on mobile */}
             <div className="bg-[var(--bg-surface)] px-4 sm:px-5 py-3 rounded-[24px] border border-[var(--glass-border)] shadow-sm">
                 {/* Desktop: one row */}
-                <div className="hidden md:flex items-center gap-3">
+                <div className="hidden md:flex flex-wrap items-center gap-3">
                     {/* Tabs */}
-                    <div ref={scrollRef} className="flex bg-[var(--glass-surface-hover)] p-1 rounded-xl gap-1 flex-1 overflow-x-auto no-scrollbar">
+                    <div ref={scrollRef} className="flex min-w-0 flex-1 bg-[var(--glass-surface-hover)] p-1 rounded-xl gap-1 overflow-x-auto no-scrollbar">
                         {tabs.map(tab => (
                             <button
                                 key={tab.id}
                                 onClick={() => setActiveTab(tab.id as any)}
-                                className={`px-4 py-2 text-xs font-bold rounded-lg transition-all whitespace-nowrap flex-1 text-center ${
+                                className={`shrink-0 px-4 py-2 text-xs font-bold rounded-lg transition-all whitespace-nowrap text-center ${
                                     activeTab === tab.id
                                          ? 'bg-[var(--ui-brand)] text-[var(--ui-on-brand)] shadow-sm ring-1 ring-[var(--ui-brand)]'
                                     : 'text-[var(--text-tertiary)] hover:text-[var(--text-secondary)] hover:bg-slate-200/50'
@@ -1093,7 +1081,7 @@ export const Reports: React.FC = () => {
                     <div className="w-px h-6 bg-slate-200 shrink-0" />
                     {/* Time filter */}
                     <div className="flex items-center gap-1.5 shrink-0">
-                        <span className="text-xs2 font-bold text-[var(--text-secondary)] uppercase tracking-widest">{t('reports.period_label')}</span>
+                        <span className="text-xs2 font-bold text-[var(--text-secondary)]">{t('reports.period_label')}</span>
                         <div className="flex bg-[var(--glass-surface-hover)] p-0.5 rounded-xl gap-0.5">
                             {TIME_RANGE_VALUES.map(val => (
                                 <button
@@ -1119,7 +1107,7 @@ export const Reports: React.FC = () => {
                                 <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
                                 <span className="relative inline-flex rounded-full h-2 w-2 bg-sgs-verified"></span>
                             </span>
-                            <span className="text-xs3 font-extrabold text-sgs-verified uppercase tracking-widest">{t('reports.live')}</span>
+                            <span className="text-xs3 font-extrabold text-sgs-verified">{t('reports.live')}</span>
                         </div>
                         {lastUpdated && (
                             <span className="text-xs3 text-[var(--text-secondary)] font-mono whitespace-nowrap">
@@ -1158,7 +1146,7 @@ export const Reports: React.FC = () => {
                                 <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
                                 <span className="relative inline-flex rounded-full h-2 w-2 bg-sgs-verified"></span>
                             </span>
-                            <span className="text-xs3 font-extrabold text-sgs-verified uppercase tracking-widest">{t('reports.live')}</span>
+                            <span className="text-xs3 font-extrabold text-sgs-verified">{t('reports.live')}</span>
                         </div>
                     </div>
                     {lastUpdated && (

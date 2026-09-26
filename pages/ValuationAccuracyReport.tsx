@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { createContext, useCallback, useContext, useEffect, useState } from 'react';
 import { RefreshCw, ShieldCheck, AlertTriangle, BarChart3, Save, RotateCcw, CheckCircle2 } from 'lucide-react';
 import { CartesianGrid, Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
 import { SeoHead } from '../components/SeoHead';
@@ -32,7 +32,7 @@ type ResponseData = {
     consecutiveMapeRuns: number;
     reasons: string[];
   };
-  dataset: { name: string; sampleCount: number; unitLabel: string; sources: string[] };
+  dataset: { name: string; sampleCount: number; unitLabel: string; sources: string[]; locationLabels?: Record<string, string> };
   disclaimer: string;
   thresholdConfig: { version: number; thresholds: Thresholds; updatedAt: string | null; updatedBy: string | null };
   thresholdHistory: Array<{ version: number; changedAt: string; authorId: string | null; oldThresholds: Thresholds | null; newThresholds: Thresholds }>;
@@ -68,6 +68,15 @@ const formatPercent = (value: number | null, language: Language) =>
   value == null ? '—' : `${new Intl.NumberFormat(localeFor(language), { minimumFractionDigits: 1, maximumFractionDigits: 1 }).format(value * 100)}%`;
 const dateTime = (value: string, language: Language) => new Date(value).toLocaleString(localeFor(language));
 const formatCount = (value: number, language: Language) => value.toLocaleString(localeFor(language));
+/** Readable place names for canonical keys such as "hcm|quan-1|ben-nghe" (sent by the server). */
+const LocationLabelsContext = createContext<Record<string, string>>({});
+const useLocationLabel = () => {
+  const labels = useContext(LocationLabelsContext);
+  return (key: string) => labels[key] || key;
+};
+/** Several runs can happen on the same day, so trend axes show date and time. */
+const runLabel = (value: string, locale: string) =>
+  new Date(value).toLocaleString(locale, { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' });
 
 function DriftNotificationEvents({ language, t }: { language: Language; t: Translate }) {
   const [events, setEvents] = useState<OperationalEvent[]>([]);
@@ -234,7 +243,7 @@ function MetricCard({ label, value, detail, comparison, t }: { label: string; va
   const overThreshold = comparison?.actual != null && comparison.actual > comparison.threshold;
   return (
     <div className="min-w-0 rounded-[20px] border border-[var(--glass-border)] bg-[var(--bg-surface)] p-4 shadow-sm sm:p-5">
-      <p className="text-xs font-bold uppercase tracking-wider text-[var(--text-secondary)]">{label}</p>
+      <p className="text-xs font-semibold text-[var(--text-secondary)]">{label}</p>
       <p className="mt-2 break-words text-xl font-extrabold tabular-nums tracking-tight text-[var(--text-primary)] sm:text-2xl">{value}</p>
       {detail && <p className="mt-1 text-xs leading-relaxed text-[var(--text-tertiary)]">{detail}</p>}
       {comparison && (
@@ -295,7 +304,7 @@ function TrendChart({ history, language, t }: { history: ResponseData['history']
   const locale = localeFor(language);
   const chartData = history.map(run => ({
     ...run,
-    dateLabel: new Date(run.evaluatedAt).toLocaleDateString(locale, { year: '2-digit', month: '2-digit', day: '2-digit' }),
+    dateLabel: runLabel(run.evaluatedAt, locale),
     maeThreshold: run.thresholds?.maeVndPerM2 ?? null,
     mapePercent: run.mape == null ? null : run.mape * 100,
     mapeThresholdPercent: run.thresholds?.mape == null ? null : run.thresholds.mape * 100,
@@ -421,6 +430,7 @@ const verificationSourceKeys: Record<string, string> = {
 };
 
 function GroupMetricBreakdown({ groups, language, t }: { groups: Group[]; language: Language; t: Translate }) {
+  const locationLabel = useLocationLabel();
   const propertyTypeLabel = (value: string) => propertyTypeLabels[value]?.[language] ?? value;
   const metrics = [
     {
@@ -455,8 +465,8 @@ function GroupMetricBreakdown({ groups, language, t }: { groups: Group[]; langua
                   const width = max > 0 ? value / max * 100 : 0;
                   return (
                     <div key={`${group.locationKey}-${group.propertyType}-${metric.key}`} className="grid grid-cols-[minmax(0,1fr)_minmax(4rem,1.2fr)_auto] items-center gap-2">
-                      <span className="truncate text-xs text-[var(--text-secondary)]" title={`${group.locationKey} · ${propertyTypeLabel(group.propertyType)}`}>{group.locationKey} · {propertyTypeLabel(group.propertyType)}</span>
-                      <div className="h-2 overflow-hidden rounded-full bg-[var(--bg-surface)]" role="img" aria-label={`${group.locationKey} ${metric.title}: ${metric.format(value)}`}>
+                      <span className="truncate text-xs text-[var(--text-secondary)]" title={`${locationLabel(group.locationKey)} · ${propertyTypeLabel(group.propertyType)}`}>{locationLabel(group.locationKey)} · {propertyTypeLabel(group.propertyType)}</span>
+                      <div className="h-2 overflow-hidden rounded-full bg-[var(--bg-surface)]" role="img" aria-label={`${locationLabel(group.locationKey)} ${metric.title}: ${metric.format(value)}`}>
                         <div className="h-full rounded-full bg-sgs-primary" style={{ width: `${width}%` }} />
                       </div>
                       <span className="max-w-[8rem] truncate text-right font-mono text-[11px] font-semibold text-[var(--text-primary)]" title={metric.format(value)}>{metric.format(value)}</span>
@@ -487,6 +497,7 @@ function GroupHistoryTrends({
 }) {
   const [selectedGroupKey, setSelectedGroupKey] = useState('');
   const locale = localeFor(language);
+  const locationLabel = useLocationLabel();
   const groupOptions = new Map<string, { key: string; locationKey: string; propertyType: string }>();
   for (const run of history) {
     for (const group of run.groups ?? []) {
@@ -507,7 +518,7 @@ function GroupHistoryTrends({
   const selectedGroup = options.find(option => option.key === activeKey);
   const propertyTypeLabel = (value: string) => propertyTypeLabels[value]?.[language] ?? value;
   const selectedLabel = selectedGroup
-    ? `${selectedGroup.locationKey} · ${propertyTypeLabel(selectedGroup.propertyType)}`
+    ? `${locationLabel(selectedGroup.locationKey)} · ${propertyTypeLabel(selectedGroup.propertyType)}`
     : '';
   const chartData = history.map(run => {
     const group = (run.groups ?? []).find(item =>
@@ -515,7 +526,7 @@ function GroupHistoryTrends({
     );
     return {
       evaluatedAt: run.evaluatedAt,
-      dateLabel: new Date(run.evaluatedAt).toLocaleDateString(locale, { year: '2-digit', month: '2-digit', day: '2-digit' }),
+      dateLabel: runLabel(run.evaluatedAt, locale),
       sampleCount: group?.sampleCount ?? null,
       evaluatedCount: group?.evaluatedCount ?? null,
       mae: group?.mae ?? null,
@@ -592,7 +603,7 @@ function GroupHistoryTrends({
             >
               {options.map(option => (
                 <option key={option.key} value={option.key}>
-                  {option.locationKey} · {propertyTypeLabel(option.propertyType)}
+                  {locationLabel(option.locationKey)} · {propertyTypeLabel(option.propertyType)}
                 </option>
               ))}
             </select>
@@ -676,6 +687,11 @@ function GroupHistoryTrends({
   );
 }
 
+function LocationName({ value }: { value: string }) {
+  const locationLabel = useLocationLabel();
+  return <span title={value}>{locationLabel(value)}</span>;
+}
+
 const ValuationAccuracyReport: React.FC = () => {
   const { language, t } = useTranslation();
   const [user, setUser] = useState<User | null>(null);
@@ -744,10 +760,11 @@ const ValuationAccuracyReport: React.FC = () => {
   return (
     <div className="min-h-[100dvh] bg-[var(--bg-app)] p-4 text-[var(--text-primary)] sm:p-6 md:p-8">
       <SeoHead title={t('valuationAccuracy.seoTitle')} description={t('valuationAccuracy.seoDescription')} />
+      <LocationLabelsContext.Provider value={data?.dataset.locationLabels ?? {}}>
       <div className="mx-auto max-w-7xl space-y-6">
         <header className="flex flex-wrap items-start justify-between gap-4">
           <div>
-            <p className="text-xs font-extrabold uppercase tracking-[0.18em] text-[var(--ui-brand)]">{t('valuationAccuracy.eyebrow')}</p>
+            <p className="text-xs font-semibold text-[var(--ui-brand)]">{t('valuationAccuracy.eyebrow')}</p>
             <h1 className="mt-2 text-2xl font-extrabold tracking-tight text-[var(--text-primary)] sm:text-3xl">{t('valuationAccuracy.title')}</h1>
             <p className="mt-2 max-w-3xl text-sm leading-relaxed text-[var(--text-secondary)]">
               {t('valuationAccuracy.intro')}
@@ -873,11 +890,11 @@ const ValuationAccuracyReport: React.FC = () => {
               <GroupMetricBreakdown groups={report.groups} language={language} t={t} />
               <div className="overflow-x-auto">
                 <table className="w-full min-w-[780px] text-left text-sm">
-                  <thead className="bg-[var(--glass-surface)] text-xs uppercase tracking-wide text-[var(--text-tertiary)]"><tr>
+                  <thead className="bg-[var(--glass-surface)] text-xs font-semibold text-[var(--text-tertiary)]"><tr>
                     <th className="px-5 py-3">{t('valuationAccuracy.breakdown.locationKey')}</th><th className="px-5 py-3">{t('valuationAccuracy.breakdown.propertyType')}</th><th className="px-5 py-3">{t('valuationAccuracy.breakdown.samples')}</th><th className="px-5 py-3">MAE</th><th className="px-5 py-3">MAPE</th><th className="px-5 py-3">{t('valuationAccuracy.breakdown.coverage')}</th><th className="px-5 py-3">{t('valuationAccuracy.breakdown.reject')}</th>
                   </tr></thead>
                   <tbody>{report.groups.length ? report.groups.map(group => <tr key={`${group.locationKey}-${group.propertyType}`} className="border-t border-[var(--glass-border)] hover:bg-[var(--glass-surface)]">
-                    <td className="px-5 py-3 font-medium text-[var(--text-primary)]">{group.locationKey}</td><td className="px-5 py-3 text-[var(--text-secondary)]">{propertyTypeLabels[group.propertyType]?.[language] ?? group.propertyType}</td><td className="px-5 py-3 tabular-nums">{formatCount(group.sampleCount, language)}</td><td className="px-5 py-3 font-mono">{formatVnd(group.mae, language)}</td><td className="px-5 py-3 font-mono">{formatPercent(group.mape, language)}</td><td className="px-5 py-3 font-mono">{formatPercent(group.intervalCoverage, language)}</td><td className="px-5 py-3 font-mono">{formatCount(group.rejectedCount, language)} ({formatPercent(group.rejectRate, language)})</td>
+                    <td className="px-5 py-3 font-medium text-[var(--text-primary)]"><LocationName value={group.locationKey} /></td><td className="px-5 py-3 text-[var(--text-secondary)]">{propertyTypeLabels[group.propertyType]?.[language] ?? group.propertyType}</td><td className="px-5 py-3 tabular-nums">{formatCount(group.sampleCount, language)}</td><td className="px-5 py-3 font-mono">{formatVnd(group.mae, language)}</td><td className="px-5 py-3 font-mono">{formatPercent(group.mape, language)}</td><td className="px-5 py-3 font-mono">{formatPercent(group.intervalCoverage, language)}</td><td className="px-5 py-3 font-mono">{formatCount(group.rejectedCount, language)} ({formatPercent(group.rejectRate, language)})</td>
                   </tr>) : <tr><td colSpan={7} className="px-5 py-10 text-center text-sm text-[var(--text-tertiary)]">{t('valuationAccuracy.breakdown.empty')}</td></tr>}</tbody>
                 </table>
               </div>
@@ -893,6 +910,7 @@ const ValuationAccuracyReport: React.FC = () => {
           </div>
         )}
       </div>
+      </LocationLabelsContext.Provider>
     </div>
   );
 };
