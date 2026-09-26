@@ -64,7 +64,9 @@ export const OverviewGreeting: React.FC<{ analytics: any }> = ({ analytics }) =>
     const locale = language === 'vn' ? 'vi-VN' : 'en-US';
     const now = new Date();
     const hour = now.getHours();
-    const dateLine = now.toLocaleDateString(locale, { weekday: 'long', day: '2-digit', month: '2-digit', year: 'numeric' });
+    const rawDate = now.toLocaleDateString(locale, { weekday: 'long', day: '2-digit', month: '2-digit', year: 'numeric' });
+    // Vietnamese weekday names capitalise the second word; show the line in sentence case.
+    const dateLine = language === 'vn' ? rawDate.charAt(0).toLocaleUpperCase('vi') + rawDate.slice(1).toLocaleLowerCase('vi') : rawDate;
     const fullName = typeof analytics?.user?.name === 'string' ? analytics.user.name.trim() : '';
     const parts = fullName.split(/\s+/).filter(Boolean);
     const shortName = parts.length ? (language === 'vn' ? parts[parts.length - 1] : parts[0]) : '';
@@ -79,7 +81,7 @@ export const OverviewGreeting: React.FC<{ analytics: any }> = ({ analytics }) =>
     ].filter(Boolean).join(' · ');
     return (
         <div className="min-w-0">
-            <div className="text-xs font-semibold uppercase tracking-[0.06em] text-[var(--text-tertiary)]">{dateLine}</div>
+            <div className="text-xs font-semibold text-[var(--text-tertiary)] first-letter:uppercase">{dateLine}</div>
             <h1 className="dashboard-title mt-1 text-[var(--text-primary)]">
                 {shortName ? `${tr(greetKey)}, ${shortName}` : tr(greetKey)}
             </h1>

@@ -1129,3 +1129,37 @@ html.dark body {
   /* Keep the floating chat button off the last panel. */
   .sgs-dashboard { padding-bottom: 6rem; }
 }
+
+/* ---- Dashboard mobile header & label fixes ------------------------ */
+/* Labels follow the sentence-case rule of the product instead of
+   uppercase mono eyebrows, which were hard to read at small sizes. */
+.sgs-dashboard .dashboard-kpi .kpi-label,
+.sgs-dashboard .dashboard-subhead,
+.sgs-dashboard .dashboard-status-label,
+.sgs-dashboard .dashboard-ranking .rank-metric span {
+  text-transform: none;
+  letter-spacing: 0;
+}
+.sgs-dashboard .dashboard-kpi .kpi-label { font-size: .8125rem; color: var(--text-secondary); }
+.sgs-dashboard .dashboard-subhead { font-size: .8125rem; color: var(--text-secondary); }
+@media (max-width: 640px) {
+  /* Square icon buttons: an asymmetric padding (.75rem left, 0 right)
+     pushed the icons off-centre. Centre them and match the date filter height. */
+  .sgs-dashboard .dashboard-kpi-settings,
+  .sgs-dashboard .dashboard-export {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+    min-height: 2.75rem;
+  }
+  .sgs-dashboard .dashboard-kpi-settings svg,
+  .sgs-dashboard .dashboard-export svg { width: 1.05rem; height: 1.05rem; margin: 0; }
+  .sgs-dashboard .dashboard-date-filter > button {
+    min-height: 2.75rem;
+    font-size: .8125rem;
+  }
+  .sgs-dashboard .dashboard-kpi .kpi-label { font-size: .75rem; line-height: 1.3; }
+  .sgs-dashboard .dashboard-kpi .kpi-meta { font-size: .7rem; }
+  .sgs-dashboard .dashboard-ranking .rank-metric span { font-size: .65rem; }
+}
