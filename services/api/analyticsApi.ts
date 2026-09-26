@@ -1,4 +1,5 @@
 import { api } from './apiClient';
+import type { BiMartsData } from '../../types';
 export const analyticsApi = {
   getSummary: (timeRange?: string): Promise<any> =>
     api.get('/api/analytics/summary', timeRange ? { timeRange } : undefined),
@@ -8,7 +9,7 @@ export const analyticsApi = {
     api.put('/api/analytics/kpi-targets', data),
   getAuditLogs: (page = 1, pageSize = 50, filters?: Record<string, any>): Promise<any> =>
     api.get('/api/enterprise/audit-logs', { page, pageSize, ...filters }),
-  getBiMarts: (timeRange?: string): Promise<any> =>
+  getBiMarts: (timeRange?: string): Promise<BiMartsData> =>
     api.get('/api/analytics/bi-marts', timeRange ? { timeRange } : undefined),
   createCampaignCost: (data: { campaignName: string; source: string; cost: number; period: string }): Promise<any> =>
     api.post('/api/analytics/campaign-costs', data),

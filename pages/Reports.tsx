@@ -2,7 +2,7 @@ import React, { useEffect, useState, useMemo, memo, useRef, useCallback } from '
 import { createPortal } from 'react-dom';
 import { 
     BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, 
-    ComposedChart, Line, Area, AreaChart
+    ComposedChart, Line, Area, AreaChart, Legend, Cell, ReferenceLine
 } from 'recharts';
 import { db } from '../services/dbApi';
 import { useTranslation } from '../services/i18n';
@@ -12,6 +12,7 @@ import { CampaignCost } from '../types';
 import { Dropdown } from '../components/Dropdown';
 import { SeoHead } from '../components/SeoHead';
 import { AudienceInsights } from '../components/reports/AudienceInsights';
+import { countNonDirectLeads, summarizePaidMarketing } from '../components/reports/marketingMetrics';
 // -----------------------------------------------------------------------------
 // 1. TYPES & INTERFACES
 // -----------------------------------------------------------------------------
@@ -37,11 +38,18 @@ interface ConversionPeriod {
     inProgress: number;
     conversionRate: number;
 }
+interface CampaignCostSummary {
+    totalCost: number;
+    entryCount: number;
+    byPeriod: Array<{ period: string; cost: number }>;
+    bySource: Array<{ source: string; cost: number }>;
+}
 interface BiData {
     funnel: FunnelStep[];
     attribution: AttributionData[];
     campaignCosts: CampaignCost[];
     conversionByPeriod: ConversionPeriod[];
+    campaignCostSummary?: CampaignCostSummary | null;
 }
 // -----------------------------------------------------------------------------
 // 2. HELPER COMPONENTS
@@ -143,7 +151,11 @@ const CustomTooltip = memo(({ active, payload, label, formatCurrency, theme, t }
                         <div className="w-2 h-2 rounded-full" style={{ backgroundColor: p.color }}></div>
                         <span className="capitalize text-[var(--text-tertiary)] dark:text-slate-400">{p.name}:</span>
                         <span className="font-mono font-bold" style={{ color: p.color }}>
-                            {typeof p.value === 'number' && p.value > 1000 ? formatCurrency(p.value) : p.value}
+                            {p.value == null
+                                ? (p.dataKey === 'roi' ? t('reports.roi_na') : '—')
+                                : p.dataKey === 'roi'
+                                    ? `${p.value > 0 ? '+' : ''}${Number(p.value).toFixed(1)}%`
+                                    : formatCurrency(Number(p.value))}
                         </span>
                     </div>
                 ))}
@@ -155,18 +167,28 @@ const CustomTooltip = memo(({ active, payload, label, formatCurrency, theme, t }
 // -----------------------------------------------------------------------------
 // 3. TAB COMPONENTS
 // -----------------------------------------------------------------------------
-const OverviewTab = memo(({ data, t, formatCurrency, formatCompactNumber, chartTheme, locale }: { data: BiData, t: any, formatCurrency: any, formatCompactNumber: any, chartTheme: any, locale: string }) => {
-    const hasData = data.attribution.length > 0;
+const OverviewTab = memo(({ data, t, formatCurrency, formatCompactNumber, chartTheme, locale, language }: { data: BiData, t: any, formatCurrency: any, formatCompactNumber: any, chartTheme: any, locale: string, language: string }) => {
+    const paidMarketing = useMemo(
+        () => summarizePaidMarketing(data.attribution),
+        [data.attribution],
+    );
+    const paidMarketingData = paidMarketing.channels;
+    const overviewChartData = useMemo(
+        () => data.attribution.map(row => ({
+            ...row,
+            roi: row.channel !== 'DIRECT_SALE' && row.spend > 0 ? row.roi : null,
+        })),
+        [data.attribution],
+    );
+    const hasData = overviewChartData.length > 0;
     // Fix: reverse conversionByPeriod so trend chart shows oldest → newest (left → right)
     const trendData = useMemo(() => [...data.conversionByPeriod].reverse(), [data.conversionByPeriod]);
     const hasTrend = trendData.length > 0;
     const colors = chartTheme?.colors || {};
     const totalRevenue = data.attribution.reduce((acc, curr) => acc + curr.revenue, 0);
     const totalSpend = data.attribution.reduce((acc, curr) => acc + curr.spend, 0);
-    const totalLeads = data.attribution.reduce((acc, curr) => acc + curr.leads, 0);
-    const avgRoi = totalSpend > 0
-        ? ((totalRevenue - totalSpend) / totalSpend) * 100
-        : 0;
+    const totalLeads = countNonDirectLeads(data.attribution);
+    const avgRoi = paidMarketing.roi;
     return (
         <div className="space-y-6 animate-enter">
             <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
@@ -174,7 +196,7 @@ const OverviewTab = memo(({ data, t, formatCurrency, formatCompactNumber, chartT
                     { label: t('reports.metric_revenue'), value: formatCurrency(totalRevenue), color: 'emerald' },
                     { label: t('reports.metric_spend'), value: formatCurrency(totalSpend), color: 'rose' },
                     { label: t('reports.table_leads'), value: totalLeads.toLocaleString(), color: 'indigo' },
-                    { label: t('reports.metric_roi'), value: `${avgRoi > 0 ? '+' : ''}${avgRoi.toFixed(1)}%`, color: avgRoi >= 0 ? 'emerald' : 'rose' },
+                    { label: t('reports.metric_roi'), value: avgRoi == null ? t('reports.roi_na') : `${avgRoi > 0 ? '+' : ''}${avgRoi.toFixed(1)}%`, color: avgRoi == null ? 'slate' : avgRoi >= 0 ? 'emerald' : 'rose' },
                 ].map(({ label, value, color }) => (
                     <div key={label} className="bg-[var(--bg-surface)] p-4 sm:p-5 rounded-[20px] border border-[var(--glass-border)] shadow-sm relative overflow-hidden group min-w-0">
                         <div className={`absolute top-0 right-0 w-20 h-20 bg-${color}-50 rounded-full blur-2xl opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none`}></div>
@@ -183,13 +205,18 @@ const OverviewTab = memo(({ data, t, formatCurrency, formatCompactNumber, chartT
                     </div>
                 ))}
             </div>
+            <p className="text-xs leading-relaxed text-[var(--text-tertiary)] -mt-3">
+                {language === 'vn'
+                    ? 'Tổng doanh thu gồm mọi kênh. ROI chỉ tính doanh thu từ kênh có chi phí marketing được ghi nhận; doanh thu bán trực tiếp và kênh không có chi phí không tham gia phép tính.'
+                    : 'Total revenue includes all channels. ROI uses only revenue from channels with recorded marketing spend; direct-sale revenue and channels without spend are excluded.'}
+            </p>
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                 <div className="lg:col-span-2 bg-[var(--bg-surface)] p-4 sm:p-6 rounded-[24px] border border-[var(--glass-border)] shadow-sm">
                     <h3 className="font-bold text-[var(--text-primary)] mb-3 sm:mb-4 text-sm sm:text-base">{t('reports.chart_source_mix')}</h3>
                     <div style={{ width: '100%', height: 260 }}>
                         {hasData ? (
                             <ResponsiveContainer width="100%" height="100%" minWidth={200} minHeight={200}>
-                                <ComposedChart data={data.attribution} margin={{ top: 8, right: 48, bottom: 36, left: 8 }}>
+                                <ComposedChart data={overviewChartData} margin={{ top: 8, right: 48, bottom: 36, left: 8 }}>
                                     <CartesianGrid strokeDasharray="3 3" vertical={false} stroke={colors.grid} />
                                     <XAxis 
                                         dataKey="channel" 
@@ -338,7 +365,7 @@ const FunnelTab = memo(({ data, t, chartTheme }: { data: BiData, t: any, chartTh
     const maxCount = hasData ? Math.max(...activeFunnel.map(f => f.count)) : 1;
     // overallRate = WON / total (all stages including LOST) — from backend conversionRate
     const wonStage = data.funnel.find(f => f.stage === 'WON');
-    const overallRate = wonStage && wonStage.conversionRate > 0
+    const overallRate = wonStage
         ? wonStage.conversionRate.toFixed(1)
         : null;
     return (
@@ -416,17 +443,46 @@ const FunnelTab = memo(({ data, t, chartTheme }: { data: BiData, t: any, chartTh
         </div>
     );
 });
-const RoiTab = memo(({ data, t, formatCurrency }: { data: BiData, t: any, formatCurrency: any }) => {
+const RoiTab = memo(({ data, t, formatCurrency, formatCompactNumber, chartTheme, language }: { data: BiData, t: any, formatCurrency: any, formatCompactNumber: any, chartTheme: any, language: string }) => {
     const scrollRef = useRef<HTMLDivElement>(null);
     useDraggableScroll(scrollRef);
-    // KPI summary computed from attribution data
-    const totalRevenue = data.attribution.reduce((acc, r) => acc + r.revenue, 0);
-    const totalSpend = data.attribution.reduce((acc, r) => acc + r.spend, 0);
-    const totalLeads = data.attribution.reduce((acc, r) => acc + r.leads, 0);
-    const overallRoi = totalSpend > 0 ? ((totalRevenue - totalSpend) / totalSpend) * 100 : null;
+    const paidMarketing = useMemo(
+        () => summarizePaidMarketing(data.attribution),
+        [data.attribution],
+    );
+    const marketingAttribution = useMemo(
+        () => paidMarketing.channels.map(row => {
+                const key = `source.${row.channel}`;
+                const translated = t(key);
+                return { ...row, channelLabel: translated !== key ? translated : row.channel };
+            }),
+        [paidMarketing.channels, t],
+    );
+    const roiChartData = marketingAttribution.filter(row => Number.isFinite(row.roi));
+    const totalRevenue = paidMarketing.revenue;
+    const totalSpend = paidMarketing.spend;
+    const totalLeads = paidMarketing.leads;
+    const overallRoi = paidMarketing.roi;
+    const colors = chartTheme?.colors || {};
+    const chartHeight = Math.max(250, marketingAttribution.length * 46 + 72);
+    const roiTooltip = ({ active, payload }: any) => {
+        const row = payload?.[0]?.payload;
+        if (!active || !row) return null;
+        return (
+            <div className="rounded-xl border p-3 text-xs shadow-xl" style={{ backgroundColor: colors.tooltipBg, borderColor: colors.grid }}>
+                <p className="mb-2 font-bold text-[var(--text-primary)]">{row.channelLabel}</p>
+                <p className="font-mono font-bold text-[var(--text-primary)]">
+                    {t('reports.metric_roi')}: {row.roi > 0 ? '+' : ''}{row.roi.toFixed(1)}%
+                </p>
+                <p className="mt-1 text-[var(--text-secondary)]">{t('reports.table_revenue')}: {formatCurrency(row.revenue)}</p>
+                <p className="text-[var(--text-secondary)]">{t('reports.table_spend')}: {formatCurrency(row.spend)}</p>
+                <p className="text-[var(--text-secondary)]">{t('reports.table_leads')}: {row.leads.toLocaleString()}</p>
+            </div>
+        );
+    };
     const roiDisplay = (row: AttributionData) => {
         // Fix: when spend = 0, ROI is meaningless — show N/A instead of 0%
-        if (row.spend === 0) return <span className="px-2.5 py-1 rounded-lg text-xs font-bold bg-[var(--glass-surface)] text-[var(--text-secondary)] border border-[var(--glass-border)]">{t('reports.roi_na')}</span>;
+        if (row.channel === 'DIRECT_SALE' || row.spend === 0) return <span className="px-2.5 py-1 rounded-lg text-xs font-bold bg-[var(--glass-surface)] text-[var(--text-secondary)] border border-[var(--glass-border)]">{t('reports.roi_na')}</span>;
         return (
             <span className={`px-2.5 py-1 rounded-lg text-xs font-bold ${row.roi >= 0 ? 'bg-emerald-50 text-emerald-600 border border-emerald-100' : 'bg-rose-50 text-rose-600 border border-rose-100'}`}>
                 {row.roi > 0 ? '+' : ''}{row.roi.toFixed(1)}%
@@ -438,9 +494,9 @@ const RoiTab = memo(({ data, t, formatCurrency }: { data: BiData, t: any, format
         {/* KPI Summary */}
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
             {[
-                { label: t('reports.metric_revenue'), value: formatCurrency(totalRevenue), color: 'emerald' },
+                { label: language === 'vn' ? 'Doanh thu kênh có chi phí' : 'Revenue from paid channels', value: formatCurrency(totalRevenue), color: 'emerald' },
                 { label: t('reports.metric_spend'), value: formatCurrency(totalSpend), color: 'rose' },
-                { label: t('reports.table_leads'), value: totalLeads.toLocaleString(), color: 'indigo' },
+                { label: language === 'vn' ? 'Lead kênh có chi phí' : 'Leads from paid channels', value: totalLeads.toLocaleString(), color: 'indigo' },
                 { 
                     label: t('reports.metric_roi'), 
                     value: overallRoi !== null ? `${overallRoi > 0 ? '+' : ''}${overallRoi.toFixed(1)}%` : t('reports.roi_na'),
@@ -454,6 +510,60 @@ const RoiTab = memo(({ data, t, formatCurrency }: { data: BiData, t: any, format
                 </div>
             ))}
         </div>
+        <p className="text-xs leading-relaxed text-[var(--text-tertiary)] -mt-3">
+            {language === 'vn'
+                ? 'Biểu đồ và KPI chỉ gồm kênh marketing có chi phí ghi nhận. Doanh thu DIRECT_SALE và kênh không có chi phí vẫn có trong bảng chi tiết, nhưng không tham gia ROI.'
+                : 'Charts and KPIs include only marketing channels with recorded spend. DIRECT_SALE and channels without spend remain in the detail table but are excluded from ROI.'}
+        </p>
+        <section className="grid gap-4 lg:grid-cols-2" aria-label={language === 'vn' ? 'Biểu đồ ROI theo kênh' : 'ROI by channel charts'}>
+            <div className="min-w-0 rounded-[22px] border border-[var(--glass-border)] bg-[var(--bg-surface)] p-4 sm:p-5">
+                <div className="mb-3">
+                    <h2 className="font-bold text-[var(--text-primary)]">{language === 'vn' ? 'Doanh thu và chi phí theo kênh' : 'Revenue and spend by channel'}</h2>
+                    <p className="mt-1 text-xs text-[var(--text-tertiary)]">{language === 'vn' ? 'Cùng đơn vị tiền tệ; chỉ kênh có chi phí được ghi nhận.' : 'Same currency scale; channels with recorded spend only.'}</p>
+                </div>
+                <div style={{ width: '100%', height: chartHeight }}>
+                    {marketingAttribution.length ? (
+                        <ResponsiveContainer width="100%" height="100%" minWidth={240} minHeight={220}>
+                            <BarChart data={marketingAttribution} layout="vertical" margin={{ top: 4, right: 16, bottom: 4, left: 4 }}>
+                                <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke={colors.grid} />
+                                <XAxis type="number" axisLine={false} tickLine={false} tick={{ fill: colors.text, fontSize: 10 }} tickFormatter={(value) => formatCompactNumber(Number(value))} />
+                                <YAxis type="category" dataKey="channelLabel" width={104} axisLine={false} tickLine={false} tick={{ fill: colors.text, fontSize: 10 }} />
+                                <Tooltip content={<CustomTooltip formatCurrency={formatCurrency} theme={chartTheme} t={t} />} />
+                                <Legend wrapperStyle={{ fontSize: 11 }} />
+                                <Bar dataKey="revenue" name={t('reports.table_revenue')} fill={colors.primary} radius={[0, 4, 4, 0]} />
+                                <Bar dataKey="spend" name={t('reports.table_spend')} fill={colors.success} radius={[0, 4, 4, 0]} />
+                            </BarChart>
+                        </ResponsiveContainer>
+                    ) : (
+                        <EmptyChartState t={t} message={t('common.no_results')} />
+                    )}
+                </div>
+            </div>
+            <div className="min-w-0 rounded-[22px] border border-[var(--glass-border)] bg-[var(--bg-surface)] p-4 sm:p-5">
+                <div className="mb-3">
+                    <h2 className="font-bold text-[var(--text-primary)]">{language === 'vn' ? 'ROI theo kênh marketing' : 'ROI by marketing channel'}</h2>
+                    <p className="mt-1 text-xs text-[var(--text-tertiary)]">{language === 'vn' ? 'Đường mốc 0% phân biệt kênh lỗ và kênh có ROI dương.' : 'The 0% reference line separates negative and positive ROI.'}</p>
+                </div>
+                <div style={{ width: '100%', height: chartHeight }}>
+                    {roiChartData.length ? (
+                        <ResponsiveContainer width="100%" height="100%" minWidth={240} minHeight={220}>
+                            <BarChart data={roiChartData} layout="vertical" margin={{ top: 4, right: 20, bottom: 4, left: 4 }}>
+                                <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke={colors.grid} />
+                                <XAxis type="number" axisLine={false} tickLine={false} tick={{ fill: colors.text, fontSize: 10 }} tickFormatter={(value) => `${Number(value).toFixed(0)}%`} />
+                                <YAxis type="category" dataKey="channelLabel" width={104} axisLine={false} tickLine={false} tick={{ fill: colors.text, fontSize: 10 }} />
+                                <ReferenceLine x={0} stroke={colors.text} strokeDasharray="4 4" />
+                                <Tooltip content={roiTooltip} />
+                                <Bar dataKey="roi" name={t('reports.metric_roi')} radius={[0, 4, 4, 0]}>
+                                    {roiChartData.map(row => <Cell key={row.channel} fill={row.roi >= 0 ? colors.success : '#e05b67'} />)}
+                                </Bar>
+                            </BarChart>
+                        </ResponsiveContainer>
+                    ) : (
+                        <EmptyChartState t={t} message={t('common.no_results')} />
+                    )}
+                </div>
+            </div>
+        </section>
         {/* Attribution Table */}
         <div className="bg-[var(--bg-surface)] p-0 md:p-2 rounded-[24px] border border-[var(--glass-border)] shadow-sm overflow-hidden">
             {data.attribution.length === 0 ? (
@@ -485,7 +595,9 @@ const RoiTab = memo(({ data, t, formatCurrency }: { data: BiData, t: any, format
                                     <td className="p-5 text-right font-mono text-[var(--text-secondary)]">
                                         {row.spend > 0 ? formatCurrency(row.spend) : <span className="text-[var(--text-secondary)]">{t('common.no_value')}</span>}
                                     </td>
-                                    <td className="p-5 text-right font-bold text-[var(--text-secondary)]">{row.leads}</td>
+                                    <td className="p-5 text-right font-bold text-[var(--text-secondary)]">
+                                        {row.channel === 'DIRECT_SALE' ? t('common.no_value') : row.leads}
+                                    </td>
                                     <td className="p-5 text-right font-mono text-[var(--text-secondary)]">
                                         {row.cac > 0 ? formatCurrency(row.cac) : <span className="text-[var(--text-secondary)]">{t('common.no_value')}</span>}
                                     </td>
@@ -501,7 +613,7 @@ const RoiTab = memo(({ data, t, formatCurrency }: { data: BiData, t: any, format
     </div>
     );
 });
-const CostsTab = memo(({ data, t, formatCurrency, currentUser, onCostUpdated, notify }: { data: BiData, t: any, formatCurrency: any, currentUser: any, onCostUpdated: () => void, notify: (msg: string, type?: 'success' | 'error') => void }) => {
+const CostsTab = memo(({ data, t, formatCurrency, currentUser, onCostUpdated, notify, language }: { data: BiData, t: any, formatCurrency: any, currentUser: any, onCostUpdated: () => void, notify: (msg: string, type?: 'success' | 'error') => void, language: string }) => {
     const scrollRef = useRef<HTMLDivElement>(null);
     useDraggableScroll(scrollRef);
     const [showUpdateModal, setShowUpdateModal] = useState(false);
@@ -513,6 +625,9 @@ const CostsTab = memo(({ data, t, formatCurrency, currentUser, onCostUpdated, no
     const [isSaving, setIsSaving] = useState(false);
     const [deletingId, setDeletingId] = useState<string | null>(null);
     const [isDeleting, setIsDeleting] = useState(false);
+    const costSummary = data.campaignCostSummary;
+    const maxPeriodCost = Math.max(0, ...(costSummary?.byPeriod.map(item => item.cost) || []));
+    const maxSourceCost = Math.max(0, ...(costSummary?.bySource.map(item => item.cost) || []));
     const canUpdateCosts = ['SUPER_ADMIN', 'ADMIN', 'TEAM_LEAD'].includes(currentUser?.role ?? '');
     const handleUpdate = async () => {
         if (!editingCost) return;
@@ -575,6 +690,71 @@ const CostsTab = memo(({ data, t, formatCurrency, currentUser, onCostUpdated, no
     };
     return (
     <div className="space-y-6 animate-enter">
+        {costSummary ? (
+            <section className="space-y-4" aria-label={t('reports.cost_history')}>
+                <div className="grid grid-cols-2 gap-3 sm:gap-4">
+                    <div className="rounded-[20px] border border-[var(--glass-border)] bg-[var(--bg-surface)] p-4 sm:p-5">
+                        <p className="text-xs font-bold uppercase tracking-wider text-[var(--text-secondary)]">{t('reports.metric_spend')}</p>
+                        <p className="mt-2 truncate text-lg font-extrabold tabular-nums text-[var(--text-primary)] sm:text-2xl" title={formatCurrency(costSummary.totalCost)}>{formatCurrency(costSummary.totalCost)}</p>
+                        <p className="mt-1 text-xs text-[var(--text-tertiary)]">{language === 'vn' ? 'Tổng chi phí trong kỳ đã chọn' : 'Total spend in the selected period'}</p>
+                    </div>
+                    <div className="rounded-[20px] border border-[var(--glass-border)] bg-[var(--bg-surface)] p-4 sm:p-5">
+                        <p className="text-xs font-bold uppercase tracking-wider text-[var(--text-secondary)]">{language === 'vn' ? 'Bản ghi chi phí' : 'Cost entries'}</p>
+                        <p className="mt-2 text-lg font-extrabold tabular-nums text-[var(--text-primary)] sm:text-2xl">{costSummary.entryCount.toLocaleString()}</p>
+                        <p className="mt-1 text-xs text-[var(--text-tertiary)]">{language === 'vn' ? 'Toàn bộ bản ghi phù hợp bộ lọc thời gian' : 'All entries matching the selected time range'}</p>
+                    </div>
+                </div>
+                <div className="grid gap-4 lg:grid-cols-2">
+                    <div className="rounded-[22px] border border-[var(--glass-border)] bg-[var(--bg-surface)] p-4 sm:p-5">
+                        <div className="mb-4">
+                            <h3 className="font-bold text-[var(--text-primary)]">{t('reports.cost_month')}</h3>
+                            <p className="mt-1 text-xs text-[var(--text-tertiary)]">{language === 'vn' ? 'Chi phí theo tháng · cùng phạm vi thời gian đã chọn' : 'Monthly spend · same selected time range'}</p>
+                        </div>
+                        {costSummary.byPeriod.length ? (
+                            <div className="space-y-3">
+                                {costSummary.byPeriod.map(item => (
+                                    <div key={item.period} className="grid grid-cols-[4.25rem_minmax(0,1fr)_auto] items-center gap-3">
+                                        <span className="font-mono text-xs text-[var(--text-secondary)]">{item.period}</span>
+                                        <div className="h-2.5 overflow-hidden rounded-full bg-[var(--glass-surface-hover)]" role="img" aria-label={`${item.period}: ${formatCurrency(item.cost)}`}>
+                                            <div className="h-full rounded-full bg-sgs-primary transition-all duration-500" style={{ width: `${maxPeriodCost > 0 ? item.cost / maxPeriodCost * 100 : 0}%` }} />
+                                        </div>
+                                        <span className="max-w-[8rem] truncate text-right font-mono text-xs font-semibold text-[var(--text-primary)]" title={formatCurrency(item.cost)}>{formatCurrency(item.cost)}</span>
+                                    </div>
+                                ))}
+                            </div>
+                        ) : <p className="rounded-xl bg-[var(--glass-surface)] p-4 text-sm text-[var(--text-secondary)]">{t('common.no_results')}</p>}
+                    </div>
+                    <div className="rounded-[22px] border border-[var(--glass-border)] bg-[var(--bg-surface)] p-4 sm:p-5">
+                        <div className="mb-4">
+                            <h3 className="font-bold text-[var(--text-primary)]">{t('reports.cost_source')}</h3>
+                            <p className="mt-1 text-xs text-[var(--text-tertiary)]">{language === 'vn' ? 'Chi phí theo kênh nguồn' : 'Spend by source'}</p>
+                        </div>
+                        {costSummary.bySource.length ? (
+                            <div className="space-y-3">
+                                {costSummary.bySource.map(item => (
+                                    <div key={item.source} className="grid grid-cols-[5.25rem_minmax(0,1fr)_auto] items-center gap-3">
+                                        <span className="truncate text-xs font-medium text-[var(--text-secondary)]">{t(`source.${item.source}`) !== `source.${item.source}` ? t(`source.${item.source}`) : item.source}</span>
+                                        <div className="h-2.5 overflow-hidden rounded-full bg-[var(--glass-surface-hover)]" role="img" aria-label={`${item.source}: ${formatCurrency(item.cost)}`}>
+                                            <div className="h-full rounded-full bg-sgs-verified transition-all duration-500" style={{ width: `${maxSourceCost > 0 ? item.cost / maxSourceCost * 100 : 0}%` }} />
+                                        </div>
+                                        <span className="max-w-[8rem] truncate text-right font-mono text-xs font-semibold text-[var(--text-primary)]" title={formatCurrency(item.cost)}>{formatCurrency(item.cost)}</span>
+                                    </div>
+                                ))}
+                            </div>
+                        ) : <p className="rounded-xl bg-[var(--glass-surface)] p-4 text-sm text-[var(--text-secondary)]">{t('common.no_results')}</p>}
+                    </div>
+                </div>
+                <p className="text-xs leading-relaxed text-[var(--text-tertiary)]">
+                    {language === 'vn'
+                        ? 'Danh sách chi tiết bên dưới chỉ hiển thị tối đa 100 bản ghi mới nhất; tổng chi phí và phân bổ trên đây dùng toàn bộ bản ghi trong phạm vi kỳ đã chọn.'
+                        : 'The detail list below shows up to the latest 100 entries; totals and breakdowns above use all entries in the selected period.'}
+                </p>
+            </section>
+        ) : (
+            <p className="rounded-xl border border-[var(--glass-border)] bg-[var(--glass-surface)] p-4 text-xs text-[var(--text-secondary)]">
+                {language === 'vn' ? 'Chưa có dữ liệu tổng hợp chi phí cho phạm vi này. Danh sách chi tiết vẫn được giữ bên dưới.' : 'No cost summary is available for this scope. The detailed list remains below.'}
+            </p>
+        )}
         <div className="bg-[var(--bg-surface)] p-0 md:p-2 rounded-[24px] border border-[var(--glass-border)] shadow-sm overflow-hidden">
             <div className="p-5 border-b border-[var(--glass-border)] flex justify-between items-center bg-[var(--bg-surface)]">
                 <h3 className="font-bold text-[var(--text-primary)] text-sm uppercase tracking-wide">{t('reports.cost_history')}</h3>
@@ -770,6 +950,7 @@ export const Reports: React.FC = () => {
     const [timeRange, setTimeRange] = useState<string>('30');
     const [toast, setToast] = useState<{ msg: string; type: 'success' | 'error' } | null>(null);
     const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
+    const [loadError, setLoadError] = useState(false);
     const mountedRef = useRef(true);
     const refreshTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);    
     const { t, formatCurrency, formatCompactNumber, language } = useTranslation();
@@ -781,6 +962,7 @@ export const Reports: React.FC = () => {
     }, []);
     const loadData = useCallback(() => {
         let mounted = true;
+        setLoadError(false);
         setLoading(true);      
         Promise.all([
             db.generateBiMarts(timeRange),
@@ -792,6 +974,7 @@ export const Reports: React.FC = () => {
                 attribution: res.attribution || [],
                 campaignCosts: res.campaignCosts || [],
                 conversionByPeriod: res.conversionByPeriod || [],
+                campaignCostSummary: res.campaignCostSummary ?? null,
             };
             setData(safeData);
             setCurrentUser(user);
@@ -799,6 +982,8 @@ export const Reports: React.FC = () => {
             setLoading(false);
         }).catch(() => {
             if (mounted) {
+                setData(null);
+                setLoadError(true);
                 notify(t('common.error_loading'), 'error');
                 setLoading(false);
             }
@@ -818,9 +1003,13 @@ export const Reports: React.FC = () => {
                 attribution: res.attribution || [],
                 campaignCosts: res.campaignCosts || [],
                 conversionByPeriod: res.conversionByPeriod || [],
+                campaignCostSummary: res.campaignCostSummary ?? null,
             });
             setLastUpdated(new Date());
-        }).catch(() => {});
+            setLoadError(false);
+        }).catch(() => {
+            if (mountedRef.current) setLoadError(true);
+        });
     }, [timeRange]);
     // Debounced refresh: wait 2s after last event before fetching (avoids hammering on bulk updates)
     const scheduleRefresh = useCallback(() => {
@@ -851,11 +1040,34 @@ export const Reports: React.FC = () => {
     ], [t]);
     const scrollRef = useRef<HTMLDivElement>(null);
     useDraggableScroll(scrollRef);
-    if (loading) return <div className="p-10 text-center text-[var(--text-secondary)] font-mono animate-pulse">{t('common.loading')}</div>;
-    if (!data) return null;
+    if (loading) return (
+        <div className="space-y-4 p-4 sm:p-6" aria-label={t('common.loading')}>
+            <div className="h-16 animate-pulse rounded-[22px] border border-[var(--glass-border)] bg-[var(--glass-surface)]" />
+            <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+                {[0, 1, 2, 3].map(item => <div key={item} className="h-24 animate-pulse rounded-[20px] border border-[var(--glass-border)] bg-[var(--glass-surface)]" />)}
+            </div>
+            <div className="grid gap-4 lg:grid-cols-3"><div className="h-72 rounded-[22px] border border-[var(--glass-border)] bg-[var(--glass-surface)] animate-pulse lg:col-span-2" /><div className="h-72 rounded-[22px] border border-[var(--glass-border)] bg-[var(--glass-surface)] animate-pulse" /></div>
+        </div>
+    );
+    if (!data) return (
+        <div className="mx-auto max-w-2xl p-6 sm:p-10">
+            <div className="rounded-[22px] border border-rose-200 bg-rose-50 p-6 text-center">
+                <p className="text-sm font-semibold text-rose-800">{t('common.error_loading')}</p>
+                <button onClick={() => { void loadData(); }} className="mt-4 rounded-xl bg-[var(--ui-brand)] px-4 py-2.5 text-sm font-bold text-[var(--ui-on-brand)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--ui-brand)] focus-visible:ring-offset-2">
+                    {language === 'vn' ? 'Thử tải lại' : 'Try again'}
+                </button>
+            </div>
+        </div>
+    );
     return (
         <div className="p-4 sm:p-6 space-y-4 pb-20 relative animate-enter">
           <SeoHead title="Báo Cáo | SGS LAND" description="Xem báo cáo kinh doanh, phân tích hiệu suất và thống kê bất động sản." canonicalPath="/reports" />
+            {loadError && data && (
+                <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-xs text-rose-800" role="alert">
+                    <span>{language === 'vn' ? 'Không thể cập nhật dữ liệu mới nhất.' : 'The latest report data could not be refreshed.'}</span>
+                    <button onClick={() => { void loadData(); }} className="font-bold underline underline-offset-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-rose-500">{language === 'vn' ? 'Thử lại' : 'Retry'}</button>
+                </div>
+            )}
 
             {/* Header: single bar — Tabs (left) + Time Filter (right) on desktop; stacked on mobile */}
             <div className="bg-[var(--bg-surface)] px-4 sm:px-5 py-3 rounded-[24px] border border-[var(--glass-border)] shadow-sm">
@@ -958,10 +1170,10 @@ export const Reports: React.FC = () => {
             </div>
             {/* Content Area */}
             <div className="min-h-[500px]">
-                {activeTab === 'OVERVIEW' && <OverviewTab data={data} t={t} formatCurrency={formatCurrency} formatCompactNumber={formatCompactNumber} chartTheme={chartTheme} locale={locale} />}
+                {activeTab === 'OVERVIEW' && <OverviewTab data={data} t={t} formatCurrency={formatCurrency} formatCompactNumber={formatCompactNumber} chartTheme={chartTheme} locale={locale} language={language} />}
                 {activeTab === 'FUNNEL' && <FunnelTab data={data} t={t} chartTheme={chartTheme} />} 
-                {activeTab === 'ROI' && <RoiTab data={data} t={t} formatCurrency={formatCurrency} />}
-                {activeTab === 'COSTS' && <CostsTab data={data} t={t} formatCurrency={formatCurrency} currentUser={currentUser} onCostUpdated={loadData} notify={notify} />}
+                {activeTab === 'ROI' && <RoiTab data={data} t={t} formatCurrency={formatCurrency} formatCompactNumber={formatCompactNumber} chartTheme={chartTheme} language={language} />}
+                {activeTab === 'COSTS' && <CostsTab data={data} t={t} formatCurrency={formatCurrency} currentUser={currentUser} onCostUpdated={loadData} notify={notify} language={language} />}
             </div>
             {activeTab === 'OVERVIEW' && <AudienceInsights timeRange={timeRange} language={language} role={currentUser?.role} />}
 

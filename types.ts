@@ -1043,6 +1043,27 @@ export interface CampaignCost {
     cost: number;
     createdAt: ISOString;
 }
+export interface CampaignCostSummary {
+    totalCost: number;
+    entryCount: number;
+    byPeriod: Array<{ period: string; cost: number }>;
+    bySource: Array<{ source: string; cost: number }>;
+}
+export interface BiMartsData {
+    funnel: Array<{ stage: string; count: number; conversionRate: number }>;
+    attribution: Array<{ channel: string; spend: number; leads: number; revenue: number; cac: number; roi: number }>;
+    campaignCosts: CampaignCost[];
+    conversionByPeriod: Array<{
+        period: string;
+        won: number;
+        lost: number;
+        total: number;
+        resolved: number;
+        inProgress: number;
+        conversionRate: number;
+    }>;
+    campaignCostSummary: CampaignCostSummary | null;
+}
 // Update to include metrics
 export interface SequenceStats {
     enrolled: number;

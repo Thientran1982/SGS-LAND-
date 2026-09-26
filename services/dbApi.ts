@@ -7,7 +7,7 @@ import { userApi } from './api/userApi';
 import { analyticsApi } from './api/analyticsApi';
 import { knowledgeApi } from './api/knowledgeApi';
 import { api } from './api/apiClient';
-import { PlanTier, Plan, UserRole, ThreadStatus, ComplianceConfig } from '../types';
+import { PlanTier, Plan, UserRole, ThreadStatus, ComplianceConfig, type BiMartsData } from '../types';
 import { ROUTES } from '../config/routes';
 const DEFAULT_TENANT_ID = '00000000-0000-0000-0000-000000000001';
 export const PLANS: Record<PlanTier, Plan> = {
@@ -941,13 +941,8 @@ class DatabaseApiClient {
       return { status: 'unknown', components: [] };
     }
   }
-  async generateBiMarts(timeRange?: string) {
-    try {
-      return await analyticsApi.getBiMarts(timeRange);
-    } catch (error) {
-      console.error('generateBiMarts error:', error);
-      return { funnel: [], attribution: [], conversionByPeriod: [], campaignCosts: [] };
-    }
+  async generateBiMarts(timeRange?: string): Promise<BiMartsData> {
+    return analyticsApi.getBiMarts(timeRange);
   }
   async updateCampaignCost(id: string, cost: number) {
     try {

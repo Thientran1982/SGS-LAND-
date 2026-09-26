@@ -1113,11 +1113,19 @@ export class AnalyticsRepository extends BaseRepository {
 
       // Campaign costs: always full-scope (company-level marketing spend)
       const campaignCostsResult = await client.query(`
-        SELECT source, COALESCE(SUM(cost), 0)::numeric as total_cost
+        SELECT source, COALESCE(SUM(cost), 0)::numeric as total_cost, COUNT(*)::int as entry_count
         FROM campaign_costs
         WHERE ${TENANT_FILTER}
           ${useTimeFilter ? `AND period >= TO_CHAR(NOW() - INTERVAL '${days} days', 'YYYY-MM')` : ''}
         GROUP BY source
+      `);
+      const campaignCostByPeriodResult = await client.query(`
+        SELECT period, COALESCE(SUM(cost), 0)::numeric as total_cost
+        FROM campaign_costs
+        WHERE ${TENANT_FILTER}
+          ${useTimeFilter ? `AND period >= TO_CHAR(NOW() - INTERVAL '${days} days', 'YYYY-MM')` : ''}
+        GROUP BY period
+        ORDER BY period ASC
       `);
 
       // normalizeSource must be defined before costsBySource so we can normalize
@@ -1160,6 +1168,17 @@ export class AnalyticsRepository extends BaseRepository {
         const normalizedKey = normalizeSource(row.source);
         costsBySource[normalizedKey] = (costsBySource[normalizedKey] || 0) + (parseFloat(row.total_cost) || 0);
       }
+      const campaignCostSummary = {
+        totalCost: Object.values(costsBySource).reduce((sum, cost) => sum + cost, 0),
+        entryCount: campaignCostsResult.rows.reduce((sum: number, row: any) => sum + (Number(row.entry_count) || 0), 0),
+        byPeriod: campaignCostByPeriodResult.rows.map((row: any) => ({
+          period: row.period,
+          cost: parseFloat(row.total_cost) || 0,
+        })),
+        bySource: Object.entries(costsBySource)
+          .map(([source, cost]) => ({ source, cost }))
+          .sort((a, b) => b.cost - a.cost),
+      };
 
       const attribution = attributionResult.rows.map((row: any) => {
         const normalizedSource = normalizeSource(row.source);
@@ -1285,6 +1304,7 @@ export class AnalyticsRepository extends BaseRepository {
         attribution,
         conversionByPeriod,
         campaignCosts,
+        campaignCostSummary,
       };
     });
   }
