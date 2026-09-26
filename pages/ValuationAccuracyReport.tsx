@@ -4,6 +4,7 @@ import { CartesianGrid, Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YA
 import { SeoHead } from '../components/SeoHead';
 import { db } from '../services/dbApi';
 import { api } from '../services/api/apiClient';
+import { useTranslation, type Language } from '../services/i18n';
 import type { User } from '../types';
 
 type Metrics = {
@@ -41,20 +42,32 @@ type OperationalEvent = {
   eventType: string;
   payload: {
     thresholdVersion?: number;
-    notification?: { title?: string; body?: string; type?: string };
+    notification?: {
+      title?: string;
+      body?: string;
+      type?: string;
+      metadata?: {
+        authorName?: string | null;
+        version?: number;
+        thresholds?: Thresholds;
+      };
+    };
   };
   resolvedAt: string | null;
   resolvedBy: string | null;
   createdAt: string;
 };
 
-const formatVnd = (value: number | null) =>
-  value == null ? '—' : `${Math.round(value).toLocaleString('vi-VN')} VND/m²`;
-const formatPercent = (value: number | null) =>
-  value == null ? '—' : `${(value * 100).toFixed(1)}%`;
-const dateTime = (value: string) => new Date(value).toLocaleString('vi-VN');
+type Translate = (key: string, params?: Record<string, string | number>) => string;
+const localeFor = (language: Language) => language === 'vn' ? 'vi-VN' : 'en-US';
+const formatVnd = (value: number | null, language: Language) =>
+  value == null ? '—' : `${Math.round(value).toLocaleString(localeFor(language))} VND/m²`;
+const formatPercent = (value: number | null, language: Language) =>
+  value == null ? '—' : `${new Intl.NumberFormat(localeFor(language), { minimumFractionDigits: 1, maximumFractionDigits: 1 }).format(value * 100)}%`;
+const dateTime = (value: string, language: Language) => new Date(value).toLocaleString(localeFor(language));
+const formatCount = (value: number, language: Language) => value.toLocaleString(localeFor(language));
 
-function DriftNotificationEvents() {
+function DriftNotificationEvents({ language, t }: { language: Language; t: Translate }) {
   const [events, setEvents] = useState<OperationalEvent[]>([]);
   const [statusFilter, setStatusFilter] = useState<'all' | 'open' | 'resolved'>('all');
   const [loading, setLoading] = useState(true);
@@ -71,8 +84,8 @@ function DriftNotificationEvents() {
         { eventType: 'valuation_drift_threshold_notification_failed' },
       );
       setEvents(response.events || []);
-    } catch (err: any) {
-      setError(err?.message || 'Không thể tải sự kiện gửi thông báo drift.');
+    } catch {
+      setError('valuationAccuracy.notifications.error');
     } finally {
       setLoading(false);
     }
@@ -98,9 +111,9 @@ function DriftNotificationEvents() {
         `/api/valuation/admin/operational-events/${encodeURIComponent(event.id)}/retry`,
       );
       setEvents(current => current.map(item => item.id === event.id ? response.event : item));
-      setFeedback({ id: event.id, message: 'Đã gửi lại thông báo cho các quản trị viên.', success: true });
-    } catch (err: any) {
-      setFeedback({ id: event.id, message: err?.message || 'Gửi lại thông báo thất bại; sự kiện vẫn đang mở.', success: false });
+      setFeedback({ id: event.id, message: 'retry-success', success: true });
+    } catch {
+      setFeedback({ id: event.id, message: 'retry-error', success: false });
     } finally {
       setRetryingId(null);
     }
@@ -110,24 +123,24 @@ function DriftNotificationEvents() {
     <section className="overflow-hidden rounded-[22px] border border-[var(--glass-border)] bg-[var(--bg-surface)] shadow-sm">
       <div className="flex flex-wrap items-start justify-between gap-3 border-b border-[var(--glass-border)] px-4 py-4 sm:px-5">
         <div>
-          <h2 className="font-bold text-[var(--text-primary)]">Thông báo drift bị bỏ lỡ</h2>
-          <p className="mt-1 text-xs leading-relaxed text-[var(--text-tertiary)]">Theo dõi các lần gửi cảnh báo ngưỡng thất bại và xử lý lại từ workspace.</p>
-          <div className="mt-3 flex flex-wrap items-center gap-2 text-xs" aria-label="Tóm tắt sự kiện drift">
-            <span className="rounded-full bg-amber-50 px-2.5 py-1 font-semibold text-amber-800">Đang mở: {openCount}</span>
-            <span className="rounded-full bg-emerald-50 px-2.5 py-1 font-semibold text-emerald-800">Đã xử lý: {resolvedCount}</span>
+          <h2 className="font-bold text-[var(--text-primary)]">{t('valuationAccuracy.notifications.title')}</h2>
+          <p className="mt-1 text-xs leading-relaxed text-[var(--text-tertiary)]">{t('valuationAccuracy.notifications.description')}</p>
+          <div className="mt-3 flex flex-wrap items-center gap-2 text-xs" aria-label={t('valuationAccuracy.notifications.summaryAria')}>
+            <span className="rounded-full bg-amber-50 px-2.5 py-1 font-semibold text-amber-800">{t('valuationAccuracy.notifications.openCount', { count: formatCount(openCount, language) })}</span>
+            <span className="rounded-full bg-emerald-50 px-2.5 py-1 font-semibold text-emerald-800">{t('valuationAccuracy.notifications.resolvedCount', { count: formatCount(resolvedCount, language) })}</span>
           </div>
         </div>
         <div className="flex flex-wrap items-center gap-2">
           <label className="flex items-center gap-2 text-xs font-semibold text-[var(--text-secondary)]">
-            <span>Lọc trạng thái</span>
+            <span>{t('valuationAccuracy.notifications.filter')}</span>
             <select
               value={statusFilter}
               onChange={event => setStatusFilter(event.target.value as 'all' | 'open' | 'resolved')}
               className="min-h-10 rounded-lg border border-[var(--glass-border)] bg-[var(--glass-surface)] px-2.5 py-2 text-xs font-semibold text-[var(--text-primary)] focus:outline-none focus:ring-2 focus:ring-[var(--ui-brand)]"
             >
-              <option value="all">Tất cả</option>
-              <option value="open">Đang mở</option>
-              <option value="resolved">Đã xử lý</option>
+              <option value="all">{t('valuationAccuracy.notifications.filterAll')}</option>
+              <option value="open">{t('valuationAccuracy.notifications.filterOpen')}</option>
+              <option value="resolved">{t('valuationAccuracy.notifications.filterResolved')}</option>
             </select>
           </label>
           <button
@@ -135,24 +148,39 @@ function DriftNotificationEvents() {
             disabled={loading}
             className="inline-flex min-h-10 items-center gap-1.5 rounded-lg border border-[var(--glass-border)] px-3 py-2 text-xs font-semibold text-[var(--text-secondary)] hover:bg-[var(--glass-surface)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--ui-brand)] disabled:opacity-50"
           >
-            <RefreshCw className={`h-3.5 w-3.5 ${loading ? 'animate-spin' : ''}`} /> Làm mới
+            <RefreshCw className={`h-3.5 w-3.5 ${loading ? 'animate-spin' : ''}`} /> {t('valuationAccuracy.notifications.refresh')}
           </button>
         </div>
       </div>
-      {error && <div className="mx-4 my-4 rounded-lg border border-rose-200 bg-rose-50 p-3 text-sm text-rose-800 sm:mx-5" role="alert">{error}</div>}
+      {error && <div className="mx-4 my-4 rounded-lg border border-rose-200 bg-rose-50 p-3 text-sm text-rose-800 sm:mx-5" role="alert">{t(error)}</div>}
       {loading ? (
-        <div className="space-y-3 p-5" aria-label="Đang tải sự kiện"><div className="h-16 animate-pulse rounded-xl bg-[var(--glass-surface)]" /><div className="h-16 animate-pulse rounded-xl bg-[var(--glass-surface)]" /></div>
+        <div className="space-y-3 p-5" aria-label={t('valuationAccuracy.notifications.loading')}><div className="h-16 animate-pulse rounded-xl bg-[var(--glass-surface)]" /><div className="h-16 animate-pulse rounded-xl bg-[var(--glass-surface)]" /></div>
       ) : events.length === 0 ? (
-        <div className="p-5 text-sm text-[var(--text-tertiary)]">Chưa có sự kiện gửi thông báo drift nào.</div>
+        <div className="p-5 text-sm text-[var(--text-tertiary)]">{t('valuationAccuracy.notifications.empty')}</div>
       ) : visibleEvents.length === 0 ? (
         <div className="p-5 text-sm text-[var(--text-tertiary)]">
-          Không có sự kiện nào ở trạng thái {statusFilter === 'open' ? 'đang mở' : 'đã xử lý'}.
+          {statusFilter === 'open'
+            ? t('valuationAccuracy.notifications.filteredEmptyOpen')
+            : t('valuationAccuracy.notifications.filteredEmptyResolved')}
         </div>
       ) : (
         <div className="divide-y divide-[var(--glass-border)]">
           {visibleEvents.map(event => {
             const open = !event.resolvedAt;
             const notification = event.payload?.notification;
+            const notificationThresholds = notification?.metadata?.thresholds;
+            const notificationTitle = notification?.type === 'drift_threshold_changed'
+              ? t('valuationAccuracy.notifications.thresholdsUpdatedTitle')
+              : t('valuationAccuracy.notifications.failedTitle');
+            const notificationBody = notificationThresholds
+              ? t('valuationAccuracy.notifications.thresholdsUpdatedBody', {
+                  author: notification.metadata?.authorName || t('valuationAccuracy.notifications.actorFallback'),
+                  version: notification.metadata?.version ?? event.payload?.thresholdVersion ?? '—',
+                  mae: formatVnd(notificationThresholds.maeVndPerM2, language),
+                  mape: formatPercent(notificationThresholds.mape, language),
+                  runs: formatCount(notificationThresholds.consecutiveRuns, language),
+                })
+              : t('valuationAccuracy.notifications.failedBody');
             return (
               <div key={event.id} className="p-5">
                 <div className="flex flex-wrap items-start justify-between gap-3">
@@ -160,12 +188,12 @@ function DriftNotificationEvents() {
                     <div className="flex flex-wrap items-center gap-2">
                       <span className={`inline-flex items-center gap-1 rounded-full px-2 py-1 text-xs font-semibold ${open ? 'bg-amber-100 text-amber-800' : 'bg-emerald-100 text-emerald-800'}`}>
                         {open ? <AlertTriangle className="h-3.5 w-3.5" /> : <CheckCircle2 className="h-3.5 w-3.5" />}
-                        {open ? 'Đang mở' : 'Đã xử lý'}
+                        {open ? t('valuationAccuracy.notifications.statusOpen') : t('valuationAccuracy.notifications.statusResolved')}
                       </span>
-                      <span className="text-xs text-[var(--text-tertiary)]">{dateTime(event.createdAt)}</span>
+                      <span className="text-xs text-[var(--text-tertiary)]">{dateTime(event.createdAt, language)}</span>
                     </div>
-                    <h3 className="mt-2 font-semibold text-[var(--text-primary)]">{notification?.title || 'Gửi thông báo drift thất bại'}</h3>
-                    {notification?.body && <p className="mt-1 text-sm leading-relaxed text-[var(--text-secondary)]">{notification.body}</p>}
+                    <h3 className="mt-2 font-semibold text-[var(--text-primary)]">{notificationTitle}</h3>
+                    {notification?.body && <p className="mt-1 text-sm leading-relaxed text-[var(--text-secondary)]">{notificationBody}</p>}
                   </div>
                   {open && (
                     <button
@@ -174,18 +202,20 @@ function DriftNotificationEvents() {
                       className="inline-flex min-h-10 shrink-0 items-center gap-1.5 rounded-lg bg-[var(--ui-brand)] px-3 py-2 text-xs font-bold text-[var(--ui-on-brand)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--ui-brand)] focus-visible:ring-offset-2 disabled:opacity-50"
                     >
                       <RotateCcw className={`h-3.5 w-3.5 ${retryingId === event.id ? 'animate-spin' : ''}`} />
-                      {retryingId === event.id ? 'Đang gửi lại…' : 'Gửi lại'}
+                      {retryingId === event.id ? t('valuationAccuracy.notifications.retrying') : t('valuationAccuracy.notifications.retry')}
                     </button>
                   )}
                 </div>
                 <dl className="mt-4 grid gap-3 break-words text-xs text-[var(--text-secondary)] sm:grid-cols-3">
-                  <div><dt className="text-[var(--text-tertiary)]">Tenant</dt><dd className="font-mono">{event.tenantId}</dd></div>
-                  <div><dt className="text-[var(--text-tertiary)]">Phiên bản ngưỡng</dt><dd className="font-semibold">{event.payload?.thresholdVersion == null ? '—' : `v${event.payload.thresholdVersion}`}</dd></div>
-                  <div><dt className="text-[var(--text-tertiary)]">{open ? 'Mã sự kiện' : 'Xử lý lúc'}</dt><dd className="font-mono">{open ? event.id : dateTime(event.resolvedAt!)}</dd></div>
+                  <div><dt className="text-[var(--text-tertiary)]">{t('valuationAccuracy.notifications.tenant')}</dt><dd className="font-mono">{event.tenantId}</dd></div>
+                  <div><dt className="text-[var(--text-tertiary)]">{t('valuationAccuracy.notifications.thresholdVersion')}</dt><dd className="font-semibold">{event.payload?.thresholdVersion == null ? '—' : `v${event.payload.thresholdVersion}`}</dd></div>
+                  <div><dt className="text-[var(--text-tertiary)]">{open ? t('valuationAccuracy.notifications.eventId') : t('valuationAccuracy.notifications.resolvedAt')}</dt><dd className="font-mono">{open ? event.id : dateTime(event.resolvedAt!, language)}</dd></div>
                 </dl>
                 {feedback?.id === event.id && (
                   <p className={`mt-3 text-xs font-medium ${feedback.success ? 'text-emerald-700' : 'text-red-700'}`} role="status">
-                    {feedback.message}
+                    {feedback.message === 'retry-success'
+                      ? t('valuationAccuracy.notifications.retrySuccess')
+                      : t('valuationAccuracy.notifications.retryError')}
                   </p>
                 )}
               </div>
@@ -197,7 +227,7 @@ function DriftNotificationEvents() {
   );
 }
 
-function MetricCard({ label, value, detail, comparison }: { label: string; value: string; detail?: string; comparison?: { actual: number | null; threshold: number; format: (value: number) => string } }) {
+function MetricCard({ label, value, detail, comparison, t }: { label: string; value: string; detail?: string; comparison?: { actual: number | null; threshold: number; format: (value: number) => string }; t: Translate }) {
   const measured = comparison?.actual != null;
   const overThreshold = comparison?.actual != null && comparison.actual > comparison.threshold;
   return (
@@ -207,52 +237,63 @@ function MetricCard({ label, value, detail, comparison }: { label: string; value
       {detail && <p className="mt-1 text-xs leading-relaxed text-[var(--text-tertiary)]">{detail}</p>}
       {comparison && (
         <div className={`mt-3 flex flex-wrap items-center justify-between gap-2 border-t border-[var(--glass-border)] pt-3 text-xs ${measured ? overThreshold ? 'text-rose-700' : 'text-emerald-700' : 'text-[var(--text-tertiary)]'}`}>
-          <span>{measured ? overThreshold ? 'Vượt ngưỡng áp dụng' : 'Trong ngưỡng áp dụng' : 'Chưa có metric đo được'}</span>
-          <span className="font-mono font-semibold">Ngưỡng {comparison.format(comparison.threshold)}</span>
+          <span>{measured ? overThreshold ? t('valuationAccuracy.metric.overThreshold') : t('valuationAccuracy.metric.withinThreshold') : t('valuationAccuracy.metric.unavailable')}</span>
+          <span className="font-mono font-semibold">{t('valuationAccuracy.metric.threshold', { value: comparison.format(comparison.threshold) })}</span>
         </div>
       )}
     </div>
   );
 }
 
-function DriftStatus({ drift }: { drift: ResponseData['drift'] }) {
+function DriftStatus({ drift, language, t }: { drift: ResponseData['drift']; language: Language; t: Translate }) {
   const blocked = drift.status === 'BLOCKED';
   const warning = drift.status === 'WARNING';
   const colors = blocked
     ? 'border-rose-200 bg-rose-50 text-rose-950'
     : warning ? 'border-amber-200 bg-amber-50 text-amber-950'
       : 'border-emerald-200 bg-emerald-50 text-emerald-950';
-  const title = blocked ? 'Đang chặn promotion do drift'
-    : warning ? 'Cảnh báo drift cần xem xét' : 'Chưa phát hiện drift';
+  const title = blocked ? t('valuationAccuracy.drift.blockedTitle')
+    : warning ? t('valuationAccuracy.drift.warningTitle') : t('valuationAccuracy.drift.clearTitle');
+  const status = drift.status === 'BLOCKED'
+    ? t('valuationAccuracy.drift.statusBlocked')
+    : drift.status === 'WARNING'
+      ? t('valuationAccuracy.drift.statusWarning')
+      : t('valuationAccuracy.drift.statusClear');
+  const reasons = drift.reasons.map(reason => {
+    if (reason === 'mae_above_threshold_with_consecutive_increases') return t('valuationAccuracy.drift.reason.mae');
+    if (reason === 'mape_above_threshold_with_consecutive_increases') return t('valuationAccuracy.drift.reason.mape');
+    return t('valuationAccuracy.drift.reason.unknown');
+  });
   return (
-    <section className={`rounded-[22px] border p-5 sm:p-6 ${colors}`} aria-label="Trạng thái drift">
+    <section className={`rounded-[22px] border p-5 sm:p-6 ${colors}`} aria-label={t('valuationAccuracy.drift.statusAria')}>
       <div className="flex items-start gap-3">
         <AlertTriangle className="mt-0.5 h-5 w-5 shrink-0" />
         <div className="min-w-0">
           <h2 className="font-semibold">{title}</h2>
           <p className="mt-1 text-sm">
             {blocked
-              ? 'Tín hiệu này yêu cầu giữ promotion hiện tại để review; không tự thay đổi quyết định promotion.'
+              ? t('valuationAccuracy.drift.blockedDescription')
               : warning
-                ? 'Một metric đã vượt ngưỡng hoặc đang tăng liên tiếp, nhưng chưa đủ điều kiện chặn.'
-                : 'Các metric hiện nằm dưới ngưỡng cảnh báo định lượng.'}
+                ? t('valuationAccuracy.drift.warningDescription')
+                : t('valuationAccuracy.drift.clearDescription')}
           </p>
           <div className="mt-3 grid gap-2 text-xs sm:grid-cols-3">
-            <span>MAE: {drift.consecutiveMaeRuns}/{drift.consecutiveRunsRequired} lần tăng · ngưỡng {formatVnd(drift.thresholds.maeVndPerM2)}</span>
-            <span>MAPE: {drift.consecutiveMapeRuns}/{drift.consecutiveRunsRequired} lần tăng · ngưỡng {formatPercent(drift.thresholds.mape)}</span>
-            <span>Trạng thái audit: {drift.status}</span>
+            <span>MAE: {t('valuationAccuracy.drift.consecutiveIncrease', { count: formatCount(drift.consecutiveMaeRuns, language), required: formatCount(drift.consecutiveRunsRequired, language) })} · {t('valuationAccuracy.metric.threshold', { value: formatVnd(drift.thresholds.maeVndPerM2, language) })}</span>
+            <span>MAPE: {t('valuationAccuracy.drift.consecutiveIncrease', { count: formatCount(drift.consecutiveMapeRuns, language), required: formatCount(drift.consecutiveRunsRequired, language) })} · {t('valuationAccuracy.metric.threshold', { value: formatPercent(drift.thresholds.mape, language) })}</span>
+            <span>{t('valuationAccuracy.drift.auditStatus', { status })}</span>
           </div>
-          {drift.reasons.length > 0 && <p className="mt-3 text-xs font-medium">Lý do: {drift.reasons.join(', ')}</p>}
+          {reasons.length > 0 && <p className="mt-3 text-xs font-medium">{t('valuationAccuracy.drift.reasonLabel', { reason: reasons.join(', ') })}</p>}
         </div>
       </div>
     </section>
   );
 }
 
-function TrendChart({ history }: { history: ResponseData['history'] }) {
+function TrendChart({ history, language, t }: { history: ResponseData['history']; language: Language; t: Translate }) {
+  const locale = localeFor(language);
   const chartData = history.map(run => ({
     ...run,
-    dateLabel: new Date(run.evaluatedAt).toLocaleDateString('vi-VN', { year: '2-digit', month: '2-digit', day: '2-digit' }),
+    dateLabel: new Date(run.evaluatedAt).toLocaleDateString(locale, { year: '2-digit', month: '2-digit', day: '2-digit' }),
     maeThreshold: run.thresholds?.maeVndPerM2 ?? null,
     mapePercent: run.mape == null ? null : run.mape * 100,
     mapeThresholdPercent: run.thresholds?.mape == null ? null : run.thresholds.mape * 100,
@@ -265,89 +306,89 @@ function TrendChart({ history }: { history: ResponseData['history'] }) {
     const value = point[metric] as number | null;
     const threshold = metric === 'mae' ? point.maeThreshold as number | null : point.mapeThresholdPercent as number | null;
     const format = metric === 'mae'
-      ? (number: number | null) => formatVnd(number)
-      : (number: number | null) => number == null ? '—' : `${number.toFixed(1)}%`;
+        ? (number: number | null) => formatVnd(number, language)
+        : (number: number | null) => number == null ? '—' : `${new Intl.NumberFormat(locale, { minimumFractionDigits: 1, maximumFractionDigits: 1 }).format(number)}%`;
     return (
       <div className="rounded-xl border border-[var(--glass-border)] bg-[var(--bg-surface)] p-3 text-xs shadow-xl">
-        <p className="mb-2 font-semibold text-[var(--text-primary)]">{dateTime(point.evaluatedAt)}</p>
-        <p className="font-mono text-[var(--text-secondary)]">Đo được: {format(value)}</p>
-        <p className="font-mono text-[var(--text-secondary)]">Ngưỡng lần chạy: {format(threshold)}</p>
-        <p className="mt-1 text-[var(--text-tertiary)]">{point.thresholdVersion == null ? 'Không lưu phiên bản ngưỡng' : `Phiên bản ngưỡng v${point.thresholdVersion}`}</p>
+        <p className="mb-2 font-semibold text-[var(--text-primary)]">{dateTime(point.evaluatedAt, language)}</p>
+        <p className="font-mono text-[var(--text-secondary)]">{t('valuationAccuracy.trend.measuredValue', { value: format(value) })}</p>
+        <p className="font-mono text-[var(--text-secondary)]">{t('valuationAccuracy.trend.runThresholdValue', { value: format(threshold) })}</p>
+        <p className="mt-1 text-[var(--text-tertiary)]">{point.thresholdVersion == null ? t('valuationAccuracy.trend.thresholdVersionMissing') : t('valuationAccuracy.trend.thresholdVersion', { version: point.thresholdVersion })}</p>
       </div>
     );
   };
   return (
     <div>
       {!history.length ? (
-        <p className="rounded-xl bg-[var(--glass-surface)] p-4 text-sm text-[var(--text-secondary)]">Chưa có lần chạy nào được lưu để hiển thị xu hướng.</p>
+        <p className="rounded-xl bg-[var(--glass-surface)] p-4 text-sm text-[var(--text-secondary)]">{t('valuationAccuracy.trend.noRuns')}</p>
       ) : (
         <>
           <div className="grid gap-4 xl:grid-cols-2">
-            <section className="min-w-0 rounded-[18px] bg-[var(--glass-surface)] p-3 sm:p-4" aria-label="Xu hướng MAE theo VND trên mét vuông">
+            <section className="min-w-0 rounded-[18px] bg-[var(--glass-surface)] p-3 sm:p-4" aria-label={t('valuationAccuracy.trend.maeAria')}>
               <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
                 <h3 className="text-sm font-bold text-[var(--text-primary)]">MAE · VND/m²</h3>
                 <div className="flex flex-wrap items-center gap-3 text-[11px] text-[var(--text-secondary)]">
-                  <span className="inline-flex items-center gap-1.5"><i className="h-2.5 w-2.5 rounded-full bg-[var(--ui-brand)]" /> Đo được</span>
-                  <span className="inline-flex items-center gap-1.5"><i className="h-0 w-4 border-t-2 border-dashed border-amber-600" /> Ngưỡng lần chạy</span>
+                  <span className="inline-flex items-center gap-1.5"><i className="h-2.5 w-2.5 rounded-full bg-[var(--ui-brand)]" /> {t('valuationAccuracy.trend.measured')}</span>
+                  <span className="inline-flex items-center gap-1.5"><i className="h-0 w-4 border-t-2 border-dashed border-amber-600" /> {t('valuationAccuracy.trend.runThreshold')}</span>
                 </div>
               </div>
-              <div className="h-60" role="img" aria-label="Biểu đồ MAE có trục giá trị VND trên mét vuông và ngưỡng theo từng lần chạy">
+              <div className="h-60" role="img" aria-label={t('valuationAccuracy.trend.maeChartAria')}>
                 {hasMae ? (
                   <ResponsiveContainer width="100%" height="100%">
                     <LineChart data={chartData} margin={{ top: 8, right: 12, bottom: 4, left: 12 }}>
                       <CartesianGrid stroke="var(--glass-border)" strokeDasharray="3 3" vertical={false} />
                       <XAxis dataKey="dateLabel" tick={{ fill: 'var(--text-tertiary)', fontSize: 10 }} tickLine={false} axisLine={false} minTickGap={18} />
-                      <YAxis width={78} domain={[0, 'auto']} tickFormatter={(value) => Number(value).toLocaleString('vi-VN', { maximumFractionDigits: 0 })} tick={{ fill: 'var(--text-tertiary)', fontSize: 10 }} tickLine={false} axisLine={false} />
+                      <YAxis width={78} domain={[0, 'auto']} tickFormatter={(value) => Number(value).toLocaleString(locale, { maximumFractionDigits: 0 })} tick={{ fill: 'var(--text-tertiary)', fontSize: 10 }} tickLine={false} axisLine={false} />
                       <Tooltip content={renderTooltip('mae')} />
-                      <Line type="stepAfter" dataKey="maeThreshold" name="Ngưỡng lần chạy" stroke="#b7791f" strokeDasharray="5 4" strokeWidth={2} dot={false} connectNulls={false} isAnimationActive={false} />
+                      <Line type="stepAfter" dataKey="maeThreshold" name={t('valuationAccuracy.trend.runThreshold')} stroke="#b7791f" strokeDasharray="5 4" strokeWidth={2} dot={false} connectNulls={false} isAnimationActive={false} />
                       <Line type="monotone" dataKey="mae" name="MAE" stroke="var(--ui-brand)" strokeWidth={2.5} dot={{ r: 3 }} activeDot={{ r: 5 }} connectNulls={false} isAnimationActive={false} />
                     </LineChart>
                   </ResponsiveContainer>
-                ) : <p className="flex h-full items-center justify-center text-sm text-[var(--text-tertiary)]">Chưa có MAE hoặc ngưỡng MAE đo được.</p>}
+                ) : <p className="flex h-full items-center justify-center text-sm text-[var(--text-tertiary)]">{t('valuationAccuracy.trend.noMae')}</p>}
               </div>
             </section>
-            <section className="min-w-0 rounded-[18px] bg-[var(--glass-surface)] p-3 sm:p-4" aria-label="Xu hướng MAPE theo phần trăm">
+            <section className="min-w-0 rounded-[18px] bg-[var(--glass-surface)] p-3 sm:p-4" aria-label={t('valuationAccuracy.trend.mapeAria')}>
               <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
                 <h3 className="text-sm font-bold text-[var(--text-primary)]">MAPE · %</h3>
                 <div className="flex flex-wrap items-center gap-3 text-[11px] text-[var(--text-secondary)]">
-                  <span className="inline-flex items-center gap-1.5"><i className="h-2.5 w-2.5 rounded-full bg-sgs-primary" /> Đo được</span>
-                  <span className="inline-flex items-center gap-1.5"><i className="h-0 w-4 border-t-2 border-dashed border-amber-600" /> Ngưỡng lần chạy</span>
+                  <span className="inline-flex items-center gap-1.5"><i className="h-2.5 w-2.5 rounded-full bg-sgs-primary" /> {t('valuationAccuracy.trend.measured')}</span>
+                  <span className="inline-flex items-center gap-1.5"><i className="h-0 w-4 border-t-2 border-dashed border-amber-600" /> {t('valuationAccuracy.trend.runThreshold')}</span>
                 </div>
               </div>
-              <div className="h-60" role="img" aria-label="Biểu đồ MAPE có trục phần trăm và ngưỡng theo từng lần chạy">
+              <div className="h-60" role="img" aria-label={t('valuationAccuracy.trend.mapeChartAria')}>
                 {hasMape ? (
                   <ResponsiveContainer width="100%" height="100%">
                     <LineChart data={chartData} margin={{ top: 8, right: 12, bottom: 4, left: 8 }}>
                       <CartesianGrid stroke="var(--glass-border)" strokeDasharray="3 3" vertical={false} />
                       <XAxis dataKey="dateLabel" tick={{ fill: 'var(--text-tertiary)', fontSize: 10 }} tickLine={false} axisLine={false} minTickGap={18} />
-                      <YAxis width={52} domain={[0, 'auto']} tickFormatter={(value) => `${Number(value).toFixed(1)}%`} tick={{ fill: 'var(--text-tertiary)', fontSize: 10 }} tickLine={false} axisLine={false} />
+                      <YAxis width={52} domain={[0, 'auto']} tickFormatter={(value) => `${new Intl.NumberFormat(locale, { minimumFractionDigits: 1, maximumFractionDigits: 1 }).format(Number(value))}%`} tick={{ fill: 'var(--text-tertiary)', fontSize: 10 }} tickLine={false} axisLine={false} />
                       <Tooltip content={renderTooltip('mapePercent')} />
-                      <Line type="stepAfter" dataKey="mapeThresholdPercent" name="Ngưỡng lần chạy" stroke="#b7791f" strokeDasharray="5 4" strokeWidth={2} dot={false} connectNulls={false} isAnimationActive={false} />
+                      <Line type="stepAfter" dataKey="mapeThresholdPercent" name={t('valuationAccuracy.trend.runThreshold')} stroke="#b7791f" strokeDasharray="5 4" strokeWidth={2} dot={false} connectNulls={false} isAnimationActive={false} />
                       <Line type="monotone" dataKey="mapePercent" name="MAPE" stroke="#c47b16" strokeWidth={2.5} dot={{ r: 3 }} activeDot={{ r: 5 }} connectNulls={false} isAnimationActive={false} />
                     </LineChart>
                   </ResponsiveContainer>
-                ) : <p className="flex h-full items-center justify-center text-sm text-[var(--text-tertiary)]">Chưa có MAPE hoặc ngưỡng MAPE đo được.</p>}
+                ) : <p className="flex h-full items-center justify-center text-sm text-[var(--text-tertiary)]">{t('valuationAccuracy.trend.noMape')}</p>}
               </div>
             </section>
           </div>
           <p className="mt-2 text-xs leading-relaxed text-[var(--text-tertiary)]">
-            Mỗi biểu đồ dùng trục có đơn vị riêng, đường đứt nét là ngưỡng đã áp dụng cho lần chạy tương ứng. MAPE được đổi từ phân số sang phần trăm. Giá trị thiếu tạo khoảng trống, không bị coi là 0.
+            {t('valuationAccuracy.trend.chartNote')}
           </p>
         </>
       )}
       <div className="mt-4 overflow-x-auto">
         <table className="w-full min-w-[900px] text-left text-xs text-[var(--text-secondary)]">
           <thead className="border-b border-[var(--glass-border)] text-[var(--text-tertiary)]"><tr>
-            <th className="py-2">Thời điểm</th><th>Phiên bản</th><th>MAE đo được</th><th>MAPE đo được</th><th>MAE ngưỡng</th><th>MAPE ngưỡng</th><th>Số lần liên tiếp</th>
+            <th className="py-2">{t('valuationAccuracy.trend.historyTime')}</th><th>{t('valuationAccuracy.trend.historyVersion')}</th><th>{t('valuationAccuracy.trend.maeMeasured')}</th><th>{t('valuationAccuracy.trend.mapeMeasured')}</th><th>{t('valuationAccuracy.trend.maeThreshold')}</th><th>{t('valuationAccuracy.trend.mapeThreshold')}</th><th>{t('valuationAccuracy.trend.consecutiveRuns')}</th>
           </tr></thead>
           <tbody>{[...history].reverse().map(run => <tr key={`threshold-${run.evaluatedAt}`} className="border-b border-[var(--glass-border)]">
-            <td className="py-2">{dateTime(run.evaluatedAt)}</td>
-            <td>{run.thresholdVersion == null ? 'Không lưu phiên bản' : `v${run.thresholdVersion}`}</td>
-            <td className="font-mono">{formatVnd(run.mae)}</td>
-            <td className="font-mono">{formatPercent(run.mape)}</td>
-            <td>{run.thresholds ? formatVnd(run.thresholds.maeVndPerM2) : '—'}</td>
-            <td>{run.thresholds ? formatPercent(run.thresholds.mape) : '—'}</td>
-            <td>{run.thresholds?.consecutiveRuns ?? '—'}</td>
+            <td className="py-2">{dateTime(run.evaluatedAt, language)}</td>
+            <td>{run.thresholdVersion == null ? t('valuationAccuracy.trend.versionMissing') : `v${run.thresholdVersion}`}</td>
+            <td className="font-mono">{formatVnd(run.mae, language)}</td>
+            <td className="font-mono">{formatPercent(run.mape, language)}</td>
+            <td>{run.thresholds ? formatVnd(run.thresholds.maeVndPerM2, language) : '—'}</td>
+            <td>{run.thresholds ? formatPercent(run.thresholds.mape, language) : '—'}</td>
+            <td>{run.thresholds ? formatCount(run.thresholds.consecutiveRuns, language) : '—'}</td>
           </tr>)}</tbody>
         </table>
       </div>
@@ -355,18 +396,41 @@ function TrendChart({ history }: { history: ResponseData['history'] }) {
   );
 }
 
-function GroupMetricBreakdown({ groups }: { groups: Group[] }) {
+const propertyTypeLabels: Record<string, { vn: string; en: string }> = {
+  apartment_center: { vn: 'Căn hộ trung tâm', en: 'Central apartment' },
+  apartment_suburb: { vn: 'Căn hộ ven đô', en: 'Suburban apartment' },
+  townhouse_suburb: { vn: 'Nhà phố ven đô', en: 'Suburban townhouse' },
+  land_urban: { vn: 'Đất đô thị', en: 'Urban land' },
+  land_suburban: { vn: 'Đất ven đô', en: 'Suburban land' },
+  townhouse_center: { vn: 'Nhà phố trung tâm', en: 'City-center townhouse' },
+  villa: { vn: 'Biệt thự', en: 'Villa' },
+  shophouse: { vn: 'Nhà phố thương mại', en: 'Shophouse' },
+  penthouse: { vn: 'Căn hộ áp mái', en: 'Penthouse' },
+  office: { vn: 'Văn phòng', en: 'Office' },
+  warehouse: { vn: 'Nhà kho', en: 'Warehouse' },
+  land_agricultural: { vn: 'Đất nông nghiệp', en: 'Agricultural land' },
+  land_industrial: { vn: 'Đất công nghiệp', en: 'Industrial land' },
+  project: { vn: 'Dự án bất động sản', en: 'Real-estate project' },
+};
+const verificationSourceKeys: Record<string, string> = {
+  owner_contract: 'valuationAccuracy.source.owner_contract',
+  bank_disbursement: 'valuationAccuracy.source.bank_disbursement',
+  notary_deed: 'valuationAccuracy.source.notary_deed',
+};
+
+function GroupMetricBreakdown({ groups, language, t }: { groups: Group[]; language: Language; t: Translate }) {
+  const propertyTypeLabel = (value: string) => propertyTypeLabels[value]?.[language] ?? value;
   const metrics = [
     {
       key: 'mae' as const,
-      title: 'MAE cao nhất theo nhóm',
-      format: (value: number) => formatVnd(value),
+      title: t('valuationAccuracy.group.maeHighest'),
+      format: (value: number) => formatVnd(value, language),
       value: (group: Group) => group.mae,
     },
     {
       key: 'mape' as const,
-      title: 'MAPE cao nhất theo nhóm',
-      format: (value: number) => formatPercent(value),
+      title: t('valuationAccuracy.group.mapeHighest'),
+      format: (value: number) => formatPercent(value, language),
       value: (group: Group) => group.mape,
     },
   ];
@@ -381,7 +445,7 @@ function GroupMetricBreakdown({ groups }: { groups: Group[] }) {
         return (
           <div key={metric.key} className="rounded-[18px] bg-[var(--glass-surface)] p-4">
             <h3 className="text-sm font-bold text-[var(--text-primary)]">{metric.title}</h3>
-            <p className="mt-1 text-xs text-[var(--text-tertiary)]">Tối đa 5 nhóm · thanh so sánh tương đối trong nhóm hiển thị</p>
+            <p className="mt-1 text-xs text-[var(--text-tertiary)]">{t('valuationAccuracy.group.limit')}</p>
             {ranked.length ? (
               <div className="mt-4 space-y-3">
                 {ranked.map(group => {
@@ -389,7 +453,7 @@ function GroupMetricBreakdown({ groups }: { groups: Group[] }) {
                   const width = max > 0 ? value / max * 100 : 0;
                   return (
                     <div key={`${group.locationKey}-${group.propertyType}-${metric.key}`} className="grid grid-cols-[minmax(0,1fr)_minmax(4rem,1.2fr)_auto] items-center gap-2">
-                      <span className="truncate text-xs text-[var(--text-secondary)]" title={`${group.locationKey} · ${group.propertyType}`}>{group.locationKey} · {group.propertyType}</span>
+                      <span className="truncate text-xs text-[var(--text-secondary)]" title={`${group.locationKey} · ${propertyTypeLabel(group.propertyType)}`}>{group.locationKey} · {propertyTypeLabel(group.propertyType)}</span>
                       <div className="h-2 overflow-hidden rounded-full bg-[var(--bg-surface)]" role="img" aria-label={`${group.locationKey} ${metric.title}: ${metric.format(value)}`}>
                         <div className="h-full rounded-full bg-sgs-primary" style={{ width: `${width}%` }} />
                       </div>
@@ -398,7 +462,7 @@ function GroupMetricBreakdown({ groups }: { groups: Group[] }) {
                   );
                 })}
               </div>
-            ) : <p className="mt-4 rounded-xl bg-[var(--bg-surface)] p-3 text-xs text-[var(--text-tertiary)]">Chưa có giá trị đo được cho metric này.</p>}
+            ) : <p className="mt-4 rounded-xl bg-[var(--bg-surface)] p-3 text-xs text-[var(--text-tertiary)]">{t('valuationAccuracy.group.noMetric')}</p>}
           </div>
         );
       })}
@@ -407,6 +471,7 @@ function GroupMetricBreakdown({ groups }: { groups: Group[] }) {
 }
 
 const ValuationAccuracyReport: React.FC = () => {
+  const { language, t } = useTranslation();
   const [user, setUser] = useState<User | null>(null);
   const [userResolved, setUserResolved] = useState(false);
   const [data, setData] = useState<ResponseData | null>(null);
@@ -423,8 +488,8 @@ const ValuationAccuracyReport: React.FC = () => {
       const response = await api.get<ResponseData>('/api/valuation/admin/evaluation-report');
       setData(response);
       setThresholdDraft(response.thresholdConfig.thresholds);
-    } catch (err: any) {
-      setError(err?.message || 'Không thể tải báo cáo.');
+    } catch {
+      setError('valuationAccuracy.error.load');
     } finally {
       setLoading(false);
     }
@@ -450,8 +515,8 @@ const ValuationAccuracyReport: React.FC = () => {
         '/api/valuation/admin/drift-thresholds', thresholdDraft,
       );
       setData(current => current ? { ...current, thresholdConfig: response.config, thresholdHistory: response.thresholdHistory } : current);
-    } catch (err: any) {
-      setError(err?.message || 'Không thể lưu ngưỡng drift.');
+    } catch {
+      setError('valuationAccuracy.error.saveThresholds');
     } finally {
       setSavingThresholds(false);
     }
@@ -461,49 +526,49 @@ const ValuationAccuracyReport: React.FC = () => {
   const isAdmin = ['ADMIN', 'SUPER_ADMIN'].includes(user?.role || '');
 
   if (userResolved && !isAdmin) {
-    return <div className="min-h-[100dvh] bg-[var(--bg-app)] p-6 text-[var(--text-secondary)] sm:p-8">Bạn không có quyền xem báo cáo này.</div>;
+    return <div className="min-h-[100dvh] bg-[var(--bg-app)] p-6 text-[var(--text-secondary)] sm:p-8">{t('valuationAccuracy.accessDenied')}</div>;
   }
 
   return (
     <div className="min-h-[100dvh] bg-[var(--bg-app)] p-4 text-[var(--text-primary)] sm:p-6 md:p-8">
-      <SeoHead title="Sai số định giá | SGS Land" description="Báo cáo backtest độ chính xác mô hình định giá trên gold set đã xác minh" />
+      <SeoHead title={t('valuationAccuracy.seoTitle')} description={t('valuationAccuracy.seoDescription')} />
       <div className="mx-auto max-w-7xl space-y-6">
         <header className="flex flex-wrap items-start justify-between gap-4">
           <div>
-            <p className="text-xs font-extrabold uppercase tracking-[0.18em] text-[var(--ui-brand)]">AI Governance · Admin</p>
-            <h1 className="mt-2 text-2xl font-extrabold tracking-tight text-[var(--text-primary)] sm:text-3xl">Báo cáo sai số định giá</h1>
+            <p className="text-xs font-extrabold uppercase tracking-[0.18em] text-[var(--ui-brand)]">{t('valuationAccuracy.eyebrow')}</p>
+            <h1 className="mt-2 text-2xl font-extrabold tracking-tight text-[var(--text-primary)] sm:text-3xl">{t('valuationAccuracy.title')}</h1>
             <p className="mt-2 max-w-3xl text-sm leading-relaxed text-[var(--text-secondary)]">
-              Backtest mô hình hiện tại trên gold set giao dịch đã xác minh, phân rã theo khu vực và loại bất động sản.
+              {t('valuationAccuracy.intro')}
             </p>
           </div>
           <button onClick={runBacktest} disabled={loading || running}
             className="inline-flex min-h-11 items-center gap-2 rounded-xl bg-[var(--ui-brand)] px-4 py-2.5 text-sm font-bold text-[var(--ui-on-brand)] shadow-sm transition hover:brightness-110 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--ui-brand)] focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50">
             <RefreshCw className={`h-4 w-4 ${running ? 'animate-spin' : ''}`} />
-            {running ? 'Đang chạy…' : 'Chạy lại backtest'}
+            {running ? t('valuationAccuracy.backtest.running') : t('valuationAccuracy.backtest.run')}
           </button>
         </header>
 
         <div className="flex items-start gap-3 rounded-[20px] border border-amber-200 bg-amber-50 p-4 text-sm text-amber-950">
           <AlertTriangle className="mt-0.5 h-5 w-5 shrink-0" />
-          <p><strong>Lưu ý:</strong> {data?.disclaimer || 'Báo cáo này là kết quả đánh giá offline trên dữ liệu đã xác minh, không phải dữ liệu giao dịch trực tiếp.'}</p>
+          <p><strong>{t('valuationAccuracy.disclaimer.title')}</strong> {t('valuationAccuracy.disclaimer.body')}</p>
         </div>
 
         {error && (
           <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-rose-200 bg-rose-50 p-4 text-sm text-rose-800" role="alert">
-            <span>{error}</span>
-            {!data && <button type="button" onClick={load} className="rounded-lg border border-rose-300 px-3 py-2 text-xs font-bold hover:bg-rose-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-rose-500">Thử tải lại</button>}
+            <span>{t(error)}</span>
+            {!data && <button type="button" onClick={load} className="rounded-lg border border-rose-300 px-3 py-2 text-xs font-bold hover:bg-rose-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-rose-500">{t('valuationAccuracy.retry')}</button>}
           </div>
         )}
         {isAdmin && thresholdDraft && data?.thresholdConfig && (
           <section className="rounded-[22px] border border-[var(--glass-border)] bg-[var(--bg-surface)] p-4 shadow-sm sm:p-5">
             <div className="flex flex-wrap items-start justify-between gap-3">
               <div>
-                <h2 className="font-bold text-[var(--text-primary)]">Ngưỡng phát hiện drift</h2>
-                <p className="mt-1 text-xs leading-relaxed text-[var(--text-tertiary)]">Phiên bản hiện tại: v{data.thresholdConfig.version}. Thay đổi chỉ áp dụng cho các lần đánh giá mới.</p>
+                <h2 className="font-bold text-[var(--text-primary)]">{t('valuationAccuracy.threshold.title')}</h2>
+                <p className="mt-1 text-xs leading-relaxed text-[var(--text-tertiary)]">{t('valuationAccuracy.threshold.versionNotice', { version: data.thresholdConfig.version })}</p>
               </div>
               <button onClick={saveThresholds} disabled={savingThresholds}
                 className="inline-flex min-h-10 items-center gap-2 rounded-xl bg-[var(--ui-brand)] px-3 py-2 text-sm font-bold text-[var(--ui-on-brand)] transition hover:brightness-110 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--ui-brand)] focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50">
-                <Save className="h-4 w-4" /> {savingThresholds ? 'Đang lưu…' : 'Lưu ngưỡng'}
+                <Save className="h-4 w-4" /> {savingThresholds ? t('valuationAccuracy.threshold.saving') : t('valuationAccuracy.threshold.save')}
               </button>
             </div>
             <div className="mt-4 grid gap-4 sm:grid-cols-3">
@@ -519,7 +584,7 @@ const ValuationAccuracyReport: React.FC = () => {
                   onChange={event => setThresholdDraft({ ...thresholdDraft, mape: Number(event.target.value) / 100 })}
                   className="mt-1 min-h-11 w-full rounded-xl border border-[var(--glass-border)] bg-[var(--glass-surface)] px-3 py-2 font-mono font-normal text-[var(--text-primary)] focus:outline-none focus:ring-2 focus:ring-[var(--ui-brand)]" />
               </label>
-              <label className="text-sm font-semibold text-[var(--text-secondary)]">Последовательных запусков
+              <label className="text-sm font-semibold text-[var(--text-secondary)]">{t('valuationAccuracy.threshold.consecutiveRuns')}
                 <input type="number" min="1" max="100" step="1"
                   value={thresholdDraft.consecutiveRuns}
                   onChange={event => setThresholdDraft({ ...thresholdDraft, consecutiveRuns: Number(event.target.value) })}
@@ -528,13 +593,13 @@ const ValuationAccuracyReport: React.FC = () => {
             </div>
             {data.thresholdHistory.length > 0 && (
               <div className="mt-5 overflow-x-auto">
-                <h3 className="mb-2 text-sm font-semibold text-[var(--text-primary)]">История изменений</h3>
+                <h3 className="mb-2 text-sm font-semibold text-[var(--text-primary)]">{t('valuationAccuracy.threshold.history')}</h3>
                 <table className="w-full min-w-[620px] text-left text-xs text-[var(--text-secondary)]">
-                  <thead className="border-b border-[var(--glass-border)] text-[var(--text-tertiary)]"><tr><th className="py-2">Версия</th><th>Время</th><th>Автор</th><th>Ngưỡng cũ</th><th>Ngưỡng mới</th></tr></thead>
+                  <thead className="border-b border-[var(--glass-border)] text-[var(--text-tertiary)]"><tr><th className="py-2">{t('valuationAccuracy.threshold.version')}</th><th>{t('valuationAccuracy.threshold.time')}</th><th>{t('valuationAccuracy.threshold.author')}</th><th>{t('valuationAccuracy.threshold.old')}</th><th>{t('valuationAccuracy.threshold.new')}</th></tr></thead>
                   <tbody>{data.thresholdHistory.map(change => <tr key={change.version} className="border-b border-[var(--glass-border)]">
-                    <td className="py-2 font-medium">v{change.version}</td><td>{dateTime(change.changedAt)}</td><td>{change.authorId || '—'}</td>
-                    <td>{change.oldThresholds ? `${formatVnd(change.oldThresholds.maeVndPerM2)} · ${formatPercent(change.oldThresholds.mape)} · ${change.oldThresholds.consecutiveRuns}` : '—'}</td>
-                    <td>{formatVnd(change.newThresholds.maeVndPerM2)} · {formatPercent(change.newThresholds.mape)} · {change.newThresholds.consecutiveRuns}</td>
+                    <td className="py-2 font-medium">v{change.version}</td><td>{dateTime(change.changedAt, language)}</td><td>{change.authorId || '—'}</td>
+                    <td>{change.oldThresholds ? `${formatVnd(change.oldThresholds.maeVndPerM2, language)} · ${formatPercent(change.oldThresholds.mape, language)} · ${formatCount(change.oldThresholds.consecutiveRuns, language)}` : '—'}</td>
+                    <td>{formatVnd(change.newThresholds.maeVndPerM2, language)} · {formatPercent(change.newThresholds.mape, language)} · {formatCount(change.newThresholds.consecutiveRuns, language)}</td>
                   </tr>)}</tbody>
                 </table>
               </div>
@@ -542,7 +607,7 @@ const ValuationAccuracyReport: React.FC = () => {
           </section>
         )}
         {loading ? (
-          <div className="space-y-4" aria-label="Đang tải báo cáo">
+          <div className="space-y-4" aria-label={t('valuationAccuracy.loading')}>
             <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
               {[0, 1, 2, 3].map(item => <div key={item} className="h-28 animate-pulse rounded-[20px] border border-[var(--glass-border)] bg-[var(--glass-surface)]" />)}
             </div>
@@ -550,55 +615,62 @@ const ValuationAccuracyReport: React.FC = () => {
           </div>
         ) : isAdmin && report && (
           <>
-            {data?.drift && <DriftStatus drift={data.drift} />}
+            {data?.drift && <DriftStatus drift={data.drift} language={language} t={t} />}
             {report.thresholdVersion != null && report.appliedThresholds && (
-              <p className="rounded-xl border border-[var(--glass-border)] bg-[var(--glass-surface)] px-4 py-3 text-xs leading-relaxed text-[var(--text-secondary)]">Backtest này đã áp dụng bộ ngưỡng phiên bản v{report.thresholdVersion}: MAE {formatVnd(report.appliedThresholds.maeVndPerM2)} · MAPE {formatPercent(report.appliedThresholds.mape)} · {report.appliedThresholds.consecutiveRuns} lần liên tiếp.</p>
+              <p className="rounded-xl border border-[var(--glass-border)] bg-[var(--glass-surface)] px-4 py-3 text-xs leading-relaxed text-[var(--text-secondary)]">
+                {t('valuationAccuracy.threshold.applied', {
+                  version: report.thresholdVersion,
+                  mae: formatVnd(report.appliedThresholds.maeVndPerM2, language),
+                  mape: formatPercent(report.appliedThresholds.mape, language),
+                  runs: formatCount(report.appliedThresholds.consecutiveRuns, language),
+                })}
+              </p>
             )}
             <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-              <MetricCard label="MAE" value={formatVnd(report.mae)} detail="Sai số tuyệt đối trung bình · VND/m²" comparison={report.appliedThresholds ? { actual: report.mae, threshold: report.appliedThresholds.maeVndPerM2, format: formatVnd } : undefined} />
-              <MetricCard label="MAPE" value={formatPercent(report.mape)} detail="Sai số phần trăm tuyệt đối trung bình" comparison={report.appliedThresholds ? { actual: report.mape, threshold: report.appliedThresholds.mape, format: formatPercent } : undefined} />
-              <MetricCard label="Median absolute error" value={formatVnd(report.medianAbsoluteError)} detail="Trung vị sai số tuyệt đối · VND/m²" />
-              <MetricCard label="Interval coverage" value={formatPercent(report.intervalCoverage)} detail="Khoảng dự báo ±15%" />
+              <MetricCard t={t} label="MAE" value={formatVnd(report.mae, language)} detail={t('valuationAccuracy.metric.mae')} comparison={report.appliedThresholds ? { actual: report.mae, threshold: report.appliedThresholds.maeVndPerM2, format: value => formatVnd(value, language) } : undefined} />
+              <MetricCard t={t} label="MAPE" value={formatPercent(report.mape, language)} detail={t('valuationAccuracy.metric.mape')} comparison={report.appliedThresholds ? { actual: report.mape, threshold: report.appliedThresholds.mape, format: value => formatPercent(value, language) } : undefined} />
+              <MetricCard t={t} label={t('valuationAccuracy.metric.medianLabel')} value={formatVnd(report.medianAbsoluteError, language)} detail={t('valuationAccuracy.metric.medianAbsoluteError')} />
+              <MetricCard t={t} label={t('valuationAccuracy.metric.coverageLabel')} value={formatPercent(report.intervalCoverage, language)} detail={t('valuationAccuracy.metric.intervalCoverage')} />
             </div>
             <div className="grid gap-4 sm:grid-cols-3">
-              <MetricCard label="Mẫu gold set" value={report.sampleCount.toLocaleString('vi-VN')} detail={`${data?.dataset.name} · ${data?.dataset.unitLabel}`} />
-              <MetricCard label="Đã đánh giá" value={report.evaluatedCount.toLocaleString('vi-VN')} detail={`${report.sampleCount > 0 ? formatPercent(report.evaluatedCount / report.sampleCount) : '—'} trên tổng mẫu`} />
-              <MetricCard label="Bị reject" value={report.rejectedCount.toLocaleString('vi-VN')} detail={`Reject rate: ${formatPercent(report.rejectRate)}`} />
+              <MetricCard t={t} label={t('valuationAccuracy.dataset.samples')} value={formatCount(report.sampleCount, language)} detail={`${t('valuationAccuracy.dataset.verifiedGoldSet')} · ${data?.dataset.unitLabel}`} />
+              <MetricCard t={t} label={t('valuationAccuracy.dataset.evaluated')} value={formatCount(report.evaluatedCount, language)} detail={t('valuationAccuracy.dataset.ofTotal', { value: report.sampleCount > 0 ? formatPercent(report.evaluatedCount / report.sampleCount, language) : '—' })} />
+              <MetricCard t={t} label={t('valuationAccuracy.dataset.rejected')} value={formatCount(report.rejectedCount, language)} detail={t('valuationAccuracy.dataset.rejectRate', { value: formatPercent(report.rejectRate, language) })} />
             </div>
             <section className="rounded-[22px] border border-[var(--glass-border)] bg-[var(--bg-surface)] p-4 shadow-sm sm:p-5">
               <div className="mb-4 flex flex-wrap items-start justify-between gap-2">
-                <div><h2 className="font-bold text-[var(--text-primary)]">Xu hướng sai số theo thời gian</h2><p className="mt-1 text-xs text-[var(--text-tertiary)]">Tối đa 30 lần chạy gần nhất · dùng để phát hiện model drift trước promotion</p></div>
-                <span className="rounded-full bg-[var(--glass-surface)] px-3 py-1 text-xs font-semibold text-[var(--text-secondary)]">{data.history.length} lần chạy đã lưu</span>
+                <div><h2 className="font-bold text-[var(--text-primary)]">{t('valuationAccuracy.trend.title')}</h2><p className="mt-1 text-xs text-[var(--text-tertiary)]">{t('valuationAccuracy.trend.description')}</p></div>
+                <span className="rounded-full bg-[var(--glass-surface)] px-3 py-1 text-xs font-semibold text-[var(--text-secondary)]">{t('valuationAccuracy.trend.savedRuns', { count: formatCount(data.history.length, language) })}</span>
               </div>
-              <TrendChart history={data.history} />
+              <TrendChart history={data.history} language={language} t={t} />
             </section>
-            <DriftNotificationEvents />
+            <DriftNotificationEvents language={language} t={t} />
 
             <section className="overflow-hidden rounded-[22px] border border-[var(--glass-border)] bg-[var(--bg-surface)] shadow-sm">
               <div className="flex flex-wrap items-center justify-between gap-2 border-b border-[var(--glass-border)] px-4 py-4 sm:px-5">
-                <div><h2 className="font-bold text-[var(--text-primary)]">Phân rã theo khu vực / loại BĐS</h2><p className="mt-1 text-xs text-[var(--text-tertiary)]">Tất cả giá đều tính bằng VND/m²</p></div>
-                <span className="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-3 py-1.5 text-xs font-semibold text-emerald-800"><ShieldCheck className="h-4 w-4" /> Dữ liệu đã xác minh</span>
+                <div><h2 className="font-bold text-[var(--text-primary)]">{t('valuationAccuracy.breakdown.title')}</h2><p className="mt-1 text-xs text-[var(--text-tertiary)]">{t('valuationAccuracy.breakdown.unit')}</p></div>
+                <span className="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-3 py-1.5 text-xs font-semibold text-emerald-800"><ShieldCheck className="h-4 w-4" /> {t('valuationAccuracy.breakdown.verified')}</span>
               </div>
-              <GroupMetricBreakdown groups={report.groups} />
+              <GroupMetricBreakdown groups={report.groups} language={language} t={t} />
               <div className="overflow-x-auto">
                 <table className="w-full min-w-[780px] text-left text-sm">
                   <thead className="bg-[var(--glass-surface)] text-xs uppercase tracking-wide text-[var(--text-tertiary)]"><tr>
-                    <th className="px-5 py-3">Location key</th><th className="px-5 py-3">Loại BĐS</th><th className="px-5 py-3">Mẫu</th><th className="px-5 py-3">MAE</th><th className="px-5 py-3">MAPE</th><th className="px-5 py-3">Coverage</th><th className="px-5 py-3">Reject</th>
+                    <th className="px-5 py-3">{t('valuationAccuracy.breakdown.locationKey')}</th><th className="px-5 py-3">{t('valuationAccuracy.breakdown.propertyType')}</th><th className="px-5 py-3">{t('valuationAccuracy.breakdown.samples')}</th><th className="px-5 py-3">MAE</th><th className="px-5 py-3">MAPE</th><th className="px-5 py-3">{t('valuationAccuracy.breakdown.coverage')}</th><th className="px-5 py-3">{t('valuationAccuracy.breakdown.reject')}</th>
                   </tr></thead>
                   <tbody>{report.groups.length ? report.groups.map(group => <tr key={`${group.locationKey}-${group.propertyType}`} className="border-t border-[var(--glass-border)] hover:bg-[var(--glass-surface)]">
-                    <td className="px-5 py-3 font-medium text-[var(--text-primary)]">{group.locationKey}</td><td className="px-5 py-3 text-[var(--text-secondary)]">{group.propertyType}</td><td className="px-5 py-3 tabular-nums">{group.sampleCount.toLocaleString('vi-VN')}</td><td className="px-5 py-3 font-mono">{formatVnd(group.mae)}</td><td className="px-5 py-3 font-mono">{formatPercent(group.mape)}</td><td className="px-5 py-3 font-mono">{formatPercent(group.intervalCoverage)}</td><td className="px-5 py-3 font-mono">{group.rejectedCount.toLocaleString('vi-VN')} ({formatPercent(group.rejectRate)})</td>
-                  </tr>) : <tr><td colSpan={7} className="px-5 py-10 text-center text-sm text-[var(--text-tertiary)]">Không có nhóm dữ liệu cho lần chạy này.</td></tr>}</tbody>
+                    <td className="px-5 py-3 font-medium text-[var(--text-primary)]">{group.locationKey}</td><td className="px-5 py-3 text-[var(--text-secondary)]">{propertyTypeLabels[group.propertyType]?.[language] ?? group.propertyType}</td><td className="px-5 py-3 tabular-nums">{formatCount(group.sampleCount, language)}</td><td className="px-5 py-3 font-mono">{formatVnd(group.mae, language)}</td><td className="px-5 py-3 font-mono">{formatPercent(group.mape, language)}</td><td className="px-5 py-3 font-mono">{formatPercent(group.intervalCoverage, language)}</td><td className="px-5 py-3 font-mono">{formatCount(group.rejectedCount, language)} ({formatPercent(group.rejectRate, language)})</td>
+                  </tr>) : <tr><td colSpan={7} className="px-5 py-10 text-center text-sm text-[var(--text-tertiary)]">{t('valuationAccuracy.breakdown.empty')}</td></tr>}</tbody>
                 </table>
               </div>
             </section>
             <footer className="flex flex-wrap items-center gap-2 text-xs text-[var(--text-tertiary)]">
-              <BarChart3 className="h-4 w-4" /> Chạy lúc: {dateTime(report.evaluatedAt)} · Nguồn xác minh: {data?.dataset.sources.join(', ')}
+              <BarChart3 className="h-4 w-4" /> {t('valuationAccuracy.footer.runAt')} {dateTime(report.evaluatedAt, language)} · {t('valuationAccuracy.footer.sources')} {data?.dataset.sources.map(source => verificationSourceKeys[source] ? t(verificationSourceKeys[source]) : source).join(', ')}
             </footer>
           </>
         )}
         {!loading && !report && !error && (
           <div className="rounded-[22px] border border-[var(--glass-border)] bg-[var(--bg-surface)] p-8 text-center text-sm text-[var(--text-secondary)]">
-            Không có kết quả backtest để hiển thị.
+            {t('valuationAccuracy.noResult')}
           </div>
         )}
       </div>
