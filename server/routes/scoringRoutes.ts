@@ -1,5 +1,6 @@
 import { Router, Request, Response } from 'express';
 import { scoringConfigRepository, DEFAULT_WEIGHTS, DEFAULT_THRESHOLDS } from '../repositories/scoringConfigRepository';
+import { invalidateScoringConfig, rescoreTenantLeads } from '../services/leadScoringService';
 
 export function createScoringRoutes(authenticateToken: any) {
   const router = Router();
@@ -50,6 +51,7 @@ export function createScoringRoutes(authenticateToken: any) {
         weights,
         thresholds: thresholds ?? DEFAULT_THRESHOLDS,
       });
+      invalidateScoringConfig(user.tenantId);
       res.json({
         ...result,
         version: result.version ?? 1,
@@ -57,6 +59,21 @@ export function createScoringRoutes(authenticateToken: any) {
     } catch (error) {
       console.error('Error updating scoring config:', error);
       res.status(500).json({ error: 'Không lưu được cấu hình điểm số' });
+    }
+  });
+
+  // Re-score every lead of the tenant with the saved configuration.
+  router.post('/rescore', authenticateToken, async (req: Request, res: Response) => {
+    try {
+      const user = (req as any).user;
+      if (!['SUPER_ADMIN', 'ADMIN', 'TEAM_LEAD'].includes(user.role)) {
+        return res.status(403).json({ error: 'Chỉ quản trị viên và trưởng nhóm được chấm lại điểm lead' });
+      }
+      const result = await rescoreTenantLeads(user.tenantId, req.body?.lang === 'en' ? 'en' : 'vn');
+      res.json(result);
+    } catch (error) {
+      console.error('Error re-scoring leads:', error);
+      res.status(500).json({ error: 'Không chấm lại được điểm lead' });
     }
   });
 

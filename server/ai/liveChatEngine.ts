@@ -2965,16 +2965,26 @@ async function handle_capture_lead(args: Record<string, any>): Promise<any> {
         budget, timeline, area, source: 'WEBSITE',
         hasPhone: true, interactions: 1,
     });
+    // The stored score follows the tenant's scoring configuration (Customers → Scoring).
+    const { scoreLeadForTenant } = await import('../services/leadScoringService');
+    const configured = await scoreLeadForTenant(tenantId, {
+        name, phone, source, stage: 'NEW', notes: notes ? String(notes) : null,
+        preferences: {
+            budgetMax: Number(budget) > 0 ? Number(budget) : null,
+            regions: area ? [String(area)] : [],
+            timeline: timeline && timeline !== 'EXPLORING' ? String(timeline) : null,
+        },
+    }, notes ? String(notes) : '');
 
     const lead = await leadRepository.create(tenantId, {
         name: String(name || 'Khách hàng').trim().slice(0, 100),
         phone: String(phone).trim().slice(0, 20),
         notes: notes
             ? String(notes).slice(0, 2000)
-            : `Captured via widget. Score: ${score.score}${area ? ` | Khu vực: ${area}` : ''}`,
+            : `Captured via widget. Score: ${configured.score}${area ? ` | Khu vực: ${area}` : ''}`,
         source,
         stage: 'NEW',
-        score: { total: score.score, grade: score.grade, capturedAt: new Date().toISOString() },
+        score: { score: configured.score, grade: configured.grade, reasoning: configured.reasoning, factors: configured.factors, configVersion: configured.configVersion, scoredAt: new Date().toISOString() },
     });
     // P-AUDIT Rec3: tu dong ghi danh lead moi vao follow-up D+1/3/5/7 (idempotent, fail-safe)
     try {
@@ -2998,8 +3008,8 @@ async function handle_capture_lead(args: Record<string, any>): Promise<any> {
     return {
         success: true,
         leadId: lead.id,
-        score: score.score,
-        grade: score.grade,
+        score: configured.score,
+        grade: configured.grade,
         priority: score.priority,
     };
 }

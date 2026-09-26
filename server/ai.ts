@@ -3264,69 +3264,16 @@ ${dataFreshnessNote}`;
         }
     }
 
-    async scoreLead(leadData: Partial<Lead>, messageContent?: string, weights?: Record<string, number>, lang: string = 'vn', tenantId: string = 'default'): Promise<{ score: number, grade: string, reasoning: string }> {
-        try {
-            const weightsStr = weights ? `\nTrọng số: completeness=${weights.completeness || 0}, engagement=${weights.engagement || 0}, budgetFit=${weights.budgetFit || 0}, velocity=${weights.velocity || 0}. Tính điểm (0-100) theo trọng số.` : '';
-            const budgetDisplay = leadData.preferences?.budgetMax ? `${(leadData.preferences.budgetMax / 1e9).toFixed(2)} Tỷ VNĐ` : 'Chưa rõ';
-            const existingScore = leadData.score?.score != null ? `Điểm hiện tại: ${leadData.score.score} (${leadData.score.grade || '?'})` : 'Chưa có điểm';
-            const msgLine = messageContent ? `\nTin nhắn mới nhất: "${messageContent}"` : '';
-
-            const prompt = `Ngôn ngữ: ${lang === 'en' ? 'English' : 'Tiếng Việt'}
-
-KHÁCH HÀNG: ${leadData.name || 'Chưa rõ'} | Nguồn: ${leadData.source || 'Chưa rõ'} | Giai đoạn: ${leadData.stage || 'Chưa rõ'}
-Ngân sách: ${budgetDisplay} | Loại: ${leadData.preferences?.propertyTypes?.join(', ') || 'Chưa rõ'} | Khu vực: ${leadData.preferences?.regions?.join(', ') || 'Chưa rõ'}
-SĐT: ${leadData.phone ? 'Có' : 'Chưa'} | Email: ${leadData.email ? 'Có' : 'Chưa'} | ${existingScore}
-Ghi chú: ${leadData.notes || 'Không'}${msgLine}${weightsStr}
-
-THANG ĐIỂM (0-100):
-A (80-100): Nhu cầu rõ, ngân sách cụ thể, đủ liên lạc, giai đoạn tiến triển.
-B (60-79): Có nhu cầu nhưng thiếu 1-2 thông tin quan trọng.
-C (40-59): Chưa xác định ngân sách hoặc khu vực.
-D (0-39): Thiếu thông tin hoặc không có dấu hiệu mua.
-
-reasoning phải bằng ${lang === 'en' ? 'English' : 'Tiếng Việt'}, cụ thể dựa trên dữ liệu trên.`;
-
-            const schema: Schema = {
-                type: Type.OBJECT,
-                properties: {
-                    score: { type: Type.NUMBER, description: "Điểm từ 0 đến 100" },
-                    grade: { type: Type.STRING, enum: ['A', 'B', 'C', 'D'] },
-                    reasoning: { type: Type.STRING, description: "Lý do chấm điểm ngắn gọn" }
-                },
-                required: ['score', 'grade', 'reasoning']
-            };
-
-            const scoreModel = await getGovernanceModel(tenantId);
-            const _scoreStart = Date.now();
-            const response = await generateWithFallback({
-                model: scoreModel,
-                contents: prompt,
-                config: {
-                    systemInstruction: 'Bạn là chuyên gia chấm điểm lead BĐS. Phân tích khách quan, dựa trên dữ liệu thực tế. Trả về JSON hợp lệ theo schema.',
-                    responseMimeType: 'application/json',
-                    responseSchema: schema
-                }
-            });
-            trackAiUsage('LEAD_SCORING', scoreModel, Date.now() - _scoreStart, prompt, response.text || '', { tenantId });
-
-            const result = JSON.parse(response.text || '{}');
-            return {
-                score: result.score || 50,
-                grade: result.grade || 'C',
-                reasoning: result.reasoning || 'Thiếu dữ liệu để đánh giá chính xác.'
-            };
-        } catch (e: any) {
-            const msg = e?.message || String(e);
-            const isQuota = msg.includes('RESOURCE_EXHAUSTED') || msg.includes('quota') || msg.includes('429');
-            logger.error("AI Scoring Error:", e);
-            return {
-                score: 50,
-                grade: 'C',
-                reasoning: isQuota
-                    ? (lang === 'en' ? 'AI scoring unavailable — quota exceeded. Score estimated.' : 'Hệ thống AI đang bận, điểm được ước tính tạm thời.')
-                    : (lang === 'en' ? 'AI scoring temporarily unavailable.' : 'Hệ thống AI chấm điểm tạm thời không khả dụng.')
-            };
-        }
+    /**
+     * Scores a lead with the tenant's saved scoring configuration (weights and A–D
+     * thresholds, see server/services/leadScoringService.ts). Deterministic, so it
+     * never falls back to a placeholder score when the AI provider is busy.
+     * `_weights` is kept for API compatibility; the tenant configuration wins.
+     */
+    async scoreLead(leadData: Partial<Lead>, messageContent?: string, _weights?: Record<string, number>, lang: string = 'vn', tenantId: string = 'default'): Promise<{ score: number, grade: string, reasoning: string, factors?: Record<string, number>, configVersion?: number }> {
+        const { scoreLeadForTenant } = await import('./services/leadScoringService');
+        const result = await scoreLeadForTenant(tenantId, leadData as any, messageContent || '', lang);
+        return { score: result.score, grade: result.grade, reasoning: result.reasoning, factors: result.factors, configVersion: result.configVersion };
     }
 
     async summarizeLead(lead: Lead, logs: any[], lang: string = 'vn', tenantId: string = 'default') {

@@ -709,6 +709,16 @@ class DatabaseApiClient {
   async updateScoringConfig(data: any) {
     return api.put<any>('/api/scoring/config', data);
   }
+  async rescoreLeads(): Promise<{ updated: number; grades: Record<string, number> }> {
+    const result = await fetch('/api/scoring/rescore', {
+      method: 'POST',
+      credentials: 'include',
+      headers: { 'Content-Type': 'application/json' },
+      body: '{}',
+    });
+    if (!result.ok) throw new Error((await result.json().catch(() => ({}))).error || 'Không chấm lại được điểm lead');
+    return result.json();
+  }
   async getRoutingRules() {
     const result = await fetch('/api/routing-rules', { credentials: 'include' });
     if (!result.ok) throw new Error('Failed to fetch routing rules');
@@ -768,7 +778,7 @@ class DatabaseApiClient {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(data),
     });
-    if (!result.ok) throw new Error('Failed to create sequence');
+    if (!result.ok) throw new Error((await result.json().catch(() => ({}))).error || 'Không tạo được chiến dịch');
     return result.json();
   }
   async updateSequence(id: string, data: any) {
@@ -778,7 +788,7 @@ class DatabaseApiClient {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(data),
     });
-    if (!result.ok) throw new Error('Failed to update sequence');
+    if (!result.ok) throw new Error((await result.json().catch(() => ({}))).error || 'Không lưu được chiến dịch');
     return result.json();
   }
   async deleteSequence(id: string) {

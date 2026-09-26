@@ -1174,7 +1174,7 @@ export async function processWebhookJob(io: Server, job: any): Promise<void> {
       (async () => {
         try {
           const { aiService } = await import('./ai');
-          const scoreResult = await aiService.scoreLead({ name: lead.name, source: 'Zalo' }, textContent);
+          const scoreResult = await aiService.scoreLead({ id: leadId, name: lead.name, source: 'Zalo' } as any, textContent, undefined, 'vn', tenantId);
           if (scoreResult) {
             const { leadRepository } = await import('./repositories/leadRepository');
             await leadRepository.update(tenantId, leadId, {
@@ -1269,7 +1269,7 @@ export async function processWebhookJob(io: Server, job: any): Promise<void> {
           (async () => {
             try {
               const { aiService } = await import('./ai');
-              const scoreResult = await aiService.scoreLead({ name: lead.name, source: 'Facebook' }, messageText);
+              const scoreResult = await aiService.scoreLead({ id: leadId, name: lead.name, source: 'Facebook' } as any, messageText, undefined, 'vn', tenantId);
               if (scoreResult) {
                 const { leadRepository } = await import('./repositories/leadRepository');
                 await leadRepository.update(tenantId, leadId, {

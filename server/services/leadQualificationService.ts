@@ -59,7 +59,7 @@ function normalize(value: string): string {
     .replace(/đ/g, 'd');
 }
 
-function parseBudget(text: string): number | undefined {
+export function parseBudget(text: string): number | undefined {
   const normalized = normalize(text).replace(/\s+/g, ' ');
   const match = normalized.match(/(\d+(?:[.,]\d+)?)\s*(ty|ti|trieu|tr|tyr|ty dong|tỷ|tỷ)/i);
   if (!match) return undefined;
@@ -69,7 +69,7 @@ function parseBudget(text: string): number | undefined {
   return Math.round(amount * 1_000_000_000);
 }
 
-function parseTimeline(text: string): string | undefined {
+export function parseTimeline(text: string): string | undefined {
   const normalized = normalize(text);
   if (/(gap|ngay|hom nay|tuan nay|urgent|kh[aâ]n)/i.test(normalized)) return 'URGENT';
   if (/(1 thang|1m|mot thang)/i.test(normalized)) return '1M';

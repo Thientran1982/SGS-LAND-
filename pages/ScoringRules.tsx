@@ -52,6 +52,7 @@ export const ScoringRules: React.FC = () => {
     const [loading, setLoading] = useState(true);
     const [loadError, setLoadError] = useState('');
     const [saving, setSaving] = useState(false);
+    const [rescoring, setRescoring] = useState(false);
     const [weights, setWeights] = useState<Record<WeightKey, number>>(DEFAULT_WEIGHTS);
     const [thresholds, setThresholds] = useState<Record<Grade, number>>(DEFAULT_THRESHOLDS);
     const [saved, setSaved] = useState<{ w: Record<WeightKey, number>; th: Record<Grade, number> }>({ w: DEFAULT_WEIGHTS, th: DEFAULT_THRESHOLDS });
@@ -105,6 +106,18 @@ export const ScoringRules: React.FC = () => {
         }
     };
 
+    const handleRescore = async () => {
+        setRescoring(true);
+        try {
+            const r = await db.rescoreLeads();
+            notify(t('scoring.rescore_done', { n: r?.updated ?? 0 }));
+        } catch (e: any) {
+            notify(e?.message || t('common.error'), 'error');
+        } finally {
+            setRescoring(false);
+        }
+    };
+
     if (loading) return <div className="flex items-center justify-center h-48"><div className="w-8 h-8 border-4 border-[var(--glass-border)] border-t-[var(--sgs-primary)] rounded-full animate-spin" /></div>;
     if (loadError) return (
         <div className="flex flex-col items-center justify-center h-full p-10 text-center">
@@ -131,6 +144,9 @@ export const ScoringRules: React.FC = () => {
                 <div className="flex-1 min-h-0 overflow-y-auto no-scrollbar p-4 lg:p-6 pb-24">
                     <div className="grid grid-cols-1 xl:grid-cols-[minmax(0,1fr)_360px] gap-4 lg:gap-6 items-start">
                         <div className="space-y-4">
+                            <p className="rounded-2xl border border-[var(--glass-border)] bg-[var(--glass-surface)] px-4 py-3 text-xs leading-relaxed text-[var(--text-secondary)]">
+                                <span className="font-semibold text-[var(--text-primary)]">{t('scoring.applies_title')}</span> {t('scoring.applies_desc')}
+                            </p>
                             {/* Weights */}
                             <section className="rounded-2xl border border-[var(--glass-border)] bg-[var(--bg-surface)] p-4 sm:p-5">
                                 <div className="flex items-start justify-between gap-3 flex-wrap">
@@ -256,7 +272,8 @@ export const ScoringRules: React.FC = () => {
                 {/* Save bar */}
                 <div className="shrink-0 border-t border-[var(--glass-border)] bg-[var(--bg-surface)] px-4 lg:px-6 py-3 flex items-center justify-between gap-3 flex-wrap">
                     <span className="text-xs text-[var(--text-secondary)]">{dirty ? t('scoring.unsaved') : t('scoring.saved_state')}</span>
-                    <div className="flex gap-2">
+                    <div className="flex gap-2 flex-wrap">
+                        <button type="button" onClick={() => void handleRescore()} disabled={dirty || rescoring || saving} title={dirty ? t('scoring.rescore_save_first') : undefined} className="h-10 px-4 rounded-xl border border-[var(--glass-border)] text-sm font-semibold text-sgs-primary hover:bg-[var(--glass-surface-hover)] disabled:opacity-40">{rescoring ? t('scoring.rescoring') : t('scoring.rescore')}</button>
                         <button type="button" onClick={() => { setWeights(saved.w); setThresholds(saved.th); }} disabled={!dirty || saving} className="h-10 px-4 rounded-xl border border-[var(--glass-border)] text-sm font-semibold text-[var(--text-primary)] hover:bg-[var(--glass-surface-hover)] disabled:opacity-40">{t('scoring.discard')}</button>
                         <button type="button" onClick={() => void handleSave()} disabled={!dirty || saving || !!thresholdError || !!weightError} className="h-10 px-4 rounded-xl bg-sgs-primary text-white text-sm font-semibold hover:opacity-90 disabled:opacity-40">{saving ? t('scoring.saving') : t('common.save')}</button>
                     </div>

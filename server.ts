@@ -1550,7 +1550,7 @@ app.use(globalMutationAudit);
 
       if (result && leadData?.id) {
         const tenantId = (req as any).tenantId;
-        const savedScore = { score: result.score || (result as any).totalScore, grade: result.grade, reasoning: result.reasoning };
+        const savedScore = { score: result.score, grade: result.grade, reasoning: result.reasoning, factors: (result as any).factors, configVersion: (result as any).configVersion, scoredAt: new Date().toISOString() };
         try {
           await leadRepository.update(tenantId, leadData.id, { score: savedScore }, (req as any).user?.id, (req as any).user?.role || 'ADMIN');
           logger.info(`AI score persisted for lead ${leadData.id}: ${savedScore.score}`);

@@ -7,6 +7,7 @@ import { useTranslation } from '../services/i18n';
 import { Dropdown } from '../components/Dropdown';
 import { ConfirmModal } from '../components/ConfirmModal';
 import { SeoHead } from '../components/SeoHead';
+import { uniqueSequenceName } from '../utils/sequenceNames';
 // ── Template types (mirrors server/sequenceTemplates.ts) ──────────────────────
 interface SequenceTemplate {
     id: string;
@@ -791,7 +792,7 @@ export const Sequences: React.FC = () => {
         try {
             const steps = tpl.steps.map(s => ({ ...s, id: crypto.randomUUID() }));
             const newSeq = await db.createSequence({
-                name: tpl.name,
+                name: uniqueSequenceName(tpl.name, sequences.map(s => s.name)),
                 triggerEvent: tpl.triggerEvent,
                 steps,
                 isActive: false,
@@ -799,10 +800,10 @@ export const Sequences: React.FC = () => {
             setSequences(prev => [newSeq, ...prev]);
             setSelectedSeq(newSeq);
             notify(t('seq.created_from_template'), 'success');
-        } catch {
-            notify(t('common.error'), 'error');
+        } catch (e: any) {
+            notify(e?.message || t('common.error'), 'error');
         }
-    }, [t, notify]);
+    }, [t, notify, sequences]);
     const handleDuplicate = async (seq: Sequence) => {
       try {
         const res = await fetch('/api/sequences', {
@@ -810,7 +811,7 @@ export const Sequences: React.FC = () => {
           headers: { 'Content-Type': 'application/json' },
           credentials: 'include',
           body: JSON.stringify({
-            name: `${seq.name} ${t('seq.copy_suffix')}`,
+            name: uniqueSequenceName(`${seq.name} ${t('seq.copy_suffix')}`, sequences.map(s => s.name)),
             triggerEvent: seq.triggerEvent,
             steps: seq.steps || [],
             isActive: false,
@@ -821,7 +822,8 @@ export const Sequences: React.FC = () => {
           setSequences(prev => [newSeq, ...prev]);
           notify(t('seq.duplicated'), 'success');
         } else {
-          notify(t('seq.duplicate_error'), 'error');
+          const err = await res.json().catch(() => ({}));
+          notify(err?.error || t('seq.duplicate_error'), 'error');
         }
       } catch {
         notify(t('seq.duplicate_error'), 'error');
@@ -841,7 +843,8 @@ export const Sequences: React.FC = () => {
           setSequences(prev => prev.map(s => s.id === seq.id ? updated : s));
           notify(seq.isActive ? t('seq.paused_ok') : t('seq.activated_ok'), 'success');
         } else {
-          notify(t('seq.status_error'), 'error');
+          const err = await res.json().catch(() => ({}));
+          notify(err?.error || t('seq.status_error'), 'error');
         }
       } catch {
         notify(t('seq.status_error'), 'error');
@@ -862,14 +865,14 @@ export const Sequences: React.FC = () => {
     const handleCreate = async () => {
         try {
             const newSeq = await db.createSequence({
-                name: `${t('seq.default_name')} ${formatDate(new Date().toISOString())}`,
+                name: uniqueSequenceName(`${t('seq.default_name')} ${formatDate(new Date().toISOString())}`, sequences.map(s => s.name)),
                 triggerEvent: LeadStage.NEW,
                 steps: []
             });
             setSequences(prev => [newSeq, ...prev]);
             setSelectedSeq(newSeq);
-        } catch {
-            notify(t('common.error'), 'error');
+        } catch (e: any) {
+            notify(e?.message || t('common.error'), 'error');
         }
     };
 

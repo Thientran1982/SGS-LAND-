@@ -30,6 +30,11 @@ function publicBaseUrl(): string {
 
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
+const DUPLICATE_NAME_ERROR = 'Đã có chiến dịch cùng tên. Vui lòng đặt tên khác.';
+const NEED_STEPS_ERROR = 'Vui lòng thêm ít nhất 1 bước trước khi kích hoạt chiến dịch';
+/** Unique violation on uniq_sequences_tenant_name (one name per tenant). */
+const isDuplicateName = (error: any) => error?.code === '23505';
+
 function signSeqUrl(enrollmentId: string, url: string): string {
   const secret = process.env.JWT_SECRET || 'dev-secret';
   return createHmac('sha256', secret)
@@ -140,16 +145,23 @@ export function createSequenceRoutes(pool: Pool, authenticateToken: any) {
         return res.status(403).json({ error: 'Only admins and team leads can create sequences' });
       }
 
-      const { name, triggerEvent, steps, isActive } = req.body;
+      const { triggerEvent, steps } = req.body;
+      const name = typeof req.body?.name === 'string' ? req.body.name.trim() : '';
       if (!name) {
-        return res.status(400).json({ error: 'Name is required' });
+        return res.status(400).json({ error: 'Vui lòng nhập tên chiến dịch' });
       }
+      if (name.length > 255) {
+        return res.status(400).json({ error: 'Tên chiến dịch tối đa 255 ký tự' });
+      }
+      // A campaign without steps cannot run, so it starts paused.
+      const isActive = req.body.isActive === true && Array.isArray(steps) && steps.length > 0;
 
       const sequence = await sequenceRepository.create(user.tenantId, {
         name, triggerEvent, steps, isActive,
       });
       res.status(201).json(sequence);
     } catch (error) {
+      if (isDuplicateName(error)) return res.status(409).json({ error: DUPLICATE_NAME_ERROR });
       console.error('Error creating sequence:', error);
       res.status(500).json({ error: 'Failed to create sequence' });
     }
@@ -163,17 +175,30 @@ export function createSequenceRoutes(pool: Pool, authenticateToken: any) {
         return res.status(403).json({ error: 'Only admins and team leads can update sequences' });
       }
 
-      // Validate: cannot activate sequence with no steps
-        if (req.body.isActive === true) {
-          const bodySteps = req.body.steps;
-          if (!bodySteps || (Array.isArray(bodySteps) && bodySteps.length === 0)) {
-            return res.status(400).json({ error: 'Vui lòng thêm ít nhất 1 bước trước khi kích hoạt chiến dịch' });
-          }
+      if (req.body.name !== undefined) {
+        const name = typeof req.body.name === 'string' ? req.body.name.trim() : '';
+        if (!name) return res.status(400).json({ error: 'Vui lòng nhập tên chiến dịch' });
+        if (name.length > 255) return res.status(400).json({ error: 'Tên chiến dịch tối đa 255 ký tự' });
+        req.body.name = name;
+      }
+      // Cannot activate a sequence with no steps. The card toggle sends only
+      // { isActive }, so fall back to the stored steps.
+      if (req.body.isActive === true) {
+        let steps = req.body.steps;
+        if (steps === undefined) {
+          const current = await sequenceRepository.findById(user.tenantId, req.params.id as string);
+          if (!current) return res.status(404).json({ error: 'Sequence not found' });
+          steps = (current as any).steps;
         }
-        const sequence = await sequenceRepository.update(user.tenantId, req.params.id as string, req.body);
+        if (!Array.isArray(steps) || steps.length === 0) {
+          return res.status(400).json({ error: NEED_STEPS_ERROR });
+        }
+      }
+      const sequence = await sequenceRepository.update(user.tenantId, req.params.id as string, req.body);
       if (!sequence) return res.status(404).json({ error: 'Sequence not found' });
       res.json(sequence);
     } catch (error) {
+      if (isDuplicateName(error)) return res.status(409).json({ error: DUPLICATE_NAME_ERROR });
       console.error('Error updating sequence:', error);
       res.status(500).json({ error: 'Failed to update sequence' });
     }
