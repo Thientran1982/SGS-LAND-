@@ -18,9 +18,10 @@ type Metrics = {
   intervalCoverage: number | null;
 };
 type Group = Metrics & { locationKey: string; propertyType: string };
+type GroupHistoryPoint = Metrics & { locationKey: string; propertyType: string };
 type ResponseData = {
   report: Metrics & { evaluatedAt: string; groups: Group[]; thresholdVersion?: number; appliedThresholds?: Thresholds };
-  history: Array<Metrics & { evaluatedAt: string; thresholdVersion: number | null; thresholds: Thresholds | null }>;
+  history: Array<Metrics & { evaluatedAt: string; thresholdVersion: number | null; thresholds: Thresholds | null; groups?: GroupHistoryPoint[] }>;
   drift: {
     status: 'CLEAR' | 'WARNING' | 'BLOCKED';
     promotionBlocked: boolean;
@@ -470,6 +471,182 @@ function GroupMetricBreakdown({ groups, language, t }: { groups: Group[]; langua
   );
 }
 
+function GroupHistoryTrends({
+  history,
+  latestGroups,
+  language,
+  t,
+}: {
+  history: ResponseData['history'];
+  latestGroups: Group[];
+  language: Language;
+  t: Translate;
+}) {
+  const [selectedGroupKey, setSelectedGroupKey] = useState('');
+  const locale = localeFor(language);
+  const groupOptions = new Map<string, { key: string; locationKey: string; propertyType: string }>();
+  for (const run of history) {
+    for (const group of run.groups ?? []) {
+      const key = JSON.stringify([group.locationKey, group.propertyType]);
+      groupOptions.set(key, { key, locationKey: group.locationKey, propertyType: group.propertyType });
+    }
+  }
+  for (const group of latestGroups) {
+    const key = JSON.stringify([group.locationKey, group.propertyType]);
+    groupOptions.set(key, { key, locationKey: group.locationKey, propertyType: group.propertyType });
+  }
+  const options = [...groupOptions.values()].sort((a, b) =>
+    `${a.locationKey}\u0000${a.propertyType}`.localeCompare(`${b.locationKey}\u0000${b.propertyType}`, locale),
+  );
+  const activeKey = options.some(option => option.key === selectedGroupKey)
+    ? selectedGroupKey
+    : options[0]?.key ?? '';
+  const selectedGroup = options.find(option => option.key === activeKey);
+  const propertyTypeLabel = (value: string) => propertyTypeLabels[value]?.[language] ?? value;
+  const selectedLabel = selectedGroup
+    ? `${selectedGroup.locationKey} · ${propertyTypeLabel(selectedGroup.propertyType)}`
+    : '';
+  const chartData = history.map(run => {
+    const group = (run.groups ?? []).find(item =>
+      item.locationKey === selectedGroup?.locationKey && item.propertyType === selectedGroup?.propertyType,
+    );
+    return {
+      evaluatedAt: run.evaluatedAt,
+      dateLabel: new Date(run.evaluatedAt).toLocaleDateString(locale, { year: '2-digit', month: '2-digit', day: '2-digit' }),
+      sampleCount: group?.sampleCount ?? null,
+      mae: group?.mae ?? null,
+      mapePercent: group?.mape == null ? null : group.mape * 100,
+    };
+  });
+  const hasMae = chartData.some(point => point.mae != null);
+  const hasMape = chartData.some(point => point.mapePercent != null);
+  const metricCharts = [
+    {
+      key: 'mae' as const,
+      title: 'MAE · VND/m²',
+      aria: 'valuationAccuracy.groupTrend.maeAria',
+      chartAria: 'valuationAccuracy.groupTrend.maeChartAria',
+      dataKey: 'mae',
+      hasData: hasMae,
+      noData: 'valuationAccuracy.groupTrend.noMae',
+      tickFormatter: (value: number) => Number(value).toLocaleString(locale, { maximumFractionDigits: 0 }),
+      format: (value: number | null) => formatVnd(value, language),
+      color: 'var(--ui-brand)',
+    },
+    {
+      key: 'mape' as const,
+      title: 'MAPE · %',
+      aria: 'valuationAccuracy.groupTrend.mapeAria',
+      chartAria: 'valuationAccuracy.groupTrend.mapeChartAria',
+      dataKey: 'mapePercent',
+      hasData: hasMape,
+      noData: 'valuationAccuracy.groupTrend.noMape',
+      tickFormatter: (value: number) => `${new Intl.NumberFormat(locale, { minimumFractionDigits: 1, maximumFractionDigits: 1 }).format(Number(value))}%`,
+      format: (value: number | null) => value == null
+        ? '—'
+        : `${new Intl.NumberFormat(locale, { minimumFractionDigits: 1, maximumFractionDigits: 1 }).format(value)}%`,
+      color: '#c47b16',
+    },
+  ];
+  const renderTooltip = (metric: typeof metricCharts[number]) => ({ active, payload }: any) => {
+    const point = payload?.[0]?.payload;
+    if (!active || !point) return null;
+    const value = point[metric.dataKey] as number | null;
+    return (
+      <div className="rounded-xl border border-[var(--glass-border)] bg-[var(--bg-surface)] p-3 text-xs shadow-xl">
+        <p className="mb-2 font-semibold text-[var(--text-primary)]">{dateTime(point.evaluatedAt, language)}</p>
+        <p className="font-mono text-[var(--text-secondary)]">{t('valuationAccuracy.groupTrend.measured', { value: metric.format(value) })}</p>
+        <p className="mt-1 text-[var(--text-tertiary)]">
+          {t('valuationAccuracy.groupTrend.samples', { count: point.sampleCount == null ? '—' : formatCount(point.sampleCount, language) })}
+        </p>
+      </div>
+    );
+  };
+
+  return (
+    <section className="rounded-[22px] border border-[var(--glass-border)] bg-[var(--bg-surface)] p-4 shadow-sm sm:p-5">
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <div>
+          <h2 className="font-bold text-[var(--text-primary)]">{t('valuationAccuracy.groupTrend.title')}</h2>
+          <p className="mt-1 max-w-3xl text-xs leading-relaxed text-[var(--text-tertiary)]">{t('valuationAccuracy.groupTrend.description')}</p>
+        </div>
+        {options.length > 0 && (
+          <label className="min-w-[min(100%,18rem)] text-xs font-semibold text-[var(--text-secondary)]">
+            <span>{t('valuationAccuracy.groupTrend.select')}</span>
+            <select
+              value={activeKey}
+              onChange={event => setSelectedGroupKey(event.target.value)}
+              className="mt-1 min-h-10 w-full rounded-lg border border-[var(--glass-border)] bg-[var(--glass-surface)] px-2.5 py-2 text-sm text-[var(--text-primary)] focus:outline-none focus:ring-2 focus:ring-[var(--ui-brand)]"
+            >
+              {options.map(option => (
+                <option key={option.key} value={option.key}>
+                  {option.locationKey} · {propertyTypeLabel(option.propertyType)}
+                </option>
+              ))}
+            </select>
+          </label>
+        )}
+      </div>
+      {!options.length ? (
+        <p className="mt-4 rounded-xl bg-[var(--glass-surface)] p-4 text-sm text-[var(--text-tertiary)]">{t('valuationAccuracy.groupTrend.noGroups')}</p>
+      ) : (
+        <>
+          {history.length === 0 && (
+            <p className="mt-4 rounded-xl bg-[var(--glass-surface)] p-4 text-sm text-[var(--text-tertiary)]">{t('valuationAccuracy.groupTrend.noHistory')}</p>
+          )}
+          <div className="mt-4 grid gap-4 xl:grid-cols-2">
+            {metricCharts.map(metric => (
+              <section key={metric.key} className="min-w-0 rounded-[18px] bg-[var(--glass-surface)] p-3 sm:p-4" aria-label={t(metric.aria)}>
+                <h3 className="mb-2 text-sm font-bold text-[var(--text-primary)]">{metric.title}</h3>
+                <div className="h-56" role="img" aria-label={t(metric.chartAria, { group: selectedLabel })}>
+                  {metric.hasData ? (
+                    <ResponsiveContainer width="100%" height="100%">
+                      <LineChart data={chartData} margin={{ top: 8, right: 12, bottom: 4, left: 8 }}>
+                        <CartesianGrid stroke="var(--glass-border)" strokeDasharray="3 3" vertical={false} />
+                        <XAxis dataKey="dateLabel" tick={{ fill: 'var(--text-tertiary)', fontSize: 10 }} tickLine={false} axisLine={false} minTickGap={18} />
+                        <YAxis width={metric.key === 'mae' ? 78 : 56} domain={[0, 'auto']} tickFormatter={metric.tickFormatter} tick={{ fill: 'var(--text-tertiary)', fontSize: 10 }} tickLine={false} axisLine={false} />
+                        <Tooltip content={renderTooltip(metric)} />
+                        <Line type="monotone" dataKey={metric.dataKey} name={metric.title} stroke={metric.color} strokeWidth={2.5} dot={{ r: 3 }} activeDot={{ r: 5 }} connectNulls={false} isAnimationActive={false} />
+                      </LineChart>
+                    </ResponsiveContainer>
+                  ) : (
+                    <p className="flex h-full items-center justify-center text-sm text-[var(--text-tertiary)]">{t(metric.noData)}</p>
+                  )}
+                </div>
+              </section>
+            ))}
+          </div>
+          {history.length > 0 && (
+            <div className="mt-4 overflow-x-auto">
+              <table className="w-full min-w-[620px] text-left text-xs text-[var(--text-secondary)]">
+                <thead className="border-b border-[var(--glass-border)] text-[var(--text-tertiary)]"><tr>
+                  <th className="py-2">{t('valuationAccuracy.groupTrend.time')}</th>
+                  <th>{t('valuationAccuracy.groupTrend.samplesLabel')}</th>
+                  <th>MAE · VND/m²</th>
+                  <th>MAPE · %</th>
+                </tr></thead>
+                <tbody>{history.map(run => {
+                  const group = (run.groups ?? []).find(item =>
+                    item.locationKey === selectedGroup?.locationKey && item.propertyType === selectedGroup?.propertyType,
+                  );
+                  return (
+                    <tr key={`group-${run.evaluatedAt}`} className="border-b border-[var(--glass-border)]">
+                      <td className="py-2">{dateTime(run.evaluatedAt, language)}</td>
+                      <td>{group ? formatCount(group.sampleCount, language) : t('valuationAccuracy.groupTrend.unavailable')}</td>
+                      <td className="font-mono">{group ? formatVnd(group.mae, language) : t('valuationAccuracy.groupTrend.unavailable')}</td>
+                      <td className="font-mono">{group ? formatPercent(group.mape, language) : t('valuationAccuracy.groupTrend.unavailable')}</td>
+                    </tr>
+                  );
+                })}</tbody>
+              </table>
+            </div>
+          )}
+        </>
+      )}
+    </section>
+  );
+}
+
 const ValuationAccuracyReport: React.FC = () => {
   const { language, t } = useTranslation();
   const [user, setUser] = useState<User | null>(null);
@@ -644,6 +821,7 @@ const ValuationAccuracyReport: React.FC = () => {
               </div>
               <TrendChart history={data.history} language={language} t={t} />
             </section>
+            <GroupHistoryTrends history={data.history} latestGroups={report.groups} language={language} t={t} />
             <DriftNotificationEvents language={language} t={t} />
 
             <section className="overflow-hidden rounded-[22px] border border-[var(--glass-border)] bg-[var(--bg-surface)] shadow-sm">

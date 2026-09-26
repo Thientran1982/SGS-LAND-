@@ -1,5 +1,5 @@
 import React from 'react';
-import { cleanup, render, screen } from '@testing-library/react';
+import { cleanup, fireEvent, render, screen, within } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import ValuationAccuracyReport from '../../pages/ValuationAccuracyReport';
 import { DICTIONARY } from '../../config/locales';
@@ -55,6 +55,30 @@ const evaluationReport = {
     evaluatedCount: 3,
     rejectedCount: 1,
     rejectRate: 0.25,
+    mae: 18_000_000,
+    mape: 0.18,
+    medianAbsoluteError: 15_000_000,
+    intervalCoverage: 0.5,
+    evaluatedAt: '2026-09-18T10:30:00.000Z',
+    thresholdVersion: 2,
+    thresholds: { maeVndPerM2: 18_000_000, mape: 0.18, consecutiveRuns: 3 },
+    groups: ['townhouse_center', 'apartment_suburb', 'land_urban'].map((propertyType, index) => ({
+      locationKey: ['Quận 1, TP. Hồ Chí Minh', 'Quận 7, TP. Hồ Chí Minh', 'Cầu Giấy, Hà Nội'][index],
+      propertyType,
+      sampleCount: 4,
+      evaluatedCount: 3,
+      rejectedCount: 1,
+      rejectRate: 0.25,
+      mae: 18_000_000 + index * 1_000_000,
+      mape: 0.18 + index * 0.01,
+      medianAbsoluteError: 15_000_000,
+      intervalCoverage: 0.5,
+    })),
+  }, {
+    sampleCount: 4,
+    evaluatedCount: 3,
+    rejectedCount: 1,
+    rejectRate: 0.25,
     mae: 12_500_000,
     mape: 0.125,
     medianAbsoluteError: 9_000_000,
@@ -62,6 +86,18 @@ const evaluationReport = {
     evaluatedAt: '2026-09-25T10:30:00.000Z',
     thresholdVersion: 3,
     thresholds: { maeVndPerM2: 20_000_000, mape: 0.2, consecutiveRuns: 3 },
+    groups: ['townhouse_center', 'apartment_suburb', 'land_urban'].map((propertyType, index) => ({
+      locationKey: ['Quận 1, TP. Hồ Chí Minh', 'Quận 7, TP. Hồ Chí Minh', 'Cầu Giấy, Hà Nội'][index],
+      propertyType,
+      sampleCount: 4,
+      evaluatedCount: 3,
+      rejectedCount: 1,
+      rejectRate: 0.25,
+      mae: 12_500_000,
+      mape: 0.125,
+      medianAbsoluteError: 9_000_000,
+      intervalCoverage: 0.75,
+    })),
   }],
   drift: {
     status: 'WARNING' as const,
@@ -154,6 +190,15 @@ describe('ValuationAccuracyReport localization', () => {
     expect(screen.getByRole('combobox', { name: 'Filter by status' })).toBeInTheDocument();
     expect(screen.getByRole('option', { name: 'Open' })).toBeInTheDocument();
     expect(screen.getByRole('img', { name: 'MAE chart with a VND per square meter value axis and thresholds for each run' })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'Error trends by area and property type' })).toBeInTheDocument();
+    expect(screen.getByRole('combobox', { name: 'Area and property type' })).toBeInTheDocument();
+    expect(screen.getByRole('img', { name: /MAE history in VND per square meter for/ })).toBeInTheDocument();
+    fireEvent.change(screen.getByRole('combobox', { name: 'Area and property type' }), {
+      target: { value: JSON.stringify(['Quận 1, TP. Hồ Chí Minh', 'townhouse_center']) },
+    });
+    const groupHistoryTable = screen.getByRole('columnheader', { name: 'Evaluation time' }).closest('table')!;
+    expect(within(groupHistoryTable).getByText('18,000,000 VND/m²')).toBeInTheDocument();
+    expect(within(groupHistoryTable).getByText('12,500,000 VND/m²')).toBeInTheDocument();
     expect(await screen.findByText('Valuation drift thresholds updated')).toBeInTheDocument();
     expect(screen.getByText('an administrator updated drift thresholds to version 3: MAE 20,000,000 VND/m², MAPE 20.0%, 3 consecutive runs.')).toBeInTheDocument();
     expect(screen.getByText('City-center townhouse')).toBeInTheDocument();
@@ -181,6 +226,9 @@ describe('ValuationAccuracyReport localization', () => {
     expect(screen.getByRole('combobox', { name: 'Lọc trạng thái' })).toBeInTheDocument();
     expect(screen.getByRole('option', { name: 'Đang mở' })).toBeInTheDocument();
     expect(screen.getByRole('img', { name: 'Biểu đồ MAE có trục giá trị VND trên mét vuông và ngưỡng theo từng lần chạy' })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'Xu hướng sai số theo khu vực và loại bất động sản' })).toBeInTheDocument();
+    expect(screen.getByRole('combobox', { name: 'Khu vực và loại bất động sản' })).toBeInTheDocument();
+    expect(screen.getByRole('img', { name: /Biểu đồ lịch sử MAE theo VND trên mét vuông cho/ })).toBeInTheDocument();
     expect(await screen.findByText('Ngưỡng drift định giá đã được cập nhật')).toBeInTheDocument();
     expect(screen.getByText('quản trị viên đã cập nhật ngưỡng drift phiên bản 3: MAE 20.000.000 VND/m², MAPE 20,0%, 3 lần chạy liên tiếp.')).toBeInTheDocument();
     expect(screen.getByText('Nhà phố trung tâm')).toBeInTheDocument();
@@ -240,6 +288,25 @@ describe('ValuationAccuracyReport localization', () => {
   });
 
   it.each([
+    ['en', 'Error trends by area and property type', 'Evaluation time', 'Unavailable'],
+    ['vn', 'Xu hướng sai số theo khu vực và loại bất động sản', 'Thời điểm đánh giá', 'Chưa có'],
+  ] as const)('keeps missing historical group measurements unavailable in %s', async (language, heading, timeColumn, unavailable) => {
+    const legacyHistory = {
+      ...evaluationReport,
+      history: evaluationReport.history.map(run => ({ ...run, groups: [] })),
+    };
+    apiGet.mockImplementation((path: string) => Promise.resolve(
+      path.endsWith('/operational-events') ? { events: [] } : legacyHistory,
+    ));
+    renderReport(language);
+
+    expect(await screen.findByRole('heading', { name: heading })).toBeInTheDocument();
+    const groupHistoryTable = screen.getByRole('columnheader', { name: timeColumn }).closest('table')!;
+    expect(within(groupHistoryTable).getAllByText(unavailable)).toHaveLength(6);
+    expect(within(groupHistoryTable).queryByText(/0 VND\/m²/)).toBeNull();
+  });
+
+  it.each([
     ['en', 'There are no backtest results to display.'],
     ['vn', 'Không có kết quả backtest để hiển thị.'],
   ] as const)('localizes the no-result state in %s', async (language, noResult) => {
@@ -254,6 +321,8 @@ describe('ValuationAccuracyReport localization', () => {
     expect(DICTIONARY.en['valuationAccuracy.trend.runThresholdValue']).toBe('Run threshold: {value}');
     expect(DICTIONARY.vn['valuationAccuracy.trend.measuredValue']).toBe('Đo được: {value}');
     expect(DICTIONARY.vn['valuationAccuracy.trend.runThresholdValue']).toBe('Ngưỡng lần chạy: {value}');
+    expect(DICTIONARY.en['valuationAccuracy.groupTrend.title']).toBe('Error trends by area and property type');
+    expect(DICTIONARY.vn['valuationAccuracy.groupTrend.title']).toBe('Xu hướng sai số theo khu vực và loại bất động sản');
   });
 
   it('keeps report access restricted to the existing admin roles', async () => {

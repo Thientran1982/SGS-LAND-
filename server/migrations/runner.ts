@@ -240,6 +240,7 @@ import m216 from './216_minh_chat_plans';
 import m217 from './217_approval_request_soft_archive';
 import m218 from './218_dedupe_sequences_and_scoring_version';
 import m219 from './219_repair_audit_trigger';
+import m220 from './220_valuation_evaluation_group_history';
 dotenv.config();
 
 export interface Migration {
@@ -475,6 +476,7 @@ export const MIGRATION_REGISTRY: Record<string, Migration> = {
   '217_approval_request_soft_archive.ts': m217,
   '218_dedupe_sequences_and_scoring_version.ts': m218,
   '219_repair_audit_trigger.ts': m219,
+  '220_valuation_evaluation_group_history.ts': m220,
 };
 
 /**

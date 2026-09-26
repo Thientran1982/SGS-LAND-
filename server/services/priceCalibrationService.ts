@@ -19,7 +19,7 @@
  * When no transactions exist, weights shift to AI: 70% + comps: 30%.
  */
 
-import { Pool } from 'pg';
+import { Pool, type PoolClient } from 'pg';
 import { createHash } from 'crypto';
 import { logger } from '../middleware/logger';
 import { valuationGoldSet, type VerifiedTransaction } from '../data/valuationGoldSet';
@@ -516,13 +516,17 @@ export class PriceCalibrationService {
 
   private async saveEvaluationRun(evaluation: GoldSetEvaluation, thresholdConfig: ValuationDriftThresholdConfig): Promise<void> {
     if (!this.pool) return;
+    let client: PoolClient | null = null;
     try {
-      await this.pool.query(
+      client = await this.pool.connect();
+      await client.query('BEGIN');
+      const result = await client.query<{ id: string }>(
         `INSERT INTO valuation_evaluation_runs
           (evaluated_at, sample_count, evaluated_count, rejected_count, reject_rate,
            mae, mape, median_absolute_error, interval_coverage,
            threshold_version, threshold_mae_vnd_per_m2, threshold_mape, threshold_consecutive_runs)
-         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)`,
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)
+         RETURNING id`,
         [
           evaluation.evaluatedAt, evaluation.sampleCount, evaluation.evaluatedCount,
           evaluation.rejectedCount, evaluation.rejectRate, evaluation.mae, evaluation.mape,
@@ -531,9 +535,46 @@ export class PriceCalibrationService {
           thresholdConfig.thresholds.mape, thresholdConfig.thresholds.consecutiveRuns,
         ],
       );
+      const runId = result.rows[0]?.id;
+      if (!runId) throw new Error('Evaluation history insert did not return an id');
+
+      if (evaluation.groups.length) {
+        await client.query(
+          `INSERT INTO valuation_evaluation_run_groups
+            (run_id, location_key, property_type, sample_count, evaluated_count, rejected_count,
+             reject_rate, mae, mape, median_absolute_error, interval_coverage)
+           SELECT $1, group_row.location_key, group_row.property_type, group_row.sample_count,
+                  group_row.evaluated_count, group_row.rejected_count, group_row.reject_rate,
+                  group_row.mae, group_row.mape, group_row.median_absolute_error,
+                  group_row.interval_coverage
+           FROM jsonb_to_recordset($2::jsonb) AS group_row(
+             location_key TEXT, property_type TEXT, sample_count INTEGER, evaluated_count INTEGER,
+             rejected_count INTEGER, reject_rate NUMERIC, mae NUMERIC, mape NUMERIC,
+             median_absolute_error NUMERIC, interval_coverage NUMERIC
+           )`,
+          [runId, JSON.stringify(evaluation.groups.map(group => ({
+            location_key: group.locationKey,
+            property_type: group.propertyType,
+            sample_count: group.sampleCount,
+            evaluated_count: group.evaluatedCount,
+            rejected_count: group.rejectedCount,
+            reject_rate: group.rejectRate,
+            mae: group.mae,
+            mape: group.mape,
+            median_absolute_error: group.medianAbsoluteError,
+            interval_coverage: group.intervalCoverage,
+          })))],
+        );
+      }
+      await client.query('COMMIT');
     } catch (error: any) {
+      if (client) {
+        try { await client.query('ROLLBACK'); } catch { /* keep the original persistence error */ }
+      }
       // Reporting remains available if an older database has not migrated yet.
       logger.warn(`[Calibration] Could not persist evaluation run: ${error?.message || error}`);
+    } finally {
+      client?.release();
     }
   }
 
@@ -549,12 +590,24 @@ export class PriceCalibrationService {
     intervalCoverage: number | null;
     thresholdVersion: number | null;
     thresholds: ValuationDriftThresholds | null;
+    groups: Array<{
+      locationKey: string;
+      propertyType: string;
+      sampleCount: number;
+      evaluatedCount: number;
+      rejectedCount: number;
+      rejectRate: number;
+      mae: number | null;
+      mape: number | null;
+      medianAbsoluteError: number | null;
+      intervalCoverage: number | null;
+    }>;
   }>> {
     if (!this.pool) return [];
     try {
       const safeLimit = Math.max(1, Math.min(100, Math.floor(limit)));
       const { rows } = await this.pool.query(
-        `SELECT evaluated_at, sample_count, evaluated_count, rejected_count, reject_rate,
+        `SELECT id, evaluated_at, sample_count, evaluated_count, rejected_count, reject_rate,
                mae, mape, median_absolute_error, interval_coverage,
                threshold_version, threshold_mae_vnd_per_m2, threshold_mape, threshold_consecutive_runs
          FROM valuation_evaluation_runs
@@ -562,6 +615,28 @@ export class PriceCalibrationService {
          LIMIT $1`,
         [safeLimit],
       );
+      let groupRows: any[] = [];
+      if (rows.length) {
+        try {
+          const grouped = await this.pool.query(
+            `SELECT run_id, location_key, property_type, sample_count, evaluated_count,
+                    rejected_count, reject_rate, mae, mape, median_absolute_error, interval_coverage
+             FROM valuation_evaluation_run_groups
+             WHERE run_id = ANY($1::uuid[])
+             ORDER BY location_key, property_type`,
+            [rows.map((row: any) => row.id)],
+          );
+          groupRows = grouped.rows;
+        } catch (error: any) {
+          // Preserve top-level history during a rolling deploy before the group migration is applied.
+          logger.warn(`[Calibration] Could not read evaluation group history: ${error?.message || error}`);
+        }
+      }
+      const groupsByRun = new Map<string, any[]>();
+      for (const row of groupRows) {
+        const key = String(row.run_id);
+        groupsByRun.set(key, [...(groupsByRun.get(key) || []), row]);
+      }
       return rows.map((row: any) => ({
         evaluatedAt: new Date(row.evaluated_at).toISOString(),
         sampleCount: Number(row.sample_count),
@@ -578,6 +653,18 @@ export class PriceCalibrationService {
           mape: Number(row.threshold_mape),
           consecutiveRuns: Number(row.threshold_consecutive_runs),
         },
+        groups: (groupsByRun.get(String(row.id)) || []).map((group: any) => ({
+          locationKey: group.location_key,
+          propertyType: group.property_type,
+          sampleCount: Number(group.sample_count),
+          evaluatedCount: Number(group.evaluated_count),
+          rejectedCount: Number(group.rejected_count),
+          rejectRate: Number(group.reject_rate),
+          mae: group.mae == null ? null : Number(group.mae),
+          mape: group.mape == null ? null : Number(group.mape),
+          medianAbsoluteError: group.median_absolute_error == null ? null : Number(group.median_absolute_error),
+          intervalCoverage: group.interval_coverage == null ? null : Number(group.interval_coverage),
+        })),
       })).reverse();
     } catch (error: any) {
       logger.warn(`[Calibration] Could not read evaluation history: ${error?.message || error}`);
