@@ -1,0 +1,157 @@
+                <NotificationButton
+                    placement="rail"
+                    className="w-full"
+                    expanded={expanded}
+                    unreadCount={unreadCount}
+                    notifications={notifications}
+                    onMarkRead={onMarkRead}
+                    onMarkAllRead={onMarkAllRead}
+                    onDeleteNotification={onDeleteNotification}
+                    onDeleteAllRead={onDeleteAllRead}
+                    onNavigate={onNavigate}
+                />
+
+                <div className="relative flex w-full justify-center">
+                    {profileOpen && (
+                        <div
+                            role="menu"
+                            aria-label={t('menu.profile')}
+                            className="absolute bottom-0 left-full z-[130] ml-3 w-64 rounded-2xl border border-[var(--glass-border)] bg-[var(--bg-surface)] p-2 text-[var(--text-primary)] shadow-2xl"
+                        >
+                            <div className="flex items-center gap-3 rounded-xl px-3 py-2.5">
+                                <UserAvatar user={user} isActive={activePage === ROUTES.PROFILE} />
+                                <div className="min-w-0 leading-tight">
+                                    <div className="truncate text-sm font-bold">{user.name}</div>
+                                    <div className="truncate text-xs text-[var(--text-tertiary)]">{t(`role.${user.role?.toUpperCase()}`) || user.role}</div>
+                                </div>
+                            </div>
+                            <div className="my-1 border-t border-[var(--glass-border)]" />
+                            <button
+                                type="button"
+                                role="menuitem"
+                                onClick={() => { setProfileOpen(false); onNavigate(ROUTES.PROFILE); }}
+                                className="flex min-h-11 w-full items-center gap-2 rounded-xl px-3 text-left text-sm font-semibold text-[var(--text-secondary)] hover:bg-[var(--glass-surface-hover)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--ui-focus)]"
+                            >
+                                <UserAvatar user={user} isActive={activePage === ROUTES.PROFILE} />
+                                {t('menu.profile')}
+                            </button>
+                            <button
+                                type="button"
+                                role="menuitem"
+                                onClick={() => { setProfileOpen(false); onLogout(); }}
+                                className="flex min-h-11 w-full items-center gap-2 rounded-xl px-3 text-left text-sm font-semibold text-[var(--ui-danger)] hover:bg-[var(--glass-surface-hover)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--ui-focus)]"
+                            >
+                                <LogOut size={16} aria-hidden="true" />
+                                {t('menu.logout')}
+                            </button>
+                        </div>
+                    )}
+                    <button
+                        type="button"
+                        onClick={() => setProfileOpen(value => !value)}
+                        aria-label={t('menu.profile')}
+                        aria-expanded={profileOpen}
+                        aria-haspopup="menu"
+                        title={t('menu.profile')}
+                        className={`flex min-h-12 [@media(max-height:880px)]:min-h-10 w-full items-center rounded-2xl hover:bg-[var(--ui-text-inverse)]/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--sgs-accent)] ${expanded ? 'justify-start gap-3 px-3' : 'justify-center'}`}
+----
+196:    const [profileOpen, setProfileOpen] = useState(false);
+304:                    {profileOpen && (
+342:                        aria-expanded={profileOpen}
+524:const MobileNavigation: React.FC<MobileNavigationProps> = ({
+534:    const [moreOpen, setMoreOpen] = useState(false);
+578:        active: moreOpen,
+583:            {moreOpen && (
+657:                            aria-expanded={tab.id === 'more' ? moreOpen : undefined}
+----
+            </nav>
+        </>
+    );
+};
+
+export const WorkspaceNavigation: React.FC<WorkspaceNavigationProps> = ({
+    children,
+    activePage,
+    menuGroups,
+    user,
+    assistantOpen,
+    onNavigate,
+    onLogout,
+    onOpenAssistant,
+    unreadCount,
+    notifications,
+    onMarkRead,
+    onMarkAllRead,
+    onDeleteNotification,
+    onDeleteAllRead,
+    onSearch,
+    onToggleTheme,
+    onToggleLanguage,
+    themeMode,
+    language,
+}) => {
+    const { t } = useTranslation();
+    const [railExpanded, setRailExpanded] = useState(false);
+    const hubs = useMemo(() => buildWorkspaceHubs(menuGroups), [menuGroups]);
+    const currentHub = hubs.find(hub => hub.items.some(item => item.route === activePage))
+        ?? hubs.find(hub => hub.id === (routeHub.get(activePage) ?? 'overview'));
+    const isPartner = user.role === 'PARTNER_ADMIN' || user.role === 'PARTNER_AGENT';
+    const hasInbox = hubs.some(hub => hub.id === 'inbox');
+    const queryClient = useQueryClient();
+    const unreadQuery = useQuery({
+        queryKey: ['shellInboxUnread', user.id],
+        queryFn: async () => {
+            const threads: any[] = await db.getInboxThreads();
+            return (threads || []).reduce((sum, thread) => sum + (Number(thread?.unreadCount) || 0), 0);
+        },
+        enabled: hasInbox,
+        refetchInterval: 60000,
+        staleTime: 20000,
+    });
+    const inboxUnread = hasInbox ? (unreadQuery.data ?? 0) : 0;
+    useEffect(() => {
+        if (!hasInbox) return;
+        const refresh = () => queryClient.invalidateQueries({ queryKey: ['shellInboxUnread'] });
+        socket.on('new_inbound_message', refresh);
+        socket.on('inbox_read', refresh);
+        return () => { socket.off('new_inbound_message', refresh); socket.off('inbox_read', refresh); };
+    }, [hasInbox, queryClient]);
+    useEffect(() => {
+        const onKey = (event: KeyboardEvent) => {
+            if ((event.metaKey || event.ctrlKey) && !event.altKey && event.key.toLowerCase() === 'k') {
+                event.preventDefault();
+                onSearch();
+            }
+        };
+        window.addEventListener('keydown', onKey);
+        return () => window.removeEventListener('keydown', onKey);
+    }, [onSearch]);
+
+    return (
+        <>
+            <div className={`hidden h-full shrink-0 overflow-visible rounded-[24px] border border-[var(--glass-border)] shadow-sm transition-[width] duration-200 md:flex ${railExpanded ? 'md:w-60 lg:w-64' : 'md:w-[76px] lg:w-[84px]'}`}>
+                <WorkspaceRail
+                    inboxUnread={inboxUnread}
+                    activePage={activePage}
+                    hubs={hubs}
+                    user={user}
+                    expanded={railExpanded}
+                    language={language}
+                    onToggleExpanded={() => setRailExpanded(value => !value)}
+                    onNavigate={onNavigate}
+                    onLogout={onLogout}
+                    onOpenAssistant={onOpenAssistant}
+                    unreadCount={unreadCount}
+                    notifications={notifications}
+                    onMarkRead={onMarkRead}
+                    onMarkAllRead={onMarkAllRead}
+                    onDeleteNotification={onDeleteNotification}
+                    onDeleteAllRead={onDeleteAllRead}
+                    onSearch={onSearch}
+                />
+            </div>
+            <div className="flex min-w-0 flex-1 flex-col overflow-hidden rounded-none border border-transparent bg-[var(--bg-surface)] shadow-sm sm:rounded-[24px] sm:border-[var(--glass-border)]">
+                <WorkspaceTopBar
+                    activePage={activePage}
+                    activeHub={currentHub}
+                    assistantOpen={assistantOpen}

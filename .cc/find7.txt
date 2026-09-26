@@ -1,0 +1,181 @@
+
+export async function runPendingMigrations(pool: Pool, isDryRun = false): Promise<void> {
+  const client = await pool.connect();
+  let lockAcquired = false;
+  try {
+    // Acquire session-level advisory lock so concurrent instances (autoscale)
+    // queue up instead of deadlocking on CREATE INDEX / DDL statements.
+    console.log('[migrations] Waiting for advisory lock...');
+    await client.query('SELECT pg_advisory_lock($1)', [MIGRATION_ADVISORY_LOCK_KEY]);
+    lockAcquired = true;
+    console.log('[migrations] Lock acquired.');
+
+    await client.query('BEGIN');
+    await ensureSchemaVersionsTable(client);
+
+    const applied = await getAppliedVersions(client);
+    const files = getMigrationFiles();
+    const pending = files.filter(f => !applied.has(f));
+
+    if (pending.length === 0) {
+      console.log('[migrations] All up to date.');
+      await client.query('COMMIT');
+      return;
+    }
+
+    console.log(`[migrations] ${pending.length} pending migration(s):`);
+    for (const file of pending) {
+      console.log(`  → ${file}`);
+    }
+
+    if (isDryRun) {
+      for (const file of pending) {
+        const migration = MIGRATION_REGISTRY[file];
+        if (migration?.report) {
+          console.log(`[migrations] Preview ${file}:`);
+          await migration.report(client);
+        }
+      }
+      console.log('[migrations] Dry run — no changes applied.');
+      await client.query('ROLLBACK');
+      return;
+    }
+
+    for (const file of pending) {
+      const migration = MIGRATION_REGISTRY[file];
+      if (!migration || typeof migration.up !== 'function') {
+        throw new Error(`[migrations] Invalid migration module for ${file} — missing up() function`);
+      }
+
+      console.log(`[migrations] Applying ${file}: ${migration.description || ''}`);
+      await migration.up(client);
+      await client.query(
+        'INSERT INTO schema_versions (version, description) VALUES ($1, $2) ON CONFLICT (version) DO NOTHING',
+        [file, migration.description || null]
+      );
+      console.log(`[migrations] ✓ ${file}`);
+    }
+
+    await client.query('COMMIT');
+    console.log('[migrations] All migrations applied successfully.');
+  } catch (err) {
+    await client.query('ROLLBACK');
+    console.error('[migrations] FAILED — rolled back:', err);
+    throw err;
+  } finally {
+    if (lockAcquired) {
+  '184_gallery_cleanup_jobs.ts': m184,
+  '185_landing_design_agent.ts': m185,
+  '186_social_publications.ts': m186,
+  '187_social_publication_audit.ts': m187,
+  '188_zalo_readiness_notification_retries.ts': m188,
+  '189_user_scoped_connectors.ts': m189,
+  '190_auto_posting_phase3.ts': m190,
+  '191_repair_enterprise_config_rls.ts': m191,
+  '192_social_publication_project_source.ts': m192,
+  '193_marketing_facebook_daily_runs.ts': m193,
+  '194_marketing_facebook_backfills.ts': m194,
+  '195_agent_skill_runtime_bindings.ts': m195,
+  '196_agent_skill_binding_rls_bypass.ts': m196,
+  '197_auto_posting_multi_slot.ts': m197,
+  '198_seo_keyword_decimal_positions.ts': m198,
+  '199_normalize_project_social_images.ts': m199,
+  '200_live_chat_telemetry.ts': m200,
+  '201_repair_auto_posting_conflict_targets.ts': m201,
+  '202_minh_proactive_decision_queue.ts': m202,
+  '203_minh_proactive_signal_id_text.ts': m203,
+  '204_minh_decision_learning_rollout.ts': m204,
+  '205_minh_learning_export_history.ts': m205,
+  '206_minh_model_promotion_loop.ts': m206,
+  '207_outreach_draft_approval.ts': m207,
+  '208_outreach_delivery_claims.ts': m208,
+  '209_outreach_delivery_audit.ts': m209,
+  '210_outreach_audit_export_failure_telemetry.ts': m210,
+  '211_repair_marketing_daily_run_ledger.ts': m211,
+  '212_livechat_reply_outbox.ts': m212,
+  '213_public_listing_teaser.ts': m213,
+  '214_valuation_data_contract.ts': m214,
+  '215_valuation_location_alias_review.ts': m215,
+  '216_minh_chat_plans.ts': m216,
+  '217_approval_request_soft_archive.ts': m217,
+};
+
+/**
+ * Migration filenames were corrected after they had already been recorded in
+ * the long-lived Aiven database. Keep those historical names as aliases
+import m213 from './213_public_listing_teaser';
+import m214 from './214_valuation_data_contract';
+import m215 from './215_valuation_location_alias_review';
+import m216 from './216_minh_chat_plans';
+import m217 from './217_approval_request_soft_archive';
+dotenv.config();
+
+export interface Migration {
+  up: (client: PoolClient) => Promise<void>;
+  down?: (client: PoolClient) => Promise<void>;
+  /** Read-only preview of data changes that up() will make. */
+  report?: (client: PoolClient) => Promise<void>;
+  description: string;
+}
+
+/**
+ * Static registry of all migrations keyed by filename.
+ * Add new migrations here in addition to creating the .ts file.
+ * Order is determined by the sorted filename keys.
+ */
+export const MIGRATION_REGISTRY: Record<string, Migration> = {
+  '001_baseline_schema.ts': m001,
+  '002_audit_logs_and_tasks.ts': m002,
+  '003_ai_and_billing.ts': m003,
+  '004_rbac_creator_columns.ts': m004,
+  '005_projects_and_b2b2c.ts': m005,
+  '006_fix_schema_mismatches.ts': m006,
+200_live_chat_telemetry.ts
+201_repair_auto_posting_conflict_targets.ts
+202_minh_proactive_decision_queue.ts
+203_minh_proactive_signal_id_text.ts
+204_minh_decision_learning_rollout.ts
+205_minh_learning_export_history.ts
+206_minh_model_promotion_loop.ts
+207_outreach_draft_approval.ts
+208_outreach_delivery_claims.ts
+209_outreach_delivery_audit.ts
+210_outreach_audit_export_failure_telemetry.ts
+211_repair_marketing_daily_run_ledger.ts
+212_livechat_reply_outbox.ts
+213_public_listing_teaser.ts
+214_valuation_data_contract.ts
+215_valuation_location_alias_review.ts
+216_minh_chat_plans.ts
+217_approval_request_soft_archive.ts
+import type { PoolClient } from 'pg';
+import type { Migration } from './runner';
+
+const migration: Migration = {
+  description: 'Add audit-preserving soft archive fields to approval requests',
+
+  async up(client: PoolClient): Promise<void> {
+    await client.query(`
+      ALTER TABLE approval_requests
+        ADD COLUMN IF NOT EXISTS archived_at TIMESTAMPTZ,
+        ADD COLUMN IF NOT EXISTS archived_by UUID,
+        ADD COLUMN IF NOT EXISTS archive_reason TEXT;
+
+      CREATE INDEX IF NOT EXISTS idx_approval_requests_active_pending
+        ON approval_requests (tenant_id, requested_at DESC)
+        WHERE status = 'PENDING' AND archived_at IS NULL;
+    `);
+  },
+
+  async down(client: PoolClient): Promise<void> {
+    await client.query(`
+      DROP INDEX IF EXISTS idx_approval_requests_active_pending;
+      ALTER TABLE approval_requests
+        DROP COLUMN IF EXISTS archive_reason,
+        DROP COLUMN IF EXISTS archived_by,
+        DROP COLUMN IF EXISTS archived_at;
+    `);
+  },
+};
+
+export default migration;

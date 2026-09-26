@@ -1,3 +1,17 @@
+server/repositories/index.ts:14:export { scoringConfigRepository } from './scoringConfigRepository';
+server/repositories/scoringConfigRepository.ts:8:    super('scoring_configs');
+server/repositories/scoringConfigRepository.ts:73:export const scoringConfigRepository = new ScoringConfigRepository();
+server/routes/scoringRoutes.ts:2:import { scoringConfigRepository, DEFAULT_WEIGHTS, DEFAULT_THRESHOLDS } from '../repositories/scoringConfigRepository';
+server/routes/scoringRoutes.ts:10:      const config = await scoringConfigRepository.getByTenant(user.tenantId);
+server/routes/scoringRoutes.ts:38:      const result = await scoringConfigRepository.upsert(user.tenantId, {
+---
+server/services/leadQualificationService.ts
+server/ai/liveChatEngine.ts
+server/test/leadQualificationService.test.ts
+server/queue.ts
+server/ai.ts
+services/aiService.ts
+---
 import { Router, Request, Response } from 'express';
 import { scoringConfigRepository, DEFAULT_WEIGHTS, DEFAULT_THRESHOLDS } from '../repositories/scoringConfigRepository';
 
@@ -21,7 +35,7 @@ export function createScoringRoutes(authenticateToken: any) {
       });
     } catch (error) {
       console.error('Error fetching scoring config:', error);
-      res.status(500).json({ error: 'Không tải được cấu hình điểm số' });
+      res.status(500).json({ error: 'Failed to fetch scoring config' });
     }
   });
 
@@ -29,22 +43,11 @@ export function createScoringRoutes(authenticateToken: any) {
     try {
       const user = (req as any).user;
       if (!['SUPER_ADMIN', 'ADMIN', 'TEAM_LEAD'].includes(user.role)) {
-        return res.status(403).json({ error: 'Chỉ quản trị viên và trưởng nhóm được sửa cấu hình điểm số' });
+        return res.status(403).json({ error: 'Only admins can update scoring config' });
       }
       const { weights, thresholds } = req.body;
-      if (!weights || typeof weights !== 'object' || Array.isArray(weights)) {
-        return res.status(400).json({ error: 'Thiếu trọng số chấm điểm' });
-      }
-      const values = Object.values(weights).map(Number);
-      if (values.some(v => !Number.isFinite(v) || v < 0 || v > 100) || values.reduce((x, y) => x + y, 0) <= 0) {
-        return res.status(400).json({ error: 'Trọng số phải từ 0 đến 100 và tổng lớn hơn 0' });
-      }
-      if (thresholds !== undefined) {
-        const th = thresholds || {};
-        const [A, B, C, D] = ['A', 'B', 'C', 'D'].map(k => Number(th[k]));
-        if (![A, B, C, D].every(Number.isFinite) || !(A <= 100 && A > B && B > C && C > D && D >= 0)) {
-          return res.status(400).json({ error: 'Ngưỡng hạng phải giảm dần từ A đến D trong khoảng 0–100' });
-        }
+      if (!weights || typeof weights !== 'object') {
+        return res.status(400).json({ error: 'weights is required' });
       }
       const result = await scoringConfigRepository.upsert(user.tenantId, {
         weights,
@@ -56,7 +59,7 @@ export function createScoringRoutes(authenticateToken: any) {
       });
     } catch (error) {
       console.error('Error updating scoring config:', error);
-      res.status(500).json({ error: 'Không lưu được cấu hình điểm số' });
+      res.status(500).json({ error: 'Failed to update scoring config' });
     }
   });
 

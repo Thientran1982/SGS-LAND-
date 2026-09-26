@@ -1,0 +1,46 @@
+        };
+        window.addEventListener('keydown', onKey);
+        return () => window.removeEventListener('keydown', onKey);
+    }, [onSearch]);
+
+    return (
+        <>
+            <div className={`hidden h-full shrink-0 overflow-visible rounded-[24px] border border-[var(--glass-border)] shadow-sm transition-[width] duration-200 md:flex ${railExpanded ? 'md:w-60 lg:w-64' : 'md:w-[76px] lg:w-[84px]'}`}>
+                <WorkspaceRail
+                    inboxUnread={inboxUnread}
+                    activePage={activePage}
+                    hubs={hubs}
+                    user={user}
+                    expanded={railExpanded}
+                    language={language}
+                    onToggleExpanded={() => setRailExpanded(value => !value)}
+                    onNavigate={onNavigate}
+                    onLogout={onLogout}
+                    onOpenAssistant={onOpenAssistant}
+                    unreadCount={unreadCount}
+                    notifications={notifications}
+                    onMarkRead={onMarkRead}
+                    onMarkAllRead={onMarkAllRead}
+                    onDeleteNotification={onDeleteNotification}
+                    onDeleteAllRead={onDeleteAllRead}
+                    onSearch={onSearch}
+                />
+            </div>
+            <div className="flex min-w-0 flex-1 flex-col overflow-hidden rounded-none border border-transparent bg-[var(--bg-surface)] shadow-sm sm:rounded-[24px] sm:border-[var(--glass-border)]">
+                <WorkspaceTopBar
+                    activePage={activePage}
+                    activeHub={currentHub}
+                    assistantOpen={assistantOpen}
+                    unreadCount={unreadCount}
+                    notifications={notifications}
+                    onMarkRead={onMarkRead}
+                    onMarkAllRead={onMarkAllRead}
+                    onDeleteNotification={onDeleteNotification}
+                    onDeleteAllRead={onDeleteAllRead}
+                    onNavigate={onNavigate}
+                    onSearch={onSearch}
+                    onOpenAssistant={onOpenAssistant}
+                    onToggleTheme={onToggleTheme}
+                    onToggleLanguage={onToggleLanguage}
+                    themeMode={themeMode}
+                    language={language}

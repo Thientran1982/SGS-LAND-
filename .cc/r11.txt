@@ -1,0 +1,8 @@
+OK   components/GuideAssistant.tsx
+ChevronDown still used: 1
+TSC_DONE
+ Test Files  49 passed (49)
+      Tests  304 passed (304)
+   Start at  21:32:33
+   Duration  33.57s (transform 5.29s, setup 3.77s, import 17.31s, tests 16.72s, environment 49.67s)
+

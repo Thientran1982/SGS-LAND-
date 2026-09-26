@@ -685,7 +685,7 @@ const SequenceCard = memo(({ sequence, onClick, onDelete, onDuplicate, onToggle,
     >
         <div className="flex justify-between items-start mb-4">
             <div className="flex-1 min-w-0 pr-2">
-                <h3 className="font-bold text-[var(--text-primary)] group-hover:text-sgs-primary transition-colors line-clamp-2 break-words" title={sequence.name}>{sequence.name}</h3>
+                <h3 className="font-bold text-[var(--text-primary)] group-hover:text-sgs-primary transition-colors truncate" title={sequence.name}>{sequence.name}</h3>
                 <div className="flex items-center gap-2 mt-1">
                     <span className={`w-2 h-2 rounded-full flex-shrink-0 ${sequence.isActive ? 'bg-emerald-500' : 'bg-slate-300'}`}></span>
                     <span className="text-xs text-[var(--text-tertiary)]">{sequence.isActive ? t('seq.status_active') : t('seq.status_draft')}</span>

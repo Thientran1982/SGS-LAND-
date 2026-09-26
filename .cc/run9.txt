@@ -1,0 +1,13 @@
+OK   pages/Inbox.tsx (4 steps)
+INFO components/detail/DetailLayout.tsx: has base class
+CHIP_TONE = {
+    neutral: 'ui-badge-neutral',
+    info: 'ui-badge-info',
+    success: 'ui-badge-success',
+    warning: 'ui-badge-warning',
+    danger: 'ui-badge-danger',
+} as const;
+
+    <span className={`ui-badge ${CHIP_TONE[tone]}`}>{children}</span>
+OK   locales hint
+TSC_DONE

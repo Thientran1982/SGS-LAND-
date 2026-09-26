@@ -1,0 +1,33 @@
+6859fd4f feat(inbox): redesign inbox list, chat panel and live chat embed
+e1692644 fix(crm, inventory): design review fixes (GD5)
+?? .cc/
+components/WorkspaceNavigation.tsx:11:    LogOut,
+components/WorkspaceNavigation.tsx:141:    onLogout: () => void;
+components/WorkspaceNavigation.tsx:164:    onLogout: () => void;
+components/WorkspaceNavigation.tsx:184:    onLogout,
+components/WorkspaceNavigation.tsx:330:                                onClick={() => { setProfileOpen(false); onLogout(); }}
+components/WorkspaceNavigation.tsx:333:                                <LogOut size={16} aria-hidden="true" />
+components/WorkspaceNavigation.tsx:334:                                {t('menu.logout')}
+components/WorkspaceNavigation.tsx:682:    onLogout,
+components/WorkspaceNavigation.tsx:745:                    onLogout={onLogout}
+components/Layout.tsx:23:    User as UserIcon, Moon, Sun, LogOut, PanelLeft, ChevronDown, Languages, Home, Globe,
+components/Layout.tsx:78:    'logout': <LogOut size={20} strokeWidth={2} />,
+components/Layout.tsx:85:const LogoutModal = ({ isOpen, onClose, onConfirm, t }: { isOpen: boolean; onClose: () => void; onConfirm: () => void; t: any }) => {
+components/Layout.tsx:92:                        <LogOut className="w-6 h-6" />
+components/Layout.tsx:94:                    <h3 className="text-lg font-bold text-[var(--text-primary)] mb-2">{t('menu.logout')}</h3>
+components/Layout.tsx:95:                    <p className="text-sm text-[var(--text-secondary)] mb-6">{t('common.confirm_logout')}</p>
+components/Layout.tsx:115:    onLogoutClick: () => void;
+components/Layout.tsx:126:    onLogoutClick, 
+components/Layout.tsx:317:                                    onClick={() => { setProfileOpen(false); onLogoutClick(); }}
+components/Layout.tsx:320:                                    {t('menu.logout')}
+components/Layout.tsx:354:    onLogout: () => void;
+components/Layout.tsx:356:export const Layout: React.FC<LayoutProps> = memo(({ children, activePage, onNavigate, onLogout }) => {
+components/Layout.tsx:357:    const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);    
+components/Layout.tsx:498:    const handleLogoutClick = useCallback(() => {
+components/Layout.tsx:499:        setShowLogoutConfirm(true);
+components/Layout.tsx:501:    const handleLogoutConfirm = useCallback(() => {
+components/Layout.tsx:502:        setShowLogoutConfirm(false);
+components/Layout.tsx:503:        onLogout();
+components/Layout.tsx:504:    }, [onLogout]);
+components/Layout.tsx:515:                    onLogout={handleLogoutClick}
+components/Layout.tsx:560:            <LogoutModal 

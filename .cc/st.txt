@@ -1,0 +1,11 @@
+ M src/test/AgentCockpit.test.tsx
+ M src/test/Dashboard.test.tsx
+ M src/test/SocialPublishing.test.tsx
+ M src/test/minhOrchestrator.test.ts
+?? .cc/
+1501 pages/Inbox.tsx
+e1692644 fix(crm, inventory): design review fixes (GD5)
+42e110ea feat(tasks): task detail drawer on shared detail template (GD4)
+cf820b5a feat(leads): two-column detail page template for customer profile (GD3)
+24760300 Add tenant-scoped read-only approval archive history
+c51ce98f Implement soft archive functionality for approval requests

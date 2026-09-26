@@ -35,7 +35,7 @@ const GRADE_BADGE: Record<Grade | 'none', string> = {
 const clamp = (n: number, min: number, max: number) => Math.min(max, Math.max(min, Math.round(Number(n) || 0)));
 
 /** Normalised 0–100 score: each criterion contributes weight × fulfilment, divided by total weight. */
-function scoreOf(weights: Record<WeightKey, number>, sample: Record<WeightKey, number>): number {
+export function scoreOf(weights: Record<WeightKey, number>, sample: Record<WeightKey, number>): number {
     const total = FIELDS.reduce((s, f) => s + (weights[f.key] || 0), 0);
     if (total <= 0) return 0;
     const got = FIELDS.reduce((s, f) => s + (weights[f.key] || 0) * ((sample[f.key] || 0) / 100), 0);

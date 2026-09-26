@@ -1,0 +1,1247 @@
+import { uiNotify } from '../utils/uiDialog';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
+import { createPortal } from 'react-dom';
+import { db } from '../services/dbApi';
+import { listingApi } from '../services/api/listingApi';
+import { Project, ProjectAccess, UserRole, ContractType, ContractStatus, Listing } from '../types';
+import { useTranslation } from '../services/i18n';
+import { Dropdown } from '../components/Dropdown';
+import { ListingForm } from '../components/ListingForm';
+import { ContractModal } from '../components/ContractModal';
+import FloorPlanRenderer from '../components/FloorPlanRenderer';
+import FloorPlanManagerModal from '../components/FloorPlanManagerModal';
+import ProjectCommissionPanel from '../components/ProjectCommissionPanel';
+import { floorPlanApi, FloorPlanSummary } from '../services/api/floorPlanApi';
+import LazyImage from '../components/LazyImage';
+import { NO_IMAGE_URL } from '../utils/constants';
+import {
+    exportListingsToExcel,
+    parseListingsFromExcel,
+    downloadImportTemplate,
+    type ImportResult,
+} from '../utils/listingExcel';
+import { SeoHead } from '../components/SeoHead';
+// ─────────────────────────────────────────────────────────────────────────────
+// Icons
+// ─────────────────────────────────────────────────────────────────────────────
+const IC = {
+    PLUS: <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4"/></svg>,
+    EDIT: <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"/></svg>,
+    TRASH: <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>,
+    SHIELD: <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>,
+    X: <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12"/></svg>,
+    BLDG: <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/></svg>,
+    SEARCH: <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>,
+    LIST: <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 10h16M4 14h16M4 18h16"/></svg>,
+    HOME: <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg>,
+    LOCK: <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/></svg>,
+    CHECK_ALL: <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"/></svg>,
+    DOWNLOAD: <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>,
+    UPLOAD: <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/></svg>,
+    TEMPLATE: <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>,
+    CONTRACT: <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"/></svg>,
+};
+const STATUS_COLOR: Record<string, string> = {
+    ACTIVE: 'bg-emerald-100 text-emerald-700 border-emerald-200',
+    COMPLETED: 'bg-sky-100 text-sky-700 border-sky-200',
+    ON_HOLD: 'bg-amber-100 text-amber-700 border-amber-200',
+    SUSPENDED: 'bg-rose-100 text-rose-700 border-rose-200',
+    BOOKING: 'bg-[var(--sgs-primary)]/10 text-[var(--sgs-primary)] border-[var(--sgs-primary)]',
+};
+const ACCESS_COLOR: Record<string, string> = {
+    ACTIVE: 'bg-emerald-100 text-emerald-700',
+    REVOKED: 'bg-rose-100 text-rose-700',
+    EXPIRED: 'bg-slate-100 text-slate-500',
+};
+function fmtDate(d?: string) {
+    if (!d) return '—';
+    return new Date(d).toLocaleDateString('vi-VN');
+}
+// ─────────────────────────────────────────────────────────────────────────────
+// Project Form Modal
+// ─────────────────────────────────────────────────────────────────────────────
+interface ProjectFormProps {
+    project?: Project | null;
+    onSave: (data: Record<string, unknown>) => Promise<void>;
+    onClose: () => void;
+    t: (k: string) => string;
+}
+// Chấp nhận link Google Drive / Docs / Sheets / Slides / Forms (kể cả tên miền a/<email>/...)
+const GDRIVE_HOST_RE = /^https:\/\/(?:drive|docs)\.google\.com\//i;
+const isValidDriveUrl = (url: string): boolean => {
+    const s = url.trim();
+    if (!s) return true; // optional
+    // Files selected with "Thêm tệp" are stored through the app upload endpoint.
+    if (s.startsWith('/api/upload/')) return true;
+    try {
+        const u = new URL(s);
+        if (u.protocol !== 'https:') return false;
+        return GDRIVE_HOST_RE.test(s);
+    } catch {
+        return false;
+    }
+};
+function ProjectFormModal({ project, onSave, onClose, t }: ProjectFormProps) {
+    const p = project as any;
+    const existingMeta = (p?.metadata && typeof p.metadata === 'object') ? p.metadata : {};
+    const [form, setForm] = useState({
+        name: p?.name || '',
+        code: p?.code || '',
+        developer: existingMeta.developer || '',
+        description: p?.description || '',
+        location: p?.location || '',
+        scale: existingMeta.scale || '',
+        priceRange: existingMeta.priceRange || existingMeta.price_range || '',
+        projectType: existingMeta.projectType || existingMeta.project_type || '',
+        typeGroup: existingMeta.typeGroup || existingMeta.type_group || '',
+        highlights: Array.isArray(existingMeta.highlights) ? existingMeta.highlights.join('\n') : (existingMeta.highlights || ''),
+        amenities: Array.isArray(existingMeta.amenities) ? existingMeta.amenities.join('\n') : (existingMeta.amenities || ''),
+        gallery: Array.isArray(existingMeta.gallery) ? existingMeta.gallery.join('\n') : (existingMeta.gallery || ''),
+        totalUnits: (p?.total_units ?? p?.totalUnits) != null ? String(p?.total_units ?? p?.totalUnits) : '',
+        status: p?.status || 'ACTIVE',
+        isFeatured: Boolean(p?.is_featured ?? p?.isFeatured),
+        priority: String(p?.priority ?? 0),
+        openDate: p?.open_date || p?.openDate || '',
+        handoverDate: p?.handover_date || p?.handoverDate || '',
+        driveUrl: existingMeta.drive_url || existingMeta.driveUrl || '',
+    });
+    const [publicMicrosite, setPublicMicrosite] = useState<boolean>(existingMeta.public_microsite === true || existingMeta.public_microsite === 'true');
+    const [featuredRank, setFeaturedRank] = useState<string>(() => {
+        const v = existingMeta.featured_rank;
+        if (v === null || v === undefined || v === '') return '';
+        const n = Number(v);
+        return Number.isFinite(n) && n >= 1 ? String(Math.trunc(n)) : '';
+    });
+    const [coverImage, setCoverImage] = useState<string>(existingMeta.coverImage || existingMeta.cover_image || '');
+    const [coverUploading, setCoverUploading] = useState(false);
+    const [coverErr, setCoverErr] = useState('');
+    const coverInputRef = useRef<HTMLInputElement | null>(null);
+    const driveFileInputRef = useRef<HTMLInputElement | null>(null);
+    const [driveUploading, setDriveUploading] = useState(false);
+    const [driveFileErr, setDriveFileErr] = useState('');
+    const [saving, setSaving] = useState(false);
+    const [err, setErr] = useState('');
+    const handleCoverPick = async (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (e.target) e.target.value = '';
+        if (!file) return;
+        if (!file.type.startsWith('image/')) { setCoverErr(t('project.cover_image_error')); return; }
+        if (file.size > 10 * 1024 * 1024) { setCoverErr(t('inventory.upload_error_size')); return; }
+        setCoverErr('');
+        setCoverUploading(true);
+        try {
+            const out = await db.uploadFiles([file]);
+            const url = out?.files?.[0]?.url;
+            if (url) setCoverImage(url);
+            else setCoverErr(t('project.cover_image_error'));
+        } catch (uploadErr: any) {
+            setCoverErr(uploadErr?.message || t('project.cover_image_error'));
+        } finally {
+            setCoverUploading(false);
+        }
+    };
+    const set = (k: string, v: string) => setForm(f => ({ ...f, [k]: v }));
+
+    const driveUrlTrim = form.driveUrl.trim();
+    const driveUrlValid = isValidDriveUrl(driveUrlTrim);
+    const handlePasteDrive = async () => {
+        try {
+            const text = (await navigator.clipboard.readText()).trim();
+            if (text) set('driveUrl', text);
+        } catch {
+            // Clipboard có thể bị chặn (quyền hoặc HTTP) — bỏ qua, người dùng vẫn paste tay được
+        }
+    };
+    const handleDriveFilePick = async (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        e.target.value = '';
+        if (!file) return;
+        if (file.size > 25 * 1024 * 1024) {
+            setDriveFileErr('Tệp không được vượt quá 25MB');
+            return;
+        }
+        setDriveFileErr('');
+        setDriveUploading(true);
+        try {
+            const out = await db.uploadFiles([file]);
+            const url = out?.files?.[0]?.url;
+            if (!url) throw new Error('Không nhận được liên kết tệp');
+            set('driveUrl', url);
+        } catch (uploadErr: any) {
+            setDriveFileErr(uploadErr?.message || 'Không thể tải tệp lên');
+        } finally {
+            setDriveUploading(false);
+        }
+    };
+    const handleSubmit = async (e: React.FormEvent) => {
+        e.preventDefault();
+        if (!form.name.trim()) { setErr(t('project.error_name_required')); return; }
+        if (driveUrlTrim && !driveUrlValid) { setErr(t('project.error_drive_url_invalid')); return; }
+        const featuredRankTrim = featuredRank.trim();
+        let featuredRankNum: number | null = null;
+        if (featuredRankTrim !== '') {
+            const n = Number(featuredRankTrim);
+            if (!Number.isFinite(n) || !Number.isInteger(n) || n < 1) {
+                setErr(t('project.featured_rank_invalid'));
+                return;
+            }
+            featuredRankNum = n;
+        }
+        setSaving(true);
+        setErr('');
+        try {
+            // Server-side metadata is merged + null-stripped (jsonb merge), so
+            // we send a *patch* — only the keys we want to add/update/remove.
+            // `null` removes the key on the server; omitting a key leaves it
+            // untouched. This avoids clobbering metadata written by other flows.
+            const nextMeta: Record<string, any> = {};
+            nextMeta.drive_url = driveUrlTrim ? driveUrlTrim : null;
+            nextMeta.driveUrl = null; // legacy camelCase alias — always strip
+            nextMeta.coverImage = coverImage ? coverImage : null;
+            nextMeta.cover_image = null; // legacy snake_case alias — always strip
+            nextMeta.developer = form.developer.trim() || null;
+            nextMeta.scale = form.scale.trim() || null;
+            nextMeta.priceRange = form.priceRange.trim() || null;
+            nextMeta.price_range = null;
+            nextMeta.projectType = form.projectType.trim() || null;
+            nextMeta.project_type = null;
+            nextMeta.typeGroup = form.typeGroup.trim() || null;
+            nextMeta.type_group = null;
+            nextMeta.highlights = form.highlights.split('\n').map((v: string) => v.trim()).filter(Boolean);
+            nextMeta.amenities = form.amenities.split('\n').map((v: string) => v.trim()).filter(Boolean);
+            nextMeta.gallery = form.gallery.split('\n').map((v: string) => v.trim()).filter(Boolean);
+            // Mini-site công khai (Task #25) — gửi true/false để bật/tắt /p/<code>
+            nextMeta.public_microsite = publicMicrosite ? true : null;
+            // Featured rank (Task #61) — số nguyên ≥1 để xếp hạng trên carousel
+            // "Dự án nổi bật" của mobile app; null để gỡ khỏi danh sách xếp hạng.
+            // Server endpoint /api/public/projects/featured đã ORDER BY
+            // (metadata->>'featured_rank')::int — không cần đổi mobile client.
+            nextMeta.featured_rank = featuredRankNum;
+            // Lưu ý: gửi chuỗi rỗng (đã trim) thay vì undefined cho các text
+            // field, và null cho number/date đã xoá. Nếu gửi undefined thì
+            // JSON.stringify sẽ drop key, server bỏ qua, DB giữ giá trị cũ —
+            // khiến UI báo "cập nhật thành công" nhưng thực tế không xoá.
+            await onSave({
+                name: form.name.trim(),
+                code: form.code.trim(),
+                description: form.description.trim(),
+                location: form.location.trim(),
+                totalUnits: form.totalUnits.trim() === '' ? null : Number(form.totalUnits),
+                status: form.status,
+                openDate: form.openDate || null,
+                handoverDate: form.handoverDate || null,
+                isFeatured: form.isFeatured,
+                priority: Number(form.priority) || 0,
+                metadata: nextMeta,
+            });
+        } catch (e: any) {
+            setErr(e.message || t('common.error_generic'));
+        } finally {
+            setSaving(false);
+        }
+    };
+    const inputCls = 'w-full border border-[var(--glass-border)] rounded-xl px-3 py-2 bg-[var(--bg-app)] text-[var(--text-primary)] text-[16px] focus:outline-none focus:ring-2 focus:ring-[var(--sgs-primary)]';
+    const labelCls = 'block text-xs font-semibold text-[var(--text-secondary)] mb-1 uppercase tracking-wide';
+    return (
+        <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/50 backdrop-blur-sm p-4" role="dialog" aria-modal="true">
+            <div className="bg-[var(--bg-surface)] rounded-2xl shadow-2xl w-full max-w-lg border border-[var(--glass-border)] flex flex-col max-h-[90vh]">
+                {/* Header — luôn hiển thị, không scroll */}
+                <div className="flex items-center justify-between px-6 py-4 border-b border-[var(--glass-border)] shrink-0">
+                    <div className="flex items-center gap-2 text-sgs-primary">
+                        <h2 className="text-base font-bold">{project ? t('project.edit') : t('project.new')}</h2>
+                    </div>
+                    <button type="button" onClick={onClose} className="p-1.5 rounded-lg hover:bg-[var(--glass-surface-hover)] text-[var(--text-secondary)]" aria-label={t('common.close')}>{IC.X}</button>
+                </div>
+                {/* Error — nằm ngoài scroll area, luôn hiển thị dưới header */}
+                {err && (
+                    <div className="shrink-0 px-6 pt-3" role="alert">
+                        <p className="text-rose-600 text-sm bg-rose-50 border border-rose-200 rounded-xl px-3 py-2">{err}</p>
+                    </div>
+                )}
+                <form onSubmit={handleSubmit} className="overflow-y-auto no-scrollbar flex-1 p-6 space-y-4">
+                    <div className="grid grid-cols-2 gap-4">
+                        <div className="col-span-2">
+                            <label htmlFor="pj-name" className={labelCls}>{t('project.name')} *</label>
+                            <input id="pj-name" className={inputCls} value={form.name} onChange={e => set('name', e.target.value)} required />
+                        </div>
+                        <div>
+                            <label htmlFor="pj-code" className={labelCls}>{t('project.code')}</label>
+                            <input id="pj-code" className={inputCls} value={form.code} onChange={e => set('code', e.target.value)} />
+                        </div>
+                        <div>
+                            <label htmlFor="pj-units" className={labelCls}>{t('project.total_units')}</label>
+                            <input id="pj-units" type="number" min="0" className={inputCls} value={form.totalUnits} onChange={e => set('totalUnits', e.target.value)} />
+                        </div>
+                        <div className="col-span-2">
+                            <label htmlFor="pj-location" className={labelCls}>{t('project.location')}</label>
+                            <input id="pj-location" className={inputCls} value={form.location} onChange={e => set('location', e.target.value)} />
+                        </div>
+                        <div className="col-span-2 border-t border-[var(--glass-border)] pt-4">
+                            <p className="text-sm font-bold text-[var(--text-primary)] mb-1">Mẫu card & trang dự án</p>
+                            <p className="text-xs text-[var(--text-secondary)] mb-3">Các trường dưới đây dùng cùng bố cục với Aqua City và sẽ hiển thị trên card/trang chi tiết.</p>
+                        </div>
+                        <div>
+                            <label htmlFor="pj-developer" className={labelCls}>Chủ đầu tư</label>
+                            <input id="pj-developer" className={inputCls} value={form.developer} onChange={e => set('developer', e.target.value)} placeholder="Novaland Group" />
+                        </div>
+                        <div>
+                            <label htmlFor="pj-scale" className={labelCls}>Quy mô</label>
+                            <input id="pj-scale" className={inputCls} value={form.scale} onChange={e => set('scale', e.target.value)} placeholder="1.000 ha" />
+                        </div>
+                        <div>
+                            <label htmlFor="pj-price" className={labelCls}>Khoảng giá</label>
+                            <input id="pj-price" className={inputCls} value={form.priceRange} onChange={e => set('priceRange', e.target.value)} placeholder="Từ 6 tỷ đồng" />
+                        </div>
+                        <div>
+                            <label htmlFor="pj-project-type" className={labelCls}>Loại hình dự án</label>
+                            <input id="pj-project-type" className={inputCls} value={form.projectType} onChange={e => set('projectType', e.target.value)} placeholder="Đại đô thị sinh thái" />
+                        </div>
+                        <div className="col-span-2">
+                            <label htmlFor="pj-type-group" className={labelCls}>Phân khúc</label>
+                            <input id="pj-type-group" className={inputCls} value={form.typeGroup} onChange={e => set('typeGroup', e.target.value)} placeholder="Đô thị tổng hợp" />
+                        </div>
+                        <div className="col-span-2">
+                            <label htmlFor="pj-desc" className={labelCls}>{t('project.description')}</label>
+                            <textarea id="pj-desc" className={inputCls} rows={3} value={form.description} onChange={e => set('description', e.target.value)} />
+                        </div>
+                        <div>
+                            <label htmlFor="pj-highlights" className={labelCls}>Điểm nổi bật</label>
+                            <textarea id="pj-highlights" className={inputCls} rows={4} value={form.highlights} onChange={e => set('highlights', e.target.value)} placeholder="Mỗi dòng một điểm nổi bật" />
+                        </div>
+                        <div>
+                            <label htmlFor="pj-amenities" className={labelCls}>Tiện ích</label>
+                            <textarea id="pj-amenities" className={inputCls} rows={4} value={form.amenities} onChange={e => set('amenities', e.target.value)} placeholder="Mỗi dòng một tiện ích" />
+                        </div>
+                        <div className="col-span-2">
+                            <label htmlFor="pj-gallery" className={labelCls}>Ảnh thư viện</label>
+                            <textarea id="pj-gallery" className={inputCls} rows={2} value={form.gallery} onChange={e => set('gallery', e.target.value)} placeholder="Mỗi dòng một URL ảnh (không bắt buộc)" />
+                        </div>
+                        <div className="col-span-2">
+                            <label htmlFor="pj-drive" className={labelCls}>{t('project.drive_url')}</label>
+                            <input
+                                ref={driveFileInputRef}
+                                type="file"
+                                className="hidden"
+                                onChange={handleDriveFilePick}
+                            />
+                            <div className="flex gap-2">
+                                <div className="relative flex-1">
+                                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--text-secondary)]" aria-hidden="true">
+                                        <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" /></svg>
+                                    </span>
+                                    <input
+                                        id="pj-drive"
+                                        type="url"
+                                        inputMode="url"
+                                        autoComplete="off"
+                                        spellCheck={false}
+                                        placeholder="https://drive.google.com/file/d/..."
+                                        className={`${inputCls} pl-9 pr-3 ${driveUrlTrim && !driveUrlValid ? 'border-rose-400 focus:ring-rose-500' : ''}`}
+                                        value={form.driveUrl}
+                                        onChange={e => set('driveUrl', e.target.value)}
+                                        aria-invalid={driveUrlTrim ? !driveUrlValid : undefined}
+                                        aria-describedby="pj-drive-help"
+                                    />
+                                </div>
+                                <button
+                                    type="button"
+                                    onClick={() => driveFileInputRef.current?.click()}
+                                    disabled={driveUploading}
+                                    className="shrink-0 px-3 py-2 rounded-xl border border-[var(--glass-border)] text-xs font-semibold text-[var(--text-secondary)] hover:bg-[var(--glass-surface-hover)] disabled:opacity-60"
+                                >
+                                    {driveUploading ? 'Đang tải...' : 'Thêm tệp'}
+                                </button>
+                                <button
+                                    type="button"
+                                    onClick={handlePasteDrive}
+                                    className="shrink-0 px-3 py-2 rounded-xl border border-[var(--glass-border)] text-xs font-semibold text-[var(--text-secondary)] hover:bg-[var(--glass-surface-hover)]"
+                                    title={t('project.drive_paste')}
+                                >
+                                    {t('project.drive_paste')}
+                                </button>
+                                {/* Nút "Mở Drive" đã ẩn trong form — dùng nút ngoài header Danh mục sản phẩm để mở. */}
+                            </div>
+                            <p id="pj-drive-help" className={`mt-1 text-xs ${driveFileErr || (driveUrlTrim && !driveUrlValid) ? 'text-rose-600' : 'text-[var(--text-secondary)]'}`}>
+                                {driveFileErr || (driveUrlTrim && !driveUrlValid ? t('project.error_drive_url_invalid') : 'Dán link Google Drive hoặc thêm tệp từ máy (tối đa 25MB).')}
+                            </p>
+                        </div>
+                        <div className="col-span-2 grid grid-cols-1 sm:grid-cols-3 gap-4">
+                            <div>
+                                <label className={labelCls}>{t('project.status')}</label>
+                                <Dropdown
+                                    value={form.status}
+                                    onChange={v => set('status', v as string)}
+                                    options={['ACTIVE','BOOKING','COMPLETED','ON_HOLD','SUSPENDED'].map(s => ({ value: s, label: t('project.status_' + s) }))}
+                                />
+                            </div>
+                            <div>
+                                <label htmlFor="pj-open" className={labelCls}>{t('project.open_date')}</label>
+                                <input id="pj-open" type="date" className={inputCls} value={form.openDate} onChange={e => set('openDate', e.target.value)} />
+                            </div>
+                            <div>
+                                <label htmlFor="pj-handover" className={labelCls}>{t('project.handover_date')}</label>
+                                <input id="pj-handover" type="date" className={inputCls} value={form.handoverDate} onChange={e => set('handoverDate', e.target.value)} />
+                            </div>
+                        </div>
+                        <div className="col-span-2 grid grid-cols-1 sm:grid-cols-[1fr_140px] gap-4 rounded-xl border border-amber-200 bg-amber-50/50 p-3">
+                            <label className="flex items-center gap-3 text-sm font-semibold text-[var(--text-primary)]">
+                                <input type="checkbox" checked={form.isFeatured} onChange={e => setForm(current => ({ ...current, isFeatured: e.target.checked }))} className="h-4 w-4 accent-[var(--sgs-primary)]" />
+                                Dự án nổi bật cho selector tự động
+                            </label>
+                            <label>
+                                <span className={labelCls}>Ưu tiên</span>
+                                <input type="number" min="0" className={inputCls} value={form.priority} onChange={e => set('priority', e.target.value)} />
+                            </label>
+                        </div>
+                        {/* Cover image — single 16:9 hero photo for the project card */}
+                        <div className="col-span-2">
+                            <label className={labelCls}>{t('project.cover_image')}</label>
+                            <input
+                                ref={coverInputRef}
+                                type="file"
+                                accept="image/*"
+                                className="hidden"
+                                onChange={handleCoverPick}
+                            />
+                            {coverImage ? (
+                                <div className="relative rounded-xl overflow-hidden border border-[var(--glass-border)] aspect-[16/9] bg-[var(--bg-app)]">
+                                    <LazyImage
+                                        src={coverImage}
+                                        alt={form.name || 'cover'}
+                                        wrapperClassName="absolute inset-0"
+                                        className="w-full h-full object-cover"
+                                    />
+                                    <div className="absolute top-2 right-2 flex gap-1.5">
+                                        <button
+                                            type="button"
+                                            onClick={() => coverInputRef.current?.click()}
+                                            disabled={coverUploading}
+                                            className="px-2.5 py-1 rounded-lg bg-black/60 text-white text-xs font-semibold backdrop-blur-sm hover:bg-black/70 disabled:opacity-60"
+                                        >
+                                            {coverUploading ? t('project.cover_image_uploading') : t('project.cover_image_change')}
+                                        </button>
+                                        <button
+                                            type="button"
+                                            onClick={() => { setCoverImage(''); setCoverErr(''); }}
+                                            disabled={coverUploading}
+                                            className="px-2.5 py-1 rounded-lg bg-rose-600/85 text-white text-xs font-semibold backdrop-blur-sm hover:bg-rose-700 disabled:opacity-60"
+                                            title={t('project.cover_image_remove')}
+                                        >
+                                            {IC.X}
+                                        </button>
+                                    </div>
+                                </div>
+                            ) : (
+                                <button
+                                    type="button"
+                                    onClick={() => coverInputRef.current?.click()}
+                                    disabled={coverUploading}
+                                    className="w-full aspect-[16/9] rounded-xl border-2 border-dashed border-[var(--glass-border)] hover:border-[var(--sgs-primary)] bg-[var(--bg-app)] flex flex-col items-center justify-center gap-2 text-[var(--text-secondary)] hover:text-sgs-primary transition-colors disabled:opacity-60"
+                                >
+                                    {coverUploading ? (
+                                        <span className="w-6 h-6 border-2 border-current/30 border-t-current rounded-full animate-spin" />
+                                    ) : IC.UPLOAD}
+                                    <span className="text-xs font-semibold">
+                                        {coverUploading ? t('project.cover_image_uploading') : t('project.cover_image_change')}
+                                    </span>
+                                </button>
+                            )}
+                            <p className={`mt-1 text-xs ${coverErr ? 'text-rose-600' : 'text-[var(--text-secondary)]'}`}>
+                                {coverErr || t('project.cover_image_hint')}
+                            </p>
+                        </div>
+                        {/* Mini-site công khai (/p/<code>) — ADMIN/SUPER_ADMIN/TEAM_LEAD của tenant chủ có quyền bật/tắt (server enforce). */}
+                        <div className="col-span-2">
+                            <label className={`${labelCls} mb-2`}>{t('project.microsite_section')}</label>
+                            <label className={`flex items-start gap-3 p-3 rounded-xl border cursor-pointer transition ${publicMicrosite ? 'border-[var(--sgs-primary)] bg-[var(--sgs-primary)]/10 dark:bg-[var(--sgs-primary)]/30' : 'border-[var(--glass-border)] hover:bg-[var(--glass-surface-hover)]'}`}>
+                                <input
+                                    type="checkbox"
+                                    checked={publicMicrosite}
+                                    onChange={(e) => setPublicMicrosite(e.target.checked)}
+                                    className="mt-0.5 w-4 h-4 accent-[var(--sgs-primary)]"
+                                />
+                                <span className="flex-1">
+                                    <span className="block text-sm font-semibold text-[var(--text-primary)]">
+                                        {t('project.microsite_toggle')}
+                                    </span>
+                                    <span className="block text-xs text-[var(--text-secondary)] mt-0.5">
+                                        {t('project.microsite_url_label')}: <span className="font-mono">{window.location.origin}/p/{(form.code || t('project.microsite_code_placeholder')).toUpperCase()}</span>
+                                        {!form.code && <span className="text-rose-600 ml-1">{t('project.microsite_code_required')}</span>}
+                                    </span>
+                                    <span className="block text-xs text-[var(--text-secondary)] mt-1">
+                                        {t('project.microsite_desc')}
+                                    </span>
+                                </span>
+                            </label>
+                        </div>
+                        {/* Featured rank (Task #61) — admin-only ordering control for the
+                            mobile Discover "Dự án nổi bật" carousel. Whole number ≥1, blank
+                            removes the rank. Server merges metadata via jsonb_strip_nulls so
+                            sending `null` deletes the key. */}
+                        <div className="col-span-2">
+                            <label htmlFor="pj-featured-rank" className={labelCls}>{t('project.featured_rank')}</label>
+                            <input
+                                id="pj-featured-rank"
+                                type="number"
+                                min="1"
+                                step="1"
+                                inputMode="numeric"
+                                placeholder={t('project.featured_rank_placeholder')}
+                                className={inputCls}
+                                value={featuredRank}
+                                onChange={e => setFeaturedRank(e.target.value)}
+                                aria-describedby="pj-featured-rank-help"
+                            />
+                            <p id="pj-featured-rank-help" className="mt-1 text-xs text-[var(--text-secondary)]">
+                                {t('project.featured_rank_help')}
+                            </p>
+                        </div>
+                    </div>
+                    <div className="flex gap-3 justify-end pt-2">
+                        <button type="button" onClick={onClose} className="px-4 py-2 rounded-xl border border-[var(--glass-border)] text-sm font-semibold text-[var(--text-secondary)] hover:bg-[var(--glass-surface-hover)]">{t('common.cancel')}</button>
+                        <button type="submit" disabled={saving || coverUploading} className="px-5 py-2 rounded-xl bg-sgs-primary text-white text-sm font-bold hover:bg-sgs-primary disabled:opacity-50">{saving ? t('common.loading') : t('common.save')}</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    );
+}
+// ─────────────────────────────────────────────────────────────────────────────
+// Access Management Panel
+// ─────────────────────────────────────────────────────────────────────────────
+interface AccessPanelProps {
+    project: Project;
+    onClose: () => void;
+    t: (k: string) => string;
+}
+function AccessPanel({ project, onClose, t }: AccessPanelProps) {
+    const [accesses, setAccesses] = useState<any[]>([]);
+    const [tenants, setTenants] = useState<any[]>([]);
+    const [loading, setLoading] = useState(true);
+    const [grantForm, setGrantForm] = useState({ partnerTenantId: '', expiresAt: '', note: '' });
+    const [granting, setGranting] = useState(false);
+    const [err, setErr] = useState('');
+    const [revokeTarget, setRevokeTarget] = useState<string | null>(null); // partnerTenantId pending confirm
+    const [revokeErr, setRevokeErr] = useState('');
+    useEffect(() => {
+        Promise.all([
+            db.getProjectAccess(project.id),
+            db.listTenants(),
+        ]).then(([a, t]) => {
+            setAccesses(a);
+            setTenants(t);
+        }).finally(() => setLoading(false));
+    }, [project.id]);
+
+    const handleGrant = async (e: React.FormEvent) => {
+        e.preventDefault();
+        if (!grantForm.partnerTenantId) { setErr(t('project.error_partner_required')); return; }
+        setGranting(true);
+        setErr('');
+        try {
+            const newAccess = await db.grantProjectAccess(project.id, {
+                partnerTenantId: grantForm.partnerTenantId,
+                expiresAt: grantForm.expiresAt || undefined,
+                note: grantForm.note || undefined,
+            });
+            setAccesses(prev => {
+                const idx = prev.findIndex(a => a.partner_tenant_id === newAccess.partner_tenant_id);
+                if (idx >= 0) { const n = [...prev]; n[idx] = newAccess; return n; }
+                return [newAccess, ...prev];
+            });
+            setGrantForm({ partnerTenantId: '', expiresAt: '', note: '' });
+        } catch (e: any) {
+            setErr(e.message || t('common.error_generic'));
+        } finally {
+            setGranting(false);
+        }
+    };
+    const handleRevoke = async (partnerTenantId: string) => {
+        setRevokeErr('');
+        try {
+            await db.revokeProjectAccess(project.id, partnerTenantId);
+            setAccesses(prev => prev.map(a =>
+                a.partner_tenant_id === partnerTenantId ? { ...a, status: 'REVOKED' } : a
+            ));
+            setRevokeTarget(null);
+        } catch (e: any) {
+            setRevokeErr(e.message || t('common.error_generic'));
+        }
+    };
+    // Tenants not yet ACTIVE in this project
+    const activePartnerIds = new Set(accesses.filter(a => a.status === 'ACTIVE').map(a => a.partner_tenant_id));
+    const availableTenants = tenants.filter(t2 => !activePartnerIds.has(t2.id));
+    const inputCls = 'w-full border border-[var(--glass-border)] rounded-xl px-3 py-2 bg-[var(--bg-app)] text-[var(--text-primary)] text-[16px] focus:outline-none focus:ring-2 focus:ring-[var(--sgs-primary)]';
+    const labelCls = 'block text-xs font-semibold text-[var(--text-secondary)] mb-1 uppercase tracking-wide';
+    return (
+        <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/50 backdrop-blur-sm p-4" role="dialog" aria-modal="true">
+            <div className="bg-[var(--bg-surface)] rounded-2xl shadow-2xl w-full max-w-2xl border border-[var(--glass-border)] flex flex-col max-h-[90vh]">
+                <div className="flex items-center justify-between px-6 py-4 border-b border-[var(--glass-border)] shrink-0">
+                    <div>
+                        <div className="flex items-center gap-2 text-sgs-primary">
+                            {IC.SHIELD}
+                            <h2 className="text-base font-bold">{t('project.access_title')}</h2>
+                        </div>
+                        <p className="text-xs text-[var(--text-secondary)] mt-0.5">{project.name}</p>
+                    </div>
+                    <button type="button" onClick={onClose} className="p-1.5 rounded-lg hover:bg-[var(--glass-surface-hover)] text-[var(--text-secondary)]" aria-label={t('common.close')}>{IC.X}</button>
+                </div>
+
+                <div className="overflow-y-auto no-scrollbar flex-1 p-6 space-y-6">
+                    {/* Grant form */}
+                    <form onSubmit={handleGrant} className="bg-sgs-champagne dark:bg-sgs-primary/20 border border-sgs-border dark:border-sgs-primary rounded-xl p-4 space-y-3">
+                        <p className="text-sm font-bold text-sgs-primary dark:text-sgs-on-dark-muted">{t('project.grant_access')}</p>
+                        {err && <p className="text-rose-600 text-xs bg-rose-50 border border-rose-200 rounded-lg px-3 py-1.5" role="alert">{err}</p>}
+                        <div className="grid grid-cols-2 gap-3">
+                            <div className="col-span-2">
+                                <label className={labelCls}>{t('project.partner_tenant')} *</label>
+                                <Dropdown
+                                    value={grantForm.partnerTenantId}
+                                    onChange={(v) => setGrantForm(f => ({ ...f, partnerTenantId: v as string }))}
+                                    placeholder={t('common.select')}
+                                    options={availableTenants.map(t2 => ({ value: t2.id, label: `${t2.name} (${t2.domain})` }))}
+                                />
+                            </div>
+                            <div>
+                                <label htmlFor="pa-expires" className={labelCls}>{t('project.expires_at')}</label>
+                                <input id="pa-expires" type="date" className={inputCls} value={grantForm.expiresAt} onChange={e => setGrantForm(f => ({ ...f, expiresAt: e.target.value }))} />
+                            </div>
+                            <div>
+                                <label htmlFor="pa-note" className={labelCls}>{t('project.note')}</label>
+                                <input id="pa-note" className={inputCls} value={grantForm.note} onChange={e => setGrantForm(f => ({ ...f, note: e.target.value }))} />
+                            </div>
+                        </div>
+                        <div className="flex justify-end">
+                            <button type="submit" disabled={granting} className="px-4 py-2 rounded-xl bg-sgs-primary text-white text-sm font-bold hover:bg-sgs-primary disabled:opacity-50 flex items-center gap-2">
+                                {IC.SHIELD}
+                                {granting ? t('common.loading') : t('project.grant_access')}
+                            </button>
+                        </div>
+                    </form>
+                    {/* Access list */}
+                    {loading ? (
+                        <p className="text-center text-sm text-[var(--text-secondary)] py-8">{t('common.loading')}</p>
+                    ) : accesses.length === 0 ? (
+                        <p className="text-center text-sm text-[var(--text-secondary)] py-8">{t('project.no_access')}</p>
+                    ) : (
+                        <div className="space-y-2">
+                            {accesses.map(a => (
+                                <div key={a.id} className="flex items-center justify-between gap-4 bg-[var(--bg-app)] border border-[var(--glass-border)] rounded-xl px-4 py-3">
+                                    <div className="flex-1 min-w-0">
+                                        <p className="font-semibold text-sm text-[var(--text-primary)] truncate">{a.partner_tenant_name || a.partner_tenant_id}</p>
+                                        <p className="text-xs text-[var(--text-secondary)]">{a.partner_tenant_domain}</p>
+                                        <div className="flex items-center gap-3 mt-1 text-xs text-[var(--text-tertiary)]">
+                                            <span>{t('project.granted_at')}: {fmtDate(a.granted_at)}</span>
+                                            {a.expires_at && <span>{t('project.expires_at')}: {fmtDate(a.expires_at)}</span>}
+                                            {a.note && <span className="italic">"{a.note}"</span>}
+                                        </div>
+                                    </div>
+                                    <div className="flex items-center gap-2 shrink-0 flex-wrap justify-end">
+                                        <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${ACCESS_COLOR[a.status] || 'bg-slate-100 text-slate-600'}`}>
+                                            {t('project.access_status_' + a.status)}
+                                        </span>
+                                        {a.status === 'ACTIVE' && revokeTarget !== a.partner_tenant_id && (
+                                            <button type="button" onClick={() => { setRevokeTarget(a.partner_tenant_id); setRevokeErr(''); }}
+                                                className="text-xs font-semibold text-rose-600 hover:bg-rose-50 px-2 py-1 rounded-lg border border-rose-200">
+                                                {t('project.revoke_access')}
+                                            </button>
+                                        )}
+                                        {revokeTarget === a.partner_tenant_id && (
+                                            <div className="flex flex-col items-end gap-1">
+                                                {revokeErr && <p className="text-xs text-rose-600">{revokeErr}</p>}
+                                                <p className="text-xs text-[var(--text-secondary)]">{t('project.confirm_revoke')}</p>
+                                                <div className="flex gap-1.5">
+                                                    <button type="button" onClick={() => setRevokeTarget(null)}
+                                                        className="text-xs px-2 py-1 rounded-lg border border-[var(--glass-border)] hover:bg-[var(--glass-surface-hover)]">
+                                                        {t('common.cancel')}
+                                                    </button>
+                                                    <button type="button" onClick={() => handleRevoke(a.partner_tenant_id)}
+                                                        className="text-xs font-bold px-2 py-1 rounded-lg bg-rose-600 text-white hover:bg-rose-700">
+                                                        {t('project.revoke_access')}
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        )}
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    )}
+                </div>
+            </div>
+        </div>
+    );
+}
+// ─────────────────────────────────────────────────────────────────────────────
+// Project Listings Panel  (Danh mục sản phẩm trong dự án)
+// ─────────────────────────────────────────────────────────────────────────────
+const STATUS_LISTING_COLOR: Record<string, string> = {
+    AVAILABLE: 'bg-emerald-100 text-emerald-700',
+    BOOKING:   'bg-sky-100 text-sky-700',
+    OPENING:   'bg-[var(--sgs-primary)]/10 text-[var(--sgs-primary)]',
+    HOLD:      'bg-amber-100 text-amber-700',
+    SOLD:      'bg-slate-100 text-slate-500',
+    RENTED:    'bg-[var(--sgs-primary)]/10 text-[var(--sgs-primary)]',
+    INACTIVE:  'bg-rose-100 text-rose-500',
+};
+function fmtNum(v: number, maxDec = 2) {
+    return v.toLocaleString('vi-VN', { minimumFractionDigits: 0, maximumFractionDigits: maxDec });
+}
+function fmtPrice(p: number) {
+    if (!p) return '—';
+    if (p >= 1_000_000_000) return fmtNum(p / 1_000_000_000, 3) + ' tỷ';
+    if (p >= 1_000_000) return fmtNum(p / 1_000_000, 2) + ' tr';
+    return fmtNum(p, 0) + ' đ';
+}
+function fmtUnitPrice(price: number, area: number) {
+    if (!price || !area) return '—';
+    const up = price / area;
+    if (up >= 1_000_000_000) return fmtNum(up / 1_000_000_000, 3) + ' tỷ/m²';
+    if (up >= 1_000_000) return fmtNum(up / 1_000_000, 1) + ' tr/m²';
+    return fmtNum(up, 0) + ' đ/m²';
+}
+// ─────────────────────────────────────────────────────────────────────────────
+// Listing Detail Panel  (Xem chi tiết sản phẩm)
+// ─────────────────────────────────────────────────────────────────────────────
+interface ListingDetailPanelProps {
+    listing: Listing;
+    canEdit: boolean;
+    onEdit: () => void;
+    onClose: () => void;
+    onStatusChange?: (newStatus: string) => Promise<void>;
+    t: (k: string) => string;
+}
+const LISTING_STATUS_OPTIONS: { value: string; idle: string }[] = [
+    { value: 'BOOKING',  idle: 'bg-sky-50    text-sky-600    border border-sky-200'   },
+    { value: 'OPENING',  idle: 'bg-[var(--sgs-primary)]/10 text-sgs-primary border border-[var(--sgs-primary)]'},
+    { value: 'AVAILABLE',idle: 'bg-emerald-50 text-emerald-600 border border-emerald-200'},
+    { value: 'HOLD',     idle: 'bg-amber-50  text-amber-600  border border-amber-200' },
+    { value: 'SOLD',     idle: 'bg-slate-100 text-slate-500  border border-slate-200' },
+    { value: 'RENTED',   idle: 'bg-[var(--sgs-primary)]/10 text-[var(--sgs-primary)] border border-[var(--sgs-primary)]'},
+    { value: 'INACTIVE', idle: 'bg-rose-50   text-rose-500   border border-rose-200'  },
+];
+function ListingDetailPanel({ listing, canEdit, onEdit, onClose, onStatusChange, t }: ListingDetailPanelProps) {
+    const [activeImg, setActiveImg] = useState(0);
+    const [changingTo, setChangingTo] = useState<string | null>(null);
+    const images = listing.images || [];
+    const attrs = listing.attributes || {};
+    // Sale and rental listings have different terminal states. Keep the
+    // status controls aligned with the transaction type while retaining a
+    // legacy mismatched current value long enough for the user to correct it.
+    const transaction = String(listing.transaction || 'SALE').toUpperCase();
+    const statusOptions = LISTING_STATUS_OPTIONS.filter(option =>
+        option.value !== (transaction === 'RENT' ? 'SOLD' : 'RENTED')
+        || option.value === listing.status
+    );
+
+    const handleStatusChange = async (newStatus: string) => {
+        if (!onStatusChange || changingTo || newStatus === listing.status) return;
+        setChangingTo(newStatus);
+        try {
+            await onStatusChange(newStatus);
+        } finally {
+            setChangingTo(null);
+        }
+    };
+    const DetailRow = ({ label, value }: { label: string; value?: React.ReactNode }) =>
+        value ? (
+            <div className="flex flex-col gap-0.5">
+                <span className="text-xs font-semibold text-[var(--text-tertiary)] uppercase tracking-wide">{label}</span>
+                <span className="text-sm font-medium text-[var(--text-primary)]">{value}</span>
+            </div>
+        ) : null;
+    return createPortal(
+        <div
+            className="fixed inset-0 z-[10001] flex items-center justify-center bg-black/60 backdrop-blur-sm p-3 sm:p-4"
+            onClick={onClose}
+            role="dialog"
+            aria-modal="true"
+        >
+            <div
+                /* Hardcoded bg-white/dark:bg-slate-900 — see ProjectListingsPanel
+                   for the same fix; CSS variable can be overridden by tenant
+                   custom theme and end up matching the dark backdrop. */
+                className="bg-[var(--bg-surface)] dark:bg-sgs-primary-deep rounded-2xl shadow-2xl w-full max-w-2xl max-h-[92vh] flex flex-col border border-slate-200 dark:border-slate-700 overflow-hidden"
+                onClick={e => e.stopPropagation()}
+            >
+                {/* Header */}
+                <div className="flex items-center justify-between px-5 py-3.5 border-b border-[var(--glass-border)] shrink-0">
+                    <div className="flex items-center gap-2.5 min-w-0">
+                        <div className="min-w-0">
+                            <div className="flex items-center gap-2 flex-wrap">
+                                <span className="font-mono text-xs bg-[var(--glass-surface-hover)] text-[var(--text-tertiary)] px-1.5 py-0.5 rounded">{listing.code}</span>
+                                <span className={`text-xs font-bold px-2 py-0.5 rounded-full whitespace-nowrap ${STATUS_LISTING_COLOR[listing.status] || 'bg-slate-100 text-slate-600'}`}>
+                                    {t(`status.${listing.status}`) || listing.status}
+                                </span>
+                                {listing.transaction && (
+                                    <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-sgs-champagne text-sgs-primary whitespace-nowrap">
+                                        {t(`transaction.${listing.transaction}`) || listing.transaction}
+                                    </span>
+                                )}
+                            </div>
+                            <h2 className="font-bold text-[var(--text-primary)] text-sm truncate mt-0.5">{listing.title}</h2>
+                        </div>
+                    </div>
+                    <div className="flex items-center gap-2 shrink-0">
+                        {canEdit && (
+                            <button
+                                type="button"
+                                onClick={onEdit}
+                                aria-label={t('common.edit')}
+                                title={t('common.edit')}
+                                className="p-1.5 rounded-lg text-[var(--text-secondary)] hover:bg-[var(--glass-surface-hover)] hover:text-[var(--text-primary)] transition-colors"
+                            >
+                                {IC.EDIT}
+                            </button>
+                        )}
+                        <button
+                            type="button"
+                            onClick={onClose}
+                            className="p-2 hover:bg-[var(--glass-surface-hover)] rounded-full text-[var(--text-secondary)] transition-colors"
+                        >
+                            {IC.X}
+                        </button>
+                    </div>
+                </div>
+
+                {/* Body */}
+                <div className="flex-1 overflow-y-auto p-5 space-y-4 no-scrollbar">
+                    {/* Image gallery */}
+                    {images.length > 0 ? (
+                        <div className="space-y-2">
+                            <div className="aspect-video w-full rounded-xl overflow-hidden bg-[var(--bg-surface)] border border-[var(--glass-border)]">
+                                <img
+                                    src={images[activeImg]}
+                                    alt={listing.title}
+                                    className="w-full h-full object-cover"
+                                />
+                            </div>
+                            {images.length > 1 && (
+                                <div className="flex gap-2 overflow-x-auto no-scrollbar pb-1">
+                                    {images.map((img, i) => (
+                                        <button
+                                            key={i}
+                                            type="button"
+                                            onClick={() => setActiveImg(i)}
+                                            className={`w-14 h-14 rounded-lg overflow-hidden shrink-0 border-2 transition-all ${i === activeImg ? 'border-emerald-500 shadow-sm' : 'border-transparent opacity-70 hover:opacity-100 hover:border-[var(--glass-border)]'}`}
+                                        >
+                                            <img src={img} alt="" className="w-full h-full object-cover" />
+                                        </button>
+                                    ))}
+                                </div>
+                            )}
+                        </div>
+                    ) : (
+                        <div className="aspect-video w-full rounded-xl bg-[var(--bg-surface)] border border-[var(--glass-border)] flex flex-col items-center justify-center gap-2 text-[var(--text-muted)]">
+                            <svg className="w-12 h-12 opacity-25" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+                            </svg>
+                            <span className="text-xs">{t('project.detail_no_image')}</span>
+                        </div>
+                    )}
+                    {/* Price cards */}
+                    <div className="grid grid-cols-2 gap-3">
+                        <div className="bg-[var(--bg-surface)] rounded-xl p-3.5 border border-[var(--glass-border)]">
+                            <p className="text-xs text-[var(--text-tertiary)] font-semibold uppercase tracking-wide mb-1">{t('inventory.label_price')}</p>
+                            <p className="text-xl font-bold text-[var(--text-primary)]">{fmtPrice(listing.price)}</p>
+                        </div>
+                        <div className="bg-[var(--bg-surface)] rounded-xl p-3.5 border border-[var(--glass-border)]">
+                            <p className="text-xs text-[var(--text-tertiary)] font-semibold uppercase tracking-wide mb-1">{t('inventory.label_unit_price')}</p>
+                            <p className="text-base font-bold text-[var(--text-primary)]">{fmtUnitPrice(listing.price, listing.area)}</p>
+                        </div>
+                    </div>
+                    {/* Quick status change */}
+                    {canEdit && onStatusChange && (
+                        <div className="bg-[var(--bg-surface)] rounded-xl border border-[var(--glass-border)] p-4">
+                            <p className="text-xs font-bold text-[var(--text-tertiary)] uppercase tracking-wide mb-2.5">{t('project.detail_change_status')}</p>
+                            <div className="flex flex-wrap gap-2">
+                                {statusOptions.map(s => {
+                                    const isActive = s.value === listing.status;
+                                    const isChanging = changingTo === s.value;
+                                    return (
+                                        <button
+                                            key={s.value}
+                                            type="button"
+                                            disabled={!!changingTo || isActive}
+                                            onClick={() => handleStatusChange(s.value)}
+                                            className={`inline-flex items-center gap-1 text-xs2 font-bold px-3 py-1.5 rounded-full transition-all
+                                                ${isActive
+                                                    ? `${STATUS_LISTING_COLOR[s.value] || s.idle} ring-2 ring-current/30 cursor-default`
+                                                    : `${s.idle} hover:shadow-sm disabled:opacity-40 cursor-pointer`
+                                                }`}
+                                        >
+                                            {isChanging && (
+                                                <span className="w-3 h-3 border-2 border-current/30 border-t-current rounded-full animate-spin shrink-0" />
+                                            )}
+                                            {isActive && !isChanging && (
+                                                <svg className="w-3 h-3 shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                                                    <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd"/>
+                                                </svg>
+                                            )}
+                                            {t(`status.${s.value}`) || s.value}
+                                        </button>
+                                    );
+                                })}
+                            </div>
+                        </div>
+                    )}
+                    {/* Key specs grid */}
+                    <div className="bg-[var(--bg-surface)] rounded-xl border border-[var(--glass-border)] p-4 grid grid-cols-2 sm:grid-cols-3 gap-x-6 gap-y-3">
+                        <DetailRow label={t('inventory.label_type')} value={t(`property.${listing.type?.toUpperCase()}`) || listing.type} />
+                        <DetailRow label={t('inventory.label_area')} value={listing.area ? `${listing.area} m²` : undefined} />
+                        {!!listing.builtArea && <DetailRow label={t('inventory.label_built_area')} value={`${listing.builtArea} m²`} />}
+                        {!!attrs.clearArea && <DetailRow label={t('inventory.label_clear_area')} value={`${attrs.clearArea} m²`} />}
+                        {!!listing.bedrooms && <DetailRow label={t('inventory.label_bed')} value={listing.bedrooms} />}
+                        {!!listing.bathrooms && <DetailRow label={t('inventory.label_bath')} value={listing.bathrooms} />}
+                        {!!attrs.tower && <DetailRow label={t('inventory.label_tower')} value={attrs.tower} />}
+                        {!!attrs.floor && <DetailRow label={t('inventory.label_floor')} value={attrs.floor} />}
+                        {!!attrs.direction && <DetailRow label={t('inventory.label_direction')} value={t(`direction.${attrs.direction}`) || attrs.direction} />}
+                        {!!attrs.view && <DetailRow label={t('inventory.label_view')} value={attrs.view} />}
+                        {!!attrs.furniture && <DetailRow label={t('inventory.label_furniture')} value={t(`furniture.${attrs.furniture}`) || attrs.furniture} />}
+                        {!!attrs.legalStatus && <DetailRow label={t('inventory.label_legal')} value={t(`legal.${attrs.legalStatus}`) || attrs.legalStatus} />}
+                        {!!attrs.frontage && <DetailRow label={t('inventory.label_frontage')} value={`${attrs.frontage} m`} />}
+                        {!!attrs.roadWidth && <DetailRow label={t('inventory.label_road_width')} value={`${attrs.roadWidth} m`} />}
+                        {listing.location && <DetailRow label={t('inventory.label_location')} value={listing.location} />}
+                        {listing.contactPhone && <DetailRow label={t('inventory.label_owner_phone')} value={listing.contactPhone} />}
+                    </div>
+                    {/* Description / notes */}
+                    {attrs.notes && (
+                        <div className="bg-[var(--bg-surface)] rounded-xl border border-[var(--glass-border)] p-4">
+                            <p className="text-xs font-bold text-[var(--text-tertiary)] uppercase tracking-wide mb-2">{t('inventory.label_notes')}</p>
+                            <p className="text-sm text-[var(--text-secondary)] whitespace-pre-wrap leading-relaxed">{attrs.notes}</p>
+                        </div>
+                    )}
+                    {/* Assigned agent */}
+                    {listing.assignedToName && (
+                        <div className="flex items-center gap-3 bg-[var(--glass-surface)] rounded-xl border border-[var(--glass-border)] px-4 py-3">
+                            <div className="w-8 h-8 rounded-full bg-sgs-champagne flex items-center justify-center text-sgs-primary text-sm font-bold shrink-0">
+                                {listing.assignedToName[0]?.toUpperCase()}
+                            </div>
+                            <div>
+                                <p className="text-xs text-[var(--text-tertiary)] font-semibold">{t('inventory.label_assignee')}</p>
+                                <p className="text-sm font-semibold text-[var(--text-primary)]">{listing.assignedToName}</p>
+                            </div>
+                        </div>
+                    )}
+                </div>
+            </div>
+        </div>,
+        document.body
+    );
+}
+// ─────────────────────────────────────────────────────────────────────────────
+// PriceMatrixPanel — Bảng giá theo Tầng / Hướng / Loại phòng
+// ─────────────────────────────────────────────────────────────────────────────
+const DIRECTIONS = ['ALL','N','S','E','W','NE','NW','SE','SW'];
+const BEDROOM_TYPES = ['ALL','Studio','1PN','2PN','3PN','4PN+','Penthouse','Shophouse'];
+const DIR_LABEL: Record<string, string> = {
+    ALL:'Tất cả', N:'Bắc', S:'Nam', E:'Đông', W:'Tây',
+    NE:'Đông Bắc', NW:'Tây Bắc', SE:'Đông Nam', SW:'Tây Nam',
+};
+const BEDROOM_LABEL: Record<string, string> = {
+    ALL: 'Tất cả loại phòng',
+    Studio: 'Studio',
+    '1PN': '1 phòng ngủ',
+    '2PN': '2 phòng ngủ',
+    '3PN': '3 phòng ngủ',
+    '4PN+': '4+ phòng ngủ',
+    Penthouse: 'Penthouse',
+    Shophouse: 'Shophouse',
+};
+function SelectDropdown({ value, onChange, options, labelMap, placeholder }: {
+    value: string;
+    onChange: (v: string) => void;
+    options: string[];
+    labelMap: Record<string, string>;
+    placeholder?: string;
+}) {
+    const [open, setOpen] = useState(false);
+    const ref = useRef<HTMLDivElement>(null);
+    useEffect(() => {
+        if (!open) return;
+        const handler = (e: MouseEvent) => {
+            if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
+        };
+        document.addEventListener('mousedown', handler);
+        return () => document.removeEventListener('mousedown', handler);
+    }, [open]);
+    return (
+        <div ref={ref} className="relative">
+            <button type="button" onClick={() => setOpen(o => !o)}
+                className="w-full h-8 px-2 text-xs border border-[var(--glass-border)] rounded-lg bg-[var(--bg-app)] text-[var(--text-primary)] focus:outline-none focus:ring-1 focus:ring-emerald-400 flex items-center justify-between gap-1 hover:border-emerald-400 transition-colors">
+                <span className="truncate">{labelMap[value] ?? value ?? placeholder ?? '—'}</span>
+                <svg className={`w-3.5 h-3.5 shrink-0 text-[var(--text-tertiary)] transition-transform ${open ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                </svg>
+            </button>
+            {open && (
+                <div className="absolute z-[10000] top-full left-0 mt-1 w-full min-w-max bg-[var(--bg-surface)] border border-[var(--glass-border)] rounded-xl shadow-xl overflow-hidden">
+                    {options.map(opt => (
+                        <button key={opt} type="button"
+                            onClick={() => { onChange(opt); setOpen(false); }}
+                            className={`w-full text-left px-3 py-1.5 text-xs transition-colors hover:bg-emerald-50 hover:text-emerald-700 ${value === opt ? 'bg-emerald-50 text-emerald-700 font-semibold' : 'text-[var(--text-primary)]'}`}>
+                            {labelMap[opt] ?? opt}
+                        </button>
+                    ))}
+                </div>
+            )}
+        </div>
+    );
+}
+function fmtSqm(v: number) {
+    if (!v) return '—';
+    return (v / 1_000_000).toLocaleString('vi-VN', { maximumFractionDigits: 2 }) + ' tr/m²';
+}
+const EMPTY_ROW = { tower: '', floor_from: 1, floor_to: 99, direction: 'ALL', bedroom_type: 'ALL', base_price_sqm: '', adjustment_pct: '0', notes: '' };
+function PriceMatrixPanel({ project, canEdit, onClose }: { project: Project; canEdit: boolean; onClose: () => void }) {
+    const [rows, setRows] = useState<any[]>([]);
+    const [loading, setLoading] = useState(true);
+    const [form, setForm] = useState<any | null>(null);
+    const [editId, setEditId] = useState<string | null>(null);
+    const [saving, setSaving] = useState(false);
+    const [toast, setToast] = useState<{ msg: string; type: 'success' | 'error' } | null>(null);
+    const [deleting, setDeleting] = useState<string | null>(null);
+
+    const showToast = (msg: string, type: 'success' | 'error' = 'success') => {
+        setToast({ msg, type });
+        setTimeout(() => setToast(null), 3000);
+    };
+    const load = useCallback(async () => {
+        setLoading(true);
+        try {
+            const data = await db.getProjectPriceMatrix(project.id);
+            setRows(data);
+        } catch { setRows([]); }
+        finally { setLoading(false); }
+    }, [project.id]);
+
+    useEffect(() => { load(); }, [load]);
+
+    const handleSave = async () => {
+        if (!form) return;
+        const price = Number(String(form.base_price_sqm).replace(/[^0-9.]/g, '')) * (String(form.base_price_sqm).includes('tr') || Number(form.base_price_sqm) < 10000 ? 1_000_000 : 1);
+        if (!price || price <= 0) { showToast('Vui lòng nhập giá hợp lệ', 'error'); return; }
+        const payload = { ...form, base_price_sqm: price, adjustment_pct: Number(form.adjustment_pct) || 0, floor_from: Number(form.floor_from), floor_to: Number(form.floor_to) };
+        setSaving(true);
+        try {
+            if (editId) {
+                const updated = await db.updatePriceMatrixRow(project.id, editId, payload);
+                setRows(prev => prev.map(r => r.id === editId ? updated : r));
+                showToast('Đã cập nhật dòng bảng giá');
+            } else {
+                const created = await db.createPriceMatrixRow(project.id, payload);
+                setRows(prev => [...prev, created]);
+                showToast('Đã thêm dòng bảng giá');
+            }
+            setForm(null); setEditId(null);
+        } catch (e: any) { showToast(e.message || 'Lỗi lưu bảng giá', 'error'); }
+        finally { setSaving(false); }
+    };
+    const handleDelete = async (id: string) => {
+        setDeleting(id);
+        try {
+            await db.deletePriceMatrixRow(project.id, id);
+            setRows(prev => prev.filter(r => r.id !== id));
+            showToast('Đã xóa dòng bảng giá');
+        } catch (e: any) { showToast(e.message || 'Lỗi xóa', 'error'); }
+        finally { setDeleting(null); }
+    };
+
+    const startEdit = (row: Record<string, unknown>) => {
+        setEditId(String(row.id));
+        setForm({ ...row, base_price_sqm: (Number(row.base_price_sqm) / 1_000_000).toFixed(2) });
+    };
+
+    return createPortal(
+        <div className="fixed inset-0 z-[9990] flex" onClick={() => { setForm(null); setEditId(null); onClose(); }}>
+            <div className="flex-1 bg-black/40 backdrop-blur-sm" />
+            <div className="w-full max-w-3xl bg-[var(--bg-surface)] shadow-2xl flex flex-col overflow-hidden" onClick={e => e.stopPropagation()}>
+                {/* Header */}
+                <div className="shrink-0 flex items-center gap-3 px-5 py-4 border-b border-[var(--glass-border)]">
+                    <svg className="w-5 h-5 text-sgs-verified shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 11h.01M12 11h.01M15 11h.01M4 19h16a2 2 0 002-2V7a2 2 0 00-2-2H4a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>
+                    <div className="flex-1 min-w-0">
+                        <h2 className="text-sm font-bold text-[var(--text-primary)] truncate">Bảng Giá — {project.name}</h2>
+                        <p className="text-xs text-[var(--text-secondary)] mt-0.5">Giá theo tầng · hướng · loại phòng</p>
+                    </div>
+                    {canEdit && (
+                        <button type="button" onClick={() => { setForm({ ...EMPTY_ROW }); setEditId(null); }}
+                            className="shrink-0 flex items-center gap-1.5 px-3 py-1.5 bg-sgs-verified hover:bg-emerald-700 text-white text-xs font-bold rounded-xl transition-colors">
+                            {IC.PLUS} Thêm dòng
+                        </button>
+                    )}
+                    <button type="button" onClick={onClose} className="shrink-0 p-1.5 rounded-lg hover:bg-[var(--glass-surface-hover)] text-[var(--text-secondary)]" aria-label="Đóng">{IC.X}</button>
+                </div>
+
+                {/* Add / Edit form */}
+                {form && (
+                    <div className="shrink-0 border-b border-[var(--glass-border)] bg-[var(--glass-surface)] px-5 py-4">
+                        <p className="text-xs font-bold text-[var(--text-secondary)] mb-3">{editId ? 'Chỉnh sửa dòng' : 'Thêm dòng mới'}</p>
+                        <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                            <div>
+                                <label className="block text-xs text-[var(--text-tertiary)] mb-1">Tòa / Tower</label>
+                                <input value={form.tower ?? ''} onChange={e => setForm((f: any) => ({ ...f, tower: e.target.value }))}
+                                    placeholder="A, B, C... (bỏ trống = tất cả)"
+                                    className="w-full h-8 px-2 text-xs border border-[var(--glass-border)] rounded-lg bg-[var(--bg-app)] text-[var(--text-primary)] focus:outline-none focus:ring-1 focus:ring-emerald-400" />
+                            </div>
+                            <div>
+                                <label className="block text-xs text-[var(--text-tertiary)] mb-1">Tầng từ</label>
+                                <input type="number" min={1} max={200} value={form.floor_from} onChange={e => setForm((f: any) => ({ ...f, floor_from: e.target.value }))}
+                                    className="w-full h-8 px-2 text-xs border border-[var(--glass-border)] rounded-lg bg-[var(--bg-app)] text-[var(--text-primary)] focus:outline-none focus:ring-1 focus:ring-emerald-400" />
+                            </div>
+                            <div>
+                                <label className="block text-xs text-[var(--text-tertiary)] mb-1">Tầng đến</label>
+                                <input type="number" min={1} max={200} value={form.floor_to} onChange={e => setForm((f: any) => ({ ...f, floor_to: e.target.value }))}
+                                    className="w-full h-8 px-2 text-xs border border-[var(--glass-border)] rounded-lg bg-[var(--bg-app)] text-[var(--text-primary)] focus:outline-none focus:ring-1 focus:ring-emerald-400" />
+                            </div>
+                            <div>
+                                <label className="block text-xs text-[var(--text-tertiary)] mb-1">Hướng</label>
+                                <SelectDropdown
+                                    value={form.direction}
+                                    onChange={v => setForm((f: any) => ({ ...f, direction: v }))}
+                                    options={DIRECTIONS}
+                                    labelMap={DIR_LABEL}
+                                />
+                            </div>
+                            <div>
+                                <label className="block text-xs text-[var(--text-tertiary)] mb-1">Loại phòng</label>
+                                <SelectDropdown
+                                    value={form.bedroom_type}
+                                    onChange={v => setForm((f: any) => ({ ...f, bedroom_type: v }))}
+                                    options={BEDROOM_TYPES}
+                                    labelMap={BEDROOM_LABEL}
+                                />
+                            </div>
+                            <div>
+                                <label className="block text-xs text-[var(--text-tertiary)] mb-1">Giá gốc (tr/m²)</label>
+                                <input type="number" min={0} step={0.01} value={form.base_price_sqm} onChange={e => setForm((f: any) => ({ ...f, base_price_sqm: e.target.value }))}
+                                    placeholder="VD: 85.5"
+                                    className="w-full h-8 px-2 text-xs border border-[var(--glass-border)] rounded-lg bg-[var(--bg-app)] text-[var(--text-primary)] focus:outline-none focus:ring-1 focus:ring-emerald-400" />
+                            </div>
+                            <div>
+                                <label className="block text-xs text-[var(--text-tertiary)] mb-1">Điều chỉnh (%)</label>
+                                <input type="number" step={0.1} value={form.adjustment_pct} onChange={e => setForm((f: any) => ({ ...f, adjustment_pct: e.target.value }))}
+                                    placeholder="0"
+                                    className="w-full h-8 px-2 text-xs border border-[var(--glass-border)] rounded-lg bg-[var(--bg-app)] text-[var(--text-primary)] focus:outline-none focus:ring-1 focus:ring-emerald-400" />
+                            </div>
+                            <div className="col-span-2 sm:col-span-2">
+                                <label className="block text-xs text-[var(--text-tertiary)] mb-1">Ghi chú</label>
+                                <input value={form.notes ?? ''} onChange={e => setForm((f: any) => ({ ...f, notes: e.target.value }))}
+                                    placeholder="VD: Tầng cao view kênh đào, tăng giá 5%"
+                                    className="w-full h-8 px-2 text-xs border border-[var(--glass-border)] rounded-lg bg-[var(--bg-app)] text-[var(--text-primary)] focus:outline-none focus:ring-1 focus:ring-emerald-400" />
+                            </div>
+                        </div>
+                        <div className="flex gap-2 mt-3 justify-end">
+                            <button type="button" onClick={() => { setForm(null); setEditId(null); }} disabled={saving}
+                                className="px-3 py-1.5 text-xs font-semibold border border-[var(--glass-border)] rounded-lg text-[var(--text-secondary)] hover:bg-[var(--glass-surface-hover)] disabled:opacity-50">
+                                Hủy
+                            </button>
+                            <button type="button" onClick={handleSave} disabled={saving}
+                                className="px-4 py-1.5 text-xs font-bold bg-sgs-verified hover:bg-emerald-700 text-white rounded-lg disabled:opacity-50 flex items-center gap-1.5">
+                                {saving ? <svg className="w-3 h-3 animate-spin" viewBox="0 0 24 24" fill="none"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"/></svg> : null}
+                                {editId ? 'Lưu thay đổi' : 'Thêm dòng'}
+                            </button>
+                        </div>
+                    </div>
+                )}
+                {/* Table */}
+                <div className="flex-1 overflow-y-auto no-scrollbar">
+                    {loading ? (
+                        <div className="flex items-center justify-center h-32">
+                            <div className="w-6 h-6 border-4 border-emerald-200 border-t-emerald-500 rounded-full animate-spin" />
+                        </div>
+                    ) : rows.length === 0 ? (
+                        <div className="flex flex-col items-center justify-center h-48 text-[var(--text-secondary)]">
+                            <svg className="w-10 h-10 mb-3 text-emerald-200" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 11h.01M12 11h.01M15 11h.01M4 19h16a2 2 0 002-2V7a2 2 0 00-2-2H4a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>
+                            <p className="text-sm font-semibold">Chưa có bảng giá</p>
+                            {canEdit && <p className="text-xs mt-1">Nhấn "Thêm dòng" để bắt đầu nhập giá</p>}
+                        </div>
+                    ) : (
+                        <table className="w-full text-xs min-w-max">
+                            <thead>
+                                <tr className="border-b border-[var(--glass-border)] bg-[var(--glass-surface)]">
+                                    <th className="text-left px-3 py-2 font-semibold text-[var(--text-tertiary)]">Tòa</th>
+                                    <th className="text-left px-3 py-2 font-semibold text-[var(--text-tertiary)]">Tầng</th>
+                                    <th className="text-left px-3 py-2 font-semibold text-[var(--text-tertiary)]">Hướng</th>
+                                    <th className="text-left px-3 py-2 font-semibold text-[var(--text-tertiary)]">Loại</th>
+                                    <th className="text-right px-3 py-2 font-semibold text-[var(--text-tertiary)]">Giá gốc</th>
+                                    <th className="text-right px-3 py-2 font-semibold text-[var(--text-tertiary)]">Điều chỉnh</th>
+                                    <th className="text-right px-3 py-2 font-semibold text-sgs-verified">Giá hiệu lực</th>
+                                    <th className="text-left px-3 py-2 font-semibold text-[var(--text-tertiary)]">Ghi chú</th>
+                                    {canEdit && <th className="px-3 py-2" />}
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {rows.map(row => {
+                                    const base = Number(row.base_price_sqm);
+                                    const adj  = Number(row.adjustment_pct);
+                                    const eff  = Math.round(base * (1 + adj / 100));
+                                    return (
+                                        <tr key={row.id} className="border-b border-[var(--glass-border)] hover:bg-[var(--glass-surface)] transition-colors">
+                                            <td className="px-3 py-2 text-[var(--text-secondary)]">{row.tower || <span className="text-[var(--text-tertiary)]">—</span>}</td>
+                                            <td className="px-3 py-2 font-semibold text-[var(--text-primary)]">{row.floor_from}–{row.floor_to}</td>
+                                            <td className="px-3 py-2 text-[var(--text-secondary)]">{DIR_LABEL[row.direction] ?? row.direction}</td>
+                                            <td className="px-3 py-2"><span className="px-1.5 py-0.5 bg-sgs-champagne text-sgs-primary rounded font-medium">{BEDROOM_LABEL[row.bedroom_type] ?? row.bedroom_type}</span></td>
+                                            <td className="px-3 py-2 text-right text-[var(--text-secondary)]">{fmtSqm(base)}</td>
+                                            <td className="px-3 py-2 text-right">
+                                                <span className={adj === 0 ? 'text-[var(--text-tertiary)]' : adj > 0 ? 'text-emerald-600 font-semibold' : 'text-rose-500 font-semibold'}>
+                                                    {adj >= 0 ? '+' : ''}{adj}%
+                                                </span>
+                                            </td>
+                                            <td className="px-3 py-2 text-right font-bold text-sgs-verified">{fmtSqm(eff)}</td>
+                                            <td className="px-3 py-2 text-[var(--text-tertiary)] max-w-[160px] truncate">{row.notes || '—'}</td>
+                                            {canEdit && (
+                                                <td className="px-3 py-2">
+                                                    <div className="flex items-center gap-1">
+                                                        <button type="button" onClick={() => startEdit(row)} className="p-1 rounded hover:bg-sgs-champagne text-sgs-primary" title="Sửa">{IC.EDIT}</button>
+                                                        <button type="button" onClick={() => handleDelete(row.id)} disabled={deleting === row.id}
+                                                            className="p-1 rounded hover:bg-rose-50 text-rose-400 disabled:opacity-40" title="Xóa">
+                                                            {deleting === row.id ? <svg className="w-4 h-4 animate-spin" viewBox="0 0 24 24" fill="none"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"/></svg> : IC.TRASH}
+                                                        </button>
+                                                    </div>
+                                                </td>
+                                            )}
+                                        </tr>
+                                    );
+                                })}
+                            </tbody>
+                        </table>
+                    )}
+                </div>
+                {/* Toast */}
+                {toast && createPortal(
+                    <div className={`fixed bottom-6 left-1/2 -translate-x-1/2 z-[9999] px-5 py-3 rounded-2xl shadow-2xl text-sm font-bold ${toast.type === 'success' ? 'bg-emerald-600 text-white' : 'bg-rose-600 text-white'}`}>
+                        {toast.msg}
+                    </div>,
+                    document.body
+                )}
+            </div>
+        </div>,
+        document.body
+    );
+}
+// Local error boundary so a render error inside ProjectListingsPanel
+// shows an inline message instead of unmounting the modal and leaving
+// a blank page behind it.
+class ListingsPanelErrorBoundary extends React.Component<
+    { onClose: () => void; t: (k: string) => string; children: React.ReactNode },
+    { error: Error | null }
+> {
+    state = { error: null as Error | null };
+    static getDerivedStateFromError(error: Error) {
+        return { error };
+    }
+    componentDidCatch(error: Error, info: React.ErrorInfo) {
+        // eslint-disable-next-line no-console
+        console.error('[ProjectListingsPanel] render error:', error, info?.componentStack);
+        try {
+            fetch('/api/_client_error', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    where: 'ProjectListingsPanel',
+                    message: error?.message ?? String(error),
+                    stack: error?.stack ?? null,
+                    componentStack: info?.componentStack ?? null,
+                    href: typeof window !== 'undefined' ? window.location.href : null,
+                    ua: typeof navigator !== 'undefined' ? navigator.userAgent : null,
+                    ts: Date.n

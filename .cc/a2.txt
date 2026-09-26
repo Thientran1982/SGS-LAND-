@@ -1,0 +1,18 @@
+import { api } from './apiClient';
+
+export const auctionApi = {
+  list: (params?: Record<string, any>) => api.get<any[]>('/api/auctions', params),
+  create: (data: Record<string, any>) => api.post<any>('/api/auctions', data),
+  bids: (id: string) => api.get<any[]>(`/api/auctions/${id}/bids`),
+  updateStatus: (id: string, status: string) => api.patch<any>(`/api/auctions/${id}/status`, { status }),
+  convert: (id: string, target: 'booking' | 'contract') => api.post<any>(`/api/auctions/${id}/convert`, { target }),
+  placeBid: (id: string, amount: number, idempotencyKey: string) =>
+    api.post<any>(`/api/auctions/${id}/bids`, { amount, idempotencyKey }),
+};=====
+server/migrations/147_auctions.ts
+server/migrations/148_auction_conversions.ts
+server/migrations/runner.ts
+server/repositories/auctionRepository.ts
+server/routes/auctionRoutes.ts
+server/ai/liveChatEngine.ts
+5538:  app.use('/api/auctions', apiRateLimit, createAuctionRoutes(authenticateToken, io));

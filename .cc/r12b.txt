@@ -1,0 +1,9 @@
+OK   pages/Projects.tsx replaced
+OK   config/locales.ts (updated 6; +8 VN / +8 EN)
+pages/Projects.tsx(1070,96): error TS2304: Cannot find name 't'.
+TSC_DONE
+ Test Files  49 passed (49)
+      Tests  304 passed (304)
+   Start at  03:13:48
+   Duration  30.91s (transform 4.29s, setup 3.75s, import 16.19s, tests 13.88s, environment 47.26s)
+

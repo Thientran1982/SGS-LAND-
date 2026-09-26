@@ -1,0 +1,6 @@
+server.ts:5500:  app.use('/api/sequences', apiRateLimit, createSequenceRoutes(pool, authenticateToken));
+755:  async getSequences() {
+764:  async createSequence(data: any) {
+774:  async updateSequence(id: string, data: any) {
+784:  async deleteSequence(id: string) {
+792:  async getSequenceTemplates() {

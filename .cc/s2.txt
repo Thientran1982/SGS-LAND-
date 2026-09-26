@@ -1,0 +1,52 @@
+server/migrations/003_ai_and_billing.ts:65:        thresholds  JSONB DEFAULT '{}'::jsonb,
+server/migrations/009_extended_schema.ts:397:        thresholds JSONB DEFAULT '{}'::jsonb,
+server/migrations/145_valuation_drift_thresholds.ts:5:  description: '145: Versioned valuation drift thresholds and audit history',
+server/migrations/runner.ts:167:import m145 from './145_valuation_drift_thresholds';
+server/migrations/runner.ts:401:  '145_valuation_drift_thresholds.ts': m145,
+server/repositories/scoringConfigRepository.ts:3:const DEFAULT_WEIGHTS = { engagement: 15, completeness: 10, budgetFit: 40, velocity: 10 };
+server/repositories/scoringConfigRepository.ts:43:  async upsert(tenantId: string, data: { weights: any; thresholds: any }): Promise<any> {
+server/repositories/scoringConfigRepository.ts:54:           SET weights = $1, thresholds = $2, updated_at = CURRENT_TIMESTAMP, version = $4
+server/repositories/scoringConfigRepository.ts:57:          [JSON.stringify(data.weights), JSON.stringify(data.thresholds), existing.rows[0].id, nextVersion]
+server/repositories/scoringConfigRepository.ts:62:          `INSERT INTO ${this.tableName} (tenant_id, weights, thresholds, version)
+server/repositories/scoringConfigRepository.ts:65:          [tenantId, JSON.stringify(data.weights), JSON.stringify(data.thresholds)]
+server/routes/scoringRoutes.ts:14:          thresholds: DEFAULT_THRESHOLDS,
+server/routes/scoringRoutes.ts:34:      const { weights, thresholds } = req.body;
+server/routes/scoringRoutes.ts:40:        thresholds: thresholds ?? DEFAULT_THRESHOLDS,
+server/routes/valuationRoutes.ts:1384:  router.get('/admin/drift-thresholds', authenticateToken, async (req: Request, res: Response) => {
+server/routes/valuationRoutes.ts:1393:      logger.error('[Valuation drift-thresholds] read error', err);
+server/routes/valuationRoutes.ts:1443:  router.put('/admin/drift-thresholds', authenticateToken, async (req: Request, res: Response) => {
+server/routes/valuationRoutes.ts:1459:        const { thresholds } = config;
+server/routes/valuationRoutes.ts:1462:          title: 'Valuation drift thresholds updated',
+server/routes/valuationRoutes.ts:1463:          body: `${user.name || user.email || 'An administrator'} updated the drift thresholds to version ${config.version}: MAE ${thresholds.maeVndPerM2.toLocaleString('en-US')} VND/m², MAPE ${(thresholds.mape * 100).toLocaleString('en-US')}%, ${thresholds.consecutiveRuns} consecutive runs.`,
+server/routes/valuationRoutes.ts:1468:            thresholds,
+server/routes/valuationRoutes.ts:1474:          title: 'Valuation drift thresholds updated',
+server/routes/valuationRoutes.ts:1475:          body: `${user.name || user.email || 'An administrator'} updated the drift thresholds to version ${config.version}: MAE ${config.thresholds.maeVndPerM2.toLocaleString('en-US')} VND/m², MAPE ${(config.thresholds.mape * 100).toLocaleString('en-US')}%, ${config.thresholds.consecutiveRuns} consecutive runs.`,
+server/routes/valuationRoutes.ts:1480:            thresholds: config.thresholds,
+server/routes/valuationRoutes.ts:1511:      logger.error('[Valuation drift-thresholds] update error', err);
+server/services/valuationEvaluationService.ts:54:  thresholds: ValuationDriftThresholds;
+server/services/valuationEvaluationService.ts:68:  thresholds: ValuationDriftThresholds = VALUATION_DRIFT_THRESHOLDS,
+server/services/valuationEvaluationService.ts:91:  const maeThresholdReached = latest?.mae != null && latest.mae >= thresholds.maeVndPerM2;
+server/services/valuationEvaluationService.ts:92:  const mapeThresholdReached = latest?.mape != null && latest.mape >= thresholds.mape;
+server/services/valuationEvaluationService.ts:93:  const maeBlocked = maeThresholdReached && consecutiveMaeRuns >= thresholds.consecutiveRuns;
+2826:        "scoring.title": "Cấu Hình Điểm Số Lead",
+2827:        "scoring.subtitle": "Thiết lập trọng số chấm điểm tiềm năng khách hàng cho AI.",
+2828:        "scoring.pts": "điểm",
+2829:        "scoring.max_weight": "Trọng số tối đa",
+2830:        "scoring.update_success": "Đã cập nhật cấu hình điểm số",
+2831:        "scoring.empty_title": "Chưa có cấu hình điểm số",
+2832:        "scoring.empty_desc": "Cấu hình chấm điểm sẽ được tạo sau lần lưu đầu tiên.",
+2833:        "scoring.version": "Phiên bản",
+2834:        "scoring.sim_title": "Mô Phỏng Điểm Số",
+2835:        "scoring.sim_desc": "Nhập thông tin khách hàng để xem điểm số AI dự đoán.",
+2836:        "scoring.status_hot": "HOT",
+2837:        "scoring.status_warm": "WARM",
+2838:        "scoring.status_cold": "COLD",
+2839:        "scoring.total_max": "Tổng điểm tối đa",
+2840:        "scoring.total_weights": "Tổng trọng số",
+2841:        "scoring.note_title": "Lưu Ý",
+2842:        "scoring.note_desc": "Tổng trọng số nên bằng 100% để đảm bảo tính nhất quán trong chấm điểm.",
+2843:        "scoring.engagement": "Mức Độ Tương Tác",
+2844:        "scoring.completeness": "Mức Độ Hoàn Chỉnh Hồ Sơ",
+2845:        "scoring.budget_fit": "Phù Hợp Ngân Sách",
+2846:        "scoring.velocity": "Tốc Độ Phản Hồi",
+2847:        "scoring.num_criteria": "Số Tiêu Chí",

@@ -1,0 +1,29 @@
+===
+./server/migrations/003_ai_and_billing.ts:8:  description: 'Add AI governance logs, subscriptions, usage_tracking, and scoring_configs',
+./server/migrations/003_ai_and_billing.ts:61:      CREATE TABLE IF NOT EXISTS scoring_configs (
+./server/migrations/003_ai_and_billing.ts:94:    const tables = ['ai_governance_logs', 'subscriptions', 'usage_tracking', 'scoring_configs', 'prompt_templates'];
+./server/migrations/009_extended_schema.ts:391:    // ---------- scoring_configs ----------
+./server/migrations/009_extended_schema.ts:393:      CREATE TABLE IF NOT EXISTS scoring_configs (
+./server/migrations/009_extended_schema.ts:401:    await client.query(`ALTER TABLE scoring_configs ENABLE ROW LEVEL SECURITY;`);
+./server/migrations/009_extended_schema.ts:404:        IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE tablename = 'scoring_configs' AND policyname = 'tenant_isolation_policy') THEN
+./server/migrations/009_extended_schema.ts:405:          CREATE POLICY tenant_isolation_policy ON scoring_configs FOR ALL
+./server/migrations/009_extended_schema.ts:744:      'scoring_configs', 'routing_rules', 'sequences', 'favorites', 'enterprise_config',
+./server/repositories/index.ts:14:export { scoringConfigRepository } from './scoringConfigRepository';
+./server/repositories/scoringConfigRepository.ts:8:    super('scoring_configs');
+./server/repositories/scoringConfigRepository.ts:73:export const scoringConfigRepository = new ScoringConfigRepository();
+./server/routes/scoringRoutes.ts:2:import { scoringConfigRepository, DEFAULT_WEIGHTS, DEFAULT_THRESHOLDS } from '../repositories/scoringConfigRepository';
+./server/routes/scoringRoutes.ts:10:      const config = await scoringConfigRepository.getByTenant(user.tenantId);
+./server/routes/scoringRoutes.ts:49:      const result = await scoringConfigRepository.upsert(user.tenantId, {
+./services/dbApi.ts:706:  async getScoringConfig() {
+===
+./server/repositories/interactionRepository.ts
+./server/services/leadQualificationService.ts
+./server/services/minhOpportunityDetectors.ts
+./server/ai/liveChatEngine.ts
+./server/test/leadQualificationService.test.ts
+./server/queue.ts
+./server/ai.ts
+./services/aiService.ts
+./services/dbApi.ts
+./tests/inbox-csat.spec.ts
+./server.ts

@@ -1,0 +1,17 @@
+OK   server/repositories/routingRuleRepository.ts
+OK   server/routes/routingRuleRoutes.ts
+OK   pages/RoutingRules.tsx
+OK   src/test/routingRules.test.ts
+OK   services/dbApi.ts (3 steps)
+OK   components/WorkspaceNavigation.tsx (1 steps)
+OK   components/Layout.tsx (1 steps)
+OK   config/locales.ts (updated 7; +47 VN / +47 EN)
+TSC_DONE
+ RUN  v4.1.10 /home/runner/workspace
+
+
+ Test Files  52 passed (52)
+      Tests  318 passed (318)
+   Start at  06:17:46
+   Duration  29.07s (transform 4.05s, setup 3.54s, import 15.62s, tests 12.13s, environment 45.22s)
+

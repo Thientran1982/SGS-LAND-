@@ -1,0 +1,7 @@
+App.tsx:61:const Auction = lazyLoad(() => import('./pages/Auction'), 'Auction');
+App.tsx:239:  [ROUTES.AUCTION]: Auction,
+config/routes.ts:108:    AUCTION: 'auction',
+-rw-r--r-- 1 runner runner  16367 Sep  3 18:33 Auction.tsx
+server/routes/auctionRoutes.ts
+server.ts
+services/api/auctionApi.ts

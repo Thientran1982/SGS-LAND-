@@ -1,0 +1,9 @@
+OK   components/WorkspaceNavigation.tsx (7 steps)
+INFO interface WorkspaceNavigationProps: true; UserAvatar: false; react import: import React, { useEffect, useMemo, useState, useRef } from 'react';
+TSC_DONE
+
+ Test Files  1 passed (1)
+      Tests  3 passed (3)
+   Start at  21:23:02
+   Duration  4.54s (transform 246ms, setup 129ms, import 780ms, tests 353ms, environment 2.96s)
+

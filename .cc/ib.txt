@@ -1,0 +1,19 @@
+105598 pages/Inbox.tsx
+ 28053 components/ChatUI.tsx
+  4304 components/LiveChatInsight.tsx
+137955 total
+pages/PublicProposal.tsx
+pages/Inbox.tsx
+pages/SystemStatus.tsx
+components/reports/AudienceInsights.tsx
+components/dashboard/OverviewHome.tsx
+162:    const [embedChannel, setEmbedChannel] = useState<'EMBED' | 'ZALO' | 'FACEBOOK' | 'SMS' | 'TIKTOK'>('EMBED');    
+1385:                                        <label className="block text-sm font-bold text-[var(--text-secondary)] mb-2">{t('inbox.widget_embed_label')}</label>
+1389:                                                 { key: 'EMBED' as const, label: t('inbox.widget_channel_embed'), activeClass: 'bg-white !text-sgs-primary-deep border-white shadow-sm' },
+1399:                                                        embedChannel === key
+1412:                                                 value={`<script>\n  window.SGSLAND_CHAT_URL = "${buildLiveChatUrl(embedChannel)}";\n</script>\n<script src="${window.location.origin}/widget.js" async></script>`}
+1417:                                                     const embedBase = buildLiveChatUrl(embedChannel);
+1418:                                                    const embedCode = `<script>\n  window.SGSLAND_CHAT_URL = "${embedBase}";\n</script>\n<script src="${window.location.origin}/widget.js" async></script>`;
+1419:                                                    navigator.clipboard.writeText(embedCode).catch(() => {});
+1420:                                                    notify(t('inbox.widget_embed_copied'), 'success');
+1428:                                        <p className="text-xs text-[var(--text-tertiary)] mt-2">{t('inbox.widget_embed_desc')}</p>

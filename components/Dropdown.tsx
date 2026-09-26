@@ -32,7 +32,7 @@ const ICONS = {
     CHECK: <svg className="w-4 h-4 text-sgs-primary dark:text-sgs-text-muted shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" /></svg>
 };
 const STYLES = {
-    LABEL: "block text-xs font-bold uppercase mb-1 ml-1 select-none transition-colors",
+    LABEL: "block text-xs font-semibold mb-1.5 ml-0.5 select-none transition-colors",
     BUTTON: "w-full min-h-[44px] flex items-center justify-between gap-2 px-3 py-2.5 rounded-xl border transition-all duration-200 outline-none focus-visible:ring-2 focus-visible:ring-[var(--sgs-primary)] text-sm group",
     // Outer: overflow-hidden clips at border-radius; NO max-h (inner controls height precisely)
     MENU: "fixed z-[10010] bg-[var(--bg-surface)] dark:bg-slate-900 rounded-xl shadow-2xl border border-[var(--glass-border)] dark:border-white/10 animate-scale-up overflow-hidden text-sm focus:outline-none min-w-[120px]",

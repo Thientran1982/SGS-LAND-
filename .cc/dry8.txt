@@ -1,0 +1,4 @@
+OK   pages/Inbox.tsx (45 steps)
+OK   components/ChatUI.tsx (23 steps)
+OK   server.ts (1 steps)
+OK   config/locales.ts (updated 38; +40 VN / +40 EN keys)

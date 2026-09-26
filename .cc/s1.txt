@@ -1,0 +1,10 @@
+70:const Sequences = lazyLoad(() => import('./pages/Sequences'), 'Sequences');
+73:const ScoringRules = lazyLoad(() => import('./pages/ScoringRules'), 'ScoringRules');
+118:registerPrefetch(ROUTES.SEQUENCES,           () => import('./pages/Sequences'));
+121:registerPrefetch(ROUTES.SCORING_RULES,       () => import('./pages/ScoringRules'));
+247:    [ROUTES.SEQUENCES]: Sequences,
+250:    [ROUTES.SCORING_RULES]: ScoringRules,
+531:                ROUTES.ROUTING_RULES, ROUTES.SEQUENCES, ROUTES.KNOWLEDGE,
+14985 pages/ScoringRules.tsx
+51152 pages/Sequences.tsx
+66137 total

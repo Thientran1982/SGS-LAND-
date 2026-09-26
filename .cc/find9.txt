@@ -1,0 +1,89 @@
+conrelid|conname|pg_get_constraintdef
+sequence_enrollments|sequence_enrollments_sequence_id_fkey|FOREIGN KEY (sequence_id) REFERENCES sequences(id) ON DELETE CASCADE
+(1 row)
+tgname
+(0 rows)
+pg_get_indexdef
+CREATE UNIQUE INDEX sequences_pkey ON public.sequences USING btree (id)
+(1 row)
+column_name|character_maximum_length
+is_active|
+tenant_id|
+trigger|
+steps|
+created_by|
+created_at|
+updated_at|
+is_active|
+numeric_precision|
+numeric_precision_radix|
+numeric_scale|
+id|
+tenant_id|
+trigger|
+steps|
+created_by|
+created_at|
+updated_at|
+id|
+description|
+description|
+status|50
+trigger_event|100
+status|50
+trigger_event|100
+name|255
+name|255
+sequence_name|
+data_type|
+sequence_catalog|
+sequence_schema|
+start_value|
+minimum_value|
+maximum_value|
+increment|
+cycle_option|3
+(36 rows)
+BEGIN
+SET
+ERROR:  column "version" does not exist
+LINE 1: SELECT count(*), max(version) FROM scoring_configs;
+                             ^
+ERROR:  current transaction is aborted, commands ignored until end of transaction block
+ROLLBACK
+current_user
+avnadmin
+(1 row)
+status
+BEST_MARKET
+OPENING
+SOLD
+AVAILABLE
+(4 rows)
+255:export async function withTenantContext<T>(
+          leadZaloId: null,
+          source: 'LIVE_CHAT',
+        });
+        logger.info('[FollowUp] auto-enrolled lead=' + lead.id);
+      }
+    } catch (enrollErr: any) {
+      logger.warn('[FollowUp] auto-enroll skipped: ' + (enrollErr?.message || enrollErr));
+    }
+    return {
+        success: true,
+        leadId: lead.id,
+        score: score.score,
+        grade: score.grade,
+        priority: score.priority,
+    };
+}
+
+async function handle_escalate_to_human(args: Record<string, any>): Promise<any> {
+    const { tenantId = DEFAULT_TENANT_ID, leadId, reason = 'user_requested', priority = 'normal' } = args;
+    if (!leadId) return { error: 'leadId bắt buộc' };
+
+1521:function handle_score_lead(args: Record<string, any>): any {
+1522-    return scoreLeadDeterministically(args as LeadScoreInput);
+1523-}
+1524-
+1525-async function handle_route_lead(args: Record<string, any>): Promise<any> {

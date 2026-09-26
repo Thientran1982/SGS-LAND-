@@ -1,0 +1,39 @@
+server.ts
+5394:  // POST /api/links/shorten   → tạo short code Redis (TTL 30 ngày)
+5395-  // GET  /c/:code             → redirect tới target URL (xem SSR section)
+5396-
+5397-  function genShortCode(): string {
+5398-    return Math.random().toString(36).slice(2, 9);
+5399-  }
+5400-
+5401:  app.post('/api/links/shorten', apiRateLimit, authenticateToken, async (req: express.Request, res: express.Response) => {
+5402-    const { url } = req.body;
+5403-    if (!url || typeof url !== 'string' || url.length > 2048) {
+5404-      return res.status(400).json({ error: 'URL không hợp lệ' }) as any;
+5405-    }
+5406-    // Only allow internal livechat URLs
+5407-    try {
+5408-      const parsed = new URL(url);
+5409-      if (!parsed.pathname.startsWith('/livechat')) {
+5410-        return res.status(400).json({ error: 'Chỉ hỗ trợ rút gọn link livechat' }) as any;
+5411-      }
+5412-    } catch {
+5413-      return res.status(400).json({ error: 'URL không hợp lệ' }) as any;
+5414-    }
+5415-
+5416-    const code = genShortCode();
+5417-    const redisKey = `sl:${code}`;
+5418-    const TTL_SECS = 30 * 24 * 3600; // 30 ngày
+5419-
+5420-    try {
+5421-      if (process.env.UPSTASH_REDIS_REST_URL && process.env.UPSTASH_REDIS_REST_TOKEN) {
+5422-        const { Redis } = await import('@upstash/redis');
+5423-        const redis = new Redis({ url: process.env.UPSTASH_REDIS_REST_URL, token: process.env.UPSTASH_REDIS_REST_TOKEN });
+5424-        await redis.set(redisKey, url, { ex: TTL_SECS });
+5425-      } else {
+5426-        // In-memory fallback for dev (non-persistent)
+5427-        (global as any).__shortLinks = (global as any).__shortLinks || {};
+5428-        (global as any).__shortLinks[code] = { url, exp: Date.now() + TTL_SECS * 1000 };
+5429-      }
+5430-    } catch (err) {
+5431-      logger.error('[ShortLink] Redis error:', err);

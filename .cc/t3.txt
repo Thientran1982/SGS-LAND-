@@ -1,0 +1,25 @@
+318:  const [minhLearningDays, setMinhLearningDays] = useState(30);
+347:        api.get<MinhBrainOverview>(`/api/internal/minh-brain/overview?limit=50&days=${minhLearningDays}`),
+349:        api.get<MinhLearningTrendResponse>(`/api/internal/minh-brain/learning/trends?days=${minhLearningDays}`),
+404:  }, [eventFilters, memoryFilters, minhLearningDays]);
+423:      const snapshot = await api.get<MinhLearningSnapshot>(`/api/internal/minh-brain/learning/trends/export?days=${minhLearningDays}`);
+819:                    value={minhLearningDays}
+== mock
+95:function mockCockpitRequests(
+96-  summary: Record<string, unknown>,
+97-  overview?: Record<string, unknown>,
+98-  commandCenter: Record<string, unknown> = createCommandCenter(),
+--
+106:    if (path.startsWith('/api/internal/minh-brain/overview')) return overview || {
+107-      scheduler: { mode: 'shadow', enabled: true, lastTickAt: null, detectorSummary: { enabled: true, lastRunAt: null, tenantRuns: 0, opportunitiesFound: 0, opportunitiesPersisted: 0, degradedRuns: 0, detectorStatus: [] } },
+108-      routing: { registryErrors: [] },
+109-      opportunities: [],
+--
+336:    expect((api.get as any).mock.calls.some(([path]: [string]) => path.includes('/api/internal/minh-brain/overview?limit=50&days=7'))).toBe(true);
+337-  });
+338-
+339-  it('makes learning degradation explicit when the overview cannot load it', async () => {
+
+c4268b3d fix(ux): wave 3 - hero split search, dialog/toast instead of alert/confirm/prompt, role-based menu, a11y, filters in URL
+9b592369 Prevent stale memory loads from overwriting filtered mutation results
+6a9021b3 Coalesce rapid Agent Cockpit filter reloads

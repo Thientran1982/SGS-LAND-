@@ -1,0 +1,67 @@
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({ error: 'Failed to update enterprise config' }));
+      throw new Error(err.error || 'Failed to update enterprise config');
+    }
+    return res.json();
+  }
+  async getScoringConfig() {
+    return api.get<any>('/api/scoring/config');
+  }
+  async updateScoringConfig(data: any) {
+    return api.put<any>('/api/scoring/config', data);
+  }
+  async getRoutingRules() {
+    const result = await fetch('/api/routing-rules', { credentials: 'include' });
+    if (!result.ok) throw new Error('Failed to fetch routing rules');
+    return result.json();
+  }
+  async createRoutingRule(data: any) {
+    const result = await fetch('/api/routing-rules', {
+      method: 'POST',
+      credentials: 'include',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data),
+    });
+    if (!result.ok) throw new Error('Failed to create routing rule');
+    return result.json();
+  }
+  async updateRoutingRule(id: string, data: any) {
+    const result = await fetch(`/api/routing-rules/${id}`, {
+      method: 'PUT',
+      credentials: 'include',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data),
+    });
+    if (!result.ok) throw new Error('Failed to update routing rule');
+    return result.json();
+  }
+  async deleteRoutingRule(id: string) {
+    const result = await fetch(`/api/routing-rules/${id}`, {
+      method: 'DELETE',
+      credentials: 'include',
+    });
+    if (!result.ok) throw new Error('Failed to delete routing rule');
+    return true;
+  }
+  async getSequences() {
+    try {
+      const result = await fetch('/api/sequences', { credentials: 'include' });
+      if (!result.ok) throw new Error('Failed to fetch sequences');
+      return await result.json();
+    } catch {
+      return [];
+    }
+  }
+  async createSequence(data: any) {
+    const result = await fetch('/api/sequences', {
+      method: 'POST',
+      credentials: 'include',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data),
+    });
+=====
+89
+61
+services/csrfFetch.ts:1:// services/csrfFetch.ts
+services/csrfFetch.ts:32:  window.fetch = async (input: RequestInfo | URL, init?: RequestInit): Promise<Response> => {
+index.tsx:3:import { installCsrfFetch } from './services/csrfFetch';

@@ -1,0 +1,4 @@
+0
+ M components/GuideAssistant.tsx
+ M components/WorkspaceNavigation.tsx
+?? .cc/
