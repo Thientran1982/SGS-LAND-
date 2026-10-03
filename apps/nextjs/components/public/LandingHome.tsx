@@ -237,8 +237,9 @@ const STYLE = `
   .lp-h2 { font-size:clamp(29px,3.8vw,48px);line-height:1.08;letter-spacing:-.035em; }
   .lp-lead { color:#58666b; }
   .lp-eyebrow { text-transform:uppercase;letter-spacing:.11em;font-size:11px;font-weight:750;color:#896a24; }
-  .lp-hero { position:relative;isolation:isolate;overflow:hidden;padding:clamp(102px,11vw,136px) 0 56px;background:#102d35; }
-  .lp-hero-backdrop { position:absolute;inset:0;z-index:-2;object-fit:cover;object-position:center 54%; }
+  .lp-hero { position:relative;z-index:2;isolation:isolate;overflow:visible;padding:clamp(102px,11vw,136px) 0 56px;background:#102d35; }
+  .lp-hero-media { position:absolute;inset:0;z-index:-2;overflow:hidden;pointer-events:none; }
+  .lp-hero-backdrop { position:absolute;inset:0;z-index:0;object-fit:cover;object-position:center 54%; }
   .lp-hero::before { content:"";position:absolute;z-index:-1;inset:0;pointer-events:none;background:linear-gradient(90deg,rgba(8,27,33,.92) 0%,rgba(8,27,33,.78) 43%,rgba(8,27,33,.32) 100%),linear-gradient(0deg,rgba(8,27,33,.62),transparent 60%); }
   .lp-hero::after { content:"";position:absolute;z-index:1;inset:auto 0 0;height:1px;background:linear-gradient(90deg,transparent,rgba(255,253,247,.35),transparent); }
   .lp-hero-grid { position:relative;z-index:2; }
@@ -418,7 +419,9 @@ function SectionHead({ eyebrow, title, lead, action }: { eyebrow?: React.ReactNo
 function Hero({ lang, onAskAi }: { lang: Lang; onAskAi: (q: string) => void }) {
   return (
     <section className="lp-hero">
-      <Image className="lp-hero-backdrop" src={projImg("aqua-city")} alt="" fill priority sizes="100vw" />
+      <div className="lp-hero-media" aria-hidden="true">
+        <Image className="lp-hero-backdrop" src={projImg("aqua-city")} alt="" fill priority sizes="100vw" />
+      </div>
       <div className="lp-wrap lp-hero-grid">
         <div className="lp-hero-copy">
           <span className="lp-badge">

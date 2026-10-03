@@ -32,6 +32,7 @@ const CSS = `
   .hs-input::placeholder { color:#7B8186; opacity:1; }
   .hs-field .hs-form-select-trigger { cursor:pointer; border-radius:0!important; box-shadow:none; text-align:left; }
   .hs-field .hs-form-select-trigger:focus-visible { outline:2px solid #123b46; outline-offset:2px; border-radius:4px!important; box-shadow:none; }
+  .hs-field [role="listbox"] { white-space:nowrap; }
   .hs-main { min-height:56px; min-width:126px; padding:0 22px; border:0; border-radius:16px; background:#C8963E; color:#0B1B2B; font:700 14px var(--font-be-vietnam,sans-serif); cursor:pointer; transition:filter .18s,transform .18s; }
   .hs-main:hover { filter:brightness(1.06); transform:translateY(-1px); }
   .hs-support { display:flex; flex-wrap:wrap; align-items:center; gap:8px; margin-top:12px; color:rgba(255,255,255,.84); font-size:12px; }
@@ -43,6 +44,7 @@ const CSS = `
     .hs-field:first-child { grid-column:1/-1; border-bottom:1px solid #E4DED3; }
     .hs-field:nth-child(2) { border-left:0; }
     .hs-field { padding:9px 12px; }
+    .hs-field .hs-form-select-trigger { font-size:13px; }
     .hs-main { grid-column:1/-1; min-height:48px; margin-top:6px; }
   }
   @media (max-width: 420px) {
@@ -145,6 +147,7 @@ export default function HeroSearch({ lang, action, valuationHref, onAskAi, withT
             options={propertyTypeOptions}
             buttonClassName="hs-form-select-trigger"
             buttonStyle={{ height: "30px", padding: 0, border: 0, borderRadius: 0, background: "transparent", color: "#0B1B2B" }}
+            menuStyle={{ width: "max-content", minWidth: "100%", maxWidth: "calc(100vw - 32px)" }}
           />
         </div>
         <div className="hs-field">
@@ -157,6 +160,8 @@ export default function HeroSearch({ lang, action, valuationHref, onAskAi, withT
             options={budgetOptions}
             buttonClassName="hs-form-select-trigger"
             buttonStyle={{ height: "30px", padding: 0, border: 0, borderRadius: 0, background: "transparent", color: "#0B1B2B" }}
+            menuAlign="right"
+            menuStyle={{ width: "max-content", minWidth: "100%", maxWidth: "calc(100vw - 32px)" }}
           />
         </div>
         <button type="submit" className="hs-main">{vi ? "Tìm nhà" : "Find a home"}</button>

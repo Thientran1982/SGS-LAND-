@@ -144,6 +144,7 @@ export default function ConsentBanner() {
     <div
       role="dialog"
       aria-label={tt(lang, "Cài đặt cookie", "Cookie settings")}
+      data-consent-banner
       style={{
         position: "fixed",
         left: 0,

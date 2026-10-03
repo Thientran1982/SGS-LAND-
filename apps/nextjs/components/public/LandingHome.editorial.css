@@ -103,20 +103,29 @@
 /* Single-photo hero */
 .lp-root.lp-editorial .lp-hero {
   position: relative;
+  z-index: 2;
   isolation: isolate;
   display: flex;
   min-height: 92vh;
   min-height: 92svh;
   max-height: 1120px;
   padding: 112px 0 36px;
-  overflow: hidden;
+  overflow: visible;
   background: #0B1B2B;
+}
+
+.lp-root.lp-editorial .lp-hero-media {
+  position: absolute;
+  z-index: -2;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
 }
 
 .lp-root.lp-editorial .lp-hero-backdrop {
   position: absolute;
   inset: 0;
-  z-index: -2;
+  z-index: 0;
   object-fit: cover;
   object-position: center 54%;
   animation: lp-hero-drift 22s ease-in-out infinite alternate;

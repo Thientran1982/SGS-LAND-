@@ -111,113 +111,115 @@ export function PublicHeader({ authed = false }: { authed?: boolean }) {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between" style={{ height: "64px" }}>
 
-          {/* ── Logo ─────────────────────────────────────── */}
-          <Link href="/" className="flex items-center gap-2.5 shrink-0 group">
-            <img
-              src={isHero || theme === "dark" ? "/logo-white.png" : "/logo-navy.png"}
-              alt="SGS Land"
-              className="w-9 h-9 transition-transform group-hover:scale-105"
-              style={{ objectFit: "contain" }}
-            />
-            <div>
-              <div
-                className="font-bold text-lg leading-tight"
-                style={{
-                  color: isHero
-                    ? "#FFFFFF"
-                    : theme === "dark" ? "#E4EDF5" : "var(--sgs-primary)",
-                  fontFamily: "var(--font-display, Georgia, serif)",
-                  letterSpacing: "-0.02em",
-                }}
-              >
-                SGS <span style={{ color: "var(--sgs-accent)" }}>LAND</span>
+          <div className="flex min-w-0 items-center gap-3 xl:gap-5">
+            {/* ── Logo ─────────────────────────────────────── */}
+            <Link href="/" className="flex items-center gap-2.5 shrink-0 group">
+              <img
+                src={isHero || theme === "dark" ? "/logo-white.png" : "/logo-navy.png"}
+                alt="SGS Land"
+                className="w-9 h-9 transition-transform group-hover:scale-105"
+                style={{ objectFit: "contain" }}
+              />
+              <div>
+                <div
+                  className="font-bold text-lg leading-tight"
+                  style={{
+                    color: isHero
+                      ? "#FFFFFF"
+                      : theme === "dark" ? "#E4EDF5" : "var(--sgs-primary)",
+                    fontFamily: "var(--font-display, Georgia, serif)",
+                    letterSpacing: "-0.02em",
+                  }}
+                >
+                  SGS <span style={{ color: "var(--sgs-accent)" }}>LAND</span>
+                </div>
+                <div
+                  className="text-[12px] font-semibold uppercase hidden sm:block"
+                  style={{
+                    color: isHero
+                      ? "rgba(200,150,62,0.85)"
+                      : theme === "dark" ? "var(--sgs-accent)" : "var(--sgs-accent-text)",
+                    letterSpacing: "0.2em",
+                  }}
+                >
+                  Proptech
+                </div>
               </div>
-              <div
-                className="text-[12px] font-semibold uppercase hidden sm:block"
-                style={{
-                  color: isHero
-                    ? "rgba(200,150,62,0.85)"
-                    : theme === "dark" ? "var(--sgs-accent)" : "var(--sgs-accent-text)",
-                  letterSpacing: "0.2em",
-                }}
-              >
-                Proptech
-              </div>
-            </div>
-          </Link>
+            </Link>
 
-          {/* ── Desktop Nav ───────────────────────────────── */}
-          <nav
-            className="hidden xl:flex items-center gap-0.5"
-            data-public-desktop-nav
-          >
-            <div
-              className="relative"
-              onMouseEnter={() => setRealEstateOpen(true)}
-              onMouseLeave={() => setRealEstateOpen(false)}
+            {/* ── Desktop Nav ───────────────────────────────── */}
+            <nav
+              className="hidden xl:flex items-center gap-0.5 whitespace-nowrap"
+              data-public-desktop-nav
             >
-              <button
-                type="button"
-                onClick={() => setRealEstateOpen(open => !open)}
-                className="flex items-center gap-1 px-2.5 xl:px-3.5 py-2 rounded-lg text-sm font-medium transition-all"
-                style={{
-                  color: isHero ? "rgba(255,255,255,0.85)" : "var(--sgs-primary)",
-                  fontFamily: "var(--font-ui, var(--font-be-vietnam), sans-serif)",
-                }}
-                aria-haspopup="menu"
-                aria-expanded={realEstateOpen}
-              >
-                {lang === "vi" ? "Mua bán & cho thuê" : "Buy & rent"}
-                <ChevronDown className={`w-3.5 h-3.5 transition-transform ${realEstateOpen ? "rotate-180" : ""}`} />
-              </button>
               <div
-                className={`absolute left-0 top-full mt-1 min-w-44 rounded-xl p-1.5 shadow-lg transition-all ${
-                  realEstateOpen ? "visible translate-y-0 opacity-100" : "invisible -translate-y-1 opacity-0"
-                }`}
-                style={{
-                  background: "var(--hdr-panel)",
-                  border: "1px solid var(--hdr-border)",
-                }}
-                role="menu"
+                className="relative"
+                onMouseEnter={() => setRealEstateOpen(true)}
+                onMouseLeave={() => setRealEstateOpen(false)}
               >
-                {realEstateLinks.map(link => (
-                  <Link
-                    key={link.href}
-                    href={localizedHref(link.href)}
-                    className="block rounded-lg px-3 py-2 text-sm font-medium transition-colors hover:bg-[rgba(27,58,92,0.06)]"
-                    style={{ color: "var(--sgs-primary)" }}
-                    role="menuitem"
-                  >
-                    {lang === "vi" ? link.vi : link.en}
-                  </Link>
-                ))}
+                <button
+                  type="button"
+                  onClick={() => setRealEstateOpen(open => !open)}
+                  className="flex items-center gap-1 px-2.5 xl:px-3.5 py-2 rounded-lg text-sm font-medium transition-all"
+                  style={{
+                    color: isHero ? "rgba(255,255,255,0.85)" : "var(--sgs-primary)",
+                    fontFamily: "var(--font-ui, var(--font-be-vietnam), sans-serif)",
+                  }}
+                  aria-haspopup="menu"
+                  aria-expanded={realEstateOpen}
+                >
+                  {lang === "vi" ? "Mua bán & cho thuê" : "Buy & rent"}
+                  <ChevronDown className={`w-3.5 h-3.5 transition-transform ${realEstateOpen ? "rotate-180" : ""}`} />
+                </button>
+                <div
+                  className={`absolute left-0 top-full mt-1 min-w-44 rounded-xl p-1.5 shadow-lg transition-all ${
+                    realEstateOpen ? "visible translate-y-0 opacity-100" : "invisible -translate-y-1 opacity-0"
+                  }`}
+                  style={{
+                    background: "var(--hdr-panel)",
+                    border: "1px solid var(--hdr-border)",
+                  }}
+                  role="menu"
+                >
+                  {realEstateLinks.map(link => (
+                    <Link
+                      key={link.href}
+                      href={localizedHref(link.href)}
+                      className="block rounded-lg px-3 py-2 text-sm font-medium transition-colors hover:bg-[rgba(27,58,92,0.06)]"
+                      style={{ color: "var(--sgs-primary)" }}
+                      role="menuitem"
+                    >
+                      {lang === "vi" ? link.vi : link.en}
+                    </Link>
+                  ))}
+                </div>
               </div>
-            </div>
-            {navLinks.map((link) => (
-              <Link
-                key={link.href}
-                href={localizedHref(link.href)}
-                data-public-nav-link={link.href}
-                className="px-2.5 xl:px-3.5 py-2 rounded-lg text-sm font-medium transition-all"
-                style={{
-                  color: isHero ? "rgba(255,255,255,0.85)" : "var(--sgs-primary)",
-                  fontFamily: "var(--font-ui, var(--font-be-vietnam), sans-serif)",
-                }}
-                onMouseEnter={e => {
-                  const el = e.currentTarget as HTMLElement;
-                  el.style.background = isHero ? "rgba(255,255,255,0.1)" : "rgba(27,58,92,0.06)";
-                  el.style.color = isHero ? "#FFFFFF" : "var(--sgs-primary-deep)";
-                }}
-                onMouseLeave={e => {
-                  const el = e.currentTarget as HTMLElement;
-                  el.style.background = "transparent";
-                  el.style.color = isHero ? "rgba(255,255,255,0.85)" : "var(--sgs-primary)";
-                }}
-              >
-                {lang === "vi" ? link.vi : link.en}
-              </Link>
-            ))}
-          </nav>
+              {navLinks.map((link) => (
+                <Link
+                  key={link.href}
+                  href={localizedHref(link.href)}
+                  data-public-nav-link={link.href}
+                  className="px-2.5 xl:px-3.5 py-2 rounded-lg text-sm font-medium transition-all"
+                  style={{
+                    color: isHero ? "rgba(255,255,255,0.85)" : "var(--sgs-primary)",
+                    fontFamily: "var(--font-ui, var(--font-be-vietnam), sans-serif)",
+                  }}
+                  onMouseEnter={e => {
+                    const el = e.currentTarget as HTMLElement;
+                    el.style.background = isHero ? "rgba(255,255,255,0.1)" : "rgba(27,58,92,0.06)";
+                    el.style.color = isHero ? "#FFFFFF" : "var(--sgs-primary-deep)";
+                  }}
+                  onMouseLeave={e => {
+                    const el = e.currentTarget as HTMLElement;
+                    el.style.background = "transparent";
+                    el.style.color = isHero ? "rgba(255,255,255,0.85)" : "var(--sgs-primary)";
+                  }}
+                >
+                  {lang === "vi" ? link.vi : link.en}
+                </Link>
+              ))}
+            </nav>
+          </div>
 
           {/* ── Right Controls ─────────────────────────────── */}
           <div className="hidden xl:flex items-center gap-1.5 xl:gap-2">
