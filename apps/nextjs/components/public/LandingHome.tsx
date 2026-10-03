@@ -1,6 +1,8 @@
 // @ts-nocheck
 "use client";
 import React, { useState, useEffect, useRef, useCallback } from "react";
+import dynamic from "next/dynamic";
+import Image from "next/image";
 import { useLang } from "@/components/shared/useLang";
 import HeroSearch from "./HeroSearch";
 import { PublicListingCard } from "./MarketplacePage";
@@ -230,6 +232,122 @@ const STYLE = `
     .lp-rv, .lp-ready .lp-rv:not(.in) { opacity:1 !important; transform:none !important; transition:none !important; }
     .lp-tile, .lp-proj img, .lp-collage .ph img, .lp-tool { transition: none !important; }
   }
+
+  /* SGS LAND editorial field-guide palette and layout. */
+  .lp-root { --lp-bg:#f5f2e9;--lp-paper:#fffdf7;--lp-ink:#172a35;--lp-muted:#53646a;--lp-soft:#748187;--lp-hair:rgba(20,48,58,.13);--lp-line:rgba(20,48,58,.2);--lp-navy:#123b46;--lp-gold:#e3b341;--lp-ok:#276b58;--lp-shadow:rgba(28,53,53,.15);--lp-cardbg:#fffdf7;--lp-tint:#e9eee9;background:var(--lp-bg)!important; }
+  .lp-wrap { max-width:1340px; }
+  .lp-sec { padding:clamp(54px,7vw,92px) 0; }
+  .lp-h2 { font-size:clamp(29px,3.8vw,48px);line-height:1.08;letter-spacing:-.035em; }
+  .lp-lead { color:#58666b; }
+  .lp-eyebrow { text-transform:uppercase;letter-spacing:.11em;font-size:11px;font-weight:750;color:#896a24; }
+  .lp-hero { position:relative;isolation:isolate;overflow:hidden;padding:clamp(102px,11vw,136px) 0 56px;background:#102d35; }
+  .lp-hero-backdrop { position:absolute;inset:0;z-index:-2;object-fit:cover;object-position:center 54%; }
+  .lp-hero::before { content:"";position:absolute;z-index:-1;inset:0;pointer-events:none;background:linear-gradient(90deg,rgba(8,27,33,.92) 0%,rgba(8,27,33,.78) 43%,rgba(8,27,33,.32) 100%),linear-gradient(0deg,rgba(8,27,33,.62),transparent 60%); }
+  .lp-hero::after { content:"";position:absolute;z-index:1;inset:auto 0 0;height:1px;background:linear-gradient(90deg,transparent,rgba(255,253,247,.35),transparent); }
+  .lp-hero-grid { position:relative;z-index:2; }
+  .lp-hero-grid { grid-template-columns:minmax(0,.95fr) minmax(0,1.05fr);gap:clamp(28px,5vw,76px); }
+  .lp-h1 { font-size:clamp(39px,5.1vw,68px);line-height:1.02;letter-spacing:-.052em;max-width:700px; }
+  .lp-hero .lp-h1 { color:#fffdf7; }
+  .lp-hero .lp-h1 em { color:#f1cd76; }
+  .lp-badge { background:rgba(255,253,247,.12);border-color:rgba(255,253,247,.3);border-radius:99px;font-size:12px;color:#fffdf7;backdrop-filter:blur(10px); }
+  .lp-badge b { color:#fffdf7; }
+  .lp-hero .lp-lead { max-width:490px!important;font-size:clamp(15px,1.3vw,17px)!important;color:rgba(255,253,247,.9)!important; }
+  .lp-hero .lp-popular-label { color:rgba(255,253,247,.9)!important; }
+  .lp-hero .hs-tabs { background:rgba(255,253,247,.15); }
+  .lp-hero .hs-tab { color:rgba(255,253,247,.86); }
+  .lp-hero .hs-tab[aria-pressed="true"] { color:#123b46; }
+  .lp-hero .hs-bar { border-radius:14px;background:#fffdf7;box-shadow:0 15px 36px rgba(31,59,58,.09); }
+  .lp-hero .hs-main,.lp-hero .hs-more { background:#123b46;color:#fffdf7; }
+  .lp-hero .hs-input::placeholder { color:#657278; }
+  .lp-hero .lp-chip { height:30px;padding:0 11px;background:rgba(255,253,247,.12);border-color:rgba(255,253,247,.28);color:#fffdf7;font-size:12px;backdrop-filter:blur(8px); }
+  .lp-hero .lp-chip:hover { background:rgba(255,253,247,.22);border-color:rgba(255,253,247,.56); }
+  .lp-hero .lp-trust { display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin-top:22px!important; }
+  .lp-hero .lp-trust span { min-height:54px;padding:9px 10px;gap:8px;border:1px solid rgba(255,253,247,.28);background:rgba(11,36,43,.62);color:#fffdf7;border-radius:12px;font-size:12px;line-height:1.35;backdrop-filter:blur(10px); }
+  .lp-hero .lp-trust svg { color:#f1cd76;width:16px;height:16px; }
+  .lp-hero .lp-trust b { display:block;font-size:15px;color:#fffdf7; }
+  .lp-hero-note { display:block;margin-top:8px;color:rgba(255,253,247,.78);font-size:10px;letter-spacing:.035em; }
+  .lp-collage { display:block;aspect-ratio:1.08/1;min-height:390px; }
+  .lp-collage .ph { border-radius:4px;box-shadow:0 28px 65px rgba(20,48,58,.18); }
+  .lp-collage .ph-a { inset:0 9% 13% 4%; }
+  .lp-collage .ph-b { width:48%;right:0;bottom:0;border:7px solid #f5f2e9;aspect-ratio:4/3; }
+  .lp-collage .tag { left:18px;bottom:18px;border-radius:4px;background:rgba(14,38,44,.77);padding:11px 14px; }
+  .lp-float { top:7%;left:-4%;width:207px;padding:14px;border-radius:3px; }
+  .lp-cats { display:flex;gap:8px;flex-wrap:wrap; }
+  .lp-tile { min-height:44px;flex-direction:row;align-items:center;gap:8px;padding:8px 13px;border-radius:99px;background:#fbf8ef;border-color:rgba(18,59,70,.14); }
+  .lp-tile .ic { width:25px;height:25px;border-radius:50%;background:#e8ece5;color:#315d57; }
+  .lp-tile .ic svg { width:14px;height:14px; }
+  .lp-tile small { display:none; }
+  .lp-tile b { font-size:13px; }
+  .lp-listings { align-items:stretch;gap:16px; }
+  .lp-listings > a { display:flex;flex-direction:column;height:100%;min-height:405px;border-radius:4px!important;box-shadow:0 7px 22px rgba(28,53,53,.05); }
+  .lp-listings > a > div:first-child { width:100%;aspect-ratio:4/3;flex:none; }
+  .lp-listings > a > div:last-child { display:flex;flex-direction:column;flex:1; }
+  .lp-listings > a h3 { min-height:40px; }
+  .lp-proj { border-radius:4px; }
+  .lp-proj .dev { display:inline-flex;margin-bottom:3px;padding:4px 7px;background:rgba(246,240,223,.18);border:1px solid rgba(255,255,255,.35);letter-spacing:.11em;font-size:10px; }
+  .lp-band { border-radius:4px;background:#123b46; }
+  .lp-tool,.lp-btn { border-radius:4px; }
+  .lp-btn-primary { background:#123b46;color:#fffdf7; }
+  .lp-btn:focus-visible,.lp-tool:focus-visible,.lp-proj:focus-visible,.lp-tile:focus-visible,.lp-link:focus-visible { outline:3px solid #a57b20;outline-offset:3px; }
+  .lp-proof { border-top:1px solid var(--lp-hair);border-bottom:1px solid var(--lp-hair);padding:22px 0;background:#efeee5; }
+  .lp-proof-row { display:flex;align-items:center;justify-content:space-between;gap:22px;flex-wrap:wrap; }
+  .lp-wordmarks { display:flex;align-items:center;justify-content:space-between;gap:24px;flex:1;color:#50605f; }
+  .lp-wordmarks span { font-size:13px;letter-spacing:.04em;font-weight:750; }
+  .lp-dev-note { color:#6a7471;font-size:10px;letter-spacing:.08em;text-transform:uppercase; }
+  .lp-dev-examples { display:flex;flex-wrap:wrap;gap:12px;margin-top:20px; }
+  .lp-dev-examples span { padding:11px 14px;background:#fffdf7;border:1px solid var(--lp-hair);font-size:12px;color:#43555b; }
+  .lp-sample-proof { margin-top:22px;padding:20px;background:#fffdf7;border:1px solid var(--lp-hair); }
+  .lp-sample-label { margin:0 0 14px;color:#6b4d12;font-size:11px;font-weight:800;letter-spacing:.09em;text-transform:uppercase; }
+  .lp-sample-metrics { display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px; }
+  .lp-sample-metrics div { padding:13px 15px;background:#f0efe7;border:1px solid var(--lp-hair); }
+  .lp-sample-metrics b { display:block;color:#123b46;font-size:clamp(18px,2.5vw,26px);line-height:1.1; }
+  .lp-sample-metrics span { display:block;margin-top:4px;color:#53646a;font-size:12px; }
+  .lp-review-grid { display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin-top:12px; }
+  .lp-review { padding:15px;background:#f8f6ef;border:1px solid var(--lp-hair); }
+  .lp-review p { margin:0 0 12px;color:#34464b;font-size:13px;line-height:1.55; }
+  .lp-review b { display:block;color:#123b46;font-size:11px; }
+  .lp-review small { display:block;margin-top:3px;color:#6a7471;font-size:10px; }
+  .lp-advisor { display:grid;grid-template-columns:68px 1fr auto;gap:20px;align-items:center;padding:clamp(22px,4vw,40px);background:#e7ebe3;border:1px solid rgba(18,59,70,.13); }
+  .lp-advisor-mark { width:64px;height:64px;display:grid;place-items:center;border-radius:50%;color:#fffdf7;background:#123b46; }
+  .lp-advisor h3 { margin:5px 0;color:#172a35;font-size:clamp(19px,2.5vw,27px);letter-spacing:-.025em; }
+  .lp-advisor p { color:#526168;font-size:14px;line-height:1.6;max-width:620px; }
+  .lp-map-shell { overflow:hidden;border:1px solid var(--lp-line);background:#e7ebe4;min-height:450px;position:relative; }
+  .lp-map-loading { min-height:450px;display:flex;align-items:center;justify-content:center;gap:9px;background:linear-gradient(140deg,#e6ebe3,#f2eee1); }
+  .lp-map-loading span { width:8px;height:8px;border-radius:50%;background:#315d57;animation:lp-pulse 1s infinite alternate; }
+  .lp-map-loading span:nth-child(2){animation-delay:.18s}.lp-map-loading span:nth-child(3){animation-delay:.36s}
+  @keyframes lp-pulse { to { transform:translateY(-5px);opacity:.45; } }
+  .lp-map-surface { width:100%;min-height:450px;background:#e6ebe3; }
+  .lp-map-fallback { min-height:450px;position:relative;overflow:hidden;background:#e6ebe3; }
+  .lp-map-fallback-art { position:absolute;inset:0;width:100%;height:100%; }
+  .lp-map-fallback-pin { position:absolute;z-index:2;transform:translate(-50%,-50%); }
+  .lp-map-price.active.lp-map-fallback-pin { transform:translate(-50%,-52%); }
+  .lp-map-fallback-note { position:absolute;z-index:3;left:14px;bottom:12px;margin:0;padding:7px 9px;background:rgba(255,253,247,.94);color:#33484b;font-size:11px; }
+  .lp-map-price { border:0;border-radius:99px;padding:8px 11px;background:#123b46;color:#fffdf7;font:700 12px var(--font-be-vietnam,sans-serif);box-shadow:0 4px 14px rgba(15,39,48,.25);white-space:nowrap;cursor:pointer; }
+  .lp-map-price.active { background:#e4b53e;color:#22343a;transform:translateY(-2px); }
+  .lp-map-legend { position:absolute;z-index:500;left:14px;top:14px;padding:9px 12px;background:rgba(255,253,247,.94);color:#25383e;border:1px solid rgba(18,59,70,.15);font-size:11px; }
+  .lp-map-legend b { display:block;font-size:13px;margin-bottom:2px; }
+  .lp-map-legend span,.lp-map-legend small { display:block; }
+  .lp-map-legend small { margin-top:4px;color:#53646a;font-size:10px; }
+  .lp-floating-cta { display:none; }
+  @media(max-width:1023px) { .lp-hero-grid { grid-template-columns:1fr; }.lp-collage { max-width:720px;width:100%;min-height:0;margin:0 auto; }.lp-collage .lp-float { display:none; }.lp-hero .lp-trust { max-width:680px; } }
+  @media(max-width:767px) {
+    .lp-hero { padding-top:96px;padding-bottom:34px; }.lp-h1 { font-size:clamp(38px,10vw,54px); }.lp-hero-grid { gap:24px; }
+    .lp-hero::before { background:linear-gradient(90deg,rgba(8,27,33,.91),rgba(8,27,33,.76)),linear-gradient(0deg,rgba(8,27,33,.68),transparent 62%); }
+    .lp-collage { aspect-ratio:1.08/1;min-height:0; }.lp-collage .ph-a { inset:0 8% 13% 0; }.lp-collage .ph-b { width:48%;border-width:5px; }
+    .lp-hero .lp-trust { gap:7px; }.lp-hero .lp-trust span { padding:8px 7px;display:block;font-size:10px; }.lp-hero .lp-trust svg { display:block;margin-bottom:4px; }.lp-hero .lp-trust b { font-size:13px; }
+    .lp-proof-row { align-items:flex-start;flex-direction:column;gap:10px; }.lp-wordmarks { width:100%;gap:12px;flex-wrap:wrap; }.lp-wordmarks span { font-size:11px; }
+    .lp-advisor { grid-template-columns:48px 1fr;gap:12px; }.lp-advisor-mark { width:46px;height:46px; }.lp-advisor .lp-btn { grid-column:1/-1;width:100%; }
+    .lp-mapcard { display:block; }
+    .lp-map-shell,.lp-map-surface,.lp-map-loading,.lp-map-fallback { min-height:360px; }
+    .lp-sample-proof { padding:14px; }
+    .lp-sample-metrics { grid-template-columns:1fr; }
+    .lp-review-grid { grid-template-columns:1fr; }
+    .lp-root { padding-bottom:78px; }
+    .lp-floating-cta { display:flex;position:fixed;z-index:49;left:0;right:0;bottom:0;padding:10px 16px calc(10px + env(safe-area-inset-bottom));gap:9px;background:rgba(245,242,233,.96);border-top:1px solid rgba(18,59,70,.15);backdrop-filter:blur(12px); }
+    .lp-floating-cta a,.lp-floating-cta button { flex:1;min-height:44px;border:0;display:flex;justify-content:center;align-items:center;gap:7px;text-decoration:none;font:650 13px var(--font-be-vietnam,sans-serif); }
+    .lp-floating-cta a { background:#123b46;color:#fffdf7; }.lp-floating-cta button { background:#e4b53e;color:#26363a; }.lp-listings > a { min-height:390px; }
+  }
+  @media(prefers-reduced-motion:reduce) { .lp-map-loading span { animation:none; }.lp-map-price.active { transform:none; }.lp-map-price.active.lp-map-fallback-pin { transform:translate(-50%,-50%); } }
 `;
 
 // ─── FAQ data (bilingual) ────────────────────────────────────────────────────
@@ -270,6 +388,10 @@ const PIN_DATA = [
 
 const lpath = (p: string, g: string) => (g === "en" ? "/en" + p : p);
 const projImg = (slug: string) => `/images/projects/${slug}.webp`;
+const LandingProjectMap = dynamic(() => import("./LandingProjectMap").then((m) => m.LandingProjectMap), {
+  ssr: false,
+  loading: () => <div className="lp-map-loading" aria-label="Loading project map"><span /><span /><span /></div>,
+});
 
 function useReveal() {
   const ref = useRef<HTMLElement>(null);
@@ -302,7 +424,7 @@ function SectionHead({ eyebrow, title, lead, action }: { eyebrow?: React.ReactNo
 }
 
 // ─── 1. HERO ─────────────────────────────────────────────────────────────────
-function Hero({ lang, listingCount, onAskAi }: { lang: Lang; listingCount: number; onAskAi: (q: string) => void }) {
+function Hero({ lang, listingCount, onAskAi, illustrative }: { lang: Lang; listingCount: number; onAskAi: (q: string) => void; illustrative: boolean }) {
   const chips = [
     { vi: "Căn hộ Thủ Đức", en: "Thu Duc apartments", href: "/marketplace?q=Th%E1%BB%A7%20%C4%90%E1%BB%A9c&type=APARTMENT" },
     { vi: "Vinhomes Grand Park", en: "Vinhomes Grand Park", href: "/marketplace?q=Vinhomes%20Grand%20Park" },
@@ -311,6 +433,7 @@ function Hero({ lang, listingCount, onAskAi }: { lang: Lang; listingCount: numbe
   ];
   return (
     <section className="lp-hero">
+      <Image className="lp-hero-backdrop" src={projImg("aqua-city")} alt="" fill priority sizes="100vw" />
       <div className="lp-wrap lp-hero-grid">
         <div>
           <span className="lp-badge">
@@ -333,7 +456,7 @@ function Hero({ lang, listingCount, onAskAi }: { lang: Lang; listingCount: numbe
           </div>
 
           <div style={{ display: "flex", flexWrap: "wrap", alignItems: "center", gap: 8, marginTop: -8 }}>
-            <span style={{ fontSize: 13, color: "var(--lp-muted)", marginRight: 4 }}>{T(lang, "Tìm nhiều:", "Popular:")}</span>
+            <span className="lp-popular-label" style={{ fontSize: 13, color: "var(--lp-muted)", marginRight: 4 }}>{T(lang, "Tìm nhiều:", "Popular:")}</span>
             {chips.map(c => <a key={c.href} className="lp-chip" href={lpath(c.href, lang)}>{c[lang]}</a>)}
           </div>
 
@@ -344,16 +467,17 @@ function Hero({ lang, listingCount, onAskAi }: { lang: Lang; listingCount: numbe
             <span><ShieldCheck size={18} aria-hidden="true" />{T(lang, <>Kiểm tra pháp lý&nbsp;<b>2 lớp</b></>, <><b>Two-layer</b>&nbsp;legal check</>)}</span>
             <span><Wallet size={18} aria-hidden="true" />{T(lang, <><b>Miễn phí</b>&nbsp;cho người mua</>, <><b>Free</b>&nbsp;for buyers</>)}</span>
           </div>
+          {illustrative && <small className="lp-hero-note">{T(lang, "Số liệu minh họa trong môi trường phát triển · Không phải số liệu kinh doanh.", "Illustrative development data · Not a production business claim.")}</small>}
         </div>
 
         {/* Visual: real project photography + valuation entry */}
         <div className="lp-collage" aria-label={T(lang, "Dự án nổi bật", "Featured projects")}>
           <a className="ph ph-a" href={lpath("/du-an/the-global-city", lang)}>
-            <img src={projImg("the-global-city")} alt="The Global City" fetchPriority="high" />
+            <Image src={projImg("the-global-city")} alt="The Global City" fill priority sizes="(max-width: 1023px) 100vw, 52vw" />
             <span className="tag"><small>Masterise · Thủ Đức</small><b>The Global City</b></span>
           </a>
           <a className="ph ph-b" href={lpath("/du-an/aqua-city", lang)}>
-            <img src={projImg("aqua-city")} alt="Aqua City" loading="lazy" />
+            <Image src={projImg("aqua-city")} alt="Aqua City" fill sizes="(max-width: 1023px) 50vw, 24vw" />
             <span className="tag"><small>Novaland · Biên Hòa</small><b>Aqua City</b></span>
           </a>
         </div>
@@ -393,7 +517,7 @@ function Categories({ lang }: { lang: Lang }) {
 }
 
 // ─── 3. LATEST LISTINGS ──────────────────────────────────────────────────────
-function LatestListings({ lang, listings, total }: { lang: Lang; listings: any[]; total: number }) {
+function LatestListings({ lang, listings, total, illustrative }: { lang: Lang; listings: any[]; total: number; illustrative: boolean }) {
   const withPhotos = listings.filter(l => Array.isArray(l?.images) && l.images.length > 0);
   const seen = new Set<string>();
   const clean = (withPhotos.length >= 4 ? withPhotos : listings).filter(l => {
@@ -418,7 +542,9 @@ function LatestListings({ lang, listings, total }: { lang: Lang; listings: any[]
         <SectionHead
           eyebrow={T(lang, "Tin mới đăng", "Just listed")}
           title={T(lang, "Bất động sản đang mở bán", "Properties on the market")}
-          lead={T(lang, "Ảnh thật, giá niêm yết và trạng thái kiểm tra của từng tin.", "Real photos, asking price and check status on every listing.")}
+          lead={illustrative
+            ? T(lang, "Ví dụ minh họa trong môi trường phát triển; giá và tin đăng không phải chào bán thực tế.", "Illustrative development fixtures; prices and listings are not live offers.")
+            : T(lang, "Ảnh thật, giá niêm yết và trạng thái kiểm tra của từng tin.", "Real photos, asking price and check status on every listing.")}
           action={<a className="lp-link" href={lpath("/marketplace", lang)}>{total > 0 ? T(lang, `Xem tất cả ${total.toLocaleString("vi-VN")} tin`, `See all ${total.toLocaleString("en-US")} listings`) : T(lang, "Xem tất cả tin", "See all listings")} <ArrowRight size={16} aria-hidden="true" /></a>}
         />
         <div className="lp-listings">
@@ -443,7 +569,7 @@ function Projects({ lang }: { lang: Lang }) {
         <Reveal className="lp-bento">
           {PROJECTS.map((p, i) => (
             <a key={p.slug} className="lp-proj" href={lpath(`/du-an/${p.slug}`, lang)}>
-              <img src={projImg(p.slug)} alt={p.name} loading={i === 0 ? "eager" : "lazy"} />
+              <Image src={projImg(p.slug)} alt={p.name} fill priority={i === 0} sizes="(max-width: 640px) 82vw, (max-width: 1023px) 50vw, 40vw" />
               <span className="go" aria-hidden="true"><ArrowUpRight size={18} /></span>
               <div className="body">
                 <span className="dev">{p.dev}</span>
@@ -452,6 +578,66 @@ function Projects({ lang }: { lang: Lang }) {
               </div>
             </a>
           ))}
+        </Reveal>
+      </div>
+    </section>
+  );
+}
+
+function DeveloperAndProof({ lang, illustrative }: { lang: Lang; illustrative: boolean }) {
+  return (
+    <section className="lp-proof" aria-label={T(lang, "Chủ đầu tư và ghi chú dữ liệu", "Developers and data notes")}>
+      <div className="lp-wrap">
+        <div className="lp-proof-row">
+          <span className="lp-dev-note">{T(lang, "Danh mục dự án", "Project directory")}</span>
+          <div className="lp-wordmarks" aria-label={T(lang, "Các chủ đầu tư được giới thiệu", "Featured developers")}>
+            <span>NOVALAND</span><span>MASTERISE HOMES</span><span>NAM LONG</span><span>VINHOMES</span>
+          </div>
+        </div>
+        {illustrative && (
+          <div className="lp-sample-proof" aria-label={T(lang, "Số liệu và đánh giá minh họa, chỉ dùng trong môi trường phát triển", "Illustrative metrics and reviews for development only")}>
+            <p className="lp-sample-label">{T(lang, "Dữ liệu minh họa · Chỉ dùng trong môi trường phát triển", "Illustrative data · Development only")}</p>
+            <div className="lp-sample-metrics">
+              <div><b>{T(lang, "128+", "128+")}</b><span>{T(lang, "giao dịch mẫu", "sample transactions")}</span></div>
+              <div><b>{T(lang, "85", "85")}</b><span>{T(lang, "tin mẫu", "sample listings")}</span></div>
+              <div><b>{T(lang, "2 lớp", "2 layers")}</b><span>{T(lang, "rà soát pháp lý", "legal review")}</span></div>
+            </div>
+            <div className="lp-review-grid">
+              <article className="lp-review">
+                <p>{T(lang, "“Tôi hiểu rõ những giấy tờ cần kiểm tra trước khi đi xem nhà.”", "“I knew which documents to check before viewing the home.”")}</p>
+                <b>{T(lang, "Khách mua · ví dụ 01", "Buyer · example 01")}</b>
+                <small>{T(lang, "Đánh giá minh họa", "Illustrative review")}</small>
+              </article>
+              <article className="lp-review">
+                <p>{T(lang, "“So sánh giá theo khu vực giúp tôi thu hẹp lựa chọn nhanh hơn.”", "“Area price comparisons helped me narrow my choices faster.”")}</p>
+                <b>{T(lang, "Khách mua · ví dụ 02", "Buyer · example 02")}</b>
+                <small>{T(lang, "Đánh giá minh họa", "Illustrative review")}</small>
+              </article>
+              <article className="lp-review">
+                <p>{T(lang, "“Tư vấn dễ hiểu, không tạo áp lực phải quyết định ngay.”", "“The advice was clear and I was not pressured to decide immediately.”")}</p>
+                <b>{T(lang, "Khách hàng · ví dụ 03", "Client · example 03")}</b>
+                <small>{T(lang, "Đánh giá minh họa", "Illustrative review")}</small>
+              </article>
+            </div>
+          </div>
+        )}
+      </div>
+    </section>
+  );
+}
+
+function LegalAdvisorIntro({ lang, onChatOpen }: { lang: Lang; onChatOpen: () => void }) {
+  return (
+    <section className="lp-sec" style={{ paddingTop: 0 }}>
+      <div className="lp-wrap">
+        <Reveal className="lp-advisor">
+          <span className="lp-advisor-mark"><Scale size={27} aria-hidden="true" /></span>
+          <div>
+            <span className="lp-eyebrow">{T(lang, "Hỗ trợ pháp lý thực tế", "Practical legal support")}</span>
+            <h3>{T(lang, "Đọc hồ sơ trước. Quyết định sau.", "Read the documents. Then decide.")}</h3>
+            <p>{T(lang, "Đội ngũ chuyên viên pháp lý hỗ trợ bạn hiểu giấy tờ, tình trạng giao dịch và những điểm cần hỏi thêm. Thông tin dự án luôn nên được đối chiếu với tài liệu gốc mới nhất.", "The legal specialists can help explain documents, transaction status and questions to resolve. Always compare project information with the latest original documents.")}</p>
+          </div>
+          <button className="lp-btn lp-btn-primary" type="button" onClick={onChatOpen}>{T(lang, "Trao đổi với chuyên viên", "Talk to a specialist")} <ArrowRight size={16} aria-hidden="true" /></button>
         </Reveal>
       </div>
     </section>
@@ -484,42 +670,7 @@ function MapSection({ lang }: { lang: Lang }) {
         </Reveal>
 
         <Reveal className="lp-mapcard">
-          <div style={{ position: "relative", background: "var(--lp-paper)", border: "1px solid var(--lp-line)", borderRadius: 24, overflow: "hidden", boxShadow: "0 30px 80px var(--lp-shadow)" }}>
-            <svg viewBox="0 0 1200 640" preserveAspectRatio="xMidYMid meet" fill="none" xmlns="http://www.w3.org/2000/svg"
-              style={{ display: "block", width: "100%", height: "auto" }}
-              role="img" aria-label={T(lang, "Bản đồ vị trí các dự án nổi bật", "Map of featured project locations")}>
-              <g stroke="var(--lp-hair)" strokeWidth="1"><path d="M200 0V640M400 0V640M600 0V640M800 0V640M1000 0V640" /><path d="M0 160H1200M0 320H1200M0 480H1200" /></g>
-              <path fill="var(--lp-navy)" fillOpacity=".08" d="M0 560 C220 530 420 555 620 585 C820 615 1020 600 1200 570 L1200 640 L0 640 Z" />
-              <path stroke="var(--lp-line)" strokeWidth="1.6" d="M0 560 C220 530 420 555 620 585 C820 615 1020 600 1200 570" />
-              <path stroke="var(--lp-line)" strokeWidth="7" strokeLinecap="round" d="M340 0 C360 90 300 150 350 220 C400 290 480 300 470 380 C460 450 380 470 400 545" opacity=".85" />
-              <path stroke="var(--lp-line)" strokeWidth="6" strokeLinecap="round" d="M980 0 C940 80 850 110 800 180 C750 250 640 260 560 320 C500 365 480 410 470 380" opacity=".85" />
-              <g stroke="var(--lp-navy)" strokeWidth="1" strokeDasharray="4 5" opacity=".35">
-                <path className="lp-route" d="M430 330 C520 300 620 260 700 210" /><path className="lp-route" d="M430 330 C560 320 700 330 810 300" />
-                <path className="lp-route" d="M430 330 C440 400 470 480 520 545" /><path className="lp-route" d="M430 330 C480 310 540 300 590 285" />
-              </g>
-              <g fontFamily="var(--font-ibm-plex-mono,monospace)" fontSize="15" letterSpacing="2" fill="var(--lp-soft)">
-                <text x="150" y="90">TÂY NINH</text><text x="120" y="430">LONG AN</text><text x="960" y="520">BR-VT</text>
-                <text x="620" y="120">BÌNH DƯƠNG</text><text x="880" y="230">ĐỒNG NAI</text>
-              </g>
-              <circle fill="var(--lp-ink)" cx="430" cy="330" r="5" />
-              <text x="430" y="356" textAnchor="middle" fontFamily="var(--font-ibm-plex-mono,monospace)" fontSize="15" letterSpacing="2" fill="var(--lp-soft)">TP.HCM</text>
-              {PIN_DATA.map(p => (
-                <g key={p.i} style={{ cursor: "pointer" }} onClick={() => setActive(p.i)} onMouseEnter={() => setActive(p.i)}>
-                  <circle className="lp-pin-ring" cx={p.cx} cy={p.cy} r="14" stroke="var(--lp-navy)" strokeWidth="1.4" opacity=".55" style={{ animationDelay: `${p.i * 0.5}s` }} />
-                  <circle cx={p.cx} cy={p.cy} r={active === p.i ? 9 : 7} fill={active === p.i ? "var(--lp-gold)" : "var(--lp-navy)"} stroke="var(--lp-paper)" strokeWidth="2.5" style={{ transition: "all .2s" }} />
-                  <text x={p.cx} y={p.cy - 22} textAnchor="middle" fontFamily="var(--font-ibm-plex-mono,monospace)" fontSize="17" letterSpacing=".06em"
-                    fill={active === p.i ? "var(--lp-ink)" : "var(--lp-muted)"} style={{ textTransform: "uppercase", fontWeight: active === p.i ? 700 : 400 }}>{p.label}</text>
-                </g>
-              ))}
-            </svg>
-            <a href={lpath(`/du-an/${proj.slug}`, lang)} style={{ position: "absolute", right: 16, bottom: 16, display: "flex", gap: 12, alignItems: "center", padding: 10, paddingRight: 16, borderRadius: 16, background: "var(--lp-cardbg)", border: "1px solid var(--lp-line)", boxShadow: "0 18px 40px var(--lp-shadow)", textDecoration: "none", color: "var(--lp-ink)", maxWidth: "calc(100% - 32px)" }}>
-              <img src={projImg(proj.slug)} alt="" width={72} height={54} style={{ width: 72, height: 54, objectFit: "cover", borderRadius: 10, flexShrink: 0 }} />
-              <span style={{ minWidth: 0 }}>
-                <b style={{ display: "block", fontSize: 15, fontWeight: 650 }}>{proj.name}</b>
-                <span style={{ display: "block", fontSize: 12.5, color: "var(--lp-muted)", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{proj.dev} · {proj.price[lang]}</span>
-              </span>
-            </a>
-          </div>
+          <LandingProjectMap active={active} onSelect={setActive} lang={lang} />
         </Reveal>
       </div>
     </section>
@@ -648,9 +799,10 @@ function FinalCta({ lang, onChatOpen }: { lang: Lang; onChatOpen: () => void }) 
 interface Props {
   featuredListings?: any[];
   stats?: { totalListings: number; totalProjects: number; totalBrokers: number };
+  illustrative?: boolean;
 }
 
-export function LandingPage({ featuredListings = [], stats }: Props) {
+export function LandingPage({ featuredListings = [], stats, illustrative = false }: Props) {
   const lang: Lang = useLang();
   const [ready, setReady] = useState(false);
   useEffect(() => { setReady(true); }, []);
@@ -662,15 +814,21 @@ export function LandingPage({ featuredListings = [], stats }: Props) {
     <>
       <style dangerouslySetInnerHTML={{ __html: STYLE }} />
       <div className={`lp-root lp-sans${ready ? " lp-ready" : ""}`} style={{ background: "var(--lp-bg)", color: "var(--lp-ink)", minHeight: "100vh" }}>
-        <Hero lang={lang} listingCount={total} onAskAi={onAskAi} />
+        <Hero lang={lang} listingCount={total} onAskAi={onAskAi} illustrative={illustrative} />
         <Categories lang={lang} />
-        <LatestListings lang={lang} listings={featuredListings} total={total} />
+        <LatestListings lang={lang} listings={featuredListings} total={total} illustrative={illustrative} />
         <Projects lang={lang} />
+        <DeveloperAndProof lang={lang} illustrative={illustrative} />
         <MapSection lang={lang} />
         <Why lang={lang} />
+        <LegalAdvisorIntro lang={lang} onChatOpen={onChatOpen} />
         <Tools lang={lang} />
         <Faq lang={lang} onChatOpen={onChatOpen} />
         <FinalCta lang={lang} onChatOpen={onChatOpen} />
+        <div className="lp-floating-cta" aria-label={T(lang, "Liên hệ nhanh", "Quick contact")}>
+          <a href="tel:0379281445"><span>{T(lang, "Gọi tư vấn", "Call advisor")}</span></a>
+          <button type="button" onClick={onChatOpen}><MessageCircle size={17} aria-hidden="true" />{T(lang, "Hỏi chuyên viên", "Ask a specialist")}</button>
+        </div>
       </div>
     </>
   );

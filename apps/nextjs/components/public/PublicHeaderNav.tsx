@@ -135,7 +135,7 @@ export function PublicHeader({ authed = false }: { authed?: boolean }) {
 
           {/* ── Desktop Nav ───────────────────────────────── */}
           <nav
-            className="hidden lg:flex items-center gap-0.5"
+            className="hidden xl:flex items-center gap-0.5"
             data-public-desktop-nav
           >
             <div
@@ -207,7 +207,14 @@ export function PublicHeader({ authed = false }: { authed?: boolean }) {
           </nav>
 
           {/* ── Right Controls ─────────────────────────────── */}
-          <div className="hidden lg:flex items-center gap-1.5 xl:gap-2">
+          <div className="hidden xl:flex items-center gap-1.5 xl:gap-2">
+            <a href="tel:0379281445" className="flex items-center gap-1.5 px-2.5 py-2 text-xs font-semibold" style={{ color: "var(--sgs-primary)" }}>
+              <span aria-hidden="true">0379 281 445</span>
+              <span className="sr-only">{lang === "vi" ? "Gọi SGS LAND" : "Call SGS LAND"}</span>
+            </a>
+            <a href="https://zalo.me/0379281445" target="_blank" rel="noreferrer" className="px-2.5 py-2 text-xs font-semibold" style={{ color: "var(--sgs-primary)" }}>
+              Zalo
+            </a>
             {/* VI/EN Toggle */}
             <button
               onClick={toggleLang}
@@ -274,7 +281,7 @@ export function PublicHeader({ authed = false }: { authed?: boolean }) {
           {/* ── Mobile Hamburger ──────────────────────────── */}
           <button
             onClick={() => setMenuOpen(!menuOpen)}
-            className="lg:hidden p-2 rounded-lg transition-colors"
+            className="xl:hidden p-2 rounded-lg transition-colors"
             style={{ color: isHero ? "#FFFFFF" : "var(--sgs-primary)" }}
             aria-label="Mở menu"
             data-public-menu-toggle
@@ -289,7 +296,7 @@ export function PublicHeader({ authed = false }: { authed?: boolean }) {
       {mounted && menuOpen &&
         createPortal(
           <div
-            className="lg:hidden fixed inset-0 z-40"
+            className="xl:hidden fixed inset-0 z-40"
             style={{ top: 64, background: "rgba(0,0,0,0.45)" }}
             onClick={() => setMenuOpen(false)}
             aria-hidden
@@ -298,7 +305,7 @@ export function PublicHeader({ authed = false }: { authed?: boolean }) {
         )}
       {menuOpen && (
         <div
-          className="lg:hidden relative z-50"
+          className="xl:hidden relative z-50"
           data-public-mobile-menu
           style={{
             background: "var(--hdr-panel)",
@@ -385,6 +392,14 @@ export function PublicHeader({ authed = false }: { authed?: boolean }) {
               >
                 {lang === "vi" ? "Định giá miễn phí" : "Free valuation"}
               </Link>
+            </div>
+            <div className="flex gap-2 pt-2">
+              <a href="tel:0379281445" className="flex-1 text-center text-sm font-semibold py-2.5 rounded-lg" style={{ background: "var(--sgs-primary)", color: "#fff" }}>
+                {lang === "vi" ? "Gọi 0379 281 445" : "Call 0379 281 445"}
+              </a>
+              <a href="https://zalo.me/0379281445" target="_blank" rel="noreferrer" className="flex-1 text-center text-sm font-semibold py-2.5 rounded-lg" style={{ border: "1px solid var(--hdr-border)", color: "var(--sgs-primary)" }}>
+                Zalo
+              </a>
             </div>
           </div>
         </div>

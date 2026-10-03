@@ -47,9 +47,53 @@ id = "R8S80l1cgy_yqkIYZ_ab4"
 uri = "file://attached_assets/screenshots/no-image-placeholder.svg"
 type = "image"
 title = "Placeholder khi listing chưa có ảnh (kích thước gốc 400×300)"
+logical_id = "c6022777-df2d-4950-88ac-5531edd5ebd5"
 
 [[outputs]]
 id = "vgslLZ5EeuLsnJvFkivQh"
 uri = "file://.local/geo-audit-sgsland.pdf"
 type = "pdf"
 title = "GEO & SEO Audit Report — sgsland.vn"
+logical_id = "bf9fd83c-236e-460a-b29f-cabc3f212425"
+
+[[outputs]]
+id = "wlfaNCtRpXaXhI7_UJC0E"
+uri = "file://screenshots/sgs-home-390.jpg"
+type = "image"
+title = "SGS LAND homepage — 390 px"
+description = "Mobile first-viewport capture of the development homepage."
+logical_id = "571383a1-ae27-416d-b8b1-7fd24309bd0d"
+content_hash = "sha256:4017199d5d725bf234fea79fac225ab2d8b311c495668cb9eb620f82b1073557"
+size = 61469
+mtime_ms = 1790997455064
+storage_uri = "gcs://replit-rams-assets-pike/rams/assets/repl:bc72de0b-fc4e-4e50-bcce-71b9685b0ab7/571383a1-ae27-416d-b8b1-7fd24309bd0d/4b782d09-e5c5-458d-a91b-38785fa59bc7"
+storage_version_token = "1790997576042897"
+content_type = "image/jpeg"
+
+[[outputs]]
+id = "K2dTNCw3aRyZ1fDf8M_mA"
+uri = "file://screenshots/sgs-home-768.jpg"
+type = "image"
+title = "SGS LAND homepage — 768 px"
+description = "Tablet first-viewport capture of the development homepage."
+logical_id = "89a77d5f-dc7d-4d52-a938-2dd0939ca6c6"
+content_hash = "sha256:e5d3634e368309c97889fd2f644e1f045f15da536febb49db140300cca46db1e"
+size = 118031
+mtime_ms = 1790997458276
+storage_uri = "gcs://replit-rams-assets-pike/rams/assets/repl:bc72de0b-fc4e-4e50-bcce-71b9685b0ab7/89a77d5f-dc7d-4d52-a938-2dd0939ca6c6/52df09ec-eb0a-4c5a-97cb-a0e19e07a8ab"
+storage_version_token = "1790997578011577"
+content_type = "image/jpeg"
+
+[[outputs]]
+id = "rbLLfh_Ggzg5eqDNsx-qY"
+uri = "file://screenshots/sgs-home-1440.jpg"
+type = "image"
+title = "SGS LAND homepage — 1440 px"
+description = "Desktop first-viewport capture of the development homepage."
+logical_id = "2b570e1a-5a72-4b2d-bc15-ab920d0a4830"
+content_hash = "sha256:42c0780880cab19598b1ac153e7d077b19f69538189b70d1f8693bddf747cd1b"
+size = 227712
+mtime_ms = 1790997461748
+storage_uri = "gcs://replit-rams-assets-pike/rams/assets/repl:bc72de0b-fc4e-4e50-bcce-71b9685b0ab7/2b570e1a-5a72-4b2d-bc15-ab920d0a4830/844f3bcd-0051-4a3f-ab09-c6d43ee8127d"
+storage_version_token = "1790997580287445"
+content_type = "image/jpeg"

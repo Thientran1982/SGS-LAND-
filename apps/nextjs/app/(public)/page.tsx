@@ -42,29 +42,37 @@ const DATASET_AREA_PRICE_INDEX = {
   license: "https://creativecommons.org/licenses/by/4.0/",
 };
 export default async function HomePage() {
-  // Fetch featured listings & stats at build/revalidation time
   let featuredListings: Listing[] = [];
-  // UX audit U4: never show invented totals. 0 = unknown -> the stat is hidden.
   let stats = { totalListings: 0, totalProjects: 0, totalBrokers: 0 };
-  try {
-    const res = await fetch(      `${process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000"}/api/public/listings?limit=6&featured=true`,
-      { next: { revalidate: 3600 } }
-    );
-    if (res.ok) {
-      const data = await res.json();
-      featuredListings = data.data || [];
+  const illustrative = process.env.NODE_ENV === "development";
+  if (illustrative) {
+    // Homepage-only synthetic fixtures: never request live listing data in dev.
+    featuredListings = [
+      { id: 92001, title: "Nhà phố ven sông Aqua City", location: "Aqua City, Biên Hòa, Đồng Nai", price: 6200000000, area: 120, bedrooms: 3, transaction: "SALE", status: "AVAILABLE", type: "Townhouse", images: ["/images/projects/aqua-city.webp"], attributes: { legalStatus: "Contract" }, isVerified: true },
+      { id: 92002, title: "Nhà phố thương mại The Global City", location: "The Global City, Thủ Đức, TP.HCM", price: 7800000000, area: 96, bedrooms: 3, transaction: "SALE", status: "AVAILABLE", type: "Townhouse", images: ["/images/projects/the-global-city.webp"], attributes: { legalStatus: "Contract" }, isVerified: true },
+      { id: 92003, title: "Biệt thự song lập Aqua City", location: "Aqua City, Biên Hòa, Đồng Nai", price: 11800000000, area: 180, bedrooms: 4, transaction: "SALE", status: "READY", type: "Villa", images: ["/images/projects/aqua-city.webp"], attributes: { legalStatus: "Contract" }, isVerified: true },
+      { id: 92004, title: "Căn hộ The Global City", location: "The Global City, Thủ Đức, TP.HCM", price: 5200000000, area: 78, bedrooms: 2, transaction: "SALE", status: "AVAILABLE", type: "Apartment", images: ["/images/projects/the-global-city.webp"], attributes: { legalStatus: "Contract" }, isVerified: true },
+    ] as Listing[];
+    stats = { ...stats, totalListings: 85, totalProjects: 5 };
+  } else {
+    // Keep the existing production listing behavior unchanged.
+    try {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000"}/api/public/listings?limit=6&featured=true`, { next: { revalidate: 3600 } });
+      if (res.ok) {
+        const data = await res.json();
+        featuredListings = data.data || [];
+      }
+      const apiBase = process.env.BACKEND_URL || process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
+      const countRes = await fetch(`${apiBase}/api/public/listings?page=1&pageSize=12`, { next: { revalidate: 600 } });
+      if (countRes.ok) {
+        const countData = await countRes.json();
+        const total = Number(countData?.total);
+        if (Number.isFinite(total) && total > 0) stats = { ...stats, totalListings: total };
+        if (featuredListings.length < 4 && Array.isArray(countData?.data)) featuredListings = countData.data;
+      }
+    } catch {
+      // Public homepage remains renderable while the listings service is unavailable.
     }
-    const apiBase = process.env.BACKEND_URL || process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
-    const countRes = await fetch(`${apiBase}/api/public/listings?page=1&pageSize=12`, { next: { revalidate: 600 } });
-    if (countRes.ok) {
-      const countData = await countRes.json();
-      const total = Number(countData?.total);
-      if (Number.isFinite(total) && total > 0) stats = { ...stats, totalListings: total };
-      // Homepage "just listed" grid: fall back to the newest listings when no featured set exists.
-      if (featuredListings.length < 4 && Array.isArray(countData?.data)) featuredListings = countData.data;
-    }
-  } catch {
-    // Fallback to static data during build
   }
   const homeBreadcrumb = getBreadcrumbSchema([
     { name: "Trang chủ", url: SITE_URL },
@@ -78,7 +86,7 @@ export default async function HomePage() {
         ...getFoundersSchema(),
         DATASET_AREA_PRICE_INDEX,
       ]} />
-      <LandingPage featuredListings={featuredListings} stats={stats} />
+      <LandingPage featuredListings={featuredListings} stats={stats} illustrative={illustrative} />
     </>
   );
 }

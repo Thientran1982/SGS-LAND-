@@ -192,6 +192,26 @@ const UI_LABELS: Record<string, Bi> = {
   updated: ["C\u1eadp nh\u1eadt", "Updated"],
 };
 const ui = (k: string, g: L): string => bi(UI_LABELS, k, g);
+function cleanListingAddress(value: unknown): string {
+  const seen = new Set<string>();
+  return String(value || "")
+    .split(",")
+    .map((part) => {
+      const cleaned = part.trim().replace(/\s+/g, " ").normalize("NFC");
+      const key = cleaned.toLocaleLowerCase("vi").replace(/\./g, "");
+      if (["hoc mon", "hóc môn", "huyen hoc mon", "huyện hóc môn"].includes(key)) return "Hóc Môn";
+      if (["thu duc", "thủ đức", "tp thu duc", "tp thủ đức", "thanh pho thu duc"].includes(key)) return "TP. Thủ Đức";
+      if (["hcm", "tp hcm", "thanh pho ho chi minh", "ho chi minh", "sai gon", "sài gòn"].includes(key)) return "TP.HCM";
+      return cleaned;
+    })
+    .filter((part) => {
+      const key = part.toLocaleLowerCase("vi");
+      if (!key || seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    })
+    .join(", ");
+}
 
 function updatedAgoLabel(raw: unknown, lang: L, nowMs: number): string | null {
   if (!raw) return null;
@@ -213,6 +233,12 @@ function toThumbnailUrl(src: string, width = 800): string {
     return `${src}?w=${w}`;
   }
   return src;
+}
+
+function isPropertyImageUrl(value: string): boolean {
+  const supportedOrigin = /^(?:\/(?:uploads|images)\/|https?:\/\/)/i.test(value);
+  const nonPhotoAsset = /(?:logo|banner|watermark|qr[-_]?code|floor[-_ ]?plan|site[-_ ]?plan|master[-_ ]?plan|avatar|agent[-_ ]?(?:photo|avatar))/i.test(value);
+  return supportedOrigin && !nonPhotoAsset;
 }
 
 /* Anonymous visitors have no favourites API yet - persist locally so the heart
@@ -279,15 +305,27 @@ export function PublicListingCard({ listing, list, eager, facets }: { listing: a
   const views = listing.viewCount || 0;
   const rawStatus = String(listing.status || "");
   const statusKey = rawStatus === "AVAILABLE" && isRent ? "READY" : rawStatus;
-  const statusLabel = STATUS_LABELS[statusKey] ? bi(STATUS_LABELS, statusKey, lang) : "";
+  const saleStateOnly = ["AVAILABLE", "READY", "OPENING", "ACTIVE", "FOR_SALE", "FOR_RENT"].includes(statusKey);
+  const statusLabel = !saleStateOnly && STATUS_LABELS[statusKey] ? bi(STATUS_LABELS, statusKey, lang) : "";
   const isBest = rawStatus === "BEST_MARKET";
   const legal = attrs.legalStatus ? bi(LEGAL_LABELS, String(attrs.legalStatus), lang) : "";
   const direction = attrs.direction ? bi(DIRECTION_LABELS, String(attrs.direction), lang) : "";
   const images: string[] = Array.isArray(listing.images) ? listing.images : [];
-  const src = images[0] || "";
-  const [imgFailed, setImgFailed] = useState(false);
+  const src = images.find((image) => isPropertyImageUrl(image)) || "";
+  const [displaySrc, setDisplaySrc] = useState(src);
+  const [imageLoaded, setImageLoaded] = useState(false);
   const [optFailed, setOptFailed] = useState(false);
   const [fav, setFav] = useState(false);
+  useEffect(() => {
+    setDisplaySrc(src);
+    setImageLoaded(false);
+    setOptFailed(false);
+  }, [listing.id, src]);
+  const handleImageError = () => {
+    setImageLoaded(false);
+    setDisplaySrc("");
+    setOptFailed(false);
+  };
   useEffect(() => { setFav(readFavoriteIds().includes(listing.id)); }, [listing.id]);
   const toggleFav = (e: React.MouseEvent) => {
     e.preventDefault();
@@ -297,7 +335,7 @@ export function PublicListingCard({ listing, list, eager, facets }: { listing: a
   };
   // next/image only for same-origin paths (/uploads/...): a remote host that is
   // missing from next.config remotePatterns must never blank out the card.
-  const optimized = src.startsWith("/") && !optFailed;
+  const optimized = displaySrc.startsWith("/") && !optFailed;
   const sizes = list ? "288px" : "(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw";
   const savedLabel = fav ? ui("saved", lang) : ui("save", lang);
   const sourceTitle = lang === "en" && hasVietnameseSourceText(listing.title);
@@ -313,20 +351,28 @@ export function PublicListingCard({ listing, list, eager, facets }: { listing: a
       style={{ background: "var(--bg-surface)", border: "1px solid var(--border-default)" }}>
       {/* Image */}
       <div className={`relative overflow-hidden ${list ? "w-32 h-32 sm:w-72 sm:h-auto shrink-0" : "aspect-[4/3]"}`} style={{ background: "var(--bg-elevated)" }}>
-        {src && !imgFailed ? (
-          optimized ? (
-            <Image src={src} alt={listing.title || ""} fill sizes={sizes} priority={!!eager}
-              className="object-cover group-hover:scale-105 transition-transform duration-500"
-              onError={() => setOptFailed(true)} />
-          ) : (
-            <img src={toThumbnailUrl(src, 800)} alt={listing.title || ""}
-              loading={eager ? "eager" : "lazy"} decoding="async"
-              className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-              onError={() => setImgFailed(true)} />
-          )
+        {displaySrc ? (
+          <>
+            {!imageLoaded && <div aria-hidden="true" className="absolute inset-0 z-[1] animate-pulse" style={{ background: "linear-gradient(120deg, #e7ebe4 25%, #f3f0e7 45%, #e7ebe4 65%)" }} />}
+            {optimized ? (
+              <Image src={displaySrc} alt={listing.title || ""} fill sizes={sizes} priority={!!eager}
+                className={`object-cover group-hover:scale-105 transition-all duration-500 ${imageLoaded ? "opacity-100" : "opacity-0"}`}
+                onLoad={() => setImageLoaded(true)}
+                onError={() => setOptFailed(true)} />
+            ) : (
+              <img src={toThumbnailUrl(displaySrc, 800)} alt={listing.title || ""}
+                loading={eager ? "eager" : "lazy"} decoding="async"
+                className={`w-full h-full object-cover group-hover:scale-105 transition-all duration-500 ${imageLoaded ? "opacity-100" : "opacity-0"}`}
+                onLoad={() => setImageLoaded(true)}
+                onError={handleImageError} />
+            )}
+          </>
         ) : (
-          <div className="w-full h-full flex flex-col items-center justify-center gap-1">
-            <span className="text-5xl opacity-20">{"\ud83c\udfe2"}</span>
+          <div className="w-full h-full flex flex-col items-center justify-center gap-3" style={{ background: "linear-gradient(145deg, #e6ebe4, #f1ead8)" }}>
+            <span aria-hidden="true" className="relative block h-12 w-16 border border-[#59716b]/50">
+              <span className="absolute bottom-0 left-2 h-7 w-3 border-x border-t border-[#59716b]/50" />
+              <span className="absolute bottom-0 right-2 h-5 w-3 border-x border-t border-[#59716b]/50" />
+            </span>
             <span className="text-xs2" style={{ color: "var(--text-tertiary)" }}>{ui("noImage", lang)}</span>
           </div>
         )}
@@ -376,7 +422,7 @@ export function PublicListingCard({ listing, list, eager, facets }: { listing: a
         </button>
       </div>
       {/* Body */}
-      <div className="p-3 sm:p-4 flex-1 min-w-0">
+      <div className="p-3 sm:p-4 flex flex-col flex-1 min-w-0">
         <div className="flex items-center gap-2 mb-1.5 flex-wrap">
           {listing.code && (
             <span title={listing.code} className="font-mono text-xs font-bold px-1.5 py-0.5 rounded uppercase tracking-wider max-w-full truncate" style={{ background: "var(--bg-elevated)", color: "var(--text-secondary)" }}>{listing.code}</span>
@@ -393,10 +439,10 @@ export function PublicListingCard({ listing, list, eager, facets }: { listing: a
            {sourceTitle && <span className="ml-1 text-[10px] font-normal uppercase tracking-wide" style={{ color: "var(--text-tertiary)" }}>({tt(lang, "nguồn tiếng Việt", "Vietnamese source")})</span>}
         </h3>
         <div className="flex items-center gap-1.5 mb-3 text-xs" style={{ color: "var(--text-secondary)" }}>
-           <MapPin className="w-3 h-3 shrink-0" /><span className="truncate" lang={sourceLocation ? "vi" : undefined}>{locationLabel(listing.location, lang)}</span>
+            <MapPin className="w-3 h-3 shrink-0" /><span className="truncate" lang={sourceLocation ? "vi" : undefined}>{locationLabel(cleanListingAddress(listing.location), lang)}</span>
            {sourceLocation && <span className="sr-only">{tt(lang, "Tên vị trí theo nguồn tiếng Việt", "Location name is supplied in the original Vietnamese listing")}</span>}
         </div>
-        <div className="flex items-end justify-between gap-2">
+        <div className="mt-auto flex items-end justify-between gap-2">
           <div className="min-w-0">
             <p className="font-extrabold text-lg leading-none" style={{ color: "var(--primary-600)" }}>
               {priceText}
@@ -865,7 +911,7 @@ export function MarketplacePage({ initialListings, totalCount, totalPages, searc
       {/* Content */}
       {initialListings.length === 0 ? (
         <div className="py-24 text-center">
-          <p className="text-4xl mb-4">🔍</p>
+          <Search className="w-9 h-9 mx-auto mb-4" style={{ color: "var(--text-tertiary)" }} aria-hidden="true" />
           <p className="font-semibold mb-2" style={{ color: "var(--text-primary)" }}>{tt(lang, "Không tìm thấy kết quả", "No results found")}</p>
           <p className="text-sm" style={{ color: "var(--text-secondary)" }}>{tt(lang, "Thử thay đổi tiêu chí tìm kiếm hoặc mở rộng khu vực", "Try adjusting your filters or widening the area")}</p>
         </div>

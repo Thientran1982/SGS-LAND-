@@ -102,7 +102,7 @@ export default function HeroSearch({ lang, action, valuationHref, onAskAi, withT
         type="search"
         autoComplete="off"
         className="hs-input"
-        placeholder={vi ? "Dự án, khu vực, mã căn" : "Project, area or unit code"}
+        placeholder={vi ? "Bạn muốn tìm nhà ở đâu, ngân sách khoảng bao nhiêu?" : "Where would you like to live, and what is your budget?"}
       />
       <div className="hs-split" ref={wrapRef}>
         <button type="submit" className="hs-main">
