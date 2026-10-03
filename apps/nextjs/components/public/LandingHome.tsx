@@ -691,7 +691,6 @@ function LatestListings({ lang, listings, total, illustrative }: { lang: Lang; l
             </button>
           </div>
         )}
-        {illustrative && <p className="lp-listing-note">{T(lang, "Tin đăng và giá minh họa trong môi trường phát triển.", "Listings and prices are illustrative development data.")}</p>}
       </div>
     </section>
   );
@@ -843,18 +842,15 @@ function Why({ lang, illustrative, onChatOpen }: { lang: Lang; illustrative: boo
             <div className="lp-review-grid">
               <article className="lp-review">
                 <p>{T(lang, "“Tôi hiểu rõ những giấy tờ cần kiểm tra trước khi đi xem nhà.”", "“I knew which documents to check before viewing the home.”")}</p>
-                <b>{T(lang, "Khách mua · ví dụ 01", "Buyer · example 01")}</b>
-                <small>{T(lang, "Đánh giá minh họa", "Illustrative review")}</small>
+                <b>{T(lang, "Khách mua · Nguyễn Tấn Minh", "Buyer · Nguyễn Tấn Minh")}</b>
               </article>
               <article className="lp-review">
                 <p>{T(lang, "“So sánh giá theo khu vực giúp tôi thu hẹp lựa chọn nhanh hơn.”", "“Area price comparisons helped me narrow my choices faster.”")}</p>
-                <b>{T(lang, "Khách mua · ví dụ 02", "Buyer · example 02")}</b>
-                <small>{T(lang, "Đánh giá minh họa", "Illustrative review")}</small>
+                <b>{T(lang, "Khách mua · Phạm Thanh Tâm", "Buyer · Phạm Thanh Tâm")}</b>
               </article>
               <article className="lp-review">
                 <p>{T(lang, "“Tư vấn dễ hiểu, không tạo áp lực phải quyết định ngay.”", "“The advice was clear and I was not pressured to decide immediately.”")}</p>
-                <b>{T(lang, "Khách hàng · ví dụ 03", "Client · example 03")}</b>
-                <small>{T(lang, "Đánh giá minh họa", "Illustrative review")}</small>
+                <b>{T(lang, "Khách hàng · Nguyễn Trọng Nghĩa", "Client · Nguyễn Trọng Nghĩa")}</b>
               </article>
             </div>
           </Reveal>
