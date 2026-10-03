@@ -139,3 +139,4 @@
 - [Valuation location observability](valuation-location-observability.md) — unknown locations stay explicit reference estimates; aliases affect matching only after tenant review
 - [Marketplace type normalization](marketplace-type-normalization.md) — public filters and BOARD grouping must handle enum, Vietnamese slug, and legacy JSON type fields
 - [Lazy Three.js preview timing](lazy-threejs-preview-timing.md) — a cold Next dev build may show the intentional photo fallback until the lazy city canvas finishes compiling
+- [Scoped npm override references](npm-scoped-override-references.md) — npm 10.8.2 failed to resolve `$` references for scoped types; matching direct semver ranges passed
