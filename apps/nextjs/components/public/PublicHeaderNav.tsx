@@ -114,15 +114,19 @@ export function PublicHeader({ authed = false }: { authed?: boolean }) {
           <div className="flex min-w-0 items-center gap-3 xl:gap-5">
             {/* ── Logo ─────────────────────────────────────── */}
             <Link href="/" className="flex items-center gap-2.5 shrink-0 group">
-              <img
-                src={isHero || theme === "dark" ? "/logo-white.png" : "/logo-navy.png"}
-                alt="SGS Land"
-                className="w-9 h-9 transition-transform group-hover:scale-105"
-                style={{ objectFit: "contain" }}
-              />
+              <picture>
+                {isHomepage && <source media="(max-width: 767px)" srcSet="/logo-navy.png" />}
+                <img
+                  src={isHero || theme === "dark" ? "/logo-white.png" : "/logo-navy.png"}
+                  alt="SGS Land"
+                  className="w-9 h-9 transition-transform group-hover:scale-105"
+                  style={{ objectFit: "contain" }}
+                />
+              </picture>
               <div>
                 <div
                   className="font-bold text-lg leading-tight"
+                  data-public-wordmark
                   style={{
                     color: isHero
                       ? "#FFFFFF"
