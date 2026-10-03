@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from "next";
-import { Be_Vietnam_Pro, IBM_Plex_Mono } from "next/font/google";
+import { Be_Vietnam_Pro, Fraunces, IBM_Plex_Mono } from "next/font/google";
 import "./globals.css";
 import { getLang } from "@/lib/lang";
 import { LangProvider } from "@/components/shared/LangProvider";
@@ -13,6 +13,13 @@ const beVietnamPro = Be_Vietnam_Pro({
   variable: "--font-be-vietnam",
   display: "swap",
   weight: ["400", "500", "600", "700"],
+});
+const fraunces = Fraunces({
+  subsets: ["latin", "vietnamese"],
+  variable: "--font-fraunces",
+  display: "swap",
+  weight: ["400", "500", "600", "700"],
+  style: ["normal", "italic"],
 });
 const ibmPlexMono = IBM_Plex_Mono({
   subsets: ["latin"],
@@ -152,7 +159,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
         <script async src="https://www.googletagmanager.com/gtag/js?id=G-3LBRB691S4" />
       </head>
       <body
-        className={`${beVietnamPro.variable} ${ibmPlexMono.variable} font-sans antialiased`}
+        className={`${beVietnamPro.variable} ${fraunces.variable} ${ibmPlexMono.variable} font-sans antialiased`}
         style={{ background: "var(--bg-app)", color: "var(--text-primary)" }}
       >
         {/* Inline <script> tags live at the top of <body>, not in <head>:

@@ -1,0 +1,17 @@
+Thiết kế lại toàn bộ trang chủ SGS Land theo phong cách "Quiet Luxury + AI", responsive cho desktop, tablet và mobile.
+
+1) HERO 100vh: video nền drone (mobile dùng ảnh tĩnh), lớp phủ gradient tối từ dưới lên; tiêu đề serif 72px "Nơi chốn xứng tầm." + 1 dòng phụ; ô tìm kiếm dạng pill glassmorphism có tab Mua bán/Cho thuê, placeholder tự gõ luân phiên ("Căn hộ 3PN gần trường quốc tế, dưới 6 tỷ…"), nút micro, nút Tìm; gợi ý nhanh bên dưới. KHÔNG đặt thẻ/số liệu/slider chữ đè lên hero (sửa lỗi chữ Novaland/Aqua City chồng lên thẻ). Xóa khoảng trống tối giữa hero và danh mục.
+2) Thanh tin cậy marquee: Pháp lý đã kiểm tra · 85+ dự án · Miễn phí cho người mua + logo chủ đầu tư grayscale.
+3) "Khám phá theo phong cách sống": 4 thẻ ảnh dọc 3:4 (Sống ven sông, Đô thị hiện đại, Biệt thự nghỉ dưỡng, Đầu tư sinh lời), hover phóng nhẹ + số tin.
+4) Dự án nổi bật dạng bento (1 ô lớn + 4 ô nhỏ): nhãn chủ đầu tư, tên serif, giá "từ…", nút "Tham quan 360°".
+5) Tin mới đăng: carousel ngang, ảnh 4:3 bo góc 20px, giá to đậm, thông số icon mảnh, huy hiệu "AI định giá: hợp lý", nút ♡ có animation.
+6) Bản đồ tương tác: nửa bản đồ tông tối với ghim giá, nửa danh sách, hover đồng bộ.
+7) Số liệu thị trường: 3 số lớn count-up + biểu đồ đường mảnh màu vàng.
+8) Quy trình 3 bước (Tìm – Kiểm tra pháp lý – Giao dịch an toàn), đường nối vẽ dần khi cuộn.
+9) CTA nền xanh đêm "Để chuyên gia tìm giúp bạn." + form 1 dòng số điện thoại + nút Zalo.
+10) Footer tối giản 4 cột, logo chữ lớn mờ ở đáy.
+
+HEADER: trong suốt trên hero, chuyển trắng blur khi cuộn; desktop hiện menu đầy đủ + nút "Đăng tin" màu vàng.
+DESIGN SYSTEM: màu #0B1F2A, #C9A96E, #F7F5F0, chữ #1A1A1A; font tiêu đề Playfair Display, nội dung Be Vietnam Pro; cỡ chữ 72/48/32/20/16, line-height 1.6; spacing hệ 8px, section cách 120px (desktop) / 72px (mobile); animation fade + trượt lên 24px trong 400ms, tôn trọng prefers-reduced-motion; ảnh AVIF/WebP + blur placeholder, không còn ô xám.
+MOBILE: bottom nav (Trang chủ, Tìm, Bản đồ, Đã lưu, Tôi).
+Ẩn dòng "Ví dụ minh họa trong môi trường phát triển" ở production. Sửa lỗi Issue đang báo. Giữ nguyên dữ liệu, chức năng và API hiện có.

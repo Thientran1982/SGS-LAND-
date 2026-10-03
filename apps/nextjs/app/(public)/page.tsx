@@ -50,8 +50,8 @@ export default async function HomePage() {
     featuredListings = [
       { id: 92001, title: "Nhà phố ven sông Aqua City", location: "Aqua City, Biên Hòa, Đồng Nai", price: 6200000000, area: 120, bedrooms: 3, transaction: "SALE", status: "AVAILABLE", type: "Townhouse", images: ["/images/projects/aqua-city.webp"], attributes: { legalStatus: "Contract" }, isVerified: true },
       { id: 92002, title: "Nhà phố thương mại The Global City", location: "The Global City, Thủ Đức, TP.HCM", price: 7800000000, area: 96, bedrooms: 3, transaction: "SALE", status: "AVAILABLE", type: "Townhouse", images: ["/images/projects/the-global-city.webp"], attributes: { legalStatus: "Contract" }, isVerified: true },
-      { id: 92003, title: "Biệt thự song lập Aqua City", location: "Aqua City, Biên Hòa, Đồng Nai", price: 11800000000, area: 180, bedrooms: 4, transaction: "SALE", status: "READY", type: "Villa", images: ["/images/projects/aqua-city.webp"], attributes: { legalStatus: "Contract" }, isVerified: true },
-      { id: 92004, title: "Căn hộ The Global City", location: "The Global City, Thủ Đức, TP.HCM", price: 5200000000, area: 78, bedrooms: 2, transaction: "SALE", status: "AVAILABLE", type: "Apartment", images: ["/images/projects/the-global-city.webp"], attributes: { legalStatus: "Contract" }, isVerified: true },
+      { id: 92003, title: "Căn hộ Izumi City", location: "Izumi City, Biên Hòa, Đồng Nai", price: 4800000000, area: 82, bedrooms: 2, transaction: "SALE", status: "AVAILABLE", type: "Apartment", images: ["/images/projects/izumi-city.webp"], attributes: { legalStatus: "Contract" }, isVerified: true },
+      { id: 92004, title: "Nhà phố Vinhomes Cần Giờ", location: "Vinhomes Cần Giờ, TP.HCM", price: 8200000000, area: 112, bedrooms: 3, transaction: "SALE", status: "AVAILABLE", type: "Townhouse", images: ["/images/projects/vinhomes-can-gio.webp"], attributes: { legalStatus: "Contract" }, isVerified: true },
     ] as Listing[];
     stats = { ...stats, totalListings: 85, totalProjects: 5 };
   } else {
