@@ -210,7 +210,7 @@ export default function HeroSearch({ lang, action, valuationHref, onAskAi, onLoc
       <form action={action} method="get" role="search" data-hero-search className="hs-bar">
         {withTabs && <input type="hidden" name="transaction" value={tx} />}
         <div className="hs-field hs-location-field">
-          <label htmlFor="lp-hero-q">{vi ? "Nhập khu vực" : "Enter location"}</label>
+          <label htmlFor="lp-hero-q">{vi ? "Khu vực" : "Location"}</label>
           <div className="hs-location-control">
             <input
               ref={inputRef}
