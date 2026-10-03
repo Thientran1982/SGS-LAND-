@@ -518,7 +518,7 @@ function Hero({ lang, onAskAi }: { lang: Lang; onAskAi: (q: string) => void }) {
           </span>
           <h1 className="lp-h1" style={{ marginTop: 20 }}>
             {T(lang,
-              <><span className="nw">Tìm đúng nhà.</span><br /><em className="nw">Đúng giá.</em><br /><span className="nw">Pháp lý rõ ràng.</span></>,
+              <><span className="nw">Tìm đúng nhà.</span><br /><em className="nw">Đúng giá.</em><br /><span className="nw">Pháp lý rõ ràng</span></>,
               <><span className="nw">The right home.</span><br /><em className="nw">The right price.</em><br /><span className="nw">Clear title.</span></>)}
           </h1>
           <p className="lp-lead" style={{ fontSize: "clamp(15px,1.4vw,18px)", maxWidth: 560, marginTop: 18 }}>
