@@ -8,7 +8,7 @@ import HeroSearch from "./HeroSearch";
 import "./LandingHome.editorial.css";
 import { PublicListingCard } from "./MarketplacePage";
 import {
-  BadgeCheck, ShieldCheck, Wallet, Building2, Home, LandPlot, KeyRound, Sparkles, Handshake,
+  BadgeCheck, ShieldCheck, Building2, Home, LandPlot, KeyRound, Sparkles, Handshake,
   Calculator, Trees, ArrowRight, ArrowUpRight, MessageCircle, MapPin, Scale, Landmark, FileSearch, Phone,
 } from "lucide-react";
 
@@ -65,10 +65,6 @@ const STYLE = `
     color: var(--lp-ink); background: var(--lp-paper); border: 1px solid var(--lp-line); text-decoration:none; white-space:nowrap;
     transition: border-color .15s, background .15s; }
   .lp-chip:hover { border-color: var(--lp-navy); background: color-mix(in srgb, var(--lp-navy) 6%, var(--lp-paper)); }
-  .lp-trust { display:flex; flex-wrap:wrap; gap: 10px 26px; font-size: 14px; color: var(--lp-muted); }
-  .lp-trust span { display:inline-flex; align-items:center; gap:8px; }
-  .lp-trust svg { color: var(--lp-ok); flex-shrink: 0; }
-  .lp-trust b { color: var(--lp-ink); font-weight: 650; }
 
   .lp-collage { position:relative; aspect-ratio: 5/5.4; display:none; }
   @media (min-width: 1024px) { .lp-collage { display:block; } }
@@ -246,7 +242,7 @@ const STYLE = `
   .lp-hero::before { content:"";position:absolute;z-index:-1;inset:0;pointer-events:none;background:linear-gradient(90deg,rgba(8,27,33,.92) 0%,rgba(8,27,33,.78) 43%,rgba(8,27,33,.32) 100%),linear-gradient(0deg,rgba(8,27,33,.62),transparent 60%); }
   .lp-hero::after { content:"";position:absolute;z-index:1;inset:auto 0 0;height:1px;background:linear-gradient(90deg,transparent,rgba(255,253,247,.35),transparent); }
   .lp-hero-grid { position:relative;z-index:2; }
-  .lp-hero-grid { grid-template-columns:minmax(0,.95fr) minmax(0,1.05fr);gap:clamp(28px,5vw,76px); }
+  .lp-hero-grid { grid-template-columns:1fr;gap:clamp(28px,5vw,76px); }
   .lp-h1 { font-size:clamp(39px,5.1vw,68px);line-height:1.02;letter-spacing:-.052em;max-width:700px; }
   .lp-hero .lp-h1 { color:#fffdf7; }
   .lp-hero .lp-h1 em { color:#f1cd76; }
@@ -262,11 +258,6 @@ const STYLE = `
   .lp-hero .hs-input::placeholder { color:#657278; }
   .lp-hero .lp-chip { height:30px;padding:0 11px;background:rgba(255,253,247,.12);border-color:rgba(255,253,247,.28);color:#fffdf7;font-size:12px;backdrop-filter:blur(8px); }
   .lp-hero .lp-chip:hover { background:rgba(255,253,247,.22);border-color:rgba(255,253,247,.56); }
-  .lp-hero .lp-trust { display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin-top:22px!important; }
-  .lp-hero .lp-trust span { min-height:54px;padding:9px 10px;gap:8px;border:1px solid rgba(255,253,247,.28);background:rgba(11,36,43,.62);color:#fffdf7;border-radius:12px;font-size:12px;line-height:1.35;backdrop-filter:blur(10px); }
-  .lp-hero .lp-trust svg { color:#f1cd76;width:16px;height:16px; }
-  .lp-hero .lp-trust b { display:block;font-size:15px;color:#fffdf7; }
-  .lp-hero-note { display:block;margin-top:8px;color:rgba(255,253,247,.78);font-size:10px;letter-spacing:.035em; }
   .lp-collage { display:block;aspect-ratio:1.08/1;min-height:390px; }
   .lp-collage .ph { border-radius:4px;box-shadow:0 28px 65px rgba(20,48,58,.18); }
   .lp-collage .ph-a { inset:0 9% 13% 4%; }
@@ -330,12 +321,11 @@ const STYLE = `
   .lp-map-legend span,.lp-map-legend small { display:block; }
   .lp-map-legend small { margin-top:4px;color:#53646a;font-size:10px; }
   .lp-floating-cta { display:none; }
-  @media(max-width:1023px) { .lp-hero-grid { grid-template-columns:1fr; }.lp-collage { max-width:720px;width:100%;min-height:0;margin:0 auto; }.lp-collage .lp-float { display:none; }.lp-hero .lp-trust { max-width:680px; } }
+  @media(max-width:1023px) { .lp-hero-grid { grid-template-columns:1fr; }.lp-collage { max-width:720px;width:100%;min-height:0;margin:0 auto; }.lp-collage .lp-float { display:none; } }
   @media(max-width:767px) {
     .lp-hero { padding-top:96px;padding-bottom:34px; }.lp-h1 { font-size:clamp(38px,10vw,54px); }.lp-hero-grid { gap:24px; }
     .lp-hero::before { background:linear-gradient(90deg,rgba(8,27,33,.91),rgba(8,27,33,.76)),linear-gradient(0deg,rgba(8,27,33,.68),transparent 62%); }
     .lp-collage { aspect-ratio:1.08/1;min-height:0; }.lp-collage .ph-a { inset:0 8% 13% 0; }.lp-collage .ph-b { width:48%;border-width:5px; }
-    .lp-hero .lp-trust { gap:7px; }.lp-hero .lp-trust span { padding:8px 7px;display:block;font-size:10px; }.lp-hero .lp-trust svg { display:block;margin-bottom:4px; }.lp-hero .lp-trust b { font-size:13px; }
     .lp-proof-row { align-items:flex-start;flex-direction:column;gap:10px; }.lp-wordmarks { width:100%;gap:12px;flex-wrap:wrap; }.lp-wordmarks span { font-size:11px; }
     .lp-advisor { grid-template-columns:48px 1fr;gap:12px; }.lp-advisor-mark { width:46px;height:46px; }.lp-advisor .lp-btn { grid-column:1/-1;width:100%; }
     .lp-mapcard { display:block; }
@@ -425,43 +415,7 @@ function SectionHead({ eyebrow, title, lead, action }: { eyebrow?: React.ReactNo
 }
 
 // ─── 1. HERO ─────────────────────────────────────────────────────────────────
-function Hero({ lang, listingCount, onAskAi, illustrative }: { lang: Lang; listingCount: number; onAskAi: (q: string) => void; illustrative: boolean }) {
-  const [animatedListings, setAnimatedListings] = useState(0);
-  const statsRef = useRef<HTMLDivElement>(null);
-  useEffect(() => {
-    const node = statsRef.current;
-    if (!node || listingCount <= 0) {
-      setAnimatedListings(0);
-      return;
-    }
-    let frame = 0;
-    let observer: IntersectionObserver | undefined;
-    const animate = () => {
-      if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
-        setAnimatedListings(listingCount);
-        return;
-      }
-      const started = performance.now();
-      const duration = 1050;
-      const tick = (now: number) => {
-        const progress = Math.min((now - started) / duration, 1);
-        setAnimatedListings(Math.round(listingCount * (1 - Math.pow(1 - progress, 3))));
-        if (progress < 1) frame = window.requestAnimationFrame(tick);
-      };
-      frame = window.requestAnimationFrame(tick);
-    };
-    observer = new IntersectionObserver(([entry]) => {
-      if (entry.isIntersecting) {
-        animate();
-        observer?.disconnect();
-      }
-    }, { threshold: 0.25 });
-    observer.observe(node);
-    return () => {
-      observer?.disconnect();
-      window.cancelAnimationFrame(frame);
-    };
-  }, [listingCount]);
+function Hero({ lang, onAskAi }: { lang: Lang; onAskAi: (q: string) => void }) {
   return (
     <section className="lp-hero">
       <Image className="lp-hero-backdrop" src={projImg("aqua-city")} alt="" fill priority sizes="100vw" />
@@ -487,24 +441,6 @@ function Hero({ lang, listingCount, onAskAi, illustrative }: { lang: Lang; listi
           </div>
 
         </div>
-        <div className="lp-trust" ref={statsRef} aria-label={T(lang, "Thông tin nổi bật", "Key facts")}>
-          <div className="lp-stat">
-            <span className="lp-stat-icon"><BadgeCheck size={17} aria-hidden="true" /></span>
-            <b className="lp-stat-value">{listingCount > 0 ? animatedListings.toLocaleString(lang === "vi" ? "vi-VN" : "en-US") : "—"}</b>
-            <span className="lp-stat-label">{T(lang, "tin đang hiển thị", "active listings")}</span>
-          </div>
-          <div className="lp-stat">
-            <span className="lp-stat-icon"><ShieldCheck size={17} aria-hidden="true" /></span>
-            <b className="lp-stat-value">{T(lang, "2 lớp", "2 layers")}</b>
-            <span className="lp-stat-label">{T(lang, "rà soát pháp lý", "legal review")}</span>
-          </div>
-          <div className="lp-stat">
-            <span className="lp-stat-icon"><Wallet size={17} aria-hidden="true" /></span>
-            <b className="lp-stat-value">{T(lang, "0₫", "Free")}</b>
-            <span className="lp-stat-label">{T(lang, "cho người mua", "for buyers")}</span>
-          </div>
-        </div>
-        {illustrative && <small className="lp-hero-note">{T(lang, "Số liệu minh họa trong môi trường phát triển · Không phải số liệu kinh doanh.", "Illustrative development data · Not a production business claim.")}</small>}
       </div>
     </section>
   );
@@ -886,7 +822,7 @@ export function LandingPage({ featuredListings = [], stats, illustrative = false
     <>
       <style dangerouslySetInnerHTML={{ __html: STYLE }} />
       <div className={`lp-root lp-editorial lp-sans${ready ? " lp-ready" : ""}`} style={{ background: "var(--lp-bg)", color: "var(--lp-ink)", minHeight: "100vh" }}>
-        <Hero lang={lang} listingCount={total} onAskAi={onAskAi} illustrative={illustrative} />
+        <Hero lang={lang} onAskAi={onAskAi} />
         <DeveloperAndProof lang={lang} />
         <Categories lang={lang} />
         <Projects lang={lang} />

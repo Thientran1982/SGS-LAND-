@@ -1,5 +1,6 @@
 "use client";
 import React, { useRef, useState } from "react";
+import FormSelect from "@/components/ui/FormSelect";
 
 // Home hero search: one field with a split button inside it.
 // The main half searches the marketplace; the chevron opens a small menu
@@ -18,7 +19,8 @@ const CSS = `
   .hs-tabs { display:inline-flex; gap:4px; padding:4px; border:1px solid rgba(255,255,255,.32); border-radius:999px; background:rgba(11,27,43,.42); backdrop-filter:blur(14px); }
   .hs-tab { min-height:38px; padding:0 17px; border:0; border-radius:999px; background:transparent; color:rgba(255,255,255,.82); font-size:13px; font-weight:600; cursor:pointer; transition:background .18s,color .18s; }
   .hs-tab[aria-pressed="true"] { background:#FAF8F4; color:#0B1B2B; }
-  .hs-tab:focus-visible,.hs-ai:focus-visible,.hs-main:focus-visible,.hs-field select:focus-visible,.hs-input:focus-visible { outline:3px solid #C8963E; outline-offset:3px; }
+  .hs-tab:focus-visible,.hs-ai:focus-visible,.hs-main:focus-visible { outline:3px solid #C8963E; outline-offset:3px; }
+  .hs-input:focus-visible:not(.hs-input-pointer-focus) { outline:3px solid #C8963E; outline-offset:3px; }
   .hs-ai { min-height:42px; padding:0 16px; display:inline-flex; align-items:center; justify-content:center; gap:8px; border:1px solid rgba(255,255,255,.42); border-radius:999px; background:rgba(255,255,255,.12); color:#fff; backdrop-filter:blur(14px); font:600 13px var(--font-be-vietnam,sans-serif); cursor:pointer; transition:background .18s,transform .18s; }
   .hs-ai-mark { width:20px; height:20px; display:inline-grid; place-items:center; border-radius:50%; background:#C8963E; color:#0B1B2B; font-size:9px; font-weight:800; letter-spacing:-.05em; }
   .hs-ai:hover { background:rgba(255,255,255,.2); transform:translateY(-1px); }
@@ -26,9 +28,10 @@ const CSS = `
   .hs-field { min-width:0; padding:8px 16px; display:flex; flex-direction:column; justify-content:center; gap:3px; }
   .hs-field + .hs-field { border-left:1px solid #E4DED3; }
   .hs-field label { color:#666D73; font-size:10px; font-weight:700; letter-spacing:.1em; text-transform:uppercase; }
-  .hs-input,.hs-field select { width:100%; min-width:0; height:30px; padding:0; border:0; outline:0; background:transparent; color:#0B1B2B; font:500 14px var(--font-be-vietnam,sans-serif); }
+  .hs-input,.hs-field .hs-form-select-trigger { width:100%; min-width:0; height:30px; padding:0; border:0; outline:0; background:transparent; color:#0B1B2B; font:500 14px var(--font-be-vietnam,sans-serif); }
   .hs-input::placeholder { color:#7B8186; opacity:1; }
-  .hs-field select { cursor:pointer; }
+  .hs-field .hs-form-select-trigger { cursor:pointer; border-radius:0!important; box-shadow:none; text-align:left; }
+  .hs-field .hs-form-select-trigger:focus-visible { outline:2px solid #123b46; outline-offset:2px; border-radius:4px!important; box-shadow:none; }
   .hs-main { min-height:56px; min-width:126px; padding:0 22px; border:0; border-radius:16px; background:#C8963E; color:#0B1B2B; font:700 14px var(--font-be-vietnam,sans-serif); cursor:pointer; transition:filter .18s,transform .18s; }
   .hs-main:hover { filter:brightness(1.06); transform:translateY(-1px); }
   .hs-support { display:flex; flex-wrap:wrap; align-items:center; gap:8px; margin-top:12px; color:rgba(255,255,255,.84); font-size:12px; }
@@ -47,7 +50,7 @@ const CSS = `
     .hs-tab { padding:0 12px; font-size:12px; }
     .hs-ai { padding:0 11px; font-size:12px; }
     .hs-field label { font-size:9px; }
-    .hs-input,.hs-field select { font-size:12px; }
+    .hs-input,.hs-field .hs-form-select-trigger { font-size:12px; }
     .hs-support { gap:6px; }
     .hs-support > span:first-child { width:100%; }
   }
@@ -58,9 +61,23 @@ export default function HeroSearch({ lang, action, valuationHref, onAskAi, withT
   const [tx, setTx] = useState<"SALE" | "RENT">("SALE");
   const vi = lang === "vi";
   const inputRef = useRef<HTMLInputElement>(null);
-  const typeRef = useRef<HTMLSelectElement>(null);
+  const [locationPointerFocused, setLocationPointerFocused] = useState(false);
   const [propertyType, setPropertyType] = useState("");
   const [budget, setBudget] = useState("");
+  const propertyTypeOptions = [
+    { value: "", label: vi ? "Tất cả loại" : "Any type" },
+    { value: "Apartment", label: vi ? "Căn hộ" : "Apartment" },
+    { value: "Townhouse", label: vi ? "Nhà phố" : "Townhouse" },
+    { value: "Villa", label: vi ? "Biệt thự" : "Villa" },
+    { value: "Land", label: vi ? "Đất nền" : "Land" },
+  ];
+  const budgetOptions = [
+    { value: "", label: vi ? "Chọn ngân sách" : "Choose a budget" },
+    { value: "3", label: vi ? "Dưới 3 tỷ" : "Under VND 3B" },
+    { value: "5", label: vi ? "Dưới 5 tỷ" : "Under VND 5B" },
+    { value: "10", label: vi ? "Dưới 10 tỷ" : "Under VND 10B" },
+    { value: "20", label: vi ? "Dưới 20 tỷ" : "Under VND 20B" },
+  ];
   const suggestions = vi
     ? ["Thủ Đức", "Aqua City", "Dưới 5 tỷ"]
     : ["Thu Duc", "Aqua City", "Under VND 5B"];
@@ -76,7 +93,7 @@ export default function HeroSearch({ lang, action, valuationHref, onAskAi, withT
   };
   const askAi = () => {
     const location = inputRef.current?.value.trim() || "";
-    const typeLabel = propertyType ? typeRef.current?.selectedOptions[0]?.textContent?.trim() : "";
+    const typeLabel = propertyType ? propertyTypeOptions.find(option => option.value === propertyType)?.label || "" : "";
     const budgetLabel = budget === "5" ? (vi ? "dưới 5 tỷ" : "under VND 5B") : "";
     const details = [location, typeLabel, budgetLabel].filter(Boolean).join(", ");
     onAskAi?.(details ? (vi ? `Tôi đang tìm bất động sản ${details}.` : `I'm looking for a property: ${details}.`) : "");
@@ -109,29 +126,38 @@ export default function HeroSearch({ lang, action, valuationHref, onAskAi, withT
             name="q"
             type="search"
             autoComplete="off"
-            className="hs-input"
+            className={`hs-input${locationPointerFocused ? " hs-input-pointer-focus" : ""}`}
+            onPointerDown={() => setLocationPointerFocused(true)}
+            onKeyDown={event => {
+              if (event.key === "Tab") setLocationPointerFocused(false);
+            }}
+            onBlur={() => setLocationPointerFocused(false)}
             placeholder={vi ? "Nhập khu vực bạn quan tâm" : "Enter an area"}
           />
         </div>
         <div className="hs-field">
           <label htmlFor="lp-hero-type">{vi ? "Loại bất động sản" : "Property type"}</label>
-          <select ref={typeRef} id="lp-hero-type" name="type" value={propertyType} onChange={event => setPropertyType(event.target.value)}>
-            <option value="">{vi ? "Tất cả loại" : "Any type"}</option>
-            <option value="Apartment">{vi ? "Căn hộ" : "Apartment"}</option>
-            <option value="Townhouse">{vi ? "Nhà phố" : "Townhouse"}</option>
-            <option value="Villa">{vi ? "Biệt thự" : "Villa"}</option>
-            <option value="Land">{vi ? "Đất nền" : "Land"}</option>
-          </select>
+          <FormSelect
+            id="lp-hero-type"
+            name="type"
+            value={propertyType}
+            onChange={setPropertyType}
+            options={propertyTypeOptions}
+            buttonClassName="hs-form-select-trigger"
+            buttonStyle={{ height: "30px", padding: 0, border: 0, borderRadius: 0, background: "transparent", color: "#0B1B2B" }}
+          />
         </div>
         <div className="hs-field">
           <label htmlFor="lp-hero-budget">{vi ? "Ngân sách tối đa" : "Maximum budget"}</label>
-          <select id="lp-hero-budget" name="maxPrice" value={budget} onChange={event => setBudget(event.target.value)}>
-            <option value="">{vi ? "Chọn ngân sách" : "Choose a budget"}</option>
-            <option value="3">{vi ? "Dưới 3 tỷ" : "Under VND 3B"}</option>
-            <option value="5">{vi ? "Dưới 5 tỷ" : "Under VND 5B"}</option>
-            <option value="10">{vi ? "Dưới 10 tỷ" : "Under VND 10B"}</option>
-            <option value="20">{vi ? "Dưới 20 tỷ" : "Under VND 20B"}</option>
-          </select>
+          <FormSelect
+            id="lp-hero-budget"
+            name="maxPrice"
+            value={budget}
+            onChange={setBudget}
+            options={budgetOptions}
+            buttonClassName="hs-form-select-trigger"
+            buttonStyle={{ height: "30px", padding: 0, border: 0, borderRadius: 0, background: "transparent", color: "#0B1B2B" }}
+          />
         </div>
         <button type="submit" className="hs-main">{vi ? "Tìm nhà" : "Find a home"}</button>
       </form>

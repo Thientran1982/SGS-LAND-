@@ -15,6 +15,9 @@ export interface FormSelectProps {
   placeholder?: string;
   name?: string;
   disabled?: boolean;
+  id?: string;
+  buttonClassName?: string;
+  buttonStyle?: React.CSSProperties;
 }
 
 export default function FormSelect({
@@ -24,6 +27,9 @@ export default function FormSelect({
   placeholder = "Select...",
   name,
   disabled,
+  id,
+  buttonClassName = "",
+  buttonStyle,
 }: FormSelectProps) {
   const [open, setOpen] = useState(false);
   const rootRef = useRef<HTMLDivElement>(null);
@@ -45,13 +51,15 @@ export default function FormSelect({
       {name ? <input type="hidden" name={name} value={value} /> : null}
       <button
         type="button"
+        id={id}
         disabled={disabled}
         onClick={() => setOpen((o) => !o)}
-        className="w-full flex items-center justify-between gap-2 px-3.5 py-2.5 rounded-xl text-sm outline-none transition-all focus:ring-2 focus:ring-indigo-500/30 disabled:opacity-60"
+        className={`w-full flex items-center justify-between gap-2 px-3.5 py-2.5 rounded-xl text-sm outline-none transition-all focus:ring-2 focus:ring-indigo-500/30 disabled:opacity-60 ${buttonClassName}`}
         style={{
           background: "var(--bg-app)",
           border: "1px solid var(--border-default)",
           color: selected ? "var(--text-primary)" : "var(--text-tertiary)",
+          ...buttonStyle,
         }}
         aria-haspopup="listbox"
         aria-expanded={open}
