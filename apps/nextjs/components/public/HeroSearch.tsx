@@ -69,8 +69,7 @@ const CSS = `
     .hs-topline .hs-ai { display:none; }
     .hs-ai-inline { display:inline-flex; min-height:44px; flex:0 0 auto; padding:0 10px; font-size:14px; }
     .hs-bar { display:flex; flex-direction:column; gap:8px; padding:9px; border-radius:18px; }
-    .hs-field:first-child { min-height:70px; padding:2px 8px 4px; border:0; }
-    .hs-field:first-child label { font-size:14px; letter-spacing:0; text-transform:none; }
+     .hs-location-field { min-height:54px; padding:2px 8px; border:0; }
     .hs-location-control { display:flex; align-items:center; gap:5px; }
     .hs-input { height:48px!important; flex:1 1 auto; font-size:15px!important; }
     .hs-desktop-filter-field,.hs-desktop-submit { display:none!important; }
@@ -193,7 +192,7 @@ export default function HeroSearch({ lang, action, valuationHref, onAskAi, onLoc
       </div>
       <form action={action} method="get" role="search" data-hero-search className="hs-bar">
         {withTabs && <input type="hidden" name="transaction" value={tx} />}
-        <div className="hs-field">
+        <div className="hs-field hs-location-field">
           <label htmlFor="lp-hero-q">{vi ? "Khu vực" : "Location"}</label>
           <div className="hs-location-control">
             <input

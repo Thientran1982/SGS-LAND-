@@ -323,7 +323,13 @@ const STYLE = `
   .lp-map-legend span,.lp-map-legend small { display:block; }
   .lp-map-legend small { margin-top:4px;color:#53646a;font-size:10px; }
   .lp-floating-cta { display:none; }
-  @media(max-width:1023px) { .lp-hero-grid { grid-template-columns:1fr; }.lp-collage { max-width:720px;width:100%;min-height:0;margin:0 auto; }.lp-collage .lp-float { display:none; } }
+  @media(max-width:1023px) {
+    .lp-hero-grid { grid-template-columns:1fr; }
+    .lp-collage { max-width:720px;width:100%;min-height:0;margin:0 auto; }
+    .lp-collage .lp-float { display:none; }
+    .lp-hero .hs-valuation,.lp-hero .hs-field label[for="lp-hero-q"] { display:none; }
+    body:has(.lp-root) .sgs-home-chat > button { display:none!important; }
+  }
   @media(max-width:767px) {
     .lp-hero { padding-top:96px;padding-bottom:34px; }.lp-h1 { font-size:clamp(38px,10vw,54px); }.lp-hero-grid { gap:24px; }
      .lp-hero::before { background:linear-gradient(90deg,rgba(5,18,25,.94),rgba(5,18,25,.84)),linear-gradient(0deg,rgba(5,18,25,.84),rgba(5,18,25,.42) 42%,transparent 72%); }
@@ -544,8 +550,8 @@ function Hero({ lang, onAskAi }: { lang: Lang; onAskAi: (q: string) => void }) {
           </h1>
           <p className="lp-lead" style={{ fontSize: "clamp(15px,1.4vw,18px)", maxWidth: 560, marginTop: 18 }}>
             {T(lang,
-              "Xem tin đăng và dự án đã qua kiểm tra pháp lý, so sánh giá theo khu vực và định giá AI miễn phí trước khi xuống tiền.",
-              "Browse listings and projects with checked legal status, compare prices by area and get a free AI valuation before you commit.")}
+              "So sánh giá, kiểm tra pháp lý, định giá AI miễn phí.",
+              "Compare prices, check legal status, and get a free AI valuation.")}
           </p>
 
           <div style={{ marginTop: 28 }}>

@@ -146,22 +146,23 @@ function createBuildingMaterial(): THREE.MeshStandardMaterial {
       .replace(
         "#include <emissivemap_fragment>",
         `#include <emissivemap_fragment>
-          vec2 cityCell = floor(vCityUv * vec2(4.0, 9.0));
-          vec2 cityCellUv = fract(vCityUv * vec2(4.0, 9.0));
+          vec2 cityGridUv = vec2(vCityUv.x * 4.0, vCityWorldPosition.y / 1.25);
+          vec2 cityCell = floor(cityGridUv);
+          vec2 cityCellUv = fract(cityGridUv);
           float cityWindowShape =
             step(0.19, cityCellUv.x) * step(cityCellUv.x, 0.81) *
             step(0.13, cityCellUv.y) * step(cityCellUv.y, 0.84);
           float cityWindowSeed = cityHash(cityCell + vec2(vCitySeed * 17.0, floor(vCitySeed * 91.0)));
           float cityWindowPeriod = 5.0 + cityHash(cityCell + vec2(vCitySeed * 31.0, 7.0)) * 8.0;
           float cityWindowPhase = floor((uCityTime + cityWindowSeed * cityWindowPeriod) / cityWindowPeriod);
-          float cityWindowOn = step(0.85, cityHash(cityCell + vec2(vCitySeed * 29.0, cityWindowPhase)));
+          float cityWindowOn = step(0.88, cityHash(cityCell + vec2(vCitySeed * 29.0, cityWindowPhase)));
           float cityTwinkle = 0.94 + 0.06 * sin(uCityTime * 0.12 + cityWindowSeed * 6.28318);
          float cityWindowMask = cityWindowShape * cityWindowOn * (1.0 - step(0.5, vCityFaceTop));
-           vec2 cityFacadeGrid = fract(vCityUv * vec2(4.0, 9.0));
+           vec2 cityFacadeGrid = fract(cityGridUv);
           float cityFacadeEdge = 1.0 - smoothstep(0.0, 0.035, min(min(cityFacadeGrid.x, 1.0 - cityFacadeGrid.x), min(cityFacadeGrid.y, 1.0 - cityFacadeGrid.y)));
            vec3 cityWindowColor = vec3(0.788, 0.663, 0.431);
           diffuseColor.rgb += vec3(0.009, 0.021, 0.026) * cityFacadeEdge * (1.0 - step(0.5, vCityFaceTop));
-          diffuseColor.rgb = mix(diffuseColor.rgb, cityWindowColor, cityWindowMask * 0.78);
+          diffuseColor.rgb = mix(diffuseColor.rgb, cityWindowColor, cityWindowMask * 0.7);
           totalEmissiveRadiance += cityWindowColor * cityWindowMask * cityTwinkle * 0.9;`,
       );
   };
@@ -319,6 +320,7 @@ function SkyDome() {
         side: THREE.BackSide,
         depthTest: false,
         depthWrite: false,
+        fog: false,
         uniforms: {},
         vertexShader: `
           varying vec2 vSkyUv;
@@ -345,9 +347,11 @@ function SkyDome() {
       }),
     [],
   );
-  const geometry = useMemo(() => new THREE.SphereGeometry(220, 36, 24), []);
+  const geometry = useMemo(() => new THREE.SphereGeometry(400, 36, 24), []);
 
-  return <mesh geometry={geometry} material={material} renderOrder={-1000} />;
+  const skyRef = useRef<THREE.Mesh>(null);
+  useFrame(({ camera }) => { skyRef.current?.position.copy(camera.position); });
+  return <mesh ref={skyRef} geometry={geometry} material={material} renderOrder={-1000} frustumCulled={false} />;
 }
 
 function CityGround({ mobile }: { mobile: boolean }) {
@@ -578,7 +582,7 @@ export function HeroCityScene({ activeRegion, mobile, inView, motionRef }: Scene
     <Canvas
       dpr={mobile ? 1 : [1, 1.5]}
       frameloop={inView ? "always" : "never"}
-      camera={{ position: [0, 61, 89], fov: 39, near: 0.1, far: 260 }}
+      camera={{ position: [0, 61, 89], fov: 39, near: 0.1, far: 600 }}
       gl={{
         alpha: true,
         antialias: false,
