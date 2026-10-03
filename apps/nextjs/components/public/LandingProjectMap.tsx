@@ -2,7 +2,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { LngLatBounds, Map as MapLibreMap, Marker, NavigationControl } from "maplibre-gl";
+import { LngLatBounds, Map as MapLibreMap, Marker, NavigationControl, setWorkerUrl } from "maplibre-gl";
 import "maplibre-gl/dist/maplibre-gl.css";
 
 const PROJECTS = [
@@ -29,6 +29,7 @@ export function LandingProjectMap({ active, onSelect, lang }: { active: number; 
     let cancelled = false;
     let map: any;
     try {
+      setWorkerUrl("/maplibre/maplibre-gl-worker.mjs");
       if (typeof MapLibreMap.isSupported === "function" && !MapLibreMap.isSupported()) {
         setMapUnavailable(true);
         return () => { cancelled = true; };

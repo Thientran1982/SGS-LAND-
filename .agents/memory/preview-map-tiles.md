@@ -7,4 +7,4 @@ Map tiles used inside the Replit Preview iframe should be fetched through a same
 
 **Why:** The embedded browser can apply resource policy differently from a normal browser, and OSM/CARTO hosts may return an “Access blocked” image instead of a usable tile.
 
-**How to apply:** Keep Leaflet tile URLs same-origin and have the server fetch OSM HOT/DE tiles with an explicit user agent, reject blocked headers and non-PNG responses, and bump the tile URL cache-buster when replacing an already shipped client bundle.
+**How to apply:** Keep map tile URLs same-origin and have the server fetch OSM HOT/DE tiles with an explicit user agent, reject blocked headers and non-PNG responses, and bump the tile URL cache-buster when replacing an already shipped client bundle.

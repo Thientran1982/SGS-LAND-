@@ -1,6 +1,6 @@
 - [Next.js 15.5 prerender fix](nextjs15-prerender-fix.md) — force-dynamic on root layout prevents /_not-found OuterLayoutRouter.useContext null crash
 - [GEO Tier S file locations](geo-tier-s.md) — llms.txt/llms-full.txt/llms-en.txt in public/, sitemap subs as route handlers, area-price-index in public/data/
-- [Next.js Public Site Setup](nextjs-public-site-setup.md) — Next.js runs on port 3001 (separate from Express CRM port 5000); all public components must have "use client"
+- [Next.js Public Site Setup](nextjs-public-site-setup.md) — main preview uses Next.js on port 5000 with Express on 5001; the optional standalone workflow uses 3001
 - [Express v5 route wildcards](express-v5-wildcards.md) — use /assets/*path not /assets/* — path-to-regexp v8 requires named wildcards
 - [Production EIO static assets](production-eio-assets.md) — Replit VM overlay filesystem returns EIO on large streamed files; fix with fs.readFile + retry
 - [Provider delivery capabilities](provider-delivery-capabilities.md) — Zalo/Facebook lack portable idempotency/status lookup; UNKNOWN must not be blindly resent
@@ -35,6 +35,7 @@
 - [Preview Service Worker hydration](preview-service-worker-hydration.md) — stale production SW assets can mismatch fresh SSR HTML after returning to the dev preview
 - [SPA loading ownership](spa-loading-ownership.md) — keep one React-controlled loading fallback; a static Vite index loader duplicates Next/SPA route loading
 - [Preview map tile policy](preview-map-tiles.md) — map tiles in the Preview iframe must use a same-origin proxy, not third-party client fallbacks
+- [MapLibre Next worker routing](maplibre-next-worker.md) — set an explicit same-origin worker URL and serve both the worker and its relative shared chunk
 - [Agent event worker payloads](agent-event-worker-payloads.md) — durable event payloads stay JSON-serializable; process-bound Socket.IO belongs in the worker, not QStash jobs
 - [Agent event lease heartbeats](agent-event-lease-heartbeats.md) — long-running inbound handlers renew their database lease to prevent concurrent reclaim
 - [Email template consistency](email-template-consistency.md) — direct transactional senders must share the common layout, palette, table backgrounds, and reviewed Vietnamese copy
