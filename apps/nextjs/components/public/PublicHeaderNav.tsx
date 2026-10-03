@@ -40,6 +40,15 @@ export function PublicHeader({ authed = false }: { authed?: boolean }) {
   }, []);
 
   useEffect(() => {
+    const syncTheme = (event: Event) => {
+      const nextTheme = (event as CustomEvent<Theme>).detail;
+      if (nextTheme === "dark" || nextTheme === "light") setTheme(nextTheme);
+    };
+    window.addEventListener("sgs-theme-change", syncTheme);
+    return () => window.removeEventListener("sgs-theme-change", syncTheme);
+  }, []);
+
+  useEffect(() => {
     const html = document.documentElement;
     html.classList.toggle("dark", theme === "dark");
     html.classList.toggle("light", theme === "light");
@@ -49,6 +58,7 @@ export function PublicHeader({ authed = false }: { authed?: boolean }) {
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 40);
     window.addEventListener("scroll", onScroll, { passive: true });
+    onScroll();
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
 
@@ -80,14 +90,17 @@ export function PublicHeader({ authed = false }: { authed?: boolean }) {
     return lang === "en" ? "/en" + href : viPath;
   };
 
-  const isHero = false; // hero is light — always use the light header treatment
+  const normalizedPath = pathname?.replace(/\/+$/, "") || "/";
+  const isHomepage = normalizedPath === "/" || normalizedPath === "/en";
+  const isHero = isHomepage && !scrolled;
 
   return (
     <header
       className="ui-public-header fixed top-0 left-0 right-0 z-50 transition-all duration-300"
+      data-homepage={isHomepage ? "true" : undefined}
       style={{
         background:      isHero
-          ? "linear-gradient(to bottom, rgba(10,30,51,0.72) 0%, rgba(10,30,51,0.0) 100%)"
+          ? "linear-gradient(to bottom, rgba(11,27,43,0.76) 0%, rgba(11,27,43,0.0) 100%)"
           : "var(--hdr-bg)",
         backdropFilter:  isHero ? "none"   : "blur(14px)",
         WebkitBackdropFilter: isHero ? "none" : "blur(14px)",
@@ -101,7 +114,7 @@ export function PublicHeader({ authed = false }: { authed?: boolean }) {
           {/* ── Logo ─────────────────────────────────────── */}
           <Link href="/" className="flex items-center gap-2.5 shrink-0 group">
             <img
-              src={theme === "dark" ? "/logo-white.png" : "/logo-navy.png"}
+              src={isHero || theme === "dark" ? "/logo-white.png" : "/logo-navy.png"}
               alt="SGS Land"
               className="w-9 h-9 transition-transform group-hover:scale-105"
               style={{ objectFit: "contain" }}
@@ -111,7 +124,7 @@ export function PublicHeader({ authed = false }: { authed?: boolean }) {
                 className="font-bold text-lg leading-tight"
                 style={{
                   color: isHero
-                    ? theme === "dark" ? "#FFFFFF" : "var(--sgs-primary)"
+                    ? "#FFFFFF"
                     : theme === "dark" ? "#E4EDF5" : "var(--sgs-primary)",
                   fontFamily: "var(--font-display, Georgia, serif)",
                   letterSpacing: "-0.02em",

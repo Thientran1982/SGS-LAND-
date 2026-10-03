@@ -294,7 +294,7 @@ function ActiveChip({ label, onRemove }) {
 }
 
 /* ── Listing card ─────────────────────────────────────────── */
-export function PublicListingCard({ listing, list, eager, facets }: { listing: any; list?: boolean; eager?: boolean; facets?: { priceBenchmarks: Record<string, { avgPricePerM2: number; sampleSize: number }> } | null }) {
+export function PublicListingCard({ listing, list, eager, facets, editorial = false }: { listing: any; list?: boolean; eager?: boolean; editorial?: boolean; facets?: { priceBenchmarks: Record<string, { avgPricePerM2: number; sampleSize: number }> } | null }) {
   const lang = useLang();
   const slug = `${slugifyListingTitle(listing.title)}-${listing.id}`;
   const isRent = String(listing.transaction || "").toUpperCase() === "RENT";
@@ -311,11 +311,16 @@ export function PublicListingCard({ listing, list, eager, facets }: { listing: a
   const legal = attrs.legalStatus ? bi(LEGAL_LABELS, String(attrs.legalStatus), lang) : "";
   const direction = attrs.direction ? bi(DIRECTION_LABELS, String(attrs.direction), lang) : "";
   const images: string[] = Array.isArray(listing.images) ? listing.images : [];
-  const src = images.find((image) => isPropertyImageUrl(image)) || "";
+  const imagePool = images.filter((image) => isPropertyImageUrl(image));
+  const [imageIndex, setImageIndex] = useState(0);
+  const src = imagePool[imageIndex] || imagePool[0] || "";
   const [displaySrc, setDisplaySrc] = useState(src);
   const [imageLoaded, setImageLoaded] = useState(false);
   const [optFailed, setOptFailed] = useState(false);
   const [fav, setFav] = useState(false);
+  useEffect(() => {
+    setImageIndex(0);
+  }, [listing.id, imagePool[0]]);
   useEffect(() => {
     setDisplaySrc(src);
     setImageLoaded(false);
@@ -347,7 +352,7 @@ export function PublicListingCard({ listing, list, eager, facets }: { listing: a
   }, [updatedAt, lang]);
   return (
     <Link href={lang === "en" ? `/en/bds/${slug}` : `/bds/${slug}`}
-      className={`group block rounded-3xl overflow-hidden hover:shadow-token-lg transition-all hover:-translate-y-1 ${list ? "flex" : ""}`}
+      className={`group block rounded-3xl overflow-hidden hover:shadow-token-lg transition-all hover:-translate-y-1 ${list ? "flex" : ""} ${editorial ? "lp-listing-card" : ""}`}
       style={{ background: "var(--bg-surface)", border: "1px solid var(--border-default)" }}>
       {/* Image */}
       <div className={`relative overflow-hidden ${list ? "w-32 h-32 sm:w-72 sm:h-auto shrink-0" : "aspect-[4/3]"}`} style={{ background: "var(--bg-elevated)" }}>
@@ -374,6 +379,24 @@ export function PublicListingCard({ listing, list, eager, facets }: { listing: a
               <span className="absolute bottom-0 right-2 h-5 w-3 border-x border-t border-[#59716b]/50" />
             </span>
             <span className="text-xs2" style={{ color: "var(--text-tertiary)" }}>{ui("noImage", lang)}</span>
+          </div>
+        )}
+        {editorial && imagePool.length > 1 && (
+          <div className="lp-photo-dots" role="group" aria-label={lang === "vi" ? "Ảnh tin đăng" : "Listing photos"}>
+            {imagePool.map((_, index) => (
+              <button
+                key={`${listing.id}-photo-${index}`}
+                type="button"
+                className="lp-photo-dot"
+                aria-label={lang === "vi" ? `Xem ảnh ${index + 1} trên ${imagePool.length}` : `View photo ${index + 1} of ${imagePool.length}`}
+                aria-current={imageIndex === index ? "true" : "false"}
+                onClick={(event) => {
+                  event.preventDefault();
+                  event.stopPropagation();
+                  setImageIndex(index);
+                }}
+              />
+            ))}
           </div>
         )}
         <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent pointer-events-none" />

@@ -2,7 +2,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { Map as MapLibreMap, Marker, NavigationControl } from "maplibre-gl";
+import { LngLatBounds, Map as MapLibreMap, Marker, NavigationControl } from "maplibre-gl";
 import "maplibre-gl/dist/maplibre-gl.css";
 
 const PROJECTS = [
@@ -87,6 +87,13 @@ export function LandingProjectMap({ active, onSelect, lang }: { active: number; 
           .setLngLat([project.position[1], project.position[0]])
           .addTo(map);
         return { marker, element };
+      });
+      const bounds = new LngLatBounds();
+      PROJECTS.forEach((project) => bounds.extend([project.position[1], project.position[0]]));
+      map.fitBounds(bounds, {
+        padding: { top: 76, right: 76, bottom: 64, left: 76 },
+        maxZoom: 10.3,
+        duration: 0,
       });
       window.setTimeout(() => map.resize(), 80);
     });

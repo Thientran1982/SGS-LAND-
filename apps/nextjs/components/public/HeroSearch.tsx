@@ -1,5 +1,5 @@
 "use client";
-import React, { useEffect, useRef, useState } from "react";
+import React, { useRef, useState } from "react";
 
 // Home hero search: one field with a split button inside it.
 // The main half searches the marketplace; the chevron opens a small menu
@@ -14,135 +14,135 @@ type Props = {
 };
 
 const CSS = `
-  .hs-bar { display:flex; align-items:center; gap:6px; margin-bottom:26px; padding:6px 6px 6px 18px;
-    border:1px solid var(--lp-line); border-radius:16px; background:var(--lp-paper);
-    box-shadow:0 1px 2px rgba(15,23,42,.04); transition:border-color .15s, box-shadow .15s; }
-  .hs-bar:focus-within { border-color:var(--lp-navy); box-shadow:0 0 0 3px color-mix(in srgb, var(--lp-navy) 18%, transparent); }
-  .hs-icon { flex:0 0 auto; color:var(--lp-muted); }
-  .hs-input { flex:1 1 auto; min-width:0; height:48px; border:0; outline:0; background:transparent;
-    color:var(--lp-ink); font-size:16px; }
-  .hs-input::placeholder { color:var(--lp-muted); }
-  .hs-split { position:relative; display:flex; flex:0 0 auto; }
-  .hs-main, .hs-more { height:48px; border:0; cursor:pointer; background:var(--lp-navy); color:var(--lp-bg);
-    font-size:15px; font-weight:600; }
-  .hs-main { padding:0 20px; border-radius:12px 0 0 12px; }
-  .hs-more { width:44px; display:inline-flex; align-items:center; justify-content:center;
-    border-radius:0 12px 12px 0; border-left:1px solid color-mix(in srgb, var(--lp-bg) 28%, transparent); }
-  .hs-main:hover, .hs-more:hover { filter:brightness(1.12); }
-  .hs-main:focus-visible, .hs-more:focus-visible, .hs-item:focus-visible { outline:2px solid var(--lp-navy); outline-offset:2px; }
-  .hs-more svg { transition:transform .15s; }
-  .hs-more[aria-expanded="true"] svg { transform:rotate(180deg); }
-  .hs-menu { position:absolute; right:0; top:calc(100% + 8px); z-index:40; min-width:240px; padding:6px;
-    border:1px solid var(--lp-line); border-radius:14px; background:var(--lp-paper);
-    box-shadow:0 12px 32px rgba(15,23,42,.16); }
-  .hs-item { width:100%; border:0; background:transparent; text-align:left; cursor:pointer; font:inherit; display:flex; flex-direction:column; gap:2px; padding:10px 12px; border-radius:10px;
-    color:var(--lp-ink); text-decoration:none; }
-  .hs-item:hover { background:color-mix(in srgb, var(--lp-navy) 8%, transparent); }
-  .hs-item b { font-size:14px; font-weight:600; }
-  .hs-item span { font-size:12.5px; color:var(--lp-muted); }
-  .hs-short { display:none; }
-  .hs-tabs { display:inline-flex; gap:4px; padding:4px; margin-bottom:10px; border-radius:12px; background:color-mix(in srgb, var(--lp-navy) 7%, transparent); }
-  .hs-tab { height:34px; padding:0 16px; border:0; border-radius:9px; background:transparent; color:var(--lp-muted); font-size:14px; font-weight:600; cursor:pointer; }
-  .hs-tab[aria-pressed="true"] { background:var(--lp-paper); color:var(--lp-ink); box-shadow:0 1px 3px rgba(15,23,42,.12); }
-  .hs-tab:focus-visible { outline:2px solid var(--lp-navy); outline-offset:2px; }
-  @media (max-width: 480px) {
-    .hs-bar { padding-left:12px; }
-    .hs-icon { display:none; }
-    .hs-main { padding:0 14px; }
-    .hs-long { display:none; }
-    .hs-short { display:inline; }
+  .hs-topline { display:flex; align-items:center; justify-content:space-between; gap:14px; margin-bottom:12px; }
+  .hs-tabs { display:inline-flex; gap:4px; padding:4px; border:1px solid rgba(255,255,255,.32); border-radius:999px; background:rgba(11,27,43,.42); backdrop-filter:blur(14px); }
+  .hs-tab { min-height:38px; padding:0 17px; border:0; border-radius:999px; background:transparent; color:rgba(255,255,255,.82); font-size:13px; font-weight:600; cursor:pointer; transition:background .18s,color .18s; }
+  .hs-tab[aria-pressed="true"] { background:#FAF8F4; color:#0B1B2B; }
+  .hs-tab:focus-visible,.hs-ai:focus-visible,.hs-main:focus-visible,.hs-field select:focus-visible,.hs-input:focus-visible { outline:3px solid #C8963E; outline-offset:3px; }
+  .hs-ai { min-height:42px; padding:0 16px; display:inline-flex; align-items:center; justify-content:center; gap:8px; border:1px solid rgba(255,255,255,.42); border-radius:999px; background:rgba(255,255,255,.12); color:#fff; backdrop-filter:blur(14px); font:600 13px var(--font-be-vietnam,sans-serif); cursor:pointer; transition:background .18s,transform .18s; }
+  .hs-ai-mark { width:20px; height:20px; display:inline-grid; place-items:center; border-radius:50%; background:#C8963E; color:#0B1B2B; font-size:9px; font-weight:800; letter-spacing:-.05em; }
+  .hs-ai:hover { background:rgba(255,255,255,.2); transform:translateY(-1px); }
+  .hs-bar { display:grid; grid-template-columns:minmax(190px,1.45fr) minmax(145px,.8fr) minmax(145px,.8fr) auto; align-items:stretch; gap:0; padding:7px; border:1px solid rgba(255,255,255,.74); border-radius:22px; background:rgba(250,248,244,.96); box-shadow:0 20px 54px rgba(0,0,0,.2); backdrop-filter:blur(20px); }
+  .hs-field { min-width:0; padding:8px 16px; display:flex; flex-direction:column; justify-content:center; gap:3px; }
+  .hs-field + .hs-field { border-left:1px solid #E4DED3; }
+  .hs-field label { color:#666D73; font-size:10px; font-weight:700; letter-spacing:.1em; text-transform:uppercase; }
+  .hs-input,.hs-field select { width:100%; min-width:0; height:30px; padding:0; border:0; outline:0; background:transparent; color:#0B1B2B; font:500 14px var(--font-be-vietnam,sans-serif); }
+  .hs-input::placeholder { color:#7B8186; opacity:1; }
+  .hs-field select { cursor:pointer; }
+  .hs-main { min-height:56px; min-width:126px; padding:0 22px; border:0; border-radius:16px; background:#C8963E; color:#0B1B2B; font:700 14px var(--font-be-vietnam,sans-serif); cursor:pointer; transition:filter .18s,transform .18s; }
+  .hs-main:hover { filter:brightness(1.06); transform:translateY(-1px); }
+  .hs-support { display:flex; flex-wrap:wrap; align-items:center; gap:8px; margin-top:12px; color:rgba(255,255,255,.84); font-size:12px; }
+  .hs-suggestion { min-height:31px; padding:0 11px; border:1px solid rgba(255,255,255,.32); border-radius:999px; background:rgba(11,27,43,.25); color:#fff; font:500 11px var(--font-be-vietnam,sans-serif); cursor:pointer; }
+  .hs-suggestion:hover { background:rgba(255,255,255,.16); }
+  .hs-valuation { color:#F3D79D; text-underline-offset:3px; font-weight:600; }
+  @media (max-width: 700px) {
+    .hs-bar { grid-template-columns:minmax(0,1fr) minmax(0,1fr); border-radius:20px; gap:0; }
+    .hs-field:first-child { grid-column:1/-1; border-bottom:1px solid #E4DED3; }
+    .hs-field:nth-child(2) { border-left:0; }
+    .hs-field { padding:9px 12px; }
+    .hs-main { grid-column:1/-1; min-height:48px; margin-top:6px; }
   }
+  @media (max-width: 420px) {
+    .hs-topline { align-items:flex-start; }
+    .hs-tab { padding:0 12px; font-size:12px; }
+    .hs-ai { padding:0 11px; font-size:12px; }
+    .hs-field label { font-size:9px; }
+    .hs-input,.hs-field select { font-size:12px; }
+    .hs-support { gap:6px; }
+    .hs-support > span:first-child { width:100%; }
+  }
+  @media (prefers-reduced-motion:reduce) { .hs-tab,.hs-ai,.hs-main { transition:none; } }
 `;
 
 export default function HeroSearch({ lang, action, valuationHref, onAskAi, withTabs }: Props) {
   const [tx, setTx] = useState<"SALE" | "RENT">("SALE");
   const vi = lang === "vi";
-  const [open, setOpen] = useState(false);
-  const wrapRef = useRef<HTMLDivElement>(null);
-  const moreRef = useRef<HTMLButtonElement>(null);
-  const itemRef = useRef<HTMLButtonElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
-
-  useEffect(() => {
-    if (!open) return;
-    (itemRef.current ?? wrapRef.current?.querySelector<HTMLElement>('[role="menuitem"]'))?.focus();
-    const onDown = (e: MouseEvent) => {
-      if (wrapRef.current && !wrapRef.current.contains(e.target as Node)) setOpen(false);
-    };
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key === "Escape") { setOpen(false); moreRef.current?.focus(); }
-    };
-    document.addEventListener("mousedown", onDown);
-    document.addEventListener("keydown", onKey);
-    return () => {
-      document.removeEventListener("mousedown", onDown);
-      document.removeEventListener("keydown", onKey);
-    };
-  }, [open]);
+  const typeRef = useRef<HTMLSelectElement>(null);
+  const [propertyType, setPropertyType] = useState("");
+  const [budget, setBudget] = useState("");
+  const suggestions = vi
+    ? ["Thủ Đức", "Aqua City", "Dưới 5 tỷ"]
+    : ["Thu Duc", "Aqua City", "Under VND 5B"];
+  const fillSuggestion = (value: string) => {
+    if (/under|dưới/i.test(value)) {
+      setBudget("5");
+      return;
+    }
+    if (inputRef.current) {
+      inputRef.current.value = value;
+      inputRef.current.focus();
+    }
+  };
+  const askAi = () => {
+    const location = inputRef.current?.value.trim() || "";
+    const typeLabel = propertyType ? typeRef.current?.selectedOptions[0]?.textContent?.trim() : "";
+    const budgetLabel = budget === "5" ? (vi ? "dưới 5 tỷ" : "under VND 5B") : "";
+    const details = [location, typeLabel, budgetLabel].filter(Boolean).join(", ");
+    onAskAi?.(details ? (vi ? `Tôi đang tìm bất động sản ${details}.` : `I'm looking for a property: ${details}.`) : "");
+  };
 
   return (
     <>
     <style>{CSS}</style>
-    {withTabs && (
-      <div className="hs-tabs" role="group" aria-label={vi ? "Loại giao dịch" : "Transaction type"}>
-        <button type="button" className="hs-tab" aria-pressed={tx === "SALE"} onClick={() => setTx("SALE")}>{vi ? "Mua bán" : "Buy"}</button>
-        <button type="button" className="hs-tab" aria-pressed={tx === "RENT"} onClick={() => setTx("RENT")}>{vi ? "Cho thuê" : "Rent"}</button>
-      </div>
-    )}
-    <form action={action} method="get" role="search" data-hero-search className="hs-bar">
-      {withTabs && <input type="hidden" name="transaction" value={tx} />}
-      <svg className="hs-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-        <circle cx="11" cy="11" r="7" /><path d="m20 20-3.5-3.5" />
-      </svg>
-      <label htmlFor="lp-hero-q" className="sr-only">{vi ? "Tìm bất động sản" : "Search properties"}</label>
-      <input
-        ref={inputRef}
-        id="lp-hero-q"
-        name="q"
-        type="search"
-        autoComplete="off"
-        className="hs-input"
-        placeholder={vi ? "Bạn muốn tìm nhà ở đâu, ngân sách khoảng bao nhiêu?" : "Where would you like to live, and what is your budget?"}
-      />
-      <div className="hs-split" ref={wrapRef}>
-        <button type="submit" className="hs-main">
-          <span className="hs-long">{vi ? "Tìm bất động sản" : "Search properties"}</span>
-          <span className="hs-short">{vi ? "Tìm" : "Search"}</span>
-        </button>
-        <button
-          ref={moreRef}
-          type="button"
-          className="hs-more"
-          aria-haspopup="menu"
-          aria-expanded={open}
-          aria-controls="hs-menu"
-          aria-label={vi ? "Tuỳ chọn khác" : "More options"}
-          onClick={() => setOpen(o => !o)}
-        >
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6" /></svg>
-        </button>
-        {open && (
-          <div id="hs-menu" role="menu" className="hs-menu">
-            {onAskAi && (
-              <button
-                ref={itemRef}
-                type="button"
-                role="menuitem"
-                className="hs-item"
-                onClick={() => { setOpen(false); onAskAi(inputRef.current?.value.trim() || ""); }}
-              >
-                <b>{vi ? "Hỏi AI tư vấn" : "Ask the AI advisor"}</b>
-                <span>{vi ? "Mô tả nhu cầu, AI gợi ý căn phù hợp" : "Describe what you need, get matching options"}</span>
-              </button>
-            )}
-            <a role="menuitem" href={valuationHref} className="hs-item" onClick={() => setOpen(false)}>
-              <b>{vi ? "Định giá miễn phí" : "Free valuation"}</b>
-              <span>{vi ? "Ước tính giá nhà đất bằng AI" : "Estimate a property's value with AI"}</span>
-            </a>
+    <div className="hs-search">
+      <div className="hs-topline">
+        {withTabs && (
+          <div className="hs-tabs" role="group" aria-label={vi ? "Loại giao dịch" : "Transaction type"}>
+            <button type="button" className="hs-tab" aria-pressed={tx === "SALE"} onClick={() => setTx("SALE")}>{vi ? "Mua bán" : "Buy"}</button>
+            <button type="button" className="hs-tab" aria-pressed={tx === "RENT"} onClick={() => setTx("RENT")}>{vi ? "Cho thuê" : "Rent"}</button>
           </div>
         )}
+        {onAskAi && (
+          <button type="button" className="hs-ai" onClick={askAi}>
+            <span className="hs-ai-mark" aria-hidden="true">AI</span>{vi ? "Hỏi AI" : "Ask AI"}
+          </button>
+        )}
       </div>
-    </form>
+      <form action={action} method="get" role="search" data-hero-search className="hs-bar">
+        {withTabs && <input type="hidden" name="transaction" value={tx} />}
+        <div className="hs-field">
+          <label htmlFor="lp-hero-q">{vi ? "Khu vực" : "Location"}</label>
+          <input
+            ref={inputRef}
+            id="lp-hero-q"
+            name="q"
+            type="search"
+            autoComplete="off"
+            className="hs-input"
+            placeholder={vi ? "Nhập khu vực bạn quan tâm" : "Enter an area"}
+          />
+        </div>
+        <div className="hs-field">
+          <label htmlFor="lp-hero-type">{vi ? "Loại bất động sản" : "Property type"}</label>
+          <select ref={typeRef} id="lp-hero-type" name="type" value={propertyType} onChange={event => setPropertyType(event.target.value)}>
+            <option value="">{vi ? "Tất cả loại" : "Any type"}</option>
+            <option value="Apartment">{vi ? "Căn hộ" : "Apartment"}</option>
+            <option value="Townhouse">{vi ? "Nhà phố" : "Townhouse"}</option>
+            <option value="Villa">{vi ? "Biệt thự" : "Villa"}</option>
+            <option value="Land">{vi ? "Đất nền" : "Land"}</option>
+          </select>
+        </div>
+        <div className="hs-field">
+          <label htmlFor="lp-hero-budget">{vi ? "Ngân sách tối đa" : "Maximum budget"}</label>
+          <select id="lp-hero-budget" name="maxPrice" value={budget} onChange={event => setBudget(event.target.value)}>
+            <option value="">{vi ? "Chọn ngân sách" : "Choose a budget"}</option>
+            <option value="3">{vi ? "Dưới 3 tỷ" : "Under VND 3B"}</option>
+            <option value="5">{vi ? "Dưới 5 tỷ" : "Under VND 5B"}</option>
+            <option value="10">{vi ? "Dưới 10 tỷ" : "Under VND 10B"}</option>
+            <option value="20">{vi ? "Dưới 20 tỷ" : "Under VND 20B"}</option>
+          </select>
+        </div>
+        <button type="submit" className="hs-main">{vi ? "Tìm nhà" : "Find a home"}</button>
+      </form>
+      <div className="hs-support">
+        <span>{vi ? "Gợi ý:" : "Try:"}</span>
+        {suggestions.map(suggestion => (
+          <button key={suggestion} type="button" className="hs-suggestion" onClick={() => fillSuggestion(suggestion)}>{suggestion}</button>
+        ))}
+        <a className="hs-valuation" href={valuationHref}>{vi ? "Định giá miễn phí" : "Free valuation"}</a>
+      </div>
+    </div>
     </>
   );
 }

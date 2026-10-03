@@ -5,10 +5,11 @@ import dynamic from "next/dynamic";
 import Image from "next/image";
 import { useLang } from "@/components/shared/useLang";
 import HeroSearch from "./HeroSearch";
+import "./LandingHome.editorial.css";
 import { PublicListingCard } from "./MarketplacePage";
 import {
   BadgeCheck, ShieldCheck, Wallet, Building2, Home, LandPlot, KeyRound, Sparkles, Handshake,
-  Calculator, Trees, ArrowRight, ArrowUpRight, MessageCircle, MapPin, Scale, Landmark, FileSearch,
+  Calculator, Trees, ArrowRight, ArrowUpRight, MessageCircle, MapPin, Scale, Landmark, FileSearch, Phone,
 } from "lucide-react";
 
 type Lang = "vi" | "en";
@@ -425,17 +426,47 @@ function SectionHead({ eyebrow, title, lead, action }: { eyebrow?: React.ReactNo
 
 // ─── 1. HERO ─────────────────────────────────────────────────────────────────
 function Hero({ lang, listingCount, onAskAi, illustrative }: { lang: Lang; listingCount: number; onAskAi: (q: string) => void; illustrative: boolean }) {
-  const chips = [
-    { vi: "Căn hộ Thủ Đức", en: "Thu Duc apartments", href: "/marketplace?q=Th%E1%BB%A7%20%C4%90%E1%BB%A9c&type=APARTMENT" },
-    { vi: "Vinhomes Grand Park", en: "Vinhomes Grand Park", href: "/marketplace?q=Vinhomes%20Grand%20Park" },
-    { vi: "Aqua City", en: "Aqua City", href: "/marketplace?q=Aqua%20City" },
-    { vi: "Dưới 3 tỷ", en: "Under 3B VND", href: "/marketplace?maxPrice=3000000000&transaction=SALE" },
-  ];
+  const [animatedListings, setAnimatedListings] = useState(0);
+  const statsRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    const node = statsRef.current;
+    if (!node || listingCount <= 0) {
+      setAnimatedListings(0);
+      return;
+    }
+    let frame = 0;
+    let observer: IntersectionObserver | undefined;
+    const animate = () => {
+      if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+        setAnimatedListings(listingCount);
+        return;
+      }
+      const started = performance.now();
+      const duration = 1050;
+      const tick = (now: number) => {
+        const progress = Math.min((now - started) / duration, 1);
+        setAnimatedListings(Math.round(listingCount * (1 - Math.pow(1 - progress, 3))));
+        if (progress < 1) frame = window.requestAnimationFrame(tick);
+      };
+      frame = window.requestAnimationFrame(tick);
+    };
+    observer = new IntersectionObserver(([entry]) => {
+      if (entry.isIntersecting) {
+        animate();
+        observer?.disconnect();
+      }
+    }, { threshold: 0.25 });
+    observer.observe(node);
+    return () => {
+      observer?.disconnect();
+      window.cancelAnimationFrame(frame);
+    };
+  }, [listingCount]);
   return (
     <section className="lp-hero">
       <Image className="lp-hero-backdrop" src={projImg("aqua-city")} alt="" fill priority sizes="100vw" />
       <div className="lp-wrap lp-hero-grid">
-        <div>
+        <div className="lp-hero-copy">
           <span className="lp-badge">
             <BadgeCheck size={16} color="var(--lp-ok)" aria-hidden="true" />
             {T(lang, <><b>Tin đã kiểm tra</b> · TP.HCM · Đồng Nai · Tây Ninh</>, <><b>Checked listings</b> · HCMC · Dong Nai · Tay Ninh</>)}
@@ -455,32 +486,25 @@ function Hero({ lang, listingCount, onAskAi, illustrative }: { lang: Lang; listi
             <HeroSearch lang={lang} action={lpath("/marketplace", lang)} valuationHref={lpath("/ai-valuation", lang)} onAskAi={onAskAi} withTabs />
           </div>
 
-          <div style={{ display: "flex", flexWrap: "wrap", alignItems: "center", gap: 8, marginTop: -8 }}>
-            <span className="lp-popular-label" style={{ fontSize: 13, color: "var(--lp-muted)", marginRight: 4 }}>{T(lang, "Tìm nhiều:", "Popular:")}</span>
-            {chips.map(c => <a key={c.href} className="lp-chip" href={lpath(c.href, lang)}>{c[lang]}</a>)}
-          </div>
-
-          <div className="lp-trust" style={{ marginTop: 28 }}>
-            {listingCount > 0 && (
-              <span><BadgeCheck size={18} aria-hidden="true" />{T(lang, <><b>{listingCount.toLocaleString("vi-VN")}</b>&nbsp;tin đang mở bán</>, <><b>{listingCount.toLocaleString("en-US")}</b>&nbsp;live listings</>)}</span>
-            )}
-            <span><ShieldCheck size={18} aria-hidden="true" />{T(lang, <>Kiểm tra pháp lý&nbsp;<b>2 lớp</b></>, <><b>Two-layer</b>&nbsp;legal check</>)}</span>
-            <span><Wallet size={18} aria-hidden="true" />{T(lang, <><b>Miễn phí</b>&nbsp;cho người mua</>, <><b>Free</b>&nbsp;for buyers</>)}</span>
-          </div>
-          {illustrative && <small className="lp-hero-note">{T(lang, "Số liệu minh họa trong môi trường phát triển · Không phải số liệu kinh doanh.", "Illustrative development data · Not a production business claim.")}</small>}
         </div>
-
-        {/* Visual: real project photography + valuation entry */}
-        <div className="lp-collage" aria-label={T(lang, "Dự án nổi bật", "Featured projects")}>
-          <a className="ph ph-a" href={lpath("/du-an/the-global-city", lang)}>
-            <Image src={projImg("the-global-city")} alt="The Global City" fill priority sizes="(max-width: 1023px) 100vw, 52vw" />
-            <span className="tag"><small>Masterise · Thủ Đức</small><b>The Global City</b></span>
-          </a>
-          <a className="ph ph-b" href={lpath("/du-an/aqua-city", lang)}>
-            <Image src={projImg("aqua-city")} alt="Aqua City" fill sizes="(max-width: 1023px) 50vw, 24vw" />
-            <span className="tag"><small>Novaland · Biên Hòa</small><b>Aqua City</b></span>
-          </a>
+        <div className="lp-trust" ref={statsRef} aria-label={T(lang, "Thông tin nổi bật", "Key facts")}>
+          <div className="lp-stat">
+            <span className="lp-stat-icon"><BadgeCheck size={17} aria-hidden="true" /></span>
+            <b className="lp-stat-value">{listingCount > 0 ? animatedListings.toLocaleString(lang === "vi" ? "vi-VN" : "en-US") : "—"}</b>
+            <span className="lp-stat-label">{T(lang, "tin đang hiển thị", "active listings")}</span>
+          </div>
+          <div className="lp-stat">
+            <span className="lp-stat-icon"><ShieldCheck size={17} aria-hidden="true" /></span>
+            <b className="lp-stat-value">{T(lang, "2 lớp", "2 layers")}</b>
+            <span className="lp-stat-label">{T(lang, "rà soát pháp lý", "legal review")}</span>
+          </div>
+          <div className="lp-stat">
+            <span className="lp-stat-icon"><Wallet size={17} aria-hidden="true" /></span>
+            <b className="lp-stat-value">{T(lang, "0₫", "Free")}</b>
+            <span className="lp-stat-label">{T(lang, "cho người mua", "for buyers")}</span>
+          </div>
         </div>
+        {illustrative && <small className="lp-hero-note">{T(lang, "Số liệu minh họa trong môi trường phát triển · Không phải số liệu kinh doanh.", "Illustrative development data · Not a production business claim.")}</small>}
       </div>
     </section>
   );
@@ -489,16 +513,20 @@ function Hero({ lang, listingCount, onAskAi, illustrative }: { lang: Lang; listi
 // ─── 2. CATEGORIES ───────────────────────────────────────────────────────────
 function Categories({ lang }: { lang: Lang }) {
   const cats = [
-    { icon: Building2, vi: "Căn hộ", en: "Apartments", svi: "Chung cư, căn hộ dự án", sen: "Condos & project units", href: "/marketplace?type=APARTMENT&transaction=SALE" },
-    { icon: Home, vi: "Nhà phố", en: "Townhouses", svi: "Nhà phố, nhà liền kề", sen: "Street & row houses", href: "/marketplace?type=TOWNHOUSE&transaction=SALE" },
-    { icon: LandPlot, vi: "Đất nền", en: "Land plots", svi: "Đất nền dự án, thổ cư", sen: "Residential land", href: "/marketplace?type=LAND&transaction=SALE" },
+    { icon: Building2, vi: "Căn hộ", en: "Apartments", svi: "Chung cư, căn hộ dự án", sen: "Condos & project units", href: "/marketplace?type=Apartment&transaction=SALE" },
+    { icon: Home, vi: "Nhà phố", en: "Townhouses", svi: "Nhà phố, nhà liền kề", sen: "Street & row houses", href: "/marketplace?type=Townhouse&transaction=SALE" },
+    { icon: LandPlot, vi: "Đất nền", en: "Land plots", svi: "Đất nền dự án, thổ cư", sen: "Residential land", href: "/marketplace?type=Land&transaction=SALE" },
     { icon: KeyRound, vi: "Cho thuê", en: "For rent", svi: "Căn hộ, nhà, mặt bằng", sen: "Homes & premises", href: "/marketplace?transaction=RENT" },
     { icon: Sparkles, vi: "Dự án mới", en: "New projects", svi: "Bảng giá, mặt bằng", sen: "Price lists & plans", href: "/du-an" },
-    { icon: Trees, vi: "Biệt thự", en: "Villas", svi: "Biệt thự, song lập", sen: "Detached & semi-detached", href: "/marketplace?type=VILLA&transaction=SALE" },
+    { icon: Trees, vi: "Biệt thự", en: "Villas", svi: "Biệt thự, song lập", sen: "Detached & semi-detached", href: "/marketplace?type=Villa&transaction=SALE" },
   ];
   return (
-    <section style={{ padding: "8px 0 0" }} aria-label={T(lang, "Danh mục", "Categories")}>
+    <section className="lp-sec lp-category-section" aria-label={T(lang, "Danh mục", "Categories")}>
       <div className="lp-wrap">
+        <SectionHead
+          eyebrow={T(lang, "Tìm theo nhu cầu", "Explore by need")}
+          title={T(lang, "Chọn kiểu nhà phù hợp với bạn", "Find the right kind of home")}
+        />
         <Reveal className="lp-cats">
           {cats.map(c => {
             const Icon = c.icon;
@@ -518,6 +546,7 @@ function Categories({ lang }: { lang: Lang }) {
 
 // ─── 3. LATEST LISTINGS ──────────────────────────────────────────────────────
 function LatestListings({ lang, listings, total, illustrative }: { lang: Lang; listings: any[]; total: number; illustrative: boolean }) {
+  const [activeFilter, setActiveFilter] = useState("all");
   const withPhotos = listings.filter(l => Array.isArray(l?.images) && l.images.length > 0);
   const seen = new Set<string>();
   const clean = (withPhotos.length >= 4 ? withPhotos : listings).filter(l => {
@@ -534,10 +563,27 @@ function LatestListings({ lang, listings, total, illustrative }: { lang: Lang; l
     perArea[key] = (perArea[key] || 0) + 1;
     return perArea[key] <= 2;
   });
-  const items = [...varied, ...pool.filter(l => !varied.includes(l))].slice(0, 8);
+  const candidates = [...varied, ...pool.filter(l => !varied.includes(l))];
+  const items = candidates.slice(0, 8);
   if (items.length === 0) return null;
+  const filters = [
+    { id: "all", vi: "Tất cả", en: "All" },
+    { id: "thu-duc", vi: "Thủ Đức", en: "Thu Duc" },
+    { id: "under-5b", vi: "Dưới 5 tỷ", en: "Under VND 5B" },
+    { id: "rent", vi: "Cho thuê", en: "For rent" },
+  ];
+  const filteredItems = candidates.filter((listing) => {
+    if (activeFilter === "all") return true;
+    if (activeFilter === "rent") return String(listing?.transaction || "").toUpperCase() === "RENT";
+    if (activeFilter === "under-5b") return Number(listing?.price) > 0 && Number(listing?.price) <= 5_000_000_000;
+    if (activeFilter === "thu-duc") {
+      const text = `${listing?.location || ""} ${listing?.title || ""}`.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
+      return text.includes("thu duc") || text.includes("the global city");
+    }
+    return true;
+  }).slice(0, 8);
   return (
-    <section className="lp-sec">
+    <section className="lp-sec lp-listings-section">
       <div className="lp-wrap">
         <SectionHead
           eyebrow={T(lang, "Tin mới đăng", "Just listed")}
@@ -547,9 +593,32 @@ function LatestListings({ lang, listings, total, illustrative }: { lang: Lang; l
             : T(lang, "Ảnh thật, giá niêm yết và trạng thái kiểm tra của từng tin.", "Real photos, asking price and check status on every listing.")}
           action={<a className="lp-link" href={lpath("/marketplace", lang)}>{total > 0 ? T(lang, `Xem tất cả ${total.toLocaleString("vi-VN")} tin`, `See all ${total.toLocaleString("en-US")} listings`) : T(lang, "Xem tất cả tin", "See all listings")} <ArrowRight size={16} aria-hidden="true" /></a>}
         />
-        <div className="lp-listings">
-          {items.map((l, i) => <PublicListingCard key={l.id} listing={l} eager={i < 4} />)}
+        <div className="lp-filter-row" role="group" aria-label={T(lang, "Lọc tin đăng", "Filter listings")}>
+          {filters.map((filter) => (
+            <button
+              key={filter.id}
+              type="button"
+              className="lp-filter-chip"
+              aria-pressed={activeFilter === filter.id}
+              onClick={() => setActiveFilter(filter.id)}
+            >
+              {filter[lang]}
+            </button>
+          ))}
         </div>
+        {filteredItems.length ? (
+          <div className="lp-listings">
+            {filteredItems.map((listing) => <PublicListingCard key={listing.id} listing={listing} eager={false} editorial />)}
+          </div>
+        ) : (
+          <div className="lp-empty-filter">
+            <p>{T(lang, "Chưa có tin phù hợp với bộ lọc này.", "No listings match this filter yet.")}</p>
+            <button type="button" className="lp-link" onClick={() => setActiveFilter("all")}>
+              {T(lang, "Xem tất cả tin", "Show all listings")} <ArrowRight size={16} aria-hidden="true" />
+            </button>
+          </div>
+        )}
+        {illustrative && <p className="lp-listing-note">{T(lang, "Tin đăng và giá minh họa trong môi trường phát triển.", "Listings and prices are illustrative development data.")}</p>}
       </div>
     </section>
   );
@@ -558,7 +627,7 @@ function LatestListings({ lang, listings, total, illustrative }: { lang: Lang; l
 // ─── 4. PROJECTS (bento) ─────────────────────────────────────────────────────
 function Projects({ lang }: { lang: Lang }) {
   return (
-    <section className="lp-sec" style={{ background: "var(--lp-tint)" }}>
+    <section className="lp-sec lp-projects-section">
       <div className="lp-wrap">
         <SectionHead
           eyebrow={T(lang, "Dự án nổi bật", "Featured projects")}
@@ -567,14 +636,16 @@ function Projects({ lang }: { lang: Lang }) {
           action={<a className="lp-link" href={lpath("/du-an", lang)}>{T(lang, "Tất cả dự án", "All projects")} <ArrowRight size={16} aria-hidden="true" /></a>}
         />
         <Reveal className="lp-bento">
-          {PROJECTS.map((p, i) => (
+          {PROJECTS.map((p) => (
             <a key={p.slug} className="lp-proj" href={lpath(`/du-an/${p.slug}`, lang)}>
-              <Image src={projImg(p.slug)} alt={p.name} fill priority={i === 0} sizes="(max-width: 640px) 82vw, (max-width: 1023px) 50vw, 40vw" />
+              <Image src={projImg(p.slug)} alt={p.name} fill sizes="(max-width: 640px) 82vw, (max-width: 1023px) 50vw, 40vw" />
               <span className="go" aria-hidden="true"><ArrowUpRight size={18} /></span>
               <div className="body">
                 <span className="dev">{p.dev}</span>
                 <h3>{p.name}</h3>
+                <span className="lp-project-price">{p.price[lang]}</span>
                 <p>{p.desc[lang]}</p>
+                <span className="lp-project-action">{T(lang, "Khám phá dự án", "Explore project")} <ArrowRight size={14} aria-hidden="true" /></span>
               </div>
             </a>
           ))}
@@ -584,61 +655,21 @@ function Projects({ lang }: { lang: Lang }) {
   );
 }
 
-function DeveloperAndProof({ lang, illustrative }: { lang: Lang; illustrative: boolean }) {
+function DeveloperAndProof({ lang }: { lang: Lang }) {
+  const developers = Array.from(new Set(PROJECTS.map(project => project.dev)));
   return (
     <section className="lp-proof" aria-label={T(lang, "Chủ đầu tư và ghi chú dữ liệu", "Developers and data notes")}>
       <div className="lp-wrap">
         <div className="lp-proof-row">
-          <span className="lp-dev-note">{T(lang, "Danh mục dự án", "Project directory")}</span>
-          <div className="lp-wordmarks" aria-label={T(lang, "Các chủ đầu tư được giới thiệu", "Featured developers")}>
-            <span>NOVALAND</span><span>MASTERISE HOMES</span><span>NAM LONG</span><span>VINHOMES</span>
+          <span className="lp-dev-note">{T(lang, "Đối tác dự án", "Project partners")}</span>
+          <div className="lp-marquee" role="img" aria-label={`${T(lang, "Các chủ đầu tư được giới thiệu", "Featured developers")}: ${developers.join(", ")}`}>
+            <div className="lp-marquee-track" aria-hidden="true">
+              {[...developers, ...developers].map((name, index) => (
+                <span className="lp-wordmark" key={`${name}-${index}`}>{name}</span>
+              ))}
+            </div>
           </div>
         </div>
-        {illustrative && (
-          <div className="lp-sample-proof" aria-label={T(lang, "Số liệu và đánh giá minh họa, chỉ dùng trong môi trường phát triển", "Illustrative metrics and reviews for development only")}>
-            <p className="lp-sample-label">{T(lang, "Dữ liệu minh họa · Chỉ dùng trong môi trường phát triển", "Illustrative data · Development only")}</p>
-            <div className="lp-sample-metrics">
-              <div><b>{T(lang, "128+", "128+")}</b><span>{T(lang, "giao dịch mẫu", "sample transactions")}</span></div>
-              <div><b>{T(lang, "85", "85")}</b><span>{T(lang, "tin mẫu", "sample listings")}</span></div>
-              <div><b>{T(lang, "2 lớp", "2 layers")}</b><span>{T(lang, "rà soát pháp lý", "legal review")}</span></div>
-            </div>
-            <div className="lp-review-grid">
-              <article className="lp-review">
-                <p>{T(lang, "“Tôi hiểu rõ những giấy tờ cần kiểm tra trước khi đi xem nhà.”", "“I knew which documents to check before viewing the home.”")}</p>
-                <b>{T(lang, "Khách mua · ví dụ 01", "Buyer · example 01")}</b>
-                <small>{T(lang, "Đánh giá minh họa", "Illustrative review")}</small>
-              </article>
-              <article className="lp-review">
-                <p>{T(lang, "“So sánh giá theo khu vực giúp tôi thu hẹp lựa chọn nhanh hơn.”", "“Area price comparisons helped me narrow my choices faster.”")}</p>
-                <b>{T(lang, "Khách mua · ví dụ 02", "Buyer · example 02")}</b>
-                <small>{T(lang, "Đánh giá minh họa", "Illustrative review")}</small>
-              </article>
-              <article className="lp-review">
-                <p>{T(lang, "“Tư vấn dễ hiểu, không tạo áp lực phải quyết định ngay.”", "“The advice was clear and I was not pressured to decide immediately.”")}</p>
-                <b>{T(lang, "Khách hàng · ví dụ 03", "Client · example 03")}</b>
-                <small>{T(lang, "Đánh giá minh họa", "Illustrative review")}</small>
-              </article>
-            </div>
-          </div>
-        )}
-      </div>
-    </section>
-  );
-}
-
-function LegalAdvisorIntro({ lang, onChatOpen }: { lang: Lang; onChatOpen: () => void }) {
-  return (
-    <section className="lp-sec" style={{ paddingTop: 0 }}>
-      <div className="lp-wrap">
-        <Reveal className="lp-advisor">
-          <span className="lp-advisor-mark"><Scale size={27} aria-hidden="true" /></span>
-          <div>
-            <span className="lp-eyebrow">{T(lang, "Hỗ trợ pháp lý thực tế", "Practical legal support")}</span>
-            <h3>{T(lang, "Đọc hồ sơ trước. Quyết định sau.", "Read the documents. Then decide.")}</h3>
-            <p>{T(lang, "Đội ngũ chuyên viên pháp lý hỗ trợ bạn hiểu giấy tờ, tình trạng giao dịch và những điểm cần hỏi thêm. Thông tin dự án luôn nên được đối chiếu với tài liệu gốc mới nhất.", "The legal specialists can help explain documents, transaction status and questions to resolve. Always compare project information with the latest original documents.")}</p>
-          </div>
-          <button className="lp-btn lp-btn-primary" type="button" onClick={onChatOpen}>{T(lang, "Trao đổi với chuyên viên", "Talk to a specialist")} <ArrowRight size={16} aria-hidden="true" /></button>
-        </Reveal>
       </div>
     </section>
   );
@@ -678,7 +709,7 @@ function MapSection({ lang }: { lang: Lang }) {
 }
 
 // ─── 6. WHY ──────────────────────────────────────────────────────────────────
-function Why({ lang }: { lang: Lang }) {
+function Why({ lang, illustrative, onChatOpen }: { lang: Lang; illustrative: boolean; onChatOpen: () => void }) {
   const items = [
     { icon: Scale, ti: T(lang, "Định giá minh bạch", "Transparent valuation"), tx: T(lang, "Ước tính theo dữ liệu giao dịch trong khu vực, hiển thị rõ từng yếu tố ảnh hưởng đến giá.", "Estimates from local transaction data, showing every factor that moves the price.") },
     { icon: ShieldCheck, ti: T(lang, "Pháp lý hai lớp", "Two-layer legal check"), tx: T(lang, "AI rà soát quy hoạch, sổ và tranh chấp; chuyên viên pháp lý xác nhận trước khi bạn đặt cọc.", "AI screens zoning, title and disputes; a legal specialist confirms before you deposit.") },
@@ -686,7 +717,7 @@ function Why({ lang }: { lang: Lang }) {
     { icon: Landmark, ti: T(lang, "Hỗ trợ vay ngân hàng", "Mortgage support"), tx: T(lang, "Một bộ hồ sơ, so sánh gói vay của nhiều ngân hàng, đồng hành đến khi giải ngân.", "One application, compare offers from several banks, supported until disbursement.") },
   ];
   return (
-    <section className="lp-sec" style={{ background: "var(--lp-tint)" }}>
+    <section className="lp-sec lp-why-section" style={{ background: "var(--lp-tint)" }}>
       <div className="lp-wrap">
         <SectionHead
           eyebrow={T(lang, "Vì sao chọn SGS LAND", "Why SGS LAND")}
@@ -694,9 +725,50 @@ function Why({ lang }: { lang: Lang }) {
         />
         <Reveal className="lp-why">
           {items.map((it, i) => { const Icon = it.icon; return (
-            <div key={i}><span className="ic"><Icon size={22} aria-hidden="true" /></span><h3>{it.ti}</h3><p>{it.tx}</p></div>
+            <div key={i} className={`lp-why-card lp-why-card-${i + 1}`}>
+              <span className="lp-why-index">0{i + 1}</span>
+              <span className="ic"><Icon size={22} aria-hidden="true" /></span>
+              <h3>{it.ti}</h3>
+              <p>{it.tx}</p>
+            </div>
           ); })}
+          <div className="lp-why-card lp-why-legal">
+            <span className="lp-why-index">05</span>
+            <span className="ic"><Scale size={22} aria-hidden="true" /></span>
+            <h3>{T(lang, "Chuyên viên pháp lý đồng hành", "Legal specialists, when needed")}</h3>
+            <p>{T(lang, "Đội ngũ hỗ trợ bạn hiểu giấy tờ, tình trạng giao dịch và những điểm cần xác minh thêm.", "Get help understanding documents, transaction status and anything that needs further verification.")}</p>
+            <button type="button" className="lp-why-action" onClick={onChatOpen}>
+              {T(lang, "Trao đổi với chuyên viên", "Talk to a specialist")} <ArrowRight size={15} aria-hidden="true" />
+            </button>
+          </div>
         </Reveal>
+        {illustrative && (
+          <Reveal className="lp-sample-proof" aria-label={T(lang, "Số liệu và đánh giá minh họa, chỉ dùng trong môi trường phát triển", "Illustrative metrics and reviews for development only")}>
+            <p className="lp-sample-label">{T(lang, "Dữ liệu minh họa · Chỉ dùng trong môi trường phát triển", "Illustrative data · Development only")}</p>
+            <div className="lp-sample-metrics">
+              <div><b>128+</b><span>{T(lang, "giao dịch mẫu", "sample transactions")}</span></div>
+              <div><b>85</b><span>{T(lang, "tin mẫu", "sample listings")}</span></div>
+              <div><b>{T(lang, "2 lớp", "2 layers")}</b><span>{T(lang, "rà soát pháp lý", "legal review")}</span></div>
+            </div>
+            <div className="lp-review-grid">
+              <article className="lp-review">
+                <p>{T(lang, "“Tôi hiểu rõ những giấy tờ cần kiểm tra trước khi đi xem nhà.”", "“I knew which documents to check before viewing the home.”")}</p>
+                <b>{T(lang, "Khách mua · ví dụ 01", "Buyer · example 01")}</b>
+                <small>{T(lang, "Đánh giá minh họa", "Illustrative review")}</small>
+              </article>
+              <article className="lp-review">
+                <p>{T(lang, "“So sánh giá theo khu vực giúp tôi thu hẹp lựa chọn nhanh hơn.”", "“Area price comparisons helped me narrow my choices faster.”")}</p>
+                <b>{T(lang, "Khách mua · ví dụ 02", "Buyer · example 02")}</b>
+                <small>{T(lang, "Đánh giá minh họa", "Illustrative review")}</small>
+              </article>
+              <article className="lp-review">
+                <p>{T(lang, "“Tư vấn dễ hiểu, không tạo áp lực phải quyết định ngay.”", "“The advice was clear and I was not pressured to decide immediately.”")}</p>
+                <b>{T(lang, "Khách hàng · ví dụ 03", "Client · example 03")}</b>
+                <small>{T(lang, "Đánh giá minh họa", "Illustrative review")}</small>
+              </article>
+            </div>
+          </Reveal>
+        )}
       </div>
     </section>
   );
@@ -710,7 +782,7 @@ function Tools({ lang }: { lang: Lang }) {
     { icon: Handshake, ti: T(lang, "Ký gửi bất động sản", "List your property"), tx: T(lang, "Gửi thông tin nhà đất, đội ngũ SGS LAND kiểm tra và giới thiệu đến người mua phù hợp.", "Send us your property; our team checks it and presents it to the right buyers."), cta: T(lang, "Ký gửi ngay", "List now"), href: "/ky-gui-bat-dong-san" },
   ];
   return (
-    <section className="lp-sec" style={{ paddingTop: 0, background: "var(--lp-tint)" }}>
+    <section className="lp-sec lp-tools-section" style={{ paddingTop: 0, background: "var(--lp-tint)" }}>
       <div className="lp-wrap">
         <Reveal className="lp-band">
           <div style={{ position: "relative", maxWidth: 620, marginBottom: 28 }}>
@@ -779,12 +851,12 @@ function Faq({ lang, onChatOpen }: { lang: Lang; onChatOpen: () => void }) {
 // ─── 9. FINAL CTA ────────────────────────────────────────────────────────────
 function FinalCta({ lang, onChatOpen }: { lang: Lang; onChatOpen: () => void }) {
   return (
-    <section className="lp-sec" style={{ paddingTop: 0 }}>
+    <section className="lp-sec lp-final-cta-section">
       <div className="lp-wrap">
-        <Reveal style={{ borderRadius: 28, border: "1px solid var(--lp-line)", background: "var(--lp-paper)", padding: "clamp(32px,5vw,64px)", textAlign: "center" }}>
+        <Reveal className="lp-final-cta">
           <span className="lp-eyebrow">{T(lang, "Miễn phí · Không cần đăng ký", "Free · No sign-up")}</span>
-          <h2 className="lp-h2" style={{ marginTop: 12, fontSize: "clamp(28px,4vw,48px)" }}>{T(lang, <>Bắt đầu bằng <em style={{ fontStyle: "normal", color: "var(--lp-navy)" }}>giá thật.</em></>, <>Start with the <em style={{ fontStyle: "normal", color: "var(--lp-navy)" }}>real price.</em></>)}</h2>
-          <p className="lp-lead" style={{ margin: "14px auto 28px", maxWidth: 480 }}>{T(lang, "Định giá AI ngay, hoặc trò chuyện với chuyên viên tư vấn để được hỗ trợ theo nhu cầu.", "Get an AI valuation now, or chat with an advisor for help with your needs.")}</p>
+          <h2 className="lp-h2">{T(lang, <>Bắt đầu bằng <em>giá thật.</em></>, <>Start with the <em>real price.</em></>)}</h2>
+          <p className="lp-lead">{T(lang, "Định giá AI ngay, hoặc trò chuyện với chuyên viên tư vấn để được hỗ trợ theo nhu cầu.", "Get an AI valuation now, or chat with an advisor for help with your needs.")}</p>
           <div style={{ display: "flex", gap: 12, justifyContent: "center", flexWrap: "wrap" }}>
             <a className="lp-btn lp-btn-primary" href={lpath("/ai-valuation", lang)}>{T(lang, "Định giá AI miễn phí", "Free AI valuation")} <ArrowRight size={16} aria-hidden="true" /></a>
             <button type="button" className="lp-btn lp-btn-ghost" onClick={onChatOpen}><MessageCircle size={18} aria-hidden="true" /> {T(lang, "Hỏi chuyên viên", "Ask an advisor")}</button>
@@ -813,22 +885,22 @@ export function LandingPage({ featuredListings = [], stats, illustrative = false
   return (
     <>
       <style dangerouslySetInnerHTML={{ __html: STYLE }} />
-      <div className={`lp-root lp-sans${ready ? " lp-ready" : ""}`} style={{ background: "var(--lp-bg)", color: "var(--lp-ink)", minHeight: "100vh" }}>
+      <div className={`lp-root lp-editorial lp-sans${ready ? " lp-ready" : ""}`} style={{ background: "var(--lp-bg)", color: "var(--lp-ink)", minHeight: "100vh" }}>
         <Hero lang={lang} listingCount={total} onAskAi={onAskAi} illustrative={illustrative} />
+        <DeveloperAndProof lang={lang} />
         <Categories lang={lang} />
-        <LatestListings lang={lang} listings={featuredListings} total={total} illustrative={illustrative} />
         <Projects lang={lang} />
-        <DeveloperAndProof lang={lang} illustrative={illustrative} />
+        <LatestListings lang={lang} listings={featuredListings} total={total} illustrative={illustrative} />
         <MapSection lang={lang} />
-        <Why lang={lang} />
-        <LegalAdvisorIntro lang={lang} onChatOpen={onChatOpen} />
+        <Why lang={lang} illustrative={illustrative} onChatOpen={onChatOpen} />
         <Tools lang={lang} />
         <Faq lang={lang} onChatOpen={onChatOpen} />
         <FinalCta lang={lang} onChatOpen={onChatOpen} />
-        <div className="lp-floating-cta" aria-label={T(lang, "Liên hệ nhanh", "Quick contact")}>
-          <a href="tel:0379281445"><span>{T(lang, "Gọi tư vấn", "Call advisor")}</span></a>
-          <button type="button" onClick={onChatOpen}><MessageCircle size={17} aria-hidden="true" />{T(lang, "Hỏi chuyên viên", "Ask a specialist")}</button>
-        </div>
+        <nav className="lp-floating-cta" aria-label={T(lang, "Liên hệ nhanh", "Quick contact")}>
+          <a href="tel:0379281445"><Phone size={16} aria-hidden="true" /><span>{T(lang, "Gọi", "Call")}</span></a>
+          <a href="https://zalo.me/0379281445" target="_blank" rel="noopener noreferrer"><span className="lp-zalo-mark" aria-hidden="true">Z</span><span>Zalo</span></a>
+          <button type="button" onClick={onChatOpen}><MessageCircle size={16} aria-hidden="true" /><span>{T(lang, "Trò chuyện", "Chat")}</span></button>
+        </nav>
       </div>
     </>
   );

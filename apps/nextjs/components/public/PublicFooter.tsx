@@ -2,8 +2,10 @@
 "use client";
 import { useState, useEffect } from "react";
 import Link from "next/link";
-import { useLang } from "@/components/shared/useLang";
+import { usePathname } from "next/navigation";
+import { useLang, switchLangPath } from "@/components/shared/useLang";
 import { tt } from "@/lib/i18n";
+import { Globe, Moon, Sun } from "lucide-react";
 const FOOTER_PROJECTS = [
   { label: "Aqua City Novaland",       href: "/du-an/aqua-city" },
   { label: "The Global City",          href: "/du-an/the-global-city" },
@@ -73,14 +75,35 @@ const FOOTER_YEAR = 2026;
 
 export function PublicFooter() {
   const lang: Lang = useLang();
+  const pathname = usePathname();
+  const normalizedPath = pathname?.replace(/\/+$/, "") || "/";
+  const isHomepage = normalizedPath === "/" || normalizedPath === "/en";
   const [clientReady, setClientReady] = useState(false);
+  const [theme, setTheme] = useState<"light" | "dark">("light");
 
   useEffect(() => {
     setClientReady(true);
+    setTheme(document.documentElement.classList.contains("dark") ? "dark" : "light");
   }, []);
 
+  const toggleTheme = () => {
+    const next = theme === "dark" ? "light" : "dark";
+    document.documentElement.classList.toggle("dark", next === "dark");
+    document.documentElement.classList.toggle("light", next === "light");
+    try { localStorage.setItem("sgs-theme", next); } catch {}
+    setTheme(next);
+    window.dispatchEvent(new CustomEvent("sgs-theme-change", { detail: next }));
+  };
+
+  const toggleLanguage = () => {
+    const next = lang === "vi" ? "en" : "vi";
+    const current = new URL(window.location.href);
+    current.pathname = switchLangPath(current.pathname, next);
+    window.location.assign(`${current.pathname}${current.search}${current.hash}`);
+  };
+
   return (
-      <footer className="ui-public-footer" style={{ background: "var(--sgs-primary-deep)", borderTop: "1px solid rgba(200,150,62,0.2)" }}>
+      <footer className="ui-public-footer sgs-home-footer" style={{ background: "var(--sgs-primary-deep)", borderTop: "1px solid rgba(200,150,62,0.2)" }}>
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-14 pb-4">
 
         {/* ── 4-column grid ─────────────────────────────── */}
@@ -277,6 +300,25 @@ export function PublicFooter() {
             © {FOOTER_YEAR} SGS LAND. {lang === "vi" ? "Bảo lưu mọi quyền." : "All rights reserved."} · {tt(lang, "Cấp ngày: 01/01/2018 tại TP.HCM", "Issued: 01/01/2018 in Ho Chi Minh City")}
           </p>
           <div className="flex items-center gap-3 flex-wrap justify-center sm:justify-end">
+            {isHomepage && (
+              <div className="lp-footer-controls" aria-label={lang === "vi" ? "Tùy chọn hiển thị" : "Display options"}>
+                <button
+                  type="button"
+                  onClick={toggleTheme}
+                  aria-label={theme === "dark" ? (lang === "vi" ? "Chuyển sang giao diện sáng" : "Switch to light theme") : (lang === "vi" ? "Chuyển sang giao diện tối" : "Switch to dark theme")}
+                >
+                  {theme === "dark" ? <Sun size={15} aria-hidden="true" /> : <Moon size={15} aria-hidden="true" />}
+                  {theme === "dark" ? (lang === "vi" ? "Sáng" : "Light") : (lang === "vi" ? "Tối" : "Dark")}
+                </button>
+                <button
+                  type="button"
+                  onClick={toggleLanguage}
+                  aria-label={lang === "vi" ? "Switch to English" : "Chuyển sang tiếng Việt"}
+                >
+                  <Globe size={15} aria-hidden="true" />{lang === "vi" ? "EN" : "VI"}
+                </button>
+              </div>
+            )}
             {LEGAL_LINKS.map((link) => (
               <Link
                 key={link.href}
