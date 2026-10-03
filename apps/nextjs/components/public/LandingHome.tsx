@@ -5,6 +5,7 @@ import dynamic from "next/dynamic";
 import Image from "next/image";
 import { useLang } from "@/components/shared/useLang";
 import HeroSearch from "./HeroSearch";
+import HeroCityBackdrop from "./hero-city/HeroCityBackdrop";
 import "./LandingHome.editorial.css";
 import { PublicListingCard } from "./MarketplacePage";
 import {
@@ -504,11 +505,28 @@ function SectionHead({ eyebrow, title, lead, action }: { eyebrow?: React.ReactNo
 }
 
 // ─── 1. HERO ─────────────────────────────────────────────────────────────────
+function resolveHeroRegion(location: string): string {
+  const normalized = location
+    .toLowerCase()
+    .replace(/đ/g, "d")
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "");
+
+  if (normalized.includes("thu duc") || normalized.includes("thuduc")) return "thu-duc";
+  if (normalized.includes("bien hoa") || normalized.includes("dong nai") || normalized.includes("aqua city")) return "bien-hoa";
+  if (normalized.includes("tay ninh")) return "tay-ninh";
+  if (normalized.includes("hcm") || normalized.includes("ho chi minh") || normalized.includes("sai gon") || normalized.includes("saigon")) return "hcm";
+  return "";
+}
+
 function Hero({ lang, onAskAi }: { lang: Lang; onAskAi: (q: string) => void }) {
+  const [activeRegion, setActiveRegion] = useState("");
+
   return (
     <section className="lp-hero">
       <div className="lp-hero-media" aria-hidden="true">
         <Image className="lp-hero-backdrop" src={projImg("aqua-city")} alt="" fill priority sizes="100vw" />
+        <HeroCityBackdrop activeRegion={activeRegion} />
       </div>
       <div className="lp-wrap lp-hero-grid">
         <div className="lp-hero-copy">
@@ -528,7 +546,14 @@ function Hero({ lang, onAskAi }: { lang: Lang; onAskAi: (q: string) => void }) {
           </p>
 
           <div style={{ marginTop: 28 }}>
-            <HeroSearch lang={lang} action={lpath("/marketplace", lang)} valuationHref={lpath("/ai-valuation", lang)} onAskAi={onAskAi} withTabs />
+            <HeroSearch
+              lang={lang}
+              action={lpath("/marketplace", lang)}
+              valuationHref={lpath("/ai-valuation", lang)}
+              onAskAi={onAskAi}
+              onLocationChange={location => setActiveRegion(resolveHeroRegion(location))}
+              withTabs
+            />
           </div>
 
         </div>

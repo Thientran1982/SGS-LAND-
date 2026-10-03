@@ -138,3 +138,4 @@
 - [Valuation data contract](valuation-data-contract.md) — valuation prices, rent, area, and yields use explicit units with persisted provenance and freshness
 - [Valuation location observability](valuation-location-observability.md) — unknown locations stay explicit reference estimates; aliases affect matching only after tenant review
 - [Marketplace type normalization](marketplace-type-normalization.md) — public filters and BOARD grouping must handle enum, Vietnamese slug, and legacy JSON type fields
+- [Lazy Three.js preview timing](lazy-threejs-preview-timing.md) — a cold Next dev build may show the intentional photo fallback until the lazy city canvas finishes compiling

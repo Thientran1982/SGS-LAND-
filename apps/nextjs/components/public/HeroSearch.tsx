@@ -13,6 +13,7 @@ type Props = {
   action: string;
   valuationHref: string;
   onAskAi?: (question: string) => void;
+  onLocationChange?: (location: string) => void;
   withTabs?: boolean;
 };
 
@@ -91,7 +92,7 @@ const CSS = `
   @media (prefers-reduced-motion:reduce) { .hs-tab,.hs-ai,.hs-main { transition:none; } }
 `;
 
-export default function HeroSearch({ lang, action, valuationHref, onAskAi, withTabs }: Props) {
+export default function HeroSearch({ lang, action, valuationHref, onAskAi, onLocationChange, withTabs }: Props) {
   const [tx, setTx] = useState<"SALE" | "RENT">("SALE");
   const vi = lang === "vi";
   const inputRef = useRef<HTMLInputElement>(null);
@@ -161,6 +162,7 @@ export default function HeroSearch({ lang, action, valuationHref, onAskAi, withT
     }
     if (inputRef.current) {
       inputRef.current.value = value;
+      onLocationChange?.(value);
       inputRef.current.focus();
     }
   };
@@ -201,6 +203,7 @@ export default function HeroSearch({ lang, action, valuationHref, onAskAi, withT
               type="search"
               autoComplete="off"
               className={`hs-input${locationPointerFocused ? " hs-input-pointer-focus" : ""}`}
+              onChange={event => onLocationChange?.(event.target.value)}
               onPointerDown={() => setLocationPointerFocused(true)}
               onKeyDown={event => {
                 if (event.key === "Tab") setLocationPointerFocused(false);
