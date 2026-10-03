@@ -23,7 +23,7 @@ const CSS = `
   .hs-tab { min-height:38px; padding:0 17px; border:0; border-radius:999px; background:transparent; color:rgba(255,255,255,.82); font-size:13px; font-weight:600; cursor:pointer; transition:background .18s,color .18s; }
   .hs-tab[aria-pressed="true"] { background:#FAF8F4; color:#0B1B2B; }
   .hs-tab:focus-visible,.hs-ai:focus-visible,.hs-main:focus-visible { outline:3px solid #C8963E; outline-offset:3px; }
-  .hs-input:focus-visible:not(.hs-input-pointer-focus) { outline:3px solid #C8963E; outline-offset:3px; }
+  .hs-input:focus-visible:not(.hs-input-pointer-focus):placeholder-shown { outline:3px solid #C8963E; outline-offset:3px; }
   .hs-ai { min-height:42px; padding:0 16px; display:inline-flex; align-items:center; justify-content:center; gap:8px; border:1px solid rgba(255,255,255,.42); border-radius:999px; background:rgba(255,255,255,.12); color:#fff; backdrop-filter:blur(14px); font:600 13px var(--font-be-vietnam,sans-serif); cursor:pointer; transition:background .18s,transform .18s; }
   .hs-ai-mark { width:20px; height:20px; display:inline-grid; place-items:center; border-radius:50%; background:#C8963E; color:#0B1B2B; font-size:9px; font-weight:800; letter-spacing:-.05em; }
   .hs-ai:hover { background:rgba(255,255,255,.2); transform:translateY(-1px); }
@@ -210,7 +210,7 @@ export default function HeroSearch({ lang, action, valuationHref, onAskAi, onLoc
       <form action={action} method="get" role="search" data-hero-search className="hs-bar">
         {withTabs && <input type="hidden" name="transaction" value={tx} />}
         <div className="hs-field hs-location-field">
-          <label htmlFor="lp-hero-q">{vi ? "Khu vực" : "Location"}</label>
+          <label htmlFor="lp-hero-q">{vi ? "Nhập khu vực" : "Enter location"}</label>
           <div className="hs-location-control">
             <input
               ref={inputRef}
