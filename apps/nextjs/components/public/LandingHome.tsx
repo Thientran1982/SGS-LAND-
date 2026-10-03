@@ -241,7 +241,7 @@ const STYLE = `
   .lp-hero { position:relative;z-index:2;isolation:isolate;overflow:visible;padding:clamp(102px,11vw,136px) 0 56px;background:#102d35; }
   .lp-hero-media { position:absolute;inset:0;z-index:-2;overflow:hidden;pointer-events:none; }
   .lp-hero-backdrop { position:absolute;inset:0;z-index:0;object-fit:cover;object-position:center 54%; }
-  .lp-hero::before { content:"";position:absolute;z-index:-1;inset:0;pointer-events:none;background:linear-gradient(90deg,rgba(8,27,33,.92) 0%,rgba(8,27,33,.78) 43%,rgba(8,27,33,.32) 100%),linear-gradient(0deg,rgba(8,27,33,.62),transparent 60%); }
+   .lp-hero::before { content:"";position:absolute;z-index:-1;inset:0;pointer-events:none;background:linear-gradient(90deg,rgba(5,18,25,.97) 0%,rgba(5,18,25,.91) 34%,rgba(5,18,25,.68) 59%,rgba(5,18,25,.22) 100%),linear-gradient(0deg,rgba(5,18,25,.86) 0%,rgba(5,18,25,.48) 36%,transparent 74%); }
   .lp-hero::after { content:"";position:absolute;z-index:1;inset:auto 0 0;height:1px;background:linear-gradient(90deg,transparent,rgba(255,253,247,.35),transparent); }
   .lp-hero-grid { position:relative;z-index:2; }
   .lp-hero-grid { grid-template-columns:1fr;gap:clamp(28px,5vw,76px); }
@@ -326,7 +326,7 @@ const STYLE = `
   @media(max-width:1023px) { .lp-hero-grid { grid-template-columns:1fr; }.lp-collage { max-width:720px;width:100%;min-height:0;margin:0 auto; }.lp-collage .lp-float { display:none; } }
   @media(max-width:767px) {
     .lp-hero { padding-top:96px;padding-bottom:34px; }.lp-h1 { font-size:clamp(38px,10vw,54px); }.lp-hero-grid { gap:24px; }
-    .lp-hero::before { background:linear-gradient(90deg,rgba(8,27,33,.91),rgba(8,27,33,.76)),linear-gradient(0deg,rgba(8,27,33,.68),transparent 62%); }
+     .lp-hero::before { background:linear-gradient(90deg,rgba(5,18,25,.94),rgba(5,18,25,.84)),linear-gradient(0deg,rgba(5,18,25,.84),rgba(5,18,25,.42) 42%,transparent 72%); }
     .lp-collage { aspect-ratio:1.08/1;min-height:0; }.lp-collage .ph-a { inset:0 8% 13% 0; }.lp-collage .ph-b { width:48%;border-width:5px; }
     .lp-proof-row { align-items:flex-start;flex-direction:column;gap:10px; }.lp-wordmarks { width:100%;gap:12px;flex-wrap:wrap; }.lp-wordmarks span { font-size:11px; }
     .lp-advisor { grid-template-columns:48px 1fr;gap:12px; }.lp-advisor-mark { width:46px;height:46px; }.lp-advisor .lp-btn { grid-column:1/-1;width:100%; }
@@ -510,7 +510,10 @@ function resolveHeroRegion(location: string): string {
     .toLowerCase()
     .replace(/đ/g, "d")
     .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "");
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/[-_]+/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
 
   if (normalized.includes("thu duc") || normalized.includes("thuduc")) return "thu-duc";
   if (normalized.includes("bien hoa") || normalized.includes("dong nai") || normalized.includes("aqua city")) return "bien-hoa";

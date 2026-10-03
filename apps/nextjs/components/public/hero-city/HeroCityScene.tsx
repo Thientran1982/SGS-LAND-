@@ -4,7 +4,7 @@ import { useEffect, useMemo, useRef } from "react";
 import type { MutableRefObject } from "react";
 import { Canvas, useFrame, useThree } from "@react-three/fiber";
 import { MeshReflectorMaterial } from "@react-three/drei";
-import { Bloom, EffectComposer } from "@react-three/postprocessing";
+import { Bloom, EffectComposer, Vignette } from "@react-three/postprocessing";
 import * as THREE from "three";
 
 type MotionState = {
@@ -48,31 +48,48 @@ function smoothNoise(x: number, y: number): number {
 }
 
 function createBuildings(count: number, mobile: boolean): Building[] {
-  const columns = mobile ? 20 : 40;
-  const rows = Math.ceil(count / columns);
-  const spacingX = mobile ? 6.15 : 3.55;
-  const spacingZ = mobile ? 5.9 : 3.25;
-  const buildings: Building[] = [];
+  const columns = mobile ? 26 : 52;
+  const rows = mobile ? 28 : 42;
+  const spacingX = mobile ? 3.65 : 3.25;
+  const spacingZ = mobile ? 3.5 : 3.05;
+  const candidates: Building[] = [];
 
-  for (let index = 0; index < count; index += 1) {
-    const column = index % columns;
-    const row = Math.floor(index / columns);
-    const x = (column - (columns - 1) / 2) * spacingX + (hash2(column, row) - 0.5) * 0.72;
-    const z = (row - (rows - 1) / 2) * spacingZ + (hash2(row + 27, column) - 0.5) * 0.7;
-    const coarse = smoothNoise(column * 0.18 + 4.3, row * 0.2 + 10.7);
-    const fine = hash2(column + 14, row + 41);
-    const centerMass = Math.exp(-(((x - 5) ** 2) / 1550 + ((z + 3) ** 2) / 630));
-    const height = 4.2 + coarse * 12 + fine * 5 + centerMass * (7 + fine * 11);
+  for (let row = 0; row < rows; row += 1) {
+    for (let column = 0; column < columns; column += 1) {
+      // Broad avenues sit in the deliberate gaps between neighbourhood blocks.
+      if (column % 8 === 7 || row % 8 === 7) continue;
+      const x = (column - (columns - 1) / 2) * spacingX + (hash2(column, row) - 0.5) * 0.34;
+      const z = (row - (rows - 1) / 2) * spacingZ + (hash2(row + 27, column) - 0.5) * 0.32;
+      const riverCenter = 18 + 12 * Math.sin(x * 0.038) + 3 * Math.sin(x * 0.09 + 0.6);
+      if (Math.abs(z - riverCenter) < 7) continue;
 
-    buildings.push({
-      x,
-      z,
-      width: 1.35 + hash2(index, 73) * 0.82,
-      depth: 1.15 + hash2(index, 91) * 0.8,
-      height,
-    });
+      const coarse = smoothNoise(column * 0.16 + 4.3, row * 0.19 + 10.7);
+      const fine = hash2(column + 14, row + 41);
+      const outerProfile = Math.exp(-(((x - 5) ** 2) / 2450 + ((z + 3) ** 2) / 1060));
+      const centralBusinessDistrict = Math.exp(-(((x - 5) ** 2) / 480 + ((z + 3) ** 2) / 235));
+      const height =
+        3.4 +
+        outerProfile * (2.4 + coarse * 6.4) +
+        coarse * 3.6 +
+        fine * 2.1 +
+        centralBusinessDistrict * (6 + fine * 10.5);
+
+      candidates.push({
+        x,
+        z,
+        width: 1.5 + hash2(row, column + 73) * 1.05,
+        depth: 1.38 + hash2(column, row + 91) * 0.9,
+        height,
+      });
+    }
   }
-  return buildings;
+
+  // A stable shuffle removes a visible row-by-row cutoff while preserving the city plan.
+  for (let index = candidates.length - 1; index > 0; index -= 1) {
+    const swapIndex = Math.floor(hash2(index, 107) * (index + 1));
+    [candidates[index], candidates[swapIndex]] = [candidates[swapIndex], candidates[index]];
+  }
+  return candidates.slice(0, count);
 }
 
 function createBuildingMaterial(): THREE.MeshStandardMaterial {
@@ -124,23 +141,27 @@ function createBuildingMaterial(): THREE.MeshStandardMaterial {
       )
       .replace(
         "#include <color_fragment>",
-        `#include <color_fragment>
-         float cityVariation = fract(vCitySeed * 41.73);
-         diffuseColor.rgb *= mix(0.78, 1.14, cityVariation);`,
+        `#include <color_fragment>`,
       )
       .replace(
         "#include <emissivemap_fragment>",
         `#include <emissivemap_fragment>
-         vec2 cityCell = floor(vCityUv * vec2(6.0, 13.0));
-         vec2 cityCellUv = fract(vCityUv * vec2(6.0, 13.0));
-         float cityWindowShape =
-           step(0.13, cityCellUv.x) * step(cityCellUv.x, 0.84) *
-           step(0.12, cityCellUv.y) * step(cityCellUv.y, 0.82);
-         float cityWindowOn = step(0.62, cityHash(cityCell + vec2(vCitySeed * 17.0, floor(vCitySeed * 91.0))));
-         float cityTwinkle = 0.72 + 0.28 * sin(uCityTime * 0.19 + cityHash(cityCell + vCitySeed) * 6.28318 + vCitySeed * 8.0);
+          vec2 cityCell = floor(vCityUv * vec2(4.0, 9.0));
+          vec2 cityCellUv = fract(vCityUv * vec2(4.0, 9.0));
+          float cityWindowShape =
+            step(0.19, cityCellUv.x) * step(cityCellUv.x, 0.81) *
+            step(0.13, cityCellUv.y) * step(cityCellUv.y, 0.84);
+          float cityWindowSeed = cityHash(cityCell + vec2(vCitySeed * 17.0, floor(vCitySeed * 91.0)));
+          float cityWindowPeriod = 5.0 + cityHash(cityCell + vec2(vCitySeed * 31.0, 7.0)) * 8.0;
+          float cityWindowPhase = floor((uCityTime + cityWindowSeed * cityWindowPeriod) / cityWindowPeriod);
+          float cityWindowOn = step(0.85, cityHash(cityCell + vec2(vCitySeed * 29.0, cityWindowPhase)));
+          float cityTwinkle = 0.94 + 0.06 * sin(uCityTime * 0.12 + cityWindowSeed * 6.28318);
          float cityWindowMask = cityWindowShape * cityWindowOn * (1.0 - step(0.5, vCityFaceTop));
-          vec3 cityWindowColor = vec3(0.584, 0.396, 0.156);
-         diffuseColor.rgb = mix(diffuseColor.rgb, cityWindowColor, cityWindowMask * 0.78);
+           vec2 cityFacadeGrid = fract(vCityUv * vec2(4.0, 9.0));
+          float cityFacadeEdge = 1.0 - smoothstep(0.0, 0.035, min(min(cityFacadeGrid.x, 1.0 - cityFacadeGrid.x), min(cityFacadeGrid.y, 1.0 - cityFacadeGrid.y)));
+           vec3 cityWindowColor = vec3(0.788, 0.663, 0.431);
+          diffuseColor.rgb += vec3(0.009, 0.021, 0.026) * cityFacadeEdge * (1.0 - step(0.5, vCityFaceTop));
+          diffuseColor.rgb = mix(diffuseColor.rgb, cityWindowColor, cityWindowMask * 0.78);
           totalEmissiveRadiance += cityWindowColor * cityWindowMask * cityTwinkle * 0.9;`,
       );
   };
@@ -273,7 +294,7 @@ function CityCamera({
     const radius = 89;
     desiredPosition.set(
       Math.sin(orbit) * radius,
-      31 - motion.scroll * 4.3,
+      61 - motion.scroll * 4.3,
       Math.cos(orbit) * radius,
     );
     camera.position.lerp(desiredPosition, 1 - Math.exp(-delta * 0.38));
@@ -291,41 +312,260 @@ function CityCamera({
   return null;
 }
 
-function NightWater() {
+function SkyDome() {
+  const material = useMemo(
+    () =>
+      new THREE.ShaderMaterial({
+        side: THREE.BackSide,
+        depthTest: false,
+        depthWrite: false,
+        uniforms: {},
+        vertexShader: `
+          varying vec2 vSkyUv;
+          void main() {
+            vSkyUv = uv;
+            gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+          }
+        `,
+        fragmentShader: `
+          varying vec2 vSkyUv;
+          void main() {
+             float horizon = smoothstep(0.22, 0.51, vSkyUv.y);
+             float upperNight = smoothstep(0.51, 0.8, vSkyUv.y);
+            vec3 dusk = vec3(0.20, 0.15, 0.12);
+            vec3 blueHour = vec3(0.035, 0.085, 0.105);
+            vec3 midnight = vec3(0.012, 0.032, 0.047);
+            vec3 sky = mix(dusk, blueHour, horizon);
+            sky = mix(sky, midnight, upperNight * 0.86);
+             float afterglow = exp(-pow((vSkyUv.y - 0.49) * 22.0, 2.0));
+             sky += vec3(0.16, 0.055, 0.012) * afterglow;
+            gl_FragColor = vec4(sky, 1.0);
+          }
+        `,
+      }),
+    [],
+  );
+  const geometry = useMemo(() => new THREE.SphereGeometry(220, 36, 24), []);
+
+  return <mesh geometry={geometry} material={material} renderOrder={-1000} />;
+}
+
+function CityGround({ mobile }: { mobile: boolean }) {
+  const { roads, edges } = useMemo(() => {
+    const xRoads = mobile ? [-20, 9, 38] : [-60, -34, -8, 18, 44, 70];
+    const zRoads = mobile ? [-19, 9, 37] : [-41, -17, 7, 31, 55];
+    const roadDepth = mobile ? 108 : 150;
+    const roadWidth = mobile ? 1.3 : 1.25;
+    const verticalRoads = xRoads.map(x => ({ x, z: 0, width: roadWidth, depth: roadDepth, rotation: 0 }));
+    const horizontalRoads = zRoads.map(z => ({
+      x: 0,
+      z,
+      width: mobile ? 110 : 178,
+      depth: roadWidth,
+      rotation: 0,
+    }));
+    const roadEdges = [
+      ...xRoads.flatMap(x => [
+        { x: x - roadWidth / 2 - 0.08, z: 0, width: 0.035, depth: roadDepth, rotation: 0 },
+        { x: x + roadWidth / 2 + 0.08, z: 0, width: 0.035, depth: roadDepth, rotation: 0 },
+      ]),
+      ...zRoads.flatMap(z => [
+        { x: 0, z: z - roadWidth / 2 - 0.08, width: mobile ? 110 : 178, depth: 0.035, rotation: 0 },
+        { x: 0, z: z + roadWidth / 2 + 0.08, width: mobile ? 110 : 178, depth: 0.035, rotation: 0 },
+      ]),
+    ];
+    return { roads: [...verticalRoads, ...horizontalRoads], edges: roadEdges };
+  }, [mobile]);
+
   return (
-    <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.035, 51]} receiveShadow={false}>
-      <planeGeometry args={[178, 42]} />
-      <MeshReflectorMaterial
-        color="#102B32"
-        metalness={0.38}
-        roughness={0.68}
-        mirror={0.2}
-        blur={[180, 60]}
-        resolution={128}
-        mixBlur={0.82}
-        mixStrength={0.18}
-        depthScale={0.16}
-        minDepthThreshold={0.28}
-        maxDepthThreshold={1.2}
-        depthToBlurRatioBias={0.22}
-      />
+    <>
+      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, -0.025, 0]} receiveShadow={false}>
+        <planeGeometry args={mobile ? [120, 112] : [205, 155]} />
+        <meshStandardMaterial color="#071820" roughness={0.98} metalness={0.04} />
+      </mesh>
+      {roads.map((road, index) => (
+        <mesh
+          key={`road-${index}`}
+          position={[road.x, 0.018, road.z]}
+          rotation={[0, road.rotation, 0]}
+        >
+          <boxGeometry args={[road.width, 0.025, road.depth]} />
+          <meshBasicMaterial color="#1D3D47" toneMapped={false} />
+        </mesh>
+      ))}
+      {edges.map((edge, index) => (
+        <mesh
+          key={`road-edge-${index}`}
+          position={[edge.x, 0.033, edge.z]}
+          rotation={[0, edge.rotation, 0]}
+        >
+          <boxGeometry args={[edge.width, 0.008, edge.depth]} />
+          <meshBasicMaterial color="#6A8890" transparent opacity={0.52} toneMapped={false} />
+        </mesh>
+      ))}
+    </>
+  );
+}
+
+function NightRiver({ mobile }: { mobile: boolean }) {
+  const geometry = useMemo(() => {
+    const shape = new THREE.Shape();
+    const startX = -100;
+    const endX = 100;
+    const halfWidth = 6.4;
+    const riverY = (x: number) => -(18 + 12 * Math.sin(x * 0.038) + 3 * Math.sin(x * 0.09 + 0.6));
+    shape.moveTo(startX, riverY(startX) - halfWidth);
+    for (let x = startX + 2; x <= endX; x += 2) {
+      shape.lineTo(x, riverY(x) - halfWidth);
+    }
+    for (let x = endX; x >= startX; x -= 2) {
+      shape.lineTo(x, riverY(x) + halfWidth);
+    }
+    shape.closePath();
+    const riverGeometry = new THREE.ShapeGeometry(shape, 1);
+    riverGeometry.rotateX(-Math.PI / 2);
+    return riverGeometry;
+  }, []);
+
+  return (
+    <mesh geometry={geometry} position={[0, 0.045, 0]} receiveShadow={false}>
+      {mobile ? (
+        <meshBasicMaterial color="#205666" toneMapped={false} side={THREE.DoubleSide} />
+      ) : (
+        <MeshReflectorMaterial
+          color="#1B4A56"
+          metalness={0.48}
+          roughness={0.44}
+          mirror={0.34}
+          blur={[24, 24]}
+          resolution={128}
+          mixBlur={0.72}
+          mixStrength={0.32}
+          depthScale={0.12}
+          minDepthThreshold={0.24}
+          maxDepthThreshold={1.1}
+          depthToBlurRatioBias={0.18}
+          emissive="#0D2A33"
+          emissiveIntensity={0.55}
+          side={THREE.DoubleSide}
+        />
+      )}
     </mesh>
+  );
+}
+
+function GoldDust({ mobile }: { mobile: boolean }) {
+  const pointsRef = useRef<THREE.Points>(null);
+  const count = mobile ? 96 : 300;
+  const { geometry, drift } = useMemo(() => {
+    const positions = new Float32Array(count * 3);
+    const velocities = new Float32Array(count * 3);
+    for (let index = 0; index < count; index += 1) {
+      positions[index * 3] = (hash2(index, 1) - 0.5) * 172;
+      positions[index * 3 + 1] = 1 + hash2(index, 2) * 27;
+      positions[index * 3 + 2] = (hash2(index, 3) - 0.5) * 122;
+      velocities[index * 3] = (hash2(index, 4) - 0.5) * 0.12;
+      velocities[index * 3 + 1] = 0.015 + hash2(index, 5) * 0.04;
+      velocities[index * 3 + 2] = (hash2(index, 6) - 0.5) * 0.1;
+    }
+    const pointsGeometry = new THREE.BufferGeometry();
+    pointsGeometry.setAttribute("position", new THREE.BufferAttribute(positions, 3));
+    return { geometry: pointsGeometry, drift: velocities };
+  }, [count]);
+
+  useFrame((_, delta) => {
+    const attribute = geometry.getAttribute("position") as THREE.BufferAttribute;
+    const positions = attribute.array as Float32Array;
+    for (let index = 0; index < count; index += 1) {
+      const offset = index * 3;
+      positions[offset] += drift[offset] * delta;
+      positions[offset + 1] += drift[offset + 1] * delta;
+      positions[offset + 2] += drift[offset + 2] * delta;
+      if (positions[offset] > 88) positions[offset] = -88;
+      if (positions[offset] < -88) positions[offset] = 88;
+      if (positions[offset + 1] > 30) positions[offset + 1] = 1;
+      if (positions[offset + 2] > 64) positions[offset + 2] = -64;
+      if (positions[offset + 2] < -64) positions[offset + 2] = 64;
+    }
+    attribute.needsUpdate = true;
+  });
+
+  useEffect(() => () => geometry.dispose(), [geometry]);
+
+  return (
+    <points ref={pointsRef} geometry={geometry} frustumCulled={false}>
+      <pointsMaterial
+        color={WINDOW_GOLD}
+        size={mobile ? 0.34 : 0.4}
+        transparent
+        opacity={0.55}
+        depthWrite={false}
+        sizeAttenuation
+        toneMapped={false}
+      />
+    </points>
+  );
+}
+
+function VehicleTrail({ z, offset, reverse }: { z: number; offset: number; reverse: boolean }) {
+  const ref = useRef<THREE.Group>(null);
+  useFrame(({ clock }) => {
+    if (!ref.current) return;
+    const distance = ((clock.elapsedTime * 3.6 + offset) % 176 + 176) % 176;
+    ref.current.position.set(reverse ? 88 - distance : -88 + distance, 0.14, z);
+  });
+
+  return (
+    <group ref={ref}>
+      <mesh position={[reverse ? 0.62 : -0.62, 0, 0]}>
+        <boxGeometry args={[1.28, 0.035, 0.085]} />
+        <meshBasicMaterial color={WINDOW_GOLD} transparent opacity={0.68} toneMapped={false} />
+      </mesh>
+      <mesh>
+        <sphereGeometry args={[0.105, 8, 6]} />
+        <meshBasicMaterial color="#E3C88E" toneMapped={false} />
+      </mesh>
+    </group>
+  );
+}
+
+function CityContents({ activeRegion, mobile }: { activeRegion: string; mobile: boolean }) {
+  const mobileRows = [-42, -14, 14, 42];
+  const desktopRows = [-41, -17, 7, 31, 55];
+  const vehicleRows = mobile ? mobileRows : desktopRows;
+
+  return (
+    <group position={mobile ? [0, 0, 0] : [12, 0, 0]}>
+      <CityGround mobile={mobile} />
+      <Buildings count={mobile ? 300 : 1200} mobile={mobile} />
+      <NightRiver mobile={mobile} />
+      <Highlight region={activeRegion} mobile={mobile} />
+      <GoldDust mobile={mobile} />
+      {!mobile && vehicleRows.map((z, index) => (
+        <VehicleTrail
+          key={`vehicle-${index}`}
+          z={z}
+          offset={index * 29 + 12}
+          reverse={index % 2 === 1}
+        />
+      ))}
+    </group>
   );
 }
 
 function SceneContents({ activeRegion, mobile, motionRef }: SceneProps) {
   return (
     <>
-      <fog attach="fog" args={["#102D36", 70, 174]} />
-      <ambientLight intensity={0.78} color="#557078" />
-      <directionalLight position={[-22, 35, -16]} intensity={1.1} color="#7898A0" />
-      <directionalLight position={[18, 18, 28]} intensity={0.32} color="#C9A96E" />
-      <Buildings count={mobile ? 300 : 1200} mobile={mobile} />
-      <Highlight region={activeRegion} mobile={mobile} />
-      {!mobile && <NightWater />}
+      <SkyDome />
+      <fog attach="fog" args={["#102D3B", 82, 205]} />
+      <ambientLight intensity={0.72} color="#69838A" />
+      <directionalLight position={[-22, 35, -16]} intensity={1.04} color="#829BA0" />
+      <directionalLight position={[18, 18, 28]} intensity={0.26} color="#C9A96E" />
+      <CityContents activeRegion={activeRegion} mobile={mobile} />
       {!mobile && (
         <EffectComposer multisampling={0}>
-          <Bloom intensity={0.6} luminanceThreshold={0.77} luminanceSmoothing={0.22} mipmapBlur />
+          <Bloom intensity={0.6} luminanceThreshold={0.79} luminanceSmoothing={0.24} mipmapBlur />
+          <Vignette offset={0.28} darkness={0.28} />
         </EffectComposer>
       )}
       <CityCamera motionRef={motionRef} />
@@ -338,7 +578,7 @@ export function HeroCityScene({ activeRegion, mobile, inView, motionRef }: Scene
     <Canvas
       dpr={mobile ? 1 : [1, 1.5]}
       frameloop={inView ? "always" : "never"}
-      camera={{ position: [0, 31, 89], fov: 39, near: 0.1, far: 260 }}
+      camera={{ position: [0, 61, 89], fov: 39, near: 0.1, far: 260 }}
       gl={{
         alpha: true,
         antialias: false,
