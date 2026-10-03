@@ -2,7 +2,7 @@
 import React, { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import FormSelect from "@/components/ui/FormSelect";
-import { SlidersHorizontal, X } from "lucide-react";
+import { Search, SlidersHorizontal, X } from "lucide-react";
 
 // Home hero search: one field with a split button inside it.
 // The main half searches the marketplace; the chevron opens a small menu
@@ -82,6 +82,23 @@ const CSS = `
     .hs-suggestion { min-height:40px; padding-inline:12px; font-size:13px; }
     .hs-valuation { min-height:40px; display:inline-flex; align-items:center; font-size:14px; }
     .hs-tab { min-height:44px; }
+    .hs-btn-text { position:absolute!important; width:1px; height:1px; overflow:hidden; clip:rect(0 0 0 0); white-space:nowrap; }
+    .hs-bar { flex-direction:row; align-items:center; gap:6px; padding:6px; }
+    .hs-location-field { flex:1 1 auto; min-width:0; min-height:48px; padding:0 4px 0 10px; }
+    .hs-location-field > label { position:absolute; width:1px; height:1px; overflow:hidden; clip:rect(0 0 0 0); }
+    .hs-input { height:44px!important; }
+    .hs-ai-inline { width:44px; height:44px; min-height:44px; padding:0; border-radius:12px; }
+    .hs-ai-inline .hs-ai-mark { width:26px; height:26px; font-size:10px; }
+    .hs-mobile-actions { display:flex; gap:6px; flex:0 0 auto; }
+    .hs-filter-trigger { position:relative; width:44px; height:44px; min-height:44px; padding:0; border-radius:12px; }
+    .hs-filter-count { position:absolute; top:-5px; right:-5px; min-width:18px; height:18px; font-size:11px; background:#C8963E; }
+    .hs-mobile-actions .hs-main { width:48px; height:44px; min-height:44px; padding:0; display:grid; place-items:center; border-radius:12px; }
+    .hs-bar { display:grid; grid-template-columns:auto 1fr auto auto; align-items:center; gap:4px 6px; padding:6px 8px 8px; }
+    .hs-location-field,.hs-location-control,.hs-mobile-actions { display:contents; }
+    .hs-input { grid-column:1 / -1; grid-row:1; height:48px!important; padding:0 8px!important; border-bottom:1px solid #E4DED3!important; }
+    .hs-filter-trigger { grid-column:1; grid-row:2; border:0; background:transparent; }
+    .hs-ai-inline { grid-column:3; grid-row:2; border:0; background:transparent; }
+    .hs-mobile-actions .hs-main { grid-column:4; grid-row:2; border:0; }
   }
   @media (max-width: 420px) {
     .hs-tab { padding:0 12px; font-size:13px; }
@@ -186,7 +203,7 @@ export default function HeroSearch({ lang, action, valuationHref, onAskAi, onLoc
         )}
         {onAskAi && (
           <button type="button" className="hs-ai" onClick={askAi}>
-            <span className="hs-ai-mark" aria-hidden="true">AI</span>{vi ? "Hỏi AI" : "Ask AI"}
+            <span className="hs-ai-mark" aria-hidden="true">AI</span><span className="hs-btn-text">{vi ? "Hỏi AI" : "Ask AI"}</span>
           </button>
         )}
       </div>
@@ -212,7 +229,7 @@ export default function HeroSearch({ lang, action, valuationHref, onAskAi, onLoc
             />
             {onAskAi && (
               <button type="button" className="hs-ai hs-ai-inline" onClick={askAi}>
-                <span className="hs-ai-mark" aria-hidden="true">AI</span>{vi ? "Hỏi AI" : "Ask AI"}
+                <span className="hs-ai-mark" aria-hidden="true">AI</span><span className="hs-btn-text">{vi ? "Hỏi AI" : "Ask AI"}</span>
               </button>
             )}
           </div>
@@ -255,11 +272,11 @@ export default function HeroSearch({ lang, action, valuationHref, onAskAi, onLoc
             aria-controls="hs-filter-sheet"
             onClick={() => setFiltersOpen(true)}
           >
-            <SlidersHorizontal size={17} aria-hidden="true" />
-            {vi ? "Bộ lọc" : "Filters"}
+            <SlidersHorizontal size={18} aria-hidden="true" />
+            <span className="hs-btn-text">{vi ? "Bộ lọc" : "Filters"}</span>
             {selectedFilterCount > 0 && <span className="hs-filter-count" aria-label={vi ? `${selectedFilterCount} bộ lọc đang chọn` : `${selectedFilterCount} filters selected`}>{selectedFilterCount}</span>}
           </button>
-          <button type="submit" className="hs-main">{vi ? "Tìm nhà" : "Search"}</button>
+          <button type="submit" className="hs-main" aria-label={vi ? "Tìm nhà" : "Search"}><Search size={20} aria-hidden="true" /><span className="hs-btn-text">{vi ? "Tìm nhà" : "Search"}</span></button>
         </div>
       </form>
       {filtersOpen && typeof document !== "undefined" && createPortal(

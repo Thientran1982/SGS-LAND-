@@ -323,11 +323,12 @@ const STYLE = `
   .lp-map-legend span,.lp-map-legend small { display:block; }
   .lp-map-legend small { margin-top:4px;color:#53646a;font-size:10px; }
   .lp-floating-cta { display:none; }
+  .lp-hero .hs-valuation { display:none; }
   @media(max-width:1023px) {
     .lp-hero-grid { grid-template-columns:1fr; }
     .lp-collage { max-width:720px;width:100%;min-height:0;margin:0 auto; }
     .lp-collage .lp-float { display:none; }
-    .lp-hero .hs-valuation,.lp-hero .hs-field label[for="lp-hero-q"] { display:none; }
+    .lp-hero .hs-field label[for="lp-hero-q"] { display:none; }
     body:has(.lp-root) .sgs-home-chat > button { display:none!important; }
   }
   @media(max-width:767px) {

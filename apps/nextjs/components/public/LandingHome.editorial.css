@@ -1396,22 +1396,22 @@ body:has(.lp-root.lp-editorial) .sgs-home-footer .lp-footer-controls button:hove
     flex: 0 0 auto;
   }
 
-  body:has(.lp-root.lp-editorial) .ui-public-header[data-homepage="true"] {
+  body:has(.lp-root.lp-editorial) .ui-public-header[data-homepage="true"]:not([data-hero="true"]) {
     background: rgba(250, 248, 244, .96) !important;
     box-shadow: 0 5px 20px rgba(11, 27, 43, .11);
     backdrop-filter: blur(16px);
     -webkit-backdrop-filter: blur(16px);
   }
 
-  body:has(.lp-root.lp-editorial) .ui-public-header[data-homepage="true"] [data-public-wordmark] {
+  body:has(.lp-root.lp-editorial) .ui-public-header[data-homepage="true"]:not([data-hero="true"]) [data-public-wordmark] {
     color: #0B1B2B !important;
   }
 
-  body:has(.lp-root.lp-editorial) .ui-public-header[data-homepage="true"] [data-public-wordmark] span {
+  body:has(.lp-root.lp-editorial) .ui-public-header[data-homepage="true"]:not([data-hero="true"]) [data-public-wordmark] span {
     color: #946D2A !important;
   }
 
-  body:has(.lp-root.lp-editorial) .ui-public-header[data-homepage="true"] [data-public-menu-toggle] {
+  body:has(.lp-root.lp-editorial) .ui-public-header[data-homepage="true"]:not([data-hero="true"]) [data-public-menu-toggle] {
     color: #0B1B2B !important;
   }
 

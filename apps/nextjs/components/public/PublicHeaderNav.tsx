@@ -98,6 +98,7 @@ export function PublicHeader({ authed = false }: { authed?: boolean }) {
     <header
       className="ui-public-header fixed top-0 left-0 right-0 z-50 transition-all duration-300"
       data-homepage={isHomepage ? "true" : undefined}
+      data-hero={isHero ? "true" : undefined}
       style={{
         background:      isHero
           ? "linear-gradient(to bottom, rgba(11,27,43,0.76) 0%, rgba(11,27,43,0.0) 100%)"
@@ -115,7 +116,7 @@ export function PublicHeader({ authed = false }: { authed?: boolean }) {
             {/* ── Logo ─────────────────────────────────────── */}
             <Link href="/" className="flex items-center gap-2.5 shrink-0 group">
               <picture>
-                {isHomepage && <source media="(max-width: 767px)" srcSet="/logo-navy.png" />}
+                {isHomepage && !isHero && <source media="(max-width: 767px)" srcSet="/logo-navy.png" />}
                 <img
                   src={isHero || theme === "dark" ? "/logo-white.png" : "/logo-navy.png"}
                   alt="SGS Land"
