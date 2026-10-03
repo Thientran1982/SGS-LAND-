@@ -397,9 +397,97 @@ function useReveal() {
   return { ref, inView };
 }
 
-function Reveal({ as: Tag = "div", className = "", children, ...rest }: any) {
+function Reveal({ as: Tag = "div", className = "", children, trackRef, ...rest }: any) {
   const { ref, inView } = useReveal();
-  return <Tag ref={ref} className={`lp-rv${inView ? " in" : ""} ${className}`} {...rest}>{children}</Tag>;
+  const assignRef = (node: HTMLElement | null) => {
+    ref.current = node;
+    if (typeof trackRef === "function") trackRef(node);
+    else if (trackRef) trackRef.current = node;
+  };
+  return <Tag ref={assignRef} className={`lp-rv${inView ? " in" : ""} ${className}`} {...rest}>{children}</Tag>;
+}
+
+function useSnapCarousel(itemCount: number, resetKey = "") {
+  const ref = useRef<HTMLDivElement>(null);
+  const [activeIndex, setActiveIndex] = useState(0);
+  const syncIndex = useCallback(() => {
+    const track = ref.current;
+    if (!track || itemCount < 1) return;
+    const items = Array.from(track.children) as HTMLElement[];
+    if (!items.length) return;
+    const trackStart = track.getBoundingClientRect().left + (parseFloat(getComputedStyle(track).paddingLeft) || 0);
+    let closest = 0;
+    let distance = Number.POSITIVE_INFINITY;
+    items.forEach((item, index) => {
+      const nextDistance = Math.abs(item.getBoundingClientRect().left - trackStart);
+      if (nextDistance < distance) {
+        distance = nextDistance;
+        closest = index;
+      }
+    });
+    setActiveIndex(current => current === closest ? current : closest);
+  }, [itemCount]);
+  useEffect(() => {
+    const track = ref.current;
+    if (!track) return;
+    const reset = () => {
+      track.scrollTo({ left: 0, behavior: "auto" });
+      setActiveIndex(0);
+      syncIndex();
+    };
+    const resizeObserver = typeof ResizeObserver === "undefined" ? null : new ResizeObserver(syncIndex);
+    track.addEventListener("scroll", syncIndex, { passive: true });
+    window.addEventListener("resize", syncIndex);
+    resizeObserver?.observe(track);
+    reset();
+    return () => {
+      track.removeEventListener("scroll", syncIndex);
+      window.removeEventListener("resize", syncIndex);
+      resizeObserver?.disconnect();
+    };
+  }, [itemCount, resetKey, syncIndex]);
+  const goTo = useCallback((index: number) => {
+    const track = ref.current;
+    const item = track?.children[index] as HTMLElement | undefined;
+    if (!track || !item) return;
+    const left = item.getBoundingClientRect().left - track.getBoundingClientRect().left + track.scrollLeft -
+      (parseFloat(getComputedStyle(track).paddingLeft) || 0);
+    track.scrollTo({
+      left,
+      behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth",
+    });
+    setActiveIndex(index);
+  }, []);
+  return { ref, activeIndex, goTo };
+}
+
+function CarouselDots({ total, index, onSelect, label, lang }: {
+  total: number;
+  index: number;
+  onSelect: (index: number) => void;
+  label: string;
+  lang: Lang;
+}) {
+  if (total < 2) return null;
+  const dotCount = Math.min(total, 5);
+  const activeDot = total <= 5 ? index : Math.round(index * (dotCount - 1) / (total - 1));
+  return (
+    <div className="lp-carousel-dots" role="group" aria-label={label}>
+      {Array.from({ length: dotCount }, (_, dotIndex) => {
+        const targetIndex = total <= 5 ? dotIndex : Math.round(dotIndex * (total - 1) / (dotCount - 1));
+        return (
+          <button
+            key={dotIndex}
+            type="button"
+            className={dotIndex === activeDot ? "active" : ""}
+            aria-label={lang === "vi" ? `Hiển thị mục ${targetIndex + 1}` : `Show item ${targetIndex + 1}`}
+            aria-pressed={dotIndex === activeDot}
+            onClick={() => onSelect(targetIndex)}
+          ><span /></button>
+        );
+      })}
+    </div>
+  );
 }
 
 function SectionHead({ eyebrow, title, lead, action }: { eyebrow?: React.ReactNode; title: React.ReactNode; lead?: React.ReactNode; action?: React.ReactNode }) {
@@ -521,6 +609,8 @@ function LatestListings({ lang, listings, total, illustrative }: { lang: Lang; l
     }
     return true;
   }).slice(0, 8);
+  const carousel = useSnapCarousel(filteredItems.length, activeFilter);
+  if (items.length === 0) return null;
   return (
     <section className="lp-sec lp-listings-section">
       <div className="lp-wrap">
@@ -546,9 +636,18 @@ function LatestListings({ lang, listings, total, illustrative }: { lang: Lang; l
           ))}
         </div>
         {filteredItems.length ? (
-          <div className="lp-listings">
-            {filteredItems.map((listing) => <PublicListingCard key={listing.id} listing={listing} eager={false} editorial />)}
-          </div>
+          <>
+            <div className="lp-listings" ref={carousel.ref}>
+              {filteredItems.map((listing) => <PublicListingCard key={listing.id} listing={listing} eager={false} editorial />)}
+            </div>
+            <CarouselDots
+              total={filteredItems.length}
+              index={carousel.activeIndex}
+              onSelect={carousel.goTo}
+              label={T(lang, "Vị trí tin đăng", "Listing position")}
+              lang={lang}
+            />
+          </>
         ) : (
           <div className="lp-empty-filter">
             <p>{T(lang, "Chưa có tin phù hợp với bộ lọc này.", "No listings match this filter yet.")}</p>
@@ -565,6 +664,7 @@ function LatestListings({ lang, listings, total, illustrative }: { lang: Lang; l
 
 // ─── 4. PROJECTS (bento) ─────────────────────────────────────────────────────
 function Projects({ lang }: { lang: Lang }) {
+  const carousel = useSnapCarousel(PROJECTS.length);
   return (
     <section className="lp-sec lp-projects-section">
       <div className="lp-wrap">
@@ -574,7 +674,7 @@ function Projects({ lang }: { lang: Lang }) {
           lead={T(lang, "Bảng giá, mặt bằng và pháp lý dự án, đối chiếu với tài liệu gốc có ngày cập nhật.", "Price lists, floor plans and legal status, checked against dated source documents.")}
           action={<a className="lp-link" href={lpath("/du-an", lang)}>{T(lang, "Tất cả dự án", "All projects")} <ArrowRight size={16} aria-hidden="true" /></a>}
         />
-        <Reveal className="lp-bento">
+        <Reveal className="lp-bento" trackRef={carousel.ref}>
           {PROJECTS.map((p) => (
             <a key={p.slug} className="lp-proj" href={lpath(`/du-an/${p.slug}`, lang)}>
               <Image src={projImg(p.slug)} alt={p.name} fill sizes="(max-width: 640px) 82vw, (max-width: 1023px) 50vw, 40vw" />
@@ -589,6 +689,13 @@ function Projects({ lang }: { lang: Lang }) {
             </a>
           ))}
         </Reveal>
+        <CarouselDots
+          total={PROJECTS.length}
+          index={carousel.activeIndex}
+          onSelect={carousel.goTo}
+          label={T(lang, "Vị trí dự án", "Project position")}
+          lang={lang}
+        />
       </div>
     </section>
   );
@@ -621,10 +728,15 @@ function MapSection({ lang }: { lang: Lang }) {
   return (
     <section className="lp-sec" id="ban-do">
       <div className="lp-wrap lp-map-grid">
-        <Reveal>
+        <Reveal className="lp-map-intro">
           <span className="lp-eyebrow"><MapPin size={16} aria-hidden="true" />{T(lang, "Bản đồ dự án", "Project map")}</span>
           <h2 className="lp-h2" style={{ marginTop: 10 }}>{T(lang, "Chọn khu vực, xem dự án gần bạn", "Pick an area, see projects nearby")}</h2>
           <p className="lp-lead" style={{ marginTop: 10 }}>{T(lang, "Các dự án trọng điểm quanh TP.HCM, Đồng Nai và vùng ven.", "Key projects around HCMC, Dong Nai and the surrounding region.")}</p>
+        </Reveal>
+        <Reveal className="lp-mapcard">
+          <LandingProjectMap active={active} onSelect={setActive} lang={lang} />
+        </Reveal>
+        <div className="lp-map-projects">
           <div className="lp-plist" style={{ marginTop: 22 }}>
             {PROJECTS.map((p, i) => (
               <button key={p.slug} type="button" aria-pressed={active === i} onClick={() => setActive(i)} onMouseEnter={() => setActive(i)}>
@@ -637,11 +749,7 @@ function MapSection({ lang }: { lang: Lang }) {
           <a className="lp-btn lp-btn-primary" style={{ marginTop: 22 }} href={lpath(`/du-an/${proj.slug}`, lang)}>
             {T(lang, `Xem ${proj.name}`, `View ${proj.name}`)} <ArrowRight size={16} aria-hidden="true" />
           </a>
-        </Reveal>
-
-        <Reveal className="lp-mapcard">
-          <LandingProjectMap active={active} onSelect={setActive} lang={lang} />
-        </Reveal>
+        </div>
       </div>
     </section>
   );
@@ -655,6 +763,7 @@ function Why({ lang, illustrative, onChatOpen }: { lang: Lang; illustrative: boo
     { icon: FileSearch, ti: T(lang, "Thông tin có nguồn", "Sourced information"), tx: T(lang, "Giá và điều kiện giao dịch luôn cần đối chiếu với tài liệu gốc có ngày cập nhật.", "Prices and terms should always be checked against dated source documents.") },
     { icon: Landmark, ti: T(lang, "Hỗ trợ vay ngân hàng", "Mortgage support"), tx: T(lang, "Một bộ hồ sơ, so sánh gói vay của nhiều ngân hàng, đồng hành đến khi giải ngân.", "One application, compare offers from several banks, supported until disbursement.") },
   ];
+  const carousel = useSnapCarousel(5);
   return (
     <section className="lp-sec lp-why-section" style={{ background: "var(--lp-tint)" }}>
       <div className="lp-wrap">
@@ -662,7 +771,7 @@ function Why({ lang, illustrative, onChatOpen }: { lang: Lang; illustrative: boo
           eyebrow={T(lang, "Vì sao chọn SGS LAND", "Why SGS LAND")}
           title={T(lang, "Mua nhà an tâm hơn, miễn phí cho người mua", "Buy with more confidence, free for buyers")}
         />
-        <Reveal className="lp-why">
+        <Reveal className="lp-why" trackRef={carousel.ref}>
           {items.map((it, i) => { const Icon = it.icon; return (
             <div key={i} className={`lp-why-card lp-why-card-${i + 1}`}>
               <span className="lp-why-index">0{i + 1}</span>
@@ -681,6 +790,13 @@ function Why({ lang, illustrative, onChatOpen }: { lang: Lang; illustrative: boo
             </button>
           </div>
         </Reveal>
+        <CarouselDots
+          total={5}
+          index={carousel.activeIndex}
+          onSelect={carousel.goTo}
+          label={T(lang, "Vị trí lý do", "Benefit position")}
+          lang={lang}
+        />
         {illustrative && (
           <Reveal className="lp-sample-proof" aria-label={T(lang, "Số liệu và đánh giá minh họa, chỉ dùng trong môi trường phát triển", "Illustrative metrics and reviews for development only")}>
             <p className="lp-sample-label">{T(lang, "Dữ liệu minh họa · Chỉ dùng trong môi trường phát triển", "Illustrative data · Development only")}</p>

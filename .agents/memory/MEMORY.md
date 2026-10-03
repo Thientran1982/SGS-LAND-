@@ -131,6 +131,7 @@
 - [Product information architecture](product-information-architecture.md) — organize customer, CRM, and agent operations by user jobs, not backend routes or tool names
 - [Public SEO TTFB](public-seo-ttfb.md) — server-rendered public content should use the internal backend URL and bounded caching to avoid rewrite latency
 - [Public header breakpoints](public-header-breakpoints.md) — full desktop navigation starts at xl; smaller widths use one hamburger path without repeated destinations
+- [Mobile filter sheet overlays](mobile-filter-sheet-overlays.md) — portal the sheet above consent and chat overlays; use native selects to avoid clipped menus
 - [P2 tenant and realtime boundaries](p2-tenant-and-realtime-boundaries.md) — P2 routes fail closed on tenant identity; room broadcasts need tenant-safe socket joins
 - [Socket.IO distributed adapter](socketio-distributed-adapter.md) — multi-process room revocation needs explicit TCP Redis pub/sub, not Upstash REST or an in-memory mock
 - [Public listing teaser capability](public-listing-teaser-capability.md) — signed tenant/listing capabilities still require an explicit public flag and exact server-side scope checks

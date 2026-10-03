@@ -13,11 +13,14 @@ const PROJECTS = [
   { slug: "masterise-homes", name: "Grand Marina · Masteri", price: "Từ 25 tỷ", priceVnd: 25_000_000_000, position: [10.777, 106.706] },
 ];
 
+const PROJECT_CLUSTERS = [[0, 3], [1, 4], [2]];
+
 export function LandingProjectMap({ active, onSelect, lang }: { active: number; onSelect: (index: number) => void; lang: "vi" | "en" }) {
   const rootRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<any>(null);
   const markersRef = useRef<any[]>([]);
   const [mapUnavailable, setMapUnavailable] = useState(false);
+  const [compactFallback, setCompactFallback] = useState(false);
   const onSelectRef = useRef(onSelect);
   const activeRef = useRef(active);
   const langRef = useRef(lang);
@@ -26,8 +29,55 @@ export function LandingProjectMap({ active, onSelect, lang }: { active: number; 
   langRef.current = lang;
 
   useEffect(() => {
+    const media = window.matchMedia("(max-width: 767px)");
+    const update = () => setCompactFallback(media.matches);
+    update();
+    media.addEventListener?.("change", update);
+    return () => media.removeEventListener?.("change", update);
+  }, []);
+
+  useEffect(() => {
     let cancelled = false;
     let map: any;
+    let mapBounds: any = null;
+    let markersClustered: boolean | null = null;
+    const renderMarkers = (compact: boolean) => {
+      if (markersClustered === compact) return;
+      markersRef.current.forEach(({ marker }) => marker.remove());
+      const groups = compact ? PROJECT_CLUSTERS : PROJECTS.map((_, index) => [index]);
+      markersRef.current = groups.map((projectIndexes) => {
+        const selectedIndex = projectIndexes.includes(activeRef.current) ? activeRef.current : -1;
+        const element = document.createElement("button");
+        element.type = "button";
+        element.className = `lp-map-price${projectIndexes.length > 1 ? " lp-map-cluster" : ""}${selectedIndex >= 0 ? " active" : ""}`;
+        element.textContent = selectedIndex >= 0
+          ? priceText(PROJECTS[selectedIndex], langRef.current)
+          : clusterPriceText(projectIndexes, langRef.current);
+        element.setAttribute("aria-pressed", String(selectedIndex >= 0));
+        element.setAttribute("aria-label", clusterAriaLabel(projectIndexes, langRef.current));
+        element.addEventListener("click", () => {
+          const currentIndex = projectIndexes.indexOf(activeRef.current);
+          const nextIndex = projectIndexes[(currentIndex + 1) % projectIndexes.length];
+          onSelectRef.current(nextIndex);
+        });
+        const center = clusterCenter(projectIndexes);
+        const marker = new Marker({ element, anchor: "center", offset: [0, -5] })
+          .setLngLat([center[1], center[0]])
+          .addTo(map);
+        return { marker, element, projectIndexes };
+      });
+      markersClustered = compact;
+    };
+    const fitMapToProjects = (compact: boolean) => {
+      if (!mapBounds) return;
+      map.fitBounds(mapBounds, {
+        padding: compact
+          ? { top: 154, right: 34, bottom: 42, left: 34 }
+          : { top: 76, right: 76, bottom: 64, left: 76 },
+        maxZoom: compact ? 9.7 : 10.3,
+        duration: 0,
+      });
+    };
     try {
       setWorkerUrl("/maplibre/maplibre-gl-worker.mjs");
       if (typeof MapLibreMap.isSupported === "function" && !MapLibreMap.isSupported()) {
@@ -74,33 +124,28 @@ export function LandingProjectMap({ active, onSelect, lang }: { active: number; 
 
     map.once("load", () => {
       if (cancelled) return;
-      markersRef.current = PROJECTS.map((project, index) => {
-        const element = document.createElement("button");
-        element.type = "button";
-        element.className = `lp-map-price${index === activeRef.current ? " active" : ""}`;
-        element.textContent = priceText(project, langRef.current);
-        element.setAttribute(
-          "aria-label",
-          `${project.name} — ${priceText(project, langRef.current)}. ${langRef.current === "vi" ? "Chọn dự án" : "Select project"}`,
-        );
-        element.addEventListener("click", () => onSelectRef.current(index));
-        const marker = new Marker({ element, anchor: "center", offset: [0, -5] })
-          .setLngLat([project.position[1], project.position[0]])
-          .addTo(map);
-        return { marker, element };
-      });
-      const bounds = new LngLatBounds();
-      PROJECTS.forEach((project) => bounds.extend([project.position[1], project.position[0]]));
-      map.fitBounds(bounds, {
-        padding: { top: 76, right: 76, bottom: 64, left: 76 },
-        maxZoom: 10.3,
-        duration: 0,
-      });
+      mapBounds = new LngLatBounds();
+      PROJECTS.forEach((project) => mapBounds.extend([project.position[1], project.position[0]]));
+      const compact = window.matchMedia("(max-width: 767px)").matches;
+      renderMarkers(compact);
+      fitMapToProjects(compact);
       window.setTimeout(() => map.resize(), 80);
     });
 
+    const resizeMap = () => {
+      map.resize();
+      if (map.loaded()) {
+        const compact = window.matchMedia("(max-width: 767px)").matches;
+        if (markersClustered !== compact) {
+          renderMarkers(compact);
+          fitMapToProjects(compact);
+        }
+      }
+    };
+    window.addEventListener("resize", resizeMap);
     return () => {
       cancelled = true;
+      window.removeEventListener("resize", resizeMap);
       map.remove();
       mapRef.current = null;
       markersRef.current = [];
@@ -110,14 +155,12 @@ export function LandingProjectMap({ active, onSelect, lang }: { active: number; 
   useEffect(() => {
     const map = mapRef.current;
     if (!map) return;
-    markersRef.current.forEach(({ element }, index) => {
-      const project = PROJECTS[index];
-      element.classList.toggle("active", index === active);
-      element.textContent = priceText(project, lang);
-      element.setAttribute(
-        "aria-label",
-        `${project.name} — ${priceText(project, lang)}. ${lang === "vi" ? "Chọn dự án" : "Select project"}`,
-      );
+    markersRef.current.forEach(({ element, projectIndexes }) => {
+      const selected = projectIndexes.includes(active);
+      element.classList.toggle("active", selected);
+      element.textContent = selected ? priceText(PROJECTS[active], lang) : clusterPriceText(projectIndexes, lang);
+      element.setAttribute("aria-pressed", String(selected));
+      element.setAttribute("aria-label", clusterAriaLabel(projectIndexes, lang));
     });
     const project = PROJECTS[active] || PROJECTS[0];
     map.easeTo({ center: [project.position[1], project.position[0]], duration: 450 });
@@ -140,21 +183,25 @@ export function LandingProjectMap({ active, onSelect, lang }: { active: number; 
             <text x="34" y="56" fill="#607b70" fontSize="14" letterSpacing="2">TP. HỒ CHÍ MINH</text>
             <text x="419" y="405" fill="#607b70" fontSize="13" letterSpacing="2">ĐỒNG NAI</text>
           </svg>
-          {PROJECTS.map((project, index) => {
-            const [lat, lon] = project.position;
+          {(compactFallback ? PROJECT_CLUSTERS : PROJECTS.map((_, index) => [index])).map((projectIndexes, clusterIndex) => {
+            const [lat, lon] = clusterCenter(projectIndexes);
             const left = Math.max(10, Math.min(90, ((lon - 106.6) / 0.42) * 100));
             const top = Math.max(10, Math.min(90, ((10.95 - lat) / 0.65) * 100));
+            const selected = projectIndexes.includes(active);
             return (
               <button
-                key={project.slug}
+                key={clusterIndex}
                 type="button"
-                className={`lp-map-price lp-map-fallback-pin${index === active ? " active" : ""}`}
+                className={`lp-map-price${projectIndexes.length > 1 ? " lp-map-cluster" : ""} lp-map-fallback-pin${selected ? " active" : ""}`}
                 style={{ left: `${left}%`, top: `${top}%` }}
-                aria-pressed={index === active}
-                aria-label={`${project.name} — ${priceText(project, lang)}. ${lang === "vi" ? "Chọn dự án" : "Select project"}`}
-                onClick={() => onSelect(index)}
+                aria-pressed={selected}
+                aria-label={clusterAriaLabel(projectIndexes, lang)}
+                onClick={() => {
+                  const currentIndex = projectIndexes.indexOf(active);
+                  onSelect(projectIndexes[(currentIndex + 1) % projectIndexes.length]);
+                }}
               >
-                {priceText(project, lang)}
+                {selected ? priceText(PROJECTS[active], lang) : clusterPriceText(projectIndexes, lang)}
               </button>
             );
           })}
@@ -165,6 +212,31 @@ export function LandingProjectMap({ active, onSelect, lang }: { active: number; 
       )}
     </div>
   );
+}
+
+function clusterCenter(indices: number[]) {
+  const points = indices.map(index => PROJECTS[index].position);
+  return [
+    points.reduce((sum, point) => sum + point[0], 0) / points.length,
+    points.reduce((sum, point) => sum + point[1], 0) / points.length,
+  ];
+}
+
+function clusterPriceText(indices: number[], lang: "vi" | "en") {
+  if (indices.length === 1) return priceText(PROJECTS[indices[0]], lang);
+  const prices = indices.map(index => PROJECTS[index].priceVnd / 1_000_000_000);
+  const format = (value: number) => new Intl.NumberFormat(lang === "vi" ? "vi-VN" : "en-US", { maximumFractionDigits: 1 }).format(value);
+  return lang === "vi"
+    ? `${format(Math.min(...prices))}–${format(Math.max(...prices))} tỷ`
+    : `VND ${format(Math.min(...prices))}–${format(Math.max(...prices))}B`;
+}
+
+function clusterAriaLabel(indices: number[], lang: "vi" | "en") {
+  const names = indices.map(index => PROJECTS[index].name).join(", ");
+  const instruction = indices.length > 1
+    ? (lang === "vi" ? "Chọn để chuyển dự án trong cụm; danh sách bên dưới cũng có thể dùng để chọn." : "Select to cycle projects in this cluster; you can also choose from the list below.")
+    : (lang === "vi" ? "Chọn dự án; danh sách bên dưới cũng có thể dùng để chọn." : "Select project; you can also choose from the list below.");
+  return `${names} — ${clusterPriceText(indices, lang)}. ${instruction}`;
 }
 
 function priceText(project: (typeof PROJECTS)[number], lang: "vi" | "en") {
