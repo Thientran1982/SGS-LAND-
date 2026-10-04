@@ -779,6 +779,10 @@
   gap: 12px;
 }
 
+.lp-root.lp-editorial .lp-live-metrics {
+  grid-template-columns: minmax(0, 320px);
+}
+
 .lp-root.lp-editorial .lp-sample-metrics div {
   padding: 15px;
   border: 1px solid var(--lp-hair);

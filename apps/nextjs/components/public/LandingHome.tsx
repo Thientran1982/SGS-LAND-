@@ -790,7 +790,7 @@ function MapSection({ lang }: { lang: Lang }) {
 }
 
 // ─── 6. WHY ──────────────────────────────────────────────────────────────────
-function Why({ lang, illustrative, onChatOpen }: { lang: Lang; illustrative: boolean; onChatOpen: () => void }) {
+function Why({ lang, illustrative, totalListings, onChatOpen }: { lang: Lang; illustrative: boolean; totalListings: number; onChatOpen: () => void }) {
   const items = [
     { icon: Scale, ti: T(lang, "Định giá minh bạch", "Transparent valuation"), tx: T(lang, "Ước tính theo dữ liệu giao dịch trong khu vực, hiển thị rõ từng yếu tố ảnh hưởng đến giá.", "Estimates from local transaction data, showing every factor that moves the price.") },
     { icon: ShieldCheck, ti: T(lang, "Pháp lý hai lớp", "Two-layer legal check"), tx: T(lang, "AI rà soát quy hoạch, sổ và tranh chấp; chuyên viên pháp lý xác nhận trước khi bạn đặt cọc.", "AI screens zoning, title and disputes; a legal specialist confirms before you deposit.") },
@@ -852,6 +852,17 @@ function Why({ lang, illustrative, onChatOpen }: { lang: Lang; illustrative: boo
                 <p>{T(lang, "“Tư vấn dễ hiểu, không tạo áp lực phải quyết định ngay.”", "“The advice was clear and I was not pressured to decide immediately.”")}</p>
                 <b>{T(lang, "Khách hàng · Nguyễn Trọng Nghĩa", "Client · Nguyễn Trọng Nghĩa")}</b>
               </article>
+            </div>
+          </Reveal>
+        )}
+        {!illustrative && Number.isFinite(totalListings) && totalListings > 0 && (
+          <Reveal className="lp-sample-proof lp-live-proof" aria-label={T(lang, "Số tin đăng công khai hiện có", "Current public listing count")}>
+            <p className="lp-sample-label">{T(lang, "Số liệu từ danh mục tin công khai", "Public listing data")}</p>
+            <div className="lp-sample-metrics lp-live-metrics">
+              <div>
+                <b>{totalListings.toLocaleString(lang === "vi" ? "vi-VN" : "en-US")}</b>
+                <span>{T(lang, "tin đăng công khai", "public listings")}</span>
+              </div>
             </div>
           </Reveal>
         )}
@@ -978,7 +989,7 @@ export function LandingPage({ featuredListings = [], stats, illustrative = false
         <Projects lang={lang} />
         <LatestListings lang={lang} listings={featuredListings} total={total} illustrative={illustrative} />
         <MapSection lang={lang} />
-        <Why lang={lang} illustrative={illustrative} onChatOpen={onChatOpen} />
+        <Why lang={lang} illustrative={illustrative} totalListings={total} onChatOpen={onChatOpen} />
         <Tools lang={lang} />
         <Faq lang={lang} onChatOpen={onChatOpen} />
         <FinalCta lang={lang} onChatOpen={onChatOpen} />
