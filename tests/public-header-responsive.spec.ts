@@ -67,6 +67,24 @@ test.describe("public header responsive navigation", () => {
       await expect(
         visibleNavigation.locator('a[href="/ky-gui-bat-dong-san"]'),
       ).toHaveCount(1);
+
+      const contactLink = visibleNavigation.locator(
+        '[data-public-nav-link="/contact"]',
+      );
+      await expect(contactLink).toHaveCount(1);
+      await contactLink.click();
+      await expect(page).toHaveURL(/\/contact\/?$/);
+
+      const removedHeaderActions = header.locator(
+        'a[href^="tel:"], a[href*="zalo.me"], button[aria-label^="Chuyển ngôn ngữ"], button[aria-label^="Chuyển chế độ"]',
+      );
+      await expect(removedHeaderActions).toHaveCount(0);
+
+      if (!isDesktop) {
+        await menuToggle.click();
+        await expect(mobileMenu).toBeVisible();
+        await expect(removedHeaderActions).toHaveCount(0);
+      }
     });
   }
 

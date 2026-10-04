@@ -5,10 +5,9 @@ import Link from "next/link";
 import { useState, useEffect } from "react";
 import { createPortal } from "react-dom";
 import { usePathname } from "next/navigation";
-import { useLang, switchLangPath, VI_PUBLIC_PATHS } from "@/components/shared/useLang";
-import { Sun, Moon, Globe, User, Menu, X, Sparkles, ChevronDown } from "lucide-react";
+import { useLang, VI_PUBLIC_PATHS } from "@/components/shared/useLang";
+import { Menu, X, ChevronDown } from "lucide-react";
 
-type Lang = "vi" | "en";
 type Theme = "light" | "dark";
 
 export function PublicHeader({ authed = false }: { authed?: boolean }) {
@@ -61,18 +60,6 @@ export function PublicHeader({ authed = false }: { authed?: boolean }) {
     onScroll();
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
-
-  const toggleLang = () => {
-    const next: Lang = lang === "vi" ? "en" : "vi";
-    try { localStorage.setItem("sgs-lang", next); } catch {}
-    window.dispatchEvent(new CustomEvent("sgs-lang-change", { detail: next }));
-    // Middleware can rewrite /en/* before usePathname() sees it; use the
-    // browser URL so language switching preserves the current page and slug.
-    const current = new URL(window.location.href);
-    current.pathname = switchLangPath(current.pathname || pathname || "/", next);
-    // Keep marketplace filters and any article query state when changing language.
-    window.location.assign(`${current.pathname}${current.search}${current.hash}`);
-  };
 
   const realEstateLinks = [
     { href: "/mua",                vi: "Mua nhà đất",    en: "Buy property" },
@@ -228,45 +215,6 @@ export function PublicHeader({ authed = false }: { authed?: boolean }) {
 
           {/* ── Right Controls ─────────────────────────────── */}
           <div className="hidden xl:flex items-center gap-1.5 xl:gap-2">
-            {!isHomepage && (
-              <>
-                <a href="tel:0379281445" className="flex items-center gap-1.5 px-2.5 py-2 text-xs font-semibold" style={{ color: "var(--sgs-primary)" }}>
-                  <span aria-hidden="true">0379 281 445</span>
-                  <span className="sr-only">{lang === "vi" ? "Gọi SGS LAND" : "Call SGS LAND"}</span>
-                </a>
-                <a href="https://zalo.me/0379281445" target="_blank" rel="noreferrer" className="px-2.5 py-2 text-xs font-semibold" style={{ color: "var(--sgs-primary)" }}>
-                  Zalo
-                </a>
-                {/* VI/EN Toggle */}
-                <button
-                  onClick={toggleLang}
-                  className="sgs-hdr-chip flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold transition-all"
-                  style={{
-                    background: isHero ? "rgba(255,255,255,0.12)" : "transparent",
-                    border: `1px solid ${isHero ? "rgba(255,255,255,0.3)" : "transparent"}`,
-                    color: isHero ? "#FFFFFF" : "var(--hdr-muted)",
-                  }}
-                  aria-label="Chuyển ngôn ngữ VI / EN"
-                >
-                  {lang.toUpperCase()}
-                </button>
-
-                {/* Light / Dark Toggle */}
-                <button
-                  onClick={() => setTheme(t => t === "light" ? "dark" : "light")}
-                  className="sgs-hdr-chip w-8 h-8 rounded-full flex items-center justify-center transition-all"
-                  style={{
-                    background: isHero ? "rgba(255,255,255,0.12)" : "transparent",
-                    border: `1px solid ${isHero ? "rgba(255,255,255,0.3)" : "transparent"}`,
-                    color: isHero ? "#FFFFFF" : "var(--hdr-muted)",
-                  }}
-                  aria-label="Chuyển chế độ sáng / tối"
-                >
-                  {theme === "light" ? <Moon className="w-4 h-4" /> : <Sun className="w-4 h-4" />}
-                </button>
-              </>
-            )}
-
             {/* Login — ghost outline */}
             <Link
               href={authed ? "/dashboard" : "/login"}
@@ -378,29 +326,6 @@ export function PublicHeader({ authed = false }: { authed?: boolean }) {
                 {lang === "vi" ? link.vi : link.en}
               </Link>
             ))}
-            {!isHomepage && (
-              <div
-                className="pt-3 flex gap-2"
-                style={{ borderTop: "1px solid rgba(27,58,92,0.08)" }}
-              >
-                <button
-                  onClick={toggleLang}
-                  className="flex-1 flex items-center justify-center gap-1.5 text-xs font-semibold py-2.5 rounded-lg"
-                  style={{ background: "var(--hdr-panel)", border: "none", color: "var(--sgs-primary)" }}
-                  aria-label="Chuyển ngôn ngữ"
-                >
-                  {lang.toUpperCase()}
-                </button>
-                <button
-                  onClick={() => setTheme(t => t === "light" ? "dark" : "light")}
-                  className="flex-1 flex items-center justify-center gap-1.5 text-xs font-semibold py-2.5 rounded-lg"
-                  style={{ background: "var(--hdr-panel)", border: "none", color: "var(--sgs-primary)" }}
-                  aria-label="Chuyển chế độ sáng tối"
-                >
-                  {theme === "light" ? <Moon className="w-4 h-4" /> : <Sun className="w-4 h-4" />}
-                </button>
-              </div>
-            )}
             <div className="flex gap-2">
               <Link
                 href={authed ? "/dashboard" : "/login"}
@@ -419,16 +344,6 @@ export function PublicHeader({ authed = false }: { authed?: boolean }) {
                 {lang === "vi" ? "Định giá miễn phí" : "Free valuation"}
               </Link>
             </div>
-            {!isHomepage && (
-              <div className="flex gap-2 pt-2">
-                <a href="tel:0379281445" className="flex-1 text-center text-sm font-semibold py-2.5 rounded-lg" style={{ background: "var(--sgs-primary)", color: "#fff" }}>
-                  {lang === "vi" ? "Gọi 0379 281 445" : "Call 0379 281 445"}
-                </a>
-                <a href="https://zalo.me/0379281445" target="_blank" rel="noreferrer" className="flex-1 text-center text-sm font-semibold py-2.5 rounded-lg" style={{ border: "1px solid var(--hdr-border)", color: "var(--sgs-primary)" }}>
-                  Zalo
-                </a>
-              </div>
-            )}
           </div>
         </div>
       )}
