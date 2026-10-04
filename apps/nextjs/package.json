@@ -5,6 +5,7 @@
   "scripts": {
     "dev": "next dev",
     "build": "next build --turbopack",
+    "check:dependency-resolution": "npm install --package-lock-only --ignore-scripts --dry-run --no-audit --no-fund",
     "preview:prod": "next build --turbopack && next start",
     "start": "next start",
     "lint": "next lint",
