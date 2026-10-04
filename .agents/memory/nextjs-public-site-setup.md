@@ -23,3 +23,10 @@ ANY component in `apps/nextjs/` that uses event handlers (onMouseEnter, onClick,
 Without `"use client"`, RSC will throw: "Event handlers cannot be passed to Client Component props"
 
 **Affects:** PublicHeader, PublicFooter, LandingPage — all must be Client Components.
+
+## Shared workspace peer dependencies
+Because `externalDir` lets the Next.js app import components from the workspace root, peer dependencies of packages resolved from root `node_modules` must also be declared at the workspace root. A dependency installed only under `apps/nextjs/node_modules` may not satisfy imports issued by a package in root `node_modules`.
+
+**Why:** The public hero's React Three Fiber postprocessing package could not resolve its `postprocessing` peer during Next.js compilation until that peer was installed at the workspace root.
+
+**How to apply:** When a public Next.js component imports a root-level package with peers, check the issuer's resolution path and declare required peers in root `package.json`; then verify the root route compiles in the main workflow.
