@@ -4,11 +4,22 @@ import {
   Component,
   Suspense,
   lazy,
+  useCallback,
   useEffect,
   useRef,
   useState,
 } from "react";
 import type { CSSProperties, ReactNode } from "react";
+import {
+  decideHeroScene,
+  INITIAL_CONTEXT_RECOVERY,
+  transitionContextRecovery,
+} from "./heroCityPolicy";
+import type {
+  ContextRecoveryEvent,
+  ContextRecoveryState,
+  HeroFallbackReason,
+} from "./heroCityPolicy";
 
 const HeroCityScene = lazy(() => import("./HeroCityScene"));
 
@@ -62,17 +73,6 @@ function hasWebGL2(): boolean {
   }
 }
 
-function hasCapableDevice(): boolean {
-  const device = navigator as Navigator & {
-    deviceMemory?: number;
-    connection?: { saveData?: boolean };
-  };
-  if (device.connection?.saveData) return false;
-  if (typeof device.hardwareConcurrency === "number" && device.hardwareConcurrency <= 2) return false;
-  if (typeof device.deviceMemory === "number" && device.deviceMemory <= 2) return false;
-  return true;
-}
-
 function clamp(value: number, min: number, max: number): number {
   return Math.min(max, Math.max(min, value));
 }
@@ -86,6 +86,65 @@ export default function HeroCityBackdrop({ activeRegion }: Props) {
   const [sceneLoaded, setSceneLoaded] = useState(false);
   const [failed, setFailed] = useState(false);
   const [mobile, setMobile] = useState(false);
+  const [deviceLowPerformance, setDeviceLowPerformance] = useState(false);
+  const [fpsLow, setFpsLow] = useState(false);
+  const [recovery, setRecovery] = useState<ContextRecoveryState>(INITIAL_CONTEXT_RECOVERY);
+  const recoveryRef = useRef<ContextRecoveryState>(INITIAL_CONTEXT_RECOVERY);
+  const recoveryTimerRef = useRef<number | null>(null);
+  const webgl2AvailableRef = useRef<boolean | null>(null);
+  const warnedReasonsRef = useRef<Set<HeroFallbackReason>>(new Set());
+  const lowPerformance = deviceLowPerformance || fpsLow;
+  const contextUnavailable = recovery.phase === "lost" || recovery.phase === "retrying";
+
+  const warnFallback = useCallback((reason: HeroFallbackReason) => {
+    if (process.env.NODE_ENV === "production" || warnedReasonsRef.current.has(reason)) return;
+    warnedReasonsRef.current.add(reason);
+    console.warn(`[HeroCity] Showing static hero image: ${reason}`);
+  }, []);
+
+  const clearRecoveryTimer = useCallback(() => {
+    if (recoveryTimerRef.current !== null) {
+      window.clearTimeout(recoveryTimerRef.current);
+      recoveryTimerRef.current = null;
+    }
+  }, []);
+
+  const advanceRecovery = useCallback((event: ContextRecoveryEvent) => {
+    const result = transitionContextRecovery(recoveryRef.current, event);
+    if (result.state !== recoveryRef.current) {
+      recoveryRef.current = result.state;
+      setRecovery(result.state);
+    }
+    return result;
+  }, []);
+
+  const failToStaticFallback = useCallback((reason: HeroFallbackReason) => {
+    clearRecoveryTimer();
+    advanceRecovery("render-error");
+    setFailed(true);
+    warnFallback(reason);
+  }, [advanceRecovery, clearRecoveryTimer, warnFallback]);
+
+  const scheduleRecoveryTimeout = useCallback((delayMs: number) => {
+    clearRecoveryTimer();
+    recoveryTimerRef.current = window.setTimeout(() => {
+      recoveryTimerRef.current = null;
+      const result = advanceRecovery("timeout");
+      if (result.action === "fallback") {
+        setFailed(true);
+        warnFallback("webgl-context-recovery-failed");
+      }
+    }, delayMs);
+  }, [advanceRecovery, clearRecoveryTimer, warnFallback]);
+
+  const handleRendererCreated = useCallback(() => {
+    const result = advanceRecovery("renderer-ready");
+    if (result.action === "recovered") clearRecoveryTimer();
+  }, [advanceRecovery, clearRecoveryTimer]);
+
+  const handleLowFps = useCallback(() => setFpsLow(true), []);
+
+  useEffect(() => clearRecoveryTimer, [clearRecoveryTimer]);
 
   useEffect(() => {
     let secondFrame = 0;
@@ -133,19 +192,41 @@ export default function HeroCityBackdrop({ activeRegion }: Props) {
   }, []);
 
   useEffect(() => {
-    if (!firstPaint || !inView) return;
+    if (!firstPaint) return;
 
     const preference = window.matchMedia("(prefers-reduced-motion: reduce)");
     const evaluate = () => {
-      const canRender = !preference.matches && hasCapableDevice() && hasWebGL2();
-      setAllowed(canRender);
-      if (canRender) setSceneLoaded(true);
+      if (webgl2AvailableRef.current === null) {
+        webgl2AvailableRef.current = hasWebGL2();
+      }
+      const device = navigator as Navigator & {
+        deviceMemory?: number;
+        connection?: { saveData?: boolean };
+      };
+      const decision = decideHeroScene({
+        reducedMotion: preference.matches,
+        webgl2Available: webgl2AvailableRef.current,
+        saveData: device.connection?.saveData,
+        hardwareConcurrency: device.hardwareConcurrency,
+        deviceMemory: device.deviceMemory,
+      });
+
+      if (decision.mode === "fallback") {
+        setAllowed(false);
+        setDeviceLowPerformance(false);
+        warnFallback(decision.reason);
+        return;
+      }
+
+      setAllowed(true);
+      setDeviceLowPerformance(decision.lowPerformance);
+      if (inView) setSceneLoaded(true);
     };
 
     evaluate();
     preference.addEventListener("change", evaluate);
     return () => preference.removeEventListener("change", evaluate);
-  }, [firstPaint, inView]);
+  }, [firstPaint, inView, warnFallback]);
 
   useEffect(() => {
     const host = hostRef.current;
@@ -162,7 +243,7 @@ export default function HeroCityBackdrop({ activeRegion }: Props) {
       const entering = clamp((viewportHeight - rect.top) / edgeFade, 0, 1);
       const leaving = clamp((rect.bottom + edgeFade) / edgeFade, 0, 1);
       const fade = Math.min(entering, leaving);
-      host.style.opacity = String(fade);
+      host.style.opacity = contextUnavailable ? "0" : String(fade);
 
       motionRef.current.scroll = clamp(
         (viewportHeight - rect.top) / Math.max(rect.height, viewportHeight),
@@ -201,19 +282,39 @@ export default function HeroCityBackdrop({ activeRegion }: Props) {
       window.removeEventListener("resize", schedulePositionUpdate);
       window.removeEventListener("pointermove", updatePointer);
     };
-  }, [sceneLoaded]);
+  }, [sceneLoaded, contextUnavailable]);
 
   useEffect(() => {
     const host = hostRef.current;
     if (!host) return;
     let canvas: HTMLCanvasElement | null = null;
-    const onContextLost = () => setFailed(true);
+    const onContextLost = (event: Event) => {
+      const result = advanceRecovery("context-lost");
+      if (result.action === "wait-for-restore") {
+        (event as WebGLContextEvent).preventDefault();
+        host.style.opacity = "0";
+        warnFallback("webgl-context-lost");
+        scheduleRecoveryTimeout(3500);
+        return;
+      }
+      failToStaticFallback("webgl-context-recovery-failed");
+    };
+    const onContextRestored = () => {
+      const result = advanceRecovery("context-restored");
+      if (result.action === "retry") {
+        scheduleRecoveryTimeout(5000);
+        return;
+      }
+      failToStaticFallback("webgl-context-recovery-failed");
+    };
     const observeCanvas = () => {
       const nextCanvas = host.querySelector("canvas");
       if (nextCanvas === canvas) return;
       canvas?.removeEventListener("webglcontextlost", onContextLost);
+      canvas?.removeEventListener("webglcontextrestored", onContextRestored);
       canvas = nextCanvas;
       canvas?.addEventListener("webglcontextlost", onContextLost);
+      canvas?.addEventListener("webglcontextrestored", onContextRestored);
     };
     observeCanvas();
     const observer = new MutationObserver(observeCanvas);
@@ -221,8 +322,15 @@ export default function HeroCityBackdrop({ activeRegion }: Props) {
     return () => {
       observer.disconnect();
       canvas?.removeEventListener("webglcontextlost", onContextLost);
+      canvas?.removeEventListener("webglcontextrestored", onContextRestored);
     };
-  }, [sceneLoaded]);
+  }, [
+    advanceRecovery,
+    failToStaticFallback,
+    sceneLoaded,
+    scheduleRecoveryTimeout,
+    warnFallback,
+  ]);
 
   const style: CSSProperties = {
     position: "absolute",
@@ -248,13 +356,17 @@ export default function HeroCityBackdrop({ activeRegion }: Props) {
       style={style}
     >
       {sceneLoaded && allowed && (
-        <SceneErrorBoundary onFailure={() => setFailed(true)}>
+        <SceneErrorBoundary onFailure={() => failToStaticFallback("render-error")}>
           <Suspense fallback={null}>
             <HeroCityScene
+              key={recovery.generation}
               activeRegion={activeRegion}
               mobile={mobile}
-              inView={inView}
+              inView={inView && recovery.phase !== "lost"}
+              lowPerformance={lowPerformance}
               motionRef={motionRef}
+              onLowFps={handleLowFps}
+              onRendererCreated={handleRendererCreated}
             />
           </Suspense>
         </SceneErrorBoundary>

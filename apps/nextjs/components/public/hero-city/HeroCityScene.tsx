@@ -6,6 +6,9 @@ import { Canvas, useFrame, useThree } from "@react-three/fiber";
 import { MeshReflectorMaterial } from "@react-three/drei";
 import { Bloom, EffectComposer, Vignette } from "@react-three/postprocessing";
 import * as THREE from "three";
+import { getHeroQualitySettings } from "./heroCityPolicy";
+import type { HeroQualitySettings } from "./heroCityPolicy";
+import { createHeroResourceCleanup } from "./heroCityResources";
 
 type MotionState = {
   pointerX: number;
@@ -17,7 +20,10 @@ type SceneProps = {
   activeRegion: string;
   mobile: boolean;
   inView: boolean;
+  lowPerformance: boolean;
   motionRef: MutableRefObject<MotionState>;
+  onLowFps: () => void;
+  onRendererCreated: () => void;
 };
 
 type Building = {
@@ -172,8 +178,10 @@ function createBuildingMaterial(): THREE.MeshStandardMaterial {
 function Buildings({ count, mobile }: { count: number; mobile: boolean }) {
   const meshRef = useRef<THREE.InstancedMesh>(null);
   const buildings = useMemo(() => createBuildings(count, mobile), [count, mobile]);
-  const geometry = useMemo(() => new THREE.BoxGeometry(1, 1, 1), []);
-  const material = useMemo(() => createBuildingMaterial(), []);
+  // InstancedMesh is reconstructed when its count changes, so give each instance
+  // its own resources instead of reusing args that R3F may already have disposed.
+  const geometry = useMemo(() => new THREE.BoxGeometry(1, 1, 1), [count, mobile]);
+  const material = useMemo(() => createBuildingMaterial(), [count, mobile]);
 
   useEffect(() => {
     const mesh = meshRef.current;
@@ -313,6 +321,46 @@ function CityCamera({
   return null;
 }
 
+function FpsMonitor({ onLowFps, inView }: { onLowFps: () => void; inView: boolean }) {
+  const warmupElapsed = useRef(0);
+  const sampleElapsed = useRef(0);
+  const sampleFrames = useRef(0);
+  const slowWindows = useRef(0);
+  const notified = useRef(false);
+
+  useEffect(() => {
+    warmupElapsed.current = 0;
+    sampleElapsed.current = 0;
+    sampleFrames.current = 0;
+    slowWindows.current = 0;
+  }, [inView]);
+
+  useFrame((_, delta) => {
+    if (!inView || notified.current || !Number.isFinite(delta) || delta <= 0) return;
+
+    if (warmupElapsed.current < 3) {
+      warmupElapsed.current += delta;
+      return;
+    }
+
+    sampleElapsed.current += delta;
+    sampleFrames.current += 1;
+    if (sampleElapsed.current < 2) return;
+
+    const fps = sampleFrames.current / sampleElapsed.current;
+    slowWindows.current = fps < 24 ? slowWindows.current + 1 : 0;
+    sampleElapsed.current = 0;
+    sampleFrames.current = 0;
+
+    if (slowWindows.current >= 2) {
+      notified.current = true;
+      onLowFps();
+    }
+  });
+
+  return null;
+}
+
 function SkyDome() {
   const material = useMemo(
     () =>
@@ -348,6 +396,10 @@ function SkyDome() {
     [],
   );
   const geometry = useMemo(() => new THREE.SphereGeometry(400, 36, 24), []);
+  useEffect(
+    () => createHeroResourceCleanup([material, geometry]),
+    [material, geometry],
+  );
 
   const skyRef = useRef<THREE.Mesh>(null);
   useFrame(({ camera }) => { skyRef.current?.position.copy(camera.position); });
@@ -430,6 +482,7 @@ function NightRiver({ mobile }: { mobile: boolean }) {
     riverGeometry.rotateX(-Math.PI / 2);
     return riverGeometry;
   }, []);
+  useEffect(() => createHeroResourceCleanup([geometry]), [geometry]);
 
   return (
     <mesh geometry={geometry} position={[0, 0.045, 0]} receiveShadow={false}>
@@ -458,9 +511,8 @@ function NightRiver({ mobile }: { mobile: boolean }) {
   );
 }
 
-function GoldDust({ mobile }: { mobile: boolean }) {
+function GoldDust({ count, mobile }: { count: number; mobile: boolean }) {
   const pointsRef = useRef<THREE.Points>(null);
-  const count = mobile ? 96 : 300;
   const { geometry, drift } = useMemo(() => {
     const positions = new Float32Array(count * 3);
     const velocities = new Float32Array(count * 3);
@@ -494,7 +546,7 @@ function GoldDust({ mobile }: { mobile: boolean }) {
     attribute.needsUpdate = true;
   });
 
-  useEffect(() => () => geometry.dispose(), [geometry]);
+  useEffect(() => createHeroResourceCleanup([geometry]), [geometry]);
 
   return (
     <points ref={pointsRef} geometry={geometry} frustumCulled={false}>
@@ -533,7 +585,15 @@ function VehicleTrail({ z, offset, reverse }: { z: number; offset: number; rever
   );
 }
 
-function CityContents({ activeRegion, mobile }: { activeRegion: string; mobile: boolean }) {
+function CityContents({
+  activeRegion,
+  mobile,
+  quality,
+}: {
+  activeRegion: string;
+  mobile: boolean;
+  quality: HeroQualitySettings;
+}) {
   const mobileRows = [-42, -14, 14, 42];
   const desktopRows = [-41, -17, 7, 31, 55];
   const vehicleRows = mobile ? mobileRows : desktopRows;
@@ -541,10 +601,10 @@ function CityContents({ activeRegion, mobile }: { activeRegion: string; mobile: 
   return (
     <group position={mobile ? [0, 0, 0] : [12, 0, 0]}>
       <CityGround mobile={mobile} />
-      <Buildings count={mobile ? 300 : 1200} mobile={mobile} />
+      <Buildings count={quality.buildingCount} mobile={mobile} />
       <NightRiver mobile={mobile} />
       <Highlight region={activeRegion} mobile={mobile} />
-      <GoldDust mobile={mobile} />
+      <GoldDust count={quality.particleCount} mobile={mobile} />
       {!mobile && vehicleRows.map((z, index) => (
         <VehicleTrail
           key={`vehicle-${index}`}
@@ -557,7 +617,15 @@ function CityContents({ activeRegion, mobile }: { activeRegion: string; mobile: 
   );
 }
 
-function SceneContents({ activeRegion, mobile, motionRef }: SceneProps) {
+function SceneContents({
+  activeRegion,
+  mobile,
+  inView,
+  lowPerformance,
+  motionRef,
+  onLowFps,
+  quality,
+}: SceneProps & { quality: HeroQualitySettings }) {
   return (
     <>
       <SkyDome />
@@ -565,22 +633,33 @@ function SceneContents({ activeRegion, mobile, motionRef }: SceneProps) {
       <ambientLight intensity={0.72} color="#69838A" />
       <directionalLight position={[-22, 35, -16]} intensity={1.04} color="#829BA0" />
       <directionalLight position={[18, 18, 28]} intensity={0.26} color="#C9A96E" />
-      <CityContents activeRegion={activeRegion} mobile={mobile} />
-      {!mobile && (
+      <CityContents activeRegion={activeRegion} mobile={mobile} quality={quality} />
+      {quality.postprocessing && (
         <EffectComposer multisampling={0}>
           <Bloom intensity={0.6} luminanceThreshold={0.79} luminanceSmoothing={0.24} mipmapBlur />
           <Vignette offset={0.28} darkness={0.28} />
         </EffectComposer>
       )}
+      {!lowPerformance && <FpsMonitor onLowFps={onLowFps} inView={inView} />}
       <CityCamera motionRef={motionRef} />
     </>
   );
 }
 
-export function HeroCityScene({ activeRegion, mobile, inView, motionRef }: SceneProps) {
+export function HeroCityScene({
+  activeRegion,
+  mobile,
+  inView,
+  lowPerformance,
+  motionRef,
+  onLowFps,
+  onRendererCreated,
+}: SceneProps) {
+  const quality = getHeroQualitySettings(mobile, lowPerformance);
+
   return (
     <Canvas
-      dpr={mobile ? 1 : [1, 1.5]}
+      dpr={quality.dpr}
       frameloop={inView ? "always" : "never"}
       camera={{ position: [0, 61, 89], fov: 39, near: 0.1, far: 600 }}
       gl={{
@@ -593,6 +672,7 @@ export function HeroCityScene({ activeRegion, mobile, inView, motionRef }: Scene
         gl.setClearColor("#071923", 1);
         gl.toneMapping = THREE.ACESFilmicToneMapping;
         gl.toneMappingExposure = 1.12;
+        onRendererCreated();
       }}
       style={{ position: "absolute", inset: 0, width: "100%", height: "100%" }}
       aria-hidden="true"
@@ -601,7 +681,11 @@ export function HeroCityScene({ activeRegion, mobile, inView, motionRef }: Scene
         activeRegion={activeRegion}
         mobile={mobile}
         inView={inView}
+        lowPerformance={lowPerformance}
         motionRef={motionRef}
+        onLowFps={onLowFps}
+        onRendererCreated={onRendererCreated}
+        quality={quality}
       />
     </Canvas>
   );
