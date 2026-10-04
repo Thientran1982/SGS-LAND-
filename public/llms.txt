@@ -169,7 +169,7 @@ Organization (SGS LAND / sgsland.vn)
 │   ├── ListingMarketplace → sgsland.vn/marketplace
 │   ├── CRMPlatform → sgsland.vn/crm-platform
 │   └── LegalCheck → (embedded trong listing workflow)
-├── publishes → Article[] → sgsland.vn/news
+├── publishes → Article[] → sgsland.vn/tin-tuc
 │   └── about → RealEstateMarket | Project | AdministrativeArea
 └── exposes → Dataset[]
     ├── /data/long-thanh-price-index.json

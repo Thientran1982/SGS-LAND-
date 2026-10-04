@@ -163,11 +163,64 @@ async function fetchJson<T>(path: string): Promise<T | null> {
   }
 }
 
+const PUBLIC_ARTICLES_PAGE_SIZE = 200;
+const MAX_PUBLIC_ARTICLE_PAGES = 20;
+
+export interface PublishedArticlesSnapshot {
+  rows: any[];
+  articles: Article[];
+  /** False means the public content API failed; it is not an empty publication list. */
+  available: boolean;
+}
+
+/** One bounded, shared read of the published-only public articles API. */
+export const getPublishedArticlesSnapshot = cache(
+  async (): Promise<PublishedArticlesSnapshot> => {
+    const rows: any[] = [];
+
+    for (let page = 1; page <= MAX_PUBLIC_ARTICLE_PAGES; page += 1) {
+      const json = await fetchJson<{
+        data?: any[];
+        totalPages?: number;
+      }>(`/api/public/articles?page=${page}&pageSize=${PUBLIC_ARTICLES_PAGE_SIZE}`);
+
+      if (!json || !Array.isArray(json.data)) {
+        return { rows: [], articles: [], available: false };
+      }
+
+      rows.push(
+        ...json.data.filter(
+          (row) => row && typeof row.slug === "string" && row.slug.trim(),
+        ),
+      );
+
+      const totalPages = Number(json.totalPages);
+      const hasMorePages =
+        Number.isInteger(totalPages) && totalPages > 0
+          ? page < totalPages
+          : json.data.length === PUBLIC_ARTICLES_PAGE_SIZE;
+
+      if (!hasMorePages) break;
+      if (page === MAX_PUBLIC_ARTICLE_PAGES) {
+        // Do not claim a partial list is the complete set of published content.
+        return { rows: [], articles: [], available: false };
+      }
+    }
+
+    const uniqueRows = Array.from(
+      new Map(rows.map((row) => [row.slug, row])).values(),
+    );
+    return {
+      rows: uniqueRows,
+      articles: uniqueRows.map(mapDbArticle).filter((article) => article.slug),
+      available: true,
+    };
+  },
+);
+
 /** All published articles, newest first. Deduplicated per request. */
 export const getAllArticles = cache(async (): Promise<Article[]> => {
-  const json = await fetchJson<{ data?: any[] }>("/api/public/articles?page=1&pageSize=200");
-  const rows = Array.isArray(json?.data) ? json!.data! : [];
-  return rows.map(mapDbArticle).filter((a) => a.slug);
+  return (await getPublishedArticlesSnapshot()).articles;
 });
 
 export const getArticleBySlug = cache(async (slug: string): Promise<Article | undefined> => {

@@ -55,13 +55,13 @@
 
   <!-- ══ TIN TỨC BĐS ══ -->
   <url>
-    <loc>https://sgsland.vn/news</loc>
+    <loc>https://sgsland.vn/tin-tuc</loc>
     <lastmod>2026-05-03</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.85</priority>
-    <xhtml:link rel="alternate" hreflang="vi" href="https://sgsland.vn/news" />
-    <xhtml:link rel="alternate" hreflang="en" href="https://sgsland.vn/news?lang=en" />
-    <xhtml:link rel="alternate" hreflang="x-default" href="https://sgsland.vn/news" />
+    <xhtml:link rel="alternate" hreflang="vi" href="https://sgsland.vn/tin-tuc" />
+    <xhtml:link rel="alternate" hreflang="en" href="https://sgsland.vn/en/tin-tuc" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://sgsland.vn/tin-tuc" />
   </url>
 
   <!-- ══ VỀ CHÚNG TÔI ══ -->

@@ -17,7 +17,7 @@ interface ArticleSchemaProps {
  * - reviewedBy field for legal articles (Google YMYL trust signal)
  */
 export function ArticleSchema({ article, author }: ArticleSchemaProps) {
-  const canonicalUrl = `${SITE_URL}/news/${article.slug}`;
+  const canonicalUrl = `${SITE_URL}/tin-tuc/${article.slug}`;
 
   const authorSchema = {
     "@type": "Person",

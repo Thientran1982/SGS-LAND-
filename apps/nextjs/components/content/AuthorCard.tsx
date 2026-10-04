@@ -5,6 +5,7 @@ import Image from "next/image";
 import type { Author } from "@/data/authors";
 interface AuthorCardProps {
   author: Author;
+  articleCount?: number;
   variant?: "inline" | "full";
   className?: string;
 }
@@ -23,7 +24,7 @@ function Initials({ name, className = "" }: { name: string; className?: string }
     </div>
   );
 }
-export function AuthorCard({ author, variant = "inline", className = "" }: AuthorCardProps) {
+export function AuthorCard({ author, articleCount, variant = "inline", className = "" }: AuthorCardProps) {
   if (variant === "inline") {
     return (
       <div className={`flex items-center gap-3 ${className}`}>
@@ -106,7 +107,7 @@ export function AuthorCard({ author, variant = "inline", className = "" }: Autho
         {author.bio}
       </p>
       <div className="flex items-center justify-between text-xs" style={{ color: "var(--text-tertiary)" }}>
-        <span>{author.articlesCount} bài viết</span>
+        {articleCount !== undefined && <span>{articleCount} bài viết</span>}
         <a
           href={author.linkedIn}
           target="_blank"

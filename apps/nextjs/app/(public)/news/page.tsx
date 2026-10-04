@@ -5,7 +5,7 @@ import Image from "next/image";
 import { Suspense } from "react";
 import { Calendar, Clock, ArrowRight } from "lucide-react";
 import type { Article } from "@/data/articles";
-import { getAllArticles } from "@/lib/content/articles-source";
+import { getPublishedArticlesSnapshot } from "@/lib/content/articles-source";
 import { AUTHORS } from "@/data/authors";
 import { CATEGORIES } from "@/data/categories";
 import { CategoryFilter } from "@/components/content/CategoryFilter";
@@ -180,19 +180,20 @@ export default async function NewsPage() {
     );
   }
   // Single source of truth: the Postgres `articles` table (via /api/public/articles)
-  const all = await getAllArticles();
+  const articleSnapshot = await getPublishedArticlesSnapshot();
+  const all = articleSnapshot.articles;
   const featured = all.filter((a) => a.featured).slice(0, 1);
   const rest = all.filter((a) => a.slug !== featured[0]?.slug);
   const breadcrumb = getBreadcrumbSchema([
     { name: "Trang chủ", url: SITE_URL },
-    { name: en ? "Knowledge & News" : "Kiến thức & Tin tức", url: `${SITE_URL}${en ? "/en/news" : "/tin-tuc"}` },
+    { name: en ? "Knowledge & News" : "Kiến thức & Tin tức", url: `${SITE_URL}${en ? "/en/tin-tuc" : "/tin-tuc"}` },
   ]);
   const collectionSchema = {
     "@context": "https://schema.org",
     "@type": "CollectionPage",
-    "@id": `${SITE_URL}${en ? "/en/news" : "/tin-tuc"}#collection`,
+    "@id": `${SITE_URL}${en ? "/en/tin-tuc" : "/tin-tuc"}#collection`,
     name: "Kiến thức & Tin tức BĐS — SGS LAND",
-    url: `${SITE_URL}${en ? "/en/news" : "/tin-tuc"}`,
+    url: `${SITE_URL}${en ? "/en/tin-tuc" : "/tin-tuc"}`,
     inLanguage: en ? "en" : "vi",
     publisher: { "@id": `${SITE_URL}/#organization` },
     mainEntity: {
@@ -200,7 +201,7 @@ export default async function NewsPage() {
       itemListElement: all.map((a, i) => ({
         "@type": "ListItem",
         position: i + 1,
-        url: `${SITE_URL}${en ? "/en/news" : "/tin-tuc"}/${a.slug}`,
+        url: `${SITE_URL}${en ? "/en/tin-tuc" : "/tin-tuc"}/${a.slug}`,
         name: a.title,
       })),
     },
@@ -242,7 +243,16 @@ export default async function NewsPage() {
               {en ? "Expert authors" : "Tác giả chuyên gia"}
             </p>
             {AUTHORS.map((author) => (
-              <AuthorCard key={author.slug} author={author} variant="full" />
+              <AuthorCard
+                key={author.slug}
+                author={author}
+                variant="full"
+                articleCount={
+                  articleSnapshot.available
+                    ? all.filter((article) => article.author === author.slug).length
+                    : undefined
+                }
+              />
             ))}
           </aside>
         </div>

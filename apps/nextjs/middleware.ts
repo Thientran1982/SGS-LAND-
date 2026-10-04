@@ -8,7 +8,7 @@ import { PRIVATE_PREFIXES } from "./config/routes";
 // ─── Routes accessible only when NOT logged in ────────────
 const AUTH_ONLY_ROUTES = ["/login", "/reset-password", "/verify-email"];
 
-export function middleware(request: NextRequest) {
+export async function middleware(request: NextRequest) {
   let { pathname } = request.nextUrl;
 
   // —— Canonical host: 301 redirect www → non-www (SEO consolidation) ——
@@ -40,6 +40,76 @@ export function middleware(request: NextRequest) {
       const canonical = request.nextUrl.clone();
       canonical.pathname = `${lang === "en" ? "/en" : ""}/tin-tuc${articlePath ? `/${articlePath}` : ""}`;
       return NextResponse.redirect(canonical, 308);
+    }
+  }
+
+  // Resolve article existence before the route shell can stream. The public
+  // API exposes published articles only and returns 404 for missing/draft slugs.
+  const articleSegments = pathname.split("/").filter(Boolean);
+  if (articleSegments.length === 2 && articleSegments[0] === "tin-tuc") {
+    const rewriteToNotFound = () => {
+      const notFoundUrl = request.nextUrl.clone();
+      notFoundUrl.pathname = "/_not-found";
+      const headers = new Headers(request.headers);
+      headers.set("x-sgs-lang", lang);
+      const response = NextResponse.rewrite(notFoundUrl, {
+        request: { headers },
+        status: 404,
+      });
+      response.headers.set("X-Robots-Tag", "noindex, nofollow");
+      return response;
+    };
+
+    let slug: string;
+    try {
+      slug = decodeURIComponent(articleSegments[1]);
+    } catch {
+      return rewriteToNotFound();
+    }
+
+    const apiBase = (
+      process.env.BACKEND_URL ||
+      process.env.NEXT_PUBLIC_API_URL ||
+      "http://localhost:5001"
+    ).replace(/\/+$/, "");
+
+    try {
+      const articleResponse = await fetch(
+        `${apiBase}/api/public/articles/${encodeURIComponent(slug)}`,
+        { cache: "no-store", signal: AbortSignal.timeout(5000) },
+      );
+      if (articleResponse.status === 404) return rewriteToNotFound();
+      if (!articleResponse.ok) {
+        return new NextResponse("Article availability is temporarily unknown", {
+          status: 503,
+          headers: {
+            "Cache-Control": "no-store",
+            "Retry-After": "60",
+            "X-Robots-Tag": "noindex",
+          },
+        });
+      }
+
+      const article = await articleResponse.json();
+      if (article?.slug !== slug) {
+        return new NextResponse("Article availability is temporarily unknown", {
+          status: 503,
+          headers: {
+            "Cache-Control": "no-store",
+            "Retry-After": "60",
+            "X-Robots-Tag": "noindex",
+          },
+        });
+      }
+    } catch {
+      return new NextResponse("Article availability is temporarily unknown", {
+        status: 503,
+        headers: {
+          "Cache-Control": "no-store",
+          "Retry-After": "60",
+          "X-Robots-Tag": "noindex",
+        },
+      });
     }
   }
 

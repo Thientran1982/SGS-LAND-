@@ -5,7 +5,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { Linkedin, ArrowRight, Calendar, Clock } from "lucide-react";
 import { AUTHORS, getAuthorBySlug } from "@/data/authors";
-import { getArticlesByAuthor } from "@/lib/content/articles-source";
+import { getPublishedArticlesSnapshot } from "@/lib/content/articles-source";
 import { CATEGORIES } from "@/data/categories";
 import { SchemaScript } from "@/components/SchemaScript";
 import { getBreadcrumbSchema, SITE_URL, ORG_ID } from "@/lib/schema";
@@ -52,7 +52,8 @@ export default async function AuthorPage({
   const author = getAuthorBySlug(slug);
   if (!author) notFound();
 
-  const articles = await getArticlesByAuthor(slug);
+  const articleSnapshot = await getPublishedArticlesSnapshot();
+  const articles = articleSnapshot.articles.filter((article) => article.author === slug);
   const catMap = Object.fromEntries(CATEGORIES.map((c) => [c.slug, c]));
 
   const breadcrumb = getBreadcrumbSchema([
@@ -141,7 +142,7 @@ export default async function AuthorPage({
             {/* Stats + LinkedIn */}
             <div className="flex flex-wrap justify-center sm:justify-start items-center gap-4 text-sm" style={{ color: "var(--text-secondary)" }}>
               <span>{author.yearsExperience}+ năm kinh nghiệm</span>
-              <span>{author.articlesCount} bài viết</span>
+              {articleSnapshot.available && <span>{articles.length} bài viết</span>}
               <a
                 href={author.linkedIn}
                 target="_blank"

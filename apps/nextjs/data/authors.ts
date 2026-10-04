@@ -14,7 +14,6 @@ export interface Author {
   bioFull: string;
   avatar: string;
   linkedIn: string;
-  articlesCount: number;
   sameAs: string[];
 }
 
@@ -46,7 +45,6 @@ Dưới sự lãnh đạo của ông, SGS LAND đã xây dựng mạng lưới m
 Ông Thiện thường xuyên chia sẻ phân tích thị trường và là diễn giả tại các sự kiện BĐS lớn như Vietnam Real Estate Summit và PropTech Vietnam Conference.`,
     avatar: "",
     linkedIn: "https://www.linkedin.com/in/tran-minh-thien-sgsland",
-    articlesCount: 8,
     sameAs: [
       "https://www.linkedin.com/in/tran-minh-thien-sgsland",
       "https://sgsland.vn/tac-gia/tran-minh-thien",
@@ -79,7 +77,6 @@ Hệ thống AVM do ông thiết kế phân tích 9 hệ số định giá theo 
 Ông Nam thường viết về ứng dụng AI trong định giá BĐS, phân tích dữ liệu thị trường và các giải pháp tài chính cho người mua nhà.`,
     avatar: "",
     linkedIn: "https://www.linkedin.com/in/nguyen-hoang-nam-cto-sgsland",
-    articlesCount: 4,
     sameAs: [
       "https://www.linkedin.com/in/nguyen-hoang-nam-cto-sgsland",
       "https://sgsland.vn/tac-gia/nguyen-hoang-nam",
@@ -112,7 +109,6 @@ Với vai trò COO, bà Hoa đã thiết lập quy trình thẩm định pháp l
 Bà Hoa thường viết về các chủ đề pháp lý BĐS, dòng tiền cho thuê và kinh nghiệm thực tế mua bán nhà đất tại TP.HCM.`,
     avatar: "",
     linkedIn: "https://www.linkedin.com/in/le-thi-hoa-coo-sgsland",
-    articlesCount: 4,
     sameAs: [
       "https://www.linkedin.com/in/le-thi-hoa-coo-sgsland",
       "https://sgsland.vn/tac-gia/le-thi-hoa",
@@ -145,7 +141,6 @@ Tại SGS LAND, ông Pháp đảm nhận vai trò kiểm duyệt và xác minh n
 Tất cả bài viết pháp lý trên sgsland.vn đều được ông Pháp review trước khi xuất bản.`,
     avatar: "",
     linkedIn: "https://www.linkedin.com/in/nguyen-van-phap-legal",
-    articlesCount: 4,
     sameAs: [
       "https://www.linkedin.com/in/nguyen-van-phap-legal",
       "https://sgsland.vn/tac-gia/chuyen-gia-phap-ly",
@@ -165,7 +160,6 @@ Tất cả bài viết pháp lý trên sgsland.vn đều được ông Pháp rev
       "Ban Biên Tập SGS LAND chịu trách nhiệm tổng hợp, biên tập và kiểm duyệt nội dung đăng trên chuyên mục Kiến thức & Tin tức BĐS. Bài viết do các phòng ban chuyên môn cung cấp được đăng dưới tên Ban Biên Tập khi tác giả chưa có trang hồ sơ riêng.",
     avatar: "",
     linkedIn: "",
-    articlesCount: 0,
     sameAs: [],
   },
 ];

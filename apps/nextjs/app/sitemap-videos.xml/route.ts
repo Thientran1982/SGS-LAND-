@@ -1,8 +1,9 @@
 // @ts-nocheck
 import { NextResponse } from "next/server";
+import { getPublishedArticlesSnapshot } from "@/lib/content/articles-source";
 
 const BASE = "https://sgsland.vn";
-const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
+export const dynamic = "force-dynamic";
 
 function esc(s: string): string {
   return String(s || "")
@@ -18,32 +19,19 @@ function absUrl(u: string): string {
   return `${BASE}${u.startsWith("/") ? "" : "/"}${u}`;
 }
 
-async function fetchAllArticles(): Promise<any[]> {
-  const all: any[] = [];
-  for (let page = 1; page <= 20; page++) {
-    let json: any;
-    try {
-      const res = await fetch(`${API_BASE}/api/public/articles?page=${page}&pageSize=200`, { cache: "no-store" });
-      if (!res.ok) break;
-      json = await res.json();
-    } catch {
-      break;
-    }
-    const data = json?.data ?? [];
-    if (!Array.isArray(data) || data.length === 0) break;
-    all.push(...data);
-    if (data.length < 200) break;
-  }
-  return all;
-}
-
 export async function GET() {
-  const articles = await fetchAllArticles();
+  const snapshot = await getPublishedArticlesSnapshot();
+  if (!snapshot.available) {
+    return new NextResponse("Published article data is unavailable", {
+      status: 503,
+      headers: { "Cache-Control": "no-store", "Retry-After": "60" },
+    });
+  }
 
-  const entries = articles
+  const entries = snapshot.rows
     .filter((a) => Array.isArray(a.videos) && a.videos.length > 0 && a.slug)
     .map((a) => {
-      const thumb = absUrl(a.cover_image || a.image || "");
+      const thumb = absUrl(a.coverImage || a.cover_image || a.image || "");
       const videoTags = (a.videos as string[])
         .filter(Boolean)
         .slice(0, 10)

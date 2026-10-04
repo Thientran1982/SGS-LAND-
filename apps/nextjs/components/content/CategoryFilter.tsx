@@ -12,7 +12,7 @@ export function CategoryFilter({ categories, lang = "vi", className = "" }: Cate
   const params = useSearchParams();
   const active = params?.get("category") ?? "all";
   function select(slug: string) {
-    const base = lang === "en" ? "/en/news" : "/tin-tuc";
+    const base = lang === "en" ? "/en/tin-tuc" : "/tin-tuc";
     const url = slug === "all" ? base : `${base}?category=${slug}`;
     router.push(url, { scroll: false });
   }

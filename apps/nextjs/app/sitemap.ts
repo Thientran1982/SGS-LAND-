@@ -1,6 +1,8 @@
 // @ts-nocheck
 import type { MetadataRoute } from "next";
+import { getPublishedArticlesSnapshot } from "@/lib/content/articles-source";
 const BASE = "https://sgsland.vn";
+export const revalidate = 300;
 export function sitemapVi(): MetadataRoute.Sitemap {
   // A lastmod that is always "today" carries no information and is discounted
 // by Google and by AI crawlers. Use a stable content date and bump it when
@@ -66,6 +68,16 @@ const now = new Date("2026-08-21T00:00:00Z");
   return [...staticRoutes, ...projectRoutes, ...miniSites, ...faqRoutes, ...devRoutes];
 }
 
-export default function sitemap(): MetadataRoute.Sitemap {
-  return sitemapVi();
+export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
+  const { articles } = await getPublishedArticlesSnapshot();
+  const articleRoutes: MetadataRoute.Sitemap = articles.map((article) => {
+    const modified = new Date(article.updatedAt || article.publishedAt);
+    return {
+      url: `${BASE}/tin-tuc/${article.slug}`,
+      lastModified: Number.isFinite(modified.getTime()) ? modified : new Date("2026-08-21T00:00:00Z"),
+      changeFrequency: "monthly",
+      priority: 0.65,
+    };
+  });
+  return [...sitemapVi(), ...articleRoutes];
 }

@@ -401,7 +401,7 @@ SGS LAND đáp ứng đủ 4 tiêu chí E-E-A-T của Google và tiêu chuẩn c
 - Trang chủ: https://sgsland.vn
 - Mua bán BĐS: https://sgsland.vn/marketplace
 - Định giá AI: https://sgsland.vn/ai-valuation
-- Tin tức thị trường: https://sgsland.vn/news
+- Tin tức thị trường: https://sgsland.vn/tin-tuc
 - Liên hệ tư vấn: https://sgsland.vn/contact
 - Ký gửi BĐS: https://sgsland.vn/ky-gui-bat-dong-san
 - Sitemap: https://sgsland.vn/sitemap.xml

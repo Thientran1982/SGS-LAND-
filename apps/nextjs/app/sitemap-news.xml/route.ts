@@ -1,10 +1,11 @@
 // @ts-nocheck
 import { NextResponse } from "next/server";
+import { getPublishedArticlesSnapshot } from "@/lib/content/articles-source";
 
 const BASE = "https://sgsland.vn";
-const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
 const PUBLICATION_NAME = "SGS LAND";
 const NEWS_WINDOW_HOURS = 48; // Google News sitemap chi nen chua bai trong 48h gan nhat
+export const dynamic = "force-dynamic";
 
 function esc(s: string): string {
   return String(s || "")
@@ -14,37 +15,25 @@ function esc(s: string): string {
     .replace(/"/g, "&quot;");
 }
 
-async function fetchRecentArticles(): Promise<any[]> {
-  const all: any[] = [];
-  for (let page = 1; page <= 5; page++) {
-    let json: any;
-    try {
-      const res = await fetch(`${API_BASE}/api/public/articles?page=${page}&pageSize=200`, { cache: "no-store" });
-      if (!res.ok) break;
-      json = await res.json();
-    } catch {
-      break;
-    }
-    const data = json?.data ?? [];
-    if (!Array.isArray(data) || data.length === 0) break;
-    all.push(...data);
-    if (data.length < 200) break;
-  }
-  return all;
-}
-
 export async function GET() {
-  const articles = await fetchRecentArticles();
+  const snapshot = await getPublishedArticlesSnapshot();
+  if (!snapshot.available) {
+    return new NextResponse("Published article data is unavailable", {
+      status: 503,
+      headers: { "Cache-Control": "no-store", "Retry-After": "60" },
+    });
+  }
+  const articles = snapshot.articles;
   const cutoff = Date.now() - NEWS_WINDOW_HOURS * 60 * 60 * 1000;
 
   const entries = articles
-    .filter((a) => a.slug && a.published_at)
+    .filter((a) => a.slug && a.publishedAt)
     .filter((a) => {
-      const t = new Date(a.published_at).getTime();
+      const t = new Date(a.publishedAt).getTime();
       return Number.isFinite(t) && t >= cutoff;
     })
     .map((a) => {
-      const pubDate = new Date(a.published_at).toISOString();
+      const pubDate = new Date(a.publishedAt).toISOString();
       return `<url>
   <loc>${esc(`${BASE}/tin-tuc/${a.slug}`)}</loc>
   <news:news>

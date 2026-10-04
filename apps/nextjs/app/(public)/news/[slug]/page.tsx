@@ -32,7 +32,7 @@ export async function generateMetadata({
   if (!article) {
     return {
       title: lang === "en" ? "Article not found" : "Bài viết không tìm thấy",
-      alternates: { canonical: canonicalUrl },
+      robots: { index: false, follow: false },
     };
   }
   if (lang === "en") {
@@ -84,9 +84,9 @@ export default async function ArticlePage({
 
   const breadcrumb = getBreadcrumbSchema([
     { name: "Trang chủ", url: SITE_URL },
-    { name: lang === "en" ? "Knowledge & News" : "Kiến thức & Tin tức", url: `${SITE_URL}${lang === "en" ? "/en/news" : "/tin-tuc"}` },
-    ...(category ? [{ name: category.name, url: `${SITE_URL}${lang === "en" ? "/en/news" : "/tin-tuc"}?category=${category.slug}` }] : []),
-    { name: article.title, url: `${SITE_URL}${lang === "en" ? "/en/news" : "/tin-tuc"}/${slug}` },
+    { name: lang === "en" ? "Knowledge & News" : "Kiến thức & Tin tức", url: `${SITE_URL}${lang === "en" ? "/en/tin-tuc" : "/tin-tuc"}` },
+    ...(category ? [{ name: category.name, url: `${SITE_URL}${lang === "en" ? "/en/tin-tuc" : "/tin-tuc"}?category=${category.slug}` }] : []),
+    { name: article.title, url: `${SITE_URL}${lang === "en" ? "/en/tin-tuc" : "/tin-tuc"}/${slug}` },
   ]);
 
   return (

@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
+import { getPublishedArticlesSnapshot } from "@/lib/content/articles-source";
 
 const BASE = "https://sgsland.vn";
-const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
 const FEED_TITLE = "SGS LAND - Tin tuc & Phan tich bat dong san";
 const FEED_DESC =
   "Cap nhat tin tuc, phan tich thi truong va kien thuc bat dong san tu SGS LAND.";
@@ -19,37 +19,19 @@ function esc(s: string): string {
     .replace(/'/g, "&apos;");
 }
 
-async function fetchRecentArticles(): Promise<any[]> {
-  const all: any[] = [];
-  for (let page = 1; page <= 5; page++) {
-    let json: any;
-    try {
-      const res = await fetch(
-        `${API_BASE}/api/public/articles?page=${page}&pageSize=200`,
-        { cache: "no-store" }
-      );
-      if (!res.ok) break;
-      json = await res.json();
-    } catch {
-      break;
-    }
-    const data = json?.data ?? [];
-    if (!Array.isArray(data) || data.length === 0) break;
-    all.push(...data);
-    if (data.length < 200) break;
-  }
-  return all;
-}
-
 export async function GET() {
-  const articles = await fetchRecentArticles();
+  const snapshot = await getPublishedArticlesSnapshot();
+  if (!snapshot.available) {
+    return new NextResponse("Published article data is unavailable", {
+      status: 503,
+      headers: { "Cache-Control": "no-store", "Retry-After": "60" },
+    });
+  }
+  const articles = snapshot.articles;
 
   const items = articles
-    .filter((a) => a.slug && (a.publishedAt || a.published_at))
-    .map((a) => ({
-      ...a,
-      _pub: new Date(a.publishedAt || a.published_at).getTime(),
-    }))
+    .filter((a) => a.slug && a.publishedAt)
+    .map((a) => ({ ...a, _pub: new Date(a.publishedAt).getTime() }))
     .filter((a) => Number.isFinite(a._pub))
     .sort((a, b) => b._pub - a._pub)
     .slice(0, MAX_ITEMS)
