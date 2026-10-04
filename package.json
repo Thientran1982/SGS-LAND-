@@ -117,6 +117,7 @@
     "pdfkit": "^0.18.0",
     "pg": "^8.20.0",
     "postcss": "^8.5.8",
+    "postprocessing": "^6.39.5",
     "qrcode.react": "^4.2.0",
     "react": "^19.1.0",
     "react-dom": "^19.1.0",
